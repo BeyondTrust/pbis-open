@@ -1,0 +1,62 @@
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id="domainjoin-cli">
+
+  <refmeta>
+    <refentrytitle>domainjoin-gui</refentrytitle>
+    <manvolnum>8</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname>domainjoin-gui</refname>
+    <refpurpose>Graphically join a host to an Active Directory domain</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>domainjoin-gui</command>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      The <command>domainjoin-gui</command> command launches a
+      graphical application that provides a one-step method of joining
+      Linux, Unix, and OS X hosts into an Active Directory domain.
+      The tool performs all the system management configuration
+      necessary to enable local PAM aware services so that they will
+      be capable of authenticating AD domain user login requests.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Debugging Information</title>
+
+    <para>
+      In the event that the local host machine fails to successfully
+      join the AD domain, <command>domainjoin-gui</command> dialog
+      will allow you to save the log file containing the verbose
+      debugging information obtained during the join attempt.  This
+      information may then be used to obtain support from Likewise
+      Software or the Likewise Open community mailing lists.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+
+    <para>
+      <command>likewise-open(7)</command>, <command>domainjoin-cli(8)</command>
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Version</title>
+
+    <para>
+      This man page is correct for Likewise Open version 4.1.
+    </para>
+  </refsect1>
+
+</refentry>

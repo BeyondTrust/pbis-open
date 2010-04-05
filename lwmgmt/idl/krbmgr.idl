@@ -1,0 +1,88 @@
+/*
+ * Copyright (C) Centeris Corporation 2004-2007
+ * Copyright (C) Likewise Software 2007
+ * All rights reserved.
+ *
+ * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *
+ * LWMGMT IDL
+ *
+ */
+#ifndef __KRBMGR_IDL__
+#define __KRBMGR_IDL__
+
+[
+    uuid(eb73d202-6429-11dd-9e04-000c2943de47),
+    pointer_default(unique),
+    version(1.0)
+]
+interface krbmgr { 
+
+    cpp_quote("#ifndef __KRBMGR_IDL__")
+    cpp_quote("#define __KRBMGR_IDL__")
+    
+    cpp_quote("#ifndef LSA_KEYTAB_ENTRY_DEFINED")
+    cpp_quote("#define LSA_KEYTAB_ENTRY_DEFINED 1")
+
+    typedef struct _LSA_KEYTAB_ENTRY
+    {
+        long                    timestamp;
+        unsigned long           kvno;
+        long                    enctype;
+        [unique, string] char * pszPrincipal;
+        [unique, string] char * pszPassword;
+    } LSA_KEYTAB_ENTRY;
+    cpp_quote("#endif")
+
+    cpp_quote("#ifndef LSA_KEYTAB_ENTRIES_DEFINED")
+    cpp_quote("#define LSA_KEYTAB_ENTRIES_DEFINED 1")
+
+    typedef struct _LSA_KEYTAB_ENTRIES
+    {
+        unsigned long    count;
+        [size_is(count)] LSA_KEYTAB_ENTRY* pLsaKeyTabEntryArray;
+    } LSA_KEYTAB_ENTRIES;
+    cpp_quote("#endif")
+
+    long
+    RpcLWIReadKeyTab(
+        [in]  handle_t bindingHandle,
+        [in, string] char * pszKeyTabPath,
+        [in]  long nRecordsToSkip,
+        [in]  long nRecordsPerPage,
+        [out,ref] LSA_KEYTAB_ENTRIES* entries
+    );
+
+    long
+    RpcLWIKeyTabCount(
+        [in]  handle_t bindingHandle,
+        [in, string] char * pszKeyTabPath,
+        [out] long * pdwCount
+    );
+
+    long
+    RpcLWIWriteKeyTabEntry(
+        [in]  handle_t bindingHandle,
+        [in, string] char * pszKeyTabPath,
+        [in] LSA_KEYTAB_ENTRY KeyTabEntry
+    );
+
+    long
+    RpcLWIDeleteFromKeyTab(
+        [in]  handle_t bindingHandle,
+        [in, string] char * pszKeyTabPath,
+        [in] LSA_KEYTAB_ENTRY KeyTabEntry
+    );
+
+    long
+    RpcLWIClearKeyTab(
+        [in]  handle_t bindingHandle,
+        [in, string] char * pszKeyTabPath
+    );
+
+    cpp_quote("#endif /* __KRBMGR_IDL__ */")
+}
+
+#endif /* __KRBMGR_IDL__ */
+

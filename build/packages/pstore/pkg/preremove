@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# if this is a local deinstall, remove the password storage database
+if [ -z "$PKG_INSTALL_ROOT" ]
+then
+   CACHE_ROOT_DIR=/var/cache/likewise/lwps
+   if [ -d $CACHE_ROOT_DIR ]; then
+      /bin/rm -rf $CACHE_ROOT_DIR
+   fi
+fi

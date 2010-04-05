@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# Remove the DCE RPC endpoint map.
+#
+# ** ONLY ** do this when rebooting the system, or bringing the
+# machine down otherwise your DCE RPC applications may become
+# stranded.
+#
+# jrd@bu.edu 08-30-1998
+#
+#
+
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+case "$1" in
+  start)
+	$0 stop
+	;;
+  stop)
+        echo "Removing DCE RPC endpoint map"
+	if [ -f /opt/dcelocal/var/rpc/rpcdep.dat ]; then
+	   rm -f /opt/dcelocal/var/rpc/rpcdep.dat
+	fi
+	;;
+   *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+esac                
+exit 0

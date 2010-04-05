@@ -1,0 +1,87 @@
+#!/bin/bash -c "exit 1"
+
+COMP_SOURCES=${BUILD_ROOT}/src/linux/domainjoin/domainjoin-gui/carbon/DomainJoin
+COMP_DEPENDENCIES="domainjoin"
+
+function component_bootstrap
+{
+    echo "Nothing to bootstrap for ${COMP_NAME}"
+}
+
+function component_gather
+{
+    rsync -a --exclude=.svn ${COMP_SOURCES}/ ${GATHER_DIR}/
+}
+
+function _chomp
+{
+    echo $@ | sed 's/^ *//' | sed 's/ *$//'
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    _CPPFLAGS="$(libtool_staging_cppflags)"
+    _CFLAGS="${_cflags}"
+    _LDSHFLAGS="${_ldshflags}"
+    _LDFLAGS="${_ldflags} $(libtool_staging_ldflags)"
+    CC=/usr/bin/gcc
+
+    export CC _LDFLAGS _CFLAGS _CPPFLAGS _LDSHFLAGS
+
+    BUILD_USE_XCODE=
+    if [ -n "${BUILD_USE_XCODE}" ]; then
+        stage_source_dir=build/Release
+    else
+        stage_source_dir=output
+    fi
+}
+
+function component_configure
+{
+    _setup_build_env
+
+}
+
+function component_build
+{
+   _setup_build_env
+
+    if [ -n "${BUILD_USE_XCODE}" ]; then
+    xcodebuild -project DomainJoin.xcodeproj \
+	CFLAGS="$(_chomp ${_CFLAGS} ${_CPPFLAGS})" \
+	LDFLAGS="$(_chomp ${_LDFLAGS})"
+    else
+	${MAKE} ${_mflags} all
+    fi
+    exit_on_error $?
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    mkdir -p "${STAGING_PREFIX_DIR}/lib"
+
+    rsync -a --exclude=pbdevelopment.plist \
+	${stage_source_dir}/ \
+	${STAGING_PREFIX_DIR}/bin/
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=domainjoin-mac
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+
+    libtool_rewrite_populate
+}

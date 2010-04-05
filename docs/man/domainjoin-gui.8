@@ -1,0 +1,35 @@
+.\"     Title: domainjoin-gui
+.\"    Author: 
+.\" Generator: DocBook XSL Stylesheets v1.72.0 <http://docbook.sf.net/>
+.\"      Date: 03/14/2008
+.\"    Manual: 
+.\"    Source: 
+.\"
+.TH "DOMAINJOIN\-GUI" "8" "03/14/2008" "" ""
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.SH "NAME"
+domainjoin\-gui \- Graphically join a host to an Active Directory domain
+.SH "SYNOPSIS"
+.HP 15
+\fBdomainjoin\-gui\fR
+.SH "DESCRIPTION"
+.PP
+The
+\fBdomainjoin\-gui\fR
+command launches a graphical application that provides a one\-step method of joining Linux, Unix, and OS X hosts into an Active Directory domain. The tool performs all the system management configuration necessary to enable local PAM aware services so that they will be capable of authenticating AD domain user login requests.
+.SH "DEBUGGING INFORMATION"
+.PP
+In the event that the local host machine fails to successfully join the AD domain,
+\fBdomainjoin\-gui\fR
+dialog will allow you to save the log file containing the verbose debugging information obtained during the join attempt. This information may then be used to obtain support from Likewise Software or the Likewise Open community mailing lists.
+.SH "SEE ALSO"
+.PP
+
+\fBlikewise\-open(7)\fR,
+\fBdomainjoin\-cli(8)\fR
+.SH "VERSION"
+.PP
+This man page is correct for Likewise Open version 4.1.

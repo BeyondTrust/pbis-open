@@ -1,0 +1,15 @@
+#!/bin/bash
+
+EVENTFWD_NAME=com.likewisesoftware.eventfwdd
+EVENTFWD_DAEMON=/Library/LaunchDaemons/$EVENTFWD_NAME.plist
+
+if [ -f $EVENTFWD_DAEMON ]; then
+   launchctl list | grep $EVENTFWD_NAME > /dev/null
+   if [ $? -eq 0 ]; then
+      launchctl stop $EVENTFWD_NAME
+      touch /tmp/eventfwdd.restart
+   fi
+
+   launchctl unload $EVENTFWD_DAEMON
+   rm $EVENTFWD_DAEMON
+fi

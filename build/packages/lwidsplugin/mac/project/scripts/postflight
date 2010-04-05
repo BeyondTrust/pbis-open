@@ -1,0 +1,27 @@
+#!/bin/bash
+
+PLUGIN_DIR_ENT=LWEDSPlugIn.dsplug
+PLUGIN_DIR_OPEN=LWIDSPlugIn.dsplug
+SRC_DIR=/opt/likewise/lib
+FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+
+if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_ENT ]; then
+   /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_ENT
+fi
+
+if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
+   /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
+fi
+
+ln -s $SRC_DIR/$PLUGIN_DIR_OPEN $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
+
+if [ -f /usr/bin/setfile ]; then
+   setfile -a "V" /opt
+else
+   grep opt /.hidden > /dev/null
+   if [ $? -ne 0 ]; then
+       echo "opt" >> /.hidden
+   fi
+fi
+
+killall DirectoryService

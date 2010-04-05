@@ -1,0 +1,18 @@
+#!/bin/sh
+
+APACHE_VERSION="2.2"
+COMP_VERSION="2.2.10"
+COMP_RELEASE="0"
+
+. ${BUILD_ROOT}/src/linux/build/components/apache.func
+
+function component_configure
+{
+    _setup_build_env
+
+    ./configure \
+        --prefix=${STAGING_ROOT}${PREFIX_DIR} \
+        --with-included-apr \
+        ${DEPENDENCY_TRACKING}
+}
+

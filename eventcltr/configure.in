@@ -1,0 +1,399 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.59)
+AC_INIT(likewise-eventcltr, 1.0, support@likewise.com)
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+AC_CONFIG_HEADERS([include/config.h])
+AC_PREFIX_DEFAULT(/opt/likewise)
+
+# Platform-specific stuff
+
+MOD_EXT=".so"
+
+case "$host_os:$host_cpu" in
+	linux*:i?86|linux*:x86_64|linux*:s390*)
+		AC_DEFINE([__LWI_LINUX__], [], [Define if OS is Linux])
+		;;
+	solaris*:i?86|solaris*:sparc*)
+		AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
+		AC_DEFINE([__EXTENSIONS__], [], [Solaris requires this macro to be defined to enable
+several function declarations like:
+settimeofday(3) in sys/time.h
+vsyslog(3) in syslog.h])
+	        AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
+		;;
+	darwin*:*)
+		AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+		;;
+	freebsd*:*)
+		AC_DEFINE([__LWI_FREEBSD__], [], [Define if OS is FreeBSD])
+		;;
+	hpux*:hppa*)
+		MOD_EXT=".sl"
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
+                AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		;;
+	hpux*:ia64*)
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
+                AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		;;
+	aix*:*)
+		AC_DEFINE([__LWI_AIX__], [], [Define if OS is AIX])
+                AC_DEFINE([_LINUX_SOURCE_COMPAT], [], [Enable Linux source compatibility on AIX])
+		;;
+esac
+
+AC_SUBST(MOD_EXT)
+
+AC_DEFINE_UNQUOTED([MOD_EXT], ["$MOD_EXT"], [Extension of shared modules])
+
+# openldap
+
+AC_ARG_WITH([openldap],
+        [AC_HELP_STRING([--with-openldap=<dir>], [use openldap located in prefix <dir>])],
+        [
+		OPENLDAP_INCLUDES="-I$withval/include"
+        OPENLDAP_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_SUBST(OPENLDAP_INCLUDES)
+AC_SUBST(OPENLDAP_LDFLAGS)
+AC_SUBST(OPENLDAP_LIBS)
+
+# lwbase
+
+AC_ARG_WITH([lwbase],
+        [AC_HELP_STRING([--with-lwbase=<dir>], [use lwbase located in prefix <dir>])],
+        [
+		LWBASE_INCLUDES="-I$withval/include"
+        LWBASE_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwbase-includes],
+        [AC_HELP_STRING([--with-lwbase-includes=<dir>], [use lwbase includes located in <dir>])],
+        [
+		LWBASE_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lwbase-libs],
+        [AC_HELP_STRING([--with-lwbase-libs=<dir>], [use lwbase libs located in <dir>])],
+        [
+		LWBASE_LDFLAGS="-L$withval"
+        ])
+
+# sqlite
+
+AC_ARG_WITH([sqlite],
+        [AC_HELP_STRING([--with-sqlite=<dir>], [use sqlite located in prefix <dir>])],
+        [
+		SQLITE_INCLUDES="-I$withval/include"
+                SQLITE_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([sqlite-includes],
+        [AC_HELP_STRING([--with-sqlite-includes=<dir>], [use sqlite includes located in <dir>])],
+        [
+		SQLITE_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([sqlite-libs],
+        [AC_HELP_STRING([--with-sqlite-libs=<dir>], [use sqlite libs located in <dir>])],
+        [
+		SQLITE_LDFLAGS="-L$withval"
+        ])
+
+AC_SUBST(SQLITE_INCLUDES)
+AC_SUBST(SQLITE_LDFLAGS)
+AC_SUBST(SQLITE_LIBS)
+
+# dcerpc
+
+AC_ARG_WITH([dcerpc],
+        [AC_HELP_STRING([--with-dcerpc=<dir>], [use dcerpc located in prefix <dir>])],
+        [
+		DCERPC_INCLUDES="-I$withval/include"
+                DCERPC_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([dcerpc-includes],
+        [AC_HELP_STRING([--with-dcerpc-includes=<dir>], [use dcerpc includes located in <dir>])],
+        [
+		DCERPC_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([dcerpc-libs],
+        [AC_HELP_STRING([--with-dcerpc-libs=<dir>], [use dcerpc libs located in <dir>])],
+        [
+		DCERPC_LDFLAGS="-L$withval"
+        ])
+
+DCERPC_LIBS="-ldcerpc"
+
+# lwrpcrt
+
+AC_ARG_WITH([lwrpcrt],
+        [AC_HELP_STRING([--with-lwrpcrt=<dir>], [use lwrpcrt located in prefix <dir>])],
+        [
+		LWRPCRT_INCLUDES="-I$withval/include"
+                LWRPCRT_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwrpcrt-includes],
+        [AC_HELP_STRING([--with-lwrpcrt-includes=<dir>], [use lwrpcrt includes located in <dir>])],
+        [
+		LWRPCRT_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lwrpcrt-libs],
+        [AC_HELP_STRING([--with-lwrpcrt-libs=<dir>], [use lwrpcrt libs located in <dir>])],
+        [
+		LWRPCRT_LDFLAGS="-L$withval"
+        ])
+
+LWRPCRT_LIBS="-llwrpcrt"
+
+AC_SUBST(LWRPCRT_INCLUDES)
+AC_SUBST(LWRPCRT_LDFLAGS)
+AC_SUBST(LWRPCRT_LIBS)
+
+
+AC_SUBST(DCERPC_INCLUDES)
+AC_SUBST(DCERPC_LDFLAGS)
+AC_SUBST(DCERPC_LIBS)
+
+# pstore
+
+AC_ARG_WITH([pstore],
+        [AC_HELP_STRING([--with-pstore=<dir>], [use pstore located in prefix <dir>])],
+        [
+		PSTORE_INCLUDES="-I$withval/include"
+        PSTORE_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([pstore-includes],
+        [AC_HELP_STRING([--with-pstore-includes=<dir>], [use pstore includes located in <dir>])],
+        [
+		PSTORE_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([pstore-libs],
+        [AC_HELP_STRING([--with-pstore-libs=<dir>], [use pstore libs located in <dir>])],
+        [
+		PSTORE_LDFLAGS="-L$withval"
+        ])
+
+AC_SUBST(PSTORE_INCLUDES)
+AC_SUBST(PSTORE_LDFLAGS)
+AC_SUBST(PSTORE_LIBS)
+
+# eventlog
+
+AC_ARG_WITH([eventlog],
+        [AC_HELP_STRING([--with-eventlog=<dir>], [use eventlog located in prefix <dir>])],
+        [
+		EVENTLOG_INCLUDES="-I$withval/include"
+        EVENTLOG_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([eventlog-includes],
+        [AC_HELP_STRING([--with-eventlog-includes=<dir>], [use eventlog includes located in <dir>])],
+        [
+		EVENTLOG_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([eventlog-libs],
+        [AC_HELP_STRING([--with-eventlog-libs=<dir>], [use eventlog libs located in <dir>])],
+        [
+		EVENTLOG_LDFLAGS="-L$withval"
+        ])
+
+EVENTLOG_LIBS="-leventlog"
+
+AC_SUBST(EVENTLOG_INCLUDES)
+AC_SUBST(EVENTLOG_LDFLAGS)
+AC_SUBST(EVENTLOG_LIBS)
+
+# debugging
+
+AC_ARG_ENABLE([debug],
+        [AC_HELP_STRING([--enable-debug], [enable debugging (default: disabled)])],
+        [
+                if test x"$enableval" = x"yes"
+                then
+			AM_CFLAGS="$AM_CFLAGS -g -O0"
+			AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG"			
+                fi
+        ])
+        
+# Basic variables
+
+CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+
+AM_CPPFLAGS="$AM_CPPFLAGS -I\$(top_srcdir)/include -I\$(top_builddir)/include"
+AM_LDFLAGS="$AM_LDFLAGS -Wall -Werror"
+AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
+for i in $CPPFLAGS; do
+    j=`echo $i | grep '^-I'`
+    if test x != x"$j"
+    then
+        IDLFLAGS="$IDLFLAGS $j"
+    fi
+done
+
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
+AC_SUBST(IDLFLAGS)
+
+AC_DEFINE_UNQUOTED([PREFIXDIR], ["$prefix"], [Prefix directory])
+
+AS_AC_EXPAND(daemonconfdir, ["$sysconfdir"])
+AC_DEFINE_UNQUOTED([EFD_CONFIG_DIR], ["$daemonconfdir"], [Location of daemon configuration files])
+
+AS_AC_EXPAND(daemoncachedir, ["$localstatedir/lib/likewise"])
+AC_DEFINE_UNQUOTED([EFD_CACHE_DIR], ["$daemoncachedir"], [Location of daemon cache files])
+
+initdir='$(exec_prefix)/init'
+AC_SUBST(initdir)
+
+# Checks for programs.
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+
+echo "path is [$PATH]"
+echo "dcerpc_path is [$DCERPC_PATH]"
+AC_PATH_PROG([IDL], [dceidl], [no], [$PATH:$DCERPC_PATH])
+
+if test x"$IDL" = x"no"; then
+    AC_MSG_ERROR([DCERPC IDL compiler not found])
+fi
+
+# Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS([inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h synch.h pthread.h wc16str.h wc16printf.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_PID_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_C_BIGENDIAN
+
+# Checks for library functions.
+AC_FUNC_FORK
+AC_FUNC_MALLOC
+AC_FUNC_SELECT_ARGTYPES
+AC_TYPE_SIGNAL
+AC_FUNC_STRFTIME
+AC_FUNC_VPRINTF
+AC_FUNC_STRERROR_R
+AC_CHECK_FUNCS([atexit localtime_r memset select socket strchr strerror vsyslog])
+AC_CHECK_FUNCS([rpl_realloc rpl_malloc clock_gettime clock_settime])
+AC_CHECK_FUNCS([settimeofday gettimeofday timegm  strtoll __strtoll strtoull __strtoull])
+
+AC_CHECK_DECLS([isblank, pstat_getproc, res_init, res_query], [], [], [#include <ctype.h>
+#if HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#if HAVE_SYS_PSTAT_H
+#include <sys/pstat.h>
+#endif])
+AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_WC16STR_H
+# include <wc16str.h>
+#endif
+])
+
+# Check for external libraries
+AC_CHECK_LIB([lwpsapi], [LwpsOpenPasswordStore], [PSTORE_LIBS="-llwpsapi"], AC_MSG_ERROR([Could not find liblwpsapi; please use --with-pstore]), [$PSTORE_LDFLAGS])
+AC_CHECK_LIB([sqlite3], [sqlite3_exec], [SQLITE_LIBS="-lsqlite3"], AC_MSG_ERROR([Could not find sqlite; please use --with-sqlite]), [$SQLITE_LDFLAGS])
+AC_CHECK_LIB([tdb], [tdb_open], [TDB_LIBS="-ltdb"], [ENABLE_TDB=false], [$TDB_LDFLAGS])
+AC_CHECK_LIB([ldap], [ldap_bind], [OPENLDAP_LIBS="-lldap"], AC_MSG_ERROR([Could not find libldap; please use --with-openldap]), [$OPENLDAP_LDFLAGS])
+AC_CHECK_LIB([pthread], [pthread_self], [PTHREAD_LIBS="-lpthread"], [])
+
+AC_SUBST(PTHREAD_LIBS)
+
+# Checks for libraries.
+have_sigtimedwait=no
+AC_CHECK_LIB(c, sigtimedwait, [have_sigtimedwait=yes])
+if test "$have_sigtimedwait" = no; then
+   AC_CHECK_LIB(rt, sigtimedwait, [RT_LIBS="-lrt"])
+fi
+
+AC_CHECK_LIB([nsl], [gethostname], [NSL_LIBS="-lnsl"],,)
+AC_CHECK_LIB([resolv], [res_query], [RESOLV_LIBS="-lresolv"],,)
+AC_CHECK_LIB([resolv], [__res_query], [RESOLV_LIBS="-lresolv"],,)
+AC_CHECK_LIB([rt], [clock_settime], [RT_LIBS="-lrt"],,)
+AC_CHECK_LIB([socket], [bind], [SOCKET_LIBS="-lsocket"],,)
+
+AC_SUBST(NSL_LIBS)
+AC_SUBST(RESOLV_LIBS)
+AC_SUBST(RT_LIBS)
+AC_SUBST(SOCKET_LIBS)
+
+AC_CHECK_HEADER([lw/base.h],,[AC_MSG_ERROR([Could not find lwbase headers])])
+AC_CHECK_LIB([lwbase_nothr], [LwRtlMemoryAllocate], [LWBASE_NOTHR_LIBS="-llwbase_nothr"], [AC_MSG_ERROR([Could not find liblwbase_nothr])], [$LWBASE_LDFLAGS])
+AC_CHECK_LIB([lwbase], [LwInterlockedIncrement], [LWBASE_LIBS="-llwbase"], [AC_MSG_ERROR([Could not find liblwbase])], [$LWBASE_LDFLAGS])
+
+AC_SUBST(LWBASE_INCLUDES)
+AC_SUBST(LWBASE_LDFLAGS)
+AC_SUBST(LWBASE_NOTHR_LIBS)
+AC_SUBST(LWBASE_LIBS)
+
+AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
+#include <sys/types.h>
+#include <sys/socket.h>
+])
+
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror"
+
+AC_MSG_CHECKING([if getsockname takes socklen_t*])
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+],
+[
+int fd = -1;
+struct sockaddr addr;
+socklen_t addrlen;
+(void) getsockname(fd, &addr, &addrlen);
+], [
+AC_MSG_RESULT([yes])
+AC_DEFINE([GETSOCKNAME_TAKES_SOCKLEN_T], [], [Define if getsockname takes socklen_t as its third argument])],[
+AC_MSG_RESULT([no])
+])
+
+AC_MSG_CHECKING([if struct msghdr has msg_control])
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+],
+[
+struct msghdr hdr;
+hdr.msg_control = 0;
+],
+[
+AC_MSG_RESULT([yes])
+AC_DEFINE([MSGHDR_HAS_MSG_CONTROL], [], [Define if struct msghdr has the msg_control field])
+],
+[
+AC_MSG_RESULT([no])
+])
+
+CFLAGS="$saved_CFLAGS"
+
+
+AC_CONFIG_FILES([Makefile
+		 include/Makefile
+		 logging/Makefile
+		 logging/logging_r/Makefile
+		 common/Makefile
+                 clientlib/Makefile
+		 cli/Makefile
+		 ]
+)
+AC_OUTPUT

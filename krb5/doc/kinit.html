@@ -1,0 +1,182 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     kinit - obtain and cache Kerberos ticket-granting ticket
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>kinit</B>
+          [<B>-V</B>] [<B>-l</B> <I>lifetime</I>] [<B>-s</B> <I>start</I>_<I>time</I>] [<B>-r</B> <I>renewable</I>_<I>life</I>]
+          [<B>-p</B> | <B>-P</B>] [<B>-f</B> | <B>-F</B>] [<B>-a</B>] [<B>-A</B>] [<B>-v</B>] [<B>-R</B>] [<B>-k</B> [<B>-t</B>
+          <I>keytab</I>_<I>file</I>]] [<B>-c</B> <I>cache</I>_<I>name</I>] [<B>-S</B> <I>service</I>_<I>name</I>][<B>-T</B>
+          <I>armor</I>_<I>ccache</I>] [<B>-X</B> <I>attribute</I>[=<I>value</I>]] [<I>principal</I>]
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     <I>kinit</I> obtains and caches an initial  ticket-granting  ticket
+     for <I>principal</I>.
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     -<B>V</B>   display verbose output.
+
+     <B>-l</B> <I>lifetime</I>
+          requests a ticket  with  the  lifetime  <I>lifetime</I>.   The
+          value  for <I>lifetime</I> must be followed immediately by one
+          of the following delimiters:
+
+             <B>s</B>  seconds
+             <B>m</B>  minutes
+             <B>h</B>  hours
+             <B>d</B>  days
+
+          as in "kinit -l 90m".  You cannot mix units; a value of
+          `3h30m' will result in an error.
+
+          If the -<B>l</B> option is not specified, the  default  ticket
+          lifetime (configured by each site) is used.  Specifying
+          a ticket lifetime longer than the maximum ticket  life-
+          time (configured by each site) results in a ticket with
+          the maximum lifetime.
+
+     <B>-s</B> <I>start</I>_<I>time</I>
+          requests  a  postdated  ticket,   valid   starting   at
+          <I>start</I>_<I>time</I>.   Postdated  tickets  are  issued  with the
+          <I>invalid</I> flag set, and need to be fed back  to  the  kdc
+          before use.
+
+     <B>-r</B> <I>renewable</I>_<I>life</I>
+          requests renewable tickets, with a  total  lifetime  of
+          <I>renewable</I>_<I>life</I>.   The duration is in the same format as
+          the -<B>l</B> option, with the same delimiters.
+
+     -<B>f</B>   request forwardable tickets.
+
+     -<B>F</B>   do not request forwardable tickets.
+
+     -<B>p</B>   request proxiable tickets.
+     -<B>P</B>   do not request proxiable tickets.
+
+     -<B>a</B>   request tickets with the local address[es].
+
+     -<B>A</B>   request address-less tickets.
+
+     -<B>v</B>   requests that the ticket granting ticket in  the  cache
+          (with  the  <I>invalid</I>  flag set) be passed to the kdc for
+          validation.  If the ticket is within its requested time
+          range, the cache is replaced with the validated ticket.
+
+     -<B>R</B>   requests renewal of the ticket-granting  ticket.   Note
+          that  an  expired ticket cannot be renewed, even if the
+          ticket is still within its renewable life.
+
+     <B>-k</B> [<B>-t</B> <I>keytab</I>_<I>file</I>]
+          requests a host ticket, obtained  from  a  key  in  the
+          local host's <I>keytab</I> file.  The name and location of the
+          keytab file may be specified with  the  -<B>t</B>  <I>keytab</I>_<I>file</I>
+          option; otherwise the default name and location will be
+          used.
+
+     <B>-T</B> <I>armor</I>_<I>ccache</I>
+          Specifies the name of a credential cache  that  already
+          contains  a  ticket.  This ccache will be used to armor
+          the request.   Ideally,  an  attacker  should  have  to
+          attack both the armor ticket and the key of the princi-
+          pal.
+
+     <B>-c</B> <I>cache</I>_<I>name</I>
+          use <I>cache</I>_<I>name</I> as the Kerberos 5  credentials  (ticket)
+          cache  name  and  location; if this option is not used,
+          the default cache name and location are used.
+
+          The default credentials cache may vary between systems.
+          If  the  <B>KRB5CCNAME</B>  environment  variable  is set, its
+          value is used to name the default  ticket  cache.   Any
+          existing contents of the cache are destroyed by <I>kinit</I>.
+
+     <B>-S</B> <I>service</I>_<I>name</I>
+          specify an alternate service name to use  when  getting
+          initial tickets.
+
+     <B>-X</B> <I>attribute</I>[=<I>value</I>]
+          specify a pre-authentication attribute and value to  be
+          passed  to  pre-authentication plugins.  The acceptable
+          <I>attribute</I> and <I>value</I> values vary from pre-authentication
+          plugin  to plugin.  This option may be specified multi-
+          ple times to specify multiple attributes.  If no  <I>value</I>
+          is specified, it is assumed to be "yes".
+
+          The following attributes are recognized by the OpenSSL pkinit
+          pre-authentication mechanism:
+             <B>X509_user_identity</B>=<I>value</I>
+                specify where to find user's X509 identity information
+             <B>X509_anchors</B>=<I>value</I>
+                specify where to find trusted X509 anchor information
+             <B>flag_RSA_PROTOCOL</B>[=yes]
+                specify use of RSA, rather than the default Diffie-Hellman protocol
+
+
+
+</PRE>
+<H2>ENVIRONMENT</H2><PRE>
+     <B>Kinit</B> uses the following environment variables:
+
+     KRB5CCNAME      Location  of  the  Kerberos  5   credentials
+                     (ticket) cache.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+     /tmp/krb5cc_[uid]  default location of  Kerberos  5  creden-
+                        tials  cache ([uid] is the decimal UID of
+                        the user).
+
+     /etc/krb5.keytab   default location  for  the  local  host's
+                        <B>keytab</B> file.
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>klist(1)</B>, <B>kdestroy(1)</B>, <B>kerberos(1)</B>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

@@ -1,0 +1,75 @@
+' Your license does not include any rights to disclose, sell, 
+' sublicense, lease, distribute, or otherwise transfer this Release 
+' Software, related documentation, or other proprietary information of Wise Solutions, Altiris 
+' or any companies affiliated to Wise Solutions or Altiris.
+' Licensee may not modify, alter, adapt, or publicly perform or display the 
+' Release Software or any Pre-Release Software or related documentation in any manner.  Licensee may 
+' not decompile, disassemble, reverse translate, or otherwise reverse engineer 
+' any portion of the Release Software or any Pre-Release Software.
+
+Function WisePrevDlg
+   UpdateProperties("Back")
+End Function
+   
+Function WiseNextDlg
+   UpdateProperties("Next")
+End Function
+
+Sub UpdateProperties(Direction)
+
+   SkipDialog = Property("CenterisSkipDialog")
+
+   CurrDialog = Property("WiseCurrentDialog")
+   Wizard = Property("WiseCurrentWizard")
+   if (Property("WiseNextDialog") = "") Then
+	   CurrDialog = Wizard
+   Else 
+	   CurrDialog = Property("WiseNextDialog")
+   End If
+   Property("WiseCurrentDialog") = CurrDialog
+
+   ' if going backwards, use stack...		
+   ' else find next conditioned dialog
+   IF (Direction = "Back") THEN
+      NextDialog = Property("WiseDialogStack")
+      pos = InStrRev(NextDialog,"|")
+      if (pos = 0) THEN
+         Property("WiseDialogStack") = ""
+      ELSE
+         Property("WiseDialogStack") = Left(NextDialog,pos - 1)
+         NextDialog = Mid(NextDialog,pos + 1)
+      END IF   
+      Property("WiseNextDialog") = NextDialog
+   ELSE
+      Dim vwOrder,rec
+      bFound = FALSE
+      ' where current wizard is correct
+      set vwOrder = Database.OpenView("Select * FROM WiseDlgSequence WHERE Wizard = '" & Wizard &"' ORDER BY Ordering")
+      vwOrder.Execute
+      Do
+	      Set record = vwOrder.Fetch
+	      IF record Is Nothing Then Exit Do
+	      IF (bFound = TRUE) THEN	
+			if (record.IntegerData(4) = 1) Then
+				IF (EvaluateCondition(record.StringData(5)) = 1) Then
+					if(SkipDialog = "1") then
+						SkipDialog = "0"
+						Property("CenterisSkipDialog") = "0"	
+					else		
+						NextDialog = record.StringData(1)
+						exit do	
+					end if
+		    	End IF
+	         end if
+	      ELSEIF (record.StringData(1) = CurrDialog) THEN
+		      bFound = TRUE
+	      END IF
+      Loop
+      Property("WiseNextDialog") = NextDialog
+      if (Property("WiseDialogStack") <> "") Then
+         Property("WiseDialogStack") = Property("WiseDialogStack") & "|" & CurrDialog
+      else
+         Property("WiseDialogStack") = Property("WiseDialogStack") & CurrDialog
+      End if
+   End if
+End Sub

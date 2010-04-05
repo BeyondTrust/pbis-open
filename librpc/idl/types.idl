@@ -1,0 +1,25 @@
+#ifndef _TYPES_IDL_
+#define _TYPES_IDL_
+
+cpp_quote("#ifndef _GEN_TYPES_H_")
+cpp_quote("#define _GEN_TYPES_H_")
+
+#include <lwrpc/types.h>
+
+/* Including header file in idl processing leads to providing
+   enclosed definitions but losing preprocessor #defines at
+   the same time. We're supplying them again here because defined
+   macros are needed later when including public headers along
+   with dceidl-generated files */
+
+cpp_quote("#define WCHAR16_H")
+cpp_quote("#define DEFINED_UINT32")
+cpp_quote("#define NTSTATUS_DEFINED")
+cpp_quote("#define WINERR_DEFINED")
+cpp_quote("#define NTTIME_DEFINED")
+cpp_quote("#define UNISTR_DEFINED")
+
+cpp_quote("#endif /* _GEN_TYPES_H_ */")
+
+
+#endif

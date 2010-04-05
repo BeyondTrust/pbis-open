@@ -1,0 +1,18 @@
+Source: __PKG_NAME
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2)
+Standards-Version: 3.7.2
+Vcs-Browser: http://lobugs.likewise.com/
+Homepage: http://www.likewise.com/
+
+Package: __PKG_NAME
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Likewise Service Manager
+ The Likewise lwsmd daemon provides a central service management API
+ for starting and stopping all Likewise daemons.  Dependency tracking
+ between services is handled via registry settings on a per service
+ basis.
+

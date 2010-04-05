@@ -1,0 +1,5 @@
+BUILD_VENDOR="datadomain"
+BUILD_PREFIX="/opt/likewise"
+BUILD_SYSCONFDIR="/etc/likewise"
+BUILD_LOCALSTATEDIR="/var"
+BUILD_PRODUCTS="lwiso"

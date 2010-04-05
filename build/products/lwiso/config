@@ -1,0 +1,54 @@
+NAME="LikewiseIdentityServiceOpen"
+FULL_NAME="Likewise Identity Service [Open]"
+DESCRIPTION="Provides integration with Active Directory."
+_BITROCK_DESCRIPTION="Interoperability software to allow non-Windows systems to use Microsoft Active Directory." # unused
+_MAC_DESCRIPTION="Provides integration with Active Directory." # unused
+FILES="COPYING README EULA"
+SCRIPT="../install.sh"
+UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
+
+PACKAGES="\
+    krb5 openldap libxml2 sqlite base lwreg\
+    pstore netlogon lwio rpc eventlog lsass \
+    srvsvc domainjoin lwupgrade \
+    lwnetapi lwtools \
+    "
+OBSOLETE_PACKAGES="lwmgmt"
+
+DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
+OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
+# lwregd is started elsewhere since it must be started first.
+AUTOSTART=""
+REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg"
+
+case "${BUILD_OS_TYPE}" in
+    linux)
+        PACKAGES="$PACKAGES passwd"
+        check_is_rhel_21
+        if [ $? -ne 0 ]; then
+            PACKAGES="$PACKAGES mod-auth-kerb"
+        fi
+        ;;
+    freebsd|aix|hpux)
+        PACKAGES="$PACKAGES passwd"
+        ;;
+    solaris)
+        PACKAGES="$PACKAGES passwd mod-auth-kerb"
+        ;;
+    darwin)
+        case "$UNAME_RELEASE" in
+            8.*)
+                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui mod-auth-kerb"
+                ;;
+            9.*)
+                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui mod-auth-kerb"
+                ;;
+            10.*)
+                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui"
+                ;;
+        esac
+        ;;
+    source)
+	PACKAGES="$PACKAGES lwidsplugin passwd mod-auth-kerb"
+	;;
+esac

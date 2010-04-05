@@ -1,0 +1,289 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/.. && pwd)`
+export BUILD_ROOT
+
+umask 022
+
+STAGE_DIR="${BUILD_ROOT}/staging"
+STAGE_INSTALL_DIR="${STAGE_DIR}/install-root"
+STAGE_COMP_DIR="${STAGE_DIR}/components"
+STAGE_PKG_DIR="${STAGE_DIR}/packaging"
+
+
+##
+## Support libraries
+##
+. ${BUILD_ROOT}/build/lib/common.sh
+. ${BUILD_ROOT}/build/lib/mkcomp-helper.sh
+. ${BUILD_ROOT}/build/lib/VARS
+
+##############################################################
+
+function _setup_pkg_env
+{
+    PKG_NAME="$1"
+    PKG_TYPE="$2"
+    PKG_POPULATE_DIR="${STAGE_PKG_DIR}/${PKG_NAME}/populate"
+    PKG_PACKAGE_DIR="${STAGE_PKG_DIR}/${PKG_NAME}/${PKG_TYPE}"
+    PKG_VERSION=`echo $(LikewiseOpenVersion) | sed 's/-.*$//'`
+
+    [ "${PKG_PACKAGE_DIR}" != "/" ] && rm -rf ${PKG_PACKAGE_DIR}
+    mkdir -p "${PKG_PACKAGE_DIR}"
+    exit_on_error $?
+
+    export PKG_NAME PKG_TYPE PKG_POPULATE_DIR PKG_PACKAGE_DIR
+}
+
+##############################################################
+
+function _make_deb
+{
+    local _PKG_NAME="$1"
+    local fullPath=""
+    local file=""
+
+    _setup_pkg_env "$1" "deb"
+
+    mkdir -p "${PKG_PACKAGE_DIR}/debian"
+    exit_on_error $?
+
+    [ "${PKG_POPULATE_DIR}" != "/" ] && rm -rf ${PKG_POPULATE_DIR}
+    mkdir -p "${PKG_POPULATE_DIR}"
+    exit_on_error $?
+
+    (bash ${BUILD_ROOT}/build/packages/${PKG_NAME}/${PKG_NAME}.func)
+
+    for file in control rules changelog preinst postinst prerm postrm; do
+        if [ -f ${BUILD_ROOT}/build/packages/${PKG_NAME}/deb/$file ]; then
+	    cat ${BUILD_ROOT}/build/packages/${PKG_NAME}/deb/$file |\
+              sed -e "s#__PKG_NAME#likewise-open-${PKG_NAME}#g" \
+	      -e "s#__PKG_VERSION#${PKG_VERSION}#g" \
+              -e "s#__PKG_DATE#`date -R`#g" \
+	    > "${PKG_PACKAGE_DIR}/debian/$file"
+        fi
+    done
+
+    if [ -n "${ENABLE_DEBUG}" ]; then
+	local rules_file="${PKG_PACKAGE_DIR}/debian/rules"
+	local tmp_rules_file="${PKG_PACKAGE_DIR}/debian/rules.no_dhstrip"
+
+	sed 's/dh_strip.*//g' $rules_file > $tmp_rules_file
+	mv -f $tmp_rules_file $rules_file
+	exit_on_error $?
+    fi
+
+    chmod 755 "${PKG_PACKAGE_DIR}/debian/rules"
+
+    echo "Building likewise-open-${PKG_NAME} ${PKG_TYPE}..."
+    (cd ${PKG_PACKAGE_DIR} && \
+        dpkg-buildpackage -rfakeroot -uc -b)
+    exit_on_error $?
+
+    fullPath="${PKG_PACKAGE_DIR}/../likewise-open-${PKG_NAME}*.deb"
+
+    [ ! -d "${STAGE_PKG_DIR}/${PKG_TYPE}" ] && mkdir -p "${STAGE_PKG_DIR}/${PKG_TYPE}"
+
+    mv -f ${fullPath} ${STAGE_PKG_DIR}/${PKG_TYPE}/
+
+    echo "Package `basename ${fullPath}` created and moved to ${STAGE_PKG_DIR}/${PKG_TYPE}/"
+}
+
+function make_debs
+{
+    local _list="$1"
+
+    case "${_list}" in
+	all)
+	    # _pkg_list="libs lwsm lwreg lwio netlogon rpc lsass eventlog srvsvc domainjoin"
+	    _pkg_list="cifs"
+	    ;;
+	*)
+	    _pkg_list="${_list}"
+    esac
+
+    for p in ${_pkg_list}; do
+	_make_deb $p
+    done
+
+}
+
+##############################################################
+
+function _make_rpm
+{
+    local fullPath=""
+    local file=""
+    local pathOverride="${PATH}"
+
+    _setup_pkg_env "$1" "rpm"
+
+    local RPM_DEFINE_TOPDIR="--define=_topdir ${PKG_PACKAGE_DIR}"
+
+    [ "${PKG_POPULATE_DIR}" != "/" ] && rm -rf ${PKG_POPULATE_DIR}
+    mkdir -p "${PKG_POPULATE_DIR}"
+    exit_on_error $?
+
+    (bash ${BUILD_ROOT}/build/packages/${PKG_NAME}/${PKG_NAME}.func)
+
+    mkdir -p ${PKG_PACKAGE_DIR}/{SOURCES,SPECS,BUILD,SRPMS,RPMS}
+    exit_on_error $?
+
+    if [ -n "${ENABLE_DEBUG}" ]; then
+        mkdir -p "${PKG_PACKAGE_DIR}/../path"
+        exit_on_error $?
+
+        cat << EOF > "${PKG_PACKAGE_DIR}/../path/strip"
+#!/bin/sh
+echo 'SKIP: strip '"\$@"
+EOF
+        exit_on_error $?
+        chmod a+x "${PKG_PACKAGE_DIR}/../path/strip"
+        exit_on_error $?
+        pathOverride="${PKG_PACKAGE_DIR}/../path:${PATH}"
+    fi
+
+
+    for file in ${PKG_NAME}.spec; do
+	cat ${BUILD_ROOT}/build/packages/${PKG_NAME}/rpm/$file |\
+          sed -e "s#__PKG_NAME#likewise-open-${PKG_NAME}#g" \
+	      -e "s#__PKG_VERSION#${PKG_VERSION}#g" \
+              -e "s#__PKG_POPULATE_DIR#${PKG_POPULATE_DIR}#g" \
+	> "${PKG_PACKAGE_DIR}/SPECS/$file"
+    done
+
+
+
+    echo "Building likewise-open-${PKG_NAME} ${PKG_TYPE}..."
+    env PATH=${pathOverride} \
+	rpmbuild "${RPM_DEFINE_TOPDIR}" \
+	'--define=PrefixDir /opt/likewise' \
+	'--define=__strip strip' \
+	-bb ${PKG_PACKAGE_DIR}/SPECS/${PKG_NAME}.spec
+
+    exit_on_error $?
+
+    fullPath=`find "${PKG_PACKAGE_DIR}" -name "*.rpm"`
+
+    [ ! -d "${STAGE_PKG_DIR}/${PKG_TYPE}" ] && mkdir -p "${STAGE_PKG_DIR}/${PKG_TYPE}"
+
+    mv -f ${fullPath} ${STAGE_PKG_DIR}/${PKG_TYPE}/
+
+    echo "Package `basename ${fullPath}` created and moved to ${STAGE_PKG_DIR}/${PKG_TYPE}/"
+
+}
+
+function make_rpms
+{
+    local _list="$1"
+
+    case "${_list}" in
+	all)
+	    _pkg_list="libs lwsm lwreg lwio netlogon rpc lsass eventlog srvsvc domainjoin"
+	    ;;
+	*)
+	    _pkg_list="${_list}"
+    esac
+
+    for p in ${_pkg_list}; do
+	echo "Building RPM package for $p..."
+	_make_rpm $p
+    done
+
+}
+
+##############################################################
+
+function print_pkg_list
+{
+    local _pkg_files=`ls ${BUILD_ROOT}/build/packages/*/*.func 2>/dev/null | sort`
+    local _pkg_name=""
+
+    warn "Valid individual component names are:"
+    for _f in ${_pkg_files}; do
+	_pkg_name=`basename ${_f}`
+	_pkg_name=`echo ${_pkg_name} | sed 's:.func$::'`
+	warn "    ${_pkg_name}"
+    done
+
+    warn ""
+
+    return 0
+}
+
+##############################################################
+
+function main
+{
+    local _PKG_NAME=""
+    local _PKG_DIR=""
+    local DEFAULT_PKG_TYPE=""
+    local PKG_TYPE=""
+
+    parseOptionsDone=""
+    while [[ -z "${parseOptionsDone}" ]]; do
+	case "$1" in
+	    --debug)
+		export ENABLE_DEBUG="1"
+		shift
+		;;
+	    *)
+		parseOptionsDone="1"
+		;;
+	esac
+    done
+
+    _PKG_NAME="$1"
+    _PKG_DIR="${BUILD_ROOT}/build/packages/${_PKG_NAME}"
+
+    case "${_PKG_NAME}" in
+	all)
+	    ;;
+	*)
+	    if [ ! -f "${_PKG_DIR}/${_PKG_NAME}.func" ];
+	    then
+		warn "Usage: $0 [options] <pkg_name | all>"
+		warn "    --debug           Enable debug symbols in packages"
+		warn ""
+		print_pkg_list
+		exit 1
+	    fi
+	    ;;
+    esac
+
+    case "`uname -s`" in
+	Linux)
+	    if [ -f /etc/debian_version ]; then
+                DEFAULT_PKG_TYPE="deb"
+            else
+                DEFAULT_PKG_TYPE=rpm
+            fi
+            ;;
+	*)
+	    DEFAULT_PKG_TYPE=unknown
+	    warn "Unknown packaging type for this platform.  Exiting..."
+	    exit 1
+	    ;;
+    esac
+
+    PKG_TYPE=${DEFAULT_PKG_TYPE}
+
+    case "${PKG_TYPE}" in
+	rpm)
+	    make_rpms "${_PKG_NAME}"
+	    ;;
+	deb)
+	    make_debs "${_PKG_NAME}"
+	    ;;
+       *)
+	    warn "Support for package type ${PKG_TYPE} is currently unimplemented."
+	    exit 1
+	    ;;
+    esac
+
+    return 0
+}
+
+
+main "$@"
+exit 0

@@ -1,0 +1,98 @@
+#!/bin/bash -c "exit 1"
+
+COMP_DEPENDENCIES="autoconf automake libtool sqlite dcerpc librpc lsass krb5 lwbase"
+COMP_INCREMENTAL=1
+COMP_SOURCES="${BUILD_ROOT}/src/linux/lwmgmt"
+
+function component_gather
+{
+    rsync -a --exclude=.svn ${BUILD_ROOT}/src/linux/lwmgmt ${GATHER_DIR}/
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}/lwmgmt
+    exit_on_error $?
+
+    CPPFLAGS="${_cppflags}"
+    CFLAGS="${_cflags}"
+    LDFLAGS="${_ldflags}"
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS LDSHFLAGS CC
+
+    libtool_set_staging_library_path
+    libtool_set_staging_path
+}
+
+function component_configure
+{
+    local enable_debug=""
+    local enable_compat=""
+
+    _setup_build_env
+
+    ./autogen.sh
+    exit_on_error $?
+
+    ./configure \
+	--prefix=${PREFIX_DIR}                       \
+	--libdir=${PREFIX_DIR}/${_lib}               \
+        --sysconfdir=${BUILD_SYSCONFDIR}             \
+        --localstatedir=${BUILD_LOCALSTATEDIR}       \
+        $enable_debug                                \
+        $enable_compat                               \
+        ${DEPENDENCY_TRACKING}                       \
+	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS" \
+	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"
+}
+
+function component_build
+{
+   _setup_build_env
+
+   ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=lwmgmt
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
+
+    if [ -z "${IS_COMPAT}" ]; then
+        # Handle init scripts
+        local script=lwmgmtd
+        x_mkinit \
+            "${BUILD_ROOT}/src/linux/config/${script}" \
+            ${script} \
+            01 01 \
+            likewise.lwmgmtd 20 09
+
+        if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwmgmtd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+        fi
+
+        if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwmgmtd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
+        fi
+    fi
+
+    libtool_rewrite_populate
+}

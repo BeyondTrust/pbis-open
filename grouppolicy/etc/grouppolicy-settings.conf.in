@@ -1,0 +1,8 @@
+
+[GP Settings]
+ComputerPolicyRefreshInterval = 1800
+UserPolicyRefreshInterval = 1800
+UserPolicyLoopbackProcessingMode = useronly
+EnableEventLog = no
+MonitorSudoers = no
+

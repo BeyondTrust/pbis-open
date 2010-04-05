@@ -1,0 +1,132 @@
+#!/bin/sh
+
+COMP_INCREMENTAL=1
+COMP_DEPENDENCIES="autoconf automake libtool krb5 openldap centutils libxml2 netlogon pstore lsass libcrypto eventlog libuuid lwbase lwio"
+COMP_SOURCES="${BUILD_ROOT}/src/linux/grouppolicy"
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./autogen.sh
+    exit_on_error $?
+}
+
+function component_gather
+{
+    echo "Nothing to gather for ${COMP_NAME}"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    CFLAGS="${_cflags}"
+    LDFLAGS="${_ldflags}"
+    CPPFLAGS="${_cppflags} ${GPAGENT_CPPFLAGS}"
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS CC
+}
+
+function component_configure
+{
+    local enable_debug=""
+    local enable_compat=""
+
+    _setup_build_env
+
+    if [ -n "${BUILD_DEBUG}" ]; then
+       enable_debug="--enable-debug"
+    fi
+
+    if [ -n "${IS_COMPAT}" ]; then
+        enable_compat="--enable-compat"
+    fi
+
+    "${COMP_SOURCES}/configure"                  \
+	--prefix=${PREFIX_DIR}                   \
+        --libdir="${PREFIX_DIR}/${_lib}"         \
+	--sysconfdir="${BUILD_SYSCONFDIR}"       \
+	--localstatedir="${BUILD_LOCALSTATEDIR}" \
+        $enable_debug                            \
+        $enable_compat                           \
+        ${DEPENDENCY_TRACKING}                   \
+        LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"  \
+        CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS"
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags} all
+}
+
+function _sed_to_dir
+{
+    if [ ! -d "$3" ]; then
+	echo "$3 does not exist"
+	exit 1
+    fi
+
+    local _file
+    _file=`basename "$2"`
+    exit_on_error $?
+
+    local _target
+    _target="$3/${_file}"
+
+    ( set -x && sed "s#PREFIX_DIR#${PREFIX_DIR}#g" "$2" > "${_target}" )
+    ( set -x & chmod $1 "${_target}" )
+}
+
+function sed_to_dir
+{
+    ( set +x && _sed_to_dir "$@" )
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=grouppolicy
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    mkdir -p ${POPULATE_ROOT_DIR}/var/cache/likewise/grouppolicy
+
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    if [ -z "${IS_COMPAT}" ]; then
+
+        # Handle init scripts
+        local script=gpagentd
+        x_mkinit \
+            "${BUILD_ROOT}/src/linux/config/${script}" \
+	    ${script} \
+	    01 01 \
+	    likewise.gpagentd 22 09
+
+        if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/gpagentd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+        fi
+	
+        if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.gpagentd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
+        fi
+
+    fi
+
+    libtool_rewrite_populate
+}

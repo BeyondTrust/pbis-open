@@ -1,0 +1,378 @@
+#!/bin/bash
+
+if [ -z "${BUILD_ROOT}" ]; then
+    echo "You need to source buildenv first"
+    exit 1
+fi
+
+function exit_on_error
+{
+    if [ $1 -ne 0 ]; then
+        if [ -n "$2" ]; then
+            echo "$2"
+        fi
+        exit $1
+    fi
+}
+
+##
+## Setup the environment
+##
+. ${BUILD_ROOT}/src/linux/build/common.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/version.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/pkgtype-helper.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/installer-helper.sh
+exit_on_error $?
+
+ADDON_VER="${MAIN_VERSION}"
+if [ -n "${OFFICIAL_BUILD_NUMBER}" ]; then
+    ADDON_VER="${ADDON_VER}.${OFFICIAL_BUILD_NUMBER}"
+fi
+
+#####################################################################
+
+build_addon()
+{
+    #
+    # Args:
+    #
+    # PKG_TYPE - rpm | deb | pkg | dmg | bff
+    # MANIFEST - location of the package manifest file
+    # POST_EXTRACT_SCRIPT - post-extract script
+    # PKG_FILES_SPEC - filespec for package files (rpm or deb)
+    # META_DIR - where in meta to make stuff
+    # DIST_DIR - where in dist to copy final bits
+    # OSNAME - really "os + larch [+ pkgtype]" or something like that
+    # OSARCH - the actual arch of the packages
+    #
+
+    _META_DIR=${META_DIR}/${PKG_TYPE}/${OSARCH}
+    _BASE_NAME=${PKG_NAME}-${ADDON_VER}-${OSNAME}
+    PKGSDIR=${_META_DIR}/${_BASE_NAME}
+    _TARGET_SUBDIR="packages/${BUILD_OS_TYPE}/${OSARCH}"
+
+    rm -rf ${_META_DIR}
+    exit_on_error $? "Failed to remove meta directory"
+
+    mkdir -p ${PKGSDIR}/${_TARGET_SUBDIR}
+    exit_on_error $? "Failed to create tar directory"
+
+    for f in ${PKG_FILES_SPEC}; do
+        cp -p $f ${PKGSDIR}/${_TARGET_SUBDIR}/
+        exit_on_error $?
+    done
+
+    WORKFLOW_DIR=${PKGSDIR}/${_TARGET_SUBDIR}/workflow
+    mkdir -p ${WORKFLOW_DIR}
+
+    PRODUCT_NAME="likewise-identity-enterprise"
+    CONTENT_FILE=${_META_DIR}/content
+    PRODUCT_FILE=${_META_DIR}/product
+    cat >${CONTENT_FILE} <<end
+BASEARCHS ${OSARCH}
+CONTENTSTYLE 11
+DATADIR suse
+DESCRDIR suse/setup/descr
+DISTRIBUTION `product_full_name $PKG_CONFIG_NAME` $ADDON_VER
+LABEL `product_full_name $PKG_CONFIG_NAME`
+NAME $PRODUCT_NAME
+RELEASE 0
+VENDOR Likewise Software
+VERSION $ADDON_VER
+end
+
+    cat >${PRODUCT_FILE} <<end
+<?xml version="1.0" encoding="UTF-8"?>
+<productdefinition>
+  <mediasets>
+    <media flavor="dvd" name="$PRODUCT_NAME" product="$PRODUCT_NAME" type="dvd">
+      <productdependency flag="EQ" name="$PRODUCT_NAME" relationship="provides" release="0" version="$ADDON_VER" />
+      <productdependency flag="EQ" name="SUSE_SLED" relationship="requires" version="11" />
+    </media>
+  </mediasets>
+  <products>
+    <product id="$PRODUCT_NAME" schemeversion="0.0">
+      <arch>${OSARCH}</arch>
+      <description>`product_description $PKG_CONFIG_NAME`</description>
+      <linguas>
+        <language>en_US</language>
+      </linguas>
+      <name>$PRODUCT_NAME</name>
+      <release>0</release>
+      <summary>`product_description $PKG_CONFIG_NAME`</summary>
+      <urls></urls>
+      <vendor>Likewise Software</vendor>
+      <version>$ADDON_VER</version>
+    </product>
+  </products>
+</productdefinition>
+end
+
+    RPM_STAGING=${_META_DIR}/rpm/staging
+    mkdir -p ${_META_DIR}/rpm/SPECS/
+    mkdir -p ${_META_DIR}/rpm/BUILD/
+    mkdir -p ${_META_DIR}/rpm/RPMS/
+    mkdir -p ${RPM_STAGING}/usr/share/YaST2/modules/
+    mkdir -p ${RPM_STAGING}/usr/share/YaST2/clients/
+    mkdir -p ${RPM_STAGING}/etc/likewise/
+
+    cp -p $BUILD_ROOT/src/linux/build/lib/yast-installation/Likewise.ycp ${RPM_STAGING}/usr/share/YaST2/modules/
+    exit_on_error $?
+    ycpc -c ${RPM_STAGING}/usr/share/YaST2/modules/Likewise.ycp
+    exit_on_error $?
+    cp -p $BUILD_ROOT/src/linux/build/lib/yast-installation/inst_likewise*.ycp ${RPM_STAGING}/usr/share/YaST2/clients/
+    exit_on_error $?
+    cp -p ${MANIFEST} ${RPM_STAGING}/etc/likewise/
+    exit_on_error $?
+    cp -p $BUILD_ROOT/src/linux/build/products/install.sh ${RPM_STAGING}/etc/likewise/
+    exit_on_error $?
+
+    rpmbuild -bb --target=${OSARCH}-linux-gnu "--define=OSARCH ${OSARCH}" "--define=_topdir ${_META_DIR}/rpm" "--define=rpmStaging $RPM_STAGING" "--define=AddonVer ${ADDON_VER}" $BUILD_ROOT/src/linux/build/lib/yast-installation/yast2-likewise.spec
+    exit_on_error $?
+
+    cp -p ${_META_DIR}/rpm/RPMS/${OSARCH}/yast2-likewise-*.rpm ${WORKFLOW_DIR}/
+
+    PACKAGE_LIST=`for i in $(product_native_packages ${PKG_CONFIG_NAME}); do echo $i; done`
+    for i in $(product_native_packages_compat ${PKG_CONFIG_NAME}); do
+	if [ -f ${PKGSDIR}/${_TARGET_SUBDIR}/$i-* ]; then
+	    PACKAGE_LIST=`printf %s\\\\n%s "$PACKAGE_LIST" "$i"`
+	fi
+    done
+
+    mkdir -p ${_META_DIR}/patterns
+    cat >${_META_DIR}/patterns/likewise.pat <<end
+=Ver: 5.0
+
+=Pat: $PRODUCT_NAME $ADDON_VER 1 ${OSARCH}
+
+=Cat: Authentication
+
++Prc:
+-Prc:
+
++Prq:
+$PACKAGE_LIST
+yast2-likewise
+-Prq:
+
+=Vis: true
+end
+
+    SIGNING=
+    if gpg --card-status; then
+	    SIGNING="gpg_key=38932334 passphrase=x"
+    fi
+    TMPDIR=${BUILD_META_ROOT} /sbin/yast2 add-on-creator create content=${CONTENT_FILE} rpm_dir="${PKGSDIR}/${_TARGET_SUBDIR}" output_dir="${_META_DIR}" product_file=${PRODUCT_FILE} patterns_dir=${_META_DIR}/patterns workflow=$BUILD_ROOT/src/linux/build/lib/yast-installation/yast-installation.xml y2update_packages_dir=${WORKFLOW_DIR} create_iso $SIGNING
+    exit_on_error $?
+
+    #rm -rf ${PKGSDIR}
+
+    ##
+    ## Copy to dist
+    ##
+
+    mkdir -p ${DIST_DIR}
+    exit_on_error $?
+
+    ISO_FILE=$PRODUCT_NAME-$ADDON_VER-${OSARCH}.iso
+    cp -p ${_META_DIR}/$PRODUCT_NAME-$ADDON_VER.iso ${DIST_DIR}/${ISO_FILE}
+    exit_on_error $?
+
+    echo "addon archive copied to ${DIST_DIR}/$ISO_FILE"
+
+    echo ""
+    echo ""
+}
+
+_build_loop()
+{
+    #
+    # Args
+    #
+    # PKG_TYPE - rpm, deb, etc...
+    # POST_EXTRACT_SCRIPT - post-extract script
+    # EXTRA_NAME - optional additional part of OSNAME
+    #
+
+    local arch_list
+    local larch
+    if [ -n "${OPT_ALL_ARCH}" ]; then
+        arch_list=`pkgtype_get_current_os_arch_list`
+        exit_on_error $?
+    else
+        arch_list="${BUILD_OS_ARCH}"
+    fi
+
+    for arch in $arch_list; do
+
+        larch=`pkgtype_convert_pkgtype_and_arch_to_larch "${PKG_TYPE}" "${arch}"`
+        exit_on_error $?
+
+        PKG_FILES_SPEC=`product_packages_spec "${BUILD_OS_TYPE}" "${arch}" "${PKG_TYPE}" "${PKG_CONFIG_NAME}"`
+        exit_on_error $?
+
+        local addon_dir_suffix=${BUILD_OS_TYPE}/${arch}/addon/${PKG_CONFIG_NAME}
+        META_DIR=${BUILD_META_ROOT}/${addon_dir_suffix}
+        DIST_DIR=${BUILD_DIST_ROOT}/${addon_dir_suffix}
+        OSNAME="${BUILD_OS_TYPE}${EXTRA_NAME}-${larch}-${PKG_TYPE}"
+        OSARCH="${arch}"
+        LARCH="${larch}"
+        if [ -n "${PKG_FILES_SPEC}" ]; then
+            echo "Building yast addon product for ${OSNAME}..."
+            build_addon
+        else
+            echo "Skipping addon product for ${OSNAME}..."
+        fi
+    done
+}
+
+function build_loop
+{
+    time_command "Addon ${BUILD_OS_TYPE}${EXTRA_NAME} ${PKG_TYPE}" _build_loop "$@"
+    exit_on_error $?
+}
+
+function build_manifest
+{
+    local name="${PKG_CONFIG_NAME}"
+    local manifest="${BUILD_META_OS_ROOT}/addon/${PKG_CONFIG_NAME}/MANIFEST"
+
+    installer_build_manifest "${name}" "${manifest}"
+
+    echo "${manifest}"
+}
+
+function usage
+{
+    local _configs=`product_list`
+    local _pkgtypes=`pkgtype_get_all_pkgtypes`
+    local _default_pkgtypes=`pkgtype_get_current_os_pkgtype_list`
+    local _arch_list=`pkgtype_get_current_os_arch_list`
+    echo "usage: `basename $0` [options] <product>"
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --type, -t <pkgType> - Do specified package type instead"
+    echo "      of the default(s).  This can be specified multiple times."
+    echo "      (<pkgType> is one of: ${_pkgtypes})"
+    echo "      (default for this platform is: ${_default_pkgtypes})"
+    echo ""
+    echo "    --all, -a - Create Addon files for all architectures for this platform"
+    echo "      (${_arch_list}) instead of just the current one (${BUILD_OS_ARCH})."
+    echo ""
+    echo "  products:"
+    echo ""
+    local _config
+    for _config in ${_configs} ; do
+        echo "        ${_config}"
+    done
+    exit 1
+}
+
+function main
+{
+    set_ctrlc_trap
+
+    OPT_ALL_ARCH=""
+    OPT_PKG_TYPE_LIST=""
+
+    while true; do
+        case "$1" in
+            --help)
+                usage
+                ;;
+            --type|-t)
+                if [ -z "$2" ]; then
+                    warn "Missing argument to $1 option."
+                    exit 1
+                fi
+                pkgtype_check_valid "$2"
+                exit_on_error $? "Invalid package type '$2'"
+		OPT_PKG_TYPE_LIST="${OPT_PKG_TYPE_LIST} $2"
+                shift
+                ;;
+            --all|-a)
+                OPT_ALL_ARCH=1
+                ;;
+            *)
+                break
+                ;;
+        esac
+        shift
+    done
+
+    PKG_CONFIG_NAME="$1"
+    shift
+    if [ -z "${PKG_CONFIG_NAME}" ]; then
+	warn "Missing product name."
+	usage
+    fi
+
+    if [ -n "$1" ]; then
+        warn "Too many arguments."
+        usage
+    fi
+
+    if [ -z "${OPT_PKG_TYPE_LIST}" ]; then
+        OPT_PKG_TYPE_LIST=`pkgtype_get_current_os_pkgtype_list`
+        exit_on_error $?
+        # Override Mac behavior
+        case "${BUILD_OS_TYPE}" in
+            darwin)
+                OPT_PKG_TYPE_LIST=dmg
+                ;;
+        esac
+	echo "Using default package type list: '${OPT_PKG_TYPE_LIST}'"
+    fi
+
+    #
+    # Get package list
+    #
+
+    PKG_CONFIG_LIST=`product_packages "${PKG_CONFIG_NAME}"`
+    exit_on_error $? "Failed to get package list."
+
+    PKG_NAME=`product_name "${PKG_CONFIG_NAME}"`
+    exit_on_error $? "Failed to get package addon name."
+
+    POST_EXTRACT_SCRIPT=`product_script "${PKG_CONFIG_NAME}"`
+    SOLARIS_RESPONSE_FILE="${BUILD_ROOT}/src/linux/build/lib/bitrock/platforms/solaris-sparc/response"
+
+    for PKG_TYPE in ${OPT_PKG_TYPE_LIST} ; do
+	MANIFEST=`build_manifest`
+        MAKESELF_ARGS="${MAKESELF_NOCOMP_ARGS}"
+        case "${PKG_TYPE}" in
+            pkg|mac|dmg|depot)
+                # These need to be compressed
+                # TODO: Do we really need to compress mac and/or dmg?
+                MAKESELF_ARGS="${MAKESELF_COMP_ARGS}"
+                ;;
+        esac
+
+        EXTRA_NAME=""
+        case "${BUILD_OS_TYPE}" in
+            linux)
+                check_is_rhel_21
+                if [ $? -eq 0 ]; then
+                    EXTRA_NAME="-oldlibc${EXTRA_NAME}"
+                fi
+                ;;
+        esac
+
+        build_loop
+    done
+
+    return 0
+}
+
+main "$@"
+exit $?

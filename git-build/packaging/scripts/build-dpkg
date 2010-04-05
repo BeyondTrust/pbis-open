@@ -1,0 +1,25 @@
+#!/bin/sh
+
+BASEDIR=`dirname $0`/../..
+. ${BASEDIR}/packaging/scripts/functions
+VERSION=$(get_lwopen_version)
+
+(cd .. && tar zxf likewise-open-$VERSION.tar.gz)
+
+if [ ! -d ../likewise-open-$VERSION ]; then
+	echo "Directory does not exist!"
+	exit 1
+fi
+
+## Create orig.tar.gz neeed for ubuntu merges.
+echo "Creating likewise-open_$VERSION.orig.tar.gz"
+tar zcf ../likewise-open_$VERSION.orig.tar.gz $BASEDIR/../likewise-open-$VERSION 
+
+cd $BASEDIR/../likewise-open-$VERSION
+if [ ! -d debian ]; then
+	cp -r packaging/debian debian
+fi
+
+# Let's build this thing
+dpkg-buildpackage -rfakeroot
+

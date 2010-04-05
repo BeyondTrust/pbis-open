@@ -1,0 +1,8 @@
+PKG_COMPONENTS="lwadutil"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

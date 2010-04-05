@@ -1,0 +1,5 @@
+Likewise Administrative Console
+
+Administration software to allow non-Windows systems to remotely administer Active Directory, Events, and Windows Local Users and Groups.
+
+This program installs the Likewise Administrative Console.

@@ -1,0 +1,4 @@
+<buildtool.dirs>
+  <dir name="sspiclient"/>
+  <dir name="sspiserver"/>
+</buildtool.dirs>

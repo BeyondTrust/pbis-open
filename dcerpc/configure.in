@@ -1,0 +1,538 @@
+dnl Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.13])
+AC_INIT([DCE RPC], [1.1.0.7])
+AC_CONFIG_AUX_DIR([build])
+AC_CANONICAL_TARGET
+AM_INIT_AUTOMAKE(dcerpc, 1.1.0.7)
+AC_PREFIX_DEFAULT(/opt/dcerpc)
+AC_CONFIG_SRCDIR([uuid/uuid.c])
+AC_CONFIG_HEADER([include/config.h])
+
+AC_PROG_CC
+AC_CHECK_SIZEOF([long])
+
+# reduce target_cpu
+case $target_cpu in
+	i?86)	target_cpu="i386";;
+	hppa2.0*) target_cpu="hppa2.0";;
+esac
+
+DCERPCD_SERVICE_TYPE="dword:00000001"
+
+# reduce linux* to linux-gnu for target_os
+# reduce hpux11.* to hpux11.11
+# reduce freebsd 6.x/7.x/8.x to 6.0
+case $target_os in
+     linux*)
+         echo "Detected Linux system"
+         target_os="linux-gnu"
+         ;;
+     hpux11.*)
+         echo "Detected HPUX system"
+         target_os="hpux11.11"
+	 DCERPCD_SERVICE_TYPE="dword:00000004"
+         ;;
+     darwin8.*)
+         echo "Detected Mac OS X 10.4 - Tiger system"
+         target_os="darwin6.0"
+         ;;
+     darwin9.*)
+         echo "Detected Mac OS X 10.5 - Leopard system"
+         target_os="darwin6.0"
+         ;;
+     darwin10.*)
+         echo "Detected Mac OS X 10.6 - Snow Leopard system"
+         target_os="darwin6.0"
+	 if test "$ac_cv_sizeof_long" = "8" -a "$target_cpu" = "i386"
+	 then
+		echo "Building in 64-bit mode"
+		target_cpu="x86_64"
+	 fi
+         ;;
+     solaris2.1*)
+         echo "Detected Solaris system"
+         target_os="solaris2.10"
+         ;;
+     freebsd6.*|freebsd7.*|freebsd8.*|netbsd*5*)
+         echo "Detected FreeBSD system"
+         target_os="freebsd6.0"
+         ;;
+esac
+
+AC_SUBST(target_cpu)
+AC_SUBST(target_os)
+AC_SUBST(DCERPCD_SERVICE_TYPE)
+
+#AM_CONFIG_HEADER([include/config.h])
+
+dnl Checks for programs.
+AC_PROG_CPP
+AC_PROG_CXX
+AC_PROG_AWK
+AM_PROG_LIBTOOL
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_SED
+AC_PATH_PROG(GENCAT, gencat, true)
+AC_PATH_PROG(BISON, bison)
+AC_SUBST(GENCAT)
+AC_OBJEXT
+AC_C_INLINE
+XAC_C_ATTRIBUTE_UNUSED
+
+# Specify desired UNIX interface
+case "$target_os" in
+     *darwin*)
+		FEATURETEST_CFLAGS="-D_SOCKADDR_LEN"
+		IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+		;;
+     *freebsd*) 
+		FEATURETEST_CFLAGS="-D_SOCKADDR_LEN"
+		IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+		;;
+     *aix*)
+                FEATURETEST_CFLAGS="-D_XOPEN_SOURCE=500 -D_ALL_SOURCE=1 -D_REENTRANT"
+		IDL_CFLAGS="$IDL_CFLAGS -D_SOCKADDR_LEN"
+		;;
+     *) FEATURETEST_CFLAGS="-D_XOPEN_SOURCE=500 -D__EXTENSIONS__ -D_POSIX_PTHREAD_SEMANTICS -D_ALL_SOURCE=1 -D_REENTRANT" ;;
+esac
+
+AC_SUBST([FEATURETEST_CFLAGS])
+AC_DEFINE([FEATURETEST_CFLAGS], [$FEATURETEST_CFLAGS], [Feature test flags])
+
+CPPFLAGS="$CPPFLAGS $FEATURETEST_CFLAGS"
+
+# Allow libtool-specific linker flags to be passed in
+AC_SUBST(LTLDFLAGS)
+
+dnl Checks for libraries.
+AC_CHECK_LIB(socket,		socket,		 [LIB_socket="-lsocket" AC_SUBST(LIB_socket)],,)
+AC_CHECK_LIB(nsl,		gethostbyname,	 [LIB_nsl="-lnsl"],,)
+AC_CHECK_LIB(dl,		dlopen,		 [LIB_dl="-ldl" AC_SUBST(LIB_dl)],,)
+AC_SUBST(LIB_nsl)
+
+dnl Checks for header files.
+AC_CHECK_HEADERS(features.h sys/cdefs.h dlfcn.h sys/time.h)
+AC_CHECK_HEADERS(getopt.h sys/sockio.h sys/un.h nl_types.h)
+AC_CHECK_HEADERS(net/if_dl.h execinfo.h sys/fd_set.h)
+
+AC_CHECK_FUNCS(scandir)
+
+dnl Check for number of arguments to gethostbyname_r
+saved_LIBS="$LIBS"
+LIBS="$LIBS $LIB_nsl"
+AC_CHECK_FUNCS(gethostbyname_r)
+if test "$ac_cv_func_gethostbyname_r" = "yes"; then
+AC_CACHE_CHECK(number of arcuments to gethostbyname_r, xad_cv_gethostbyname_r_args, [
+xad_cv_gethostbyname_r_args=
+   AC_TRY_COMPILE([
+#include <netdb.h>], [gethostbyname_r(0, 0, 0, 0, 0, 0);], [xad_cv_gethostbyname_r_args=6], [
+         AC_TRY_COMPILE([
+		#include <netdb.h>],
+		[gethostbyname_r(0, 0, 0, 0, 0);], [xad_cv_gethostbyname_r_args=5], [xad_cv_gethostbyname_r_args=3])]) ])
+fi
+AC_DEFINE_UNQUOTED(GETHOSTBYNAME_R_ARGS, $xad_cv_gethostbyname_r_args, Number of arguments to gethostbyname_r)
+LIBS="$saved_LIBS"
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+# Check for basic types
+AC_CHECK_TYPES([int8, int16, int32, int64], [], [],
+[#include <sys/types.h>
+ #if __ia64
+ #include <model.h>
+ #endif])
+AC_CHECK_TYPES([uint8, uint16, uint32, uint64])
+
+AC_CHECK_SIZEOF([long long int])
+AC_CHECK_SIZEOF([long int])
+
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+
+dnl _GNU_SOURCE pulls in the definition of _pthread_push_defer
+AC_DEFINE(__EXTENSIONS__, 1, Ask for extension api)
+AC_DEFINE(_REENTRANT, 1, Ask for re-entrant api)
+AC_DEFINE(_GNU_SOURCE, 1, Ask for gnu extensions)
+AC_DEFINE(_BSD, 1, Tell libc that we want BSD things)
+
+RPC_ARG_DEFINE(debug, DEBUG, yes, [Compile with debugging support])
+RPC_ARG_DEFINE(dcom, ENABLE_DCOM, no,[Enable experimental DCOM support])
+AM_CONDITIONAL(ENABLE_DCOM, test x$rpc_arg_dcom = yes)
+AM_CONDITIONAL(TARGET_OS_LINUX, test x$target_os = xlinux-gnu)
+
+if test x"$localstatedir" = x"/var"; then
+    rpccachedir="$localstatedir/lib/likewise"
+else
+    rpccachedir="$localstatedir"
+fi
+AS_AC_EXPAND(rpc_dir, ["$rpccachedir/rpc"])
+AC_DEFINE_UNQUOTED([RPC_C_NP_DIR], ["$rpc_dir"], [named pipes directory])
+AC_DEFINE_UNQUOTED([RPC_C_UXD_DIR], ["$rpc_dir"], [unix domain sockets directory])
+
+#####################################################################
+## COMPONENT: threads
+
+AC_MSG_CHECKING(pthread library and requirements)
+AC_MSG_RESULT()
+
+AC_ARG_WITH(pthread-ext-dir,      [  --with-pthread-ext-dir=DIR       base directory of pthread extension library])
+AC_ARG_WITH(pthread-ext-libdir,      [  --with-pthread-ext-libdir=DIR       directory of pthread extension library. (defaults to --with-pthread-ext-dir/lib)])
+
+if test -n "$with_pthread_ext_dir"; then
+  CPPFLAGS="$CPPFLAGS -I$with_pthread_ext_dir/include"
+  LDFLAGS="$LDFLAGS -L$with_pthread_ext_dir/lib"
+  if test -z "$with_pthread_ext_libdir"; then
+    with_pthread_ext_libdir="$with_pthread_ext_dir/lib"
+  fi
+fi
+
+if test -n "$with_pthread_ext_libdir"; then
+  LDFLAGS="$LDFLAGS -L$with_pthread_ext_libdir"
+fi
+
+AC_ARG_WITH(pthread-ext-rpath,      [  --with-pthread-ext-rpath=DIR       directory where the pthread extension will be installed at runtime. Defaults to --with-pthread-ext-libdir value.],
+    [pthread_ext_rpath="$withval"],
+    [pthread_ext_rpath="$with_pthread_ext_libdir"])
+
+if test -n "$pthread_ext_rpath"; then
+  LIBTOOLFLAGS="$LIBTOOLFLAGS -rpath $pthread_ext_rpath"
+fi
+
+AC_CHECK_HEADERS(pthread.h)
+
+if test -n "$with_pthread_ext_dir"; then
+   AC_CHECK_HEADERS(pthread_ext.h)
+fi
+
+AC_CHECK_LIB(pthread,		pthread_create,		[LIB_pthread="-lpthread" AC_SUBST(LIB_pthread)],,)
+
+PTHREAD_MODE="none"
+
+AC_CHECK_LIB(rt, sched_yield, [LIB_rt="-lrt" AC_SUBST(LIB_rt)],,)
+
+dcethreads_save_LIBS="$LIBS"
+LIBS="$LIBS $LIB_pthread $LIB_rt"
+
+AC_CHECK_FUNCS(pthread_atfork)
+AC_CHECK_FUNCS(pthread_get_expiration_np)
+AC_CHECK_FUNCS(pthread_delay_np)
+AC_CHECK_FUNCS(pthread_lock_global_np)
+AC_CHECK_FUNCS(pthread_unlock_global_np)
+AC_CHECK_FUNCS(pthread_getunique_np)
+AC_CHECK_FUNCS(pthread_ismultithreaded_np)
+AC_CHECK_FUNCS(pthread_kill_other_threads_np)
+AC_CHECK_FUNCS(pthread_mutexattr_getkind_np)
+AC_CHECK_FUNCS(pthread_mutexattr_setkind_np)
+AC_CHECK_FUNCS(pthread_yield)
+AC_CHECK_FUNCS(sched_yield)
+
+AC_SUBST(DCETHREADINCLUDES)
+
+LIBS="$dcepthreads_save_LIBS"
+
+AC_CHECK_FUNCS(backtrace backtrace_symbols backtrace_symbols_fd)
+
+#####################################################################
+## COMPONENT: uuid
+
+AC_MSG_CHECKING(UUID library and tool requirements)
+AC_MSG_RESULT()
+
+AC_CHECK_HEADERS(sys/sysctl.h)
+AC_CHECK_HEADERS(net/if_arp.h)
+AC_CHECK_FUNCS(gettimeofday socket)
+
+#####################################################################
+## COMPONENT: include
+
+if test "x$ENABLE_DCOM" = "xyes" ; then
+	include_dcom_idl="objex.idl obase.idl remact.idl wtypes.idl"
+else
+	include_dcom_idl=""
+fi
+AC_SUBST(include_dcom_idl)
+
+#####################################################################
+## COMPONENT: idl/idl_compiler
+
+RPC_ARG_DEFINE(idldumpers, DUMPERS, no, [Enable DUMPERS for debugging dceidl])
+AC_CHECK_FUNCS(catopen)
+
+dnl IDL needs to set these flags when it compiles stuff
+IDL_CFLAGS="$IDL_CFLAGS -D_GNU_SOURCE -D_REENTRANT -D_POSIX_C_SOURCE=3"
+AC_SUBST(IDL_CFLAGS)
+
+dnl For DCOM, default to C++ compiler for now
+if test "x$ENABLE_DCOM" = "xyes" ; then
+	IDL_CC="$CXX"
+else
+	IDL_CC="$CC"
+fi
+AC_SUBST(IDL_CC)
+
+dnl If using GCC, we need to add -x c-header to force it to treat idl files
+dnl as C headers; otherwise it tries to do something wierd...
+if test "x${ac_cv_prog_gcc}" = "xyes" ; then
+	IDL_CPP="$CPP -x c-header"
+else
+	IDL_CPP=$CPP
+fi
+AC_SUBST(IDL_CPP)
+
+#####################################################################
+## COMPONENT: AUTH PLUGINS
+
+##
+## gss_negotiate
+
+AC_ARG_WITH(
+	gssapi-dir, 
+	[  --with-gssapi-dir=<prefix>      look for gssapi libraries in <prefix>],
+	[
+	    GSSAPI_INCLUDES="-I$withval/include"
+	    GSSAPI_LDFLAGS="-L$withval/`basename $libdir`"
+	],
+)
+
+AC_ARG_WITH(
+	gssapi-libdir, 
+	[  --with-gssapi-libdir=<libdir>   look for gssapi libraries in <libdir>],
+	[
+	    GSSAPI_LDFLAGS="-L$withval"
+	],
+)
+
+AC_SUBST(GSSAPI_INCLUDES)
+AC_SUBST(GSSAPI_LDFLAGS)
+AC_SUBST(GSSAPI_LIBS)
+
+tmp_LDFLAGS="$LDFLAGS"
+LDFLAGS="$GSSAPI_LDFLAGS $LDFLAGS"
+AC_CHECK_LIB(gssapi_krb5, gss_wrap, [GSSAPI_LIBS="-lgssapi_krb5"], [AC_MSG_ERROR([Could not find libgssapi_krb5])])
+LDFLAGS="$tmp_LDFLAGS"
+
+##
+## schannel
+
+AC_ARG_WITH(
+	schannel-dir, 
+	[  --with-schannel-dir=<prefix>    look for libschannel in <prefix>],
+	[
+	    SCHANNEL_INCLUDES="-I$withval/include"
+	    SCHANNEL_LDFLAGS="-L$withval/`basename $libdir`"
+	],
+)
+
+AC_ARG_WITH(
+	schannel-libdir, 
+	[  --with-schannel-libdir=<libdir> look for libschannel libraries in <libdir>],
+	[
+	    SCHANNEL_LDFLAGS="-L$withval"
+	],
+)
+
+AC_SUBST(SCHANNEL_INCLUDES)
+AC_SUBST(SCHANNEL_LDFLAGS)
+AC_SUBST(SCHANNEL_LIBS)
+
+tmp_LDFLAGS="$LDFLAGS"
+LDFLAGS="$SCHANNEL_LDFLAGS $LDFLAGS"
+AC_CHECK_LIB(schannel, schn_wrap, [SCHANNEL_LIBS="-lschannel"], [AC_MSG_ERROR([Could not find libschannel])])
+LDFLAGS="$tmp_LDFLAGS"
+
+#####################################################################
+## COMPONENT: ncklib
+
+RPC_ARG_DEFINE(ncacn, PROT_NCACN, yes,Support connection based transports)
+if test x"$rpc_arg_ncacn" = xyes
+then
+	AC_DEFINE([ENABLE_PROT_NCACN], [], [Enable NCACN protocol sequence])
+fi
+AM_CONDITIONAL(PROT_NCACN, test x${rpc_arg_ncacn} = xyes)
+
+RPC_ARG_DEFINE(ncadg, PROT_NCADG, yes,Support connectionless transports)
+if test x"$rpc_arg_ncadg" = xyes
+then
+	AC_DEFINE([ENABLE_PROT_NCADG], [], [Enable NCADG protocol sequence])
+fi
+AM_CONDITIONAL(PROT_NCADG, test x${rpc_arg_ncadg} = xyes)
+
+RPC_ARG_DEFINE(dummyauth, AUTH_DUMMY, no,Include the DCE dummy auth service)
+AM_CONDITIONAL(AUTH_DUMMY, test x${rpc_arg_dummyauth} = xyes)
+
+if test "x${rpc_arg_dummyauth}" = "xyes" ; then
+	AUTH_DUMMY_EXTRAS=""
+	test "x${rpc_arg_ncacn}" = "xyes" && AUTH_DUMMY_EXTRAS="$AUTH_DUMMY_EXTRAS noauthcn.c"
+	test "x${rpc_arg_ncadg}" = "xyes" && AUTH_DUMMY_EXTRAS="$AUTH_DUMMY_EXTRAS noauthdg.c"
+	AC_SUBST(AUTH_DUMMY_EXTRAS)
+fi
+
+RPC_ARG_DEFINE(gss_negotiate, AUTH_GSS_NEGOTIATE, yes, Include the DCE gss_negotiate auth service)
+if test x"$rpc_arg_gss_negotiate" = xyes
+then
+	AC_DEFINE([ENABLE_AUTH_GSS_NEGOTIATE], [], [Enable GSS negotiate auth mechanism])
+fi
+AM_CONDITIONAL(AUTH_GSS_NEGOTIATE, test x${rpc_arg_gss_negotiate} = xyes)
+
+RPC_ARG_DEFINE(schannel, AUTH_SCHANNEL, yes, Include the schannel auth service)
+if test x"$rpc_arg_schannel" = xyes
+then
+	AC_DEFINE([ENABLE_AUTH_SCHANNEL], [], [Enable schannel auth mechanism])
+fi
+AM_CONDITIONAL(AUTH_SCHANNEL, test x${rpc_arg_schannel} = xyes)
+
+RPC_ARG_DEFINE(codeset, BUILD_CODESET, no,Support for the codeset registry (untested))
+AM_CONDITIONAL(BUILD_CODESET, test x${rpc_arg_codeset} = xyes)
+
+RPC_ARG_DEFINE(rpc-ns-ldap, BUILD_RPC_NS_LDAP, no,Support for the LDAP nameservice (untested))
+AM_CONDITIONAL(BUILD_RPC_NS_LDAP, test x${rpc_arg_rpc_ns_ldap} = xyes)
+AC_CHECK_FUNCS(scandir)
+
+RPC_ARG_DEFINE(afip, NAF_IP, yes,IP network address family support)
+if test x"$rpc_arg_afip" = xyes
+then
+	AC_DEFINE([ENABLE_NAF_IP], [], [Enable IP address family support])
+fi
+AM_CONDITIONAL(NAF_IP, test x${rpc_arg_afip} = xyes)
+
+RPC_ARG_DEFINE(afnp, NAF_NP,yes,Named Pipes network address family support)
+if test x"$rpc_arg_afnp" = xyes
+then
+	AC_DEFINE([ENABLE_NAF_NP], [], [Enable named pipe address family support])
+fi
+
+AM_CONDITIONAL(NAF_NP, test x${rpc_arg_afnp} = xyes)
+
+RPC_ARG_DEFINE(afuxd, NAF_UXD,no,AF_LOCAL network address family support (untested))
+AM_CONDITIONAL(NAF_UXD, test x${rpc_arg_afuxd} = xyes)
+
+RPC_ARG_DEFINE(ifloopback, USE_LOOPBACK, yes,Include loopback interface support)
+
+AC_CHECK_DECLS([SO_PEERCRED, getpeereid],,,
+[
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+])
+
+AC_CHECK_FUNCS(getpeereid)
+
+
+#####################################################################
+## COMPONENT: dcelib
+
+#####################################################################
+## COMPONENT: rpcd
+
+AS_AC_EXPAND(SBINDIR, ["${sbindir}"])
+
+AC_CHECK_FUNCS(setpgrp)
+if test "$ac_cv_func_setpgrp" = "yes"; then
+	AC_CACHE_CHECK(whether setpgrp() takes 2 arguments, rpcd_cv_setpgrp_args, [
+		AC_TRY_COMPILE([#include <unistd.h>], [setpgrp(0, 0);], [rpcd_cv_setpgrp_args=2], [rpcd_cv_setpgrp_args=0])])
+	AC_DEFINE_UNQUOTED(SETPGRP_ARGS, $rpcd_cv_setpgrp_args, Number of arguments to setgrp())
+fi
+
+#####################################################################
+## COMPONENT: demos
+
+RPC_ARG_DEFINE(demoprogs, DEMO_PROGS, yes,Build demo programs)
+
+#####################################################################
+
+#####
+## Unit tests
+#####
+
+# Check for moonunit bits
+AC_CHECK_HEADERS([moonunit/moonunit.h], [HAVE_MOONUNIT_H=true], [HAVE_MOONUNIT_H=false])
+AC_CHECK_LIB(moonunit, Mu_Interface_Result, [HAVE_MOONUNIT_LIB=true], [HAVE_MOONUNIT_LIB=false])
+AC_CHECK_PROG(MOONUNIT_STUB, moonunit-stub, moonunit-stub, false)
+
+if test "${MOONUNIT_STUB}" = "moonunit-stub" && $HAVE_MOONUNIT_H && $HAVE_MOONUNIT_LIB
+then
+	HAVE_MOONUNIT="true"
+	LIB_moonunit="-lmoonunit"
+	AC_DEFINE([HAVE_MOONUNIT], [], [Have MoonUnit])
+else
+	HAVE_MOONUNIT="false"
+fi
+
+AC_SUBST(LIB_moonunit)
+AM_CONDITIONAL(HAVE_MOONUNIT, $HAVE_MOONUNIT)
+
+AC_CONFIG_SUBDIRS(flex-2.5.4)
+
+FLEX='${top_builddir}/flex-2.5.4/flex'
+AC_SUBST(FLEX)
+
+for i in ${CPPFLAGS} ${AM_CPPFLAGS}; do
+    j=`echo $i | grep '^-I'`
+    if test x != x"$j"
+    then
+        IDL_FLAGS="$IDL_FLAGS $j"
+    fi
+done
+
+AC_SUBST(IDL_FLAGS)
+
+
+AC_OUTPUT(
+Makefile
+dnl freedce.spec
+libdcethread/Makefile
+uuid/Makefile
+include/Makefile
+include/compat/Makefile
+include/dce/Makefile
+include/dce/dce.h
+include/dce/dce_error.h
+include/dce/dce_utils.h
+include/dce/marshall.h
+include/dce/ndr_rep.h
+include/dce/ndrtypes.h
+include/dce/sec_authn.h
+include/dce/aix5.2.0.0/Makefile
+include/dce/darwin6.0/Makefile
+include/dce/linux-gnu/Makefile
+include/dce/freebsd6.0/Makefile
+include/dce/solaris2.8/Makefile
+include/dce/solaris2.9/Makefile
+include/dce/solaris2.10/Makefile
+include/dce/hpux11.11/Makefile
+include/dce/i386/Makefile
+include/dce/hppa2.0/Makefile
+include/dce/powerpc/Makefile
+include/dce/powerpc64/Makefile
+include/dce/s390/Makefile
+include/dce/s390x/Makefile
+include/dce/sparc/Makefile
+include/dce/x86_64/Makefile
+include/dce/ia64/Makefile
+idl_compiler/Makefile
+idl_compiler/sysdep.h
+idl_lib/Makefile
+ncklib/Makefile
+ncklib/include/aix5.2.0.0/Makefile
+ncklib/include/linux-gnu/Makefile
+ncklib/include/freebsd6.0/Makefile
+ncklib/include/solaris2.8/Makefile
+ncklib/include/solaris2.9/Makefile
+ncklib/include/solaris2.10/Makefile
+ncklib/include/darwin6.0/Makefile
+ncklib/include/hpux11.11/Makefile
+ncklib/include/Makefile
+dcelib/Makefile
+rpcd/Makefile
+rpcd/dcerpcd.reg
+demos/Makefile
+demos/echo_server/Makefile
+demos/echo_number/Makefile
+demos/echo_union/Makefile
+demos/samr_test/Makefile
+demos/access/Makefile
+perf/Makefile
+)

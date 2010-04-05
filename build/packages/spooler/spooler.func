@@ -1,0 +1,8 @@
+PKG_COMPONENTS="spooler"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

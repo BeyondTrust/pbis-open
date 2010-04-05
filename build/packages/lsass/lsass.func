@@ -1,0 +1,10 @@
+PKG_NEED_COMPAT=1
+PKG_NEED_FOREIGN=1
+PKG_COMPONENTS="lsass lwdns"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

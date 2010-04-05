@@ -1,0 +1,5 @@
+LIBRARY	"CAMClient"
+EXPORTS
+   CamJoinComputeNode   @1
+   CamClientCreateRpcBinding @2
+   CamClientGetErrorString @3

@@ -1,0 +1,133 @@
+
+AC_INIT(pkg-config.1)
+
+AM_INIT_AUTOMAKE(pkg-config, 0.23)
+AM_MAINTAINER_MODE
+
+AM_CONFIG_HEADER(config.h)
+
+AM_PROG_LIBTOOL
+
+AC_PROG_CC
+
+AC_DEFUN([PKG_CONFIG_FIND_PC_PATH],
+[AC_ARG_WITH(pc_path,
+ [  --with-pc-path          Override the default search path for .pc files ],
+ [ pc_path="$withval"
+   AC_MSG_CHECKING([for default search path for .pc files])
+   AC_MSG_RESULT([$pc_path])],
+ [pc_path='${libdir}/pkgconfig:${datadir}/pkgconfig'])
+ AC_SUBST([pc_path])
+
+])
+
+PKG_CONFIG_FIND_PC_PATH
+
+#
+# Code taken from gtk+-2.0's configure.in.
+#
+# This causes pkg-config to not list private dependencies (a very
+# common example is libm) on platforms which support inter-library
+# dependencies.
+
+AC_ARG_ENABLE(indirect-deps,
+        [AC_HELP_STRING([--enable-indirect-deps],
+                              [list both direct and indirect dependencies.])
+AC_HELP_STRING([--disable-indirect-deps],
+                              [only list direct dependencies.])
+    [default=auto]],use_indirect_deps=$enableval,
+    [use_indirect_deps=auto])
+echo use_indirect_deps=$use_indirect_deps >&AS_MESSAGE_LOG_FD
+AC_MSG_CHECKING([whether to list both direct and indirect dependencies])
+case $use_indirect_deps in
+  auto)
+    deplibs_check_method=`(./libtool --config; echo eval echo \$deplibs_check_method) | sh`
+    if test "X$deplibs_check_method" = Xnone; then
+    echo "foo: $deplibs_check_method" >&AS_MESSAGE_LOG_FD
+      use_indirect_deps=yes
+    else
+      use_indirect_deps=no
+    fi
+  ;;
+  yes|no)
+  ;;
+  *) AC_MSG_ERROR([Value given to --enable-indirect-deps must be one of yes, no
+or auto])
+  ;;
+esac
+AC_MSG_RESULT($use_indirect_deps)
+
+#
+# Choose default CFLAGS and warnings depending on compiler.
+#
+
+WARN_CFLAGS=""
+if test "${GCC}" = "yes" && test "${ac_env_CFLAGS_set}" != "set"; then
+   WARN_CFLAGS="-g -Wall -O2"
+fi
+AC_SUBST(WARN_CFLAGS)
+
+AC_DEFINE_UNQUOTED(ENABLE_INDIRECT_DEPS, `test $use_indirect_deps = no; echo $?`, [Link library to all dependent libraries, not only directly needed ones])
+
+AC_MSG_CHECKING([for Win32])
+case "$host" in
+  *-*-mingw*)
+    native_win32=yes
+  ;;
+  *)
+    native_win32=no
+  ;;
+esac
+AC_MSG_RESULT([$native_win32])
+
+case "$libdir" in
+*lib64) AC_DEFINE(PREFER_LIB64,1,[Define if your native architecture defines libdir to be $prefix/lib64 instead of $prefix/lib.]) ;;
+*) : ;;
+esac
+
+if test x$native_win32 = xyes; then
+  # On Win32, use the normal installed GLib.  Yes, this is a circular
+  # dependency. But then, only experienced hackers that presumably can
+  # work around that will be building pkg-config and GLib on Win32
+  # anyway (especially using the auto*/configure/libtool
+  # mechanism). Others use prebuilt versions.
+  #
+  # These are correct for GLib 2.x
+  GLIB_CFLAGS="-I$includedir/glib-2.0 -I$libdir/glib-2.0/include"
+  GLIB_LIBS="-L$libdir -lglib-2.0 -liconv -lintl"
+  use_installed_glib=yes
+else
+  use_installed_glib=no
+  AC_ARG_WITH([installed-glib],
+    [  --with-installed-glib   Use installed Glib-2.x], [
+    if test x$withval = xyes; then
+      # Not on Win32, but the user requested to use the installed Glib-2.x,
+      # therefore we may assume that (some older version of) pkg-config can
+      # be found in the users PATH (otherwise we simply ignore the request).
+      AC_CHECK_PROGS([PKG_CONFIG], [pkg-config], [])
+      if test -n $PKG_CONFIG && $PKG_CONFIG --exists glib-2.0; then
+	GLIB_CFLAGS=`$PKG_CONFIG --cflags glib-2.0`
+	GLIB_LIBS=`$PKG_CONFIG --libs glib-2.0`
+	use_installed_glib=yes
+      fi
+    fi
+  ])
+fi # !use_installed_glib
+
+AM_CONDITIONAL(USE_INSTALLED_GLIB, test x$use_installed_glib = xyes)
+
+if test x$use_installed_glib = xyes; then
+  AC_DEFINE(USE_INSTALLED_GLIB, 1, [We are using an installed GLib])
+  AC_SUBST(GLIB_LIBS)
+  AC_SUBST(GLIB_CFLAGS)
+
+else
+  AC_CONFIG_SUBDIRS(glib-1.2.10)
+fi # !native_win32
+
+AC_FUNC_ALLOCA
+
+AC_CHECK_FUNCS(setresuid setreuid,break)
+AC_CHECK_HEADERS([dirent.h unistd.h sys/wait.h])
+
+AC_OUTPUT([Makefile check/Makefile])

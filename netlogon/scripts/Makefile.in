@@ -1,0 +1,32 @@
+BUILD_ROOT = @builddir@/..
+SRC_ROOT=@srcdir@/..
+
+SHELL= /bin/sh
+
+vpath %.c @srcdir@
+vpath %.h @srcdir@
+
+top_srcdir= @top_srcdir@
+srcdir = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = ${exec_prefix}/bin
+infodir = ${prefix}/info
+libdir = @libdir@
+initscriptdir = ${prefix}/etc/init.d
+mandir = ${prefix}/man/man1
+
+DESTDIR=@DESTDIR@
+INSTALL = @INSTALL@
+
+all :
+
+clean :
+
+distclean: clean
+	$(RM) Makefile
+
+install: all
+
+uninstall:
+

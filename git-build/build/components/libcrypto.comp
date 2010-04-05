@@ -1,0 +1,99 @@
+#!/bin/bash -c "exit 1"
+
+#
+# libgss.comp -- see ../../helper.sh for how this file works.
+#
+
+COMP_NAME="libcrypto"
+COMP_SOURCES="${BUILD_ROOT}/openssl"
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    LDFLAGS="${_ldflags}"
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags}"
+
+    export LDFLAGS CFLAGS CPPFLAGS
+
+    cd ${COMP_SOURCES}/.
+    exit_on_error $?
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    #run_autogen ${COMP_SOURCES}
+    #exit_on_error $?
+
+    ./config --prefix="${PREFIXDIR}" shared
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} DIRS="crypto" SHARED_LDFLAGS="-shared ${LDFLAGS}" all
+}
+
+function component_install
+{
+    _setup_build_env
+
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+    local INSTALL_PREFIX_DIR="${INSTALL_ROOT}/${PREFIXDIR}"
+    local STAGING_PREFIX_DIR="${STAGE_INSTALL_DIR}/${PREFIXDIR}"
+
+    [ "$INSTALL_ROOT" != "/" ] && [ -z "${BUILD_PRESERVE_STAGING}" ] && rm -rf $INSTALL_ROOT
+    mkdir -p ${INSTALL_ROOT}
+    mkdir -p ${STAGE_INSTALL_DIR}
+
+    ${MAKE} INSTALL_PREFIX="${INSTALL_ROOT}" DIRS="crypto" install_sw
+
+    if [ "lib" != "${_lib}" ]; then
+        mv "${INSTALL_PREFIX_DIR}/lib" "${INSTALL_PREFIX_DIR}/${_lib}" 
+    fi
+
+    rsync -a \
+        --filter '- bin/' \
+        --filter '- engines/' \
+        --filter '- pkgconfig/' \
+        --filter "- ${PREFIXDIR}/ssl/" \
+        --filter "- libssl.*" \
+        ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+    local INSTALL_PREFIX_DIR="${INSTALL_ROOT}/${PREFIXDIR}"
+    local STAGING_PREFIX_DIR="${STAGE_INSTALL_DIR}/${PREFIXDIR}"
+    local STAGING_SYSCONF_DIR="${STAGE_INSTALL_DIR}/${SYSCONFDIR}"
+
+    local POPULATE_DIR="$1"
+    local EXCLUDE_FILE="${POPULATE_DIR}/../exclude.files"
+
+    if [ -z "${POPULATE_DIR}" ] || [ ! -d "${POPULATE_DIR}" ]; then
+	echo "Non-existent or invalid populate dircetory given: ${POPULATE_DIR}"
+	return 1
+    fi
+
+    cat <<EOF > ${EXCLUDE_FILE}
+include
+share
+*.a
+*.la
+libssl.so
+pkgconfig
+*.pc
+engines
+ssl
+EOF
+
+    rsync -a --exclude-from=${EXCLUDE_FILE} ${INSTALL_ROOT}/ ${POPULATE_DIR}/
+}
+

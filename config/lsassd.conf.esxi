@@ -1,0 +1,180 @@
+#
+# Likewise Security and Authentication Subsystem (LSASS)
+#
+# Time value suffixes:
+# d - days
+# h - hours
+# m - minutes
+# s - seconds
+#
+
+[global]
+
+    # Default: no
+    # enable-eventlog = yes    
+    
+    # Default: yes
+    # log-network-connection-events = no
+
+    # Default: \
+    # Allowed: a punctuation character
+    # Excluded: whitespace, alphanumeric, space-replacement character
+    domain-separator = \
+
+[pam]
+
+    # Default: error
+    #
+    # Note: log-level can be one of
+    #       {disabled, error, warning, info, verbose}
+    log-level = error
+       
+    # Message of the day
+    # Default: no
+    # display-motd = yes
+    
+    # Note: Show this error when user is not
+    #       list of members (users/groups)
+    #       allowed to login
+    # user-not-allowed-error = Access denied
+
+[auth provider:lsa-activedirectory-provider]
+
+    path = /lib/liblsass_auth_provider_ad.so
+
+    login-shell-template = /bin/ash
+    
+    # Prefix path for user's home directory
+    # Note:
+    #   a) This is used in place of %H in the
+    #      homedir-template setting
+    #   b) Must be an absolute path
+    #
+    # Default: Linux: /home
+    # Default: MacOS: /Users
+    # Default: SunOS: /export/home
+    #
+    # homedir-prefix = <absolute path>
+
+    homedir-template = /
+
+    ldap-sign-and-seal = false
+
+    # Cache entry expiration timespan
+    # Default: 4h
+    # Minimum: 0
+    # Maximum: 1d
+    cache-entry-expiry = 4h
+
+    # Machine password expiration lifespan
+    # Default: 30d
+    # Minimum: 1h
+    # Maximum: 60d
+    machine-password-lifespan = 30d
+
+    # Default: ^
+    # Allowed: a punctuation character
+    # Excluded: whitespace, alphanumeric, @, /, domain separator character, #
+    space-replacement = ^
+    
+    # Default: no
+    # assume-default-domain = yes
+    
+    # Default: yes
+    # sync-system-time = no
+    
+    # Allow only the following users and groups
+    # to login to this system
+    #
+    # Note: Use a comma-separated list of
+    #       { alias, NT4 style name, SID }
+    #
+    # require-membership-of = ABC\support group, ABC\joe, jane, S-1-5-21-3447809367-3151979076-456401374-513
+    
+    # Default: yes
+    # create-k5login = no
+
+    # Whether home directories should be automatically
+    # created upon user login
+    #
+    # Default: yes
+    # create-homedir = no
+
+    # Umask for home directories
+    # Default: 022
+    #
+    # homedir-umask = 022
+
+    # Paths to skeleton directories for provisioning
+    # home directories
+    #
+    # Note: Use a comma separated list
+    #
+    # Default: /etc/skel
+    #   or
+    # Default: System/Library/User Template/Non_localized,
+    #          /System/Library/User Template/English.lproj
+    #
+    # skeleton-dirs = /etc/skel
+
+    # Whether user credentials should automatically be
+    # refreshed
+    #
+    # Default: yes
+    # refresh-user-credentials = no
+
+    # Forces lsass to use unprovisioned mode
+    # Values: full unprovisioned
+    # Default: full
+    #
+    cell-support = unprovisioned
+
+    # Whether to remove a cached group membership entry derived from PAC
+    # with information from LDAP showing the user disappearing from
+    # a group.
+    #
+    # Default: yes
+    #
+    # trim-user-membership = no
+
+    # Whether to return only cached info for NSS group members.
+    #
+    # Default: yes
+    #
+    # nss-group-members-query-cache-only = no
+
+    # Whether to return only cached info for NSS user's groups.
+    #
+    # Default: no
+    #
+    # nss-user-membership-query-cache-only = yes
+
+    # Whether to enumerate users or groups for NSS
+    #
+    # Default: no (yes - Mac systems)
+    #
+    nss-enumeration-enabled = no
+
+    # How often the domain manager should check whether a domain is back
+    # online.
+    #
+    # Default: 5m
+    # domain-manager-check-domain-online-interval = 5m
+
+    # How long an unknown domain is cached as unknown in the domain manager.
+    #
+    # Default: 1h
+    # domain-manager-unknown-domain-cache-timeout = 1h
+
+    # The cache backend to use
+    # Values: sqlite memory
+    # Default: sqlite
+    #
+    # cache-type = memory
+
+    # The maximum bytes to use for the in-memory cache. Old data will be purged
+    # if the total cache size exceeds this limit. A value of 0 indicates no
+    # limit.
+    # Default: 0
+    #
+    # memory-cache-size-cap = 10000

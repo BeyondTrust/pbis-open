@@ -1,0 +1,9 @@
+PKG_COMPONENTS="lwedsplugin macadutil"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}
+

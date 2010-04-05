@@ -1,0 +1,20 @@
+#!/bin/bash
+
+LWSM_NAME=com.likewisesoftware.lwsmd
+LWSM_DAEMON=/Library/LaunchDaemons/$LWSM_NAME.plist
+LWSM_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$LWSM_NAME.plist
+
+if [ -f $LWSM_DAEMON_INSTALL ]; then
+   cp $LWSM_DAEMON_INSTALL $LWSM_DAEMON
+   launchctl load $LWSM_DAEMON || exit 1
+   launchctl start $LWSM_NAME || exit 1
+
+   sleep 1
+
+   for i in /etc/likewise/*.reg
+   do
+       /opt/likewise/bin/lwregshell upgrade "$i" || exit 1
+   done
+
+   killall -HUP lwsmd || exit 1
+fi

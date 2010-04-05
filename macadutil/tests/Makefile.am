@@ -1,0 +1,2 @@
+SUBDIRS=enumallgpos \
+        resolver

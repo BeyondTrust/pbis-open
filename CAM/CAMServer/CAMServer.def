@@ -1,0 +1,4 @@
+LIBRARY	"CAMServer"
+EXPORTS
+   CamServerMain   @1
+   CamServerCleanup @2

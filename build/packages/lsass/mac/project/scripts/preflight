@@ -1,0 +1,15 @@
+#!/bin/bash
+
+LSASS_NAME=com.likewisesoftware.lsassd
+LSASS_DAEMON=/Library/LaunchDaemons/$LSASS_NAME.plist
+
+if [ -f $LSASS_DAEMON ]; then
+   launchctl list | grep $LSASS_NAME > /dev/null
+   if [ $? -eq 0 ]; then
+      launchctl stop $LSASS_NAME
+      touch /tmp/lsassd.restart
+   fi
+
+   launchctl unload $LSASS_DAEMON
+   rm $LSASS_DAEMON
+fi

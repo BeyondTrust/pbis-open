@@ -1,0 +1,137 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>domainjoin-cli</title><meta name="generator" content="DocBook XSL Stylesheets V1.72.0"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en"><a name="domainjoin-cli"></a><div class="titlepage"></div><div class="refnamediv"><h2>Name</h2><p>domainjoin-cli &#8212; Join a host to an Active Directory domain</p></div><div class="refsynopsisdiv"><h2>Synopsis</h2><div class="cmdsynopsis"><p><code class="command">domainjoin-cli</code>  [<em class="replaceable"><code>options</code></em>]  join  [
+	 <code class="option">--ou</code> 
+	  <em class="replaceable"><code>organizational_unit</code></em> 
+      ]<br> [
+	 <code class="option">--enable</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ...] [
+	 <code class="option">--disable</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ...]<br> [<code class="option">--preview</code>] [<code class="option">--advanced</code>] [
+	 <code class="option">--details</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ]<br>  <em class="replaceable"><code>domain</code></em>   <em class="replaceable"><code>username</code></em>  [<em class="replaceable"><code>password</code></em>]</p></div><div class="cmdsynopsis"><p><code class="command">domainjoin-cli</code>  [<em class="replaceable"><code>options</code></em>]  leave <br> [
+	 <code class="option">--enable</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ...] [
+	 <code class="option">--disable</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ...]<br> [<code class="option">--preview</code>] [<code class="option">--advanced</code>] [
+	 <code class="option">--details</code> 
+	  <em class="replaceable"><code>module</code></em> 
+      ]<br> [
+	 <em class="replaceable"><code>username</code></em> 
+	 [<em class="replaceable"><code>password</code></em>]
+      ]</p></div><div class="cmdsynopsis"><p><code class="command">domainjoin-cli</code>  [<em class="replaceable"><code>options</code></em>]  query </p></div><div class="cmdsynopsis"><p><code class="command">domainjoin-cli</code>  [<em class="replaceable"><code>options</code></em>]  fixfqdn </p></div><div class="cmdsynopsis"><p><code class="command">domainjoin-cli</code>  [<em class="replaceable"><code>options</code></em>]  setname   <em class="replaceable"><code>name</code></em> </p></div></div><div class="refsect1" lang="en"><a name="id2491509"></a><h2>Description</h2><p>
+      <span><strong class="command">domainjoin-cli</strong></span> is the command-line version of the
+      <span class="emphasis"><em>Likewise</em></span> AD domain join tool.  In a basic invocation,
+      <span><strong class="command">domainjoin-cli</strong></span> will join the current machine into an
+      AD domain, enable authentication of AD users, and enable group policy
+      if it is available.
+    </p><p>
+      For systems with sensitive configurations, <span><strong class="command">domainjoin-cli</strong></span> 
+      offers fine-grained control over modifications to system configuration files
+      that are typically required during a join, such as editing
+      <code class="filename">/etc/nsswitch.conf</code> or the system PAM setup.
+    </p></div><div class="refsect1" lang="en"><a name="id2491557"></a><h2>Usage</h2><div class="refsect2" lang="en"><a name="id2491562"></a><h3>Commands</h3><p>
+	<span><strong class="command">domainjoin-cli</strong></span> supports the following major modes
+	of operation:
+      </p><div class="variablelist"><dl><dt><span class="term">join</span></dt><dd><p>
+	      Joins the machine to the AD domain <em class="replaceable"><code>domain</code></em> and
+	      configures AD authentication and group policy (where applicable).  This
+	      operation requires valid AD credentials for <em class="replaceable"><code>domain</code></em>
+	      to be specified as <em class="replaceable"><code>username</code></em> and
+	      <em class="replaceable"><code>password</code></em>. If <em class="replaceable"><code>password</code></em>
+	      is not specified on the command line, <span><strong class="command">domainjoin-cli</strong></span> will
+	      prompt you for it.
+	    </p><p>
+	      <span><strong class="command">domainjoin-cli</strong></span> supports joining the machine to a specific
+	      OU (Organizational Unit) with <a href="#option-ou"><code class="option">--ou</code> <em class="replaceable"><code>organizational_unit</code></em></a>.
+	    </p></dd><dt><span class="term">leave</span></dt><dd><p>
+	      Leaves the currently-joined AD domain and deconfigures AD authentication
+	      and group policy (where applicable).
+	    </p><p>
+	      In order to actually disable the machine account in AD, either administrative
+	      credentials for <em class="replaceable"><code>domain</code></em> or the same credentials originally
+	      used to join the machine must be specified as <em class="replaceable"><code>username</code></em>
+	      and <em class="replaceable"><code>password</code></em>.  If <em class="replaceable"><code>password</code></em>
+	      is not specified on the command line, <span><strong class="command">domainjoin-cli</strong></span> will
+	      prompt you for it.
+	    </p><p>
+	      If no credentials are specified, the machine will no longer behave as a
+	      member of <em class="replaceable"><code>domain</code></em> but its machine account will
+	      remain enabled in AD.
+	    </p></dd><dt><span class="term">query</span></dt><dd><p>Displays information about the currently-joined AD domain and OU.</p></dd><dt><span class="term">fixfqdn</span></dt><dd><p>
+	      Makes local configuration modifications necessary to ensure that
+	      the fully-qualified domain name of the machine is forward-
+	      and backward-resolvable.  This can work around domain join issues
+	      on networks with sub-optimal DNS setups.
+	    </p></dd><dt><span class="term">setname</span></dt><dd><p>
+	      Changes the hostname of this machine to <em class="replaceable"><code>name</code></em>.
+	      As it is necessary to have a unique, non-generic name before joining AD,
+	      this operation is provided as a convenient way to quickly rename this
+	      computer before performing a join.
+	    </p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id2487366"></a><h3>Common options</h3><div class="variablelist"><dl><dt><span class="term"><code class="option">--log</code> <em class="replaceable"><code>filename</code></em></span></dt><dd><p>
+	      Log details about the operation to <em class="replaceable"><code>file</code></em>.
+	      If <em class="replaceable"><code>file</code></em> is "<code class="literal">.</code>", logging
+	      is directed to the console.
+	    </p></dd><dt><span class="term"><code class="option">--loglevel</code> &lt;error | warning | info | verbose &gt;</span></dt><dd><p>
+	      Specifies the level of logging information which should be written to the 
+              log file.
+	    </p></dd><dt><span class="term"><code class="option">--help</code></span></dt><dd><p>
+	      Displays brief usage and help information. No operation is performed.
+	    </p></dd></dl></div></div><div class="refsect2" lang="en"><a name="id2487444"></a><h3>Join and leave options</h3><div class="variablelist"><dl><dt><a name="option-ou"></a><span class="term"><code class="option">--ou</code> <em class="replaceable"><code>organizational_unit</code></em></span></dt><dd><p>
+	      Joins the machine to the OU <em class="replaceable"><code>organizational_unit</code></em>
+	      instead of the default "Computers" OU.  The OU to which a machine
+	      is joined determines which users will be able to authenticate against the
+	      machine and which group policies will be applied.  This option has no
+	      effect when leaving a domain.
+	    </p></dd><dt><span class="term"><code class="option">--enable</code> <em class="replaceable"><code>module</code></em></span></dt><dd><p>
+	      Explicitly enables the configuration module <em class="replaceable"><code>module</code></em>
+	      during the join or leave operation.
+	    </p></dd><dt><span class="term"><code class="option">--disable</code> <em class="replaceable"><code>module</code></em></span></dt><dd><p>
+	      Explicitly disables the configuration module <em class="replaceable"><code>module</code></em>
+	      during the join or leave operation.
+	      </p><p>
+	      Note that some modules are necessary for the proper operation of
+	      <span class="emphasis"><em>Likewise</em></span> while joined to AD.  If you attempt to disable
+	      such a module, <span><strong class="command">domainjoin-cli</strong></span> will refuse to proceed with
+	      a join operation.
+	    </p><p>
+	      For some modules, it is possible to make the relevant configuration changes by hand; 
+	      <span><strong class="command">domainjoin-cli</strong></span> will inform you of the necessary changes
+	      and will proceed with the module disabled if it detects that the changes have
+	      been made.
+	    </p></dd><dt><span class="term"><code class="option">--details</code> <em class="replaceable"><code>module</code></em></span></dt><dd><p>
+	      Provide details about module <em class="replaceable"><code>module</code></em> and what
+	      specific configuration changes it would perform during a join or leave
+	      operation.  No actual operation is performed.
+	    </p></dd><dt><a name="option-preview"></a><span class="term"><code class="option">--preview</code></span></dt><dd><p>
+	      Provide a summary of what configuration modules would be run during
+	      a join or leave operation.  No actual operation is performed.
+	    </p></dd><dt><span class="term"><code class="option">--advanced</code></span></dt><dd><p>
+	      Turns on debugging information during leave and join operations and provides
+	      more verbose output when using <a href="#option-preview"><code class="option">--preview</code></a>.  This
+	      is generally only helpful when diagnosing unusual system or network configuration
+	      issues.
+	    </p></dd></dl></div></div></div><div class="refsect1" lang="en"><a name="id2532437"></a><h2>Examples</h2><p>Example invocations of <span><strong class="command">domainjoin-cli</strong></span> and their effects follow:</p><pre class="programlisting">$ domainjoin-cli join sales.my-company.com Administrator@sales rosebud</pre><p>
+      Joins the AD domain <code class="literal">sales.my-company.com</code> using
+      <code class="literal">Administrator</code> as the username and <code class="literal">rosebud</code>
+      as the password.  This is the typical join scenario.
+    </p><pre class="programlisting">$ domainjoin-cli --log . leave</pre><p>
+      Leaves the current AD domain without attempting to disable the machine account
+      as no user credentials were specified.  Information about the process will be
+      logged to the console at the default logging level.
+    </p><pre class="programlisting">$ domainjoin-cli join --disable nsswitch sales.my-company.com Administrator@sales</pre><p>
+      Joins the AD domain <code class="literal">sales.my-company.com</code> using
+      <code class="literal">Administrator</code> as the username and prompting for
+      the password.  If possible, nsswitch configuration will not be modified.
+    </p><pre class="programlisting">$ domainjoin-cli join --preview sales.my-company.com Administrator@sales rosebud</pre><p>
+      Show what configuration modules would be run when joining the AD domain
+      <code class="literal">sales.my-company.com</code>.
+    </p><pre class="programlisting">$ domainjoin-cli join --details pam sales.my-company.com Administrator@sales rosebud</pre><p>
+      Show what changes would be made to the system by the <code class="literal">pam</code> module
+      when joining the AD domain <code class="literal">sales.my-company.com</code>.
+    </p></div><div class="refsect1" lang="en"><a name="id2532566"></a><h2>Version</h2><p>
+      This man page is correct for Likewise Open version 4.1.
+    </p></div></div></body></html>

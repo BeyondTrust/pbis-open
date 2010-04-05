@@ -1,0 +1,10 @@
+Likewise Enterprise
+--------------------------
+
+To join an Active Directory domain using a graphical user interface, run:
+
+	/opt/likewise/bin/domainjoin-gui
+
+To join an Active Directory domain using a command-line interface, run:
+
+	/opt/likewise/bin/domainjoin-cli

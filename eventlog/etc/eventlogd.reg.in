@@ -1,0 +1,17 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Services\eventlog]
+"Description"="Likewise Event Log Service"
+"Path"="@SBINDIR@/eventlogd"
+"Arguments"="@SBINDIR@/eventlogd --syslog"
+"Dependencies"="dcerpc"
+"Type"=dword:00000001
+
+[HKEY_THIS_MACHINE\Services\eventlog\Parameters]
+"AllowReadTo"=""
+"AllowWriteTo"=""
+"AllowDeleteTo"=""
+"MaxDiskUsage"=dword:06400000
+"MaxEventLifespan"=dword:0000005A
+"MaxNumEvents"=dword:000186A0
+"EventDbPurgeInterval"=dword:00000001

@@ -1,0 +1,17 @@
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions]
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions\{36C20771-2724-4ee3-B1B0-36A396CDA5E3}]
+"Name"="Likewise Enterprise Fstab GP Extension"
+"DllName"="liblwifstab@MOD_EXT@"
+"EnableAsynchronousProcessing"=dword:00000000
+"NoBackgroundPolicy"=dword:00000000
+"NoGPOListChanges"=dword:00000001
+"NoMachinePolicy"=dword:00000000
+"NoSlowLink"=dword:00000001
+"NoUserPolicy"=dword:00000001
+"PerUserLocalSettings"=dword:00000000
+"RequireSuccessfulRegistry"=dword:00000001
+"ProcessGroupPolicy"="ProcessFSTabGroupPolicy"
+"ResetGroupPolicy"="ResetFSTabGroupPolicy"
+

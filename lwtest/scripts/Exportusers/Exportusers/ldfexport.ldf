@@ -1,0 +1,374 @@
+
+dn: CN=Administrator,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: Administrator
+description: Built-in account for administering the computer/domain
+distinguishedName: CN=Administrator,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715014624.0Z
+whenChanged: 20090919165113.0Z
+uSNCreated: 8194
+memberOf: CN=Group Policy Creator Owners,CN=Users,DC=dctest,DC=likewise,DC=com
+memberOf: CN=Domain Admins,CN=Users,DC=dctest,DC=likewise,DC=com
+memberOf: CN=Enterprise Admins,CN=Users,DC=dctest,DC=likewise,DC=com
+memberOf: CN=Schema Admins,CN=Users,DC=dctest,DC=likewise,DC=com
+memberOf: CN=Administrators,CN=Builtin,DC=dctest,DC=likewise,DC=com
+uSNChanged: 114946
+name: Administrator
+objectGUID:: VPzE4RdIykqbEJSC8GXjtw==
+userAccountControl: 66048
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 128976799744692500
+lastLogoff: 0
+lastLogon: 128987361370312500
+pwdLastSet: 128920691884375000
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarL9AEAAA==
+adminCount: 1
+accountExpires: 9223372036854775807
+logonCount: 270
+sAMAccountName: Administrator
+sAMAccountType: 805306368
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: TRUE
+lastLogonTimestamp: 128978526736562500
+
+dn: CN=Guest,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: Guest
+description: Built-in account for guest access to the computer/domain
+distinguishedName: CN=Guest,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715014624.0Z
+whenChanged: 20090715014624.0Z
+uSNCreated: 8195
+memberOf: CN=Guests,CN=Builtin,DC=dctest,DC=likewise,DC=com
+uSNChanged: 8195
+name: Guest
+objectGUID:: AGYPObAJ9E2nYt2GGzDeeA==
+userAccountControl: 66082
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 0
+pwdLastSet: 0
+primaryGroupID: 514
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarL9QEAAA==
+accountExpires: 9223372036854775807
+logonCount: 0
+sAMAccountName: Guest
+sAMAccountType: 805306368
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: TRUE
+
+dn: CN=SUPPORT_388945a0,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: SUPPORT_388945a0
+description: This is a vendor's account for the Help and Support Service
+distinguishedName: CN=SUPPORT_388945a0,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715014624.0Z
+whenChanged: 20090715014624.0Z
+displayName: CN=Microsoft Corporation,L=Redmond,S=Washington,C=US
+uSNCreated: 8196
+memberOf: CN=HelpServicesGroup,CN=Users,DC=dctest,DC=likewise,DC=com
+uSNChanged: 8196
+name: SUPPORT_388945a0
+objectGUID:: u40nchkmnkOMmMecGDdERg==
+userAccountControl: 66050
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 0
+pwdLastSet: 128920946741092500
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarL6QMAAA==
+accountExpires: 0
+logonCount: 0
+sAMAccountName: SUPPORT_388945a0
+sAMAccountType: 805306368
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+
+dn: CN=RAVINDRA,OU=Domain Controllers,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+objectClass: computer
+cn: RAVINDRA
+distinguishedName: 
+ CN=RAVINDRA,OU=Domain Controllers,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715014848.0Z
+whenChanged: 20090922054526.0Z
+displayName: RAVINDRA$
+uSNCreated: 12290
+uSNChanged: 118994
+name: RAVINDRA
+objectGUID:: 5VsLg8/fOkiJ2r1VtAcpeg==
+userAccountControl: 532480
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 128987354161093750
+localPolicyFlags: 0
+pwdLastSet: 128976796910000000
+primaryGroupID: 516
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarL7QMAAA==
+accountExpires: 9223372036854775807
+logonCount: 259
+sAMAccountName: RAVINDRA$
+sAMAccountType: 805306369
+operatingSystem: Windows Server 2003
+operatingSystemVersion: 5.2 (3790)
+operatingSystemServicePack: Service Pack 1
+serverReferenceBL: 
+ CN=RAVINDRA,CN=Servers,CN=Default-First-Site,CN=Sites,CN=Configuration,DC=dcte
+ st,DC=likewise,DC=com
+dNSHostName: ravindra.dctest.likewise.com
+rIDSetReferences: 
+ CN=RID Set,CN=RAVINDRA,OU=Domain Controllers,DC=dctest,DC=likewise,DC=com
+servicePrincipalName: 
+ ldap/ravindra.dctest.likewise.com/TAPI3Directory.dctest.likewise.com
+servicePrincipalName: 
+ NtFrs-88f5d2bd-b646-11d2-a6d3-00c04fc9b232/ravindra.dctest.likewise.com
+servicePrincipalName: 
+ ldap/ravindra.dctest.likewise.com/ForestDnsZones.dctest.likewise.com
+servicePrincipalName: GC/ravindra.dctest.likewise.com/dctest.likewise.com
+servicePrincipalName: HOST/ravindra.dctest.likewise.com/DCTEST
+servicePrincipalName: HOST/ravindra.dctest.likewise.com/dctest.likewise.com
+servicePrincipalName: ldap/ravindra.dctest.likewise.com/DCTEST
+servicePrincipalName: ldap/ravindra.dctest.likewise.com
+servicePrincipalName: 
+ ldap/ravindra.dctest.likewise.com/DomainDnsZones.dctest.likewise.com
+servicePrincipalName: ldap/ravindra.dctest.likewise.com/dctest.likewise.com
+servicePrincipalName: DNS/ravindra.dctest.likewise.com
+servicePrincipalName: HOST/ravindra.dctest.likewise.com
+servicePrincipalName: HOST/RAVINDRA
+servicePrincipalName: ldap/RAVINDRA
+servicePrincipalName: 
+ E3514235-4B06-11D1-AB04-00C04FC2DCD2/e5c1472c-2e7f-45ce-98fd-acc1e1d71401/dcte
+ st.likewise.com
+servicePrincipalName: 
+ ldap/e5c1472c-2e7f-45ce-98fd-acc1e1d71401._msdcs.dctest.likewise.com
+objectCategory: 
+ CN=Computer,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: TRUE
+frsComputerReferenceBL: 
+ CN=V-YLUNYVACYMQHQ,CN=Domain System Volume (SYSVOL share),CN=File Replication 
+ Service,CN=System,DC=dctest,DC=likewise,DC=com
+lastLogonTimestamp: 128980719267031250
+
+dn: CN=krbtgt,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: krbtgt
+description: Key Distribution Center Service Account
+distinguishedName: CN=krbtgt,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715014848.0Z
+whenChanged: 20090715020400.0Z
+uSNCreated: 12320
+uSNChanged: 13978
+showInAdvancedViewOnly: TRUE
+name: krbtgt
+objectGUID:: P8Lg/43tJ0O9wRJNzpHRCw==
+userAccountControl: 514
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 0
+pwdLastSet: 128920961288281250
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarL9gEAAA==
+adminCount: 1
+accountExpires: 9223372036854775807
+logonCount: 0
+sAMAccountName: krbtgt
+sAMAccountType: 805306368
+servicePrincipalName: kadmin/changepw
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: TRUE
+
+dn: CN=ravi d,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: ravi d
+sn: d
+givenName: ravi
+distinguishedName: CN=ravi d,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090715015541.0Z
+whenChanged: 20090909233047.0Z
+displayName: ravi d
+uSNCreated: 13962
+memberOf: CN=Server Operators,CN=Builtin,DC=dctest,DC=likewise,DC=com
+uSNChanged: 106590
+name: ravi d
+objectGUID:: 1UF/QsmfNU2lqNoJwInDvw==
+userAccountControl: 512
+badPwdCount: 32
+codePage: 0
+countryCode: 0
+badPasswordTime: 128976809738286250
+lastLogoff: 0
+lastLogon: 128970478771977500
+pwdLastSet: 128970126477290000
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarLWAQAAA==
+adminCount: 1
+accountExpires: 9223372036854775807
+logonCount: 7
+sAMAccountName: ravi
+sAMAccountType: 805306368
+userPrincipalName: ravi@dctest.likewise.com
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+lastLogonTimestamp: 128969091951406250
+
+dn: CN=UBUNTU,CN=Computers,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+objectClass: computer
+cn: UBUNTU
+distinguishedName: CN=UBUNTU,CN=Computers,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090716163444.0Z
+whenChanged: 20090929221537.0Z
+displayName: UBUNTU
+uSNCreated: 16397
+uSNChanged: 119506
+name: UBUNTU
+objectGUID:: RORfSmf5Uk+LVr9+BkAkKw==
+userAccountControl: 4096
+badPwdCount: 0
+codePage: 0
+countryCode: 0
+badPasswordTime: 0
+lastLogoff: 0
+lastLogon: 128987361376562500
+localPolicyFlags: 0
+pwdLastSet: 128987361374531250
+primaryGroupID: 515
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarLWQQAAA==
+accountExpires: 9223372036854775807
+logonCount: 241
+sAMAccountName: UBUNTU$
+sAMAccountType: 805306369
+operatingSystem: Ubuntu
+operatingSystemVersion: 8.10
+operatingSystemServicePack: Likewise Identity 5.3.0.0.36555
+dNSHostName: ubuntu.dctest.likewise.com
+servicePrincipalName: HOST/ubuntu
+servicePrincipalName: HOST/ubuntu.dctest.likewise.com
+objectCategory: 
+ CN=Computer,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: FALSE
+lastLogonTimestamp: 128983778994531250
+
+dn: CN=MYDC$,CN=Users,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: MYDC$
+distinguishedName: CN=MYDC$,CN=Users,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090717165956.0Z
+whenChanged: 20090717165956.0Z
+uSNCreated: 28706
+uSNChanged: 28709
+name: MYDC$
+objectGUID:: O4t1MIy6zE2lLAsBcKhmww==
+userAccountControl: 2080
+badPwdCount: 16
+codePage: 0
+countryCode: 0
+badPasswordTime: 128976809724536250
+lastLogoff: 0
+lastLogon: 0
+pwdLastSet: 128923235960712500
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarLWgQAAA==
+accountExpires: 9223372036854775807
+logonCount: 0
+sAMAccountName: MYDC$
+sAMAccountType: 805306370
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+isCriticalSystemObject: TRUE
+
+dn: CN=othello,DC=dctest,DC=likewise,DC=com
+changetype: add
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: user
+cn: othello
+givenName: othello
+distinguishedName: CN=othello,DC=dctest,DC=likewise,DC=com
+instanceType: 4
+whenCreated: 20090730211804.0Z
+whenChanged: 20090825222512.0Z
+displayName: othello
+uSNCreated: 69706
+memberOf: CN=testgrp,DC=dctest,DC=likewise,DC=com
+uSNChanged: 86304
+name: othello
+objectGUID:: O2MLeVWeAkCsvcBNHZ8dwg==
+userAccountControl: 512
+badPwdCount: 16
+codePage: 0
+countryCode: 0
+badPasswordTime: 128976809716098750
+lastLogoff: 0
+lastLogon: 128957492464531250
+pwdLastSet: 128957127047812500
+primaryGroupID: 513
+objectSid:: AQUAAAAAAAUVAAAA/pDVbGXMHGcvxarLXQQAAA==
+accountExpires: 9223372036854775807
+logonCount: 3
+sAMAccountName: othello
+sAMAccountType: 805306368
+userPrincipalName: othello@dctest.likewise.com
+objectCategory: 
+ CN=Person,CN=Schema,CN=Configuration,DC=dctest,DC=likewise,DC=com
+lastLogonTimestamp: 128957127122968750
+

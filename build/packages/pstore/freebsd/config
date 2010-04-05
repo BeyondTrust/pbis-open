@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Password Storage (LWPS)"
+DEPENDS="likewise-sqlite"

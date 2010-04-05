@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<project>
+  <target name="local.build">
+    <midl
+          env="win32"
+          tlb="${build.meta.current}\idl.tlb"
+	  header="${build.meta.current}\eventlog_h.h"
+          filename="eventlog.idl"
+    >
+      <includedirs>
+        <include name="..\..\libunistr\include"/>
+        <include name="..\..\lwbase\include"/>
+        <include name="..\include"/>
+      </includedirs>
+      <arg line="/cstub"/>
+      <arg file="${build.meta.current}\eventlog_c.c"/>
+      <arg line="/sstub"/>
+      <arg file="${build.meta.current}\eventlog_s.c"/>
+      <arg line="/char signed"/>
+    </midl>
+  </target>
+</project>

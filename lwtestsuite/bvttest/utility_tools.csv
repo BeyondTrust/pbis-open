@@ -1,0 +1,26 @@
+#ID,Description,Platforms,Command1,Expecited1,Command2,Expected2,Command3,Expected3,Command4,Expected4,Command5,Expected5,Command6,Expected6
+1,Verify domain join to Computers OU in PARENT2.LIKEWISEQA.COM,all,domainjoin(/opt/likewise/bin/domainjoin-cli join --ou computers parent2.likewiseqa.com administrator || centeris),SUCCESS,,,,,,,,,,
+2,Verify successful scenarios for  lw-lsa list-groups-for-user ,all,/opt/likewise/bin/lw-lsa list-groups-for-user childa\\defuser,"Number of groups found for user 'childa\defuser' : 3
+Group[1 of 3] name = CHILDA\childagp (gid = 182977666)
+Group[2 of 3] name = CHILDA\bvtgrp (gid = 182977620)
+Group[3 of 3] name = CHILDA\domain^users (gid = 182977025)
+",/opt/likewise/bin/lw-lsa list-groups-for-user --uid 182977618,"Number of groups found for uid 182977618 : 3
+Group[1 of 3] name = CHILDA\childagp (gid = 182977666)
+Group[2 of 3] name = CHILDA\bvtgrp (gid = 182977620)
+Group[3 of 3] name = CHILDA\domain^users (gid = 182977025)
+",/opt/likewise/bin/lw-lsa list-groups-for-user --show-sid childa\\defuser,"Number of groups found for user 'childa\defuser' : 3
+Group[1 of 3] name = CHILDA\childagp (gid = 182977666, sid = S-1-5-21-3256861886-3620348874-3522279881-1154)
+Group[2 of 3] name = CHILDA\bvtgrp (gid = 182977620, sid = S-1-5-21-3256861886-3620348874-3522279881-1108)
+Group[3 of 3] name = CHILDA\domain^users (gid = 182977025, sid = S-1-5-21-3256861886-3620348874-3522279881-513)
+",,,,,,
+3,Verify failure scenarios for  lw-lsa list-groups-for-user ,all,"/opt/likewise/bin/lw-lsa list-groups-for-user childa\\defu
+",Number of groups found for user 'childa\defu' : 0,/opt/likewise/bin/lw-lsa list-groups-for-user childa\defuser,Number of groups found for user 'childadefuser' : 0,/opt/likewise/bin/lw-lsa list-groups-for-user 182977618,"Number of groups found for user '182977618' : 0
+",/opt/likewise/bin/lw-lsa list-groups-for-user --show-sid childa\\defu,"Number of groups found for user 'childa\defu' : 0
+",/opt/likewise/bin/lw-lsa list-groups-for-user --show-sid childa\defuser,Number of groups found for user 'childadefuser' : 0,/opt/likewise/bin/lw-lsa list-groups-for-user --showsid childa\defuser,"Too many arguments.
+Usage: lw-list-groups-for-user [options] <user name>
+   or: lw-list-groups-for-user [options] --uid <uid>
+
+  where options are:
+
+    --show-sid  -- Show SIDs
+"

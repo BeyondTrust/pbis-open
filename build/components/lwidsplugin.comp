@@ -1,0 +1,72 @@
+#!/bin/bash -c "exit 1"
+
+COMP_SOURCES=${BUILD_ROOT}/src/linux/lwidsplugin
+COMP_DEPENDENCIES=""
+
+function component_bootstrap
+{
+    echo "Nothing to bootstrap for ${COMP_NAME}"
+}
+
+function component_gather
+{
+    rsync -a --exclude=.svn ${BUILD_ROOT}/src/linux/lwidsplugin/ ${GATHER_DIR}/
+}
+
+function _chomp
+{
+    echo $@ | sed 's/^ *//' | sed 's/ *$//'
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    _CPPFLAGS="$(libtool_staging_cppflags)"
+    _CFLAGS="${_cflags}"
+    _LDSHFLAGS="${_ldshflags}"
+    _LDFLAGS="${_ldflags} $(libtool_staging_ldflags)"
+
+    export CC _LDFLAGS _CFLAGS _CPPFLAGS _LDSHFLAGS
+}
+
+function component_configure
+{
+    _setup_build_env
+
+}
+
+function component_build
+{
+   _setup_build_env
+
+   ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    mkdir -p "${STAGING_PREFIX_DIR}/lib"
+
+    rsync -a --exclude=pbdevelopment.plist \
+	output/ \
+	${STAGING_PREFIX_DIR}/lib/
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=lwidsplugin
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+
+    libtool_rewrite_populate
+}

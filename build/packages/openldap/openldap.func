@@ -1,0 +1,8 @@
+PKG_COMPONENTS="openldap"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

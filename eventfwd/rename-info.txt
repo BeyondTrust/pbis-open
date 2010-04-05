@@ -1,0 +1,14 @@
+macro name:
+__LWNET_DEF_H__
+BAIL_ON_LWNET_ERROR
+LWNET_SECONDS_IN_MINUTE
+
+filenames:
+lwnet.h
+lwnet-ipc.h
+
+function name prefix:
+sed -e 's/^LWI\([A-Z]\)/Cltr\1/' eventlog.c -i
+
+project description:
+Likewise Security and Authentication Subsystem

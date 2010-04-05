@@ -1,0 +1,413 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 42;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		47BFBC770C69205A00AAC31B /* Credentials.nib in Resources */ = {isa = PBXBuildFile; fileRef = 47BFBC750C69205A00AAC31B /* Credentials.nib */; };
+		47C25E370C750800008F66A3 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47C25E360C750800008F66A3 /* Security.framework */; };
+		5048396209E3303100765E4B /* TWindow.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5048395709E3302200765E4B /* TWindow.cp */; };
+		5048396309E3303100765E4B /* TEventHandler.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5048395909E3302200765E4B /* TEventHandler.cp */; };
+		5048396409E3303100765E4B /* TApplication.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5048395D09E3302200765E4B /* TApplication.cp */; };
+		5048396509E3303100765E4B /* TNib.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5048395E09E3302200765E4B /* TNib.cp */; };
+		5048396609E3303100765E4B /* TCarbonEvent.cp in Sources */ = {isa = PBXBuildFile; fileRef = 5048395F09E3302200765E4B /* TCarbonEvent.cp */; };
+		61D053A20C6BB82E00A44DF7 /* MainWindow.cp in Sources */ = {isa = PBXBuildFile; fileRef = 61D053A10C6BB82E00A44DF7 /* MainWindow.cp */; };
+		61D056C10C710D1400A44DF7 /* CredentialsDialog.cp in Sources */ = {isa = PBXBuildFile; fileRef = 61D056C00C710D1400A44DF7 /* CredentialsDialog.cp */; };
+		61D059F90C716B9A00A44DF7 /* TSheet.cp in Sources */ = {isa = PBXBuildFile; fileRef = 61D059F70C716B9A00A44DF7 /* TSheet.cp */; };
+		61E547330C73A887006C3011 /* App.rsrc in Rez */ = {isa = PBXBuildFile; fileRef = 61E547320C73A887006C3011 /* App.rsrc */; };
+		61E547350C73A8A1006C3011 /* keys.rsrc in Rez */ = {isa = PBXBuildFile; fileRef = 61E547340C73A8A1006C3011 /* keys.rsrc */; };
+		8D0C4E8D0486CD37000505A6 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */; };
+		8D0C4E8E0486CD37000505A6 /* main.nib in Resources */ = {isa = PBXBuildFile; fileRef = 02345980000FD03B11CA0E72 /* main.nib */; };
+		8D0C4E900486CD37000505A6 /* main.cp in Sources */ = {isa = PBXBuildFile; fileRef = 20286C2BFDCF999611CA2CEA /* main.cp */; settings = {ATTRIBUTES = (); }; };
+		8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 20286C33FDCF999611CA2CEA /* Carbon.framework */; };
+		F22FEAF30F200BD100D859C2 /* DirectoryService.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F22FEAF20F200BD100D859C2 /* DirectoryService.framework */; };
+		F27E68560F1DC51800DA4135 /* Migrate.nib in Resources */ = {isa = PBXBuildFile; fileRef = F27E68540F1DC51800DA4135 /* Migrate.nib */; };
+		F2971E2B0F1DDF24000C3A41 /* DomainMigrateWindow.cp in Sources */ = {isa = PBXBuildFile; fileRef = F2971E2A0F1DDF24000C3A41 /* DomainMigrateWindow.cp */; };
+		F2AA88BD0F322C6F001C4471 /* UserMigrateException.cp in Sources */ = {isa = PBXBuildFile; fileRef = F2AA88B90F322C6F001C4471 /* UserMigrateException.cp */; };
+		F2AA88CF0F322CC6001C4471 /* UserMigrate.icns in Resources */ = {isa = PBXBuildFile; fileRef = F2AA88CE0F322CC6001C4471 /* UserMigrate.icns */; };
+		F2AA88D20F322CE7001C4471 /* UserMigrateProj.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F2AA88D00F322CE7001C4471 /* UserMigrateProj.xcconfig */; };
+		F2AA88D30F322CE7001C4471 /* UserMigrateTarget.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F2AA88D10F322CE7001C4471 /* UserMigrateTarget.xcconfig */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0867D6ABFE840B52C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1870340FFE93FCAF11CA0CD7 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/main.nib; sourceTree = "<group>"; };
+		20286C2BFDCF999611CA2CEA /* main.cp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cp; sourceTree = "<group>"; };
+		20286C33FDCF999611CA2CEA /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
+		47BFBC760C69205A00AAC31B /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/Credentials.nib; sourceTree = "<group>"; };
+		47BFBDDF0C693AF600AAC31B /* MainWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainWindow.h; sourceTree = "<group>"; };
+		47C25E360C750800008F66A3 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ApplicationServices.framework; path = /System/Library/Frameworks/ApplicationServices.framework; sourceTree = "<absolute>"; };
+		4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreServices.framework; path = /System/Library/Frameworks/CoreServices.framework; sourceTree = "<absolute>"; };
+		5048395709E3302200765E4B /* TWindow.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TWindow.cp; path = HIFramework/TWindow.cp; sourceTree = "<group>"; };
+		5048395809E3302200765E4B /* TCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TCarbonEvent.h; path = HIFramework/TCarbonEvent.h; sourceTree = "<group>"; };
+		5048395909E3302200765E4B /* TEventHandler.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TEventHandler.cp; path = HIFramework/TEventHandler.cp; sourceTree = "<group>"; };
+		5048395A09E3302200765E4B /* TNib.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TNib.h; path = HIFramework/TNib.h; sourceTree = "<group>"; };
+		5048395B09E3302200765E4B /* TApplication.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TApplication.h; path = HIFramework/TApplication.h; sourceTree = "<group>"; };
+		5048395C09E3302200765E4B /* TWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TWindow.h; path = HIFramework/TWindow.h; sourceTree = "<group>"; };
+		5048395D09E3302200765E4B /* TApplication.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TApplication.cp; path = HIFramework/TApplication.cp; sourceTree = "<group>"; };
+		5048395E09E3302200765E4B /* TNib.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TNib.cp; path = HIFramework/TNib.cp; sourceTree = "<group>"; };
+		5048395F09E3302200765E4B /* TCarbonEvent.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TCarbonEvent.cp; path = HIFramework/TCarbonEvent.cp; sourceTree = "<group>"; };
+		5048396009E3302200765E4B /* TEventHandler.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TEventHandler.h; path = HIFramework/TEventHandler.h; sourceTree = "<group>"; };
+		5048396109E3302200765E4B /* HIFramework.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = HIFramework.h; path = HIFramework/HIFramework.h; sourceTree = "<group>"; };
+		508344B209E5C41E0093A071 /* Likewise Domain Join.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Likewise Domain Join.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		61D0523A0C6B886100A44DF7 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = main.h; sourceTree = "<group>"; };
+		61D053A10C6BB82E00A44DF7 /* MainWindow.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MainWindow.cp; sourceTree = "<group>"; };
+		61D056BF0C710D1400A44DF7 /* CredentialsDialog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CredentialsDialog.h; sourceTree = "<group>"; };
+		61D056C00C710D1400A44DF7 /* CredentialsDialog.cp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CredentialsDialog.cp; sourceTree = "<group>"; };
+		61D059F70C716B9A00A44DF7 /* TSheet.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = TSheet.cp; path = HIFramework/TSheet.cp; sourceTree = "<group>"; };
+		61D059F80C716B9A00A44DF7 /* TSheet.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TSheet.h; path = HIFramework/TSheet.h; sourceTree = "<group>"; };
+		61E547320C73A887006C3011 /* App.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = App.rsrc; sourceTree = "<group>"; };
+		61E547340C73A8A1006C3011 /* keys.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = keys.rsrc; sourceTree = "<group>"; };
+		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		F22FEAF20F200BD100D859C2 /* DirectoryService.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DirectoryService.framework; path = /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/DirectoryService.framework; sourceTree = "<absolute>"; };
+		F27E68550F1DC51800DA4135 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/Migrate.nib; sourceTree = "<group>"; };
+		F2971E2A0F1DDF24000C3A41 /* DomainMigrateWindow.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DomainMigrateWindow.cp; sourceTree = "<group>"; };
+		F2971E350F1DE6FB000C3A41 /* DomainMigrateWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DomainMigrateWindow.h; sourceTree = "<group>"; };
+		F2AA88B80F322C4D001C4471 /* UserMigrateStatus.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = UserMigrateStatus.h; sourceTree = "<group>"; };
+		F2AA88B90F322C6F001C4471 /* UserMigrateException.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = UserMigrateException.cp; sourceTree = "<group>"; };
+		F2AA88BA0F322C6F001C4471 /* UserMigrateException.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = UserMigrateException.h; sourceTree = "<group>"; };
+		F2AA88BF0F322C95001C4471 /* UserMigrate_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = UserMigrate_Prefix.pch; sourceTree = "<group>"; };
+		F2AA88C00F322CA8001C4471 /* UserMigrateDefs.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = UserMigrateDefs.h; sourceTree = "<group>"; };
+		F2AA88CE0F322CC6001C4471 /* UserMigrate.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = UserMigrate.icns; sourceTree = "<group>"; };
+		F2AA88D00F322CE7001C4471 /* UserMigrateProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; path = UserMigrateProj.xcconfig; sourceTree = "<group>"; };
+		F2AA88D10F322CE7001C4471 /* UserMigrateTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.xcconfig; path = UserMigrateTarget.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		8D0C4E910486CD37000505A6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0C4E920486CD37000505A6 /* Carbon.framework in Frameworks */,
+				47C25E370C750800008F66A3 /* Security.framework in Frameworks */,
+				F22FEAF30F200BD100D859C2 /* DirectoryService.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		195DF8CFFE9D517E11CA2CBB /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				508344B209E5C41E0093A071 /* Likewise Domain Join.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		20286C29FDCF999611CA2CEA /* DomainJoin */ = {
+			isa = PBXGroup;
+			children = (
+				F2AA88D00F322CE7001C4471 /* UserMigrateProj.xcconfig */,
+				F2AA88D10F322CE7001C4471 /* UserMigrateTarget.xcconfig */,
+				F2AA88CE0F322CC6001C4471 /* UserMigrate.icns */,
+				61E547340C73A8A1006C3011 /* keys.rsrc */,
+				61E547320C73A887006C3011 /* App.rsrc */,
+				5048396909E3304600765E4B /* Configuration Files */,
+				20286C2AFDCF999611CA2CEA /* Sources */,
+				20286C2CFDCF999611CA2CEA /* Resources */,
+				20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */,
+				195DF8CFFE9D517E11CA2CBB /* Products */,
+			);
+			name = DomainJoin;
+			sourceTree = "<group>";
+		};
+		20286C2AFDCF999611CA2CEA /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				F2AA88C00F322CA8001C4471 /* UserMigrateDefs.h */,
+				F2AA88BF0F322C95001C4471 /* UserMigrate_Prefix.pch */,
+				F2AA88B90F322C6F001C4471 /* UserMigrateException.cp */,
+				F2AA88BA0F322C6F001C4471 /* UserMigrateException.h */,
+				F2971E350F1DE6FB000C3A41 /* DomainMigrateWindow.h */,
+				F2971E2A0F1DDF24000C3A41 /* DomainMigrateWindow.cp */,
+				F2AA88B80F322C4D001C4471 /* UserMigrateStatus.h */,
+				47BFBDDF0C693AF600AAC31B /* MainWindow.h */,
+				61D053A10C6BB82E00A44DF7 /* MainWindow.cp */,
+				61D0523A0C6B886100A44DF7 /* main.h */,
+				20286C2BFDCF999611CA2CEA /* main.cp */,
+				2229D7BF09C7779A0058DAED /* HIFramework */,
+				61D056BF0C710D1400A44DF7 /* CredentialsDialog.h */,
+				61D056C00C710D1400A44DF7 /* CredentialsDialog.cp */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		20286C2CFDCF999611CA2CEA /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				F27E68540F1DC51800DA4135 /* Migrate.nib */,
+				47BFBC750C69205A00AAC31B /* Credentials.nib */,
+				8D0C4E960486CD37000505A6 /* Info.plist */,
+				0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */,
+				02345980000FD03B11CA0E72 /* main.nib */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		20286C32FDCF999611CA2CEA /* External Frameworks and Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				F22FEAF20F200BD100D859C2 /* DirectoryService.framework */,
+				47C25E360C750800008F66A3 /* Security.framework */,
+				20286C33FDCF999611CA2CEA /* Carbon.framework */,
+				4A9504CAFFE6A41611CA0CBA /* CoreServices.framework */,
+				4A9504C8FFE6A3BC11CA0CBA /* ApplicationServices.framework */,
+			);
+			name = "External Frameworks and Libraries";
+			sourceTree = "<group>";
+		};
+		2229D7BF09C7779A0058DAED /* HIFramework */ = {
+			isa = PBXGroup;
+			children = (
+				61D059F70C716B9A00A44DF7 /* TSheet.cp */,
+				61D059F80C716B9A00A44DF7 /* TSheet.h */,
+				5048395709E3302200765E4B /* TWindow.cp */,
+				5048395809E3302200765E4B /* TCarbonEvent.h */,
+				5048395909E3302200765E4B /* TEventHandler.cp */,
+				5048395A09E3302200765E4B /* TNib.h */,
+				5048395B09E3302200765E4B /* TApplication.h */,
+				5048395C09E3302200765E4B /* TWindow.h */,
+				5048395D09E3302200765E4B /* TApplication.cp */,
+				5048395E09E3302200765E4B /* TNib.cp */,
+				5048395F09E3302200765E4B /* TCarbonEvent.cp */,
+				5048396009E3302200765E4B /* TEventHandler.h */,
+				5048396109E3302200765E4B /* HIFramework.h */,
+			);
+			name = HIFramework;
+			sourceTree = "<group>";
+		};
+		5048396909E3304600765E4B /* Configuration Files */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "Configuration Files";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		8D0C4E890486CD37000505A6 /* DomainJoin */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "DomainJoin" */;
+			buildPhases = (
+				8D0C4E8C0486CD37000505A6 /* Resources */,
+				8D0C4E8F0486CD37000505A6 /* Sources */,
+				8D0C4E910486CD37000505A6 /* Frameworks */,
+				61E547300C73A867006C3011 /* Rez */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DomainJoin;
+			productInstallPath = "$(HOME)/Applications";
+			productName = DomainJoin;
+			productReference = 508344B209E5C41E0093A071 /* Likewise Domain Join.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		20286C28FDCF999611CA2CEA /* Project object */ = {
+			isa = PBXProject;
+			buildConfigurationList = C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "UserMigrate" */;
+			hasScannedForEncodings = 1;
+			mainGroup = 20286C29FDCF999611CA2CEA /* DomainJoin */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				8D0C4E890486CD37000505A6 /* DomainJoin */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		8D0C4E8C0486CD37000505A6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0C4E8D0486CD37000505A6 /* InfoPlist.strings in Resources */,
+				8D0C4E8E0486CD37000505A6 /* main.nib in Resources */,
+				47BFBC770C69205A00AAC31B /* Credentials.nib in Resources */,
+				F27E68560F1DC51800DA4135 /* Migrate.nib in Resources */,
+				F2AA88CF0F322CC6001C4471 /* UserMigrate.icns in Resources */,
+				F2AA88D20F322CE7001C4471 /* UserMigrateProj.xcconfig in Resources */,
+				F2AA88D30F322CE7001C4471 /* UserMigrateTarget.xcconfig in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXRezBuildPhase section */
+		61E547300C73A867006C3011 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				61E547330C73A887006C3011 /* App.rsrc in Rez */,
+				61E547350C73A8A1006C3011 /* keys.rsrc in Rez */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXRezBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8D0C4E8F0486CD37000505A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8D0C4E900486CD37000505A6 /* main.cp in Sources */,
+				5048396209E3303100765E4B /* TWindow.cp in Sources */,
+				5048396309E3303100765E4B /* TEventHandler.cp in Sources */,
+				5048396409E3303100765E4B /* TApplication.cp in Sources */,
+				5048396509E3303100765E4B /* TNib.cp in Sources */,
+				5048396609E3303100765E4B /* TCarbonEvent.cp in Sources */,
+				61D053A20C6BB82E00A44DF7 /* MainWindow.cp in Sources */,
+				61D056C10C710D1400A44DF7 /* CredentialsDialog.cp in Sources */,
+				61D059F90C716B9A00A44DF7 /* TSheet.cp in Sources */,
+				F2971E2B0F1DDF24000C3A41 /* DomainMigrateWindow.cp in Sources */,
+				F2AA88BD0F322C6F001C4471 /* UserMigrateException.cp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		02345980000FD03B11CA0E72 /* main.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1870340FFE93FCAF11CA0CD7 /* English */,
+			);
+			name = main.nib;
+			sourceTree = "<group>";
+		};
+		0867D6AAFE840B52C02AAC07 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0867D6ABFE840B52C02AAC07 /* English */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		47BFBC750C69205A00AAC31B /* Credentials.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				47BFBC760C69205A00AAC31B /* English */,
+			);
+			name = Credentials.nib;
+			sourceTree = "<group>";
+		};
+		F27E68540F1DC51800DA4135 /* Migrate.nib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F27E68550F1DC51800DA4135 /* English */,
+			);
+			name = Migrate.nib;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		C0E91AC608A95435008D54AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)\"";
+				PRODUCT_NAME = "Likewise Domain Join";
+			};
+			name = Debug;
+		};
+		C0E91AC708A95435008D54AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				DEAD_CODE_STRIPPING = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
+				);
+				FRAMEWORK_SEARCH_PATHS_QUOTED_1 = "\"$(SYSTEM_DEVELOPER_DIR)/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks\"";
+				INSTALL_PATH = "$(HOME)/Applications";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(LIBRARY_SEARCH_PATHS_QUOTED_1)",
+				);
+				LIBRARY_SEARCH_PATHS_QUOTED_1 = "\"$(SRCROOT)\"";
+				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
+				PRODUCT_NAME = "Likewise Domain Join";
+			};
+			name = Release;
+		};
+		C0E91ACA08A95435008D54AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH)";
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_ENABLE_FIX_AND_CONTINUE = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_LDFLAGS = "";
+				PRELINK_FLAGS = "";
+				PRELINK_LIBS = "$(inherited)";
+				PRODUCT_NAME = "Likewise Domain Join";
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				ZERO_LINK = YES;
+				ddd = "";
+				domainjoin = "";
+			};
+			name = Debug;
+		};
+		C0E91ACB08A95435008D54AB /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(NATIVE_ARCH)";
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				LIBRARY_SEARCH_PATHS = "$(inherited)";
+				OTHER_LDFLAGS = "";
+				PRELINK_FLAGS = "";
+				PRELINK_LIBS = "$(inherited)";
+				PRODUCT_NAME = "Likewise Domain Join";
+				SDKROOT = /Developer/SDKs/MacOSX10.4u.sdk;
+				SEPARATE_STRIP = YES;
+				ddd = "";
+				domainjoin = "";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C0E91AC508A95435008D54AB /* Build configuration list for PBXNativeTarget "DomainJoin" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0E91AC608A95435008D54AB /* Debug */,
+				C0E91AC708A95435008D54AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "UserMigrate" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0E91ACA08A95435008D54AB /* Debug */,
+				C0E91ACB08A95435008D54AB /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 20286C28FDCF999611CA2CEA /* Project object */;
+}

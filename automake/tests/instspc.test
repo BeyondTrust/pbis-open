@@ -1,0 +1,113 @@
+#! /bin/sh
+# Copyright (C) 2004  Free Software Foundation, Inc.
+#
+# This file is part of GNU Automake.
+#
+# GNU Automake is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# GNU Automake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Automake; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301, USA.
+
+# Check that installation to directory with spaces succeed.
+# Report from James Amundson.
+
+# This is mostly the same input as nobase.test, but we do not use
+# libtool libraries, because Libtool does not preserve space in
+# filenames (Issue observed with ltmain.sh (GNU libtool) 1.5a (1.1323
+# 2003/11/10 21:06:47))
+
+
+required='gcc'
+. ./defs || exit 1
+
+set -e
+
+# Make sure this system supports spaces in filenames.
+mkdir 'a b' || exit 77
+
+cat >> configure.in <<'EOF'
+AC_PROG_CC
+AC_PROG_RANLIB
+AC_OUTPUT
+EOF
+
+cat > Makefile.am << 'EOF'
+foodir = $(prefix)/foo
+fooexecdir = $(prefix)/foo
+
+foo_HEADERS = sub/base.h
+nobase_foo_HEADERS = sub/nobase.h
+
+dist_foo_DATA = sub/base.dat
+nobase_dist_foo_DATA = sub/nobase.dat
+
+dist_fooexec_SCRIPTS = sub/base.sh
+nobase_dist_fooexec_SCRIPTS = sub/nobase.sh
+
+fooexec_PROGRAMS = sub/base
+nobase_fooexec_PROGRAMS = sub/nobase
+sub_base_SOURCES = source.c
+sub_nobase_SOURCES = source.c
+
+fooexec_LIBRARIES = sub/libbase.a
+nobase_fooexec_LIBRARIES = sub/libnobase.a
+sub_libbase_a_SOURCES = source.c
+sub_libnobase_a_SOURCES = source.c
+
+test-install-space: install
+	test   -f "$(DESTDIR)/more space/foo/sub/nobase.h"
+	test ! -f "$(DESTDIR)/more space/foo/nobase.h"
+	test   -f "$(DESTDIR)/more space/foo/base.h"
+	test   -f "$(DESTDIR)/more space/foo/sub/nobase.dat"
+	test ! -f "$(DESTDIR)/more space/foo/nobase.dat"
+	test   -f "$(DESTDIR)/more space/foo/base.dat"
+	test   -f "$(DESTDIR)/more space/foo/sub/nobase.sh"
+	test ! -f "$(DESTDIR)/more space/foo/nobase.sh"
+	test   -f "$(DESTDIR)/more space/foo/base.sh"
+	test   -f "$(DESTDIR)/more space/foo/sub/nobase$(EXEEXT)"
+	test ! -f "$(DESTDIR)/more space/foo/nobase$(EXEEXT)"
+	test   -f "$(DESTDIR)/more space/foo/base$(EXEEXT)"
+	test   -f "$(DESTDIR)/more space/foo/sub/libnobase.a"
+	test ! -f "$(DESTDIR)/more space/foo/libnobase.a"
+	test   -f "$(DESTDIR)/more space/foo/libbase.a"
+EOF
+
+mkdir sub
+
+: > sub/base.h
+: > sub/nobase.h
+: > sub/base.dat
+: > sub/nobase.dat
+: > sub/base.sh
+: > sub/nobase.sh
+
+cat >source.c <<'EOF'
+int
+main (int argc, char *argv[])
+{
+  return 0;
+}
+EOF
+cp source.c source2.c
+
+$ACLOCAL
+$AUTOCONF
+$AUTOMAKE -a
+
+mkdir build
+cd build
+
+../configure --prefix '/more space'
+$MAKE
+dest=`pwd`/'with space';
+DESTDIR="$dest" $MAKE -e test-install-space

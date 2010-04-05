@@ -1,0 +1,13 @@
+NAME="LikewiseIdentityServiceBlueCoat"
+FULL_NAME="Likewise Identity Service [Blue Coat]"
+FILES="README"
+SCRIPT="../install.sh"
+
+PACKAGES="\
+    krb5 openldap libxml2 sqlite base \
+    pstore netlogon rpc lsass eventlog \
+    domainjoin passwd lwio srvsvc \
+    "
+
+DAEMONS="lwiod netlogond dcerpcd eventlogd lsassd"
+AUTOSTART=""

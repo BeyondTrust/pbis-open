@@ -1,0 +1,82 @@
+#!/bin/bash
+
+BUILD_ROOT=`(cd $(dirname $0)/.. && pwd)`
+export BUILD_ROOT
+
+umask 022
+
+. ${BUILD_ROOT}/build/lib/common.sh
+. ${BUILD_ROOT}/build/lib/VARS
+
+COMP_ALL="${__COMP_LIST}"
+
+function print_comp_list
+{
+    local _comp_files=`ls ${BUILD_ROOT}/build/components/*.comp 2>/dev/null | sort`
+    local _comp_name=""
+
+    warn "Valid individual component names are:"
+    for _f in ${_comp_files}; do
+	_comp_name=`basename ${_f}`
+	_comp_name=`echo ${_comp_name} | sed 's:.comp$::'`
+	warn "    ${_comp_name}"
+    done
+
+    warn ""
+
+    return 0
+}
+
+function main
+{
+    local _COMP_NAME=""
+    local _COMP_LIST=""
+    local _comp=""
+
+    parseOptionsDone=""
+    while [[ -z "${parseOptionsDone}" ]]; do
+	case "$1" in
+	    --debug)
+		export ENABLE_DEBUG="1"
+		shift
+		;;
+	    --noincremental)
+		export ENABLE_CLEAN="1"
+		shift
+		;;
+	    *)
+		parseOptionsDone="1"
+		;;
+	esac
+    done
+
+    _COMP_NAME="$1"
+
+    if [ -z "${_COMP_NAME}" ]; then
+	warn "Usage: $0 [options] <comp_name | all>"
+	warn "    --debug           Enable debug symbols"
+	warn "    --noincremental   Perform a clean build"
+	warn ""
+	print_comp_list
+	exit 1
+    fi
+
+    case "${_COMP_NAME}" in
+	all)
+	    _COMP_LIST="${COMP_ALL}"
+	    ;;
+	*)
+	    _COMP_LIST="${_COMP_NAME}"
+	    ;;
+    esac
+
+    for _comp in ${_COMP_LIST}; do
+	${BUILD_ROOT}/build/mkcomponent "${_comp}"
+	exit_on_error $?
+    done
+
+}
+
+main "$@"
+exit 0
+

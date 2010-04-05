@@ -1,0 +1,3 @@
+NAME="__PKG_NAME__"
+VERSION="__PKG_VERSION__.0"
+DESCRIPTION="Likewise Resource Kit Version=__PKG_VERSION__ Release=__PKG_RELEASE__"

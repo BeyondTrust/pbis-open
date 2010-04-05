@@ -1,0 +1,17 @@
+BVT_LWISO.xls ----- Covers installation,domainjoin,authentication and password change testcases using Open source build.
+
+BVT_LWISE_validation.xls ----- Covers installation,domainjoin,authentication,password change and SUDO group policy testcases using Enterprise source build.
+
+GP_Testcase.xls -------- Covers all the testcases for group policy's settings.
+
+RegShell_BVT_testcase.xls -- Covers all the lwregshell tool BVT testcases.
+
+Utility_tools.xls ----- Covers only for some utility tools, need to upgrade for other tools.
+
+LikewiseValidationTests_ESX_ESXi_report.xls ------ Covers installation,domainjoin,Authentication,lw-lsa tools,password test cases in ESX/ESXi distros.
+
+ESX_ESXi_script.xls ------- Covers various topology testing using vmware automation script.
+
+BVT_WGM.xls --------- Will be tested on MAC intel distros. It covers system preferences testing. 
+
+LAC_BVT_Testcase.xls ------ Covers ADUC,cellmanager,eventviewer,gpmc,gpoe,provisioning management and registry viewer test cases.

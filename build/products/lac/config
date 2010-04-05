@@ -1,0 +1,12 @@
+NAME="LikewiseAdministrationConsole"
+FULL_NAME="Likewise Administration Console"
+DESCRIPTION="Console for the administration of Active Directory and Likewise products."
+FILES="EULA"
+SCRIPT="../install.sh"
+
+PACKAGES="\
+    lac \
+    "
+
+DAEMONS=""
+AUTOSTART=""

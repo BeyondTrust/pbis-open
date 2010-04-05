@@ -1,0 +1,1501 @@
+<?xml version='1.0'?>
+<Wix xmlns='http://schemas.microsoft.com/wix/2003/01/wi'>
+  <?define Company = "Likewise Software Corporation"?>
+  <Product UpgradeCode="018e1786-04c9-4397-9bb2-1db9c816fd00" 
+           Id="26450358-c3cf-482a-b3e8-caf76fc8855d" 
+           Name="Likewise Collector" 
+           Version="1.0.0.1" 
+           Manufacturer="Likewise" 
+           Language="1033" 
+           Codepage="1252">
+	  <Package Id='????????-????-????-????-????????????' 
+             Description='Likewise event collector' 
+             Manufacturer='Likewise' 
+             InstallerVersion='100'
+             Languages='1033' ShortNames='yes' 
+             Keywords='Installer,MSI,Database' 
+             Comments='Installs LWCollector service, copies files' 
+             SummaryCodepage='1252'
+             Compressed='yes'/>
+
+	<Media Id='1' DiskPrompt='LWCollector Service Installer - Disk 1' Cabinet='lwcollector.cab' EmbedCab='yes' VolumeLabel='LwcollectorDB1'/>
+  <CustomAction Id="SetWizardProperty1" Return="check" Property="WiseCurrentWizard" Value="Welcome_Dialog" />
+  <CustomAction Id="WiseNextDlg" Return="check" BinaryKey="WiseDlgSequence" VBScriptCall="WiseNextDlg" />
+  <CustomAction Id="WisePrevDlg" Return="check" BinaryKey="WiseDlgSequence" VBScriptCall="WisePrevDlg" />
+  <CustomAction Id="SetWizardProperty" Return="check" Property="WiseCurrentWizard" Value="Maintenance_Welcome_Dialog" />    
+    
+	<Directory Id='TARGETDIR' Name='SourceDir'>
+		<Directory Id='ProgramFilesFolder' Name='Programs'>
+      <Directory Id='Likewise' Name='Likewise'>
+        <Directory Id='INSTALLDIR' Name='LWColl' LongName='LWCollector'>
+          <Component Id='LWCollector' Guid='af6f33d9-5ced-488c-86f0-85b5f7ba90ac' Location='either'>
+            <File Id='LWCollector.exe' Name='LWColl' LongName='LWCollector.exe' DiskId='1' src="C:\LWCollector\debug\LWCollector.exe"/>
+            <File Id='client.exe' Name='client' LongName='client.exe' DiskId='1' src="C:\LWCollector\debug\client.exe"/>
+            <File Id='common.lib' Name='common' LongName='common.lib' DiskId='1' src="C:\LWCollector\debug\common.lib"/>
+            <File Id='server.lib' Name='server' LongName='server.lib' DiskId='1' src="C:\LWCollector\debug\server.lib"/>
+            <File Id='sqlite.lib' Name='sqlite' LongName='sqlite.lib' DiskId='1' src="C:\LWCollector\debug\sqlite.lib"/>
+            <ServiceInstall Id="LWCollectorService"
+                            Name="LWCollector"
+                            DisplayName="LWCollectorService"
+                            Type="ownProcess"
+                            Start="auto"
+                            ErrorControl="normal"
+                            Description="Collects the events from all likewise products and stores in Database"
+                            Account="[SERVICEACCOUNT]"
+                            Password="[SERVICEPASSWORD]" />
+            <ServiceControl Id="StartLWCollectorServiceInstaller" Name="LWCollector" Start="install" Wait="no" />
+            <ServiceControl Id="StopLWCollectorServiceInstaller" Name="LWCollector"  Stop="uninstall" Wait="yes" Remove="uninstall" />
+            <RemoveFolder Id='INSTALLDIR' On='uninstall' />
+          </Component>
+        </Directory>
+      </Directory>
+		</Directory>
+	</Directory>
+
+	<Feature Id='LWCollector' Title='LWCollector' Description="This feature will install the Likewise LWCollector." Level='3' AllowAdvertise='no' Absent="disallow" InstallDefault="local" Display="1">  
+		<ComponentRef Id='LWCollector'/>
+	</Feature>
+  
+	<UI>
+		<Property Id='ErrorDialog' Value='ErrorDialog'/>
+		<Property Id='DefaultUIFont' Value='DlgFont'/>
+
+    <Dialog Id="ActionDialog" Width="375" Height="270" Title="[ProductName] " CustomPalette="yes" Modeless='yes'>
+      <Control Id='Cancel' Type='PushButton' X='378' Y='50' Width='90' Height='18' Default='yes' Cancel='yes'>
+        <Text><![CDATA[[_WiseDialogFontDefault]&Cancel >]]></Text>
+        <Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+      </Control>
+      <!--<Control Id="Bitmap34" Type="Bitmap" X="0" Y="0" Width="375" Height="234">
+        <Text><![CDATA[CenterisImages_SideImage]]></Text>
+      </Control>-->
+      <Control Id='ActionData' Type='Text' X='12' Y='30' Width='456' Height='12'>
+        <Subscribe Event='ActionData' Attribute='Text'/>
+      </Control>
+      <Control Id="ActionProgress95" Type="ProgressBar" X="55" Y="135" Width="270" Height="15">
+        <Subscribe Event="SetProgress" Attribute="Progress" />
+        <Subscribe Event='InstallFiles' Attribute='Progress'/>
+        <Subscribe Event='InstallAdminPackage' Attribute='Progress'/>
+        <Subscribe Event='DeleteServices' Attribute='Progress'/>
+        <Subscribe Event='MoveFiles' Attribute='Progress'/>
+        <Subscribe Event='RemoveFiles' Attribute='Progress'/>
+        <Subscribe Event='RemoveRegistryValues' Attribute='Progress'/>
+        <Subscribe Event='StartServices' Attribute='Progress'/>
+        <Subscribe Event='StopServices' Attribute='Progress'/>
+        <Subscribe Event='UnmoveFiles' Attribute='Progress'/>
+        <Subscribe Event='WriteIniValues' Attribute='Progress'/>
+        <Subscribe Event='WriteRegistryValues' Attribute='Progress'/>
+      </Control>
+      <Control Id='ActionText' Type='Text' X='12' Y='10' Width='456' Height='12'>
+        <Subscribe Event='ActionText' Attribute='Text'/>
+      </Control>
+      <Control Id="Bitmap26" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+    </Dialog>
+    
+    <Dialog Id="Resume_Install_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]" CustomPalette="yes">
+      <Control Id="InstallNow" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[OutOfDiskSpace <> 1]]></Publish>
+        <Publish Event="SpawnDialog" Value="OutOfDisk"><![CDATA[OutOfDiskSpace = 1]]></Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="136" Y="55" Width="227" Height="42" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Are you ready to continue the installation?]]></Text>
+        <Condition Action="show"><![CDATA[NOT RESUME]]></Condition>
+        <Condition Action="hide"><![CDATA[RESUME]]></Condition>
+      </Control>
+      <Control Id="Text31" Type="Text" X="136" Y="6" Width="227" Height="49" Transparent="yes">
+        <Text><![CDATA[{&Arial14}Resuming the [ProductName] Installation Wizard]]></Text>
+      </Control>
+      <Control Id="Text2" Type="Text" X="136" Y="55" Width="227" Height="55" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Are you ready to complete your suspended installation?]]></Text>
+        <Condition Action="show"><![CDATA[RESUME]]></Condition>
+        <Condition Action="hide"><![CDATA[NOT RESUME]]></Condition>
+      </Control>
+      <Control Id="Line7" Type="Line" X="0" Y="234" Width="375" Height="1" />
+      <Control Id="Bitmap32" Type="Bitmap" X="0" Y="0" Width="375" Height="234">
+        <Text><![CDATA[CenterisImages_SideImage]]></Text>
+      </Control>
+    </Dialog>
+    
+    <Dialog Id="Patch_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]" CustomPalette="yes">
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17" Disabled="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="136" Y="10" Width="227" Height="39" Property="ProductName1" Transparent="yes">
+        <Text>{&amp;Arial14}[ProductName] Installation Wizard</Text>
+      </Control>
+      <Control Id="Line" Type="Line" X="0" Y="234" Width="375" Height="1" />
+      <Control Id="Text1" Type="Text" X="136" Y="60" Width="228" Height="30" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]It is strongly recommended that you exit all Windows programs before running this setup program.]]></Text>
+      </Control>
+      <Control Id="Bitmap35" Type="Bitmap" X="0" Y="0" Width="375" Height="234">
+        <Text><![CDATA[CenterisImages_SideImage]]></Text>
+      </Control>
+      <Control Id="Text2519" Type="Text" X="136" Y="154" Width="228" Height="42" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Unauthorized reproduction or distribution of this program, or any portion of it, may result in severe civil and criminal penalties, and will be prosecuted to the maximum extent possible under law.]]></Text>
+      </Control>
+      <Control Id="Text269" Type="Text" X="136" Y="123" Width="228" Height="30" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]WARNING: This program is protected by copyright law and international treaties.]]></Text>
+      </Control>
+      <Control Id="Text2518" Type="Text" X="136" Y="90" Width="228" Height="30" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Click Cancel to quit the setup program, then close any programs you have running.  Click Next to continue the installation.]]></Text>
+      </Control>
+    </Dialog>
+
+    <Dialog Id="Progress_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]" Modeless="yes" CustomPalette="yes">
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Line7" Type="Line" X="0" Y="234" Width="375" Height="0" />
+      <Control Id="ActionText" Type="Text" X="55" Y="60" Width="270" Height="12">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+        <Subscribe Event="ActionText" Attribute="Text" />
+      </Control>
+      <Control Id="Billboard" Type="Billboard" X="8" Y="244" Width="45" Height="17" ToolTip="billboard control">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+        <Subscribe Event="SetProgress" Attribute="Progress" />
+      </Control>
+      <Control Id="ActionData" Type="Text" X="55" Y="78" Width="270" Height="50">
+        <Text><![CDATA[[_WiseDialogFontDefault]Initializing...]]></Text>
+        <Subscribe Event="ActionData" Attribute="Text" />
+      </Control>
+      <Control Id="ActionProgress95" Type="ProgressBar" X="55" Y="135" Width="270" Height="15">
+        <Subscribe Event="SetProgress" Attribute="Progress" />
+      </Control>
+      <Control Id="TimeRemaining" Type="Text" X="55" Y="155" Width="270" Height="12">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+        <Subscribe Event="TimeRemaining" Attribute="TimeRemaining" />
+      </Control>
+      <Control Id="Text28" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]The features you selected are currently being installed.]]></Text>
+        <Condition Action="hide"><![CDATA[WiseUninstall]]></Condition>
+      </Control>
+      <Control Id="Line43" Type="Line" X="0" Y="50" Width="375" Height="1" />
+      <Control Id="Text27" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Updating System]]></Text>
+      </Control>
+      <Control Id="Bitmap26" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Text57" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[{&MSSansSerif8}The features you selected are currently being uninstalled.]]></Text>
+        <Condition Action="hide"><![CDATA[NOT WiseUninstall]]></Condition>
+      </Control>
+    </Dialog>
+
+    <Dialog Id='AdminInstallPoint' Width='410' Height='300' Title='[ProductName]'>
+			<Control Id='EditQ' Type='Text' X='130' Y='70' Width='270' Height='18' TabSkip='no'>
+			<Text><![CDATA[Network &installation point:]]></Text>
+			</Control>
+			<Control Id='Edit' Type='PathEdit' X='130' Y='90' Width='266' Height='20' Property='TARGETDIR'/>
+			<Control Id='Browse' Type='PushButton' X='306' Y='120' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}B&rowse]]></Text>
+			<Publish Event='SpawnDialog' Value='AdminInstallBrowse'>1</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='102' Y='270' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Back' Type='PushButton' X='204' Y='270' Width='90' Height='18' Disabled='yes'>
+			<Text><![CDATA[{\Tahoma10}< &Back]]></Text>
+			</Control>
+			<Control Id='Next' Type='PushButton' X='306' Y='270' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >]]></Text>
+			<Publish Event='SetTargetPath' Value='TARGETDIR'>1</Publish>
+			<Publish Event='NewDialog' Value='VerifyReadyAdmin'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='130' Y='40' Width='270' Height='18'>
+			<Text>Where would you like to create your install?</Text>
+			</Control>
+		</Dialog>
+
+    <Dialog Id="Exit_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]">
+      <Control Id="OK" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Finish]]></Text>
+        <!--<Publish Event="DoAction" Value="ActionSetCustomActionData"><![CDATA[(NOT Installed) AND ( CENTERIS_SHOW_README = 1)]]></Publish>
+        <Publish Event="DoAction" Value="DisplayURL"><![CDATA[(NOT Installed) AND ( CENTERIS_SHOW_README = 1)]]></Publish>
+        <Publish Event="DoAction" Value="LaunchIConsole"><![CDATA[(NOT Installed) AND ( CENTERIS_LAUNCH_CESM = 1)]]></Publish>-->
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="PushButton" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+        <Condition Action="disable"><![CDATA[1]]></Condition>
+      </Control>
+      <Control Id="PushButton1" Type="PushButton" X="309" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+        <Condition Action="disable"><![CDATA[1]]></Condition>
+      </Control>
+      <Control Id="Text" Type="Text" X="13" Y="6" Width="227" Height="53" Transparent="yes">
+        <Text><![CDATA[{&Arial12}[ProductName] has been successfully installed.]]></Text>
+        <Condition Action="hide"><![CDATA[WiseUninstall]]></Condition>
+      </Control>
+      <Control Id="Bitmap" Type="Bitmap" X="0" Y="0" Width="375" Height="50" Text="CenterisImages_TopImage" />
+      <Control Id="Text6" Type="Text" X="48" Y="81" Width="227" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Click the Finish button to exit this installation.]]></Text>
+      </Control>
+      <Control Id="Text56" Type="Text" X="13" Y="6" Width="227" Height="53" Transparent="yes">
+        <Text><![CDATA[{&Arial12}[ProductName] has been successfully uninstalled.]]></Text>
+        <Condition Action="hide"><![CDATA[NOT WiseUninstall]]></Condition>
+      </Control>
+      <Control Id="Line11" Type="Line" X="0" Y="234" Width="375" Height="1" />
+    </Dialog>
+
+    <Dialog Id="Fatal_Error" X="40" Y="40" Width="240" Height="81" Title="Fatal Error">
+      <Control Id="OK" Type="PushButton" X="172" Y="56" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]OK]]></Text>
+        <Publish Event="EndDialog" Value="Exit"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="10" Y="9" Width="220" Height="37">
+        <Text><![CDATA[[_WiseDialogFontDefault]Installation ended prematurely because of an error. ]]></Text>
+      </Control>
+    </Dialog>
+
+    <Dialog Id='PreActionDialog' Width='480' Height='240' Title='Setup' Modeless='yes'>
+			<Control Id='Cancel' Type='PushButton' X='378' Y='210' Width='90' Height='18' Default='yes' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='ActionData' Type='Text' X='12' Y='50' Width='456' Height='12'>
+			<Subscribe Event='ActionData' Attribute='Text'/>
+			</Control>
+			<Control Id='ActionText' Type='Text' X='12' Y='30' Width='456' Height='30'>
+			<Text>Please, wait while we prepare for the installation.</Text>
+			<Subscribe Event='ActionText' Attribute='Text'/>
+			</Control>
+		</Dialog>
+
+    <Dialog Id="User_Exit" Width="300" Height="90" Title="[ProductName] [_WiseDialogSuffix] Canceled">
+      <Control Id="OK" Type="PushButton" X="200" Y="65" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]OK]]></Text>
+        <Publish Event="EndDialog" Value="Exit"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="10" Y="9" Width="280" Height="44">
+        <Text><![CDATA[[_WiseDialogFontDefault][ProductName] was interrupted before your new software was fully installed.  You can rerun this installation at another time to complete the setup of this software.]]></Text>
+      </Control>
+    </Dialog>
+    
+    <Dialog Id="Cancel" Width="233" Height="127" Title="Likewise Collector Setup" NoMinimize="yes">
+      <Control Id="No" Type="PushButton" X="101" Y="101" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Resume]]></Text>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Yes" Type="PushButton" X="164" Y="101" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Exit Setup]]></Text>
+        <Publish Event="EndDialog" Value="Exit"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="10" Y="9" Width="210" Height="59">
+        <Text><![CDATA[[_WiseDialogFontDefault]Installation is not complete.  If you quit the setup program now, the application will not be installed.  You can run the setup program at a later time to complete the installation.]]></Text>
+      </Control>
+      <Control Id="Text2515" Type="Text" X="10" Y="68" Width="210" Height="30">
+        <Text><![CDATA[[_WiseDialogFontDefault]To continue installing, click Resume.  To quit the setup program, click Exit Setup.]]></Text>
+      </Control>
+    </Dialog>
+
+    <Dialog Id='AdminInstallBrowse' X='20' Y='20' Width='480' Height='240' Title='Likewise Collector Setup'>
+			<Control Id='TailText' Type='Text' X='10' Y='160' Width='90' Height='20' TabSkip='no'>
+			<Text><![CDATA[&Selected path:]]></Text>
+			</Control>
+			<Control Id='Tail' Type='PathEdit' X='110' Y='160' Width='260' Height='20' Property='TARGETDIR'/>
+			<Control Id='OK' Type='PushButton' X='380' Y='160' Width='90' Height='20' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&OK]]></Text>
+			<Publish Event='SetTargetPath' Value='TARGETDIR'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='380' Y='210' Width='90' Height='20' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='Reset' Value='0'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='ComboText' Type='Text' X='10' Y='10' Width='90' Height='20' TabSkip='no'>
+			<Text><![CDATA[&Location of folder:]]></Text>
+			</Control>
+			<Control Id='Combo' Type='DirectoryCombo' X='110' Y='10' Width='300' Height='80' Property='TARGETDIR' Removable='yes' Fixed='yes' Remote='yes'>
+			<Subscribe Event='IgnoreChange' Attribute='IgnoreChange'/>
+			</Control>
+			<Control Id='Up' Type='PushButton' X='420' Y='10' Width='20' Height='20' Help='go to parent folder|' Icon='yes' FixedSize='yes' IconSize='16' Text='Up'>
+			<Publish Event='DirectoryListUp' Value='0'>1</Publish>
+			</Control>
+			<Control Id='NewFolder' Type='PushButton' X='450' Y='10' Width='20' Height='20' Help='create new folder|' Icon='yes' FixedSize='yes' IconSize='16' Text='New'>
+			<Publish Event='DirectoryListNew' Value='0'>1</Publish>
+			</Control>
+			<Control Id='List' Type='DirectoryList' X='10' Y='40' Width='460' Height='110' Property='TARGETDIR'/>
+		</Dialog>
+
+    <Dialog Id="Browse" Width="348" Height="193" Title="Likewise Collector Setup">
+      <Control Id="TailText" Type="Text" X="9" Y="151" Width="55" Height="14" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Folder name:]]></Text>
+      </Control>
+      <Control Id="Tail" Type="PathEdit" X="65" Y="147" Width="212" Height="18" Property="_BrowseProperty" Indirect="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+      </Control>
+      <Control Id="OK" Type="PushButton" X="282" Y="148" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]OK]]></Text>
+        <Publish Event="SetTargetPath" Value="[_BrowseProperty]"><![CDATA[1]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="282" Y="169" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="Reset" Value="0"><![CDATA[1]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[NOT BaseBrowse]]></Publish>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[BaseBrowse]]></Publish>
+      </Control>
+      <Control Id="ComboText" Type="Text" X="10" Y="13" Width="54" Height="15" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Look in:]]></Text>
+      </Control>
+      <Control Id="Combo" Type="DirectoryCombo" X="65" Y="10" Width="230" Height="90" Property="_BrowseProperty" Indirect="yes" Removable="yes" Fixed="yes" Remote="yes" CDROM="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+        <Subscribe Event="IgnoreChange" Attribute="IgnoreChange" />
+      </Control>
+      <Control Id="Up" Type="PushButton" X="300" Y="9" Width="17" Height="17" ToolTip="go to parent folder" Icon="yes" FixedSize="yes" IconSize="16" Text="Up">
+        <Publish Event="DirectoryListUp" Value="0"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="NewFolder" Type="PushButton" X="320" Y="9" Width="17" Height="17" ToolTip="create new folder" Icon="yes" FixedSize="yes" IconSize="16" Text="New">
+        <Publish Event="DirectoryListNew" Value="0"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="List" Type="DirectoryList" X="8" Y="29" Width="330" Height="110" Property="_BrowseProperty" Sunken="yes" Indirect="yes" TabSkip="no" />
+    </Dialog>
+
+
+    <Dialog Id='CCPDialog' Width='480' Height='240' Title='Product Compliance Check'>
+			<Control Id='Drive' Type='VolumeSelectCombo' X='12' Y='136' Width='200' Height='100' Property='CCP_DRIVE' CDROM='yes' Floppy='yes'/>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='OK' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next>>]]></Text>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='DriveText' Type='Text' X='12' Y='110' Width='100' Height='18' TabSkip='no' Text='Drive:'/>
+			<Control Id='Text' Type='Text' X='12' Y='24' Width='400' Height='80'>
+			<Text>Setup failed to locate a qualifying product on your hard drive(s). Please select the drive that contains the qualifying product.</Text>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18' Disabled='yes' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='CCPFail' Width='480' Height='240' Title='Product Compliance Check'>
+			<Control Id='OK' Type='PushButton' X='200' Y='180' Width='80' Height='18' Default='yes' Cancel='yes' Text='Exit'>
+			<Publish Event='EndDialog' Value='Exit'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='12' Y='12' Width='400' Height='80'>
+			<Text>Setup has failed to locate a qualifying product. If you feel cheated, please contact Microsoft.</Text>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='CustomCompleteDialog' Width='480' Height='240' Title='[ProductName] Selection Choice Dialog'>
+			<Control Id='SomethingElse' Type='RadioButtonGroup' X='20' Y='20' Width='400' Height='80' Property='InstallMode'/>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='PIDDialog'>1</Publish>
+			</Control>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >>]]></Text>			
+			<Publish Event='SetInstallLevel' Value='1000'><![CDATA[InstallMode = "Complete"]]></Publish>
+			<Publish Event='SetInstallLevel' Value='3'><![CDATA[InstallMode = "Typical"]]></Publish>
+			<Publish Event='NewDialog' Value='VerifyReadyDialog'><![CDATA[InstallMode <> "Custom"]]></Publish>
+			</Control>
+			<Control Id='CompleteText' Type='Text' X='20' Y='120' Width='400' Height='80' Hidden='yes'>
+			<Text>This selection will install all the components of the product.</Text>
+			<Condition Action='hide'><![CDATA[InstallMode <> "Complete"]]></Condition>
+			<Condition Action='show'><![CDATA[InstallMode = "Complete"]]></Condition>
+			</Control>
+			<Control Id='CustomText' Type='Text' X='20' Y='120' Width='400' Height='80' Hidden='yes'>
+			<Text>This selection will give you complete control over what components will be installed.</Text>
+			<Condition Action='hide'><![CDATA[InstallMode <> "Custom"]]></Condition>
+			<Condition Action='show'><![CDATA[InstallMode = "Custom"]]></Condition>
+			</Control>
+			<Control Id='TypicalText' Type='Text' X='20' Y='120' Width='400' Height='80' Hidden='yes'>
+			<Text>This selection will install the most frequently used components.</Text>
+			<Condition Action='hide'><![CDATA[InstallMode <> "Typical"]]></Condition>
+			<Condition Action='show'><![CDATA[InstallMode = "Typical"]]></Condition>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='DiskCost' X='20' Y='20' Width='480' Height='240' Title='Likewise Collector Setup'>
+			<Control Id='OK' Type='PushButton' X='200' Y='180' Width='80' Height='18' Default='yes' Cancel='yes' Text='OK'>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='12' Y='12' Width='400' Height='40'>
+			<Text>The current selections require the following amount of disk space on the different volumes. The highlighted volumes do not have enough disk space available for the currently selected features.</Text>
+			</Control>
+			<Control Id='List' Type='VolumeCostList' X='12' Y='70' Width='450' Height='100' Fixed='yes' Remote='yes' Text='List of volumes'/>
+		</Dialog>
+    
+		<Dialog Id='ErrorDialog' Y='10' Width='300' Height='200' Title='Installer Information' ErrorDialog='yes'>
+			<Control Id='ErrorText' Type='Text' X='125' Y='20' Width='155' Height='130' TabSkip='no'>
+			<Text><![CDATA[{&Times9}]]></Text>
+			</Control>
+			<Control Id='Y' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&Yes]]></Text>
+			<Publish Event='EndDialog' Value='ErrorYes'>1</Publish>
+			</Control>
+			<Control Id='A' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='EndDialog' Value='ErrorAbort'>1</Publish>
+			</Control>
+			<Control Id='C' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='EndDialog' Value='ErrorCancel'>1</Publish>
+			</Control>
+			<Control Id='I' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&Ignore]]></Text>
+			<Publish Event='EndDialog' Value='ErrorIgnore'>1</Publish>
+			</Control>
+			<Control Id='N' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&No]]></Text>
+			<Publish Event='EndDialog' Value='ErrorNo'>1</Publish>
+			</Control>
+			<Control Id='O' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&OK]]></Text>
+			<Publish Event='EndDialog' Value='ErrorOk'>1</Publish>
+			</Control>
+			<Control Id='R' Type='PushButton' X='100' Y='160' Width='80' Height='18' TabSkip='yes'>
+			<Text><![CDATA[{\Tahoma10}&Retry]]></Text>
+			<Publish Event='EndDialog' Value='ErrorRetry'>1</Publish>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='FastMaintenanceDialog' Width='480' Height='240' Title='[ProductName] Verifying the data '>
+			<Control Id='InstallNow' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Install Now]]></Text>
+			<Publish Event='SpawnDialog' Value='OutOfDisk'>OutOfDiskSpace = 1</Publish>
+			<Publish Event='EndDialog' Value='Return'><![CDATA[OutOfDiskSpace <> 1]]></Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='10' Y='10' Width='400' Height='18'>
+			<Text>This will install Likewise Collector. Do you want to proceed?</Text>
+			<Condition Action='hide'>RESUME</Condition>
+			<Condition Action='show'>NOT RESUME</Condition>
+			</Control>
+			<Control Id='Text2' Type='Text' X='10' Y='10' Width='400' Height='18'>
+			<Text>Are you ready to complete your suspended installation?</Text>
+			<Condition Action='hide'>NOT RESUME</Condition>
+			<Condition Action='show'>RESUME</Condition>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='FilesInUse' Width='480' Height='240' Title='Files in use' KeepModeless='yes'>
+			<Control Id='Retry' Type='PushButton' X='174' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Retry]]></Text>
+			<Publish Event='EndDialog' Value='Retry'>1</Publish>
+			</Control>
+			<Control Id='Ignore' Type='PushButton' X='276' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}&Ignore]]></Text>
+			<Publish Event='EndDialog' Value='Ignore'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='12' Y='12' Width='460' Height='18' TabSkip='no'>
+			<Text><![CDATA[The &following applications should be closed before continuing the install:]]></Text>
+			</Control>
+			<Control Id='List' Type='ListBox' X='12' Y='70' Width='450' Height='100' Property='FileInUseProcess'/>
+			<Control Id='Exit' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Exit]]></Text>
+			<Publish Event='EndDialog' Value='Exit'>1</Publish>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='Welcome_Dialog' Width='375' Height='270' Title='Likewise Collector Setup'>
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <!--<Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND OutOfDiskSpace <> 1]]></Publish>-->
+        <Publish Event='NewDialog' Value='License_Dialog'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17" Disabled="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="enable"><![CDATA[WiseDialogStack]]></Condition>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="139" Y="10" Width="227" Height="35" Property="ProductName" Transparent="yes">
+        <Text>{&amp;Arial14}[ProductName] Installation Wizard</Text>
+      </Control>
+      <Control Id="Line" Type="Line" X="0" Y="234" Width="375" Height="1" />
+      <Control Id="Text1" Type="Text" X="139" Y="60" Width="210" Height="64" Transparent="yes">
+        <Text>[_WiseDialogFontDefault]This wizard will install the Likewise Collector program used to log events on Microsoft Windows.</Text>
+      </Control>
+      <Control Id="Bitmap35" Type="Bitmap" X="0" Y="1" Width="375" Height="234">
+        <Text><![CDATA[CenterisImages_SideImage]]></Text>
+      </Control>
+      <Control Id="Text2517" Type="Text" X="139" Y="193" Width="228" Height="30" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]WARNING: This program is protected by copyright law and international treaties.]]></Text>
+      </Control>
+      <Control Id="Text2516" Type="Text" X="139" Y="130" Width="210" Height="30" Transparent="yes">
+        <Text>[_WiseDialogFontDefault]Likewise Collector includes a 30-day evaluation license. To extend the evaluation or to purchase, please contact sales@likewisesoftware.com.</Text>
+      </Control>
+    </Dialog>
+    
+		<Dialog Id='FirstMaintenanceDialog' Width='480' Height='240' Title='Likewise Collector Setup'>
+			<Control Id='RemoveAll' Type='PushButton' X='20' Y='60' Width='80' Height='18'>
+			<Text><![CDATA[{\Tahoma10}&Remove All]]></Text>
+			<Publish Event='NewDialog' Value='VerifyRemoveAll'>1</Publish>
+			</Control>
+			<Control Id='Reinstall' Type='PushButton' X='20' Y='100' Width='80' Height='18'>
+			<Text><![CDATA[{\Tahoma10}R&einstall]]></Text>			
+			<Publish Event='Reinstall' Value='ALL'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>			
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18' Disabled='yes'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			</Control>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes' Disabled='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >>]]></Text>
+			<Publish Event='NewDialog' Value='Reinstall'><![CDATA[InstallChoice = "RE"]]></Publish>
+			<Publish Event='NewDialog' Value='VerifyRemoveAll'><![CDATA[InstallChoice = "RA"]]></Publish>
+			</Control>
+		</Dialog>
+    
+		<!--<Dialog Id='Reinstall' Width='480' Height='240' Title='[ProductName]'>
+			<Control Id='Normal' Type='PushButton' X='20' Y='60' Width='80' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Normal]]></Text>			
+			<Publish Event='Reinstall' Value='ALL'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Complete' Type='PushButton' X='20' Y='100' Width='80' Height='18'>
+			<Text><![CDATA[{\Tahoma10}C&omplete]]></Text>			
+			<Publish Event='Reinstall' Value='ALL'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='Maintenance_Welcome_Dialog'>1</Publish>
+			</Control>
+			<Control Id='Minimal' Type='PushButton' X='20' Y='20' Width='80' Height='18'>
+			<Text><![CDATA[{\Tahoma10}&Minimal]]></Text>			
+			<Publish Event='Reinstall' Value='ALL'>1</Publish>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='CompleteText' Type='Text' X='125' Y='100' Width='260' Height='25'>
+			<Text>{\Times9}Replace all files, rewrite all registry entries, fix up all shortcuts</Text>
+			</Control>
+			<Control Id='MinimalText' Type='Text' X='125' Y='20' Width='260' Height='25'>
+			<Text>{\Times9}Replace only missing files, rewrite machine registry entries</Text>
+			</Control>
+			<Control Id='NormalText' Type='Text' X='125' Y='60' Width='260' Height='25'>
+			<Text><![CDATA[{\Times9}Replace all files whose versions don't match exactly, rewrite all registry entries]]></Text>
+			</Control>
+		</Dialog>-->
+
+    <Dialog Id="Reinstall" Width="321" Height="241" Title="[ProductName] Reinstall Mode">
+      <Control Id="OK" Type="PushButton" X="164" Y="213" Width="70" Height="18" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]OK]]></Text>
+        <Publish Property="REINSTALLMODE" Value="[ReinstallRepair][ReinstallFilePresent][ReinstallFileOlderVersion][ReinstallFileDifferingVersion][ReinstallFileChecksum][ReinstallFileForceAll][ReinstallUserData][ReinstallMachineData][ReinstallShortcut]"><![CDATA[1]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="ReinstallRepair" Type="CheckBox" X="11" Y="10" Width="280" Height="18" Property="ReinstallRepair" CheckBoxValue="r">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Repair all detected reinstall problems]]></Text>
+        <Property Id="ReinstallRepair"><![CDATA[r]]></Property>
+      </Control>
+      <Control Id="ReinstallFilePresent" Type="CheckBox" X="11" Y="30" Width="280" Height="18" Property="ReinstallFilePresent" CheckBoxValue="p">
+        <Text><![CDATA[[_WiseDialogFontDefault]Reinstall only if file is missing]]></Text>
+      </Control>
+      <Control Id="ReinstallFileOlderVersion" Type="CheckBox" X="11" Y="50" Width="280" Height="18" Property="ReinstallFileOlderVersion" CheckBoxValue="o">
+        <Text><![CDATA[[_WiseDialogFontDefault]Reinstall if file is missing, or an older version exists]]></Text>
+        <Property Id="ReinstallFileOlderVersion"><![CDATA[o]]></Property>
+      </Control>
+      <Control Id="ReinstallFileEqualVersion" Type="CheckBox" X="11" Y="70" Width="280" Height="18" Property="ReinstallFileEqualVersion" CheckBoxValue="e">
+        <Text><![CDATA[[_WiseDialogFontDefault]Reinstall if file is missing, or an older or equal version exists]]></Text>
+      </Control>
+      <Control Id="ReinstallFileExact" Type="CheckBox" X="11" Y="90" Width="280" Height="18" Property="ReinstallFileDifferingVersion" CheckBoxValue="d">
+        <Text><![CDATA[[_WiseDialogFontDefault]Reinstall if existing file has a different version]]></Text>
+      </Control>
+      <Control Id="ReinstallFileChecksum" Type="CheckBox" X="11" Y="110" Width="280" Height="18" Property="ReinstallFileChecksum" CheckBoxValue="c">
+        <Text><![CDATA[[_WiseDialogFontDefault]Reinstall if EXE or DLL has an invalid checksum]]></Text>
+      </Control>
+      <Control Id="ReinstallFileForce" Type="CheckBox" X="11" Y="130" Width="280" Height="18" Property="ReinstallFileForceAll" CheckBoxValue="a">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Force all files to be reinstalled, regardless of checksum or version]]></Text>
+      </Control>
+      <Control Id="ReinstallUserData" Type="CheckBox" X="11" Y="150" Width="280" Height="18" Property="ReinstallUserData" CheckBoxValue="u">
+        <Text><![CDATA[[_WiseDialogFontDefault]Verify that required &user registry entries are present]]></Text>
+      </Control>
+      <Control Id="ReinstallMachineData" Type="CheckBox" X="11" Y="170" Width="280" Height="18" Property="ReinstallMachineData" CheckBoxValue="m">
+        <Text><![CDATA[[_WiseDialogFontDefault]Verify that required local &machine registry entries are present]]></Text>
+      </Control>
+      <Control Id="ReinstallShortcut" Type="CheckBox" X="11" Y="190" Width="280" Height="18" Property="ReinstallShortcut" CheckBoxValue="s">
+        <Text><![CDATA[[_WiseDialogFontDefault]Validate shortcuts]]></Text>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="240" Y="213" Width="70" Height="18" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="Reset" Value="0"><![CDATA[1]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[1]]></Publish>
+      </Control>
+    </Dialog>
+
+    <Dialog Id='FirstRun' Width='480' Height='240' Title='Likewise Collector Setup'>
+			<Control Id='NameQ' Type='Text' X='12' Y='12' Width='80' Height='18' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}N&ame:]]></Text>
+			</Control>
+			<Control Id='NameE' Type='Edit' X='100' Y='12' Width='300' Height='20' Property='USERNAME' Text='{47}'/>
+			<Control Id='OrgQ' Type='Text' X='12' Y='40' Width='80' Height='18' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}&Organization:]]></Text>
+			</Control>
+			<Control Id='OrgE' Type='Edit' X='100' Y='40' Width='300' Height='20' Property='COMPANYNAME' Text='{53}'/>
+			<Control Id='PIDQ' Type='Text' X='12' Y='70' Width='450' Height='20' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}Please, enter the product &ID found on your CD box.]]></Text>
+			<Condition Action='hide'>ProductID</Condition>
+			</Control>
+			<Control Id='PIDE' Type='MaskedEdit' X='12' Y='90' Width='450' Height='15' Property='PIDKEY' Text='[PIDTemplate]'>
+			<Condition Action='hide'>ProductID</Condition>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18' Disabled='yes'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			</Control>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >>]]></Text>
+			<Publish Event='ValidateProductID' Value='0'>1</Publish>
+			<Publish Event='NewDialog' Value='FirstRun2'>ProductID</Publish>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='FirstRun2' Width='480' Height='240' Title='Likewise Collector Setup'>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&OK]]></Text>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='FirstRun'>1</Publish>
+			</Control>
+			<Control Id='PIDNumber' Type='Text' X='20' Y='80' Width='440' Height='25'>
+			<Text>{\TimesRed16}[ProductID]</Text>
+			</Control>
+			<Control Id='PIDText' Type='Text' X='20' Y='20' Width='440' Height='40'>
+			<Text>This is your product ID number:</Text>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='IdentityDialog' Width='480' Height='240' Title='[ProductName] Identity Dialog'>
+			<Control Id='NameQ' Type='Text' X='12' Y='12' Width='80' Height='18' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}N&ame:]]></Text>
+			</Control>
+			<Control Id='NameE' Type='Edit' X='100' Y='12' Width='300' Height='20' Property='USERNAME' Text='{47}'/>
+			<Control Id='OrgQ' Type='Text' X='12' Y='40' Width='80' Height='18' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}&Organization:]]></Text>
+			</Control>
+			<Control Id='OrgE' Type='Edit' X='100' Y='40' Width='300' Height='20' Property='COMPANYNAME' Text='{53}'/>
+			<Control Id='PIDQ' Type='Text' X='12' Y='70' Width='450' Height='20' TabSkip='no'>
+			<Text><![CDATA[{\TimesItalicBlue10}Please, enter the product &ID found on your CD box.]]></Text>
+			<Condition Action='hide'>ProductID</Condition>
+			</Control>
+			<Control Id='PIDE' Type='MaskedEdit' X='12' Y='90' Width='450' Height='15' Property='PIDKEY' Text='[PIDTemplate]'>
+			<Condition Action='hide'>ProductID</Condition>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='Welcome_Dialog'>1</Publish>
+			</Control>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >>]]></Text>
+			<Publish Event='ValidateProductID' Value='0'>1</Publish>
+			<Publish Event='NewDialog' Value='PIDDialog'>ProductID</Publish>
+			</Control>
+		</Dialog>
+
+    <Dialog Id="User_Information_Dialog" Width="375" Height="270" Title="Likewise Collector Setup" CustomPalette="yes">
+      <Control Id="NameQ" Type="Text" X="30" Y="60" Width="80" Height="18" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]Full N&ame:]]></Text>
+      </Control>
+      <Control Id="NameE" Type="Edit" X="112" Y="57" Width="194" Height="18" Property="USERNAME">
+        <Text><![CDATA[[_WiseDialogFontDefault]{47}]]></Text>
+      </Control>
+      <Control Id="OrgQ" Type="Text" X="30" Y="86" Width="80" Height="18" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Organization:]]></Text>
+      </Control>
+      <Control Id="OrgE" Type="Edit" X="112" Y="83" Width="194" Height="18" Property="COMPANYNAME">
+        <Text><![CDATA[[_WiseDialogFontDefault]{53}]]></Text>
+      </Control>
+      <Control Id="PIDQ" Type="Text" X="30" Y="112" Width="64" Height="15" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]Product &ID:]]></Text>
+        <Condition Action="hide"><![CDATA[ProductID = "none"]]></Condition>
+      </Control>
+      <Control Id="PIDE" Type="MaskedEdit" X="112" Y="108" Width="194" Height="18" Property="PIDKEY">
+        <Text><![CDATA[[_WiseDialogFontDefault][PIDTemplate]]]></Text>
+        <Condition Action="hide"><![CDATA[ProductID = "none"]]></Condition>
+      </Control>
+      <Control Id="Text8" Type="Text" X="30" Y="134" Width="309" Height="33" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]The settings for this application can be installed for the current user or for all users that share this computer. You must have administrator rights to install the settings for all users. Install this application for:]]></Text>
+        <Condition Action="hide"><![CDATA[NOT Privileged OR Version9X]]></Condition>
+      </Control>
+      <Control Id="RadioButtonGroup" Type="RadioButtonGroup" X="112" Y="170" Width="219" Height="44" Property="ApplicationUsers">
+        <RadioButtonGroup Property="ApplicationUsers">
+          <RadioButton Value="AllUsers" X="0" Y="0" Width="200" Height="18" Text="[_WiseDialogFontDefault]&amp;Anyone who uses this computer" />
+          <RadioButton Value="OnlyCurrentUser" X="0" Y="15" Width="200" Height="18" Text="[_WiseDialogFontDefault]&amp;Me only ([USERNAME])" />
+        </RadioButtonGroup>
+        <Condition Action="hide"><![CDATA[NOT Privileged OR Version9X]]></Condition>
+      </Control>
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <!--<Publish Event="ValidateProductID" Value="0"><![CDATA[ProductID <> "none"]]></Publish>
+        <Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Property="ALLUSERS" Value="1"><![CDATA[ApplicationUsers = "AllUsers" AND Privileged]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND OutOfDiskSpace <> 1]]></Publish>
+        <Publish Property="ALLUSERS" Value="{}"><![CDATA[ApplicationUsers <> "AllUsers" OR NOT Privileged]]></Publish>-->
+        <Publish Event='NewDialog' Value='Single_Feature_Destination'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='License_Dialog'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text7" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Enter the following information to personalize your installation.]]></Text>        
+      </Control>
+      <Control Id="Line4" Type="Line" X="0" Y="234" Width="375" Height="0" />
+      <Control Id="Line15" Type="Line" X="0" Y="50" Width="375" Height="1" />
+      <Control Id="Bitmap30" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Text16" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]User Information]]></Text>
+      </Control>
+    </Dialog>    
+    
+			<Dialog Id='OutOfDisk' X='20' Y='20' Width='480' Height='240' Title='[ProductName] Out Of Diskspace Dialog'>
+			  <Control Id='OK' Type='PushButton' X='200' Y='180' Width='80' Height='18' Default='yes' Cancel='yes' Text='{\Tahoma10}OK'>
+			  <Publish Event='EndDialog' Value='Return'>1</Publish>
+			  </Control>
+			  <Control Id='Text' Type='Text' X='12' Y='12' Width='400' Height='40'>
+			  <Text>Out of disk space. The highlighted volumes do not have enough disk space available for the currently selected features.</Text>
+			  </Control>
+			  <Control Id='List' Type='VolumeCostList' X='12' Y='70' Width='450' Height='100' Text='List of volumes'/>
+		  </Dialog>
+    
+		<Dialog Id='PIDDialog' Width='480' Height='240' Title='[ProductName] Product ID Dialog'>
+			<Control Id='Next' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Next >>]]></Text>
+			<Publish Event='NewDialog' Value='CustomCompleteDialog'>NOT Preselected</Publish>
+			<Publish Event='NewDialog' Value='VerifyReadyDialog'>Preselected</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='IdentityDialog'>1</Publish>
+			</Control>
+			<Control Id='PIDNumber' Type='Text' X='20' Y='40' Width='440' Height='25'>
+			<Text>{\TimesRed16}[ProductID]</Text>
+			</Control>
+			<Control Id='PIDText' Type='Text' X='20' Y='20' Width='440' Height='15'>
+			<Text>This is your product ID number:</Text>
+			</Control>
+			<Control Id='NameDbLang' Type='Text' X='180' Y='100' Width='200' Height='15' Text='[USERNAME]'/>
+			<Control Id='NameTDbLang' Type='Text' X='20' Y='100' Width='150' Height='15'>
+			<Text><![CDATA[User Name (w/ database's font):]]></Text>
+			</Control>
+			<Control Id='NameTUserLang' Type='Text' X='20' Y='80' Width='150' Height='15'>
+			<Text><![CDATA[User Name (w/ user's UI font):]]></Text>
+			</Control>
+			<Control Id='NameUserLang' Type='Text' X='180' Y='80' Width='200' Height='15' UserLanguage='yes' Text='[USERNAME]'/>
+		</Dialog>
+		
+		<Dialog Id='VerifyReadyAdmin' Width='410' Height='300' Title='[ProductName] Verify Ready All Dialog'>
+			<Control Id='InstallNow' Type='PushButton' X='306' Y='270' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Install Now]]></Text>
+			<Publish Event='EndDialog' Value='Return'>1</Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='102' Y='270' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Back' Type='PushButton' X='204' Y='270' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Back]]></Text>
+			<Publish Event='NewDialog' Value='AdminInstallPoint'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='130' Y='10' Width='270' Height='60'>
+			<Text>This will install Likewise Collector. Do you want to proceed?</Text>
+			</Control>
+		</Dialog>
+    
+		<Dialog Id='VerifyReadyDialog' Width='480' Height='240' Title='[ProductName] Verify Ready All Dialog' TrackDiskSpace='yes'>
+			<Control Id='InstallNow' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Install Now]]></Text>
+			<Publish Event='SpawnDialog' Value='OutOfDisk'>OutOfDiskSpace = 1</Publish>
+			<Publish Event='EndDialog' Value='Return'><![CDATA[OutOfDiskSpace <> 1]]></Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='CustomCompleteDialog'><![CDATA[InstallMode  <> "Custom" AND NOT Installed AND NOT RESUME AND NOT Preselected]]></Publish>
+			<Publish Event='NewDialog' Value='Welcome_Dialog'>NOT Installed AND RESUME</Publish>
+			<Publish Event='NewDialog' Value='PIDDialog'>NOT Installed AND NOT RESUME AND Preselected</Publish>				
+			</Control>
+			<Control Id='Text' Type='Text' X='10' Y='10' Width='400' Height='18'>
+			<Text>Are you ready to install?</Text>
+			<Condition Action='hide'>RESUME</Condition>
+			<Condition Action='show'>NOT RESUME</Condition>
+			</Control>
+			<Control Id='Text2' Type='Text' X='10' Y='10' Width='400' Height='18'>
+			<Text>Are you ready to complete your suspended installation?</Text>
+			<Condition Action='hide'>NOT RESUME</Condition>
+			<Condition Action='show'>RESUME</Condition>
+			</Control>
+		</Dialog>
+
+    <Dialog Id="Verify_Remove_All" Width="375" Height="270" Title="[ProductName] Uninstall" CustomPalette="yes">
+      <!--<Control Id="RemoveNow" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Event="Remove" Value="ALL"><![CDATA[1]]></Publish>
+        <Publish Event="SpawnDialog" Value="OutOfDisk"><![CDATA[OutOfDiskSpace = 1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND (OutOfDiskSpace <> 1)]]></Publish>
+        <Publish Property="WiseUninstall" Value="1"><![CDATA[1]]></Publish>
+      </Control>-->
+      <Control Id="RemoveNow" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event='Remove' Value='ALL'>1</Publish>
+        <Publish Event='SpawnDialog' Value='OutOfDisk'>OutOfDiskSpace = 1</Publish>
+        <Publish Event='NewDialog' Value='ActionDialog'>1</Publish>
+        <Publish Event='EndDialog' Value='Return'><![CDATA[OutOfDiskSpace <> 1]]></Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='Maintenance_Welcome_Dialog'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text" Type="Text" X="136" Y="75" Width="227" Height="110" Transparent="yes">
+        <Text>
+          <![CDATA[[_WiseDialogFontDefault]This will remove [ProductName] from your machine. Are you sure you want to continue?
+
+Click the Next button to remove the application.
+
+Click the Cancel button to exit the uninstall process.]]>
+        </Text>
+      </Control>
+      <Control Id="Bitmap34" Type="Bitmap" X="0" Y="0" Width="375" Height="234">
+        <Text><![CDATA[CenterisImages_SideImage]]></Text>
+      </Control>
+      <Control Id="Text32" Type="Text" X="136" Y="13" Width="227" Height="40" Transparent="yes">
+        <Text><![CDATA[{&Arial14}[ProductName] Uninstall]]></Text>
+      </Control>
+      <Control Id="Line9" Type="Line" X="0" Y="234" Width="375" Height="1" />
+    </Dialog>
+    
+		<Dialog Id='VerifyRemoveAll' Width='480' Height='240' Title='Verifying [ProductName]  Uninstall'>
+			<Control Id='RemoveNow' Type='PushButton' X='276' Y='210' Width='90' Height='18' Default='yes'>
+			<Text><![CDATA[{\Tahoma10}&Remove Now]]></Text>
+			<Publish Event='Remove' Value='ALL'>1</Publish>
+			<Publish Event='SpawnDialog' Value='OutOfDisk'>OutOfDiskSpace = 1</Publish>
+			<Publish Event='EndDialog' Value='Return'><![CDATA[OutOfDiskSpace <> 1]]></Publish>
+			</Control>
+			<Control Id='Cancel' Type='PushButton' X='72' Y='210' Width='90' Height='18' Cancel='yes'>
+			<Text><![CDATA[{\Tahoma10}&Cancel]]></Text>
+			<Publish Event='SpawnDialog' Value='Cancel'>1</Publish>
+			</Control>
+			<Control Id='Previous' Type='PushButton' X='174' Y='210' Width='90' Height='18'>
+			<Text><![CDATA[{\Tahoma10}<< &Previous]]></Text>
+			<Publish Event='NewDialog' Value='Maintenance_Welcome_Dialog'>1</Publish>
+			</Control>
+			<Control Id='Text' Type='Text' X='10' Y='10' Width='400' Height='18'>
+			<Text>Are you sure you want to remove everything?</Text>
+			</Control>
+		</Dialog>
+
+    <Dialog Id="License_Dialog" Width="375" Height="270" Title="Likewise Collector Setup" CustomPalette="yes">
+      <Control Id="Group" Type="RadioButtonGroup" X="121" Y="204" Width="211" Height="41" Property="Accept">
+        <RadioButtonGroup Property="Accept">
+          <RadioButton Value="No" X="0" Y="13" Width="200" Height="13" Text="[_WiseDialogFontDefault]I &amp;decline." />
+          <RadioButton Value="Yes" X="0" Y="0" Width="200" Height="13" Text="[_WiseDialogFontDefault]I &amp;accept and agree." />
+        </RadioButtonGroup>
+      </Control>
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <!--<Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="User_Information_Dialog"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND OutOfDiskSpace <> 1]]></Publish>-->
+        <Publish Event='NewDialog' Value='User_Information_Dialog'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+        <Condition Action="disable"><![CDATA[Accept <> "Yes"]]></Condition>
+        <Condition Action="enable"><![CDATA[Accept = "Yes"]]></Condition>
+        <Condition Action="default"><![CDATA[Accept = "Yes"]]></Condition>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>-->        
+        <!--<Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='Welcome_Dialog'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="License" Type="ScrollableText" X="5" Y="55" Width="363" Height="145" Sunken="yes" TabSkip="no">
+        <Text SourceFile="../../Documentation/Likewise-Identity-EULA.RTF" />
+      </Control>
+      <Control Id="Line12" Type="Line" X="0" Y="50" Width="375" Height="1" />
+      <Control Id="Text13" Type="Text" X="10" Y="8" Width="230" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]License Agreement]]></Text>
+      </Control>
+      <Control Id="Bitmap24" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Line3" Type="Line" X="1" Y="234" Width="372" Height="0" />
+      <Control Id="Text14" Type="Text" X="20" Y="22" Width="230" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]You must agree with the license agreement below to proceed.]]></Text>
+      </Control>
+    </Dialog>
+
+    <Dialog Id="Single_Feature_Destination" Width="375" Height="270" Title="Likewise Collector Setup" CustomPalette="yes">
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <!--<Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND OutOfDiskSpace <> 1]]></Publish>-->
+        <Publish Event='NewDialog' Value='Select_Feature_Dialog'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='User_Information_Dialog'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Line7" Type="Line" X="0" Y="234" Width="375" Height="1" />
+      <Control Id="Bitmap23" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Text19" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Select a folder where the application will be installed.]]></Text>
+      </Control>
+      <Control Id="Text18" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Destination Folder]]></Text>
+      </Control>
+      <Control Id="Line17" Type="Line" X="0" Y="50" Width="375" Height="1" />
+      <Control Id="GroupBox" Type="GroupBox" X="31" Y="136" Width="309" Height="33">
+        <Text><![CDATA[[_WiseDialogFontDefault]Destination Folder]]></Text>
+      </Control>
+      <Control Id="Text43" Type="Text" X="38" Y="150" Width="228" Height="17" Property="INSTALLDIR">
+        <Text><![CDATA[[_WiseDialogFontDefault][INSTALLDIR]]]></Text>
+        <Property Id="INSTALLDIR" Secure="yes" />
+      </Control>
+      <Control Id="Text42a" Type="Text" X="30" Y="100" Width="312" Height="30">
+        <Text><![CDATA[[_WiseDialogFontDefault]You can choose not to install [ProductName] by clicking Cancel.]]></Text>
+      </Control>
+      <Control Id="Text42" Type="Text" X="30" Y="60" Width="340" Height="40">
+        <Text>[_WiseDialogFontDefault]The Wizard will install the files for [ProductName] in the destination folder.
+To install into a different folder, click the Browse button, and select another folder.</Text>
+      </Control>
+      <Control Id="PushButton44" Type="PushButton" X="278" Y="147" Width="56" Height="17" TabSkip="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]B&rowse]]></Text>
+        <Publish Property="_BrowseProperty" Value="INSTALLDIR"><![CDATA[1]]></Publish>
+        <Publish Event="SpawnDialog" Value="Browse"><![CDATA[1]]></Publish>
+      </Control>
+    </Dialog>
+
+    <Dialog Id="Select_Feature_Dialog" Width="375" Height="270" Title="Likewise Collector Setup" TrackDiskSpace="yes" CustomPalette="yes">
+      <Control Id="Tree" Type="SelectionTree" X="5" Y="55" Width="174" Height="167" Property="_BrowseProperty" TabSkip="no">
+        <Text><![CDATA[[_WiseDialogFontDefault]]]></Text>
+      </Control>
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>        
+        <!--<Publish Event="SpawnDialog" Value="OutOfDisk"><![CDATA[OutOfDiskSpace = 1]]></Publish>        
+        <Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND OutOfDiskSpace <> 1]]></Publish>-->
+        <Publish Event='NewDialog' Value='Start_Installation_Dialog'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+        <Subscribe Event="SelectionNoItems" Attribute="Enabled" />        
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='Single_Feature_Destination'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Size" Type="Text" X="191" Y="143" Width="167" Height="40">
+        <Text><![CDATA[[_WiseDialogFontDefault]The size of the current selection xxx xxx xxxx xxxx xxxx xxxx xxx xxxx xxxx xxxx xxxx xxx]]></Text>
+        <Subscribe Event="SelectionSize" Attribute="Text" />
+      </Control>
+      <Control Id="Line21" Type="Line" X="0" Y="50" Width="375" Height="1" />
+      <Control Id="Text41" Type="Text" X="191" Y="60" Width="115" Height="14">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Feature Description:]]></Text>
+      </Control>
+      <Control Id="ActionDescription" Type="Text" X="190" Y="114" Width="166" Height="26">
+        <Text><![CDATA[[_WiseDialogFontDefault]Description of the currently selected action xxx xxx xxx xxxx xxxx xxxx xxxx xxxx]]></Text>
+        <Subscribe Event="SelectionAction" Attribute="Text" />
+      </Control>
+      <Control Id="Text24" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Please select which features you would like to install.]]></Text>
+      </Control>
+      <Control Id="ItemDescription" Type="Text" X="191" Y="72" Width="165" Height="36">
+        <Text><![CDATA[[_WiseDialogFontDefault]Multiline description of the currently selected item xxx xxxx xxxx xxxx xxxx  xxxxx xxx xxxx xxxx xxxx xxx xxxx xx xxxxx xxxxx x]]></Text>
+        <Subscribe Event="SelectionDescription" Attribute="Text" />
+      </Control>
+      <Control Id="Text23" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Select Features]]></Text>
+      </Control>
+      <Control Id="SelectionFrame" Type="GroupBox" X="186" Y="48" Width="180" Height="174" Hidden="no" RightToLeft="no" Disabled="no" />
+      <Control Id="Bitmap28" Type="Bitmap" X="0" Y="0" Width="375" Height="49" Hidden="no" Disabled="no">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Line22" Type="Line" X="0" Y="233" Width="375" Height="2" />
+    </Dialog>
+
+    <Dialog Id="Verify_Dialog" Width="375" Height="270" Title="Likewise Collector Setup" TrackDiskSpace="yes" CustomPalette="yes">
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <!--<Publish Event="DoAction" Value="IsGPMCInstalled">1</Publish>-->
+        <Publish Event="DoAction" Value="WiseNextDlg">GPMCINSTALLED="Group Policy Management"</Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND (OutOfDiskSpace <> 1)]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]">WiseNextDialog AND (OutOfDiskSpace &lt;&gt; 1) AND (GPMCINSTALLED="Group Policy Management")</Publish>
+        <Publish Event="SpawnDialog" Value="Need to Install GPMC">(OutOfDiskSpace &lt;&gt; 1) AND (GPMCINSTALLED&lt;&gt;"Group Policy Management")</Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='Single_Feature_Destination'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes" Hidden="no" RightToLeft="no" Disabled="no" TabSkip="no" Text="Cancel">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text51" Type="Text" X="18" Y="66" Width="288" Height="37" Transparent="yes" Text="[_WiseDialogFontDefault]You have elected to install the Likewise Enterprise support for the Microsoft Group Policy Management Console. The Setup Wizard will need to perform additional prerequisite checks.">
+        <Text><![CDATA[[_WiseDialogFontDefault]You have elected to install Likewise Enterprise support for the Microsoft Group Policy Management Console. The Setup Wizard will need to perform additional prerequisite checks.]]></Text>
+      </Control>
+      <Control Id="Text244" Type="Text" X="20" Y="22" Width="230" Height="24" Transparent="yes" Text="[_WiseDialogFontDefault]Click next to continue with install">
+        <Text><![CDATA[[_WiseDialogFontDefault]Click next to continue with install.]]></Text>
+      </Control>
+      <Control Id="Text26" Type="Text" X="9" Y="7" Width="229" Height="12" Transparent="yes" Hidden="no" RightToLeft="no" Disabled="no" Text="[_WiseDialogTitleFontDefault]Ready to perform final prerequisite checks">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Ready to perform final prerequisite checks]]></Text>
+      </Control>
+      <Control Id="Bitmap29" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Line5" Type="Line" X="1" Y="234" Width="372" Height="0" />
+      <Control Id="Line29" Type="Line" X="0" Y="50" Width="375" Height="1" />
+    </Dialog>
+
+    <Dialog Id="Start_Installation_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]" TrackDiskSpace="yes" CustomPalette="yes">
+      <Control Id="InstallNow" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event="DoAction" Value="WiseNextDlg"><![CDATA[1]]></Publish>
+        <!--<Publish Event="SpawnWaitDialog" Value="WaitForCosting"><![CDATA[CostingComplete = 1]]></Publish>-->
+        <!--<Publish Event="SpawnDialog" Value="OutOfDisk"><![CDATA[OutOfDiskSpace = 1]]></Publish>
+        <Publish Event="Reinstall" Value="ALL"><![CDATA[Installed AND MaintenanceMode="Repair"]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog AND (OutOfDiskSpace <> 1)]]></Publish>
+        <Publish Event="EndDialog" Value="Return"><![CDATA[Not WiseNextDialog AND (OutOfDiskSpace <> 1)]]></Publish>-->
+        <Publish Event='NewDialog' Value='Progress_Dialog'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+      </Control>
+      <Control Id="Previous" Type="PushButton" X="189" Y="244" Width="56" Height="17">
+        <Text><![CDATA[[_WiseDialogFontDefault]< &Back]]></Text>
+        <!--<Publish Event="DoAction" Value="WisePrevDlg"><![CDATA[1]]></Publish>
+        <Publish Event="NewDialog" Value="[WiseNextDialog]"><![CDATA[WiseNextDialog]]></Publish>
+        <Condition Action="disable"><![CDATA[NOT WiseDialogStack]]></Condition>-->
+        <Publish Event='NewDialog' Value='Single_Feature_Destination'>1</Publish>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <!--<Control Id="CheckBox" Type="CheckBox" X="32" Y="119" Width="200" Height="14" Property="INSTALL_DESKTOP_SHORTCUTS" Integer="yes" CheckBoxValue="1">
+        <Text>[_WiseDialogFontDefault]Create shortcuts on the &amp;desktop.</Text>
+        <Property Id="INSTALL_DESKTOP_SHORTCUTS" Secure="yes"><![CDATA[1]]></Property>
+        --><!-- We need to make the desktop shortcut installation a feature so that we can do the right thing on repair as there is no way to know the property specified at install time when doing a repair. --><!--
+      </Control>-->
+      <Control Id="Text51" Type="Text" X="30" Y="65" Width="290" Height="26">
+        <Text><![CDATA[[_WiseDialogFontDefault]Click the Back button to reenter the installation information or click Cancel to exit the wizard.]]></Text>
+      </Control>
+      <Control Id="Text244" Type="Text" X="20" Y="22" Width="230" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Click Next to begin installation.]]></Text>
+      </Control>
+      <Control Id="Text26" Type="Text" X="10" Y="8" Width="230" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Ready to Modify Likewise Enterprise]]></Text>
+        <Condition Action="hide"><![CDATA[Not Installed OR MaintenanceMode <> "Modify"]]></Condition>
+      </Control>
+      <Control Id="Bitmap29" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+      <Control Id="Text2512" Type="Text" X="10" Y="8" Width="230" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Ready to Repair Likewise Enterprise]]></Text>
+        <Condition Action="hide"><![CDATA[Not Installed OR MaintenanceMode <> "Repair"  OR RESUME]]></Condition>
+      </Control>
+      <Control Id="Text251" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Ready to Install Likewise Collector]]></Text>
+        <Condition Action="hide"><![CDATA[Installed OR RESUME]]></Condition>
+      </Control>
+      <Control Id="Text2513" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Ready to Resume [ProductName] installation]]></Text>
+        <Condition Action="hide"><![CDATA[NOT RESUME]]></Condition>
+      </Control>
+      <Control Id="Line5" Type="Line" X="1" Y="234" Width="372" Height="0" />
+      <Control Id="Line29" Type="Line" X="0" Y="50" Width="375" Height="1" />
+    </Dialog>
+
+    <Dialog Id="Maintenance_Welcome_Dialog" Width="375" Height="270" Title="[ProductName] [_WiseDialogSuffix]" CustomPalette="yes">
+      <Control Id="SomethingElse1" Type="RadioButtonGroup" X="15" Y="51" Width="80" Height="144" Property="MaintenanceMode">
+        <RadioButtonGroup Property="MaintenanceMode">
+          <RadioButton Value="No" X="25" Y="60" Width="80" Height="18" Text="[_WiseDialogTitleFontDefault]&amp;No." />
+          <RadioButton Value="Yes" X="25" Y="115" Width="80" Height="18" Text="[_WiseDialogTitleFontDefault]&amp;Yes." />
+        </RadioButtonGroup>
+      </Control>
+      <Control Id="Next" Type="PushButton" X="244" Y="244" Width="56" Height="17" Default="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]&Next >]]></Text>
+        <Publish Event='NewDialog' Value='Verify_Remove_All'>NOT RESUME</Publish>
+        <Publish Event='NewDialog' Value='VerifyReadyDialog'>RESUME</Publish>
+        <Condition Action="disable"><![CDATA[MaintenanceMode <> "Yes"]]></Condition>
+        <Condition Action="enable"><![CDATA[MaintenanceMode = "Yes"]]></Condition>
+        <Condition Action="default"><![CDATA[MaintenanceMode = "Yes"]]></Condition>
+      </Control>
+      <Control Id="Cancel" Type="PushButton" X="309" Y="244" Width="56" Height="17" Cancel="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Cancel]]></Text>
+        <Publish Event="SpawnDialog" Value="Cancel"><![CDATA[1]]></Publish>
+      </Control>
+      <Control Id="Text2" Type="Text" X="20" Y="22" Width="290" Height="24" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogFontDefault]Select the maintenance operation to perform.]]></Text>
+      </Control>
+      <Control Id="Text3" Type="Text" X="10" Y="8" Width="310" Height="12" Transparent="yes">
+        <Text><![CDATA[[_WiseDialogTitleFontDefault]Application Maintenance]]></Text>
+      </Control>
+      <Control Id="Text51" Type="Text" X="30" Y="65" Width="290" Height="26">
+        <Text><![CDATA[[_WiseDialogFontDefault]Would you like to Uninstall [ProductName] from this computer?.]]></Text>
+      </Control>
+      <Control Id="Bitmap25" Type="Bitmap" X="0" Y="0" Width="375" Height="50">
+        <Text><![CDATA[CenterisImages_TopImage]]></Text>
+      </Control>
+    </Dialog>
+
+    <RadioButtonGroup Property='InstallMode'>
+			<RadioButton Value='Complete' X='10' Y='5' Width='380' Height='18' Text='{\Tahoma10}C&amp;omplete'/>
+			<RadioButton Value='Custom' X='10' Y='30' Width='380' Height='18' Text='{\Tahoma10}C&amp;ustom'/>
+			<RadioButton Value='Typical' X='10' Y='55' Width='380' Height='18' Text='{\Tahoma10}&amp;Typical'/>
+		</RadioButtonGroup>
+		<RadioButtonGroup Property='InstallChoice'>
+			<RadioButton Value='AR' X='10' Y='10' Width='380' Height='18' Text='{\Tahoma10}&amp;Add/Remove'/>
+			<RadioButton Value='RA' X='10' Y='110' Width='380' Height='18' Text='{\Tahoma10}&amp;Remove All'/>
+		</RadioButtonGroup>
+		<RadioButtonGroup Property='Advertise'>
+			<RadioButton Value='Yes' X='0' Y='40' Width='265' Height='18' Text='{\Tahoma10}&amp;Advertise'/>
+			<RadioButton Value='No' X='0' Y='10' Width='265' Height='18' Text='{\Tahoma10}&amp;Do not advertise'/>
+		</RadioButtonGroup>
+    
+		<TextStyle Id='DlgFont' FaceName='MS Shell Dlg' Size='10'/>
+		<TextStyle Id='ArialBlueStrike10' FaceName='Arial' Size='10' Red='0' Green='0' Blue='255' Strike='yes'/>
+		<TextStyle Id='CourierBoldGreen12' FaceName='Courier New' Size='12' Red='0' Green='255' Blue='0' Bold='yes'/>
+		<TextStyle Id='Tahoma10' FaceName='Tahoma' Size='10'/>
+		<TextStyle Id='Tahoma15' FaceName='Tahoma' Size='15'/>
+		<TextStyle Id='Times9' FaceName='Times New Roman' Size='9'/>
+		<TextStyle Id='TimesItalic12' FaceName='Times New Roman' Size='12' Italic='yes'/>
+		<TextStyle Id='TimesItalicBlue10' FaceName='Times New Roman' Size='10' Red='0' Green='0' Blue='255' Italic='yes'/>
+		<TextStyle Id='TimesRed16' FaceName='Times New Roman' Size='16' Red='255' Green='0' Blue='0'/>
+		<UIText Id='NewFolder'>Fldr|New Folder</UIText>
+    <UIText Id="TimeRemaining"><![CDATA[Time remaining: {[1] minutes }{[2] seconds}]]></UIText>
+    <UIText Id='AbsentPath'/>
+		<UIText Id='bytes'>bytes</UIText>
+		<UIText Id='GB'>GB</UIText>
+		<UIText Id='KB'>KB</UIText>
+		<UIText Id='MB'>MB</UIText>
+		<UIText Id='MenuAbsent'>Entire feature will not be available</UIText>
+		<UIText Id='MenuAdvertise'>Entire feature will be installed when required</UIText>
+		<UIText Id='MenuAllCD'>Entire feature will be installed to run from CD</UIText>
+		<UIText Id='MenuAllLocal'>Entire feature will be installed on local hard drive</UIText>
+		<UIText Id='MenuAllNetwork'>Entire feature will be installed to run from network</UIText>
+		<UIText Id='MenuCD'>Will be installed to run from CD</UIText>
+		<UIText Id='MenuLocal'>Will be installed on local hard drive</UIText>
+		<UIText Id='MenuNetwork'>Will be installed to run from network</UIText>
+		<UIText Id='SelAbsentAbsent'>This feature will remain uninstalled</UIText>
+		<UIText Id='SelAbsentAdvertise'>This feature will be set to be installed when required</UIText>
+		<UIText Id='SelAbsentCD'>This feature will be installed to run from CD</UIText>
+		<UIText Id='SelAbsentLocal'>This feature will be installed on the local hard drive</UIText>
+		<UIText Id='SelAbsentNetwork'>This feature will be installed to run from the network</UIText>
+		<UIText Id='SelAdvertiseAbsent'>This feature will become unavailable</UIText>
+		<UIText Id='SelAdvertiseAdvertise'>Will be installed when required</UIText>
+		<UIText Id='SelAdvertiseCD'>This feature will be available to run from CD</UIText>
+		<UIText Id='SelAdvertiseLocal'>This feature will be installed on you local hard drive</UIText>
+		<UIText Id='SelAdvertiseNetwork'>This feature will be available to run from the network</UIText>
+		<UIText Id='SelCDAbsent'>This feature will be uninstalled completely, you won't be able to run it from CD</UIText>
+		<UIText Id='SelCDAdvertise'>This feature will change from run from CD state to set to be installed when required</UIText>
+		<UIText Id='SelCDCD'>This feature will remain to be run from CD</UIText>
+		<UIText Id='SelCDLocal'>This feature will change from run from CD state to be installed on the local hard drive</UIText>
+		<UIText Id='SelChildCostNeg'>This feature frees up [1] on your hard drive.</UIText>
+		<UIText Id='SelChildCostPos'>This feature requires [1] on your hard drive.</UIText>
+		<UIText Id='SelLocalAbsent'>This feature will be completely removed</UIText>
+		<UIText Id='SelLocalAdvertise'>This feature will be removed from your local hard drive, but will be set to be installed when required</UIText>
+		<UIText Id='SelLocalCD'>This feature will be removed from your local hard drive, but will be still available to run from CD</UIText>
+		<UIText Id='SelLocalLocal'>This feature will remain on you local hard drive</UIText>
+		<UIText Id='SelLocalNetwork'>This feature will be removed from your local hard drive, but will be still available to run from the network</UIText>
+		<UIText Id='SelNetworkAbsent'>This feature will be uninstalled completely, you won't be able to run it from the network</UIText>
+		<UIText Id='SelNetworkAdvertise'>This feature will change from run from network state to set to be installed when required</UIText>
+		<UIText Id='SelNetworkLocal'>This feature will change from run from network state to be installed on the local hard drive</UIText>
+		<UIText Id='SelNetworkNetwork'>This feature will remain to be run from the network</UIText>
+		<UIText Id='SelParentCostNegNeg'>This feature frees up [1] on your hard drive. It has [2] of [3] subfeatures selected. The subfeatures free up [4] on your hard drive.</UIText>
+		<UIText Id='SelParentCostNegPos'>This feature frees up [1] on your hard drive. It has [2] of [3] subfeatures selected. The subfeatures require [4] on your hard drive.</UIText>
+		<UIText Id='SelParentCostPosNeg'>This feature requires [1] on your hard drive. It has [2] of [3] subfeatures selected. The subfeatures free up [4] on your hard drive.</UIText>
+		<UIText Id='SelParentCostPosPos'>This feature requires [1] on your hard drive. It has [2] of [3] subfeatures selected. The subfeatures require [4] on your hard drive.</UIText>
+		<UIText Id='VolumeCostAvailable'>Available</UIText>
+		<UIText Id='VolumeCostDifference'>Difference</UIText>
+		<UIText Id='VolumeCostRequired'>Required</UIText>
+		<UIText Id='VolumeCostSize'>Disk Size</UIText>
+		<UIText Id='VolumeCostVolume'>Volume</UIText>
+
+    <ProgressText Action="InstallFiles" Template="File: [1]&#xD;&#xA;Directory: [9]&#xD;&#xA;Size: [6]"><![CDATA[Copying new files...]]></ProgressText>
+    
+    <InstallUISequence>
+      <Show Dialog="Resume_Install_Dialog" After="Welcome_Dialog"><![CDATA[Installed AND (RESUME OR Preselected) AND NOT PATCH]]></Show>
+      <Show Dialog="Patch_Dialog" After="Resume_Install_Dialog"><![CDATA[PATCH]]></Show>
+      <Custom Action="SetWizardProperty" After="Patch_Dialog"><![CDATA[Installed AND NOT RESUME AND NOT Preselected AND NOT PATCH]]></Custom>
+      <Show Dialog='Fatal_Error' OnExit='error'/>
+			<Show Dialog='User_Exit' OnExit='cancel'/>
+			<Show Dialog='Exit_Dialog' OnExit='success'/>
+			<Show Dialog='PreActionDialog' After="LaunchConditions"/>
+			<Show Dialog='Welcome_Dialog' After="CostFinalize">NOT Installed</Show>
+      <!--<Show Dialog="Welcome_Dialog" After="SetWizardProperty1"><![CDATA[NOT Installed AND NOT PATCH]]></Show>-->
+			<Show Dialog='FastMaintenanceDialog' After="Welcome_Dialog">Installed AND (RESUME OR Preselected)</Show>
+      <!--<Show Dialog='FirstMaintenanceDialog' After="FastMaintenanceDialog">Installed AND NOT RESUME AND NOT Preselected</Show>-->
+      <!--<Show Dialog='Maintenance_Welcome_Dialog' After="FastMaintenanceDialog">Installed AND NOT RESUME AND NOT Preselected</Show>-->
+      <!--<Show Dialog="Progress_Dialog" After="FirstMaintenanceDialog" />-->
+      <!--<Show Dialog="Progress_Dialog" After="Maintenance_Welcome_Dialog" />-->
+      <Show Dialog="Maintenance_Welcome_Dialog" After="SetWizardProperty"><![CDATA[Installed AND NOT RESUME AND NOT Preselected AND NOT PATCH]]></Show>-->
+      <!--<Show Dialog='ActionDialog' After="Maintenance_Welcome_Dialog"/>-->
+    </InstallUISequence>
+	</UI>
+    
+    <!--<Property Id="APPS_TEST"><![CDATA[1]]></Property>
+    <Property Id="WiseInitLangDefault"><![CDATA[English,1033]]></Property>
+    <Property Id="ARPCONTACT"><![CDATA[support@likewisesoftware.com]]></Property>
+    <Property Id="PALMUSERS"><![CDATA[0]]></Property>
+    <Property Id="ApplicationUsers"><![CDATA[AllUsers]]></Property>
+    <Property Id="_WiseDialogFontDefault"><![CDATA[{&MSSansSerif8}]]></Property>
+    <Property Id="WiseInitAdminError"><![CDATA[You must have administrator rights to run this installation. Please login as an administrator and re-run this installation.]]></Property>
+    <Property Id="DiskPrompt"><![CDATA[[ProductName] [1]]]></Property>
+    <Property Id="MaintenanceMode"><![CDATA[Modify]]></Property>
+    <Property Id="ProductID"><![CDATA[none]]></Property>
+    <Property Id="ARPURLINFOABOUT"><![CDATA[http://www.likewisesoftware.com/]]></Property>
+    <Property Id="WiseInitSuffix"><![CDATA[Wizard...]]></Property>
+    <Property Id="_WiseDebugMode"><![CDATA[0]]></Property>
+    <Property Id="WiseInitPrefix"><![CDATA[Initializing]]></Property>
+    <Property Id="ARPHELPLINK"><![CDATA[http://www.likewisesoftware.com/support/]]></Property>
+    <Property Id="_WiseDialogTitleFontDefault"><![CDATA[{&Arial8}]]></Property>
+    <Property Id="InstallMode"><![CDATA[Complete]]></Property>
+    <Property Id="_WiseDialogSuffix"><![CDATA[Setup]]></Property>
+    <Property Id="WiseInitSpaceError"><![CDATA[Could not create temporary file, not enough free temporary disk space. Please free up disk space and rerun this installation.]]></Property>
+    <Property Id="Accept"><![CDATA[No]]></Property>
+    <Property Id="PackageCode"><![CDATA[{A09AAC9F-042B-4D8B-9811-DEF6707640EF}]]></Property>
+    <Property Id="WiseInitExistError"><![CDATA[%s Version %s is already installed. You must uninstall the existing version before installing %s Version %s. Do you want to uninstall the existing version of %s?]]></Property>
+    <Property Id="ARPHELPTELEPHONE"><![CDATA[+1 (425) 378-7887]]></Property>
+    <Property Id="ReinstallFileVersion"><![CDATA[o]]></Property>
+    <Property Id="PIDTemplate"><![CDATA[12345<###-%%%%%%%>@@@@@]]></Property>
+    <Property Id="INSTALLLEVEL"><![CDATA[3]]></Property>
+    <Property Id="PRIMARYFOLDER"><![CDATA[INSTALLDIR]]></Property>
+    <Property Id="WISE_SQL_CONN_STR" Hidden="yes" />-->
+
+    <Property Id="Accept"><![CDATA[No]]></Property>
+    <Property Id="ApplicationUsers"><![CDATA[AllUsers]]></Property>
+    <Property Id="PRIMARYFOLDER"><![CDATA[INSTALLDIR]]></Property>
+    <Property Id="_WiseDialogTitleFontDefault"><![CDATA[{&Arial8}]]></Property>
+    <Property Id="WiseInitLangDefault"><![CDATA[English,1033]]></Property>
+    <Property Id="ARPCONTACT"><![CDATA[support@likewisesoftware.com]]></Property>
+    <Property Id="PALMUSERS"><![CDATA[0]]></Property>    
+    <Property Id="WiseInitAdminError"><![CDATA[You must have administrator rights to run this installation. Please login as an administrator and re-run this installation.]]></Property>
+    <Property Id="DiskPrompt"><![CDATA[[ProductName] [1]]]></Property>
+    <Property Id="MaintenanceMode"><![CDATA[Repair]]></Property>
+    <Property Id="ProductID"><![CDATA[none]]></Property>
+    <Property Id="ARPURLINFOABOUT"><![CDATA[http://www.likewisesoftware.com/]]></Property>
+    <Property Id="WiseInitSuffix"><![CDATA[Wizard...]]></Property>
+    <Property Id="_WiseDebugMode"><![CDATA[0]]></Property>
+    <Property Id="WiseInitPrefix"><![CDATA[Initializing]]></Property>
+    <Property Id="ARPHELPLINK"><![CDATA[http://www.likewisesoftware.com/support/]]></Property>    
+    <!--<Property Id='ReinstallFileOlderVersion' Value='o'/>-->
+    <!--<Property Id='ReinstallRepair' Value='r'/>-->
+    <Property Id='NewFolder' Value='NewFolder-NOTUSED'/>    
+    <Property Id='PIDKEY' Value='679-1111111'/>
+    <Property Id='ComponentDownload' Value='ftp://xxxxx@likewisesoftware.com/components/'/>
+    <Property Id='DialogCaption' Value='Likewise Collector Install'/>
+    <Property Id='DiskSerial' Value='4FE17'/>
+    <Property Id='InstallChoice' Value='AR'/>
+    <Property Id="InstallMode"><![CDATA[Complete]]></Property>
+    <Property Id="_WiseDialogSuffix"><![CDATA[Setup]]></Property>
+    <Property Id="WiseInitSpaceError"><![CDATA[Could not create temporary file, not enough free temporary disk space. Please free up disk space and rerun this installation.]]></Property>    
+    <Property Id="PackageCode"><![CDATA[{A09AAC9F-042B-4D8B-9811-DEF6707640EF}]]></Property>
+    <Property Id="WiseInitExistError"><![CDATA[%s Version %s is already installed. You must uninstall the existing version before installing %s Version %s. Do you want to uninstall the existing version of %s?]]></Property>
+    <Property Id="ARPHELPTELEPHONE"><![CDATA[+1 (425) 378-7887]]></Property>
+    <Property Id="ReinstallFileVersion"><![CDATA[o]]></Property>
+    <Property Id="PIDTemplate"><![CDATA[12345<###-%%%%%%%>@@@@@]]></Property>
+    <Property Id="INSTALLLEVEL"><![CDATA[3]]></Property>    
+    <Property Id="WISE_SQL_CONN_STR" Hidden="yes" />
+
+    <Binary Id='Up' src='bin\up.bmp'/>
+	  <Binary Id='New' src='bin\new.bmp'/>
+	  <Binary Id='CD' src='bin\cd.bmp'/>
+	  <Binary Id='Info' src='bin\info.bmp'/>
+	  <Binary Id='Music' src='bin\music.bmp'/>
+	  <Binary Id='Welcome' src='bin\welcome.bmp'/>
+    <Binary Id="CenterisImages_SideImage" SourceFile="resources\images\SideImage.bmp" />
+    <Binary Id="CenterisImages_TopImage" SourceFile="resources\images\TopImage.bmp" />    
+    <Binary Id="WiseDlgSequence" SourceFile="resources\wise\WiseDlgSequence.ibd" />
+    
+    <CustomTable Id="WiseDlgSequence">
+      <Column Id="Dialog_" Type="string" Width="72" PrimaryKey="yes" />
+      <Column Id="Wizard" Nullable="yes" Type="string" Width="72" PrimaryKey="yes" />
+      <Column Id="Ordering" Nullable="yes" Type="int" Width="2" />
+      <Column Id="Enabled" Nullable="yes" Type="int" Width="2" />
+      <Column Id="Condition" Nullable="yes" Type="string" Width="0" />
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Maintenance_Welcome_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Maintenance_Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[1]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[1]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[1]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[1]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Installation_Type_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[6]]></Data>
+        <Data Column="Enabled"><![CDATA[0]]></Data>
+        <Data Column="Condition"><![CDATA[NOT RESUME AND NOT Preselected]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[User_Information_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[4]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[NOT RESUME]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[License_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[2]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[1]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Select_Feature_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Maintenance_Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[2]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[MaintenanceMode = "Repair"]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Select_Feature_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[7]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[NOT RESUME AND NOT Preselected]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Start_Installation_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Maintenance_Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[4]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[MaintenanceMode <> "Remove"]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Start_Installation_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[9]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[1]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Verify_Remove_All]]></Data>
+        <Data Column="Wizard"><![CDATA[Maintenance_Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[3]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[MaintenanceMode = "Remove"]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Readme_Dialog]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[3]]></Data>
+        <Data Column="Enabled"><![CDATA[0]]></Data>
+        <Data Column="Condition"><![CDATA[NOT RESUME]]></Data>
+      </Row>
+      <Row>
+        <Data Column="Dialog_"><![CDATA[Single_Feature_Destination]]></Data>
+        <Data Column="Wizard"><![CDATA[Welcome_Dialog]]></Data>
+        <Data Column="Ordering"><![CDATA[5]]></Data>
+        <Data Column="Enabled"><![CDATA[1]]></Data>
+        <Data Column="Condition"><![CDATA[NOT RESUME AND NOT Preselected]]></Data>
+      </Row>
+    </CustomTable>
+  </Product>
+</Wix>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id='moonunit-strip'>
+  <refmeta>
+    <refentrytitle>moonunit-strip</refentrytitle>
+    <manvolnum>1</manvolnum>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>moonunit-strip</refname>
+    <refpurpose>Removes MoonUnit tests from libraries and object files *EXPERIMENTAL*</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>moonunit</command>
+      <arg choice='opt'><replaceable>options</replaceable></arg>
+      <arg choice='plain' rep='repeat'><replaceable>file1</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id='description'><title>Description</title>
+    <para>
+      <command>moonunit-strip</command> removes <emphasis>MoonUnit</emphasis>
+      function and data sections from libraries and strips related symbols,
+      removing all traces of unit tests.
+    </para>
+    <para>
+      This permits unit tests to be compiled directly into
+      libraries, run, and subsequently be stripped,
+      yielding a binary suitable for distribution.
+    </para>
+  </refsect1>
+  <refsect1 id='options'><title>Options</title>
+    <para>
+      <command>moonunit-strip</command> expects one or more shared library,
+      static library, dynamic module, or object files to be
+      specified as arguments.
+    </para> 
+    <para>
+      In addition, the following options are available:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term><option>-h</option></term>
+	<term><option>--help</option></term>
+	<listitem>
+	  <para>Lists brief usage and option information and exits.</para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1 id='caveats'><title>Caveats</title>
+    <para>
+      This script is considered experimental.  Differences
+      between object file formats and linkers preclude
+      a functional implementation on all platforms.  A project
+      which aims for portability should either compile unit
+      tests as separate, discardable modules or allow them to
+      be filtered out at compile time using the preprocessor.
+    </para>
+    <para>
+      Relocations will typically prevent symbols from being
+      stripped in intermediate files such as static libraries
+      and object files; however, the data and functions
+      themselves will be removed, and any vestigal symbols
+      should be cleaned up by ordinary stripping of the final
+      library.
+    </para>
+    <para>
+      If a shared library was compiled with exported
+      unit tests (that is, present in the dynamic symbol table),
+      the symbols cannot be stripped.  To allow stripping, define
+      <literal>MU_HIDE_TESTS</literal> before including
+      <emphasis>MoonUnit</emphasis> headers.  Note that on ELF systems, 
+      <command>moonunit</command> will still generally be able to
+      locate unit tests in shared libraries even if they are
+      hidden in this manner; other platforms may require the use
+      of <command>moonunit-stub</command> to allow the loader access to
+      hidden tests.
+    </para>  
+    <para>
+      The <emphasis>MoonUnit</emphasis> test interface was designed
+      to minimize or eliminate external symbol references, obviating
+      the need to link against <literal>libmoonunit</literal> in most
+      cases.  To ensure that no other references to
+      <literal>libmoonunit</literal> symbols exist in your library,
+      define <literal>MU_LINK_STYLE</literal> to <literal>MU_LINK_NONE</literal>
+      before including <emphasis>MoonUnit</emphasis> headers.  Note that this
+      will change the mechanism used to communicate with the harness such
+      that test macros may not appear outside the immediate bodies of
+      unit tests.
+    </para>
+    <para>
+      If these steps are followed, it should be possible (on some platforms)
+      to remove all traces of unit tests, leaving behind a working library with no
+      <literal>libmoonunit</literal> dependencies.  In the future, a custom program
+      to process library files may eliminate these restrictions and complications.
+    </para>
+    <para>
+      <command>moonunit-strip</command> requires GNU <command>objcopy</command>.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='examples'><title>Examples</title>
+    <variablelist>
+      <varlistentry>
+	<term><literal>moonunit-strip library.so</literal></term>
+	<listitem>
+	  <para>
+	    Remove all unit test data and functions as well as strippable
+	    unit test symbols from <literal>library.so</literal>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1 id='copyright'><title>Copyright</title>
+    <para>Copyright (c) 2007-2008, Brian Koropoff.  All rights reserved.</para>
+    
+    <para>
+      Redistribution in source and binary form is permitted under
+      the terms of the 3-clause BSD license.  See COPYING in the
+      documentation or source distribution for details.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='seealso'><title>See Also</title>
+    <para>
+      <citerefentry><refentrytitle>moonunit</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-lt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-stub</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+</refentry>
+

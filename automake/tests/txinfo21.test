@@ -1,0 +1,107 @@
+#! /bin/sh
+# Copyright (C) 2003, 2004  Free Software Foundation, Inc.
+#
+# This file is part of GNU Automake.
+#
+# GNU Automake is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# GNU Automake is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Automake; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+# Boston, MA 02110-1301, USA.
+
+# Test support for building HTML documentation.
+
+required='makeinfo-html tex'
+. ./defs || exit 1
+
+set -e
+
+cat >>configure.in <<EOF
+AC_CONFIG_FILES([rec/Makefile])
+AC_OUTPUT
+EOF
+
+cat > Makefile.am << 'END'
+SUBDIRS = rec
+info_TEXINFOS = main.texi sub/main.texi
+END
+
+cat > main.texi << 'END'
+\input texinfo
+@setfilename main.info
+@settitle main
+@node Top
+Hello walls.
+@bye
+END
+
+mkdir sub
+mkdir rec
+cp main.texi sub/main.texi
+cp main.texi rec/main.texi
+
+cat > rec/Makefile.am << 'END'
+info_TEXINFOS = main.texi
+END
+
+$ACLOCAL
+$AUTOMAKE --add-missing
+$AUTOCONF
+
+./configure
+
+$MAKE
+
+$sleep
+# Test production of split-per-node HTML.
+$MAKE html
+test -d main.html
+test -d sub/main.html
+test -d rec/main.html
+
+# Rebuilding main.html should cause its timestamp to be updated.
+test `ls -1td main.texi main.html | sed 1q` = main.html
+$sleep
+touch main.texi
+$MAKE html
+test `ls -1td main.texi main.html | sed 1q` = main.html
+
+$MAKE clean
+test ! -d main.html
+test ! -d sub/main.html
+test ! -d rec/main.html
+
+# Test production of a single HTML file.
+MAKEINFOFLAGS=--no-split $MAKE -e html
+test -f main.html
+test -f sub/main.html
+test -f rec/main.html
+$MAKE clean
+test ! -f main.html
+test ! -f sub/main.html
+test ! -f rec/main.html
+
+# Make sure AM_MAKEINFOHTMLFLAGS is supported, and override AM_MAKEINFO.
+cat >>Makefile.am <<\EOF
+AM_MAKEINFOHTMLFLAGS=--no-split
+AM_MAKEINFOFLAGS=--unsupported-option
+EOF
+$AUTOMAKE
+./configure
+$MAKE html
+test -f main.html
+test -f sub/main.html
+test -d rec/main.html
+$MAKE clean
+test ! -f main.html
+test ! -f sub/main.html
+test ! -d rec/main.html

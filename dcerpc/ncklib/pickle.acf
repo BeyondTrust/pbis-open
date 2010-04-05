@@ -1,0 +1,7 @@
+interface pickle {
+	[encode] sec__id_pac_format_v1_pickle([comm_status] st);
+	[decode] sec__id_pac_format_v1_unpickle([comm_status] st);
+
+	[encode] sec__id_pac_pickle([comm_status] st);
+	[decode] sec__id_pac_unpickle([comm_status] st);
+}

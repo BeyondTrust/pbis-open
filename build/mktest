@@ -1,0 +1,166 @@
+#!/bin/bash
+
+if [ -z "$BUILD_ROOT" ] ; then
+    echo "BUILD_ROOT is not defined."
+    exit 1
+fi
+
+source ${BUILD_ROOT}/src/linux/build/common.sh
+exit_on_error $?
+
+source ${BUILD_ROOT}/src/linux/build/version.sh
+exit_on_error $?
+
+source ${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh
+exit_on_error $?
+
+function get_test_libraries
+{
+    local comp
+    local lib
+    
+    for comp in "$@"
+    do
+	for lib in ${BUILD_META_OS_ROOT}/components/${comp}/staging/${MAIN_PREFIX_DIR}/lib*/*_mu.${MODULE_EXT}
+	do
+            la_lib=`echo $lib | sed "s/\.${MODULE_EXT}\$/.la/"`
+            [ -f "$la_lib" ] && lib="$la_lib"
+            [ -f "$lib" ] && echo "$lib"
+	done
+    done
+}
+
+function get_test_libpath
+{
+    local path=""
+    for dir in ${BUILD_RUN_ROOT}/lib ${BUILD_META_OS_ROOT}/components/*/staging/${MAIN_PREFIX_DIR}/lib*
+    do
+        [ -d "$dir" ] && path="$path:$dir"
+    done
+    echo "$path"
+}
+
+function get_test_loggers
+{
+    local loggers=""
+
+    if ${OPT_XML}
+    then
+	loggers="$loggers --logger xml:file=${BUILD_DIST_OS_ROOT}/moonunit.xml"
+    fi
+
+    if ${OPT_COLOR}
+    then
+	loggers="$loggers --logger console:ansi=true"
+    else
+	loggers="$loggers --logger console:ansi=false"
+    fi
+
+    echo "${loggers}"
+}
+
+function usage
+{
+    echo "usage: `basename $0` [options] [COMPONENT ...]"
+    echo ""
+    echo "    Run moonunit tests on the specified components."
+    echo "    The default is to do all components."
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --debug        - Enable debugging."
+    echo "    --xml          - Enable XML output."
+    echo "    --color        - Enable color output."
+    echo "    --nocolor      - Disable color output."
+    echo "    --iterations N - Do N iterations (default is $DEFAULT_ITERATIONS)."
+    echo "    --timeout N    - Set timeout to N miliseconds (default is $DEFAULT_TIMEOUT)."
+    echo ""
+    exit 1
+}
+
+function parse_arguments
+{
+    local arg
+    while [ -n "$1" ]
+    do
+	arg="$1"
+	shift
+	case "$arg" in
+            --help)
+                usage
+                ;;
+            --debug)
+                OPT_DEBUG="-g"
+                ;;
+	    --xml)
+		OPT_XML=true
+		;;
+	    --color)
+		OPT_COLOR=true
+		;;
+	    --nocolor)
+		OPT_COLOR=false
+		;;
+	    --iterations)
+		OPT_ITERATIONS="$1"
+		shift
+		;;
+	    --timeout)
+		OPT_TIMEOUT="$1"
+		shift
+		;;
+	    --*|-*)
+		echo "Unrecognized option: $arg"
+                usage
+		;;
+	    *)
+		OPT_TARGETS="$OPT_TARGETS $arg"
+		;;
+	esac
+    done
+
+    if [ -z "${OPT_TARGETS}" ]
+    then
+	OPT_TARGETS="$(component_available)"
+    fi
+}
+
+function main
+{
+    OPT_TARGETS=""
+    OPT_XML=false
+    OPT_COLOR="`[ -n "${OFFICIAL_BUILD_NUMBER}" ] && echo false || echo true ]`"
+    OPT_TIMEOUT=10000
+    OPT_ITERATIONS=1
+    OPT_DEBUG=""
+
+    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+        hpux-hppa20)
+            MODULE_EXT="sl"
+            ;;
+        *)
+            MODULE_EXT="so"
+            ;;
+    esac
+
+    export LD_LIBRARY_PATH="$(get_test_libpath)"
+    export SHLIB_PATH="${LD_LIBRARY_PATH}"
+    export LIBPATH="${LD_LIBRARY_PATH}"
+
+    export CHARSETALIASDIR=`dirname "${BUILD_META_OS_ROOT}/components/libiconv/staging/${MAIN_PREFIX_DIR}"/lib*/charset.alias`
+
+    parse_arguments "$@"
+
+    LOGGERS="$(get_test_loggers)"
+    LIBRARIES="$(get_test_libraries ${OPT_TARGETS})"
+
+    if [ -n "${LIBRARIES}" ] ; then
+	set -x
+	exec moonunit-lt ${OPT_DEBUG} --timeout "${OPT_TIMEOUT}" --iterations "${OPT_ITERATIONS}" ${LOGGERS} ${LIBRARIES}
+    else
+	exit 0
+    fi
+}
+
+main "$@"
+exit 0

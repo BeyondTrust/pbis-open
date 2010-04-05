@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise advanced authentication infrastructure (LSASS)"
+DEPENDS="likewise-pstore likewise-base"

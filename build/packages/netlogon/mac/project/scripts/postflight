@@ -1,0 +1,125 @@
+#!/bin/bash
+
+#
+# Prepare common installation and dependant directories used by Likewise
+#
+OPT="/opt"
+OPT_LW="/opt/likewise"
+USR="/usr"
+USR_LIB="/usr/lib"
+ETC="/etc"
+ETC_LW="/etc/likewise"
+VAR="/var"
+VAR_LIB="/var/lib"
+VAR_LIB_LW="/var/lib/likewise"
+
+if test -d $OPT; then
+    echo "setting $OPT directory owner to 0:80"
+    chown 0:80 "$OPT"
+else
+    echo "creating $OPT directory and setting owner to 0:80"
+    mkdir "$OPT"
+    chown 0:80 "$OPT"
+fi
+
+if test -d $OPT_LW; then
+    echo "setting $OPT_LW directory owner to 0:80"
+    chown -R 0:80 "$OPT_LW"
+else
+    echo "creating $OPT_LW directory and setting owner to 0:80"
+    mkdir "$OPT_LW"
+    chown -R 0:80 "$OPT_LW"
+fi
+
+if test -d $USR; then
+    echo "setting $USR directory owner to 0:0"
+    chown 0:0 "$USR"
+else
+    echo "creating $USR directory and setting owner to 0:0"
+    mkdir "$USR"
+    chown 0:0 "$USR"
+fi
+
+if test -d $USR_LIB; then
+    echo "setting $USR_LIB directory owner to 0:0"
+    chown 0:0 "$USR_LIB"
+else
+    echo "creating $USR_LIB directory and setting owner to 0:0"
+    mkdir "$USR_LIB"
+    chown -R 0:0 "$USR_LIB"
+fi
+
+if test -d $ETC; then
+    echo "setting $ETC directory owner to 0:80"
+    chown 0:80 "$ETC"
+else
+    echo "creating $ETC directory and setting owner to 0:80"
+    mkdir "$ETC"
+    chown 0:80 "$ETC"
+fi
+
+if test -d $ETC_LW; then
+    echo "setting $ETC_LW directory owner to 0:80"
+    chown -R 0:80 "$ETC_LW"
+else
+    echo "creating $ETC_LW directory and setting owner to 0:80"
+    mkdir "$ETC_LW"
+    chown -R 0:80 "$ETC_LW"
+fi
+
+if test -d $VAR; then
+    echo "setting $VAR directory owner to 0:80"
+    chown 0:80 "$VAR"
+else
+    echo "creating $VAR directory and setting owner to 0:80"
+    mkdir "$VAR"
+    chown 0:80 "$VAR"
+fi
+
+if test -d $VAR_LIB; then
+    echo "setting $VAR_LIB directory owner to 0:80"
+    chown 0:80 "$VAR_LIB"
+else
+    echo "creating $VAR_LIB directory and setting owner to 0:80"
+    mkdir "$VAR_LIB"
+    chown 0:80 "$VAR_LIB"
+fi
+
+if test -d $VAR_LIB_LW; then
+    echo "setting $VAR_LIB_LW directory owner to 0:80"
+    chown -R 0:80 "$VAR_LIB_LW"
+else
+    echo "creating $VAR_LIB_LW directory and setting owner to 0:80"
+    mkdir "$VAR_LIB_LW"
+    chown -R 0:80 "$VAR_LIB_LW"
+fi
+
+
+#
+# Prepare Netlogon specific installation and dependant directories
+#
+VAR_LIB_LW_NETLOGON="/var/lib/likewise/netlogon"
+
+if test -d $VAR_LIB_LW_NETLOGON; then
+    echo "setting $VAR_LIB_NETLOGON directory owner to 0:80"
+    chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
+    chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
+else
+    echo "creating $VAR_LIB_LW_NETLOGON directory and setting owner to 0:80"
+    mkdir "$VAR_LIB_LW_NETLOGON"
+    chown -R 0:80 "$VAR_LIB_LW_NETLOGON"
+    chmod -R 0755 "$VAR_LIB_LW_NETLOGON"
+fi
+
+#
+# Register Netlogon daemon with LaunchCtl
+#
+NETLOGON_NAME=com.likewisesoftware.netlogond
+NETLOGON_DAEMON=/Library/LaunchDaemons/$NETLOGON_NAME.plist
+NETLOGON_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$NETLOGON_NAME.plist
+
+if [ -f $NETLOGON_DAEMON_INSTALL ]; then
+    cp $NETLOGON_DAEMON_INSTALL $NETLOGON_DAEMON > /dev/null
+    launchctl load $NETLOGON_DAEMON > /dev/null
+fi
+

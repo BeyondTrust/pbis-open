@@ -1,0 +1,22 @@
+#!/bin/bash
+
+PKG_COMPONENTS="mod-auth-kerb-2_0 mod-auth-kerb-2_2"
+
+case "${PKG_TYPE}" in
+    rpm|deb|mac)
+        PKG_NAME=likewise-mod-auth-kerb
+        ;;
+    pkg|depot)
+        PKG_NAME=LikewiseModAuthKerb
+        ;;
+    bff)
+       PKG_NAME=likewise.modauthkerb
+       ;;
+esac
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

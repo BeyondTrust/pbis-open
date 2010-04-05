@@ -1,0 +1,66 @@
+COMP_DEPENDENCIES="automake autoconf"
+COMP_SOURCES=${BUILD_ROOT}/src/linux/libtool
+COMP_IS_TOOL=1
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}"
+    exit_on_error $?
+
+    (
+	find . -name '*.m4'
+	find . -name '*.in'
+	find . -name 'configure'
+    ) | xargs touch
+
+    touch doc/version.texi doc/stamp-vti
+}
+
+function component_gather
+{
+    echo "Nothing to gather for libtool"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    LDFLAGS="${_ldflags}"
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags}"
+
+    export LDFLAGS CFLAGS CPPFLAGS
+
+    libtool_set_staging_library_path
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    "${COMP_SOURCES}/configure" --prefix="${BUILD_RUN_ROOT}" ${DEPENDENCY_TRACKING}
+}
+
+function component_build
+{
+   _setup_build_env
+
+   # Don't use parallel make for libtool
+   ${MAKE} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR="${STAGING_ROOT_DIR}" install
+}
+
+function component_populate
+{
+    echo "SHOULD NOT BE HERE"
+    exit 1
+}

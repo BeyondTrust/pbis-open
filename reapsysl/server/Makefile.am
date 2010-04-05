@@ -1,0 +1,7 @@
+
+SUBDIRS = \
+         ipc       \
+         api       \
+         etc       \
+         reader    \
+         daemon

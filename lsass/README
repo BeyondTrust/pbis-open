@@ -1,0 +1,110 @@
+Building LSASS using a package build (RPM/DEB/etc.) on Linux:
+========================
+
+1.  Verify that all Sapphire RPMs from the latest successful build (Currently, build 2700), except lsass, are installed.
+2.  Use the latest Sapphire source tree from SVN
+3.  Enter directory Sapphire/build
+4.  run source buildenv
+5.  run mkall build (may take ~30 minutes)
+6.  run mkcomp lsass (<1 minute)
+7.  run mkpkg lsass (<1 minute)
+8.  install centeris-lsass*.rpm
+9.  to make another build, repeat steps 6-8
+
+
+
+Building LSASS on Linux:
+========================
+
+1.  Consider using the package build instead: it is just as fast, and tracks the official build.
+2.  Verify that all Sapphire RPMs from the latest successful build (Currently, build 2700), except lsass, are installed.
+3.  Use the latest Sapphire source tree from SVN
+4.  Enter directory Sapphire/build
+5.  run source buildenv
+6.  run mkall build (may take ~30 minutes)
+7.  Enter directory Sapphire/src/linux/lsass
+8.  run export LD_LIBRARY_PATH=/usr/centeris/lib
+9.  run ./autogen.sh
+10. run ./configure
+11. run make
+12. run make install
+13. to make another build, repeate steps 11-12
+
+Debugging LSASS on Linux:
+=========================
+
+Same as steps for 'Building LSASS on Linux', except for configure:
+
+--run ./configure --enable-debug instead of './configure'
+
+Now, you should be able to use gdb to debug the server and client modules.
+
+Please make sure your $HOME/.gdbinit has the following line
+
+handle SIGXCPU SIG33 SIG35 SIGPWR nostop noprint
+
+
+To run the lsass daemon from the command line on linux:
+======================================================
+
+--enter /opt/likewise/sbin
+--su to root
+--run /sbin/service likewise.com-rpcd restart
+--run export LD_LIBRARY_PATH=/opt/likewise/lib
+--run ./lsassd
+
+
+To start LSASS server as a background service on linux:
+=======================================================
+--su to root
+--run /sbin/service likewise.com-rpcd restart
+--run /sbin/service likewise.com-lsassd restart
+
+To configure LSASS on linux:
+============================
+--su to root
+--Make sure you are joined to an Active Directory domain.
+
+File: /etc/nsswitch.conf
+
+      Put "lsass" in place of "lwidentity".
+
+      For instance,
+
+          passwd: compat lsass
+          group:  compat lsass
+
+File: /etc/pam.d
+
+      Change the files which have lwidentity in them to have lsass instead.
+
+      On Ubuntu, these files are {common-account,
+                                  common-auth,
+                                  common-password,
+                                  common-session}
+
+      For instance, after the changes, the file at common-account will look
+      as follows.
+
+      #
+      # /etc/pam.d/common-account - authorization settings common to all services
+      #
+      # This file is included from other service-specific PAM config files,
+      # and should contain a list of the authorization modules that define
+      # the central access policy for use on the system.  The default is to
+      # only deny service to users whose accounts are expired in /etc/shadow.
+      #
+      account required        /lib/security/pam_lsass.so      unknown_ok
+      account sufficient      /lib/security/pam_lsass.so
+      account required        pam_unix.so
+
+Adding a local LSASS group:
+===========================
+
+/opt/likewise/sbin/likewise-addgroup likewise
+
+Adding a local LSASS user:
+==========================
+
+/opt/likewise/sbin/likewise-adduser --group likewise likewise
+

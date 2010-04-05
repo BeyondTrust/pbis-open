@@ -1,0 +1,15 @@
+[
+	explicit_handle
+]
+interface lsa
+{
+	[enable_allocate] __LsaClose();
+	[enable_allocate] __LsaQueryInfoPolicy();
+	[enable_allocate] __LsaLookupNames();
+	[enable_allocate] __LsaLookupSids();
+	[enable_allocate] __LsaOpenPolicy2();
+	[enable_allocate] __LsaQueryInfoPolicy2();
+	[enable_allocate] __LsaLookupNames2();
+	[enable_allocate] __LsaLookupSids2();
+	[enable_allocate] __LsaLookupNames3();
+}

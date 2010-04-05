@@ -1,0 +1,10 @@
+{
+
+module "Likewise";
+
+global string domain = "";
+global string user = "";
+global string pass = "";
+
+/* EOF */
+}

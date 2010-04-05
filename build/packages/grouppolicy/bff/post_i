@@ -1,0 +1,29 @@
+## chkconfig behaves differently on various updates of RHEL4 and Suse
+## So, we massage the init script according to the release, for now.
+if [ -x /etc/rc.d/init.d/likewise.com-gpagentd ]; then
+
+INIT_FILE=/etc/rc.d/init.d/likewise.com-gpagentd
+INIT_FILE_NEW=${INIT_FILE}.new
+
+if [ -f /etc/redhat-release ]; then
+
+sed 's/^LWI_STARTUP_TYPE_REDHAT\(.*\)$/\1/' $INIT_FILE > $INIT_FILE_NEW
+mv $INIT_FILE_NEW $INIT_FILE
+
+sed '/^LWI_STARTUP_TYPE_SUSE.*$/ d' $INIT_FILE > $INIT_FILE_NEW
+mv $INIT_FILE_NEW $INIT_FILE
+
+else
+
+sed 's/^LWI_STARTUP_TYPE_SUSE\(.*\)$/\1/' $INIT_FILE > $INIT_FILE_NEW
+mv $INIT_FILE_NEW $INIT_FILE
+
+sed '/^LWI_STARTUP_TYPE_REDHAT.*$/ d' $INIT_FILE > $INIT_FILE_NEW
+mv $INIT_FILE_NEW $INIT_FILE
+
+fi
+
+chmod +x $INIT_FILE
+
+fi
+

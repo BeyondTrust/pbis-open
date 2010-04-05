@@ -1,0 +1,17 @@
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions]
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions\{A36E3651-9910-4183-859B-2E077140FBCB}]
+"Name"="Likewise Enterprise Macintosh GP Extension"
+"DllName"="liblwimacpolicy@MOD_EXT@"
+"EnableAsynchronousProcessing"=dword:00000000
+"NoBackgroundPolicy"=dword:00000000
+"NoGPOListChanges"=dword:00000001
+"NoMachinePolicy"=dword:00000000
+"NoSlowLink"=dword:00000001
+"NoUserPolicy"=dword:00000001
+"PerUserLocalSettings"=dword:00000000
+"RequireSuccessfulRegistry"=dword:00000001
+"ProcessGroupPolicy"="ProcessMacGroupPolicy"
+"ResetGroupPolicy"="ResetMacGroupPolicy"
+

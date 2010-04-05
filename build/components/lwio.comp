@@ -1,0 +1,130 @@
+#!/bin/bash -c "exit 1"
+
+# Variables section
+#
+# Defines variables that describe attributes of this
+# component
+
+COMP_INCREMENTAL=1
+COMP_DEPENDENCIES="autoconf automake libtool moonunit libuuid libcrypto lwmsg krb5 netlogon lwbase sqlite lwbase lwreg"
+COMP_SOURCES=${BUILD_ROOT}/src/linux/lwio
+
+if [ "${BUILD_OS_TYPE}" = "linux" ] && ! check_is_rhel_21
+then
+    COMP_DEPENDENCIES="$COMP_DEPENDENCIES libfuse"
+fi
+
+# Functions section
+#
+# Contains logic for variou stages of building the component
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./autogen.sh
+    exit_on_error $?
+}
+
+function component_gather
+{
+    echo "Nothing to gather for ${COMP_NAME}"
+}
+
+# Helper function to set up build environment -- this is not called directly by the build system,
+# and is just a convention
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    CFLAGS="${_cflags} -fPIC"
+    LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib})"
+
+    # Extra logic for setting CFLAGS/CPPFLAGS/LDFLAGS for various platforms goes here
+
+    export CPPFLAGS LDFLAGS CFLAGS
+}
+
+# Performs the configure stage, generally by running autogen.sh followed by configure
+function component_configure
+{
+    local extra_flags=""
+
+    _setup_build_env
+
+    if [ -n "${BUILD_DEBUG}" ]
+    then
+	extra_flags="$extra_flags --enable-debug"
+    fi
+
+    if [ -n "${BUILD_MINIMAL}" ]
+    then
+	extra_flags="$extra_flags --with-drivers=rdr --enable-static-drivers --disable-iotest --disable-pidfile --enable-small-daemon"
+    fi
+
+    "${COMP_SOURCES}/configure"                        \
+        --prefix=${PREFIX_DIR}                         \
+        --libdir=${PREFIX_DIR}/${_lib}                 \
+        --sysconfdir=${BUILD_SYSCONFDIR}               \
+        --localstatedir=${BUILD_LOCALSTATEDIR}         \
+        ${extra_flags}                                 \
+        ${DEPENDENCY_TRACKING}                         \
+        LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"  \
+        CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS"
+}
+
+# Peforms the build stage, generally by running make
+function component_build
+{
+    _setup_build_env
+
+   ${MAKE} ${_mflags} all
+}
+
+# Peforms the staging stage, generally by running make install or copying bits
+# explicitly into the staging directory
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    libtool_rewrite_staging
+}
+
+# Peforms the populate stage, generally by copying desired bits from the
+# staging directory into the populate directory, along with
+# config files, init script, and other vendor files
+function component_populate
+{
+    COMP_NAME=lwio
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
+
+    if [ -z "${IS_COMPAT}" ]; then
+        # Handle init scripts
+        local script=lwiod
+        x_mkinit \
+            "${BUILD_ROOT}/src/linux/config/${script}" \
+            ${script} \
+            01 01 \
+            likewise.lwiod 20 09
+
+        if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwiod.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+        fi
+
+        if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwiod.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
+        fi
+    fi
+
+    libtool_rewrite_populate
+}

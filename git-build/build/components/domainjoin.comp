@@ -1,0 +1,127 @@
+#!/bin/bash -c "exit 1"
+
+COMP_NAME="domainjoin"
+COMP_SOURCES="${BUILD_ROOT}/${COMP_NAME}"
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${COMP_SOURCES}
+    exit_on_error $?
+
+    CPPFLAGS="${_cppflags}"
+    CFLAGS="${_cflags} -D_REENTRANT -fPIC"
+    LDSHFLAGS="${_ldshflags}"
+    LDFLAGS="${_ldflags}"
+
+    WANT_GTK=no
+
+    case `uname -s` in
+        Linux)
+           WANT_GTK=yes
+            ;;
+    esac
+
+    ## Allow the domainjoin-gui to be disabled
+    [ -n "${DISABLE_DJ_GUI}" ] && WANT_GTK=no
+
+    export CC LDFLAGS CPPFLAGS CFLAGS LDSHFLAGS WANT_GTK
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    run_autogen ${COMP_SOURCES}
+    exit_on_error $?
+
+    run_configure                                 \
+        --prefix=${PREFIXDIR}                   \
+        --libexecdir=${LIBEXECDIR}              \
+        --libdir=${PREFIXDIR}/${_lib}           \
+        --sysconfdir=${SYSCONFDIR}              \
+        --localstatedir=${LOCALSTATEDIR}        \
+        --disable-static                        \
+        --enable-shared                         \
+	--with-gtk=${WANT_GTK} \
+	--without-libxml2
+
+}
+
+function component_build
+{
+   _setup_build_env
+
+   local _make_build_flags=""
+
+   if [ -n "${BUILD_MAKE_FLAGS}" ]; then
+       _make_build_flags="${BUILD_MAKE_FLAGS}"
+   fi
+
+   ${MAKE} ${_mflags} ${_make_build_flags} all
+}
+
+function component_install
+{
+    _setup_build_env
+
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+    local INSTALL_PREFIX_ROOT="${INSTALL_ROOT}/${PREFIXDIR}"
+    local STAGING_PREFIX_DIR=${STAGE_INSTALL_DIR}/${PREFIXDIR}
+
+    [ "$INSTALL_ROOT" != "/" ] && [ -z "${BUILD_PRESERVE_STAGING}" ] && rm -rf $INSTALL_ROOT
+    mkdir -p ${INSTALL_ROOT}
+    mkdir -p ${INSTALL_PREFIX_ROOT}
+    mkdir -p ${STAGE_INSTALL_DIR}
+
+    ${MAKE} DESTDIR=${INSTALL_ROOT} install
+
+    mkdir -m 755 -p ${INSTALL_PREFIX_ROOT}/{bin,include,${_lib},data}
+    mkdir -m 755 -p ${INSTALL_PREFIX_ROOT}/share/likewise
+
+    cp libdomainjoin/include/*.h ${INSTALL_PREFIX_ROOT}/include/
+
+    install -m755 scripts/ConfigureLogin ${INSTALL_PREFIX_ROOT}/bin/
+    install -m755 scripts/gpcron ${INSTALL_PREFIX_ROOT}/bin/
+
+    PrintVersionData > ${INSTALL_PREFIX_ROOT}/data/VERSION
+    ln -s ${INSTALL_PREFIX_ROOT}/data/VERSION ${INSTALL_PREFIX_ROOT}/share/likewise/VERSION
+    
+
+    if [ -x domainjoin-gui/gtk/domainjoin-gtk ] ; then
+        mv ${INSTALL_PREFIX_ROOT}/bin/domainjoin-gtk ${INSTALL_PREFIX_ROOT}/bin/domainjoin-gui
+        cp domainjoin-gui/gtk/domainjoin-gtk.glade ${INSTALL_PREFIX_ROOT}/share/likewise
+        cp domainjoin-gui/gtk/*.png ${INSTALL_PREFIX_ROOT}/share/likewise
+    fi
+
+    rsync -a ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
+
+    libtool_rewrite_staging
+}
+
+
+function component_populate
+{
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+    local INSTALL_PREFIX_DIR="${INSTALL_ROOT}/${PREFIXDIR}"
+    local STAGING_PREFIX_DIR="${STAGE_INSTALL_DIR}/${PREFIXDIR}"
+    local STAGING_SYSCONF_DIR="${STAGE_INSTALL_DIR}/${SYSCONFDIR}"
+
+    local POPULATE_DIR="$1"
+    local EXCLUDE_FILE="${POPULATE_DIR}/../exclude.files"
+
+    if [ -z "${POPULATE_DIR}" ] || [ ! -d "${POPULATE_DIR}" ]; then
+	echo "Non-existent or invalid populate dircetory given: ${POPULATE_DIR}"
+	return 1
+    fi
+
+    cat <<EOF > ${EXCLUDE_FILE}
+include
+*.a
+*.la
+EOF
+
+    rsync -a --exclude-from=${EXCLUDE_FILE} ${INSTALL_ROOT}/ ${POPULATE_DIR}/
+}
+

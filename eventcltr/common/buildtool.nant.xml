@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<project>
+  <target name="local.build">
+
+    <property name="local.output" value="common" />
+    <if test="${build.vsarch!='x86'}">
+      <fail message="${local.output} only builds for the x86 architecture!" />
+    </if>
+
+    <if test="${build.vsarch=='x86'}">
+      <choose>
+        <when test="${build.debug.boolean}">
+          <property name="build.cflags" value="/Od /GL /FD /EHsc /Wp64 /Zi /MD /W3" />
+        </when>
+        <otherwise>
+          <property name="build.cflags" value="/O2 /FD /EHsc /Wp64 /Zi /MD /W3" />
+        </otherwise>
+      </choose>
+    </if>
+
+    <cl outputdir="${build.meta.current}/">
+      <includedirs>
+        <include name="..\..\lwbase\include"/>
+        <include name="..\..\lwbase\include\win32"/>
+        <include name="..\include"/>
+      </includedirs>
+      <defines>
+        <define name="UNICODE"/>
+        <define name="_UNICODE"/>
+        <define name="WIN32"/>
+        <define name="_WINDOWS"/>
+        <define name="NDEBUG"/>
+        <define name="_USRDLL"/>
+        <define name="_AFXDLL"/>
+      </defines>
+      <sources>
+        <include name="*.c"/>
+      </sources>
+	    <arg line="${build.cflags}" />
+    </cl>
+    <lib output="${build.meta.current}/${local.output}.lib">
+      <sources basedir="${build.meta.current}/">
+        <include name="*.obj"/>
+      </sources>
+    </lib>
+  </target>
+</project>

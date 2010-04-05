@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Tools"
+DEPENDS="likewise-lsass"

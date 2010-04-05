@@ -1,0 +1,148 @@
+#!/usr/bin/ksh
+#**********************************************************************
+#                                                                     *
+# LPPBUILD_ROOT_LIB                                                   *
+#                                                                     *
+# This procedure is more or less the same as lppbuild_user_lib except *
+# that it will create the liblpp.a file relevant to the root part of  *
+# the package and there is less fiddling around with the inst_root    *
+# directory.                                                          *
+#                                                                     *
+# The root part differs to the extent that all the files are in       *
+# different places and the names of the optional user scripts are     *
+# defined to be slightly non standard so that we can distinguish      *
+# them from the rest.                                                 *
+#                                                                     *
+# The incoming parameters are as follows:                             *
+#                                                                     *
+# $1 - The name of the product                                        *
+# $2 - The name of the component                                      *
+# $3 - The name of the directory to contain the liblpp.a created      *
+#                                                                     *
+#**********************************************************************
+
+product=$1                                # names easier to work with
+component=$2                              # names easier to work with
+lppdir=$3                                 # target directory for output
+work=/tmp/$$`id -un`                      # use a work directory
+rm -fr $work                              # clean up any old rubbish
+mkdir -p $work                            # start with a clean slate
+restore=`pwd`                             # current directory for later
+applylist=$work/$product.$component.al    # name of apply list
+inv=$work/$product.$component.inventory   # name of the inventory
+
+#**********************************************************************
+#                                                                     *
+# INTERNAL PROCEDURE                                                  *
+#                                                                     *
+# getmode will return the octal version of the permissions for the    *
+# incoming filename, including suid, guid, etc.                       *
+#                                                                     *
+#**********************************************************************
+
+getmode()
+{
+ ls -ld $1 | awk \
+ '{j=256                                   # highest "bit" value
+   for(i=2;i<11;i++)                       # take 2nd-10th char of perms
+    {                                      # and process each one
+     if (substr($1,i,1)!~/[-ST]/)          # "-" "S" and "T" all mean "off"
+       mode+=j                             # take decimal equivalent if "on"
+     j/=2                                  # get decimal equivalent of next
+    }                                      # end of basic permissions
+   if (substr($1,4,1)~/[Ss]/)              # setuid is on?
+     mode+=2048                            # so add the 4000 bit
+   if (substr($1,7,1)~/[Ss]/)              # Guid is on?
+     mode+=1024                            # so add the 2000 bit
+   if (substr($1,10,1)~/[Tt]/)             # link permisssion on?
+     mode+=512                             # so add the 1000 bit
+   printf("%o\n", mode)                    # display the octal permissions
+ }'                                        # end of awk script
+}                                          # end of function
+
+#**********************************************************************
+#                                                                     *
+# Define a list of all the valid optional files which can be placed   *
+# in the liblpp.a file at the users discretion                        *
+#                                                                     *
+#**********************************************************************
+
+names="cfginfo cfgfiles err fixdata namelist odmadd rm_inv trc"
+names="$names config config_u odmdel pre_d pre_i pre_u pre_rm"
+names="$names post_i post_u unconfig unconfig_u unodmadd"
+names="$names unpost_i unpost_u unpre_i unpre_u"
+
+#**********************************************************************
+#                                                                     *
+# If the user has included in his component directory any of the      *
+# optional files listed above, then make sure that they get added     *
+# in the appropriate form to the liblpp.a library                     *
+#                                                                     *
+#**********************************************************************
+
+cd $component                             # go to component directory
+for optional in $names; do                # run through possibilities
+  if [ -f root.$optional ]; then          # has he provided such a thing
+    cp root.$optional $work/$product.$component.$optional # add to build area
+    chmod +x $work/$product.$component.$optional     # always forget this!
+  fi                                      # end of handling the option
+done                                      # end of worrying about optionals
+
+#**********************************************************************
+#                                                                     *
+# Run through all the files in the source directory structure and     *
+# build an apply list which defines all of them. We select only       *
+# those files which are not in the user part                          *
+#                                                                     *
+#**********************************************************************
+
+cd root                                   # step down to actual files
+for file in `find . -print | grep -v "./usr" | grep -x -v "."`; do
+  lsdata=`ls -ld $file`;                  # collect ls -ld output just once
+  echo $file >> $applylist                # spit out the apply list
+  echo `echo $file | cut -c 2-`: >>$inv   # create stanza heading
+  echo \\t class=apply,inventory,$product.$component>>$inv; # meaning uncertain
+  #S7 Changes begins. Hard coded the owner and group part as root and system
+  #and commented out the initial procedure of getting it from ls -ld
+  echo \\t owner=root >> $inv
+  echo \\t group=system >> $inv
+  #echo \\t owner=`echo $lsdata | awk '{print $3}'`  >>$inv; # determine owner
+  #echo \\t group=`echo $lsdata | awk '{print $4}'`  >>$inv; # determine group
+  #S7 Changes ends.
+  echo \\t mode=`getmode $file`                     >>$inv; # octal attributes
+  if [ -L $file ]; then                   # select out symlinks first
+    echo \\t type=SYMLINK                               >>$inv  # identify this
+    echo \\t target=`echo $lsdata | awk '{print $11}'`  >>$inv  # and its target
+  else                                    # otherwise determine the file type
+    if [ -d $file ]; then echo \\t type=DIRECTORY >>$inv; fi # its a directory
+    if [ -p $file ]; then echo \\t type=FIFO      >>$inv; fi # this is a pipe
+    if [ -b $file ]; then echo \\t type=BLK_DEV   >>$inv; fi # block device
+    if [ -c $file ]; then echo \\t type=CHAR_DEV  >>$inv; fi # character device
+    if [ -f $file ]; then echo \\t type=FILE      >>$inv;    # normal file
+      if [ -w $file ]; then               # if the thing is root writeable
+        echo \\t size=VOLATILE     >>$inv # then assume its size will change
+        echo \\t checksum=VOLATILE >>$inv # which affects the checksum too
+      else                                # otherwsie assume read only file
+        echo \\t size=`echo $lsdata | awk '{print $5}'`         >>$inv;
+        echo \\t checksum=`sum $file | awk '{print $1 " " $2}'` >>$inv;
+      fi                                  # end of dealing with writeability
+    fi                                    # end of dealing with normal files
+  fi                                      # end of ascertaining the file type
+done                                      # end of file scan
+
+#**********************************************************************
+#                                                                     *
+# We now have one or two control files. Archive them into the target  *
+# liblpp.a library and delete the temp directory we used.             *
+#                                                                     *
+#**********************************************************************
+
+if [ ! -d $lppdir ]; then                 # does this directory exist
+  mkdir -p $lppdir                        # create it now if not
+fi                                        # end of creating liblpp directory
+cd $work                                  # go where the files are
+for file in `ls *`; do                    # process all ctrl files
+  ar -c -q $lppdir/liblpp.a $file         # and archive then
+done                                      # all done
+cd $restore                               # restore caller's directory
+rm -fr $work                              # clean up our mess

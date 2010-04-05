@@ -1,0 +1,6 @@
+#!/bin/bash
+
+APACHE_COMP_VERSION="2_2"
+
+. ${BUILD_ROOT}/src/linux/build/components/mod-auth-kerb.func
+

@@ -1,0 +1,15 @@
+DCOM:
+
+
+We (well, me mainly) are beginning to support DCOM/Object RPC as documented by Microsoft.
+
+The aim is to produce a free implementation of DCOM that can be installed by
+anyone on anyone's Linux box without a heavy license fee.  People can then
+really think about using it for their applications and then we might find a
+whole host of component-orientated applications start to spring up, and then
+we might find a lot of components being created to make the applications
+easier to develop, and the range of applications will grow and grow...
+
+For more info on this, subscribe to the mailing list:
+	freedce-dcomdev@lists.sourceforge.net
+

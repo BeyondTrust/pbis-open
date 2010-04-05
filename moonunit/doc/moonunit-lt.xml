@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id='moonunit-lt'>
+  <refmeta>
+    <refentrytitle>moonunit-lt</refentrytitle>
+    <manvolnum>1</manvolnum>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>moonunit-lt</refname>
+    <refpurpose>Libtool support for MoonUnit</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>moonunit-lt</command>
+      <arg choice='opt'>--plugin <replaceable>module</replaceable></arg>
+      <arg choice='opt'>--wrap <replaceable>command_prefix</replaceable></arg>
+      <group choice="plain" rep="repeat">
+	<arg choice='plain'><replaceable>moonunit_parameter</replaceable></arg>
+	<arg choice='plain'><replaceable>libtool_library</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1 id='description'>
+    <title>Description</title>
+    <para>
+      <command>moonunit-lt</command> allows libtool library (.la) files
+      to be used with <command>moonunit</command>. Libraries will be relinked as
+      necessary and a modified set of parameters will be passed to <command>moonunit</command>.
+    </para>
+    <para>
+      This script allows <emphasis>MoonUnit</emphasis> tests to be compiled and run
+      as part of a project built with <command>libtool</command>.  All types of
+      libraries -- including static -- are supported.  Non-libtool libraries will
+      still work as expected.
+    </para>
+    <para>
+      As a convenience to plugin writers, <command>moonunit-lt</command> also
+      supports loading additional libtool libraries as plugins.
+    </para>
+  </refsect1>
+  <refsect1 id='options'>
+    <title>Options</title>
+    <para>
+      <command>moonunit-lt</command> expects a list of parameters as appropriate for
+      <command>moonunit</command>, with the exception that libtool library files may
+      safely be specified.
+    </para> 
+    <para>
+      In addition, the following options are available:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term><option>--plugin</option> <replaceable>module</replaceable></term>
+	<listitem>
+	  <para>
+	    Allows <replaceable>module</replaceable> (which should be a libtool library) to be
+	    found and loaded as a <emphasis>MoonUnit</emphasis> plugin.  This is useful
+	    for testing a new plugin within its own build tree.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--wrap</option> <replaceable>command_prefix</replaceable></term>
+	<listitem>
+	  <para>
+	    Prefixes the invocation of <command>moonunit</command> with
+	    <replaceable>command_prefix</replaceable>, e.g. <literal>gdb --args</literal>.
+	    This is used primarily for testing <command>moonunit</command> itself.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-h</option></term>
+	<term><option>--help</option></term>
+	<listitem>
+	  <para>
+	    Lists brief usage and option information in addition to that
+	    provided by <command>moonunit</command>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1 id='examples'><title>Examples</title>
+    <variablelist>
+      <varlistentry>
+	<term><literal>moonunit-lt mylib.la</literal></term>
+	<listitem>
+	  <para>Run all unit tests in the libtool library <literal>mylib.la</literal>.</para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><literal>moonunit-lt --plugin mylogger.la -l mylogger mylib.la</literal></term>
+	<listitem>
+	  <para>
+	    Run all unit tests in the libtool library <literal>mylib.la</literal>, logging
+	    results using the logger plugin in the libtool library <literal>mylogger.la</literal>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><literal>moonunit-lt --wrap valgrind mylib.la</literal></term>
+	<listitem>
+	  <para>
+	    Run all unit tests in the libtool library <literal>mylib.la</literal>, with
+	    <command>moonunit</command> itself being run in the memory debugger
+	    <command>valgrind</command>.
+	  </para> 
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id='copyright'><title>Copyright</title>
+    <para>Copyright (c) 2007-2008, Brian Koropoff.  All rights reserved.</para>
+    
+    <para>
+      Redistribution in source and binary form is permitted under
+      the terms of the 3-clause BSD license.  See COPYING in the
+      documentation or source distribution for details.
+    </para>
+  </refsect1>
+  <refsect1 id='seealso'><title>See also</title>
+    <para>
+      <citerefentry><refentrytitle>moonunit</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-stub</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-strip</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+</refentry>
+

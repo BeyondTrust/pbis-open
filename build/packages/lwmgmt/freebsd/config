@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Management Services"
+DEPENDS="likewise-rpc"

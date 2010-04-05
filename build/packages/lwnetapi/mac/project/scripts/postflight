@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#
+# Prepare common installation and dependant directories used by Likewise
+#
+OPT="/opt"
+OPT_LW="/opt/likewise"
+USR="/usr"
+USR_LIB="/usr/lib"
+ETC="/etc"
+ETC_LW="/etc/likewise"
+VAR="/var"
+VAR_LIB="/var/lib"
+VAR_LIB_LW="/var/lib/likewise"
+
+if test -d $OPT; then
+    echo "setting $OPT directory owner to 0:80"
+    chown 0:80 "$OPT"
+else
+    echo "creating $OPT directory and setting owner to 0:80"
+    mkdir "$OPT"
+    chown 0:80 "$OPT"
+fi
+
+if test -d $OPT_LW; then
+    echo "setting $OPT_LW directory owner to 0:80"
+    chown -R 0:80 "$OPT_LW"
+else
+    echo "creating $OPT_LW directory and setting owner to 0:80"
+    mkdir "$OPT_LW"
+    chown -R 0:80 "$OPT_LW"
+fi
+

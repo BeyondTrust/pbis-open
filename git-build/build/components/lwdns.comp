@@ -1,0 +1,87 @@
+#!/bin/sh
+
+COMP_NAME="lwdns"
+COMP_SOURCES="${BUILD_ROOT}/${COMP_NAME}"
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${COMP_SOURCES}/.
+    exit_on_error $?
+
+    # We need no-strict aliasing if we get optimized builds
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags}"
+    LDFLAGS="${_ldflags}"
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS CC
+}
+
+function component_configure
+{
+    local enable_debug=""
+
+    _setup_build_env
+
+    run_autogen ${COMP_SOURCES}
+    exit_on_error $?
+
+    run_configure                                 \
+	--prefix=${PREFIXDIR}                   \
+        --libdir=${PREFIXDIR}/${_lib}  \
+	--sysconfdir=${SYSCONFDIR}              \
+        --localstatedir=${LOCALSTATEDIR} 
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags} all
+}
+
+function component_install
+{
+    _setup_build_env
+
+
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+
+    [ "$INSTALL_ROOT" != "/" ] && [ -z "${BUILD_PRESERVE_STAGING}" ] && rm -rf $INSTALL_ROOT
+    mkdir -p ${INSTALL_ROOT}
+    mkdir -p ${STAGE_INSTALL_DIR}
+
+    ${MAKE} DESTDIR=${INSTALL_ROOT} install
+
+    rsync -a ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
+
+    libtool_rewrite_staging
+}
+
+
+function component_populate
+{
+    local INSTALL_ROOT="${STAGE_COMP_DIR}/${COMP_NAME}"
+    local INSTALL_PREFIX_DIR="${INSTALL_ROOT}/${PREFIXDIR}"
+    local STAGING_PREFIX_DIR="${STAGE_INSTALL_DIR}/${PREFIXDIR}"
+    local STAGING_SYSCONF_DIR="${STAGE_INSTALL_DIR}/${SYSCONFDIR}"
+
+    local POPULATE_DIR="$1"
+    local EXCLUDE_FILE="${POPULATE_DIR}/../exclude.files"
+
+    if [ -z "${POPULATE_DIR}" ] || [ ! -d "${POPULATE_DIR}" ]; then
+	echo "Non-existent or invalid populate dircetory given: ${POPULATE_DIR}"
+	return 1
+    fi
+
+    cat <<EOF > ${EXCLUDE_FILE}
+include
+share
+*.a
+*.la
+EOF
+
+    rsync -a --exclude-from=${EXCLUDE_FILE} ${INSTALL_ROOT}/ ${POPULATE_DIR}/
+}
+

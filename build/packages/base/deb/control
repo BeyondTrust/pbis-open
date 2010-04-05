@@ -1,0 +1,15 @@
+Source: __PKG_NAME
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
+Standards-Version: 3.7.2
+
+Package: __PKG_NAME
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Replaces: likewise-grouppolicy (<< 4.1.0)
+Description: Likewise Base support libraries
+ The Likewise Base libraries are required support pieces needed
+ by the Likewise domain join utilities.
+

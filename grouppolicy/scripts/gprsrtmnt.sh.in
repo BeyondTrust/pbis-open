@@ -1,0 +1,248 @@
+#!/bin/sh
+
+LC_MESSAGES=C; export LC_MESSAGES
+#this gets filled in with sed
+PREFIX=@PREFIXDIR@
+BINDIR="$PREFIX/bin"
+
+Help()
+{
+    echo "usage: $0 <start> | <stop> | <reload> | <restart>"
+}
+
+GetOsType()
+{
+    ${BINDIR}/domainjoin-cli get_os_type
+}
+
+GetDistroType()
+{
+    ${BINDIR}/domainjoin-cli get_distro
+}
+
+GetDistroVersion()
+{
+    ${BINDIR}/domainjoin-cli get_distro_version
+}
+
+StartAutoMounter()
+{
+    osType=`GetOsType`
+    case "$osType" in
+        Linux)
+             if [ ! -x /etc/init.d/autofs ]; then
+                echo "Error: Missing Automount control file"
+                return 1
+             fi
+             /etc/init.d/autofs start
+             rc=$?
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/autofs ]; then
+                /etc/init.d/autofs start
+                rc=$?
+             else
+                svcadm enable autofs
+                rc=$?
+             fi
+             ;;
+        AIX)
+             /usr/bin/startsrc -g autofs
+             rc=$?
+             ;;
+        HP-UX)
+             if [ -x /sbin/init.d/nfs.client ]; then
+                 /sbin/init.d/nfs.client start
+                 rc=$?
+             else
+                 echo "Error: Failed to start automounter. /sbin/init.d/nfs.client does not exist"
+                 return 1
+             fi
+             ;;
+        Darwin)
+             if [ -x /usr/libexec/autofsd ]; then
+                 launchctl start com.apple.autofsd
+                 rc=$?
+             fi
+            ;;
+        *)
+             echo "Error: Unsupported OS $OS_TYPE"
+             return 1
+             ;;
+    esac
+ 
+    return $rc
+}
+
+StopAutoMounter()
+{
+    osType=`GetOsType`
+    case "$osType" in
+	Linux)
+             if [ ! -x /etc/init.d/autofs ]; then
+                echo "Error: Missing Automount control file"
+                return 1
+             fi
+             /etc/init.d/autofs stop
+             rc=$?
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/autofs ]; then
+                /etc/init.d/autofs stop
+                rc=$?
+             else
+                svcadm disable autofs
+                rc=$?
+             fi
+             ;;
+        AIX)
+             /usr/bin/stopsrc -g autofs
+             rc=$?
+             ;;
+        HP-UX)
+             if [ -x /sbin/init.d/nfs.client ]; then
+                 /sbin/init.d/nfs.client stop
+                 rc=$?
+             else
+                 echo "Error: Failed to start automounter. /sbin/init.d/nfs.client does not exist"
+                 return 1
+             fi
+             ;;
+        Darwin)
+             if [ -x /usr/libexec/autofsd ]; then
+                 launchctl stop com.apple.autofsd
+                 rc=$?
+             fi
+            ;;
+        *)
+             echo "Error: Unsupported OS $OS_TYPE"
+             return 1
+             ;;
+    esac
+
+    return $rc
+}
+
+RestartAutoMounter()
+{
+    osType=`GetOsType`
+    distroVersion=`GetDistroVersion`
+    case "$osType" in
+        SunOS)
+             if [ -x /etc/init.d/autofs ]; then
+                StopAutoMounter
+                rc=$?
+
+                if [ $rc -eq 0 ]; then
+                   StartAutoMounter
+                   rc=$?
+                fi
+             else
+                svcadm restart autofs
+                rc=$?
+             fi
+             ;;
+        *)
+             StopAutoMounter
+             rc=$?
+
+             if [ $rc -eq 0 ]; then
+                StartAutoMounter
+                rc=$?
+             fi
+             ;;
+    esac
+
+    return $rc
+}
+
+ReloadAutoMounter()
+{
+    osType=`GetOsType`
+    case "$osType" in
+        Linux)
+             if [ ! -x /etc/init.d/autofs ]; then
+                echo "Error: Missing Automount control file"
+                return 1
+             fi
+             /etc/init.d/autofs reload;/etc/init.d/autofs restart
+             rc=$?
+             ;;
+        SunOS)
+             if [ -x /etc/init.d/autofs ]; then
+	        StopAutoMounter
+                rc=$?
+                if [ $rc -eq 0 ]; then
+                   StartAutoMounter
+                   rc=$?
+                fi
+             else
+                svcadm restart autofs
+                rc=$?
+             fi
+             ;;
+        AIX)
+             /usr/bin/refresh -g autofs
+             rc=$?
+             ;;
+        HP-UX)
+             RestartAutoMounter
+             rc=$?
+             ;;
+        *)
+             if [ ! -x /usr/sbin/automount ]; then
+                 echo "Error: Unsupported OS $OS_TYPE"
+                 return 1
+             else 
+                /usr/sbin/automount
+                return $?
+             fi
+             ;;
+    esac
+
+    # This program exists on some Unix flavors. It will add new mount points,
+    # but it might not remove old mount points.
+    if [ 0 -ne $rc ]; then 
+        if [ -x /usr/sbin/automount ]; then
+            /usr/sbin/automount
+            rc=$?
+        fi
+    fi
+
+    return $rc
+}
+
+#
+# main
+#
+
+if [ 0 -eq "$#" ]; then
+   # if the script has no args, show help
+   Help
+   exit 0
+elif [ 'start' = "$1" ]; then
+   StartAutoMounter
+elif [ 'stop'  = "$1" ]; then
+   StopAutoMounter
+elif [ 'reload' = "$1" ]; then
+   ReloadAutoMounter
+elif [ 'restart' = "$1" ]; then
+   RestartAutoMounter
+else
+   Help
+   exit 1
+fi
+
+rc=$?
+
+if [ 0 != "$rc" ]; then
+   echo "FAILED"
+else
+   # echo "SUCCESS"
+   if [ -s /bin/true ]; then
+      /bin/true
+   else
+      /usr/bin/true
+   fi
+fi
+ 

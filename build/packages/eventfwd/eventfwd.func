@@ -1,0 +1,9 @@
+PKG_COMPONENTS="eventfwd"
+PKG_DESC="Event forwarder from eventlogd to collector service"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

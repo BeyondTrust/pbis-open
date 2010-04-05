@@ -1,0 +1,43 @@
+-*- outline -*-
+
+This file lists the bugs you must be aware of.  Be sure to check this
+file before using Autoconf, and especially CVS versions of Autoconf.
+
+	Copyright 2000, 2001, 2002 Free Software Foundation, Inc.
+
+	This file is part of GNU Autoconf.
+
+	GNU Autoconf is free software; you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation; either version 2, or (at your option)
+	any later version.
+
+	GNU Autoconf is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with autoconf; see the file COPYING.  If not, write to
+	the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+	Boston, MA 02110-1301, USA.
+
+
+Autoconf must not be used in production if there are ``Serious'' bugs,
+and use with caution an Autoconf with ``Important bugs''.
+
+* Status
+
+                    /*--------------------------.
+                    | Sane for full scale use.  |
+                    `--------------------------*/
+
+* No known serious or important bugs.
+
+* Minor Problems
+
+Some Makefile segments do not behave correctly in VPATH builds with proprietary
+`make' programs.  Some BSD `make's will work.  For best results, build in the
+source directory or use GNU `make'.
+
+Parallel builds via `make -jN' do not work.

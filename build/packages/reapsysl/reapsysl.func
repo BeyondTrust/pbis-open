@@ -1,0 +1,9 @@
+PKG_COMPONENTS="reapsysl"
+PKG_DESC="Reaps events from syslog and pushes them to the event log"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

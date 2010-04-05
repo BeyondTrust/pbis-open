@@ -1,0 +1,17 @@
+#!/bin/bash
+
+EVENTLOG_NAME=com.likewisesoftware.eventlogd
+EVENTLOG_DAEMON=/Library/LaunchDaemons/$EVENTLOG_NAME.plist
+
+if [ -f $EVENTLOG_DAEMON ]; then
+   launchctl list | grep $EVENTLOG_NAME > /dev/null
+   if [ $? -eq 0 ]; then
+      launchctl stop $EVENTLOG_NAME
+      sleep 3
+      killall -9 eventlogd > /dev/null
+      touch /tmp/eventlogd.restart
+   fi
+
+   launchctl unload $EVENTLOG_DAEMON
+   rm $EVENTLOG_DAEMON
+fi

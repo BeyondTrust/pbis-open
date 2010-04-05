@@ -1,0 +1,91 @@
+#!/bin/bash -c "exit 1"
+
+#
+# centutils.comp -- see ../../helper.sh for how this file works.
+#
+
+COMP_INCREMENTAL=1
+COMP_SOURCES="${BUILD_ROOT}/src/linux/centutils"
+COMP_DEPENDENCIES="autoconf automake libtool moonunit lwbase"
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./autogen.sh
+}
+
+function component_gather
+{
+    echo "Nothing to gather for centutils"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}/.
+    exit_on_error $?
+
+    # We need no-strict aliasing if we get optimized builds
+    CPPFLAGS="${_cppflags}"
+    CFLAGS="${_cflags} -D_REENTRANT -fPIC -fno-strict-aliasing"
+    LDSHFLAGS="${_ldshflags}"
+    LDFLAGS="${_ldflags}"
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS CC
+}
+
+function component_configure
+{
+    local enable_debug=""
+    local enable_compat=""
+
+    _setup_build_env
+
+    if [ -n "${BUILD_DEBUG}" ]; then
+       enable_debug="--enable-debug"
+    fi
+
+    if [ -n "${IS_COMPAT}" ]; then
+        enable_compat="--enable-compat"
+    fi
+
+    "${COMP_SOURCES}/configure" \
+        --prefix=${PREFIX_DIR} \
+        --libdir="${PREFIX_DIR}/${_lib}"         \
+        --sysconfdir="${BUILD_SYSCONFDIR}"       \
+        --localstatedir="${BUILD_LOCALSTATEDIR}" \
+        $enable_debug                            \
+        $enable_compat                           \
+        ${DEPENDENCY_TRACKING}                   \
+	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS" \
+	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=centutils
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    libtool_rewrite_populate
+}

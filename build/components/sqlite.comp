@@ -1,0 +1,154 @@
+#!/bin/sh
+
+COMP_VERSION="3.6.18"
+COMP_RELEASE="0"
+COMP_DEPENDENCIES=""
+COMP_SRCDIR="${BUILD_ROOT}/src/linux/sqlite"
+COMP_SOURCES="${COMP_SRCDIR}"
+
+function component_bootstrap
+{
+    echo "Nothing to bootstrap for sqlite"
+}
+
+function component_gather
+{
+    echo "Nothing to gather for sqlite"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}/.
+    exit_on_error $?
+
+    # We need no-strict aliasing if we get optimized builds
+    CFLAGS="${_cflags} -D_REENTRANT -fPIC -fno-strict-aliasing"
+    LDSHFLAGS="${_ldshflags}"
+    LDFLAGS="${_ldflags}"
+
+    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+        LDFLAGS="$LDFLAGS -L/lib -R${PREFIX_DIR}/${_lib}"
+    elif [ "${BUILD_OS_TYPE}" = 'aix' ]; then
+        CFLAGS="$CFLAGS -D_THREAD_SAFE"
+    fi
+
+    case "${BUILD_OS_TYPE}" in
+        hpux)
+            LDFLAGS="$LDFLAGS -Wl,+b -Wl,${PREFIX_DIR}/${_lib}"
+            ;;
+        aix)
+            LDFLAGS="$LDFLAGS -Wl,-brtl"
+            CC="$(echo $CC | sed 's/^gcc/gcc-wrap.sh/')"
+            ;;
+        solaris)
+            LDFLAGS="$LDFLAGS -R${PREFIX_DIR}/${_lib}"
+            ;;
+        freebsd)
+            LDFLAGS="$LDFLAGS -Wl,-rpath -Wl,${PREFIX_DIR}/${_lib}"
+            ;;
+        linux)
+            LDFLAGS="$LDFLAGS -Wl,-rpath -Wl,${PREFIX_DIR}/${_lib}"
+            ;;
+    esac
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS LDSHFLAGS CC
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    local with_linker=
+
+    if [ "${BUILD_OS_TYPE}" = 'aix' ]; then
+        with_linker="--with-linker=ld"
+	with_openldap_dir="--with-openldap-dir=${OPENLDAP_DIRPATH}"
+    fi
+
+    "${COMP_SRCDIR}/configure"                                \
+        ${with_linker}                                        \
+        --build=`get_build_string`                            \
+	--prefix=${PREFIX_DIR}                                \
+        --libdir=${PREFIX_DIR}/${_lib}                        \
+        --disable-readline                                    \
+        --disable-tcl                                         \
+        --disable-static                                      \
+        --enable-shared                                       \
+        --enable-threadsafe                                   \
+        ${DEPENDENCY_TRACKING}                                \
+	LDFLAGS="$LDFLAGS $(libtool_staging_ldflags)"
+}
+
+function component_build
+{
+    _setup_build_env
+
+    if [ -z ${IS_COMPAT} ]; then
+        ${MAKE} ${_mflags} all
+    else
+        ${MAKE} ${_mflags} compat
+    fi
+}
+
+function _sed_to_dir
+{
+    if [ ! -d "$3" ]; then
+	echo "$3 does not exist"
+	exit 1
+    fi
+
+    local _file
+    _file=`basename "$2"`
+    exit_on_error $?
+
+    local _target
+    _target="$3/${_file}"
+
+    ( set -x && sed "s#PREFIX_DIR#${PREFIX_DIR}#g" "$2" > "${_target}" )
+    ( set -x & chmod $1 "${_target}" )
+}
+
+function sed_to_dir
+{
+    ( set +x && _sed_to_dir "$@" )
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    if [ -z "${IS_COMPAT}" ]; then
+       ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+    fi
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=sqlite
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+
+    if [ -z "${IS_COMPAT}" ]; then
+#	rsync -a --exclude "include" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+	rsync -a --exclude "include" ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+    else
+	mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
+	rsync -a ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
+	rsync -a ${COMP_ROOT_DIR}/${_lib}/ ${POPULATE_ROOT_DIR}/${_lib}/
+    fi
+
+    libtool_rewrite_populate
+}
+
+# function component_strip
+# {
+#     # Strip binaries
+#     x_strip ${STAGING_PREFIX_DIR}/sbin/*
+#     x_strip ${STAGING_PREFIX_DIR}/lib/*.so*
+# }

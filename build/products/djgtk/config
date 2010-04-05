@@ -1,0 +1,8 @@
+NAME="LikewiseDomainJoinGui"
+FULL_NAME="Likewise Desktop Domain Join Utility"
+FILES="COPYING README"
+SCRIPT="../install.sh"
+
+PACKAGES="\
+    domainjoin-gui \
+    "

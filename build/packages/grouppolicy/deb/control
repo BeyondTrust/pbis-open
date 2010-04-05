@@ -1,0 +1,14 @@
+Source: __PKG_NAME
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2)
+Standards-Version: 3.7.2
+
+Package: __PKG_NAME
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, likewise-krb5, likewise-openldap, likewise-lsa-service, likewise-base
+Description: Likewise Group Policy Agent
+ The Likewise Group Policy Agent provides a means to manage
+ Linux hosts via Active Directory Group policy settings.
+

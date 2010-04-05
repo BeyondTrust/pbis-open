@@ -1,0 +1,10 @@
+if [ -x /etc/rc.d/init.d/likewise.com-gpagentd ]; then
+                /etc/rc.d/init.d/likewise.com-gpagentd status > /dev/null 2>&1
+        rc=$?
+        if [ $rc=="0" ]; then
+                /etc/rc.d/init.d/likewise.com-gpagentd stop > /dev/null 2>&1
+        fi
+        # Even if something failed, we should return a successful exit code
+        true
+fi
+

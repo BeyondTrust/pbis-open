@@ -1,0 +1,8 @@
+#!/bin/bash
+
+. `dirname $0`/functions
+
+echo "VERSION=${LIKEWISE_OPEN_MAJOR}.${LIKEWISE_OPEN_MINOR}"
+echo "BUILD=${LIKEWISE_OPEN_BUILD}"
+echo "REVISION=${LIKEWISE_OPEN_REVISION}"
+

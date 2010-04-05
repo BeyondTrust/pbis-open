@@ -1,0 +1,66 @@
+COMP_DEPENDENCIES="autoconf"
+COMP_SOURCES=${BUILD_ROOT}/src/linux/automake
+COMP_IS_TOOL=1
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}"
+    exit_on_error $?
+
+    # Update timestamp on configure and Makefile.in
+    # to avoid make attempting to regenerate them
+    find . -name configure | xargs touch
+    find . -name Makefile.in | xargs touch
+
+    touch doc/version.texi doc/stamp-vti
+}
+
+function component_gather
+{
+    echo "Nothing to gather for automake"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    LDFLAGS="${_ldflags}"
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags}"
+
+    export LDFLAGS CFLAGS CPPFLAGS
+
+    libtool_set_staging_library_path
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    "${COMP_SOURCES}/configure" --prefix="${BUILD_RUN_ROOT}"
+}
+
+function component_build
+{
+   _setup_build_env
+
+   ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    #find . -name '*.info' | xargs touch
+
+    ${MAKE} DESTDIR="${STAGING_ROOT_DIR}" install
+}
+
+function component_populate
+{
+    echo "SHOULD NOT BE HERE"
+    exit 1
+}

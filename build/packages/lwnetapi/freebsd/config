@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Net API"
+DEPENDS="likewise-lsass"

@@ -1,0 +1,120 @@
+#!/bin/sh
+
+COMP_VERSION="2.4.16"
+COMP_RELEASE="0"
+COMP_NEED_COMPAT=1
+COMP_DEPENDENCIES="autoconf libtool krb5"
+COMP_SOURCES=${BUILD_ROOT}/src/linux/openldap
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./autogen.sh
+    exit_on_error $?
+}
+
+function component_gather
+{
+    echo "Nothing to gather for openldap"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+
+    CFLAGS="${_cflags} -D_GNU_SOURCE -D_REENTRANT -fPIC -DLDAP_CONNECTIONLESS -Wimplicit-function-declaration"
+    LDFLAGS="${_ldflags}"
+
+    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+        if [ `uname -r` = "5.10" ]; then
+            # Solaris Bug#6419029 - include -D_AVL_H
+            CFLAGS="$CFLAGS -D_AVL_H"
+        fi
+	LDFLAGS="$LDFLAGS -R${PREFIX_DIR}/${_lib}"
+    fi
+
+    export CFLAGS LDFLAGS
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    extra_flags=""
+
+    if [ -n "${BUILD_MINIMAL}" ]
+    then
+	extra_flags="--disable-syslog --disable-debug --disable-proctitle --disable-local"
+	CPPFLAGS="$CPPFLAGS -DFD_SETSIZE=32"
+    fi
+
+    "${COMP_SOURCES}/configure" \
+        --prefix=${PREFIX_DIR} \
+        --libdir=${PREFIX_DIR}/${_lib} \
+        --disable-static \
+        --enable-shared \
+        --without-kerberos \
+        --without-cyrus-sasl \
+        --disable-slapd \
+        --disable-slurpd \
+        --without-tls \
+	${extra_flags} \
+        ${DEPENDENCY_TRACKING} \
+	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS" \
+	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags}
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    mv ${STAGING_PREFIX_DIR}/bin ${STAGING_PREFIX_DIR}/bin.delete
+    mkdir -p ${STAGING_PREFIX_DIR}/bin/openldap
+    mv ${STAGING_PREFIX_DIR}/bin.delete/* ${STAGING_PREFIX_DIR}/bin/openldap
+
+    # Remove unused files
+    rm -rf ${STAGING_PREFIX_DIR}/{share,etc,bin.delete}
+
+    # Fixup permissions on header files.
+    find ${STAGING_PREFIX_DIR}/include -type d | xargs chmod 755
+    find ${STAGING_PREFIX_DIR}/include -type f | xargs chmod 644
+
+    # Fixup strange shared library permissions.
+    chmod 755 ${STAGING_PREFIX_DIR}/${_lib}/lib*
+
+    libtool_rewrite_staging
+}
+
+# function component_strip
+# {
+#     # Strip binaries
+#     x_strip ${STAGING_PREFIX_DIR}/${_lib}/*.so*
+# }
+#!/bin/bash
+
+function component_populate
+{
+    COMP_NAME=openldap
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    if [ -z "${IS_COMPAT}" ]; then
+	mkdir -p ${POPULATE_PREFIX_DIR}
+	rsync -a --exclude "include" --exclude "*.la" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+    else
+	mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
+	rsync -a --exclude "*.la" ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
+    fi
+
+    libtool_rewrite_populate
+}

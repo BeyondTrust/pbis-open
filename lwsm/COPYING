@@ -1,0 +1,12 @@
+The lwsm API library is made available under the terms of
+the GNU Lesser General Public License version 2.1 or later.
+See COPYING-LGPL for the complete license.
+
+The lwsmd server program and associated tool programs are
+made available under the terms of the GNU General Public
+License version 2 or later.  See COPYING-GPL for the complete
+license.
+
+Each source code file indicates which license applies to
+it.  Alternate licensing terms are available.  Please contact
+license@likewise.com for details.

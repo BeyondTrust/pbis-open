@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise RPC infrastructure (DCE/RPC)"
+DEPENDS="likewise-krb5 likewise-openldap likewise-pstore likewise-base"

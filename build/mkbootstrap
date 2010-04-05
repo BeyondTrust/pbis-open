@@ -1,0 +1,76 @@
+#!/bin/bash
+
+source "${BUILD_ROOT}/src/linux/build/common.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/version.sh"
+
+MAX_CONCURRENT=8
+
+do_bootstrap()
+{
+    while [ -n "$1" ]
+    do
+	list=""
+	pids=""
+	status=0
+	for i in `seq 1 $MAX_CONCURRENT`
+	do
+	    list="$list $1"
+	    shift
+	done
+
+	echo "Bootstrapping: ${list}"
+	for comp in ${list}
+	do
+	    mkdir -p "${BUILD_META_OS_ROOT}/components/${comp}"
+	    mkcomp --nocopy --noincremental --step bootstrap ${comp} \
+		> "${BUILD_META_OS_ROOT}/components/${comp}/bootstrap.log" 2>&1 &
+	    pids="$pids $!"
+	done
+
+	for pid in ${pids}
+	do
+	    wait "$pid" || status="$?"
+	done
+
+	for comp in ${list}
+	do
+	    if [ -f "${BUILD_META_OS_ROOT}/components/${comp}/bootstrap.log" ]
+	    then
+		cat "${BUILD_META_OS_ROOT}/components/${comp}/bootstrap.log"
+		rm -f "${BUILD_META_OS_ROOT}/components/${comp}/bootstrap.log"
+	    fi
+	done
+
+	exit_on_error $status
+    done
+}
+
+products="${BUILD_PRODUCTS}"
+components=$(component_build_list $(product_components ${products}))
+tools=""
+nontools=""
+
+echo components=$components
+
+for comp in ${components}
+do
+    if component_is_tool "${comp}"
+    then
+	tools="$tools $comp"
+    else
+	nontools="$nontools $comp"
+    fi
+done
+
+rm -f "${BUILD_ROOT}/src/linux/BOOTSTRAP"
+
+echo "Building all tools"
+mkcomp ${tools}
+exit_on_error $?
+
+echo "Bootstrapping all other components"
+do_bootstrap ${nontools}
+exit_on_error $?
+
+echo "${SVN_REVISION}" > "${BUILD_ROOT}/src/linux/BOOTSTRAP"

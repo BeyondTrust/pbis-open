@@ -1,0 +1,22 @@
+#ifndef _SECURITY_IDL_
+#define _SECURITY_IDL_
+
+cpp_quote("#ifndef _GEN_SECURITY_H_")
+cpp_quote("#define _GEN_SECURITY_H_")
+
+#include <secdesc/sectypes.h>
+
+cpp_quote("#endif /* _GEN_SECURITY_H_ */")
+
+
+#endif /* _SECURITY_IDL_ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

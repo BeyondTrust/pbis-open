@@ -1,0 +1,320 @@
+*******************************************************************************
+* VALID USER ATTRIBUTES FOR /ETC/SECURITY/USER:
+* 
+* account_locked Defines whether the account is locked.  Locked accounts can
+*		not be used for login.  Possible values: true or false.
+*
+* admin		Defines the administrative status of the user.
+*		Possible values: true or false.
+*
+* admgroups	Lists the groups that the user administrates.  The value
+*		is a comma-separated list of valid group names.
+*
+* auth1		Defines primary authentication methods for a user.  This
+*		attribute describes Version 3 style authentication methods.  
+*		Commands login, telnet, rlogin, and su support these 
+*		authentication methods.
+*
+*		Possible values: SYSTEM,NONE,token;username.
+*
+*			SYSTEM 	: Describes normal password authentication in
+*			  	  Version 3.  Version 4 has extended this 
+*				  definition to include loadable modules and 
+*				  an authentication grammar.  See SYSTEM 
+*				  attribute description below.
+*
+*			NONE 	: No authentication.
+*
+*			token;username 	: A generic name for a custom 
+*					  authentication method defined in 
+*					  /etc/security/login.cfg.
+*			
+*		Example:
+*			If auth1 is:
+*				auth1 = SYSTEM,mylogin;mary
+*
+*			And the stanza in /etc/security/login.cfg is:
+*				mylogin:
+*					program = /etc/myprogram
+*
+*			This will do password authentication, and then
+*			invoke the program /etc/myprogram with "mary"
+*			as the first parameter.
+*			
+* auth2		Defines the secondary authentication methods for a user.
+*		It is not a requirement to pass this method to login.
+*		See auth1 description above for examples.
+*
+* SYSTEM	Describes Version 4 authentication requirements.  This 
+*		attribute can be used to describe multiple or alternate 
+*		authentication methods.  See authenticate() routine and 
+*		SYSTEM grammar manual pages. 
+*
+*		Possible tokens:
+*
+*			files	: local only authentication.
+*			compat	: local plus NIS authentication.  
+*				  Version 3 behavior.
+*			DCE	: Distributed Computing Environment 
+*		 		  authentication.
+*		
+*		Example:
+*			SYSTEM = "DCE OR DCE[UNAVAIL] AND compat" 
+*
+* daemon	Defines whether the user can execute programs using the system
+*		resource controller (SRC). Possible values: true or false.
+*
+* dictionlist   Defines the password dictionaries used when checking new
+*               passwords.  The format is a comma-separated list of absolute
+*               path names to dictionary files.  A dictionary file contains
+*               one word per line where each word has no leading or trailing
+*               white space.  Words should only contain 7 bit ASCII characters.
+*               All dictionary files and directories should be write protected
+*               from everyone except root.  The default is valueless, which is
+*               equivalent to no dictionary checking.
+*
+*               Example dictionary:  /usr/share/dict/words
+*                       (Only available if text processing is installed.)
+*
+* expires	Defines the expiration time for the user account.
+*		Possible values: a valid date in the form MMDDHHMMYY or 0.
+*		If 0 the account does not expire.  If 0101000070 the account 
+*		is disabled.  The range for YY is:
+*			00 - 38    years 2000 thru 2038
+*			39 - 99    years 1939 thru 1999
+*
+* histexpire    Defines the period of time in weeks that a user
+*               will not be able to reuse a password.
+*               Possible values: an integer value between 0 and 260.
+*               26 (approximately 6 months) is the recommended value.
+*
+* histsize      Defines the number of previous passwords which cannot be
+*               reused.
+*               Possible values:  an integer value between 0 and 50.
+*
+* login		Defines whether the user can login.
+*		Possible values : true or false.
+*
+* logintimes	Defines the times a user can login.  The value is a comma
+*		separated list of items as follows:
+*			[!][MMdd[-MMdd]]:hhmm-hhmm
+*				or
+*			[!]MMdd[-MMdd][:hhmm-hhmm]
+*				or
+*			[!][w[-w]]:hhmm-hhmm
+*				or
+*			[!]w[-w][:hhmm-hhmm]
+*		where MM is a month number (00=January, 11=December), dd is
+*		the day of the month, hh is the hour of the day (00 - 23), mm
+*		is the minute of the hour, and w is a weekday (0=Sunday, 6=
+*		Saturday).
+*
+* loginretries	The number of invalid login attempts before a user is not
+*		allowed to login.  Possible values: a positive integer or 0
+*		to disable this feature.
+*
+* maxage        Defines the maximum number of weeks a password is valid.  The
+*               default is 0, which is equivalent to unlimited. Range: 0 to 52.
+*
+* maxexpired    Defines the maximum number of weeks after maxage that an expired
+*               password can be changed by a user.  The default is -1, which
+*               is equivalent to unlimited.  Range: -1 to 52.  maxage must
+*               be greater than 0 for maxexpired to be enforced.  (root is
+*               exempt from maxexpired.)
+*
+* maxrepeats    Defines the maximum number of times a given character can
+*               appear in a password.  The default is 8, which is equivalent
+*               to unlimited.  Range: 0 to 8.
+*
+* minage        Defines the minimum number of weeks between password changes.
+*               The default is 0.  Range: 0 to 52.
+*
+* minalpha      Defines the minimum number of alphabetic characters in a
+*               password. The default is 0.  Range: 0 to 8.
+*
+* mindiff       Defines the minimum number of characters in the new password
+*               that were not in the old password.  The default is 0.
+*               Range: 0 to 8.
+*
+* minlen        Defines the minimum length of a password.  The default is 0.
+*               Range: 0 to 8.
+*
+*   Note: The minimum length of a password is determined by minlen and/or
+*         'minalpha + minother', whichever is greater.  'minalpha + minother'
+*         should never be greater than 8.  If 'minalpha + minother' is greater
+*         than 8, then minother is reduced to '8 - minalpha'.
+*
+* minother      Defines the minimum number of non-alphabetic characters in a
+*               password.  The default is 0.  Range: 0 to 8.
+*
+* pwdchecks     Defines external password restriction methods used when
+*               checking new passwords.  The format is a comma-separated list
+*               of absolute path names to methods and/or method path names
+*               relative to /usr/lib.  A password restriction method is a
+*               program module that is loaded by the password restrictions code
+*               at runtime.  All password restriction methods and directories
+*               should be write protected from everyone except root.  The
+*               default is valueless, which is equivalent to no external
+*               password restriction methods.
+*
+* pwdwarntime	The number of days before a forced password change that a
+*		warning will be given to the user informing them of the
+*		impending password change.  Possible values: a positive integer
+*		or 0 to disable this feature.
+*
+* registry	Describes where this user is administered.  It is used
+*		whenever there is a possibility of resolving a remotely
+*		administered user to the local administration domain. 
+*		This can happen when network services go down or
+*		network databases are replicated locally.  
+*		Possible values	: files, NIS, or DCE
+*
+* rlogin	Defines whether the user account can be accessed by remote 
+*		logins.  Commands rlogin and telnet support this attribute.
+*		Possible values: true or false.
+*
+* su		Defines whether other users can switch to this user account.  
+*		Command su supports this attribute.
+*		Possible values: true or false.
+*
+* sugroups	Defines which groups can switch to this user account.
+*		Alternatively you may explicitly deny groups by preceding
+*		the group name with a ! character.
+*		Possible values : 
+*			A list of valid groups separated by commas, ALL, or *. 
+*
+* tpath		Defines the user's trusted path characteristics.
+*		Possible values:
+*			nosak	: The Secure Attention Key (SAK) key (^X^R) 
+*				  has no effect.
+*			notsh	: The SAK key logs you out.  You can never be 
+*				  on the trusted path.
+*			always	: When you log in you are always on the 
+*				  trusted path.
+*			on	: The trusted path is entered when the SAK 
+*				  key is hit.
+*
+*		Note	: This attribute only takes effect if the sak_enabled
+*			  attribute (in /etc/security/login.cfg) is set to 
+*			  true for the port you are logging into.
+*
+* ttys		Defines which terminals can access the user account.
+*		Alternatively you may explicitly deny terminals by preceding
+*		the terminal name with the ! character.
+*		Possible values: 
+*			List of device paths separated by commas, ALL or *.
+*
+* umask		Defines the default umask for the user.
+*		Possible values: three-digit octal value.
+*
+* Notes:	Boolean values (i.e. true or false) may use any of the 
+*		following values.  These values are not case sensitive.
+*
+*			true, false, yes, no, always, never.
+*
+*******************************************************************************
+
+default:
+	admin = false
+	login = true
+	su = true
+	daemon = true
+	rlogin = true
+	sugroups = ALL
+	admgroups =
+	ttys = ALL
+	auth1 = SYSTEM
+	auth2 = NONE
+	tpath = nosak
+	umask = 022
+	expires = 0
+	SYSTEM = "compat"
+	logintimes = 
+	pwdwarntime = 0
+	account_locked = false
+	loginretries = 0
+	histexpire = 0
+	histsize = 0
+	minage = 0
+	maxage = 0
+	maxexpired = -1
+	minalpha = 0
+	minother = 0
+	minlen = 0
+	mindiff = 0
+	maxrepeats = 8
+	dictionlist =
+	pwdchecks =
+
+root:
+	admin = true
+	SYSTEM = "compat"
+	registry = files
+	loginretries = 0
+	account_locked = false
+
+daemon:
+	admin = true
+	expires = 0101000070
+
+bin:
+	admin = true
+	expires = 0101000070
+
+sys:
+	admin = true
+	expires = 0101000070
+
+adm:
+	admin = true
+
+uucp:
+	admin = true
+	login = false
+	rlogin = false
+	su = true
+
+guest:
+
+nobody:
+	admin = true
+	expires = 0101000070
+
+lpd:
+	admin = true
+	expires = 0101000070
+
+invscout:
+	admin = true
+
+snapp:
+	admin = false
+	rlogin = false
+	su = false
+	SYSTEM = "NONE"
+	login = true
+	ttys = /dev/tty0
+	registry = files
+	dce_export = false
+
+ipsec:
+	admin = false
+
+nuucp:
+	admin = false
+
+
+sshd:
+	admin = false
+	account_locked = true
+	login = false
+	rlogin = false
+
+testuser:
+	admin = false
+
+filecopy:
+	admin = false
+
+test2:
+	admin = false

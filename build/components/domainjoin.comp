@@ -1,0 +1,163 @@
+#!/bin/bash -c "exit 1"
+
+if [ -z "${BUILD_MINIMAL}" ]
+then
+    extra_deps="libxml2"
+fi
+
+COMP_INCREMENTAL=1
+COMP_SRCDIR=${BUILD_ROOT}/src/linux/domainjoin
+COMP_CONFIGS="nsswitch.lwi_defaults"
+COMP_SOURCES="${COMP_SRCDIR}"
+COMP_DEPENDENCIES="autoconf pkg-config netlogon librpc dcerpc pstore libxml2 centutils openldap lwdns eventlog lsass lwsm ${extra_deps}"
+
+for file in ${COMP_CONFIGS}; do
+    COMP_SOURCES="${COMP_SOURCES} ${BUILD_ROOT}/src/linux/config/$file"
+done
+
+function component_bootstrap
+{
+    cd "${COMP_SRCDIR}" && ./autogen.sh
+    exit_on_error $?
+}
+
+function component_gather
+{
+    echo "Nothing to gather for ${COMP_NAME}"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    libtool_set_staging_library_path
+    libtool_set_staging_path
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    CFLAGS="${_cflags} -D_REENTRANT -fPIC"
+    LDSHFLAGS="${_ldshflags}"
+    LDFLAGS="${_ldflags}"
+
+    WANT_GTK=no
+
+    case "${BUILD_OS_TYPE}" in
+        linux)
+           WANT_GTK=yes
+            ;;
+    esac
+
+    export CC LDFLAGS CFLAGS LDSHFLAGS WANT_GTK
+}
+
+function component_configure
+{
+    local extra_flags=""
+
+    _setup_build_env
+
+    if [ -n "${BUILD_MINIMAL}" ]
+    then
+        extra_flags="$extra_flags --without-libxml2 --enable-minimal"
+        if [ -z "${OFFICIAL_BUILD_NUMBER}" ]; then
+            extra_flags="$extra_flags --with-version=${MAIN_VERSION}.0.${SVN_REVISION}"
+        else
+            extra_flags="$extra_flags --with-version=${MAIN_VERSION}.${OFFICIAL_BUILD_NUMBER}.${SVN_REVISION}"
+        fi
+    fi
+
+    "${COMP_SRCDIR}/configure"                               \
+        --prefix=${PREFIX_DIR}                               \
+        --libexecdir=${PREFIX_DIR}/bin                       \
+        --libdir=${PREFIX_DIR}/${_lib}                       \
+        --sysconfdir=${BUILD_SYSCONFDIR}                     \
+        --localstatedir=${BUILD_LOCALSTATEDIR}               \
+        --disable-static                                     \
+        --enable-shared                                      \
+	--with-gtk=${WANT_GTK}                               \
+	--with-gtk=${WANT_GTK}                               \
+    	${extra_flags}   				     \
+        CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS"     \
+        LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS $ICONV_LDFLAGS" \
+        ${DEPENDENCY_TRACKING}
+}
+
+function component_build
+{
+   _setup_build_env
+
+   ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    mkdir -m 755 -p ${STAGING_PREFIX_DIR}/bin
+    mkdir -m 755 -p ${STAGING_PREFIX_DIR}/${_lib}
+    mkdir -m 755 -p ${STAGING_PREFIX_DIR}/include
+    mkdir -m 755 -p ${STAGING_PREFIX_DIR}/share/likewise
+
+    x_cp 755 ${COMP_SRCDIR}/libdomainjoin/include/*.h ${STAGING_PREFIX_DIR}/include/
+    x_cp 755 scripts/ConfigureLogin ${STAGING_PREFIX_DIR}/bin/
+    x_cp 755 scripts/gpcron ${STAGING_PREFIX_DIR}/bin/
+
+    if [ -x domainjoin-gui/gtk/domainjoin-gtk ] ; then
+        mkdir -m 755 -p ${STAGING_PREFIX_DIR}/share
+
+        mv ${STAGING_PREFIX_DIR}/bin/domainjoin-gtk ${STAGING_PREFIX_DIR}/bin/domainjoin-gui
+        x_cp 755 ${COMP_SRCDIR}/domainjoin-gui/gtk/domainjoin-gtk.glade ${STAGING_PREFIX_DIR}/share/likewise
+        x_cp 755 ${COMP_SRCDIR}/domainjoin-gui/gtk/*.png ${STAGING_PREFIX_DIR}/share/likewise
+    fi
+
+    if [ -f domainjoin-gui/carbon/libdomainjoin-mac/src/libdomainjoin-mac.so.1 ]; then
+       x_cp 755 domainjoin-gui/carbon/libdomainjoin-mac/src/libdomainjoin-mac.so* ${STAGING_PREFIX_DIR}/${_lib}/
+
+    fi
+
+    libtool_rewrite_staging
+}
+#!/bin/bash
+
+function component_populate
+{
+    COMP_NAME=domainjoin
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_PREFIX_DIR}
+
+    rsync -a --exclude=include ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+    if ! [ -x ${POPULATE_ROOT_DIR}/usr/bin/domainjoin-cli ]
+    then
+	mkdir -p ${POPULATE_ROOT_DIR}/usr/bin
+	ln -s ${PREFIX_DIR}/bin/domainjoin-cli ${POPULATE_ROOT_DIR}/usr/bin/domainjoin-cli
+    fi
+    
+    /bin/rm -f ${POPULATE_PREFIX_DIR}/bin/domainjoin-gui
+    /bin/rm -rf ${POPULATE_PREFIX_DIR}/share
+
+    # Create a version file so that domainjoin can read it at runtime
+    mkdir -p ${POPULATE_PREFIX_DIR}/data
+    echo "VERSION=${PKG_VERSION}" >${POPULATE_PREFIX_DIR}/data/VERSION
+    if [ -z "${OFFICIAL_BUILD_NUMBER}" ]; then
+        echo "BUILD=0" >>${POPULATE_PREFIX_DIR}/data/VERSION
+    else
+        echo "BUILD=${OFFICIAL_BUILD_NUMBER}" >>${POPULATE_PREFIX_DIR}/data/VERSION
+    fi
+    # This script sets SVN_REVISION
+    . ${BUILD_ROOT}/src/linux/build/version.sh
+    echo "REVISION=${SVN_REVISION}" >>${POPULATE_PREFIX_DIR}/data/VERSION
+    
+    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+    hpux-*)
+        mkdir -p ${POPULATE_ROOT_DIR}/etc
+        x_cp 0644 ${BUILD_ROOT}/src/linux/config/nsswitch.lwi_defaults ${POPULATE_ROOT_DIR}/etc/.
+        ;;
+    esac
+
+    libtool_rewrite_populate
+}

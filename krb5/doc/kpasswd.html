@@ -1,0 +1,78 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+
+</PRE>
+<H2>NAME</H2><PRE>
+     kpasswd - change a user's Kerberos password
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <B>kpasswd</B> [<I>principal</I>]
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     The <I>kpasswd</I> command is used to change a Kerberos principal's
+     password.   <I>Kpasswd</I>  prompts  for the current Kerberos pass-
+     word, which is used to obtain a <B>changepw</B> ticket from the KDC
+     for  the  user's  Kerberos  realm.   If <B>kpasswd</B> successfully
+     obtains the <B>changepw</B> ticket, the user is prompted twice  for
+     the new password, and the password is changed.
+
+     If the principal is governed by a policy that specifies  the
+     length  and/or  number  of character classes required in the
+     new password, the new password must conform to  the  policy.
+     (The  five  character  classes  are  lower case, upper case,
+     numbers, punctuation, and all other characters.)
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     <I>principal</I>
+          change the password for the Kerberos principal  <I>princi-</I>
+          <I>pal</I>.   Otherwise,  the  principal  is  derived from the
+          identity of the user invoking the <I>kpasswd</I> command.
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+     /tmp/tkt_kadm_[pid]
+                        temporary credentials cache for the life-
+                        time  of the password changing operation.
+                        ([pid] is the process-ID of  the  kpasswd
+                        process.)
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     <B>kadmin(8)</B>, <B>kadmind(8)</B>
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     If <B>kpasswd</B> is suspended, the changepw  tickets  may  not  be
+     destroyed.
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>

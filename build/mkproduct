@@ -1,0 +1,222 @@
+#!/bin/bash
+
+source ${BUILD_ROOT}/src/linux/build/common.sh
+source ${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh
+
+function make_dmg
+{
+    ${RUN} mkdmg "$@" ${RUN_SUFFIX}
+}
+
+function make_sfx
+{
+    local _product_name="$1"
+    local _pkg_type="$2"
+    local _opts=""
+
+    if [ -n "${_pkg_type}" ]; then
+        _opts="${_opts} --type ${_pkg_type}"
+    fi
+
+    ${RUN} mksfx${_opts} ${_product_name} ${RUN_SUFFIX}
+    exit_on_error $?
+}
+
+function usage
+{
+    echo "usage: `basename $0` [options] <productname1> [<productname2> ...]"
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --show          - Only show steps w/o doing anything."
+    echo ""
+    echo "    --nocomp        - Skip building components."
+    echo "    --onlycomp      - Only build components (no packaging, etc)."
+    echo "    --nocopy        - Do not use cached staging images for any component."
+    echo "    --noincremental - Do not peform incremental builds for any component."
+    echo "    --nocompat      - Skip building compat libraries."
+    echo "    --notool        - Skip building build toolchain."
+    echo "    --archive       - Build soruce tarballs for all package components."
+    echo ""
+    echo "    --type, -t <pkgType> - Do the specified package type(s)."
+    echo "        This can be specified multiple times."
+    echo ""
+    echo "  symbol options:"
+    echo ""
+    echo "    --debug           Force build with debug information."
+    echo "    --nodebug         Force build without debug information."
+    echo "    --profiling         Force build with profiling information."
+    echo "    --noprofiling       Force build without profiling information."
+    echo ""
+    echo "  available products:"
+    echo ""
+    for prod in `product_list` ; do
+        name=`product_name "${prod}"`
+        #full_name=`product_full_name "${prod}"`
+        printf '    %-10s  %s\n' "${prod}" "${name}"
+        #printf '    %-10s  %-40s  %-20s\n' "${prod}" "${name}" "${full_name}"
+    done
+    exit 1
+}
+
+OPT_SHOW=false
+OPT_PRODUCTS=""
+OPT_MKCOMP=""
+OPT_MKPKG=""
+OPT_TYPES=""
+OPT_NOCOMP="false"
+OPT_ONLYCOMP="false"
+OPT_COMPAT="false"
+OPT_NOTOOL="false"
+
+arg="$1"
+
+while [ -n "$arg" ]
+do
+    shift
+    case "$arg" in
+        --help)
+            usage
+            ;;
+        --show)
+            OPT_SHOW=true
+            ;;
+        --nocomp)
+            OPT_NOCOMP=true
+            ;;
+        --onlycomp|--nopkg)
+            OPT_ONLYCOMP=true
+            ;;
+        --nocopy)
+            OPT_MKCOMP="$OPT_MKCOMP --nocopy"
+            ;;
+        --noincremental)
+            OPT_MKCOMP="$OPT_MKCOMP --noincremental"
+            ;;
+        --nocompat)
+            OPT_MKCOMP="$OPT_MKCOMP --nocompat"
+            OPT_MKPKG="$OPT_MKPKG --nocompat"
+            ;;
+        --notool)
+            OPT_NOTOOL=true
+            ;;
+        --compat)
+            OPT_COMPAT=true
+            ;;
+        --type|-t)
+            if [ -z "$1" ]; then
+                echo "Missing argument to $arg option."
+                exit 1
+            fi
+            OPT_TYPES="$OPT_TYPES $1"
+            shift
+            ;;
+        --debug)
+            OPT_MKCOMP="$OPT_MKCOMP --debug"
+            OPT_MKPKG="$OPT_MKPKG --debug"
+            ;;
+        --nodebug)
+            OPT_MKCOMP="$OPT_MKCOMP --nodebug"
+            OPT_MKPKG="$OPT_MKPKG --nodebug"
+            ;;
+        --profiling)
+            OPT_MKCOMP="$OPT_MKCOMP --profiling"
+            OPT_MKPKG="$OPT_MKPKG --profiling"
+            ;;
+        --noprofiling)
+            OPT_MKCOMP="$OPT_MKCOMP --noprofiling"
+            OPT_MKPKG="$OPT_MKPKG --noprofiling"
+            ;;
+	--archive)
+	    OPT_MKCOMP="$OPT_MKCOMP --archive"
+	    OPT_ONLYCOMP=true
+	    ;;
+        --*)
+            echo "Unrecognized option $arg"
+            usage
+            ;;
+        *)
+            OPT_PRODUCTS="$OPT_PRODUCTS $arg"
+            ;;
+    esac
+    arg="$1"
+done
+
+if $OPT_SHOW
+then
+    RUN="echo"
+    RUN_SUFFIX="&&"
+else
+    RUN=""
+    RUN_SUFFIX=""
+fi
+
+if [ -z "${OPT_PRODUCTS}" ]; then
+    echo "No product names specified."
+    usage
+fi
+
+packages=`product_packages $OPT_PRODUCTS`
+
+if ! $OPT_NOCOMP
+then
+    components=`product_components $OPT_PRODUCTS`
+    build_list=`component_build_list $components`
+    for comp in ${build_list}
+    do
+        is_tool=`( COMP_IS_TOOL=""; source ${BUILD_ROOT}/src/linux/build/components/$comp.comp; echo $COMP_IS_TOOL )`
+        compat=""
+        if [ -z "$is_tool" ] || ! ${OPT_NOTOOL}
+        then
+            [ -z "$is_tool" ] && ${OPT_COMPAT} && compat="--compat"
+            $RUN mkcomp ${OPT_MKCOMP} ${compat} $comp $RUN_SUFFIX
+            exit_on_error $?
+        fi
+    done
+fi
+
+if ! $OPT_ONLYCOMP
+then
+    if [ -n "${OPT_TYPES}" ]
+    then
+        for type in ${OPT_TYPES}
+        do
+            for pkg in ${packages}
+            do
+                $RUN mkpkg ${OPT_MKPKG} --type ${type} $pkg $RUN_SUFFIX
+                exit_on_error $?
+            done
+    done
+    else
+        for pkg in ${packages}
+        do
+            $RUN mkpkg ${OPT_MKPKG} $pkg $RUN_SUFFIX
+            exit_on_error $?
+        done
+    fi    
+    
+    case "${BUILD_OS_TYPE}" in
+        darwin)
+            MAKE_INSTALLER=make_dmg
+            ;;
+        *)
+        MAKE_INSTALLER=make_sfx
+        ;;
+    esac
+    
+    for prod in ${OPT_PRODUCTS}
+    do
+        if [ -n "${OPT_TYPES}" ]
+        then
+            for type in ${OPT_TYPES}
+            do
+                $MAKE_INSTALLER "$prod" "$type"
+                exit_on_error $?
+            done
+        else
+            $MAKE_INSTALLER "$prod"
+            exit_on_error $?
+        fi
+    done
+fi
+

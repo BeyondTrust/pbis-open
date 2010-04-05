@@ -1,0 +1,8 @@
+PKG_COMPONENTS="lwidsplugin"
+
+function package_populate
+{
+    populate_components
+
+    strip_common
+}

@@ -1,0 +1,27 @@
+[
+uuid(3919286a-b10c-11d0-9ba8-00c04fd92ef5),
+version(0.0),
+pointer_default(unique)
+]
+interface dssetup
+{
+cpp_quote("#ifdef DCERPC_STUB_BUILD")
+
+#include <lw/security-types.h>
+#include <lwrpc/types.h>
+#include <lwrpc/dsrdefs.h>
+
+typedef [switch_type(UINT16)] union ds_role_info {
+    [case(DS_ROLE_BASIC_INFORMATION)] DsRolePrimaryDomainInfoBasic basic;
+    [case(DS_ROLE_UPGRADE_STATUS)]    DsRoleUpgradeStatus          upgrade;
+    [case(DS_ROLE_OP_STATUS)]         DsRoleOpStatus               opstatus;
+} DsRoleInfo;
+
+cpp_quote("#endif")
+
+    DWORD __DsrRoleGetPrimaryDomainInformation(
+        [in] UINT16 uiLevel,
+        [out,switch_is(uiLevel)] DsRoleInfo **ppInfo
+        );
+
+}

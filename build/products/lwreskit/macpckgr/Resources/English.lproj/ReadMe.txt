@@ -1,0 +1,6 @@
+Likewise Resource Kit
+-------------------
+
+This package installs the Likewise deployment diagnostic utility:
+	/opt/likewise/reskit/likewise-support.pl
+

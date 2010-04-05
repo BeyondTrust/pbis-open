@@ -1,0 +1,74 @@
+#!/bin/sh
+
+# This script gathers sources/packages/debug symbols from build results 
+# into a tar.bz2 file that can be delivered to a customer
+#
+
+PACKAGES="base krb5 openldap libxml2 sqlite"
+PACKAGES="$PACKAGES rpc eventlog pstore netlogon lsass"
+PACKAGES="$PACKAGES domainjoin domainjoin-gui"
+
+if [ $# -lt 4 ]; then
+   echo "Usage: mkdistwrap distroot build-number architecture(s) dest-dir"
+   echo "   Eg: mkdistwrap /mnt/strindberg/lwidentity-5.0 3886 i386:x86_64 /tmp"
+   exit 1
+fi
+
+DISTROOT=$1
+BUILDNUM=$2
+ARCH=$3
+DESTDIR=$4
+
+TMPDIR="$DESTDIR/`basename $DISTROOT`-$BUILDNUM"
+
+if [ -d $TMPDIR ]; then
+   echo "Error: destination directory [$TMPDIR] exists"
+   echo "Please delete the destination directory and try again"
+   exit 1
+fi
+
+echo "Gathering Build Results from [$DISTROOT] for Architectures [$ARCH]"
+echo "Packaging Build Results [Number:$BUILDNUM]"
+echo "Creating temporary distribution directory at [$TMPDIR]"
+
+mkdir -p $TMPDIR
+
+for arch in `echo $ARCH | tr ':' ' '`
+do
+
+    DISTROOT_ARCH=$TMPDIR/$arch
+    SRC_ROOT_DIR=$DISTROOT_ARCH/sources
+    PKG_ROOT_DIR=$DISTROOT_ARCH/packages
+    DBG_ROOT_DIR=$DISTROOT_ARCH/debug
+
+    mkdir -p $DISTROOT_ARCH
+    mkdir -p $SRC_ROOT_DIR
+    mkdir -p $PKG_ROOT_DIR
+    mkdir -p $DBG_ROOT_DIR
+
+    for pkg in $PACKAGES
+    do
+
+        echo "Adding package [$pkg] for Architecture [$arch] to distribution"
+
+        PKG_SRC_DIR=$DISTROOT/$BUILDNUM/release/linux/$arch/packages/$pkg
+
+        cp $PKG_SRC_DIR/rpm/*.rpm $PKG_ROOT_DIR
+
+        if [ -d $PKG_SRC_DIR/source ]; then
+            cp $PKG_SRC_DIR/source/*.bz2 $SRC_ROOT_DIR
+        fi
+
+        cp $PKG_SRC_DIR/rpm/debug/*.bz2 $DBG_ROOT_DIR
+
+    done
+
+done
+
+CURDIR=`pwd`
+cd $DESTDIR
+tar cjfv "${TMPDIR}.tar.bz2" "`basename ${TMPDIR}`"
+cd $CURDIR
+
+rm -rf "$TMPDIR"
+

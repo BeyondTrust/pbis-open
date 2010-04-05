@@ -1,0 +1,222 @@
+                       Software License Agreement
+
+1. Introduction and Acceptance.  This Software License Agreement is a
+legal agreement between you (either an individual or an entity) and
+Likewise Software regarding the use of the Likewise software v5.4
+accompanying this Agreement, which includes user documentation
+provided in "online" or electronic form (together, the "Software").
+BEFORE YOU CLICK ON THE "I ACCEPT AND AGREE" BUTTON AT THE END OF THIS
+DOCUMENT, CAREFULLY READ THE TERMS OF THIS AGREEMENT.  BY CLICKING ON
+THE "I ACCEPT AND AGREE" BUTTON, YOU ARE AGREEING TO BE BOUND BY AND ARE
+BECOMING A PARTY TO THIS AGREEMENT.  IF YOU DO NOT AGREE TO THE TERMS OF
+THIS AGREEMENT, CLICK THE "I DECLINE" BUTTON AND THE SOFTWARE WILL NOT
+BE INSTALLED.  IF YOU DO NOT INSTALL THIS SOFTWARE, PLEASE DESTROY OR
+DELETE ALL COPIES IN YOUR POSSESSION.
+
+2. License to Install and Use the Software.  Subject to the restrictions
+set forth in this Agreement, Likewise hereby grants to you a
+non-exclusive copyright license to install and use the number of
+instances of the Software (in object code format) for which you have
+been granted a license by Likewise (see Section 3).  An instance of the
+Software is "in use" on a computer (or virtual computer or virtual
+machine) when it is loaded into the temporary memory (i.e., RAM) or
+installed into the permanent memory (e.g., hard disk, CD-ROM, or other
+storage device) used by that computer (or virtual computer or virtual
+machine).  The use of multiple instances of the Software on a single
+computer requires multiple licenses.
+
+3. Number of Licenses. You are granted a license to install and use one
+instance of Likewise software v5.4 on either a physical or virtual
+machine, comprising of the Linux/UNIX/Mac side Likewise Software
+agent, the Linux/UNIX/Mac side Likewise Software graphical tools, the
+Windows side Likewise Enterprise MMC snap-in extensions and the Windows
+side Likewise Enterprise Management Console for 30 days from the date of
+installation.  If you wish to use the Software after the 30-day period,
+you must purchase a commercial license for each instance installed
+during the trial period, plus licenses for additional instances.  Please
+email Likewise at sales@likewise.com to purchase licenses and
+you will be granted licenses for the number of instances of the
+Linux/UNIX/Mac agent specified by your Likewise sales order and Likewise
+license key.
+
+4. Prohibited Users.  Unless otherwise agreed to in writing by you and
+Likewise, you may not install, use, or access the Software (including
+related documentation) if you are (a) an entity or individual that
+markets, distributes, or provides server management, configuration, or
+Windows-Linux/UNIX/Mac interoperability software or services or (b) an
+entity or individual that will access or use the Software (including
+related documentation) on behalf of an entity or individual that
+markets, distributes, or provides server management, configuration, or
+Windows/Linux interoperability software or services.  The license in
+Section 2 is void if you are in violation of this Section 4.
+
+5. Special Provisions Regarding Open Source and Third Party Software.
+The Software may contain or be distributed with third party software
+covered by an open source software license ("Open Source Software") or
+other third party software ("Third Party Software") which may be covered
+by a different license.  If Open Source Software is included the terms
+and conditions of this license do not apply to the Open Source Software.
+If Third Party Software is included the terms and conditions of this
+license may not apply to Third Party Software.  Information concerning
+the inclusion of the Open Source Software and Third Party Software, if
+any, and the notices, license terms, and disclaimers applicable to that
+software is contained in the Licenses.txt file provided with the
+Software.
+
+6. License Restrictions.  YOU MAY NOT RENT, LEASE, SUBLICENSE, SELL,
+ASSIGN, LOAN, OR OTHERWISE TRANSFER THE SOFTWARE OR ANY OF YOUR RIGHTS
+AND OBLIGATIONS UNDER THIS AGREEMENT.  You may not remove or destroy any
+copyright notices or other proprietary markings.  You may not modify or
+adapt the Software, merge the Software into another program, or create
+derivative works based on the Software.  You may not use, copy, or
+distribute the Software without Likewise's authorization, except that
+you may make one copy of the Software for archival or back-up purposes
+only.  You may use, copy, and distribute user documentation provided in
+"online" or electronic form within your private organization solely to
+support your authorized use of the Software, but you are not authorized
+to publicly display or transmit the documentation or use the
+documentation for any other purpose.
+
+7. Ownership.  The license granted to you in Section 2 is not a transfer
+or sale of Likewise's or its suppliers' ownership rights in or to the
+Software.  Except for the license granted in Section 2, Likewise and its
+suppliers retain all right, title and interest (including all
+intellectual property rights) in and to the Software.  The Software is
+protected by applicable intellectual property laws, including United
+States copyright laws and international treaties.
+
+8. Customer Reference.  You hereby grant Likewise the right to use your
+organization's name or your corporate logo or both in connection with
+Likewise' promotional materials and website solely to identify you as a
+customer of Likewise. If, at any time, you do not wish for Likewise to
+use your trade name or corporate logo in such a manner, you may notify
+Likewise at reference@likewise.com.
+
+9. Confidentiality.  In order to protect the trade secrets and
+proprietary know-how contained in Software, you will not decompile,
+disassemble, or reverse engineer the Software.  If you are participating
+in the Trial Program, you will maintain the confidentiality of and not
+disclose to any third party: (a) all non-public information disclosed by
+Likewise to you regarding Trial Versions of the Software or the Trial
+Program, and (b) all Feedback, Software performance data, and all other
+information obtained through evaluation of the Software as part of the
+Trial Program.
+
+10. Termination.  This Agreement will be effective upon installation of
+the Software and will terminate upon the earlier of: (a) your failure to
+comply with any term of this Agreement; (b) return, destruction, or
+deletion of all instances and copies of the Software in your possession;
+or, (c) if you are using a Trial Version of the Software, upon
+completion of the Trial Program as specified by Likewise.  Likewise'
+rights and your obligations will survive the termination of this
+Agreement.  Upon termination of this Agreement by Likewise, you will
+certify in writing to Likewise that all instances and copies of the
+Software, or any portion thereof, have either been returned to Likewise
+or otherwise destroyed or deleted from any of your computers or storage
+devices.
+
+11. Limited Warranty
+
+  (a) "No Questions Asked" Warranty for Commercial Versions.  You may
+return a Commercial Version of the Software for a refund within 30 days
+of purchase for any reason.  To request a refund, you must contact
+Likewise (via US Postal mail or email sales@likewise.com) and
+identify the reason for your return.  Prior to receiving your refund,
+you must certify in writing to Likewise that all copies of the Software,
+or any portion thereof, have either been returned to Likewise or
+otherwise destroyed or deleted from any of your computers or storage
+devices.
+
+  (b) Performance Warranty for Commercial Versions.  Likewise warrants
+that Commercial Versions of the Software will perform substantially in
+accordance with the documentation accompanying the Software for a period
+of 90 days after receipt by you.  Likewise's entire liability and your
+exclusive remedy for breach of this warranty will be, at Likewise's
+option, either (a) refund of the license fee paid by you; or (b) repair
+or replacement of the Software that does not meet this warranty and that
+is returned to Likewise.  This limited warranty will be void if failure
+of the Software has resulted from any accident, abuse, misuse, or
+misapplication by you.  Replacement Software will be warranted for the
+remainder of the original warranty period or 30 days, whichever is
+longer.
+
+12. NO OTHER WARRANTIES.  EXCEPT AS SET FORTH IN SECTION 11, THE
+SOFTWARE IS PROVIDED ON AN "AS IS" BASIS.  YOU ASSUME ALL
+RESPONSIBILITIES FOR SELECTION OF THE SOFTWARE TO ACHIEVE YOUR INTENDED
+RESULTS, AND FOR THE INSTALLATION OF, USE OF, AND RESULTS OBTAINED FROM
+THE SOFTWARE.  TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW,
+LIKEWISE DISCLAIMS ALL WARRANTIES, EITHER EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO IMPLIED WARRANTIES OF MERCHANTABILITY, QUALITY,
+ACCURACY, TITLE, NONINFRINGEMENT, AND FITNESS FOR A PARTICULAR PURPOSE
+WITH RESPECT TO THE SOFTWARE AND THE ACCOMPANYING WRITTEN MATERIALS.
+THERE IS NO WARRANTY AGAINST INTERFERENCE WITH THE ENJOYMENT OF THE
+SOFTWARE OR AGAINST INFRINGEMENT.  THERE IS NO WARRANTY THAT THE
+SOFTWARE OR LIKEWISE'S EFFORTS WILL FULFILL ANY OF YOUR PARTICULAR
+PURPOSES OR NEEDS.
+
+13. LIMITATION OF LIABILITY.  UNDER NO CIRCUMSTANCES WILL LIKEWISE BE
+LIABLE FOR ANY CONSEQUENTIAL, SPECIAL, INDIRECT, INCIDENTAL OR PUNITIVE
+DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF
+BUSINESS PROFITS, BUSINESS INTERRUPTION, LOSS OF BUSINESS INFORMATION,
+LOSS OF DATA OR OTHER SUCH PECUNIARY LOSS) ARISING OUT OF THE USE OR
+INABILITY TO USE THE SOFTWARE, EVEN IF LIKEWISE HAS BEEN ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGES.  THE FOREGOING LIMITATIONS ARE INDEPENDENT
+OF THE EXCLUSIVE REMEDY PROVIDED IN SECTION 11 AND WILL APPLY
+NOTWITHSTANDING ANY FAILURE OF SUCH EXCLUSIVE REMEDY.  IN NO EVENT WILL
+LIKEWISE'S AGGREGATE LIABILITY FOR DAMAGES ARISING OUT OF THIS AGREEMENT
+EXCEED THE FEES PAID BY YOU FOR THE SOFTWARE.  THE FOREGOING EXCLUSIONS
+AND LIMITATIONS OF LIABILITY AND DAMAGES WILL NOT APPLY TO CONSEQUENTIAL
+DAMAGES FOR PERSONAL INJURY.
+
+14. Audit.  You must keep current, complete, and accurate records
+regarding the reproduction, installation, and use of Software.  You will
+provide such information to Likewise and certify that you have paid all
+related fees within five business days of any written request, so long
+as Likewise does not make more than three requests during any 12-month
+period.  You will, after a two week prior notice from Likewise, provide
+Likewise with reasonable access to your premises, records, and personnel
+so that Likewise may audit and confirm that you comply with this
+Agreement.  If an audit reveals any reproduction, installation, or use
+of the Software that is not compliant with this Agreement, you will
+promptly comply with this Agreement and pay the additional fees (at
+Likewise's then-current rates) due plus interest at the rate of 1.5% per
+month.  You will also promptly reimburse Likewise for its reasonable
+costs of conducting the audit if the audit reveals any noncompliance.
+
+15. Indemnification.  You will indemnify and hold harmless Likewise
+(including all of its officers, employees, directors, subsidiaries,
+representatives, affiliates, and agents) and Likewise's suppliers from
+and against any damages (including attorney's fees and expenses),
+claims, and lawsuits that arise or result from your use of the Software.
+
+16. Trademarks.  Certain of the product and Likewise names used in this
+Agreement, the Software may constitute trademarks of Likewise or third
+parties.  You are not authorized to use any such trademarks.
+
+17. Export Restrictions.  You may not export or re-export the Software
+without complying with applicable export control laws and obtaining any
+necessary permits and licenses.
+
+18. Arbitration.  Except for the right of Likewise to apply to a court
+of competent jurisdiction for a temporary restraining order, a
+preliminary injunction, or other equitable relief to preserve the status
+quo or prevent irreparable harm, any dispute as to the interpretation,
+enforcement, breach, or termination of this Agreement will be settled by
+binding arbitration in Seattle, Washington, U.S.A. under the Rules of
+the American Arbitration Association by one arbitrator appointed in
+accordance with the Rules.  All other disputes will be resolved by a
+court specified in Section 19.  Judgment upon the award rendered by the
+arbitrators may be entered in any court of competent jurisdiction.  The
+prevailing party will be entitled to receive from the other party its
+attorneys' fees and costs incurred in connection with any arbitration.
+
+19. General.  This Agreement is governed by the laws of the State of
+Washington, without reference to its conflict of laws principles.
+Except as set forth in Section 18, any dispute between you and Likewise
+regarding this Agreement will be subject to the exclusive jurisdiction
+of the state and federal courts located in King County, Washington in
+connection with any action arising under this Agreement.  This Agreement
+is the entire agreement between you and Likewise and supersedes any
+other communications with respect to the Software.  If any provision of
+this Agreement is held invalid or unenforceable, the remainder of this
+Agreement will continue in full force and effect.

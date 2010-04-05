@@ -1,0 +1,26 @@
+# -*- sh -*-
+#
+# This file is sourced by the different test scripts.  It needs to be
+# valid POSIX sh.
+#
+
+pkgconfig=../pkg-config
+
+PKG_CONFIG_PATH=$srcdir
+export PKG_CONFIG_PATH
+
+run_test () {
+    ${pkgconfig} $ARGS >/dev/null 2>&1
+    if [ "$?" -ne "0" ]; then
+        echo "Running ${pkgconfig} $ARGS failed altogether, bailing"
+        exit 1
+    fi
+
+    R=$(${pkgconfig} $ARGS | sed -e 's,^[[:space:]]*,,' -e 's,[[:space:]]*$,,')
+    if [ "$R" != "$RESULT" ]; then
+	echo "${pkgconfig} $ARGS :"
+	echo "'$R' != '$RESULT'"
+	exit 1
+    fi
+    return
+}

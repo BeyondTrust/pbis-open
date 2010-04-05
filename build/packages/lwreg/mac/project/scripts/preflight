@@ -1,0 +1,15 @@
+#!/bin/bash
+
+LWREG_NAME=com.likewisesoftware.lwregd
+LWREG_DAEMON=/Library/LaunchDaemons/$LWREG_NAME.plist
+
+if [ -f $LWREG_DAEMON ]; then
+   launchctl list | grep $LWREG_NAME > /dev/null
+   if [ $? -eq 0 ]; then
+      launchctl stop $LWREG_NAME
+      touch /tmp/lwregd.restart
+   fi
+
+   launchctl unload $LWREG_DAEMON
+   rm $LWREG_DAEMON
+fi

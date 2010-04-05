@@ -1,0 +1,417 @@
+#							-*- Autotest -*-
+
+AT_BANNER([Autotest.])
+
+# Copyright (C) 2004, 2005, 2006 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301, USA.
+
+# AT_CHECK_AT(TITLE, SUITE-CODE, [XFAIL-CONDITION], [STATUS = 0],
+#             [STDOUT := ignore], STDERR, [POST-TEST-CODE])
+# ---------------------------------------------------------------
+# Create a new test named TITLE that runs a minimal Autotest test suite,
+# SUITE-CODE.  Call AT_XFAIL_IF with XFAIL-CONDITION.  STATUS and STDERR pass
+# directly to the AT_CHECK that call the minimal test suite.  STDOUT is not
+# used, but it is reserved for future use.  Run POST-TEST-CODE
+# at the top level after the micro-suite has been run.
+m4_define([AT_CHECK_AT],
+[
+AT_SETUP([$1])
+AT_KEYWORDS([autotest])
+AT_CAPTURE_FILE([micro-suite.log])
+AT_XFAIL_IF([$3])
+
+AT_DATA([package.m4],[[
+m4_define([AT_PACKAGE_NAME],      [GNU Nonsense])
+m4_define([AT_PACKAGE_TARNAME],   [nonsense])
+m4_define([AT_PACKAGE_VERSION],   [1.0])
+m4_define([AT_PACKAGE_STRING],    [GNU Nonsense 1.0])
+m4_define([AT_PACKAGE_BUGREPORT], [bug-autoconf@gnu.org])
+]])
+
+AT_DATA([mysuite.at], [$2])
+
+# Do not use `testsuite' as the name of the small test suite, or the
+# log file it generates will overwrite the log that the Autoconf test
+# suite produces for this test case.
+AT_CHECK_AUTOM4TE([--language=autotest -o micro-suite mysuite.at])
+AT_CHECK([$CONFIG_SHELL ./micro-suite],       m4_default([$4], 0), [ignore], [$6])
+AT_CHECK([$CONFIG_SHELL ./micro-suite -v -x], m4_default([$4], 0), [ignore], [$6])
+$7
+AT_CLEANUP
+])# AT_CHECK_AT
+
+# AT_CHECK_AT_TEST(TITLE, SUITE-SNIPPET, ...)
+# -----------------------------------------------------------------------
+# Wrapper for AT_CHECK_AT that surrounds SUITE-SNIPPET with a boilerplate
+# AT_INIT, AT_SETUP, and AT_CLEANUP and passes other arguments verbatim.
+m4_define([AT_CHECK_AT_TEST],
+[AT_CHECK_AT([$1],
+[[
+AT_INIT([artificial test suite])
+AT_SETUP([my only test])
+$2
+AT_CLEANUP
+]], m4_shiftn(2, $@))])
+
+# Here documents for these tests contain forbidden macros.
+m4_pattern_allow([^AT_])
+
+# AT_NO_CMDSUBST
+# --------------
+m4_define([AT_NO_CMDSUBST],
+[if (eval 'foo=$(echo bar) && test "$foo" = bar') >/dev/null 2>&1; then false; else :; fi])
+
+
+## ------------------ ##
+## Empty test suite.  ##
+## ------------------ ##
+
+# This is not a sensible thing to do, but the user should not get an unhelpful
+# error message.
+AT_CHECK_AT([Empty test suite],
+[[AT_INIT([empty test suite])
+]])
+
+# Next level of emptiness.
+AT_CHECK_AT_TEST([Empty test], [])
+
+# And finally, an empty check should not cause a syntax error.
+AT_CHECK_AT_TEST([Empty check], [AT_CHECK])
+
+## ----------------------------------------------------- ##
+## Newlines and command substitutions in test commands.  ##
+## ----------------------------------------------------- ##
+
+AT_CHECK_AT_TEST([Truth],
+  [AT_CHECK([:], 0, [], [])])
+
+AT_CHECK_AT_TEST([Fallacy],
+  [AT_CHECK([false], ignore, [], [])])
+
+AT_CHECK_AT_TEST([Literal multiline command],
+  [AT_CHECK([echo Auto'
+'conf], 0, [Auto
+conf
+], [])])
+
+AT_CHECK_AT_TEST([Multiline parameter expansion],
+  [FOO='one
+two'
+   AT_CHECK([echo "$FOO"], 0, [one
+two
+], [])])
+
+AT_CHECK_AT_TEST([Backquote command substition],
+  [AT_CHECK([echo `echo hi`], 0, [hi
+], [])])
+
+
+AT_CHECK_AT_TEST([Multiline backquote command substition],
+  [AT_DATA([myfile],[foo
+bar
+])
+   AT_CHECK([echo "`cat myfile`"], 0, [foo
+bar
+], [])])
+
+AT_CHECK_AT_TEST([Parenthetical command substition],
+  [AT_CHECK([echo $(echo hi)], 0, [hi
+], [])],
+  [AT_NO_CMDSUBST])
+
+AT_CHECK_AT_TEST([Multiline parenthetical command substition],
+  [AT_DATA([myfile],[foo
+bar
+])
+   AT_CHECK([echo "$(cat myfile)"], 0, [foo
+bar
+], [])],
+  [AT_NO_CMDSUBST])
+
+
+## ------------------------- ##
+## ${...} in test commands.  ##
+## ------------------------- ##
+
+# If this invalid parameter expansion capsizes the test suite, the entire
+# AT_SETUP ... AT_CLEANUP subshell will exit, and the commands it runs will
+# appear to have succeeded.  Therefore, we verify a failing test case.
+
+AT_CHECK_AT_TEST([Invalid brace-enclosed parameter expansion],
+  [AT_CHECK([echo '${=invalid}'], 0, [wrong])], [false], 1, ignore, ignore)
+
+
+## ---------------------------- ##
+## M4 macros in test commands.  ##
+## ---------------------------- ##
+
+# The last paragaph in the comment above _AT_DECIDE_TRACEABLE illustrates why
+# this test fails (except with Korn shell-style quoting $'foo\nbar').
+AT_CHECK_AT_TEST([Multiline command from M4 expansion],
+  [m4_define([GNU], ['foo
+bar'])
+   AT_CHECK([echo GNU], 0, [foo
+bar
+], [])], [case `( set -x; echo 'foo
+bar') 2>&1` in *\$\'foo\\nbar\'*) false;; *) :;; esac])
+
+AT_CHECK_AT_TEST([Double-M4-quoted command],
+  [m4_define([GNU], ['foo
+bar'])
+   AT_CHECK([[echo GNU]], 0, [[GNU
+]], [])])
+
+
+## -------------------------------------- ##
+## Backslash-<newline> in test commands.  ##
+## -------------------------------------- ##
+
+AT_CHECK_AT_TEST([BS-newline in command],
+  [AT_CHECK([echo Auto"\
+"conf], 0, [Autoconf
+], [])])
+
+AT_CHECK_AT_TEST([^BS-newline in command],
+  [AT_CHECK([\
+echo GNU], 0, [GNU
+], [])])
+
+AT_CHECK_AT_TEST([BSx641-newline in command],
+  [AT_CHECK([echo Auto"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+"conf], 0, [Auto\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\conf
+], [])])
+
+AT_CHECK_AT_TEST([BS-BS-newline in command],
+  [AT_CHECK([echo Auto"\\
+"conf], 0, [Auto\
+conf
+], [])])
+
+# A `^BS-BS-newline in command' test will run a command named `\'.  No, thanks.
+
+AT_CHECK_AT_TEST([BSx640-newline in command],
+  [AT_CHECK([echo Auto"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+"conf], 0, [Auto\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+conf
+], [])])
+
+# This command has both escaped and unescaped newlines.
+AT_CHECK_AT_TEST([Newline-CODE-BS-newline in command],
+  [AT_CHECK([echo Auto'
+'co\
+nf], 0, [Auto
+conf
+], [])])
+
+AT_CHECK_AT_TEST([Single-quote-BS-newline in command],
+  [AT_CHECK([echo Auto'\
+'conf], 0, [Auto\
+conf
+], [])])
+
+AT_CHECK_AT_TEST([Single-quote-newline-BS-newline in command],
+  [AT_CHECK([echo Auto'
+\
+'conf], 0, [Auto
+\
+conf
+], [])])
+
+
+## ------------------------------- ##
+## Funny characters in test names. ##
+## ------------------------------- ##
+
+# AT_CHECK_AT_TITLE(TITLE, TITLE-TO-TEST, EXPANDED-TITLE-TO-TEST
+#                   [XFAIL-CONDITION])
+# ---------------------------------------------------------------
+# Create a new test named TITLE that runs an Autotest test suite
+# comprised of a trivial test named TITLE-TO-TEST, which expands
+# to EXPANDED-TITLE-TO-TEST.  XFAIL-CONDITION passes verbatim to
+# AT_CHECK_AT.
+m4_define([AT_CHECK_AT_TITLE],
+[AT_CHECK_AT([$1],
+[[
+m4@&t@_define([macro_name],         [[macro_expanded]])
+m4@&t@_define([macro_expanded], [[macro_overexpanded]])
+m4@&t@_define([macro_backquote],    [`])
+m4@&t@_define([macro_single_quote], ['])
+m4@&t@_define([macro_double_quote], ["])
+m4@&t@_define([macro_backslash],   [\\])
+AT_INIT([artificial test suite])
+AT_SETUP([$2])
+AT_CHECK([:])
+AT_CLEANUP
+]], [$4], [], [], [],
+[AT_CHECK([[$CONFIG_SHELL ./micro-suite |
+	    sed -n 's/[^:]*: \(.*[^	 ]\)[	 ]*ok.*/\1/p']],,
+[[$3
+]])
+AT_CHECK([[$CONFIG_SHELL ./micro-suite -l |
+	   sed -n 's/.*[0-9]: [^	 ][^	 ]*[	 ][	 ]*\(.*[^	 ]\)[	 ]*/\1/p']],,
+[[$3
+]])
+AT_CHECK([[sed -n 's/[^.]*\. \(.*\) ([^)]*): ok.*/\1/p' micro-suite.log]],,
+[[$3
+]])
+])])
+
+m4_define([AT_CHECK_AT_TITLE_CHAR],
+[AT_CHECK_AT_TITLE([$1 in a test title], [A $2 in my name],
+                   [A ]m4_ifval([$3], [[$3]], [[$2]])[ in my name], $4)])
+
+AT_CHECK_AT_TITLE_CHAR([Backquote],    [`])
+AT_CHECK_AT_TITLE_CHAR([Single-quote], ['])
+AT_CHECK_AT_TITLE_CHAR([Double-quote], ["])
+AT_CHECK_AT_TITLE_CHAR([Backslash],   [\\])
+AT_CHECK_AT_TITLE_CHAR([Brackets],  [[[]]], [[]])
+AT_CHECK_AT_TITLE_CHAR([Pound],      [[#]], [#])
+AT_CHECK_AT_TITLE_CHAR([Comma],        [,])
+
+AT_CHECK_AT_TITLE_CHAR([Quoted Macro],                  [[macro_name]],
+                                                          [macro_name])
+AT_CHECK_AT_TITLE_CHAR([Macro],                           [macro_name],
+                                                      [macro_expanded])
+AT_CHECK_AT_TITLE_CHAR([Macro with backquote],       [macro_backquote],
+                                                                   [`], [:])
+AT_CHECK_AT_TITLE_CHAR([Macro with single-quote], [macro_single_quote], ['])
+AT_CHECK_AT_TITLE_CHAR([Macro with double-quote], [macro_double_quote],
+                                                                   ["], [:])
+# This test neither fails nor passes reliably.
+# AT_CHECK_AT_TITLE_CHAR([Macro with backslash],       [macro_backslash],
+#                                                                  [\\], [:])
+
+
+## ----------------- ##
+## Debugging a test. ##
+## ----------------- ##
+
+AT_CHECK_AT_TEST([Debugging a successful test],
+  [AT_CHECK([:])], [], [], [], [ignore],
+[# Without options, when all tests pass, no test directory should exist.
+AT_CHECK([test -d micro-suite.dir/1 && exit 42
+          ./micro-suite -d 1], [], [ignore], [ignore])
+# Running with -d should leave a reproducible test group.
+# Also, running the test script from the test group locks the
+# directory from removal on some platforms; the script should still be
+# able to run even if rmdir fails.
+AT_CHECK([(cd micro-suite.dir/1 && ./run)], [], [ignore], [ignore])
+# Running a debugging script implies -d.
+AT_CHECK([(cd micro-suite.dir/1 && ./run)], [], [ignore], [ignore])
+])
+
+AT_CHECK_AT_TEST([Debugging script and environment],
+  [AT_CHECK([test "$MY_VAR" = pass || exit 42])],
+  [], [1], [], [ignore], [
+# Changing environment outside of debugging script is not preserved.
+AT_CHECK([(cd micro-suite.dir/1 && MY_VAR=pass ./run)],
+         [0], [ignore], [ignore])
+AT_CHECK([(cd micro-suite.dir/1 && ./run)],
+         [1], [ignore], [ignore])
+# Changing environment as argument to debugging script is preserved.
+AT_CHECK([(cd micro-suite.dir/1; ./run MY_VAR=pass)],
+         [0], [ignore], [ignore])
+AT_CHECK([(cd micro-suite.dir/1; ./run)],
+         [0], [ignore], [ignore])
+])
+
+# The run script must still be valid when shell metacharacters are passed
+# in via an environment option.
+AT_CHECK_AT_TEST([Debugging a failed test],
+  [AT_CHECK([test "$MY_VAR" = "one space" || exit 42])],
+  [], [1], [], [ignore], [
+AT_CHECK([(cd micro-suite.dir/1 && ./run MY_VAR='two  spaces')],
+         [1], [ignore], [ignore])
+AT_CHECK([(cd micro-suite.dir/1 && ./run MY_VAR='one space')],
+         [0], [ignore], [ignore])
+])
+
+
+## --------- ##
+## Keywords. ##
+## --------- ##
+AT_SETUP([Keywords and ranges])
+AT_KEYWORDS([autotest])
+
+AT_DATA([k.at],
+[[m4_define([AT_PACKAGE_STRING],[k])
+m4_define([AT_PACKAGE_BUGREPORT],[devnull])
+AT_INIT
+AT_SETUP(none)
+AT_CHECK(:)
+AT_CLEANUP
+AT_SETUP(first)
+AT_KEYWORDS(key1)
+AT_CHECK(:)
+AT_CLEANUP
+AT_SETUP(second)
+AT_KEYWORDS(key2)
+AT_CHECK(:)
+AT_CLEANUP
+AT_SETUP(both)
+AT_KEYWORDS(key1)
+AT_KEYWORDS(key2)
+AT_CHECK(:)
+AT_CLEANUP
+]])
+AT_CHECK_AUTOM4TE([--language=autotest -o k k.at])
+
+# AT_CHECK_EGREP(PATTERN, STATUS, COUNT)
+m4_define([AT_CHECK_EGREP],
+[AT_CHECK([$EGREP -c '$1' stdout], $2, [$3
+], ignore)
+])
+
+# AT_CHECK_KEYS(TESTSUITE-OPTIONS, PATTERN1, COUNT1, PATTERN2, COUNT2)
+m4_define([AT_CHECK_KEYS],
+[AT_CHECK([./k $1], 0, [stdout])
+AT_CHECK_EGREP([$2], 0, [$3])
+AT_CHECK_EGREP([$4], 1, [$5])
+])
+
+AT_CHECK_KEYS([-k key1], [first|both], [2], [none|second], [0])
+AT_CHECK_KEYS([-k key2], [second|both], [2], [none|first], [0])
+AT_CHECK_KEYS([-k key1,key2], [both], [1], [none|first|second], [0])
+AT_CHECK_KEYS([-k key1 -k key2], [first|second|both], [3], [none], [0])
+AT_CHECK_KEYS([-k '!key1'], [none|second], [2], [first|both], [0])
+AT_CHECK_KEYS([-k '!key2'], [none|first], [2], [second|both], [0])
+AT_CHECK_KEYS([-k '!key1,key2'], [second], [1], [none|first|both], [0])
+AT_CHECK_KEYS([-k 'key1,!key2'], [first], [1], [none|second|both], [0])
+AT_CHECK_KEYS([-k '!key1,!key2'], [none], [1], [first|second|both], [0])
+AT_CHECK_KEYS([-k '!key1' -k KEY2], [none|second|both], [3], [first], [0])
+AT_CHECK_KEYS([-k key1 -k '!key2'], [none|first|both], [3], [second], [0])
+AT_CHECK_KEYS([-k '!KEY1' -k '!key2'], [none|first|second], [3], [both], [0])
+
+AT_CHECK_KEYS([-k none], [none], [1], [first|second|both], [0])
+AT_CHECK_KEYS([-k key1,both], [both], [1], [none|first|second], [0])
+AT_CHECK_KEYS([-k key1 -k both], [first|both], [2], [none|second], [0])
+AT_CHECK_KEYS([-k none,first], [successful], [1], [none|first|second|both], [0])
+AT_CHECK_KEYS([-k none,first,second,both], [successful], [1], [none|first|second|both], [0])
+AT_CHECK_KEYS([-k !none,first], [first], [1], [none|second|both], [0])
+
+AT_CHECK_KEYS([-k '.*eco.*'], [second], [1], [none|first|both], [0])
+AT_CHECK_KEYS([-k 'ECO'], [successful], [1], [none|first|second|both], [0])
+AT_CHECK_KEYS([-k '.*eco'], [successful], [1], [none|first|second|both], [0])
+AT_CHECK_KEYS([-k 'eco.*'], [successful], [1], [none|first|second|both], [0])
+AT_CHECK_KEYS([-k 'fir.*'], [first], [1], [none|second|both], [0])
+
+AT_CHECK_KEYS([1-2], [none|first], [2], [second|both], [0])
+AT_CHECK_KEYS([1-3 2-1], [none|first|second], [3], [both], [0])
+AT_CHECK_KEYS([-3], [none|first|second], [3], [both], [0])
+AT_CHECK_KEYS([4-], [both], [1], [none|first|second], [0])
+AT_CHECK_KEYS([-k second 4-], [second|both], [2], [none|first], [0])
+AT_CLEANUP

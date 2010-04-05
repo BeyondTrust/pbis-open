@@ -1,0 +1,15 @@
+#! /bin/sh
+
+# Do the Solaris Dance:
+if [ ! -d ~root ]  ; then
+    exec /usr/xpg4/bin/sh $0 "$@" 
+fi
+
+set -e
+
+. ${srcdir}/common
+
+ARGS="--cflags simple"
+RESULT=""
+
+run_test

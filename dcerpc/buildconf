@@ -1,0 +1,5 @@
+#!/bin/sh -xe
+ROOT=`pwd`
+mkdir -p build || exit $?
+autoreconf -fi || exit $?
+cd flex-2.5.4 && autoreconf -fi && cd $ROOT || exit $?

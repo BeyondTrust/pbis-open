@@ -1,0 +1,6 @@
+Likewise
+--------
+
+To join an Active Directory domain using a command-line interface, run:
+
+	/opt/likewise/bin/domainjoin-cli

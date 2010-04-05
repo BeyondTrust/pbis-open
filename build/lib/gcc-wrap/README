@@ -1,0 +1,7 @@
+This utility is used by non-libtool components when building on AIX to set the
+RPATH without causing the linker to blow up.
+
+To use the wrapper, the component checks whether it is building on AIX.  If
+so, the component does:
+
+   CC="$(echo $CC | sed 's/^gcc/gcc-wrap.sh/')"

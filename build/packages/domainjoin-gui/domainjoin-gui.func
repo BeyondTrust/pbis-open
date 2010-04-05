@@ -1,0 +1,17 @@
+PKG_COMPONENTS="domainjoin"
+
+if [ "${BUILD_OS_TYPE}" = "darwin" ]
+then
+    PKG_COMPONENTS="domainjoin domainjoin-mac"
+fi
+
+function package_populate
+{
+    if [ "${BUILD_OS_TYPE}" != "darwin" ]
+    then
+        populate_component domainjoin-gtk
+    else
+        populate_component domainjoin-mac
+    fi
+    strip_common
+}

@@ -1,0 +1,33 @@
+/**
+ *
+ * Authors:	Jiri Srain <jsrain@suse.cz>
+ *
+ * Purpose:	Likewise authentication configuration
+ *
+ * $Id: inst_doit.ycp 47566 2008-05-15 11:15:20Z locilka $
+ */
+{
+textdomain "likewise";
+
+import "Wizard";
+import "Mode";
+import "AutoinstConfig";
+import "PackagesUI";
+
+import "Label";
+import "GetInstArgs";
+import "Report";
+
+map argmap = GetInstArgs::argmap();
+
+string help = _("Help text");
+
+Wizard::SetContents(_("Installing Packages"), `Label (_("Installing Packages, please, wait...")), help, false , false);
+
+//Pkg::ResolvableInstall(pattern_name, `pattern);
+Pkg::ResolvableInstall("likewise-identity-enterprise", `pattern);
+Pkg::PkgSolve(false);
+
+return `next;
+
+}

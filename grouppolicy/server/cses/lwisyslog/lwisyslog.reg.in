@@ -1,0 +1,17 @@
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions]
+
+[HKEY_THIS_MACHINE\Services\gpagent\GPExtensions\{0D18828D-E7DA-434c-A537-8AF8122E2602}]
+"Name"="Likewise Enterprise Syslog GP Extension"
+"DllName"="liblwisyslog@MOD_EXT@"
+"EnableAsynchronousProcessing"=dword:00000000
+"NoBackgroundPolicy"=dword:00000000
+"NoGPOListChanges"=dword:00000001
+"NoMachinePolicy"=dword:00000000
+"NoSlowLink"=dword:00000001
+"NoUserPolicy"=dword:00000001
+"PerUserLocalSettings"=dword:00000000
+"RequireSuccessfulRegistry"=dword:00000001
+"ProcessGroupPolicy"="ProcessSyslogGroupPolicy"
+"ResetGroupPolicy"="ResetSyslogGroupPolicy"
+

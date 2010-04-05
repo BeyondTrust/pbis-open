@@ -1,0 +1,1102 @@
+#!/bin/bash
+
+source "${BUILD_ROOT}/src/linux/build/lib/vc-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/zip-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/version.sh"
+
+function safe_rmtree
+{
+    if [ -z "$1" ]; then
+        echo "No directory tree name to remove"
+        exit 1
+    fi
+    if [ "$1" != "/" ]; then
+        if [ -d "$1" ]; then
+            rm -rf "$1"
+            exit_on_error $?
+        fi
+    fi
+}
+
+function recreate_dir
+{
+    safe_rmtree "$1"
+    mkdir -p "$1"
+    exit_on_error $?
+}
+
+function create_dir
+{
+    mkdir -p "$1"
+    exit_on_error $?
+}
+
+function expand_archive
+{
+    local _sourceFile="$1"
+    local _targetDir="$2"
+
+    echo "Expanding archive '${_sourceFile}'"
+    (cd "${_targetDir}" && uncompress_archive "${_sourceFile}" )
+    exit_on_error $?
+}
+
+function create_archive
+{
+    local _targetFile="$1"
+    local _baseDir="$2"
+    local _fileSpec="$3"
+
+    (cd "${_baseDir}" && compress_archive "${_fileSpec}" "${_targetFile}" )
+    exit_on_error $?
+}
+
+function cleandir
+{
+    echo "Cleaning ${1}..."
+    safe_rmtree "${1}"
+}
+
+function copy_to_dist
+{
+    local _path="$1"
+    local _dir="${COMP_DIST_ROOT}/${COMP_NAME}"
+
+    echo "Copying `basename ${_path}` to dist at ${_dir}..."
+    create_dir "${_dir}"
+    cp -p "${_path}" "${_dir}/."
+    exit_on_error $?
+}
+
+function copy_to_cache
+{
+    local _path="$1"
+    local _dir="${COMP_CACHE_ROOT}/${COMP_NAME}"
+
+    echo "Copying `basename ${_path}` to cache at ${_dir}..."
+    create_dir "${_dir}"
+    cp -p "${_path}" "${_dir}/."
+    exit_on_error $?
+}
+
+#
+# is_incremental
+#
+# Determines if this is an incremental build, which is true if and only if
+#     - The configure stage has been run previously (as indicated by flag file)
+#     - The component explicitly allows incremental building by setting COMP_INCREMENTAL
+#     - Incremental building is not disabled by the user
+#
+
+function is_incremental
+{
+    [ -f "${COMP_FLAGFILE_CONFIGURE}" -a -n "${COMP_INCREMENTAL}" -a -z "${BUILD_DISABLE_INCREMENTAL}" ]
+}
+
+function step_clean
+{
+    echo "STEP: clean"
+
+    # Handle pivoting staging root for downstream incremental builds
+    if [ ! -d "${COMP_STAGING_ROOT}-incremental" -a -d "${COMP_STAGING_ROOT}" ]
+    then
+	echo "Pivoting ${COMP_STAGING_ROOT}"
+        mv "${COMP_STAGING_ROOT}" "${COMP_STAGING_ROOT}-incremental"
+    elif [ -d "${COMP_STAGING_ROOT}-incremental" ]
+    then
+	cleandir "${COMP_STAGING_ROOT}"
+    fi
+
+    # Clean source directory and configure flag for non-incremental builds
+    if ! is_incremental
+    then
+	cleandir "${COMP_GATHER_ROOT}"
+	rm -f "${COMP_FLAGFILE_CONFIGURE}"
+    fi
+    
+    # Always clean install root
+    cleandir "${COMP_INSTALL_ROOT}"
+    
+    return 0
+}
+
+function step_bootstrap
+{
+    if [ -f "${BUILD_ROOT}/src/linux/BOOTSTRAP" ]
+    then
+	echo "Build already bootstrapped -- skipping"
+    elif [ -f "${COMP_BOOTSTRAP}" -a -z "${BUILD_DISABLE_INCREMENTAL}" ]
+    then
+	echo "Component already bootstrapped -- skipping"
+    else
+	echo "Bootstrapping component"
+	op_invoke bootstrap
+	exit_on_error $?
+	mkdir -p "${COMP_BUILD_ROOT}"
+	touch "${COMP_BOOTSTRAP}"
+    fi
+}
+
+function step_sync
+{
+    echo "Gathering files into ${COMP_GATHER_ROOT}..."
+    mkdir -p "${COMP_GATHER_ROOT}"
+    exit_on_error $?
+    op_invoke gather
+    exit_on_error $?
+
+    if [ -n "${OPT_ARCHIVE}" ]; then
+        create_archive "${COMP_SOURCE_ARCHIVE}" "${COMP_GATHER_ROOT}" "`basename ${COMP_GATHER_DIR}`"
+        exit_on_error $?
+        copy_to_dist "${COMP_GATHER_ROOT}/${COMP_SOURCE_ARCHIVE}"
+        exit_on_error $?
+    fi
+}
+
+
+function step_configure
+{
+    echo "STEP: configure"
+
+    if is_incremental
+    then
+        echo "Already configured, skipping"
+    else
+        echo "Configuring in ${COMP_SOURCES_ROOT}..."
+        ( mkdir -p "${COMP_SOURCES_DIR}" && cd "${COMP_SOURCES_DIR}" && op_invoke configure )
+        exit_on_error $?
+        touch "${COMP_FLAGFILE_CONFIGURE}"
+    fi
+    return 0
+}
+
+function step_build
+{
+    echo "STEP: build"
+
+    echo "Building in ${COMP_SOURCES_ROOT}..."
+    ( cd "${COMP_SOURCES_DIR}" && op_invoke build )
+    exit_on_error $?
+
+    return 0
+}
+
+function step_stage
+{
+    echo "STEP: stage"
+
+    recreate_dir "${COMP_INSTALL_ROOT}"
+    recreate_dir "${COMP_STAGING_ROOT}"
+
+    echo "Staging from ${COMP_SOURCES_ROOT} to ${COMP_STAGING_ROOT}..."
+    ( cd "${COMP_SOURCES_DIR}" && op_invoke stage )
+    exit_on_error $?
+
+    # If a pivoted staging directory exists, synchronize into it
+    # to preserve timestamps of unchanged files.  This makes incremental
+    # builds of later components more effective.
+    if [ -d "${COMP_STAGING_ROOT}-incremental" ]
+    then
+        echo "Synchronizing with previous staging image; changed files:"
+        for file in `rsync -rlpgoDcvW --delete "${COMP_STAGING_ROOT}/" "${COMP_STAGING_ROOT}-incremental/" 2>&1`; do
+            if [ -f "${COMP_STAGING_ROOT}/$file" ]; then
+                echo "    $file"
+            fi
+        done
+        rm -rf "${COMP_STAGING_ROOT}"
+        mv "${COMP_STAGING_ROOT}-incremental" "${COMP_STAGING_ROOT}"
+    fi
+
+    return 0
+}
+
+function step_archive
+{
+    echo "STEP: archive"
+
+    local _metaArchive="${COMP_BUILD_ROOT}/${COMP_STAGE_ARCHIVE}"
+    local _metaExisting=$(_first ${COMP_STAGE_CACHED_PATTERN})
+
+    echo "Creating ${COMP_STAGE_ARCHIVE}..."
+    (cd "${COMP_STAGING_ROOT}" && compress_archive ./ "${_metaArchive}" )
+    exit_on_error $?
+
+    if [ -f "${_metaExisting}" ]; then
+        echo "Removing old archive $(basename ${_metaExisting})"
+        rm -f "${_metaExisting}"
+    fi
+
+    local is_tool="`( COMP_IS_TOOL=""; source ${BUILD_ROOT}/src/linux/build/components/${COMP_NAME}.comp && echo $COMP_IS_TOOL )`"
+
+    if [ -z "${is_tool}" ]
+    then
+        copy_to_dist "${_metaArchive}"
+    fi
+    copy_to_cache "${_metaArchive}"
+}
+
+function get_step_function_name
+{
+    echo "step_$1"
+}
+
+function check_step_exists
+{
+    local _func=`get_step_function_name $1`
+    local _type=`type -t "${_func}"`
+    if [ -z "${_type}" ]; then
+        echo "Component is missing step function: \"$1\""
+        exit 1
+    fi
+    if [ "${_type}" != "function" ]; then
+        echo "Component step is not a function: \"$1\" (${_type})"
+        exit 1
+    fi
+    return 0
+}
+
+
+function get_step_name_from_index
+{
+    local _step="${COMP_ALL_STEPS[$1 - 1]}"
+    if [ -z "${_step}" ]; then
+        echo "Invalid step index '$1'"
+        exit 1
+    fi
+    echo "${_step}"
+}
+
+function get_step_index_from_name
+{
+    # 0 is invalid, index is 1-based
+    local _step
+    if [ -z "$1" ]; then
+        if [ -n "$2" ]; then
+            return ${#COMP_ALL_STEPS[@]}
+        fi
+        return 1
+    fi
+    local -i _index=1
+    for _step in ${COMP_ALL_STEPS[@]}; do
+        if [ "$1" == "${_step}" ]; then
+            return ${_index}
+        fi
+        _index=${_index}+1
+    done
+    return 0
+}
+
+function check_step_valid
+{
+    local _index
+    get_step_index_from_name "$1"
+    _index=$?
+    if [ -z "$1" -o $_index -lt 1 ]; then
+        echo "Invalid step: \"$1\""
+        exit 1
+    fi
+}
+
+function check_step_valid_range
+{
+    local _start
+    local _stop
+    get_step_index_from_name "$1"
+    _start=$?
+    get_step_index_from_name "$2" 1
+    _stop=$?
+    #echo $_start $_stop
+    if [ ${_start} -le 0 ]; then
+        echo "Invalid step: '$1'"
+        exit 1
+    fi
+    if [ ${_stop} -le 0 ]; then
+        echo "Invalid step: '$2'"
+        exit 1
+    fi
+    if [ ${_start} -gt ${_stop} ]; then
+        echo "Invalid step range: '$1:$2'"
+        exit 1
+    fi
+}
+
+function do_step
+{
+    check_step_exists $1
+    local _func=`get_step_function_name $1`
+    "${_func}"
+    exit_on_error $?
+}
+
+function do_copy
+{
+    local _path="${COMP_COPY_FILE}"
+
+    echo "Copying from `basename ${_path}` to ${COMP_STAGING_ROOT}..."
+    recreate_dir "${COMP_STAGING_ROOT}"
+    exit_on_error $?
+    expand_archive "${_path}" "${COMP_STAGING_ROOT}"
+    exit_on_error $?
+
+    # Deal with old cache tarballs which had everything in a "root" subdirectory
+    if [ -d "${COMP_STAGING_ROOT}/root" ]
+    then
+        mv ${COMP_STAGING_ROOT}/root/* ${COMP_STAGING_ROOT}/.
+        rmdir ${COMP_STAGING_ROOT}/root
+    fi
+
+    if [ -z "$COMP_IS_TOOL" ]
+    then
+        copy_to_dist "${_path}"
+    fi
+    exit_on_error $?
+}
+
+function do_foreign
+{
+    local _path=`find_one_file ${COMP_STAGE_FOREIGN_SPEC}`
+    local _foreign_root="${COMP_FOREIGN_STAGING_ROOT}"
+
+    if [ -f "${_path}" ]; then
+        echo "Unpacking foreign staging tarball ${_path} to ${_foreign_root}..."
+        recreate_dir "${_foreign_root}"
+        expand_archive "${_path}" "${_foreign_root}"
+        exit_on_error $?
+    else
+        echo "Warning: unable to find foreign staging tarball for ${COMP_NEED_FOREIGN}"
+        return 0
+    fi
+}
+
+function _cached_revision
+{
+    local version=`echo $1 | sed "s:${COMP_STAGE_CACHED_EXTRACT}:\1:"`
+    local revision=`echo $version | sed 's/\./ /g' | awk '{print $2;}'`
+
+    echo $revision
+}
+
+function _first
+{
+    echo "$1"
+}
+
+function _rebuild_run
+{
+    local comp
+
+    echo "Rebuilding ${BUILD_RUN_ROOT}"
+
+    [ -z "${BUILD_RUN_ROOT}" ] && exit 1
+
+    rm -rf "${BUILD_RUN_ROOT}"
+    mkdir -p "${BUILD_RUN_ROOT}"
+
+    for comp in ${BUILD_ROOT}/src/linux/build/components/*.comp
+    do
+        local name="`basename $comp | sed 's/\..*$//'`"
+        local meta="${BUILD_META_OS_ROOT}/components/$name/staging"
+        local is_tool="`( COMP_IS_TOOL=""; source $comp && echo $COMP_IS_TOOL )`"
+        if [ -n "${is_tool}" -a -d "${meta}/${BUILD_RUN_ROOT}" ]
+        then
+            echo " - $name"
+            rsync -a "${meta}/${BUILD_RUN_ROOT}/" "${BUILD_RUN_ROOT}/"
+        fi
+    done
+}
+
+function do_component
+{
+    COMP_IS_RECURSED="$1"
+
+    #
+    # Skip components that are externally satisfied
+    #
+
+    if component_is_external "${COMP_NAME}"
+    then
+	echo "Component \"${COMP_NAME}\" is externally satisfied -- skipping"
+	exit 0
+    fi
+
+
+    #
+    # Check some assertions
+    #
+
+    if [[ -n "${COMP_IS_RECURSED}" && -n "${OPT_STEP}" ]]; then
+        echo "ASSERT"
+        exit 1
+    fi
+
+    #
+    # Set up the most basic variables needed to set up everything else.
+    #
+
+    COMP_MAIN_FILE="${COMPONENTS_DIR}/${COMP_NAME}.comp"
+    COMP_VARS_FILE="${COMPONENTS_DIR}/${COMP_NAME}.comp"
+    COMP_IS_COMPAT=""
+    if [ -n "${COMP_IS_RECURSED}" -o -n "${OPT_COMPAT}" ]; then
+        COMP_IS_COMPAT=1
+    fi
+
+    #
+    # Check that component is defined properly.
+    #
+
+    if [ ! -f "${COMP_MAIN_FILE}" ]; then
+        echo "Component \"${COMP_NAME}\" does not exist!"
+        exit 1
+    fi
+
+    #
+    # Indicate what component we are doing.
+    #
+
+    local compatSuffix=""
+    if [ -n "${COMP_IS_COMPAT}" ]; then
+        compatSuffix=" (compat)"
+    fi
+    echo "Component: ${COMP_NAME}${compatSuffix}"
+
+    #
+    # Setup the per-component variables, reading config as needed.
+    #
+
+    setup_comp_vars
+
+    #
+    # Check for validity of compat/nocompat
+    #
+
+    if [[ -n "${COMP_IS_COMPAT}" && -z "${COMP_NEED_COMPAT}" ]]; then
+        echo "Compatibility build is invalid for \"${COMP_NAME}\""
+        exit 0
+    fi
+
+    #echo "S=${COMP_SOURCE_ARCHIVE}"
+
+    #
+    # Now do whichever steps we need.
+    #
+
+    local _comp_sources="$(component_sources ${COMP_NAME})"
+    local _comp_dependencies="$(component_dependencies "${COMP_NAME}")"
+    local _comp_modified="$(component_modified "${COMP_NAME}")"
+
+    echo "Component sources: ${_comp_sources}"
+    echo "Component dependencies: ${_comp_dependencies}"
+    echo "Component modified: ${_comp_modified}"
+    
+    COMP_COPY_FILE=
+
+    if [ -z "${OPT_NO_COPY}" -a -z "${COMP_DISABLE_CACHE}" ]; then
+        echo "Deciding whether to copy existing staging data"
+        local _cache_file=$(_first ${COMP_STAGE_CACHED_PATTERN})
+        local _dep
+
+        if [ -f "$_cache_file" ]; then
+            local _rev=$(component_cache_modified "$_cache_file" "${COMP_STAGE_CACHED_EXTRACT}")
+            if [ "$_comp_modified" -gt "$_rev" ]
+            then
+                echo "Component has unbuilt modifications -- disabling caching"
+                COMP_COPY_FILE=""
+            else
+                COMP_COPY_FILE="$_cache_file"
+            fi
+        else
+            echo "Did not find cached staging tarball at ${COMP_STAGE_CACHED_PATTERN}"
+        fi
+
+        if [ -z "${OFFICIAL_BUILD_NUMBER}" ] && vc_have_local_changes ${_comp_sources}; then
+            echo "Local changes detected -- disabling caching"
+            COMP_COPY_FILE=""
+        fi
+
+        if [ -f "${COMP_STAMP}" ]
+        then
+            local _time="`cat "${COMP_STAMP}"`"
+            local _dep_time
+            local _dep_stamp
+
+            for _dep in  ${_comp_dependencies}
+            do
+                _dep_stamp="${BUILD_META_OS_ROOT}/components/${_dep}/${COMP_STAMP_NAME}"
+                if [ -f "${_dep_stamp}" ]
+                then
+                    _dep_time="`cat "${_dep_stamp}"`"
+                    echo "Considering dependency $_dep: $_dep_time > $_time"
+                    if [ "$_dep_time" -gt "$_time" ]
+                    then
+                        echo "Dependency $_dep was rebuilt -- disabling caching"
+                        COMP_COPY_FILE=""
+                        break;
+                    fi
+                fi
+            done
+        else
+            for _dep in  ${_comp_dependencies}
+            do
+                _dep_stamp="${BUILD_META_OS_ROOT}/components/${_dep}/${COMP_STAMP_NAME}"
+                if [ -f "${_dep_stamp}" ]
+                then
+                    echo "Dependency $_dep was rebuilt -- disabling caching"
+                    COMP_COPY_FILE=""
+                    break;
+                fi
+            done
+        fi
+    fi
+
+    if [ -n "${COMP_COPY_FILE}" ]; then
+        do_copy
+        exit_on_error $?
+    else
+        local -i _index
+        _index=${OPT_STEP_START_INDEX}
+        #echo "${_index} ${OPT_STEP_STOP_INDEX}"
+        while [ ${_index} -le ${OPT_STEP_STOP_INDEX} ]; do
+            local _step=`get_step_name_from_index ${_index}`
+            do_step ${_step}
+            _index=${_index}+1
+        done
+
+        date '+%Y%m%d%H%M%S' > "${COMP_STAMP}"
+    fi
+
+    #
+    # Do compat as needed:
+    #
+    # - compat allowed
+    # - not doing compat
+    # - need compat
+    # - not doing step
+    #
+
+    if [[ -z "${OPT_NO_COMPAT}" && -z "${COMP_IS_COMPAT}" && -n "${COMP_NEED_COMPAT}" && -z "${OPT_STEP}" ]]; then
+        ( time_command "${COMP_NAME} (compat)" do_component 1 )
+        exit_on_error $?
+    fi
+
+    # Do foreign as needed
+    if [ -n "${COMP_NEED_FOREIGN}" ]; then
+        ( do_foreign )
+        exit_on_error $?
+    fi
+
+    # Do tool install as needed
+    if [ -n "${COMP_IS_TOOL}" ]; then
+        _rebuild_run
+    fi
+
+    return 0
+}
+
+function subshell
+{
+    local _subshell_func="$1"
+    shift
+    ( "${_subshell_func}" "$@" )
+    exit_on_error $?
+}
+
+function setup_comp_vars
+{
+    #
+    # Read component variables
+    #
+
+    COMP_VERSION=""
+    COMP_RELEASE=""
+    COMP_NEED_COMPAT=""
+    COMP_NEED_FOREIGN=""
+    COMP_IS_TOOL=""
+    COMP_INCREMENTAL=""
+    COMP_DISABLE_CACHE=""
+    COMP_SOURCES=""
+    COMP_COMPAT_IS_FULL=""
+
+    if [ -f "${COMP_VARS_FILE}" ]; then
+        local -x _COMP_FILE="${COMP_VARS_FILE}"
+        local -x COMP_NAME="${COMP_NAME}"
+
+        local _result
+        _result=`invoke_helper _invoke_vars "$@"`
+        exit_on_error $?
+
+        # echo "results=[${_result}]"
+
+        COMP_VERSION=`echo "${_result}" | sed -e /^COMP_VERSION=/!d -e s/^COMP_VERSION=// | tail -1`
+        COMP_RELEASE=`echo "${_result}" | sed -e /^COMP_RELEASE=/!d -e s/^COMP_RELEASE=// | tail -1`
+        COMP_NEED_COMPAT=`echo "${_result}" | sed -e /^COMP_NEED_COMPAT=/!d -e s/^COMP_NEED_COMPAT=// | tail -1`
+        COMP_NEED_FOREIGN=`echo "${_result}" | sed -e /^COMP_NEED_FOREIGN=/!d -e s/^COMP_NEED_FOREIGN=// | tail -1`
+        COMP_SOURCES=`echo "${_result}" | sed -e /^COMP_SOURCES=/!d -e s/^COMP_SOURCES=// | tail -1`
+        COMP_IS_TOOL=`echo "${_result}" | sed -e /^COMP_IS_TOOL=/!d -e s/^COMP_IS_TOOL=// | tail -1`
+        COMP_INCREMENTAL=`echo "${_result}" | sed -e /^COMP_INCREMENTAL=/!d -e s/^COMP_INCREMENTAL=// | tail -1`
+        COMP_DISABLE_CACHE=`echo "${_result}" | sed -e /^COMP_DISABLE_CACHE=/!d -e s/^COMP_DISABLE_CACHE=// | tail -1`
+    else
+        echo "Skipping missing vars file: ${COMP_VARS_FILE}"
+    fi
+
+    #
+    # Fix up whether we really need compat based on platform
+    #
+
+    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+        linux-x86_64|hpux-*|solaris-sparc)
+            : # Yes
+            ;;
+        solaris-i386)
+            [ "`uname -r`" = "5.10" ] || COMP_NEED_COMPAT=""
+            ;;
+	darwin-x86_64)
+	    if [ -z "${COMP_IS_TOOL}" ]
+	    then
+		COMP_NEED_COMPAT="1"
+		COMP_COMPAT_IS_FULL="1"
+	    fi
+	    ;;
+        *)
+            COMP_NEED_COMPAT=""
+            ;;
+    esac
+
+    if [ -n "${COMP_NEED_FOREIGN}" ]; then
+        case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+            hpux-ia64)
+                COMP_NEED_FOREIGN="hppa20"
+                ;;
+            solaris-i386)
+                if [ "`uname -r`" = "5.10" ]; then
+                    COMP_NEED_FOREIGN=""
+                else
+                    COMP_NEED_FOREIGN="i386"
+                fi
+                ;;
+            *)
+                COMP_NEED_FOREIGN=""
+                ;;
+        esac
+    fi
+    #
+    # Figure out version/release information
+    #
+
+    COMP_USING_DEFAULT_VERSION=""
+    if [ -n "${COMP_VERSION}" ]; then
+        if [ -z "${COMP_RELEASE}" ]; then
+            echo "COMP_VERSION specified, but missing COMP_RELEASE variable."
+            exit 1
+        fi
+    else
+        if [ -n "${COMP_RELEASE}" ]; then
+            echo "COMP_RELEASE specified, but missing COMP_VERSION variable."
+            exit 1
+        fi
+        COMP_USING_DEFAULT_VERSION=1
+        COMP_VERSION="${MAIN_VERSION}"
+        COMP_RELEASE="${MAIN_RELEASE}"
+    fi
+
+    local _mainFullRelease="${MAIN_RELEASE}.${SVN_REVISION}"
+    if [ -n "${OFFICIAL_BUILD_NUMBER}" ]; then
+        _mainFullRelease="${_mainFullRelease}.${OFFICIAL_BUILD_NUMBER}"
+    fi
+
+    local _compOptionalVersion=""
+    if [ -z "${COMP_USING_DEFAULT_VERSION}" ]; then
+        _compOptionalVersion="-${COMP_VERSION}-${COMP_RELEASE}"
+    fi
+
+    #
+    # Compute OS and 32-bit parts
+    #
+
+    local _osType="${BUILD_OS_TYPE}"
+    check_is_rhel_21
+    if [ $? -eq 0 ]; then
+        _osType="${_osType}-oldlibc"
+    fi
+    local _osPart="${_osType}-${BUILD_OS_ARCH}"
+    local _32bit=""
+    local _32bitDirSuffix=""
+    if [ -n "${COMP_IS_COMPAT}" ]; then
+        _32bit="-compat"
+        _32bitDirSuffix="-compat"
+    fi
+
+    #
+    # Compute archive names
+    #
+
+    local _archiveSuffix=`get_archive_suffix`
+
+    COMP_ARCHIVE_BASE="${MAIN_NAME}-${MAIN_VERSION}-${_mainFullRelease}-${COMP_NAME}${_compOptionalVersion}"
+
+    COMP_SOURCE_ARCHIVE="${COMP_ARCHIVE_BASE}-sources${_archiveSuffix}"
+    COMP_STAGE_ARCHIVE="${COMP_ARCHIVE_BASE}${_32bit}-${_osPart}-stage${_archiveSuffix}"
+
+    COMP_STAGE_CACHED_SPEC="${BUILD_CACHE_OS_ROOT}/components/${COMP_NAME}/${MAIN_NAME}-${MAIN_VERSION}-__VERSION__-${COMP_NAME}${_compOptionalVersion}${_32bit}-${_osPart}-stage${_archiveSuffix}"
+    COMP_STAGE_CACHED_PATTERN="`echo $COMP_STAGE_CACHED_SPEC | sed 's/__VERSION__/*/'`"
+    COMP_STAGE_CACHED_EXTRACT="`echo $COMP_STAGE_CACHED_SPEC | sed 's/__VERSION__/\\\\([^-]*\\\\)/'`"
+
+    if [ "${BUILD_OS_TYPE}" = "solaris" ]; then
+        _foreignCompat="-compat"
+    fi
+
+    COMP_STAGE_FOREIGN_SPEC="${BUILD_DIST_ROOT}/${_osType}/${COMP_NEED_FOREIGN}/components/${COMP_NAME}/${MAIN_NAME}-*-${COMP_NAME}${_compOptionalVersion}${_foreignCompat}-${BUILD_OS_TYPE}-${COMP_NEED_FOREIGN}-stage${_archiveSuffix}"
+
+    COMP_FOREIGN_STAGING_ROOT="${BUILD_META_ROOT}/${_osType}/${COMP_NEED_FOREIGN}/components/${COMP_NAME}/staging${_foreignCompat}"
+
+    #
+    # Compute directories
+    #
+
+    COMP_PREFIX_DIR="${MAIN_PREFIX_DIR}"
+
+    COMP_BUILD_ROOT="${COMP_META_ROOT}/${COMP_NAME}"
+
+    COMP_GATHER_ROOT="${COMP_BUILD_ROOT}/sources${_32bitDirSuffix}"
+    COMP_INSTALL_ROOT="${COMP_BUILD_ROOT}/install${_32bitDirSuffix}"
+    COMP_STAGING_ROOT="${COMP_BUILD_ROOT}/staging${_32bitDirSuffix}"
+
+    COMP_GATHER_DIR="${COMP_GATHER_ROOT}/${COMP_NAME}"
+    COMP_SOURCES_DIR="${COMP_GATHER_DIR}"
+
+    COMP_STAMP_NAME="stamp${_32bitDirSuffix}"
+    COMP_STAMP="${COMP_BUILD_ROOT}/${COMP_STAMP_NAME}"
+
+    COMP_BOOTSTRAP="${COMP_BUILD_ROOT}/bootstrap"
+
+    #
+    # Compute flag files
+    #
+
+    COMP_FLAGFILE_CONFIGURE="${COMP_BUILD_ROOT}/flag-configure${_32bitDirSuffix}"
+
+    return 0
+}
+
+function op_invoke
+{
+    local -x _COMP_OP="$1"
+    shift
+
+    local -x _COMP_FILE="${COMP_MAIN_FILE}"
+
+    local -x COMP_NAME="${COMP_NAME}"
+    local -x GATHER_DIR="${COMP_GATHER_DIR}"
+    local -x BUILDING_ROOT="${COMP_SOURCES_DIR}"
+    local -x INSTALL_ROOT="${COMP_INSTALL_ROOT}"
+    local -x STAGING_ROOT="${COMP_STAGING_ROOT}"
+    local -x PREFIX_DIR="${COMP_PREFIX_DIR}"
+    local -x COMP_IS_COMPAT="${COMP_IS_COMPAT}"
+    if [ -z "${COMP_COMPAT_IS_FULL}" ]
+    then
+	local -x IS_COMPAT="${COMP_IS_COMPAT}"
+    fi
+
+    local -x COMP_VERSION="${COMP_VERSION}"
+    local -x COMP_RELEASE="${COMP_RELEASE}"
+
+    invoke_helper _invoke_op "$@"
+    exit_on_error $?
+
+    return 0
+}
+
+function invoke_helper
+{
+    bash -e <<EOF
+source "${COMPONENTS_DIR}/../common.sh"
+source "${COMPONENTS_DIR}/../lib/mkcomp-helper.sh"
+"$@"
+exit \$?
+EOF
+    return $?
+}
+
+function check_component_name
+{
+    #
+    # Check component name
+    #
+
+    if [ -z "${1}" ]; then
+        warn "Missing component name."
+        return 1
+    fi
+
+    if [ ! -f "${COMPONENTS_DIR}/${1}.comp" ]; then
+        warn "Invalid component: \"${1}\""
+        return 1
+    fi
+
+    return 0
+}
+
+function do_component_list
+{
+    local COMP_NAME=""
+    for COMP_NAME in $@ ; do
+
+        #
+        # Time the build
+        #
+
+        check_component_name "${COMP_NAME}"
+        exit_on_error $?
+
+        local compatSuffix=""
+        if [ -n "${OPT_COMPAT}" ]; then
+            compatSuffix=" (compat)"
+        fi
+        ( time_command "${COMP_NAME}${compatSuffix}" do_component )
+        exit_on_error $?
+    done
+}
+
+function usage
+{
+    echo "usage: `basename $1` [options] <component> [<component> ...]"
+    echo ""
+    echo "  description:"
+    echo ""
+    echo "    Builds one or more components in the build system."
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --help-options    Show component-specific env. variable build options."
+    echo ""
+    echo "    --noincremental   Disable incremental builds."
+    echo ""
+    echo "    --nocopy          Do not use existing staging archives, even if they are up-to-date"
+    echo ""
+    echo "    --nocompat        Skip 32-bit compat build."
+    echo ""
+    echo "    --compat          Only do 32-bit compat build."
+    echo ""
+    echo "    --step <STEP>     Perform the specified step.  A range can also be specified"
+    echo "                      by using STEP:STEP (where the start or stop can be blank)."
+    echo "                      The steps are:"
+    echo ""
+    local _step
+    for _step in ${COMP_ALL_STEPS[@]}; do
+        echo "                          ${_step}"
+    done
+    echo ""
+    echo "  symbol options:"
+    echo ""
+    echo "    --debug           Force build with debug information."
+    echo "    --nodebug         Force build without debug information."
+    echo "    --profiling         Force build with profiling information."
+    echo "    --noprofiling       Force build without profiling information."
+    echo ""
+    echo "  components:"
+    echo ""
+    for comp in ${COMPONENTS_LIST}; do
+        if [ -f "${COMPONENTS_DIR}/${comp}.comp" ]; then
+            echo "    ${comp}"
+            if [ -n "${OPT_HELP_OPTIONS}" ]; then
+                local opts=`component_option_names "${comp}"`
+                for opt in ${opts} ; do
+                    local help=`component_option_help "${comp}" "${opt}"`
+                    echo "      option ($opt)"
+                    echo "$help" | perl -pe '$p=" "x8;s/(.{0,68})\s/$p$1\n/g'
+                done
+            fi
+        fi
+    done
+}
+
+function usage_bad_multi
+{
+    echo "Cannot specify $1 more than once."
+    exit 1
+}
+
+function usage_bad_combo
+{
+    echo "Cannot specify $1 with $2."
+    exit 1
+}
+
+##
+## Main driver code
+##
+
+function main
+{
+    if [ -z "${BUILD_ROOT}" ]; then
+        echo "You need to source buildenv first"
+        exit 1
+    fi
+
+    . ${BUILD_ROOT}/src/linux/build/common.sh
+    if [ $? -ne 0 ]; then
+        echo "Perhaps the BUILD_ROOT environment variable is incorrect." 1>&2
+        exit 1
+    fi
+
+    . ${BUILD_ROOT}/src/linux/build/version.sh
+    exit_on_error $?
+
+    set_ctrlc_trap
+
+    COMPONENTS_DIR="${BUILD_ROOT}/src/linux/build/components"
+    COMPONENTS_LIST=`for comp in ${COMPONENTS_DIR}/*.comp; do basename $comp | sed 's/\.comp$//'; done`
+    COMP_META_ROOT="${BUILD_META_OS_ROOT}/components"
+    COMP_DIST_ROOT="${BUILD_DIST_OS_ROOT}/components"
+    COMP_CACHE_ROOT="${BUILD_CACHE_OS_ROOT}/components"
+    COMP_ALL_STEPS=(clean bootstrap sync configure build stage archive)
+
+    OPT_HELP_OPTIONS=""
+    OPT_NO_COPY=""
+    OPT_NO_COMPAT=""
+    OPT_COMPAT=""
+    OPT_STEP=""
+    OPT_ARCHIVE=""
+    parseOptDone=""
+
+    while [[ -z "${parseOptDone}" ]]; do
+        case "$1" in
+            --help)
+                usage "$0"
+                exit 0
+                ;;
+            --help-options)
+                OPT_HELP_OPTIONS=1
+                usage "$0"
+                exit 0
+                ;;
+            --noincremental)
+                export BUILD_DISABLE_INCREMENTAL=1
+                shift
+                ;;
+            --nocopy)
+                OPT_NO_COPY=1
+                shift
+                ;;
+            --nocompat)
+                OPT_NO_COMPAT=1
+                shift
+                ;;
+            --compat)
+                OPT_COMPAT=1
+                shift
+                ;;
+            --archive)
+                OPT_ARCHIVE=1
+                OPT_STEP="sync"
+                OPT_NO_COPY=1
+                shift
+                ;;
+            --step)
+                if [ -n "${OPT_STEP}" ]; then
+                    usage_bad_multi "$1"
+                fi
+                shift
+                OPT_STEP="$1"
+                if [ -z "${OPT_STEP}" ]; then
+                    echo "Missing argument to --step."
+                    exit 1
+                fi
+                shift
+                ;;
+            --debug)
+                export BUILD_DEBUG=1
+                shift
+                ;;
+            --nodebug)
+                unset BUILD_DEBUG
+                shift
+                ;;
+            --profiling)
+                export BUILD_PROFILING=1
+                shift
+                ;;
+            --noprofiling)
+                unset BUILD_PROFILING
+                shift
+                ;;
+            *)
+                parseOptDone=1
+                ;;
+        esac
+    done
+
+    if [ -n "${OPT_STEP}" ]; then
+        case "${OPT_STEP}" in
+            *:*:*)
+                echo "Only one delimiter allowed"
+                exit 1
+                ;;
+            *:*)
+                OPT_STEP_START_NAME=`echo "${OPT_STEP}" | cut -d : -f 1`
+                OPT_STEP_STOP_NAME=`echo "${OPT_STEP}" | cut -d : -f 2`
+                check_step_valid_range "${OPT_STEP_START_NAME}" "${OPT_STEP_STOP_NAME}"
+                ;;
+            *)
+                check_step_valid "${OPT_STEP}"
+                OPT_STEP_START_NAME="${OPT_STEP}"
+                OPT_STEP_STOP_NAME="${OPT_STEP}"
+                ;;
+        esac
+        get_step_index_from_name "${OPT_STEP_START_NAME}"
+        OPT_STEP_START_INDEX=$?
+        get_step_index_from_name "${OPT_STEP_STOP_NAME}" 1
+        OPT_STEP_STOP_INDEX=$?
+    else
+        OPT_STEP_START_INDEX=1
+        OPT_STEP_STOP_INDEX=${#COMP_ALL_STEPS[@]}
+    fi
+
+    OPT_STEP_START_NAME=`get_step_name_from_index $OPT_STEP_START_INDEX`
+    OPT_STEP_STOP_NAME=`get_step_name_from_index $OPT_STEP_STOP_INDEX`
+
+    if [ -n "${OPT_STEP}" -a $OPT_STEP_START_INDEX -ne $OPT_STEP_STOP_INDEX ]; then
+        echo "Steps '${OPT_STEP_START_NAME}' through '${OPT_STEP_STOP_NAME}'"
+    fi
+
+    if [[ -n "${COMP_COPY_FILE}" && -n "${OPT_STEP}" ]]; then
+        echo "Cannot use --copy with --step."
+    fi
+
+    if [[ -n "${OPT_NO_COMPAT}" && -n "${OPT_COMPAT}" ]]; then
+        echo "Cannot use --compat with --nocompat."
+    fi
+
+    #
+    # Get component
+    #
+
+    local _comps="$@"
+    local -i _count=0
+    local _comp=""
+    for _comp in ${_comps} ; do
+        _count=${_count}+1
+
+        #
+        # Check component name
+        #
+
+        check_component_name "${_comp}"
+        if [ $? -ne 0 ]; then
+            usage "$0"
+            exit 1
+        fi
+    done
+
+    if [ ${_count} -le 0 ]; then
+        echo "Missing component name."
+        usage "$0"
+        exit 1
+    fi
+
+    ( time_command "Component List: ${_comps}" do_component_list ${_comps} )
+    exit_on_error $?
+}
+
+main "$@"
+exit 0

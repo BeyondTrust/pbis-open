@@ -1,0 +1,94 @@
+#!/bin/sh
+
+COMP_INCREMENTAL=1
+COMP_DEPENDENCIES="autoconf automake libtool sqlite lwbase lwmsg lwreg"
+COMP_SOURCES=${BUILD_ROOT}/src/linux/pstore
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./autogen.sh
+    exit_on_error $?
+}
+
+function component_gather
+{
+    echo "Nothing to gather for pstore"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}/.
+    exit_on_error $?
+
+    # We need no-strict aliasing if we get optimized builds
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags}"
+    LDFLAGS="${_ldflags}"
+
+    if [ "${BUILD_OS_TYPE}" = 'aix' ]; then
+        CFLAGS="$CFLAGS -D_THREAD_SAFE"
+    fi
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS CC
+}
+
+function component_configure
+{
+    local extra_flags=""
+    local localstatedir="${BUILD_LOCALSTATEDIR}"
+
+    if [ -n "${BUILD_PSTORE_LOCALSTATEDIR}" ]
+    then
+	localstatedir="${BUILD_PSTORE_LOCALSTATEDIR}"
+    fi
+
+    _setup_build_env
+
+    if [ -n "${BUILD_DEBUG}" ]; then
+        extra_flags="$extra_flags --enable-debug"
+    fi
+
+    if [ -n "${BUILD_MINIMAL}" ]
+    then
+        extra_flags="$extra_flags --enable-static-providers --with-providers=filedb"
+    fi
+
+    "${COMP_SOURCES}/configure"                       \
+	--prefix=${PREFIX_DIR}                        \
+        --libdir=${PREFIX_DIR}/${_lib}                \
+	--sysconfdir=${BUILD_SYSCONFDIR}              \
+        --localstatedir=${localstatedir}              \
+        ${extra_flags}                                \
+        ${DEPENDENCY_TRACKING}                        \
+	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS" \
+        CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS"
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=pstore
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_ROOT_DIR}
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    libtool_rewrite_populate
+}

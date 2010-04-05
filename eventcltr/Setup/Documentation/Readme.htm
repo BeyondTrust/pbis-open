@@ -1,0 +1,1454 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Likewise Enterprise Release Notes</TITLE><!--(Meta)==========================================================-->
+<META http-equiv=content-type content="text/html; charset=windows-1252">
+<META content=kadov name=filetype>
+<META content=1 name=filetype-version>
+<META content=1 name=page-count>
+<META content=1737 name=layout-height>
+<META content=666 name=layout-width><!--(Style Sheet)===================================================-->
+<STYLE>TABLE {
+	PADDING-RIGHT: 0px; BORDER-TOP: #c7d5e1 1px solid; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; MARGIN: 0px 18px 18px; BORDER-LEFT: #c7d5e1 1px solid; WIDTH: 620px; PADDING-TOP: 0px
+}
+TD {
+	BORDER-RIGHT: #c7d5e1 1px solid; PADDING-RIGHT: 9px; PADDING-LEFT: 9px; FONT-SIZE: 11pt; PADDING-BOTTOM: 0px; VERTICAL-ALIGN: middle; LINE-HEIGHT: 17px; PADDING-TOP: 0px; BORDER-BOTTOM: #c7d5e1 1px solid; FONT-FAMILY: "Arial CE", sans-serif; TEXT-ALIGN: left
+}
+TH {
+	BORDER-RIGHT: #c7d5e1 1px solid; PADDING-RIGHT: 9px; PADDING-LEFT: 9px; FONT-SIZE: 11pt; PADDING-BOTTOM: 0px; VERTICAL-ALIGN: middle; LINE-HEIGHT: 17px; PADDING-TOP: 0px; BORDER-BOTTOM: #c7d5e1 1px solid; FONT-FAMILY: "Arial CE", sans-serif; TEXT-ALIGN: left
+}
+TD {
+	FONT-SIZE: 11pt; FONT-FAMILY: "Arial CE", sans-serif
+}
+.pricing TD {
+	PADDING-RIGHT: 9px; PADDING-LEFT: 9px; FONT-SIZE: 1.8em; PADDING-BOTTOM: 9px; PADDING-TOP: 9px
+}
+.table_header TH {
+	BORDER-RIGHT: #c7d5e1 1px solid; PADDING-RIGHT: 0px; BORDER-TOP: 0px; PADDING-LEFT: 0px; BACKGROUND: #e8eff7; PADDING-BOTTOM: 4px; BORDER-LEFT: #c7d5e1 1px solid; PADDING-TOP: 4px; BORDER-BOTTOM: #c7d5e1 1px solid
+}
+.table_header TD {
+	BORDER-RIGHT: #c7d5e1 1px solid; PADDING-RIGHT: 0px; BORDER-TOP: 0px; PADDING-LEFT: 0px; BACKGROUND: #e8eff7; PADDING-BOTTOM: 4px; BORDER-LEFT: #c7d5e1 1px solid; PADDING-TOP: 4px; BORDER-BOTTOM: #c7d5e1 1px solid
+}
+.table_header TH {
+	BORDER-LEFT: medium none
+}
+TD IMG {
+	MARGIN-TOP: 1px; MARGIN-BOTTOM: 1px; VERTICAL-ALIGN: middle
+}
+.column1 {
+	BORDER-RIGHT: #c7d5e1 1px solid; BACKGROUND: #fff; VERTICAL-ALIGN: middle; BORDER-BOTTOM: #c7d5e1 1px solid; TEXT-ALIGN: left
+}
+LI.kadov-Ccolumn1 {
+	TEXT-ALIGN: left
+}
+.column1 H3 {
+	PADDING-LEFT: 9px
+}
+.column2 H3 {
+	PADDING-LEFT: 9px
+}
+.column1 LI.kadov-h3 {
+	
+}
+.column2 LI.kadov-h3 {
+	
+}
+.column1 H4 {
+	PADDING-LEFT: 0px; FONT-WEIGHT: normal
+}
+.column1 LI.kadov-h4 {
+	FONT-WEIGHT: normal
+}
+.column1 H4 EM {
+	FONT-SIZE: 0.9em; COLOR: #4d8abe; FONT-STYLE: normal
+}
+.column1 IMG {
+	VERTICAL-ALIGN: middle
+}
+.column2 {
+	TEXT-ALIGN: left
+}
+LI.kadov-Ccolumn2 {
+	TEXT-ALIGN: left
+}
+TH.odd {
+	BACKGROUND: #f6f9fc
+}
+TD {
+	BACKGROUND: #f6f9fc
+}
+.odd TD {
+	BACKGROUND: #fff
+}
+TD EM {
+	FONT-WEIGHT: bold; COLOR: #4d8abe; FONT-STYLE: normal
+}
+H1 {
+	FONT-SIZE: 14pt; MARGIN-BOTTOM: 3px; COLOR: #4c89bc; FONT-FAMILY: "Arial CE", sans-serif
+}
+LI.kadov-H1 {
+	FONT-SIZE: 17pt; COLOR: #4c89bc; FONT-FAMILY: "Arial CE", sans-serif
+}
+P {
+	FONT-SIZE: 11pt; FONT-FAMILY: "Arial CE", sans-serif
+}
+LI.kadov-P {
+	FONT-SIZE: 11pt; FONT-FAMILY: "Arial CE", sans-serif
+}
+A:link {
+	COLOR: #4e8abe
+}
+A:visited {
+	COLOR: #4e8abe
+}
+A:active {
+	COLOR: #4e8abe
+}
+UL {
+	MARGIN-TOP: 6px; MARGIN-BOTTOM: 6px; MARGIN-LEFT: 20px
+}
+OL {
+	MARGIN-TOP: 6px; MARGIN-BOTTOM: 6px; MARGIN-LEFT: 30px
+}
+LI {
+	MARGIN-TOP: 2px; FONT-SIZE: 11pt; MARGIN-BOTTOM: 2px; FONT-FAMILY: font-family: "Arial CE", sans-serif
+}
+H3 {
+	FONT-WEIGHT: normal; FONT-SIZE: 10pt; COLOR: #4e8abe; FONT-STYLE: normal; FONT-FAMILY: "Arial CE", sans-serif
+}
+LI.kadov-H3 {
+	FONT-WEIGHT: normal; FONT-SIZE: 10pt; COLOR: #4e8abe; FONT-STYLE: normal; FONT-FAMILY: "Arial CE", sans-serif
+}
+SPAN.inlineCodeOrPath {
+	FONT-FAMILY: "Courier New", monospace
+}
+P.codeBlock {
+	FONT-SIZE: 9pt; FONT-FAMILY: "Courier New", monospace
+}
+LI.kadov-P-CcodeBlock {
+	FONT-SIZE: 9pt; FONT-FAMILY: "Courier New", monospace
+}
+SPAN.UI {
+	FONT-WEIGHT: bold; FONT-STYLE: normal
+}
+SPAN.cmdResult {
+	FONT-SIZE: 9pt; FONT-FAMILY: "Courier New", monospace
+}
+H2 {
+	FONT-SIZE: 10pt; FONT-FAMILY: Arial, sans-serif
+}
+LI.kadov-H2 {
+	FONT-SIZE: 10pt; FONT-FAMILY: Arial, sans-serif
+}
+</STYLE>
+<!--(Body)==========================================================-->
+<META content="MSHTML 6.00.6000.16414" name=GENERATOR></HEAD>
+<BODY><SPAN 
+style="FONT-WEIGHT: bold; FONT-SIZE: 18pt; COLOR: #4c89bc; FONT-FAMILY: Arial"> 
+Likewise Enterprise 4.1 Release Notes </SPAN>
+<HR height="1">
+
+<H1>Contents</H1><A 
+href="#Documents">Documents</A><BR><A 
+href="#Licenses">Licenses</A><BR><A 
+href="#Support">Technical 
+Support</A><BR><A 
+href="#Releases">Release 
+History</A><BR><A 
+href="#Platforms">Platform 
+Support</A><BR><A 
+href="#About">About 
+Likewise Enterprise</A><BR><BR>
+<HR height="1">
+<A name=Documents></A>
+<H1>Documents</H1>
+<P>The following documents are available at <A 
+href="http://www.likewisesoftware.com/resources/">http://www.likewisesoftware.com/resources/</A>: 
+
+<UL>
+  <LI>Quick Start Guide 
+  <LI>Installation Guide 
+  <LI>Administrator's Guide 
+  <LI>Knowledge Base </LI></UL>
+<P>To view the Help topics, in the Likewise Management Console, on the Help menu, 
+click Help Contents, or press F1. </P>
+<HR height="1">
+<A name=Licenses></A>
+<H1>Licenses</H1>
+<P>Without a license, this release is subject to a 30-day trial period from the 
+date of installation. Please contact <A 
+href="mailto:support@likewisesoftware.com">support@likewisesoftware.com</A> to extend the 
+evaluation period or to purchase a permanent license. </P>
+<HR height="1">
+<A name=Support></A>
+<H1>Technical Support</H1>
+<P>For access to free technical support during an evaluation period, register 
+now by sending email to <A 
+href="mailto:support@likewisesoftware.com">support@likewisesoftware.com</A>. Likewise technical 
+support provides access to installation support, knowledge base articles, and 
+email access to the Likewise development team to help get the most out of your 
+evaluation period. </P>
+<P>If you have already registered for support, you can access the support site 
+at <A 
+href="http://www.likewisesoftware.com/support/">http://www.likewisesoftware.com/support/</A>.</P>
+<P>To provide feedback or report a bug, email us at support@likewisesoftware.com or 
+contact us directly: </P>
+<P>Likewise Software<BR>15395 SE 30th Place, Suite 140<BR>Bellevue, WA 98007<BR><A 
+href="http://www.likewisesoftware.com/">http://www.likewisesoftware.com/</A><BR></P>
+<HR height="1">
+<A name=Releases></A>
+<H1>Release History</H1><BR>
+<TABLE style="border-spacing: 0px" cellSpacing=0 
+summary="Visual representation of Likewise Enterprise Release Updates." 
+x-use-null-cells>
+  <TBODY>
+  <TR class=table_header>
+    <TH class=column1 
+    style="PADDING-RIGHT: 0px; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px" 
+    scope=col>
+      <H3>Version and Build Number</H3></TH>
+    <TH class=column2 
+    style="PADDING-RIGHT: 0px; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px" 
+    scope=col>
+      <H3>Release Date</H3></TH>
+    <TH class=column2 
+    style="PADDING-RIGHT: 0px; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; PADDING-TOP: 0px" 
+    scope=col>
+      <H3>Comments</H3></TH></TR>
+  <TR>
+   <TR class=odd>
+    <TD>4.1</TD>
+    <TD>March 2008</TD>
+    <TD>Added support for Linux on IBM zSeries<br>
+        Added support for Asianux<br>
+        Added support for NIS maps<br>
+        Added support for GPMC-based group policy backup/restore<br>
+        Added diagnostic capabilities to domain join utility<br>
+    </TD>
+  </TR>
+  <TR>
+  <TR>
+   <TR class=odd>
+    <TD>4.0</TD>
+    <TD>December 2007</TD>
+    <TD>Product rebranded to Likewise Enterprise<br>
+	Added New Mac-specific group policies for Mac OS X 10.4<BR>
+	Added New Linux and UNIX Group Policies<br>
+	Added support for Organizational Unit installations which removed the requirement for Domain Administrator privileges<br>
+	Added over 2,000 Group Policies for GNOME Desktops<br>
+	Added Platform support for Solaris 8 and Solaris 9 on x86<br>
+	Added Platform support for Open Solaris<br>
+	Added Platform support for Oracle Redhat 4 and 4, 32 and 64 bit
+	Expanded the range for UID and GID settings including a configurable Group Policy to set the limits<br>
+	Added Aliasing for all Cells<br>
+	Added the ability to manage Linux Users and Groups in Active Directory from a Linux machine<br>
+	Added the ability to run Active Directory Users and Computers functionality from a Linux machine<br>
+	Added the ability to run ADSIEDIT from a Linux machine<br>
+      </TD></TR>
+  <TR>
+<TR class=odd>
+    <TD>3.5.XXXX</TD>
+    <TD>September 2007</TD>
+    <TD>Added Mac-specific group policies for Mac OS X 10.4<BR>Added Domain 
+      Join Tool GUI for Mac<BR>Added Cell Manager<BR>Added aliasing for 
+      groups<BR>Updated Help topics </TD></TR>
+  <TR>
+    <TD>3.5.1209</TD>
+    <TD>August 2007</TD>
+    <TD>Added more than 50 new Group Policies for computers running Unix, 
+      Linux and Mac OS X; see the Version 3.5 Admin Guide for details<BR>Added 
+      integration with Microsoft Group Policy Management Console and Group 
+      Policy Object Editor<BR>Added Mac OS X v10.4 PPC support<BR>Added Mac OS X 
+      Server v10.4 PPC support<BR>Added Mac OS X v10.4 x86 support<BR>Added 
+      HP-UX 11.11 PA-RISC – Trusted Mode Support<BR>Added HP-UX 11.11 PA-RISC – 
+      64bit Support<BR>Added HP-UX 11.23 Itanium-Trusted Mode Support<BR>Added 
+      HP-UX 11.23 Itanium – 64bit Support</TD></TR>
+  <TR class=odd>
+    <TD>3.1.0874</TD>
+    <TD>May 2007</TD>
+    <TD>Added Redhat 7.3, Enterprise 2.1 and 5.0 support<BR>Added Ubuntu 7.04 
+      support<BR>Added automount group policy<BR>Added cross-domain-trust 
+      support<BR>Added Solaris 8 (Sparc) and x86 support<BR>Added migration tool 
+      to the Identity Console<BR>Added Samba plugin<BR>Added full RFC2307 
+      attribute support for AD objects<BR>Added support to join to an OU from 
+      UNIX client<BR>Fixes all major issues with cached credentials<BR>Fixes all 
+      major issues with installation on non-English domain controllers<BR></TD></TR>
+  <TR class=odd>
+    <TD>3.02.0665</TD>
+    <TD>February 2007</TD>
+    <TD>Added AIX 5.3 support Added names-with-spaces support<BR>Added alias 
+      support<BR>Added Likewise Admin 2.1 compatibility support<BR>Added 
+      compliance reporting tools<BR>Added migration tools<BR>Added deployment 
+      scripts for large enterprises<BR>Added log-on-locally and local security 
+      group policy<BR>Added cron group policy<BR>Added boot script group policy 
+      <BR>Works with Windows Vista™ <BR>v3.00.0319 January 2007 Initial Consumer 
+      Release <BR>v3.00.0190 December 2006 Release Candidate</TD></TR></TBODY></TABLE>
+<HR height="1">
+<A name=Platforms></A>
+<H1>Platform Support</H1>
+<P>To install the Likewise Enterprise Agent on one of the supported platforms 
+listed below, the Linux, Unix, or Mac OS X computer must have a 32-bit or 64-bit 
+1GHz or faster processor, 256 MB of RAM, and a minimum 50 MB of free disk 
+space.</P>
+<P>Likewise Enterprise supports a broad range of platforms. Likewise is constantly 
+adding new vendors and distributions to the following list. To get the latest 
+list of supported platforms, go to <A 
+href="http://www.likewisesoftware.com/products/likewise_enterprise/supported_platforms.php" 
+target=_blank>http://www.likewisesoftware.com/products/likewise_enterprise/supported_platforms.php</A>. 
+</P><!--(Table)=========================================================-->
+
+
+
+
+<table summary="Visual representation of all platforms currently supported by Centeris Likewise Ideneity - type of support in columns and vendors in rows."
+		x-use-null-cells
+		style="border-spacing: 0px; border-spacing: 0px;"
+		cellspacing=0>
+
+<tr class=table_header>
+<th class=column1
+	scope=col
+	rowspan=2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<h3>Vendor</th>
+<th class=column2
+	scope=col
+	rowspan=2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<h3>Distribution</th>
+<th scope=col
+	colspan=2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<h3>Supported</th>
+<td_null></tr>
+
+<tr class=table_header>
+<td_null>
+<td_null>
+<th scope=col
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<h4>32-bit</th>
+<th scope=col
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<h4>64-bit</th></tr>
+
+<tr>
+<th class=column1
+	rowspan=11
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Desktop 8.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Desktop 9.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Desktop 9.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Desktop 9.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Desktop 9.3</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Enterprise Desktop 10.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OpenSuSE Linux 10.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OpenSuSE Linux 10.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OpenSuSE Linux 10.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Enterprise Server 9.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">SuSE Linux Enterprise Server 10.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<th class="column1 odd"
+	rowspan=16
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux AS 2.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux ES 2.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux WS 2.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux AS 3.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux ES 3.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux WS 3.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux AS 4.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux ES 4.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux WS 4.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux 5.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux 5.0 Desktop</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Enterprise Linux 5.0 Advanced 
+ Platform</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Linux 7.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Linux 7.3</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Linux 8</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Red Hat Linux 9</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr class=odd>
+<th class=column1
+	rowspan=5
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora Core 3</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora Core 4</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora Core 5</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora Core 6</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Fedora Core 7</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<th class="column1 odd"
+	rowspan=6
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 4.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 4.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 4.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 4.3</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 4.4</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">CentOS 5.0</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<th class=column1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Debian</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Debian Linux 3.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<th class="column1 odd"
+	rowspan=5
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu Desktop 6.06</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu Desktop 6.10</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu Server 6.06</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu Server 6.10</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Ubuntu Desktop 7.04</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<th class=column1
+	rowspan=7
+	colspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Sun</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 8 (SPARC)</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 8 x86</td>
+<td colspan=1
+	rowspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td>
+<td colspan=1
+	rowspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 9 (SPARC)</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 9 x86</td>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td>
+<td colspan=1
+	rowspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 10 (SPARC)</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Solaris 10 x86</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Open Solaris</td>
+<td colspan=1
+	rowspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>-</td>
+<td colspan=1
+	rowspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr>
+<th class="column1 odd"
+	rowspan=2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>AIX</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>AIX 5L 5.2</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">AIX 5L 5.3</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<th class=column1
+	rowspan=4
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">HP</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">HP-UX 11.11 PA-RISC - Trusted Mode</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">HP-UX 11.11 PA-RISC - Untrusted Mode</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">HP-UX 11.23 Itanium - Trusted Mode</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">HP-UX 11.23 Itanium - Untrusted Mode</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<th class="column1 odd"
+	rowspan=4
+	colspan=1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Apple</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OS X v10.4 PPC</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OS X Server v10.4 PPC</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr class=odd>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">OS X v10.4 x86</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td></tr>
+
+<tr>
+<td_null>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+<p>OS X v10.3 PPC</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">
+Yes</td></tr>
+
+<tr>
+<th class=column1
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">VMWare</th>
+<td class=column2
+	style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">VMWare ESX Server 3.0.1</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">Yes</td>
+<td style="padding-left: 0px;
+			padding-top: 0px;
+			padding-right: 0px;
+			padding-bottom: 0px;">-</td></tr>
+</table>
+
+
+
+
+    <!-- end table -->
+
+
+
+<P>&nbsp;</P>
+<P><B>Note:</B> It is suggested you check with your Linux vendor for important 
+updates or patches. </P>
+<HR height="1">
+<A name=About></A>
+<H1>About Likewise Enterprise</H1>
+<P>Likewise Enterprise is an enterprise software solution that improves management 
+and interoperability of Windows®, Linux®, UNIX®, and Mac systems to considerably 
+reduce IT costs and enhance security. Using familiar Windows-based tools, system 
+administrators can easily and seamlessly integrate non-Windows systems with 
+Microsoft® Active Directory™. </P></BODY></HTML>

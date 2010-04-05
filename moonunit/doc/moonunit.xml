@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+          "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<refentry id='moonunit'>
+  <refmeta>
+    <refentrytitle>moonunit</refentrytitle>
+    <manvolnum>1</manvolnum>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>moonunit</refname>
+    <refpurpose>Run MoonUnit unit tests</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>moonunit</command>
+      <arg choice='opt'><replaceable class='option'>options</replaceable></arg>
+      <arg choice='plain' rep='repeat'><replaceable class='parameter'>libraries</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+  <refsect1 id='description'>
+    <title>Description</title>
+    <para>
+      <command>moonunit</command> detects, loads and invokes 
+      <emphasis>MoonUnit</emphasis> unit tests in dynamic shared
+      objects and logs the results.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='options'>
+    <title>Options</title>
+    <para>
+      <command>moonunit</command> expects one or more shared objects
+      containing unit tests to be specified as arguments.
+    </para> 
+    <para>
+      In addition, the following options are available:
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><option>-t</option></term>
+        <term><option>--test</option> <replaceable>library</replaceable><literal>/</literal><replaceable>suite</replaceable><literal>/</literal><replaceable>test</replaceable></term>
+        <listitem>
+          <para>
+            Run a test or subset of tests specified by <replaceable>library</replaceable>,
+	    <replaceable>suite</replaceable>, and <replaceable>test</replaceable>, which
+	    may be globs.  This option may be specified multiple times.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-a</option></term>
+        <term><option>--all</option></term>
+        <listitem>
+          <para>
+            Run all tests in all suites.  This is the default behavior
+            if no instances of <option>-t</option> are specified.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-g</option></term>
+        <term><option>--gdb</option></term>
+        <listitem>
+          <para>
+            Interactively trace failed tests in <emphasis>gdb</emphasis>,
+            the GNU debugger. Each test that fails will immediately be 
+            rerun inside a <emphasis>gdb</emphasis> session with a breakpoint
+            set at the failed function.  After leaving the <emphasis>gdb</emphasis>
+	    session, <command>moonunit</command> will resume at the next unit test.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-l</option></term>
+        <term><option>--logger</option> <replaceable>name</replaceable>:<replaceable>key</replaceable>=<replaceable>value</replaceable>,...</term>
+        <listitem>
+          <para>
+            Attempts to load and use the logger plugin <replaceable>name</replaceable>.
+            <replaceable>name</replaceable> may be followed by a colon and a comma-separated
+            list of key-value pairs to pass configuration options to the logger.
+            To obtain a list of configuration options, see <xref linkend="option-plugin-info"/>. 
+            The default is equivalent to <literal>console:ansi=true,columns=60</literal>, which
+            produces colored, human-readable output on stdout.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-r</option></term>
+        <term><option>--resource</option> <replaceable>file</replaceable></term>
+        <listitem>
+          <para>
+	    Read in resource definitions from <replaceable>file</replaceable>, which
+	    should be a simple ini-style configuration file.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>--list-plugins</option></term>
+        <listitem>
+          <para>
+            Prints a table showing all available plugins and what components 
+            (loader, harness, logger) they provide.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry id="option-plugin-info" xreflabel="--plugin-info">
+        <term><option>--plugin-info</option> <replaceable>name</replaceable></term>
+        <listitem>
+          <para>
+            Show detailed information about a plugin, including available
+            configuration options.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-h</option></term>
+        <term><option>--help</option></term>
+        <listitem>
+          <para>
+            Lists brief usage and option information and exits.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1 id='examples'><title>Examples</title>
+    <variablelist>
+      <varlistentry>
+        <term><literal>moonunit library1.so library2.so</literal></term>
+        <listitem>
+          <para>
+            Run all unit tests in <literal>library1.so</literal> and
+            <literal>library2.so</literal>, printing results to the console.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>moonunit -t Foo/bar -g library.so</literal>
+        </term>
+        <listitem>
+          <para>
+            Run test <literal>bar</literal> in the suite <literal>Foo</literal>
+            in <literal>library.so</literal> and trace any failures in <emphasis>GDB</emphasis>.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>moonunit -l console:ansi=false library.so</literal></term>
+        <listitem>
+          <para>
+            Run all tests in <literal>library.so</literal>, printing results to the console without
+            ANSI color.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>moonunit -l xml:file=out.xml library.so</literal></term>
+        <listitem>
+          <para>
+            Run all tests in <literal>library.so</literal>, writing the results
+	    as XML to out.xml.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1 id='copyright'><title>Copyright</title>
+    <para>Copyright (c) 2007-2008, Brian Koropoff.  All rights reserved.</para>
+    
+    <para>
+      Redistribution in source and binary form is permitted under
+      the terms of the 3-clause BSD license.  See COPYING in the
+      documentation or source distribution for details.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='seealso'><title>See also</title>
+    <para>
+      <citerefentry><refentrytitle>moonunit-lt</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-stub</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>moonunit-strip</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+</refentry>
+

@@ -1,0 +1,124 @@
+.header {
+    padding: 0.25em;
+}
+
+.title {
+    display: inline;
+    font-weight: bold;
+    font-size: 100%;
+}
+
+.expander {
+    display: inline;
+    float: left;
+    width: 10pt;
+    height: 10pt;
+}
+
+.result {
+    font-family: monospace;
+    font-size: 80%;
+    border: 1px solid black;
+    background: #2e3436;
+    color: #eeeeec;
+    padding: 1px;
+    float: right;
+}
+
+.result[status="pass"] {
+    background-color: #4e9a06;
+}
+
+.result[status="fail"] {
+    background-color: #a40000;
+}
+
+.result[status="skip"] {
+    background-color: #c4a000;
+}
+
+.content {
+    position: relative;
+}
+
+.library {
+    margin: 0.5em;
+    border: 2px solid black;
+    width: 70%;
+    margin-left: 15%;
+    margin-right: 15%;
+    margin-top: 2em;
+    display: block;
+}
+
+.library > .header {
+    color: white;
+    background: #3465a4;
+    font-size: 130%;
+}
+
+.suite > .header {
+    background: #babdb6;
+    font-size: 105%;
+    padding-left: 1.0em;
+}
+
+.test > .header {
+    padding-left: 2.0em;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    font-size: 105%;
+    
+}
+
+.test > .header[full] > .title:after {
+    content: " ..."
+}
+
+.test > .header:hover {
+    background: #729fcf;
+}
+
+.test > .content {
+    padding-left: 3.0em;
+}
+
+.events .content {
+    padding-left: 1.0em;
+}
+
+.test {
+    background: #d3d7cf;
+}
+
+.event {
+    display: block;
+}
+
+.level {
+    font-family: monospace;
+    font-size: 80%;
+    border: 1px solid black;
+    background: #2e3436;
+    color: #eeeeec;
+    padding: 1px;
+    display: inline;
+    float: right;
+    margin-right: 0.25em;
+    margin-left: 0.25em;
+}
+
+.source
+{
+    font-family: monospace;
+    font-size: 80%;
+    border: 1px solid black;
+    background: #eeeeec;
+    color: #2e3436;
+    padding: 1px;
+    display: inline;
+    float: right;
+    margin-right: 0.25em;
+    margin-left: 0.25em;
+}
+

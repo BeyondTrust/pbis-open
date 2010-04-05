@@ -1,0 +1,350 @@
+#!/bin/bash
+
+if [ -z "${BUILD_ROOT}" ]; then
+    echo "You need to source buildenv first"
+    exit 1
+fi
+
+function exit_on_error
+{
+    if [ $1 -ne 0 ]; then
+        if [ -n "$2" ]; then
+            echo "$2"
+        fi
+        exit $1
+    fi
+}
+
+##
+## Setup the environment
+##
+. ${BUILD_ROOT}/src/linux/build/common.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/version.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/pkgtype-helper.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh
+exit_on_error $?
+
+. ${BUILD_ROOT}/src/linux/build/lib/installer-helper.sh
+exit_on_error $?
+
+MAKESELF_SH="${BUILD_ROOT}/src/linux/build/lib/makeself/makeself.sh"
+MAKESELF_HEADER="${BUILD_ROOT}/src/linux/build/lib/makeself/makeself-header.sh"
+
+#
+# Determine whether platform support --nosignature option
+#
+RPM_NOSIGNATURE=`get_rpm_nosignature_option`
+
+SFX_VER="${MAIN_VERSION}"
+if [ -n "${OFFICIAL_BUILD_NUMBER}" ]; then
+    SFX_VER="${SFX_VER}.${OFFICIAL_BUILD_NUMBER}"
+fi
+
+_MAKESELF_COMMON_ARGS="--nox11 --notemp"
+MAKESELF_NOCOMP_ARGS="--nocomp ${_MAKESELF_COMMON_ARGS}"
+MAKESELF_COMP_ARGS="${_MAKESELF_COMMON_ARGS}"
+
+#####################################################################
+
+build_sfx()
+{
+    #
+    # Args:
+    #
+    # PKG_TYPE - rpm | deb | pkg | dmg | bff
+    # SFX_FILES - files to put into SFX
+    # MANIFEST - location of the package manifest file
+    # POST_EXTRACT_SCRIPT - post-extract script
+    # PKG_FILES_SPEC - filespec for package files (rpm or deb)
+    # META_DIR - where in meta to make stuff
+    # DIST_DIR - where in dist to copy final bits
+    # OSNAME - really "os + larch [+ pkgtype]" or something like that
+    # OSARCH - the actual arch of the packages
+    #
+
+    _META_DIR=${META_DIR}/${PKG_TYPE}/${OSARCH}
+    _BASE_NAME=${PKG_NAME}-${SFX_VER}-${OSNAME}
+    TARDIR=${_META_DIR}/${_BASE_NAME}
+    _TARGET_SUBDIR="packages/${BUILD_OS_TYPE}/${OSARCH}"
+
+    rm -rf ${_META_DIR}
+    exit_on_error $? "Failed to remove meta directory"
+
+    mkdir -p ${TARDIR}/${_TARGET_SUBDIR}
+    exit_on_error $? "Failed to create tar directory"
+
+    for f in ${SFX_FILES} ${POST_EXTRACT_SCRIPT}; do
+        cp -p ${BUILD_ROOT}/src/linux/build/products/${PKG_CONFIG_NAME}/$f ${TARDIR}/
+        exit_on_error $?
+    done
+
+    cp -p "${MANIFEST}" "${TARDIR}/"
+
+    for f in ${PKG_FILES_SPEC}; do
+        cp -p $f ${TARDIR}/${_TARGET_SUBDIR}/
+        exit_on_error $?
+    done
+
+    for f in `ls ${TARDIR}/${_TARGET_SUBDIR}/*-32bit-* 2>/dev/null`; do
+        mkdir -p ${TARDIR}/${_TARGET_SUBDIR}/compat
+        exit_on_error $?
+        mv $f ${TARDIR}/${_TARGET_SUBDIR}/compat/
+        exit_on_error $?
+    done
+
+    ORIG_HEADER="${MAKESELF_HEADER}"
+    NEW_HEADER=${_META_DIR}/makeself-header.${OSNAME}.sh
+
+    rm -f ${NEW_HEADER}
+    exit_on_error $?
+
+    LINE_CUT=`head -10 ${ORIG_HEADER} | grep -n "#!/bin/sh" | head -1 | cut -d: -f1`
+    head -${LINE_CUT} ${ORIG_HEADER} > ${NEW_HEADER}
+
+    # Handle things that are particular to certain  package types
+    case "${PKG_TYPE}" in
+        rpm)
+            RPM_QUERY_FORMAT="%{NAME}, %{FILEMD5S}, %{VERSION}, %{RELEASE}, %{BUILDTIME}, %{BUILDHOST}\n"
+            echo "# RpmQueryFormat: \"${RPM_QUERY_FORMAT}\"" >> ${NEW_HEADER}
+
+            for spec in ${PKG_FILES_SPEC}; do
+                for file in `ls ${spec}`; do
+                    RPM_QUERY_INFO=`rpm ${RPM_NOSIGNATURE} -q --qf "${RPM_QUERY_FORMAT}" -p $file`
+                    echo "# RpmQueryInfo: ${RPM_QUERY_INFO}" >> ${NEW_HEADER}
+                done
+            done
+            ;;
+        pkg)
+            cp -p ${SOLARIS_RESPONSE_FILE} ${TARDIR}/
+            ;;
+    esac
+
+    case "${BUILD_OS_TYPE}" in
+        solaris)
+            tail +$((${LINE_CUT}+1)) ${ORIG_HEADER} >> ${NEW_HEADER}
+            ;;
+        *)
+            tail -n +$((${LINE_CUT}+1)) ${ORIG_HEADER} >> ${NEW_HEADER}
+            ;;
+    esac
+
+    chmod a+x ${NEW_HEADER}
+    MAKESELF_ARGS="${MAKESELF_ARGS} --header ${NEW_HEADER}"
+
+    export ORG_SIZE
+    ORG_SIZE=`du -s ${TARDIR} | cut -f1 `
+    echo ORG_SIZE: $ORG_SIZE
+
+    TMPDIR=${BUILD_META_ROOT} "${MAKESELF_SH}" ${MAKESELF_ARGS} ${TARDIR} ${TARDIR}.sh \
+        ${_BASE_NAME} \
+        "./`basename ${POST_EXTRACT_SCRIPT}` --echo-dir ${_BASE_NAME}"
+    exit_on_error $?
+
+    rm -rf ${TARDIR}
+
+    ##
+    ## Copy to dist
+    ##
+
+    mkdir -p ${DIST_DIR}
+    exit_on_error $?
+
+    cp -p ${TARDIR}.sh ${DIST_DIR}/.
+    exit_on_error $?
+
+    echo "SFX archive copied to ${DIST_DIR}/`basename ${TARDIR}.sh`"
+
+    echo ""
+    echo ""
+}
+
+_build_loop()
+{
+    #
+    # Args
+    #
+    # PKG_TYPE - rpm, deb, etc...
+    # SFX_FILES - files to put into SFX
+    # POST_EXTRACT_SCRIPT - post-extract script
+    # EXTRA_NAME - optional additional part of OSNAME
+    #
+
+    local arch_list
+    local larch
+    if [ -n "${OPT_ALL_ARCH}" ]; then
+        arch_list=`pkgtype_get_current_os_arch_list`
+        exit_on_error $?
+    else
+        arch_list="${BUILD_OS_ARCH}"
+    fi
+
+    for arch in $arch_list; do
+
+        larch=`pkgtype_convert_pkgtype_and_arch_to_larch "${PKG_TYPE}" "${arch}"`
+        exit_on_error $?
+
+        PKG_FILES_SPEC=`product_packages_spec "${BUILD_OS_TYPE}" "${arch}" "${PKG_TYPE}" "${PKG_CONFIG_NAME}"`
+        exit_on_error $?
+
+        local sfx_dir_suffix=${BUILD_OS_TYPE}/${arch}/sfx/${PKG_CONFIG_NAME}
+        META_DIR=${BUILD_META_ROOT}/${sfx_dir_suffix}
+        DIST_DIR=${BUILD_DIST_ROOT}/${sfx_dir_suffix}
+        OSNAME="${BUILD_OS_TYPE}${EXTRA_NAME}-${larch}-${PKG_TYPE}"
+        OSARCH="${arch}"
+        if [ -n "${PKG_FILES_SPEC}" ]; then
+            echo "Building shell archive for ${OSNAME}..."
+            build_sfx
+        else
+            echo "Skipping shell archive for ${OSNAME}..."
+        fi
+    done
+}
+
+function build_loop
+{
+    time_command "SFX ${BUILD_OS_TYPE}${EXTRA_NAME} ${PKG_TYPE}" _build_loop "$@"
+    exit_on_error $?
+}
+
+function build_manifest
+{
+    local name="${PKG_CONFIG_NAME}"
+    local manifest="${BUILD_META_OS_ROOT}/sfx/${PKG_CONFIG_NAME}/MANIFEST"
+
+    installer_build_manifest "${name}" "${manifest}"
+
+    echo "${manifest}"
+}
+
+function usage
+{
+    local _configs=`product_list`
+    local _pkgtypes=`pkgtype_get_all_pkgtypes`
+    local _default_pkgtypes=`pkgtype_get_current_os_pkgtype_list`
+    local _arch_list=`pkgtype_get_current_os_arch_list`
+    echo "usage: `basename $0` [options] <product>"
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --type, -t <pkgType> - Do specified package type instead"
+    echo "      of the default(s).  This can be specified multiple times."
+    echo "      (<pkgType> is one of: ${_pkgtypes})"
+    echo "      (default for this platform is: ${_default_pkgtypes})"
+    echo ""
+    echo "    --all, -a - Create SFX files for all architectures for this platform"
+    echo "      (${_arch_list}) instead of just the current one (${BUILD_OS_ARCH})."
+    echo ""
+    echo "  products:"
+    echo ""
+    local _config
+    for _config in ${_configs} ; do
+        echo "        ${_config}"
+    done
+    exit 1
+}
+
+function main
+{
+    set_ctrlc_trap
+
+    OPT_ALL_ARCH=""
+    OPT_PKG_TYPE_LIST=""
+
+    while true; do
+        case "$1" in
+            --help)
+                usage
+                ;;
+            --type|-t)
+                if [ -z "$2" ]; then
+                    warn "Missing argument to $1 option."
+                    exit 1
+                fi
+                pkgtype_check_valid "$2"
+                exit_on_error $? "Invalid package type '$2'"
+		OPT_PKG_TYPE_LIST="${OPT_PKG_TYPE_LIST} $2"
+                shift
+                ;;
+            --all|-a)
+                OPT_ALL_ARCH=1
+                ;;
+            *)
+                break
+                ;;
+        esac
+        shift
+    done
+
+    PKG_CONFIG_NAME="$1"
+    shift
+    if [ -z "${PKG_CONFIG_NAME}" ]; then
+	warn "Missing product name."
+	usage
+    fi
+
+    if [ -n "$1" ]; then
+        warn "Too many arguments."
+        usage
+    fi
+
+    if [ -z "${OPT_PKG_TYPE_LIST}" ]; then
+        OPT_PKG_TYPE_LIST=`pkgtype_get_current_os_pkgtype_list`
+        exit_on_error $?
+        # Override Mac behavior
+        case "${BUILD_OS_TYPE}" in
+            darwin)
+                OPT_PKG_TYPE_LIST=dmg
+                ;;
+        esac
+	echo "Using default package type list: '${OPT_PKG_TYPE_LIST}'"
+    fi
+
+    #
+    # Get package list
+    #
+
+    PKG_CONFIG_LIST=`product_packages "${PKG_CONFIG_NAME}"`
+    exit_on_error $? "Failed to get package list."
+
+    PKG_NAME=`product_name "${PKG_CONFIG_NAME}"`
+    exit_on_error $? "Failed to get package sfx name."
+
+    SFX_FILES=`product_files "${PKG_CONFIG_NAME}"`
+    POST_EXTRACT_SCRIPT=`product_script "${PKG_CONFIG_NAME}"`
+    SOLARIS_RESPONSE_FILE="${BUILD_ROOT}/src/linux/build/lib/bitrock/platforms/solaris-sparc/response"
+
+    for PKG_TYPE in ${OPT_PKG_TYPE_LIST} ; do
+	MANIFEST=`build_manifest`
+        MAKESELF_ARGS="${MAKESELF_NOCOMP_ARGS}"
+        case "${PKG_TYPE}" in
+            pkg|mac|dmg|depot)
+                # These need to be compressed
+                # TODO: Do we really need to compress mac and/or dmg?
+                MAKESELF_ARGS="${MAKESELF_COMP_ARGS}"
+                ;;
+        esac
+
+        EXTRA_NAME=""
+        case "${BUILD_OS_TYPE}" in
+            linux)
+                check_is_rhel_21
+                if [ $? -eq 0 ]; then
+                    EXTRA_NAME="-oldlibc${EXTRA_NAME}"
+                fi
+                ;;
+        esac
+
+        build_loop
+    done
+
+    return 0
+}
+
+main "$@"
+exit $?

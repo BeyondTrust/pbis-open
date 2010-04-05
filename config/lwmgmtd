@@ -1,0 +1,28 @@
+#! /bin/sh
+# ex: set tabstop=4 expandtab shiftwidth=4:
+#
+# Copyright (c) Likewise Corporation 2006
+# Author: Gerald Carter <jerry@likewise.com>
+#
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT# chkconfig: 35 20 9
+#LWI_STARTUP_TYPE_REDHAT# description: Start and Stop LWMGMT 
+#LWI_STARTUP_TYPE_REDHAT###
+#LWI_STARTUP_TYPE_REDHAT#
+#LWI_STARTUP_TYPE_SUSE### BEGIN INIT INFO
+#LWI_STARTUP_TYPE_SUSE# Provides: lwmgmtd
+#LWI_STARTUP_TYPE_SUSE# Required-Start: $network $remote_fs rpcd netlogond
+#LWI_STARTUP_TYPE_SUSE# Required-Stop: $network $remote_fs
+#LWI_STARTUP_TYPE_SUSE# Default-Start: 3 5
+#LWI_STARTUP_TYPE_SUSE# Default-Stop: 0 1 2 6
+#LWI_STARTUP_TYPE_SUSE# Description: Start and Stop LWMGMT
+#LWI_STARTUP_TYPE_SUSE### END INIT INFO
+
+PROG_DESC="Likewise Management Services"
+PROG_BIN=PREFIX_DIR/sbin/lwmgmtd
+PROG_ARGS="--start-as-daemon"
+PROG_ERR=/var/lib/likewise/lwmgmtd/lwmgmtd.err
+PIDFILE=/var/run/lwmgmtd.pid
+SCRIPTNAME="lwmgmtd"
+
+. PREFIX_DIR/bin/init-base.sh

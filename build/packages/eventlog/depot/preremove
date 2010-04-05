@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# if this is a local deinstall, stop the Likewise Eventlog daemon
+if [ -z "$PKG_INSTALL_ROOT" ]
+then
+   EVENTLOGD=`ps -e -o pid,comm | grep likewise-eventlogd | awk '{print $1}'`
+   [ ! -z "$EVENTLOGD" ] && kill -TERM $EVENTLOGD
+   sleep 2
+fi

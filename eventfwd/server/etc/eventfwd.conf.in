@@ -1,0 +1,12 @@
+#
+# Likewise eventfwdd
+#
+[global]
+# Address of computer to push events to
+# This can be in DNS hostname format only.
+# collector = <hostname>
+
+# Service principal for collector
+# If this is unset, it defaults to host/<collector>@<default realm>. This value
+# must be overwritten if an IP address is used for the collector address.
+# collector-principal = host/<name>@<realm>

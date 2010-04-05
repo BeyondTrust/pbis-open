@@ -1,0 +1,9 @@
+Before uninstalling, ensure that the host has been removed from the domain by running the following command:
+
+	domainjoin-cli leave
+
+If you have not unjoined this host machine from the domain yet, please exit the uninstallation immediately and do so before continuing.
+
+Are you ready to uninstall Likewise now?
+
+
