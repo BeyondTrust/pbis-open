@@ -91,7 +91,7 @@ function component_populate
 
     if [ -z "${IS_COMPAT}" ]; then
 
-        rsync -a --exclude "include" --exclude lw-export-dc-cache ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+        rsync -a --exclude lw-export-dc-cache ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
         # Handle init scripts
         local script=netlogond

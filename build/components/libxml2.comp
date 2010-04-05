@@ -92,7 +92,7 @@ function component_populate
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
     mkdir -p ${POPULATE_PREFIX_DIR}
-    rsync -a --exclude "include" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+    rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
 
     libtool_rewrite_populate
 }

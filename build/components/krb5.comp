@@ -135,7 +135,7 @@ function component_populate
 
     if [ -z "${IS_COMPAT}" ]; then
 	mkdir -p ${POPULATE_PREFIX_DIR}
-	rsync -a --exclude "include" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+	rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
 	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise
     else
 	mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
