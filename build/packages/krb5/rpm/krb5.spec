@@ -42,6 +42,15 @@ contains the header files and libraries needed for compiling Kerberos
 5 programs. If you want to develop Kerberos-aware programs, you need
 to install this package.
 
+%package devel
+Summary: The likewise-krb5-devel package contains the header files and libraries needed for compiling Kerberos 5 programs.
+Group: Development/Libraries
+Requires: likewise-krb5
+%description devel
+Kerberos is a network authentication system. The likewise-krb5-devel package
+contains the header files and libraries needed for compiling Kerberos 5
+programs.
+
 %prep
 
 %build
@@ -62,5 +71,13 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 
 %{PrefixDir}/%{_lib}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(0644,root,root) %{PrefixDir}/include/*
+%attr(0644,root,root) %{PrefixDir}/man/*
 
 %changelog
