@@ -455,22 +455,9 @@ function _strip_common
 
     for dir in ${dirs}
     do
-	if [ "${PKG_TYPE}" != "install" ]
-	then
-	    x_rm ${dir}/*.la
-	    x_rm ${dir}/*.a
-	fi
-
 	x_rm ${dir}/.libs
 	x_rm ${dir}/*_mu.*
     done
-
-    if [ "${PKG_TYPE}" != "install" ]
-    then
-	x_rmdir ${POPULATE_PREFIX_DIR}/include
-	x_rmdir ${POPULATE_PREFIX_DIR}/share/man
-	x_rmdir ${POPULATE_PREFIX_DIR}/share/doc
-    fi
 }
 
 function strip_common
