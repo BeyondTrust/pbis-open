@@ -14,3 +14,10 @@ Description: Likewise Registry Daemon
  The Likewise Registry Daemon
  contains components to modify registry entries for Linux/UNIX systems.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Registry Daemon
+ The Likewise Registry Daemon
+ contains components to modify registry entries for Linux/UNIX systems.

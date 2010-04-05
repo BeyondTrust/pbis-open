@@ -12,3 +12,8 @@ Replaces: likewise-lwnetapi
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Likewise Net API
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Net API

@@ -13,3 +13,10 @@ Description: Likewise Base support libraries
  The Likewise Base libraries are required support pieces needed
  by the Likewise domain join utilities.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Base support libraries
+ The Likewise Base libraries are required support pieces needed
+ by the Likewise domain join utilities.

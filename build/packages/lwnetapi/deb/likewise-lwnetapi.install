@@ -1,0 +1,1 @@
+__PKG_PREFIX/lib*/{*.so,*.so.*}

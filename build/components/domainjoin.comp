@@ -101,7 +101,7 @@ function component_stage
     mkdir -m 755 -p ${STAGING_PREFIX_DIR}/include
     mkdir -m 755 -p ${STAGING_PREFIX_DIR}/share/likewise
 
-    x_cp 755 ${COMP_SRCDIR}/libdomainjoin/include/*.h ${STAGING_PREFIX_DIR}/include/
+    #x_cp 755 ${COMP_SRCDIR}/libdomainjoin/include/*.h ${STAGING_PREFIX_DIR}/include/
     x_cp 755 scripts/ConfigureLogin ${STAGING_PREFIX_DIR}/bin/
     x_cp 755 scripts/gpcron ${STAGING_PREFIX_DIR}/bin/
 

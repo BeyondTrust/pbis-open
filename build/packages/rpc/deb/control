@@ -13,4 +13,11 @@ Description: Likewise DCE/RPC Runtime and Client Libraries
  to management services remogtely across a network.  These libraries 
  support features such as user management and Active Directory integration.
 
-
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise DCE/RPC Runtime and Client Libraries
+ The Likewise DCE/RPC runtime environment is used to provide access 
+ to management services remogtely across a network.  These libraries 
+ support features such as user management and Active Directory integration.

@@ -12,3 +12,8 @@ Description: Likewise Kerberos 5 support libraries
  The Likewise Kerberos 5 libraries are used to support authentication 
  functions in Active Directory domains.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Kerberos 5 support libraries (development resources)

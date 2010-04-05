@@ -23,7 +23,6 @@ DESTDIR=`pwd`/debian/tmp
 PKGNAME=__PKG_NAME
 PREFIX=/opt/likewise
 
-
 configure: configure-stamp
 configure-stamp:
 	dh_testdir
@@ -50,11 +49,7 @@ install: build
 	dh_clean -k
 #	dh_installdirs -P $(DESTDIR)
 	dh_installdirs
-
-	## rsync files from install prefix to $(DESTDIR)/
-	rsync -a ../../populate/ $(DESTDIR)/
-
-	dh_install --sourcedir=$(DESTDIR)
+	dh_install --sourcedir=../../populate
 
 
 

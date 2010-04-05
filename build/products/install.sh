@@ -269,7 +269,18 @@ check_bff_installed()
 
 check_deb_installed()
 {
-    dpkg -s $1 > /dev/null 2>&1
+    _status="`dpkg -s "$1" 2>/dev/null`"
+    if [ $? -ne 0 ]
+    then
+	return 1
+    fi
+
+    if echo "$_status" | grep 'not-installed' >/dev/null 2>&1
+    then
+	return 1
+    fi
+
+    return 0
 }
 
 check_pkg_installed()
@@ -414,7 +425,22 @@ install_rpms()
 
 install_debs()
 {
-    dpkg ${DPKG_INSTALL_OPTIONS} "${PKGDIR}"/*.deb
+    _debs=""
+
+    for _pkg in ${PACKAGES}
+    do
+	_debs="$_debs ${PKGDIR}/${_pkg}_*.deb"
+
+	if $OPT_DEVEL
+	then
+	    if test -f ${PKGDIR}/${_pkg}-dev_*.deb
+	    then
+		_debs="$_debs ${PKGDIR}/${_pkg}-dev_*.deb"
+	    fi
+	fi
+    done
+
+    dpkg ${DPKG_INSTALL_OPTIONS} ${_debs}
     exit_on_error $? "Failed to install packages"
     return 0
 }
@@ -517,9 +543,14 @@ uninstall_debs()
 {
     _pkgs=""
     for pkg in $@ ; do
-        check_deb_installed ${pkg}
-        if [ $? -eq 0 ]; then
+        if check_deb_installed ${pkg}
+	then
             _pkgs="${_pkgs} ${pkg}"
+        fi
+
+        if check_deb_installed "${pkg}-dev"
+	then
+            _pkgs="${_pkgs} ${pkg}-dev"
         fi
     done
     if [ -n "${_pkgs}" ]; then
@@ -1101,6 +1132,7 @@ usage()
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --compat         install 32-bit compatibility libraries (default: auto)"
     echo "    --nocompat       do not install 32-bit compatibility libraries (default: auto)"
+    echo "    --devel          install development packages"
     #echo "    --type <pkgType> type of package to install"
     echo ""
     echo "  where command is one of:"
@@ -1118,6 +1150,7 @@ usage()
 
 main()
 {
+    OPT_DEVEL=false
     OPT_COMPAT=""
     DIRNAME=`dirname $0`
     if [ -z "${DIRNAME}" ]; then
@@ -1162,6 +1195,10 @@ main()
                 OPT_COMPAT=no
                 shift 1
                 ;;
+	    --devel)
+		OPT_DEVEL=true
+		shift 1
+		;;
             --type|-t)
                 if [ -n "${PKGTYPE}" ]; then
                     echo "Only one --type option allowed"

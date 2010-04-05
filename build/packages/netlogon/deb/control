@@ -14,3 +14,11 @@ Description: Likewise Security and Authentication Subsystem
  contains components to authenticate users and groups
  in Windows Active Directory from Linux/UNIX hosts.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Security and Authentication Subsystem
+ The Likewise Security and Authentication Subsystem
+ contains components to authenticate users and groups
+ in Windows Active Directory from Linux/UNIX hosts.
