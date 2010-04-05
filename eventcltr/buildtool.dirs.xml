@@ -1,9 +1,0 @@
-<buildtool.dirs>
-  <dir name="sqlite"/>
-  <dir name="idl"/>
-  <dir name="logging"/>
-  <dir name="common"/>
-  <dir name="clientlib"/>
-  <dir name="cli"/>
-  <dir name="server"/>
-</buildtool.dirs>

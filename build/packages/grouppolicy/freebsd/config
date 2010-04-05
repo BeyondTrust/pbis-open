@@ -1,2 +1,0 @@
-DESCRIPTION="Likewise group policy agent"
-DEPENDS="likewise-base likewise-krb5 likewise-openldap"

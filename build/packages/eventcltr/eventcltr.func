@@ -1,9 +1,0 @@
-PKG_COMPONENTS="eventcltr"
-PKG_DESC="Event collector"
-
-function package_populate
-{
-    populate_components
-
-    strip_common
-}

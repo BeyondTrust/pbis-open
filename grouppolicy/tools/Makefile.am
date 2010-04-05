@@ -1,4 +1,0 @@
-SUBDIRS =    \
-    gporefresh\
-    gpsetloglevel
-

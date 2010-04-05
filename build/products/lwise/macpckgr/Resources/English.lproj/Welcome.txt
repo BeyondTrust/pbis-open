@@ -1,5 +1,0 @@
-Likewise Enterprise
-
-Interoperability software to allow non-Windows systems to use Microsoft Active Directory.
-
-This program installs the Likewise Enterprise software suite in order to enable AD authentication, single sign-on, group policy, and other features.
