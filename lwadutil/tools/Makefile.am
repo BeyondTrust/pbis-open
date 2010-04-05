@@ -1,1 +1,0 @@
-SUBDIRS=lw-gp-admin 
