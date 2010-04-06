@@ -48,7 +48,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function01();
 
     /* function 0x02 */
-    NTSTATUS _NetrLogonSamLogon(
+    NTSTATUS NetrLogonSamLogon(
         [in,unique,string] wchar16_t *server_name,
         [in,unique,string] wchar16_t *computer_name,
         [in,unique] NetrAuth *creds,
@@ -61,7 +61,7 @@ cpp_quote("#endif")
         );
 
 	/* function 0x03 */
-    NTSTATUS _NetrLogonSamLogoff(
+    NTSTATUS NetrLogonSamLogoff(
         [in,unique,string] wchar16_t *server_name,
         [in,unique,string] wchar16_t *computer_name,
         [in,unique] NetrAuth *creds,
@@ -71,14 +71,14 @@ cpp_quote("#endif")
         );
 
 	/* function 0x04 */
-    NTSTATUS _NetrServerReqChallenge(
+    NTSTATUS NetrServerReqChallenge(
         [in,string,unique] wchar16_t *server_name,
         [in,string] wchar16_t *computer_name,
         [in,out,ref] NetrCred *credentials
         );
 
 	/* function 0x05 */
-    NTSTATUS _NetrServerAuthenticate(
+    NTSTATUS NetrServerAuthenticate(
         [in,string,unique] wchar16_t *server_name,
         [in,string] wchar16_t account_name[],
         [in] UINT16 secure_channel_type,
@@ -97,7 +97,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function0e();
 
 	/* function 0x0f */
-    NTSTATUS _NetrServerAuthenticate2(
+    NTSTATUS NetrServerAuthenticate2(
         [in,string,unique] wchar16_t *server_name,
         [in,string] wchar16_t account_name[],
         [in] UINT16 secure_channel_type,
@@ -112,7 +112,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function13();
 
     /* function 0x14 */
-    NTSTATUS _DsrGetDcName(
+    NTSTATUS DsrGetDcName(
         [in,string,unique] wchar16_t *server_name,
         [in,string,unique] wchar16_t *domain_name,
         [in,unique] Guid *domain_guid,
@@ -128,7 +128,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function19();
 
 	/* function 0x1a */
-    NTSTATUS _NetrServerAuthenticate3(
+    NTSTATUS NetrServerAuthenticate3(
         [in,string] wchar16_t *server_name,
         [in,string] wchar16_t account_name[],
         [in] UINT16 secure_channel_type,
@@ -142,7 +142,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function1c();
 
     /* function 0x1d */
-    NTSTATUS _NetrLogonGetDomainInfo(
+    NTSTATUS NetrLogonGetDomainInfo(
         [in,string] wchar16_t *server_name,
         [in,unique,string] wchar16_t *computer_name,
         [in] NetrAuth *creds,
@@ -161,7 +161,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function23();
 
 	/* function 0x24 */
-    NTSTATUS _NetrEnumerateTrustedDomainsEx(
+    NTSTATUS NetrEnumerateTrustedDomainsEx(
         [in,string,unique] wchar16_t *server_name,
         [out,ref] NetrDomainTrustList *domain_trusts
         );
@@ -170,7 +170,7 @@ cpp_quote("#endif")
     NTSTATUS netr_Function26();
 
 	/* function 0x27 */
-    NTSTATUS _NetrLogonSamLogonEx(
+    NTSTATUS NetrLogonSamLogonEx(
         [in,unique,string] wchar16_t *server_name,
         [in,unique,string] wchar16_t *computer_name,
         [in] UINT16 logon_level,
@@ -183,7 +183,7 @@ cpp_quote("#endif")
 
   
 	/* function 0x28 */
-	WINERR _DsrEnumerateDomainTrusts(
+	WINERR DsrEnumerateDomainTrusts(
         [in,unique,string] wchar16_t *server_name,
         [in] UINT32 trust_flags,
         [out,ref] NetrDomainTrustList *trusts
