@@ -51,6 +51,14 @@ AutoProv: no
 The Likewise Registry Daemon
 contains components to modify registry entries for Linux/UNIX systems.
 
+%package devel
+Summary: Likewise Registry Software Development Kit
+Group: Development/Libraries
+Requires: likewise-lwreg
+
+%description devel
+The likewise-lwreg-devel package includes the development libraries and header files that supply the application programming interface to manage information in the Likewise Registry.
+
 %prep
 
 %build
@@ -72,6 +80,16 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 /etc/likewise/*.reg
 %endif
 %{PrefixDir}/%{_lib}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/man/*
+%endif
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lwregd
