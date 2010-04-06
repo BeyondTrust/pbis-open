@@ -34,6 +34,14 @@ The DCE/RPC runtime environment is used to provide access to management
 services remogtely across a network.  These libraries support features
 such as user management and Active Directory integration.
 
+%package devel
+Summary: Likewise RPC Software Development Kit
+Group: Development/Libraries
+Requires: likewise-rpc
+
+%description devel
+The likewise-rpc-devel package includes the development libraries and header files that supply the application programming interface for the DCE/RPC runtime.
+
 %prep
 
 %build
@@ -51,6 +59,17 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/*
 %{_sysconfdir}/init.d/*
 %dir /var/rpc
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%endif
 
 %if ! %{Compat32}
 /etc/likewise/*.reg
