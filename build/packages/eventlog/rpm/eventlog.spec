@@ -28,6 +28,14 @@ AutoReq: no
 %description
 Likewise Audit (Eventlog) system
 
+%package devel
+Summary: Likewise Audit (Eventlog) Software Development Kit
+Group: Development/Libraries
+Requires: likewise-eventlog
+
+%description devel
+The likewise-eventlog-devel package includes the development libraries and header files that supply the application programming interface for the Likewise Audit (Eventlog) system.
+
 %prep
 
 %build
@@ -48,6 +56,18 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 
 %{PrefixDir}/%{_lib}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%endif
+
 
 %define initScriptPathList %{INIT_DIR}/eventlogd
 %post
