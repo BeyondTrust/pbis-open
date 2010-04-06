@@ -75,7 +75,7 @@ extern char *error_text();
 #endif
 
 extern uuid_old_t FooType, BarType, FooObj1, FooObj2, BarObj1, BarObj2;
-extern uuid_t NilTypeObj, NilObj, ZotObj, ZotType;
+extern dce_uuid_t NilTypeObj, NilObj, ZotObj, ZotType;
 
 extern char *authn_level_names[];
 extern char *authn_names[];

@@ -64,7 +64,7 @@
  *  auto_handle       | boolean     |    i        |  i     |
  *  local             | boolean     |    i        |  i     |
  *  implicit_handle   | <name,type> |    i        |  i     |
- *  uuid              | uuid_t      |    i        |  i     |
+ *  uuid              | dce_uuid_t      |    i        |  i     |
  *  port              | int[]       |    i        |  i     |
  *  version           | unsigned    |    i        |  i     |
  *  npb               | boolean     |    i        |  i     | 5

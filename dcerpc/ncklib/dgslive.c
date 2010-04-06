@@ -95,13 +95,13 @@ INTERNAL unsigned32 active_monitors = 0;
  */
 
 INTERNAL rpc_dg_client_rep_p_t find_client _DCE_PROTOTYPE_((
-        uuid_p_t /*cas_uuid*/
+        dce_uuid_p_t /*cas_uuid*/
     ));
 
 INTERNAL rpc_dg_client_rep_p_t find_client
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t cas_uuid
+    dce_uuid_p_t cas_uuid
 )
 #else
 (cas_uuid)
@@ -117,7 +117,7 @@ uuid_p_t cas_uuid;
 
     while (client != NULL) 
     {
-        if (uuid_equal(cas_uuid, &client->cas_uuid, &st))
+        if (dce_uuid_equal(cas_uuid, &client->cas_uuid, &st))
             return(client);
         client = client->next;
     }
@@ -158,7 +158,7 @@ unsigned32 *st;
 {            
     rpc_dg_client_rep_p_t ptr, client = (rpc_dg_client_rep_p_t) client_h;
     unsigned16 probe;
-    uuid_p_t cas_uuid = (uuid_p_t) &client->cas_uuid;
+    dce_uuid_p_t cas_uuid = (dce_uuid_p_t) &client->cas_uuid;
 
     RPC_MUTEX_LOCK(monitor_mutex);
    
@@ -242,7 +242,7 @@ unsigned32 *st;
 {
     rpc_dg_client_rep_p_t client = (rpc_dg_client_rep_p_t) client_h;
     rpc_dg_client_rep_p_t ptr;
-    uuid_p_t cas_uuid = &client->cas_uuid;
+    dce_uuid_p_t cas_uuid = &client->cas_uuid;
     unsigned16 probe;
                  
     RPC_MUTEX_LOCK(monitor_mutex);
@@ -384,11 +384,11 @@ INTERNAL void network_monitor_liveness(void)
 PRIVATE void rpc__dg_convc_indy
 #ifdef _DCE_PROTO_
 (
-    uuid_t *cas_uuid
+    dce_uuid_t *cas_uuid
 )
 #else
 (cas_uuid)
-uuid_t *cas_uuid;
+dce_uuid_t *cas_uuid;
 #endif
 {
     rpc_dg_client_rep_p_t client;
@@ -428,7 +428,7 @@ unsigned32 *st;
     rpc_dg_binding_server_p_t shand = (rpc_dg_binding_server_p_t) binding_r;
     rpc_dg_scall_p_t scall = shand->scall;
     rpc_binding_handle_t h;
-    uuid_t cas_uuid;
+    dce_uuid_t cas_uuid;
     rpc_dg_client_rep_p_t client;
     unsigned32 temp_seq, tst;
                               

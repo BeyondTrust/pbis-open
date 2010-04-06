@@ -93,7 +93,7 @@ typedef struct
     unsigned short              ifspec_vers;
     unsigned short              opcnt;
     unsigned long               vers;
-    uuid_t                      id;
+    dce_uuid_t                  id;
     unsigned short              stub_rtl_if_vers;
     rpc_endpoint_vector_t       endpoint_vector;
     rpc_syntax_vector_t         syntax_vector;
@@ -1246,12 +1246,12 @@ void rpc_ss_init_callee_ctx_tables   _DCE_PROTOTYPE_ ((void));
 #define uuid_tOue rpc_ss_u_uuid
 
 void rpc_ss_m_uuid  _DCE_PROTOTYPE_ ((
-   uuid_t *, 
+   dce_uuid_t *, 
    rpc_ss_marsh_state_t *
 ));
 
 void rpc_ss_u_uuid   _DCE_PROTOTYPE_ ((
-   uuid_t *, 
+   dce_uuid_t *, 
    rpc_ss_marsh_state_t *
 ));
 

@@ -113,7 +113,7 @@ INTERNAL void epdb_replace_entry
 INTERNAL boolean32 epdb_is_replace_candidate
     _DCE_PROTOTYPE_((
         db_entry_t      *entp,
-        uuid_p_t        object,
+        dce_uuid_p_t        object,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr
     ));
@@ -121,7 +121,7 @@ INTERNAL boolean32 epdb_is_replace_candidate
 INTERNAL void epdb_delete_replaceable_entries
     _DCE_PROTOTYPE_((
         struct db       *h,
-        uuid_p_t        object,
+        dce_uuid_p_t        object,
         twr_fields_p_t  tfp,
         rpc_addr_p_t    addr,
         error_status_t  *status
@@ -131,7 +131,7 @@ INTERNAL void epdb_delete_entries_by_obj_if_addr
     _DCE_PROTOTYPE_((
         struct db           *h,
         boolean32           object_speced,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_addr_p_t        addr,
         error_status_t      *status
@@ -148,7 +148,7 @@ INTERNAL void lookup
     _DCE_PROTOTYPE_((
         struct db           *h,
         unsigned32          inquiry_type,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         unsigned32          vers_option,
         ept_lookup_handle_t *entry_handle,
@@ -161,7 +161,7 @@ INTERNAL void lookup
 INTERNAL void lookup_match
     _DCE_PROTOTYPE_((
         unsigned32          inquiry_type,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         unsigned32          vers_option,
         unsigned32          max_ents,
@@ -175,7 +175,7 @@ INTERNAL void lookup_match
 INTERNAL void map
     _DCE_PROTOTYPE_((
         struct db           *h,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
@@ -191,7 +191,7 @@ INTERNAL void map
         
 INTERNAL void map_match
     _DCE_PROTOTYPE_((
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
@@ -211,7 +211,7 @@ INTERNAL void map_match
 INTERNAL void map_mgmt
     _DCE_PROTOTYPE_((
         struct db           *h,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
         unsigned32          rpc_protocol_vers_major,
@@ -226,7 +226,7 @@ INTERNAL void map_mgmt
         
 INTERNAL void map_mgmt_match
     _DCE_PROTOTYPE_((
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
         unsigned32          rpc_protocol_vers_major,
@@ -264,8 +264,8 @@ handle_t        h;
 epdb_handle_t   *epdb_h;
 error_status_t  *status;
 {
-    uuid_t  obj;
-    uuid_t  epdb_obj;
+    dce_uuid_t  obj;
+    dce_uuid_t  epdb_obj;
 
     SET_STATUS(status, rpc_s_ok);
 
@@ -276,12 +276,12 @@ error_status_t  *status;
     }
 
     rpc_binding_inq_object(h, &obj, status);
-    if (uuid_is_nil(&obj, status))
+    if (dce_uuid_is_nil(&obj, status))
         *epdb_h = epdb_handle;
     else
     {
         epdb_inq_object(epdb_handle, &epdb_obj, status);
-        if (uuid_equal(&obj, &epdb_obj, status))
+        if (dce_uuid_equal(&obj, &epdb_obj, status))
             *epdb_h = epdb_handle;
         else
             SET_STATUS(status, ept_s_cant_perform_op); /* !!! ep_wrong_object? */
@@ -414,8 +414,8 @@ error_status_t  *status;
     rpc_binding_handle_t    binding_h;
     error_status_t          tmp_st;
 
-    if (uuid_is_nil(&tfp->interface.uuid, &tmp_st) ||
-        uuid_is_nil(&tfp->data_rep.id, &tmp_st) ||
+    if (dce_uuid_is_nil(&tfp->interface.uuid, &tmp_st) ||
+        dce_uuid_is_nil(&tfp->data_rep.id, &tmp_st) ||
         (addr == NULL) ||
         (addr->len == 0)) 
     {
@@ -435,8 +435,8 @@ error_status_t  *status;
 {
     error_status_t  tmp_st;
 
-    if (uuid_is_nil(&tfp->interface.uuid, &tmp_st) ||
-        uuid_is_nil(&tfp->data_rep.id, &tmp_st) ||
+    if (dce_uuid_is_nil(&tfp->interface.uuid, &tmp_st) ||
+        dce_uuid_is_nil(&tfp->data_rep.id, &tmp_st) ||
         (! RPC_PROTSEQ_INQ_SUPPORTED(tfp->protseq)) )
         SET_STATUS(status, ept_s_invalid_entry);
     else
@@ -485,8 +485,8 @@ error_status_t  *status;
 
     db_entp->object = xentry->object;
     db_entp->interface = tfp->interface;
-    db_entp->object_nil = uuid_is_nil(&db_entp->object, &tmp_st);
-    db_entp->if_nil = uuid_is_nil(&db_entp->interface.uuid, &tmp_st);
+    db_entp->object_nil = dce_uuid_is_nil(&db_entp->object, &tmp_st);
+    db_entp->if_nil = dce_uuid_is_nil(&db_entp->interface.uuid, &tmp_st);
     db_entp->data_rep_id = tfp->data_rep.id;
     db_entp->data_rep_vers_major = RPC_IF_VERS_MAJOR(tfp->data_rep.version);
     db_entp->data_rep_vers_minor = RPC_IF_VERS_MINOR(tfp->data_rep.version);
@@ -565,7 +565,7 @@ error_status_t  *status;
  */
 INTERNAL boolean32 epdb_is_replace_candidate(entp, object, tfp, addr)
 twr_fields_p_t  tfp;
-uuid_p_t        object;
+dce_uuid_p_t        object;
 db_entry_t      *entp;
 rpc_addr_p_t    addr;
 {
@@ -576,11 +576,11 @@ rpc_addr_p_t    addr;
     data_rep_vers_major = RPC_IF_VERS_MAJOR(tfp->data_rep.version);
     data_rep_vers_minor = RPC_IF_VERS_MINOR(tfp->data_rep.version);
 
-    return (uuid_equal(object, &entp->object, &tmp_st) &&
-            uuid_equal(&tfp->interface.uuid, &entp->interface.uuid, &tmp_st) &&
+    return (dce_uuid_equal(object, &entp->object, &tmp_st) &&
+            dce_uuid_equal(&tfp->interface.uuid, &entp->interface.uuid, &tmp_st) &&
             (tfp->interface.vers_major == entp->interface.vers_major) && 
             (addr->rpc_protseq_id == entp->addr->rpc_protseq_id) &&
-            uuid_equal(&tfp->data_rep.id, &entp->data_rep_id, &tmp_st) && 
+            dce_uuid_equal(&tfp->data_rep.id, &entp->data_rep_id, &tmp_st) && 
             (data_rep_vers_major == entp->data_rep_vers_major) &&
             (data_rep_vers_minor == entp->data_rep_vers_minor) &&
             (tfp->rpc_protocol == entp->rpc_protocol) &&
@@ -596,7 +596,7 @@ rpc_addr_p_t    addr;
  */
 INTERNAL void epdb_delete_replaceable_entries(h, object, tfp, addr, status)
 struct db       *h;
-uuid_p_t        object;
+dce_uuid_p_t        object;
 twr_fields_p_t  tfp;
 rpc_addr_p_t    addr;
 error_status_t  *status;
@@ -616,7 +616,7 @@ error_status_t  *status;
         return;
     }
 
-    if (! uuid_is_nil(object, &tmp_st))
+    if (! dce_uuid_is_nil(object, &tmp_st))
     { 
         list_type = db_c_object_list;
         lp_first = db_list_first(&h->lists_mgmt, db_c_object_list, object);
@@ -696,7 +696,7 @@ DONE:
 INTERNAL void epdb_delete_entries_by_obj_if_addr(h, object_speced, object, interface, addr, status)
 struct db           *h;
 boolean32           object_speced;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 rpc_if_id_p_t       interface;
 rpc_addr_p_t        addr;
 error_status_t      *status;
@@ -722,8 +722,8 @@ error_status_t      *status;
 
         if (entp->delete_flag) continue;
 
-        if (((! object_speced) || uuid_equal(object, &entp->object, &tmp_st)) &&
-            (uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st)) &&
+        if (((! object_speced) || dce_uuid_equal(object, &entp->object, &tmp_st)) &&
+            (dce_uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st)) &&
             (interface->vers_major == entp->interface.vers_major) &&
             (interface->vers_minor == entp->interface.vers_minor) &&
             (rpc__naf_addr_compare(addr, entp->addr, &tmp_st)))
@@ -759,7 +759,7 @@ ept_entry_p_t   xentry;
     rpc_if_id_t     interface;
     error_status_t  tmp_st;
 
-    if (! uuid_is_nil(&xentry->object, &tmp_st))
+    if (! dce_uuid_is_nil(&xentry->object, &tmp_st))
     { 
         list_type = db_c_object_list;
         lp = db_list_first(&h->lists_mgmt, db_c_object_list, &xentry->object);
@@ -775,7 +775,7 @@ ept_entry_p_t   xentry;
     {
         entp = (db_entry_t *) lp;
 
-        if (uuid_equal(&xentry->object, &entp->object, &tmp_st) &&
+        if (dce_uuid_equal(&xentry->object, &entp->object, &tmp_st) &&
             (xentry->tower->tower_length == entp->tower.tower_length) &&
             (memcmp((char *) xentry->tower->tower_octet_string, 
                     (char *) entp->tower.tower_octet_string, 
@@ -921,7 +921,7 @@ error_status_t  *status;
 PRIVATE void epdb_mgmt_delete(h_, object_speced, object, tower, status)
 epdb_handle_t       h_;
 boolean32           object_speced;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 twr_p_t             tower;
 error_status_t      *status;
 {
@@ -960,7 +960,7 @@ PRIVATE void epdb_lookup(h_, inquiry_type, object, interface, vers_option, entry
     num_ents, entries, status)
 epdb_handle_t       h_;
 unsigned32          inquiry_type;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 rpc_if_id_p_t       interface;
 unsigned32          vers_option;
 ept_lookup_handle_t *entry_handle;
@@ -994,7 +994,7 @@ INTERNAL void lookup(h, inquiry_type, object, interface, vers_option, entry_hand
     num_ents, entries, status)
 struct db           *h;
 unsigned32          inquiry_type;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 rpc_if_id_p_t       interface;
 unsigned32          vers_option;
 ept_lookup_handle_t *entry_handle;
@@ -1113,7 +1113,7 @@ error_status_t      *status;
 INTERNAL void lookup_match(inquiry_type, object, interface, vers_option, max_ents, num_ents, entries, list_type, 
     lpp, status)
 unsigned32          inquiry_type;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 rpc_if_id_p_t       interface;
 unsigned32          vers_option;
 unsigned32          max_ents;
@@ -1142,18 +1142,18 @@ error_status_t      *status;
                 break;
 
             case rpc_c_ep_match_by_if:
-                if (uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st))
+                if (dce_uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st))
                     match = true;
                 break;
 
             case rpc_c_ep_match_by_obj:
-                if (uuid_equal(object, &entp->object, &tmp_st))
+                if (dce_uuid_equal(object, &entp->object, &tmp_st))
                     match = true;
                 break;
 
             case rpc_c_ep_match_by_both:
-                if (uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st) &&
-                    uuid_equal(object, &entp->object, &tmp_st))
+                if (dce_uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st) &&
+                    dce_uuid_equal(object, &entp->object, &tmp_st))
                     match = true;
                 break;
 
@@ -1264,7 +1264,7 @@ PRIVATE void epdb_fwd(h_, object, interface, data_rep,
                         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor,
                         addr, map_handle, max_ents, num_ents, fwd_addrs, status)
 epdb_handle_t           h_;
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_if_id_p_t           interface;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
@@ -1306,7 +1306,7 @@ unsigned32              *status;
 
     start_ent = *num_ents;
 
-    if (uuid_equal(&interface->uuid, &mgmt_if_rep->id, &tmp_st))
+    if (dce_uuid_equal(&interface->uuid, &mgmt_if_rep->id, &tmp_st))
         map_mgmt(h, object, data_rep, 
         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, addr->rpc_protseq_id,
         map_handle, max_ents, num_ents, db_entries, status); 
@@ -1363,7 +1363,7 @@ unsigned32              *status;
  */
 PRIVATE void epdb_map(h_, object, map_tower, map_handle, max_ents, num_ents, fwd_towers, status)
 epdb_handle_t       h_;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 twr_p_t             map_tower;
 ept_lookup_handle_t *map_handle;
 unsigned32          max_ents;
@@ -1420,7 +1420,7 @@ unsigned32          *status;
 
     start_ent = *num_ents;
 
-    if (uuid_equal(&tfp->interface.uuid, &mgmt_if_rep->id, &tmp_st))
+    if (dce_uuid_equal(&tfp->interface.uuid, &mgmt_if_rep->id, &tmp_st))
         map_mgmt(h, object, &tfp->data_rep, 
         tfp->rpc_protocol, tfp->rpc_protocol_vers_major, tfp->rpc_protocol_vers_minor, 
         tfp->protseq, map_handle, max_ents, num_ents, db_entries, status);
@@ -1497,7 +1497,7 @@ INTERNAL void map(h, object, interface, data_rep,
         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, protseq,
         map_handle, max_ents, n_ents, db_entries, status)
 struct db               *h;
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_if_id_p_t           interface;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
@@ -1519,7 +1519,7 @@ unsigned32              *status;
 
     if ((map_handle == NULL) || (*map_handle == NULL))
     {
-        if (uuid_is_nil(object, &tmp_st))
+        if (dce_uuid_is_nil(object, &tmp_st))
         {
             pass = 2;
             list_type = db_c_interface_list;
@@ -1600,7 +1600,7 @@ INTERNAL void map_match(
         object, interface, data_rep, 
         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, protseq,
         max_ents, n_ents, entries, map_handle, pass, list_type, lpp, status)
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_if_id_p_t           interface;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
@@ -1625,7 +1625,7 @@ unsigned32              *status;
 
     SET_STATUS_OK(status);
 
-    object_nil = uuid_is_nil(object, &tmp_st);
+    object_nil = dce_uuid_is_nil(object, &tmp_st);
     data_rep_vers_major = RPC_IF_VERS_MAJOR(data_rep->version);
     data_rep_vers_minor = RPC_IF_VERS_MINOR(data_rep->version);
 
@@ -1636,12 +1636,12 @@ unsigned32              *status;
         if (entp->delete_flag) continue;
 
         if  (((object_nil && entp->object_nil) || 
-                uuid_equal(object, &entp->object, &tmp_st)) && 
-            uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st) &&
+                dce_uuid_equal(object, &entp->object, &tmp_st)) && 
+            dce_uuid_equal(&interface->uuid, &entp->interface.uuid, &tmp_st) &&
             (interface->vers_major == entp->interface.vers_major) && 
             (interface->vers_minor <= entp->interface.vers_minor) &&
             (protseq == entp->addr->rpc_protseq_id) &&
-            uuid_equal(&data_rep->id, &entp->data_rep_id, &tmp_st) && 
+            dce_uuid_equal(&data_rep->id, &entp->data_rep_id, &tmp_st) && 
             (data_rep_vers_major == entp->data_rep_vers_major) &&
             (data_rep_vers_minor <= entp->data_rep_vers_minor) &&
             (rpc_protocol == entp->rpc_protocol) &&
@@ -1689,7 +1689,7 @@ INTERNAL void map_mgmt(h, object, data_rep,
         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, protseq,
         map_handle, max_ents, n_ents, db_entries, status)
 struct db               *h;
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
 unsigned32              rpc_protocol_vers_major;
@@ -1706,7 +1706,7 @@ unsigned32              *status;
     db_lists_t      *lp;
     error_status_t  tmp_st;
 
-    if (uuid_is_nil(object, &tmp_st))
+    if (dce_uuid_is_nil(object, &tmp_st))
     {
         db_delete_context(h, map_handle);
         SET_STATUS(status, ept_s_invalid_entry);
@@ -1751,7 +1751,7 @@ INTERNAL void map_mgmt_match(
         object, data_rep, 
         rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, protseq,
         max_ents, n_ents, entries, map_handle, pass, list_type, lpp, status)
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
 unsigned32              rpc_protocol_vers_major;
@@ -1783,9 +1783,9 @@ unsigned32              *status;
 
         if (entp->delete_flag) continue;
 
-        if (uuid_equal(object, &entp->object, &tmp_st) && 
+        if (dce_uuid_equal(object, &entp->object, &tmp_st) && 
             (protseq == entp->addr->rpc_protseq_id) &&
-            uuid_equal(&data_rep->id, &entp->data_rep_id, &tmp_st) && 
+            dce_uuid_equal(&data_rep->id, &entp->data_rep_id, &tmp_st) && 
             (data_rep_vers_major == entp->data_rep_vers_major) &&
             (data_rep_vers_minor <= entp->data_rep_vers_minor) &&
             (rpc_protocol == entp->rpc_protocol) &&
@@ -1863,7 +1863,7 @@ db_entry_t      *entries[];
  */
 PRIVATE void epdb_inq_object(h_, object, status)
 epdb_handle_t h_;
-uuid_t *object;
+dce_uuid_t *object;
 error_status_t *status;
 {
     struct db *h = (struct db *) h_;

@@ -83,7 +83,7 @@ PRIVATE void epdb_mgmt_delete
     _DCE_PROTOTYPE_ ((
         epdb_handle_t       h,
         boolean32           object_speced,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         twr_p_t             tower,
         error_status_t      *status
     ));
@@ -92,7 +92,7 @@ PRIVATE void epdb_lookup
     _DCE_PROTOTYPE_ ((
         epdb_handle_t       h,
         unsigned32          inquiry_type,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         unsigned32          vers_option,
         ept_lookup_handle_t *entry_handle,
@@ -105,7 +105,7 @@ PRIVATE void epdb_lookup
 PRIVATE void epdb_map
     _DCE_PROTOTYPE_ ((
         epdb_handle_t       h,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         twr_p_t             map_tower,
         ept_lookup_handle_t *entry_handle,
         unsigned32          max_towers,
@@ -117,7 +117,7 @@ PRIVATE void epdb_map
 PRIVATE void epdb_fwd
     _DCE_PROTOTYPE_ ((
         epdb_handle_t       h,
-        uuid_p_t            object,
+        dce_uuid_p_t            object,
         rpc_if_id_p_t       interface,
         rpc_syntax_id_p_t   data_rep,
         rpc_protocol_id_t   rpc_protocol,
@@ -134,7 +134,7 @@ PRIVATE void epdb_fwd
 PRIVATE void epdb_inq_object
     _DCE_PROTOTYPE_ ((
         epdb_handle_t h,
-        uuid_t *object,
+        dce_uuid_t *object,
         error_status_t *status
     ));
 

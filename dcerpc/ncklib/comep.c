@@ -67,7 +67,7 @@ typedef struct {
     ndr_boolean             done;
     rpc_binding_handle_t    ep_binding;
     unsigned32              inquiry_type;
-    uuid_t                  object;
+    dce_uuid_t                  object;
     rpc_if_id_t             if_id;
     unsigned32              vers_option;
     ept_lookup_handle_t     entry_handle;
@@ -574,7 +574,7 @@ unsigned32                  *status;
              * First create the partial object vector.
              */
 
-            ov_size = sizeof(uuid_vector_t) + (sizeof(uuid_t) * (curr_obj - 1));
+            ov_size = sizeof(uuid_vector_t) + (sizeof(dce_uuid_t) * (curr_obj - 1));
             RPC_MEM_ALLOC(ovp, uuid_vector_p_t, ov_size,
                 RPC_C_MEM_UUID_VECTOR, RPC_C_MEM_WAITOK);
             if (ovp == NULL)
@@ -909,7 +909,7 @@ PUBLIC void rpc_mgmt_ep_elt_inq_begin
     unsigned32              inquiry_type,
     rpc_if_id_p_t           if_id,
     unsigned32              vers_option,
-    uuid_p_t                object_uuid,
+    dce_uuid_p_t                object_uuid,
     rpc_ep_inq_handle_t     *inquiry_context,
     unsigned32              *status
 )
@@ -926,7 +926,7 @@ unsigned32              *status;
 {
     mgmt_ep_inq_rep_t       *chp;
     rpc_binding_handle_t    ep_binding;
-    uuid_t                  UUID_NIL;
+    dce_uuid_t                  UUID_NIL;
     unsigned32              tmp_st;
 
     CODING_ERROR (status);
@@ -966,7 +966,7 @@ unsigned32              *status;
      * nil_uuid and versions = 0.
      */ 
 
-    uuid_create_nil(&UUID_NIL, &tmp_st);
+    dce_uuid_create_nil(&UUID_NIL, &tmp_st);
 
     switch ((int)inquiry_type)
     {
@@ -1072,7 +1072,7 @@ PUBLIC void rpc_mgmt_ep_elt_inq_next
     rpc_ep_inq_handle_t       inquiry_context,
     rpc_if_id_t               *if_id,
     rpc_binding_handle_t      *binding,
-    uuid_t                    *object_uuid,
+    dce_uuid_t                    *object_uuid,
     unsigned_char_p_t         *annotation,
     unsigned32                *status
 )
@@ -1081,7 +1081,7 @@ PUBLIC void rpc_mgmt_ep_elt_inq_next
 rpc_ep_inq_handle_t       inquiry_context;
 rpc_if_id_t               *if_id;
 rpc_binding_handle_t      *binding;
-uuid_t                    *object_uuid;
+dce_uuid_t                    *object_uuid;
 unsigned_char_p_t         *annotation;
 unsigned32                *status;
 #endif
@@ -1387,7 +1387,7 @@ PUBLIC void rpc_mgmt_ep_unregister
     rpc_binding_handle_t    input_binding,
     rpc_if_id_p_t           if_id,
     rpc_binding_handle_t    binding,
-    uuid_p_t                object_uuid,
+    dce_uuid_p_t                object_uuid,
     unsigned32              *status
 )
 #else
@@ -1403,8 +1403,8 @@ unsigned32              *status;
     rpc_tower_ref_vector_p_t    tower_vec;
     twr_p_t                     tower;
     boolean32                   object_speced;
-    uuid_t                      UUID_NIL;
-    uuid_t                      *objp;
+    dce_uuid_t                      UUID_NIL;
+    dce_uuid_t                      *objp;
     error_status_t              tmp_st;
     rpc_if_rep_t                ifspec;
 
@@ -1472,7 +1472,7 @@ unsigned32              *status;
     if (object_uuid == NULL)
     {
         object_speced = false;
-        uuid_create_nil(&UUID_NIL, &tmp_st);
+        dce_uuid_create_nil(&UUID_NIL, &tmp_st);
         objp = &UUID_NIL;
     }    
     else
@@ -1951,7 +1951,7 @@ unsigned32              *st;
     ept_lookup_handle_t         map_lookup_handle;
     rpc_addr_p_t                *rpc_addr;
     unsigned32                  saved_timeout;
-    uuid_t                      saved_object_uuid;
+    dce_uuid_t                      saved_object_uuid;
     rpc_tower_ref_vector_p_t    tower_vector = NULL;
     twr_p_t                     map_tower = NULL;
     twr_p_t                     * volatile towers = NULL;

@@ -241,20 +241,20 @@ PRIVATE void rpc__noauth_dg_who_are_you
 (
         rpc_auth_info_p_t info,
         handle_t h,
-        uuid_t *actuid,
+        dce_uuid_t *actuid,
         unsigned32 boot_time,
         unsigned32 *seq,
-        uuid_t *cas_uuid,
+        dce_uuid_t *cas_uuid,
         unsigned32 *stp
 )
 #else
 (info, h, actuid, boot_time, seq, cas_uuid, stp)
     rpc_auth_info_p_t info;
     handle_t h;
-    uuid_t *actuid;
+    dce_uuid_t *actuid;
     unsigned32 boot_time;
     unsigned32 *seq;
-    uuid_t *cas_uuid;
+    dce_uuid_t *cas_uuid;
     unsigned32 *stp;
 #endif
 {

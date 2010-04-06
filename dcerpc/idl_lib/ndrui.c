@@ -2201,7 +2201,7 @@ void rpc_ss_ndr_unmar_interp
                     IDL_GET_LONG_FROM_VECTOR(iid_index, type_vec_ptr);
                     rpc_ss_ndr_unmar_dyn_interface(rtn_index,
                         		       IDL_param_vector[param_index],
-                        		       ((uuid_t *) IDL_param_vector[iid_index]),
+                        		       ((dce_uuid_t *) IDL_param_vector[iid_index]),
                         		       NULL, IDL_msp );
                    break;
 #endif

@@ -147,7 +147,7 @@ EXTERNAL rpc_protocol_id_elt_t   rpc_g_protocol_id[];
 typedef struct
 {
     unsigned8               prefix;
-    uuid_t                  uuid;
+    dce_uuid_t                  uuid;
 } rpc_flr_prot_id_t, *rpc_flr_prot_id_p_t;
 
 typedef struct

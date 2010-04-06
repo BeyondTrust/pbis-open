@@ -2425,8 +2425,8 @@ PRIVATE void rpc__cthread_invoke_null
 #ifdef _DCE_PROTO_
 (
     rpc_call_rep_p_t        call_rep,
-    uuid_p_t                object,
-    uuid_p_t                if_uuid,
+    dce_uuid_p_t                object,
+    dce_uuid_p_t                if_uuid,
     unsigned32              if_ver,
     unsigned32              if_opnum,
     rpc_prot_cthread_executor_fn_t cthread_executor,

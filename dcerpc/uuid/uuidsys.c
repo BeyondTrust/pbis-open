@@ -63,7 +63,7 @@
  *
  * Get OS time - contains platform-specific code.
  */
-void uuid__get_os_time (uuid_time_t * uuid_time)
+void uuid__get_os_time (dce_uuid_time_t * uuid_time)
 {
 
     struct timeval      tp;
@@ -122,7 +122,7 @@ unsigned32 uuid__get_os_pid ( void )
  */
 void uuid__get_os_address
 (
-    uuid_address_p_t        addr,
+    dce_uuid_address_p_t    addr,
     unsigned32              *status
 )
 {

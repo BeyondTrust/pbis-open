@@ -140,7 +140,7 @@ extern void stub_conversion
  */
 #define rpc_c_uuid_codesets_string	"a1794860-a955-11cd-8443-08000925d3fe"
 
-extern uuid_t rpc_c_attr_real_codesets;
-extern uuid_t *rpc_c_attr_codesets;
+extern dce_uuid_t rpc_c_attr_real_codesets;
+extern dce_uuid_t *rpc_c_attr_codesets;
 
 #endif	/* !defined(_CS_S_H) */

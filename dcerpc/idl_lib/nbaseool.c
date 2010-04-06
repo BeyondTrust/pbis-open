@@ -56,12 +56,12 @@
 void rpc_ss_m_uuid
 #ifdef IDL_PROTOTYPES
 (
-uuid_t *p_node,
+dce_uuid_t *p_node,
 rpc_ss_marsh_state_t *NIDL_msp
 )
 #else
 ( p_node, NIDL_msp )
-uuid_t *p_node;
+dce_uuid_t *p_node;
 rpc_ss_marsh_state_t *NIDL_msp;
 #endif
 {
@@ -120,12 +120,12 @@ rpc_ss_marsh_state_t *NIDL_msp;
 void rpc_ss_u_uuid
 #ifdef IDL_PROTOTYPES
 (
-uuid_t *p_node,
+dce_uuid_t *p_node,
 rpc_ss_marsh_state_t *p_unmar_params
 )
 #else
 ( p_node, p_unmar_params )
-uuid_t *p_node;
+dce_uuid_t *p_node;
 rpc_ss_marsh_state_t *p_unmar_params;
 #endif
 {

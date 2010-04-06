@@ -134,7 +134,7 @@ rpc_dg_ccall_p_t ccall;
 PRIVATE rpc_dg_ccall_p_t rpc__dg_ccallt_lookup
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t actid,
+    dce_uuid_p_t actid,
     unsigned32 probe_hint
 )
 #else

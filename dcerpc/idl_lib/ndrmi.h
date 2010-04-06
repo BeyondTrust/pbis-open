@@ -478,7 +478,7 @@ void rpc_ss_ndr_marsh_dyn_interface
 #ifdef IDL_PROTOTYPES
     idl_ulong_int rtn_index,
     void 	  *param_addr,
-    uuid_t	  *piid,
+    dce_uuid_t	  *piid,
     IDL_msp_t     IDL_msp
 #endif
 );

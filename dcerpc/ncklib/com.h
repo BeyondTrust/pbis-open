@@ -54,7 +54,7 @@
 /*
  * U U I D _ G _ N I L _ U U I D
  */
-EXTERNAL uuid_t    uuid_g_nil_uuid;
+EXTERNAL dce_uuid_t    uuid_g_nil_uuid;
 
 
 /***********************************************************************/
@@ -829,7 +829,7 @@ typedef struct rpc_handle_s_t
     rpc_list_t                  link;               /* This must be first! */
     rpc_protocol_id_t           protocol_id;
     signed8                     refcnt;
-    uuid_t                      obj;
+    dce_uuid_t                      obj;
     rpc_addr_p_t                rpc_addr;
     unsigned                    is_server: 1;
     unsigned                    addr_is_dynamic: 1;
@@ -1237,7 +1237,7 @@ PRIVATE void rpc__binding_free _DCE_PROTOTYPE_ ((
 
 PRIVATE rpc_binding_rep_t *rpc__binding_alloc _DCE_PROTOTYPE_ ((
         boolean32                   /* is_server */,
-        uuid_p_t                    /* object_uuid */,
+        dce_uuid_p_t                    /* object_uuid */,
         rpc_protocol_id_t           /* protocol_id */,
         rpc_addr_p_t                /* rpc_addr */,
         unsigned32                  * /* status */
@@ -1310,9 +1310,9 @@ PRIVATE void rpc__if_fork_handler _DCE_PROTOTYPE_ ((
     ));
 
 PRIVATE void rpc__if_lookup _DCE_PROTOTYPE_ ((
-        uuid_p_t                    /* if_uuid */,
+        dce_uuid_p_t                    /* if_uuid */,
         unsigned32                  /* if_vers */,
-        uuid_p_t                    /* type_uuid */,
+        dce_uuid_p_t                    /* type_uuid */,
         unsigned16                  */* ihint */,
         rpc_if_rep_p_t              */* ifspec */,
         rpc_v2_server_stub_epv_t    */* ss_epv */,
@@ -1321,9 +1321,9 @@ PRIVATE void rpc__if_lookup _DCE_PROTOTYPE_ ((
     ));
 
 PRIVATE void rpc__if_lookup2 _DCE_PROTOTYPE_ ((
-        uuid_p_t                    /* if_uuid */,
+        dce_uuid_p_t                    /* if_uuid */,
         unsigned32                  /* if_vers */,
-        uuid_p_t                    /* type_uuid */,
+        dce_uuid_p_t                    /* type_uuid */,
         unsigned16                  */* ihint */,
         rpc_if_rep_p_t              */* ifspec */,
         rpc_v2_server_stub_epv_t    */* ss_epv */,
@@ -1628,7 +1628,7 @@ PRIVATE void rpc__naf_tower_flrs_to_addr _DCE_PROTOTYPE_ ((
 PRIVATE void rpc__server_register_if_int _DCE_PROTOTYPE_ ((
 
         rpc_if_handle_t             /* ifspec_h */,
-        uuid_p_t                    /* mgr_type_uuid */,
+        dce_uuid_p_t                    /* mgr_type_uuid */,
         rpc_mgr_epv_t               /* mgr_epv */,
         unsigned32                  /* flags */,
         unsigned32                  /* max_calls */,
@@ -1640,7 +1640,7 @@ PRIVATE void rpc__server_register_if_int _DCE_PROTOTYPE_ ((
 
 PRIVATE void rpc__server_unregister_if_int _DCE_PROTOTYPE_ ((
         rpc_if_handle_t             /* ifspec_h */,
-        uuid_p_t                    /* mgr_type_uuid */,
+        dce_uuid_p_t                    /* mgr_type_uuid */,
         rpc_if_handle_t             */* rtn_ifspec_h */,
         unsigned32                  * /* status */
     ));

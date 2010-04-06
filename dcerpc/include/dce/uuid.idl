@@ -56,7 +56,7 @@ const long      uuid_c_version_highest  = 2;
 typedef struct
 {
     unsigned32              count;
-    uuid_p_t                uuid[1];
+    dce_uuid_p_t                uuid[1];
 } uuid_vector_t, *uuid_vector_p_t;
 
 
@@ -73,9 +73,9 @@ const long      uuid_s_ok                   = error_status_ok;
  *
  * Create a new UUID.
  */
-void uuid_create
+void dce_uuid_create
 (
-    [out]   uuid_t              *uuid,
+    [out]   dce_uuid_t              *uuid,
     [out]   unsigned32          *status
 );
 
@@ -85,9 +85,9 @@ void uuid_create
  *
  * Create a 'nil' uuid
  */
-void uuid_create_nil
+void dce_uuid_create_nil
 (
-    [out]   uuid_t              *uuid,
+    [out]   dce_uuid_t              *uuid,
     [out]   unsigned32          *status
 );
 
@@ -97,9 +97,9 @@ void uuid_create_nil
  *
  * Convert a UUID in (non-human) UUID format to STRING format
  */
-void uuid_to_string
+void dce_uuid_to_string
 (
-    [in]    uuid_p_t            uuid,
+    [in]    dce_uuid_p_t            uuid,
     [out]   unsigned_char_p_t   *uuid_string,
     [out]   unsigned32          *status
 );
@@ -110,10 +110,10 @@ void uuid_to_string
  *
  * Convert a UUID in STRING format to a UUID in UUID format
  */
-void uuid_from_string
+void dce_uuid_from_string
 (
     [in]    unsigned_char_p_t   uuid_string,
-    [out]   uuid_t              *uuid,
+    [out]   dce_uuid_t              *uuid,
     [out]   unsigned32          *status
 );
  
@@ -123,10 +123,10 @@ void uuid_from_string
  *
  * Compare two UUIDs
  */
-boolean32 uuid_equal
+boolean32 dce_uuid_equal
 (
-    [in]    uuid_p_t            uuid1,
-    [in]    uuid_p_t            uuid2,
+    [in]    dce_uuid_p_t            uuid1,
+    [in]    dce_uuid_p_t            uuid2,
     [out]   unsigned32          *status
 );
 
@@ -136,9 +136,9 @@ boolean32 uuid_equal
  *
  * Return boolean true if uuid is 'nil'
  */
-boolean32 uuid_is_nil
+boolean32 dce_uuid_is_nil
 (
-    [in]    uuid_p_t            uuid,
+    [in]    dce_uuid_p_t            uuid,
     [out]   unsigned32          *status
 );
 
@@ -148,10 +148,10 @@ boolean32 uuid_is_nil
  *
  * Compare two UUIDs "lexically"
  */
-signed32 uuid_compare
+signed32 dce_uuid_compare
 (
-    [in]    uuid_p_t            uuid1,
-    [in]    uuid_p_t            uuid2,
+    [in]    dce_uuid_p_t            uuid1,
+    [in]    dce_uuid_p_t            uuid2,
     [out]   unsigned32          *status
 );
 
@@ -161,9 +161,9 @@ signed32 uuid_compare
  *
  * Create a hash value for a UUID
  */
-unsigned16 uuid_hash
+unsigned16 dce_uuid_hash
 (
-    [in]    uuid_p_t            uuid,
+    [in]    dce_uuid_p_t            uuid,
     [out]   unsigned32          *status
 );
 

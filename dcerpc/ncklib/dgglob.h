@@ -77,7 +77,7 @@ EXTERNAL unsigned32 rpc_g_dg_server_boot_time;
  * need to maintain liveness.
  */
 
-EXTERNAL uuid_t rpc_g_dg_my_cas_uuid;
+EXTERNAL dce_uuid_t rpc_g_dg_my_cas_uuid;
 
 /*
  * The DG socket pool

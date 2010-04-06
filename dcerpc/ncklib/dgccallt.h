@@ -58,7 +58,7 @@ PRIVATE void rpc__dg_ccallt_remove _DCE_PROTOTYPE_((
     ));
 
 PRIVATE rpc_dg_ccall_p_t rpc__dg_ccallt_lookup _DCE_PROTOTYPE_((
-        uuid_p_t /*actid*/,
+        dce_uuid_p_t /*actid*/,
         unsigned32 /*probe_hint*/
     ));
 

@@ -2070,7 +2070,7 @@ void rpc_ss_ndr_marsh_interp
                     IDL_GET_LONG_FROM_VECTOR(rtn_index,type_vec_ptr);
                     IDL_GET_LONG_FROM_VECTOR(iid_index,type_vec_ptr);
                     rpc_ss_ndr_marsh_dyn_interface(rtn_index, param_addr,
-								  ((uuid_t*) IDL_param_vector[iid_index]), IDL_msp);
+								  ((dce_uuid_t*) IDL_param_vector[iid_index]), IDL_msp);
                    break;
 #endif
 

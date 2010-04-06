@@ -104,7 +104,7 @@
 #define RPC_C_MEM_RPC_ADDR         21       /* rpc_addr + naf data          */
 #define RPC_C_MEM_DG_CLIENT_REP    22       /* rpc_dg_client_rep_t          */
 #define RPC_C_MEM_DG_MAINT         23       /* maintain liveness structure  */
-#define RPC_C_MEM_UUID             24       /* uuid_t                       */
+#define RPC_C_MEM_UUID             24       /* dce_uuid_t                       */
 #define RPC_C_MEM_NSENTRY          25       /* rpc_nsentry_t                */
 #define RPC_C_MEM_NSATTR           26       /* rpc_nsattr_t                 */
 #define RPC_C_MEM_NSUUID           27       /* rpc_nsuuid_t                 */

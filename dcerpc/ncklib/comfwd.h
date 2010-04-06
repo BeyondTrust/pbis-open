@@ -84,14 +84,14 @@ typedef enum
 } rpc_fwd_action_t;
 
 typedef void (*rpc_fwd_map_fn_t) _DCE_PROTOTYPE_ ((
-        /* [in] */    uuid_p_t           /*obj_uuid*/,
+        /* [in] */    dce_uuid_p_t           /*obj_uuid*/,
         /* [in] */    rpc_if_id_p_t      /*if_id*/,
         /* [in] */    rpc_syntax_id_p_t  /*data_rep*/,
         /* [in] */    rpc_protocol_id_t  /*rpc_protocol*/,
         /* [in] */    unsigned32         /*rpc_protocol_vers_major*/,
         /* [in] */    unsigned32         /*rpc_protocol_vers_minor*/,
         /* [in] */    rpc_addr_p_t       /*addr*/,
-        /* [in] */    uuid_p_t           /*actuuid*/,
+        /* [in] */    dce_uuid_p_t           /*actuuid*/,
         /* [out] */   rpc_addr_p_t      * /*fwd_addr*/,
         /* [out] */   rpc_fwd_action_t  * /*fwd_action*/,
         /* [out] */   unsigned32        * /*status*/
@@ -109,7 +109,7 @@ PRIVATE void rpc__server_register_fwd_map _DCE_PROTOTYPE_ ((
     ));
 
 PRIVATE void rpc__server_fwd_resolve_delayed _DCE_PROTOTYPE_ ((
-	/* [in] */   uuid_p_t            /*actuuid*/,
+	/* [in] */   dce_uuid_p_t            /*actuuid*/,
         /* [in] */   rpc_addr_p_t        /*fwd_addr*/,
         /* [in] */   rpc_fwd_action_t  * /*fwd_action*/,
         /* [out] */  unsigned32        * /*status*/

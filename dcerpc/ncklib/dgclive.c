@@ -365,7 +365,7 @@ PRIVATE void rpc__dg_maintain_init(void)
      * to indicate that we're still alive.
      */
 
-    uuid_create(&rpc_g_dg_my_cas_uuid, &st); 
+    dce_uuid_create(&rpc_g_dg_my_cas_uuid, &st); 
     if (st != rpc_s_ok)
     {
 	/*

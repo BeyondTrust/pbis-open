@@ -102,7 +102,7 @@ void rpc_binding_from_string_binding
 void rpc_binding_inq_object
 (
     [in]        rpc_binding_handle_t    binding_handle,
-    [out]       uuid_t                  *object_uuid,
+    [out]       dce_uuid_t              *object_uuid,
     [out]       unsigned32              *status
 );
 
@@ -126,7 +126,7 @@ void rpc_binding_reset
 void rpc_binding_set_object
 (
     [in]        rpc_binding_handle_t    binding_handle,
-    [in]        uuid_p_t                object_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
     [out]       unsigned32              *status
 );
 
@@ -363,7 +363,7 @@ typedef struct rpc_binding_handle_template_v1_s_t {
 	unsigned_char_p_t	network_address;
 	unsigned_char_p_t	string_endpoint;
 	unsigned_char_p_t	reserved;
-	uuid_t			object_uuid;
+	dce_uuid_t		object_uuid;
 } rpc_binding_handle_template_v1_t, rpc_binding_handle_template_t;
 
 typedef struct rpc_binding_handle_security_v1_s_t {
@@ -476,8 +476,8 @@ boolean32 rpc_network_is_protseq_valid
  */
 void rpc_object_set_type
 (
-    [in]        uuid_p_t                object_uuid,
-    [in]        uuid_p_t                type_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
+    [in]        dce_uuid_p_t            type_uuid,
     [out]       unsigned32              *status
 );
 
@@ -488,8 +488,8 @@ void rpc_object_set_type
  */
 void rpc_object_inq_type
 (
-    [in]        uuid_p_t                object_uuid,
-    [out]       uuid_t                  *type_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
+    [out]       dce_uuid_t              *type_uuid,
     [out]       unsigned32              *status
 );
 
@@ -645,7 +645,7 @@ void rpc_server_use_all_protseqs_if
 void rpc_server_register_if
 (
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                mgr_type_uuid,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
     [in]        rpc_mgr_epv_t           mgr_epv,
     [out]       unsigned32              *status
 );
@@ -678,7 +678,7 @@ const unsigned32 rpc_if_sec_no_cache = 0x0040;
 void rpc_server_register_if_ex
 (
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                mgr_type_uuid,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
     [in]        rpc_mgr_epv_t           mgr_epv,
     [in]        unsigned32              flags,
     [in]        unsigned32              max_calls,
@@ -695,7 +695,7 @@ void rpc_server_register_if_ex
 void rpc_server_register_if_2
 (
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                mgr_type_uuid,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
     [in]        rpc_mgr_epv_t           mgr_epv,
     [in]        unsigned32              flags,
     [in]        unsigned32              max_calls,
@@ -714,7 +714,7 @@ void rpc_server_register_if_2
 void rpc_server_unregister_if
 (
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                mgr_type_uuid,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
     [out]       unsigned32              *status
 );
 
@@ -727,7 +727,7 @@ void rpc_server_unregister_if
 void rpc_server_inq_if
 (
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                mgr_type_uuid,
+    [in]        dce_uuid_p_t            mgr_type_uuid,
     [out]       rpc_mgr_epv_t           *mgr_epv,
     [out]       unsigned32              *status
 );
@@ -996,7 +996,7 @@ void rpc_mgmt_ep_elt_inq_begin
     [in]        unsigned32              inquiry_type,
     [in]        rpc_if_id_p_t           if_id,
     [in]        unsigned32              vers_option,
-    [in]        uuid_p_t                object_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
     [out]       rpc_ep_inq_handle_t     *inquiry_context,
     [out]       unsigned32              *status
 );
@@ -1012,7 +1012,7 @@ void rpc_mgmt_ep_elt_inq_next
     [in]      rpc_ep_inq_handle_t       inquiry_context,
     [out]     rpc_if_id_t               *if_id,
     [out]     rpc_binding_handle_t      *binding,
-    [out]     uuid_t                    *object_uuid,
+    [out]     dce_uuid_t                *object_uuid,
     [out]     unsigned_char_p_t         *annotation,
     [out]     unsigned32                *status
 );
@@ -1039,7 +1039,7 @@ void rpc_mgmt_ep_unregister
     [in]        rpc_binding_handle_t    ep_binding,
     [in]        rpc_if_id_p_t           if_id,
     [in]        rpc_binding_handle_t    binding,
-    [in]        uuid_p_t                object_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
     [out]       unsigned32              *status
 );
 
@@ -1086,7 +1086,7 @@ void rpc_ns_binding_import_begin
     [in]        unsigned32              entry_name_syntax,
     [in]        unsigned_char_p_t       entry_name,
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                object_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
     [out]       rpc_ns_handle_t         *import_context,
     [out]       unsigned32              *status
 );
@@ -1139,7 +1139,7 @@ void rpc_ns_binding_lookup_begin
     [in]        unsigned32              entry_name_syntax,
     [in]        unsigned_char_p_t       entry_name,
     [in]        rpc_if_handle_t         if_spec,
-    [in]        uuid_p_t                object_uuid,
+    [in]        dce_uuid_p_t            object_uuid,
     [in]        unsigned32              binding_max_count,
     [out]       rpc_ns_handle_t         *lookup_context,
     [out]       unsigned32              *status
@@ -1244,7 +1244,7 @@ void rpc_ns_entry_object_inq_done
 void rpc_ns_entry_object_inq_next
 (
     [in]        rpc_ns_handle_t         inquiry_context,
-    [out]       uuid_t                  *object_uuid,
+    [out]       dce_uuid_t              *object_uuid,
     [out]       unsigned32              *status
 );
 
@@ -1582,7 +1582,7 @@ void rpc_ns_mgmt_set_attribute
 (
     [in]	unsigned32		entry_name_syntax,
     [in]	unsigned_char_p_t	entry_name,
-    [in]	uuid_p_t		attr_type,
+    [in]	dce_uuid_p_t		attr_type,
     [in]	void			*attr_val,
     [out]	error_status_t		*status
 );
@@ -1596,7 +1596,7 @@ void rpc_ns_mgmt_read_attr_begin
 (
     [in]	unsigned32		entry_name_syntax,
     [in]	unsigned_char_p_t	entry_name,
-    [in]	uuid_p_t		attr_type,
+    [in]	dce_uuid_p_t		attr_type,
     [out]	rpc_ns_handle_t		*inquiry_context,
     [out]	error_status_t		*status
 );
@@ -1610,7 +1610,7 @@ void rpc_ns_mgmt_read_attr_begin
 void rpc_ns_mgmt_read_attr_next
 (
     [in]	rpc_ns_handle_t		inquiry_context,
-    [in]	uuid_p_t		attr_type,
+    [in]	dce_uuid_p_t		attr_type,
     [out]	byte			**value,
     [out]	unsigned32		*length,
     [out]	error_status_t		*status
@@ -1637,7 +1637,7 @@ void rpc_ns_mgmt_remove_attribute
 (
     [in]	unsigned32		entry_name_syntax,
     [in]	unsigned_char_p_t	entry_name,
-    [in]	uuid_p_t		attr_type,
+    [in]	dce_uuid_p_t		attr_type,
     [out]	error_status_t		*status
 );
 

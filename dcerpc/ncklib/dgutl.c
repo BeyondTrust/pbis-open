@@ -220,9 +220,9 @@ PRIVATE void rpc__dg_plog_dump(void)
         if (p->timestamp == 0)
             break;
 
-        uuid_to_string(&hdrp->object, &obj, &st);
-        uuid_to_string(&hdrp->if_id, &iface, &st);
-        uuid_to_string(&hdrp->actuid, &act, &st);
+        dce_uuid_to_string(&hdrp->object, &obj, &st);
+        dce_uuid_to_string(&hdrp->if_id, &iface, &st);
+        dce_uuid_to_string(&hdrp->actuid, &act, &st);
 
         RPC_DBG_PRINTF(rpc_e_dbg_dg_pktlog, 1,
 	    ("%08x %c%c%1u %-4.4s %02x %02x %08x/%04x/%04x %04x %04x %4d %s/%02u/%03u %s %9u %s %02x%02x%02x %02x\n",
@@ -631,14 +631,14 @@ PRIVATE void rpc__dg_stats_print(void)
 /*
  * R P C _ _ D G _ U U I D _ H A S H
  *
- * A significantly faster (though likely not as good) version of uuid_hash() 
+ * A significantly faster (though likely not as good) version of dce_uuid_hash() 
  * (this is the NCS 1.5.1 implementation).
  */
 
 PRIVATE unsigned16 rpc__dg_uuid_hash
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t uuid
+    dce_uuid_p_t uuid
 )
 #else
 (uuid)

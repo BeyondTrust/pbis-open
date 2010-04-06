@@ -99,7 +99,7 @@ INTERNAL boolean do_fack _DCE_PROTOTYPE_((
 
 INTERNAL void marshall_uuid _DCE_PROTOTYPE_((
         char * /*p*/,
-        uuid_p_t  /*uuid*/
+        dce_uuid_p_t  /*uuid*/
     ));
 
 /* ========================================================================= */
@@ -107,42 +107,42 @@ INTERNAL void marshall_uuid _DCE_PROTOTYPE_((
 INTERNAL void conv_stub_who_are_you _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
-        uuid_p_t  /*clt_actid*/,
+        dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
     ));
 
 INTERNAL void conv_stub_who_are_you2 _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
-        uuid_p_t  /*clt_actid*/,
+        dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
     ));
 
 INTERNAL void conv_stub_are_you_there _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
-        uuid_p_t  /*clt_actid*/,
+        dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
     ));
 
 INTERNAL void conv_stub_who_are_you_auth _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
-        uuid_p_t  /*clt_actid*/,
+        dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
     ));
 
 typedef void (*conv_stub_t) _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t  /*rqe*/,
         rpc_dg_pkt_hdr_p_t  /*resp_hdrp*/,
-        uuid_p_t  /*clt_actid*/,
+        dce_uuid_p_t  /*clt_actid*/,
         unsigned32  /*clt_boot*/
     ));
 
 INTERNAL void conv_stub_who_are_you_auth_more _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t /*rqe*/,
         rpc_dg_pkt_hdr_p_t /*resp_hdrp*/,
-        uuid_p_t /*clt_actid*/,
+        dce_uuid_p_t /*clt_actid*/,
         unsigned32 /*clt_boot*/
     ));
 
@@ -340,7 +340,7 @@ INTERNAL void marshall_uuid
 #ifdef _DCE_PROTO_
 (
     char *p,
-    uuid_p_t uuid
+    dce_uuid_p_t uuid
 )
 #else
 (p, uuid)
@@ -432,7 +432,7 @@ INTERNAL void convq_remove _DCE_PROTOTYPE_ ((void));
 INTERNAL void convq_loop _DCE_PROTOTYPE_ ((void));
 
 
-INTERNAL boolean32 convq_has_act _DCE_PROTOTYPE_ (( uuid_p_t  /*actuid*/));
+INTERNAL boolean32 convq_has_act _DCE_PROTOTYPE_ (( dce_uuid_p_t  /*actuid*/));
 
         
 INTERNAL boolean32 handle_conv_int _DCE_PROTOTYPE_ ((
@@ -545,7 +545,7 @@ INTERNAL void convq_remove(void)
  */
 
 INTERNAL boolean32 convq_has_act(actuid)
-uuid_p_t actuid;
+dce_uuid_p_t actuid;
 {
     rpc_dg_recvq_elt_p_t rqe1;
     unsigned32 st;
@@ -741,7 +741,7 @@ rpc_socket_t sock;
 rpc_dg_recvq_elt_p_t rqe1;
 #endif
 {
-    uuid_t clt_actid1;
+    dce_uuid_t clt_actid1;
     unsigned32 clt_boot1;
     boolean b;
     rpc_dg_pkt_hdr_t resp_hdr;
@@ -802,7 +802,7 @@ rpc_dg_recvq_elt_p_t rqe1;
     }
 
 #ifndef MISPACKED_HDR
-    clt_actid1 = *((uuid_p_t) rawpkt->body.args);
+    clt_actid1 = *((dce_uuid_p_t) rawpkt->body.args);
     clt_boot1 = *((unsigned32 *) ((char *) rawpkt->body.args + 16));
 
     if (NDR_DREP_INT_REP(hdrp->drep) != ndr_g_local_drep.int_rep)
@@ -982,7 +982,7 @@ INTERNAL void conv_stub_who_are_you
 (
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_pkt_hdr_p_t resp_hdrp,
-    uuid_p_t clt_actid,
+    dce_uuid_p_t clt_actid,
     unsigned32 clt_boot
 )
 #else
@@ -1039,7 +1039,7 @@ INTERNAL void conv_stub_who_are_you2
 (
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_pkt_hdr_p_t resp_hdrp,
-    uuid_p_t clt_actid,
+    dce_uuid_p_t clt_actid,
     unsigned32 clt_boot
 )
 #else
@@ -1053,7 +1053,7 @@ unsigned32 clt_boot;
     rpc_dg_raw_pkt_p_t rawpkt = rqe->pkt;
     unsigned32 way_status;
     unsigned32 way_seq;
-    uuid_t way2_cas_uuid;
+    dce_uuid_t way2_cas_uuid;
 
     RPC_DBG_PRINTF(rpc_e_dbg_general, 3, 
         ("(conv_stub_who_are_you2) Responding to WAY2 callback\n"));
@@ -1114,7 +1114,7 @@ INTERNAL void conv_stub_are_you_there
 (
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_pkt_hdr_p_t resp_hdrp,
-    uuid_p_t clt_actid,
+    dce_uuid_p_t clt_actid,
     unsigned32 clt_boot
 )
 #else
@@ -1167,7 +1167,7 @@ INTERNAL void conv_stub_who_are_you_auth
 (
     rpc_dg_recvq_elt_p_t rqe,
     rpc_dg_pkt_hdr_p_t resp_hdrp,
-    uuid_p_t clt_actid,
+    dce_uuid_p_t clt_actid,
     unsigned32 clt_boot
 )
 #else
@@ -1185,7 +1185,7 @@ unsigned32 clt_boot;
     signed32 out_round_len;
     unsigned32 way_status;
     unsigned32 way_seq;
-    uuid_t way2_cas_uuid;
+    dce_uuid_t way2_cas_uuid;
     
     /*
      * Unmarshall the remaining arguments:
@@ -1322,7 +1322,7 @@ INTERNAL void conv_stub_who_are_you_auth_more(rqe, resp_hdrp, clt_actid,
                                               clt_boot)
 rpc_dg_recvq_elt_p_t rqe;
 rpc_dg_pkt_hdr_p_t resp_hdrp;
-uuid_p_t clt_actid;
+dce_uuid_p_t clt_actid;
 unsigned32 clt_boot;
 {
     rpc_dg_pkt_hdr_p_t rqst_hdrp = rqe->hdrp;
@@ -1445,7 +1445,7 @@ PRIVATE void rpc__dg_handle_convc
 rpc_dg_recvq_elt_p_t rqe;
 #endif
 {
-    uuid_t cas_uuid;
+    dce_uuid_t cas_uuid;
     rpc_dg_pkt_hdr_p_t hdrp = rqe->hdrp;
     rpc_dg_raw_pkt_p_t rawpkt = rqe->pkt;
 
@@ -1486,7 +1486,7 @@ rpc_dg_recvq_elt_p_t rqe;
     }
 
 #ifndef MISPACKED_HDR
-    cas_uuid = *((uuid_p_t) rawpkt->body.args);
+    cas_uuid = *((dce_uuid_p_t) rawpkt->body.args);
 
     if (NDR_DREP_INT_REP(hdrp->drep) != ndr_g_local_drep.int_rep)
     {

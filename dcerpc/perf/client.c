@@ -52,7 +52,7 @@ typedef struct
     unsigned short              ifspec_vers;
     unsigned short              opcnt;
     unsigned long               vers;
-    uuid_t                      id;
+    dce_uuid_t                      id;
     unsigned short              stub_rtl_if_vers;
 } rpc_if_rep_t, *rpc_if_rep_p_t;
 
@@ -399,7 +399,7 @@ struct msec_time *avg_time;
 
 static handle_t binding_from_string_binding (object, name)
 
-uuid_t              *object;
+dce_uuid_t              *object;
 char                *name;
 
 {
@@ -725,14 +725,14 @@ char                *argv[];
     unsigned_char_t     *endpoint;
 
     rpc_if_rep_p_t      if_rep = (rpc_if_rep_p_t)perfb_v1_0_c_ifspec;
-    uuid_t              if_uuid;
+    dce_uuid_t              if_uuid;
 
     if (argc < 3)
     {
         usage(test);
     }
 
-    memcpy(&if_uuid, &(if_rep->id), sizeof(uuid_t));
+    memcpy(&if_uuid, &(if_rep->id), sizeof(dce_uuid_t));
 
     rh = binding_from_string_binding(NULL, argv[2]);
 
@@ -753,7 +753,7 @@ char                *argv[];
         perf_init(rh);
     }
 
-    uuid_create(&(if_rep->id), &st);
+    dce_uuid_create(&(if_rep->id), &st);
     if (st != rpc_s_ok)
     {
         fprintf(stderr, "*** Can't create uuid\n");
@@ -778,7 +778,7 @@ char                *argv[];
 #ifdef _POSIX_THREADS
     if (! multithread)
 #endif
-    memcpy(&(if_rep->id), &if_uuid, sizeof(uuid_t));
+    memcpy(&(if_rep->id), &if_uuid, sizeof(dce_uuid_t));
 }
 
 /*
@@ -818,7 +818,7 @@ char *name;
     printf ("%ld interface ids returned for %s.\n", if_ids->count, pstring);
     for (i = 0; i < if_ids->count; i++)
     {
-        uuid_to_string (&if_ids->if_id[i]->uuid, &uuid_string, &st);
+        dce_uuid_to_string (&if_ids->if_id[i]->uuid, &uuid_string, &st);
         printf ("%ld:\tuuid:\t%s\n\tvers_major:\t%d\tvers_minor\t%d\n",
             (i+1), uuid_string, if_ids->if_id[i]->vers_major,
             if_ids->if_id[i]->vers_minor );
@@ -970,7 +970,7 @@ char                *msg;
 
     for (i = 0; i < if_ids->count; i++)
     {
-        if (uuid_equal(&if_ids->if_id[i]->uuid, &perfb_if_id.uuid, &st))
+        if (dce_uuid_equal(&if_ids->if_id[i]->uuid, &perfb_if_id.uuid, &st))
             break;
     }
 
@@ -1388,10 +1388,10 @@ char                *argv[];
     }
 
     TRY {
-        uuid_t  random_uuid;
+        dce_uuid_t  random_uuid;
         unsigned32 st;
 
-        uuid_create(&random_uuid, &st);
+        dce_uuid_create(&random_uuid, &st);
         rh = binding_from_string_binding(&random_uuid, argv[2]);
         perfg_op1(rh, 17, &x);
         fprintf(stderr,

@@ -230,7 +230,7 @@ void rpc_server_free_thread_pool
  */
 typedef void (*rpc_thread_pool_fn_t)
 (
-    [in]        uuid_p_t                obj_uuid,
+    [in]        dce_uuid_p_t                obj_uuid,
     [in]        rpc_if_id_p_t           if_id,
     [in]        unsigned32              opnum,
     [out]       rpc_thread_pool_handle_t *phandle,

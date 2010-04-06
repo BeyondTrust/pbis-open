@@ -216,7 +216,7 @@ get_client_rpc_binding(binding_handle, hostname, interface_spec, protocol, mech,
   char partial_string_binding[128];
   char server_principal[128];
   rpc_if_id_t nonkeyword_interface ATTRIBUTE_UNUSED;
-  uuid_t ifc_uuid ATTRIBUTE_UNUSED;
+  dce_uuid_t ifc_uuid ATTRIBUTE_UNUSED;
   error_status_t status;
   unsigned32 authn_protocol = rpc_c_authn_gss_negotiate;
   unsigned32 authn_level = rpc_c_authn_level_connect;

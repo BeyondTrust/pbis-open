@@ -716,7 +716,7 @@ unsigned32          *status;
 
         /*
          * Assume success. This way we can check the status
-         * of uuid_equal when it is called.
+         * of dce_uuid_equal when it is called.
          */
         *status = rpc_s_ok;
 
@@ -725,7 +725,7 @@ unsigned32          *status;
             for (j = 0; j < floors_to_search; j++)
             {
                 if ((master_prot_ids[k].prefix == tower_prot_ids[j].prefix) &&
-                    (uuid_equal (&(master_prot_ids[k].uuid), 
+                    (dce_uuid_equal (&(master_prot_ids[k].uuid), 
                      &(tower_prot_ids[j].uuid), status)))
                 {
                     master_prot_ids[k].prefix = 0;
@@ -733,7 +733,7 @@ unsigned32          *status;
                 }
                 
                 /*
-                 * Check status from uuid_equal.
+                 * Check status from dce_uuid_equal.
                  * Return if failure.
                  */
                 if (*status != rpc_s_ok)
@@ -951,7 +951,7 @@ unsigned32              *status;
             /*
              * Check if a syntax id and version match.
              */
-            match = uuid_equal 
+            match = dce_uuid_equal 
                     (&(tower_syntax_id.id), &(if_syntax_id->id), status);
 
             if ((match == true) &&

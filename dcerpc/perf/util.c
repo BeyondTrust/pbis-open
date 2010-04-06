@@ -66,7 +66,7 @@ uuid_old_t BarType =
     {0x00, 0x01, 0x34, 0x22, 0x00, 0x00, 0x00}
 };
 
-uuid_t ZotType =
+dce_uuid_t ZotType =
 { 
     0x007dd408,
     0x05b0,
@@ -121,7 +121,7 @@ uuid_old_t BarObj2 =
 /*
  * Define an object of type Zot.
  */
-uuid_t ZotObj =
+dce_uuid_t ZotObj =
 {
     0x0053e49a,
     0x05d3,
@@ -134,7 +134,7 @@ uuid_t ZotObj =
 /*
  * Define an object of type "nil".  (Not to be confused with the "nil" object.)
  */
-uuid_t NilTypeObj =
+dce_uuid_t NilTypeObj =
 { /* 1c5b2910-33ab-11ca-b092-08001e01d6d5 */
     0x1c5b2910,
     0x33ab,
@@ -148,7 +148,7 @@ uuid_t NilTypeObj =
  * Define the "nil" object.  (Not to be confused with an object whose type
  * simply happens to be "nil".)
  */
-uuid_t NilObj = {0,0,0,0,0,{0,0,0,0,0,0} };
+dce_uuid_t NilObj = {0,0,0,0,0,{0,0,0,0,0,0} };
 
 
     

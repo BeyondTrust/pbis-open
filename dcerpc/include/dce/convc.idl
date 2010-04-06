@@ -54,7 +54,7 @@ interface convc
 [maybe] 
 void convc_indy(
         [in]    handle_t        h,
-        [in]    uuid_t          *cas_uuid
+        [in]    dce_uuid_t          *cas_uuid
 );
 
 }

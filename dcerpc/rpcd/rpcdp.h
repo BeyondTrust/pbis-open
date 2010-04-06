@@ -49,7 +49,7 @@
 #define SET_STATUS_OK(s) SET_STATUS(s, error_status_ok)
 #define STATUS(s) *(s)
 
-EXTERNAL uuid_t nil_uuid;
+EXTERNAL dce_uuid_t nil_uuid;
 EXTERNAL boolean32 dflag;
 
 typedef enum {warning, fatal, fatal_usage} check_mode_t;

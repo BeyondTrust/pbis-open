@@ -84,7 +84,7 @@ typedef struct
 typedef struct
 {
     rpc_list_t      link;
-    uuid_t          type;        /* type of object to which entry applies    */
+    dce_uuid_t          type;        /* type of object to which entry applies    */
     rpc_mgr_epv_t   mepv;        /* pointer to manager procedures            */
     unsigned        copied_mepv: 1; /* 1 = mepv copied at registration time  */
 } rpc_if_type_info_t, *rpc_if_type_info_p_t;
@@ -92,7 +92,7 @@ typedef struct
 
 INTERNAL void unregister_if_entry _DCE_PROTOTYPE_ ((
         rpc_if_rgy_entry_p_t    /*if_entry*/,
-        uuid_p_t                /*mgr_type_uuid*/,
+        dce_uuid_p_t                /*mgr_type_uuid*/,
         unsigned32              * /*status*/
     ));
 
@@ -246,7 +246,7 @@ PUBLIC void rpc_server_register_if
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_mgr_epv_t               mgr_epv,
     unsigned32                  *status
 )
@@ -328,7 +328,7 @@ PRIVATE void rpc__server_register_if_int
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_mgr_epv_t               mgr_epv,
     unsigned32                  flags,
     unsigned32                  max_calls,
@@ -414,9 +414,9 @@ unsigned32                  *status;
 
     /*
      * compute a hash value using the interface uuid - check the status
-     * from uuid_hash to make sure the uuid has a valid format
+     * from dce_uuid_hash to make sure the uuid has a valid format
      */
-    index = (uuid_hash (&(if_rep->id), status)) % RPC_C_IF_REGISTRY_SIZE;
+    index = (dce_uuid_hash (&(if_rep->id), status)) % RPC_C_IF_REGISTRY_SIZE;
     
     if (*status != uuid_s_ok)
     {
@@ -492,7 +492,7 @@ unsigned32                  *status;
     /*
      * see if a manager type was specified (and is non-nil)
      */
-    if (mgr_type_uuid != NULL && !(uuid_is_nil (mgr_type_uuid, status)))
+    if (mgr_type_uuid != NULL && !(dce_uuid_is_nil (mgr_type_uuid, status)))
     {
         /*
          * see if the specified mgr type already exists for this entry
@@ -655,7 +655,7 @@ PRIVATE void rpc__server_unregister_if_int
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_if_handle_t             *rtn_ifspec_h,
     unsigned32                  *status
 )
@@ -751,9 +751,9 @@ unsigned32                  *status;
     {
         /*
          * compute a hash value using the interface uuid - check the status
-         * from uuid_hash to make sure the uuid has a valid format
+         * from dce_uuid_hash to make sure the uuid has a valid format
          */
-        index = uuid_hash (&(if_rep->id), status) % RPC_C_IF_REGISTRY_SIZE;
+        index = dce_uuid_hash (&(if_rep->id), status) % RPC_C_IF_REGISTRY_SIZE;
 
         if (*status != uuid_s_ok)
         {
@@ -870,7 +870,7 @@ PUBLIC void rpc_server_unregister_if
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     unsigned32                  *status
 )
 #else
@@ -897,7 +897,7 @@ INTERNAL void unregister_if_entry
 #ifdef _DCE_PROTO_
 (
     rpc_if_rgy_entry_p_t    if_entry,
-    uuid_p_t                mgr_type_uuid,
+    dce_uuid_p_t                mgr_type_uuid,
     unsigned32              *status
 )
 #else
@@ -966,7 +966,7 @@ unsigned32              *status;
         /*
          * see if this is an unregister for the default manager epv
          */
-        if (uuid_is_nil (mgr_type_uuid, status))
+        if (dce_uuid_is_nil (mgr_type_uuid, status))
         {
             if (if_entry->default_mepv == NULL)
             {
@@ -1107,9 +1107,9 @@ unsigned32              *status;
 PRIVATE void rpc__if_lookup 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                    if_uuid,
+    dce_uuid_p_t                    if_uuid,
     unsigned32                  if_vers,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     unsigned16                  *ihint,
     rpc_if_rep_p_t              *ifspec,
     rpc_v2_server_stub_epv_t    *sepv,
@@ -1215,9 +1215,9 @@ unsigned32                  *status;
 PRIVATE void rpc__if_lookup2
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                    if_uuid,
+    dce_uuid_p_t                    if_uuid,
     unsigned32                  if_vers,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     unsigned16                  *ihint,
     rpc_if_rep_p_t              *ifspec,
     rpc_v2_server_stub_epv_t    *sepv,
@@ -1287,9 +1287,9 @@ unsigned32                  *status;
     {
         /*
          * compute a hash value using the interface uuid - check the status
-         * from uuid_hash to make sure the uuid has a valid format
+         * from dce_uuid_hash to make sure the uuid has a valid format
          */
-        index = uuid_hash (if_uuid, status) % RPC_C_IF_REGISTRY_SIZE;
+        index = dce_uuid_hash (if_uuid, status) % RPC_C_IF_REGISTRY_SIZE;
     
         if (*status != uuid_s_ok)
         {
@@ -1333,7 +1333,7 @@ unsigned32                  *status;
      * if a manager type uuid is given, and is not the nil uuid, try to match
      * for a registered type - otherwise, return the default manager epv
      */
-    if (mgr_type_uuid != NULL && !(uuid_is_nil (mgr_type_uuid, status)))
+    if (mgr_type_uuid != NULL && !(dce_uuid_is_nil (mgr_type_uuid, status)))
     {
         /*
          * scan the type uuid/mgr epv list for a match
@@ -1545,7 +1545,7 @@ unsigned32                  *status;
 **
 **      status          The result of the operation. One of:
 **                          rpc_s_ok
-**                          the result of uuid_equal()
+**                          the result of dce_uuid_equal()
 **
 **  IMPLICIT INPUTS:    none
 **
@@ -1585,7 +1585,7 @@ unsigned32              *status;
     if (! (UUID_EQ (if_id->uuid, if_id_ref->uuid, status)))
     {
         /*
-         * return "incompatible" and the status of uuid_equal()
+         * return "incompatible" and the status of dce_uuid_equal()
          */
         return (false);
     }
@@ -2236,7 +2236,7 @@ PUBLIC void rpc_server_inq_if
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_mgr_epv_t               *mgr_epv,
     unsigned32                  *status
 )
@@ -2310,7 +2310,7 @@ PUBLIC void rpc_server_register_if_ex
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_mgr_epv_t               mgr_epv,
     unsigned32                  flags,
     unsigned32                  max_calls,
@@ -2389,7 +2389,7 @@ PUBLIC void rpc_server_register_if_2
 #ifdef _DCE_PROTO_
 (
     rpc_if_handle_t             ifspec_h,
-    uuid_p_t                    mgr_type_uuid,
+    dce_uuid_p_t                    mgr_type_uuid,
     rpc_mgr_epv_t               mgr_epv,
     unsigned32                  flags,
     unsigned32                  max_calls,

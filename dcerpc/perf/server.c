@@ -126,7 +126,7 @@ rpc_if_id_p_t ifid1, ifid2;
 
     return (ifid1->vers_major == ifid2->vers_major
         && ifid1->vers_minor == ifid2->vers_minor
-        && uuid_equal(&ifid1->uuid, &ifid2->uuid, &st));
+        && dce_uuid_equal(&ifid1->uuid, &ifid2->uuid, &st));
 }
 
 /*
@@ -163,7 +163,7 @@ unsigned32              *status;
 
     *phandle = NULL;
     if ((opnum == 1 && if_id_is_equal(if_id, &perfg_if_id)
-            && obj_uuid != NULL && ! uuid_is_nil(obj_uuid, &st))
+            && obj_uuid != NULL && ! dce_uuid_is_nil(obj_uuid, &st))
       || (opnum == 15 && if_id_is_equal(if_id, &perf_if_id)))
     {
         *phandle = thread_poolh;

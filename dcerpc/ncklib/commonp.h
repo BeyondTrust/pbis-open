@@ -190,7 +190,7 @@ typedef idl_byte byte_t ;
 
 #ifndef UUID_EQ
 #  define UUID_EQ(uuid1, uuid2, st) \
-        (uuid_equal(&(uuid1), &(uuid2), (st)))
+        (dce_uuid_equal(&(uuid1), &(uuid2), (st)))
 #endif /* UUID_EQ */
 
 /*

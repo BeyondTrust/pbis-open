@@ -109,12 +109,12 @@ PRIVATE void rpc__dg_sct_backout_new_call _DCE_PROTOTYPE_((
     ));
 
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_lookup _DCE_PROTOTYPE_((
-        uuid_p_t  /*actid*/,
+        dce_uuid_p_t  /*actid*/,
         unsigned32  /*probe_hint*/
     ));
 
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_get _DCE_PROTOTYPE_((
-        uuid_p_t  /*actid*/,
+        dce_uuid_p_t  /*actid*/,
         unsigned32  /*probe_hint*/,
         unsigned32  /*seq*/
     ));

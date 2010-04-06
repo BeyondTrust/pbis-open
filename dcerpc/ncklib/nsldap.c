@@ -146,7 +146,7 @@ static void rpc_ns__ldap_export_server(LDAP *ld,
 		return;
 	}
 
-	uuid_to_string(&if_id.uuid, &uuid, status);
+	dce_uuid_to_string(&if_id.uuid, &uuid, status);
 	if (*status != rpc_s_ok) {
 		return;
 	}
@@ -206,7 +206,7 @@ static void rpc_ns__ldap_export_server_element_ext(LDAP *ld,
 	}
 
 	/* Get the interface ID */
-	uuid_to_string(&if_id.uuid, &uuid, status);
+	dce_uuid_to_string(&if_id.uuid, &uuid, status);
 	if (*status != rpc_s_ok) {
 		goto out;
 	}
@@ -294,12 +294,12 @@ static void rpc_ns__ldap_export_server_element(LDAP *ld,
 	uuid_t rdnUuid;
 
 	/* Just create an arbitary UUID to name this entry. */
-	uuid_create(&rdnUuid, status);
+	dce_uuid_create(&rdnUuid, status);
 	if (*status != rpc_s_ok) {
 		goto out;
 	}
 
-	uuid_to_string(&rdnUuid, &rdn, status);
+	dce_uuid_to_string(&rdnUuid, &rdn, status);
 	if (*status != rpc_s_ok) {
 		goto out;
 	}
@@ -342,7 +342,7 @@ static void rpc_ns__ldap_lookup_server_element(LDAP *ld,
 	}
 
 	/* Get the interface ID */
-	uuid_to_string(&if_id.uuid, &uuid, status);
+	dce_uuid_to_string(&if_id.uuid, &uuid, status);
 	if (*status != rpc_s_ok) {
 		goto out;
 	}
@@ -459,7 +459,7 @@ static void rpc_ns__ldap_import_server_element(LDAP *ld,
 	}
 
 	/* Get the interface ID */
-	uuid_to_string(&if_id.uuid, &uuid, status);
+	dce_uuid_to_string(&if_id.uuid, &uuid, status);
 	if (*status != rpc_s_ok) {
 		goto out;
 	}
@@ -516,7 +516,7 @@ rpc_ns_binding_import_begin(
     /* [in] */ unsigned32 entry_name_syntax,
     /* [in] */ unsigned_char_p_t entry_name,
     /* [in] */ rpc_if_handle_t if_spec,
-    /* [in] */ uuid_p_t object_uuid ATTRIBUTE_UNUSED,
+    /* [in] */ dce_uuid_p_t object_uuid ATTRIBUTE_UNUSED,
     /* [out] */ rpc_ns_handle_t *import_context,
     /* [out] */ unsigned32 *status
 )

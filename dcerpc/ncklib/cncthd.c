@@ -89,7 +89,7 @@ boolean32               call_was_queued;
     rpc_binding_rep_t           *binding_r;
     rpc_cn_call_rep_t           *call_r;
     rpc_iovector_t              iovector;
-    uuid_t                      type_uuid;
+    dce_uuid_t                      type_uuid;
     rpc_mgr_epv_t               manager_epv;
     rpc_v2_server_stub_epv_t    server_stub_epv;
     rpc_if_rep_p_t              if_spec_rep;

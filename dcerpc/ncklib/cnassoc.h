@@ -86,7 +86,7 @@ static void RPC_CN_ASSOC_ACB_DEC_REF(rpc_cn_assoc_t *assoc)
  */
 #if (uuid_c_version == 1)
 #define RPC_CN_ASSOC_SYNTAX_EQUAL(s1, s2, st)\
-    ((memcmp (&((s1)->id), &((s2)->id), sizeof (uuid_t)) == 0) &&\
+    ((memcmp (&((s1)->id), &((s2)->id), sizeof (dce_uuid_t)) == 0) &&\
      (((s1)->version & 0xFFFF) == ((s2)->version & 0xFFFF)) &&\
      (((s1)->version >> 16) == ((s2)->version >> 16)))
 #else

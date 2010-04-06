@@ -62,7 +62,7 @@ rpc_ns_binding_import_begin(
     /* [in] */ unsigned32 entry_name_syntax ATTRIBUTE_UNUSED,
     /* [in] */ unsigned_char_p_t entry_name ATTRIBUTE_UNUSED,
     /* [in] */ rpc_if_handle_t if_spec ,
-    /* [in] */ uuid_p_t object_uuid ATTRIBUTE_UNUSED,
+    /* [in] */ dce_uuid_p_t object_uuid ATTRIBUTE_UNUSED,
     /* [out] */ rpc_ns_handle_t *import_context,
     /* [out] */ unsigned32 *status
 )

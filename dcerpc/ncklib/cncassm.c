@@ -1571,7 +1571,7 @@ pointer_t       sm;
 {
     rpc_cn_assoc_t              *assoc;
     rpc_cn_assoc_sm_work_t      *assoc_sm_work;
-    uuid_t                      assoc_uuid;
+    dce_uuid_t                      assoc_uuid;
     boolean                     old_server;
     rpc_protocol_version_t      *protocol_version;
     rpc_cn_sm_ctlblk_t		*sm_p;
@@ -1586,11 +1586,11 @@ pointer_t       sm;
      * Create a UUID for this association, compute its CRC and store
      * it as part of the per-association security information.
      */
-    uuid_create (&assoc_uuid, &(assoc->assoc_status));
+    dce_uuid_create (&assoc_uuid, &(assoc->assoc_status));
     RPC_CN_ASSOC_CHECK_ST (assoc, &(assoc->assoc_status));
     assoc->security.assoc_uuid_crc = 
         rpc__cn_pkt_crc_compute ((unsigned8 *)&assoc_uuid, 
-                                 sizeof (uuid_t));
+                                 sizeof (dce_uuid_t));
     
     /*
      * Check the binding handle for protocol version information
@@ -4889,7 +4889,7 @@ unsigned32              *st;
             unsigned_char_t     *abstract;
             unsigned32          st;
 
-            uuid_to_string (&pres_context->syntax_abstract_id.id,
+            dce_uuid_to_string (&pres_context->syntax_abstract_id.id,
                             &abstract, 
                             &st);
             RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
@@ -4918,7 +4918,7 @@ unsigned32              *st;
                 unsigned_char_t     *transfer;
                 unsigned32          st;
                 
-                uuid_to_string (&pres_context->syntax_vector->syntax_id[i].id,
+                dce_uuid_to_string (&pres_context->syntax_vector->syntax_id[i].id,
                                 &transfer, 
                                 &st);
                 RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,

@@ -116,7 +116,7 @@ void idl_es_encode_incremental
     p_es_state->IDL_action = IDL_encoding_k;
     p_es_state->IDL_style = IDL_incremental_k;
     /* Set transfer syntax null to indicate "not yet determined" */
-    uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
+    dce_uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
     p_es_state->IDL_pickle_header.IDL_syntax_id.version = 0;
     p_es_state->IDL_state = state;
     p_es_state->IDL_alloc = alloc;
@@ -171,7 +171,7 @@ void idl_es_encode_fixed_buffer
     p_es_state->IDL_action = IDL_encoding_k;
     p_es_state->IDL_style = IDL_fixed_k;
     /* Set transfer syntax null to indicate "not yet determined" */
-    uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
+    dce_uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
     p_es_state->IDL_pickle_header.IDL_syntax_id.version = 0;
     if (((ep - (idl_byte *)0) & 7) != 0)
     {
@@ -244,7 +244,7 @@ void idl_es_encode_dyn_buffer
     p_es_state->IDL_action = IDL_encoding_k;
     p_es_state->IDL_style = IDL_dynamic_k;
     /* Set transfer syntax null to indicate "not yet determined" */
-    uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
+    dce_uuid_create_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id), st);
     p_es_state->IDL_pickle_header.IDL_syntax_id.version = 0;
     p_es_state->IDL_p_buff_addr = ep;
     *ep = NULL;     /* Marker to indicate that no encoding call has yet been
@@ -458,7 +458,7 @@ static void idl_es_check_transfer_syntax
     /* Check the stub supports the transfer syntax */
     for (i=0; i<p_if_spec->syntax_vector.count; i++)
     {
-        if ( uuid_equal(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id),
+        if ( dce_uuid_equal(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id),
                         &(p_if_spec->syntax_vector.syntax_id[i].id),
                         (error_status_t *)&IDL_msp->IDL_status)
             && (p_es_state->IDL_pickle_header.IDL_syntax_id.version
@@ -506,7 +506,7 @@ static void idl_es_encode_get_xfer_syntax
 
     p_es_state = (IDL_es_state_t *)h;
     p_if_spec = (rpc_if_rep_t *)ifp;
-    if ( uuid_is_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id),
+    if ( dce_uuid_is_nil(&(p_es_state->IDL_pickle_header.IDL_syntax_id.id),
                      (error_status_t *)&IDL_msp->IDL_status) )
     {
         /* No transfer syntax specified in the handle,
@@ -734,12 +734,12 @@ void idl_es_encode_attach_buff
 static void idl_es_put_encoding_uuid
 #ifdef IDL_PROTOTYPES
 (
-    uuid_t *p_uuid,     /* [in] Address of UUID */
+    dce_uuid_t *p_uuid,     /* [in] Address of UUID */
     IDL_msp_t IDL_msp
 )
 #else
 (p_uuid, IDL_msp)
-    uuid_t *p_uuid;
+    dce_uuid_t *p_uuid;
     IDL_msp_t IDL_msp;
 #endif
 {
@@ -833,12 +833,12 @@ static void idl_es_put_encoding_header
 static void idl_es_get_encoding_uuid
 #ifdef IDL_PROTOTYPES
 (
-    uuid_t *p_uuid,     /* [in] Address of UUID */
+    dce_uuid_t *p_uuid,     /* [in] Address of UUID */
     IDL_msp_t IDL_msp
 )
 #else
 (p_uuid, IDL_msp)
-    uuid_t *p_uuid;
+    dce_uuid_t *p_uuid;
     IDL_msp_t IDL_msp;
 #endif
 {
@@ -896,7 +896,7 @@ static void idl_es_get_encoding_header
     IDL_UNMAR_ULONG(&p_pickle_header->IDL_op_num);
 
     /* If the pickle uses NDR encoding, get its drep's */
-    if (uuid_equal(&p_pickle_header->IDL_syntax_id.id,
+    if (dce_uuid_equal(&p_pickle_header->IDL_syntax_id.id,
                    &ndr_transfer_syntax_id.id,
                    (error_status_t *)&IDL_msp->IDL_status))
     {
@@ -1005,7 +1005,7 @@ static void idl_mes_get_encoding_header
     IDL_UNMAR_HYPER(&length);
 
     p_pickle_header->IDL_syntax_id = ndr_transfer_syntax_id;
-    uuid_create_nil(&p_pickle_header->IDL_if_id.uuid, &status);
+    dce_uuid_create_nil(&p_pickle_header->IDL_if_id.uuid, &status);
     if (status != rpc_s_ok)
     {
         IDL_msp->IDL_status = status;
@@ -1041,7 +1041,7 @@ static void idl_mes_forge_encoding_header
     IDL_msp->IDL_drep.int_rep = ndr_c_int_little_endian;
 
     p_pickle_header->IDL_syntax_id = ndr_transfer_syntax_id;
-    uuid_create_nil(&p_pickle_header->IDL_if_id.uuid, &status);
+    dce_uuid_create_nil(&p_pickle_header->IDL_if_id.uuid, &status);
     if (status != rpc_s_ok)
     {
         IDL_msp->IDL_status = status;
@@ -1152,7 +1152,7 @@ void idl_es_before_interp_call
                                                | IDL_ES_NO_HEADER
                                                ) ) )
             {
-                if ( ! uuid_equal(&p_es_state->IDL_pickle_header.IDL_if_id.uuid,
+                if ( ! dce_uuid_equal(&p_es_state->IDL_pickle_header.IDL_if_id.uuid,
                                   &p_if_spec->id,
                                   (error_status_t *)&IDL_msp->IDL_status) )
                 {

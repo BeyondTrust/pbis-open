@@ -107,7 +107,7 @@ INTERNAL void cct_timer_fn _DCE_PROTOTYPE_((
     ));
 
 INTERNAL void create_activity_uuid _DCE_PROTOTYPE_((
-        uuid_t * /*uuid*/
+        dce_uuid_t * /*uuid*/
     ));
 
 /* ========================================================================= */
@@ -457,7 +457,7 @@ pointer_t junk;
  * C R E A T E _ A C T I V I T Y _ U U I D
  *
  * Create a new UUID to be used as an activity UUID.  This routine does
- * not simply call "uuid_create" to avoid a bug in old systems.
+ * not simply call "dce_uuid_create" to avoid a bug in old systems.
  * 
  * Old (pre-2.0) UUIDs have the same field structure as current UUIDs,
  * but the semantics of the fields are different.  By careful construction,
@@ -536,17 +536,17 @@ pointer_t junk;
 INTERNAL void create_activity_uuid
 #ifdef _DCE_PROTO_
 (
-    uuid_t *uuid
+    dce_uuid_t *uuid
 )
 #else
 (uuid)
-uuid_t *uuid;
+dce_uuid_t *uuid;
 #endif
 {
     unsigned32 st;
     unsigned16 tmp;
 
-    uuid_create(uuid, &st);
+    dce_uuid_create(uuid, &st);
     if (st != rpc_s_ok)
     {
 	/*

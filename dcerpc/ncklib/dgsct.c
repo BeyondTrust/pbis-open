@@ -338,7 +338,7 @@ unsigned32 seq;
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_lookup
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t actid,
+    dce_uuid_p_t actid,
     unsigned32 probe_hint
 )
 #else
@@ -414,7 +414,7 @@ RETRY:
 PRIVATE rpc_dg_sct_elt_p_t rpc__dg_sct_get
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t actid,
+    dce_uuid_p_t actid,
     unsigned32 probe_hint,
     unsigned32 seq
 )
@@ -726,7 +726,7 @@ unsigned32 *st;
     unsigned32 seq;
     unsigned32 xst;
     rpc_key_info_p_t key_info;
-    uuid_t cas_uuid;            /* retrieved but ignored here. */
+    dce_uuid_t cas_uuid;            /* retrieved but ignored here. */
     rpc_binding_handle_t h;
 
     /*

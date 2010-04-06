@@ -42,17 +42,17 @@
 
 int main(int argc, char *argv[])
 {
-	uuid_t uuid;
+	dce_uuid_t uuid;
 	unsigned32 st;
 	unsigned_char_p_t uuid_string;
 
-	uuid_create(&uuid, &st);
+	dce_uuid_create(&uuid, &st);
 	if (st != error_status_ok) {
 		fprintf(stderr, "%s: failed to generate UUID\n", argv[0]);
 		exit(2);
 	}
 
-	uuid_to_string(&uuid, &uuid_string, &st);
+	dce_uuid_to_string(&uuid, &uuid_string, &st);
 	if (st != error_status_ok) {
 		fprintf(stderr, "%s: failed to convert UUID to string\n", argv[0]);
 		exit(3);

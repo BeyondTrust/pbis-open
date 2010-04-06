@@ -3591,7 +3591,7 @@ unsigned32              *st;
 #if (uuid_c_version == 1)
         if ((memcmp (&pres_context->syntax_abstract_id.id, 
                      &if_r->id,
-                     sizeof (uuid_t)) == 0)
+                     sizeof (dce_uuid_t)) == 0)
 #else
 ***Make sure memcmp works on this version of UUIDs***
 #endif

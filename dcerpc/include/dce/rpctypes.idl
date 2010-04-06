@@ -53,7 +53,7 @@ interface rpctypes
  */
 typedef struct
 {
-    uuid_t                  uuid;
+    dce_uuid_t                  uuid;
     unsigned16              vers_major;
     unsigned16              vers_minor;
 } rpc_if_id_t;

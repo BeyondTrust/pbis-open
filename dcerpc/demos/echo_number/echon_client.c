@@ -193,7 +193,7 @@ get_client_rpc_binding(binding_handle, hostname, interface_spec, protocol)
   char * protocol_family;
   char partial_string_binding[128];
   rpc_if_id_t nonkeyword_interface ATTRIBUTE_UNUSED;
-  uuid_t ifc_uuid ATTRIBUTE_UNUSED;
+  dce_uuid_t ifc_uuid ATTRIBUTE_UNUSED;
   error_status_t status;
 
   /*

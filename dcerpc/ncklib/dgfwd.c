@@ -429,7 +429,7 @@ INTERNAL void fwd_delayed (
  * and do what we are told with it
  */
 PRIVATE void rpc__server_fwd_resolve_delayed(
-    uuid_p_t             actuuid,
+    dce_uuid_p_t             actuuid,
     rpc_addr_p_t	fwd_addr,
     rpc_fwd_action_t	*fwd_action,
     unsigned32		*status)
@@ -450,7 +450,7 @@ PRIVATE void rpc__server_fwd_resolve_delayed(
     while (ep != NULL)
     {
         hdrp = ep->rqe->hdrp;
-        if (uuid_equal(&(hdrp->actuid), actuuid, &st) && (st == rpc_s_ok))
+        if (dce_uuid_equal(&(hdrp->actuid), actuuid, &st) && (st == rpc_s_ok))
         {
             /* found - remove it from the list */
             rqe = ep->rqe;

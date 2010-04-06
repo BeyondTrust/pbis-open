@@ -126,7 +126,7 @@ PRIVATE char *rpc__dg_pkt_name _DCE_PROTOTYPE_((
     ));
 
 PRIVATE unsigned16 rpc__dg_uuid_hash _DCE_PROTOTYPE_((
-        uuid_p_t  /*uuid*/
+        dce_uuid_p_t  /*uuid*/
     ));
 
 #endif /* _DGUTL_H */

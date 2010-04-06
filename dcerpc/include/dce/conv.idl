@@ -101,7 +101,7 @@ interface conv
 [idempotent] 
 void conv_who_are_you(
         [in]    handle_t        h,
-        [in]    uuid_t          *actuid,
+        [in]    dce_uuid_t          *actuid,
         [in]    unsigned32      boot_time,
         [out]   unsigned32      *seq,
         [out]   unsigned32      *st
@@ -133,10 +133,10 @@ void conv_who_are_you(
 [idempotent] 
 void conv_who_are_you2(
         [in]    handle_t        h,
-        [in]    uuid_t          *actuid,
+        [in]    dce_uuid_t          *actuid,
         [in]    unsigned32      boot_time,
         [out]   unsigned32      *seq,
-        [out]   uuid_t          *cas_uuid,
+        [out]   dce_uuid_t          *cas_uuid,
         [out]   unsigned32      *st
 );
 
@@ -155,7 +155,7 @@ void conv_who_are_you2(
 [idempotent] 
 void conv_are_you_there(
         [in]    handle_t        h,
-        [in]    uuid_t          *actuid,
+        [in]    dce_uuid_t          *actuid,
         [in]    unsigned32      boot_time,
         [out]   unsigned32      *st
 );
@@ -183,14 +183,14 @@ void conv_are_you_there(
 [idempotent] 
 void conv_who_are_you_auth(
         [in]    handle_t        h,
-        [in]    uuid_t          *actuid,
+        [in]    dce_uuid_t          *actuid,
         [in]    unsigned32      boot_time,
         [in, size_is(in_len)]    
                 byte            in_data[],
         [in]    signed32        in_len,
         [in]    signed32        out_max_len,
         [out]   unsigned32      *seq,
-        [out]   uuid_t          *cas_uuid,
+        [out]   dce_uuid_t          *cas_uuid,
         [out, length_is(*out_len), size_is(out_max_len)]    
                 byte            out_data[],
         [out]   signed32        *out_len,
@@ -222,7 +222,7 @@ void conv_who_are_you_auth(
 [idempotent]
 void conv_who_are_you_auth_more(
         [in]    handle_t        h,
-        [in]    uuid_t          *actuid,
+        [in]    dce_uuid_t          *actuid,
         [in]    unsigned32      boot_time,
         [in]    signed32        index,
         [in]    signed32        out_max_len,

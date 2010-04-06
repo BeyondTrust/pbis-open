@@ -292,7 +292,7 @@ typedef unsigned16 rpc_cn_pres_context_id_t;
  */
 typedef struct
 {
-    uuid_t     id;
+    dce_uuid_t     id;
     unsigned32 version;
 } rpc_cn_pres_syntax_id_t, *rpc_cn_pres_syntax_id_p_t;
 
@@ -743,7 +743,7 @@ typedef union
  */
 typedef union
 {
-    uuid_t object;                     /* 24:16 object UID */
+    dce_uuid_t object;                     /* 24:16 object UID */
     unsigned8 stub_data_no_object[1];  /* stub data */
 } object_or_stub_data_t;
 
@@ -799,7 +799,7 @@ typedef union
 #define RPC_CN_PKT_SIZEOF_RQST_HDR_NO_OBJ \
     RPC_CN_PKT_SIZEOF_RQST_HDR
 #define RPC_CN_PKT_SIZEOF_RQST_HDR_W_OBJ \
-    (RPC_CN_PKT_SIZEOF_RQST_HDR + sizeof (uuid_t))
+    (RPC_CN_PKT_SIZEOF_RQST_HDR + sizeof (dce_uuid_t))
 
 
 

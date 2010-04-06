@@ -66,8 +66,8 @@ INTERNAL rpc_mutex_t obj_mutex;
 typedef struct
 {
     rpc_list_t      link;
-    uuid_t          object_uuid;
-    uuid_t          type_uuid;
+    dce_uuid_t          object_uuid;
+    dce_uuid_t          type_uuid;
 } rpc_obj_rgy_entry_t, *rpc_obj_rgy_entry_p_t;
 
 
@@ -242,8 +242,8 @@ rpc_fork_stage_id_t stage;
 PUBLIC void rpc_object_set_type 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                object_uuid,
-    uuid_p_t                type_uuid,
+    dce_uuid_p_t                object_uuid,
+    dce_uuid_p_t                type_uuid,
     unsigned32              *status
 )
 #else
@@ -277,9 +277,9 @@ unsigned32              *status;
     
     /*
      * compute a hash value using the object uuid - check the status
-     * from uuid_hash to make sure the uuid has a valid format
+     * from dce_uuid_hash to make sure the uuid has a valid format
      */
-    index = (uuid_hash (object_uuid, status)) % RPC_C_OBJ_REGISTRY_SIZE;
+    index = (dce_uuid_hash (object_uuid, status)) % RPC_C_OBJ_REGISTRY_SIZE;
     
     if (*status != uuid_s_ok)
     {
@@ -298,7 +298,7 @@ unsigned32              *status;
 
     while (obj_entry != NULL)
     {
-        if (uuid_equal (&(obj_entry->object_uuid), object_uuid, status))
+        if (dce_uuid_equal (&(obj_entry->object_uuid), object_uuid, status))
         {
             break;
         }
@@ -351,7 +351,7 @@ unsigned32              *status;
             /*
              * see if the type uuid matches the one specified
              */
-            if (uuid_equal (&(obj_entry->type_uuid), type_uuid, status))
+            if (dce_uuid_equal (&(obj_entry->type_uuid), type_uuid, status))
             {
                 RPC_MUTEX_UNLOCK (obj_mutex);
                 *status = rpc_s_already_registered;
@@ -419,14 +419,14 @@ unsigned32              *status;
 PUBLIC void rpc_object_inq_type 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                object_uuid,
-    uuid_t                  *type_uuid,
+    dce_uuid_p_t                object_uuid,
+    dce_uuid_t                  *type_uuid,
     unsigned32              *status
 )
 #else
 (object_uuid, type_uuid, status)
 uuid_p_t                object_uuid;
-uuid_t                  *type_uuid;
+dce_uuid_t                  *type_uuid;
 unsigned32              *status;
 #endif
 {
@@ -449,9 +449,9 @@ unsigned32              *status;
 
     /*
      * compute a hash value using the object uuid - check the status
-     * from uuid_hash to make sure the uuid has a valid format
+     * from dce_uuid_hash to make sure the uuid has a valid format
      */
-    index = uuid_hash (object_uuid, status) % RPC_C_OBJ_REGISTRY_SIZE;
+    index = dce_uuid_hash (object_uuid, status) % RPC_C_OBJ_REGISTRY_SIZE;
 
     if (*status != uuid_s_ok)
     {
@@ -470,7 +470,7 @@ unsigned32              *status;
 
     while (obj_entry != NULL)
     {
-        if (uuid_equal (&(obj_entry->object_uuid), object_uuid, status))
+        if (dce_uuid_equal (&(obj_entry->object_uuid), object_uuid, status))
         {
             /*
              * if a type uuid is wanted, return it

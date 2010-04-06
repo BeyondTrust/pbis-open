@@ -66,7 +66,7 @@ const long ept_max_annotation_size  = 64;
 
 typedef struct 
 {
-                uuid_t      object;
+                dce_uuid_t      object;
                 twr_p_t     tower;
     [string]    char        annotation[ept_max_annotation_size];
 } ept_entry_t, *ept_entry_p_t;
@@ -119,7 +119,7 @@ void ept_delete(
 void ept_lookup(
     [in]            handle_t            h,
     [in]            unsigned32          inquiry_type,
-    [in]            uuid_p_t            object,
+    [in]            dce_uuid_p_t        object,
     [in]            rpc_if_id_p_t       interface_id,
     [in]            unsigned32          vers_option,
     [in, out]       ept_lookup_handle_t *entry_handle,
@@ -142,7 +142,7 @@ void ept_lookup(
 [idempotent]
 void ept_map(
     [in]            handle_t            h,
-    [in]            uuid_p_t            object,
+    [in]            dce_uuid_p_t        object,
     [in]            twr_p_t             map_tower,
     [in, out]       ept_lookup_handle_t *entry_handle,
     [in, range(0,500)]
@@ -176,7 +176,7 @@ void ept_lookup_handle_free(
 [idempotent]
 void ept_inq_object(
     [in]            handle_t            h,
-    [out]           uuid_t              *ept_object,
+    [out]           dce_uuid_t              *ept_object,
     [out]           error_status_t      *status
 );
 
@@ -194,7 +194,7 @@ void ept_inq_object(
 void ept_mgmt_delete(
     [in]            handle_t            h,
     [in]            boolean32           object_speced,
-    [in]            uuid_p_t            object,
+    [in]            dce_uuid_p_t        object,
     [in]            twr_p_t             tower,
     [out]           error_status_t      *status
 );

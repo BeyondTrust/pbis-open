@@ -411,7 +411,7 @@ PUBLIC void rpc_binding_set_object
 #ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
-    uuid_p_t                object_uuid,
+    dce_uuid_p_t                object_uuid,
     unsigned32              *status
 )
 #else
@@ -441,7 +441,7 @@ unsigned32              *status;
     }
     else
     {
-        uuid_create_nil (&(binding_rep->obj), status);
+        dce_uuid_create_nil (&(binding_rep->obj), status);
     }
 
     /*
@@ -496,13 +496,13 @@ PUBLIC void rpc_binding_inq_object
 #ifdef _DCE_PROTO_
 (
     rpc_binding_handle_t    binding_h,
-    uuid_t                  *object_uuid,
+    dce_uuid_t                  *object_uuid,
     unsigned32              *status
 )
 #else
 (binding_h, object_uuid, status)
 rpc_binding_handle_t    binding_h;
-uuid_t                  *object_uuid;
+dce_uuid_t              *object_uuid;
 unsigned32              *status;
 #endif
 {
@@ -940,9 +940,9 @@ unsigned32              *status;
      * convert the object UUID in the binding rep to string format
      * (if it is non-nil - otherwise, keep it as a NULL pointer)
      */
-    if (!uuid_is_nil (&(binding_rep->obj), status))
+    if (!dce_uuid_is_nil (&(binding_rep->obj), status))
     {
-        uuid_to_string (&(binding_rep->obj), &object_uuid, status);
+        dce_uuid_to_string (&(binding_rep->obj), &object_uuid, status);
 
         if (*status != uuid_s_ok)
         {
@@ -1117,7 +1117,7 @@ unsigned32              *status;
 #endif
 {
     rpc_binding_rep_p_t     binding_rep;
-    uuid_t                  obj_uuid;
+    dce_uuid_t                  obj_uuid;
     rpc_addr_p_t            rpc_addr = NULL;
     unsigned_char_p_t       string_object_uuid = NULL;
     unsigned_char_p_t       protseq = NULL;
@@ -1170,11 +1170,11 @@ unsigned32              *status;
      */
     if (*string_object_uuid != '\0')
     {
-        uuid_from_string (string_object_uuid, &obj_uuid, status);
+        dce_uuid_from_string (string_object_uuid, &obj_uuid, status);
     }
     else
     {
-        uuid_create_nil (&obj_uuid, status);
+        dce_uuid_create_nil (&obj_uuid, status);
     }
 
     if (*status != uuid_s_ok)
@@ -2050,7 +2050,7 @@ PRIVATE rpc_binding_rep_t *rpc__binding_alloc
 #ifdef _DCE_PROTO_
 (
     boolean32               is_server,
-    uuid_p_t                object_uuid,
+    dce_uuid_p_t                object_uuid,
     rpc_protocol_id_t       protocol_id,
     rpc_addr_p_t            rpc_addr,
     unsigned32              *status
@@ -2964,9 +2964,9 @@ PUBLIC void rpc_binding_create(
 	return;
     }
 
-    if (!uuid_is_nil(&template->object_uuid, st))
+    if (!dce_uuid_is_nil(&template->object_uuid, st))
     {
-	uuid_to_string(&template->object_uuid, &string_binding, st);
+	dce_uuid_to_string(&template->object_uuid, &string_binding, st);
 	if (*st != rpc_s_ok)
 	    return;
     }

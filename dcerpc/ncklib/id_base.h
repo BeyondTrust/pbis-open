@@ -13,7 +13,7 @@
 #include <dce/nbase.h>
 #endif
 typedef struct sec_id_t {
-uuid_t uuid;
+dce_uuid_t uuid;
 idl_char *name;
 } sec_id_t;
 typedef struct sec_id_foreign_t {

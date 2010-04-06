@@ -150,7 +150,7 @@ error_status_t  *status;
             return;
         }
 
-        uuid_create(&h->object, &tmp_st);
+        dce_uuid_create(&h->object, &tmp_st);
 
         hdr.version = version;
         hdr.object = h->object;
@@ -270,13 +270,13 @@ db_entry_t      *entp;
 PRIVATE void db_htable_add(htable, table_type, id, entp)
 db_hash_table_t     htable;
 db_list_type_t      table_type;
-uuid_p_t            id;
+dce_uuid_p_t            id;
 db_lists_t          *entp;
 {
     unsigned16      bucket;
     error_status_t  tmp_st;
 
-    bucket = uuid_hash(id, &tmp_st);
+    bucket = dce_uuid_hash(id, &tmp_st);
 
     bucket = bucket % db_c_nbucket;
 
@@ -286,13 +286,13 @@ db_lists_t          *entp;
 PRIVATE void db_htable_remove(htable, table_type, id, entp)
 db_hash_table_t     htable;
 db_list_type_t      table_type;
-uuid_p_t            id;
+dce_uuid_p_t            id;
 db_lists_t          *entp;
 {
     unsigned16      bucket;
     error_status_t  tmp_st;
 
-    bucket = uuid_hash(id, &tmp_st);
+    bucket = dce_uuid_hash(id, &tmp_st);
 
     bucket = bucket % db_c_nbucket;
 
@@ -395,7 +395,7 @@ db_list_t   *elp;
 PRIVATE db_lists_t *db_list_first(lists_mgmt, list_type, id)
 db_lists_mgmt_t     *lists_mgmt;
 db_list_type_t      list_type;
-uuid_p_t            id;
+dce_uuid_p_t            id;
 {
     unsigned16      bucket;
     error_status_t  tmp_st;
@@ -410,14 +410,14 @@ uuid_p_t            id;
             entp = (db_lists_t *) lists_mgmt->entry_list.fwd;
             break;
         case db_c_object_list:
-            bucket = uuid_hash(id, &tmp_st);
+            bucket = dce_uuid_hash(id, &tmp_st);
             bucket = bucket % db_c_nbucket;
             elp = lists_mgmt->object_table[bucket].fwd;
             if (elp != NULL)
                 entp = (db_lists_t *) (((char *) elp) - db_c_object_list_offset);
             break;
         case db_c_interface_list:
-            bucket = uuid_hash(id, &tmp_st);
+            bucket = dce_uuid_hash(id, &tmp_st);
             bucket = bucket % db_c_nbucket;
             elp = lists_mgmt->interface_table[bucket].fwd;
             if (elp != NULL)

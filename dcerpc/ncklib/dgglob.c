@@ -57,7 +57,7 @@ GLOBAL rpc_dg_stats_t rpc_g_dg_stats = RPC_DG_STATS_INITIALIZER;
 
 GLOBAL unsigned32 rpc_g_dg_server_boot_time;
 
-GLOBAL uuid_t rpc_g_dg_my_cas_uuid;
+GLOBAL dce_uuid_t rpc_g_dg_my_cas_uuid;
 
 GLOBAL rpc_dg_sock_pool_t rpc_g_dg_sock_pool;
 /* ======= */

@@ -375,7 +375,7 @@ PRIVATE void ept_lookup(h, inquiry_type, object, interface, vers_option, entry_h
                       max_ents, num_ents, entries, status)
 handle_t            h;
 unsigned32          inquiry_type;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 rpc_if_id_p_t       interface;
 unsigned32          vers_option;
 ept_lookup_handle_t *entry_handle;
@@ -403,7 +403,7 @@ error_status_t      *status;
 PRIVATE void ept_map(h, object, map_tower, entry_handle,
                         max_towers, num_towers, towers, status)
 handle_t            h;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 twr_p_t             map_tower;
 ept_lookup_handle_t *entry_handle;
 unsigned32          max_towers;
@@ -459,7 +459,7 @@ error_status_t      *status;
 
 PRIVATE void ept_inq_object(h, object, status)
 handle_t            h;
-uuid_t              *object;
+dce_uuid_t              *object;
 error_status_t      *status;
 {
     epdb_handle_t epdb;
@@ -474,7 +474,7 @@ error_status_t      *status;
 PRIVATE void ept_mgmt_delete(h, object_speced, object, tower, status)
 handle_t            h;
 boolean32           object_speced;
-uuid_p_t            object;
+dce_uuid_p_t            object;
 twr_p_t             tower;
 error_status_t      *status;
 {

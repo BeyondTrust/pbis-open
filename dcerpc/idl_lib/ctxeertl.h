@@ -65,7 +65,7 @@ typedef struct callee_client_entry_t {
 **  is overflow hash with chaining.
 */
 typedef struct callee_context_entry_t {
-    uuid_t uuid;
+    dce_uuid_t uuid;
     rpc_ss_context_t user_context;
     ctx_rundown_fn_p_t rundown; /* Pointer to rundown routine for context */
     callee_client_entry_t *p_client_entry;  /* Client this context belongs to */
@@ -110,7 +110,7 @@ void rpc_ss_take_from_callee_client
 void rpc_ss_lkddest_callee_context
 (
 #ifdef IDL_PROTOTYPES
-    uuid_t *p_uuid,    /* Pointer to UUID of context to be destroyed */
+    dce_uuid_t *p_uuid,    /* Pointer to UUID of context to be destroyed */
     rpc_client_handle_t *p_close_client,
                          /* Ptr to NULL or client to stop monitoring */
     error_status_t *result         /* Function result */
@@ -127,7 +127,7 @@ void rpc_ss_create_callee_context
 (
 #ifdef IDL_PROTOTYPES
     rpc_ss_context_t callee_context, /* user's local form of the context */
-    uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
+    dce_uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
     handle_t  h,                     /* Binding handle */
     ctx_rundown_fn_p_t ctx_rundown,  /* pointer to context rundown routine */
     error_status_t *result      /* Function result */
@@ -139,7 +139,7 @@ void rpc_ss_update_callee_context
 (
 #ifdef IDL_PROTOTYPES
     rpc_ss_context_t callee_context, /* user's local form of the context */
-    uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
+    dce_uuid_t    *p_uuid,               /* pointer to the equivalent UUID */
     error_status_t *result      /* Function result */
 #endif
 );
@@ -148,7 +148,7 @@ void rpc_ss_update_callee_context
 void rpc_ss_destroy_callee_context
 (
 #ifdef IDL_PROTOTYPES
-    uuid_t *p_uuid,          /* pointer to UUID of context to be destroyed */
+    dce_uuid_t *p_uuid,          /* pointer to UUID of context to be destroyed */
     handle_t  h,                    /* Binding handle */
     error_status_t *result     /* Function result */
 #endif

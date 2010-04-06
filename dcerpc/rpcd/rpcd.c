@@ -129,14 +129,14 @@ INTERNAL void init
 
 INTERNAL void fwd_map
     _DCE_PROTOTYPE_ ((
-        uuid_p_t                object,
+        dce_uuid_p_t                object,
         rpc_if_id_p_t           interface,
         rpc_syntax_id_p_t       data_rep,
         rpc_protocol_id_t       rpc_protocol,
         unsigned32              rpc_protocol_vers_major,
         unsigned32              rpc_protocol_vers_minor,
         rpc_addr_p_t            addr,
-        uuid_p_t                actuuid,
+        dce_uuid_p_t                actuuid,
         rpc_addr_p_t            *fwd_addr,
         rpc_fwd_action_t        *fwd_action,
         error_status_t          *status
@@ -202,7 +202,7 @@ INTERNAL char           rpcd_version_str[] =
 	"rpcd version freedce 1.1";
 #endif
 
-GLOBAL   uuid_t         nil_uuid;
+GLOBAL   dce_uuid_t         nil_uuid;
 
 
 
@@ -356,7 +356,7 @@ error_status_t  *status;
     ept_v3_0_epv_t* _epv = &ept_v3_0_mgr_epv;
     rpc_mgr_epv_t epv = (rpc_mgr_epv_t) _epv;
 
-    rpc_server_register_if(ept_v3_0_s_ifspec, (uuid_p_t)NULL, 
+    rpc_server_register_if(ept_v3_0_s_ifspec, (dce_uuid_p_t)NULL, 
             epv, status);
     if (check_st_bad("Unable to rpc_server_register_if for ept", status))
         return;
@@ -451,13 +451,13 @@ INTERNAL void init(status)
 error_status_t  *status;
 {
     epdb_handle_t       h;
-    uuid_t              epdb_obj;
+    dce_uuid_t              epdb_obj;
     rpc_if_rep_p_t      ept_if_rep;
     unsigned_char_p_t   fname;
     unsigned_char_p_t   dname;
     struct stat         statbuf;
 
-    uuid_create_nil(&nil_uuid, status);
+    dce_uuid_create_nil(&nil_uuid, status);
     if (check_st_bad("Can't create nil uuid", status)) {
         return;
     }
@@ -537,7 +537,7 @@ error_status_t  *status;
         unsigned_char_p_t   ustr;
         error_status_t      st;
 
-        uuid_to_string(&epdb_obj, &ustr, &st);
+        dce_uuid_to_string(&epdb_obj, &ustr, &st);
         printf("(rpcd) endpoint database object id: %s\n", ustr);
         rpc_string_free(&ustr, &st);
     }
@@ -557,14 +557,14 @@ INTERNAL void fwd_map
     (object, interface, data_rep, 
     rpc_protocol, rpc_protocol_vers_major, rpc_protocol_vers_minor, addr, 
     actuuid, fwd_addr, fwd_action, status)
-uuid_p_t                object;
+dce_uuid_p_t                object;
 rpc_if_id_p_t           interface;
 rpc_syntax_id_p_t       data_rep;
 rpc_protocol_id_t       rpc_protocol;
 unsigned32              rpc_protocol_vers_major;
 unsigned32              rpc_protocol_vers_minor;
 rpc_addr_p_t            addr;
-uuid_p_t                actuuid ATTRIBUTE_UNUSED;
+dce_uuid_p_t                actuuid ATTRIBUTE_UNUSED;
 rpc_addr_p_t            *fwd_addr;
 rpc_fwd_action_t        *fwd_action;
 error_status_t          *status;

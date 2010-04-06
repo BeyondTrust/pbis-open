@@ -124,10 +124,10 @@ void rpc__noauth_dg_recv_ck _DCE_PROTOTYPE_((
 void rpc__noauth_dg_who_are_you _DCE_PROTOTYPE_((                         
         rpc_auth_info_p_t                /*info*/,
         handle_t                        ,
-        uuid_t                          *,
+        dce_uuid_t                          *,
         unsigned32                      ,
         unsigned32                      *,
-        uuid_t                          *,
+        dce_uuid_t                          *,
         unsigned32                      *
     ));
 

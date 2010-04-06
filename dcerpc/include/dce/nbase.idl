@@ -62,12 +62,13 @@ typedef unsigned32      boolean32;
 typedef unsigned long   error_status_t;
 const long              error_status_ok = 0;
 
-
+#if 0
 cpp_quote("/* Horrible hack for Darwin */")
 cpp_quote("#ifdef __APPLE__")
 cpp_quote("#include <unistd.h>")
-cpp_quote("#define uuid_t dce_uuid_t")
+cpp_quote("#define dce_uuid_t dce_uuid_t")
 cpp_quote("#endif")
+#endif
 
 /*
  * Universal Unique Identifier (UUID) types.
@@ -80,7 +81,7 @@ typedef struct
     unsigned8           clock_seq_hi_and_reserved;
     unsigned8           clock_seq_low;
     byte                node[6];
-} uuid_t, *uuid_p_t;
+} dce_uuid_t, *dce_uuid_p_t;
 
 /*
  * Old UUID type.
@@ -131,7 +132,7 @@ typedef struct
 typedef struct ndr_context_handle
 {
     unsigned32      context_handle_attributes;
-    uuid_t          context_handle_uuid;
+    dce_uuid_t          context_handle_uuid;
 } ndr_context_handle;
 
 /*

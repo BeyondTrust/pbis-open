@@ -182,14 +182,14 @@
 typedef struct
 {
     char eaddr[6];      /* 6 bytes of ethernet hardware address */
-} uuid_address_t, *uuid_address_p_t;
+} dce_uuid_address_t, *dce_uuid_address_p_t;
 
 
 typedef struct
 {
     unsigned32  lo;
     unsigned32  hi;
-} uuid_time_t, *uuid_time_p_t;
+} dce_uuid_time_t, *dce_uuid_time_p_t;
 
 
 typedef struct
@@ -236,7 +236,7 @@ typedef struct
  *
  * Get OS time
  */
- void uuid__get_os_time _DCE_PROTOTYPE_(( uuid_time_t * /*uuid_time*/));
+ void uuid__get_os_time _DCE_PROTOTYPE_(( dce_uuid_time_t * /*uuid_time*/));
 
 
 /*
@@ -245,7 +245,7 @@ typedef struct
  * Get ethernet hardware address from the OS
  */
  void uuid__get_os_address _DCE_PROTOTYPE_ ((
-        uuid_address_t          * /*address*/,
+        dce_uuid_address_t      * /*address*/,
         unsigned32              * /*st*/
     ));
 

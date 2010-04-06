@@ -25,7 +25,7 @@ interface sec_id_base
 import "dce/nbase.idl";
 
 typedef struct sec_id_t {
-	uuid_t uuid;
+	dce_uuid_t uuid;
 	[string] char *name;
 } sec_id_t;
 

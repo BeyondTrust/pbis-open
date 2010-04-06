@@ -242,8 +242,8 @@
  *
  ****************************************************************************/
 
-uuid_t uuid_g_nil_uuid = { 0, 0, 0, 0, 0, {0} };
-uuid_t uuid_nil = { 0, 0, 0, 0, 0, {0} };
+dce_uuid_t uuid_g_nil_uuid = { 0, 0, 0, 0, 0, {0} };
+dce_uuid_t uuid_nil = { 0, 0, 0, 0, 0, {0} };
 
 /****************************************************************************
  *
@@ -254,7 +254,7 @@ uuid_t uuid_nil = { 0, 0, 0, 0, 0, {0} };
 /*
  * saved copy of our IEEE 802 address for quick reference
  */
-static uuid_address_t  saved_addr;
+static dce_uuid_address_t  saved_addr;
 
 /*
  * saved copy of the status associated with saved_addr
@@ -264,10 +264,10 @@ static unsigned32     saved_st;
 /*
  * declarations used in UTC time calculations
  */
-static uuid_time_t      time_now;     /* utc time as of last query        */
-static uuid_time_t      time_last;    /* 'saved' value of time_now        */
-static unsigned16       time_adjust;  /* 'adjustment' to ensure uniqness  */
-static unsigned16       clock_seq;    /* 'adjustment' for backwards clocks*/
+static dce_uuid_time_t      time_now;     /* utc time as of last query        */
+static dce_uuid_time_t      time_last;    /* 'saved' value of time_now        */
+static unsigned16           time_adjust;  /* 'adjustment' to ensure uniqness  */
+static unsigned16           clock_seq;    /* 'adjustment' for backwards clocks*/
 
 /*
  * true_random variables
@@ -330,7 +330,7 @@ static void new_clock_seq _DCE_PROTOTYPE_(( unsigned16 * /*clock_seq*/));
  *
  * Does the UUID have the known standard structure layout?
  */
-boolean structure_is_known _DCE_PROTOTYPE_(( uuid_p_t /*uuid*/));
+boolean structure_is_known _DCE_PROTOTYPE_(( dce_uuid_p_t /*uuid*/));
 
 /*
  * T I M E _ C M P
@@ -338,8 +338,8 @@ boolean structure_is_known _DCE_PROTOTYPE_(( uuid_p_t /*uuid*/));
  * Compares two UUID times (64-bit DEC UID UTC values)
  */
 static uuid_compval_t time_cmp _DCE_PROTOTYPE_ ((
-        uuid_time_p_t        /*time1*/,
-        uuid_time_p_t        /*time2*/
+        dce_uuid_time_p_t        /*time1*/,
+        dce_uuid_time_p_t        /*time2*/
     ));
 
 /*
@@ -349,7 +349,7 @@ static uuid_compval_t time_cmp _DCE_PROTOTYPE_ ((
  */
 
 void uuid_get_address _DCE_PROTOTYPE_ ((
-        uuid_address_t      * /*address*/,
+        dce_uuid_address_t      * /*address*/,
         unsigned32          * /*st*/
     ));
 
@@ -541,19 +541,19 @@ unsigned32              *status;
 **--
 **/
 
-void uuid_create 
+void dce_uuid_create 
 #ifdef _DCE_PROTO_
 (
-    uuid_t                  *uuid,
+    dce_uuid_t              *uuid,
     unsigned32              *status
 )
 #else
 (uuid, status)
-uuid_t                  *uuid;
+dce_uuid_t              *uuid;
 unsigned32              *status;
 #endif
 {
-    uuid_address_t          eaddr;      /* our IEEE 802 hardware address */
+    dce_uuid_address_t      eaddr;      /* our IEEE 802 hardware address */
     boolean32               got_no_time = FALSE;
 
 
@@ -566,7 +566,7 @@ unsigned32              *status;
     uuid_get_address (&eaddr, status);
     if (*status != uuid_s_ok)
     {
-        DEBUG_PRINT("uuid_create:uuid_get_address", *status);
+        DEBUG_PRINT("dce_uuid_create:uuid_get_address", *status);
         return;
     }
 
@@ -609,7 +609,7 @@ unsigned32              *status;
                 break;
             default:
                 *status = uuid_s_internal_error;
-                DEBUG_PRINT ("uuid_create", *status);
+                DEBUG_PRINT ("dce_uuid_create", *status);
                 return;
         }
     } while (got_no_time);
@@ -639,7 +639,7 @@ unsigned32              *status;
 
     uuid->clock_seq_hi_and_reserved |= UUID_RESERVED_BITS;
 
-    memcpy (uuid->node, &eaddr, sizeof (uuid_address_t));
+    memcpy (uuid->node, &eaddr, sizeof (dce_uuid_address_t));
 
     *status = uuid_s_ok;
 }
@@ -647,7 +647,7 @@ unsigned32              *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_create_nil
+**  ROUTINE NAME:       dce_uuid_create_nil
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -679,21 +679,21 @@ unsigned32              *status;
 **--
 **/
 
-void uuid_create_nil 
+void dce_uuid_create_nil 
 #ifdef _DCE_PROTO_
 (
-    uuid_t              *uuid,
+    dce_uuid_t              *uuid,
     unsigned32          *status
 )
 #else
 (uuid, status)
-uuid_t              *uuid;
+dce_uuid_t              *uuid;
 unsigned32          *status;
 #endif
 {
     CODING_ERROR (status);
     UUID_VERIFY_INIT (EmptyArg);
-    memset (uuid, 0, sizeof (uuid_t));
+    memset (uuid, 0, sizeof (dce_uuid_t));
 
     *status = uuid_s_ok;
 }
@@ -701,7 +701,7 @@ unsigned32          *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_to_string
+**  ROUTINE NAME:       dce_uuid_to_string
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -736,16 +736,16 @@ unsigned32          *status;
 **--
 **/
 
-void uuid_to_string 
+void dce_uuid_to_string 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                uuid,
+    dce_uuid_p_t            uuid,
     unsigned_char_p_t       *uuid_string,
     unsigned32              *status
 )
 #else
 (uuid, uuid_string, status)
-uuid_p_t                uuid;
+dce_uuid_p_t            uuid;
 unsigned_char_p_t       *uuid_string;
 unsigned32              *status;
 #endif
@@ -800,7 +800,7 @@ unsigned32              *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_from_string
+**  ROUTINE NAME:       dce_uuid_from_string
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -836,23 +836,23 @@ unsigned32              *status;
 **--
 **/
 
-void uuid_from_string 
+void dce_uuid_from_string 
 #ifdef _DCE_PROTO_
 (
     unsigned_char_p_t       uuid_string,
-    uuid_t                  *uuid,
+    dce_uuid_t              *uuid,
     unsigned32              *status
 )
 #else
 (uuid_string, uuid, status)
 unsigned_char_p_t       uuid_string;
-uuid_t                  *uuid;
+dce_uuid_t              *uuid;
 unsigned32              *status;
 #endif
 {
-    uuid_t              uuid_new;       /* used for sscanf for new uuid's */
+    dce_uuid_t          uuid_new;       /* used for sscanf for new uuid's */
     uuid_old_t          uuid_old;       /* used for sscanf for old uuid's */
-    uuid_p_t            uuid_ptr;       /* pointer to correct uuid (old/new) */
+    dce_uuid_p_t        uuid_ptr;       /* pointer to correct uuid (old/new) */
     int                 i;
 
 
@@ -975,7 +975,7 @@ unsigned32              *status;
          * fix up non-string field, and point to the correct uuid
          */
         uuid_old.reserved = 0;
-        uuid_ptr = (uuid_p_t) (&uuid_old);
+        uuid_ptr = (dce_uuid_p_t) (&uuid_old);
     }
 
     /*
@@ -986,7 +986,7 @@ unsigned32              *status;
     /*
      * copy the uuid to user
      */
-    memcpy (uuid, uuid_ptr, sizeof (uuid_t));
+    memcpy (uuid, uuid_ptr, sizeof (dce_uuid_t));
 
     *status = uuid_s_ok;
 }
@@ -994,7 +994,7 @@ unsigned32              *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_equal
+**  ROUTINE NAME:       dce_uuid_equal
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -1032,17 +1032,17 @@ unsigned32              *status;
 **--
 **/
 
-boolean32 uuid_equal 
+boolean32 dce_uuid_equal 
 #ifdef _DCE_PROTO_
 (
-    register uuid_p_t                uuid1,
-    register uuid_p_t                uuid2,
+    register dce_uuid_p_t            uuid1,
+    register dce_uuid_p_t            uuid2,
     register unsigned32              *status
 )
 #else
 (uuid1, uuid2, status)
-register uuid_p_t                uuid1;
-register uuid_p_t                uuid2;
+register dce_uuid_p_t            uuid1;
+register dce_uuid_p_t            uuid2;
 register unsigned32              *status;
 #endif
 {
@@ -1076,7 +1076,7 @@ register unsigned32              *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_is_nil
+**  ROUTINE NAME:       dce_uuid_is_nil
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -1112,15 +1112,15 @@ register unsigned32              *status;
 **--
 **/
 
-boolean32 uuid_is_nil 
+boolean32 dce_uuid_is_nil 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t            uuid,
+    dce_uuid_p_t        uuid,
     unsigned32          *status
 )
 #else
 (uuid, status)
-uuid_p_t            uuid;
+dce_uuid_p_t        uuid;
 unsigned32          *status;
 #endif
 {
@@ -1135,7 +1135,7 @@ unsigned32          *status;
      * Note: This should later be changed to a field-by-field compare
      * because of portability problems with alignment and garbage in a UUID.
      */
-    if (memcmp (uuid, &uuid_g_nil_uuid, sizeof (uuid_t)) == 0)
+    if (memcmp (uuid, &uuid_g_nil_uuid, sizeof (dce_uuid_t)) == 0)
     {
         return (TRUE);
     }
@@ -1148,7 +1148,7 @@ unsigned32          *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_compare
+**  ROUTINE NAME:       dce_uuid_compare
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -1196,17 +1196,17 @@ unsigned32          *status;
 **--
 **/
 
-signed32 uuid_compare 
+signed32 dce_uuid_compare 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                uuid1,
-    uuid_p_t                uuid2,
+    dce_uuid_p_t            uuid1,
+    dce_uuid_p_t            uuid2,
     unsigned32              *status
 )
 #else
 (uuid1, uuid2, status)
-uuid_p_t                uuid1;
-uuid_p_t                uuid2;
+dce_uuid_p_t            uuid1;
+dce_uuid_p_t            uuid2;
 unsigned32              *status;
 #endif
 {
@@ -1232,13 +1232,13 @@ unsigned32              *status;
         }
 
         rCHECK_STRUCTURE (uuid2, status, -1);
-        return (uuid_is_nil (uuid2, status) ? 0 : -1);
+        return (dce_uuid_is_nil (uuid2, status) ? 0 : -1);
     }
 
     if (uuid2 == NULL)
     {
         rCHECK_STRUCTURE (uuid1, status, -1);
-        return (uuid_is_nil (uuid1, status) ? 0 : 1);
+        return (dce_uuid_is_nil (uuid1, status) ? 0 : 1);
     }
 
     rCHECK_STRUCTURE (uuid1, status, -1);
@@ -1311,7 +1311,7 @@ unsigned32              *status;
 /*
 **++
 **
-**  ROUTINE NAME:       uuid_hash
+**  ROUTINE NAME:       dce_uuid_hash
 **
 **  SCOPE:              - declared in UUID.IDL
 **
@@ -1351,15 +1351,15 @@ unsigned32              *status;
 **--
 **/
 
-unsigned16 uuid_hash 
+unsigned16 dce_uuid_hash 
 #ifdef _DCE_PROTO_
 (
-    uuid_p_t                uuid,
+    dce_uuid_p_t            uuid,
     unsigned32              *status
 )
 #else
 (uuid, status)
-uuid_p_t                uuid;
+dce_uuid_p_t            uuid;
 unsigned32              *status;
 #endif
 {
@@ -1464,13 +1464,13 @@ unsigned32              *status;
 static uuid_compval_t time_cmp 
 #ifdef _DCE_PROTO_
 (
-    uuid_time_p_t           time1,
-    uuid_time_p_t           time2
+    dce_uuid_time_p_t       time1,
+    dce_uuid_time_p_t       time2
 )
 #else
 (time1, time2)
-uuid_time_p_t           time1;
-uuid_time_p_t           time2;
+dce_uuid_time_p_t       time1;
+dce_uuid_time_p_t       time2;
 #endif
 {
     /*
@@ -1599,7 +1599,7 @@ unsigned64_t        *prodPtr;
 
 static void true_random_init (void)
 {
-    uuid_time_t         t;
+    dce_uuid_time_t     t;
     unsigned16          *seedp, seed=0;
 
 
@@ -1756,12 +1756,12 @@ unsigned16              *clkseq;
 void uuid_get_address 
 #ifdef _DCE_PROTO_
 (
-    uuid_address_p_t        addr,
+    dce_uuid_address_p_t    addr,
     unsigned32              *status
 )
 #else
 (addr, status)
-uuid_address_p_t        addr;
+dce_uuid_address_p_t    addr;
 unsigned32              *status;
 #endif
 {
@@ -1771,7 +1771,7 @@ unsigned32              *status;
      */
     if (got_address)
     {
-        memcpy (addr, &saved_addr, sizeof (uuid_address_t));
+        memcpy (addr, &saved_addr, sizeof (dce_uuid_address_t));
         *status = saved_st;
         return;
     }
@@ -1784,7 +1784,7 @@ unsigned32              *status;
     if (*status == uuid_s_ok)
     {
         got_address = TRUE;
-        memcpy (&saved_addr, addr, sizeof (uuid_address_t));
+        memcpy (&saved_addr, addr, sizeof (dce_uuid_address_t));
 
 #ifdef  UUID_DEBUG
         RPC_DBG_GPRINTF ((

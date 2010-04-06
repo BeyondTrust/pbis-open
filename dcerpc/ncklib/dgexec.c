@@ -215,7 +215,7 @@ boolean32 call_was_queued;
     rpc_v2_server_stub_epv_t ss_epv;
     rpc_mgr_epv_t mgr_epv;
     rpc_if_rep_p_t ifspec;
-    uuid_t type;
+    dce_uuid_t type;
     int force_way_auth;
     rpc_key_info_p_t key_info;
     rpc_dg_auth_epv_p_t auth_epv;

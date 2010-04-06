@@ -422,7 +422,7 @@ typedef struct rpc_cn_call_rep_s_t
         } client;
         struct
         {
-            uuid_t                      *if_id;
+            dce_uuid_t                      *if_id;
             unsigned32                  if_vers;
             unsigned16                  ihint;
             struct

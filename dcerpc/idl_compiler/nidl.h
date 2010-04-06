@@ -101,7 +101,7 @@ typedef unsigned8 boolean;
 #endif
 
 /*
- * IDL's model of the info in a UUID (see uuid_t in nbase.idl)
+ * IDL's model of the info in a UUID (see dce_uuid_t in nbase.idl)
  */
 
 typedef struct

@@ -285,7 +285,7 @@ PRIVATE void rpc__die _DCE_PROTOTYPE_ ((
  * R P C _ _ U U I D _ S T R I N G
  */
 
-PRIVATE char *rpc__uuid_string _DCE_PROTOTYPE_(( uuid_t */*uuid*/));
+PRIVATE char *rpc__uuid_string _DCE_PROTOTYPE_(( dce_uuid_t */*uuid*/));
 
 /*
  * R P C _ _ P R I N T _ S O U R C E

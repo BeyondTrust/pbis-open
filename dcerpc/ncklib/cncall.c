@@ -474,7 +474,7 @@ unsigned32              *st;
      * The start of stub data will depend upon whether the object 
      * UUID field is present.
      */
-    if (memcmp (&binding_r->obj, &uuid_g_nil_uuid, sizeof (uuid_t)) != 0)
+    if (memcmp (&binding_r->obj, &uuid_g_nil_uuid, sizeof (dce_uuid_t)) != 0)
     {
         /*
          * A non-nil object UUID is present.

@@ -50,7 +50,7 @@
 /* ========================================================================= */
 
 INTERNAL boolean conv_common  _DCE_PROTOTYPE_ ((
-        uuid_t * /*actuid*/,
+        dce_uuid_t * /*actuid*/,
         unsigned32 /*boot_time*/,
         rpc_dg_ccall_p_t * /*ccall*/,
         unsigned32 * /*st*/
@@ -70,14 +70,14 @@ INTERNAL boolean conv_common  _DCE_PROTOTYPE_ ((
 INTERNAL boolean conv_common
 #ifdef _DCE_PROTO_
 (
-    uuid_t *actuid,
+    dce_uuid_t *actuid,
     unsigned32 boot_time,
     rpc_dg_ccall_p_t *ccall,
     unsigned32 *st
 )
 #else
 (actuid, boot_time, ccall, st)
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 rpc_dg_ccall_p_t *ccall;
 unsigned32 *st;
@@ -152,7 +152,7 @@ PRIVATE void conv_who_are_you
 #ifdef _DCE_PROTO_
 (
     handle_t h ATTRIBUTE_UNUSED,       /* Not really */
-    uuid_t *actuid,
+    dce_uuid_t *actuid,
     unsigned32 boot_time,
     unsigned32 *seq,
     unsigned32 *st
@@ -160,7 +160,7 @@ PRIVATE void conv_who_are_you
 #else
 (h, actuid, boot_time, seq, st)
 handle_t h;       /* Not really */
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 unsigned32 *seq;
 unsigned32 *st;
@@ -194,19 +194,19 @@ PRIVATE void conv_who_are_you2
 #ifdef _DCE_PROTO_
 (
     handle_t h,       /* Not really */
-    uuid_t *actuid,
+    dce_uuid_t *actuid,
     unsigned32 boot_time,
     unsigned32 *seq,
-    uuid_t *cas_uuid,
+    dce_uuid_t *cas_uuid,
     unsigned32 *st
 )
 #else
 (h, actuid, boot_time, seq, cas_uuid, st)
 handle_t h;       /* Not really */
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 unsigned32 *seq;
-uuid_t *cas_uuid;
+dce_uuid_t *cas_uuid;
 unsigned32 *st;
 #endif
 {
@@ -233,14 +233,14 @@ PRIVATE void conv_are_you_there
 #ifdef _DCE_PROTO_
 (
     handle_t h ATTRIBUTE_UNUSED,       /* Not really */
-    uuid_t *actuid,
+    dce_uuid_t *actuid,
     unsigned32 boot_time,
     unsigned32 *st
 )
 #else
 (h, actuid, boot_time, st)
 handle_t h;       /* Not really */
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 unsigned32 *st;
 #endif
@@ -272,13 +272,13 @@ PRIVATE void conv_who_are_you_auth
 #ifdef _DCE_PROTO_
 (
     handle_t h ATTRIBUTE_UNUSED, /* not really */
-    uuid_t *actuid,
+    dce_uuid_t *actuid,
     unsigned32 boot_time,
     ndr_byte *in_data,
     signed32 in_len,
     signed32 out_max_len,
     unsigned32 *seq,
-    uuid_t *cas_uuid,
+    dce_uuid_t *cas_uuid,
     ndr_byte *out_data,
     signed32 *out_len,
     unsigned32 *st
@@ -286,13 +286,13 @@ PRIVATE void conv_who_are_you_auth
 #else
 (h, actuid, boot_time, in_data, in_len, out_max_len, seq, cas_uuid, out_data, out_len, st)
 handle_t h; /* not really */
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 ndr_byte *in_data;
 signed32 in_len;
 signed32 out_max_len;
 unsigned32 *seq;
-uuid_t *cas_uuid;
+dce_uuid_t *cas_uuid;
 ndr_byte *out_data;
 signed32 *out_len;
 unsigned32 *st;
@@ -394,7 +394,7 @@ unsigned32 *st;
 PRIVATE void conv_who_are_you_auth_more (h, actuid, boot_time, index,
                                          out_max_len, out_data, out_len, st)
 handle_t h ATTRIBUTE_UNUSED; /* not really */
-uuid_t *actuid;
+dce_uuid_t *actuid;
 unsigned32 boot_time;
 signed32 index;
 signed32 out_max_len;

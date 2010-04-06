@@ -106,7 +106,7 @@ static void rpc_ss_create_caller_context
     memcpy(
             (char *)&p_created_context->context_on_wire.context_handle_uuid,
             (char *)&p_wire_context->context_handle_uuid,
-                        sizeof(uuid_t));
+                        sizeof(dce_uuid_t));
 
     rpc_binding_copy(caller_handle, &p_created_context->using_handle, p_st);
     if (*p_st != error_status_ok) return;
@@ -152,7 +152,7 @@ void rpc_ss_er_ctx_from_wire
 
     if (in_out) {
         if (
-            uuid_is_nil(
+            dce_uuid_is_nil(
                 &p_wire_context->context_handle_uuid, (error_status_t *)p_st
             )
         ) {
@@ -181,7 +181,7 @@ void rpc_ss_er_ctx_from_wire
             if (*p_caller_context != NULL) {
                 /* And it wasn't NIL before the call */
                 if (
-                    ! uuid_equal(
+                    ! dce_uuid_equal(
                         &p_wire_context->context_handle_uuid,
                         &((rpc_ss_caller_context_element_t *)*p_caller_context)
                             ->context_on_wire.context_handle_uuid,
@@ -201,7 +201,7 @@ void rpc_ss_er_ctx_from_wire
     }
     else {  /* Handling an OUT parameter */
         if (
-            uuid_is_nil(
+            dce_uuid_is_nil(
                 &p_wire_context->context_handle_uuid, (error_status_t *)p_st
             )
         )
@@ -266,7 +266,7 @@ void rpc_ss_er_ctx_to_wire
         {
             /* No active context. Send callee a NIL UUID */
             p_wire_context->context_handle_attributes = 0;
-            uuid_create_nil(&p_wire_context->context_handle_uuid,(unsigned32*)p_st);
+            dce_uuid_create_nil(&p_wire_context->context_handle_uuid,(unsigned32*)p_st);
         }
         else
         {
@@ -303,7 +303,7 @@ static int debug_context_uuid(uuid_p, prefix)
     }
 
     fprintf(debug_fid, prefix);
-    for (j=0; j<sizeof(uuid_t); j++)
+    for (j=0; j<sizeof(dce_uuid_t); j++)
     {
         k = *uuid_p++;
         fprintf(debug_fid, " %02x", k);

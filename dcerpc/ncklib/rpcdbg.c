@@ -307,11 +307,11 @@ int             line;
 PRIVATE char *rpc__uuid_string 
 #ifdef _DCE_PROTO_
 (
-    uuid_t          *uuid ATTRIBUTE_UNUSED
+    dce_uuid_t          *uuid ATTRIBUTE_UNUSED
 )
 #else
 (uuid)
-uuid_t          *uuid;
+dce_uuid_t          *uuid;
 #endif
 {
 #ifndef DEBUG
@@ -324,7 +324,7 @@ uuid_t          *uuid;
     unsigned32          status;
 
 
-    uuid_to_string (uuid, &uuid_string_p, &status);
+    dce_uuid_to_string (uuid, &uuid_string_p, &status);
     if (status != uuid_s_ok)
     {
         return (NULL);

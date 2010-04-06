@@ -39,5 +39,5 @@
 
 interface nbase
 {
-    typedef [out_of_line] uuid_t;
+    typedef [out_of_line] dce_uuid_t;
 }

@@ -346,9 +346,9 @@ typedef struct {
     u_char flags2;          /* 03:01 more flag (see rpc_c_dg_pf2__... below) */
     u_char drep[3];         /* 04:03 data type format of sender (see below) */
     u_char serial_hi;       /* 07:01 high byte of fragment serial number */
-    uuid_t object;          /* 08:16 object UID */
-    uuid_t if_id;           /* 24:16 interface UID */
-    uuid_t actuid;          /* 40:16 activity UID of caller */
+    dce_uuid_t object;          /* 08:16 object UID */
+    dce_uuid_t if_id;           /* 24:16 interface UID */
+    dce_uuid_t actuid;          /* 40:16 activity UID of caller */
     unsigned32 server_boot; /* 56:04 time server booted */
     unsigned32 if_vers;     /* 60:04 version of interface */
     unsigned32 seq;         /* 64:04 sequence # -- monotonically increasing */
@@ -839,7 +839,7 @@ typedef enum {
 typedef struct rpc_dg_client_rep_t
 {   
     struct rpc_dg_client_rep_t *next;
-    uuid_t                     cas_uuid;         /* UUID uniquely identifying client    */
+    dce_uuid_t                     cas_uuid;         /* UUID uniquely identifying client    */
     rpc_network_rundown_fn_t   rundown;          /* routine to call if client dies      */  
     rpc_clock_t                last_update;      /* last time we heard from this client */  
     unsigned32                 refcnt;           /* # of references to this element     */ 
@@ -1269,8 +1269,8 @@ typedef struct rpc_dg_cct_elt_t {
     rpc_auth_info_p_t auth_info;        /* auth info to be used with server */
     rpc_key_info_p_t key_info;       /* key to use */
     struct rpc_dg_auth_epv_t *auth_epv; /* auth epv */
-    uuid_t actid;                       /* activity ID to use in msgs to server */
-    unsigned32 actid_hash;              /* uuid_hash(.actid) */
+    dce_uuid_t actid;                       /* activity ID to use in msgs to server */
+    unsigned32 actid_hash;              /* dce_uuid_hash(.actid) */
     unsigned32 seq;                     /* seq # to use in next call to server */
     rpc_clock_t timestamp;              /* last time connection used in a call */
     unsigned8 refcnt;                   /* # of references to the CCTE */
@@ -1441,7 +1441,7 @@ typedef struct rpc_dg_call_t {
     rpc_dg_xmitq_t xq;                  /* transmit queue */
     rpc_dg_recvq_t rq;                  /* receive queue */
     struct rpc_dg_sock_pool_elt_t *sock_ref;   /* reference to socket pool element */
-    unsigned32 actid_hash;              /* uuid_hash(.call_actid) */
+    unsigned32 actid_hash;              /* dce_uuid_hash(.call_actid) */
     rpc_key_info_p_t key_info;       /* key info */
     struct rpc_dg_auth_epv_t *auth_epv; /* auth epv */
     rpc_addr_p_t addr;                  /* location (network address) of peer */
@@ -1876,8 +1876,8 @@ typedef struct rpc_dg_ccall_t {
 
 typedef struct rpc_dg_sct_elt_t {
     struct rpc_dg_sct_elt_t *next;      /* -> next in hash chain */
-    uuid_t actid;                       /* activity of of remote client */
-    unsigned16 ahint;                   /* uuid_hash(.actid) % RPC_DG_SCT_SIZE */
+    dce_uuid_t actid;                       /* activity of of remote client */
+    unsigned16 ahint;                   /* dce_uuid_hash(.actid) % RPC_DG_SCT_SIZE */
     unsigned32 high_seq;                /* highest known seq */
     unsigned high_seq_is_way_validated: 1; /* T => .high_seq is WAY validated */
     unsigned8 refcnt;                   /* scte reference count */
@@ -2305,10 +2305,10 @@ typedef void (*rpc_dg_auth_recv_ck_fn_t) _DCE_PROTOTYPE_((
 typedef void (*rpc_dg_auth_way_fn_t) _DCE_PROTOTYPE_((
         rpc_key_info_p_t               /* in */   /*info*/,
         handle_t                        /* in */   /*h*/,
-        uuid_t                          /* in */  * /*actuid*/,
+        dce_uuid_t                          /* in */  * /*actuid*/,
         unsigned32                      /* in */   /*boot_time*/,
         unsigned32                      /* out */ * /*seqno*/,
-        uuid_t                          /* out */ * /*cas_uuid*/,
+        dce_uuid_t                          /* out */ * /*cas_uuid*/,
         unsigned32                      /* out */ * /*st*/
     ));
 
@@ -2560,7 +2560,7 @@ PRIVATE boolean32 rpc__dg_handle_conv _DCE_PROTOTYPE_((
         rpc_dg_recvq_elt_p_t /*rqe*/
     ));
 
-PRIVATE void rpc__dg_convc_indy _DCE_PROTOTYPE_(( uuid_p_t /*cas_uuid*/));
+PRIVATE void rpc__dg_convc_indy _DCE_PROTOTYPE_(( dce_uuid_p_t /*cas_uuid*/));
 
 
 PRIVATE void rpc__dg_handle_convc _DCE_PROTOTYPE_(( 
