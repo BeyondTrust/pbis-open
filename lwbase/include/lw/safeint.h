@@ -43,6 +43,10 @@
 #include <lw/attrs.h>
 #include <lw/ntstatus.h>
 
+#ifdef WIN32
+#define inline __inline
+#endif
+
 inline
 static
 LW_NTSTATUS
