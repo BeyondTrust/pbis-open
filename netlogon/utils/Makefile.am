@@ -21,12 +21,10 @@ noinst_HEADERS = \
         includes.h      \
 	lwnet-dns_p.h
 
-liblwnetutils_la_LDFLAGS =  \
-	@LIBUNISTR_LIBS@    \
-	@RESOLV_LIBS@       \
-	@RT_LIBS@           \
+liblwnetutils_la_LIBADD =  \
+	@LWREG_LIBS@   \
+	@RESOLV_LIBS@  \
+	@RT_LIBS@      \
 	@PTHREAD_LIBS@ 
 
-liblwnetutils_la_LIBADD =  \
-    @LWREG_LIBS@
 
