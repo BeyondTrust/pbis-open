@@ -31,13 +31,16 @@ AutoProv: no
 %endif
 
 %description
-The openldap package includes the development libraries and
-header files needed for compiling applications that use LDAP
+The openldap package includes the runtime libraries needed to use LDAP
 (Lightweight Directory Access Protocol) internals. LDAP is a set of
-protocols for enabling directory services over the Internet. Install
-this package only if you plan to develop or will need to compile
-customized LDAP clients.
+protocols for enabling directory services over the Internet.
 
+%package devel
+Summary: The likewise-openldap-devel package includes the development libraries and header files needed for compiling applications that use LDAP (Lightweight Directory Access Protocol) internals. LDAP is a set of protocols for enabling directory services over the Internet. Install this package only if you plan to develop or will need to compile customized LDAP clients.
+Group: Development/Libraries
+Requires: likewise-openldap
+%description devel
+The likewise-openldap-devel package contains the header files and libraries needed to develop software that utilizes the Lightweight Directory Access Protocol (LDAP).
 
 %prep
 
@@ -57,5 +60,14 @@ rm -rf $RPM_BUILD_ROOT
 %{PrefixDir}/%{_lib}/libldap*
 %{PrefixDir}/%{_lib}/liblber*
 %{PrefixDir}/bin/openldap/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/man/*
+
 
 %changelog
