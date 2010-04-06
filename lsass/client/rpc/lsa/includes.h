@@ -35,21 +35,17 @@
 
 #include <lwio/lwio.h>
 
-#include <DceSupport.h>
 #include <dce/rpc.h>
 #include <dce/smb.h>
+#include <dce/dcethread.h>
 #include <wc16str.h>
 #include <lw/ntstatus.h>
+#include <lwmem.h>
+#include <lwstr.h>
 #include <lwbuffer.h>
 
-#include <lwrpc/types.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/memptr.h>
-#include <lwrpc/sidhelper.h>
-
-#include "macros.h"
+#include <lw/rpc/lsa.h>
+#include <lw/macros.h>
 
 #include "lsadefs.h"
 #include "lsa_memory.h"

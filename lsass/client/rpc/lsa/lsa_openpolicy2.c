@@ -49,11 +49,11 @@
 
 NTSTATUS
 LsaOpenPolicy2(
-    IN  handle_t       hBinding,
-    IN  PCWSTR         pwszSysName,
-    IN  PVOID          attrib,
-    IN  UINT32         AccessMask,
-    OUT POLICY_HANDLE *phPolicy
+    IN  LSA_BINDING      hBinding,
+    IN  PCWSTR           pwszSysName,
+    IN  PVOID            attrib,
+    IN  UINT32           AccessMask,
+    OUT POLICY_HANDLE   *phPolicy
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -88,7 +88,7 @@ LsaOpenPolicy2(
     ObjAttribute.sec_qos      = &SecQos;
 
     DCERPC_CALL(ntStatus, cli_LsaOpenPolicy2(
-                              hBinding,
+                              (handle_t)hBinding,
                               pwszSystemName,
                               &ObjAttribute,
                               AccessMask,

@@ -49,8 +49,8 @@
 
 NTSTATUS
 LsaClose(
-    IN  handle_t hBinding,
-    IN  void*    hObject
+    IN  LSA_BINDING  hBinding,
+    IN  void*        hObject
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -60,7 +60,7 @@ LsaClose(
     BAIL_ON_INVALID_PTR(hObject, ntStatus);
 
     DCERPC_CALL(ntStatus, cli_LsaClose(
-                              hBinding,
+                              (handle_t)hBinding,
                               &hObject));
     BAIL_ON_NT_STATUS(ntStatus);
 

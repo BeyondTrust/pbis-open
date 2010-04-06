@@ -49,21 +49,23 @@
 
 NTSTATUS
 LsaLookupNames2(
-    IN  handle_t         hBinding,
-    IN  POLICY_HANDLE    hPolicy,
-    IN  UINT32           NumNames,
-    IN  PWSTR           *ppNames,
-    OUT RefDomainList  **ppDomList,
-    OUT TranslatedSid2 **ppSids,
-    IN  UINT16           Level,
-    IN OUT UINT32       *Count
+    IN  LSA_BINDING        hBinding,
+    IN  POLICY_HANDLE      hPolicy,
+    IN  DWORD              dwNumNames,
+    IN  PWSTR             *ppwszNames,
+    OUT RefDomainList    **ppDomList,
+    OUT TranslatedSid2   **ppSids,
+    IN  WORD               swLevel,
+    IN OUT PDWORD          pdwCount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntRetStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     UINT32 unknown1 = 0;
     UINT32 unknown2 = 0;
-    UnicodeStringEx *pLsaNames = NULL;
+    PUNICODE_STRING pLsaNames = NULL;
+    DWORD iName = 0;
     RefDomainList *pRefDomains = NULL;
     RefDomainList *pOutDomains = NULL;
     TranslatedSidArray2 SidArray = {0};
@@ -74,25 +76,34 @@ LsaLookupNames2(
 
     BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hPolicy, ntStatus);
-    BAIL_ON_INVALID_PTR(ppNames, ntStatus);
+    BAIL_ON_INVALID_PTR(ppwszNames, ntStatus);
     BAIL_ON_INVALID_PTR(ppDomList, ntStatus);
     BAIL_ON_INVALID_PTR(ppSids, ntStatus);
-    BAIL_ON_INVALID_PTR(Count, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwCount, ntStatus);
 
-    pLsaNames = InitUnicodeStringExArray(ppNames, NumNames);
-    BAIL_ON_NULL_PTR(pLsaNames, ntStatus);
+    dwError = LwAllocateMemory(sizeof(pLsaNames[0]) * dwNumNames,
+                               OUT_PPVOID(&pLsaNames));
+    BAIL_ON_WIN_ERROR(dwError);
 
-    *Count = 0;
+    for (iName = 0; iName < dwNumNames; iName++)
+    {
+        dwError = LwAllocateUnicodeStringExFromWc16String(
+                                      &pLsaNames[iName],
+                                      ppwszNames[iName]);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+    
+    *pdwCount = 0;
 
     DCERPC_CALL(ntStatus, cli_LsaLookupNames2(
-                              hBinding,
+                              (handle_t)hBinding,
                               hPolicy,
-                              NumNames,
+                              dwNumNames,
                               pLsaNames,
                               &pRefDomains,
                               &SidArray,
-                              Level,
-                              Count,
+                              swLevel,
+                              pdwCount,
                               unknown1,
                               unknown2));
     ntRetStatus = ntStatus;
@@ -150,10 +161,18 @@ LsaLookupNames2(
 
     *ppSids    = pTransSids;
     *ppDomList = pOutDomains;
-    *Count     = SidArray.count;
+    *pdwCount  = SidArray.count;
 
 cleanup:
-    FreeUnicodeStringExArray(pLsaNames, NumNames);
+    if (pLsaNames)
+    {
+        for (iName = 0; iName < dwNumNames; iName++)
+        {
+            LwFreeUnicodeString(&(pLsaNames[iName]));
+        }
+
+        LW_SAFE_FREE_MEMORY(pLsaNames);
+    }
 
     /* Free pointers returned from stub */
     LsaCleanStubTranslatedSidArray2(&SidArray);
@@ -170,15 +189,28 @@ cleanup:
         ntStatus = ntRetStatus;
     }
 
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
     return ntStatus;
 
 error:
-    LsaRpcFreeMemory(pTransSids);
-    LsaRpcFreeMemory(pOutDomains);
+    if (pTransSids)
+    {
+        LsaRpcFreeMemory(pTransSids);
+    }
+
+    if (pOutDomains)
+    {
+        LsaRpcFreeMemory(pOutDomains);
+    }
 
     *ppSids    = NULL;
     *ppDomList = NULL;
-    *Count     = 0;
+    *pdwCount  = 0;
 
     goto cleanup;
 }

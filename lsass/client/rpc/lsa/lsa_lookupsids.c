@@ -49,13 +49,13 @@
 
 NTSTATUS
 LsaLookupSids(
-    IN  handle_t         hBinding,
-    IN  POLICY_HANDLE    hPolicy,
-    IN  SidArray        *pSids,
-    OUT RefDomainList  **ppRefDomList,
-    OUT TranslatedName **ppTransNames,
-    IN  UINT16           Level,
-    IN OUT UINT32       *Count
+    IN  LSA_BINDING        hBinding,
+    IN  POLICY_HANDLE      hPolicy,
+    IN  SidArray          *pSids,
+    OUT RefDomainList    **ppRefDomList,
+    OUT TranslatedName   **ppTransNames,
+    IN  WORD               swLevel,
+    IN OUT PDWORD          pdwCount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -73,20 +73,20 @@ LsaLookupSids(
     BAIL_ON_INVALID_PTR(pSids, ntStatus);
     BAIL_ON_INVALID_PTR(ppRefDomList, ntStatus);
     BAIL_ON_INVALID_PTR(ppTransNames, ntStatus);
-    BAIL_ON_INVALID_PTR(Count, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwCount, ntStatus);
 
     /* windows allows Level to be in range 1-6 */
 
-    *Count = 0;
+    *pdwCount = 0;
 
     DCERPC_CALL(ntStatus, cli_LsaLookupSids(
-                              hBinding,
+                              (handle_t)hBinding,
                               hPolicy,
                               pSids,
                               &pRefDomains,
                               &NameArray,
-                              Level,
-                              Count));
+                              swLevel,
+                              pdwCount));
     ntRetStatus = ntStatus;
 
     /* Status other than success doesn't have to mean failure here */
@@ -151,7 +151,7 @@ LsaLookupSids(
 
     *ppTransNames = pTransNames;
     *ppRefDomList = pOutDomains;
-    *Count        = NameArray.count;
+    *pdwCount     = NameArray.count;
 
 cleanup:
     /* Free pointers returned from stub */
@@ -172,12 +172,19 @@ cleanup:
     return ntStatus;
 
 error:
-    LsaRpcFreeMemory(pTransNames);
-    LsaRpcFreeMemory(pOutDomains);
+    if (pTransNames)
+    {
+        LsaRpcFreeMemory(pTransNames);
+    }
+
+    if (pOutDomains)
+    {
+        LsaRpcFreeMemory(pOutDomains);
+    }
 
     *ppTransNames = NULL;
     *ppRefDomList = NULL;
-    *Count        = 0;
+    *pdwCount     = 0;
 
     goto cleanup;
 }

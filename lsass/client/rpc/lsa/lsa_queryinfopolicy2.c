@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -49,9 +49,9 @@
 
 NTSTATUS
 LsaQueryInfoPolicy2(
-    IN  handle_t               hBinding,
+    IN  LSA_BINDING            hBinding,
     IN  POLICY_HANDLE          hPolicy,
-    IN  UINT16                 Level,
+    IN  WORD                   swLevel,
     OUT LsaPolicyInformation **ppInfo
     )
 {
@@ -69,9 +69,9 @@ LsaQueryInfoPolicy2(
     *ppInfo = NULL;
 
     DCERPC_CALL(ntStatus, cli_LsaQueryInfoPolicy2(
-                              hBinding,
+                              (handle_t)hBinding,
                               hPolicy,
-                              Level,
+                              swLevel,
                               &pInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -81,7 +81,7 @@ LsaQueryInfoPolicy2(
                               NULL,
                               &dwOffset,
                               NULL,
-                              Level,
+                              swLevel,
                               pInfo,
                               &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -98,7 +98,7 @@ LsaQueryInfoPolicy2(
                               pOutInfo,
                               &dwOffset,
                               &dwSpaceLeft,
-                              Level,
+                              swLevel,
                               pInfo,
                               &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -110,13 +110,16 @@ cleanup:
     /* Free pointers allocated by dcerpc stub */
     if (pInfo)
     {
-        LsaFreeStubPolicyInformation(pInfo, Level);
+        LsaFreeStubPolicyInformation(pInfo, swLevel);
     }
 
     return ntStatus;
 
 error:
-    LsaRpcFreeMemory(pOutInfo);
+    if (pOutInfo)
+    {
+        LsaRpcFreeMemory(pOutInfo);
+    }
 
     *ppInfo = NULL;
     goto cleanup;
