@@ -1,6 +1,6 @@
 __PKG_PREFIX/bin
 __PKG_PREFIX/sbin
-__PKG_PREFIX/lib*/{*.so,*.so.*}
+__PKG_PREFIX/lib*/{*.so,*.so.*,gss/*.so}
 etc/likewise
 etc/init.d
 lib*/{*.so,*.so.*}
