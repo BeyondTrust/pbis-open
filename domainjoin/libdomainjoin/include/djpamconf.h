@@ -41,11 +41,6 @@ void DJNewConfigurePamForADLogin(
     LWException **exc
     );
 
-CENTERROR
-ConfigurePamForADLogin(
-    PCSTR pszShortDomainName
-    );
-
 void
 DJSetUseNewPamConfigurator(
         BOOLEAN bNewValue);
