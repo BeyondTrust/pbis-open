@@ -43,6 +43,7 @@
 #include <lwrpc/samrdefs.h>
 #include <lwrpc/lsadefs.h>
 
+
 /*
  * Domain trust definitions
  */
@@ -132,9 +133,15 @@
 #define NETR_TRUST_ATTR_WITHIN_FOREST        0x00000020
 #define NETR_TRUST_ATTR_TREAT_AS_EXTERNAL    0x00000040
 
-#if !defined(_DCE_IDL_) && defined(LIBRPC_BUILD)
-#include <dce/nbase.h>      /* uuid_t definition */
-#endif
+
+typedef struct _GUID {
+    ULONG   ulTimeLow;
+    USHORT  usTimeMid;
+    USHORT  usTimeHiAndVersion;
+    BYTE    ClockSeqHiAndReserved;
+    BYTE    ClockSeqLow;
+    BYTE    Node[6];
+} GUID, *PGUID;
 
 typedef struct netr_domain_trust {
 #ifdef _DCE_IDL_
@@ -150,7 +157,7 @@ typedef struct netr_domain_trust {
     UINT16 trust_type;
     UINT32 trust_attrs;
     PSID sid;
-    uuid_t guid;
+    GUID guid;
 } NetrDomainTrust;
 
 
