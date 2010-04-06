@@ -52,6 +52,14 @@ The Likewise Security and Authentication Subsystem
 contains components to authenticate users and groups
 in Windows Active Directory from Linux/UNIX hosts.
 
+%package devel
+Summary: Likewise Security and Authentication Subsystem Software Development Kit
+Group: Development/Libraries
+Requires: likewise-lsass
+
+%description devel
+The likewise-lsass-devel package includes the development libraries and header files that supply the application programming interface for the security and authentication subsystem (LSASS), which is used to authenticate users and groups in Windows Active Directory from Linux/UNIX hosts.
+
 %prep
 
 %build
@@ -75,6 +83,18 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 %{PrefixDir}/%{_lib}/*
 /%{_lib}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+%endif
+
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lsassd
