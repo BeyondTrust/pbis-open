@@ -103,5 +103,5 @@ function component_populate
         x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.dcerpcd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
     fi
     
-    libtool_rewrite_populate
+    
 }

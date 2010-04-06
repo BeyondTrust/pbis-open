@@ -100,5 +100,5 @@ function component_populate
         fi
     fi
 
-    libtool_rewrite_populate
+    
 }

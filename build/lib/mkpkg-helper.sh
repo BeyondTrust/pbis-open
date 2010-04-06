@@ -608,6 +608,10 @@ function _invoke_op_internal
             check_arg POPULATE_PREFIX_DIR "${POPULATE_PREFIX_DIR}"
             check_arg POPULATE_ROOT_DIR "${POPULATE_ROOT_DIR}"
             _invoke "$@"
+            (
+		source ${BUILD_ROOT}/src/linux/build/lib/mkcomp-helper.sh &&
+		libtool_rewrite_populate
+	    )
             ;;
 
         *)

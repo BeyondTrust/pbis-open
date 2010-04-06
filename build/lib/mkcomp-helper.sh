@@ -676,29 +676,33 @@ function libtool_rewrite_staging
 function _libtool_rewrite_populate
 {
     local staging_list="$(_libtool_staging_dirs)"
-
-    if [ "${PKG_TYPE}" = "install" ]
+    local rewrite_paths="$(echo ${staging_list} ${BUILD_RUN_ROOT} | sed 's/  */:/g')"
+    
+    if [ "${PKG_TYPE}" = "platform" ]
     then
-	local rewrite_paths="$(echo ${staging_list} ${BUILD_RUN_ROOT} | sed 's/  */:/g')"
-	local la
-	if echo ${POPULATE_PREFIX_DIR}/${_lib}/*.la | grep -v '*' >/dev/null 2>&1
-	then
-            for la in ${POPULATE_PREFIX_DIR}/${_lib}/*.la
-            do
-		$_LIBTOOL_REWRITE -final ${la} ${PREFIX_DIR} ${rewrite_paths}
-            done
-	fi
+	DEST_DIR="`cd "${PKG_DIR}" && pwd`"
+    else
+	DEST_DIR=""
     fi
 
+    local la
+    for la in ${POPULATE_PREFIX_DIR}/${_lib}/*.la
+    do
+	if [ -f "$la" ]
+	then
+	    $_LIBTOOL_REWRITE -final ${la} ${PREFIX_DIR} ${rewrite_paths} ${DEST_DIR}
+	fi
+    done
+    
     if test "${BUILD_OS_TYPE}" = "darwin"
     then
 	local rewrite_paths="$(echo ${staging_list} | sed 's/  */:/g')"
         for binary in ${POPULATE_PREFIX_DIR}/${_lib}/{/,grouppolicy}/*.{so,dylib}* ${POPULATE_PREFIX_DIR}/{sbin,bin}/* ${POPULATE_ROOT_DIR}/${_lib}/*.{so,dylib}* ${POPULATE_ROOT_DIR}/${_lib}/security/*.{so,dylib}*
         do
-          if [ -x "$binary" ] && file "$binary" | grep "Mach-O" >/dev/null 2>&1
-          then
-              $_DYLIB_REWRITE -final ${binary} ${PREFIX_DIR}/${_lib} ${rewrite_paths}
-          fi
+	    if [ -x "$binary" ] && file "$binary" | grep "Mach-O" >/dev/null 2>&1
+	    then
+		$_DYLIB_REWRITE -final ${binary} ${PREFIX_DIR}/${_lib} ${rewrite_paths} ${DEST_DIR}
+	    fi
         done
     fi
 }

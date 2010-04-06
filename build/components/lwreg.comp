@@ -122,5 +122,5 @@ function component_populate
         rsync -a ${COMP_PREFIX_DIR}/${_lib}/  ${POPULATE_PREFIX_DIR}/${_lib}/
     fi
 
-    libtool_rewrite_populate
+    
 }

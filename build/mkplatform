@@ -1,0 +1,207 @@
+#!/bin/bash
+
+source "${BUILD_ROOT}/src/linux/build/common.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/pkgtype-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/dep-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/lib/mkpkg-helper.sh"
+source "${BUILD_ROOT}/src/linux/build/version.sh"
+
+function setup_package_vars
+{
+    #
+    # Read component variables
+    #
+
+    PKG_VERSION=""
+    PKG_RELEASE=""
+    PKG_NEED_COMPAT=""
+    PKG_NEED_FOREIGN=""
+    PKG_COMPAT_DISPOSITION=""
+
+    local -x _FILE="${PKG_VARS_FILE}"
+    local -x PKG_ALIAS="${PKG_ALIAS}"
+
+    local _result
+    _result=`PKG_TYPE="${PKG_TYPE}" invoke_helper _invoke_vars "$@"`
+    exit_on_error $?
+
+    # echo "results=[${_result}]"
+    PKG_VERSION=`echo "${_result}" | sed -e /^PKG_VERSION=/!d -e s/^PKG_VERSION=// | tail -1`
+    PKG_RELEASE=`echo "${_result}" | sed -e /^PKG_RELEASE=/!d -e s/^PKG_RELEASE=// | tail -1`
+    PKG_NEED_COMPAT=`echo "${_result}" | sed -e /^PKG_NEED_COMPAT=/!d -e s/^PKG_NEED_COMPAT=// | tail -1`
+    PKG_NEED_FOREIGN=`echo "${_result}" | sed -e /^PKG_NEED_FOREIGN=/!d -e s/^PKG_NEED_FOREIGN=// | tail -1`
+
+    PKG_NAME="`package_native_name "${PKG_ALIAS}"`"
+      
+    #
+    # Fix up whether we really need compat based on platform
+    #
+
+    case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+        linux-x86_64|hpux-*|solaris-sparc)
+            : # Yes
+            ;;
+        solaris-i386)
+            [ "`uname -r`" = "5.10" ] || PKG_NEED_COMPAT=""
+            ;;
+        *)
+            PKG_NEED_COMPAT=""
+            ;;
+    esac
+
+    if [ -n "${PKG_NEED_FOREIGN}" ]; then
+        case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+            hpux-ia64)
+                PKG_NEED_FOREIGN="hppa20"
+                ;;
+            solaris-i386)
+                if [ "`uname -r`" = "5.10" ]; then
+                    PKG_NEED_FOREIGN=""
+                else
+                    PKG_NEED_FOREIGN="i386"
+                fi
+                ;;
+            *)
+                PKG_NEED_FOREIGN=""
+                ;;
+        esac
+    fi
+
+    PKG_COMPAT_DISPOSITION="comp"
+           
+    #
+    # Figure out version/release information
+    #
+
+    PKG_USING_DEFAULT_VERSION=""
+    if [ -n "${PKG_VERSION}" ]; then
+        if [ -z "${PKG_RELEASE}" ]; then
+            echo "PKG_VERSION specified, but missing PKG_RELEASE variable."
+            exit 1
+        fi
+    else
+        if [ -n "${PKG_RELEASE}" ]; then
+            echo "PKG_RELEASE specified, but missing PKG_VERSION variable."
+            exit 1
+        fi
+        PKG_USING_DEFAULT_VERSION=1
+        PKG_VERSION="${MAIN_VERSION}"
+        PKG_RELEASE="${MAIN_RELEASE}"
+    fi
+
+    PKG_FULL_RELEASE="${PKG_RELEASE}.${SVN_REVISION}"
+    if [ -n "${OFFICIAL_BUILD_NUMBER}" ]; then
+        PKG_FULL_RELEASE="${PKG_FULL_RELEASE}.${OFFICIAL_BUILD_NUMBER}"
+    fi
+
+    #
+    # Compute directories
+    #
+
+    PKG_PREFIX_DIR="${MAIN_PREFIX_DIR}"
+
+    PKG_BUILD_ROOT="${PKG_META_ROOT}/${PKG_ALIAS}/${PKG_TYPE}"
+    PKG_POPULATE_ROOT="${PKG_BUILD_ROOT}/populate"
+    PKG_PACKAGE_ROOT="${PKG_BUILD_ROOT}/package"
+
+    ### XXX - keep these in-sync w/mkcomp
+
+    if [ -n "${PKG_IS_COMPAT}" ]; then
+	_compat="-compat"
+    else
+	_compat=""
+    fi
+
+    if [ -n "${PKG_IS_FOREIGN}" ]; then
+        COMP_STAGING_PREFIX="${BUILD_META_ROOT}/${BUILD_OS_TYPE}/${PKG_NEED_FOREIGN}/components"
+    else
+        COMP_STAGING_PREFIX="${BUILD_META_OS_ROOT}/components"
+    fi
+    COMP_STAGING_SUFFIX="staging${_compat}"
+
+    return 0
+}
+
+function op_invoke
+{
+    local -x _OP="$1"
+    shift
+
+    local -x _FILE="${PKG_FUNC_FILE}"
+    local -x _DIR="${PKG_DIR}"
+
+    local -x PKG_TYPE="${PKG_TYPE}"
+    local -x PKG_ALIAS="${PKG_ALIAS}"
+    local -x PKG_NAME="${PKG_NAME}"
+    local -x PKG_VERSION="${PKG_VERSION}"
+    local -x PKG_RELEASE="${PKG_RELEASE}"
+    local -x PKG_COMPAT_DISPOSITION="${PKG_COMPAT_DISPOSITION}"
+    local -x PREFIX_DIR="${BUILD_PREFIX}"
+    local -x IS_COMPAT="${PKG_IS_COMPAT}"
+    local -x IS_FOREIGN="${PKG_IS_FOREIGN}"
+    local -x POPULATE_ROOT="${PKG_POPULATE_ROOT}"
+    local -x POPULATE_PREFIX_DIR="${PKG_POPULATE_PREFIX_DIR}"
+    local -x POPULATE_ROOT_DIR="${PKG_POPULATE_ROOT_DIR}"
+    local -x PKG_DIST_ROOT="${PKG_DIST_ROOT}"
+    local -x PKG_DIST_DIR="${PKG_DIST_DIR}"
+    local -x COMP_STAGING_PREFIX="${COMP_STAGING_PREFIX}"
+    local -x COMP_STAGING_SUFFIX="${COMP_STAGING_SUFFIX}"
+    local -x PACKAGES_DIR="${PACKAGES_DIR}"
+    local -x OLDLIBC=0
+    if check_is_rhel_21; then
+        OLDLIBC=1
+    fi
+
+    invoke_helper _invoke_op "$@"
+    exit_on_error $?
+
+    return 0
+}
+
+function invoke_helper
+{
+    (
+	"$@"
+    )
+}
+
+function populate
+{
+    PKG_TYPE="platform"
+    PKG_ALIAS="${1}"
+    PKG_FUNC_FILE="${BUILD_ROOT}/src/linux/build/packages/${1}/${1}.func"
+    PKG_VARS_FILE="${PKG_FUNC_FILE}"
+    PKG_DIR="${2}"
+    PREFIX_DIR="${BUILD_PREFIX}"
+    PKG_POPULATE_PREFIX_DIR="${2}/${BUILD_PREFIX}"
+    PKG_POPULATE_ROOT_DIR="${2}"
+
+    setup_package_vars
+
+    PKG_COMPAT_DISPOSITION="comp"
+
+    mkdir -p "${PKG_POPULATE_ROOT_DIR}"
+    exit_on_error $?
+
+    op_invoke populate
+
+    if [ -n "${PKG_NEED_COMPAT}" ]; then
+        ( PKG_IS_COMPAT=1 && setup_package_vars && op_invoke populate )
+        exit_on_error $?
+    fi
+
+    if [ -n "${PKG_NEED_FOREIGN}" ]; then
+        echo "Performing foreign population"        
+        ( PKG_IS_FOREIGN=1 && setup_package_vars && op_invoke populate )
+        exit_on_error $?
+    fi
+}
+
+
+
+PKG_TYPE="platform"
+
+for pkg in `product_packages ${1}`
+do
+    populate "${pkg}" "${2}"
+done

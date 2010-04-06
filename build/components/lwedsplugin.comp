@@ -72,5 +72,5 @@ function component_populate
     x_cp 0755 ${BUILD_ROOT}/src/linux/config/user-home-directory-in-dock.plist ${POPULATE_ROOT_DIR}/etc/likewise/.
     x_cp 0755 ${BUILD_ROOT}/src/linux/config/lwedsplugin.conf ${POPULATE_ROOT_DIR}/etc/likewise/.
 
-    libtool_rewrite_populate
+    
 }

@@ -83,5 +83,5 @@ function component_populate
     mkdir -p ${POPULATE_PREFIX_DIR}
     rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
 
-    libtool_rewrite_populate
+    
 }

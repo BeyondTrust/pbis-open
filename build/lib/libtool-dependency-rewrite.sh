@@ -11,6 +11,7 @@ MODE=$1
 LAFILE=$2
 FINALPATH=$3
 LAPATH=`echo $4 | $SED 's/::*/ /g'`
+DESTDIR=$5
 
 get_dependencies()
 {
@@ -81,7 +82,7 @@ rewrite_final_la_dep()
 	echo ""
     elif matches "$1" "${FINALPATH}/.*\.la$"
     then
-	echo "$1" | sed "s:^.*${FINALPATH}:${FINALPATH}:"
+	echo "$1" | sed "s:^.*${FINALPATH}:${DESTDIR}${FINALPATH}:"
     else
 	echo "$1"
     fi
@@ -89,61 +90,69 @@ rewrite_final_la_dep()
 
 deps=""
 
-if test "$MODE" = "-staging"
-then
-    echo "$(basename $LAFILE): Rewriting dependencies to reference staging directories"
-    for candidate in $(get_dependencies $LAFILE)
-    do
-	case "$candidate" in
-            ${FINALPATH}/*.la)
+case "$MODE" in
+    -staging)
+	echo "$(basename $LAFILE): Rewriting dependencies to reference staging directories"
+	for candidate in $(get_dependencies $LAFILE)
+	do
+	    case "$candidate" in
+		${FINALPATH}/*.la)
                 rewrite=$(rewrite_staging_la_dep $candidate)
                 echo " - Rewriting $candidate -> $rewrite"
                 deps="$deps $rewrite"
                 ;;
-            *)
-                deps="$deps $candidate"
-                ;;
-        esac
-    done
-    deps="$(pathchomp "$deps")"
-    installed_value=`$SED -n <$LAFILE 's/installed=\(.*\)/\1/p'`
-    if test $installed_value != no; then
-	echo "$(basename $LAFILE): Switching installed from $installed_value to no"
-	$SED <$LAFILE >$LAFILE.rewrite 's/installed=\(.*\)/installed=no/'
-	mv $LAFILE.rewrite $LAFILE
-    fi
-    objdir=`dirname $LAFILE`/.libs
-    if test ! -d $objdir; then
-	echo "$(basename $LAFILE): Creating $objdir"
-	ln -s . $objdir
-    fi
-elif test "$MODE" = "-final"
-then
-    installed_value=`$SED -n <$LAFILE 's/installed=\(.*\)/\1/p'`
-    if test $installed_value != yes
-    then
-	deps="-L$(dirname "${LAFILE}" | sed "s:^.*${FINALPATH}:${FINALPATH}:")"
-	echo "$(basename $LAFILE): Rewriting dependencies to reference final directory"
-	for candidate in $(get_dependencies $LAFILE)
-	do
-	    rewrite="$(rewrite_final_la_dep $candidate)"
-	    if [ "$candidate" != "$rewrite" ]
-	    then
-		echo " - Rewriting $candidate -> $rewrite"
-	    fi
-	    deps="$deps $rewrite"
+		*)
+                    deps="$deps $candidate"
+                    ;;
+            esac
 	done
-	echo "$(basename $LAFILE): Switching installed from $installed_value to yes"
-	$SED <$LAFILE >$LAFILE.rewrite 's/installed=\(.*\)/installed=yes/'
-	mv $LAFILE.rewrite $LAFILE
-
-	objdir=`dirname $LAFILE/.libs`
-	if test -d $objdir; then
-	    echo "$(basename $LAFILE): Removing $objdir"
-	    rm $objdir
+	deps="$(pathchomp "$deps")"
+	installed_value=`$SED -n <$LAFILE 's/installed=\(.*\)/\1/p'`
+	if test $installed_value != no; then
+	    echo "$(basename $LAFILE): Switching installed from $installed_value to no"
+	    $SED <$LAFILE >$LAFILE.rewrite 's/installed=\(.*\)/installed=no/'
+	    mv $LAFILE.rewrite $LAFILE
 	fi
-    fi
-fi
+	objdir=`dirname $LAFILE`/.libs
+	if test ! -d $objdir; then
+	    echo "$(basename $LAFILE): Creating $objdir"
+	    ln -s . $objdir
+	fi
+	;;
+    -final)
+	installed_value=`$SED -n <$LAFILE 's/installed=\(.*\)/\1/p'`
+	platform_value=`$SED -n <$LAFILE 's/likewise_platform=\(.*\)/\1/p'`
+	if test $installed_value != yes -a "$platform_value" != yes
+	then
+	    deps="-L${DESTDIR}$(dirname "${LAFILE}" | sed "s:^.*${FINALPATH}:${FINALPATH}:")"
+	    echo "$(basename $LAFILE): Rewriting dependencies to reference final directory"
+	    for candidate in $(get_dependencies $LAFILE)
+	    do
+		rewrite="$(rewrite_final_la_dep $candidate)"
+		if [ "$candidate" != "$rewrite" ]
+		then
+		    echo " - Rewriting $candidate -> $rewrite"
+		fi
+		deps="$deps $rewrite"
+	    done
+
+	    if [ -z "${DESTDIR}" ]
+	    then
+		echo "$(basename $LAFILE): Switching installed from $installed_value to yes"
+		$SED <$LAFILE >$LAFILE.rewrite 's/installed=\(.*\)/installed=yes/'
+		mv $LAFILE.rewrite $LAFILE
+	    else
+		echo "likewise_platform=yes" >> "$LAFILE"
+	    fi
+	    
+	    objdir=`dirname $LAFILE/.libs`
+	    if test -d $objdir; then
+		echo "$(basename $LAFILE): Removing $objdir"
+		rm $objdir
+	    fi
+	fi
+	;;
+esac
 
 replace_dependencies "$LAFILE" "$deps"
 exit $?
