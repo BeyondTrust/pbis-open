@@ -2642,8 +2642,10 @@ AD_FillTrustedDomainInfo(
     if (pDomainInfo->pGuid)
     {
         CHAR szGUID[37] = "";
+        uuid_t uuid = {0};
 
-        uuid_unparse(*pDomainInfo->pGuid, szGUID);
+        memcpy(&uuid, pDomainInfo->pGuid, sizeof(uuid));
+        uuid_unparse(uuid, szGUID);
 
         dwError = LwAllocateString(
                         szGUID,

@@ -171,7 +171,7 @@ LsaDmAddTrustedDomain(
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN PSID pDomainSid,
-    IN uuid_t* pDomainGuid,
+    IN PGUID pDomainGuid,
     IN PCSTR pszTrusteeDnsDomainName,
     IN DWORD dwTrustFlags,
     IN DWORD dwTrustType,

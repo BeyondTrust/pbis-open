@@ -79,7 +79,7 @@ typedef struct _LSA_DM_ENUM_DOMAIN_INFO {
     PSTR pszDnsDomainName;
     PSTR pszNetbiosDomainName;
     PSID pSid;
-    uuid_t* pGuid;
+    PGUID pGuid;
     PSTR pszTrusteeDnsDomainName;
     DWORD dwTrustFlags;
     DWORD dwTrustType;
@@ -207,7 +207,7 @@ LsaDmAddTrustedDomain(
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN PSID pDomainSid,
-    IN uuid_t* pDomainGuid,
+    IN PGUID pDomainGuid,
     IN PCSTR pszTrusteeDnsDomainName,
     IN DWORD dwTrustFlags,
     IN DWORD dwTrustType,

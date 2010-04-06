@@ -1101,7 +1101,7 @@ LsaDmpDomainCreate(
     IN OPTIONAL PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN PSID pDomainSid,
-    IN uuid_t* pDomainGuid,
+    IN PGUID pDomainGuid,
     IN OPTIONAL PCSTR pszDnsForestName,
     IN OPTIONAL PLWNET_DC_INFO pDcInfo
     )
@@ -1383,7 +1383,7 @@ LsaDmpAddTrustedDomain(
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN PSID pDomainSid,
-    IN uuid_t* pDomainGuid,
+    IN PGUID pDomainGuid,
     IN PCSTR pszTrusteeDnsDomainName,
     IN DWORD dwTrustFlags,
     IN DWORD dwTrustType,

@@ -949,14 +949,18 @@ ADState_ReadRegDomainEntry(
         BAIL_ON_LSA_ERROR(dwError);
         if (pszGUID)
         {
+            uuid_t uuid = {0};
+
             dwError = LwAllocateMemory(
                           UUID_STR_SIZE,
                           (PVOID*)&pListEntry->pGuid);
             BAIL_ON_LSA_ERROR(dwError);
+
+            memcpy(&uuid, pListEntry->pGuid, sizeof(uuid));
     
             if (uuid_parse(
                     pszGUID,
-                    *pListEntry->pGuid) < 0)
+                    uuid) < 0)
             {
                 // uuid_parse returns -1 on error, but does not set errno
                 dwError = LW_ERROR_INVALID_OBJECTGUID;
@@ -1179,8 +1183,12 @@ ADState_WriteRegDomainEntry(
 
     if (pDomainInfoEntry->pGuid)
     {
+        uuid_t uuid = {0};
+
+        memcpy(&uuid, pDomainInfoEntry->pGuid, sizeof(uuid));
+
         // Writes into a 37-byte caller allocated string
-        uuid_unparse(*pDomainInfoEntry->pGuid, szGuid);
+        uuid_unparse(uuid, szGuid);
 
     }
     dwError = RegUtilSetValue(

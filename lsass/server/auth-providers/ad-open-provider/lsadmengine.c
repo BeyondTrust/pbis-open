@@ -582,7 +582,7 @@ LsaDmEnginepAddOneWayOtherForestDomain(
     )
 {
     DWORD dwError = 0;
-    uuid_t guid = { 0 };
+    GUID guid = { 0 };
     PSID pSid = NULL;
     PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo = NULL;
 
