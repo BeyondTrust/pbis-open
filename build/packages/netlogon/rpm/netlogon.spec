@@ -38,6 +38,13 @@ The Netlogon service allows clients to retrieve
 information about domain controllers in a given domain.
 in Windows Active Directory from Linux/UNIX hosts.
 
+%package devel
+Summary: Likewise Netlogon Software Development Kit
+Group: Development/Libraries
+Requires: likewise-netlogon
+%description devel
+The likewise-netlogon-devel package includes the development libraries and header files that supply the application programming interface to query information about domain controllers in a given domain.
+
 %prep
 
 %build
@@ -58,6 +65,14 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
 %{PrefixDir}/%{_lib}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/man/*
 
 %define initScriptPathList %{INIT_DIR}/netlogond
 %post
