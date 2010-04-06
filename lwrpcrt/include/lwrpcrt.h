@@ -46,7 +46,7 @@ extern "C" {
 typedef unsigned32 RPC_STATUS;
 typedef handle_t RPC_BINDING_HANDLE;
 typedef rpc_if_handle_t RPC_IF_HANDLE;
-typedef uuid_t UUID;
+typedef dce_uuid_t UUID;
 typedef rpc_mgr_proc_t RPC_MGR_EPV;
 typedef idl_ushort_int *RPC_WSTR;
 typedef rpc_auth_identity_handle_t RPC_AUTH_IDENTITY_HANDLE;
