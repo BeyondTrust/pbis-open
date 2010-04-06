@@ -220,7 +220,7 @@ AC_SUBST(RT_LIBS)
 
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([strndup strncasecmp])
+AC_CHECK_FUNCS([strndup strncasecmp strcasestr])
 AC_CHECK_FUNCS([strtoll __strtoll strtoull __strtoull strtol strtoul])
 AC_CHECK_DECLS([isblank], [], [], [#include <ctype.h>])
 

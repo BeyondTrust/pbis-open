@@ -647,7 +647,8 @@ DWORD
 AD_AuthenticateUser(
     HANDLE hProvider,
     PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     )
 {
     DWORD dwError = 0;
@@ -683,7 +684,7 @@ AD_AuthenticateUser(
 error:
 
     LsaAdProviderStateRelease(gpLsaAdProviderState);
-
+    *ppszMessage = NULL;
     return dwError;
 }
 

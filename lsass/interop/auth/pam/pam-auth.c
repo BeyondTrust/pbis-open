@@ -62,6 +62,7 @@ pam_sm_authenticate(
     PLSA_PAM_CONFIG pConfig = NULL;
     PLSA_USER_INFO_0 pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
+    PSTR pszMessage = NULL;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -128,7 +129,15 @@ pam_sm_authenticate(
         dwError = LsaAuthenticateUser(
             hLsaConnection,
             pszLoginId,
-            pszPassword);
+            pszPassword,
+            &pszMessage);
+        if (pszMessage)
+        {
+            LsaPamConverse(pamh,
+                           pszMessage,
+                           PAM_TEXT_INFO,
+                           NULL);
+        }
         if (dwError == LW_ERROR_PASSWORD_EXPIRED)
         {
             // deal with this error in the
@@ -228,6 +237,7 @@ cleanup:
 
     LW_SAFE_CLEAR_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
+    LW_SAFE_FREE_STRING(pszMessage);
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::end");
 

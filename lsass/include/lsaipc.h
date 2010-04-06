@@ -163,7 +163,7 @@ typedef enum __LSA_IPC_TAG
 typedef struct __LSA_IPC_ERROR
 {
     DWORD dwError;
-    PCSTR pszErrorMessage;
+    PSTR pszErrorMessage;
 } LSA_IPC_ERROR, *PLSA_IPC_ERROR;
 
 typedef struct __LSA_IPC_FIND_NSSARTEFACT_BY_KEY_REQ

@@ -54,7 +54,8 @@ DWORD
 LsaAuthenticateUser(
     HANDLE hLsaConnection,
     PCSTR  pszLoginName,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     );
 
 LSASS_API

@@ -767,6 +767,30 @@ error:
     goto cleanup;
 }
 
+PSTR
+LwCaselessStringSearch(
+    PCSTR pszHaystack,
+    PCSTR pszNeedle
+    )
+{
+#ifdef HAVE_STRCASESTR
+    return strcasestr(pszHaystack, pszNeedle);
+#else
+    PSTR pszPos = (PSTR)pszHaystack;
+    size_t sNeedle = strlen(pszNeedle);
+
+    while (*pszPos)
+    {
+        if (!strncasecmp(pszHaystack, pszNeedle, sNeedle))
+        {
+            return pszPos;
+        }
+        pszPos++;
+    }
+    return NULL;
+#endif
+}
+
 /*
 local variables:
 mode: c

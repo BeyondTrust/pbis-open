@@ -144,7 +144,7 @@ AD_InitializeConfig(
     pConfig->bEnableEventLog = FALSE;
     pConfig->bShouldLogNetworkConnectionEvents = TRUE;
     pConfig->bRefreshUserCreds = TRUE;
-    pConfig->CellSupport = AD_CELL_SUPPORT_FULL;
+    pConfig->CellSupport = AD_CELL_SUPPORT_UNPROVISIONED;
     pConfig->CacheBackend = AD_CACHE_SQLITE;
     pConfig->bTrimUserMembershipEnabled = TRUE;
     pConfig->bNssGroupMembersCacheOnlyEnabled = FALSE;
@@ -238,10 +238,7 @@ AD_ReadRegistry(
     LSA_AD_CONFIG StagingConfig;
 
     const PCSTR CellSupport[] = {
-        "full",
-        "file",
-        "unprovisioned",
-        "default-schema"
+        "unprovisioned"
     };
 
     const PCSTR CacheBackend[] = 
@@ -436,8 +433,8 @@ AD_ReadRegistry(
             "CellSupport",
             TRUE,
             LsaTypeEnum,
-            AD_CELL_SUPPORT_FULL,
-            AD_CELL_SUPPORT_DEFAULT_SCHEMA,
+            AD_CELL_SUPPORT_UNPROVISIONED,
+            AD_CELL_SUPPORT_UNPROVISIONED,
             CellSupport,
             &StagingConfig.CellSupport
         },

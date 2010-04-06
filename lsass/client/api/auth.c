@@ -51,7 +51,8 @@ DWORD
 LsaAuthenticateUser(
     HANDLE hLsaConnection,
     PCSTR  pszLoginName,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     )
 {
     DWORD dwError = 0;
@@ -62,7 +63,8 @@ LsaAuthenticateUser(
     dwError = LsaTransactAuthenticateUser(
                 hLsaConnection,
                 pszLoginName,
-                pszPassword);
+                pszPassword,
+                ppszMessage);
 error:
 
     return dwError;

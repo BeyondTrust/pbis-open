@@ -1,7 +1,7 @@
 SUBDIRS =
 
 if ENABLE_AD
-SUBDIRS += ad-provider
+SUBDIRS += ad-open-provider
 endif
 
 if ENABLE_LOCAL

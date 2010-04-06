@@ -40,6 +40,8 @@ MOD_EXT=".so"
 # not appear to be useful.
 default_skeldirs="/etc/skel"
 default_homedir_prefix="/home"
+AC_DEFINE_UNQUOTED([AD_DEFAULT_HOMEDIR_PREFIX], ["$default_homedir_prefix"], [This directory substitutes for %H])
+AC_DEFINE_UNQUOTED([AD_DEFAULT_SKELDIRS], ["$default_skeldirs"], [The directory to copy skeleton files from])
 
 
 CF_FRAMEWORK_LDFLAGS=""
@@ -1057,8 +1059,7 @@ AC_CONFIG_FILES([Makefile
                  server/api/Makefile
                  server/ntlm/Makefile
                  server/auth-providers/Makefile
-                 server/auth-providers/ad-provider/addef.h
-                 server/auth-providers/ad-provider/Makefile
+                 server/auth-providers/ad-open-provider/Makefile
                  server/auth-providers/local-provider/lpdefs.h
                  server/auth-providers/local-provider/Makefile
                  server/lsassd/Makefile

@@ -60,7 +60,8 @@ typedef BOOLEAN (*PFNSERVICESDOMAIN)(PCSTR pszDomain);
 typedef DWORD (*PFNAUTHENTICATEUSER)(
                         HANDLE hProvider,
                         PCSTR  pszLoginId,
-                        PCSTR  pszPassword
+                        PCSTR  pszPassword,
+                        PSTR*  ppszMessage
                         );
 
 typedef DWORD (*PFNAUTHENTICATEUSEREX)(

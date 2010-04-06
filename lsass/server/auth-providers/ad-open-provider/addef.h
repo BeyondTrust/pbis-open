@@ -57,10 +57,6 @@
 
 #define AD_DEFAULT_UMASK            022
 
-#define AD_DEFAULT_HOMEDIR_PREFIX "@default_homedir_prefix@"
-
-#define AD_DEFAULT_SKELDIRS       "@default_skeldirs@"
-
 #define AD_DEFAULT_HOMEDIR_TEMPLATE "%H/local/%D/%U"
 
 #define AD_CACHE_REAPER_TIMEOUT_MINIMUM_SECS (5 * LSA_SECONDS_IN_MINUTE)

@@ -187,6 +187,20 @@ LwLdapDirectoryOnePagedSearch(
     LDAPMessage**  ppMessage
     );
 
+DWORD
+LwLdapCountEntries(
+    HANDLE hDirectory,
+    LDAPMessage* pMessage,
+    PDWORD pdwCount
+    );
+
+DWORD
+LwLdapModify(
+    HANDLE hDirectory,
+    PCSTR pszDN,
+    LDAPMod** ppMods
+    );
+
 LDAPMessage*
 LwLdapFirstEntry(
     HANDLE hDirectory,
@@ -219,6 +233,14 @@ LwLdapGetString(
     LDAPMessage* pMessage,
     PCSTR pszFieldName,
     PSTR* ppszValue
+    );
+
+DWORD
+LwLdapGetGUID(
+    IN HANDLE       hDirectory,
+    IN LDAPMessage* pMessage,
+    IN PSTR         pszFieldName,
+    OUT PSTR*       ppszGUID
     );
 
 DWORD

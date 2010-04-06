@@ -261,6 +261,31 @@ error:
 }
 
 DWORD
+LwAllocateWc16sPrintfW(
+    PWSTR* ppszString,
+    const wchar_t* pszFormat,
+    ...
+    )
+{
+    DWORD dwError = 0;
+    PWSTR pszNewString = NULL;
+    va_list args;
+
+    va_start(args, pszFormat);
+
+    pszNewString = asw16printfwv(pszFormat, args);
+    if (pszNewString == NULL)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+    }
+    *ppszString = pszNewString;
+
+    va_end(args);
+
+    return dwError;
+}
+
+DWORD
 LwWc16sToUpper(
     IN OUT PWSTR pwszString
     )

@@ -30,7 +30,7 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
 "Id"="lsa-activedirectory-provider"
-"Path"="@providerdir@/liblsass_auth_provider_ad@MOD_EXT@"
+"Path"="@providerdir@/liblsass_auth_provider_ad_open@MOD_EXT@"
 "LogNetworkConnectionEvents"=dword:00000001
 "LoginShellTemplate"="/bin/sh"
 "HomeDirPrefix"="@default_homedir_prefix@"
@@ -49,7 +49,7 @@
 "HomeDirUmask"="022"
 "SkeletonDirs"="@default_skeldirs@"
 "RefreshUserCredentials"=dword:00000001
-"CellSupport"="full"
+"CellSupport"="unprovisioned"
 "TrimUserMembership"=dword:00000001
 "NssGroupMembersQueryCacheOnly"=dword:00000000
 "NssUserMembershipQueryCacheOnly"=dword:00000000

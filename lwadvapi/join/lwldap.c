@@ -1066,6 +1066,67 @@ LwLdapFirstEntry(
     return ldap_first_entry(pDirectory->ld, pMessage);
 }
 
+DWORD
+LwLdapCountEntries(
+    HANDLE hDirectory,
+    LDAPMessage* pMessage,
+    PDWORD pdwCount
+    )
+{
+    int iCount = 0;
+    int err = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
+    DWORD dwError = 0;
+
+    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+    iCount = ldap_count_entries(pDirectory->ld, pMessage);
+
+    if (iCount < 0)
+    {
+        dwError = ldap_get_option(
+                        pDirectory->ld,
+                        LDAP_OPT_ERROR_NUMBER,
+                        &err);
+        BAIL_ON_LDAP_ERROR(dwError);
+        dwError = err;
+        BAIL_ON_LDAP_ERROR(dwError);
+    }
+
+    *pdwCount = iCount;
+
+cleanup:
+    return dwError;
+
+error:
+    *pdwCount = 0;
+    goto cleanup;
+}
+
+DWORD
+LwLdapModify(
+    HANDLE hDirectory,
+    PCSTR pszDN,
+    LDAPMod** ppMods
+    )
+{
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
+    DWORD dwError = 0;
+
+    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+
+    dwError = ldap_modify_s(
+                  pDirectory->ld,
+                  pszDN,
+                  ppMods);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 LDAPMessage*
 LwLdapNextEntry(
     HANDLE hDirectory,
@@ -1174,6 +1235,79 @@ error:
 
     goto cleanup;
 }
+
+DWORD
+LwLdapGetGUID(
+    IN HANDLE       hDirectory,
+    IN LDAPMessage* pMessage,
+    IN PSTR         pszFieldName,
+    OUT PSTR*       ppszGUID
+    )
+{
+    DWORD                  dwError = LW_ERROR_SUCCESS;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
+    struct berval **                 ppValues = NULL;
+    uint8_t                rawGUIDValue[16];
+    PSTR                   pszValue = NULL;
+
+    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+
+    ppValues = ldap_get_values_len(
+                            pDirectory->ld,
+                            pMessage,
+                            pszFieldName);
+    if (!ppValues || ppValues[0]->bv_len != sizeof(rawGUIDValue))
+    {
+        dwError = LW_ERROR_INVALID_LDAP_ATTR_VALUE;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    memcpy(
+        rawGUIDValue,
+        ppValues[0]->bv_val,
+        sizeof(rawGUIDValue));
+
+    dwError = LwAllocateStringPrintf(
+                  &pszValue,
+                  "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                  rawGUIDValue[3],
+                  rawGUIDValue[2],
+                  rawGUIDValue[1],
+                  rawGUIDValue[0],
+                  rawGUIDValue[5],
+                  rawGUIDValue[4],
+                  rawGUIDValue[7],
+                  rawGUIDValue[6],
+                  rawGUIDValue[8],
+                  rawGUIDValue[9],
+                  rawGUIDValue[10],
+                  rawGUIDValue[11],
+                  rawGUIDValue[12],
+                  rawGUIDValue[13],
+                  rawGUIDValue[14],
+                  rawGUIDValue[15]);
+    BAIL_ON_LW_ERROR(dwError);
+
+    *ppszGUID = pszValue;
+    pszValue = NULL;
+
+cleanup:
+
+    if (ppValues)
+    {
+        ldap_value_free_len(ppValues);
+    }
+
+    LW_SAFE_FREE_STRING(pszValue);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+
+}
+
 
 DWORD
 LwLdapGetDN(

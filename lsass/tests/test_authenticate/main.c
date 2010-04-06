@@ -99,7 +99,8 @@ main(
     dwError = LsaAuthenticateUser(
                hLsaConnection,
                pszUserId,
-               pszPassword);
+               pszPassword,
+               NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     fprintf(stdout, "Successfully authenticated user %s\n", pszUserId);

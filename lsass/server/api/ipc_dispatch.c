@@ -387,20 +387,22 @@ LsaSrvIpcAuthenticateUser(
     DWORD dwError = 0;
     PLSA_IPC_AUTH_USER_REQ pReq = pIn->data;
     PLSA_IPC_ERROR pError = NULL;
+    PSTR pszMessage = NULL;
 
     dwError = LsaSrvAuthenticateUser(
                         LsaSrvIpcGetSessionData(pCall),
                         pReq->pszLoginName,
-                        pReq->pszPassword);
+                        pReq->pszPassword,
+                        &pszMessage);
 
     if (!dwError)
     {
         pOut->tag = LSA_R_AUTH_USER_SUCCESS;
-        pOut->data = NULL;
+        pOut->data = pszMessage;
     }
     else
     {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
+        dwError = LsaSrvIpcCreateError(dwError, pszMessage, &pError);
         BAIL_ON_LSA_ERROR(dwError);
 
         pOut->tag = LSA_R_AUTH_USER_FAILURE;

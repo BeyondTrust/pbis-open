@@ -146,6 +146,7 @@ LsaNssAuthenticate(
     DWORD dwError = LW_ERROR_SUCCESS;
     PLSA_USER_INFO_0 pInfo = NULL;
     const DWORD dwInfoLevel = 0;
+    PSTR pszMessage = NULL;
 
     LSA_LOG_PAM_DEBUG("Lsass LAM authenticating user [%s]",
             pszUser? pszUser: "(null)");
@@ -166,7 +167,8 @@ LsaNssAuthenticate(
     dwError = LsaAuthenticateUser(
                 hLsaConnection,
                 pInfo->pszName,
-                pszResponse);
+                pszResponse,
+                &pszMessage);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaCheckUserInList(
@@ -183,6 +185,14 @@ LsaNssAuthenticate(
 
 cleanup:
 
+    if (ppszOutputMessage)
+    {
+        *ppszOutputMessage = pszMessage;
+    }
+    else
+    {
+        LW_SAFE_FREE_STRING(pszMessage);
+    }
     if (pInfo != NULL)
     {
         LsaFreeUserInfo(

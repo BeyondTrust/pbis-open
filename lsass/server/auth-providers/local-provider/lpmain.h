@@ -84,7 +84,8 @@ DWORD
 LocalAuthenticateUser(
     HANDLE hProvider,
     PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     );
 
 DWORD

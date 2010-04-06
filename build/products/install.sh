@@ -987,7 +987,7 @@ do_uninstall()
         $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
     fi
 
-    dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
+    dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT} ${OBSOLETE_PACKAGES}`
 
     scrub_prefix
 

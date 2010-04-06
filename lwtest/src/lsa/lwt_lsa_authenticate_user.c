@@ -322,7 +322,8 @@ AuthenticateUserValid(
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             pszUser, 
-                            pszPassword);
+                            pszPassword,
+                            NULL);
 
     if ( dwLocalError != LW_ERROR_SUCCESS )
     {
@@ -359,11 +360,15 @@ AuthenticateUserDisabled(
 
     char szTestMsg[128] = { 0 };
     
+<<<<<<< .working
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             pszUser, 
                             pszPassword);
 
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+>>>>>>> .merge-right.r41851
     if ( dwLocalError != LW_ERROR_ACCOUNT_DISABLED )
     {
         dwError = LW_ERROR_TEST_FAILED;
@@ -400,11 +405,15 @@ AuthenticateUserAccountExpired(
 
     char szTestMsg[128] = { 0 };
 
+<<<<<<< .working
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             pszUser, 
                             pszPassword);
 
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+>>>>>>> .merge-right.r41851
     if ( dwLocalError != LW_ERROR_ACCOUNT_EXPIRED )
     {
         dwError = LW_ERROR_TEST_FAILED;
@@ -440,11 +449,15 @@ AuthenticateUserLockedOut(
 
     char szTestMsg[128] = { 0 };
 
+<<<<<<< .working
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             pszUser, 
                             pszPassword);
 
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+>>>>>>> .merge-right.r41851
     if ( dwLocalError != LW_ERROR_ACCOUNT_LOCKED )
     {
         dwError = LW_ERROR_TEST_FAILED;
@@ -481,10 +494,14 @@ AuthenticateUserPasswordExpired(
 
     char szTestMsg[128] = { 0 };
 
+<<<<<<< .working
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             pszUser, 
                             pszPassword);
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+>>>>>>> .merge-right.r41851
     if ( dwLocalError != LW_ERROR_PASSWORD_EXPIRED )
     {
         dwError = LW_ERROR_TEST_FAILED;
@@ -518,7 +535,12 @@ AuthenticateUserInvalid(
     DWORD dwInvalidTests = 0;
     PSTR pszInvalidData = NULL;
     
+<<<<<<< .working
     if (!pTestData || !pTestData->pInvalidDataIface)
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+    if ( dwLocalError == LW_ERROR_SUCCESS )
+>>>>>>> .merge-right.r41851
     {
         dwError = LW_ERROR_TEST_SKIPPED;
         BAIL_ON_TEST_BROKE(dwError);
@@ -583,12 +605,17 @@ AuthenticateUserNULLData(
     PCSTR pszTestDescription = "Authentication rejects NULL parameters.";
     char szTestMsg[128] = { 0 };
     
+<<<<<<< .working
     dwLocalError = LsaAuthenticateUser( 
                             hLsaConnection, 
                             NULL, 
                             NULL);
 
     if ( dwLocalError != LW_ERROR_INVALID_PARAMETER )
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, "badPassword", NULL);
+    if ( dwLocalError == LW_ERROR_SUCCESS  )
+>>>>>>> .merge-right.r41851
     {
         dwError = LW_ERROR_TEST_FAILED;
         snprintf( 
@@ -613,6 +640,7 @@ CheckAPIInvalidErrors(
     DWORD dwError = LW_ERROR_SUCCESS;
     DWORD dwLocalError = 0;
     
+<<<<<<< .working
     char szTestMsg[256] = { 0 };
     PCSTR pszTestAPIs = "LsaAuthenticateUser";
     PCSTR pszTestDescription = "Authentication rejects bad parameters.";
@@ -623,6 +651,10 @@ CheckAPIInvalidErrors(
                                 pLwtFailData->pszPassword);
     
     if ( dwLocalError != pLwtFailData->dwErrorCode )
+=======
+    dwLocalError = LsaAuthenticateUser(hLsaConnection, pszUser, pszPassword, NULL);
+    if ( dwLocalError == LW_ERROR_SUCCESS )
+>>>>>>> .merge-right.r41851
     {
         dwError = LW_ERROR_TEST_FAILED;
         snprintf( 

@@ -92,7 +92,8 @@ DWORD
 AD_AuthenticateUser(
     HANDLE hProvider,
     PCSTR  pszUserName,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     );
 
 DWORD

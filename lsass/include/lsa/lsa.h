@@ -1378,7 +1378,8 @@ LW_DWORD
 LsaAuthenticateUser(
     LW_HANDLE hLsaConnection,
     LW_PCSTR pszLoginName,
-    LW_PCSTR pszPassword
+    LW_PCSTR pszPassword,
+    LW_PSTR* ppszMessage
     );
 
 LW_DWORD

@@ -67,7 +67,8 @@ _nss_lsass_authenticate(
 
     dwError = LsaAuthenticateUser(hLsaConnection,
                                   pszUserName,
-                                  pszPassword);
+                                  pszPassword,
+                                  NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaCheckUserInList(hLsaConnection,

@@ -60,6 +60,12 @@ static LWMsgTypeSpec gLsaIPCErrorSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsaStringSpec[] =
+{
+    LWMSG_PSTR,
+    LWMSG_TYPE_END
+};
+
 LWMsgTypeSpec gLsaGroupInfo0Spec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_GROUP_INFO_0),
@@ -1252,7 +1258,7 @@ static LWMsgTypeSpec gLsa2IpcDeleteObjectReqSpec[] =
 static LWMsgProtocolSpec gLsaIPCSpec[] =
 {
     LWMSG_MESSAGE(LSA_Q_AUTH_USER, gLsaIPCAuthUserReqSpec),
-    LWMSG_MESSAGE(LSA_R_AUTH_USER_SUCCESS, NULL),
+    LWMSG_MESSAGE(LSA_R_AUTH_USER_SUCCESS, gLsaStringSpec),
     LWMSG_MESSAGE(LSA_R_AUTH_USER_FAILURE, gLsaIPCErrorSpec),
     LWMSG_MESSAGE(LSA_Q_AUTH_USER_EX, gLsaIPCAuthUserExReqSpec),
     LWMSG_MESSAGE(LSA_R_AUTH_USER_EX_SUCCESS, gLsaAuthUserInfoPtrSpec),

@@ -50,7 +50,8 @@ DWORD
 LsaSrvAuthenticateUser(
     HANDLE hServer,
     PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     )
 {
     DWORD dwError = 0;
@@ -58,6 +59,7 @@ LsaSrvAuthenticateUser(
     BOOLEAN bInLock = FALSE;
     PLSA_AUTH_PROVIDER pProvider = NULL;
     HANDLE hProvider = (HANDLE)NULL;
+    PSTR pszMessage = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
@@ -70,10 +72,12 @@ LsaSrvAuthenticateUser(
         dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
+        LW_SAFE_FREE_STRING(pszMessage);
         dwError = pProvider->pFnTable2->pfnAuthenticateUser(
                                             hProvider,
                                             pszLoginId,
-                                            pszPassword);
+                                            pszPassword,
+                                            &pszMessage);
         if (!dwError)
         {
             if (LsaSrvEventlogEnabled())
@@ -131,6 +135,7 @@ cleanup:
     }
 
     LSA_TRACE_END_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
+    *ppszMessage = pszMessage;
 
     return dwError;
 
@@ -163,6 +168,7 @@ LsaSrvAuthenticateUserEx(
     HANDLE hProvider = (HANDLE)NULL;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     LSA_AUTH_USER_PARAMS localUserParams;
+    PSTR pszMessage = NULL;
 
     BAIL_ON_INVALID_POINTER(pUserParams);
     BAIL_ON_INVALID_POINTER(ppUserInfo);
@@ -196,7 +202,8 @@ LsaSrvAuthenticateUserEx(
 	    /* Pass off plain text auth to AuthenticateUser() */
 	    dwError = LsaSrvAuthenticateUser(hServer, 
 					     "",
-					     pUserParams->pass.clear.pszPassword);
+					     pUserParams->pass.clear.pszPassword,
+                                             &pszMessage);
 	    LW_SAFE_FREE_MEMORY(pszAccountName);	    
 	    goto cleanup;
 	    break;
@@ -301,6 +308,7 @@ cleanup:
     }
 
     LSA_TRACE_END_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
+    LW_SAFE_FREE_STRING(pszMessage);
 
     return dwError;
 

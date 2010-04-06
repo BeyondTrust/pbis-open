@@ -169,6 +169,7 @@ LsaPamCheckCurrentPassword(
     BOOLEAN bCheckOldPassword = TRUE;
     PSTR    pszOldPassword = NULL;
     PSTR    pszLoginId = NULL;
+    PSTR pszMessage = NULL;
 
     LSA_LOG_PAM_DEBUG("LsaPamCheckCurrentPassword::begin");
 
@@ -199,7 +200,15 @@ LsaPamCheckCurrentPassword(
         dwError = LsaAuthenticateUser(
                           hLsaConnection,
                           pszLoginId,
-                          pszOldPassword);
+                          pszOldPassword,
+                          &pszMessage);
+        if (pszMessage)
+        {
+            LsaPamConverse(pamh,
+                           pszMessage,
+                           PAM_TEXT_INFO,
+                           NULL);
+        }
         BAIL_ON_LSA_ERROR(dwError);
      }
 
@@ -212,6 +221,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszLoginId);
     LW_SAFE_CLEAR_FREE_STRING(pszOldPassword);
+    LW_SAFE_FREE_STRING(pszMessage);
 
     LSA_LOG_PAM_DEBUG("LsaPamCheckCurrentPassword::end");
 

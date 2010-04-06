@@ -49,6 +49,7 @@
 #include "config.h"
 #include "stresssys.h"
 #include "stressdef.h"
+#include <lwstr.h>
 #include <lsa/lsa.h>
 
 int
@@ -64,6 +65,7 @@ main(
     UINT64 llIter = 0;
     PCSTR  pszLoginName = "";
     PCSTR  pszPassword  = "";
+    PSTR pszMessage = NULL;
     
     if (argc < 3)
     {
@@ -85,7 +87,16 @@ main(
        dwError = LsaAuthenticateUser(
                      hLsaConnection,
                      pszLoginName,
-                     pszPassword);
+                     pszPassword,
+                     &pszMessage);
+
+       if (pszMessage)
+       {
+           fprintf(stdout,
+                   "%s\n",
+                   pszMessage);
+       }
+       LW_SAFE_FREE_STRING(pszMessage);
        
        if ( dwError == 0 )
        {

@@ -275,6 +275,13 @@ LwSW16printf(
     ...);
 
 DWORD
+LwAllocateWc16sPrintfW(
+    PWSTR* ppszString,
+    const wchar_t* pszFormat,
+    ...
+    );
+
+DWORD
 LwWc16sToUpper(
     IN OUT PWSTR pwszString
     );
@@ -290,6 +297,11 @@ LwAllocateWc16String(
     IN  PCWSTR pwszInputString
     );
 
+PSTR
+LwCaselessStringSearch(
+    PCSTR pszHaystack,
+    PCSTR pszNeedle
+    );
 
 DWORD
 LwAllocateUnicodeStringFromWc16String(

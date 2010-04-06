@@ -54,11 +54,17 @@ function component_configure
 	    ;;
     esac
 
+    DEBUG_FLAG=""
+    if [ "$BUILD_DEBUG" -eq 1 ]
+    then
+        DEBUG_FLAG="-d"
+    fi
+
     if [ -n "${TARGET}" ]
     then
 	./Configure --prefix="${PREFIX_DIR}" shared ${TARGET}
     else 
-        ./config --prefix="${PREFIX_DIR}" shared 
+        ./config ${DEBUG_FLAG} --prefix="${PREFIX_DIR}" shared 
     fi
 }
 

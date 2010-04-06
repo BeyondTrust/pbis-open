@@ -68,6 +68,35 @@ AC_ARG_WITH([version],
         ])
 AC_DEFINE_UNQUOTED(PKG_VERSION, "$PKG_VERSION", [Package Version])
 
+# lwadvapi
+
+AC_ARG_WITH([lwadvapi],
+        [AC_HELP_STRING([--with-lwadvapi=<dir>], [use lwadvapi located in prefix <dir>])],
+        [
+                LWADVAPI_INCLUDES="-I$withval/include"
+                LWADVAPI_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lwadvapi-includes],
+        [AC_HELP_STRING([--with-lwadvapi-includes=<dir>], [use lwadvapi includes located in <dir>])],
+        [
+                LWADVAPI_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lwadvapi-libs],
+        [AC_HELP_STRING([--with-lwadvapi-libs=<dir>], [use lwadvapi libs located in <dir>])],
+        [
+                LWADVAPI_LDFLAGS="-L$withval"
+        ])
+
+LWADVAPI_LIBS="-llwadvapi"
+LWADVAPI_NOTHR_LIBS="-llwadvapi_nothr"
+
+AC_SUBST(LWADVAPI_INCLUDES)
+AC_SUBST(LWADVAPI_LDFLAGS)
+AC_SUBST(LWADVAPI_LIBS)
+AC_SUBST(LWADVAPI_NOTHR_LIBS)
+
 # lsass
 
 AC_ARG_WITH([lsass],

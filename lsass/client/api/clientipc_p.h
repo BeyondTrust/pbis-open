@@ -95,7 +95,8 @@ DWORD
 LsaTransactAuthenticateUser(
     HANDLE hServer,
     PCSTR  pszLoginName,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     );
 
 DWORD

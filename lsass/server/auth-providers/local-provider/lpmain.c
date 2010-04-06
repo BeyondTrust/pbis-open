@@ -203,7 +203,8 @@ DWORD
 LocalAuthenticateUser(
     HANDLE hProvider,
     PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     )
 {
     DWORD dwError = 0;
@@ -271,6 +272,10 @@ LocalAuthenticateUser(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+    if (ppszMessage)
+    {
+        *ppszMessage = NULL;
+    }
 
     LsaUtilFreeSecurityObject(pObject);
 

@@ -53,7 +53,8 @@ DWORD
 LsaSrvAuthenticateUser(
     HANDLE hServer,
     PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    PCSTR  pszPassword,
+    PSTR*  ppszMessage
     );
 
 DWORD
