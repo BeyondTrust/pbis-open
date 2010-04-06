@@ -552,8 +552,8 @@ EventLoop(
     RING runnable;
     RING waiting;
     CLOCK clock = {0};
-    LONG64 llNow;
-    LONG64 llNextDeadline;
+    LONG64 llNow = 0;
+    LONG64 llNextDeadline = 0;
     struct epoll_event events[MAX_EVENTS];
     int ready = 0;
     BOOLEAN bShutdown = FALSE;
