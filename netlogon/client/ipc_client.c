@@ -88,11 +88,13 @@ error:
     if (gContext.pClient)
     {
         lwmsg_client_delete(gContext.pClient);
+        gContext.pClient = NULL;
     }
     
     if (gContext.pProtocol)
     {
         lwmsg_protocol_delete(gContext.pProtocol);
+        gContext.pProtocol = NULL;
     }
     
     goto cleanup;
