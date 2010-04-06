@@ -50,6 +50,15 @@ AutoProv: no
 %description
 Likewise NFS Service
 
+%package devel
+Summary: Likewise NFS Service Software Development Kit
+Group: Development/Libraries
+Requires: likewise-nfssvc
+
+%description devel
+The likewise-nfssvc-devel package includes the development libraries and header files that supply the application programming interface for the Likewise NFS Service.
+
+
 %prep
 
 %build
@@ -69,6 +78,17 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/sbin/*
 
 %{PrefixDir}/%{_LIB}/*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%endif
 
 %define initScriptPathList %{INIT_DIR}/nfssvcd
 %post
