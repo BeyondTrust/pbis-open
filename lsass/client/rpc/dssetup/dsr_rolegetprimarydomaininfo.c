@@ -47,52 +47,51 @@
 #include "includes.h"
 
 
-WINERR
+WINERROR
 DsrRoleGetPrimaryDomainInformation(
-    handle_t hBinding,
-    UINT16 uiLevel,
-    PDS_ROLE_INFO *ppInfo
+    IN  DSR_BINDING   hBinding,
+    IN  WORD          swLevel,
+    PDSR_ROLE_INFO   *ppInfo
     )
 {
-    WINERR dwError = ERROR_SUCCESS;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    PDS_ROLE_INFO pStubInfo = NULL;
-    PDS_ROLE_INFO pInfo = NULL;
+    DWORD dwError = ERROR_SUCCESS;
+    PDSR_ROLE_INFO pStubInfo = NULL;
+    PDSR_ROLE_INFO pInfo = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    DCERPC_CALL(ntStatus, cli_DsrRoleGetPrimaryDomainInformation(
-                              hBinding,
-                              uiLevel,
+    DCERPC_CALL(dwError, cli_DsrRoleGetPrimaryDomainInformation(
+                              (handle_t)hBinding,
+                              swLevel,
                               &pStubInfo));
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_WIN_ERROR(dwError);
 
     if (pStubInfo)
     {
-        ntStatus = DsrAllocateDsRoleInfo(NULL,
-                                         &dwOffset,
-                                         NULL,
-                                         pStubInfo,
-                                         uiLevel,
-                                         &dwSize);
-        BAIL_ON_NT_STATUS(ntStatus);
+        dwError = DsrAllocateDsRoleInfo(NULL,
+                                        &dwOffset,
+                                        NULL,
+                                        pStubInfo,
+                                        swLevel,
+                                        &dwSize);
+        BAIL_ON_WIN_ERROR(dwError);
 
         dwSpaceLeft = dwSize;
         dwSize      = 0;
         dwOffset    = 0;
 
-        ntStatus = DsrAllocateMemory(OUT_PPVOID(&pInfo),
-                                     dwSpaceLeft);
-        BAIL_ON_NT_STATUS(ntStatus);
+        dwError = DsrAllocateMemory(OUT_PPVOID(&pInfo),
+                                    dwSpaceLeft);
+        BAIL_ON_WIN_ERROR(dwError);
 
-        ntStatus = DsrAllocateDsRoleInfo(pInfo,
-                                         &dwOffset,
-                                         &dwSpaceLeft,
-                                         pStubInfo,
-                                         uiLevel,
-                                         &dwSize);
-        BAIL_ON_NT_STATUS(ntStatus);
+        dwError = DsrAllocateDsRoleInfo(pInfo,
+                                        &dwOffset,
+                                        &dwSpaceLeft,
+                                        pStubInfo,
+                                        swLevel,
+                                        &dwSize);
+        BAIL_ON_WIN_ERROR(dwError);
     }
 
     *ppInfo = pInfo;
@@ -101,16 +100,10 @@ DsrRoleGetPrimaryDomainInformation(
 cleanup:
     if (pStubInfo)
     {
-        DsrFreeStubDsRoleInfo(pStubInfo, uiLevel);
+        DsrFreeStubDsRoleInfo(pStubInfo, swLevel);
     }
 
-    if ((dwError == ERROR_SUCCESS) &&
-        (ntStatus != STATUS_SUCCESS))
-    {
-        dwError = NtStatusToWin32Error(ntStatus);
-    }
-
-    return dwError;
+    return (WINERROR)dwError;
 
 error:
     if (pInfo)

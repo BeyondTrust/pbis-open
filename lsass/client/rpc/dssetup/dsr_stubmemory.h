@@ -28,19 +28,14 @@
  * license@likewisesoftware.com
  */
 
-/*
- * Abstract: Dsr rpc stub memory cleanup routines (rpc client library)
- *
- * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
- */
-
 #ifndef _DSR_STUB_MEMORY_H_
 #define _DSR_STUB_MEMORY_H_
 
-void
+
+VOID
 DsrFreeStubDsRoleInfo(
-    PDS_ROLE_INFO pInfo,
-    UINT16 uiLevel
+    PDSR_ROLE_INFO  pInfo,
+    WORD            swLevel
     );
 
 

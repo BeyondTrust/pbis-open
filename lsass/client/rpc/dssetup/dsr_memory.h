@@ -104,19 +104,19 @@
     LWBUF_ALIGN_TYPE(offset_ptr, size_ptr, space_ptr, PVOID)
 
 
-NTSTATUS
+DWORD
 DsrAllocateMemory(
     OUT PVOID *ppOut,
     IN  size_t sSize
     );
 
 
-NTSTATUS
+DWORD
 DsrAllocateDsRoleInfo(
-    OUT PDS_ROLE_INFO   pOut,
+    OUT PDSR_ROLE_INFO  pOut,
     IN OUT PDWORD       pdwOffset,
     IN OUT PDWORD       pdwSpaceLeft,
-    IN  PDS_ROLE_INFO   pIn,
+    IN  PDSR_ROLE_INFO  pIn,
     IN  WORD            swLevel,
     IN OUT PDWORD       dwSize
     );

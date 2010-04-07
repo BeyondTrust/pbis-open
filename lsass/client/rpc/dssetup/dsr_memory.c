@@ -67,27 +67,27 @@ DsrDestroyMemory(
 }
 
 
-NTSTATUS
+DWORD
 DsrAllocateMemory(
     OUT PVOID *ppOut,
     IN  size_t sSize
     )
 {
-    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PVOID pMem = NULL;
 
     pMem = malloc(sSize);
     if (pMem == NULL)
     {
-        ntStatus = STATUS_NO_MEMORY;
-        BAIL_ON_NT_STATUS(ntStatus);
+        dwError = ERROR_OUTOFMEMORY;
+        BAIL_ON_WIN_ERROR(dwError);
     }
 
     memset(pMem, 0, sSize);
     *ppOut = pMem;
 
 cleanup:
-    return ntStatus;
+    return dwError;
 
 error:
     *ppOut = NULL;
@@ -104,12 +104,12 @@ DsrFreeMemory(
 }
 
 
-NTSTATUS
+DWORD
 DsrAllocateDsRoleInfo(
-    OUT PDS_ROLE_INFO   pOut,
+    OUT PDSR_ROLE_INFO  pOut,
     IN OUT PDWORD       pdwOffset,
     IN OUT PDWORD       pdwSpaceLeft,
-    IN  PDS_ROLE_INFO   pIn,
+    IN  PDSR_ROLE_INFO  pIn,
     IN  WORD            swLevel,
     IN OUT PDWORD       pdwSize
     )
@@ -125,24 +125,24 @@ DsrAllocateDsRoleInfo(
     switch(swLevel)
     {
     case DS_ROLE_BASIC_INFORMATION:
-        LWBUF_ALLOC_DWORD(pBuffer, pIn->basic.dwRole);
-        LWBUF_ALLOC_DWORD(pBuffer, pIn->basic.dwFlags);
-        LWBUF_ALLOC_PWSTR(pBuffer, pIn->basic.pwszDomain);
-        LWBUF_ALLOC_PWSTR(pBuffer, pIn->basic.pwszDnsDomain);
-        LWBUF_ALLOC_PWSTR(pBuffer, pIn->basic.pwszForest);
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->Basic.dwRole);
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->Basic.dwFlags);
+        LWBUF_ALLOC_PWSTR(pBuffer, pIn->Basic.pwszDomain);
+        LWBUF_ALLOC_PWSTR(pBuffer, pIn->Basic.pwszDnsDomain);
+        LWBUF_ALLOC_PWSTR(pBuffer, pIn->Basic.pwszForest);
         LWBUF_ALLOC_BLOB(pBuffer,
-                         sizeof(pIn->basic.DomainGuid),
-                         &pIn->basic.DomainGuid);
+                         sizeof(pIn->Basic.DomainGuid),
+                         &pIn->Basic.DomainGuid);
         break;
 
     case DS_ROLE_UPGRADE_STATUS:
-        LWBUF_ALLOC_WORD(pBuffer, pIn->upgrade.swUpgradeStatus);
+        LWBUF_ALLOC_WORD(pBuffer, pIn->Upgrade.swUpgradeStatus);
         LWBUF_ALIGN_TYPE(pdwOffset, pdwSize, pdwSpaceLeft, DWORD);
-        LWBUF_ALLOC_DWORD(pBuffer, pIn->upgrade.dwPrevious);
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->Upgrade.dwPrevious);
         break;
 
     case DS_ROLE_OP_STATUS:
-        LWBUF_ALLOC_WORD(pBuffer, pIn->opstatus.swStatus);
+        LWBUF_ALLOC_WORD(pBuffer, pIn->OpStatus.swStatus);
         break;
 
     default:
@@ -150,10 +150,16 @@ DsrAllocateDsRoleInfo(
         break;
     }
 
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_WIN_ERROR(dwError);
 
 cleanup:
-    return ntStatus;
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(dwError);
+    }
+
+    return dwError;
 
 error:
     goto cleanup;

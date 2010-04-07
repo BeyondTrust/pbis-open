@@ -32,19 +32,20 @@
 
 
 static
-void
+VOID
 DsrCleanStubDsRoleInfo(
-    PDS_ROLE_INFO pInfo,
-    UINT16 uiLevel
+    PDSR_ROLE_INFO  pInfo,
+    WORD            swLevel
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
-    switch (uiLevel) {
+    switch (swLevel)
+    {
     case DS_ROLE_BASIC_INFORMATION:
-        rpc_sm_client_free(pInfo->basic.pwszDomain, &rpcStatus);
-        rpc_sm_client_free(pInfo->basic.pwszDnsDomain, &rpcStatus);
-        rpc_sm_client_free(pInfo->basic.pwszForest, &rpcStatus);
+        rpc_sm_client_free(pInfo->Basic.pwszDomain, &rpcStatus);
+        rpc_sm_client_free(pInfo->Basic.pwszDnsDomain, &rpcStatus);
+        rpc_sm_client_free(pInfo->Basic.pwszForest, &rpcStatus);
         break;
 
     case DS_ROLE_UPGRADE_STATUS:
@@ -55,15 +56,15 @@ DsrCleanStubDsRoleInfo(
 }
 
 
-void
+VOID
 DsrFreeStubDsRoleInfo(
-    PDS_ROLE_INFO pInfo,
-    UINT16 uiLevel
+    PDSR_ROLE_INFO  pInfo,
+    WORD            swLevel
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
-    DsrCleanStubDsRoleInfo(pInfo, uiLevel);
+    DsrCleanStubDsRoleInfo(pInfo, swLevel);
     rpc_sm_client_free(pInfo, &rpcStatus);
 }
 
