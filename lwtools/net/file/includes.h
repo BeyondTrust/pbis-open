@@ -36,8 +36,6 @@
 #include <lw/winerror.h>
 #include <lw/security-types.h>
 #include <lw/security-api.h>
-#include <lw/rtlstring.h>
-#include <lw/rtlmemory.h>
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
