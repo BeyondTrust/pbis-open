@@ -72,7 +72,7 @@ rewrite_final_dylib_dep()
     
     if test -n "$found"
     then
-	pathchomp $(echo $candidate | sed "s:^$found::")
+	pathchomp $(echo $candidate | sed "s:^$found:$DESTDIR:")
     else
 	pathchomp $candidate
     fi
@@ -82,6 +82,7 @@ MODE=$1
 DYLIBFILE=`pathchomp $2`
 FINALPATH=`pathchomp $3`
 DYLIBPATH=`echo $4 | sed 's/::*/ /g'`
+DESTDIR=$5
 
 deps=""
 
