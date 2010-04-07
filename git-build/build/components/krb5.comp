@@ -123,7 +123,7 @@ function component_populate
 	return 1
     fi
 
-    rsync -a --exclude "include" ${INSTALL_ROOT}/ ${POPULATE_DIR}/
+    rsync -a ${INSTALL_ROOT}/ ${POPULATE_DIR}/
     mkdir -p ${POPULATE_DIR}/etc/likewise
     
     install -m 0644 \

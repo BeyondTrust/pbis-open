@@ -54,14 +54,12 @@ function _make_deb
 
     (bash ${BUILD_ROOT}/build/packages/${PKG_NAME}/${PKG_NAME}.func)
 
-    for file in control rules changelog preinst postinst prerm postrm; do
-        if [ -f ${BUILD_ROOT}/build/packages/${PKG_NAME}/deb/$file ]; then
-	    cat ${BUILD_ROOT}/build/packages/${PKG_NAME}/deb/$file |\
+    for file in ${BUILD_ROOT}/build/packages/${PKG_NAME}/deb/*; do
+        cat $file |\
               sed -e "s#__PKG_NAME#likewise-open-${PKG_NAME}#g" \
 	      -e "s#__PKG_VERSION#${PKG_VERSION}#g" \
               -e "s#__PKG_DATE#`date -R`#g" \
-	    > "${PKG_PACKAGE_DIR}/debian/$file"
-        fi
+	    > "${PKG_PACKAGE_DIR}/debian/`basename $file`"
     done
 
     if [ -n "${ENABLE_DEBUG}" ]; then

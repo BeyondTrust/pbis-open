@@ -81,7 +81,6 @@ function component_populate
 	return 1
     fi
 
-     rsync -a --exclude "include" --exclude "*.la" \
-	${INSTALL_ROOT}/ ${POPULATE_DIR}/
+     rsync -a -exclude "*.la" ${INSTALL_ROOT}/ ${POPULATE_DIR}/
 
 }
