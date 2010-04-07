@@ -10,10 +10,8 @@ interface netlogon
 cpp_quote("#ifdef DCERPC_STUB_BUILD")
 
 #include <lw/security-types.h>
-#include <lwrpc/types.h>
-#include <lwrpc/unistrdef.h>
-#include <lwrpc/rid.h>
-#include <lwrpc/netrdefs.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
 
     typedef [switch_type(UINT16)] union {
         [case(1)] NetrPasswordInfo *password1;
@@ -112,11 +110,11 @@ cpp_quote("#endif")
     NTSTATUS netr_Function13();
 
     /* function 0x14 */
-    NTSTATUS DsrGetDcName(
+    WINERROR DsrGetDcName(
         [in,string,unique] wchar16_t *server_name,
         [in,string,unique] wchar16_t *domain_name,
-        [in,unique] Guid *domain_guid,
-        [in,unique] Guid *site_guid,
+        [in,unique] GUID *domain_guid,
+        [in,unique] GUID *site_guid,
         [in] UINT32 get_dc_flags,
         [out,ref] DsrDcNameInfo **info
         );
@@ -183,7 +181,7 @@ cpp_quote("#endif")
 
   
 	/* function 0x28 */
-	WINERR DsrEnumerateDomainTrusts(
+	WINERROR DsrEnumerateDomainTrusts(
         [in,unique,string] wchar16_t *server_name,
         [in] UINT32 trust_flags,
         [out,ref] NetrDomainTrustList *trusts

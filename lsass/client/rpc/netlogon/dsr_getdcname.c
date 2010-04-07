@@ -28,17 +28,33 @@
  * license@likewisesoftware.com
  */
 
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        dsr_getdcname.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        DsrGetDcName function
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
+
 #include "includes.h"
 
 
-WINERR
+WINERROR
 DsrGetDcName(
-    IN  handle_t hNetrBinding,
-    IN  PCWSTR pwszServerName,
-    IN  PCWSTR pwszDomainName,
-    IN  const Guid *pDomainGuid,
-    IN  const Guid *pSiteGuid,
-    IN  UINT32 GetDcFlags,
+    IN  NETR_BINDING    hBinding,
+    IN  PCWSTR          pwszServerName,
+    IN  PCWSTR          pwszDomainName,
+    IN  const PGUID     pDomainGuid,
+    IN  const PGUID     pSiteGuid,
+    IN  DWORD           dwGetDcFlags,
     OUT DsrDcNameInfo **ppInfo
     )
 {
@@ -46,15 +62,15 @@ DsrGetDcName(
     DWORD dwError = ERROR_SUCCESS;
     PWSTR pwszServer = NULL;
     PWSTR pwszDomain = NULL;
-    Guid *pDomainGuidCopy = NULL;
-    Guid *pSiteGuidCopy = NULL;
+    PGUID pDomainGuidCopy = NULL;
+    PGUID pSiteGuidCopy = NULL;
     DsrDcNameInfo *pDcInfo = NULL;
     DsrDcNameInfo *pDcRetInfo = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServerName, ntStatus);
     BAIL_ON_INVALID_PTR(pwszDomainName, ntStatus);
     BAIL_ON_INVALID_PTR(ppInfo, ntStatus);
@@ -89,13 +105,13 @@ DsrGetDcName(
                sizeof(*pSiteGuid));
     }
 
-    DCERPC_CALL(dwError, _DsrGetDcName(hNetrBinding,
-                                       pwszServer,
-                                       pwszDomain,
-                                       pDomainGuidCopy,
-                                       pSiteGuidCopy,
-                                       GetDcFlags,
-                                       &pDcInfo));
+    DCERPC_CALL(dwError, cli_DsrGetDcName(hBinding,
+                                          pwszServer,
+                                          pwszDomain,
+                                          pDomainGuidCopy,
+                                          pSiteGuidCopy,
+                                          dwGetDcFlags,
+                                          &pDcInfo));
     BAIL_ON_WIN_ERROR(dwError);
 
     ntStatus = NetrAllocateDcNameInfo(NULL,
@@ -136,7 +152,8 @@ cleanup:
         NetrFreeMemory(pSiteGuidCopy);
     }
 
-    if (pDcInfo) {
+    if (pDcInfo)
+    {
         NetrFreeStubDcNameInfo(pDcInfo);
     }
 
@@ -146,7 +163,7 @@ cleanup:
         dwError = NtStatusToWin32Error(ntStatus);
     }
 
-    return dwError;
+    return (WINERROR)dwError;
 
 error:
     if (pDcRetInfo)

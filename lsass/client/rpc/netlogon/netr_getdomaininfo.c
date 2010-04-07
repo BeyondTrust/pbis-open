@@ -49,7 +49,7 @@
 
 NTSTATUS
 NetrGetDomainInfo(
-    IN  handle_t          hNetrBinding,
+    IN  NETR_BINDING      hBinding,
     IN  NetrCredentials  *pCreds,
     IN  PCWSTR            pwszServer,
     IN  PCWSTR            pwszComputer,
@@ -70,7 +70,7 @@ NetrGetDomainInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pCreds, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
@@ -104,14 +104,14 @@ NetrGetDomainInfo(
                                   sizeof(NetrAuth));
     BAIL_ON_NT_STATUS(ntStatus);
 
-    DCERPC_CALL(ntStatus, _NetrLogonGetDomainInfo(hNetrBinding,
-                                                  pwszServerName,
-                                                  pwszComputerName,
-                                                  pAuth,
-                                                  pReturnedAuth,
-                                                  Level,
-                                                  pQuery,
-                                                  &DomainInfo));
+    DCERPC_CALL(ntStatus, cli_NetrLogonGetDomainInfo(hBinding,
+                                                     pwszServerName,
+                                                     pwszComputerName,
+                                                     pAuth,
+                                                     pReturnedAuth,
+                                                     Level,
+                                                     pQuery,
+                                                     &DomainInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = NetrAllocateDomainInfo(NULL,

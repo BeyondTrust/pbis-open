@@ -50,15 +50,15 @@
 
 NTSTATUS
 NetrServerAuthenticate3(
-    IN  handle_t   hNetrBinding,
-    IN  PCWSTR     pwszServer,
-    IN  PCWSTR     pwszAccount,
-    IN  UINT16     SchannelType,
-    IN  PCWSTR     pwszComputer,
-    IN  BYTE       CliCreds[8],
-    IN  BYTE       SrvCreds[8],
-    IN OUT UINT32 *pNegFlags,
-    IN OUT UINT32 *pRid
+    IN  NETR_BINDING   hBinding,
+    IN  PCWSTR         pwszServer,
+    IN  PCWSTR         pwszAccount,
+    IN  UINT16         SchannelType,
+    IN  PCWSTR         pwszComputer,
+    IN  BYTE           CliCreds[8],
+    IN  BYTE           SrvCreds[8],
+    IN OUT UINT32     *pNegFlags,
+    IN OUT UINT32     *pRid
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -72,7 +72,7 @@ NetrServerAuthenticate3(
 
     memset(&Creds, 0, sizeof(Creds));
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     BAIL_ON_INVALID_PTR(pwszAccount, ntStatus);
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
@@ -95,14 +95,14 @@ NetrServerAuthenticate3(
                                    pwszComputer);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, _NetrServerAuthenticate3(hNetrBinding,
-                                                   pwszServerName,
-                                                   pwszAccountName,
-                                                   SchannelType,
-                                                   pwszComputerName,
-                                                   &Creds,
-                                                   &Flags,
-                                                   &Rid));
+    DCERPC_CALL(ntStatus, cli_NetrServerAuthenticate3(hBinding,
+                                                      pwszServerName,
+                                                      pwszAccountName,
+                                                      SchannelType,
+                                                      pwszComputerName,
+                                                      &Creds,
+                                                      &Flags,
+                                                      &Rid));
     BAIL_ON_NT_STATUS(ntStatus);
 
     memcpy(SrvCreds, Creds.data, sizeof(Creds.data));

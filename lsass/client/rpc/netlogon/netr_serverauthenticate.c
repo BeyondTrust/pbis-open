@@ -50,13 +50,13 @@
 
 NTSTATUS
 NetrServerAuthenticate(
-    IN  handle_t hNetrBinding,
-    IN  PCWSTR   pwszServer,
-    IN  PCWSTR   pwszAccount,
-    IN  UINT16   SchannelType,
-    IN  PCWSTR   pwszComputer,
-    IN  UINT8    CliCreds[8],
-    IN  UINT8    SrvCreds[8]
+    IN  NETR_BINDING  hBinding,
+    IN  PCWSTR        pwszServer,
+    IN  PCWSTR        pwszAccount,
+    IN  UINT16        SchannelType,
+    IN  PCWSTR        pwszComputer,
+    IN  UINT8         CliCreds[8],
+    IN  UINT8         SrvCreds[8]
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -68,7 +68,7 @@ NetrServerAuthenticate(
 
     memset(&Creds, 0, sizeof(Creds));
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     BAIL_ON_INVALID_PTR(pwszAccount, ntStatus);
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
@@ -89,12 +89,12 @@ NetrServerAuthenticate(
                                    pwszComputer);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, _NetrServerAuthenticate(hNetrBinding,
-                                                  pwszServerName,
-                                                  pwszAccountName,
-                                                  SchannelType,
-                                                  pwszComputerName,
-                                                  &Creds));
+    DCERPC_CALL(ntStatus, cli_NetrServerAuthenticate(hBinding,
+                                                     pwszServerName,
+                                                     pwszAccountName,
+                                                     SchannelType,
+                                                     pwszComputerName,
+                                                     &Creds));
     BAIL_ON_NT_STATUS(ntStatus);
 
     memcpy(SrvCreds, Creds.data, sizeof(Creds.data));

@@ -48,6 +48,33 @@
 #define _NETR_CREDENTIALS_H_
 
 
+#define GETUINT8(buf, off)                      \
+    ((UINT8)(buf)[(off)])
+
+#define GETUINT16(buf, off)                     \
+    (((UINT16)GETUINT8((buf), 0+(off))) |       \
+     ((UINT16)GETUINT8((buf), 1+(off)) << 8))
+
+#define GETUINT32(buf, off)                     \
+    (((UINT32)GETUINT16((buf), 0+(off))) |      \
+     ((UINT32)GETUINT16((buf), 2+(off)) << 16))
+
+#define SETUINT8(buf, off, v)                   \
+    ((buf)[(off)] = (UINT8)((v) & 0xff))
+
+#define SETUINT16(buf, off, v)                  \
+    do {                                        \
+        SETUINT8((buf), 0+(off), (v));          \
+        SETUINT8((buf), 1+(off), ((v) >> 8));   \
+    } while (0)
+
+#define SETUINT32(buf, off, v)                  \
+    do {                                        \
+        SETUINT16((buf), 0+(off), (v));         \
+        SETUINT16((buf), 2+(off), ((v) >> 16)); \
+    } while (0)
+
+
 VOID
 NetrCredentialsCliStep(
     IN OUT NetrCredentials *pCreds

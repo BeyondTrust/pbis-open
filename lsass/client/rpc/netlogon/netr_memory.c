@@ -51,22 +51,22 @@
 static
 NTSTATUS
 NetrAllocateRidWithAttributeArray(
-    OUT PVOID                   *pOut,
-    IN OUT PDWORD                pdwOffset,
-    IN OUT PDWORD                pdwSpaceLeft,
-    IN  RidWithAttributeArray   *pIn,
-    IN OUT PDWORD                pdwSize
+    OUT PVOID                     *pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE_ARRAY  pIn,
+    IN OUT PDWORD                  pdwSize
     );
 
 
 static
 NTSTATUS
 NetrAllocateRidWithAttribute(
-    OUT RidWithAttribute  *pOut,
-    IN OUT PDWORD          pdwOffset,
-    IN OUT PDWORD          pdwSpaceLeft,
-    IN  RidWithAttribute  *pRids,
-    IN OUT PDWORD          pdwSize
+    OUT PRID_WITH_ATTRIBUTE   pOut,
+    IN OUT PDWORD             pdwOffset,
+    IN OUT PDWORD             pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE   pRids,
+    IN OUT PDWORD             pdwSize
     );
 
 
@@ -680,11 +680,11 @@ error:
 static
 NTSTATUS
 NetrAllocateRidWithAttributeArray(
-    OUT PVOID                   *pOut,
-    IN OUT PDWORD                pdwOffset,
-    IN OUT PDWORD                pdwSpaceLeft,
-    IN  RidWithAttributeArray   *pIn,
-    IN OUT PDWORD                pdwSize
+    OUT PVOID                      *pOut,
+    IN OUT PDWORD                   pdwOffset,
+    IN OUT PDWORD                   pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE_ARRAY   pIn,
+    IN OUT PDWORD                   pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -696,7 +696,7 @@ NetrAllocateRidWithAttributeArray(
     DWORD dwRidsOffset = 0;
     DWORD iRid = 0;
     PVOID pRids = NULL;
-    RidWithAttribute **ppRids = NULL;
+    PRID_WITH_ATTRIBUTE *ppRids = NULL;
     
     BAIL_ON_INVALID_PTR(pdwOffset, ntStatus);
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
@@ -704,12 +704,12 @@ NetrAllocateRidWithAttributeArray(
 
     LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
 
-    LWBUF_ALLOC_DWORD(pBuffer, pIn->count);
+    LWBUF_ALLOC_DWORD(pBuffer, pIn->dwCount);
     LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
 
-    if (pIn->count)
+    if (pIn->dwCount)
     {
-        dwRidsSize = sizeof(pIn->rids[0]) * pIn->count;
+        dwRidsSize = sizeof(pIn->pRids[0]) * pIn->dwCount;
     }
 
     if (pBuffer && pdwSpaceLeft)
@@ -717,26 +717,26 @@ NetrAllocateRidWithAttributeArray(
         BAIL_IF_NOT_ENOUGH_SPACE(dwRidsSize, pdwSpaceLeft, dwError);
         pCursor = pBuffer + (*pdwOffset);
 
-        if (pIn->rids)
+        if (pIn->pRids)
         {
             pRids = LWBUF_TARGET_PTR(pBuffer, dwRidsSize, pdwSpaceLeft);
 
             /* sanity check - the rids pointer and current buffer cursor
                must not overlap */
-            BAIL_IF_PTR_OVERLAP(RidWithAttribute*, pRids, dwError);
+            BAIL_IF_PTR_OVERLAP(PRID_WITH_ATTRIBUTE, pRids, dwError);
 
             dwRidsSpaceLeft = dwRidsSize;
             dwRidsOffset    = 0;
 
             /* Allocate the rid entries */
-            for (iRid = 0; iRid < pIn->count; iRid++)
+            for (iRid = 0; iRid < pIn->dwCount; iRid++)
             {
-                PVOID pRidCursor = pRids + (iRid * sizeof(pIn->rids[0]));
+                PVOID pRidCursor = pRids + (iRid * sizeof(pIn->pRids[0]));
 
                 ntStatus = NetrAllocateRidWithAttribute(pRidCursor,
                                                         &dwRidsOffset,
                                                         &dwRidsSpaceLeft,
-                                                        &(pIn->rids[iRid]),
+                                                        &(pIn->pRids[iRid]),
                                                         pdwSize);
                 BAIL_ON_NT_STATUS(ntStatus);
 
@@ -744,12 +744,12 @@ NetrAllocateRidWithAttributeArray(
             }
         }
 
-        ppRids           = (RidWithAttribute**)pCursor;
-        *ppRids          = (RidWithAttribute*)pRids;
+        ppRids           = (PRID_WITH_ATTRIBUTE*)pCursor;
+        *ppRids          = (PRID_WITH_ATTRIBUTE)pRids;
         (*pdwSpaceLeft) -= (pRids) ? dwRidsSize : 0;
 
         /* recalculate space after setting the pointer */
-        (*pdwSpaceLeft)  -= sizeof(RidWithAttribute*);
+        (*pdwSpaceLeft)  -= sizeof(PRID_WITH_ATTRIBUTE);
     }
     else
     {
@@ -757,8 +757,8 @@ NetrAllocateRidWithAttributeArray(
     }
 
     /* include size of the pointer */
-    (*pdwOffset) += sizeof(RidWithAttribute*);
-    (*pdwSize)   += sizeof(RidWithAttribute*);
+    (*pdwOffset) += sizeof(RID_WITH_ATTRIBUTE);
+    (*pdwSize)   += sizeof(RID_WITH_ATTRIBUTE);
 
 cleanup:
     if (ntStatus == STATUS_SUCCESS &&
@@ -777,11 +777,11 @@ error:
 static
 NTSTATUS
 NetrAllocateRidWithAttribute(
-    OUT RidWithAttribute  *pOut,
-    IN OUT PDWORD          pdwOffset,
-    IN OUT PDWORD          pdwSpaceLeft,
-    IN  RidWithAttribute  *pRids,
-    IN OUT PDWORD          pdwSize
+    OUT PRID_WITH_ATTRIBUTE  pOut,
+    IN OUT PDWORD            pdwOffset,
+    IN OUT PDWORD            pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE  pRids,
+    IN OUT PDWORD            pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -792,8 +792,8 @@ NetrAllocateRidWithAttribute(
     BAIL_ON_INVALID_PTR(pRids, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    LWBUF_ALLOC_DWORD(pBuffer, pRids->rid);
-    LWBUF_ALLOC_DWORD(pBuffer, pRids->attributes);
+    LWBUF_ALLOC_DWORD(pBuffer, pRids->dwRid);
+    LWBUF_ALLOC_DWORD(pBuffer, pRids->dwAttributes);
 
 cleanup:
     if (ntStatus == STATUS_SUCCESS &&

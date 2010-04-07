@@ -50,7 +50,7 @@
 
 NTSTATUS
 NetrEnumerateTrustedDomainsEx(
-    IN  handle_t          hNetrBinding,
+    IN  NETR_BINDING      hBinding,
     IN  PCWSTR            pwszServerName,
     OUT NetrDomainTrust **ppTrusts,
     OUT PUINT32           pCount
@@ -65,7 +65,7 @@ NetrEnumerateTrustedDomainsEx(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServerName, ntStatus);
     BAIL_ON_INVALID_PTR(ppTrusts, ntStatus);
     BAIL_ON_INVALID_PTR(pCount, ntStatus);
@@ -73,9 +73,10 @@ NetrEnumerateTrustedDomainsEx(
     dwError = LwAllocateWc16String(&pwszName, pwszServerName);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, _NetrEnumerateTrustedDomainsEx(hNetrBinding,
-                                                         pwszName,
-                                                         &TrustList));
+    DCERPC_CALL(ntStatus, cli_NetrEnumerateTrustedDomainsEx(
+                                           hBinding,
+                                           pwszName,
+                                           &TrustList));
     BAIL_ON_NT_STATUS(ntStatus);
 
     *pCount  = TrustList.count;

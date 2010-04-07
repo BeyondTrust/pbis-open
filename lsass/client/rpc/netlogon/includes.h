@@ -35,9 +35,11 @@
 #include <iconv.h>
 #include <pthread.h>
 
+#include <lwio/lwio.h>
+
 #include <dce/rpc.h>
 #include <dce/smb.h>
-#include <DceSupport.h>
+#include <dce/dcethread.h>
 #include <dce/schannel.h>
 #include <wc16str.h>
 #include <wc16printf.h>
@@ -53,22 +55,9 @@
 #include <lwstr.h>
 #include <lwbuffer.h>
 
-#include <lwrpc/types.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/memptr.h>
-#include <lwrpc/sidhelper.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/lsadefs.h>
-#include <lwrpc/netlogon.h>
-#include <macros.h>
-
-#include <md4.h>
-#include <md5.h>
-#include <hmac_md5.h>
-#include <des.h>
-#include <crypto.h>
-#include <byteops.h>
-#include <random.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/macros.h>
 
 #include "netr_credentials.h"
 #include "netr_memory.h"

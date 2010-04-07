@@ -51,7 +51,7 @@
 
 NTSTATUS
 NetrOpenSchannel(
-    IN  handle_t          hNetrBinding,
+    IN  NETR_BINDING      hNetrBinding,
     IN  PCWSTR            pwszMachineAccount,
     IN  PCWSTR            pwszHostname,
     IN  PCWSTR            pwszServer,
@@ -59,10 +59,10 @@ NetrOpenSchannel(
     IN  PCWSTR            pwszComputer,
     IN  PCWSTR            pwszMachinePassword,
     IN  NetrCredentials  *pCreds,
-    OUT handle_t         *phSchannelBinding
+    OUT PNETR_BINDING     phSchannelBinding
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     BYTE PassHash[16] = {0};
@@ -71,8 +71,7 @@ NetrOpenSchannel(
     BYTE SrvCred[8] = {0};
     rpc_schannel_auth_info_t SchannelAuthInfo = {0};
     PIO_CREDS pIoCreds = NULL;
-    PSTR pszHostname = NULL;
-    handle_t hSchannelBinding = NULL;
+    NETR_BINDING hSchannelBinding = NULL;
 
     NetrGetNtHash(PassHash, pwszMachinePassword);
 
@@ -128,13 +127,10 @@ NetrOpenSchannel(
     ntStatus = LwIoGetActiveCreds(NULL, &pIoCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(dwError);
-
-    ntStatus = InitNetlogonBindingDefault(&hSchannelBinding,
-                                          pszHostname,
-                                          pIoCreds,
-                                          TRUE);
+    ntStatus = NetrInitBindingDefault(&hSchannelBinding,
+                                      pwszHostname,
+                                      pIoCreds,
+                                      TRUE);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
     rpc_binding_set_auth_info(hSchannelBinding,
@@ -157,7 +153,6 @@ NetrOpenSchannel(
 cleanup:
     LW_SAFE_FREE_MEMORY(SchannelAuthInfo.domain_name);
     LW_SAFE_FREE_MEMORY(SchannelAuthInfo.machine_name);
-    LW_SAFE_FREE_MEMORY(pszHostname);
 
     if (pIoCreds)
     {
@@ -175,7 +170,7 @@ cleanup:
 error:
     if (hSchannelBinding)
     {
-        FreeNetlogonBinding(&hSchannelBinding);
+        NetrFreeBinding(&hSchannelBinding);
     }
 
     *phSchannelBinding = NULL;
@@ -186,12 +181,12 @@ error:
 
 VOID
 NetrCloseSchannel(
-    IN  handle_t hSchannelBinding
+    IN NETR_BINDING  hSchannelBinding
     )
 {
     if (hSchannelBinding)
     {
-        FreeNetlogonBinding(&hSchannelBinding);
+        NetrFreeBinding(&hSchannelBinding);
     }
 }
 

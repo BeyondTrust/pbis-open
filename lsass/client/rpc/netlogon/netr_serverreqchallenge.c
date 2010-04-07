@@ -49,11 +49,11 @@
 
 NTSTATUS
 NetrServerReqChallenge(
-    IN  handle_t  hNetrBinding,
-    IN  PCWSTR    pwszServer,
-    IN  PCWSTR    pwszComputer,
-    IN  BYTE      CliChal[8],
-    IN  BYTE      SrvChal[8]
+    IN  NETR_BINDING  hBinding,
+    IN  PCWSTR        pwszServer,
+    IN  PCWSTR        pwszComputer,
+    IN  BYTE          CliChal[8],
+    IN  BYTE          SrvChal[8]
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -64,7 +64,7 @@ NetrServerReqChallenge(
 
     memset(&Creds, 0, sizeof(Creds));
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
     BAIL_ON_INVALID_PTR(CliChal, ntStatus);
@@ -80,10 +80,10 @@ NetrServerReqChallenge(
                                    pwszComputer);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, _NetrServerReqChallenge(hNetrBinding,
-                                                  pwszServerName,
-                                                  pwszComputerName,
-                                                  &Creds));
+    DCERPC_CALL(ntStatus, cli_NetrServerReqChallenge(hBinding,
+                                                     pwszServerName,
+                                                     pwszComputerName,
+                                                     &Creds));
     BAIL_ON_NT_STATUS(ntStatus);
 
     memcpy(SrvChal, Creds.data, sizeof(Creds.data));

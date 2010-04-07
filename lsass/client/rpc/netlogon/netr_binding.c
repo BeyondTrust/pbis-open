@@ -29,171 +29,344 @@
  */
 
 /*
- * Abstract: Netlogon interface binding (rpc client library)
+ * Copyright (C) Likewise Software. All rights reserved.
  *
- * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
+ * Module Name:
+ *
+ *        netr_binding.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        DCE/RPC binding functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
 #include "includes.h"
 
 
-RPCSTATUS
-InitNetlogonBindingDefault(
-    OUT handle_t            *phNetrBinding,
-    IN  PCSTR                pszHostname,
-    IN  LW_PIO_CREDS  pAccessToken,
-    IN  BOOLEAN              bIsSchannel
+static
+NTSTATUS
+NetrInitBindingDefaultA(
+    OUT PNETR_BINDING   phBinding,
+    IN  PCSTR           pszHostname,
+    IN  LW_PIO_CREDS    pCreds,
+    IN  BOOLEAN         bIsSchannel
+    );
+
+
+static
+NTSTATUS
+NetrInitBindingFullA(
+    OUT PNETR_BINDING   phBinding,
+    IN  PCSTR           pszProtSeq,
+    IN  PCSTR           pszHostname,
+    IN  PCSTR           pszEndpoint,
+    IN  PCSTR           pszUuid,
+    IN  PCSTR           pszOptions,
+    IN  LW_PIO_CREDS    pCreds,
+    IN  BOOLEAN         bIsSchannel
+    );
+
+
+NTSTATUS
+NetrInitBindingDefault(
+    OUT PNETR_BINDING   phBinding,
+    IN  PCWSTR          pwszHostname,
+    IN  LW_PIO_CREDS    pCreds,
+    IN  BOOLEAN         bIsSchannel
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
-    PSTR pszProtSeq = NETLOGON_DEFAULT_PROT_SEQ;
-    PSTR pszEndpoint = NETLOGON_DEFAULT_ENDPOINT;
-    PSTR pszUuid = NULL;
-    PSTR pszOptions = NULL;
-    handle_t hNetrBinding = NULL;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszHostname = NULL;
 
-    rpcStatus = InitNetlogonBindingFull(&hNetrBinding,
-                                        pszProtSeq,
-                                        pszHostname,
-                                        pszEndpoint,
-                                        pszUuid,
-                                        pszOptions,
-                                        pAccessToken,
-                                        bIsSchannel);
-    BAIL_ON_RPC_STATUS(rpcStatus);
+    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    *phNetrBinding = hNetrBinding;
+    ntStatus = NetrInitBindingDefaultA(phBinding,
+                                       pszHostname,
+                                       pCreds,
+                                       bIsSchannel);
+    BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
-    return rpcStatus;
+    LW_SAFE_FREE_MEMORY(pszHostname);
+
+    return ntStatus;
 
 error:
-    *phNetrBinding = NULL;
+    goto cleanup;
+}
+
+
+static
+NTSTATUS
+NetrInitBindingDefaultA(
+    OUT PNETR_BINDING  phBinding,
+    IN  PCSTR          pszHostname,
+    IN  LW_PIO_CREDS   pCreds,
+    IN  BOOLEAN        bIsSchannel
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSTR pszProtSeq = (PSTR)NETLOGON_DEFAULT_PROT_SEQ;
+    PSTR pszLpcProtSeq = (PSTR)"ncalrpc";
+    PSTR pszEndpoint = NETLOGON_DEFAULT_ENDPOINT;
+    PSTR pszLpcEndpoint = (PSTR)NETLOGON_LOCAL_ENDPOINT;
+    PSTR pszUuid = NULL;
+    PSTR pszOptions = NULL;
+    NETR_BINDING hBinding = NULL;
+
+    ntStatus = NetrInitBindingFullA(
+                      &hBinding,
+                      (pszHostname) ? pszProtSeq : pszLpcProtSeq,
+                      pszHostname,
+                      (pszHostname) ? pszEndpoint : pszLpcEndpoint,
+                      pszUuid,
+                      pszOptions,
+                      pCreds,
+                      bIsSchannel);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *phBinding = hBinding;
+
+cleanup:
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+NetrInitBindingFull(
+    OUT PNETR_BINDING   phBinding,
+    IN  PCWSTR          pwszProtSeq,
+    IN  PCWSTR          pwszHostname,
+    IN  PCWSTR          pwszEndpoint,
+    IN  PCWSTR          pwszUuid,
+    IN  PCWSTR          pwszOptions,
+    IN  LW_PIO_CREDS    pCreds,
+    IN  BOOLEAN         bIsSchannel
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszProtSeq = NULL;
+    PSTR pszHostname = NULL;
+    PSTR pszEndpoint = NULL;
+    PSTR pszUuid = NULL;
+    PSTR pszOptions = NULL;
+    NETR_BINDING hBinding = NULL;
+
+    dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszEndpoint, &pszEndpoint);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszUuid, &pszUuid);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszOptions, &pszOptions);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    ntStatus = NetrInitBindingFullA(&hBinding,
+                                    pszProtSeq,
+                                    pszHostname,
+                                    pszEndpoint,
+                                    pszUuid,
+                                    pszOptions,
+                                    pCreds,
+                                    bIsSchannel);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *phBinding = hBinding;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszProtSeq);
+    LW_SAFE_FREE_MEMORY(pszHostname);
+    LW_SAFE_FREE_MEMORY(pszEndpoint);
+    LW_SAFE_FREE_MEMORY(pszUuid);
+    LW_SAFE_FREE_MEMORY(pszOptions);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError == ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return ntStatus;
+
+error:
+    *phBinding = NULL;
 
     goto cleanup;
 }
 
 
-RPCSTATUS
-InitNetlogonBindingFull(
-    OUT handle_t             *phNetrBinding,
-    IN  PCSTR                 pszProtSeq,
-    IN  PCSTR                 pszHostname,
-    IN  PCSTR                 pszEndpoint,
-    IN  PCSTR                 pszUuid,
-    IN  PCSTR                 pszOptions,
-    IN  LW_PIO_CREDS   pAccessToken,
-    IN  BOOLEAN               bIsSchannel
+static
+NTSTATUS
+NetrInitBindingFullA(
+    OUT PNETR_BINDING   phBinding,
+    IN  PCSTR           pszProtSeq,
+    IN  PCSTR           pszHostname,
+    IN  PCSTR           pszEndpoint,
+    IN  PCSTR           pszUuid,
+    IN  PCSTR           pszOptions,
+    IN  LW_PIO_CREDS    pCreds,
+    IN  BOOLEAN         bIsSchannel
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
-    RPCSTATUS rpcRetStatus = RPC_S_OK;
- unsigned char *binding_string = NULL;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    unsigned32 rpcStatus = RPC_S_OK;
+    unsigned32 rpcRetStatus = RPC_S_OK;
+    unsigned char *binding_string = NULL;
     unsigned char *prot_seq       = NULL;
     unsigned char *endpoint       = NULL;
     unsigned char *uuid           = NULL;
     unsigned char *options        = NULL;
     unsigned char *address        = NULL;
-    handle_t hNetrBinding = NULL;
-    rpc_transport_info_handle_t info = NULL;
+    handle_t hBinding = NULL;
+    rpc_transport_info_handle_t hInfo = NULL;
 
-    BAIL_ON_INVALID_PTR_RPCSTATUS(phNetrBinding, rpcStatus);
-    BAIL_ON_INVALID_PTR_RPCSTATUS(pszHostname, rpcStatus);
-    BAIL_ON_INVALID_PTR_RPCSTATUS(pszProtSeq, rpcStatus);
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszHostname, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     prot_seq = (unsigned char*) strdup(pszProtSeq);
-    BAIL_ON_NO_MEMORY_RPCSTATUS(prot_seq, rpcStatus);
+    BAIL_ON_NULL_PTR(prot_seq, ntStatus);
 
-    if (pszEndpoint != NULL) {
+    if (pszEndpoint != NULL)
+    {
         endpoint = (unsigned char*) strdup(pszEndpoint);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(endpoint, rpcStatus);
+        BAIL_ON_NULL_PTR(endpoint, ntStatus);
     }
 
-    if (pszUuid != NULL) {
+    if (pszUuid != NULL)
+    {
         uuid = (unsigned char*) strdup(pszUuid);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(uuid, rpcStatus);
+        BAIL_ON_NULL_PTR(uuid, ntStatus);
     }
 
-    if (pszOptions != NULL) {
+    if (pszOptions != NULL)
+    {
         options = (unsigned char*) strdup(pszOptions);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(options, rpcStatus);
+        BAIL_ON_NULL_PTR(options, ntStatus);
     }
 
-    address = (unsigned char*) strdup(pszHostname);
-    BAIL_ON_NO_MEMORY_RPCSTATUS(address, rpcStatus);
+    if (pszHostname)
+    {
+        address = (unsigned char*) strdup(pszHostname);
+        BAIL_ON_NULL_PTR(address, ntStatus);
+    }
 
-    rpc_string_binding_compose(uuid,
-                               prot_seq,
-                               address,
-                               endpoint,
-                               options,
-                               &binding_string,
-                               &rpcStatus);
+    rpc_string_binding_compose(
+        uuid,
+        prot_seq,
+        address,
+        endpoint,
+        options,
+        &binding_string,
+        &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    rpc_binding_from_string_binding(binding_string, &hNetrBinding, &rpcStatus);
+    rpc_binding_from_string_binding(
+        binding_string,
+        &hBinding,
+        &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    rpc_smb_transport_info_from_lwio_creds(pAccessToken, bIsSchannel, &info, &rpcStatus);
+    if (strcmp(pszProtSeq, "ncacn_np") == 0)
+    {
+        rpc_smb_transport_info_from_lwio_creds(
+            pCreds,
+            bIsSchannel,
+            &hInfo,
+            &rpcStatus);
+        BAIL_ON_RPC_STATUS(rpcStatus);
+
+        rpc_binding_set_transport_info(
+            hBinding,
+            hInfo,
+            &rpcStatus);
+        BAIL_ON_RPC_STATUS(rpcStatus);
+
+        hInfo = NULL;
+    }
+
+    rpc_mgmt_set_com_timeout(hBinding, 6, &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    rpc_binding_set_transport_info(hNetrBinding, info, &rpcStatus);
-    BAIL_ON_RPC_STATUS(rpcStatus);
-
-	info = NULL;
-
-    rpc_mgmt_set_com_timeout(hNetrBinding, 6, &rpcStatus);
-    BAIL_ON_RPC_STATUS(rpcStatus);
-
-    *phNetrBinding = hNetrBinding;
+    *phBinding = (NETR_BINDING)hBinding;
 
 cleanup:
-    SAFE_FREE(prot_seq);
-    SAFE_FREE(endpoint);
-    SAFE_FREE(uuid);
-    SAFE_FREE(options);
-    SAFE_FREE(address);
+    LW_SAFE_FREE_MEMORY(prot_seq);
+    LW_SAFE_FREE_MEMORY(endpoint);
+    LW_SAFE_FREE_MEMORY(uuid);
+    LW_SAFE_FREE_MEMORY(options);
+    LW_SAFE_FREE_MEMORY(address);
 
-    if (binding_string) {
+    if (binding_string)
+    {
         rpc_string_free(&binding_string, &rpcRetStatus);
     }
 
+    if (hInfo)
+    {
+        rpc_smb_transport_info_free(hInfo);
+    }
+
     if (rpcStatus == RPC_S_OK &&
-        rpcRetStatus != RPC_S_OK) {
+        rpcRetStatus != RPC_S_OK)
+    {
         rpcStatus = rpcRetStatus;
     }
 
-    if (info)
+    if (ntStatus == STATUS_SUCCESS &&
+        rpcStatus != RPC_S_OK)
     {
-        rpc_smb_transport_info_free(info);
+        ntStatus = LwRpcStatusToNtStatus(rpcStatus);
     }
 
-    return rpcStatus;
+    return ntStatus;
 
 error:
-    if (hNetrBinding) {
-        rpc_binding_free(&hNetrBinding, &rpcStatus);
+    if (hBinding)
+    {
+        rpc_binding_free(&hBinding, &rpcRetStatus);
     }
+
+    *phBinding = NULL;
 
     goto cleanup;
 }
 
 
-RPCSTATUS
-FreeNetlogonBinding(
-    IN OUT handle_t *phNetrBinding
+VOID
+NetrFreeBinding(
+    IN OUT  PNETR_BINDING  phBinding
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     /* Free the binding itself */
-    if (phNetrBinding && *phNetrBinding) {
-        rpc_binding_free(phNetrBinding, &rpcStatus);
+    if (phBinding && *phBinding)
+    {
+        rpc_binding_free((handle_t*)phBinding, &rpcStatus);
         BAIL_ON_RPC_STATUS(rpcStatus);
     }
 
+    *phBinding = NULL;
+
 cleanup:
-    return rpcStatus;
+    return;
 
 error:
     goto cleanup;

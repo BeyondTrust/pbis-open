@@ -28,12 +28,28 @@
  * license@likewisesoftware.com
  */
 
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        dsr_enumeratedomaintrusts.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        DsrEnumerateDomainTrusts function
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
+
 #include "includes.h"
 
 
-WINERR
+WINERROR
 DsrEnumerateDomainTrusts(
-    IN  handle_t           hNetrBinding,
+    IN  NETR_BINDING       hBinding,
     IN  PCWSTR             pwszServer,
     IN  UINT32             Flags,
     OUT NetrDomainTrust  **ppTrusts,
@@ -41,7 +57,7 @@ DsrEnumerateDomainTrusts(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    WINERR dwError = ERROR_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PWSTR pwszServerName = NULL;
     NetrDomainTrustList TrustList = {0};
     NetrDomainTrust *pTrusts = NULL;
@@ -49,7 +65,7 @@ DsrEnumerateDomainTrusts(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     BAIL_ON_INVALID_PTR(ppTrusts, ntStatus);
     BAIL_ON_INVALID_PTR(pCount, ntStatus);
@@ -57,10 +73,11 @@ DsrEnumerateDomainTrusts(
     dwError = LwAllocateWc16String(&pwszServerName, pwszServer);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, _DsrEnumerateDomainTrusts(hNetrBinding,
-                                                    pwszServerName,
-                                                    Flags,
-                                                    &TrustList));
+    DCERPC_CALL(ntStatus, cli_DsrEnumerateDomainTrusts(
+                                        (handle_t)hBinding,
+                                        pwszServerName,
+                                        Flags,
+                                        &TrustList));
     BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = NetrAllocateDomainTrusts(NULL,
@@ -98,7 +115,7 @@ cleanup:
         dwError = NtStatusToWin32Error(ntStatus);
     }
 
-    return dwError;
+    return (WINERROR)dwError;
 
 error:
     if (pTrusts)

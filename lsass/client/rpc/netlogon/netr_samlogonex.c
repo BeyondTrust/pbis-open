@@ -50,7 +50,7 @@
 
 NTSTATUS
 NetrSamLogonEx(
-    IN  handle_t              hNetrBinding,
+    IN  NETR_BINDING          hBinding,
     IN  NetrCredentials      *pCreds,
     IN  PCWSTR                pwszServer,
     IN  PCWSTR                pwszDomain,
@@ -77,7 +77,7 @@ NetrSamLogonEx(
     BYTE Authoritative = 0;
     UINT32 Flags = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     /* pwszDomain can be NULL */
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
@@ -148,15 +148,15 @@ NetrSamLogonEx(
         break;
     }
 
-    DCERPC_CALL(ntStatus, _NetrLogonSamLogonEx(hNetrBinding,
-                                               pwszServerName,
-                                               pwszComputerName,
-                                               LogonLevel,
-                                               &LogonInfo,
-                                               ValidationLevel,
-                                               &ValidationInfo,
-                                               &Authoritative,
-                                               &Flags));
+    DCERPC_CALL(ntStatus, cli_NetrLogonSamLogonEx(hBinding,
+                                                  pwszServerName,
+                                                  pwszComputerName,
+                                                  LogonLevel,
+                                                  &LogonInfo,
+                                                  ValidationLevel,
+                                                  &ValidationInfo,
+                                                  &Authoritative,
+                                                  &Flags));
     BAIL_ON_NT_STATUS(ntStatus);
 
     dwSize   = 0;
@@ -220,7 +220,7 @@ error:
 
 NTSTATUS
 NetrSamLogonNetworkEx(
-    IN  handle_t              hNetrBinding,
+    IN  NETR_BINDING          hBinding,
     IN  PCWSTR                pwszServer,
     IN  PCWSTR                pwszDomain,
     IN  PCWSTR                pwszComputer,
@@ -250,7 +250,7 @@ NetrSamLogonNetworkEx(
     BYTE Authoritative = 0;
     UINT32 Flags = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     /* pwszDomain can be NULL */
     BAIL_ON_INVALID_PTR(pwszComputer, ntStatus);
@@ -323,15 +323,15 @@ NetrSamLogonNetworkEx(
         break;
     }
 
-    DCERPC_CALL(ntStatus, _NetrLogonSamLogonEx(hNetrBinding,
-                                               pwszServerName,
-                                               pwszComputerName,
-                                               LogonLevel,
-                                               &LogonInfo,
-                                               ValidationLevel,
-                                               &ValidationInfo,
-                                               &Authoritative,
-                                               &Flags));
+    DCERPC_CALL(ntStatus, cli_NetrLogonSamLogonEx(hBinding,
+                                                  pwszServerName,
+                                                  pwszComputerName,
+                                                  LogonLevel,
+                                                  &LogonInfo,
+                                                  ValidationLevel,
+                                                  &ValidationInfo,
+                                                  &Authoritative,
+                                                  &Flags));
     BAIL_ON_NT_STATUS(ntStatus);
 
     dwSize   = 0;

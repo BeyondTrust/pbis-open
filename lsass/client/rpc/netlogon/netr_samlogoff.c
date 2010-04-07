@@ -50,7 +50,7 @@
 
 NTSTATUS
 NetrSamLogoff(
-    IN  handle_t          hNetrBinding,
+    IN  NETR_BINDING      hBinding,
     IN  NetrCredentials  *pCreds,
     IN  PCWSTR            pwszServer,
     IN  PCWSTR            pwszDomain,
@@ -72,7 +72,7 @@ NetrSamLogoff(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hNetrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pCreds, ntStatus);
     BAIL_ON_INVALID_PTR(pwszServer, ntStatus);
     /* pwszDomain can be NULL */
@@ -159,13 +159,13 @@ NetrSamLogoff(
         break;
     }
 
-    DCERPC_CALL(ntStatus, _NetrLogonSamLogoff(hNetrBinding,
-                                              pwszServerName,
-                                              pwszComputerName,
-                                              pAuth,
-                                              pReturnedAuth,
-                                              LogonLevel,
-                                              &LogonInfo));
+    DCERPC_CALL(ntStatus, cli_NetrLogonSamLogoff(hBinding,
+                                                 pwszServerName,
+                                                 pwszComputerName,
+                                                 pAuth,
+                                                 pReturnedAuth,
+                                                 LogonLevel,
+                                                 &LogonInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:

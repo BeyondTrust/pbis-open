@@ -29,7 +29,19 @@
  */
 
 /*
- * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        netr_stubmemory.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        Netlogon rpc DCE/RPC stub memory cleanup functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
 #include "includes.h"
@@ -40,7 +52,7 @@ NetrCleanStubDomainTrustList(
     NetrDomainTrustList *pTrustList
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     UINT32 i = 0;
 
     for (i = 0; i < pTrustList->count; i++) {
@@ -63,20 +75,20 @@ NetrCleanSamBaseInfo(
     NetrSamBaseInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
-    rpc_sm_client_free(pInfo->account_name.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->full_name.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->logon_script.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->profile_path.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->home_directory.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->home_drive.string, &rpcStatus);
+    rpc_sm_client_free(pInfo->account_name.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->full_name.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->logon_script.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->profile_path.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->home_directory.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->home_drive.Buffer, &rpcStatus);
 
-    pInfo->groups.count = 0;
-    rpc_sm_client_free(pInfo->groups.rids, &rpcStatus);
+    pInfo->groups.dwCount = 0;
+    rpc_sm_client_free(pInfo->groups.pRids, &rpcStatus);
 
-    rpc_sm_client_free(pInfo->logon_server.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->domain.string, &rpcStatus);
+    rpc_sm_client_free(pInfo->logon_server.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->domain.Buffer, &rpcStatus);
 
     if (pInfo->domain_sid) {
         rpc_sm_client_free(pInfo->domain_sid, &rpcStatus);
@@ -100,7 +112,7 @@ NetrFreeSamInfo2(
     NetrSamInfo2 *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     if (pInfo == NULL) return;
 
@@ -116,7 +128,7 @@ NetrCleanSidAttr(
     UINT32 Count
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     UINT32 i = 0;
 
     for (i = 0; pSidAttr && i < Count; i++) {
@@ -133,7 +145,7 @@ NetrFreeSidAttr(
     NetrSidAttr *pSidAttr,
     UINT32 Count)
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     NetrCleanSidAttr(pSidAttr, Count);
     rpc_sm_client_free(pSidAttr, &rpcStatus);
@@ -161,7 +173,7 @@ NetrFreeSamInfo3(
     NetrSamInfo3 *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     if (pInfo == NULL) return;
 
@@ -176,7 +188,7 @@ NetrCleanSamInfo6(
     NetrSamInfo6 *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     NetrCleanSamBaseInfo(&pInfo->base);
 
@@ -185,8 +197,8 @@ NetrCleanSamInfo6(
                         pInfo->sidcount);
     }
 
-    rpc_sm_client_free(pInfo->forest.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->principal.string, &rpcStatus);
+    rpc_sm_client_free(pInfo->forest.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->principal.Buffer, &rpcStatus);
 }
 
 
@@ -196,7 +208,7 @@ NetrFreeSamInfo6(
     NetrSamInfo6 *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     if (pInfo == NULL) return;
 
@@ -211,18 +223,18 @@ NetrCleanPacInfo(
     NetrPacInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     rpc_sm_client_free(pInfo->pac, &rpcStatus);
     rpc_sm_client_free(pInfo->auth, &rpcStatus);
 
-    rpc_sm_client_free(pInfo->logon_domain.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->logon_server.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->principal_name.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->unknown1.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->unknown2.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->unknown3.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->unknown4.string, &rpcStatus);
+    rpc_sm_client_free(pInfo->logon_domain.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->logon_server.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->principal_name.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->unknown1.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->unknown2.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->unknown3.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->unknown4.Buffer, &rpcStatus);
 }
 
 
@@ -232,7 +244,7 @@ NetrFreePacInfo(
     NetrPacInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     if (pInfo == NULL) return;
 
@@ -275,21 +287,21 @@ NetrCleanDomainTrustInfo(
     NetrDomainTrustInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     UINT32 i = 0;
 
     if (pInfo == NULL) return;
 
-    rpc_sm_client_free(pInfo->domain_name.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->full_domain_name.string, &rpcStatus);
-    rpc_sm_client_free(pInfo->forest.string, &rpcStatus);
+    rpc_sm_client_free(pInfo->domain_name.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->full_domain_name.Buffer, &rpcStatus);
+    rpc_sm_client_free(pInfo->forest.Buffer, &rpcStatus);
     rpc_sm_client_free(pInfo->sid, &rpcStatus);
 
     for (i = 0;
          i < sizeof(pInfo->unknown1)/sizeof(pInfo->unknown1[0]);
          i++)
     {
-        rpc_sm_client_free(pInfo->unknown1[i].string, &rpcStatus);
+        rpc_sm_client_free(pInfo->unknown1[i].Buffer, &rpcStatus);
     }
 }
 
@@ -300,7 +312,7 @@ NetrFreeDomainInfo1(
     NetrDomainInfo1 *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     UINT32 i = 0;
 
     if (pInfo == NULL) return;
@@ -340,7 +352,7 @@ NetrCleanStubDcNameInfo(
     DsrDcNameInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     rpc_sm_client_free(pInfo->dc_name, &rpcStatus);
     rpc_sm_client_free(pInfo->dc_address, &rpcStatus);
@@ -356,7 +368,7 @@ NetrFreeStubDcNameInfo(
     DsrDcNameInfo *pInfo
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     if (pInfo == NULL) return;
 
