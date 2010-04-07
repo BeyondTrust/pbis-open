@@ -68,8 +68,8 @@ NetShareShowUsage(
 static
 VOID
 NetShareFreeCommandInfo(
-	PNET_SHARE_COMMAND_INFO* ppCommandInfo
-	);
+    PNET_SHARE_COMMAND_INFO pCommandInfo
+    );
 
 static
 DWORD
@@ -170,7 +170,7 @@ ParseShareAddOptionArgs(
 
 error:
 
-    LW_SAFE_FREE_MEMORY(pwszArg);
+    LWUTIL_SAFE_FREE_MEMORY(pwszArg);
 
     return dwError;
 }
@@ -215,7 +215,7 @@ NetShareAddParseArguments(
 	pszShareAddShareInfo = argv[indexShareAddArg];
 
 	pszPath = strchr(pszShareAddShareInfo, '=');
-	if (LW_IS_NULL_OR_EMPTY_STR(pszPath))
+	if (LWUTIL_IS_NULL_OR_EMPTY_STR(pszPath))
 	{
 		dwError = LW_ERROR_INVALID_PARAMETER;
 		BAIL_ON_LWUTIL_ERROR(dwError);
@@ -232,7 +232,7 @@ NetShareAddParseArguments(
 		BAIL_ON_LWUTIL_ERROR(dwError);
     }
 
-    dwError = LwAllocateMemory(sShareNameLen+1,
+    dwError = LwNetAllocateMemory(sShareNameLen+1,
     		                  (PVOID*)&pszShareName);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
@@ -246,14 +246,13 @@ NetShareAddParseArguments(
     BAIL_ON_LWUTIL_ERROR(dwError);
 
 cleanup:
-    LW_SAFE_FREE_STRING(pszShareName);
+    LWUTIL_SAFE_FREE_STRING(pszShareName);
 
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszServerName);
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszShareName);
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszPath);
+
+    NetShareFreeCommandInfo(pCommandInfo);
 
     goto cleanup;
 }
@@ -297,8 +296,8 @@ cleanup:
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszServerName);
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszShareName);
+
+    NetShareFreeCommandInfo(pCommandInfo);
 
     goto cleanup;
 }
@@ -327,7 +326,8 @@ cleanup:
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pCommandInfo->ShareEnumInfo.pwszServerName);
+
+    NetShareFreeCommandInfo(pCommandInfo);
 
     goto cleanup;
 }
@@ -350,7 +350,7 @@ NetShareParseArguments(
 		BAIL_ON_LWUTIL_ERROR(dwError);
 	}
 
-    dwError = LwNetUtilAllocateMemory(sizeof(*pCommandInfo),
+    dwError = LwNetAllocateMemory(sizeof(*pCommandInfo),
     		                       (PVOID*)&pCommandInfo);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
@@ -411,7 +411,7 @@ error:
     	NetShareShowUsage();
     }
 
-    LwNetUtilFreeMemory(pCommandInfo);
+    LWUTIL_SAFE_FREE_MEMORY(pCommandInfo);
     pCommandInfo = NULL;
 
     goto cleanup;
@@ -470,7 +470,9 @@ NetShare(
     }
 
 cleanup:
-    NetShareFreeCommandInfo(&pCommandInfo);
+    NetShareFreeCommandInfo(pCommandInfo);
+    LWUTIL_SAFE_FREE_MEMORY(pCommandInfo);
+    pCommandInfo = NULL;
 
     return dwError;
 
@@ -489,11 +491,9 @@ NetShareShutdown(
 static
 VOID
 NetShareFreeCommandInfo(
-	PNET_SHARE_COMMAND_INFO* ppCommandInfo
+	PNET_SHARE_COMMAND_INFO pCommandInfo
 	)
 {
-	PNET_SHARE_COMMAND_INFO pCommandInfo = ppCommandInfo ? *ppCommandInfo : NULL;
-
 	if (!pCommandInfo)
 		return;
 
@@ -501,29 +501,26 @@ NetShareFreeCommandInfo(
 	{
 	    case NET_SHARE_ADD:
 
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszServerName);
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszPath);
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszShareName);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszServerName);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszPath);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszShareName);
 	        break;
 
 	    case NET_SHARE_DEL:
 
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszServerName);
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszShareName);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszServerName);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareDelInfo.pwszShareName);
 	        break;
 
 	    case NET_SHARE_ENUM:
 
-	    	LW_SAFE_FREE_MEMORY(pCommandInfo->ShareEnumInfo.pwszServerName);
+	    	LWUTIL_SAFE_FREE_MEMORY(pCommandInfo->ShareEnumInfo.pwszServerName);
 
 	        break;
 
 	     default:
 	        break;
 	}
-
-	LW_SAFE_FREE_MEMORY(pCommandInfo);
-	*ppCommandInfo = NULL;
 
 	return;
 }

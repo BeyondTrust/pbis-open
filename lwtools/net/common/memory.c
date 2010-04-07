@@ -48,7 +48,7 @@
 #include "includes.h"
 
 DWORD
-LwNetUtilAllocateMemory(
+LwNetAllocateMemory(
     size_t Size,
     LW_PVOID * ppMemory
     )
@@ -57,7 +57,7 @@ LwNetUtilAllocateMemory(
 }
 
 DWORD
-LwNetUtilReallocMemory(
+LwNetReallocMemory(
     LW_PVOID pMemory,
     LW_PVOID * ppNewMemory,
     size_t Size
@@ -69,9 +69,130 @@ LwNetUtilReallocMemory(
 }
 
 VOID
-LwNetUtilFreeMemory(
+LwNetFreeMemory(
     PVOID pMemory
     )
 {
 	LwFreeMemory(pMemory);
+}
+
+DWORD
+LwNetAllocateString(
+    PCSTR  pszInputString,
+    PSTR* ppszOutputString
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwLen = 0;
+    PSTR  pszOutputString = NULL;
+
+    if (!pszInputString) {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LWUTIL_ERROR(dwError);
+    }
+
+    dwLen = strlen(pszInputString);
+
+    dwError = LwNetAllocateMemory(dwLen+1, (PVOID *)&pszOutputString);
+    BAIL_ON_LWUTIL_ERROR(dwError);
+
+    if (dwLen) {
+       memcpy(pszOutputString, pszInputString, dwLen);
+    }
+
+    *ppszOutputString = pszOutputString;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LWUTIL_SAFE_FREE_STRING(pszOutputString);
+
+    *ppszOutputString = NULL;
+
+    goto cleanup;
+}
+
+VOID
+LwNetFreeString(
+    PSTR pszString
+    )
+{
+    LwNetFreeMemory(pszString);
+}
+
+VOID
+LwNetFreeStringArray(
+    PSTR * ppStringArray,
+    DWORD dwCount
+    )
+{
+    DWORD i;
+
+    if ( ppStringArray ) {
+        for(i = 0; i < dwCount; i++)
+        {
+            if (ppStringArray[i]) {
+                LwNetFreeString(ppStringArray[i]);
+            }
+        }
+
+        LwNetFreeMemory(ppStringArray);
+    }
+
+    return;
+}
+
+VOID
+LwNetFreeNullTerminatedStringArray(
+    PSTR * ppStringArray
+    )
+{
+    PSTR* ppTmp = ppStringArray;
+
+    while (ppTmp && *ppTmp) {
+
+          LwNetFreeString(*ppTmp);
+
+          ppTmp++;
+    }
+
+    LwNetFreeMemory(ppStringArray);
+}
+
+DWORD
+LwNetWC16StringAllocateFromCString(
+    OUT PWSTR* ppszNewString,
+    IN PCSTR pszOriginalString
+    )
+{
+    return LwNtStatusToWin32Error(
+            LwRtlWC16StringAllocateFromCString(
+                    ppszNewString,
+                    pszOriginalString)
+                    );
+}
+
+VOID
+LwNetWC16StringFree(
+    OUT PWSTR* ppszString
+    )
+{
+    LwRtlWC16StringFree(ppszString);
+}
+
+DWORD
+LwNetAllocateSidFromCString(
+    OUT PSID* Sid,
+    IN PCSTR StringSid
+    )
+{
+    return LwNtStatusToWin32Error(
+            RtlAllocateSidFromCString(
+                Sid,
+                StringSid
+                )
+                );
 }

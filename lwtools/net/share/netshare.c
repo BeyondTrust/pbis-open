@@ -116,7 +116,7 @@ LwUtilNetShareAdd(
 
 cleanup:
 
-    LW_SAFE_FREE_MEMORY(pSecDesc);
+    LWUTIL_SAFE_FREE_MEMORY(pSecDesc);
 
     return dwError;
 
@@ -166,19 +166,19 @@ LwUtilNetShareEnum(
 
         if (!ppszShareName)
         {
-            dwError = LwAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareName);
+            dwError = LwNetAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareName);
             BAIL_ON_LWUTIL_ERROR(dwError);
         }
 
         if (!ppszSharePath)
         {
-            dwError = LwAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszSharePath);
+            dwError = LwNetAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszSharePath);
             BAIL_ON_LWUTIL_ERROR(dwError);
         }
 
         if (!ppszShareComment)
         {
-        	dwError = LwAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareComment);
+        	dwError = LwNetAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareComment);
             BAIL_ON_LWUTIL_ERROR(dwError);
         }
 
@@ -210,13 +210,13 @@ LwUtilNetShareEnum(
 
     } while (dwVisitedShares < dwTotalShares);
 
-    dwError = LwAllocateString(NET_SHARE_NAME_TITLE, &ppszShareName[dwTotalShares]);
+    dwError = LwNetAllocateString(NET_SHARE_NAME_TITLE, &ppszShareName[dwTotalShares]);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
-    dwError = LwAllocateString(NET_SHARE_PATH_TITLE, &ppszSharePath[dwTotalShares]);
+    dwError = LwNetAllocateString(NET_SHARE_PATH_TITLE, &ppszSharePath[dwTotalShares]);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
-    dwError = LwAllocateString(NET_SHARE_COMMENT_TITLE, &ppszShareComment[dwTotalShares]);
+    dwError = LwNetAllocateString(NET_SHARE_COMMENT_TITLE, &ppszShareComment[dwTotalShares]);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
     for (dwIndex = 0; dwIndex < dwTotalShares + 1; dwIndex++)
@@ -291,15 +291,15 @@ cleanup:
 
     if (ppszShareName)
     {
-    	LwFreeStringArray(ppszShareName, dwTotalShares);
+    	LwNetFreeStringArray(ppszShareName, dwTotalShares);
     }
     if (ppszSharePath)
     {
-    	LwFreeStringArray(ppszSharePath, dwTotalShares);
+    	LwNetFreeStringArray(ppszSharePath, dwTotalShares);
     }
     if (ppszShareComment)
     {
-    	LwFreeStringArray(ppszShareComment, dwTotalShares);
+    	LwNetFreeStringArray(ppszShareComment, dwTotalShares);
     }
 
     if (pShareInfo)
@@ -372,15 +372,14 @@ MapNameToSid(
         BAIL_ON_LWUTIL_ERROR(dwError);
     }
 
-    dwError = LwNtStatusToWin32Error(
-        RtlAllocateSidFromCString(ppSid, ppObjects[0]->pszObjectSid));
+    dwError = LwNetAllocateSidFromCString(ppSid, ppObjects[0]->pszObjectSid);
     BAIL_ON_LWUTIL_ERROR(dwError);
 
 cleanup:
 
     LsaFreeSecurityObjectList(1, ppObjects);
 
-    LW_SAFE_FREE_STRING(pszName);
+    LWUTIL_SAFE_FREE_STRING(pszName);
 
     return dwError;
 
@@ -407,10 +406,9 @@ MapBuiltinNameToSid(
     ULONG SidSize = sizeof(Sid.buffer);
     PWSTR pwszEveryone = NULL;
 
-    dwError = LwNtStatusToWin32Error(
-                  RtlWC16StringAllocateFromCString(
+    dwError = LwNetWC16StringAllocateFromCString(
                       &pwszEveryone,
-                      "Everyone"));
+                      "Everyone");
     BAIL_ON_LWUTIL_ERROR(dwError);
 
 
@@ -429,7 +427,7 @@ MapBuiltinNameToSid(
                   RtlDuplicateSid(ppSid, &Sid.sid));
 
 cleanup:
-    LwRtlWC16StringFree(&pwszEveryone);
+    LwNetWC16StringFree(&pwszEveryone);
 
     return dwError;
 
@@ -498,7 +496,7 @@ ConstructSecurityDescriptor(
         dwDenyUserCount * (sizeof(ACCESS_DENIED_ACE) + SID_MAX_SIZE) +
         RtlLengthSid(&Owner.sid) + RtlLengthSid(&Group.sid);
 
-    dwError = LwAllocateMemory(
+    dwError = LwNetAllocateMemory(
         dwDaclSize,
         OUT_PPVOID(&pDacl));
     BAIL_ON_LWUTIL_ERROR(dwError);
@@ -550,7 +548,7 @@ ConstructSecurityDescriptor(
         RTL_FREE(&pSid);
     }
 
-    dwError = LwAllocateMemory(
+    dwError = LwNetAllocateMemory(
         SECURITY_DESCRIPTOR_ABSOLUTE_MIN_SIZE,
         OUT_PPVOID(&pAbsolute));
     BAIL_ON_LWUTIL_ERROR(dwError);
@@ -588,7 +586,7 @@ ConstructSecurityDescriptor(
         NULL,
         &ulRelativeSize);
 
-    dwError = LwAllocateMemory(ulRelativeSize, OUT_PPVOID(&pRelative));
+    dwError = LwNetAllocateMemory(ulRelativeSize, OUT_PPVOID(&pRelative));
     BAIL_ON_LWUTIL_ERROR(dwError);
 
     dwError = LwNtStatusToWin32Error(
@@ -608,9 +606,9 @@ cleanup:
         LsaCloseServer(hLsa);
     }
 
-    RTL_FREE(&pSid);
-    LW_SAFE_FREE_MEMORY(pDacl);
-    LW_SAFE_FREE_MEMORY(pAbsolute);
+    LWUTIL_SAFE_FREE_MEMORY(pSid);
+    LWUTIL_SAFE_FREE_MEMORY(pDacl);
+    LWUTIL_SAFE_FREE_MEMORY(pAbsolute);
 
     return dwError;
 
@@ -619,7 +617,7 @@ error:
     *ppRelative = NULL;
     *pdwRelativeSize = 0;
 
-    LW_SAFE_FREE_MEMORY(pRelative);
+    LWUTIL_SAFE_FREE_MEMORY(pRelative);
 
     goto cleanup;
 }

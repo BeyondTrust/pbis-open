@@ -33,6 +33,7 @@
 #include <lwtoolsystem.h>
 
 #include <lw/errno.h>
+#include <lw/security-types.h>
 #include <lwmem.h>
 #include <lwstr.h>
 #include <lwsecurityidentifier.h>
@@ -43,4 +44,4 @@
 #include <netshare.h>
 #include <lwnetutils.h>
 
-#include "driverdef.h"
+#include "structs.h"

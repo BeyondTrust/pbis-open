@@ -141,7 +141,7 @@ NetFileParseArguments(
         NET_FILE_ARG_FILE_ID
     } parseState = NET_FILE_ARG_OPEN;
 
-    dwError = LwNetUtilAllocateMemory(
+    dwError = LwNetAllocateMemory(
                     sizeof(*pCommandInfo),
                     (PVOID*)&pCommandInfo);
     BAIL_ON_LWUTIL_ERROR(dwError);
@@ -246,7 +246,7 @@ error:
         NetFileShowUsage();
     }
 
-    LwNetUtilFreeMemory(pCommandInfo);
+    LwNetFreeMemory(pCommandInfo);
 
     goto cleanup;
 }

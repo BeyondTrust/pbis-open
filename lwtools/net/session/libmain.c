@@ -159,7 +159,7 @@ NetSessionParseArguments(
         NET_SESSION_ARG_NAME
     } parseState = NET_SESSION_ARG_OPEN;
 
-    dwError = LwNetUtilAllocateMemory(
+    dwError = LwNetAllocateMemory(
                     sizeof(*pCommandInfo),
                     (PVOID*)&pCommandInfo);
     BAIL_ON_LWUTIL_ERROR(dwError);
@@ -262,7 +262,7 @@ error:
         NetSessionShowUsage();
     }
 
-    LwNetUtilFreeMemory(pCommandInfo);
+    LwNetFreeMemory(pCommandInfo);
 
     goto cleanup;
 }

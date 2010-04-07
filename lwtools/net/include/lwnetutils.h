@@ -52,22 +52,101 @@
 #define BAIL_ON_LWUTIL_ERROR(dwError) \
 	if (dwError) goto error;
 
+
+#define LWUTIL_SAFE_FREE_STRING(str) \
+        do {                      \
+           if (str) {             \
+              LwNetFreeString(str); \
+              (str) = NULL;       \
+           }                      \
+        } while(0);
+
+#define LWUTIL_SAFE_CLEAR_FREE_STRING(str)       \
+        do {                                  \
+           if (str) {                         \
+              if (*str) {                     \
+                 memset(str, 0, strlen(str)); \
+              }                               \
+              LwNetFreeString(str);             \
+              (str) = NULL;                   \
+           }                                  \
+        } while(0);
+
+#define LWUTIL_SAFE_FREE_MEMORY(mem) \
+        do {                      \
+           if (mem) {             \
+              LwNetFreeMemory(mem); \
+              (mem) = NULL;       \
+           }                      \
+        } while(0);
+
+#define LWUTIL_SAFE_FREE_STRING_ARRAY(ppszArray)               \
+        do {                                                \
+           if (ppszArray) {                                 \
+               LwNetFreeNullTerminatedStringArray(ppszArray); \
+               (ppszArray) = NULL;                          \
+           }                                                \
+        } while (0);
+
+
+#define LWUTIL_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
+
+
 DWORD
-LwNetUtilAllocateMemory(
+LwNetAllocateMemory(
     size_t Size,
-    LW_PVOID * ppMemory
+    LW_PVOID* ppMemory
     );
 
 DWORD
-LwNetUtilReallocMemory(
+LwNetReallocMemory(
     LW_PVOID pMemory,
-    LW_PVOID * ppNewMemory,
+    LW_PVOID* ppNewMemory,
     size_t Size
     );
 
 VOID
-LwNetUtilFreeMemory(
+LwNetFreeMemory(
     PVOID pMemory
+    );
+
+DWORD
+LwNetAllocateString(
+    PCSTR  pszInputString,
+    PSTR* ppszOutputString
+    );
+
+VOID
+LwNetFreeString(
+    PSTR pszString
+    );
+
+VOID
+LwNetFreeStringArray(
+    PSTR* ppStringArray,
+    DWORD dwCount
+    );
+
+VOID
+LwNetFreeNullTerminatedStringArray(
+    PSTR * ppStringArray
+    );
+
+DWORD
+LwNetWC16StringAllocateFromCString(
+    OUT PWSTR* ppszNewString,
+    IN PCSTR pszOriginalString
+    );
+
+VOID
+LwNetWC16StringFree(
+    OUT PWSTR* ppszString
+    );
+
+DWORD
+LwNetAllocateSidFromCString(
+    OUT PSID* Sid,
+    IN PCSTR StringSid
     );
 
 BOOLEAN

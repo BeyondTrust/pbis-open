@@ -54,8 +54,12 @@
 #include <lwtoolsystem.h>
 
 #include <lw/errno.h>
+#include <lw/rtlstring.h>
+#include <lw/security-api.h>
+#include <lw/security-types.h>
 #include <lwmem.h>
 #include <lwstr.h>
+#include <lwerror.h>
 #include <reg/lwreg.h>
 
 #include <lwsecurityidentifier.h>
