@@ -33,43 +33,64 @@
  *
  * Module Name:
  *
- *        samr_deletedomgroup.c
+ *        samr_stubmemory.h
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        SamrDeleteDomGroup function
+ *        Samr DCE/RPC stub memory cleanup functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include "includes.h"
+#ifndef _SAMR_STUB_MEMORY_H_
+#define _SAMR_STUB_MEMORY_H_
 
+void SamrCleanStubRidNameArray(RID_NAME_ARRAY *r);
 
-NTSTATUS
-SamrDeleteDomGroup(
-    IN  SAMR_BINDING    hBinding,
-    IN  ACCOUNT_HANDLE  hGroup
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    ACCOUNT_HANDLE hGroupOut = NULL;
+void SamrFreeStubRidNameArray(RID_NAME_ARRAY *ptr);
 
-    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
-    BAIL_ON_INVALID_PTR(hGroup, ntStatus);
+void SamrCleanStubIds(IDS *r);
 
-    DCERPC_CALL(ntStatus, cli_SamrDeleteDomGroup((handle_t)hBinding,
-                                                 hGroup,
-                                                 &hGroupOut));
-    BAIL_ON_NT_STATUS(ntStatus);
+void SamrCleanStubUnicodeStringArray(UNICODE_STRING_ARRAY *r);
 
-cleanup:
-    return ntStatus;
+void SamrCleanStubEntryArray(ENTRY_ARRAY *r);
 
-error:
-    goto cleanup;
-}
+void SamrFreeStubEntryArray(ENTRY_ARRAY *ptr);
+
+void SamrFreeStubDomSid(PSID ptr);
+
+void SamrCleanStubSidArray(SID_ARRAY *r);
+
+void SamrCleanStubRidWithAttributeArray(RID_WITH_ATTRIBUTE_ARRAY *r);
+
+void SamrFreeStubRidWithAttributeArray(RID_WITH_ATTRIBUTE_ARRAY *ptr);
+
+void SamrCleanStubAliasInfo(AliasInfo *r, UINT16 level);
+
+void SamrFreeStubAliasInfo(AliasInfo *ptr, UINT16 level);
+
+void SamrCleanStubDomainInfo(DomainInfo *r, UINT16 level);
+
+void SamrFreeStubDomainInfo(DomainInfo *ptr, UINT16 level);
+
+void SamrCleanStubUserInfo(UserInfo *r, UINT16 level);
+
+void SamrFreeStubUserInfo(UserInfo *ptr, UINT16 level);
+
+void SamrCleanStubDisplayInfo(SamrDisplayInfo *ptr, UINT16 level);
+
+void SamrCleanStubSecurityDescriptorBuffer(
+    PSAMR_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
+    );
+
+void
+SamrFreeStubSecurityDescriptorBuffer(
+    PSAMR_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
+    );
+
+#endif /* _SAMR_STUB_MEMORY_H */
 
 
 /*

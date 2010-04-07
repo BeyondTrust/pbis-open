@@ -49,9 +49,9 @@
 
 NTSTATUS
 SamrQueryDomainInfo(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
-    IN  UINT16          Level,
+    IN  WORD            swLevel,
     OUT DomainInfo    **ppInfo
     )
 {
@@ -62,13 +62,13 @@ SamrQueryDomainInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(ppInfo, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrQueryDomainInfo(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrQueryDomainInfo((handle_t)hBinding,
                                                   hDomain,
-                                                  Level,
+                                                  swLevel,
                                                   &pInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -77,7 +77,7 @@ SamrQueryDomainInfo(
         ntStatus = SamrAllocateDomainInfo(NULL,
                                           &dwOffset,
                                           NULL,
-                                          Level,
+                                          swLevel,
                                           pInfo,
                                           &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -93,7 +93,7 @@ SamrQueryDomainInfo(
         ntStatus = SamrAllocateDomainInfo(pOutInfo,
                                           &dwOffset,
                                           &dwSpaceLeft,
-                                          Level,
+                                          swLevel,
                                           pInfo,
                                           &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -104,7 +104,7 @@ SamrQueryDomainInfo(
 cleanup:
     if (pInfo)
     {
-        SamrFreeStubDomainInfo(pInfo, Level);
+        SamrFreeStubDomainInfo(pInfo, swLevel);
     }
 
     return ntStatus;

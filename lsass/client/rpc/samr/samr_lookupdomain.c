@@ -49,33 +49,37 @@
 
 NTSTATUS
 SamrLookupDomain(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  CONNECT_HANDLE  hConn,
     IN  PCWSTR          pwszDomainName,
     OUT PSID           *ppSid
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    UnicodeString DomainName = {0};
+    DWORD dwError = ERROR_SUCCESS;
+    UNICODE_STRING DomainName = {0};
     DWORD dwSidSize = 0;
     PSID pSid = NULL;
     PSID pRetSid = NULL;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hConn, ntStatus);
     BAIL_ON_INVALID_PTR(pwszDomainName, ntStatus);
     BAIL_ON_INVALID_PTR(ppSid, ntStatus);
 
-    ntStatus = InitUnicodeString(&DomainName, pwszDomainName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringFromWc16String(
+                                    &DomainName,
+                                    pwszDomainName);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrLookupDomain(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrLookupDomain((handle_t)hBinding,
                                                hConn,
                                                &DomainName,
                                                &pSid));
     BAIL_ON_NT_STATUS(ntStatus);
 
-    if (pSid) {
+    if (pSid)
+    {
         dwSidSize = RtlLengthRequiredSid(pSid->SubAuthorityCount);
         ntStatus = SamrAllocateMemory(OUT_PPVOID(&pRetSid),
                                       dwSidSize);
@@ -90,11 +94,17 @@ SamrLookupDomain(
     *ppSid = pRetSid;
 
 cleanup:
-    FreeUnicodeString(&DomainName);
+    LwFreeUnicodeString(&DomainName);
 
     if (pSid)
     {
         SamrFreeStubDomSid(pSid);
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;

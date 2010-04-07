@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrEnumDomainAliases(
-    IN  handle_t      hSamrBinding,
+    IN  SAMR_BINDING  hBinding,
     IN  DOMAIN_HANDLE hDomain,
     IN  PUINT32       pResume,
     IN  UINT32        AccountFlags,
@@ -62,14 +62,14 @@ SamrEnumDomainAliases(
     NTSTATUS ntRetStatus = STATUS_SUCCESS;
     UINT32 Count = 0;
     UINT32 Resume = 0;
-    RidNameArray *pEntries = NULL;
+    PRID_NAME_ARRAY pEntries = NULL;
     PWSTR *ppwszNames = NULL;
     UINT32 *pRids = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pResume, ntStatus);
     BAIL_ON_INVALID_PTR(pppwszNames, ntStatus);
@@ -78,12 +78,13 @@ SamrEnumDomainAliases(
 
     Resume = *pResume;
 
-    DCERPC_CALL(ntStatus, cli_SamrEnumDomainAliases(hSamrBinding,
-                                                    hDomain,
-                                                    &Resume,
-                                                    AccountFlags,
-                                                    &pEntries,
-                                                    &Count));
+    DCERPC_CALL(ntStatus, cli_SamrEnumDomainAliases(
+                                        (handle_t)hBinding,
+                                        hDomain,
+                                        &Resume,
+                                        AccountFlags,
+                                        &pEntries,
+                                        &Count));
 
     /* Preserve returned status code */
     ntRetStatus = ntStatus;

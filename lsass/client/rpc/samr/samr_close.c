@@ -49,22 +49,21 @@
 
 NTSTATUS
 SamrClose(
-    IN  handle_t  hSamrBinding,
-    IN  void     *hIn
+    IN  LSA_BINDING  hBinding,
+    IN  void        *hIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     unsigned32 rpcStatus = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hIn, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrClose(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrClose((handle_t)hBinding,
                                         &hIn))
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
-
     return ntStatus;
 
 error:

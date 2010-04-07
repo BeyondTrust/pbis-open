@@ -49,9 +49,9 @@
 
 NTSTATUS
 SamrQueryDisplayInfo(
-    IN  handle_t          hSamrBinding,
+    IN  SAMR_BINDING      hBinding,
     IN  DOMAIN_HANDLE     hDomain,
-    IN  UINT16            Level,
+    IN  WORD              swLevel,
     IN  UINT32            StartIdx,
     IN  UINT32            MaxEntries,
     IN  UINT32            BufferSize,
@@ -70,7 +70,7 @@ SamrQueryDisplayInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pTotalSize, ntStatus);
     BAIL_ON_INVALID_PTR(pReturnedSize, ntStatus);
@@ -78,9 +78,9 @@ SamrQueryDisplayInfo(
 
     memset(&Info, 0, sizeof(Info));
 
-    DCERPC_CALL(ntStatus, cli_SamrQueryDisplayInfo(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrQueryDisplayInfo((handle_t)hBinding,
                                                    hDomain,
-                                                   Level,
+                                                   swLevel,
                                                    StartIdx,
                                                    MaxEntries,
                                                    BufferSize,
@@ -100,7 +100,7 @@ SamrQueryDisplayInfo(
     ntStatus = SamrAllocateDisplayInfo(NULL,
                                        &dwOffset,
                                        NULL,
-                                       Level,
+                                       swLevel,
                                        &Info,
                                        &dwSize);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -116,7 +116,7 @@ SamrQueryDisplayInfo(
     ntStatus = SamrAllocateDisplayInfo(pDispInfo,
                                        &dwOffset,
                                        &dwSpaceLeft,
-                                       Level,
+                                       swLevel,
                                        &Info,
                                        &dwSize);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -126,7 +126,7 @@ SamrQueryDisplayInfo(
     *ppInfo        = pDispInfo;
 
 cleanup:
-    SamrCleanStubDisplayInfo(&Info, Level);
+    SamrCleanStubDisplayInfo(&Info, swLevel);
 
     if (ntStatus == STATUS_SUCCESS &&
         (ntRetStatus == STATUS_SUCCESS ||

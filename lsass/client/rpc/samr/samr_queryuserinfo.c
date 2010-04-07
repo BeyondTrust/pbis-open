@@ -49,9 +49,9 @@
 
 NTSTATUS
 SamrQueryUserInfo(
-    IN  handle_t         hSamrBinding,
+    IN  SAMR_BINDING     hBinding,
     IN  ACCOUNT_HANDLE   hUser,
-    IN  UINT16           Level,
+    IN  WORD             swLevel,
     OUT UserInfo       **ppInfo
     )
 {
@@ -62,13 +62,13 @@ SamrQueryUserInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hUser, ntStatus);
     BAIL_ON_INVALID_PTR(ppInfo, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrQueryUserInfo(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrQueryUserInfo(hBinding,
                                                 hUser,
-                                                Level,
+                                                swLevel,
                                                 &pInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -77,7 +77,7 @@ SamrQueryUserInfo(
         ntStatus = SamrAllocateUserInfo(NULL,
                                         &dwOffset,
                                         NULL,
-                                        Level,
+                                        swLevel,
                                         pInfo,
                                         &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -93,7 +93,7 @@ SamrQueryUserInfo(
         ntStatus = SamrAllocateUserInfo(pOutInfo,
                                         &dwOffset,
                                         &dwSpaceLeft,
-                                        Level,
+                                        swLevel,
                                         pInfo,
                                         &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -105,7 +105,7 @@ cleanup:
     if (pInfo)
     {
         SamrFreeStubUserInfo(pInfo,
-                             Level);
+                             swLevel);
     }
 
     return ntStatus;

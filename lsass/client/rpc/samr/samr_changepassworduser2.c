@@ -49,27 +49,28 @@
 
 NTSTATUS
 SamrChangePasswordUser2(
-    IN  handle_t hSamrBinding,
-    IN  PCWSTR   pwszHostname,
-    IN  PCWSTR   pwszAccount,
-    IN  BYTE     ntpass[516],
-    IN  BYTE     ntverify[16],
-    IN  BYTE     bLmChange,
-    IN  BYTE     lmpass[516],
-    IN  BYTE     lmverify[16]
+    IN  LSA_BINDING  hBinding,
+    IN  PCWSTR       pwszHostname,
+    IN  PCWSTR       pwszAccount,
+    IN  BYTE         ntpass[516],
+    IN  BYTE         ntverify[16],
+    IN  BYTE         bLmChange,
+    IN  BYTE         lmpass[516],
+    IN  BYTE         lmverify[16]
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     CryptPassword NtPass;
     CryptPassword LmPass;
     CryptPassword *pLmPass = NULL;
     HashPassword NtVer;
     HashPassword LmVer;
     HashPassword *pLmVer = NULL;
-    UnicodeString Server = {0};
-    UnicodeString Account = {0};
+    UNICODE_STRING Server = {0};
+    UNICODE_STRING Account = {0};
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pwszHostname, ntStatus);
     BAIL_ON_INVALID_PTR(pwszAccount, ntStatus);
     BAIL_ON_INVALID_PTR(ntpass, ntStatus);
@@ -80,28 +81,35 @@ SamrChangePasswordUser2(
     memset(&NtVer, 0, sizeof(NtVer));
     memset(&LmVer, 0, sizeof(LmVer));
 
-    ntStatus = InitUnicodeString(&Server, pwszHostname);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringFromWc16String(
+                                    &Server,
+                                    pwszHostname);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    ntStatus = InitUnicodeString(&Account, pwszAccount);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringFromWc16String(
+                                    &Account,
+                                    pwszAccount);
+    BAIL_ON_WIN_ERROR(dwError);
 
     memcpy(NtPass.data, ntpass, sizeof(NtPass.data));
     memcpy(NtVer.data, ntverify, sizeof(NtVer.data));
 
-    if (bLmChange) {
+    if (bLmChange)
+    {
         memcpy(LmPass.data, lmpass, sizeof(LmPass.data));
         memcpy(LmVer.data, lmverify, sizeof(LmVer.data));
         pLmPass = &LmPass;
         pLmVer  = &LmVer;
 
-    } else {
+    }
+    else
+    {
         pLmPass = NULL;
         pLmVer  = NULL;
     }
 
     DCERPC_CALL(ntStatus,
-                cli_SamrChangePasswordUser2(hSamrBinding,
+                cli_SamrChangePasswordUser2((handle_t)hBinding,
                                             &Server,
                                             &Account,
                                             &NtPass,
@@ -112,8 +120,14 @@ SamrChangePasswordUser2(
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
-    FreeUnicodeString(&Account);
-    FreeUnicodeString(&Server);
+    LwFreeUnicodeString(&Account);
+    LwFreeUnicodeString(&Server);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
 
     return ntStatus;
 

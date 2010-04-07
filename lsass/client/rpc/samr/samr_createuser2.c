@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrCreateUser2(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
     IN  PWSTR           pwszAccountName,
     IN  UINT32          AccountFlags,
@@ -60,22 +60,25 @@ SamrCreateUser2(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    UnicodeStringEx AccountName = {0};
+    DWORD dwError = ERROR_SUCCESS;
+    UNICODE_STRING AccountName = {0};
     ACCOUNT_HANDLE hUser = NULL;
     UINT32 AccessGranted = 0;
     UINT32 Rid = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pwszAccountName, ntStatus);
     BAIL_ON_INVALID_PTR(phUser, ntStatus);
     BAIL_ON_INVALID_PTR(pAccessGranted, ntStatus);
     BAIL_ON_INVALID_PTR(pRid, ntStatus);
 
-    ntStatus = InitUnicodeStringEx(&AccountName, pwszAccountName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringExFromWc16String(
+                                    &AccountName,
+                                    pwszAccountName);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrCreateUser2(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrCreateUser2((handle_t)hBinding,
                                               hDomain,
                                               &AccountName,
                                               AccountFlags,
@@ -90,7 +93,13 @@ SamrCreateUser2(
     *pRid           = Rid;
 
 cleanup:
-    FreeUnicodeStringEx(&AccountName);
+    LwFreeUnicodeString(&AccountName);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
 
     return ntStatus;
 

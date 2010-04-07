@@ -47,104 +47,235 @@
 #include "includes.h"
 
 
-RPCSTATUS
-InitSamrBindingDefault(
-    handle_t         *phSamrBinding,
-    PCSTR             pszHostname,
-    PIO_CREDS  pCreds
+static
+NTSTATUS
+SamrInitBindingDefaultA(
+    OUT PSAMR_BINDING  phBinding,
+    IN  PCSTR          pszHostname,
+    IN  PIO_CREDS      pCreds
+    );
+
+
+static
+NTSTATUS
+SamrInitBindingFullA(
+    OUT PSAMR_BINDING  phBinding,
+    IN  PCSTR          pszProtSeq,
+    IN  PCSTR          pszHostname,
+    IN  PCSTR          pszEndpoint,
+    IN  PCSTR          pszUuid,
+    IN  PCSTR          pszOptions,
+    IN  PIO_CREDS      pCreds
+    );
+
+
+NTSTATUS
+SamrInitBindingDefault(
+    OUT PSAMR_BINDING  phBinding,
+    IN  PCWSTR         pwszHostname,
+    IN  PIO_CREDS      pCreds
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszHostname = NULL;
+
+    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    ntStatus = SamrInitBindingDefaultA(phBinding,
+                                       pszHostname,
+                                       pCreds);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszHostname);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+
+static
+NTSTATUS
+SamrInitBindingDefaultA(
+    OUT PSAMR_BINDING   phBinding,
+    IN  PCSTR           pszHostname,
+    IN  PIO_CREDS       pCreds
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PSTR pszProtSeq = (PSTR)SAMR_DEFAULT_PROT_SEQ;
     PSTR pszLpcProtSeq = (PSTR)"ncalrpc";
     PSTR pszEndpoint = (PSTR)SAMR_DEFAULT_ENDPOINT;
     PSTR pszLpcEndpoint = (PSTR)SAMR_LOCAL_ENDPOINT;
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
-    handle_t hSamrBinding = NULL;
+    SAMR_BINDING hBinding = NULL;
 
-    rpcStatus = InitSamrBindingFull(
-                    &hSamrBinding,
+    ntStatus = SamrInitBindingFullA(
+                    &hBinding,
                     (pszHostname) ? pszProtSeq : pszLpcProtSeq,
                     pszHostname,
                     (pszHostname) ? pszEndpoint : pszLpcEndpoint,
                     pszUuid,
                     pszOptions,
                     pCreds);
-    BAIL_ON_RPC_STATUS(rpcStatus);
+    BAIL_ON_NT_STATUS(ntStatus);
 
-    *phSamrBinding = hSamrBinding;
+    *phBinding = hBinding;
 
 cleanup:
-    return rpcStatus;
+    return ntStatus;
 
 error:
-    *phSamrBinding = NULL;
+    goto cleanup;
+}
+
+
+NTSTATUS
+SamrInitBindingFull(
+    OUT PSAMR_BINDING   phBinding,
+    IN  PCWSTR          pwszProtSeq,
+    IN  PCWSTR          pwszHostname,
+    IN  PCWSTR          pwszEndpoint,
+    IN  PCWSTR          pwszUuid,
+    IN  PCWSTR          pwszOptions,
+    IN  PIO_CREDS       pCreds
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszProtSeq = NULL;
+    PSTR pszHostname = NULL;
+    PSTR pszEndpoint = NULL;
+    PSTR pszUuid = NULL;
+    PSTR pszOptions = NULL;
+    SAMR_BINDING hBinding = NULL;
+
+    dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszEndpoint, &pszEndpoint);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszUuid, &pszUuid);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszOptions, &pszOptions);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    ntStatus = SamrInitBindingFullA(&hBinding,
+                                    pszProtSeq,
+                                    pszHostname,
+                                    pszEndpoint,
+                                    pszUuid,
+                                    pszOptions,
+                                    pCreds);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *phBinding = hBinding;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszProtSeq);
+    LW_SAFE_FREE_MEMORY(pszHostname);
+    LW_SAFE_FREE_MEMORY(pszEndpoint);
+    LW_SAFE_FREE_MEMORY(pszUuid);
+    LW_SAFE_FREE_MEMORY(pszOptions);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError == ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return ntStatus;
+
+error:
+    *phBinding = NULL;
 
     goto cleanup;
 }
 
 
-RPCSTATUS
-InitSamrBindingFull(
-    handle_t *phSamrBinding,
-    PCSTR pszProtSeq,
-    PCSTR pszHostname,
-    PCSTR pszEndpoint,
-    PCSTR pszUuid,
-    PCSTR pszOptions,
-    PIO_CREDS pCreds
+static
+NTSTATUS
+SamrInitBindingFullA(
+    OUT PSAMR_BINDING  phBinding,
+    IN  PCSTR          pszProtSeq,
+    IN  PCSTR          pszHostname,
+    IN  PCSTR          pszEndpoint,
+    IN  PCSTR          pszUuid,
+    IN  PCSTR          pszOptions,
+    IN  PIO_CREDS      pCreds
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
-    RPCSTATUS st = RPC_S_OK;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    unsigned32 rpcStatus = RPC_S_OK;
+    unsigned32 st = RPC_S_OK;
     unsigned char *binding_string = NULL;
     unsigned char *prot_seq   = NULL;
     unsigned char *endpoint   = NULL;
     unsigned char *uuid       = NULL;
     unsigned char *options    = NULL;
     unsigned char *address    = NULL;
-    handle_t hSamrBinding = NULL;
+    handle_t hBinding = NULL;
     rpc_transport_info_handle_t hInfo = NULL;
 
-    BAIL_ON_INVALID_PTR_RPCSTATUS(phSamrBinding, rpcStatus);
-    BAIL_ON_INVALID_PTR_RPCSTATUS(pszProtSeq, rpcStatus);
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     prot_seq = (unsigned char*) strdup(pszProtSeq);
-    BAIL_ON_NO_MEMORY_RPCSTATUS(prot_seq, rpcStatus);
+    BAIL_ON_NULL_PTR(prot_seq, ntStatus);
 
-    if (pszEndpoint != NULL) {
+    if (pszEndpoint != NULL)
+    {
         endpoint = (unsigned char*) strdup(pszEndpoint);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(endpoint, rpcStatus);
+        BAIL_ON_NULL_PTR(endpoint, ntStatus);
     }
 
-    if (pszUuid != NULL) {
+    if (pszUuid != NULL)
+    {
         uuid = (unsigned char*) strdup(pszUuid);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(uuid, rpcStatus);
+        BAIL_ON_NULL_PTR(uuid, ntStatus);
     }
 
-    if (pszOptions != NULL) {
+    if (pszOptions != NULL)
+    {
         options = (unsigned char*) strdup(pszOptions);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(options, rpcStatus);
+        BAIL_ON_NULL_PTR(options, ntStatus);
     }
 
     if (pszHostname != NULL) {
         address = (unsigned char*) strdup(pszHostname);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(address, rpcStatus);
+        BAIL_ON_NO_MEMORY_RPCSTATUS(address, ntStatus);
     }
 
-    rpc_string_binding_compose(uuid,
-                               prot_seq,
-                               address,
-                               endpoint,
-                               options,
-                               &binding_string,
-                               &rpcStatus);
+    rpc_string_binding_compose(
+        uuid,
+        prot_seq,
+        address,
+        endpoint,
+        options,
+        &binding_string,
+        &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    rpc_binding_from_string_binding(binding_string,
-                                    &hSamrBinding,
-                                    &rpcStatus);
+    rpc_binding_from_string_binding(
+        binding_string,
+        &hBinding,
+        &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
     if (strcmp(pszProtSeq, "ncacn_np") == 0)
@@ -157,7 +288,7 @@ InitSamrBindingFull(
         BAIL_ON_RPC_STATUS(rpcStatus);
 
         rpc_binding_set_transport_info(
-            hSamrBinding,
+            hBinding,
             hInfo,
             &rpcStatus);
         BAIL_ON_RPC_STATUS(rpcStatus);
@@ -165,19 +296,19 @@ InitSamrBindingFull(
         hInfo = NULL;
     }
 
-    rpc_mgmt_set_com_timeout(hSamrBinding,
+    rpc_mgmt_set_com_timeout(hBinding,
                              6,
                              &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    *phSamrBinding = hSamrBinding;
+    *phBinding = (SAMR_BINDING)hBinding;
 
 cleanup:
-    SAFE_FREE(prot_seq);
-    SAFE_FREE(endpoint);
-    SAFE_FREE(uuid);
-    SAFE_FREE(options);
-    SAFE_FREE(address);
+    LW_SAFE_FREE_MEMORY(prot_seq);
+    LW_SAFE_FREE_MEMORY(endpoint);
+    LW_SAFE_FREE_MEMORY(uuid);
+    LW_SAFE_FREE_MEMORY(options);
+    LW_SAFE_FREE_MEMORY(address);
 
     if (hInfo)
     {
@@ -194,34 +325,44 @@ cleanup:
         rpcStatus = st;
     }
 
-    return rpcStatus;
-
-error:
-    if (hSamrBinding) {
-        rpc_binding_free(&hSamrBinding, &rpcStatus);
+    if (ntStatus == STATUS_SUCCESS &&
+        rpcStatus != RPC_S_OK)
+    {
+        ntStatus = LwRpcStatusToNtStatus(rpcStatus);
     }
 
-    *phSamrBinding = NULL;
+    return ntStatus;
+
+error:
+    if (hBinding)
+    {
+        rpc_binding_free(&hBinding, &rpcStatus);
+    }
+
+    *phBinding = NULL;
 
     goto cleanup;
 }
 
 
-RPCSTATUS
-FreeSamrBinding(
-    IN  handle_t *phSamrBinding
+VOID
+SamrFreeBinding(
+    IN  PSAMR_BINDING  phBinding
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     /* Free the binding itself */
-    if (phSamrBinding && *phSamrBinding) {
-        rpc_binding_free(phSamrBinding, &rpcStatus);
+    if (phBinding && *phBinding)
+    {
+        rpc_binding_free((handle_t*)phBinding, &rpcStatus);
         BAIL_ON_RPC_STATUS(rpcStatus);
     }
 
+    *phBinding = NULL;
+
 cleanup:
-    return rpcStatus;
+    return;
 
 error:
     goto cleanup;

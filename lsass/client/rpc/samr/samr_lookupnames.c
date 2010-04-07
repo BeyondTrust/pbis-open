@@ -49,9 +49,9 @@
 
 NTSTATUS
 SamrLookupNames(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
-    IN  UINT32          NumNames,
+    IN  DWORD           dwNumNames,
     IN  PWSTR          *ppwszNames,
     OUT UINT32        **ppRids,
     OUT UINT32        **ppTypes,
@@ -60,16 +60,18 @@ SamrLookupNames(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntLookupStatus = STATUS_SUCCESS;
-    UnicodeString *pNames = NULL;
-    Ids Rids = {0};
-    Ids Types = {0};
+    DWORD dwError = ERROR_SUCCESS;
+    PUNICODE_STRING pNames = NULL;
+    DWORD iName = 0;
+    IDS Rids = {0};
+    IDS Types = {0};
     UINT32 *pRids = NULL;
     UINT32 *pTypes = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(ppwszNames, ntStatus);
     BAIL_ON_INVALID_PTR(ppRids, ntStatus);
@@ -77,12 +79,21 @@ SamrLookupNames(
     /* pRidsCount can be NULL, in which case the number of returned rids must
        match num_names. */
 
-    pNames = InitUnicodeStringArray(ppwszNames, NumNames);
-    BAIL_ON_NULL_PTR(pNames, ntStatus);
+    dwError = LwAllocateMemory(sizeof(pNames[0]) * dwNumNames,
+                               OUT_PPVOID(&pNames));
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrLookupNames(hSamrBinding,
+    for (iName = 0; iName < dwNumNames; iName++)
+    {
+        dwError = LwAllocateUnicodeStringFromWc16String(
+                                      &pNames[iName],
+                                      ppwszNames[iName]);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+    
+    DCERPC_CALL(ntStatus, cli_SamrLookupNames((handle_t)hBinding,
                                               hDomain,
-                                              NumNames,
+                                              dwNumNames,
                                               pNames,
                                               &Rids,
                                               &Types));
@@ -94,7 +105,7 @@ SamrLookupNames(
 
     ntLookupStatus = ntStatus;
 
-    if (Rids.count != Types.count)
+    if (Rids.dwCount != Types.dwCount)
     {
         ntStatus = STATUS_REPLY_MESSAGE_MISMATCH;
         BAIL_ON_NT_STATUS(ntStatus);
@@ -107,7 +118,7 @@ SamrLookupNames(
                                &dwSize);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwSpaceLeft = sizeof(pRids[0]) * Rids.count;
+    dwSpaceLeft = sizeof(pRids[0]) * Rids.dwCount;
     dwSize      = 0;
     dwOffset    = 0;
 
@@ -122,7 +133,7 @@ SamrLookupNames(
                                &dwSize);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwSpaceLeft = sizeof(pTypes[0]) * Types.count;
+    dwSpaceLeft = sizeof(pTypes[0]) * Types.dwCount;
     dwSize      = 0;
     dwOffset    = 0;
 
@@ -139,9 +150,9 @@ SamrLookupNames(
 
     if (pRidsCount)
     {
-        *pRidsCount = Rids.count;
+        *pRidsCount = Rids.dwCount;
     }
-    else if (Rids.count != NumNames)
+    else if (Rids.dwCount != dwNumNames)
     {
         ntStatus = STATUS_REPLY_MESSAGE_MISMATCH;
         BAIL_ON_NT_STATUS(ntStatus);
@@ -154,12 +165,26 @@ cleanup:
     SamrCleanStubIds(&Rids);
     SamrCleanStubIds(&Types);
 
-    FreeUnicodeStringArray(pNames, NumNames);
+    if (pNames)
+    {
+        for (iName = 0; iName < dwNumNames; iName++)
+        {
+            LwFreeUnicodeString(&(pNames[iName]));
+        }
+
+        LW_SAFE_FREE_MEMORY(pNames);
+    }
 
     if (ntStatus == STATUS_SUCCESS &&
         ntLookupStatus != STATUS_SUCCESS)
     {
         ntStatus = ntLookupStatus;
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;

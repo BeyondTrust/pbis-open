@@ -49,26 +49,26 @@
 
 void
 SamrCleanStubRidNameArray(
-    RidNameArray *pRidNames
+    RID_NAME_ARRAY *pRidNames
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     UINT32 i = 0;
 
-    for (i = 0; i < pRidNames->count; i++) {
-        RidName *pRidName = &(pRidNames->entries[i]);
-        rpc_sm_client_free(pRidName->name.string, &rpcStatus);
+    for (i = 0; i < pRidNames->dwCount; i++) {
+        PRID_NAME pRidName = &(pRidNames->pEntries[i]);
+        rpc_sm_client_free(pRidName->Name.Buffer, &rpcStatus);
     }
 
-    rpc_sm_client_free(pRidNames->entries, &rpcStatus);
+    rpc_sm_client_free(pRidNames->pEntries, &rpcStatus);
 }
 
 
 void
 SamrFreeStubRidNameArray(
-    RidNameArray *pRidNames)
+    RID_NAME_ARRAY *pRidNames)
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     SamrCleanStubRidNameArray(pRidNames);
     rpc_sm_client_free(pRidNames, &rpcStatus);
@@ -77,57 +77,57 @@ SamrFreeStubRidNameArray(
 
 void
 SamrCleanStubIds(
-    Ids *pIds
+    IDS *pIds
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
-    if (pIds->count) {
-        rpc_sm_client_free(pIds->ids, &rpcStatus);
+    if (pIds->dwCount) {
+        rpc_sm_client_free(pIds->pIds, &rpcStatus);
     }
 }
 
 
 void
 SamrCleanStubUnicodeStringArray(
-    UnicodeStringArray *pUniStrings
+    UNICODE_STRING_ARRAY *pUniStrings
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
-    for (i = 0; i < pUniStrings->count; i++) {
-        UnicodeString *pUniString = &(pUniStrings->names[i]);
-        rpc_sm_client_free(pUniString->string, &rpcStatus);
+    for (i = 0; i < pUniStrings->dwCount; i++) {
+        PUNICODE_STRING pUniString = &(pUniStrings->pNames[i]);
+        rpc_sm_client_free(pUniString->Buffer, &rpcStatus);
     }
 
-    rpc_sm_client_free(pUniStrings->names, &rpcStatus);
+    rpc_sm_client_free(pUniStrings->pNames, &rpcStatus);
 }
 
 
 void
 SamrCleanStubEntryArray(
-    EntryArray *pEntries
+    ENTRY_ARRAY *pEntries
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
-    for (i = 0; i < pEntries->count; i++) {
-        Entry *pEntry = &(pEntries->entries[i]);
-        rpc_sm_client_free(pEntry->name.string, &rpcStatus);
+    for (i = 0; i < pEntries->dwCount; i++) {
+        PENTRY pEntry = &(pEntries->pEntries[i]);
+        rpc_sm_client_free(pEntry->Name.Buffer, &rpcStatus);
     }
 
-    rpc_sm_client_free(pEntries->entries, &rpcStatus);
+    rpc_sm_client_free(pEntries->pEntries, &rpcStatus);
 }
 
 
 void
 SamrFreeStubEntryArray(
-    EntryArray *pEntries
+    ENTRY_ARRAY *pEntries
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     SamrCleanStubEntryArray(pEntries);
     rpc_sm_client_free(pEntries, &rpcStatus);
@@ -139,7 +139,7 @@ SamrFreeStubDomSid(
     PSID pSid
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     rpc_sm_client_free(pSid, &rpcStatus);
 }
@@ -147,37 +147,39 @@ SamrFreeStubDomSid(
 
 void
 SamrCleanStubSidArray(
-    SidArray *pSids
+    SID_ARRAY *pSids
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
-    for (i = 0; i < pSids->num_sids; i++) {
-        PSID pSid = pSids->sids[i].sid;
+    for (i = 0; i < pSids->dwNumSids; i++) {
+        PSID pSid = pSids->pSids[i].pSid;
         rpc_sm_client_free(pSid, &rpcStatus);
     }
 
-    rpc_sm_client_free(pSids->sids, &rpcStatus);
+    rpc_sm_client_free(pSids->pSids, &rpcStatus);
 }
 
 
 void
 SamrCleanStubRidWithAttributeArray(
-    RidWithAttributeArray *pRidAttribs)
+    RID_WITH_ATTRIBUTE_ARRAY *pRidAttribs)
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
-    rpc_sm_client_free(pRidAttribs->rids, &rpcStatus);
+    rpc_sm_client_free(pRidAttribs->pRids, &rpcStatus);
 }
 
 
 void
 SamrFreeStubRidWithAttributeArray(
-    RidWithAttributeArray *pRidAttribs)
+    RID_WITH_ATTRIBUTE_ARRAY *pRidAttribs)
 {
+    unsigned32 rpcStatus = RPC_S_OK;
+
     SamrCleanStubRidWithAttributeArray(pRidAttribs);
-    free(pRidAttribs);
+    rpc_sm_client_free(pRidAttribs, &rpcStatus);
 }
 
 
@@ -187,20 +189,20 @@ SamrCleanStubAliasInfo(
     UINT16     Level
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     switch (Level) {
     case ALIAS_INFO_ALL:
-        rpc_sm_client_free(pInfo->all.name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->all.description.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->all.name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->all.description.Buffer, &rpcStatus);
         break;
 
     case ALIAS_INFO_NAME:
-        rpc_sm_client_free(pInfo->name.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->name.Buffer, &rpcStatus);
         break;
 
     case ALIAS_INFO_DESCRIPTION:
-        rpc_sm_client_free(pInfo->description.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->description.Buffer, &rpcStatus);
         break;
     }
 }
@@ -212,7 +214,7 @@ SamrFreeStubAliasInfo(
     UINT16     Level
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     SamrCleanStubAliasInfo(pInfo, Level);
     rpc_sm_client_free(pInfo, &rpcStatus);
@@ -224,25 +226,25 @@ SamrCleanStubDomainInfo(
     DomainInfo *pInfo,
     UINT16      Level)
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     switch (Level) {
     case 2:
-        rpc_sm_client_free(pInfo->info2.comment.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info2.domain_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info2.primary.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info2.comment.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info2.domain_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info2.primary.Buffer, &rpcStatus);
         break;
 
     case 4:
-        rpc_sm_client_free(pInfo->info4.comment.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info4.comment.Buffer, &rpcStatus);
         break;
 
     case 5:
-        rpc_sm_client_free(pInfo->info5.domain_name.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.domain_name.Buffer, &rpcStatus);
         break;
 
     case 6:
-        rpc_sm_client_free(pInfo->info6.primary.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info6.primary.Buffer, &rpcStatus);
         break;
 
     case 11:
@@ -256,7 +258,7 @@ SamrFreeStubDomainInfo(
     DomainInfo *pInfo,
     UINT16      Level)
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     SamrCleanStubDomainInfo(pInfo, Level);
     rpc_sm_client_free(pInfo, &rpcStatus);
@@ -269,29 +271,29 @@ SamrCleanStubUserInfo(
     UINT16    Level
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     switch (Level) {
     case 1:
-        rpc_sm_client_free(pInfo->info1.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info1.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info1.description.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info1.comment.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info1.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info1.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info1.description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info1.comment.Buffer, &rpcStatus);
         break;
 
     case 2:
-        rpc_sm_client_free(pInfo->info2.comment.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info2.unknown1.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info2.comment.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info2.unknown1.Buffer, &rpcStatus);
         break;
 
     case 3:
-        rpc_sm_client_free(pInfo->info3.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.home_drive.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.logon_script.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.profile_path.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info3.workstations.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.home_drive.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.logon_script.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.profile_path.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info3.workstations.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info3.logon_hours.units, &rpcStatus);
         break;
 
@@ -300,69 +302,69 @@ SamrCleanStubUserInfo(
         break;
 
     case 5:
-        rpc_sm_client_free(pInfo->info5.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.home_drive.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.logon_script.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.profile_path.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.description.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info5.workstations.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.home_drive.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.logon_script.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.profile_path.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info5.workstations.Buffer, &rpcStatus);
         rpc_sm_client_free(pInfo->info5.logon_hours.units, &rpcStatus);
         break;
 
     case 6:
-        rpc_sm_client_free(pInfo->info6.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info6.full_name.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info6.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info6.full_name.Buffer, &rpcStatus);
         break;
 
     case 7:
-        rpc_sm_client_free(pInfo->info7.account_name.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info7.account_name.Buffer, &rpcStatus);
         break;
 
     case 8:
-        rpc_sm_client_free(pInfo->info8.full_name.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info8.full_name.Buffer, &rpcStatus);
         break;
 
     case 10:
-        rpc_sm_client_free(pInfo->info10.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info10.home_drive.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info10.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info10.home_drive.Buffer, &rpcStatus);
         break;
 
     case 11:
-        rpc_sm_client_free(pInfo->info11.logon_script.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info11.logon_script.Buffer, &rpcStatus);
         break;
 
     case 12:
-        rpc_sm_client_free(pInfo->info12.profile_path.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info12.profile_path.Buffer, &rpcStatus);
         break;
 
     case 13:
-        rpc_sm_client_free(pInfo->info13.description.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info13.description.Buffer, &rpcStatus);
         break;
 
     case 14:
-        rpc_sm_client_free(pInfo->info14.workstations.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info14.workstations.Buffer, &rpcStatus);
         break;
 
     case 20:
-        rpc_sm_client_free(pInfo->info20.parameters.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info20.parameters.Buffer, &rpcStatus);
         break;
 
     case 21:
-        rpc_sm_client_free(pInfo->info21.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.home_drive.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.logon_script.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.profile_path.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.description.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.workstations.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.comment.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.parameters.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.unknown1.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.unknown2.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info21.unknown3.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.home_drive.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.logon_script.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.profile_path.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.workstations.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.comment.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.parameters.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.unknown1.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.unknown2.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info21.unknown3.Buffer, &rpcStatus);
         if (&pInfo->info21.buf_count) {
             rpc_sm_client_free(pInfo->info21.buffer, &rpcStatus);
         }
@@ -370,19 +372,19 @@ SamrCleanStubUserInfo(
         break;
 
     case 23:
-        rpc_sm_client_free(pInfo->info23.info.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.home_drive.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.logon_script.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.profile_path.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.description.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.workstations.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.comment.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.parameters.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.unknown1.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.unknown2.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info23.info.unknown3.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.home_drive.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.logon_script.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.profile_path.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.workstations.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.comment.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.parameters.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.unknown1.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.unknown2.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info23.info.unknown3.Buffer, &rpcStatus);
         if (&pInfo->info23.info.buf_count) {
             rpc_sm_client_free(pInfo->info23.info.buffer, &rpcStatus);
         }
@@ -391,19 +393,19 @@ SamrCleanStubUserInfo(
         break;
 
     case 25:
-        rpc_sm_client_free(pInfo->info25.info.account_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.full_name.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.home_directory.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.home_drive.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.logon_script.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.profile_path.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.description.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.workstations.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.comment.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.parameters.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.unknown1.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.unknown2.string, &rpcStatus);
-        rpc_sm_client_free(pInfo->info25.info.unknown3.string, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.full_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.home_directory.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.home_drive.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.logon_script.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.profile_path.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.workstations.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.comment.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.parameters.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.unknown1.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.unknown2.Buffer, &rpcStatus);
+        rpc_sm_client_free(pInfo->info25.info.unknown3.Buffer, &rpcStatus);
         if (&pInfo->info25.info.buf_count) {
             rpc_sm_client_free(pInfo->info25.info.buffer, &rpcStatus);
         }
@@ -420,7 +422,7 @@ SamrFreeStubUserInfo(
     UINT16    Level
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
 
     SamrCleanStubUserInfo(pInfo, Level);
     rpc_sm_client_free(pInfo, &rpcStatus);
@@ -433,15 +435,15 @@ SamrCleanStubDisplayInfoFull(
     SamrDisplayInfoFull *pInfo
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
     for (i = 0; i < pInfo->count; i++) {
         SamrDisplayEntryFull *pEntry = &(pInfo->entries[i]);
 
-        rpc_sm_client_free(pEntry->account_name.string, &rpcStatus);
-        rpc_sm_client_free(pEntry->description.string, &rpcStatus);
-        rpc_sm_client_free(pEntry->full_name.string, &rpcStatus);
+        rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
+        rpc_sm_client_free(pEntry->full_name.Buffer, &rpcStatus);
     }
 }
 
@@ -452,14 +454,14 @@ SamrCleanStubDisplayInfoGeneral(
     SamrDisplayInfoGeneral *pInfo
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
     for (i = 0; i < pInfo->count; i++) {
         SamrDisplayEntryGeneral *pEntry = &(pInfo->entries[i]);
 
-        rpc_sm_client_free(pEntry->account_name.string, &rpcStatus);
-        rpc_sm_client_free(pEntry->description.string, &rpcStatus);
+        rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
     }
 }
 
@@ -470,14 +472,14 @@ SamrCleanStubDisplayInfoGeneralGroups(
     SamrDisplayInfoGeneralGroups *pInfo
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
     for (i = 0; i < pInfo->count; i++) {
         SamrDisplayEntryGeneralGroup *pEntry = &(pInfo->entries[i]);
 
-        rpc_sm_client_free(pEntry->account_name.string, &rpcStatus);
-        rpc_sm_client_free(pEntry->description.string, &rpcStatus);
+        rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
+        rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
     }
 }
 
@@ -488,7 +490,7 @@ SamrCleanStubDisplayInfoAscii(
     SamrDisplayInfoAscii *pInfo
     )
 {
-    RPCSTATUS rpcStatus = RPC_S_OK;
+    unsigned32 rpcStatus = RPC_S_OK;
     UINT32 i = 0;
 
     for (i = 0; i < pInfo->count; i++) {
@@ -536,7 +538,7 @@ SamrCleanStubSecurityDescriptorBuffer(
     PSAMR_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     rpc_sm_client_free(pSecDescBuffer->pBuffer,
                        &rpcStatus);
 }
@@ -547,7 +549,7 @@ SamrFreeStubSecurityDescriptorBuffer(
     PSAMR_SECURITY_DESCRIPTOR_BUFFER pSecDescBuffer
     )
 {
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     SamrCleanStubSecurityDescriptorBuffer(pSecDescBuffer);
     rpc_sm_client_free(pSecDescBuffer, &rpcStatus);

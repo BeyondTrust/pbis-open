@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrGetUserGroups(
-    IN  handle_t         hSamrBinding,
+    IN  SAMR_BINDING     hBinding,
     IN  ACCOUNT_HANDLE   hUser,
     OUT UINT32         **ppRids,
     OUT UINT32         **ppAttributes,
@@ -59,25 +59,25 @@ SamrGetUserGroups(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     UINT32 *pRids = NULL;
     UINT32 *pAttributes = NULL;
-    RidWithAttributeArray *pRidWithAttr = NULL;
+    PRID_WITH_ATTRIBUTE_ARRAY pRidWithAttr = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hUser, ntStatus);
     BAIL_ON_INVALID_PTR(ppRids, ntStatus);
     BAIL_ON_INVALID_PTR(ppAttributes, ntStatus);
     BAIL_ON_INVALID_PTR(pCount, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrGetUserGroups(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrGetUserGroups((handle_t)hBinding,
                                                 hUser,
                                                 &pRidWithAttr));
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (pRidWithAttr)
     {
-        dwSpaceLeft = sizeof(pRids[0]) * pRidWithAttr->count;
+        dwSpaceLeft = sizeof(pRids[0]) * pRidWithAttr->dwCount;
 
         ntStatus = SamrAllocateMemory(OUT_PPVOID(&pRids),
                                       dwSpaceLeft);
@@ -91,7 +91,7 @@ SamrGetUserGroups(
                                       &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
 
-        dwSpaceLeft = sizeof(pAttributes[0]) * pRidWithAttr->count;
+        dwSpaceLeft = sizeof(pAttributes[0]) * pRidWithAttr->dwCount;
         dwSize      = 0;
         dwOffset    = 0;
 
@@ -110,7 +110,7 @@ SamrGetUserGroups(
 
     *ppRids       = pRids;
     *ppAttributes = pAttributes;
-    *pCount       = pRidWithAttr->count;
+    *pCount       = pRidWithAttr->dwCount;
 
 cleanup:
     if (pRidWithAttr)

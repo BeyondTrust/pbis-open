@@ -49,46 +49,47 @@
 
 NTSTATUS
 SamrGetAliasMembership(
-    IN  handle_t       hSamrBinding,
+    IN  SAMR_BINDING   hBinding,
     IN  DOMAIN_HANDLE  hDomain,
     IN  PSID          *ppSids,
-    IN  UINT32         NumSids,
-    OUT UINT32       **ppRids,
-    OUT UINT32        *pCount
+    IN  DWORD          dwNumSids,
+    OUT PDWORD        *ppdwRids,
+    OUT PDWORD         pdwCount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     UINT32 iSid = 0;
-    SidArray Sids = {0};
-    Ids Rids = {0};
+    SID_ARRAY Sids = {0};
+    IDS Rids = {0};
     UINT32 *pRids = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(ppSids, ntStatus);
-    BAIL_ON_INVALID_PTR(ppRids, ntStatus);
-    BAIL_ON_INVALID_PTR(pCount, ntStatus);
+    BAIL_ON_INVALID_PTR(ppdwRids, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwCount, ntStatus);
 
-    Sids.num_sids = NumSids;
-    ntStatus = SamrAllocateMemory(OUT_PPVOID(&Sids.sids),
-                                  sizeof(SidPtr) * NumSids);
+    Sids.dwNumSids = dwNumSids;
+    ntStatus = SamrAllocateMemory(OUT_PPVOID(&Sids.pSids),
+                                  sizeof(Sids.pSids[0]) * dwNumSids);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    for (iSid = 0; iSid < NumSids; iSid++)
+    for (iSid = 0; iSid < dwNumSids; iSid++)
     {
-        Sids.sids[iSid].sid = ppSids[iSid];
+        Sids.pSids[iSid].pSid = ppSids[iSid];
     }
 
-    DCERPC_CALL(ntStatus, cli_SamrGetAliasMembership(hSamrBinding,
-                                                     hDomain,
-                                                     &Sids,
-                                                     &Rids));
+    DCERPC_CALL(ntStatus, cli_SamrGetAliasMembership(
+                                       (handle_t)hBinding,
+                                       hDomain,
+                                       &Sids,
+                                       &Rids));
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwSpaceLeft = sizeof(pRids[0]) * Rids.count;
+    dwSpaceLeft = sizeof(pRids[0]) * Rids.dwCount;
     dwSize      = 0;
 
     ntStatus = SamrAllocateMemory(OUT_PPVOID(&pRids),
@@ -102,8 +103,8 @@ SamrGetAliasMembership(
                                &dwSize);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    *ppRids  = pRids;
-    *pCount  = Rids.count;
+    *ppdwRids  = pRids;
+    *pdwCount  = Rids.dwCount;
 
 cleanup:
     SamrCleanStubIds(&Rids);
@@ -116,8 +117,8 @@ error:
         SamrFreeMemory(pRids);
     }
 
-    *ppRids  = NULL;
-    *pCount  = 0;
+    *ppdwRids  = NULL;
+    *pdwCount  = 0;
 
     goto cleanup;
 }

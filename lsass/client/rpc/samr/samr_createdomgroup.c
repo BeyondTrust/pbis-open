@@ -48,7 +48,7 @@
 
 NTSTATUS
 SamrCreateDomGroup(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
     IN  PWSTR           pwszGroupName,
     IN  UINT32          AccessMask,
@@ -57,20 +57,23 @@ SamrCreateDomGroup(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    UnicodeString GroupName = {0};
+    DWORD dwError = ERROR_SUCCESS;
+    UNICODE_STRING GroupName = {0};
     ACCOUNT_HANDLE hGroup = NULL;
     UINT32 Rid = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pwszGroupName, ntStatus);
     BAIL_ON_INVALID_PTR(phGroup, ntStatus);
     BAIL_ON_INVALID_PTR(pRid, ntStatus);
 
-    ntStatus = InitUnicodeString(&GroupName, pwszGroupName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringFromWc16String(
+                                    &GroupName,
+                                    pwszGroupName);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrCreateDomGroup(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrCreateDomGroup((handle_t)hBinding,
                                                  hDomain,
                                                  &GroupName,
                                                  AccessMask,
@@ -82,7 +85,13 @@ SamrCreateDomGroup(
     *pRid    = Rid;
 
 cleanup:
-    FreeUnicodeString(&GroupName);
+    LwFreeUnicodeString(&GroupName);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
 
     return ntStatus;
 

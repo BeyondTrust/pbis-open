@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrOpenGroup(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
     IN  UINT32          AccessMask,
     IN  UINT32          Rid,
@@ -59,11 +59,11 @@ SamrOpenGroup(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     ACCOUNT_HANDLE hGroup = NULL;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(phGroup, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrOpenGroup(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrOpenGroup((handle_t)hBinding,
                                             hDomain,
                                             AccessMask,
                                             Rid,

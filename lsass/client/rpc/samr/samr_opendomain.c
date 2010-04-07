@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrOpenDomain(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  CONNECT_HANDLE  hConn,
     IN  UINT32          AccessMask,
     IN  PSID            pSid,
@@ -59,12 +59,12 @@ SamrOpenDomain(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DOMAIN_HANDLE hDomain = NULL;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hConn, ntStatus);
     BAIL_ON_INVALID_PTR(pSid, ntStatus);
     BAIL_ON_INVALID_PTR(phDomain, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrOpenDomain(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrOpenDomain((handle_t)hBinding,
                                              hConn,
                                              AccessMask,
                                              pSid,

@@ -49,30 +49,30 @@
 
 NTSTATUS
 SamrGetMembersInAlias(
-    IN  handle_t         hSamrBinding,
+    IN  SAMR_BINDING     hBinding,
     IN  ACCOUNT_HANDLE   hAlias,
     OUT PSID           **pppSids,
     OUT UINT32          *pCount
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    SidArray Sids = {0};
+    SID_ARRAY Sids = {0};
     PSID *ppSids = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hAlias, ntStatus);
     BAIL_ON_INVALID_PTR(pppSids, ntStatus);
     BAIL_ON_INVALID_PTR(pCount, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrGetMembersInAlias(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrGetMembersInAlias((handle_t)hBinding,
                                                     hAlias,
                                                     &Sids));
     BAIL_ON_NT_STATUS(ntStatus);
 
-    if (Sids.num_sids)
+    if (Sids.dwNumSids)
     {
         ntStatus = SamrAllocateSids(NULL,
                                     &dwOffset,
@@ -98,7 +98,7 @@ SamrGetMembersInAlias(
     }
 
     *pppSids = ppSids;
-    *pCount  = Sids.num_sids;
+    *pCount  = Sids.dwNumSids;
 
 cleanup:
     SamrCleanStubSidArray(&Sids);

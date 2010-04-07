@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrEnumDomains(
-    IN  handle_t         hSamrBinding,
+    IN  SAMR_BINDING     hBinding,
     IN  CONNECT_HANDLE   hConn,
     IN OUT UINT32       *pResume,
     IN  UINT32           Size,
@@ -59,7 +59,7 @@ SamrEnumDomains(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntRetStatus = STATUS_SUCCESS;
-    EntryArray *pDomains = NULL;
+    PENTRY_ARRAY pDomains = NULL;
     UINT32 Resume = 0;
     UINT32 Count = 0;
     PWSTR *ppwszNames = NULL;
@@ -67,7 +67,7 @@ SamrEnumDomains(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hConn, ntStatus);
     BAIL_ON_INVALID_PTR(pResume, ntStatus);
     BAIL_ON_INVALID_PTR(pppwszNames, ntStatus);
@@ -75,7 +75,7 @@ SamrEnumDomains(
 
     Resume = *pResume;
 
-    DCERPC_CALL(ntStatus, cli_SamrEnumDomains(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrEnumDomains((handle_t)hBinding,
                                               hConn,
                                               &Resume,
                                               Size,

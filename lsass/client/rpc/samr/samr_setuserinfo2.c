@@ -49,21 +49,21 @@
 
 NTSTATUS
 SamrSetUserInfo2(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  ACCOUNT_HANDLE  hUser,
-    IN  UINT16          Level,
+    IN  WORD            swLevel,
     IN  UserInfo       *pInfo
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hUser, ntStatus);
     BAIL_ON_INVALID_PTR(pInfo, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrSetUserInfo2(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrSetUserInfo2((handle_t)hBinding,
                                                hUser,
-                                               Level,
+                                               swLevel,
                                                pInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 

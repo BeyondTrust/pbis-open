@@ -49,16 +49,16 @@
 
 NTSTATUS
 SamrDeleteUser(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  ACCOUNT_HANDLE  hUser
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hUser, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrDeleteUser(hSamrBinding, &hUser));
+    DCERPC_CALL(ntStatus, cli_SamrDeleteUser((handle_t)hBinding, &hUser));
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:

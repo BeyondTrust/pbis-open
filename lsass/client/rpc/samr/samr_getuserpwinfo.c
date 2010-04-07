@@ -49,18 +49,18 @@
 
 NTSTATUS
 SamrGetUserPwInfo(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  ACCOUNT_HANDLE  hUser,
     OUT PwInfo         *pInfo
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hUser, ntStatus);
     BAIL_ON_INVALID_PTR(pInfo, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrGetUserPwInfo(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrGetUserPwInfo((handle_t)hBinding,
                                                 hUser,
                                                 pInfo));
     BAIL_ON_NT_STATUS(ntStatus);

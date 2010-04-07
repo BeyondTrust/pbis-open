@@ -49,18 +49,18 @@
 
 NTSTATUS
 SamrAddAliasMember(
-    IN  handle_t       hSamrBinding,
+    IN  SAMR_BINDING   hBinding,
     IN  ACCOUNT_HANDLE hAlias,
     IN  PSID           pSid
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hAlias, ntStatus);
     BAIL_ON_INVALID_PTR(pSid, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrAddAliasMember(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrAddAliasMember((handle_t)hBinding,
                                                  hAlias,
                                                  pSid));
 

@@ -53,20 +53,16 @@
 #include <lwio/lwio.h>
 #include <dce/rpc.h>
 #include <dce/smb.h>
-#include <DceSupport.h>
+#include <dce/dcethread.h>
 #include <wc16str.h>
 #include <lw/ntstatus.h>
+#include <lwmem.h>
+#include <lwstr.h>
 #include <lwbuffer.h>
 
-#include <lwrpc/types.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/memptr.h>
-#include <lwrpc/sidhelper.h>
-#include <lwrpc/rid.h>
-#include <lwrpc/lsadefs.h>
-#include <lwrpc/samr.h>
-#include <macros.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/lsa.h>
+#include <lw/macros.h>
 
 #include "samrdefs.h"
 #include "samr_memory.h"

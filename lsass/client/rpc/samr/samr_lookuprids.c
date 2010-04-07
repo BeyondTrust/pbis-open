@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrLookupRids(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
     IN  UINT32          NumRids,
     IN  UINT32         *pRids,
@@ -59,21 +59,21 @@ SamrLookupRids(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntLookupStatus = STATUS_SUCCESS;
-    UnicodeStringArray Names = {0};
-    Ids Types = {0};
+    UNICODE_STRING_ARRAY Names = {0};
+    IDS Types = {0};
     PWSTR *ppwszNames = NULL;
     UINT32 *pTypes = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pRids, ntStatus);
     BAIL_ON_INVALID_PTR(pppwszNames, ntStatus);
     BAIL_ON_INVALID_PTR(ppTypes, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrLookupRids(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrLookupRids((handle_t)hBinding,
                                              hDomain,
                                              NumRids,
                                              pRids,
@@ -87,7 +87,7 @@ SamrLookupRids(
 
     ntLookupStatus = ntStatus;
 
-    if (Names.count > 0)
+    if (Names.dwCount > 0)
     {
         ntStatus = SamrAllocateNamesFromUnicodeStringArray(
                                       NULL,
@@ -113,7 +113,7 @@ SamrLookupRids(
                                       &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
 
-        dwSpaceLeft = sizeof(pTypes[0]) * Types.count;
+        dwSpaceLeft = sizeof(pTypes[0]) * Types.dwCount;
         dwSize      = 0;
         dwOffset    = 0;
 

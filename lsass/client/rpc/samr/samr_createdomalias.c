@@ -49,7 +49,7 @@
 
 NTSTATUS
 SamrCreateDomAlias(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  DOMAIN_HANDLE   hDomain,
     IN  PWSTR           pwszAliasName,
     IN  UINT32          AccessMask,
@@ -58,20 +58,23 @@ SamrCreateDomAlias(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    UnicodeString AliasName = {0};
+    DWORD dwError = ERROR_SUCCESS;
+    UNICODE_STRING AliasName = {0};
     ACCOUNT_HANDLE hAlias = NULL;
     UINT32 Rid = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hDomain, ntStatus);
     BAIL_ON_INVALID_PTR(pwszAliasName, ntStatus);
     BAIL_ON_INVALID_PTR(phAlias, ntStatus);
     BAIL_ON_INVALID_PTR(pRid, ntStatus);
 
-    ntStatus = InitUnicodeString(&AliasName, pwszAliasName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwAllocateUnicodeStringFromWc16String(
+                                    &AliasName,
+                                    pwszAliasName);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrCreateDomAlias(hSamrBinding,
+    DCERPC_CALL(ntStatus, cli_SamrCreateDomAlias((handle_t)hBinding,
                                                  hDomain,
                                                  &AliasName,
                                                  AccessMask,
@@ -83,7 +86,13 @@ SamrCreateDomAlias(
     *pRid    = Rid;
 
 cleanup:
-    FreeUnicodeString(&AliasName);
+    LwFreeUnicodeString(&AliasName);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
 
     return ntStatus;
 

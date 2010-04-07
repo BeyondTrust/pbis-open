@@ -172,11 +172,11 @@ SamrFreeMemory(
 
 NTSTATUS
 SamrAllocateNamesFromRidNameArray(
-    OUT PWSTR         *ppwszNames,
-    IN OUT PDWORD      pdwOffset,
-    IN OUT PDWORD      pdwSpaceLeft,
-    IN  RidNameArray  *pIn,
-    IN OUT PDWORD      pdwSize
+    OUT PWSTR           *ppwszNames,
+    IN OUT PDWORD        pdwOffset,
+    IN OUT PDWORD        pdwSpaceLeft,
+    IN  PRID_NAME_ARRAY  pIn,
+    IN OUT PDWORD        pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -187,11 +187,11 @@ SamrAllocateNamesFromRidNameArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iName = 0; iName < pIn->count; iName++)
+    for (iName = 0; iName < pIn->dwCount; iName++)
     {
         LWBUF_ALLOC_WC16STR_FROM_UNICODE_STRING(
                                ppwszNames,
-                               (PUNICODE_STRING)&(pIn->entries[iName].name));
+                               (PUNICODE_STRING)&(pIn->pEntries[iName].Name));
     }
 
 cleanup:
@@ -210,11 +210,11 @@ error:
 
 NTSTATUS
 SamrAllocateRidsFromRidNameArray(
-    OUT UINT32        *pRids,
-    IN OUT PDWORD      pdwOffset,
-    IN OUT PDWORD      pdwSpaceLeft,
-    IN  RidNameArray  *pIn,
-    IN OUT PDWORD      pdwSize
+    OUT UINT32          *pRids,
+    IN OUT PDWORD        pdwOffset,
+    IN OUT PDWORD        pdwSpaceLeft,
+    IN  PRID_NAME_ARRAY  pIn,
+    IN OUT PDWORD        pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -225,9 +225,9 @@ SamrAllocateRidsFromRidNameArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iRid = 0; iRid < pIn->count; iRid++)
+    for (iRid = 0; iRid < pIn->dwCount; iRid++)
     {
-        LWBUF_ALLOC_DWORD(pRids, pIn->entries[iRid].rid);
+        LWBUF_ALLOC_DWORD(pRids, pIn->pEntries[iRid].dwRid);
     }
 
 cleanup:
@@ -246,11 +246,11 @@ error:
 
 NTSTATUS
 SamrAllocateNames(
-    OUT PWSTR       *ppwszNames,
-    IN OUT PDWORD    pdwOffset,
-    IN OUT PDWORD    pdwSpaceLeft,
-    IN  EntryArray  *pIn,
-    IN OUT PDWORD    pdwSize
+    OUT PWSTR        *ppwszNames,
+    IN OUT PDWORD     pdwOffset,
+    IN OUT PDWORD     pdwSpaceLeft,
+    IN  PENTRY_ARRAY  pIn,
+    IN OUT PDWORD     pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -261,11 +261,11 @@ SamrAllocateNames(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iName = 0; iName < pIn->count; iName++)
+    for (iName = 0; iName < pIn->dwCount; iName++)
     {
         LWBUF_ALLOC_WC16STR_FROM_UNICODE_STRING(
                           ppwszNames,
-                          (PUNICODE_STRING)&(pIn->entries[iName].name));
+                          (PUNICODE_STRING)&(pIn->pEntries[iName].Name));
     }
 
 cleanup:
@@ -284,11 +284,11 @@ error:
 
 NTSTATUS
 SamrAllocateNamesFromUnicodeStringArray(
-    OUT PWSTR              *ppwszNames,
-    IN OUT PDWORD           pdwOffset,
-    IN OUT PDWORD           pdwSpaceLeft,
-    IN UnicodeStringArray  *pIn,
-    IN OUT PDWORD           pdwSize
+    OUT PWSTR                *ppwszNames,
+    IN OUT PDWORD             pdwOffset,
+    IN OUT PDWORD             pdwSpaceLeft,
+    IN PUNICODE_STRING_ARRAY  pIn,
+    IN OUT PDWORD             pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -299,11 +299,11 @@ SamrAllocateNamesFromUnicodeStringArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iName = 0; iName < pIn->count; iName++)
+    for (iName = 0; iName < pIn->dwCount; iName++)
     {
         LWBUF_ALLOC_WC16STR_FROM_UNICODE_STRING(
                           ppwszNames,
-                          (PUNICODE_STRING)&(pIn->names[iName]));
+                          (PUNICODE_STRING)&(pIn->pNames[iName]));
     }
 
 cleanup:
@@ -325,7 +325,7 @@ SamrAllocateIds(
     OUT UINT32     *pIds,
     IN OUT PDWORD   pdwOffset,
     IN OUT PDWORD   pdwSpaceLeft,
-    IN  Ids        *pIn,
+    IN  PIDS        pIn,
     IN OUT PDWORD   pdwSize
     )
 {
@@ -337,9 +337,9 @@ SamrAllocateIds(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iId = 0; iId < pIn->count; iId++)
+    for (iId = 0; iId < pIn->dwCount; iId++)
     {
-        LWBUF_ALLOC_DWORD(pIds, pIn->ids[iId]);
+        LWBUF_ALLOC_DWORD(pIds, pIn->pIds[iId]);
     }
 
 cleanup:
@@ -358,11 +358,11 @@ error:
 
 NTSTATUS
 SamrAllocateSids(
-    OUT PSID      *ppSids,
-    IN OUT PDWORD  pdwOffset,
-    IN OUT PDWORD  pdwSpaceLeft,
-    IN  SidArray  *pIn,
-    IN OUT PDWORD  pdwSize
+    OUT PSID       *ppSids,
+    IN OUT PDWORD   pdwOffset,
+    IN OUT PDWORD   pdwSpaceLeft,
+    IN  PSID_ARRAY  pIn,
+    IN OUT PDWORD   pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -373,9 +373,9 @@ SamrAllocateSids(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iSid = 0; iSid < pIn->num_sids; iSid++)
+    for (iSid = 0; iSid < pIn->dwNumSids; iSid++)
     {
-        LWBUF_ALLOC_PSID(ppSids, pIn->sids[iSid].sid);
+        LWBUF_ALLOC_PSID(ppSids, pIn->pSids[iSid].pSid);
     }
 
 cleanup:
@@ -394,11 +394,11 @@ error:
 
 NTSTATUS
 SamrAllocateRidsFromRidWithAttributeArray(
-    OUT UINT32                 *pRids,
-    IN OUT PDWORD               pdwOffset,
-    IN OUT PDWORD               pdwSpaceLeft,
-    IN  RidWithAttributeArray  *pIn,
-    IN OUT PDWORD               pdwSize
+    OUT UINT32                    *pRids,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE_ARRAY  pIn,
+    IN OUT PDWORD                  pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -409,9 +409,9 @@ SamrAllocateRidsFromRidWithAttributeArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iRid = 0; iRid < pIn->count; iRid++)
+    for (iRid = 0; iRid < pIn->dwCount; iRid++)
     {
-        LWBUF_ALLOC_DWORD(pRids, pIn->rids[iRid].rid);
+        LWBUF_ALLOC_DWORD(pRids, pIn->pRids[iRid].dwRid);
     }
 
 cleanup:
@@ -430,11 +430,11 @@ error:
 
 NTSTATUS
 SamrAllocateAttributesFromRidWithAttributeArray(
-    OUT UINT32                 *pAttributes,
-    IN OUT PDWORD               pdwOffset,
-    IN OUT PDWORD               pdwSpaceLeft,
-    IN  RidWithAttributeArray  *pIn,
-    IN OUT PDWORD               pdwSize
+    OUT UINT32                    *pAttributes,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PRID_WITH_ATTRIBUTE_ARRAY  pIn,
+    IN OUT PDWORD                  pdwSize
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -445,9 +445,9 @@ SamrAllocateAttributesFromRidWithAttributeArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    for (iAttr = 0; iAttr < pIn->count; iAttr++)
+    for (iAttr = 0; iAttr < pIn->dwCount; iAttr++)
     {
-        LWBUF_ALLOC_DWORD(pAttributes, pIn->rids[iAttr].attributes);
+        LWBUF_ALLOC_DWORD(pAttributes, pIn->pRids[iAttr].dwAttributes);
     }
 
 cleanup:

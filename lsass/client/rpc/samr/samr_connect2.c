@@ -49,29 +49,34 @@
 
 NTSTATUS
 SamrConnect2(
-    IN  handle_t        hSamrBinding,
+    IN  SAMR_BINDING    hBinding,
     IN  PCWSTR          pwszSysName,
     IN  UINT32          AccessMask,
     OUT CONNECT_HANDLE *phConn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     WCHAR wszDefaultSysName[] = SAMR_DEFAULT_SYSNAME;
-    UINT32 SystemNameLen = 0;
+    DWORD dwSystemNameLen = 0;
     PWSTR pwszSystemName = NULL;
     CONNECT_HANDLE hConn = NULL;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(phConn, ntStatus);
 
-    pwszSystemName = wc16sdup((pwszSysName) ?
-                              pwszSysName : &(wszDefaultSysName[0]));
-    BAIL_ON_NULL_PTR(pwszSystemName, ntStatus);
+    dwError = LwAllocateWc16String(
+                        &pwszSystemName,
+                        (pwszSysName) ? pwszSysName : &(wszDefaultSysName[0]));
+    BAIL_ON_WIN_ERROR(dwError);
 
-    SystemNameLen = (UINT32) wc16slen(pwszSystemName) + 1;
+    dwError = LwWc16sLen(pwszSystemName, (size_t*)&dwSystemNameLen);
+    BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_SamrConnect2(hSamrBinding,
-                                           SystemNameLen,
+    dwSystemNameLen++;
+
+    DCERPC_CALL(ntStatus, cli_SamrConnect2((handle_t)hBinding,
+                                           dwSystemNameLen,
                                            pwszSystemName,
                                            AccessMask,
                                            &hConn));
@@ -80,7 +85,13 @@ SamrConnect2(
     *phConn = hConn;
 
 cleanup:
-    SAFE_FREE(pwszSystemName);
+    LW_SAFE_FREE_MEMORY(pwszSystemName);
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
 
     return ntStatus;
 

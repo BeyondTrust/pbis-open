@@ -49,9 +49,9 @@
 
 NTSTATUS
 SamrQueryAliasInfo(
-    IN  handle_t         hSamrBinding,
+    IN  SAMR_BINDING     hBinding,
     IN  ACCOUNT_HANDLE   hAlias,
-    IN  UINT16           Level,
+    IN  WORD             swLevel,
     OUT AliasInfo      **ppInfo
     )
 {
@@ -62,14 +62,14 @@ SamrQueryAliasInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    BAIL_ON_INVALID_PTR(hSamrBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(hAlias, ntStatus);
     BAIL_ON_INVALID_PTR(ppInfo, ntStatus);
 
-    DCERPC_CALL(ntStatus, cli_SamrQueryAliasInfo(hSamrBinding,
-                                              hAlias,
-                                              Level,
-                                              &pInfo));
+    DCERPC_CALL(ntStatus, cli_SamrQueryAliasInfo((handle_t)hBinding,
+                                                 hAlias,
+                                                 swLevel,
+                                                 &pInfo));
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (pInfo)
@@ -77,7 +77,7 @@ SamrQueryAliasInfo(
         ntStatus = SamrAllocateAliasInfo(NULL,
                                          &dwOffset,
                                          NULL,
-                                         Level,
+                                         swLevel,
                                          pInfo,
                                          &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -93,7 +93,7 @@ SamrQueryAliasInfo(
         ntStatus = SamrAllocateAliasInfo(pOutInfo,
                                          &dwOffset,
                                          &dwSpaceLeft,
-                                         Level,
+                                         swLevel,
                                          pInfo,
                                          &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -104,7 +104,7 @@ SamrQueryAliasInfo(
 cleanup:
     if (pInfo)
     {
-        SamrFreeStubAliasInfo(pInfo, Level);
+        SamrFreeStubAliasInfo(pInfo, swLevel);
     }
 
     return ntStatus;
