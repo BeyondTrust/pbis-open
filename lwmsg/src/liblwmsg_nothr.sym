@@ -20,7 +20,6 @@ lwmsg_assoc_connect
 lwmsg_assoc_accept
 lwmsg_assoc_finish
 lwmsg_assoc_set_nonblock
-lwmsg_assoc_set_session_functions
 lwmsg_assoc_print_message_alloc
 lwmsg_assoc_acquire_call
 lwmsg_connection_new
@@ -98,8 +97,6 @@ lwmsg_security_token_equal
 lwmsg_security_token_can_access
 lwmsg_security_token_copy
 lwmsg_security_token_delete
-lwmsg_assoc_set_session_manager
-lwmsg_assoc_get_session_manager
 lwmsg_session_generate_cookie
 lwmsg_session_manager_init
 lwmsg_session_manager_delete
