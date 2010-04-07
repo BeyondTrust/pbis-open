@@ -7,7 +7,7 @@ BUILD_LOCALSTATEDIR="/var"
 
 # Build product set
 
-BUILD_PRODUCTS="lwiso qatools lwtest"
+BUILD_PRODUCTS="lwiso qatools"
 
 # We only want to srcdist for lwiso
 
