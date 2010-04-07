@@ -71,7 +71,7 @@ cpp_quote("#endif")
 	/* function 0x0f */
     NTSTATUS LsaLookupSids(
         [in] POLICY_HANDLE hPolicy,
-        [in] SidArray *sids,
+        [in] SID_ARRAY *pSids,
         [out] RefDomainList **domains,
         [in,out] TranslatedNameArray *names,
         [in] UINT16 level,

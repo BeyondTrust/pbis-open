@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2010
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -44,8 +44,8 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _RPCCLI_LSA_H_
-#define _RPCCLI_LSA_H_
+#ifndef _RPC_LSA_H_
+#define _RPC_LSA_H_
 
 
 #define LSA_DEFAULT_PROT_SEQ   "ncacn_np"
@@ -223,11 +223,13 @@ typedef struct ref_domain_list {
     UINT32 max_size;
 } RefDomainList;
 
+
 typedef struct translated_sid {
     UINT16 type;     /* SID_TYPE_ */
     UINT32 rid;
     UINT32 index;
 } TranslatedSid;
+
 
 typedef struct translated_sid_array {
 #ifdef _DCE_IDL_
@@ -240,12 +242,14 @@ typedef struct translated_sid_array {
     TranslatedSid *sids;
 } TranslatedSidArray;
 
+
 typedef struct translated_sid2 {
     UINT16 type;     /* SID_TYPE_ */
     UINT32 rid;
     UINT32 index;
     UINT32 unknown1;
 } TranslatedSid2;
+
 
 typedef struct translated_sid_array2 {
 #ifdef _DCE_IDL_
@@ -258,12 +262,14 @@ typedef struct translated_sid_array2 {
     TranslatedSid2 *sids;
 } TranslatedSidArray2;
 
+
 typedef struct translated_sid3 {
     UINT16 type;     /* SID_TYPE_ */
     PSID   sid;
     UINT32 index;
     UINT32 unknown1;
 } TranslatedSid3;
+
 
 typedef struct translated_sid_array3 {
 #ifdef _DCE_IDL_
@@ -276,11 +282,13 @@ typedef struct translated_sid_array3 {
     TranslatedSid3 *sids;
 } TranslatedSidArray3;
 
+
 typedef struct translated_name {
     UINT16 type;             /* SID_TYPE_ */
     UNICODE_STRING name;
     UINT32 sid_index;
 } TranslatedName;
+
 
 typedef struct translated_name_array {
 #ifdef _DCE_IDL_
@@ -293,12 +301,14 @@ typedef struct translated_name_array {
     TranslatedName *names;
 } TranslatedNameArray;
 
+
 typedef struct translated_name2 {
     UINT16 type;             /* SID_TYPE_ */
     UNICODE_STRING name;
     UINT32 sid_index;
     UINT32 unknown1;
 } TranslatedName2;
+
 
 typedef struct translated_name_array2 {
 #ifdef _DCE_IDL_
@@ -311,20 +321,24 @@ typedef struct translated_name_array2 {
     TranslatedName2 *names;
 } TranslatedNameArray2;
 
-typedef struct _sid_ptr {
-    PSID sid;
-} SidPtr;
 
-typedef struct _sid_array {
+typedef struct _SID_PTR
+{
+    PSID pSid;
+} SID_PTR, *PSID_PTR;
+
+
+typedef struct _SID_ARRAY
+{
 #ifdef _DCE_IDL_
     [range(0,1000)]
 #endif
-    ULONG num_sids;
+    DWORD dwNumSids;
 #ifdef _DCE_IDL_
-    [size_is(num_sids)]
+    [size_is(dwNumSids)]
 #endif
-    SidPtr* sids;
-} SidArray;
+    SID_PTR* pSids;
+} SID_ARRAY, *PSID_ARRAY;
 
 
 typedef
@@ -333,14 +347,15 @@ typedef
 #endif
 void* POLICY_HANDLE;
 
+
+#ifndef _DCE_IDL_
+
 typedef
 void* LSA_BINDING;
 
 typedef
 LSA_BINDING *PLSA_BINDING;
 
-
-#ifndef _DCE_IDL_
 
 NTSTATUS
 LsaInitBindingDefault(
@@ -446,7 +461,7 @@ NTSTATUS
 LsaLookupSids(
     IN  LSA_BINDING      hBinding,
     IN  POLICY_HANDLE    hPolicy,
-    IN  SidArray        *pSids,
+    IN  PSID_ARRAY       pSids,
     OUT RefDomainList  **ppRefDomList,
     OUT TranslatedName **ppTransNames,
     IN  WORD             swLevel,
@@ -474,7 +489,7 @@ LsaRpcFreeMemory(
 
 #endif /* _DCE_IDL_ */
 
-#endif /* _RPCCLI_LSA_H_ */
+#endif /* _RPC_LSA_H_ */
 
 
 /*

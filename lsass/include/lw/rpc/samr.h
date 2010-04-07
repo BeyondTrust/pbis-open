@@ -45,9 +45,13 @@
  */
 
 
-#ifndef _RPCCLI_SAMR_H_
-#define _RPCCLI_SAMR_H_
+#ifndef _RPC_SAMR_H_
+#define _RPC_SAMR_H_
 
+
+#define SAMR_DEFAULT_PROT_SEQ   "ncacn_np"
+#define SAMR_DEFAULT_ENDPOINT   "\\pipe\\samr"
+#define SAMR_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
 
 /* Connect access mask flags */
 #define SAMR_ACCESS_CONNECT_TO_SERVER          0x00000001
@@ -619,6 +623,78 @@ typedef struct _SAMR_SECURITY_DESCRIPTOR_BUFFER
 SAMR_SECURITY_DESCRIPTOR_BUFFER, *PSAMR_SECURITY_DESCRIPTOR_BUFFER;
 
 
+typedef struct _UNICODE_STRING_ARRAY
+{
+    DWORD dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    PUNICODE_STRING pNames;
+} UNICODE_STRING_ARRAY, *PUNICODE_STRING_ARRAY;
+
+
+typedef struct _IDS {
+#ifdef _DCE_IDL_
+	[range(0,1024)]
+#endif
+    DWORD dwCount;
+#ifdef _DCE_IDL_
+	[size_is(dwCount)]
+#endif
+    PDWORD pIds;
+} IDS, *PIDS;
+
+
+typedef struct _RID_WITH_ATTRIBUTE
+{
+    DWORD  dwRid;
+    DWORD  dwAttributes;
+} RID_WITH_ATTRIBUTE, *PRID_WITH_ATTRIBUTE;
+
+
+typedef struct _RID_WITH_ATTRIBUTE_ARRAY
+{
+    DWORD  dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    PRID_WITH_ATTRIBUTE pRids;
+} RID_WITH_ATTRIBUTE_ARRAY, *PRID_WITH_ATTRIBUTE_ARRAY;
+
+
+typedef struct _RID_NAME
+{
+    DWORD dwRid;
+    UNICODE_STRING Name;
+} RID_NAME, *PRID_NAME;
+
+
+typedef struct _RID_NAME_ARRAY
+{
+    DWORD dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    PRID_NAME pEntries;
+} RID_NAME_ARRAY, *PRID_NAME_ARRAY;
+
+
+typedef struct _ENTRY
+{
+    DWORD dwIndex;
+    UNICODE_STRING Name;
+} ENTRY, *PENTRY;
+
+typedef struct _ENTRY_ARRAY
+{
+    DWORD dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    PENTRY pEntries;
+} ENTRY_ARRAY, *PENTRY_ARRAY;
+
+
 /*
  * Samr context handles
  */
@@ -641,17 +717,15 @@ typedef
 #endif
 void* ACCOUNT_HANDLE;
 
+
+#ifndef _DCE_IDL_
+
 typedef
 void* SAMR_BINDING;
 
 typedef
 SAMR_BINDING *PSAMR_BINDING;
 
-
-#endif /* _SAMRDEFS_H_ */
-
-
-#ifndef _DCE_IDL_
 
 NTSTATUS
 SamrInitBindingDefault(
@@ -907,9 +981,9 @@ SamrGetAliasMembership(
     IN  SAMR_BINDING   hSamrBinding,
     IN  DOMAIN_HANDLE  hDomain,
     IN  PSID          *ppSids,
-    IN  UINT32         NumSids,
-    OUT UINT32       **ppRids,
-    OUT UINT32        *pCount
+    IN  DWORD          dwNumSids,
+    OUT PDWORD        *ppdwRids,
+    OUT PDWORD         pdwCount
     );
 
 NTSTATUS
@@ -1029,7 +1103,7 @@ SamrFreeMemory(
 
 #endif /* _DCE_IDL_ */
 
-#endif /* _SAMR_H_ */
+#endif /* _RPC_SAMR_H_ */
 
 
 /*
