@@ -1,5 +1,7 @@
 MKDIR_P = @MKDIR_P@
 
+doc_DATA = README.devel
+
 if HAVE_DOXYGEN
 
 if HAVE_DOXYGEN_PDF

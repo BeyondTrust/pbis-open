@@ -86,6 +86,8 @@ client_lwsm_LDADD = $(top_builddir)/client/liblwsm.la
 
 # documentation
 
+doc_DATA = doc/README.devel
+
 if HAVE_DOXYGEN
 
 if HAVE_DOXYGEN_PDF
