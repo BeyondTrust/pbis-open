@@ -13,6 +13,8 @@ BUILD_PRODUCTS="lwiso qatools lwtest"
 
 BUILD_SRCDIST="lwiso"
 
+BUILD_PLATFORM_PRODUCTS="lwiso"
+
 my_check_is_rhel_21()
 {
     if [ -f /etc/redhat-release ]; then
@@ -28,12 +30,12 @@ case "${BUILD_OS_TYPE}" in
     linux)
 	if ! my_check_is_rhel_21 >/dev/null 2>&1
 	then
-	    BUILD_PRODUCTS="$BUILD_PRODUCTS lac djgtk"
+	    BUILD_PRODUCTS="$BUILD_PRODUCTS djgtk"
 	fi		   
 	;;
     freebsd | solaris)
 	;;
     darwin)
-	BUILD_PRODUCTS="$BUILD_PRODUCTS lac"
+	BUILD_PRODUCTS="$BUILD_PRODUCTS"
 	;;
 esac

@@ -203,5 +203,5 @@ PKG_TYPE="platform"
 
 for pkg in `product_packages ${1}`
 do
-    populate "${pkg}" "${2}"
+    populate "${pkg}" "${BUILD_IMAGE_ROOT}"
 done
