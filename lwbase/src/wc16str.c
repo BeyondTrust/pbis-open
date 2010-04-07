@@ -393,6 +393,8 @@ int wc16scmp(const wchar16_t *s1, const wchar16_t *s2)
 
 #ifndef HAVE_WCSCASECMP
 
+int wcscasecmp(const wchar_t *w1, const wchar_t *w2);
+
 int wcscasecmp(const wchar_t *w1, const wchar_t *w2)
 {
     int index;
