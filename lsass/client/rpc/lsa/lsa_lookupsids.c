@@ -51,7 +51,7 @@ NTSTATUS
 LsaLookupSids(
     IN  LSA_BINDING        hBinding,
     IN  POLICY_HANDLE      hPolicy,
-    IN  SidArray          *pSids,
+    IN  PSID_ARRAY         pSids,
     OUT RefDomainList    **ppRefDomList,
     OUT TranslatedName   **ppTransNames,
     IN  WORD               swLevel,

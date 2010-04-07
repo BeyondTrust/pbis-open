@@ -52,7 +52,7 @@ NTSTATUS
 LsaInitBindingDefaultA(
     OUT PLSA_BINDING   phBinding,
     IN  PCSTR          pszHostname,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     );
 
 
@@ -65,7 +65,7 @@ LsaInitBindingFullA(
     IN  PCSTR          pszEndpoint,
     IN  PCSTR          pszUuid,
     IN  PCSTR          pszOptions,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     );
 
 
@@ -73,7 +73,7 @@ NTSTATUS
 LsaInitBindingDefault(
     OUT PLSA_BINDING   phBinding,
     IN  PCWSTR         pwszHostname,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -85,7 +85,7 @@ LsaInitBindingDefault(
 
     ntStatus = LsaInitBindingDefaultA(phBinding,
                                       pszHostname,
-                                      pIoAccessToken);
+                                      pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
@@ -103,7 +103,7 @@ NTSTATUS
 LsaInitBindingDefaultA(
     OUT PLSA_BINDING   phBinding,
     IN  PCSTR          pszHostname,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     )
 {
     NTSTATUS ntStatus = RPC_S_OK;
@@ -122,7 +122,7 @@ LsaInitBindingDefaultA(
                     (pszHostname) ? pszEndpoint : pszLpcEndpoint,
                     pszUuid,
                     pszOptions,
-                    pIoAccessToken);
+                    pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
     *phBinding = hBinding;
@@ -143,7 +143,7 @@ LsaInitBindingFull(
     IN  PCWSTR         pwszEndpoint,
     IN  PCWSTR         pwszUuid,
     IN  PCWSTR         pwszOptions,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -176,7 +176,7 @@ LsaInitBindingFull(
                                    pszEndpoint,
                                    pszUuid,
                                    pszOptions,
-                                   pIoAccessToken);
+                                   pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
     *phBinding = hBinding;
@@ -212,7 +212,7 @@ LsaInitBindingFullA(
     IN  PCSTR          pszEndpoint,
     IN  PCSTR          pszUuid,
     IN  PCSTR          pszOptions,
-    IN  PIO_CREDS      pIoAccessToken
+    IN  PIO_CREDS      pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -276,7 +276,7 @@ LsaInitBindingFullA(
     if (strcmp(pszProtSeq, "ncacn_np") == 0)
     {
         rpc_smb_transport_info_from_lwio_creds(
-            pIoAccessToken,
+            pCreds,
             FALSE,
             &hInfo,
             &rpcStatus);
