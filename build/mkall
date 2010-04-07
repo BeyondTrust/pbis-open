@@ -278,11 +278,7 @@ function main
             done
         fi
 
-	for product in ${BUILD_PLATFORM_PRODUCTS}
-	do
-	    ${RUN} mkplatform "${product}" ${RUNSUFFIX}
-	done
-
+	${RUN} mkplatform ${BUILD_PLATFORM_PRODUCTS} ${RUNSUFFIX}
         ${RUN} true
     )
     rc=$?

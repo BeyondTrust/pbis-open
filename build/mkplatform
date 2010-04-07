@@ -197,11 +197,30 @@ function populate
     fi
 }
 
+function safe_rmtree
+{
+    if [ -z "$1" ]; then
+        echo "No directory tree name to remove"
+        exit 1
+    fi
+    if [ "$1" != "/" ]; then
+        if [ -d "$1" ]; then
+            rm -rf "$1"
+            exit_on_error $?
+        fi
+    fi
+}
 
+function recreate_dir
+{
+    safe_rmtree "$1"
+    mkdir -p "$1"
+    exit_on_error $?
+}
 
-PKG_TYPE="platform"
+recreate_dir "${BUILD_IMAGE_ROOT}"
 
-for pkg in `product_packages ${1}`
+for pkg in `product_packages $@`
 do
     populate "${pkg}" "${BUILD_IMAGE_ROOT}"
 done
