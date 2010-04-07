@@ -1081,31 +1081,6 @@ AC_CONFIG_FILES([Makefile
                  etc/lsassd.reg
                  include/lsaregdef.h
                  include/Makefile
-                 tests/Makefile
-                 tests/test_headers/Makefile
-                 tests/lsaclient/Makefile
-                 tests/test_getgrgid/Makefile
-                 tests/test_getpwuid/Makefile
-                 tests/test_LsaGetNamesBySidList/Makefile
-                 tests/test_getgrnam/Makefile
-                 tests/test_LsaAllocSecurityIdentifierFromBinary/Makefile
-                 tests/test_LsaGetSecurityIdentifierHashedRid/Makefile
-                 tests/test_LsaAllocSecurityIdentifierFromString/Makefile
-                 tests/test_getpwent/Makefile
-                 tests/test_getpwnam/Makefile
-                 tests/test_bitvector/Makefile
-                 tests/test_memcache/Makefile
-                 tests/test_perf/Makefile
-                 tests/test_perf/lsassonly/Makefile
-                 tests/test_authenticate/Makefile
-                 tests/test_validate/Makefile
-                 tests/test_changepasswd/Makefile
-                 tests/test_session/Makefile
-                 tests/test_checkuserinlist/Makefile
-                 tests/test_openldap/Makefile
-                 tests/ntlmapps/Makefile
-                 tests/ntlmapps/ntlmclient/Makefile
-                 tests/ntlmapps/ntlmserver/Makefile
                  scripts/Makefile
                  docs/Makefile
                  docs/Doxyfile])

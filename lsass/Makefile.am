@@ -1,21 +1,20 @@
 ACLOCAL_AMFLAGS = -I m4
 
 compat_subdirs = \
-	common \
+    common \
     client \
-	interop
+    interop
 
 full_subdirs= \
-	$(compat_subdirs) \
-	logging_r \
-	lsaunistr \
+    $(compat_subdirs) \
+    logging_r \
+    lsaunistr \
     join \
     server \
     tools \
     etc \
     include \
     scripts \
-    tests \
     docs
 
 if ENABLE_COMPAT
