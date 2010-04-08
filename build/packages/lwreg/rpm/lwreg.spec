@@ -81,16 +81,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 %{PrefixDir}/%{_lib}/*
 
-%files devel
-%defattr(0644,root,root,0755)
-
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
-%if ! %{Compat32}
-%attr(0644,root,root) %{PrefixDir}/include/*
-#%attr(0644,root,root) %{PrefixDir}/man/*
-%endif
-
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lwregd
 %post
@@ -123,6 +113,17 @@ for daemon in %{initScriptPathList}; do
         fi
     fi
 done
+%endif
+
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/man/*
 %endif
 
 %changelog

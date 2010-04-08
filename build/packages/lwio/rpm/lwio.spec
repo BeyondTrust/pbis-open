@@ -56,18 +56,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 
 %{PrefixDir}/%{_lib}/*
 
-%files devel
-%defattr(0644,root,root,0755)
-
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
-%if ! %{Compat32}
-%attr(0644,root,root) %{PrefixDir}/include/*
-#%attr(0644,root,root) %{PrefixDir}/share/man/*
-#%attr(0644,root,root) %{PrefixDir}/share/doc/*
-%endif
-
-
 %define initScriptPathList %{INIT_DIR}/lwiod
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
@@ -100,5 +88,16 @@ for daemon in %{initScriptPathList}; do
     fi
 done
 
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%endif
 
 %changelog
