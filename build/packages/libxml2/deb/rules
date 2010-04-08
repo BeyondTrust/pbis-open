@@ -51,10 +51,7 @@ install: build
 #	dh_installdirs -P $(DESTDIR)
 	dh_installdirs
 
-	## rsync files from install prefix to $(DESTDIR)/
-	rsync -a ../../populate/ $(DESTDIR)/
-
-	dh_install --sourcedir=$(DESTDIR)
+	dh_install --sourcedir=../../populate
 
 
 

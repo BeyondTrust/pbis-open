@@ -14,3 +14,11 @@ Description: SQLite (re-packaged by Likewise Software)
  from http://www.sqlite.org. This version is re-packaged
  by Likewise Software.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: SQLite (re-packaged by Likewise Software)
+ The SQLite components is the SQL Database Engine
+ from http://www.sqlite.org. This version is re-packaged
+ by Likewise Software.

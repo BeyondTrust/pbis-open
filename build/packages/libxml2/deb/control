@@ -12,3 +12,10 @@ Description: Likewise LibXML2 support libraries
  The Likewise LibXML2 libraries are used to support system management
  functions when joining Active Directory domains.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise LibXML2 support libraries
+ The Likewise LibXML2 libraries are used to support system management
+ functions when joining Active Directory domains.
