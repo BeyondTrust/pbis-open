@@ -33,6 +33,7 @@ to Windows Active Directory Domains.
 %install
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
 rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
+rm ${RPM_BUILD_ROOT}/%{PrefixDir}/%{_lib}/*.la
 
 %clean
 [ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
