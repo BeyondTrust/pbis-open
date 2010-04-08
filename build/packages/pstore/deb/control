@@ -13,3 +13,11 @@ Description: Likewise Password Store
  The Likewise Password Store maintains the Domain Information
  and Machine Password obtained from Active Directory.
 
+Package: __PKG_NAME-dev
+Section: libdevel
+Architecture: any
+Depends: __PKG_NAME (= ${binary:Version})
+Description: Likewise Password Store
+ The Likewise Password Store maintains the Domain Information
+ and Machine Password obtained from Active Directory.
+
