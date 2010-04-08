@@ -503,7 +503,7 @@ k5_pac_validate_client(krb5_context context,
     if (ret != 0)
 	return ret;
 
-    if (!strchr(decoded_pac_princname, "@")) {
+    if (!strchr(decoded_pac_princname, '@')) {
 	/* Append a realm so the default realm in the conf file is is avoided */
 	appended_pac_princname = malloc(pac_princname_length / 2 +
 					principal->realm.length + 2);
