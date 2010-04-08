@@ -88,7 +88,7 @@ function component_populate
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
     mkdir -p ${POPULATE_ROOT_DIR}
-    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+    rsync -a --exclude "*.h" ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
     
 }
