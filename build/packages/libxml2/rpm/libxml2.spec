@@ -27,6 +27,14 @@ AutoProv: no
 %description
 LIbXML2 is an XML parser written in C. It aims to be fully comforming.
 
+%package devel
+Summary: LibXML2 libraries and development files
+Group: Development/Libraries
+Requires: likewise-libxml2
+
+%description devel
+The likewise-libxml2-devel package includes the development libraries and header files that supply the application programming interface for an LibXML2 parser written in C.
+ 
 %prep
 
 %build
@@ -42,5 +50,17 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %files
 %defattr(-,root,root)
 %{PrefixDir}/%{_lib}/*
+
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%if ! %{Compat32}
+%attr(0644,root,root) %{PrefixDir}/include/*
+#%attr(0644,root,root) %{PrefixDir}/share/man/*
+#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%endif
 
 %changelog
