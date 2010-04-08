@@ -60,9 +60,9 @@ int _xnet_setsockopt(int, int, int, const void *, socklen_t);
 int _xnet_socket(int, int, int);
 int _xnet_socketpair(int, int, int, int[2]);
 
-#define accept       _xnet_accept
+#define accept(a,b,c) _xnet_accept(a,b,c)
 #define bind         _xnet_bind
-#define connect      _xnet_connect
+#define connect(a,b,c) _xnet_connect(a,b,c)
 #define getpeername  _xnet_getpeername
 #define getsockname  _xnet_getsockname
 #define getsockopt   _xnet_getsockopt
