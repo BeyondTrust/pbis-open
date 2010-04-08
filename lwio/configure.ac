@@ -299,7 +299,7 @@ AM_CONDITIONAL(ENABLE_SHARE_REPOSITORY_REGISTRY, test x"$share_repository" = x"r
 AC_SUBST(SHARE_REPOSITORY_TYPE_DEFINES)
 
 AC_ARG_WITH([drivers], [AC_HELP_STRING([--with-drivers], [list of drivers to build (npfs pvfs dfs srv rdr)])],
-		       [], [with_drivers="npfs pvfs dfs srv nfs rdr"])
+		       [], [with_drivers="npfs pvfs dfs srv rdr"])
 
 _IFS="${IFS}"
 IFS=" ,"
@@ -337,12 +337,6 @@ AM_CONDITIONAL(ENABLE_NPFS, test x"$enable_npfs" = x"yes")
 if test x"$enable_npfs" = x"yes"
 then
 	AC_DEFINE([ENABLE_NPFS], [], [Define if npfs driver should be built])
-fi
-
-AM_CONDITIONAL(ENABLE_NFS, test x"$enable_nfs" = x"yes")
-if test x"$enable_nfs" = x"yes"
-then
-	AC_DEFINE([ENABLE_NFS], [], [Define if nfs driver should be built])
 fi
 
 # Boolean settings
@@ -859,18 +853,6 @@ AC_CONFIG_FILES([Makefile
         server/srv/transport/Makefile
         server/srv/transport/threadpool/Makefile
         server/srv/driver/Makefile
-        server/nfs/Makefile
-        server/nfs/utils/Makefile
-        server/nfs/exports/Makefile
-        server/nfs/exports/regexports/Makefile
-        server/nfs/exports/api/Makefile
-        server/nfs/elements/Makefile
-        server/nfs/protocols/Makefile
-        server/nfs/protocols/api/Makefile
-        server/nfs/protocols/smb2/Makefile
-        server/nfs/transport/Makefile
-        server/nfs/transport/threadpool/Makefile
-        server/nfs/driver/Makefile
         server/npfs/Makefile
         server/pvfs/Makefile
         server/dfs/Makefile

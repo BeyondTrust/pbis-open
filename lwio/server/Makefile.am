@@ -20,8 +20,4 @@ if ENABLE_SRV
 SUBDIRS += srv
 endif
 
-if ENABLE_NFS
-SUBDIRS += nfs
-endif
-
 SUBDIRS += lwiod
