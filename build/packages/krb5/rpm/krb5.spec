@@ -78,6 +78,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 #%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 #%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
 %attr(0644,root,root) %{PrefixDir}/include/*
-%attr(0644,root,root) %{PrefixDir}/man/*
+#%attr(0644,root,root) %{PrefixDir}/man/*
 
 %changelog
