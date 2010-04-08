@@ -91,7 +91,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
 %if ! %{Compat32}
 %attr(0644,root,root) %{PrefixDir}/include/*
-#%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%attr(0644,root,root) %{PrefixDir}/share/doc/*
 #%attr(0644,root,root) %{PrefixDir}/share/man/*
 %endif
 
