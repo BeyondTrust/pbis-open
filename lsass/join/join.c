@@ -725,13 +725,19 @@ LsaChangeDomainGroupMembership(
             }
             else
             {
+                // This should not cause the join to fail even if we cannot
+                // remove the group members
+
                 ntStatus = SamrDeleteAliasMember(hSamrBinding,
                                                  hAlias,
                                                  (*ppSid));
-                if (ntStatus == STATUS_MEMBER_NOT_IN_ALIAS)
+                if ((ntStatus != STATUS_SUCCESS) && 
+                    (ntStatus != STATUS_NO_SUCH_MEMBER))
                 {
-                    ntStatus = STATUS_SUCCESS;
+                    // Perhaps log an error here
+                    ;
                 }
+                ntStatus = STATUS_SUCCESS;
             }
             BAIL_ON_NT_STATUS(ntStatus);
         }
