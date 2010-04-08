@@ -48,43 +48,47 @@
 
 VOID
 FreeUnicodeStringContents(
-    UnicodeStringEx *pStr
+    PUNICODE_STRING  pStr
     )
 {
-    if (pStr->string == NULL) {
+    if (pStr->Buffer == NULL)
+    {
         return;
     }
 
-    rpc_ss_client_free(pStr->string);
-    pStr->string = NULL;
-    pStr->len = 0;
-    pStr->size = 0;
+    rpc_ss_client_free(pStr->Buffer);
+    pStr->Buffer        = NULL;
+    pStr->Length        = 0;
+    pStr->MaximumLength = 0;
  
     return;    
 }
 
+
 VOID
 FreeRidWithAttributeArrayContents(
-    RidWithAttributeArray *pArr
+    PRID_WITH_ATTRIBUTE_ARRAY  pArr
     )
 {
-    if (pArr->rids == NULL) {
+    if (pArr->pRids == NULL)
+    {
         return;
     }
 
-    rpc_ss_client_free(pArr->rids);
-    pArr->rids = NULL;
-    pArr->count = 0;
+    rpc_ss_client_free(pArr->pRids);
+    pArr->pRids   = NULL;
+    pArr->dwCount = 0;
 
     return;    
 }
+
 
 VOID
 FreeNetrSamBaseInfoContents(
     NetrSamBaseInfo *pBase
     )
 {
-    UnicodeStringEx *pStringArray[] = {
+    PUNICODE_STRING pStringArray[] = {
         &pBase->account_name,
         &pBase->full_name,
         &pBase->logon_script,
@@ -103,7 +107,8 @@ FreeNetrSamBaseInfoContents(
 
     FreeRidWithAttributeArrayContents(&pBase->groups);
 
-    if (pBase->domain_sid == NULL) {
+    if (pBase->domain_sid == NULL)
+    {
         return;
     }
 
@@ -112,6 +117,7 @@ FreeNetrSamBaseInfoContents(
 
     return;    
 }
+
 
 VOID
 FreeSidAttrArray(
@@ -143,7 +149,8 @@ FreeNetrSamInfo3Contents(
 {
     FreeNetrSamBaseInfoContents(&pInfo->base);
 
-    if (pInfo->sids == NULL) {
+    if (pInfo->sids == NULL)
+    {
         return;
     }
 
@@ -158,7 +165,8 @@ VOID
 FreePacLogonInfo(
     PAC_LOGON_INFO *pInfo)
 {
-    if (pInfo == NULL) {
+    if (pInfo == NULL)
+    {
         return;
     }
 
@@ -185,16 +193,18 @@ FreePacLogonInfo(
     }
 
 
-error_status_t
+NTSTATUS
 DecodePacLogonInfo(
     const char *pchBuffer,
     size_t sBufferLen,
-    PAC_LOGON_INFO **ppLogonInfo)
+    PAC_LOGON_INFO **ppLogonInfo
+    )
 {
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     idl_es_handle_t decodingHandle = NULL;
     error_status_t status;
     error_status_t status2;
-    PAC_LOGON_INFO *pLogonInfo = NULL;
+    PPAC_LOGON_INFO pLogonInfo = NULL;
 
     idl_es_decode_buffer(
             (unsigned char *)pchBuffer,
@@ -207,7 +217,7 @@ DecodePacLogonInfo(
     idl_es_set_attrs(decodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
-    PAC_LOGON_INFO_Decode(decodingHandle, &pLogonInfo);
+    PAC_LOGON_INFO_Decode((handle_t)decodingHandle, &pLogonInfo);
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&decodingHandle, &status);
@@ -217,7 +227,12 @@ DecodePacLogonInfo(
     *ppLogonInfo = pLogonInfo;
 
 cleanup:
-    return status;
+    if (status != error_status_ok)
+    {
+        ntStatus = LwRpcStatusToNtStatus(status);
+    }
+
+    return ntStatus;
 
 error:
     if (pLogonInfo != NULL)
@@ -232,13 +247,15 @@ error:
     goto cleanup;
 }
 
-error_status_t
+
+NTSTATUS
 EncodePacLogonInfo(
-    PAC_LOGON_INFO* pLogonInfo,
-    PDWORD pdwEncodedSize,
-    PBYTE* ppEncodedBuffer
+    PPAC_LOGON_INFO  pLogonInfo,
+    PDWORD           pdwEncodedSize,
+    PBYTE*           ppEncodedBuffer
     )
 {
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     idl_es_handle_t decodingHandle = NULL;
     error_status_t status;
     error_status_t status2;
@@ -253,7 +270,7 @@ EncodePacLogonInfo(
     idl_es_set_attrs(decodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
-    PAC_LOGON_INFO_Encode(decodingHandle, pLogonInfo);
+    PAC_LOGON_INFO_Encode((handle_t)decodingHandle, pLogonInfo);
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&decodingHandle, &status);
@@ -261,8 +278,12 @@ EncodePacLogonInfo(
     BAIL_ON_ERR_STATUS(status);
 
 cleanup:
+    if (status != error_status_ok)
+    {
+        ntStatus = LwRpcStatusToNtStatus(status);
+    }
 
-    return status;
+    return ntStatus;
 
 error:
 

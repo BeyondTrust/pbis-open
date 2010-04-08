@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,11 +28,97 @@
  * license@likewisesoftware.com
  */
 
-#include <stdlib.h>
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        krb5pac.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        Kerberos 5 PAC library
+ *
+ * Authors: Kyle Stemen (kstemen@likewise.com)
+ */
 
-#include <dce/rpc.h>
-#include <dce/idlddefs.h>
-#include <lw/security-types.h>
-#include <lwio/lwio.h>
+#ifndef _RPC_KRB5PAC_H_H
+#define _RPC_KRB5PAC_H_H
 
-#include "krb5pac_h.h"
+typedef struct _PAC_LOGON_INFO
+{
+    NetrSamInfo3 info3;
+    PSID res_group_dom_sid;
+    RID_WITH_ATTRIBUTE_ARRAY res_groups;
+} PAC_LOGON_INFO, *PPAC_LOGON_INFO;
+
+
+#ifndef _DCE_IDL_
+
+NTSTATUS
+DecodePacLogonInfo(
+    const char *pchBuffer,
+    size_t sBufferLen,
+    PAC_LOGON_INFO **ppLogonInfo
+    );
+
+
+NTSTATUS
+EncodePacLogonInfo(
+    PAC_LOGON_INFO* pLogonInfo,
+    PDWORD pdwEncodedSize,
+    PBYTE* ppEncodedBuffer
+    );
+
+
+VOID
+FreePacLogonInfo(
+    PAC_LOGON_INFO *pInfo
+    );
+
+
+VOID
+FreeUnicodeStringContents(
+    PUNICODE_STRING  pStr
+    );
+
+
+VOID
+FreeRidWithAttributeArrayContents(
+    PRID_WITH_ATTRIBUTE_ARRAY  pArr
+    );
+
+
+VOID
+FreeNetrSamBaseInfoContents(
+    NetrSamBaseInfo *pBase
+    );
+
+
+VOID
+FreeSidAttrArray(
+    NetrSidAttr *pSids,
+    size_t sCount
+    );
+
+
+VOID
+FreeNetrSamInfo3Contents(
+    NetrSamInfo3 *pInfo
+    );
+
+
+#endif /* _DCE_IDL_ */
+
+#endif /* _RPC_KRB5PAC_H_H */
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

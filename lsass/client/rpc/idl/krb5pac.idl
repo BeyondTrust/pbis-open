@@ -6,12 +6,14 @@ interface krb5pac
 {
 
 #include <lw/security-types.h>
-#include <lwrpc/types.h>
-#include <lwrpc/krb5pacdefs.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
 
     void PAC_LOGON_INFO_Encode(
             [in] handle_t h,
             [in, unique] PAC_LOGON_INFO * logon_info);
+
     void PAC_LOGON_INFO_Decode(
             [in] handle_t h,
             [out] PAC_LOGON_INFO **logon_info);
