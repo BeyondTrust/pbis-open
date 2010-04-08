@@ -153,7 +153,6 @@
     BAIL_ON_WIN_ERROR(dwError)
 
 #define LWBUF_ALLOC_SESSION_KEY(buffer, key_ptr)                \
-    LWBUF_ALIGN_TYPE(pdwOffset, pdwSize, pdwSpaceLeft, DWORD);  \
     dwError = LwBufferAllocFixedBlob((buffer),                  \
                                      pdwOffset,                 \
                                      pdwSpaceLeft,              \
