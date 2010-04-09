@@ -132,8 +132,6 @@ AC_SUBST(LIB_ICONV)
 
 saved_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Wall -Werror"
-saved_CPPFLAGS="$CFLAGS"
-CPPFLAGS="$CPPFLAGS $LWBASE_CPPFLAGS"
 
 AC_MSG_CHECKING([whether iconv() takes const char** as its second parameter])
 
@@ -149,7 +147,6 @@ AC_TRY_COMPILE(
 		[AC_MSG_RESULT([no]); AC_DEFINE_UNQUOTED(ICONV_IN_TYPE, [char**], [iconv in type])])
 
 CFLAGS="$saved_CFLAGS"
-CPPFLAGS="$saved_CPPFLAGS"
 
 AC_CHECK_FUNCS([wcscasecmp])
 
