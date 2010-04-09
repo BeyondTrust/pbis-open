@@ -1,0 +1,34 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#if HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
+#include <dce/rpc.h>
+#include <dce/smb.h>
+#include <dce/schannel.h>
+#include <wc16str.h>
+#include <lw/base.h>
+#include <lw/ntstatus.h>
+#include <lw/winerror.h>
+#include <lwmem.h>
+#include <lwstr.h>
+#include <lwsid.h>
+#include <lwio/lwio.h>
+#include <lwps/lwps.h>
+#include <lwnet.h>
+#include <openssl/rc4.h>
+#include <openssl/md5.h>
+
+#include <lw/rpc/samr.h>
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/dssetup.h>
+#include <lw/macros.h>
+
+#include "testrpc.h"
+#include "params.h"
+#include "test_util.h"
