@@ -84,7 +84,7 @@ NetExecFileEnum(
                         nStatus = LwWc16sToMbs(
                                         pFileCursor->fi3_path_name,
                                         &pszPathname);
-                        BAIL_ON_LWUTIL_ERROR(nStatus);
+                        BAIL_ON_LTNET_ERROR(nStatus);
                     }
 
                     if (pFileCursor->fi3_username)
@@ -94,7 +94,7 @@ NetExecFileEnum(
                         nStatus = LwWc16sToMbs(
                                         pFileCursor->fi3_username,
                                         &pszUsername);
-                        BAIL_ON_LWUTIL_ERROR(nStatus);
+                        BAIL_ON_LTNET_ERROR(nStatus);
                     }
 
                     printf("File [%u]\n", ++iFileCursor);
@@ -114,7 +114,7 @@ NetExecFileEnum(
 
             default:
 
-                BAIL_ON_LWUTIL_ERROR(nStatus);
+                BAIL_ON_LTNET_ERROR(nStatus);
 
                 break;
         }
@@ -159,7 +159,7 @@ NetExecFileQueryInfo(
     PSTR           pszUsername = NULL;
 
     nStatus = NetFileGetInfoW(pwszServername, dwFileId, dwInfoLevel, &pBuffer);
-    BAIL_ON_LWUTIL_ERROR(nStatus);
+    BAIL_ON_LTNET_ERROR(nStatus);
 
     pFileInfo = (PFILE_INFO_3)pBuffer;
 
@@ -168,7 +168,7 @@ NetExecFileQueryInfo(
         LW_SAFE_FREE_STRING(pszPathname);
 
         nStatus = LwWc16sToMbs(pFileInfo->fi3_path_name, &pszPathname);
-        BAIL_ON_LWUTIL_ERROR(nStatus);
+        BAIL_ON_LTNET_ERROR(nStatus);
     }
 
     if (pFileInfo->fi3_username)
@@ -176,7 +176,7 @@ NetExecFileQueryInfo(
         LW_SAFE_FREE_STRING(pszUsername);
 
         nStatus = LwWc16sToMbs(pFileInfo->fi3_username, &pszUsername);
-        BAIL_ON_LWUTIL_ERROR(nStatus);
+        BAIL_ON_LTNET_ERROR(nStatus);
     }
 
     printf("\tId:              %u\n",     pFileInfo->fi3_idd);
@@ -213,7 +213,7 @@ NetExecFileClose(
     NET_API_STATUS nStatus = 0;
 
     nStatus = NetFileCloseW(pwszServername, dwFileId);
-    BAIL_ON_LWUTIL_ERROR(nStatus);
+    BAIL_ON_LTNET_ERROR(nStatus);
 
 cleanup:
 

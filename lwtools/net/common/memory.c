@@ -88,13 +88,13 @@ LwNetAllocateString(
 
     if (!pszInputString) {
         dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LWUTIL_ERROR(dwError);
+        BAIL_ON_LTNET_ERROR(dwError);
     }
 
     dwLen = strlen(pszInputString);
 
     dwError = LwNetAllocateMemory(dwLen+1, (PVOID *)&pszOutputString);
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     if (dwLen) {
        memcpy(pszOutputString, pszInputString, dwLen);
@@ -108,7 +108,7 @@ cleanup:
 
 error:
 
-    LWUTIL_SAFE_FREE_STRING(pszOutputString);
+    LTNET_SAFE_FREE_STRING(pszOutputString);
 
     *ppszOutputString = NULL;
 

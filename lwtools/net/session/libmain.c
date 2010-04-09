@@ -92,10 +92,10 @@ NetSession(
                     argv,
                     &pCommandInfo
                     );
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     dwError = NetSessionInitialize();
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     if (pCommandInfo->bEnumerate)
     {
@@ -111,7 +111,7 @@ NetSession(
     {
         dwError = ERROR_INVALID_PARAMETER;
     }
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
 
@@ -162,7 +162,7 @@ NetSessionParseArguments(
     dwError = LwNetAllocateMemory(
                     sizeof(*pCommandInfo),
                     (PVOID*)&pCommandInfo);
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     for (iArg = 1; iArg < argc; iArg++)
     {
@@ -186,7 +186,7 @@ NetSessionParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 break;
@@ -196,7 +196,7 @@ NetSessionParseArguments(
                 if (!strncmp(pszArg, "\\\\", sizeof("\\\\")-1))
                 {
                     dwError = LwMbsToWc16s(pszArg, &pCommandInfo->pwszSessionName);
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
 
                     pCommandInfo->bEnumerate = FALSE;
 
@@ -210,7 +210,7 @@ NetSessionParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 break;
@@ -225,7 +225,7 @@ NetSessionParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 parseState = NET_SESSION_ARG_OPEN;
@@ -235,7 +235,7 @@ NetSessionParseArguments(
             default:
 
                 dwError = LW_ERROR_INVALID_PARAMETER;
-                BAIL_ON_LWUTIL_ERROR(dwError);
+                BAIL_ON_LTNET_ERROR(dwError);
 
                 break;
         }
@@ -244,7 +244,7 @@ NetSessionParseArguments(
     if (!pCommandInfo->bEnumerate && !pCommandInfo->bLogoff)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LWUTIL_ERROR(dwError);
+        BAIL_ON_LTNET_ERROR(dwError);
     }
 
     *ppCommandInfo = pCommandInfo;

@@ -49,11 +49,11 @@
 #ifndef __LW_NETUTILS_H__
 #define __LW_NETUTILS_H__
 
-#define BAIL_ON_LWUTIL_ERROR(dwError) \
+#define BAIL_ON_LTNET_ERROR(dwError) \
 	if (dwError) goto error;
 
 
-#define LWUTIL_SAFE_FREE_STRING(str) \
+#define LTNET_SAFE_FREE_STRING(str) \
         do {                      \
            if (str) {             \
               LwNetFreeString(str); \
@@ -61,7 +61,7 @@
            }                      \
         } while(0);
 
-#define LWUTIL_SAFE_CLEAR_FREE_STRING(str)       \
+#define LTNET_SAFE_CLEAR_FREE_STRING(str)       \
         do {                                  \
            if (str) {                         \
               if (*str) {                     \
@@ -72,7 +72,7 @@
            }                                  \
         } while(0);
 
-#define LWUTIL_SAFE_FREE_MEMORY(mem) \
+#define LTNET_SAFE_FREE_MEMORY(mem) \
         do {                      \
            if (mem) {             \
               LwNetFreeMemory(mem); \
@@ -80,7 +80,7 @@
            }                      \
         } while(0);
 
-#define LWUTIL_SAFE_FREE_STRING_ARRAY(ppszArray)               \
+#define LTNET_SAFE_FREE_STRING_ARRAY(ppszArray)               \
         do {                                                \
            if (ppszArray) {                                 \
                LwNetFreeNullTerminatedStringArray(ppszArray); \
@@ -89,7 +89,7 @@
         } while (0);
 
 
-#define LWUTIL_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
+#define LTNET_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
 
 
 DWORD

@@ -104,7 +104,7 @@ NetExecSessionEnum(
                         nStatus = LwWc16sToMbs(
                                         pSessionCursor->sesi2_cname,
                                         &pszSessionname);
-                        BAIL_ON_LWUTIL_ERROR(nStatus);
+                        BAIL_ON_LTNET_ERROR(nStatus);
                     }
 
                     if (pSessionCursor->sesi2_username)
@@ -114,7 +114,7 @@ NetExecSessionEnum(
                         nStatus = LwWc16sToMbs(
                                         pSessionCursor->sesi2_username,
                                         &pszUsername);
-                        BAIL_ON_LWUTIL_ERROR(nStatus);
+                        BAIL_ON_LTNET_ERROR(nStatus);
                     }
 
                     if (pSessionCursor->sesi2_cltype_name)
@@ -124,7 +124,7 @@ NetExecSessionEnum(
                         nStatus = LwWc16sToMbs(
                                         pSessionCursor->sesi2_cltype_name,
                                         &pszClientType);
-                        BAIL_ON_LWUTIL_ERROR(nStatus);
+                        BAIL_ON_LTNET_ERROR(nStatus);
                     }
 
                     printf("Session [%u]\n", ++iSessionCursor);
@@ -152,7 +152,7 @@ NetExecSessionEnum(
 
             default:
 
-                BAIL_ON_LWUTIL_ERROR(nStatus);
+                BAIL_ON_LTNET_ERROR(nStatus);
 
                 break;
         }
@@ -194,7 +194,7 @@ NetExecSessionLogoff(
     PWSTR   pwszUsername = NULL;
 
     nStatus = NetSessionDelW(pwszServername, pwszUncClientname, pwszUsername);
-    BAIL_ON_LWUTIL_ERROR(nStatus);
+    BAIL_ON_LTNET_ERROR(nStatus);
 
 cleanup:
 

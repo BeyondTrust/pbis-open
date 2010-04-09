@@ -87,10 +87,10 @@ NetFile(
     PNET_FILE_COMMAND_INFO pCommandInfo = NULL;
 
     dwError = NetFileParseArguments(argc, argv, &pCommandInfo);
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     dwError = NetFileInitialize();
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     if (pCommandInfo->bEnumerate)
     {
@@ -108,7 +108,7 @@ NetFile(
                         pCommandInfo->pwszServerName,
                         pCommandInfo->dwFileId);
     }
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
 
@@ -144,7 +144,7 @@ NetFileParseArguments(
     dwError = LwNetAllocateMemory(
                     sizeof(*pCommandInfo),
                     (PVOID*)&pCommandInfo);
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     for (iArg = 1; iArg < argc; iArg++)
     {
@@ -168,7 +168,7 @@ NetFileParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 break;
@@ -192,7 +192,7 @@ NetFileParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 break;
@@ -207,7 +207,7 @@ NetFileParseArguments(
                 else
                 {
                     dwError = LW_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_LWUTIL_ERROR(dwError);
+                    BAIL_ON_LTNET_ERROR(dwError);
                 }
 
                 parseState = NET_FILE_ARG_OPEN;
@@ -217,7 +217,7 @@ NetFileParseArguments(
             default:
 
                 dwError = LW_ERROR_INVALID_PARAMETER;
-                BAIL_ON_LWUTIL_ERROR(dwError);
+                BAIL_ON_LTNET_ERROR(dwError);
 
                 break;
         }
@@ -228,7 +228,7 @@ NetFileParseArguments(
         !pCommandInfo->bCloseFile)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LWUTIL_ERROR(dwError);
+        BAIL_ON_LTNET_ERROR(dwError);
     }
 
     *ppCommandInfo = pCommandInfo;

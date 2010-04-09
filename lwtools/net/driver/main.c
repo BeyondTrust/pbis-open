@@ -204,7 +204,7 @@ main(
                     argv[1],
                     &dwSubCommand
                     );
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
     switch (dwSubCommand)
     {
@@ -259,7 +259,7 @@ main(
         	NetShowUsage();
         	break;
     }
-    BAIL_ON_LWUTIL_ERROR(dwError);
+    BAIL_ON_LTNET_ERROR(dwError);
 
  error:
 
