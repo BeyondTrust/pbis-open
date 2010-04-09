@@ -186,6 +186,7 @@ function populate
 	exit_on_error $?
 
 	op_invoke populate
+        exit_on_error $?
     fi
 
     if [ -n "${PKG_NEED_COMPAT}" ]; then
@@ -238,4 +239,5 @@ done
 for pkg in `product_packages $@`
 do
     populate "${pkg}" "${BUILD_IMAGE_ROOT}"
+    exit_on_error $?
 done
