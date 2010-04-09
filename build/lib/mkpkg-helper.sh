@@ -43,7 +43,7 @@ function _get_lib_dir
         solaris-sparc-yes-*)
             dir=lib64
             ;;
-        solaris-i386-*-yes)
+        solaris-i386-*-yes|solaris-i386-yes-*)
             dir=lib64
             ;;
         *)
