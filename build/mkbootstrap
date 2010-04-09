@@ -74,3 +74,5 @@ do_bootstrap ${nontools}
 exit_on_error $?
 
 echo "${SVN_REVISION}" > "${BUILD_ROOT}/src/linux/BOOTSTRAP"
+
+sleep 15
