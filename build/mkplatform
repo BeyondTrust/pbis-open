@@ -194,11 +194,11 @@ function populate
         exit_on_error $?
     fi
     
-    if [ -n "${PKG_NEED_FOREIGN}" ]; then
-        echo "Performing foreign population"        
-        ( PKG_IS_FOREIGN=1 && setup_package_vars && op_invoke populate )
-        exit_on_error $?
-    fi
+#    if [ -n "${PKG_NEED_FOREIGN}" ]; then
+#        echo "Performing foreign population"        
+#        ( PKG_IS_FOREIGN=1 && setup_package_vars && op_invoke populate )
+#        exit_on_error $?
+#    fi
 }
 
 function safe_rmtree
