@@ -7,88 +7,90 @@ interface wkssvc
 {
 cpp_quote("#ifdef DCERPC_STUB_BUILD")
 
+#include <lw/security-types.h>
 #include <lw/rpc/wkssvc.h>
 
-    typedef [switch_type(UINT32)] union _NET_WKSTA_INFO
+    typedef [switch_type(UINT32)] union _NETR_WKSTA_INFO
     {
-        [case(100)]           WKSTA_INFO_100 *info100;
-        [default];
-    } NET_WKSTA_INFO, *PNET_WKSTA_INFO;
+        [case(100)]    WKSTA_INFO_100 *pInfo100;
+        [case(101)]    WKSTA_INFO_101 *pInfo101;
+        [case(102)]    WKSTA_INFO_102 *pInfo102;
+    } NETR_WKSTA_INFO;
 
 cpp_quote("#endif /* DCERPC_STUB_BUILD */") 
 
 
     /* Function 0x00 */
-    WINERR NetrWkstaGetInfo(
-        [in,string,unique] PWSTR pwszServerName,
+    WINERROR NetrWkstaGetInfo(
+        [in,string,unique] wchar16_t *pwszServerName,
         [in] DWORD dwLevel,
-        [out,ref,switch_is(level)] NET_WKSTA_INFO *pInfo
+        [out,ref,switch_is(dwLevel)] NETR_WKSTA_INFO *pInfo
     );
 
-    WINERR wkssvc_Function0x01();
-    WINERR wkssvc_Function0x02();
-    WINERR wkssvc_Function0x03();
-    WINERR wkssvc_Function0x04();
-    WINERR wkssvc_Function0x05();
-    WINERR wkssvc_Function0x06();
-    WINERR wkssvc_Function0x07();
-    WINERR wkssvc_Function0x08();
-    WINERR wkssvc_Function0x09();
-    WINERR wkssvc_Function0x0a();
-    WINERR wkssvc_Function0x0b();
-    WINERR wkssvc_Function0x0c();
-    WINERR wkssvc_Function0x0d();
-    WINERR wkssvc_Function0x0e();
-    WINERR wkssvc_Function0x0f();
+    WINERROR wkssvc_Function0x01();
+    WINERROR wkssvc_Function0x02();
+    WINERROR wkssvc_Function0x03();
+    WINERROR wkssvc_Function0x04();
+    WINERROR wkssvc_Function0x05();
+    WINERROR wkssvc_Function0x06();
+    WINERROR wkssvc_Function0x07();
+    WINERROR wkssvc_Function0x08();
+    WINERROR wkssvc_Function0x09();
+    WINERROR wkssvc_Function0x0a();
+    WINERROR wkssvc_Function0x0b();
+    WINERROR wkssvc_Function0x0c();
+    WINERROR wkssvc_Function0x0d();
+    WINERROR wkssvc_Function0x0e();
+    WINERROR wkssvc_Function0x0f();
 
     /* Function 0x10 */
-    WINERR NetrJoinDomain(
-        [in,string,unique] PWSTR pwszServerName,
-        [in,ref] PWSTR pwszDomainName,
-        [in,string,unique] PWSTR pwszAccountOu,
-        [in,string,unique] PWSTR pwszAccountName,
-        [in,string,unique] PWSTR pwszPassword,
+    WINERROR NetrJoinDomain(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,ref] wchar16_t *pwszDomainName,
+        [in,string,unique] wchar16_t *pwszAccountOu,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,string,unique] wchar16_t *pwszPassword,
         [in] DWORD dwJoinFlags
     );
 
     /* Function 0x11 */
-    WINERR NetrUnjoinDomain(
-        [in,string,unique] PWSTR pwszServerName,
-        [in,string,unique] PWSTR pwszAccountName,
-        [in,string,unique] PWSTR pwszPassword,
+    WINERROR NetrUnjoinDomain(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,string,unique] wchar16_t *pwszPassword,
         [in] DWORD dwUnjoinFlags
     );
 
-    WINERR wkssvc_Function0x12();
-    WINERR wkssvc_Function0x13();
-    WINERR wkssvc_Function0x14();
-    WINERR wkssvc_Function0x15();
+    WINERROR wkssvc_Function0x12();
+    WINERROR wkssvc_Function0x13();
+    WINERROR wkssvc_Function0x14();
+    WINERROR wkssvc_Function0x15();
 
     /* Function 0x16 */
-    WINERR NetrJoinDomain2(
-        [in,string,unique] PWSTR pwszServerName,
-        [in,ref] PWSTR pwszDomainName,
-        [in,string,unique] PWSTR pwszAccountOu,
-        [in,string,unique] PWSTR pwszAccountName,
-        [in,unique] ENC_PASSWORD_BUFFER Password,
+    WINERROR NetrJoinDomain2(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,ref] wchar16_t *pwszDomainName,
+        [in,string,unique] wchar16_t *pwszAccountOu,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,unique] ENC_JOIN_PASSWORD_BUFFER *pPassword,
         [in] DWORD dwJoinFlags
     );
 
     /* Function 0x17 */
-    WINERR NetrUnjoinDomain2(
-        [in,string,unique] PWSTR pwszServerName,
-        [in,string,unique] PWSTR pwszAccountName,
-        [in,unique] ENC_PASSWORD_BUFFER Password,
+    WINERROR NetrUnjoinDomain2(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,string,unique] wchar16_t *pwszAccountName,
+        [in,unique] ENC_JOIN_PASSWORD_BUFFER *pPassword,
         [in] DWORD dwUnjoinFlags
     );
 
-    WINERR wkssvc_Function0x18();
-    WINERR wkssvc_Function0x19();
-    WINERR wkssvc_Function0x1a();
-    WINERR wkssvc_Function0x1b();
-    WINERR wkssvc_Function0x1c();
-    WINERR wkssvc_Function0x1d();
-    WINERR wkssvc_Function0x1e();
+    WINERROR wkssvc_Function0x18();
+    WINERROR wkssvc_Function0x19();
+    WINERROR wkssvc_Function0x1a();
+    WINERROR wkssvc_Function0x1b();
+    WINERROR wkssvc_Function0x1c();
+    WINERROR wkssvc_Function0x1d();
+    WINERROR wkssvc_Function0x1e();
 }
 
 
