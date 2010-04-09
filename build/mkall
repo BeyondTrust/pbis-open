@@ -280,6 +280,8 @@ function main
         fi
 
 	${RUN} mkplatform ${OPT_PLATFORM} ${BUILD_PLATFORM_PRODUCTS} ${RUNSUFFIX}
+	exit_on_error $?
+
         ${RUN} true
     )
     rc=$?
