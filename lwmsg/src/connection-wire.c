@@ -38,13 +38,6 @@
  */
 
 #include <config.h>
-#include "connection-private.h"
-#include "assoc-private.h"
-#include "util-private.h"
-#include "convert.h"
-#include "xnet-private.h"
-#include <lwmsg/data.h>
-
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
 #endif
@@ -57,7 +50,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <config.h>
+
+#include "connection-private.h"
+#include "assoc-private.h"
+#include "util-private.h"
+#include "convert.h"
+#include "xnet-private.h"
+#include <lwmsg/data.h>
 
 #ifndef CMSG_ALIGN
 #    if defined(_CMSG_DATA_ALIGN)

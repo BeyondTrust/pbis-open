@@ -41,8 +41,6 @@
 #include "util-private.h"
 #include <lwmsg/buffer.h>
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <errno.h>
 #include <string.h>
 
