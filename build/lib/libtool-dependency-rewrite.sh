@@ -122,7 +122,14 @@ case "$MODE" in
     -final)
 	installed_value=`$SED -n <$LAFILE 's/installed=\(.*\)/\1/p'`
 	platform_value=`$SED -n <$LAFILE 's/likewise_platform=\(.*\)/\1/p'`
-	if test $installed_value != yes -a "$platform_value" != yes
+	
+	if test "$platform_value" = yes
+	then
+	    echo "Skipping ${LAFILE}: already processed"
+	    exit 0
+	fi
+
+	if test $installed_value != yes
 	then
 	    deps="-L${DESTDIR}$(dirname "${LAFILE}" | sed "s:^.*${FINALPATH}:${FINALPATH}:")"
 	    echo "$(basename $LAFILE): Rewriting dependencies to reference final directory"
