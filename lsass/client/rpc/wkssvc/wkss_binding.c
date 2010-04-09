@@ -79,8 +79,11 @@ WkssInitBindingDefault(
     WINERROR winError = ERROR_SUCCESS;
     PSTR pszHostname = NULL;
 
-    winError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(winError);
+    if (pwszHostname)
+    {
+        winError = LwWc16sToMbs(pwszHostname, &pszHostname);
+        BAIL_ON_WIN_ERROR(winError);
+    }
 
     winError = WkssInitBindingDefaultA(phBinding,
                                        pszHostname,

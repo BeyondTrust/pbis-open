@@ -80,8 +80,11 @@ LsaInitBindingDefault(
     DWORD dwError = ERROR_SUCCESS;
     PSTR pszHostname = NULL;
 
-    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszHostname)
+    {
+        dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
     ntStatus = LsaInitBindingDefaultA(phBinding,
                                       pszHostname,
@@ -340,7 +343,7 @@ error:
 
 VOID
 LsaFreeBinding(
-    IN  PLSA_BINDING  phBinding
+    IN OUT PLSA_BINDING  phBinding
     )
 {
     unsigned32 rpcStatus = RPC_S_OK;

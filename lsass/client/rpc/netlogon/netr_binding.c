@@ -83,8 +83,11 @@ NetrInitBindingDefault(
     DWORD dwError = ERROR_SUCCESS;
     PSTR pszHostname = NULL;
 
-    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszHostname)
+    {
+        dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
     ntStatus = NetrInitBindingDefaultA(phBinding,
                                        pszHostname,
