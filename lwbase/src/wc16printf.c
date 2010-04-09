@@ -49,6 +49,10 @@
 #include <wc16printf.h>
 #include <limits.h>
 
+#ifdef HAVE_SYS_VARARGS_H
+#include <sys/varargs.h>
+#endif
+
 #ifdef _WIN32
 #pragma warning( disable : 4996 )
 
