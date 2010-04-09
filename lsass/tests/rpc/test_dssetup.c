@@ -31,45 +31,36 @@
 #include "includes.h"
 
 
-handle_t
+DSR_BINDING
 CreateDsrBinding(
-    handle_t *binding,
+    DSR_BINDING *binding,
     const wchar16_t *host
     )
 {
-    RPCSTATUS status = RPC_S_OK;
-    size_t hostname_size = 0;
-    char *hostname = NULL;
-    PIO_CREDS creds = NULL;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    LW_PIO_CREDS creds = NULL;
 
     if (binding == NULL || host == NULL) return NULL;
 
-    hostname_size = wc16slen(host) + 1;
-    hostname = (char*) malloc(hostname_size * sizeof(char));
-    if (hostname == NULL) return NULL;
-    wc16stombs(hostname, host, hostname_size);
-
     if (LwIoGetActiveCreds(NULL, &creds) != STATUS_SUCCESS)
     {
-        return NULL;
+        *binding = NULL;
+        goto error;
     }
 
-    status = InitDsrBindingDefault(binding, hostname, creds);
-    if (status != RPC_S_OK) {
-        int result;
-        unsigned char errmsg[dce_c_error_string_len];
-
-        dce_error_inq_text(status, errmsg, &result);
-        if (result == 0) {
-            printf("Error: %s\n", errmsg);
-        } else {
-            printf("Unknown error: %08lx\n", (unsigned long int)status);
-        }
-
-        return NULL;
+    ntStatus = DsrInitBindingDefault(binding, host, creds);
+    if (ntStatus)
+    {
+        *binding = NULL;
+        goto error;
     }
 
-    SAFE_FREE(hostname);
+error:
+    if (creds)
+    {
+        LwIoDeleteCreds(creds);
+    }
+
     return *binding;
 }
 
@@ -87,18 +78,18 @@ TestDsrRoleGetPrimaryDomainInformation(
     const DWORD dwDefLevel = (WORD)(-1);
 
     BOOLEAN bRet = TRUE;
-    WINERR err = ERROR_SUCCESS;
+    WINERROR err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
-    handle_t hBinding = NULL;
+    DSR_BINDING hBinding = NULL;
     DWORD dwSelectedLevels[] = {0};
-    DWORD dwAvailableLevels[] = {DS_ROLE_BASIC_INFORMATION,
-                                DS_ROLE_UPGRADE_STATUS,
-                                DS_ROLE_OP_STATUS};
+    DWORD dwAvailableLevels[] = { DS_ROLE_BASIC_INFORMATION,
+                                  DS_ROLE_UPGRADE_STATUS,
+                                  DS_ROLE_OP_STATUS };
     PDWORD pdwLevels = NULL;
     DWORD dwNumLevels = 0;
     DWORD dwLevel = 0;
     DWORD i = 0;
-    PDS_ROLE_INFO pInfo = NULL;
+    PDSR_ROLE_INFO pInfo = NULL;
 
     perr = fetch_value(options, optcount, "level", pt_uint32, &dwLevel,
                        &dwDefLevel);
@@ -107,8 +98,6 @@ TestDsrRoleGetPrimaryDomainInformation(
     PARAM_INFO("level", pt_uint32, &dwLevel);
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     if (dwLevel == (WORD)(-1))
     {
@@ -144,22 +133,22 @@ TestDsrRoleGetPrimaryDomainInformation(
         switch (dwLevel)
         {
         case DS_ROLE_BASIC_INFORMATION:
-            ASSERT_TEST((pInfo->basic.dwRole >= DS_ROLE_STANDALONE_WORKSTATION &&
-                         pInfo->basic.dwRole <= DS_ROLE_PRIMARY_DC));
-            ASSERT_TEST(pInfo->basic.pwszDomain != NULL);
-            ASSERT_TEST(pInfo->basic.pwszDnsDomain != NULL);
-            ASSERT_TEST(pInfo->basic.pwszForest != NULL);
+            ASSERT_TEST((pInfo->Basic.dwRole >= DS_ROLE_STANDALONE_WORKSTATION &&
+                         pInfo->Basic.dwRole <= DS_ROLE_PRIMARY_DC));
+            ASSERT_TEST(pInfo->Basic.pwszDomain != NULL);
+            ASSERT_TEST(pInfo->Basic.pwszDnsDomain != NULL);
+            ASSERT_TEST(pInfo->Basic.pwszForest != NULL);
             break;
 
         case DS_ROLE_UPGRADE_STATUS:
-            ASSERT_TEST((pInfo->upgrade.swUpgradeStatus == DS_ROLE_NOT_UPGRADING ||
-                         pInfo->upgrade.swUpgradeStatus == DS_ROLE_UPGRADING));
-            ASSERT_TEST((pInfo->upgrade.dwPrevious >= DS_ROLE_PREVIOUS_UNKNOWN &&
-                         pInfo->upgrade.dwPrevious <= DS_ROLE_PREVIOUS_BACKUP));
+            ASSERT_TEST((pInfo->Upgrade.swUpgradeStatus == DS_ROLE_NOT_UPGRADING ||
+                         pInfo->Upgrade.swUpgradeStatus == DS_ROLE_UPGRADING));
+            ASSERT_TEST((pInfo->Upgrade.dwPrevious >= DS_ROLE_PREVIOUS_UNKNOWN &&
+                         pInfo->Upgrade.dwPrevious <= DS_ROLE_PREVIOUS_BACKUP));
             break;
 
         case DS_ROLE_OP_STATUS:
-            ASSERT_TEST(pInfo->opstatus.swStatus <= DS_ROLE_NEEDS_REBOOT);
+            ASSERT_TEST(pInfo->OpStatus.swStatus <= DS_ROLE_NEEDS_REBOOT);
             break;
         }
 
@@ -172,9 +161,7 @@ TestDsrRoleGetPrimaryDomainInformation(
 
 done:
 error:
-    FreeDsrBinding(&hBinding);
-
-    RELEASE_SESSION_CREDS;
+    DsrFreeBinding(&hBinding);
 
     if (pInfo)
     {

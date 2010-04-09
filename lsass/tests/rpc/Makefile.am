@@ -7,7 +7,8 @@ rpctest_SOURCES =    \
     params.c         \
     test_lsa.c       \
     test_samr.c      \
-    test_netlogon.c
+    test_netlogon.c  \
+    test_dssetup.c
 
 rpctest_CPPFLAGS =             \
     $(AM_CPPFLAGS)             \

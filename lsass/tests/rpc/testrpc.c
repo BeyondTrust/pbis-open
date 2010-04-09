@@ -270,10 +270,7 @@ int main(int argc, char *argv[])
     SetupLsaTests(tests);
     SetupSamrTests(tests);
     SetupNetlogonTests(tests);
-#if 0
-    SetupNetApiTests(tests);
     SetupDsrTests(tests);
-#endif
     
     for (i = 1; i < argc; i++)
     {

@@ -1238,7 +1238,7 @@ int TestNetlogonGetDcName(struct test *t, const wchar16_t *hostname,
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     PARAM_INFO("getdcflags", pt_uint32, &dwGetDcFlags);
-    PARAM_INFO("domainname", pt_w16string, &pwszDomainName);
+    PARAM_INFO("domainname", pt_w16string, pwszDomainName);
 
     hNetr = CreateNetlogonBinding(&hNetr, hostname);
     if (hNetr == NULL)
