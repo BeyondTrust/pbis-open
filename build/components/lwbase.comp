@@ -2,7 +2,7 @@
 
 COMP_NEED_COMPAT=1
 COMP_NEED_FOREIGN=1
-COMP_DEPENDENCIES="autoconf automake libtool libuuid"
+COMP_DEPENDENCIES="autoconf automake libtool libuuid libiconv"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwbase"
 COMP_INCREMENTAL=1
 
