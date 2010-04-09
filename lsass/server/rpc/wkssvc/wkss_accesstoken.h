@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2010
+ * Copyright Likewise Software    2004-2009
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,103 +33,48 @@
  *
  * Module Name:
  *
- *        wkssvc_memory.h
+ *        wkss_accesstoken.h
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        WksSvc memory allocation manager
+ *        Access token handling functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSSSRV_MEMORY_H_
-#define _WKSSSRV_MEMORY_H_
+#ifndef _WKSS_ACCESSTOKEN_H_
+#define _WKSS_ACCESSTOKEN_H_
 
 
-NTSTATUS
-WkssSrvAllocateMemory(
-    void **ppOut,
-    DWORD dwSize
+DWORD
+WkssSrvInitAuthInfo(
+    IN  handle_t            hBinding,
+    OUT PWKSS_SRV_CONTEXT   pSrvCtx
     );
 
 
-void
-WkssSrvFreeMemory(
-    void *pPtr
+VOID
+WkssSrvFreeAuthInfo(
+    IN  PWKSS_SRV_CONTEXT   pSrvCtx
     );
 
 
-NTSTATUS
-WkssSrvAllocateSidFromWC16String(
-    PSID *ppSid,
-    PCWSTR pwszSidStr
+DWORD
+WkssSrvGetSystemCreds(
+    OUT LW_PIO_CREDS *ppCreds
     );
 
 
-NTSTATUS
-WkssSrvDuplicateSid(
-    PSID *ppSidOut,
-    PSID pSidIn
-    );
+#endif /* _LSA_ACCESSTOKEN_H_ */
 
 
-NTSTATUS
-WkssSrvDuplicateWC16String(
-    PWSTR *ppwszOut,
-    PWSTR pwszIn
-    );
-
-
-NTSTATUS
-WkssSrvDuplicateWC16String(
-    PWSTR *ppwszOut,
-    PWSTR pwszIn
-    );
-
-
-NTSTATUS
-WkssSrvGetFromUnicodeString(
-    PWSTR *ppwszOut,
-    UnicodeString *pIn
-    );
-
-
-NTSTATUS
-WkssSrvGetFromUnicodeStringEx(
-    PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
-    );
-
-
-NTSTATUS
-WkssSrvInitUnicodeString(
-    UnicodeString *pOut,
-    PCWSTR pwszIn
-    );
-
-
-NTSTATUS
-WkssSrvInitUnicodeStringEx(
-    UnicodeStringEx *pOut,
-    PCWSTR pwszIn
-    );
-
-
-NTSTATUS
-WkssSrvDuplicateUnicodeString(
-    UnicodeString *pOut,
-    UnicodeString *pIn
-    );
-
-
-NTSTATUS
-WkssSrvSidAppendRid(
-    PSID *ppOutSid,
-    PSID pInSid,
-    DWORD dwRid
-    );
-
-
-#endif /* _WKSSSRV_MEMORY_H_ */
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

@@ -40,11 +40,21 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSSSRV_STRUCTS_H_
-#define _WKSSSRV_STRUCTS_H_
+#ifndef _WKSS_STRUCTS_H_
+#define _WKSS_STRUCTS_H_
 
 
-#endif /* _WKSSSRV_STRUCTS_H_ */
+typedef struct _WKSS_SRV_CONTEXT
+{
+    PACCESS_TOKEN        pUserToken;
+    PBYTE                pSessionKey;
+    DWORD                dwSessionKeyLen;
+    DWORD                dwAccessGranted;
+
+} WKSS_SRV_CONTEXT, *PWKSS_SRV_CONTEXT;
+
+
+#endif /* _WKSS_STRUCTS_H_ */
 
 
 /*

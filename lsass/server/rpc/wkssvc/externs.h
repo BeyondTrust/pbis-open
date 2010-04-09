@@ -42,7 +42,7 @@ extern LSA_RPCSRV_FUNCTION_TABLE gWkssRpcFuncTable;
 
 extern rpc_binding_vector_p_t gpWkssSrvBinding;
 
-extern LSA_SRV_CONFIG gWkssSrvConfig;
+extern WKSS_SRV_CONFIG gWkssSrvConfig;
 
 extern PSECURITY_DESCRIPTOR_ABSOLUTE gpWkssSecDesc;
 

@@ -45,13 +45,12 @@
 #include <wc16str.h>
 #include <lw/base.h>
 #include <lwsid.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/lsa.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>
 #include <lwps/lwps.h>
 #include <lwkrb5.h>
-#include <lwmapsecurity/lwmapsecurity.h>
+#include <lw/rpc/wkssvc.h>
+#include <lwrpc/lsa.h>
 
 #include <lsa/lsa.h>
 #include <lsaunistr.h>
@@ -59,20 +58,16 @@
 #include <lsasrvutils.h>
 #include <rpcctl-register.h>
 #include <directory.h>
-#include <samr_srv.h>
 
-#include "lsa_cfg.h"
-#include "lsa_srv.h"
-#include "lsadefs.h"
 #include "structs.h"
-#include "lsa_contexthandle.h"
-#include "lsa_accesstoken.h"
-#include "lsa_security.h"
-#include "lsa_memory.h"
-#include "lsa_accounts.h"
-#include "lsa_domaincache.h"
-#include "lsa.h"
-#include "lsa_h.h"
+#include "wkss_srv.h"
+#include "wkss_cfg.h"
+#include "wkssdefs.h"
+#include "wkss_accesstoken.h"
+#include "wkss_security.h"
+#include "wkss_memory.h"
+#include "wkssvc.h"
+#include "wkssvc_h.h"
 
 #include "externs.h"
 

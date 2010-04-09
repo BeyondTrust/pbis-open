@@ -50,7 +50,7 @@
 
 DWORD
 WkssSrvInitialiseConfig(
-    PLSA_SRV_CONFIG pConfig
+    PWKSS_SRV_CONFIG pConfig
     )
 {
     DWORD dwError = 0;
@@ -58,8 +58,13 @@ WkssSrvInitialiseConfig(
     memset(pConfig, 0, sizeof(*pConfig));
 
     dwError = LwAllocateString(
-            LSA_DEFAULT_LPC_SOCKET_PATH,
+            WKSS_RPC_CFG_DEFAULT_LPC_SOCKET_PATH,
             &pConfig->pszLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(
+            WKSS_RPC_CFG_DEFAULT_LPC_SOCKET_PATH,
+            &pConfig->pszLsaLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -72,10 +77,10 @@ error:
 
 VOID
 WkssSrvFreeConfigContents(
-    PLSA_SRV_CONFIG pConfig
+    PWKSS_SRV_CONFIG pConfig
     )
 {
-    if ( pConfig )
+    if (pConfig)
     {
         LW_SAFE_FREE_STRING(pConfig->pszLpcSocketPath);
     }
@@ -84,7 +89,7 @@ WkssSrvFreeConfigContents(
 
 DWORD
 WkssSrvReadRegistry(
-    PLSA_SRV_CONFIG pConfig
+    PWKSS_SRV_CONFIG pConfig
     )
 {
     DWORD dwError = 0;
@@ -107,6 +112,27 @@ WkssSrvReadRegistry(
                 "LpcSocketPath",
                 FALSE,
                 &pConfig->pszLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaCloseConfig(pReg);
+    pReg = NULL;
+
+    dwError = LsaOpenConfig(
+                "Services\\lsass\\Parameters\\RPCServers\\lsarpc",
+                "Policy\\Services\\lsass\\Parameters\\RPCServers\\lsarpc",
+                &pReg);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pReg)
+    {
+        goto error;
+    }
+
+    dwError = LsaReadConfigString(
+                pReg,
+                "LpcSocketPath",
+                FALSE,
+                &pConfig->pszLsaLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaCloseConfig(pReg);
@@ -143,6 +169,37 @@ WkssSrvConfigGetLpcSocketPath(
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppszLpcSocketPath = pszLpcSocketPath;
+
+cleanup:
+    GLOBAL_DATA_UNLOCK(bLocked);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+WkssSrvConfigGetLsaLpcSocketPath(
+    PSTR *ppszLsaLpcSocketPath
+    )
+{
+    DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    BOOL bLocked = 0;
+    PSTR pszLpcSocketPath = NULL;
+
+    GLOBAL_DATA_LOCK(bLocked);
+
+    if (LW_IS_NULL_OR_EMPTY_STR(gWkssSrvConfig.pszLsaLpcSocketPath)) {
+        goto cleanup;
+    }
+
+    dwError = LwAllocateString(gWkssSrvConfig.pszLsaLpcSocketPath,
+                               &pszLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppszLsaLpcSocketPath = pszLpcSocketPath;
 
 cleanup:
     GLOBAL_DATA_UNLOCK(bLocked);

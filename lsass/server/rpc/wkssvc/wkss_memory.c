@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2010
+ * Copyright Likewise Software    2004-2009
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -33,48 +33,90 @@
  *
  * Module Name:
  *
- *        wkssvc_srv.h
+ *        wkssvc_memeory.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        WksSvc server management functions
-*
+ *        WksSvc memory allocation manager
+ *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSS_SRV_H_
-#define _WKSS_SRV_H_
-
-typedef struct wkss_rpc_context {
-} WkssRpcContext, WKSS_RPC_CONTEXT;
+#include "includes.h"
 
 
 DWORD
-LsaRpcStartServer(
-    VOID
-    );
+WkssSrvAllocateMemory(
+    PVOID  *ppOut,
+    DWORD  dwSize
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    void *pOut = NULL;
+
+    pOut = rpc_ss_allocate(dwSize);
+    BAIL_ON_NO_MEMORY(pOut, dwError);
+
+    memset(pOut, 0, dwSize);
+
+    *ppOut = pOut;
+
+cleanup:
+    return dwError;
+
+error:
+    *ppOut = NULL;
+    goto cleanup;
+}
+
+
+VOID
+WkssSrvFreeMemory(
+    PVOID pPtr
+    )
+{
+    rpc_ss_free(pPtr);
+}
+
 
 DWORD
-LsaRpcStopServer(
-    VOID
-    );
+WkssSrvAllocateWC16StringFromUnicodeStringEx(
+    OUT PWSTR            *ppwszOut,
+    IN  UNICODE_STRING   *pIn
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PWSTR pwszStr = NULL;
 
+    BAIL_ON_INVALID_PTR(ppwszOut, dwError);
+    BAIL_ON_INVALID_PTR(pIn, dwError);
 
-DWORD
-WkssSrvInitServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
+    dwError = WkssSrvAllocateMemory(OUT_PPVOID(&pwszStr),
+                                    pIn->MaximumLength * sizeof(WCHAR));
+    BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwWc16snCpy(pwszStr,
+                          pIn->Buffer,
+                          pIn->Length / sizeof(WCHAR));
+    BAIL_ON_LSA_ERROR(dwError);
 
-DWORD
-WkssSrvDestroyServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
+    *ppwszOut = pwszStr;
 
+cleanup:
+    return dwError;
 
-#endif /* _WKSS_SRV_H_ */
+error:
+    if (pwszStr)
+    {
+        WkssSrvFreeMemory(pwszStr);
+    }
+
+    *ppwszOut = NULL;
+    goto cleanup;
+}
+
 
 
 /*

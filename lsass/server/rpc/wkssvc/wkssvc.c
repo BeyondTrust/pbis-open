@@ -47,6 +47,363 @@
 #include "includes.h"
 
 
+WINERROR
+srv_NetrWkstaGetInfo(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ DWORD dwLevel,
+    /* [out] */ NETR_WKSTA_INFO *pInfo
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+
+    winError = NetrSrvWkstaGetInfo(IDL_handle,
+                                   pwszServerName,
+                                   dwLevel,
+                                   pInfo);
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x01(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x02(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x03(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x04(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x05(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x06(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x07(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x08(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x09(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0a(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0b(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0c(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0d(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0e(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x0f(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_NetrJoinDomain(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ wchar16_t *pwszDomainName,
+    /* [in] */ wchar16_t *pwszAccountOu,
+    /* [in] */ wchar16_t *pwszAccountName,
+    /* [in] */ wchar16_t *pwszPassword,
+    /* [in] */ DWORD dwJoinFlags
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_NetrUnjoinDomain(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ wchar16_t *pwszAccountName,
+    /* [in] */ wchar16_t *pwszPassword,
+    /* [in] */ DWORD dwUnjoinFlags
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x10(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x11(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x12(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x13(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x14(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x15(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_NetrJoinDomain2(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ wchar16_t *pwszDomainName,
+    /* [in] */ wchar16_t *pwszAccountOu,
+    /* [in] */ wchar16_t *pwszAccountName,
+    /* [in] */ ENC_JOIN_PASSWORD_BUFFER *pPassword,
+    /* [in] */ DWORD dwJoinFlags
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_NetrUnjoinDomain2(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ wchar16_t *pwszAccountName,
+    /* [in] */ ENC_JOIN_PASSWORD_BUFFER *pPassword,
+    /* [in] */ DWORD dwUnjoinFlags
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x18(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x19(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x1a(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x1b(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x1c(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x1d(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
+
+WINERROR
+srv_wkssvc_Function0x1e(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    WINERROR winError = ERROR_SUCCESS;
+    return winError;
+}
+
 
 /*
 local variables:

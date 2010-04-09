@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2009
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,48 +33,39 @@
  *
  * Module Name:
  *
- *        lsa_accesstoken.h
+ *        wkss_memory.h
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        Access token handling functions
+ *        WksSvc memory allocation manager
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _LSA_ACCESSTOKEN_H_
-#define _LSA_ACCESSTOKEN_H_
+#ifndef _WKSS_MEMORY_H_
+#define _WKSS_MEMORY_H_
 
 
-NTSTATUS
-LsaSrvInitAuthInfo(
-    IN  handle_t          hBinding,
-    OUT PPOLICY_CONTEXT   pConnCtx
+DWORD
+WkssSrvAllocateMemory(
+    PVOID *ppOut,
+    DWORD dwSize
     );
 
 
 VOID
-LsaSrvFreeAuthInfo(
-    IN  PPOLICY_CONTEXT   pConnCtx
+WkssSrvFreeMemory(
+    PVOID pPtr
     );
 
 
-NTSTATUS
-LsaSrvGetSystemCreds(
-    OUT LW_PIO_CREDS *ppCreds
+DWORD
+WkssSrvAllocateWC16StringFromUnicodeStringEx(
+    OUT PWSTR            *ppwszOut,
+    IN  UNICODE_STRING   *pIn
     );
 
 
-#endif /* _LSA_ACCESSTOKEN_H_ */
-
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+#endif /* _WKSS_MEMORY_H_ */

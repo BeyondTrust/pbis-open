@@ -44,11 +44,20 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSSSRV_H_
-#define _WKSSSRV_H_
+#ifndef _WKSSVC_H_
+#define _WKSSVC_H_
 
 
-#endif /* _WKSSSRV_H_ */
+WINERROR
+NetrSrvWkstaGetInfo(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ DWORD dwLevel,
+    /* [out] */ PNETR_WKSTA_INFO pInfo
+    );
+
+
+#endif /* _WKSSVC_H_ */
 
 
 /*

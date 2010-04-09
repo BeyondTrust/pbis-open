@@ -44,26 +44,13 @@
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSSSRVDEFS_H_
-#define _WKSSSRVDEFS_H_
+#ifndef _WKSSDEFS_H_
+#define _WKSSDEFS_H_
 
 #define LSA_RPC_DIR                            CACHEDIR "/rpc"
 #define WKSS_RPC_CFG_DEFAULT_LPC_SOCKET_PATH   LSA_RPC_DIR "/lsass"
 
 #define LSASS_KRB5_CACHE_PATH                  "FILE:" CACHEDIR "/krb5cc_lsass"
-
-
-#define BAIL_ON_NT_STATUS(status)                   \
-    do {                                                 \
-        if ((status) != STATUS_SUCCESS) {                \
-            LSA_LOG_DEBUG("Error at %s:%d code: %s "     \
-                          "(0x%08x)",                    \
-                          __FILE__, __LINE__,            \
-                          LwNtStatusToName((status)),    \
-                          (status));                     \
-            goto error;                                  \
-        }                                                \
-    } while (0)
 
 
 #define BAIL_ON_NO_MEMORY(ptr, err)                      \
@@ -113,7 +100,7 @@
     do {                                                 \
         int ret = 0;                                     \
         if (!locked) break;                              \
-        ret = pthread_mutex_unlock(&gWksSrvDataMutex);   \
+        ret = pthread_mutex_unlock(&gWkssSrvDataMutex);  \
         if (ret && ntStatus == STATUS_SUCCESS) {         \
             ntStatus = STATUS_UNSUCCESSFUL;              \
                                                          \
@@ -123,7 +110,7 @@
     } while (0)
 
 
-#endif /* _WKSSSRVDEFS_H_ */
+#endif /* _WKSSDEFS_H_ */
 
 
 /*

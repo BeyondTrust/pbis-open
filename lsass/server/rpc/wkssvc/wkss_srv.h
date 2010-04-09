@@ -28,25 +28,53 @@
  * license@likewisesoftware.com
  */
 
-#include "includes.h"
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        wkssvc_srv.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        WksSvc server management functions
+*
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
 
-/* Library initialisation guard */
-pthread_mutex_t gWkssSrvDataMutex;
+#ifndef _WKSS_SRV_H_
+#define _WKSS_SRV_H_
 
-int bWkssSrvInitialised = 0;
+typedef struct wkss_rpc_context {
+} WkssRpcContext, WKSS_RPC_CONTEXT;
 
-PCSTR gpszWkssRpcSrvName = "wkssvc";
-LSA_RPCSRV_FUNCTION_TABLE gWkssRpcFuncTable = {
-    &WkssRpcStartServer,
-    &WkssRpcStopServer
-};
 
-rpc_binding_vector_p_t gpWkssSrvBinding = NULL;
+DWORD
+WkssRpcStartServer(
+    VOID
+    );
 
-WKSS_SRV_CONFIG gWkssSrvConfig;
+DWORD
+WkssRpcStopServer(
+    VOID
+    );
 
-/* wkssvc server security descriptor */
-PSECURITY_DESCRIPTOR_ABSOLUTE gpWkssSecDesc = NULL;
+
+DWORD
+WkssSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+DWORD
+WkssSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+#endif /* _WKSS_SRV_H_ */
 
 
 /*
