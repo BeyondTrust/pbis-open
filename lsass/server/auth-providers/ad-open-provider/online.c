@@ -150,7 +150,10 @@ AD_OnlineInitializeDomainTrustsInfo(
     {
         pDomain = (PLSA_DM_ENUM_DOMAIN_INFO)pPos->pItem;
 
-        if (!pDomain || !IsSetFlag(pDomain->Flags, LSA_DM_DOMAIN_FLAG_TRANSITIVE_1WAY_CHILD))
+        if (!pDomain
+            || !IsSetFlag(pDomain->Flags, LSA_DM_DOMAIN_FLAG_TRANSITIVE_1WAY_CHILD)
+            || LsaDmIsDomainPresent(pDomain->pszDnsDomainName)
+           )
         {
             pPos = pPos->pNext;
             continue;
