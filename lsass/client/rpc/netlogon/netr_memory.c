@@ -702,8 +702,6 @@ NetrAllocateRidWithAttributeArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
-    LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
-
     LWBUF_ALLOC_DWORD(pBuffer, pIn->dwCount);
     LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
 
@@ -757,8 +755,8 @@ NetrAllocateRidWithAttributeArray(
     }
 
     /* include size of the pointer */
-    (*pdwOffset) += sizeof(RID_WITH_ATTRIBUTE);
-    (*pdwSize)   += sizeof(RID_WITH_ATTRIBUTE);
+    (*pdwOffset) += sizeof(PRID_WITH_ATTRIBUTE);
+    (*pdwSize)   += sizeof(PRID_WITH_ATTRIBUTE);
 
 cleanup:
     if (ntStatus == STATUS_SUCCESS &&
