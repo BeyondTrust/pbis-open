@@ -172,6 +172,7 @@ function main
             --compat)
                 OPT_COMPAT=1
                 OPT_PRODUCT="$OPT_PRODUCT --compat"
+		OPT_PLATFORM="$OPT_PLATFORM --compat"
                 shift
                 ;;
             --profile)
@@ -278,7 +279,7 @@ function main
             done
         fi
 
-	${RUN} mkplatform ${BUILD_PLATFORM_PRODUCTS} ${RUNSUFFIX}
+	${RUN} mkplatform ${OPT_PLATFORM} ${BUILD_PLATFORM_PRODUCTS} ${RUNSUFFIX}
         ${RUN} true
     )
     rc=$?

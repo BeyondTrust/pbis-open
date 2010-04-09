@@ -175,21 +175,24 @@ function populate
     PREFIX_DIR="${BUILD_PREFIX}"
     PKG_POPULATE_PREFIX_DIR="${2}/${BUILD_PREFIX}"
     PKG_POPULATE_ROOT_DIR="${2}"
+    PKG_COMPAT_DISPOSITION="comp"
 
     setup_package_vars
 
-    PKG_COMPAT_DISPOSITION="comp"
+    if [ -z "$OPT_COMPAT" -a -z "$PKG_IS_COMPAT" ]
+    then
 
-    mkdir -p "${PKG_POPULATE_ROOT_DIR}"
-    exit_on_error $?
+	mkdir -p "${PKG_POPULATE_ROOT_DIR}"
+	exit_on_error $?
 
-    op_invoke populate
+	op_invoke populate
+    fi
 
     if [ -n "${PKG_NEED_COMPAT}" ]; then
         ( PKG_IS_COMPAT=1 && setup_package_vars && op_invoke populate )
         exit_on_error $?
     fi
-
+    
     if [ -n "${PKG_NEED_FOREIGN}" ]; then
         echo "Performing foreign population"        
         ( PKG_IS_FOREIGN=1 && setup_package_vars && op_invoke populate )
@@ -219,6 +222,18 @@ function recreate_dir
 }
 
 recreate_dir "${BUILD_IMAGE_ROOT}"
+
+while true
+do
+    case "$1" in
+	--compat)
+	    OPT_COMPAT="1"
+	    shift
+	    ;;
+	*)
+	    break
+    esac
+done
 
 for pkg in `product_packages $@`
 do
