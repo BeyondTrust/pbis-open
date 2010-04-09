@@ -54,17 +54,29 @@ NetShareShowUsage(
 {
     printf(
         "Usage: lwnet share help\n"
-        "       lwnet share [ <options> ... ]\n"
-        "       lwnet share add [ <options> ... ] <name=path>\n"
-        "       lwnet share del [ <options> ... ] <name>\n");
+        "       lwnet share [\\\\SERVERNAME]\n"
+        "       lwnet share add [\\\\SERVERNAME] <name=path> [ <add options> ... ] \n"
+        "       lwnet share del [\\\\SERVERNAME] <name> \n"
+        "       lwnet share set-info [\\\\SERVERNAME] <name> [ <set-info options> ... ] \n");
 
     printf("\n"
            "Options:\n"
            "\n"
-           "  --server <server>       Specify target server (default: local machine)\n"
-           "\n");
+           "  \\\\SERVERNAME       Specify target server (default: local machine)\n"
+           "\n"
+           "Options (add/set-info):\n"
+           "\n"
+           "  --path <path>           Share path\n"
+           "  --comment <comment>     Share comment\n"
+           "  --read-only             Make share read-only\n"
+           "  --read-write            Make share readable and writable (default)\n"
+           "  --allow <NT4 name>      Allow user/group access to share\n"
+           "  --deny <NT4 name>       Deny user/group access to share\n"
+           "\n"
+           "Options (set-info):\n"
+           "  --clear-allow           Clear allowed list\n"
+           "  --clear-deny            Clear denied list\n");
 }
-
 static
 VOID
 NetShareFreeCommandInfo(
@@ -100,11 +112,12 @@ error:
 
 static
 DWORD
-ParseShareAddOptionArgs(
+ParseShareAddOrSetinfoOptionArgs(
     IN int argc,
     IN int indexStart,
     IN char** argv,
-    IN OUT NET_SHARE_ADD_INFO_PARAMS ShareAddParams
+    IN NET_SHARE_CTRL_CODE dwCtrlCode,
+    IN OUT PNET_SHARE_ADD_OR_SET_INFO_PARAMS pShareAddOrSetParams
     )
 {
     DWORD dwError = 0;
@@ -119,8 +132,8 @@ ParseShareAddOptionArgs(
             BAIL_ON_LTNET_ERROR(dwError);
 
             dwError = AppendStringArray(
-                &ShareAddParams.dwAllowUserCount,
-                &ShareAddParams.ppwszAllowUsers,
+                &pShareAddOrSetParams->dwAllowUserCount,
+                &pShareAddOrSetParams->ppwszAllowUsers,
                 pwszArg);
             BAIL_ON_LTNET_ERROR(dwError);
 
@@ -132,8 +145,8 @@ ParseShareAddOptionArgs(
             BAIL_ON_LTNET_ERROR(dwError);
 
             dwError = AppendStringArray(
-                &ShareAddParams.dwDenyUserCount,
-                &ShareAddParams.ppwszDenyUsers,
+                &pShareAddOrSetParams->dwDenyUserCount,
+                &pShareAddOrSetParams->ppwszDenyUsers,
                 pwszArg);
             BAIL_ON_LTNET_ERROR(dwError);
 
@@ -141,28 +154,30 @@ ParseShareAddOptionArgs(
         }
         else if (!strcmp(argv[dwIndex], "--comment"))
         {
-            dwError = LwMbsToWc16s(argv[++dwIndex], &ShareAddParams.pwszComment);
+            dwError = LwMbsToWc16s(argv[++dwIndex], &pShareAddOrSetParams->pwszComment);
             BAIL_ON_LTNET_ERROR(dwError);
         }
         else if (!strcmp(argv[dwIndex], "--read-only"))
         {
-        	ShareAddParams.bReadOnly = TRUE;
+            pShareAddOrSetParams->bReadOnly = TRUE;
         }
         else if (!strcmp(argv[dwIndex], "--read-write"))
         {
-        	ShareAddParams.bReadWrite = TRUE;
+            pShareAddOrSetParams->bReadWrite = TRUE;
         }
-        else if (!strcmp(argv[dwIndex], "--clear-allow"))
+        else if (!strcmp(argv[dwIndex], "--clear-allow")
+                && NET_SHARE_SETINFO == dwCtrlCode)
         {
-        	ShareAddParams.bClearAllow = TRUE;
+            pShareAddOrSetParams->bClearAllow = TRUE;
         }
-        else if (!strcmp(argv[dwIndex], "--clear-deny"))
+        else if (!strcmp(argv[dwIndex], "--clear-deny")
+                && NET_SHARE_SETINFO == dwCtrlCode)
         {
-        	ShareAddParams.bClearDeny = TRUE;
+            pShareAddOrSetParams->bClearDeny = TRUE;
         }
         else
         {
-            dwError = LwMbsToWc16s(argv[dwIndex], &ShareAddParams.pwszTarget);
+            dwError = LwMbsToWc16s(argv[dwIndex], &pShareAddOrSetParams->pwszTarget);
             BAIL_ON_LTNET_ERROR(dwError);
             break;
         }
@@ -198,13 +213,14 @@ NetShareAddParseArguments(
 		BAIL_ON_LTNET_ERROR(dwError);
 	}
 
-	if (!strcasecmp(argv[indexShareAddArg], "--server"))
-	{
-	    dwError = LwMbsToWc16s(argv[++indexShareAddArg], &pCommandInfo->ShareAddInfo.pwszServerName);
-	    BAIL_ON_LTNET_ERROR(dwError);
+    if (!strncmp(argv[indexShareAddArg], "\\\\", sizeof("\\\\")-1))
+    {
+        dwError = LwMbsToWc16s(argv[indexShareAddArg]+sizeof("\\\\")-1,
+                  &pCommandInfo->ShareAddOrSetInfo.pwszServerName);
+        BAIL_ON_LTNET_ERROR(dwError);
 
-	    indexShareAddArg++;
-	}
+        indexShareAddArg++;
+    }
 
 	if (indexShareAddArg > argc-1)
 	{
@@ -221,7 +237,7 @@ NetShareAddParseArguments(
 		BAIL_ON_LTNET_ERROR(dwError);
 	}
 
-    dwError = LwMbsToWc16s(pszPath+1, &pCommandInfo->ShareAddInfo.pwszPath);
+    dwError = LwMbsToWc16s(pszPath+1, &pCommandInfo->ShareAddOrSetInfo.pwszPath);
     BAIL_ON_LTNET_ERROR(dwError);
 
     sShareNameLen = strlen(pszShareAddShareInfo)-strlen(pszPath);
@@ -238,11 +254,13 @@ NetShareAddParseArguments(
 
     memcpy(pszShareName, pszShareAddShareInfo, sShareNameLen);
 
-    dwError = LwMbsToWc16s(pszShareName, &pCommandInfo->ShareAddInfo.pwszShareName);
+    dwError = LwMbsToWc16s(pszShareName, &pCommandInfo->ShareAddOrSetInfo.pwszShareName);
     BAIL_ON_LTNET_ERROR(dwError);
 
     // Process add options
-    dwError = ParseShareAddOptionArgs(argc, ++indexShareAddArg, argv, pCommandInfo->ShareAddInfo);
+    dwError = ParseShareAddOrSetinfoOptionArgs(argc, ++indexShareAddArg, argv,
+                                               pCommandInfo->dwControlCode,
+                                               &pCommandInfo->ShareAddOrSetInfo);
     BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
@@ -274,13 +292,14 @@ NetShareDelParseArguments(
 		BAIL_ON_LTNET_ERROR(dwError);
 	}
 
-	if (!strcasecmp(argv[indexShareDelArg], "--server"))
-	{
-	    dwError = LwMbsToWc16s(argv[++indexShareDelArg], &pCommandInfo->ShareDelInfo.pwszServerName);
-	    BAIL_ON_LTNET_ERROR(dwError);
+    if (!strncmp(argv[indexShareDelArg], "\\\\", sizeof("\\\\")-1))
+    {
+        dwError = LwMbsToWc16s(argv[indexShareDelArg]+sizeof("\\\\")-1,
+                  &pCommandInfo->ShareAddOrSetInfo.pwszServerName);
+        BAIL_ON_LTNET_ERROR(dwError);
 
-	    indexShareDelArg++;
-	}
+        indexShareDelArg++;
+    }
 
 	if (indexShareDelArg > argc-1)
 	{
@@ -330,6 +349,73 @@ error:
     NetShareFreeCommandInfo(pCommandInfo);
 
     goto cleanup;
+}
+
+static
+DWORD
+NetShareSetinfoParseArguments(
+    int argc,
+    char ** argv,
+    IN OUT PNET_SHARE_COMMAND_INFO pCommandInfo
+    )
+{
+    DWORD dwError = 0;
+    int indexShareSetInfoArg = 3;
+
+
+    if (!argv[indexShareSetInfoArg])
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    if (!strncmp(argv[indexShareSetInfoArg], "\\\\", sizeof("\\\\")-1))
+    {
+        dwError = LwMbsToWc16s(argv[indexShareSetInfoArg]+sizeof("\\\\")-1,
+                  &pCommandInfo->ShareAddOrSetInfo.pwszServerName);
+        BAIL_ON_LTNET_ERROR(dwError);
+
+        indexShareSetInfoArg++;
+    }
+
+    if (indexShareSetInfoArg > argc-1)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    dwError = LwMbsToWc16s(argv[indexShareSetInfoArg],
+            &pCommandInfo->ShareAddOrSetInfo.pwszShareName);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    // Process set-info options
+    dwError = ParseShareAddOrSetinfoOptionArgs(argc, ++indexShareSetInfoArg, argv,
+                                               pCommandInfo->dwControlCode,
+                                               &pCommandInfo->ShareAddOrSetInfo);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    NetShareFreeCommandInfo(pCommandInfo);
+
+    goto cleanup;
+
+}
+
+static
+DWORD
+NetShareGetinfoParseArguments(
+    int argc,
+    char ** argv,
+    IN OUT PNET_SHARE_COMMAND_INFO pCommandInfo
+    )
+{
+    return 0;
+
 }
 
 
@@ -393,6 +479,20 @@ NetShareParseArguments(
 		dwError = NetShareEnumParseArguments(argc, argv, pCommandInfo);
 		BAIL_ON_LTNET_ERROR(dwError);
     }
+	else if (!strcasecmp(argv[2], NET_SHARE_COMMAND_SETINFO))
+	{
+	    pCommandInfo->dwControlCode = NET_SHARE_SETINFO;
+
+	    dwError = NetShareSetinfoParseArguments(argc, argv, pCommandInfo);
+	    BAIL_ON_LTNET_ERROR(dwError);
+	}
+    else if (!strcasecmp(argv[2], NET_SHARE_COMMAND_GETINFO))
+    {
+        pCommandInfo->dwControlCode = NET_SHARE_GETINFO;
+
+        dwError = NetShareGetinfoParseArguments(argc, argv, pCommandInfo);
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
 	else
 	{
 		dwError = LW_ERROR_INVALID_PARAMETER;
@@ -449,19 +549,19 @@ NetShare(
 
         case NET_SHARE_ADD:
 
-        	dwError = LwUtilNetShareAdd(pCommandInfo->ShareAddInfo);
+        	dwError = NetExecShareAdd(pCommandInfo->ShareAddOrSetInfo);
         	BAIL_ON_LTNET_ERROR(dwError);
         	break;
 
 
         case NET_SHARE_DEL:
-            dwError = LwUtilNetShareDel(pCommandInfo->ShareDelInfo);
+            dwError = NetExecShareDel(pCommandInfo->ShareDelInfo);
         	BAIL_ON_LTNET_ERROR(dwError);
         	break;
 
         case NET_SHARE_ENUM:
 
-            dwError = LwUtilNetShareEnum(pCommandInfo->ShareEnumInfo);
+            dwError = NetExecShareEnum(pCommandInfo->ShareEnumInfo);
         	BAIL_ON_LTNET_ERROR(dwError);
         	break;
 
@@ -500,10 +600,11 @@ NetShareFreeCommandInfo(
 	switch (pCommandInfo->dwControlCode)
 	{
 	    case NET_SHARE_ADD:
+	    case NET_SHARE_SETINFO:
 
-	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszServerName);
-	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszPath);
-	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddInfo.pwszShareName);
+	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddOrSetInfo.pwszServerName);
+	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddOrSetInfo.pwszPath);
+	    	LTNET_SAFE_FREE_MEMORY(pCommandInfo->ShareAddOrSetInfo.pwszShareName);
 	        break;
 
 	    case NET_SHARE_DEL:

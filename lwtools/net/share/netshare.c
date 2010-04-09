@@ -77,8 +77,8 @@ ConstructSecurityDescriptor(
 
 
 DWORD
-LwUtilNetShareAdd(
-	NET_SHARE_ADD_INFO_PARAMS ShareAddInfo
+NetExecShareAdd(
+	NET_SHARE_ADD_OR_SET_INFO_PARAMS ShareAddInfo
     )
 {
     static const DWORD dwLevel = 502;
@@ -127,7 +127,7 @@ error:
 
 
 DWORD
-LwUtilNetShareEnum(
+NetExecShareEnum(
 	NET_SHARE_ENUM_INFO_PARAMS ShareEnumInfo
     )
 {
@@ -316,7 +316,7 @@ error:
 }
 
 DWORD
-LwUtilNetShareDel(
+NetExecShareDel(
 	NET_SHARE_DEL_INFO_PARAMS ShareDelInfo
     )
 {
