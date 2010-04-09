@@ -267,6 +267,10 @@ krb5int_open_plugin (const char *filepath, struct plugin_file_handle **h, struct
             handle = dlopen(filepath, PLUGIN_DLOPEN_FLAGS);
             if (handle == NULL) {
                 const char *e = dlerror();
+                if (e == NULL)
+                {
+                    e = "";
+                }
                 Tprintf ("dlopen(%s): %s\n", filepath, e);
                 err = ENOENT; /* XXX */
 		krb5int_set_error (ep, err, "%s", e);
