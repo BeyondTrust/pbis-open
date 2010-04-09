@@ -468,9 +468,11 @@ shared_accept(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     SharedManager* priv = SHARED_MANAGER(manager);
-    SharedSession* session = shared_find_session(priv, connect);
+    SharedSession* session = NULL;
 
     shared_lock(priv);
+
+    session = shared_find_session(priv, connect);
 
     if (session)
     {
