@@ -52,4 +52,10 @@
         [out] unsigned32* uid,
         [out] unsigned32* gid
         );
+
+    void rpc_lrpc_transport_info_inq_session_key(
+        [in] rpc_transport_info_handle_t info,
+        [out] unsigned char** sess_key,
+        [out] unsigned16* sess_key_len
+        );
 }

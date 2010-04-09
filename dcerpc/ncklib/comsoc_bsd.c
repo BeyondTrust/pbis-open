@@ -202,6 +202,11 @@ int ioctl(int d, int request, ...);
  */
 typedef struct rpc_bsd_transport_info_s
 {
+    struct
+    {
+        unsigned16 length;
+        unsigned char* data;
+    } session_key;
     uid_t peer_uid;
     gid_t peer_gid;
 } rpc_bsd_transport_info_t, *rpc_bsd_transport_info_p_t;
@@ -354,9 +359,11 @@ rpc__bsd_socket_construct(
 	goto error;
     }
 
-    lrpc->fd            = -1;
-    lrpc->info.peer_uid = -1;
-    lrpc->info.peer_gid = -1;
+    lrpc->fd                      = -1;
+    lrpc->info.peer_uid           = -1;
+    lrpc->info.peer_gid           = -1;
+    lrpc->info.session_key.data   = NULL;
+    lrpc->info.session_key.length = 0;
 
     RPC_SOCKET_DISABLE_CANCEL;
     lrpc->fd = socket(
@@ -465,6 +472,12 @@ rpc_socket_t        sock;
 
     if (lrpc)
     {
+        if (lrpc->info.session_key.data)
+        {
+            free(lrpc->info.session_key.data);
+            lrpc->info.session_key.length = 0;
+        }
+
 	free(lrpc);
     }
 
@@ -697,6 +710,30 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvpeereid
 
 #endif
 
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_createsessionkey
+(
+    unsigned char **session_key,
+    unsigned16     *session_key_len
+);
+
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_sendsessionkey
+(
+    rpc_socket_t        sock,
+    unsigned char      *session_key,
+    unsigned16          session_key_len
+);
+
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_recvsession_key
+(
+    rpc_socket_t        sock,
+    unsigned char     **session_key,
+    unsigned16 	       *session_key_len
+);
+
+
 
 /*
  * R P C _ _ S O C K E T _ C O N N E C T
@@ -726,6 +763,8 @@ rpc_cn_assoc_t     *assoc;
     unsigned_char_t *netaddr, *endpoint;
     unsigned32      dbg_status;
     rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
+    unsigned char *session_key = NULL;
+    unsigned16 session_key_len = 0;
 
     rpc__naf_addr_inq_netaddr (addr,
                                &netaddr,
@@ -758,7 +797,22 @@ connect_again:
 
 #if !defined(SO_PEERCRED) && !(defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID)
     serr = rpc__bsd_socket_sendpeereid(sock, addr);
+    if (serr)
+    {
+        goto error;
+    }
 #endif
+
+    serr = rpc__bsd_socket_recvsession_key(sock,
+                                           &session_key,
+                                           &session_key_len);
+    if (serr)
+    {
+        goto error;
+    }
+
+    lrpc->info.session_key.data   = session_key;
+    lrpc->info.session_key.length = session_key_len;
 
 cleanup:
     rpc_string_free (&netaddr, &dbg_status);
@@ -769,6 +823,8 @@ cleanup:
 error:
     goto cleanup;
 }
+
+
 
 /*
  * R P C _ _ S O C K E T _ A C C E P T
@@ -802,6 +858,8 @@ rpc_socket_t        *newsock;
     rpc_bsd_socket_p_t newlrpc = NULL;
     uid_t euid = -1;
     gid_t egid = -1;
+    unsigned char *session_key = NULL;
+    unsigned16 session_key_len = 0;
 
     *newsock = malloc(sizeof (**newsock));
 
@@ -842,22 +900,42 @@ accept_again:
     serr = (newlrpc->fd == -1) ? errno : RPC_C_SOCKET_OK;
     RPC_LOG_SOCKET_ACCEPT_XIT;
 
+    if (serr == EINTR)
+    {
+        goto accept_again;
+    }
+
     if (!serr)
     {
         serr = rpc__bsd_socket_getpeereid((*newsock), &euid, &egid);
+	if (serr)
+        {
+            goto cleanup;
+        }
+
+        serr = rpc__bsd_socket_createsessionkey(&session_key, &session_key_len);
+	if (serr)
+        {
+            goto cleanup;
+        }
+
+        serr = rpc__bsd_socket_sendsessionkey((*newsock),
+                                              session_key,
+                                              session_key_len);
+	if (serr)
+        {
+            goto cleanup;
+        }
     }
     else
     {
         goto cleanup;
     }
 
-    if (serr == EINTR)
-    {
-        goto accept_again;
-    }
-
-    newlrpc->info.peer_uid = euid;
-    newlrpc->info.peer_gid = egid;
+    newlrpc->info.peer_uid           = euid;
+    newlrpc->info.peer_gid           = egid;
+    newlrpc->info.session_key.data   = session_key;
+    newlrpc->info.session_key.length = session_key_len;
 
 cleanup:
     if (serr && newlrpc)
@@ -1772,6 +1850,177 @@ error:
 #endif
 
 
+
+/*
+ * R P C _ _ S O C K E T _ C R E A T E S E S S I O N K E Y
+ *
+ * Generate new session key
+ */
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_createsessionkey
+#ifdef _DCE_PROTO_
+(
+    unsigned char **session_key,
+    unsigned16     *session_key_len
+)
+#else
+(session_key, session_key_len)
+unsigned char    **session_key;
+unsigned16        *session_key_len;
+#endif
+{
+    rpc_socket_error_t serr = RPC_C_SOCKET_OK;
+    unsigned16 key_len = 0;
+    unsigned char *key = NULL;
+    unsigned32 seed = 0;
+    unsigned32 rand = 0;
+    unsigned32 i = 0;
+    unsigned32 offset = 0;
+
+    /* Reseed the random number generator. Since this is a local connection
+       it doesn't have to come from high-entropy source */
+    seed  = (unsigned32)time(NULL);
+    seed *= (unsigned32)getpid();
+
+    RPC_RANDOM_INIT(seed);
+
+    /* Default key length is 16 bytes */
+    key_len = 16;
+
+    key = malloc(key_len);
+    if (!key)
+    {
+        serr = ENOMEM;
+        goto cleanup;
+    }
+
+    for (i = 0; i < (key_len / sizeof(rand)); i++)
+    {    
+        rand = RPC_RANDOM_GET(1, 0xffffffff);
+	offset = i * sizeof(rand);
+
+	key[0 + offset] = (unsigned char)((rand >> 24) & 0xff);
+	key[1 + offset] = (unsigned char)((rand >> 16) & 0xff);
+	key[2 + offset] = (unsigned char)((rand >> 8) & 0xff);
+	key[3 + offset] = (unsigned char)((rand) & 0xff);
+    }
+
+    *session_key     = key;
+    *session_key_len = key_len;
+
+cleanup:
+    return serr;
+}
+
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_sendsessionkey
+#ifdef _DCE_PROTO_
+(
+    rpc_socket_t        sock,
+    unsigned char      *session_key,
+    unsigned16          session_key_len
+)
+#else
+(sock, session_key, session_key_len)
+rpc_socket_t        sock;
+unsigned char      *session_key;
+unsigned16          session_key_len;
+#endif
+{
+    rpc_socket_error_t serr = RPC_C_SOCKET_OK;
+    rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
+    rpc_socket_iovec_t iovec = {0};
+    struct msghdr msg = {0};
+    int bytes_sent = 0;
+
+    iovec.iov_base     = session_key;
+    iovec.iov_len      = session_key_len;
+
+    msg.msg_iov        = &iovec;
+    msg.msg_iovlen     = 1;
+    msg.msg_flags      = 0;
+
+    RPC_SOCKET_DISABLE_CANCEL;
+    bytes_sent = sendmsg(lrpc->fd, &msg, 0);
+    RPC_SOCKET_RESTORE_CANCEL;
+    if (bytes_sent == -1)
+    {
+        serr = errno;
+        goto error;
+    }
+
+cleanup:
+    return serr;
+
+error:
+
+    goto cleanup;
+}
+
+
+INTERNAL rpc_socket_error_t rpc__bsd_socket_recvsession_key
+#ifdef _DCE_PROTO_
+(
+    rpc_socket_t        sock,
+    unsigned char     **session_key,
+    unsigned16 	       *session_key_len
+)
+#else
+(sock, session_key, session_key)
+rpc_socket_t        sock;
+unsigned char     **session_key;
+unsigned16         *session_key_len;
+#endif
+{
+    rpc_socket_error_t serr = RPC_C_SOCKET_OK;
+    rpc_bsd_socket_p_t lrpc = (rpc_bsd_socket_p_t) sock->data.pointer;
+    int bytes_rcvd = 0;
+    unsigned char buffer[512] = {0};
+    rpc_socket_iovec_t iovec = {0};
+    struct msghdr msg = {0};
+    unsigned char *key = NULL;
+    unsigned16 key_len = 0;
+
+    iovec.iov_base = buffer;
+    iovec.iov_len  = sizeof(buffer);
+
+    msg.msg_iov        = &iovec;
+    msg.msg_iovlen     = 1;
+    msg.msg_flags      = 0;
+
+    RPC_SOCKET_DISABLE_CANCEL;
+    bytes_rcvd = recvmsg(lrpc->fd, &msg, 0);
+    RPC_SOCKET_RESTORE_CANCEL;
+    if (bytes_rcvd == -1)
+    {
+        serr = errno;
+        goto error;
+    }
+
+    key_len = bytes_rcvd;
+    key = malloc(key_len);
+    if (!key)
+    {
+        serr = ENOMEM;
+        goto error;
+    }
+
+    memcpy(key, buffer, key_len);
+
+    *session_key     = key;
+    *session_key_len = key_len;
+
+cleanup:
+    return serr;
+
+error:
+    *session_key     = NULL;
+    *session_key_len = 0;
+
+    goto cleanup;
+}
+
+
 INTERNAL
 int rpc__bsd_socket_get_select_desc(
     rpc_socket_t sock
@@ -2252,6 +2501,20 @@ rpc__bsd_socket_inq_transport_info(
     lrpc_info->peer_uid = lrpc->info.peer_uid;
     lrpc_info->peer_gid = lrpc->info.peer_gid;
 
+    lrpc_info->session_key.data = malloc(lrpc->info.session_key.length);
+
+    if (!lrpc_info->session_key.data)
+    {
+        serr = ENOMEM;
+        goto error;
+    }
+
+    memcpy(lrpc_info->session_key.data,
+           lrpc->info.session_key.data,
+           lrpc->info.session_key.length);
+
+    lrpc_info->session_key.length = lrpc->info.session_key.length;
+
     *info = (rpc_transport_info_handle_t) lrpc_info;
 
 error:
@@ -2273,7 +2536,14 @@ rpc_lrpc_transport_info_free(
     rpc_transport_info_handle_t info
     )
 {
-    free(info);
+    rpc_bsd_transport_info_p_t lrpc_info = (rpc_bsd_transport_info_p_t) info;
+
+    if (lrpc_info->session_key.data)
+    {
+        free(lrpc_info->session_key.data);
+    }
+
+    free(lrpc_info);
 }
 
 void
@@ -2293,6 +2563,26 @@ rpc_lrpc_transport_info_inq_peer_eid(
     if (gid)
     {
         *gid = lrpc_info->peer_gid;
+    }
+}
+
+void
+rpc_lrpc_transport_info_inq_session_key(
+    rpc_transport_info_handle_t info,
+    unsigned char** sess_key,
+    unsigned16* sess_key_len
+    )
+{
+    rpc_bsd_transport_info_p_t lrpc_info = (rpc_bsd_transport_info_p_t) info;
+
+    if (sess_key)
+    {
+        *sess_key = lrpc_info->session_key.data;
+    }
+
+    if (sess_key_len)
+    {
+        *sess_key_len = lrpc_info->session_key.length;
     }
 }
 
