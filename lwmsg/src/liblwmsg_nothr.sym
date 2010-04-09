@@ -119,7 +119,6 @@ lwmsg_session_unregister_handle
 lwmsg_session_get_handle_location
 lwmsg_session_get_data
 lwmsg_session_get_peer_security_token
-lwmsg_session_get_id
 lwmsg_message_init
 lwmsg_archive_new
 lwmsg_archive_set_file
