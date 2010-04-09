@@ -30,7 +30,8 @@
 
 DWORD
 NetExecSessionEnum(
-    PWSTR pwszServername    /* IN     OPTIONAL */
+    PWSTR pwszServername,   /* IN              */
+    PWSTR pwszClientname    /* IN     OPTIONAL */
     );
 
 DWORD

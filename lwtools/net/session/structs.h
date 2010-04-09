@@ -30,8 +30,8 @@
 
 typedef struct _NET_SESSION_COMMAND_INFO
 {
-    PWSTR pwszServerName;
-    PWSTR pwszSessionName;
+    PWSTR pwszServername;
+    PWSTR pwszClientname;
 
     BOOLEAN bEnumerate;
     BOOLEAN bLogoff;

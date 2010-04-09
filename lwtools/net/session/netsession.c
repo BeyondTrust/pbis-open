@@ -49,11 +49,11 @@
 
 DWORD
 NetExecSessionEnum(
-    PWSTR pwszServername    /* IN     OPTIONAL */
+    PWSTR pwszServername,   /* IN              */
+    PWSTR pwszClientname    /* IN     OPTIONAL */
     )
 {
     NET_API_STATUS nStatus  = 0;
-    PWSTR pwszUncClientname = NULL;
     PWSTR pwszUsername      = NULL;
     DWORD dwInfoLevel       = 2;
     PBYTE pBuffer           = NULL;
@@ -78,7 +78,7 @@ NetExecSessionEnum(
 
         nStatus = NetSessionEnumW(
                         pwszServername,
-                        pwszUncClientname,
+                        pwszClientname,
                         pwszUsername,
                         dwInfoLevel,
                         &pBuffer,

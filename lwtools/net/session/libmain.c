@@ -99,13 +99,15 @@ NetSession(
 
     if (pCommandInfo->bEnumerate)
     {
-        dwError = NetExecSessionEnum(pCommandInfo->pwszServerName);
+        dwError = NetExecSessionEnum(
+                        pCommandInfo->pwszServername,
+                        pCommandInfo->pwszClientname);
     }
     else if (pCommandInfo->bLogoff)
     {
         dwError = NetExecSessionLogoff(
-                        pCommandInfo->pwszServerName,
-                        pCommandInfo->pwszSessionName);
+                        pCommandInfo->pwszServername,
+                        pCommandInfo->pwszClientname);
     }
     else
     {
@@ -125,7 +127,7 @@ cleanup:
 error:
 
     fprintf(stderr,
-            "Error [%u][%s] %s",
+            "Error [%u][%s] %s\n",
             dwError,
             LwWin32ExtErrorToName(dwError),
             LwWin32ExtErrorToDescription(dwError));
@@ -195,10 +197,8 @@ NetSessionParseArguments(
 
                 if (!strncmp(pszArg, "\\\\", sizeof("\\\\")-1))
                 {
-                    dwError = LwMbsToWc16s(pszArg, &pCommandInfo->pwszSessionName);
+                    dwError = LwMbsToWc16s(pszArg, &pCommandInfo->pwszClientname);
                     BAIL_ON_LTNET_ERROR(dwError);
-
-                    pCommandInfo->bEnumerate = FALSE;
 
                     parseState = NET_SESSION_ARG_NAME;
                 }
@@ -273,7 +273,7 @@ NetSessionFreeCommandInfo(
     PNET_SESSION_COMMAND_INFO pCommandInfo
     )
 {
-    LW_SAFE_FREE_MEMORY(pCommandInfo->pwszServerName);
-    LW_SAFE_FREE_MEMORY(pCommandInfo->pwszSessionName);
+    LW_SAFE_FREE_MEMORY(pCommandInfo->pwszServername);
+    LW_SAFE_FREE_MEMORY(pCommandInfo->pwszClientname);
     LW_SAFE_FREE_MEMORY(pCommandInfo);
 }
