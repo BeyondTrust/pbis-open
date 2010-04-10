@@ -123,8 +123,8 @@ LwNetFreeString(
 
 VOID
 LwNetFreeStringArray(
-    PSTR* ppStringArray,
-    DWORD dwCount
+    DWORD dwCount,
+    PSTR * ppStringArray
     );
 
 VOID
@@ -140,7 +140,13 @@ LwNetWC16StringAllocateFromCString(
 
 VOID
 LwNetWC16StringFree(
-    OUT PWSTR* ppszString
+    PWSTR pwszString
+    );
+
+VOID
+LwNetFreeWC16StringArray(
+    DWORD dwCount,
+    PWSTR* ppwszArray
     );
 
 DWORD
@@ -152,6 +158,13 @@ LwNetAllocateSidFromCString(
 BOOLEAN
 LwNetCheckUnsignedInteger(
     PCSTR pszIntegerCandidate
+    );
+
+DWORD
+LwNetAppendStringArray(
+    PDWORD pdwCount,
+    PWSTR** pppwszArray,
+    PWSTR pwszString
     );
 
 #endif /* __LW_NETUTILS_H__ */

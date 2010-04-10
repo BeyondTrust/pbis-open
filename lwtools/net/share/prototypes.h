@@ -47,4 +47,9 @@ NetExecShareDel(
 	NET_SHARE_DEL_INFO_PARAMS ShareDelInfo
     );
 
+DWORD
+NetExecSetInfo(
+    NET_SHARE_ADD_OR_SET_INFO_PARAMS ShareSetInfo
+    );
+
 #endif /* PROTOTYPES_H_ */

@@ -83,32 +83,6 @@ NetShareFreeCommandInfo(
     PNET_SHARE_COMMAND_INFO pCommandInfo
     );
 
-static
-DWORD
-AppendStringArray(
-    PDWORD pdwCount,
-    PWSTR** pppwszArray,
-    PWSTR pwszString
-    )
-{
-    DWORD dwError = 0;
-    PWSTR* ppwszNewArray = NULL;
-
-    dwError = LwReallocMemory(
-        *pppwszArray,
-        OUT_PPVOID(&ppwszNewArray),
-        sizeof(*ppwszNewArray) * (*pdwCount + 1));
-    BAIL_ON_LTNET_ERROR(dwError);
-
-    ppwszNewArray[(*pdwCount)++] = pwszString;
-
-    *pppwszArray = ppwszNewArray;
-
-error:
-
-    return dwError;
-}
-
 
 static
 DWORD
@@ -131,7 +105,7 @@ ParseShareAddOrSetinfoOptionArgs(
             dwError = LwMbsToWc16s(argv[++dwIndex], &pwszArg);
             BAIL_ON_LTNET_ERROR(dwError);
 
-            dwError = AppendStringArray(
+            dwError = LwNetAppendStringArray(
                 &pShareAddOrSetParams->dwAllowUserCount,
                 &pShareAddOrSetParams->ppwszAllowUsers,
                 pwszArg);
@@ -144,7 +118,7 @@ ParseShareAddOrSetinfoOptionArgs(
             dwError = LwMbsToWc16s(argv[++dwIndex], &pwszArg);
             BAIL_ON_LTNET_ERROR(dwError);
 
-            dwError = AppendStringArray(
+            dwError = LwNetAppendStringArray(
                 &pShareAddOrSetParams->dwDenyUserCount,
                 &pShareAddOrSetParams->ppwszDenyUsers,
                 pwszArg);
@@ -564,6 +538,12 @@ NetShare(
             dwError = NetExecShareEnum(pCommandInfo->ShareEnumInfo);
         	BAIL_ON_LTNET_ERROR(dwError);
         	break;
+
+        case NET_SHARE_SETINFO:
+
+            dwError = NetExecSetInfo(pCommandInfo->ShareAddOrSetInfo);
+            BAIL_ON_LTNET_ERROR(dwError);
+            break;
 
         default:
         	break;

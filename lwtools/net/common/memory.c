@@ -125,8 +125,8 @@ LwNetFreeString(
 
 VOID
 LwNetFreeStringArray(
-    PSTR * ppStringArray,
-    DWORD dwCount
+    DWORD dwCount,
+    PSTR * ppStringArray
     )
 {
     DWORD i;
@@ -177,10 +177,29 @@ LwNetWC16StringAllocateFromCString(
 
 VOID
 LwNetWC16StringFree(
-    OUT PWSTR* ppszString
+    PWSTR pwszString
     )
 {
-    LwRtlWC16StringFree(ppszString);
+    LTNET_SAFE_FREE_MEMORY(pwszString);
+}
+
+VOID
+LwNetFreeWC16StringArray(
+    DWORD dwCount,
+    PWSTR* ppwszArray
+    )
+{
+    DWORD dwIndex = 0;
+
+    if (ppwszArray)
+    {
+        for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
+        {
+            LwNetWC16StringFree(ppwszArray[dwIndex]);
+        }
+
+        LTNET_SAFE_FREE_MEMORY(ppwszArray);
+    }
 }
 
 DWORD

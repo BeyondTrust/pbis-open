@@ -121,3 +121,28 @@ error:
 
     return bIsUnsignedInteger;
 }
+
+DWORD
+LwNetAppendStringArray(
+    PDWORD pdwCount,
+    PWSTR** pppwszArray,
+    PWSTR pwszString
+    )
+{
+    DWORD dwError = 0;
+    PWSTR* ppwszNewArray = NULL;
+
+    dwError = LwReallocMemory(
+        *pppwszArray,
+        OUT_PPVOID(&ppwszNewArray),
+        sizeof(*ppwszNewArray) * (*pdwCount + 1));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    ppwszNewArray[(*pdwCount)++] = pwszString;
+
+    *pppwszArray = ppwszNewArray;
+
+error:
+
+    return dwError;
+}

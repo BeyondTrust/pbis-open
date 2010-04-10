@@ -57,9 +57,24 @@ MapNameToSid(
 
 static
 DWORD
+MapSidToName(
+    HANDLE hLsa,
+    PSID pSid,
+    PWSTR* ppwszName
+    );
+
+static
+DWORD
 MapBuiltinNameToSid(
     PSID *ppSid,
     PCWSTR pwszName
+    );
+
+static
+DWORD
+MapBuiltinSidToName(
+    PWSTR *ppwszName,
+    PSID pSid
     );
 
 static
@@ -72,6 +87,18 @@ ConstructSecurityDescriptor(
     BOOLEAN bReadOnly,
     PSECURITY_DESCRIPTOR_RELATIVE* ppRelative,
     PDWORD pdwRelativeSize
+    );
+
+static
+DWORD
+DeconstructSecurityDescriptor(
+    DWORD dwLength,
+    PSECURITY_DESCRIPTOR_RELATIVE pRelative,
+    PDWORD pdwAllowUserCount,
+    PWSTR** pppwszAllowUsers,
+    PDWORD pdwDenyUserCount,
+    PWSTR** pppwszDenyUsers,
+    PBOOLEAN pbReadOnly
     );
 
 
@@ -291,15 +318,15 @@ cleanup:
 
     if (ppszShareName)
     {
-    	LwNetFreeStringArray(ppszShareName, dwTotalShares);
+    	LwNetFreeStringArray(dwTotalShares, ppszShareName);
     }
     if (ppszSharePath)
     {
-    	LwNetFreeStringArray(ppszSharePath, dwTotalShares);
+    	LwNetFreeStringArray(dwTotalShares, ppszSharePath);
     }
     if (ppszShareComment)
     {
-    	LwNetFreeStringArray(ppszShareComment, dwTotalShares);
+    	LwNetFreeStringArray(dwTotalShares, ppszShareComment);
     }
 
     if (pShareInfo)
@@ -329,6 +356,101 @@ NetExecShareDel(
     BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+NetExecSetInfo(
+    NET_SHARE_ADD_OR_SET_INFO_PARAMS ShareSetInfo
+    )
+{
+    static const DWORD dwLevel = 502;
+
+    DWORD dwError = 0;
+    SHARE_INFO_502 newShareInfo = {0};
+    PSHARE_INFO_502 pShareInfo = NULL;
+    DWORD dwParmErr = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDesc = NULL;
+    DWORD dwSecDescSize = 0;
+    DWORD dwAllowUserCount = 0;
+    PWSTR* ppwszAllowUsers = NULL;
+    DWORD dwDenyUserCount = 0;
+    PWSTR* ppwszDenyUsers = NULL;
+    BOOLEAN bReadOnly = FALSE;
+
+    dwError = NetShareGetInfoW(
+            ShareSetInfo.pwszServerName,
+            ShareSetInfo.pwszShareName,
+            dwLevel,
+            (PBYTE*)(&pShareInfo));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    dwError = DeconstructSecurityDescriptor(
+        pShareInfo->shi502_reserved,
+        (PSECURITY_DESCRIPTOR_RELATIVE) pShareInfo->shi502_security_descriptor,
+        &dwAllowUserCount,
+        &ppwszAllowUsers,
+        &dwDenyUserCount,
+        &ppwszDenyUsers,
+        &bReadOnly);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    newShareInfo = *pShareInfo;
+
+    if (ShareSetInfo.pwszShareName)
+    {
+        newShareInfo.shi502_netname = ShareSetInfo.pwszShareName;
+    }
+
+    if (ShareSetInfo.pwszComment)
+    {
+        newShareInfo.shi502_remark = ShareSetInfo.pwszComment;
+    }
+
+    if (ShareSetInfo.pwszPath)
+    {
+        newShareInfo.shi502_path = ShareSetInfo.pwszPath;
+    }
+
+    dwError = ConstructSecurityDescriptor(
+            ShareSetInfo.dwAllowUserCount
+            || ShareSetInfo.bClearAllow ? ShareSetInfo.dwAllowUserCount : dwAllowUserCount,
+            ShareSetInfo.dwAllowUserCount || ShareSetInfo.bClearAllow ? ShareSetInfo.ppwszAllowUsers : ppwszAllowUsers,
+            ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.dwDenyUserCount : dwDenyUserCount,
+            ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.ppwszDenyUsers : ppwszDenyUsers,
+            ShareSetInfo.bReadOnly || ShareSetInfo.bReadWrite ? (ShareSetInfo.bReadOnly && !ShareSetInfo.bReadWrite) : bReadOnly,
+            &pSecDesc,
+            &dwSecDescSize);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    newShareInfo.shi502_type = pShareInfo->shi502_type;
+    newShareInfo.shi502_reserved = dwSecDescSize;
+    newShareInfo.shi502_security_descriptor = (PBYTE) pSecDesc;
+
+    dwError = NetShareSetInfoW(
+            ShareSetInfo.pwszServerName,
+            ShareSetInfo.pwszShareName,
+            dwLevel,
+            (PBYTE)&newShareInfo,
+            &dwParmErr);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+cleanup:
+
+    if (pShareInfo)
+    {
+        LwNetFreeMemory(pShareInfo);
+    }
+
+    LwNetFreeWC16StringArray(dwAllowUserCount, ppwszAllowUsers);
+    LwNetFreeWC16StringArray(dwDenyUserCount, ppwszDenyUsers);
+
+    LTNET_SAFE_FREE_MEMORY(pSecDesc);
 
     return dwError;
 
@@ -392,6 +514,65 @@ error:
 
 static
 DWORD
+MapSidToName(
+    HANDLE hLsa,
+    PSID pSid,
+    PWSTR* ppwszName
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszSid = NULL;
+    LSA_QUERY_LIST QueryList;
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+
+    dwError = LwNtStatusToWin32Error(
+        RtlAllocateCStringFromSid(&pszSid, pSid));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    QueryList.ppszStrings = (PCSTR*) &pszSid;
+
+    dwError = LsaFindObjects(
+        hLsa,
+        NULL,
+        0,
+        LSA_OBJECT_TYPE_UNDEFINED,
+        LSA_QUERY_TYPE_BY_SID,
+        1,
+        QueryList,
+        &ppObjects);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    if (ppObjects[0] == NULL)
+    {
+        dwError = LW_ERROR_NO_SUCH_OBJECT;
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    dwError = LwAllocateWc16sPrintfW(
+            ppwszName,
+            L"%s\\%s",
+            ppObjects[0]->pszNetbiosDomainName,
+            ppObjects[0]->pszSamAccountName);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+cleanup:
+
+    LsaFreeSecurityObjectList(1, ppObjects);
+
+    LTNET_SAFE_FREE_STRING(pszSid);
+
+    return dwError;
+
+error:
+
+    *ppwszName = NULL;
+
+    goto cleanup;
+}
+
+
+static
+DWORD
 MapBuiltinNameToSid(
     PSID *ppSid,
     PCWSTR pwszName
@@ -427,11 +608,57 @@ MapBuiltinNameToSid(
                   RtlDuplicateSid(ppSid, &Sid.sid));
 
 cleanup:
-    LwNetWC16StringFree(&pwszEveryone);
+    LwNetWC16StringFree(pwszEveryone);
 
     return dwError;
 
 error:
+    goto cleanup;
+}
+
+static
+DWORD
+MapBuiltinSidToName(
+    PWSTR *ppwszName,
+    PSID pSid
+    )
+{
+    DWORD dwError = 0;
+    union
+    {
+        SID sid;
+        BYTE buffer[SID_MAX_SIZE];
+    } Sid;
+    ULONG SidSize = sizeof(Sid.buffer);
+    PWSTR pwszEveryone = NULL;
+
+    dwError = LwNtStatusToWin32Error(
+                  RtlCreateWellKnownSid(
+                      WinWorldSid,
+                      NULL,
+                      &Sid.sid,
+                      &SidSize));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    if (RtlEqualSid(&Sid.sid, pSid))
+    {
+        dwError = LwNtStatusToWin32Error(
+                      RtlWC16StringAllocateFromCString(
+                          &pwszEveryone,
+                          "Everyone"));
+        BAIL_ON_LTNET_ERROR(dwError);
+
+    }
+
+    *ppwszName = pwszEveryone;
+
+cleanup:
+
+    return dwError;
+
+error:
+    LwNetWC16StringFree(pwszEveryone);
+
     goto cleanup;
 }
 
@@ -618,6 +845,198 @@ error:
     *pdwRelativeSize = 0;
 
     LTNET_SAFE_FREE_MEMORY(pRelative);
+
+    goto cleanup;
+}
+
+static
+DWORD
+DeconstructSecurityDescriptor(
+    DWORD dwLength,
+    PSECURITY_DESCRIPTOR_RELATIVE pRelative,
+    PDWORD pdwAllowUserCount,
+    PWSTR** pppwszAllowUsers,
+    PDWORD pdwDenyUserCount,
+    PWSTR** pppwszDenyUsers,
+    PBOOLEAN pbReadOnly
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    DWORD dwError = 0;
+    ULONG ulSize = 0;
+    ULONG ulDaclSize = 0;
+    ULONG ulSaclSize = 0;
+    ULONG ulOwnerSize = 0;
+    ULONG ulGroupSize = 0;
+    PSID pOwner = NULL;
+    PSID pGroup = NULL;
+    PACL pSacl = NULL;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pAbsolute = NULL;
+    PACL pDacl = NULL;
+    ULONG ulIndex = 0;
+    PVOID pAce = NULL;
+    PACCESS_ALLOWED_ACE pAllow = NULL;
+    PACCESS_DENIED_ACE pDeny = NULL;
+    DWORD dwAllowUserCount = 0;
+    PWSTR* ppwszAllowUsers = NULL;
+    DWORD dwDenyUserCount = 0;
+    PWSTR* ppwszDenyUsers = NULL;
+    PSID pSid = NULL;
+    PWSTR pwszUser = NULL;
+    HANDLE hLsa = NULL;
+    ACCESS_MASK leastMask = FILE_ALL_ACCESS;
+
+    dwError = LsaOpenServer(&hLsa);
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    status = RtlSelfRelativeToAbsoluteSD(
+        pRelative,
+        pAbsolute,
+        &ulSize,
+        pDacl,
+        &ulDaclSize,
+        pSacl,
+        &ulSaclSize,
+        pOwner,
+        &ulOwnerSize,
+        pGroup,
+        &ulGroupSize);
+    if (status != STATUS_BUFFER_TOO_SMALL)
+    {
+        dwError = LwNtStatusToWin32Error(status);
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    dwError = LwNetAllocateMemory(ulSize, OUT_PPVOID(&pAbsolute));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    if (ulDaclSize)
+    {
+        dwError = LwNetAllocateMemory(ulDaclSize, OUT_PPVOID(&pDacl));
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    if (ulSaclSize)
+    {
+        dwError = LwNetAllocateMemory(ulSaclSize, OUT_PPVOID(&pSacl));
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    if (ulOwnerSize)
+    {
+        dwError = LwNetAllocateMemory(ulOwnerSize, OUT_PPVOID(&pOwner));
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    if (ulGroupSize)
+    {
+        dwError = LwNetAllocateMemory(ulGroupSize, OUT_PPVOID(&pGroup));
+        BAIL_ON_LTNET_ERROR(dwError);
+    }
+
+    dwError = LwNtStatusToWin32Error(
+        RtlSelfRelativeToAbsoluteSD(
+            pRelative,
+            pAbsolute,
+            &ulSize,
+            pDacl,
+            &ulDaclSize,
+            pSacl,
+            &ulSaclSize,
+            pOwner,
+            &ulOwnerSize,
+            pGroup,
+            &ulGroupSize));
+    BAIL_ON_LTNET_ERROR(dwError);
+
+    if (pDacl)
+    {
+        for (ulIndex = 0; ulIndex < RtlGetAclAceCount(pDacl); ulIndex++)
+        {
+            RtlGetAce(pDacl, ulIndex, &pAce);
+
+            switch(((PACE_HEADER) pAce)->AceType)
+            {
+            case ACCESS_ALLOWED_ACE_TYPE:
+                pAllow = pAce;
+                pSid = (PSID) &pAllow->SidStart;
+
+                if ((pAllow->Mask & FILE_GENERIC_READ) == FILE_GENERIC_READ)
+                {
+                    dwError = MapSidToName(hLsa, pSid, &pwszUser);
+                    if (dwError != LW_ERROR_SUCCESS)
+                    {
+                        dwError = MapBuiltinSidToName(&pwszUser, pSid);
+                    }
+                    BAIL_ON_LTNET_ERROR(dwError);
+
+                    dwError = LwNetAppendStringArray(
+                        &dwAllowUserCount,
+                        &ppwszAllowUsers,
+                        pwszUser);
+                    BAIL_ON_LTNET_ERROR(dwError);
+
+                    pwszUser = NULL;
+
+                    leastMask &= pAllow->Mask;
+                }
+                break;
+            case ACCESS_DENIED_ACE_TYPE:
+                pDeny = pAce;
+                pSid = (PSID) &pDeny->SidStart;
+
+                if ((pDeny->Mask & FILE_GENERIC_READ) == FILE_GENERIC_READ)
+                {
+                    dwError = MapSidToName(hLsa, pSid, &pwszUser);
+                    if (dwError != LW_ERROR_SUCCESS)
+                    {
+                        dwError = MapBuiltinSidToName(&pwszUser, pSid);
+                    }
+                    BAIL_ON_LTNET_ERROR(dwError);
+
+                    dwError = LwNetAppendStringArray(
+                        &dwDenyUserCount,
+                        &ppwszDenyUsers,
+                        pwszUser);
+                    BAIL_ON_LTNET_ERROR(dwError);
+
+                    pwszUser = NULL;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    *pppwszAllowUsers = ppwszAllowUsers;
+    *pdwAllowUserCount = dwAllowUserCount;
+    *pppwszDenyUsers = ppwszDenyUsers;
+    *pdwDenyUserCount = dwDenyUserCount;
+    *pbReadOnly = !((leastMask & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE);
+
+cleanup:
+
+    if (hLsa)
+    {
+        LsaCloseServer(hLsa);
+    }
+
+    LTNET_SAFE_FREE_MEMORY(pSacl);
+    LTNET_SAFE_FREE_MEMORY(pOwner);
+    LTNET_SAFE_FREE_MEMORY(pGroup);
+    LTNET_SAFE_FREE_MEMORY(pwszUser);
+    LTNET_SAFE_FREE_MEMORY(pDacl);
+    LTNET_SAFE_FREE_MEMORY(pAbsolute);
+
+    return dwError;
+
+error:
+
+    *pppwszAllowUsers = NULL;
+    *pdwAllowUserCount = 0;
+    *pppwszDenyUsers = NULL;
+    *pdwDenyUserCount = 0;
 
     goto cleanup;
 }
