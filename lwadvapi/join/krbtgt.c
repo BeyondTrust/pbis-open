@@ -68,6 +68,7 @@ LwKrb5GetTgt(
     PSTR pszUPN = NULL;
     PSTR pszRealmIdx = NULL;
     BOOLEAN bUnlockExistingClientLock = FALSE;
+    PWSTR pwszPass = NULL;
 
     dwError = LwAllocateString(
                     pszUserPrincipal,
@@ -104,6 +105,13 @@ LwKrb5GetTgt(
         dwError = LwAllocateString(pszPassword, &pszPass);
         BAIL_ON_LW_ERROR(dwError);
     }
+
+    // The converted string is not used, but the error code is.
+    // krb5_get_init_creds_will return EINVAL if it cannot convert the name
+    // from UTF8 to UCS2. By pretesting the string first, we know it is
+    // convertable.
+    dwError = LwMbsToWc16s(pszPass, &pwszPass);
+    BAIL_ON_LW_ERROR(dwError);
 
     ret = krb5_get_init_creds_password(ctx, &creds, client, pszPass, NULL,
                                        NULL, 0, NULL, &opts);
@@ -162,6 +170,15 @@ cleanup:
     }
 
     LW_SAFE_FREE_STRING(pszUPN);
+    if (pwszPass)
+    {
+        size_t len;
+        if (!LwWc16sLen(pwszPass, &len))
+        {
+            memset(pwszPass, 0, len * sizeof(WCHAR));
+        }
+        LW_SAFE_FREE_MEMORY(pwszPass);
+    }
     LW_SAFE_CLEAR_FREE_STRING(pszPass);
 
     return dwError;
