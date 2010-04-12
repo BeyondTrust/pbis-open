@@ -76,7 +76,6 @@ function component_populate
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
 
     mkdir -m 0755 -p ${POPULATE_ROOT_DIR}/etc/likewise
-    mkdir -m 0755 -p ${POPULATE_ROOT_DIR}/etc/likewise/eventlog
 
     # Handle init scripts
     local script=eventlogd
