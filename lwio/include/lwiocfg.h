@@ -42,6 +42,7 @@ typedef struct __LWIO_CONFIG_REG LWIO_CONFIG_REG, *PLWIO_CONFIG_REG;
 typedef enum
 {
     LwIoTypeString,
+    LwIoTypeMultiString,
     LwIoTypeDword,
     LwIoTypeBoolean,
     LwIoTypeChar,
@@ -86,6 +87,19 @@ LwIoReadConfigString(
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
     PSTR    *ppszValue
+    );
+
+NTSTATUS
+LwIoReadConfigMultiString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    **pppszValue
+    );
+
+VOID
+LwIoMultiStringFree(
+    PSTR *ppszValue
     );
 
 NTSTATUS

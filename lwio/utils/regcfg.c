@@ -99,6 +99,14 @@ LwIoProcessConfig(
                             pConfig[dwEntry].pValue);
                 break;
 
+            case LwIoTypeMultiString:
+                ntStatus = LwIoReadConfigMultiString(
+                            pReg,
+                            pConfig[dwEntry].pszName,
+                            pConfig[dwEntry].bUsePolicy,
+                            pConfig[dwEntry].pValue);
+                break;
+
             case LwIoTypeDword:
                 ntStatus = LwIoReadConfigDword(
                             pReg,
@@ -293,6 +301,81 @@ cleanup:
 
 error:
     goto cleanup;
+}
+
+NTSTATUS
+LwIoReadConfigMultiString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    **pppszValue
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    BOOLEAN bGotValue = FALSE;
+    BYTE szValue[MAX_VALUE_LENGTH];
+    PSTR *ppszValue = NULL;
+    DWORD dwType = 0;
+    DWORD dwSize = 0;
+
+    if (bUsePolicy)
+    {
+        dwSize = sizeof(szValue);
+        memset(szValue, 0, dwSize);
+        ntStatus = NtRegGetValueA(
+                    pReg->hConnection,
+                    pReg->hKey,
+                    pReg->pszPolicyKey,
+                    pszName,
+                    RRF_RT_REG_MULTI_SZ,
+                    &dwType,
+                    szValue,
+                    &dwSize);
+        if (!ntStatus)
+        {
+            bGotValue = TRUE;
+        }
+    }
+
+    if (!bGotValue)
+    {
+        dwSize = sizeof(szValue);
+        memset(szValue, 0, dwSize);
+        ntStatus = NtRegGetValueA(
+                    pReg->hConnection,
+                    pReg->hKey,
+                    pReg->pszConfigKey,
+                    pszName,
+                    RRF_RT_REG_MULTI_SZ,
+                    &dwType,
+                    szValue,
+                    &dwSize);
+        if (!ntStatus)
+        {
+            bGotValue = TRUE;
+        }
+    }
+
+    if (bGotValue)
+    {
+        ntStatus = NtRegByteArrayToMultiStrsA(szValue, dwSize, &ppszValue);
+        BAIL_ON_NT_STATUS(ntStatus);
+        *pppszValue = ppszValue;
+    }
+
+cleanup:
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+VOID
+LwIoMultiStringFree(
+    PSTR *ppszStrings
+    )
+{
+    RegFreeMultiStrsA(ppszStrings);
 }
 
 NTSTATUS
