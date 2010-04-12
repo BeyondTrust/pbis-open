@@ -113,5 +113,5 @@ function component_populate
 
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
-    
+    libtool_rewrite_populate
 }

@@ -159,5 +159,5 @@ function component_populate
         ;;
     esac
 
-    
+    libtool_rewrite_populate
 }

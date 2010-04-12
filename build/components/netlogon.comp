@@ -133,5 +133,5 @@ function component_populate
 	${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}/likewise-krb5-ad.conf
 
 
-    
+    libtool_rewrite_populate
 }
