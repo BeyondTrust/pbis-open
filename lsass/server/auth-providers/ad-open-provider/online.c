@@ -186,7 +186,10 @@ AD_OnlineInitializeDomainTrustsInfo(
             TRUE,
             pDomain->pszForestName,
             NULL);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (IsSetFlag(pDomain->dwTrustFlags, NETR_TRUST_FLAG_PRIMARY))
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
 
         pPos = pPos->pNext;
     }
