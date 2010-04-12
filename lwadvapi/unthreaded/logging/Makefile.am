@@ -8,7 +8,7 @@ liblwadvapi_logging_la_LDFLAGS = \
 	$(LWBASE_LDFLAGS)
 
 liblwadvapi_logging_la_LIBADD = \
-	$(LWBASE_LIBS)
+	$(LWBASE_NOTHR_LIBS)
 
 liblwadvapi_logging_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
