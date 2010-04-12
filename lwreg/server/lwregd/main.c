@@ -232,6 +232,11 @@ RegSrvParseArgs(
                 {
                     parseMode = PARSE_MODE_LOGLEVEL;
                 }
+                else if (strcmp(pArg, "--syslog") == 0)
+                {
+                    gServerInfo.logTarget = REG_LOG_TARGET_SYSLOG;
+                    bLogTargetSet = TRUE;
+                }
                 else
                 {
                     REG_LOG_ERROR("Unrecognized command line option [%s]",pArg);
@@ -314,7 +319,8 @@ RegSrvParseArgs(
     }
     else
     {
-        if (pRegServerInfo->logTarget != REG_LOG_TARGET_FILE)
+        if (pRegServerInfo->logTarget != REG_LOG_TARGET_FILE &&
+            pRegServerInfo->logTarget != REG_LOG_TARGET_SYSLOG)
         {
             pRegServerInfo->logTarget = REG_LOG_TARGET_CONSOLE;
         }
@@ -358,6 +364,7 @@ ShowUsage(
 {
     printf("Usage: %s [--start-as-daemon]\n"
            "          [--logfile logFilePath]\n"
+           "          [--syslog]\n"
            "          [--loglevel {error, warning, info, verbose, trace}]\n",
            pszProgramName);
 }
