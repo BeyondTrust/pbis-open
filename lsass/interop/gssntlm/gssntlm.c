@@ -615,7 +615,7 @@ static GSS_MECH_CONFIG gNtlmMech =
     NULL, //ntlm_gss_unwrap_aead,
     ntlm_gss_wrap_iov,
     ntlm_gss_unwrap_iov,
-    NULL, //ntlm_gss_wrap_iov_length,
+    ntlm_gss_wrap_iov_length,
     NULL, //ntlm_gss_complete_auth_token,
     NULL, //ntlm_gss_inquire_context2
     .gss_get_name_attribute = ntlm_gss_get_name_attribute
@@ -1630,6 +1630,80 @@ error:
     }
 
     nEncrypted = 0;
+
+    if (MajorStatus == GSS_S_COMPLETE)
+    {
+        MajorStatus = GSS_S_FAILURE;
+    }
+    goto cleanup;
+}
+
+OM_uint32
+ntlm_gss_wrap_iov_length(
+    OM_uint32* pMinorStatus,
+    gss_ctx_id_t GssCtxtHandle,
+    INT nEncrypt,
+    gss_qop_t Qop,
+    PINT pEncrypted,
+    gss_iov_buffer_desc* pBuffers,
+    int cBuffers
+    )
+{
+    OM_uint32 MajorStatus = GSS_S_COMPLETE;
+    OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
+    NTLM_CONTEXT_HANDLE ContextHandle = (NTLM_CONTEXT_HANDLE)GssCtxtHandle;
+    SecPkgContext_Sizes Sizes = {0};
+    DWORD dwIndex = 0;
+    BOOLEAN bFoundHeader = FALSE;
+
+    if (cBuffers < 2)
+    {
+        MinorStatus = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(MinorStatus);
+    }
+
+    if (Qop != GSS_C_QOP_DEFAULT)
+    {
+        MajorStatus = GSS_S_BAD_QOP;
+        BAIL_ON_LSA_ERROR(MajorStatus);
+    }
+
+    // Since every encrypted message gets a signature, we need to get the size
+    MinorStatus = NtlmClientQueryContextAttributes(
+        &ContextHandle,
+        SECPKG_ATTR_SIZES,
+        &Sizes
+        );
+    BAIL_ON_LSA_ERROR(MinorStatus);
+
+    for (dwIndex = 0 ; dwIndex < cBuffers ; dwIndex++ )
+    {
+        switch (GSS_IOV_BUFFER_TYPE(pBuffers[dwIndex].type))
+        {
+            case GSS_IOV_BUFFER_TYPE_HEADER:
+                pBuffers[dwIndex].buffer.length = Sizes.cbMaxSignature;
+                pBuffers[dwIndex].buffer.value = NULL;
+                bFoundHeader = TRUE;
+                break;
+            case GSS_IOV_BUFFER_TYPE_PADDING:
+                pBuffers[dwIndex].buffer.length = 0;
+                pBuffers[dwIndex].buffer.value = NULL;
+                break;
+        }
+    }
+
+    if (!bFoundHeader)
+    {
+        MinorStatus = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(MinorStatus);
+    }
+
+cleanup:
+
+    *pMinorStatus = MinorStatus;
+    return MajorStatus;
+
+error:
 
     if (MajorStatus == GSS_S_COMPLETE)
     {

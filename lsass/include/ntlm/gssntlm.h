@@ -192,6 +192,17 @@ ntlm_gss_wrap_iov(
     );
 
 OM_uint32
+ntlm_gss_wrap_iov_length(
+    OM_uint32* pMinorStatus,
+    gss_ctx_id_t GssCtxtHandle,
+    INT nEncrypt,
+    gss_qop_t Qop,
+    PINT pEncrypted,
+    gss_iov_buffer_desc* pBuffers,
+    int cBuffers
+    );
+
+OM_uint32
 ntlm_gss_unwrap(
     OM_uint32* pMinorStatus,
     gss_ctx_id_t GssCtxtHandle,
