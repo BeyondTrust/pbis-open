@@ -64,34 +64,26 @@ function component_populate
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
-    if [ -z "${IS_COMPAT}" -a -z "${IS_FOREIGN}" ]
-    then
-        mkdir -p ${POPULATE_ROOT_DIR}
-        rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
-    else
-        mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
-        rsync -a ${COMP_PREFIX_DIR}/${_lib}/  ${POPULATE_PREFIX_DIR}/${_lib}/
+    mkdir -p ${POPULATE_ROOT_DIR}
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    # Handle init scripts
+    local script=lwsmd
+    x_mkinit \
+	"${BUILD_ROOT}/src/linux/config/${script}" \
+	${script} \
+	01 01 \
+	likewise.lwsmd 17 09
+
+    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwsmd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
     fi
 
-    if [ -z "${IS_COMPAT}" -a -z "${IS_FOREIGN}" ]; then
-        # Handle init scripts
-	local script=lwsmd
-	x_mkinit \
-            "${BUILD_ROOT}/src/linux/config/${script}" \
-            ${script} \
-            01 01 \
-            likewise.lwsmd 17 09
-	
-	if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwsmd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-	fi
-	
-	if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwsmd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/lw-local-user-migrate.sh.in ${POPULATE_PREFIX_DIR}/bin/lw-local-user-migrate.sh
-	fi
+    if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwsmd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/lw-local-user-migrate.sh.in ${POPULATE_PREFIX_DIR}/bin/lw-local-user-migrate.sh
     fi
 
     libtool_rewrite_populate

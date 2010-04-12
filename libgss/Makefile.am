@@ -1,5 +1,3 @@
-compat_subdirs = \
+SUBDIRS = \
             include \
 	    schannel
-
-SUBDIRS = $(compat_subdirs)

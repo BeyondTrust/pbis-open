@@ -1,7 +1,5 @@
 #!/bin/bash -c "exit 1"
 
-#COMP_NEED_COMPAT=0
-
 COMP_DEPENDENCIES="autoconf automake libtool krb5 apache-${APACHE_COMP_VERSION}"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/mod_auth_kerb
 
@@ -92,13 +90,8 @@ function component_populate
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
-    if [ -z "${IS_COMPAT}" ]; then
-	mkdir -p ${POPULATE_PREFIX_DIR}
-	rsync -a --exclude  "*.la" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
-    else
-	mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
-	rsync -a --exclude  "*.la" ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
-    fi
+    mkdir -p ${POPULATE_PREFIX_DIR}
+    rsync -a --exclude  "*.la" ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
 
     libtool_rewrite_populate
 }

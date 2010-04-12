@@ -106,24 +106,22 @@ function component_populate
     
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
 
-    if [ -z "${IS_COMPAT}" ]; then
-        # Handle init scripts
-        local script=lwiod
-        x_mkinit \
-            "${BUILD_ROOT}/src/linux/config/${script}" \
-            ${script} \
-            01 01 \
-            likewise.lwiod 20 09
+    # Handle init scripts
+    local script=lwiod
+    x_mkinit \
+	"${BUILD_ROOT}/src/linux/config/${script}" \
+	${script} \
+	01 01 \
+	likewise.lwiod 20 09
 
-        if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwiod.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-        fi
+    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwiod.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+    fi
 
-        if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwiod.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
-        fi
+    if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwiod.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
     fi
 
     libtool_rewrite_populate

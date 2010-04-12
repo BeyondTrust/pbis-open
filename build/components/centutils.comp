@@ -37,16 +37,11 @@ function _setup_build_env
 function component_configure
 {
     local enable_debug=""
-    local enable_compat=""
 
     _setup_build_env
 
     if [ -n "${BUILD_DEBUG}" ]; then
        enable_debug="--enable-debug"
-    fi
-
-    if [ -n "${IS_COMPAT}" ]; then
-        enable_compat="--enable-compat"
     fi
 
     "${COMP_SOURCES}/configure" \
@@ -55,7 +50,6 @@ function component_configure
         --sysconfdir="${BUILD_SYSCONFDIR}"       \
         --localstatedir="${BUILD_LOCALSTATEDIR}" \
         $enable_debug                            \
-        $enable_compat                           \
         ${DEPENDENCY_TRACKING}                   \
 	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS" \
 	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"

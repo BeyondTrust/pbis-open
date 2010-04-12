@@ -85,11 +85,7 @@ function component_build
 {
     _setup_build_env
 
-    if [ -z ${IS_COMPAT} ]; then
-        ${MAKE} ${_mflags} all
-    else
-        ${MAKE} ${_mflags} compat
-    fi
+    ${MAKE} ${_mflags} all
 }
 
 function _sed_to_dir
@@ -119,9 +115,7 @@ function component_stage
 {
     _setup_build_env
 
-    if [ -z "${IS_COMPAT}" ]; then
-       ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
-    fi
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
 
     libtool_rewrite_staging
 }
@@ -134,20 +128,7 @@ function component_populate
 
     mkdir -p ${POPULATE_PREFIX_DIR}
 
-    if [ -z "${IS_COMPAT}" ]; then
-	rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
-    else
-	mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
-	rsync -a ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
-	rsync -a ${COMP_ROOT_DIR}/${_lib}/ ${POPULATE_ROOT_DIR}/${_lib}/
-    fi
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
     libtool_rewrite_populate
 }
-
-# function component_strip
-# {
-#     # Strip binaries
-#     x_strip ${STAGING_PREFIX_DIR}/sbin/*
-#     x_strip ${STAGING_PREFIX_DIR}/lib/*.so*
-# }

@@ -60,14 +60,8 @@ function component_populate
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
-    if [ -z "${IS_COMPAT}" -a -z "${IS_FOREIGN}" ]
-    then
-        mkdir -p ${POPULATE_ROOT_DIR}
-        rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
-    else
-        mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
-        rsync -a ${COMP_PREFIX_DIR}/${_lib}/  ${POPULATE_PREFIX_DIR}/${_lib}/
-    fi
+    mkdir -p ${POPULATE_ROOT_DIR}
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
     libtool_rewrite_populate
 }

@@ -29,7 +29,6 @@ function _setup_build_env
 function component_configure
 {
     local enable_debug=""
-    local enable_compat=""
 
     _setup_build_env
 
@@ -42,7 +41,6 @@ function component_configure
         --sysconfdir=${BUILD_SYSCONFDIR}             \
         --localstatedir=${BUILD_LOCALSTATEDIR}       \
         $enable_debug                                \
-        $enable_compat                               \
         ${DEPENDENCY_TRACKING}                       \
 	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS" \
 	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"
@@ -74,24 +72,22 @@ function component_populate
 
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
 
-    if [ -z "${IS_COMPAT}" ]; then
-        # Handle init scripts
-        local script=lwmgmtd
-        x_mkinit \
-            "${BUILD_ROOT}/src/linux/config/${script}" \
-            ${script} \
-            01 01 \
-            likewise.lwmgmtd 20 09
+    # Handle init scripts
+    local script=lwmgmtd
+    x_mkinit \
+	"${BUILD_ROOT}/src/linux/config/${script}" \
+	${script} \
+	01 01 \
+	likewise.lwmgmtd 20 09
 
-        if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwmgmtd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
-        fi
+    if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwmgmtd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+    fi
 
-        if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
-            mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
-            x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwmgmtd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
-        fi
+    if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.lwmgmtd.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
     fi
 
     libtool_rewrite_populate
