@@ -46,6 +46,7 @@ static SM_BOOTSTRAP_SERVICE gRegistryService =
     .ppszArgs =
     {
         SBINDIR "/lwregd",
+        "--syslog",
         NULL
     }
 };
