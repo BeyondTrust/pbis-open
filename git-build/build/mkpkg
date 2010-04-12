@@ -43,6 +43,7 @@ function _make_deb
     local fullPath=""
     local file=""
 
+    set_compiler_env
     _setup_pkg_env "$1" "deb"
 
     mkdir -p "${PKG_PACKAGE_DIR}/debian"
@@ -59,6 +60,7 @@ function _make_deb
               sed -e "s#__PKG_NAME#likewise-open-${PKG_NAME}#g" \
 	      -e "s#__PKG_VERSION#${PKG_VERSION}#g" \
               -e "s#__PKG_DATE#`date -R`#g" \
+              -e "s#__LIB#${_lib}#g" \
 	    > "${PKG_PACKAGE_DIR}/debian/`basename $file`"
     done
 
