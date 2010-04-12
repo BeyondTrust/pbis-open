@@ -94,7 +94,7 @@
                              ORDER BY EventRecordId ASC  \
                              LIMIT %ld OFFSET %ld"
 
-#define DB_QUERY_COUNT_ALL  "SELECT COUNT(EventRecordId)  \
+#define DB_QUERY_COUNT_ALL  "SELECT COUNT(*)  \
                              FROM     lwievents"
 
 #define DB_QUERY_COUNT      "SELECT COUNT(EventRecordId)  \
