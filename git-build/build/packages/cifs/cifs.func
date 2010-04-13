@@ -16,7 +16,7 @@ esac
 
 PKG="cifs"
 COMPONENTS="krb5 openldap libcrypto lwbase ${_UUID} ${_ICONV} \
-            lwmsg lwadvapi lwrpcrt centutils \
+            lwmsg lwadvapi centutils \
             libkeytab libgss sqlite pstore lsass lwdns \
             domainjoin eventlog lwio lwreg lwsm netlogon dcerpc librpc \
             lwnetapi lwtools srvsvc"
