@@ -879,9 +879,12 @@ AC_CHECK_MEMBERS([ucontext_t.uc_mcontext,
 #endif
 ])
 
+if test x"$ENABLE_COMPAT" = x"false"; then
 AC_CHECK_HEADER([reg/reg.h],,[AC_MSG_ERROR([Could not find lwreg headers])],
 [[#include <stdarg.h>
 ]])
+fi
+
 AC_SUBST(LWREG_INCLUDES)
 AC_SUBST(LWREG_LDFLAGS)
 AC_SUBST(LWREG_LIBS)

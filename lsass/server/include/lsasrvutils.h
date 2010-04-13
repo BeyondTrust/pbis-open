@@ -50,6 +50,8 @@
 #ifndef __LSASRVUTILS_H__
 #define __LSASRVUTILS_H__
 
+#include <reg/lwreg.h>
+
 #define LOGIN_LOGOFF_EVENT_CATEGORY "Login/Logoff"
 #define PASSWORD_EVENT_CATEGORY     "Password"
 #define KERBEROS_EVENT_CATEGORY     "Kerberos"

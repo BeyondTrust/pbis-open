@@ -53,7 +53,6 @@
 #include <lw/ntstatus.h>
 #include <lw/winerror.h>
 #include <lw/security-types.h>
-#include <reg/lwreg.h>
 
 #ifndef LW_ENDIAN_SWAP16
 
