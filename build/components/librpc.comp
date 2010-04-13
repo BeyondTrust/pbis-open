@@ -5,7 +5,7 @@
 #
 
 COMP_INCREMENTAL=1
-COMP_DEPENDENCIES="automake autoconf libtool moonunit dcerpc openldap krb5 pstore netlogon libkeytab lwio lwbase lwadvapi"
+COMP_DEPENDENCIES="automake autoconf libtool moonunit dcerpc openldap krb5 pstore netlogon lwio lwbase lwadvapi"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/librpc
 
 function component_bootstrap
