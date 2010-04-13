@@ -75,7 +75,7 @@ NetrSrvJoinDomain2(
     LWMsgDataContext *pDataCtx = NULL;
     size_t sInputBlobSize = 0;
     PVOID pInputBlob = NULL;
-    size_t sOutputBlobSize = 0;
+    DWORD dwOutputBlobSize = 0;
     PVOID pOutputBlob = NULL;
 
     dwError = WkssSrvInitAuthInfo(hBinding,
@@ -147,7 +147,7 @@ NetrSrvJoinDomain2(
                                       LSA_AD_IO_JOINDOMAIN,
                                       sInputBlobSize,
                                       pInputBlob,
-                                      &sOutputBlobSize,
+                                      &dwOutputBlobSize,
                                       &pOutputBlob);
     BAIL_ON_LSA_ERROR(dwError);
 
