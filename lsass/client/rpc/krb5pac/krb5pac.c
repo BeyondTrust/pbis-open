@@ -217,7 +217,7 @@ DecodePacLogonInfo(
     idl_es_set_attrs(decodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
-    PAC_LOGON_INFO_Decode((handle_t)decodingHandle, &pLogonInfo);
+    PAC_LOGON_INFO_Decode(decodingHandle, &pLogonInfo);
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&decodingHandle, &status);
@@ -270,7 +270,7 @@ EncodePacLogonInfo(
     idl_es_set_attrs(decodingHandle, IDL_ES_MIDL_COMPAT, &status);
     BAIL_ON_ERR_STATUS(status);
 
-    PAC_LOGON_INFO_Encode((handle_t)decodingHandle, pLogonInfo);
+    PAC_LOGON_INFO_Encode(decodingHandle, pLogonInfo);
     BAIL_ON_ERR_STATUS(status);
 
     idl_es_handle_free(&decodingHandle, &status);

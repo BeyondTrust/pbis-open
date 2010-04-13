@@ -35,5 +35,5 @@ include_HEADERS = krb5pac_h.h
 CLEANFILES = krb5pac_h.h krb5pac_cstub.c krb5pac_sstub.c
 
 krb5pac_h.h krb5pac_cstub.c: $(idl_srcdir)/krb5pac.idl
-	$(IDL) $(IDLFLAGS) -keep c_source -header krb5pac_h.h -I$(idl_srcdir) \
-		$(DCEIDL_PASS_INCLUDES) $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header krb5pac_h.h \
+                -I$(idl_srcdir) -I$(srcdir) $(DCEIDL_PASS_INCLUDES) $<
