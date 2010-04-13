@@ -71,7 +71,7 @@ DsrSrvDuplicateSid(
 NTSTATUS
 DsrSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pIn
     );
 
 

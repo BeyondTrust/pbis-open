@@ -355,81 +355,81 @@ SamrSrvQueryDomainInfo(
                               &dwEntriesNum);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&pInfo,
-                                   sizeof(*pInfo));
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&pInfo),
+                                     sizeof(*pInfo));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     switch (level) {
     case 1:
         ntStatus = SamrSrvFillDomainInfo1(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 2:
         ntStatus = SamrSrvFillDomainInfo2(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 3:
         ntStatus = SamrSrvFillDomainInfo3(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 4:
         ntStatus = SamrSrvFillDomainInfo4(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 5:
         ntStatus = SamrSrvFillDomainInfo5(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 6:
         ntStatus = SamrSrvFillDomainInfo6(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 7:
         ntStatus = SamrSrvFillDomainInfo7(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 8:
         ntStatus = SamrSrvFillDomainInfo8(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 9:
         ntStatus = SamrSrvFillDomainInfo9(pDomCtx,
-                                        pEntry,
-                                        pInfo);
+                                          pEntry,
+                                          pInfo);
         break;
 
     case 11:
         ntStatus = SamrSrvFillDomainInfo11(pDomCtx,
-                                         pEntry,
-                                         pInfo);
+                                           pEntry,
+                                           pInfo);
         break;
 
     case 12:
         ntStatus = SamrSrvFillDomainInfo12(pDomCtx,
-                                         pEntry,
-                                         pInfo);
+                                           pEntry,
+                                           pInfo);
         break;
 
     case 13:
         ntStatus = SamrSrvFillDomainInfo13(pDomCtx,
-                                         pEntry,
-                                         pInfo);
+                                           pEntry,
+                                           pInfo);
         break;
 
     default:
@@ -903,7 +903,7 @@ SamrSrvFillDomainInfo8(
     BAIL_ON_LSA_ERROR(dwError);
 
     pInfo8 = &pInfo->info8;
-    pInfo8->domain_create_time = (NtTime)llCreatedTime;
+    pInfo8->domain_create_time = llCreatedTime;
 
 cleanup:
     return ntStatus;
@@ -1059,7 +1059,7 @@ SamrSrvFillDomainInfo13(
 
     pInfo13 = &pInfo->info13;
 
-    pInfo13->domain_create_time = (NtTime)llCreatedTime;
+    pInfo13->domain_create_time = llCreatedTime;
 
 cleanup:
     return ntStatus;

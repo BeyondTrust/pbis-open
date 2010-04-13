@@ -115,7 +115,7 @@ NTSTATUS _samr_Function04(
 NTSTATUS __SamrLookupDomain(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ CONNECT_HANDLE hConn,
-    /* [in] */ UnicodeString *domain_name,
+    /* [in] */ UNICODE_STRING *domain_name,
     /* [out] */ SID **sid
     )
 {
@@ -134,7 +134,7 @@ NTSTATUS __SamrEnumDomains(
     /* [in] */ CONNECT_HANDLE hConn,
     /* [in, out] */ UINT32 *resume,
     /* [in] */ UINT32 size,
-    /* [out] */ EntryArray **domains,
+    /* [out] */ ENTRY_ARRAY **domains,
     /* [out] */ UINT32 *num_entries
     )
 {
@@ -216,7 +216,7 @@ NTSTATUS _samr_Function0b(
 NTSTATUS __SamrCreateUser(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ UnicodeString *account_name,
+    /* [in] */ UNICODE_STRING *account_name,
     /* [in] */ UINT32 access_mask,
     /* [out] */ ACCOUNT_HANDLE *hUser,
     /* [out] */ UINT32 *rid
@@ -240,7 +240,7 @@ NTSTATUS __SamrEnumDomainUsers(
     /* [in, out] */ UINT32 *resume,
     /* [in] */ UINT32 account_flags,
     /* [in] */ UINT32 max_size,
-    /* [out] */ RidNameArray **names,
+    /* [out] */ RID_NAME_ARRAY **names,
     /* [out] */ UINT32 *num_entries
     )
 {
@@ -260,7 +260,7 @@ NTSTATUS __SamrEnumDomainUsers(
 NTSTATUS __SamrCreateDomAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ UnicodeString *alias_name,
+    /* [in] */ UNICODE_STRING *alias_name,
     /* [in] */ UINT32 access_mask,
     /* [out] */ ACCOUNT_HANDLE *hAlias,
     /* [out] */ UINT32 *rid
@@ -283,7 +283,7 @@ NTSTATUS __SamrEnumDomainAliases(
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in, out] */ UINT32 *resume,
     /* [in] */ UINT32 account_flags,
-    /* [out] */ RidNameArray **names,
+    /* [out] */ RID_NAME_ARRAY **names,
     /* [out] */ UINT32 *num_entries
     )
 {
@@ -302,8 +302,8 @@ NTSTATUS __SamrEnumDomainAliases(
 NTSTATUS __SamrGetAliasMembership(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ SidArray *sids,
-    /* [out] */ Ids *rids
+    /* [in] */ SID_ARRAY *sids,
+    /* [out] */ IDS *rids
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -320,9 +320,9 @@ NTSTATUS __SamrLookupNames(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 num_names,
-    /* [in] */ UnicodeString *names,
-    /* [out] */ Ids *ids,
-    /* [out] */ Ids *types
+    /* [in] */ UNICODE_STRING *names,
+    /* [out] */ IDS *ids,
+    /* [out] */ IDS *types
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -342,8 +342,8 @@ NTSTATUS __SamrLookupRids(
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 num_rids,
     /* [in] */ UINT32 *rids,
-    /* [out] */ UnicodeStringArray *names,
-    /* [out] */ Ids *types
+    /* [out] */ UNICODE_STRING_ARRAY *names,
+    /* [out] */ IDS *types
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -531,7 +531,7 @@ NTSTATUS __SamrDeleteAliasMember(
 NTSTATUS __SamrGetMembersInAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
-    /* [out] */ SidArray *sids
+    /* [out] */ SID_ARRAY *sids
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -623,7 +623,7 @@ NTSTATUS _samr_Function26(
 NTSTATUS __SamrGetUserGroups(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
-    /* [out] */ RidWithAttributeArray **rids
+    /* [out] */ RID_WITH_ATTRIBUTE_ARRAY **rids
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -758,7 +758,7 @@ NTSTATUS _samr_Function31(
 NTSTATUS __SamrCreateUser2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ UnicodeStringEx *account_name,
+    /* [in] */ UNICODE_STRING *account_name,
     /* [in] */ UINT32 account_flags,
     /* [in] */ UINT32 access_mask,
     /* [out] */ ACCOUNT_HANDLE *hUser,
@@ -818,8 +818,8 @@ NTSTATUS _samr_Function36(
 
 NTSTATUS __SamrChangePasswordUser2(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UnicodeString *server,
-    /* [in] */ UnicodeString *account_name,
+    /* [in] */ UNICODE_STRING *server,
+    /* [in] */ UNICODE_STRING *account_name,
     /* [in] */ CryptPassword *nt_password,
     /* [in] */ HashPassword *nt_verifier,
     /* [in] */ UINT8 lm_change,

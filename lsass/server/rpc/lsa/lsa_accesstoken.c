@@ -60,7 +60,7 @@ LsaSrvInitAuthInfo(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
     rpc_transport_info_handle_t hTransportInfo = NULL;
     DWORD dwProtSeq = rpc_c_invalid_protseq_id;
 

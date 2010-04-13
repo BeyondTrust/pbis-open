@@ -57,14 +57,11 @@
 #include <lw/base.h>
 #include <lwsid.h>
 #include <lwtime.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/rid.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/samrdefs.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>
 #include <lwkrb5.h>
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/samr.h>
 
 #include <lsa/lsa.h>
 #include "lwmem.h"

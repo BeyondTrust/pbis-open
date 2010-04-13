@@ -74,7 +74,7 @@ typedef struct lsa_policy_context
     DWORD                dwSessionKeyLen;
     DWORD                dwAccessGranted;
 
-    handle_t             hSamrBinding;
+    SAMR_BINDING         hSamrBinding;
     CONNECT_HANDLE       hConn;
     DOMAIN_HANDLE        hBuiltinDomain;
     DOMAIN_HANDLE        hLocalDomain;

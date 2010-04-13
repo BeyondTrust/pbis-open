@@ -53,7 +53,7 @@ SamrSrvEnumDomains(
     IN  CONNECT_HANDLE  hConn,
     IN OUT PDWORD       pdwResume,
     IN  DWORD           dwMaxSize,
-    OUT EntryArray    **ppDomains,
+    OUT ENTRY_ARRAY   **ppDomains,
     OUT PDWORD          pdwNumEntries
     )
 {
@@ -78,8 +78,8 @@ SamrSrvEnumDomains(
     DWORD i = 0;
     DWORD dwResume = 0;
     DWORD dwCount = 0;
-    EntryArray *pDomains = NULL;
-    Entry *pDomain = NULL;
+    ENTRY_ARRAY *pDomains = NULL;
+    ENTRY *pDomain = NULL;
 
     PWSTR wszAttributes[] = {
         wszAttrCommonName,
@@ -137,8 +137,8 @@ SamrSrvEnumDomains(
                               &dwEntriesNum);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&pDomains,
-                                     sizeof(EntryArray));
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&pDomains),
+                                     sizeof(*pDomains));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     i = (*pdwResume);
@@ -149,7 +149,7 @@ SamrSrvEnumDomains(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    dwSize += sizeof(pDomains->count);
+    dwSize += sizeof(pDomains->dwCount);
     for (; dwSize < dwMaxSize && i < dwEntriesNum; i++)
     {
         pEntry = &(pEntries[i]);
@@ -183,11 +183,11 @@ SamrSrvEnumDomains(
     dwResume = (*pdwResume) + dwCount;
 
     ntStatus = SamrSrvAllocateMemory(
-                          (void**)&pDomains->entries,
-                          sizeof(pDomains->entries[0]) * dwCount);
+                          (void**)&pDomains->pEntries,
+                          sizeof(pDomains->pEntries[0]) * dwCount);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    pDomains->count = dwCount;
+    pDomains->dwCount = dwCount;
 
     for (i = (*pdwResume); i < dwResume; i++)
     {
@@ -202,11 +202,11 @@ SamrSrvEnumDomains(
 
         if (pAttrVal->Type == DIRECTORY_ATTR_TYPE_UNICODE_STRING)
         {
-            pDomain = &(pDomains->entries[i - (*pdwResume)]);
+            pDomain = &(pDomains->pEntries[i - (*pdwResume)]);
 
-            pDomain->idx = i;
+            pDomain->dwIndex = i;
             ntStatus = SamrSrvInitUnicodeString(
-                                    &pDomain->name,
+                                    &pDomain->Name,
                                     pAttrVal->data.pwszStringValue);
         }
         else

@@ -92,42 +92,42 @@ LsaSrvDuplicateWC16String(
 NTSTATUS
 LsaSrvGetFromUnicodeString(
     PWSTR *ppwszOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pIn
     );
 
 
 NTSTATUS
 LsaSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pIn
     );
 
 
 NTSTATUS
 LsaSrvInitUnicodeString(
-    UnicodeString *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     );
 
 
 NTSTATUS
 LsaSrvInitUnicodeStringEx(
-    UnicodeStringEx *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     );
 
 
 NTSTATUS
 LsaSrvDuplicateUnicodeString(
-    UnicodeString *pOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pOut,
+    UNICODE_STRING *pIn
     );
 
 
 NTSTATUS
 LsaSrvDuplicateUnicodeStringEx(
-    UnicodeStringEx *pOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pOut,
+    UNICODE_STRING *pIn
     );
 
 

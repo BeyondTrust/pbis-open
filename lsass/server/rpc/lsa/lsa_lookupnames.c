@@ -52,7 +52,7 @@ LsaSrvLookupNames(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ POLICY_HANDLE hPolicy,
     /* [in] */ UINT32 num_names,
-    /* [in] */ UnicodeString *names,
+    /* [in] */ UNICODE_STRING *names,
     /* [out] */ RefDomainList **domains,
     /* [in, out] */ TranslatedSidArray *sids,
     /* [in] */ UINT16 level,
@@ -61,8 +61,9 @@ LsaSrvLookupNames(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntLookupStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PPOLICY_CONTEXT pPolCtx = NULL;
-    UnicodeStringEx *pNames = NULL;
+    PUNICODE_STRING pNames = NULL;
     PWSTR pwszName = NULL;
     DWORD i = 0;
     RefDomainList *pDomains = NULL;
@@ -88,13 +89,16 @@ LsaSrvLookupNames(
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     for (i = 0; i < num_names; i++) {
-        pwszName = GetFromUnicodeString(&(names[i]));
-        BAIL_ON_NO_MEMORY(pwszName);
+        dwError = LwAllocateWc16StringFromUnicodeString(
+                                    &pwszName,
+                                    &(names[i]));
+        BAIL_ON_LSA_ERROR(dwError);
 
         ntStatus = LsaSrvInitUnicodeStringEx(&(pNames[i]), pwszName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        if (pwszName) {
+        if (pwszName)
+        {
             LW_SAFE_FREE_MEMORY(pwszName);
         }
     }
@@ -164,6 +168,12 @@ cleanup:
         ntLookupStatus != STATUS_SUCCESS)
     {
         ntStatus = ntLookupStatus;
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;

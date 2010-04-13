@@ -49,14 +49,14 @@
 
 NTSTATUS
 SamrSrvChangePasswordUser2(
-    /* [in] */ handle_t       hBinding,
-    /* [in] */ UnicodeString *pDomainName,
-    /* [in] */ UnicodeString *pAccountName,
-    /* [in] */ CryptPassword *pNtPasswordBlob,
-    /* [in] */ HashPassword  *pNtVerifier,
-    /* [in] */ UINT8          ussLmChange,
-    /* [in] */ CryptPassword *pLmPasswordBlob,
-    /* [in] */ HashPassword  *pLmVerifier
+    /* [in] */ handle_t         hBinding,
+    /* [in] */ UNICODE_STRING  *pDomainName,
+    /* [in] */ UNICODE_STRING  *pAccountName,
+    /* [in] */ CryptPassword   *pNtPasswordBlob,
+    /* [in] */ HashPassword    *pNtVerifier,
+    /* [in] */ UINT8            ussLmChange,
+    /* [in] */ CryptPassword   *pLmPasswordBlob,
+    /* [in] */ HashPassword    *pLmVerifier
     )
 {
     const wchar_t wszFilterFmt[] = L"%ws='%ws'";
@@ -127,16 +127,16 @@ SamrSrvChangePasswordUser2(
 
     dwError = LwAllocateWc16StringFromUnicodeString(
                                    &pwszDomainName,
-                                   (PUNICODE_STRING)pDomainName);
+                                   pDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateWc16StringFromUnicodeString(
                                    &pwszUserName,
-                                   (PUNICODE_STRING)pAccountName);
+                                   pAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    sDomainNameLen = pDomainName->len / 2;
-    sUserNameLen   = pAccountName->len / 2;
+    sDomainNameLen = pDomainName->Length / 2;
+    sUserNameLen   = pAccountName->Length / 2;
 
     dwFilterLen = (((sizeof(wszAttrSamAccountName)
                      /sizeof(wszAttrSamAccountName[0])) - 1) +

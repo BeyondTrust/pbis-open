@@ -28,12 +28,6 @@
  * license@likewisesoftware.com
  */
 
-/*
- * Abstract: DsSetup interface (rpc server library)
- *
- * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
- */
-
 #include <config.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -51,10 +45,11 @@
 #include <wc16str.h>
 #include <lw/base.h>
 #include <lwsid.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/dssetup.h>
 #include <lwio/lwio.h>
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/dssetup.h>
 #include <lwnet.h>
 #include <lwps/lwps.h>
 

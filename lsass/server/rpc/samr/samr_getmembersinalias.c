@@ -51,7 +51,7 @@ NTSTATUS
 SamrSrvGetMembersInAlias(
     IN  handle_t        hBinding,
     IN  ACCOUNT_HANDLE  hAlias,
-    OUT SidArray       *pSids
+    OUT SID_ARRAY      *pSids
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -66,7 +66,7 @@ SamrSrvGetMembersInAlias(
     DWORD i = 0;
     PWSTR pwszMemberSid = NULL;
     PSID pMemberSid = NULL;
-    SidArray Sids = {0};
+    SID_ARRAY Sids = {0};
 
     PWSTR wszAttributes[] = {
         wszAttrObjectSid,
@@ -98,9 +98,9 @@ SamrSrvGetMembersInAlias(
                                        &dwMembersNum);
     BAIL_ON_LSA_ERROR(dwError);
 
-    Sids.num_sids = dwMembersNum;
-    ntStatus = SamrSrvAllocateMemory((PVOID*)&Sids.sids,
-                                   sizeof(*Sids.sids) * Sids.num_sids);
+    Sids.dwNumSids = dwMembersNum;
+    ntStatus = SamrSrvAllocateMemory((PVOID*)&Sids.pSids,
+                                   sizeof(*Sids.pSids) * Sids.dwNumSids);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     for (i = 0; i < dwMembersNum; i++)
@@ -119,11 +119,11 @@ SamrSrvGetMembersInAlias(
                                     pwszMemberSid);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        Sids.sids[i].sid = pMemberSid;
+        Sids.pSids[i].pSid = pMemberSid;
     }
 
-    pSids->num_sids = Sids.num_sids;
-    pSids->sids     = Sids.sids;
+    pSids->dwNumSids = Sids.dwNumSids;
+    pSids->pSids     = Sids.pSids;
 
 cleanup:
     if (pMemberEntries)
@@ -142,9 +142,9 @@ cleanup:
 error:
     for (i = 0; i < dwMembersNum; i++)
     {
-        SamrSrvFreeMemory(Sids.sids[i].sid);
+        SamrSrvFreeMemory(Sids.pSids[i].pSid);
     }
-    SamrSrvFreeMemory(Sids.sids);
+    SamrSrvFreeMemory(Sids.pSids);
 
     memset(pSids, 0, sizeof(*pSids));
     goto cleanup;

@@ -53,8 +53,8 @@ SamrSrvLookupRids(
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 dwNumRids,
     /* [in] */ UINT32 *pdwRids,
-    /* [out] */ UnicodeStringArray *pNames,
-    /* [out] */ Ids *pTypes
+    /* [out] */ UNICODE_STRING_ARRAY *pNames,
+    /* [out] */ IDS *pTypes
     )
 {
     const wchar_t wszFilterFmt[] = L"%ws='%ws'";
@@ -79,8 +79,8 @@ SamrSrvLookupRids(
     DWORD dwEntriesNum = 0;
     PWSTR pwszAccountName = NULL;
     DWORD dwObjectClass = 0;
-    UnicodeStringArray Names = {0};
-    Ids Types = {0};
+    UNICODE_STRING_ARRAY Names = {0};
+    IDS Types = {0};
     DWORD dwUnknownNamesNum = 0;
 
     PWSTR wszAttributes[] = {
@@ -106,12 +106,12 @@ SamrSrvLookupRids(
 
     pSid->SubAuthorityCount++;
 
-    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Types.ids),
-                                   sizeof(Types.ids[0]) * dwNumRids);
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Types.pIds),
+                                   sizeof(Types.pIds[0]) * dwNumRids);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Names.names),
-                                   sizeof(Names.names[0]) * dwNumRids);
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Names.pNames),
+                                   sizeof(Names.pNames[0]) * dwNumRids);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     for (i = 0; i < dwNumRids; i++)
@@ -152,14 +152,14 @@ SamrSrvLookupRids(
         if (dwEntriesNum == 0)
         {
             ntStatus = SamrSrvInitUnicodeString(
-                                      &Names.names[i],
+                                      &Names.pNames[i],
                                       pwszAccountName);
             BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-            Names.count++;
+            Names.dwCount++;
 
-            Types.ids[i] = SID_TYPE_UNKNOWN;
-            Types.count++;
+            Types.pIds[i] = SID_TYPE_UNKNOWN;
+            Types.dwCount++;
         }
         else if (dwEntriesNum > 1)
         {
@@ -176,11 +176,11 @@ SamrSrvLookupRids(
             BAIL_ON_LSA_ERROR(dwError);
 
             ntStatus = SamrSrvInitUnicodeString(
-                                      &Names.names[i],
+                                      &Names.pNames[i],
                                       pwszAccountName);
             BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-            Names.count++;
+            Names.dwCount++;
 
             dwError = DirectoryGetEntryAttrValueByName(
                                       pEntry,
@@ -192,11 +192,11 @@ SamrSrvLookupRids(
             switch (dwObjectClass)
             {
             case DS_OBJECT_CLASS_LOCAL_GROUP:
-                Types.ids[i] = SID_TYPE_ALIAS;
+                Types.pIds[i] = SID_TYPE_ALIAS;
                 break;
 
             case DS_OBJECT_CLASS_USER:
-                Types.ids[i] = SID_TYPE_USER;
+                Types.pIds[i] = SID_TYPE_USER;
                 break;
 
             case DS_OBJECT_CLASS_LOCALGRP_MEMBER:
@@ -204,11 +204,11 @@ SamrSrvLookupRids(
             case DS_OBJECT_CLASS_BUILTIN_DOMAIN:
             case DS_OBJECT_CLASS_CONTAINER: 
             default:
-                Types.ids[i] = SID_TYPE_INVALID;
+                Types.pIds[i] = SID_TYPE_INVALID;
                 break;
             }
 
-            Types.count++;
+            Types.dwCount++;
         }
 
         if (pEntry)
@@ -222,14 +222,14 @@ SamrSrvLookupRids(
         pwszFilter = NULL;
     }
 
-    pNames->names = Names.names;
-    pNames->count = Names.count;
-    pTypes->ids   = Types.ids;
-    pTypes->count = Types.count;
+    pNames->pNames   = Names.pNames;
+    pNames->dwCount  = Names.dwCount;
+    pTypes->pIds     = Types.pIds;
+    pTypes->dwCount  = Types.dwCount;
 
-    for (i = 0; i < pTypes->count; i++)
+    for (i = 0; i < pTypes->dwCount; i++)
     {
-        if (pTypes->ids[i] == SID_TYPE_UNKNOWN)
+        if (pTypes->pIds[i] == SID_TYPE_UNKNOWN)
         {
             dwUnknownNamesNum++;
         }
@@ -237,7 +237,7 @@ SamrSrvLookupRids(
 
     if (dwUnknownNamesNum > 0)
     {
-        if (dwUnknownNamesNum < pTypes->count)
+        if (dwUnknownNamesNum < pTypes->dwCount)
         {
             ntStatus = LW_STATUS_SOME_NOT_MAPPED;
         }
@@ -266,17 +266,17 @@ cleanup:
     return ntStatus;
 
 error:
-    for (i = 0; i < Names.count; i++)
+    for (i = 0; i < Names.dwCount; i++)
     {
-        SamrSrvFreeUnicodeString(&(Names.names[i]));
+        SamrSrvFreeUnicodeString(&(Names.pNames[i]));
     }
-    SamrSrvFreeMemory(Names.names);
-    SamrSrvFreeMemory(Types.ids);
+    SamrSrvFreeMemory(Names.pNames);
+    SamrSrvFreeMemory(Types.pIds);
 
-    pNames->names = NULL;
-    pNames->count = 0;
-    pTypes->ids   = NULL;
-    pTypes->count = 0;
+    pNames->pNames   = NULL;
+    pNames->dwCount  = 0;
+    pTypes->pIds     = NULL;
+    pTypes->dwCount  = 0;
 
     goto cleanup;
 }

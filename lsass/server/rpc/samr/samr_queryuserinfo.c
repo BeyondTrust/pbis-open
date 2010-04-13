@@ -57,10 +57,10 @@
                           &pwszValue);                                  \
         BAIL_ON_LSA_ERROR(dwError);                                     \
                                                                         \
-        ntStatus = SamrSrvInitUnicodeString(                              \
+        ntStatus = SamrSrvInitUnicodeString(                            \
                           &(field),                                     \
                           (pwszValue) ? pwszValue : wszEmpty);          \
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);                                 \
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);                               \
     }
 
 #define GET_NTTIME_VALUE(attr, field)                                   \
@@ -73,7 +73,7 @@
                           &llValue);                                    \
         BAIL_ON_LSA_ERROR(dwError);                                     \
                                                                         \
-        field = (NtTime)llValue;                                        \
+        field = llValue;                                        \
     }
 
 #define GET_RID_VALUE(attr, field)                                      \
@@ -859,8 +859,8 @@ SamrFillUserInfo3(
     WCHAR wszAttrBadPasswordCount[] = DS_ATTR_BAD_PASSWORD_COUNT;
     WCHAR wszAttrLogonCount[] = DS_ATTR_LOGON_COUNT;
     WCHAR wszAttrAccountFlags[] = DS_ATTR_ACCOUNT_FLAGS;
-    NtTime ntMinPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
-    NtTime ntMaxPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
+    LONG64 ntMinPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
+    LONG64 ntMaxPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
 
     pInfo3 = &(pInfo->info3);
 
@@ -1315,9 +1315,9 @@ SamrFillUserInfo21(
     WCHAR wszAttrLogonCount[] = DS_ATTR_LOGON_COUNT;
     WCHAR wszAttrCountryCode[] = DS_ATTR_COUNTRY_CODE;
     WCHAR wszAttrCodePage[] = DS_ATTR_CODE_PAGE;
-    NtTime ntMinPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
-    NtTime ntMaxPasswordAge = pAcctCtx->pDomCtx->ntMaxPasswordAge;
-    NtTime ntCurrentTime = 0;
+    LONG64 ntMinPasswordAge = pAcctCtx->pDomCtx->ntMinPasswordAge;
+    LONG64 ntMaxPasswordAge = pAcctCtx->pDomCtx->ntMaxPasswordAge;
+    LONG64 ntCurrentTime = 0;
 
     pInfo21 = &(pInfo->info21);
 
@@ -1399,7 +1399,7 @@ SamrFillUserInfo21(
     GET_UINT16_VALUE(wszAttrCodePage, pInfo21->code_page);
     pInfo21->fields_present |= SAMR_FIELD_CODE_PAGE;
 
-    dwError = LwGetNtTime(&ntCurrentTime);
+    dwError = LwGetNtTime((PULONG64)&ntCurrentTime);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (ntCurrentTime >= pInfo21->last_password_change + ntMaxPasswordAge)

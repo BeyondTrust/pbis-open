@@ -52,7 +52,7 @@ NTSTATUS
 SamrSrvLookupDomain(
     /* [in] */ handle_t hBinding,
     /* [in] */ CONNECT_HANDLE hConn,
-    /* [in] */ UnicodeString *domain_name,
+    /* [in] */ UNICODE_STRING *domain_name,
     /* [out] */ SID **ppSid
     )
 {
@@ -80,11 +80,7 @@ SamrSrvLookupDomain(
     PSID pDomainSid = NULL;
 
     BAIL_ON_INVALID_PARAMETER(ppSid);
-    BAIL_ON_INVALID_PARAMETER((domain_name &&
-                               domain_name->string &&
-                               domain_name->len > 0 &&
-                               domain_name->size > 0));
-    BAIL_ON_INVALID_PARAMETER((domain_name->size >= domain_name->len));
+    BAIL_ON_INVALID_PARAMETER(domain_name);
 
     memset(wszAttributes, 0, sizeof(wszAttributes));
 
@@ -97,29 +93,34 @@ SamrSrvLookupDomain(
     }
 
     ntStatus = SamrSrvGetFromUnicodeString(&pwszDomainName,
-                                         domain_name);
+                                           domain_name);
     BAIL_ON_NO_MEMORY(pwszDomainName);
 
-    if (!wc16scasecmp(pwszDomainName, wszBuiltinDomainName)) {
+    if (!wc16scasecmp(pwszDomainName, wszBuiltinDomainName))
+    {
         dwObjectClass = DS_OBJECT_CLASS_BUILTIN_DOMAIN;
     }
 
-    dwBaseLen = domain_name->size +
+    dwBaseLen = domain_name->MaximumLength +
                 ((sizeof(szDnToken) + 2) * sizeof(WCHAR));
 
     dwFilterLen = (sizeof(wszAttrObjectClass) - 1) +
                   10 +
                   (sizeof(wszAttrDomain) - 1) +
-                  domain_name->len +
+                  domain_name->Length +
                   sizeof(wszFilter);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&pwszFilter,
-                                   dwFilterLen);
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&pwszFilter),
+                                     dwFilterLen);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilter,
-                wszAttrObjectClass, dwObjectClass,
-                wszAttrDomain, pwszDomainName);
+    if (sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilter,
+                    wszAttrObjectClass, dwObjectClass,
+                    wszAttrDomain, pwszDomainName) < 0)
+    {
+        ntStatus = LwErrnoToNtStatus(errno);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     wszAttributes[0] = wszAttrObjectSID;
     wszAttributes[1] = NULL;

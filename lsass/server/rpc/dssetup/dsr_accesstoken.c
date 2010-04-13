@@ -53,7 +53,7 @@ DsrSrvInitAuthInfo(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
+    unsigned32 rpcStatus = 0;
 
     rpc_binding_inq_access_token_caller(
         hBinding,

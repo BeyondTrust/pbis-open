@@ -60,7 +60,7 @@ LsaSrvParseAccountName(
 NTSTATUS
 LsaSrvSelectAccountsByDomainName(
     PPOLICY_CONTEXT   pPolCtx,
-    UnicodeStringEx  *pNames,
+    UNICODE_STRING   *pNames,
     DWORD             dwNumNames,
     PACCOUNT_NAMES   *ppAccountNames
     );
@@ -69,7 +69,7 @@ LsaSrvSelectAccountsByDomainName(
 NTSTATUS
 LsaSrvSelectAccountsByDomainSid(
     PPOLICY_CONTEXT   pPolCtx,
-    SidArray         *pSids,
+    SID_ARRAY        *pSids,
     DWORD             dwNumSids,
     PACCOUNT_SIDS    *ppAccountSids
     );

@@ -49,18 +49,18 @@
 
 NTSTATUS
 SamrSrvCreateUser(
-    IN  handle_t        hBinding,
-    IN  DOMAIN_HANDLE   hDomain,
-    IN  UnicodeString  *pAccountName,
-    IN  DWORD           dwAccessMask,
-    OUT ACCOUNT_HANDLE *phUser,
-    OUT PDWORD          pdwRid
+    IN  handle_t         hBinding,
+    IN  DOMAIN_HANDLE    hDomain,
+    IN  UNICODE_STRING  *pAccountName,
+    IN  DWORD            dwAccessMask,
+    OUT ACCOUNT_HANDLE  *phUser,
+    OUT PDWORD           pdwRid
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PDOMAIN_CONTEXT pDomCtx = NULL;
     PWSTR pwszUserName = NULL;
-    UnicodeStringEx UserName;
+    UNICODE_STRING UserName = {0};
     UINT32 ulAccessGranted = 0;
 
     pDomCtx = (PDOMAIN_CONTEXT)hDomain;

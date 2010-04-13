@@ -50,7 +50,7 @@
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoBasic(
-    PDS_ROLE_PRIMARY_DOMAIN_INFO_BASIC pInfo,
+    PDSR_ROLE_PRIMARY_DOMAIN_INFO_BASIC pInfo,
     void *pParent
     );
 
@@ -58,22 +58,22 @@ DsrSrvRoleGetPDCInfoBasic(
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoUpgrade(
-    PDS_ROLE_UPGRADE_STATUS pInfo
+    PDSR_ROLE_UPGRADE_STATUS pInfo
     );
 
 
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoOpStatus(
-    PDS_ROLE_OP_STATUS pInfo
+    PDSR_ROLE_OP_STATUS pInfo
     );
 
 
 DWORD
 DsrSrvRoleGetPrimaryDomainInformation(
-    IN  handle_t         hBinding,
-    IN  UINT16           usLevel,
-    OUT PDS_ROLE_INFO   *ppInfo
+    IN  handle_t          hBinding,
+    IN  WORD              swLevel,
+    OUT PDSR_ROLE_INFO   *ppInfo
     )
 {
     DWORD dwError = 0;
@@ -83,7 +83,7 @@ DsrSrvRoleGetPrimaryDomainInformation(
     DWORD dwAccessMask = LSA_ACCESS_VIEW_POLICY_INFO;
     DWORD dwAccessGranted = 0;
     PACCESS_TOKEN pUserToken = NULL;
-    PDS_ROLE_INFO pInfo = NULL;
+    PDSR_ROLE_INFO pInfo = NULL;
 
     /*
      * Get an access token and perform access check before
@@ -109,23 +109,23 @@ DsrSrvRoleGetPrimaryDomainInformation(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    ntStatus = DsrSrvAllocateMemory((void**)&pInfo,
+    ntStatus = DsrSrvAllocateMemory(OUT_PPVOID(&pInfo),
                                     sizeof(*pInfo));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    switch (usLevel)
+    switch (swLevel)
     {
     case DS_ROLE_BASIC_INFORMATION:
-        ntStatus = DsrSrvRoleGetPDCInfoBasic(&pInfo->basic,
+        ntStatus = DsrSrvRoleGetPDCInfoBasic(&pInfo->Basic,
                                              pInfo);
         break;
 
     case DS_ROLE_UPGRADE_STATUS:
-        ntStatus = DsrSrvRoleGetPDCInfoUpgrade(&pInfo->upgrade);
+        ntStatus = DsrSrvRoleGetPDCInfoUpgrade(&pInfo->Upgrade);
         break;
 
     case DS_ROLE_OP_STATUS:
-        ntStatus = DsrSrvRoleGetPDCInfoOpStatus(&pInfo->opstatus);
+        ntStatus = DsrSrvRoleGetPDCInfoOpStatus(&pInfo->OpStatus);
         break;
 
     default:
@@ -164,22 +164,23 @@ error:
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoBasic(
-    PDS_ROLE_PRIMARY_DOMAIN_INFO_BASIC pInfo,
+    PDSR_ROLE_PRIMARY_DOMAIN_INFO_BASIC pInfo,
     void *pParent
     )
 {
     const DWORD dwPolicyAccessMask = LSA_ACCESS_VIEW_POLICY_INFO;
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD rpcstatus = 0;
     DWORD dwError = 0;
     PSTR pszDomainFqdn = NULL;
+    PWSTR pwszProtSeq = NULL;
     PSTR pszLsaLpcSocketPath = NULL;
+    PWSTR pwszLsaLpcSocketPath = NULL;
     PSTR pszDcName = NULL;
     PWSTR pwszDcName = NULL;
     PIO_CREDS pCreds = NULL;
     CHAR szHostname[64];
-    handle_t hLsaBinding = NULL;
+    LSA_BINDING hLsaBinding = NULL;
     POLICY_HANDLE hLocalPolicy = NULL;
     LsaPolicyInformation *pPolInfo = NULL;
     PWSTR pwszDomain = NULL;
@@ -204,17 +205,22 @@ DsrSrvRoleGetPDCInfoBasic(
     dwError = DsrSrvConfigGetLsaLpcSocketPath(&pszLsaLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
-    rpcstatus = InitLsaBindingFull(&hLsaBinding,
-                                   "ncalrpc",
-                                   szHostname,
-                                   pszLsaLpcSocketPath,
-                                   NULL,
-                                   NULL,
-                                   NULL);
-    if (rpcstatus) {
-        dwError = LW_ERROR_RPC_ERROR;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LwMbsToWc16s("ncalrpc",
+                           &pwszProtSeq);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMbsToWc16s(pszLsaLpcSocketPath,
+                           &pwszLsaLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = LsaInitBindingFull(&hLsaBinding,
+                                  pwszProtSeq,
+                                  NULL,
+                                  pwszLsaLpcSocketPath,
+                                  NULL,
+                                  NULL,
+                                  NULL);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     dwError = LsaMbsToWc16s(pszDcName, &pwszDcName);
     BAIL_ON_LSA_ERROR(dwError);
@@ -237,11 +243,11 @@ DsrSrvRoleGetPDCInfoBasic(
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = DsrSrvGetFromUnicodeStringEx(&pwszDnsDomain,
-                                          &pPolInfo->dns.dns_domain);
+                                            &pPolInfo->dns.dns_domain);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = DsrSrvGetFromUnicodeStringEx(&pwszForest,
-                                          &pPolInfo->dns.dns_forest);
+                                            &pPolInfo->dns.dns_forest);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     memcpy(&pInfo->DomainGuid, &pPolInfo->dns.domain_guid,
@@ -273,8 +279,11 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pwszDcName);
+    LW_SAFE_FREE_MEMORY(pszLsaLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszLsaLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszProtSeq);
 
-    FreeLsaBinding(&hLsaBinding);
+    LsaFreeBinding(&hLsaBinding);
 
     return ntStatus;
 
@@ -286,7 +295,7 @@ error:
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoUpgrade(
-    PDS_ROLE_UPGRADE_STATUS pInfo
+    PDSR_ROLE_UPGRADE_STATUS pInfo
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -301,7 +310,7 @@ DsrSrvRoleGetPDCInfoUpgrade(
 static
 NTSTATUS
 DsrSrvRoleGetPDCInfoOpStatus(
-    PDS_ROLE_OP_STATUS pInfo
+    PDSR_ROLE_OP_STATUS pInfo
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;

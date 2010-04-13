@@ -49,12 +49,12 @@
 
 NTSTATUS
 SamrSrvEnumDomainAliases(
-    IN  handle_t        hBinding,
-    IN  DOMAIN_HANDLE   hDomain,
-    IN OUT PDWORD       pdwResume,
-    IN  DWORD           dwAccountFlags,
-    OUT RidNameArray  **ppNames,
-    OUT PDWORD          pdwNumEntries
+    IN  handle_t          hBinding,
+    IN  DOMAIN_HANDLE     hDomain,
+    IN OUT PDWORD         pdwResume,
+    IN  DWORD             dwAccountFlags,
+    OUT RID_NAME_ARRAY  **ppNames,
+    OUT PDWORD            pdwNumEntries
     )
 {
     /* this should be reasonable value to send over 50 aliases */

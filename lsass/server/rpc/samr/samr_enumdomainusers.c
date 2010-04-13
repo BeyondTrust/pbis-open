@@ -49,13 +49,13 @@
 
 NTSTATUS
 SamrSrvEnumDomainUsers(
-    IN  handle_t       hBinding,
-    IN  DOMAIN_HANDLE  hDomain,
-    IN OUT PDWORD      pdwResume,
-    IN  DWORD          dwAccountFlags,
-    IN  DWORD          dwMaxSize,
-    OUT RidNameArray **ppNames,
-    OUT PDWORD         pdwNumEntries
+    IN  handle_t          hBinding,
+    IN  DOMAIN_HANDLE     hDomain,
+    IN OUT PDWORD         pdwResume,
+    IN  DWORD             dwAccountFlags,
+    IN  DWORD             dwMaxSize,
+    OUT RID_NAME_ARRAY  **ppNames,
+    OUT PDWORD            pdwNumEntries
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;

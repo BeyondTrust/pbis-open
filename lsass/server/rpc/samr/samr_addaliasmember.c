@@ -60,7 +60,6 @@ SamrSrvAddAliasMember(
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
     PACCOUNT_CONTEXT pAcctCtx = NULL;
     PDOMAIN_CONTEXT pDomCtx = NULL;
     PCONNECT_CONTEXT pConnCtx = NULL;
@@ -84,9 +83,9 @@ SamrSrvAddAliasMember(
     PSTR pszDcName = NULL;
     PWSTR pwszDcName = NULL;
     LW_PIO_CREDS pCreds = NULL;
-    handle_t hLsaBinding = NULL;
+    LSA_BINDING hLsaBinding = NULL;
     POLICY_HANDLE hDcPolicy = NULL;
-    SidArray SidsArray = {0};
+    SID_ARRAY SidsArray = {0};
     RefDomainList *pRemoteDomains = NULL;
     TranslatedName *pRemoteNames = NULL;
     DWORD i = 0;
@@ -274,21 +273,17 @@ SamrSrvAddAliasMember(
                                            &pszDcName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        ntStatus = SamrSrvGetSystemCreds(&pCreds);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        
-        rpcStatus = InitLsaBindingDefault(&hLsaBinding,
-                                          pszDcName,
-                                          pCreds);
-        if (rpcStatus)
-        {
-            dwError = LW_ERROR_RPC_ERROR;
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-
         dwError = LwMbsToWc16s(pszDcName,
                                &pwszDcName);
         BAIL_ON_LSA_ERROR(dwError);
+
+        ntStatus = SamrSrvGetSystemCreds(&pCreds);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+        
+        ntStatus = LsaInitBindingDefault(&hLsaBinding,
+                                         pwszDcName,
+                                         pCreds);
+        BAIL_ON_NT_STATUS(ntStatus);
 
         ntStatus = LsaOpenPolicy2(hLsaBinding,
                                   pwszDcName,
@@ -297,15 +292,15 @@ SamrSrvAddAliasMember(
                                   &hDcPolicy);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        SidsArray.num_sids = 1;
+        SidsArray.dwNumSids = 1;
 
         dwError = LwAllocateMemory(
-                           sizeof(SidsArray.sids[0]) * SidsArray.num_sids,
-                           OUT_PPVOID(&SidsArray.sids));
+                           sizeof(SidsArray.pSids[0]) * SidsArray.dwNumSids,
+                           OUT_PPVOID(&SidsArray.pSids));
         BAIL_ON_LSA_ERROR(dwError);
 
-        SidsArray.sids[0].sid = pSid;
-        dwLookupLevel         = LSA_LOOKUP_NAMES_ALL;
+        SidsArray.pSids[0].pSid = pSid;
+        dwLookupLevel           = LSA_LOOKUP_NAMES_ALL;
 
         ntStatus = LsaLookupSids(hLsaBinding,
                                  hDcPolicy,
@@ -397,7 +392,7 @@ SamrSrvAddAliasMember(
 cleanup:
     if (hLsaBinding)
     {
-        FreeLsaBinding(&hLsaBinding);
+        LsaFreeBinding(&hLsaBinding);
     }
 
     if (pCreds)
@@ -424,7 +419,7 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pwszDcName);
-    LW_SAFE_FREE_MEMORY(SidsArray.sids);
+    LW_SAFE_FREE_MEMORY(SidsArray.pSids);
 
     if (pRemoteDomains)
     {

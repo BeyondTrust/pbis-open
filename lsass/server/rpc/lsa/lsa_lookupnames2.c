@@ -52,7 +52,7 @@ LsaSrvLookupNames2(
     handle_t hBinding,
     POLICY_HANDLE hPolicy,
     UINT32 num_names,
-    UnicodeStringEx *names,
+    UNICODE_STRING *names,
     RefDomainList **domains,
     TranslatedSidArray2 *pSids,
     UINT16 level,

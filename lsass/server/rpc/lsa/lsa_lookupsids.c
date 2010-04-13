@@ -51,7 +51,7 @@ NTSTATUS
 LsaSrvLookupSids(
     handle_t hBinding,
     POLICY_HANDLE hPolicy,
-    SidArray *sids,
+    SID_ARRAY *sids,
     RefDomainList **ppDomains,
     TranslatedNameArray *pNames,
     UINT16 level,
@@ -89,14 +89,14 @@ LsaSrvLookupSids(
 
     for (i = 0; i < pNames->count; i++)
     {
-        UnicodeString *pIn  = &(Names.names[i].name);
-        UnicodeString *pOut = &(pNames->names[i].name);
+        UNICODE_STRING *pIn  = &(Names.names[i].name);
+        UNICODE_STRING *pOut = &(pNames->names[i].name);
 
         pNames->names[i].type      = Names.names[i].type;
         pNames->names[i].sid_index = Names.names[i].sid_index;
-        pOut->string               = pIn->string;
-        pOut->len                  = pIn->len;
-        pOut->size                 = pIn->size;
+        pOut->Buffer               = pIn->Buffer;
+        pOut->Length               = pIn->Length;
+        pOut->MaximumLength        = pIn->MaximumLength;
     }
 
     *ppDomains = pDomains;

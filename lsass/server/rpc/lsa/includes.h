@@ -28,12 +28,6 @@
  * license@likewisesoftware.com
  */
 
-/*
- * Abstract: Lsa interface (rpc server library)
- *
- * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
- */
-
 #include <config.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -51,11 +45,10 @@
 #include <wc16str.h>
 #include <lw/base.h>
 #include <lwsid.h>
-#include <lwrpc/allocate.h>
-#include <lwrpc/unicodestring.h>
-#include <lwrpc/samr.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/netlogon.h>
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/netlogon.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>
 #include <lwps/lwps.h>

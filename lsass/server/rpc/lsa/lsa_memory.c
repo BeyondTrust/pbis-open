@@ -191,17 +191,17 @@ error:
 NTSTATUS
 LsaSrvGetFromUnicodeString(
     PWSTR *ppwszOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszStr = NULL;
 
     ntStatus = LsaSrvAllocateMemory((void**)&pwszStr,
-                                  (pIn->size + 1) * sizeof(WCHAR));
+                                  (pIn->MaximumLength + 1) * sizeof(WCHAR));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    wc16sncpy(pwszStr, pIn->string, (pIn->len / sizeof(WCHAR)));
+    wc16sncpy(pwszStr, pIn->Buffer, (pIn->Length / sizeof(WCHAR)));
     *ppwszOut = pwszStr;
 
 cleanup:
@@ -220,17 +220,17 @@ error:
 NTSTATUS
 LsaSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszStr = NULL;
 
     ntStatus = LsaSrvAllocateMemory((void**)&pwszStr,
-                                  (pIn->size) * sizeof(WCHAR));
+                                  (pIn->MaximumLength) * sizeof(WCHAR));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    wc16sncpy(pwszStr, pIn->string, (pIn->len / sizeof(WCHAR)));
+    wc16sncpy(pwszStr, pIn->Buffer, (pIn->Length / sizeof(WCHAR)));
     *ppwszOut = pwszStr;
 
 cleanup:
@@ -248,7 +248,7 @@ error:
 
 NTSTATUS
 LsaSrvInitUnicodeString(
-    UnicodeString *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     )
 {
@@ -259,31 +259,31 @@ LsaSrvInitUnicodeString(
     dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
     dwSize = dwLen * sizeof(WCHAR);
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->string),
+    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
                                   dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pwszIn, dwSize);
-    pOut->size = dwSize;
-    pOut->len  = dwSize;
+    memcpy(pOut->Buffer, pwszIn, dwSize);
+    pOut->MaximumLength = dwSize;
+    pOut->Length  = dwSize;
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        LsaSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        LsaSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length  = 0;
     goto cleanup;
 }
 
 
 NTSTATUS
 LsaSrvInitUnicodeStringEx(
-    UnicodeStringEx *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     )
 {
@@ -294,94 +294,94 @@ LsaSrvInitUnicodeStringEx(
     dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
     dwSize = (dwLen + 1) * sizeof(WCHAR);
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->string),
-                                  dwSize);
+    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
+                                    dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pwszIn, dwSize - sizeof(WCHAR));
-    pOut->size = dwSize;
-    pOut->len  = dwSize - sizeof(WCHAR);
+    memcpy(pOut->Buffer, pwszIn, dwSize - sizeof(WCHAR));
+    pOut->MaximumLength = dwSize;
+    pOut->Length  = dwSize - sizeof(WCHAR);
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        LsaSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        LsaSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length        = 0;
     goto cleanup;
 }
 
 
 NTSTATUS
 LsaSrvDuplicateUnicodeString(
-    UnicodeString *pOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pOut,
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwLen = 0;
     DWORD dwSize = 0;
 
-    dwLen  = pIn->len;
-    dwSize = pIn->size;
+    dwLen  = pIn->Length;
+    dwSize = pIn->MaximumLength;
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->string),
-                                  dwSize);
+    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
+                                    dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pIn->string, dwLen);
-    pOut->size = dwSize;
-    pOut->len  = dwLen;
+    memcpy(pOut->Buffer, pIn->Buffer, dwLen);
+    pOut->MaximumLength = dwSize;
+    pOut->Length        = dwLen;
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        LsaSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        LsaSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length        = 0;
     goto cleanup;
 }
 
 
 NTSTATUS
 LsaSrvDuplicateUnicodeStringEx(
-    UnicodeStringEx *pOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pOut,
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwLen = 0;
     DWORD dwSize = 0;
 
-    dwLen  = pIn->len;
-    dwSize = pIn->size;
+    dwLen  = pIn->Length;
+    dwSize = pIn->MaximumLength;
 
-    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->string),
-                                  dwSize);
+    ntStatus = LsaSrvAllocateMemory((void**)&(pOut->Buffer),
+                                    dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pIn->string, dwLen);
-    pOut->size = dwSize;
-    pOut->len  = dwLen;
+    memcpy(pOut->Buffer, pIn->Buffer, dwLen);
+    pOut->MaximumLength = dwSize;
+    pOut->Length        = dwLen;
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        LsaSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        LsaSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length        = 0;
     goto cleanup;
 }
 

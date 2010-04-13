@@ -159,17 +159,17 @@ error:
 NTSTATUS
 DsrSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
-    )
+    UNICODE_STRING *pIn
+   )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszStr = NULL;
 
     ntStatus = DsrSrvAllocateMemory((void**)&pwszStr,
-                                    (pIn->size) * sizeof(WCHAR));
+                                    (pIn->MaximumLength) * sizeof(WCHAR));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    wc16sncpy(pwszStr, pIn->string, (pIn->len / sizeof(WCHAR)));
+    wc16sncpy(pwszStr, pIn->Buffer, (pIn->Length / sizeof(WCHAR)));
     *ppwszOut = pwszStr;
 
 cleanup:

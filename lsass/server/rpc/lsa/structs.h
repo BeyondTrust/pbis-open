@@ -67,7 +67,7 @@ typedef struct _DOMAIN_ENTRY
 {
     PWSTR          pwszName;
     PSID           pSid;
-    handle_t       hLsaBinding;
+    LSA_BINDING    hLsaBinding;
     POLICY_HANDLE  hPolicy;
 
 } DOMAIN_ENTRY, *PDOMAIN_ENTRY;

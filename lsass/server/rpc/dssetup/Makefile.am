@@ -19,10 +19,10 @@ libdssetup_la_SOURCES =             \
     dsr_accesstoken.c               \
     dsr_rolegetprimarydomaininfo.c
 
-DCEIDL_PASS_INCLUDES = \
-    $(CPPFLAGS)        \
-    $(NETAPI_INCLUDES) \
-    $(LWBASE_INCLUDES)
+DCEIDL_PASS_INCLUDES =       \
+    $(CPPFLAGS)              \
+    $(LWBASE_INCLUDES)       \
+    -I$(top_srcdir)/include
 
 libdssetup_la_CFLAGS = \
     $(AM_CFLAGS)            \
@@ -31,18 +31,16 @@ libdssetup_la_CFLAGS = \
     -I$(top_srcdir)/include \
     -I$(srv_srcdir)/api     \
     $(DCERPC_INCLUDES)      \
-    $(LIBUNISTR_INCLUDES)   \
     $(LWBASE_INCLUDES)      \
     $(NETLOGON_INCLUDES)
 
 libdssetup_la_LIBADD = \
-    $(DCERPC_LIBS)                        \
-    $(NETAPI_LIBS)                        \
-    $(LIBUNISTR_LIBS)                     \
-    $(LWBASE_LIBS)                        \
-    $(NETLOGON_LIBS)                      \
-    $(top_builddir)/server/api/liblsaserverapi.la  \
-    $(top_builddir)/server/store/dsapi/libdsapi.la
+    $(DCERPC_LIBS)                                  \
+    $(LWBASE_LIBS)                                  \
+    $(NETLOGON_LIBS)                                \
+    $(top_builddir)/server/api/liblsaserverapi.la   \
+    $(top_builddir)/server/store/dsapi/libdsapi.la  \
+    $(top_builddir)/client/rpc/liblsarpc.la
 
 libdssetup_ss_la_SOURCES = \
     dssetup_sstub.c
@@ -51,7 +49,6 @@ libdssetup_ss_la_CFLAGS = \
     $(AM_CFLAGS)          \
     -DDCERPC_STUB_BUILD   \
     $(DCERPC_INCLUDES)    \
-    $(LIBUNISTR_INCLUDES) \
     $(LWBASE_INCLUDES)
 
 libdssetup_ss_la_LIBADD = \

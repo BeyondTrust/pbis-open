@@ -371,7 +371,7 @@ LsaSrvDomainEntryDestroy(
         pEntry->hPolicy)
     {
         LsaClose(pEntry->hLsaBinding, pEntry->hPolicy);
-        FreeLsaBinding(&pEntry->hLsaBinding);
+        LsaFreeBinding(&pEntry->hLsaBinding);
     }
 
     LsaSrvDomainEntryFree(&pEntry);
@@ -640,12 +640,11 @@ LsaSrvConnectDomainByName(
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
     PSTR pszDcName = NULL;
     PIO_CREDS pCreds = NULL;
-    handle_t hLsaBinding = NULL;
+    LSA_BINDING hLsaBinding = NULL;
     POLICY_HANDLE hDcPolicy = NULL;
-    handle_t hNetrBinding = NULL;
+    NETR_BINDING hNetrBinding = NULL;
     NetrDomainTrust *pTrusts = NULL;
     DWORD dwNumTrusts = 0;
     DWORD i = 0;
@@ -680,14 +679,10 @@ LsaSrvConnectDomainByName(
         /*
          * Connect to a DC of the domain we're member of
          */
-        rpcStatus = InitLsaBindingDefault(&hLsaBinding,
-                                          pszDcName,
-                                          pCreds);
-        if (rpcStatus)
-        {
-            ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-            BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        }
+        ntStatus = LsaInitBindingDefault(&hLsaBinding,
+                                         pPolCtx->pwszDcName,
+                                         pCreds);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = LsaOpenPolicy2(hLsaBinding,
                                   pPolCtx->pwszDcName,
@@ -718,15 +713,11 @@ LsaSrvConnectDomainByName(
          * domains and make a connection if so.
          */
 
-        rpcStatus = InitNetlogonBindingDefault(&hNetrBinding,
-                                               pszDcName,
-                                               pCreds,
-                                               FALSE);
-        if (rpcStatus)
-        {
-            ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-            BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        }
+        ntStatus = NetrInitBindingDefault(&hNetrBinding,
+                                           pPolCtx->pwszDcName,
+                                           pCreds,
+                                           FALSE);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = DsrEnumerateDomainTrusts(hNetrBinding,
                                             pPolCtx->pwszDcName,
@@ -765,14 +756,10 @@ LsaSrvConnectDomainByName(
                                                &pszTrustedDcName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            rpcStatus = InitLsaBindingDefault(&hLsaBinding,
-                                              pszTrustedDcName,
-                                              pCreds);
-            if (rpcStatus)
-            {
-                ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-                BAIL_ON_NTSTATUS_ERROR(ntStatus);
-            }
+            ntStatus = LsaInitBindingDefault(&hLsaBinding,
+                                             pTrust->dns_name,
+                                             pCreds);
+            BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
             ntStatus = LsaOpenPolicy2(hLsaBinding,
                                       pTrust->dns_name,
@@ -818,7 +805,7 @@ LsaSrvConnectDomainByName(
     *ppDomEntry = pDomEntry;
 
 cleanup:
-    FreeNetlogonBinding(&hNetrBinding);
+    NetrFreeBinding(&hNetrBinding);
 
     if (pTrusts)
     {
@@ -860,12 +847,11 @@ LsaSrvConnectDomainBySid(
 
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
     PSTR pszDcName = NULL;
     PIO_CREDS pCreds = NULL;
-    handle_t hLsaBinding= NULL;
+    LSA_BINDING hLsaBinding= NULL;
     POLICY_HANDLE hDcPolicy = NULL;
-    handle_t hNetrBinding = NULL;
+    NETR_BINDING hNetrBinding = NULL;
     NetrDomainTrust *pTrusts = NULL;
     DWORD dwNumTrusts = 0;
     DWORD i = 0;
@@ -900,14 +886,10 @@ LsaSrvConnectDomainBySid(
         /*
          * Connect to a DC of the domain we're member of
          */
-        rpcStatus = InitLsaBindingDefault(&hLsaBinding,
-                                          pszDcName,
-                                          pCreds);
-        if (rpcStatus)
-        {
-            ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-            BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        }
+        ntStatus = LsaInitBindingDefault(&hLsaBinding,
+                                         pPolCtx->pwszDcName,
+                                         pCreds);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = LsaOpenPolicy2(hLsaBinding,
                                   pPolCtx->pwszDcName,
@@ -938,15 +920,11 @@ LsaSrvConnectDomainBySid(
          * domains and make a connection if so.
          */
 
-        rpcStatus = InitNetlogonBindingDefault(&hNetrBinding,
-                                               pszDcName,
-                                               pCreds,
-                                               FALSE);
-        if (rpcStatus)
-        {
-            ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-            BAIL_ON_NTSTATUS_ERROR(ntStatus);
-        }
+        ntStatus = NetrInitBindingDefault(&hNetrBinding,
+                                          pPolCtx->pwszDcName,
+                                          pCreds,
+                                          FALSE);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = DsrEnumerateDomainTrusts(hNetrBinding,
                                             pPolCtx->pwszDcName,
@@ -985,14 +963,10 @@ LsaSrvConnectDomainBySid(
                                                &pszTrustedDcName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            rpcStatus = InitLsaBindingDefault(&hLsaBinding,
-                                              pszTrustedDcName,
-                                              pCreds);
-            if (rpcStatus)
-            {
-                ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-                BAIL_ON_NTSTATUS_ERROR(ntStatus);
-            }
+            ntStatus = LsaInitBindingDefault(&hLsaBinding,
+                                             pTrust->dns_name,
+                                             pCreds);
+            BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
             ntStatus = LsaOpenPolicy2(hLsaBinding,
                                       pTrust->dns_name,
@@ -1038,7 +1012,7 @@ LsaSrvConnectDomainBySid(
     *ppDomEntry = pDomEntry;
 
 cleanup:
-    FreeNetlogonBinding(&hNetrBinding);
+    NetrFreeBinding(&hNetrBinding);
 
     if (pTrusts)
     {

@@ -98,7 +98,7 @@ POLICY_HANDLE_rundown(
     if (pPolCtx->bCleanClose &&
         pPolCtx->hSamrBinding)
     {
-        FreeSamrBinding(&pPolCtx->hSamrBinding);
+        SamrFreeBinding(&pPolCtx->hSamrBinding);
         pPolCtx->hSamrBinding = NULL;
     }
 

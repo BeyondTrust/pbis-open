@@ -67,8 +67,8 @@ NTSTATUS
 SamrSrvGetAliasMembership(
     IN  handle_t       hBinding,
     IN  DOMAIN_HANDLE  hDomain,
-    IN  SidArray      *pSids,
-    OUT Ids           *pRids
+    IN  SID_ARRAY     *pSids,
+    OUT IDS           *pRids
     )
 {
     wchar_t wszFilterFmt[] = L"%ws='%ws'";
@@ -105,7 +105,7 @@ SamrSrvGetAliasMembership(
     GENERIC_MAPPING GenericMapping = {0};
     DWORD dwAccessGranted = 0;
     DWORD dwSidCount = 0;
-    Ids Rids = {0};
+    IDS Rids = {0};
 
     PWSTR wszMemberAttributes[] = {
         wszAttrDn,
@@ -136,16 +136,16 @@ SamrSrvGetAliasMembership(
 
     pConnCtx   = pDomCtx->pConnCtx;
     hDirectory = pConnCtx->hDirectory;
-    dwDnNum    = pSids->num_sids;
+    dwDnNum    = pSids->dwNumSids;
 
     dwError = LwAllocateMemory(sizeof(PWSTR) * dwDnNum,
                                OUT_PPVOID(&ppwszDn));
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; i < pSids->num_sids; i++)
+    for (i = 0; i < pSids->dwNumSids; i++)
     {
         ntStatus = RtlAllocateWC16StringFromSid(&pwszSid,
-                                              pSids->sids[i].sid);
+                                                pSids->pSids[i].pSid);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         dwError = LwWc16sLen(pwszSid, &sSidStrLen);
@@ -303,14 +303,14 @@ SamrSrvGetAliasMembership(
 
     dwSidCount = LsaDLinkedListLength(pSidList);
 
-    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Rids.ids),
-                                   sizeof(Rids.ids[0]) * dwSidCount);
+    ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&Rids.pIds),
+                                   sizeof(Rids.pIds[0]) * dwSidCount);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     LsaDLinkedListForEach(pSidList, SetRidsArray, (PVOID)&Rids);
 
-    pRids->count = Rids.count;
-    pRids->ids   = Rids.ids;
+    pRids->dwCount = Rids.dwCount;
+    pRids->pIds    = Rids.pIds;
 
 cleanup:
     if (pEntry)
@@ -339,8 +339,8 @@ cleanup:
     return ntStatus;
 
 error:
-    pRids->count = 0;
-    pRids->ids   = NULL;
+    pRids->dwCount = 0;
+    pRids->pIds    = NULL;
 
     goto cleanup;
 }
@@ -366,11 +366,11 @@ SetRidsArray(
     )
 {
     PSID pAliasSid = (PSID)pData;
-    Ids *pRids = (Ids*)pUserData;
-    DWORD i = pRids->count;
+    IDS *pRids = (IDS*)pUserData;
+    DWORD i = pRids->dwCount;
 
-    pRids->ids[i] = pAliasSid->SubAuthority[pAliasSid->SubAuthorityCount - 1];
-    pRids->count  = ++i;
+    pRids->pIds[i]  = pAliasSid->SubAuthority[pAliasSid->SubAuthorityCount - 1];
+    pRids->dwCount  = ++i;
 }
 
 

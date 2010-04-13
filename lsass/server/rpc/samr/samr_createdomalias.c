@@ -51,7 +51,7 @@ NTSTATUS
 SamrSrvCreateDomAlias(
     /* [in] */ handle_t hBinding,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ UnicodeString *alias_name,
+    /* [in] */ UNICODE_STRING *alias_name,
     /* [in] */ UINT32 access_mask,
     /* [out] */ ACCOUNT_HANDLE *hAlias,
     /* [out] */ UINT32 *rid
@@ -60,7 +60,7 @@ SamrSrvCreateDomAlias(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PDOMAIN_CONTEXT pDomCtx = NULL;
     PWSTR pwszAliasName = NULL;
-    UnicodeStringEx Name;
+    UNICODE_STRING Name = {0};
     UINT32 ulAccessGranted = 0;
 
     pDomCtx = (PDOMAIN_CONTEXT)hDomain;
@@ -78,11 +78,11 @@ SamrSrvCreateDomAlias(
     }
 
     ntStatus = SamrSrvGetFromUnicodeString(&pwszAliasName,
-                                         alias_name);
+                                           alias_name);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeStringEx(&Name,
-                                        pwszAliasName);
+                                          pwszAliasName);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvCreateAccount(hBinding,
@@ -101,7 +101,8 @@ SamrSrvCreateDomAlias(
     }
 
 cleanup:
-    if (pwszAliasName) {
+    if (pwszAliasName)
+    {
         SamrSrvFreeMemory(pwszAliasName);
     }
 

@@ -78,40 +78,40 @@ SamrSrvDuplicateSid(
 NTSTATUS
 SamrSrvGetFromUnicodeString(
     PWSTR *ppwszOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pIn
     );
 
 
 NTSTATUS
 SamrSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pIn
     );
 
 
 NTSTATUS
 SamrSrvInitUnicodeString(
-    UnicodeString *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     );
 
 
 NTSTATUS
 SamrSrvInitUnicodeStringEx(
-    UnicodeStringEx *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     );
 
 
 void
 SamrSrvFreeUnicodeString(
-    UnicodeString *pStr
+    UNICODE_STRING *pStr
     );
 
 
 void
 SamrSrvFreeUnicodeStringEx(
-    UnicodeStringEx *pStr
+    UNICODE_STRING *pStr
     );
 
 

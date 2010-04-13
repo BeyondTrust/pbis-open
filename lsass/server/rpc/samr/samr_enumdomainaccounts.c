@@ -49,14 +49,14 @@
 
 NTSTATUS
 SamrSrvEnumDomainAccounts(
-    IN  handle_t        hBinding,
-    IN  DOMAIN_HANDLE   hDomain,
-    IN OUT PDWORD       pdwResume,
-    IN  DWORD           dwObjectClass,
-    IN  DWORD           dwFlagsFilter,
-    IN  DWORD           dwMaxSize,
-    OUT RidNameArray  **ppNames,
-    OUT UINT32         *pdwNumEntries
+    IN  handle_t          hBinding,
+    IN  DOMAIN_HANDLE     hDomain,
+    IN OUT PDWORD         pdwResume,
+    IN  DWORD             dwObjectClass,
+    IN  DWORD             dwFlagsFilter,
+    IN  DWORD             dwMaxSize,
+    OUT RID_NAME_ARRAY  **ppNames,
+    OUT UINT32           *pdwNumEntries
     )
 {
     wchar_t wszFilterFmt[] = L"%ws=%d AND %ws='%ws'";
@@ -91,8 +91,8 @@ SamrSrvEnumDomainAccounts(
     PWSTR pwszSid = NULL;
     PSID pSid = NULL;
     DWORD dwRid = 0;
-    RidNameArray *pNames = NULL;
-    RidName *pName = NULL;
+    RID_NAME_ARRAY *pNames = NULL;
+    RID_NAME *pName = NULL;
     DWORD dwNewResumeIdx = 0;
 
     PWSTR wszAttributes[] = {
@@ -160,7 +160,7 @@ SamrSrvEnumDomainAccounts(
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&pNames),
-                                     sizeof(RidNameArray));
+                                     sizeof(*pNames));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
 
@@ -170,7 +170,7 @@ SamrSrvEnumDomainAccounts(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    dwTotalSize += sizeof(pNames->count);
+    dwTotalSize += sizeof(pNames->dwCount);
 
     for (i = 0; i + dwResume < dwNumEntries; i++)
     {
@@ -224,10 +224,10 @@ SamrSrvEnumDomainAccounts(
      */
     dwNumEntriesReturned = (dwSize > 0 && dwCount == 0) ? 1 : dwCount;
 
-    pNames->count = dwNumEntriesReturned;
+    pNames->dwCount = dwNumEntriesReturned;
     ntStatus = SamrSrvAllocateMemory(
-                           OUT_PPVOID(&pNames->entries),
-                           sizeof(pNames->entries[0]) * pNames->count);
+                           OUT_PPVOID(&pNames->pEntries),
+                           sizeof(pNames->pEntries[0]) * pNames->dwCount);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     for (i = 0, dwCount = 0;
@@ -262,15 +262,15 @@ SamrSrvEnumDomainAccounts(
             continue;
         }
 
-        pName = &(pNames->entries[dwCount++]);
+        pName = &(pNames->pEntries[dwCount++]);
 
         ntStatus = RtlAllocateSidFromWC16String(&pSid, pwszSid);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        dwRid      = pSid->SubAuthority[pSid->SubAuthorityCount - 1];
-        pName->rid = (UINT32)dwRid;
+        dwRid        = pSid->SubAuthority[pSid->SubAuthorityCount - 1];
+        pName->dwRid = (UINT32)dwRid;
         
-        ntStatus = SamrSrvInitUnicodeString(&pName->name,
+        ntStatus = SamrSrvInitUnicodeString(&pName->Name,
                                             pwszName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
@@ -307,11 +307,11 @@ cleanup:
 error:
     if (pNames)
     {
-        for (i = 0; i < pNames->count; i++)
+        for (i = 0; i < pNames->dwCount; i++)
         {
-            SamrSrvFreeUnicodeString(&(pNames->entries[i].name));
+            SamrSrvFreeUnicodeString(&(pNames->pEntries[i].Name));
         }
-        SamrSrvFreeMemory(pNames->entries);
+        SamrSrvFreeMemory(pNames->pEntries);
         SamrSrvFreeMemory(pNames);
     }
 

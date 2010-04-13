@@ -30,10 +30,10 @@ liblsa_la_SOURCES = \
     lsa_security.c              \
     lsa_contexthandle.c
 
-DCEIDL_PASS_INCLUDES = \
-    $(CPPFLAGS)        \
-    $(NETAPI_INCLUDES) \
-    $(LWBASE_INCLUDES)
+DCEIDL_PASS_INCLUDES =       \
+    $(CPPFLAGS)              \
+    $(LWBASE_INCLUDES)       \
+    -I$(top_srcdir)/include
 
 liblsa_la_CFLAGS = \
     $(AM_CFLAGS)             \
@@ -44,20 +44,18 @@ liblsa_la_CFLAGS = \
     -I$(rpc_srcdir)/samr     \
     -I$(srv_srcdir)/api      \
     $(DCERPC_INCLUDES)       \
-    $(LIBUNISTR_INCLUDES)    \
     $(LWBASE_INCLUDES)       \
     $(LWADVAPI_INCLUDES)     \
     $(NETLOGON_INCLUDES)
 
 liblsa_la_LIBADD = \
-    $(DCERPC_LIBS)                        \
-    $(NETAPI_LIBS)                        \
-    $(LIBUNISTR_LIBS)                     \
-    $(LWBASE_LIBS)                        \
-    $(LWADVAPI_LIBS)                      \
-    $(NETLOGON_LIBS)                      \
+    $(DCERPC_LIBS)                                 \
+    $(LWBASE_LIBS)                                 \
+    $(LWADVAPI_LIBS)                               \
+    $(NETLOGON_LIBS)                               \
     $(top_builddir)/server/api/liblsaserverapi.la  \
-    $(top_builddir)/server/store/dsapi/libdsapi.la
+    $(top_builddir)/server/store/dsapi/libdsapi.la \
+    $(top_builddir)/client/rpc/liblsarpc.la
 
 liblsa_ss_la_SOURCES = \
     lsa_sstub.c

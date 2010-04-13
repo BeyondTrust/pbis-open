@@ -62,12 +62,12 @@ libsamr_la_SOURCES = \
     samr_crypto.c                \
     samr_contexthandle.c
 
-DCEIDL_PASS_INCLUDES = \
-    $(CPPFLAGS) \
-    $(NETAPI_INCLUDES) \
-    $(LWBASE_INCLUDES)
+DCEIDL_PASS_INCLUDES =        \
+    $(CPPFLAGS)               \
+    $(LWBASE_INCLUDES)        \
+    -I$(top_srcdir)/include
 
-libsamr_la_CFLAGS = \
+libsamr_la_CFLAGS =         \
     $(AM_CFLAGS)            \
     -DLIBRPC_BUILD          \
     $(FEATURETEST_FLAGS)    \
@@ -75,33 +75,29 @@ libsamr_la_CFLAGS = \
     -I$(top_srcdir)/include \
     -I$(srv_srcdir)/api     \
     $(DCERPC_INCLUDES)      \
-    $(NETAPI_INCLUDES)      \
-    $(LIBUNISTR_INCLUDES)   \
     $(LWBASE_INCLUDES)      \
     $(LWADVAPI_INCLUDES)    \
     $(NETLOGON_INCLUDES)
 
-libsamr_la_LIBADD = \
-    $(DCERPC_LIBS)                        \
-    $(NETAPI_LIBS)                        \
-    $(LIBUNISTR_LIBS)                     \
-    $(LWBASE_LIBS)                        \
-    $(LWADVAPI_LIBS)                      \
-    $(NETLOGON_LIBS)                      \
+libsamr_la_LIBADD =                                \
+    $(DCERPC_LIBS)                                 \
+    $(LWBASE_LIBS)                                 \
+    $(LWADVAPI_LIBS)                               \
+    $(NETLOGON_LIBS)                               \
     $(top_builddir)/server/api/liblsaserverapi.la  \
     $(top_builddir)/server/store/dsapi/libdsapi.la \
-    $(top_builddir)/common/liblsacommon.la
+    $(top_builddir)/common/liblsacommon.la         \
+    $(top_builddir)/client/rpc/liblsarpc.la
 
 
 libsamr_ss_la_SOURCES = \
     samr_sstub.c
 
-libsamr_ss_la_CFLAGS = \
+libsamr_ss_la_CFLAGS =      \
     $(AM_CFLAGS)            \
-    -DDCERPC_STUB_BUILD   \
-    $(FEATURETEST_FLAGS)  \
-    $(DCERPC_INCLUDES)    \
-    $(LIBUNISTR_INCLUDES) \
+    -DDCERPC_STUB_BUILD     \
+    $(FEATURETEST_FLAGS)    \
+    $(DCERPC_INCLUDES)      \
     $(LWBASE_INCLUDES)
 
 libsamr_ss_la_LIBADD = \

@@ -291,10 +291,10 @@ SamrSrvOpenDomain(
     pDomCtx->pDomainSid           = pDomainSid;
     pDomCtx->pwszDomainName       = pwszDomainName;
     pDomCtx->pwszDn               = pwszDomainDn;
-    pDomCtx->ntMinPasswordAge     = (NtTime)llMinPasswordAge;
-    pDomCtx->ntMaxPasswordAge     = (NtTime)llMaxPasswordAge;
+    pDomCtx->ntMinPasswordAge     = llMinPasswordAge;
+    pDomCtx->ntMaxPasswordAge     = llMaxPasswordAge;
     pDomCtx->dwMinPasswordLen     = dwMinPwdLen;
-    pDomCtx->ntPasswordPromptTime = (NtTime)llPasswordPromptTime;
+    pDomCtx->ntPasswordPromptTime = llPasswordPromptTime;
     pDomCtx->dwPasswordProperties = dwPwdProperties;
 
     pDomCtx->pConnCtx         = pConnCtx;

@@ -116,7 +116,7 @@ error:
 NTSTATUS
 LsaSrvSelectAccountsByDomainName(
     PPOLICY_CONTEXT   pPolCtx,
-    UnicodeStringEx  *pNames,
+    UNICODE_STRING   *pNames,
     DWORD             dwNumNames,
     PACCOUNT_NAMES   *ppAccountNames
     )
@@ -200,11 +200,11 @@ LsaSrvSelectAccountsByDomainName(
 
     for (i = 0; i < dwNumNames; i++)
     {
-        UnicodeStringEx *pName = &(pNames[i]);
+        UNICODE_STRING *pName = &(pNames[i]);
 
         dwError = LwAllocateWc16StringFromUnicodeString(
                                           &pwszName,
-                                          (PUNICODE_STRING)pName);
+                                          pName);
         BAIL_ON_NTSTATUS_ERROR(dwError);
 
         ntStatus = LsaSrvParseAccountName(pwszName,
@@ -348,7 +348,7 @@ LsaSrvFreeAccountNames(
 NTSTATUS
 LsaSrvSelectAccountsByDomainSid(
     PPOLICY_CONTEXT   pPolCtx,
-    SidArray         *pSids,
+    SID_ARRAY        *pSids,
     DWORD             dwNumSids,
     PACCOUNT_SIDS    *ppAccountSids
     )
@@ -421,7 +421,7 @@ LsaSrvSelectAccountsByDomainSid(
 
     for (i = 0; i < dwNumSids; i++)
     {
-        pSid = pSids->sids[i].sid;
+        pSid = pSids->pSids[i].pSid;
 
         if (pPolCtx->pDomainSid &&
             RtlIsPrefixSid(pPolCtx->pDomainSid, pSid))

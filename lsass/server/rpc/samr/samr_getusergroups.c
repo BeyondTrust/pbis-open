@@ -49,20 +49,20 @@
 
 NTSTATUS
 SamrSrvGetUserGroups(
-    IN  handle_t                hBinding,
-    IN  ACCOUNT_HANDLE          hUser,
-    OUT RidWithAttributeArray **ppRids
+    IN  handle_t                    hBinding,
+    IN  ACCOUNT_HANDLE              hUser,
+    OUT RID_WITH_ATTRIBUTE_ARRAY  **ppRids
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    RidWithAttributeArray *pRids = NULL;
+    RID_WITH_ATTRIBUTE_ARRAY *pRids = NULL;
 
     ntStatus = SamrSrvAllocateMemory(OUT_PPVOID(&pRids),
                                      sizeof(*pRids));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    pRids->count = 0;
-    pRids->rids  = NULL;
+    pRids->dwCount = 0;
+    pRids->pRids   = NULL;
 
     *ppRids = pRids;
 

@@ -95,7 +95,7 @@ NTSTATUS
 LsaSrvLookupSids2(
     handle_t hBinding,
     POLICY_HANDLE hPolicy,
-    SidArray *pSids,
+    SID_ARRAY *pSids,
     RefDomainList **ppDomains,
     TranslatedNameArray2 *pNamesArray,
     UINT16 level,
@@ -131,7 +131,7 @@ LsaSrvLookupSids2(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    dwSidsNum = pSids->num_sids;
+    dwSidsNum = pSids->dwNumSids;
 
     ntStatus = LsaSrvAllocateMemory(OUT_PPVOID(&(NamesArray.names)),
                                     sizeof(NamesArray.names[0]) * dwSidsNum);
@@ -160,7 +160,7 @@ LsaSrvLookupSids2(
 
     ntStatus = LsaSrvSelectAccountsByDomainSid(pPolCtx,
                                                pSids,
-                                               pSids->num_sids,
+                                               pSids->dwNumSids,
                                                &pAccountSids);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
@@ -299,7 +299,7 @@ LsaSrvLookupDomainSids(
     handle_t hLsaBinding = NULL;
     POLICY_HANDLE hDcPolicy = NULL;
     DWORD dwDomIndex = 0;
-    SidArray Sids = {0};
+    SID_ARRAY Sids = {0};
     RefDomainList *pDomain = NULL;
     TranslatedName *pDomainNames = NULL;
     DWORD dwDomainNamesCount = 0;
@@ -330,15 +330,15 @@ LsaSrvLookupDomainSids(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    Sids.num_sids = pAccountSids->dwCount;
+    Sids.dwNumSids = pAccountSids->dwCount;
 
-    dwError = LwAllocateMemory(sizeof(Sids.sids[0]) * Sids.num_sids,
-                               OUT_PPVOID(&Sids.sids));
+    dwError = LwAllocateMemory(sizeof(Sids.pSids[0]) * Sids.dwNumSids,
+                               OUT_PPVOID(&Sids.pSids));
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; i < Sids.num_sids; i++)
+    for (i = 0; i < Sids.dwNumSids; i++)
     {
-        Sids.sids[i].sid = pAccountSids->ppSids[i];
+        Sids.pSids[i].pSid = pAccountSids->ppSids[i];
     }
 
     ntStatus = LsaLookupSids(hLsaBinding,
@@ -424,7 +424,7 @@ LsaSrvLookupDomainSids(
     }
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(Sids.sids);
+    LW_SAFE_FREE_MEMORY(Sids.pSids);
 
     if (pDomEntry)
     {
@@ -475,7 +475,7 @@ LsaSrvLookupForeignDomainSids(
     DWORD iSid = 0;
     DWORD dwDomIndex = 0;
     ACCOUNT_SIDS ForeignSids = {0};
-    SidArray Sids = {0};
+    SID_ARRAY Sids = {0};
     RefDomainList *pForeignDomains = NULL;
     TranslatedName *pForeignNames = NULL;
     DWORD dwForeignNamesCount = 0;
@@ -498,8 +498,8 @@ LsaSrvLookupForeignDomainSids(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(
-                    sizeof(Sids.sids[0]) * pAccountSids->dwCount,
-                    OUT_PPVOID(&Sids.sids));
+                    sizeof(Sids.pSids[0]) * pAccountSids->dwCount,
+                    OUT_PPVOID(&Sids.pSids));
     BAIL_ON_LSA_ERROR(dwError);
 
     while (iDomSid < pAccountSids->dwCount)
@@ -540,9 +540,9 @@ LsaSrvLookupForeignDomainSids(
 
         for (i = 0; i < ForeignSids.dwCount; i++)
         {
-            Sids.sids[i].sid = ForeignSids.ppSids[i];
+            Sids.pSids[i].pSid = ForeignSids.ppSids[i];
         }
-        Sids.num_sids = ForeignSids.dwCount;
+        Sids.dwNumSids = ForeignSids.dwCount;
 
         ntStatus = LsaSrvConnectDomainBySid(pPolCtx,
                                             pDomSid,
@@ -632,10 +632,10 @@ LsaSrvLookupForeignDomainSids(
         {
             RTL_FREE(&(ForeignSids.ppSids[i]));
             ForeignSids.ppSids[i]     = NULL;
-            Sids.sids[i].sid          = NULL;
+            Sids.pSids[i].pSid        = NULL;
             ForeignSids.pdwIndices[i] = -1;
         }
-        Sids.num_sids = 0;
+        Sids.dwNumSids = 0;
 
         if (pForeignDomains)
         {
@@ -682,7 +682,7 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(ForeignSids.ppSids);
     LW_SAFE_FREE_MEMORY(ForeignSids.pdwIndices);
-    LW_SAFE_FREE_MEMORY(Sids.sids);
+    LW_SAFE_FREE_MEMORY(Sids.pSids);
 
     if (pForeignDomains)
     {

@@ -50,7 +50,7 @@
 DWORD __DsrRoleGetPrimaryDomainInformation(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT16 uiLevel,
-    /* [out] */ DsRoleInfo **ppInfo
+    /* [out] */ PDSR_ROLE_INFO *ppInfo
     )
 {
     DWORD err = 0;

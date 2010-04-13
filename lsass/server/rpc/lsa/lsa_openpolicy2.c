@@ -66,13 +66,14 @@ LsaSrvOpenPolicy2(
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    RPCSTATUS rpcStatus = 0;
     PPOLICY_CONTEXT pPolCtx = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = gpLsaSecDesc;
     GENERIC_MAPPING GenericMapping = {0};
     DWORD dwAccessGranted = 0;
+    PWSTR pwszProtSeq = NULL;
     PSTR pszSamrLpcSocketPath = NULL;
-    handle_t hSamrBinding = NULL;
+    PWSTR pwszSamrLpcSocketPath = NULL;
+    SAMR_BINDING hSamrBinding = NULL;
     CHAR szHostname[64] = {0};
     PWSTR pwszSystemName = NULL;
     CONNECT_HANDLE hConn = (CONNECT_HANDLE)NULL;
@@ -119,18 +120,23 @@ LsaSrvOpenPolicy2(
 
     dwError = LsaSrvConfigGetSamrLpcSocketPath(&pszSamrLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
-    
-    rpcStatus = InitSamrBindingFull(&hSamrBinding,
-                                    "ncalrpc",
-                                    szHostname,
-                                    pszSamrLpcSocketPath,
-                                    NULL,
-                                    NULL,
-                                    NULL);
-    if (rpcStatus) {
-        dwError = LW_ERROR_RPC_ERROR;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+
+    dwError = LwMbsToWc16s("ncalrpc",
+                           &pwszProtSeq);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMbsToWc16s(pszSamrLpcSocketPath,
+                           &pwszSamrLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = SamrInitBindingFull(&hSamrBinding,
+                                   pwszProtSeq,
+                                   NULL,
+                                   pwszSamrLpcSocketPath,
+                                   NULL,
+                                   NULL,
+                                   NULL);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     pPolCtx->hSamrBinding = hSamrBinding;
 
@@ -299,6 +305,8 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszSystemName);
     LW_SAFE_FREE_MEMORY(pszSamrLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszSamrLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszProtSeq);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)

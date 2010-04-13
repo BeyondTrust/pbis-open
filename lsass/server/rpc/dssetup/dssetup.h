@@ -34,9 +34,9 @@
 
 DWORD
 DsrSrvRoleGetPrimaryDomainInformation(
-    handle_t hBinding,
-    UINT16 uiLevel,
-    PDS_ROLE_INFO *ppInfo
+    handle_t         hBinding,
+    WORD             swLevel,
+    PDSR_ROLE_INFO  *ppInfo
     );
 
 

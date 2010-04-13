@@ -49,8 +49,8 @@
 
 NTSTATUS
 SamrSrvRenameAccount(
-    IN  ACCOUNT_HANDLE  hAccount,
-    IN  UnicodeString  *pAccountName
+    IN  ACCOUNT_HANDLE   hAccount,
+    IN  UNICODE_STRING  *pAccountName
     )
 {
     const wchar_t wszAccountDnFmt[] = L"CN=%ws,%ws";
@@ -135,12 +135,12 @@ SamrSrvRenameAccount(
 
     dwError = LwAllocateWc16StringFromUnicodeString(
                                &pwszSamAccountName,
-                               (PUNICODE_STRING)pAccountName);
+                               pAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateWc16StringFromUnicodeString(
                                &pwszCommonName,
-                               (PUNICODE_STRING)pAccountName);
+                               pAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwWc16sLen(pwszSamAccountName, &sSamAccountNameLen);

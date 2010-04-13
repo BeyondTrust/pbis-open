@@ -108,7 +108,7 @@ LsaSrvLookupNames3(
     IN  handle_t               hBinding,
     IN  POLICY_HANDLE          hPolicy,
     IN  DWORD                  dwNumNames,
-    IN  UnicodeStringEx       *pNames,
+    IN  UNICODE_STRING        *pNames,
     OUT RefDomainList        **ppDomains,
     OUT TranslatedSidArray3   *pSids,
     IN  UINT16                 level,

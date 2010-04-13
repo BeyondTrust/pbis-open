@@ -159,17 +159,17 @@ error:
 NTSTATUS
 SamrSrvGetFromUnicodeString(
     PWSTR *ppwszOut,
-    UnicodeString *pIn
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszStr = NULL;
 
     ntStatus = SamrSrvAllocateMemory((void**)&pwszStr,
-                                   (pIn->size + 1) * sizeof(WCHAR));
+                                   (pIn->MaximumLength + 1) * sizeof(WCHAR));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    wc16sncpy(pwszStr, pIn->string, (pIn->len / sizeof(WCHAR)));
+    wc16sncpy(pwszStr, pIn->Buffer, (pIn->Length / sizeof(WCHAR)));
     *ppwszOut = pwszStr;
 
 cleanup:
@@ -188,17 +188,17 @@ error:
 NTSTATUS
 SamrSrvGetFromUnicodeStringEx(
     PWSTR *ppwszOut,
-    UnicodeStringEx *pIn
+    UNICODE_STRING *pIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszStr = NULL;
 
     ntStatus = SamrSrvAllocateMemory((void**)&pwszStr,
-                                   (pIn->size) * sizeof(WCHAR));
+                                   (pIn->MaximumLength) * sizeof(WCHAR));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    wc16sncpy(pwszStr, pIn->string, (pIn->len / sizeof(WCHAR)));
+    wc16sncpy(pwszStr, pIn->Buffer, (pIn->Length / sizeof(WCHAR)));
     *ppwszOut = pwszStr;
 
 cleanup:
@@ -216,7 +216,7 @@ error:
 
 NTSTATUS
 SamrSrvInitUnicodeString(
-    UnicodeString *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     )
 {
@@ -227,31 +227,31 @@ SamrSrvInitUnicodeString(
     dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
     dwSize = dwLen * sizeof(WCHAR);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&(pOut->string),
+    ntStatus = SamrSrvAllocateMemory((void**)&(pOut->Buffer),
                                    dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pwszIn, dwSize);
-    pOut->size = dwSize;
-    pOut->len  = dwSize;
+    memcpy(pOut->Buffer, pwszIn, dwSize);
+    pOut->MaximumLength = dwSize;
+    pOut->Length        = dwSize;
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        SamrSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        SamrSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length        = 0;
     goto cleanup;
 }
 
 
 NTSTATUS
 SamrSrvInitUnicodeStringEx(
-    UnicodeStringEx *pOut,
+    UNICODE_STRING *pOut,
     PCWSTR pwszIn
     )
 {
@@ -262,53 +262,53 @@ SamrSrvInitUnicodeStringEx(
     dwLen  = (pwszIn) ? wc16slen(pwszIn) : 0;
     dwSize = (dwLen + 1) * sizeof(WCHAR);
 
-    ntStatus = SamrSrvAllocateMemory((void**)&(pOut->string),
+    ntStatus = SamrSrvAllocateMemory((void**)&(pOut->Buffer),
                                    dwSize);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    memcpy(pOut->string, pwszIn, dwSize - 1);
-    pOut->size = dwSize;
-    pOut->len  = dwSize - 1;
+    memcpy(pOut->Buffer, pwszIn, dwSize - 1);
+    pOut->MaximumLength = dwSize;
+    pOut->Length        = dwSize - 1;
 
 cleanup:
     return ntStatus;
 
 error:
-    if (pOut->string) {
-        SamrSrvFreeMemory(pOut->string);
+    if (pOut->Buffer) {
+        SamrSrvFreeMemory(pOut->Buffer);
     }
 
-    pOut->size = 0;
-    pOut->len  = 0;
+    pOut->MaximumLength = 0;
+    pOut->Length        = 0;
     goto cleanup;
 }
 
 
 void
 SamrSrvFreeUnicodeString(
-    UnicodeString *pStr
+    UNICODE_STRING *pStr
     )
 {
-    if (pStr->string)
+    if (pStr->Buffer)
     {
-        SamrSrvFreeMemory(pStr->string);
+        SamrSrvFreeMemory(pStr->Buffer);
     }
-    pStr->len  = 0;
-    pStr->size = 0;
+    pStr->Length        = 0;
+    pStr->MaximumLength = 0;
 }
 
 
 void
 SamrSrvFreeUnicodeStringEx(
-    UnicodeStringEx *pStr
+    UNICODE_STRING *pStr
     )
 {
-    if (pStr->string)
+    if (pStr->Buffer)
     {
-        SamrSrvFreeMemory(pStr->string);
+        SamrSrvFreeMemory(pStr->Buffer);
     }
-    pStr->len  = 0;
-    pStr->size = 0;
+    pStr->Length        = 0;
+    pStr->MaximumLength = 0;
 }
 
 

@@ -14,7 +14,7 @@ NTSTATUS
 SamrSrvCreateAccount(
     IN  handle_t          hBinding,
     IN  DOMAIN_HANDLE     hDomain,
-    IN  UnicodeStringEx  *pAccountName,
+    IN  UNICODE_STRING   *pAccountName,
     IN  DWORD             dwObjectClass,
     IN  DWORD             dwAccountFlags,
     IN  DWORD             dwAccessMask,
@@ -140,9 +140,9 @@ SamrSrvCreateAccount(
     size_t sCommonNameLen = 0;
     size_t sParentDnLen = 0;
     DWORD i = 0;
-    UnicodeString AccountName = {0};
-    Ids Rids = {0};
-    Ids Types = {0};
+    UNICODE_STRING AccountName = {0};
+    IDS Rids = {0};
+    IDS Types = {0};
     DWORD dwRid = 0;
     DWORD dwAccountType = 0;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
@@ -169,7 +169,7 @@ SamrSrvCreateAccount(
 
     dwError = LwAllocateWc16StringFromUnicodeString(
                                      &pwszAccountName,
-                                     (PUNICODE_STRING)pAccountName);
+                                     pAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = SamrSrvInitUnicodeString(&AccountName,
@@ -198,14 +198,14 @@ SamrSrvCreateAccount(
     }
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    if (Rids.ids)
+    if (Rids.pIds)
     {
-        SamrSrvFreeMemory(Rids.ids);
+        SamrSrvFreeMemory(Rids.pIds);
     }
 
-    if (Types.ids)
+    if (Types.pIds)
     {
-        SamrSrvFreeMemory(Types.ids);
+        SamrSrvFreeMemory(Types.pIds);
     }
 
     /*
@@ -281,8 +281,8 @@ SamrSrvCreateAccount(
                                   &Types);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwRid         = Rids.ids[0];
-    dwAccountType = Types.ids[0];
+    dwRid         = Rids.pIds[0];
+    dwAccountType = Types.pIds[0];
 
     /*
      * Create default security descriptor
@@ -336,14 +336,14 @@ cleanup:
 
     SamrSrvFreeUnicodeString(&AccountName);
 
-    if (Rids.ids)
+    if (Rids.pIds)
     {
-        SamrSrvFreeMemory(Rids.ids);
+        SamrSrvFreeMemory(Rids.pIds);
     }
 
-    if (Types.ids)
+    if (Types.pIds)
     {
-        SamrSrvFreeMemory(Types.ids);
+        SamrSrvFreeMemory(Types.pIds);
     }
 
     SamrSrvFreeSecurityDescriptor(&pSecDesc);

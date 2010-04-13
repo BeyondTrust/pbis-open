@@ -51,7 +51,7 @@ NTSTATUS
 SamrSrvCreateUser2(
     IN  handle_t         hBinding,
     IN  DOMAIN_HANDLE    hDomain,
-    IN  UnicodeStringEx *pAccountName,
+    IN  UNICODE_STRING  *pAccountName,
     IN  DWORD            dwAccountFlags,
     IN  DWORD            dwAccessMask,
     OUT ACCOUNT_HANDLE  *phUser,

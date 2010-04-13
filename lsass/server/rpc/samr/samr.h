@@ -77,7 +77,7 @@ NTSTATUS
 SamrSrvLookupDomain(
     handle_t hBinding,                     
     CONNECT_HANDLE hConn,
-    UnicodeString *domain_name,
+    UNICODE_STRING *domain_name,
     SID **sid
     );
 
@@ -88,7 +88,7 @@ SamrSrvEnumDomains(
     CONNECT_HANDLE hConn,
     UINT32 *resume,
     UINT32 size,
-    EntryArray **domains,
+    ENTRY_ARRAY **domains,
     UINT32 *num_entries
     );
 
@@ -116,7 +116,7 @@ NTSTATUS
 SamrSrvCreateUser(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
-    UnicodeString *account_name,
+    UNICODE_STRING *account_name,
     UINT32 access_mask,
     ACCOUNT_HANDLE *hUser,
     UINT32 *rid
@@ -130,7 +130,7 @@ SamrSrvEnumDomainUsers(
     UINT32 *resume,
     UINT32 account_flags,
     UINT32 max_size,
-    RidNameArray **names,
+    RID_NAME_ARRAY **names,
     UINT32 *num_entries
     );
 
@@ -139,7 +139,7 @@ NTSTATUS
 SamrSrvCreateDomAlias(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
-    UnicodeString *alias_name,
+    UNICODE_STRING *alias_name,
     UINT32 access_mask,
     ACCOUNT_HANDLE *hAlias,
     UINT32 *rid
@@ -152,7 +152,7 @@ SamrSrvEnumDomainAliases(
     DOMAIN_HANDLE hDomain,
     UINT32 *resume,
     UINT32 account_flags,
-    RidNameArray **names,
+    RID_NAME_ARRAY **names,
     UINT32 *num_entries
     );
 
@@ -161,8 +161,8 @@ NTSTATUS
 SamrSrvGetAliasMembership(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
-    SidArray *pSids,
-    Ids *pRids
+    SID_ARRAY *pSids,
+    IDS *pRids
     );
 
 
@@ -171,9 +171,9 @@ SamrSrvLookupNames(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
     UINT32 num_names,
-    UnicodeString *names,
-    Ids *ids,
-    Ids *types
+    UNICODE_STRING *names,
+    IDS *ids,
+    IDS *types
     );
 
 
@@ -183,8 +183,8 @@ SamrSrvLookupRids(
     DOMAIN_HANDLE hDomain,
     UINT32 dwNumRids,
     UINT32 *pdwRids,
-    UnicodeStringArray *pNames,
-    Ids *pTypes
+    UNICODE_STRING_ARRAY *pNames,
+    IDS *pTypes
     );
 
 
@@ -252,7 +252,7 @@ NTSTATUS
 SamrSrvGetMembersInAlias(
     handle_t hBinding,
     ACCOUNT_HANDLE hAlias,
-    SidArray *sids
+    SID_ARRAY *sids
     );
 
 
@@ -296,7 +296,7 @@ NTSTATUS
 SamrSrvGetUserGroups(
     IN  handle_t                hBinding,
     IN  ACCOUNT_HANDLE          hUser,
-    OUT RidWithAttributeArray **ppRids
+    OUT RID_WITH_ATTRIBUTE_ARRAY **ppRids
     );
 
 
@@ -334,7 +334,7 @@ NTSTATUS
 SamrSrvCreateUser2(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
-    UnicodeStringEx *account_name,
+    UNICODE_STRING *account_name,
     UINT32 account_flags,
     UINT32 access_mask,
     ACCOUNT_HANDLE *hUser,
@@ -346,8 +346,8 @@ SamrSrvCreateUser2(
 NTSTATUS
 SamrSrvChangePasswordUser2(
     IN  handle_t       hBinding,
-    IN  UnicodeString *pDomainName,
-    IN  UnicodeString *pAccountName,
+    IN  UNICODE_STRING *pDomainName,
+    IN  UNICODE_STRING *pAccountName,
     IN  CryptPassword *pNtPasswordBlob,
     IN  HashPassword  *pNtVerifier,
     IN  UINT8          ussLmChange,
@@ -383,7 +383,7 @@ SamrSrvEnumDomainAccounts(
     DWORD dwObjectClass,
     UINT32 account_flags,
     UINT32 max_size,
-    RidNameArray **names,
+    RID_NAME_ARRAY **names,
     UINT32 *num_entries
     );
 
@@ -403,7 +403,7 @@ NTSTATUS
 SamrSrvCreateAccount(
     handle_t hBinding,
     DOMAIN_HANDLE hDomain,
-    UnicodeStringEx *account_name,
+    UNICODE_STRING *account_name,
     DWORD dwObjectClass,
     UINT32 account_flags,
     UINT32 access_mask,
@@ -452,7 +452,7 @@ SamrSrvConnect5(
 NTSTATUS
 SamrSrvRenameAccount(
     IN  ACCOUNT_HANDLE  hAccount,
-    IN  UnicodeString  *pAccountName
+    IN  UNICODE_STRING  *pAccountName
     );
 
 
