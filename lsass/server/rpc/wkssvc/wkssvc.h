@@ -57,6 +57,28 @@ NetrSrvWkstaGetInfo(
     );
 
 
+WINERROR
+NetrSrvJoinDomain2(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in] */ wchar16_t *pwszDomainName,
+    /* [in] */ wchar16_t *pwszAccountOu,
+    /* [in] */ wchar16_t *pwszAccountName,
+    /* [in] */ ENC_JOIN_PASSWORD_BUFFER *pPassword,
+    /* [in] */ DWORD dwJoinFlags
+    );
+
+
+WINERROR
+NetrSrvUnjoinDomain2(
+    /* [in] */ handle_t                  hBinding,
+    /* [in] */ PWSTR                     pwszServerName,
+    /* [in] */ PWSTR                     pwszAccountName,
+    /* [in] */ PENC_JOIN_PASSWORD_BUFFER pPassword,
+    /* [in] */ DWORD                     dwUnjoinFlags
+    );
+
+
 #endif /* _WKSSVC_H_ */
 
 

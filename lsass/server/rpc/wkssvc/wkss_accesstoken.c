@@ -54,6 +54,14 @@ WkssSrvInitNpAuthInfo(
     );
 
 
+static
+DWORD
+WkssSrvInitLpcAuthInfo(
+    IN  rpc_transport_info_handle_t hTransportInfo,
+    OUT PWKSS_SRV_CONTEXT           pSrvCtx
+    );
+
+
 DWORD
 WkssSrvInitAuthInfo(
     IN  handle_t           hBinding,
@@ -103,9 +111,14 @@ WkssSrvInitAuthInfo(
         case rpc_c_protseq_id_ncacn_np:
             ntStatus = WkssSrvInitNpAuthInfo(hTransportInfo,
                                              pSrvCtx);
-            BAIL_ON_NT_STATUS(ntStatus);
+            break;
+
+        case rpc_c_protseq_id_ncalrpc:
+            ntStatus = WkssSrvInitLpcAuthInfo(hTransportInfo,
+                                              pSrvCtx);
             break;
         }
+        BAIL_ON_NT_STATUS(ntStatus);
     }
 
 cleanup:
@@ -137,6 +150,45 @@ WkssSrvInitNpAuthInfo(
     DWORD dwSessionKeyLen = 0;
 
     rpc_smb_transport_info_inq_session_key(
+                                   hTransportInfo,
+                                   (unsigned char**)&pucSessionKey,
+                                   (unsigned16*)&usSessionKeyLen);
+
+    dwSessionKeyLen = usSessionKeyLen;
+    if (dwSessionKeyLen)
+    {
+        dwError = LwAllocateMemory(dwSessionKeyLen,
+                                   OUT_PPVOID(&pSessionKey));
+        BAIL_ON_LSA_ERROR(dwError);
+
+        memcpy(pSessionKey, pucSessionKey, dwSessionKeyLen);
+    }
+
+    pSrvCtx->pSessionKey     = pSessionKey;
+    pSrvCtx->dwSessionKeyLen = dwSessionKeyLen;
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+static
+DWORD
+WkssSrvInitLpcAuthInfo(
+    IN  rpc_transport_info_handle_t  hTransportInfo,
+    OUT PWKSS_SRV_CONTEXT            pSrvCtx
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PUCHAR pucSessionKey = NULL;
+    USHORT usSessionKeyLen = 0;
+    PBYTE pSessionKey = NULL;
+    DWORD dwSessionKeyLen = 0;
+
+    rpc_lrpc_transport_info_inq_session_key(
                                    hTransportInfo,
                                    (unsigned char**)&pucSessionKey,
                                    (unsigned16*)&usSessionKeyLen);

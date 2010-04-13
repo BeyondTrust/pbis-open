@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2009
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,50 +28,50 @@
  * license@likewisesoftware.com
  */
 
-#include <config.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <string.h>
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#endif
-#include <pthread.h>
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        wkss_crypto.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        Encrypted password blob handling functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
 
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/lrpc.h>
-#include <dce/dcethread.h>
-#include <wc16str.h>
-#include <openssl/md5.h>
-#include <openssl/rc4.h>
-#include <lw/base.h>
-#include <lwsid.h>
-#include <lwio/lwio.h>
-#include <lwnet.h>
-#include <lwps/lwps.h>
-#include <lwkrb5.h>
-#include <lw/rpc/wkssvc.h>
-#include <lw/rpc/lsa.h>
+#ifndef _WKSS_SRV_CRYPTO_H_
+#define _WKSS_SRV_CRYPTO_H_
 
-#include <lsarpcsrv.h>
-#include <lsasrvutils.h>
-#include <rpcctl-register.h>
-#include <lsasrvapi.h>
-#include <lsaadprovider.h>
 
-#include "structs.h"
-#include "wkss_srv.h"
-#include "wkss_cfg.h"
-#include "wkssdefs.h"
-#include "wkss_accesstoken.h"
-#include "wkss_security.h"
-#include "wkss_memory.h"
-#include "wkss_crypto.h"
-#include "wkssvc.h"
-#include "wkssvc_h.h"
+DWORD
+WkssSrvDecryptPasswordBlob(
+    IN  PWKSS_SRV_CONTEXT          pSrvCtx,
+    IN  PENC_JOIN_PASSWORD_BUFFER  pPassBuffer,
+    IN  PBYTE                      pCryptKey,
+    IN  DWORD                      dwCryptKeyLen,
+    OUT PWSTR                     *ppwszPassword
+    );
 
-#include "externs.h"
+
+DWORD
+WkssSrvEncryptPasswordBlobEx(
+    IN  PWKSS_SRV_CONTEXT          pSrvCtx,
+    IN  PCWSTR                     pwszPassword,
+    IN  PBYTE                      pCryptoKey,
+    IN  DWORD                      dwCryptoKeyLen,
+    IN  PBYTE                      pKeyInit,
+    IN  DWORD                      dwKeyInitLen,
+    IN  PBYTE                      pBlobInit,
+    OUT PENC_JOIN_PASSWORD_BUFFER  pEncryptedPassBlob
+    );
+
+
+#endif /* _WKSS_SRV_CRYPTO */
 
 
 /*

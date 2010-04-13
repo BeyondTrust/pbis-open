@@ -16,7 +16,10 @@ libwkssvc_la_SOURCES =          \
     wkss_srv.c                  \
     wkss_memory.c               \
     wkss_accesstoken.c          \
-    netr_wkstagetinfo.c
+    wkss_crypto.c               \
+    netr_wkstagetinfo.c         \
+    netr_joindomain2.c          \
+    netr_unjoindomain2.c
 
 #libwkssvc_la_SOURCES =          \
 #    globals.c                   \
@@ -40,16 +43,15 @@ libwkssvc_la_CFLAGS =        \
     $(DCERPC_INCLUDES)       \
     $(LWBASE_INCLUDES)       \
     $(LWADVAPI_INCLUDES)     \
-    $(NETAPI_INCLUDES)       \
     $(NETLOGON_INCLUDES)
 
 libwkssvc_la_LIBADD =                             \
     $(DCERPC_LIBS)                                \
     $(LWBASE_LIBS)                                \
     $(LWADVAPI_LIBS)                              \
-    $(NETAPI_LIBS)                                \
     $(NETLOGON_LIBS)                              \
-    $(top_builddir)/server/api/liblsaserverapi.la
+    $(top_builddir)/server/api/liblsaserverapi.la \
+    $(top_builddir)/client/rpc/liblsarpc.la
 
 libwkssvc_ss_la_SOURCES = \
     wkssvc_sstub.c

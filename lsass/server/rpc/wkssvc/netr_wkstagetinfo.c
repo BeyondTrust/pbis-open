@@ -50,9 +50,9 @@
 
 WINERROR
 NetrSrvWkstaGetInfo(
-    /* [in] */ handle_t IDL_handle,
-    /* [in] */ wchar16_t *pwszServerName,
-    /* [in] */ DWORD dwLevel,
+    /* [in] */ handle_t          hBinding,
+    /* [in] */ PWSTR             pwszServerName,
+    /* [in] */ DWORD             dwLevel,
     /* [out] */ PNETR_WKSTA_INFO pInfo
     )
 {
@@ -61,11 +61,13 @@ NetrSrvWkstaGetInfo(
 
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    unsigned32 rpcStatus = RPC_S_OK;
+    WKSS_SRV_CONTEXT SrvCtx = {0};
     PWKSTA_INFO_100 pInfo100 = NULL;
     CHAR szHostname[64] = {0};
+    PWSTR pwszLpcProtSeq = NULL;
     PSTR pszLsaLpcSocketPath = NULL;
-    handle_t hLsaBinding = NULL;
+    PWSTR pwszLsaLpcSocketPath = NULL;
+    LSA_BINDING hLsaBinding = NULL;
     PWSTR pwszLocalHost = NULL;
     POLICY_HANDLE hLocalPolicy = NULL;
     LsaPolicyInformation *pPolInfo = NULL;
@@ -78,6 +80,10 @@ NetrSrvWkstaGetInfo(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    dwError = WkssSrvInitAuthInfo(hBinding,
+                                  &SrvCtx);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = WkssSrvAllocateMemory(OUT_PPVOID(&pInfo100),
                                     sizeof(*pInfo100));
     BAIL_ON_LSA_ERROR(dwError);
@@ -85,21 +91,23 @@ NetrSrvWkstaGetInfo(
     dwError = gethostname(szHostname, sizeof(szHostname));
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwMbsToWc16s("ncalrpc", &pwszLpcProtSeq);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = WkssSrvConfigGetLsaLpcSocketPath(&pszLsaLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
-    rpcStatus = InitLsaBindingFull(&hLsaBinding,
-                                   "ncalrpc",
-                                   NULL,
-                                   pszLsaLpcSocketPath,
-                                   NULL,
-                                   NULL,
-                                   NULL);
-    if (rpcStatus)
-    {
-        ntStatus = LwRpcStatusToNtStatus(rpcStatus);
-        BAIL_ON_NT_STATUS(ntStatus);
-    }
+    dwError = LwMbsToWc16s(pszLsaLpcSocketPath, &pwszLsaLpcSocketPath);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = LsaInitBindingFull(&hLsaBinding,
+                                  pwszLpcProtSeq,
+                                  NULL,
+                                  pwszLsaLpcSocketPath,
+                                  NULL,
+                                  NULL,
+                                  NULL);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     dwError = LwMbsToWc16s(szHostname, &pwszLocalHost);
     BAIL_ON_LSA_ERROR(dwError);
@@ -149,9 +157,13 @@ cleanup:
         LsaRpcFreeMemory(pPolInfo);
     }
 
-    FreeLsaBinding(&hLsaBinding);
+    LsaFreeBinding(&hLsaBinding);
+
+    WkssSrvFreeAuthInfo(&SrvCtx);
 
     LW_SAFE_FREE_MEMORY(pszLsaLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszLsaLpcSocketPath);
+    LW_SAFE_FREE_MEMORY(pwszLpcProtSeq);
     LW_SAFE_FREE_MEMORY(pwszLocalHost);
 
     if (dwError == ERROR_SUCCESS &&

@@ -226,7 +226,7 @@ srv_NetrJoinDomain(
     /* [in] */ DWORD dwJoinFlags
     )
 {
-    WINERROR winError = ERROR_SUCCESS;
+    WINERROR winError = ERROR_NOT_SUPPORTED;
     return winError;
 }
 
@@ -240,7 +240,7 @@ srv_NetrUnjoinDomain(
     /* [in] */ DWORD dwUnjoinFlags
     )
 {
-    WINERROR winError = ERROR_SUCCESS;
+    WINERROR winError = ERROR_NOT_SUPPORTED;
     return winError;
 }
 
@@ -317,6 +317,14 @@ srv_NetrJoinDomain2(
     )
 {
     WINERROR winError = ERROR_SUCCESS;
+
+    winError = NetrSrvJoinDomain2(IDL_handle,
+                                  pwszServerName,
+                                  pwszDomainName,
+                                  pwszAccountOu,
+                                  pwszAccountName,
+                                  pPassword,
+                                  dwJoinFlags);
     return winError;
 }
 
@@ -331,6 +339,12 @@ srv_NetrUnjoinDomain2(
     )
 {
     WINERROR winError = ERROR_SUCCESS;
+
+    winError = NetrSrvUnjoinDomain2(IDL_handle,
+                                    pwszServerName,
+                                    pwszAccountName,
+                                    pPassword,
+                                    dwUnjoinFlags);
     return winError;
 }
 
