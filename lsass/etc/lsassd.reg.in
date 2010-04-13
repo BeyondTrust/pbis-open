@@ -80,7 +80,7 @@
 "LockoutWindow"=dword:00000000
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers]
-"LoadOrder"=sza:"lsarpc" "samr" "dssetup"
+"LoadOrder"=sza:"lsarpc" "samr" "dssetup" "wkssvc"
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\lsarpc]
 "Path"="@rpcserverdir@/liblsa_srv@MOD_EXT@"
@@ -95,4 +95,8 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\dssetup]
 "Path"="@rpcserverdir@/libdssetup_srv@MOD_EXT@"
+"LpcSocketPath"="@CACHEDIR@/rpc/lsass"
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\wkssvc]
+"Path"="@rpcserverdir@/libwkssvc_srv@MOD_EXT@"
 "LpcSocketPath"="@CACHEDIR@/rpc/lsass"

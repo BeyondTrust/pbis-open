@@ -1044,8 +1044,16 @@ AC_CONFIG_FILES([Makefile
                  client/api/Makefile
                  client/ad/Makefile
                  client/ntlm/Makefile
+                 client/rpc/Makefile
+                 client/rpc/lsa/Makefile
+                 client/rpc/samr/Makefile
+                 client/rpc/netlogon/Makefile
+                 client/rpc/dssetup/Makefile
+                 client/rpc/krb5pac/Makefile
+                 client/rpc/wkssvc/Makefile
                  logging_r/Makefile
                  lsaunistr/Makefile
+                 join/keytab/Makefile
                  join/Makefile
                  interop/Makefile
                  interop/gssntlm/Makefile
@@ -1070,6 +1078,7 @@ AC_CONFIG_FILES([Makefile
                  server/rpc/lsa/Makefile
                  server/rpc/samr/Makefile
                  server/rpc/dssetup/Makefile
+                 server/rpc/wkssvc/Makefile
                  server/store/Makefile
                  server/store/samdb/Makefile
                  server/store/dsapi/Makefile
@@ -1085,6 +1094,8 @@ AC_CONFIG_FILES([Makefile
                  include/lsaregdef.h
                  include/Makefile
                  scripts/Makefile
+                 tests/Makefile
+                 tests/rpc/Makefile
                  docs/Makefile
                  docs/Doxyfile])
 
