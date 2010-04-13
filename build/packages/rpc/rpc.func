@@ -1,4 +1,4 @@
-PKG_COMPONENTS="libkeytab libgss dcerpc librpc lwrpcrt"
+PKG_COMPONENTS="libkeytab libgss dcerpc librpc"
 
 function package_populate
 {

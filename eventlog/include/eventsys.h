@@ -51,7 +51,7 @@
   #include <sys/stat.h>
   #include <dirent.h>
   #include <pwd.h>
-  #include <lwrpcrt.h>
+  #include <lwrpcrt/lwrpcrt.h>
   #include <lw/winerror.h>
   #include <dlfcn.h>
   #include <dce/rpcexc.h>
@@ -62,5 +62,3 @@
 #endif
 
 #endif
-
-

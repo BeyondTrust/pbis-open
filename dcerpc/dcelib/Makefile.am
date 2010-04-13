@@ -5,7 +5,7 @@ include $(top_srcdir)/ncklib/ncklib.mk
 
 # Build the shared library
 lib_LTLIBRARIES = libdcerpc.la
-libdcerpc_la_SOURCES = dummyfuncs.c
+libdcerpc_la_SOURCES = dummyfuncs.c lwrpcrt.c
 
 if TARGET_OS_LINUX
 libdcerpc_la_LDFLAGS = -version-info 1:2:0 -all_load -Wl,--version-script,$(srcdir)/exports -Wl,-Bgroup -Wl,--allow-shlib-undefined

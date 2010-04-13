@@ -512,6 +512,7 @@ include/dce/s390x/Makefile
 include/dce/sparc/Makefile
 include/dce/x86_64/Makefile
 include/dce/ia64/Makefile
+include/lwrpcrt/Makefile
 idl_compiler/Makefile
 idl_compiler/sysdep.h
 idl_lib/Makefile

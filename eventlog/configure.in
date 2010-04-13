@@ -133,34 +133,6 @@ AC_SUBST(DCERPC_INCLUDES)
 AC_SUBST(DCERPC_LDFLAGS)
 AC_SUBST(DCERPC_LIBS)
 
-# lwrpcrt
-
-AC_ARG_WITH([lwrpcrt],
-        [AC_HELP_STRING([--with-lwrpcrt=<dir>], [use lwrpcrt located in prefix <dir>])],
-        [
-		LWRPCRT_INCLUDES="-I$withval/include"
-                LWRPCRT_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([lwrpcrt-includes],
-        [AC_HELP_STRING([--with-lwrpcrt-includes=<dir>], [use lwrpcrt includes located in <dir>])],
-        [
-		LWRPCRT_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([lwrpcrt-libs],
-        [AC_HELP_STRING([--with-lwrpcrt-libs=<dir>], [use lwrpcrt libs located in <dir>])],
-        [
-		LWRPCRT_LDFLAGS="-L$withval"
-        ])
-
-LWRPCRT_LIBS="-llwrpcrt"
-
-AC_SUBST(LWRPCRT_INCLUDES)
-AC_SUBST(LWRPCRT_LDFLAGS)
-AC_SUBST(LWRPCRT_LIBS)
-
-
 # gssapi
 
 AC_ARG_WITH([gssapi],

@@ -1,2 +1,2 @@
 ## Process this file with automake to produce Makefile.in
-SUBDIRS=dce compat
+SUBDIRS=dce compat lwrpcrt

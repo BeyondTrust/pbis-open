@@ -28,7 +28,7 @@
  * license@likewisesoftware.com
  */
 
-#include "lwrpcrt.h"
+#include "lwrpcrt/lwrpcrt.h"
 #include <lw/winerror.h>
 #include <stdlib.h>
 #include <wc16str.h>

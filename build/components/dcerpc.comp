@@ -6,7 +6,7 @@ COMP_SOURCES=${BUILD_ROOT}/src/linux/dcerpc
 
 function component_bootstrap
 {
-    cd "${COMP_SOURCES}" && ./buildconf
+    cd "${COMP_SOURCES}" && ./autogen.sh
     exit_on_error $?
 }
 
