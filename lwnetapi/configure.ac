@@ -215,6 +215,33 @@ AC_ARG_WITH([lwbase-libs],
 		LWBASE_LDFLAGS="-L$withval"
         ])
         
+# lsass
+
+AC_ARG_WITH([lsass],
+        [AC_HELP_STRING([--with-lsass=<dir>], [use lsass located in prefix <dir>])],
+        [
+        LSASS_INCLUDES="-I$withval/include"
+        LSASS_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([lsass-includes],
+        [AC_HELP_STRING([--with-lsass-includes=<dir>], [use lsass includes located in <dir>])],
+        [
+        LSASS_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([lsass-libs],
+        [AC_HELP_STRING([--with-lsass-libs=<dir>], [use lsass libs located in <dir>])],
+        [
+        LSASS_LDFLAGS="-L$withval"
+        ])
+
+LSASS_LIBS=-llsarpc
+
+AC_SUBST(LSASS_INCLUDES)
+AC_SUBST(LSASS_LDFLAGS)
+AC_SUBST(LSASS_LIBS)
+
 # srvsvc
 
 AC_ARG_WITH([srvsvc],
@@ -241,6 +268,60 @@ SRVSVC_LIBS=-lsrvsvc
 AC_SUBST(SRVSVC_INCLUDES)
 AC_SUBST(SRVSVC_LDFLAGS)
 AC_SUBST(SRVSVC_LIBS)
+
+# dcerpc
+
+AC_ARG_WITH([dcerpc],
+        [AC_HELP_STRING([--with-dcerpc=<dir>], [use dcerpc located in prefix <dir>])],
+        [
+        DCERPC_INCLUDES="-I$withval/include"
+        DCERPC_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([dcerpc-includes],
+        [AC_HELP_STRING([--with-dcerpc-includes=<dir>], [use dcerpc includes located in <dir>])],
+        [
+        DCERPC_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([dcerpc-libs],
+        [AC_HELP_STRING([--with-dcerpc-libs=<dir>], [use dcerpc libs located in <dir>])],
+        [
+        DCERPC_LDFLAGS="-L$withval"
+        ])
+
+DCERPC_LIBS=-ldcerpc
+
+AC_SUBST(DCERPC_INCLUDES)
+AC_SUBST(DCERPC_LDFLAGS)
+AC_SUBST(DCERPC_LIBS)
+
+# dcerpc
+
+AC_ARG_WITH([netlogon],
+        [AC_HELP_STRING([--with-netlogon=<dir>], [use dcerpc located in prefix <dir>])],
+        [
+        NETLOGON_INCLUDES="-I$withval/include"
+        NETLOGON_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([netlogon-includes],
+        [AC_HELP_STRING([--with-netlogon-includes=<dir>], [use netlogon includes located in <dir>])],
+        [
+        NETLOGON_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([netlogon-libs],
+        [AC_HELP_STRING([--with-netlogon-libs=<dir>], [use netlogon libs located in <dir>])],
+        [
+        NETLOGON_LDFLAGS="-L$withval"
+        ])
+
+NETLOGON_LIBS=-llwnetclientapi
+
+AC_SUBST(NETLOGON_INCLUDES)
+AC_SUBST(NETLOGON_LDFLAGS)
+AC_SUBST(NETLOGON_LIBS)
 
 # unicode
 
