@@ -361,7 +361,7 @@ NTSTATUS
 LsaInitBindingDefault(
     OUT PLSA_BINDING   phBinding,
     IN  PCWSTR         pwszHostname,
-    IN  PIO_CREDS      pCreds
+    IN  LW_PIO_CREDS   pCreds
     );
 
 
@@ -373,7 +373,7 @@ LsaInitBindingFull(
     IN  PCWSTR         pwszEndpoint,
     IN  PCWSTR         pwszUuid,
     IN  PCWSTR         pwszOptions,
-    IN  PIO_CREDS      pCreds
+    IN  LW_PIO_CREDS   pCreds
     );
 
 

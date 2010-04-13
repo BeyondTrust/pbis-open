@@ -110,7 +110,7 @@ typedef struct _WKSTA_INFO_102
     [string]
 #endif
     PWSTR  wksta102_lan_root;
-    DWORD  dwLoggedUsers;
+    DWORD  wksta102_logged_users;
 
 } WKSTA_INFO_102, *PWKSTA_INFO_102;
 
@@ -169,11 +169,40 @@ WkssFreeBinding(
 
 WINERROR
 NetrWkstaGetInfo(
-    IN WKSS_BINDING       hBinding,
-    IN PWSTR              pwszServerName,
-    IN DWORD              dwLevel,
-    OUT PNETR_WKSTA_INFO  pInfo
+    IN  WKSS_BINDING       hBinding,
+    IN  PWSTR              pwszServerName,
+    IN  DWORD              dwLevel,
+    OUT PNETR_WKSTA_INFO   pInfo
     );
+
+
+WINERROR
+NetrJoinDomain2(
+    IN  WKSS_BINDING               hBinding,
+    IN  PWSTR                      pwszServerName,
+    IN  PWSTR                      pwszDomainName,
+    IN  PWSTR                      pwszAccountOu,
+    IN  PWSTR                      pwszAccountName,
+    IN  PENC_JOIN_PASSWORD_BUFFER  pPassword,
+    IN  DWORD                      dwJoinFlags
+    );
+
+
+WINERROR
+NetrUnjoinDomain2(
+    IN  WKSS_BINDING               hBinding,
+    IN  PWSTR                      pwszServerName,
+    IN  PWSTR                      pwszAccountName,
+    IN  PENC_JOIN_PASSWORD_BUFFER  pPassword,
+    IN  DWORD                      dwUnjoinFlags
+    );
+
+
+VOID
+WkssFreeMemory(
+    IN PVOID pPtr
+    );
+
 
 #endif /* _DCE_IDL_ */
 

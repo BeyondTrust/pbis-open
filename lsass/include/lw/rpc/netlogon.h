@@ -763,6 +763,16 @@ NetrCredentialsInit(
 
 
 NTSTATUS
+NetrNTLMv1EncryptChallenge(
+    BYTE  Challenge[8],
+    PBYTE pLmHash,
+    PBYTE pNtHash,
+    BYTE  LmResponse[24],
+    BYTE  NtResponse[24]
+    );
+
+
+NTSTATUS
 NetrInitMemory(
     VOID
     );
