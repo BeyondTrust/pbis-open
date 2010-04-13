@@ -393,7 +393,7 @@ cpp_quote("#endif")
         [out] CONNECT_HANDLE *hConn
         );
 
-    NTSTATUS samr_Function3f();
+    NTSTATUS _samr_Function3f();
 
     /* function 0x40 */
     NTSTATUS __SamrConnect5(

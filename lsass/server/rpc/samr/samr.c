@@ -955,6 +955,15 @@ NTSTATUS __SamrConnect4(
 }
 
 
+NTSTATUS _samr_Function3f(
+    /* [in] */ handle_t IDL_handle
+    )
+{
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    return status;
+}
+
+
 NTSTATUS __SamrConnect5(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT32 size,
