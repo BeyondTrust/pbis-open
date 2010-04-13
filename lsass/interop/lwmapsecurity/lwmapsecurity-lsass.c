@@ -48,7 +48,10 @@
 #include <lw/rtlgoto.h>
 #include <lsa/lsa.h>
 #include <uuid/uuid.h>
-#include <lwrpc/krb5pac.h>
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
 #include <gssapi/gssapi.h>
 #include <gssapi/gssapi_ext.h>
 #include <sys/types.h>
@@ -1355,7 +1358,6 @@ LsaMapSecurityGetPacInfoFromGssContext(
     NTSTATUS status = STATUS_SUCCESS;
     OM_uint32 minorStatus = 0;
     OM_uint32 majorStatus = 0;
-    error_status_t dceStatus = 0;
     gss_name_t srcName = GSS_C_NO_NAME;
     gss_buffer_desc logonInfoUrn =
     {
@@ -1404,15 +1406,11 @@ LsaMapSecurityGetPacInfoFromGssContext(
         BAIL_ON_NT_STATUS(status);
     }
 
-    dceStatus = DecodePacLogonInfo(
+    status = DecodePacLogonInfo(
         pacData.value,
         pacData.length,
         &pPac);
-    if (dceStatus)
-    {
-        status = STATUS_UNSUCCESSFUL;
-        BAIL_ON_NT_STATUS(status);
-    }
+    BAIL_ON_NT_STATUS(status);
 
     *ppPac = pPac;
 
@@ -1506,16 +1504,16 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
     BAIL_ON_NT_STATUS(status);
 
     status = RTL_ALLOCATE(&ppInputSids, PSID, sizeof(PSID) * 
-                          (pPac->info3.base.groups.count +
-                           pPac->res_groups.count +
+                          (pPac->info3.base.groups.dwCount +
+                           pPac->res_groups.dwCount +
                            pPac->info3.sidcount));
     BAIL_ON_NT_STATUS(status);
 
-    for (dwIndex = 0; dwIndex < pPac->info3.base.groups.count; dwIndex++)
+    for (dwIndex = 0; dwIndex < pPac->info3.base.groups.dwCount; dwIndex++)
     {
         status = LsaMapSecurityConstructSid(
             pPac->info3.base.domain_sid,
-            pPac->info3.base.groups.rids[dwIndex].rid,
+            pPac->info3.base.groups.pRids[dwIndex].dwRid,
             &pSid);
         BAIL_ON_NT_STATUS(status);
 
@@ -1523,11 +1521,11 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
         pSid = NULL;
     }
 
-    for (dwIndex = 0; dwIndex < pPac->res_groups.count; dwIndex++)
+    for (dwIndex = 0; dwIndex < pPac->res_groups.dwCount; dwIndex++)
     {
         status = LsaMapSecurityConstructSid(
             pPac->res_group_dom_sid,
-            pPac->res_groups.rids[dwIndex].rid,
+            pPac->res_groups.pRids[dwIndex].dwRid,
             &pSid);
         BAIL_ON_NT_STATUS(status);
 
