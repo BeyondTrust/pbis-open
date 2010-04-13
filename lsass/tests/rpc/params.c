@@ -225,10 +225,23 @@ struct parameter* get_optional_params(char *opt, int *count)
 
 const char* find_value(struct parameter *params, int count, const char *key)
 {
-    int i;
+    int i = 0;
+    size_t sParamLen = 0;
+    size_t sKeyLen = strlen(key);
 
-    for (i = 0; i < count; i++) {
-        if (strstr(params[i].key, key)) return params[i].val;
+    for (i = 0; i < count; i++)
+    {
+        sParamLen = strlen(params[i].key);
+
+        if (sParamLen != sKeyLen)
+        {
+            continue;
+        }
+
+        if (memcmp(params[i].key, key, sKeyLen) == 0)
+        {
+            return params[i].val;
+        }
     }
 
     return NULL;

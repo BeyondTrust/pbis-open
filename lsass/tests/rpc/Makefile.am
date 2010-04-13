@@ -8,7 +8,8 @@ rpctest_SOURCES =    \
     test_lsa.c       \
     test_samr.c      \
     test_netlogon.c  \
-    test_dssetup.c
+    test_dssetup.c   \
+    test_wkssvc.c
 
 rpctest_CPPFLAGS =             \
     $(AM_CPPFLAGS)             \
@@ -34,4 +35,4 @@ rpctest_LDADD =                               \
     $(LWADVAPI_LIBS)                          \
     $(LWNET_LIBS)                             \
     $(LWIOCLIENT_LIBS)                        \
-    $(rpccli_builddir)/liblsassrpc.la
+    $(rpccli_builddir)/liblsarpc.la

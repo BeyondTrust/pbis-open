@@ -9,6 +9,7 @@
 
 #include <dce/rpc.h>
 #include <dce/smb.h>
+#include <dce/lrpc.h>
 #include <dce/schannel.h>
 #include <wc16str.h>
 #include <lw/base.h>
@@ -22,11 +23,13 @@
 #include <lwnet.h>
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
+#include <openssl/rand.h>
 
 #include <lw/rpc/samr.h>
 #include <lw/rpc/lsa.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/dssetup.h>
+#include <lw/rpc/wkssvc.h>
 #include <lw/macros.h>
 
 #include "testrpc.h"

@@ -66,6 +66,7 @@ void SetupNetlogonTests(struct test *t);
 void SetupNetApiTests(struct test *t);
 void SetupMprTests(struct test *t);
 void SetupDsrTests(struct test *t);
+void SetupWkssvcTests(struct test *t);
 
 
 #define STATUS(a, b)                                                     \
