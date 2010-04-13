@@ -16,6 +16,7 @@ liblwmapsecurity_lsass_la_CPPFLAGS =    \
 
 liblwmapsecurity_lsass_la_LIBADD = \
 	$(top_builddir)/client/liblsaclient.la \
+	$(top_builddir)/client/rpc/liblsarpc.la \
 	$(LWBASE_LIBS)
 
 liblwmapsecurity_lsass_la_LDFLAGS = \
