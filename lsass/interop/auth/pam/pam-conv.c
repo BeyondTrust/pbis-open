@@ -65,6 +65,12 @@ LsaPamConverse(
     
     dwError = pam_get_item(pamh, PAM_CONV, (PAM_GET_ITEM_TYPE)&pConv);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pConv)
+    {
+        dwError = PAM_CONV_ERR;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
     
     memset(&msg, 0, sizeof(struct pam_message));
     pMsg = &msg;
