@@ -68,7 +68,6 @@
 
 #include "externs_p.h"
 
-#include "lsaunistr.h"
 #include <locale.h>
 
 #include "lwio/lwio.h"

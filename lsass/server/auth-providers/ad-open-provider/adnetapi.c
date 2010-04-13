@@ -256,19 +256,19 @@ AD_NetUserChangePassword(
     }
     bChangedToken = TRUE;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszDomainName,
                     &pwszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszLoginId,
                     &pwszLoginId);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOldPassword)) {
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszOldPassword,
                     &pwszOldPassword);
         BAIL_ON_LSA_ERROR(dwError);
@@ -277,7 +277,7 @@ AD_NetUserChangePassword(
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pszNewPassword)) {
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszNewPassword,
                     &pwszNewPassword);
         BAIL_ON_LSA_ERROR(dwError);
@@ -440,7 +440,7 @@ AD_NetLookupObjectSidsByNames(
     BOOLEAN bChangedToken = FALSE;
 
     BAIL_ON_INVALID_STRING(pszHostname);
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                   pszHostname,
                   &pwcHost);
     BAIL_ON_LSA_ERROR(dwError);
@@ -476,7 +476,7 @@ AD_NetLookupObjectSidsByNames(
 
     for (i = 0; i < dwNamesCount; i++)
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                       ppszNames[i],
                       &ppwcNames[i]);
         BAIL_ON_LSA_ERROR(dwError);
@@ -783,7 +783,7 @@ AD_NetLookupObjectNamesBySids(
 
     BAIL_ON_INVALID_STRING(pszHostname);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                   pszHostname,
                   &pwcHost);
     BAIL_ON_LSA_ERROR(dwError);
@@ -916,7 +916,7 @@ AD_NetLookupObjectNamesBySids(
     {
         if (pDomains->domains[i].name.Length > 0)
         {
-            dwError = LsaWc16snToMbs(
+            dwError = LwWc16snToMbs(
                           pDomains->domains[i].name.Buffer,
                           &ppszDomainNames[i],
                           pDomains->domains[i].name.Length / 2);
@@ -953,7 +953,7 @@ AD_NetLookupObjectNamesBySids(
 
         if (name_array[i].name.Length > 0)
         {
-            dwError = LsaWc16snToMbs(
+            dwError = LwWc16snToMbs(
                            name_array[i].name.Buffer,
                            &pszUsername,
                            name_array[i].name.Length / 2);
@@ -1093,7 +1093,7 @@ AD_DsEnumerateDomainTrusts(
     LW_PIO_CREDS pOldToken = NULL;
     BOOLEAN bChangedToken = FALSE;
 
-    dwError = LsaMbsToWc16s(pszDomainControllerName, &pwcDomainControllerName);
+    dwError = LwMbsToWc16s(pszDomainControllerName, &pwcDomainControllerName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_SetSystemAccess(&pOldToken);
@@ -1216,7 +1216,7 @@ AD_DsGetDcName(
     PSTR pszDomainDnsOrFlatName = NULL;
     PSTR pszDomainForestDnsName = NULL;
 
-    dwError = LsaMbsToWc16s(pszServerName, &pwcServerName);
+    dwError = LwMbsToWc16s(pszServerName, &pwcServerName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_SetSystemAccess(&pOldToken);
@@ -1240,7 +1240,7 @@ AD_DsGetDcName(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMbsToWc16s(pszDomainName, &pwcDomainName);
+    dwError = LwMbsToWc16s(pszDomainName, &pwcDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     winError = DsrGetDcName(netr_b,
@@ -1271,10 +1271,10 @@ AD_DsGetDcName(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaWc16sToMbs(pDcNameInfo->domain_name, &pszDomainDnsOrFlatName);
+    dwError = LwWc16sToMbs(pDcNameInfo->domain_name, &pszDomainDnsOrFlatName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(pDcNameInfo->forest_name, &pszDomainForestDnsName);
+    dwError = LwWc16sToMbs(pDcNameInfo->forest_name, &pszDomainForestDnsName);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1439,49 +1439,49 @@ LsaCopyNetrUserInfo3(
 
     if (pBase->account_name.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->account_name.Buffer, &pUserInfo->pszAccount);
+        dwError = LwWc16sToMbs(pBase->account_name.Buffer, &pUserInfo->pszAccount);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->full_name.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->full_name.Buffer, &pUserInfo->pszFullName);
+        dwError = LwWc16sToMbs(pBase->full_name.Buffer, &pUserInfo->pszFullName);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->domain.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->domain.Buffer, &pUserInfo->pszDomain);
+        dwError = LwWc16sToMbs(pBase->domain.Buffer, &pUserInfo->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->logon_server.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->logon_server.Buffer, &pUserInfo->pszLogonServer);
+        dwError = LwWc16sToMbs(pBase->logon_server.Buffer, &pUserInfo->pszLogonServer);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->logon_script.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->logon_script.Buffer, &pUserInfo->pszLogonScript);
+        dwError = LwWc16sToMbs(pBase->logon_script.Buffer, &pUserInfo->pszLogonScript);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->home_directory.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->home_directory.Buffer, &pUserInfo->pszHomeDirectory);
+        dwError = LwWc16sToMbs(pBase->home_directory.Buffer, &pUserInfo->pszHomeDirectory);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->home_drive.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->home_drive.Buffer, &pUserInfo->pszHomeDrive);
+        dwError = LwWc16sToMbs(pBase->home_drive.Buffer, &pUserInfo->pszHomeDrive);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pBase->profile_path.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->profile_path.Buffer, &pUserInfo->pszProfilePath);
+        dwError = LwWc16sToMbs(pBase->profile_path.Buffer, &pUserInfo->pszProfilePath);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1601,10 +1601,10 @@ AD_NetlogonAuthenticationUserEx(
     BAIL_ON_LSA_ERROR(dwError);
 
     snprintf(pszServerName, dwDCNameLen, "\\\\%s", pszDomainController);
-    dwError = LsaMbsToWc16s(pszServerName, &pwszServerName);
+    dwError = LwMbsToWc16s(pszServerName, &pwszServerName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(pUserParams->pszDomain, &pwszShortDomain);
+    dwError = LwMbsToWc16s(pUserParams->pszDomain, &pwszShortDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     pwszComputer = wc16sdup(pMachAcctInfo->pwszMachineAccount);
@@ -1619,10 +1619,10 @@ AD_NetlogonAuthenticationUserEx(
 
     if (!ghSchannelBinding)
     {
-        dwError = LsaMbsToWc16s(pszDomainController, &pwszDomainController);
+        dwError = LwMbsToWc16s(pszDomainController, &pwszDomainController);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(gpADProviderData->szShortDomain,
+        dwError = LwMbsToWc16s(gpADProviderData->szShortDomain,
                                 &pwszPrimaryShortDomain);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -1670,7 +1670,7 @@ AD_NetlogonAuthenticationUserEx(
 
     /* Time to do the authentication */
 
-    dwError = LsaMbsToWc16s(pUserParams->pszAccountName, &pwszUsername);
+    dwError = LwMbsToWc16s(pUserParams->pszAccountName, &pwszUsername);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* Get the data blob buffers */

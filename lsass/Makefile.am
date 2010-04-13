@@ -8,7 +8,6 @@ compat_subdirs = \
 full_subdirs= \
     $(compat_subdirs) \
     logging_r \
-    lsaunistr \
     join \
     server \
     tools \

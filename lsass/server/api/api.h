@@ -64,7 +64,6 @@
 #include "lwstr.h"
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
-#include "lsaunistr.h"
 #include "lsalog_r.h"
 #include "lsaregdef.h"
 #include "lwmapsecurity-lsass.h"

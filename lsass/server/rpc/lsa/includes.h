@@ -55,7 +55,6 @@
 #include <lwkrb5.h>
 
 #include <lsa/lsa.h>
-#include <lsaunistr.h>
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>
 #include <rpcctl-register.h>

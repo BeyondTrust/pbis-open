@@ -427,7 +427,7 @@ LsaSrvSetMachineSid(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMbsToWc16s(pszSID,
+    dwError = LwMbsToWc16s(pszSID,
                             &pwszNewDomainSid);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -861,7 +861,7 @@ LsaSrvSetMachineName(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMbsToWc16s(pszNewMachineName,
+    dwError = LwMbsToWc16s(pszNewMachineName,
                             &pwszNewMachineName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1043,7 +1043,7 @@ LsaSrvSetMachineName(
     {
         pObjectEntry = &(pObjectEntries[iEntry]);
 
-        dwError = LsaWc16sToMbs(pwszMachineName, &pszMachineName);
+        dwError = LwWc16sToMbs(pwszMachineName, &pszMachineName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = DirectoryGetEntryAttrValueByName(
@@ -1053,7 +1053,7 @@ LsaSrvSetMachineName(
                                     &pwszObjectDN);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaWc16sToMbs(pwszObjectDN, &pszObjectDN);
+        dwError = LwWc16sToMbs(pwszObjectDN, &pszObjectDN);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaSrvModifyMachineDC(pszObjectDN,
@@ -1071,7 +1071,7 @@ LsaSrvSetMachineName(
 
         if (pwszParentDN)
         {
-            dwError = LsaWc16sToMbs(pwszParentDN, &pszParentDN);
+            dwError = LwWc16sToMbs(pwszParentDN, &pszParentDN);
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = LsaSrvModifyMachineDC(pszParentDN,

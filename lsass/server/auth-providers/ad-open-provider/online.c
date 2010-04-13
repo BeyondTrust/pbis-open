@@ -1354,7 +1354,7 @@ AD_GetCachedPasswordHash(
     // Compute the NT hash (which only depends on the password) and store
     // it in the first 16 bytes of pbPrehashedVerifier
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
             pszPassword,
             &pwszPassword);
     BAIL_ON_LSA_ERROR(dwError);

@@ -137,6 +137,9 @@
 #if HAVE_WC16STR_H
 #include <wc16str.h>
 #endif
+#if HAVE_WC16PRINTF_H
+#include <wc16printf.h>
+#endif
 
 #if defined(__hpux__) && defined(_XOPEN_SOURCE_EXTENDED)
 #    include "xpg_socket.h"

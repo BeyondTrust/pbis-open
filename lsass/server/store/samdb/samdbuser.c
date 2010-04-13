@@ -115,12 +115,12 @@ SamDbSetPassword_inlock(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszPassword,
                     &pszPassword);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszUserDN,
                     &pszUserDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -306,12 +306,12 @@ SamDbVerifyPassword_inlock(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszPassword,
                     &pszPassword);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszUserDN,
                     &pszUserDN);
     BAIL_ON_SAMDB_ERROR(dwError);

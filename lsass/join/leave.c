@@ -115,13 +115,13 @@ LsaLeaveDomain(
     
     if (!LW_IS_NULL_OR_EMPTY_STR(pAcct->pszDnsDomainName))
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pAcct->pszDnsDomainName,
                     &pwszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszHostname,
                     &pwszHostname);
     BAIL_ON_LSA_ERROR(dwError);

@@ -1052,7 +1052,6 @@ AC_CONFIG_FILES([Makefile
                  client/rpc/krb5pac/Makefile
                  client/rpc/wkssvc/Makefile
                  logging_r/Makefile
-                 lsaunistr/Makefile
                  join/keytab/Makefile
                  join/Makefile
                  interop/Makefile

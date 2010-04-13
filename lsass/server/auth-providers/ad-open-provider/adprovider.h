@@ -74,7 +74,6 @@
 #include <lw/rpc/krb5pac.h>
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
-#include "lsaunistr.h"
 #include "lsaipc.h"
 #include "lsaprovider.h"
 #include "lsaprovider2.h"

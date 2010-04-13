@@ -332,18 +332,18 @@ AuthenticateNTLMv2(
     
     /* First calculate the NTLMv2 Hash */
 
-    dwError = LsaMbsToWc16s(pUserParams->pszAccountName,
+    dwError = LwMbsToWc16s(pUserParams->pszAccountName,
                             &pwszAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(pUserParams->pszDomain,
+    dwError = LwMbsToWc16s(pUserParams->pszDomain,
                             &pwszDestination);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* Emperical testing from WinXP sp3 shows that only
        the username need be upper cased */
 
-    dwError = LsaWc16ToUpper(pwszAccountName);
+    dwError = LwWc16sToUpper(pwszAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwAcctNameSize = RtlWC16StringNumChars(pwszAccountName) * sizeof(WCHAR);

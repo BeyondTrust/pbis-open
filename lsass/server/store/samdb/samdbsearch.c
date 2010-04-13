@@ -227,7 +227,7 @@ SamDbBuildSqlQuery(
 
     if (pwszFilter)
     {
-        dwError = LsaWc16sToMbs(
+        dwError = LwWc16sToMbs(
                         pwszFilter,
                         &pszFilter);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -636,7 +636,7 @@ SamDbSearchMarshallResultsAttributesValues(
 
                         pAttrVal->Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING;
 
-                        dwError = LsaMbsToWc16s(
+                        dwError = LwMbsToWc16s(
                                         (PCSTR)pszStringVal,
                                         &pAttrVal->data.pwszStringValue);
                         BAIL_ON_SAMDB_ERROR(dwError);

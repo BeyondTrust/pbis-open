@@ -110,7 +110,7 @@ SamDbSchemaAddValidateDirMods(
 
                         LW_SAFE_FREE_STRING(pszAttrName);
 
-                        dwError2 = LsaWc16sToMbs(
+                        dwError2 = LwWc16sToMbs(
                                         &pAttrMapInfo->wszAttributeName[0],
                                         &pszAttrName);
                         if (dwError2 == LW_ERROR_SUCCESS)
@@ -143,7 +143,7 @@ SamDbSchemaAddValidateDirMods(
 
                 LW_SAFE_FREE_STRING(pszAttrName);
 
-                dwError2 = LsaWc16sToMbs(
+                dwError2 = LwWc16sToMbs(
                                 &pAttrMapInfo->wszAttributeName[0],
                                 &pszAttrName);
                 if (dwError2 == LW_ERROR_SUCCESS)
@@ -171,7 +171,7 @@ SamDbSchemaAddValidateDirMods(
 
                     LW_SAFE_FREE_STRING(pszAttrName);
 
-                    dwError2 = LsaWc16sToMbs(
+                    dwError2 = LwWc16sToMbs(
                                     &pAttrMapInfo->wszAttributeName[0],
                                     &pszAttrName);
                     if (dwError2 == LW_ERROR_SUCCESS)
@@ -197,7 +197,7 @@ SamDbSchemaAddValidateDirMods(
 
                     LW_SAFE_FREE_STRING(pszAttrName);
 
-                    dwError2 = LsaWc16sToMbs(
+                    dwError2 = LwWc16sToMbs(
                                     &pAttrMapInfo->wszAttributeName[0],
                                     &pszAttrName);
                     if (dwError2 == LW_ERROR_SUCCESS)

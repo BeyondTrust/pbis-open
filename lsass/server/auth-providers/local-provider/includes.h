@@ -46,12 +46,21 @@
  *          Gerald Carter <gcarter@likewise.com>
  */
 
-#include "config.h"
-#include "lsasystem.h"
-#include "lsadef.h"
-#include "lsa/lsa.h"
-#include "lsa/lsa2.h"
-#include "reg/reg.h"
+#include <config.h>
+#include <lsasystem.h>
+#include <lsadef.h>
+#include <lsa/lsa.h>
+#include <lsa/lsa2.h>
+#include <reg/reg.h>
+
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/samr.h>
+
+#include <openssl/evp.h>
+#include <openssl/md4.h>
+#include <openssl/hmac.h>
 
 #include <eventlog.h>
 
@@ -62,7 +71,6 @@
 
 #include "lsautils.h"
 #include "lsasrvutils.h"
-#include "lsaunistr.h"
 
 #include "lsaprovider.h"
 #include "lsaprovider2.h"
@@ -85,16 +93,6 @@
 #include "lpobject.h"
 
 #include "externs.h"
-
-//#include <lwrpc/LMcrypt.h>
-#include <lwio/lwio.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
-#include <lw/rpc/samr.h>
-
-#include <openssl/evp.h>
-#include <openssl/md4.h>
-#include <openssl/hmac.h>
 
 /*
 local variables:

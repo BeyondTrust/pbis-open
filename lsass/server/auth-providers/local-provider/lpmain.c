@@ -245,7 +245,7 @@ LocalAuthenticateUser(
 
     if (pszPassword)
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszPassword,
                         &pwszPassword);
         BAIL_ON_LSA_ERROR(dwError);
@@ -410,12 +410,12 @@ LocalChangePassword(
                     pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                         (pszPassword ? pszPassword : ""),
                         &pwszNewPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                         (pszOldPassword ? pszOldPassword : ""),
                         &pwszOldPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -474,7 +474,7 @@ LocalSetPassword(
                     pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                         (pszPassword ? pszPassword : ""),
                         &pwszNewPassword);
     BAIL_ON_LSA_ERROR(dwError);

@@ -222,7 +222,7 @@ DsrSrvRoleGetPDCInfoBasic(
                                   NULL);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwError = LsaMbsToWc16s(pszDcName, &pwszDcName);
+    dwError = LwMbsToWc16s(pszDcName, &pwszDcName);
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LsaOpenPolicy2(hLsaBinding,

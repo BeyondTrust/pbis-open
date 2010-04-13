@@ -1023,7 +1023,7 @@ SamDbAddGenerateParentDN(
 
     if (pwszParentDN)
     {
-        dwError = LsaWc16sToMbs(
+        dwError = LwWc16sToMbs(
                         pwszParentDN,
                         &pAttrValue->data.pszStringValue);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -1073,7 +1073,7 @@ SamDbAddGenerateDN(
 
     if (pwszDN)
     {
-        dwError = LsaWc16sToMbs(
+        dwError = LwWc16sToMbs(
                         pwszDN,
                         &pAttrValue->data.pszStringValue);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -1123,7 +1123,7 @@ SamDbAddGenerateDomain(
 
     if (pwszDomainName)
     {
-        dwError = LsaWc16sToMbs(
+        dwError = LwWc16sToMbs(
                         pwszDomainName,
                         &pAttrValue->data.pszStringValue);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -1401,7 +1401,7 @@ SamDbAddConvertUnicodeAttrValues(
 
                 if (pSrcValue->data.pwszStringValue)
                 {
-                    dwError = LsaWc16sToMbs(
+                    dwError = LwWc16sToMbs(
                                     pSrcValue->data.pwszStringValue,
                                     &pTgtValue->data.pszStringValue);
                     BAIL_ON_SAMDB_ERROR(dwError);
@@ -1670,7 +1670,7 @@ SamDbFindDomainSID(
     PCSTR pszQueryClause = SAM_DB_COL_DOMAIN       " = \"%s\"" \
                            "   AND " SAM_DB_COL_OBJECT_CLASS " = %d;";
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszDomainName,
                     &pszDomainName);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -1682,7 +1682,7 @@ SamDbFindDomainSID(
                     objectClass);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -1717,7 +1717,7 @@ SamDbFindDomainSID(
         BAIL_ON_SAMDB_ERROR(dwError);
     }
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pDirEntries[0].pAttributes[0].pValues[0].data.pwszStringValue,
                     &pszDomainSID);
     BAIL_ON_SAMDB_ERROR(dwError);

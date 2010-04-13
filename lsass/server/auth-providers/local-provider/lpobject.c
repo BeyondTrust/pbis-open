@@ -87,7 +87,7 @@ LocalFindObjectByName(
                     pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -189,7 +189,7 @@ LocalDirResolveUserObjectPrimaryGroupSid(
         pUserObject->userInfo.gid);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
         pszFilter,
         &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -414,7 +414,7 @@ LocalDirFindObjectsInternal(
             BAIL_ON_LSA_ERROR(dwError);
         }
         
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
             pszFilter,
             &pwszFilter);
         BAIL_ON_LSA_ERROR(dwError);
@@ -680,7 +680,7 @@ LocalDirOpenEnumObjects(
         pszTypeFilter = NULL;
     }
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
         pszFilter,
         &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -843,7 +843,7 @@ LocalDirOpenEnumMembers(
         pszSid);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
         pszFilter,
         &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1098,7 +1098,7 @@ LocalDirQueryMemberOfInternal(
         pszSid);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
         pszFilter,
             &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);

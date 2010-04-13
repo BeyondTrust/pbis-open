@@ -19,5 +19,4 @@ noinst_HEADERS = \
 	lsasystem.h \
 	lsadef.h \
 	lsaipc.h \
-	lsaunistr.h \
 	lsautils.h

@@ -76,7 +76,7 @@ SamDbDeleteObject(
                     &pDN);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszObjectDN,
                     &pszObjectDN);
     BAIL_ON_SAMDB_ERROR(dwError);

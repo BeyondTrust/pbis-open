@@ -303,7 +303,7 @@ ADSyncMachinePasswordThreadRoutine(
                 {
                     LW_SAFE_FREE_STRING(pszDnsDomainName);
 
-                    dwError = LsaWc16sToMbs(pAcctInfo->pwszDnsDomainName, &pszDnsDomainName);
+                    dwError = LwWc16sToMbs(pAcctInfo->pwszDnsDomainName, &pszDnsDomainName);
                     BAIL_ON_LSA_ERROR(dwError);
                     
                     LsaDmTransitionOffline(pszDnsDomainName, FALSE);

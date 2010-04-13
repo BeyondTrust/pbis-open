@@ -338,7 +338,7 @@ LocalSyncDomainInfo(
                     dwDomainObjectClass);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -645,7 +645,7 @@ LocalGetDomainInfo(
                     objectClass);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -805,7 +805,7 @@ LocalGetSingleStringAttrValue(
 
     if (pAttrs[0].data.pwszStringValue)
     {
-        dwError = LsaWc16sToMbs(
+        dwError = LwWc16sToMbs(
                         pAttrs[0].data.pwszStringValue,
                         &pszValue);
         BAIL_ON_LSA_ERROR(dwError);

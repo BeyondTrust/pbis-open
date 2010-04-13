@@ -235,7 +235,7 @@ DirectoryGetEntryAttributeByNameA(
     PWSTR pwszAttributeName = NULL;
     PDIRECTORY_ATTRIBUTE pAttribute = NULL;
 
-    dwError = LsaMbsToWc16s(pszAttributeName, &pwszAttributeName);
+    dwError = LwMbsToWc16s(pszAttributeName, &pwszAttributeName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectoryGetEntryAttributeByName(pEntry,
@@ -387,7 +387,7 @@ DirectoryGetEntryAttrValueByNameA(
     DWORD dwError = 0;
     PWSTR pwszAttrName = NULL;
 
-    dwError = LsaMbsToWc16s(pszAttrName, &pwszAttrName);
+    dwError = LwMbsToWc16s(pszAttrName, &pwszAttrName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = DirectoryGetEntryAttrValueByName(pEntry,

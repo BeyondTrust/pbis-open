@@ -37,8 +37,7 @@ liblsass_auth_provider_local_la_CFLAGS = $(AM_CFLAGS) $(PROVIDER_CFLAGS)
 liblsass_auth_provider_local_la_LIBADD = \
     @top_builddir@/common/liblsacommon.la \
     @top_builddir@/server/api/liblsaserverapi.la \
-    @top_builddir@/server/store/dsapi/libdsapi.la \
-    @top_builddir@/lsaunistr/liblsaunistr.la
+    @top_builddir@/server/store/dsapi/libdsapi.la
 
 liblsass_auth_provider_local_la_LDFLAGS = \
 	$(PROVIDER_LDFLAGS) \

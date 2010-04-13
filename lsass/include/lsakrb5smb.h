@@ -52,7 +52,6 @@
 #include "lwstr.h"
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
-#include "lsaunistr.h"
 
 #include "lwnet.h"
 

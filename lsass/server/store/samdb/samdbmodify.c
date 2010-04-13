@@ -101,7 +101,7 @@ SamDbModifyObject(
     PSAM_DIRECTORY_CONTEXT pDirectoryContext = hBindHandle;
     SAMDB_OBJECT_CLASS objectClass = SAMDB_OBJECT_CLASS_UNKNOWN;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszObjectDN,
                     &pszObjectDN);
     BAIL_ON_LSA_ERROR(dwError);
@@ -167,7 +167,7 @@ SamDbUpdateObjectInDatabase(
                 &pDN);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                 pDN->pwszDN,
                 &pszDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -574,7 +574,7 @@ SamDbUpdateBindValues(
 
                 if (pwszValue)
                 {
-                    dwError = LsaWc16sToMbs(pwszValue, &pszValue);
+                    dwError = LwWc16sToMbs(pwszValue, &pszValue);
                     BAIL_ON_LSA_ERROR(dwError);
                 }
 

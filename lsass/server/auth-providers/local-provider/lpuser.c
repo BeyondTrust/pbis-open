@@ -94,7 +94,7 @@ LocalDirGetUserInfoFlags(
                     LOCAL_OBJECT_CLASS_USER);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
@@ -417,21 +417,21 @@ LocalDirAddUser(
         RTL_FREE(&pGroupSID);
     }
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pLoginInfo->pszFullDomainName,
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     attrValues[LOCAL_DAU0_IDX_DOMAIN].data.pwszStringValue = pwszDomain;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pLoginInfo->pszDomainNetBiosName,
                     &pwszNetBIOSDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     attrValues[LOCAL_DAU0_IDX_NETBIOS_DOMAIN].data.pwszStringValue = pwszNetBIOSDomain;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pLoginInfo->pszName,
                     &pwszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
@@ -447,7 +447,7 @@ LocalDirAddUser(
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszGecos))
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pUserInfo->pszGecos,
                     &pwszGecos);
         BAIL_ON_LSA_ERROR(dwError);
@@ -457,7 +457,7 @@ LocalDirAddUser(
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir))
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pUserInfo->pszHomedir,
                     &pwszHomedir);
         BAIL_ON_LSA_ERROR(dwError);
@@ -470,7 +470,7 @@ LocalDirAddUser(
                         &pszHomedir);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszHomedir,
                         &pwszHomedir);
         BAIL_ON_LSA_ERROR(dwError);
@@ -480,7 +480,7 @@ LocalDirAddUser(
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell))
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pUserInfo->pszShell,
                     &pwszShell);
         BAIL_ON_LSA_ERROR(dwError);
@@ -490,7 +490,7 @@ LocalDirAddUser(
         dwError = LocalCfgGetDefaultShell(&pszShell);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszShell,
                     &pwszShell);
         BAIL_ON_LSA_ERROR(dwError);
@@ -612,7 +612,7 @@ LocalDirAddUser(
         pszPassword = pUserInfo->pszPassword;
     }
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszPassword,
                     &pwszPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1073,7 +1073,7 @@ LocalDirModifyUser(
 
     if (pUserModInfo->actions.bSetPassword)
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pUserModInfo->pszPassword ? pUserModInfo->pszPassword : "",
                         &pwszPassword);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1431,7 +1431,7 @@ LocalGetUserLogonInfo(
                     pszUserDn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszFilter,
                     &pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);

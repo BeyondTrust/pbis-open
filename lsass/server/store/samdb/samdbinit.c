@@ -562,7 +562,7 @@ SamDbAddLocalDomain(
 
     memset(mods, 0, sizeof(mods));
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszDomainDN,
                     &pwszObjectDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -574,7 +574,7 @@ SamDbAddLocalDomain(
     avObjectClass.data.ulValue = SAMDB_OBJECT_CLASS_DOMAIN;
     mods[iMod].pAttrValues = &avObjectClass;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszMachineSID,
                     &pwszMachineSID);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -586,7 +586,7 @@ SamDbAddLocalDomain(
     avMachineSID.data.pwszStringValue = pwszMachineSID;
     mods[iMod].pAttrValues = &avMachineSID;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszDomainName,
                     &pwszDomainName);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -612,7 +612,7 @@ SamDbAddLocalDomain(
     avSamAccountName.data.pwszStringValue = pwszDomainName;
     mods[iMod].pAttrValues = &avSamAccountName;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszNetBIOSName,
                     &pwszNetBIOSName);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -770,22 +770,22 @@ SamDbAddContainer(
                     pszDomainDN);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszObjectDN,
                     &pwszObjectDN);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszName,
                     &pwszDomainName);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszNetBIOSName,
                     &pwszNetBIOSName);
     BAIL_ON_SAMDB_ERROR(dwError);
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszSID,
                     &pwszSID);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -1009,32 +1009,32 @@ SamDbAddBuiltinAccounts(
                         pszDomainDN);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszObjectDN,
                         &pwszObjectDN);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszName,
                         &pwszSamAccountName);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszSID,
                         &pwszSID);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszDomainName,
                         &pwszDomainName);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszNetBIOSDomain,
                         &pwszNetBIOSDomain);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszDescription,
                         &pwszDescription);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -1319,7 +1319,7 @@ SamDbAddLocalAccounts(
                         pszDomainDN);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszObjectDN,
                         &pwszObjectDN);
         BAIL_ON_SAMDB_ERROR(dwError);
@@ -1332,35 +1332,35 @@ SamDbAddLocalAccounts(
             BAIL_ON_SAMDB_ERROR(dwError);
         }
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszName,
                         &pwszSamAccountName);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszDomain,
                         &pwszDomain);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszNetBIOSDomain,
                         &pwszNetBIOSDomain);
         BAIL_ON_SAMDB_ERROR(dwError);
 
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszDescription,
                         &pwszDescription);
         BAIL_ON_SAMDB_ERROR(dwError);
 
         if (pszShell) {
-            dwError = LsaMbsToWc16s(
+            dwError = LwMbsToWc16s(
                             pszShell,
                             &pwszShell);
             BAIL_ON_SAMDB_ERROR(dwError);
         }
 
         if (pszHomedir) {
-            dwError = LsaMbsToWc16s(
+            dwError = LwMbsToWc16s(
                             pszHomedir,
                             &pwszHomedir);
             BAIL_ON_SAMDB_ERROR(dwError);

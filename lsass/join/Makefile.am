@@ -36,7 +36,6 @@ liblsajoin_la_LIBADD =                         \
     $(top_builddir)/join/keytab/libktkrb5.la   \
     $(NETLOGON_LIBS)                           \
     $(PSTORE_LIBS)                             \
-    $(top_builddir)/lsaunistr/liblsaunistr.la  \
     $(top_builddir)/logging_r/liblsalog_r.la   \
     $(KRB5_LIBS)                               \
     $(LWIO_LIBS)                               \

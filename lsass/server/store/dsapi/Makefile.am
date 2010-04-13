@@ -38,7 +38,6 @@ libdsapi_la_CPPFLAGS = \
 libdsapi_la_LIBADD = \
         $(LWBASE_LIBS) \
         $(top_builddir)/common/liblsacommon.la \
-        $(top_builddir)/lsaunistr/liblsaunistr.la \
         $(ADDITIONAL_LIBS) \
         $(DL_LIBS)
 

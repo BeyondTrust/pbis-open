@@ -201,21 +201,21 @@ LocalDirAddGroup(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pLoginInfo->pszFullDomainName,
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     attrValues[LOCAL_DAG1_IDX_DOMAIN].data.pwszStringValue = pwszDomain;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pLoginInfo->pszDomainNetBiosName,
                     &pwszNetBIOSDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     attrValues[LOCAL_DAG1_IDX_NETBIOS_DOMAIN].data.pwszStringValue = pwszNetBIOSDomain;
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pGroupInfo->pszName,
                     &pwszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
@@ -427,7 +427,7 @@ LocalDirModifyGroup(
 
             bForeignSid = !bIsLocalOrBuiltinSid;
 
-            dwError = LsaMbsToWc16s(pszSID, &pwszSID);
+            dwError = LwMbsToWc16s(pszSID, &pwszSID);
             BAIL_ON_LSA_ERROR(dwError);
 
             dwFilterLen = (sizeof(wszAttrObjectClass) - 2) +
@@ -538,7 +538,7 @@ LocalDirModifyGroup(
         {
             pszSID = pGroupModInfo->ppszRemoveMembers[i];
 
-            dwError = LsaMbsToWc16s(pszSID, &pwszSID);
+            dwError = LwMbsToWc16s(pszSID, &pwszSID);
             BAIL_ON_LSA_ERROR(dwError);
 
             dwFilterLen = (sizeof(wszAttrObjectClass) - 1) +

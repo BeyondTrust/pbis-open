@@ -303,20 +303,20 @@ LsaJoinDomain(
                 NULL);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszHostname,
                     &pwszHostname);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pszHostDnsDomain))
     {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                         pszHostDnsDomain,
                         &pwszHostDnsDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszDomain,
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
@@ -329,28 +329,28 @@ LsaJoinDomain(
                     &pszOU_DN);
         BAIL_ON_LSA_ERROR(dwError);
         
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszOU_DN,
                     &pwszOU);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSName)) {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszOSName,
                     &pwszOSName);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSVersion)) {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszOSVersion,
                     &pwszOSVersion);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
     if (!LW_IS_NULL_OR_EMPTY_STR(pszOSServicePack)) {
-        dwError = LsaMbsToWc16s(
+        dwError = LwMbsToWc16s(
                     pszOSServicePack,
                     &pwszOSServicePack);
         BAIL_ON_LSA_ERROR(dwError);
@@ -665,32 +665,32 @@ LsaBuildMachineAccountInfo(
                     (PVOID*)&pAcctInfo);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszDnsDomainName,
                     &pAcctInfo->pszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszDomainName,
                     &pAcctInfo->pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszHostname,
                     &pAcctInfo->pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszMachineAccount,
                     &pAcctInfo->pszMachineAccount);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszMachinePassword,
                     &pAcctInfo->pszMachinePassword);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pInfo->pwszSID,
                     &pAcctInfo->pszSID);
     BAIL_ON_LSA_ERROR(dwError);

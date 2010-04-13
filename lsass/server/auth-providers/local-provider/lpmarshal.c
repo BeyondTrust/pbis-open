@@ -448,7 +448,7 @@ LocalMarshalAttrToANSIFromUnicodeString(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pAttrValue->data.pwszStringValue,
                     &pszValue);
     BAIL_ON_LSA_ERROR(dwError);

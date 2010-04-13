@@ -200,7 +200,7 @@ LocalBuildDN(
         } while (sLenAvailable > 0);
     }
 
-    dwError = LsaMbsToWc16s(
+    dwError = LwMbsToWc16s(
                     pszDN,
                     &pwszDN);
     BAIL_ON_LSA_ERROR(dwError);

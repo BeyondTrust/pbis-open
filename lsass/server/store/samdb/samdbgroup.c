@@ -117,7 +117,7 @@ SamDbGetGroupMembers(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszGroupDN,
                     &pszGroupDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -212,7 +212,7 @@ SamDbGetUserMemberships(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszUserDN,
                     &pszUserDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -523,7 +523,7 @@ SamDbGroupSearchExecute(
 
                         pAttrVal->Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING;
 
-                        dwError = LsaMbsToWc16s(
+                        dwError = LwMbsToWc16s(
                                         (PCSTR)pszStringVal,
                                         &pAttrVal->data.pwszStringValue);
                         BAIL_ON_SAMDB_ERROR(dwError);
@@ -714,7 +714,7 @@ SamDbAddToGroup(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszGroupDN,
                     &pszGroupDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -747,7 +747,7 @@ SamDbAddToGroup(
         BAIL_ON_SAMDB_ERROR(dwError);
 
         if (pwszMemberDN) {
-            dwError = LsaWc16sToMbs(
+            dwError = LwWc16sToMbs(
                             pwszMemberDN,
                             &pszMemberDN);
             BAIL_ON_SAMDB_ERROR(dwError);
@@ -767,7 +767,7 @@ SamDbAddToGroup(
                             &pwszMemberSID);
             BAIL_ON_SAMDB_ERROR(dwError);
 
-            dwError = LsaWc16sToMbs(
+            dwError = LwWc16sToMbs(
                             pwszMemberSID,
                             &pszMemberSID);
             BAIL_ON_SAMDB_ERROR(dwError);
@@ -874,7 +874,7 @@ SamDbRemoveFromGroup(
 
     pDirectoryContext = (PSAM_DIRECTORY_CONTEXT)hBindHandle;
 
-    dwError = LsaWc16sToMbs(
+    dwError = LwWc16sToMbs(
                     pwszGroupDN,
                     &pszGroupDN);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -907,7 +907,7 @@ SamDbRemoveFromGroup(
         BAIL_ON_SAMDB_ERROR(dwError);
 
         if (pwszMemberDN) {
-            dwError = LsaWc16sToMbs(
+            dwError = LwWc16sToMbs(
                             pwszMemberDN,
                             &pszMemberDN);
             BAIL_ON_SAMDB_ERROR(dwError);
@@ -927,7 +927,7 @@ SamDbRemoveFromGroup(
                             &pwszMemberSID);
             BAIL_ON_SAMDB_ERROR(dwError);
 
-            dwError = LsaWc16sToMbs(
+            dwError = LwWc16sToMbs(
                             pwszMemberSID,
                             &pszMemberSID);
             BAIL_ON_SAMDB_ERROR(dwError);

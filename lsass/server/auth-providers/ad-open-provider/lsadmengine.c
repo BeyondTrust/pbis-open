@@ -65,11 +65,11 @@ LsaDmEnginepAddTrust(
     PSTR pszDnsDomainName = NULL;
     PSTR pszNetbiosDomainName = NULL;
 
-    dwError = LsaWc16sToMbs(pTrustInfo->dns_name,
+    dwError = LwWc16sToMbs(pTrustInfo->dns_name,
                             &pszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaWc16sToMbs(pTrustInfo->netbios_name,
+    dwError = LwWc16sToMbs(pTrustInfo->netbios_name,
                             &pszNetbiosDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -179,7 +179,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
         }
 
         // double-check that this is the expected domain name
-        dwError = LsaWc16sToMbs(pPrimaryTrust->dns_name, &pszDnsDomainName);
+        dwError = LwWc16sToMbs(pPrimaryTrust->dns_name, &pszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (strcasecmp(pszDnsDomainName, pszDomainName))
@@ -223,7 +223,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
             if (pCurrentTrust->netbios_name)
             {
-                dwError = LsaWc16sToMbs(
+                dwError = LwWc16sToMbs(
                                 pCurrentTrust->netbios_name,
                                 &pszNetbiosName);
                 BAIL_ON_LSA_ERROR(dwError);
@@ -270,7 +270,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
         if (pCurrentTrust->dns_name)
         {
-            dwError = LsaWc16sToMbs(pCurrentTrust->dns_name, &pszDnsDomainName);
+            dwError = LwWc16sToMbs(pCurrentTrust->dns_name, &pszDnsDomainName);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
@@ -280,7 +280,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
             if (pCurrentTrust->netbios_name)
             {
-                dwError = LsaWc16sToMbs(
+                dwError = LwWc16sToMbs(
                                 pCurrentTrust->netbios_name,
                                 &pszNetbiosName);
                 BAIL_ON_LSA_ERROR(dwError);
