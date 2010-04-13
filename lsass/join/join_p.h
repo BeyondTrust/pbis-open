@@ -51,6 +51,24 @@
 
 #include <lwio/lwio.h>
 
+
+/* (un)join domain flags - local copies of NETSETUP_* flags
+   from NetAPI */
+#define LSAJOIN_JOIN_DOMAIN                          (0x00000001)
+#define LSAJOIN_ACCT_CREATE                          (0x00000002)
+#define LSAJOIN_ACCT_DELETE                          (0x00000004)
+#define LSAJOIN_WIN9X_UPGRADE                        (0x00000010)
+#define LSAJOIN_DOMAIN_JOIN_IF_JOINED                (0x00000020)
+#define LSAJOIN_JOIN_UNSECURE                        (0x00000040)
+#define LSAJOIN_MACHINE_PWD_PASSED                   (0x00000080)
+#define LSAJOIN_DEFER_SPN_SET                        (0x00000100)
+
+/* LDAP account flags - local copies of UF_* flags
+   from NetAPI */
+#define LSAJOIN_ACCOUNTDISABLE                       (0x00000002)
+#define LSAJOIN_WORKSTATION_TRUST_ACCOUNT            (0x00001000)
+
+
 typedef struct __LSA_MACHINE_ACCT_INFO
 {
     PSTR   pszDomainName;
@@ -101,5 +119,35 @@ VOID
 LsaFreeMachineAccountInfo(
     PLSA_MACHINE_ACCT_INFO pAcctInfo
     );
+
+
+DWORD
+LsaJoinDomainInternal(
+    PWSTR  pwszHostname,
+    PWSTR  pwszDnsDomain,
+    PWSTR  pwszDomain,
+    PWSTR  pwszAccountOu,
+    PWSTR  pwszAccount,
+    PWSTR  pwszPassword,
+    DWORD  dwJoinFlags,
+    PWSTR  pwszOsName,
+    PWSTR  pwszOsVersion,
+    PWSTR  pwszOsServicePack
+    );
+
+
+NTSTATUS
+LsaGetRwDcName(
+    PCWSTR    pwszDnsDomainName,
+    BOOLEAN   bForce,
+    PWSTR    *ppwszDomainControllerName
+    );
+
+
+DWORD
+LsaGetHostInfo(
+    PSTR* ppszHostname
+    );
+
 
 #endif /* __JOIN_P_H__ */

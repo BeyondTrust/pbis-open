@@ -37,6 +37,14 @@
 #include "lsa/lsa.h"
 #include "eventlog.h"
 
+#include <openssl/md4.h>
+#include <openssl/md5.h>
+#include <openssl/rc4.h>
+#include <openssl/des.h>
+#include <openssl/rand.h>
+#include <dce/rpc.h>
+#include <dce/smb.h>
+
 #include <lw/winerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
@@ -56,25 +64,27 @@
 #include <lwps/lwps.h>
 #include <lw/winerror.h>
 #include <lwnet.h>
-
-
-#include <lwrpc/LM.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/netlogon.h>
-#include <lwrpc/samr.h>
+#include <keytab.h>
 
 #include <lwio/lwio.h>
 
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
+
 #include <lsa/join.h>
 #include "join_p.h"
+#include <ldap.h>
+#include "ldaputil.h"
 
 
 #include <lwldap.h>
+#include <lwldap-error.h>
 #include "lsaldap_p.h"
 
 #include "externs.h"
 
 #include <lber.h>
-#include <lwrpc/krb5pac.h>
 
 #endif /* __INCLUDES_H__ */

@@ -48,41 +48,18 @@
 
 DWORD
 LsaNetJoinInitialize(
+    VOID
     )
 {
     DWORD dwError = 0;
-
-    dwError = LsaRpcInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = NetrInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = SamrInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = NetInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-    
-cleanup:
-
     return dwError;
-    
-error:
-
-    goto cleanup;
 }
+
 
 VOID
 LsaNetJoinShutdown(
+    VOID
     )
 {
-    NetrDestroyMemory();
-
-    SamrDestroyMemory();
-    
-    LsaRpcDestroyMemory();
-
-    NetDestroyMemory();
 }
 
