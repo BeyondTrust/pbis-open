@@ -1,4 +1,4 @@
-PKG_COMPONENTS="libkeytab libschannel dcerpc librpc"
+PKG_COMPONENTS="libschannel dcerpc"
 
 function package_populate
 {
