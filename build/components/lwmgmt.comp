@@ -1,6 +1,6 @@
 #!/bin/bash -c "exit 1"
 
-COMP_DEPENDENCIES="autoconf automake libtool sqlite dcerpc librpc lsass krb5 lwbase"
+COMP_DEPENDENCIES="autoconf automake libtool sqlite dcerpc lsass krb5 lwbase"
 COMP_INCREMENTAL=1
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwmgmt"
 
