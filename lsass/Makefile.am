@@ -15,7 +15,6 @@ full_subdirs= \
     etc \
     include \
     scripts \
-    tests \
     docs
 
 if ENABLE_COMPAT

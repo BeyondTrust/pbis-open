@@ -1095,6 +1095,7 @@ AC_CONFIG_FILES([Makefile
                  include/Makefile
                  scripts/Makefile
                  tests/Makefile
+                 tests/test_headers/Makefile
                  tests/rpc/Makefile
                  docs/Makefile
                  docs/Doxyfile])
