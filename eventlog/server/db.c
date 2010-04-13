@@ -97,7 +97,7 @@
 #define DB_QUERY_COUNT_ALL  "SELECT COUNT(*)  \
                              FROM     lwievents"
 
-#define DB_QUERY_COUNT      "SELECT COUNT(EventRecordId)  \
+#define DB_QUERY_COUNT      "SELECT COUNT(*)  \
                              FROM     lwievents           \
                              WHERE  (%s)"
 
