@@ -87,7 +87,7 @@ LsaLookupNames2(
 
     for (iName = 0; iName < dwNumNames; iName++)
     {
-        dwError = LwAllocateUnicodeStringExFromWc16String(
+        dwError = LwAllocateUnicodeStringFromWc16String(
                                       &pLsaNames[iName],
                                       ppwszNames[iName]);
         BAIL_ON_WIN_ERROR(dwError);

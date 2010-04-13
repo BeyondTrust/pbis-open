@@ -73,7 +73,7 @@ SamrCreateUser2(
     BAIL_ON_INVALID_PTR(pAccessGranted, ntStatus);
     BAIL_ON_INVALID_PTR(pRid, ntStatus);
 
-    dwError = LwAllocateUnicodeStringExFromWc16String(
+    dwError = LwAllocateUnicodeStringFromWc16String(
                                     &AccountName,
                                     pwszAccountName);
     BAIL_ON_WIN_ERROR(dwError);
