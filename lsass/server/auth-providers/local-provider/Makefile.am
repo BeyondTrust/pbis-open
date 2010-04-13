@@ -38,10 +38,8 @@ liblsass_auth_provider_local_la_LIBADD = \
     @top_builddir@/common/liblsacommon.la \
     @top_builddir@/server/api/liblsaserverapi.la \
     @top_builddir@/server/store/dsapi/libdsapi.la \
-    @top_builddir@/lsaunistr/liblsaunistr.la \
-    @NETAPI_LIBS@
+    @top_builddir@/lsaunistr/liblsaunistr.la
 
 liblsass_auth_provider_local_la_LDFLAGS = \
 	$(PROVIDER_LDFLAGS) \
-	-export-symbols=lp.sym \
-	@NETAPI_LDFLAGS@
+	-export-symbols=lp.sym

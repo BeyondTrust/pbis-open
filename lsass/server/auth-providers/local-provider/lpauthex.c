@@ -233,12 +233,13 @@ AuthenticateNTLMv1(
     pChal = LsaDataBlobBuffer(pUserParams->pass.chap.pChallenge);
     BAIL_ON_INVALID_POINTER(pChal);
 
-    ntError = NTLMv1EncryptChallenge(pChal,
-                                     NULL,     /* ignore LM hash */
-                                     pObject->userInfo.pNtHash,
-                                     NULL,
-                                     NTResponse);
-    if (ntError != STATUS_SUCCESS) {
+    ntError = NetrNTLMv1EncryptChallenge(pChal,
+                                         NULL,     /* ignore LM hash */
+                                         pObject->userInfo.pNtHash,
+                                         NULL,
+                                         NTResponse);
+    if (ntError != STATUS_SUCCESS)
+    {
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }

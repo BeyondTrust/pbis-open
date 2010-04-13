@@ -86,8 +86,11 @@
 
 #include "externs.h"
 
-#include <lwrpc/LMcrypt.h>
-#include <lwrpc/samr.h>
+//#include <lwrpc/LMcrypt.h>
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/samr.h>
 
 #include <openssl/evp.h>
 #include <openssl/md4.h>
