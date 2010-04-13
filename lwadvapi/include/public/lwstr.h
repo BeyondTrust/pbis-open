@@ -311,6 +311,13 @@ LwAllocateUnicodeStringFromWc16String(
 
 
 DWORD
+LwAllocateUnicodeStringExFromWc16String(
+    PUNICODE_STRING   pOutputString,
+    PCWSTR            pwszInputString
+    );
+
+
+DWORD
 LwAllocateWc16StringFromUnicodeString(
     PWSTR            *ppOutputString,
     PUNICODE_STRING   pInputString
@@ -328,6 +335,13 @@ DWORD
 LwAllocateCStringFromUnicodeString(
     PSTR             *ppszOutputString,
     PUNICODE_STRING   pInputString
+    );
+
+
+DWORD
+LwAllocateUnicodeStringExFromCString(
+    PUNICODE_STRING   pOutputString,
+    PCSTR             pszInputString
     );
 
 

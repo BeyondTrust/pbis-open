@@ -39,6 +39,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "lwerror.h"
 #include "lwlogging.h"

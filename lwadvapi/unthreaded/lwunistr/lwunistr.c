@@ -400,6 +400,56 @@ error:
 
 
 DWORD
+LwAllocateUnicodeStringExFromWc16String(
+    PUNICODE_STRING   pOutputString,
+    PCWSTR            pwszInputString
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    DWORD dwLen = 0;
+    DWORD dwSize = 0;
+    PWSTR pwszBuffer = NULL;
+
+    if (!pOutputString)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    if (pwszInputString)
+    {
+        dwLen  = wc16slen(pwszInputString);
+    }
+
+    dwSize = dwLen + 1;
+    dwError = LwAllocateMemory(sizeof(pwszBuffer[0]) * dwSize,
+                               OUT_PPVOID(&pwszBuffer));
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (dwLen)
+    {
+        wc16sncpy(pwszBuffer, pwszInputString, dwLen);
+    }
+
+    pOutputString->Length        = sizeof(pwszBuffer[0]) * dwLen;
+    pOutputString->MaximumLength = sizeof(pwszBuffer[0]) * dwSize;
+    pOutputString->Buffer        = pwszBuffer;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszBuffer);
+
+    pOutputString->Length        = 0;
+    pOutputString->MaximumLength = 0;
+    pOutputString->Buffer = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
 LwAllocateWc16StringFromUnicodeString(
     PWSTR            *ppOutputString,
     PUNICODE_STRING   pInputString
@@ -456,6 +506,56 @@ error:
 
 DWORD
 LwAllocateUnicodeStringFromCString(
+    PUNICODE_STRING   pOutputString,
+    PCSTR             pszInputString
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    DWORD dwLen = 0;
+    DWORD dwSize = 0;
+    PWSTR pwszBuffer = NULL;
+
+    if (!pOutputString)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
+    if (pszInputString)
+    {
+        dwLen  = strlen(pszInputString);
+    }
+
+    dwSize = dwLen + 1;
+    dwError = LwAllocateMemory(sizeof(pwszBuffer[0]) * dwSize,
+                               OUT_PPVOID(&pwszBuffer));
+    BAIL_ON_LW_ERROR(dwError);
+
+    if (dwLen)
+    {
+        mbstowc16s(pwszBuffer, pszInputString, dwLen);
+    }
+
+    pOutputString->Length        = sizeof(pwszBuffer[0]) * dwLen;
+    pOutputString->MaximumLength = sizeof(pwszBuffer[0]) * dwSize;
+    pOutputString->Buffer        = pwszBuffer;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszBuffer);
+
+    pOutputString->Length        = 0;
+    pOutputString->MaximumLength = 0;
+    pOutputString->Buffer = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
+LwAllocateUnicodeStringExFromCString(
     PUNICODE_STRING   pOutputString,
     PCSTR             pszInputString
     )
