@@ -143,16 +143,6 @@
 #define NETR_TRUST_ATTR_TREAT_AS_EXTERNAL    0x00000040
 
 
-typedef struct _GUID {
-    ULONG   ulTimeLow;
-    USHORT  usTimeMid;
-    USHORT  usTimeHiAndVersion;
-    BYTE    ClockSeqHiAndReserved;
-    BYTE    ClockSeqLow;
-    BYTE    Node[6];
-} GUID, *PGUID;
-
-
 typedef struct netr_domain_trust {
 #ifdef _DCE_IDL_
     [string]
