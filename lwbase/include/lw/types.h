@@ -151,6 +151,17 @@ typedef LW_WCHAR           LW_TCHAR;
 typedef LW_CHAR            LW_TCHAR;
 #endif 
 
+typedef struct _LW_GUID {
+    LW_ULONG Data1;
+    LW_USHORT Data2;
+    LW_USHORT Data3;
+#ifndef _DCE_IDL_
+    LW_UCHAR Data4[8];
+#else
+    LW_BYTE Data4[8];
+#endif
+} LW_GUID, *LW_PGUID;
+
 #define LW_TRUE  1
 #define LW_FALSE 0
 
@@ -302,6 +313,9 @@ typedef LW_NTSTATUS  NTSTATUS;
 typedef LW_PNTSTATUS PNTSTATUS;
 
 typedef LW_TCHAR    TCHAR;
+
+typedef LW_GUID     GUID;
+typedef LW_PGUID    PGUID;
 
 #ifndef TRUE
 #define TRUE LW_TRUE
