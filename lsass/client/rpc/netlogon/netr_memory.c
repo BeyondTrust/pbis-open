@@ -702,6 +702,8 @@ NetrAllocateRidWithAttributeArray(
     BAIL_ON_INVALID_PTR(pIn, ntStatus);
     BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
 
+    LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
+
     LWBUF_ALLOC_DWORD(pBuffer, pIn->dwCount);
     LWBUF_ALIGN(pdwOffset, pdwSize, pdwSpaceLeft);
 
