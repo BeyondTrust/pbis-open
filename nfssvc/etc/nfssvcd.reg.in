@@ -1,8 +1,0 @@
-[HKEY_THIS_MACHINE\Services]
-
-[HKEY_THIS_MACHINE\Services\nfssvc]
-"Description"="Likewise NFS Service"
-"Path"="@SBINDIR@/nfssvcd"
-"Arguments"="@SBINDIR@/nfssvcd --syslog"
-"Dependencies"="dcerpc lwio nfs npfs"
-"Type"=dword:00000001
