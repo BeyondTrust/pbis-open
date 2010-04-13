@@ -8,9 +8,8 @@ interface lsa
 cpp_quote("#ifdef DCERPC_STUB_BUILD")
 
 #include <lw/security-types.h>
-#include <lwrpc/types.h>
-#include <lwrpc/unistrdef.h>
-#include <lwrpc/lsadefs.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/lsa.h>
 
 
     /* LsaPolicyInformation union returned from LsaQueryInfoPolicy */
@@ -63,7 +62,7 @@ cpp_quote("#endif")
     NTSTATUS __LsaLookupNames(
         [in] POLICY_HANDLE hPolicy,
         [in,range(0,1000)] UINT32 num_names,
-        [in,size_is(num_names)] UnicodeString *names,
+        [in,size_is(num_names)] UNICODE_STRING *names,
         [out] RefDomainList **domains,
         [in,out] TranslatedSidArray *sids,
         [in] UINT16 level,
@@ -73,7 +72,7 @@ cpp_quote("#endif")
 	/* function 0x0f */
     NTSTATUS __LsaLookupSids(
         [in] POLICY_HANDLE hPolicy,
-        [in] SidArray *sids,
+        [in] SID_ARRAY *sids,
         [out] RefDomainList **domains,
         [in,out] TranslatedNameArray *names,
         [in] UINT16 level,
@@ -140,7 +139,7 @@ cpp_quote("#endif")
     /* function 0x39 */
     NTSTATUS __LsaLookupSids2(
         [in] POLICY_HANDLE hPolicy,
-        [in] SidArray *sids,
+        [in] SID_ARRAY *sids,
         [out] RefDomainList **domains,
         [in,out] TranslatedNameArray2 *names,
         [in] UINT16 level,
@@ -153,7 +152,7 @@ cpp_quote("#endif")
     NTSTATUS __LsaLookupNames2(
         [in] POLICY_HANDLE hPolicy,
         [in,range(0,1000)] UINT32 num_names,
-        [in,size_is(num_names)] UnicodeStringEx *names,
+        [in,size_is(num_names)] UNICODE_STRING *names,
         [out] RefDomainList **domains,
         [in,out] TranslatedSidArray2 *sids,
         [in] UINT16 level,
@@ -176,7 +175,7 @@ cpp_quote("#endif")
     NTSTATUS __LsaLookupNames3(
         [in] POLICY_HANDLE hPolicy,
         [in,range(0,1000)] UINT32 num_names,
-        [in,size_is(num_names)] UnicodeStringEx *names,
+        [in,size_is(num_names)] UNICODE_STRING *names,
         [out] RefDomainList **domains,
         [in,out] TranslatedSidArray3 *sids,
         [in] UINT16 level,

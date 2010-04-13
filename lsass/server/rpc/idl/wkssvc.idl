@@ -46,7 +46,7 @@ cpp_quote("#endif /* DCERPC_STUB_BUILD */")
     /* Function 0x10 */
     WINERROR NetrJoinDomain(
         [in,string,unique] wchar16_t *pwszServerName,
-        [in,ref] wchar16_t *pwszDomainName,
+        [in,string,ref] wchar16_t *pwszDomainName,
         [in,string,unique] wchar16_t *pwszAccountOu,
         [in,string,unique] wchar16_t *pwszAccountName,
         [in,string,unique] wchar16_t *pwszPassword,
@@ -69,7 +69,7 @@ cpp_quote("#endif /* DCERPC_STUB_BUILD */")
     /* Function 0x16 */
     WINERROR NetrJoinDomain2(
         [in,string,unique] wchar16_t *pwszServerName,
-        [in,ref] wchar16_t *pwszDomainName,
+        [in,string,ref] wchar16_t *pwszDomainName,
         [in,string,unique] wchar16_t *pwszAccountOu,
         [in,string,unique] wchar16_t *pwszAccountName,
         [in,unique] ENC_JOIN_PASSWORD_BUFFER *pPassword,

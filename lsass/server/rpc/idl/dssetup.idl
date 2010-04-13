@@ -8,20 +8,21 @@ interface dssetup
 cpp_quote("#ifdef DCERPC_STUB_BUILD")
 
 #include <lw/security-types.h>
-#include <lwrpc/types.h>
-#include <lwrpc/dsrdefs.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/dssetup.h>
 
-typedef [switch_type(UINT16)] union ds_role_info {
-    [case(DS_ROLE_BASIC_INFORMATION)] DsRolePrimaryDomainInfoBasic basic;
-    [case(DS_ROLE_UPGRADE_STATUS)]    DsRoleUpgradeStatus          upgrade;
-    [case(DS_ROLE_OP_STATUS)]         DsRoleOpStatus               opstatus;
-} DsRoleInfo;
+typedef [switch_type(UINT16)] union _DSR_ROLE_INFO {
+    [case(DS_ROLE_BASIC_INFORMATION)] DSR_ROLE_PRIMARY_DOMAIN_INFO_BASIC  Basic;
+    [case(DS_ROLE_UPGRADE_STATUS)]    DSR_ROLE_UPGRADE_STATUS             Upgrade;
+    [case(DS_ROLE_OP_STATUS)]         DSR_ROLE_OP_STATUS                  OpStatus;
+} DSR_ROLE_INFO;
 
 cpp_quote("#endif")
 
     DWORD __DsrRoleGetPrimaryDomainInformation(
         [in] UINT16 uiLevel,
-        [out,switch_is(uiLevel)] DsRoleInfo **ppInfo
+        [out,switch_is(uiLevel)] DSR_ROLE_INFO **ppInfo
         );
 
 }
