@@ -1,5 +1,3 @@
-PKG_NEED_COMPAT=1
-PKG_NEED_FOREIGN=1
 PKG_COMPONENTS="lwreg"
 
 function package_populate
