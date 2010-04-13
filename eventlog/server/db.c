@@ -135,13 +135,16 @@
                                         ?10)"
 
 //Delete the record over 'n' entries
-#define DB_QUERY_DELETE_AT_LIMIT    "DELETE FROM     lwievents      \
-                                     WHERE  EventRecordId NOT IN (  \
-                                       SELECT EventRecordId         \
-                                       FROM     lwievents           \
-                                       ORDER BY EventRecordId DESC  \
-                                       LIMIT %lu                    \
-                                     )"
+#define DB_QUERY_DELETE_AT_LIMIT    "DELETE FROM lwievents \
+                                    WHERE EventRecordId IN ( \
+                                        SELECT EventRecordId \
+                                        FROM lwievents \
+                                        ORDER BY EventRecordId ASC \
+                                        LIMIT max( \
+                                            (SELECT count(*) FROM lwievents) - \
+                                            %lu, 0 \
+                                        ) \
+                                    )"
 
 //Delete the first 'n' entries
 #define DB_QUERY_DELETE_COUNT       "DELETE FROM     lwievents      \
