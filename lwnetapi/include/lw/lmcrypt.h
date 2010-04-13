@@ -29,31 +29,35 @@
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Abstract: LanMan cryptography functions (rpc client library)
  *
- * Module Name:
- *
- *        lm.h
- *
- * Abstract:
- *
- *        Likewise Network Management API
- *
- * Authors: Rafal Szczesniak (rafal@likewise.com)
+ * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
  */
 
-#ifndef _LM_H_
-#define _LM_H_
 
-#ifdef _GNU_SOURCE
-#include <lw/lmerr.h>
-#endif
-#include <lw/lmaccess.h>
-#include <lw/lmjoin.h>
-#include <lw/lmdebug.h>
-#include <lw/lmcrypt.h>
-#include <lw/lmmem.h>
-#include <lw/lmcreds.h>
-#include <lw/lmshare.h>
+#ifndef _LM_CRYPT_H_
+#define _LM_CRYPT_H_
 
-#endif /* _LM_H_ */
+#include <lw/ntstatus.h>
+
+
+NTSTATUS
+NTLMv1EncryptChallenge(
+    UINT8  Challenge[8],
+    UINT8  *pLMHash,
+    UINT8  *pNTHash,
+    UINT8  LMResp[24],
+    UINT8  NTResp[24]
+    );
+
+#endif   /* _LM_CRYPT_H_ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

@@ -29,31 +29,25 @@
  */
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
+ * Abstract: NetAPI memory (de)initialisation functions (rpc client library)
  *
- * Module Name:
- *
- *        lm.h
- *
- * Abstract:
- *
- *        Likewise Network Management API
- *
- * Authors: Rafal Szczesniak (rafal@likewise.com)
+ * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
  */
 
-#ifndef _LM_H_
-#define _LM_H_
+#ifndef _LM_MEM_H_
+#define _LM_MEM_H_
 
-#ifdef _GNU_SOURCE
-#include <lw/lmerr.h>
-#endif
-#include <lw/lmaccess.h>
-#include <lw/lmjoin.h>
-#include <lw/lmdebug.h>
-#include <lw/lmcrypt.h>
-#include <lw/lmmem.h>
-#include <lw/lmcreds.h>
-#include <lw/lmshare.h>
 
-#endif /* _LM_H_ */
+NTSTATUS
+NetInitMemory(
+    void
+    );
+
+
+NTSTATUS
+NetDestroyMemory(
+    void
+    );
+
+
+#endif /* _LM_MEM_H_ */

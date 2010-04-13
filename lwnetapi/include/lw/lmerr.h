@@ -28,32 +28,15 @@
  * license@likewisesoftware.com
  */
 
+#include <lw/ntstatus.h>
+#include <lw/winerror.h>
+
+
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
- * Module Name:
- *
- *        lm.h
- *
- * Abstract:
- *
- *        Likewise Network Management API
- *
- * Authors: Rafal Szczesniak (rafal@likewise.com)
- */
-
-#ifndef _LM_H_
-#define _LM_H_
-
-#ifdef _GNU_SOURCE
-#include <lw/lmerr.h>
-#endif
-#include <lw/lmaccess.h>
-#include <lw/lmjoin.h>
-#include <lw/lmdebug.h>
-#include <lw/lmcrypt.h>
-#include <lw/lmmem.h>
-#include <lw/lmcreds.h>
-#include <lw/lmshare.h>
-
-#endif /* _LM_H_ */
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
