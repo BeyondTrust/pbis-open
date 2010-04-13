@@ -4,7 +4,7 @@ AC_PREREQ([2.13])
 AC_INIT([DCE RPC], [1.1.0.7])
 AC_CONFIG_AUX_DIR([build])
 AC_CANONICAL_TARGET
-AM_INIT_AUTOMAKE(dcerpc, 1.1.0.7)
+AM_INIT_AUTOMAKE([foreign])
 AC_PREFIX_DEFAULT(/opt/dcerpc)
 AC_CONFIG_SRCDIR([uuid/uuid.c])
 AC_CONFIG_HEADER([include/config.h])
