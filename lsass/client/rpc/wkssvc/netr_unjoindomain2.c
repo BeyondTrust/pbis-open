@@ -33,29 +33,53 @@
  *
  * Module Name:
  *
- *        wkss_stubmemory.h
+ *        netr_unjoindomain2.c
  *
  * Abstract:
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        WksSvc DCE/RPC stub memory cleanup functions
+ *        NetrUnjoinDomain2 function
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _WKSS_STUB_MEMORY_H_
-#define _WKSS_STUB_MEMORY_H_
+#include "includes.h"
 
 
-VOID
-WkssCleanStubNetrWkstaInfo(
-    PNETR_WKSTA_INFO pInfo,
-    DWORD            dwLevel
-    );
+WINERROR
+NetrUnjoinDomain2(
+    IN  WKSS_BINDING               hBinding,
+    IN  PWSTR                      pwszServerName,
+    IN  PWSTR                      pwszAccountName,
+    IN  PENC_JOIN_PASSWORD_BUFFER  pPassword,
+    IN  DWORD                      dwUnjoinFlags
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
 
+    BAIL_ON_INVALID_PTR(hBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pwszAccountName, ntStatus);
+    BAIL_ON_INVALID_PTR(pPassword, ntStatus);
 
-#endif /* _WKSS_STUB_MEMORY_H_ */
+    DCERPC_CALL(dwError, cli_NetrUnjoinDomain2(
+                              (handle_t)hBinding,
+                              pwszServerName,
+                              pwszAccountName,
+                              pPassword,
+                              dwUnjoinFlags));
+    BAIL_ON_WIN_ERROR(dwError);
+
+error:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return (WINERROR)dwError;
+}
 
 
 /*

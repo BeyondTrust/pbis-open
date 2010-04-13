@@ -8,7 +8,10 @@ libwkssvc_la_SOURCES =       \
     globals.c                \
     wkss_binding.c           \
     wkss_memory.c            \
-    wkss_stubmemory.c
+    wkss_stubmemory.c        \
+    netr_wkstagetinfo.c      \
+    netr_joindomain2.c       \
+    netr_unjoindomain2.c
 
 
 DCEIDL_PASS_INCLUDES =         \

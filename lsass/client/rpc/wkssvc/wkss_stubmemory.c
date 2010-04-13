@@ -47,6 +47,33 @@
 #include "includes.h"
 
 
+VOID
+WkssCleanStubNetrWkstaInfo(
+    PNETR_WKSTA_INFO pInfo,
+    DWORD            dwLevel
+    )
+{
+    unsigned32 rpcStatus = 0;
+
+    switch (dwLevel)
+    {
+    case 102:
+        if (pInfo->pInfo102)
+        {
+            rpc_sm_client_free(pInfo->pInfo102->wksta102_lan_root, &rpcStatus);
+        }
+
+    case 101:
+    case 100:
+        if (pInfo->pInfo100)
+        {
+            rpc_sm_client_free(pInfo->pInfo100->wksta100_name, &rpcStatus);
+            rpc_sm_client_free(pInfo->pInfo100->wksta100_domain, &rpcStatus);
+        }
+        break;
+    }
+}
+
 
 /*
 local variables:

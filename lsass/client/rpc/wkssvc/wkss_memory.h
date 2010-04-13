@@ -88,6 +88,16 @@
     LWBUF_ALLOC_ULONG64((buffer), (ULONG64)(val))
 
 
+#define LWBUF_ALLOC_WC16STR(buffer, ptr)                        \
+    dwError = LwBufferAllocWC16String(                          \
+                                 (buffer),                      \
+                                 pdwOffset,                     \
+                                 pdwSpaceLeft,                  \
+                                 (ptr),                         \
+                                 pdwSize);                      \
+    BAIL_ON_WIN_ERROR(dwError)
+
+
 #define LWBUF_ALLOC_WC16STR_FROM_UNICODE_STRING(buffer, ptr)    \
     dwError = LwBufferAllocWC16StringFromUnicodeString(         \
                                  (buffer),                      \
@@ -190,6 +200,17 @@ WINERROR
 WkssAllocateMemory(
     OUT PVOID *ppOut,
     IN  size_t Size
+    );
+
+
+DWORD
+WkssAllocateNetrWkstaInfo(
+    OUT PNETR_WKSTA_INFO  pOut,
+    IN OUT PDWORD         pdwOffset,
+    IN OUT PDWORD         pdwSpaceLeft,
+    IN  DWORD             dwLevel,
+    IN  PNETR_WKSTA_INFO  pIn,
+    IN OUT PDWORD         pdwSize
     );
 
 

@@ -84,6 +84,72 @@ WkssFreeMemory(
 }
 
 
+DWORD
+WkssAllocateNetrWkstaInfo(
+    OUT PNETR_WKSTA_INFO  pOut,
+    IN OUT PDWORD         pdwOffset,
+    IN OUT PDWORD         pdwSpaceLeft,
+    IN  DWORD             dwLevel,
+    IN  PNETR_WKSTA_INFO  pIn,
+    IN OUT PDWORD         pdwSize
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PVOID pBuffer = NULL;
+
+    BAIL_ON_INVALID_PTR(pOut, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwOffset, ntStatus);
+    BAIL_ON_INVALID_PTR(pIn, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
+
+    if (dwLevel >= 100 && dwLevel <= 102)
+    {
+        pBuffer = pOut->pInfo100;
+
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->pInfo100->wksta100_platform_id);
+        LWBUF_ALLOC_WC16STR(pBuffer, pIn->pInfo100->wksta100_name);
+        LWBUF_ALLOC_WC16STR(pBuffer, pIn->pInfo100->wksta100_domain);
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->pInfo100->wksta100_version_major);
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->pInfo100->wksta100_version_minor);
+    }
+
+    if (dwLevel >= 101 && dwLevel <= 102)
+    {
+        /* Level 101 is an extension of level 100 and
+           pBuffer points to the same place as pInfo101 */
+        LWBUF_ALLOC_WC16STR(pBuffer, pIn->pInfo101->wksta101_domain);
+    }
+
+    if (dwLevel == 102)
+    {
+        /* Level 102 is an extension of level 101 and
+           pBuffer points to the same place as pInfo102 */
+        LWBUF_ALLOC_DWORD(pBuffer, pIn->pInfo102->wksta102_logged_users);
+    }
+
+    if (pBuffer == NULL &&
+        pdwSpaceLeft != NULL)
+    {
+        /* No matching infolevel has been found */
+        dwError = ERROR_INVALID_LEVEL;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c
