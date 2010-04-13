@@ -39,25 +39,6 @@ error:
     goto cleanup;
 }
 
-NET_API_STATUS
-NetApiBufferFree(
-    PVOID pBuffer
-    )
-{
-    NET_API_STATUS status = 0;
-
-    if (!pBuffer)
-    {
-        status = ERROR_INVALID_PARAMETER;
-        BAIL_ON_NETAPI_ERROR(status);
-    }
-
-    LwFreeMemory(pBuffer);
-
-error:
-
-    return status;
-}
 
 NET_API_STATUS
 NetServerGetInfoA(

@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,56 +28,59 @@
  * license@likewisesoftware.com
  */
 
+#ifndef _NET_UTIL_H_
+#define _NET_UTIL_H_
+
+
+#define BAIL_ON_NT_STATUS(err)               \
+    if ((err) != STATUS_SUCCESS) {           \
+        goto error;                          \
+    }
+
+#define BAIL_ON_WIN_ERROR(err)               \
+    if ((err) != ERROR_SUCCESS) {            \
+        goto error;                          \
+    }
+
+#define BAIL_ON_LDERR_ERROR(e)               \
+    if ((e) != LDAP_SUCCESS) {               \
+        lderr = (e);                         \
+        goto error;                          \
+    }
+
+#define BAIL_ON_NO_MEMORY(p, err)            \
+    if ((p) == NULL) {                       \
+        err = ERROR_OUTOFMEMORY;             \
+        goto error;                          \
+    }
+
+#define BAIL_ON_INVALID_PTR(p, err)          \
+    if ((p) == NULL) {                       \
+        err = ERROR_INVALID_PARAMETER;       \
+        goto error;                          \
+    }
+
+#define goto_if_no_memory_lderr(p, lbl) \
+    if ((p) == NULL) {                  \
+        lderr = LDAP_NO_MEMORY;         \
+        err = ERROR_OUTOFMEMORY;        \
+        goto lbl;                       \
+    }
+
+
+#if !defined(MACHPASS_LEN)
+#define MACHPASS_LEN  (16)
+#endif
+
+
+#endif /* _NET_UTIL_H_ */
 
 
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
- * Module Name:
- *
- *        includes.h
- *
- * Abstract:
- *
- *        Likewise Net API
- *
- * Authors: Sriram Nambakam (snambakam@likewise.com)
- */
-#include "config.h"
-#include "lwnetapisys.h"
-
-#include <lw/base.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwtime.h>
-
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/des.h>
-#include <openssl/rc4.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
-
-#include <lwio/lwio.h>
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/lrpc.h>
-#include <lwnet.h>
-
-#include <lw/lm.h>
-#include <lw/srvsvc.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/lsa.h>
-
-#include <lwnetapidefs.h>
-
-#include "net_connection.h"
-#include "net_user.h"
-#include "net_util.h"
-#include "net_memory.h"
-#include "net_userinfo.h"
-#include "net_groupinfo.h"
-#include "net_memberinfo.h"
-#include "net_crypto.h"
-#include "net_getdcname.h"
-#include "externs.h"
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

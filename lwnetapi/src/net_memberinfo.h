@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,56 +28,65 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        includes.h
+ *        net_memberinfo.h
  *
  * Abstract:
  *
- *        Likewise Net API
+ *        Remote Procedure Call (RPC) Client Interface
  *
- * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *        NetAPI local group members info buffer handling functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
-#include "lwnetapisys.h"
 
-#include <lw/base.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwtime.h>
 
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/des.h>
-#include <openssl/rc4.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
+#ifndef _NET_MEMBERS_H_
+#define _NET_MEMBERS_H_
 
-#include <lwio/lwio.h>
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/lrpc.h>
-#include <lwnet.h>
 
-#include <lw/lm.h>
-#include <lw/srvsvc.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/lsa.h>
+typedef struct _NET_RESOLVED_NAME
+{
+    UNICODE_STRING  DomainName;
+    UNICODE_STRING  AccountName;
+    USHORT          usType;
+    PSID            pSid;
+}
+NET_RESOLVED_NAME, *PNET_RESOLVED_NAME;
 
-#include <lwnetapidefs.h>
 
-#include "net_connection.h"
-#include "net_user.h"
-#include "net_util.h"
-#include "net_memory.h"
-#include "net_userinfo.h"
-#include "net_groupinfo.h"
-#include "net_memberinfo.h"
-#include "net_crypto.h"
-#include "net_getdcname.h"
-#include "externs.h"
+DWORD
+NetAllocateLocalGroupMembersInfo(
+    PVOID   pInfoBuffer,
+    PDWORD  pdwSpaceLeft, 
+    DWORD   dwLevel,
+    PVOID   pSource,
+    PDWORD  pdwSize
+    );
+
+
+DWORD
+NetAllocateLocalGroupUsersInfo(
+    PVOID   pInfoBuffer,
+    PDWORD  pdwSpaceLeft,
+    DWORD   dwLevel,
+    PVOID   pSource,
+    PDWORD  pdwSize
+    );
+
+
+#endif /* _NET_MEMBERS_H_ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

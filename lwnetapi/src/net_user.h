@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,56 +28,44 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        includes.h
+ *        net_user.h
  *
  * Abstract:
  *
- *        Likewise Net API
+ *        Remote Procedure Call (RPC) Client Interface
  *
- * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *        NetAPI user and alias (a.k.a. local group) open routines
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
-#include "lwnetapisys.h"
 
-#include <lw/base.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwtime.h>
+#ifndef _NET_USER_H_
+#define _NET_USER_H_
 
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/des.h>
-#include <openssl/rc4.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
 
-#include <lwio/lwio.h>
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/lrpc.h>
-#include <lwnet.h>
+NTSTATUS
+NetOpenUser(
+    PNET_CONN       pConn,
+    PCWSTR          pwszUsername,
+    DWORD           dwAccessMask,
+    ACCOUNT_HANDLE *phUser,
+    PDWORD          pdwRid
+    );
 
-#include <lw/lm.h>
-#include <lw/srvsvc.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/lsa.h>
 
-#include <lwnetapidefs.h>
+NTSTATUS
+NetOpenAlias(
+    PNET_CONN       pConn,
+    PCWSTR          pwszAliasname,
+    DWORD           dwAccessMask,
+    ACCOUNT_HANDLE *phAlias,
+    PDWORD          pdwRid
+    );
 
-#include "net_connection.h"
-#include "net_user.h"
-#include "net_util.h"
-#include "net_memory.h"
-#include "net_userinfo.h"
-#include "net_groupinfo.h"
-#include "net_memberinfo.h"
-#include "net_crypto.h"
-#include "net_getdcname.h"
-#include "externs.h"
+
+#endif /* _NET_USER_H_ */
