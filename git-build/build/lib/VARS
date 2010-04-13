@@ -23,8 +23,8 @@ esac
 __COMP_LIST="krb5 openldap libcrypto ${_UUID} ${_ICONV} lwbase \
     lwmsg centutils \
     sqlite lwreg pstore \
-    lwadvapi netlogon lwio lwsm libkeytab libschannel \
-    dcerpc librpc eventlog lsass srvsvc \
+    lwadvapi netlogon lwio lwsm libschannel \
+    dcerpc eventlog lsass srvsvc \
     lwdns domainjoin lwnetapi lwtools \
 "
 

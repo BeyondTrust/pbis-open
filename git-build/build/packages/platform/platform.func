@@ -17,8 +17,8 @@ esac
 PKG="platform"
 COMPONENTS="krb5 openldap libcrypto lwbase ${_UUID} ${_ICONV} \
             lwmsg lwadvapi centutils \
-            libkeytab libschannel sqlite pstore lsass lwdns \
-            domainjoin eventlog lwio lwreg lwsm netlogon dcerpc librpc \
+            libschannel sqlite pstore lsass lwdns \
+            domainjoin eventlog lwio lwreg lwsm netlogon dcerpc \
             lwnetapi lwtools srvsvc"
 
 for comp in ${COMPONENTS}; do
