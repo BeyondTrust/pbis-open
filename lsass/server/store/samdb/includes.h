@@ -38,7 +38,8 @@
 #include <lw/base.h>
 #include <lw/security-types.h>
 #include <lwsid.h>
-#include <lwrpc/samrdefs.h>
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
 
 #include "lsa/lsa.h"
 
