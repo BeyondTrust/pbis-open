@@ -56,14 +56,12 @@ libnetlogon_la_LDFLAGS =   \
     $(AM_LDFLAGS)          \
     $(LWBASE_LDFLAGS)      \
     $(LWADVAPI_LDFLAGS)    \
-    $(DCERPC_LDFLAGS)      \
-    $(LIBUNISTR_LDFLAGS)
+    $(DCERPC_LDFLAGS)
 
 libnetlogon_la_LIBADD =    \
     $(LWBASE_LIBS)         \
     $(LWADVAPI_LIBS)       \
     $(DCERPC_LIBS)         \
-    $(LIBUNISTR_LIBS)      \
     libnetlogon_cs.la
 
 CLEANFILES = netlogon_h.h netlogon_cstub.c netlogon_sstub.c

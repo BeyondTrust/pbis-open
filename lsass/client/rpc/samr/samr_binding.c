@@ -167,17 +167,26 @@ SamrInitBindingFull(
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszHostname)
+    {
+        dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
     dwError = LwWc16sToMbs(pwszEndpoint, &pszEndpoint);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwWc16sToMbs(pwszUuid, &pszUuid);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszUuid)
+    {
+        dwError = LwWc16sToMbs(pwszUuid, &pszUuid);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
-    dwError = LwWc16sToMbs(pwszOptions, &pszOptions);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszOptions)
+    {
+        dwError = LwWc16sToMbs(pwszOptions, &pszOptions);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
     ntStatus = SamrInitBindingFullA(&hBinding,
                                     pszProtSeq,
@@ -198,7 +207,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszOptions);
 
     if (ntStatus == STATUS_SUCCESS &&
-        dwError == ERROR_SUCCESS)
+        dwError != ERROR_SUCCESS)
     {
         ntStatus = LwWin32ErrorToNtStatus(dwError);
     }

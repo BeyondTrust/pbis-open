@@ -159,8 +159,11 @@ DsrInitBindingFull(
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
-    BAIL_ON_WIN_ERROR(dwError);
+    if (pwszHostname)
+    {
+        dwError = LwWc16sToMbs(pwszHostname, &pszHostname);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
 
     dwError = LwWc16sToMbs(pwszEndpoint, &pszEndpoint);
     BAIL_ON_WIN_ERROR(dwError);
