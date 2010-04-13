@@ -11,4 +11,6 @@ domainjoin_cli_SOURCES = djcli.c \
        main.c
 
 domainjoin_cli_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la \
-		       $(CENTUTILS_LDFLAGS) $(CENTUTILS_LIBS)
+		       $(CENTUTILS_LDFLAGS) \
+                       $(CENTUTILS_LIBS)    \
+                       $(LSASS_LIBS)

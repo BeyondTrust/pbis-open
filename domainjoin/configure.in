@@ -153,25 +153,6 @@ AC_ARG_WITH(
 )
 
 AC_ARG_WITH(
-        librpc-dir,
-        [  --with-librpc-dir=<prefix>     look for librpc headers/libraries in <prefix>],
-        [
-            LIBRPC_INCLUDE=-I$withval/include
-            LIBRPC_LDFLAGS=-L$withval/lib
-            LIBRPC_LIBDIR=$withval/lib
-        ]
-)
-
-AC_ARG_WITH(
-        librpc-libdir,
-        [  --with-librpc-libdir=<libdir>     look for librpc libraries in <libdir>],
-        [
-            LIBRPC_LDFLAGS=-L$withval
-            LIBRPC_LIBDIR=$withval
-        ]
-)
-
-AC_ARG_WITH(
         lwdns-dir,
         [  --with-lwdns-dir=<prefix>     look for lwdns headers/libraries in <prefix>],
         [
@@ -268,9 +249,6 @@ AC_ARG_WITH([lsass-libs],
 		LSASS_LDFLAGS="-L$withval"
         ])
 
-AC_SUBST(LSASS_INCLUDES)
-AC_SUBST(LSASS_LDFLAGS)
-
 # minimal
 
 AC_ARG_WITH([version], [AC_HELP_STRING([--with-version], [build version])],
@@ -347,13 +325,6 @@ AC_SUBST(DCERPC_INCLUDE)
 AC_SUBST(DCERPC_LDFLAGS)
 AC_SUBST(DCERPC_LIBS)
 
-LIBRPC_LIBS=""
-AC_CHECK_LIB([netapi], [NetJoinDomainLocal], [LIBRPC_LIBS="-lnetapi"], AC_MSG_ERROR([Use --with-librpc-dir to find libnetapi.so]), [$LIBRPC_LDFLAGS $PSTORE_LDFLAGS $PSTORE_LIBS $DCERPC_LDFLAGS $DCERPC_LIBS $OPENLDAP_LDFLAGS $OPENLDAP_LIBS $KRB5_LDFLAGS $KRB5_LIBS])
-
-AC_SUBST(LIBRPC_INCLUDE)
-AC_SUBST(LIBRPC_LDFLAGS)
-AC_SUBST(LIBRPC_LIBS)
-
 LWDNS_LIBS=""
 AC_CHECK_LIB([lwdns], [DNSUpdateSecure], [LWDNS_LIBS="-llwdns"], AC_MSG_ERROR([Use --with-lwdns-dir to find lwdns libraries]), [$LWDNS_LDFLAGS])
 
@@ -361,8 +332,12 @@ AC_SUBST(LWDNS_INCLUDE)
 AC_SUBST(LWDNS_LDFLAGS)
 AC_SUBST(LWDNS_LIBS)
 
+
+LSASS_LIBS=""
 AC_CHECK_LIB([lsaclient], [LsaOpenServer], [LSASS_LIBS="$LSASS_LIBS -llsaclient"])
-AC_CHECK_LIB([lsajoin], [LsaNetJoinDomain], [LSASS_LIBS="$LSASS_LIBS -llsajoin"])
+AC_CHECK_LIB([lsajoin], [LsaJoinDomain], [LSASS_LIBS="$LSASS_LIBS -llsajoin"])
+AC_SUBST(LSASS_INCLUDE)
+AC_SUBST(LSASS_LDFLAGS)
 AC_SUBST(LSASS_LIBS)
 
 CPPFLAGS="$CPPFLAGS -D_REENTRANT -fPIC"
@@ -532,9 +507,9 @@ fi
 
 AM_CONDITIONAL([BUILD_GTK], [test "x$have_gtk" = "xyes"])
 
-LIBDOMAINJOIN_LDFLAGS="$KRB5_LDFLAGS $OPENLDAP_LDFLAGS $LIBXML2_LDFLAGS $CENTUTILS_LDFLAGS $PSTORE_LDFLAGS $NETLOGON_LDFLAGS $DCERPC_LDFLAGS $LIBRPC_LDFLAGS"
+LIBDOMAINJOIN_LDFLAGS="$KRB5_LDFLAGS $OPENLDAP_LDFLAGS $LIBXML2_LDFLAGS $CENTUTILS_LDFLAGS $PSTORE_LDFLAGS $NETLOGON_LDFLAGS $DCERPC_LDFLAGS"
 
-LIBDOMAINJOIN_LIBS="$LIBXML2_LIBS $CENTUTILS_LIBS $NETLOGON_LIBS $LIBRPC_LIBS $DCERPC_LIBS $PSTORE_LIBS $KRB5_LIBS" 
+LIBDOMAINJOIN_LIBS="$LIBXML2_LIBS $CENTUTILS_LIBS $NETLOGON_LIBS $DCERPC_LIBS $PSTORE_LIBS $KRB5_LIBS" 
 
 AC_SUBST(LIBDOMAINJOIN_LDFLAGS)
 AC_SUBST(LIBDOMAINJOIN_LIBS)
