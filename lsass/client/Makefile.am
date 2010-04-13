@@ -1,7 +1,8 @@
 SUBDIRS = \
     api \
     ad \
-    ntlm
+    ntlm \
+    rpc
 
 lib_LTLIBRARIES = liblsaclient.la
 
