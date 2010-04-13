@@ -5,7 +5,7 @@
 #
 
 COMP_INCREMENTAL=1
-COMP_DEPENDENCIES="automake autoconf libtool netlogon lsass srvsvc lwbase lwadvapi"
+COMP_DEPENDENCIES="automake autoconf libtool netlogon dcerpc lsass srvsvc lwbase lwadvapi"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/lwnetapi
 
 function component_bootstrap
