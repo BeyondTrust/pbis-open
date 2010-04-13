@@ -64,7 +64,7 @@ LsaNetTestJoinDomain(
     );
 
 DWORD
-LsaNetJoinDomain(
+LsaJoinDomain(
     PCSTR pszHostname,
     PCSTR pszHostDnsDomain,
     PCSTR pszDomain,
@@ -78,7 +78,7 @@ LsaNetJoinDomain(
     );
 
 DWORD
-LsaNetLeaveDomain(
+LsaLeaveDomain(
     PCSTR pszUsername,
     PCSTR pszPassword
     );
@@ -136,6 +136,21 @@ DWORD
 LsaChangeDomainGroupMembership(
     IN  PCSTR    pszDomainName,
     IN  BOOLEAN  bEnable
+    );
+
+
+DWORD
+LsaMachineChangePassword(
+    VOID
+    );
+
+
+DWORD
+LsaUserChangePassword(
+    PWSTR  pwszDCName,
+    PWSTR  pwszUserName,
+    PWSTR  pwszOldPassword,
+    PWSTR  pwszNewPassword
     );
 
 
