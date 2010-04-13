@@ -696,7 +696,7 @@ static
 DWORD
 AD_PacRidsToSidStringList(
     IN OPTIONAL PSID pDomainSid,
-    IN RidWithAttributeArray* pRids,
+    IN PRID_WITH_ATTRIBUTE_ARRAY pRids,
     OUT PDWORD pdwSidCount,
     OUT PSTR** pppszSidList
     )
@@ -709,7 +709,7 @@ AD_PacRidsToSidStringList(
 
     if (!pDomainSid)
     {
-        if (pRids->count != 0)
+        if (pRids->dwCount != 0)
         {
             dwError = LW_ERROR_INTERNAL;
             BAIL_ON_LSA_ERROR(dwError);
@@ -719,7 +719,7 @@ AD_PacRidsToSidStringList(
         goto error;
     }
 
-    dwSidCount = pRids->count;
+    dwSidCount = pRids->dwCount;
 
     dwError = LwAllocateMemory(sizeof(ppszSidList[0]) * dwSidCount,
                                 (PVOID*)&ppszSidList);
@@ -731,10 +731,10 @@ AD_PacRidsToSidStringList(
                     0);
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; i < pRids->count; i++)
+    for (i = 0; i < pRids->dwCount; i++)
     {
         pDomainBasedSid->SubAuthority[pDomainBasedSid->SubAuthorityCount - 1] =
-            pRids->rids[i].rid;
+            pRids->pRids[i].dwRid;
 
         dwError = LsaAllocateCStringFromSid(
                         &ppszSidList[i],
@@ -1529,7 +1529,7 @@ AD_OnlineCheckUserPassword(
     size_t sNdrEncodedPac = 0;
     PAC_LOGON_INFO *pPac = NULL;
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
-    error_status_t dceStatus = 0;
+    NTSTATUS ntStatus = 0;
 
     dwError = AD_DetermineTrustModeandDomainName(
                         pUserInfo->pszNetbiosDomainName,
@@ -1651,11 +1651,11 @@ AD_OnlineCheckUserPassword(
     if (sNdrEncodedPac)
     {
         // This function will abort if it is passed a zero sized PAC.
-        dceStatus = DecodePacLogonInfo(
+        ntStatus = DecodePacLogonInfo(
             pchNdrEncodedPac,
             sNdrEncodedPac,
             &pPac);
-        BAIL_ON_DCE_ERROR(dwError, dceStatus);
+        BAIL_ON_NT_STATUS(ntStatus);
     }
 
     if (pPac != NULL)

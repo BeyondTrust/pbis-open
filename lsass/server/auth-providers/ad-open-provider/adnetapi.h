@@ -52,12 +52,9 @@
 #include <openssl/rc4.h>
 
 #include <lw/ntstatus.h>
-#include <lwrpc/lsa.h>
-#include <lwrpc/netlogon.h>
-#include <lwrpc/samr.h>
-#include <lwrpc/LM.h>
-#include <lwrpc/errcheck.h>
-
+#include <lw/rpc/lsa.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/samr.h>
 
 typedef struct _LSA_TRANSLATED_NAME_OR_SID {
     PSTR pszNT4NameOrSid;

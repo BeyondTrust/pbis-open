@@ -69,7 +69,9 @@
 #include "lwmem.h"
 #include "lwstr.h"
 #include <lwkrb5.h>
-#include <lwrpc/krb5pac.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
 #include "lsaunistr.h"

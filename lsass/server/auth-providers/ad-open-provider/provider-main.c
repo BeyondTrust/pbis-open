@@ -1309,7 +1309,7 @@ AD_JoinDomain(
     dwError = AD_PreJoinDomain(hProvider, gpLsaAdProviderState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaNetJoinDomain(
+    dwError = LsaJoinDomain(
         pRequest->pszHostname,
         pRequest->pszHostDnsDomain,
         pRequest->pszDomain,
@@ -1451,7 +1451,7 @@ AD_LeaveDomain(
     dwError = AD_PreLeaveDomain(hProvider, gpLsaAdProviderState);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaNetLeaveDomain(
+    dwError = LsaLeaveDomain(
         pRequest->pszUsername,
         pRequest->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);

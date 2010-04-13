@@ -52,7 +52,7 @@
 
 static NetrCredentials gSchannelCreds = { 0 };
 static NetrCredentials* gpSchannelCreds = NULL;
-static handle_t ghSchannelBinding = NULL;
+static NETR_BINDING ghSchannelBinding = NULL;
 static pthread_mutex_t gSchannelLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
@@ -64,7 +64,7 @@ AD_NtStatusIsConnectionError(
 static
 BOOLEAN
 AD_WinErrorIsConnectionError(
-    WINERR winError
+    WINERROR winError
     );
 
 static
@@ -188,9 +188,6 @@ AD_NetInitMemory(
     dwError = SamrInitMemory();
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = NetInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
 error:
 
     return dwError;
@@ -204,9 +201,6 @@ AD_NetShutdownMemory(
     DWORD dwError = 0;
 
     AD_ClearSchannelState();
-
-    dwError = NetDestroyMemory();
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = SamrDestroyMemory();
     BAIL_ON_LSA_ERROR(dwError);
@@ -290,7 +284,7 @@ AD_NetUserChangePassword(
 
     }
 
-    dwError = NetUserChangePassword(
+    dwError = LsaUserChangePassword(
                     pwszDomainName,
                     pwszLoginId,
                     pwszOldPassword,
@@ -428,9 +422,8 @@ AD_NetLookupObjectSidsByNames(
 {
     DWORD dwError = 0;
     PWSTR pwcHost = NULL;
-    RPCSTATUS rpcStatus;
     NTSTATUS status = 0;
-    handle_t lsa_binding = (HANDLE)NULL;
+    LSA_BINDING lsa_binding = (HANDLE)NULL;
     DWORD dwAccess_rights = LSA_ACCESS_LOOKUP_NAMES_SIDS;
     POLICY_HANDLE hPolicy = NULL;
     DWORD dwLevel;
@@ -460,10 +453,10 @@ AD_NetLookupObjectSidsByNames(
 	dwError = LwNtStatusToErrno(status);
     BAIL_ON_LSA_ERROR(dwError);
 
-    rpcStatus = InitLsaBindingDefault(&lsa_binding, pszHostname, pCreds);
-    if (rpcStatus != 0)
+    status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
+    if (status != 0)
     {
-        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", rpcStatus, rpcStatus);
+        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -653,7 +646,7 @@ cleanup:
     }
     if (lsa_binding)
     {
-        FreeLsaBinding(&lsa_binding);
+        LsaFreeBinding(&lsa_binding);
     }
     if (bChangedToken)
     {
@@ -769,12 +762,11 @@ AD_NetLookupObjectNamesBySids(
 {
     DWORD dwError = 0;
     PWSTR pwcHost = NULL;
-    RPCSTATUS rpcStatus;
     NTSTATUS status = 0;
-    handle_t lsa_binding = (HANDLE)NULL;
+    LSA_BINDING lsa_binding = (HANDLE)NULL;
     DWORD dwAccess_rights = LSA_ACCESS_LOOKUP_NAMES_SIDS;
     POLICY_HANDLE hPolicy = NULL;
-    SidArray sid_array  = {0};
+    SID_ARRAY sid_array  = {0};
     DWORD dwLevel = 1;
     DWORD dwFoundNamesCount = 0;
     RefDomainList* pDomains = NULL;
@@ -804,11 +796,10 @@ AD_NetLookupObjectNamesBySids(
     dwError = LwNtStatusToErrno(status);
     BAIL_ON_LSA_ERROR(dwError);
 
-    rpcStatus = InitLsaBindingDefault(&lsa_binding, pszHostname, pCreds);
-
-    if (rpcStatus != 0)
+    status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
+    if (status != 0)
     {
-        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", rpcStatus, rpcStatus);
+        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -821,20 +812,20 @@ AD_NetLookupObjectNamesBySids(
     }
 
     // Convert ppszObjectSids to sid_array
-    sid_array.num_sids = dwSidsCount;
+    sid_array.dwNumSids = dwSidsCount;
     dwError = LwAllocateMemory(
-                    sizeof(*sid_array.sids)*sid_array.num_sids,
-                    (PVOID*)&sid_array.sids);
+                    sizeof(*sid_array.pSids)*sid_array.dwNumSids,
+                    (PVOID*)&sid_array.pSids);
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; i < sid_array.num_sids; i++)
+    for (i = 0; i < sid_array.dwNumSids; i++)
     {
         dwError = LsaAllocateSidFromCString(
                         &pObjectSID,
                         ppszObjectSids[i]);
         BAIL_ON_LSA_ERROR(dwError);
 
-        sid_array.sids[i].sid = pObjectSID;
+        sid_array.pSids[i].pSid = pObjectSID;
         pObjectSID = NULL;
     }
 
@@ -923,12 +914,12 @@ AD_NetLookupObjectNamesBySids(
 
     for (i = 0; i < pDomains->count; i++)
     {
-        if (pDomains->domains[i].name.len > 0)
+        if (pDomains->domains[i].name.Length > 0)
         {
             dwError = LsaWc16snToMbs(
-                          pDomains->domains[i].name.string,
+                          pDomains->domains[i].name.Buffer,
                           &ppszDomainNames[i],
-                          pDomains->domains[i].name.len / 2);
+                          pDomains->domains[i].name.Length / 2);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -960,12 +951,12 @@ AD_NetLookupObjectNamesBySids(
 
         pszDomainName = ppszDomainNames[name_array[i].sid_index];
 
-        if (name_array[i].name.len > 0)
+        if (name_array[i].name.Length > 0)
         {
             dwError = LsaWc16snToMbs(
-                           name_array[i].name.string,
+                           name_array[i].name.Buffer,
                            &pszUsername,
-                           name_array[i].name.len / 2);
+                           name_array[i].name.Length / 2);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
@@ -1021,13 +1012,13 @@ cleanup:
         LsaRpcFreeMemory(name_array);
     }
 
-    if (sid_array.sids)
+    if (sid_array.pSids)
     {
-        for (i = 0; i < sid_array.num_sids; i++)
+        for (i = 0; i < sid_array.dwNumSids; i++)
         {
-            LW_SAFE_FREE_MEMORY(sid_array.sids[i].sid);
+            LW_SAFE_FREE_MEMORY(sid_array.pSids[i].pSid);
         }
-        LW_SAFE_FREE_MEMORY(sid_array.sids);
+        LW_SAFE_FREE_MEMORY(sid_array.pSids);
     }
 
     LW_SAFE_FREE_MEMORY(pObjectSID);
@@ -1040,7 +1031,7 @@ cleanup:
 
     if (lsa_binding)
     {
-        FreeLsaBinding(&lsa_binding);
+        LsaFreeBinding(&lsa_binding);
     }
     if (bChangedToken)
     {
@@ -1090,11 +1081,11 @@ AD_DsEnumerateDomainTrusts(
     OUT OPTIONAL PBOOLEAN pbIsNetworkError
     )
 {
+    NTSTATUS status = 0;
     DWORD dwError = 0;
     PWSTR pwcDomainControllerName = NULL;
-    RPCSTATUS status = 0;
-    handle_t netr_b = NULL;
-    WINERR winError = 0;
+    NETR_BINDING netr_b = NULL;
+    WINERROR winError = 0;
     NetrDomainTrust* pTrusts = NULL;
     DWORD dwCount = 0;
     BOOLEAN bIsNetworkError = FALSE;
@@ -1113,10 +1104,10 @@ AD_DsEnumerateDomainTrusts(
     dwError = LwNtStatusToErrno(status);
     BAIL_ON_LSA_ERROR(dwError);
 
-    status = InitNetlogonBindingDefault(&netr_b,
-                                        pszDomainControllerName,
-                                        pCreds,
-                                        FALSE);
+    status = NetrInitBindingDefault(&netr_b,
+                                    pwcDomainControllerName,
+                                    pCreds,
+                                    FALSE);
     if (status != 0)
     {
         LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
@@ -1154,7 +1145,7 @@ AD_DsEnumerateDomainTrusts(
 cleanup:
     if (netr_b)
     {
-        FreeNetlogonBinding(&netr_b);
+        NetrFreeBinding(&netr_b);
         netr_b = NULL;
     }
     LW_SAFE_FREE_MEMORY(pwcDomainControllerName);
@@ -1213,9 +1204,9 @@ AD_DsGetDcName(
     DWORD dwError = 0;
     PWSTR pwcServerName = NULL;
     PWSTR pwcDomainName = NULL;
-    RPCSTATUS status = 0;
-    handle_t netr_b = NULL;
-    WINERR winError = 0;
+    NETR_BINDING netr_b = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    WINERROR winError = 0;
     BOOLEAN bIsNetworkError = FALSE;
     LW_PIO_CREDS pCreds = NULL;
     LW_PIO_CREDS pOldToken = NULL;
@@ -1236,10 +1227,10 @@ AD_DsGetDcName(
     dwError = LwNtStatusToErrno(status);
     BAIL_ON_LSA_ERROR(dwError);
 
-    status = InitNetlogonBindingDefault(&netr_b,
-                                        pszServerName,
-                                        pCreds,
-                                        FALSE);
+    status = NetrInitBindingDefault(&netr_b,
+                                    pwcServerName,
+                                    pCreds,
+                                    FALSE);
     if (status != 0)
     {
         LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
@@ -1289,7 +1280,7 @@ AD_DsGetDcName(
 cleanup:
     if (netr_b)
     {
-        FreeNetlogonBinding(&netr_b);
+        NetrFreeBinding(&netr_b);
         netr_b = NULL;
     }
     LW_SAFE_FREE_MEMORY(pwcServerName);
@@ -1446,51 +1437,51 @@ LsaCopyNetrUserInfo3(
     pUserInfo->pszUserPrincipalName = NULL;
     pUserInfo->pszDnsDomain = NULL;
 
-    if (pBase->account_name.len)
+    if (pBase->account_name.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->account_name.string, &pUserInfo->pszAccount);
+        dwError = LsaWc16sToMbs(pBase->account_name.Buffer, &pUserInfo->pszAccount);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->full_name.len)
+    if (pBase->full_name.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->full_name.string, &pUserInfo->pszFullName);
+        dwError = LsaWc16sToMbs(pBase->full_name.Buffer, &pUserInfo->pszFullName);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->domain.len)
+    if (pBase->domain.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->domain.string, &pUserInfo->pszDomain);
+        dwError = LsaWc16sToMbs(pBase->domain.Buffer, &pUserInfo->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->logon_server.len)
+    if (pBase->logon_server.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->logon_server.string, &pUserInfo->pszLogonServer);
+        dwError = LsaWc16sToMbs(pBase->logon_server.Buffer, &pUserInfo->pszLogonServer);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->logon_script.len)
+    if (pBase->logon_script.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->logon_script.string, &pUserInfo->pszLogonScript);
+        dwError = LsaWc16sToMbs(pBase->logon_script.Buffer, &pUserInfo->pszLogonScript);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->home_directory.len)
+    if (pBase->home_directory.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->home_directory.string, &pUserInfo->pszHomeDirectory);
+        dwError = LsaWc16sToMbs(pBase->home_directory.Buffer, &pUserInfo->pszHomeDirectory);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->home_drive.len)
+    if (pBase->home_drive.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->home_drive.string, &pUserInfo->pszHomeDrive);
+        dwError = LsaWc16sToMbs(pBase->home_drive.Buffer, &pUserInfo->pszHomeDrive);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pBase->profile_path.len)
+    if (pBase->profile_path.Length)
     {
-        dwError = LsaWc16sToMbs(pBase->profile_path.string, &pUserInfo->pszProfilePath);
+        dwError = LsaWc16sToMbs(pBase->profile_path.Buffer, &pUserInfo->pszProfilePath);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1500,7 +1491,7 @@ LsaCopyNetrUserInfo3(
     pUserInfo->dwUserRid         = pBase->rid;
     pUserInfo->dwPrimaryGroupRid = pBase->primary_gid;
 
-    pUserInfo->dwNumRids = pBase->groups.count;
+    pUserInfo->dwNumRids = pBase->groups.dwCount;
     if (pUserInfo->dwNumRids != 0)
     {
         int i = 0;
@@ -1511,8 +1502,8 @@ LsaCopyNetrUserInfo3(
 
         for (i=0; i<pUserInfo->dwNumRids; i++)
         {
-            pUserInfo->pRidAttribList[i].Rid      = pBase->groups.rids[i].rid;
-            pUserInfo->pRidAttribList[i].dwAttrib = pBase->groups.rids[i].attributes;
+            pUserInfo->pRidAttribList[i].Rid      = pBase->groups.pRids[i].dwRid;
+            pUserInfo->pRidAttribList[i].dwAttrib = pBase->groups.pRids[i].dwAttributes;
         }
 
     }
@@ -1566,8 +1557,8 @@ AD_NetlogonAuthenticationUserEx(
     PWSTR pwszComputer = NULL;
     PSTR pszHostname = NULL;
     HANDLE hPwdDb = (HANDLE)NULL;
-    RPCSTATUS status = 0;
-    handle_t netr_b = NULL;
+    NTSTATUS status = 0;
+    NETR_BINDING netr_b = NULL;
     PLWPS_PASSWORD_INFO pMachAcctInfo = NULL;
     BOOLEAN bIsNetworkError = FALSE;
     NTSTATUS nt_status = STATUS_UNHANDLED_EXCEPTION;
@@ -1645,7 +1636,7 @@ AD_NetlogonAuthenticationUserEx(
         dwError = LwNtStatusToErrno(status);
         BAIL_ON_LSA_ERROR(dwError);
 
-        status = InitNetlogonBindingDefault(&netr_b,(const char*)pszDomainController, pCreds, FALSE);
+        status = NetrInitBindingDefault(&netr_b, pwszDomainController, pCreds, FALSE);
         if (status != 0)
         {
             LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
@@ -1740,7 +1731,7 @@ cleanup:
 
     if (netr_b)
     {
-        FreeNetlogonBinding(&netr_b);
+        NetrFreeBinding(&netr_b);
         netr_b = NULL;
     }
 
@@ -1820,7 +1811,7 @@ AD_NtStatusIsConnectionError(
 static
 BOOLEAN
 AD_WinErrorIsConnectionError(
-    WINERR winError
+    WINERROR winError
     )
 {
     switch (winError)

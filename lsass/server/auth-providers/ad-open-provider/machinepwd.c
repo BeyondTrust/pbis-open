@@ -261,7 +261,7 @@ ADSyncMachinePasswordThreadRoutine(
                 goto lsa_wait_resync;
             }
 
-            dwError = NetMachineChangePassword();           
+            dwError = LsaMachineChangePassword();           
             if (dwError)
             {
                 LSA_LOG_ERROR("Error: Failed to re-sync machine account [Error code: %ld]", dwError);                
