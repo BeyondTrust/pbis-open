@@ -4,7 +4,7 @@
 # libgss.comp -- see ../../helper.sh for how this file works.
 #
 
-COMP_NAME="libgss"
+COMP_NAME="libschannel"
 COMP_SOURCES="${BUILD_ROOT}/${COMP_NAME}"
 
 function _setup_build_env
