@@ -79,7 +79,10 @@
 #include <lwstr.h>
 #include <wc16str.h>
 #include <uuid/uuid.h>
-#include <lwrpc/krb5pac.h>
+#include <lwio/lwio.h>
+#include <lw/rpc/samr.h>
+#include <lw/rpc/netlogon.h>
+#include <lw/rpc/krb5pac.h>
 
 #include "defines.h"
 #include "structs.h"

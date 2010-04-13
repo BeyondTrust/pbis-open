@@ -351,7 +351,7 @@ error:
 static
 DWORD
 NtlmSetUnicodeStringEx(
-    UnicodeStringEx* pUnicode,
+    PUNICODE_STRING pUnicode,
     PCSTR pszStr
     )
 {
@@ -360,14 +360,14 @@ NtlmSetUnicodeStringEx(
 
     if (pszStr)
     {
-        dwError = LwMbsToWc16s(pszStr, &pUnicode->string);
+        dwError = LwMbsToWc16s(pszStr, &pUnicode->Buffer);
         BAIL_ON_LSA_ERROR(dwError);
         
-        dwError = LwWc16sLen(pUnicode->string, &len);
+        dwError = LwWc16sLen(pUnicode->Buffer, &len);
         BAIL_ON_LSA_ERROR(dwError);
         
-        pUnicode->len = (UINT16) (len * sizeof(WCHAR));
-        pUnicode->size = (UINT16) ((len + 1) * sizeof(WCHAR));
+        pUnicode->Length = (UINT16) (len * sizeof(WCHAR));
+        pUnicode->MaximumLength = (UINT16) ((len + 1) * sizeof(WCHAR));
     }
 
 error:
@@ -378,12 +378,12 @@ error:
 static
 VOID
 NtlmFreeUnicodeStringEx(
-    UnicodeStringEx* pUnicode
+    PUNICODE_STRING pUnicode
     )
 {
-    if (pUnicode->string)
+    if (pUnicode->Buffer)
     {
-        LwFreeMemory(pUnicode->string);
+        LwFreeMemory(pUnicode->Buffer);
     }
 
     memset(pUnicode, 0, sizeof(*pUnicode));
@@ -428,8 +428,8 @@ NtlmServerMarshalUserInfoToEncodedPac(
     pInfo3->base.user_flags = pUserInfo->dwUserFlags;
     pInfo3->base.acct_flags = pUserInfo->dwAcctFlags;
     
-    pInfo3->base.groups.count = pUserInfo->dwNumRids;
-    pInfo3->base.groups.rids = (RidWithAttribute*) pUserInfo->pRidAttribList;
+    pInfo3->base.groups.dwCount = pUserInfo->dwNumRids;
+    pInfo3->base.groups.pRids = (PRID_WITH_ATTRIBUTE) pUserInfo->pRidAttribList;
 
     memcpy(pInfo3->base.key.key, pUserInfo->pSessionKey->pData, sizeof(pInfo3->base.key.key));
     if (pUserInfo->pLmSessionKey)

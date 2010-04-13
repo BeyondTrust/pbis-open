@@ -40,10 +40,10 @@ libntlmserver_la_LDFLAGS = \
 
 libntlmserver_la_LIBADD = \
     $(top_builddir)/common/liblsacommon.la \
+    $(top_builddir)/client/rpc/liblsarpc.la \
     $(LWMSG_NOTHR_LIBS) \
     $(PSTORE_LIBS) \
     $(CRYPTO_LIBS) \
     $(KRB5_LIBS) \
     $(LWADVAPI_LIBS) \
-    $(SOCKET_LIBS) \
-    $(NETAPI_LIBS)
+    $(SOCKET_LIBS)
