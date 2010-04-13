@@ -1455,7 +1455,8 @@ LsaCreateMachineAccount(
 
     const DWORD dwDomainAccess = DOMAIN_ACCESS_ENUM_ACCOUNTS |
                                  DOMAIN_ACCESS_OPEN_ACCOUNT |
-                                 DOMAIN_ACCESS_LOOKUP_INFO_2;
+                                 DOMAIN_ACCESS_LOOKUP_INFO_2 |
+                                 DOMAIN_ACCESS_CREATE_USER;
 
     const DWORD dwUserAccess = USER_ACCESS_GET_ATTRIBUTES |
                                USER_ACCESS_SET_ATTRIBUTES |
