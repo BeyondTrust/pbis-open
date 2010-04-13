@@ -1,3 +1,3 @@
 SUBDIRS = \
             include \
-	    schannel
+	    src

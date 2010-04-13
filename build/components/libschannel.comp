@@ -1,12 +1,12 @@
 #!/bin/bash -c "exit 1"
 
 #
-# libgss.comp -- see ../../helper.sh for how this file works.
+# libschannel.comp -- see ../../helper.sh for how this file works.
 #
 
 COMP_INCREMENTAL=1
 COMP_DEPENDENCIES="automake autoconf libtool libcrypto"
-COMP_SOURCES=${BUILD_ROOT}/src/linux/libgss
+COMP_SOURCES=${BUILD_ROOT}/src/linux/libschannel
 
 function component_bootstrap
 {
@@ -64,7 +64,7 @@ function component_stage
 
 function component_populate
 {
-    COMP_NAME=libgss
+    COMP_NAME=libschannel
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 

@@ -102,6 +102,6 @@ AC_SUBST(PTHREAD_LIBS)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
-                 schannel/Makefile
+                 src/Makefile
                  ])
 AC_OUTPUT
