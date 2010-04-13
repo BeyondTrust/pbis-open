@@ -48,13 +48,11 @@ liblsa_la_CFLAGS =  \
 liblsa_la_LDFLAGS =       \
     $(AM_LDFLAGS)         \
     $(LWBASE_LDFLAGS)     \
-    $(DCERPC_LDFLAGS)     \
-    $(LIBUNISTR_LDFLAGS)
+    $(DCERPC_LDFLAGS)
 
 liblsa_la_LIBADD =     \
     $(LWBASE_LIBS)     \
     $(DCERPC_LIBS)     \
-    $(LIBUNISTR_LIBS)  \
     liblsa_cs.la
 
 CLEANFILES = lsa_h.h lsa_cstub.c lsa_sstub.c
