@@ -11,4 +11,5 @@ SUBDIRS=\
     libedit           \
     shellutil         \
     test              \
-    shell
+    shell             \
+    common

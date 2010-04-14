@@ -420,6 +420,11 @@ strtoull(
 #endif /* defined(HAVE_STRTOULL) */
 
 DWORD
+RegGetCurrentTimeSeconds(
+    OUT time_t* pTime
+    );
+
+DWORD
 RegRemoveFile(
     PCSTR pszPath
     );
@@ -852,14 +857,6 @@ RegStripWhitespace(
     BOOLEAN bTrailing
     );
 
-NTSTATUS
-RegCopyValueBytes(
-    IN PBYTE pValue,
-    IN DWORD dwValueLen,
-    OUT OPTIONAL PBYTE pData,
-    IN OUT OPTIONAL PDWORD pcbData
-    );
-
 DWORD
 RegAllocateMemory(
     size_t Size,
@@ -919,6 +916,43 @@ PCWSTR
 RegStrchr(
     PCWSTR pwszStr,
     wchar16_t wch
+    );
+
+DWORD
+RegBuildLogInfo(
+    RegLogLevel    maxAllowedLogLevel,
+    RegLogTarget   logTarget,
+    PCSTR          pszPath,
+    PREG_LOG_INFO* ppLogInfo
+    );
+
+DWORD
+RegSetLogLevel(
+    HANDLE      hRegConnection,
+    RegLogLevel logLevel
+    );
+
+DWORD
+RegGetLogInfo(
+    HANDLE         hRegConnection,
+    PREG_LOG_INFO* ppLogInfo
+    );
+
+DWORD
+RegSetLogInfo(
+    HANDLE        hRegConnection,
+    PREG_LOG_INFO pLogInfo
+    );
+
+VOID
+RegFreeLogInfo(
+    PREG_LOG_INFO pLogInfo
+    );
+
+LW_DWORD
+RegGetErrorMessageForLoggingEvent(
+    LW_DWORD dwError,
+    LW_PSTR* ppszErrorMsg
     );
 
 #endif /* __REG_UTILS_H__ */

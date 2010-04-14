@@ -632,55 +632,6 @@ RegCopyValueBytes(
 
 error:
     return status;
-
-    /*switch (type)
-    {
-        case REG_BINARY:
-        case REG_MULTI_SZ:
-        case REG_SZ:
-            status = RegHexStrToByteArray(
-                           pszValue,
-                           NULL,
-                           &pTempData,
-                           &cbData);
-            BAIL_ON_NT_STATUS(status);
-
-            if(pData && cbData > *pcbData)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-                BAIL_ON_NT_STATUS(status);
-            }
-
-            if (pData)
-            {
-                memcpy(pData, pTempData, cbData);
-            }
-
-            break;
-
-        case REG_DWORD:
-
-            if (pData &&  sizeof(dwValue) > *pcbData)
-            {
-                status = STATUS_BUFFER_TOO_SMALL;
-                BAIL_ON_NT_STATUS(status);
-            }
-
-            dwValue = (DWORD)atoi(pszValue);
-
-            cbData = sizeof(dwValue);
-
-            if (pData)
-            {
-                memcpy(pData, &dwValue, cbData);
-            }
-
-            break;
-
-        default:
-        	status = STATUS_NOT_SUPPORTED;
-            BAIL_ON_NT_STATUS(status);
-    }*/
 }
 
 void

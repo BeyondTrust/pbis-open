@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = librsutils.la
+noinst_LTLIBRARIES = librsutils.la
 
 librsutils_la_SOURCES = \
     regutilwrap.c \
@@ -13,6 +13,6 @@ librsutils_la_CPPFLAGS = \
     @LWMSG_INCLUDES@
 
 librsutils_la_LIBADD = \
-        @top_builddir@/utils/libregutils.la \
+        $(top_builddir)/client/libregclient.la \
         @LWBASE_NOTHR_LIBS@ \
         @LWMSG_NOTHR_LIBS@

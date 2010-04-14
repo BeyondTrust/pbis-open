@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libreglog_r.la
+noinst_LTLIBRARIES = libreglog_r.la
 
 libreglog_r_la_SOURCES = \
 	globals.c \

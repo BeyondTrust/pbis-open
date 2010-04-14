@@ -110,7 +110,7 @@ AC_ARG_WITH([lwreg-libs],
 		LWREG_LDFLAGS="-L$withval"
         ])
 
-LWREG_LIBS="-lrsutils -lregclient"
+LWREG_LIBS="-lregcommon -lregclient"
 
 #AC_CHECK_HEADER([reg/reg.h],,[AC_MSG_ERROR([Could not find lwreg headers])])
 AC_SUBST(LWREG_INCLUDES)

@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libregparse.la
+noinst_LTLIBRARIES = libregparse.la
 
 libregparse_la_SOURCES = \
     regio.c \

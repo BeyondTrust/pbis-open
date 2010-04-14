@@ -1,4 +1,4 @@
-lib_LTLIBRARIES = libregipc.la
+noinst_LTLIBRARIES = libregipc.la
 
 libregipc_la_SOURCES =    \
     ipc_protocol.c \

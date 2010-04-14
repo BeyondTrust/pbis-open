@@ -203,43 +203,6 @@ typedef struct _SECURITY_ATTRIBUTES {
     BOOL   bInheritHandle;
 }SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES;
 
-DWORD
-RegBuildLogInfo(
-    RegLogLevel    maxAllowedLogLevel,
-    RegLogTarget   logTarget,
-    PCSTR          pszPath,
-    PREG_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-RegSetLogLevel(
-    HANDLE      hRegConnection,
-    RegLogLevel logLevel
-    );
-
-DWORD
-RegGetLogInfo(
-    HANDLE         hRegConnection,
-    PREG_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-RegSetLogInfo(
-    HANDLE        hRegConnection,
-    PREG_LOG_INFO pLogInfo
-    );
-
-VOID
-RegFreeLogInfo(
-    PREG_LOG_INFO pLogInfo
-    );
-
-LW_DWORD
-RegGetErrorMessageForLoggingEvent(
-    LW_DWORD dwError,
-    LW_PSTR* ppszErrorMsg
-    );
-
 void
 RegFreeMultiStrsA(
     PSTR* ppszStrings
@@ -253,6 +216,14 @@ RegFreeMultiStrsW(
 VOID
 RegFreeMemory(
     PVOID pMemory
+    );
+
+NTSTATUS
+RegCopyValueBytes(
+    IN PBYTE pValue,
+    IN DWORD dwValueLen,
+    OUT OPTIONAL PBYTE pData,
+    IN OUT OPTIONAL PDWORD pcbData
     );
 
 #endif /* __REG_H__ */
