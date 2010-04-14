@@ -222,19 +222,50 @@ function recreate_dir
     exit_on_error $?
 }
 
+function usage
+{
+    echo "usage: `basename $0` [options] <productname1> [<productname2> ...]"
+    echo ""
+    echo "  options:"
+    echo ""
+    echo "    --compat        - Also do compat"
+    echo ""
+    echo "  available products:"
+    echo ""
+    for prod in `product_list` ; do
+        name=`product_name "${prod}"`
+        #full_name=`product_full_name "${prod}"`
+        printf '    %-10s  %s\n' "${prod}" "${name}"
+        #printf '    %-10s  %-40s  %-20s\n' "${prod}" "${name}" "${full_name}"
+    done
+    exit 1
+}
+
 recreate_dir "${BUILD_IMAGE_ROOT}"
 
 while true
 do
     case "$1" in
+        --help)
+            usage
+            ;;
 	--compat)
 	    OPT_COMPAT="1"
 	    shift
 	    ;;
+        --*)
+            echo "Unrecognized option $arg"
+            usage
+            ;;
 	*)
 	    break
     esac
 done
+
+if [ -z "$1" ]; then
+    echo "No product names specified."
+    usage
+fi
 
 for pkg in `product_packages $@`
 do
