@@ -23,7 +23,7 @@ libiotest_sys_la_CPPFLAGS = \
 
 libiotest_sys_la_LIBADD = \
     @top_builddir@/common/liblwiocommon.la \
-    @top_builddir@/server/iomgr2/libiomgr2.la \
+    @top_builddir@/server/iomgr/libiomgr.la \
     @UUID_LIBS@ \
     @PTHREAD_LIBS@
 

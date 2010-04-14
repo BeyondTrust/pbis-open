@@ -1,4 +1,4 @@
-SUBDIRS = iomgr2 smbcommon
+SUBDIRS = iomgr smbcommon
 
 if ENABLE_NPFS
 SUBDIRS += npfs

@@ -1,10 +1,10 @@
 if ENABLE_STATIC_DRIVERS
-noinst_LTLIBRARIES = libiomgr2.la
+noinst_LTLIBRARIES = libiomgr.la
 else
-lib_LTLIBRARIES = libiomgr2.la
+lib_LTLIBRARIES = libiomgr.la
 endif
 
-libiomgr2_la_SOURCES = \
+libiomgr_la_SOURCES = \
     ioinit.c \
     ioconfig.c \
     ioroot.c \
@@ -20,12 +20,12 @@ libiomgr2_la_SOURCES = \
     iolog.c \
     lwzct.c
 
-libiomgr2_la_CPPFLAGS = \
+libiomgr_la_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1 \
     -I@top_srcdir@/include \
     -I@top_srcdir@/server/include
 
-libiomgr2_la_LIBADD = \
+libiomgr_la_LIBADD = \
     @top_builddir@/common/liblwiocommon.la \
     @top_builddir@/logging_r/liblwiolog_r.la  \
     @LWBASE_LIBS@ \
@@ -36,5 +36,5 @@ libiomgr2_la_LIBADD = \
     @SOCKET_LIBS@ \
 	@LWREG_LIBS@
 
-libiomgr2_la_LDFLAGS = \
+libiomgr_la_LDFLAGS = \
     -no-undefined

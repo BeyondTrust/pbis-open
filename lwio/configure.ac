@@ -838,7 +838,7 @@ AC_CONFIG_FILES([Makefile
         server/Makefile
         server/rdr/Makefile
         server/smbcommon/Makefile
-        server/iomgr2/Makefile
+        server/iomgr/Makefile
         server/srv/Makefile
         server/srv/utils/Makefile
         server/srv/shares/Makefile

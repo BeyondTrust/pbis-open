@@ -1,6 +1,6 @@
 ADDITIONAL_LIBS =
 NOINST_DEP_LIBS = \
-    @top_builddir@/server/iomgr2/libiomgr2.la
+    @top_builddir@/server/iomgr/libiomgr.la
 
 if ENABLE_STATIC_DRIVERS
 noinst_LTLIBRARIES = librdr.sys.la

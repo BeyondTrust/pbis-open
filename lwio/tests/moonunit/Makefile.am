@@ -13,7 +13,7 @@ lwio_mu_la_SOURCES = \
 lwio_mu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/server/include
 
 lwio_mu_la_LIBADD = \
-	$(top_builddir)/server/iomgr2/libiomgr2.la \
+	$(top_builddir)/server/iomgr/libiomgr.la \
 	$(LIB_MOONUNIT)
 
 lwio_mu_la_LDFLAGS = -module -avoid-version

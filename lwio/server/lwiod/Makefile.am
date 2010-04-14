@@ -11,7 +11,7 @@ MAIN_CPPFLAGS = \
     -I@top_srcdir@/server/include
 
 MAIN_LIBS = \
-    @top_builddir@/server/iomgr2/libiomgr2.la \
+    @top_builddir@/server/iomgr/libiomgr.la \
     @NETLOGON_LIBS@ \
     @LWMSG_LIBS@ \
 	@LWREG_LIBS@
