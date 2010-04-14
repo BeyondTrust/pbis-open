@@ -13,8 +13,12 @@ case "$1" in
     domainjoin-cli configure --enable pam
     domainjoin-cli configure --enable nsswitch
 
-    [ -z "`pidof lwsmd`" ] && /etc/init.d/lwsmd start
-    [ -z "`pidof lwreg`" ] && lwsm start lwreg
+    if [ -z "`pidof lwsmd`" ]; then 
+        /etc/init.d/lwsmd start
+    else
+        lwsm stop lwreg || true
+        /etc/init.d/lwsmd restart
+    fi
 
     for file in /etc/likewise/*reg; do
 	echo "Importing $file..."
