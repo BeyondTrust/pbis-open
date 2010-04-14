@@ -124,6 +124,7 @@ function main
     OPT_SOURCE_ARCHIVE=""
     OPT_PROFILE=""
     OPT_PRODUCT=""
+    OPT_PLATFORM=""
     OPT_NOTEST=""
     OPT_NOTOOL=""
 
