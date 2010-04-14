@@ -41,10 +41,7 @@
  *          Adam Bernstein (abernstein@likewise.com)
  *
  */
-#include "rsutils.h"
-#include <../parse/includes.h>
-#include <regclient.h>
-#include <reg/lwreg.h>
+#include "includes.h"
 
 static
 DWORD

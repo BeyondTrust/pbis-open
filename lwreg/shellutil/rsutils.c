@@ -41,7 +41,7 @@
  *          Adam Bernstein (abernstein@likewise.com)
  *
  */
-#include "rsutils.h"
+#include "includes.h"
 
 DWORD
 RegShellCanonicalizePath(

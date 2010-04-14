@@ -1,26 +1,5 @@
-#ifndef _SHELLUTIL_H
-#define _SHELLUTIL_H
-
-#include <config.h>
-#include <regsystem.h>
-
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <reg/lwreg.h>
-
-
-#include <regutils.h>
-#include <regdef.h>
-#include <regclient.h>
-#include <regparse_r.h>
-
-#include <lw/base.h>
-#include <lw/ntstatus.h>
-#include <lw/rtlstring.h>
-#include <lw/rtlmemory.h>
+#ifndef _RSUTILS_H
+#define _RSUTILS_H
 
 #define REGEXPORT_LINE_WIDTH 80
 

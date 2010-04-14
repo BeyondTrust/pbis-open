@@ -40,13 +40,7 @@
  * Authors: Adam Bernstein (abernstein@likewise.com)
  *
  */
-#include <stdarg.h>
-#include <reg/lwreg.h>
-#include <rsutils.h>
-
-#include <lw/base.h>
-#include <lw/rtlstring.h>
-#include <lw/rtlmemory.h>
+#include "includes.h"
 
 
 DWORD
