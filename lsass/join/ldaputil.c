@@ -91,13 +91,7 @@ static int LdapModSetStrValue(LDAPMod **mod,
 error:
     LW_SAFE_FREE_MEMORY(sv);
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 }
 
 
@@ -225,13 +219,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ldap_url);
     LW_SAFE_FREE_MEMORY(ldap_srv);
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 
 error:
     if (ld) {
@@ -254,14 +242,8 @@ int LdapCloseConnection(LDAP *ldconn)
 
     lderr = ldap_unbind_ext_s(ldconn, NULL, NULL);
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
 error:
-    return dwError;
+    return lderr;
 }
 
 
@@ -295,13 +277,7 @@ int LdapGetDirectoryInfo(LDAPMessage **info, LDAPMessage **result, LDAP *ld)
     *result = res;
 
 cleanup:
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 
 error:
     *info   = NULL;
@@ -529,13 +505,7 @@ error:
         LW_SAFE_FREE_MEMORY(objclass[i]);
     }
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 }
 
 
@@ -607,13 +577,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(basedn);
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 
 error:
 
@@ -682,13 +646,7 @@ cleanup:
 
     *out = res;
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 
 error:
     *out = NULL;
@@ -739,13 +697,7 @@ error:
     LW_SAFE_FREE_MEMORY(machname);
     LW_SAFE_FREE_MEMORY(dname);
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 }
 
 
@@ -794,13 +746,7 @@ cleanup:
         LdapModFree(&mod);
     }
 
-    if (dwError == ERROR_SUCCESS &&
-        lderr != 0)
-    {
-        dwError = LwLdapErrToWin32Error(lderr);
-    }
-
-    return dwError;
+    return lderr;
 
 error:
     goto cleanup;

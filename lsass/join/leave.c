@@ -278,11 +278,6 @@ cleanup:
        LwpsClosePasswordStore(hStore);
     }
 
-    if (pCreds)
-    {
-        LwIoDeleteCreds(pCreds);
-    }
-
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
