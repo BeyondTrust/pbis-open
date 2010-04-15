@@ -576,10 +576,18 @@ LocalSyncDomainInfo(
     pGlobals->llLockoutWindow      = llLockoutWindow;
 
 cleanup:
+    if (hDirectory)
+    {
+        DirectoryClose(hDirectory);
+    }
+
     if (pEntries)
     {
         DirectoryFreeEntries(pEntries, dwNumEntries);
     }
+
+    LW_SAFE_FREE_MEMORY(pszFilter);
+    LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
