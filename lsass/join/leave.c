@@ -275,7 +275,12 @@ cleanup:
 
     if (hStore != (HANDLE)NULL)
     {
-       LwpsClosePasswordStore(hStore);
+        LwpsClosePasswordStore(hStore);
+    }
+
+    if (pCreds)
+    {
+        LwIoDeleteCreds(pCreds);
     }
 
     if (dwError == ERROR_SUCCESS &&
