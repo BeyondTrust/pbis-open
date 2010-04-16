@@ -16,6 +16,7 @@ usage()
     optional_append_variable default_targets ${DEFAULT_OPT_DIST} dist ", "
     optional_append_variable default_targets ${DEFAULT_OPT_CACHE} cache ", "
     optional_append_variable default_targets ${DEFAULT_OPT_RUN} run ", "
+    optional_append_variable default_targets ${DEFAULT_OPT_IMAGE} image ", "
     if [ -z "${default_targets}" ]; then
 	default_targets="none"
     fi
@@ -38,6 +39,7 @@ usage: `basename $0` [options] [target...]
     dist, nodist    Whether to remove dist directory (default: `opt_bool_to_yn ${DEFAULT_OPT_DIST}`)
     cache, nocache  Whether to remove cache directory (default: `opt_bool_to_yn ${DEFAULT_OPT_CACHE}`)
     run, norun      Whether to remove run directory (default: `opt_bool_to_yn ${DEFAULT_OPT_RUN}`)
+    image, noimae   Whether to remove image directory (default: `opt_bool_to_yn ${DEFAULT_OPT_IMAGE}`)
 
 EOF
     exit 1
@@ -52,11 +54,13 @@ DEFAULT_OPT_META=true
 DEFAULT_OPT_DIST=true
 DEFAULT_OPT_CACHE=false
 DEFAULT_OPT_RUN=true
+DEFAULT_OPT_IMAGE=false
 
 OPT_META=false
 OPT_DIST=false
 OPT_CACHE=false
 OPT_RUN=false
+OPT_IMAGE=false
 
 OPT_SHOW=false
 
@@ -94,18 +98,21 @@ while [ -n "$1" ]; do
 	    OPT_DIST=${DEFAULT_OPT_DIST}
 	    OPT_CACHE=${DEFAULT_OPT_CACHE}
 	    OPT_RUN=${DEFAULT_OPT_RUN}
+	    OPT_IMAGE=${DEFAULT_OPT_IMAGE}
 	    ;;
 	all)
 	    OPT_META=true
 	    OPT_DIST=true
 	    OPT_CACHE=true
 	    OPT_RUN=true
+	    OPT_IMAGE=true
 	    ;;
 	none)
 	    OPT_META=false
 	    OPT_DIST=false
 	    OPT_CACHE=false
 	    OPT_RUN=false
+	    OPT_IMAGE=false
 	    ;;
 	meta)
 	    OPT_META=true
@@ -131,6 +138,12 @@ while [ -n "$1" ]; do
 	norun)
 	    OPT_RUN=false
 	    ;;
+	image)
+	    OPT_IMAGE=true
+	    ;;
+	noimage)
+	    OPT_IMAGE=false
+	    ;;
 	*)
 	    warn "Unknown target: $1"
             usage
@@ -144,6 +157,7 @@ optional_append_variable CLEAN_DIRS ${OPT_META} "${BUILD_META_ROOT}"
 optional_append_variable CLEAN_DIRS ${OPT_DIST} "${BUILD_DIST_ROOT}"
 optional_append_variable CLEAN_DIRS ${OPT_CACHE} "${BUILD_CACHE_ROOT}"
 optional_append_variable CLEAN_DIRS ${OPT_RUN} "${BUILD_RUN_ROOT}"
+optional_append_variable CLEAN_DIRS ${OPT_IMAGE} "${BUILD_IMAGE_ROOT}"
 
 for dir in ${CLEAN_DIRS} ; do
     if ${OPT_SHOW} ; then
