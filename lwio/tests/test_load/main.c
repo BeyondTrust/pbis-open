@@ -273,6 +273,9 @@ LoadThread(
         }
     }
 
+    fprintf(stderr, "Total number of failed opens == %d \n",
+            gState.ulFailureCount);
+
 error:
 
     if (status != STATUS_SUCCESS)
