@@ -35,6 +35,9 @@ struct
     BOOLEAN volatile bStart;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
+    ULONG ulFailureCount;
+    BOOLEAN bContinueOnError;
+    
 } gState =
 {
     .ulThreadCount = 100,
@@ -42,7 +45,9 @@ struct
     .ulIterations = 10,
     .bStart = FALSE,
     .Lock = PTHREAD_MUTEX_INITIALIZER,
-    .Event = PTHREAD_COND_INITIALIZER
+    .Event = PTHREAD_COND_INITIALIZER,
+    .ulFailureCount = 0,
+    .bContinueOnError = FALSE
 };
 
 static
@@ -145,7 +150,20 @@ LoadThread(
                 NULL,                  /* EA buffer */
                 0,                     /* EA length */
                 NULL);                 /* ECP list */
-            GOTO_ERROR_ON_STATUS(status);
+            if (status != STATUS_SUCCESS)
+            {
+                gState.ulFailureCount++;
+
+                fprintf(stderr, "Error Opening File: %s (%x).  Failure Count == %d \n",
+                        LwNtStatusToName(status), 
+                        status,  
+                        gState.ulFailureCount);
+
+                if (!gState.bContinueOnError)
+                {
+                    GOTO_ERROR_ON_STATUS(status);
+                }
+            }
         }
       
         /* Pass 2 -- write payload into each file */
@@ -158,15 +176,18 @@ LoadThread(
 
             llOffset = 0;
 
-            status = LwNtWriteFile(
-                pFile->hHandle, /* File handle */
-                NULL, /* Async control block */
-                &ioStatus, /* IO status block */
-                (PVOID) szPayload, /* Buffer */
-                sizeof(szPayload), /* Buffer size */
-                &llOffset, /* File offset */
-                NULL); /* Key */
-            GOTO_ERROR_ON_STATUS(status);
+            if (pFile->hHandle)
+            {
+                status = LwNtWriteFile(
+                    pFile->hHandle, /* File handle */
+                    NULL, /* Async control block */
+                    &ioStatus, /* IO status block */
+                    (PVOID) szPayload, /* Buffer */
+                    sizeof(szPayload), /* Buffer size */
+                    &llOffset, /* File offset */
+                    NULL); /* Key */
+                GOTO_ERROR_ON_STATUS(status);
+            }
         }
 
         /* Pass 3 -- reopen each file for reading */
@@ -177,31 +198,34 @@ LoadThread(
         {
             pFile = &pFiles[ulFile];
 
-            status = LwNtCloseFile(pFile->hHandle);
-            GOTO_ERROR_ON_STATUS(status);
+            if (pFile->hHandle)
+            {
+                status = LwNtCloseFile(pFile->hHandle);
+                GOTO_ERROR_ON_STATUS(status);
 
-            pFile->hHandle = NULL;
+                pFile->hHandle = NULL;
 
-            status = LwNtCreateFile(
-                &pFile->hHandle,       /* File handle */
-                NULL,                  /* Async control block */
-                &ioStatus,             /* IO status block */
-                &pFile->Filename,      /* Filename */
-                NULL,                  /* Security descriptor */
-                NULL,                  /* Security QOS */
-                FILE_GENERIC_READ |
-                DELETE,                /* Desired access mask */
-                0,                     /* Allocation size */
-                0,                     /* File attributes */
-                FILE_SHARE_READ |
-                FILE_SHARE_WRITE |
-                FILE_SHARE_DELETE,     /* Share access */
-                FILE_OPEN,             /* Create disposition */
-                FILE_DELETE_ON_CLOSE,  /* Create options */
-                NULL,                  /* EA buffer */
-                0,                     /* EA length */
-                NULL);                 /* ECP list */
-            GOTO_ERROR_ON_STATUS(status);
+                status = LwNtCreateFile(
+                    &pFile->hHandle,       /* File handle */
+                    NULL,                  /* Async control block */
+                    &ioStatus,             /* IO status block */
+                    &pFile->Filename,      /* Filename */
+                    NULL,                  /* Security descriptor */
+                    NULL,                  /* Security QOS */
+                    FILE_GENERIC_READ |
+                    DELETE,                /* Desired access mask */
+                    0,                     /* Allocation size */
+                    0,                     /* File attributes */
+                    FILE_SHARE_READ |
+                    FILE_SHARE_WRITE |
+                    FILE_SHARE_DELETE,     /* Share access */
+                    FILE_OPEN,             /* Create disposition */
+                    FILE_DELETE_ON_CLOSE,  /* Create options */
+                    NULL,                  /* EA buffer */
+                    0,                     /* EA length */
+                    NULL);                 /* ECP list */
+                GOTO_ERROR_ON_STATUS(status);
+            }
         }
 
         /* Pass 4 -- read back each payload and compare */
@@ -212,21 +236,24 @@ LoadThread(
         {
             llOffset = 0;
 
-            status = LwNtReadFile(
-                pFile->hHandle, /* File handle */
-                NULL, /* Async control block */
-                &ioStatus, /* IO status block */
-                szCompare, /* Buffer */
-                sizeof(szCompare), /* Buffer size */
-                &llOffset, /* File offset */
-                NULL); /* Key */
-            GOTO_ERROR_ON_STATUS(status);
-
-            if (ioStatus.BytesTransferred != sizeof(szCompare) ||
-                memcmp(szCompare, szPayload, sizeof(szCompare)))
+            if (pFile->hHandle)
             {
-                status = STATUS_UNSUCCESSFUL;
+                status = LwNtReadFile(
+                    pFile->hHandle, /* File handle */
+                    NULL, /* Async control block */
+                    &ioStatus, /* IO status block */
+                    szCompare, /* Buffer */
+                    sizeof(szCompare), /* Buffer size */
+                    &llOffset, /* File offset */
+                    NULL); /* Key */
                 GOTO_ERROR_ON_STATUS(status);
+
+                if (ioStatus.BytesTransferred != sizeof(szCompare) ||
+                    memcmp(szCompare, szPayload, sizeof(szCompare)))
+                {
+                    status = STATUS_UNSUCCESSFUL;
+                    GOTO_ERROR_ON_STATUS(status);
+                }
             }
         }
 
@@ -238,8 +265,11 @@ LoadThread(
         {
             pFile = &pFiles[ulFile];
 
-            status = LwNtCloseFile(pFile->hHandle);
-            GOTO_ERROR_ON_STATUS(status);
+            if (pFile->hHandle)
+            {
+                status = LwNtCloseFile(pFile->hHandle);
+                GOTO_ERROR_ON_STATUS(status);
+            }
         }
     }
 
@@ -471,6 +501,10 @@ ParseArgs(
                 exit(1);
             }
             gState.pszPassword = ppszArgv[++i];
+        }
+        else if (!strcmp(ppszArgv[i], "--continue-on-error"))
+        {
+            gState.bContinueOnError = TRUE;
         }
         else
         {
