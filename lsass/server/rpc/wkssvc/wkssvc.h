@@ -39,7 +39,7 @@
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        WksSvc wrapper functions called from DCE/RPC stubs (rpc server library)
+ *        Wkssvc rpc server functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
