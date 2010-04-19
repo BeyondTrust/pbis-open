@@ -1,5 +1,5 @@
 rpccli_srcdir = $(top_srcdir)/client/rpc
-idl_srcdir = $(top_srcdir)/client/rpc/idl
+idl_srcdir = $(top_srcdir)/idl
 lsass_srcdir = $(top_srcdir)
 
 noinst_LTLIBRARIES = libkrb5pac.la
