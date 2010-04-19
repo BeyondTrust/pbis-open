@@ -711,6 +711,12 @@ PRIVATE const char *rpc__gssauth_error_map
 		    *st = rpc_s_partial_credentials;
 		    break;
 		}
+		if (major_status == GSS_S_CONTEXT_EXPIRED)
+		{
+		    *st = rpc_s_auth_tkt_expired;
+		    break;
+		}
+		abort();
 		*st = rpc_s_auth_method;
 		break;
 	}

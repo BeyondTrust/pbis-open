@@ -818,6 +818,7 @@ rpc_cn_assoc_p_t        assoc;
                         {
                             (*fragbuf_p->fragbuf_dealloc)(fragbuf_p);
                             sec_context->sec_status = auth_st;
+                            assoc->assoc_status = auth_st;
                             RPC_CN_ASSOC_WAKEUP (assoc);
                             continue;
                         }

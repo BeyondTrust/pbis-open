@@ -996,6 +996,10 @@ unsigned32              *st;
                            in_call_args, 
                            call_rep, 
                            temp_status);
+    if (temp_status != rpc_s_ok)
+    {
+	call_rep->cn_call_status = temp_status;
+    }
 
     if (call_rep->cn_call_status == rpc_s_ok)
     {
