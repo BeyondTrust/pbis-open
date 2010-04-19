@@ -53,6 +53,7 @@
 #include <lwio/lwio.h>
 #include <dce/rpc.h>
 #include <dce/smb.h>
+#include <dce/lrpc.h>
 #include <dce/dcethread.h>
 #include <wc16str.h>
 #include <lw/ntstatus.h>
