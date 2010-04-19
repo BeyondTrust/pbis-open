@@ -1,6 +1,6 @@
 srv_srcdir = $(top_srcdir)/server
 rpc_srcdir = $(srv_srcdir)/rpc
-idl_srcdir = $(rpc_srcdir)/idl
+idl_srcdir = $(top_srcdir)/idl
 
 if ENABLE_STATIC_RPCSERVERS
 noinst_LTLIBRARIES = libsamr_srv.la
@@ -116,5 +116,5 @@ CLEAN_FILES = samr_cstub.c samr_sstub.c samr_h.h
 BUILT_SOURCES = samr_h.h
 
 samr_sstub.c samr_cstub.c samr_h.h: $(idl_srcdir)/samr.idl samr.acf
-	$(IDL) $(IDLFLAGS) -keep c_source -header samr_h.h -I$(srcdir) -I$(idl_srcdir) \
-                $(DCEIDL_PASS_INCLUDES) $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header samr_h.h -cstub_pref cli_ -sstub_pref srv_ \
+                -I$(srcdir) -I$(idl_srcdir) $(DCEIDL_PASS_INCLUDES) $<

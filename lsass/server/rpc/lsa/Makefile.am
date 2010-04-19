@@ -1,6 +1,6 @@
 srv_srcdir = $(top_srcdir)/server
 rpc_srcdir = $(srv_srcdir)/rpc
-idl_srcdir = $(rpc_srcdir)/idl
+idl_srcdir = $(top_srcdir)/idl
 
 if ENABLE_STATIC_RPCSERVERS
 noinst_LTLIBRARIES = liblsa_srv.la
@@ -83,5 +83,5 @@ CLEAN_FILES = lsa_cstub.c lsa_sstub.c lsa_h.h
 BUILT_SOURCES = lsa_h.h
 
 lsa_sstub.c lsa_cstub.c lsa_h.h: $(idl_srcdir)/lsa.idl lsa.acf
-	$(IDL) $(IDLFLAGS) -keep c_source -header lsa_h.h -I$(srcdir) -I$(idl_srcdir) \
-		$(DCEIDL_PASS_INCLUDES) $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header lsa_h.h -cstub_pref cli_ -sstub_pref srv_ \
+                -I$(srcdir) -I$(idl_srcdir) $(DCEIDL_PASS_INCLUDES) $<

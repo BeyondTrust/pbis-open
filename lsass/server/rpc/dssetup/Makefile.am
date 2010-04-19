@@ -1,6 +1,6 @@
 srv_srcdir = $(top_srcdir)/server
 rpc_srcdir = $(srv_srcdir)/rpc
-idl_srcdir = $(rpc_srcdir)/idl
+idl_srcdir = $(top_srcdir)/idl
 
 if ENABLE_STATIC_RPCSERVERS
 noinst_LTLIBRARIES = libdssetup_srv.la
@@ -66,5 +66,5 @@ CLEAN_FILES = dssetup_cstub.c dssetup_sstub.c dssetup_h.h
 BUILT_SOURCES = dssetup_h.h
 
 dssetup_sstub.c dssetup_cstub.c dssetup_h.h: $(idl_srcdir)/dssetup.idl dssetup.acf
-	$(IDL) $(IDLFLAGS) -keep c_source -header dssetup_h.h -I$(srcdir) -I$(idl_srcdir) \
-		$(DCEIDL_PASS_INCLUDES) $<
+	$(IDL) $(IDLFLAGS) -keep c_source -header dssetup_h.h -cstub_pref cli_ -sstub_pref srv_ \
+                -I$(srcdir) -I$(idl_srcdir) $(DCEIDL_PASS_INCLUDES) $<
