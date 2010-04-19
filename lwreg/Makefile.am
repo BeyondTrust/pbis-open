@@ -4,12 +4,12 @@ SUBDIRS=\
     utils        \
     include      \
     ipc          \
-    common       \
-    client       \
-    logging_r    \
-    parse        \
-    server       \
-    libedit      \
-    shellutil    \
-    shell        \
-    test
+    client \
+    logging_r         \
+    parse             \
+    server            \
+    libedit           \
+    shellutil         \
+    test              \
+    shell             \
+    common
