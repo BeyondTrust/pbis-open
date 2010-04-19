@@ -548,6 +548,12 @@ RPC_STATUS LwMapDCEStatusToWinerror(
         case rpc_s_invalid_arg:
             return RPC_S_INVALID_ARG;
 
+        case rpc_s_auth_tkt_expired:
+            return ERROR_CONTEXT_EXPIRED;
+
+        case rpc_s_ss_in_null_context:
+            return RPC_X_SS_IN_NULL_CONTEXT;
+
         default:
             return RPC_S_INTERNAL_ERROR;
     }
