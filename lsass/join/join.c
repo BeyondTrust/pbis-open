@@ -1758,16 +1758,6 @@ cleanup:
         SamrClose(hSamrBinding, hConnect);
     }
 
-    if (hTransportInfo)
-    {
-        switch (dwProtSeq)
-        {
-        case rpc_c_protseq_id_ncacn_np:
-            rpc_smb_transport_info_free(hTransportInfo);
-            break;
-        }
-    }
-
     if (hSamrBinding)
     {
         SamrFreeBinding(&hSamrBinding);
