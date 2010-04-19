@@ -39,7 +39,7 @@
  *
  *        Remote Procedure Call (RPC) Server Interface
  *
- *        Directory Services Setup (DsSetup) interface
+ *        Directory Services Setup (DsSetup) rpc server stub functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -47,18 +47,18 @@
 #include "includes.h"
 
 
-DWORD __DsrRoleGetPrimaryDomainInformation(
+WINERROR srv_DsrRoleGetPrimaryDomainInformation(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UINT16 uiLevel,
+    /* [in] */ WORD swLevel,
     /* [out] */ PDSR_ROLE_INFO *ppInfo
     )
 {
-    DWORD err = 0;
+    WINERROR winError = ERROR_SUCCESS;
 
-    err = DsrSrvRoleGetPrimaryDomainInformation(IDL_handle,
-                                                uiLevel,
-                                                ppInfo);
-    return err;
+    winError = DsrSrvRoleGetPrimaryDomainInformation(IDL_handle,
+                                                     swLevel,
+                                                     ppInfo);
+    return winError;
 }
 
 

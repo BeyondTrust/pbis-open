@@ -28,11 +28,27 @@
  * license@likewisesoftware.com
  */
 
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        dssetup.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        Directory Services Setup (DsSetup) rpc server functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
+
 #ifndef _DSRSRV_H_
 #define _DSRSRV_H_
 
 
-DWORD
+WINERROR
 DsrSrvRoleGetPrimaryDomainInformation(
     handle_t         hBinding,
     WORD             swLevel,

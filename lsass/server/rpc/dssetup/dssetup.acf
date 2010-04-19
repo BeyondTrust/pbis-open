@@ -3,5 +3,5 @@
 ]
 interface dssetup
 {
-	[enable_allocate] __DsrRoleGetPrimaryDomainInformation();
+	[enable_allocate] DsrRoleGetPrimaryDomainInformation();
 }
