@@ -78,7 +78,6 @@ SamrSrvRemoveMemberFromForeignDomain(
     PSID pAliasSid = NULL;
     DWORD dwRid = 0;
     ACCOUNT_HANDLE hAlias = NULL;
-    ACCOUNT_HANDLE hAliasClosed = NULL;
     PACCOUNT_CONTEXT pAcctCtx = NULL;
 
     PWSTR wszAttributes[] = {
@@ -168,7 +167,7 @@ SamrSrvRemoveMemberFromForeignDomain(
         }
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        ntStatus = SamrSrvClose(hBinding, hAlias, &hAliasClosed);
+        ntStatus = SamrSrvClose(hBinding, &hAlias);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         /*

@@ -50,15 +50,14 @@
 NTSTATUS
 SamrSrvDeleteUser(
     /* [in] */ handle_t hBinding,
-    /* [in] */ ACCOUNT_HANDLE hUserIn,
-    /* [in] */ ACCOUNT_HANDLE *phUserOut
+    /* [in] */ ACCOUNT_HANDLE *phUser
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
     ntStatus = SamrSrvDeleteAccount(hBinding,
-                                    hUserIn,
-                                    phUserOut);
+                                    *phUser,
+                                    phUser);
     return ntStatus;
 }
 

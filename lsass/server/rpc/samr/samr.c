@@ -29,7 +29,17 @@
  */
 
 /*
- * Abstract: Samr wrapper functions called from DCE/RPC stubs (rpc server library)
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        samr.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        Samr rpc server stub functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -37,7 +47,7 @@
 #include "includes.h"
 
 
-NTSTATUS __SamrConnect(
+NTSTATUS srv_SamrConnect(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ wchar16_t *system_name,
     /* [in] */ UINT32 access_mask,
@@ -54,22 +64,20 @@ NTSTATUS __SamrConnect(
 }
 
 
-NTSTATUS __SamrClose(
+NTSTATUS srv_SamrClose(
     /* [in] */ handle_t IDL_handle,
-    /* [in,context_handle] */ void *hIn,
-    /* [out,context_handle] */ void **hOut
+    /* [in,context_handle] */ void **phInOut
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvClose(IDL_handle,
-                          hIn,
-                          hOut);
+                          phInOut);
     return status;
 }
 
 
-NTSTATUS __SamrSetSecurity(
+NTSTATUS srv_SamrSetSecurity(
     /* [in] */ handle_t IDL_handle,
     /* [in,context_handle] */ void *hObject,
     /* [in] */ UINT32 security_info,
@@ -86,7 +94,7 @@ NTSTATUS __SamrSetSecurity(
 }
 
 
-NTSTATUS __SamrQuerySecurity(
+NTSTATUS srv_SamrQuerySecurity(
     /* [in] */ handle_t IDL_handle,
     /* [in,context_handle] */ void *hObject,
     /* [in] */ UINT32 security_info,
@@ -103,7 +111,7 @@ NTSTATUS __SamrQuerySecurity(
 }
 
 
-NTSTATUS _samr_Function04(
+NTSTATUS srv_samr_Function04(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -112,7 +120,7 @@ NTSTATUS _samr_Function04(
 }
 
 
-NTSTATUS __SamrLookupDomain(
+NTSTATUS srv_SamrLookupDomain(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ CONNECT_HANDLE hConn,
     /* [in] */ UNICODE_STRING *domain_name,
@@ -129,7 +137,7 @@ NTSTATUS __SamrLookupDomain(
 }
 
 
-NTSTATUS __SamrEnumDomains(
+NTSTATUS srv_SamrEnumDomains(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ CONNECT_HANDLE hConn,
     /* [in, out] */ UINT32 *resume,
@@ -150,7 +158,7 @@ NTSTATUS __SamrEnumDomains(
 }
 
 
-NTSTATUS __SamrOpenDomain(
+NTSTATUS srv_SamrOpenDomain(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ CONNECT_HANDLE hConn,
     /* [in] */ UINT32 access_mask,
@@ -169,7 +177,7 @@ NTSTATUS __SamrOpenDomain(
 }
 
 
-NTSTATUS __SamrQueryDomainInfo(
+NTSTATUS srv_SamrQueryDomainInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT16 level,
@@ -186,7 +194,7 @@ NTSTATUS __SamrQueryDomainInfo(
 }
 
 
-NTSTATUS _samr_Function09(
+NTSTATUS srv_samr_Function09(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -195,7 +203,21 @@ NTSTATUS _samr_Function09(
 }
 
 
-NTSTATUS _samr_Function0a(
+NTSTATUS srv_SamrCreateDomGroup(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ DOMAIN_HANDLE hDomain,
+    /* [in] */ UNICODE_STRING *group_name,
+    /* [in] */ UINT32 access_mask,
+    /* [out] */ ACCOUNT_HANDLE *hGroup,
+    /* [out] */ UINT32 *rid
+    )
+{
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    return status;
+}
+
+
+NTSTATUS srv_samr_Function0b(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -204,16 +226,7 @@ NTSTATUS _samr_Function0a(
 }
 
 
-NTSTATUS _samr_Function0b(
-    /* [in] */ handle_t IDL_handle
-    )
-{
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    return status;
-}
-
-
-NTSTATUS __SamrCreateUser(
+NTSTATUS srv_SamrCreateUser(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UNICODE_STRING *account_name,
@@ -234,7 +247,7 @@ NTSTATUS __SamrCreateUser(
 }
 
 
-NTSTATUS __SamrEnumDomainUsers(
+NTSTATUS srv_SamrEnumDomainUsers(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in, out] */ UINT32 *resume,
@@ -257,7 +270,7 @@ NTSTATUS __SamrEnumDomainUsers(
 }
 
 
-NTSTATUS __SamrCreateDomAlias(
+NTSTATUS srv_SamrCreateDomAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UNICODE_STRING *alias_name,
@@ -278,7 +291,7 @@ NTSTATUS __SamrCreateDomAlias(
 }
 
 
-NTSTATUS __SamrEnumDomainAliases(
+NTSTATUS srv_SamrEnumDomainAliases(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in, out] */ UINT32 *resume,
@@ -299,7 +312,7 @@ NTSTATUS __SamrEnumDomainAliases(
 }
 
 
-NTSTATUS __SamrGetAliasMembership(
+NTSTATUS srv_SamrGetAliasMembership(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ SID_ARRAY *sids,
@@ -316,7 +329,7 @@ NTSTATUS __SamrGetAliasMembership(
 }
 
 
-NTSTATUS __SamrLookupNames(
+NTSTATUS srv_SamrLookupNames(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 num_names,
@@ -337,7 +350,7 @@ NTSTATUS __SamrLookupNames(
 }
 
 
-NTSTATUS __SamrLookupRids(
+NTSTATUS srv_SamrLookupRids(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 num_rids,
@@ -358,7 +371,20 @@ NTSTATUS __SamrLookupRids(
 }
 
 
-NTSTATUS _samr_Function13(
+NTSTATUS srv_SamrOpenGroup(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ DOMAIN_HANDLE hDomain,
+    /* [in] */ UINT32 access_mask,
+    /* [in] */ UINT32 rid,
+    /* [out] */ ACCOUNT_HANDLE *hGroup
+)
+{
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    return status;
+}
+
+
+NTSTATUS srv_samr_Function14(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -367,7 +393,7 @@ NTSTATUS _samr_Function13(
 }
 
 
-NTSTATUS _samr_Function14(
+NTSTATUS srv_samr_Function15(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -376,7 +402,7 @@ NTSTATUS _samr_Function14(
 }
 
 
-NTSTATUS _samr_Function15(
+NTSTATUS srv_samr_Function16(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -385,7 +411,18 @@ NTSTATUS _samr_Function15(
 }
 
 
-NTSTATUS _samr_Function16(
+NTSTATUS srv_SamrDeleteDomGroup(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ ACCOUNT_HANDLE hGroupIn,
+    /* [out] */ ACCOUNT_HANDLE *hGroupOut
+)
+{
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    return status;
+}
+
+
+NTSTATUS srv_samr_Function18(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -394,7 +431,7 @@ NTSTATUS _samr_Function16(
 }
 
 
-NTSTATUS _samr_Function17(
+NTSTATUS srv_samr_Function19(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -403,7 +440,7 @@ NTSTATUS _samr_Function17(
 }
 
 
-NTSTATUS _samr_Function18(
+NTSTATUS srv_samr_Function1a(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -412,25 +449,7 @@ NTSTATUS _samr_Function18(
 }
 
 
-NTSTATUS _samr_Function19(
-    /* [in] */ handle_t IDL_handle
-    )
-{
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    return status;
-}
-
-
-NTSTATUS _samr_Function1a(
-    /* [in] */ handle_t IDL_handle
-    )
-{
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
-    return status;
-}
-
-
-NTSTATUS __SamrOpenAlias(
+NTSTATUS srv_SamrOpenAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 access_mask,
@@ -449,7 +468,7 @@ NTSTATUS __SamrOpenAlias(
 }
 
 
-NTSTATUS __SamrQueryAliasInfo(
+NTSTATUS srv_SamrQueryAliasInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
     /* [in] */ UINT16 level,
@@ -466,7 +485,7 @@ NTSTATUS __SamrQueryAliasInfo(
 }
 
 
-NTSTATUS __SamrSetAliasInfo(
+NTSTATUS srv_SamrSetAliasInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
     /* [in] */ UINT16 level,
@@ -483,7 +502,7 @@ NTSTATUS __SamrSetAliasInfo(
 }
 
 
-NTSTATUS __SamrDeleteDomAlias(
+NTSTATUS srv_SamrDeleteDomAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAliasIn,
     /* [out] */ ACCOUNT_HANDLE *hAliasOut
@@ -498,7 +517,7 @@ NTSTATUS __SamrDeleteDomAlias(
 }
 
 
-NTSTATUS __SamrAddAliasMember(
+NTSTATUS srv_SamrAddAliasMember(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
     /* [in] */ SID *sid
@@ -513,7 +532,7 @@ NTSTATUS __SamrAddAliasMember(
 }
 
 
-NTSTATUS __SamrDeleteAliasMember(
+NTSTATUS srv_SamrDeleteAliasMember(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
     /* [in] */ SID *sid
@@ -528,7 +547,7 @@ NTSTATUS __SamrDeleteAliasMember(
 }
 
 
-NTSTATUS __SamrGetMembersInAlias(
+NTSTATUS srv_SamrGetMembersInAlias(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hAlias,
     /* [out] */ SID_ARRAY *sids
@@ -543,7 +562,7 @@ NTSTATUS __SamrGetMembersInAlias(
 }
 
 
-NTSTATUS __SamrOpenUser(
+NTSTATUS srv_SamrOpenUser(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT32 access_mask,
@@ -562,22 +581,20 @@ NTSTATUS __SamrOpenUser(
 }
 
 
-NTSTATUS __SamrDeleteUser(
+NTSTATUS srv_SamrDeleteUser(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ ACCOUNT_HANDLE hUserIn,
-    /* [in] */ ACCOUNT_HANDLE *phUserOut
+    /* [in] */ ACCOUNT_HANDLE *phUser
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvDeleteUser(IDL_handle,
-                               hUserIn,
-                               phUserOut);
+                               phUser);
     return status;
 }
 
 
-NTSTATUS __SamrQueryUserInfo(
+NTSTATUS srv_SamrQueryUserInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
     /* [in] */ UINT16 level,
@@ -594,7 +611,7 @@ NTSTATUS __SamrQueryUserInfo(
 }
 
 
-NTSTATUS __SamrSetUserInfo(
+NTSTATUS srv_SamrSetUserInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
     /* [in] */ UINT16 level,
@@ -611,7 +628,7 @@ NTSTATUS __SamrSetUserInfo(
 }
 
 
-NTSTATUS _samr_Function26(
+NTSTATUS srv_samr_Function26(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -620,7 +637,7 @@ NTSTATUS _samr_Function26(
 }
 
 
-NTSTATUS __SamrGetUserGroups(
+NTSTATUS srv_SamrGetUserGroups(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
     /* [out] */ RID_WITH_ATTRIBUTE_ARRAY **rids
@@ -635,7 +652,7 @@ NTSTATUS __SamrGetUserGroups(
 }
 
 
-NTSTATUS __SamrQueryDisplayInfo(
+NTSTATUS srv_SamrQueryDisplayInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UINT16 level,
@@ -662,7 +679,7 @@ NTSTATUS __SamrQueryDisplayInfo(
 }
 
 
-NTSTATUS _samr_Function29(
+NTSTATUS srv_samr_Function29(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -671,7 +688,7 @@ NTSTATUS _samr_Function29(
 }
 
 
-NTSTATUS _samr_Function2a(
+NTSTATUS srv_samr_Function2a(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -680,7 +697,7 @@ NTSTATUS _samr_Function2a(
 }
 
 
-NTSTATUS _samr_Function2b(
+NTSTATUS srv_samr_Function2b(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -689,7 +706,7 @@ NTSTATUS _samr_Function2b(
 }
 
 
-NTSTATUS __SamrGetUserPwInfo(
+NTSTATUS srv_SamrGetUserPwInfo(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
     /* [out] */ PwInfo *info
@@ -704,7 +721,7 @@ NTSTATUS __SamrGetUserPwInfo(
 }
 
 
-NTSTATUS __SamrRemoveMemberFromForeignDomain(
+NTSTATUS srv_SamrRemoveMemberFromForeignDomain(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ PSID sid
@@ -719,7 +736,7 @@ NTSTATUS __SamrRemoveMemberFromForeignDomain(
 }
 
 
-NTSTATUS _samr_Function2e(
+NTSTATUS srv_samr_Function2e(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -728,7 +745,7 @@ NTSTATUS _samr_Function2e(
 }
 
 
-NTSTATUS _samr_Function2f(
+NTSTATUS srv_samr_Function2f(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -737,7 +754,7 @@ NTSTATUS _samr_Function2f(
 }
 
 
-NTSTATUS _samr_Function30(
+NTSTATUS srv_samr_Function30(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -746,7 +763,7 @@ NTSTATUS _samr_Function30(
 }
 
 
-NTSTATUS _samr_Function31(
+NTSTATUS srv_samr_Function31(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -755,7 +772,7 @@ NTSTATUS _samr_Function31(
 }
 
 
-NTSTATUS __SamrCreateUser2(
+NTSTATUS srv_SamrCreateUser2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ DOMAIN_HANDLE hDomain,
     /* [in] */ UNICODE_STRING *account_name,
@@ -780,7 +797,7 @@ NTSTATUS __SamrCreateUser2(
 }
 
 
-NTSTATUS _samr_Function33(
+NTSTATUS srv_samr_Function33(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -789,7 +806,7 @@ NTSTATUS _samr_Function33(
 }
 
 
-NTSTATUS _samr_Function34(
+NTSTATUS srv_samr_Function34(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -798,7 +815,7 @@ NTSTATUS _samr_Function34(
 }
 
 
-NTSTATUS _samr_Function35(
+NTSTATUS srv_samr_Function35(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -807,7 +824,7 @@ NTSTATUS _samr_Function35(
 }
 
 
-NTSTATUS _samr_Function36(
+NTSTATUS srv_samr_Function36(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -816,7 +833,7 @@ NTSTATUS _samr_Function36(
 }
 
 
-NTSTATUS __SamrChangePasswordUser2(
+NTSTATUS srv_SamrChangePasswordUser2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UNICODE_STRING *server,
     /* [in] */ UNICODE_STRING *account_name,
@@ -841,7 +858,7 @@ NTSTATUS __SamrChangePasswordUser2(
 }
 
 
-NTSTATUS _samr_Function38(
+NTSTATUS srv_samr_Function38(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -850,7 +867,7 @@ NTSTATUS _samr_Function38(
 }
 
 
-NTSTATUS __SamrConnect2(
+NTSTATUS srv_SamrConnect2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
@@ -869,7 +886,7 @@ NTSTATUS __SamrConnect2(
 }
 
 
-NTSTATUS __SamrSetUserInfo2(
+NTSTATUS srv_SamrSetUserInfo2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ ACCOUNT_HANDLE hUser,
     /* [in] */ UINT16 level,
@@ -886,7 +903,7 @@ NTSTATUS __SamrSetUserInfo2(
 }
 
 
-NTSTATUS _samr_Function3a(
+NTSTATUS srv_samr_Function3a(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -895,7 +912,7 @@ NTSTATUS _samr_Function3a(
 }
 
 
-NTSTATUS _samr_Function3b(
+NTSTATUS srv_samr_Function3b(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -904,7 +921,7 @@ NTSTATUS _samr_Function3b(
 }
 
 
-NTSTATUS _samr_Function3c(
+NTSTATUS srv_samr_Function3c(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -913,7 +930,7 @@ NTSTATUS _samr_Function3c(
 }
 
 
-NTSTATUS __SamrConnect3(
+NTSTATUS srv_SamrConnect3(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
@@ -934,7 +951,7 @@ NTSTATUS __SamrConnect3(
 }
 
 
-NTSTATUS __SamrConnect4(
+NTSTATUS srv_SamrConnect4(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
@@ -955,7 +972,7 @@ NTSTATUS __SamrConnect4(
 }
 
 
-NTSTATUS _samr_Function3f(
+NTSTATUS srv_samr_Function3f(
     /* [in] */ handle_t IDL_handle
     )
 {
@@ -964,7 +981,7 @@ NTSTATUS _samr_Function3f(
 }
 
 
-NTSTATUS __SamrConnect5(
+NTSTATUS srv_SamrConnect5(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,

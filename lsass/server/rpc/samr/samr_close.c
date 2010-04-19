@@ -50,29 +50,29 @@
 NTSTATUS
 SamrSrvClose(
     /* [in] */ handle_t hBinding,                     
-    /* [in, context_handle] */ void *hIn,
-    /* [out, context_handle] */ void **hOut
+    /* [in, context_handle] */ void **phInOut
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PSAMR_GENERIC_CONTEXT pContext = NULL;
 
-    BAIL_ON_INVALID_PTR(hIn);
-    BAIL_ON_INVALID_PTR(hOut);
+    BAIL_ON_INVALID_PTR(phInOut);
+    BAIL_ON_INVALID_PTR(*phInOut);
 
-    pContext = (PSAMR_GENERIC_CONTEXT)hIn;
+    pContext = (PSAMR_GENERIC_CONTEXT)(*phInOut);
+
 
     switch (pContext->Type) {
     case SamrContextConnect:
-        CONNECT_HANDLE_rundown(hIn);
+        CONNECT_HANDLE_rundown(*phInOut);
         break;
 
     case SamrContextDomain:
-        DOMAIN_HANDLE_rundown(hIn);
+        DOMAIN_HANDLE_rundown(*phInOut);
         break;
 
     case SamrContextAccount:
-        ACCOUNT_HANDLE_rundown(hIn);
+        ACCOUNT_HANDLE_rundown(*phInOut);
         break;
 
     default:
@@ -82,13 +82,12 @@ SamrSrvClose(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    *hOut = NULL;
+    *phInOut = NULL;
 
 cleanup:
     return ntStatus;
 
 error:
-    *hOut = hIn;
     goto cleanup;
 }
 

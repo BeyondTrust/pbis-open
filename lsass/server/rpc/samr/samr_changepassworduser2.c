@@ -84,7 +84,6 @@ SamrSrvChangePasswordUser2(
     DWORD dwSystemNameLen = (sizeof(wszSystemName)/sizeof(wszSystemName[0])) - 1;
     DWORD dwConnectFlags = SAMR_ACCESS_CONNECT_TO_SERVER;
     PCONNECT_CONTEXT pConnCtx = NULL;
-    CONNECT_HANDLE hConnClosed = NULL;
     DWORD dwObjectClass = 0;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     GENERIC_MAPPING GenericMapping = {0};
@@ -266,8 +265,7 @@ SamrSrvChangePasswordUser2(
 
 cleanup:
     SamrSrvClose(hBinding,
-                 (PVOID)pConnCtx,
-                 (PVOID*)&hConnClosed);
+                 (PVOID*)&pConnCtx);
 
     LW_SAFE_FREE_MEMORY(pwszDomainName);
     LW_SAFE_FREE_MEMORY(pwszUserName);

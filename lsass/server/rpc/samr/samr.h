@@ -29,7 +29,17 @@
  */
 
 /*
- * Abstract: Samr rpc server functions (rpc server library)
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        samr.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        Samr rpc server functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -50,8 +60,7 @@ SamrSrvConnect(
 NTSTATUS
 SamrSrvClose(
     handle_t bind,
-    void *hIn,
-    void **hOut
+    void **phInOut
     );
 
 
@@ -269,8 +278,7 @@ SamrSrvOpenUser(
 NTSTATUS
 SamrSrvDeleteUser(
     handle_t hBinding,
-    ACCOUNT_HANDLE hUserIn,
-    ACCOUNT_HANDLE *phUserOut
+    ACCOUNT_HANDLE *phUser
     );
 
 
