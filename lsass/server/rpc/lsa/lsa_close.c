@@ -50,20 +50,19 @@
 NTSTATUS
 LsaSrvClose(
     /* [in] */ handle_t hBinding,
-    /* [in, context_handle] */ void *hIn,
-    /* [out, context_handle] */ void **hOut
+    /* [out, context_handle] */ void **phInOut
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
     PLSA_GENERIC_CONTEXT pContext = NULL;
 
-    pContext = (PLSA_GENERIC_CONTEXT)hIn;
+    pContext = (PLSA_GENERIC_CONTEXT)(*phInOut);
 
     pContext->bCleanClose = TRUE;
 
     switch (pContext->Type) {
     case LsaContextPolicy:
-        POLICY_HANDLE_rundown(hIn);
+        POLICY_HANDLE_rundown(*phInOut);
         break;
 
     default:
@@ -73,13 +72,12 @@ LsaSrvClose(
         BAIL_ON_NTSTATUS_ERROR(status);
     }
 
-    *hOut = NULL;
+    *phInOut = NULL;
 
 cleanup:
     return status;
 
 error:
-    *hOut = hIn;
     goto cleanup;
 }
 

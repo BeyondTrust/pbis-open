@@ -3,13 +3,13 @@
 ]
 interface lsa
 {
-	[enable_allocate] __LsaClose();
-	[enable_allocate] __LsaQueryInfoPolicy();
-	[enable_allocate] __LsaLookupNames();
-	[enable_allocate] __LsaLookupSids();
-	[enable_allocate] __LsaOpenPolicy2();
-	[enable_allocate] __LsaQueryInfoPolicy2();
-	[enable_allocate] __LsaLookupNames2();
-	[enable_allocate] __LsaLookupSids2();
-	[enable_allocate] __LsaLookupNames3();
+	[enable_allocate] LsaClose();
+	[enable_allocate] LsaQueryInfoPolicy();
+	[enable_allocate] LsaLookupNames();
+	[enable_allocate] LsaLookupSids();
+	[enable_allocate] LsaOpenPolicy2();
+	[enable_allocate] LsaQueryInfoPolicy2();
+	[enable_allocate] LsaLookupNames2();
+	[enable_allocate] LsaLookupSids2();
+	[enable_allocate] LsaLookupNames3();
 }

@@ -29,7 +29,17 @@
  */
 
 /*
- * Abstract: Lsa rpc server functions (rpc server library)
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        lsa.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Server Interface
+ *
+ *        Lsa rpc server functions
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -41,8 +51,7 @@
 NTSTATUS
 LsaSrvClose(
     handle_t b,
-    POLICY_HANDLE hIn,
-    POLICY_HANDLE *hOut
+    POLICY_HANDLE *hInOut
     );
 
 
