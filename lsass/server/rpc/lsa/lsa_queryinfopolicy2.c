@@ -58,6 +58,15 @@ LsaQueryDomainInfo(
 
 static
 NTSTATUS
+LsaQueryAccountDomainInfo(
+    handle_t hBinding,
+    PPOLICY_CONTEXT pPolCtx,
+    LsaDomainInfo *pInfo
+    );
+
+
+static
+NTSTATUS
 LsaQueryDnsDomainInfo(
     handle_t hBinding,
     PPOLICY_CONTEXT pPolCtx,
@@ -105,8 +114,11 @@ LsaSrvQueryInfoPolicy2(
         ntStatus = LsaQueryDomainInfo(hBinding, pPolCtx, &pInfo->domain);
         break;
 
-    case LSA_POLICY_INFO_PD:
     case LSA_POLICY_INFO_ACCOUNT_DOMAIN:
+        ntStatus = LsaQueryAccountDomainInfo(hBinding, pPolCtx, &pInfo->domain);
+        break;
+
+    case LSA_POLICY_INFO_PD:
     case LSA_POLICY_INFO_ROLE:
     case LSA_POLICY_INFO_REPLICA:
     case LSA_POLICY_INFO_QUOTA:
@@ -142,10 +154,6 @@ error:
 }
 
 
-#if !defined(MAXHOSTNAMELEN)
-#define MAXHOSTNAMELEN (256)
-#endif
-
 static
 NTSTATUS
 LsaQueryDomainInfo(
@@ -157,25 +165,17 @@ LsaQueryDomainInfo(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    char pszLocalname[MAXHOSTNAMELEN];
-
-    memset(pszLocalname, 0, sizeof(pszLocalname));
-
-    if (gethostname((char*)pszLocalname, sizeof(pszLocalname)) < 0) {
-        ntStatus = STATUS_INTERNAL_ERROR;
-        goto error;
-    }
 
     ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
                                      &hStore);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    ntStatus = LwpsGetPasswordByHostName(hStore,
-                                         pszLocalname,
-                                         &pPassInfo);
+    ntStatus = LwpsGetPasswordByCurrentHostName(hStore,
+                                                &pPassInfo);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    if (pPassInfo) {
+    if (pPassInfo)
+    {
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->name,
                                              pPassInfo->pwszDomainName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus); 
@@ -183,15 +183,44 @@ LsaQueryDomainInfo(
         ntStatus = LsaSrvAllocateSidFromWC16String(&pInfo->sid,
                                                    pPassInfo->pwszSID);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    }
 
+cleanup:
+
+    if (pPassInfo != NULL)
+    {
         LwpsFreePasswordInfo(hStore, pPassInfo);
-        pPassInfo = NULL;
     }
 
-    if (hStore != NULL) {
-        ntStatus = LwpsClosePasswordStore(hStore);
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    if (hStore != NULL)
+    {
+        LwpsClosePasswordStore(hStore);
     }
+
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+
+static
+NTSTATUS
+LsaQueryAccountDomainInfo(
+    handle_t hBinding,
+    PPOLICY_CONTEXT pPolCtx,
+    LsaDomainInfo *pInfo
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+
+    ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->name,
+                                         pPolCtx->pwszLocalDomainName);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = LsaSrvDuplicateSid(&pInfo->sid,
+                                  pPolCtx->pLocalDomainSid);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
 cleanup:
     return ntStatus;
@@ -213,7 +242,6 @@ LsaQueryDnsDomainInfo(
     DWORD dwError = 0;
     HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    char pszLocalname[MAXHOSTNAMELEN];
     PWSTR pwszDnsForest = NULL;
     PSTR pszDomainFqdn = NULL;
     PSTR pszDcFqdn = NULL;
@@ -221,23 +249,16 @@ LsaQueryDnsDomainInfo(
     DWORD dwFlags = 0;
     PLWNET_DC_INFO pDcInfo = NULL;
 
-    memset(pszLocalname, 0, sizeof(pszLocalname));
-
-    if (gethostname((char*)pszLocalname, sizeof(pszLocalname)) < 0) {
-        ntStatus = STATUS_INTERNAL_ERROR;
-        goto error;
-    }
-
     ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
                                      &hStore);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    ntStatus = LwpsGetPasswordByHostName(hStore,
-                                         pszLocalname,
-                                         &pPassInfo);
+    ntStatus = LwpsGetPasswordByCurrentHostName(hStore,
+                                                &pPassInfo);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    if (pPassInfo) {
+    if (pPassInfo)
+    {
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->name,
                                              pPassInfo->pwszHostname);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
@@ -250,8 +271,9 @@ LsaQueryDnsDomainInfo(
                                                    pPassInfo->pwszSID);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        pszDomainFqdn = awc16stombs(pPassInfo->pwszDnsDomainName);
-        BAIL_ON_NO_MEMORY(pszDomainFqdn);
+        dwError = LwWc16sToMbs(pPassInfo->pwszDnsDomainName,
+                               &pszDomainFqdn);
+        BAIL_ON_LSA_ERROR(dwError);
     
         dwError = LWNetGetDCName(pszDcFqdn,
                                  pszDomainFqdn,
@@ -260,8 +282,8 @@ LsaQueryDnsDomainInfo(
                                  &pDcInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
-        pwszDnsForest = ambstowc16s(pDcInfo->pszDnsForestName);
-        BAIL_ON_NO_MEMORY(pwszDnsForest);
+        dwError = LwMbsToWc16s(pDcInfo->pszDnsForestName,
+                               &pwszDnsForest);
 
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->dns_forest,
                                              pwszDnsForest);
@@ -272,25 +294,23 @@ LsaQueryDnsDomainInfo(
     }
 
 cleanup:
-    if (pPassInfo) {
+    if (pPassInfo)
+    {
         LwpsFreePasswordInfo(hStore, pPassInfo);
     }
 
-    if (hStore) {
+    if (hStore)
+    {
         LwpsClosePasswordStore(hStore);
     }
 
-    if (pDcInfo) {
+    if (pDcInfo)
+    {
         LWNetFreeDCInfo(pDcInfo);
     }
 
-    if (pszDomainFqdn) {
-        RTL_FREE(&pszDomainFqdn);
-    }
-
-    if (pwszDnsForest) {
-        RTL_FREE(&pwszDnsForest);
-    }
+    LW_SAFE_FREE_MEMORY(pszDomainFqdn);
+    LW_SAFE_FREE_MEMORY(pwszDnsForest);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
