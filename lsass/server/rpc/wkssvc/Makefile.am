@@ -1,6 +1,6 @@
 srv_srcdir = $(top_srcdir)/server
 rpc_srcdir = $(srv_srcdir)/rpc
-idl_srcdir = $(rpc_srcdir)/idl
+idl_srcdir = $(top_srcdir)/idl
 
 if ENABLE_STATIC_RPCSERVERS
 noinst_LTLIBRARIES = libwkssvc_srv.la
