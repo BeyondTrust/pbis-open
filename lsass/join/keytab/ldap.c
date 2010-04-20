@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  * 
  *        LDAP API
  *
@@ -49,58 +49,88 @@
 
 DWORD
 KtLdapBind(
-    LDAP **ldret,
-    PCSTR pszDc)
+    LDAP  **ppLd,
+    PCSTR   pszDc
+    )
 {
     const int version = LDAP_VERSION3;
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
     int lderr = 0;
-    LDAP *ld = NULL;
+    PSTR pszUrl = NULL;
+    LDAP *pLd = NULL;
     int secflags = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG | GSS_C_INTEG_FLAG;
 
-    *ldret = NULL;
+    dwError = LwAllocateStringPrintf(&pszUrl,
+                                     "ldap://%s",
+                                     pszDc);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    ld = ldap_open(pszDc, LDAP_PORT);
-    if (!ld) BAIL_WITH_KT_ERROR(KT_STATUS_LDAP_ERROR);
-
-    lderr = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &version);
+    lderr = ldap_initialize(&pLd,
+                            pszUrl);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
+    lderr = ldap_set_option(pLd,
+                            LDAP_OPT_PROTOCOL_VERSION,
+                            &version);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = ldap_set_option(ld, LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL,
-            LDAP_OPT_ON);
+    lderr = ldap_set_option(pLd,
+                            LDAP_OPT_REFERRALS,
+                            LDAP_OPT_OFF);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = ldap_set_option(ld, LDAP_OPT_SSPI_FLAGS, &secflags);
+    lderr = ldap_set_option(pLd,
+                            LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL,
+                            LDAP_OPT_ON);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = ldap_bind_s(ld, NULL, NULL, LDAP_AUTH_NEGOTIATE);
+    lderr = ldap_set_option(pLd,
+                            LDAP_OPT_SSPI_FLAGS,
+                            &secflags);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    *ldret = ld;
+    lderr = ldap_gssapi_bind_s(pLd,
+                               NULL,
+                               NULL);
+    BAIL_ON_LDAP_ERROR(lderr);
+
+    *ppLd = pLd;
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pszUrl);
+
+    if (dwError == ERROR_SUCCESS &&
+        lderr != LDAP_SUCCESS)
+    {
+        dwError = LwLdapErrToWin32Error(lderr);
+    }
+
     return dwError;
 
 error:
-    if (ld) ldap_memfree(ld);
+    if (pLd)
+    {
+        ldap_memfree(pLd);
+    }
+
+    *ppLd = NULL;
+
     goto cleanup;
 }
 
 
 DWORD
 KtLdapQuery(
-    LDAP *ld,
-    PCSTR pszBaseDn,
-    DWORD dwScope,
-    PCSTR pszFilter,
-    PCSTR pszAttrName,
-    PSTR *pszAttrVal)
+    LDAP  *pLd,
+    PCSTR  pszBaseDn,
+    DWORD  dwScope,
+    PCSTR  pszFilter,
+    PCSTR  pszAttrName,
+    PSTR  *ppszAttrVal
+    )
 {
-    DWORD dwError = 0;
-    int lderr = 0;
+    DWORD dwError = ERROR_SUCCESS;
+    int lderr = LDAP_SUCCESS;
     char *attrs[2] = {
         NULL, // This gets filled in later
         NULL  // This null terminates the list of attributes
@@ -112,38 +142,55 @@ KtLdapQuery(
     BerElement *ptr = NULL;
     struct timeval timeout = { .tv_sec  = 10,
                                .tv_usec = 0 };
+    PSTR pszAttrVal = NULL;
 
-    dwError = KtAllocateString(pszAttrName, &attrs[0]);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwAllocateString(pszAttrName,
+                               &attrs[0]);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    lderr = ldap_search_ext_s(ld, pszBaseDn, dwScope, pszFilter, attrs, 0, NULL,
-                              NULL, &timeout, 0, &res);
+    lderr = ldap_search_ext_s(pLd,
+                              pszBaseDn,
+                              dwScope,
+                              pszFilter,
+                              attrs,
+                              0,
+                              NULL,
+                              NULL,
+                              &timeout,
+                              0,
+                              &res);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    if (ldap_count_entries(ld, res)) {
-        entry = ldap_first_entry(ld, res);
-        if (entry == NULL) BAIL_WITH_KT_ERROR(KT_STATUS_LDAP_ERROR);
+    if (ldap_count_entries(pLd, res))
+    {
+        entry = ldap_first_entry(pLd, res);
+        if (entry == NULL)
+        {
+            dwError = ERROR_DS_GENERIC_ERROR;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
         
-        attr = ldap_first_attribute(ld, entry, &ptr);
-        if (attr) {
-            val = ldap_get_values(ld, entry, attr);
-
+        attr = ldap_first_attribute(pLd, entry, &ptr);
+        if (attr)
+        {
+            val = ldap_get_values(pLd, entry, attr);
             ldap_memfree(attr);
         }
 
         ldap_msgfree(res);
     }
 
-    if (val && val[0]) {
-        dwError = KtAllocateString(val[0], pszAttrVal);
-        BAIL_ON_KT_ERROR(dwError);
-
-    } else {
-        *pszAttrVal = NULL;
+    if (val && val[0])
+    {
+        dwError = LwAllocateString(val[0], &pszAttrVal);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
+    *ppszAttrVal = pszAttrVal;
+
 cleanup:
-    if (val) {
+    if (val)
+    {
         ldap_value_free(val);
     }
 
@@ -152,26 +199,40 @@ cleanup:
         ber_free( ptr, 0 );
     }
 
-    KT_SAFE_FREE_STRING(attrs[0]);
+    LW_SAFE_FREE_STRING(attrs[0]);
+
+    if (dwError == ERROR_SUCCESS &&
+        lderr != LDAP_SUCCESS)
+    {
+        dwError = LwLdapErrToWin32Error(lderr);
+    }
 
     return dwError;
 
 error:
+    *ppszAttrVal = NULL;
+
     goto cleanup;
 }
 
 
 DWORD
 KtLdapUnbind(
-   LDAP *ld)
+    LDAP *pLd
+    )
 {
-    DWORD dwError = 0;
-    int lderr = 0;
+    DWORD dwError = ERROR_SUCCESS;
+    int lderr = LDAP_SUCCESS;
 
-    lderr = ldap_unbind_s(ld);
+    lderr = ldap_unbind_s(pLd);
     BAIL_ON_LDAP_ERROR(lderr);
 
 cleanup:
+    if (lderr)
+    {
+        dwError = LwLdapErrToWin32Error(lderr);
+    }
+
     return dwError;
 
 error:
@@ -180,149 +241,311 @@ error:
 
 
 DWORD
-KtLdapGetBaseDn(
-    PCSTR pszDcName,
-    PSTR *pszBaseDn)
+KtLdapGetBaseDnA(
+    PCSTR  pszDcName,
+    PSTR  *ppszBaseDn
+    )
 {
+    PCSTR pszDefBaseDn = "";
     PCSTR pszDefNamingCtxAttr = "defaultNamingContext";
 
-    DWORD dwError = KT_STATUS_SUCCESS;
-    LDAP *ld = NULL;
-    PSTR pszBaseDnVal = NULL;
+    DWORD dwError = ERROR_SUCCESS;
+    LDAP *pLd = NULL;
+    PSTR pszBaseDn = NULL;
+    PSTR pszFilter = "(objectClass=*)";
 
     /* Bind to directory service on the DC */
-    dwError = KtLdapBind(&ld, pszDcName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtLdapBind(&pLd, pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Get naming context first */
-    dwError = KtLdapQuery(ld, "", LDAP_SCOPE_BASE,
-                          "(objectClass=*)", pszDefNamingCtxAttr, &pszBaseDnVal);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtLdapQuery(pLd,
+                          pszDefBaseDn,
+                          LDAP_SCOPE_BASE,
+                          pszFilter,
+                          pszDefNamingCtxAttr,
+                          &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /* Close connection to the directory */
-    dwError = KtLdapUnbind(ld);
-    BAIL_ON_KT_ERROR(dwError);
-
-    *pszBaseDn = pszBaseDnVal;
+    *ppszBaseDn = pszBaseDn;
 
 cleanup:
+    /* Close connection to the directory */
+    if (pLd)
+    {
+        KtLdapUnbind(pLd);
+    }
+
     return dwError;
 
 error:
-    KT_SAFE_FREE_STRING(pszBaseDnVal);
+    LW_SAFE_FREE_MEMORY(pszBaseDn);
 
-    *pszBaseDn = NULL;
+    *ppszBaseDn = NULL;
 
     goto cleanup;
 }
 
 
 DWORD
-KtLdapGetKeyVersion(
-    PCSTR pszDcName,
-    PCSTR pszBaseDn,
-    PCSTR pszPrincipal,
-    DWORD *dwKvno)
+KtLdapGetBaseDnW(
+    PCWSTR  pwszDcName,
+    PWSTR  *ppwszBaseDn
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszDcName = NULL;
+    PSTR pszBaseDn = NULL;
+    PWSTR pwszBaseDn = NULL;
+
+    dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = KtLdapGetBaseDnA(pszDcName, &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszBaseDn)
+    {
+        dwError = LwMbsToWc16s(pszBaseDn, &pwszBaseDn);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppwszBaseDn = pwszBaseDn;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszBaseDn);
+    LW_SAFE_FREE_MEMORY(pszDcName);
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszBaseDn);
+    *ppwszBaseDn = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
+KtLdapGetKeyVersionA(
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PCSTR   pszPrincipal,
+    PDWORD  pdwKvno
+    )
 {
     PCSTR pszKvnoAttr = "msDS-KeyVersionNumber";
     PCSTR pszSamAcctAttr = "sAMAccountName";
 
-    DWORD dwError = 0;
-    LDAP *ld = NULL;
+    DWORD dwError = ERROR_SUCCESS;
+    LDAP *pLd = NULL;
     PSTR pszRealm = NULL;
     PSTR pszAcctName = NULL;
     PSTR pszFilter = NULL;    
     PSTR pszKvnoVal = NULL;
+    DWORD dwKvno = 0;
 
     /* Bind to directory service on the DC */
-    dwError = KtLdapBind(&ld, pszDcName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtLdapBind(&pLd, pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Extract a username by cutting off the realm part of principal */
-    dwError = KtAllocateString(pszPrincipal, &pszAcctName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwAllocateString(pszPrincipal, &pszAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    KtStrChr(pszAcctName, '@', &pszRealm);
+    LwStrChr(pszAcctName, '@', &pszRealm);
     pszRealm[0] = '\0';
 
     /* Prepare ldap query filter */
-    dwError = KtAllocateStringPrintf(&pszFilter, "(%s=%s)",
-                                     pszSamAcctAttr, pszAcctName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwAllocateStringPrintf(&pszFilter,
+                                     "(%s=%s)",
+                                     pszSamAcctAttr,
+                                     pszAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Look for key version number attribute */
-    dwError = KtLdapQuery(ld, pszBaseDn, LDAP_SCOPE_SUBTREE,
-                          pszFilter, pszKvnoAttr, &pszKvnoVal);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtLdapQuery(pLd,
+                          pszBaseDn,
+                          LDAP_SCOPE_SUBTREE,
+                          pszFilter,
+                          pszKvnoAttr,
+                          &pszKvnoVal);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /* Close connection to the directory */
-    dwError = KtLdapUnbind(ld);
-    BAIL_ON_KT_ERROR(dwError);
-
-    if (pszKvnoVal == NULL) {
-        BAIL_WITH_KT_ERROR(KT_STATUS_LDAP_NO_KVNO_FOUND);
+    if (pszKvnoVal == NULL)
+    {
+        dwError = ERROR_FILE_NOT_FOUND;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwKvno = atoi(pszKvnoVal);
     }
 
-    *dwKvno = atoi(pszKvnoVal);
+    *pdwKvno = dwKvno;
 
 cleanup:
-    KT_SAFE_FREE_STRING(pszAcctName);
-    KT_SAFE_FREE_STRING(pszFilter);
-    KT_SAFE_FREE_STRING(pszKvnoVal);
+    /* Close connection to the directory */
+    if (pLd)
+    {
+        KtLdapUnbind(pLd);
+    }
+
+    LW_SAFE_FREE_MEMORY(pszAcctName);
+    LW_SAFE_FREE_MEMORY(pszFilter);
+    LW_SAFE_FREE_MEMORY(pszKvnoVal);
 
     return dwError;
 
 error:
-    *dwKvno = (DWORD)(-1);
+    *pdwKvno = (DWORD)(-1);
+
     goto cleanup;
 }
 
 
 
 DWORD
-KtLdapGetSaltingPrincipal(
-    PCSTR pszDcName,
-    PCSTR pszBaseDn,
-    PCSTR pszMachAcctName,
-    PSTR *pszSalt)
+KtLdapGetKeyVersionW(
+    PCWSTR pwszDcName,
+    PCWSTR pwszBaseDn,
+    PCWSTR pwszPrincipal,
+    PDWORD pdwKvno)
 {
-    PCSTR pszUpnAttr = "userPrincipalName";
-    PCSTR pszSamAcctAttr = "sAMAccountName";
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszDcName = NULL;
+    PSTR pszBaseDn = NULL;
+    PSTR pszPrincipal = NULL;
 
-    DWORD dwError = KT_STATUS_SUCCESS;
-    LDAP *ld = NULL;
-    PSTR pszFilter = NULL;
-    PSTR pszUpnVal = NULL;
+    dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /* Bind to directory service on the DC */
-    dwError = KtLdapBind(&ld, pszDcName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwWc16sToMbs(pwszBaseDn, &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /* Prepare ldap query filter */
-    dwError = KtAllocateStringPrintf(&pszFilter, "(%s=%s)",
-                                     pszSamAcctAttr, pszMachAcctName);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    /* Look for key version number attribute */
-    dwError = KtLdapQuery(ld, pszBaseDn, LDAP_SCOPE_SUBTREE,
-                          pszFilter, pszUpnAttr, &pszUpnVal);
-    BAIL_ON_KT_ERROR(dwError);
-
-    /* Close connection to the directory */
-    dwError = KtLdapUnbind(ld);
-    BAIL_ON_KT_ERROR(dwError);
-
-    *pszSalt = pszUpnVal;
+    dwError = KtLdapGetKeyVersionA(pszDcName, pszBaseDn, pszPrincipal, pdwKvno);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    KT_SAFE_FREE_STRING(pszFilter);
+    LW_SAFE_FREE_STRING(pszDcName);
+    LW_SAFE_FREE_STRING(pszBaseDn);
+    LW_SAFE_FREE_STRING(pszPrincipal);
 
     return dwError;
 
 error:
-    KT_SAFE_FREE_STRING(pszUpnVal);
+    goto cleanup;
+}
 
-    *pszSalt = NULL;
+
+DWORD
+KtLdapGetSaltingPrincipalA(
+    PCSTR  pszDcName,
+    PCSTR  pszBaseDn,
+    PCSTR  pszMachAcctName,
+    PSTR  *ppszSalt
+    )
+{
+    PCSTR pszUpnAttr = "userPrincipalName";
+    PCSTR pszSamAcctAttr = "sAMAccountName";
+
+    DWORD dwError = ERROR_SUCCESS;
+    LDAP *pLd = NULL;
+    PSTR pszFilter = NULL;
+    PSTR pszUpn = NULL;
+
+    /* Bind to directory service on the DC */
+    dwError = KtLdapBind(&pLd, pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* Prepare ldap query filter */
+    dwError = LwAllocateStringPrintf(&pszFilter,
+                                     "(%s=%s)",
+                                     pszSamAcctAttr,
+                                     pszMachAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* Look for key version number attribute */
+    dwError = KtLdapQuery(pLd,
+                          pszBaseDn,
+                          LDAP_SCOPE_SUBTREE,
+                          pszFilter,
+                          pszUpnAttr,
+                          &pszUpn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppszSalt = pszUpn;
+
+cleanup:
+    /* Close connection to the directory */
+    if (pLd)
+    {
+        KtLdapUnbind(pLd);
+    }
+
+    LW_SAFE_FREE_MEMORY(pszFilter);
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pszUpn);
+
+    *ppszSalt = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
+KtLdapGetSaltingPrincipalW(
+    PCWSTR  pwszDcName,
+    PCWSTR  pwszBaseDn,
+    PCWSTR  pwszMachAcctName,
+    PWSTR  *ppwszSalt
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszDcName = NULL;
+    PSTR pszBaseDn = NULL;
+    PSTR pszMachAcctName = NULL;
+    PSTR pszSalt = NULL;
+    PWSTR pwszSalt = NULL;
+
+    dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszBaseDn, &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszMachAcctName, &pszMachAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = KtLdapGetSaltingPrincipalA(pszDcName,
+                                         pszBaseDn,
+                                         pszMachAcctName,
+                                         &pszSalt);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszSalt)
+    {
+        dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppwszSalt = pwszSalt;
+
+cleanup:
+    LW_SAFE_FREE_STRING(pszDcName);
+    LW_SAFE_FREE_STRING(pszBaseDn);
+    LW_SAFE_FREE_STRING(pszMachAcctName);
+
+    return dwError;
+
+error:
+    *ppwszSalt = NULL;
     goto cleanup;
 }
 

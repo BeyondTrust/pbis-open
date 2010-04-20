@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -46,116 +46,6 @@
  */
 
 #include "includes.h"
-
-
-DWORD
-KtLdapGetBaseDnW(
-    PCWSTR pwszDcName,
-    PWSTR *pwszBaseDn)
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-    PSTR pszDcName = NULL;
-    PSTR pszBaseDn = NULL;
-
-    pszDcName = awc16stombs(pwszDcName);
-    BAIL_IF_NO_MEMORY(pszDcName);
-
-    dwError = KtLdapGetBaseDn(pszDcName, &pszBaseDn);
-    BAIL_ON_KT_ERROR(dwError);
-
-    if (pszBaseDn) {
-        *pwszBaseDn = ambstowc16s(pszBaseDn);
-        BAIL_IF_NO_MEMORY(*pwszBaseDn);
-    }
-
-cleanup:
-    KT_SAFE_FREE_STRING(pszBaseDn);
-    KT_SAFE_FREE_STRING(pszDcName);
-
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-
-DWORD
-KtLdapGetKeyVersionW(
-    PCWSTR pwszDcName,
-    PCWSTR pwszBaseDn,
-    PCWSTR pwszPrincipal,
-    DWORD *dwKvno)
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-    PSTR pszDcName = NULL;
-    PSTR pszBaseDn = NULL;
-    PSTR pszPrincipal = NULL;
-
-    pszDcName = awc16stombs(pwszDcName);
-    BAIL_IF_NO_MEMORY(pszDcName);
-
-    pszBaseDn = awc16stombs(pwszBaseDn);
-    BAIL_IF_NO_MEMORY(pszBaseDn);
-
-    pszPrincipal = awc16stombs(pwszPrincipal);
-    BAIL_IF_NO_MEMORY(pszPrincipal);
-
-    dwError = KtLdapGetKeyVersion(pszDcName, pszBaseDn, pszPrincipal, dwKvno);
-
-cleanup:
-    KT_SAFE_FREE_STRING(pszDcName);
-    KT_SAFE_FREE_STRING(pszBaseDn);
-    KT_SAFE_FREE_STRING(pszPrincipal);
-
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-
-DWORD
-KtLdapGetSaltingPrincipalW(
-    PCWSTR pwszDcName,
-    PCWSTR pwszBaseDn,
-    PCWSTR pwszMachAcctName,
-    PWSTR *pwszSalt)
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-    PSTR pszDcName = NULL;
-    PSTR pszBaseDn = NULL;
-    PSTR pszMachAcctName = NULL;
-    PSTR pszSalt = NULL;
-
-    pszDcName = awc16stombs(pwszDcName);
-    BAIL_IF_NO_MEMORY(pszDcName);
-
-    pszBaseDn = awc16stombs(pwszBaseDn);
-    BAIL_IF_NO_MEMORY(pszBaseDn);
-
-    pszMachAcctName = awc16stombs(pwszMachAcctName);
-    BAIL_IF_NO_MEMORY(pszMachAcctName);
-
-    dwError = KtLdapGetSaltingPrincipal(pszDcName, pszBaseDn, pszMachAcctName,
-                                        &pszSalt);
-    BAIL_ON_KT_ERROR(dwError);
-
-    if (pszSalt) {
-        *pwszSalt = ambstowc16s(pszSalt);
-        BAIL_IF_NO_MEMORY(*pwszSalt);
-    }
-
-cleanup:
-    KT_SAFE_FREE_STRING(pszDcName);
-    KT_SAFE_FREE_STRING(pszBaseDn);
-    KT_SAFE_FREE_STRING(pszMachAcctName);
-
-    return dwError;
-
-error:
-    *pwszSalt = NULL;
-    goto cleanup;
-}
 
 
 /*
