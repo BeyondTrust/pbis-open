@@ -131,6 +131,31 @@ KtKrb5FormatPrincipalW(
     PWSTR *ppwszPrincipal
     );
 
+
+DWORD
+KtKrb5GetSaltingPrincipalA(
+    PCSTR   pszMachineName,
+    PCSTR   pszMachAcctName,
+    PCSTR   pszDnsDomainName,
+    PCSTR   pszRealmName,
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PSTR   *pszSalt
+    );
+
+
+DWORD
+KtKrb5GetSaltingPrincipalW(
+    PCWSTR   pwszMachineName,
+    PCWSTR   pwszMachAcctName,
+    PCWSTR   pwszDnsDomainName,
+    PCWSTR   pwszRealmName,
+    PCWSTR   pwszDcName,
+    PCWSTR   pwszBaseDn,
+    PWSTR   *pwszSalt
+    );
+
+
 DWORD
 KtLdapGetBaseDnA(
     PCSTR  pszDcName,
@@ -178,30 +203,6 @@ KtLdapGetSaltingPrincipalW(
     PCWSTR  pwszBaseDn,
     PCWSTR  pwszMachAcctName,
     PWSTR  *ppwszSalt
-    );
-
-
-DWORD
-KtGetSaltingPrincipalA(
-    PCSTR   pszMachineName,
-    PCSTR   pszMachAcctName,
-    PCSTR   pszDnsDomainName,
-    PCSTR   pszRealmName,
-    PCSTR   pszDcName,
-    PCSTR   pszBaseDn,
-    PSTR   *pszSalt
-    );
-
-
-DWORD
-KtGetSaltingPrincipalW(
-    PCWSTR   pwszMachineName,
-    PCWSTR   pwszMachAcctName,
-    PCWSTR   pwszDnsDomainName,
-    PCWSTR   pwszRealmName,
-    PCWSTR   pwszDcName,
-    PCWSTR   pwszBaseDn,
-    PWSTR   *pwszSalt
     );
 
 
