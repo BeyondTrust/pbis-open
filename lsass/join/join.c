@@ -2288,9 +2288,8 @@ LsaSaveMachinePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    if (base_dn) KtFreeMemory(base_dn);
-    if (salt) KtFreeMemory(salt);
-
+    LW_SAFE_FREE_MEMORY(base_dn);
+    LW_SAFE_FREE_MEMORY(salt);
     LW_SAFE_FREE_MEMORY(dom_name);
     LW_SAFE_FREE_MEMORY(ad_dns_dom_name_lc);
     LW_SAFE_FREE_MEMORY(ad_dns_dom_name_uc);
@@ -2350,10 +2349,7 @@ SavePrincipalKey(
     }
 
 cleanup:
-    if (principal)
-    {
-        KtFreeMemory(principal);
-    }
+    LW_SAFE_FREE_MEMORY(principal);
 
     return dwError;
 
