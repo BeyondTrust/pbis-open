@@ -234,7 +234,7 @@ AC_ARG_WITH([lwreg-libs],
 		LWREG_LDFLAGS="-L$withval"
         ])
 
-LWREG_LIBS=-lregclient
+LWREG_LIBS=-lrsutils
 
 # NSS and PAM
 
