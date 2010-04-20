@@ -565,6 +565,7 @@ SamrSrvQueryUserInfo(
     case 18:
     case 19:
         ntStatus = STATUS_INVALID_INFO_CLASS;
+        break;
 
     default:
         ntStatus = STATUS_SUCCESS;
