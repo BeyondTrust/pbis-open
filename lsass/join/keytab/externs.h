@@ -47,22 +47,6 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-extern pthread_mutex_t gGlobalDataLock;
-
-#define ENTER_KRB5_GLOBAL_DATA_LOCK(bInLock)       \
-        if (!bInLock) {                            \
-           pthread_mutex_lock(&gGlobalDataLock);   \
-           bInLock = TRUE;                         \
-        }
-
-#define LEAVE_KRB5_GLOBAL_DATA_LOCK(bInLock)       \
-        if (bInLock) {                             \
-           pthread_mutex_unlock(&gGlobalDataLock); \
-           bInLock = FALSE;                        \
-        }
-
-extern CHAR          szKrb5CacheEnv[PATH_MAX+1];
-
 #endif /* __EXTERNS_H__ */
 
 

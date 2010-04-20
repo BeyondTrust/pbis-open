@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  *        
  *        Kerberos 5 API Globals
  *
@@ -45,14 +45,7 @@
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
 
-#include <pthread.h>
-
 #include "includes.h"
-
-pthread_mutex_t gGlobalDataLock = PTHREAD_MUTEX_INITIALIZER;
-
-Krb5CacheType gKrb5CacheType = KRB5_File_Cache;
-CHAR          szKrb5CacheEnv[PATH_MAX+1] = "";
 
 
 /*
