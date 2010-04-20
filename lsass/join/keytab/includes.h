@@ -36,7 +36,6 @@
 #include "ktldap.h"
 #include "krb5sys.h"
 #include "keytab.h"
-#include "externs.h"
 
 
 /*
