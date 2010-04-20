@@ -44,12 +44,15 @@
 #include <openssl/rand.h>
 #include <dce/rpc.h>
 #include <dce/smb.h>
+#include <gssapi/gssapi.h>
+#include <krb5/krb5.h>
 
 #include <lw/winerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
 #include <lwsid.h>
 #include <lwkrb5.h>
+#include <lwldap-error.h>
 #include "lsakrb5smb.h"
 #include <uuid/uuid.h>
 #include "lwsecurityidentifier.h"
@@ -82,6 +85,9 @@
 #include <lwldap-error.h>
 #include "lsaldap_p.h"
 
+#include "keytab.h"
+#include "ktdef.h"
+#include "ktldap.h"
 #include "externs.h"
 
 #include <lber.h>
