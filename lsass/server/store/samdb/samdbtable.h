@@ -541,7 +541,7 @@ typedef struct _SAM_DB_ATTRIBUTE_MAP
     },                                        \
     {                                         \
         SAM_DB_DIR_ATTR_LOGON_SCRIPT,         \
-        SAM_DB_COL_HOME_DRIVE,                \
+        SAM_DB_COL_LOGON_SCRIPT,              \
         SAMDB_ATTR_TYPE_TEXT,                 \
         SAM_DB_IS_NOT_A_ROW_ID,               \
         SAM_DB_IS_NOT_MULTI_VALUED,           \
