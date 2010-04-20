@@ -7,5 +7,6 @@ libregipc_la_SOURCES =    \
 libregipc_la_CFLAGS = \
     $(AM_CFLAGS)
        
-libregipc_la_LIBADD = @top_builddir@/utils/libregutils.la
+libregipc_la_LIBADD = \
+    @LWMSG_LIBS@
 

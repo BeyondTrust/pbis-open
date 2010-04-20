@@ -390,21 +390,21 @@ AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 ])
 
 AC_CHECK_HEADER([lwmsg/lwmsg.h],,[AC_MSG_ERROR([Could not find lwmsg headers])])
-AC_CHECK_LIB([lwmsg_nothr], [lwmsg_data_marshal], [LWMSG_NOTHR_LIBS="-llwmsg_nothr"], [AC_MSG_ERROR([Could not find liblwmsg_nothr])], [$LWMSG_LDFLAGS])
+#AC_CHECK_LIB([lwmsg_nothr], [lwmsg_data_marshal], [LWMSG_NOTHR_LIBS="-llwmsg_nothr"], [AC_MSG_ERROR([Could not find liblwmsg_nothr])], [$LWMSG_LDFLAGS])
 AC_CHECK_LIB([lwmsg], [lwmsg_peer_new], [LWMSG_LIBS="-llwmsg"], [AC_MSG_ERROR([Could not find liblwmsg])], [$LWMSG_LDFLAGS])
 
 AC_SUBST(LWMSG_INCLUDES)
 AC_SUBST(LWMSG_LDFLAGS)
-AC_SUBST(LWMSG_NOTHR_LIBS)
+#AC_SUBST(LWMSG_NOTHR_LIBS)
 AC_SUBST(LWMSG_LIBS)
 
 AC_CHECK_HEADER([lw/base.h],,[AC_MSG_ERROR([Could not find lwbase headers])])
-AC_CHECK_LIB([lwbase_nothr], [LwRtlMemoryAllocate], [LWBASE_NOTHR_LIBS="-llwbase_nothr"], [AC_MSG_ERROR([Could not find liblwbase_nothr])], [$LWBASE_LDFLAGS])
+#AC_CHECK_LIB([lwbase_nothr], [LwRtlMemoryAllocate], [LWBASE_NOTHR_LIBS="-llwbase_nothr"], [AC_MSG_ERROR([Could not find liblwbase_nothr])], [$LWBASE_LDFLAGS])
 AC_CHECK_LIB([lwbase], [LwInterlockedIncrement], [LWBASE_LIBS="-llwbase"], [AC_MSG_ERROR([Could not find liblwbase])], [$LWBASE_LDFLAGS])
 
 AC_SUBST(LWBASE_INCLUDES)
 AC_SUBST(LWBASE_LDFLAGS)
-AC_SUBST(LWBASE_NOTHR_LIBS)
+#AC_SUBST(LWBASE_NOTHR_LIBS)
 AC_SUBST(LWBASE_LIBS)
 
 AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT

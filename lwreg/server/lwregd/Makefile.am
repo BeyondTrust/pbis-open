@@ -14,11 +14,9 @@ lwregd_CPPFLAGS =                 \
 
 lwregd_LDADD =                             \
     @top_builddir@/server/api/libregserverapi.la \
-    @top_builddir@/client/libregclient.la     \
-    @top_builddir@/utils/libregutils.la       \
+    @top_builddir@/common/libregcommon.la     \
     @top_builddir@/logging_r/libreglog_r.la   \
-    @DS_FRAMEWORK_LDFLAGS@                    \
-    @LWMSG_LIBS@
+    @DS_FRAMEWORK_LDFLAGS@
 
 sysconf_DATA = lwreg.reg
 
