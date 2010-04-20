@@ -1,6 +1,3 @@
-SUBDIRS =   \
-    keytab
-
 AM_CPPFLAGS =                \
     @AM_CPPFLAGS@            \
     -I$(top_srcdir)/include
@@ -16,7 +13,9 @@ liblsajoin_la_SOURCES = \
     libmain.c        \
     lsakrb5smb.c     \
     lsaldap.c        \
-    query.c
+    query.c          \
+    keytab.c         \
+    ktldap.c
 
 
 liblsajoin_la_CPPFLAGS =             \
@@ -33,7 +32,6 @@ liblsajoin_la_CPPFLAGS =             \
 liblsajoin_la_LIBADD =                         \
     $(top_builddir)/common/liblsacommon.la     \
     $(top_builddir)/client/rpc/liblsarpc.la    \
-    $(top_builddir)/join/keytab/libktkrb5.la   \
     $(NETLOGON_LIBS)                           \
     $(PSTORE_LIBS)                             \
     $(top_builddir)/logging_r/liblsalog_r.la   \
