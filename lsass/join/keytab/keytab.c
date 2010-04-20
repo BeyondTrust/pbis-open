@@ -764,6 +764,169 @@ error:
 }
 
 
+DWORD
+KtKrb5GetSaltingPrincipalA(
+    PCSTR pszMachineName,
+    PCSTR pszMachAcctName,
+    PCSTR pszDnsDomainName,
+    PCSTR pszRealmName,
+    PCSTR pszDcName,
+    PCSTR pszBaseDn,
+    PSTR *pszSalt)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    krb5_error_code ret = 0;
+    PSTR pszSaltOut = NULL;
+    PSTR pszRealm = NULL;
+    PSTR pszMachine = NULL;
+    krb5_context ctx = NULL;
+
+    /* Try to query for userPrincipalName attribute first */
+    dwError = KtLdapGetSaltingPrincipalA(pszDcName,
+                                         pszBaseDn,
+                                         pszMachAcctName,
+                                         &pszSaltOut);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszSaltOut)
+    {
+        *pszSalt = pszSaltOut;
+        goto cleanup;
+    }
+
+    if (pszRealmName)
+    {
+        /* Use passed realm name */
+        dwError = LwAllocateString(pszRealmName, &pszRealm);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        /* No realm name was passed so get the default */
+        ret = krb5_init_context(&ctx);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+
+        ret = krb5_get_default_realm(ctx, &pszRealm);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+    }
+
+    /* Ensure realm name uppercased */
+    LwStrToUpper(pszRealm);
+
+    /* Ensure host name lowercased */
+    dwError = LwAllocateString(pszMachineName, &pszMachine);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToLower(pszMachine);
+
+    dwError = LwAllocateStringPrintf(&pszSaltOut,
+                                     "host/%s.%s@%s",
+                                     pszMachine,
+                                     pszDnsDomainName,
+                                     pszRealm);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *pszSalt = pszSaltOut;
+
+cleanup:
+    if (ctx)
+    {
+        krb5_free_context(ctx);
+    }
+
+    LW_SAFE_FREE_MEMORY(pszRealm);
+    LW_SAFE_FREE_MEMORY(pszMachine);
+
+    return dwError;
+
+error:
+    *pszSalt = NULL;
+    goto cleanup;
+}
+
+
+DWORD
+KtKrb5GetSaltingPrincipalW(
+    PCWSTR  pwszMachineName,
+    PCWSTR  pwszMachAcctName,
+    PCWSTR  pwszDnsDomainName,
+    PCWSTR  pwszRealmName,
+    PCWSTR  pwszDcName,
+    PCWSTR  pwszBaseDn,
+    PWSTR  *ppwszSalt
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszMachineName = NULL;
+    PSTR pszMachAcctName = NULL;
+    PSTR pszDnsDomainName = NULL;
+    PSTR pszRealmName = NULL;
+    PSTR pszDcName = NULL;
+    PSTR pszBaseDn = NULL;
+    PSTR pszSalt = NULL;
+    PWSTR pwszSalt = NULL;
+
+    dwError = LwWc16sToMbs(pwszMachineName,
+                           &pszMachineName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszMachAcctName,
+                           &pszMachAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszDnsDomainName,
+                           &pszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszDcName,
+                           &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszBaseDn,
+                           &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pwszRealmName)
+    {
+        dwError = LwWc16sToMbs(pwszRealmName,
+                               &pszRealmName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = KtKrb5GetSaltingPrincipalA(pszMachineName,
+                                         pszMachAcctName,
+                                         pszDnsDomainName,
+                                         pszRealmName,
+                                         pszDcName,
+                                         pszBaseDn,
+                                         &pszSalt);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszSalt)
+    {
+        dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppwszSalt = pwszSalt;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszMachineName);
+    LW_SAFE_FREE_MEMORY(pszMachAcctName);
+    LW_SAFE_FREE_MEMORY(pszDnsDomainName);
+    LW_SAFE_FREE_MEMORY(pszRealmName);
+    LW_SAFE_FREE_MEMORY(pszDcName);
+    LW_SAFE_FREE_MEMORY(pszBaseDn);
+    LW_SAFE_FREE_MEMORY(pszSalt);
+
+    return dwError;
+
+error:
+    pwszSalt = NULL;
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c
