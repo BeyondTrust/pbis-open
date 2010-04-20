@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -51,453 +51,7 @@
 
 
 DWORD
-KtKrb5GetDefaultRealm(
-    PSTR* ppszRealm
-    )
-{
-    DWORD dwError = 0;
-    krb5_context ctx = NULL;
-    PSTR pszKrb5Realm = NULL;
-    PSTR pszRealm = NULL;
-
-    krb5_init_context(&ctx);
-    krb5_get_default_realm(ctx, &pszKrb5Realm);
-
-    if (IsNullOrEmptyString(pszKrb5Realm)) {
-        dwError = KT_STATUS_KRB5_NO_DEFAULT_REALM;
-        BAIL_ON_KT_ERROR(dwError);
-    }
-
-    dwError = KtAllocateString(pszKrb5Realm, &pszRealm);
-    BAIL_ON_KT_ERROR(dwError);
-
-    *ppszRealm = pszRealm;
-    
-cleanup:
-
-    if (pszKrb5Realm){
-        krb5_free_default_realm(ctx,pszKrb5Realm);
-    }
-
-    krb5_free_context(ctx);
-
-    return(dwError);
-
-error:
-
-    *ppszRealm = NULL;
-    
-    KT_SAFE_FREE_STRING(pszRealm);
-
-    goto cleanup;
-}
-
-
-DWORD
-KtKrb5GetSystemCachePath(
-    Krb5CacheType cacheType,
-    PSTR*         ppszCachePath
-    )
-{
-    DWORD dwError = 0;
-    PSTR  pszCachePath = NULL;
-    
-    switch (cacheType)
-    {
-        case KRB5_InMemory_Cache:
-            
-            dwError = KtAllocateString(
-                        "MEMORY:krb5cc_lsass",
-                        &pszCachePath);
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-            
-        case KRB5_File_Cache:
-            
-            dwError = KtAllocateString(
-                        "FILE:/tmp/krb5cc_0",
-                        &pszCachePath);
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-            
-        default:
-            
-            dwError = KT_STATUS_INVALID_PARAMETER;
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-    }
-    
-    *ppszCachePath = pszCachePath;
-    
-cleanup:
-
-    return dwError;
-    
-error:
-
-    *ppszCachePath = NULL;
-    
-    goto cleanup;
-}
-
-
-DWORD
-KtKrb5GetUserCachePath(
-    uid_t         uid,
-    Krb5CacheType cacheType,
-    PSTR*         ppszCachePath
-    )
-{
-    DWORD dwError = 0;
-    PSTR  pszCachePath = NULL;
-    
-    switch (cacheType)
-    {
-        case KRB5_InMemory_Cache:
-            
-            dwError = KtAllocateStringPrintf(
-                        &pszCachePath,
-                        "MEMORY:krb5cc_%ld",
-                        (long)uid);
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-            
-        case KRB5_File_Cache:
-            
-            dwError = KtAllocateStringPrintf(
-                        &pszCachePath,
-                        "FILE:/tmp/krb5cc_%ld",
-                        (long)uid);
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-            
-        default:
-            
-            dwError = KT_STATUS_INVALID_PARAMETER;
-            BAIL_ON_KT_ERROR(dwError);
-            
-            break;
-    }
-    
-    *ppszCachePath = pszCachePath;
-    
-cleanup:
-
-    return dwError;
-    
-error:
-
-    *ppszCachePath = NULL;
-    
-    goto cleanup;
-}
-
-
-DWORD
-KtKrb5SetDefaultCachePath(
-    PCSTR pszCachePath,
-    PSTR* ppszOrigCachePath
-    )
-{
-    DWORD dwError       = 0;
-    DWORD dwMajorStatus = 0;
-    DWORD dwMinorStatus = 0;
-    PSTR  pszOrigCachePath = NULL;
-
-    dwMajorStatus = gss_krb5_ccache_name(
-                            (OM_uint32 *)&dwMinorStatus,
-                            pszCachePath,
-                            (ppszOrigCachePath) ? (const char**)&pszOrigCachePath : NULL);
-    BAIL_ON_SEC_ERROR(dwMajorStatus);
-    
-    if (ppszOrigCachePath) {
-        if (!IsNullOrEmptyString(pszOrigCachePath)) {
-            dwError = KtAllocateString(pszOrigCachePath, ppszOrigCachePath);
-            BAIL_ON_KT_ERROR(dwError);
-        } else {
-            *ppszOrigCachePath = NULL;
-        }
-    }
-    
-cleanup:
-
-    return dwError;
-    
-error:
-
-    if (ppszOrigCachePath) {
-        *ppszOrigCachePath = NULL;
-    }
-
-    goto cleanup;
-}
-
-
-DWORD
-KtKrb5GetSystemKeytabPath(
-    PSTR* ppszKeytabPath
-    )
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-    krb5_error_code ret = 0;
-    krb5_context ctx = NULL;
-    PSTR pszPath = NULL;
-    size_t size = 64;
-
-    ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
-
-    do {
-        KT_SAFE_FREE_STRING(pszPath);
-
-        size *= 2;
-        dwError = KtAllocateMemory(size, (PVOID*)&pszPath);
-        BAIL_ON_KT_ERROR(dwError);
-
-        ret = krb5_kt_default_name(ctx, pszPath, size);
-    } while (ret == KRB5_CONFIG_NOTENUFSPACE);
-    
-    BAIL_ON_KRB5_ERROR(ctx, ret);
-    *ppszKeytabPath = pszPath;
-
-cleanup:
-    if (ctx) {
-        krb5_free_context(ctx);
-    }
-
-    return dwError;
-
-error:
-    KT_SAFE_FREE_STRING(pszPath);
-    *ppszKeytabPath = NULL;
-    
-    goto cleanup;
-}
-
-
-#if 0
-static
-BOOLEAN
-Krb5TicketHasExpired()
-{
-    if (gdwKrbTicketExpiryTime == 0) {
-
-        LSA_LOG_VERBOSE("Acquiring new Krb5 ticket...");
-        return TRUE;
-
-    } else if (difftime(gdwKrbTicketExpiryTime,time(NULL)) < gdwExpiryGraceSeconds) {
-
-        LSA_LOG_VERBOSE("Renewing Krb5 Ticket...");
-        return TRUE;
-    }
-
-    return FALSE;
-}
-#endif
-
-
-DWORD
-KtKrb5Init(
-    PCSTR pszMachname,
-    PCSTR pszPassword
-    )
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-
-    return (dwError);
-}
-
-
-DWORD
-KtSetupMachineSession(
-    PCSTR pszMachname,
-    PCSTR pszPassword,
-    PCSTR pszRealm,
-    PCSTR pszDomain
-    )
-{
-    DWORD dwError = KT_STATUS_SUCCESS;
-    PSTR pszHostKeytabFile = NULL;
-    PSTR pszKrb5CcPath = NULL;
-    PSTR pszHostname = NULL;
-    PSTR pszDomname = NULL;
-    PSTR pszRealmCpy = NULL;
-    PSTR pszMachPrincipal = NULL;
-    PSTR pszSrvPrincipal = NULL;
-    PSTR pszHostPrincipal = NULL;
-    PSTR pszDomainControllerName = NULL;
-    /*
-    dwError = LWNetGetDomainController(pszDomain, &pszDomainControllerName);
-    BAIL_ON_KT_ERROR(dwError);
-    */
-    dwError = KtKrb5GetSystemKeytabPath(&pszHostKeytabFile);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtKrb5GetSystemCachePath(KRB5_File_Cache, &pszKrb5CcPath);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtAllocateString(pszRealm, &pszRealmCpy);
-    BAIL_ON_KT_ERROR(dwError);
-    KtStrToUpper(pszRealmCpy);
-
-    dwError = KtAllocateStringPrintf(&pszMachPrincipal, "%s$@%s",
-                                      pszMachname, pszRealm);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtAllocateStringPrintf(&pszSrvPrincipal, "krbtgt/%s@%s",
-                                      pszDomainControllerName, pszRealm);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtAllocateString(pszMachname, &pszHostname);
-    BAIL_ON_KT_ERROR(dwError);
-    KtStrToLower(pszHostname);
-
-    dwError = KtAllocateString(pszDomain, &pszDomname);
-    BAIL_ON_KT_ERROR(dwError);
-    KtStrToLower(pszDomname);
-
-    dwError = KtAllocateStringPrintf(&pszHostPrincipal, "host/%s.%s@%s",
-                                      pszHostname, pszDomname, pszRealm);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtKrb5GetTgt(pszMachPrincipal,
-            pszPassword,
-            pszKrb5CcPath);
-    BAIL_ON_KT_ERROR(dwError);
-
-    dwError = KtKrb5GetTgs(pszMachPrincipal, pszHostPrincipal,
-                           pszKrb5CcPath);
-    BAIL_ON_KT_ERROR(dwError);
-
-error:
-    KT_SAFE_FREE_STRING(pszMachPrincipal);
-    KT_SAFE_FREE_STRING(pszSrvPrincipal);
-    KT_SAFE_FREE_STRING(pszHostPrincipal);
-    KT_SAFE_FREE_STRING(pszHostname);
-    KT_SAFE_FREE_STRING(pszDomname);
-    KT_SAFE_FREE_STRING(pszRealmCpy);
-    KT_SAFE_FREE_STRING(pszKrb5CcPath);
-    
-    return (dwError);
-}
-
-
-DWORD
-KtKrb5SetConfFileSearchPath()
-{
-    DWORD dwError = 0;
-    
-    PCSTR pszKrb5ConfName = "KRB5_CONFIG";
-    PCSTR pszKrb5ConfValueDefault = "/etc/krb5.conf";
-    PCSTR pszKrb5ConfValueAdditional = "/var/lib/netlogon/krb5.conf";
-    BOOLEAN bPathAlreadyPresent = FALSE;
-    PSTR pszKrb5ConfValue = NULL;
-    PSTR pszKrb5ConfValueOriginal = NULL;
-    char* pszKrb5ConfValueOriginalPtr = NULL;
-    PSTR pszKrb5ConfPutenvStr = NULL;
-    PCSTR pszDelimiter = ":";
-    PSTR pszSavePtr = NULL;
-    PSTR pszToken = NULL;
-    
-    pszKrb5ConfValueOriginalPtr = getenv(pszKrb5ConfName);
-    if (!IsNullOrEmptyString(pszKrb5ConfValueOriginalPtr))
-    {
-        dwError = KtAllocateString(
-                    pszKrb5ConfValueOriginalPtr,
-                    &pszKrb5ConfValueOriginal
-                    );
-        BAIL_ON_KT_ERROR(dwError);      
-    }
-    
-    
-    //If the previous value was empty, the behavior is to open /etc/krb5.conf.
-    //To preserve this behavior, /etc/krb5.conf must be added expicitly.
-    if (IsNullOrEmptyString(pszKrb5ConfValueOriginal))
-    {
-        dwError = KtAllocateStringPrintf(
-                    &pszKrb5ConfValue,
-                    "%s:%s",
-                    pszKrb5ConfValueAdditional,
-                    pszKrb5ConfValueDefault
-                    );
-        BAIL_ON_KT_ERROR(dwError);
-    }
-    
-    //if a path is found in the original path string, 
-    //do not add it or /etc/krb5.conf again
-    else
-    {
-        pszToken = strtok_r(pszKrb5ConfValueOriginal, pszDelimiter, &pszSavePtr);
-        
-        while(!IsNullOrEmptyString(pszToken))
-        {
-            if(strcmp(pszToken, pszKrb5ConfValueAdditional) == 0)
-            {
-                bPathAlreadyPresent = TRUE;
-            }
-            pszToken = strtok_r(NULL, pszDelimiter, &pszSavePtr);
-        }
-        
-        strcpy(pszKrb5ConfValueOriginal, pszKrb5ConfValueOriginalPtr);
-        
-        if(bPathAlreadyPresent)
-        {
-            dwError = KtAllocateString(
-                    pszKrb5ConfValueOriginal,
-                    &pszKrb5ConfValue
-                    );
-            BAIL_ON_KT_ERROR(dwError);
-        }
-        else
-        {
-            dwError = KtAllocateStringPrintf(
-                        &pszKrb5ConfValue,
-                        "%s:%s",
-                        pszKrb5ConfValueAdditional,
-                        pszKrb5ConfValueOriginal
-                        );
-            BAIL_ON_KT_ERROR(dwError);
-        }
-    }
-    
-    dwError = KtAllocateStringPrintf(
-                &pszKrb5ConfPutenvStr,
-                "%s=%s",
-                pszKrb5ConfName,
-                pszKrb5ConfValue
-                );
-    BAIL_ON_KT_ERROR(dwError);
-    
-    dwError = putenv(pszKrb5ConfPutenvStr);
-    if(dwError)
-    {
-        dwError = errno;
-        BAIL_ON_KT_ERROR(dwError);
-    }
-    
-cleanup:
-
-    KT_SAFE_FREE_STRING(pszKrb5ConfValueOriginal);
-    KT_SAFE_FREE_STRING(pszKrb5ConfValue);
-
-    return dwError;
-
-error:
-
-    KT_SAFE_FREE_STRING(pszKrb5ConfPutenvStr);
-
-    goto cleanup;
-    
-}
-
-
-DWORD
-KtGetSaltingPrincipal(
+KtGetSaltingPrincipalA(
     PCSTR pszMachineName,
     PCSTR pszMachAcctName,
     PCSTR pszDnsDomainName,
@@ -506,7 +60,7 @@ KtGetSaltingPrincipal(
     PCSTR pszBaseDn,
     PSTR *pszSalt)
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     PSTR pszSaltOut = NULL;
     PSTR pszRealm = NULL;
@@ -514,52 +68,60 @@ KtGetSaltingPrincipal(
     krb5_context ctx = NULL;
 
     /* Try to query for userPrincipalName attribute first */
-    dwError = KtLdapGetSaltingPrincipal(pszDcName, pszBaseDn, pszMachAcctName,
+    dwError = KtLdapGetSaltingPrincipalA(pszDcName,
+                                         pszBaseDn,
+                                         pszMachAcctName,
                                          &pszSaltOut);
-    BAIL_ON_KT_ERROR(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    if (pszSaltOut) {
+    if (pszSaltOut)
+    {
         *pszSalt = pszSaltOut;
         goto cleanup;
     }
 
-    if (pszRealmName) {
+    if (pszRealmName)
+    {
         /* Use passed realm name */
-        dwError = KtAllocateString(pszRealmName, &pszRealm);
-        BAIL_ON_KT_ERROR(dwError);
-
-    } else {
+        dwError = LwAllocateString(pszRealmName, &pszRealm);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
         /* No realm name was passed so get the default */
         ret = krb5_init_context(&ctx);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
         ret = krb5_get_default_realm(ctx, &pszRealm);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
     }
 
     /* Ensure realm name uppercased */
-    KtStrToUpper(pszRealm);
+    LwStrToUpper(pszRealm);
 
     /* Ensure host name lowercased */
-    dwError = KtAllocateString(pszMachineName, &pszMachine);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwAllocateString(pszMachineName, &pszMachine);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    KtStrToLower(pszMachine);
+    LwStrToLower(pszMachine);
 
-    dwError = KtAllocateStringPrintf(&pszSaltOut, "host/%s.%s@%s",
-                                     pszMachine, pszDnsDomainName,
+    dwError = LwAllocateStringPrintf(&pszSaltOut,
+                                     "host/%s.%s@%s",
+                                     pszMachine,
+                                     pszDnsDomainName,
                                      pszRealm);
-    BAIL_ON_KT_ERROR(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *pszSalt = pszSaltOut;
 
 cleanup:
-    if (ctx) {
+    if (ctx)
+    {
         krb5_free_context(ctx);
     }
 
-    KT_SAFE_FREE_STRING(pszRealm);
-    KT_SAFE_FREE_STRING(pszMachine);
+    LW_SAFE_FREE_MEMORY(pszRealm);
+    LW_SAFE_FREE_MEMORY(pszMachine);
 
     return dwError;
 
@@ -571,15 +133,16 @@ error:
 
 DWORD
 KtGetSaltingPrincipalW(
-    PCWSTR pwszMachineName,
-    PCWSTR pwszMachAcctName,
-    PCWSTR pwszDnsDomainName,
-    PCWSTR pwszRealmName,
-    PCWSTR pwszDcName,
-    PCWSTR pwszBaseDn,
-    PWSTR *pwszSalt)
+    PCWSTR  pwszMachineName,
+    PCWSTR  pwszMachAcctName,
+    PCWSTR  pwszDnsDomainName,
+    PCWSTR  pwszRealmName,
+    PCWSTR  pwszDcName,
+    PCWSTR  pwszBaseDn,
+    PWSTR  *ppwszSalt
+    )
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PSTR pszMachineName = NULL;
     PSTR pszMachAcctName = NULL;
     PSTR pszDnsDomainName = NULL;
@@ -587,46 +150,60 @@ KtGetSaltingPrincipalW(
     PSTR pszDcName = NULL;
     PSTR pszBaseDn = NULL;
     PSTR pszSalt = NULL;
+    PWSTR pwszSalt = NULL;
 
-    pszMachineName = awc16stombs(pwszMachineName);
-    BAIL_IF_NO_MEMORY(pszMachineName);
+    dwError = LwWc16sToMbs(pwszMachineName,
+                           &pszMachineName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    pszMachAcctName = awc16stombs(pwszMachAcctName);
-    BAIL_IF_NO_MEMORY(pszMachAcctName);
+    dwError = LwWc16sToMbs(pwszMachAcctName,
+                           &pszMachAcctName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    pszDnsDomainName = awc16stombs(pwszDnsDomainName);
-    BAIL_IF_NO_MEMORY(pszDnsDomainName);
+    dwError = LwWc16sToMbs(pwszDnsDomainName,
+                           &pszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    pszDcName = awc16stombs(pwszDcName);
-    BAIL_IF_NO_MEMORY(pszDcName);
+    dwError = LwWc16sToMbs(pwszDcName,
+                           &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    pszBaseDn = awc16stombs(pwszBaseDn);
-    BAIL_IF_NO_MEMORY(pszBaseDn);
+    dwError = LwWc16sToMbs(pwszBaseDn,
+                           &pszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    if (pwszRealmName) {
-        pszRealmName = awc16stombs(pwszRealmName);
-        BAIL_IF_NO_MEMORY(pszRealmName);
+    if (pwszRealmName)
+    {
+        dwError = LwWc16sToMbs(pwszRealmName,
+                               &pszRealmName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = KtGetSaltingPrincipal(pszMachineName, pszMachAcctName,
-                                    pszDnsDomainName,
-                                    pszRealmName, pszDcName, pszBaseDn,
-                                    &pszSalt);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtGetSaltingPrincipalA(pszMachineName,
+                                     pszMachAcctName,
+                                     pszDnsDomainName,
+                                     pszRealmName,
+                                     pszDcName,
+                                     pszBaseDn,
+                                     &pszSalt);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    if (pszSalt) {
-        *pwszSalt = ambstowc16s(pszSalt);
-        BAIL_IF_NO_MEMORY(*pwszSalt);
+    if (pszSalt)
+    {
+        dwError = LwMbsToWc16s(pszSalt, &pwszSalt);
+        BAIL_ON_LSA_ERROR(dwError);
     }
+
+    *ppwszSalt = pwszSalt;
 
 cleanup:
-    KT_SAFE_FREE_STRING(pszMachineName);
-    KT_SAFE_FREE_STRING(pszMachAcctName);
-    KT_SAFE_FREE_STRING(pszDnsDomainName);
-    KT_SAFE_FREE_STRING(pszRealmName);
-    KT_SAFE_FREE_STRING(pszDcName);
-    KT_SAFE_FREE_STRING(pszBaseDn);
-    KT_SAFE_FREE_STRING(pszSalt);
+    LW_SAFE_FREE_MEMORY(pszMachineName);
+    LW_SAFE_FREE_MEMORY(pszMachAcctName);
+    LW_SAFE_FREE_MEMORY(pszDnsDomainName);
+    LW_SAFE_FREE_MEMORY(pszRealmName);
+    LW_SAFE_FREE_MEMORY(pszDcName);
+    LW_SAFE_FREE_MEMORY(pszBaseDn);
+    LW_SAFE_FREE_MEMORY(pszSalt);
 
     return dwError;
 
