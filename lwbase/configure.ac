@@ -109,7 +109,7 @@ AC_SUBST(LIB_PTHREAD)
 AC_CHECK_FUNCS([strndup strncasecmp])
 
 # Checks for header files.
-AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h unistd.h])
+AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h sys/time.h pthread.h unistd.h])
 
 old_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS:$LIBUUID_INCLUDES"
