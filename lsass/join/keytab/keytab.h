@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  *
  * Authors: Rafal Szczesniak (rafal@likewisesoftware.com)
  * 
@@ -132,61 +132,76 @@ KtKrb5FormatPrincipalW(
     );
 
 DWORD
-KtLdapGetBaseDn(
-    PCSTR pszDcName,
-    PSTR *pszBaseDn);
+KtLdapGetBaseDnA(
+    PCSTR  pszDcName,
+    PSTR  *pszBaseDn
+    );
+
 
 DWORD
 KtLdapGetBaseDnW(
-    PCWSTR pwszDcName,
-    PWSTR *ppwszBaseDn);
+    PCWSTR  pwszDcName,
+    PWSTR  *ppwszBaseDn
+    );
+
 
 DWORD
-KtLdapGetKeyVersion(
-    PCSTR pszDcName,
-    PCSTR pszBaseDn,
-    PCSTR pszPrincipal,
-    DWORD *dwKvno
+KtLdapGetKeyVersionA(
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PCSTR   pszPrincipal,
+    PDWORD  pdwKvno
     );
+
 
 DWORD
 KtLdapGetKeyVersionW(
-    PCWSTR pwszDcName,
-    PCWSTR pwszBaseDn,
-    PCWSTR pwszPrincipal,
-    DWORD *dwKvno
+    PCWSTR   pwszDcName,
+    PCWSTR   pwszBaseDn,
+    PCWSTR   pwszPrincipal,
+    PDWORD   pdwKvno
     );
 
-DWORD
-KtLdapGetSaltingPrincipal(
-    PCSTR pszDcName,
-    PCSTR pszBaseDn,
-    PCSTR pszMachAcctName,
-    PSTR *pszSalt);
 
 DWORD
-KtGetSaltingPrincipal(
-    PCSTR pszMachineName,
-    PCSTR pszMachAcctName,
-    PCSTR pszDnsDomainName,
-    PCSTR pszRealmName,
-    PCSTR pszDcName,
-    PCSTR pszBaseDn,
-    PSTR *pszSalt);
+KtLdapGetSaltingPrincipalA(
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PCSTR   pszMachAcctName,
+    PSTR   *pszSalt
+    );
+
+
+DWORD
+KtLdapGetSaltingPrincipalW(
+    PCWSTR  pwszDcName,
+    PCWSTR  pwszBaseDn,
+    PCWSTR  pwszMachAcctName,
+    PWSTR  *ppwszSalt
+    );
+
+
+DWORD
+KtGetSaltingPrincipalA(
+    PCSTR   pszMachineName,
+    PCSTR   pszMachAcctName,
+    PCSTR   pszDnsDomainName,
+    PCSTR   pszRealmName,
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PSTR   *pszSalt
+    );
+
 
 DWORD
 KtGetSaltingPrincipalW(
-    PCWSTR pwszMachineName,
-    PCWSTR pwszMachAcctName,
-    PCWSTR pwszDnsDomainName,
-    PCWSTR pwszRealmName,
-    PCWSTR pwszDcName,
-    PCWSTR pwszBaseDn,
-    PWSTR *pwszSalt);
-
-void
-KtFreeMemory(
-    PVOID pMemory
+    PCWSTR   pwszMachineName,
+    PCWSTR   pwszMachAcctName,
+    PCWSTR   pwszDnsDomainName,
+    PCWSTR   pwszRealmName,
+    PCWSTR   pwszDcName,
+    PCWSTR   pwszBaseDn,
+    PWSTR   *pwszSalt
     );
 
 

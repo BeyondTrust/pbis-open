@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  *
  *        Simple LDAP client routines
  *
