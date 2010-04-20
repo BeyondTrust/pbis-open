@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  *
  *        Public libkeytab API
  * 
@@ -50,25 +50,27 @@
 #define RDONLY_FILE  "FILE"
 #define RDWR_FILE  "WRFILE"
 
+
 static
 VOID
 KtKrb5FreeKeytabEntries(
-    krb5_context ctx,
+    krb5_context       ctx,
     krb5_keytab_entry *pEntries,
-    INT count
+    DWORD              dwCount
     );
+
 
 static
 DWORD
 KtKrb5KeytabOpen(
-    PCSTR pszPrefix,
-    PCSTR pszKtFile,
+    PCSTR         pszPrefix,
+    PCSTR         pszKtFile,
     krb5_context *pCtx,
     krb5_keytab  *pId
     )
 {
     const DWORD dwMaxSize = 1024;
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
     krb5_keytab id = 0;
@@ -78,41 +80,45 @@ KtKrb5KeytabOpen(
     DWORD dwSize = 32;
 
     ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    if (!pszKtFile) {
-
-        do {
+    if (!pszKtFile)
+    {
+        do
+        {
             dwSize += dwSize;
 
-            dwError = KtReallocMemory((PVOID)pszDefName,
-                                      (PVOID*)&pszDefName, dwSize);
-            BAIL_ON_KT_ERROR(dwError);
+            dwError = LwReallocMemory((PVOID)pszDefName,
+ (PVOID*)&pszDefName,
+                                      dwSize);
+            BAIL_ON_LSA_ERROR(dwError);
 
             ret = krb5_kt_default_name(ctx, pszDefName, dwSize);
-            if (ret == 0) {
-                KtStrChr(pszDefName, ':', &pszKtFilename);
+            if (ret == 0)
+            {
+                LwStrChr(pszDefName, ':', &pszKtFilename);
                 pszKtFilename++;
-
-            } else if (ret != KRB5_CONFIG_NOTENUFSPACE) {
-                BAIL_ON_KRB5_ERROR(ctx, ret);
             }
-
-        } while (ret == KRB5_CONFIG_NOTENUFSPACE &&
-                 dwSize < dwMaxSize);
+            else if (ret != KRB5_CONFIG_NOTENUFSPACE)
+            {
+                BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+            }
+        }
+        while (ret == KRB5_CONFIG_NOTENUFSPACE &&
+               dwSize < dwMaxSize);
     }
 
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    dwError = KtAllocateStringPrintf(
+    dwError = LwAllocateStringPrintf(
                   &pszKtName,
                   "%s:%s",
                   pszPrefix,
                   pszKtFile ? pszKtFile : pszKtFilename);
-    BAIL_ON_KT_ERROR(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
 
     ret = krb5_kt_resolve(ctx, pszKtName, &id);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
     *pId  = id;
     *pCtx = ctx;
@@ -124,72 +130,84 @@ error:
         ctx = NULL;
     }
 
-    KT_SAFE_FREE_STRING(pszDefName);
-    KT_SAFE_FREE_STRING(pszKtName);
+    LW_SAFE_FREE_MEMORY(pszDefName);
+    LW_SAFE_FREE_MEMORY(pszKtName);
 
     return dwError;
 }
 
+
 static
 DWORD
 KtKrb5SearchKeys(
-    krb5_context ctx,
-    krb5_keytab ktid,
-    PCSTR pszSrvPrincipal,
+    krb5_context        ctx,
+    krb5_keytab         ktid,
+    PCSTR               pszSrvPrincipal,
     krb5_keytab_entry **ppEntries,
-    INT *pCount
+    PDWORD              pdwCount
     )
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     krb5_principal server = NULL;
     krb5_kt_cursor ktcursor = NULL;
     krb5_keytab_entry entry = {0};
     krb5_keytab_entry *entries = NULL;
-    int num = 0;
+    DWORD dwCount = 0;
 
     ret = krb5_parse_name(ctx, pszSrvPrincipal, &server);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
     ret = krb5_kt_start_seq_get(ctx, ktid, &ktcursor);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    do {
+    do
+    {
         ret = krb5_kt_next_entry(ctx, ktid, &entry, &ktcursor);
 
         if (ret == 0 &&
-            krb5_principal_compare(ctx, entry.principal, server)) {
+            krb5_principal_compare(ctx, entry.principal, server))
+        {
 
-            dwError = KtReallocMemory((PVOID)entries, (PVOID*)&entries,
-                                       (num + 1) * sizeof(krb5_keytab_entry));
-            BAIL_ON_KT_ERROR(dwError);
+            dwError = LwReallocMemory((PVOID)entries,
+                                      (PVOID*)&entries,
+                                      (dwCount + 1) * sizeof(krb5_keytab_entry));
+            BAIL_ON_LSA_ERROR(dwError);
 
-            memset(&entries[num], 0, sizeof(krb5_keytab_entry));
-            num++;
+            memset(&entries[dwCount], 0, sizeof(krb5_keytab_entry));
+            dwCount++;
 
-            entries[num - 1].magic     = entry.magic;
-            entries[num - 1].timestamp = entry.timestamp;
-            entries[num - 1].vno       = entry.vno;
+            entries[dwCount - 1].magic     = entry.magic;
+            entries[dwCount - 1].timestamp = entry.timestamp;
+            entries[dwCount - 1].vno       = entry.vno;
 
-            ret = krb5_copy_principal(ctx, entry.principal,
-                                      &entries[num - 1].principal);
-            BAIL_ON_KRB5_ERROR(ctx, ret);
+            ret = krb5_copy_principal(ctx,
+                                      entry.principal,
+                                      &entries[dwCount - 1].principal);
+            BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-            entries[num - 1].key       = entry.key;
+            entries[dwCount - 1].key = entry.key;
 
-            ret = krb5_copy_keyblock_contents(ctx, &entry.key,
-                                              &entries[num - 1].key);
-            BAIL_ON_KRB5_ERROR(ctx, ret);
-	}
-
-        if (ret == 0) {
-            krb5_free_keytab_entry_contents(ctx, &entry);
+            ret = krb5_copy_keyblock_contents(ctx,
+                                              &entry.key,
+                                              &entries[dwCount - 1].key);
+            BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
         }
 
-    } while (ret != KRB5_KT_END);
+        if (ret == 0)
+        {
+            krb5_free_keytab_entry_contents(ctx, &entry);
+        }
+    }
+    while (ret != KRB5_KT_END);
 
     ret = krb5_kt_end_seq_get(ctx, ktid, &ktcursor);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+
+    if (dwCount == 0)
+    {
+        dwError = ERROR_FILE_NOT_FOUND;
+    }
 
 cleanup:
     if (server)
@@ -198,39 +216,38 @@ cleanup:
     }
 
     *ppEntries = entries;
-    *pCount    = num;
+    *pdwCount  = dwCount;
 
     return dwError;
 
 error:
     if (entries)
     {
-        KtKrb5FreeKeytabEntries(ctx, entries, num);
+        KtKrb5FreeKeytabEntries(ctx, entries, dwCount);
     }
 
     entries = NULL;
-    num     = 0;
+    dwCount = 0;
 
     goto cleanup;
 }
 
 
 DWORD
-KtKrb5AddKey(
-    PCSTR pszPrincipal,
-    PVOID pKey,
-    DWORD dwKeyLen,
-    PCSTR pszSalt,
-    PCSTR pszKtPath,
-    PCSTR pszDcName,
-    DWORD dwKeyVer
+KtKrb5AddKeyA(
+    PCSTR  pszPrincipal,
+    PVOID  pKey,
+    DWORD  dwKeyLen,
+    PCSTR  pszSalt,
+    PCSTR  pszKtPath,
+    PCSTR  pszDcName,
+    DWORD  dwKeyVer
     )
-
 {
     const krb5_enctype enc[] = { ENCTYPE_DES_CBC_CRC,
                                  ENCTYPE_DES_CBC_MD5,
                                  ENCTYPE_ARCFOUR_HMAC };
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PSTR pszBaseDn = NULL;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
@@ -241,121 +258,148 @@ KtKrb5AddKey(
     krb5_keytab_entry *entries = NULL;
     krb5_kvno kvno = 0;
     krb5_octet search_kvno = 0;
-    krb5_data password = {0}, salt = {0};
+    krb5_data password = {0};
+    krb5_data salt = {0};
     krb5_keyblock key = {0};
     krb5_encrypt_block key_encrypted = {0};
     DWORD dwKvno = 0;
-    int count = 0;
-    int i = 0;
+    DWORD dwCount = 0;
+    DWORD i = 0;
 
     dwError = KtKrb5KeytabOpen(RDWR_FILE, pszKtPath, &ctx, &kt);
-    BAIL_ON_KT_ERROR(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    if (dwKeyVer == (unsigned int)(-1)) {
-        /* Try to find kvno querying ldap directory, if no kvno was passed */
-        dwError = KtLdapGetBaseDn(pszDcName, &pszBaseDn);
-        BAIL_ON_KT_ERROR(dwError);
+    /*
+     * Try to find kvno by querying ldap directory, if no kvno was passed
+     */
+    if (dwKeyVer == (unsigned int)(-1))
+    {
+        dwError = KtLdapGetBaseDnA(pszDcName, &pszBaseDn);
+        BAIL_ON_LSA_ERROR(dwError);
 
-        if (pszBaseDn) {
-            dwError = KtLdapGetKeyVersion(pszDcName, pszBaseDn, pszPrincipal,
-                                          &dwKvno);
-            BAIL_ON_KT_ERROR(dwError);
+        if (pszBaseDn)
+        {
+            dwError = KtLdapGetKeyVersionA(pszDcName,
+                                           pszBaseDn,
+                                           pszPrincipal,
+                                           &dwKvno);
+            BAIL_ON_LSA_ERROR(dwError);
 
             kvno = dwKvno;
         }
-
-    } else {
+    }
+    else
+    {
         kvno = dwKeyVer;
     }
 
-    dwError = KtKrb5SearchKeys(ctx, kt, pszPrincipal,
-                               &entries, &count);
-    /* Go straight to adding a key since there are no keys found */
-    if (dwError == KT_STATUS_KRB5_NO_KEYS_FOUND) goto keyadd;
-
-    /* The file doesn't exist yet, so it has no keys */
-    if (dwError == ENOENT) goto keyadd;
-
-    /* Handle other errors */
-    BAIL_ON_KT_ERROR(dwError);
-
-    /* Find the latest version of this key and remove old ones.
-     * Key versions are stored as a single byte.
+    /*
+     * Search for existing versions of this principal's keys
      */
-    search_kvno = (krb5_octet)(kvno - 1);
-    for (i = 0; i < count; i++) {
-        if (search_kvno == entries[i].vno) {
-           /* Don't remove the ones with just one version older */
-           continue;
-        }
-        else
+    dwError = KtKrb5SearchKeys(ctx,
+                               kt,
+                               pszPrincipal,
+                               &entries,
+                               &dwCount);
+    if (dwError == ERROR_SUCCESS)
+    {
+        /*
+         * Find the latest version of this key and remove old ones.
+         * Key versions are stored as a single byte.
+         */
+        search_kvno = (krb5_octet)(kvno - 1);
+        for (i = 0; i < dwCount; i++)
         {
-            ret = krb5_kt_remove_entry(ctx, kt, &(entries[i]));
-            BAIL_ON_KRB5_ERROR(ctx, ret);
+            if (search_kvno == entries[i].vno)
+            {
+                /* Don't remove the keys with just one version number older */
+                continue;
+            }
+            else
+            {
+                ret = krb5_kt_remove_entry(ctx, kt, &(entries[i]));
+                BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+            }
         }
     }
+    else if (dwError == ERROR_FILE_NOT_FOUND ||
+             dwError == ENOENT)
+    {
+        /*
+         * No key has been found or the file doesn't exist so
+         * ignore the error and start adding the new keys
+         */
+        dwError = ERROR_SUCCESS;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
-keyadd:
-    /* Cleanup status code */
-    dwError = KT_STATUS_SUCCESS;
-
+    /*
+     * Prepare new key for this principal
+     */
     ret = krb5_parse_name(ctx, pszPrincipal, &client);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    if (pszSalt) {
+    if (pszSalt)
+    {
         ret = krb5_parse_name(ctx, pszSalt, &salt_principal);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
         ret = krb5_principal2salt(ctx, salt_principal, &salt);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
     }
 
     password.data   = pKey;
     password.length = dwKeyLen;
 
-    for (i = 0; i < sizeof(enc)/sizeof(krb5_enctype); i++) {
+    /*
+     * Add key entry for each encryption type
+     */
+    for (i = 0; i < sizeof(enc)/sizeof(krb5_enctype); i++)
+    {
         krb5_data *pass_salt = NULL;
-        if (salt.data && salt.length) pass_salt = &salt;
 
         memset(&key, 0, sizeof(key));
         memset(&key_encrypted, 0, sizeof(key_encrypted));
+        memset(&entry, 0, sizeof(entry));
+
+        if (salt.data && salt.length)
+        {
+            pass_salt = &salt;
+        }
 
         krb5_use_enctype(ctx, &key_encrypted, enc[i]);
 
-        ret = krb5_string_to_key(ctx, &key_encrypted, &key, &password,
+        ret = krb5_string_to_key(ctx,
+                                 &key_encrypted,
+                                 &key,
+                                 &password,
                                  pass_salt);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
-
-        memset(&entry, 0, sizeof(entry));
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
         entry.principal = client;
         entry.vno       = kvno;
         entry.key       = key;
 
         ret = krb5_kt_add_entry(ctx, kt, &entry);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
         krb5_free_keyblock_contents(ctx, &key);
-        memset(&key, 0, sizeof(key));
     }
 
 cleanup:
-    if ( ctx && entries )
+    if (ctx && entries)
     {
-        KtKrb5FreeKeytabEntries(ctx, entries, count);
+        KtKrb5FreeKeytabEntries(ctx, entries, dwCount);
     }
 
-    if (pszBaseDn)
-    {
-        KtFreeMemory(pszBaseDn);
-    }
-
-    KT_SAFE_FREE_MEMORY(salt.data);
+    LW_SAFE_FREE_MEMORY(pszBaseDn);
+    LW_SAFE_FREE_MEMORY(salt.data);
 
     if (ctx)
     {
-        krb5_free_keyblock_contents(ctx, &key);
-
         if (client)
         {
             krb5_free_principal(ctx, client);
@@ -382,7 +426,6 @@ cleanup:
     return dwError;
     
 error:
-
     goto cleanup;
 }
 
@@ -390,34 +433,98 @@ error:
 static
 VOID
 KtKrb5FreeKeytabEntries(
-    krb5_context ctx,
+    krb5_context       ctx,
     krb5_keytab_entry *pEntries,
-    INT count
+    DWORD              dwCount
     )
 {
-    int num = 0;
+    DWORD i = 0;
 
-    for (num = 0; num < count ; num++)
+    for (i = 0; i < dwCount; i++)
     {
-        krb5_free_keytab_entry_contents(ctx, &pEntries[num]);
+        krb5_free_keytab_entry_contents(ctx, &pEntries[i]);
     }
 
-    KT_SAFE_FREE_MEMORY(pEntries);
+    LW_SAFE_FREE_MEMORY(pEntries);
 
     return;
 }
 
 
 DWORD
+KtKrb5AddKeyW(
+    PCWSTR   pwszPrincipal,
+    PVOID    pKey,
+    DWORD    dwKeyLen,
+    PCWSTR   pwszKtPath,
+    PCWSTR   pwszSalt,
+    PCWSTR   pwszDcName,
+    DWORD    dwKeyVersion)
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszPrincipal = NULL;
+    PSTR pszKey = NULL;
+    PSTR pszKtPath = NULL;
+    PSTR pszSalt = NULL;
+    PSTR pszDcName = NULL;
+
+    dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateMemory(dwKeyLen + 1,
+                               OUT_PPVOID(&pszKey));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16snToMbs((PWSTR)pKey,
+                            &pszKey,
+                            dwKeyLen + 1);
+    BAIL_ON_LSA_ERROR(dwError)
+
+    if (pwszKtPath)
+    {
+        dwError = LwWc16sToMbs(pwszKtPath, &pszKtPath);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwWc16sToMbs(pwszSalt, &pszSalt);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszDcName, &pszDcName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = KtKrb5AddKeyA(pszPrincipal,
+                            (PVOID)pszKey,
+                            dwKeyLen,
+                            pszSalt,
+                            pszKtPath,
+                            pszDcName,
+                            dwKeyVersion);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszPrincipal);
+    LW_SAFE_FREE_MEMORY(pszKey);
+    LW_SAFE_FREE_MEMORY(pszKtPath);
+    LW_SAFE_FREE_MEMORY(pszSalt);
+    LW_SAFE_FREE_MEMORY(pszDcName);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
 KtKrb5GetKey(
-    PCSTR pszPrincipal,
-    PCSTR pszKtPath,
-    DWORD dwEncType,
-    PVOID *pKey,
-    DWORD *dwKeyLen
+    PCSTR    pszPrincipal,
+    PCSTR    pszKtPath,
+    DWORD    dwEncType,
+    PVOID   *ppKey,
+    PDWORD   pdwKeyLen
     )
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
     krb5_keytab ktid = 0;
@@ -425,26 +532,32 @@ KtKrb5GetKey(
     krb5_kvno vno = 0;
     krb5_enctype enctype = 0;
     krb5_keytab_entry entry = {0};
+    PVOID pKey = NULL;
 
-    dwError = KtKrb5KeytabOpen(RDONLY_FILE, pszKtPath, &ctx, &ktid);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtKrb5KeytabOpen(RDONLY_FILE,
+                               pszKtPath,
+                               &ctx,
+                               &ktid);
+    BAIL_ON_LSA_ERROR(dwError);
 
     ret = krb5_parse_name(ctx, pszPrincipal, &client);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
     enctype = (krb5_enctype)dwEncType;
 
     ret = krb5_kt_get_entry(ctx, ktid, client, vno, enctype, &entry);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    dwError = KtDuplicateMemory((PVOID)entry.key.contents,
-                                (DWORD)entry.key.length, pKey);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = LwAllocateMemory((DWORD)entry.key.length,
+                               OUT_PPVOID(&pKey));
+    BAIL_ON_LSA_ERROR(dwError);
 
-    *dwKeyLen = entry.key.length;
+    memcpy(pKey, entry.key.contents, entry.key.length);
+
+    *ppKey     = pKey;
+    *pdwKeyLen = entry.key.length;
 
 cleanup:
-
     if (ctx)
     {
         if (client)
@@ -463,38 +576,54 @@ cleanup:
     return dwError;
 
 error:
+    LW_SAFE_FREE_MEMORY(pKey);
+
+    *ppKey     = NULL;
+    *pdwKeyLen = 0;
+
     goto cleanup;
 }
 
 
 DWORD
 KtKrb5RemoveKey(
-    PSTR pszPrincipal,
-    DWORD dwVer,
-    PSTR pszKtPath
+    PSTR   pszPrincipal,
+    DWORD  dwVer,
+    PSTR   pszKtPath
     )
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
     krb5_keytab ktid = 0;
     krb5_keytab_entry *entries = NULL;
-    int count = 0, i;
+    DWORD dwCount = 0;
+    DWORD i = 0;
 
-    dwError = KtKrb5KeytabOpen(RDWR_FILE, pszKtPath, &ctx, &ktid);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtKrb5KeytabOpen(RDWR_FILE,
+                               pszKtPath,
+                               &ctx,
+                               &ktid);
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Should enctypes be added to conditions ? */
-    dwError = KtKrb5SearchKeys(ctx, ktid, pszPrincipal,
-                               &entries, &count);
-    BAIL_ON_KT_ERROR(dwError);
+    dwError = KtKrb5SearchKeys(ctx,
+                               ktid,
+                               pszPrincipal,
+                               &entries,
+                               &dwCount);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < dwCount; i++)
+    {
         /* if dwVer is non-zero skip entries with different kvno */
-        if (dwVer > 0 && dwVer != entries[i].vno) continue;
+        if (dwVer > 0 && dwVer != entries[i].vno)
+        {
+            continue;
+        }
 
         ret = krb5_kt_remove_entry(ctx, ktid, &(entries[i]));
-        BAIL_ON_KRB5_ERROR(ctx, ret);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
     }
 
 error:
@@ -502,10 +631,11 @@ error:
     {
         if (entries)
         {
-            for (i = 0; i < count; i++) {
+            for (i = 0; i < dwCount; i++)
+            {
                 krb5_free_principal(ctx, entries[i].principal);
             }
-            KT_SAFE_FREE_MEMORY(entries);
+            LW_SAFE_FREE_MEMORY(entries);
         }
 
         if (ktid)
@@ -521,49 +651,115 @@ error:
 
 
 DWORD
-KtKrb5FormatPrincipal(
-    PCSTR pszAccount,
-    PCSTR pszRealm,
-    PSTR *ppszPrincipal)
+KtKrb5FormatPrincipalA(
+    PCSTR  pszAccount,
+    PCSTR  pszRealmName,
+    PSTR  *ppszPrincipal
+    )
 {
-    DWORD dwError = KT_STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszRealm = NULL;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
-    char *realm = NULL;
-    int i = 0;
+    PSTR pszPrincipal = NULL;
 
     ret = krb5_init_context(&ctx);
-    BAIL_ON_KRB5_ERROR(ctx, ret);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
-    if (pszRealm) {
-        dwError = KtAllocateString(pszRealm, &realm);
-        BAIL_ON_KT_ERROR(dwError);
-    } else {
-        ret = krb5_get_default_realm(ctx, &realm);
-        BAIL_ON_KRB5_ERROR(ctx, ret);
-    }
-
-    for (i = 0; i < strlen(realm); i++)
+    if (pszRealmName)
     {
-        *(realm+i) = toupper((int)*(realm+i));
+        dwError = LwAllocateString(pszRealmName,
+                                   &pszRealm);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        ret = krb5_get_default_realm(ctx, &pszRealm);
+        BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
     }
 
-    dwError = KtAllocateStringPrintf(ppszPrincipal, "%s@%s",
-                                     pszAccount, realm);
-    BAIL_ON_KT_ERROR(dwError);
+    LwStrToUpper(pszRealm);
+
+    dwError = LwAllocateStringPrintf(&pszPrincipal,
+                                     "%s@%s",
+                                     pszAccount,
+                                     pszRealm);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppszPrincipal = pszPrincipal;
 
 cleanup:
-
-    KT_SAFE_FREE_STRING(realm);
+    if (pszRealmName)
+    {
+        LW_SAFE_FREE_MEMORY(pszRealm);
+    }
 
     if (ctx)
     {
-       krb5_free_context(ctx);
+        if (pszRealm && !pszRealmName)
+        {
+            krb5_free_default_realm(ctx, pszRealm);
+        }
+
+        krb5_free_context(ctx);
     }
 
     return dwError;
 
 error:
+    LW_SAFE_FREE_MEMORY(pszPrincipal);
+
+    *ppszPrincipal = NULL;
+
+    goto cleanup;
+}
+
+
+DWORD
+KtKrb5FormatPrincipalW(
+    PCWSTR   pwszAccount,
+    PCWSTR   pwszRealm,
+    PWSTR   *ppwszPrincipal
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszAccount = NULL;
+    PSTR pszRealm = NULL;
+    PSTR pszPrincipal = NULL;
+    PWSTR pwszPrincipal = NULL;
+
+    dwError = LwWc16sToMbs(pwszAccount, &pszAccount);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* NULL realm is a valid argument of KtKrb5FormatPrincpal */
+    if (pwszRealm)
+    {
+        dwError = LwWc16sToMbs(pwszRealm, &pszRealm);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = KtKrb5FormatPrincipalA(pszAccount,
+                                     pszRealm,
+                                     &pszPrincipal);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMbsToWc16s(pszPrincipal, &pwszPrincipal);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppwszPrincipal = pwszPrincipal;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszAccount);
+    LW_SAFE_FREE_MEMORY(pszRealm);
+    LW_SAFE_FREE_MEMORY(pszPrincipal);
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszPrincipal);
+
+    *ppwszPrincipal = NULL;
+
     goto cleanup;
 }
 
