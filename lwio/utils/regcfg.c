@@ -77,6 +77,8 @@ LwIoProcessConfig(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwEntry = 0;
     PLWIO_CONFIG_REG pReg = NULL;
+    PSTR pszTmp = NULL;
+    PSTR *ppszTmp = NULL;
 
     ntStatus = LwIoOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -96,7 +98,13 @@ LwIoProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            pConfig[dwEntry].pValue);
+                            &pszTmp);
+                if (ntStatus == STATUS_SUCCESS)
+                {
+                    /* Free the old string, if it existed. */
+                    LwRtlCStringFree((PSTR *)pConfig[dwEntry].pValue);
+                    *((PSTR *)pConfig[dwEntry].pValue) = pszTmp;
+                }
                 break;
 
             case LwIoTypeMultiString:
@@ -104,7 +112,12 @@ LwIoProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            pConfig[dwEntry].pValue);
+                            &ppszTmp);
+                if (ntStatus == STATUS_SUCCESS)
+                {
+                    LwIoMultiStringFree(*((PSTR **)pConfig[dwEntry].pValue));
+                    *((PSTR **)pConfig[dwEntry].pValue) = ppszTmp;
+                }
                 break;
 
             case LwIoTypeDword:
