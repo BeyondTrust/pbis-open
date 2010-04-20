@@ -711,7 +711,8 @@ error:
 
     if (ntStatus != STATUS_PENDING)
     {
-        SMBSocketInvalidate(pSocket, ntStatus);
+        LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
+        SMBSocketInvalidate_InLock(pSocket, ntStatus);
         *pWaitMask = LW_TASK_EVENT_COMPLETE;
     }
 
