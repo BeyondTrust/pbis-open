@@ -37,7 +37,7 @@
  *
  * Abstract:
  *
- *        Kerberos 5 keytab management library
+ *        Kerberos 5 keytab functions
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
@@ -124,6 +124,11 @@
 #define LDAP_DEPRECATED 1
 #endif
 #include <ldap.h>
+
+#include <lw/winerror.h>
+#include <lwmem.h>
+#include <lwstr.h>
+#include <lwldap-error.h>
 
 #endif
 

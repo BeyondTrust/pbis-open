@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -28,28 +28,13 @@
  * license@likewisesoftware.com
  */
 
-/*
- * Copyright (C) Likewise Software. All rights reserved.
- *
- * Module Name:
- *
- *        includes.h
- *
- * Abstract:
- *
- *        Krb5 (Private Header)
- *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- */
-
 #include "config.h"
 #include "ktsystem.h"
+#include "lsautils.h"
 #include "keytab.h"
 #include "ktdef.h"
 #include "ktmem.h"
 #include "ktstr.h"
-#include "ktkrb5.h"
 #include "ktldap.h"
 #include "krb5sys.h"
 #include "keytab.h"
