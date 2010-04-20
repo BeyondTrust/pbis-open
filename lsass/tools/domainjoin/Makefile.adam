@@ -1,0 +1,20 @@
+#TOPDIR = /home/abernstein/builds/workspaces/Sapphire/src/linux
+#LW_LIB = /opt/likewise/lib
+
+TOPDIR = /home/abernstein/builds/workspaces/Platform/src/linux
+LW_LIB = /opt/likewise/lib64
+
+CFLAGS=-Wall -Werror -g -I$(TOPDIR) \
+  -I$(TOPDIR)/libunistr/include \
+  -I$(TOPDIR)/lwbase/include \
+  -I$(TOPDIR)/lsass/include \
+  -I$(TOPDIR)/lwadvapi/include/public \
+  -I$(TOPDIR)/lwmsg/include -D__LWADAM_MAKEFILE__
+
+LDFLAGS= -L$(LW_LIB) -Wl,-rpath $(LW_LIB)
+
+join: join.o
+	$(CC) $(LDFLAGS) -o join join.o -llwbase -llsaclient -llwnetclientapi
+join.o: includes.h
+clean:
+	$(RM) $(RMFLAGS) join join.o
