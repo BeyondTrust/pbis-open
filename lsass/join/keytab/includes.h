@@ -33,8 +33,6 @@
 #include "lsautils.h"
 #include "keytab.h"
 #include "ktdef.h"
-#include "ktmem.h"
-#include "ktstr.h"
 #include "ktldap.h"
 #include "krb5sys.h"
 #include "keytab.h"
