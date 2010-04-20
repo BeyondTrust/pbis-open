@@ -11,7 +11,6 @@ libktkrb5_la_CFLAGS =          \
 
 libktkrb5_la_SOURCES = \
        krbtgt.c        \
-       ktkrb5.c        \
        keytab.c        \
        ldap.c
 
