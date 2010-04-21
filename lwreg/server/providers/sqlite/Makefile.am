@@ -25,7 +25,7 @@ libregserver_provider_sqlite_la_LIBADD = \
     $(PROVIDER_LIBS) \
     @PTHREAD_LIBS@    \
     @UUID_LIBS@ \
-    @LWBASE_NOTHR_LIBS@
+    @LWBASE_LIBS@
     
 libregserver_provider_sqlite_la_LDFLAGS = \
     @LWBASE_LDFLAGS@ \
