@@ -383,12 +383,12 @@ LwIoAssertionFailedFormat(
 #define LWIO_ASSERT_MSG(Expression, Message) \
     ((Expression) ? \
      TRUE : \
-     LwIoAssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__), FALSE)
+     (LwIoAssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__), FALSE))
 
 #define LWIO_ASSERT_FORMAT(Expression, Format, ...) \
     ((Expression) ? \
      TRUE : \
-     LwIoAssertionFailedFormat(#Expression, Format, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__), FALSE)
+     (LwIoAssertionFailedFormat(#Expression, Format, __FUNCTION__, __FILE__, __LINE__, ## __VA_ARGS__), FALSE))
 
 #define LWIO_ASSERT(Expression) \
     LWIO_ASSERT_MSG(Expression, NULL)
