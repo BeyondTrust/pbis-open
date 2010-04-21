@@ -101,6 +101,8 @@ AC_ARG_WITH([lwbase-libs],
 
 AC_CHECK_HEADER([lw/base.h],,[AC_MSG_ERROR([Could not find lwbase headers])])
 
+LWBASE_NOTHR_LIBS="-llwbase_nothr"
+
 AC_SUBST(LWBASE_INCLUDES)
 AC_SUBST(LWBASE_LDFLAGS)
 AC_SUBST(LWBASE_NOTHR_LIBS)
