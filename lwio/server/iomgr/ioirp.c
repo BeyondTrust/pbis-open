@@ -43,6 +43,10 @@ typedef struct _IRP_INTERNAL {
     LONG ReferenceCount;
     IRP_FLAGS Flags;
     LW_LIST_LINKS FileObjectLinks;
+    // CancelLinks are used to add to the list of IRPs to cancel
+    // on rundown.  However, for allocated but unused IRPs,
+    // these links are used to store the IRP in the file object's
+    // ZctCompletionIrpList.
     LW_LIST_LINKS CancelLinks;
     struct {
         PIO_IRP_CALLBACK Callback;
@@ -58,10 +62,11 @@ typedef struct _IRP_INTERNAL {
                 // Per-operation output parameters
                 union {
                     struct {
-                        PIO_FILE_HANDLE pFileHandle;
+                        OUT PIO_FILE_HANDLE pFileHandle;
                     } Create;
                     struct {
-                        PVOID* pCompletionContext;
+                        OUT PVOID* pCompletionContext;
+                        IN PIRP pCompletionIrp;
                     } PrepareZctReadWrite;
                 } OpOut;
             } Async;
@@ -114,10 +119,8 @@ IopIrpReleaseCancelLock(
 }
 
 NTSTATUS
-IopIrpCreate(
-    OUT PIRP* ppIrp,
-    IN IRP_TYPE Type,
-    IN PIO_FILE_OBJECT pFileObject
+IopIrpCreateDetached(
+    OUT PIRP* ppIrp
     )
 {
     NTSTATUS status = 0;
@@ -132,11 +135,32 @@ IopIrpCreate(
     irpInternal = IopIrpGetInternal(pIrp);
     irpInternal->ReferenceCount = 1;
 
-    pIrp->Type = Type;
-    pIrp->FileHandle = pFileObject;
-    IopFileObjectReference(pFileObject);
-    pIrp->DeviceHandle = pFileObject->pDevice;
-    pIrp->DriverHandle = pFileObject->pDevice->Driver;
+cleanup:
+    if (status)
+    {
+        IopIrpDereference(&pIrp);
+    }
+
+    *ppIrp = pIrp;
+
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+    return status;
+}
+
+NTSTATUS
+IopIrpAttach(
+    IN OUT PIRP pIrp,
+    IN IRP_TYPE Type,
+    IN PIO_FILE_OBJECT pFileObject
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIRP_INTERNAL irpInternal = IopIrpGetInternal(pIrp);
+
+    LWIO_ASSERT(!pIrp->FileHandle);
+    LWIO_ASSERT(pIrp->Type == IRP_TYPE_UNINITIALIZED);
+    LWIO_ASSERT(Type != IRP_TYPE_UNINITIALIZED);
 
     IopFileObjectLock(pFileObject);
     // TODO-Add FILE_OBJECT_FLAG_CLOSED
@@ -150,7 +174,34 @@ IopIrpCreate(
                          &irpInternal->FileObjectLinks);
     }
     IopFileObjectUnlock(pFileObject);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
+    pIrp->Type = Type;
+    pIrp->FileHandle = pFileObject;
+    IopFileObjectReference(pFileObject);
+    pIrp->DeviceHandle = pFileObject->pDevice;
+    pIrp->DriverHandle = pFileObject->pDevice->Driver;
+
+cleanup:
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+    return status;
+}
+
+NTSTATUS
+IopIrpCreate(
+    OUT PIRP* ppIrp,
+    IN IRP_TYPE Type,
+    IN PIO_FILE_OBJECT pFileObject
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIRP pIrp = NULL;
+
+    status = IopIrpCreateDetached(&pIrp);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = IopIrpAttach(pIrp, Type, pFileObject);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
@@ -273,60 +324,71 @@ IopIrpCompleteInternal(
 
     LWIO_ASSERT(IsValidStatusForIrpType(pIrp->IoStatusBlock.Status, pIrp->Type));
 
-    if (STATUS_SUCCESS == pIrp->IoStatusBlock.Status)
+    switch (pIrp->Type)
     {
-        // Handle special success processing having to do with file handle.
-        switch (pIrp->Type)
+    case IRP_TYPE_CREATE:
+    case IRP_TYPE_CREATE_NAMED_PIPE:
+        if (STATUS_SUCCESS == pIrp->IoStatusBlock.Status)
         {
-            case IRP_TYPE_CREATE:
-            case IRP_TYPE_CREATE_NAMED_PIPE:
-                // ISSUE-May not need lock since it should be only reference
-                IopFileObjectLock(pIrp->FileHandle);
-                SetFlag(pIrp->FileHandle->Flags, FILE_OBJECT_FLAG_CREATE_DONE);
-                IopFileObjectUnlock(pIrp->FileHandle);
+            // Handle special success processing having to do with file handle.
+            // ISSUE-May not need lock since it should be only reference
+            IopFileObjectLock(pIrp->FileHandle);
+            SetFlag(pIrp->FileHandle->Flags, FILE_OBJECT_FLAG_CREATE_DONE);
+            IopFileObjectUnlock(pIrp->FileHandle);
 
-                IopFileObjectReference(pIrp->FileHandle);
-                if (IsAsyncCompletion && irpInternal->Completion.IsAsyncCall)
-                {
-                    *irpInternal->Completion.Async.OpOut.Create.pFileHandle = pIrp->FileHandle;
-                }
-                break;
-
-            case IRP_TYPE_CLOSE:
+            IopFileObjectReference(pIrp->FileHandle);
+            if (IsAsyncCompletion && irpInternal->Completion.IsAsyncCall)
             {
-                PIO_FILE_OBJECT pFileObject = NULL;
-
-                SetFlag(pIrp->FileHandle->Flags, FILE_OBJECT_FLAG_CLOSE_DONE);
-
-                // Note that we must delete the reference from the create
-                // w/o removing the file object value from the IRP (which
-                // will be removed when the IRP is freed).
-
-                pFileObject = pIrp->FileHandle;
-                IopFileObjectDereference(&pFileObject);
-
-                break;
-            }
-
-            case IRP_TYPE_READ:
-            case IRP_TYPE_WRITE:
-            {
-                if (IRP_ZCT_OPERATION_PREPARE == pIrp->Args.ReadWrite.ZctOperation)
-                {
-                    LWIO_ASSERT(pIrp->Args.ReadWrite.ZctCompletionContext);
-
-                    if (IsAsyncCompletion && irpInternal->Completion.IsAsyncCall)
-                    {
-                        *irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionContext = pIrp->Args.ReadWrite.ZctCompletionContext;
-                    }
-                }
+                *irpInternal->Completion.Async.OpOut.Create.pFileHandle = pIrp->FileHandle;
             }
         }
-    }
-    else if (IRP_TYPE_CLOSE == pIrp->Type)
-    {
-        LWIO_LOG_ERROR("Unable to close file object, status = 0x%08x",
-                       pIrp->IoStatusBlock.Status);
+        break;
+
+    case IRP_TYPE_CLOSE:
+        if (STATUS_SUCCESS == pIrp->IoStatusBlock.Status)
+        {
+            PIO_FILE_OBJECT pFileObject = NULL;
+
+            SetFlag(pIrp->FileHandle->Flags, FILE_OBJECT_FLAG_CLOSE_DONE);
+
+            // Note that we must delete the reference from the create
+            // w/o removing the file object value from the IRP (which
+            // will be removed when the IRP is freed).
+
+            pFileObject = pIrp->FileHandle;
+            IopFileObjectDereference(&pFileObject);
+        }
+        else
+        {
+            LWIO_LOG_ERROR("Unable to close file object, status = 0x%08x",
+                           pIrp->IoStatusBlock.Status);
+        }
+        break;
+
+    case IRP_TYPE_READ:
+    case IRP_TYPE_WRITE:
+        if (IRP_ZCT_OPERATION_PREPARE == pIrp->Args.ReadWrite.ZctOperation)
+        {
+            if (STATUS_SUCCESS == pIrp->IoStatusBlock.Status)
+            {
+                LWIO_ASSERT(pIrp->Args.ReadWrite.ZctCompletionContext);
+
+                if (IsAsyncCompletion && irpInternal->Completion.IsAsyncCall)
+                {
+                    PIRP pCompletionIrp = irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionIrp;
+                    PVOID pCompletionContext = IopIrpSaveZctIrp(
+                                                    pIrp->FileHandle,
+                                                    pCompletionIrp,
+                                                    pIrp->Args.ReadWrite.ZctCompletionContext);
+                    *irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionContext = pCompletionContext;
+                }
+            }
+            if (irpInternal->Completion.IsAsyncCall)
+            {
+                IopIrpDereference(&irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionIrp);
+            }
+        }
+        break;
     }
 
     if (IsAsyncCompletion)
@@ -506,17 +568,21 @@ VOID
 IopIrpSetOutputPrepareZctReadWrite(
     IN OUT PIRP pIrp,
     IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    IN PVOID* pCompletionContext
+    IN PVOID* pCompletionContext,
+    IN PIRP pCompletionIrp
     )
 {
     LWIO_ASSERT(IopIrpIsPrepareZctReadWrite(pIrp));
     LWIO_ASSERT(pCompletionContext);
+    LWIO_ASSERT(pCompletionIrp);
 
     if (AsyncControlBlock)
     {
         PIRP_INTERNAL irpInternal = IopIrpGetInternal(pIrp);
         irpInternal->Completion.IsAsyncCall = TRUE;
         irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionContext = pCompletionContext;
+        irpInternal->Completion.Async.OpOut.PrepareZctReadWrite.pCompletionIrp = pCompletionIrp;
+        IopIrpReference(pCompletionIrp);
     }
 }
 
@@ -694,4 +760,71 @@ IopIrpCancelFileObject(
         IopIrpCancel(pIrp);
         IopIrpDereference(&pIrp);
     }
+}
+
+VOID
+IopIrpFreeZctIrpList(
+    IN OUT PIO_FILE_OBJECT pFileObject
+    )
+{
+    PLW_LIST_LINKS pLinks = NULL;;
+    PIRP_INTERNAL irpInternal = NULL;
+    PIRP pIrp = NULL;
+
+    IopFileObjectLock(pFileObject);
+    while (!LwListIsEmpty(&pFileObject->ZctCompletionIrpList))
+    {
+        pLinks = LwListRemoveHead(&pFileObject->ZctCompletionIrpList);
+        irpInternal = LW_STRUCT_FROM_FIELD(pLinks, IRP_INTERNAL, CancelLinks);
+        pIrp = &irpInternal->Irp;
+
+        LWIO_ASSERT(1 == irpInternal->ReferenceCount);
+        LWIO_ASSERT(!pIrp->FileHandle);
+
+        IopIrpDereference(&pIrp);
+    }
+    IopFileObjectUnlock(pFileObject);
+}
+
+PVOID
+IopIrpSaveZctIrp(
+    IN OUT PIO_FILE_OBJECT pFileObject,
+    IN PIRP pIrp,
+    IN PVOID pCompletionContext
+    )
+{
+    PIRP_INTERNAL irpInternal = IopIrpGetInternal(pIrp);
+
+    LWIO_ASSERT(pCompletionContext);
+
+    IopIrpReference(pIrp);
+
+    pIrp->Args.ReadWrite.ZctCompletionContext = pCompletionContext;
+
+    IopFileObjectLock(pFileObject);
+    LwListInsertTail(&pFileObject->ZctCompletionIrpList, &irpInternal->CancelLinks);
+    IopFileObjectUnlock(pFileObject);
+
+    return pIrp;
+}
+
+PIRP
+IopIrpLoadZctIrp(
+    IN OUT PIO_FILE_OBJECT pFileObject,
+    IN PVOID pCompletionContext
+    )
+{
+    PIRP pIrp = (PIRP) pCompletionContext;
+    PIRP_INTERNAL irpInternal = IopIrpGetInternal(pIrp);
+
+    LWIO_ASSERT(pIrp->Args.ReadWrite.ZctCompletionContext);
+    LWIO_ASSERT(irpInternal->CancelLinks.Next && irpInternal->CancelLinks.Prev);
+
+    IopFileObjectLock(pFileObject);
+    LwListRemove(&irpInternal->CancelLinks);
+    IopFileObjectUnlock(pFileObject);
+
+    RtlZeroMemory(&irpInternal->CancelLinks, sizeof(irpInternal->CancelLinks));
+
+    return pIrp;
 }

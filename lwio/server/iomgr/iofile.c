@@ -95,6 +95,11 @@ IopFileObjectAllocate(
     pFileObject->pDevice = pDevice;
 
     LwListInit(&pFileObject->IrpList);
+    LwListInit(&pFileObject->ZctCompletionIrpList);
+
+    // Pre-allocate IRP for close.
+    status = IopIrpCreateDetached(&pFileObject->pCloseIrp);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (FileName->RootFileHandle)
     {
@@ -151,10 +156,45 @@ IopFileObjectFree(
 
         LwRtlUnicodeStringFree(&pFileObject->FileName);
 
+        IopIrpDereference(&pFileObject->pCloseIrp);
+
         IoMemoryFree(pFileObject);
         *ppFileObject = NULL;
     }
 }
+
+static
+NTSTATUS
+IopFileObjectGetCloseIrp(
+    IN IO_FILE_HANDLE FileHandle,
+    OUT PIRP* ppIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int EE = 0;
+    PIRP pIrp = NULL;
+
+    // TODO-Use InterlockedExchangePointer()
+
+    IopFileObjectLock(FileHandle);
+    pIrp = FileHandle->pCloseIrp;
+    FileHandle->pCloseIrp = NULL;
+    IopFileObjectUnlock(FileHandle);
+
+    if (!LWIO_ASSERT_MSG(pIrp, "Cannot close already closed file"))
+    {
+        status = STATUS_FILE_CLOSED;
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    }
+
+cleanup:
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+
+    *ppIrp = pIrp;
+
+    return status;
+}
+
 
 NTSTATUS
 IoFileSetContext(
@@ -238,7 +278,12 @@ IopContinueAsyncCloseFile(
     IO_ASYNC_CONTROL_BLOCK asyncControlBlock = { 0 };
     PIO_ASYNC_CONTROL_BLOCK useAsyncControlBlock = NULL;
 
-    status = IopIrpCreate(&pIrp, IRP_TYPE_CLOSE, FileHandle);
+    IopIrpFreeZctIrpList(FileHandle);
+
+    status = IopFileObjectGetCloseIrp(FileHandle, &pIrp);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = IopIrpAttach(pIrp, IRP_TYPE_CLOSE, FileHandle);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (Callback)

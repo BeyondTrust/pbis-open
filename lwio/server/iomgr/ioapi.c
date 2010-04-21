@@ -444,6 +444,7 @@ IopPrepareZctReadWriteFile(
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
     LW_ZCT_ENTRY_MASK mask = 0;
     PVOID completionContext = NULL;
+    PIRP pCompletionIrp = NULL;
 
     if (!FileHandle || !IoStatusBlock || !Zct)
     {
@@ -467,26 +468,43 @@ IopPrepareZctReadWriteFile(
         GOTO_CLEANUP_EE(EE);
     }
 
+    status = IopIrpCreateDetached(&pCompletionIrp);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
     status = IopIrpCreate(&pIrp, irpType, FileHandle);
     ioStatusBlock.Status = status;
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     pIrp->Args.ReadWrite.Zct = Zct;
     pIrp->Args.ReadWrite.Length = Length;
-    pIrp->Args.ReadWrite.ByteOffset = ByteOffset;
-    pIrp->Args.ReadWrite.Key = Key;
+    if (ByteOffset)
+    {
+        pIrp->Args.ReadWrite.Storage.ByteOffset = *ByteOffset;
+        pIrp->Args.ReadWrite.ByteOffset = &pIrp->Args.ReadWrite.Storage.ByteOffset;
+    }
+    if (Key)
+    {
+        pIrp->Args.ReadWrite.Storage.Key = *Key;
+        pIrp->Args.ReadWrite.Key = &pIrp->Args.ReadWrite.Storage.Key;
+    }
     pIrp->Args.ReadWrite.IsPagingIo = bIsPagingIo;
     pIrp->Args.ReadWrite.ZctOperation = IRP_ZCT_OPERATION_PREPARE;
 
-    // TODO -- Reserve space for complete ZCT IRP.
-    // The idea is that the completion context returned
-    // would be from the I/O manager and would include
-    // the FSD's context as well as the completion IRP.
+    pCompletionIrp->Args.ReadWrite = pIrp->Args.ReadWrite;
+    if (ByteOffset)
+    {
+        pCompletionIrp->Args.ReadWrite.ByteOffset = &pCompletionIrp->Args.ReadWrite.Storage.ByteOffset;
+    }
+    if (Key)
+    {
+        pCompletionIrp->Args.ReadWrite.Key = &pCompletionIrp->Args.ReadWrite.Storage.Key;
+    }
 
     IopIrpSetOutputPrepareZctReadWrite(
             pIrp,
             AsyncControlBlock,
-            CompletionContext);
+            CompletionContext,
+            pCompletionIrp);
     status = IopIrpDispatch(
                     pIrp,
                     AsyncControlBlock,
@@ -497,10 +515,18 @@ IopPrepareZctReadWriteFile(
         LWIO_ASSERT(ioStatusBlock.BytesTransferred <= Length);
         completionContext = pIrp->Args.ReadWrite.ZctCompletionContext;
         LWIO_ASSERT(LW_IS_BOTH_OR_NEITHER(completionContext, STATUS_SUCCESS == status));
+        if (STATUS_SUCCESS == status)
+        {
+            completionContext = IopIrpSaveZctIrp(
+                                        pIrp->FileHandle,
+                                        pCompletionIrp,
+                                        pIrp->Args.ReadWrite.ZctCompletionContext);
+        }
     }
 
 cleanup:
     IopIrpDereference(&pIrp);
+    IopIrpDereference(&pCompletionIrp);
 
     if (STATUS_PENDING != status)
     {
@@ -541,16 +567,19 @@ IopCompleteZctReadWriteFile(
 
     LWIO_ASSERT(!BytesTransferred || bIsWrite);
 
-    // TODO -- use reserved complete ZCT IRP -- see
-    // IopPrepareZctReadWriteFile().
+    pIrp = IopIrpLoadZctIrp(FileHandle, CompletionContext);
+    LWIO_ASSERT(pIrp);
 
-    status = IopIrpCreate(&pIrp, irpType, FileHandle);
+    status = IopIrpAttach(pIrp, irpType, FileHandle);
     ioStatusBlock.Status = status;
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    pIrp->Args.ReadWrite.IsPagingIo = bIsPagingIo;
+    LWIO_ASSERT(FileHandle == pIrp->FileHandle);
+    LWIO_ASSERT(irpType == pIrp->Type);
+    LWIO_ASSERT(bIsPagingIo == pIrp->Args.ReadWrite.IsPagingIo);
+
+    pIrp->Args.ReadWrite.Zct = NULL;
     pIrp->Args.ReadWrite.ZctOperation = IRP_ZCT_OPERATION_COMPLETE;
-    pIrp->Args.ReadWrite.ZctCompletionContext = CompletionContext;
     pIrp->Args.ReadWrite.ZctWriteBytesTransferred = BytesTransferred;
 
     status = IopIrpDispatch(

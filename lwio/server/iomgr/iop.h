@@ -169,7 +169,12 @@ struct _IO_FILE_OBJECT {
     LW_ZCT_ENTRY_MASK ZctReadMask;
     LW_ZCT_ENTRY_MASK ZctWriteMask;
 
-    // TODO -- Pre-allocate IRP_TYPE_CLOSE...
+    // Extra IRPs -- These are allocated before the operation
+    // that requires the IRP so that we can cleanup without
+    // allocating more memory and/or so we can remember parameters
+    // from an earlier operation (in the case of ZCT completion).
+    PIRP pCloseIrp;
+    LW_LIST_LINKS ZctCompletionIrpList;
 };
 
 // ioinit.c
@@ -319,6 +324,18 @@ IopDeviceUnlock(
 // ioirp.c
 
 NTSTATUS
+IopIrpCreateDetached(
+    OUT PIRP* ppIrp
+    );
+
+NTSTATUS
+IopIrpAttach(
+    IN OUT PIRP pIrp,
+    IN IRP_TYPE Type,
+    IN PIO_FILE_OBJECT pFileObject
+    );
+
+NTSTATUS
 IopIrpCreate(
     OUT PIRP* ppIrp,
     IN IRP_TYPE Type,
@@ -356,7 +373,8 @@ VOID
 IopIrpSetOutputPrepareZctReadWrite(
     IN OUT PIRP pIrp,
     IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    IN PVOID* pCompletionContext
+    IN PVOID* pCompletionContext,
+    IN PIRP pCompletionIrp
     );
 
 NTSTATUS
@@ -369,6 +387,24 @@ IopIrpDispatch(
 VOID
 IopIrpCancelFileObject(
     IN PIO_FILE_OBJECT pFileObject
+    );
+
+VOID
+IopIrpFreeZctIrpList(
+    IN OUT PIO_FILE_OBJECT pFileObject
+    );
+
+PVOID
+IopIrpSaveZctIrp(
+    IN OUT PIO_FILE_OBJECT pFileObject,
+    IN PIRP pIrp,
+    IN PVOID pCompletionContext
+    );
+
+PIRP
+IopIrpLoadZctIrp(
+    IN OUT PIO_FILE_OBJECT pFileObject,
+    IN PVOID pCompletionContext
     );
 
 // iofile.c
