@@ -607,8 +607,8 @@ SMBSocketReaderMain(
     NTSTATUS ntStatus = 0;
     PSMB_SOCKET pSocket = (PSMB_SOCKET) pContext;
     BOOLEAN bInLock = FALSE;
-    socklen_t len = 0;
-    long err = 0;
+    int err = 0;
+    socklen_t len = sizeof(err);
     static const LONG64 llConnectTimeout = 10 * 1000000000ll; // 10 sec
 
     if (WakeMask & LW_TASK_EVENT_CANCEL)
