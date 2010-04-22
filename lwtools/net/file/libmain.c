@@ -157,7 +157,7 @@ NetFileParseArguments(
                 if (!strcasecmp(pszArg, "-h") || !strcasecmp(pszArg, "help"))
                 {
                     NetFileShowUsage();
-                    goto cleanup;
+                    goto done;
                 }
                 else if (!strcasecmp(pszArg, "file"))
                 {
@@ -184,10 +184,17 @@ NetFileParseArguments(
 
                     parseState = NET_FILE_ARG_FILE_ID;
                 }
-                else if (!strcasecmp(pszArg, "-h") || !strcasecmp(pszArg, "help"))
+                else if (!strcasecmp(pszArg, "-h") ||
+                         !strcasecmp(pszArg, "--help") ||
+                         !strcasecmp(pszArg, "help"))
                 {
                     NetFileShowUsage();
-                    goto cleanup;
+
+                    pCommandInfo->bCloseFile = FALSE;
+                    pCommandInfo->bEnumerate = FALSE;
+                    pCommandInfo->bQueryInfo = FALSE;
+
+                    goto done;
                 }
                 else
                 {
@@ -231,6 +238,8 @@ NetFileParseArguments(
         BAIL_ON_LTNET_ERROR(dwError);
     }
 
+done:
+
     *ppCommandInfo = pCommandInfo;
 
 cleanup:
@@ -246,7 +255,10 @@ error:
         NetFileShowUsage();
     }
 
-    LwNetFreeMemory(pCommandInfo);
+    if (pCommandInfo)
+    {
+        LwNetFreeMemory(pCommandInfo);
+    }
 
     goto cleanup;
 }

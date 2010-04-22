@@ -109,10 +109,6 @@ NetSession(
                         pCommandInfo->pwszServername,
                         pCommandInfo->pwszClientname);
     }
-    else
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-    }
     BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
@@ -177,7 +173,7 @@ NetSessionParseArguments(
                 if (!strcasecmp(pszArg, "-h") || !strcasecmp(pszArg, "--help"))
                 {
                     NetSessionShowUsage();
-                    goto cleanup;
+                    goto done;
                 }
                 else if (!strcasecmp(pszArg, "session"))
                 {
@@ -202,10 +198,16 @@ NetSessionParseArguments(
 
                     parseState = NET_SESSION_ARG_NAME;
                 }
-                else if (!strcasecmp(pszArg, "-h") || !strcasecmp(pszArg, "--help"))
+                else if (!strcasecmp(pszArg, "-h") ||
+                         !strcasecmp(pszArg, "--help") ||
+                         !strcasecmp(pszArg, "help"))
                 {
                     NetSessionShowUsage();
-                    goto cleanup;
+
+                    pCommandInfo->bEnumerate = FALSE;
+                    pCommandInfo->bLogoff    = FALSE;
+
+                    goto done;
                 }
                 else
                 {
@@ -247,6 +249,8 @@ NetSessionParseArguments(
         BAIL_ON_LTNET_ERROR(dwError);
     }
 
+done:
+
     *ppCommandInfo = pCommandInfo;
 
 cleanup:
@@ -262,7 +266,10 @@ error:
         NetSessionShowUsage();
     }
 
-    LwNetFreeMemory(pCommandInfo);
+    if (pCommandInfo)
+    {
+        LwNetFreeMemory(pCommandInfo);
+    }
 
     goto cleanup;
 }
