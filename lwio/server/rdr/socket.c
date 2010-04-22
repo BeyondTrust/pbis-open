@@ -1005,7 +1005,15 @@ SMBSocketRead(
             case EINTR:
                 continue;
             case EAGAIN:
-                ntStatus = STATUS_PENDING;
+                if (totalRead == 0)
+                {
+                    ntStatus = STATUS_PENDING;
+                }
+                else
+                {
+                    /* Return a successful partial read */
+                    goto cleanup;
+                }
                 break;
             default:
                 ntStatus = ErrnoToNtStatus(errno);
