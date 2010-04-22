@@ -39,7 +39,7 @@ usage: `basename $0` [options] [target...]
     dist, nodist    Whether to remove dist directory (default: `opt_bool_to_yn ${DEFAULT_OPT_DIST}`)
     cache, nocache  Whether to remove cache directory (default: `opt_bool_to_yn ${DEFAULT_OPT_CACHE}`)
     run, norun      Whether to remove run directory (default: `opt_bool_to_yn ${DEFAULT_OPT_RUN}`)
-    image, noimae   Whether to remove image directory (default: `opt_bool_to_yn ${DEFAULT_OPT_IMAGE}`)
+    image, noimage  Whether to remove image directory (default: `opt_bool_to_yn ${DEFAULT_OPT_IMAGE}`)
 
 EOF
     exit 1
