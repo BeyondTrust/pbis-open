@@ -262,9 +262,20 @@ RdrShutdown(
     if (gRdrRuntime.hPacketAllocator != (HANDLE)NULL)
     {
         SMBPacketFreeAllocator(gRdrRuntime.hPacketAllocator);
+        gRdrRuntime.hPacketAllocator = NULL;
     }
 
 error:
 
     return ntStatus;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
