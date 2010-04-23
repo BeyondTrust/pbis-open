@@ -38,17 +38,17 @@ case "${BUILD_OS_TYPE}" in
     darwin)
         case "$UNAME_RELEASE" in
             8.*)
-                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui mod-auth-kerb"
+                PACKAGES="$PACKAGES domainjoin-gui mod-auth-kerb"
                 ;;
             9.*)
-                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui mod-auth-kerb"
+                PACKAGES="$PACKAGES domainjoin-gui mod-auth-kerb"
                 ;;
             10.*)
-                PACKAGES="$PACKAGES lwidsplugin domainjoin-gui"
+                PACKAGES="$PACKAGES domainjoin-gui"
                 ;;
         esac
         ;;
     source)
-	PACKAGES="$PACKAGES lwidsplugin passwd mod-auth-kerb"
+	PACKAGES="$PACKAGES passwd mod-auth-kerb"
 	;;
 esac

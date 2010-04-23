@@ -54,6 +54,7 @@ AC_DEFINE(__LW_MOTD_MAX_SIZE__, 4096, [The maximum number of bytes which will be
 AC_USE_SYSTEM_EXTENSIONS
 
 PLATFORM_AIX="false"
+PLATFORM_MAC="false"
 
 case "$host_os:$host_cpu" in
 	linux*:i?86)
@@ -96,6 +97,7 @@ case "$host_os:$host_cpu" in
 		pam_libdir="/usr/lib/pam"
                 NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
+		PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
         default_homedir_prefix="/Users"
                 CF_FRAMEWORK_LDFLAGS="-framework CoreFoundation"
@@ -109,6 +111,7 @@ case "$host_os:$host_cpu" in
 		pam_libdir="/usr/lib/pam"
                 NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
+		PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
         default_homedir_prefix="/Users"
                 CF_FRAMEWORK_LDFLAGS="-framework CoreFoundation"
@@ -122,6 +125,7 @@ case "$host_os:$host_cpu" in
 		pam_libdir="/usr/lib/pam"
                 NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
+		PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
         default_homedir_prefix="/Users"
                 CF_FRAMEWORK_LDFLAGS="-framework CoreFoundation"
@@ -184,6 +188,7 @@ case "$host_os:$host_cpu" in
 esac
 
 AM_CONDITIONAL(PLATFORM_AIX, [$PLATFORM_AIX])
+AM_CONDITIONAL(PLATFORM_MAC, [$PLATFORM_MAC])
 
 AC_SUBST(NSS_SUBDIR)
 AC_SUBST(MOD_EXT)
@@ -769,6 +774,7 @@ AC_DEFINE_UNQUOTED(NSS_LIBDIR, "$nsslibdir", [NSS library directory])
 AC_C_BIGENDIAN
 
 AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AC_PROG_MKDIR_P
@@ -1064,6 +1070,7 @@ AC_CONFIG_FILES([Makefile
                  interop/nsswitch/solaris/Makefile
                  interop/nsswitch/mac/Makefile
                  interop/lwmapsecurity/Makefile
+                 interop/lwidsplugin/Makefile
                  server/Makefile
                  server/api/Makefile
                  server/ntlm/Makefile

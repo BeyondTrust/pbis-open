@@ -13,3 +13,12 @@ if [ -f $LSASS_DAEMON ]; then
    launchctl unload $LSASS_DAEMON
    rm $LSASS_DAEMON
 fi
+
+PLUGIN_DIR_OPEN=LWIDSPlugIn.dsplug
+SRC_DIR=/opt/likewise/lib
+FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
+
+if [ -h $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN ]; then
+   /bin/rm -f $FRAMEWORK_DIR/$PLUGIN_DIR_OPEN
+fi
+
