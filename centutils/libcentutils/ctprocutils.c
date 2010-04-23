@@ -99,7 +99,7 @@ CTMatchProgramToPID(
 #if defined(__LWI_DARWIN__) || defined(__LWI_FREEBSD__)
     sprintf(szBuf, "ps -p %d -o command= | grep %s", pid, pszProgramName);
 #elif defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__) || defined(__LWI_AIX__)
-    sprintf(szBuf, "UNIX95=1 ps -p %ld -o comm= | grep %s", (long)pid, pszProgramName);
+    sprintf(szBuf, "PS=ps; [ -x /bin/ps ] && PS=/bin/ps; UNIX95=1 $PS -p %ld -o comm= | grep %s", (long)pid, pszProgramName);
 #else
     sprintf(szBuf, "UNIX95=1 ps -p %ld -o cmd= | grep %s", (long)pid, pszProgramName);
 #endif
