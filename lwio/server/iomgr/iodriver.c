@@ -125,7 +125,7 @@ IopDriverLoad(
             LWIO_LOG_ERROR("Failed to load driver '%s' from '%s' (%s)",
                            pszName, pszPath, SMB_SAFE_LOG_STRING(pszError));
             
-            status = STATUS_UNSUCCESSFUL;
+            status = STATUS_DLL_NOT_FOUND;
             GOTO_CLEANUP_EE(EE);
         }
         
@@ -138,7 +138,7 @@ IopDriverLoad(
             LWIO_LOG_ERROR("Failed to load " IO_DRIVER_ENTRY_FUNCTION_NAME " function for driver %s from %s (%s)",
                            pszName, pszPath, SMB_SAFE_LOG_STRING(pszError));
             
-            status = STATUS_UNSUCCESSFUL;
+            status = STATUS_BAD_DLL_ENTRYPOINT;
             GOTO_CLEANUP_EE(EE);
         }
     }
@@ -151,7 +151,7 @@ IopDriverLoad(
         LWIO_LOG_ERROR(IO_DRIVER_ENTRY_FUNCTION_NAME " did not initialize driver '%s' from '%s'",
                       pszName, pszPath);
 
-        status = STATUS_UNSUCCESSFUL;
+        status = STATUS_DLL_INIT_FAILED;
         GOTO_CLEANUP_EE(EE);
     }
 
@@ -271,3 +271,12 @@ IopDriverRemoveDevice(
     pDriver->DeviceCount--;
 }
 
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
