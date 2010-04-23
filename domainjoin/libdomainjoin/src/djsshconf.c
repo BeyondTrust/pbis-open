@@ -883,7 +883,7 @@ static QueryResult UpdateSshdConf(struct SshConf *conf, PCSTR testPrefix,
                 options->warningCallback(options, "Unpatched version of SSH",
                         "The version of your sshd daemon indicates that it is susceptible to the remote exploit described at http://www.openssh.com/txt/preauth.adv . To avoid exposing your system to this exploit, the 'ChallengeResponseAuthentication' and 'PAMAuthenticationViaKBDInt' options will be set to 'no' instead of 'yes'. As a side effect, all login error messages will appear as 'permission denied' instead of more detailed messages like 'account disabled'. Additionally, password changes on login may not work.\n\
 \n\
-Even when those options are disabled, your system is still vunerable to http://www.cert.org/advisories/CA-2003-24.html . We recommend upgrading your version of SSH.");
+Even when those options are disabled, your system is still vulnerable to http://www.cert.org/advisories/CA-2003-24.html . We recommend upgrading your version of SSH.");
             }
         }
         else if(IsOlderThanOrEq(&version, 3, 7, 0, -1))
@@ -892,7 +892,7 @@ Even when those options are disabled, your system is still vunerable to http://w
             if (options->warningCallback != NULL)
             {
                 options->warningCallback(options, "Unpatched version of SSH",
-                        "The version of your sshd daemon indicates that it is susceptible to the security vunulerability described at http://www.cert.org/advisories/CA-2003-24.html . We recommend upgrading your version of SSH.");
+                        "The version of your sshd daemon indicates that it is susceptible to the security vulnerability described at http://www.cert.org/advisories/CA-2003-24.html . We recommend upgrading your version of SSH.");
             }
         }
     }
