@@ -49,24 +49,6 @@ function setup_package_vars
             ;;
     esac
 
-    if [ -n "${PKG_NEED_FOREIGN}" ]; then
-        case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-            hpux-ia64)
-                PKG_NEED_FOREIGN="hppa20"
-                ;;
-            solaris-i386)
-                if [ "`uname -r`" = "5.10" ]; then
-                    PKG_NEED_FOREIGN=""
-                else
-                    PKG_NEED_FOREIGN="i386"
-                fi
-                ;;
-            *)
-                PKG_NEED_FOREIGN=""
-                ;;
-        esac
-    fi
-
     PKG_COMPAT_DISPOSITION="comp"
            
     #
@@ -106,7 +88,7 @@ function setup_package_vars
 
     ### XXX - keep these in-sync w/mkcomp
 
-    if [ -n "${PKG_IS_COMPAT}" ]; then
+    if [ -n "${PKG_IS_COMPAT}" -o -n "${PKG_MAC_COMPAT}" ]; then
 	_compat="-compat"
     else
 	_compat=""
@@ -192,13 +174,7 @@ function populate
     if [ -n "${PKG_NEED_COMPAT}" ]; then
         ( PKG_IS_COMPAT=1 && setup_package_vars && op_invoke populate )
         exit_on_error $?
-    fi
-    
-#    if [ -n "${PKG_NEED_FOREIGN}" ]; then
-#        echo "Performing foreign population"        
-#        ( PKG_IS_FOREIGN=1 && setup_package_vars && op_invoke populate )
-#        exit_on_error $?
-#    fi
+    fi   
 }
 
 function safe_rmtree
@@ -241,6 +217,41 @@ function usage
     exit 1
 }
 
+function mac_combine_binaries
+{
+    (
+        cd "${BUILD_IMAGE_ROOT}"
+        IFS=$'\n'
+        for f in `find .`
+        do
+            if [ ! -L "$f" ]; then
+                case "`file "$f"`" in
+                *"Mach-O"*)
+                    echo "Merging binary: $f"
+                    f2="${BUILD_META_OS_ROOT}/image-compat/${f}"
+                    lipo -create -output "${f}.univ" "$f" "$f2"
+                    if [ $? -ne 0 ]; then
+                        if [ -n "$2" ]; then
+                            echo "Lipo error, warning:"
+                            warn "$2"
+                            echo "Skipping merge"
+                        else
+                            echo "Lipo error, skipping merge"
+                        fi
+                    else
+                        echo "Merge completed"
+                        rm -f "${f}"
+                        mv "${f}.univ" "${f}"
+                    fi
+                    ;;
+                    esac
+            fi
+        done
+    )
+
+    exit_on_error "$?"
+}
+
 recreate_dir "${BUILD_IMAGE_ROOT}"
 
 while true
@@ -272,3 +283,17 @@ do
     populate "${pkg}" "${BUILD_IMAGE_ROOT}"
     exit_on_error $?
 done
+
+case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+    darwin-x86_64)
+	recreate_dir "${BUILD_META_OS_ROOT}/image-compat"
+	PKG_MAC_COMPAT="1"
+
+	for pkg in `product_packages $@`
+	do
+	    populate "${pkg}" "${BUILD_META_OS_ROOT}/image-compat"
+	done
+
+        mac_combine_binaries	
+	;;
+esac
