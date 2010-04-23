@@ -37,7 +37,7 @@
  * In any case, it is probable that platforms having broken
  * res_ninit() will have thread safety hacks for res_init() and _res.
  */
-#if HAVE_RES_NINIT && (HAVE_RES_NDESTROY || HAVE_RES_NCLOSE) && HAVE_RES_NSEARCH
+#if HAVE_RES_NINIT && HAVE_WORKING_RES_NINIT && (HAVE_RES_NDESTROY || HAVE_RES_NCLOSE) && HAVE_RES_NSEARCH
 #define USE_RES_NINIT 1
 #endif
 
