@@ -48,13 +48,7 @@
 #include "client.h"
 
 static REG_CLIENT_CONNECTION_CONTEXT gContext = {0};
-#if defined(__LWI_SOLARIS__) || defined (__LWI_AIX__)
-static pthread_once_t gOnceControl = {PTHREAD_ONCE_INIT};
-#else
-static pthread_once_t gOnceControl = PTHREAD_ONCE_INIT;
-#endif
-static NTSTATUS gdwOnceError = 0;
-
+static pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
 NTSTATUS
@@ -83,50 +77,49 @@ RegOpenServer(
     		NtRegOpenServer(phConnection));
 }
 
-VOID
-NtRegOpenServerOnce(
+NTSTATUS
+NtRegOpenServerInitialize(
     VOID
     )
 {
     NTSTATUS status = 0;
+    
+    pthread_mutex_lock(&gLock);
 
-    status = MAP_LWMSG_ERROR(lwmsg_protocol_new(NULL, &gContext.pProtocol));
-    BAIL_ON_NT_STATUS(status);
+    if (!gContext.pProtocol)
+    {
+        status = MAP_LWMSG_ERROR(lwmsg_protocol_new(NULL, &gContext.pProtocol));
+        BAIL_ON_NT_STATUS(status);
+        
+        status = MAP_LWMSG_ERROR(lwmsg_protocol_add_protocol_spec(gContext.pProtocol, RegIPCGetProtocolSpec()));
+        BAIL_ON_NT_STATUS(status);
+    }
 
-    status = MAP_LWMSG_ERROR(lwmsg_protocol_add_protocol_spec(gContext.pProtocol, RegIPCGetProtocolSpec()));
-    BAIL_ON_NT_STATUS(status);
+    if (!gContext.pClient)
+    {
+        status = MAP_LWMSG_ERROR(lwmsg_peer_new(NULL, gContext.pProtocol, &gContext.pClient));
+        BAIL_ON_NT_STATUS(status);
+        
+        status = MAP_LWMSG_ERROR(lwmsg_peer_add_connect_endpoint(
+                                     gContext.pClient,
+                                     LWMSG_CONNECTION_MODE_LOCAL,
+                                     CACHEDIR "/" REG_SERVER_FILENAME));
+        BAIL_ON_NT_STATUS(status);
+    }
 
-    status = MAP_LWMSG_ERROR(lwmsg_client_new(NULL, gContext.pProtocol, &gContext.pClient));
-    BAIL_ON_NT_STATUS(status);
-
-    status = MAP_LWMSG_ERROR(lwmsg_client_set_endpoint(
-                                  gContext.pClient,
-                                  LWMSG_CONNECTION_MODE_LOCAL,
-                                  CACHEDIR "/" REG_SERVER_FILENAME));
-    BAIL_ON_NT_STATUS(status);
-
-    status = MAP_LWMSG_ERROR(lwmsg_peer_connect(gContext.pClient, &gContext.pSession));
-    BAIL_ON_NT_STATUS(status);  
-
+    if (!gContext.pSession)
+    {
+        status = MAP_LWMSG_ERROR(lwmsg_peer_connect(gContext.pClient, &gContext.pSession));
+        BAIL_ON_NT_STATUS(status);  
+    }
+        
 cleanup:
 
-    gdwOnceError = status;
+    pthread_mutex_unlock(&gLock);
 
-    return;
+    return status;
 
 error:
-
-    if (gContext.pClient)
-    {
-        lwmsg_client_delete(gContext.pClient);
-        gContext.pClient = NULL;
-    }
-
-    if (gContext.pProtocol)
-    {
-        lwmsg_protocol_delete(gContext.pProtocol);
-        gContext.pProtocol = NULL;
-    }
 
     goto cleanup;
 }
@@ -141,9 +134,7 @@ NtRegOpenServer(
 
     BAIL_ON_NT_INVALID_POINTER(phConnection);
 
-    pthread_once(&gOnceControl, NtRegOpenServerOnce);
-
-    status = gdwOnceError;
+    status = NtRegOpenServerInitialize();
     BAIL_ON_NT_STATUS(status);
 
     *phConnection = (HANDLE) &gContext;
@@ -188,7 +179,7 @@ NtRegCloseServerOnce(
 {
     if (gContext.pClient)
     {
-        lwmsg_client_delete(gContext.pClient);
+        lwmsg_peer_delete(gContext.pClient);
     }
 
     if (gContext.pProtocol)
