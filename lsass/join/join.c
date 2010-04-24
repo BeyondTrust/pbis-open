@@ -1471,6 +1471,7 @@ LsaCreateMachineAccount(
     DWORD dwProtSeq = 0;
     PBYTE pSessionKey = NULL;
     DWORD dwSessionKeyLen = 0;
+    unsigned16 sessionKeyLen = 0;
     PSID pBuiltinSid = NULL;
     DWORD dwResume = 0;
     DWORD dwSize = 256;
@@ -1534,7 +1535,8 @@ LsaCreateMachineAccount(
         rpc_smb_transport_info_inq_session_key(
                                    hTransportInfo,
                                    (unsigned char**)&pSessionKey,
-                                   (unsigned16*)&dwSessionKeyLen);
+                                   &sessionKeyLen);
+        dwSessionKeyLen = (DWORD)sessionKeyLen;
     }
     else
     {

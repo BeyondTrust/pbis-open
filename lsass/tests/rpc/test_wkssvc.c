@@ -147,6 +147,7 @@ TestNetrJoinDomain2(
     DWORD dwJoinFlags = 0;
     PBYTE pSessionKey = NULL;
     DWORD dwSessionKeyLen = 0;
+    unsigned16 sessionKeyLen = 0;
 
     memset(&ctx, 0, sizeof(ctx));
     memset(&key, 0, sizeof(key));
@@ -215,16 +216,17 @@ TestNetrJoinDomain2(
             rpc_smb_transport_info_inq_session_key(
                                        hTransportInfo,
                                        (unsigned char**)&pSessionKey,
-                                       (unsigned16*)&dwSessionKeyLen);
+                                       &sessionKeyLen);
             break;
 
         case rpc_c_protseq_id_ncalrpc:
             rpc_lrpc_transport_info_inq_session_key(
                                        hTransportInfo,
                                        (unsigned char**)&pSessionKey,
-                                       (unsigned16*)&dwSessionKeyLen);
+                                       &sessionKeyLen);
             break;
         }
+        dwSessionKeyLen = (DWORD)sessionKeyLen;
     }
     else
     {
