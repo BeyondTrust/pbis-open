@@ -41,6 +41,15 @@ DJConfigureEventFwd(
 {
     CENTERROR ceError = CENTERROR_SUCCESS;
     LWException *innerExc = NULL;
+    int firstStart = 0;
+    int firstStop = 0;
+    int stopLaterOffset = 0;
+
+    ceError = DJGetBaseDaemonPriorities(
+                &firstStart,
+                &firstStop,
+                &stopLaterOffset);
+    GOTO_CLEANUP_ON_CENTERROR(ceError);
 
     if(enable)
         DJ_LOG_INFO("Configuring Likewise Enterprise to run eventfwdd daemon");
@@ -49,7 +58,8 @@ DJConfigureEventFwd(
 
     if (geteuid() == 0)
     {
-        DJManageDaemon("eventfwdd", enable, 21, 9, &innerExc);
+        DJManageDaemon("eventfwdd", enable, firstStart + 2,
+                firstStop + stopLaterOffset * 0, &innerExc);
         if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
         {
             DJLogException(LOG_LEVEL_WARNING, innerExc);
@@ -73,6 +83,15 @@ DJConfigureReapSyslog(
 {
     CENTERROR ceError = CENTERROR_SUCCESS;
     LWException *innerExc = NULL;
+    int firstStart = 0;
+    int firstStop = 0;
+    int stopLaterOffset = 0;
+
+    ceError = DJGetBaseDaemonPriorities(
+                &firstStart,
+                &firstStop,
+                &stopLaterOffset);
+    GOTO_CLEANUP_ON_CENTERROR(ceError);
 
     if(enable)
         DJ_LOG_INFO("Configuring Likewise Enterprise to run reapsysld daemon");
@@ -81,7 +100,8 @@ DJConfigureReapSyslog(
 
     if (geteuid() == 0)
     {
-        DJManageDaemon("reapsysld", enable, 12, 9, &innerExc);
+        DJManageDaemon("reapsysld", enable, firstStart + 0,
+                firstStop + stopLaterOffset * 0, &innerExc);
         if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
         {
             DJLogException(LOG_LEVEL_WARNING, innerExc);

@@ -32,6 +32,7 @@
 #include "djdaemonmgr.h"
 #include "ctstrutils.h"
 #include "djauthinfo.h"
+#include "djdistroinfo.h"
 #include <lsa/lsa.h>
 
 // aka: CENTERROR_LICENSE_INCORRECT
@@ -277,6 +278,46 @@ cleanup:
     CTStringBufferDestroy(&buffer);
 }
 
+CENTERROR
+DJGetBaseDaemonPriorities(
+    int *startPriority,
+    int *stopPriority,
+    int *stopLaterOffset
+    )
+{
+    DistroInfo distro;
+    CENTERROR ceError = CENTERROR_SUCCESS;
+
+    memset(&distro, 0, sizeof(distro));
+
+    ceError = DJGetDistroInfo(NULL, &distro);
+    GOTO_CLEANUP_ON_CENTERROR(ceError);
+
+    if (distro.os == OS_HPUX)
+    {
+        // Start after S590Rpcd
+        *startPriority = 591;
+        // Stop before K410Rpcd
+        *stopPriority = 401;
+
+        // On HP-UX, the kill scripts are run in numerical order. So adding 1
+        // the priority causes it to stop later in the shutdown.
+        *stopLaterOffset = 1;
+    }
+    else
+    {
+        *startPriority = 19;
+        *stopPriority = 9;
+
+        // On Linux, the stop scrips are run in descending order
+        *stopLaterOffset = -1;
+    }
+
+cleanup:
+    DJFreeDistroInfo(&distro);
+    return ceError;
+}
+
 void
 DJManageDaemons(
     BOOLEAN bStart,
@@ -296,6 +337,14 @@ DJManageDaemons(
     BOOLEAN bLsassContacted = FALSE;
     DWORD dwError = 0;
     LW_HANDLE hLsa = NULL;
+    int firstStart = 0;
+    int firstStop = 0;
+    int stopLaterOffset = 0;
+
+    LW_TRY(exc, DJGetBaseDaemonPriorities(
+                &firstStart,
+                &firstStop,
+                &stopLaterOffset));
 
     LW_CLEANUP_CTERR(exc, CTCheckFileExists(PWGRD, &bFileExists));
     if(bFileExists)
@@ -317,8 +366,9 @@ DJManageDaemons(
  
             DJManageDaemon(daemonList[i].primaryName,
                              bStart,
-                             daemonList[i].startPriority,
-                             daemonList[i].stopPriority,
+                             firstStart + daemonList[i].startPriority,
+                             firstStop +
+                                 stopLaterOffset * daemonList[i].stopPriority,
                              &innerExc);
 
             //Try the alternate daemon name if there is one
@@ -329,8 +379,9 @@ DJManageDaemons(
                 LW_HANDLE(&innerExc);
                 DJManageDaemon(daemonList[i].alternativeNames[j],
                                  bStart,
-                                 daemonList[i].startPriority,
-                                 daemonList[i].stopPriority,
+                                 firstStart + daemonList[i].startPriority,
+                                 firstStop + stopLaterOffset *
+                                     daemonList[i].stopPriority,
                                  &innerExc);
                 if (!LW_IS_OK(innerExc) &&
                         innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
@@ -417,8 +468,9 @@ DJManageDaemons(
         {
             DJManageDaemon(daemonList[i].primaryName,
                              bStart,
-                             daemonList[i].startPriority,
-                             daemonList[i].stopPriority,
+                             firstStart + daemonList[i].startPriority,
+                             firstStop +
+                                 stopLaterOffset * daemonList[i].stopPriority,
                              &innerExc);
 
             //Try the alternate daemon name if there is one
@@ -429,8 +481,9 @@ DJManageDaemons(
                 LW_HANDLE(&innerExc);
                 DJManageDaemon(daemonList[i].alternativeNames[j],
                                  bStart,
-                                 daemonList[i].startPriority,
-                                 daemonList[i].stopPriority,
+                                 firstStart + daemonList[i].startPriority,
+                                 firstStop + stopLaterOffset *
+                                     daemonList[i].stopPriority,
                                  &innerExc);
                 if (!LW_IS_OK(innerExc) &&
                         innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)

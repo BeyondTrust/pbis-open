@@ -963,18 +963,35 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
 {
     BOOLEAN systemDcedExists = FALSE;
     LWException *innerExc = NULL;
+    int firstStart = 0;
+    int firstStop = 0;
+    int stopLaterOffset = 0;
 
 #ifndef MINIMAL_JOIN
+
     if (geteuid() == 0)
     {
+        LW_CLEANUP_CTERR(exc, DJGetBaseDaemonPriorities(
+                    &firstStart,
+                    &firstStop,
+                    &stopLaterOffset));
+
         LW_TRY(exc, DJManageDaemon("lwsmd", TRUE,
-                    17, 10, &LW_EXC));
+                    firstStart - 2,
+                    firstStop + stopLaterOffset * 1,
+                    &LW_EXC));
         LW_TRY(exc, DJManageDaemon("lwregd", TRUE,
-                    18, 9, &LW_EXC));
+                    firstStart - 1, 
+                    firstStop + stopLaterOffset * 2,
+                    &LW_EXC));
         LW_TRY(exc, DJManageDaemon("netlogond", TRUE,
-                    19, 9, &LW_EXC));
+                    firstStart + 0,
+                    firstStop + stopLaterOffset * 2,
+                    &LW_EXC));
         LW_TRY(exc, DJManageDaemon("lwiod", TRUE,
-                    20, 9, &LW_EXC));
+                    firstStart + 1,
+                    firstStop + stopLaterOffset * 2,
+                    &LW_EXC));
 
         if (bEnableDcerpcd)
         {
@@ -991,10 +1008,15 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
             else
             {
                 LW_TRY(exc, DJManageDaemon("dcerpcd", TRUE,
-                            19, 9, &LW_EXC));
+                            firstStart + 0,
+                            firstStop + stopLaterOffset * 2,
+                            &LW_EXC));
             }
 
-            DJManageDaemon("eventlogd", TRUE, 20, 9, &innerExc);
+            DJManageDaemon("eventlogd", TRUE,
+                        firstStart + 1,
+                        firstStop + stopLaterOffset * 0,
+                        &innerExc);
             if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
             {
                 DJLogException(LOG_LEVEL_WARNING, innerExc);
@@ -1002,7 +1024,9 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
         }
 
         LW_TRY(exc, DJManageDaemon("lsassd", TRUE,
-                    21, 9, &LW_EXC));
+                    firstStart + 2,
+                    firstStop + stopLaterOffset * 2,
+                    &LW_EXC));
     }
 
 #if 0

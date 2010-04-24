@@ -676,13 +676,13 @@ DJConfigureForDaemonRestart(
             LW_TRY(exc, FindDaemonScript(pszDaemonName,
                         &symlinkTarget, &LW_EXC));
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&symlinkName,
-                    "/sbin/rc1.d/K%02d%s", stopPriority, relativeName));
+                    "/sbin/rc1.d/K%03d%s", stopPriority, relativeName));
             LW_TRY(exc,
                     DJOverwriteSymlink(symlinkTarget, symlinkName, &LW_EXC));
             CT_SAFE_FREE_STRING(symlinkName);
 
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&symlinkName,
-                    "/sbin/rc2.d/S%02d%s", startPriority, relativeName));
+                    "/sbin/rc2.d/S%03d%s", startPriority, relativeName));
             LW_TRY(exc,
                     DJOverwriteSymlink(symlinkTarget, symlinkName, &LW_EXC));
         }
@@ -911,9 +911,7 @@ cleanup:
 }
 
 struct _DaemonList daemonList[] = {    
-    //{ "reapsysld", {NULL}, FALSE, 12, 9 },
-    { "gpagentd", {NULL}, FALSE, 22, 9 },
-    //{ "eventfwdd", {NULL}, FALSE, 21, 9 },
+    { "gpagentd", {NULL}, FALSE, 3, 0 },
     { NULL, {NULL}, FALSE, 0, 0 },
 };
 

@@ -59,6 +59,13 @@ DJManageDaemonDescription(
     LWException **exc
     );
 
+CENTERROR
+DJGetBaseDaemonPriorities(
+    int *startPriority,
+    int *stopPriority,
+    int *stopLaterOffset
+    );
+
 void
 DJManageDaemons(
     BOOLEAN bStart,
