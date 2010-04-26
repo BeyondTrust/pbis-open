@@ -55,6 +55,18 @@ AC_KRB5_TCL
 AC_ARG_ENABLE([athena],
 [  --enable-athena         build with MIT Project Athena configuration],,)
 dnl
+dnl Special --enable-includes-only build option.
+dnl
+includes_only=
+AC_ARG_ENABLE([includes-only],
+  AC_HELP_STRING([--enable-includes-only],[build only include files @<:@disabled@:>@]),
+  includes_only=yes,)
+SUBDIRS_TYPE="all"
+if test -n "$includes_only" ; then
+  SUBDIRS_TYPE="includes_only"
+fi
+AC_SUBST(SUBDIRS_TYPE)
+dnl
 dnl Begin autoconf tests for the Makefiles generated out of the top-level
 dnl configure.in...
 dnl

@@ -6,6 +6,8 @@ COMP_NEED_COMPAT=1
 COMP_DEPENDENCIES="autoconf libtool krb5"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/openldap
 
+# NOTE: IS_COMPAT build is only for headers (for error mappings in lwadvapi).
+
 function component_bootstrap
 {
     cd "${COMP_SOURCES}" && ./autogen.sh
@@ -48,6 +50,9 @@ function component_configure
 	extra_flags="--disable-syslog --disable-debug --disable-proctitle --disable-local"
 	CPPFLAGS="$CPPFLAGS -DFD_SETSIZE=32"
     fi
+    if [ -n "${IS_COMPAT}" ]; then
+        extra_flags="${extra_flags}"" --enable-includes-only"
+    fi
 
     "${COMP_SOURCES}/configure" \
         --prefix=${PREFIX_DIR} \
@@ -78,9 +83,11 @@ function component_stage
 
     ${MAKE} DESTDIR=${STAGING_ROOT_DIR} install
 
-    mv ${STAGING_PREFIX_DIR}/bin ${STAGING_PREFIX_DIR}/bin.delete
-    mkdir -p ${STAGING_PREFIX_DIR}/bin/openldap
-    mv ${STAGING_PREFIX_DIR}/bin.delete/* ${STAGING_PREFIX_DIR}/bin/openldap
+    if [ -d ${STAGING_PREFIX_DIR}/bin ]; then
+        mv ${STAGING_PREFIX_DIR}/bin ${STAGING_PREFIX_DIR}/bin.delete
+        mkdir -p ${STAGING_PREFIX_DIR}/bin/openldap
+        mv ${STAGING_PREFIX_DIR}/bin.delete/* ${STAGING_PREFIX_DIR}/bin/openldap
+    fi
 
     # Remove unused files
     rm -rf ${STAGING_PREFIX_DIR}/{share,etc,bin.delete}
@@ -89,8 +96,10 @@ function component_stage
     find ${STAGING_PREFIX_DIR}/include -type d | xargs chmod 755
     find ${STAGING_PREFIX_DIR}/include -type f | xargs chmod 644
 
-    # Fixup strange shared library permissions.
-    chmod 755 ${STAGING_PREFIX_DIR}/${_lib}/lib*
+    if [ -d "${STAGING_PREFIX_DIR}/${_lib}" ]; then
+        # Fixup strange shared library permissions.
+        chmod 755 ${STAGING_PREFIX_DIR}/${_lib}/lib*
+    fi
 
     libtool_rewrite_staging
 }

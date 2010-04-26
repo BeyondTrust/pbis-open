@@ -11,6 +11,8 @@ COMP_DEPENDENCIES="autoconf libtool"
 SRC_DIR=${BUILD_ROOT}/src/linux/krb5
 COMP_SOURCES=$SRC_DIR
 
+# NOTE: IS_COMPAT build is only for headers (for error mappings in lwadvapi).
+
 function component_bootstrap
 {
     cd "${COMP_SOURCES}/src" && ./autogen.sh
@@ -55,6 +57,10 @@ function component_configure
 {
     _setup_build_env
 
+    extra_flags=""
+    if [ -n "${IS_COMPAT}" ]; then
+        extra_flags="${extra_flags}"" --enable-includes-only"
+    fi
     "${COMP_SOURCES}/src/configure" \
         CC="${CC}" \
         CFLAGS="${CFLAGS}" \
@@ -69,6 +75,7 @@ function component_configure
 	--enable-shared \
 	--without-krb4 \
         --without-tcl \
+        ${extra_flags} \
         ${DEPENDENCY_TRACKING}
 }
 
@@ -103,7 +110,12 @@ function component_stage
     # Fixup permissions on header files.
     find ${STAGING_PREFIX_DIR}/include -type d | xargs chmod 755
     find ${STAGING_PREFIX_DIR}/include -type f | xargs chmod 644
-    
+
+    if [ -n "${IS_COMPAT}" ]; then
+        rm -rf ${STAGING_PREFIX_DIR}/${_lib}
+        rm -rf ${STAGING_PREFIX_DIR}/bin
+    fi
+
     # Do we want to also exclude some others (libdes425, libgssrpc)?
     rm -f ${STAGING_PREFIX_DIR}/${_lib}/{libkadm5,libkdb5}*
     rm -rf ${STAGING_PREFIX_DIR}/{sbin,share,var}
@@ -113,8 +125,10 @@ function component_stage
     rm -rf ${STAGING_PREFIX_DIR}/include/kerberosIV
     rm -rf ${STAGING_PREFIX_DIR}/${_lib}/krb5
 
-    # Fixup strange shared library permissions.
-    chmod 755 ${STAGING_PREFIX_DIR}/${_lib}/lib*
+    if [ -d "${STAGING_PREFIX_DIR}/${_lib}" ]; then
+        # Fixup strange shared library permissions.
+        chmod 755 ${STAGING_PREFIX_DIR}/${_lib}/lib*
+    fi
 
     # Fix up libtool/dylib files
     libtool_rewrite_staging

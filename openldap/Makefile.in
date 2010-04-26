@@ -13,7 +13,9 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-SUBDIRS= include libraries clients servers tests
+SUBDIRS_all= include libraries clients servers tests
+SUBDIRS_includes_only= include
+SUBDIRS=$(SUBDIRS_@SUBDIRS_TYPE@)
 CLEANDIRS=
 INSTALLDIRS= 
 
