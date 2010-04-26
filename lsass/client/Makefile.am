@@ -1,10 +1,10 @@
 compat_subdirs = \
     api \
-    ad \
-    ntlm
+    ad
 
 full_subdirs = \
     $(compat_subdirs) \
+    ntlm \
     rpc
 
 lib_LTLIBRARIES = liblsaclient.la
