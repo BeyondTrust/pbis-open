@@ -322,8 +322,10 @@ stop_daemons_on_reboot()
         # AIX, and Redhat
         rm -f /etc/rc.d/rc?.d/S??${daemon} /etc/rc.d/rc?.d/K??${daemon}
 
-        # HP-UX
+        # HP-UX, old likewise install
         rm -f /sbin/rc?.d/S??${daemon} /sbin/rc?.d/K??${daemon}
+        # HP-UX, new likewise install
+        rm -f /sbin/rc?.d/S???${daemon} /sbin/rc?.d/K???${daemon}
 
         # Solaris 10 and newer
         if type svccfg >/dev/null 2>&1 && svccfg select $daemon 2>/dev/null; then
