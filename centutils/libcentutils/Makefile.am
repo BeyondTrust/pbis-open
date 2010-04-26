@@ -18,7 +18,7 @@ libcentutils_la_SOURCES = \
     cttext.c       \
     ctuser.c       \
     lwexc.c        \
-    sysfuncs.c
+    ctsysfuncs.c
 
 libcentutils_la_LIBADD = \
     @top_builddir@/libgpglib/libgpglib.la \

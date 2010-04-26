@@ -25,5 +25,5 @@ centutilsinclude_HEADERS = \
     lwglist.h         \
     lwgmissing.h      \
     lwgprimes.h       \
-    sysfuncs.h
+    ctsysfuncs.h
 

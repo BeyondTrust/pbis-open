@@ -64,7 +64,7 @@
 #include "ctrwlock.h"
 #include "ctstrutils.h"
 #include "ctfileutils.h"
-#include "sysfuncs.h"
+#include "ctsysfuncs.h"
 #include "ctcfgparser.h"
 #include "ctprocutils.h"
 #include "cthash.h"

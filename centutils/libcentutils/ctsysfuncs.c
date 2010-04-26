@@ -62,7 +62,7 @@
 
 #include "ctbase.h"
 #include <syslog.h>
-#include "sysfuncs.h"
+#include "ctsysfuncs.h"
 
 void
 sys_vsyslog(
