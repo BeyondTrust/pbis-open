@@ -107,6 +107,11 @@ typedef hyper int          LW_INT64, *LW_PINT64;
 
 typedef void               LW_VOID, *LW_PVOID;
 typedef void const        *LW_PCVOID;
+#ifdef __cplusplus
+#define LW_VOID void
+#define LW_PVOID void*
+#define LW_PCVOID const void*
+#endif
 typedef LW_UINT8           LW_BOOLEAN, *LW_PBOOLEAN;
 typedef LW_UINT8           LW_BYTE, *LW_PBYTE;
 typedef char               LW_CHAR, *LW_PCHAR;
