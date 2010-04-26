@@ -1,0 +1,97 @@
+#!/bin/sh
+
+COMP_NEED_COMPAT=1
+COMP_NEED_FOREIGN=1
+COMP_VERSION="2.14"
+COMP_RELEASE="1"
+COMP_SOURCES="${BUILD_ROOT}/src/linux/popt"
+COMP_DEPENDENCIES="autoconf"
+
+function component_bootstrap
+{
+    echo "Nothing to bootstrap for popt"
+}
+
+function component_gather
+{
+    echo "Nothing to gather for popt"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+
+    CFLAGS="${_cflags}"
+    CPPFLAGS="${_cppflags} -D_REENTRANT -D_THREAD_SAFE"
+    LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib})"
+    
+    export CPPFLAGS CFLAGS LDFLAGS
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    "${COMP_SOURCES}/configure" \
+        --build="`get_build_string`" \
+	--prefix="${PREFIX_DIR}" \
+	--libdir="${PREFIX_DIR}/${_lib}" \
+	--disable-nls \
+        ${DEPENDENCY_TRACKING}
+}
+
+function component_build
+{
+    _setup_build_env
+
+    # Hack to work around broken -fvisibility on solaris
+    if [ "${BUILD_OS_TYPE}" = "solaris" ]
+    then
+	${MAKE} ${_mflags} all CFLAG_VISIBILITY=""
+    else
+	${MAKE} ${_mflags} all
+    fi
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    # Horrible hack on AIX
+    # The popt makefile attempts to apply a hack on
+    # AIX where it manually modifies popt.a.  However,
+    # libtool does not build popt.a when -Wl,-brtl is
+    # in LDFLAGS (it builds popt.so instead).  Since
+    # popt.a doesn't exist, make fails.  To work around
+    # this, we create an empty dummy .a file before doing
+    # "make install", and then remove it afterward
+    if [ "${BUILD_OS_TYPE}" = "aix" ]
+    then
+	mkdir -p "${STAGING_ROOT_DIR}/${PREFIX_DIR}/${_lib}"
+	ar cru "${STAGING_ROOT_DIR}/${PREFIX_DIR}/${_lib}/popt.a"
+    fi
+
+    ${MAKE} DESTDIR="${STAGING_ROOT_DIR}" install
+
+    if [ "${BUILD_OS_TYPE}" = "aix" ]
+    then
+	rm -f "${STAGING_ROOT_DIR}/${PREFIX_DIR}/${_lib}/popt.a"
+    fi
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_NAME=popt
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/ --exclude "${PREFIX_DIR}/bin"
+    x_rm ${POPULATE_PREFIX_DIR}/${_lib}/preloadable_popt.*
+    x_rm ${POPULATE_PREFIX_DIR}/${_lib}/libcharset.*
+
+    libtool_rewrite_populate
+}

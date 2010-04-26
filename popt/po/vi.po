@@ -1,0 +1,139 @@
+# Vietnamese translation for POPT.
+# Copyright © 2008 Free Software Foundation, Inc.
+# This file is distributed under the same license as the popt-1.14 package
+# Clytie Siddall <clytie@riverland.net.au>, 2007-2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: popt 1.14\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2008-02-18 16:20+1030\n"
+"Last-Translator: Clytie Siddall <clytie@riverland.net.au>\n"
+"Language-Team: Vietnamese <vi-VN@googlegroups.com>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: LocFactoryEditor 1.7b3\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "số hiệu lỗi không rõ"
+
+#: popt.c:1031
+#, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "kiểu tùy chọn (%u) chưa được thực hiện trong popt\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "thiếu đối số"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "tùy chọn không rõ"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "các thao tác hợp lý loại từ lẫn nhau được yêu cầu"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr "« tùy chọn->đối số » không thể vô giá trị"
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "các bí danh lồng nhau quá sâu"
+
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "gặp lỗi trong lời trích dẫn tham số"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "giá trị thuộc số không hợp lệ"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "con số quá lớn hay quá nhỏ"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr "lỗi cấp phát bộ nhớ"
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "lỗi không rõ"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "Xem thông điệp trợ giúp này"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "Hiển thị thông điệp cách sử dụng ngắn"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr "Hiển thị các giá trị mặc định của tùy chọn trong thông điệp"
+
+#: popthelp.c:92
+msgid "Terminate options"
+msgstr "Tùy chọn chấm dứt"
+
+#: popthelp.c:191
+msgid "Help options:"
+msgstr "Tùy chọn trợ giúp:"
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr "Các tùy chọn được thực hiện thông qua popt alias/exec:"
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "KHÔNG CÓ"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "GIÁ TRỊ"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "SỐ NGUYÊN"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "DÀI"
+
+#: popthelp.c:208
+msgid "LONGLONG"
+msgstr "DÀIDÀI"
+
+#: popthelp.c:209
+msgid "STRING"
+msgstr "CHUỖI"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "NỔI"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "ĐÔI"
+
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ĐỐI SỐ"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "Sử dụng:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[TÙY_CHỌN...]"

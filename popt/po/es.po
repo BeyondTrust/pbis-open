@@ -1,0 +1,137 @@
+# Spanish translations for popt.
+# Copyright (C) 2007 Free Software Foundation, Inc.
+# Leandro Lucarella <luca@linuxmendoza.org.ar>, 2007
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: popt 1.12\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2007-12-28 12:22+0100\n"
+"Last-Translator: Leandro Lucarella <luca@linuxmendoza.org.ar>\n"
+"Language-Team: Spanish <es@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "errno desconocido"
+
+#: popt.c:1031
+#, fuzzy, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "tipo de opción (%d) no implementada en popt\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "falta argumento"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "opción desconocida"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "requerida operación lógica mutuamente exclusiva"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr ""
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "alias anidados muy profundamente"
+
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "error en cita de parámetros"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "valor numérico inválido"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "número muy largo o muy pequeño"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr ""
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "error desconocido"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "Muestra este mensaje de ayuda"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "Indica el modo de uso resumido"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr ""
+
+#: popthelp.c:92
+msgid "Terminate options"
+msgstr ""
+
+#: popthelp.c:191
+msgid "Help options:"
+msgstr ""
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr ""
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "NONE"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "VAL"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "INT"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "LONG"
+
+#: popthelp.c:208
+#, fuzzy
+msgid "LONGLONG"
+msgstr "LONG"
+
+#: popthelp.c:209
+msgid "STRING"
+msgstr "STRING"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "FLOAT"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "DOUBLE"
+
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ARG"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "Modo de uso:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[OPCIÓN...]"

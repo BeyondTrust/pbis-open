@@ -1,0 +1,139 @@
+# translation of translation.po to 
+# Simplified Chinese Messages for popt
+# Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+# Wei-Lun Chao <chaoweilun@pcmail.com.tw>, 2005.
+# LI Daobing <lidaobing@gmail.com>, 2007, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: popt 1.14\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2008-02-18 20:16+0800\n"
+"Last-Translator: LI Daobing <lidaobing@gmail.com>\n"
+"Language-Team: Chinese (simplified) <translation-team-zh-cn@lists."
+"sourceforge.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "未知的错误"
+
+#: popt.c:1031
+#, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "选项类别 (%u) 没有在 popt 中实现\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "缺少参数"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "未知的选项"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "需要 XOR 逻辑运算"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr "opt->arg 不应该为 NULL"
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "别名嵌套太深"
+
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "参数引号错误"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "无效的数值"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "数值太大或太小"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr "内存分配错误"
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "未知的错误"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "显示这个帮助信息"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "显示简短的使用说明"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr "在信息中显示默认的选项"
+
+#: popthelp.c:92
+msgid "Terminate options"
+msgstr "终止选项"
+
+#: popthelp.c:191
+msgid "Help options:"
+msgstr "帮助选项:"
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr "通过 popt alias/exec 实现的选项:"
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "NONE"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "VAL"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "INT"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "LONG"
+
+#: popthelp.c:208
+msgid "LONGLONG"
+msgstr "LONGLONG"
+
+#: popthelp.c:209
+msgid "STRING"
+msgstr "STRING"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "FLOAT"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "DOUBLE"
+
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ARG"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "用法:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[选项...]"

@@ -1,0 +1,140 @@
+# Dutch messages for popt.
+# This file is put in the public domain.
+# Tim Van Holder <tim.van.holder@telenet.be>, 2007, 2008.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: popt 1.14\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2008-02-20 19:26+0100\n"
+"Last-Translator: Tim Van Holder <tim.van.holder@telenet.be>\n"
+"Language-Team: Dutch <vertaling@vrijschrift.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "onbekend foutnummer (errno)"
+
+#: popt.c:1031
+#, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "dit optietype (%u) is niet geïmplementeerd in popt\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "ontbrekend argument"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "onbekende optie"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "elkaar uitsluitende logische operatoren werden gevraagd"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr "opt->arg zou niet NULL mogen zijn"
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "aliassen zijn te diep genest"
+
+# of toch beter "quoting" behouden?
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "fout in de aanhaling van parameters"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "ongeldige numerieke waarde"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "getal is te klein of te groot"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr "reserveren van geheugen is mislukt"
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "onbekende fout"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "Deze hulptekst tonen"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "Een korte gebruikssamenvatting tonen"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr "De standaardwaarden van opties tonen in de tekst"
+
+#: popthelp.c:92
+msgid "Terminate options"
+msgstr "Opties beëindigen"
+
+# of "Help-opties:"?
+#: popthelp.c:191
+msgid "Help options:"
+msgstr "Hulp-opties:"
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr "Opties geïmplementeerd d.m.v. popt alias/exec:"
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "GEEN"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "WAARDE"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "INT"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "LONG"
+
+#: popthelp.c:208
+msgid "LONGLONG"
+msgstr "LONGLONG"
+
+# TEKENREEKS lijkt me niet gepast; dus ofwel STRING behouden, ofwel TEKST
+#: popthelp.c:209
+msgid "STRING"
+msgstr "TEKST"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "FLOAT"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "DOUBLE"
+
+# of hier ARGUMENT van maken?
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ARG"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "Gebruik:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[OPTIE...]"

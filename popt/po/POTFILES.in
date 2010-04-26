@@ -1,0 +1,11 @@
+# List of files which contain translatable strings.
+
+# Package source files
+
+popt.c
+popt.h
+poptconfig.c
+popthelp.c
+poptint.c
+poptparse.c
+test1.c

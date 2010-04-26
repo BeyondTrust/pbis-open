@@ -1,0 +1,138 @@
+# Translation of popt to German (Deutsch)
+# This file is distributed under the same license as the popt package.
+# Robert Scheck <rpm@robert-scheck.de>, 2004-2007.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: popt 1.11\n"
+"Report-Msgid-Bugs-To: <popt-devel@rpm5.org>\n"
+"POT-Creation-Date: 2009-04-12 20:14+0200\n"
+"PO-Revision-Date: 2007-02-17 21:00+0100\n"
+"Last-Translator: Robert Scheck <rpm@robert-scheck.de>\n"
+"Language-Team: German <de@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: popt.c:47
+msgid "unknown errno"
+msgstr "Unbekannte Fehler-Nummer"
+
+#: popt.c:1031
+#, fuzzy, c-format
+msgid "option type (%u) not implemented in popt\n"
+msgstr "Optionstyp (%d) ist in popt nicht vorhanden\n"
+
+#: popt.c:1452
+msgid "missing argument"
+msgstr "Fehlendes Argument"
+
+#: popt.c:1454
+msgid "unknown option"
+msgstr "Unbekannte Option"
+
+#: popt.c:1456
+msgid "mutually exclusive logical operations requested"
+msgstr "Gegenseitig ausschließende logische Operatoren"
+
+#: popt.c:1458
+msgid "opt->arg should not be NULL"
+msgstr "opt->arg sollte nicht NULL sein"
+
+#: popt.c:1460
+msgid "aliases nested too deeply"
+msgstr "Aliase zu tief verschachtelt"
+
+#: popt.c:1462
+msgid "error in parameter quoting"
+msgstr "Fehler beim Quotieren der Parameter"
+
+#: popt.c:1464
+msgid "invalid numeric value"
+msgstr "Ungültiger nummerischer Wert"
+
+#: popt.c:1466
+msgid "number too large or too small"
+msgstr "Nummer zu groß oder zu klein"
+
+#: popt.c:1468
+msgid "memory allocation failed"
+msgstr "Speicherzuordnung fehlgeschlagen"
+
+#: popt.c:1470
+msgid "config file failed sanity test"
+msgstr ""
+
+#: popt.c:1474
+msgid "unknown error"
+msgstr "Unbekannter Fehler"
+
+#: popthelp.c:75 popthelp.c:86
+msgid "Show this help message"
+msgstr "Zeigt diese Hilfe an"
+
+#: popthelp.c:76 popthelp.c:87
+msgid "Display brief usage message"
+msgstr "Zeigt eine kurze Verwendungsinformation"
+
+#: popthelp.c:90
+msgid "Display option defaults in message"
+msgstr "Zeigt die Standardeinstellungen an"
+
+#: popthelp.c:92
+#, fuzzy
+msgid "Terminate options"
+msgstr "Hilfe-Optionen:"
+
+#: popthelp.c:191
+msgid "Help options:"
+msgstr "Hilfe-Optionen:"
+
+#: popthelp.c:192
+msgid "Options implemented via popt alias/exec:"
+msgstr "Optionen über popt alias/exec implementiert:"
+
+#: popthelp.c:200
+msgid "NONE"
+msgstr "NICHTS"
+
+#: popthelp.c:202
+msgid "VAL"
+msgstr "WERT"
+
+#: popthelp.c:206
+msgid "INT"
+msgstr "INTEGER"
+
+#: popthelp.c:207
+msgid "LONG"
+msgstr "LONG"
+
+#: popthelp.c:208
+#, fuzzy
+msgid "LONGLONG"
+msgstr "LONG"
+
+#: popthelp.c:209
+msgid "STRING"
+msgstr "STRING"
+
+#: popthelp.c:210
+msgid "FLOAT"
+msgstr "FLOAT"
+
+#: popthelp.c:211
+msgid "DOUBLE"
+msgstr "DOUBLE"
+
+#: popthelp.c:214
+msgid "ARG"
+msgstr "ARGUMENT"
+
+#: popthelp.c:644
+msgid "Usage:"
+msgstr "Verwendung:"
+
+#: popthelp.c:667
+msgid "[OPTION...]"
+msgstr "[OPTION...]"
