@@ -117,16 +117,16 @@ LsaSrvInitNpAuthInfo(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PUCHAR pucSessionKey = NULL;
-    USHORT usSessionKeyLen = 0;
+    unsigned16 SessionKeyLen = 0;
     PBYTE pSessionKey = NULL;
     DWORD dwSessionKeyLen = 0;
 
     rpc_smb_transport_info_inq_session_key(
                                    hTransportInfo,
                                    (unsigned char**)&pucSessionKey,
-                                   (unsigned16*)&usSessionKeyLen);
+                                   &SessionKeyLen);
 
-    dwSessionKeyLen = usSessionKeyLen;
+    dwSessionKeyLen = SessionKeyLen;
     if (dwSessionKeyLen)
     {
         dwError = LwAllocateMemory(dwSessionKeyLen,
