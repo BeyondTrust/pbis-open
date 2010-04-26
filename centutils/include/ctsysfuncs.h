@@ -82,7 +82,7 @@ BOOLEAN
 IsRoot(void);
 
 #ifndef HAVE_MKDTEMP
-char *mkdtemp(char *template);
+char *mkdtemp(char *temp);
 #endif
 
 #endif /* __SYSFUNCS_H__ */

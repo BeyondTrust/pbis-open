@@ -54,6 +54,7 @@
  * license@likewisesoftware.com
  */
 
+#include "lw/types.h"
 #ifdef HAVE_CONFIG_H
 #    include <config.h>
 #endif
@@ -117,26 +118,26 @@ IsRoot()
 }
 
 #ifndef HAVE_MKDTEMP
-char *mkdtemp(char *template)
+char *mkdtemp(char *temp)
 {
     unsigned int seed = 0;
     int attempt;
     struct timespec curtime;
     size_t templateLen;
 
-    if(template == NULL)
+    if(temp == NULL)
     {
         errno = EINVAL;
         return NULL;
     }
 
-    templateLen = strlen(template);
+    templateLen = strlen(temp);
     if(templateLen < 6)
     {
         errno = EINVAL;
         return NULL;
     }
-    if(strcmp(template + templateLen - 6, "XXXXXX"))
+    if(strcmp(temp + templateLen - 6, "XXXXXX"))
     {
         errno = EINVAL;
         return NULL;
@@ -149,15 +150,15 @@ char *mkdtemp(char *template)
         seed += (unsigned int)curtime.tv_nsec;
         seed += (unsigned int)getpid();
 
-        sprintf(template + templateLen - 6, "%.6X", rand_r(&seed) & 0xFFFFFF);
+        sprintf(temp + templateLen - 6, "%.6X", rand_r(&seed) & 0xFFFFFF);
 
-        if(mkdir(template, 0700) < 0)
+        if(mkdir(temp, 0700) < 0)
         {
             if(errno == EEXIST || errno == ELOOP || errno == ENOENT || errno == ENOTDIR)
                 continue;
             return NULL;
         }
-        return template;
+        return temp;
     }
     return NULL;
 }
