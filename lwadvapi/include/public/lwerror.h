@@ -724,6 +724,13 @@
 #define LW_ERROR_KRB5_PROF_BAD_INTEGER                     42180
 #define LW_ERROR_KRB5_PROF_MAGIC_FILE_DATA                 42181
 
+//
+// 49900-49999 reserved for internal PAM error code mapping
+//
+
+#define _LW_ERROR_PAM_BASE                                 49900
+#define _LW_ERROR_PAM_MAX                                  49999
+
 size_t
 LwGetErrorString(
     LW_IN LW_DWORD dwError,

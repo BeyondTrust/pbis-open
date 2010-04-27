@@ -55,5 +55,16 @@ LsaPamMapErrorCode(
     PPAMCONTEXT pPamContext
     );
 
+static
+inline
+DWORD
+LsaPamUnmapErrorCode(
+    int iPamError
+    )
+{
+    assert(iPamError <= (_LW_ERROR_PAM_MAX - _LW_ERROR_PAM_BASE));
+    return iPamError ? (_LW_ERROR_PAM_BASE + iPamError) : LW_ERROR_SUCCESS;
+}
+
 #endif /* __PAM_ERROR_H__ */
 

@@ -63,6 +63,7 @@ pam_sm_authenticate(
     PLSA_USER_INFO_0 pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
     PSTR pszMessage = NULL;
+    int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -92,10 +93,11 @@ pam_sm_authenticate(
         if (currentRepository == NULL)
         {
             struct pam_repository files = { "files", NULL, 0 };
-            int pam_result = pam_set_item(pamh, PAM_REPOSITORY, &files);
-            if (pam_result != PAM_SUCCESS)
+            iPamError = pam_set_item(pamh, PAM_REPOSITORY, &files);
+            dwError = LsaPamUnmapErrorCode(iPamError);
+            if (dwError)
             {
-                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %d]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", pam_result);
+                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %d]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
@@ -143,7 +145,7 @@ pam_sm_authenticate(
             // deal with this error in the
             // next call to pam_sm_acct_mgmt
             pPamContext->bPasswordExpired = TRUE;
-            dwError = PAM_SUCCESS;
+            dwError = 0;
         }
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -184,10 +186,11 @@ pam_sm_authenticate(
         {
             LSA_LOG_PAM_INFO("Canonicalizing pam username from '%s' to '%s'\n",
                     pszLoginId, pUserInfo->pszName);
-            dwError = pam_set_item(
+            iPamError = pam_set_item(
                     pamh,
                     PAM_USER,
                     pUserInfo->pszName);
+            dwError = LsaPamUnmapErrorCode(iPamError);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
@@ -276,6 +279,7 @@ pam_sm_setcred(
     PPAMCONTEXT pPamContext = NULL;
     DWORD dwUserInfoLevel = 0;
     PLSA_USER_INFO_0 pUserInfo = NULL;
+    int iPamError = 0;
 
     dwError = LsaPamGetConfig(&pConfig);
     BAIL_ON_LSA_ERROR(dwError);
@@ -338,19 +342,19 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_setcred::end");
 
-    dwError = LsaPamMapErrorCode(dwError, pPamContext);
+    iPamError = LsaPamMapErrorCode(dwError, pPamContext);
 #ifdef __LWI_SOLARIS__
-    if (dwError == PAM_SUCCESS)
+    if (iPamError == PAM_SUCCESS)
     {
         /* Typically on Solaris a pam module would need to call setproject
          * here. It is rather complicated to determine what to set the project
          * to. Instead, if PAM_IGNORE is returned, pam_unix_cred will set the
          * project.
         */
-        dwError = PAM_IGNORE;
+        iPamError = PAM_IGNORE;
     }
 #endif
-    return dwError;
+    return iPamError;
 
 error:
     if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)

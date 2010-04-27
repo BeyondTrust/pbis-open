@@ -48,7 +48,7 @@
  */
 #include "pam-lsass.h"
 
-int
+DWORD
 LsaPamConverse(
     pam_handle_t* pamh,
     PCSTR         pszPrompt,
@@ -56,19 +56,21 @@ LsaPamConverse(
     PSTR*         ppszResponse
     )
 {
-    DWORD  dwError = PAM_SUCCESS;
+    DWORD  dwError = 0;
     struct pam_conv* pConv = NULL;
     struct pam_response* pResponse = NULL;
     struct pam_message msg;
     struct pam_message* pMsg = NULL;
     PSTR   pszResponse = NULL;
+    int    iPamError = 0;
     
-    dwError = pam_get_item(pamh, PAM_CONV, (PAM_GET_ITEM_TYPE)&pConv);
+    iPamError = pam_get_item(pamh, PAM_CONV, (PAM_GET_ITEM_TYPE)&pConv);
+    dwError = LsaPamUnmapErrorCode(iPamError);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (!pConv)
     {
-        dwError = PAM_CONV_ERR;
+        dwError = LsaPamUnmapErrorCode(PAM_CONV_ERR);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
@@ -80,10 +82,11 @@ LsaPamConverse(
     
     if (pConv->conv)
     {
-        dwError = pConv->conv(1,
+        iPamError = pConv->conv(1,
                 (PAM_CONV_2ND_ARG_TYPE)&pMsg,
                 &pResponse,
                 pConv->appdata_ptr);
+        dwError = LsaPamUnmapErrorCode(iPamError);
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
@@ -98,7 +101,7 @@ LsaPamConverse(
         case PAM_PROMPT_ECHO_OFF:
             if (pResponse == NULL || (pResponse->resp == NULL)) {
                 
-               dwError = PAM_CONV_ERR;
+               dwError = LsaPamUnmapErrorCode(PAM_CONV_ERR);
                BAIL_ON_LSA_ERROR(dwError);
                
             } else {
@@ -126,7 +129,7 @@ cleanup:
         free(pResponse);
     }
 
-    return LsaPamMapErrorCode(dwError, NULL);
+    return dwError;
     
 error:
 

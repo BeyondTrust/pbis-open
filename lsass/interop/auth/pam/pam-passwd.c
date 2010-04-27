@@ -158,7 +158,7 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamCheckCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT pPamContext
@@ -236,7 +236,7 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamMustCheckCurrentPassword(
     HANDLE   hLsaConnection,
     PCSTR    pszLoginId,
@@ -413,7 +413,7 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamGetCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
@@ -424,6 +424,7 @@ LsaPamGetCurrentPassword(
     PSTR pszPassword = NULL;
     BOOLEAN bPrompt = TRUE;
     PPAMOPTIONS pPamOptions = &pPamContext->pamOptions;
+    int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("LsaPamGetCurrentPassword::begin");
 
@@ -431,13 +432,14 @@ LsaPamGetCurrentPassword(
         pPamOptions->bUseFirstPass) {
         PCSTR pszItem = NULL;
 
-        dwError = pam_get_item(
+        iPamError = pam_get_item(
                         pamh,
                         PAM_AUTHTOK,
                         (PAM_GET_ITEM_TYPE)&pszItem);
-        if (dwError != PAM_SUCCESS)
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        if (dwError)
         {
-            if (dwError == PAM_BAD_ITEM)
+            if (dwError == LsaPamUnmapErrorCode(PAM_BAD_ITEM))
             {
                 if (pPamOptions->bUseFirstPass)
                 {
@@ -476,10 +478,11 @@ LsaPamGetCurrentPassword(
                         &pszPassword);
        BAIL_ON_LSA_ERROR(dwError);
 
-       dwError = pam_set_item(
+       iPamError = pam_set_item(
                        pamh,
                        PAM_AUTHTOK,
                        (const void*) pszPassword);
+       dwError = LsaPamUnmapErrorCode(iPamError);
        BAIL_ON_LSA_ERROR(dwError);
 
     }
@@ -490,7 +493,7 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("LsaPamGetCurrentPassword::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return dwError;
 
 error:
 
@@ -503,17 +506,18 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamGetOldPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT pPamContext,
     PSTR* ppszPassword
     )
 {
-    int dwError = 0;
+    DWORD dwError = 0;
     PSTR pszPassword = NULL;
     BOOLEAN bPrompt = TRUE;
     PPAMOPTIONS pPamOptions = &pPamContext->pamOptions;
+    int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("LsaPamGetOldPassword::begin");
 
@@ -529,17 +533,19 @@ LsaPamGetOldPassword(
 
         /* HP-UX likes to clear PAM_OLDAUTHTOK between the two phases
            of chauthtok, so we also grab our saved version in this case */
-        dwError = pam_get_data(
+        iPamError = pam_get_data(
             pamh,
             PAM_LSASS_OLDAUTHTOK,
             (PAM_GET_DATA_TYPE)&pszItem);
+        dwError = LsaPamUnmapErrorCode(iPamError);
 #else
-        dwError = pam_get_item(
+        iPamError = pam_get_item(
             pamh,
             PAM_OLDAUTHTOK,
             (PAM_GET_ITEM_TYPE)&pszItem);
+        dwError = LsaPamUnmapErrorCode(iPamError);
 #endif
-        if (dwError == PAM_BAD_ITEM ||
+        if (dwError == LsaPamUnmapErrorCode(PAM_BAD_ITEM) ||
             pszItem == NULL)
         {
             if (pPamOptions->bUseFirstPass)
@@ -553,7 +559,7 @@ LsaPamGetOldPassword(
                 dwError = 0;
             }
         }
-        else if (dwError != PAM_SUCCESS)
+        else if (dwError)
         {
            BAIL_ON_LSA_ERROR(dwError);
         }
@@ -576,10 +582,11 @@ LsaPamGetOldPassword(
                             &pszPassword);
        BAIL_ON_LSA_ERROR(dwError);
 
-       dwError = pam_set_item(
+       iPamError = pam_set_item(
                        pamh,
                        PAM_OLDAUTHTOK,
                        (const void*) pszPassword);
+       dwError = LsaPamUnmapErrorCode(iPamError);
        BAIL_ON_LSA_ERROR(dwError);
 
 #ifdef __LWI_HP_UX__
@@ -596,7 +603,7 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("LsaPamGetOldPassword::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return dwError;
 
 error:
 
@@ -609,20 +616,21 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamGetNewPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
     PSTR*         ppszPassword
     )
 {
-    int dwError = PAM_SUCCESS;
+    DWORD dwError = 0;
     PSTR pszPassword_1 = NULL;
     PSTR pszPassword_2 = NULL;
     DWORD dwLen_1 = 0;
     DWORD dwLen_2 = 0;
     BOOLEAN bPrompt = TRUE;
     PPAMOPTIONS pPamOptions = &pPamContext->pamOptions;
+    int iPamError = 0;
 
     LSA_LOG_PAM_DEBUG("LsaPamGetNewPassword::begin");
 
@@ -630,10 +638,11 @@ LsaPamGetNewPassword(
 
         PCSTR pszItem = NULL;
 
-        dwError = pam_get_item(
+        iPamError = pam_get_item(
                     pamh,
                     PAM_AUTHTOK,
                     (PAM_GET_ITEM_TYPE)&pszItem);
+        dwError = LsaPamUnmapErrorCode(iPamError);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pszItem)) {
@@ -671,7 +680,7 @@ LsaPamGetNewPassword(
            (strcmp(pszPassword_1, pszPassword_2) != 0))
        {
            LsaPamConverse(pamh, "Passwords do not match", PAM_ERROR_MSG, NULL);
-           dwError = PAM_SUCCESS;
+           dwError = 0;
 
            LW_SAFE_CLEAR_FREE_STRING(pszPassword_1);
            LW_SAFE_CLEAR_FREE_STRING(pszPassword_2);
@@ -679,10 +688,11 @@ LsaPamGetNewPassword(
        }
        else
        {
-           dwError = pam_set_item(
+           iPamError = pam_set_item(
                        pamh,
                        PAM_AUTHTOK,
                        (const void*) pszPassword_1);
+           dwError = LsaPamUnmapErrorCode(iPamError);
            BAIL_ON_LSA_ERROR(dwError);
 
            bPrompt = FALSE;
@@ -697,7 +707,7 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("LsaPamGetNewPassword::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return dwError;
 
 error:
 

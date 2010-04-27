@@ -49,7 +49,7 @@
 #ifndef __PAM_CONV_H__
 #define __PAM_CONV_H__
 
-int
+DWORD
 LsaPamConverse(
     pam_handle_t* pamh,
     PCSTR         pszPrompt,

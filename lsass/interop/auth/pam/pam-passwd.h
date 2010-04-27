@@ -74,13 +74,13 @@ pam_sm_chauthtok(
     const char**  argv
     );
 
-int
+DWORD
 LsaPamCheckCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT pPamContext
     );
 
-int
+DWORD
 LsaPamMustCheckCurrentPassword(
     HANDLE   hLsaConnection,
     PCSTR    pszLoginId,
@@ -92,21 +92,21 @@ LsaPamUpdatePassword(
     PPAMCONTEXT   pPamContext
     );
 
-int
+DWORD
 LsaPamGetCurrentPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
     PSTR*         ppszPassword 
     );
 
-int
+DWORD
 LsaPamGetOldPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT pPamContext,
     PSTR* ppszPassword
     );
 
-int
+DWORD
 LsaPamGetNewPassword(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,

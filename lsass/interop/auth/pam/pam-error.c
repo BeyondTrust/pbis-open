@@ -60,6 +60,12 @@ LsaPamMapErrorCode(
        goto cleanup;
     }
 
+    if ((_LW_ERROR_PAM_BASE <= dwError) && (dwError <= _LW_ERROR_PAM_MAX))
+    {
+        ret = dwError - _LW_ERROR_PAM_BASE;
+        goto cleanup;
+    }
+
     switch(dwError)
     {
         case LW_ERROR_NOT_HANDLED:

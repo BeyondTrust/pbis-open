@@ -57,7 +57,7 @@ pam_sm_open_session(
     const char**  argv
     );
 
-int
+DWORD
 LsaPamDisplayMOTD(
     pam_handle_t* pamh,
     PPAMCONTEXT    pPamContext

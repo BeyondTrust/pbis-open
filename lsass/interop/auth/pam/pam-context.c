@@ -48,7 +48,7 @@
  */
 #include "pam-lsass.h"
 
-int
+DWORD
 LsaPamGetContext(
     pam_handle_t* pamh, 
     int           flags, 
@@ -60,16 +60,16 @@ LsaPamGetContext(
     DWORD       dwError = 0;
     PPAMCONTEXT pPamContext = NULL;
     BOOLEAN     bFreeContext = FALSE;
+    int         iPamError = 0;
     
     LSA_LOG_PAM_DEBUG("LsaPamGetContext::begin");
     
-    dwError = pam_get_data(pamh, MODULE_NAME, (PAM_GET_DATA_TYPE)&pPamContext);
-    if (PAM_SUCCESS != dwError)
+    iPamError = pam_get_data(pamh, MODULE_NAME, (PAM_GET_DATA_TYPE)&pPamContext);
+    dwError = LsaPamUnmapErrorCode(iPamError);
+    if (dwError)
     {
-        switch(dwError)
+        if (dwError == LsaPamUnmapErrorCode(PAM_NO_MODULE_DATA))
         {
-            case PAM_NO_MODULE_DATA:
-                
                 dwError = LwAllocateMemory(
                                 sizeof(PAMCONTEXT),
                                 (PVOID*)&pPamContext);
@@ -77,19 +77,18 @@ LsaPamGetContext(
 
                 bFreeContext = TRUE;
 
-                dwError = pam_set_data(
+                iPamError = pam_set_data(
                                 pamh,
                                 MODULE_NAME,
                                 (PVOID)pPamContext,
                                 &LsaPamCleanupContext);
+                dwError = LsaPamUnmapErrorCode(iPamError);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 bFreeContext = FALSE;
-                
-                break;
-                
-            default:
-
+        }
+        else
+        {
                 BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -111,7 +110,7 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("LsaPamGetContext::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return dwError;
 
 error:
 
@@ -126,7 +125,7 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamGetOptions(
     pam_handle_t* pamh,
     int           flags,
@@ -172,10 +171,10 @@ LsaPamGetOptions(
     
     LSA_LOG_PAM_DEBUG("LsaPamGetOptions::end");
 
-    return LsaPamMapErrorCode(dwError, NULL);
+    return dwError;
 }
 
-int
+DWORD
 LsaPamGetLoginId(
     pam_handle_t* pamh,
     PPAMCONTEXT   pPamContext,
@@ -186,16 +185,18 @@ LsaPamGetLoginId(
     DWORD dwError = 0;
     PSTR pszLoginId = NULL;
     PSTR pszPamId = NULL;
+    int iPamError = 0;
     
     LSA_LOG_PAM_DEBUG("LsaPamGetLoginId::begin");
 
         
-    dwError = pam_get_item(
+    iPamError = pam_get_item(
                     pamh,
                     PAM_USER,
                     (PAM_GET_ITEM_TYPE)&pszPamId);
+    dwError = LsaPamUnmapErrorCode(iPamError);
 #if HAVE_DECL_PAM_BAD_ITEM
-    if (dwError == PAM_BAD_ITEM)
+    if (dwError == LsaPamUnmapErrorCode(PAM_BAD_ITEM))
     {
         pszPamId = NULL;
         dwError = 0;
@@ -204,19 +205,21 @@ LsaPamGetLoginId(
     BAIL_ON_LSA_ERROR(dwError);
     if (LW_IS_NULL_OR_EMPTY_STR(pszPamId) && bAllowPrompt)
     {
-        dwError = pam_get_user(
+        iPamError = pam_get_user(
                         pamh,
                         (PPCHAR_ARG_CAST)&pszPamId,
                         NULL);
-        if (dwError != PAM_SUCCESS)
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        if (dwError)
         {
-           dwError = (dwError == PAM_CONV_AGAIN) ?
-               PAM_INCOMPLETE : PAM_SERVICE_ERR;
+           dwError = (dwError == LsaPamUnmapErrorCode(PAM_CONV_AGAIN)) ?
+               LsaPamUnmapErrorCode(PAM_INCOMPLETE) :
+               LsaPamUnmapErrorCode(PAM_SERVICE_ERR);
            BAIL_ON_LSA_ERROR(dwError);
         }
 	    if (LW_IS_NULL_OR_EMPTY_STR(pszPamId))
 	    {
-	       dwError = PAM_SERVICE_ERR;
+	       dwError = LsaPamUnmapErrorCode(PAM_SERVICE_ERR);
 	       BAIL_ON_LSA_ERROR(dwError);
 	    }
     }
@@ -243,7 +246,7 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("LsaPamGetLoginId::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return dwError;
 
 error:
 
@@ -314,11 +317,13 @@ LsaPamSetDataString(
 {
     DWORD dwError = 0;
     PSTR pszStrCopy = NULL;
+    int iPamError = 0;
 
     dwError = LwAllocateString(pszStr, &pszStrCopy);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = pam_set_data(pamh, pszKey, pszStrCopy, LsaPamCleanupDataString);
+    iPamError = pam_set_data(pamh, pszKey, pszStrCopy, LsaPamCleanupDataString);
+    dwError = LsaPamUnmapErrorCode(iPamError);
     BAIL_ON_LSA_ERROR(dwError);
 
 error:

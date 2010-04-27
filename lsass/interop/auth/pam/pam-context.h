@@ -72,7 +72,7 @@ typedef struct _PAMCONTEXT
     
 } PAMCONTEXT, *PPAMCONTEXT;
 
-int
+DWORD
 LsaPamGetContext(
     pam_handle_t* pamh, 
     int           flags, 
@@ -81,7 +81,7 @@ LsaPamGetContext(
     PPAMCONTEXT*  ppContext
     );
 
-int
+DWORD
 LsaPamGetOptions(
     pam_handle_t* pamh,
     int           flags,
@@ -90,7 +90,7 @@ LsaPamGetOptions(
     PPAMOPTIONS   pPamOptions
     );
 
-int
+DWORD
 LsaPamGetLoginId(
     pam_handle_t* pamh,
     PPAMCONTEXT   pContext,

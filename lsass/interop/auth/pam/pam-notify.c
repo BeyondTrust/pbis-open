@@ -116,14 +116,14 @@ GPLogMessageCB(
     /* We don't do anything with this */
 }
 
-int
-pam_notify_user_logon(
+DWORD
+LsaPamNotifyUserLogon(
     PSTR pszLoginId
     )
 {
     DWORD dwError = 0;
 
-    LSA_LOG_PAM_DEBUG("pam_notify_user_logon::begin");
+    LSA_LOG_PAM_DEBUG("LsaPamNotifyUserLogon::begin");
 
     if (pszLoginId == NULL)
     {
@@ -136,7 +136,7 @@ pam_notify_user_logon(
 
 cleanup:
 
-    LSA_LOG_PAM_DEBUG("pam_notify_user_logon::end");
+    LSA_LOG_PAM_DEBUG("LsaPamNotifyUserLogon::end");
 
     return dwError;
 
@@ -144,13 +144,13 @@ error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("pam_notify_user_logon failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogon failed [login:%s][error code: %d]", 
                             LSA_SAFE_LOG_STRING(pszLoginId),
                             dwError);
     }
     else
     {
-        LSA_LOG_PAM_INFO("pam_notify_user_logon failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_INFO("LsaPamNotifyUserLogon failed [login:%s][error code: %d]", 
                          LSA_SAFE_LOG_STRING(pszLoginId),
                          dwError);
     }
@@ -159,14 +159,14 @@ error:
 }
 
 
-int
-pam_notify_user_logoff(
+DWORD
+LsaPamNotifyUserLogoff(
     PSTR pszLoginId
     )
 {
     DWORD dwError = 0;
 
-    LSA_LOG_PAM_DEBUG("pam_notify_user_logoff::begin");
+    LSA_LOG_PAM_DEBUG("LsaPamNotifyUserLogoff::begin");
 
     if (pszLoginId == NULL)
     {
@@ -179,18 +179,18 @@ pam_notify_user_logoff(
 
 cleanup:
 
-    LSA_LOG_PAM_DEBUG("pam_notify_user_logoff::end");
+    LSA_LOG_PAM_DEBUG("LsaPamNotifyUserLogoff::end");
     return dwError;
 
 error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("pam_notify_user_logoff error [error code:%d]", dwError);
+        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogoff error [error code:%d]", dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_notify_user_logoff error [error code:%d]", dwError);
+        LSA_LOG_PAM_ERROR("LsaPamNotifyUserLogoff error [error code:%d]", dwError);
     }
 
     goto cleanup;

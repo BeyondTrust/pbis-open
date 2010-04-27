@@ -103,7 +103,7 @@ pam_sm_open_session(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = pam_notify_user_logon(
+    dwError = LsaPamNotifyUserLogon(
                     pszLoginId);
     if (dwError == LW_ERROR_LOAD_LIBRARY_FAILED ||
         dwError == LW_ERROR_LOOKUP_SYMBOL_FAILED )
@@ -147,7 +147,7 @@ error:
     goto cleanup;
 }
 
-int
+DWORD
 LsaPamDisplayMOTD(
     pam_handle_t* pamh,
     PPAMCONTEXT    pPamContext
@@ -261,7 +261,7 @@ pam_sm_close_session(
                             pszLoginId);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = pam_notify_user_logoff(
+    dwError = LsaPamNotifyUserLogoff(
                     pszLoginId);
     if (dwError == LW_ERROR_LOAD_LIBRARY_FAILED ||
         dwError == LW_ERROR_LOOKUP_SYMBOL_FAILED )

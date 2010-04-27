@@ -50,13 +50,13 @@
 #ifndef __PAM_NOTIFY_H__
 #define __PAM_NOTIFY_H__
 
-int
-pam_notify_user_logon(
+DWORD
+LsaPamNotifyUserLogon(
     PSTR pszLoginId
     );
 
-int
-pam_notify_user_logoff(
+DWORD
+LsaPamNotifyUserLogoff(
     PSTR pszLoginId
     );
 
