@@ -139,17 +139,40 @@ NetrSrvWkstaGetInfo(
                                   hLocalPolicy,
                                   LSA_POLICY_INFO_DNS,
                                   &pPolInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (ntStatus == STATUS_SUCCESS)
+    {
+        dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
+                                    &pwszDnsDomain,
+                                    &pPolInfo->dns.dns_domain);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
-                                &pwszDnsDomain,
-                                (PUNICODE_STRING)&pPolInfo->dns.dns_domain);
-    BAIL_ON_LSA_ERROR(dwError);
+        dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
+                                    &pwszHostname,
+                                    &pPolInfo->dns.name);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (ntStatus == STATUS_INVALID_INFO_CLASS)
+    {
+        ntStatus = STATUS_SUCCESS;
+        /*
+         * Not joined to a domain, return our localhost as our name
+         * and WORKGROUP for the dns domain.  This matches matches
+         * what Windows XP does over the wire.
+         */
 
-    dwError = WkssSrvAllocateWC16StringFromUnicodeStringEx(
-                                  &pwszHostname,
-                                  (PUNICODE_STRING)&pPolInfo->dns.name);
-    BAIL_ON_LSA_ERROR(dwError);
+        pwszHostname = pwszLocalHost;
+        pwszLocalHost = NULL;
+
+        dwError = WkssSrvAllocateWC16StringFromCString(
+                                    &pwszDnsDomain,
+                                    "WORKGROUP"
+                                    );
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     pInfo100->wksta100_domain        = pwszDnsDomain;
     pInfo100->wksta100_name          = pwszHostname;

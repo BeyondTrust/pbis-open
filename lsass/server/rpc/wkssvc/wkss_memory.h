@@ -68,4 +68,11 @@ WkssSrvAllocateWC16StringFromUnicodeStringEx(
     );
 
 
+DWORD
+WkssSrvAllocateWC16StringFromCString(
+    OUT PWSTR    *ppwszOut,
+    IN  PSTR      pszIn
+    );
+
+
 #endif /* _WKSS_MEMORY_H_ */

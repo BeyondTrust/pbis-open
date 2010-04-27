@@ -93,6 +93,11 @@ WkssSrvAllocateWC16StringFromUnicodeStringEx(
     BAIL_ON_INVALID_PTR(ppwszOut, dwError);
     BAIL_ON_INVALID_PTR(pIn, dwError);
 
+    if (pIn->MaximumLength > 0 && pIn->Buffer == NULL)
+    {
+        goto cleanup;
+    }
+
     dwError = WkssSrvAllocateMemory(OUT_PPVOID(&pwszStr),
                                     pIn->MaximumLength * sizeof(WCHAR));
     BAIL_ON_LSA_ERROR(dwError);
@@ -101,6 +106,42 @@ WkssSrvAllocateWC16StringFromUnicodeStringEx(
                           pIn->Buffer,
                           pIn->Length / sizeof(WCHAR));
     BAIL_ON_LSA_ERROR(dwError);
+
+    *ppwszOut = pwszStr;
+
+cleanup:
+    return dwError;
+
+error:
+    if (pwszStr)
+    {
+        WkssSrvFreeMemory(pwszStr);
+    }
+
+    *ppwszOut = NULL;
+    goto cleanup;
+}
+
+
+DWORD
+WkssSrvAllocateWC16StringFromCString(
+    OUT PWSTR    *ppwszOut,
+    IN  PSTR      pszIn
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PWSTR pwszStr = NULL;
+    size_t sLen = 0;
+
+    BAIL_ON_INVALID_PTR(ppwszOut, dwError);
+    BAIL_ON_INVALID_PTR(pszIn, dwError);
+
+    sLen = strlen(pszIn);
+    dwError = WkssSrvAllocateMemory(OUT_PPVOID(&pwszStr),
+                                    sizeof(pwszStr[0]) * (sLen + 1));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    mbstowc16s(pwszStr, pszIn, sLen);
 
     *ppwszOut = pwszStr;
 

@@ -163,6 +163,7 @@ LsaQueryDomainInfo(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
 
@@ -170,9 +171,18 @@ LsaQueryDomainInfo(
                                      &hStore);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    ntStatus = LwpsGetPasswordByCurrentHostName(hStore,
-                                                &pPassInfo);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    dwError = LwpsGetPasswordByCurrentHostName(hStore,
+                                               &pPassInfo);
+    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+    {
+        /* No password info means we're not joined */
+        ntStatus = STATUS_INVALID_INFO_CLASS;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     if (pPassInfo)
     {
@@ -186,7 +196,6 @@ LsaQueryDomainInfo(
     }
 
 cleanup:
-
     if (pPassInfo != NULL)
     {
         LwpsFreePasswordInfo(hStore, pPassInfo);
@@ -195,6 +204,12 @@ cleanup:
     if (hStore != NULL)
     {
         LwpsClosePasswordStore(hStore);
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;
@@ -239,7 +254,7 @@ LsaQueryDnsDomainInfo(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
     HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
     PWSTR pwszDnsForest = NULL;
@@ -253,9 +268,17 @@ LsaQueryDnsDomainInfo(
                                      &hStore);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    ntStatus = LwpsGetPasswordByCurrentHostName(hStore,
-                                                &pPassInfo);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    dwError = LwpsGetPasswordByCurrentHostName(hStore,
+                                               &pPassInfo);
+    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+    {
+        ntStatus = STATUS_INVALID_INFO_CLASS;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     if (pPassInfo)
     {
