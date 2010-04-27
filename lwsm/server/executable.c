@@ -38,6 +38,14 @@
 
 #include "includes.h"
 
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define ENVIRON (*_NSGetEnviron())
+#else
+extern char **environ;
+#define ENVIRON environ
+#endif
+
 typedef struct _SM_PROCESS_TABLE
 {
     pthread_mutex_t lock;
@@ -55,6 +63,7 @@ typedef struct _SM_EXECUTABLE
     LW_SERVICE_TYPE type;
     PWSTR pwszPath;
     PWSTR* ppwszArgs;
+    PWSTR* ppwszEnv;
     PLW_SERVICE_OBJECT pObject;
     SM_LINK link;
     SM_LINK threadLink;
@@ -230,7 +239,10 @@ LwSmExecProgram(
     DWORD dwError = 0;
     PSTR pszPath = NULL;
     PSTR* ppszArgs = NULL;
+    PSTR* ppszEnv = NULL;
     size_t argsLen = 0;
+    size_t envLen = 0;
+    size_t environLen = 0;
     size_t i = 0;
     sigset_t set;
 
@@ -244,7 +256,8 @@ LwSmExecProgram(
 
     argsLen = LwSmStringListLength(pExec->ppwszArgs);
 
-    dwError = LwAllocateMemory((argsLen + 1) * sizeof(*ppszArgs), OUT_PPVOID(&ppszArgs));
+    dwError = LwAllocateMemory((argsLen + 1) * sizeof(*ppszArgs),
+	OUT_PPVOID(&ppszArgs));
     BAIL_ON_ERROR(dwError);
 
     for (i = 0; i < argsLen; i++)
@@ -265,7 +278,26 @@ LwSmExecProgram(
         putenv("LIKEWISE_SM_NOTIFY=3");
     }
 
-    if (execv(pszPath, ppszArgs) < 0)
+    environLen = LwSmStringListLengthA(ENVIRON);
+    envLen = LwSmStringListLength(pExec->ppwszEnv);
+
+    dwError = LwAllocateMemory((environLen + envLen + 1) * sizeof(*ppszEnv),
+        OUT_PPVOID(&ppszEnv));
+    BAIL_ON_ERROR(dwError);
+
+    for (i = 0; i < environLen; i++)
+    {
+        dwError = LwAllocateString(ENVIRON[i], &ppszEnv[i]);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    for (i = 0; i < envLen; i++)
+    {
+        dwError = LwWc16sToMbs(pExec->ppwszEnv[i], &ppszEnv[environLen + i]);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (execve(pszPath, ppszArgs, ppszEnv) < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
         BAIL_ON_ERROR(dwError);
@@ -405,6 +437,9 @@ LwSmExecutableConstruct(
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pExec->ppwszArgs);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyStringList(pInfo->ppwszEnv, &pExec->ppwszEnv);
     BAIL_ON_ERROR(dwError);
 
     pExec->pid = -1;

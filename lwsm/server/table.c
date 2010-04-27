@@ -317,6 +317,11 @@ LwSmTableUpdateEntry(
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmCopyStringList(
+        mask & LW_SERVICE_INFO_MASK_ENVIRONMENT ? pInfo->ppwszEnv : pEntry->pInfo->ppwszEnv,
+        &pUpdate->ppwszEnv);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmCopyStringList(
         mask & LW_SERVICE_INFO_MASK_DEPENDENCIES ? pInfo->ppwszDependencies : pEntry->pInfo->ppwszDependencies,
         &pUpdate->ppwszDependencies);
     BAIL_ON_ERROR(dwError);

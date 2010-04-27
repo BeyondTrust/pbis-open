@@ -4,6 +4,7 @@
 "Description"="Likewise Security and Authentication Subsystem"
 "Path"="@SBINDIR@/lsassd"
 "Arguments"="@SBINDIR@/lsassd --syslog"
+"Environment"=""
 "Dependencies"="netlogon lwio lwreg rdr npfs"
 "Type"=dword:00000001
 

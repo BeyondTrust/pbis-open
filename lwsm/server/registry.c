@@ -195,6 +195,8 @@ LwSmRegistryReadServiceInfo(
         {'A', 'r', 'g', 'u', 'm', 'e', 'n', 't', 's', 0};
     static const WCHAR wszDependencies[] =
         {'D', 'e', 'p', 'e', 'n', 'd', 'e', 'n', 'c', 'i', 'e', 's', 0};
+    static const WCHAR wszEnvironment[] =
+        {'E', 'n', 'v', 'i', 'r', 'o', 'n', 'm', 'e', 'n', 't', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -252,6 +254,14 @@ LwSmRegistryReadServiceInfo(
         pwszParentKey,
         wszArguments,
         &pInfo->ppwszArgs);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadStringList(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszEnvironment,
+        &pInfo->ppwszEnv);
     BAIL_ON_ERROR(dwError);
 
     dwError = LwSmRegistryReadStringList(

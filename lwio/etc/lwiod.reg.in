@@ -4,6 +4,7 @@
 "Description"="Likewise IO Manager"
 "Path"="@SBINDIR@/lwiod"
 "Arguments"="@SBINDIR@/lwiod --syslog"
+"Environment"=""
 "Dependencies"="lwreg"
 "Type"=dword:00000001
 
@@ -11,6 +12,7 @@
 "Description"="Likewise CIFS Redirector"
 "Path"="@providerdir@/librdr.sys@MOD_EXT@"
 "Arguments"="rdr"
+"Environment"=""
 "Dependencies"="lwio"
 "Type"=dword:00000003
 
@@ -18,6 +20,7 @@
 "Description"="Likewise CIFS Server"
 "Path"="@providerdir@/libsrv.sys@MOD_EXT@"
 "Arguments"="srv"
+"Environment"=""
 "Dependencies"="lwio pvfs npfs lsass"
 "Type"=dword:00000003
 
@@ -32,6 +35,7 @@
 "Description"="Likewise Distributed Filesystem"
 "Path"="@providerdir@/libdfs.sys@MOD_EXT@"
 "Arguments"="dfs"
+"Environment"=""
 "Dependencies"="lwio"
 "Type"=dword:00000003
 
@@ -39,6 +43,7 @@
 "Description"="Likewise Named Pipe Filesystem"
 "Path"="@providerdir@/libnpfs.sys@MOD_EXT@"
 "Arguments"="npfs"
+"Environment"=""
 "Dependencies"="lwio"
 "Type"=dword:00000003
 

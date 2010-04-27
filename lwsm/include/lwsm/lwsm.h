@@ -157,20 +157,25 @@ typedef enum _LW_SERVICE_INFO_MASK
      */
     LW_SERVICE_INFO_MASK_ARGS         = 0x10,
     /**
+     * @brief Update environment variables
+     * @hideinitializer
+     */
+    LW_SERVICE_INFO_MASK_ENVIRONMENT  = 0x20,
+    /**
      * @brief Update dependencies
      * @hideinitializer
      */
-    LW_SERVICE_INFO_MASK_DEPENDENCIES = 0x20,
+    LW_SERVICE_INFO_MASK_DEPENDENCIES = 0x40,
     /**
      * @brief Update autostart flag
      * @hideinitializer
      */
-    LW_SERVICE_INFO_MASK_AUTOSTART    = 0x40,
+    LW_SERVICE_INFO_MASK_AUTOSTART    = 0x80,
     /**
      * @brief Update all flags
      * @hideinitializer
      */
-    LW_SERVICE_INFO_MASK_ALL          = 0x7F
+    LW_SERVICE_INFO_MASK_ALL          = 0xFF
 } LW_SERVICE_INFO_MASK, *PLW_SERVICE_INFO_MASK;
 
 /**
@@ -191,6 +196,8 @@ typedef struct _LW_SERVICE_INFO
     LW_PWSTR pwszPath;
     /** @brief Arguments to service when started */
     LW_PWSTR* ppwszArgs;
+    /** @brief Environment variables with which to start the service  */
+    LW_PWSTR* ppwszEnv;
     /** @brief Names of services on which this service depends */
     LW_PWSTR* ppwszDependencies;
     /** @brief Is this service automatically started? */

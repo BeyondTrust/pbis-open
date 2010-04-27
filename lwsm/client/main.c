@@ -924,6 +924,20 @@ LwSmInfo(
 
     printf("\n");
 
+    printf("Environment:");
+
+    for (i = 0; pInfo->ppwszEnv[i]; i++)
+    {
+         dwError = LwWc16sToMbs(pInfo->ppwszEnv[i], &pszTemp);
+         BAIL_ON_ERROR(dwError);
+
+         printf(" '%s'", pszTemp);
+
+         LW_SAFE_FREE_MEMORY(pszTemp);
+    }
+
+    printf("\n");
+
     printf("Dependencies:");
 
     for (i = 0; pInfo->ppwszDependencies[i]; i++)

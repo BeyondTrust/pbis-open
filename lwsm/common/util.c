@@ -93,6 +93,22 @@ LwSmStringListLength(
     return len;
 }
 
+size_t
+LwSmStringListLengthA(
+    PSTR* ppszStrings
+    )
+{
+    PSTR* ppszCursor = NULL;
+    size_t len = 0;
+
+    for (ppszCursor = ppszStrings; *ppszCursor; ppszCursor++)
+    {
+        len++;
+    }
+
+    return len;
+}
+
 DWORD
 LwSmCopyStringList(
     PWSTR* ppwszStrings,
@@ -231,6 +247,9 @@ LwSmCopyServiceInfo(
     dwError = LwSmCopyStringList(pInfo->ppwszArgs, &pCopy->ppwszArgs);
     BAIL_ON_ERROR(dwError);
 
+    dwError = LwSmCopyStringList(pInfo->ppwszEnv, &pCopy->ppwszEnv);
+    BAIL_ON_ERROR(dwError);
+
     dwError = LwSmCopyStringList(pInfo->ppwszDependencies, &pCopy->ppwszDependencies);
     BAIL_ON_ERROR(dwError);
 
@@ -273,6 +292,7 @@ LwSmCommonFreeServiceInfo(
         }
         
         LwSmFreeStringList(pInfo->ppwszArgs);
+        LwSmFreeStringList(pInfo->ppwszEnv);
         LwSmFreeStringList(pInfo->ppwszDependencies);
         LwFreeMemory(pInfo);
     }

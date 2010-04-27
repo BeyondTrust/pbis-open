@@ -107,6 +107,7 @@ static LWMsgTypeSpec gServiceInfoSpec[] =
     LWMSG_MEMBER_PWSTR(LW_SERVICE_INFO, pwszPath),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_TYPESPEC(LW_SERVICE_INFO, ppwszArgs, gStringListSpec),
+    LWMSG_MEMBER_TYPESPEC(LW_SERVICE_INFO, ppwszEnv, gStringListSpec),
     LWMSG_MEMBER_TYPESPEC(LW_SERVICE_INFO, ppwszDependencies, gStringListSpec),
     LWMSG_MEMBER_UINT8(LW_SERVICE_INFO, bAutostart),
     LWMSG_ATTR_RANGE(0, 1),

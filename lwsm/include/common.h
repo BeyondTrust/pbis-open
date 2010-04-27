@@ -159,6 +159,11 @@ LwSmStringListLength(
     PWSTR* ppwszStrings
     );
 
+size_t
+LwSmStringListLengthA(
+    PSTR* ppwszStrings
+    );
+
 DWORD
 LwSmCopyStringList(
     PWSTR* ppwszStrings,

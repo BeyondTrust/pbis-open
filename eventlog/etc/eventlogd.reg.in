@@ -4,6 +4,7 @@
 "Description"="Likewise Event Log Service"
 "Path"="@SBINDIR@/eventlogd"
 "Arguments"="@SBINDIR@/eventlogd --syslog"
+"Environment"=""
 "Dependencies"="dcerpc"
 "Type"=dword:00000001
 

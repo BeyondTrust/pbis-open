@@ -101,6 +101,13 @@ LwSmBootstrap(
             BAIL_ON_ERROR(dwError);
         }
 
+	/* Create empty Env list. */
+        dwError = LwAllocateMemory(
+            1 * sizeof(*pInfo->ppwszEnv), OUT_PPVOID(&pInfo->ppwszEnv));
+        BAIL_ON_ERROR(dwError);
+
+	pInfo->ppwszEnv[0] = NULL;
+
         dwError = LwAllocateMemory(
             1 * sizeof(*pInfo->ppwszDependencies),
             OUT_PPVOID(&pInfo->ppwszDependencies));
