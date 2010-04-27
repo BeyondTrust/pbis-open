@@ -58,8 +58,14 @@ NetrSrvJoinDomain2(
     /* [in] */ DWORD                     dwJoinFlags
     )
 {
+    const DWORD dwRequiredAccessRights = WKSSVC_ACCESS_JOIN_DOMAIN;
+
     DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     WKSS_SRV_CONTEXT SrvCtx = {0};
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = gpWkssSecDesc;
+    GENERIC_MAPPING GenericMapping = {0};
+    DWORD dwAccessGranted = 0;
     PWSTR pwszPassword = NULL;
     size_t sPasswordLen = 0;
     PSTR szHostname[255] = {0};
@@ -81,6 +87,17 @@ NetrSrvJoinDomain2(
     dwError = WkssSrvInitAuthInfo(hBinding,
                                   &SrvCtx);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (!RtlAccessCheck(pSecDesc,
+                        SrvCtx.pUserToken,
+                        dwRequiredAccessRights,
+                        0,
+                        &GenericMapping,
+                        &dwAccessGranted,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     dwError = WkssSrvDecryptPasswordBlob(&SrvCtx,
                                          pPassword,

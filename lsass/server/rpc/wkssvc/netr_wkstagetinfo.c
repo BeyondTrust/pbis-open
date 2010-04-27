@@ -56,12 +56,17 @@ NetrSrvWkstaGetInfo(
     /* [out] */ PNETR_WKSTA_INFO pInfo
     )
 {
+    const DWORD dwRequiredAccessRights = WKSSVC_ACCESS_GET_INFO_1;
+
     const DWORD dwPolicyAccessMask = LSA_ACCESS_LOOKUP_NAMES_SIDS |
                                      LSA_ACCESS_VIEW_POLICY_INFO;
 
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     WKSS_SRV_CONTEXT SrvCtx = {0};
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = gpWkssSecDesc;
+    GENERIC_MAPPING GenericMapping = {0};
+    DWORD dwAccessGranted = 0;
     PWKSTA_INFO_100 pInfo100 = NULL;
     CHAR szHostname[64] = {0};
     PWSTR pwszLpcProtSeq = NULL;
@@ -83,6 +88,17 @@ NetrSrvWkstaGetInfo(
     dwError = WkssSrvInitAuthInfo(hBinding,
                                   &SrvCtx);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (!RtlAccessCheck(pSecDesc,
+                        SrvCtx.pUserToken,
+                        dwRequiredAccessRights,
+                        0,
+                        &GenericMapping,
+                        &dwAccessGranted,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     dwError = WkssSrvAllocateMemory(OUT_PPVOID(&pInfo100),
                                     sizeof(*pInfo100));

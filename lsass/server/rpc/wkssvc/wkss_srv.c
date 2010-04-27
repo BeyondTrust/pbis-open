@@ -53,7 +53,7 @@ LsaInitializeRpcSrv(
     PLSA_RPCSRV_FUNCTION_TABLE* ppFnTable
     )
 {
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
 
     pthread_mutex_init(&gWkssSrvDataMutex, NULL);
 
@@ -69,10 +69,9 @@ LsaInitializeRpcSrv(
     dwError = WkssSrvReadRegistry(&gWkssSrvConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /*
     dwError = WkssSrvInitServerSecurityDescriptor(&gpWkssSecDesc);
     BAIL_ON_LSA_ERROR(dwError);
-    */
+
     bWkssSrvInitialised = TRUE;
 
 error:
@@ -86,14 +85,14 @@ LsaShutdownRpcSrv(
     PLSA_RPCSRV_FUNCTION_TABLE pFnTable
     )
 {
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
 
     dwError = RpcSvcUnregisterRpcInterface(wkssvc_v1_0_s_ifspec);
     BAIL_ON_LSA_ERROR(dwError);
-    /*
+
     dwError = WkssSrvDestroyServerSecurityDescriptor(&gpWkssSecDesc);
     BAIL_ON_LSA_ERROR(dwError);
-    */
+
     pthread_mutex_destroy(&gWkssSrvDataMutex);
 
     bWkssSrvInitialised = FALSE;

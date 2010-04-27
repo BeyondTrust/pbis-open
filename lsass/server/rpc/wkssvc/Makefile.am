@@ -17,16 +17,10 @@ libwkssvc_la_SOURCES =          \
     wkss_memory.c               \
     wkss_accesstoken.c          \
     wkss_crypto.c               \
+    wkss_security.c             \
     netr_wkstagetinfo.c         \
     netr_joindomain2.c          \
     netr_unjoindomain2.c
-
-#libwkssvc_la_SOURCES =          \
-#    globals.c                   \
-#    wkss_cfg.c                  \
-#    wkss_srv.c                  \
-#    wkss_memory.c               \
-#    wkss_security.c
 
 DCEIDL_PASS_INCLUDES =         \
     $(CPPFLAGS)                \
