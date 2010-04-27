@@ -53,6 +53,17 @@
 #define LSASS_KRB5_CACHE_PATH                  "FILE:" CACHEDIR "/krb5cc_lsass"
 
 
+/*
+ * Internal access flags for doing security checks
+ */
+#define WKSSVC_ACCESS_GET_INFO_1               (0x00000001)
+#define WKSSVC_ACCESS_GET_INFO_2               (0x00000002)
+#define WKSSVC_ACCESS_SET_INFO_1               (0x00000004)
+#define WKSSVC_ACCESS_SET_INFO_2               (0x00000008)
+#define WKSSVC_ACCESS_JOIN_DOMAIN              (0x00000010)
+#define WKSSVC_ACCESS_RENAME_MACHINE           (0x00000020)
+
+
 #define BAIL_ON_NO_MEMORY(ptr, err)                      \
     do {                                                 \
         if ((ptr) == NULL) {                             \

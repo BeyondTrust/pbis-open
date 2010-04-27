@@ -47,7 +47,215 @@
 #include "includes.h"
 
 
-NTSTATUS
+static
+DWORD
+WkssSrvCreateServerDacl(
+    PACL *ppDacl
+    );
+
+
+static
+DWORD
+WkssSrvCreateDacl(
+    PACL *ppDacl,
+    PACCESS_LIST pList
+    );
+
+
+DWORD
+WkssSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    PSID pOwnerSid = NULL;
+    PSID pGroupSid = NULL;
+    PACL pDacl = NULL;
+
+    BAIL_ON_INVALID_PTR(ppSecDesc, dwError);
+
+    dwError = LwAllocateMemory(SECURITY_DESCRIPTOR_ABSOLUTE_MIN_SIZE,
+                               OUT_PPVOID(&pSecDesc));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlCreateSecurityDescriptorAbsolute(
+                                    pSecDesc,
+                                    SECURITY_DESCRIPTOR_REVISION);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+                                   NULL,
+                                   &pOwnerSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetOwnerSecurityDescriptor(
+                                    pSecDesc,
+                                    pOwnerSid,
+                                    FALSE);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pGroupSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetGroupSecurityDescriptor(
+                                    pSecDesc,
+                                    pGroupSid,
+                                    FALSE);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = WkssSrvCreateServerDacl(&pDacl);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetDaclSecurityDescriptor(
+                                    pSecDesc,
+                                    TRUE,
+                                    pDacl,
+                                    FALSE);
+
+    *ppSecDesc = pSecDesc;
+
+cleanup:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pSecDesc);
+
+    *ppSecDesc = NULL;
+    goto cleanup;
+}
+
+
+static
+DWORD
+WkssSrvCreateServerDacl(
+    PACL *ppDacl
+    )
+{
+    ACCESS_MASK SystemAccessMask = STANDARD_RIGHTS_REQUIRED |
+                                   WKSSVC_ACCESS_GET_INFO_1 |
+                                   WKSSVC_ACCESS_GET_INFO_2 |
+                                   WKSSVC_ACCESS_SET_INFO_1 |
+                                   WKSSVC_ACCESS_SET_INFO_2 |
+                                   WKSSVC_ACCESS_JOIN_DOMAIN |
+                                   WKSSVC_ACCESS_RENAME_MACHINE;
+
+    ACCESS_MASK AdminAccessMask = STANDARD_RIGHTS_REQUIRED |
+                                  WKSSVC_ACCESS_GET_INFO_1 |
+                                  WKSSVC_ACCESS_GET_INFO_2 |
+                                  WKSSVC_ACCESS_SET_INFO_1 |
+                                  WKSSVC_ACCESS_SET_INFO_2 |
+                                  WKSSVC_ACCESS_JOIN_DOMAIN |
+                                  WKSSVC_ACCESS_RENAME_MACHINE;
+
+    ACCESS_MASK AuthenticatedAccessMask = STANDARD_RIGHTS_READ |
+                                          WKSSVC_ACCESS_GET_INFO_1 |
+                                          WKSSVC_ACCESS_GET_INFO_2;
+
+    ACCESS_MASK WorldAccessMask = STANDARD_RIGHTS_READ |
+                                  WKSSVC_ACCESS_GET_INFO_1;
+
+    DWORD dwError = ERROR_SUCCESS;
+    DWORD dwSystemSidLen = 0;
+    DWORD dwBuiltinAdminsSidLen = 0;
+    DWORD dwAuthenticatedSidLen = 0;
+    DWORD dwWorldSidLen = 0;
+    PSID pSystemSid = NULL;
+    PSID pBuiltinAdminsSid = NULL;
+    PSID pAuthenticatedSid = NULL;
+    PSID pWorldSid = NULL;
+    PACL pDacl = NULL;
+
+    ACCESS_LIST AccessList[] = {
+        {
+            .ppSid        = &pSystemSid,
+            .AccessMask   = SystemAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pBuiltinAdminsSid,
+            .AccessMask   = AdminAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pAuthenticatedSid,
+            .AccessMask   = AuthenticatedAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pWorldSid,
+            .AccessMask   = WorldAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = NULL,
+            .AccessMask   = 0,
+            .ulAccessType = 0
+        }
+    };
+
+    /* create local system sid */
+    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+                                   NULL,
+                                   &pSystemSid,
+                                   &dwSystemSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create administrators sid */
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   &dwBuiltinAdminsSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create authenticated users sid */
+    dwError = LwCreateWellKnownSid(WinAuthenticatedUserSid,
+                                   NULL,
+                                   &pAuthenticatedSid,
+                                   &dwAuthenticatedSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create world (everyone) sid */
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   &dwWorldSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = WkssSrvCreateDacl(&pDacl,
+                                AccessList);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppDacl = pDacl;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pSystemSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pAuthenticatedSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
+    return dwError;
+
+error:
+    *ppDacl = NULL;
+
+    goto cleanup;
+}
+
+
+static
+DWORD
 WkssSrvCreateDacl(
     PACL *ppDacl,
     PACCESS_LIST pList
@@ -81,7 +289,7 @@ WkssSrvCreateDacl(
     BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = RtlCreateAcl(pDacl, dwDaclSize, ACL_REVISION);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     for (i = 0; pList[i].ppSid && (*pList[i].ppSid); i++)
     {
@@ -102,7 +310,7 @@ WkssSrvCreateDacl(
                                                *(pList[i].ppSid));
         }
 
-        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+        BAIL_ON_NT_STATUS(ntStatus);
     }
 
     *ppDacl = pDacl;
@@ -120,6 +328,50 @@ error:
     LW_SAFE_FREE_MEMORY(pDacl);
     *ppDacl = NULL;
 
+    goto cleanup;
+}
+
+
+DWORD
+WkssSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    PACL pDacl = NULL;
+    BOOLEAN bDaclPresent = FALSE;
+    BOOLEAN bDaclDefaulted = FALSE;
+
+    BAIL_ON_INVALID_PTR(ppSecDesc, dwError);
+
+    pSecDesc = *ppSecDesc;
+    if (pSecDesc == NULL)
+    {
+        dwError = ERROR_SUCCESS;
+        goto cleanup;
+    }
+
+    ntStatus = RtlGetDaclSecurityDescriptor(pSecDesc,
+                                            &bDaclPresent,
+                                            &pDacl,
+                                            &bDaclDefaulted);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (bDaclPresent)
+    {
+        LW_SAFE_FREE_MEMORY(pDacl);
+    }
+
+    LW_SAFE_FREE_MEMORY(pSecDesc);
+
+    *ppSecDesc = NULL;
+
+cleanup:
+    return dwError;
+
+error:
     goto cleanup;
 }
 
