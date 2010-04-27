@@ -65,9 +65,6 @@
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *
  */
-#include "lsaclient.h"
-#include "pam-system.h"
-#include "pam-lsass.h"
 
 int
 pam_sm_chauthtok(
