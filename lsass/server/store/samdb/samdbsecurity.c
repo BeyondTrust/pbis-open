@@ -739,6 +739,9 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pSecDesc);
     LW_SAFE_FREE_MEMORY(pDacl);
 
+    LW_SAFE_FREE_MEMORY(pOwnerSid);
+    LW_SAFE_FREE_MEMORY(pGroupSid);
+
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
