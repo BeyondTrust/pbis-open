@@ -107,6 +107,94 @@ done:
 
 
 int
+TestNetrWkstaGetInfo(
+    struct test *t,
+    const wchar16_t *hostname,
+    const wchar16_t *user,
+    const wchar16_t *pass,
+    struct parameter *options,
+    int optcount
+    )
+{
+    const DWORD dwDefLevel = -1;
+
+    BOOLEAN bRet = TRUE;
+    WINERROR winError = ERROR_SUCCESS;
+    enum param_err perr = perr_success;
+    WKSS_BINDING hBinding = NULL;
+    PWSTR pwszServerName = NULL;
+    DWORD dwSelectedLevels[] = {0};
+    DWORD dwAvailableLevels[] = {100};
+    DWORD dwNumLevels = 0;
+    PDWORD pdwLevels = NULL;
+    DWORD iLevel = 0;
+    DWORD dwLevel = 0;
+    PNETR_WKSTA_INFO pWkstaInfo = NULL;
+
+    perr = fetch_value(options, optcount, "level", pt_uint32,
+                       (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    TESTINFO(t, hostname, user, pass);
+
+    CreateWkssBinding(&hBinding, hostname);
+    if (hBinding == NULL)
+    {
+        bRet = FALSE;
+        goto cleanup;
+    }
+
+    if (hostname)
+    {
+        winError = LwAllocateWc16String(&pwszServerName, hostname);
+        BAIL_ON_WIN_ERROR(winError);
+    }
+
+    if (dwLevel == (DWORD)(-1))
+    {
+        pdwLevels   = dwAvailableLevels;
+        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
+    }
+    else
+    {
+        dwSelectedLevels[0] = dwLevel;
+        pdwLevels   = dwSelectedLevels;
+        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
+    }
+
+    for (iLevel = 0; iLevel < dwNumLevels; iLevel++)
+    {
+        dwLevel = pdwLevels[iLevel];
+
+        bRet &= CallNetrWkstaGetInfo(hBinding,
+                                     pwszServerName,
+                                     pdwLevels,
+                                     dwNumLevels,
+                                     &pWkstaInfo);
+    }
+
+cleanup:
+error:
+    WkssFreeBinding(&hBinding);
+
+    for (iLevel = 0; iLevel < dwNumLevels; iLevel++)
+    {
+        if (pWkstaInfo[iLevel].pInfo100)
+        {
+            WkssFreeMemory(pWkstaInfo[iLevel].pInfo100);
+        }
+    }
+
+    if (winError != ERROR_SUCCESS)
+    {
+        bRet = FALSE;
+    }
+
+    return bRet;
+}
+
+
+int
 TestNetrJoinDomain2(
     struct test *t,
     const wchar16_t *hostname,
@@ -116,7 +204,7 @@ TestNetrJoinDomain2(
     int optcount
     )
 {
-    PCSTR pszDefAccountOu = "OU=TestingMachines";
+    PCSTR pszDefAccountOu = "";
     PCSTR pszDefAccountName = "Administrator";
 
     BOOLEAN bRet = TRUE;
@@ -124,7 +212,7 @@ TestNetrJoinDomain2(
     unsigned32 rpcStatus = RPC_S_OK;
     enum param_err perr = perr_success;
     WKSS_BINDING hBinding = NULL;
-    DWORD dwLevels[] = { 100 };
+    DWORD dwLevels[] = {100};
     PNETR_WKSTA_INFO pWkstaInfo = NULL;
     PWSTR pwszServerName = NULL;
     PWSTR pwszDomainName = NULL;
@@ -298,23 +386,17 @@ cleanup:
 error:
     WkssFreeBinding(&hBinding);
 
+    if (pWkstaInfo[0].pInfo100)
+    {
+        WkssFreeMemory(pWkstaInfo[0].pInfo100);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszServerName);
     LW_SAFE_FREE_MEMORY(pwszDomainName);
     LW_SAFE_FREE_MEMORY(pwszAccountOu);
     LW_SAFE_FREE_MEMORY(pwszAccountName);
     LW_SAFE_FREE_MEMORY(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-
-    switch (dwProtSeq)
-    {
-    case rpc_c_protseq_id_ncacn_np:
-        rpc_smb_transport_info_free(hTransportInfo);
-        break;
-
-    case rpc_c_protseq_id_ncalrpc:
-        rpc_lrpc_transport_info_free(hTransportInfo);
-        break;
-    }
 
     if (winError != ERROR_SUCCESS)
     {
@@ -342,7 +424,7 @@ TestNetrUnjoinDomain2(
     unsigned32 rpcStatus = RPC_S_OK;
     enum param_err perr = perr_success;
     WKSS_BINDING hBinding = NULL;
-    DWORD dwLevels[] = { 100 };
+    DWORD dwLevels[] = {100};
     PNETR_WKSTA_INFO pWkstaInfo = NULL;
     PWSTR pwszServerName = NULL;
     PWSTR pwszAccountName = NULL;
@@ -492,21 +574,15 @@ cleanup:
 error:
     WkssFreeBinding(&hBinding);
 
+    if (pWkstaInfo[0].pInfo100)
+    {
+        WkssFreeMemory(pWkstaInfo[0].pInfo100);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszServerName);
     LW_SAFE_FREE_MEMORY(pwszAccountName);
     LW_SAFE_FREE_MEMORY(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-
-    switch (dwProtSeq)
-    {
-    case rpc_c_protseq_id_ncacn_np:
-        rpc_smb_transport_info_free(hTransportInfo);
-        break;
-
-    case rpc_c_protseq_id_ncalrpc:
-        rpc_lrpc_transport_info_free(hTransportInfo);
-        break;
-    }
 
     if (winError != ERROR_SUCCESS)
     {
@@ -519,6 +595,7 @@ error:
 
 void SetupWkssvcTests(struct test *t)
 {
+    AddTest(t, "NETR-WKSTA-GET-INFO", TestNetrWkstaGetInfo);
     AddTest(t, "NETR-JOIN-DOMAIN2", TestNetrJoinDomain2);
     AddTest(t, "NETR-UNJOIN-DOMAIN2", TestNetrUnjoinDomain2);
 }
