@@ -14,8 +14,7 @@ full_subdirs= \
     etc \
     include \
     scripts \
-    docs \
-    tests
+    docs 
 
 if ENABLE_COMPAT
 SUBDIRS = $(compat_subdirs)
