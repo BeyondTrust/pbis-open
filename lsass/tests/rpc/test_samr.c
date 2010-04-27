@@ -2127,7 +2127,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2149,7 +2148,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2165,7 +2163,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2181,7 +2178,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2197,7 +2193,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2213,7 +2208,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2226,7 +2220,6 @@ CallCreateUserAccounts(
             if (ntStatus)
             {
                 bRet = FALSE;
-                goto cleanup;
             }
         }
 
@@ -2314,7 +2307,6 @@ CallCreateUserAccounts(
         if (ntStatus)
         {
             bRet = FALSE;
-            goto cleanup;
         }
 
         ppUserInfo[iUser] = pInfo21;
