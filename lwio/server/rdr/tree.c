@@ -377,7 +377,7 @@ SMBTreeReceiveResponse(
 
     LWIO_LOCK_MUTEX(bResponseInLock, &pResponse->mutex);
 
-    while (!pResponse->state == SMB_RESOURCE_STATE_VALID)
+    while (!(pResponse->state == SMB_RESOURCE_STATE_VALID))
     {
         ts.tv_sec = time(NULL) + 30;
         ts.tv_nsec = 0;
