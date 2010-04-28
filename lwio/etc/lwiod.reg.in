@@ -28,6 +28,7 @@
 "Description"="Likewise POSIX VFS Filesystem"
 "Path"="@providerdir@/libpvfs.sys@MOD_EXT@"
 "Arguments"="pvfs"
+"Environment"=""
 "Dependencies"="lwio"
 "Type"=dword:00000003
 
