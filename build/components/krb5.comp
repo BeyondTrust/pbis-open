@@ -7,7 +7,7 @@
 COMP_VERSION="1.7"
 COMP_RELEASE="0"
 COMP_NEED_COMPAT=1
-COMP_DEPENDENCIES="autoconf libtool"
+COMP_DEPENDENCIES="autoconf libtool libcrypto"
 SRC_DIR=${BUILD_ROOT}/src/linux/krb5
 COMP_SOURCES=$SRC_DIR
 
@@ -123,7 +123,9 @@ function component_stage
     rm -f ${STAGING_PREFIX_DIR}/bin/k5srvutil
     rm -f ${STAGING_PREFIX_DIR}/bin/kadmin
     rm -rf ${STAGING_PREFIX_DIR}/include/kerberosIV
-    rm -rf ${STAGING_PREFIX_DIR}/${_lib}/krb5
+    rm -rf ${STAGING_PREFIX_DIR}/${_lib}/krb5/plugins/authdata
+    rm -rf ${STAGING_PREFIX_DIR}/${_lib}/krb5/plugins/kdb
+    rm -rf ${STAGING_PREFIX_DIR}/${_lib}/krb5/plugins/libkrb5
 
     if [ -d "${STAGING_PREFIX_DIR}/${_lib}" ]; then
         # Fixup strange shared library permissions.

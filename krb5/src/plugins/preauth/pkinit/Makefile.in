@@ -14,7 +14,6 @@ LOCALINCLUDES = -I../../../include/krb5 -I.
 LIBBASE=pkinit
 LIBMAJOR=0
 LIBMINOR=0
-SO_EXT=.so
 RELDIR=../plugins/preauth/pkinit
 # Depends on libk5crypto and libkrb5
 SHLIB_EXPDEPS = \
@@ -46,12 +45,12 @@ SRCS= \
 	$(srcdir)/pkinit_matching.c \
 	$(srcdir)/pkinit_crypto_openssl.c
 
-all-unix:: $(LIBBASE)$(SO_EXT)
+all-unix:: $(LIBBASE)$(DYNOBJEXT)
 install-unix:: install-libs
 clean-unix:: clean-libs clean-libobjs
 
 clean::
-	$(RM) lib$(LIBBASE)$(SO_EXT)
+	$(RM) lib$(LIBBASE)$(DYNOBJEXT)
 
 @libnover_frag@
 @libobj_frag@
