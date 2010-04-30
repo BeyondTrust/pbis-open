@@ -293,6 +293,11 @@ function main
         usage
     fi
 
+    if ! product_exists "${PKG_CONFIG_NAME}" ; then
+        echo "Product '${PKG_CONFIG_NAME}' does not exist"
+        exit 1
+    fi
+
     if [ -z "${OPT_PKG_TYPE_LIST}" ]; then
         OPT_PKG_TYPE_LIST=`pkgtype_get_current_os_pkgtype_list`
         exit_on_error $?

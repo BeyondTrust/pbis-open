@@ -156,6 +156,13 @@ if [ -z "${OPT_PRODUCTS}" ]; then
     usage
 fi
 
+for prod in $OPT_PRODUCTS ; do
+    if ! product_exists $prod ; then
+        echo "Product '$prod' does not exist"
+        exit 1
+    fi
+done
+
 packages=`product_packages $OPT_PRODUCTS`
 
 if ! $OPT_NOCOMP

@@ -278,7 +278,15 @@ if [ -z "$1" ]; then
     usage
 fi
 
-for pkg in `product_packages $@`
+products="$@"
+for prod in ${products} ; do
+    if ! product_exists $prod ; then
+        echo "Product '$prod' does not exist"
+        exit 1
+    fi
+done
+
+for pkg in `product_packages ${products}`
 do
     populate "${pkg}" "${BUILD_IMAGE_ROOT}"
     exit_on_error $?
