@@ -123,10 +123,10 @@ function step_clean
 
 function step_bootstrap
 {
-    if [ -f "${BUILD_ROOT}/src/linux/BOOTSTRAP" ]
+    if [ -f "${BUILD_ROOT}/src/linux/BOOTSTRAP" -a -z "${OPT_FORCE_BOOTSTRAP}" ]
     then
 	echo "Build already bootstrapped -- skipping"
-    elif [ -f "${COMP_BOOTSTRAP}" -a -z "${BUILD_DISABLE_INCREMENTAL}" ]
+    elif [ -f "${COMP_BOOTSTRAP}" -a -z "${BUILD_DISABLE_INCREMENTAL}" -a -z "${OPT_FORCE_BOOTSTRAP}" ]
     then
 	echo "Component already bootstrapped -- skipping"
     else
@@ -880,11 +880,13 @@ function usage
     echo "    --step <STEP>     Perform the specified step.  A range can also be specified"
     echo "                      by using STEP:STEP (where the start or stop can be blank)."
     echo "                      The steps are:"
-    echo ""
     local _step
     for _step in ${COMP_ALL_STEPS[@]}; do
         echo "                          ${_step}"
     done
+    echo ""
+    echo "    --force-bootsrap  Allows bootstrap step in cases where it would otherwise"
+    echo "                      be skipped."
     echo ""
     echo "  symbol options:"
     echo ""
@@ -957,6 +959,7 @@ function main
     OPT_COMPAT=""
     OPT_STEP=""
     OPT_ARCHIVE=""
+    OPT_FORCE_BOOTSTRAP=""
     parseOptDone=""
 
     while [[ -z "${parseOptDone}" ]]; do
@@ -1002,6 +1005,15 @@ function main
                     echo "Missing argument to --step."
                     exit 1
                 fi
+                shift
+                ;;
+            --force-bootstrap)
+                if [ -n "${OPT_STEP}" ]; then
+                    echo "Cannot use --force-bootstrap with --step."
+                    exit 1
+                fi
+                OPT_BOOTSTRAP=1
+                OPT_STEP=bootstrap
                 shift
                 ;;
             --debug)
