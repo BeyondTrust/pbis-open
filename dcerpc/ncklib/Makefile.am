@@ -141,7 +141,7 @@ librpc_la_SOURCES=dce_error.c rpcclock.c rpcdbg.c rpclist.c \
 noinst_LTLIBRARIES+=libtrans.la
 
 libtrans_la_CPPFLAGS = $(AM_CPPFLAGS)
-libtrans_la_SOURCES = comsoc.c comsoc_bsd.c comsoc_smb.c
+libtrans_la_SOURCES = comsoc.c comsoc_bsd.c comsoc_smb.c xnet.c
 libtrans_la_LIBADD = -llwioclient -llwbase
 
 ######################################################################

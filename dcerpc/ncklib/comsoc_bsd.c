@@ -56,6 +56,11 @@
 #include <cnp.h>
 #include <lw/base.h>
 
+#if defined(__hpux)
+#include "xnet-private.h"
+#endif
+
+
 /* Bizarre hack for HP-UX ia64 where a system header
  * makes reference to a kernel-only data structure
  */
@@ -694,6 +699,7 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_getpeereid
 
 #if !defined(SO_PEERCRED) && !(defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID)
 
+
 INTERNAL rpc_socket_error_t rpc__bsd_socket_sendpeereid
 (
     rpc_socket_t        sock,
@@ -709,6 +715,7 @@ INTERNAL rpc_socket_error_t rpc__bsd_socket_recvpeereid
 );
 
 #endif
+
 
 
 INTERNAL rpc_socket_error_t rpc__bsd_socket_createsessionkey
