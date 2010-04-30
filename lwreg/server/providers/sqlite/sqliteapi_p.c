@@ -397,34 +397,6 @@ error:
     goto cleanup;
 }
 
-NTSTATUS
-SqliteOpenKeyInternal_inDblock(
-	IN OPTIONAL HANDLE handle,
-    IN PCWSTR pwszFullKeyName, // Full Key Path
-    IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
-    )
-{
-	NTSTATUS status = STATUS_SUCCESS;
-    BOOLEAN bInLock = FALSE;
-
-    LWREG_LOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
-
-    status = SqliteOpenKeyInternal_inlock_inDblock(handle,
-    		                                       pwszFullKeyName,
-    		                                       AccessDesired,
-    		                                       ppKeyHandle);
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-    LWREG_UNLOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
-
-    return status;
-
-error:
-    goto cleanup;
-}
-
 /* Open a key, if not found,
  * do not create a new key */
 NTSTATUS
@@ -497,70 +469,78 @@ error:
 
 NTSTATUS
 SqliteOpenKeyInternal_inlock_inDblock(
-	IN OPTIONAL HANDLE handle,
-	IN PCWSTR pwszFullKeyName, // Full Key Path
-	IN ACCESS_MASK AccessDesired,
-	OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
-	)
+    IN OPTIONAL HANDLE handle,
+    IN PCWSTR pwszFullKeyName, // Full Key Path
+    IN ACCESS_MASK AccessDesired,
+    OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
+    )
 {
-	NTSTATUS status = STATUS_SUCCESS;
-	PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)handle;
-	PREG_DB_KEY pRegEntry = NULL;
-	PREG_KEY_HANDLE pKeyHandle = NULL;
-	PREG_KEY_CONTEXT pKeyCtx = NULL;
-	ACCESS_MASK AccessGranted = AccessDesired;
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)handle;
+    PREG_DB_KEY pRegEntry = NULL;
+    PREG_KEY_HANDLE pKeyHandle = NULL;
+    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    ACCESS_MASK AccessGranted = AccessDesired;
 
-	BAIL_ON_NT_INVALID_STRING(pwszFullKeyName);
+    BAIL_ON_NT_INVALID_STRING(pwszFullKeyName);
 
-	pKeyCtx = SqliteCacheLocateActiveKey_inlock(pwszFullKeyName);
-	if (!pKeyCtx)
-	{
-		status = RegDbOpenKey_inlock(ghCacheConnection, pwszFullKeyName, &pRegEntry);
-		BAIL_ON_NT_STATUS(status);
+    pKeyCtx = SqliteCacheLocateActiveKey_inlock(pwszFullKeyName);
+    if (!pKeyCtx)
+    {
+        status = RegDbOpenKey_inlock(ghCacheConnection, pwszFullKeyName, &pRegEntry);
+        BAIL_ON_NT_STATUS(status);
 
-		status = SqliteCreateKeyContext(AccessGranted, pRegEntry, &pKeyCtx);
-		BAIL_ON_NT_STATUS(status);
+        status = SqliteCreateKeyContext(AccessGranted, pRegEntry, &pKeyCtx);
+        BAIL_ON_NT_STATUS(status);
 
-		// Cache this new key in gActiveKeyList
-		status = SqliteCacheInsertActiveKey_inlock(pKeyCtx);
-		BAIL_ON_NT_STATUS(status);
-	}
+        // Cache this new key in gActiveKeyList
+        status = SqliteCacheInsertActiveKey_inlock(pKeyCtx);
+        BAIL_ON_NT_STATUS(status);
+    }
 
-	if (pServerState)
-	{
+    if (pServerState)
+    {
         if (!pServerState->pToken)
         {
-    	    status = RegSrvCreateAccessToken(pServerState->peerUID,
-    	    		                         pServerState->peerGID,
-    	    		                         &pServerState->pToken);
+            status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                             pServerState->peerGID,
+                                             &pServerState->pToken);
             BAIL_ON_NT_STATUS(status);
         }
 
-		status = RegSrvAccessCheckKey(pServerState->pToken,
-								      pKeyCtx->pSecurityDescriptor,
-								      pKeyCtx->ulSecDescLength,
-								      AccessDesired,
-								      &AccessGranted);
-		BAIL_ON_NT_STATUS(status);
-	}
+        status = RegSrvAccessCheckKey(pServerState->pToken,
+                                      pKeyCtx->pSecurityDescriptor,
+                                      pKeyCtx->ulSecDescLength,
+                                      AccessDesired,
+                                      &AccessGranted);
+        BAIL_ON_NT_STATUS(status);
+    }
 
-	status = SqliteCreateKeyHandle(AccessGranted, pKeyCtx, &pKeyHandle);
-	BAIL_ON_NT_STATUS(status);
-	pKeyCtx = NULL;
+    status = SqliteCreateKeyHandle(AccessGranted, pKeyCtx, &pKeyHandle);
+    BAIL_ON_NT_STATUS(status);
+    pKeyCtx = NULL;
 
-	*ppKeyHandle = pKeyHandle;
+    *ppKeyHandle = pKeyHandle;
 
 cleanup:
-	SqliteReleaseKeyContext_inlock(pKeyCtx);
-	RegDbSafeFreeEntryKey(&pRegEntry);
+    SqliteReleaseKeyContext_inlock(pKeyCtx);
+    RegDbSafeFreeEntryKey(&pRegEntry);
 
-	return status;
+    return status;
 
 error:
-	SqliteSafeFreeKeyHandle_inlock(pKeyHandle);
-	*ppKeyHandle = NULL;
+    SqliteSafeFreeKeyHandle_inlock(pKeyHandle);
+    *ppKeyHandle = NULL;
 
-	goto cleanup;
+    goto cleanup;
+}
+
+VOID
+SqliteCloseKey_inlock(
+    IN HKEY hKey
+    )
+{
+    SqliteSafeFreeKeyHandle_inlock((PREG_KEY_HANDLE)hKey);
 }
 
 NTSTATUS
@@ -626,9 +606,9 @@ error:
     goto cleanup;
 }
 
-// This can be called when a DB lock is already in held
+// This can be called when a DB lock and active key list lock are both held
 NTSTATUS
-SqliteDeleteKeyInternal_inDblock(
+SqliteDeleteKeyInternal_inlock_inDblock(
 	IN HANDLE handle,
     IN PCWSTR pwszKeyName
     )
@@ -640,7 +620,7 @@ SqliteDeleteKeyInternal_inDblock(
     // Do not free
     PREG_KEY_CONTEXT pKeyCtx = NULL;
 
-    status = SqliteOpenKeyInternal_inDblock(handle,
+    status = SqliteOpenKeyInternal_inlock_inDblock(handle,
     		                                pwszKeyName,
     		                                0,
                                             &pKeyHandle);
@@ -670,7 +650,7 @@ SqliteDeleteKeyInternal_inDblock(
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
         {
-        	SqliteCacheResetParentKeySubKeyInfo(pwszParentKeyName);
+        	SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
         }
     }
     else
@@ -680,7 +660,7 @@ SqliteDeleteKeyInternal_inDblock(
     }
 
 cleanup:
-    SqliteSafeFreeKeyHandle(pKeyHandle);
+    SqliteSafeFreeKeyHandle_inlock(pKeyHandle);
 
     LWREG_SAFE_FREE_MEMORY(pwszParentKeyName);
 
@@ -696,20 +676,14 @@ SqliteDeleteActiveKey(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PREG_KEY_CONTEXT pFoundKey = NULL;
     BOOLEAN bInLock = FALSE;
 
     LWREG_LOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
 
-    pFoundKey = SqliteCacheLocateActiveKey_inlock(pwszKeyName);
-    if (pFoundKey)
-    {
-    	status = STATUS_RESOURCE_IN_USE;
-        BAIL_ON_NT_STATUS(status);
-    }
+    status = SqliteDeleteActiveKey_inlock(pwszKeyName);
+    BAIL_ON_NT_STATUS(status);
 
 cleanup:
-    SqliteReleaseKeyContext_inlock(pFoundKey);
     LWREG_UNLOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
 
     return status;
@@ -718,93 +692,25 @@ error:
     goto cleanup;
 }
 
-/*delete all subkeys and values of hKey*/
 NTSTATUS
-SqliteDeleteTreeInternal_inDblock(
-    IN HANDLE Handle,
-    IN HKEY hKey
+SqliteDeleteActiveKey_inlock(
+    IN PCWSTR pwszKeyName
     )
 {
-	NTSTATUS status = STATUS_SUCCESS;
-    HKEY hCurrKey = NULL;
-    int iCount = 0;
-    DWORD dwSubKeyCount = 0;
-    LW_WCHAR psubKeyName[MAX_KEY_LENGTH];
-    DWORD dwSubKeyLen = 0;
-    PWSTR* ppwszSubKey = NULL;
-    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
-    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_KEY_CONTEXT pFoundKey = NULL;
 
-    BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
-    pKeyCtx = pKeyHandle->pKey;
-    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
-
-    status = RegDbQueryInfoKeyCount_inlock(ghCacheConnection,
-    		                               pKeyCtx->qwId,
-                                           QuerySubKeys,
-                                           (size_t*)&dwSubKeyCount);
-    BAIL_ON_NT_STATUS(status);
-
-    if (dwSubKeyCount)
+    pFoundKey = SqliteCacheLocateActiveKey_inlock(pwszKeyName);
+    if (pFoundKey)
     {
-        status = LW_RTL_ALLOCATE((PVOID*)&ppwszSubKey, PWSTR, sizeof(*ppwszSubKey) * dwSubKeyCount);
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    for (iCount = 0; iCount < dwSubKeyCount; iCount++)
-    {
-        dwSubKeyLen = MAX_KEY_LENGTH;
-        memset(psubKeyName, 0, MAX_KEY_LENGTH);
-
-        status = SqliteEnumKeyEx_inDblock(Handle,
-                                  hKey,
-                                  iCount,
-                                  psubKeyName,
-                                  &dwSubKeyLen,
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  NULL);
-        BAIL_ON_NT_STATUS(status);
-
-    	status = LwRtlWC16StringDuplicate(&ppwszSubKey[iCount], psubKeyName);
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    for (iCount = 0; iCount < dwSubKeyCount; iCount++)
-    {
-        status = SqliteOpenKeyEx_inDblock(Handle,
-                                  hKey,
-                                  ppwszSubKey[iCount],
-                                  0,
-                                  KEY_ALL_ACCESS,
-                                  &hCurrKey);
-        BAIL_ON_NT_STATUS(status);
-
-        status = SqliteDeleteTreeInternal_inDblock(
-        		                           Handle,
-                                           hCurrKey);
-        BAIL_ON_NT_STATUS(status);
-
-        if (hCurrKey)
-        {
-            SqliteCloseKey(hCurrKey);
-            hCurrKey = NULL;
-        }
-
-        status = SqliteDeleteKey_inDblock(Handle, hKey, ppwszSubKey[iCount]);
+        status = STATUS_RESOURCE_IN_USE;
         BAIL_ON_NT_STATUS(status);
     }
 
 cleanup:
-    if (hCurrKey)
-    {
-        SqliteCloseKey(hCurrKey);
-    }
-    RegFreeWC16StringArray(ppwszSubKey, dwSubKeyCount);
+    SqliteReleaseKeyContext_inlock(pFoundKey);
 
     return status;
-
 
 error:
     goto cleanup;

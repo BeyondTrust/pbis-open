@@ -96,14 +96,6 @@ SqliteOpenKeyInternal(
     );
 
 NTSTATUS
-SqliteOpenKeyInternal_inDblock(
-	IN OPTIONAL HANDLE handle,
-    IN PCWSTR pwszFullKeyName, // Full Key Path
-    IN ACCESS_MASK AccessDesired,
-    OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
-    );
-
-NTSTATUS
 SqliteOpenKeyInternal_inlock(
 	IN OPTIONAL HANDLE handle,
     IN PCWSTR pwszFullKeyName, // Full Key Path
@@ -119,6 +111,11 @@ SqliteOpenKeyInternal_inlock_inDblock(
 	OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
 	);
 
+VOID
+SqliteCloseKey_inlock(
+    IN HKEY hKey
+    );
+
 NTSTATUS
 SqliteDeleteKeyInternal(
 	IN HANDLE handle,
@@ -126,7 +123,7 @@ SqliteDeleteKeyInternal(
     );
 
 NTSTATUS
-SqliteDeleteKeyInternal_inDblock(
+SqliteDeleteKeyInternal_inlock_inDblock(
 	IN HANDLE handle,
     IN PCWSTR pwszKeyName
     );
@@ -137,9 +134,8 @@ SqliteDeleteActiveKey(
     );
 
 NTSTATUS
-SqliteDeleteTreeInternal_inDblock(
-    IN HANDLE Handle,
-    IN HKEY hKey
+SqliteDeleteActiveKey_inlock(
+    IN PCWSTR pwszKeyName
     );
 
 #endif /* SQLITEAPI_P_H_ */

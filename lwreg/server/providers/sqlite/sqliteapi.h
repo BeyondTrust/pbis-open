@@ -74,16 +74,6 @@ SqliteOpenKeyEx(
     OUT PHKEY phkResult
     );
 
-NTSTATUS
-SqliteOpenKeyEx_inDblock(
-    IN HANDLE Handle,
-    IN HKEY hKey,
-    IN OPTIONAL PCWSTR pwszSubKey,
-    IN DWORD ulOptions,
-    IN ACCESS_MASK AccessDesired,
-    OUT PHKEY phkResult
-    );
-
 VOID
 SqliteCloseKey(
     IN HKEY hKey
@@ -91,13 +81,6 @@ SqliteCloseKey(
 
 NTSTATUS
 SqliteDeleteKey(
-    IN HANDLE Handle,
-    IN HKEY hKey,
-    IN PCWSTR pSubKey
-    );
-
-NTSTATUS
-SqliteDeleteKey_inDblock(
     IN HANDLE Handle,
     IN HKEY hKey,
     IN PCWSTR pSubKey
