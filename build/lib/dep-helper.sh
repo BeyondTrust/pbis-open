@@ -43,6 +43,11 @@ product_list()
     done
 }
 
+product_exists()
+{
+    test -f "${PRODUCTS_DIR}/$1/config"
+}
+
 product_name()
 {
     echo "`( source ${PRODUCTS_DIR}/$1/config && echo $NAME )`"
