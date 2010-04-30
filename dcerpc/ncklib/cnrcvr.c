@@ -852,17 +852,26 @@ rpc_cn_assoc_p_t        assoc;
         else
         {
             if ((assoc->assoc_flags & RPC_C_CN_ASSOC_CLIENT) &&
-               (ptype == RPC_C_CN_PKT_RESPONSE) &&
-               (RPC_CN_PKT_AUTH_REQUIRED(assoc->call_rep->binding_rep->auth_info)))
+                (ptype == RPC_C_CN_PKT_RESPONSE))
             {
-                RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
-                        ("CN: auth_info %x\n", assoc->call_rep->binding_rep->auth_info));
-                RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
-                        ("CN: should not continue further with this PDU\n"));
-                (*fragbuf_p->fragbuf_dealloc)(fragbuf_p);
-                st = rpc_s_authn_level_mismatch;
-                RPC_CN_ASSOC_WAKEUP (assoc);
-                break;
+                if (assoc->call_rep == NULL)
+                {
+                    /* The call was abandoned by the sending thread at the same time that
+                       a bind ack came back from the server, so bail out */
+                    st = rpc_s_connection_closed;
+                    break;
+                }
+                
+                if ((RPC_CN_PKT_AUTH_REQUIRED(assoc->call_rep->binding_rep->auth_info)))
+                {
+                    RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                    ("CN: auth_info %x\n", assoc->call_rep->binding_rep->auth_info));
+                    RPC_DBG_PRINTF (rpc_e_dbg_general, RPC_C_CN_DBG_GENERAL,
+                                    ("CN: should not continue further with this PDU\n"));
+                    st = rpc_s_authn_level_mismatch;
+                    RPC_CN_ASSOC_WAKEUP (assoc);
+                    break;
+                }
             }
         }
 
