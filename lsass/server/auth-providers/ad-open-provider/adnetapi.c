@@ -1486,7 +1486,8 @@ LsaCopyNetrUserInfo3(
     }
 
     ntError = RtlAllocateCStringFromSid(&pUserInfo->pszDomainSid, pBase->domain_sid);
-    BAIL_ON_NT_STATUS(dwError);
+    dwError = LwNtStatusToWin32Error(ntError);
+    BAIL_ON_LSA_ERROR(dwError);
 
     pUserInfo->dwUserRid         = pBase->rid;
     pUserInfo->dwPrimaryGroupRid = pBase->primary_gid;
@@ -1525,7 +1526,8 @@ LsaCopyNetrUserInfo3(
 
             ntError = RtlAllocateCStringFromSid(&pSidAttrib->pszSid,
                                                 pNetrUserInfo3->sam3->sids[i].sid);
-            BAIL_ON_NT_STATUS(dwError);
+            dwError = LwNtStatusToWin32Error(ntError);
+            BAIL_ON_LSA_ERROR(dwError);
         }
     }
 
