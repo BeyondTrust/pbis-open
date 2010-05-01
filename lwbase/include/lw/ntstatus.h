@@ -75,6 +75,22 @@
 // STATUS_PENDING.
 //
 
+#define LW_STATUS_SEVERITY_SUCCESS       0x0
+#define LW_STATUS_SEVERITY_INFORMATIONAL 0x1
+#define LW_STATUS_SEVERITY_WARNING       0x2
+#define LW_STATUS_SEVERITY_ERROR         0x3
+
+#define LW_FACILITY_SYSTEM      0x000
+#define LW_FACILITY_RPC_RUNTIME 0x002
+#define LW_FACILITY_RPC_STUBS   0x003
+#define LW_FACILITY_LW_ERRNO    0xFFF
+
+#define LW_MAKE_CUSTOM_NTSTATUS(Severity, Facility, Code) \
+    ((NTSTATUS)(((ULONG)(Severity) << 30) | \
+                (1 << 29) | \
+                ((ULONG)(Facility) << 16) | \
+                (ULONG) Code))
+
 // Determine whether this is a failure code.  Only warning and
 // error codes are considered failure.
 #define LW_NT_SUCCESS(status) \

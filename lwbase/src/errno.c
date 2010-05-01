@@ -84,13 +84,13 @@ LwErrnoToNtStatus(
 {
     PTABLE_ENTRY pEntry = LwUnixErrnoLookupCode(Uerror);
 
-    if (pEntry)
+    if (pEntry && (pEntry->ntStatus != (NTSTATUS) -1))
     {
         return pEntry->ntStatus;
     }
     else
     {
-        return -1;
+        return LW_MAKE_CUSTOM_NTSTATUS(LW_STATUS_SEVERITY_ERROR, LW_FACILITY_LW_ERRNO, Uerror);
     }
 }
 
