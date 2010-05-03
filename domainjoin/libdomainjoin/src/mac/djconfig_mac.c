@@ -188,6 +188,7 @@ DJRegisterLWIDSPlugin()
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;
     LONG status = 0;
+    DWORD retryCount = 3;
 
     DJ_LOG_INFO("Registering LWIDSPlugin for Macintosh Directory Services Authentication");
 
@@ -215,16 +216,30 @@ DJRegisterLWIDSPlugin()
     ceError = CTAllocateString(LWDSPLUGIN_NAME, ppszArgs+5);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = DJSpawnProcess(ppszArgs[0], ppszArgs, &pProcInfo);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    ceError = DJGetProcessStatus(pProcInfo, &status);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (status != 0)
+    while (retryCount)
     {
-       ceError = CENTERROR_DOMAINJOIN_FAILED_REG_OPENDIR;
-       BAIL_ON_CENTERIS_ERROR(ceError);
+        ceError = DJSpawnProcess(ppszArgs[0], ppszArgs, &pProcInfo);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+
+        ceError = DJGetProcessStatus(pProcInfo, &status);
+        BAIL_ON_CENTERIS_ERROR(ceError);
+
+        if (status == 0)
+        {
+            goto error;
+        }
+
+        if (pProcInfo)
+        {
+            FreeProcInfo(pProcInfo);
+        }
+
+        retryCount--;
+
+        sleep(5);
+
+        // Set last error
+        ceError = CENTERROR_DOMAINJOIN_FAILED_REG_OPENDIR;
     }
 
 error:
