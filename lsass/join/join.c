@@ -2069,7 +2069,7 @@ LsaSaveMachinePassword(
                                    pwszMachineName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LwWc16sToUpper(pwszHostnameLc);
+    LwWc16sToLower(pwszHostnameLc);
 
     dwError = LwAllocateWc16String(&pwszPass,
                                    pwszPassword);
