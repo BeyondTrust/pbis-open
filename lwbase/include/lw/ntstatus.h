@@ -91,6 +91,17 @@
                 ((ULONG)(Facility) << 16) | \
                 (ULONG) Code))
 
+#define LW_NTSTATUS_GET_SEVERITY(status)    ((((ULONG)(status)) >> 30)
+#define LW_NTSTATUS_GET_FACILITY(status)    ((((ULONG)(status)) >> 16) & 0xFFF)
+#define LW_NTSTATUS_GET_CODE(status)        (((ULONG)(status)) & 0xFFFF)
+#define LW_NTSTATUS_IS_CUSTOM(status)       ((((ULONG)(status)) >> 29) & 0x1)
+#define LW_NTSTATUS_IS_RESERVED(status)     ((((ULONG)(status)) >> 28) & 0x1)
+
+#define _LW_MAKE_ERRNO_NTSTATUS(Code) \
+    LW_MAKE_CUSTOM_NTSTATUS(LW_STATUS_SEVERITY_ERROR, LW_FACILITY_LW_ERRNO, Code)
+#define _LW_IS_ERRNO_NTSTATUS(status) \
+    (((status) & _LW_MAKE_ERRNO_NTSTATUS(0)) == _LW_MAKE_ERRNO_NTSTATUS(0))
+
 // Determine whether this is a failure code.  Only warning and
 // error codes are considered failure.
 #define LW_NT_SUCCESS(status) \

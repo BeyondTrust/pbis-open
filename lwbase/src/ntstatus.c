@@ -113,6 +113,10 @@ LwNtStatusToErrno(
     {
         return pEntry->unixErrno;
     }
+    else if (_LW_IS_ERRNO_NTSTATUS(NtStatus))
+    {
+        return LW_NTSTATUS_GET_CODE(NtStatus);
+    }
     else
     {
         return -1;

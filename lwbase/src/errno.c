@@ -90,7 +90,7 @@ LwErrnoToNtStatus(
     }
     else
     {
-        return LW_MAKE_CUSTOM_NTSTATUS(LW_STATUS_SEVERITY_ERROR, LW_FACILITY_LW_ERRNO, Uerror);
+        return _LW_MAKE_ERRNO_NTSTATUS(Uerror);
     }
 }
 
