@@ -261,6 +261,11 @@ typedef LW_PINT64   PINT64;
 typedef LW_VOID     VOID;
 typedef LW_PVOID    PVOID;
 typedef LW_PCVOID   PCVOID;
+#ifdef __cplusplus
+#define VOID void
+#define PVOID void*
+#define PCVOID const void*
+#endif
 typedef LW_BOOLEAN  BOOLEAN;
 typedef LW_PBOOLEAN PBOOLEAN;
 typedef LW_BYTE     BYTE;
