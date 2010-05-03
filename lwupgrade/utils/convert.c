@@ -47,11 +47,17 @@ UpStringToMultiString(
     DWORD i = 0;
     DWORD j = 0;
     PSTR pszCompactIn = NULL;
-    DWORD dwLength = 0;
+
+    // Make a copy of the string, reserving enough space for terminator.
+    dwError = LwAllocateMemory(strlen(pszIn) + 2, (PVOID*)&pszCompactIn);
+    BAIL_ON_UP_ERROR(dwError);
+
+    memcpy(pszCompactIn, pszIn, strlen(pszIn) + 1);
 
     // First, remove all whitespace from the string.
-    dwError = LwAllocateString(pszIn, &pszCompactIn);
-    BAIL_ON_UP_ERROR(dwError);
+    //dwError = LwAllocateString(pszIn, &pszCompactIn);
+    //BAIL_ON_UP_ERROR(dwError);
+
 
     i = 0;
     j = 0;
@@ -79,16 +85,20 @@ UpStringToMultiString(
             bCharacterIsDelimiter = TRUE;
         }
 
+        // Don't want to delimiters in a row.
         if (!(bPreviousCharacterIsDelimiter && bCharacterIsDelimiter))
         {
             pszCompactIn[j++] = pszCompactIn[i];
-            bPreviousCharacterIsDelimiter = bCharacterIsDelimiter;
         }
+
+        bPreviousCharacterIsDelimiter = bCharacterIsDelimiter;
         i++;
     }
+    pszCompactIn[j++] = '\0';
 
 
     // Finally, replace all delmiters with '\0'.
+    i = 0;
     while (pszCompactIn[i])
     {
         if (strchr(pszDelims, pszCompactIn[i]))
@@ -97,17 +107,7 @@ UpStringToMultiString(
         }
         i++;
     }
-
-    // Third, remove all 'empty' strings.
-    dwLength = i;
-    while (i < dwLength - 1)
-    {
-       if (!pszCompactIn[i] && !pszCompactIn[i + 1])
-       {
-           pszCompactIn[j++] = pszCompactIn[i];
-       }
-       i++;
-    }
+    pszCompactIn[i+1] = '\0';
 
 cleanup:
 
