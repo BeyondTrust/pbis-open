@@ -209,6 +209,18 @@ LwZctGetLength(
     );
 
 ///
+/// Get remaing transfer for the ZCT vector.
+///
+/// @param[in] pZct - ZCT vector to query.
+///
+/// @return bytes remaining
+///
+ULONG
+LwZctGetRemaining(
+    IN PLW_ZCT_VECTOR pZct
+    );
+
+///
 /// Get the mask of ZCT buffer types supported in a ZCT vector.
 ///
 /// @param[in] pZct - ZCT vector to query.
@@ -297,6 +309,30 @@ NTSTATUS
 LwZctWriteSocketIo(
     IN OUT PLW_ZCT_VECTOR pZct,
     IN int SocketFd,
+    OUT OPTIONAL PULONG BytesTransferred,
+    OUT OPTIONAL PULONG BytesRemaining
+    );
+
+///
+/// Read from memory buffer into ZCT vector.
+///
+/// The ZCT vector must have been prepared with LwZctPrepareIo().
+///
+/// @param[in out] pZct - ZCT vector into which to read.
+/// @param[in] pBuffer - Memory buffer from which to read.
+/// @param[in] Length - Number of bytes to read.
+/// @param[out] BytesTrasnferred - returns bytes read.
+/// @param[out] BytesRemaining - returns bytes remaining to read.
+///
+/// @retval STATUS_SUCCESS
+/// @retval STATUS_MORE_PROCESSING_REQUIRED
+/// @retval !NT_SUCCESS
+///
+NTSTATUS
+LwZctReadBufferIo(
+    IN OUT PLW_ZCT_VECTOR pZct,
+    IN PVOID pBuffer,
+    IN ULONG Length,
     OUT OPTIONAL PULONG BytesTransferred,
     OUT OPTIONAL PULONG BytesRemaining
     );

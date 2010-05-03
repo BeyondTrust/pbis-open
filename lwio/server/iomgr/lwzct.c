@@ -89,6 +89,8 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+// For read/write/pread/pwrite support
+#include <unistd.h>
 
 // Enable to pull in test definitions to help
 // catch compilation issues for splice/sendfilev/etc.
@@ -250,11 +252,41 @@ struct _LW_ZCT_VECTOR {
     PLW_ZCT_CURSOR Cursor;
 };
 
+typedef enum _ZCT_ENDPOINT_TYPE {
+    ZCT_ENDPOINT_TYPE_UNINITIALZIED,
+    ZCT_ENDPOINT_TYPE_SOCKET,
+    ZCT_ENDPOINT_TYPE_BUFFER
+} ZCT_ENDPOINT_TYPE, *PZCT_ENDPOINT_TYPE;
+
+typedef struct _ZCT_ENDPOINT {
+    ZCT_ENDPOINT_TYPE Type;
+    union {
+        int Socket;
+        struct {
+            PVOID pBuffer;
+            ULONG Length;
+        };
+    };
+} ZCT_ENDPOINT, *PZCT_ENDPOINT;
+
+#define ZctEndpointSocketInit(pEndpoint, _FileDescriptor) \
+    do { \
+        (pEndpoint)->Type = ZCT_ENDPOINT_TYPE_SOCKET; \
+        (pEndpoint)->Socket = (_FileDescriptor); \
+    } while (0)
+
+#define ZctEndpointBufferInit(pEndpoint, _pBuffer, _Length) \
+    do { \
+        (pEndpoint)->Type = ZCT_ENDPOINT_TYPE_BUFFER; \
+        (pEndpoint)->pBuffer = (_pBuffer); \
+        (pEndpoint)->Length = (_Length); \
+    } while (0)
+
 static
 NTSTATUS
-LwpZctReadWriteSocket(
+LwpZctReadWrite(
     IN OUT PLW_ZCT_VECTOR pZct,
-    IN int SocketFd,
+    IN PZCT_ENDPOINT pEndpoint,
     IN BOOLEAN IsWrite,
     OUT OPTIONAL PULONG BytesTransferred,
     OUT OPTIONAL PULONG BytesRemaining
@@ -297,6 +329,53 @@ static
 NTSTATUS
 LwpZctSendFile(
     IN int FileDescriptor,
+    IN OUT PLW_ZCT_CURSOR_SENDFILE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    );
+#endif
+
+static
+NTSTATUS
+LwpZctCursorEntryReadWriteBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_ENTRY pEntry,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDoneEntry
+    );
+
+static
+NTSTATUS
+LwpZctIoVecReadWriteBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_IOVEC Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    );
+
+#if defined(HAVE_SPLICE)
+static
+NTSTATUS
+LwpZctSpliceBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_SPLICE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    );
+#endif
+
+#if defined(HAVE_SENDFILE_ANY)
+static
+NTSTATUS
+LwpZctSendFileBuffer(
+    OUT PVOID pBuffer,
+    IN ULONG Length,
     IN OUT PLW_ZCT_CURSOR_SENDFILE Cursor,
     OUT PULONG BytesTransferred,
     OUT PBOOLEAN IsDone
@@ -519,6 +598,15 @@ LwZctGetLength(
     )
 {
     return pZct->Length;
+}
+
+ULONG
+LwZctGetRemaining(
+    IN PLW_ZCT_VECTOR pZct
+    )
+{
+    assert(pZct->BytesTransferred <= pZct->Length);
+    return pZct->Length - pZct->BytesTransferred;
 }
 
 LW_ZCT_ENTRY_MASK
@@ -1145,7 +1233,6 @@ cleanup:
     return status;
 }
 
-
 NTSTATUS
 LwZctReadSocketIo(
     IN OUT PLW_ZCT_VECTOR pZct,
@@ -1154,9 +1241,11 @@ LwZctReadSocketIo(
     OUT OPTIONAL PULONG BytesRemaining
     )
 {
-    return LwpZctReadWriteSocket(
+    ZCT_ENDPOINT endpoint = { 0 };
+    ZctEndpointSocketInit(&endpoint, SocketFd);
+    return LwpZctReadWrite(
                 pZct,
-                SocketFd,
+                &endpoint,
                 FALSE,
                 BytesTransferred,
                 BytesRemaining);
@@ -1170,19 +1259,40 @@ LwZctWriteSocketIo(
     OUT OPTIONAL PULONG BytesRemaining
     )
 {
-    return LwpZctReadWriteSocket(
+    ZCT_ENDPOINT endpoint = { 0 };
+    ZctEndpointSocketInit(&endpoint, SocketFd);
+    return LwpZctReadWrite(
                 pZct,
-                SocketFd,
+                &endpoint,
                 TRUE,
+                BytesTransferred,
+                BytesRemaining);
+}
+
+NTSTATUS
+LwZctReadBufferIo(
+    IN OUT PLW_ZCT_VECTOR pZct,
+    IN PVOID pBuffer,
+    IN ULONG Length,
+    OUT OPTIONAL PULONG BytesTransferred,
+    OUT OPTIONAL PULONG BytesRemaining
+    )
+{
+    ZCT_ENDPOINT endpoint = { 0 };
+    ZctEndpointBufferInit(&endpoint, pBuffer, Length);
+    return LwpZctReadWrite(
+                pZct,
+                &endpoint,
+                FALSE,
                 BytesTransferred,
                 BytesRemaining);
 }
 
 static
 NTSTATUS
-LwpZctReadWriteSocket(
+LwpZctReadWrite(
     IN OUT PLW_ZCT_VECTOR pZct,
-    IN int SocketFd,
+    IN PZCT_ENDPOINT pEndpoint,
     IN BOOLEAN IsWrite,
     OUT OPTIONAL PULONG BytesTransferred,
     OUT OPTIONAL PULONG BytesRemaining
@@ -1212,18 +1322,65 @@ LwpZctReadWriteSocket(
         GOTO_CLEANUP_EE(EE);
     }
 
+    switch (pEndpoint->Type)
+    {
+    case ZCT_ENDPOINT_TYPE_SOCKET:
+        if (pEndpoint->Socket < 0)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            GOTO_CLEANUP_EE(EE);
+        }
+        break;
+    case ZCT_ENDPOINT_TYPE_BUFFER:
+        if (pEndpoint->Length && !pEndpoint->pBuffer)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            GOTO_CLEANUP_EE(EE);
+        }
+        if (!pEndpoint->Length && !pEndpoint->pBuffer)
+        {
+            status = STATUS_SUCCESS;
+            GOTO_CLEANUP_EE(EE);
+        }
+        break;
+    default:
+        assert(FALSE);
+        status = STATUS_ASSERTION_FAILURE;
+        GOTO_CLEANUP_EE(EE);
+    }
+
     while (pZct->Cursor->Index < pZct->Cursor->Count)
     {
         ULONG bytesTransferred = 0;
         BOOLEAN isDoneEntry = FALSE;
         PLW_ZCT_CURSOR_ENTRY pEntry = &pZct->Cursor->Entry[pZct->Cursor->Index];
 
-        status = LwpZctCursorEntryReadWriteSocket(
-                        SocketFd,
-                        IsWrite,
-                        pEntry,
-                        &bytesTransferred,
-                        &isDoneEntry);
+        switch (pEndpoint->Type)
+        {
+        case ZCT_ENDPOINT_TYPE_SOCKET:
+            status = LwpZctCursorEntryReadWriteSocket(
+                            pEndpoint->Socket,
+                            IsWrite,
+                            pEntry,
+                            &bytesTransferred,
+                            &isDoneEntry);
+            break;
+        case ZCT_ENDPOINT_TYPE_BUFFER:
+            status = LwpZctCursorEntryReadWriteBuffer(
+                            pEndpoint->pBuffer,
+                            pEndpoint->Length,
+                            IsWrite,
+                            pEntry,
+                            &bytesTransferred,
+                            &isDoneEntry);
+            assert(bytesTransferred <= pEndpoint->Length);
+            pEndpoint->Length -= bytesTransferred;
+            break;
+        default:
+            assert(FALSE);
+            status = STATUS_ASSERTION_FAILURE;
+            GOTO_CLEANUP_EE(EE);
+        }
         // Handle blocking where we already got some data
         if ((STATUS_MORE_PROCESSING_REQUIRED == status) &&
             (totalBytesTransferred > 0))
@@ -1237,6 +1394,11 @@ LwpZctReadWriteSocket(
         if (isDoneEntry)
         {
             pZct->Cursor->Index++;
+        }
+        if ((ZCT_ENDPOINT_TYPE_BUFFER == pEndpoint->Type) &&
+            !pEndpoint->Length)
+        {
+            break;
         }
     }
 
@@ -1430,7 +1592,7 @@ cleanup:
 
     *BytesTransferred = bytesTransferred;
     *IsDone = isDone;
-    
+
     return status;
 }
 
@@ -1563,6 +1725,335 @@ LwpZctSendFile(
                     Cursor->FileDescriptor,
                     &Cursor->Offset,
                     Cursor->Length);
+    if (result < 0)
+    {
+        int error = errno;
+        if ((EAGAIN == error) || (EWOULDBLOCK == error))
+        {
+            status = STATUS_MORE_PROCESSING_REQUIRED;
+        }
+        else
+        {
+            status = LwErrnoToNtStatus(error);
+        }
+        GOTO_CLEANUP_EE(EE);
+        // unreachable
+        assert(FALSE);
+        status = STATUS_INTERNAL_ERROR;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    assert(result <= Cursor->Length);
+
+    bytesTransferred = (ULONG) result;
+
+    if (bytesTransferred < Cursor->Length)
+    {
+        Cursor->Offset += bytesTransferred;
+        Cursor->Length -= bytesTransferred;
+    }
+    else
+    {
+        isDone = TRUE;
+    }
+
+cleanup:
+    if (status)
+    {
+        bytesTransferred = 0;
+        isDone = FALSE;
+    }
+
+    *BytesTransferred = bytesTransferred;
+    *IsDone = isDone;
+
+    return status;
+}
+#endif
+
+static
+NTSTATUS
+LwpZctCursorEntryReadWriteBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_ENTRY pEntry,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDoneEntry
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int EE = 0;
+    ULONG bytesTransferred = 0;
+    BOOLEAN isDoneEntry = FALSE;
+
+    switch (pEntry->Type)
+    {
+    case LW_ZCT_CURSOR_TYPE_IOVEC:
+    {
+        status = LwpZctIoVecReadWriteBuffer(
+                        pBuffer,
+                        Length,
+                        IsWrite,
+                        &pEntry->Data.IoVec,
+                        &bytesTransferred,
+                        &isDoneEntry);
+        break;
+    }
+#ifdef HAVE_SPLICE
+    case LW_ZCT_CURSOR_TYPE_SPLICE:
+        status = LwpZctSpliceBuffer(
+                        pBuffer,
+                        Length,
+                        IsWrite,
+                        &pEntry->Data.Splice,
+                        &bytesTransferred,
+                        &isDoneEntry);
+        break;
+#endif
+#ifdef HAVE_SENDFILE_ANY
+    case LW_ZCT_CURSOR_TYPE_SENDFILE:
+        assert(IsWrite);
+        if (!IsWrite)
+        {
+            status = STATUS_INTERNAL_ERROR;
+        }
+        else
+        {
+            status = LwpZctSendFileBuffer(
+                        pBuffer,
+                        Length,
+                        &pEntry->Data.SendFile,
+                        &bytesTransferred,
+                        &isDoneEntry);
+        }
+        break;
+#endif
+    default:
+        status = STATUS_INTERNAL_ERROR;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+cleanup:
+    if (status)
+    {
+        bytesTransferred = 0;
+        isDoneEntry = FALSE;
+    }
+
+    *BytesTransferred = bytesTransferred;
+    *IsDoneEntry = isDoneEntry;
+
+    return status;
+}
+
+static
+NTSTATUS
+LwpZctIoVecReadWriteBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_IOVEC Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    struct iovec* vector = &Cursor->Vector[Cursor->Index];
+    int count = Cursor->Count - Cursor->Index;
+    ULONG remaining = Length;
+    ULONG bytesTransferred = 0;
+    BOOLEAN isDone = FALSE;
+    int i = 0;
+
+    for (i = 0; i < count; i++)
+    {
+        if (remaining >= vector[i].iov_len)
+        {
+            if (IsWrite)
+            {
+                RtlCopyMemory(pBuffer, vector[i].iov_base, vector[i].iov_len);
+            }
+            else
+            {
+                RtlCopyMemory(vector[i].iov_base, pBuffer, vector[i].iov_len);
+            }
+            // Note: Do not need to zero since we are moving on.
+            // vector[i].iov_len = 0;
+            remaining -= vector[i].iov_len;
+            Cursor->Index++;
+
+            if (0 == remaining)
+            {
+                break;
+            }
+        }
+        else
+        {
+            if (IsWrite)
+            {
+                RtlCopyMemory(pBuffer, vector[i].iov_base, remaining);
+            }
+            else
+            {
+                RtlCopyMemory(vector[i].iov_base, pBuffer, remaining);
+            }
+            vector[i].iov_base = LwRtlOffsetToPointer(vector[i].iov_base, remaining);
+            vector[i].iov_len -= remaining;
+            remaining -= remaining;
+            break;
+        }
+        assert(remaining > 0);
+    }
+
+    bytesTransferred = Length - remaining;
+
+    assert(Cursor->Index <= Cursor->Count);
+
+    if (Cursor->Index == Cursor->Count)
+    {
+        isDone = TRUE;
+    }
+
+// cleanup:
+    if (status)
+    {
+        bytesTransferred = 0;
+        isDone = FALSE;
+    }
+
+    *BytesTransferred = bytesTransferred;
+    *IsDone = isDone;
+
+    return status;
+}
+
+#if defined(HAVE_SPLICE)
+static
+NTSTATUS
+LwpZctSpliceBuffer(
+    IN OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN BOOLEAN IsWrite,
+    IN OUT PLW_ZCT_CURSOR_SPLICE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int EE = 0;
+    long result = 0;
+    ULONG bytesTransferred = 0;
+    BOOLEAN isDone = FALSE;
+
+    if (IsWrite)
+    {
+        result = read(Cursor->FileDescriptor,
+                      pBuffer,
+                      Length);
+    }
+    else
+    {
+        result = write(Cursor->FileDescriptor,
+                       pBuffer,
+                       Length);
+    }
+    if (result < 0)
+    {
+        int error = errno;
+        if ((EAGAIN == error) || (EWOULDBLOCK == error))
+        {
+            status = STATUS_MORE_PROCESSING_REQUIRED;
+        }
+        else
+        {
+            status = LwErrnoToNtStatus(error);
+        }
+        GOTO_CLEANUP_EE(EE);
+        // unreachable
+        assert(FALSE);
+        status = STATUS_INTERNAL_ERROR;
+        GOTO_CLEANUP_EE(EE);
+    }
+    if (0 == result)
+    {
+        // TODO: Need to investigate semantics of this case.
+    }
+
+    assert(result <= Cursor->Length);
+
+    bytesTransferred = (ULONG) result;
+
+    if (bytesTransferred < Cursor->Length)
+    {
+        Cursor->Length -= bytesTransferred;
+    }
+    else
+    {
+        isDone = TRUE;
+    }
+
+cleanup:
+    if (status)
+    {
+        bytesTransferred = 0;
+        isDone = FALSE;
+    }
+
+    *BytesTransferred = bytesTransferred;
+    *IsDone = isDone;
+
+    return status;
+}
+#endif
+
+#if defined(HAVE_SENDFILEV)
+static
+NTSTATUS
+LwpZctSendFileBuffer(
+    OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN OUT PLW_ZCT_CURSOR_SENDFILE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+#elif defined (HAVE_SENDFILE_HEADER_TRAILER)
+static
+NTSTATUS
+LwpZctSendFileBuffer(
+    OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN OUT PLW_ZCT_CURSOR_SENDFILE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+#elif defined (HAVE_SENDFILE)
+static
+NTSTATUS
+LwpZctSendFileBuffer(
+    OUT PVOID pBuffer,
+    IN ULONG Length,
+    IN OUT PLW_ZCT_CURSOR_SENDFILE Cursor,
+    OUT PULONG BytesTransferred,
+    OUT PBOOLEAN IsDone
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int EE = 0;
+    ssize_t result = 0;
+    ULONG bytesTransferred = 0;
+    BOOLEAN isDone = FALSE;
+
+    result = pread(Cursor->FileDescriptor,
+                   pBuffer,
+                   Length,
+                   Cursor->Offset);
     if (result < 0)
     {
         int error = errno;
