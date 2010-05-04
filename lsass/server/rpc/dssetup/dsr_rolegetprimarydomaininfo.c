@@ -69,14 +69,14 @@ DsrSrvRoleGetPDCInfoOpStatus(
     );
 
 
-DWORD
+WINERROR
 DsrSrvRoleGetPrimaryDomainInformation(
     IN  handle_t          hBinding,
     IN  WORD              swLevel,
     OUT PDSR_ROLE_INFO   *ppInfo
     )
 {
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = gpDsrSecDesc;
     GENERIC_MAPPING GenericMapping = {0};
@@ -147,7 +147,7 @@ cleanup:
         dwError = LwNtStatusToWin32Error(ntStatus);
     }
 
-    return dwError;
+    return (WINERROR)dwError;
 
 error:
     if (pInfo)

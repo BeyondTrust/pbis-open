@@ -57,11 +57,19 @@ typedef struct _ACCESS_LIST
 } ACCESS_LIST, *PACCESS_LIST;
 
 
-NTSTATUS
-LsaSrvCreateDacl(
-    OUT PACL *ppDacl,
-    IN  PACCESS_LIST pList
+DWORD
+LsaSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
     );
+
+
+DWORD
+LsaSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+
 
 
 #endif /* _LSA_SECURITY_H_ */

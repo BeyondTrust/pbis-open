@@ -57,19 +57,24 @@ typedef struct _ACCESS_LIST
 } ACCESS_LIST, *PACCESS_LIST;
 
 
+DWORD
+SamrSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+DWORD
+SamrSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
 NTSTATUS
 SamrSrvCreateNewAccountSecurityDescriptor(
     IN  PSID                           pDomainSid,
     IN  DWORD                          dwRid,
     IN  DWORD                          dwObjectClass,
     OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
-NTSTATUS
-SamrSrvCreateDacl(
-    OUT PACL *ppDacl,
-    IN  PACCESS_LIST pList
     );
 
 

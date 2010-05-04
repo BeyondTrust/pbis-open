@@ -60,18 +60,6 @@ DsrRpcStopServer(
     );
 
 
-DWORD
-DsrSrvInitServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
-DWORD
-DsrSrvDestroyServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
 #endif /* _DSSETUP_SRV_H_ */
 
 

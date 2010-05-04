@@ -62,7 +62,8 @@ SamrSrvClose(
     pContext = (PSAMR_GENERIC_CONTEXT)(*phInOut);
 
 
-    switch (pContext->Type) {
+    switch (pContext->Type)
+    {
     case SamrContextConnect:
         CONNECT_HANDLE_rundown(*phInOut);
         break;
@@ -81,8 +82,6 @@ SamrSrvClose(
         ntStatus = STATUS_INTERNAL_ERROR;
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
-
-    *phInOut = NULL;
 
 cleanup:
     return ntStatus;

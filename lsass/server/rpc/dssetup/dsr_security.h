@@ -57,10 +57,15 @@ typedef struct _ACCESS_LIST
 } ACCESS_LIST, *PACCESS_LIST;
 
 
-NTSTATUS
-DsrSrvCreateDacl(
-    OUT PACL *ppDacl,
-    IN  PACCESS_LIST pList
+DWORD
+DsrSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
+
+
+DWORD
+DsrSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
     );
 
 

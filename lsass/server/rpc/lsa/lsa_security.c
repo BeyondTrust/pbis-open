@@ -47,7 +47,234 @@
 #include "includes.h"
 
 
-NTSTATUS
+static
+DWORD
+LsaSrvCreateServerDacl(
+    PACL *ppDacl
+    );
+
+
+static
+DWORD
+LsaSrvCreateDacl(
+    PACL *ppDacl,
+    PACCESS_LIST pList
+    );
+
+
+DWORD
+LsaSrvInitServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    PSID pOwnerSid = NULL;
+    PSID pGroupSid = NULL;
+    PACL pDacl = NULL;
+
+    BAIL_ON_INVALID_PTR(ppSecDesc);
+
+    dwError = LwAllocateMemory(SECURITY_DESCRIPTOR_ABSOLUTE_MIN_SIZE,
+                               OUT_PPVOID(&pSecDesc));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlCreateSecurityDescriptorAbsolute(
+                                    pSecDesc,
+                                    SECURITY_DESCRIPTOR_REVISION);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+                                   NULL,
+                                   &pOwnerSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetOwnerSecurityDescriptor(
+                                    pSecDesc,
+                                    pOwnerSid,
+                                    FALSE);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pGroupSid,
+                                   NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetGroupSecurityDescriptor(
+                                    pSecDesc,
+                                    pGroupSid,
+                                    FALSE);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LsaSrvCreateServerDacl(&pDacl);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlSetDaclSecurityDescriptor(
+                                    pSecDesc,
+                                    TRUE,
+                                    pDacl,
+                                    FALSE);
+
+    *ppSecDesc = pSecDesc;
+
+cleanup:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pSecDesc);
+
+    *ppSecDesc = NULL;
+    goto cleanup;
+}
+
+
+static
+DWORD
+LsaSrvCreateServerDacl(
+    PACL *ppDacl
+    )
+{
+    ACCESS_MASK SystemAccessMask = STANDARD_RIGHTS_REQUIRED |
+                                   LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                                   LSA_ACCESS_ENABLE_LSA |
+                                   LSA_ACCESS_ADMIN_AUDIT_LOG_ATTRS |
+                                   LSA_ACCESS_CHANGE_SYS_AUDIT_REQS |
+                                   LSA_ACCESS_SET_DEFAULT_QUOTA |
+                                   LSA_ACCESS_CREATE_PRIVILEGE |
+                                   LSA_ACCESS_CREATE_SECRET_OBJECT |
+                                   LSA_ACCESS_CREATE_SPECIAL_ACCOUNTS |
+                                   LSA_ACCESS_CHANGE_DOMTRUST_RELATION |
+                                   LSA_ACCESS_GET_SENSITIVE_POLICY_INFO |
+                                   LSA_ACCESS_VIEW_SYS_AUDIT_REQS |
+                                   LSA_ACCESS_VIEW_POLICY_INFO;
+
+    ACCESS_MASK AdminAccessMask = STANDARD_RIGHTS_REQUIRED |
+                                  LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                                  LSA_ACCESS_ENABLE_LSA |
+                                  LSA_ACCESS_ADMIN_AUDIT_LOG_ATTRS |
+                                  LSA_ACCESS_CHANGE_SYS_AUDIT_REQS |
+                                  LSA_ACCESS_SET_DEFAULT_QUOTA |
+                                  LSA_ACCESS_CREATE_PRIVILEGE |
+                                  LSA_ACCESS_CREATE_SECRET_OBJECT |
+                                  LSA_ACCESS_CREATE_SPECIAL_ACCOUNTS |
+                                  LSA_ACCESS_CHANGE_DOMTRUST_RELATION |
+                                  LSA_ACCESS_GET_SENSITIVE_POLICY_INFO |
+                                  LSA_ACCESS_VIEW_SYS_AUDIT_REQS |
+                                  LSA_ACCESS_VIEW_POLICY_INFO;
+
+    ACCESS_MASK AuthenticatedAccessMask = STANDARD_RIGHTS_READ |
+                                          LSA_ACCESS_LOOKUP_NAMES_SIDS |
+                                          LSA_ACCESS_VIEW_SYS_AUDIT_REQS |
+                                          LSA_ACCESS_VIEW_POLICY_INFO;
+
+    ACCESS_MASK WorldAccessMask = STANDARD_RIGHTS_READ;
+
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
+    DWORD dwSystemSidLen = 0;
+    DWORD dwBuiltinAdminsSidLen = 0;
+    DWORD dwAuthenticatedSidLen = 0;
+    DWORD dwWorldSidLen = 0;
+    PSID pSystemSid = NULL;
+    PSID pBuiltinAdminsSid = NULL;
+    PSID pAuthenticatedSid = NULL;
+    PSID pWorldSid = NULL;
+    PACL pDacl = NULL;
+
+    ACCESS_LIST AccessList[] = {
+        {
+            .ppSid        = &pSystemSid,
+            .AccessMask   = SystemAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pBuiltinAdminsSid,
+            .AccessMask   = AdminAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pAuthenticatedSid,
+            .AccessMask   = AuthenticatedAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = &pWorldSid,
+            .AccessMask   = WorldAccessMask,
+            .ulAccessType = ACCESS_ALLOWED_ACE_TYPE
+        },
+        {
+            .ppSid        = NULL,
+            .AccessMask   = 0,
+            .ulAccessType = 0
+        }
+    };
+
+    /* create local system sid */
+    dwError = LwCreateWellKnownSid(WinLocalSystemSid,
+                                   NULL,
+                                   &pSystemSid,
+                                   &dwSystemSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create administrators sid */
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   &dwBuiltinAdminsSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create authenticated users sid */
+    dwError = LwCreateWellKnownSid(WinAuthenticatedUserSid,
+                                   NULL,
+                                   &pAuthenticatedSid,
+                                   &dwAuthenticatedSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* create world (everyone) sid */
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   &dwWorldSidLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = LsaSrvCreateDacl(&pDacl,
+                                AccessList);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *ppDacl = pDacl;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pSystemSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pAuthenticatedSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
+    *ppDacl = NULL;
+
+    goto cleanup;
+}
+
+
+static
+DWORD
 LsaSrvCreateDacl(
     PACL *ppDacl,
     PACCESS_LIST pList
@@ -120,6 +347,80 @@ error:
     LW_SAFE_FREE_MEMORY(pDacl);
     *ppDacl = NULL;
 
+    goto cleanup;
+}
+
+
+DWORD
+LsaSrvDestroyServerSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    PSID pOwnerSid = NULL;
+    BOOLEAN bOwnerDefaulted = FALSE;
+    PSID pPrimaryGroupSid = NULL;
+    BOOLEAN bPrimaryGroupDefaulted = FALSE;
+    PACL pDacl = NULL;
+    BOOLEAN bDaclPresent = FALSE;
+    BOOLEAN bDaclDefaulted = FALSE;
+    PACL pSacl = NULL;
+    BOOLEAN bSaclPresent = FALSE;
+    BOOLEAN bSaclDefaulted = FALSE;
+
+    BAIL_ON_INVALID_PTR(ppSecDesc);
+
+    pSecDesc = *ppSecDesc;
+    if (pSecDesc == NULL)
+    {
+        dwError = ERROR_SUCCESS;
+        goto cleanup;
+    }
+
+    ntStatus = RtlGetOwnerSecurityDescriptor(pSecDesc,
+                                             &pOwnerSid,
+                                             &bOwnerDefaulted);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = RtlGetGroupSecurityDescriptor(pSecDesc,
+                                             &pPrimaryGroupSid,
+                                             &bPrimaryGroupDefaulted);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = RtlGetDaclSecurityDescriptor(pSecDesc,
+                                            &bDaclPresent,
+                                            &pDacl,
+                                            &bDaclDefaulted);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = RtlGetSaclSecurityDescriptor(pSecDesc,
+                                            &bSaclPresent,
+                                            &pSacl,
+                                            &bSaclDefaulted);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pOwnerSid);
+    LW_SAFE_FREE_MEMORY(pPrimaryGroupSid);
+
+    if (bDaclPresent)
+    {
+        LW_SAFE_FREE_MEMORY(pDacl);
+    }
+
+    if (bSaclPresent)
+    {
+        LW_SAFE_FREE_MEMORY(pSacl);
+    }
+
+    LW_SAFE_FREE_MEMORY(pSecDesc);
+    *ppSecDesc = NULL;
+
+    return dwError;
+
+error:
     goto cleanup;
 }
 

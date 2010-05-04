@@ -92,18 +92,6 @@ SamrSrvConfigGetLpcSocketPath(
     );
 
 
-DWORD
-SamrSrvInitServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
-DWORD
-SamrSrvDestroyServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
 #endif /* _SAMR_SRV_H_ */
 
 

@@ -52,18 +52,6 @@ LsaRpcStopServer(
     );
 
 
-DWORD
-LsaSrvInitServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
-DWORD
-LsaSrvDestroyServerSecurityDescriptor(
-    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
-    );
-
-
 #endif /* _LSA_SRV_H_ */
 
 

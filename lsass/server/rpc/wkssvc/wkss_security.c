@@ -340,9 +340,16 @@ WkssSrvDestroyServerSecurityDescriptor(
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    PSID pOwnerSid = NULL;
+    BOOLEAN bOwnerDefaulted = FALSE;
+    PSID pPrimaryGroupSid = NULL;
+    BOOLEAN bPrimaryGroupDefaulted = FALSE;
     PACL pDacl = NULL;
     BOOLEAN bDaclPresent = FALSE;
     BOOLEAN bDaclDefaulted = FALSE;
+    PACL pSacl = NULL;
+    BOOLEAN bSaclPresent = FALSE;
+    BOOLEAN bSaclDefaulted = FALSE;
 
     BAIL_ON_INVALID_PTR(ppSecDesc, dwError);
 
@@ -353,22 +360,45 @@ WkssSrvDestroyServerSecurityDescriptor(
         goto cleanup;
     }
 
+    ntStatus = RtlGetOwnerSecurityDescriptor(pSecDesc,
+                                             &pOwnerSid,
+                                             &bOwnerDefaulted);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = RtlGetGroupSecurityDescriptor(pSecDesc,
+                                             &pPrimaryGroupSid,
+                                             &bPrimaryGroupDefaulted);
+    BAIL_ON_NT_STATUS(ntStatus);
+
     ntStatus = RtlGetDaclSecurityDescriptor(pSecDesc,
                                             &bDaclPresent,
                                             &pDacl,
                                             &bDaclDefaulted);
     BAIL_ON_NT_STATUS(ntStatus);
 
+    ntStatus = RtlGetSaclSecurityDescriptor(pSecDesc,
+                                            &bSaclPresent,
+                                            &pSacl,
+                                            &bSaclDefaulted);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pOwnerSid);
+    LW_SAFE_FREE_MEMORY(pPrimaryGroupSid);
+
     if (bDaclPresent)
     {
         LW_SAFE_FREE_MEMORY(pDacl);
     }
 
-    LW_SAFE_FREE_MEMORY(pSecDesc);
+    if (bSaclPresent)
+    {
+        LW_SAFE_FREE_MEMORY(pSacl);
+    }
 
+    LW_SAFE_FREE_MEMORY(pSecDesc);
     *ppSecDesc = NULL;
 
-cleanup:
     return dwError;
 
 error:
