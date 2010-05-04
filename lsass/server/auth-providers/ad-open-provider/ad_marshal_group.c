@@ -59,12 +59,17 @@ ADMarshalGetCanonicalName(
     PSTR    pszResult = NULL;
 
     if(pObject->type == LSA_OBJECT_TYPE_GROUP &&
-            !LW_IS_NULL_OR_EMPTY_STR(pObject->groupInfo.pszAliasName))
+       !LW_IS_NULL_OR_EMPTY_STR(pObject->groupInfo.pszAliasName))
     {
         dwError = LwAllocateString(
             pObject->groupInfo.pszAliasName,
             &pszResult);
         BAIL_ON_LSA_ERROR(dwError);
+        
+        LwStrCharReplace(
+            pszResult,
+            ' ',
+            AD_GetSpaceReplacement());
     }
     else if(pObject->type == LSA_OBJECT_TYPE_USER &&
             !LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszAliasName))
@@ -73,6 +78,11 @@ ADMarshalGetCanonicalName(
             pObject->userInfo.pszAliasName,
             &pszResult);
         BAIL_ON_LSA_ERROR(dwError);
+
+        LwStrCharReplace(
+            pszResult,
+            ' ',
+            AD_GetSpaceReplacement());
     }
     else
     {

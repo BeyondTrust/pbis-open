@@ -4107,6 +4107,112 @@ error:
 
 static
 DWORD
+AD_OnlineFindObjectByName(
+    IN HANDLE hProvider,
+    IN LSA_FIND_FLAGS FindFlags,
+    IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
+    IN LSA_QUERY_TYPE QueryType,
+    IN PCSTR pszLoginName,
+    IN PLSA_LOGIN_NAME_INFO pUserNameInfo,
+    OUT PLSA_SECURITY_OBJECT* ppObject
+    )
+{
+    DWORD dwError = 0;
+    PLSA_SECURITY_OBJECT pCachedUser = NULL;
+
+    switch(ObjectType)
+    {
+    case LSA_OBJECT_TYPE_USER:
+        dwError = ADCacheFindUserByName(
+            gpLsaAdProviderState->hCacheConnection,
+            pUserNameInfo,
+            &pCachedUser);
+        break;
+    case LSA_OBJECT_TYPE_GROUP:
+        dwError = ADCacheFindGroupByName(
+            gpLsaAdProviderState->hCacheConnection,
+            pUserNameInfo,
+            &pCachedUser);
+        break;
+    default:
+        dwError = ADCacheFindUserByName(
+            gpLsaAdProviderState->hCacheConnection,
+            pUserNameInfo,
+            &pCachedUser);
+        if (dwError == LW_ERROR_NO_SUCH_USER ||
+            dwError == LW_ERROR_NOT_HANDLED)
+        {
+            dwError = ADCacheFindGroupByName(
+                gpLsaAdProviderState->hCacheConnection,
+                pUserNameInfo,
+                &pCachedUser);
+        }
+        break;
+    }
+    
+    if (dwError == LW_ERROR_SUCCESS)
+    {
+        dwError = AD_CheckExpiredObject(&pCachedUser);
+    }
+    
+    switch (dwError)
+    {
+    case LW_ERROR_SUCCESS:
+        break;
+    case LW_ERROR_NOT_HANDLED:
+    case LW_ERROR_NO_SUCH_USER:
+    case LW_ERROR_NO_SUCH_GROUP:
+    case LW_ERROR_NO_SUCH_OBJECT:
+        dwError = AD_FindObjectByNameTypeNoCache(
+            hProvider,
+            pszLoginName,
+            pUserNameInfo->nameType,
+            ObjectType,
+            &pCachedUser);
+        switch (dwError)
+        {
+        case LW_ERROR_SUCCESS:
+            dwError = ADCacheStoreObjectEntry(
+                gpLsaAdProviderState->hCacheConnection,
+                pCachedUser);
+            BAIL_ON_LSA_ERROR(dwError);
+            
+            break;
+        case LW_ERROR_NO_SUCH_USER:
+        case LW_ERROR_NO_SUCH_GROUP:
+        case LW_ERROR_NO_SUCH_OBJECT:
+        case LW_ERROR_DOMAIN_IS_OFFLINE:
+            dwError = LW_ERROR_SUCCESS;
+            break;
+        default:
+            BAIL_ON_LSA_ERROR(dwError);
+            break;
+        }
+        break;
+    default:
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    
+    *ppObject = pCachedUser;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppObject = NULL;
+
+    if (pCachedUser)
+    {
+        LsaUtilFreeSecurityObject(pCachedUser);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
 AD_OnlineFindObjectsByName(
     IN HANDLE hProvider,
     IN LSA_FIND_FLAGS FindFlags,
@@ -4120,7 +4226,6 @@ AD_OnlineFindObjectsByName(
     DWORD dwError = 0;
     PLSA_LOGIN_NAME_INFO pUserNameInfo = NULL;
     PSTR  pszLoginId_copy = NULL;
-    PLSA_SECURITY_OBJECT pCachedUser = NULL;
     DWORD dwIndex = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
@@ -4165,77 +4270,74 @@ AD_OnlineFindObjectsByName(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        switch(ObjectType)
-        {
-        case LSA_OBJECT_TYPE_USER:
-            dwError = ADCacheFindUserByName(
-                gpLsaAdProviderState->hCacheConnection,
-                pUserNameInfo,
-                &pCachedUser);
-            break;
-        case LSA_OBJECT_TYPE_GROUP:
-            dwError = ADCacheFindGroupByName(
-                gpLsaAdProviderState->hCacheConnection,
-                pUserNameInfo,
-                &pCachedUser);
-            break;
-        default:
-            dwError = ADCacheFindUserByName(
-                gpLsaAdProviderState->hCacheConnection,
-                pUserNameInfo,
-                &pCachedUser);
-            if (dwError == LW_ERROR_NO_SUCH_USER ||
-                dwError == LW_ERROR_NOT_HANDLED)
-            {
-                dwError = ADCacheFindGroupByName(
-                    gpLsaAdProviderState->hCacheConnection,
-                    pUserNameInfo,
-                    &pCachedUser);
-            }
-            break;
-        }
+        dwError = AD_OnlineFindObjectByName(
+            hProvider,
+            FindFlags,
+            ObjectType,
+            QueryType,
+            pszLoginId_copy,
+            pUserNameInfo,
+            &ppObjects[dwIndex]);
 
-        if (dwError == LW_ERROR_SUCCESS)
-        {
-            dwError = AD_CheckExpiredObject(&pCachedUser);
-        }
-        
         switch (dwError)
         {
         case LW_ERROR_SUCCESS:
-            ppObjects[dwIndex] = pCachedUser;
-            pCachedUser = NULL;
             break;
         case LW_ERROR_NOT_HANDLED:
         case LW_ERROR_NO_SUCH_USER:
         case LW_ERROR_NO_SUCH_GROUP:
         case LW_ERROR_NO_SUCH_OBJECT:
-            dwError = AD_FindObjectByNameTypeNoCache(
-                hProvider,
-                pszLoginId_copy,
-                pUserNameInfo->nameType,
-                ObjectType,
-                &pCachedUser);
-            switch (dwError)
+        case LW_ERROR_NOT_SUPPORTED:
+            ppObjects[dwIndex] = NULL;
+            dwError = LW_ERROR_SUCCESS;
+            
+            if (QueryType == LSA_QUERY_TYPE_BY_ALIAS &&
+                AD_ShouldAssumeDefaultDomain())
             {
-            case LW_ERROR_SUCCESS:
-                dwError = ADCacheStoreObjectEntry(
-                    gpLsaAdProviderState->hCacheConnection,
-                    pCachedUser);
+                LW_SAFE_FREE_STRING(pszLoginId_copy);
+                LsaFreeNameInfo(pUserNameInfo);
+                pUserNameInfo = NULL;
+
+                dwError = LwAllocateStringPrintf(
+                    &pszLoginId_copy,
+                    "%s\\%s",
+                    gpADProviderData->szShortDomain,
+                    QueryList.ppszStrings[dwIndex]);
                 BAIL_ON_LSA_ERROR(dwError);
-                
-                ppObjects[dwIndex] = pCachedUser;
-                pCachedUser = NULL;
-                break;
-            case LW_ERROR_NO_SUCH_USER:
-            case LW_ERROR_NO_SUCH_GROUP:
-            case LW_ERROR_NO_SUCH_OBJECT:
-            case LW_ERROR_DOMAIN_IS_OFFLINE:
-                dwError = LW_ERROR_SUCCESS;
-                break;
-            default:
+
+                LwStrCharReplace(
+                    pszLoginId_copy,
+                    AD_GetSpaceReplacement(),
+                    ' ');
+
+                dwError = LsaCrackDomainQualifiedName(
+                    pszLoginId_copy,
+                    gpADProviderData->szDomain,
+                    &pUserNameInfo);
                 BAIL_ON_LSA_ERROR(dwError);
-                break;
+
+                dwError = AD_OnlineFindObjectByName(
+                    hProvider,
+                    FindFlags,
+                    ObjectType,
+                    LSA_QUERY_TYPE_BY_NT4,
+                    pszLoginId_copy,
+                    pUserNameInfo,
+                    &ppObjects[dwIndex]);
+                switch (dwError)
+                {
+                case LW_ERROR_SUCCESS:
+                    break;
+                case LW_ERROR_NOT_HANDLED:
+                case LW_ERROR_NO_SUCH_USER:
+                case LW_ERROR_NO_SUCH_GROUP:
+                case LW_ERROR_NO_SUCH_OBJECT:
+                    ppObjects[dwIndex] = NULL;
+                    dwError = LW_ERROR_SUCCESS;
+                    break;
+                default:
+                    BAIL_ON_LSA_ERROR(dwError);
+                }
             }
             break;
         default:
