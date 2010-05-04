@@ -29,19 +29,18 @@ libdsapi_la_SOURCES = \
         dirsearch.c   \
         diruser.c
 
-libdsapi_la_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-        -DLW_ENABLE_THREADS=1 \
-        -I@top_srcdir@/server/include \
-        -I@top_srcdir@/server/store/include
+libdsapi_la_CPPFLAGS =                        \
+	$(AM_CPPFLAGS)                        \
+        -DLW_ENABLE_THREADS=1                 \
+        $(LWBASE_INCLUDES)                    \
+        -I$(top_srcdir)/server/include        \
+        -I$(top_srcdir)/server/store/include
 
-libdsapi_la_LIBADD = \
-        $(LWBASE_LIBS) \
-        $(top_builddir)/common/liblsacommon.la \
-        $(ADDITIONAL_LIBS) \
-        $(DL_LIBS)
+libdsapi_la_LIBADD =                             \
+        $(LWBASE_LIBS)                           \
+        $(ADDITIONAL_LIBS)                       \
+        $(DL_LIBS)                               \
+        $(top_builddir)/common/liblsacommon.la
 
-libdsapi_la_LDFLAGS = \
+libdsapi_la_LDFLAGS =                            \
         $(LWBASE_LDFLAGS)
-
-

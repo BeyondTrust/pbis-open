@@ -24,20 +24,23 @@ libsamdb_la_SOURCES =     \
         samdbsecurity.c
 
 libsamdb_la_CPPFLAGS = \
-	$(AM_CPPFLAGS) \
-        -DLW_ENABLE_THREADS=1         \
-        -I$(top_srcdir)/server/include \
-        -I$(top_srcdir)/server/store/include \
-        $(SQLITE_INCLUDES) \
-        $(CRYPTO_INCLUDES)
+        $(AM_CPPFLAGS)                        \
+        -DLW_ENABLE_THREADS=1                 \
+        $(LWBASE_INCLUDES)                    \
+        $(SQLITE_INCLUDES)                    \
+        $(CRYPTO_INCLUDES)                    \
+        -I$(top_srcdir)/server/include        \
+        -I$(top_srcdir)/server/store/include
 
-libsamdb_la_LIBADD = \
-        $(UUID_LIBS) \
-        $(top_builddir)/server/store/dsapi/libdsapi.la \
-        $(SQLITE_LIBS) \
-        $(CRYPTO_LIBS)
+libsamdb_la_LIBADD =                                    \
+        $(UUID_LIBS)                                    \
+        $(LWBASE_LIBS)                                  \
+        $(SQLITE_LIBS)                                  \
+        $(CRYPTO_LIBS)                                  \
+        $(top_builddir)/server/store/dsapi/libdsapi.la
 
-libsamdb_la_LDFLAGS = \
+libsamdb_la_LDFLAGS =                                                    \
         -module -avoid-version -export-dynamic -export-symbols=samdb.sym \
-        $(SQLITE_LDFLAGS) \
-        $(CRYPTO_LDFLAGS)
+        $(LWBASE_LDFLAGS)                                                \
+        $(SQLITE_LDFLAGS)                                                \
+        $(CRYPTO_LDFLAGS) 
