@@ -456,7 +456,7 @@ AD_NetLookupObjectSidsByNames(
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %d (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -799,7 +799,7 @@ AD_NetLookupObjectNamesBySids(
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("InitLsaBindingDefault() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %d (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
