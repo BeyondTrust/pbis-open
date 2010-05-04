@@ -817,6 +817,9 @@ rpc_cn_packet_p_t pkt_p;
 			"rpc__cn_unpack_hdr" ));
                 }
 #endif
+
+                SWAB_INPLACE_32(authp->key_id);
+
                 authn_protocol = RPC_CN_AUTH_CVT_ID_WIRE_TO_API (authp->auth_type, &st);
                 if (st == rpc_s_ok)
                 {
