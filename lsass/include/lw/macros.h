@@ -87,20 +87,39 @@
         goto error;                              \
     }
 
-#define DCERPC_CALL(status, fn_call)             \
-    do {                                         \
-        dcethread_exc *dceexc;                   \
-                                                 \
-        DCETHREAD_TRY                            \
-        {                                        \
-            dceexc = NULL;                       \
-            (status) = fn_call;                  \
-        }                                        \
-        DCETHREAD_CATCH_ALL(dceexc)              \
-        {                                        \
-            status = LwRpcStatusToNtStatus(dceexc->match.value); \
-        }                                        \
-        DCETHREAD_ENDTRY;                        \
+#define DCERPC_CALL(status, fn_call)                                 \
+    do {                                                             \
+        dcethread_exc *dceexc;                                       \
+                                                                     \
+        DCETHREAD_TRY                                                \
+        {                                                            \
+            dceexc = NULL;                                           \
+            (status) = fn_call;                                      \
+        }                                                            \
+        DCETHREAD_CATCH_ALL(dceexc)                                  \
+        {                                                            \
+            status = LwRpcStatusToNtStatus(dceexc->match.value);     \
+        }                                                            \
+        DCETHREAD_ENDTRY;                                            \
+    } while (0);
+
+#define DCERPC_CALL_WINERR(winerr, fn_call)                          \
+    do {                                                             \
+        dcethread_exc *dceexc;                                       \
+        NTSTATUS ntstat;                                             \
+                                                                     \
+        DCETHREAD_TRY                                                \
+        {                                                            \
+            dceexc = NULL;                                           \
+            ntstat = STATUS_SUCCESS;                                 \
+            (winerr) = fn_call;                                      \
+        }                                                            \
+        DCETHREAD_CATCH_ALL(dceexc)                                  \
+        {                                                            \
+            ntstat = LwRpcStatusToNtStatus(dceexc->match.value);     \
+            winerr = LwNtStatusToWin32Error(ntstat);                 \
+        }                                                            \
+        DCETHREAD_ENDTRY;                                            \
     } while (0);
 
 

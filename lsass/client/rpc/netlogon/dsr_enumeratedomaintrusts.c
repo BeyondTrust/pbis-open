@@ -73,12 +73,12 @@ DsrEnumerateDomainTrusts(
     dwError = LwAllocateWc16String(&pwszServerName, pwszServer);
     BAIL_ON_WIN_ERROR(dwError);
 
-    DCERPC_CALL(ntStatus, cli_DsrEnumerateDomainTrusts(
+    DCERPC_CALL_WINERR(dwError, cli_DsrEnumerateDomainTrusts(
                                         (handle_t)hBinding,
                                         pwszServerName,
                                         Flags,
                                         &TrustList));
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_WIN_ERROR(dwError);
 
     ntStatus = NetrAllocateDomainTrusts(NULL,
                                         &dwOffset,

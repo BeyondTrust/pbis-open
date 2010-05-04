@@ -105,7 +105,7 @@ DsrGetDcName(
                sizeof(*pSiteGuid));
     }
 
-    DCERPC_CALL(dwError, cli_DsrGetDcName(hBinding,
+    DCERPC_CALL_WINERR(dwError, cli_DsrGetDcName(hBinding,
                                           pwszServer,
                                           pwszDomain,
                                           pDomainGuidCopy,
