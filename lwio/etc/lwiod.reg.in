@@ -74,6 +74,8 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares]
 
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares\flags]
+
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares\security]
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\smb1]
