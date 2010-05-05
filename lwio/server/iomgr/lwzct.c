@@ -1411,13 +1411,10 @@ cleanup:
             pZct->Status = status;
         }
         totalBytesTransferred = 0;
-        bytesRemaining = 0;
     }
-    else
-    {
-        pZct->BytesTransferred += totalBytesTransferred;
-        bytesRemaining = pZct->Length - pZct->BytesTransferred;
-    }
+
+    pZct->BytesTransferred += totalBytesTransferred;
+    bytesRemaining = pZct->Length - pZct->BytesTransferred;
 
     if (BytesTransferred)
     {
