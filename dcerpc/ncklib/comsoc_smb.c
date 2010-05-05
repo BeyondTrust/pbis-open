@@ -770,7 +770,7 @@ rpc__smb_socket_accept(
     IO_FILE_HANDLE np = NULL;
     size_t i;
     char c = 0;
-    BYTE clientaddr[4] = {0, 0, 0, 0};
+    BYTE clientaddr[16] = {0};
     USHORT clientaddrlen = sizeof(clientaddr);
 
     *newsock = NULL;
@@ -835,10 +835,31 @@ rpc__smb_socket_accept(
         goto error;
     }
 
-    if (clientaddrlen == sizeof(clientaddr))
+    switch (clientaddrlen)
     {
-        snprintf(npsmb->peeraddr.remote_host, sizeof(npsmb->peeraddr.remote_host) - 1,
-                 "%u.%u.%u.%u", clientaddr[0], clientaddr[1], clientaddr[2], clientaddr[3]);
+    case 0:
+        /* No client address */
+        break;
+    case 4:
+        if (inet_ntop(AF_INET, clientaddr, npsmb->peeraddr.remote_host, sizeof(npsmb->peeraddr.remote_host)) == NULL)
+        {
+            serr = errno;
+            goto error;
+        }
+        break;
+#ifdef AF_INET6
+    case 16:
+        if (inet_ntop(AF_INET6, clientaddr, npsmb->peeraddr.remote_host, sizeof(npsmb->peeraddr.remote_host)) == NULL)
+        {
+            serr = errno;
+            goto error;
+        }
+        break;
+#endif
+    default:
+        serr = ENOTSUP;
+        goto error;
+        break;
     }
 
     if (addr)
