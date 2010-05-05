@@ -479,7 +479,14 @@ SMBPacketMarshallFooter(
     PSMB_PACKET pPacket
     )
 {
-    pPacket->pNetBIOSHeader->len = htonl(pPacket->bufferUsed - sizeof(NETBIOS_HEADER));
+    if (pPacket->bufferUsed > sizeof(NETBIOS_HEADER))
+    {
+        pPacket->pNetBIOSHeader->len = htonl(pPacket->bufferUsed - sizeof(NETBIOS_HEADER));
+    }
+    else
+    {
+        pPacket->pNetBIOSHeader->len = 0;
+    }
 
     return 0;
 }
