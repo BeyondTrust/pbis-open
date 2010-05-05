@@ -703,6 +703,22 @@ typedef struct __LSA_AUTH_USER_PARAMS
     } pass;
 } LSA_AUTH_USER_PARAMS, *PLSA_AUTH_USER_PARAMS;
 
+typedef struct __LSA_AUTH_USER_PAM_PARAMS
+{
+    LW_DWORD dwFlags;
+    LW_PCSTR pszLoginName;
+    LW_PCSTR pszPassword;
+    LW_PCSTR pszPamSource;
+} LSA_AUTH_USER_PAM_PARAMS, *PLSA_AUTH_USER_PAM_PARAMS;
+
+#define LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE   0x00000001
+#define LSA_AUTH_USER_PAM_FLAG_SMART_CARD       0x00000002
+
+typedef struct __LSA_AUTH_USER_PAM_INFO
+{
+    LW_PSTR pszMessage;
+} LSA_AUTH_USER_PAM_INFO, *PLSA_AUTH_USER_PAM_INFO;
+
 #define LSA_MAX_SID_SUB_AUTHORITIES  15
 
 typedef struct __LSA_SID_ATTRIB
@@ -1397,6 +1413,13 @@ LsaAuthenticateUserEx(
     LW_IN LW_HANDLE hLsaConnection,
     LW_IN LSA_AUTH_USER_PARAMS* pParams,
     LW_OUT PLSA_AUTH_USER_INFO* ppUserInfo
+    );
+
+LW_DWORD
+LsaAuthenticateUserPam(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LSA_AUTH_USER_PAM_PARAMS* pParams,
+    LW_OUT LSA_AUTH_USER_PAM_INFO* pPamAuthInfo
     );
 
 LW_DWORD
