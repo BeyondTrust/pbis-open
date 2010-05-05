@@ -76,7 +76,7 @@ pam_sm_chauthtok(
     if (!(flags & PAM_UPDATE_AUTHTOK) &&
         !(flags & PAM_PRELIM_CHECK))
     {
-        dwError = PAM_AUTHTOK_ERR;
+        dwError = LsaPamUnmapErrorCode(PAM_AUTHTOK_ERR);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -464,7 +464,7 @@ LsaPamGetCurrentPassword(
         }
         else if (pPamOptions->bUseFirstPass)
         {
-            dwError = PAM_BAD_ITEM;
+            dwError = LsaPamUnmapErrorCode(PAM_BAD_ITEM);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
