@@ -732,6 +732,12 @@ start_daemon()
             if [ -n "$2" ]; then
                 log_info "Starting $1 daemon"
             fi
+            if type svccfg >/dev/null 2>&1; then
+                if svccfg select TEMP/network/$1 2>/dev/null; then
+                    svccfg delete TEMP/network/$1
+                fi
+                svccfg import /etc/likewise/svcs-solaris/$1.xml
+            fi
             $INIT_SCRIPT_PREFIX_DIR/$1 start
         fi
     fi
