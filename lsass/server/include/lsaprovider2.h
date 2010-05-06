@@ -227,7 +227,7 @@ typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
     PFNOPENHANDLE_2                pfnOpenHandle; // we should be able to get rid of this and just pass in a LSA_PROVIDER_HANDLE that is created by SRV/API but that provider can attach context.
     PFNCLOSEHANDLE                 pfnCloseHandle; // "
     PFNSERVICESDOMAIN              pfnServicesDomain; // is it necessary?  if we can lookup domains, it is not.
-    PFNAUTHENTICATEUSER            pfnAuthenticateUser; // ok
+    PFNAUTHENTICATEUSERPAM         pfnAuthenticateUserPam; // ok
     PFNAUTHENTICATEUSEREX          pfnAuthenticateUserEx; // ok
     PFNVALIDATEUSER                pfnValidateUser; // This can be combined with the below (removing password)
     PFNCHECKUSERINLIST             pfnCheckUserInList; // see above

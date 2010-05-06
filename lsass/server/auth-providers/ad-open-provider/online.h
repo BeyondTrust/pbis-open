@@ -175,10 +175,10 @@ AD_DetermineTrustModeandDomainName(
     );
 
 DWORD
-AD_OnlineAuthenticateUser(
+AD_OnlineAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszUserName,
-    PCSTR  pszPassword
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

@@ -50,14 +50,6 @@
 #define __AUTH_P_H__
 
 DWORD
-LsaSrvAuthenticateUser(
-    HANDLE hServer,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
-    );
-
-DWORD
 LsaSrvAuthenticateUserEx(
     HANDLE hServer,
     PLSA_AUTH_USER_PARAMS pUserParms,

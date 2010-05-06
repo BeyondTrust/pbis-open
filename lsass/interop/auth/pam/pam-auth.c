@@ -46,6 +46,10 @@
  */
 #include "pam-lsass.h"
 
+#ifndef PAM_BAD_ITEM
+#define PAM_BAD_ITEM PAM_SERVICE_ERR
+#endif
+
 int
 pam_sm_authenticate(
     pam_handle_t* pamh,
@@ -62,8 +66,9 @@ pam_sm_authenticate(
     PLSA_PAM_CONFIG pConfig = NULL;
     PLSA_USER_INFO_0 pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
-    PSTR pszMessage = NULL;
     int iPamError = 0;
+    LSA_AUTH_USER_PAM_PARAMS params = { 0 };
+    PLSA_AUTH_USER_PAM_INFO pInfo = NULL;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -128,15 +133,29 @@ pam_sm_authenticate(
         dwError = LsaOpenServer(&hLsaConnection);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaAuthenticateUser(
+        dwError = pam_get_item(
+                        pamh,
+                        PAM_SERVICE,
+                        (PAM_GET_ITEM_TYPE)&params.pszPamSource);
+        if (dwError == PAM_BAD_ITEM)
+        {
+            dwError = 0;
+            params.pszPamSource = NULL;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+
+        params.dwFlags = LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE;
+        params.pszLoginName = pszLoginId;
+        params.pszPassword = pszPassword;
+
+        dwError = LsaAuthenticateUserPam(
             hLsaConnection,
-            pszLoginId,
-            pszPassword,
-            &pszMessage);
-        if (pszMessage)
+            &params,
+            &pInfo);
+        if (pInfo && pInfo->pszMessage)
         {
             LsaPamConverse(pamh,
-                           pszMessage,
+                           pInfo->pszMessage,
                            PAM_TEXT_INFO,
                            NULL);
         }
@@ -240,7 +259,10 @@ cleanup:
 
     LW_SAFE_CLEAR_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
-    LW_SAFE_FREE_STRING(pszMessage);
+    if (pInfo)
+    {
+        LsaFreeAuthUserPamInfo(pInfo);
+    }
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::end");
 

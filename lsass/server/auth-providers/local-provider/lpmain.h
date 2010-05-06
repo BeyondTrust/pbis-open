@@ -81,11 +81,10 @@ LocalServicesDomain(
     );
 
 DWORD
-LocalAuthenticateUser(
+LocalAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

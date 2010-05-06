@@ -644,14 +644,18 @@ cleanup:
 }
 
 DWORD
-AD_AuthenticateUser(
+AD_AuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
+    
+    if (ppPamAuthInfo)
+    {
+        *ppPamAuthInfo = NULL;
+    }
 
     LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
 
@@ -667,24 +671,23 @@ AD_AuthenticateUser(
     }
     else
     {
-        dwError = AD_OnlineAuthenticateUser(
+        dwError = AD_OnlineAuthenticateUserPam(
             hProvider,
-            pszLoginId,
-            pszPassword);
+            pParams,
+            ppPamAuthInfo);
     }
    
     if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
-        dwError = AD_OfflineAuthenticateUser(
+        dwError = AD_OfflineAuthenticateUserPam(
             hProvider,
-            pszLoginId,
-            pszPassword);
+            pParams,
+            ppPamAuthInfo);
     }
 
 error:
 
     LsaAdProviderStateRelease(gpLsaAdProviderState);
-    *ppszMessage = NULL;
     return dwError;
 }
 

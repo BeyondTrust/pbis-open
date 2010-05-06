@@ -92,11 +92,10 @@ LsaTransactAddUser2(
     );
 
 DWORD
-LsaTransactAuthenticateUser(
+LsaTransactAuthenticateUserPam(
     HANDLE hServer,
-    PCSTR  pszLoginName,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

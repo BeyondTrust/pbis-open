@@ -46,12 +46,54 @@
  */
 #include "api.h"
 
+DWORD
+LsaSrvGetPamSourceOffset(
+    PCSTR pszPamSource
+    )
+{
+    struct
+    {
+        DWORD dwOffset;
+        const char *pszPamSource;
+    } services[] = {
+        { 0, "ssh" },
+        { 0, "sshd" },
+        { 0, "sshd-kbdint" }, // Used by Solaris 10
+        { 1, "gdm" },
+        { 1, "kdm" },
+        { 1, "dtlogin" }, // Used by Solaris 10
+        { 2, "login" },
+        { 3, "ftp" }, // Used by Solaris 10
+        { 4, "telnet" }, // Used by Solaris 10
+        { 4, "rsh" },
+        { 4, "krsh" },
+        { 4, "ktelnet" },
+        { 4, "rlogin" },
+        { 5, "gnome-screensaver" },
+        { 5, "dtsession" }, // Used by Solaris 10
+        { 6, "sudo" },
+        { 7, "passwd" },
+        { 8, "su" },
+    };
+    DWORD i = 0;
+
+    for (i = 0; i < sizeof(services)/sizeof(services[0]); i++)
+    {
+        if (!strcmp(pszPamSource, services[i].pszPamSource))
+        {
+            return services[i].dwOffset;
+        }
+    }
+
+    return 19;
+}
 
 VOID
 LsaSrvWriteLoginSuccessEvent(
     HANDLE hServer,
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
+    PCSTR  pszPamSource,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     )
@@ -67,7 +109,8 @@ LsaSrvWriteLoginSuccessEvent(
     {
         case LSASS_EVENT_LOGON_PHASE_AUTHENTICATE:
             sprintf(szLoginPhase, "User authenticate");
-            dwEventID = LSASS_EVENT_SUCCESSFUL_LOGON_AUTHENTICATE;
+            dwEventID = LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH +
+                LsaSrvGetPamSourceOffset(pszPamSource);
             break;
 
         case LSASS_EVENT_LOGON_PHASE_CREATE_SESSION:
@@ -92,15 +135,38 @@ LsaSrvWriteLoginSuccessEvent(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LwAllocateStringPrintf(
-                 &pszDescription,
-                 "Successful Logon:\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     User Name:               %s\r\n" \
-                 "     Login phase:             %s",
-                 pszProvider,
-                 pszLoginId,
-                 szLoginPhase);
+    if (pszPamSource != NULL)
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDescription,
+                     "Successful Logon:\r\n\r\n" \
+                     "     Authentication provider: %s\r\n" \
+                     "     Caller euid:             %d\r\n" \
+                     "\r\n" \
+                     "     User Name:               %s\r\n" \
+                     "     Login phase:             %s\r\n" \
+                     "     Pam source:              %s\r\n",
+                     pszProvider,
+                     pServerState->peerUID,
+                     pszLoginId,
+                     szLoginPhase,
+                     pszPamSource);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDescription,
+                     "Successful Logon:\r\n\r\n" \
+                     "     Authentication provider: %s\r\n" \
+                     "     Caller euid:             %d\r\n" \
+                     "\r\n" \
+                     "     User Name:               %s\r\n" \
+                     "     Login phase:             %s\r\n",
+                     pszProvider,
+                     pServerState->peerUID,
+                     pszLoginId,
+                     szLoginPhase);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaGetErrorMessageForLoggingEvent(
@@ -137,6 +203,7 @@ LsaSrvWriteLoginFailedEvent(
     HANDLE hServer,
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
+    PCSTR  pszPamSource,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     )
@@ -180,7 +247,15 @@ LsaSrvWriteLoginFailedEvent(
         case LW_ERROR_NO_SUCH_USER:
         case LW_ERROR_INVALID_PASSWORD:
         case LW_ERROR_PASSWORD_MISMATCH:
-            dwEventID = LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD;
+            if (dwLoginPhase == LSASS_EVENT_LOGON_PHASE_AUTHENTICATE)
+            {
+                dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SSH +
+                    LsaSrvGetPamSourceOffset(pszPamSource);
+            }
+            else
+            {
+                dwEventID = LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD;
+            }
             strcpy(szReason, "Unknown username or bad password");
             break;
 
@@ -236,20 +311,45 @@ LsaSrvWriteLoginFailedEvent(
 
     if (dwErrCode == LSASS_EVENT_LOGON_PHASE_CHECK_USER)
     {
-            dwEventID = LSASS_EVENT_FAILED_LOGON_CHECK_USER;
+        dwEventID = LSASS_EVENT_FAILED_LOGON_CHECK_USER;
     }
 
-    dwError = LwAllocateStringPrintf(
-                 &pszDescription,
-                 "Logon Failure:\r\n\r\n" \
-                 "     Authentication provider: %s\r\n\r\n" \
-                 "     Reason:                  %s\r\n" \
-                 "     User Name:               %s\r\n" \
-                 "     Login phase:             %s",
-                 pszProvider,
-                 szReason,
-                 pszLoginId,
-                 szLoginPhase);
+    if (pszPamSource != NULL)
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDescription,
+                     "Logon Failure:\r\n\r\n" \
+                     "     Authentication provider: %s\r\n" \
+                     "     Caller euid:             %d\r\n" \
+                     "\r\n" \
+                     "     Reason:                  %s\r\n" \
+                     "     User Name:               %s\r\n" \
+                     "     Login phase:             %s\r\n" \
+                     "     Pam source:              %s\r\n",
+                     pszProvider,
+                     pServerState->peerUID,
+                     szReason,
+                     pszLoginId,
+                     szLoginPhase,
+                     pszPamSource);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDescription,
+                     "Logon Failure:\r\n\r\n" \
+                     "     Authentication provider: %s\r\n" \
+                     "     Caller euid:             %d\r\n" \
+                     "\r\n" \
+                     "     Reason:                  %s\r\n" \
+                     "     User Name:               %s\r\n" \
+                     "     Login phase:             %s\r\n",
+                     pszProvider,
+                     pServerState->peerUID,
+                     szReason,
+                     pszLoginId,
+                     szLoginPhase);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaGetErrorMessageForLoggingEvent(

@@ -57,11 +57,10 @@ typedef VOID  (*PFNCLOSEHANDLE)(HANDLE hProvider);
 
 typedef BOOLEAN (*PFNSERVICESDOMAIN)(PCSTR pszDomain);
 
-typedef DWORD (*PFNAUTHENTICATEUSER)(
+typedef DWORD (*PFNAUTHENTICATEUSERPAM)(
                         HANDLE hProvider,
-                        PCSTR  pszLoginId,
-                        PCSTR  pszPassword,
-                        PSTR*  ppszMessage
+                        PLSA_AUTH_USER_PAM_PARAMS pParams,
+                        PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
                         );
 
 typedef DWORD (*PFNAUTHENTICATEUSEREX)(

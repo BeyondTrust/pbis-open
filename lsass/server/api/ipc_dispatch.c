@@ -411,7 +411,7 @@ error:
 
 
 static LWMsgStatus
-LsaSrvIpcAuthenticateUser(
+LsaSrvIpcAuthenticateUserPam(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
     LWMsgParams* pOut,
@@ -419,27 +419,38 @@ LsaSrvIpcAuthenticateUser(
     )
 {
     DWORD dwError = 0;
-    PLSA_IPC_AUTH_USER_REQ pReq = pIn->data;
+    PLSA_AUTH_USER_PAM_PARAMS pParams = pIn->data;
+    PLSA_AUTH_USER_PAM_INFO pInfo = NULL;
     PLSA_IPC_ERROR pError = NULL;
-    PSTR pszMessage = NULL;
 
-    dwError = LsaSrvAuthenticateUser(
+    dwError = LwAllocateMemory(sizeof(*pInfo),
+                                    (PVOID)&pInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaSrvAuthenticateUserPam(
                         LsaSrvIpcGetSessionData(pCall),
-                        pReq->pszLoginName,
-                        pReq->pszPassword,
-                        &pszMessage);
+                        pParams,
+                        &pInfo);
 
     if (!dwError)
     {
-        pOut->tag = LSA_R_AUTH_USER_SUCCESS;
-        pOut->data = pszMessage;
+        pOut->tag = LSA_R_AUTH_USER_PAM_SUCCESS;
+        pOut->data = pInfo;
+        pInfo = NULL;
     }
     else
     {
-        dwError = LsaSrvIpcCreateError(dwError, pszMessage, &pError);
+        dwError = LsaSrvIpcCreateError(
+                        dwError,
+                        pInfo ? pInfo->pszMessage : NULL,
+                        &pError);
         BAIL_ON_LSA_ERROR(dwError);
+        if (pInfo)
+        {
+            pInfo->pszMessage = NULL;
+        }
 
-        pOut->tag = LSA_R_AUTH_USER_FAILURE;
+        pOut->tag = LSA_R_AUTH_USER_PAM_FAILURE;
         pOut->data = pError;
     }
 
@@ -447,6 +458,10 @@ cleanup:
     return MAP_LW_ERROR_IPC(dwError);
 
 error:
+    if (pInfo)
+    {
+        LsaFreeAuthUserPamInfo(pInfo);
+    }
     goto cleanup;
 }
 
@@ -2002,7 +2017,7 @@ error:
 
 static LWMsgDispatchSpec gMessageHandlers[] =
 {
-    LWMSG_DISPATCH_BLOCK(LSA_Q_AUTH_USER, LsaSrvIpcAuthenticateUser),
+    LWMSG_DISPATCH_BLOCK(LSA_Q_AUTH_USER_PAM, LsaSrvIpcAuthenticateUserPam),
     LWMSG_DISPATCH_BLOCK(LSA_Q_AUTH_USER_EX, LsaSrvIpcAuthenticateUserEx),
     LWMSG_DISPATCH_BLOCK(LSA_Q_VALIDATE_USER, LsaSrvIpcValidateUser),
     LWMSG_DISPATCH_BLOCK(LSA_Q_CHANGE_PASSWORD, LsaSrvIpcChangePassword),

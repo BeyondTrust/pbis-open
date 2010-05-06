@@ -346,17 +346,14 @@ error:
 }
 
 DWORD
-LsaTransactAuthenticateUser(
+LsaTransactAuthenticateUserPam(
     HANDLE hServer,
-    PCSTR  pszLoginName,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
-    LSA_IPC_AUTH_USER_REQ authUserReq;
     PLSA_IPC_ERROR pError = NULL;
-    PSTR pszMessage = NULL;
 
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
@@ -365,26 +362,24 @@ LsaTransactAuthenticateUser(
     dwError = LsaIpcAcquireCall(hServer, &pCall);
     BAIL_ON_LSA_ERROR(dwError);
 
-    authUserReq.pszLoginName = pszLoginName;
-    authUserReq.pszPassword = pszPassword;
-
-    in.tag = LSA_Q_AUTH_USER;
-    in.data = &authUserReq;
+    in.tag = LSA_Q_AUTH_USER_PAM;
+    in.data = pParams;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
     BAIL_ON_LSA_ERROR(dwError);
 
     switch (out.tag)
     {
-        case LSA_R_AUTH_USER_SUCCESS:
-            pszMessage = (PSTR)out.data;
-            out.data = NULL;
+        case LSA_R_AUTH_USER_PAM_SUCCESS:
+            if (ppPamAuthInfo)
+            {
+                *ppPamAuthInfo = out.data;
+                out.data = NULL;
+            }
             break;
-        case LSA_R_AUTH_USER_FAILURE:
+        case LSA_R_AUTH_USER_PAM_FAILURE:
             pError = (PLSA_IPC_ERROR) out.data;
             dwError = pError->dwError;
-            pszMessage = pError->pszErrorMessage;
-            pError->pszErrorMessage = NULL;
             BAIL_ON_LSA_ERROR(dwError);
             break;
         default:
@@ -398,10 +393,6 @@ cleanup:
     {
         lwmsg_call_destroy_params(pCall, &out);
         lwmsg_call_release(pCall);
-    }
-    if (ppszMessage)
-    {
-        *ppszMessage = pszMessage;
     }
 
     return dwError;

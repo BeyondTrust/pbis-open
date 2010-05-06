@@ -1706,10 +1706,10 @@ error:
 }
 
 DWORD
-AD_OnlineAuthenticateUser(
+AD_OnlineAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
@@ -1718,9 +1718,15 @@ AD_OnlineAuthenticateUser(
     DWORD dwGoodUntilTime = 0;
     BOOLEAN bFoundDomain = FALSE;
     PSTR pszNT4UserName = NULL;
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
+
+    dwError = LwAllocateMemory(
+                    sizeof(*pPamAuthInfo),
+                    (PVOID*)&pPamAuthInfo);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaCrackDomainQualifiedName(
-                    pszLoginId,
+                    pParams->pszLoginName,
                     gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1738,14 +1744,14 @@ AD_OnlineAuthenticateUser(
 
     dwError = AD_FindUserObjectByName(
                     hProvider,
-                    pszLoginId,
+                    pParams->pszLoginName,
                     &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_OnlineCheckUserPassword(
                     hProvider,
                     pUserInfo,
-                    pszPassword,
+                    pParams->pszPassword,
                     &dwGoodUntilTime);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1753,7 +1759,7 @@ AD_OnlineAuthenticateUser(
 
     dwError = AD_FindUserObjectByName(
                     hProvider,
-                    pszLoginId,
+                    pParams->pszLoginName,
                     &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1763,7 +1769,7 @@ AD_OnlineAuthenticateUser(
 
     dwError = AD_OnlineCachePasswordVerifier(
                     pUserInfo,
-                    pszPassword);
+                    pParams->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
@@ -1776,9 +1782,11 @@ AD_OnlineAuthenticateUser(
     dwError = LsaUmAddUser(
                   pUserInfo->userInfo.uid,
                   pszNT4UserName,
-                  pszPassword,
+                  pParams->pszPassword,
                   dwGoodUntilTime);
     BAIL_ON_LSA_ERROR(dwError);
+
+    *ppPamAuthInfo = pPamAuthInfo;
 
 cleanup:
 
@@ -1794,6 +1802,11 @@ cleanup:
     return dwError;
 
 error:
+    *ppPamAuthInfo = NULL;
+    if (pPamAuthInfo)
+    {
+        LsaFreeAuthUserPamInfo(pPamAuthInfo);
+    }
 
     goto cleanup;
 }

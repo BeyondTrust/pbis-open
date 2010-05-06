@@ -73,9 +73,10 @@
 #define LSASS_EVENT_INFO_SERVICE_CONFIGURATION_CHANGED               1004
 
 // Logon events
-#define LSASS_EVENT_SUCCESSFUL_LOGON_AUTHENTICATE                    1200 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_LOGON_AUTHENTICATE                    1200 // Similar to Window event id 528 - deprecated
 #define LSASS_EVENT_SUCCESSFUL_LOGON_CREATE_SESSION                  1201 // Similar to Window event id 528
 #define LSASS_EVENT_SUCCESSFUL_LOGON_CHECK_USER                      1203 // Similar to Window event id 528
+// Only fired for the non-authenticate phases
 #define LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD    1205 // Similar to Window event id 529
 #define LSASS_EVENT_FAILED_LOGON_TIME_RESTRICTION_VIOLATION          1206 // Similar to Window event id 530
 #define LSASS_EVENT_FAILED_LOGON_ACCOUNT_DISABLED                    1207 // Similar to Window event id 531
@@ -94,6 +95,34 @@
 
 // Logoff events
 #define LSASS_EVENT_SUCCESSFUL_LOGOFF                                1220 // Similar to Window event id 538
+
+// Logon success events
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH                      1230 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_GRAPHICAL                1231 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_CONSOLE                  1232 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_FTP                      1233 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_TELNET                   1234 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SCREEENSAVER             1235 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SUDO                     1236 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_PASSWD                   1237 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SU                       1238 // Similar to Window event id 528
+// 1239-1248 reserved
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_OTHER                    1249 // Similar to Window event id 528
+
+// Logon failed events
+// These are fired during the authenticate phase if the username is unknown or
+// the password is incorrect. Disabled accounts, etc.. create different events.
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SSH                          1250 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_GRAPHICAL                    1251 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_CONSOLE                      1252 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_FTP                          1253 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_TELNET                       1254 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SCREENSAVER                  1255 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SUDO                         1256 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_PASSWD                       1257 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SU                           1258 // Similar to Window event id 529
+// 1259-1268 reserved
+#define LSASS_EVENT_FAILED_AUTHENTICATE_OTHER                        1269 // Similar to Window event id 529
 
 // User password change events
 #define LSASS_EVENT_SUCCESSFUL_PASSWORD_CHANGE                       1300 // Similar to Window event id 627

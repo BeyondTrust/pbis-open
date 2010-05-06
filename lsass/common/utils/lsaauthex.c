@@ -45,6 +45,18 @@
 
 #include "includes.h"
 
+VOID
+LsaFreeAuthUserPamInfo(
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo
+    )
+{
+    if (pPamAuthInfo)
+    {
+        LW_SAFE_FREE_STRING(pPamAuthInfo->pszMessage);
+        LW_SAFE_FREE_MEMORY(pPamAuthInfo);
+    }
+}
+
 DWORD
 LsaFreeAuthUserInfo(
     PLSA_AUTH_USER_INFO *ppAuthUserInfo

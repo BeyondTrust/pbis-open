@@ -548,7 +548,7 @@ LADSValidateProvider(
         !pProvider->pFnTable->pfnOpenHandle ||
         !pProvider->pFnTable->pfnCloseHandle ||
         !pProvider->pFnTable->pfnServicesDomain ||
-        !pProvider->pFnTable->pfnAuthenticateUser ||
+        !pProvider->pFnTable->pfnAuthenticateUserPam ||
         !pProvider->pFnTable->pfnValidateUser ||
         !pProvider->pFnTable->pfnLookupUserByName ||
         !pProvider->pFnTable->pfnLookupUserById ||

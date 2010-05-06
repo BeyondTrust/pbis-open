@@ -47,11 +47,10 @@
 #include "api.h"
 
 DWORD
-LsaSrvAuthenticateUser(
+LsaSrvAuthenticateUserPam(
     HANDLE hServer,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
@@ -59,11 +58,12 @@ LsaSrvAuthenticateUser(
     BOOLEAN bInLock = FALSE;
     PLSA_AUTH_PROVIDER pProvider = NULL;
     HANDLE hProvider = (HANDLE)NULL;
-    PSTR pszMessage = NULL;
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
-    BAIL_ON_INVALID_STRING(pszLoginId);
+    BAIL_ON_INVALID_POINTER(pParams);
+    BAIL_ON_INVALID_STRING(pParams->pszLoginName);
 
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
@@ -72,19 +72,22 @@ LsaSrvAuthenticateUser(
         dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        LW_SAFE_FREE_STRING(pszMessage);
-        dwError = pProvider->pFnTable2->pfnAuthenticateUser(
+        if (pPamAuthInfo)
+        {
+            LsaFreeAuthUserPamInfo(pPamAuthInfo);
+        }
+        dwError = pProvider->pFnTable2->pfnAuthenticateUserPam(
                                             hProvider,
-                                            pszLoginId,
-                                            pszPassword,
-                                            &pszMessage);
+                                            pParams,
+                                            &pPamAuthInfo);
         if (!dwError)
         {
             if (LsaSrvEventlogEnabled())
             {
                 LsaSrvWriteLoginSuccessEvent(hServer,
                                              pProvider->pszName,
-                                             pszLoginId,
+                                             pParams->pszLoginName,
+                                             pParams->pszPamSource,
                                              LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                              dwError);
             }
@@ -103,7 +106,8 @@ LsaSrvAuthenticateUser(
             {
                 LsaSrvWriteLoginFailedEvent(hServer,
                                             pProvider->pszName,
-                                            pszLoginId,
+                                            pParams->pszLoginName,
+                                            pParams->pszPamSource,
                                             LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                             dwError);
             }
@@ -119,6 +123,14 @@ LsaSrvAuthenticateUser(
 
 cleanup:
 
+    if (ppPamAuthInfo)
+    {
+        *ppPamAuthInfo = pPamAuthInfo;
+    }
+    else if (pPamAuthInfo)
+    {
+        LsaFreeAuthUserPamInfo(pPamAuthInfo);
+    }
     if (hProvider != (HANDLE)NULL) {
         LsaSrvCloseProvider(pProvider, hProvider);
     }
@@ -135,7 +147,6 @@ cleanup:
     }
 
     LSA_TRACE_END_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
-    *ppszMessage = pszMessage;
 
     return dwError;
 
@@ -144,11 +155,18 @@ error:
     if (dwError == LW_ERROR_NOT_HANDLED ||
         dwError == LW_ERROR_NO_SUCH_USER)
     {
-        LSA_LOG_VERBOSE_ENTRY_NOT_FOUND(hServer, dwError, "authenticate user (name = '%s')", LSA_SAFE_LOG_STRING(pszLoginId));
+        LSA_LOG_VERBOSE_ENTRY_NOT_FOUND(hServer, dwError, "authenticate user (name = '%s')", LSA_SAFE_LOG_STRING(pParams->pszLoginName));
     }
     else
     {
-        LSA_LOG_ERROR_API_FAILED(hServer, dwError, "authenticate user (name = '%s')", LSA_SAFE_LOG_STRING(pszLoginId));
+        /* if (dwError == LW_ERROR_PASSWORD_MISMATCH && LsaSrvLogPasswords())
+        {
+            LSA_LOG_ERROR_API_FAILED(hServer, dwError, "authenticate user (name = '%s', password = '%s')", LSA_SAFE_LOG_STRING(pParams->pszLoginName), LSA_SAFE_LOG_STRING(pParams->pszPassword));
+        }
+        else */
+        {
+            LSA_LOG_ERROR_API_FAILED(hServer, dwError, "authenticate user (name = '%s')", LSA_SAFE_LOG_STRING(pParams->pszLoginName));
+        }
     }
 
     goto cleanup;
@@ -168,7 +186,6 @@ LsaSrvAuthenticateUserEx(
     HANDLE hProvider = (HANDLE)NULL;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     LSA_AUTH_USER_PARAMS localUserParams;
-    PSTR pszMessage = NULL;
 
     BAIL_ON_INVALID_POINTER(pUserParams);
     BAIL_ON_INVALID_POINTER(ppUserInfo);
@@ -186,6 +203,7 @@ LsaSrvAuthenticateUserEx(
     {
 	    PSTR pszAccountName = NULL;
 	    DWORD dwLen = 0;
+            LSA_AUTH_USER_PAM_PARAMS params = { 0 };
 	    
 	    /* calculate length includeing '\' and terminating NULL */
 
@@ -199,11 +217,13 @@ LsaSrvAuthenticateUserEx(
 		     pUserParams->pszDomain ? "\\" : "", 
 		     pUserParams->pszAccountName);
 
+            params.pszLoginName = pszAccountName;
+            params.pszPassword = pUserParams->pass.clear.pszPassword;
+
 	    /* Pass off plain text auth to AuthenticateUser() */
-	    dwError = LsaSrvAuthenticateUser(hServer, 
-					     "",
-					     pUserParams->pass.clear.pszPassword,
-                                             &pszMessage);
+	    dwError = LsaSrvAuthenticateUserPam(hServer, 
+					     &params,
+                                             NULL);
 	    LW_SAFE_FREE_MEMORY(pszAccountName);	    
 	    goto cleanup;
 	    break;
@@ -252,6 +272,7 @@ LsaSrvAuthenticateUserEx(
                                              pProvider->pszName,
                                              pUserParams && pUserParams->pszAccountName ?
                                              pUserParams->pszAccountName : "",
+                                             NULL,
                                              LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                              dwError);
             }
@@ -272,6 +293,7 @@ LsaSrvAuthenticateUserEx(
                                             pProvider->pszName,
                                             pUserParams && pUserParams->pszAccountName ?
                                             pUserParams->pszAccountName : "",
+                                            NULL,
                                             LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                             dwError);
             }
@@ -308,7 +330,6 @@ cleanup:
     }
 
     LSA_TRACE_END_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
-    LW_SAFE_FREE_STRING(pszMessage);
 
     return dwError;
 
@@ -434,6 +455,7 @@ LsaSrvCheckUserInList(
                     hServer,
                     pProvider->pszName,
                     pszLoginId,
+                    NULL,
                     LSASS_EVENT_LOGON_PHASE_CHECK_USER,
                     dwError);
             }
@@ -454,6 +476,7 @@ LsaSrvCheckUserInList(
                     hServer,
                     pProvider->pszName,
                     pszLoginId,
+                    NULL,
                     LSASS_EVENT_LOGON_PHASE_CHECK_USER,
                     dwError);
             }

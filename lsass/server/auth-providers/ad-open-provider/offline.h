@@ -56,10 +56,10 @@ AD_IsOffline(
     );
 
 DWORD
-AD_OfflineAuthenticateUser(
+AD_OfflineAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszUserName,
-    PCSTR  pszPassword
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

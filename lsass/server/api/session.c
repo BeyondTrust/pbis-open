@@ -84,6 +84,7 @@ LsaSrvOpenSession(
                     hServer,
                     pProvider->pszName,
                     pszLoginId,
+                    NULL,
                     LSASS_EVENT_LOGON_PHASE_CREATE_SESSION,
                     dwError);
             }
@@ -104,6 +105,7 @@ LsaSrvOpenSession(
                     hServer,
                     pProvider->pszName,
                     pszLoginId,
+                    NULL,
                     LSASS_EVENT_LOGON_PHASE_CREATE_SESSION,
                     dwError);
             }

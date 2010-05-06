@@ -1419,7 +1419,12 @@ LW_DWORD
 LsaAuthenticateUserPam(
     LW_IN LW_HANDLE hLsaConnection,
     LW_IN LSA_AUTH_USER_PAM_PARAMS* pParams,
-    LW_OUT LSA_AUTH_USER_PAM_INFO* pPamAuthInfo
+    LW_OUT PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
+    );
+
+LW_VOID
+LsaFreeAuthUserPamInfo(
+    LW_IN LW_OUT PLSA_AUTH_USER_PAM_INFO pPamAuthInfo
     );
 
 LW_DWORD

@@ -89,11 +89,10 @@ AD_ServicesDomainWithDiscovery(
     );
 
 DWORD
-AD_AuthenticateUser(
+AD_AuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszUserName,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

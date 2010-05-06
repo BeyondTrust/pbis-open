@@ -81,11 +81,10 @@ LsaSrvCloseServer(
     );
 
 DWORD
-LsaSrvAuthenticateUser(
+LsaSrvAuthenticateUserPam(
     HANDLE hServer,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD

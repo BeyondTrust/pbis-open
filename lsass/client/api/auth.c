@@ -55,16 +55,56 @@ LsaAuthenticateUser(
     PSTR*  ppszMessage
     )
 {
+    LSA_AUTH_USER_PAM_PARAMS params = { 0 };
+    PLSA_AUTH_USER_PAM_INFO pInfo = NULL;
+    DWORD dwError = 0;
+
+    params.dwFlags = LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE;
+    params.pszLoginName = pszLoginName;
+    params.pszPassword = pszPassword;
+
+    dwError = LsaAuthenticateUserPam(
+            hLsaConnection,
+            &params,
+            &pInfo);
+
+    if (ppszMessage)
+    {
+        if (pInfo)
+        {
+            *ppszMessage = pInfo->pszMessage;
+            pInfo->pszMessage = NULL;
+        }
+        else
+        {
+            *ppszMessage = NULL;
+        }
+    }
+    if (pInfo)
+    {
+        LsaFreeAuthUserPamInfo(pInfo);
+    }
+
+    return dwError;
+}
+
+LSASS_API
+DWORD
+LsaAuthenticateUserPam(
+    HANDLE hLsaConnection,
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
+    )
+{
     DWORD dwError = 0;
 
     BAIL_ON_INVALID_HANDLE(hLsaConnection);
-    BAIL_ON_INVALID_STRING(pszLoginName);
+    BAIL_ON_INVALID_STRING(pParams->pszLoginName);
 
-    dwError = LsaTransactAuthenticateUser(
+    dwError = LsaTransactAuthenticateUserPam(
                 hLsaConnection,
-                pszLoginName,
-                pszPassword,
-                ppszMessage);
+                pParams,
+                ppPamAuthInfo);
 error:
 
     return dwError;

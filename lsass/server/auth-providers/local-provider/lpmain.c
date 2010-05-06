@@ -200,11 +200,10 @@ LocalServicesDomain(
 }
 
 DWORD
-LocalAuthenticateUser(
+LocalAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszLoginId,
-    PCSTR  pszPassword,
-    PSTR*  ppszMessage
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
@@ -222,7 +221,7 @@ LocalAuthenticateUser(
         hProvider,
         0,
         LSA_OBJECT_TYPE_USER,
-        pszLoginId,
+        pParams->pszLoginName,
         &pObject);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -243,10 +242,10 @@ LocalAuthenticateUser(
                   &dwBadPasswordCount);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pszPassword)
+    if (pParams->pszPassword)
     {
         dwError = LwMbsToWc16s(
-                        pszPassword,
+                        pParams->pszPassword,
                         &pwszPassword);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -272,9 +271,9 @@ LocalAuthenticateUser(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    if (ppszMessage)
+    if (*ppPamAuthInfo)
     {
-        *ppszMessage = NULL;
+        *ppPamAuthInfo = NULL;
     }
 
     LsaUtilFreeSecurityObject(pObject);
@@ -286,7 +285,6 @@ cleanup:
     {
         dwError = dwUpdateError;
     }
-
     return dwError;
 
 error:

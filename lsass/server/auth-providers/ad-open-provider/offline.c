@@ -59,10 +59,10 @@ AD_IsOffline(
 }
 
 DWORD
-AD_OfflineAuthenticateUser(
+AD_OfflineAuthenticateUserPam(
     HANDLE hProvider,
-    PCSTR  pszUserName,
-    PCSTR  pszPassword
+    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
     DWORD dwError = 0;
@@ -71,10 +71,16 @@ AD_OfflineAuthenticateUser(
     PSTR pszEnteredPasswordVerifier = NULL;
     PBYTE pbHash = NULL;
     PSTR pszNT4UserName = NULL;
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
+
+    dwError = LwAllocateMemory(
+                    sizeof(*pPamAuthInfo),
+                    (PVOID*)&pPamAuthInfo);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_FindUserObjectByName(
                 hProvider,
-                pszUserName,
+                pParams->pszLoginName,
                 &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -91,7 +97,7 @@ AD_OfflineAuthenticateUser(
 
     dwError = AD_GetCachedPasswordHash(
                 pUserInfo->pszSamAccountName,
-                pszPassword,
+                pParams->pszPassword,
                 &pbHash);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -117,9 +123,11 @@ AD_OfflineAuthenticateUser(
     dwError = LsaUmAddUser(
                   pUserInfo->userInfo.uid,
                   pszNT4UserName,
-                  pszPassword,
+                  pParams->pszPassword,
                   0);
     BAIL_ON_LSA_ERROR(dwError);
+
+    *ppPamAuthInfo = pPamAuthInfo;
 
 cleanup:
 
@@ -129,9 +137,16 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pbHash);
     LW_SAFE_FREE_STRING(pszNT4UserName);
 
+    *ppPamAuthInfo = NULL;
+
     return dwError;
 
 error:
+    *ppPamAuthInfo = NULL;
+    if (pPamAuthInfo)
+    {
+        LsaFreeAuthUserPamInfo(pPamAuthInfo);
+    }
 
     goto cleanup;
 }
