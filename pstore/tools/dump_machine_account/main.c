@@ -152,7 +152,7 @@ main(
     )
 {
     DWORD dwError = 0;
-    PSTR  pszReqDomainName;
+    PSTR  pszReqDomainName = NULL;
     PSTR  pszDomainName = NULL;
     PSTR  pszDomainSID = NULL;
     PSTR  pszMachineAccount = NULL;
@@ -165,6 +165,12 @@ main(
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
     
+    if (geteuid() != 0) {
+        fprintf(stderr, "This program requires super-user privileges.\n");
+        dwError = LWPS_ERROR_ACCESS_DENIED;
+        BAIL_ON_LWPS_ERROR(dwError);
+    }
+
     dwError = ParseArgs(argc, argv, &pszReqDomainName);
     BAIL_ON_LWPS_ERROR(dwError);
 

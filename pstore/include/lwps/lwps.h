@@ -81,7 +81,8 @@
 #define LWPS_ERROR_INVALID_HANDLE            0x4017 // 16407
 #define LWPS_ERROR_DB_RECORD_NOT_FOUND       0x4018 // 16408
 #define LWPS_ERROR_INVALID_MESSAGE           0x4019 // 16409
-#define LWPS_ERROR_SENTINEL                  0x401A // 16410
+#define LWPS_ERROR_ACCESS_DENIED             0x401A // 16410
+#define LWPS_ERROR_SENTINEL                  0x401B // 16411
 
 #define LWPS_ERROR_MASK(_e_)             (_e_ & 0x4000)
 

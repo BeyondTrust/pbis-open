@@ -103,7 +103,9 @@ const char* gLwpsErrorMessages[] =
     //  LWPS_ERROR_DB_RECORD_NOT_FOUND                            : 16408
     "The requested database record was not found",
     //  LWPS_ERROR_INVALID_MESSAGE                                : 16409
-    "The Inter Process message is invalid"
+    "The Inter Process message is invalid",
+    //  LWPS_ERROR_ACCESS_DENIED                                  : 16410
+    "Incorrect access attempt"
 };
 
 BOOLEAN
