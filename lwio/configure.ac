@@ -53,11 +53,11 @@ case "$host_os:$host_cpu" in
 	hpux*:hppa*)
 		MOD_EXT=".sl"
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
-        AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		AM_CPPFLAGS="$AM_CPPFLAGS -D_HPUX_SOURCE=1 -U_XOPEN_SOURCE_EXTENDED"
 		;;
 	hpux*:ia64*)
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
-        AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
 		;;
 	aix*:*)
 		AC_DEFINE([__LWI_AIX__], [], [Define if OS is AIX])
@@ -646,7 +646,7 @@ AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/socket.h>
 ])
 
-saved_CFLAGS="$CFLAGS"
+saved_CFLAGS="$CFLAGS $AM_CPPFLAGS"
 CFLAGS="$CFLAGS -Wall -Werror"
 
 AC_MSG_CHECKING([if getsockname takes socklen_t*])
@@ -681,23 +681,6 @@ AC_DEFINE([MSGHDR_HAS_MSG_CONTROL], [], [Define if struct msghdr has the msg_con
 AC_MSG_RESULT([no])
 ])
 
-CFLAGS="$saved_CFLAGS"
-
-# Check for sockaddr_in6 support
-saved_CFLAGS="$CFLAGS"
-AC_MSG_CHECKING([if IPv6 is supported])
-AC_TRY_COMPILE([
-#include <netinet/in.h>
-  ],
-  [
-    struct sockaddr_in6 a;
-    return sizeof(a);
-  ], [
-    AC_MSG_RESULT([yes])
-    AC_DEFINE([LW_USE_INET6], [], [Define if using IPv6])
-  ], [
-    AC_MSG_RESULT([no])
-])
 CFLAGS="$saved_CFLAGS"
 
 # ZCT splice, sendfile, etc. support
