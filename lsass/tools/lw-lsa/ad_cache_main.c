@@ -139,6 +139,12 @@ ad_cache_main(
         exit(0);
     }
 
+    if (geteuid() != 0) {
+        fprintf(stderr, "This program requires super-user privileges.\n");
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = ParseArgs(
                   argc,
                   argv,

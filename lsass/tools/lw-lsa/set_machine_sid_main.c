@@ -97,6 +97,12 @@ set_machine_sid_main(
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
 
+    if (geteuid() != 0) {
+        fprintf(stderr, "This program requires super-user privileges.\n");
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = ParseArgs(argc, argv,
                         &pszMachineSid);
     BAIL_ON_LSA_ERROR(dwError);
