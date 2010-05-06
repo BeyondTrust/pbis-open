@@ -290,8 +290,10 @@ main()
 
     for plugin in LWIDSPLugIn LWEDSPlugIn ; do
         path="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins/${plugin}.dsplug"
-        if [ -e "${path}" ]; then
+        echo "Checking for link to DS plugin (${path})"
+        if [ -h "${path}" ]; then
             $RUN rm -fv "${path}"
+            echo "Removed symlink to DS plugin"
         fi
     done
 
