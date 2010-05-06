@@ -1,8 +1,8 @@
-NAME="LikewiseIdentityServiceOpen"
-FULL_NAME="Likewise Identity Service [Open]"
-DESCRIPTION="Provides integration with Active Directory."
-_BITROCK_DESCRIPTION="Interoperability software to allow non-Windows systems to use Microsoft Active Directory." # unused
-_MAC_DESCRIPTION="Provides integration with Active Directory." # unused
+NAME="LikewiseOpen"
+FULL_NAME="Likewise Open"
+DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory."
+_BITROCK_DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory." # unused
+_MAC_DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory." # unused
 FILES="COPYING README EULA"
 SCRIPT="../install.sh"
 UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
