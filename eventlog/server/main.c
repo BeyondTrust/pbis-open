@@ -386,25 +386,43 @@ EVTSetAllowData(
     )
 {
     DWORD dwError = 0;
+    PVOID pParsed = NULL;
+    BOOLEAN bLocked = FALSE;
+
+    dwError = EVTAccessGetData(
+                  pszValue,
+                  &pParsed);
+    BAIL_ON_EVT_ERROR(dwError);
 
     EVT_LOCK_SERVERINFO;
+    bLocked = TRUE;
 
     EVTFreeAllowData(pAllowData);
 
     dwError = EVTAllocateString(
                   pszValue,
                   &pAllowData->configData);    
+    BAIL_ON_EVT_ERROR(dwError);
 
-    if ( !dwError )
-    {
-        dwError = EVTAccessGetData(
-                      pszValue,
-                      &pAllowData->pAllowedTo);
-    }
+    pAllowData->pAllowedTo = pParsed;
 
     EVT_UNLOCK_SERVERINFO;
 
+cleanup:
     return (dwError);
+
+error:
+    if (bLocked)
+    {
+        EVT_SAFE_FREE_STRING(pAllowData->configData);
+        pAllowData->pAllowedTo = NULL;
+        EVT_UNLOCK_SERVERINFO;
+    }
+    if (pParsed)
+    {
+        EVTAccessFreeData(pParsed);
+    }
+    goto cleanup;
 }
 
 static
