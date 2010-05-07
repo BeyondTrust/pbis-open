@@ -449,7 +449,8 @@ RegLexParseBackslash(
             dwError = RegIOUnGetChar(ioHandle, NULL);
         }
     }
-    else if (lexHandle->state == REGLEX_STATE_IN_QUOTE)
+
+    if (lexHandle->state == REGLEX_STATE_IN_QUOTE)
     {
         /*
          * Treat sequence '\C'  (C=any character) as
