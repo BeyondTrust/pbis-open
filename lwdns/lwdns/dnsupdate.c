@@ -497,6 +497,8 @@ DNSUpdateSecure(
     PDNS_UPDATE_RESPONSE pDNSSecureUpdateResponse = NULL;
     PSTR pszKeyName = NULL;
 
+    LWDNS_LOG_INFO("Attempting DNS Update (in-secure)");
+
     dwError = DNSSendUpdate(
                     hDNSServer,
                     pszDomainName,
@@ -511,7 +513,9 @@ DNSUpdateSecure(
                     &dwResponseCode);
     BAIL_ON_LWDNS_ERROR(dwError);
 
-    if (dwResponseCode == DNS_REFUSED) {
+    if (dwResponseCode == DNS_REFUSED)
+    {
+        LWDNS_LOG_INFO("DNS Update (in-secure) denied");
 
         dwError = DNSGenerateKeyName(&pszKeyName);
         BAIL_ON_LWDNS_ERROR(dwError);
@@ -539,6 +543,10 @@ DNSUpdateSecure(
                     pDNSSecureUpdateResponse,
                     &dwResponseCode);
         BAIL_ON_LWDNS_ERROR(dwError);
+    }
+    else
+    {
+        LWDNS_LOG_INFO("DNS Update (in-secure) succeeded");
     }
 
     dwError = DNSMapRCode(dwResponseCode);
@@ -716,8 +724,6 @@ DNSSendUpdate(
     PDNS_ZONE_RECORD pDNSZoneRecord = NULL;
     PDNS_RR_RECORD   pDNSARecord = NULL;
 
-    LWDNS_LOG_INFO("Attempting DNS Update (in-secure)");
-
     dwError = DNSUpdateCreateARUpdateRequest(
                     &pDNSUpdateRequest,
                     pszZoneName,
@@ -737,8 +743,6 @@ DNSSendUpdate(
     BAIL_ON_LWDNS_ERROR(dwError);
 
     *ppDNSUpdateResponse = pDNSUpdateResponse;
-
-    LWDNS_LOG_INFO("DNS Update (in-secure) succeeded");
 
 cleanup:
 

@@ -165,13 +165,6 @@ DNSFindAddressForServer(
     );
 
 static
-BOOLEAN
-DNSIsNameServerAuthoritative(
-    PCSTR pszDomain,
-    PCSTR pszNameServer
-    );
-
-static
 DWORD
 DNSBuildNameServerArray(
     PDNSDLINKEDLIST pNameServerList,
@@ -232,7 +225,7 @@ DNSGetNameServers(
     while (responseLen < 0)
     {
         LWDNS_LOG_DEBUG(
-                "Querying DNS for NS Records for zone [%s]",
+                "Querying DNS for SOA Record for zone [%s]",
                 pszZone);
 
         LWDNS_SAFE_FREE_STRING(pszDupZone);
@@ -245,14 +238,14 @@ DNSGetNameServers(
         responseLen = res_query(
                         pszDupZone, //this parameter is char* on HP-UX
                         ns_c_in,
-                        ns_t_ns,
+                        ns_t_soa,
                         pBuffer,
                         dwBufferSize);
         if (responseLen < 0)
         {
             if (h_errno == HOST_NOT_FOUND || h_errno == NO_DATA)
             {
-                LWDNS_LOG_DEBUG("NS record not found [h_errno:%d]",
+                LWDNS_LOG_DEBUG("SOA record not found [h_errno:%d]",
                         h_errno);
                 // Try looking in the parent zone by jumping past the first
                 // component.
@@ -912,7 +905,7 @@ DNSBuildNameServerList(
         
         pRecord = (PDNS_RECORD)pIter->pItem;
         
-        if (pRecord->wType == ns_t_ns &&
+        if (pRecord->wType == ns_t_soa &&
             pRecord->wDataLen &&
             pRecord->pData)
         {
@@ -930,28 +923,13 @@ DNSBuildNameServerList(
                         &pNSInfo->pszNSHostName);
             BAIL_ON_LWDNS_ERROR(dwError);
             
-            LWDNS_LOG_DEBUG("Considering Name Server at [%s]", 
+            LWDNS_LOG_DEBUG("Adding Name Server [%s]", 
                             IsNullOrEmptyString(pNSInfo->pszNSHostName) ? "" : pNSInfo->pszNSHostName);
             
-            if (DNSIsNameServerAuthoritative(
-                        pszDomain,
-                        pNSInfo->pszNSHostName))
-            {
-                LWDNS_LOG_DEBUG("Adding Name Server [%s]", 
-                                IsNullOrEmptyString(pNSInfo->pszNSHostName) ? "" : pNSInfo->pszNSHostName);
-                
-                dwError = DNSDLinkedListAppend(
-                            &pNameServers,
-                            pNSInfo);
-                BAIL_ON_LWDNS_ERROR(dwError);
-            }
-            else
-            {
-                LWDNS_LOG_DEBUG("Skipping non-authoritative Name Server at [%s]", 
-                                IsNullOrEmptyString(pNSInfo->pszNSHostName) ? "" : pNSInfo->pszNSHostName);
-                
-                DNSFreeNameServerInfo(pNSInfo);
-            }
+            dwError = DNSDLinkedListAppend(
+                        &pNameServers,
+                        pNSInfo);
+            BAIL_ON_LWDNS_ERROR(dwError);
             
             pNSInfo = NULL;
         }
@@ -1036,53 +1014,6 @@ cleanup:
 error:
 
     *pdwIP = 0;
-
-    goto cleanup;
-}
-
-static
-BOOLEAN
-DNSIsNameServerAuthoritative(
-    PCSTR pszDomain,
-    PCSTR pszNameServer
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bResult = FALSE;
-    HANDLE hDNSServer = (HANDLE)NULL;
-    PDNS_RESPONSE pResponse = NULL;
-    
-    dwError = DNSOpen(
-                pszNameServer,
-                DNS_TCP,
-                &hDNSServer);
-    BAIL_ON_LWDNS_ERROR(dwError);
-    
-    dwError = DNSMakeQuestion(
-                hDNSServer,
-                pszDomain,
-                DNS_CLASS_IN,
-                QTYPE_SOA,
-                &pResponse);
-    BAIL_ON_LWDNS_ERROR(dwError);
-    
-    bResult = (pResponse->wAnswers != 0) ? TRUE : FALSE;
-    
-cleanup:
-
-    if (pResponse)
-    {
-        DNSStdFreeResponse(pResponse);
-    }
-    
-    if (hDNSServer != (HANDLE)NULL)
-    {
-        DNSClose(hDNSServer);
-    }
-
-    return bResult;
-    
-error:
 
     goto cleanup;
 }
