@@ -33,5 +33,6 @@
 #define SRV_ECP_TYPE_SHARE_NAME     "Likewise.SRV.ShareName"
 #define SRV_ECP_TYPE_CLIENT_ADDRESS "Likewise.SRV.ClientAddress"
 #define SRV_ECP_TYPE_MAX_ACCESS     "Likewise.SRV.MaximalAccess"
+#define SRV_ECP_TYPE_ABE            "Likewise.SRV.AccessBasedEnumeration"
 
 #endif /* __SRV_ECP_H__ */
