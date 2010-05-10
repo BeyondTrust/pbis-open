@@ -67,8 +67,14 @@ static void* volatile _xnet_handle = NULL;
 
 static const char* _xnet_paths[] =
 {
+  // PA RISC
   "/usr/lib/libxnet.sl",
+  // PA RISC 64bit
+  "/usr/lib/pa20_64/libxnet.sl",
+
+  // Itanium 32bit
   "/usr/lib/hpux32/libxnet.so",
+  // Itanium 64bit
   "/usr/lib/hpux64/libxnet.so",
   NULL
 };
