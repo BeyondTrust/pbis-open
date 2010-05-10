@@ -353,7 +353,8 @@ typedef ULONG FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 #define FileFsAttributeInformation        41 // VOL: FILE_FS_ATTRIBUTE_INFORMATION
 #define FileFsVolumeInformation           42 // VOL: FILE_FS_VOLUME_INFORMATION
 #define FileFsSizeInformation             43 // VOL: FILE_FS_SIZE_INFORMATION
-#define FileMaximumInformation            44 // SENTINEL
+#define FileFsDeviceInformation           44 // VOL: FILE_FS_DEVICE_INFORMATION
+#define FileMaximumInformation            45 // SENTINEL
 
 //
 // Notes:
@@ -775,6 +776,36 @@ typedef struct _FILE_FS_SIZE_INFORMATION {
     ULONG   BytesPerSector;	
 } FILE_FS_SIZE_INFORMATION, *PFILE_FS_SIZE_INFORMATION;
 
+
+// Device Type for the FileFsDeviceInformation level
+// Not all types are listed.  Refer to section 4.1.6.5 in the SNIA CIFS
+// Technical Reference for more.
+
+typedef ULONG DEVICE_TYPE, *PDEVICE_TYPE;
+
+#define FILE_DEVICE_CD_ROM                 0x00000002
+#define FILE_DEVICE_CD_ROM_FILE_SYSTEM     0x00000003
+#define FILE_DEVICE_DFS                    0x00000006
+#define FILE_DEVICE_DISK                   0x00000007
+#define FILE_DEVICE_DISK_FILE_SYSTEM       0x00000008
+#define FILE_DEVICE_FILE_SYSTEM            0x00000009
+
+// Characteristics
+
+#define FILE_REMOVABLE_MEDIA               0x00000001
+#define FILE_READ_ONLY_DEVICE              0x00000002
+#define FILE_FLOPPY_DISKETTE               0x00000004
+#define FILE_WRITE_ONE_MEDIA               0x00000008
+#define FILE_REMOTE_DEVICE                 0x00000010
+#define FILE_DEVICE_IS_MOUNTED             0x00000020
+#define FILE_VIRTUAL_VOLUME                0x00000040
+
+// VOL: FileFsDeviceInformation
+typedef struct _FILE_FS_DEVICE_INFORMATION {
+    DEVICE_TYPE DeviceType;
+    ULONG       DeviceCharacteristics;
+} FILE_FS_DEVICE_INFORMATION, *PFILE_FS_DEVICE_INFORMATION;
+
 //
 // Extra Create Parameter Support
 //
@@ -853,3 +884,12 @@ typedef LW_PIO_CREDS PIO_CREDS;
 #endif /* ! LW_STRICT_NAMESPACE */
 
 #endif
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
