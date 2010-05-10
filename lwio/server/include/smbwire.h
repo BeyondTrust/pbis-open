@@ -370,6 +370,7 @@ typedef USHORT SMB_INFO_LEVEL, *PSMB_INFO_LEVEL;
 #define SMB_FIND_FILE_BOTH_DIRECTORY_INFO 0x104
 #define SMB_SET_FILE_END_OF_FILE_INFO     0x104
 #define SMB_QUERY_FS_ATTRIBUTE_INFO       0x105
+#define SMB_FIND_FILE_ID_FULL_DIRECTORY_INFO 0x105
 #define SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO 0x106
 #define SMB_QUERY_FILE_ALL_INFO           0x107
 #define SMB_QUERY_FILE_ALT_NAME_INFO      0x108
@@ -1740,6 +1741,25 @@ typedef struct _SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO_HEADER
     WCHAR     FileName[];
 } __attribute__((__packed__)) SMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO_HEADER,
                              *PSMB_FIND_FILE_ID_BOTH_DIRECTORY_INFO_HEADER;
+
+typedef struct _SMB_FIND_FILE_ID_FULL_DIRECTORY_INFO_HEADER
+{
+    ULONG     NextEntryOffset;
+    ULONG     FileIndex;
+    LONG64    CreationTime;
+    LONG64    LastAccessTime;
+    LONG64    LastWriteTime;
+    LONG64    ChangeTime;
+    LONG64    EndOfFile;
+    LONG64    AllocationSize;
+    FILE_ATTRIBUTES FileAttributes;
+    ULONG     FileNameLength;
+    ULONG     EaSize;
+    ULONG     Reserved;
+    LONG64    FileId;
+    WCHAR     FileName[];
+} __attribute__((__packed__)) SMB_FIND_FILE_ID_FULL_DIRECTORY_INFO_HEADER,
+                             *PSMB_FIND_FILE_ID_FULL_DIRECTORY_INFO_HEADER;
 
 typedef struct _SMB_FIND_FILE_FULL_DIRECTORY_INFO_HEADER
 {
