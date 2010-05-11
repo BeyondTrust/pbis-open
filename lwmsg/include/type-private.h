@@ -157,7 +157,7 @@ typedef struct LWMsgTypeIter
     } debug;
 } LWMsgTypeIter;
 
-typedef struct LWMsgMemberRep
+typedef struct LWMsgFieldRep
 {
     struct LWMsgTypeRep* type;
     char* name;
@@ -251,6 +251,7 @@ typedef struct LWMsgTypeRepMapEntry
 
 typedef struct LWMsgTypeRepMap
 {
+    const LWMsgContext* context;
     LWMsgHashTable hash_by_spec;
     LWMsgHashTable hash_by_rep;
     LWMsgTypeIter* dominating_iter;
@@ -315,6 +316,7 @@ lwmsg_type_iterate_promoted(
 
 LWMsgStatus
 lwmsg_type_rep_from_spec(
+    const LWMsgContext* context,
     LWMsgTypeSpec* spec,
     LWMsgTypeRep** rep
     );

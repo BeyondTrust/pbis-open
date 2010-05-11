@@ -361,14 +361,6 @@ error:
     return status;
 }
 
-typedef struct freeinfo
-{
-    LWMsgObjectMap map;
-    LWMsgDataContext* context;
-    LWMsgFreeFunction free;
-    void* data;
-} freeinfo;
-
 LWMsgStatus
 lwmsg_data_visit_graph_children(
     LWMsgTypeIter* iter,
@@ -424,6 +416,61 @@ error:
     return status;
 }
 
+typedef struct FreePath
+{
+    void* pointer;
+    struct FreePath* up;
+} FreePath;
+
+typedef struct FreeInfo
+{
+    LWMsgDataContext* context;
+    LWMsgFreeFunction free;
+    void* data;
+    FreePath* path;
+    void* alias_list;
+} FreeInfo;
+
+static
+LWMsgBool
+detect_cycle(
+    FreeInfo* info,
+    void* pointer
+    )
+{
+    FreePath* path = NULL;
+
+    for (path = info->path; path != NULL; path = path->up)
+    {
+        if (path->pointer == pointer)
+        {
+            return LWMSG_TRUE;
+        }
+    }
+
+    return LWMSG_FALSE;
+}
+
+static
+LWMsgBool
+detect_alias(
+    FreeInfo* info,
+    void* pointer
+    )
+{
+    void* alias = NULL;
+
+    for (alias = info->alias_list; alias; alias = *(void**) alias)
+    {
+        if (alias == pointer)
+        {
+            return LWMSG_TRUE;
+        }
+    }
+
+    return LWMSG_FALSE;
+}
+
 static
 LWMsgStatus
 lwmsg_data_free_graph_visit(
@@ -433,8 +480,9 @@ lwmsg_data_free_graph_visit(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    freeinfo* info = (freeinfo*) data;
-    LWMsgObjectID id = 0;
+    FreeInfo* info = (FreeInfo*) data;
+    FreePath path = {0};
+    void* pointer = NULL;
 
     switch(iter->kind)
     {
@@ -449,33 +497,50 @@ lwmsg_data_free_graph_visit(
         }
         break;
     case LWMSG_KIND_POINTER:
-        if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
-            *(void**) object)
+        pointer = *(void**) object;
+
+        if (pointer == NULL)
         {
-            status = lwmsg_data_object_map_find_object(
-                &info->map,
-                *(void**) object,
-                &id);
-            if (status == LWMSG_STATUS_NOT_FOUND)
+            /* Leave */
+            goto error;
+        }
+
+        if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE)
+        {
+            /* If the pointer is aliasable, we need to avoid visiting its referent twice */
+            if (detect_cycle(info, pointer) || detect_alias(info, pointer))
             {
-                BAIL_ON_ERROR(status = lwmsg_data_object_map_insert(
-                                  &info->map,
-                                  *(void**)object,
-                                  iter,
-                                  &id));
-            }
-            else
-            {
-                /* Skip aliasable pointers we've already seen */
+                /* Leave */
                 goto error;
             }
+
+            /* Push pointer into path list so we avoid cycles */
+            path.up = info->path;
+            path.pointer = pointer;
+            info->path = &path;
         }
+
+        /* Visit referent */
         BAIL_ON_ERROR(status = lwmsg_data_visit_graph_children(
                           iter,
                           object,
                           lwmsg_data_free_graph_visit,
                           data));
-        info->free(*(void **) object, info->data);
+
+        if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE)
+        {
+            /* Pop pointer from path list */
+            info->path = info->path->up;
+
+            /* Since we will never visit the pointer referent again, we can safely reuse
+               its memory to link it into a list of aliasable memory objects */
+            *(void**) pointer = info->alias_list;
+            info->alias_list = pointer;
+        }
+        else
+        {
+            info->free(pointer, info->data);
+        }
         break;
     default:
         BAIL_ON_ERROR(status = lwmsg_data_visit_graph_children(
@@ -499,7 +564,9 @@ lwmsg_data_free_graph_internal(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    freeinfo info = {{0}};
+    FreeInfo info = {0};
+    void* alias = NULL;
+    void* next = NULL;
 
     lwmsg_context_get_memory_functions(context->context, NULL, &info.free, NULL, &info.data);
     info.context = context;
@@ -510,9 +577,15 @@ lwmsg_data_free_graph_internal(
                       lwmsg_data_free_graph_visit,
                       &info));
 
-error:
+    /* Free all aliasable objects that were found */
+    for (alias = info.alias_list; alias; alias = next)
+    {
+        next = *(void**) alias;
 
-    lwmsg_data_object_map_destroy(&info.map);
+        info.free(alias, info.data);
+    }
+
+error:
 
     return status;
 }

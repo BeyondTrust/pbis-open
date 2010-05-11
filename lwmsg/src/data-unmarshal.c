@@ -417,7 +417,7 @@ lwmsg_data_unmarshal_pointees(
                       buffer,
                       &count));
 
-    /* Context a single struct pointee as a special case as it could
+    /* Treat a single struct pointee as a special case as it could
        hold a flexible array member */
     if (inner.kind == LWMSG_KIND_STRUCT && count == 1)
     {
@@ -444,7 +444,14 @@ lwmsg_data_unmarshal_pointees(
 
         /* Calculate the referent size */
         BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(full_count, inner.size, &referent_size));
-        
+
+        if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
+            referent_size < sizeof(void*))
+        {
+            /* Make sure aliasable objects are always large enough to hold a pointer */
+            referent_size = sizeof(void*);
+        }
+
         /* Allocate the referent */
         BAIL_ON_ERROR(status = lwmsg_object_alloc(context, referent_size, &object));
 
@@ -754,13 +761,22 @@ lwmsg_data_unmarshal_struct_pointee(
     unsigned char* base_object = NULL;
     unsigned char* full_object = NULL;
     LWMsgTypeSpec* flexible_member = NULL;
+    size_t base_size = 0;
     size_t full_size = 0;
     LWMsgObjectID id = 0;
+
+    base_size = struct_iter->size;
+
+    if (pointer_iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
+        base_size < sizeof(void*))
+    {
+        base_size = sizeof(void*);
+    }
 
     /* Allocate enough memory to hold the base of the object */
     BAIL_ON_ERROR(status = lwmsg_object_alloc(
                       context,
-                      struct_iter->size,
+                      base_size,
                       &base_object));
 
     if (pointer_iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE)
@@ -821,6 +837,12 @@ lwmsg_data_unmarshal_struct_pointee(
 
         /* Calculate the size of the full structure */
         BAIL_ON_ERROR(status = lwmsg_add_unsigned(struct_iter->size, flexible_size, &full_size));
+
+        if (pointer_iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
+            full_size < sizeof(void*))
+        {
+            full_size = sizeof(void*);
+        }
 
         /* Allocate the full object */
         BAIL_ON_ERROR(status = lwmsg_object_realloc(
