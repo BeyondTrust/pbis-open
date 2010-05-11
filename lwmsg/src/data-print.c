@@ -48,7 +48,7 @@
 typedef struct
 {
     LWMsgObjectMap map;
-    const LWMsgContext* context;
+    LWMsgDataContext* context;
     unsigned int depth;
     LWMsgBool newline;
     LWMsgBuffer* buffer;
@@ -372,6 +372,65 @@ error:
 
 static
 LWMsgStatus
+lwmsg_data_print_custom(
+    LWMsgTypeIter* iter,
+    unsigned char* object,
+    PrintInfo* info
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    unsigned char* transmit_object = NULL;
+    LWMsgTypeIter transmit_iter;
+    LWMsgTypeClass* typeclass = iter->info.kind_custom.typeclass;
+
+    if (typeclass->print)
+    {
+        BAIL_ON_ERROR(status = typeclass->print(
+                          info->context,
+                          &iter->attrs,
+                          object,
+                          iter->info.kind_custom.typedata,
+                          info->buffer));
+    }
+    else
+    {
+        /* Convert the object to its transmitted form and print that */
+        lwmsg_type_iterate(typeclass->transmit_type, &transmit_iter);
+
+        /* Allocate space for the transmitted object */
+        BAIL_ON_ERROR(status = LWMSG_ALLOC_ARRAY(
+                          transmit_iter.size,
+                          &transmit_object));
+
+        /* Convert presented object into transmitted object */
+        BAIL_ON_ERROR(status = iter->info.kind_custom.typeclass->marshal(
+                          info->context,
+                          &iter->attrs,
+                          object,
+                          transmit_object,
+                          iter->info.kind_custom.typedata));
+
+        /* Print the transmitted object */
+        BAIL_ON_ERROR(status = lwmsg_data_visit_graph(
+                          &transmit_iter,
+                          transmit_object,
+                          lwmsg_data_print_graph_visit,
+                          info));
+    }
+
+error:
+
+    if (transmit_object)
+    {
+        free(transmit_object);
+    }
+
+    return status;
+}
+
+
+static
+LWMsgStatus
 lwmsg_data_print_graph_visit(
     LWMsgTypeIter* iter,
     unsigned char* object,
@@ -506,19 +565,10 @@ lwmsg_data_print_graph_visit(
                               info));
             break;
         case LWMSG_KIND_CUSTOM:
-            if (iter->info.kind_custom.typeclass->print)
-            {
-                BAIL_ON_ERROR(status = iter->info.kind_custom.typeclass->print(
-                                  info->context,
-                                  &iter->attrs,
-                                  object,
-                                  iter->info.kind_custom.typedata,
-                                  info->buffer));
-            }
-            else
-            {
-                BAIL_ON_ERROR(status = print(info, "<custom>"));
-            }
+            BAIL_ON_ERROR(status = lwmsg_data_print_custom(
+                              iter,
+                              object,
+                              info));
         case LWMSG_KIND_NONE:
         case LWMSG_KIND_VOID:
             break;
@@ -545,9 +595,9 @@ lwmsg_data_print_graph(
 
     memset(&info, 0, sizeof(info));
 
-    info.newline = LWMSG_TRUE;
+    info.newline = LWMSG_FALSE;
     info.depth = indent;
-    info.context = context->context;
+    info.context = context;
     info.buffer = buffer;
 
     lwmsg_type_iterate_promoted(type, &iter);

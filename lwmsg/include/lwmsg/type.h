@@ -311,7 +311,7 @@ typedef void (*LWMsgTypeDestroyTransmittedFunction) (
  * @param buffer the buffer into which to write
  */
 typedef LWMsgStatus (*LWMsgTypePrintFunction) (
-    const struct LWMsgContext* context,
+    struct LWMsgDataContext* context,
     LWMsgType* attr,
     void* object,
     void* data,
