@@ -646,7 +646,7 @@ void display_status_1(char *m, OM_uint32 code, int type)
         if (!msg_ctx)
             break;
     }
-    if (code == KRB5_FCC_NOFILE)
+    if (code == (OM_uint32)KRB5_FCC_NOFILE)
     {
         PSTR pszOrigCachePath = NULL;
 
