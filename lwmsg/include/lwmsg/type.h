@@ -98,7 +98,8 @@
  * Type specifications have the following restrictions compared to C type definitions:
  * - The length of arrays and pointer referents must be specified:
  *     - As a static length with #LWMSG_ATTR_LENGTH_STATIC()
- *     - As the value of a <i>previous</i> integer structure member with #LWMSG_ATTR_LENGTH_MEMBER()
+ *     - As the value of a <i>previous</i> integer or enum structure member with
+ *       #LWMSG_ATTR_LENGTH_MEMBER()
  *     - As being implicit through zero-termination with #LWMSG_ATTR_ZERO_TERMINATED
  * - The active arm of unions must be specified through a discriminator:
  *     - Each union arm must be marked with an integer tag with #LWMSG_ATTR_TAG()
@@ -934,19 +935,55 @@ typedef enum LWMsgTypeDirective
     _TYPECMD(LWMSG_CMD_CUSTOM_ATTR),            \
         _TYPEARG(value)
 
+/**
+ * @brief Begin enum definition
+ *
+ * Defines an enumerated integer type with the given
+ * underlying C type, width, and sign.  An enum value
+ * can consist of one of a set of scalar values (specified
+ * with #LWMSG_ENUM_VALUE()) and/or a bitwise-or'd
+ * set of mask values (specified with #LWMSG_ENUM_MASK())
+ *
+ * @param type the name of the C enum type
+ * @param width the width of the enum when marshalled, in bytes
+ * @param sign the sign of the enum when marshalled, an #LWMsgSignage value
+ * @hideinitializer
+ */
 #define LWMSG_ENUM_BEGIN(type, width, sign)    \
     _TYPECMD_TYPE(LWMSG_CMD_ENUM, type),       \
         _TYPEARG(sizeof(type)),                \
         _TYPEARG(width),                       \
         _TYPEARG(sign)
 
+/**
+ * @brief End enum definition
+ *
+ * Ends an enum definition started by #LWMSG_ENUM_BEGIN()
+ * @hideinitializer
+ */
 #define LWMSG_ENUM_END \
     _TYPECMD(LWMSG_CMD_END)
 
+/**
+ * @brief Define enum scalar value
+ *
+ * Defines a possible scalar value of an enum type
+ *
+ * @param value the value
+ * @hideinitializer
+ */
 #define LWMSG_ENUM_VALUE(value)                   \
     _TYPECMD_TYPE(LWMSG_CMD_ENUM_VALUE, value),   \
         _TYPEARG((value))
 
+/**
+ * @brief Define enum mask value
+ *
+ * Defines a potential bitmask value of an enum type
+ *
+ * @param value the value
+ * @hideinitializer
+ */
 #define LWMSG_ENUM_MASK(value)                      \
     _TYPECMD_TYPE(LWMSG_CMD_ENUM_MASK, value),      \
         _TYPEARG((value))

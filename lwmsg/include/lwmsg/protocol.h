@@ -42,6 +42,7 @@
 #include <lwmsg/context.h>
 #include <lwmsg/type.h>
 #include <lwmsg/buffer.h>
+#include <lwmsg/message.h>
 
 /**
  * @file protocol.h
@@ -133,7 +134,7 @@ const LWMsgProtocolSpec;
 LWMsgStatus
 lwmsg_protocol_get_message_type(
     LWMsgProtocol* prot,
-    unsigned int tag,
+    LWMsgTag tag,
     LWMsgTypeSpec** out_type
     );
 
@@ -153,7 +154,7 @@ lwmsg_protocol_get_message_type(
 LWMsgStatus
 lwmsg_protocol_get_message_name(
     LWMsgProtocol* prot,
-    unsigned int tag,
+    LWMsgTag tag,
     const char** name
     );
 

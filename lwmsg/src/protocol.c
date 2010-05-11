@@ -111,7 +111,10 @@ lwmsg_protocol_delete(LWMsgProtocol* prot)
 }
 
 LWMsgStatus
-lwmsg_protocol_get_message_type(LWMsgProtocol* prot, unsigned int tag, LWMsgTypeSpec** out_type)
+lwmsg_protocol_get_message_type(
+    LWMsgProtocol* prot,
+    LWMsgTag tag,
+    LWMsgTypeSpec** out_type)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
@@ -133,7 +136,7 @@ error:
 LWMsgStatus
 lwmsg_protocol_get_message_name(
     LWMsgProtocol* prot,
-    unsigned int tag,
+    LWMsgTag tag,
     const char** name
     )
 {
