@@ -159,7 +159,7 @@ WireMarshallCreateDirectoryResponse(
     pResponseHeader = (PSMB_CREATE_DIRECTORY_RESPONSE_HEADER)pParams;
     usPackageBytesUsed += sizeof(SMB_CREATE_DIRECTORY_RESPONSE_HEADER);
 
-    pResponseHeader->usByteCount = usPackageBytesUsed;
+    pResponseHeader->usByteCount = 0;
 
     *ppResponseHeader = pResponseHeader;
     *pusPackageBytesUsed = usPackageBytesUsed;
