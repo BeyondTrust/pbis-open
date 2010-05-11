@@ -1189,7 +1189,6 @@ lwmsg_data_print_type(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgTypeIter iter;
     PrintInfo info;
     LWMsgTypeRep* rep = NULL;
 
@@ -1201,9 +1200,7 @@ lwmsg_data_print_type(
     info.print = print;
     info.print_data = print_data;
 
-    BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(type, &rep));
-
-    lwmsg_type_iterate_promoted(type, &iter);
+    BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(context->context, type, &rep));
 
     BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
                       context,
@@ -1211,6 +1208,11 @@ lwmsg_data_print_type(
                       &info));
 
 error:
+
+    if (rep)
+    {
+        status = lwmsg_data_free_graph(context, lwmsg_type_rep_spec, rep);
+    }
 
     lwmsg_data_object_map_destroy(&info.map);
 
