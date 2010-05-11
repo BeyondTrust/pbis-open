@@ -97,7 +97,6 @@ static LWMsgTypeSpec kind_enum_spec[] =
     LWMSG_ENUM_VALUE(LWMSG_KIND_UNION),
     LWMSG_ENUM_VALUE(LWMSG_KIND_ARRAY),
     LWMSG_ENUM_VALUE(LWMSG_KIND_POINTER),
-    LWMSG_ENUM_VALUE(LWMSG_KIND_CUSTOM),
     LWMSG_ENUM_VALUE(LWMSG_KIND_VOID),
     LWMSG_ENUM_VALUE(LWMSG_KIND_ENUM),
     LWMSG_ENUM_END,
@@ -109,7 +108,6 @@ static LWMsgTypeSpec flags_enum_spec[] =
     LWMSG_ENUM_BEGIN(LWMsgTypeFlags, 4, LWMSG_UNSIGNED),
     LWMSG_ENUM_MASK(LWMSG_TYPE_FLAG_NOT_NULL),
     LWMSG_ENUM_MASK(LWMSG_TYPE_FLAG_SENSITIVE),
-    LWMSG_ENUM_MASK(LWMSG_TYPE_FLAG_PROMOTED),
     LWMSG_ENUM_MASK(LWMSG_TYPE_FLAG_RANGE),
     LWMSG_ENUM_MASK(LWMSG_TYPE_FLAG_ALIASABLE),
     LWMSG_ENUM_END,
@@ -268,18 +266,6 @@ static LWMsgTypeSpec array_rep_spec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec custom_rep_spec[] =
-{
-    LWMSG_STRUCT_BEGIN(LWMsgCustomRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgCustomRep, transmitted_type, lwmsg_type_rep_spec),
-    LWMSG_ATTR_NOT_NULL,
-    LWMSG_ATTR_ALIASABLE,
-    LWMSG_MEMBER_TYPESPEC(LWMsgCustomRep, is_pointer, bool_enum_spec),
-    LWMSG_MEMBER_PSTR(LWMsgCustomRep, name),
-    LWMSG_STRUCT_END,
-    LWMSG_TYPE_END
-};
-
 static LWMsgTypeSpec type_info_spec[] =
 {
     LWMSG_UNION_BEGIN(LWMsgTypeRepInfo),
@@ -295,8 +281,6 @@ static LWMsgTypeSpec type_info_spec[] =
     LWMSG_ATTR_TAG(LWMSG_KIND_POINTER),
     LWMSG_MEMBER_TYPESPEC(LWMsgTypeRepInfo, array_rep, array_rep_spec),
     LWMSG_ATTR_TAG(LWMSG_KIND_ARRAY),
-    LWMSG_MEMBER_TYPESPEC(LWMsgTypeRepInfo, custom_rep, custom_rep_spec),
-    LWMSG_ATTR_TAG(LWMSG_KIND_CUSTOM),
     LWMSG_MEMBER_VOID(LWMsgTypeRepInfo, void_rep),
     LWMSG_ATTR_TAG(LWMSG_KIND_VOID),
     LWMSG_UNION_END,
@@ -876,36 +860,6 @@ error:
     return status;
 }
 
-static
-LWMsgStatus
-lwmsg_type_rep_from_custom(
-    LWMsgTypeRepMap* map,
-    LWMsgTypeIter* iter,
-    LWMsgTypeRep* rep
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgTypeIter inner;
-
-    rep->info.custom_rep.is_pointer = iter->info.kind_custom.typeclass->is_pointer;
-
-    lwmsg_type_iterate(iter->info.kind_custom.typeclass->transmit_type, &inner);
-
-    BAIL_ON_ERROR(status = lwmsg_strdup(
-                      map->context,
-                      lwmsg_type_name_suffix(iter->meta.type_name),
-                      &rep->info.custom_rep.name));
-
-    BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
-                      map,
-                      &inner,
-                      &rep->info.custom_rep.transmitted_type));
-
-error:
-
-    return status;
-}
-
 LWMsgStatus
 lwmsg_type_rep_from_spec_internal(
     LWMsgTypeRepMap* map,
@@ -914,6 +868,18 @@ lwmsg_type_rep_from_spec_internal(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    /* Treat custom types as a special case and just return the rep of the transmitted type.
+       This is because the type representation is only concerned with what can legally appear
+       in the marshalled data stream. */
+    if (iter->kind == LWMSG_KIND_CUSTOM)
+    {
+        LWMsgTypeIter transmit_iter;
+        
+        lwmsg_type_iterate(iter->info.kind_custom.typeclass->transmit_type, &transmit_iter);
+        
+        return lwmsg_type_rep_from_spec_internal(map, &transmit_iter, rep);
+    }
 
     status = lwmsg_type_rep_map_find_spec(map, SPEC_TYPE, iter->spec, (void**) (void*) rep);
 
@@ -965,12 +931,6 @@ lwmsg_type_rep_from_spec_internal(
             break;
         case LWMSG_KIND_ARRAY:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_array(
-                              map,
-                              iter,
-                              *rep));
-            break;
-        case LWMSG_KIND_CUSTOM:
-            BAIL_ON_ERROR(status = lwmsg_type_rep_from_custom(
                               map,
                               iter,
                               *rep));
@@ -2186,15 +2146,6 @@ lwmsg_type_spec_from_rep_into(
                           rep,
                           buffer));
         break;
-    case LWMSG_KIND_CUSTOM:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_UNIMPLEMENTED);
-#if 0
-        BAIL_ON_ERROR(status = lwmsg_type_spec_from_custom(
-                          state,
-                          rep,
-                          buffer));
-#endif
-        break;
     case LWMSG_KIND_VOID:
         BAIL_ON_ERROR(status = lwmsg_type_spec_from_void(
                           state,
@@ -2411,10 +2362,6 @@ print_type_name(
     case LWMSG_KIND_UNION:
         kind = "union";
         name = rep->info.union_rep.definition->name;
-        break;
-    case LWMSG_KIND_CUSTOM:
-        kind = "custom";
-        name = rep->info.custom_rep.name;
         break;
     default:
         return LWMSG_STATUS_INTERNAL;
@@ -2846,43 +2793,6 @@ error:
 
 static
 LWMsgStatus
-lwmsg_type_print_custom(
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    BAIL_ON_ERROR(status = lwmsg_type_print_internal(
-                          rep->info.custom_rep.transmitted_type,
-                          info));
-    BAIL_ON_ERROR(status = print(info, " <presented="));
-    BAIL_ON_ERROR(status = print_type_name(info, rep));
-    if (rep->info.custom_rep.is_pointer)
-    {
-        if (rep->flags & LWMSG_TYPE_FLAG_NOT_NULL)
-        {
-            BAIL_ON_ERROR(status = print(info, "&"));
-        }
-        else
-        {
-            BAIL_ON_ERROR(status = print(info, "*"));
-        }
-
-        if (rep->flags & LWMSG_TYPE_FLAG_ALIASABLE)
-        {
-            BAIL_ON_ERROR(status = print(info, "!"));
-        }
-    }
-    BAIL_ON_ERROR(status = print(info, ">"));
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
 lwmsg_type_print_internal(
     LWMsgTypeRep* rep,
     PrintInfo* info
@@ -2919,11 +2829,6 @@ lwmsg_type_print_internal(
         break;
     case LWMSG_KIND_ARRAY:
         BAIL_ON_ERROR(status = lwmsg_type_print_array(
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_CUSTOM:
-        BAIL_ON_ERROR(status = lwmsg_type_print_custom(
                           rep,
                           info));
         break;

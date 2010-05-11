@@ -123,16 +123,15 @@ struct LWMsgContext;
 
 typedef enum LWMsgKind
 {
-    LWMSG_KIND_NONE,
-    /* Atomic integral type */
-    LWMSG_KIND_INTEGER,
-    LWMSG_KIND_STRUCT,
-    LWMSG_KIND_UNION,
-    LWMSG_KIND_ARRAY,
-    LWMSG_KIND_POINTER,
-    LWMSG_KIND_CUSTOM,
-    LWMSG_KIND_VOID,
-    LWMSG_KIND_ENUM
+    LWMSG_KIND_NONE = 0,
+    LWMSG_KIND_VOID = 1,
+    LWMSG_KIND_INTEGER = 2,
+    LWMSG_KIND_ENUM = 3,
+    LWMSG_KIND_STRUCT = 4,
+    LWMSG_KIND_UNION = 5,
+    LWMSG_KIND_ARRAY = 6,
+    LWMSG_KIND_POINTER = 7,
+    LWMSG_KIND_CUSTOM = 128
 } LWMsgKind;
 
 typedef enum LWMsgArrayTermination

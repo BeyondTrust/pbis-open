@@ -251,12 +251,6 @@ typedef struct LWMsgTypeRep
             int16_t length_member_index;
             char* encoding;
         } array_rep;
-        struct LWMsgCustomRep
-        {
-            struct LWMsgTypeRep* transmitted_type;
-            LWMsgBool is_pointer;
-            char* name;
-        } custom_rep;
     } info;
 } LWMsgTypeRep;
 
