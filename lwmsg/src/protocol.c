@@ -39,6 +39,32 @@
 #include "protocol-private.h"
 #include "util-private.h"
 #include "type-private.h"
+#include "data-private.h"
+
+static LWMsgTypeSpec protocol_message_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgProtocolMessageRep),
+    LWMSG_MEMBER_INT16(LWMsgProtocolMessageRep, tag),
+    LWMSG_ATTR_RANGE(0, INT16_MAX),
+    LWMSG_MEMBER_TYPESPEC(LWMsgProtocolMessageRep, type, lwmsg_type_rep_spec),
+    LWMSG_MEMBER_PSTR(LWMsgProtocolMessageRep, name),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+
+static LWMsgTypeSpec protocol_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgProtocolRep),
+    LWMSG_MEMBER_UINT16(LWMsgProtocolRep, message_count),
+    LWMSG_MEMBER_POINTER(LWMsgProtocolRep, messages, LWMSG_TYPESPEC(protocol_message_rep_spec)),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_LENGTH_MEMBER(LWMsgProtocolRep, message_count),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+LWMsgTypeSpec* lwmsg_protocol_rep_spec = protocol_rep_spec;
 
 LWMsgStatus
 lwmsg_protocol_new(
@@ -54,6 +80,8 @@ lwmsg_protocol_new(
     {
         BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
     }
+
+    my_prot->context = context;
 
     *prot = my_prot;
 
@@ -172,4 +200,71 @@ lwmsg_protocol_get_error_message(
     )
 {
     return lwmsg_error_message(status, &prot->error);
+}
+
+LWMsgStatus
+lwmsg_protocol_create_representation(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep** rep
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeRepMap map = {0};
+    size_t i = 0;
+    LWMsgProtocolRep* my_rep = NULL;
+    LWMsgProtocolMessageRep* message = NULL;
+    LWMsgTypeIter iter;
+
+    map.context = context->context;
+
+    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(
+                      context,
+                      sizeof(*my_rep),
+                      (void**) (void*) &my_rep));
+
+    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(
+                      context,
+                      sizeof(*my_rep->messages) * prot->num_types,
+                      (void**) (void*) &my_rep->messages));
+
+    for (i = 0; i < prot->num_types; i++)
+    {
+        if (prot->types[i])
+        {
+            message = &my_rep->messages[my_rep->message_count++];
+
+            message->tag = prot->types[i]->tag;
+
+            if (prot->types[i]->type)
+            {
+                lwmsg_type_iterate(prot->types[i]->type, &iter);
+
+                BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
+                                  &map,
+                                  &iter,
+                                  &message->type));
+            }
+
+            lwmsg_strdup(
+                context->context,
+                prot->types[i]->tag_name,
+                &message->name);
+        }
+    }
+
+    *rep = my_rep;
+
+done:
+
+    return status;
+
+error:
+
+    if (my_rep)
+    {
+        lwmsg_data_free_graph(context, protocol_rep_spec, my_rep);
+    }
+
+    goto done;
 }

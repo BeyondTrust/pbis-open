@@ -42,16 +42,6 @@
 #include "util-private.h"
 #include "data-private.h"
 
-static
-LWMsgStatus
-lwmsg_type_rep_from_spec_internal(
-    LWMsgTypeRepMap* map,
-    LWMsgTypeIter* iter,
-    LWMsgTypeRep** rep
-    );
-
-static LWMsgTypeSpec type_rep_pointer_spec[];
-
 static LWMsgTypeSpec bool_enum_spec[] =
 {
     LWMSG_ENUM_BEGIN(LWMsgBool, 1, LWMSG_UNSIGNED),
@@ -110,7 +100,7 @@ static LWMsgTypeSpec integer_def_rep_spec[] =
 static LWMsgTypeSpec field_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgFieldRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgFieldRep, type, type_rep_pointer_spec),
+    LWMSG_MEMBER_TYPESPEC(LWMsgFieldRep, type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_PSTR(LWMsgFieldRep, name),
     LWMSG_STRUCT_END,
@@ -132,7 +122,7 @@ static LWMsgTypeSpec struct_def_rep_spec[] =
 static LWMsgTypeSpec arm_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgArmRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgArmRep, type, type_rep_pointer_spec),
+    LWMSG_MEMBER_TYPESPEC(LWMsgArmRep, type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_PSTR(LWMsgArmRep, name),
     LWMSG_STRUCT_END,
@@ -222,7 +212,7 @@ static LWMsgTypeSpec union_rep_spec[] =
 static LWMsgTypeSpec pointer_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgPointerRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgPointerRep, pointee_type, type_rep_pointer_spec),
+    LWMSG_MEMBER_TYPESPEC(LWMsgPointerRep, pointee_type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_ATTR_ALIASABLE,
     LWMSG_MEMBER_TYPESPEC(LWMsgPointerRep, zero_terminated, bool_enum_spec),
@@ -236,7 +226,7 @@ static LWMsgTypeSpec pointer_rep_spec[] =
 static LWMsgTypeSpec array_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgArrayRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgArrayRep, element_type, type_rep_pointer_spec),
+    LWMSG_MEMBER_TYPESPEC(LWMsgArrayRep, element_type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_ATTR_ALIASABLE,
     LWMSG_MEMBER_TYPESPEC(LWMsgArrayRep, zero_terminated, bool_enum_spec),
@@ -251,9 +241,11 @@ static LWMsgTypeSpec array_rep_spec[] =
 static LWMsgTypeSpec custom_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgCustomRep),
-    LWMSG_MEMBER_TYPESPEC(LWMsgCustomRep, transmitted_type, type_rep_pointer_spec),
+    LWMSG_MEMBER_TYPESPEC(LWMsgCustomRep, transmitted_type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_ATTR_ALIASABLE,
+    LWMSG_MEMBER_TYPESPEC(LWMsgCustomRep, is_pointer, bool_enum_spec),
+    LWMSG_MEMBER_PSTR(LWMsgCustomRep, name),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -292,14 +284,12 @@ static LWMsgTypeSpec type_rep_spec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec type_rep_pointer_spec[] =
+LWMsgTypeSpec lwmsg_type_rep_spec[] =
 {
     LWMSG_POINTER(LWMSG_TYPESPEC(type_rep_spec)),
     LWMSG_ATTR_ALIASABLE,
     LWMSG_TYPE_END
 };
-
-LWMsgTypeSpec* lwmsg_type_rep_spec = type_rep_pointer_spec;
 
 static
 void*
@@ -942,7 +932,14 @@ lwmsg_type_rep_from_custom(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgTypeIter inner;
 
+    rep->info.custom_rep.is_pointer = iter->info.kind_custom.typeclass->is_pointer;
+
     lwmsg_type_iterate(iter->info.kind_custom.typeclass->transmit_type, &inner);
+
+    BAIL_ON_ERROR(status = lwmsg_strdup(
+                      map->context,
+                      lwmsg_type_name_suffix(iter->meta.type_name),
+                      &rep->info.custom_rep.name));
 
     BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
                       map,
@@ -954,7 +951,6 @@ error:
     return status;
 }
 
-static
 LWMsgStatus
 lwmsg_type_rep_from_spec_internal(
     LWMsgTypeRepMap* map,

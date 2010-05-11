@@ -270,6 +270,12 @@ lwmsg_type_iterate_inner(
         iter->kind = LWMSG_KIND_CUSTOM;
         iter->info.kind_custom.typeclass = (LWMsgTypeClass*) *(spec++);
         iter->info.kind_custom.typedata = (void*) *(spec++);
+
+        if (iter->info.kind_custom.typeclass->get_name)
+        {
+            iter->meta.type_name = iter->info.kind_custom.typeclass->get_name(
+                iter->info.kind_custom.typedata);
+        }
         break;
     case LWMSG_CMD_VOID:
         iter->kind = LWMSG_KIND_VOID;

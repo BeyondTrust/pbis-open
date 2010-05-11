@@ -50,6 +50,7 @@
 
 #include "util-private.h"
 #include "test-private.h"
+#include "data-private.h"
 
 typedef struct CounterHandle
 {
@@ -76,6 +77,7 @@ typedef struct CounterAdd
 LWMsgTypeSpec counterhandle_spec[] =
 {
     LWMSG_HANDLE(CounterHandle),
+    LWMSG_ATTR_NOT_NULL,
     LWMSG_TYPE_END
 };
 
@@ -375,6 +377,24 @@ MU_TEST(stress, parallel)
 
     pthread_mutex_destroy(&data.lock);
     pthread_cond_destroy(&data.event);
+}
+
+MU_TEST(stress, parallel_print_protocol)
+{
+    LWMsgContext* context = NULL;
+    LWMsgDataContext* dcontext = NULL;
+    LWMsgProtocol* protocol = NULL;
+    char* text = NULL;
+
+    MU_TRY(lwmsg_context_new(NULL, &context));
+    MU_TRY(lwmsg_data_context_new(context, &dcontext));
+
+    MU_TRY(lwmsg_protocol_new(context, &protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, counterprotocol_spec));
+
+    MU_TRY(lwmsg_data_print_protocol_alloc(dcontext, protocol, &text));
+
+    MU_VERBOSE("\n%s", text);
 }
 
 MU_TEST(client_server, handle_invalidation)

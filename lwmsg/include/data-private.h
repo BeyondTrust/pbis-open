@@ -186,5 +186,20 @@ lwmsg_data_free_graph_internal(
     LWMsgTypeIter* iter,
     unsigned char* object
     );
-    
+
+LWMsgStatus
+lwmsg_data_print_protocol(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    LWMsgDataPrintFunction _print,
+    void* print_data
+    );
+
+LWMsgStatus
+lwmsg_data_print_protocol_alloc(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    char** text
+    );
+
 #endif

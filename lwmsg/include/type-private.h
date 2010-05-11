@@ -254,7 +254,8 @@ typedef struct LWMsgTypeRep
         struct LWMsgCustomRep
         {
             struct LWMsgTypeRep* transmitted_type;
-            const char* name;
+            LWMsgBool is_pointer;
+            char* name;
         } custom_rep;
     } info;
 } LWMsgTypeRep;
@@ -350,12 +351,19 @@ lwmsg_type_iterate_promoted(
     );
 
 LWMsgStatus
+lwmsg_type_rep_from_spec_internal(
+    LWMsgTypeRepMap* map,
+    LWMsgTypeIter* iter,
+    LWMsgTypeRep** rep
+    );
+
+LWMsgStatus
 lwmsg_type_rep_from_spec(
     const LWMsgContext* context,
     LWMsgTypeSpec* spec,
     LWMsgTypeRep** rep
     );
 
-extern LWMsgTypeSpec* lwmsg_type_rep_spec;
+extern LWMsgTypeSpec lwmsg_type_rep_spec[];
 
 #endif

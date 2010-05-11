@@ -38,18 +38,51 @@
 #ifndef __LWMSG_PROTOCOL_PRIVATE_H__
 #define __LWMSG_PROTOCOL_PRIVATE_H__
 
+#include <lwmsg/message.h>
 #include <lwmsg/protocol.h>
 #include <lwmsg/type.h>
+#include <lwmsg/data.h>
 
 #include "context-private.h"
+#include "type-private.h"
 
 struct LWMsgProtocol
 {
+    LWMsgContext* context;
     LWMsgErrorContext error;
     /* Number of message types in this protocol */
     size_t num_types;
     /* Pointers to protocol spec entries indexed by message tag */
     LWMsgProtocolSpec** types;
 };
+
+typedef struct LWMsgProtocolMessageRep
+{
+    LWMsgTag tag;
+    LWMsgTypeRep* type;
+    char* name;
+} LWMsgProtocolMessageRep;
+
+typedef struct LWMsgProtocolRep
+{
+    uint16_t message_count;
+    LWMsgProtocolMessageRep* messages;
+} LWMsgProtocolRep;
+
+LWMsgStatus
+lwmsg_protocol_create_representation(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep** rep
+    );
+
+LWMsgStatus
+lwmsg_protocol_create_representation(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep** rep
+    );
+
+extern LWMsgTypeSpec* lwmsg_protocol_rep_spec;
 
 #endif

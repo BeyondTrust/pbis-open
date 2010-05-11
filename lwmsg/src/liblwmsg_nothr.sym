@@ -71,6 +71,8 @@ lwmsg_data_print_graph
 lwmsg_data_print_graph_alloc
 lwmsg_data_print_type
 lwmsg_data_print_type_alloc
+lwmsg_data_print_protocol
+lwmsg_data_print_protocol_alloc
 lwmsg_data_alloc_memory
 lwmsg_data_free_memory
 lwmsg_protocol_get_message_type

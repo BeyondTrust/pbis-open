@@ -390,6 +390,7 @@ typedef struct LWMsgTypeClass
     LWMsgTypeDestroyTransmittedFunction destroy_transmitted;
     /** @brief Print callback function */
     LWMsgTypePrintFunction print;
+    const char* (*get_name) (void* data);
 } LWMsgTypeClass;
 
 /**

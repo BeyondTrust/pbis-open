@@ -39,6 +39,7 @@
 #include "data-private.h"
 #include "util-private.h"
 #include "type-private.h"
+#include "protocol-private.h"
 #include "convert.h"
 
 #include <stdio.h>
@@ -674,6 +675,10 @@ print_type_name(
         kind = "union";
         name = rep->info.union_rep.definition->name;
         break;
+    case LWMSG_KIND_CUSTOM:
+        kind = "custom";
+        name = rep->info.custom_rep.name;
+        break;
     default:
         return LWMSG_STATUS_INTERNAL;
         break;
@@ -765,7 +770,7 @@ print_variant_value(
         {
             LWMsgVariantRep* variant = &rep->info.enum_rep.definition->variants[index];
 
-            if (variant->value == value)
+            if (variant->value == value && variant->name)
             {
                 return print(info, variant->name);
             }
@@ -774,11 +779,11 @@ print_variant_value(
 
     if (rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED)
     {
-        return print(info, "%llu", (unsigned long long) index);
+        return print(info, "%llu", (unsigned long long) value);
     }
     else
     {
-        return print(info, "%lli", (signed long long) index);
+        return print(info, "%lli", (signed long long) value);
     }
 }
 
@@ -1126,8 +1131,24 @@ lwmsg_data_print_type_custom(
                           context,
                           rep->info.custom_rep.transmitted_type,
                           info));
-    BAIL_ON_ERROR(status = print(info, " <custom="));
+    BAIL_ON_ERROR(status = print(info, " <presented="));
     BAIL_ON_ERROR(status = print_type_name(info, rep));
+    if (rep->info.custom_rep.is_pointer)
+    {
+        if (rep->flags & LWMSG_TYPE_FLAG_NOT_NULL)
+        {
+            BAIL_ON_ERROR(status = print(info, "&"));
+        }
+        else
+        {
+            BAIL_ON_ERROR(status = print(info, "*"));
+        }
+
+        if (rep->flags & LWMSG_TYPE_FLAG_ALIASABLE)
+        {
+            BAIL_ON_ERROR(status = print(info, "!"));
+        }
+    }
     BAIL_ON_ERROR(status = print(info, ">"));
 
 error:
@@ -1270,6 +1291,98 @@ cleanup:
 error:
 
     *result = NULL;
+
+    if (info.buffer)
+    {
+        lwmsg_context_free(context->context, info.buffer);
+    }
+
+    goto cleanup;
+}
+
+LWMsgStatus
+lwmsg_data_print_protocol(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    LWMsgDataPrintFunction _print,
+    void* print_data
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PrintInfo info;
+    LWMsgProtocolRep* rep = NULL;
+    size_t i = 0;
+
+    memset(&info, 0, sizeof(info));
+
+    info.newline = LWMSG_TRUE;
+    info.depth = 0;
+    info.context = context->context;
+    info.print = _print;
+    info.print_data = print_data;
+
+    BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
+                      context,
+                      prot,
+                      &rep));
+
+    for (i = 0; i < rep->message_count; i++)
+    {
+        BAIL_ON_ERROR(status = print(&info, "%s (%i):", rep->messages[i].name, rep->messages[i].tag));
+        BAIL_ON_ERROR(status = newline(&info));
+        info.depth += 2;
+        BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
+                          context,
+                          rep->messages[i].type,
+                          &info));
+        info.depth -= 2;
+        BAIL_ON_ERROR(status = newline(&info));
+        BAIL_ON_ERROR(status = newline(&info));
+    }
+
+cleanup:
+
+    if (rep)
+    {
+        lwmsg_data_free_graph(context, lwmsg_protocol_rep_spec, rep);
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+LWMsgStatus
+lwmsg_data_print_protocol_alloc(
+    LWMsgDataContext* context,
+    LWMsgProtocol* prot,
+    char** text
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    print_alloc_info info = {0};
+
+    memset(&info, 0, sizeof(info));
+
+    info.context = context;
+
+    BAIL_ON_ERROR(status = lwmsg_data_print_protocol(
+                      context,
+                      prot,
+                      lwmsg_data_print_graph_alloc_print,
+                      &info));
+
+    *text = info.buffer;
+
+cleanup:
+
+    return status;
+
+error:
+
+    *text = NULL;
 
     if (info.buffer)
     {
