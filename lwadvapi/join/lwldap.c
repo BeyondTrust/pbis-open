@@ -646,6 +646,21 @@ void display_status_1(char *m, OM_uint32 code, int type)
         if (!msg_ctx)
             break;
     }
+    if (code == KRB5_FCC_NOFILE)
+    {
+        PSTR pszOrigCachePath = NULL;
+
+        LW_LOG_DEBUG("KRB5CCNAME is set to %s",
+                LW_SAFE_LOG_STRING(getenv("KRB5CCNAME")));
+
+        if (!LwKrb5SetDefaultCachePath(NULL, &pszOrigCachePath))
+        {
+            LW_LOG_DEBUG("gss krb5 ccache is set to %s",
+                    LW_SAFE_LOG_STRING(pszOrigCachePath));
+            LwKrb5SetDefaultCachePath(pszOrigCachePath, NULL);
+            LW_SAFE_FREE_MEMORY(pszOrigCachePath);
+        }
+    }
 }
 
 void
