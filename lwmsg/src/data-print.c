@@ -617,6 +617,10 @@ lwmsg_data_print_graph_visit(
                         goto error;
                     }
                 }
+                else
+                {
+                    BAIL_ON_ERROR(status = print(info, "<pointer> -> "));
+                }
 
                 /* Print pointee */
 
