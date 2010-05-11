@@ -36,12 +36,15 @@
  *
  */
 
+#define LWMSG_SPEC_META
+
 #include <lwmsg/lwmsg.h>
 #include <moonunit/interface.h>
 #include <config.h>
 #include <string.h>
 
 #include "test-private.h"
+#include "type-private.h"
 
 static LWMsgContext* context = NULL;
 static LWMsgDataContext* dcontext = NULL;
@@ -297,6 +300,254 @@ MU_TEST(marshal, basic_verify_null_failure)
         MU_TYPE_INTEGER,
         lwmsg_data_unmarshal(dcontext, type, &buffer, (void**) (void*) &out),
         LWMSG_STATUS_EOF);
+}
+
+typedef struct alias_struct
+{
+    long *ptr1;
+    long *ptr2;
+} alias_struct;
+
+static LWMsgTypeSpec long_pointer_spec[] =
+{
+    LWMSG_POINTER(LWMSG_INT64(long)),
+    LWMSG_ATTR_LENGTH_STATIC(2),
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec alias_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(alias_struct),
+    LWMSG_MEMBER_TYPESPEC(alias_struct, ptr1, long_pointer_spec),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_ALIASABLE,
+    LWMSG_MEMBER_TYPESPEC(alias_struct, ptr2, long_pointer_spec),
+    LWMSG_ATTR_ALIASABLE,
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+MU_TEST(marshal, alias)
+{
+    static const unsigned char expected[] =
+    {
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01,
+        /* 1234 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
+        /* 4321 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1,
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01
+    };
+
+    LWMsgTypeSpec* type = alias_spec;
+    void* buffer;
+    size_t length;
+    alias_struct alias;
+    alias_struct *out;
+    long longs[2];
+    char* text = NULL;
+
+    alias.ptr1 = longs;
+    alias.ptr2 = longs;
+
+    longs[0] = 1234;
+    longs[1] = 4321;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &alias, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT(alias.ptr1[0] == out->ptr1[0]);
+    MU_ASSERT(alias.ptr1[1] == out->ptr1[1]);
+    MU_ASSERT(out->ptr1 == out->ptr2);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_graph_alloc(dcontext, type, out, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+    free(text);
+}
+
+MU_TEST(marshal, alias_null)
+{
+    static const unsigned char expected[] =
+    {
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01,
+        /* 1234 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
+        /* 4321 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1,
+        /* object id (NULL) */
+        0x00, 0x00, 0x00, 0x00
+    };
+
+    LWMsgTypeSpec* type = alias_spec;
+    void* buffer;
+    size_t length;
+    alias_struct alias;
+    alias_struct *out;
+    long longs[2];
+
+    alias.ptr1 = longs;
+    alias.ptr2 = NULL;
+
+    longs[0] = 1234;
+    longs[1] = 4321;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &alias, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT(alias.ptr1[0] == out->ptr1[0]);
+    MU_ASSERT(alias.ptr1[1] == out->ptr1[1]);
+    MU_ASSERT(out->ptr2 == NULL);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+}
+
+MU_TEST(marshal, alias_verify_null_marshal_failure)
+{
+    LWMsgTypeSpec* type = alias_spec;
+    void* buffer;
+    size_t length;
+    alias_struct alias;
+    long longs[2];
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    alias.ptr2 = longs;
+    alias.ptr1 = NULL;
+
+    longs[0] = 1234;
+    longs[1] = 4321;
+
+    status = lwmsg_data_marshal_flat_alloc(dcontext, type, &alias, &buffer, &length);
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_MALFORMED);
+}
+
+MU_TEST(marshal, alias_verify_null_unmarshal_failure)
+{
+    static const unsigned char data[] =
+    {
+        /* object id (NULL) */
+        0x00, 0x00, 0x00, 0x00,
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01,
+        /* 1234 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0xD2,
+        /* 4321 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0xE1,
+    };
+
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpec* type = alias_spec;
+    alias_struct *out;
+
+    status = lwmsg_data_unmarshal_flat(dcontext, type, data, sizeof(data), (void**) (void*) &out);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_MALFORMED);
+}
+
+typedef struct ring_struct
+{
+    int number;
+    struct ring_struct* next;
+} ring_struct;
+
+static LWMsgTypeSpec ring_ptr_spec[];
+
+static LWMsgTypeSpec ring_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(ring_struct),
+    LWMSG_MEMBER_INT32(ring_struct, number),
+    LWMSG_MEMBER_TYPESPEC(ring_struct, next, ring_ptr_spec),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec ring_ptr_spec[] =
+{
+    LWMSG_POINTER(LWMSG_TYPESPEC(ring_spec)),
+    LWMSG_ATTR_ALIASABLE,
+    LWMSG_TYPE_END
+};
+
+MU_TEST(marshal, ring)
+{
+    static const unsigned char expected[] =
+    {
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01,
+        /* 10 */
+        0x00, 0x00, 0x00, 0x0A,
+        /* object id 2 */
+        0x00, 0x00, 0x00, 0x02,
+        /* 20 */
+        0x00, 0x00, 0x00, 0x14,
+        /* object id 3 */
+        0x00, 0x00, 0x00, 0x03,
+        /* 30 */
+        0x00, 0x00, 0x00, 0x1e,
+        /* object id 1 */
+        0x00, 0x00, 0x00, 0x01
+    };
+
+    LWMsgTypeSpec* type = ring_ptr_spec;
+    void* buffer;
+    size_t length;
+    ring_struct ring1, ring2, ring3;
+    ring_struct *out;
+    char* text = NULL;
+
+    ring1.number = 10;
+    ring1.next = &ring2;
+    ring2.number = 20;
+    ring2.next = &ring3;
+    ring3.number = 30;
+    ring3.next = &ring1;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &ring1, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out->number, 10);
+    MU_ASSERT(out->next != NULL);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out->next->number, 20);
+    MU_ASSERT(out->next->next != NULL);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out->next->next->number, 30);
+    MU_ASSERT_EQUAL(MU_TYPE_POINTER, out, out->next->next->next);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_graph_alloc(dcontext, type, out, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+    free(text);
+}
+
+MU_TEST(marshal, ring_print_type)
+{
+    LWMsgTypeSpec* type = ring_ptr_spec;
+    char* text = NULL;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    free(text);
 }
 
 typedef struct
@@ -935,6 +1186,18 @@ MU_TEST(marshal, flexible_string)
     free(in);
 }
 
+MU_TEST(marshal, flexible_string_print_type)
+{
+    LWMsgTypeSpec* type = flexible_string_spec;
+    char* text = NULL;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    free(text);
+}
+
 typedef struct
 {
     int len;
@@ -992,6 +1255,19 @@ MU_TEST(marshal, flexible_array)
     free(in);
 }
 
+MU_TEST(marshal, flexible_array_print_type)
+{
+    LWMsgTypeSpec* type = flexible_array_spec;
+    char* text = NULL;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    free(text);
+}
+
+
 typedef struct info_level_struct
 {
     unsigned int length;
@@ -1036,6 +1312,17 @@ static LWMsgTypeSpec info_level_spec[] =
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
+
+MU_TEST(marshal, info_level_print_type)
+{
+    char* text = NULL;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, info_level_spec, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    free(text);
+}
 
 MU_TEST(marshal, info_level_1)
 {
@@ -1144,4 +1431,176 @@ MU_TEST(marshal, info_level_2)
         MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array.level_2[0].number1, out->array.level_2[0].number1);
         MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array.level_2[0].number2, out->array.level_2[0].number2);
     }
+}
+
+MU_TEST(marshal, type_rep_print_type)
+{
+    char* text = NULL;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, lwmsg_type_rep_spec, &text));
+
+    MU_VERBOSE("\n%s", text);
+    free(text);
+}
+
+typedef enum MixedEnum
+{
+    MIXED_VALUE_1 = 1,
+    MIXED_VALUE_2 = 2,
+    MIXED_MASK_1 = 0x1000,
+    MIXED_MASK_2 = 0x2000,
+} MixedEnum;
+
+static LWMsgTypeSpec MixedEnum_spec[] =
+{
+    LWMSG_ENUM_BEGIN(MixedEnum, 2, LWMSG_UNSIGNED),
+    LWMSG_ENUM_VALUE(MIXED_VALUE_1),
+    LWMSG_ENUM_VALUE(MIXED_VALUE_2),
+    LWMSG_ENUM_MASK(MIXED_MASK_1),
+    LWMSG_ENUM_MASK(MIXED_MASK_2),
+    LWMSG_ENUM_END,
+    LWMSG_TYPE_END,
+};
+
+MU_TEST(marshal, mixed_enum_mixed)
+{
+    static const unsigned char expected[] =
+    {
+        /* value */
+        0x20, 0x01
+    };
+
+    LWMsgTypeSpec* type = MixedEnum_spec;
+    void* buffer = NULL;
+    MixedEnum in = MIXED_VALUE_1 | MIXED_MASK_2;
+    MixedEnum* out = 0;
+    char* text = NULL;
+    size_t length = 0;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &in, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in, *out);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_graph_alloc(dcontext, type, &in, &text));
+
+    MU_VERBOSE("%s", text);
+
+    free(text);
+    free(out);
+}
+
+MU_TEST(marshal, mixed_enum_value)
+{
+    static const unsigned char expected[] =
+    {
+        /* value */
+        0x00, 0x01
+    };
+
+    LWMsgTypeSpec* type = MixedEnum_spec;
+    void* buffer = NULL;
+    MixedEnum in = MIXED_VALUE_1;
+    MixedEnum* out = 0;
+    char* text = NULL;
+    size_t length = 0;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &in, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in, *out);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_graph_alloc(dcontext, type, &in, &text));
+
+    MU_VERBOSE("%s", text);
+
+    free(text);
+    free(out);
+}
+
+MU_TEST(marshal, mixed_enum_unmarshal_zero_fail)
+{
+    static const unsigned char data[] =
+    {
+        /* value */
+        0x10, 0x00
+    };
+
+    LWMsgTypeSpec* type = MixedEnum_spec;
+    MixedEnum* out = 0;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    status = lwmsg_data_unmarshal_flat(dcontext, type, data, sizeof(data), (void**) (void*) &out);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_MALFORMED);
+}
+
+MU_TEST(marshal, mixed_enum_unmarshal_bogus_fail)
+{
+    static const unsigned char data[] =
+    {
+        /* value */
+        0x00, 0x03
+    };
+
+    LWMsgTypeSpec* type = MixedEnum_spec;
+    MixedEnum* out = 0;
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    status = lwmsg_data_unmarshal_flat(dcontext, type, data, sizeof(data), (void**) (void*) &out);
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, status, LWMSG_STATUS_MALFORMED);
+}
+
+typedef enum MaskEnum
+{
+    MASK_MASK_1 = 0x1000,
+    MASK_MASK_2 = 0x2000,
+} MaskEnum;
+
+static LWMsgTypeSpec MaskEnum_spec[] =
+{
+    LWMSG_ENUM_BEGIN(MaskEnum, 2, LWMSG_UNSIGNED),
+    LWMSG_ENUM_MASK(MASK_MASK_1),
+    LWMSG_ENUM_MASK(MASK_MASK_2),
+    LWMSG_ENUM_END,
+    LWMSG_TYPE_END,
+};
+
+MU_TEST(marshal, mask_enum_zero)
+{
+    static const unsigned char expected[] =
+    {
+        /* value */
+        0x00, 0x00
+    };
+
+    LWMsgTypeSpec* type = MaskEnum_spec;
+    void* buffer = NULL;
+    MaskEnum in = 0;
+    MaskEnum* out = NULL;
+    char* text = NULL;
+    size_t length = 0;
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal_flat_alloc(dcontext, type, &in, &buffer, &length));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, sizeof(expected), length);
+    MU_ASSERT(!memcmp(buffer, expected, sizeof(expected)));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_unmarshal_flat(dcontext, type, buffer, length, (void**) (void*) &out));
+
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in, *out);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_graph_alloc(dcontext, type, &in, &text));
+
+    MU_VERBOSE("%s", text);
+
+    free(text);
+    free(out);
 }

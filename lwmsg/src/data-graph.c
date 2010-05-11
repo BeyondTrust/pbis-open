@@ -205,7 +205,7 @@ lwmsg_data_verify_range(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t value;
+    uint64_t value;
 
     BAIL_ON_ERROR(status = lwmsg_convert_integer(
                       object,
@@ -225,6 +225,60 @@ lwmsg_data_verify_range(
 error:
 
     return status;
+}
+
+LWMsgStatus
+lwmsg_data_decode_enum_value(
+    LWMsgTypeIter* iter,
+    uint64_t value,
+    uint64_t* mask,
+    uint64_t* res
+    )
+{
+    LWMsgTypeIter var;
+    LWMsgBool found_value = LWMSG_FALSE;
+
+    *mask = 0;
+
+    for (lwmsg_type_enter(iter, &var);
+         lwmsg_type_valid(&var);
+         lwmsg_type_next(&var))
+    {
+        if (var.info.kind_variant.is_mask)
+        {
+            *mask |= (var.tag & value);
+        }
+    }
+
+    *res = value & ~*mask;
+
+    for (lwmsg_type_enter(iter, &var);
+         lwmsg_type_valid(&var);
+         lwmsg_type_next(&var))
+    {
+        if (!var.info.kind_variant.is_mask)
+        {
+            found_value = LWMSG_TRUE;
+
+            if (*res == var.tag)
+            {
+                return LWMSG_STATUS_SUCCESS;
+            }
+        }
+    }
+
+    if (*res == 0 && !found_value)
+    {
+        /* A residual of 0 is ok when the enum is a pure mask */
+        return LWMSG_STATUS_SUCCESS;
+    }
+    else
+    {
+        *res = 0;
+        *mask = 0;
+
+        return LWMSG_STATUS_MALFORMED;
+    }
 }
 
 LWMsgStatus
@@ -306,7 +360,14 @@ error:
 
     return status;
 }
-    
+
+typedef struct freeinfo
+{
+    LWMsgObjectMap map;
+    LWMsgDataContext* context;
+    LWMsgFreeFunction free;
+    void* data;
+} freeinfo;
 
 LWMsgStatus
 lwmsg_data_visit_graph_children(
@@ -363,13 +424,6 @@ error:
     return status;
 }
 
-typedef struct freeinfo
-{
-    LWMsgDataContext* context;
-    LWMsgFreeFunction free;
-    void* data;
-} freeinfo;
-
 static
 LWMsgStatus
 lwmsg_data_free_graph_visit(
@@ -380,6 +434,7 @@ lwmsg_data_free_graph_visit(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     freeinfo* info = (freeinfo*) data;
+    LWMsgObjectID id = 0;
 
     switch(iter->kind)
     {
@@ -394,6 +449,27 @@ lwmsg_data_free_graph_visit(
         }
         break;
     case LWMSG_KIND_POINTER:
+        if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE &&
+            *(void**) object)
+        {
+            status = lwmsg_data_object_map_find_object(
+                &info->map,
+                *(void**) object,
+                &id);
+            if (status == LWMSG_STATUS_NOT_FOUND)
+            {
+                BAIL_ON_ERROR(status = lwmsg_data_object_map_insert(
+                                  &info->map,
+                                  *(void**)object,
+                                  iter,
+                                  &id));
+            }
+            else
+            {
+                /* Skip aliasable pointers we've already seen */
+                goto error;
+            }
+        }
         BAIL_ON_ERROR(status = lwmsg_data_visit_graph_children(
                           iter,
                           object,
@@ -423,7 +499,7 @@ lwmsg_data_free_graph_internal(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    freeinfo info;
+    freeinfo info = {{0}};
 
     lwmsg_context_get_memory_functions(context->context, NULL, &info.free, NULL, &info.data);
     info.context = context;
@@ -435,6 +511,8 @@ lwmsg_data_free_graph_internal(
                       &info));
 
 error:
+
+    lwmsg_data_object_map_destroy(&info.map);
 
     return status;
 }

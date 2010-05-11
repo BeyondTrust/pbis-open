@@ -78,6 +78,10 @@ lwmsg_type_find_end(
         case LWMSG_CMD_INTEGER:
             spec += is_member ? 4 : 3;
             break;
+        case LWMSG_CMD_ENUM:
+            spec += is_member ? 4 : 3;
+            depth++;
+            break;
         case LWMSG_CMD_STRUCT:
         case LWMSG_CMD_UNION:
             spec += is_member ? 2 : 1;
@@ -87,6 +91,10 @@ lwmsg_type_find_end(
         case LWMSG_CMD_ARRAY:
             spec += is_member ? 1 : 0;
             depth++;
+            break;
+        case LWMSG_CMD_ENUM_VALUE:
+        case LWMSG_CMD_ENUM_MASK:
+            spec += 1;
             break;
         case LWMSG_CMD_TYPESPEC:
             spec += is_member ? 3 : 1;
@@ -123,6 +131,7 @@ lwmsg_type_find_end(
             spec += 1;
             break;
         case LWMSG_CMD_SENSITIVE:
+        case LWMSG_CMD_ALIASABLE:
         case LWMSG_CMD_NOT_NULL:
             break;
         default:
@@ -170,15 +179,26 @@ lwmsg_type_iterate_inner(
     switch (cmd & LWMSG_CMD_MASK)
     {
     case LWMSG_CMD_INTEGER:
+    case LWMSG_CMD_ENUM:
         iter->size = *(spec++);
         if (cmd & LWMSG_FLAG_MEMBER)
         {
             iter->offset = *(spec++);
         }
 
-        iter->kind = LWMSG_KIND_INTEGER;
         iter->info.kind_integer.width = *(spec++);
         iter->info.kind_integer.sign = *(spec++);
+
+        if ((cmd & LWMSG_CMD_MASK) == LWMSG_CMD_ENUM)
+        {
+            iter->kind = LWMSG_KIND_ENUM;
+            iter->inner = spec;
+            lwmsg_type_find_end(&spec);
+        }
+        else
+        {
+            iter->kind = LWMSG_KIND_INTEGER;
+        }
         break;
     case LWMSG_CMD_STRUCT:
         iter->size = *(spec++);
@@ -260,6 +280,12 @@ lwmsg_type_iterate_inner(
         }
         iter->kind = LWMSG_KIND_VOID;
         break;
+    case LWMSG_CMD_ENUM_VALUE:
+    case LWMSG_CMD_ENUM_MASK:
+        iter->kind = LWMSG_KIND_VOID;
+        iter->info.kind_variant.is_mask = (cmd & LWMSG_CMD_MASK) == LWMSG_CMD_ENUM_MASK;
+        iter->tag = (uint64_t) *(spec++);
+        break;
     case LWMSG_CMD_TERMINATION:
     case LWMSG_CMD_TAG:
     case LWMSG_CMD_DISCRIM:
@@ -326,6 +352,9 @@ lwmsg_type_iterate_inner(
             break;
         case LWMSG_CMD_SENSITIVE:
             iter->attrs.flags |= LWMSG_TYPE_FLAG_SENSITIVE;
+            break;
+        case LWMSG_CMD_ALIASABLE:
+            iter->attrs.flags |= LWMSG_TYPE_FLAG_ALIASABLE;
             break;
         case LWMSG_CMD_CUSTOM_ATTR:
             iter->attrs.custom |= (size_t) *(spec++);

@@ -69,6 +69,8 @@ lwmsg_data_free_graph
 lwmsg_data_destroy_graph
 lwmsg_data_print_graph
 lwmsg_data_print_graph_alloc
+lwmsg_data_print_type
+lwmsg_data_print_type_alloc
 lwmsg_data_alloc_memory
 lwmsg_data_free_memory
 lwmsg_protocol_get_message_type
@@ -138,6 +140,8 @@ lwmsg_set_close_on_exec
 lwmsg_type_get_flags
 lwmsg_type_get_custom_flags
 lwmsg_type_get_integer_range
+lwmsg_type_rep_from_spec
+lwmsg_type_rep_spec
 lwmsg_hash_init
 lwmsg_hash_get_count
 lwmsg_hash_insert_entry

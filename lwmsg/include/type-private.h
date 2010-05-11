@@ -43,6 +43,7 @@
 #include <lwmsg/status.h>
 #include <lwmsg/common.h>
 
+#include "util-private.h"
 #include "status-private.h"
 
 typedef struct LWMsgType
@@ -68,8 +69,9 @@ typedef struct LWMsgTypeIter
     size_t offset;
     /* Size of type */
     size_t size;
-    /* Tag of arm when in union, or 0 */
-    intmax_t tag;
+    /* Tag of arm when in union
+       Value of enum variant when in enum */
+    uint64_t tag;
 
     /* User verification function */
     LWMsgVerifyFunction verify;
@@ -81,6 +83,10 @@ typedef struct LWMsgTypeIter
     /* Union of type-specific informatin */
     union
     {
+        struct
+        {
+            LWMsgBool is_mask;
+        } kind_variant;
         /* Integer types */
         struct
         {
@@ -151,6 +157,106 @@ typedef struct LWMsgTypeIter
     } debug;
 } LWMsgTypeIter;
 
+typedef struct LWMsgMemberRep
+{
+    struct LWMsgTypeRep* type;
+    char* name;
+} LWMsgFieldRep;
+
+typedef struct LWMsgArmRep
+{
+    struct LWMsgTypeRep* type;
+    uint32_t tag;
+    char* name;
+} LWMsgArmRep;
+
+typedef struct LWMsgVariantRep
+{
+    uint8_t is_mask;
+    uint64_t value;
+    char* name;
+} LWMsgVariantRep;
+
+typedef struct LWMsgTypeRep
+{
+    LWMsgKind kind;
+    LWMsgTypeFlags flags;
+    char* name;
+    union LWMsgTypeRepInfo
+    {
+        struct LWMsgIntegerRep
+        {
+            uint8_t width;
+            LWMsgSignage sign;
+            uint64_t lower_bound;
+            uint64_t upper_bound;
+        } integer_rep;
+        struct LWMsgEnumRep
+        {
+            uint8_t width;
+            LWMsgSignage sign;
+            uint16_t variant_count;
+            LWMsgVariantRep* variants;
+        } enum_rep;
+        struct LWMsgStructRep
+        {
+            uint16_t field_count;
+            LWMsgFieldRep* fields;
+        } struct_rep;
+        struct LWMsgUnionRep
+        {
+            uint16_t arm_count;
+            LWMsgArmRep* arms;
+            uint16_t discrim_member_index;
+        } union_rep;
+        struct LWMsgPointerRep
+        {
+            struct LWMsgTypeRep* pointee_type;
+            LWMsgBool zero_terminated;
+            uint32_t static_length;
+            int16_t length_member_index;
+            char* encoding;
+        } pointer_rep;
+        struct LWMsgArrayRep
+        {
+            struct LWMsgTypeRep* element_type;
+            LWMsgBool zero_terminated;
+            uint32_t static_length;
+            int16_t length_member_index;
+            char* encoding;
+        } array_rep;
+        struct LWMsgCustomRep
+        {
+            struct LWMsgTypeRep* transmitted_type;
+        } custom_rep;
+    } info;
+} LWMsgTypeRep;
+
+typedef union LWMsgTypeRepInfo LWMsgTypeRepInfo;
+typedef struct LWMsgIntegerRep LWMsgIntegerRep;
+typedef struct LWMsgStructRep LWMsgStructRep;
+typedef struct LWMsgUnionRep LWMsgUnionRep;
+typedef struct LWMsgPointerRep LWMsgPointerRep;
+typedef struct LWMsgArrayRep LWMsgArrayRep;
+typedef struct LWMsgCustomRep LWMsgCustomRep;
+typedef struct LWMsgEnumRep LWMsgEnumRep;
+
+typedef struct LWMsgTypeRepMapEntry
+{
+    LWMsgTypeSpec* spec;
+    LWMsgTypeRep* rep;
+    LWMsgRing ring1;
+    LWMsgRing ring2;
+} LWMsgTypeRepMapEntry;
+
+typedef struct LWMsgTypeRepMap
+{
+    LWMsgHashTable hash_by_spec;
+    LWMsgHashTable hash_by_rep;
+    LWMsgTypeIter* dominating_iter;
+    LWMsgTypeIter* dominating_rep;
+} LWMsgTypeRepMap;
+
 void
 lwmsg_type_iterate(
     LWMsgTypeSpec* spec,
@@ -206,5 +312,13 @@ lwmsg_type_iterate_promoted(
     LWMsgTypeSpec* spec,
     LWMsgTypeIter* iter
     );
+
+LWMsgStatus
+lwmsg_type_rep_from_spec(
+    LWMsgTypeSpec* spec,
+    LWMsgTypeRep** rep
+    );
+
+extern LWMsgTypeSpec* lwmsg_type_rep_spec;
 
 #endif

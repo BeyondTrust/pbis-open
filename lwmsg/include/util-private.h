@@ -39,7 +39,7 @@
 #define __LWMSG_UTIL_PRIVATE_H__
 
 #include "status-private.h"
-#include "context-private.h"
+//#include "context-private.h"
 #include <lwmsg/buffer.h>
 #include <lwmsg/time.h>
 
@@ -569,5 +569,31 @@ void
 lwmsg_hash_destroy(
     LWMsgHashTable* table
     );
+
+static inline
+LWMsgStatus
+lwmsg_strdup(
+    const char* src,
+    char** dst
+    )
+{
+    if (src)
+    {
+        *dst = strdup(src);
+        if (!*dst)
+        {
+            return LWMSG_STATUS_MEMORY;
+        }
+        else
+        {
+            return LWMSG_STATUS_SUCCESS;
+        }
+    }
+    else
+    {
+        *dst = NULL;
+        return LWMSG_STATUS_SUCCESS;
+    }
+}
 
 #endif

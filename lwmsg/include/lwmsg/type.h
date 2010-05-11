@@ -130,8 +130,9 @@ typedef enum LWMsgKind
     LWMSG_KIND_UNION,
     LWMSG_KIND_ARRAY,
     LWMSG_KIND_POINTER,
-    LWMSG_KIND_CUSTOM,    
-    LWMSG_KIND_VOID
+    LWMSG_KIND_CUSTOM,
+    LWMSG_KIND_VOID,
+    LWMSG_KIND_ENUM
 } LWMsgKind;
 
 typedef enum LWMsgArrayTermination
@@ -190,7 +191,12 @@ typedef enum LWMsgTypeFlags
      * Type has a range constraint
      * @hideinitializer
      */
-    LWMSG_TYPE_FLAG_RANGE     = 0x08    
+    LWMSG_TYPE_FLAG_RANGE     = 0x08,
+    /**
+     * Pointer type is aliasable
+     * @hideinitializer
+     */
+    LWMSG_TYPE_FLAG_ALIASABLE = 0x08
 } LWMsgTypeFlags;
 
 /**
@@ -430,6 +436,10 @@ typedef enum LWMsgTypeDirective
         LWMSG_CMD_VOID,
         LWMSG_CMD_ENCODING,
         LWMSG_CMD_SENSITIVE,
+        LWMSG_CMD_ALIASABLE,
+        LWMSG_CMD_ENUM,
+        LWMSG_CMD_ENUM_VALUE,
+        LWMSG_CMD_ENUM_MASK,
         LWMSG_FLAG_MEMBER = 0x10000,
         LWMSG_FLAG_META = 0x20000,
         LWMSG_FLAG_DEBUG = 0x40000
@@ -464,12 +474,24 @@ typedef enum LWMsgTypeDirective
 /**
  * @brief Specify an empty type
  *
- * Specifies an empty (zero-length) type.  This is primarily useful
- * for indicating empty arms of a union.
+ * Specifies an empty (zero-length) type.
  * @hideinitializer
  */
 #define LWMSG_VOID \
     _TYPECMD(LWMSG_CMD_VOID)
+
+/**
+ * @brief Specify an empty member
+ *
+ * Specifies an empty (zero-length) member.  This is primarily useful
+ * for indicating empty arms of a union.  The field name can be arbitrary.
+ *
+ * @param type the name of the containing type
+ * @param field the name of the member
+ * @hideinitializer
+ */
+#define LWMSG_MEMBER_VOID(type, field) \
+    _TYPECMD_MEMBER(LWMSG_CMD_VOID, type, field)
 
 /**
  * @brief Reference another type specification
@@ -720,6 +742,18 @@ typedef enum LWMsgTypeDirective
     _TYPECMD(LWMSG_CMD_SENSITIVE)
 
 /**
+ * @brief Indicate aliasable pointer
+ *
+ * Indicates that the immediately previous type or member,
+ * which must be a pointer or pointer-like type,
+ * is aliasable -- that is, multiple instances of the same
+ * pointer may appear in the data object graph.
+ * @hideinitializer
+ */
+#define LWMSG_ATTR_ALIASABLE                    \
+    _TYPECMD(LWMSG_CMD_ALIASABLE)
+
+/**
  * @brief Indicate C string
  *
  * Indicates that the immediately previous array or pointer
@@ -913,6 +947,23 @@ typedef enum LWMsgTypeDirective
 #define LWMSG_ATTR_CUSTOM(value)                \
     _TYPECMD(LWMSG_CMD_CUSTOM_ATTR),            \
         _TYPEARG(value)
+
+#define LWMSG_ENUM_BEGIN(type, width, sign)    \
+    _TYPECMD_TYPE(LWMSG_CMD_ENUM, type),       \
+        _TYPEARG(sizeof(type)),                \
+        _TYPEARG(width),                       \
+        _TYPEARG(sign)
+
+#define LWMSG_ENUM_END \
+    _TYPECMD(LWMSG_CMD_END)
+
+#define LWMSG_ENUM_VALUE(value)                   \
+    _TYPECMD_TYPE(LWMSG_CMD_ENUM_VALUE, value),   \
+        _TYPEARG((value))
+
+#define LWMSG_ENUM_MASK(value)                      \
+    _TYPECMD_TYPE(LWMSG_CMD_ENUM_MASK, value),      \
+        _TYPEARG((value))
 
 /* Handy aliases for more complicated commands */
 

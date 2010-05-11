@@ -158,3 +158,234 @@ lwmsg_data_free_memory(
 {
     lwmsg_context_free(context->context, object);
 }
+
+static
+void*
+lwmsg_data_object_map_get_key_id(
+    const void* entry
+    )
+{
+    return &((LWMsgObjectMapEntry*) entry)->id;
+}
+
+static
+size_t
+lwmsg_data_object_map_digest_id(
+    const void* key
+    )
+{
+    return *(LWMsgObjectID*) key;
+}
+
+static
+LWMsgBool
+lwmsg_data_object_map_equal_id(
+    const void* key1,
+    const void* key2
+    )
+{
+    return *(LWMsgObjectID*) key1 == *(LWMsgObjectID*) key2;
+}
+
+static
+void*
+lwmsg_data_object_map_get_key_object(
+    const void* entry
+    )
+{
+    return ((LWMsgObjectMapEntry*) entry)->object;
+}
+
+static
+size_t
+lwmsg_data_object_map_digest_object(
+    const void* key
+    )
+{
+    return (size_t) key;
+}
+
+static
+LWMsgBool
+lwmsg_data_object_map_equal_object(
+    const void* key1,
+    const void* key2
+    )
+{
+    return key1 == key2;
+}
+
+static
+LWMsgStatus
+lwmsg_data_object_map_init(
+    LWMsgObjectMap* map
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!map->hash_by_id.buckets)
+    {
+        BAIL_ON_ERROR(status = lwmsg_hash_init(
+                          &map->hash_by_id,
+                          11,
+                          lwmsg_data_object_map_get_key_id,
+                          lwmsg_data_object_map_digest_id,
+                          lwmsg_data_object_map_equal_id,
+                          offsetof(LWMsgObjectMapEntry, ring1)));
+
+        BAIL_ON_ERROR(status = lwmsg_hash_init(
+                          &map->hash_by_object,
+                          11,
+                          lwmsg_data_object_map_get_key_object,
+                          lwmsg_data_object_map_digest_object,
+                          lwmsg_data_object_map_equal_object,
+                          offsetof(LWMsgObjectMapEntry, ring2)));
+    }
+
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_data_object_map_find_id(
+    LWMsgObjectMap* map,
+    LWMsgObjectID id,
+    LWMsgTypeIter* iter,
+    void** object
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeIter inner;
+
+    BAIL_ON_ERROR(status = lwmsg_data_object_map_init(map));
+
+    LWMsgObjectMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_id, &id);
+
+    lwmsg_type_enter(iter, &inner);
+
+    if (!entry)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
+    }
+    else if (entry->spec != inner.spec)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    *object = entry->object;
+
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_data_object_map_find_object(
+    LWMsgObjectMap* map,
+    void* object,
+    LWMsgObjectID* id
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    BAIL_ON_ERROR(status = lwmsg_data_object_map_init(map));
+
+    LWMsgObjectMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_object, object);
+
+    if (!entry)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
+    }
+
+    *id = entry->id;
+
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_data_object_map_insert(
+    LWMsgObjectMap* map,
+    void* object,
+    LWMsgTypeIter* iter,
+    LWMsgObjectID* id
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgObjectMapEntry* entry = NULL;
+    LWMsgTypeIter inner;
+
+    BAIL_ON_ERROR(status = LWMSG_ALLOC(&entry));
+
+    lwmsg_type_enter(iter, &inner);
+
+    lwmsg_ring_init(&entry->ring1);
+    lwmsg_ring_init(&entry->ring2);
+    entry->object = object;
+    entry->spec = inner.spec;
+
+    if (*id != 0)
+    {
+        entry->id = *id;
+    }
+    else
+    {
+        if (map->next_id == 0)
+        {
+            map->next_id++;
+        }
+        else if (map->next_id == UINT32_MAX)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+        }
+
+        entry->id = map->next_id++;
+    }
+
+    lwmsg_hash_insert_entry(&map->hash_by_id, entry);
+    lwmsg_hash_insert_entry(&map->hash_by_object, entry);
+
+    *id = entry->id;
+
+done:
+
+    return status;
+
+error:
+
+    if (entry)
+    {
+        free(entry);
+    }
+
+    goto done;
+}
+
+void
+lwmsg_data_object_map_destroy(
+    LWMsgObjectMap* map
+    )
+{
+    LWMsgHashIter iter = {0};
+    LWMsgObjectMapEntry* entry = NULL;
+
+    if (map->hash_by_id.buckets)
+    {
+        lwmsg_hash_iter_begin(&map->hash_by_id, &iter);
+        while ((entry = lwmsg_hash_iter_next(&map->hash_by_id, &iter)))
+        {
+            lwmsg_hash_remove_entry(&map->hash_by_id, entry);
+            free(entry);
+        }
+        lwmsg_hash_iter_end(&map->hash_by_id, &iter);
+
+        lwmsg_hash_destroy(&map->hash_by_id);
+    }
+
+    if (map->hash_by_object.buckets)
+    {
+        lwmsg_hash_destroy(&map->hash_by_object);
+    }
+}

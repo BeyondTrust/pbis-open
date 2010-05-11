@@ -41,6 +41,25 @@
 #include <lwmsg/data.h>
 #include "type-private.h"
 #include "status-private.h"
+#include "util-private.h"
+
+typedef uint32_t LWMsgObjectID;
+
+typedef struct LWMsgObjectMapEntry
+{
+    LWMsgRing ring1;
+    LWMsgRing ring2;
+    LWMsgObjectID id;
+    void* object;
+    LWMsgTypeSpec* spec;
+} LWMsgObjectMapEntry;
+
+typedef struct LWMsgObjectMap
+{
+    LWMsgObjectID next_id;
+    LWMsgHashTable hash_by_object;
+    LWMsgHashTable hash_by_id;
+} LWMsgObjectMap;
 
 struct LWMsgDataContext
 {
@@ -52,6 +71,7 @@ struct LWMsgDataContext
 typedef struct LWMsgMarshalState
 {
     unsigned char* dominating_object;
+    LWMsgObjectMap* map;
 } LWMsgMarshalState;
 
 #define MAX_INTEGER_SIZE (16)
@@ -62,12 +82,41 @@ typedef struct LWMsgMarshalState
 typedef struct LWMsgUnmarshalState
 {
     unsigned char* dominating_object;
+    LWMsgObjectMap* map;
 } LWMsgUnmarshalState;
 
 typedef LWMsgStatus (*LWMsgGraphVisitFunction) (
     LWMsgTypeIter* iter,
     unsigned char* object,
     void* data
+    );
+
+LWMsgStatus
+lwmsg_data_object_map_find_id(
+    LWMsgObjectMap* map,
+    LWMsgObjectID id,
+    LWMsgTypeIter* iter,
+    void** object
+    );
+
+LWMsgStatus
+lwmsg_data_object_map_find_object(
+    LWMsgObjectMap* map,
+    void* object,
+    LWMsgObjectID* id
+    );
+
+LWMsgStatus
+lwmsg_data_object_map_insert(
+    LWMsgObjectMap* map,
+    void* object,
+    LWMsgTypeIter* iter,
+    LWMsgObjectID* id
+    );
+
+void
+lwmsg_data_object_map_destroy(
+    LWMsgObjectMap* map
     );
 
 LWMsgStatus
@@ -105,6 +154,14 @@ lwmsg_data_extract_active_arm(
     LWMsgTypeIter* iter,
     unsigned char* dominating_struct,
     LWMsgTypeIter* active_iter
+    );
+
+LWMsgStatus
+lwmsg_data_decode_enum_value(
+    LWMsgTypeIter* iter,
+    uint64_t value,
+    uint64_t* mask,
+    uint64_t* res
     );
 
 LWMsgStatus

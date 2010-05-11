@@ -416,7 +416,7 @@ LWMsgStatus
 lwmsg_data_unmarshal_flat(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
-    void* buffer,
+    const void* buffer,
     size_t length,
     void** out
     );
@@ -473,6 +473,21 @@ lwmsg_data_print_graph_alloc(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
     void* root,
+    char** result
+    );
+
+LWMsgStatus
+lwmsg_data_print_type(
+    LWMsgDataContext* context,
+    LWMsgTypeSpec* type,
+    LWMsgDataPrintFunction print,
+    void* print_data
+    );
+
+LWMsgStatus
+lwmsg_data_print_type_alloc(
+    LWMsgDataContext* context,
+    LWMsgTypeSpec* type,
     char** result
     );
 
