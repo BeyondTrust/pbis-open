@@ -62,7 +62,7 @@ ShowUsage()
     fprintf(stdout, "  where options are:\n\n");
     fprintf(stdout, "    --help                                     Display this help information.\n");
     fprintf(stdout, "    --help-internal                            Display help for debug commands\n");
-    fprintf(stdout, "    --log {.|path}                             Log to a file (or \".\" to log\n"
+    fprintf(stdout, "    --logfile {.|path}                         Log to a file (or \".\" to log\n"
                     "                                               to console).\n");
     fprintf(stdout, "    --loglevel {error|warning|info|verbose}    Adjusts how much logging is\n"
                     "                                               produced by domainjoin.\n");
@@ -823,7 +823,7 @@ int main(
         //All options after this point take an argument
         else if(remainingArgs < 2)
             showHelp = TRUE;
-        else if(!strcmp(argPos[0], "--log"))
+        else if(!strcmp(argPos[0], "--logfile"))
         {
             pszLogFilePath = (++argPos)[0];
             remainingArgs--;
@@ -875,7 +875,7 @@ int main(
         CENTERROR ceError = dj_init_logging_to_file(dwLogLevel, pszLogFilePath);
         if(ceError == CENTERROR_ACCESS_DENIED)
         {
-            fprintf(stderr, "Warning: insufficient permissions to log to %s. To enable logging, please specify a different filename with --log <file>.\n",
+            fprintf(stderr, "Warning: insufficient permissions to log to %s. To enable logging, please specify a different filename with --logfile <file>.\n",
                     pszLogFilePath);
             ceError = CENTERROR_SUCCESS;
             LW_CLEANUP_CTERR(&exc, dj_disable_logging());
