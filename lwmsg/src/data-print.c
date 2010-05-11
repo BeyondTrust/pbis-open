@@ -1328,7 +1328,15 @@ lwmsg_data_print_protocol(
 
     for (i = 0; i < rep->message_count; i++)
     {
-        BAIL_ON_ERROR(status = print(&info, "%s (%i):", rep->messages[i].name, rep->messages[i].tag));
+        if (rep->messages[i].name)
+        {
+            BAIL_ON_ERROR(status = print(&info, "Tag %s (%i):", rep->messages[i].name, rep->messages[i].tag));
+        }
+        else
+        {
+            BAIL_ON_ERROR(status = print(&info, "Tag %i:", rep->messages[i].tag));
+        }
+        
         BAIL_ON_ERROR(status = newline(&info));
         info.depth += 2;
         BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(

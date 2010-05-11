@@ -52,6 +52,7 @@ archive_dump(
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
     LWMsgDataContext* dcontext = NULL;
     char* text = NULL;
+    unsigned int i = 0;
 
     BAIL_ON_ERROR(status = lwmsg_data_context_new(NULL, &dcontext));
 
@@ -65,13 +66,19 @@ archive_dump(
 
     BAIL_ON_ERROR(status = lwmsg_data_print_protocol_alloc(dcontext, protocol, &text));
 
-    printf("Schema:\n\n%s\n", text);
+    printf("------\n");
+    printf("Schema\n");
+    printf("------\n\n");
+    printf("%s\n", text);
 
     free(text);
+    text = NULL;
 
-    printf("Messages:\n\n");
+    printf("--------\n");
+    printf("Messages\n");
+    printf("--------\n\n");
 
-    for (;;)
+    for (i = 0; ; i++)
     {
         status = lwmsg_archive_read_message(archive, &message);
 
@@ -84,13 +91,36 @@ archive_dump(
         BAIL_ON_ERROR(status);
 
         BAIL_ON_ERROR(status = lwmsg_assoc_print_message_alloc(lwmsg_archive_as_assoc(archive), &message, &text));
-        printf("%s\n\n", text);
+        printf("[%i] %s\n\n", i, text);
 
         free(text);
+        text = NULL;
         lwmsg_archive_destroy_message(archive, &message);
     }
 
 error:
+
+    if (text)
+    {
+        free(text);
+    }
+
+    if (archive)
+    {
+        lwmsg_archive_destroy_message(archive, &message);
+        lwmsg_archive_close(archive);
+        lwmsg_archive_delete(archive);
+    }
+
+    if (protocol)
+    {
+        lwmsg_protocol_delete(protocol);
+    }
+
+    if (dcontext)
+    {
+        lwmsg_data_context_delete(dcontext);
+    }
 
     return status;
 }
