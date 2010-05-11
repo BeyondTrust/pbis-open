@@ -1246,15 +1246,15 @@ error:
 */
 CENTERROR
 CTReadFile(
-	PCSTR pszFilePath,
-	PSTR *ppBuffer,
-	PLONG pSize )
+    PCSTR pszFilePath,
+    PSTR *ppBuffer,
+    PLONG pSize )
 {
-	CENTERROR ceError = CENTERROR_SUCCESS;
-	struct stat statbuf;
-	FILE *fp = NULL;
+    CENTERROR ceError = CENTERROR_SUCCESS;
+    struct stat statbuf;
+    FILE *fp = NULL;
 
-	*ppBuffer = NULL;
+    *ppBuffer = NULL;
     if(pSize != NULL)
         *pSize = 0;
 
@@ -1265,44 +1265,47 @@ CTReadFile(
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
-	if (statbuf.st_size > 0) {
-		/* allocate one additional byte of memory and set it to NULL to
-		   allow for functions like strtok() to work properly */
-		ceError = CTAllocateMemory(statbuf.st_size + 1, (VOID*)ppBuffer);
-		BAIL_ON_CENTERIS_ERROR(ceError);
+    /* allocate one additional byte of memory and set it to NULL to
+       allow for functions like strtok() to work properly */
+    ceError = CTAllocateMemory(statbuf.st_size + 1, (VOID*)ppBuffer);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-		fp = fopen( pszFilePath, "r" );
+    if (statbuf.st_size > 0)
+    {
+        fp = fopen( pszFilePath, "r" );
 
-		if ( fp == NULL ){
-			ceError = CENTERROR_GP_FILE_OPEN_FAILED;
-			BAIL_ON_CENTERIS_ERROR(ceError);
-		}
+        if ( fp == NULL ){
+            ceError = CENTERROR_GP_FILE_OPEN_FAILED;
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
 
-		if ( fread( *ppBuffer, statbuf.st_size, 1, fp ) != 1 ) {
-			ceError = CTMapSystemError(errno);
-        	BAIL_ON_CENTERIS_ERROR(ceError);
-		}
+        if ( fread( *ppBuffer, statbuf.st_size, 1, fp ) != 1 ) {
+            ceError = CTMapSystemError(errno);
+            BAIL_ON_CENTERIS_ERROR(ceError);
+        }
 
-		fclose(fp);
-		fp = NULL;
+        fclose(fp);
+        fp = NULL;
 
-        if(pSize != NULL)
-            *pSize = statbuf.st_size;
-	}
+    }
+    if (pSize != NULL)
+    {
+        *pSize = statbuf.st_size;
+    }
 
-	return ceError;
+    return ceError;
 
 error:
-	if (*ppBuffer) {
+    if (*ppBuffer) {
            CTFreeMemory( *ppBuffer );
            *ppBuffer = NULL;
-	}
+    }
 
-	if (fp) {
-		fclose( fp );
-	}
+    if (fp) {
+        fclose( fp );
+    }
 
-	return ceError;
+    return ceError;
 }
 
 CENTERROR
