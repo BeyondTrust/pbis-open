@@ -1,6 +1,6 @@
 PKG_NEED_COMPAT=1
 PKG_NEED_FOREIGN=1
-PKG_COMPONENTS="lwbase lwadvapi centutils libcrypto libiconv libuuid lwmsg lwsm"
+PKG_COMPONENTS="lwbase lwadvapi centutils libcrypto libiconv libuuid lwmsg lwsm popt"
 
 if [ "${BUILD_OS_TYPE}" = "linux" ] && ! check_is_rhel_21
 then
