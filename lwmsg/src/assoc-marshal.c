@@ -41,10 +41,11 @@
 
 #include <lwmsg/type.h>
 #include <lwmsg/assoc.h>
-#include "convert.h"
+#include "convert-private.h"
 #include "util-private.h"
 #include "assoc-private.h"
 #include "data-private.h"
+#include "buffer-private.h"
 
 #include <stdlib.h>
 #include <string.h>

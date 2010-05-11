@@ -20,7 +20,7 @@ noinst_HEADERS = \
 	include/assoc-private.h \
 	include/connection-private.h \
 	include/context-private.h \
-	include/convert.h \
+	include/convert-private.h \
 	include/protocol-private.h \
 	include/status-private.h \
 	include/test-private.h \
@@ -180,7 +180,7 @@ DOXYGEN_SOURCE_DEPS = \
 	$(top_srcdir)/include/call-private.h \
 	$(top_srcdir)/include/connection-private.h \
 	$(top_srcdir)/include/context-private.h \
-	$(top_srcdir)/include/convert.h \
+	$(top_srcdir)/include/convert-private.h \
 	$(top_srcdir)/include/data-private.h \
 	$(top_srcdir)/include/mt19937ar.h \
 	$(top_srcdir)/include/protocol-private.h \

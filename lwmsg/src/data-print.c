@@ -40,7 +40,8 @@
 #include "util-private.h"
 #include "type-private.h"
 #include "protocol-private.h"
-#include "convert.h"
+#include "buffer-private.h"
+#include "convert-private.h"
 
 #include <stdio.h>
 

@@ -43,6 +43,7 @@
 #include "data-private.h"
 #include "status-private.h"
 #include "protocol-private.h"
+#include "buffer-private.h"
 
 static
 LWMsgStatus

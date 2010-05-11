@@ -700,8 +700,9 @@ typedef enum LWMsgTypeDirective
  *
  * Indicates that the immediately previous array or pointer
  * represents text in the specified encoding.  This is used
- * as a hint to #lwmsg_data_print_graph() to aid in debugging
- * and does not affect the behavior of the marshaller.
+ * as a hint as to how to display the contents when the data
+ * is printed but does not affect how the data is stored, encoded,
+ * or decoded.
  * @hideinitializer
  */
 #define LWMSG_ATTR_ENCODING(enc)                \
@@ -713,7 +714,7 @@ typedef enum LWMsgTypeDirective
  *
  * Indicates that the immediately previous type or member
  * contains sensitive information (e.g. a password) and should
- * not be displayed when printed with lwmsg_data_print_graph().
+ * not be displayed when printed.
  * @hideinitializer
  */
 #define LWMSG_ATTR_SENSITIVE                    \

@@ -39,7 +39,7 @@
 #include "assoc-private.h"
 #include "connection-private.h"
 #include "util-private.h"
-#include "convert.h"
+#include "convert-private.h"
 
 #include <errno.h>
 #include <string.h>

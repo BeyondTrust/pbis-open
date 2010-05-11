@@ -54,7 +54,7 @@
 #include "connection-private.h"
 #include "assoc-private.h"
 #include "util-private.h"
-#include "convert.h"
+#include "convert-private.h"
 #include "xnet-private.h"
 #include <lwmsg/data.h>
 

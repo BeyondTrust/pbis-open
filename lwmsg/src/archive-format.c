@@ -41,7 +41,7 @@
 #include "util-private.h"
 #include "protocol-private.h"
 #include "data-private.h"
-#include "convert.h"
+#include "convert-private.h"
 
 #include <errno.h>
 #include <sys/types.h>

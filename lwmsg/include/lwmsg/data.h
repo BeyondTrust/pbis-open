@@ -422,34 +422,6 @@ lwmsg_data_unmarshal_flat(
     );
 
 /**
- * @brief Print textual representation of a data graph
- *
- * Prints a human-readable textual representation of a data graph.
- * The printed form will be written into the provided #LWMsgBuffer.
- * Consider using #lwmsg_data_print_graph_alloc() if you want to easily
- * print to a string.
- *
- * @param[in,out] context the data context
- * @param[in] type a type specification which describes the graph root
- * @param[in] root the root of the data graph
- * @param[in] indent the level of indentation at which to print
- * @param[in,out] buffer the buffer into which to print
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_memory
- * @lwmsg_code{MALFORMED, the provided data did not conform in some way to the provided type information}
- * @lwmsg_endstatus
- */
-LWMsgStatus
-lwmsg_data_print_graph(
-    LWMsgDataContext* context,
-    LWMsgTypeSpec* type,
-    void* root,
-    unsigned int indent,
-    LWMsgBuffer* buffer
-    );
-
-/**
  * @brief Print textual representation of a data graph to a string
  *
  * Prints a human-readable textual representation of a data graph,

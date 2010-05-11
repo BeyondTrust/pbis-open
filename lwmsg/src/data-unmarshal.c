@@ -36,12 +36,13 @@
  *
  */
 
+#include "config.h"
 #include "data-private.h"
 #include "util-private.h"
 #include "type-private.h"
-#include "config.h"
-#include "convert.h"
+#include "convert-private.h"
 #include "context-private.h"
+#include "buffer-private.h"
 
 #include <string.h>
 

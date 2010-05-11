@@ -38,7 +38,8 @@
 #include "data-private.h"
 #include "util-private.h"
 #include "type-private.h"
-#include "convert.h"
+#include "buffer-private.h"
+#include "convert-private.h"
 #include "config.h"
 
 #include <string.h>

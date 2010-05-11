@@ -43,6 +43,8 @@
 #include "util-private.h"
 #include "protocol-private.h"
 #include "session-private.h"
+#include "data-private.h"
+#include "buffer-private.h"
 
 #ifdef LWMSG_DISABLE_DEPRECATED
 

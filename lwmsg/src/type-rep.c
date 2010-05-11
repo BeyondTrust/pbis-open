@@ -41,6 +41,7 @@
 #include "type-private.h"
 #include "util-private.h"
 #include "data-private.h"
+#include "buffer-private.h"
 
 /* Data structures */
 typedef struct

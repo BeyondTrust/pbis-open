@@ -44,19 +44,19 @@
 
 /**
  * @file buffer.h
- * @brief Marshalling buffer definition
+ * @brief Generic buffer definition
  */
 
 /**
  * @ingroup marshal
- * @brief Marshalling buffer
+ * @brief Generic buffer
  *
- * This structure comprises a generic buffer used by the marshaller
- * as a source or destination of serialized data when performing
- * marshalling operations.  It consists of base, end, and cursor
- * pointers which delimit the start, end, and current position
- * respectively within a contiguous block of memory.  It also
- * contains an optional wrap callback which is invoked when
+ * This structure comprises a generic buffer used as
+ * as a source or destination for data streams when performing
+ * various operations such as marshalling, printing, etc.  It
+ * contains pointers which delimit the start, end, and current
+ * position within a contiguous block of memory.  It also
+ * contains an optional wrap callback function which is invoked when
  * the cursor reaches the end of the buffer.  This function may
  * reset, refill, or resize the buffer so that the operation
  * can continue.
@@ -85,8 +85,10 @@ typedef struct LWMsgBuffer
      * a large as possible on each call.  It is safe to return with
      * (end - cursor) < needed, but this is not recommended.
      *
-     * A needed value of 0 indicates that the marshaller operation has
-     * completed and is an opportunity to perform any last cleanup.
+     * A needed value of 0 indicates that the operation in question
+     * (e.g. #lwmsg_data_marshal()) is complete, and is an opportunity
+     * to perform any final cleanup (e.g. flushing the partially filled
+     * buffer to the underlying data stream).
      *
      * @param[in,out] buffer the buffer structure
      * @param[in] needed the number of bytes immediately needed, or 0 if finished

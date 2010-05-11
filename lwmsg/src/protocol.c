@@ -40,6 +40,7 @@
 #include "util-private.h"
 #include "type-private.h"
 #include "data-private.h"
+#include "buffer-private.h"
 
 static LWMsgTypeSpec protocol_message_rep_spec[] =
 {

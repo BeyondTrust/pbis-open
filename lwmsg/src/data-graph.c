@@ -39,7 +39,7 @@
 #include <config.h>
 
 #include <lwmsg/common.h>
-#include "convert.h"
+#include "convert-private.h"
 #include "context-private.h"
 #include "type-private.h"
 #include "data-private.h"

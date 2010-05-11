@@ -35,10 +35,10 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
-#ifndef __LWMSG_CONVERT_H__
-#define __LWMSG_CONVERT_H__
+#ifndef __LWMSG_CONVERT_PRIVATE_H__
+#define __LWMSG_CONVERT_PRIVATE_H__
 
-#include <config.h>
+#include "config.h"
 #include <lwmsg/type.h>
 #include <lwmsg/status.h>
 #include <inttypes.h>

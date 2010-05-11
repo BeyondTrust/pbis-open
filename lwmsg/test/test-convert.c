@@ -38,7 +38,7 @@
 #include <moonunit/interface.h>
 #include <config.h>
 
-#include "convert.h"
+#include "convert-private.h"
 #include "type-private.h"
 
 MU_TEST(convert, neu16_to_neu32)
