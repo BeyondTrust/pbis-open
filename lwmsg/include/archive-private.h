@@ -66,8 +66,10 @@ struct LWMsgArchive
 
 #define ARCHIVE_VERSION_FLAG_BIG_ENDIAN 0x1
 #define ARCHIVE_VERSION_MAJOR 1
-#define ARCHIVE_VERSION_MINOR 0
+#define ARCHIVE_VERSION_MINOR 1
 #define ARCHIVE_VERSION_MICRO 0
+
+#define ARCHIVE_FORMAT_FLAG_SCHEMA 0x1
 
 typedef struct ArchiveHeader
 {

@@ -1573,6 +1573,22 @@ MU_TEST(marshal, type_rep_print_type)
     lwmsg_context_free(context, text);
 }
 
+MU_TEST(marshal, type_spec_ping_pong)
+{
+    LWMsgTypeRep* rep = NULL;
+    LWMsgTypeSpec* spec = NULL;
+    char* text = NULL;
+
+
+    MU_TRY(lwmsg_type_rep_from_spec(context, lwmsg_type_rep_spec, &rep));
+    MU_TRY(lwmsg_type_spec_from_rep(context, rep, &spec));
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, spec, &text));
+
+    MU_VERBOSE("\n%s", text);
+    lwmsg_context_free(context, text);
+}
+
 typedef enum MixedEnum
 {
     MIXED_VALUE_1 = 1,

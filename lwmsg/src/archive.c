@@ -226,7 +226,7 @@ lwmsg_archive_open_fd(
         {
             archive->fd = open(
                 archive->file,
-                (archive->disp == LWMSG_ARCHIVE_READ ? O_RDONLY : (O_WRONLY | O_CREAT)),
+                ((archive->disp & LWMSG_ARCHIVE_READ) ? O_RDONLY : (O_WRONLY | O_CREAT)),
                 archive->mode);
             if (archive->fd < 0)
             {
@@ -409,7 +409,7 @@ lwmsg_archive_open(
         ARCHIVE_RAISE_ERROR(archive, status = LWMSG_STATUS_INVALID_STATE, "Archive is already open");
     }
  
-    switch (archive->disp)
+    switch (archive->disp & (LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_WRITE))
     {
     case LWMSG_ARCHIVE_READ:
         BAIL_ON_ERROR(status = lwmsg_archive_open_fd(archive));
@@ -419,6 +419,8 @@ lwmsg_archive_open(
         BAIL_ON_ERROR(status = lwmsg_archive_open_fd(archive));
         BAIL_ON_ERROR(status = lwmsg_archive_write_header_fd(archive));
         break;
+    default:
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_PARAMETER);
     }
 
 error:

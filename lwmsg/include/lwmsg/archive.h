@@ -81,7 +81,11 @@ typedef enum LWMsgArchiveDisposition
      * Open archive for writing
      * @hideinitializer
      */
-    LWMSG_ARCHIVE_WRITE = 0x2
+    LWMSG_ARCHIVE_WRITE = 0x2,
+    /**
+     * Read/write protocol schema to/from file
+     */
+    LWMSG_ARCHIVE_SCHEMA = 0x4
 } LWMsgArchiveDisposition;
 
 /**

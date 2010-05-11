@@ -144,6 +144,7 @@ lwmsg_type_get_custom_flags
 lwmsg_type_get_integer_range
 lwmsg_type_rep_from_spec
 lwmsg_type_rep_spec
+lwmsg_type_spec_from_rep
 lwmsg_hash_init
 lwmsg_hash_get_count
 lwmsg_hash_insert_entry

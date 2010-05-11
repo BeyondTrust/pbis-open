@@ -82,6 +82,7 @@ lwmsg_protocol_new(
     }
 
     my_prot->context = context;
+    my_prot->specmap.context = context;
 
     *prot = my_prot;
 
@@ -102,6 +103,8 @@ error:
 void
 lwmsg_protocol_delete(LWMsgProtocol* prot)
 {
+    lwmsg_type_spec_map_destroy(&prot->specmap);
+
     free(prot->types);
     free(prot);
 }
@@ -267,4 +270,45 @@ error:
     }
 
     goto done;
+}
+
+LWMsgStatus
+lwmsg_protocol_set_representation(
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep* rep
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* buffer = NULL;
+    struct LWMsgProtocolSpec *spec;
+    size_t i = 0;
+
+    BAIL_ON_ERROR(status = LWMSG_ALLOC_ARRAY(rep->message_count + 1, &spec));
+
+    for (i = 0; i < rep->message_count; i++)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
+                          &prot->specmap,
+                          rep->messages[i].type,
+                          &buffer));
+        
+        spec[i].tag = rep->messages[i].tag;
+        spec[i].type = buffer->buffer;
+        spec[i].tag_name = rep->messages[i].name;
+    }
+
+    spec[i].tag = -1;
+    spec[i].type = NULL;
+    spec[i].tag_name = NULL;
+
+    BAIL_ON_ERROR(status = lwmsg_protocol_add_protocol_spec(
+                          prot,
+                          spec));
+    
+    prot->spec = spec;
+    prot->rep = rep;
+
+error:
+
+    return status;
 }

@@ -39,6 +39,7 @@
 
 #include "archive-private.h"
 #include "util-private.h"
+#include "protocol-private.h"
 #include "convert.h"
 
 #include <errno.h>
@@ -175,7 +176,93 @@ lwmsg_archive_populate_header(
     header->version_micro = ARCHIVE_VERSION_MICRO;
     header->format_flags = 0;
 
+    if (archive->disp & LWMSG_ARCHIVE_SCHEMA)
+    {
+        header->format_flags |= ARCHIVE_FORMAT_FLAG_SCHEMA;
+    }
+
+    header->format_flags = LWMSG_SWAP32(
+        header->format_flags,
+        LWMSG_NATIVE_ENDIAN,
+        archive->byte_order);
+
     memset(header->protocol_id, 0, sizeof(header->protocol_id));
+}
+
+static
+LWMsgStatus
+lwmsg_archive_write_message_wrap_fd(
+    LWMsgBuffer* buffer,
+    size_t needed
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgArchive* archive = buffer->data;
+
+    /* Flush data in the buffer to file */
+    BAIL_ON_ERROR(status = lwmsg_archive_write_fd(archive, buffer->base, (size_t) (buffer->cursor - buffer->base)));
+    buffer->cursor = buffer->base;
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_archive_write_schema_fd(
+    LWMsgArchive* archive
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpec* type = lwmsg_protocol_rep_spec;
+    LWMsgProtocolRep* rep = NULL;
+    off_t length_offset = archive->offset;
+    off_t end_offset = 0;
+    LWMsgBuffer buffer = {0};
+    unsigned char data[2048];
+    uint32_t length = 0;
+    
+    BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
+                      archive->data_context,
+                      archive->base.prot,
+                      &rep));
+
+    buffer.base = data;
+    buffer.end = data + sizeof(data);
+    buffer.cursor = buffer.base;
+    buffer.wrap = lwmsg_archive_write_message_wrap_fd;
+    buffer.data = archive;
+
+    /* Leave room to write the schema length in later */
+    BAIL_ON_ERROR(status = lwmsg_archive_seek_fd(archive, length_offset + sizeof(length)));
+    
+    /* Write the marshaled protocol schema */
+    BAIL_ON_ERROR(status = lwmsg_data_marshal(archive->data_context, type, rep, &buffer));
+    
+    end_offset = archive->offset;
+
+    /* Go back and write the schema length */
+    BAIL_ON_ERROR(status = lwmsg_archive_seek_fd(archive, length_offset));
+
+    length = LWMSG_SWAP32(
+        (uint32_t) (end_offset - length_offset) - sizeof(length),
+        LWMSG_NATIVE_ENDIAN,
+        archive->byte_order);
+
+    BAIL_ON_ERROR(status = lwmsg_archive_write_fd(archive, &length, sizeof(length)));
+
+    /* Seek back to end of stream */
+    BAIL_ON_ERROR(status = lwmsg_archive_seek_fd(archive, end_offset));
+
+error:
+
+    if (rep)
+    {
+        lwmsg_data_free_graph(archive->data_context, type, rep);
+    }
+
+    return status;
 }
 
 LWMsgStatus
@@ -188,6 +275,11 @@ lwmsg_archive_write_header_fd(
 
     lwmsg_archive_populate_header(archive, &header);
     BAIL_ON_ERROR(status = lwmsg_archive_write_fd(archive, &header, sizeof(header)));
+
+    if (archive->disp & LWMSG_ARCHIVE_SCHEMA)
+    {
+        BAIL_ON_ERROR(status = lwmsg_archive_write_schema_fd(archive));
+    }
 
 error:
 
@@ -208,25 +300,6 @@ lwmsg_archive_populate_message_header(
     header->cookie = LWMSG_SWAP16((uint16_t) message->cookie, LWMSG_NATIVE_ENDIAN, archive->byte_order);
     header->tag = LWMSG_SWAP16((int16_t) message->tag, LWMSG_NATIVE_ENDIAN, archive->byte_order);
     header->size = LWMSG_SWAP32((uint32_t) data_size, LWMSG_NATIVE_ENDIAN, archive->byte_order);
-}
-
-static
-LWMsgStatus
-lwmsg_archive_write_message_wrap_fd(
-    LWMsgBuffer* buffer,
-    size_t needed
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgArchive* archive = buffer->data;
-
-    /* Flush data in the buffer to file */
-    BAIL_ON_ERROR(status = lwmsg_archive_write_fd(archive, buffer->base, (size_t) (buffer->cursor - buffer->base)));
-    buffer->cursor = buffer->base;
-
-error:
-
-    return status;
 }
 
 LWMsgStatus
@@ -272,46 +345,6 @@ error:
     return status;
 }
 
-LWMsgStatus
-lwmsg_archive_read_header_fd(
-    LWMsgArchive* archive
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    ArchiveHeader header;
-    size_t count = 0;
-
-    BAIL_ON_ERROR(status = lwmsg_archive_read_fd(archive, &header, sizeof(header), &count));
-
-    if (count < sizeof(header) || memcmp(header.magic, "LWMA", 4) != 0)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
-    }
-    
-    if (header.version_major > ARCHIVE_VERSION_MAJOR ||
-        header.version_minor > ARCHIVE_VERSION_MINOR)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
-    }
-
-    archive->version_major = header.version_major;
-    archive->version_minor = header.version_minor;
-
-    if (header.version_flags & ARCHIVE_VERSION_FLAG_BIG_ENDIAN)
-    {
-        archive->byte_order = LWMSG_BIG_ENDIAN;
-    }
-    else
-    {
-        archive->byte_order = LWMSG_LITTLE_ENDIAN;
-    }
-
-    lwmsg_data_context_set_byte_order(archive->data_context, archive->byte_order);    
-
-error:
-
-    return status;
-}
 
 typedef struct readinfo
 {
@@ -360,6 +393,117 @@ lwmsg_archive_read_message_wrap_fd (
             BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
         }
     }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_archive_read_schema_fd(
+    LWMsgArchive* archive,
+    ArchiveHeader* header
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    uint32_t format_flags = LWMSG_SWAP32(header->format_flags, LWMSG_NATIVE_ENDIAN, archive->byte_order);
+    uint32_t length = 0;
+    size_t count = 0;
+    LWMsgProtocolRep* rep = NULL;      
+
+    if (format_flags & ARCHIVE_FORMAT_FLAG_SCHEMA)
+    {
+        BAIL_ON_ERROR(status = lwmsg_archive_read_fd(archive, &length, sizeof(length), &count));
+        
+        if (count < sizeof(length))
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+
+        length = LWMSG_SWAP32(length, LWMSG_NATIVE_ENDIAN, archive->byte_order);
+
+        if (archive->disp & LWMSG_ARCHIVE_SCHEMA)
+        {
+            readinfo info;
+            LWMsgBuffer buffer = {0};
+            LWMsgTypeSpec* type = lwmsg_protocol_rep_spec;
+            
+            info.archive = archive;
+            info.remaining = length;
+            buffer.base = info.data;
+            buffer.end = buffer.base;
+            buffer.cursor = buffer.base;
+            buffer.wrap = lwmsg_archive_read_message_wrap_fd;
+            buffer.data = &info;
+            
+            /* Unmarshal the schema */
+            BAIL_ON_ERROR(status = lwmsg_data_unmarshal(
+                              archive->data_context,
+                              type,
+                              &buffer,
+                              (void**) (void*) &rep));
+
+            /* Insert the schema into the protocol structure */
+            BAIL_ON_ERROR(status = lwmsg_protocol_set_representation(
+                              archive->base.prot,
+                              rep));
+
+            rep = NULL;
+        }
+        else
+        {
+            BAIL_ON_ERROR(status = lwmsg_archive_seek_fd(archive, archive->offset + length));
+        }
+    }
+
+error:
+
+    if (rep)
+    {
+        lwmsg_data_free_graph(archive->data_context, lwmsg_type_rep_spec, rep);
+    }
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_archive_read_header_fd(
+    LWMsgArchive* archive
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    ArchiveHeader header;
+    size_t count = 0;
+
+    BAIL_ON_ERROR(status = lwmsg_archive_read_fd(archive, &header, sizeof(header), &count));
+
+    if (count < sizeof(header) || memcmp(header.magic, "LWMA", 4) != 0)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+    
+    if (header.version_major > ARCHIVE_VERSION_MAJOR ||
+        header.version_minor > ARCHIVE_VERSION_MINOR)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    archive->version_major = header.version_major;
+    archive->version_minor = header.version_minor;
+
+    if (header.version_flags & ARCHIVE_VERSION_FLAG_BIG_ENDIAN)
+    {
+        archive->byte_order = LWMSG_BIG_ENDIAN;
+    }
+    else
+    {
+        archive->byte_order = LWMSG_LITTLE_ENDIAN;
+    }
+
+    lwmsg_data_context_set_byte_order(archive->data_context, archive->byte_order);
+
+    BAIL_ON_ERROR(status = lwmsg_archive_read_schema_fd(archive, &header));
 
 error:
 

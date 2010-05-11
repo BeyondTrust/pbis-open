@@ -111,6 +111,11 @@ struct msghdr;
     
 #define LWMSG_ALLOC(_obj_) (LWMSG_ALLOC_ARRAY(1, _obj_))
 
+#define LWMSG_CONTEXT_ALLOC_ARRAY(_ctxt_, _count_, _obj_)               \
+    (lwmsg_context_alloc((_ctxt_), (_count_) * sizeof **(_obj_), (void**) (void*) (_obj_)))
+    
+#define LWMSG_CONTEXT_ALLOC(_obj_) (LWMSG_CONTEXT_ALLOC_ARRAY((_ctxt_), 1, (_obj_)))
+
 #define LWMSG_POINTER_AS_ULONG(ptr) ((unsigned long) (size_t) (ptr))
 
 char* lwmsg_formatv(const char* fmt, va_list ap);

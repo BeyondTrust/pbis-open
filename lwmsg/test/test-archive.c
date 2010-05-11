@@ -35,6 +35,9 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#define LWMSG_SPEC_META
+
 #include <lwmsg/lwmsg.h>
 #include <moonunit/interface.h>
 #include <config.h>
@@ -69,11 +72,13 @@ static LWMsgProtocolSpec archive_spec[] =
 };
 
 static LWMsgProtocol* archive_protocol = NULL;
+static LWMsgDataContext* dcontext = NULL;
 
 MU_FIXTURE_SETUP(archive)
 {
     MU_TRY(lwmsg_protocol_new(NULL, &archive_protocol));
     MU_TRY(lwmsg_protocol_add_protocol_spec(archive_protocol, archive_spec));
+    MU_TRY(lwmsg_data_context_new(NULL, &dcontext));
 }
 
 MU_TEST(archive, write_read)
@@ -112,3 +117,46 @@ MU_TEST(archive, write_read)
     MU_TRY(lwmsg_archive_destroy_message(archive, &out));
     lwmsg_archive_delete(archive);
 }
+
+MU_TEST(archive, write_schema_read_schema)
+{
+    LWMsgArchive* archive = NULL;
+    message_struct payload;
+    LWMsgMessage in = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgMessage out = LWMSG_MESSAGE_INITIALIZER;
+    char* text = NULL;
+    LWMsgProtocol* blank_protocol = NULL;
+
+    payload.number = 42;
+    payload.string = (char*) "Hello, world!";
+    in.tag = MESSAGE_NORMAL;
+    in.data = &payload;
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+
+    /* Open, write message, close, delete */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA, 0600));
+    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_write_message(archive, &in));
+    MU_TRY(lwmsg_archive_close(archive));
+    lwmsg_archive_delete(archive);
+
+    /* Create a blank protocol from which we will read the schema */
+    MU_TRY(lwmsg_protocol_new(NULL, &blank_protocol));
+
+    MU_TRY(lwmsg_archive_new(NULL, blank_protocol, &archive));
+
+    /* Open, read message, close */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA, 0));
+    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_read_message(archive, &out));
+    MU_TRY(lwmsg_archive_close(archive));
+    
+    MU_TRY(lwmsg_assoc_print_message_alloc(lwmsg_archive_as_assoc(archive), &out, &text));
+
+    MU_VERBOSE("\n%s", text);
+
+    MU_TRY(lwmsg_archive_destroy_message(archive, &out));
+    lwmsg_archive_delete(archive);
+}
+

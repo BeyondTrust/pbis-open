@@ -281,18 +281,61 @@ typedef struct LWMsgTypeRepMapEntry
         LWMsgTypeSpec* spec;
     } spec;
     void* rep;
-    LWMsgRing ring1;
-    LWMsgRing ring2;
+    LWMsgRing ring;
 } LWMsgTypeRepMapEntry;
 
 typedef struct LWMsgTypeRepMap
 {
     const LWMsgContext* context;
     LWMsgHashTable hash_by_spec;
-    LWMsgHashTable hash_by_rep;
     LWMsgTypeIter* dominating_iter;
     LWMsgTypeIter* dominating_rep;
 } LWMsgTypeRepMap;
+
+typedef struct LWMsgTypeSpecBuffer
+{
+    /* Associated type rep */
+    void* rep;
+    /* Buffer for constructed type spec */
+    unsigned int buffer_capacity;
+    unsigned int buffer_size;
+    size_t* buffer;
+    /* Backlinks to other specs that will reference this one */
+    LWMsgRing backlinks;
+    /* Array of offsets of C members */
+    struct
+    {
+        size_t offset;
+        size_t size;
+    }* member_metrics;
+    /* Size of the C type */
+    size_t type_size;
+    /* Link into hash table */
+    LWMsgRing ring;
+} LWMsgTypeSpecBuffer;
+
+typedef struct LWMsgTypeSpecLink
+{
+    LWMsgRing ring;
+    LWMsgTypeSpecBuffer* buffer;
+    unsigned int offset;
+} LWMsgTypeSpecLink;
+
+typedef struct LWMsgTypeSpecMap
+{
+    const LWMsgContext* context;
+    LWMsgHashTable hash_by_rep;
+    size_t backlinks;
+} LWMsgTypeSpecMap;
+
+typedef struct LWMsgTypeSpecState
+{
+    LWMsgTypeSpecMap* map;
+    LWMsgTypeSpecBuffer* dominating_struct;
+    ssize_t member_offset;
+    size_t member_size;
+    char* member_name;
+} LWMsgTypeSpecState;
 
 void
 lwmsg_type_iterate(
@@ -362,6 +405,25 @@ lwmsg_type_rep_from_spec(
     const LWMsgContext* context,
     LWMsgTypeSpec* spec,
     LWMsgTypeRep** rep
+    );
+
+LWMsgStatus
+lwmsg_type_spec_from_rep_internal(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer** buffer
+    );
+
+LWMsgStatus
+lwmsg_type_spec_from_rep(
+    const LWMsgContext* context,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpec** spec
+    );
+
+void
+lwmsg_type_spec_map_destroy(
+    LWMsgTypeSpecMap* map
     );
 
 extern LWMsgTypeSpec lwmsg_type_rep_spec[];

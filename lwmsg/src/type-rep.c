@@ -42,6 +42,15 @@
 #include "util-private.h"
 #include "data-private.h"
 
+/* Forward declarations of static functions */
+static
+LWMsgStatus
+lwmsg_type_spec_from_rep_into(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    );
+
 static LWMsgTypeSpec bool_enum_spec[] =
 {
     LWMSG_ENUM_BEGIN(LWMsgBool, 1, LWMSG_UNSIGNED),
@@ -124,6 +133,7 @@ static LWMsgTypeSpec arm_rep_spec[] =
     LWMSG_STRUCT_BEGIN(LWMsgArmRep),
     LWMSG_MEMBER_TYPESPEC(LWMsgArmRep, type, lwmsg_type_rep_spec),
     LWMSG_ATTR_NOT_NULL,
+    LWMSG_MEMBER_UINT32(LWMsgArmRep, tag),
     LWMSG_MEMBER_PSTR(LWMsgArmRep, name),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -334,34 +344,6 @@ lwmsg_type_rep_map_equal_spec(
 }
 
 static
-void*
-lwmsg_type_rep_map_get_key_rep(
-    const void* entry
-    )
-{
-    return ((LWMsgTypeRepMapEntry*) entry)->rep;
-}
-
-static
-size_t
-lwmsg_type_rep_map_digest_rep(
-    const void* key
-    )
-{
-    return (size_t) key;
-}
-
-static
-LWMsgBool
-lwmsg_type_rep_map_equal_rep(
-    const void* key1,
-    const void* key2
-    )
-{
-    return key1 == key2;
-}
-
-static
 LWMsgStatus
 lwmsg_type_rep_map_init(
     LWMsgTypeRepMap* map
@@ -377,15 +359,7 @@ lwmsg_type_rep_map_init(
                           lwmsg_type_rep_map_get_key_spec,
                           lwmsg_type_rep_map_digest_spec,
                           lwmsg_type_rep_map_equal_spec,
-                          offsetof(LWMsgTypeRepMapEntry, ring1)));
-
-        BAIL_ON_ERROR(status = lwmsg_hash_init(
-                          &map->hash_by_rep,
-                          11,
-                          lwmsg_type_rep_map_get_key_rep,
-                          lwmsg_type_rep_map_digest_rep,
-                          lwmsg_type_rep_map_equal_rep,
-                          offsetof(LWMsgTypeRepMapEntry, ring2)));
+                          offsetof(LWMsgTypeRepMapEntry, ring)));
     }
 
 error:
@@ -421,34 +395,6 @@ error:
     return status;
 }
 
-#if 0
-static
-LWMsgStatus
-lwmsg_type_rep_map_find_rep(
-    LWMsgTypeRepMap* map,
-    LWMsgTypeRep* rep,
-    LWMsgTypeSpec** spec
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    BAIL_ON_ERROR(status = lwmsg_type_rep_map_init(map));
-
-    LWMsgTypeRepMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_rep, rep);
-
-    if (!entry)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
-    }
-
-    *spec = entry->spec;
-
-error:
-
-    return status;
-}
-#endif
-
 static
 LWMsgStatus
 lwmsg_type_rep_map_insert(
@@ -463,8 +409,7 @@ lwmsg_type_rep_map_insert(
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC(&entry));
 
-    lwmsg_ring_init(&entry->ring1);
-    lwmsg_ring_init(&entry->ring2);
+    lwmsg_ring_init(&entry->ring);
     entry->spec.kind = kind;
     entry->spec.spec = spec;
     entry->rep = rep;
@@ -472,11 +417,6 @@ lwmsg_type_rep_map_insert(
     if (spec)
     {
         lwmsg_hash_insert_entry(&map->hash_by_spec, entry);
-    }
-
-    if (rep)
-    {
-        lwmsg_hash_insert_entry(&map->hash_by_rep, entry);
     }
 
 done:
@@ -513,11 +453,6 @@ lwmsg_type_rep_map_destroy(
         lwmsg_hash_iter_end(&map->hash_by_spec, &iter);
 
         lwmsg_hash_destroy(&map->hash_by_spec);
-    }
-
-    if (map->hash_by_rep.buckets)
-    {
-        lwmsg_hash_destroy(&map->hash_by_rep);
     }
 }
 
@@ -1068,4 +1003,1271 @@ done:
 error:
 
     goto done;
+}
+
+static
+void*
+lwmsg_type_spec_map_get_key(
+    const void* entry
+    )
+{
+    return ((LWMsgTypeSpecBuffer*) entry)->rep;
+}
+
+static
+size_t
+lwmsg_type_spec_map_digest(
+    const void* key
+    )
+{
+    return (size_t) key;
+}
+
+static
+LWMsgBool
+lwmsg_type_spec_map_equal(
+    const void* key1,
+    const void* key2
+    )
+{
+    return key1 == key2;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_map_init(
+    LWMsgTypeSpecMap* map
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!map->hash_by_rep.buckets)
+    {
+        BAIL_ON_ERROR(status = lwmsg_hash_init(
+                          &map->hash_by_rep,
+                          11,
+                          lwmsg_type_spec_map_get_key,
+                          lwmsg_type_spec_map_digest,
+                          lwmsg_type_spec_map_equal,
+                          offsetof(LWMsgTypeSpecBuffer, ring)));
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_map_find(
+    LWMsgTypeSpecMap* map,
+    void* rep,
+    LWMsgTypeSpecBuffer** buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_map_init(map));
+    
+    LWMsgTypeSpecBuffer* entry = lwmsg_hash_find_key(&map->hash_by_rep, rep);
+
+    if (!entry)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
+    }
+    
+    *buffer = entry;
+
+error:
+
+    return status;
+}
+
+static
+void
+lwmsg_type_spec_map_insert(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    lwmsg_hash_insert_entry(&map->hash_by_rep, buffer);
+}
+
+void
+lwmsg_type_spec_map_destroy(
+    LWMsgTypeSpecMap* map
+    )
+{
+    LWMsgHashIter iter = {0};
+    LWMsgTypeSpecBuffer* entry = NULL;
+
+    if (map->hash_by_rep.buckets)
+    {
+        lwmsg_hash_iter_begin(&map->hash_by_rep, &iter);
+        while ((entry = lwmsg_hash_iter_next(&map->hash_by_rep, &iter)))
+        {
+            lwmsg_hash_remove_entry(&map->hash_by_rep, entry);
+            free(entry);
+        }
+        lwmsg_hash_iter_end(&map->hash_by_rep, &iter);
+
+        lwmsg_hash_destroy(&map->hash_by_rep);
+    }
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_buffer_new(
+    LWMsgTypeSpecMap* map,
+    void* rep,
+    LWMsgTypeSpecBuffer** buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* my_buffer = NULL;
+
+    BAIL_ON_ERROR(status = LWMSG_ALLOC(&my_buffer));
+
+    lwmsg_ring_init(&my_buffer->ring);
+    lwmsg_ring_init(&my_buffer->backlinks);
+
+    my_buffer->rep = rep;
+    my_buffer->buffer_capacity = 8;
+    
+    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC_ARRAY(
+                      map->context,
+                      my_buffer->buffer_capacity,
+                      &my_buffer->buffer));
+
+    *buffer = my_buffer;
+
+done:
+
+    return status;
+
+error:
+
+    if (my_buffer)
+    {
+        lwmsg_context_free(map->context, my_buffer);
+    }
+
+    goto done;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_buffer_ensure_capacity(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* buffer,
+    unsigned int additional
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t* new_buffer = NULL;
+
+    if (buffer->buffer_capacity < buffer->buffer_size + additional)
+    {
+        BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                          map->context,
+                          buffer->buffer,
+                          buffer->buffer_capacity * sizeof(size_t),
+                          (buffer->buffer_size + additional) * sizeof(size_t),
+                          (void**) (void*) &new_buffer));
+
+        buffer->buffer_capacity = buffer->buffer_size + additional;
+        buffer->buffer = new_buffer;
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_buffer_append(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* buffer,
+    size_t* values,
+    unsigned int count
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_ensure_capacity(
+                      map,
+                      buffer,
+                      count));
+
+    memcpy(buffer->buffer + buffer->buffer_size,
+           values,
+           count * sizeof(size_t));
+
+    buffer->buffer_size += count;
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_buffer_append_value(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* buffer,
+    size_t value
+    )
+{
+    return lwmsg_type_spec_buffer_append(map, buffer, &value, 1);
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_buffer_link(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* from,
+    LWMsgTypeSpecBuffer* to
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecLink* link = NULL;
+
+    if (to->buffer_capacity)
+    {
+        BAIL_ON_ERROR(status = LWMSG_ALLOC(&link));
+        
+        lwmsg_ring_init(&link->ring);
+        
+        link->buffer = from;
+        link->offset = from->buffer_size;
+        
+        lwmsg_ring_enqueue(&to->backlinks, &link->ring);
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          map,
+                          from,
+                          (size_t) -1));
+
+        map->backlinks++;
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          map,
+                          from,
+                          (size_t) to->buffer));
+    }
+
+error:
+
+    return status;
+}
+
+static
+void
+lwmsg_type_spec_buffer_finalize(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgRing* ring = NULL;
+    LWMsgRing* next = NULL;
+    LWMsgTypeSpecLink* link = NULL;
+
+    for (ring = buffer->backlinks.next;
+         ring != &buffer->backlinks;
+         ring = next)
+    {
+        next = ring->next;
+        link = LWMSG_OBJECT_FROM_MEMBER(ring, LWMsgTypeSpecLink, ring);
+
+        LWMSG_ASSERT(link->buffer->buffer[link->offset] == (size_t) -1);
+        link->buffer->buffer[link->offset] = (size_t) buffer->buffer;
+
+        lwmsg_ring_remove(ring);
+        free(link);
+
+        map->backlinks--;
+    }
+
+    buffer->buffer_capacity = 0;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_common_attrs(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (rep->flags & LWMSG_TYPE_FLAG_NOT_NULL)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          LWMSG_CMD_NOT_NULL));
+    }
+
+error:
+
+    return status;
+}
+
+static
+void
+align_to_width(
+    ssize_t* offset,
+    size_t width
+    )
+{
+    if (*offset % width)
+    {
+        *offset += (width - *offset % width);
+    }
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_spec(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeSpecBuffer* spec,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t cmd = 0;
+
+    cmd = LWMSG_CMD_TYPESPEC;
+    
+    if (state->member_offset >= 0)
+    {
+        cmd |= LWMSG_FLAG_MEMBER;
+    }
+
+    if (state->member_name)
+    {
+        cmd |= LWMSG_FLAG_META;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      cmd));
+
+    if (cmd & LWMSG_FLAG_META)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          (size_t) state->member_name));
+    }
+
+    if (cmd & LWMSG_FLAG_MEMBER)
+    {
+        align_to_width(&state->member_offset, spec->type_size);
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          spec->type_size));
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          state->member_offset));
+
+        state->member_size = spec->type_size;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_link(
+                      state->map,
+                      buffer,
+                      spec));
+
+    buffer->type_size = spec->type_size;
+
+error:
+    
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_integer(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t cmd = 0;
+    size_t spec[3];
+
+    cmd = LWMSG_CMD_INTEGER;
+
+    if (state->member_offset >= 0)
+    {
+        cmd |= LWMSG_FLAG_MEMBER;
+    }
+
+    if (state->member_name)
+    {
+        cmd |= LWMSG_FLAG_META;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      cmd));
+
+    if (cmd & LWMSG_FLAG_META)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          (size_t) state->member_name));
+    }
+
+    if (cmd & LWMSG_FLAG_MEMBER)
+    {
+        align_to_width(&state->member_offset, rep->info.integer_rep.definition->width);
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          rep->info.integer_rep.definition->width));
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          state->member_offset));
+
+        state->member_size = rep->info.integer_rep.definition->width;
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          rep->info.integer_rep.definition->width)); 
+    }
+
+    spec[0] = rep->info.integer_rep.definition->width;
+    spec[1] = rep->info.integer_rep.definition->sign;
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                      state->map,
+                      buffer,
+                      spec,
+                      2));
+
+    if (rep->flags & LWMSG_TYPE_FLAG_RANGE)
+    {
+        spec[0] = LWMSG_CMD_RANGE;
+        spec[1] = (size_t) rep->info.integer_rep.lower_bound;
+        spec[2] = (size_t) rep->info.integer_rep.upper_bound;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          3));
+    }
+
+    buffer->type_size = rep->info.integer_rep.definition->width;
+  
+error:
+    
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_enum(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    unsigned int i = 0;
+    LWMsgTypeSpecBuffer* defbuf = NULL;
+    LWMsgEnumDefRep* def = rep->info.enum_rep.definition;
+    size_t cmd = 0;
+    size_t spec[3];
+
+    if ((status = lwmsg_type_spec_map_find(
+             state->map,
+             def,
+             &defbuf)) != LWMSG_STATUS_NOT_FOUND)
+    {
+        BAIL_ON_ERROR(status);
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_new(
+                          state->map,
+                          def,
+                          &defbuf));
+        
+        lwmsg_type_spec_map_insert(state->map, defbuf);
+        
+        cmd = LWMSG_CMD_ENUM;
+        
+        if (def->name)
+        {
+            cmd |= LWMSG_FLAG_META;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          cmd));
+        
+        if (cmd & LWMSG_FLAG_META)
+        {
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                              state->map,
+                              defbuf,
+                              (size_t) def->name));
+        }
+        
+        spec[0] = def->width;
+        spec[1] = def->width;
+        spec[2] = def->sign;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          defbuf,
+                          spec,
+                          3));
+
+        for (i = 0; i < def->variant_count; i++)
+        {
+            cmd = def->variants[i].is_mask ? LWMSG_CMD_ENUM_MASK : LWMSG_CMD_ENUM_VALUE;
+            
+            if (def->variants[i].name)
+            {
+                cmd |= LWMSG_FLAG_META;
+            }
+            
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                              state->map,
+                              defbuf,
+                              cmd));
+            
+            if (cmd & LWMSG_FLAG_META)
+            {
+                BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                                  state->map,
+                                  defbuf,
+                                  (size_t) def->variants[i].name));
+            }
+
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                              state->map,
+                              defbuf,
+                              (size_t) def->variants[i].value));
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          LWMSG_CMD_END));
+
+        lwmsg_type_spec_buffer_finalize(state->map, defbuf);
+
+        defbuf->type_size = def->width;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_spec(
+                      state,
+                      defbuf,
+                      buffer));
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_struct(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    unsigned int i = 0;
+    LWMsgTypeSpecBuffer* defbuf = NULL;
+    LWMsgStructDefRep* def = rep->info.struct_rep.definition;
+    size_t cmd = 0;
+
+    if ((status = lwmsg_type_spec_map_find(
+             state->map,
+             def,
+             &defbuf)) != LWMSG_STATUS_NOT_FOUND)
+    {
+        BAIL_ON_ERROR(status);
+    }
+    else
+    {
+        LWMsgTypeSpecState my_state = {0};
+        size_t size_offset = 0;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_new(
+                          state->map,
+                          def,
+                          &defbuf));
+        
+        lwmsg_type_spec_map_insert(state->map, defbuf);
+
+        BAIL_ON_ERROR(status = LWMSG_ALLOC_ARRAY(def->field_count, &defbuf->member_metrics));
+
+        my_state.map = state->map;
+        my_state.member_offset = 0;
+        my_state.member_name = NULL;
+        my_state.dominating_struct = defbuf;
+     
+        cmd = LWMSG_CMD_STRUCT;
+        
+        if (def->name)
+        {
+            cmd |= LWMSG_FLAG_META;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          cmd));
+        
+        if (cmd & LWMSG_FLAG_META)
+        {
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                              state->map,
+                              defbuf,
+                              (size_t) def->name));
+        }
+
+        /* Remember location where size of structure should be written
+           and put a placeholder 0 in there for now */
+        size_offset = defbuf->buffer_size;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          0));
+        
+        for (i = 0; i < def->field_count; i++)
+        {
+            my_state.member_name = def->fields[i].name;
+            
+            BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_into(
+                              &my_state,
+                              def->fields[i].type,
+                              defbuf));
+            
+            defbuf->member_metrics[i].offset = my_state.member_offset;
+            defbuf->member_metrics[i].size = my_state.member_size;
+            my_state.member_offset += my_state.member_size;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          LWMSG_CMD_END));
+
+        lwmsg_type_spec_buffer_finalize(state->map, defbuf);
+
+        defbuf->type_size = my_state.member_offset;
+
+        /* Write structure size to correct location */
+        defbuf->buffer[size_offset] = defbuf->type_size;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_spec(
+                      state,
+                      defbuf,
+                      buffer));
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_union(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    unsigned int i = 0;
+    LWMsgTypeSpecBuffer* defbuf = NULL;
+    LWMsgUnionDefRep* def = rep->info.union_rep.definition;
+    size_t cmd = 0;
+    size_t spec[3];
+
+    if ((status = lwmsg_type_spec_map_find(
+             state->map,
+             def,
+             &defbuf)) != LWMSG_STATUS_NOT_FOUND)
+    {
+        BAIL_ON_ERROR(status);
+    }
+    else
+    {
+        LWMsgTypeSpecState my_state = {0};
+        size_t size = 0;
+        size_t size_offset = 0;
+
+        my_state.map = state->map;
+        my_state.member_offset = 0;
+        my_state.member_name = NULL;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_new(
+                          state->map,
+                          def,
+                          &defbuf));
+        
+        lwmsg_type_spec_map_insert(state->map, defbuf);
+        
+        cmd = LWMSG_CMD_UNION;
+        
+        if (def->name)
+        {
+            cmd |= LWMSG_FLAG_META;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          cmd));
+        
+        if (cmd & LWMSG_FLAG_META)
+        {
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                              state->map,
+                              defbuf,
+                              (size_t) def->name));
+        }
+
+        /* Remember location where size of union should be written
+           and put a placeholder 0 in there for now */
+        size_offset = defbuf->buffer_size;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          0));
+        
+        for (i = 0; i < def->arm_count; i++)
+        {
+            my_state.member_name = def->arms[i].name;
+            
+            BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_into(
+                              &my_state,
+                              def->arms[i].type,
+                              defbuf));
+
+            if (size < my_state.member_size)
+            {
+                size = my_state.member_size;
+            }
+
+            spec[0] = LWMSG_CMD_TAG;
+            spec[1] = def->arms[i].tag;
+            
+            BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                              state->map,
+                              defbuf,
+                              spec,
+                              2));
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          defbuf,
+                          LWMSG_CMD_END));
+
+        lwmsg_type_spec_buffer_finalize(state->map, defbuf);
+
+        defbuf->type_size = size;
+
+        /* Write union size to correct location */
+        defbuf->buffer[size_offset] = defbuf->type_size;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_spec(
+                      state,
+                      defbuf,
+                      buffer));
+
+    spec[0] = LWMSG_CMD_DISCRIM;
+    spec[1] = state->dominating_struct->member_metrics[rep->info.union_rep.discrim_member_index].offset;
+    spec[2] = state->dominating_struct->member_metrics[rep->info.union_rep.discrim_member_index].size;
+    
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                      state->map,
+                      buffer,
+                      spec,
+                      3));
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_pointer(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* pointeebuf = NULL;
+    size_t cmd = 0;
+    size_t spec[4];
+    LWMsgTypeSpecState my_state = {0};
+
+    my_state.map = state->map;
+    my_state.member_offset = -1;
+
+    buffer->type_size = sizeof(void*);
+
+    cmd = LWMSG_CMD_POINTER;
+    
+    if (state->member_offset >= 0)
+    {
+        cmd |= LWMSG_FLAG_MEMBER;
+    }
+
+    if (state->member_name)
+    {
+        cmd |= LWMSG_FLAG_META;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      cmd));
+
+    if (cmd & LWMSG_FLAG_META)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          (size_t) state->member_name));
+    }
+    
+    if (cmd & LWMSG_FLAG_MEMBER)
+    {
+        align_to_width(&state->member_offset, sizeof(void*));
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          state->member_offset));
+
+        state->member_size = sizeof(void*);
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
+                      state->map,
+                      rep->info.pointer_rep.pointee_type,
+                      &pointeebuf));
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_spec(
+                      &my_state,
+                      pointeebuf,
+                      buffer));
+    
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      LWMSG_CMD_END));
+
+    if (rep->info.pointer_rep.zero_terminated)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_ZERO;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          2));
+    }
+
+    if (rep->info.pointer_rep.static_length)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_STATIC;
+        spec[2] = rep->info.pointer_rep.static_length;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          3));
+    }
+
+    if (rep->info.pointer_rep.length_member_index >= 0)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_MEMBER;
+        spec[2] = state->dominating_struct->member_metrics[rep->info.pointer_rep.length_member_index].offset;
+        spec[3] = state->dominating_struct->member_metrics[rep->info.pointer_rep.length_member_index].size;
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          4));
+    }
+
+    if (rep->info.pointer_rep.encoding)
+    {
+        spec[0] = LWMSG_CMD_ENCODING;
+        spec[1] = (size_t) rep->info.pointer_rep.encoding;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          2));
+    }
+
+    buffer->type_size = sizeof(void*);
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_array(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* elementbuf = NULL;
+    size_t cmd = 0;
+    size_t spec[4];
+
+    cmd = LWMSG_CMD_ARRAY;
+    
+    if (state->member_offset >= 0)
+    {
+        cmd |= LWMSG_FLAG_MEMBER;
+    }
+
+    if (state->member_name)
+    {
+        cmd |= LWMSG_FLAG_META;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      cmd));
+
+    if (cmd & LWMSG_FLAG_META)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          (size_t) state->member_name));
+    }
+    
+    if (cmd & LWMSG_FLAG_MEMBER)
+    {
+        align_to_width(&state->member_offset, sizeof(void*));
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          state->member_offset));
+
+        state->member_size = sizeof(void*);
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
+                      state->map,
+                      rep->info.array_rep.element_type,
+                      &elementbuf));
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_spec(
+                      state,
+                      elementbuf,
+                      buffer));
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      LWMSG_CMD_END));
+
+    if (rep->info.array_rep.zero_terminated)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_ZERO;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          2));
+    }
+
+    if (rep->info.array_rep.static_length)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_STATIC;
+        spec[2] = rep->info.array_rep.static_length;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          3));
+    }
+
+    if (rep->info.array_rep.length_member_index >= 0)
+    {
+        spec[0] = LWMSG_CMD_TERMINATION;
+        spec[1] = LWMSG_TERM_MEMBER;
+        spec[2] = state->dominating_struct->member_metrics[rep->info.pointer_rep.length_member_index].offset;
+        spec[3] = state->dominating_struct->member_metrics[rep->info.pointer_rep.length_member_index].size;
+        
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          4));
+    }
+
+    if (rep->info.array_rep.encoding)
+    {
+        spec[0] = LWMSG_CMD_ENCODING;
+        spec[1] = (size_t) rep->info.array_rep.encoding;
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append(
+                          state->map,
+                          buffer,
+                          spec,
+                          2));
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_void(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t cmd = 0;
+
+    cmd = LWMSG_CMD_VOID;
+
+    if (state->member_offset >= 0)
+    {
+        cmd |= LWMSG_FLAG_MEMBER;
+    }
+
+    if (state->member_name)
+    {
+        cmd |= LWMSG_FLAG_META;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                      state->map,
+                      buffer,
+                      cmd));
+
+    if (cmd & LWMSG_FLAG_META)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          state->map,
+                          buffer,
+                          (size_t) state->member_name));
+    }
+
+    buffer->type_size = 0;
+  
+error:
+    
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_spec_from_rep_into(
+    LWMsgTypeSpecState* state,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    
+    switch (rep->kind)
+    {
+    case LWMSG_KIND_INTEGER:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_integer(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_ENUM:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_enum(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_STRUCT:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_struct(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_UNION:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_union(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_POINTER:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_pointer(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_ARRAY:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_array(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    case LWMSG_KIND_CUSTOM:
+        BAIL_ON_ERROR(status = LWMSG_STATUS_UNIMPLEMENTED);
+#if 0
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_custom(
+                          state,
+                          rep,
+                          buffer));
+#endif
+        break;
+    case LWMSG_KIND_VOID:
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_void(
+                          state,
+                          rep,
+                          buffer));
+        break;
+    default:
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        break;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_common_attrs(state, rep, buffer));
+
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_type_spec_from_rep_internal(
+    LWMsgTypeSpecMap* map,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpecBuffer** buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* entry = NULL;
+    LWMsgTypeSpecState state = {0};
+
+    state.map = map;
+    state.member_offset = -1;
+    state.member_name = NULL;
+
+    if ((status = lwmsg_type_spec_map_find(map, rep, &entry)) != LWMSG_STATUS_NOT_FOUND)
+    {
+        BAIL_ON_ERROR(status);
+
+        *buffer = entry;
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_new(
+                          map,
+                          rep,
+                          &entry));
+
+        lwmsg_type_spec_map_insert(map, entry);
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_into(
+                          &state,
+                          rep,
+                          entry));
+
+        BAIL_ON_ERROR(status = lwmsg_type_spec_buffer_append_value(
+                          map,
+                          entry,
+                          LWMSG_CMD_END));
+
+        lwmsg_type_spec_buffer_finalize(map, entry);
+        
+        *buffer = entry;
+    }
+    
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_type_spec_from_rep(
+    const LWMsgContext* context,
+    LWMsgTypeRep* rep,
+    LWMsgTypeSpec** spec
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecMap map = {0};
+    LWMsgTypeSpecBuffer* buffer = NULL;
+
+    map.context = context;
+
+    BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
+                      &map,
+                      rep,
+                      &buffer));
+
+    *spec = buffer->buffer;
+
+    LWMSG_ASSERT(map.backlinks == 0);
+
+error:
+
+    lwmsg_type_spec_map_destroy(&map);
+
+    return status;
 }
