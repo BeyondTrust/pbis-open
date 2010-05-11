@@ -710,7 +710,18 @@ typedef enum LWMsgTypeDirective
  * represents text in the specified encoding.  This is used
  * as a hint as to how to display the contents when the data
  * is printed but does not affect how the data is stored, encoded,
- * or decoded.
+ * or decoded.  The encoding is specified as a text string which
+ * should be a valid encoding name recognized by the system iconv_open()
+ * function.  In addition, the following special encodings are recognized:
+ *
+ * - <tt>"hex+ascii"</tt>: displays the data in both hexadecimal and ASCII
+ *   like the <tt>hexdump -C</tt> command available on many UNIX systems.
+ *   Each 16-byte block is shown on its own line with its 32-bit offset in
+ *   hex, the hex value of each byte, and the ASCII interpretation of
+ *   each byte if it is a valid ASCII codepoint and not a control character,
+ *   or '<tt>.</tt>' otherwise.
+ *
+ * @param enc a string specifying the encoding 
  * @hideinitializer
  */
 #define LWMSG_ATTR_ENCODING(enc)                \
