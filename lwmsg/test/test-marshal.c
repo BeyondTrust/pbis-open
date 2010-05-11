@@ -48,6 +48,97 @@
 
 static LWMsgContext* context = NULL;
 static LWMsgDataContext* dcontext = NULL;
+static size_t allocs = 0;
+
+const char pattern[16] = "deadbeefdeadbeef";
+
+static LWMsgStatus
+debug_alloc (
+    size_t size,
+    void** out,
+    void* data)
+{
+    void* object = malloc(size + sizeof(pattern));
+
+    if (!object)
+    {
+        return LWMSG_STATUS_MEMORY;
+    }
+    else
+    {
+        memset(object, 0, size + sizeof(pattern));
+
+        memcpy(object, pattern, sizeof(pattern));
+
+        *out = ((unsigned char*) object) + sizeof(pattern);
+
+        allocs++;
+
+        return LWMSG_STATUS_SUCCESS;
+    }
+}
+
+static
+void
+debug_free (
+    void* object,
+    void* data
+    )
+{
+    if (object)
+    {
+        object = ((unsigned char*) object) - sizeof(pattern);
+
+        MU_ASSERT(!memcmp(object, pattern, sizeof(pattern)));
+        memset(object, 0, sizeof(pattern));
+
+        allocs--;
+
+        free(object);
+    }
+}
+
+static LWMsgStatus
+debug_realloc (
+    void* object,
+    size_t old_size,
+    size_t new_size,
+    void** new_object,
+    void* data)
+{
+    if (object)
+    {
+        object = ((unsigned char*) object) - sizeof(pattern);
+
+        MU_ASSERT(!memcmp(object, pattern, sizeof(pattern)));
+
+        memset(object, 0, sizeof(pattern));
+    }
+
+    void* nobj = realloc(object, new_size + sizeof(pattern));
+
+    if (!nobj)
+    {
+        return LWMSG_STATUS_MEMORY;
+    }
+    else
+    {
+        memcpy(nobj, pattern, sizeof(pattern));
+
+        if (new_size > old_size)
+        {
+            memset(nobj + sizeof(pattern) + old_size, 0, new_size - old_size);
+        }
+        *new_object = ((unsigned char*) nobj) + sizeof(pattern);
+
+        if (!object)
+        {
+            allocs++;
+        }
+
+        return LWMSG_STATUS_SUCCESS;
+    }
+}
 
 static void
 allocate_buffer(LWMsgBuffer* buffer)
@@ -70,7 +161,20 @@ rewind_buffer(LWMsgBuffer* buffer)
 MU_FIXTURE_SETUP(marshal)
 {
     MU_TRY(lwmsg_context_new(NULL, &context));
+
+    lwmsg_context_set_memory_functions(
+               context,
+               debug_alloc,
+               debug_free,
+               debug_realloc,
+               NULL);
+
     MU_TRY(lwmsg_data_context_new(context, &dcontext));
+}
+
+MU_FIXTURE_TEARDOWN(marshal)
+{
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, allocs, 0);
 }
 
 typedef struct basic_struct
@@ -152,6 +256,7 @@ MU_TEST(marshal, basic)
     MU_ASSERT(basic.long_ptr[1] == out->long_ptr[1]);
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+    lwmsg_context_free(context, buffer);
 }
 
 MU_TEST(marshal, basic_into)
@@ -198,6 +303,7 @@ MU_TEST(marshal, basic_into)
     MU_ASSERT(basic.long_ptr[1] == out.long_ptr[1]);
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_destroy_graph(dcontext, type, &out));
+    lwmsg_context_free(context, buffer);
 }
 
 MU_TEST(marshal, basic_verify_marshal_failure)
@@ -371,7 +477,8 @@ MU_TEST(marshal, alias)
     MU_VERBOSE("\n%s", text);
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
-    free(text);
+    lwmsg_context_free(context, text);
+    lwmsg_context_free(context, buffer);
 }
 
 MU_TEST(marshal, alias_null)
@@ -413,6 +520,7 @@ MU_TEST(marshal, alias_null)
     MU_ASSERT(out->ptr2 == NULL);
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+    lwmsg_context_free(context, buffer);
 }
 
 MU_TEST(marshal, alias_verify_null_marshal_failure)
@@ -535,7 +643,8 @@ MU_TEST(marshal, ring)
     MU_VERBOSE("\n%s", text);
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
-    free(text);
+    lwmsg_context_free(context, text);
+    lwmsg_context_free(context, buffer);
 }
 
 MU_TEST(marshal, ring_print_type)
@@ -547,7 +656,7 @@ MU_TEST(marshal, ring_print_type)
 
     MU_VERBOSE("\n%s", text);
 
-    free(text);
+    lwmsg_context_free(context, text);
 }
 
 typedef struct
@@ -609,6 +718,9 @@ MU_TEST(marshal, string)
 
     MU_ASSERT_EQUAL(MU_TYPE_STRING, strings.foo, out->foo);
     MU_ASSERT_EQUAL(MU_TYPE_STRING, strings.bar, out->bar);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+    lwmsg_context_free(context, text);
 }
 
 typedef struct
@@ -674,6 +786,8 @@ MU_TEST(marshal, struct_array)
     MU_ASSERT(structs.foo[0].b == out->foo[0].b);
     MU_ASSERT(structs.foo[1].a == out->foo[1].a);
     MU_ASSERT(structs.foo[1].b == out->foo[1].b);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 typedef struct
@@ -901,6 +1015,8 @@ MU_TEST(marshal, two_union)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.tag2, out->tag2);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.u1->number, out->u1->number);
     MU_ASSERT_EQUAL(MU_TYPE_STRING, unions.u2->string, out->u2->string);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 typedef struct
@@ -968,6 +1084,8 @@ MU_TEST(marshal, nested_struct)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, nested.inner.foo, out->inner.foo);
     MU_ASSERT_EQUAL(MU_TYPE_STRING, nested.inner.bar, out->inner.bar);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, nested.bar, out->bar);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 typedef struct
@@ -1033,6 +1151,8 @@ MU_TEST(marshal, nested_union)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.tag2, out->tag2);
     MU_ASSERT_EQUAL(MU_TYPE_STRING, unions.u1.string, out->u1.string);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.u2.number, out->u2.number);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 MU_TEST(marshal, nested_union_empty)
@@ -1069,6 +1189,8 @@ MU_TEST(marshal, nested_union_empty)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.tag1, out->tag1);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.tag2, out->tag2);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, unions.u2.number, out->u2.number);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 typedef struct
@@ -1129,6 +1251,8 @@ MU_TEST(marshal, inline_array)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array[0], out->array[0]);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array[1], out->array[1]);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.bar, out->bar);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 typedef struct
@@ -1183,6 +1307,8 @@ MU_TEST(marshal, flexible_string)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in->foo, out->foo);
     MU_ASSERT_EQUAL(MU_TYPE_STRING, in->string, out->string);
 
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
+
     free(in);
 }
 
@@ -1195,7 +1321,7 @@ MU_TEST(marshal, flexible_string_print_type)
 
     MU_VERBOSE("\n%s", text);
 
-    free(text);
+    lwmsg_context_free(context, text);
 }
 
 typedef struct
@@ -1253,6 +1379,8 @@ MU_TEST(marshal, flexible_array)
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in->array[1], out->array[1]);
 
     free(in);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 MU_TEST(marshal, flexible_array_print_type)
@@ -1264,7 +1392,7 @@ MU_TEST(marshal, flexible_array_print_type)
 
     MU_VERBOSE("\n%s", text);
 
-    free(text);
+    lwmsg_context_free(context, text);
 }
 
 
@@ -1321,7 +1449,7 @@ MU_TEST(marshal, info_level_print_type)
 
     MU_VERBOSE("\n%s", text);
 
-    free(text);
+    lwmsg_context_free(context, text);
 }
 
 MU_TEST(marshal, info_level_1)
@@ -1431,6 +1559,8 @@ MU_TEST(marshal, info_level_2)
         MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array.level_2[0].number1, out->array.level_2[0].number1);
         MU_ASSERT_EQUAL(MU_TYPE_INTEGER, in.array.level_2[0].number2, out->array.level_2[0].number2);
     }
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 MU_TEST(marshal, type_rep_print_type)
@@ -1440,7 +1570,7 @@ MU_TEST(marshal, type_rep_print_type)
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, lwmsg_type_rep_spec, &text));
 
     MU_VERBOSE("\n%s", text);
-    free(text);
+    lwmsg_context_free(context, text);
 }
 
 typedef enum MixedEnum
@@ -1490,8 +1620,9 @@ MU_TEST(marshal, mixed_enum_mixed)
 
     MU_VERBOSE("%s", text);
 
-    free(text);
-    free(out);
+    lwmsg_context_free(context, text);
+    lwmsg_context_free(context, buffer);
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 MU_TEST(marshal, mixed_enum_value)
@@ -1522,8 +1653,9 @@ MU_TEST(marshal, mixed_enum_value)
 
     MU_VERBOSE("%s", text);
 
-    free(text);
-    free(out);
+    lwmsg_context_free(context, text);
+    lwmsg_context_free(context, buffer);
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
 
 MU_TEST(marshal, mixed_enum_unmarshal_zero_fail)
@@ -1601,6 +1733,7 @@ MU_TEST(marshal, mask_enum_zero)
 
     MU_VERBOSE("%s", text);
 
-    free(text);
-    free(out);
+    lwmsg_context_free(context, text);
+    lwmsg_context_free(context, buffer);
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
 }
