@@ -28,8 +28,6 @@
  * license@likewisesoftware.com
  */
 
-#define LWMSG_SPEC_META
-
 #include "includes.h"
 
 LWMsgTypeSpec gSecurityTokenRepSpec[] =

@@ -428,6 +428,14 @@ typedef enum LWMsgTypeDirective
 #define _TYPECMD_TYPE(_c_, _t_) ((size_t) ((_c_) | _TYPEFLAG_META | _TYPEFLAG_DEBUG)) _TYPEMETA(_t_) _TYPEDEBUG
 #define _TYPECMD_MEMBER(_c_, _t_, _m_) ((size_t) ((_c_) | LWMSG_FLAG_MEMBER | _TYPEFLAG_META | _TYPEFLAG_DEBUG)) _TYPEMETA_MEMBER(_t_, _m_) _TYPEDEBUG
 
+#ifndef LWMSG_SPEC_META
+#define LWMSG_SPEC_META
+#endif
+
+#ifdef LWMSG_OMIT_TYPESPEC_METADATA
+#  undef LWMSG_SPEC_META
+#endif
+
 #ifdef LWMSG_SPEC_META
 #define _TYPEFLAG_META (LWMSG_FLAG_META)
 #define _TYPEMETA(type) ,_TYPEARG(#type)

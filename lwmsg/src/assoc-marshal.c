@@ -37,8 +37,6 @@
  *
  */
 
-#define LWMSG_SPEC_META
-
 #include <lwmsg/type.h>
 #include <lwmsg/assoc.h>
 #include "convert-private.h"

@@ -36,8 +36,6 @@
  *
  */
 
-#define LWMSG_SPEC_META
-
 #include <config.h>
 #include <lwmsg/lwmsg.h>
 #include <moonunit/moonunit.h>

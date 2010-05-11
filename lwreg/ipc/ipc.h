@@ -48,11 +48,7 @@
 #include <config.h>
 
 #include <regsystem.h>
-
 #include <reg/lwreg.h>
-
-#define LWMSG_SPEC_META
-
 #include <lwmsg/lwmsg.h>
 #include <lw/base.h>
 #include <lw/ntstatus.h>

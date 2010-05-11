@@ -43,10 +43,7 @@
  *
  */
 
-#define LWMSG_SPEC_META
-
 #include "adprovider.h"
-
 
 typedef enum __MemCachePersistTag
 {

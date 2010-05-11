@@ -45,8 +45,6 @@
  *
  */
 
-#define LWMSG_SPEC_META
-
 #include "ipc.h"
 
 static LWMsgTypeSpec gLsaAdIPCEnumUsersFromCacheReqSpec[] =

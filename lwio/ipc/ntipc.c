@@ -42,8 +42,6 @@
  * Authors: Danilo Almeida (dalmeida@likewisesoftware.com)
  */
 
-#define LWMSG_SPEC_META
-
 #include "includes.h"
 #include "ntipcmsg.h"
 #include "goto.h"

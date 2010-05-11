@@ -39,9 +39,6 @@
 #ifndef __LWSM_INCLUDES_H__
 #define __LWSM_INCLUDES_H__
 
-/* Enable structure/field names in lwmsg type specs for better IPC logging */
-#define LWMSG_SPEC_META
-
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>

@@ -36,8 +36,6 @@
  *
  */
 
-#define LWMSG_SPEC_META
-
 #include "type-private.h"
 #include "util-private.h"
 #include "data-private.h"
