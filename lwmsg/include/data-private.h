@@ -191,8 +191,7 @@ LWMsgStatus
 lwmsg_data_print_protocol(
     LWMsgDataContext* context,
     LWMsgProtocol* prot,
-    LWMsgDataPrintFunction _print,
-    void* print_data
+    LWMsgBuffer* buffer
     );
 
 LWMsgStatus

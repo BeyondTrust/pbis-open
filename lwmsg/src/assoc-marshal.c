@@ -300,9 +300,8 @@ lwmsg_assoc_print_handle(
     const LWMsgContext* context, 
     LWMsgTypeAttrs* attrs,
     void* object,
-    LWMsgDataPrintFunction print,
-    void* print_data,
-    void* data
+    void* data,
+    LWMsgBuffer* buffer
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -350,7 +349,7 @@ lwmsg_assoc_print_handle(
                            location == LWMSG_HANDLE_LOCAL ? "local" : "remote",
                            handle);
 
-        BAIL_ON_ERROR(status = print(str, strlen(str), print_data));
+        BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, (unsigned char*) str, strlen(str)));
     }
     else
     {
@@ -360,7 +359,7 @@ lwmsg_assoc_print_handle(
             BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_HANDLE);
         }
 
-        BAIL_ON_ERROR(status = print(nullstr, strlen(nullstr), print_data));
+        BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, (unsigned char*) nullstr, strlen(nullstr)));    
     }
 
 error:

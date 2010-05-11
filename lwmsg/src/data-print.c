@@ -50,7 +50,7 @@ typedef struct
     const LWMsgContext* context;
     unsigned int depth;
     LWMsgBool newline;
-    LWMsgDataPrintFunction print;
+    LWMsgBuffer* buffer;
     void* print_data;
     LWMsgTypeRep* dominating_rep;
 } PrintInfo;
@@ -74,25 +74,25 @@ lwmsg_data_print_type_internal(
 static
 LWMsgStatus
 print_wrap(
+    PrintInfo* info,
     const char* text,
-    size_t length,
-    void* data
+    size_t length
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    PrintInfo* info = data;
     int i;
+    unsigned char indent[2] = {' ', ' '};
 
     if (info->newline)
     {
         for (i = 0; i < info->depth; i++)
         {
-            BAIL_ON_ERROR(status = info->print("  ", 2, info->print_data));
+            BAIL_ON_ERROR(status = lwmsg_buffer_write(info->buffer, indent, sizeof(indent)));
         }
         info->newline = LWMSG_FALSE;
     }
 
-    BAIL_ON_ERROR(status = info->print(text, length, info->print_data));
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(info->buffer, (unsigned char*) text, length));
 
 error:
 
@@ -120,7 +120,7 @@ print(
         BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
     }
 
-    print_wrap(text, strlen(text), info);
+    print_wrap(info, text, strlen(text));
 
 error:
 
@@ -138,10 +138,19 @@ newline(
     PrintInfo* info
     )
 {
-    info->print("\n", 1, info->print_data);
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    unsigned char nl[1] = {'\n'};
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(
+                      info->buffer,
+                      nl,
+                      sizeof(nl)));
+    
     info->newline = LWMSG_TRUE;
 
-    return LWMSG_STATUS_SUCCESS;
+error:
+
+    return status;
 }
 
 static
@@ -155,8 +164,7 @@ lwmsg_data_print_integer(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     uintmax_t value;
 
-    BAIL_ON_ERROR(status = 
-                  lwmsg_convert_integer(
+    BAIL_ON_ERROR(status = lwmsg_convert_integer(
                       object,
                       iter->size,
                       LWMSG_NATIVE_ENDIAN,
@@ -334,7 +342,10 @@ lwmsg_data_print_string(
 
     if (!strcmp(iter->info.kind_indirect.encoding, ""))
     {
-        BAIL_ON_ERROR(status = info->print(input_string, input_length, info->print_data));
+        BAIL_ON_ERROR(status = lwmsg_buffer_write(
+                          info->buffer,
+                          input_string,
+                          input_length));
     }
     else
     {
@@ -350,7 +361,10 @@ lwmsg_data_print_string(
             BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
         }
 
-        BAIL_ON_ERROR(status = info->print(output_string, (size_t) output_length, info->print_data));
+        BAIL_ON_ERROR(status = lwmsg_buffer_write(
+                          info->buffer,
+                          (const unsigned char*) output_string,
+                          output_length));
     }
 
 error:
@@ -505,9 +519,8 @@ lwmsg_data_print_graph_visit(
                                   info->context,
                                   &iter->attrs,
                                   object,
-                                  print_wrap,
-                                  info,
-                                  iter->info.kind_custom.typedata));
+                                  iter->info.kind_custom.typedata,
+                                  info->buffer));
             }
             else
             {
@@ -529,8 +542,7 @@ lwmsg_data_print_graph(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
     void* object,
-    LWMsgDataPrintFunction print,
-    void* print_data
+    LWMsgBuffer* buffer
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -542,8 +554,7 @@ lwmsg_data_print_graph(
     info.newline = LWMSG_TRUE;
     info.depth = 0;
     info.context = context->context;
-    info.print = print;
-    info.print_data = print_data;
+    info.buffer = buffer;
 
     lwmsg_type_iterate_promoted(type, &iter);
     
@@ -560,51 +571,39 @@ error:
     return status;
 }
 
-typedef struct print_alloc_info
-{
-    LWMsgDataContext* context;
-    char* buffer;
-    size_t buffer_size;
-    size_t buffer_capacity;
-} print_alloc_info;
-
 static
 LWMsgStatus
-lwmsg_data_print_graph_alloc_print(
-    const char* text,
-    size_t length,
-    void* data
+realloc_wrap(
+    LWMsgBuffer* buffer,
+    size_t count
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    print_alloc_info* info = (print_alloc_info*) data;
-    size_t new_capacity = 0;
-    char* new_buffer = NULL;
+    const LWMsgContext* context = buffer->data;
+    size_t offset = buffer->cursor - buffer->base;
+    size_t length = buffer->end - buffer->base;
+    size_t new_length = 0;
+    unsigned char* new_buffer = NULL;
 
-    while (info->buffer_size + (length + 1) > info->buffer_capacity)
+    if (length == 0)
     {
-        if (info->buffer_capacity == 0)
-        {
-            new_capacity = 512;
-        }
-        else
-        {
-            new_capacity = info->buffer_capacity * 2;
-        }
-
-        BAIL_ON_ERROR(status = lwmsg_context_realloc(
-                          info->context->context,
-                          info->buffer,
-                          info->buffer_capacity,
-                          new_capacity,
-                          (void**) (void*) &new_buffer));
-        info->buffer = new_buffer;
-        info->buffer_capacity = new_capacity;
+        new_length = 256;
+    }
+    else
+    {
+        new_length = length * 2;
     }
 
-    memcpy(info->buffer + info->buffer_size, text, length);
-    info->buffer[info->buffer_size + length] = '\0';
-    info->buffer_size += length;
+    BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                      context,
+                      buffer->base,
+                      length,
+                      new_length,
+                      (void**) (void*) &new_buffer));
+
+    buffer->base = new_buffer;
+    buffer->end = new_buffer + new_length;
+    buffer->cursor = new_buffer + offset;
 
 error:
 
@@ -620,20 +619,18 @@ lwmsg_data_print_graph_alloc(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    print_alloc_info info = {0};
+    LWMsgBuffer buffer = {0};
 
-    memset(&info, 0, sizeof(info));
-
-    info.context = context;
+    buffer.wrap = realloc_wrap;
+    buffer.data = (void*) context->context;
 
     BAIL_ON_ERROR(status = lwmsg_data_print_graph(
                       context,
                       type,
                       object,
-                      lwmsg_data_print_graph_alloc_print,
-                      &info));
-
-    *result = info.buffer;
+                      &buffer));
+    
+    *result = (char*) buffer.base;
    
 cleanup:
 
@@ -643,9 +640,9 @@ error:
 
     *result = NULL;
 
-    if (info.buffer)
+    if (buffer.base)
     {
-        lwmsg_context_free(context->context, info.buffer);
+        lwmsg_context_free(context->context, buffer.base);
     }
 
     goto cleanup;
@@ -1227,8 +1224,7 @@ LWMsgStatus
 lwmsg_data_print_type(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
-    LWMsgDataPrintFunction print,
-    void* print_data
+    LWMsgBuffer* buffer
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -1240,25 +1236,24 @@ lwmsg_data_print_type(
     info.newline = LWMSG_TRUE;
     info.depth = 0;
     info.context = context->context;
-    info.print = print;
-    info.print_data = print_data;
+    info.buffer = buffer;
 
     BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(context->context, type, &rep));
-
+    
     BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
                       context,
                       rep,
                       &info));
-
+    
 error:
-
+    
     if (rep)
     {
         status = lwmsg_data_free_graph(context, lwmsg_type_rep_spec, rep);
     }
-
+    
     lwmsg_data_object_map_destroy(&info.map);
-
+    
     return status;
 }
 
@@ -1270,19 +1265,17 @@ lwmsg_data_print_type_alloc(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    print_alloc_info info = {0};
+    LWMsgBuffer buffer = {0};
 
-    memset(&info, 0, sizeof(info));
-
-    info.context = context;
+    buffer.wrap = realloc_wrap;
+    buffer.data = (void*) context->context;
 
     BAIL_ON_ERROR(status = lwmsg_data_print_type(
                       context,
                       type,
-                      lwmsg_data_print_graph_alloc_print,
-                      &info));
+                      &buffer));
 
-    *result = info.buffer;
+    *result = (char*) buffer.base;
 
 cleanup:
 
@@ -1292,9 +1285,9 @@ error:
 
     *result = NULL;
 
-    if (info.buffer)
+    if (buffer.base)
     {
-        lwmsg_context_free(context->context, info.buffer);
+        lwmsg_context_free(context->context, buffer.base);
     }
 
     goto cleanup;
@@ -1304,8 +1297,7 @@ LWMsgStatus
 lwmsg_data_print_protocol(
     LWMsgDataContext* context,
     LWMsgProtocol* prot,
-    LWMsgDataPrintFunction _print,
-    void* print_data
+    LWMsgBuffer* buffer
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -1318,8 +1310,7 @@ lwmsg_data_print_protocol(
     info.newline = LWMSG_TRUE;
     info.depth = 0;
     info.context = context->context;
-    info.print = _print;
-    info.print_data = print_data;
+    info.buffer = buffer;
 
     BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
                       context,
@@ -1370,19 +1361,17 @@ lwmsg_data_print_protocol_alloc(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    print_alloc_info info = {0};
+    LWMsgBuffer buffer = {0};
 
-    memset(&info, 0, sizeof(info));
-
-    info.context = context;
+    buffer.wrap = realloc_wrap;
+    buffer.data = (void*) context->context;
 
     BAIL_ON_ERROR(status = lwmsg_data_print_protocol(
                       context,
                       prot,
-                      lwmsg_data_print_graph_alloc_print,
-                      &info));
+                      &buffer));
 
-    *text = info.buffer;
+    *text = (char*) buffer.base;
 
 cleanup:
 
@@ -1392,9 +1381,9 @@ error:
 
     *text = NULL;
 
-    if (info.buffer)
+    if (buffer.base)
     {
-        lwmsg_context_free(context->context, info.buffer);
+        lwmsg_context_free(context->context, buffer.base);
     }
 
     goto cleanup;

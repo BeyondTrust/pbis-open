@@ -165,7 +165,7 @@ error:
 }
 
 static inline LWMsgStatus
-lwmsg_buffer_write(LWMsgBuffer* buffer, unsigned char* in_bytes, size_t count)
+lwmsg_buffer_write(LWMsgBuffer* buffer, const unsigned char* in_bytes, size_t count)
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     size_t remaining;

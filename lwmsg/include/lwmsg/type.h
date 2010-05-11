@@ -298,26 +298,6 @@ typedef void (*LWMsgTypeDestroyTransmittedFunction) (
     );
 
 /**
- * @brief Print callback function
- *
- * A callback function used to print text by #lwmsg_data_print_graph()
- *
- * @param text the text to print
- * @param length the length of text
- * @param data a custom data pointer
- * @lwmsg_status
- * @lwmsg_success
- * @lwmsg_etc{implementation-specific error}
- * @lwmsg_endstatus
- */
-typedef LWMsgStatus
-(*LWMsgDataPrintFunction) (
-    const char* text,
-    size_t length,
-    void* data
-    );
-
-/**
  * @brief Custom print function
  *
  * A callback function type which prints the representation of a custom type,
@@ -328,18 +308,15 @@ typedef LWMsgStatus
  * @param type the type to print
  * @param data the user data pointer specified to LWMSG_CUSTOM() or LWMSG_MEMBER_CUSTOM()
  * in the type specification
- * @param print the type print callback
- * @param print_data the user data pointer to pass to the type print callback
+ * @param buffer the buffer into which to write
  */
 typedef LWMsgStatus (*LWMsgTypePrintFunction) (
     const struct LWMsgContext* context,
     LWMsgType* attr,
     void* object,
-    LWMsgDataPrintFunction print,
-    void* print_data,
-    void* data
+    void* data,
+    LWMsgBuffer* buffer
     );
-
 
 /**
  * @brief Marshaller type specification
