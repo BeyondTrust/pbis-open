@@ -3,6 +3,19 @@
 #include <lwmsg/lwmsg.h>
 
 /* Begin type specifications */
+LWMsgTypeSpec openmode_spec[] =
+{
+    /* Marshal enum OpenMode as an 8-bit unsigned integer */
+    LWMSG_ENUM_BEGIN(OpenMode, 1, LWMSG_UNSIGNED),
+    /* Bitfield definitions */
+    LWMSG_ENUM_MASK(OPEN_MODE_READ),
+    LWMSG_ENUM_MASK(OPEN_MODE_WRITE),
+    LWMSG_ENUM_MASK(OPEN_MODE_APPEND),
+    /* End enum */
+    LWMSG_ENUM_END,
+    /* End type */
+    LWMSG_TYPE_END
+};
 
 /* FileHandle (opaque) */
 LWMsgTypeSpec filehandle_spec[] =
@@ -20,8 +33,8 @@ LWMsgTypeSpec openrequest_spec[] =
     LWMSG_STRUCT_BEGIN(OpenRequest),
     /* path - marshal as pointer to string */
     LWMSG_MEMBER_PSTR(OpenRequest, path),
-    /* mode - marshal as 8-bit unsigned integer */
-    LWMSG_MEMBER_UINT8(OpenRequest, mode),
+    /* mode - marshal as OpenMode enum */
+    LWMSG_MEMBER_TYPESPEC(OpenRequest, mode, openmode_spec),
     /* End structure */
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -44,6 +57,8 @@ LWMsgTypeSpec writerequest_spec[] =
     LWMSG_POINTER_END,
     /* Length of data is equal to value of size member */
     LWMSG_ATTR_LENGTH_MEMBER(WriteRequest, size),
+    /* Data should be printed as hex + ASCII dump */
+    LWMSG_ATTR_ENCODING("hex+ascii"),
     /* End structure */
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
@@ -90,6 +105,8 @@ LWMsgTypeSpec readreply_spec[] =
     LWMSG_POINTER_END,
     /* Length of data is equal to value of size member */
     LWMSG_ATTR_LENGTH_MEMBER(ReadReply, size),
+    /* Data should be printed as hex + ASCII dump */
+    LWMSG_ATTR_ENCODING("hex+ascii"),
     /* End structure */
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END

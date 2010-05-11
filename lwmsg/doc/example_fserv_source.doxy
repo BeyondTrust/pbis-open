@@ -388,9 +388,15 @@ With all the call handlers defined, the only remaining task is creating and star
 This is performed in @ref fserver_c which contains the definition of <tt>main()</tt> for the <tt>fserver</tt>
 program.
 
-As with the client side, the server is set up as an #LWMsgPeer.  The procedure is similar -- create a protocol structure, add a protocol spec, and create the peer structure with the protocol:
+In order to take advantage of the logging available inside lwmsg, we first create an #LWMsgContext and set a logging function on it:
 
 @dontinclude fserv/src/fserver.c
+@skip Create context
+@until Set log function
+@until ;
+
+As with the client side, the server is set up as an #LWMsgPeer.  The procedure is similar -- create a protocol structure, add a protocol spec, and create the peer structure with the protocol:
+
 @skip Create protocol
 @until Create peer
 @until }

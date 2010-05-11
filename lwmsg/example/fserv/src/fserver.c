@@ -9,6 +9,11 @@
 #include "fserver.h"
 #include "protocol.h"
 
+struct
+{
+    int trace;
+} global;
+
 static void
 blocked_signal_set(sigset_t* set)
 {
@@ -100,15 +105,45 @@ error:
     return ret;
 }
 
+static
+LWMsgBool
+log_message(
+    LWMsgLogLevel level,
+    const char* message,
+    const char* filename,
+    unsigned int line,
+    void* data
+    )
+{
+    if (message)
+    {
+        fprintf(stderr, "[lwmsg] %s\n", message);
+    }
+
+    return LWMSG_TRUE;
+}
+
+
 int main(int argc, char** argv)
 {
     int ret = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgContext* context = NULL;
     LWMsgProtocol* protocol = NULL;
     LWMsgPeer* server = NULL;
 
+    /* Create context */
+    status = lwmsg_context_new(NULL, &context);
+    if (status)
+    {
+        goto error;
+    }
+
+    /* Set log function */
+    lwmsg_context_set_log_function(context, log_message, NULL);
+
     /* Create protocol */
-    status = lwmsg_protocol_new(NULL, &protocol);
+    status = lwmsg_protocol_new(context, &protocol);
     if (status)
     {
         goto error;
@@ -122,7 +157,7 @@ int main(int argc, char** argv)
     }
 
     /* Create peer */
-    status = lwmsg_peer_new(NULL, protocol, &server);
+    status = lwmsg_peer_new(context, protocol, &server);
     if (status)
     {
         goto error;
