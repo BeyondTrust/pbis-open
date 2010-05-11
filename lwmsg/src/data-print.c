@@ -44,6 +44,7 @@
 #include "convert-private.h"
 
 #include <stdio.h>
+#include <ctype.h>
 
 typedef struct
 {
@@ -372,6 +373,107 @@ error:
 
 static
 LWMsgStatus
+lwmsg_data_print_hex_ascii(
+    LWMsgTypeIter* iter,
+    unsigned char* object,
+    PrintInfo* info
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    size_t element_size = 0;
+    size_t element_count = 0;
+    unsigned char* input_string = NULL;
+    size_t input_length = 0;
+    size_t cluster = 0;
+    size_t index = 0;
+
+    if (iter->kind == LWMSG_KIND_POINTER)
+    {
+        input_string = *(void**) object;
+    }
+    else
+    {
+        input_string = object;
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_data_calculate_indirect_metrics(
+                      iter,
+                      input_string,
+                      &element_count,
+                      &element_size));
+
+    BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(element_count, element_size, &input_length));
+
+    BAIL_ON_ERROR(status = print(info, "<hex>", (unsigned long) cluster));
+    BAIL_ON_ERROR(status = newline(info));
+    BAIL_ON_ERROR(status = print(info, "{"));
+    info->depth += 4;
+    BAIL_ON_ERROR(status = newline(info));
+
+    for (cluster = 0; cluster < input_length; cluster += 16)
+    {
+        BAIL_ON_ERROR(status = print(info, "%.8lx  ", (unsigned long) cluster));
+
+        for (index = cluster; index < cluster + 16; index++)
+        {
+            if (index % 8 == 0)
+            {
+                BAIL_ON_ERROR(status = print(info, " "));
+            }
+            
+            if (index >= input_length)
+            {
+                BAIL_ON_ERROR(status = print(info, "  "));
+
+                if (index < cluster + 15)
+                {
+                    BAIL_ON_ERROR(status = print(info, " "));
+                }
+            }
+            else
+            {
+                BAIL_ON_ERROR(status = print(info, "%.2x", input_string[index]));
+
+                if (index < cluster + 15)
+                {
+                    BAIL_ON_ERROR(status = print(info, " "));
+                }
+            }
+        }
+
+        BAIL_ON_ERROR(status = print(info, "  |"));
+
+        for (index = cluster; index < cluster + 16; index++)
+        {
+            if (index >= input_length)
+            {
+                break;
+            }
+            else if (input_string[index] >= 32 && input_string[index] <= 126)
+            {
+                BAIL_ON_ERROR(status = print(info, "%c", input_string[index]));
+            }
+            else
+            {
+                BAIL_ON_ERROR(status = print(info, ".", input_string[index]));
+            }
+        }
+
+        BAIL_ON_ERROR(status = print(info, "|"));
+
+        BAIL_ON_ERROR(status = newline(info));
+    }
+
+    info->depth -= 4;
+    BAIL_ON_ERROR(status = print(info, "}"));
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
 lwmsg_data_print_custom(
     LWMsgTypeIter* iter,
     unsigned char* object,
@@ -521,9 +623,16 @@ lwmsg_data_print_graph_visit(
                 /* String case */
                 if (iter->info.kind_indirect.encoding != NULL)
                 {
-                    BAIL_ON_ERROR(status = print(info, "\""));
-                    BAIL_ON_ERROR(status = lwmsg_data_print_string(iter, object, info));
-                    BAIL_ON_ERROR(status = print(info, "\""));
+                    if (!strcmp(iter->info.kind_indirect.encoding, "hex+ascii"))
+                    {
+                        BAIL_ON_ERROR(status = lwmsg_data_print_hex_ascii(iter, object, info));
+                    }
+                    else
+                    {
+                        BAIL_ON_ERROR(status = print(info, "\""));
+                        BAIL_ON_ERROR(status = lwmsg_data_print_string(iter, object, info));
+                        BAIL_ON_ERROR(status = print(info, "\""));
+                    }
                 }
                 /* Singleton case */
                 else if (iter->info.kind_indirect.term == LWMSG_TERM_STATIC &&
