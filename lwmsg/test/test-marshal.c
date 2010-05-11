@@ -1571,6 +1571,7 @@ MU_TEST(marshal, type_rep_print_type)
     lwmsg_context_free(context, text);
 }
 
+#if 0
 MU_TEST(marshal, type_spec_ping_pong)
 {
     LWMsgTypeRep* rep = NULL;
@@ -1585,6 +1586,7 @@ MU_TEST(marshal, type_spec_ping_pong)
     lwmsg_context_free(context, text);
     lwmsg_type_free_rep(context, rep);
 }
+#endif
 
 typedef enum MixedEnum
 {
