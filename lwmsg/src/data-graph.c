@@ -604,6 +604,23 @@ lwmsg_data_free_graph(
     return lwmsg_data_free_graph_internal(context, &iter, (unsigned char*) &root);
 }
 
+void
+lwmsg_data_free_graph_cleanup(
+    const LWMsgContext* context,
+    LWMsgTypeSpec* type,
+    void* root
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgDataContext dcontext;
+
+    memset(&dcontext, 0, sizeof(dcontext));
+    dcontext.context = context;
+
+    status = lwmsg_data_free_graph(&dcontext, type, root);
+    LWMSG_ASSERT(status == LWMSG_STATUS_SUCCESS);
+}
+
 LWMsgStatus
 lwmsg_data_destroy_graph(
     LWMsgDataContext* context,

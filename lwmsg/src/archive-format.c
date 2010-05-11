@@ -40,6 +40,7 @@
 #include "archive-private.h"
 #include "util-private.h"
 #include "protocol-private.h"
+#include "data-private.h"
 #include "convert.h"
 
 #include <errno.h>
@@ -224,7 +225,6 @@ lwmsg_archive_write_schema_fd(
     uint32_t length = 0;
     
     BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
-                      archive->data_context,
                       archive->base.prot,
                       &rep));
 
@@ -259,7 +259,7 @@ error:
 
     if (rep)
     {
-        lwmsg_data_free_graph(archive->data_context, type, rep);
+        lwmsg_data_free_graph_cleanup(archive->base.prot->context, type, rep);
     }
 
     return status;

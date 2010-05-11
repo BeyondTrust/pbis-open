@@ -652,7 +652,7 @@ MU_TEST(marshal, ring_print_type)
     LWMsgTypeSpec* type = ring_ptr_spec;
     char* text = NULL;
 
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
+    MU_TRY(lwmsg_type_print_spec_alloc(context, type, &text));
 
     MU_VERBOSE("\n%s", text);
 
@@ -1317,7 +1317,7 @@ MU_TEST(marshal, flexible_string_print_type)
     LWMsgTypeSpec* type = flexible_string_spec;
     char* text = NULL;
 
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
+    MU_TRY(lwmsg_type_print_spec_alloc(context, type, &text));
 
     MU_VERBOSE("\n%s", text);
 
@@ -1388,8 +1388,7 @@ MU_TEST(marshal, flexible_array_print_type)
     LWMsgTypeSpec* type = flexible_array_spec;
     char* text = NULL;
 
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, type, &text));
-
+    MU_TRY(lwmsg_type_print_spec_alloc(context, type, &text));
     MU_VERBOSE("\n%s", text);
 
     lwmsg_context_free(context, text);
@@ -1445,8 +1444,7 @@ MU_TEST(marshal, info_level_print_type)
 {
     char* text = NULL;
 
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, info_level_spec, &text));
-
+    MU_TRY(lwmsg_type_print_spec_alloc(context, info_level_spec, &text));
     MU_VERBOSE("\n%s", text);
 
     lwmsg_context_free(context, text);
@@ -1567,7 +1565,7 @@ MU_TEST(marshal, type_rep_print_type)
 {
     char* text = NULL;
 
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, lwmsg_type_rep_spec, &text));
+    MU_TRY(lwmsg_type_print_spec_alloc(context, lwmsg_type_rep_spec, &text));
 
     MU_VERBOSE("\n%s", text);
     lwmsg_context_free(context, text);
@@ -1579,14 +1577,13 @@ MU_TEST(marshal, type_spec_ping_pong)
     LWMsgTypeSpec* spec = NULL;
     char* text = NULL;
 
-
     MU_TRY(lwmsg_type_rep_from_spec(context, lwmsg_type_rep_spec, &rep));
     MU_TRY(lwmsg_type_spec_from_rep(context, rep, &spec));
-
-    MU_TRY_DCONTEXT(dcontext, lwmsg_data_print_type_alloc(dcontext, spec, &text));
+    MU_TRY(lwmsg_type_print_spec_alloc(context, spec, &text));
 
     MU_VERBOSE("\n%s", text);
     lwmsg_context_free(context, text);
+    lwmsg_type_free_rep(context, rep);
 }
 
 typedef enum MixedEnum

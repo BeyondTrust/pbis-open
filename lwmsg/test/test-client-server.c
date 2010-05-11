@@ -51,6 +51,7 @@
 #include "util-private.h"
 #include "test-private.h"
 #include "data-private.h"
+#include "protocol-private.h"
 
 typedef struct CounterHandle
 {
@@ -392,7 +393,7 @@ MU_TEST(stress, parallel_print_protocol)
     MU_TRY(lwmsg_protocol_new(context, &protocol));
     MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, counterprotocol_spec));
 
-    MU_TRY(lwmsg_data_print_protocol_alloc(dcontext, protocol, &text));
+    MU_TRY(lwmsg_protocol_print_alloc(protocol, &text));
 
     MU_VERBOSE("\n%s", text);
 }

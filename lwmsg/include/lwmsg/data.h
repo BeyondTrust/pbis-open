@@ -432,6 +432,7 @@ lwmsg_data_unmarshal_flat(
  * @param[in,out] context the data context
  * @param[in] type a type specification which describes the graph root
  * @param[in] root the root of the data graph
+ * @param[in] indent the level of indentation at which to print
  * @param[in,out] buffer the buffer into which to print
  * @lwmsg_status
  * @lwmsg_success
@@ -444,6 +445,7 @@ lwmsg_data_print_graph(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
     void* root,
+    unsigned int indent,
     LWMsgBuffer* buffer
     );
 
@@ -470,20 +472,6 @@ lwmsg_data_print_graph_alloc(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
     void* root,
-    char** result
-    );
-
-LWMsgStatus
-lwmsg_data_print_type(
-    LWMsgDataContext* context,
-    LWMsgTypeSpec* type,
-    LWMsgBuffer* buffer
-    );
-
-LWMsgStatus
-lwmsg_data_print_type_alloc(
-    LWMsgDataContext* context,
-    LWMsgTypeSpec* type,
     char** result
     );
 

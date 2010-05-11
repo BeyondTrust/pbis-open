@@ -66,13 +66,10 @@ lwmsg_data_unmarshal
 lwmsg_data_unmarshal_into
 lwmsg_data_unmarshal_flat
 lwmsg_data_free_graph
+lwmsg_data_free_graph_cleanup
 lwmsg_data_destroy_graph
 lwmsg_data_print_graph
 lwmsg_data_print_graph_alloc
-lwmsg_data_print_type
-lwmsg_data_print_type_alloc
-lwmsg_data_print_protocol
-lwmsg_data_print_protocol_alloc
 lwmsg_data_alloc_memory
 lwmsg_data_free_memory
 lwmsg_protocol_get_message_type
@@ -81,6 +78,8 @@ lwmsg_protocol_new
 lwmsg_protocol_add_protocol_spec
 lwmsg_protocol_delete
 lwmsg_protocol_get_error_message
+lwmsg_protocol_print
+lwmsg_protocol_print_alloc
 lwmsg_time_now
 lwmsg_time_difference
 lwmsg_time_sum
@@ -145,6 +144,9 @@ lwmsg_type_get_integer_range
 lwmsg_type_rep_from_spec
 lwmsg_type_rep_spec
 lwmsg_type_spec_from_rep
+lwmsg_type_print_rep
+lwmsg_type_print_spec_alloc
+lwmsg_type_free_rep
 lwmsg_hash_init
 lwmsg_hash_get_count
 lwmsg_hash_insert_entry

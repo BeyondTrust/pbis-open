@@ -207,7 +207,6 @@ lwmsg_protocol_get_error_message(
 
 LWMsgStatus
 lwmsg_protocol_create_representation(
-    LWMsgDataContext* context,
     LWMsgProtocol* prot,
     LWMsgProtocolRep** rep
     )
@@ -219,17 +218,11 @@ lwmsg_protocol_create_representation(
     LWMsgProtocolMessageRep* message = NULL;
     LWMsgTypeIter iter;
 
-    map.context = context->context;
+    map.context = prot->context;
 
-    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(
-                      context,
-                      sizeof(*my_rep),
-                      (void**) (void*) &my_rep));
+    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC(prot->context, &my_rep));
 
-    BAIL_ON_ERROR(status = lwmsg_data_alloc_memory(
-                      context,
-                      sizeof(*my_rep->messages) * prot->num_types,
-                      (void**) (void*) &my_rep->messages));
+    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC_ARRAY(prot->context, prot->num_types, &my_rep->messages));
 
     for (i = 0; i < prot->num_types; i++)
     {
@@ -250,7 +243,7 @@ lwmsg_protocol_create_representation(
             }
 
             lwmsg_strdup(
-                context->context,
+                prot->context,
                 prot->types[i]->tag_name,
                 &message->name);
         }
@@ -266,7 +259,7 @@ error:
 
     if (my_rep)
     {
-        lwmsg_data_free_graph(context, protocol_rep_spec, my_rep);
+        lwmsg_data_free_graph_cleanup(prot->context, protocol_rep_spec, my_rep);
     }
 
     goto done;
@@ -312,3 +305,149 @@ error:
 
     return status;
 }
+
+LWMsgStatus
+lwmsg_protocol_print(
+    LWMsgProtocol* prot,
+    unsigned int indent,
+    LWMsgBuffer* buffer
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgProtocolRep* rep = NULL;
+    size_t i = 0;
+    unsigned int j = 0;
+
+    if (prot->rep)
+    {
+        rep = prot->rep;
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
+                          prot,
+                          &rep));
+    }
+
+    for (i = 0; i < rep->message_count; i++)
+    {
+        for (j = 0; i < indent; j++)
+        {
+            BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, " "));
+        }
+
+        if (rep->messages[i].name)
+        {
+            BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                              buffer,
+                              "Tag %s (%i):\n",
+                              rep->messages[i].name,
+                              rep->messages[i].tag));
+        }
+        else
+        {
+            BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                              buffer,
+                              "Tag %i:\n",
+                              rep->messages[i].tag));
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_type_print_rep(
+                          rep->messages[i].type,
+                          indent + 4,
+                          buffer));
+
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, "\n\n"));
+    }
+
+cleanup:
+
+    if (rep && !prot->rep)
+    {
+        lwmsg_data_free_graph_cleanup(prot->context, lwmsg_protocol_rep_spec, rep);
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+LWMsgStatus
+realloc_wrap(
+    LWMsgBuffer* buffer,
+    size_t count
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    const LWMsgContext* context = buffer->data;
+    size_t offset = buffer->cursor - buffer->base;
+    size_t length = buffer->end - buffer->base;
+    size_t new_length = 0;
+    unsigned char* new_buffer = NULL;
+
+    if (count)
+    {
+        if (length == 0)
+        {
+            new_length = 256;
+        }
+        else
+        {
+            new_length = length * 2;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                          context,
+                          buffer->base,
+                          length,
+                          new_length,
+                          (void**) (void*) &new_buffer));
+        
+        buffer->base = new_buffer;
+        buffer->end = new_buffer + new_length;
+        buffer->cursor = new_buffer + offset;
+    }
+
+error:
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_protocol_print_alloc(
+    LWMsgProtocol* prot,
+    char** text
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgBuffer buffer = {0};
+
+    buffer.wrap = realloc_wrap;
+    buffer.data = (void*) prot->context;
+
+    BAIL_ON_ERROR(status = lwmsg_protocol_print(
+                      prot,
+                      0,
+                      &buffer));
+
+    *text = (char*) buffer.base;
+
+cleanup:
+
+    return status;
+
+error:
+
+    *text = NULL;
+
+    if (buffer.base)
+    {
+        lwmsg_context_free(prot->context, buffer.base);
+    }
+
+    goto cleanup;
+}
+

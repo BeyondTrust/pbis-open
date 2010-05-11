@@ -426,6 +426,26 @@ lwmsg_type_spec_map_destroy(
     LWMsgTypeSpecMap* map
     );
 
+void
+lwmsg_type_free_rep(
+    const LWMsgContext* context,
+    LWMsgTypeRep* rep
+    );
+
+LWMsgStatus
+lwmsg_type_print_rep(
+    LWMsgTypeRep* rep,
+    unsigned int indent,
+    LWMsgBuffer* buffer
+    );
+
+LWMsgStatus
+lwmsg_type_print_spec_alloc(
+    const LWMsgContext* context,
+    LWMsgTypeSpec* type,
+    char** result
+    );
+
 extern LWMsgTypeSpec lwmsg_type_rep_spec[];
 
 #endif

@@ -74,7 +74,6 @@ typedef struct LWMsgProtocolRep
 
 LWMsgStatus
 lwmsg_protocol_create_representation(
-    LWMsgDataContext* context,
     LWMsgProtocol* prot,
     LWMsgProtocolRep** rep
     );
@@ -83,6 +82,19 @@ LWMsgStatus
 lwmsg_protocol_set_representation(
     LWMsgProtocol* prot,
     LWMsgProtocolRep* rep
+    );
+
+LWMsgStatus
+lwmsg_protocol_print(
+    LWMsgProtocol* prot,
+    unsigned int indent,
+    LWMsgBuffer* buffer
+    );
+
+LWMsgStatus
+lwmsg_protocol_print_alloc(
+    LWMsgProtocol* prot,
+    char** text
     );
 
 extern LWMsgTypeSpec* lwmsg_protocol_rep_spec;

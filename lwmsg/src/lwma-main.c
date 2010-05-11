@@ -36,9 +36,34 @@
  *
  */
 
+#include <stdio.h>
+#include <errno.h>
 #include <lwmsg/lwmsg.h>
 #include "util-private.h"
 #include "data-private.h"
+#include "status-private.h"
+#include "protocol-private.h"
+
+static
+LWMsgStatus
+wrap_print(
+    LWMsgBuffer* buffer,
+    size_t count
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (fwrite(buffer->base, 1, buffer->cursor - buffer->base, stdout) < 0)
+    {
+        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+    }
+
+    buffer->cursor = buffer->base;
+
+error:
+
+    return status;
+}
 
 static
 LWMsgStatus
@@ -50,29 +75,28 @@ archive_dump(
     LWMsgProtocol* protocol = NULL;
     LWMsgArchive* archive = NULL;
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgDataContext* dcontext = NULL;
+    LWMsgBuffer buffer = {0};
+    unsigned char buf[2048];
     char* text = NULL;
     unsigned int i = 0;
 
-    BAIL_ON_ERROR(status = lwmsg_data_context_new(NULL, &dcontext));
+    buffer.base = buf;
+    buffer.cursor = buffer.base;
+    buffer.end = buffer.base + sizeof(buf);
+    buffer.wrap = wrap_print;
 
     BAIL_ON_ERROR(status = lwmsg_protocol_new(NULL, &protocol));
-
     BAIL_ON_ERROR(status = lwmsg_archive_new(NULL, protocol, &archive));
-
     BAIL_ON_ERROR(status = lwmsg_archive_set_file(archive, filename, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA, 0));
-
     BAIL_ON_ERROR(status = lwmsg_archive_open(archive));
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_protocol_alloc(dcontext, protocol, &text));
 
     printf("------\n");
     printf("Schema\n");
     printf("------\n\n");
-    printf("%s\n", text);
 
-    free(text);
-    text = NULL;
+    BAIL_ON_ERROR(status = lwmsg_protocol_print(protocol, 0, &buffer));
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_finish(&buffer));
 
     printf("--------\n");
     printf("Messages\n");
@@ -115,11 +139,6 @@ error:
     if (protocol)
     {
         lwmsg_protocol_delete(protocol);
-    }
-
-    if (dcontext)
-    {
-        lwmsg_data_context_delete(dcontext);
     }
 
     return status;

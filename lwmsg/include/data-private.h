@@ -187,18 +187,11 @@ lwmsg_data_free_graph_internal(
     unsigned char* object
     );
 
-LWMsgStatus
-lwmsg_data_print_protocol(
-    LWMsgDataContext* context,
-    LWMsgProtocol* prot,
-    LWMsgBuffer* buffer
-    );
-
-LWMsgStatus
-lwmsg_data_print_protocol_alloc(
-    LWMsgDataContext* context,
-    LWMsgProtocol* prot,
-    char** text
+void
+lwmsg_data_free_graph_cleanup(
+    const LWMsgContext* context,
+    LWMsgTypeSpec* type,
+    void* root
     );
 
 #endif

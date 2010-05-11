@@ -458,6 +458,48 @@ lwmsg_assoc_set_nonblock(
     return assoc->aclass->set_nonblock(assoc, nonblock);
 }
 
+static
+LWMsgStatus
+realloc_wrap(
+    LWMsgBuffer* buffer,
+    size_t count
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    const LWMsgContext* context = buffer->data;
+    size_t offset = buffer->cursor - buffer->base;
+    size_t length = buffer->end - buffer->base;
+    size_t new_length = 0;
+    unsigned char* new_buffer = NULL;
+
+    if (count)
+    {
+        if (length == 0)
+        {
+            new_length = 256;
+        }
+        else
+        {
+            new_length = length * 2;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                          context,
+                          buffer->base,
+                          length,
+                          new_length,
+                          (void**) (void*) &new_buffer));
+        
+        buffer->base = new_buffer;
+        buffer->end = new_buffer + new_length;
+        buffer->cursor = new_buffer + offset;
+    }
+
+error:
+
+    return status;
+}
+
 LWMsgStatus
 lwmsg_assoc_print_message_alloc(
     LWMsgAssoc* assoc,
@@ -468,31 +510,32 @@ lwmsg_assoc_print_message_alloc(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgDataContext* context = NULL;
     LWMsgTypeSpec* type = NULL;
-    char* payload_result = NULL;
-    char* my_result = NULL;
+    LWMsgBuffer buffer = {0};
     const char* tag_name = NULL;
+
+    buffer.wrap = realloc_wrap;
+    buffer.data = (void*) &assoc->context;
     
     BAIL_ON_ERROR(status = lwmsg_data_context_new(&assoc->context, &context));
     BAIL_ON_ERROR(status = lwmsg_protocol_get_message_name(assoc->prot, message->tag, &tag_name));
     BAIL_ON_ERROR(status = lwmsg_protocol_get_message_type(assoc->prot, message->tag, &type));
-
+    
     if (type)
     {
-        BAIL_ON_ERROR(status = lwmsg_data_print_graph_alloc(context, type, message->data, &payload_result));
-        
-        my_result = lwmsg_format("%s: %s", tag_name, payload_result);
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "%s:\n", tag_name));
+        BAIL_ON_ERROR(status = lwmsg_data_print_graph(
+                          context,
+                          type,
+                          message->data,
+                          4,
+                          &buffer));
     }
     else
     {
-        my_result = lwmsg_format("%s", tag_name);
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "%s", tag_name));
     }
-
-    if (!my_result)
-    {
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
-    }
-
-    *result = my_result;
+    
+    *result = (char*) buffer.base;
 
 cleanup:
 
@@ -501,20 +544,15 @@ cleanup:
         lwmsg_data_context_delete(context);
     }
 
-    if (payload_result)
-    {
-        lwmsg_context_free(&assoc->context, payload_result);
-    }
-
     return status;
 
 error:
 
     *result = NULL;
 
-    if (my_result)
+    if (buffer.base)
     {
-        lwmsg_context_free(&assoc->context, my_result);
+        lwmsg_context_free(&assoc->context, buffer.base);
     }
 
     goto cleanup;

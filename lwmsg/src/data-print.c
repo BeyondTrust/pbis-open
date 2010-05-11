@@ -65,14 +65,6 @@ lwmsg_data_print_graph_visit(
 
 static
 LWMsgStatus
-lwmsg_data_print_type_internal(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    );
-
-static
-LWMsgStatus
 print_wrap(
     PrintInfo* info,
     const char* text,
@@ -81,7 +73,7 @@ print_wrap(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     int i;
-    unsigned char indent[2] = {' ', ' '};
+    unsigned char indent[1] = {' '};
 
     if (info->newline)
     {
@@ -410,13 +402,13 @@ lwmsg_data_print_graph_visit(
             BAIL_ON_ERROR(status = newline(info));
             BAIL_ON_ERROR(status = print(info, "{"));
             BAIL_ON_ERROR(status = newline(info));
-            info->depth++;
+            info->depth += 4;
             BAIL_ON_ERROR(status = lwmsg_data_visit_graph_children(
                               iter,
                               object,
                               lwmsg_data_print_graph_visit_member,
                               data));
-            info->depth--;
+            info->depth -= 4;
             BAIL_ON_ERROR(status = print(info, "}"));
             break;
         case LWMSG_KIND_ARRAY:
@@ -489,13 +481,13 @@ lwmsg_data_print_graph_visit(
                     BAIL_ON_ERROR(status = newline(info));
                     BAIL_ON_ERROR(status = print(info, "{"));
                     BAIL_ON_ERROR(status = newline(info));
-                    info->depth++;
+                    info->depth += 4;
                     BAIL_ON_ERROR(status = lwmsg_data_visit_graph_children(
                                       iter,
                                       object,
                                       lwmsg_data_print_graph_visit_member,
                                       data));
-                    info->depth--;
+                    info->depth -= 4;
                     BAIL_ON_ERROR(status = print(info, "}"));
                 }
             }
@@ -542,6 +534,7 @@ lwmsg_data_print_graph(
     LWMsgDataContext* context,
     LWMsgTypeSpec* type,
     void* object,
+    unsigned int indent,
     LWMsgBuffer* buffer
     )
 {
@@ -552,7 +545,7 @@ lwmsg_data_print_graph(
     memset(&info, 0, sizeof(info));
 
     info.newline = LWMSG_TRUE;
-    info.depth = 0;
+    info.depth = indent;
     info.context = context->context;
     info.buffer = buffer;
 
@@ -585,25 +578,28 @@ realloc_wrap(
     size_t new_length = 0;
     unsigned char* new_buffer = NULL;
 
-    if (length == 0)
+    if (count)
     {
-        new_length = 256;
+        if (length == 0)
+        {
+            new_length = 256;
+        }
+        else
+        {
+            new_length = length * 2;
+        }
+        
+        BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                          context,
+                          buffer->base,
+                          length,
+                          new_length,
+                          (void**) (void*) &new_buffer));
+        
+        buffer->base = new_buffer;
+        buffer->end = new_buffer + new_length;
+        buffer->cursor = new_buffer + offset;
     }
-    else
-    {
-        new_length = length * 2;
-    }
-
-    BAIL_ON_ERROR(status = lwmsg_context_realloc(
-                      context,
-                      buffer->base,
-                      length,
-                      new_length,
-                      (void**) (void*) &new_buffer));
-
-    buffer->base = new_buffer;
-    buffer->end = new_buffer + new_length;
-    buffer->cursor = new_buffer + offset;
 
 error:
 
@@ -628,6 +624,7 @@ lwmsg_data_print_graph_alloc(
                       context,
                       type,
                       object,
+                      0,
                       &buffer));
     
     *result = (char*) buffer.base;
@@ -639,747 +636,6 @@ cleanup:
 error:
 
     *result = NULL;
-
-    if (buffer.base)
-    {
-        lwmsg_context_free(context->context, buffer.base);
-    }
-
-    goto cleanup;
-}
-
-static
-LWMsgStatus
-print_type_name(
-    PrintInfo* info,
-    LWMsgTypeRep* rep
-    )
-{
-    const char* kind = NULL;
-    char* name = NULL;
-
-    switch(rep->kind)
-    {
-    case LWMSG_KIND_ENUM:
-        kind = "enum";
-        name = rep->info.enum_rep.definition->name;
-        break;
-    case LWMSG_KIND_STRUCT:
-        kind = "struct";
-        name = rep->info.struct_rep.definition->name;
-        break;
-    case LWMSG_KIND_UNION:
-        kind = "union";
-        name = rep->info.union_rep.definition->name;
-        break;
-    case LWMSG_KIND_CUSTOM:
-        kind = "custom";
-        name = rep->info.custom_rep.name;
-        break;
-    default:
-        return LWMSG_STATUS_INTERNAL;
-        break;
-    }
-
-    if (name)
-    {
-        return print(info, name);
-    }
-    else
-    {
-        return print(info, "__%s_%lx", kind, (unsigned long) (size_t) rep);
-    }
-}
-
-static
-LWMsgStatus
-print_field_name(
-    PrintInfo* info,
-    LWMsgTypeRep* rep,
-    size_t index
-    )
-{
-    LWMsgFieldRep* field = &rep->info.struct_rep.definition->fields[index];
-
-    if (field->name)
-    {
-        return print(info, field->name);
-    }
-    else
-    {
-        return print(info, "__field_%lu", (unsigned long) index);
-    }
-}
-
-static
-LWMsgStatus
-print_arm_name(
-    PrintInfo* info,
-    LWMsgTypeRep* rep,
-    size_t index
-    )
-{
-    LWMsgArmRep* arm = &rep->info.union_rep.definition->arms[index];
-
-    if (arm->name)
-    {
-        return print(info, arm->name);
-    }
-    else
-    {
-        return print(info, "__arm%lu", (unsigned long) index);
-    }
-}
-
-static
-LWMsgStatus
-print_variant_name(
-    PrintInfo* info,
-    LWMsgTypeRep* rep,
-    size_t index
-    )
-{
-    LWMsgVariantRep* variant = &rep->info.enum_rep.definition->variants[index];
-
-    if (variant->name)
-    {
-        return print(info, variant->name);
-    }
-    else
-    {
-        return print(info, "__variant%lu", (unsigned long) index);
-    }
-}
-
-static
-LWMsgStatus
-print_variant_value(
-    PrintInfo* info,
-    LWMsgTypeRep* rep,
-    uint64_t value
-    )
-{
-    size_t index = 0;
-
-    if (rep->kind == LWMSG_KIND_ENUM)
-    {
-        for (index = 0; index < rep->info.enum_rep.definition->variant_count; index++)
-        {
-            LWMsgVariantRep* variant = &rep->info.enum_rep.definition->variants[index];
-
-            if (variant->value == value && variant->name)
-            {
-                return print(info, variant->name);
-            }
-        }
-    }
-
-    if (rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED)
-    {
-        return print(info, "%llu", (unsigned long long) value);
-    }
-    else
-    {
-        return print(info, "%lli", (signed long long) value);
-    }
-}
-
-
-static
-LWMsgStatus
-lwmsg_data_print_type_enum(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t i = 0;
-    LWMsgVariantRep* var = NULL;
-
-    BAIL_ON_ERROR(status = print(
-                      info, "%sint%u enum ",
-                      rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED ? "u" : "",
-                      rep->info.enum_rep.definition->width * 8));
-
-    BAIL_ON_ERROR(status = print_type_name(info, rep));
-
-    if (!rep->info.enum_rep.definition->seen)
-    {
-        rep->info.enum_rep.definition->seen = LWMSG_TRUE;
-
-        BAIL_ON_ERROR(status = newline(info));
-        BAIL_ON_ERROR(status = print(info, "{"));
-        info->depth += 2;
-        BAIL_ON_ERROR(status = newline(info));
-
-        for (i = 0; i < rep->info.enum_rep.definition->variant_count; i++)
-        {
-            var = &rep->info.enum_rep.definition->variants[i];
-            BAIL_ON_ERROR(status = print_variant_name(info, rep, i));
-            BAIL_ON_ERROR(status = print(info, " = "));
-            if (var->is_mask)
-            {
-                BAIL_ON_ERROR(status = print(
-                                  info, "0x%.*llx",
-                                  rep->info.enum_rep.definition->width * 2,
-                                  var->value));
-            }
-            else
-            {
-                BAIL_ON_ERROR(status = print(info, "%llu", (unsigned long long) var->value));
-            }
-
-            if (i < rep->info.enum_rep.definition->variant_count - 1)
-            {
-                BAIL_ON_ERROR(status = print(info, ","));
-            }
-            BAIL_ON_ERROR(status = newline(info));
-        }
-
-        info->depth -= 2;
-        BAIL_ON_ERROR(status = print(info, "}"));
-    }
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_integer(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    BAIL_ON_ERROR(status = print(
-                      info, "%sint%u",
-                      rep->info.integer_rep.definition->sign == LWMSG_UNSIGNED ? "u" : "",
-                      rep->info.integer_rep.definition->width * 8));
-
-    if (rep->flags & LWMSG_TYPE_FLAG_RANGE)
-    {
-            BAIL_ON_ERROR(status = print(
-                              info,
-                              rep->info.integer_rep.definition->sign == LWMSG_UNSIGNED ?
-                              " <range=%llu,%llu>" : " <range=%lli,%lli>",
-                              (unsigned long long) rep->info.integer_rep.lower_bound,
-                              (unsigned long long) rep->info.integer_rep.upper_bound));
-    }
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_struct(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t i = 0;
-    LWMsgTypeRep* old_rep = NULL;
-
-
-    BAIL_ON_ERROR(status = print(info, "struct "));
-    BAIL_ON_ERROR(status = print_type_name(info, rep));
-
-    if (!rep->info.struct_rep.definition->seen)
-    {
-        rep->info.struct_rep.definition->seen = LWMSG_TRUE;
-
-        old_rep = info->dominating_rep;
-        info->dominating_rep = rep;
-
-        BAIL_ON_ERROR(status = newline(info));
-        BAIL_ON_ERROR(status = print(info, "{"));
-        info->depth += 2;
-        BAIL_ON_ERROR(status = newline(info));
-
-        for (i = 0; i < rep->info.struct_rep.definition->field_count; i++)
-        {
-            BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                              context,
-                              rep->info.struct_rep.definition->fields[i].type,
-                              info));
-            BAIL_ON_ERROR(status = print(info, " "));
-            BAIL_ON_ERROR(status = print_field_name(info, rep, i));
-            BAIL_ON_ERROR(status = print(info, ";"));
-            BAIL_ON_ERROR(status = newline(info));
-        }
-
-        info->dominating_rep = old_rep;
-
-        info->depth -= 2;
-        BAIL_ON_ERROR(status = print(info, "}"));
-    }
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_union(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    size_t i = 0;
-    LWMsgTypeRep* discrim = NULL;
-
-    BAIL_ON_ERROR(status = print(info, "union "));
-    BAIL_ON_ERROR(status = print_type_name(info, rep));
-
-    if (!rep->info.union_rep.definition->seen)
-    {
-        rep->info.union_rep.definition->seen = LWMSG_TRUE;
-
-        discrim = info->dominating_rep->info.struct_rep.definition->fields[rep->info.union_rep.discrim_member_index].type;
-
-        BAIL_ON_ERROR(status = newline(info));
-        BAIL_ON_ERROR(status = print(info, "{"));
-        info->depth += 2;
-        BAIL_ON_ERROR(status = newline(info));
-
-        for (i = 0; i < rep->info.union_rep.definition->arm_count; i++)
-        {
-            BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                              context,
-                              rep->info.union_rep.definition->arms[i].type,
-                              info));
-
-            BAIL_ON_ERROR(status = print(info, " "));
-            BAIL_ON_ERROR(status = print_arm_name(info, rep, i));
-            BAIL_ON_ERROR(status = print(info, " <tag="));
-            BAIL_ON_ERROR(status = print_variant_value(info, discrim, rep->info.union_rep.definition->arms[i].tag));
-            BAIL_ON_ERROR(status = print(info, ">;"));
-            BAIL_ON_ERROR(status = newline(info));
-        }
-
-        info->depth -= 2;
-        BAIL_ON_ERROR(status = print(info, "} <discrim="));
-        BAIL_ON_ERROR(status = print_field_name(
-                          info,
-                          info->dominating_rep,
-                          rep->info.union_rep.discrim_member_index));
-        BAIL_ON_ERROR(status = print(info, ">"));
-    }
-
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_pointer(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    const char* comma = "";
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                          context,
-                          rep->info.pointer_rep.pointee_type,
-                          info));
-
-    if (!(rep->flags & LWMSG_TYPE_FLAG_PROMOTED))
-    {
-        if (rep->flags & LWMSG_TYPE_FLAG_NOT_NULL)
-        {
-            BAIL_ON_ERROR(status = print(info, "&"));
-        }
-        else
-        {
-            BAIL_ON_ERROR(status = print(info, "*"));
-        }
-
-        if (rep->flags & LWMSG_TYPE_FLAG_ALIASABLE)
-        {
-            BAIL_ON_ERROR(status = print(info, "!"));
-        }
-    }
-
-    if ((rep->info.pointer_rep.static_length && rep->info.pointer_rep.static_length != 1) ||
-        rep->info.pointer_rep.zero_terminated ||
-        (rep->info.pointer_rep.encoding && *rep->info.pointer_rep.encoding) ||
-        rep->info.pointer_rep.length_member_index >= 0 ||
-        (rep->flags & LWMSG_TYPE_FLAG_SENSITIVE))
-    {
-        BAIL_ON_ERROR(status = print(info," <"));
-
-        if (rep->info.pointer_rep.static_length && rep->info.pointer_rep.static_length != 1)
-        {
-            BAIL_ON_ERROR(status = print(info, "%slength=%lu", comma, rep->info.pointer_rep.static_length));
-            comma = ",";
-        }
-
-        if (rep->info.pointer_rep.zero_terminated && rep->info.pointer_rep.encoding)
-        {
-            BAIL_ON_ERROR(status = print(info, "%sstring", comma));
-            comma = ",";
-        }
-        else if (rep->info.pointer_rep.zero_terminated)
-        {
-            BAIL_ON_ERROR(status = print(info, "%szero", comma));
-            comma = ",";
-        }
-
-        if (rep->info.pointer_rep.encoding && *rep->info.pointer_rep.encoding)
-        {
-            BAIL_ON_ERROR(status = print(info, "%sencoding=%s", comma, rep->info.pointer_rep.encoding));
-            comma = ",";
-        }
-
-        if (rep->info.pointer_rep.length_member_index >= 0)
-        {
-            BAIL_ON_ERROR(status = print(info, "%slength=", comma));
-            BAIL_ON_ERROR(status = print_field_name(
-                              info,
-                              info->dominating_rep,
-                              rep->info.pointer_rep.length_member_index));
-            comma = ",";
-        }
-
-        if (rep->flags & LWMSG_TYPE_FLAG_SENSITIVE)
-        {
-            BAIL_ON_ERROR(status = print(info, "%ssensitive", comma));
-            comma = ",";
-        }
-
-        BAIL_ON_ERROR(status = print(info, ">"));
-    }
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_array(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                          context,
-                          rep->info.array_rep.element_type,
-                          info));
-
-    if (rep->info.array_rep.static_length)
-    {
-        BAIL_ON_ERROR(status = print(info, "[%lu]", rep->info.array_rep.static_length));
-    }
-    else if (rep->info.array_rep.length_member_index >= 0)
-    {
-        BAIL_ON_ERROR(status = print(info, "["));
-        BAIL_ON_ERROR(status = print_field_name(
-                          info,
-                          info->dominating_rep,
-                          rep->info.array_rep.length_member_index));
-        BAIL_ON_ERROR(status = print(info, "]"));
-    }
-    else
-    {
-        BAIL_ON_ERROR(status = print(info, "[]", rep->info.array_rep.static_length));
-    }
-
-    if (rep->info.array_rep.zero_terminated)
-    {
-        BAIL_ON_ERROR(status = print(info, " <zero>", rep->info.array_rep.static_length));
-    }
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_custom(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                          context,
-                          rep->info.custom_rep.transmitted_type,
-                          info));
-    BAIL_ON_ERROR(status = print(info, " <presented="));
-    BAIL_ON_ERROR(status = print_type_name(info, rep));
-    if (rep->info.custom_rep.is_pointer)
-    {
-        if (rep->flags & LWMSG_TYPE_FLAG_NOT_NULL)
-        {
-            BAIL_ON_ERROR(status = print(info, "&"));
-        }
-        else
-        {
-            BAIL_ON_ERROR(status = print(info, "*"));
-        }
-
-        if (rep->flags & LWMSG_TYPE_FLAG_ALIASABLE)
-        {
-            BAIL_ON_ERROR(status = print(info, "!"));
-        }
-    }
-    BAIL_ON_ERROR(status = print(info, ">"));
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
-lwmsg_data_print_type_internal(
-    LWMsgDataContext* context,
-    LWMsgTypeRep* rep,
-    PrintInfo* info
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    switch (rep->kind)
-    {
-    case LWMSG_KIND_INTEGER:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_integer(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_ENUM:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_enum(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_STRUCT:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_struct(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_UNION:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_union(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_POINTER:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_pointer(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_ARRAY:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_array(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_CUSTOM:
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_custom(
-                          context,
-                          rep,
-                          info));
-        break;
-    case LWMSG_KIND_VOID:
-        BAIL_ON_ERROR(status = print(info, "void"));
-        break;
-    default:
-        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
-        break;
-    }
-
-error:
-
-    return status;
-}
-
-LWMsgStatus
-lwmsg_data_print_type(
-    LWMsgDataContext* context,
-    LWMsgTypeSpec* type,
-    LWMsgBuffer* buffer
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    PrintInfo info;
-    LWMsgTypeRep* rep = NULL;
-
-    memset(&info, 0, sizeof(info));
-
-    info.newline = LWMSG_TRUE;
-    info.depth = 0;
-    info.context = context->context;
-    info.buffer = buffer;
-
-    BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(context->context, type, &rep));
-    
-    BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                      context,
-                      rep,
-                      &info));
-    
-error:
-    
-    if (rep)
-    {
-        status = lwmsg_data_free_graph(context, lwmsg_type_rep_spec, rep);
-    }
-    
-    lwmsg_data_object_map_destroy(&info.map);
-    
-    return status;
-}
-
-LWMsgStatus
-lwmsg_data_print_type_alloc(
-    LWMsgDataContext* context,
-    LWMsgTypeSpec* type,
-    char** result
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgBuffer buffer = {0};
-
-    buffer.wrap = realloc_wrap;
-    buffer.data = (void*) context->context;
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_type(
-                      context,
-                      type,
-                      &buffer));
-
-    *result = (char*) buffer.base;
-
-cleanup:
-
-    return status;
-
-error:
-
-    *result = NULL;
-
-    if (buffer.base)
-    {
-        lwmsg_context_free(context->context, buffer.base);
-    }
-
-    goto cleanup;
-}
-
-LWMsgStatus
-lwmsg_data_print_protocol(
-    LWMsgDataContext* context,
-    LWMsgProtocol* prot,
-    LWMsgBuffer* buffer
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    PrintInfo info;
-    LWMsgProtocolRep* rep = NULL;
-    size_t i = 0;
-
-    memset(&info, 0, sizeof(info));
-
-    info.newline = LWMSG_TRUE;
-    info.depth = 0;
-    info.context = context->context;
-    info.buffer = buffer;
-
-    BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
-                      context,
-                      prot,
-                      &rep));
-
-    for (i = 0; i < rep->message_count; i++)
-    {
-        if (rep->messages[i].name)
-        {
-            BAIL_ON_ERROR(status = print(&info, "Tag %s (%i):", rep->messages[i].name, rep->messages[i].tag));
-        }
-        else
-        {
-            BAIL_ON_ERROR(status = print(&info, "Tag %i:", rep->messages[i].tag));
-        }
-        
-        BAIL_ON_ERROR(status = newline(&info));
-        info.depth += 2;
-        BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
-                          context,
-                          rep->messages[i].type,
-                          &info));
-        info.depth -= 2;
-        BAIL_ON_ERROR(status = newline(&info));
-        BAIL_ON_ERROR(status = newline(&info));
-    }
-
-cleanup:
-
-    if (rep)
-    {
-        lwmsg_data_free_graph(context, lwmsg_protocol_rep_spec, rep);
-    }
-
-    return status;
-
-error:
-
-    goto cleanup;
-}
-
-LWMsgStatus
-lwmsg_data_print_protocol_alloc(
-    LWMsgDataContext* context,
-    LWMsgProtocol* prot,
-    char** text
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgBuffer buffer = {0};
-
-    buffer.wrap = realloc_wrap;
-    buffer.data = (void*) context->context;
-
-    BAIL_ON_ERROR(status = lwmsg_data_print_protocol(
-                      context,
-                      prot,
-                      &buffer));
-
-    *text = (char*) buffer.base;
-
-cleanup:
-
-    return status;
-
-error:
-
-    *text = NULL;
 
     if (buffer.base)
     {

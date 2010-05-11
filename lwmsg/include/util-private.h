@@ -114,7 +114,7 @@ struct msghdr;
 #define LWMSG_CONTEXT_ALLOC_ARRAY(_ctxt_, _count_, _obj_)               \
     (lwmsg_context_alloc((_ctxt_), (_count_) * sizeof **(_obj_), (void**) (void*) (_obj_)))
     
-#define LWMSG_CONTEXT_ALLOC(_obj_) (LWMSG_CONTEXT_ALLOC_ARRAY((_ctxt_), 1, (_obj_)))
+#define LWMSG_CONTEXT_ALLOC(_ctxt_, _obj_) (LWMSG_CONTEXT_ALLOC_ARRAY((_ctxt_), 1, (_obj_)))
 
 #define LWMSG_POINTER_AS_ULONG(ptr) ((unsigned long) (size_t) (ptr))
 
@@ -202,6 +202,53 @@ lwmsg_buffer_write(LWMsgBuffer* buffer, const unsigned char* in_bytes, size_t co
 error:
 
     return status;
+}
+
+static inline LWMsgStatus
+lwmsg_buffer_print(
+    LWMsgBuffer* buffer,
+    const char* fmt,
+    ...
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    va_list ap;
+    char* text = NULL;
+
+    va_start(ap, fmt);
+    text = lwmsg_formatv(fmt, ap);
+    va_end(ap);
+
+    if (!text)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
+    }
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(buffer, (unsigned char*) text, strlen(text)));
+
+error:
+
+    if (text)
+    {
+        free(text);
+    }
+
+    return status;
+}
+
+static inline LWMsgStatus
+lwmsg_buffer_finish(
+    LWMsgBuffer* buffer
+    )
+{
+    if (buffer->wrap)
+    {
+        return buffer->wrap(buffer, 0);
+    }
+    else
+    {
+        return LWMSG_STATUS_SUCCESS;
+    }
 }
 
 ssize_t
