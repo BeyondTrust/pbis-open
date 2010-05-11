@@ -83,6 +83,7 @@ src_liblwmsg_nothr_la_SOURCES = \
 	src/type.c \
 	src/type-iterate.c \
 	src/type-rep.c \
+	src/type-print.c \
 	src/status.c \
 	src/context.c \
 	src/util.c \
