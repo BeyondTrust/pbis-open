@@ -657,13 +657,35 @@ print_type_name(
     LWMsgTypeRep* rep
     )
 {
-    if (rep->name)
+    const char* kind = NULL;
+    char* name = NULL;
+
+    switch(rep->kind)
     {
-        return print(info, rep->name);
+    case LWMSG_KIND_ENUM:
+        kind = "enum";
+        name = rep->info.enum_rep.definition->name;
+        break;
+    case LWMSG_KIND_STRUCT:
+        kind = "struct";
+        name = rep->info.struct_rep.definition->name;
+        break;
+    case LWMSG_KIND_UNION:
+        kind = "union";
+        name = rep->info.union_rep.definition->name;
+        break;
+    default:
+        return LWMSG_STATUS_INTERNAL;
+        break;
+    }
+
+    if (name)
+    {
+        return print(info, name);
     }
     else
     {
-        return print(info, "__type_%lx", (unsigned long) (size_t) rep);
+        return print(info, "__%s_%lx", kind, (unsigned long) (size_t) rep);
     }
 }
 
@@ -675,7 +697,7 @@ print_field_name(
     size_t index
     )
 {
-    LWMsgFieldRep* field = &rep->info.struct_rep.fields[index];
+    LWMsgFieldRep* field = &rep->info.struct_rep.definition->fields[index];
 
     if (field->name)
     {
@@ -695,7 +717,7 @@ print_arm_name(
     size_t index
     )
 {
-    LWMsgArmRep* arm = &rep->info.union_rep.arms[index];
+    LWMsgArmRep* arm = &rep->info.union_rep.definition->arms[index];
 
     if (arm->name)
     {
@@ -715,7 +737,7 @@ print_variant_name(
     size_t index
     )
 {
-    LWMsgVariantRep* variant = &rep->info.enum_rep.variants[index];
+    LWMsgVariantRep* variant = &rep->info.enum_rep.definition->variants[index];
 
     if (variant->name)
     {
@@ -739,9 +761,9 @@ print_variant_value(
 
     if (rep->kind == LWMSG_KIND_ENUM)
     {
-        for (index = 0; index < rep->info.enum_rep.variant_count; index++)
+        for (index = 0; index < rep->info.enum_rep.definition->variant_count; index++)
         {
-            LWMsgVariantRep* variant = &rep->info.enum_rep.variants[index];
+            LWMsgVariantRep* variant = &rep->info.enum_rep.definition->variants[index];
 
             if (variant->value == value)
             {
@@ -750,7 +772,7 @@ print_variant_value(
         }
     }
 
-    if (rep->info.enum_rep.sign == LWMSG_UNSIGNED)
+    if (rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED)
     {
         return print(info, "%llu", (unsigned long long) index);
     }
@@ -775,30 +797,30 @@ lwmsg_data_print_type_enum(
 
     BAIL_ON_ERROR(status = print(
                       info, "%sint%u enum ",
-                      rep->info.enum_rep.sign == LWMSG_UNSIGNED ? "u" : "",
-                      rep->info.enum_rep.width * 8));
+                      rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED ? "u" : "",
+                      rep->info.enum_rep.definition->width * 8));
 
     BAIL_ON_ERROR(status = print_type_name(info, rep));
 
-    if (!(rep->flags & 0x80000000))
+    if (!rep->info.enum_rep.definition->seen)
     {
-        rep->flags |= 0x80000000;
+        rep->info.enum_rep.definition->seen = LWMSG_TRUE;
 
         BAIL_ON_ERROR(status = newline(info));
         BAIL_ON_ERROR(status = print(info, "{"));
         info->depth += 2;
         BAIL_ON_ERROR(status = newline(info));
 
-        for (i = 0; i < rep->info.enum_rep.variant_count; i++)
+        for (i = 0; i < rep->info.enum_rep.definition->variant_count; i++)
         {
-            var = &rep->info.enum_rep.variants[i];
+            var = &rep->info.enum_rep.definition->variants[i];
             BAIL_ON_ERROR(status = print_variant_name(info, rep, i));
             BAIL_ON_ERROR(status = print(info, " = "));
             if (var->is_mask)
             {
                 BAIL_ON_ERROR(status = print(
                                   info, "0x%.*llx",
-                                  rep->info.enum_rep.width * 2,
+                                  rep->info.enum_rep.definition->width * 2,
                                   var->value));
             }
             else
@@ -806,7 +828,7 @@ lwmsg_data_print_type_enum(
                 BAIL_ON_ERROR(status = print(info, "%llu", (unsigned long long) var->value));
             }
 
-            if (i < rep->info.enum_rep.variant_count - 1)
+            if (i < rep->info.enum_rep.definition->variant_count - 1)
             {
                 BAIL_ON_ERROR(status = print(info, ","));
             }
@@ -834,14 +856,14 @@ lwmsg_data_print_type_integer(
 
     BAIL_ON_ERROR(status = print(
                       info, "%sint%u",
-                      rep->info.integer_rep.sign == LWMSG_UNSIGNED ? "u" : "",
-                      rep->info.integer_rep.width * 8));
+                      rep->info.integer_rep.definition->sign == LWMSG_UNSIGNED ? "u" : "",
+                      rep->info.integer_rep.definition->width * 8));
 
     if (rep->flags & LWMSG_TYPE_FLAG_RANGE)
     {
             BAIL_ON_ERROR(status = print(
                               info,
-                              rep->info.integer_rep.sign == LWMSG_UNSIGNED ?
+                              rep->info.integer_rep.definition->sign == LWMSG_UNSIGNED ?
                               " <range=%llu,%llu>" : " <range=%lli,%lli>",
                               (unsigned long long) rep->info.integer_rep.lower_bound,
                               (unsigned long long) rep->info.integer_rep.upper_bound));
@@ -868,9 +890,9 @@ lwmsg_data_print_type_struct(
     BAIL_ON_ERROR(status = print(info, "struct "));
     BAIL_ON_ERROR(status = print_type_name(info, rep));
 
-    if (!(rep->flags & 0x80000000))
+    if (!rep->info.struct_rep.definition->seen)
     {
-        rep->flags |= 0x80000000;
+        rep->info.struct_rep.definition->seen = LWMSG_TRUE;
 
         old_rep = info->dominating_rep;
         info->dominating_rep = rep;
@@ -880,11 +902,11 @@ lwmsg_data_print_type_struct(
         info->depth += 2;
         BAIL_ON_ERROR(status = newline(info));
 
-        for (i = 0; i < rep->info.struct_rep.field_count; i++)
+        for (i = 0; i < rep->info.struct_rep.definition->field_count; i++)
         {
             BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
                               context,
-                              rep->info.struct_rep.fields[i].type,
+                              rep->info.struct_rep.definition->fields[i].type,
                               info));
             BAIL_ON_ERROR(status = print(info, " "));
             BAIL_ON_ERROR(status = print_field_name(info, rep, i));
@@ -918,28 +940,28 @@ lwmsg_data_print_type_union(
     BAIL_ON_ERROR(status = print(info, "union "));
     BAIL_ON_ERROR(status = print_type_name(info, rep));
 
-    if (!(rep->flags & 0x80000000))
+    if (!rep->info.union_rep.definition->seen)
     {
-        rep->flags |= 0x80000000;
+        rep->info.union_rep.definition->seen = LWMSG_TRUE;
 
-        discrim = info->dominating_rep->info.struct_rep.fields[rep->info.union_rep.discrim_member_index].type;
+        discrim = info->dominating_rep->info.struct_rep.definition->fields[rep->info.union_rep.discrim_member_index].type;
 
         BAIL_ON_ERROR(status = newline(info));
         BAIL_ON_ERROR(status = print(info, "{"));
         info->depth += 2;
         BAIL_ON_ERROR(status = newline(info));
 
-        for (i = 0; i < rep->info.union_rep.arm_count; i++)
+        for (i = 0; i < rep->info.union_rep.definition->arm_count; i++)
         {
             BAIL_ON_ERROR(status = lwmsg_data_print_type_internal(
                               context,
-                              rep->info.union_rep.arms[i].type,
+                              rep->info.union_rep.definition->arms[i].type,
                               info));
 
             BAIL_ON_ERROR(status = print(info, " "));
             BAIL_ON_ERROR(status = print_arm_name(info, rep, i));
             BAIL_ON_ERROR(status = print(info, " <tag="));
-            BAIL_ON_ERROR(status = print_variant_value(info, discrim, rep->info.union_rep.arms[i].tag));
+            BAIL_ON_ERROR(status = print_variant_value(info, discrim, rep->info.union_rep.definition->arms[i].tag));
             BAIL_ON_ERROR(status = print(info, ">;"));
             BAIL_ON_ERROR(status = newline(info));
         }

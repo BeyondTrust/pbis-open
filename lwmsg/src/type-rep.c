@@ -97,12 +97,34 @@ static LWMsgTypeSpec flags_enum_spec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec integer_def_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgIntegerDefRep),
+    LWMSG_MEMBER_UINT8(LWMsgIntegerDefRep, width),
+    LWMSG_ATTR_RANGE(1, 8),
+    LWMSG_MEMBER_TYPESPEC(LWMsgIntegerDefRep, sign, sign_enum_spec),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec field_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgFieldRep),
     LWMSG_MEMBER_TYPESPEC(LWMsgFieldRep, type, type_rep_pointer_spec),
     LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_PSTR(LWMsgFieldRep, name),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec struct_def_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgStructDefRep),
+    LWMSG_MEMBER_UINT16(LWMsgStructDefRep, field_count),
+    LWMSG_MEMBER_POINTER(LWMsgStructDefRep, fields, LWMSG_TYPESPEC(field_rep_spec)),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_LENGTH_MEMBER(LWMsgStructDefRep, field_count),
+    LWMSG_MEMBER_PSTR(LWMsgStructDefRep, name),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -117,6 +139,18 @@ static LWMsgTypeSpec arm_rep_spec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec union_def_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgUnionDefRep),
+    LWMSG_MEMBER_UINT16(LWMsgUnionDefRep, arm_count),
+    LWMSG_MEMBER_POINTER(LWMsgUnionDefRep, arms, LWMSG_TYPESPEC(arm_rep_spec)),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_LENGTH_MEMBER(LWMsgUnionDefRep, arm_count),
+    LWMSG_MEMBER_PSTR(LWMsgUnionDefRep, name),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec variant_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgVariantRep),
@@ -127,12 +161,27 @@ static LWMsgTypeSpec variant_rep_spec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec enum_def_rep_spec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWMsgEnumDefRep),
+    LWMSG_MEMBER_UINT8(LWMsgEnumDefRep, width),
+    LWMSG_ATTR_RANGE(1, 8),
+    LWMSG_MEMBER_TYPESPEC(LWMsgEnumDefRep, sign, sign_enum_spec),
+    LWMSG_MEMBER_UINT16(LWMsgEnumDefRep, variant_count),
+    LWMSG_MEMBER_POINTER(LWMsgEnumDefRep, variants, LWMSG_TYPESPEC(variant_rep_spec)),
+    LWMSG_ATTR_NOT_NULL,
+    LWMSG_ATTR_LENGTH_MEMBER(LWMsgEnumDefRep, variant_count),
+    LWMSG_MEMBER_PSTR(LWMsgEnumDefRep, name),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec integer_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgIntegerRep),
-    LWMSG_MEMBER_UINT8(LWMsgIntegerRep, width),
-    LWMSG_ATTR_RANGE(1, 8),
-    LWMSG_MEMBER_TYPESPEC(LWMsgIntegerRep, sign, sign_enum_spec),
+    LWMSG_MEMBER_POINTER(LWMsgIntegerRep, definition, LWMSG_TYPESPEC(integer_def_rep_spec)),
+    LWMSG_ATTR_ALIASABLE,
+    LWMSG_ATTR_NOT_NULL,
     LWMSG_MEMBER_UINT64(LWMsgIntegerRep, lower_bound),
     LWMSG_MEMBER_UINT64(LWMsgIntegerRep, upper_bound),
     LWMSG_STRUCT_END,
@@ -142,10 +191,9 @@ static LWMsgTypeSpec integer_rep_spec[] =
 static LWMsgTypeSpec struct_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgStructRep),
-    LWMSG_MEMBER_UINT16(LWMsgStructRep, field_count),
-    LWMSG_MEMBER_POINTER(LWMsgStructRep, fields, LWMSG_TYPESPEC(field_rep_spec)),
+    LWMSG_MEMBER_POINTER(LWMsgStructRep, definition, LWMSG_TYPESPEC(struct_def_rep_spec)),
+    LWMSG_ATTR_ALIASABLE,
     LWMSG_ATTR_NOT_NULL,
-    LWMSG_ATTR_LENGTH_MEMBER(LWMsgStructRep, field_count),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -153,13 +201,9 @@ static LWMsgTypeSpec struct_rep_spec[] =
 static LWMsgTypeSpec enum_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgEnumRep),
-    LWMSG_MEMBER_UINT8(LWMsgEnumRep, width),
-    LWMSG_ATTR_RANGE(1, 8),
-    LWMSG_MEMBER_TYPESPEC(LWMsgEnumRep, sign, sign_enum_spec),
-    LWMSG_MEMBER_UINT16(LWMsgEnumRep, variant_count),
-    LWMSG_MEMBER_POINTER(LWMsgEnumRep, variants, LWMSG_TYPESPEC(variant_rep_spec)),
+    LWMSG_MEMBER_POINTER(LWMsgEnumRep, definition, LWMSG_TYPESPEC(enum_def_rep_spec)),
+    LWMSG_ATTR_ALIASABLE,
     LWMSG_ATTR_NOT_NULL,
-    LWMSG_ATTR_LENGTH_MEMBER(LWMsgEnumRep, variant_count),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -167,11 +211,10 @@ static LWMsgTypeSpec enum_rep_spec[] =
 static LWMsgTypeSpec union_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgUnionRep),
-    LWMSG_MEMBER_UINT16(LWMsgUnionRep, arm_count),
-    LWMSG_MEMBER_POINTER(LWMsgUnionRep, arms, LWMSG_TYPESPEC(arm_rep_spec)),
+    LWMSG_MEMBER_POINTER(LWMsgUnionRep, definition, LWMSG_TYPESPEC(union_def_rep_spec)),
+    LWMSG_ATTR_ALIASABLE,
     LWMSG_ATTR_NOT_NULL,
-    LWMSG_ATTR_LENGTH_MEMBER(LWMsgUnionRep, arm_count),
-    LWMSG_MEMBER_UINT16(LWMsgUnionRep, discrim_member_index),
+    LWMSG_MEMBER_INT16(LWMsgUnionRep, discrim_member_index),
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
@@ -243,7 +286,6 @@ static LWMsgTypeSpec type_rep_spec[] =
     LWMSG_STRUCT_BEGIN(LWMsgTypeRep),
     LWMSG_MEMBER_TYPESPEC(LWMsgTypeRep, kind, kind_enum_spec),
     LWMSG_MEMBER_TYPESPEC(LWMsgTypeRep, flags, flags_enum_spec),
-    LWMSG_MEMBER_PSTR(LWMsgTypeRep, name),
     LWMSG_MEMBER_TYPESPEC(LWMsgTypeRep, info, type_info_spec),
     LWMSG_ATTR_DISCRIM(LWMsgTypeRep, kind),
     LWMSG_STRUCT_END,
@@ -265,7 +307,7 @@ lwmsg_type_rep_map_get_key_spec(
     const void* entry
     )
 {
-    return (void*) ((LWMsgTypeRepMapEntry*) entry)->spec;
+    return &((LWMsgTypeRepMapEntry*) entry)->spec;
 }
 
 static
@@ -274,7 +316,18 @@ lwmsg_type_rep_map_digest_spec(
     const void* key
     )
 {
-    return (size_t) key;
+    size_t hash = 0;
+    const struct SpecKey* spec = key;
+    int i;
+
+    hash = (size_t) spec->spec;
+
+    for (i = 0; i < spec->kind; i++)
+    {
+        hash = hash * 31;
+    }
+
+    return hash;
 }
 
 static
@@ -284,7 +337,10 @@ lwmsg_type_rep_map_equal_spec(
     const void* key2
     )
 {
-    return key1 == key2;
+    const struct SpecKey* spec1 = key1;
+    const struct SpecKey* spec2 = key2;
+
+    return spec1->kind == spec2->kind && spec1->spec == spec2->spec;
 }
 
 static
@@ -351,15 +407,17 @@ static
 LWMsgStatus
 lwmsg_type_rep_map_find_spec(
     LWMsgTypeRepMap* map,
+    enum SpecKind kind,
     LWMsgTypeSpec* spec,
-    LWMsgTypeRep** rep
+    void** rep
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    struct SpecKey key = {kind, spec};
 
     BAIL_ON_ERROR(status = lwmsg_type_rep_map_init(map));
 
-    LWMsgTypeRepMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_spec, spec);
+    LWMsgTypeRepMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_spec, &key);
 
     if (!entry)
     {
@@ -405,8 +463,9 @@ static
 LWMsgStatus
 lwmsg_type_rep_map_insert(
     LWMsgTypeRepMap* map,
+    enum SpecKind kind,
     LWMsgTypeSpec* spec,
-    LWMsgTypeRep* rep
+    void* rep
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -416,7 +475,8 @@ lwmsg_type_rep_map_insert(
 
     lwmsg_ring_init(&entry->ring1);
     lwmsg_ring_init(&entry->ring2);
-    entry->spec = spec;
+    entry->spec.kind = kind;
+    entry->spec.spec = spec;
     entry->rep = rep;
 
     if (spec)
@@ -491,6 +551,38 @@ lwmsg_type_member_count(
 }
 
 static
+const char*
+lwmsg_type_name_suffix(
+    const char* name
+    )
+{
+    static const char* prefix_struct = "struct ";
+    static const char* prefix_union = "union ";
+    static const char* prefix_enum = "enum ";
+
+    if (name == NULL)
+    {
+        return NULL;
+    }
+    else if (!strncmp(name, prefix_struct, strlen(prefix_struct)))
+    {
+        return name + strlen(prefix_struct);
+    }
+    else if (!strncmp(name, prefix_union, strlen(prefix_union)))
+    {
+        return name + strlen(prefix_union);
+    }
+    else if (!strncmp(name, prefix_enum, strlen(prefix_enum)))
+    {
+        return name + strlen(prefix_enum);
+    }
+    else
+    {
+        return name;
+    }
+}
+
+static
 LWMsgStatus
 lwmsg_type_rep_from_integer(
     LWMsgTypeRepMap* map,
@@ -500,14 +592,21 @@ lwmsg_type_rep_from_integer(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
-    rep->info.integer_rep.width = (uint8_t) iter->info.kind_integer.width;
-    rep->info.integer_rep.sign = (uint8_t) iter->info.kind_integer.sign;
+    BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                      map->context,
+                      sizeof(*rep->info.integer_rep.definition),
+                      (void**) (void*) &rep->info.integer_rep.definition));
+
+    rep->info.integer_rep.definition->width = (uint8_t) iter->info.kind_integer.width;
+    rep->info.integer_rep.definition->sign = (uint8_t) iter->info.kind_integer.sign;
 
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_RANGE)
     {
         rep->info.integer_rep.lower_bound = iter->attrs.range_low;
         rep->info.integer_rep.upper_bound = iter->attrs.range_high;
     }
+
+error:
 
     return status;
 }
@@ -525,25 +624,55 @@ lwmsg_type_rep_from_enum(
     size_t count = lwmsg_type_member_count(iter);
     size_t i = 0;
 
+    lwmsg_type_enter(iter, &member);
 
-    rep->info.enum_rep.width = (uint8_t) iter->info.kind_integer.width;
-    rep->info.enum_rep.sign = (uint8_t) iter->info.kind_integer.sign;
-    rep->info.enum_rep.variant_count = (uint16_t) count;
+    status = lwmsg_type_rep_map_find_spec(
+        map,
+        SPEC_DEF,
+        member.spec,
+        (void**) (void*) &rep->info.enum_rep.definition);
 
-    BAIL_ON_ERROR(status = lwmsg_context_alloc(
-                      map->context,
-                      count * sizeof(LWMsgVariantRep),
-                      (void**) (void*) &rep->info.enum_rep.variants));
-
-    for (lwmsg_type_enter(iter, &member), i = 0;
-         lwmsg_type_valid(&member);
-         lwmsg_type_next(&member), i++)
+    if (status == LWMSG_STATUS_NOT_FOUND)
     {
-        rep->info.enum_rep.variants[i].is_mask = member.info.kind_variant.is_mask;
-        rep->info.enum_rep.variants[i].value = member.tag;
-        BAIL_ON_ERROR(status = lwmsg_strdup(map->context,
-                          member.meta.type_name,
-                          &rep->info.enum_rep.variants[i].name));
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          sizeof(*rep->info.enum_rep.definition),
+                          (void**) (void*) &rep->info.enum_rep.definition));
+
+        BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(
+                          map,
+                          SPEC_DEF,
+                          member.spec,
+                          rep->info.enum_rep.definition));
+
+        BAIL_ON_ERROR(status = lwmsg_strdup(
+                          map->context,
+                          lwmsg_type_name_suffix(iter->meta.type_name),
+                          &rep->info.enum_rep.definition->name));
+
+        rep->info.enum_rep.definition->width = (uint8_t) iter->info.kind_integer.width;
+        rep->info.enum_rep.definition->sign = (uint8_t) iter->info.kind_integer.sign;
+        rep->info.enum_rep.definition->variant_count = (uint16_t) count;
+
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          count * sizeof(LWMsgVariantRep),
+                          (void**) (void*) &rep->info.enum_rep.definition->variants));
+
+        for (lwmsg_type_enter(iter, &member), i = 0;
+             lwmsg_type_valid(&member);
+             lwmsg_type_next(&member), i++)
+        {
+            rep->info.enum_rep.definition->variants[i].is_mask = member.info.kind_variant.is_mask;
+            rep->info.enum_rep.definition->variants[i].value = member.tag;
+            BAIL_ON_ERROR(status = lwmsg_strdup(map->context,
+                                                member.meta.type_name,
+                                                &rep->info.enum_rep.definition->variants[i].name));
+        }
+    }
+    else
+    {
+        BAIL_ON_ERROR(status);
     }
 
 error:
@@ -565,29 +694,59 @@ lwmsg_type_rep_from_struct(
     LWMsgTypeIter member;
     LWMsgTypeIter* old_struct = NULL;
 
-    rep->info.struct_rep.field_count = (uint16_t) count;
+    lwmsg_type_enter(iter, &member);
 
-    BAIL_ON_ERROR(status = lwmsg_context_alloc(
-                      map->context,
-                      count * sizeof(LWMsgFieldRep),
-                      (void**) (void*) &rep->info.struct_rep.fields));
+    status = lwmsg_type_rep_map_find_spec(
+        map,
+        SPEC_DEF,
+        member.spec,
+        (void**) (void*) &rep->info.struct_rep.definition);
 
-    old_struct = map->dominating_iter;
-    map->dominating_iter = iter;
-
-    for (lwmsg_type_enter(iter, &member), i = 0;
-         lwmsg_type_valid(&member);
-         lwmsg_type_next(&member), i++)
+    if (status == LWMSG_STATUS_NOT_FOUND)
     {
-        BAIL_ON_ERROR(status = lwmsg_strdup(map->context, member.meta.member_name, &rep->info.struct_rep.fields[i].name));
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          sizeof(*rep->info.struct_rep.definition),
+                          (void**) (void*) &rep->info.struct_rep.definition));
 
-        BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
+        BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(
                           map,
-                          &member,
-                          &rep->info.struct_rep.fields[i].type));
-    }
+                          SPEC_DEF,
+                          member.spec,
+                          rep->info.struct_rep.definition));
 
-    map->dominating_iter = old_struct;
+        BAIL_ON_ERROR(status = lwmsg_strdup(
+                          map->context,
+                          lwmsg_type_name_suffix(iter->meta.type_name),
+                          &rep->info.struct_rep.definition->name));
+
+        rep->info.struct_rep.definition->field_count = (uint16_t) count;
+
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          count * sizeof(LWMsgFieldRep),
+                          (void**) (void*) &rep->info.struct_rep.definition->fields));
+
+        old_struct = map->dominating_iter;
+        map->dominating_iter = iter;
+
+        for (lwmsg_type_enter(iter, &member), i = 0;
+             lwmsg_type_valid(&member);
+             lwmsg_type_next(&member), i++)
+        {
+            BAIL_ON_ERROR(status = lwmsg_strdup(
+                              map->context,
+                              member.meta.member_name,
+                              &rep->info.struct_rep.definition->fields[i].name));
+
+            BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
+                              map,
+                              &member,
+                              &rep->info.struct_rep.definition->fields[i].type));
+        }
+
+        map->dominating_iter = old_struct;
+    }
 
 error:
 
@@ -607,36 +766,66 @@ lwmsg_type_rep_from_union(
     size_t i = 0;
     LWMsgTypeIter member;
 
-    rep->info.union_rep.arm_count = (uint16_t) count;
-    rep->info.union_rep.discrim_member_index = -1;
+    lwmsg_type_enter(iter, &member);
 
-    for (lwmsg_type_enter(map->dominating_iter, &member), i = 0;
-         lwmsg_type_valid(&member);
-         lwmsg_type_next(&member), i++)
+    status = lwmsg_type_rep_map_find_spec(
+        map,
+        SPEC_DEF,
+        member.spec,
+        (void**) (void*) &rep->info.struct_rep.definition);
+
+    if (status == LWMSG_STATUS_NOT_FOUND)
     {
-        if (member.offset == iter->info.kind_compound.discrim.offset)
-        {
-            rep->info.union_rep.discrim_member_index = i;
-            break;
-        }
-    }
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          sizeof(*rep->info.union_rep.definition),
+                          (void**) (void*) &rep->info.union_rep.definition));
 
-    BAIL_ON_ERROR(status = lwmsg_context_alloc(
-                      map->context,
-                      count * sizeof(LWMsgArmRep),
-                      (void**) (void*) &rep->info.union_rep.arms));
-
-    for (lwmsg_type_enter(iter, &member), i = 0;
-         lwmsg_type_valid(&member);
-         lwmsg_type_next(&member), i++)
-    {
-        BAIL_ON_ERROR(status = lwmsg_strdup(map->context, member.meta.member_name, &rep->info.union_rep.arms[i].name));
-        rep->info.union_rep.arms[i].tag = member.tag;
-
-        BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
+        BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(
                           map,
-                          &member,
-                          &rep->info.union_rep.arms[i].type));
+                          SPEC_DEF,
+                          member.spec,
+                          rep->info.union_rep.definition));
+
+        BAIL_ON_ERROR(status = lwmsg_strdup(
+                          map->context,
+                          lwmsg_type_name_suffix(iter->meta.type_name),
+                          &rep->info.union_rep.definition->name));
+
+        rep->info.union_rep.definition->arm_count = (uint16_t) count;
+        rep->info.union_rep.discrim_member_index = -1;
+
+        for (lwmsg_type_enter(map->dominating_iter, &member), i = 0;
+             lwmsg_type_valid(&member);
+             lwmsg_type_next(&member), i++)
+        {
+            if (member.offset == iter->info.kind_compound.discrim.offset)
+            {
+                rep->info.union_rep.discrim_member_index = i;
+                break;
+            }
+        }
+
+        BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                          map->context,
+                          count * sizeof(LWMsgArmRep),
+                          (void**) (void*) &rep->info.union_rep.definition->arms));
+
+        for (lwmsg_type_enter(iter, &member), i = 0;
+             lwmsg_type_valid(&member);
+             lwmsg_type_next(&member), i++)
+        {
+            BAIL_ON_ERROR(status = lwmsg_strdup(
+                              map->context,
+                              member.meta.member_name,
+                              &rep->info.union_rep.definition->arms[i].name));
+            rep->info.union_rep.definition->arms[i].tag = member.tag;
+
+            BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec_internal(
+                              map,
+                              &member,
+                              &rep->info.union_rep.definition->arms[i].type));
+        }
     }
 
 error:
@@ -766,38 +955,6 @@ error:
 }
 
 static
-const char*
-lwmsg_type_name_suffix(
-    const char* name
-    )
-{
-    static const char* prefix_struct = "struct ";
-    static const char* prefix_union = "union ";
-    static const char* prefix_enum = "enum ";
-
-    if (name == NULL)
-    {
-        return NULL;
-    }
-    else if (!strncmp(name, prefix_struct, strlen(prefix_struct)))
-    {
-        return name + strlen(prefix_struct);
-    }
-    else if (!strncmp(name, prefix_union, strlen(prefix_union)))
-    {
-        return name + strlen(prefix_union);
-    }
-    else if (!strncmp(name, prefix_enum, strlen(prefix_enum)))
-    {
-        return name + strlen(prefix_enum);
-    }
-    else
-    {
-        return name;
-    }
-}
-
-static
 LWMsgStatus
 lwmsg_type_rep_from_spec_internal(
     LWMsgTypeRepMap* map,
@@ -806,9 +963,8 @@ lwmsg_type_rep_from_spec_internal(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-    LWMsgTypeRep* my_rep = NULL;
 
-    status = lwmsg_type_rep_map_find_spec(map, iter->spec, rep);
+    status = lwmsg_type_rep_map_find_spec(map, SPEC_TYPE, iter->spec, (void**) (void*) rep);
 
     if (status == LWMSG_STATUS_NOT_FOUND)
     {
@@ -816,18 +972,13 @@ lwmsg_type_rep_from_spec_internal(
 
         BAIL_ON_ERROR(status = lwmsg_context_alloc(
                           map->context,
-                          sizeof(*my_rep),
-                          (void**) (void*) &my_rep));
+                          sizeof(**rep),
+                          (void**) (void*) rep));
 
-        BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(map, iter->spec, my_rep));
+        BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(map, SPEC_TYPE, iter->spec, *rep));
 
-        my_rep->kind = iter->kind;
-        my_rep->flags = iter->attrs.flags;
-
-        BAIL_ON_ERROR(status = lwmsg_strdup(
-                          map->context,
-                          lwmsg_type_name_suffix(iter->meta.type_name),
-                          &my_rep->name));
+        (*rep)->kind = iter->kind;
+        (*rep)->flags = iter->attrs.flags;
 
         switch (iter->kind)
         {
@@ -835,43 +986,43 @@ lwmsg_type_rep_from_spec_internal(
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_integer(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_ENUM:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_enum(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_STRUCT:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_struct(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_UNION:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_union(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_POINTER:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_pointer(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_ARRAY:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_array(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_CUSTOM:
             BAIL_ON_ERROR(status = lwmsg_type_rep_from_custom(
                               map,
                               iter,
-                              my_rep));
+                              *rep));
             break;
         case LWMSG_KIND_VOID:
             break;
@@ -879,8 +1030,6 @@ lwmsg_type_rep_from_spec_internal(
             BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
             break;
         }
-
-        *rep = my_rep;
     }
     else
     {

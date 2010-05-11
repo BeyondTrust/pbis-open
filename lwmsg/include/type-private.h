@@ -157,11 +157,26 @@ typedef struct LWMsgTypeIter
     } debug;
 } LWMsgTypeIter;
 
+typedef struct LWMsgIntegerDefRep
+{
+    uint8_t width;
+    LWMsgSignage sign;
+    unsigned seen:1;
+} LWMsgIntegerDefRep;
+
 typedef struct LWMsgFieldRep
 {
     struct LWMsgTypeRep* type;
     char* name;
 } LWMsgFieldRep;
+
+typedef struct LWMsgStructDefRep
+{
+    uint16_t field_count;
+    LWMsgFieldRep* fields;
+    char* name;
+    unsigned seen:1;
+} LWMsgStructDefRep;
 
 typedef struct LWMsgArmRep
 {
@@ -170,6 +185,14 @@ typedef struct LWMsgArmRep
     char* name;
 } LWMsgArmRep;
 
+typedef struct LWMsgUnionDefRep
+{
+    uint16_t arm_count;
+    LWMsgArmRep* arms;
+    char* name;
+    unsigned seen:1;
+} LWMsgUnionDefRep;
+
 typedef struct LWMsgVariantRep
 {
     uint8_t is_mask;
@@ -177,37 +200,40 @@ typedef struct LWMsgVariantRep
     char* name;
 } LWMsgVariantRep;
 
+typedef struct LWMsgEnumDefRep
+{
+    uint8_t width;
+    LWMsgSignage sign;
+    uint16_t variant_count;
+    LWMsgVariantRep* variants;
+    char* name;
+    unsigned seen:1;
+} LWMsgEnumDefRep;
+
 typedef struct LWMsgTypeRep
 {
     LWMsgKind kind;
     LWMsgTypeFlags flags;
-    char* name;
     union LWMsgTypeRepInfo
     {
         struct LWMsgIntegerRep
         {
-            uint8_t width;
-            LWMsgSignage sign;
+            LWMsgIntegerDefRep* definition;
             uint64_t lower_bound;
             uint64_t upper_bound;
         } integer_rep;
         struct LWMsgEnumRep
         {
-            uint8_t width;
-            LWMsgSignage sign;
-            uint16_t variant_count;
-            LWMsgVariantRep* variants;
+            LWMsgEnumDefRep* definition;
         } enum_rep;
         struct LWMsgStructRep
         {
-            uint16_t field_count;
-            LWMsgFieldRep* fields;
+            LWMsgStructDefRep* definition;
         } struct_rep;
         struct LWMsgUnionRep
         {
-            uint16_t arm_count;
-            LWMsgArmRep* arms;
-            uint16_t discrim_member_index;
+            LWMsgUnionDefRep* definition;
+            int16_t discrim_member_index;
         } union_rep;
         struct LWMsgPointerRep
         {
@@ -228,6 +254,7 @@ typedef struct LWMsgTypeRep
         struct LWMsgCustomRep
         {
             struct LWMsgTypeRep* transmitted_type;
+            const char* name;
         } custom_rep;
     } info;
 } LWMsgTypeRep;
@@ -243,8 +270,16 @@ typedef struct LWMsgEnumRep LWMsgEnumRep;
 
 typedef struct LWMsgTypeRepMapEntry
 {
-    LWMsgTypeSpec* spec;
-    LWMsgTypeRep* rep;
+    struct SpecKey
+    {
+        enum SpecKind
+        {
+            SPEC_TYPE,
+            SPEC_DEF
+        } kind;
+        LWMsgTypeSpec* spec;
+    } spec;
+    void* rep;
     LWMsgRing ring1;
     LWMsgRing ring2;
 } LWMsgTypeRepMapEntry;
