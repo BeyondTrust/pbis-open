@@ -60,7 +60,8 @@ librdr_sys_la_SOURCES =   \
     rdrclose.c
 
 librdr_sys_la_CPPFLAGS = \
-    -I@top_srcdir@  	   \
+    $(AM_CPPFLAGS) \
+    -I@top_srcdir@ \
     -I@top_srcdir@/include \
     -I@top_srcdir@/server/include
 
