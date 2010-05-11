@@ -646,8 +646,8 @@ AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/socket.h>
 ])
 
-saved_CFLAGS="$CFLAGS $AM_CPPFLAGS"
-CFLAGS="$CFLAGS -Wall -Werror"
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror $AM_CPPFLAGS"
 
 AC_MSG_CHECKING([if getsockname takes socklen_t*])
 AC_TRY_COMPILE([
