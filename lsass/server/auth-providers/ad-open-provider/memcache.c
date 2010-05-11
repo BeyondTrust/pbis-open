@@ -42,6 +42,9 @@
  * Authors: Krishna Ganugapati (kstemen@likewisesoftware.com)
  *
  */
+
+#define LWMSG_SPEC_META
+
 #include "adprovider.h"
 
 
@@ -606,7 +609,7 @@ MemCacheStoreFile(
     dwError = MAP_LWMSG_ERROR(lwmsg_archive_set_file(
                     pArchive,
                     pszTempFile,
-                    LWMSG_ARCHIVE_WRITE,
+                    LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA,
                     0600));
     BAIL_ON_LSA_ERROR(dwError);
     dwError = MAP_LWMSG_ERROR(lwmsg_archive_open(
