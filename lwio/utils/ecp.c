@@ -334,7 +334,7 @@ IoRtlEcpListInsert(
     status = IoRtlEcpListFind(pEcpList, pszType, NULL, NULL);
     if (STATUS_SUCCESS == status)
     {
-        status = STATUS_INVALID_PARAMETER;
+        status = STATUS_OBJECT_NAME_EXISTS;
         GOTO_CLEANUP_EE(EE);
     }
     else if (STATUS_NOT_FOUND == status)
@@ -405,3 +405,13 @@ cleanup:
 
     return status;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
