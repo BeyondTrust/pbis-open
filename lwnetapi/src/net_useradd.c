@@ -27,7 +27,7 @@
  *
  * Module Name:
  *
- *        net_useradd.h
+ *        net_useradd.c
  *
  * Abstract:
  *
