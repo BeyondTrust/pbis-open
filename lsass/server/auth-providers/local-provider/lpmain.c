@@ -213,8 +213,19 @@ LocalAuthenticateUserPam(
     PWSTR pwszPassword = NULL;
     PLSA_SECURITY_OBJECT pObject = NULL;
     DWORD dwBadPasswordCount = 0;
+    PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
+
+    if (ppPamAuthInfo)
+    {
+        *ppPamAuthInfo = NULL;
+    }
 
     dwError = LocalCheckForQueryAccess(hProvider);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    sizeof(*pPamAuthInfo),
+                    (PVOID*)&pPamAuthInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LocalDirFindObjectByGenericName(
@@ -270,11 +281,12 @@ LocalAuthenticateUserPam(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-cleanup:
-    if (*ppPamAuthInfo)
+    if (ppPamAuthInfo)
     {
-        *ppPamAuthInfo = NULL;
+        *ppPamAuthInfo = pPamAuthInfo;
     }
+
+cleanup:
 
     LsaUtilFreeSecurityObject(pObject);
 
@@ -288,6 +300,11 @@ cleanup:
     return dwError;
 
 error:
+
+    if (pPamAuthInfo)
+    {
+        LsaFreeAuthUserPamInfo(pPamAuthInfo);
+    }
 
     goto cleanup;
 }

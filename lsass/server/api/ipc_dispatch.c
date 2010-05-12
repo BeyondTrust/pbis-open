@@ -423,9 +423,7 @@ LsaSrvIpcAuthenticateUserPam(
     PLSA_AUTH_USER_PAM_INFO pInfo = NULL;
     PLSA_IPC_ERROR pError = NULL;
 
-    dwError = LwAllocateMemory(sizeof(*pInfo),
-                                    (PVOID)&pInfo);
-    BAIL_ON_LSA_ERROR(dwError);
+    // The following call with *always* allocate pInfo
 
     dwError = LsaSrvAuthenticateUserPam(
                         LsaSrvIpcGetSessionData(pCall),
