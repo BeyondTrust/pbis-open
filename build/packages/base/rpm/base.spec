@@ -51,6 +51,11 @@ The likewise-base-devel package includes the development libraries and header fi
 
 %install
 rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
+%if %{Compat32}
+rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/include
+rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
+%endif
+
 
 
 %clean
