@@ -1,6 +1,6 @@
 netapi_builddir = $(top_builddir)/src
 
-noinst_PROGRAMS = netapitest
+bin_PROGRAMS = netapitest
 
 netapitest_SOURCES =    \
     netapitest.c     \

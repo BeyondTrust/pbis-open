@@ -431,7 +431,7 @@ AC_FUNC_VPRINTF
 AC_FUNC_STRERROR_R
 
 AC_CHECK_FUNCS([strtoll __strtoll strtoull __strtoull strtol strtoul])
-AC_CHECK_FUNCS([stpncpy strnlen])
+AC_CHECK_FUNCS([stpncpy strnlen strndup])
 AC_CHECK_FUNCS([atexit localtime_r memset strchr strerror strerror_r vsyslog])
 AC_CHECK_FUNCS([rpl_realloc rpl_malloc])
 
@@ -455,6 +455,7 @@ AC_SUBST(LWBASE_LIBS)
 AC_CONFIG_FILES([
         Makefile
         include/Makefile
-        src/Makefile])
+        src/Makefile
+        test/Makefile])
 
 AC_OUTPUT

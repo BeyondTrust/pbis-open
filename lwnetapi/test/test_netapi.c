@@ -31,6 +31,106 @@
 #include "includes.h"
 
 
+DWORD
+CleanupAccount(
+    PCWSTR  pwszHostname,
+    PWSTR   pwszUsername
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+
+    err = NetUserDel(pwszHostname,
+                     pwszUsername);
+    if (err == ERROR_NO_SUCH_USER)
+    {
+        err = ERROR_SUCCESS;
+    }
+
+    return err;
+}
+
+
+DWORD
+EnsureUserAccount(
+    PCWSTR     pwszHostname,
+    PWSTR      pwszUsername,
+    PBOOLEAN  pbCreated
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    USER_INFO_0 Info = {0};
+    DWORD dwParmError = 0;
+
+    Info.usri0_name = pwszUsername;
+
+    err = NetUserAdd(pwszHostname,
+                     0,
+                     (PVOID)&Info,
+                     &dwParmError);
+    if (err == ERROR_SUCCESS)
+    {
+        *pbCreated = TRUE;
+    }
+    else if (err == ERROR_USER_EXISTS)
+    {
+        *pbCreated = FALSE;
+        err = ERROR_SUCCESS;
+    }
+
+    return err;
+}
+
+
+DWORD
+CleanupAlias(
+    PCWSTR  pwszHostname,
+    PWSTR   pwszAliasname
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+
+    err = NetLocalGroupDel(pwszHostname,
+                           pwszAliasname);
+    if (err == ERROR_NO_SUCH_ALIAS)
+    {
+        err = ERROR_SUCCESS;
+    }
+
+    return err;
+}
+
+
+DWORD
+EnsureAlias(
+    PCWSTR     pwszHostname,
+    PWSTR      pwszAliasname,
+    PBOOLEAN  pbCreated
+    )
+{
+    DWORD err = ERROR_SUCCESS;
+    LOCALGROUP_INFO_0 Info = {0};
+    DWORD dwParmError = 0;
+
+    Info.lgrpi0_name = pwszAliasname;
+
+    err = NetLocalGroupAdd(pwszHostname,
+                           0,
+                           (PVOID)&Info,
+                           &dwParmError);
+    if (err == ERROR_SUCCESS)
+    {
+        *pbCreated = TRUE;
+    }
+    else if (err == ERROR_ALIAS_EXISTS)
+    {
+        *pbCreated = FALSE;
+        err = ERROR_SUCCESS;
+    }
+
+    return err;
+}
+
+
 int GetUserLocalGroups(const wchar16_t *hostname, wchar16_t *username,
                        LOCALGROUP_USERS_INFO_0 *grpinfo, UINT32 *entries)
 {
@@ -213,12 +313,12 @@ int AddUser(const wchar16_t *hostname, const wchar16_t *username)
 
     CALL_NETAPI(err, NetUserAdd(hostname, level, (void*)info1, &parm_err));
 
-    SAFE_FREE(info1->usri1_comment);
-    SAFE_FREE(info1->usri1_home_dir);
-    SAFE_FREE(info1->usri1_script_path);
-    SAFE_FREE(info1->usri1_password);
-    SAFE_FREE(info1->usri1_name);
-    SAFE_FREE(info1);
+    LW_SAFE_FREE_MEMORY(info1->usri1_comment);
+    LW_SAFE_FREE_MEMORY(info1->usri1_home_dir);
+    LW_SAFE_FREE_MEMORY(info1->usri1_script_path);
+    LW_SAFE_FREE_MEMORY(info1->usri1_password);
+    LW_SAFE_FREE_MEMORY(info1->usri1_name);
+    LW_SAFE_FREE_MEMORY(info1);
 
     return err;
 }
@@ -258,8 +358,8 @@ int AddLocalGroup(const wchar16_t *hostname, const wchar16_t *aliasname)
     
     OUTPUT_ARG_UINT(parm_err);
 
-    SAFE_FREE(info.lgrpi1_name);
-    SAFE_FREE(info.lgrpi1_comment);
+    LW_SAFE_FREE_MEMORY(info.lgrpi1_name);
+    LW_SAFE_FREE_MEMORY(info.lgrpi1_comment);
 
     return err;
 }
@@ -516,17 +616,17 @@ CallNetUserAdd(
 static
 BOOL
 CallNetUserSetInfo(
-    PCWSTR pwszHostname,
-    DWORD  dwLevel,
-    PWSTR  pwszUsername,
-    PWSTR  pwszChangedUsername,
-    PWSTR  pwszFullName,
-    PWSTR  pwszComment,
-    PWSTR  pwszHomedir,
-    PWSTR  pwszScriptPath,
-    PWSTR  pwszPassword,
-    DWORD  dwFlags,
-    PBOOL  pbRenamed
+    PCWSTR   pwszHostname,
+    DWORD    dwLevel,
+    PWSTR    pwszUsername,
+    PWSTR    pwszChangedUsername,
+    PWSTR    pwszFullName,
+    PWSTR    pwszComment,
+    PWSTR    pwszHomedir,
+    PWSTR    pwszScriptPath,
+    PWSTR    pwszPassword,
+    DWORD    dwFlags,
+    PBOOLEAN pbRenamed
     )
 {
     BOOL ret = TRUE;
@@ -894,12 +994,12 @@ CallNetLocalGroupAdd(
 static
 BOOL
 CallNetLocalGroupSetInfo(
-    PCWSTR pwszHostname,
-    DWORD  dwLevel,
-    PWSTR  pwszAliasname,
-    PWSTR  pwszChangedAliasname,
-    PWSTR  pwszComment,
-    PBOOL  pbRenamed
+    PCWSTR    pwszHostname,
+    DWORD     dwLevel,
+    PWSTR     pwszAliasname,
+    PWSTR     pwszChangedAliasname,
+    PWSTR     pwszComment,
+    PBOOLEAN  pbRenamed
     )
 {
     BOOL ret = TRUE;
@@ -1096,8 +1196,6 @@ TestNetUserEnum(
 
     TESTINFO(t, hostname, user, pass);
 
-    SET_SESSION_CREDS(hCreds);
-
     perr = fetch_value(options, optcount, "filter", pt_uint32,
                        (UINT32*)&dwFilter, (UINT32*)&dwDefaultFilter);
     if (!perr_is_ok(perr)) perr_fail(perr);
@@ -1150,10 +1248,6 @@ TestNetUserEnum(
                                    dwFilter);
         }
     }
-
-done:
-    RELEASE_SESSION_CREDS;
-
     return ret;
 }
 
@@ -1193,8 +1287,6 @@ TestNetUserAdd(
     DWORD i = 0;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
@@ -1246,9 +1338,8 @@ TestNetUserAdd(
     {
         dwLevel = pdwLevels[i];
 
-        status = CleanupAccount(hostname, pwszUsername);
-        if (status != 0) rpc_fail(status);
-
+        err = CleanupAccount(hostname, pwszUsername);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetUserAdd(hostname,
                               dwLevel,
@@ -1261,13 +1352,11 @@ TestNetUserAdd(
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszUsername);
-    SAFE_FREE(pwszComment);
-    SAFE_FREE(pwszHomedir);
-    SAFE_FREE(pwszScriptPath);
-    SAFE_FREE(pwszPassword);
+    LW_SAFE_FREE_MEMORY(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszComment);
+    LW_SAFE_FREE_MEMORY(pwszHomedir);
+    LW_SAFE_FREE_MEMORY(pwszScriptPath);
+    LW_SAFE_FREE_MEMORY(pwszPassword);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -1284,11 +1373,9 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
     NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
     PWSTR pwszUsername = NULL;
-    BOOL bCreated = FALSE;
+    BOOLEAN bCreated = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
@@ -1296,16 +1383,14 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
 
     PARAM_INFO("username", pt_w16string, pwszUsername);
 
-    status = EnsureUserAccount(hostname, pwszUsername, &bCreated);
-    if (status != 0) rpc_fail(status);
+    err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+    if (err != 0) netapi_fail(err);
 
     CALL_NETAPI(err, NetUserDel(hostname, pwszUsername));
     if (err != 0) netapi_fail(err);
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszUsername);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -1327,6 +1412,7 @@ TestNetUserGetInfo(
 
     BOOL ret = TRUE;
     enum param_err perr = perr_success;
+    DWORD err = ERROR_SUCCESS;
     NTSTATUS status = STATUS_SUCCESS;
     PWSTR pwszUsername = NULL;
     DWORD dwSelectedLevels[] = { 0 };
@@ -1335,11 +1421,9 @@ TestNetUserGetInfo(
     PDWORD pdwLevels = NULL;
     DWORD i = 0;
     DWORD dwLevel = 0;
-    BOOL bCreated = FALSE;
+    BOOLEAN bCreated = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
@@ -1368,10 +1452,10 @@ TestNetUserGetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        status = EnsureUserAccount(hostname,
-                                   pwszUsername,
-                                   &bCreated);
-        if (status != 0) rpc_fail(status);
+        err = EnsureUserAccount(hostname,
+                                pwszUsername,
+                                &bCreated);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetUserGetInfo(hostname,
                                   pwszUsername,
@@ -1379,15 +1463,20 @@ TestNetUserGetInfo(
 
         if (bCreated)
         {
-            status = CleanupAccount(hostname, pwszUsername);
-            if (status != 0) rpc_fail(status);
+            err = NetUserDel(hostname, pwszUsername);
+            if (err == ERROR_NO_SUCH_USER)
+            {
+                err = ERROR_SUCCESS;
+            }
+            else
+            {
+                netapi_fail(status);
+            }
         }
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszUsername);
 
     return ret;
 }
@@ -1415,7 +1504,6 @@ TestNetUserSetInfo(
 
     BOOL ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
     DWORD dwSelectedLevels[] = { 0 };
     DWORD dwAvailableLevels[] = { 0, 1, 2, 3, 4, 1003, 1007, 1008, 1011 };
@@ -1431,12 +1519,10 @@ TestNetUserSetInfo(
     PWSTR pwszPassword = NULL;
     DWORD dwFlags = 0;
     DWORD i = 0;
-    BOOL bCreated = FALSE;
-    BOOL bRenamed = FALSE;
+    BOOLEAN bCreated = FALSE;
+    BOOLEAN bRenamed = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
@@ -1504,14 +1590,14 @@ TestNetUserSetInfo(
         if (dwLevel == 1003 &&
             pwszPassword == NULL) continue;
 
-        status = EnsureUserAccount(hostname,
-                                   pwszUsername,
-                                   &bCreated);
-        if (status != 0) rpc_fail(status);
+        err = EnsureUserAccount(hostname,
+                                pwszUsername,
+                                &bCreated);
+        if (err != 0) netapi_fail(err);
 
-        status = CleanupAccount(hostname,
-                                pwszChangedUsername);
-        if (status != 0) rpc_fail(status);
+        err = CleanupAccount(hostname,
+                             pwszChangedUsername);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetUserSetInfo(hostname,
                                   dwLevel,
@@ -1546,20 +1632,18 @@ TestNetUserSetInfo(
 
     if (bCreated)
     {
-        status = CleanupAccount(hostname, pwszUsername);
-        if (status != 0) rpc_fail(status);
+        err = CleanupAccount(hostname, pwszUsername);
+        if (err != 0) rpc_fail(err);
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszUsername);
-    SAFE_FREE(pwszFullName);
-    SAFE_FREE(pwszComment);
-    SAFE_FREE(pwszHomedir);
-    SAFE_FREE(pwszScriptPath);
-    SAFE_FREE(pwszPassword);
-    SAFE_FREE(pwszChangedUsername);
+    LW_SAFE_FREE_MEMORY(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszFullName);
+    LW_SAFE_FREE_MEMORY(pwszComment);
+    LW_SAFE_FREE_MEMORY(pwszHomedir);
+    LW_SAFE_FREE_MEMORY(pwszScriptPath);
+    LW_SAFE_FREE_MEMORY(pwszPassword);
+    LW_SAFE_FREE_MEMORY(pwszChangedUsername);
 
     return ret;
 }
@@ -1580,7 +1664,7 @@ TestNetUserGetLocalGroups(
 
     BOOL ret = TRUE;
     enum param_err perr = perr_success;
-    NTSTATUS status = STATUS_SUCCESS;
+    DWORD err = ERROR_SUCCESS;
     PWSTR pwszUsername = NULL;
     DWORD dwSelectedLevels[] = { 0 };
     DWORD dwAvailableLevels[] = { 0 };
@@ -1588,11 +1672,9 @@ TestNetUserGetLocalGroups(
     PDWORD pdwLevels = NULL;
     DWORD i = 0;
     DWORD dwLevel = 0;
-    BOOL bCreated = FALSE;
+    BOOLEAN bCreated = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
@@ -1621,10 +1703,10 @@ TestNetUserGetLocalGroups(
     {
         dwLevel = pdwLevels[i];
 
-        status = EnsureUserAccount(hostname,
-                                   pwszUsername,
-                                   &bCreated);
-        if (status != 0) rpc_fail(status);
+        err = EnsureUserAccount(hostname,
+                                pwszUsername,
+                                &bCreated);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetUserGetLocalGroups(hostname,
                                          pwszUsername,
@@ -1632,15 +1714,13 @@ TestNetUserGetLocalGroups(
                                          0);
         if (bCreated)
         {
-            status = CleanupAccount(hostname, pwszUsername);
-            if (status != 0) rpc_fail(status);
+            err = CleanupAccount(hostname, pwszUsername);
+            if (err != 0) netapi_fail(err);
         }
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszUsername);
 
     return ret;
 }
@@ -1678,6 +1758,10 @@ int TestNetJoinDomain(struct test *t, const wchar16_t *hostname,
                        &password, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
+    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+                       &domain_name, NULL);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
     perr = fetch_value(options, optcount, "accountou", pt_w16string,
                        &accountou, &def_accountou);
     if (!perr_is_ok(perr)) perr_fail(perr);
@@ -1705,7 +1789,7 @@ int TestNetJoinDomain(struct test *t, const wchar16_t *hostname,
     if (rejoin) opts |= NETSETUP_DOMAIN_JOIN_IF_JOINED;
     if (deferspn) opts |= NETSETUP_DEFER_SPN_SET;
 
-    CALL_NETAPI(err, NetJoinDomain(NULL, hostname, accountou,
+    CALL_NETAPI(err, NetJoinDomain(hostname, domain_name, accountou,
                                    username, password, opts));
     if (err != 0) netapi_fail(err);
 
@@ -1730,9 +1814,10 @@ done:
     status = LwpsClosePasswordStore(store);
     if (status != STATUS_SUCCESS) return false;
 
-    SAFE_FREE(username);
-    SAFE_FREE(password);
-    SAFE_FREE(accountou);
+    LW_SAFE_FREE_MEMORY(domain_name);
+    LW_SAFE_FREE_MEMORY(username);
+    LW_SAFE_FREE_MEMORY(password);
+    LW_SAFE_FREE_MEMORY(accountou);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -1776,27 +1861,9 @@ int TestNetUnjoinDomain(struct test *t, const wchar16_t *hostname,
     if (err != 0) netapi_fail(err);
 
 done:
-    SAFE_FREE(username);
-    SAFE_FREE(password);
+    LW_SAFE_FREE_MEMORY(username);
+    LW_SAFE_FREE_MEMORY(password);
 
-    return (err == ERROR_SUCCESS &&
-            status == STATUS_SUCCESS);
-}
-
-
-int TestNetMachineChangePassword(struct test *t, const wchar16_t *hostname,
-                                 const wchar16_t *user, const wchar16_t *pass,
-                                 struct parameter *options, int optcount)
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    NET_API_STATUS err = ERROR_SUCCESS;
-
-    TESTINFO(t, hostname, user, pass);
-
-    CALL_NETAPI(err, NetMachineChangePassword());
-    if (err != ERROR_SUCCESS) netapi_fail(err);
-
-done:
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
 }
@@ -1814,11 +1881,9 @@ int TestNetUserChangePassword(struct test *t, const wchar16_t *hostname,
     NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
     wchar16_t *username, *oldpassword, *newpassword;
-    BOOL bCreated = FALSE;
+    BOOLEAN bCreated = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "username", pt_w16string,
                        &username, &defusername);
@@ -1836,178 +1901,19 @@ int TestNetUserChangePassword(struct test *t, const wchar16_t *hostname,
     PARAM_INFO("oldpassword", pt_w16string, oldpassword);
     PARAM_INFO("newpassword", pt_w16string, newpassword);
 
-    status = EnsureUserAccount(hostname, username, &bCreated);
-    if (status != 0) rpc_fail(status);
+    err = EnsureUserAccount(hostname,
+                            username,
+                            &bCreated);
+    if (err != 0) netapi_fail(err);
 
     CALL_NETAPI(err, NetUserChangePassword(hostname, username,
                                            oldpassword, newpassword));
     if (err != 0) netapi_fail(err);
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(username);
-    SAFE_FREE(oldpassword);
-    SAFE_FREE(newpassword);
-
-    return (err == ERROR_SUCCESS &&
-            status == STATUS_SUCCESS);
-}
-
-
-int TestNetUserLocalGroups(struct test *t, const wchar16_t *hostname,
-                           const wchar16_t *user, const wchar16_t *pass,
-                           struct parameter *options, int optcount)
-{
-    const char *defusername = "TestUser";
-    const char *defaliasname = "TestAlias";
-    const char *def_admin_user = "Administrator";
-    const char *def_guest_user = "Guest";
-    const char *def_guests_group = "Guests";
-    const char *def_admins_group = "Administrators";
-
-    NTSTATUS status = STATUS_SUCCESS;
-    NET_API_STATUS err = ERROR_SUCCESS;
-    enum param_err perr = perr_success;
-    LOCALGROUP_USERS_INFO_0 *grpinfo;
-    UINT32 entries;
-    wchar16_t *username, *aliasname, *guest_user, *admin_user;
-    wchar16_t *guests_group, *admins_group, *domname;
-    BOOL bCreated = FALSE;
-
-    TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
-
-    perr = fetch_value(options, optcount, "username", pt_w16string,
-                       &username, &defusername);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
-                       &aliasname, &defaliasname);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "guestuser", pt_w16string,
-                       &guest_user, &def_guest_user);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "adminuser", pt_w16string,
-                       &admin_user, &def_admin_user);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "guestsgroup", pt_w16string,
-                       &guests_group, &def_guests_group);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "adminsgroup", pt_w16string,
-                       &admins_group, &def_admins_group);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    PARAM_INFO("username", pt_w16string, username);
-    PARAM_INFO("aliasname", pt_w16string, aliasname);
-    PARAM_INFO("guestuser", pt_w16string, guest_user);
-    PARAM_INFO("adminuser", pt_w16string, admin_user);
-    PARAM_INFO("guestsgroup", pt_w16string, guests_group);
-    PARAM_INFO("adminsgroup", pt_w16string, admins_group);
-
-    grpinfo = NULL;
-
-    /*
-     * Test 1a: Get groups of an existing and known user
-     */
-
-    err = GetUserLocalGroups(hostname, admin_user, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-    /*
-     * Test 1b: Get groups of an existing and known user
-     */
-
-    err = GetUserLocalGroups(hostname, guest_user, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-
-    /*
-     * Test 2: Get groups of newly created user has no group memberships yet
-     */
-    status = EnsureUserAccount(hostname, username, &bCreated);
-    if (status != 0) rpc_fail(status);
-
-
-    err = GetUserLocalGroups(hostname, username, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-    if (grpinfo != NULL && entries > 0) {
-        printf("Groups found while there should be none\n");
-        return false;
-    }
-
-    /*
-     * Test 3: Add user to 2 groups and get the local groups list
-     */
-
-    status = GetSamDomainName(&domname, hostname);
-    if (status != 0) rpc_fail(status);
-
-    err = AddLocalGroupMember(hostname, admins_group, domname, username);
-    if (err != 0) netapi_fail(err);
-
-    err = AddLocalGroupMember(hostname, guests_group, domname, username);
-    if (err != 0) netapi_fail(err);
-
-    err = GetUserLocalGroups(hostname, username, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-    if (entries != 2) {
-        w16printfw(L"User %ws should be member of at 2 groups because"
-                  L"they have been added to groups %ws and %ws",
-                  username, admins_group, guests_group);
-        return false;
-    }
-
-
-    /*
-     * Test 4: Add 2 existing users to a newly created group, and get the local groups list
-     */
-    status = EnsureAlias(hostname, aliasname, &bCreated);
-
-    err = AddLocalGroupMember(hostname, aliasname, domname, admin_user);
-    if (err != 0) netapi_fail(err);
-
-    err = AddLocalGroupMember(hostname, aliasname, domname, guest_user);
-    if (err != 0) netapi_fail(err);
-
-    err = GetUserLocalGroups(hostname, admin_user, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-    if (entries != 1) {
-        w16printfw(L"User %ws should be member of at least 1 alias because"
-                  L"they have been added to group %ws",
-                  admin_user, aliasname);
-        return false;
-    }
-
-    err = GetUserLocalGroups(hostname, guest_user, (void*)&grpinfo, &entries);
-    if (err != 0) netapi_fail(err);
-
-    if (entries != 1) {
-        w16printfw(L"User %ws should be member of at least 1 alias because"
-                  L"they have been added to group %ws",
-                  guest_user, aliasname);
-        return false;
-    }
-
-done:
-    DoCleanup(hostname, aliasname, username);
-
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(username);
-    SAFE_FREE(aliasname);
-    SAFE_FREE(admin_user);
-    SAFE_FREE(guest_user);
-    SAFE_FREE(admins_group);
-    SAFE_FREE(guests_group);
+    LW_SAFE_FREE_MEMORY(username);
+    LW_SAFE_FREE_MEMORY(oldpassword);
+    LW_SAFE_FREE_MEMORY(newpassword);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -2037,8 +1943,6 @@ TestNetLocalGroupEnum(
 
     TESTINFO(t, hostname, user, pass);
 
-    SET_SESSION_CREDS(hCreds);
-
     perr = fetch_value(options, optcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
@@ -2065,9 +1969,6 @@ TestNetLocalGroupEnum(
                                      dwLevel);
     }
 
-done:
-    RELEASE_SESSION_CREDS;
-
     return ret;
 }
 
@@ -2085,7 +1986,7 @@ TestNetLocalGroupAdd(
     PCSTR pszDefaultComment = "Test comment for new local group";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    NTSTATUS status = STATUS_SUCCESS;
+    DWORD err = ERROR_SUCCESS;
     BOOL ret = TRUE;
     enum param_err perr = perr_success;
     DWORD dwSelectedLevels[] = { 0 };
@@ -2098,8 +1999,6 @@ TestNetLocalGroupAdd(
     PWSTR pwszComment = NULL;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
@@ -2133,9 +2032,9 @@ TestNetLocalGroupAdd(
     {
         dwLevel = pdwLevels[i];
 
-        status = CleanupAlias(hostname,
-                              pwszAliasname);
-        if (status != 0) rpc_fail(status);
+        err = CleanupAlias(hostname,
+                           pwszAliasname);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupAdd(hostname,
                                     dwLevel,
@@ -2143,15 +2042,13 @@ TestNetLocalGroupAdd(
                                     pwszComment);
     }
 
-    status = CleanupAlias(hostname,
-                          pwszAliasname);
-    if (status != 0) rpc_fail(status);
+    err = CleanupAlias(hostname,
+                       pwszAliasname);
+    if (err != 0) netapi_fail(err);
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszAliasname);
-    SAFE_FREE(pwszComment);
+    LW_SAFE_FREE_MEMORY(pwszAliasname);
+    LW_SAFE_FREE_MEMORY(pwszComment);
 
     return ret;
 }
@@ -2170,8 +2067,6 @@ int TestDelLocalGroup(struct test *t, const wchar16_t *hostname,
 
     TESTINFO(t, hostname, user, pass);
 
-    SET_SESSION_CREDS(hCreds);
-
     perr = fetch_value(options, optcount, "aliasname", pt_w16string, &aliasname,
                        &def_aliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
@@ -2182,9 +2077,7 @@ int TestDelLocalGroup(struct test *t, const wchar16_t *hostname,
     if (err != ERROR_SUCCESS) netapi_fail(err);
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(aliasname);
+    LW_SAFE_FREE_MEMORY(aliasname);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -2206,7 +2099,7 @@ TestNetLocalGroupGetInfo(
 
     BOOL ret = TRUE;
     enum param_err perr = perr_success;
-    NTSTATUS status = STATUS_SUCCESS;
+    DWORD err = ERROR_SUCCESS;
     PWSTR pwszAliasname = NULL;
     DWORD dwSelectedLevels[] = { 0 };
     DWORD dwAvailableLevels[] = { 1 };
@@ -2214,11 +2107,9 @@ TestNetLocalGroupGetInfo(
     PDWORD pdwLevels = NULL;
     DWORD i = 0;
     DWORD dwLevel = 0;
-    BOOL bCreated = FALSE;
+    BOOLEAN bCreated = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
@@ -2247,10 +2138,10 @@ TestNetLocalGroupGetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        status = EnsureAlias(hostname,
-                             pwszAliasname,
-                             &bCreated);
-        if (status != 0) rpc_fail(status);
+        err = EnsureAlias(hostname,
+                          pwszAliasname,
+                          &bCreated);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupGetInfo(hostname,
                                         pwszAliasname,
@@ -2258,15 +2149,14 @@ TestNetLocalGroupGetInfo(
 
         if (bCreated)
         {
-            status = CleanupAlias(hostname, pwszAliasname);
-            if (status != 0) rpc_fail(status);
+            err = CleanupAlias(hostname,
+                               pwszAliasname);
+            if (err != 0) netapi_fail(err);
         }
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszAliasname);
+    LW_SAFE_FREE_MEMORY(pwszAliasname);
 
     return ret;
 }
@@ -2289,7 +2179,6 @@ TestNetLocalGroupSetInfo(
 
     BOOL ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
     DWORD dwSelectedLevels[] = { 0 };
     DWORD dwAvailableLevels[] = { 0, 1, 1002 };
@@ -2300,12 +2189,10 @@ TestNetLocalGroupSetInfo(
     PWSTR pwszChangedAliasname = NULL;
     PWSTR pwszComment = NULL;
     DWORD i = 0;
-    BOOL bCreated = FALSE;
-    BOOL bRenamed = FALSE;
+    BOOLEAN bCreated = FALSE;
+    BOOLEAN bRenamed = FALSE;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
@@ -2348,14 +2235,14 @@ TestNetLocalGroupSetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        status = EnsureAlias(hostname,
-                             pwszAliasname,
-                             &bCreated);
-        if (status != 0) rpc_fail(status);
+        err = EnsureAlias(hostname,
+                          pwszAliasname,
+                          &bCreated);
+        if (err != 0) netapi_fail(err);
 
-        status = CleanupAlias(hostname,
-                              pwszChangedAliasname);
-        if (status != 0) rpc_fail(status);
+        err = CleanupAlias(hostname,
+                           pwszChangedAliasname);
+        if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupSetInfo(hostname,
                                         dwLevel,
@@ -2380,16 +2267,15 @@ TestNetLocalGroupSetInfo(
 
     if (bCreated)
     {
-        status = CleanupAlias(hostname, pwszAliasname);
-        if (status != 0) rpc_fail(status);
+        err = CleanupAlias(hostname,
+                           pwszAliasname);
+        if (err != 0) netapi_fail(err);
     }
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(pwszAliasname);
-    SAFE_FREE(pwszComment);
-    SAFE_FREE(pwszChangedAliasname);
+    LW_SAFE_FREE_MEMORY(pwszAliasname);
+    LW_SAFE_FREE_MEMORY(pwszComment);
+    LW_SAFE_FREE_MEMORY(pwszChangedAliasname);
 
     return ret;
 }
@@ -2419,8 +2305,6 @@ TestNetLocalGroupGetMembers(
     PWSTR pwszLocalGroupName = NULL;
 
     TESTINFO(t, hostname, user, pass);
-
-    SET_SESSION_CREDS(hCreds);
 
     perr = fetch_value(options, optcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
@@ -2454,10 +2338,7 @@ TestNetLocalGroupGetMembers(
                                            dwLevel);
     }
 
-done:
-    SAFE_FREE(pwszLocalGroupName);
-
-    RELEASE_SESSION_CREDS;
+    LW_SAFE_FREE_MEMORY(pwszLocalGroupName);
 
     return ret;
 }
@@ -2474,17 +2355,13 @@ int TestNetGetDomainName(struct test *t, const wchar16_t *hostname,
 
     TESTINFO(t, hostname, user, pass);
 
-    SET_SESSION_CREDS(hCreds);
-
     CALL_NETAPI(err, NetGetDomainName(hostname, &domain_name));
     if (err != 0) netapi_fail(err);
 
     OUTPUT_ARG_WSTR(domain_name);
 
 done:
-    RELEASE_SESSION_CREDS;
-
-    SAFE_FREE(domain_name);
+    LW_SAFE_FREE_MEMORY(domain_name);
 
     return (err == ERROR_SUCCESS &&
             status == STATUS_SUCCESS);
@@ -2506,10 +2383,8 @@ void SetupNetApiTests(struct test *t)
     AddTest(t, "NETAPI-USER-GET-LOCAL-GROUPS", TestNetUserGetLocalGroups);
     AddTest(t, "NETAPI-JOIN-DOMAIN", TestNetJoinDomain);
     AddTest(t, "NETAPI-UNJOIN-DOMAIN", TestNetUnjoinDomain);
-    AddTest(t, "NETAPI-MACHINE-CHANGE-PASSWORD", TestNetMachineChangePassword);
     AddTest(t, "NETAPI-USER-CHANGE-PASSWORD", TestNetUserChangePassword);
     AddTest(t, "NETAPI-GET-DOMAIN-NAME", TestNetGetDomainName);
-    AddTest(t, "NETAPI-USER-LOCAL-GROUPS", TestNetUserLocalGroups);
     AddTest(t, "NETAPI-LOCAL-GROUP-ENUM", TestNetLocalGroupEnum);
     AddTest(t, "NETAPI-LOCAL-GROUP-ADD", TestNetLocalGroupAdd);
     AddTest(t, "NETAPI-LOCAL-GROUP-GETINFO", TestNetLocalGroupGetInfo);

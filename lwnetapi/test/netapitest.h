@@ -60,13 +60,7 @@ struct test
 
 
 void AddTest(struct test *ft, const char *name, test_fn function);
-void SetupSamrTests(struct test *t);
-void SetupLsaTests(struct test *t);
-void SetupNetlogonTests(struct test *t);
 void SetupNetApiTests(struct test *t);
-void SetupMprTests(struct test *t);
-void SetupDsrTests(struct test *t);
-void SetupWkssvcTests(struct test *t);
 
 
 #define STATUS(a, b)                                                     \
@@ -114,6 +108,16 @@ extern int verbose_mode;
             printf("Rpc error: 0x%08x\n", err);             \
         }                                                   \
         goto done;                                          \
+    }
+
+#define BAIL_ON_WIN_ERROR(err)                              \
+    if ((err) != ERROR_SUCCESS) {                           \
+        goto error;                                         \
+    }
+
+#define BAIL_ON_NT_STATUS(status)                           \
+    if ((status) != STATUS_SUCCESS) {                       \
+        goto error;                                         \
     }
 
 #define NTSTATUS_IS_OK(status)  ((status) == STATUS_SUCCESS)
