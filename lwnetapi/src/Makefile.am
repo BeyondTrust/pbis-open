@@ -28,6 +28,8 @@ liblwnetapi_la_SOURCES = \
     net_userchangepassword.c      \
     net_getdomainname.c           \
     net_getdcname.c               \
+    net_joindomain.c              \
+    net_unjoindomain.c            \
     net_credentials.c
 
 liblwnetapi_la_CPPFLAGS =    \

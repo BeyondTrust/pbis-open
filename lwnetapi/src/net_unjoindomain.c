@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -28,177 +28,103 @@
  * license@likewisesoftware.com
  */
 
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        net_unjoindomain.c
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        NetUnjoinDomain function
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
+
 #include "includes.h"
 
 
-#if !defined(MAXHOSTNAMELEN)
-#define MAXHOSTNAMELEN (256)
-#endif
-
-NET_API_STATUS NetUnjoinDomainLocal(const wchar16_t *machine, 
-                                    const wchar16_t *domain,
-                                    const wchar16_t *account,
-                                    const wchar16_t *password,
-                                    UINT32 options)
+NET_API_STATUS
+NetUnjoinDomain(
+    IN  PCWSTR  pwszServerName,
+    IN  PCWSTR  pwszAccountName,
+    IN  PCWSTR  pwszPassword,
+    IN  DWORD   dwUnjoinFlags
+    )
 {
-    const UINT32 domain_access  = DOMAIN_ACCESS_ENUM_ACCOUNTS |
-                                  DOMAIN_ACCESS_OPEN_ACCOUNT |
-                                  DOMAIN_ACCESS_LOOKUP_INFO_2 |
-                                  DOMAIN_ACCESS_CREATE_USER;
     WINERROR err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
-    ACCOUNT_HANDLE hAccount = NULL;
-    HANDLE hStore = (HANDLE)NULL;
-    PLWPS_PASSWORD_INFO pi = NULL;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PNET_CONN pConn = NULL;
-    char *localname = NULL;
-    wchar16_t *domain_controller_name = NULL;
-    wchar16_t *machine_name = NULL;   
-    PIO_CREDS creds = NULL;
+    WKSS_BINDING hWkssBinding = NULL;
+    PWSTR pwszServer = NULL;
+    PWSTR pwszAccount = NULL;
+    PIO_CREDS pCreds = NULL;
+    ENC_JOIN_PASSWORD_BUFFER PasswordBuffer;
 
-    BAIL_ON_INVALID_PTR(machine, err);
-    BAIL_ON_INVALID_PTR(domain, err);
+    BAIL_ON_INVALID_PTR(pwszAccountName, err);
+    BAIL_ON_INVALID_PTR(pwszPassword, err);
 
-    machine_name = wc16sdup(machine);
-    BAIL_ON_NO_MEMORY(machine_name, err);
+    memset(&PasswordBuffer, 0, sizeof(PasswordBuffer));
 
-    err = NetGetHostInfo(&localname);
+    ntStatus = LwIoGetActiveCreds(NULL, &pCreds);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = NetConnectWkssvc(&pConn,
+                                pwszServerName,
+                                pCreds);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    hWkssBinding = pConn->Rpc.WksSvc.hBinding;
+
+    if (pwszServerName)
+    {
+        err = LwAllocateWc16String(&pwszServer,
+                                   pwszServerName);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    err = LwAllocateWc16String(&pwszAccount,
+                               pwszAccountName);
     BAIL_ON_WIN_ERROR(err);
 
-    status = NetpGetRwDcName(domain, FALSE, &domain_controller_name);
-    BAIL_ON_NT_STATUS(status);
+    err = NetEncryptJoinPasswordBuffer(pConn,
+                                       pwszPassword,
+                                       &PasswordBuffer);
+    BAIL_ON_WIN_ERROR(err);
 
-    status = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-    BAIL_ON_NT_STATUS(status);
-
-    status = LwpsGetPasswordByHostName(hStore, localname, &pi);
-    BAIL_ON_NT_STATUS(status);
-
-    /* zero the machine password */
-    memset((void*)pi->pwszMachinePassword, 0,
-           wc16slen(pi->pwszMachinePassword));
-    pi->last_change_time = time(NULL);
-
-    status = LwpsWritePasswordToAllStores(pi);
-    BAIL_ON_NT_STATUS(status);
-
-    /* disable the account only if requested */
-    if (options & NETSETUP_ACCT_DELETE) {
-        if (account && password)
-        {
-            status = LwIoCreatePlainCredsW(account, domain, password, &creds);
-            BAIL_ON_NT_STATUS(status);
-        }
-        else
-        {
-            status = LwIoGetActiveCreds(NULL, &creds);
-            BAIL_ON_NT_STATUS(status);
-        }
-
-        status = NetConnectSamr(&pConn, domain_controller_name, domain_access, 0, creds);
-        BAIL_ON_NT_STATUS(status);
-
-        status = DisableWksAccount(pConn, pi->pwszMachineAccount, &hAccount);
-        BAIL_ON_NT_STATUS(status);
-    }
+    err = NetrUnjoinDomain2(hWkssBinding,
+                            pwszServer,
+                            pwszAccount,
+                            &PasswordBuffer,
+                            dwUnjoinFlags);
+    BAIL_ON_WIN_ERROR(err);
 
 cleanup:
-    NetDisconnectSamr(&pConn);
-
-    if (localname)
+    if (pConn)
     {
-        NetFreeMemory(localname);
+        WkssFreeBinding(&pConn->Rpc.WksSvc.hBinding);
     }
 
-    SAFE_FREE(domain_controller_name);
-    SAFE_FREE(machine_name);
+    memset(&PasswordBuffer, 0, sizeof(PasswordBuffer));
 
-    if (pi)
-    {
-        LwpsFreePasswordInfo(hStore, pi);
-    }
+    LW_SAFE_FREE_MEMORY(pwszServer);
+    LW_SAFE_FREE_MEMORY(pwszAccount);
 
-    if (hStore != (HANDLE)NULL)
+    if (pCreds)
     {
-       LwpsClosePasswordStore(hStore);
+        LwIoDeleteCreds(pCreds);
     }
 
     if (err == ERROR_SUCCESS &&
-        status != STATUS_SUCCESS)
+        ntStatus != STATUS_SUCCESS)
     {
-        err = NtStatusToWin32Error(status);
+        err = LwNtStatusToWin32Error(ntStatus);
     }
 
-    return err;
-
-error:
-    if (creds)
-    {
-        LwIoDeleteCreds(creds);
-    }
-
-    SAFE_FREE(machine_name);
-
-    goto cleanup;
-}
-
-
-NET_API_STATUS NetUnjoinDomain(const wchar16_t *hostname,
-                               const wchar16_t *account,
-                               const wchar16_t *password,
-                               UINT32 options)
-{
-    NET_API_STATUS err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
-    wchar16_t *domain = NULL;
-    HANDLE hStore = (HANDLE)NULL;
-    PLWPS_PASSWORD_INFO pi = NULL;
-    char *localname = NULL;
-
-    /* at the moment we support only locally triggered unjoin */
-    if (hostname) {
-        status = STATUS_NOT_IMPLEMENTED;
-
-    } else {
-        wchar16_t host[MAXHOSTNAMELEN];
-
-        err = NetGetHostInfo(&localname);
-        BAIL_ON_WIN_ERROR(err);
-
-        mbstowc16s(host, localname, sizeof(wchar16_t)*MAXHOSTNAMELEN);
-
-        status = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-        BAIL_ON_NT_STATUS(status);
-
-        status = LwpsGetPasswordByHostName(hStore, localname, &pi);
-        BAIL_ON_NT_STATUS(status);
-
-        domain = pi->pwszDnsDomainName;
-        err = NetUnjoinDomainLocal(host, domain, account, password, options);
-        BAIL_ON_WIN_ERROR(err);
-    }
-
-    if (hStore != (HANDLE)NULL) {
-       status = LwpsClosePasswordStore(hStore);
-       BAIL_ON_NT_STATUS(status);
-    }
-
-cleanup:
-    if (localname)
-    {
-        NetFreeMemory(localname);
-    }    
-
-    if (pi) {
-       LwpsFreePasswordInfo(hStore, pi);
-    }
-
-    if (err == ERROR_SUCCESS &&
-        status != STATUS_SUCCESS) {
-        err = NtStatusToWin32Error(status);
-    }
-
-    return err;
+    return (NET_API_STATUS)err;
 
 error:
     goto cleanup;

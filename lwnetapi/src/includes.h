@@ -68,6 +68,7 @@
 #include <lw/srvsvc.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/lsa.h>
+#include <lw/rpc/wkssvc.h>
 
 #include <lwnetapidefs.h>
 
