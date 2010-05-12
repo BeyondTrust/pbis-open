@@ -1024,10 +1024,12 @@ cleanup:
         LwIoDeleteCreds(pCreds);
     }
 
-    LWNetFreeString(pszTrustedDcName);
+    if (pszTrustedDcName)
+    {
+        LWNetFreeString(pszTrustedDcName);
+    }
 
     LW_SAFE_FREE_MEMORY(pszDcName);
-    LW_SAFE_FREE_MEMORY(pszTrustedDcName);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
