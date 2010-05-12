@@ -29,7 +29,8 @@
 typedef enum _NET_CONN_TYPE
 {
     NET_CONN_SAMR = 1,
-    NET_CONN_LSA
+    NET_CONN_LSA,
+    NET_CONN_WKSSVC
 
 } NET_CONN_TYPE, *PNET_CONN_TYPE;
 
@@ -67,6 +68,12 @@ typedef struct _NET_CONN {
             POLICY_HANDLE    hPolicy;
             DWORD            dwPolicyAccess;
         } Lsa;
+
+        struct _NET_WKSSVC
+        {
+            WKSS_BINDING     hBinding;
+        } WksSvc;
+
     } Rpc;
 } NET_CONN, *PNET_CONN;
 
@@ -90,6 +97,14 @@ NetConnectLsa(
     );
 
 
+DWORD
+NetConnectWkssvc(
+    PNET_CONN  *ppConn,
+    PCWSTR      pwszHostname,
+    PIO_CREDS   pCreds
+    );
+
+
 VOID
 NetDisconnectSamr(
     PNET_CONN  *pConn
@@ -99,6 +114,12 @@ NetDisconnectSamr(
 VOID
 NetDisconnectLsa(
     PNET_CONN  *pConn
+    );
+
+
+VOID
+NetDisconnectWkssvc(
+    PNET_CONN  *ppConn
     );
 
 

@@ -445,12 +445,162 @@ cleanup:
         err = LwNtStatusToWin32Error(ntStatus);
     }       
 
-    return ntStatus;
+    return err;
 
 error:
     if (pConn)
     {
         NetDisconnectLsa(&pConn);
+    }
+
+    *ppConn = NULL;
+    goto cleanup;
+}
+
+
+DWORD
+NetConnectWkssvc(
+    PNET_CONN  *ppConn,
+    PCWSTR      pwszHostname,
+    PIO_CREDS   pCreds
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    WINERROR err = ERROR_SUCCESS;
+    unsigned32 rpcStatus = 0;
+    PWSTR pwszServerName = NULL;
+    WKSS_BINDING hWkssBinding = NULL;
+    PNET_CONN pConn = NULL;
+    NETR_WKSTA_INFO WkstaInfo = {0};
+    DWORD dwLevel = 100;
+    rpc_transport_info_handle_t hTransportInfo = NULL;
+    unsigned32 ProtSeq = 0;
+    unsigned char *SessionKey = NULL;
+    unsigned16 SessionKeyLen = 0;
+
+    BAIL_ON_INVALID_PTR(ppConn, err);
+
+    if ((*ppConn) == NULL)
+    {
+        /* create a new connection */
+        ntStatus = NetAllocateMemory(OUT_PPVOID(&pConn), sizeof(*pConn));
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        pConn->eType = NET_CONN_WKSSVC;
+    }
+    else
+    {
+        pConn = (*ppConn);
+
+        if (pConn->eType != NET_CONN_WKSSVC)
+        {
+            err = ERROR_INVALID_PARAMETER;
+            BAIL_ON_WIN_ERROR(err);
+        }
+    }
+
+    if (pConn->Rpc.WksSvc.hBinding == NULL)
+    {
+        err = WkssInitBindingDefault(&hWkssBinding,
+                                     pwszHostname,
+                                     pCreds);
+        BAIL_ON_WIN_ERROR(err);
+
+        if (pwszHostname)
+        {
+            err = LwAllocateWc16String(&pwszServerName,
+                                       pwszHostname);
+            BAIL_ON_WIN_ERROR(err);
+        }
+
+        /*
+         * This function is called only to establish a valid connection and
+         * get the session key
+         */
+        err = NetrWkstaGetInfo(hWkssBinding,
+                               pwszServerName,
+                               dwLevel,
+                               &WkstaInfo);
+        BAIL_ON_WIN_ERROR(err);
+
+        pConn->Rpc.WksSvc.hBinding = hWkssBinding;
+
+        rpc_binding_inq_transport_info(hWkssBinding,
+                                       &hTransportInfo,
+                                       &rpcStatus);
+        if (rpcStatus)
+        {
+            ntStatus = STATUS_CONNECTION_INVALID;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
+        if (hTransportInfo)
+        {
+            rpc_binding_inq_prot_seq(hWkssBinding,
+                                     &ProtSeq,
+                                     &rpcStatus);
+
+            switch (ProtSeq)
+            {
+            case rpc_c_protseq_id_ncacn_np:
+                rpc_smb_transport_info_inq_session_key(
+                                           hTransportInfo,
+                                           &SessionKey,
+                                           &SessionKeyLen);
+                break;
+
+            case rpc_c_protseq_id_ncalrpc:
+                rpc_lrpc_transport_info_inq_session_key(
+                                           hTransportInfo,
+                                           &SessionKey,
+                                           &SessionKeyLen);
+                break;
+            }
+
+            if (SessionKeyLen > 0)
+            {
+                memcpy(pConn->SessionKey,
+                       SessionKey,
+                       sizeof(pConn->SessionKey));
+                pConn->dwSessionKeyLen = SessionKeyLen;
+            }
+        }
+    }
+
+    /* set the host name if it's completely new connection */
+    if (pwszHostname &&
+        pConn->pwszHostname == NULL)
+    {
+        err = LwAllocateWc16String(&pConn->pwszHostname, pwszHostname);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    /* return initialised connection and status code */
+    if ((*ppConn) == NULL)
+    {
+        *ppConn = pConn;
+    }
+
+cleanup:
+    if (WkstaInfo.pInfo100)
+    {
+        WkssFreeMemory(WkstaInfo.pInfo100);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszServerName);
+
+    if (err == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        err = LwNtStatusToWin32Error(ntStatus);
+    }       
+
+    return err;
+
+error:
+    if (pConn)
+    {
+        NetDisconnectWkssvc(&pConn);
     }
 
     *ppConn = NULL;
@@ -566,6 +716,48 @@ NetDisconnectLsa(
 
         LsaFreeBinding(&hLsaBinding);
         pConn->Rpc.Lsa.hBinding = NULL;
+    }
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
+
+    if (pConn)
+    {
+        NetFreeMemory(pConn);
+    }
+
+    return;
+
+error:
+    goto cleanup;
+}
+
+
+VOID
+NetDisconnectWkssvc(
+    PNET_CONN  *ppConn
+    )
+{
+    WINERROR err = ERROR_SUCCESS;
+    WKSS_BINDING hWkssBinding = NULL;
+    PNET_CONN pConn = NULL;
+
+    BAIL_ON_INVALID_PTR(ppConn, err);
+
+    pConn = (*ppConn);
+
+    if (pConn == NULL ||
+        pConn->eType != NET_CONN_WKSSVC)
+    {
+        goto cleanup;
+    }
+
+    hWkssBinding = pConn->Rpc.WksSvc.hBinding;
+
+    if (hWkssBinding)
+    {
+        WkssFreeBinding(&hWkssBinding);
+        pConn->Rpc.WksSvc.hBinding = NULL;
     }
 
 cleanup:
