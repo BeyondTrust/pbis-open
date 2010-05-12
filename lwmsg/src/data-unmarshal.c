@@ -541,7 +541,7 @@ lwmsg_data_unmarshal_aliasable_pointer(
                           state,
                           iter,
                           buffer,
-                          (unsigned char**) &object));
+                          (unsigned char**) (void*) &object));
     }
     else
     {
