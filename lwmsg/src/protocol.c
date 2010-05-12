@@ -42,6 +42,8 @@
 #include "data-private.h"
 #include "buffer-private.h"
 
+#include <limits.h>
+
 static LWMsgTypeSpec protocol_message_rep_spec[] =
 {
     LWMSG_STRUCT_BEGIN(LWMsgProtocolMessageRep),

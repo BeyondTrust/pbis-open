@@ -41,6 +41,8 @@
 #include "data-private.h"
 #include "util-private.h"
 
+#include <limits.h>
+
 LWMsgStatus
 lwmsg_data_context_new(
     const LWMsgContext* context,
