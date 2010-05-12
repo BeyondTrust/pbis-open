@@ -72,6 +72,22 @@ NetEncryptNtHashVerifier(
     );
 
 
+DWORD
+NetEncodeJoinPasswordBuffer(
+    IN  PCWSTR  pwszPassword,
+    OUT PBYTE   pBlob,
+    IN  DWORD   dwBlobSize
+    );
+
+
+DWORD
+NetEncryptJoinPasswordBuffer(
+    IN  PNET_CONN                 pConn,
+    IN  PCWSTR                    pwszPassword,
+    OUT PENC_JOIN_PASSWORD_BUFFER pPasswordBuffer
+    );
+
+
 /*
 local variables:
 mode: c

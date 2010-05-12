@@ -301,6 +301,155 @@ error:
 }
 
 
+DWORD
+NetEncodeJoinPasswordBuffer(
+    IN  PCWSTR  pwszPassword,
+    OUT PBYTE   pBlob,
+    IN  DWORD   dwBlobSize
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sPasswordLen = 0;
+    size_t sPasswordSize = 0;
+    PWSTR pwszPasswordLE = NULL;
+    BYTE PasswordBlob[516] = {0};
+    BYTE BlobInit[512] = {0};
+    DWORD iByte = 0;
+
+    BAIL_ON_INVALID_PTR(pwszPassword, dwError);
+    BAIL_ON_INVALID_PTR(pBlob, dwError);
+
+    if (dwBlobSize < sizeof(PasswordBlob))
+    {
+        dwError = ERROR_INSUFFICIENT_BUFFER;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    dwError = LwWc16sLen(pwszPassword, &sPasswordLen);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    /* size doesn't include terminating zero here */
+    sPasswordSize = sPasswordLen * sizeof(pwszPassword[0]);
+
+    /*
+     * Make sure encoded password is 2-byte little-endian
+     */
+    dwError = LwAllocateMemory(sPasswordSize + sizeof(pwszPassword[0]),
+                               OUT_PPVOID(&pwszPasswordLE));
+    BAIL_ON_WIN_ERROR(dwError);
+
+    wc16stowc16les(pwszPasswordLE, pwszPassword, sPasswordLen);
+
+    /*
+     * Encode the password length (in bytes) - the last 4 bytes
+     */
+    iByte = sizeof(PasswordBlob);
+    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 24) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 16) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 8) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((sPasswordSize) & 0xff);
+
+    /*
+     * Copy the password and the initial random bytes
+     */
+    iByte -= sPasswordSize;
+    memcpy(&(PasswordBlob[iByte]), pwszPasswordLE, sPasswordSize);
+
+    /*
+     * Fill the rest of the buffer with (pseudo) random mess
+     * to increase security.
+     */
+    if (!RAND_bytes((unsigned char*)BlobInit, iByte))
+    {
+        dwError = ERROR_ENCRYPTION_FAILED;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+    memcpy(PasswordBlob, BlobInit, iByte);
+
+    memcpy(pBlob, PasswordBlob, sizeof(PasswordBlob));
+
+cleanup:
+    memset(PasswordBlob, 0, sizeof(PasswordBlob));
+
+    if (pwszPasswordLE)
+    {
+        memset(pwszPasswordLE, 0, sPasswordSize);
+        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
+    }
+
+    return dwError;
+
+error:
+    if (pBlob)
+    {
+        memset(pBlob, 0, dwBlobSize);
+    }
+
+    goto cleanup;
+}
+
+
+DWORD
+NetEncryptJoinPasswordBuffer(
+    IN  PNET_CONN                 pConn,
+    IN  PCWSTR                    pwszPassword,
+    OUT PENC_JOIN_PASSWORD_BUFFER pPasswordBuffer
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    BYTE PasswordBlob[516] = {0};
+    BYTE KeyInit[8] = {0};
+    MD5_CTX ctx;
+    BYTE DigestedSessionKey[16] = {0};
+    RC4_KEY key;
+    DWORD iByte = 0;
+
+    BAIL_ON_INVALID_PTR(pwszPassword, dwError);
+    BAIL_ON_INVALID_PTR(pPasswordBuffer, dwError);
+
+    memset(&ctx, 0, sizeof(ctx));
+    memset(&key, 0, sizeof(key));
+
+    dwError = NetEncodeJoinPasswordBuffer(pwszPassword,
+                                          PasswordBlob,
+                                          sizeof(PasswordBlob));
+    BAIL_ON_WIN_ERROR(dwError);
+
+    if (!RAND_bytes(KeyInit, sizeof(KeyInit)))
+    {
+        dwError = ERROR_GEN_FAILURE;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    MD5_Init(&ctx);
+    MD5_Update(&ctx, pConn->SessionKey, pConn->dwSessionKeyLen);
+    MD5_Update(&ctx, KeyInit, sizeof(KeyInit));
+    MD5_Final(DigestedSessionKey, &ctx);
+
+    RC4_set_key(&key,
+                sizeof(DigestedSessionKey),
+                (unsigned char*)DigestedSessionKey);
+
+    RC4(&key,
+        sizeof(PasswordBlob),
+        (const unsigned char*)PasswordBlob,
+        (unsigned char*)PasswordBlob);
+
+    iByte = 0;
+    memcpy(&pPasswordBuffer->data[iByte], KeyInit, sizeof(KeyInit));
+    iByte += sizeof(KeyInit);
+    memcpy(&pPasswordBuffer->data[iByte], PasswordBlob, sizeof(PasswordBlob));
+
+cleanup:
+    return dwError;
+
+error:
+    memset(pPasswordBuffer, 0, sizeof(*pPasswordBuffer));
+
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c
