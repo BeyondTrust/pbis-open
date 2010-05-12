@@ -874,7 +874,7 @@ lwmsg_type_rep_from_spec_internal(
         BAIL_ON_ERROR(status = lwmsg_type_rep_map_insert(map, SPEC_TYPE, iter->spec, *rep));
 
         (*rep)->kind = iter->kind;
-        (*rep)->flags = iter->attrs.flags;
+        (*rep)->flags = iter->attrs.flags & ~(LWMSG_TYPE_FLAG_PROMOTED | LWMSG_TYPE_FLAG_SENSITIVE);
 
         switch (iter->kind)
         {
