@@ -51,7 +51,7 @@
 #include "adprovider.h"
 #include "lsaum_p.h"
 
-static LSA_UM_STATE_HANDLE gLsaUmState;
+static LSA_UM_STATE_HANDLE gLsaUmState = NULL;
 
 DWORD
 LsaUmInitialize(
