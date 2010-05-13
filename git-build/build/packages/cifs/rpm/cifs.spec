@@ -37,7 +37,7 @@ case "$1" in
 
     ## chkconfig behaves differently on various updates of RHEL and SUSE
     ## So, we massage the init script according to the release, for now.
-    for d in in lsassd lwsmd lwiod eventlog dcerpcd netlogond lwregd; do
+    for d in lsassd lwsmd lwiod eventlogd dcerpcd netlogond lwregd srvsvcd; do
 	daemon="%{_sysconfdir}/init.d/$d"
         if [ -x $daemon ]; then
             if grep "LWI_STARTUP_TYPE_" $daemon >/dev/null 2>&1; then
@@ -60,6 +60,10 @@ case "$1" in
         fi
     done
 
+    for d in lsassd lwsmd lwiod eventlogd dcerpcd netlogond lwregd srvsvcd; do
+        chkconfig --add ${d}
+    done
+
     %{_sysconfdir}/init.d/lwsmd start
     echo -n "Waiting for lwreg startup."
     while( test -z "`/opt/likewise/bin/lwsm status lwreg | grep standalone:`" )
@@ -69,14 +73,46 @@ case "$1" in
     done
     echo "ok"
     for file in %{_sysconfdir}/likewise/*reg; do
+        echo "Installing settings from $file..."
         %{PrefixDir}/bin/lwregshell import $file
     done
     %{_sysconfdir}/init.d/lwsmd reload
+    sleep 2
     %{PrefixDir}/bin/lwsm start srvsvc
     ;;
 
     2)
     ## Upgrade
+
+    ## chkconfig behaves differently on various updates of RHEL and SUSE
+    ## So, we massage the init script according to the release, for now.
+    for d in lsassd lwsmd lwiod eventlogd dcerpcd netlogond lwregd srvsvcd; do
+	daemon="%{_sysconfdir}/init.d/$d"
+        if [ -x $daemon ]; then
+            if grep "LWI_STARTUP_TYPE_" $daemon >/dev/null 2>&1; then
+                daemon_new=${daemon}.new
+
+                if [ -f /etc/redhat-release ]; then
+                     /bin/sed \
+                        -e 's/^#LWI_STARTUP_TYPE_REDHAT\(.*\)$/\1/' \
+                        -e'/^#LWI_STARTUP_TYPE_SUSE.*$/ d' \
+                        $daemon > $daemon_new
+                 else
+                     /bin/sed \
+                         -e 's/^#LWI_STARTUP_TYPE_SUSE\(.*\)$/\1/' \
+                         -e '/^#LWI_STARTUP_TYPE_REDHAT.*$/ d' \
+                         $daemon > $daemon_new
+                 fi
+                 mv $daemon_new $daemon
+                 chmod 0755 $daemon
+            fi
+        fi
+    done
+
+    for d in lsassd lwsmd lwiod eventlogd dcerpcd netlogond lwregd srvsvcd; do
+        chkconfig --add ${d}
+    done
+
     [ -z "`pidof lwsmd`" ] && %{_sysconfdir}/init.d/lwsmd start
 
     echo -n "Waiting for lwreg startup."
@@ -88,10 +124,11 @@ case "$1" in
     echo "ok"
 
     for file in %{_sysconfdir}/likewise/*reg; do
-        echo "Importing ${file}..."
-        %{PrefixDir}/bin/lwregshell update $file
+        echo "Upgrading settings from $file..."
+        %{PrefixDir}/bin/lwregshell upgrade $file
     done
     %{_sysconfdir}/init.d/lwsmd reload
+    sleep 2
     %{PrefixDir}/bin/lwsm stop lwreg
     %{PrefixDir}/bin/lwsm start srvsvc
     ;;
@@ -132,5 +169,6 @@ fi
 %{PrefixDir}/%{_lib}/*
 %{PrefixDir}/bin/*
 %{PrefixDir}/sbin/*
+%{PrefixDir}/include/*
 
 %changelog
