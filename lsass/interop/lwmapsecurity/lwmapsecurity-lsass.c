@@ -478,6 +478,8 @@ LsaMapSecurityResolveObjectInfoFromPac(
                     1,
                     QueryList,
                     &ppObjects);
+    status = LwWin32ErrorToNtStatus(dwError);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     LsaMapSecurityCloseConnection(Context, &hConnection);
 
