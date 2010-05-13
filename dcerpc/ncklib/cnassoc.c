@@ -5831,7 +5831,8 @@ PRIVATE rpc_cn_local_id_t rpc__cn_assoc_grp_lkup_by_id
     /*
      * First determine if we were given a valid group ID.
      */
-    if (RPC_CN_LOCAL_ID_VALID (grp_id))
+    if (RPC_CN_LOCAL_ID_VALID (grp_id) &&
+        grp_id.parts.id_index < rpc_g_cn_assoc_grp_tbl.grp_count)
     {
         /*
          * An association group will be located by using the lower 16
