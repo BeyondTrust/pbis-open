@@ -61,7 +61,7 @@ _nss_lsass_setpwent(
 
     NSS_LOCK();
 
-    status = LsaNssCommonPasswdSetpwent(&hLsaConnection,
+    status = LsaNssCommonPasswdSetpwent(&lsaConnection,
                                         &gEnumUsersState);
     
     NSS_UNLOCK();
@@ -82,7 +82,7 @@ _nss_lsass_getpwent_r(
     NSS_LOCK();
 
     status = LsaNssCommonPasswdGetpwent(
-        &hLsaConnection,
+        &lsaConnection,
         &gEnumUsersState,
         pResultUser,
         pszBuf,
@@ -104,7 +104,7 @@ _nss_lsass_endpwent(
     NSS_LOCK();
 
     status = LsaNssCommonPasswdEndpwent(
-        &hLsaConnection,
+        &lsaConnection,
         &gEnumUsersState);
 
     NSS_UNLOCK();
@@ -125,7 +125,7 @@ _nss_lsass_getpwnam_r(
 
     NSS_LOCK();
 
-    status = LsaNssCommonPasswdGetpwnam(&hLsaConnection,
+    status = LsaNssCommonPasswdGetpwnam(&lsaConnection,
                                         pszLoginId,
                                         pResultUser,
                                         pszBuf,
@@ -150,7 +150,7 @@ _nss_lsass_getpwuid_r(
 
     NSS_LOCK();
 
-    status = LsaNssCommonPasswdGetpwuid(&hLsaConnection,
+    status = LsaNssCommonPasswdGetpwuid(&lsaConnection,
                                         uid,
                                         pResultUser,
                                         pszBuf,

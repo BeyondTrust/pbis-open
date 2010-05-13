@@ -50,6 +50,7 @@
 #include "externs.h"
 #include <assert.h>
 
+static const DWORD MAX_NUM_GROUPS = 500;
 static LSA_ENUMGROUPS_STATE gEnumGroupsState = {0};
 
 NSS_STATUS
@@ -57,8 +58,16 @@ _nss_lsass_setgrent(
     void
     )
 {
-    return LsaNssCommonGroupSetgrent(&hLsaConnection,
-                                     &gEnumGroupsState);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupSetgrent(&lsaConnection,
+                                       &gEnumGroupsState);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -69,12 +78,21 @@ _nss_lsass_getgrent_r(
     int*           pErrorNumber
     )
 {
-    return LsaNssCommonGroupGetgrent(&hLsaConnection,
-                                     &gEnumGroupsState,
-                                     pResultGroup,
-                                     pszBuf,
-                                     bufLen,
-                                     pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupGetgrent(
+        &lsaConnection,
+        &gEnumGroupsState,
+        pResultGroup,
+        pszBuf,
+        bufLen,
+        pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -82,7 +100,15 @@ _nss_lsass_endgrent(
     void
     )
 {
-    return LsaNssCommonGroupEndgrent(&hLsaConnection, &gEnumGroupsState);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupEndgrent(&lsaConnection, &gEnumGroupsState);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -94,12 +120,20 @@ _nss_lsass_getgrgid_r(
     int*           pErrorNumber
     )
 {
-    return LsaNssCommonGroupGetgrgid(&hLsaConnection,
-                                     gid,
-                                     pResultGroup,
-                                     pszBuf,
-                                     bufLen,
-                                     pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupGetgrgid(&lsaConnection,
+                                       gid,
+                                       pResultGroup,
+                                       pszBuf,
+                                       bufLen,
+                                       pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -111,12 +145,20 @@ _nss_lsass_getgrnam_r(
     int*           pErrorNumber
     )
 {
-    return LsaNssCommonGroupGetgrnam(&hLsaConnection,
-                                     pszGroupName,
-                                     pResultGroup,
-                                     pszBuf,
-                                     bufLen,
-                                     pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonGroupGetgrnam(&lsaConnection,
+                                       pszGroupName,
+                                       pResultGroup,
+                                       pszBuf,
+                                       bufLen,
+                                       pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -130,111 +172,69 @@ _nss_lsass_initgroups_dyn(
     int*      pErrorNumber
     )
 {
-    int   ret = NSS_STATUS_SUCCESS;
-    DWORD dwNumGroupsFound = 0;
-    gid_t* pGidTotalResult = NULL;
-    gid_t* pGidNewResult = NULL;
-    gid_t* pExistingResult = NULL;
-    DWORD dwNumTotalGroup = 0;
-    DWORD iGroup = 0, iExistingGroup = 0, iNewGroup = 0;
+    int ret = NSS_STATUS_SUCCESS;
+    size_t resultsCapacity = (size_t) *pResultsCapacity;
+    size_t resultsExistingSize = (size_t) *pResultsSize;
+    size_t resultsSize = 0;
+    gid_t* pGidResults = *ppGidResults;
+    gid_t* pGidResultsNew = NULL;
 
-    if ((*pResultsCapacity > maxGroups && maxGroups != -1) ||
-        *pResultsSize > *pResultsCapacity)
+    NSS_LOCK();
+
+    ret = LsaNssCommonGroupGetGroupsByUserName(
+        &lsaConnection,
+        pszUserName,
+        resultsExistingSize,
+        resultsCapacity,
+        &resultsSize,
+        pGidResults,
+        pErrorNumber);
+
+    if (ret != NSS_STATUS_SUCCESS)
+        goto error;
+
+    if (resultsSize > resultsCapacity)
     {
-        ret = NSS_STATUS_UNAVAIL;
-        *pErrorNumber = EINVAL;
-        BAIL_ON_NSS_ERROR(ret);
-    }
-
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-    }
-
-    ret = MAP_LSA_ERROR(pErrorNumber,
-                        LsaGetGidsForUserByName(
-                           hLsaConnection,
-                           pszUserName,
-                           &dwNumGroupsFound,
-                           &pGidNewResult));
-    BAIL_ON_NSS_ERROR(ret);
-
-    dwNumTotalGroup += dwNumGroupsFound;
-
-    dwNumTotalGroup += 1; //count in the group that is passed in
-
-    //count in the groups that are already in ppGidResults
-    dwNumTotalGroup += *pResultsSize;
-
-    if (dwNumTotalGroup > *pResultsCapacity)
-    {
-        if (dwNumTotalGroup > maxGroups && maxGroups != -1)
-            dwNumTotalGroup = maxGroups;
-
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LwAllocateMemory(
-                                sizeof(gid_t) * dwNumTotalGroup * 2,
-                                (PVOID*)&pGidTotalResult));
-        BAIL_ON_NSS_ERROR(ret);
-
-        pExistingResult = *ppGidResults;
-        for (iExistingGroup = 0, iGroup = 0;
-             iExistingGroup < *pResultsSize;
-             iExistingGroup++, iGroup++)
+        /* More results were found than were stored, so
+           reallocate array and try again. */
+        pGidResultsNew = realloc(pGidResults, sizeof(*pGidResults) * resultsSize);
+        if (!pGidResultsNew)
         {
-            pGidTotalResult[iGroup] = pExistingResult[iExistingGroup];
+            *pErrorNumber = ENOMEM;
+            ret = NSS_STATUS_UNAVAIL;
+            goto error;
+        }
+        else
+        {
+            pGidResults = pGidResultsNew;
+            *ppGidResults = pGidResults;
         }
 
-        for (iNewGroup = 0;
-             iNewGroup < dwNumGroupsFound && iGroup < dwNumTotalGroup;
-             iNewGroup++, iGroup++)
-        {
-            pGidTotalResult[iGroup] = pGidNewResult[iNewGroup];
-        }
-
-        *pResultsCapacity = dwNumTotalGroup * 2;
-        *pResultsSize = dwNumTotalGroup;
-        *ppGidResults = pGidTotalResult;
-        pGidTotalResult = NULL;
-
-        LW_SAFE_FREE_MEMORY(pExistingResult);
+        /* The number of filled elements is whatever our old capacity was */
+        resultsExistingSize = resultsCapacity;
+        /* The new capacity is the number of available results */
+        resultsCapacity = resultsSize;
+        /* Try again */
+        ret = LsaNssCommonGroupGetGroupsByUserName(
+            &lsaConnection,
+            pszUserName,
+            resultsExistingSize,
+            resultsCapacity,
+            &resultsSize,
+            pGidResults,
+            pErrorNumber);
     }
 
-    else
+    if (ret == NSS_STATUS_SUCCESS)
     {
-        pExistingResult = *ppGidResults;
-        iGroup = *pResultsSize;
-        pExistingResult[iGroup++] = groupGid;
-
-        for (iNewGroup = 0;
-             iNewGroup < dwNumGroupsFound && iGroup < dwNumTotalGroup;
-             iNewGroup++, iGroup++)
-        {
-            pExistingResult[iGroup] = pGidNewResult[iNewGroup];
-        }
+        *pResultsSize = (long int) resultsSize;
+        *pResultsCapacity = (long int) resultsCapacity;
     }
-
-    *pResultsSize = iGroup;
-
-cleanup:
-
-    LW_SAFE_FREE_MEMORY(pGidNewResult);
-
-    return ret;
 
 error:
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
-    {
-       LsaCloseServer(hLsaConnection);
-       hLsaConnection = (HANDLE)NULL;
-    }
+    NSS_UNLOCK();
 
-    LW_SAFE_FREE_MEMORY(pGidTotalResult);
-    LW_SAFE_FREE_MEMORY(pGidNewResult);
-
-    goto cleanup;
+    return ret;
 }
 

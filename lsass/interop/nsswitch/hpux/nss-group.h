@@ -51,7 +51,7 @@
 #include "lsanss.h"
 
 nss_backend_t*
-LsaNssHpuxGroupCreateBackend(
+LsaNssSolarisGroupCreateBackend(
     void			       
     );
 

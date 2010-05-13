@@ -53,7 +53,7 @@ typedef struct
 {
     nss_backend_t base;
     LSA_ENUMUSERS_STATE enumUsersState;
-    HANDLE hLsaConnectionPrUsers;
+    LSA_NSS_CACHED_HANDLE lsaConnection;
 } LSA_NSS_PRPASSWD_BACKEND, *PLSA_NSS_PRPASSWD_BACKEND;
 
 typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
@@ -109,8 +109,9 @@ LsaNssHpuxPrpasswdDestructor(
     int                     ret = NSS_STATUS_SUCCESS;
 
     LsaNssClearEnumUsersState(
-        &pLsaBackend->hLsaConnectionPrUsers,
+        &pLsaBackend->lsaConnection,
         pEnumUsersState);
+    LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
     LwFreeMemory(pBackend);
 
     return ret;
@@ -125,7 +126,8 @@ LsaNssHpuxPrpasswdSetpwent(
     PLSA_NSS_PRPASSWD_BACKEND pLsaBackend = (PLSA_NSS_PRPASSWD_BACKEND) pBackend;
     PLSA_ENUMUSERS_STATE    pEnumUsersState = &pLsaBackend->enumUsersState;
 
-    return LsaNssCommonPasswdSetpwent(&pLsaBackend->hLsaConnectionPrUsers,
+    return LsaNssCommonPasswdSetpwent(
+                                      &pLsaBackend->lsaConnection,
                                       pEnumUsersState);
 }
 
@@ -146,7 +148,8 @@ LsaNssHpuxPrpasswdGetpwent(
     int                     ret;
     int*                    pErrorNumber = &err;
 
-    ret = LsaNssCommonPasswdGetpwent(&pLsaBackend->hLsaConnectionPrUsers,
+    ret = LsaNssCommonPasswdGetpwent(
+                                     &pLsaBackend->lsaConnection,
                                      pEnumUsersState,
                                      &resultUser,
                                      szBuf,
@@ -175,7 +178,9 @@ LsaNssHpuxPrpasswdEndpwent(
     PLSA_NSS_PRPASSWD_BACKEND pLsaBackend = (PLSA_NSS_PRPASSWD_BACKEND) pBackend;
     PLSA_ENUMUSERS_STATE    pEnumUsersState = &pLsaBackend->enumUsersState;
 
-    return LsaNssCommonPasswdEndpwent(&pLsaBackend->hLsaConnectionPrUsers, pEnumUsersState);
+    return LsaNssCommonPasswdEndpwent(
+            &pLsaBackend->lsaConnection,
+            pEnumUsersState);
 }
 
 static
@@ -195,7 +200,8 @@ LsaNssHpuxPrpasswdGetpwnam(
     size_t                  bufLen = sizeof(szBuf);
     PLSA_NSS_PRPASSWD_BACKEND pLsaBackend = (PLSA_NSS_PRPASSWD_BACKEND) pBackend;
 
-    ret = LsaNssCommonPasswdGetpwnam(&pLsaBackend->hLsaConnectionPrUsers,
+    ret = LsaNssCommonPasswdGetpwnam(
+                                     &pLsaBackend->lsaConnection,
                                      pszLoginId,
                                      &resultUser,
                                      szBuf,
@@ -228,7 +234,8 @@ LsaNssHpuxPrpasswdGetpwuid(
     size_t                  bufLen = sizeof(szBuf);
     PLSA_NSS_PRPASSWD_BACKEND pLsaBackend = (PLSA_NSS_PRPASSWD_BACKEND) pBackend;
 
-    ret = LsaNssCommonPasswdGetpwuid(&pLsaBackend->hLsaConnectionPrUsers,
+    ret = LsaNssCommonPasswdGetpwuid(
+                                     &pLsaBackend->lsaConnection,
                                      uid,
                                      &resultUser,
                                      szBuf,

@@ -30,4 +30,4 @@
 
 #include "lsanss.h"
 
-HANDLE hLsaConnection = (HANDLE)NULL;
+LSA_NSS_CACHED_HANDLE lsaConnection = { 0 };

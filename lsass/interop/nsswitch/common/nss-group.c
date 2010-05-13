@@ -228,23 +228,19 @@ error:
 
 NSS_STATUS
 LsaNssCommonGroupSetgrent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PLSA_ENUMGROUPS_STATE pEnumGroupsState
     )
 {
     int ret = NSS_STATUS_SUCCESS;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
 
     LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(NULL,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(NULL,
                         LsaBeginEnumGroups(
@@ -263,10 +259,9 @@ error:
 
     LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-        LsaCloseServer(hLsaConnection);
-        *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;
@@ -274,7 +269,7 @@ error:
 
 NSS_STATUS
 LsaNssCommonGroupGetgrent(
-    PHANDLE                   phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE    pConnection,
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState,
     struct group*             pResultGroup,
     char *                    pszBuf,
@@ -283,7 +278,7 @@ LsaNssCommonGroupGetgrent(
     )
 {
     int                       ret = NSS_STATUS_NOTFOUND;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = pConnection->hLsaConnection;
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -355,10 +350,9 @@ error:
     else
     {
         LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
-        if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+        if (ret != NSS_STATUS_TRYAGAIN)
         {
-            LsaCloseServer(hLsaConnection);
-            *phLsaConnection = (HANDLE)NULL;
+            LsaNssCommonCloseConnection(pConnection);
         }
     }
 
@@ -371,11 +365,11 @@ error:
 
 NSS_STATUS
 LsaNssCommonGroupEndgrent(
-    PHANDLE                   phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE    pConnection,
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState
     )
 {
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = pConnection->hLsaConnection;
     LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
 
     return NSS_STATUS_SUCCESS;
@@ -383,7 +377,7 @@ LsaNssCommonGroupEndgrent(
 
 NSS_STATUS
 LsaNssCommonGroupGetgrgid(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     gid_t gid,
     struct group* pResultGroup,
     char* pszBuf,
@@ -392,18 +386,14 @@ LsaNssCommonGroupGetgrgid(
     )
 {
     int ret = NSS_STATUS_SUCCESS;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
     PVOID pGroupInfo = NULL;
     DWORD dwGroupInfoLevel = 1;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(NULL,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaFindGroupById(
@@ -435,10 +425,9 @@ cleanup:
 
 error:
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-        LsaCloseServer(hLsaConnection);
-        *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;
@@ -446,7 +435,7 @@ error:
 
 NSS_STATUS
 LsaNssCommonGroupGetgrnam(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     const char * pszGroupName,
     struct group * pResultGroup,
     char * pszBuf,
@@ -455,18 +444,14 @@ LsaNssCommonGroupGetgrnam(
     )
 {
     int ret = NSS_STATUS_SUCCESS;
-    HANDLE  hLsaConnection = *phLsaConnection;
+    HANDLE  hLsaConnection = NULL;
     PVOID pGroupInfo = NULL;
     DWORD dwGroupInfoLevel = 1;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaFindGroupByName(
@@ -496,10 +481,9 @@ cleanup:
 
 error:
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-        LsaCloseServer(hLsaConnection);
-        *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;
@@ -507,7 +491,7 @@ error:
 
 NSS_STATUS
 LsaNssCommonGroupGetGroupsByUserName(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PCSTR pszUserName,
     size_t resultsExistingSize,
     size_t resultsCapacity,
@@ -517,7 +501,7 @@ LsaNssCommonGroupGetGroupsByUserName(
     )
 {
     int                     ret = NSS_STATUS_SUCCESS;
-    HANDLE                  hLsaConnection = *phLsaConnection;
+    HANDLE                  hLsaConnection = NULL;
     DWORD                   dwNumGroupsFound = 0;
     gid_t*                  pGidNewResult = NULL;
     DWORD                   dwNumTotalGroup = 0;
@@ -530,14 +514,10 @@ LsaNssCommonGroupGetGroupsByUserName(
         BAIL_ON_NSS_ERROR(ret);
     }
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaGetGidsForUserByName(
@@ -583,10 +563,9 @@ error:
 
     LW_SAFE_FREE_MEMORY(pGidNewResult);
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-       LsaCloseServer(hLsaConnection);
-       *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;

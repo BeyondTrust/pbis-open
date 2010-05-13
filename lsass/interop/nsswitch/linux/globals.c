@@ -33,7 +33,7 @@
 #include <pthread.h>
 #endif
 
-HANDLE hLsaConnection = (HANDLE)NULL;
+LSA_NSS_CACHED_HANDLE lsaConnection = { 0 };
 #ifdef HAVE_NONLIBPTHREAD_MUTEX_LOCK
 pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
 #endif
@@ -45,9 +45,5 @@ LsaNssLinuxDestruct(
     void
     )
 {
-    if (hLsaConnection)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 }

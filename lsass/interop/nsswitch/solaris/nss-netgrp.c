@@ -52,7 +52,7 @@ typedef struct
 {
     nss_backend_t base;
     int inner;
-    HANDLE hLsaConnectionNetgrp;
+    LSA_NSS_CACHED_HANDLE lsaConnection;
 } LSA_NSS_NETGROUP_BACKEND, *PLSA_NSS_NETGROUP_BACKEND;
 
 typedef struct _LSA_NSS_NETGROUP_LIST
@@ -186,6 +186,7 @@ LsaNssSolarisNetgroupDestructor(
         LsaNssFreeNetgroupList(&pLsaBackend->pSeen);
         LsaNssFreeNetgroupList(&pLsaBackend->pExpand);
 
+        LsaNssCommonCloseConnection(&pLsaBackend->base.lsaConnection);
         LW_SAFE_FREE_MEMORY(pLsaBackend->pBuffer);
     }
 
@@ -243,7 +244,7 @@ LsaNssSolarisNetgroupInnerNext(
         LsaNssPopNetgroup(&pBackend->pExpand, &pszGroup);
 
         ret = LsaNssCommonNetgroupFindByName(
-            &pBackend->base.hLsaConnectionNetgrp,
+            &pBackend->base.lsaConnection,
             pszGroup,
             &pszContents);
         if (ret == NSS_STATUS_NOTFOUND)
@@ -415,7 +416,7 @@ LsaNssSolarisNetgroupSetnetgrent(
 
 
     ret = LsaNssCommonNetgroupFindByName(
-        &pLsaBackend->hLsaConnectionNetgrp,
+        &pLsaBackend->lsaConnection,
         pNetArgs->netgroup,
         &pGroupContents);
     BAIL_ON_LSA_ERROR(ret);

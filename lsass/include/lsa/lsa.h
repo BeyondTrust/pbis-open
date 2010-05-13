@@ -1518,6 +1518,24 @@ LsaCloseServer(
     LW_HANDLE hConnection
     );
 
+/**
+ * @ingroup connection
+ * @brief Frees a connection to LSASS server
+ *
+ * This frees the local resources associated with a connection, but does not
+ * explicitly notify the server. The server will discover the connection is
+ * closed when it tries to read from the socket. In general, LsaCloseServer is
+ * a cleaner way to close a connection.
+ *
+ * @param[in,out] hConnection the connection handle to close
+ * @retval LW_ERROR_SUCCESS success
+ * @retval EINVAL the handle was invalid
+ */
+LW_DWORD
+LsaDropServer(
+    LW_HANDLE hConnection
+    );
+
 LW_DWORD
 LsaGetErrorMessageForLoggingEvent(
     LW_DWORD dwError,

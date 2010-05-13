@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libnsscommon.la
 
 libnsscommon_la_SOURCES = \
 	nss-error.c \
+	nss-handle.c \
 	nss-user.c \
 	nss-group.c \
 	nss-netgrp.c

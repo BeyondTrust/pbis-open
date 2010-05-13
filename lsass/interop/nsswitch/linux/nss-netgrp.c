@@ -83,7 +83,7 @@ _nss_lsass_setnetgrent (
     NSS_LOCK();
 
     ret = LsaNssCommonNetgroupFindByName(
-        &hLsaConnection,
+        &lsaConnection,
         group,
         &pszValue);
     BAIL_ON_NSS_ERROR(ret);

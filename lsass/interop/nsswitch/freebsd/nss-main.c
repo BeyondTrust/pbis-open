@@ -452,7 +452,7 @@ LsaNSSGetGroupMembership(
     size_t myResultsSize = *pNumResultGids;
 
     ret = LsaNssCommonGroupGetGroupsByUserName(
-        &hLsaConnection,
+        &lsaConnection,
         pszUserName,
         *pNumResultGids,
         maxResultGids,

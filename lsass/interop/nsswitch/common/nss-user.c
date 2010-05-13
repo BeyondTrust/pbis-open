@@ -200,21 +200,17 @@ error:
 
 NSS_STATUS
 LsaNssCommonPasswdSetpwent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PLSA_ENUMUSERS_STATE pEnumUsersState
     )
 {
     int ret = NSS_STATUS_SUCCESS;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(NULL,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
     
     LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
 
@@ -235,10 +231,9 @@ error:
 
     LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
 
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-        LsaCloseServer(hLsaConnection);
-        *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;
@@ -246,7 +241,7 @@ error:
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwent(
-    PHANDLE                 phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE  pConnection,
     PLSA_ENUMUSERS_STATE    pEnumUsersState,
     struct passwd *         pResultUser,
     char*                   pszBuf,
@@ -255,7 +250,7 @@ LsaNssCommonPasswdGetpwent(
     )
 {
     int  ret = NSS_STATUS_NOTFOUND;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = pConnection->hLsaConnection;
 
     if (hLsaConnection == (HANDLE)NULL)
     {
@@ -328,8 +323,7 @@ error:
         
         if ( hLsaConnection != (HANDLE)NULL)
         {
-            LsaCloseServer(hLsaConnection);
-            *phLsaConnection = (HANDLE)NULL;
+            LsaNssCommonCloseConnection(pConnection);
         }
     }
 
@@ -343,11 +337,11 @@ error:
 
 NSS_STATUS
 LsaNssCommonPasswdEndpwent(
-    PHANDLE                 phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE  pConnection,
     PLSA_ENUMUSERS_STATE    pEnumUsersState
     )
 {
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = pConnection->hLsaConnection;
 
     LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
 
@@ -356,7 +350,7 @@ LsaNssCommonPasswdEndpwent(
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwnam(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     const char * pszLoginId,
     struct passwd * pResultUser,
     char * pszBuf,
@@ -365,19 +359,15 @@ LsaNssCommonPasswdGetpwnam(
     )
 {
     int ret;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
     PVOID pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
 
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaFindUserByName(
@@ -404,10 +394,9 @@ cleanup:
     return ret;
 
 error:
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-       LsaCloseServer(hLsaConnection);
-       *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;
@@ -415,7 +404,7 @@ error:
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwuid(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     uid_t uid,
     struct passwd * pResultUser,
     char * pszBuf,
@@ -424,19 +413,14 @@ LsaNssCommonPasswdGetpwuid(
     )
 {
     int ret = NSS_STATUS_SUCCESS;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
     PVOID pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
 
-
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        ret = MAP_LSA_ERROR(pErrorNumber,
-                            LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(ret);
-
-        *phLsaConnection = hLsaConnection;
-    }
+    ret = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(ret);
+    hLsaConnection = pConnection->hLsaConnection;
 
     ret = MAP_LSA_ERROR(pErrorNumber,
                         LsaFindUserById(
@@ -465,10 +449,9 @@ cleanup:
     return ret;
 
 error:
-    if (ret != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (ret != NSS_STATUS_TRYAGAIN)
     {
-       LsaCloseServer(hLsaConnection);
-       *phLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto cleanup;

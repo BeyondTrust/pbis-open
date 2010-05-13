@@ -58,7 +58,7 @@ _nss_lsass_passwd_constr(
     const char* pszCfgStr
     )
 {
-    return LsaNssHpuxPasswdCreateBackend();
+    return LsaNssSolarisPasswdCreateBackend();
 }
 
 nss_backend_t*
@@ -78,5 +78,5 @@ _nss_lsass_group_constr(
     const char* pszCfgStr
     )
 {
-    return LsaNssHpuxGroupCreateBackend();
+    return LsaNssSolarisGroupCreateBackend();
 }

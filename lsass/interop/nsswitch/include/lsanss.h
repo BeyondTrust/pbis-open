@@ -130,6 +130,22 @@ typedef struct __LSA_ENUMARTEFACTS_STATE
     BOOLEAN bTryAgain;
 } LSA_ENUMARTEFACTS_STATE, *PLSA_ENUMARTEFACTS_STATE;
 
+typedef struct __LSA_NSS_CACHED_HANDLE
+{
+    HANDLE hLsaConnection;
+    pid_t owner;
+} LSA_NSS_CACHED_HANDLE, *PLSA_NSS_CACHED_HANDLE;
+
+DWORD
+LsaNssCommonEnsureConnected(
+    PLSA_NSS_CACHED_HANDLE pConnection
+    );
+
+DWORD
+LsaNssCommonCloseConnection(
+    PLSA_NSS_CACHED_HANDLE pConnection
+    );
+
 VOID
 LsaNssClearEnumUsersState(
     HANDLE hLsaConnection,
@@ -185,13 +201,13 @@ LsaNssClearEnumArtefactsState(
 
 NSS_STATUS
 LsaNssCommonPasswdSetpwent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PLSA_ENUMUSERS_STATE pEnumUsersState
     );
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE  pConnection,
     PLSA_ENUMUSERS_STATE    pEnumUsersState,
     struct passwd *         pResultUser,
     char*                   pszBuf,
@@ -201,13 +217,13 @@ LsaNssCommonPasswdGetpwent(
 
 NSS_STATUS
 LsaNssCommonPasswdEndpwent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE  pConnection,
     PLSA_ENUMUSERS_STATE    pEnumUsersState
     );
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwnam(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     const char * pszLoginId,
     struct passwd * pResultUser,
     char * pszBuf,
@@ -217,7 +233,7 @@ LsaNssCommonPasswdGetpwnam(
 
 NSS_STATUS
 LsaNssCommonPasswdGetpwuid(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     uid_t uid,
     struct passwd * pResultUser,
     char * pszBuf,
@@ -227,13 +243,13 @@ LsaNssCommonPasswdGetpwuid(
 
 NSS_STATUS
 LsaNssCommonGroupSetgrent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PLSA_ENUMGROUPS_STATE pEnumGroupsState
     );
 
 NSS_STATUS
 LsaNssCommonGroupGetgrent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE    pConnection,
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState,
     struct group*             pResultGroup,
     char *                    pszBuf,
@@ -243,13 +259,13 @@ LsaNssCommonGroupGetgrent(
 
 NSS_STATUS
 LsaNssCommonGroupEndgrent(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE    pConnection,
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState
     );
 
 NSS_STATUS
 LsaNssCommonGroupGetgrgid(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     gid_t gid,
     struct group* pResultGroup,
     char* pszBuf,
@@ -259,7 +275,7 @@ LsaNssCommonGroupGetgrgid(
 
 NSS_STATUS
 LsaNssCommonGroupGetgrnam(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     const char * pszGroupName,
     struct group * pResultGroup,
     char * pszBuf,
@@ -269,7 +285,7 @@ LsaNssCommonGroupGetgrnam(
 
 NSS_STATUS
 LsaNssCommonGroupGetGroupsByUserName(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PCSTR pszUserName,
     size_t resultsExistingSize,
     size_t resultsCapacity,
@@ -280,7 +296,7 @@ LsaNssCommonGroupGetGroupsByUserName(
 
 NSS_STATUS
 LsaNssCommonNetgroupFindByName(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PCSTR pszName,
     PSTR* ppszValue
     );

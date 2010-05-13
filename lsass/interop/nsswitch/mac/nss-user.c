@@ -49,6 +49,7 @@
 #include "lsanss.h"
 #include "externs.h"
 
+static const int MAX_NUM_USERS = 500;
 static LSA_ENUMUSERS_STATE gEnumUsersState = {0};
 
 NSS_STATUS
@@ -56,8 +57,16 @@ _nss_lsass_setpwent(
     void
     )
 {
-    return LsaNssCommonPasswdSetpwent(&hLsaConnection,
-                                      &gEnumUsersState);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonPasswdSetpwent(&lsaConnection,
+                                        &gEnumUsersState);
+    
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -68,12 +77,21 @@ _nss_lsass_getpwent_r(
     int *           pErrorNumber
     )
 {
-    return LsaNssCommonPasswdGetpwent(&hLsaConnection,
-                                      &gEnumUsersState,
-                                      pResultUser,
-                                      pszBuf,
-                                      bufLen,
-                                      pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonPasswdGetpwent(
+        &lsaConnection,
+        &gEnumUsersState,
+        pResultUser,
+        pszBuf,
+        bufLen,
+        pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -81,7 +99,17 @@ _nss_lsass_endpwent(
     void
     )
 {
-    return LsaNssCommonPasswdEndpwent(&hLsaConnection, &gEnumUsersState);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonPasswdEndpwent(
+        &lsaConnection,
+        &gEnumUsersState);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -93,12 +121,20 @@ _nss_lsass_getpwnam_r(
     int *            pErrorNumber
     )
 {
-    return LsaNssCommonPasswdGetpwnam(&hLsaConnection,
-                                      pszLoginId,
-                                      pResultUser,
-                                      pszBuf,
-                                      bufLen,
-                                      pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonPasswdGetpwnam(&lsaConnection,
+                                        pszLoginId,
+                                        pResultUser,
+                                        pszBuf,
+                                        bufLen,
+                                        pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 NSS_STATUS
@@ -110,12 +146,20 @@ _nss_lsass_getpwuid_r(
     int *           pErrorNumber
     )
 {
-    return LsaNssCommonPasswdGetpwuid(&hLsaConnection,
-                                      uid,
-                                      pResultUser,
-                                      pszBuf,
-                                      bufLen,
-                                      pErrorNumber);
+    NSS_STATUS status;
+
+    NSS_LOCK();
+
+    status = LsaNssCommonPasswdGetpwuid(&lsaConnection,
+                                        uid,
+                                        pResultUser,
+                                        pszBuf,
+                                        bufLen,
+                                        pErrorNumber);
+
+    NSS_UNLOCK();
+
+    return status;
 }
 
 DWORD
@@ -135,13 +179,10 @@ _nss_lsass_get_principal(
        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaFindUserByName(hLsaConnection,
+    dwError = LsaFindUserByName(lsaConnection.hLsaConnection,
                                 pszUserName,
                                 dwUserInfoLevel,
                                 &pUserInfo);
@@ -168,11 +209,7 @@ error:
         *ppszPrincipalName = NULL;
     }
 
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-       LsaCloseServer(hLsaConnection);
-       hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(pConnection);
 
     if (pszPrincipalName)
     {
@@ -208,13 +245,10 @@ _nss_lsass_get_user_groups(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetGidsForUserByName(hLsaConnection,
+    dwError = LsaGetGidsForUserByName(lsaConnection.hLsaConnection,
                                       pszUserName,
                                       &dwCountOfGroups,
                                       &pGidResults);
@@ -229,11 +263,7 @@ cleanup:
 
 error:
 
-   if (hLsaConnection != (HANDLE)NULL)
-   {
-      LsaCloseServer(hLsaConnection);
-      hLsaConnection = (HANDLE)NULL;
-   }
+    LsaNssCommonCloseConnection(pConnection);
 
     if (pNumberOfGroups)
     {

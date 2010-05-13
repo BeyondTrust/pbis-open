@@ -79,29 +79,25 @@ LsaNssClearEnumArtefactsState(
 
 NSS_STATUS
 LsaNssCommonNetgroupFindByName(
-    PHANDLE phLsaConnection,
+    PLSA_NSS_CACHED_HANDLE pConnection,
     PCSTR pszName,
     PSTR* ppszValue
     )
 {
     NSS_STATUS status = NSS_STATUS_SUCCESS;
-    HANDLE hLsaConnection = *phLsaConnection;
+    HANDLE hLsaConnection = NULL;
     LSA_ENUMARTEFACTS_STATE state = {0};
     DWORD dwNumFound = 0;
     PVOID* ppInfoList = NULL;
     int iGroup;
     BOOLEAN bFound = FALSE;
 
+    status = MAP_LSA_ERROR(NULL,
+            LsaNssCommonEnsureConnected(pConnection));
+    BAIL_ON_NSS_ERROR(status);
+    hLsaConnection = pConnection->hLsaConnection;
+
     LsaNssClearEnumArtefactsState(hLsaConnection, &state);
-
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        status = MAP_LSA_ERROR(NULL,
-                               LsaOpenServer(&hLsaConnection));
-        BAIL_ON_NSS_ERROR(status);
-
-        *phLsaConnection = hLsaConnection;
-    }
 
     status = MAP_LSA_ERROR(NULL,
                            LsaBeginEnumNSSArtefacts(
@@ -152,10 +148,9 @@ done:
 
 error:
 
-    if (status != NSS_STATUS_TRYAGAIN && hLsaConnection != (HANDLE)NULL)
+    if (status != NSS_STATUS_TRYAGAIN)
     {
-        LsaCloseServer(hLsaConnection);
-        *phLsaConnection = hLsaConnection = (HANDLE)NULL;
+        LsaNssCommonCloseConnection(pConnection);
     }
 
     goto done;

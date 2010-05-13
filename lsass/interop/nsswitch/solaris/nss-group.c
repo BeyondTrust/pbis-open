@@ -54,7 +54,7 @@ typedef struct
 {
     nss_backend_t base;
     LSA_ENUMGROUPS_STATE enumGroupsState;
-    HANDLE hLsaConnectionGroup;
+    LSA_NSS_CACHED_HANDLE lsaConnection;
 } LSA_NSS_GROUP_BACKEND, *PLSA_NSS_GROUP_BACKEND;
 
 typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
@@ -70,8 +70,9 @@ LsaNssSolarisGroupDestructor(
     int                     ret = NSS_STATUS_SUCCESS;
 
     LsaNssClearEnumGroupsState(
-        &pLsaBackend->hLsaConnectionGroup,
+        &pLsaBackend->lsaConnection,
         pEnumGroupsState);
+    LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
     LwFreeMemory(pBackend);
 
     return ret;
@@ -87,7 +88,8 @@ LsaNssSolarisGroupSetgrent(
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupSetgrent(&pLsaBackend->hLsaConnectionGroup,
+    return LsaNssCommonGroupSetgrent(
+                                     &pLsaBackend->lsaConnection,
                                      pEnumGroupsState);
 }
 
@@ -108,7 +110,8 @@ LsaNssSolarisGroupGetgrent(
     int*                      pErrorNumber = &err;
     int                       ret = NSS_STATUS_NOTFOUND;
 
-    ret = LsaNssCommonGroupGetgrent(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrent(
+                                    &pLsaBackend->lsaConnection,
                                     pEnumGroupsState,
                                     pResultGroup,
                                     pszBuf,
@@ -145,7 +148,9 @@ LsaNssSolarisGroupEndgrent(
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupEndgrent(&pLsaBackend->hLsaConnectionGroup, pEnumGroupsState);
+    return LsaNssCommonGroupEndgrent(
+            &pLsaBackend->lsaConnection,
+            pEnumGroupsState);
 }
 
 static
@@ -165,7 +170,8 @@ LsaNssSolarisGroupGetgrgid(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
-    ret = LsaNssCommonGroupGetgrgid(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrgid(
+                                    &pLsaBackend->lsaConnection,
                                     gid,
                                     pResultGroup,
                                     pszBuf,
@@ -216,7 +222,8 @@ LsaNssSolarisGroupGetgrnam(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
-    ret = LsaNssCommonGroupGetgrnam(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrnam(
+                                    &pLsaBackend->lsaConnection,
                                     pszGroupName,
                                     pResultGroup,
                                     pszBuf,
@@ -272,7 +279,7 @@ LsaNssSolarisGroupGetgroupsbymember(
 
 
     ret = LsaNssCommonGroupGetGroupsByUserName(
-                &pLsaBackend->hLsaConnectionGroup,
+                &pLsaBackend->lsaConnection,
                 pszUserName,
                 myResultsSize,
                 myResultsCapacity,

@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,33 +33,61 @@
  *
  * Module Name:
  *
- *        externs.h
+ *        nss-handle.c
  *
  * Abstract:
- *
+ * 
  *        Name Server Switch (Likewise LSASS)
+ * 
+ *        Handle caching the nsswitch connection
  *
- *        Declarations of extern global variables
- *
- * Authors: Wei Fu (wfu@likewisesoftware.com)
+ * Authors: Kyle Stemen <kstemen@likewise.com>
  */
 
-#ifndef __LSA_NSS_LINUX_EXTERNS_H__
-#define __LSA_NSS_LINUX_EXTERNS_H__
+#include "lsanss.h"
 
-#ifdef HAVE_NONLIBPTHREAD_MUTEX_LOCK
-#include <pthread.h>
-#endif
+DWORD
+LsaNssCommonEnsureConnected(
+    PLSA_NSS_CACHED_HANDLE pConnection
+    )
+{
+    pid_t myPid = getpid();
 
-extern LSA_NSS_CACHED_HANDLE lsaConnection;
-#ifdef HAVE_NONLIBPTHREAD_MUTEX_LOCK
-extern pthread_mutex_t gLock;
-#define NSS_LOCK() pthread_mutex_lock(&gLock);
-#define NSS_UNLOCK() pthread_mutex_unlock(&gLock);
-#else
-#define NSS_LOCK()
-#define NSS_UNLOCK()
-#endif
+    if (myPid != pConnection->owner &&
+            pConnection->hLsaConnection != (HANDLE)NULL)
+    {
+        // Drop the connection
+        LsaDropServer(pConnection->hLsaConnection);
+        pConnection->hLsaConnection = NULL;
+    }
+    if (pConnection->hLsaConnection == (HANDLE)NULL)
+    {
+        pConnection->owner = myPid;
+        return LsaOpenServer(&pConnection->hLsaConnection);
+    }
+    return ERROR_SUCCESS;
+}
 
+DWORD
+LsaNssCommonCloseConnection(
+    PLSA_NSS_CACHED_HANDLE pConnection
+    )
+{
+    DWORD dwError = 0;
 
-#endif
+    if (pConnection->hLsaConnection != (HANDLE)NULL)
+    {
+        pid_t myPid = getpid();
+        if (myPid == pConnection->owner)
+        {
+            dwError = LsaCloseServer(pConnection->hLsaConnection);
+        }
+        else
+        {
+            // Drop the connection
+            dwError = LsaDropServer(pConnection->hLsaConnection);
+        }
+        pConnection->hLsaConnection = NULL;
+    }
+    return dwError;
+}

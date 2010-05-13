@@ -203,6 +203,10 @@ LwKrb5SetDefaultCachePath(
                             pszCachePath,
                             (ppszOrigCachePath) ? (const char**)&pszOrigCachePath : NULL);
     BAIL_ON_SEC_ERROR(dwMajorStatus);
+
+    LW_LOG_DEBUG("Switched gss krb5 credentials path from %s to %s",
+            LW_SAFE_LOG_STRING(pszCachePath),
+            LW_SAFE_LOG_STRING(pszOrigCachePath));
     
     if (ppszOrigCachePath) {
         if (!LW_IS_NULL_OR_EMPTY_STR(pszOrigCachePath)) {

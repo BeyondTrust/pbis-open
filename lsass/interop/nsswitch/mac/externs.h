@@ -47,6 +47,8 @@
 #ifndef __LSA_NSS_MAC_EXTERNS_H__
 #define __LSA_NSS_MAC_EXTERNS_H__
 
-extern HANDLE hLsaConnection;
+extern LSA_NSS_CACHED_HANDLE lsaConnection;
+#define NSS_LOCK()
+#define NSS_UNLOCK()
 
 #endif

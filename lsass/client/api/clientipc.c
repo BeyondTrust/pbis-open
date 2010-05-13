@@ -147,6 +147,30 @@ LsaCloseServer(
 }
 
 DWORD
+LsaDropServer(
+    HANDLE hConnection
+    )
+{
+    DWORD dwError = 0;
+    PLSA_CLIENT_CONNECTION_CONTEXT pContext =
+                     (PLSA_CLIENT_CONNECTION_CONTEXT)hConnection;
+
+    if (pContext->pAssoc)
+    {
+        lwmsg_assoc_delete(pContext->pAssoc);
+    }
+
+    if (pContext->pProtocol)
+    {
+        lwmsg_protocol_delete(pContext->pProtocol);
+    }
+
+    LwFreeMemory(pContext);
+
+    return dwError;
+}
+
+DWORD
 LsaIpcAcquireCall(
     HANDLE hServer,
     LWMsgCall** ppCall

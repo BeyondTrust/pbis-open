@@ -54,14 +54,14 @@ typedef struct
 {
     nss_backend_t base;
     LSA_ENUMGROUPS_STATE enumGroupsState;
-    HANDLE hLsaConnectionGroup;
+    LSA_NSS_CACHED_HANDLE lsaConnection;
 } LSA_NSS_GROUP_BACKEND, *PLSA_NSS_GROUP_BACKEND;
 
 typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
 
 static
 NSS_STATUS
-LsaNssHpuxGroupDestructor(
+LsaNssSolarisGroupDestructor(
     nss_backend_t* pBackend,
     void* pArgs)
 {
@@ -70,8 +70,9 @@ LsaNssHpuxGroupDestructor(
     int                     ret = NSS_STATUS_SUCCESS;
 
     LsaNssClearEnumGroupsState(
-        &pLsaBackend->hLsaConnectionGroup,
+        &pLsaBackend->lsaConnection,
         pEnumGroupsState);
+    LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
     LwFreeMemory(pBackend);
 
     return ret;
@@ -79,7 +80,7 @@ LsaNssHpuxGroupDestructor(
 
 static
 NSS_STATUS
-LsaNssHpuxGroupSetgrent(
+LsaNssSolarisGroupSetgrent(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -87,13 +88,14 @@ LsaNssHpuxGroupSetgrent(
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupSetgrent(&pLsaBackend->hLsaConnectionGroup,
+    return LsaNssCommonGroupSetgrent(
+                                     &pLsaBackend->lsaConnection,
                                      pEnumGroupsState);
 }
 
 static
 NSS_STATUS
-LsaNssHpuxGroupGetgrent(
+LsaNssSolarisGroupGetgrent(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -108,7 +110,8 @@ LsaNssHpuxGroupGetgrent(
     int*                      pErrorNumber = &err;
     int                       ret = NSS_STATUS_NOTFOUND;
 
-    ret = LsaNssCommonGroupGetgrent(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrent(
+                                    &pLsaBackend->lsaConnection,
                                     pEnumGroupsState,
                                     pResultGroup,
                                     pszBuf,
@@ -122,6 +125,10 @@ LsaNssHpuxGroupGetgrent(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
     }
     else
     {
@@ -133,7 +140,7 @@ LsaNssHpuxGroupGetgrent(
 
 static
 NSS_STATUS
-LsaNssHpuxGroupEndgrent(
+LsaNssSolarisGroupEndgrent(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -141,12 +148,14 @@ LsaNssHpuxGroupEndgrent(
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
     PLSA_ENUMGROUPS_STATE     pEnumGroupsState = &pLsaBackend->enumGroupsState;
 
-    return LsaNssCommonGroupEndgrent(&pLsaBackend->hLsaConnectionGroup, pEnumGroupsState);
+    return LsaNssCommonGroupEndgrent(
+            &pLsaBackend->lsaConnection,
+            pEnumGroupsState);
 }
 
 static
 NSS_STATUS
-LsaNssHpuxGroupGetgrgid(
+LsaNssSolarisGroupGetgrgid(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -161,8 +170,8 @@ LsaNssHpuxGroupGetgrgid(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
-
-    ret = LsaNssCommonGroupGetgrgid(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrgid(
+                                    &pLsaBackend->lsaConnection,
                                     gid,
                                     pResultGroup,
                                     pszBuf,
@@ -176,6 +185,18 @@ LsaNssHpuxGroupGetgrgid(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
+    }
+    else if (ret == NSS_STATUS_UNAVAIL && err == ECONNREFUSED)
+    {
+        /* Librestart on Solaris does not like it when getpwnam_r returns
+         * ECONNREFUSED. So instead, we'll treat this case like the user
+         * was not found (0 for errno but NULL for result).
+         */
+        errno = 0;
     }
     else
     {
@@ -186,7 +207,7 @@ LsaNssHpuxGroupGetgrgid(
 }
 
 NSS_STATUS
-LsaNssHpuxGroupGetgrnam(
+LsaNssSolarisGroupGetgrnam(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -201,7 +222,8 @@ LsaNssHpuxGroupGetgrnam(
     int                       ret = NSS_STATUS_SUCCESS;
     PLSA_NSS_GROUP_BACKEND    pLsaBackend = (PLSA_NSS_GROUP_BACKEND) pBackend;
 
-    ret = LsaNssCommonGroupGetgrnam(&pLsaBackend->hLsaConnectionGroup,
+    ret = LsaNssCommonGroupGetgrnam(
+                                    &pLsaBackend->lsaConnection,
                                     pszGroupName,
                                     pResultGroup,
                                     pszBuf,
@@ -215,6 +237,18 @@ LsaNssHpuxGroupGetgrnam(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
+    }
+    else if (ret == NSS_STATUS_UNAVAIL && err == ECONNREFUSED)
+    {
+        /* Librestart on Solaris does not like it when getpwnam_r returns
+         * ECONNREFUSED. So instead, we'll treat this case like the user
+         * was not found (0 for errno but NULL for result).
+         */
+        errno = 0;
     }
     else
     {
@@ -225,7 +259,7 @@ LsaNssHpuxGroupGetgrnam(
 }
 
 NSS_STATUS
-LsaNssHpuxGroupGetgroupsbymember(
+LsaNssSolarisGroupGetgroupsbymember(
     nss_backend_t* pBackend,
     void* pArgs
     )
@@ -245,13 +279,13 @@ LsaNssHpuxGroupGetgroupsbymember(
 
 
     ret = LsaNssCommonGroupGetGroupsByUserName(
-                    &pLsaBackend->hLsaConnectionGroup,
-                    pszUserName,
-                    myResultsSize,
-                    myResultsCapacity,
-                    &myResultsSize,
-                    pGidResults,
-                    pErrorNumber);
+                &pLsaBackend->lsaConnection,
+                pszUserName,
+                myResultsSize,
+                myResultsCapacity,
+                &myResultsSize,
+                pGidResults,
+                pErrorNumber);
 
     if (ret == NSS_STATUS_SUCCESS)
     {
@@ -266,27 +300,27 @@ LsaNssHpuxGroupGetgroupsbymember(
 
 static
 NSS_ENTRYPOINT
-LsaNssHpuxGroupOps[] =
+LsaNssSolarisGroupOps[] =
 {
-    LsaNssHpuxGroupDestructor,
-    LsaNssHpuxGroupEndgrent,
-    LsaNssHpuxGroupSetgrent,
-    LsaNssHpuxGroupGetgrent,
-    LsaNssHpuxGroupGetgrnam,
-    LsaNssHpuxGroupGetgrgid,
-    LsaNssHpuxGroupGetgroupsbymember
+    LsaNssSolarisGroupDestructor,
+    LsaNssSolarisGroupEndgrent,
+    LsaNssSolarisGroupSetgrent,
+    LsaNssSolarisGroupGetgrent,
+    LsaNssSolarisGroupGetgrnam,
+    LsaNssSolarisGroupGetgrgid,
+    LsaNssSolarisGroupGetgroupsbymember
 };
 
 static
 nss_backend_t
-LsaNssHpuxGroupBackend =
+LsaNssSolarisGroupBackend =
 {
     .n_ops = 7,
-    .ops = LsaNssHpuxGroupOps
+    .ops = LsaNssSolarisGroupOps
 };
 
 nss_backend_t*
-LsaNssHpuxGroupCreateBackend(
+LsaNssSolarisGroupCreateBackend(
     void
     )
 {
@@ -297,7 +331,7 @@ LsaNssHpuxGroupCreateBackend(
         return NULL;
     }
 
-    pLsaBackend->base = LsaNssHpuxGroupBackend;
+    pLsaBackend->base = LsaNssSolarisGroupBackend;
 
     return (nss_backend_t*) pLsaBackend;
 }

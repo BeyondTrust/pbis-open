@@ -52,7 +52,7 @@
 #include "lsanss.h"
 
 nss_backend_t*
-LsaNssHpuxPasswdCreateBackend(
+LsaNssSolarisPasswdCreateBackend(
     void			       
     );
 

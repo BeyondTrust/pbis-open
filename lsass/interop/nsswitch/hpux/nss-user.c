@@ -53,7 +53,7 @@ typedef struct
 {
     nss_backend_t base;
     LSA_ENUMUSERS_STATE enumUsersState;
-    HANDLE hLsaConnectionUsers;
+    LSA_NSS_CACHED_HANDLE lsaConnection;
 } LSA_NSS_PASSWD_BACKEND, *PLSA_NSS_PASSWD_BACKEND;
 
 typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
@@ -62,7 +62,7 @@ typedef NSS_STATUS (*NSS_ENTRYPOINT)(nss_backend_t*, void*);
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdDestructor(
+LsaNssSolarisPasswdDestructor(
     nss_backend_t* pBackend,
     void* pArgs)
 {
@@ -71,8 +71,9 @@ LsaNssHpuxPasswdDestructor(
     int                     ret = NSS_STATUS_SUCCESS;
 
     LsaNssClearEnumUsersState(
-        &pLsaBackend->hLsaConnectionUsers,
+        &pLsaBackend->lsaConnection,
         pEnumUsersState);
+    LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
     LwFreeMemory(pBackend);
 
     return ret;
@@ -80,20 +81,21 @@ LsaNssHpuxPasswdDestructor(
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdSetpwent(
+LsaNssSolarisPasswdSetpwent(
     nss_backend_t* pBackend,
     void* pArgs)
 {
     PLSA_NSS_PASSWD_BACKEND pLsaBackend = (PLSA_NSS_PASSWD_BACKEND) pBackend;
     PLSA_ENUMUSERS_STATE    pEnumUsersState = &pLsaBackend->enumUsersState;
 
-    return LsaNssCommonPasswdSetpwent(&pLsaBackend->hLsaConnectionUsers,
+    return LsaNssCommonPasswdSetpwent(
+                                      &pLsaBackend->lsaConnection,
                                       pEnumUsersState);
 }
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdGetpwent(
+LsaNssSolarisPasswdGetpwent(
     nss_backend_t* pBackend,
     void* pArgs)
 {
@@ -107,7 +109,8 @@ LsaNssHpuxPasswdGetpwent(
     int                     ret;
     int*                    pErrorNumber = &err;
 
-    ret = LsaNssCommonPasswdGetpwent(&pLsaBackend->hLsaConnectionUsers,
+    ret = LsaNssCommonPasswdGetpwent(
+                                     &pLsaBackend->lsaConnection,
                                      pEnumUsersState,
                                      pResultUser,
                                      pszBuf,
@@ -121,6 +124,10 @@ LsaNssHpuxPasswdGetpwent(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
     }
     else
     {
@@ -132,19 +139,21 @@ LsaNssHpuxPasswdGetpwent(
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdEndpwent(
+LsaNssSolarisPasswdEndpwent(
     nss_backend_t* pBackend,
     void* pArgs)
 {
     PLSA_NSS_PASSWD_BACKEND pLsaBackend = (PLSA_NSS_PASSWD_BACKEND) pBackend;
     PLSA_ENUMUSERS_STATE    pEnumUsersState = &pLsaBackend->enumUsersState;
 
-    return LsaNssCommonPasswdEndpwent(&pLsaBackend->hLsaConnectionUsers, pEnumUsersState);
+    return LsaNssCommonPasswdEndpwent(
+            &pLsaBackend->lsaConnection,
+            pEnumUsersState);
 }
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdGetpwnam(
+LsaNssSolarisPasswdGetpwnam(
     nss_backend_t* pBackend,
     void* pArgs)
 {
@@ -158,7 +167,8 @@ LsaNssHpuxPasswdGetpwnam(
     size_t                  bufLen = (size_t) pXbyYArgs->buf.buflen;
     PLSA_NSS_PASSWD_BACKEND pLsaBackend = (PLSA_NSS_PASSWD_BACKEND) pBackend;
 
-    ret = LsaNssCommonPasswdGetpwnam(&pLsaBackend->hLsaConnectionUsers,
+    ret = LsaNssCommonPasswdGetpwnam(
+                                     &pLsaBackend->lsaConnection,
                                      pszLoginId,
                                      pResultUser,
                                      pszBuf,
@@ -172,6 +182,18 @@ LsaNssHpuxPasswdGetpwnam(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
+    }
+    else if (ret == NSS_STATUS_UNAVAIL && err == ECONNREFUSED)
+    {
+        /* Librestart on Solaris does not like it when getpwnam_r returns
+         * ECONNREFUSED. So instead, we'll treat this case like the user
+         * was not found (0 for errno but NULL for result).
+         */
+        errno = 0;
     }
     else
     {
@@ -183,7 +205,7 @@ LsaNssHpuxPasswdGetpwnam(
 
 static
 NSS_STATUS
-LsaNssHpuxPasswdGetpwuid(
+LsaNssSolarisPasswdGetpwuid(
     nss_backend_t* pBackend,
     void* pArgs)
 {
@@ -197,7 +219,8 @@ LsaNssHpuxPasswdGetpwuid(
     size_t                  bufLen = (size_t) pXbyYArgs->buf.buflen;
     PLSA_NSS_PASSWD_BACKEND pLsaBackend = (PLSA_NSS_PASSWD_BACKEND) pBackend;
 
-    ret = LsaNssCommonPasswdGetpwuid(&pLsaBackend->hLsaConnectionUsers,
+    ret = LsaNssCommonPasswdGetpwuid(
+                                     &pLsaBackend->lsaConnection,
                                      uid,
                                      pResultUser,
                                      pszBuf,
@@ -211,6 +234,18 @@ LsaNssHpuxPasswdGetpwuid(
     else if (ret == NSS_STATUS_TRYAGAIN  && err == ERANGE)
     {
         pXbyYArgs->erange = 1;
+        /* Solaris 8 will call again with the same buffer size if tryagain
+         * is returned.
+         */
+        ret = NSS_STATUS_UNAVAIL;
+    }
+    else if (ret == NSS_STATUS_UNAVAIL && err == ECONNREFUSED)
+    {
+        /* Librestart on Solaris does not like it when getpwnam_r returns
+         * ECONNREFUSED. So instead, we'll treat this case like the user
+         * was not found (0 for errno but NULL for result).
+         */
+        errno = 0;
     }
     else
     {
@@ -222,26 +257,26 @@ LsaNssHpuxPasswdGetpwuid(
 
 static
 NSS_ENTRYPOINT
-LsaNssHpuxPasswdOps[] =
+LsaNssSolarisPasswdOps[] =
 {
-    LsaNssHpuxPasswdDestructor,
-    LsaNssHpuxPasswdEndpwent,
-    LsaNssHpuxPasswdSetpwent,
-    LsaNssHpuxPasswdGetpwent,
-    LsaNssHpuxPasswdGetpwnam,
-    LsaNssHpuxPasswdGetpwuid
+    LsaNssSolarisPasswdDestructor,
+    LsaNssSolarisPasswdEndpwent,
+    LsaNssSolarisPasswdSetpwent,
+    LsaNssSolarisPasswdGetpwent,
+    LsaNssSolarisPasswdGetpwnam,
+    LsaNssSolarisPasswdGetpwuid
 };
 
 static
 nss_backend_t
-LsaNssHpuxPasswdBackend =
+LsaNssSolarisPasswdBackend =
 {
     .n_ops = 6,
-    .ops = LsaNssHpuxPasswdOps
+    .ops = LsaNssSolarisPasswdOps
 };
 
 nss_backend_t*
-LsaNssHpuxPasswdCreateBackend(
+LsaNssSolarisPasswdCreateBackend(
     void
     )
 {
@@ -252,7 +287,7 @@ LsaNssHpuxPasswdCreateBackend(
         return NULL;
     }
 
-    pLsaBackend->base = LsaNssHpuxPasswdBackend;
+    pLsaBackend->base = LsaNssSolarisPasswdBackend;
 
     return (nss_backend_t*) pLsaBackend;
 }

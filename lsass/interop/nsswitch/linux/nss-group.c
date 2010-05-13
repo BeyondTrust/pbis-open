@@ -62,7 +62,7 @@ _nss_lsass_setgrent(
 
     NSS_LOCK();
 
-    status = LsaNssCommonGroupSetgrent(&hLsaConnection,
+    status = LsaNssCommonGroupSetgrent(&lsaConnection,
                                        &gEnumGroupsState);
 
     NSS_UNLOCK();
@@ -83,7 +83,7 @@ _nss_lsass_getgrent_r(
     NSS_LOCK();
 
     status = LsaNssCommonGroupGetgrent(
-        &hLsaConnection,
+        &lsaConnection,
         &gEnumGroupsState,
         pResultGroup,
         pszBuf,
@@ -104,7 +104,7 @@ _nss_lsass_endgrent(
 
     NSS_LOCK();
 
-    status = LsaNssCommonGroupEndgrent(&hLsaConnection, &gEnumGroupsState);
+    status = LsaNssCommonGroupEndgrent(&lsaConnection, &gEnumGroupsState);
 
     NSS_UNLOCK();
 
@@ -124,7 +124,7 @@ _nss_lsass_getgrgid_r(
 
     NSS_LOCK();
 
-    status = LsaNssCommonGroupGetgrgid(&hLsaConnection,
+    status = LsaNssCommonGroupGetgrgid(&lsaConnection,
                                        gid,
                                        pResultGroup,
                                        pszBuf,
@@ -149,7 +149,7 @@ _nss_lsass_getgrnam_r(
 
     NSS_LOCK();
 
-    status = LsaNssCommonGroupGetgrnam(&hLsaConnection,
+    status = LsaNssCommonGroupGetgrnam(&lsaConnection,
                                        pszGroupName,
                                        pResultGroup,
                                        pszBuf,
@@ -182,7 +182,7 @@ _nss_lsass_initgroups_dyn(
     NSS_LOCK();
 
     ret = LsaNssCommonGroupGetGroupsByUserName(
-        &hLsaConnection,
+        &lsaConnection,
         pszUserName,
         resultsExistingSize,
         resultsCapacity,
@@ -216,7 +216,7 @@ _nss_lsass_initgroups_dyn(
         resultsCapacity = resultsSize;
         /* Try again */
         ret = LsaNssCommonGroupGetGroupsByUserName(
-            &hLsaConnection,
+            &lsaConnection,
             pszUserName,
             resultsExistingSize,
             resultsCapacity,
