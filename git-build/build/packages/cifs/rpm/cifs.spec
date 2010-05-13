@@ -61,6 +61,13 @@ case "$1" in
     done
 
     %{_sysconfdir}/init.d/lwsmd start
+    echo -n "Waiting for lwreg startup."
+    while( test -z "`/opt/likewise/bin/lwsm status lwreg | grep standalone:`" )
+    do
+        echo -n "."
+        sleep 1
+    done
+    echo "ok"
     for file in %{_sysconfdir}/likewise/*reg; do
         %{PrefixDir}/bin/lwregshell import $file
     done
@@ -71,7 +78,14 @@ case "$1" in
     2)
     ## Upgrade
     [ -z "`pidof lwsmd`" ] && %{_sysconfdir}/init.d/lwsmd start
-    [ -z "`pidof lwreg`" ] && %{PrefixDir}/bin/lwsm start lwreg
+
+    echo -n "Waiting for lwreg startup."
+    while( test -z "`/opt/likewise/bin/lwsm status lwreg | grep standalone:`" )
+    do
+        echo -n "."
+        sleep 1
+    done
+    echo "ok"
 
     for file in %{_sysconfdir}/likewise/*reg; do
         echo "Importing ${file}..."
