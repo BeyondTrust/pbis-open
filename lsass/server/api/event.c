@@ -77,11 +77,14 @@ LsaSrvGetPamSourceOffset(
     };
     DWORD i = 0;
 
-    for (i = 0; i < sizeof(services)/sizeof(services[0]); i++)
+    if (pszPamSource != NULL)
     {
-        if (!strcmp(pszPamSource, services[i].pszPamSource))
+        for (i = 0; i < sizeof(services)/sizeof(services[0]); i++)
         {
-            return services[i].dwOffset;
+            if (!strcmp(pszPamSource, services[i].pszPamSource))
+            {
+                return services[i].dwOffset;
+            }
         }
     }
 
