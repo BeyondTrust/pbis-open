@@ -65,6 +65,9 @@ AC_SUBST([DOXYGEN],[$DOXYGEN])
 AM_CONDITIONAL([HAVE_DOXYGEN], [$HAVE_DOXYGEN])
 AM_CONDITIONAL([HAVE_DOXYGEN_PDF], [$HAVE_DOXYGEN_PDF])
 
+# Check if pthread_sigmask is available without libpthread
+AC_CHECK_FUNC(pthread_sigmask, [AC_DEFINE([HAVE_PTHREAD_SIGMASK_IN_LIBC],[],[Define if pthread_sigmask is available in libc])],[])
+
 # Checks for libraries.
 AC_CHECK_LIB(pthread, pthread_self, [LIB_PTHREAD="-lpthread"], [LIB_PTHREAD=""])
 AC_CHECK_LIB(rt, nanosleep, [LIB_RT="-lrt"], [LIB_RT=""])

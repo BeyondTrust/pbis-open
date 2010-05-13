@@ -60,6 +60,10 @@
 #endif
 #include <iconv.h>
 #include <errno.h>
+#ifdef HAVE_PTHREAD_SIGMASK_IN_LIBC
+#include <pthread.h>
+#endif
+#include <signal.h>
 
 char* lwmsg_formatv(const char* fmt, va_list ap)
 {
@@ -476,6 +480,113 @@ lwmsg_set_close_on_exec(
     }
 }
 
+LWMsgStatus
+lwmsg_set_block_sigpipe(
+    int fd
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+#ifdef SO_NOSIGPIPE
+    int on = 1;
+    
+    if (setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &on, sizeof(on)) < 0)
+    {
+        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
+    }
+
+error:
+#endif   
+    return status;
+}
+
+static
+int
+lwmsg_begin_ignore_sigpipe(
+    LWMsgBool* unblock,
+    sigset_t* original
+    )
+{
+    int ret = 0;
+#if !defined(MSG_NOSIGNAL) && !defined(SO_NOSIGPIPE) && defined(HAVE_PTHREAD_SIGMASK_IN_LIBC)
+    sigset_t sigpipemask;
+    sigset_t pending;
+
+    sigpending(&pending);
+
+    /* If SIGPIPE was not already pending against the thread,
+       we need to modify the thread signal mask to block it
+       and then unblock it again once we are done */
+    if (!sigismember(&pending, SIGPIPE))
+    {
+        sigemptyset(&sigpipemask);
+        sigaddset(&sigpipemask, SIGPIPE);
+
+        if (pthread_sigmask(SIG_BLOCK, &sigpipemask, original) < 0)
+        {
+            ret = -1;
+            goto error;
+        }
+
+        *unblock = LWMSG_TRUE;
+    }
+    else
+    {
+        *unblock = LWMSG_FALSE;
+    }
+    
+error:
+#endif
+    return ret;
+}
+
+static
+int
+lwmsg_end_ignore_sigpipe(
+    LWMsgBool* unblock,
+    sigset_t* original
+    )
+{
+    int ret = 0;
+#if !defined(MSG_NOSIGNAL) && !defined(SO_NOSIGPIPE) && defined(HAVE_PTHREAD_SIGMASK_IN_LIBC)
+    sigset_t sigpipemask;
+    sigset_t pending;
+    siginfo_t info;
+    struct timespec timeout = {0, 0};
+
+    if (*unblock)
+    {
+        /* We need to restore the original signal mask for this thread.
+           Before doing so, we need to clear any pending SIGPIPE so it
+           does not trigger a signal handler as soon as we restore the mask. */
+        sigpending(&pending);
+
+        if (sigismember(&pending, SIGPIPE))
+        {
+            sigemptyset(&sigpipemask);
+            sigaddset(&sigpipemask, SIGPIPE);
+            
+            do
+            {
+                ret = sigtimedwait(&sigpipemask, &info, &timeout);
+            } while (ret < 0 && errno == EINTR);
+
+            ret = 0;
+        }
+        
+        if (pthread_sigmask(SIG_SETMASK, original, NULL))
+        {
+            ret = -1;
+            goto error;
+        }
+        
+        *unblock = LWMSG_FALSE;
+    }
+        
+error:
+#endif
+    return ret;
+}
+
 #if defined(__hpux__) || defined(__APPLE__) || defined(sun)
 ssize_t
 lwmsg_recvmsg_timeout(
@@ -527,6 +638,9 @@ lwmsg_sendmsg_timeout(
     struct timeval timeout;
     fd_set fds;
     int ret = 0;
+    sigset_t original;
+    LWMsgBool unblock = LWMSG_FALSE;
+    int err = 0;
 
 #ifdef MSG_NOSIGNAL
     flags |= MSG_NOSIGNAL;
@@ -553,8 +667,23 @@ lwmsg_sendmsg_timeout(
         }
     }
 
-    return sendmsg(sock, msg, flags);
+    if (lwmsg_begin_ignore_sigpipe(&unblock, &original) < 0)
+    {
+        return -1;
+    }
+
+    ret = sendmsg(sock, msg, flags);
+    err = errno;
+
+    if (lwmsg_end_ignore_sigpipe(&unblock, &original) < 0)
+    {
+        return -1;
+    }
+
+    errno = err;
+    return ret;
 }
+
 #else
 ssize_t
 lwmsg_recvmsg_timeout(
@@ -597,6 +726,10 @@ lwmsg_sendmsg_timeout(
     )
 {
     struct timeval timeout;
+    int ret = 0;
+    int err = 0;
+    sigset_t original;
+    LWMsgBool unblock = LWMSG_FALSE;
     
 #ifdef MSG_NOSIGNAL
     flags |= MSG_NOSIGNAL;
@@ -617,7 +750,21 @@ lwmsg_sendmsg_timeout(
         return -1;
     }
 
-    return sendmsg(sock, msg, flags);
+    if (lwmsg_begin_ignore_sigpipe(&unblock, &original) < 0)
+    {
+        return -1;
+    }
+
+    ret = sendmsg(sock, msg, flags);
+    err = errno;
+
+    if (lwmsg_end_ignore_sigpipe(&unblock, &original) < 0)
+    {
+        return -1;
+    }
+
+    errno = err;
+    return ret;
 }
 #endif
 

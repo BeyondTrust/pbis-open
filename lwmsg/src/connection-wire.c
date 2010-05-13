@@ -764,6 +764,7 @@ lwmsg_connection_begin_connect_local(
     }
 
     BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(priv->fd));
+    BAIL_ON_ERROR(status = lwmsg_set_block_sigpipe(priv->fd));
 
     /* Get socket flags */
     if ((opts = fcntl(priv->fd, F_GETFL, 0)) < 0)
