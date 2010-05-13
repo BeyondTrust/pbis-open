@@ -58,7 +58,7 @@
 ///
 /// LSASS offline state.
 ///
-static LSA_DM_STATE_HANDLE gLsaDmState;
+static LSA_DM_STATE_HANDLE gLsaDmState = NULL;
 
 DWORD
 LsaDmInitialize(
