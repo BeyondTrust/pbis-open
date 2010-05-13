@@ -333,6 +333,7 @@ LsaGetComputerDN(
                 NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LSA_LOG_DEBUG("Switching default credentials path to get computer DN");
     dwError = LwKrb5SetDefaultCachePath(pszKrb5CachePath, NULL);
     BAIL_ON_LSA_ERROR(dwError);
 

@@ -99,6 +99,7 @@ LsaSetSMBCreds(
 
     if (bSetDefaultCachePath)
     {
+        LSA_LOG_DEBUG("Switching default credentials path for new access token"); 
         dwError = LwKrb5SetDefaultCachePath(
                   pszNewCachePath,
                   NULL);
