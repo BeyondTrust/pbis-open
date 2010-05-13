@@ -125,6 +125,17 @@ SamDbSetupLocalGroupMemberships(
     HANDLE hDirectory
     );
 
+static
+DWORD
+SamDbFixAcls(
+    HANDLE hDirectory
+    );
+
+static
+VOID
+SamDbFreeAbsoluteSecurityDescriptor(
+    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
 
 DWORD
 DirectoryInitializeProvider(
@@ -226,6 +237,7 @@ SamDbInit(
     )
 {
     DWORD dwError = 0;
+    HANDLE hDirectory1 = (HANDLE)NULL;
     HANDLE hDirectory = (HANDLE)NULL;
     PSAM_DIRECTORY_CONTEXT pDirectory = NULL;
     PCSTR  pszDbDirPath = SAM_DB_DIR;
@@ -240,7 +252,14 @@ SamDbInit(
     // TODO: Implement an upgrade scenario
     if (bExists)
     {
-       goto cleanup;
+        dwError = SamDbOpen(&hDirectory1);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        //Fix ACLs
+        dwError = SamDbFixAcls(hDirectory1);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        goto cleanup;
     }
 
     dwError = LsaCheckDirectoryExists(
@@ -284,6 +303,10 @@ SamDbInit(
     BAIL_ON_SAMDB_ERROR(dwError);
 
 cleanup:
+    if (hDirectory1)
+    {
+        SamDbClose(hDirectory1);
+    }
 
     if (hDirectory)
     {
@@ -1786,6 +1809,305 @@ error:
     goto cleanup;
 }
 
+
+static
+DWORD
+SamDbFixAcls(
+    HANDLE hDirectory
+    )
+{
+
+    DWORD dwError = 0;
+    NTSTATUS status = 0;
+    const wchar_t wszAnyObjectFilterFmt[] = L"%ws>0";
+    const DWORD dwInt32StrSize = 10;
+    WCHAR wszAttrRecordId[] = DIRECTORY_ATTR_RECORD_ID;
+    WCHAR wszAttrObjectDN[] = DIRECTORY_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrSecurityDescriptor[] = DIRECTORY_ATTR_SECURITY_DESCRIPTOR;
+    DWORD dwAnyObjectFilterLen = 0;
+    PWSTR pwszAnyObjectFilter = NULL;
+    ULONG ulScope = 0;
+    DWORD iEntry = 0;
+    ULONG ulAttributesOnly = 0;
+    PWSTR pwszBase = NULL;
+    PWSTR wszAttributes[] = {
+        &wszAttrObjectDN[0],
+        &wszAttrSecurityDescriptor[0],
+        NULL
+    };
+    PDIRECTORY_ENTRY pObjectEntries = NULL;
+    DWORD dwNumObjectEntries = 0;
+    PDIRECTORY_ENTRY pObjectEntry = NULL;
+    PWSTR pwszAccountObjectDN = NULL;
+    POCTET_STRING pSecDescBlob = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pCurrentSecDesc = NULL;
+
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDescAbs = NULL;
+    ULONG ulSecDescAbsLen = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelNew = NULL;
+    ULONG ulSecDescRelNewLen = 1024;
+    PACL pDacl = NULL;
+    ULONG ulDaclLen = 0;
+    PACL pSacl = NULL;
+    ULONG ulSaclLen = 0;
+    PSID pOwner = NULL;
+    ULONG ulOwnerLen = 0;
+    PSID pGroup = NULL;
+    ULONG ulGroupLen = 0;
+    PSID pSamGroup = NULL;
+    BOOLEAN bIsGroupDefaulted = FALSE;
+    PSID pGroupSid = NULL;
+
+
+    enum AttrValueIndex {
+        ATTR_VAL_IDX_SEC_DESC = 0,
+        ATTR_VAL_IDX_SENTINEL
+    };
+
+    ATTRIBUTE_VALUE AttrValues[] = {
+        {   /* ATTR_VAL_IDX_SEC_DESC */
+            .Type = DIRECTORY_ATTR_TYPE_OCTET_STREAM,
+            .data.pOctetString = NULL
+        }
+    };
+
+    DIRECTORY_MOD ModSecDesc = {
+        DIR_MOD_FLAGS_REPLACE,
+        wszAttrSecurityDescriptor,
+        1,
+        &AttrValues[ATTR_VAL_IDX_SEC_DESC]
+    };
+
+    DIRECTORY_MOD Mods[ATTR_VAL_IDX_SENTINEL + 1];
+    memset(&Mods, 0, sizeof(Mods));
+
+    OCTET_STRING NewSecDescBlob = {0};
+    DWORD iMod = 0;
+
+
+    dwAnyObjectFilterLen = ((sizeof(wszAttrRecordId)/sizeof(WCHAR) - 1) +
+                            dwInt32StrSize +
+                            (sizeof(wszAnyObjectFilterFmt)/
+                             sizeof(wszAnyObjectFilterFmt[0])));
+    dwError = LwAllocateMemory(dwAnyObjectFilterLen * sizeof(WCHAR),
+                                (PVOID*)&pwszAnyObjectFilter);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    sw16printfw(pwszAnyObjectFilter, dwAnyObjectFilterLen,
+                wszAnyObjectFilterFmt,
+                &wszAttrRecordId[0]);
+
+    dwError = SamDbSearchObject(hDirectory,
+                               pwszBase,
+                               ulScope,
+                               pwszAnyObjectFilter,
+                               wszAttributes,
+                               ulAttributesOnly,
+                               &pObjectEntries,
+                               &dwNumObjectEntries);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    for (iEntry = 0; iEntry < dwNumObjectEntries; iEntry++)
+    {
+        pObjectEntry = &(pObjectEntries[iEntry]);
+
+        dwError = DirectoryGetEntryAttrValueByName(
+                                    pObjectEntry,
+                                    wszAttrObjectDN,
+                                    DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                                    &pwszAccountObjectDN);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = DirectoryGetEntryAttrValueByName(
+                                  pObjectEntry,
+                                  wszAttrSecurityDescriptor,
+                                  DIRECTORY_ATTR_TYPE_NT_SECURITY_DESCRIPTOR,
+                                  &pSecDescBlob);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        pCurrentSecDesc  = (PSECURITY_DESCRIPTOR_RELATIVE)pSecDescBlob->pBytes;
+        pSecDescBlob->pBytes = NULL;
+
+        if (!pCurrentSecDesc)
+            continue;
+
+        // Get sizes
+        status = RtlSelfRelativeToAbsoluteSD(pCurrentSecDesc,
+                                             pSecDescAbs, &ulSecDescAbsLen,
+                                             pDacl, &ulDaclLen,
+                                             pSacl, &ulSaclLen,
+                                             pOwner, &ulOwnerLen,
+                                             pGroup, &ulGroupLen);
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
+            status = STATUS_SUCCESS;
+        }
+        BAIL_ON_NT_STATUS(status);
+
+        status = LW_RTL_ALLOCATE(&pSecDescAbs, VOID, ulSecDescAbsLen);
+        BAIL_ON_NT_STATUS(status);
+
+        if (ulOwnerLen)
+        {
+            status = LW_RTL_ALLOCATE(&pOwner, SID, ulOwnerLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulGroupLen)
+        {
+            status = LW_RTL_ALLOCATE(&pGroup, SID, ulGroupLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulDaclLen)
+        {
+            status = LW_RTL_ALLOCATE(&pDacl, VOID, ulDaclLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulSaclLen)
+        {
+            status = LW_RTL_ALLOCATE(&pSacl, VOID, ulSaclLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        status = RtlSelfRelativeToAbsoluteSD(pCurrentSecDesc,
+                                             pSecDescAbs, &ulSecDescAbsLen,
+                                             pDacl, &ulDaclLen,
+                                             pSacl, &ulSaclLen,
+                                             pOwner, &ulOwnerLen,
+                                             pGroup, &ulGroupLen);
+        BAIL_ON_NT_STATUS(status);
+
+        // Check whether group part is set, if NOT set, set it
+        status = RtlGetGroupSecurityDescriptor(pSecDescAbs,
+                                               &pSamGroup,
+                                               &bIsGroupDefaulted);
+        BAIL_ON_NT_STATUS(status);
+
+        if (!pSamGroup)
+        {
+
+            status = RtlAllocateSidFromCString(&pGroupSid, "S-1-5-32-544");
+            BAIL_ON_NT_STATUS(status);
+
+            status = RtlSetGroupSecurityDescriptor(
+                         pSecDescAbs,
+                         pGroupSid,
+                         FALSE);
+            BAIL_ON_NT_STATUS(status);
+
+            // convert absolute back to relative before write to SamDb
+            do
+            {
+                status = LwReallocMemory(pSecDescRelNew,
+                                            (PVOID*)&pSecDescRelNew,
+                                            ulSecDescRelNewLen);
+                BAIL_ON_NT_STATUS(status);
+
+                memset(pSecDescRelNew, 0, ulSecDescRelNewLen);
+
+                status = RtlAbsoluteToSelfRelativeSD(pSecDescAbs,
+                                                     pSecDescRelNew,
+                                                     &ulSecDescRelNewLen);
+                if (STATUS_BUFFER_TOO_SMALL  == status)
+                {
+                    ulSecDescRelNewLen *= 2;
+                }
+                else
+                {
+                    BAIL_ON_NT_STATUS(status);
+                }
+            }
+            while((status != STATUS_SUCCESS) &&
+                  (ulSecDescRelNewLen <= SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE));
+
+            // Write the fixed ACL back to registry
+            NewSecDescBlob.pBytes     = (PBYTE)pSecDescRelNew;
+            NewSecDescBlob.ulNumBytes = ulSecDescRelNewLen;
+
+            AttrValues[ATTR_VAL_IDX_SEC_DESC].data.pOctetString = &NewSecDescBlob;
+            Mods[iMod++] = ModSecDesc;
+
+            dwError = SamDbModifyObject(hDirectory,
+                                        pwszAccountObjectDN,
+                                        Mods);
+            BAIL_ON_SAMDB_ERROR(dwError);
+        }
+        BAIL_ON_NT_STATUS(status);
+
+        iMod = 0;
+        memset(&Mods, 0, sizeof(Mods));
+        memset(&NewSecDescBlob, 0, sizeof(NewSecDescBlob));
+        LW_SAFE_FREE_MEMORY(pSecDescRelNew);
+        ulSecDescRelNewLen = 1024;
+        SamDbFreeAbsoluteSecurityDescriptor(&pSecDescAbs);
+        ulSecDescAbsLen = 0;
+        ulDaclLen = 0;
+        ulSaclLen = 0;
+        ulOwnerLen = 0;
+        ulGroupLen = 0;
+    }
+
+cleanup:
+
+    if (pObjectEntries)
+    {
+        DirectoryFreeEntries(pObjectEntries, dwNumObjectEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszAnyObjectFilter);
+    LW_SAFE_FREE_MEMORY(pSecDescRelNew);
+    SamDbFreeAbsoluteSecurityDescriptor(&pSecDescAbs);
+
+    if (status != STATUS_SUCCESS &&
+        dwError == ERROR_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(status);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+VOID
+SamDbFreeAbsoluteSecurityDescriptor(
+    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    )
+{
+    PSID pOwner = NULL;
+    PSID pGroup = NULL;
+    PACL pDacl = NULL;
+    PACL pSacl = NULL;
+    BOOLEAN bDefaulted = FALSE;
+    BOOLEAN bPresent = FALSE;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+
+    if ((ppSecDesc == NULL) || (*ppSecDesc == NULL)) {
+        return;
+    }
+
+    pSecDesc = *ppSecDesc;
+
+    RtlGetOwnerSecurityDescriptor(pSecDesc, &pOwner, &bDefaulted);
+    RtlGetGroupSecurityDescriptor(pSecDesc, &pGroup, &bDefaulted);
+    RtlGetDaclSecurityDescriptor(pSecDesc, &bPresent, &pDacl, &bDefaulted);
+    RtlGetSaclSecurityDescriptor(pSecDesc, &bPresent, &pSacl, &bDefaulted);
+
+    LW_RTL_FREE(&pSecDesc);
+    LW_RTL_FREE(&pOwner);
+    LW_RTL_FREE(&pGroup);
+    LW_RTL_FREE(&pDacl);
+    LW_RTL_FREE(&pSacl);
+
+    *ppSecDesc = NULL;
+
+    return;
+}
 
 /*
 local variables:
