@@ -252,7 +252,7 @@ RegSrvFreeAbsoluteSecurityDescriptor(
 
 NTSTATUS
 RegSrvCreateDefaultSecDescRel(
-	IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+	IN OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecDescRel,
 	IN OUT PULONG pulSecDescLength
 	)
 {
@@ -261,6 +261,8 @@ RegSrvCreateDefaultSecDescRel(
     PACL pDacl = NULL;
     PSID pOwnerSid = NULL;
     PSID pGroupSid = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    ULONG ulSecDescLen = 1024;
 
     status = LW_RTL_ALLOCATE(&pSecDescAbs,
                             VOID,
@@ -318,10 +320,32 @@ RegSrvCreateDefaultSecDescRel(
 		BAIL_ON_NT_STATUS(status);
     }
 
-    status = RtlAbsoluteToSelfRelativeSD(pSecDescAbs,
-                                         pSecDescRel,
-                                         pulSecDescLength);
-    BAIL_ON_NT_STATUS(status);
+    do
+    {
+        status = NtRegReallocMemory(pSecDescRel,
+                                    (PVOID*)&pSecDescRel,
+                                    ulSecDescLen);
+        BAIL_ON_NT_STATUS(status);
+
+        memset(pSecDescRel, 0, ulSecDescLen);
+
+        status = RtlAbsoluteToSelfRelativeSD(pSecDescAbs,
+                                             pSecDescRel,
+                                             &ulSecDescLen);
+        if (STATUS_BUFFER_TOO_SMALL  == status)
+        {
+            ulSecDescLen *= 2;
+        }
+        else
+        {
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
+    while((status != STATUS_SUCCESS) &&
+          (ulSecDescLen <= SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE));
+
+    *ppSecDescRel = pSecDescRel;
+    *pulSecDescLength = ulSecDescLen;
 
 cleanup:
     LW_RTL_FREE(&pDacl);
@@ -333,6 +357,9 @@ cleanup:
     return status;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
+    ulSecDescLen = 0;
+
     goto cleanup;
 }
 

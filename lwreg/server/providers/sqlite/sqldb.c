@@ -44,6 +44,16 @@
  */
 #include "includes.h"
 
+static
+NTSTATUS
+RegDbUpdateKeyAclContent_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwAclDbId,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelToSet,
+    IN ULONG ulSecDescToSetLen
+    );
+
+
 NTSTATUS
 RegDbUnpackCacheInfo(
     sqlite3_stmt *pstQuery,
@@ -193,6 +203,26 @@ RegDbUnpackAclrefCountInfo(
         pstQuery,
         piColumnPos,
         "aclrefCount",
+        pdwCount);
+    BAIL_ON_NT_STATUS(status);
+
+error:
+    return status;
+}
+
+NTSTATUS
+RegDbUnpackTotalAclCountInfo(
+    sqlite3_stmt *pstQuery,
+    int *piColumnPos,
+    PDWORD pdwCount
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = RegSqliteReadUInt32(
+        pstQuery,
+        piColumnPos,
+        "totalAclCount",
         pdwCount);
     BAIL_ON_NT_STATUS(status);
 
@@ -397,6 +427,19 @@ RegDbOpen(
 				-1,
 				&pConn->pstCreateRegAcl,
 				NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+    /*pstUpdateRegAclByCacheId*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_UPDATE_REG_ACL);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+                pConn->pDb,
+                pwszQueryStatement,
+                -1,
+                &pConn->pstUpdateRegAclByCacheId,
+                NULL);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
 
@@ -649,6 +692,35 @@ RegDbOpen(
             pwszQueryStatement,
             -1, // search for null termination in szQuery to get length
             &pConn->pstQueryKeyAcl,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+
+
+    /*pstQueryTotalAclCount*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_TOTAL_ACL_COUNT);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryTotalAclCount,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+
+    /*pstQueryAclByOffset*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_KEY_ACL_BY_OFFSET);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryAclByOffset,
             NULL);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
@@ -2010,6 +2082,205 @@ error:
     goto cleanup;
 }
 
+
+NTSTATUS
+RegDbFixAcls(
+    IN REG_DB_HANDLE hDb
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    PSTR pszError = NULL;
+    BOOLEAN bInLock = FALSE;
+    size_t sAclCount = 0;
+    int iAclIndex = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    ULONG ulSecDescRelLen = 0;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDescAbs = NULL;
+    ULONG ulSecDescAbsLen = 0;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelNew = NULL;
+    ULONG ulSecDescRelNewLen = 1024;
+    PACL pDacl = NULL;
+    ULONG ulDaclLen = 0;
+    PACL pSacl = NULL;
+    ULONG ulSaclLen = 0;
+    PSID pOwner = NULL;
+    ULONG ulOwnerLen = 0;
+    PSID pGroup = NULL;
+    ULONG ulGroupLen = 0;
+    PSID pRegGroup = NULL;
+    BOOLEAN bIsGroupDefaulted = FALSE;
+    PSID pGroupSid = NULL;
+
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "begin;",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    status = RegDbQueryTotalAclCount_inlock(hDb, &sAclCount);
+    BAIL_ON_NT_STATUS(status);
+
+    for (iAclIndex = 0; iAclIndex < sAclCount; iAclIndex++)
+    {
+        int64_t qwCacheId = -1;
+
+        status = RegDbGetKeyAclByAclOffset_inlock(hDb,
+                                                 iAclIndex,
+                                                 &qwCacheId,
+                                                 &pSecDescRel,
+                                                 &ulSecDescRelLen);
+        BAIL_ON_NT_STATUS(status);
+
+        // Get sizes
+        status = RtlSelfRelativeToAbsoluteSD(pSecDescRel,
+                                             pSecDescAbs, &ulSecDescAbsLen,
+                                             pDacl, &ulDaclLen,
+                                             pSacl, &ulSaclLen,
+                                             pOwner, &ulOwnerLen,
+                                             pGroup, &ulGroupLen);
+        if (status == STATUS_BUFFER_TOO_SMALL)
+        {
+            status = STATUS_SUCCESS;
+        }
+        BAIL_ON_NT_STATUS(status);
+
+        status = LW_RTL_ALLOCATE(&pSecDescAbs, VOID, ulSecDescAbsLen);
+        BAIL_ON_NT_STATUS(status);
+
+        if (ulOwnerLen)
+        {
+            status = LW_RTL_ALLOCATE(&pOwner, SID, ulOwnerLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulGroupLen)
+        {
+            status = LW_RTL_ALLOCATE(&pGroup, SID, ulGroupLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulDaclLen)
+        {
+            status = LW_RTL_ALLOCATE(&pDacl, VOID, ulDaclLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ulSaclLen)
+        {
+            status = LW_RTL_ALLOCATE(&pSacl, VOID, ulSaclLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        status = RtlSelfRelativeToAbsoluteSD(pSecDescRel,
+                                             pSecDescAbs, &ulSecDescAbsLen,
+                                             pDacl, &ulDaclLen,
+                                             pSacl, &ulSaclLen,
+                                             pOwner, &ulOwnerLen,
+                                             pGroup, &ulGroupLen);
+        BAIL_ON_NT_STATUS(status);
+
+        // Check whether group part is set, if NOT set, set it
+        status = RtlGetGroupSecurityDescriptor(pSecDescAbs,
+                                               &pRegGroup,
+                                               &bIsGroupDefaulted);
+        BAIL_ON_NT_STATUS(status);
+
+        if (!pRegGroup)
+        {
+
+            status = RtlAllocateSidFromCString(&pGroupSid, "S-1-5-32-544");
+            BAIL_ON_NT_STATUS(status);
+
+            status = RtlSetGroupSecurityDescriptor(
+                         pSecDescAbs,
+                         pGroupSid,
+                         FALSE);
+            BAIL_ON_NT_STATUS(status);
+
+            // convert absolute back to relative before write to registry
+            do
+            {
+                status = NtRegReallocMemory(pSecDescRelNew,
+                                            (PVOID*)&pSecDescRelNew,
+                                            ulSecDescRelNewLen);
+                BAIL_ON_NT_STATUS(status);
+
+                memset(pSecDescRelNew, 0, ulSecDescRelNewLen);
+
+                status = RtlAbsoluteToSelfRelativeSD(pSecDescAbs,
+                                                     pSecDescRelNew,
+                                                     &ulSecDescRelNewLen);
+                if (STATUS_BUFFER_TOO_SMALL  == status)
+                {
+                    ulSecDescRelNewLen *= 2;
+                }
+                else
+                {
+                    BAIL_ON_NT_STATUS(status);
+                }
+            }
+            while((status != STATUS_SUCCESS) &&
+                  (ulSecDescRelNewLen <= SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE));
+
+            // Write the fixed ACL back to registry
+            status = RegDbUpdateKeyAclContent_inlock(hDb,
+                                                     qwCacheId,
+                                                     pSecDescRelNew,
+                                                     ulSecDescRelNewLen);
+            BAIL_ON_NT_STATUS(status);
+        }
+        BAIL_ON_NT_STATUS(status);
+
+        LWREG_SAFE_FREE_MEMORY(pSecDescRel);
+        ulSecDescRelLen = 0;
+        LWREG_SAFE_FREE_MEMORY(pSecDescRelNew);
+        ulSecDescRelNewLen = 1024;
+        RegSrvFreeAbsoluteSecurityDescriptor(&pSecDescAbs);
+        ulSecDescAbsLen = 0;
+    }
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "end",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbFixAcls() finished\n");
+
+
+cleanup:
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+    
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
+    LWREG_SAFE_FREE_MEMORY(pSecDescRelNew);    
+    RegSrvFreeAbsoluteSecurityDescriptor(&pSecDescAbs);
+
+    return status;
+
+error:
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+    sqlite3_exec(pConn->pDb,
+                 "rollback",
+                 NULL,
+                 NULL,
+                 NULL);
+
+    goto cleanup;
+}
+
+
 static
 NTSTATUS
 RegDbFreePreparedStatements(
@@ -2041,7 +2312,10 @@ RegDbFreePreparedStatements(
         &pConn->pstQueryKeyValueWithType,
         &pConn->pstQueryKeyValueWithWrongType,
         &pConn->pstQueryMultiKeyValues,
-        &pConn->pstQueryAclRefCount
+        &pConn->pstQueryAclRefCount,
+        &pConn->pstQueryTotalAclCount,
+        &pConn->pstQueryAclByOffset,
+        &pConn->pstUpdateRegAclByCacheId
     };
 
     for (i = 0; i < sizeof(pppstFreeList)/sizeof(pppstFreeList[0]); i++)
@@ -2145,6 +2419,62 @@ RegDbFlushNOP(
     )
 {
     return 0;
+}
+
+static
+NTSTATUS
+RegDbUpdateKeyAclContent_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwAclDbId,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelToSet,
+    IN ULONG ulSecDescToSetLen
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    PSTR pszError = NULL;
+    // Do not free
+    sqlite3_stmt *pstUpdateKeyAcl = pConn->pstUpdateRegAclByCacheId;
+
+
+    if (qwAclDbId < 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = RegSqliteBindBlob(
+               pstUpdateKeyAcl,
+               1,
+               (BYTE*)pSecDescRelToSet,
+               ulSecDescToSetLen);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstUpdateKeyAcl);
+
+    status = RegSqliteBindInt64(pstUpdateKeyAcl, 2, qwAclDbId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstUpdateKeyAcl);
+
+    status = (DWORD)sqlite3_step(pstUpdateKeyAcl);
+    if (status == SQLITE_DONE)
+    {
+        status = 0;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = sqlite3_reset(pstUpdateKeyAcl);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+
+cleanup:
+
+    return status;
+
+ error:
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    goto cleanup;
 }
 
 

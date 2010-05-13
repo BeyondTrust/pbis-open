@@ -508,9 +508,9 @@ RegSrvAccessCheckKeyHandle(
 
 NTSTATUS
 RegSrvCreateDefaultSecDescRel(
-	IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
-	IN OUT PULONG pulSecDescLen
-	);
+    IN OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecDescRel,
+    IN OUT PULONG pulSecDescLength
+    );
 
 // Registry Security related utility functions
 VOID

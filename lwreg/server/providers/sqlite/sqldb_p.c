@@ -959,6 +959,168 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+RegDbQueryTotalAclCount_inlock(
+    IN REG_DB_HANDLE hDb,
+    OUT size_t* psCount
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // do not free
+    sqlite3_stmt *pstQuery = NULL;
+    size_t sResultCount = 0;
+    const int nExpectedCols = 1;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    DWORD dwCount = 0;
+
+
+    pstQuery = pConn->pstQueryTotalAclCount;
+
+    while ((status = (DWORD)sqlite3_step(pstQuery)) == SQLITE_ROW)
+    {
+        nGotColumns = sqlite3_column_count(pstQuery);
+        if (nGotColumns != nExpectedCols)
+        {
+            status = STATUS_DATA_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (sResultCount >= 1)
+        {
+            status = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        iColumnPos = 0;
+
+        status = RegDbUnpackTotalAclCountInfo(pstQuery,
+                                              &iColumnPos,
+                                              &dwCount);
+        BAIL_ON_NT_STATUS(status);
+
+        sResultCount++;
+    }
+
+    if (status == SQLITE_DONE)
+    {
+        // No more results found
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    if (!sResultCount)
+    {
+        status = STATUS_DATA_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    *psCount = (size_t)dwCount;
+
+cleanup:
+    return status;
+
+error:
+    if (pstQuery != NULL)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    *psCount = 0;
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbGetKeyAclByAclOffset_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwOffset,
+    OUT int64_t* pqwCacheId,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecDescRel,
+    OUT PULONG pulSecDescLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int nExpectedCols = 2;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    size_t sResultCount = 0;
+
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+
+    // Do not free
+    sqlite3_stmt *pstQuery = pConn->pstQueryAclByOffset;
+
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwOffset);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    while ((status = (DWORD)sqlite3_step(pstQuery)) == SQLITE_ROW)
+    {
+        nGotColumns = sqlite3_column_count(pstQuery);
+        if (nGotColumns != nExpectedCols)
+        {
+            status = STATUS_DATA_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (sResultCount >= 1)
+        {
+            //Duplicate ACLs are found
+            status = STATUS_DUPLICATE_NAME;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        iColumnPos = 0;
+
+        status = RegDbUnpackAclIndexInfoInAcls(pstQuery,
+                                               &iColumnPos,
+                                               pqwCacheId);
+        BAIL_ON_NT_STATUS(status);
+
+        status = RegDbUnpackAclInfo(pstQuery,
+                                    &iColumnPos,
+                                    ppSecDescRel,
+                                    pulSecDescLength);
+        BAIL_ON_NT_STATUS(status);
+
+        sResultCount++;
+    }
+
+    if (status == SQLITE_DONE)
+    {
+        // No more results found
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    if (!sResultCount)
+    {
+        // This should never happen, we only store valid SD in ACLs
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+    return status;
+
+error:
+    *pqwCacheId = -1;
+    *ppSecDescRel = NULL;
+    *pulSecDescLength = 0;
+
+    goto cleanup;
+}
+
+
+
 void
 RegDbSafeFreeEntryKeyList(
     size_t sCount,

@@ -90,12 +90,16 @@ SqliteProvider_Initialize(
 {
     DWORD dwError = ERROR_SUCCESS;
     int iCount = 0;
-    BYTE pSecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE] = {0};
-    ULONG ulSecDescLength = SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE;
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    ULONG ulSecDescLength = 0;
 
 
     dwError = RegDbOpen(REG_CACHE,
                         &ghCacheConnection);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegNtStatusToWin32Error(
+                           RegDbFixAcls(ghCacheConnection));
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegHashCreate(
@@ -117,7 +121,7 @@ SqliteProvider_Initialize(
     BAIL_ON_REG_ERROR(dwError);
 
     // Creating default SD to create registry root key(s)
-    dwError = RegSrvCreateDefaultSecDescRel((PSECURITY_DESCRIPTOR_RELATIVE)pSecDescRel, &ulSecDescLength);
+    dwError = RegSrvCreateDefaultSecDescRel(&pSecDescRel, &ulSecDescLength);
     BAIL_ON_REG_ERROR(dwError);
 
     for (iCount = 0; iCount < NUM_ROOTKEY; iCount++)
@@ -127,7 +131,7 @@ SqliteProvider_Initialize(
     			                		                   NULL,
     			                		                   ppwszRootKeyNames[iCount],
     			                		                   0,
-    			                		                   (PSECURITY_DESCRIPTOR_RELATIVE)pSecDescRel,
+    			                		                   pSecDescRel,
     			                		                   ulSecDescLength,
     			                		                   NULL,
     			                		                   NULL));
@@ -141,6 +145,8 @@ SqliteProvider_Initialize(
     *ppFnTable = &gRegSqliteProviderAPITable;
 
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
+
     return dwError;
 
 error:

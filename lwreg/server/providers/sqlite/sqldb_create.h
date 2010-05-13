@@ -121,6 +121,10 @@
                                 "VALUES (?1)" \
                                 ""
 
+#define REG_DB_UPDATE_REG_ACL "update " REG_DB_TABLE_NAME_ACLS " set " \
+                        "Acl = ?1 " \
+                        "where CacheId = ?2 " \
+
 #define REG_DB_UPDATE_REG_VALUE "update " REG_DB_TABLE_NAME_VALUES " set " \
 	                    "LastUpdated = ?1, " \
                         "Value = ?2 " \
@@ -236,6 +240,15 @@
 	        REG_DB_TABLE_NAME_ACLS ".Acl " \
 			"from " REG_DB_TABLE_NAME_ACLS " " \
 			"where " REG_DB_TABLE_NAME_ACLS ".CacheId = ?1 " \
+
+#define REG_DB_QUERY_TOTAL_ACL_COUNT   "select COUNT (*) as totalAclCount " \
+            "from " REG_DB_TABLE_NAME_ACLS " " \
+
+#define REG_DB_QUERY_KEY_ACL_BY_OFFSET  "select " \
+            REG_DB_TABLE_NAME_ACLS ".CacheId, " \
+            REG_DB_TABLE_NAME_ACLS ".Acl " \
+            "from " REG_DB_TABLE_NAME_ACLS " " \
+            "LIMIT 1 OFFSET ?1" \
 
 #endif /* __SQLCACHE_CREATE_H__ */
 

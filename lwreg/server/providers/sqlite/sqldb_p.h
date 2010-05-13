@@ -78,6 +78,9 @@ typedef struct _REG_DB_CONNECTION
     sqlite3_stmt *pstQueryKeyValueWithWrongType;
     sqlite3_stmt *pstQueryMultiKeyValues;
     sqlite3_stmt *pstQueryAclRefCount;
+    sqlite3_stmt *pstQueryTotalAclCount;
+    sqlite3_stmt *pstQueryAclByOffset;
+    sqlite3_stmt *pstUpdateRegAclByCacheId;
 
 
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
@@ -113,6 +116,13 @@ RegDbUnpackSubKeysCountInfo(
 
 NTSTATUS
 RegDbUnpackAclrefCountInfo(
+    sqlite3_stmt *pstQuery,
+    int *piColumnPos,
+    PDWORD pdwCount
+    );
+
+NTSTATUS
+RegDbUnpackTotalAclCountInfo(
     sqlite3_stmt *pstQuery,
     int *piColumnPos,
     PDWORD pdwCount
@@ -379,6 +389,11 @@ RegDbGetKeyAclByKeyId(
     OUT PULONG pSecDescLen
     );
 
+NTSTATUS
+RegDbFixAcls(
+    IN REG_DB_HANDLE hDb
+    );
+
 void
 RegDbSafeClose(
     PREG_DB_HANDLE phDb
@@ -418,6 +433,21 @@ RegDbGetKeyAclByAclIndex_inlock(
     IN int64_t qwAclIndex,
     OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecDescRel,
     OUT PULONG pulSecDescLen
+    );
+
+NTSTATUS
+RegDbQueryTotalAclCount_inlock(
+    IN REG_DB_HANDLE hDb,
+    OUT size_t* psCount
+    );
+
+NTSTATUS
+RegDbGetKeyAclByAclOffset_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwOffset,
+    OUT int64_t* pqwCacheId,
+    OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecDescRel,
+    OUT PULONG pulSecDescLength
     );
 
 NTSTATUS
