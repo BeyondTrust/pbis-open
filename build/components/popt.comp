@@ -5,7 +5,7 @@ COMP_NEED_FOREIGN=1
 COMP_VERSION="2.14"
 COMP_RELEASE="1"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/popt"
-COMP_DEPENDENCIES="autoconf"
+COMP_DEPENDENCIES="autoconf libiconv"
 
 function component_bootstrap
 {
