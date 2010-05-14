@@ -186,6 +186,120 @@ typedef ULONG FILE_CREATE_RESULT;
 #define FILE_USE_FILE_POINTER_POSITION  (-2)
 
 //
+// Device Types
+//
+
+typedef ULONG DEVICE_TYPE, *PDEVICE_TYPE;
+
+#define FILE_DEVICE_BEEP                    0x00000001 // 1
+#define FILE_DEVICE_CD_ROM                  0x00000002 // 2
+#define FILE_DEVICE_CD_ROM_FILE_SYSTEM      0x00000003 // 3
+#define FILE_DEVICE_CONTROLLER              0x00000004 // 4
+#define FILE_DEVICE_DATALINK                0x00000005 // 5
+#define FILE_DEVICE_DFS                     0x00000006 // 6
+#define FILE_DEVICE_DISK                    0x00000007 // 7
+#define FILE_DEVICE_DISK_FILE_SYSTEM        0x00000008 // 8
+#define FILE_DEVICE_FILE_SYSTEM             0x00000009 // 9
+#define FILE_DEVICE_INPORT_PORT             0x0000000A // 10
+#define FILE_DEVICE_KEYBOARD                0x0000000B // 11
+#define FILE_DEVICE_MAILSLOT                0x0000000C // 12
+#define FILE_DEVICE_MIDI_IN                 0x0000000D // 13
+#define FILE_DEVICE_MIDI_OUT                0x0000000E // 14
+#define FILE_DEVICE_MOUSE                   0x0000000F // 15
+#define FILE_DEVICE_MULTI_UNC_PROVIDER      0x00000010 // 16
+#define FILE_DEVICE_NAMED_PIPE              0x00000011 // 17
+#define FILE_DEVICE_NETWORK                 0x00000012 // 18
+#define FILE_DEVICE_NETWORK_BROWSER         0x00000013 // 19
+#define FILE_DEVICE_NETWORK_FILE_SYSTEM     0x00000014 // 20
+#define FILE_DEVICE_NULL                    0x00000015 // 21
+#define FILE_DEVICE_PARALLEL_PORT           0x00000016 // 22
+#define FILE_DEVICE_PHYSICAL_NETCARD        0x00000017 // 23
+#define FILE_DEVICE_PRINTER                 0x00000018 // 24
+#define FILE_DEVICE_SCANNER                 0x00000019 // 25
+#define FILE_DEVICE_SERIAL_MOUSE_PORT       0x0000001A // 26
+#define FILE_DEVICE_SERIAL_PORT             0x0000001B // 27
+#define FILE_DEVICE_SCREEN                  0x0000001C // 28
+#define FILE_DEVICE_SOUND                   0x0000001D // 29
+#define FILE_DEVICE_STREAMS                 0x0000001E // 30
+#define FILE_DEVICE_TAPE                    0x0000001F // 31
+#define FILE_DEVICE_TAPE_FILE_SYSTEM        0x00000020 // 32
+#define FILE_DEVICE_TRANSPORT               0x00000021 // 33
+#define FILE_DEVICE_UNKNOWN                 0x00000022 // 34
+#define FILE_DEVICE_VIDEO                   0x00000023 // 35
+#define FILE_DEVICE_VIRTUAL_DISK            0x00000024 // 36
+#define FILE_DEVICE_WAVE_IN                 0x00000025 // 37
+#define FILE_DEVICE_WAVE_OUT                0x00000026 // 38
+#define FILE_DEVICE_8042_PORT               0x00000027 // 39
+#define FILE_DEVICE_NETWORK_REDIRECTOR      0x00000028 // 40
+#define FILE_DEVICE_BATTERY                 0x00000029 // 41
+#define FILE_DEVICE_BUS_EXTENDER            0x0000002A // 42
+#define FILE_DEVICE_MODEM                   0x0000002B // 43
+#define FILE_DEVICE_VDM                     0x0000002C // 44
+#define FILE_DEVICE_MASS_STORAGE            0x0000002D // 45
+#define FILE_DEVICE_SMB                     0x0000002E // 46
+#define FILE_DEVICE_KS                      0x0000002F // 47
+#define FILE_DEVICE_CHANGER                 0x00000030 // 48
+#define FILE_DEVICE_SMARTCARD               0x00000031 // 49
+#define FILE_DEVICE_ACPI                    0x00000032 // 50
+#define FILE_DEVICE_DVD                     0x00000033 // 51
+#define FILE_DEVICE_FULLSCREEN_VIDEO        0x00000034 // 52
+#define FILE_DEVICE_DFS_FILE_SYSTEM         0x00000035 // 53
+#define FILE_DEVICE_DFS_VOLUME              0x00000036 // 54
+#define FILE_DEVICE_SERENUM                 0x00000037 // 55
+#define FILE_DEVICE_TERMSRV                 0x00000038 // 56
+#define FILE_DEVICE_KSEC                    0x00000039 // 57
+#define FILE_DEVICE_FIPS                    0x0000003A // 58
+
+//
+// FSCTL/IOCTL
+//
+// Note that Windows FSCTL/IOCTL codes are defined as follows:
+//
+// The code is a 32-bit value with the bits divided as follows
+// (from high to low):
+//
+// 31 .................................... 0
+// [ Device | Access | Function | Method ]
+//
+// 16 bits for device type (top bit for custom/non-MS)
+//  2 bits for access required (any/special, read, write)
+// 12 bits for function code (top bit for custom/non-MS)
+//  2 bits for transfer method (buffered, in direct, out direct, neither)
+//
+
+#define FILE_ANY_ACCESS     0
+#define FILE_READ_ACCESS    1
+#define FILE_WRITE_ACCESS   2
+
+#define METHOD_BUFFERED     0
+#define METHOD_IN_DIRECT    1
+#define METHOD_OUT_DIRECT   2
+#define METHOD_NEITHER      3
+
+#define CTL_CODE(DeviceType, Function, Method, Access) \
+    (((DeviceType) << 16) | \
+     (((Access) & 0x3) << 14) | \
+     (((Function) & 0xFFF) << 2) | \
+     ((Method) & 0x3))
+
+#define DEVICE_TYPE_FROM_CTL_CODE(Code) (((ULONG)(Code) >> 16) & 0xFFFF)
+#define ACCESS_FROM_CTL_CODE(Code)      (((ULONG)(Code) >> 14) & 0x3)
+#define FUNCTION_FROM_CTL_CODE(Code)    (((ULONG)(Code) >> 2) & 0xFFF)
+#define METHOD_FROM_CTL_CODE(Code)      (((ULONG)(Code) >> 0) & 0x3)
+
+//
+// Device Characteristics
+//
+
+#define FILE_REMOVABLE_MEDIA                0x00000001
+#define FILE_READ_ONLY_DEVICE               0x00000002
+#define FILE_FLOPPY_DISKETTE                0x00000004
+#define FILE_WRITE_ONCE_MEDIA               0x00000008
+#define FILE_REMOTE_DEVICE                  0x00000010
+#define FILE_DEVICE_IS_MOUNTED              0x00000020
+#define FILE_VIRTUAL_VOLUME                 0x00000040
+
+//
 // Named Pipe Type
 //
 
@@ -775,30 +889,6 @@ typedef struct _FILE_FS_SIZE_INFORMATION {
     ULONG   SectorsPerAllocationUnit;
     ULONG   BytesPerSector;	
 } FILE_FS_SIZE_INFORMATION, *PFILE_FS_SIZE_INFORMATION;
-
-
-// Device Type for the FileFsDeviceInformation level
-// Not all types are listed.  Refer to section 4.1.6.5 in the SNIA CIFS
-// Technical Reference for more.
-
-typedef ULONG DEVICE_TYPE, *PDEVICE_TYPE;
-
-#define FILE_DEVICE_CD_ROM                 0x00000002
-#define FILE_DEVICE_CD_ROM_FILE_SYSTEM     0x00000003
-#define FILE_DEVICE_DFS                    0x00000006
-#define FILE_DEVICE_DISK                   0x00000007
-#define FILE_DEVICE_DISK_FILE_SYSTEM       0x00000008
-#define FILE_DEVICE_FILE_SYSTEM            0x00000009
-
-// Characteristics
-
-#define FILE_REMOVABLE_MEDIA               0x00000001
-#define FILE_READ_ONLY_DEVICE              0x00000002
-#define FILE_FLOPPY_DISKETTE               0x00000004
-#define FILE_WRITE_ONE_MEDIA               0x00000008
-#define FILE_REMOTE_DEVICE                 0x00000010
-#define FILE_DEVICE_IS_MOUNTED             0x00000020
-#define FILE_VIRTUAL_VOLUME                0x00000040
 
 // VOL: FileFsDeviceInformation
 typedef struct _FILE_FS_DEVICE_INFORMATION {

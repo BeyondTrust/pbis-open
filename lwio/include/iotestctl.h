@@ -46,21 +46,6 @@
 
 #include <lwio/io-types.h>
 
-//
-// Note that Windows FSCTL/IOCTL codes are defined as follows:
-//
-// The code is a 32-bit value with the bits divided as follows
-// (from high to low):
-//
-// 31 .................................... 0
-// [ Device | Access | Function | Transfer ]
-//
-// 16 bits for device type (top bit for non-MS)
-//  2 bits for access required (0, read, write, or "any/special")
-// 12 bits for function code (top bit for non-MS)
-//  2 bits for transfer method (buffered, in direct, out direct, neither)
-//
-
 #define _IOTEST_IOCTL_BASE 0
 #define _IOTEST_IOCTL(x) (_IOTEST_IOCTL_BASE + (x))
 
