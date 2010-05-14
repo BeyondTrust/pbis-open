@@ -177,7 +177,7 @@ print_type_name(
     }
     else
     {
-        return print(info, "__%s_%lx", kind, (unsigned long) (size_t) rep);
+        return print(info, "<anonymous>", kind);
     }
 }
 
@@ -197,7 +197,7 @@ print_field_name(
     }
     else
     {
-        return print(info, "__field_%lu", (unsigned long) index);
+        return print(info, "field%lu", (unsigned long) index);
     }
 }
 
@@ -217,7 +217,7 @@ print_arm_name(
     }
     else
     {
-        return print(info, "__arm%lu", (unsigned long) index);
+        return print(info, "arm%lu", (unsigned long) index);
     }
 }
 
@@ -237,7 +237,7 @@ print_variant_name(
     }
     else
     {
-        return print(info, "__variant%lu", (unsigned long) index);
+        return print(info, "variant%lu", (unsigned long) index);
     }
 }
 
