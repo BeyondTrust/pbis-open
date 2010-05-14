@@ -1146,18 +1146,6 @@ BuildEventLogRecordList(
 
         for (iCol = 0; iCol < nCols; iCol++)
         {
-
-            if (iRow < (nRows -1) || iCol < (nCols - 1))
-            {
-                EVT_LOG_DEBUG("server::evtdb.c BuildEventLogRecordList(r%d, c%d): CURR:%s  NEXT:%s\n",
-                    iRow, iCol, ppszResult[iVal], ppszResult[iVal+1]);
-            }
-
-            else {
-                EVT_LOG_DEBUG("server::evtdb.c BuildEventLogRecordList(r%d, c%d): CURR:%s\n",
-                    iRow, iCol, ppszResult[iVal]);
-            }
-
             switch(iCol)
             {
                 case EventTableCategoryId:
