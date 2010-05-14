@@ -832,7 +832,7 @@ import_registry()
 
     for regfile in ${REGFILES}
     do
-        FILEPATH="/etc/likewise/${regfile}"
+        FILEPATH="/opt/likewise/share/config/${regfile}"
         if [ -f ${FILEPATH} ]
         then
             ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1

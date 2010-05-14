@@ -237,7 +237,7 @@ AC_SUBST(AM_LDFLAGS)
 AC_DEFINE_UNQUOTED([PREFIXDIR], ["$prefix"], [Prefix directory])
 
 AS_AC_EXPAND(netlogonconfdir, ["$sysconfdir"])
-AS_AC_EXPAND(netlogonregdir, ["$sysconfdir"])
+AS_AC_EXPAND(netlogonregdir, ["$datadir/config"])
 AS_AC_EXPAND(SBINDIR, ["${sbindir}"])
 
 AC_DEFINE_UNQUOTED([LWNET_CONFIG_DIR], ["$netlogonconfdir"], [Location of netlogon configuration files])

@@ -27,7 +27,7 @@ fi
 echo "Pausing for daemons to initialize"
 sleep 5
 
-for i in /etc/likewise/*.reg
+for i in /opt/likewise/share/config/*.reg
 do
     echo "Upgrading Likewise Registry with contents of $i"
     /opt/likewise/bin/lwregshell upgrade "$i" || exit 1

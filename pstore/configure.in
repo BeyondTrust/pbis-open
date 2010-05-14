@@ -9,7 +9,7 @@ AC_CONFIG_HEADERS([include/config.h])
 
 # Configuration settings
 
-pstoreregdir="$sysconfdir"
+pstoreregdir="$datadir/config"
 AC_SUBST(pstoreregdir)
 
 # lwmsg

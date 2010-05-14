@@ -61,7 +61,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %dir /var/rpc
 
 %if ! %{Compat32}
-/etc/likewise/*.reg
+%{_datadir}/config/*.reg
 %define initScriptPathList %{INIT_DIR}/dcerpcd
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE

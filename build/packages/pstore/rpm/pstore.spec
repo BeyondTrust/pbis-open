@@ -51,10 +51,9 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 
 %files
 %defattr(-,root,root)
-%config(noreplace) /etc/likewise/pstore.reg
 %{PrefixDir}/%{_lib}/*
 %{PrefixDir}/bin/*
-
+%{PrefixDir}/share/config/*
 
 %files devel
 %defattr(0644,root,root,0755)

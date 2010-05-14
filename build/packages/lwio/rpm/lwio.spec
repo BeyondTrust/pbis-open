@@ -50,11 +50,10 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %files
 %defattr(-,root,root)
 %{INIT_DIR}/*
-%config(noreplace) /etc/likewise/lwiod.reg
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
-
 %{PrefixDir}/%{_lib}/*
+%{PrefixDir}/share/config/*
 
 %define initScriptPathList %{INIT_DIR}/lwiod
 %post

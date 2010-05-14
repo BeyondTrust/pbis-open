@@ -735,7 +735,7 @@ AC_SUBST(lsassconfdir)
 AS_AC_EXPAND(CONFIGDIR, $lsassconfdir)
 AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])
 
-lsassregdir="$sysconfdir"
+lsassregdir="$datadir/config"
 AC_SUBST(lsassregdir)
 
 

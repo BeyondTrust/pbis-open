@@ -76,13 +76,13 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %defattr(-,root,root)
 %if ! %{Compat32}
 %{INIT_DIR}/*
-%config(noreplace) /etc/likewise/lsassd.reg
 %config(noreplace) /etc/likewise/gss/mech
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
 %endif
 %{PrefixDir}/%{_lib}/*
 /%{_lib}/*
+${PrefixDir}/share/config/*
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lsassd

@@ -119,6 +119,7 @@ function component_populate
         x_cp 0755 ${BUILD_ROOT}/src/linux/config/com.likewisesoftware.netlogond.plist ${POPULATE_ROOT_DIR}/etc/likewise/LaunchDaemons/.
     fi
 
+    mkdir -p ${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}
     x_cp 0644 \
 	${BUILD_ROOT}/src/linux/config/likewise-krb5-ad.conf \
 	${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}/likewise-krb5-ad.conf

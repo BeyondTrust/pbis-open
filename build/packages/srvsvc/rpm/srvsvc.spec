@@ -73,10 +73,9 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %files
 %defattr(-,root,root)
 %{INIT_DIR}/*
-/etc/likewise/*.reg
 %{PrefixDir}/sbin/*
-
 %{PrefixDir}/%{_LIB}/*
+%{PrefixDir}/share/config/*
 
 %define initScriptPathList %{INIT_DIR}/srvsvcd
 %post

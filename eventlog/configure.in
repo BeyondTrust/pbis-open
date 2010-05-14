@@ -222,7 +222,7 @@ AC_SUBST(IDLFLAGS)
 
 eventlogconfdir="$sysconfdir"
 AC_SUBST(eventlogconfdir)
-eventlogregdir="$sysconfdir"
+eventlogregdir="$datadir/config"
 AC_SUBST(eventlogregdir)
 AS_AC_EXPAND(CONFIGDIR, $eventlogconfdir)
 AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])

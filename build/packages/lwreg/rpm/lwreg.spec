@@ -77,7 +77,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{INIT_DIR}/*
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
-/etc/likewise/*.reg
+%{PrefixDir}/share/config/*.reg
 %endif
 %{PrefixDir}/%{_lib}/*
 

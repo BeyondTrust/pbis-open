@@ -261,10 +261,8 @@ AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(AM_CFLAGS)
 
-registryconfdir="$sysconfdir"
-AC_SUBST(registryconfdir)
-AS_AC_EXPAND(CONFIGDIR, $registryconfdir)
-AC_DEFINE_UNQUOTED(CONFIGDIR, "$CONFIGDIR", [Config directory])
+lwregregdir="$datadir/config"
+AC_SUBST(lwregregdir)
 
 if test x"$localstatedir" = x"/var"; then
     registrycachedir="$localstatedir/lib/likewise"
