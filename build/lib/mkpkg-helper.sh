@@ -46,6 +46,9 @@ function _get_lib_dir
         solaris-i386-*-yes|solaris-i386-yes-*)
             dir=lib64
             ;;
+        aix-powerpc-yes-*)
+            dir=lib64
+            ;;
         *)
             dir=lib
             ;;
@@ -61,8 +64,13 @@ function _get_nss_dir
     fi
     local dir=/${_lib}
     case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-        aix-*)
-            dir=/usr/${_lib}/security
+        aix-powerpc)
+            if [ -n "${IS_COMPAT}" ]
+            then
+                dir="/usr/lib/security"
+            else
+                dir="/usr/lib/security"
+            fi
             ;;
         solaris-i386)
             if [ -n "${IS_FOREIGN}" ]
@@ -122,7 +130,12 @@ function _get_pam_dir
     local dir=/${_lib}/security
     case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
         aix-*)
-            dir=/usr/${_lib}/security
+            if [ -n "${IS_COMPAT}" ]
+            then
+                dir="/usr/lib/security/64"
+            else
+                dir="/usr/lib/security"
+            fi
             ;;
         solaris-i386)
             if [ -n "${IS_FOREIGN}" ]
@@ -378,12 +391,19 @@ function _x_strip
     local OBJCOPY=""
 
     case "${BUILD_OS_TYPE}" in
-	darwin)
-	    STRIP="strip -S -x"
-	    ;;
-	*)
-	    STRIP="strip"
-	    ;;
+        darwin)
+            STRIP="strip -S -x"
+            ;;
+        aix)
+            if [ -n "${IS_COMPAT}" ]; then
+                STRIP="strip -X64"
+            else
+                STRIP="strip"
+            fi
+            ;;
+        *)
+            STRIP="strip"
+            ;;
     esac
 
     case "${BUILD_OS_TYPE}" in

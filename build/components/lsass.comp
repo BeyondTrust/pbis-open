@@ -85,8 +85,13 @@ function _setup_dirs
 	    fi
 	    ;;
 	aix-powerpc)
-	    NSS_DIR="/usr/lib/security"
-	    PAM_DIR="/usr/lib/security"
+	    if [ -n "${IS_COMPAT}" ]; then
+		NSS_DIR="/usr/lib/security"
+		PAM_DIR="/usr/lib/security/64"
+            else
+		NSS_DIR="/usr/lib/security"
+		PAM_DIR="/usr/lib/security"
+	    fi
 	    ;;
 	*)
 	    NSS_DIR="/lib"

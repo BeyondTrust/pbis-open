@@ -58,6 +58,9 @@ function _get_lib_dir
         solaris-*-yes)
             dir=lib64
             ;;
+        aix-powerpc-yes)
+            dir=lib64
+            ;;
         *)
             dir=lib
             ;;
@@ -82,6 +85,9 @@ function _get_base_compat_flags
                 ;;
             solaris-*)
                 flags="${flags} -m64"
+                ;;
+            aix-powerpc)
+                flags="${flags} -maix64"
                 ;;
         esac
     fi
@@ -751,6 +757,18 @@ function set_compiler_env
     fi
 
     export CC CXX MAKE
+
+    # On Aix, we have to tell 'ar' et al to deall with 64-bit when doing COMPAT
+    if [ -n "${COMP_IS_COMPAT}" ]; then
+        case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
+            aix-powerpc)
+                OBJECT_MODE="64"
+                export OBJECT_MODE
+                ;;
+        esac
+    fi
+
+    echo "$flags"
 
     return 0
 }

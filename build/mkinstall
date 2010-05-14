@@ -38,7 +38,7 @@ function setup_package_vars
     #
 
     case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-        linux-x86_64|hpux-*|solaris-sparc)
+        linux-x86_64|hpux-*|solaris-sparc|aix-powerpc)
             : # Yes
             ;;
         solaris-i386)

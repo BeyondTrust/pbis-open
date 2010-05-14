@@ -42,8 +42,10 @@ CENTERROR
 DJIsMethodsCfgConfigured(BOOLEAN *configured)
 {
     CENTERROR ceError = CENTERROR_SUCCESS;
-    PCSTR pszRegExp = "^[[:space:]]*program[[:space:]]*=[[:space:]]*\\/usr\\/lib\\/security\\/LSASS[[:space:]]*$";
-    BOOLEAN bPatternExists = FALSE;
+    PCSTR pszRegExp32 = "^[[:space:]]*program[[:space:]]*=[[:space:]]*\\/usr\\/lib\\/security\\/LSASS[[:space:]]*$";
+    PCSTR pszRegExp64 = "^[[:space:]]*program_64[[:space:]]*=[[:space:]]*\\/usr\\/lib\\/security\\/LSASS_64[[:space:]]*$";
+    BOOLEAN bPatternExists32 = FALSE;
+    BOOLEAN bPatternExists64 = FALSE;
     BOOLEAN bFileExists = FALSE;
 
     *configured = FALSE;
@@ -57,10 +59,13 @@ DJIsMethodsCfgConfigured(BOOLEAN *configured)
         goto cleanup;
     }
 
-    ceError = CTCheckFileHoldsPattern(methodsPath, pszRegExp, &bPatternExists);
+    ceError = CTCheckFileHoldsPattern(methodsPath, pszRegExp32, &bPatternExists32);
     GOTO_CLEANUP_ON_CENTERROR(ceError);
 
-    if(bPatternExists)
+    ceError = CTCheckFileHoldsPattern(methodsPath, pszRegExp64, &bPatternExists64);
+    GOTO_CLEANUP_ON_CENTERROR(ceError);
+
+    if(bPatternExists32 && bPatternExists64)
         *configured = TRUE;
 
 cleanup:
@@ -128,6 +133,7 @@ DJFixMethodsConfigFile()
 
     fprintf(fp, "\nLSASS:\n");
     fprintf(fp, "\tprogram = /usr/lib/security/LSASS\n");
+    fprintf(fp, "\tprogram_64 = /usr/lib/security/LSASS_64\n");
     fclose(fp); fp = NULL;
 
     ceError = CTSafeReplaceFile(pszFinalPath, pszTmpPath);
