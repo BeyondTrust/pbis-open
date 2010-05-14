@@ -435,7 +435,7 @@ ShowUsage(
             "          [--syslog]\n"
             "          [--logfile logFilePath]\n"
             "          [--replacedb]\n"
-            "          [--loglevel {always, error, warning, info, verbose, debug}]\n"
+            "          [--loglevel {error, warning, info, verbose, debug}]\n"
             "          [--configfile configfilepath]\n", pszProgramName);
 }
 
