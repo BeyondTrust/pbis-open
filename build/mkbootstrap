@@ -7,6 +7,48 @@ source "${BUILD_ROOT}/src/linux/build/version.sh"
 MAX_CONCURRENT=8
 SLEEP_SECONDS=15
 
+seq_replacement()
+{
+    FIRST=1
+    INCREMENT=1
+    case "$#" in
+        0)
+            echo too few arguments
+            return 1
+            ;;
+        1)
+            LAST="$1"
+            ;;
+        2)
+            FIRST="$1"
+            LAST="$2"
+            ;;
+        3)
+            FIRST="$1"
+            INCREMENT="$2"
+            LAST="$3"
+            ;;
+        *)
+            echo too many arguments
+            return 1
+            ;;
+    esac
+    i="$FIRST"
+    while [ "$i" -le "$LAST" ]; do
+        echo "$i"
+        i="`expr "$i" + "$INCREMENT"`"
+    done
+    return 0;
+}
+
+# seq doesn't exist on HPUX or FreeBSD
+type seq 2>/dev/null 1>/dev/null
+if [ $? -ne 0 ]; then
+    seq=seq_replacement
+else
+    seq=seq
+fi
+
 do_bootstrap()
 {
     while [ -n "$1" ]
@@ -14,7 +56,7 @@ do_bootstrap()
 	list=""
 	pids=""
 	status=0
-	for i in `seq 1 $MAX_CONCURRENT`
+	for i in `$seq 1 $MAX_CONCURRENT`
 	do
 	    list="$list $1"
 	    shift
