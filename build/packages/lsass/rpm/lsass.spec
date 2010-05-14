@@ -82,7 +82,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 %{PrefixDir}/%{_lib}/*
 /%{_lib}/*
-${PrefixDir}/share/config/*
+%{PrefixDir}/share/config/*
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lsassd
