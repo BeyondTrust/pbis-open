@@ -287,6 +287,8 @@ typedef ULONG DEVICE_TYPE, *PDEVICE_TYPE;
 #define FUNCTION_FROM_CTL_CODE(Code)    (((ULONG)(Code) >> 2) & 0xFFF)
 #define METHOD_FROM_CTL_CODE(Code)      (((ULONG)(Code) >> 0) & 0x3)
 
+#define MAKE_CUSTOM_FUNCTION(Function)  ((Function) | 0x800)
+
 //
 // Device Characteristics
 //
