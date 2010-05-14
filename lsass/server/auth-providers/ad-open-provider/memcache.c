@@ -49,8 +49,17 @@ typedef enum __MemCachePersistTag
 {
     MEM_CACHE_OBJECT,
     MEM_CACHE_MEMBERSHIP,
-    MEM_CACHE_PASSWORD,
+    MEM_CACHE_PASSWORD
 } MemCachePersistTag;
+
+static LWMsgTypeSpec gLsaObjectTypeSpec[] =
+{
+    LWMSG_ENUM_BEGIN(LSA_OBJECT_TYPE, 1, LWMSG_UNSIGNED),
+    LWMSG_ENUM_VALUE(LSA_OBJECT_TYPE_USER),
+    LWMSG_ENUM_VALUE(LSA_OBJECT_TYPE_GROUP),
+    LWMSG_ENUM_END,
+    LWMSG_TYPE_END
+};
 
 static LWMsgTypeSpec gLsaCacheSecurityObjectVersionSpec[] =
 {
@@ -137,7 +146,7 @@ static LWMsgTypeSpec gLsaCacheSecurityObjectSpec[] =
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszNetbiosDomainName),
     LWMSG_MEMBER_PSTR(LSA_SECURITY_OBJECT, pszSamAccountName),
 
-    LWMSG_MEMBER_UINT8(LSA_SECURITY_OBJECT, type),
+    LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, type, gLsaObjectTypeSpec),
     LWMSG_MEMBER_UNION_BEGIN(LSA_SECURITY_OBJECT, typeInfo),
     LWMSG_MEMBER_TYPESPEC(LSA_SECURITY_OBJECT, userInfo, gLsaCacheSecurityObjectUserInfoSpec),
     LWMSG_ATTR_TAG(LSA_OBJECT_TYPE_USER),
