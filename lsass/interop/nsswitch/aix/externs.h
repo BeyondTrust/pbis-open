@@ -49,6 +49,6 @@
 
 extern LSA_NSS_STATE gNssState;
 
-extern HANDLE hLsaConnection;
+extern LSA_NSS_CACHED_HANDLE lsaConnection;
 
 #endif

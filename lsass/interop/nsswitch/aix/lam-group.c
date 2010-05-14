@@ -181,14 +181,11 @@ struct group *LsaNssGetGrGid(gid_t gid)
     const DWORD dwInfoLevel = 1;
     struct group *pResult = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaFindGroupById(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 gid,
                 LSA_FIND_FLAGS_NSS,
                 dwInfoLevel,
@@ -219,11 +216,7 @@ cleanup:
     return pResult;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -235,14 +228,11 @@ struct group *LsaNssGetGrNam(PCSTR pszName)
     const DWORD dwInfoLevel = 1;
     struct group *pResult = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaFindGroupByName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszName,
                 LSA_FIND_FLAGS_NSS,
                 dwInfoLevel,
@@ -273,11 +263,7 @@ cleanup:
     return pResult;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -293,16 +279,13 @@ LsaNssGetGrAcct(
     const DWORD dwInfoLevel = 0;
     struct group *pResult = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     if (iType == 0)
     {
         dwError = LsaFindGroupByName(
-                    hLsaConnection,
+                    lsaConnection.hLsaConnection,
                     (PSTR)pId,
                     LSA_FIND_FLAGS_NSS,
                     dwInfoLevel,
@@ -312,7 +295,7 @@ LsaNssGetGrAcct(
     else if (iType == 1)
     {
         dwError = LsaFindGroupById(
-                    hLsaConnection,
+                    lsaConnection.hLsaConnection,
                     *(gid_t *)pId,
                     LSA_FIND_FLAGS_NSS,
                     dwInfoLevel,
@@ -349,11 +332,7 @@ cleanup:
     return pResult;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -373,14 +352,11 @@ LsaNssGetGrSet(
     // Do not free
     PSTR pszPos = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaGetGidsForUserByName(
-            hLsaConnection,
+            lsaConnection.hLsaConnection,
             pszName,
             &dwGroupCount,
             &pGids);
@@ -423,11 +399,7 @@ cleanup:
 error:
 
     LW_SAFE_FREE_MEMORY(pszResult);
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }

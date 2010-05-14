@@ -51,14 +51,11 @@ LsaNssNormalizeUsername(
         goto cleanup;
     }
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaFindUserByName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszInput,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
@@ -125,11 +122,7 @@ error:
 
     *pszOutput = 0;
 
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -151,36 +144,33 @@ LsaNssAuthenticate(
     LSA_LOG_PAM_DEBUG("Lsass LAM authenticating user [%s]",
             pszUser? pszUser: "(null)");
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaNssFindUserByAixName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszUser,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaAuthenticateUser(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pInfo->pszName,
                 pszResponse,
                 &pszMessage);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaCheckUserInList(
-                        hLsaConnection,
-                        pInfo->pszName,
-                        NULL);
+                lsaConnection.hLsaConnection,
+                pInfo->pszName,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Need to ensure that home directories are created.
     dwError = LsaOpenSession(
-                  hLsaConnection,
-                  pInfo->pszName);
+                lsaConnection.hLsaConnection,
+                pInfo->pszName);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -224,11 +214,7 @@ cleanup:
     return iError;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -248,14 +234,11 @@ LsaNssIsPasswordExpired(
             pszUser? pszUser: "(null)");
     *ppszMessage = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaNssFindUserByAixName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszUser,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
@@ -315,11 +298,7 @@ cleanup:
     return iError;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -337,21 +316,18 @@ LsaNssChangePassword(
 
     *ppszError = NULL;
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaNssFindUserByAixName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszUser,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaChangePassword(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pInfo->pszName,
                 pszNewPass,
                 pszOldPass);
@@ -373,11 +349,7 @@ cleanup:
     return 0;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }

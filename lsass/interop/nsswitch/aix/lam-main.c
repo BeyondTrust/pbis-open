@@ -131,11 +131,8 @@ LsaNssGetEntry(
                 ppszAttributes[iIndex]);
     }
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     if (!strcmp(pszKey, "ALL"))
     {
@@ -155,7 +152,7 @@ LsaNssGetEntry(
             else
             {
                 dwError = LsaNssListUsers(
-                        hLsaConnection,
+                        lsaConnection.hLsaConnection,
                         &pResults[0]);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -170,7 +167,7 @@ LsaNssGetEntry(
             else
             {
                 dwError = LsaNssListGroups(
-                        hLsaConnection,
+                        lsaConnection.hLsaConnection,
                         &pResults[0]);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -186,7 +183,7 @@ LsaNssGetEntry(
         if (!strcmp(pszTable, "user"))
         {
             dwError = LsaNssGetUserAttrs(
-                    hLsaConnection,
+                    lsaConnection.hLsaConnection,
                     pszKey,
                     ppszAttributes,
                     pResults,
@@ -196,7 +193,7 @@ LsaNssGetEntry(
         else if (!strcmp(pszTable, "group"))
         {
             dwError = LsaNssGetGroupAttrs(
-                    hLsaConnection,
+                    lsaConnection.hLsaConnection,
                     pszKey,
                     ppszAttributes,
                     pResults,
@@ -222,11 +219,7 @@ cleanup:
         return 0;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }

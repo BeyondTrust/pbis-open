@@ -56,6 +56,7 @@
 #include "lsaclient.h"
 #include "nss-error.h"
 #include "structs.h"
+#include "lsanss.h"
 #include "externs.h"
 #include "lsaauth.h"
 

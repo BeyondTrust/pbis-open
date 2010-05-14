@@ -32,4 +32,4 @@
 
 LSA_NSS_STATE gNssState = {0};
 
-HANDLE hLsaConnection = (HANDLE)NULL;
+LSA_NSS_CACHED_HANDLE lsaConnection = { 0 };

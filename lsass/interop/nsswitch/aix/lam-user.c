@@ -224,14 +224,11 @@ struct passwd *LsaNssGetPwUid(uid_t uid)
 
     LSA_LOG_PAM_DEBUG("Lsass queried by getpwuid for [%ld]", (long)uid);
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaFindUserById(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 uid,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
@@ -261,11 +258,7 @@ cleanup:
     return pResult;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
@@ -279,14 +272,11 @@ struct passwd *LsaNssGetPwNam(PCSTR pszName)
 
     LSA_LOG_PAM_DEBUG("Lsass queried by getpwnam for [%s]", pszName);
 
-    if (hLsaConnection == (HANDLE)NULL)
-    {
-        dwError = LsaOpenServer(&hLsaConnection);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaNssCommonEnsureConnected(&lsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaNssFindUserByAixName(
-                hLsaConnection,
+                lsaConnection.hLsaConnection,
                 pszName,
                 dwInfoLevel,
                 (PVOID*)&pInfo);
@@ -316,11 +306,7 @@ cleanup:
     return pResult;
 
 error:
-    if (hLsaConnection != (HANDLE)NULL)
-    {
-        LsaCloseServer(hLsaConnection);
-        hLsaConnection = (HANDLE)NULL;
-    }
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     goto cleanup;
 }
