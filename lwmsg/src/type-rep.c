@@ -50,6 +50,14 @@ lwmsg_type_spec_from_rep_into(
     LWMsgTypeSpecBuffer* buffer
     );
 
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_internal(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    );
+
 static LWMsgTypeSpec bool_enum_spec[] =
 {
     LWMSG_ENUM_BEGIN(LWMsgBool, 1, LWMSG_UNSIGNED),
@@ -2278,4 +2286,482 @@ lwmsg_type_free_rep(
     {
         lwmsg_data_free_graph_cleanup(context, lwmsg_type_rep_spec, rep);
     }
+}
+
+
+static
+void*
+lwmsg_type_assign_map_get_key(
+    const void* entry
+    )
+{
+    return &((LWMsgTypeAssignEntry*) entry)->pair;
+}
+
+static
+size_t
+lwmsg_type_assign_map_digest(
+    const void* key
+    )
+{
+    const LWMsgTypeAssignPair* pair = key;
+
+    return (size_t) pair->left ^ (size_t) pair->right;
+}
+
+static
+LWMsgBool
+lwmsg_type_assign_map_equal(
+    const void* key1,
+    const void* key2
+    )
+{
+    const LWMsgTypeAssignPair* pair1 = key1;
+    const LWMsgTypeAssignPair* pair2 = key2;
+
+    return pair1->left == pair2->left && pair1->right == pair2->right;
+}
+
+static
+LWMsgStatus
+lwmsg_type_assign_map_init(
+    LWMsgTypeAssignMap* map
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!map->hash.buckets)
+    {
+        BAIL_ON_ERROR(status = lwmsg_hash_init(
+                          &map->hash,
+                          11,
+                          lwmsg_type_assign_map_get_key,
+                          lwmsg_type_assign_map_digest,
+                          lwmsg_type_assign_map_equal,
+                          offsetof(LWMsgTypeAssignEntry, ring)));
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_assign_map_find(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeAssignPair pair = {left, right};
+
+    BAIL_ON_ERROR(status = lwmsg_type_assign_map_init(map));
+    
+    LWMsgTypeAssignEntry* entry = lwmsg_hash_find_key(&map->hash, &pair);
+
+    if (!entry)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_NOT_FOUND);
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_assign_map_insert(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeAssignEntry* entry = NULL;
+    
+    BAIL_ON_ERROR(status = LWMSG_ALLOC(&entry));
+
+    lwmsg_ring_init(&entry->ring);
+    entry->pair.left = left;
+    entry->pair.right = right;
+
+    lwmsg_hash_insert_entry(&map->hash, entry);
+
+error:
+
+    return status;
+}
+
+static
+void
+lwmsg_type_assign_map_remove(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgTypeAssignPair pair = {left, right};
+    
+    lwmsg_hash_remove_key(&map->hash, &pair);
+}
+
+static
+void
+lwmsg_type_assign_map_destroy(
+    LWMsgTypeAssignMap* map
+    )
+{
+    LWMsgHashIter iter = {0};
+    LWMsgTypeAssignEntry* entry = NULL;
+
+    if (map->hash.buckets)
+    {
+        lwmsg_hash_iter_begin(&map->hash, &iter);
+        while ((entry = lwmsg_hash_iter_next(&map->hash, &iter)))
+        {
+            lwmsg_hash_remove_entry(&map->hash, entry);           
+            free(entry);
+        }
+        lwmsg_hash_iter_end(&map->hash, &iter);
+
+        lwmsg_hash_destroy(&map->hash);
+    }
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_integer(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgIntegerDefRep* ldef = left->info.integer_rep.definition;
+    LWMsgIntegerDefRep* rdef = right->info.integer_rep.definition;
+
+    if (ldef->width != rdef->width || ldef->sign != rdef->sign)
+    {
+        /* Basic characteristics don't match */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    if (left->flags & LWMSG_TYPE_FLAG_RANGE)
+    {
+        if (!(right->flags & LWMSG_TYPE_FLAG_RANGE))
+        {
+            /* The left side has a range restriction that the right side lacks */
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+        else if ((ldef->sign == LWMSG_UNSIGNED &&
+                  (left->info.integer_rep.lower_bound > right->info.integer_rep.lower_bound ||
+                   left->info.integer_rep.upper_bound < right->info.integer_rep.upper_bound)) ||
+                 (ldef->sign == LWMSG_SIGNED &&
+                  ((int64_t) left->info.integer_rep.lower_bound > (int64_t) right->info.integer_rep.lower_bound ||
+                   (int64_t) left->info.integer_rep.upper_bound < (int64_t) right->info.integer_rep.upper_bound)))
+        {
+            /* The left side has a stricter range than the right side */
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_enum(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgEnumDefRep* ldef = left->info.enum_rep.definition;
+    LWMsgEnumDefRep* rdef = right->info.enum_rep.definition;
+    int l = 0;
+    int r = 0;
+    LWMsgBool found = LWMSG_FALSE;
+
+    if (ldef->width != rdef->width || ldef->sign != rdef->sign)
+    {
+        /* Basic characteristics don't match */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    /* Ensure each variant in the rhs is present in the lhs */
+    for (r = 0; r < rdef->variant_count; r++)
+    {
+        found = LWMSG_FALSE;
+
+        for (l = 0; l < ldef->variant_count; l++)
+        {
+            if (ldef->variants[l].is_mask == rdef->variants[r].is_mask &&
+                ldef->variants[l].value == rdef->variants[r].value)
+            {
+                found = LWMSG_TRUE;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_struct(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgStructDefRep* ldef = left->info.struct_rep.definition;
+    LWMsgStructDefRep* rdef = right->info.struct_rep.definition;
+    int i = 0;
+
+    if (ldef->field_count != rdef->field_count)
+    {
+        /* Unequal number of fields */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    /* Ensure each field in the rhs is assignable to the field in the lhs */
+    for (i = 0; i < rdef->field_count; i++)
+    {
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_internal(
+                          map,
+                          ldef->fields[i].type,
+                          rdef->fields[i].type));
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_union(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgUnionDefRep* ldef = left->info.union_rep.definition;
+    LWMsgUnionDefRep* rdef = right->info.union_rep.definition;
+    int l = 0;
+    int r = 0;
+    LWMsgBool found = LWMSG_FALSE;
+
+    if (left->info.union_rep.discrim_member_index != right->info.union_rep.discrim_member_index)
+    {
+        /* Discriminators don't match */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    /* Ensure each arm in the rhs is present and assignable in the lhs */
+    for (r = 0; r < rdef->arm_count; r++)
+    {
+        found = LWMSG_FALSE;
+
+        for (l = 0; l < ldef->arm_count; l++)
+        {
+            if (ldef->arms[l].tag == rdef->arms[r].tag)
+            {
+                found = LWMSG_TRUE;
+
+                BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_internal(
+                                  map,
+                                  ldef->arms[l].type,
+                                  rdef->arms[r].type));
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+    }
+
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_pointer(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (left->flags != right->flags ||
+        left->info.pointer_rep.zero_terminated != right->info.pointer_rep.zero_terminated ||
+        left->info.pointer_rep.static_length != right->info.pointer_rep.static_length ||
+        left->info.pointer_rep.length_member_index != right->info.pointer_rep.length_member_index)
+    {
+        /* Basic characteristics don't match */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    /* Ensure pointee types are assignable */
+    BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_internal(
+                      map,
+                      left->info.pointer_rep.pointee_type,
+                      right->info.pointer_rep.pointee_type));
+    
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_array(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (left->flags != right->flags ||
+        left->info.array_rep.zero_terminated != right->info.array_rep.zero_terminated ||
+        left->info.array_rep.static_length != right->info.array_rep.static_length ||
+        left->info.array_rep.length_member_index != right->info.array_rep.length_member_index)
+    {
+        /* Basic characteristics don't match */
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+
+    /* Ensure element types are assignable */
+    BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_internal(
+                      map,
+                      left->info.array_rep.element_type,
+                      right->info.array_rep.element_type));
+    
+error:
+
+    return status;
+}
+
+static
+LWMsgStatus
+lwmsg_type_rep_is_assignable_internal(
+    LWMsgTypeAssignMap* map,
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (left->kind != right->kind)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+    }
+  
+    if ((status = lwmsg_type_assign_map_find(map, left, right)) != LWMSG_STATUS_NOT_FOUND)
+    {
+        goto error;
+    }
+
+    /* Provisionally insert the pair into the map */
+    BAIL_ON_ERROR(status = lwmsg_type_assign_map_insert(map, left, right));
+    
+    switch (left->kind)
+    {
+    case LWMSG_KIND_INTEGER:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_integer(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_ENUM:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_enum(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_STRUCT:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_struct(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_UNION:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_union(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_POINTER:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_pointer(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_ARRAY:
+        BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_array(
+                          map,
+                          left,
+                          right));
+        break;
+    case LWMSG_KIND_VOID:
+        /* Trivially assignable */
+        break;
+    default:
+        BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        break;
+    }
+
+error:
+
+    if (status == LWMSG_STATUS_MALFORMED)
+    {
+        lwmsg_type_assign_map_remove(map, left, right);
+    }
+
+    return status;
+}
+
+LWMsgStatus
+lwmsg_type_rep_is_assignable(
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeAssignMap map;
+
+    memset(&map, 0, sizeof(map));
+
+    BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable_internal(
+                      &map,
+                      left,
+                      right));
+
+error:
+
+    lwmsg_type_assign_map_destroy(&map);
+
+    return status;
 }

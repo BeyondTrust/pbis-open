@@ -82,6 +82,12 @@ lwmsg_protocol_add_protocol_rep(
     LWMsgProtocolRep* rep
     );
 
+LWMsgStatus
+lwmsg_protocol_is_protocol_rep_compatible(
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep* rep
+    );
+
 void
 lwmsg_protocol_free_protocol_rep(
     LWMsgProtocol* prot,

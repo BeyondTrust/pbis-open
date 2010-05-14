@@ -88,8 +88,9 @@ archive_dump(
 
     BAIL_ON_ERROR(status = lwmsg_protocol_new(NULL, &protocol));
     BAIL_ON_ERROR(status = lwmsg_archive_new(NULL, protocol, &archive));
-    BAIL_ON_ERROR(status = lwmsg_archive_set_file(archive, filename, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA, 0));
-    BAIL_ON_ERROR(status = lwmsg_archive_open(archive));
+    lwmsg_archive_set_protocol_update(archive, LWMSG_TRUE);
+    BAIL_ON_ERROR(status = lwmsg_archive_set_file(archive, filename, 0));
+    BAIL_ON_ERROR(status = lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA));
 
     printf("------\n");
     printf("Schema\n");

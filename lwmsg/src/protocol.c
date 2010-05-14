@@ -280,28 +280,55 @@ lwmsg_protocol_add_protocol_rep(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgTypeSpecBuffer* buffer = NULL;
     LWMsgTypeSpecMap specmap = {0};
-    struct LWMsgProtocolSpec *spec;
+    struct LWMsgProtocolSpec *spec = NULL;
+    LWMsgTypeSpec* existing_type = NULL;
+    LWMsgTypeRep* existing_rep = NULL;
     size_t i = 0;
+    size_t next = 0;
 
     specmap.context = lwmsg_memlist_context(&prot->specmem);
 
-    BAIL_ON_ERROR(status = LWMSG_ALLOC_ARRAY(rep->message_count + 1, &spec));
+    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC_ARRAY(specmap.context, rep->message_count + 1, &spec));
 
     for (i = 0; i < rep->message_count; i++)
     {
-        BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
-                          &specmap,
-                          rep->messages[i].type,
-                          &buffer));
-        
-        spec[i].tag = rep->messages[i].tag;
-        spec[i].type = buffer->buffer;
-        spec[i].tag_name = rep->messages[i].name;
+        status = lwmsg_protocol_get_message_type(prot, rep->messages[i].tag, &existing_type);
+        if (status == LWMSG_STATUS_NOT_FOUND)
+        {
+            /* Unknown tag -- convert type rep to a spec for addition to the protocol */
+            BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
+                              &specmap,
+                              rep->messages[i].type,
+                              &buffer));
+            
+            spec[next].tag = rep->messages[i].tag;
+            spec[next].type = buffer->buffer;
+            BAIL_ON_ERROR(status = lwmsg_strdup(
+                              specmap.context,
+                              rep->messages[i].name,
+                              (char**) (void*) &spec[next].tag_name));
+            next++;
+        }
+        else
+        {
+            BAIL_ON_ERROR(status);
+            /* Known tag -- check for assignability with existing type */
+            
+            BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(
+                              prot->context,
+                              existing_type,
+                              &existing_rep));
+
+            BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable(existing_rep, rep->messages[i].type));
+
+            lwmsg_type_free_rep(prot->context, existing_rep);
+            existing_rep = NULL;
+        }
     }
 
-    spec[i].tag = -1;
-    spec[i].type = NULL;
-    spec[i].tag_name = NULL;
+    spec[next].tag = -1;
+    spec[next].type = NULL;
+    spec[next].tag_name = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_protocol_add_protocol_spec(
                           prot,
@@ -311,8 +338,65 @@ error:
 
     lwmsg_type_spec_map_destroy(&specmap);
 
+    if (existing_rep)
+    {
+        lwmsg_type_free_rep(prot->context, existing_rep);
+        existing_rep = NULL;
+    }
+
     return status;
 }
+
+LWMsgStatus
+lwmsg_protocol_is_protocol_rep_compatible(
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep* rep
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecMap specmap = {0};
+    struct LWMsgProtocolSpec *spec = NULL;
+    LWMsgTypeSpec* existing_type = NULL;
+    LWMsgTypeRep* existing_rep = NULL;
+    size_t i = 0;
+
+    BAIL_ON_ERROR(status = LWMSG_CONTEXT_ALLOC_ARRAY(specmap.context, rep->message_count + 1, &spec));
+
+    for (i = 0; i < rep->message_count; i++)
+    {
+        status = lwmsg_protocol_get_message_type(prot, rep->messages[i].tag, &existing_type);
+        if (status == LWMSG_STATUS_NOT_FOUND)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_MALFORMED);
+        }
+        else
+        {
+            BAIL_ON_ERROR(status);
+            /* Known tag -- check for assignability with existing type */
+            
+            BAIL_ON_ERROR(status = lwmsg_type_rep_from_spec(
+                              prot->context,
+                              existing_type,
+                              &existing_rep));
+
+            BAIL_ON_ERROR(status = lwmsg_type_rep_is_assignable(existing_rep, rep->messages[i].type));
+
+            lwmsg_type_free_rep(prot->context, existing_rep);
+            existing_rep = NULL;
+        }
+    }
+    
+error:
+
+    if (existing_rep)
+    {
+        lwmsg_type_free_rep(prot->context, existing_rep);
+        existing_rep = NULL;
+    }
+
+    return status;
+}
+
 
 void
 lwmsg_protocol_free_protocol_rep(

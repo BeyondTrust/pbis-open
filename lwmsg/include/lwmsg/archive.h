@@ -84,6 +84,7 @@ typedef enum LWMsgArchiveDisposition
     LWMSG_ARCHIVE_WRITE = 0x2,
     /**
      * Read/write protocol schema to/from file
+     * @hideinitializer
      */
     LWMSG_ARCHIVE_SCHEMA = 0x4
 } LWMsgArchiveDisposition;
@@ -113,13 +114,11 @@ lwmsg_archive_new(
 /**
  * @brief Set file name and parameters
  *
- * Sets the archive file name, file disposition (read or write), and
- * UNIX permissions (when writing) for the given archive handle.
+ * Sets the archive file name and UNIX permissions for the given archive handle.
  *
  * @param[in,out] archive the archive handle
  * @param[in] filename the path to the archive file
- * @param[in] disp the file disposition
- * @param[in] mode the UNIX permissions used when writing a file that does not yet exist
+ * @param[in] mode the UNIX permissions used when creating a file that does not yet exist
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_memory
@@ -129,19 +128,16 @@ LWMsgStatus
 lwmsg_archive_set_file(
     LWMsgArchive* archive,
     const char* filename,
-    LWMsgArchiveDisposition disp,
     mode_t mode
     );
 
 /**
  * @brief Set file descriptor
  *
- * Sets the file descriptor and file disposition (read or write) for the given
- * archive handle.
+ * Sets the file descriptor for the given archive handle.
  *
  * @param[in,out] archive the archive handle
  * @param[in] fd the file descriptor
- * @param[in] disp the file disposition
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_endstatus
@@ -149,8 +145,7 @@ lwmsg_archive_set_file(
 LWMsgStatus
 lwmsg_archive_set_fd(
     LWMsgArchive* archive,
-    int fd,
-    LWMsgArchiveDisposition disp
+    int fd
     );
 
 /**
@@ -172,14 +167,40 @@ lwmsg_archive_set_byte_order(
     );
 
 /**
+ * @brief Set protocol update flag
+ *
+ * Sets whether the protocol passed to #lwmsg_archive_new() will be updated
+ * when schema information is read from an archive file.  By default, the schema
+ * is merely checked against the protocol to ensure compatibility.  If additional
+ * message types exist in the archive schema that are not in the protocol,
+ * opening the archive will fail as the application would be unable to handle
+ * these messages.  If protocol updating is turned on, the protocol will instead be
+ * extended with the unknown message types and the open will succeed.  This
+ * permanently modifies the protocol.  The additional message types can be
+ * manipulated to a limited extent by the application with functions such as
+ * #lwmsg_data_print_graph_alloc().
+ *
+ * This only has an effect when an archive is opened for reading with the
+ * disposition bit set #LWMSG_ARCHIVE_SCHEMA and the archive contains schema
+ * information. 
+ *
+ * @param[in,out] archive the archive handle
+ * @param[in] update whether to update the protocol or not
+ */
+void
+lwmsg_archive_set_protocol_update(
+    LWMsgArchive* archive,
+    LWMsgBool update
+    );
+
+/**
  * @brief Open archive file
  *
- * Opens the underlying archive specified by
- * #lwmsg_archive_set_file() or #lwmsg_archive_set_fd().
- * Messages may then be read and written with #lwmsg_archive_read_message()
- * and #lwmsg_archive_write_message().
+ * Opens the underlying archive specified by #lwmsg_archive_set_file() or #lwmsg_archive_set_fd()
+ * with the specified disposition.
  * 
  * @param[in,out] archive the archive handle
+ * @param[in] disp the open disposition
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_memory
@@ -188,7 +209,8 @@ lwmsg_archive_set_byte_order(
  */
 LWMsgStatus
 lwmsg_archive_open(
-    LWMsgArchive* archive
+    LWMsgArchive* archive,
+    LWMsgArchiveDisposition disp
     );
 
 /**

@@ -51,7 +51,8 @@ typedef struct message_struct
 
 typedef enum message_tag
 {
-    MESSAGE_NORMAL
+    MESSAGE_NORMAL,
+    MESSAGE_EXTRA
 } message_tag;
 
 static LWMsgTypeSpec message_struct_spec[] =
@@ -69,13 +70,23 @@ static LWMsgProtocolSpec archive_spec[] =
     LWMSG_PROTOCOL_END
 };
 
+static LWMsgProtocolSpec archive_extra_spec[] =
+{
+    LWMSG_MESSAGE(MESSAGE_NORMAL, message_struct_spec),
+    LWMSG_MESSAGE(MESSAGE_EXTRA, message_struct_spec),
+    LWMSG_PROTOCOL_END
+};
+
 static LWMsgProtocol* archive_protocol = NULL;
+static LWMsgProtocol* archive_extra_protocol = NULL;
 static LWMsgDataContext* dcontext = NULL;
 
 MU_FIXTURE_SETUP(archive)
 {
     MU_TRY(lwmsg_protocol_new(NULL, &archive_protocol));
     MU_TRY(lwmsg_protocol_add_protocol_spec(archive_protocol, archive_spec));
+    MU_TRY(lwmsg_protocol_new(NULL, &archive_extra_protocol));
+    MU_TRY(lwmsg_protocol_add_protocol_spec(archive_extra_protocol, archive_extra_spec));
     MU_TRY(lwmsg_data_context_new(NULL, &dcontext));
 }
 
@@ -95,14 +106,13 @@ MU_TEST(archive, write_read)
     MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
 
     /* Open, write message, close */
-    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_WRITE, 0600));
-    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE));
     MU_TRY(lwmsg_archive_write_message(archive, &in));
     MU_TRY(lwmsg_archive_close(archive));
 
     /* Open, read message, close, delete */
-    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_READ, 0));
-    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ));
     MU_TRY(lwmsg_archive_read_message(archive, &out));
     MU_TRY(lwmsg_archive_close(archive));
     
@@ -133,20 +143,20 @@ MU_TEST(archive, write_schema_read_schema)
     MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
 
     /* Open, write message, close, delete */
-    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA, 0600));
-    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
     MU_TRY(lwmsg_archive_write_message(archive, &in));
     MU_TRY(lwmsg_archive_close(archive));
     lwmsg_archive_delete(archive);
 
-    /* Create a blank protocol from which we will read the schema */
+    /* Create a blank protocol which we will read the schema into */
     MU_TRY(lwmsg_protocol_new(NULL, &blank_protocol));
-
     MU_TRY(lwmsg_archive_new(NULL, blank_protocol, &archive));
+    lwmsg_archive_set_protocol_update(archive, LWMSG_TRUE);
 
     /* Open, read message, close */
-    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA, 0));
-    MU_TRY(lwmsg_archive_open(archive));
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA));
     MU_TRY(lwmsg_archive_read_message(archive, &out));
     MU_TRY(lwmsg_archive_close(archive));
     
@@ -155,6 +165,150 @@ MU_TEST(archive, write_schema_read_schema)
     MU_VERBOSE("\n%s", text);
 
     MU_TRY(lwmsg_archive_destroy_message(archive, &out));
+    lwmsg_archive_delete(archive);
+}
+
+MU_TEST(archive, write_schema_read_schema_check)
+{
+    LWMsgArchive* archive = NULL;
+    message_struct payload;
+    LWMsgMessage in = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgMessage out = LWMSG_MESSAGE_INITIALIZER;
+    char* text = NULL;
+
+    payload.number = 42;
+    payload.string = (char*) "Hello, world!";
+    in.tag = MESSAGE_NORMAL;
+    in.data = &payload;
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+
+    /* Open, write message, close, delete */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_write_message(archive, &in));
+    MU_TRY(lwmsg_archive_close(archive));
+    lwmsg_archive_delete(archive);
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+
+    /* Open, read message, close */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_read_message(archive, &out));
+    MU_TRY(lwmsg_archive_close(archive));
+    
+    MU_TRY(lwmsg_assoc_print_message_alloc(lwmsg_archive_as_assoc(archive), &out, &text));
+    
+    MU_VERBOSE("\n%s", text);
+    
+    MU_TRY(lwmsg_archive_destroy_message(archive, &out));
+    lwmsg_archive_delete(archive);
+}
+
+MU_TEST(archive, write_schema_read_extra_schema_check)
+{
+    LWMsgArchive* archive = NULL;
+    message_struct payload;
+    LWMsgMessage in = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgMessage out = LWMSG_MESSAGE_INITIALIZER;
+    char* text = NULL;
+
+    payload.number = 42;
+    payload.string = (char*) "Hello, world!";
+    in.tag = MESSAGE_NORMAL;
+    in.data = &payload;
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+
+    /* Open, write message, close, delete */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_write_message(archive, &in));
+    MU_TRY(lwmsg_archive_close(archive));
+    lwmsg_archive_delete(archive);
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_extra_protocol, &archive));
+
+    /* Open, read message, close */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_read_message(archive, &out));
+    MU_TRY(lwmsg_archive_close(archive));
+    
+    MU_TRY(lwmsg_assoc_print_message_alloc(lwmsg_archive_as_assoc(archive), &out, &text));
+    
+    MU_VERBOSE("\n%s", text);
+    
+    MU_TRY(lwmsg_archive_destroy_message(archive, &out));
+    lwmsg_archive_delete(archive);
+}
+
+MU_TEST(archive, write_extra_schema_read_schema_update)
+{
+    LWMsgArchive* archive = NULL;
+    message_struct payload;
+    LWMsgMessage in = LWMSG_MESSAGE_INITIALIZER;
+    LWMsgMessage out = LWMSG_MESSAGE_INITIALIZER;
+    char* text = NULL;
+
+    payload.number = 42;
+    payload.string = (char*) "Hello, world!";
+    in.tag = MESSAGE_EXTRA;
+    in.data = &payload;
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_extra_protocol, &archive));
+
+    /* Open, write message, close, delete */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_write_message(archive, &in));
+    MU_TRY(lwmsg_archive_close(archive));
+    lwmsg_archive_delete(archive);
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+    lwmsg_archive_set_protocol_update(archive, LWMSG_TRUE);
+
+    /* Open, read message, close */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_read_message(archive, &out));
+    MU_TRY(lwmsg_archive_close(archive));
+    
+    MU_TRY(lwmsg_assoc_print_message_alloc(lwmsg_archive_as_assoc(archive), &out, &text));
+    
+    MU_VERBOSE("\n%s", text);
+    
+    MU_TRY(lwmsg_archive_destroy_message(archive, &out));
+    lwmsg_archive_delete(archive);
+}
+
+MU_TEST(archive, write_extra_schema_read_schema_check_fails)
+{
+    LWMsgArchive* archive = NULL;
+    message_struct payload;
+    LWMsgMessage in = LWMSG_MESSAGE_INITIALIZER;
+
+    payload.number = 42;
+    payload.string = (char*) "Hello, world!";
+    in.tag = MESSAGE_EXTRA;
+    in.data = &payload;
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_extra_protocol, &archive));
+
+    /* Open, write message, close, delete */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0600));
+    MU_TRY(lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
+    MU_TRY(lwmsg_archive_write_message(archive, &in));
+    MU_TRY(lwmsg_archive_close(archive));
+    lwmsg_archive_delete(archive);
+
+    MU_TRY(lwmsg_archive_new(NULL, archive_protocol, &archive));
+
+    /* Open, should fail due to schema mismatch */
+    MU_TRY(lwmsg_archive_set_file(archive, TEST_ARCHIVE, 0));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, lwmsg_archive_open(archive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA), LWMSG_STATUS_MALFORMED);
+
     lwmsg_archive_delete(archive);
 }
 

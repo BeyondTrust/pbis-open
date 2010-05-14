@@ -129,6 +129,7 @@ lwmsg_archive_new
 lwmsg_archive_set_file
 lwmsg_archive_set_fd
 lwmsg_archive_set_byte_order
+lwmsg_archive_set_protocol_update
 lwmsg_archive_as_assoc
 lwmsg_archive_delete
 lwmsg_archive_open
@@ -149,6 +150,7 @@ lwmsg_type_spec_from_rep
 lwmsg_type_print_rep
 lwmsg_type_print_spec_alloc
 lwmsg_type_free_rep
+lwmsg_type_rep_is_assignable
 lwmsg_hash_init
 lwmsg_hash_get_count
 lwmsg_hash_insert_entry

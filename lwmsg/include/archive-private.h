@@ -59,6 +59,7 @@ struct LWMsgArchive
     LWMsgArchiveDisposition disp;
     mode_t mode;
     LWMsgByteOrder byte_order;
+    LWMsgBool update_protocol;
     uint8_t version_major;
     uint8_t version_minor;
     LWMsgDataContext* data_context;

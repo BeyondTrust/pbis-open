@@ -253,7 +253,7 @@ lwmsg_archive_connect(
 {
     LWMsgArchive* archive = ARCHIVE_PRIVATE(assoc);
  
-    return lwmsg_archive_open(archive);
+    return lwmsg_archive_open(archive, LWMSG_ARCHIVE_WRITE);
 }
 
 static LWMsgAssocClass archive_class =
@@ -298,8 +298,7 @@ error:
 LWMsgStatus
 lwmsg_archive_set_fd(
     LWMsgArchive* archive,
-    int fd,
-    LWMsgArchiveDisposition disp
+    int fd
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -322,7 +321,6 @@ lwmsg_archive_set_fd(
     }
 
     archive->fd = fd;
-    archive->disp = disp;
 
 error:
 
@@ -333,7 +331,6 @@ LWMsgStatus
 lwmsg_archive_set_file(
     LWMsgArchive* archive,
     const char* file,
-    LWMsgArchiveDisposition disp,
     mode_t mode
     )
 {
@@ -358,7 +355,6 @@ lwmsg_archive_set_file(
         BAIL_ON_ERROR(status = LWMSG_STATUS_MEMORY);
     }
 
-    archive->disp = disp;
     archive->mode = mode;
 
 error:
@@ -381,6 +377,15 @@ lwmsg_archive_set_byte_order(
     return status;
 }
 
+void
+lwmsg_archive_set_protocol_update(
+    LWMsgArchive* archive,
+    LWMsgBool update
+    )
+{
+    archive->update_protocol = update;
+}
+
 LWMsgAssoc*
 lwmsg_archive_as_assoc(
     LWMsgArchive* archive
@@ -399,7 +404,8 @@ lwmsg_archive_delete(
 
 LWMsgStatus
 lwmsg_archive_open(
-    LWMsgArchive* archive
+    LWMsgArchive* archive,
+    LWMsgArchiveDisposition disp
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -408,6 +414,8 @@ lwmsg_archive_open(
     {
         ARCHIVE_RAISE_ERROR(archive, status = LWMSG_STATUS_INVALID_STATE, "Archive is already open");
     }
+
+    archive->disp = disp;
  
     switch (archive->disp & (LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_WRITE))
     {

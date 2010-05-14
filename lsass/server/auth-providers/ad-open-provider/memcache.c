@@ -451,11 +451,10 @@ MemCacheLoadFile(
     dwError = MAP_LWMSG_ERROR(lwmsg_archive_set_file(
                     pArchive,
                     pConn->pszFilename,
-                    LWMSG_ARCHIVE_READ,
                     0));
     BAIL_ON_LSA_ERROR(dwError);
 
-    status = lwmsg_archive_open(pArchive);
+    status = lwmsg_archive_open(pArchive, LWMSG_ARCHIVE_READ | LWMSG_ARCHIVE_SCHEMA);
     if (status == LWMSG_STATUS_FILE_NOT_FOUND)
     {
         LSA_LOG_INFO("The in-memory cache file does not exist yet");
@@ -606,11 +605,11 @@ MemCacheStoreFile(
     dwError = MAP_LWMSG_ERROR(lwmsg_archive_set_file(
                     pArchive,
                     pszTempFile,
-                    LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA,
                     0600));
     BAIL_ON_LSA_ERROR(dwError);
     dwError = MAP_LWMSG_ERROR(lwmsg_archive_open(
-                    pArchive));
+                    pArchive,
+                    LWMSG_ARCHIVE_WRITE | LWMSG_ARCHIVE_SCHEMA));
     BAIL_ON_LSA_ERROR(dwError);
 
     message.tag = MEM_CACHE_OBJECT;

@@ -442,10 +442,20 @@ lwmsg_archive_read_schema_fd(
                               &buffer,
                               (void**) (void*) &rep));
 
-            /* Insert the schema into the protocol structure */
-            BAIL_ON_ERROR(status = lwmsg_protocol_add_protocol_rep(
-                              archive->base.prot,
-                              rep));
+            if (archive->update_protocol)
+            {
+                /* Insert the schema into the protocol structure */
+                BAIL_ON_ERROR(status = lwmsg_protocol_add_protocol_rep(
+                                  archive->base.prot,
+                                  rep));
+            }
+            else
+            {
+                /* Check the schema against the protocol */
+                BAIL_ON_ERROR(status = lwmsg_protocol_is_protocol_rep_compatible(
+                                  archive->base.prot,
+                                  rep));
+            }
         }
         else
         {

@@ -1589,6 +1589,17 @@ MU_TEST(marshal, type_spec_ping_pong)
     lwmsg_memlist_destroy(&list);
 }
 
+MU_TEST(marshal, type_rep_rep_self_assignable)
+{
+    LWMsgTypeRep* rep = NULL;
+
+    MU_TRY(lwmsg_type_rep_from_spec(context, lwmsg_type_rep_spec, &rep));
+
+    MU_TRY(lwmsg_type_rep_is_assignable(rep, rep));
+
+    lwmsg_type_free_rep(context, rep);
+}
+
 typedef enum MixedEnum
 {
     MIXED_VALUE_1 = 1,

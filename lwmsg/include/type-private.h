@@ -331,6 +331,24 @@ typedef struct LWMsgTypeSpecState
     char* member_name;
 } LWMsgTypeSpecState;
 
+typedef struct LWMsgTypeAssignPair
+{
+    LWMsgTypeRep* left;
+    LWMsgTypeRep* right;
+} LWMsgTypeAssignPair;
+
+typedef struct LWMsgTypeAssignEntry
+{
+    LWMsgTypeAssignPair pair;
+    LWMsgRing ring;
+} LWMsgTypeAssignEntry;
+
+typedef struct LWMsgTypeAssignMap
+{
+    LWMsgHashTable hash;
+    size_t backlinks;
+} LWMsgTypeAssignMap;
+
 void
 lwmsg_type_iterate(
     LWMsgTypeSpec* spec,
@@ -438,6 +456,12 @@ lwmsg_type_print_spec_alloc(
     const LWMsgContext* context,
     LWMsgTypeSpec* type,
     char** result
+    );
+
+LWMsgStatus
+lwmsg_type_rep_is_assignable(
+    LWMsgTypeRep* left,
+    LWMsgTypeRep* right
     );
 
 extern LWMsgTypeSpec lwmsg_type_rep_spec[];
