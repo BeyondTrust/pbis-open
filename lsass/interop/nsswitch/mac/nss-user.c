@@ -209,7 +209,7 @@ error:
         *ppszPrincipalName = NULL;
     }
 
-    LsaNssCommonCloseConnection(pConnection);
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     if (pszPrincipalName)
     {
@@ -263,7 +263,7 @@ cleanup:
 
 error:
 
-    LsaNssCommonCloseConnection(pConnection);
+    LsaNssCommonCloseConnection(&lsaConnection);
 
     if (pNumberOfGroups)
     {
