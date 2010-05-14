@@ -435,7 +435,7 @@ ShowUsage(
             "          [--syslog]\n"
             "          [--logfile logFilePath]\n"
             "          [--replacedb]\n"
-            "          [--loglevel {0, 1, 2, 3, 4, 5}]\n"
+            "          [--loglevel {always, error, warning, info, verbose, debug}]\n"
             "          [--configfile configfilepath]\n", pszProgramName);
 }
 
@@ -528,13 +528,44 @@ EVTParseArgs(
             break;
             case PARSE_MODE_LOGLEVEL:
             {
-                dwLogLevel = atoi(pArg);
+                if (!strcasecmp(pArg, "always"))
+                {
+                    dwLogLevel = LOG_LEVEL_ALWAYS;
+                }
+                else if (!strcasecmp(pArg, "error"))
+                {
+                    dwLogLevel = LOG_LEVEL_ERROR;
+                }
+                else if (!strcasecmp(pArg, "warning"))
+                {
+                    dwLogLevel = LOG_LEVEL_WARNING;
+                }
+                else if (!strcasecmp(pArg, "info"))
+                {
+                    dwLogLevel = LOG_LEVEL_INFO;
+                }
+                else if (!strcasecmp(pArg, "verbose"))
+                {
+                    dwLogLevel = LOG_LEVEL_VERBOSE;
+                }
+                else if (!strcasecmp(pArg, "debug"))
+                {
+                    dwLogLevel = LOG_LEVEL_DEBUG;
+                }
+                else
+                {
+                    dwLogLevel = atoi(pArg);
 
-                if (dwLogLevel < LOG_LEVEL_ALWAYS || dwLogLevel > LOG_LEVEL_DEBUG) {
+                    if (dwLogLevel < LOG_LEVEL_ALWAYS ||
+                        dwLogLevel > LOG_LEVEL_DEBUG)
+                    {
 
-                    EVT_LOG_ERROR("Error: Invalid log level [%d]", dwLogLevel);
-                    ShowUsage(get_program_name(argv[0]));
-                    exit(1);
+                        EVT_LOG_ERROR(
+                                "Error: Invalid log level [%d]",
+                                dwLogLevel);
+                        ShowUsage(get_program_name(argv[0]));
+                        exit(1);
+                    }
                 }
 
                 pEVTServerInfo->dwLogLevel = dwLogLevel;

@@ -155,16 +155,11 @@ EVTInitLoggingToFile(
 
         gEvtLogInfo.data.logfile.logHandle = NULL;
 
-        if (gEvtLogInfo.data.logfile.szLogPath[0] != '\0')
+        pLog = freopen(gEvtLogInfo.data.logfile.szLogPath, "w", stderr);
+        if (pLog == NULL) 
         {
-             pLog = freopen(
-                        gEvtLogInfo.data.logfile.szLogPath,
-                        "w",
-                        stderr);
-            if (gEvtLogInfo.data.logfile.logHandle == NULL) {
-                dwError = errno;
-                BAIL_ON_EVT_ERROR(dwError);
-            }
+            dwError = errno;
+            BAIL_ON_EVT_ERROR(dwError);
         }
 
         gEvtLogInfo.data.logfile.logHandle = pLog;
@@ -218,7 +213,7 @@ EVTValidateLogLevel(
 {
     DWORD dwError = 0;
 
-    if (dwLogLevel < 1) {
+    if (dwLogLevel < LOG_LEVEL_ALWAYS || dwLogLevel > LOG_LEVEL_DEBUG) {
         dwError = EINVAL;
     }
 
