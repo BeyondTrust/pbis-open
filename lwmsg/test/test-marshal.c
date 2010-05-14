@@ -668,6 +668,7 @@ static LWMsgTypeSpec string_spec[] =
 {
     LWMSG_STRUCT_BEGIN(string_struct),
     LWMSG_MEMBER_PSTR(string_struct, foo),
+    LWMSG_ATTR_MAX_ALLOC(256),
     LWMSG_MEMBER_PSTR(string_struct, bar),
     LWMSG_ATTR_SENSITIVE,
     LWMSG_STRUCT_END,
@@ -720,6 +721,31 @@ MU_TEST(marshal, string)
 
     MU_TRY_DCONTEXT(dcontext, lwmsg_data_free_graph(dcontext, type, out));
     lwmsg_context_free(context, text);
+}
+
+MU_TEST(marshal, string_max_alloc_fail)
+{
+    LWMsgTypeSpec* type = string_spec;
+    LWMsgBuffer buffer;
+    string_struct strings;
+    string_struct* out = NULL;
+    static char foo[512] = {0};
+
+    memset(foo, 'x', sizeof(foo) - 1);
+
+    strings.foo = foo;
+    strings.bar = "bar";
+    
+    allocate_buffer(&buffer);
+
+    MU_TRY_DCONTEXT(dcontext, lwmsg_data_marshal(dcontext, type, &strings, &buffer));
+
+    rewind_buffer(&buffer);
+
+    MU_ASSERT_EQUAL(
+        MU_TYPE_INTEGER,
+        lwmsg_data_unmarshal(dcontext, type, &buffer, (void**) (void*) &out),
+        LWMSG_STATUS_OVERFLOW);
 }
 
 typedef struct

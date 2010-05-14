@@ -129,6 +129,9 @@ lwmsg_type_find_end(
         case LWMSG_CMD_ENCODING:
             spec += 1;
             break;
+        case LWMSG_CMD_MAX_ALLOC:
+            spec += 1;
+            break;
         case LWMSG_CMD_SENSITIVE:
         case LWMSG_CMD_ALIASABLE:
         case LWMSG_CMD_NOT_NULL:
@@ -358,6 +361,9 @@ lwmsg_type_iterate_inner(
             break;
         case LWMSG_CMD_CUSTOM_ATTR:
             iter->attrs.custom |= (size_t) *(spec++);
+            break;
+        case LWMSG_CMD_MAX_ALLOC:
+            iter->attrs.max_alloc = (size_t) *(spec++);
             break;
         case LWMSG_CMD_END:
             /* No more members/types left to iterate */

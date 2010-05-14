@@ -418,6 +418,7 @@ typedef enum LWMsgTypeDirective
         LWMSG_CMD_ENUM,
         LWMSG_CMD_ENUM_VALUE,
         LWMSG_CMD_ENUM_MASK,
+        LWMSG_CMD_MAX_ALLOC,
         LWMSG_FLAG_MEMBER = 0x10000,
         LWMSG_FLAG_META = 0x20000,
         LWMSG_FLAG_DEBUG = 0x40000
@@ -762,6 +763,20 @@ typedef enum LWMsgTypeDirective
 #define LWMSG_ATTR_STRING \
     LWMSG_ATTR_ZERO_TERMINATED,                 \
     LWMSG_ATTR_ENCODING("")
+
+/**
+ * @brief Limit memory allocation for pointer referent
+ *
+ * Indicates that the marshaller should refuse to allocate more
+ * than the given number of bytes when unmarshalling the referent
+ * of the immediately previous pointer type.  An attempt to exceed
+ * this value will result in an #LWMSG_STATUS_OVERFLOW error.
+ * @param max the maximum number of bytes to allocate
+ * @hideinitializer
+ */
+#define LWMSG_ATTR_MAX_ALLOC(max) \
+    _TYPECMD(LWMSG_CMD_MAX_ALLOC), \
+        _TYPEARG((max))
 
 /**
  * @brief Indicate union tag

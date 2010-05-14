@@ -453,6 +453,12 @@ lwmsg_data_unmarshal_pointees(
             referent_size = sizeof(void*);
         }
 
+        /* Enforce MAX_ALLOC attribute */
+        if (iter->attrs.max_alloc && referent_size > iter->attrs.max_alloc)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+        }
+
         /* Allocate the referent */
         BAIL_ON_ERROR(status = lwmsg_object_alloc(context, referent_size, &object));
 
@@ -774,6 +780,12 @@ lwmsg_data_unmarshal_struct_pointee(
         base_size = sizeof(void*);
     }
 
+    /* Enforce MAX_ALLOC attribute */
+    if (pointer_iter->attrs.max_alloc && base_size > pointer_iter->attrs.max_alloc)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
+    }
+
     /* Allocate enough memory to hold the base of the object */
     BAIL_ON_ERROR(status = lwmsg_object_alloc(
                       context,
@@ -797,8 +809,7 @@ lwmsg_data_unmarshal_struct_pointee(
                       struct_iter,
                       buffer,
                       base_object,
-                      &flexible_member
-                      ));
+                      &flexible_member));
 
     /* Now that the base of the object is unmarshalled, we can see if we need to
        reallocate space for a flexible member */
@@ -843,6 +854,12 @@ lwmsg_data_unmarshal_struct_pointee(
             full_size < sizeof(void*))
         {
             full_size = sizeof(void*);
+        }
+
+        /* Enforce MAX_ALLOC attribute */
+        if (pointer_iter->attrs.max_alloc && full_size > pointer_iter->attrs.max_alloc)
+        {
+            BAIL_ON_ERROR(status = LWMSG_STATUS_OVERFLOW);
         }
 
         /* Allocate the full object */

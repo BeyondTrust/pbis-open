@@ -56,6 +56,8 @@ typedef struct LWMsgType
     size_t range_low;
     /** Maximum value of range constraint */
     size_t range_high;
+    /** Maximum memory allocation allowed */
+    size_t max_alloc;
 } LWMsgTypeAttrs;
 
 /* Iteration */
