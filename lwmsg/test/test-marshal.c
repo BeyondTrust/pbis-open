@@ -43,6 +43,7 @@
 
 #include "test-private.h"
 #include "type-private.h"
+#include "context-private.h"
 
 static LWMsgContext* context = NULL;
 static LWMsgDataContext* dcontext = NULL;
@@ -1569,22 +1570,24 @@ MU_TEST(marshal, type_rep_print_type)
     lwmsg_context_free(context, text);
 }
 
-#if 0
 MU_TEST(marshal, type_spec_ping_pong)
 {
+    LWMsgMemoryList list;
     LWMsgTypeRep* rep = NULL;
     LWMsgTypeSpec* spec = NULL;
     char* text = NULL;
 
+    lwmsg_memlist_init(&list, context);
+
     MU_TRY(lwmsg_type_rep_from_spec(context, lwmsg_type_rep_spec, &rep));
-    MU_TRY(lwmsg_type_spec_from_rep(context, rep, &spec));
+    MU_TRY(lwmsg_type_spec_from_rep(lwmsg_memlist_context(&list), rep, &spec));
     MU_TRY(lwmsg_type_print_spec_alloc(context, spec, &text));
 
     MU_VERBOSE("\n%s", text);
     lwmsg_context_free(context, text);
     lwmsg_type_free_rep(context, rep);
+    lwmsg_memlist_destroy(&list);
 }
-#endif
 
 typedef enum MixedEnum
 {

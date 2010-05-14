@@ -224,9 +224,7 @@ lwmsg_archive_write_schema_fd(
     unsigned char data[2048];
     uint32_t length = 0;
     
-    BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
-                      archive->base.prot,
-                      &rep));
+    BAIL_ON_ERROR(status = lwmsg_protocol_get_protocol_rep(archive->base.prot, &rep));
 
     buffer.base = data;
     buffer.end = data + sizeof(data);
@@ -259,7 +257,7 @@ error:
 
     if (rep)
     {
-        lwmsg_data_free_graph_cleanup(archive->base.prot->context, type, rep);
+        lwmsg_protocol_free_protocol_rep(archive->base.prot, rep);
     }
 
     return status;
@@ -445,11 +443,9 @@ lwmsg_archive_read_schema_fd(
                               (void**) (void*) &rep));
 
             /* Insert the schema into the protocol structure */
-            BAIL_ON_ERROR(status = lwmsg_protocol_set_representation(
+            BAIL_ON_ERROR(status = lwmsg_protocol_add_protocol_rep(
                               archive->base.prot,
                               rep));
-
-            rep = NULL;
         }
         else
         {
@@ -461,7 +457,7 @@ error:
 
     if (rep)
     {
-        lwmsg_data_free_graph(archive->data_context, lwmsg_type_rep_spec, rep);
+        lwmsg_data_free_graph_cleanup(archive->data_context->context, lwmsg_protocol_rep_spec, rep);
     }
 
     return status;

@@ -104,6 +104,7 @@ lwmsg_context_setup(
     const LWMsgContext* parent
     )
 {
+    memset(context, 0, sizeof(*context));
     context->parent = parent;
 }
 
@@ -462,4 +463,122 @@ lwmsg_context_would_log(
     {
         return LWMSG_FALSE;
     }
+}
+
+#define MEMLIST_ALIGN(x,a) (((x)+(a)-1) & ~((a)-1))
+#define MEMLIST_HEADER_SIZE (MEMLIST_ALIGN(sizeof(LWMsgRing),sizeof(void*)))
+
+static
+LWMsgStatus
+lwmsg_memlist_alloc(
+    size_t size,
+    void** out,
+    void* data
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgMemoryList* list = data;
+    LWMsgRing* ring = NULL;
+
+    size += MEMLIST_HEADER_SIZE;
+
+    BAIL_ON_ERROR(status = lwmsg_context_alloc(
+                      list->parent_context,
+                      size,
+                      (void**) (void*) &ring));
+    
+    lwmsg_ring_init(ring);
+    lwmsg_ring_enqueue(&list->blocks, ring);
+
+    *out = ((unsigned char*) ring) + MEMLIST_HEADER_SIZE;
+
+error:
+
+    return status;
+}
+
+static
+void
+lwmsg_memlist_free(
+    void* object,
+    void* data
+    )
+{
+    LWMsgMemoryList* list = data;
+    LWMsgRing* ring = NULL;
+
+    ring = (LWMsgRing*) (((unsigned char*) object) - MEMLIST_HEADER_SIZE);
+
+    lwmsg_ring_remove(ring);
+
+    lwmsg_context_free(list->parent_context, object);
+}
+
+static LWMsgStatus
+lwmsg_memlist_realloc (
+    void* object,
+    size_t old_size,
+    size_t new_size,
+    void** new_object,
+    void* data)
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgMemoryList* list = data;
+    LWMsgRing* ring = NULL;
+    LWMsgRing* new_ring = NULL;
+
+    ring = (LWMsgRing*) (((unsigned char*) object) - MEMLIST_HEADER_SIZE);
+    lwmsg_ring_remove(ring);
+
+    BAIL_ON_ERROR(status = lwmsg_context_realloc(
+                      list->parent_context,
+                      ring,
+                      old_size + MEMLIST_HEADER_SIZE,
+                      new_size + MEMLIST_HEADER_SIZE,
+                      (void**) (void*) &new_ring));
+
+    lwmsg_ring_init(new_ring);
+    lwmsg_ring_enqueue(&list->blocks, new_ring);
+
+    *new_object = ((unsigned char*) new_ring) + MEMLIST_HEADER_SIZE;
+    
+error:
+
+    return status;
+}
+
+void
+lwmsg_memlist_init(
+    LWMsgMemoryList* list,
+    LWMsgContext* context
+    )
+{
+    list->parent_context = context;
+
+    lwmsg_context_setup(&list->context, context);
+    lwmsg_context_set_memory_functions(
+        &list->context,
+        lwmsg_memlist_alloc,
+        lwmsg_memlist_free,
+        lwmsg_memlist_realloc,
+        list);
+    lwmsg_ring_init(&list->blocks);
+}
+
+void
+lwmsg_memlist_destroy(
+    LWMsgMemoryList* list
+    )
+{
+    LWMsgRing* ring = NULL;
+    LWMsgRing* next = NULL;
+
+    for (ring = list->blocks.next; ring != &list->blocks; ring = next)
+    {
+        next = ring->next;
+
+        lwmsg_context_free(list->parent_context, ring);
+    }
+
+    lwmsg_context_cleanup(&list->context);
 }

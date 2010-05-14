@@ -54,9 +54,7 @@ struct LWMsgProtocol
     size_t num_types;
     /* Pointers to protocol spec entries indexed by message tag */
     LWMsgProtocolSpec** types;
-    struct LWMsgProtocolRep* rep;
-    struct LWMsgProtocolSpec* spec;
-    LWMsgTypeSpecMap specmap;
+    LWMsgMemoryList specmem;
 };
 
 typedef struct LWMsgProtocolMessageRep
@@ -73,13 +71,19 @@ typedef struct LWMsgProtocolRep
 } LWMsgProtocolRep;
 
 LWMsgStatus
-lwmsg_protocol_create_representation(
+lwmsg_protocol_get_protocol_rep(
     LWMsgProtocol* prot,
     LWMsgProtocolRep** rep
     );
 
 LWMsgStatus
-lwmsg_protocol_set_representation(
+lwmsg_protocol_add_protocol_rep(
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep* rep
+    );
+
+void
+lwmsg_protocol_free_protocol_rep(
     LWMsgProtocol* prot,
     LWMsgProtocolRep* rep
     );

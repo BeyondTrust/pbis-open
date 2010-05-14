@@ -58,6 +58,13 @@ struct LWMsgContext
     const struct LWMsgContext* parent;
 };
 
+typedef struct LWMsgMemoryList
+{
+    LWMsgContext context;
+    LWMsgContext* parent_context;
+    LWMsgRing blocks;
+} LWMsgMemoryList;
+
 void
 lwmsg_context_setup(
     LWMsgContext* context,
@@ -100,6 +107,26 @@ lwmsg_context_would_log(
     const LWMsgContext* context,
     LWMsgLogLevel level
     );
+
+void
+lwmsg_memlist_init(
+    LWMsgMemoryList* list,
+    LWMsgContext* context
+    );
+
+void
+lwmsg_memlist_destroy(
+    LWMsgMemoryList* list
+    );
+
+static inline
+LWMsgContext*
+lwmsg_memlist_context(
+    LWMsgMemoryList* list
+    )
+{
+    return &list->context;
+}
 
 #define LWMSG_LOG(context, level, ...) \
     (lwmsg_context_log_printf((context), (level), __FILE__, __LINE__, __VA_ARGS__))

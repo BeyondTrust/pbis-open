@@ -85,7 +85,7 @@ lwmsg_protocol_new(
     }
 
     my_prot->context = context;
-    my_prot->specmap.context = context;
+    lwmsg_memlist_init(&my_prot->specmem, context);
 
     *prot = my_prot;
 
@@ -106,8 +106,8 @@ error:
 void
 lwmsg_protocol_delete(LWMsgProtocol* prot)
 {
-    lwmsg_type_spec_map_destroy(&prot->specmap);
-
+    lwmsg_memlist_destroy(&prot->specmem);
+    
     free(prot->types);
     free(prot);
 }
@@ -212,7 +212,7 @@ lwmsg_protocol_get_error_message(
 }
 
 LWMsgStatus
-lwmsg_protocol_create_representation(
+lwmsg_protocol_get_protocol_rep(
     LWMsgProtocol* prot,
     LWMsgProtocolRep** rep
     )
@@ -272,22 +272,25 @@ error:
 }
 
 LWMsgStatus
-lwmsg_protocol_set_representation(
+lwmsg_protocol_add_protocol_rep(
     LWMsgProtocol* prot,
     LWMsgProtocolRep* rep
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgTypeSpecBuffer* buffer = NULL;
+    LWMsgTypeSpecMap specmap = {0};
     struct LWMsgProtocolSpec *spec;
     size_t i = 0;
+
+    specmap.context = lwmsg_memlist_context(&prot->specmem);
 
     BAIL_ON_ERROR(status = LWMSG_ALLOC_ARRAY(rep->message_count + 1, &spec));
 
     for (i = 0; i < rep->message_count; i++)
     {
         BAIL_ON_ERROR(status = lwmsg_type_spec_from_rep_internal(
-                          &prot->specmap,
+                          &specmap,
                           rep->messages[i].type,
                           &buffer));
         
@@ -304,12 +307,20 @@ lwmsg_protocol_set_representation(
                           prot,
                           spec));
     
-    prot->spec = spec;
-    prot->rep = rep;
-
 error:
 
+    lwmsg_type_spec_map_destroy(&specmap);
+
     return status;
+}
+
+void
+lwmsg_protocol_free_protocol_rep(
+    LWMsgProtocol* prot,
+    LWMsgProtocolRep* rep
+    )
+{
+    lwmsg_data_free_graph_cleanup(prot->context, lwmsg_protocol_rep_spec, rep);
 }
 
 LWMsgStatus
@@ -324,16 +335,7 @@ lwmsg_protocol_print(
     size_t i = 0;
     unsigned int j = 0;
 
-    if (prot->rep)
-    {
-        rep = prot->rep;
-    }
-    else
-    {
-        BAIL_ON_ERROR(status = lwmsg_protocol_create_representation(
-                          prot,
-                          &rep));
-    }
+    BAIL_ON_ERROR(status = lwmsg_protocol_get_protocol_rep(prot, &rep));
 
     for (i = 0; i < rep->message_count; i++)
     {
@@ -368,7 +370,7 @@ lwmsg_protocol_print(
 
 cleanup:
 
-    if (rep && !prot->rep)
+    if (rep)
     {
         lwmsg_data_free_graph_cleanup(prot->context, lwmsg_protocol_rep_spec, rep);
     }

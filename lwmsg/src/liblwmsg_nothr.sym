@@ -52,6 +52,8 @@ lwmsg_context_would_log
 lwmsg_context_alloc
 lwmsg_context_free
 lwmsg_context_realloc
+lwmsg_memlist_init
+lwmsg_memlist_destroy
 lwmsg_data_context_new
 lwmsg_data_context_delete
 lwmsg_data_context_get_error_message
