@@ -48,13 +48,13 @@
 #include "ntlogmacros.h"
 
 #define _LWMSG_MEMBER_BOOLEAN(Type, Field) \
-    LWMSG_MEMBER_UINT8(Type, Field)
+    LWMSG_MEMBER_TYPESPEC(Type, Field, gNtIpcTypeSpecBoolean)
 
 #define _LWMSG_MEMBER_BUFFER(Type, BufferField, LengthField) \
     LWMSG_MEMBER_POINTER_BEGIN(Type, BufferField), \
     LWMSG_UINT8(BYTE), \
     LWMSG_POINTER_END, \
-    LWMSG_ATTR_SENSITIVE, \
+    LWMSG_ATTR_ENCODING("hex+ascii"), \
     LWMSG_ATTR_LENGTH_MEMBER(Type, LengthField)
 
 #define _LWMSG_MEMBER_OPTIONAL_ARRAY(Type, PointerField, CountField, ElementSpec) \
@@ -87,6 +87,16 @@
 
 #define _LWMSG_MEMBER_IO_FILE_HANDLE_OUT(Type, Field) \
     _LWMSG_MEMBER_HANDLE_OUT(Type, Field, IO_FILE_HANDLE)
+
+static
+LWMsgTypeSpec gNtIpcTypeSpecBoolean[] =
+{
+    LWMSG_ENUM_BEGIN(BOOLEAN, 1, LWMSG_UNSIGNED),
+    LWMSG_ENUM_VALUE(FALSE),
+    LWMSG_ENUM_VALUE(TRUE),
+    LWMSG_ENUM_END,
+    LWMSG_TYPE_END
+};
 
 static
 LWMsgTypeSpec gNtIpcTypeSpecIoFileName[] =

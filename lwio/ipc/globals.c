@@ -30,12 +30,22 @@
 
 #include "includes.h"
 
+static
+LWMsgTypeSpec gSecurityTokenType[] =
+{
+    LWMSG_ENUM_BEGIN(enum _LW_IO_CREDS_TYPE, 1, LWMSG_UNSIGNED),
+    LWMSG_ENUM_VALUE(IO_CREDS_TYPE_PLAIN),
+    LWMSG_ENUM_VALUE(IO_CREDS_TYPE_KRB5_CCACHE),
+    LWMSG_ENUM_VALUE(IO_CREDS_TYPE_KRB5_TGT),
+    LWMSG_ENUM_END
+};
+
 LWMsgTypeSpec gSecurityTokenRepSpec[] =
 {
     /* Begin structure */
     LWMSG_STRUCT_BEGIN(IO_CREDS),
     /* Discriminator */
-    LWMSG_MEMBER_UINT8(IO_CREDS, type),
+    LWMSG_MEMBER_TYPESPEC(IO_CREDS, type, gSecurityTokenType),
     /* Begin union */
     LWMSG_MEMBER_UNION_BEGIN(IO_CREDS, payload),
     /* Union arm -- plain */
