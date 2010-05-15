@@ -79,10 +79,10 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %config(noreplace) /etc/likewise/gss/mech
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
+%{PrefixDir}/share/config/*
 %endif
 %{PrefixDir}/%{_lib}/*
 /%{_lib}/*
-%{PrefixDir}/share/config/*
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lsassd
