@@ -443,6 +443,7 @@ lwmsg_peer_startup(
     LWMsgRing* ring = NULL;
     PeerEndpoint* endpoint = NULL;
     PeerListenTask* task = NULL;
+    char* message = NULL;
 
     if (!peer->session_manager)
     {
@@ -472,7 +473,18 @@ lwmsg_peer_startup(
 
     LWMSG_LOG_INFO(peer->context, "Listener started");
 
+    if (lwmsg_context_would_log(peer->context, LWMSG_LOGLEVEL_TRACE))
+    {
+        BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(peer->protocol, &message));
+        LWMSG_LOG_TRACE(peer->context, "Listen protocol:\n%s", message);
+    }
+
 done:
+
+    if (message)
+    {
+        lwmsg_context_free(peer->protocol->context, message);
+    }
 
     return status;
 
