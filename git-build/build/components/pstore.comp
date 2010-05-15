@@ -75,7 +75,6 @@ function component_populate
     fi
 
     cat <<EOF > ${EXCLUDE_FILE}
-share
 *.a
 *.la
 EOF
