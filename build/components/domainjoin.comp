@@ -1,26 +1,15 @@
 #!/bin/bash -c "exit 1"
 
-
-case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-    darwin-*)
-
-        if [ -z "${BUILD_MINIMAL}" ]
-        then
-            extra_deps="libxml2"
-        fi
-
-        ;;
-
-     *)
-            extra_deps=""
-	;;
-esac
+if [ -z "${BUILD_MINIMAL}" ]
+then
+    extra_deps="libxml2"
+fi
 
 COMP_INCREMENTAL=1
 COMP_SRCDIR=${BUILD_ROOT}/src/linux/domainjoin
 COMP_CONFIGS="nsswitch.lwi_defaults"
 COMP_SOURCES="${COMP_SRCDIR}"
-COMP_DEPENDENCIES="autoconf pkg-config netlogon dcerpc pstore centutils openldap lwdns eventlog lsass lwsm ${extra_deps}"
+COMP_DEPENDENCIES="autoconf pkg-config netlogon dcerpc pstore libxml2 centutils openldap lwdns eventlog lsass lwsm ${extra_deps}"
 
 for file in ${COMP_CONFIGS}; do
     COMP_SOURCES="${COMP_SOURCES} ${BUILD_ROOT}/src/linux/config/$file"
