@@ -524,6 +524,14 @@ error:
 
     if (transmit_object)
     {
+        if (iter->info.kind_custom.typeclass->destroy_transmitted)
+        {
+            iter->info.kind_custom.typeclass->destroy_transmitted(
+                info->context,
+                &iter->attrs,
+                transmit_object,
+                iter->info.kind_custom.typedata);
+        }
         free(transmit_object);
     }
 
