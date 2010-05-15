@@ -516,6 +516,7 @@ lwmsg_protocol_print_alloc(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgBuffer buffer = {0};
+    unsigned char nul = 0;
 
     buffer.wrap = realloc_wrap;
     buffer.data = (void*) prot->context;
@@ -524,6 +525,8 @@ lwmsg_protocol_print_alloc(
                       prot,
                       0,
                       &buffer));
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
 
     *text = (char*) buffer.base;
 

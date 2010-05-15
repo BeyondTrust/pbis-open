@@ -788,6 +788,7 @@ lwmsg_data_print_graph_alloc(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgBuffer buffer = {0};
+    unsigned char nul = 0;
 
     buffer.wrap = realloc_wrap;
     buffer.data = (void*) context->context;
@@ -798,6 +799,8 @@ lwmsg_data_print_graph_alloc(
                       object,
                       0,
                       &buffer));
+
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
     
     *result = (char*) buffer.base;
    

@@ -514,6 +514,7 @@ lwmsg_assoc_print_message_alloc(
     LWMsgTypeSpec* type = NULL;
     LWMsgBuffer buffer = {0};
     const char* tag_name = NULL;
+    unsigned char nul = 0;
 
     buffer.wrap = realloc_wrap;
     buffer.data = (void*) &assoc->context;
@@ -531,6 +532,8 @@ lwmsg_assoc_print_message_alloc(
                           message->data,
                           4,
                           &buffer));
+
+        BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
     }
     else
     {

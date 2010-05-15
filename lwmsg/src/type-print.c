@@ -727,6 +727,7 @@ lwmsg_type_print_spec_alloc(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgBuffer buffer = {0};
     LWMsgTypeRep* rep = NULL;
+    unsigned char nul = 0;
 
     buffer.wrap = realloc_wrap;
     buffer.data = (void*) context;
@@ -735,6 +736,8 @@ lwmsg_type_print_spec_alloc(
 
     BAIL_ON_ERROR(status = lwmsg_type_print_rep(rep, 0, &buffer));
     
+    BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));
+
     *result = (char*) buffer.base;
     
 cleanup:
