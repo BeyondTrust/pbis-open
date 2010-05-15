@@ -428,27 +428,48 @@ lwmsg_protocol_print(
             BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, " "));
         }
 
-        if (rep->messages[i].name)
+        if (rep->messages[i].type)
         {
-            BAIL_ON_ERROR(status = lwmsg_buffer_print(
-                              buffer,
-                              "Tag %s (%i):\n",
-                              rep->messages[i].name,
-                              rep->messages[i].tag));
+            if (rep->messages[i].name)
+            {
+                BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                                  buffer,
+                                  "Tag %s (%i):\n",
+                                  rep->messages[i].name,
+                                  rep->messages[i].tag));
+            }
+            else
+            {
+                BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                                  buffer,
+                                  "Tag %i:\n",
+                                  rep->messages[i].tag));
+            }
+            
+            BAIL_ON_ERROR(status = lwmsg_type_print_rep(
+                              rep->messages[i].type,
+                              indent + 4,
+                              buffer));
         }
         else
         {
-            BAIL_ON_ERROR(status = lwmsg_buffer_print(
-                              buffer,
-                              "Tag %i:\n",
-                              rep->messages[i].tag));
+            if (rep->messages[i].name)
+            {
+                BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                                  buffer,
+                                  "Tag %s (%i)",
+                                  rep->messages[i].name,
+                                  rep->messages[i].tag));
+            }
+            else
+            {
+                BAIL_ON_ERROR(status = lwmsg_buffer_print(
+                                  buffer,
+                                  "Tag %i",
+                                  rep->messages[i].tag));
+            }  
         }
         
-        BAIL_ON_ERROR(status = lwmsg_type_print_rep(
-                          rep->messages[i].type,
-                          indent + 4,
-                          buffer));
-
         BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, "\n\n"));
     }
 
