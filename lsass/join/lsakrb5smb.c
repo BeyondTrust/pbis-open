@@ -51,7 +51,8 @@ typedef struct _LSA_CREDS_FREE_INFO
 {
     krb5_context ctx;
     krb5_ccache cc;
-    LW_PIO_CREDS hCreds;
+    LW_PIO_CREDS pRestoreCreds;
+    PSTR pszRestoreCache;
 } LSA_CREDS_FREE_INFO;
 
 DWORD
@@ -60,8 +61,7 @@ LsaSetSMBCreds(
     IN PCSTR pszUsername,
     IN PCSTR pszPassword,
     IN BOOLEAN bSetDefaultCachePath,
-    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo,
-    OUT OPTIONAL LW_PIO_CREDS* ppOldToken
+    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo
     )
 {
     DWORD dwError = 0;
@@ -74,6 +74,7 @@ LsaSetSMBCreds(
     LW_PIO_CREDS pNewCreds = NULL;
     LW_PIO_CREDS pOldCreds = NULL;
     PLSA_CREDS_FREE_INFO pFreeInfo = NULL;
+    PSTR pszOldCachePath = NULL;
 
     BAIL_ON_INVALID_POINTER(ppFreeInfo);
     BAIL_ON_INVALID_STRING(pszDomain);
@@ -102,7 +103,7 @@ LsaSetSMBCreds(
         LSA_LOG_DEBUG("Switching default credentials path for new access token"); 
         dwError = LwKrb5SetDefaultCachePath(
                   pszNewCachePath,
-                  NULL);
+                  &pszOldCachePath);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -130,21 +131,16 @@ LsaSetSMBCreds(
 
     pFreeInfo->ctx = ctx;
     pFreeInfo->cc = cc;
-    pFreeInfo->hCreds = pNewCreds;
-    pNewCreds = NULL;
+    pFreeInfo->pRestoreCreds = pOldCreds;
+    pFreeInfo->pszRestoreCache = pszOldCachePath;
+    pszOldCachePath = NULL;
+    pOldCreds = NULL;
 
 cleanup:
     *ppFreeInfo = pFreeInfo;
-    if (ppOldToken)
+    if (pOldCreds != NULL)
     {
-        *ppOldToken = pOldCreds;
-    }
-    else
-    {
-        if (pOldCreds != NULL)
-        {
-            LwIoDeleteCreds(pOldCreds);
-        }
+        LwIoDeleteCreds(pOldCreds);
     }
 
     if (pNewCreds != NULL)
@@ -152,6 +148,7 @@ cleanup:
         LwIoDeleteCreds(pNewCreds);
     }
     LW_SAFE_FREE_STRING(pszNewCachePath);
+    LW_SAFE_FREE_STRING(pszOldCachePath);
 
     return dwError;
 
@@ -171,12 +168,6 @@ error:
         pFreeInfo = NULL;
     }
 
-    if (pOldCreds != NULL)
-    {
-        LwIoDeleteCreds(pOldCreds);
-        pOldCreds = NULL;
-    }
-
     goto cleanup;
 }
 
@@ -192,11 +183,15 @@ LsaFreeSMBCreds(
         goto cleanup;
     }
 
-    if (pFreeInfo->hCreds != NULL)
+    LwIoSetThreadCreds(pFreeInfo->pRestoreCreds);
+    if (pFreeInfo->pRestoreCreds != NULL)
     {
-        LwIoSetThreadCreds(pFreeInfo->hCreds);
-        LwIoDeleteCreds(pFreeInfo->hCreds);
+        LwIoDeleteCreds(pFreeInfo->pRestoreCreds);
     }
+    LwKrb5SetDefaultCachePath(
+                  pFreeInfo->pszRestoreCache,
+                  NULL);
+    LW_SAFE_FREE_STRING(pFreeInfo->pszRestoreCache);
 
     if (pFreeInfo->ctx != NULL)
     {

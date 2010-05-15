@@ -66,8 +66,7 @@ LsaSetSMBCreds(
     IN PCSTR pszUsername,
     IN PCSTR pszPassword,
     IN BOOLEAN bSetDefaultCachePath,
-    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo,
-    OUT OPTIONAL LW_PIO_CREDS* ppOldToken
+    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo
     );
 
 void

@@ -134,8 +134,7 @@ LsaLeaveDomain(
                     pszUsername,
                     pszPassword,
                     TRUE,
-                    &pAccessInfo,
-                    NULL);
+                    &pAccessInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaUnjoinDomain(

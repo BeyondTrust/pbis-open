@@ -245,16 +245,15 @@ AD_NetUserChangePassword(
                         pszUserPrincipalName,
                         pszOldPassword,
                         FALSE,
-                        &pFreeInfo,
-                        &pOldCreds);
+                        &pFreeInfo);
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
         dwError = AD_SetSystemAccess(&pOldCreds);
         BAIL_ON_LSA_ERROR(dwError);
+        bChangedToken = TRUE;
     }
-    bChangedToken = TRUE;
 
     dwError = LwMbsToWc16s(
                     pszDomainName,
