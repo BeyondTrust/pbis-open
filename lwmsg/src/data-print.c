@@ -285,7 +285,7 @@ lwmsg_data_print_graph_visit_member(
     
     if (iter->meta.member_name)
     {
-        BAIL_ON_ERROR(status = print(info, ".%s = ", iter->meta.member_name));
+        BAIL_ON_ERROR(status = print(info, "%s = ", iter->meta.member_name));
     }
 
     BAIL_ON_ERROR(status = 
@@ -404,7 +404,7 @@ lwmsg_data_print_hex_ascii(
 
     BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(element_count, element_size, &input_length));
 
-    BAIL_ON_ERROR(status = print(info, "<hex>", (unsigned long) cluster));
+    BAIL_ON_ERROR(status = print(info, "<hex+ascii>", (unsigned long) cluster));
     BAIL_ON_ERROR(status = newline(info));
     BAIL_ON_ERROR(status = print(info, "{"));
     info->depth += 4;
@@ -614,20 +614,16 @@ lwmsg_data_print_graph_visit(
                                           iter,
                                           &id));
 
-                        BAIL_ON_ERROR(status = print(info, "<pointer:%lu> -> ", (unsigned long) id));
+                        BAIL_ON_ERROR(status = print(info, "<alias:%lu> ", (unsigned long) id));
                     }
                     else
                     {
                         BAIL_ON_ERROR(status);
 
-                        BAIL_ON_ERROR(status = print(info, "<pointer:%lu>", (unsigned long) id));
+                        BAIL_ON_ERROR(status = print(info, "<alias:%lu>", (unsigned long) id));
                         /* Skip printing pointee */
                         goto error;
                     }
-                }
-                else
-                {
-                    BAIL_ON_ERROR(status = print(info, "<pointer> -> "));
                 }
 
                 /* Print pointee */
