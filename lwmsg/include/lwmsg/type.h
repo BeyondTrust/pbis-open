@@ -429,6 +429,7 @@ typedef enum LWMsgTypeDirective
 #define _TYPECMD(_c_) ((size_t) ((_c_) | _TYPEFLAG_DEBUG)) _TYPEDEBUG
 #define _TYPECMD_TYPE(_c_, _t_) ((size_t) ((_c_) | _TYPEFLAG_META | _TYPEFLAG_DEBUG)) _TYPEMETA(_t_) _TYPEDEBUG
 #define _TYPECMD_MEMBER(_c_, _t_, _m_) ((size_t) ((_c_) | LWMSG_FLAG_MEMBER | _TYPEFLAG_META | _TYPEFLAG_DEBUG)) _TYPEMETA_MEMBER(_t_, _m_) _TYPEDEBUG
+#define _TYPECMD_NAMED(_c_, _n_) ((size_t) ((_c_) | _TYPEFLAG_META | _TYPEFLAG_DEBUG)) _TYPENAME(_n_) _TYPEDEBUG
 
 #ifndef LWMSG_SPEC_META
 #define LWMSG_SPEC_META
@@ -441,10 +442,12 @@ typedef enum LWMsgTypeDirective
 #ifdef LWMSG_SPEC_META
 #define _TYPEFLAG_META (LWMSG_FLAG_META)
 #define _TYPEMETA(type) ,_TYPEARG(#type)
+#define _TYPENAME(name) ,_TYPEARG(name)
 #define _TYPEMETA_MEMBER(type, field) ,_TYPEARG(#field)
 #else
 #define _TYPEFLAG_META (0)
 #define _TYPEMETA(type)
+#define _TYPENAME(name)
 #define _TYPEMETA_MEMBER(type, field)
 #endif
 
@@ -1003,6 +1006,20 @@ typedef enum LWMsgTypeDirective
         _TYPEARG((value))
 
 /**
+ * @brief Define enum scalar value with explicit name
+ *
+ * Defines a possible scalar value of an enum type with
+ * an explicit name.
+ *
+ * @param name the name of the constant
+ * @param value the value
+ * @hideinitializer
+ */
+#define LWMSG_ENUM_NAMED_VALUE(name, value)       \
+    _TYPECMD_NAMED(LWMSG_CMD_ENUM_VALUE, name),   \
+        _TYPEARG((value))
+
+/**
  * @brief Define enum mask value
  *
  * Defines a potential bitmask value of an enum type
@@ -1012,6 +1029,20 @@ typedef enum LWMsgTypeDirective
  */
 #define LWMSG_ENUM_MASK(value)                      \
     _TYPECMD_TYPE(LWMSG_CMD_ENUM_MASK, value),      \
+        _TYPEARG((value))
+
+/**
+ * @brief Define enum mask value with explicit name
+ *
+ * Defines a potential bitmask value of an enum type with
+ * an explicit name.
+ *
+ * @param name the name of the constant
+ * @param value the value
+ * @hideinitializer
+ */
+#define LWMSG_ENUM_NAMED_MASK(name, value)          \
+    _TYPECMD_NAMED(LWMSG_CMD_ENUM_MASK, name),      \
         _TYPEARG((value))
 
 /* Handy aliases for more complicated commands */
