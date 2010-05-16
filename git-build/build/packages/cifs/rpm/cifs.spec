@@ -72,7 +72,7 @@ case "$1" in
         sleep 1
     done
     echo "ok"
-    for file in %{_datadir}/config/*.reg; do
+    for file in %{PrefixDir}/share/config/*.reg; do
         echo "Installing settings from $file..."
         %{PrefixDir}/bin/lwregshell import $file
     done
@@ -123,7 +123,7 @@ case "$1" in
     done
     echo "ok"
 
-    for file in %{_datadir}/config/*.reg; do
+    for file in %{PrefixDir}/share/config/*.reg; do
         echo "Upgrading settings from $file..."
         %{PrefixDir}/bin/lwregshell upgrade $file
     done
@@ -158,9 +158,11 @@ fi
 %{_sysconfdir}/init.d/*
 %config %{_sysconfdir}/likewise/likewise-krb5-ad.conf
 %config %{_sysconfdir}/likewise/gss/mech
-%config %{_sysconfdir}/likewise/*.reg
 
 %{PrefixDir}/share/likewise/*
+%{PrefixDir}/share/config/*
+%{PrefixDir}/share/dce-rpc/
+%{PrefixDir}/share/doc/*
 %{PrefixDir}/data/VERSION
 
 /%{_lib}/*.so*
