@@ -40,19 +40,76 @@
 #ifndef __LW_IO_PUBLIC_FSCTL_H__
 #define __LW_IO_PUBLIC_FSCTL_H__
 
-/* Oplock FsIoControl codes - possibly should be moved
-   to a public header file at some point */
+//
+// Type: FILE_DEVICE_FILE_SYSTEM
+//
 
-#define IO_FSCTL_OPLOCK_REQUEST             0x00000100
-#define IO_FSCTL_OPLOCK_BREAK_ACK           0x00000101
-#define IO_FSCTL_SET_SPARSE                 0x000900c4
+#define IO_FSCTL_FUNC_SET_COMPRESSION           0x010
+#define IO_FSCTL_FUNC_GET_REPARSE_POINT         0x02a
+#define IO_FSCTL_FUNC_CREATE_OR_GET_OBJECT_ID   0x030  
+#define IO_FSCTL_FUNC_SET_SPARSE                0x031
 
-/* Shadow copy FsIoControl codes. */
-#define IO_FSCTL_NETWORK_FILESYSTEM	        0x00140000
-#define IO_FSCTL_ACCESS_READ                0x00004000
-#define IO_FSCTL_ENUMERATE_SNAPSHOTS        (IO_FSCTL_NETWORK_FILESYSTEM | IO_FSCTL_ACCESS_READ | 0x64)
+// Likewise Internal Codes
 
-/* Oplock Request Input Buffer */
+#define IO_FSCTL_FUNC_OPLOCK_REQUEST            CUSTOM_CTL_FUNCTION(0x001)
+#define IO_FSCTL_FUNC_OPLOCK_BREAK_ACK          CUSTOM_CTL_FUNCTION(0x002)
+
+// CTL_CODE's
+
+#define IO_FSCTL_SET_COMPRESSION                \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,           \
+             IO_FSCTL_FUNC_SET_COMPRESSION,     \
+             METHOD_BUFFERED,                   \
+             FILE_READ_ACCESS|FILE_WRITE_ACCESS)
+
+#define IO_FSCTL_GET_REPARSE_POINT              \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,           \
+             IO_FSCTL_FUNC_GET_REPARSE_POINT,   \
+             METHOD_BUFFERED,                   \
+             FILE_ANY_ACCESS)
+
+#define IO_FSCTL_CREATE_OR_GET_OBJECT_ID            \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,               \
+             IO_FSCTL_FUNC_CREATE_OR_GET_OBJECT_ID, \
+             METHOD_BUFFERED,                       \
+             FILE_ANY_ACCESS)
+
+#define IO_FSCTL_SET_SPARSE              \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,    \
+             IO_FSCTL_FUNC_SET_SPARSE,   \
+             METHOD_BUFFERED,            \
+             FILE_ANY_ACCESS)
+
+#define IO_FSCTL_OPLOCK_REQUEST            \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,      \
+             IO_FSCTL_FUNC_OPLOCK_REQUEST, \
+             METHOD_NEITHER,               \
+             FILE_ANY_ACCESS)
+
+#define IO_FSCTL_OPLOCK_BREAK_ACK            \
+    CTL_CODE(FILE_DEVICE_FILE_SYSTEM,        \
+             IO_FSCTL_FUNC_OPLOCK_BREAK_ACK, \
+             METHOD_NEITHER,                 \
+             FILE_ANY_ACCESS)
+
+//
+// Type: FILE_DEVICE_NETWORK_FILE_SYSTEM
+//
+
+#define IO_FSCTL_FUNC_ENUMERATE_SNAPSHOTS       0x019
+
+// CTL_CODE's
+
+#define IO_FSCTL_ENUMERATE_SNAPSHOTS             \
+    CTL_CODE(FILE_DEVICE_NETWORK_FILE_SYSTEM,    \
+             IO_FSCTL_FUNC_ENUMERATE_SNAPSHOTS,  \
+             METHOD_BUFFERED,                    \
+             FILE_READ_ACCESS)
+
+
+//
+// Oplock IoFsControl STructures
+//
 
 #define IO_OPLOCK_REQUEST_OPLOCK_BATCH      0x01
 #define IO_OPLOCK_REQUEST_OPLOCK_LEVEL_1    0x02
@@ -65,7 +122,7 @@ typedef struct _IO_FSCTL_REQUEST_OPLOCK_INPUT_BUFFER
 } IO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_REQUEST_INPUT_BUFFER;
 
-/* Oplock Request Output Buffer */
+// Oplock Request Output Buffer
 
 #define IO_OPLOCK_NOT_BROKEN                 0x00000000
 #define IO_OPLOCK_BROKEN_TO_NONE             0x00000001
@@ -79,7 +136,7 @@ typedef struct _IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
     *PIO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER;
 
 
-/* Oplock Break Acknowledge Input Buffer */
+// Oplock Break Acknowledge Input Buffer
 
 #define IO_OPLOCK_BREAK_ACKNOWLEDGE         0x01
 #define IO_OPLOCK_BREAK_ACK_NO_LEVEL_2      0x02
@@ -92,8 +149,8 @@ typedef struct _IO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER
 } IO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER, 
     *PIO_FSCTL_OPLOCK_BREAK_ACK_INPUT_BUFFER;
 
-/* Oplock Break Acknowledge Output Buffer */
-/* Accepts the same BreakResults as the OplockRequestOutputBuffer */
+// Oplock Break Acknowledge Output Buffer
+// Accepts the same BreakResults as the OplockRequestOutputBuffer
 
 typedef IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER 
             IO_FSCTL_OPLOCK_BREAK_ACK_OUTPUT_BUFFER, 
