@@ -76,6 +76,14 @@
         goto error;                                       \
     }
 
+#define BAIL_ON_KRB_ERROR(ctx, ret) \
+    do { \
+        if (ret) \
+        { \
+           (dwError) = LwTranslateKrb5Error(ctx, ret, __FUNCTION__, __FILE__, __LINE__); \
+           goto error; \
+        } \
+    } while (0)
 
 #endif /* __KTDEF_H__ */
 

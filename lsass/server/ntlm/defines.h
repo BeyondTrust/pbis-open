@@ -118,4 +118,13 @@
 #define HOST_NAME_MAX 255
 #endif
 
+#define BAIL_ON_KRB_ERROR(ctx, ret) \
+    do { \
+        if (ret) \
+        { \
+           (dwError) = LwTranslateKrb5Error(ctx, ret, __FUNCTION__, __FILE__, __LINE__); \
+           goto error; \
+        } \
+    } while (0)
+
 #endif /* __DEFINES_H__ */
