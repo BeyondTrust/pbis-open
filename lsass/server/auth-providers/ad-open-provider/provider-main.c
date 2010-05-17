@@ -476,6 +476,8 @@ error:
 
     LsaDmCleanup();
 
+    LsaUmCleanup();
+
     goto cleanup;
 }
 

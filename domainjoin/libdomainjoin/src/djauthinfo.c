@@ -1163,6 +1163,9 @@ void DJCreateComputerAccount(
             case ERROR_FILE_NOT_FOUND:
                 LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_OU, "Lsass Error", "The OU is invalid.");
                 break;
+            case ERROR_CRC:
+                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_BAD_LICENSE_KEY, "Lsass Error", "An invalid license key exists in AD");
+                break;
             case ERROR_INVALID_PARAMETER:
                 LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_FORMAT, "Lsass Error", "The OU format is invalid.");
                 break;
