@@ -98,12 +98,6 @@ function _get_base_cppflags
 {
     local flags="${BUILD_CPPFLAGS}"
 
-    case "${BUILD_OS_TYPE}" in
-        freebsd)
-            flags="$flags -I/usr/local/include"
-            ;;
-    esac
-    
     echo "$flags"
 }
 
@@ -164,9 +158,6 @@ function _get_base_ldflags
     case "${BUILD_OS_TYPE}" in
         darwin)
             flags="$flags -Wl,-headerpad_max_install_names"
-            ;;
-        freebsd)
-            flags="$flags -L/usr/local/lib"
             ;;
 	linux)
 	    if [ -z "${OFFICIAL_BUILD_NUMBER}" ]
