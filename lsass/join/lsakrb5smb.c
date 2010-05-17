@@ -75,6 +75,7 @@ LsaSetSMBCreds(
     LW_PIO_CREDS pOldCreds = NULL;
     PLSA_CREDS_FREE_INFO pFreeInfo = NULL;
     PSTR pszOldCachePath = NULL;
+    BOOLEAN bSwitchedPath = FALSE;
 
     BAIL_ON_INVALID_POINTER(ppFreeInfo);
     BAIL_ON_INVALID_STRING(pszDomain);
@@ -98,6 +99,13 @@ LsaSetSMBCreds(
     dwError = LwAllocateStringPrintf(&pszNewCachePath, "%s:%s", pszCacheType, pszCacheName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwKrb5GetTgt(
+                pszUsername,
+                pszPassword,
+                pszNewCachePath,
+                NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
     if (bSetDefaultCachePath)
     {
         LSA_LOG_DEBUG("Switching default credentials path for new access token"); 
@@ -105,14 +113,8 @@ LsaSetSMBCreds(
                   pszNewCachePath,
                   &pszOldCachePath);
         BAIL_ON_LSA_ERROR(dwError);
+        bSwitchedPath = TRUE;
     }
-
-    dwError = LwKrb5GetTgt(
-                pszUsername,
-                pszPassword,
-                pszNewCachePath,
-                NULL);
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwIoCreateKrb5CredsA(
         pszUsername,
@@ -133,7 +135,6 @@ LsaSetSMBCreds(
     pFreeInfo->cc = cc;
     pFreeInfo->pRestoreCreds = pOldCreds;
     pFreeInfo->pszRestoreCache = pszOldCachePath;
-    pszOldCachePath = NULL;
     pOldCreds = NULL;
 
 cleanup:
@@ -148,7 +149,6 @@ cleanup:
         LwIoDeleteCreds(pNewCreds);
     }
     LW_SAFE_FREE_STRING(pszNewCachePath);
-    LW_SAFE_FREE_STRING(pszOldCachePath);
 
     return dwError;
 
@@ -166,6 +166,13 @@ error:
     {
         LwFreeMemory(pFreeInfo);
         pFreeInfo = NULL;
+    }
+    if (bSwitchedPath)
+    {
+        LwKrb5SetDefaultCachePath(
+                  pszOldCachePath,
+                  NULL);
+        LW_SAFE_FREE_STRING(pszOldCachePath);
     }
 
     goto cleanup;
