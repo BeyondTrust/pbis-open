@@ -268,10 +268,21 @@ LIBPTHREAD=""
 AC_CHECK_LIB([pthread], [pthread_create], [LIBPTHREAD="-lpthread"])
 
 LIBXML2_LIBS=""
-AS_IF([test "x$with_libxml2" != xno],[
-AC_CHECK_LIB([xml2], [xmlParseFile], [LIBXML2_LIBS="-lxml2 -lm"], AC_MSG_ERROR([Use --with-libxml2-dir to find libxml2.so]), [$LIBXML2_LDFLAGS -lxml2 -lm $LIBPTHREAD])
-AC_DEFINE([HAVE_LIBXML2], [1], [Define to 1 if you have the `xml2' library (-lxml2).])
+case `uname -s` in
+
+    Darwin)
+
+        AS_IF([test "x$with_libxml2" != xno],[
+        AC_CHECK_LIB([xml2], [xmlParseFile], [LIBXML2_LIBS="-lxml2 -lm"], AC_MSG_ERROR([Use --with-libxml2-dir to find libxml2.so]), [$LIBXML2_LDFLAGS -lxml2 -lm $LIBPTHREAD])
+        AC_DEFINE([HAVE_LIBXML2], [1], [Define to 1 if you have the `xml2' library (-lxml2).])
 ])
+
+	;;
+
+    *)
+
+	;;
+esac
 
 AC_SUBST(LIBXML2_INCLUDE)
 AC_SUBST(LIBXML2_LDFLAGS)
