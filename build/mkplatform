@@ -220,7 +220,7 @@ function usage
 function mac_combine_binaries
 {
     (
-        cd "${BUILD_IMAGE_ROOT}"
+        cd "${BUILD_IMAGE_ROOT}/install"
         IFS=$'\n'
         for f in `find .`
         do
@@ -252,7 +252,7 @@ function mac_combine_binaries
     exit_on_error "$?"
 }
 
-recreate_dir "${BUILD_IMAGE_ROOT}"
+recreate_dir "${BUILD_IMAGE_ROOT}/install"
 
 while true
 do
@@ -288,7 +288,7 @@ done
 
 for pkg in `product_packages ${products}`
 do
-    populate "${pkg}" "${BUILD_IMAGE_ROOT}"
+    populate "${pkg}" "${BUILD_IMAGE_ROOT}/install"
     exit_on_error $?
 done
 
@@ -305,3 +305,7 @@ case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
         mac_combine_binaries	
 	;;
 esac
+
+recreate_dir "${BUILD_IMAGE_ROOT}/packages"
+
+rsync -a "${BUILD_DIST_OS_ROOT}/packages/" "${BUILD_IMAGE_ROOT}/packages/"
