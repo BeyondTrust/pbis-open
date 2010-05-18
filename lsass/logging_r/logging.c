@@ -57,7 +57,7 @@ LsaLwLogMessage(
     )
 {
     LSA_LOCK_LOGGER;
-    if (gpfnLogger && (gLsaMaxLogLevel >= level))
+    if (gpfnLogger && ((int)gLsaMaxLogLevel >= (int)level))
     {
         _LSA_LOG_WITH_THREAD(level, "%s", pszMessage);
     }
@@ -73,7 +73,7 @@ LsaLwpsLogMessage(
     )
 {
     LSA_LOCK_LOGGER;
-    if (gpfnLogger && (gLsaMaxLogLevel >= level))
+    if (gpfnLogger && ((int)gLsaMaxLogLevel >= (int)level))
     {
         _LSA_LOG_WITH_THREAD(level, "%s", pszMessage);
     }
