@@ -19,7 +19,7 @@ function uncompress_archive
     local file="$1"
     local tar=`get_tar_utility`
     check_arg file "${file}"
-    bunzip2 < "${file}" | "${tar}" xf -
+    bunzip2 < "${file}" | "${tar}" xpf -
 }
 
 function compress_archive

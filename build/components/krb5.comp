@@ -158,5 +158,7 @@ function component_populate
 	rsync -a ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
     fi
 
+    rm -f ${POPULATE_PREFIX_DIR}/bin/ksu
+
     libtool_rewrite_populate
 }
