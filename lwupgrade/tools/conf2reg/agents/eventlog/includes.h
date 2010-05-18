@@ -29,9 +29,9 @@
  */
 
 #include "config.h"
-#include <upsys.h>
-#include <upgradeutils.h>
-#include <updefs.h>
+#include "upsys.h"
+#include "upgradeutils.h"
+#include "updefs.h"
 
 #include <lwerror.h>
 #include <lwstr.h>

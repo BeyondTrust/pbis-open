@@ -1,12 +1,13 @@
+AC_PREREQ(2.59)
 AC_INIT(lwupgrade, 5.4, support@likewisesoftware.com)
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR(m4])
 
-LWUPGRADE_CPPFLAGS=""
-LWUPGRADE_CFLAGS="-Wall -Werror -fno-strict-aliasing"
-LWUPGRADE_LDFLAGS=""
+AM_CPPFLAGS=""
+AM_CFLAGS=""
+AM_LDFLAGS=""
 
 case "$host_os:$host_cpu" in
     linux*:*)
@@ -43,8 +44,8 @@ AC_ARG_ENABLE([debug],
         [
                 if test x"$enableval" = x"yes"
                 then
-                    LWUPGRADE_CFLAGS="$LWUPGRADE_CFLAGS -g -O0"
-                    LWUPGRADE_CPPFLAGS="$LWUPGRADE_CPPFLAGS -DDEBUG"
+                    AM_CFLAGS="$AM_CFLAGS -g -O0"
+                    AM_CPPFLAGS="$AM_CPPFLAGS -DDEBUG"
                 fi
         ])
 
@@ -72,9 +73,32 @@ AC_SUBST(LWADVAPI_INCLUDES)
 AC_SUBST(LWADVAPI_LDFLAGS)
 AC_SUBST(LWADVAPI_LIBS)
 AC_SUBST(LWADVAPI_NOTHR_LIBS)
-LWUPGRADE_CPPFLAGS="$LWUPGRADE_CPPFLAGS $LWADVAPI_INCLUDES"
-LWUPGRADE_LDFLAGS="$LWUPGRADE_LDFLAGS $LWADVAPI_LDFLAGS $LWADVAPI_LIBS $LWADVAPI_NOTHR_LIBS"
+AM_CPPFLAGS="$AM_CPPFLAGS $LWADVAPI_INCLUDES"
+AM_LDFLAGS="$AM_LDFLAGS $LWADVAPI_LDFLAGS $LWADVAPI_LIBS $LWADVAPI_NOTHR_LIBS"
 
+# librpc 
+AC_ARG_WITH(
+        librpc-dir,
+        [  --with-librpc-dir=<prefix>     look for librpc headers/libraries in <prefix>],
+        [
+            LIBRPC_INCLUDE="-I$withval/include"
+            LIBRPC_LDFLAGS="-L$withval/lib"
+        ]
+)
+
+AC_ARG_WITH(
+        librpc-libdir,
+        [  --with-librpc-libdir=<libdir>     look for librpc libraries in <libdir>],
+        [
+            LIBRPC_LDFLAGS="-L$withval"
+        ]
+)
+
+LIBRPC_LIBS="-lnetapi"
+
+AC_SUBST(LIBRPC_INCLUDE)
+AC_SUBST(LIBRPC_LDFLAGS)
+AC_SUBST(LIBRPC_LIBS)
 
 # lwbase
 
@@ -101,8 +125,8 @@ LWBASE_LIBS=-llwbase
 AC_SUBST(LWBASE_INCLUDES)
 AC_SUBST(LWBASE_LDFLAGS)
 AC_SUBST(LWBASE_LIBS)
-LWUPGRADE_CPPFLAGS="$LWUPGRADE_CPPFLAGS $LWBASE_INCLUDES"
-LWUPGRADE_LDFLAGS="$LWUPGRADE_LDFLAGS $LWBASE_LDFLAGS $LWBASE_LIBS"
+AM_CPPFLAGS="$AM_CPPFLAGS $LWBASE_INCLUDES"
+AM_LDFLAGS="$AM_LDFLAGS $LWBASE_LDFLAGS $LWBASE_LIBS"
 
 
 # sqlite
@@ -158,8 +182,6 @@ PSTORE_LIBS="-llwpsapi"
 AC_SUBST(PSTORE_INCLUDES)
 AC_SUBST(PSTORE_LDFLAGS)
 AC_SUBST(PSTORE_LIBS)
-LWUPGRADE_CPPFLAGS="$LWUPGRADE_CPPFLAGS $PSTORE_INCLUDES"
-LWUPGRADE_LDFLAGS="$LWUPGRADE_LDFLAGS $PSTORE_LDFLAGS $PSTORE_LIBS"
 
 
 
@@ -189,15 +211,8 @@ LWREG_LIBS=-lregclient
 AC_SUBST(LWREG_INCLUDES)
 AC_SUBST(LWREG_LDFLAGS)
 AC_SUBST(LWREG_LIBS)
-LWUPGRADE_CPPFLAGS="$LWUPGRADE_CPPFLAGS $LWREG_INCLUDES"
-LWUPGRADE_LDFLAGS="$LWUPGRADE_LDFLAGS $LWREG_LDFLAGS $LWREG_LIBS"
-
-AC_SUBST(LWUPGRADE_CPPFLAGS)
-AC_SUBST(LWUPGRADE_CFLAGS)
-AC_SUBST(LWUPGRADE_LDFLAGS)
-
-saved_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="$CPPFLAGS $LWUPGRADE_CPPFLAGS"
+AM_CPPFLAGS="$AM_CPPFLAGS $LWREG_INCLUDES"
+AM_LDFLAGS="$AM_LDFLAGS $LWREG_LDFLAGS $LWREG_LIBS"
 
 # Checks for library functions
 AC_FUNC_MALLOC
@@ -206,9 +221,17 @@ AC_CHECK_FUNCS([strndup strncasecmp strtoul strtoll __strtoll])
 # Checks for header files.
 AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h pthread.h])
 
+CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+
+AM_CPPFLAGS="$AM_CPPFLAGS -I${top_srcdir}/include"
+AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
+
 # Checks for programs.
 AC_PROG_CC
-AM_PROG_CC_C_O
 AC_PROG_LIBTOOL
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -217,8 +240,18 @@ AC_C_BIGENDIAN
 # Checks for library functions.
 AC_HEADER_STDC
 
-CPPFLAGS="$saved_CPPFLAGS"
-
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile
+                 tools/Makefile
+                 tools/conf2reg/Makefile
+                 tools/conf2reg/main/Makefile
+                 tools/conf2reg/agents/Makefile
+                 tools/conf2reg/agents/eventlog/Makefile
+                 tools/conf2reg/agents/lsass/Makefile
+                 tools/conf2reg/agents/lwio/Makefile
+                 tools/conf2reg/agents/netlogon/Makefile
+                 tools/conf2reg/agents/pstore-sqlite/Makefile
+                 tools/conf2reg/agents/testparse/Makefile
+                 tools/conf2reg/agents/testsambaparse/Makefile
+                 utils/Makefile])
 
 AC_OUTPUT
