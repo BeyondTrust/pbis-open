@@ -69,6 +69,7 @@ LwKrb5GetTgt(
     PSTR pszRealmIdx = NULL;
     BOOLEAN bUnlockExistingClientLock = FALSE;
     PWSTR pwszPass = NULL;
+    krb5_preauthtype pPreauthTypes[] = { KRB5_PADATA_ENC_TIMESTAMP };
 
     dwError = LwAllocateString(
                     pszUserPrincipal,
@@ -88,6 +89,18 @@ LwKrb5GetTgt(
     krb5_get_init_creds_opt_init(&opts);
     krb5_get_init_creds_opt_set_tkt_life(&opts, LW_KRB5_DEFAULT_TKT_LIFE);
     krb5_get_init_creds_opt_set_forwardable(&opts, TRUE);
+
+    // Always try sending PA-ENC-TIMESTAMP. This saves a round trip because
+    // otherwise Windows will return a KRB5KDC_ERR_PREAUTH_REQUIRED reply.
+    //
+    // Worse still, if the user is marked as preauth not required, and no
+    // preauth is given, the TGT will not contain a PAC. If the TGT is used
+    // without a PAC, it will not have the same permissions since Windows uses
+    // the PAC for group membership checks.
+    krb5_get_init_creds_opt_set_preauth_list(
+                &opts,
+                pPreauthTypes,
+                sizeof(pPreauthTypes) / sizeof(pPreauthTypes[0]));
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszCcPath)) {
         ret = krb5_cc_default(ctx, &cc);
