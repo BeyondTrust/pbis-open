@@ -696,8 +696,7 @@ RegLexParseNewline(
             return dwError;
         }
     }
-    else if ((lexHandle->state == REGLEX_STATE_INIT ||
-             lexHandle->state == REGLEX_PLAIN_TEXT) &&
+    else if (lexHandle->state == REGLEX_STATE_INIT &&
              lexHandle->curToken.valueCursor > 0)
     {
         /*
