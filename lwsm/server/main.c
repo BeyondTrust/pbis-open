@@ -624,7 +624,7 @@ LwSmLogIpc (
         break;
     }
 
-    if (LwSmGetMaxLogLevel() >= level)
+    if (LwSmGetMaxLogLevel() >= smLevel)
     {
         if (pszMessage)
         {
