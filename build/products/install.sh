@@ -157,10 +157,10 @@ do_setup()
 
     id=/usr/bin/id
     if [ -x /usr/xpg4/bin/id ]; then
-        id=/usr/bin/xpg4/bin/id
+        id=/usr/bin/xpg4/id
     fi
 
-    if [ `$id -u` != 0 ]; then
+    if [ -x "$id" -a `$id -u` != 0 ]; then
         log_info "ERROR: Root privileges are required to install this software. Try running this installer with su or sudo."
         exit 1
     fi
