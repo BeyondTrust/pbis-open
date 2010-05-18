@@ -824,6 +824,7 @@ AC_CONFIG_FILES([Makefile
         server/iomgr/Makefile
         server/srv/Makefile
         server/srv/utils/Makefile
+        server/srv/statistics/Makefile
         server/srv/shares/Makefile
         server/srv/shares/lwshare/Makefile
         server/srv/shares/regshare/Makefile
