@@ -549,7 +549,7 @@ init_ctx_new(OM_uint32 *minor_status,
 	     gss_OID_set *mechSet,
 	     send_token_flag *tokflag)
 {
-	OM_uint32 ret, tmpmin;
+	OM_uint32 ret, tmpmin, saveret = 0, savemin = 0;
 	gss_ctx_id_t tmpctx = {0};
 	gss_buffer_desc tmpoutput = GSS_C_EMPTY_BUFFER;
 	gss_cred_id_t creds = GSS_C_NO_CREDENTIAL;
@@ -598,6 +598,16 @@ init_ctx_new(OM_uint32 *minor_status,
 					   NULL);
 		if (HARD_ERROR(ret))
 		{
+			if (read_mech == 0)
+			{
+				// Some errors are recoverable.
+				// Save the error from the first
+				// mechanism which would be the
+				// preferred mechanism and return
+				// it if no mechanisms work.
+				saveret = ret;
+				savemin = tmpmin;
+			}
 			// This mechanism needs to be removed from the list.
 			free((*mechSet)->elements[read_mech].elements);
 		}
@@ -617,10 +627,15 @@ init_ctx_new(OM_uint32 *minor_status,
 
 	if ((*mechSet)->count == 0)
 	{
-		*minor_status = ERR_SPNEGO_NO_MECHS_AVAILABLE;
-		map_errcode(minor_status);
-		ret = GSS_S_FAILURE;
-	    goto cleanup;
+		ret = saveret;
+		*minor_status = savemin;
+		if (ret == GSS_S_COMPLETE)
+		{
+			*minor_status = ERR_SPNEGO_NO_MECHS_AVAILABLE;
+			ret = GSS_S_FAILURE;
+			map_errcode(minor_status);
+		}
+		goto cleanup;
 	}
 
 	sc = create_spnego_ctx();
@@ -653,6 +668,8 @@ init_ctx_new(OM_uint32 *minor_status,
 	ret = GSS_S_CONTINUE_NEEDED;
 
 cleanup:
+	gss_release_buffer(&tmpmin, &tmpoutput);
+	gss_delete_sec_context(&tmpmin, &tmpctx, GSS_C_NO_BUFFER);
 	gss_release_oid_set(&tmpmin, mechSet);
 	return ret;
 }
