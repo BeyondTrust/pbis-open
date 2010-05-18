@@ -2685,7 +2685,8 @@ boolean *sent_data;
              */
 
             xq->max_blast_size -= 2;
-            xq->xq_timer_throttle = MIN(++xq->xq_timer_throttle, 1000);
+            xq->xq_timer_throttle++;
+            xq->xq_timer_throttle = MIN(xq->xq_timer_throttle, 1000);
             RPC_DBG_PRINTF(rpc_e_dbg_recv, 5, (
                 "(do_fack) Lowering blast size %lu\n", xq->max_blast_size));
         }
@@ -2707,7 +2708,8 @@ boolean *sent_data;
         } 
         else
         {
-            xq->xq_timer_throttle = MIN(++xq->xq_timer_throttle, 1000);
+            xq->xq_timer_throttle++;
+            xq->xq_timer_throttle = MIN(xq->xq_timer_throttle, 1000);
             xq->xq_timer = xq->xq_timer_throttle * RPC_C_DG_INITIAL_XQ_TIMER;
             xq->high_cwindow = 0;
         }

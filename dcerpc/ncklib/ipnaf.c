@@ -2396,7 +2396,7 @@ unsigned32                 *status;
          */
         
         list_p -> current_range_element =
-            (++ list_p -> current_range_element) % (list_p -> n_elements);
+            (list_p -> current_range_element + 1) % (list_p -> n_elements);
 
         range_p = (rpc_port_range_element_p_t) list_p -> range_elements +
             list_p -> current_range_element;
