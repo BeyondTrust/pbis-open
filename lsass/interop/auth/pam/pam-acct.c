@@ -139,12 +139,23 @@ pam_sm_acct_mgmt(
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pUserInfo->bPromptPasswordChange &&
-        pUserInfo->dwDaysToPasswordExpiry) {
+        !pUserInfo->bPasswordExpired) {
 
         CHAR szMessage[512];
 
-        sprintf(szMessage, "Your password will expire in %d days\n",
-               pUserInfo->dwDaysToPasswordExpiry);
+        switch (pUserInfo->dwDaysToPasswordExpiry)
+        {
+            case 0:
+                sprintf(szMessage, "Your password will expire today\n");
+                break;
+            case 1:
+                sprintf(szMessage, "Your password will expire in 1 day\n");
+                break;
+            default:
+                sprintf(szMessage, "Your password will expire in %d days\n",
+                       pUserInfo->dwDaysToPasswordExpiry);
+                break;
+        }
         LsaPamConverse(pamh, szMessage, PAM_TEXT_INFO, NULL);
     }
 
