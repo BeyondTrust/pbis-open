@@ -346,6 +346,17 @@ RemoveCacheFiles()
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
+    /* /Library/Preferences/com.apple.loginwindow.plist */
+    ceError = CTCheckFileExists("/Library/Preferences/com.apple.loginwindow.plist.lwidentity.orig", &bFileExists);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    if (bFileExists)
+    {
+        DJ_LOG_VERBOSE("Restoring /Library/Preferences/com.apple.loginwindow.plist.lwidentity.orig file to /Library/Preferences/com.apple.loginwindow.plist");
+        ceError = CTMoveFile("/Library/Preferences/com.apple.loginwindow.plist.lwidentity.orig", "/Library/Preferences/com.apple.loginwindow.plist");
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
+
     /* Likewise 5.0 (group policy scratch) files... */
 
     pszCachePath = LOCALSTATEDIR "/lib/likewise/grouppolicy/scratch";
