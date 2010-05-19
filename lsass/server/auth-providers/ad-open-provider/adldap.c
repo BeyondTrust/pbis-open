@@ -1567,6 +1567,7 @@ ADLdap_GetGroupMembers(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     DWORD dwSidCount = 0;
+    PSTR pszDnsDomainName = NULL;
     PLSA_SECURITY_OBJECT pGroupObj = NULL;
     PLSA_SECURITY_OBJECT* ppResults = NULL;
     PSTR *ppszLDAPValues = NULL;
@@ -1585,7 +1586,13 @@ ADLdap_GetGroupMembers(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaDmLdapOpenDc(pszDomainName, &pConn);
+    dwError = LsaDmWrapGetDomainName(
+                  pszDomainName,
+                  &pszDnsDomainName,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaDmLdapOpenDc(pszDnsDomainName, &pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADLdap_GetAttributeValuesList(
@@ -1610,6 +1617,7 @@ ADLdap_GetGroupMembers(
     *pppResults = ppResults;
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszDnsDomainName);
     ADCacheSafeFreeObject(&pGroupObj);
     LwFreeStringArray(ppszLDAPValues, dwSidCount);
     LsaDmLdapClose(pConn);
