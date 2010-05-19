@@ -38,7 +38,7 @@ function setup_package_vars
     #
 
     case "${BUILD_OS_TYPE}-${BUILD_OS_ARCH}" in
-        linux-x86_64|hpux-*|solaris-sparc)
+        linux-x86_64|hpux-*|solaris-sparc|aix-powerpc)
             : # Yes
             ;;
         solaris-i386)
@@ -308,4 +308,6 @@ esac
 
 recreate_dir "${BUILD_IMAGE_ROOT}/packages"
 
-rsync -a "${BUILD_DIST_OS_ROOT}/packages/" "${BUILD_IMAGE_ROOT}/packages/"
+if [ -d "${BUILD_DIST_OS_ROOT}/packages" ]; then
+    rsync -a "${BUILD_DIST_OS_ROOT}/packages/" "${BUILD_IMAGE_ROOT}/packages/"
+fi
