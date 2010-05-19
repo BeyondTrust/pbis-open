@@ -13,5 +13,22 @@
 	<array>
 		<string>/opt/likewise/sbin/lwsmd</string>
 	</array>
+        <key>EnvironmentVariables</key>
+            <dict>
+                <key>LC_MONETARY</key>
+                <string>en_US.utf-8</string>
+                <key>LC_NUMERIC</key>
+                <string>en_US.utf-8</string>
+                <key>LC_ALL</key>
+                <string>en_US.UTF-8</string>
+                <key>LC_MESSAGES</key>
+                <string>en_US.utf-8</string>
+                <key>LC_COLLATE</key>
+                <string>en_US.utf-8</string>
+                <key>LC_CTYPE</key>
+                <string>en_US.utf-8</string>
+                <key>LC_TIME</key>
+                <string>en_US.utf-8</string>
+            </dict>
 </dict>
 </plist>
