@@ -240,6 +240,7 @@ typedef NTSTATUS (*PFN_SHUTDOWN_SRV_STAT_PROVIDER)(
                     PLWIO_SRV_STAT_PROVIDER_FUNCTION_TABLE pFnTable   /* IN  */
                     );
 
-#define LWIO_SYMBOL_NAME_INIT_SRV_STAT_PROVIDER "LwioSrvStatInitializeProvider"
+#define LWIO_SYMBOL_NAME_INIT_SRV_STAT_PROVIDER  "LwioSrvStatInitializeProvider"
+#define LWIO_SYMBOL_NAME_CLOSE_SRV_STAT_PROVIDER "LwioSrvStatShutdownProvider"
 
 #endif /* __LWIO_SRV_STATPROVIDER_H__ */
