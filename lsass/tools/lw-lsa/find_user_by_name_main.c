@@ -383,43 +383,41 @@ PrintUserInfo_2(
 {
     fprintf(stdout, "User info (Level-2):\n");
     fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:                       %s\n",
+    fprintf(stdout, "Name:                         %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszName) ? "<null>" : pUserInfo->pszName);
-    fprintf(stdout, "SID:                        %s\n",
+    fprintf(stdout, "SID:                          %s\n",
             LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszSid) ? "<null>" : pUserInfo->pszSid);
-    fprintf(stdout, "UPN:                        %s\n",
+    fprintf(stdout, "UPN:                          %s\n",
                     LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszUPN) ? "<null>" : pUserInfo->pszUPN);
-    fprintf(stdout, "Generated UPN:              %s\n", pUserInfo->bIsGeneratedUPN ? "YES" : "NO");
-    fprintf(stdout, "DN:                         %s\n",
+    fprintf(stdout, "Generated UPN:                %s\n", pUserInfo->bIsGeneratedUPN ? "YES" : "NO");
+    fprintf(stdout, "DN:                           %s\n",
                     LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszDN) ? "<null>" : pUserInfo->pszDN);
-    fprintf(stdout, "Uid:                        %u\n", (unsigned int)pUserInfo->uid);
-    fprintf(stdout, "Gid:                        %u\n", (unsigned int)pUserInfo->gid);
-    fprintf(stdout, "Gecos:                      %s\n",
+    fprintf(stdout, "Uid:                          %u\n", (unsigned int)pUserInfo->uid);
+    fprintf(stdout, "Gid:                          %u\n", (unsigned int)pUserInfo->gid);
+    fprintf(stdout, "Gecos:                        %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszGecos) ? "<null>" : pUserInfo->pszGecos);
-    fprintf(stdout, "Shell:                      %s\n",
+    fprintf(stdout, "Shell:                        %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
-    fprintf(stdout, "Home dir:                   %s\n",
+    fprintf(stdout, "Home dir:                     %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-    fprintf(stdout, "LMHash length:              %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:              %d\n", pUserInfo->dwNTHashLen);
-    fprintf(stdout, "Local User:                 %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
-    fprintf(stdout, "Account disabled:           %s\n",
+    fprintf(stdout, "LMHash length:                %d\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:                %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "Local User:                   %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
+    fprintf(stdout, "Account disabled (or locked): %s\n",
             pUserInfo->bAccountDisabled ? "TRUE" : "FALSE");
-    fprintf(stdout, "Account expired:            %s\n",
+    fprintf(stdout, "Account expired:              %s\n",
             pUserInfo->bAccountExpired ? "TRUE" : "FALSE");
-    fprintf(stdout, "Account locked:             %s\n",
-            pUserInfo->bAccountLocked ? "TRUE" : "FALSE");
-    fprintf(stdout, "Password never expires:     %s\n",
+    fprintf(stdout, "Password never expires:       %s\n",
             pUserInfo->bPasswordNeverExpires ? "TRUE" : "FALSE");
-    fprintf(stdout, "Password expired:           %s\n",
+    fprintf(stdout, "Password expired:             %s\n",
             pUserInfo->bPasswordExpired ? "TRUE" : "FALSE");
-    fprintf(stdout, "Prompt for password change: %s\n",
+    fprintf(stdout, "Prompt for password change:   %s\n",
             pUserInfo->bPromptPasswordChange ? "YES" : "NO");
-    fprintf(stdout, "User can change password:   %s\n",
+    fprintf(stdout, "User can change password:     %s\n",
             pUserInfo->bUserCanChangePassword ? "YES" : "NO");
-    fprintf(stdout, "Days till password expires: %d\n",
+    fprintf(stdout, "Days till password expires:   %d\n",
             pUserInfo->dwDaysToPasswordExpiry);
-    fprintf(stdout, "Logon restriction:          %s\n",
+    fprintf(stdout, "Logon restriction:            %s\n",
             bAllowedLogon ? "NO" : "YES");
 }
 

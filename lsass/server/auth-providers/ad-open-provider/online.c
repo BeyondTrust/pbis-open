@@ -1753,6 +1753,31 @@ AD_OnlineAuthenticateUserPam(
                     pUserInfo,
                     pParams->pszPassword,
                     &dwGoodUntilTime);
+    if (dwError == LW_ERROR_ACCOUNT_DISABLED ||
+        dwError == LW_ERROR_ACCOUNT_EXPIRED ||
+        dwError == LW_ERROR_PASSWORD_EXPIRED)
+    {
+        // Fix up account disabled flag.
+        if (dwError == LW_ERROR_ACCOUNT_DISABLED)
+        {
+            pUserInfo->userInfo.bAccountDisabled = TRUE;
+        }
+
+        // Fix up account expired flag.
+        if (dwError == LW_ERROR_ACCOUNT_EXPIRED)
+        {
+            pUserInfo->userInfo.bAccountExpired = TRUE;
+        }
+
+        // Fix up account password expired flags.
+        if (dwError == LW_ERROR_PASSWORD_EXPIRED)
+        {
+            pUserInfo->userInfo.bPasswordExpired = TRUE;
+        }
+
+        // Now update the cache entry with the changes.
+        ADCacheStoreObjectEntry(gpLsaAdProviderState->hCacheConnection, pUserInfo);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     ADCacheSafeFreeObject(&pUserInfo);

@@ -447,30 +447,29 @@ PrintUserInfo_2(
 {
     fprintf(stdout, "User info (Level-2):\n");
     fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:              %s\n", LW_PRINTF_STRING(pUserInfo->pszName));
-    fprintf(stdout, "UPN:               %s\n", LW_PRINTF_STRING(pUserInfo->pszUPN));
-    fprintf(stdout, "Generated UPN:     %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsGeneratedUPN));
-    fprintf(stdout, "DN:                %s\n",
+    fprintf(stdout, "Name:                         %s\n", LW_PRINTF_STRING(pUserInfo->pszName));
+    fprintf(stdout, "UPN:                          %s\n", LW_PRINTF_STRING(pUserInfo->pszUPN));
+    fprintf(stdout, "Generated UPN:                %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsGeneratedUPN));
+    fprintf(stdout, "DN:                           %s\n",
             LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszDN) ? "<null>" : pUserInfo->pszDN);
-    fprintf(stdout, "Uid:               %u\n", (unsigned int)pUserInfo->uid);
-    fprintf(stdout, "Gid:               %u\n", (unsigned int)pUserInfo->gid);
-    fprintf(stdout, "Gecos:             %s\n", LW_PRINTF_STRING(pUserInfo->pszGecos));
-    fprintf(stdout, "Shell:             %s\n", LW_PRINTF_STRING(pUserInfo->pszShell));
-    fprintf(stdout, "Home dir:          %s\n", LW_PRINTF_STRING(pUserInfo->pszHomedir));
-    fprintf(stdout, "LMHash length:     %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:     %d\n", pUserInfo->dwNTHashLen);
-    fprintf(stdout, "Local User:        %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsLocalUser));
-    fprintf(stdout, "Account disabled:           %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountDisabled));
-    fprintf(stdout, "Account Expired:            %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountExpired));
-    fprintf(stdout, "Account Locked:             %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountLocked));
-    fprintf(stdout, "Password never expires:     %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bPasswordNeverExpires));
-    fprintf(stdout, "Password Expired:           %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bPasswordExpired));
-    fprintf(stdout, "Prompt for password change: %s\n", LW_PRINTF_YES_NO(pUserInfo->bPromptPasswordChange));
-    fprintf(stdout, "User can change password:   %s\n", LW_PRINTF_YES_NO(pUserInfo->bUserCanChangePassword));
-    fprintf(stdout, "Days till password expires: %d\n", pUserInfo->dwDaysToPasswordExpiry);
+    fprintf(stdout, "Uid:                          %u\n", (unsigned int)pUserInfo->uid);
+    fprintf(stdout, "Gid:                          %u\n", (unsigned int)pUserInfo->gid);
+    fprintf(stdout, "Gecos:                        %s\n", LW_PRINTF_STRING(pUserInfo->pszGecos));
+    fprintf(stdout, "Shell:                        %s\n", LW_PRINTF_STRING(pUserInfo->pszShell));
+    fprintf(stdout, "Home dir:                     %s\n", LW_PRINTF_STRING(pUserInfo->pszHomedir));
+    fprintf(stdout, "LMHash length:                %d\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:                %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "Local User:                   %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsLocalUser));
+    fprintf(stdout, "Account disabled (or locked): %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountDisabled));
+    fprintf(stdout, "Account Expired:              %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountExpired));
+    fprintf(stdout, "Password never expires:       %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bPasswordNeverExpires));
+    fprintf(stdout, "Password Expired:             %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bPasswordExpired));
+    fprintf(stdout, "Prompt for password change:   %s\n", LW_PRINTF_YES_NO(pUserInfo->bPromptPasswordChange));
+    fprintf(stdout, "User can change password:     %s\n", LW_PRINTF_YES_NO(pUserInfo->bUserCanChangePassword));
+    fprintf(stdout, "Days till password expires:   %d\n", pUserInfo->dwDaysToPasswordExpiry);
     if (bCheckUserInList)
     {
-        fprintf(stdout, "Logon restriction: %s\n", LW_PRINTF_YES_NO(bAllowedLogon));
+        fprintf(stdout, "Logon restriction:            %s\n", LW_PRINTF_YES_NO(bAllowedLogon));
     }
     fprintf(stdout, "\n");
 }
