@@ -1073,6 +1073,7 @@ AC_CONFIG_FILES([Makefile
                  interop/lwidsplugin/Makefile
                  server/Makefile
                  server/api/Makefile
+                 server/include/Makefile
                  server/ntlm/Makefile
                  server/auth-providers/Makefile
                  server/auth-providers/ad-open-provider/Makefile
