@@ -197,7 +197,7 @@ typedef NTSTATUS
         (*PFN_SRV_STAT_POP_MESSAGE)(
             PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
             ULONG                     ulOpCode,            /* IN              */
-            NTSTATUS                  ntStatus             /* IN              */
+            NTSTATUS                  msgStatus            /* IN              */
             );
 
 typedef NTSTATUS

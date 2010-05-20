@@ -18,6 +18,7 @@ endif
 
 if ENABLE_SRV
 SUBDIRS += srv
+SUBDIRS += srvstat
 endif
 
 SUBDIRS += lwiod
