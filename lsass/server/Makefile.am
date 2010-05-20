@@ -1,5 +1,4 @@
 SUBDIRS = \
-	 include	\
          store          \
          ntlm           \
          api            \
