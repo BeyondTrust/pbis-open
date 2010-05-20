@@ -1072,7 +1072,6 @@ AC_CONFIG_FILES([Makefile
                  interop/lwmapsecurity/Makefile
                  interop/lwidsplugin/Makefile
                  server/Makefile
-                 server/include/Makefile
                  server/api/Makefile
                  server/ntlm/Makefile
                  server/auth-providers/Makefile
