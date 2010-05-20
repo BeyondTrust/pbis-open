@@ -626,16 +626,26 @@ SMBSocketReaderMain(
                        
     if (pSocket->state < RDR_SOCKET_STATE_NEGOTIATING)
     {
-        /* See if we are done connecting */
-        if (getsockopt(pSocket->fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
+        /* If the socket is writable, we can safely call getsockopt() */
+        if (WakeMask & LW_TASK_EVENT_FD_WRITABLE)
         {
-            ntStatus = LwErrnoToNtStatus(errno);
-            BAIL_ON_NT_STATUS(ntStatus);
+            /* Get result of connect() */
+            if (getsockopt(pSocket->fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
+            {
+                ntStatus = LwErrnoToNtStatus(errno);
+                BAIL_ON_NT_STATUS(ntStatus);
+            }
+        }
+        else
+        {
+            /* The connect() is still in progress */
+            err = EINPROGRESS;
         }
 
         switch (err)
         {
         case 0:
+            /* Notify thread initiating connect that it can now move on to negotiate */
             pSocket->state = RDR_SOCKET_STATE_NEGOTIATING;
             pthread_cond_broadcast(&pSocket->event);
             break;
