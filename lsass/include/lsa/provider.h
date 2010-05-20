@@ -3,7 +3,8 @@
  */
 
 /*
- * Copyright (c) Likewise Software.  All rights reserved.
+ * Copyright Likewise Software    2004-2008
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +25,7 @@
  * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
  * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewise.com
+ * license@likewisesoftware.com
  */
 
 /*
@@ -32,24 +33,129 @@
  *
  * Module Name:
  *
- *        lsaprovider2.h
+ *        lsaprovider.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Authentication Provider Interface Version 2
+ *        Authentication Provider Interface
  *
- * Authors: Krishna Ganugapati (krishnag@likewisee.com)
- *          Sriram Nambakam (snambakam@likewise.com)
- *          Danilo Almeida (dalmeida@likewise.com)
+ * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
-#ifndef __LSAPROVIDER_2_H__
-#define __LSAPROVIDER_2_H__
+#ifndef __LSAPROVIDER_H__
+#define __LSAPROVIDER_H__
 
 #include <lsa/lsa2.h>
 
-#include "lsaprovider.h"
+typedef DWORD (*PFNSHUTDOWNPROVIDER)(
+    VOID
+    );
+
+typedef VOID  (*PFNCLOSEHANDLE)(HANDLE hProvider);
+
+typedef BOOLEAN (*PFNSERVICESDOMAIN)(PCSTR pszDomain);
+
+typedef DWORD (*PFNAUTHENTICATEUSERPAM)(
+                        HANDLE hProvider,
+                        PLSA_AUTH_USER_PAM_PARAMS pParams,
+                        PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
+                        );
+
+typedef DWORD (*PFNAUTHENTICATEUSEREX)(
+                        HANDLE hProvider,
+                        PLSA_AUTH_USER_PARAMS pUserParams,
+                        PLSA_AUTH_USER_INFO *ppUserInfo
+                        );
+
+typedef DWORD (*PFNVALIDATEUSER)(
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId,
+                        PCSTR  pszPassword
+                        );
+
+typedef DWORD (*PFNCHECKUSERINLIST)(
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId,
+                        PCSTR  pszListName);
+
+typedef DWORD (*PFNCHANGEPASSWORD) (
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId,
+                        PCSTR  pszPassword,
+                        PCSTR  pszOldPassword
+                        );
+
+typedef DWORD (*PFNSETPASSWORD) (
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId,
+                        PCSTR  pszPassword
+                        );
+
+typedef DWORD (*PFNOPENSESSION) (
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId
+                        );
+
+typedef DWORD (*PFNCLOSESESSION) (
+                        HANDLE hProvider,
+                        PCSTR  pszLoginId
+                        );
+
+typedef DWORD (*PFNLOOKUP_NSS_ARTEFACT_BY_KEY)(
+                        HANDLE hProvider,
+                        PCSTR  pszKeyName,
+                        PCSTR  pszMapName,
+                        DWORD  dwInfoLevel,
+                        LSA_NIS_MAP_QUERY_FLAGS dwFlags,
+                        PVOID* ppNSSArtefactInfo
+                        );
+
+typedef DWORD (*PFNBEGIN_ENUM_NSS_ARTEFACTS)(
+                        HANDLE  hProvider,
+                        DWORD   dwInfoLevel,
+                        PCSTR   pszMapName,
+                        LSA_NIS_MAP_QUERY_FLAGS dwFlags,
+                        PHANDLE phResume
+                        );
+
+typedef DWORD (*PFNENUMNSS_ARTEFACTS) (
+                        HANDLE  hProvider,
+                        HANDLE  hResume,
+                        DWORD   dwMaxNumGroups,
+                        PDWORD  pdwGroupsFound,
+                        PVOID** pppGroupInfoList
+                        );
+
+typedef VOID (*PFNEND_ENUM_NSS_ARTEFACTS)(
+                        HANDLE hProvider,
+                        HANDLE hResume
+                        );
+
+typedef DWORD (*PFNGET_STATUS)(
+                HANDLE hProvider,
+                PLSA_AUTH_PROVIDER_STATUS* ppAuthProviderStatus
+                );
+
+typedef VOID (*PFNFREE_STATUS)(
+                PLSA_AUTH_PROVIDER_STATUS pAuthProviderStatus
+                );
+
+typedef DWORD (*PFNREFRESH_CONFIGURATION)();
+
+typedef DWORD (*PFNPROVIDER_IO_CONTROL) (
+                HANDLE hProvider,
+                uid_t  peerUid,
+                gid_t  peerGID,
+                DWORD  dwIoControlCode,
+                DWORD  dwInputBufferSize,
+                PVOID  pInputBuffer,
+                DWORD* pdwOutputBufferSize,
+                PVOID* ppOutputBuffer
+                );
+
+#define LSA_SYMBOL_NAME_INITIALIZE_PROVIDER "LsaInitializeProvider2"
 
 //
 // New Interfaces
@@ -270,7 +376,7 @@ typedef struct _LSA_STATIC_PROVIDER {
     PFNINITIALIZEPROVIDER_2 pInitialize;
 } LSA_STATIC_PROVIDER, *PLSA_STATIC_PROVIDER;
 
-#endif /* __LSAPROVIDER_2_H__ */
+#endif /* __LSAPROVIDER_H__ */
 
 /*
 local variables:

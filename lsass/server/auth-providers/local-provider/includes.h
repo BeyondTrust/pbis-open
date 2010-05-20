@@ -72,8 +72,7 @@
 #include "lsautils.h"
 #include "lsasrvutils.h"
 
-#include "lsaprovider.h"
-#include "lsaprovider2.h"
+#include <lsa/provider.h>
 #include "lsasrvapi.h"
 #include "directory.h"
 

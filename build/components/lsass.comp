@@ -206,6 +206,12 @@ function component_populate
 	rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
     fi
     rm -rf ${POPULATE_PREFIX_DIR}/test
+
+    # Remove internal headers unless we're building the platform image.
+    if [ "${PKG_TYPE}" != "platform" ]
+    then
+        rm -rf ${POPULATE_PREFIX_DIR}/include/lsa/internal
+    fi
     
     # Move around NSS/PAM modules based on distro
     # This is because /lib is 64-bit on Debian and

@@ -70,8 +70,7 @@
 
 #include "lsasrvutils.h"
 #include "lsaserver.h"
-#include "lsaprovider.h"
-#include "lsaprovider2.h"
+#include <lsa/provider.h>
 #include "lsarpcsrv.h"
 #include "rpcctl.h"
 #include "directory.h"

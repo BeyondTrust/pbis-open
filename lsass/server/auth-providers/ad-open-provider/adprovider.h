@@ -75,8 +75,7 @@
 #include "lwsecurityidentifier.h"
 #include "lsautils.h"
 #include "lsaipc.h"
-#include "lsaprovider.h"
-#include "lsaprovider2.h"
+#include <lsa/provider.h>
 #include "lsasrvapi.h"
 #include "lsaadprovider.h"
 

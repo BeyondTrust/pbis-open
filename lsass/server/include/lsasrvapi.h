@@ -47,7 +47,7 @@
 #ifndef __LSASRVAPI_H__
 #define __LSASRVAPI_H__
 
-#include "lsaprovider2.h"
+#include <lsa/provider.h>
 
 DWORD
 LsaSrvApiInit(
