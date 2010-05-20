@@ -47,85 +47,125 @@
 #include "includes.h"
 
 
-void
-POLICY_HANDLE_rundown(
-    void *hContext
+NTSTATUS
+LsaSrvPolicyContextClose(
+    PPOLICY_CONTEXT  pPolCtx
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PPOLICY_CONTEXT pPolCtx = (PPOLICY_CONTEXT)hContext;
+
+    BAIL_ON_INVALID_PTR(pPolCtx);
 
     InterlockedDecrement(&pPolCtx->refcount);
-    if (pPolCtx->refcount > 1) return;
+    if (pPolCtx->refcount)
+    {
+        ntStatus = STATUS_SUCCESS;
+        goto cleanup;
+    }
 
     /*
      * Close local SAM domain handle
      */
-    if (pPolCtx->bCleanClose &&
-        pPolCtx->hSamrBinding &&
+    if (pPolCtx->hSamrBinding &&
         pPolCtx->hLocalDomain)
     {
         ntStatus = SamrClose(pPolCtx->hSamrBinding,
                              pPolCtx->hLocalDomain);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         pPolCtx->hLocalDomain = NULL;
     }
 
     /*
-     * Close builtin SAM domain handle and close
-     * the samr rpc server connection
+     * Close builtin SAM domain handle
      */
-    if (pPolCtx->bCleanClose &&
-        pPolCtx->hSamrBinding &&
+    if (pPolCtx->hSamrBinding &&
         pPolCtx->hBuiltinDomain)
     {
         ntStatus = SamrClose(pPolCtx->hSamrBinding,
                              pPolCtx->hBuiltinDomain);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         pPolCtx->hBuiltinDomain = NULL;
     }
 
-    if (pPolCtx->bCleanClose &&
-        pPolCtx->hSamrBinding &&
+    /*
+     * Close SAM connection handle
+     */
+    if (pPolCtx->hSamrBinding &&
         pPolCtx->hConn)
     {
         ntStatus = SamrClose(pPolCtx->hSamrBinding,
                              pPolCtx->hConn);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         pPolCtx->hConn = NULL;
     }
 
-    if (pPolCtx->bCleanClose &&
-        pPolCtx->hSamrBinding)
+    /*
+     * Close samr rpc server binding
+     */
+    if (pPolCtx->hSamrBinding)
     {
         SamrFreeBinding(&pPolCtx->hSamrBinding);
         pPolCtx->hSamrBinding = NULL;
     }
 
     /*
-     * Free domain connections cache
+     * Free domain connections cache (clean free)
      */
     if (pPolCtx->pDomains)
     {
-        LsaSrvDestroyDomainsTable(pPolCtx->pDomains,
-                                  pPolCtx->bCleanClose);
+        LsaSrvDestroyDomainsTable(pPolCtx->pDomains, TRUE);
         pPolCtx->pDomains = NULL;
     }
 
-    pPolCtx->bCleanClose = FALSE;
+    LsaSrvPolicyContextFree(pPolCtx);
 
+cleanup:
+    return ntStatus;
+
+error:
+    goto cleanup;
+}
+
+
+VOID
+LsaSrvPolicyContextFree(
+    PPOLICY_CONTEXT  pPolCtx
+    )
+{
     /*
      * Free access token
      */
     LsaSrvFreeAuthInfo(pPolCtx);
-
-    if (pPolCtx->refcount) return;
 
     RTL_FREE(&pPolCtx->pLocalDomainSid);
     LW_SAFE_FREE_MEMORY(pPolCtx->pwszLocalDomainName);
     LW_SAFE_FREE_MEMORY(pPolCtx->pwszDomainName);
     RTL_FREE(&pPolCtx->pDomainSid);
     LW_SAFE_FREE_MEMORY(pPolCtx->pwszDcName);
+
+    LW_SAFE_FREE_MEMORY(pPolCtx);
+}
+
+
+void
+POLICY_HANDLE_rundown(
+    void *hContext
+    )
+{
+    PPOLICY_CONTEXT pPolCtx = (PPOLICY_CONTEXT)hContext;
+
+    /*
+     * Free domain connections cache
+     */
+    if (pPolCtx->pDomains)
+    {
+        LsaSrvDestroyDomainsTable(pPolCtx->pDomains, FALSE);
+    }
+
+    LsaSrvPolicyContextFree(pPolCtx);
 }
 
 

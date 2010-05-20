@@ -47,13 +47,11 @@
 #include "includes.h"
 
 
-void
-CONNECT_HANDLE_rundown(
-    void *hContext
+VOID
+SamrSrvConnectContextFree(
+    PCONNECT_CONTEXT  pConnCtx
     )
 {
-    PCONNECT_CONTEXT pConnCtx = (PCONNECT_CONTEXT)hContext;
-
     InterlockedDecrement(&pConnCtx->refcount);
     if (pConnCtx->refcount) return;
 
@@ -63,6 +61,54 @@ CONNECT_HANDLE_rundown(
     }
 
     SamrSrvFreeAuthInfo(pConnCtx);
+
+    LW_SAFE_FREE_MEMORY(pConnCtx);
+}
+
+
+VOID
+SamrSrvDomainContextFree(
+    PDOMAIN_CONTEXT  pDomCtx
+    )
+{
+    InterlockedDecrement(&pDomCtx->refcount);
+    if (pDomCtx->refcount) return;
+
+    RTL_FREE(&pDomCtx->pDomainSid);
+    LW_SAFE_FREE_MEMORY(pDomCtx->pwszDomainName);
+    LW_SAFE_FREE_MEMORY(pDomCtx->pwszDn);
+
+    SamrSrvConnectContextFree(pDomCtx->pConnCtx);
+
+    LW_SAFE_FREE_MEMORY(pDomCtx);
+}
+
+
+VOID
+SamrSrvAccountContextFree(
+    PACCOUNT_CONTEXT  pAcctCtx
+    )
+{
+    InterlockedDecrement(&pAcctCtx->refcount);
+    if (pAcctCtx->refcount) return;
+
+    LW_SAFE_FREE_MEMORY(pAcctCtx->pwszDn);
+    LW_SAFE_FREE_MEMORY(pAcctCtx->pwszName);
+    RTL_FREE(&pAcctCtx->pSid);
+
+    SamrSrvDomainContextFree(pAcctCtx->pDomCtx);
+
+    LW_SAFE_FREE_MEMORY(pAcctCtx);
+}
+
+
+void
+CONNECT_HANDLE_rundown(
+    void *hContext
+    )
+{
+    PCONNECT_CONTEXT pConnCtx = (PCONNECT_CONTEXT)hContext;
+    SamrSrvConnectContextFree(pConnCtx);
 }
 
 
@@ -72,15 +118,7 @@ DOMAIN_HANDLE_rundown(
     )
 {
     PDOMAIN_CONTEXT pDomCtx = (PDOMAIN_CONTEXT)hContext;
-
-    InterlockedDecrement(&pDomCtx->refcount);
-    if (pDomCtx->refcount) return;
-
-    RTL_FREE(&pDomCtx->pDomainSid);
-    LW_SAFE_FREE_MEMORY(pDomCtx->pwszDomainName);
-    LW_SAFE_FREE_MEMORY(pDomCtx->pwszDn);
-
-    CONNECT_HANDLE_rundown((CONNECT_HANDLE)pDomCtx->pConnCtx);
+    SamrSrvDomainContextFree(pDomCtx);
 }
 
 
@@ -90,15 +128,7 @@ ACCOUNT_HANDLE_rundown(
     )
 {
     PACCOUNT_CONTEXT pAcctCtx = (PACCOUNT_CONTEXT)hContext;
-
-    InterlockedDecrement(&pAcctCtx->refcount);
-    if (pAcctCtx->refcount) return;
-
-    LW_SAFE_FREE_MEMORY(pAcctCtx->pwszDn);
-    LW_SAFE_FREE_MEMORY(pAcctCtx->pwszName);
-    RTL_FREE(&pAcctCtx->pSid);
-
-    DOMAIN_HANDLE_rundown((DOMAIN_HANDLE)pAcctCtx->pDomCtx);
+    SamrSrvAccountContextFree(pAcctCtx);
 }
 
 

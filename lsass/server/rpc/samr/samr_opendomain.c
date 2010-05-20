@@ -297,12 +297,8 @@ SamrSrvOpenDomain(
     pDomCtx->ntPasswordPromptTime = llPasswordPromptTime;
     pDomCtx->dwPasswordProperties = dwPwdProperties;
 
-    pDomCtx->pConnCtx         = pConnCtx;
+    pDomCtx->pConnCtx             = pConnCtx;
     InterlockedIncrement(&pConnCtx->refcount);
-
-    /* Increase ref count because DCE/RPC runtime is about to use this
-       pointer as well */
-    InterlockedIncrement(&pDomCtx->refcount);
 
     *phDomain = (DOMAIN_HANDLE)pDomCtx;
 
@@ -332,7 +328,7 @@ cleanup:
 error:
     if (pDomCtx)
     {
-        DOMAIN_HANDLE_rundown((DOMAIN_HANDLE)pDomCtx);
+        SamrSrvDomainContextFree(pDomCtx);
     }
 
     *phDomain = NULL;

@@ -122,6 +122,24 @@ typedef struct samr_account_context
 } ACCOUNT_CONTEXT, *PACCOUNT_CONTEXT;
 
 
+VOID
+SamrSrvConnectContextFree(
+    PCONNECT_CONTEXT  pConnCtx
+    );
+
+
+VOID
+SamrSrvDomainContextFree(
+    PDOMAIN_CONTEXT  pDomCtx
+    );
+
+
+VOID
+SamrSrvAccountContextFree(
+    PACCOUNT_CONTEXT  pAcctCtx
+    );
+
+
 void
 CONNECT_HANDLE_rundown(
     void *hContext

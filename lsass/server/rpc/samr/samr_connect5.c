@@ -89,7 +89,7 @@ cleanup:
 error:
     if (pConnCtx)
     {
-        CONNECT_HANDLE_rundown((CONNECT_HANDLE)pConnCtx);
+        SamrSrvConnectContextFree(pConnCtx);
     }
 
     *pdwLevelOut = 1;

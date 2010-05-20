@@ -67,7 +67,6 @@ typedef struct lsa_policy_context
 {
     enum LsaContextType  Type;
     LONG                 refcount;
-    BOOLEAN              bCleanClose;
 
     PACCESS_TOKEN        pUserToken;
     PBYTE                pSessionKey;
@@ -88,6 +87,18 @@ typedef struct lsa_policy_context
     DWORD                dwDomainsNum;
 
 } POLICY_CONTEXT, *PPOLICY_CONTEXT;
+
+
+NTSTATUS
+LsaSrvPolicyContextClose(
+    PPOLICY_CONTEXT  pContext
+    );
+
+
+VOID
+LsaSrvPolicyContextFree(
+    PPOLICY_CONTEXT  pContext
+    );
 
 
 void

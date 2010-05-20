@@ -224,10 +224,10 @@ LsaSrvOpenPolicy2(
 
         dwError = LwMbsToWc16s(pszDcFqdn,
                                &pPolCtx->pwszDcName);
-        BAIL_ON_LSA_ERROR(dwError)
+        BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
-                                            &hPassStore);
+        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
+                                        &hPassStore);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LwpsGetPasswordByCurrentHostName(
@@ -264,10 +264,6 @@ LsaSrvOpenPolicy2(
 
     ntStatus = LsaSrvCreateDomainsTable(&pPolCtx->pDomains);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-    /* Increase ref count because DCE/RPC runtime is about to use this
-       pointer as well */
-    InterlockedIncrement(&pPolCtx->refcount);
 
     *phPolicy = (POLICY_HANDLE)pPolCtx;
 

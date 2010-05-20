@@ -61,19 +61,18 @@ SamrSrvClose(
 
     pContext = (PSAMR_GENERIC_CONTEXT)(*phInOut);
 
-
     switch (pContext->Type)
     {
     case SamrContextConnect:
-        CONNECT_HANDLE_rundown(*phInOut);
+        SamrSrvConnectContextFree((PCONNECT_CONTEXT)pContext);
         break;
 
     case SamrContextDomain:
-        DOMAIN_HANDLE_rundown(*phInOut);
+        SamrSrvDomainContextFree((PDOMAIN_CONTEXT)pContext);
         break;
 
     case SamrContextAccount:
-        ACCOUNT_HANDLE_rundown(*phInOut);
+        SamrSrvAccountContextFree((PACCOUNT_CONTEXT)pContext);
         break;
 
     default:
@@ -82,6 +81,8 @@ SamrSrvClose(
         ntStatus = STATUS_INTERNAL_ERROR;
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
+
+    *phInOut = NULL;
 
 cleanup:
     return ntStatus;

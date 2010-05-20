@@ -86,7 +86,7 @@ cleanup:
 error:
     if (pConnCtx)
     {
-        CONNECT_HANDLE_rundown((CONNECT_HANDLE)pConnCtx);
+        SamrSrvConnectContextFree(pConnCtx);
     }
 
     *hConn = NULL;
@@ -166,10 +166,6 @@ SamrSrvConnectInternal(
         *pInfoOut = pConnCtx->Info;
     }
 
-    /* Increase ref count because DCE/RPC runtime is about to use this
-       pointer as well */
-    InterlockedIncrement(&pConnCtx->refcount);
-
     *ppConnCtx = pConnCtx;
 
 cleanup:
@@ -194,7 +190,7 @@ error:
 
     if (pConnCtx)
     {
-        CONNECT_HANDLE_rundown((CONNECT_HANDLE)pConnCtx);
+        SamrSrvConnectContextFree(pConnCtx);
     }
 
     *ppConnCtx = NULL;

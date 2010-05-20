@@ -255,10 +255,6 @@ SamrSrvOpenAccount(
     pAcctCtx->pDomCtx          = pDomCtx;
     InterlockedIncrement(&pDomCtx->refcount);
 
-    /* Increase ref count because DCE/RPC runtime is about to use this
-       pointer as well */
-    InterlockedIncrement(&pAcctCtx->refcount);
-
     *phAccount = (ACCOUNT_HANDLE)pAcctCtx;
 
 cleanup:
@@ -288,7 +284,7 @@ cleanup:
 error:
     if (pAcctCtx)
     {
-        ACCOUNT_HANDLE_rundown((ACCOUNT_HANDLE)pAcctCtx);
+        SamrSrvAccountContextFree(pAcctCtx);
     }
 
     *phAccount = NULL;

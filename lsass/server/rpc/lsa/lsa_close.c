@@ -53,29 +53,31 @@ LsaSrvClose(
     /* [out, context_handle] */ void **phInOut
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLSA_GENERIC_CONTEXT pContext = NULL;
+
+    BAIL_ON_INVALID_PTR(phInOut);
+    BAIL_ON_INVALID_PTR(*phInOut);
 
     pContext = (PLSA_GENERIC_CONTEXT)(*phInOut);
 
-    pContext->bCleanClose = TRUE;
-
-    switch (pContext->Type) {
+    switch (pContext->Type)
+    {
     case LsaContextPolicy:
-        POLICY_HANDLE_rundown(*phInOut);
+        ntStatus = LsaSrvPolicyContextClose((PPOLICY_CONTEXT)pContext);
         break;
 
     default:
         /* Something is seriously wrong if we get a context
            we haven't created */
-        status = STATUS_INTERNAL_ERROR;
-        BAIL_ON_NTSTATUS_ERROR(status);
+        ntStatus = STATUS_INTERNAL_ERROR;
     }
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     *phInOut = NULL;
 
 cleanup:
-    return status;
+    return ntStatus;
 
 error:
     goto cleanup;

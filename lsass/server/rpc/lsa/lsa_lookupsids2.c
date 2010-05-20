@@ -254,7 +254,10 @@ LsaSrvLookupSids2(
     *pdwCount          = NamesArray.count - dwUnknownSidsNum;
 
 cleanup:
-    LsaSrvFreeAccountSids(pAccountSids);
+    if (pAccountSids)
+    {
+        LsaSrvFreeAccountSids(pAccountSids);
+    }
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
