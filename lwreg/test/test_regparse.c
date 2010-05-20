@@ -57,7 +57,6 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
 {
     DWORD dwError = 0;
     CHAR tokenName[128];
-    CHAR valueName[128];
     USER_CONTEXT *ctx = (USER_CONTEXT *) userContext;
     FILE *outStream = stdout;
     PWSTR *outMultiSz = NULL;
@@ -66,7 +65,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
     ctx->pfn_fprintf(outStream, "parseCallback: Line number = %d\n", pItem->lineNumber);
     ctx->pfn_fprintf(outStream, "parseCallback: Key Name    = %s\n", pItem->keyName);
-    if (pItem->valueName)
+    if (pItem->valueName && pItem->valueLen)
     {
         ctx->pfn_fprintf(outStream, "parseCallback: Value name  = '%s'\n", pItem->valueName);
         ctx->pfn_fprintf(outStream, "parseCallback: Value length= %d\n", pItem->valueLen);
@@ -78,7 +77,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
     RegExportBinaryTypeToString(pItem->type, tokenName, FALSE);
     ctx->pfn_fprintf(outStream, "parseCallback: Value type   = %d (%s)\n",
-           pItem->valueType, valueName);
+           pItem->valueType, tokenName);
     ctx->pfn_fprintf(outStream, "parseCallback: Data type   = %d (%s) - ", pItem->type, tokenName);
     switch (pItem->type)
     {

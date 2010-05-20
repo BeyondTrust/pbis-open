@@ -492,6 +492,8 @@ RegParseTypeStringArrayValue(
     PSTR pszAttr = 0;
     REGLEX_TOKEN token = 0;
     BOOLEAN eof = FALSE;
+    NTSTATUS ntStatus = 0;
+    PWSTR pwszString = NULL;
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
     RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
@@ -511,14 +513,20 @@ RegParseTypeStringArrayValue(
         RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
         if (token == REGLEX_REG_SZ)
         {
-            dwStrLen = strlen(pszAttr) + 1;
+            ntStatus = LwRtlWC16StringAllocateFromCString(&pwszString, pszAttr);
+            if (ntStatus)
+            {
+                goto error;
+            }
+
+            dwStrLen = wc16slen(pwszString) * 2 + 2;
             while (parseHandle->binaryDataAllocLen < dwStrLen)
             {
                 dwError = RegParseReAllocateData(parseHandle);
                 BAIL_ON_REG_ERROR(dwError);
             }
             memcpy(&parseHandle->binaryData[parseHandle->binaryDataLen],
-                   pszAttr,
+                   pwszString,
                    dwStrLen);
             parseHandle->binaryDataLen += dwStrLen;
         }
@@ -540,6 +548,7 @@ RegParseTypeStringArrayValue(
 
 
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pwszString);
     return dwError;
 
 error:

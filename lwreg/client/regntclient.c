@@ -1217,17 +1217,7 @@ NtRegSetValueExA(
 
     if (pData)
     {
-    	if (REG_MULTI_SZ == dwType)
-    	{
-        	status = NtRegConvertByteStreamA2W((PBYTE)pData,
-        			                          cbData,
-        			                          &pOutData,
-        			                          &cbOutDataLen);
-        	BAIL_ON_NT_STATUS(status);
-
-        	bIsStrType = TRUE;
-    	}
-    	else if (REG_SZ == dwType)
+        if (REG_SZ == dwType)
     	{
             /* Verify correct null termination of input data */
             if (strlen((char *) pData) != (cbData-1))
