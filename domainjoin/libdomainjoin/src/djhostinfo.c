@@ -788,7 +788,11 @@ FixNetworkInterfaces(
                 FALSE, szBuf));
     }
 
-    LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists("/etc/sysconfig", &bDirExists));
+    LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists("/etc/sysconfig/network", &bDirExists));
+    if (!bDirExists)
+    {
+        LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists("/etc/sysconfig/network-scripts", &bDirExists));
+    }
 
     if (bDirExists) {
 
