@@ -65,6 +65,9 @@ typedef enum
 typedef BOOLEAN (*LW_KRB5_REALM_IS_OFFLINE_CALLBACK)(IN PCSTR pszRealmName);
 typedef VOID (*LW_KRB5_REALM_TRANSITION_OFFLINE_CALLBACK)(IN PCSTR pszRealmName);
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwKrb5GetDefaultRealm(
     PSTR* ppszRealm
@@ -160,6 +163,9 @@ LwSetupUserLoginSession(
     size_t* psLogonInfo,
     PDWORD pdwGoodUntilTime
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWKRB5_H__ */
 

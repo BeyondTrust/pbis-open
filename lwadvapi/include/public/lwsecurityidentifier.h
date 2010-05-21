@@ -55,6 +55,9 @@ typedef struct __LW_SECURITY_IDENTIFIER {
     DWORD dwByteLength;
 } LW_SECURITY_IDENTIFIER, *PLW_SECURITY_IDENTIFIER;
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwAllocSecurityIdentifierFromBinary(
     UCHAR* pucSidBytes,
@@ -171,5 +174,8 @@ LwBuildSIDString(
     DWORD dwWordCount,
     PSTR* ppszSidString
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWSECURITY_IDENTIFIER_H__ */

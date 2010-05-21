@@ -45,6 +45,9 @@
 #ifndef __LWDSCACHE_H__
 #define __LWDSCACHE_H__
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwDsCacheAddPidException(
     IN pid_t pid
@@ -54,6 +57,8 @@ DWORD
 LwDsCacheRemovePidException(
     IN pid_t pid
     );
+
+LW_END_EXTERN_C
 
 #endif /* __LWDSCACHE_H__ */
 

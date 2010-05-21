@@ -83,6 +83,9 @@
            }                                                \
         } while (0);
 
+
+LW_BEGIN_EXTERN_C
+
 LW_DWORD
 LwAllocateString(
     LW_PCSTR pszInputString,
@@ -350,9 +353,10 @@ LwFreeUnicodeString(
     PUNICODE_STRING pString
     );
 
+LW_END_EXTERN_C
+
 
 #endif
-
 
 /*
 local variables:

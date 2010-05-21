@@ -731,6 +731,9 @@
 #define _LW_ERROR_PAM_BASE                                 49900
 #define _LW_ERROR_PAM_MAX                                  49999
 
+
+LW_BEGIN_EXTERN_C
+
 size_t
 LwGetErrorString(
     LW_IN LW_DWORD dwError,
@@ -767,5 +770,8 @@ LW_PCSTR
 LwWin32ExtErrorToDescription(
     LW_WINERROR winerr
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LW_ERROR_H__ */

@@ -53,6 +53,9 @@ typedef enum _LWFILE_TYPE
     LWFILE_PIPE,
 } LWFILE_TYPE;
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwRemoveFile(
     PCSTR pszPath
@@ -110,6 +113,9 @@ LwCreateDirectory(
     PCSTR pszPath,
     mode_t dwFileMode
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWFILE_H__ */
 

@@ -46,6 +46,8 @@
  */
 
 
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwBufferAllocByte(
     OUT PVOID   pBuffer,
@@ -167,6 +169,8 @@ LwBufferAllocFixedBlob(
     IN OUT PDWORD   pdwSize
     );
 
+
+LW_END_EXTERN_C
 
 /*
 local variables:

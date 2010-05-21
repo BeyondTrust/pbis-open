@@ -50,6 +50,8 @@
 #include <lw/security-types.h>
 
 
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwCreateWellKnownSid(
     IN  WELL_KNOWN_SID_TYPE  WellKnownSidType,
@@ -57,6 +59,8 @@ LwCreateWellKnownSid(
     OUT PSID                *ppSid,
     OUT OPTIONAL PDWORD      pdwSidSize
     );
+
+LW_END_EXTERN_C
 
 
 #endif /* __LWSID_H__ */

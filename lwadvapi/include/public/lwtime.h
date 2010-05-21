@@ -57,6 +57,8 @@
 #define LW_NTTIME_TO_WINTIME_REL(ntTime)   ((ntTime) / 10000000LL)
 
 
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwParseDateString(
     PCSTR  pszTimeInterval,
@@ -92,6 +94,8 @@ DWORD
 LwNtTimeToWinTime(
     IN ULONG64 ntTime
     );
+
+LW_END_EXTERN_C
 
 
 #endif /* _LWTIME_H_ */

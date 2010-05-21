@@ -57,6 +57,9 @@ typedef enum
 
 typedef VOID (*PLWLOG_CALLBACK)(LwLogLevel level, PVOID pUserData, PCSTR pszMessage);
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwSetLogFunction(
     IN LwLogLevel maxLevel,
@@ -70,5 +73,8 @@ LwLogMessage(
     IN PCSTR pszFormat,
     ...
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWLOGGING_H__ */

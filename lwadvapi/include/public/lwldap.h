@@ -78,6 +78,9 @@ typedef struct __LW_SEARCH_COOKIE
     PFNLW_COOKIE_FREE pfnFree;
 } LW_SEARCH_COOKIE, *PLW_SEARCH_COOKIE;
 
+
+LW_BEGIN_EXTERN_C
+
 DWORD
 LwCLdapOpenDirectory(
     IN PCSTR pszServerName,
@@ -340,5 +343,8 @@ DWORD
 LwLdapBindDirectoryAnonymous(
     HANDLE hDirectory
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWLDAP_H__ */

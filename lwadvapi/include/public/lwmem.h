@@ -56,6 +56,9 @@
         } \
     } while (0)
 
+
+LW_BEGIN_EXTERN_C
+
 LW_DWORD
 LwAllocateMemory(
     LW_IN LW_DWORD dwSize,
@@ -73,5 +76,8 @@ LW_VOID
 LwFreeMemory(
     LW_IN LW_OUT LW_PVOID pMemory
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWMEM_H__ */
