@@ -43,6 +43,8 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
+
 LW_NTSTATUS
 LwErrnoToNtStatus(
     LW_IN int Code
@@ -69,5 +71,7 @@ LwErrnoToDescription(
 #define ErrnoToName(Code)           LwErrnoToName(Code)
 #define ErrnoToDescription(Code)    LwErrnoToDescription(Code)
 #endif
+
+LW_END_EXTERN_C
 
 #endif

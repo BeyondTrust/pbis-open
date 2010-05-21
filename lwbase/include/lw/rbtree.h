@@ -53,6 +53,8 @@
 #include <lw/attrs.h>
 #include <lw/ntstatus.h>
 
+LW_BEGIN_EXTERN_C
+
 typedef enum
 {
 
@@ -121,6 +123,8 @@ VOID
 LwRtlRBTreeFree(
     PLWRTL_RB_TREE pRBTree
     );
+
+LW_END_EXTERN_C
 
 #endif /* __LW_RBTREE_H__ */
 

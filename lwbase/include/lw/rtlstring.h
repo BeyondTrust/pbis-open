@@ -50,6 +50,7 @@
 #include <lw/ntstatus.h>
 #include <stdarg.h>
 
+LW_BEGIN_EXTERN_C
 
 // c-style (null-terminated) strings
 
@@ -356,6 +357,7 @@ LwRtlAnsiStringParseULONG(
 #define USE_RTL_STRING_LOG_HACK 1
 
 #ifdef USE_RTL_STRING_LOG_HACK
+
 LW_PCSTR
 LwRtlUnicodeStringToLog(
     LW_IN LW_PUNICODE_STRING pString
@@ -378,5 +380,7 @@ LwRtlWC16StringToLog(
 #endif /* LW_STRICT_NAMESPAE */
 
 #endif /* USE_RTL_STRING_LOG_HACK */
+
+LW_END_EXTERN_C
 
 #endif /* __RTL_STRING_H__ */

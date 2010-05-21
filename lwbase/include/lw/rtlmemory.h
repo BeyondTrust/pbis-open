@@ -49,6 +49,8 @@
 #include <lw/attrs.h>
 #include <lw/ntstatus.h>
 
+LW_BEGIN_EXTERN_C
+
 // Need string.h to get memset, memcpy, memmove, and memcmp
 // to be used by Rtl{Zero,Fill,Copy,Move,Equal}Memory below.
 #include <string.h>
@@ -128,5 +130,7 @@ LwRtlMemoryFree(
     LW_RTL_FREE(ppMemory)
 
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif /* __RTL_MEMORY_H__ */

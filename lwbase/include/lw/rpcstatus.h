@@ -40,6 +40,9 @@
 #define __LWBASE_RPCSTATUS_H__
 
 #include <lw/types.h>
+#include <lw/attrs.h>
+
+LW_BEGIN_EXTERN_C
 
 LW_NTSTATUS
 LwRpcStatusToNtStatus(
@@ -49,5 +52,7 @@ LwRpcStatusToNtStatus(
 #ifndef LW_STRICT_NAMESPACE
 #define RpcStatusToNtStatus(code)    LwRpcStatusToNtStatus(code)
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif

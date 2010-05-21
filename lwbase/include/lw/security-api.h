@@ -43,6 +43,8 @@
 #include <lw/ntstatus.h>
 #include <lw/rtlstring.h>
 
+LW_BEGIN_EXTERN_C
+
 //
 // SID Functions
 //
@@ -568,6 +570,8 @@ RtlCreateWellKnownSid(
     OUT OPTIONAL PSID Sid,
     IN OUT PULONG SidSize
     );
+
+LW_END_EXTERN_C
 
 #endif /* __LWBASE_SECURITY_API_H__ */
 

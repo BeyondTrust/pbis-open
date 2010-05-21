@@ -42,6 +42,8 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
+
 LW_LONG
 LwInterlockedCompareExchange(
     LW_IN LW_OUT LW_LONG volatile *plDestination,
@@ -74,5 +76,7 @@ LwInterlockedDecrement(
 #define InterlockedDecrement(Destination)   LwInterlockedDecrement(Destination)
 
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif

@@ -43,6 +43,14 @@
 #define LW_IN
 #define LW_OUT
 
+#ifdef __cplusplus
+#define LW_BEGIN_EXTERN_C extern "C" {
+#define LW_END_EXTERN_C }
+#else
+#define LW_BEGIN_EXTERN_C
+#define LW_END_EXTERN_C
+#endif
+
 #ifndef LW_STRICT_NAMESPACE
 
 #define OPTIONAL LW_OPTIONAL

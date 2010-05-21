@@ -42,6 +42,8 @@
 #include <lw/types.h>
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
+
 /**
  * @file threadpool.h
  * @brief Thread pool API
@@ -626,5 +628,7 @@ LwRtlFreeThreadPool(
     );
 
 /*@}*/
+
+LW_END_EXTERN_C
 
 #endif /* __LWBASE_THREADPOOL_H__ */

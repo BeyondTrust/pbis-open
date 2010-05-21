@@ -43,6 +43,8 @@
 #include <lw/attrs.h>
 #include <lw/ntstatus.h>
 
+LW_BEGIN_EXTERN_C
+
 #ifdef WIN32
 #define inline __inline
 #endif
@@ -121,5 +123,7 @@ LwRtlSafeAddUSHORT(
 #define RtlSafeAddULONG(Result, OperandA, OperandB)         LwRtlSafeAddULONG(Result, OperandA, OperandB)
 #define RtlSafeAddUSHORT(Result, OperandA, OperandB)        LwRtlSafeAddUSHORT(Result, OperandA, OperandB)
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif /* __LWBASE_SAFEINT_H__ */

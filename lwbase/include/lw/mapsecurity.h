@@ -29,6 +29,8 @@
 #include <lw/security-types.h>
 #include <lw/ntstatus.h>
 
+LW_BEGIN_EXTERN_C
+
 typedef struct _LW_MAP_SECURITY_CONTEXT *PLW_MAP_SECURITY_CONTEXT;
 
 typedef struct gss_ctx_id_struct *LW_MAP_SECURITY_GSS_CONTEXT;
@@ -126,5 +128,7 @@ LwMapSecurityCreateAccessTokenFromGssContext(
     OUT PACCESS_TOKEN* AccessToken,
     IN LW_MAP_SECURITY_GSS_CONTEXT GssContext
     );
+
+LW_END_EXTERN_C
 
 #endif /* __LW_MAP_SECURITY_H__ */

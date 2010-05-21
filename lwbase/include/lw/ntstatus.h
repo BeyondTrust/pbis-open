@@ -2140,6 +2140,8 @@
 #ifndef _DCE_IDL_
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
+
 int
 LwNtStatusToErrno(
     LW_IN LW_NTSTATUS NtStatus
@@ -2166,6 +2168,8 @@ LwNtStatusToDescription(
 #define NtStatusToName(NtStatus)         LwNtStatusToName(NtStatus)
 #define NtStatusToDescription(NtStatus)  LwNtStatusToDescription(NtStatus)
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif /* _DCE_IDL_ */
 

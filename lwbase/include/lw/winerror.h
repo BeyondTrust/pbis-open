@@ -40,7 +40,6 @@
 
 #include <lw/types.h>
 
-
 #if !defined(__COMPAT_WINERROR_H__)
 #define __COMPAT_WINERROR_H__
 
@@ -2819,6 +2818,7 @@
 #ifndef _DCE_IDL_
 #include <lw/attrs.h>
 
+LW_BEGIN_EXTERN_C
 
 int
 LwWin32ErrorToErrno(
@@ -2846,6 +2846,8 @@ LwWin32ErrorToDescription(
 #define Win32ErrorToName(WinError)           LwWin32ErrorToName(WinError)
 #define Win32ErrorToDescription(WinError)    LwWin32ErrorToDescription(WinError)
 #endif /* LW_STRICT_NAMESPACE */
+
+LW_END_EXTERN_C
 
 #endif /*_DCE_IDL*/
 

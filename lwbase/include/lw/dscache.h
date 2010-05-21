@@ -49,6 +49,8 @@
 #ifndef __LW_DSCACHE_H__
 #define __LW_DSCACHE_H__
 
+LW_BEGIN_EXTERN_C
+
 LW_NTSTATUS
 LwAddPidExceptionToDSCache(
     int32_t pid
@@ -58,6 +60,8 @@ LW_NTSTATUS
 LwRemovePidExceptionFromDSCache(
     int32_t pid
     );
+
+LW_END_EXTERN_C
 
 #endif /* __LW_DSCACHE_H__ */
 
