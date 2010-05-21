@@ -145,6 +145,11 @@ find_pkg_type()
     fi
 }
 
+perl_uid()
+{
+    /usr/bin/perl -e 'print "$>\n"'
+}
+
 do_setup()
 {
     umask 022
@@ -156,15 +161,20 @@ do_setup()
     fi
 
     id=/usr/bin/id
+    # if /usr/xpg4/bin/id exists, it more likely to support -u
     if [ -x /usr/xpg4/bin/id ]; then
         id=/usr/xpg4/bin/id
     fi
 
-    if [ -x "$id" ]; then
-        if [ `$id -u` != 0 ]; then
-            log_info "ERROR: Root privileges are required to install this software. Try running this installer with su or sudo."
-            exit 1
-        fi
+    # Check whether it supports -u
+    "$id" -u >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        id=perl_uid
+    fi
+
+    if [ `"$id" -u` != 0 ]; then
+        log_info "ERROR: Root privileges are required to install this software. Try running this installer with su or sudo."
+        exit 1
     fi
 
     log_info "Checking setup environment..."

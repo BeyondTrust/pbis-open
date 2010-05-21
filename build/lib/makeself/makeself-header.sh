@@ -390,11 +390,33 @@ if test "\$keep" = n; then
     trap 'echo Signal caught, cleaning up >&2; cd \$TMPROOT; /bin/rm -rf \$tmpdir; eval \$finish; exit 15' 1 2 3 15
 fi
 
+perl_uid()
+{
+    if [ "\$1" = -u ]; then
+	/usr/bin/perl -e 'print "\$>\n"'
+    elif [ "\$1" = -g ]; then
+	/usr/bin/perl -e 'print \$)=~/([^ ]+).*/,"\n"'
+    fi
+}
+
+id=/usr/bin/id
+# if /usr/xpg4/bin/id exists, it more likely to support -u
+if [ -x /usr/xpg4/bin/id ]; then
+    id=/usr/xpg4/bin/id
+fi
+
+# Check whether it supports -u
+"$id" -u >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+    id=perl_uid
+fi
+export id
+
 for s in \$filesizes
 do
     if MS_dd "\$0" \$offset \$s | eval "$GUNZIP_CMD" | ( cd "\$tmpdir"; UnTAR x ) | MS_Progress; then
 		if test x"\$ownership" = xy; then
-			(PATH=/usr/xpg4/bin:\$PATH; cd "\$tmpdir"; chown -R \`id -u\` .;  chgrp -R \`id -g\` .)
+			(cd "\$tmpdir"; chown -R \`"\$id" -u\` .;  chgrp -R \`"\$id" -g\` .)
 		fi
     else
 		echo
