@@ -1646,8 +1646,27 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     }
 
     default_keytab_name = GetFirstNode(libdefaults, "default_keytab_name");
-    if(default_keytab_name == NULL)
-        goto nochanges;
+    if (default_keytab_name == NULL)
+    {
+        if (description)
+        {
+            LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+                    description,
+                    "Add the default_keytab_name setting in krb5.conf and set it to /etc/krb5.keytab"));
+        }
+        if (makeChanges)
+        {
+            LW_CLEANUP_CTERR(exc, SetNodeValue(libdefaults,
+                        "default_keytab_name", "/etc/krb5.keytab"));
+            LW_CLEANUP_CTERR(exc, WriteKrb5Configuration(tempDir,
+                        "/etc/krb5.conf", &conf, NULL));
+        }
+        else
+        {
+            result = NotConfigured;
+        }
+        goto cleanup;
+    }
 
     if(default_keytab_name->value.value == NULL)
     {
