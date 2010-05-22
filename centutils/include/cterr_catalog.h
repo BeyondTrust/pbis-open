@@ -240,7 +240,7 @@ CENTERROR_CATALOG_DESC(
     "Invalid hostname",
     
     "The current or specified hostname is invalid.  Legal hostnames "
-    "must be 15 characters or less, consisting only of letters, "
+    "must be 63 characters or less, consisting only of letters, "
     "numbers, or hyphens.  Additionally, generic names such as "
     "'localhost', 'hostname', or 'linux' are not permitted." )
 

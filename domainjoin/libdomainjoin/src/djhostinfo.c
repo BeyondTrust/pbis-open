@@ -1385,7 +1385,8 @@ DJIsValidComputerName(
         LWHandle(&exc);
     }
 
-    if(ceError == CENTERROR_DOMAINJOIN_INVALID_HOSTNAME)
+    if (ceError == CENTERROR_DOMAINJOIN_INVALID_HOSTNAME || 
+            ceError == CENTERROR_INVALID_COMPUTERNAME)
     {
         ceError = CENTERROR_SUCCESS;
     }
