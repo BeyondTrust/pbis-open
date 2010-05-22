@@ -112,6 +112,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
             const char *searchFile;
             const char *matchRegex;
             int versionMatchNum;
+            int updateMatchNum;
             BOOLEAN compareCase;
         } const distroSearch[] = {
             {
@@ -123,13 +124,15 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 #   Red Hat Linux Advanced Server release 2.1AS (Pensacola)
                 #   Red Hat Enterprise Linux Client release 5 (Tikanga)
                 #   Red Hat Enterprise Linux Server release 5.3 (Tikanga)
+                #   Red Hat Enterprise Linux ES release 4 (Nahant Update 8)
                 # In addition, Oracle Linux reports itself as:
                 #   Enterprise Linux Enterprise Linux AS release 4 (October Update 5)
                 */
                 //Find a matching distro name
                 "^[[:space:]]*((Red Hat)|(Enterprise Linux)) ((Enterprise Linux)|(Linux (Advanced|Enterprise) Server))[[:space:]]+(AS |ES |Client |Server )?"
-                "release ([[:digit:]]+(\\.[[:digit:]]+)?(AS|ES)?)",
+                "release ([[:digit:]]+(\\.[[:digit:]]+)?(AS|ES)?) \\(\\S+ Update ([[:digit:]]+)\\)",
                 9,
+                12,
                 1
             },
             {
@@ -141,6 +144,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 */
                 "^[[:space:]]*Red Hat Linux release ([[:digit:]]+(\\.[[:digit:]]+)?)",
                 1,
+                -1,
                 1
             },
             {
@@ -152,6 +156,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 */
                 "^[[:space:]]*Fedora (Core )?release (\\S+)",
                 2,
+                -1,
                 1
             },
             {
@@ -163,6 +168,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 */
                 "^[[:space:]]*CentOS release ([[:digit:]]+(\\.[[:digit:]]+)?)",
                 1,
+                -1,
                 1
             },
             {
@@ -170,6 +176,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 "/etc/SuSE-release",
                 "^[[:space:]]*SUSE LINUX ([[:digit:]]+\\.[[:digit:]]+)[[:space:]]+",
                 1,
+                -1,
                 0
             },
             {
@@ -177,6 +184,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 "/etc/SuSE-release",
                 "^[[:space:]]*openSUSE ([[:digit:]]+\\.[[:digit:]]+)[[:space:]]+",
                 1,
+                -1,
                 0
             },
             {
@@ -184,6 +192,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 "/etc/SuSE-release",
                 "^[[:space:]]*SUSE LINUX Enterprise Server ([[:digit:]]+( SP[[:digit:]]+)?)",
                 1,
+                -1,
                 0
             },
             {
@@ -191,6 +200,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 "/etc/SuSE-release",
                 "^[[:space:]]*SUSE LINUX Enterprise Desktop ([[:digit:]]+( SP[[:digit:]]+)?)",
                 1,
+                -1,
                 0
             },
             {
@@ -204,6 +214,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 "^[[:space:]]*DISTRIB_ID[[:space:]]*=[[:space:]]*Ubuntu[[:space:]]*\n"
                 "(.*\n)?DISTRIB_RELEASE[[:space:]]*=[[:space:]]*(\\S+)[[:space:]]*(\n.*)?$",
                 2,
+                -1,
                 1
             },
             {
@@ -216,11 +227,12 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 */
                 "^[[:space:]]*(\\S+)[[:space:]]*$",
                 1,
+                -1,
                 1
             },
         };
         int i;
-        regmatch_t matches[10];
+        regmatch_t matches[20];
         info->distro = DISTRO_UNKNOWN;
         for(i = 0; info->distro == DISTRO_UNKNOWN; i++)
         {
@@ -250,10 +262,25 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 {
                     //This is the correct distro
                     regmatch_t *ver = &matches[distroSearch[i].versionMatchNum];
+                    regmatch_t *update = &matches[distroSearch[i].updateMatchNum];
                     info->distro = distroSearch[i].matchDistro;
-                    GCE(ceError = CTStrndup(fileContents + ver->rm_so,
+                    if (distroSearch[i].updateMatchNum == -1 ||
+                            update->rm_so == -1)
+                    {
+                        GCE(ceError = CTStrndup(fileContents + ver->rm_so,
+                                    ver->rm_eo - ver->rm_so,
+                                    &info->version));
+                    }
+                    else
+                    {
+                        GCE(ceError = CTAllocateStringPrintf(
+                                &info->version,
+                                "%.*s.%.*s",
                                 ver->rm_eo - ver->rm_so,
-                                &info->version));
+                                fileContents + ver->rm_so,
+                                update->rm_eo - update->rm_so,
+                                fileContents + update->rm_so));
+                    }
                 }
                 regfree(&rx);
                 rxAlloced = FALSE;
