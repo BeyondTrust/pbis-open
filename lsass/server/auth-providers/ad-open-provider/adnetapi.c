@@ -57,14 +57,32 @@ static pthread_mutex_t gSchannelLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
 BOOLEAN
+AD_NtStatusIsTgtRevokedError(
+    NTSTATUS status
+    );
+
+static
+BOOLEAN
 AD_NtStatusIsConnectionError(
     NTSTATUS status
     );
 
 static
 BOOLEAN
+AD_WinErrorIsTgtRevokedError(
+    WINERROR winError
+    );
+
+static
+BOOLEAN
 AD_WinErrorIsConnectionError(
     WINERROR winError
+    );
+
+static
+VOID
+AD_ClearSchannelStateInLock(
+    VOID
     );
 
 static
@@ -489,10 +507,20 @@ AD_NetLookupObjectSidsByNames(
     if (status != 0)
     {
         LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %d (0x%08x)", status, status);
-        dwError = LW_ERROR_RPC_OPENPOLICY_FAILED;
-        if (AD_NtStatusIsConnectionError(status))
+
+        if (AD_NtStatusIsTgtRevokedError(status))
         {
             bIsNetworkError = TRUE;
+            dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+        }
+        else
+        {
+            if (AD_NtStatusIsConnectionError(status))
+            {
+                bIsNetworkError = TRUE;
+            }
+
+            dwError = LW_ERROR_RPC_OPENPOLICY_FAILED;
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -536,12 +564,21 @@ AD_NetLookupObjectSidsByNames(
         {
             LSA_LOG_DEBUG("LsaLookupNames2() failed with %d (0x%08x)", status, status);
 
-            if (AD_NtStatusIsConnectionError(status))
+            if (AD_NtStatusIsTgtRevokedError(status))
             {
                 bIsNetworkError = TRUE;
+                dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+            }
+            else
+            {
+                if (AD_NtStatusIsConnectionError(status))
+                {
+                    bIsNetworkError = TRUE;
+                }
+
+                dwError = LW_ERROR_RPC_LSA_LOOKUPNAME2_FAILED;
             }
 
-            dwError = LW_ERROR_RPC_LSA_LOOKUPNAME2_FAILED;
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -836,10 +873,20 @@ AD_NetLookupObjectNamesBySids(
     if (status != 0)
     {
         LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %d (0x%08x)", status, status);
-        dwError = LW_ERROR_RPC_OPENPOLICY_FAILED;
-        if (AD_NtStatusIsConnectionError(status))
+
+        if (AD_NtStatusIsTgtRevokedError(status))
         {
             bIsNetworkError = TRUE;
+            dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+        }
+        else
+        {
+            if (AD_NtStatusIsConnectionError(status))
+            {
+                bIsNetworkError = TRUE;
+            }
+
+            dwError = LW_ERROR_RPC_OPENPOLICY_FAILED;
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -881,12 +928,21 @@ AD_NetLookupObjectNamesBySids(
         {
             LSA_LOG_DEBUG("LsaLookupSids() failed with %d (0x%08x)", status, status);
 
-            if (AD_NtStatusIsConnectionError(status))
+            if (AD_NtStatusIsTgtRevokedError(status))
             {
                 bIsNetworkError = TRUE;
+                dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+            }
+            else
+            {
+                if (AD_NtStatusIsConnectionError(status))
+                {
+                    bIsNetworkError = TRUE;
+                }
+
+                dwError = LW_ERROR_RPC_LSA_LOOKUPSIDS_FAILED;
             }
 
-            dwError = LW_ERROR_RPC_LSA_LOOKUPSIDS_FAILED;
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
@@ -1125,19 +1181,29 @@ AD_DsEnumerateDomainTrusts(
     {
         LSA_LOG_DEBUG("Failed to enumerate trusts at %s (error %d)",
                       pszDomainControllerName, winError);
-        switch (winError)
-        {
-        case ERROR_ACCESS_DENIED:
-            dwError = winError;
-            break;
-        default:
-            dwError = LW_ERROR_ENUM_DOMAIN_TRUSTS_FAILED;
-        }
-     
-        if (AD_WinErrorIsConnectionError(winError))
+
+        if (AD_WinErrorIsTgtRevokedError(winError))
         {
             bIsNetworkError = TRUE;
+            dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
         }
+        else
+        {
+            switch (winError)
+            {
+            case ERROR_ACCESS_DENIED:
+                dwError = winError;
+                break;
+            default:
+                dwError = LW_ERROR_ENUM_DOMAIN_TRUSTS_FAILED;
+            }
+     
+            if (AD_WinErrorIsConnectionError(winError))
+            {
+                bIsNetworkError = TRUE;
+            }
+        }
+
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1255,18 +1321,28 @@ AD_DsGetDcName(
                       pszDomainName,
                       pszServerName,
                       winError);
-        if (ERROR_NO_SUCH_DOMAIN == winError)
+
+        if (AD_WinErrorIsTgtRevokedError(winError))
         {
-            dwError = LW_ERROR_NO_SUCH_DOMAIN;
+            bIsNetworkError = TRUE;
+            dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
         }
         else
         {
-            dwError = LW_ERROR_GET_DC_NAME_FAILED;
+            if (ERROR_NO_SUCH_DOMAIN == winError)
+            {
+                dwError = LW_ERROR_NO_SUCH_DOMAIN;
+            }
+            else
+            {
+                dwError = LW_ERROR_GET_DC_NAME_FAILED;
+            }
+            if (AD_WinErrorIsConnectionError(winError))
+            {
+                bIsNetworkError = TRUE;
+            }
         }
-        if (AD_WinErrorIsConnectionError(winError))
-        {
-            bIsNetworkError = TRUE;
-        }
+
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1565,7 +1641,7 @@ AD_NetlogonAuthenticationUserEx(
     NTSTATUS nt_status = STATUS_UNHANDLED_EXCEPTION;
     NetrValidationInfo  *pValidationInfo = NULL;
     UINT8 dwAuthoritative = 0;
-    PSTR pszServerName;
+    PSTR pszServerName = NULL;
     DWORD dwDCNameLen = 0;
     PBYTE pChal = NULL;
     PBYTE pLMResp = NULL;
@@ -1575,6 +1651,8 @@ AD_NetlogonAuthenticationUserEx(
     LW_PIO_CREDS pCreds = NULL;
     LW_PIO_CREDS pOldToken = NULL;
     BOOLEAN bChangedToken = FALSE;
+    BOOLEAN bResetSchannel = FALSE;
+    PLSA_AUTH_USER_INFO pUserInfo = NULL;
 
     pthread_mutex_lock(&gSchannelLock);
 
@@ -1662,7 +1740,21 @@ AD_NetlogonAuthenticationUserEx(
         if (nt_status != STATUS_SUCCESS)
         {
             LSA_LOG_DEBUG("NetrOpenSchannel() failed with %d (0x%08x)", nt_status, nt_status);
-            dwError = LW_ERROR_RPC_ERROR;
+
+            if (AD_NtStatusIsTgtRevokedError(nt_status))
+            {
+                bIsNetworkError = TRUE;
+                dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+            }
+            else
+            {
+                bResetSchannel = TRUE;
+                dwError = LW_ERROR_RPC_ERROR;
+                if (AD_NtStatusIsConnectionError(nt_status))
+                {
+                    bIsNetworkError = TRUE;
+                }
+            }
             BAIL_ON_LSA_ERROR(dwError);
         }
 
@@ -1689,34 +1781,89 @@ AD_NetlogonAuthenticationUserEx(
         NTRespLen = LsaDataBlobLength(pUserParams->pass.chap.pNT_resp);
     }
 
-    nt_status = NetrSamLogonNetwork(ghSchannelBinding,
-                                    &gSchannelCreds,
-                                    pwszServerName,
-                                    pwszShortDomain,
-                                    pwszComputer,
-                                    pwszUsername,
-                                    pChal,
-                                    pLMResp, LMRespLen,
-                                    pNTResp, NTRespLen,
-                                    2,                /* Network login */
-                                    3,                /* Return NetSamInfo3 */
-                                    &pValidationInfo,
-                                    &dwAuthoritative);
+    nt_status = NetrSamLogonNetworkEx(ghSchannelBinding,
+                                      pwszServerName,
+                                      pwszShortDomain,
+                                      pwszComputer,
+                                      pwszUsername,
+                                      pChal,
+                                      pLMResp,
+                                      LMRespLen,
+                                      pNTResp,
+                                      NTRespLen,
+                                      2,  /* Network login */
+                                      3,  /* Return NetSamInfo3 */
+                                      &pValidationInfo,
+                                      &dwAuthoritative);
 
-    if (nt_status != STATUS_SUCCESS)
+    if (nt_status)
     {
         LSA_LOG_DEBUG("NetrSamLogonNetwork() failed with %d (0x%08x) (symbol: '%s')", nt_status, nt_status, LSA_SAFE_LOG_STRING(LwNtStatusToName(nt_status)));
-        dwError = LW_ERROR_RPC_NETLOGON_FAILED;
-        BAIL_ON_LSA_ERROR(dwError);
+
+        if (AD_NtStatusIsTgtRevokedError(nt_status))
+        {
+            bIsNetworkError = TRUE;
+            dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else
+        {
+            if (AD_NtStatusIsConnectionError(nt_status))
+            {
+                bIsNetworkError = TRUE;
+            }
+        }
     }
+
+    switch (nt_status)
+    {
+    case STATUS_SUCCESS:
+        dwError = 0;
+        break;
+    case STATUS_NO_SUCH_USER:
+        dwError = LW_ERROR_NO_SUCH_USER;
+        break;
+    case STATUS_ACCOUNT_LOCKED_OUT:
+        dwError = LW_ERROR_ACCOUNT_LOCKED;
+        break;
+    case STATUS_ACCOUNT_DISABLED:
+        dwError = LW_ERROR_ACCOUNT_DISABLED;
+        break;
+    case STATUS_ACCOUNT_EXPIRED:
+        dwError = LW_ERROR_ACCOUNT_EXPIRED;
+        break;
+    case STATUS_PASSWORD_EXPIRED:
+        dwError = LW_ERROR_PASSWORD_EXPIRED;
+        break;
+    case STATUS_WRONG_PASSWORD:
+        dwError = LW_ERROR_INVALID_PASSWORD;
+        break;
+    case STATUS_INVALID_ACCOUNT_NAME:
+        dwError = LW_ERROR_INVALID_ACCOUNT;
+        break;
+    case STATUS_ACCOUNT_RESTRICTION:
+    case STATUS_LOGON_FAILURE:
+        dwError = LW_ERROR_LOGON_FAILURE;
+        break;
+    case STATUS_UNHANDLED_EXCEPTION:
+    default:
+        bResetSchannel = TRUE;
+        dwError = LW_ERROR_RPC_NETLOGON_FAILED;
+        LSA_LOG_ERROR("Resetting schannel due to nt status 0x%x while "
+                      "authenticating user '%s'",
+                      nt_status, pUserParams->pszAccountName);
+        break;
+    }
+  
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Translate the returned NetrValidationInfo to the
        LSA_AUTH_USER_INFO out param */
 
-    dwError = LwAllocateMemory(sizeof(LSA_AUTH_USER_INFO), (PVOID*)ppUserInfo);
+    dwError = LwAllocateMemory(sizeof(LSA_AUTH_USER_INFO), (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaCopyNetrUserInfo3(*ppUserInfo, pValidationInfo);
+    dwError = LsaCopyNetrUserInfo3(pUserInfo, pValidationInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1765,12 +1912,42 @@ cleanup:
 
     pthread_mutex_unlock(&gSchannelLock);
 
+    *ppUserInfo = pUserInfo;
+
+    if (pbIsNetworkError)
+    {
+        *pbIsNetworkError = bIsNetworkError;
+    }
+
     return dwError;
 
 error:
-    LsaFreeAuthUserInfo(ppUserInfo);
+
+    LsaFreeAuthUserInfo(&pUserInfo);
+
+    if (bResetSchannel)
+    {
+        AD_ClearSchannelStateInLock();
+    }
 
     goto cleanup;
+}
+
+static
+VOID
+AD_ClearSchannelStateInLock(
+    VOID
+    )
+{
+    if (ghSchannelBinding)
+    {
+        NetrCloseSchannel(ghSchannelBinding);
+
+        ghSchannelBinding = NULL;
+
+        memset(&gSchannelCreds, 0, sizeof(gSchannelCreds));
+        gpSchannelCreds = NULL;
+    }
 }
 
 static
@@ -1781,17 +1958,24 @@ AD_ClearSchannelState(
 {
     pthread_mutex_lock(&gSchannelLock);
 
-    if (ghSchannelBinding)
-    {
-        NetrCloseSchannel(ghSchannelBinding);
-
-        ghSchannelBinding = NULL;
-
-        memset(&gSchannelCreds, 0, sizeof(gSchannelCreds));
-        gpSchannelCreds = NULL;
-    }
+    AD_ClearSchannelStateInLock();
 
     pthread_mutex_unlock(&gSchannelLock);
+}
+
+static
+BOOLEAN
+AD_NtStatusIsTgtRevokedError(
+    NTSTATUS status
+    )
+{
+    switch (status)
+    {
+    case STATUS_KDC_CERT_REVOKED:
+        return TRUE;
+    default:
+        return FALSE;
+    }
 }
 
 static
@@ -1800,12 +1984,38 @@ AD_NtStatusIsConnectionError(
     NTSTATUS status
     )
 {
+    /* ACCESS_DENIED is listed as a connection error
+     * because it may be specific to a given domain controller.
+     * That is, reconnecting to a different DC with the same
+     * credentials may work. */
+
     switch (status)
     {
+    case STATUS_CONNECTION_RESET:
+    case STATUS_IO_TIMEOUT:
+    case STATUS_ACCESS_DENIED:
+    case STATUS_TIME_DIFFERENCE_AT_DC:
     case STATUS_INVALID_CONNECTION:
+    case STATUS_PIPE_DISCONNECTED:
         return TRUE;
     default:
         return FALSE;
+    }
+}
+
+static
+BOOLEAN
+AD_WinErrorIsTgtRevokedError(
+    WINERROR winError
+    )
+{
+    switch (winError)
+    {
+        case SEC_E_KDC_CERT_REVOKED:
+            return TRUE;
+
+        default:
+            return FALSE;
     }
 }
 
@@ -1817,9 +2027,12 @@ AD_WinErrorIsConnectionError(
 {
     switch (winError)
     {
+        case ERROR_NETNAME_DELETED:
+        case ERROR_SEM_TIMEOUT:
+        case ERROR_ACCESS_DENIED:
+        case ERROR_TIME_SKEW:
         case ERROR_UNEXP_NET_ERR:
-            return TRUE;
-        case LW_STATUS_INVALID_CONNECTION:
+        case ERROR_PIPE_NOT_CONNECTED:
             return TRUE;
 
         default:

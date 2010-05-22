@@ -260,6 +260,23 @@ S ( STATUS_INVALID_IMAGE_WIN_16, -1, NULL )
 S ( STATUS_END_OF_FILE, -1, NULL )
 S ( STATUS_DUPLICATE_NAME, -1, NULL )
 S ( STATUS_NOT_SUPPORTED_ON_SBS, -1, NULL )
+
+// Passing the value through as is in order to pass
+// through a unique RODC error that requires
+// reauthentication.
+//
+// rpc__cn_network_req_connect calls rpc__smb_socket_connect which
+// is expected to return a "socket error", which is an errno.  Then,
+// rpc__cn_network_req_connect calls rpc__cn_network_serr_to_status 
+// to convert the "socket error" (errno) to an RPC status code.  So
+// we need to have NtStatusToErrno in rpc__smb_socket_connect pass
+// LW_STATUS_KDC_CERT_REVOKED through as an errno so that
+// rpc__cn_network_serr_to_status can convert it to rpc_s_auth_tkt_expired.
+// And then, LwRpcStatusToNtStatus can convert the RPC status code
+// LW_ERROR_RPC_S_AUTH_TKT_EXPIRED back to LW_STATUS_KDC_CERT_REVOKED
+// (if needed) and that can be converted to SEC_E_KDC_CERT_REVOKED
+// winerror as needed.
+S ( STATUS_KDC_CERT_REVOKED, STATUS_KDC_CERT_REVOKED, NULL )
 S ( STATUS_USER_MAPPED_FILE, -1, NULL )
 S ( STATUS_PARITY_ERROR, -1, NULL )
 S ( STATUS_DOMAIN_EXISTS, -1, NULL )

@@ -430,13 +430,16 @@ SMBGSSContextNegotiate(
             break;
 
         case GSS_S_FAILURE:
-            if (dwMinorStatus == (DWORD) KRB5KRB_AP_ERR_SKEW)
+            switch (dwMinorStatus)
             {
-                dwError = LWIO_ERROR_CLOCK_SKEW;
-            }
-            else
-            {
-                dwError = LWIO_ERROR_GSS;
+                case ((DWORD) KRB5KRB_AP_ERR_SKEW):
+                    dwError = LWIO_ERROR_CLOCK_SKEW;
+                    break;
+                case ((DWORD) KRB5KDC_ERR_TGT_REVOKED):
+                    dwError = LW_STATUS_KDC_CERT_REVOKED;
+                    break;
+                default:
+                    dwError = LWIO_ERROR_GSS;
             }
             BAIL_ON_LWIO_ERROR(dwError);
             break;

@@ -892,6 +892,16 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
+    if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
+    {
+        dwError = LwKrb5RefreshMachineTGT(NULL);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = pfConnectCallback(pszDnsDomainOrForestName,
+                                    pActualDcInfo,
+                                    pContext,
+                                    &bIsNetworkError);
+    }
     if (!dwError)
     {
         goto cleanup;
@@ -924,6 +934,16 @@ LsaDmConnectDomain(
                                 pActualDcInfo,
                                 pContext,
                                 &bIsNetworkError);
+    if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
+    {
+        dwError = LwKrb5RefreshMachineTGT(NULL);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = pfConnectCallback(pszDnsDomainOrForestName,
+                                    pActualDcInfo,
+                                    pContext,
+                                    &bIsNetworkError);
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

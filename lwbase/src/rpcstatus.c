@@ -443,6 +443,10 @@ LwRpcStatusToNtStatus(
             return LW_STATUS_TOO_MANY_ADDRESSES;
         case LW_ERROR_RPC_S_INVALID_CREDENTIALS:
             return LW_STATUS_ACCESS_DENIED;
+        case LW_ERROR_RPC_S_AUTH_TKT_EXPIRED:
+            return LW_STATUS_KDC_CERT_REVOKED;
+        case LW_ERROR_RPC_S_AUTH_SKEW:
+            return LW_STATUS_TIME_DIFFERENCE_AT_DC;
 
         case LW_ERROR_RPC_S_MOD:
         case LW_ERROR_RPC_S_OP_RNG_ERROR:
@@ -661,12 +665,10 @@ LwRpcStatusToNtStatus(
         case LW_ERROR_RPC_S_CALL_ID_NOT_FOUND:
         case LW_ERROR_RPC_S_KEY_ID_NOT_FOUND:
         case LW_ERROR_RPC_S_AUTH_BAD_INTEGRITY:
-        case LW_ERROR_RPC_S_AUTH_TKT_EXPIRED:
         case LW_ERROR_RPC_S_AUTH_TKT_NYV:
         case LW_ERROR_RPC_S_AUTH_REPEAT:
         case LW_ERROR_RPC_S_AUTH_NOT_US:
         case LW_ERROR_RPC_S_AUTH_BADMATCH:
-        case LW_ERROR_RPC_S_AUTH_SKEW:
         case LW_ERROR_RPC_S_AUTH_BADADDR:
         case LW_ERROR_RPC_S_AUTH_BADVERSION:
         case LW_ERROR_RPC_S_AUTH_MSG_TYPE:

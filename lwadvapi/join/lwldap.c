@@ -534,7 +534,8 @@ LwLdapBindDirectory(
     if (
         (dwMajorStatus == GSS_S_FAILURE &&
         (dwMinorStatus == (DWORD)KRB5KRB_AP_ERR_TKT_EXPIRED ||
-         dwMinorStatus == (DWORD)KRB5KDC_ERR_NEVER_VALID)) ||
+         dwMinorStatus == (DWORD)KRB5KDC_ERR_NEVER_VALID ||
+         dwMinorStatus == (DWORD)KRB5KDC_ERR_TGT_REVOKED)) ||
         (dwMajorStatus == GSS_S_CRED_UNAVAIL &&
         dwMinorStatus == 0x25ea10c /* This is KG_EMPTY_CCACHE
                                     * inside of gssapi, but that symbol

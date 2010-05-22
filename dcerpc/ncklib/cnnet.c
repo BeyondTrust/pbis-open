@@ -48,6 +48,7 @@
 #include <cnfbuf.h>     /* NCA Connection fragment buffer service */
 #include <cncall.h>     /* NCA Connection call service */
 #include <cnnet.h>
+#include <lw/ntstatus.h>
 
 /***********************************************************************/
 /*
@@ -2081,6 +2082,12 @@ unsigned32              *st;
 
         case RPC_C_SOCKET_ETIME:
         *st = rpc_s_auth_skew;
+        break;
+
+        // Using this to pass through an RODC error that
+        // requires reauthentication.
+        case LW_STATUS_KDC_CERT_REVOKED:
+        *st = rpc_s_auth_tkt_expired;
         break;
         
         default:
