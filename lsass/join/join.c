@@ -1366,7 +1366,8 @@ LsaGenerateRandomString(
 
     if (!RAND_bytes((unsigned char*)pBuffer, (int)sBufferLen))
     {
-        goto error;
+        dwError = ERROR_ENCRYPTION_FAILED;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     for (i = 0; i < sBufferLen - 1; i++)
@@ -1731,6 +1732,8 @@ LsaCreateMachineAccount(
                                               dwSessionKeyLen);
         BAIL_ON_NT_STATUS(ntStatus);
 
+        pInfo26->password_len = sMachinePasswordLen;
+
         dwLevel = 26;
     }
 
@@ -1892,7 +1895,7 @@ LsaEncodePasswordBuffer(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     size_t sPasswordLen = 0;
-    size_t sPasswordSize = 0;
+    DWORD dwPasswordSize = 0;
     PWSTR pwszPasswordLE = NULL;
     BYTE PasswordBlob[516] = {0};
     BYTE BlobInit[512] = {0};
@@ -1910,32 +1913,43 @@ LsaEncodePasswordBuffer(
     dwError = LwWc16sLen(pwszPassword, &sPasswordLen);
     BAIL_ON_LSA_ERROR(dwError);
 
+    /*
+     * Sanity check - password cannot be longer than the buffer size
+     */
+    if ((sPasswordLen * sizeof(pwszPassword[0])) >
+        (sizeof(PasswordBlob) - sizeof(dwPasswordSize)))
+    {
+        dwError = ERROR_INVALID_PASSWORD;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     /* size doesn't include terminating zero here */
-    sPasswordSize = sPasswordLen * sizeof(pwszPassword[0]);
+    dwPasswordSize = sPasswordLen * sizeof(pwszPassword[0]);
 
     /*
      * Make sure encoded password is 2-byte little-endian
      */
-    dwError = LwAllocateMemory(sPasswordSize + sizeof(pwszPassword[0]),
+    dwError = LwAllocateMemory(dwPasswordSize + sizeof(pwszPassword[0]),
                                OUT_PPVOID(&pwszPasswordLE));
     BAIL_ON_LSA_ERROR(dwError);
 
     wc16stowc16les(pwszPasswordLE, pwszPassword, sPasswordLen);
 
     /*
-     * Encode the password length (in bytes) - the last 4 bytes
+     * Encode the password length (in bytes) in the last 4 bytes
+     * as little-endian number
      */
     iByte = sizeof(PasswordBlob);
-    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 24) & 0xff);
-    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 16) & 0xff);
-    PasswordBlob[--iByte] = (BYTE)((sPasswordSize >> 8) & 0xff);
-    PasswordBlob[--iByte] = (BYTE)((sPasswordSize) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((dwPasswordSize >> 24) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((dwPasswordSize >> 16) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((dwPasswordSize >> 8) & 0xff);
+    PasswordBlob[--iByte] = (BYTE)((dwPasswordSize) & 0xff);
 
     /*
      * Copy the password and the initial random bytes
      */
-    iByte -= sPasswordSize;
-    memcpy(&(PasswordBlob[iByte]), pwszPasswordLE, sPasswordSize);
+    iByte -= dwPasswordSize;
+    memcpy(&(PasswordBlob[iByte]), pwszPasswordLE, dwPasswordSize);
 
     /*
      * Fill the rest of the buffer with (pseudo) random mess
@@ -1946,6 +1960,7 @@ LsaEncodePasswordBuffer(
         dwError = ERROR_ENCRYPTION_FAILED;
         BAIL_ON_LSA_ERROR(dwError);
     }
+
     memcpy(PasswordBlob, BlobInit, iByte);
 
     memcpy(pBlob, PasswordBlob, sizeof(PasswordBlob));
@@ -1955,7 +1970,7 @@ cleanup:
 
     if (pwszPasswordLE)
     {
-        memset(pwszPasswordLE, 0, sPasswordSize);
+        memset(pwszPasswordLE, 0, dwPasswordSize);
         LW_SAFE_FREE_MEMORY(pwszPasswordLE);
     }
 
@@ -3304,6 +3319,7 @@ LsaGetNtPasswordHash(
 {
     DWORD dwError = ERROR_SUCCESS;
     size_t sPasswordLen = 0;
+    PWSTR pwszPasswordLE = NULL;
     BYTE Hash[16] = {0};
 
     BAIL_ON_INVALID_POINTER(pwszPassword);
@@ -3318,13 +3334,28 @@ LsaGetNtPasswordHash(
     dwError = LwWc16sLen(pwszPassword, &sPasswordLen);
     BAIL_ON_LSA_ERROR(dwError);
 
-    MD4((PBYTE)pwszPassword,
-        sPasswordLen * sizeof(pwszPassword[0]),
+    /*
+     * Make sure the password is 2-byte little-endian
+     */
+    dwError = LwAllocateMemory((sPasswordLen + 1) * sizeof(pwszPasswordLE[0]),
+                               OUT_PPVOID(&pwszPasswordLE));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    wc16stowc16les(pwszPasswordLE, pwszPassword, sPasswordLen);
+
+    MD4((PBYTE)pwszPasswordLE,
+        sPasswordLen * sizeof(pwszPasswordLE[0]),
         Hash);
 
     memcpy(pNtHash, Hash, sizeof(Hash));
 
 cleanup:
+    if (pwszPasswordLE)
+    {
+        memset(pwszPasswordLE, 0, sPasswordLen * sizeof(pwszPasswordLE[0]));
+        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
+    }
+
     memset(Hash, 0, sizeof(Hash));
 
     return dwError;
