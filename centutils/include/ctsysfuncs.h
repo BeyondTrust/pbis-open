@@ -57,6 +57,9 @@
 #ifndef __SYSFUNCS_H__
 #define __SYSFUNCS_H__
 
+
+LW_BEGIN_EXTERN_C
+
 void
 sys_vsyslog(
     int priority,
@@ -84,6 +87,9 @@ IsRoot(void);
 #ifndef HAVE_MKDTEMP
 char *mkdtemp(char *temp);
 #endif
+
+LW_END_EXTERN_C
+
 
 #endif /* __SYSFUNCS_H__ */
 

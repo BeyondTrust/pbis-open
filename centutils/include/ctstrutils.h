@@ -59,6 +59,9 @@
 
 #include "ctarray.h"
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTAllocateString(
     PCSTR pszInputString,
@@ -247,6 +250,9 @@ CENTERROR CTWriteToken(FILE *file, CTParseToken *token);
 
 CENTERROR CTGetTerminalWidth(int terminalFid, int *width);
 CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns);
+
+LW_END_EXTERN_C
+
 
 #endif /* __CTSTRUTILS_H__ */
 

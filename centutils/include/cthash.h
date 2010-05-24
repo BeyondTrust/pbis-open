@@ -110,6 +110,9 @@ typedef struct SHASH_TABLE
      */
 } SHASH_TABLE, *PSHASH_TABLE;
 
+
+LW_BEGIN_EXTERN_C
+
 /**
  * @brief Initialize a table
  *
@@ -226,6 +229,9 @@ void
 CTStableHashTableFree(
     PSHASH_TABLE tab
     );
+
+LW_END_EXTERN_C
+
 
 /*@}*/
 

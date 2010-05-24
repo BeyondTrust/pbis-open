@@ -59,6 +59,9 @@
 
 #define PPCAST(x)  ((void **)(void *)(x))
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTAllocateMemory(
     DWORD dwSize,
@@ -79,5 +82,8 @@ void
 CTFreeMemory(
     PVOID pMemory
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __CTMEM_H__ */

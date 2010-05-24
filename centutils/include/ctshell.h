@@ -91,10 +91,16 @@ struct CTShellVar __CTVarZero(const char* name);
 #define CTSHELL_BUFFER(name, value) (__CTVarOut( #name , value))
 #define CTSHELL_ZERO(name) (__CTVarZero( #name ))
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTShell(const char* format, ...);
 
 CENTERROR
 CTShellEx(char * const envp[], const char* format, ...);
+
+LW_END_EXTERN_C
+
 
 #endif

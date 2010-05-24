@@ -353,6 +353,9 @@ typedef uint32_t CENTERROR;
 #define CENTERROR_DOMAINJOIN_WARNING            CENTERROR_DOMAINJOIN(0x00000046) // 524352
 #define CENTERROR_DOMAINJOIN_LSASS_ERROR           CENTERROR_DOMAINJOIN(0x00000047) // 524353
 
+
+LW_BEGIN_EXTERN_C
+
 const char*
 CTErrorName(
     CENTERROR error
@@ -377,5 +380,8 @@ CENTERROR
 CTMapSystemError(
     int dwError
     );
+
+LW_END_EXTERN_C
+
 
 #endif

@@ -57,6 +57,9 @@
 #ifndef __CT_TEXT_H__
 #define __CT_TEXT_H__
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTTextFormatParagraph(
     const char* source,
@@ -65,5 +68,8 @@ CTTextFormatParagraph(
     unsigned int max_width,
     char** dest
     );
+
+LW_END_EXTERN_C
+
 
 #endif

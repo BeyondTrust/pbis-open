@@ -76,6 +76,9 @@ typedef struct __CFGSECTION {
 
 } CFGSECTION, *PCFGSECTION;
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTParseConfigFile(
     PCSTR pszFilePath,
@@ -155,4 +158,8 @@ CTDeleteNameValuePairBySectionName(
     PCSTR pszSectionName,
     PCSTR pszName
     );
+
+LW_END_EXTERN_C
+
+
 #endif /* __CTCFGPARSER_H__ */

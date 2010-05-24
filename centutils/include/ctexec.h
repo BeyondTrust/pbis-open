@@ -73,6 +73,9 @@ typedef struct __PROCINFO
     int   fderr;
 } PROCINFO, *PPROCINFO;
 
+
+LW_BEGIN_EXTERN_C
+
 /**
  * @brief Capture output of a Unix command
  *
@@ -91,6 +94,7 @@ typedef struct __PROCINFO
  * @errcode
  * @canfail
  */
+
 CENTERROR
 CTCaptureOutput(
     PCSTR command,
@@ -201,6 +205,9 @@ CTGetExitStatus(
     PPROCINFO pProcInfo,
     PLONG plstatus
     );
+
+LW_END_EXTERN_C
+
     
 /*@}*/
 

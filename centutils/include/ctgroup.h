@@ -57,6 +57,9 @@
 #ifndef CTGROUP_H_
 #define CTGROUP_H_
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTVerifyGID(
     gid_t gid
@@ -67,5 +70,8 @@ CTGetGID(
     PCSTR pszGID,
     gid_t* pGID
     );
+
+LW_END_EXTERN_C
+
 
 #endif /*CTGROUP_H_*/

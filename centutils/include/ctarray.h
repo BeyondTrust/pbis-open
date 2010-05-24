@@ -79,6 +79,10 @@ typedef struct
     size_t capacity;
 } DynamicArray;
 
+
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR CTArrayConstruct(DynamicArray* array, size_t itemSize);
 
 /**
@@ -136,5 +140,8 @@ void * CTArrayGetItem(DynamicArray* array, size_t index, size_t itemSize);
 
 // Only works when the DynamicArray holds (char *)
 ssize_t CTArrayFindString(DynamicArray* array, PCSTR find);
+
+LW_END_EXTERN_C
+
 
 #endif

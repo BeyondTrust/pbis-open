@@ -80,6 +80,9 @@ typedef struct __CTRWLOCK {
           0                          \
         }
 
+
+LW_BEGIN_EXTERN_C
+
 void
 CTInitRWLock(
     PCTRWLOCK pLock
@@ -109,6 +112,9 @@ void
 CTReleaseWriteLock(
     PCTRWLOCK pLock
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __CTRWLOCK_H__ */
 

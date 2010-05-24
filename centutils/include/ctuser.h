@@ -57,6 +57,9 @@
 #ifndef CTUSER_H_
 #define CTUSER_H_
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTVerifyUID(
     uid_t uid
@@ -90,5 +93,8 @@ CTGetHomeDirectory(
 //This function sets inX to true if a user is logged into X windows.
 CENTERROR
 CTIsUserInX(BOOLEAN *inX);
+
+LW_END_EXTERN_C
+
 
 #endif /*CTUSER_H_*/

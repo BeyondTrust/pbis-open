@@ -57,6 +57,9 @@
 #ifndef __CTFILEUTILS_H__
 #define __CTFILEUTILS_H__
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTRemoveFile(
     PCSTR pszPath
@@ -419,5 +422,8 @@ CTWriteLines(FILE *file, const DynamicArray *lines);
 
 void
 CTFreeLines(DynamicArray *lines);
+
+LW_END_EXTERN_C
+
 
 #endif /* __CTFILEUTILS_H__ */

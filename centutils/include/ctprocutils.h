@@ -57,6 +57,9 @@
 #ifndef __CTPROCUTILS_H__
 #define __CTPROCUTILS_H__
 
+
+LW_BEGIN_EXTERN_C
+
 CENTERROR
 CTMatchProgramToPID(
     PCSTR pszProgramName,
@@ -111,5 +114,8 @@ CTSendSignal(
 	pid_t pid,
 	int sig
     );
+
+LW_END_EXTERN_C
+
 	
 #endif /* __CTPROCUTILS_H__ */
