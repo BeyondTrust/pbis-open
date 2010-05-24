@@ -30,6 +30,9 @@
 
 #include "iop.h"
 
+#define IO_SECURITY_INVALID_UID  (uid_t)-1
+#define IO_SECURITY_INVALID_GID  (gid_t)-1
+
 typedef struct _IO_CREATE_SECURITY_CONTEXT {
     LONG ReferenceCount;
     IO_SECURITY_CONTEXT_PROCESS_INFORMATION Process;
@@ -42,6 +45,12 @@ IoSecurityGetProcessInfo(
     IN PIO_CREATE_SECURITY_CONTEXT SecurityContext
     )
 {
+    if ((SecurityContext->Process.Uid == IO_SECURITY_INVALID_UID) ||
+        (SecurityContext->Process.Gid == IO_SECURITY_INVALID_GID))
+    {
+        return NULL;
+    }
+    
     return &SecurityContext->Process;
 }
 
@@ -215,6 +224,12 @@ IoSecurityCreateSecurityContextFromUsername(
     status = RtlQueryAccessTokenUnixInformation(
                     accessToken,
                     &tokenUnix);
+    if (status == STATUS_NOT_FOUND)
+    {
+       tokenUnix.Uid = IO_SECURITY_INVALID_UID;
+       tokenUnix.Gid = IO_SECURITY_INVALID_GID;
+       status = STATUS_SUCCESS;
+    }
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = IopSecurityCreateSecurityContext(
@@ -266,6 +281,12 @@ IoSecurityCreateSecurityContextFromGssContext(
     status = RtlQueryAccessTokenUnixInformation(
                     accessToken,
                     &tokenUnix);
+    if (status == STATUS_NOT_FOUND)
+    {
+       tokenUnix.Uid = IO_SECURITY_INVALID_UID;
+       tokenUnix.Gid = IO_SECURITY_INVALID_GID;
+       status = STATUS_SUCCESS;
+    }
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = IopSecurityCreateSecurityContext(
@@ -289,3 +310,11 @@ cleanup:
     return status;
 }
 
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
