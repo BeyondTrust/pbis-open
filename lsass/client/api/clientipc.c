@@ -403,6 +403,16 @@ LsaTransactAuthenticateUserPam(
             break;
         case LSA_R_AUTH_USER_PAM_FAILURE:
             pError = (PLSA_IPC_ERROR) out.data;
+            if (pParams->dwFlags & LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE && 
+                    ppPamAuthInfo)
+            {
+                dwError = LwAllocateMemory(sizeof(*ppPamAuthInfo),
+                                            (PVOID)ppPamAuthInfo);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                (*ppPamAuthInfo)->pszMessage = pError->pszErrorMessage;
+                pError->pszErrorMessage = NULL;
+            }
             dwError = pError->dwError;
             BAIL_ON_LSA_ERROR(dwError);
             break;
