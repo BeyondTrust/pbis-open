@@ -1186,29 +1186,21 @@ LsaMapSecurityGetAccessTokenCreateInformationFromObjectInfoAndGroups(
     // TOKEN_UNIX
     //
 
-    if (IsSetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID))
+    if (IsSetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID) && 
+        IsSetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID))
     {
         createInformation->Unix->Uid = pObjectInfo->Uid;
-    }
-    else
-    {
-        status = STATUS_NO_SUCH_USER;
-        GOTO_CLEANUP();
-    }
-
-    if (IsSetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID))
-    {
         createInformation->Unix->Gid = pObjectInfo->Gid;
+
+        // TODO-Should the token even have a umask, and if so,
+        // where should it come from?
+        createInformation->Unix->Umask = 0022;
     }
     else
     {
-        status = STATUS_NO_SUCH_GROUP;
-        GOTO_CLEANUP();
+        createInformation->Unix = NULL;
     }
-
-    // TODO-Should the token even have a umask, and if so,
-    // where should it come from?
-    createInformation->Unix->Umask = 0022;
+    
 
     //
     // TOKEN_USER
