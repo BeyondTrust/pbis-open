@@ -514,6 +514,18 @@ LsaAdBatchGatherUnprovisionedModeUser(
 {
     DWORD dwError = 0;
 
+    // Check for a machine account.  Last character in name will be "$"
+    // In the future, it would be safer to either add a new 
+    // LSA_AD_BATCH_OBJECT_TYPE_COMPUTER value or an additional
+    // flag to distinguish a user from a computer.  For current
+    // AD releases however, this is a sufficient check
+
+    if (pItem->pszSamAccountName[strlen(pItem->pszSamAccountName)-1] == '$')
+    {
+        SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED);
+    }
+    
+
 #if 0
     if (dwError != 0)
     {
