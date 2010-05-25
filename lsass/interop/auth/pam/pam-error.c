@@ -94,14 +94,13 @@ LsaPamMapErrorCode(
         case LW_ERROR_INTERNAL:
             ret = PAM_SERVICE_ERR;
             break;
-        case ECONNREFUSED:
-        case ENOENT:
+        case LW_ERROR_ERRNO_ECONNREFUSED:
+        case ERROR_FILE_NOT_FOUND:
             if (pPamContext && pPamContext->pamOptions.bUnknownOK)
                 ret = PAM_IGNORE;
             else
                 ret = PAM_AUTH_ERR;
             break;
-        case EACCES:
         case ERROR_ACCESS_DENIED:
         case LW_ERROR_ACCESS_DENIED:
             ret = PAM_PERM_DENIED;
