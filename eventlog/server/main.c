@@ -1145,8 +1145,9 @@ EVTNetworkThread(
         {NULL, NULL}
     };
     struct timespec delay = {5, 0};
+    BOOLEAN *pbExitNow = (BOOLEAN *)pArg;
  
-    while (endpoints[index].protocol)
+    while (endpoints[index].protocol && !*pbExitNow)
     {
         dwError = EVTRegisterEndpoint(
             "Likewise Eventlog Service",
@@ -1198,6 +1199,7 @@ main(
         {"ncalrpc", CACHEDIR "/rpc/socket"},
         {NULL, NULL}
     };
+    BOOLEAN bExitNow = FALSE;
 
     dwError = EVTSetServerDefaults();
     BAIL_ON_EVT_ERROR(dwError);
@@ -1282,7 +1284,7 @@ main(
                                       &networkThread,
                                       NULL,
                                       EVTNetworkThread,
-                                      NULL));
+                                      &bExitNow));
     BAIL_ON_EVT_ERROR(dwError);
 
     while (!EVTIsListening())
@@ -1312,6 +1314,8 @@ main(
     BAIL_ON_EVT_ERROR(dwError);
 
     EVT_LOG_INFO("Eventlog Service exiting...");
+
+    bExitNow = TRUE;
 
     dwError = EVTUnregisterAllEndpoints();
     BAIL_ON_EVT_ERROR(dwError);
