@@ -83,7 +83,7 @@ typedef enum LWMsgArchiveDisposition
      */
     LWMSG_ARCHIVE_WRITE = 0x2,
     /**
-     * Read/write protocol schema to/from file
+     * Use archive schema
      * @hideinitializer
      */
     LWMSG_ARCHIVE_SCHEMA = 0x4
@@ -181,7 +181,7 @@ lwmsg_archive_set_byte_order(
  * #lwmsg_data_print_graph_alloc().
  *
  * This only has an effect when an archive is opened for reading with the
- * disposition bit set #LWMSG_ARCHIVE_SCHEMA and the archive contains schema
+ * #LWMSG_ARCHIVE_SCHEMA disposition bit set and the archive contains schema
  * information. 
  *
  * @param[in,out] archive the archive handle
