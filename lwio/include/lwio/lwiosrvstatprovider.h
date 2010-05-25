@@ -110,7 +110,6 @@ typedef struct _SRV_STAT_REQUEST_CONTEXT* PSRV_STAT_REQUEST_CONTEXT;
 
 typedef struct _SRV_STAT_REQUEST_PARAMETERS
 {
-    PSRV_STAT_CONNECTION_INFO pConnectionInfo;
     PSRV_STAT_SESSION_INFO    pSessionInfo;
     PSRV_STAT_TREE_INFO       pTreeInfo;
 
@@ -128,6 +127,7 @@ typedef struct _SRV_STAT_REQUEST_PARAMETERS
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_CREATE_REQUEST_CONTEXT)(
+            PSRV_STAT_CONNECTION_INFO  pConnection,        /* IN              */
             PSRV_STAT_REQUEST_CONTEXT* ppContext           /*    OUT          */
             );
 
