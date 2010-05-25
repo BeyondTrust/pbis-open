@@ -127,13 +127,8 @@ typedef NTSTATUS
         (*PFN_SRV_STAT_CREATE_REQUEST_CONTEXT)(
             PSRV_STAT_CONNECTION_INFO  pConnection,        /* IN              */
             SRV_STAT_SMB_VERSION       protocolVersion,    /* IN              */
+            ULONG                      ulRequestLength,    /* IN              */
             PHANDLE                    hContext            /*    OUT          */
-            );
-
-typedef NTSTATUS
-        (*PFN_SRV_STAT_SET_REQUEST_INFO)(
-            HANDLE                     hContext,           /* IN              */
-            ULONG                      ulRequestLength     /* IN              */
             );
 
 typedef NTSTATUS
@@ -219,7 +214,6 @@ typedef NTSTATUS
 typedef struct _LWIO_SRV_STAT_PROVIDER_FUNCTION_TABLE
 {
     PFN_SRV_STAT_CREATE_REQUEST_CONTEXT pfnCreateRequestContext;
-    PFN_SRV_STAT_SET_REQUEST_INFO       pfnSetRequestInfo;
     PFN_SRV_STAT_PUSH_MESSAGE           pfnPushMessage;
     PFN_SRV_STAT_SET_SUB_OP_CODE        pfnSetSubOpCode;
     PFN_SRV_STAT_SET_IOCTL              pfnSetIOCTL;
