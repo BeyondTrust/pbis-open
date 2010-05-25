@@ -193,6 +193,9 @@ typedef struct _LWNET_DC_ADDRESS {
     LW_PSTR pszDomainControllerAddress;
 } LWNET_DC_ADDRESS, *PLWNET_DC_ADDRESS;
 
+
+LW_BEGIN_EXTERN_C
+
 LWNET_API
 LW_DWORD
 LWNetGetDCName(
@@ -333,5 +336,8 @@ LWNetGetLogInfo(
     LW_OUT PLWNET_LOG_TARGET pLogTarget,
     LW_OUT LW_PSTR* ppszLogPath
     );
+
+LW_END_EXTERN_C
+
 
 #endif /* __LWNET_H__ */
