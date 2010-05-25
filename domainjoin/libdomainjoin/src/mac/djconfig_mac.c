@@ -232,6 +232,7 @@ DJRegisterLWIDSPlugin()
         if (pProcInfo)
         {
             FreeProcInfo(pProcInfo);
+            pProcInfo = NULL;
         }
 
         retryCount--;
