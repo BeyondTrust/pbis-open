@@ -28,6 +28,8 @@
  * license@likewisesoftware.com
  */
 
+#include <lw/attrs.h>
+
 #include "joinprogress.h"
 #include "common.h"
 
@@ -35,7 +37,6 @@
 #include <ctstrutils.h>
 
 #include <stdlib.h>
-
 
 struct JoinProgressDialog
 {

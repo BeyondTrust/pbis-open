@@ -39,6 +39,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
+#include <lw/attrs.h>
+
 #include "joindialog.h"
 #include "joinprogress.h"
 #include "joinerror.h"
