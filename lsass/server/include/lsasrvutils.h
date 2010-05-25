@@ -74,19 +74,19 @@
 
 // Logon events
 #define LSASS_EVENT_SUCCESSFUL_LOGON_AUTHENTICATE                    1200 // Similar to Window event id 528 - deprecated
-#define LSASS_EVENT_SUCCESSFUL_LOGON_CREATE_SESSION                  1201 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_LOGON_CHECK_USER                      1203 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_LOGON_CREATE_SESSION                  1201
+#define LSASS_EVENT_SUCCESSFUL_LOGON_CHECK_USER                      1203
 // Only fired for the non-authenticate phases
-#define LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD    1205 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_LOGON_TIME_RESTRICTION_VIOLATION          1206 // Similar to Window event id 530
-#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_DISABLED                    1207 // Similar to Window event id 531
-#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_EXPIRED                     1208 // Similar to Window event id 532
-#define LSASS_EVENT_FAILED_LOGON_MACHINE_RESTRICTION_VIOLATION       1209 // Similar to Window event id 533
-#define LSASS_EVENT_FAILED_LOGON_TYPE_OF_LOGON_NOT_GRANTED           1210 // Similar to Window event id 534
-#define LSASS_EVENT_FAILED_LOGON_PASSWORD_EXPIRED                    1211 // Similar to Window event id 535
-#define LSASS_EVENT_FAILED_LOGON_NETLOGON_FAILED                     1212 // Similar to Window event id 536
-#define LSASS_EVENT_FAILED_LOGON_UNEXPECTED_ERROR                    1213 // Similar to Window event id 537
-#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_LOCKED                      1214 // Similar to Window event id 539
+#define LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD    1205
+#define LSASS_EVENT_FAILED_LOGON_TIME_RESTRICTION_VIOLATION          1206
+#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_DISABLED                    1207
+#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_EXPIRED                     1208
+#define LSASS_EVENT_FAILED_LOGON_MACHINE_RESTRICTION_VIOLATION       1209
+#define LSASS_EVENT_FAILED_LOGON_TYPE_OF_LOGON_NOT_GRANTED           1210
+#define LSASS_EVENT_FAILED_LOGON_PASSWORD_EXPIRED                    1211
+#define LSASS_EVENT_FAILED_LOGON_NETLOGON_FAILED                     1212
+#define LSASS_EVENT_FAILED_LOGON_UNEXPECTED_ERROR                    1213
+#define LSASS_EVENT_FAILED_LOGON_ACCOUNT_LOCKED                      1214
 #define LSASS_EVENT_FAILED_LOGON_CHECK_USER                          1215
 
 #define LSASS_EVENT_LOGON_PHASE_AUTHENTICATE                         1
@@ -94,39 +94,39 @@
 #define LSASS_EVENT_LOGON_PHASE_CHECK_USER                           3
 
 // Logoff events
-#define LSASS_EVENT_SUCCESSFUL_LOGOFF                                1220 // Similar to Window event id 538
+#define LSASS_EVENT_SUCCESSFUL_LOGOFF                                1220
 
 // Logon success events
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH                      1230 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_GRAPHICAL                1231 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_CONSOLE                  1232 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_FTP                      1233 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_TELNET                   1234 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SCREEENSAVER             1235 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SUDO                     1236 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_PASSWD                   1237 // Similar to Window event id 528
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SU                       1238 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH                      1230
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_GRAPHICAL                1231
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_CONSOLE                  1232
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_FTP                      1233
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_TELNET                   1234
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SCREEENSAVER             1235
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SUDO                     1236
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_PASSWD                   1237
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SU                       1238
 // 1239-1248 reserved
-#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_OTHER                    1249 // Similar to Window event id 528
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_OTHER                    1249
 
 // Logon failed events
 // These are fired during the authenticate phase if the username is unknown or
 // the password is incorrect. Disabled accounts, etc.. create different events.
-#define LSASS_EVENT_FAILED_AUTHENTICATE_SSH                          1250 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_GRAPHICAL                    1251 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_CONSOLE                      1252 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_FTP                          1253 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_TELNET                       1254 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_SCREENSAVER                  1255 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_SUDO                         1256 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_PASSWD                       1257 // Similar to Window event id 529
-#define LSASS_EVENT_FAILED_AUTHENTICATE_SU                           1258 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SSH                          1250
+#define LSASS_EVENT_FAILED_AUTHENTICATE_GRAPHICAL                    1251
+#define LSASS_EVENT_FAILED_AUTHENTICATE_CONSOLE                      1252
+#define LSASS_EVENT_FAILED_AUTHENTICATE_FTP                          1253
+#define LSASS_EVENT_FAILED_AUTHENTICATE_TELNET                       1254
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SCREENSAVER                  1255
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SUDO                         1256
+#define LSASS_EVENT_FAILED_AUTHENTICATE_PASSWD                       1257
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SU                           1258
 // 1259-1268 reserved
-#define LSASS_EVENT_FAILED_AUTHENTICATE_OTHER                        1269 // Similar to Window event id 529
+#define LSASS_EVENT_FAILED_AUTHENTICATE_OTHER                        1269
 
 // User password change events
-#define LSASS_EVENT_SUCCESSFUL_PASSWORD_CHANGE                       1300 // Similar to Window event id 627
-#define LSASS_EVENT_FAILED_PASSWORD_CHANGE                           1301 // Similar to Window event id 627
+#define LSASS_EVENT_SUCCESSFUL_PASSWORD_CHANGE                       1300
+#define LSASS_EVENT_FAILED_PASSWORD_CHANGE                           1301
 #define LSASS_EVENT_SUCCESSFUL_USER_ACCOUNT_KERB_REFRESH             1302
 #define LSASS_EVENT_FAILED_USER_ACCOUNT_KERB_REFRESH                 1303
 
@@ -137,10 +137,10 @@
 #define LSASS_EVENT_FAILED_MACHINE_ACCOUNT_TGT_REFRESH               1323
 
 // Account management events
-#define LSASS_EVENT_ADD_USER_ACCOUNT                                 1400 // Similar to Window event id 624
-#define LSASS_EVENT_DELETE_USER_ACCOUNT                              1401 // Similar to Window event id 630
-#define LSASS_EVENT_ADD_GROUP                                        1402 // Similar to Window event id 635
-#define LSASS_EVENT_DELETE_GROUP                                     1403 // Similar to Window event id 638
+#define LSASS_EVENT_ADD_USER_ACCOUNT                                 1400
+#define LSASS_EVENT_DELETE_USER_ACCOUNT                              1401
+#define LSASS_EVENT_ADD_GROUP                                        1402
+#define LSASS_EVENT_DELETE_GROUP                                     1403
 
 // Lsass provider events
 #define LSASS_EVENT_SUCCESSFUL_PROVIDER_INITIALIZATION               1500
