@@ -106,8 +106,6 @@ typedef struct _SRV_STAT_CLOSE_PARAMS_SMB_V2
 
 } SRV_STAT_CLOSE_PARAMS_SMB_V2, *PSRV_STAT_CLOSE_PARAMS_SMB_V2;
 
-typedef struct _SRV_STAT_REQUEST_CONTEXT* PSRV_STAT_REQUEST_CONTEXT;
-
 typedef struct _SRV_STAT_REQUEST_PARAMETERS
 {
     PSRV_STAT_SESSION_INFO    pSessionInfo;
@@ -128,53 +126,53 @@ typedef struct _SRV_STAT_REQUEST_PARAMETERS
 typedef NTSTATUS
         (*PFN_SRV_STAT_CREATE_REQUEST_CONTEXT)(
             PSRV_STAT_CONNECTION_INFO  pConnection,        /* IN              */
-            PSRV_STAT_REQUEST_CONTEXT* ppContext           /*    OUT          */
+            PHANDLE                    hContext            /*    OUT          */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_REQUEST_INFO)(
-            PSRV_STAT_REQUEST_CONTEXT  pContext,           /* IN              */
+            HANDLE                     hContext,           /* IN              */
             SRV_STAT_SMB_VERSION       protocolVersion,    /* IN              */
             ULONG                      ulRequestLength     /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_PUSH_MESSAGE)(
-            PSRV_STAT_REQUEST_CONTEXT    pContext,         /* IN              */
+            HANDLE                       hContext,         /* IN              */
             ULONG                        ulOpcode,         /* IN              */
-            PSRV_STAT_REQUEST_PARAMETERS pParams,
+            PSRV_STAT_REQUEST_PARAMETERS pParams,          /* IN     OPTIONAL */
             PBYTE                        pMessage,         /* IN     OPTIONAL */
             ULONG                        ulMessageLen      /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_SUB_OP_CODE)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                     hContext,           /* IN              */
             ULONG                     ulSubOpcode          /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_IOCTL)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             ULONG                     ulIoCtlCode          /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SESSION_CREATED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             PSRV_STAT_SESSION_INFO    pSessionInfo         /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_TREE_CREATED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             PSRV_STAT_SESSION_INFO    pSessionInfo,        /* IN              */
             PSRV_STAT_TREE_INFO       pTreeInfo            /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_FILE_CREATED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             PSRV_STAT_SESSION_INFO    pSessionInfo,        /* IN              */
             PSRV_STAT_TREE_INFO       pTreeInfo,           /* IN              */
             PSRV_STAT_FILE_INFO       pFileInfo            /* IN              */
@@ -182,32 +180,32 @@ typedef NTSTATUS
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_FILE_CLOSED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             PSRV_STAT_FILE_INFO       pFileInfo            /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_TREE_CLOSED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                     hContext,           /* IN              */
             PSRV_STAT_TREE_INFO       pTreeInfo            /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SESSION_CLOSED)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             PSRV_STAT_SESSION_INFO    pSessionInfo         /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_POP_MESSAGE)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             ULONG                     ulOpCode,            /* IN              */
             NTSTATUS                  msgStatus            /* IN              */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_RESPONSE_INFO)(
-            PSRV_STAT_REQUEST_CONTEXT pContext,            /* IN              */
+            HANDLE                    hContext,            /* IN              */
             NTSTATUS                  responseStatus,      /* IN              */
             PBYTE                     pResponseBuffer,     /* IN     OPTIONAL */
             ULONG                     ulResponseLength     /* IN              */
@@ -215,7 +213,7 @@ typedef NTSTATUS
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_CLOSE_REQUEST_CONTEXT)(
-            PSRV_STAT_REQUEST_CONTEXT pContext             /* IN              */
+            HANDLE                     hContext            /* IN              */
             );
 
 typedef struct _LWIO_SRV_STAT_PROVIDER_FUNCTION_TABLE
