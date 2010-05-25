@@ -126,13 +126,13 @@ typedef struct _SRV_STAT_REQUEST_PARAMETERS
 typedef NTSTATUS
         (*PFN_SRV_STAT_CREATE_REQUEST_CONTEXT)(
             PSRV_STAT_CONNECTION_INFO  pConnection,        /* IN              */
+            SRV_STAT_SMB_VERSION       protocolVersion,    /* IN              */
             PHANDLE                    hContext            /*    OUT          */
             );
 
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_REQUEST_INFO)(
             HANDLE                     hContext,           /* IN              */
-            SRV_STAT_SMB_VERSION       protocolVersion,    /* IN              */
             ULONG                      ulRequestLength     /* IN              */
             );
 
