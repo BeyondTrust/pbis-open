@@ -406,8 +406,8 @@ if [ -x /usr/xpg4/bin/id ]; then
 fi
 
 # Check whether it supports -u
-"$id" -u >/dev/null 2>&1
-if [ $? -ne 0 ]; then
+"\$id" -u >/dev/null 2>&1
+if [ \$? -ne 0 ]; then
     id=perl_uid
 fi
 export id
