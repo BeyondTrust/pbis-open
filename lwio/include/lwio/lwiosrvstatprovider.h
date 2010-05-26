@@ -115,8 +115,6 @@ typedef NTSTATUS
 typedef NTSTATUS
         (*PFN_SRV_STAT_SET_RESPONSE_INFO)(
             HANDLE                    hContext,            /* IN              */
-            NTSTATUS                  responseStatus,      /* IN              */
-            PBYTE                     pResponseBuffer,     /* IN     OPTIONAL */
             ULONG                     ulResponseLength     /* IN              */
             );
 
