@@ -83,7 +83,6 @@ typedef NTSTATUS
         (*PFN_SRV_STAT_PUSH_MESSAGE)(
             HANDLE                       hContext,         /* IN              */
             ULONG                        ulOpcode,         /* IN              */
-            PBYTE                        pMessage,         /* IN     OPTIONAL */
             ULONG                        ulMessageLen      /* IN              */
             );
 
@@ -109,6 +108,7 @@ typedef NTSTATUS
         (*PFN_SRV_STAT_POP_MESSAGE)(
             HANDLE                    hContext,            /* IN              */
             ULONG                     ulOpCode,            /* IN              */
+            ULONG                     ulResponseLength,    /* IN              */
             NTSTATUS                  msgStatus            /* IN              */
             );
 
