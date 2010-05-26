@@ -75,7 +75,6 @@
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\statistics]
 "Path"="@providerdir@/libsrv.stat@MOD_EXT@"
 "EnableLogging"=dword:00000000
-"LogParameters"=dword:00000000
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\shares]
 
