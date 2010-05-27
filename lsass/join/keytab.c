@@ -88,16 +88,25 @@ KtKrb5KeytabOpen(
         {
             dwSize += dwSize;
 
-            dwError = LwReallocMemory((PVOID)pszDefName,
- (PVOID*)&pszDefName,
-                                      dwSize);
+            dwError = LwReallocMemory(
+                          (PVOID)pszDefName
+                          (PVOID*)&pszDefName,
+                          dwSize);
             BAIL_ON_LSA_ERROR(dwError);
 
             ret = krb5_kt_default_name(ctx, pszDefName, dwSize);
             if (ret == 0)
             {
                 LwStrChr(pszDefName, ':', &pszKtFilename);
-                pszKtFilename++;
+
+                if (!pszKtFilename)
+                {
+                    pszKtFilename = pszDefName;
+                }
+                else
+                {
+                    pszKtFilename++;
+                }
             }
             else if (ret != KRB5_CONFIG_NOTENUFSPACE)
             {
