@@ -50,7 +50,6 @@
 "HomeDirUmask"="022"
 "SkeletonDirs"="@default_skeldirs@"
 "RefreshUserCredentials"=dword:00000001
-"CellSupport"="unprovisioned"
 "TrimUserMembership"=dword:00000001
 "NssGroupMembersQueryCacheOnly"=dword:00000000
 "NssUserMembershipQueryCacheOnly"=dword:00000000
