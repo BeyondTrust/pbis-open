@@ -325,14 +325,27 @@ stop_daemons()
     for daemon in `reverse_list ${DAEMONS}`; do
         stop_daemon $daemon
     done
+    if type svccfg >/dev/null 2>&1; then
+        for daemon in `reverse_list ${DAEMONS}`; do
+            if svccfg select $daemon 2>/dev/null; then
+                svccfg delete $daemon
+            fi
+        done
+    fi
 }
 
 stop_obsolete_daemons()
 {
-    for daemon in ${OBSOLETE_DAEMONS}
-    do
-	stop_daemon $daemon
+    for daemon in ${OBSOLETE_DAEMONS}; do
+        stop_daemon $daemon
     done
+    if type svccfg >/dev/null 2>&1; then
+        for daemon in ${OBSOLETE_DAEMONS}; do
+            if svccfg select $daemon 2>/dev/null; then
+                svccfg delete $daemon
+            fi
+        done
+    fi
 }
 
 stop_daemons_on_reboot()

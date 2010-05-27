@@ -275,29 +275,29 @@ generic_status()
                 return 1
             fi
         fi
-	pid_comm="`UNIX95=1 ps -p "$pid" -o args= 2>/dev/null | awk '{print $1}'`"
-	if [ "$pid_comm" = "<defunct>" ]; then
+        pid_comm="`UNIX95=1 ps -p "$pid" -o args= 2>/dev/null | awk '{print $1}'`"
+        if [ "$pid_comm" = "<defunct>" ]; then
             #It is a zombie process
             return 4
-	fi
-	if [ "$pid_comm" = "${PROG_BIN}" ]; then
+        fi
+        if [ "$pid_comm" = "${PROG_BIN}" ]; then
             #If the system keeps cmdline files, check it
             if [ -f /proc/${pid}/cmdline ]; then
                 #We can't check the exe file because we may be looking
                 #at a version of the program that has been overwritten
-		grep -q ${PROG_BIN} /proc/${pid}/cmdline && return 0
+                grep -q ${PROG_BIN} /proc/${pid}/cmdline && return 0
             else
-		return 0
+                return 0
             fi
-	fi
-	
+        fi
+
         #Program is dead, but lock file exists
-	[ -f "${LOCKFILE}" ] && return 2
-	
+        [ -f "${LOCKFILE}" ] && return 2
+        
         #Program is dead, but pid file exists
-	return 1
+        return 1
     else
-	return 3
+        return 3
     fi
 }
 
@@ -305,33 +305,33 @@ generic_pid()
 {
     if [ -n "${PIDFILE}" -a -f "${PIDFILE}" ]
     then
-	cat "${PIDFILE}"
+        cat "${PIDFILE}"
     else
-	case "${PLATFORM}" in
-	    FREEBSD)
-		pgrep -f "^${PROG_BIN}"
-		;;
-	    ESXI)
-		( ps | grep "^[0-9]* [0-9]* `basename ${PROG_BIN}` *${PROG_BIN}" | awk '{ print $1 };' | head -1 )
-		;;
-	    HP-UX)
-		( UNIX95= ps -e -o pid= -o args= | grep "^ *[0123456789]* *${PROG_BIN}" | awk '{ print $1 };' )
-		;;
-	    *)
-		( UNIX95=1; ps -e -o pid= -o args= | grep "^ *[0123456789]* *${PROG_BIN}" | awk '{ print $1 };' )
-		;;
-	esac
+        case "${PLATFORM}" in
+            FREEBSD)
+                pgrep -f "^${PROG_BIN}"
+                ;;
+            ESXI)
+                ( ps | grep "^[0-9]* [0-9]* `basename ${PROG_BIN}` *${PROG_BIN}" | awk '{ print $1 };' | head -1 )
+                ;;
+            HP-UX)
+                ( UNIX95= ps -e -o pid= -o args= | grep "^ *[0123456789]* *${PROG_BIN}" | awk '{ print $1 };' )
+                ;;
+            *)
+                ( UNIX95=1; ps -e -o pid= -o args= | grep "^ *[0123456789]* *${PROG_BIN}" | awk '{ print $1 };' )
+                ;;
+        esac
     fi
 }
 
 daemon_start() {
 
     if [ -f "${PROG_ERR}" ]; then
-	/bin/rm -f $PROG_ERR;
+        /bin/rm -f $PROG_ERR;
     fi
 
     if [ -n "${STARTHOOK}" ]; then
-	${STARTHOOK}
+        ${STARTHOOK}
     fi
 
     case "${PLATFORM}" in 
@@ -375,8 +375,19 @@ daemon_start() {
             ;;
         HP-UX | SOLARIS | FREEBSD | ESXI)
             echo -n "Starting $PROG_DESC"
-            ${PROG_BIN} ${PROG_ARGS}
-            status=$?
+            if type svcadm >/dev/null 2>&1 ; then
+                # Use the solaris service manager
+
+                # This will start the program again if it was in maintenance
+                # mode.
+                svcadm clear "$SCRIPTNAME" 2>/dev/null
+                # This will start the program again if it was disabled.
+                svcadm enable "$SCRIPTNAME"
+                status=$?
+            else
+                ${PROG_BIN} ${PROG_ARGS}
+                status=$?
+            fi
             if [ $status -eq 0 ]; then
                 status=1
                 for i in `seq 5`; do
@@ -395,7 +406,7 @@ daemon_start() {
     esac
 
     if [ -n "${POSTSTARTHOOK}" ]; then
-	${POSTSTARTHOOK}
+        ${POSTSTARTHOOK}
     fi
 
     [ $status = 0 ] && [ ${PLATFORM} != "DEBIAN" ] && touch ${LOCKFILE}
@@ -420,13 +431,13 @@ daemon_stop() {
             #only try to stop the daemon if it is running
             if generic_status; then
                 kill -TERM "`generic_pid`"
-		# Forget our pidfile since it will now be invalid
-		# if is still present.  This means generic_status
-		# will fall back on ps to see if the daemon is still
-		# running.  This is important on LinuxThreads-based
-		# systems where other threads can still be in the process
-		# of shutting down even when the main thread has exited
-		PIDFILE=""
+                # Forget our pidfile since it will now be invalid
+                # if is still present.  This means generic_status
+                # will fall back on ps to see if the daemon is still
+                # running.  This is important on LinuxThreads-based
+                # systems where other threads can still be in the process
+                # of shutting down even when the main thread has exited
+                PIDFILE=""
                 #Wait up to 5 seconds for the program to end
                 for i in `seq 5`; do
                     #Did the program end?
@@ -445,7 +456,24 @@ daemon_stop() {
             echo -n "Stopping $PROG_DESC"
             status=1
             #only try to stop the daemon if it is running
+            if type svcadm >/dev/null 2>&1 && generic_status; then
+                # Use the solaris service manager
+                svcadm disable "$SCRIPTNAME"
+
+                #Wait up to 5 seconds for the program to end
+                for i in `seq 5`; do
+                    #Did the program end?
+                    generic_status
+                    # Make sure the agent is not running and is not a zombie
+                    # process.
+                    [ $? -ne 0 -a $? -ne 4 ] && status=0 && break
+                    # use the following line instead after bug 3634 is fixed
+                    #[ $? -eq 3 -o $? -eq 2 ] && status=0 && break
+                    sleep 1
+                done
+            fi
             if generic_status; then
+                # svcadm does not exist, or it was unable to stop the program
                 pid="`generic_pid`"
                 kill -TERM $pid
 
