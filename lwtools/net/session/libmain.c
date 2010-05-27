@@ -198,6 +198,19 @@ NetSessionParseArguments(
 
                     parseState = NET_SESSION_ARG_NAME;
                 }
+                else if (!strncmp(pszArg, "//", sizeof("//")-1))
+                {
+                    wchar16_t wszPrefix[] = {'\\', '\\', 0};
+
+                    dwError = LwMbsToWc16s(pszArg, &pCommandInfo->pwszClientname);
+                    BAIL_ON_LTNET_ERROR(dwError);
+
+                    memcpy( (PBYTE)pCommandInfo->pwszClientname,
+                            (PBYTE)&wszPrefix[0],
+                            (sizeof(wszPrefix)/sizeof(wszPrefix[0])-1) * sizeof(wszPrefix[0]));
+
+                    parseState = NET_SESSION_ARG_NAME;
+                }
                 else if (!strcasecmp(pszArg, "-h") ||
                          !strcasecmp(pszArg, "--help") ||
                          !strcasecmp(pszArg, "help"))
