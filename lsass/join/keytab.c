@@ -89,7 +89,7 @@ KtKrb5KeytabOpen(
             dwSize += dwSize;
 
             dwError = LwReallocMemory(
-                          (PVOID)pszDefName
+                          (PVOID)pszDefName,
                           (PVOID*)&pszDefName,
                           dwSize);
             BAIL_ON_LSA_ERROR(dwError);
