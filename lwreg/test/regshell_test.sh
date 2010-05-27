@@ -2,7 +2,7 @@
 #
 # Test of regshell use from command line
 #
-regshell=/opt/likewise/bin/regshell
+regshell=/opt/likewise/bin/lwregshell
 
 # Add values at root key level
 #
@@ -47,5 +47,5 @@ echo ======================================================
 
 # Cleanup the testing mess...
 # 
-#$regshell delete_tree '[HKEY_THIS_MACHINE\test_keys_2]'
+$regshell delete_tree '[HKEY_THIS_MACHINE\test_keys_2]'
 exit 1

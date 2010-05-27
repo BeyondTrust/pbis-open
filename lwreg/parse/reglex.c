@@ -412,7 +412,6 @@ RegLexParseComma(
     return dwError;
 }
 
-
 DWORD
 RegLexParseBackslash(
     PREGLEX_ITEM lexHandle,
@@ -467,9 +466,12 @@ RegLexParseBackslash(
             RegLexAppendChar(lexHandle, inC);
         }
     }
-    else
+    else if (lexHandle->state == REGLEX_STATE_IN_KEY)
     {
-        RegLexAppendChar(lexHandle, inC);
+        RegLexAppendChar(lexHandle, '\\');
+    }
+    else if (lexHandle->state != REGLEX_STATE_BINHEX_STR) {
+        RegLexAppendChar(lexHandle, '\\');
     }
     lexHandle->curToken.lineNum = lexHandle->parseLineNum;
     return dwError;
@@ -963,6 +965,16 @@ RegLexGetToken(
                 {
                     dwError = LWREG_ERROR_INVALID_CONTEXT;
                 }
+                else if (lexHandle->state == REGLEX_STATE_IN_KEY)
+                {
+                    lexHandle->isToken = TRUE;
+                    lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+                    lexHandle->curToken.token = REGLEX_REG_KEY;
+                    lexHandle->state = REGLEX_STATE_INIT;
+                    *pRetToken = lexHandle->curToken.token;
+                    *pEof = 0;
+                    break;
+                }
                 *pEof = eof;
             }
             break;
@@ -973,6 +985,7 @@ RegLexGetToken(
                         ioHandle,
                         inC);
         BAIL_ON_REG_ERROR(dwError);
+
         if (lexHandle->isToken)
         {
             *pRetToken = lexHandle->curToken.token;

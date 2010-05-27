@@ -280,121 +280,139 @@ error:
 }
 
 
+/*
+ * Inputs:
+ * pszKeyName
+ *   [HKEY_THIS_MACHINE\sub1\sub2\sub3]
+ *   sub1\sub2
+ *   [sub1\sub2\]
+ * cmd
+ *   REGSHELL_CMD_CHDIR
+ *
+ * Outputs:
+ * pParseState->pszFullRootKeyName 
+ *    "HKEY_THIS_MACHINE"
+ *
+ * pCmdItem
+ * pCmdItem->keyName
+ *    sub1\sub2\sub3
+ */
 DWORD
 RegShellCmdParseKeyName(
     PREGSHELL_PARSE_STATE pParseState,
     REGSHELL_CMD_E cmd,
-    PSTR pszKeyName,
+    PSTR pszInKeyName,
     PREGSHELL_CMD_ITEM *pRetCmdItem)
 {
+    BOOLEAN bFoundRootKey = FALSE;
     DWORD dwError = 0;
-    DWORD dwRootKeyError = LWREG_ERROR_NO_SUCH_KEY_OR_VALUE;
-    DWORD keyNameLen = 0;
-    DWORD dwOffset = 0;
-    PSTR pszBackslash = NULL;
-    PSTR pszRootKey = NULL;
-    PSTR pszTmpKeyName = NULL;
-    PSTR pszSubKey = NULL;
-    PREGSHELL_CMD_ITEM pCmdItem = NULL;
+    DWORD dwRootKeyError = 0;
+    DWORD dwRootKeyLen = 0;
     HKEY hRootKey = NULL;
-    DWORD dwKeyLen = 0;
+    PREGSHELL_CMD_ITEM pCmdItem = NULL;
+    PSTR pszCursor = NULL;
+    PSTR pszKeyName = NULL; /* Working copy of original pszInKeyName */
+    PSTR pszRootKeyName = NULL;
+    PSTR pszSubKey = NULL;
+    
+    BAIL_ON_INVALID_POINTER(pParseState);
+    BAIL_ON_INVALID_POINTER(pszInKeyName);
 
-    if (pszKeyName[0] == '[')
-    {
-        dwOffset++;
-    }
-    dwError = RegCStringDuplicate(&pszRootKey, &pszKeyName[dwOffset]);
+    dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
     BAIL_ON_REG_ERROR(dwError);
-    dwError = RegCStringDuplicate(&pszTmpKeyName, &pszKeyName[dwOffset]);
-    BAIL_ON_REG_ERROR(dwError);
-    dwKeyLen = strlen(pszTmpKeyName);
 
-    /* Nuke out trailing \ and ] from keyname */
-    if (dwKeyLen > 0 && pszTmpKeyName[dwKeyLen-1] == ']')
+    /* Find and strip off [] from around key when present */
+    pszKeyName = pszInKeyName;
+    if (*pszKeyName == '[')
     {
-        pszTmpKeyName[dwKeyLen-1] = '\0';
-        dwKeyLen--;
+        pszKeyName++;
+    }
+    dwError = RegCStringDuplicate(&pszKeyName, pszKeyName);
+    BAIL_ON_REG_ERROR(dwError);
+    
+    pszCursor = pszKeyName + strlen(pszKeyName) - 1;
+    if (*pszCursor == ']')
+    {
+        *pszCursor-- = '\0';
     }
 
-    pszBackslash = strchr(pszRootKey, '\\');
-    if (pszBackslash)
+    /* Rip off trailing \ characters from key path */
+    while (pszCursor > pszKeyName && *pszCursor == '\\')
     {
-        *pszBackslash = '\0';
-        dwRootKeyError = RegOpenKeyExA(
-                             pParseState->hReg,
-                             NULL,
-                             pszRootKey,
-                             0,
-                             KEY_READ,
-                             &hRootKey);
-        if (dwRootKeyError == 0)
-        {
-            RegCloseKey(pParseState->hReg, hRootKey);
-            pszSubKey = &pszTmpKeyName[strlen(pszRootKey)];
-            pParseState->pszFullRootKeyName = pszRootKey;
-            pszRootKey = NULL;
-        }
-        else {
-            pszSubKey = pszTmpKeyName;
-        }
+        *pszCursor-- = '\0';
+    }
+
+    /* 
+     * Find \ separator, and if found, determine if stuff before \
+     * is a valid root key. If no \ is found, test the stuff passed in
+     * for being a root key anyway.
+     */
+    pszCursor = strchr(pszKeyName, '\\');
+    if (pszCursor)
+    {
+        dwRootKeyLen = pszCursor - pszKeyName;
     }
     else
     {
-        pszSubKey = pszTmpKeyName;
+        dwRootKeyLen = strlen(pszKeyName);
     }
-
-    dwKeyLen = strlen(pszSubKey);
-    if (dwKeyLen > 1 && pszSubKey[dwKeyLen-1] == '\\')
-    {
-        pszSubKey[dwKeyLen-1] = '\0';
-        dwKeyLen--;
-    }
-
-    dwError = RegShellCmdParseCommand(
-                  cmd,
-                  &pCmdItem);
+    dwError = RegCStringAllocatePrintf(
+                  &pszRootKeyName,
+                  "%.*s",
+                  dwRootKeyLen,
+                  pszKeyName);
     BAIL_ON_REG_ERROR(dwError);
-
-    keyNameLen = strlen(pszSubKey);
-    if (pszSubKey[0] == '[' && pszSubKey[keyNameLen-1] == ']')
+    dwRootKeyError = RegOpenKeyExA(
+                         pParseState->hReg,
+                         NULL,
+                         pszRootKeyName,
+                         0,
+                         KEY_READ,
+                         &hRootKey);
+    if (dwRootKeyError == 0)
     {
-        dwError = RegCStringDuplicate(&pCmdItem->keyName, pszSubKey);
-        BAIL_ON_REG_ERROR(dwError);
-        /*
-         * Copy only the stuff between the [ ] delimiters. The copied string is
-         * big enough to do this.
+        /* Valid root key found */
+        RegCloseKey(pParseState->hReg, hRootKey);
+        pParseState->pszFullRootKeyName = pszRootKeyName;
+        pszRootKeyName = NULL;
+        bFoundRootKey = TRUE;
+    }
+    else {
+        LWREG_SAFE_FREE_STRING(pszRootKeyName);
+    }
+
+    if (!bFoundRootKey)
+    {
+        /* 
+         * Path provided does not start with a root key.
+         * Assume this is a subkey, and use it as such.
          */
-        strcpy(pCmdItem->keyName, &pszSubKey[1]);
-        pCmdItem->keyName[keyNameLen - 2] = '\0';
-    }
-    else
-    {
-        dwError = RegAllocateMemory(sizeof(CHAR)*(keyNameLen + 2), (PVOID*)&pCmdItem->keyName);
+        dwError = RegCStringDuplicate(&pszSubKey, pszKeyName);
         BAIL_ON_REG_ERROR(dwError);
 
-        strcat(pCmdItem->keyName, pszSubKey);
+        /* Use default HKEY_THIS_MACHINE root key */
+        dwError = RegCStringDuplicate(
+                      &pParseState->pszFullRootKeyName,
+                      HKEY_THIS_MACHINE);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    else if (pszCursor)
+    {
+        /* The stuff following the valid root key is the subkey */
+        dwError = RegCStringDuplicate(&pszSubKey, pszCursor);
     }
 
-    keyNameLen = strlen(pCmdItem->keyName);
-    if (pCmdItem->keyName[keyNameLen-1] == ']')
-    {
-        pCmdItem->keyName[keyNameLen-1] = '\0';
-    }
-    if (pCmdItem->keyName[0] == '\0')
-    {
-        LWREG_SAFE_FREE_STRING(pCmdItem->keyName);
-    }
-    if (pRetCmdItem)
-    {
-        *pRetCmdItem = pCmdItem;
-    }
+    pCmdItem->keyName = pszSubKey;
+    *pRetCmdItem = pCmdItem;
 
 cleanup:
-    LWREG_SAFE_FREE_STRING(pszRootKey);
-    LWREG_SAFE_FREE_STRING(pszTmpKeyName);
+    LWREG_SAFE_FREE_STRING(pszKeyName);
+    LWREG_SAFE_FREE_STRING(pszRootKeyName);
     return dwError;
 
 error:
+    LWREG_SAFE_FREE_STRING(pszSubKey);
+    RegShellCmdParseFree(pCmdItem);
     goto cleanup;
 }
 
@@ -1315,7 +1333,6 @@ cleanup:
 error:
     goto cleanup;
 }
-
 
 DWORD
 RegShellCmdlineParseToArgv(

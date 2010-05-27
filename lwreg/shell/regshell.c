@@ -45,6 +45,9 @@
 #include <pwd.h>
 #include "histedit.h"
 
+#if 0
+#define _LW_DEBUG 1
+#endif
 #define REGSHELL_ESC_CHAR '|'
 
 static int gCaughtSignal;
@@ -289,7 +292,8 @@ RegShellSetValue(
     switch (type)
     {
         case REG_MULTI_SZ:
-            data = rsItem->args;
+            data = rsItem->binaryValue;
+            dataLen = rsItem->binaryValueLen;
             break;
         case REG_SZ:
             data = rsItem->args[0];
@@ -803,7 +807,7 @@ RegShellProcessCmd(
                 BAIL_ON_REG_ERROR(dwError);
                 pszNewKeyName [strlen(pszNewKeyName) - 1] = '\0';
                 pszKeyName = pszNewKeyName;
-                pszToken = strtok_r(pszKeyName, "\\/", &pszStrtokState);
+                pszToken = strtok_r(pszKeyName, "\\", &pszStrtokState);
                 if (!pszToken)
                 {
                     /*
@@ -872,16 +876,7 @@ RegShellProcessCmd(
                             }
                             else
                             {
-                                pszPwd = strrchr(pszNewDefaultKey,
-                                                 '/');
-                                if (pszPwd)
-                                {
-                                    pszPwd[0] = '\0';
-                                }
-                                else
-                                {
-                                    LWREG_SAFE_FREE_MEMORY(pszNewDefaultKey);
-                                }
+                                LWREG_SAFE_FREE_MEMORY(pszNewDefaultKey);
                             }
                         }
                     }
@@ -959,7 +954,7 @@ RegShellProcessCmd(
                             BAIL_ON_REG_ERROR(dwError);
                         }
                     }
-                    pszToken = strtok_r(pszKeyName, "\\/", &pszStrtokState);
+                    pszToken = strtok_r(pszKeyName, "\\", &pszStrtokState);
                 }
                 if (bChdirOk)
                 {

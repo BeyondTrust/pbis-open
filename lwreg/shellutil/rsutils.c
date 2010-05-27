@@ -747,6 +747,9 @@ RegShellUtilSetValue(
     HKEY pRootKey = NULL;
     PSTR pszParentPath = NULL;
     DWORD dwOffset = 0;
+    PWSTR pwszMultiStr = {0};
+    PWSTR pwszTmp = {0};
+    PSTR pszTmp = NULL;
 
     if (!hReg)
     {
@@ -803,11 +806,25 @@ RegShellUtilSetValue(
     switch (type)
     {
         case REG_MULTI_SZ:
-            dwError = RegMultiStrsToByteArrayA(
-                                        data,
-                                        &pData,
-                                        &dwDataLen);
+            dwError = RegAllocateMemory(
+                dataLen*4 + 4,
+                (PVOID*) &pwszMultiStr);
             BAIL_ON_REG_ERROR(dwError);
+            dwOffset = 0;
+            for (pszTmp = (PSTR) data;
+                 *pszTmp;
+                 pszTmp += strlen((char *) pszTmp) + 1)
+            {
+                dwError = LwRtlWC16StringAllocateFromCString(
+                               &pwszTmp, pszTmp);
+                memcpy(&pwszMultiStr[dwOffset], pwszTmp, wc16slen(pwszTmp) * 2);
+                dwOffset += wc16slen(pwszTmp) + 1;
+                LWREG_SAFE_FREE_MEMORY(pwszTmp);
+            }
+            dwOffset += 2;
+
+            pData = (PBYTE) pwszMultiStr;
+            dwDataLen = dwOffset * sizeof(WCHAR);
             break;
 
         case REG_SZ:
@@ -815,7 +832,6 @@ RegShellUtilSetValue(
             dwError = RegCStringDuplicate((LW_PVOID) &pData, data?data:"");
             BAIL_ON_REG_ERROR(dwError);
             dwDataLen = strlen((PSTR) pData)+1;
-
             break;
 
         case REG_DWORD:
@@ -845,7 +861,7 @@ RegShellUtilSetValue(
         pData,
         dwDataLen);
     BAIL_ON_REG_ERROR(dwError);
-    if (type != REG_BINARY)
+    if (type != REG_BINARY && type != REG_MULTI_SZ)
     {
         LWREG_SAFE_FREE_MEMORY(pData);
     }
