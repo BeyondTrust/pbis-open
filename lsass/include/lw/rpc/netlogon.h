@@ -50,7 +50,7 @@
 
 #define NETLOGON_DEFAULT_PROT_SEQ   "ncacn_np"
 #define NETLOGON_DEFAULT_ENDPOINT   "\\PIPE\\netlogon"
-#define NETLOGON_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
+#define NETLOGON_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 
 /*

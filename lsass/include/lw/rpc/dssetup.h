@@ -49,7 +49,7 @@
 
 #define DSR_DEFAULT_PROT_SEQ   "ncacn_np"
 #define DSR_DEFAULT_ENDPOINT   "\\PIPE\\lsarpc"
-#define DSR_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
+#define DSR_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 
 #define DS_ROLE_STANDALONE_WORKSTATION         (0)

@@ -51,7 +51,7 @@
 
 #define SAMR_DEFAULT_PROT_SEQ   "ncacn_np"
 #define SAMR_DEFAULT_ENDPOINT   "\\pipe\\samr"
-#define SAMR_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
+#define SAMR_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 /* Connect access mask flags */
 #define SAMR_ACCESS_CONNECT_TO_SERVER          0x00000001

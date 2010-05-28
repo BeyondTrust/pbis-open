@@ -51,7 +51,7 @@
 
 #define WKSS_DEFAULT_PROT_SEQ   "ncacn_np"
 #define WKSS_DEFAULT_ENDPOINT   "\\PIPE\\wkssvc"
-#define WKSS_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
+#define WKSS_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 
 typedef struct _WKSTA_INFO_100

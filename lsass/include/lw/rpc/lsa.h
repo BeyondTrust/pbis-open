@@ -50,7 +50,7 @@
 
 #define LSA_DEFAULT_PROT_SEQ   "ncacn_np"
 #define LSA_DEFAULT_ENDPOINT   "\\PIPE\\lsarpc"
-#define LSA_LOCAL_ENDPOINT     "/var/lib/likewise/rpc/lsass"
+#define LSA_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 #define LSA_LOOKUP_NAMES_ALL                   1
 #define LSA_LOOKUP_NAMES_DOMAINS_ONLY          2
