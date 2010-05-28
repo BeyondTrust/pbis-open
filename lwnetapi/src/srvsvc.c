@@ -632,7 +632,10 @@ NetShareSetInfoW(
                     &dwParmError);
     BAIL_ON_NETAPI_ERROR(status);
 
-    *pdwParmError = 0;
+    if (pdwParmError)
+    {
+        *pdwParmError = 0;
+    }
 
 cleanup:
 
