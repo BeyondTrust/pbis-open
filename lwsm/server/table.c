@@ -207,17 +207,7 @@ LwSmTableAddEntry(
     DWORD dwError = 0;
     BOOL bLocked = TRUE;
     PSM_TABLE_ENTRY pEntry = NULL;
-    pthread_mutexattr_t attr;
-    pthread_mutexattr_t* pAttr = NULL;
     PWSTR pwszLoaderName = NULL;
-
-    dwError = LwMapErrnoToLwError(pthread_mutexattr_init(&attr));
-    BAIL_ON_ERROR(dwError);
-        
-    pAttr = &attr;
-
-    dwError = LwMapErrnoToLwError(pthread_mutexattr_settype(pAttr, PTHREAD_MUTEX_RECURSIVE));
-    BAIL_ON_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pEntry), OUT_PPVOID(&pEntry));
     BAIL_ON_ERROR(dwError);
@@ -229,7 +219,7 @@ LwSmTableAddEntry(
 
     dwError = LwSmCopyServiceInfo(pInfo, &pEntry->pInfo);
     
-    dwError = LwMapErrnoToLwError(pthread_mutex_init(&pEntry->lock, pAttr));
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(&pEntry->lock, NULL));
     BAIL_ON_ERROR(dwError);
     pEntry->pLock = &pEntry->lock;
 
@@ -259,11 +249,6 @@ LwSmTableAddEntry(
 cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszLoaderName);
-
-    if (pAttr)
-    {
-        pthread_mutexattr_destroy(pAttr);
-    }
 
     return dwError;
 
@@ -467,7 +452,9 @@ LwSmTableStartEntry(
                     BAIL_ON_ERROR(dwError);
                 }
 
+                UNLOCK(bLocked, pEntry->pLock);
                 dwError = pEntry->pVtbl->pfnStart(&pEntry->object);
+                LOCK(bLocked, pEntry->pLock);
                 BAIL_ON_ERROR(dwError);
                 dwAttempts++;
             }
@@ -637,7 +624,9 @@ LwSmTableStopEntry(
                 
                 SM_LOG_INFO("Stopping service: %s", pszServiceName);
 
+                UNLOCK(bLocked, pEntry->pLock);
                 dwError = pEntry->pVtbl->pfnStop(&pEntry->object);
+                LOCK(bLocked, pEntry->pLock);
                 BAIL_ON_ERROR(dwError);
                 dwAttempts++;
             }
@@ -704,7 +693,9 @@ LwSmTableRefreshEntry(
     switch (status.state)
     {
     case LW_SERVICE_STATE_RUNNING:
+        UNLOCK(bLocked, pEntry->pLock);
         dwError = pEntry->pVtbl->pfnRefresh(&pEntry->object);
+        LOCK(bLocked, pEntry->pLock);
         BAIL_ON_ERROR(dwError);
         break;
     default:
@@ -757,8 +748,11 @@ LwSmTablePollEntry(
     )
 {
     DWORD dwError = 0;
+    BOOLEAN bLocked = TRUE;
 
+    UNLOCK(bLocked, pEntry->pLock);
     dwError = pEntry->pVtbl->pfnGetStatus(&pEntry->object, pStatus);
+    LOCK(bLocked, pEntry->pLock);
     BAIL_ON_ERROR(dwError);
 
     /* If an unannounced change in the service status occured,
