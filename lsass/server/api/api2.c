@@ -1639,14 +1639,10 @@ LsaSrvAddUser2(
         }
         else if (dwError == LW_ERROR_NOT_HANDLED && !pszTargetProvider)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         }
-        else
-        {
-            BAIL_ON_LSA_ERROR(dwError);
-        }
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pszTargetProvider && !bFoundProvider)
@@ -1806,10 +1802,8 @@ LsaSrvAddGroup2(
         }
         else if (dwError == LW_ERROR_NOT_HANDLED && !pszTargetProvider)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
-            continue;
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
