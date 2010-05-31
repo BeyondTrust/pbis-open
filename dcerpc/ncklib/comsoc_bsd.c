@@ -810,16 +810,19 @@ connect_again:
     }
 #endif
 
-    serr = rpc__bsd_socket_recvsession_key(sock,
-                                           &session_key,
-                                           &session_key_len);
-    if (serr)
+    if (sock->pseq_id == rpc_c_protseq_id_ncalrpc)
     {
-        goto error;
-    }
+        serr = rpc__bsd_socket_recvsession_key(sock,
+                                               &session_key,
+                                               &session_key_len);
+        if (serr)
+        {
+            goto error;
+        }
 
-    lrpc->info.session_key.data   = session_key;
-    lrpc->info.session_key.length = session_key_len;
+        lrpc->info.session_key.data   = session_key;
+        lrpc->info.session_key.length = session_key_len;
+    }
 
 cleanup:
     rpc_string_free (&netaddr, &dbg_status);
@@ -920,19 +923,23 @@ accept_again:
             goto cleanup;
         }
 
-        serr = rpc__bsd_socket_createsessionkey(&session_key, &session_key_len);
-	if (serr)
+        if (sock->pseq_id == rpc_c_protseq_id_ncalrpc)
         {
-            goto cleanup;
-        }
+            serr = rpc__bsd_socket_createsessionkey(&session_key,
+                                                    &session_key_len);
+            if (serr)
+            {
+                goto cleanup;
+            }
 
-        serr = rpc__bsd_socket_sendsessionkey((*newsock),
-                                              session_key,
-                                              session_key_len);
-	if (serr)
-        {
-            goto cleanup;
-        }
+            serr = rpc__bsd_socket_sendsessionkey((*newsock),
+                                                  session_key,
+                                                  session_key_len);
+            if (serr)
+            {
+                goto cleanup;
+            }
+	}
     }
     else
     {
