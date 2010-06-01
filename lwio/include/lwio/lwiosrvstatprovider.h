@@ -60,6 +60,8 @@ typedef struct _SRV_STAT_CONNECTION_INFO
 {
     struct sockaddr clientAddress;
     size_t          clientAddrLen;
+    struct sockaddr serverAddress;
+    size_t          serverAddrLen;
     ULONG           ulResourceId;
 
 } SRV_STAT_CONNECTION_INFO, *PSRV_STAT_CONNECTION_INFO;
