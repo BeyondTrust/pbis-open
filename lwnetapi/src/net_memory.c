@@ -619,10 +619,18 @@ NetAllocBufferWC16StringFromUnicodeString(
             BAIL_ON_WIN_ERROR(err);
         }
 
-        err = LwWc16snCpy((PWSTR)pStr,
-                          pSource->Buffer,
-                          pSource->Length / 2);
-        BAIL_ON_WIN_ERROR(err);
+        if (pSource &&
+            pSource->MaximumLength && pSource->Buffer)
+        {
+            err = LwWc16snCpy((PWSTR)pStr,
+                              pSource->Buffer,
+                              pSource->Length / 2);
+            BAIL_ON_WIN_ERROR(err);
+        }
+        else
+        {
+            pStr = NULL;
+        }
 
         /* recalculate size and space after copying the string */
         ppwszDest     = (PWSTR*)pCursor;
