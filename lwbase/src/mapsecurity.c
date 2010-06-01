@@ -690,9 +690,19 @@ LwMapSecurityCreateExtendedAccessToken(
     ULONG sidBuffer1[SID_MAX_SIZE / sizeof(ULONG) + 1] = { 0 };
     ULONG sidBuffer2[SID_MAX_SIZE / sizeof(ULONG) + 1] = { 0 };
     PSID sids[2] = { (PSID) sidBuffer1, (PSID) sidBuffer2 };
-    ULONG sidCount = LW_ARRAY_SIZE(sids);
+    ULONG sidCount = 0;
     ULONG size = 0;
     PTOKEN_GROUPS extendedGroups = NULL;
+    ULONG ownerRid = 0;
+
+    if (!Owner)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = RtlGetRidSid(&ownerRid, Owner->Owner);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     size = sizeof(sidBuffer1);
     status = RtlCreateWellKnownSid(
@@ -702,13 +712,22 @@ LwMapSecurityCreateExtendedAccessToken(
                     &size);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    size = sizeof(sidBuffer2);
-    status = RtlCreateWellKnownSid(
-                    WinAuthenticatedUserSid,
-                    NULL,
-                    (PSID) sidBuffer2,
-                    &size);
-    GOTO_CLEANUP_ON_STATUS(status);
+    sidCount++;    
+
+    // Only Add "NT AUTHORITY\Authenticated Users" for non-Guest
+
+    if (ownerRid != DOMAIN_USER_RID_GUEST)
+    {
+        size = sizeof(sidBuffer2);
+        status = RtlCreateWellKnownSid(
+                     WinAuthenticatedUserSid,
+                     NULL,
+                     (PSID) sidBuffer2,
+                     &size);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        sidCount++;
+    }
 
     status = LwMapSecurityCreateExtendedGroups(
                     &extendedGroups,
