@@ -20,117 +20,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef UNICODE
-#undef UNICODE
-#endif
+#include "sspi-common.h"
 
-#if defined(_WIN32)
+#define INIT_FLAGMAPPING(Flag) _INIT_FLAGMAPPING(ASC_REQ_, Flag)
 
-#include <windows.h>
-#include <winerror.h>
-#include <rpc.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <io.h>
-#include <fcntl.h>
-#include <winsock2.h>
-#define SECURITY_WIN32
-#include <security.h>
-#include <ntsecapi.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#else
-
-#include "config.h"
-#include <lw/base.h>
-#include <ntlm/sspintlm.h>
-#include <wc16str.h>
-#include <lwdef.h>
-#include <lwerror.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <stddef.h>
-#include <sys/types.h>
-
-#endif
-
-#define DUPE( x ) { "-" #x, ASC_REQ_ ## x }
-
-#define BAIL_ON_ERROR(dwError) \
-    if (dwError)               \
-    {                          \
-        printf("EE = %d, error = %u (0x%08x)\n", __LINE__, dwError, dwError); \
-        goto error;            \
-    }
-
-typedef ULONG OM_uint32;
-
-typedef struct
-{
-   PCHAR     name;
-   OM_uint32 value;
-   PCHAR     realname;
-} FLAGMAPPING, *PFLAGMAPPING;
-
-typedef struct _NTLM_SEC_BUFFER
-{
-    USHORT usLength;    // number of bytes used
-    USHORT usMaxLength; // true size of buffer in bytes
-    DWORD  dwOffset;
-} NTLM_SEC_BUFFER, *PNTLM_SEC_BUFFER;
-
-typedef struct _NTLM_MESSAGE
-{
-    UCHAR NtlmSignature[8];
-    DWORD MessageType;
-} NTLM_MESSAGE, *PNTLM_MESSAGE;
-
-typedef struct _NTLM_NEGOTIATE_MESSAGE
-{
-    UCHAR NtlmSignature[8];
-    DWORD MessageType;
-    DWORD NtlmFlags;
-    // Optional Supplied Domain NTLM_SEC_BUFFER
-    // Optional Supplied Workstation NTLM_SEC_BUFFER
-    // Optional OS Version 8 bytes
-    // Optional Data
-} NTLM_NEGOTIATE_MESSAGE, *PNTLM_NEGOTIATE_MESSAGE;
-
-typedef struct _NTLM_CHALLENGE_MESSAGE
-{
-    UCHAR NtlmSignature[8];
-    DWORD MessageType;
-    NTLM_SEC_BUFFER Target;
-    DWORD NtlmFlags;
-    UCHAR Challenge[8];
-    // Optional Context 8 bytes
-    // Optional Target Information NTLM_SEC_BUFFER
-    // Optional OS Version 8 bytes
-    // Optional Data
-} NTLM_CHALLENGE_MESSAGE, *PNTLM_CHALLENGE_MESSAGE;
-
-typedef struct _NTLM_RESPONSE_MESSAGE
-{
-    UCHAR NtlmSignature[8];
-    DWORD MessageType;
-    NTLM_SEC_BUFFER LmResponse;
-    NTLM_SEC_BUFFER NtResponse;
-    NTLM_SEC_BUFFER AuthTargetName;
-    NTLM_SEC_BUFFER UserName;
-    NTLM_SEC_BUFFER Workstation;
-    // Optional Session Key NTLM_SEC_BUFFER
-    // Optional Flags 4 bytes
-    // Optional OS Version 8 bytes
-    // Optional Data
-} NTLM_RESPONSE_MESSAGE, *PNTLM_RESPONSE_MESSAGE;
-
+static
 DWORD
-Usage(VOID);
+Usage(
+    VOID
+    );
 
+static
 DWORD
 ServerAcquireCreds(
     IN PCHAR pServiceName,
@@ -140,92 +40,32 @@ ServerAcquireCreds(
     OUT CredHandle *pServerCreds
     );
 
+static
 DWORD
 CreateSocket(
     IN USHORT uPort,
     OUT PINT pSocket
     );
 
+static
 DWORD
 SignServer(
     IN INT nSocket,
     IN CredHandle *pServerCreds,
-    IN OM_uint32 AscFlags
+    IN ULONG AscFlags
     );
 
+static
 DWORD
 ServerEstablishContext(
     IN INT nSocket,
     IN CredHandle *pServerCreds,
     OUT CtxtHandle *pContext,
-    IN OM_uint32 AscFlags
+    IN ULONG AscFlags
     );
 
-DWORD
-SendToken(
-    IN INT nSocket,
-    IN PSecBuffer pToken
-    );
-
-DWORD
-WriteAll(
-    IN INT nSocket,
-    IN PCHAR pBuffer,
-    IN UINT nBytes,
-    OUT PINT nBytesWritten
-    );
-
-DWORD
-RecvToken(
-    IN INT nSocket,
-    OUT PSecBuffer pToken
-    );
-
-DWORD
-ReadAll(
-    IN INT nSocket,
-    OUT PCHAR pBuffer,
-    IN UINT nBytes,
-    OUT PINT nBytesRead
-    );
-
-VOID
-PrintHexDump(
-    DWORD dwLength,
-    PBYTE pBuffer,
-    INT bIsNtlmMessage
-    );
-
-VOID
-DumpNtlmFlags(
-    DWORD dwFlags
-    );
-
-VOID
-DumpNegMessage(
-    PNTLM_NEGOTIATE_MESSAGE pMsg,
-    DWORD dwSize
-    );
-
-VOID
-DumpChlngMessage(
-    PNTLM_CHALLENGE_MESSAGE pMsg,
-    DWORD dwSize
-    );
-
-VOID
-DumpRespMessage(
-    PNTLM_RESPONSE_MESSAGE pMsg,
-    DWORD dwSize
-    );
-
-VOID
-DumpNtlmMessage(
-    PBYTE pBuffer,
-    DWORD dwSize
-    );
-
-INT _cdecl
+INT
+_cdecl
 main(
     IN INT argc,
     IN PCHAR* argv
@@ -244,7 +84,7 @@ main(
     CredHandle ServerCreds;
     INT nServerCredsAcquired = 0;
     INT nSocketsStarted = 0;
-    OM_uint32 AscFlags =
+    ULONG AscFlags =
         //ASC_REQ_MUTUAL_AUTH |
         //ASC_REQ_CONFIDENTIALITY |
         ASC_REQ_INTEGRITY |
@@ -252,12 +92,12 @@ main(
     PCHAR pSecPkgName = NTLMSP_NAME_A;
 
     FLAGMAPPING FlagMappings[] = {
-        DUPE( CONFIDENTIALITY ),
-        DUPE( DELEGATE ),
-        DUPE( INTEGRITY ),
-        DUPE( USE_SESSION_KEY ),
-        DUPE( REPLAY_DETECT ),
-        DUPE( SEQUENCE_DETECT )
+        INIT_FLAGMAPPING( CONFIDENTIALITY ),
+        INIT_FLAGMAPPING( DELEGATE ),
+        INIT_FLAGMAPPING( INTEGRITY ),
+        INIT_FLAGMAPPING( USE_SESSION_KEY ),
+        INIT_FLAGMAPPING( REPLAY_DETECT ),
+        INIT_FLAGMAPPING( SEQUENCE_DETECT )
     };
 
     memset(&SocketData, 0, sizeof(WSADATA));
@@ -331,8 +171,6 @@ main(
 
         argc--; argv++;
     }
-
-
 
     dwError = WSAStartup(usVersionRequired, &SocketData);
     if (0 != dwError)
@@ -419,6 +257,7 @@ error:
     goto finish;
 }
 
+static
 DWORD
 Usage(VOID)
 {
@@ -428,6 +267,7 @@ Usage(VOID)
     return ERROR_INVALID_PARAMETER;
 }
 
+static
 DWORD
 ServerAcquireCreds(
     IN PCHAR pServiceName,
@@ -439,31 +279,31 @@ ServerAcquireCreds(
 {
     DWORD dwError = SEC_E_OK;
     TimeStamp Expiry;
-    SEC_WINNT_AUTH_IDENTITY AuthIdentity;
-    PSEC_WINNT_AUTH_IDENTITY pAuthId = NULL;
+    SEC_WINNT_AUTH_IDENTITY_A AuthIdentity;
+    PSEC_WINNT_AUTH_IDENTITY_A pAuthId = NULL;
 
     memset(&Expiry, 0, sizeof(TimeStamp));
-    memset(&AuthIdentity, 0, sizeof(SEC_WINNT_AUTH_IDENTITY_W));
+    memset(&AuthIdentity, 0, sizeof(SEC_WINNT_AUTH_IDENTITY_A));
 
     memset(pServerCreds, 0, sizeof(CredHandle));
 
     if (pServiceName)
     {
-        AuthIdentity.User = pServiceName;
+        AuthIdentity.User = (PBYTE) pServiceName;
         AuthIdentity.UserLength = (ULONG)strlen(pServiceName);
         pAuthId = &AuthIdentity;
     }
 
     if (pServicePassword)
     {
-        AuthIdentity.Password = pServicePassword;
+        AuthIdentity.Password = (PBYTE) pServicePassword;
         AuthIdentity.PasswordLength = (ULONG)strlen(pServicePassword);
         pAuthId = &AuthIdentity;
     }
 
     if (pServiceRealm)
     {
-        AuthIdentity.Domain = pServiceRealm;
+        AuthIdentity.Domain = (PBYTE) pServiceRealm;
         AuthIdentity.DomainLength = (ULONG)strlen(pServiceRealm);
         pAuthId = &AuthIdentity;
     }
@@ -488,6 +328,7 @@ error:
     return dwError;
 }
 
+static
 DWORD
 CreateSocket(
     IN USHORT uPort,
@@ -562,11 +403,12 @@ error:
     goto finish;
 }
 
+static
 DWORD
 SignServer(
     IN INT nSocket,
     IN CredHandle *pServerCreds,
-    IN OM_uint32 AscFlags
+    IN ULONG AscFlags
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -655,7 +497,7 @@ SignServer(
     BAIL_ON_ERROR(dwError);
 
     printf("RECEIVED:\n");
-    PrintHexDump(TransmitBuffer.cbBuffer, TransmitBuffer.pvBuffer, FALSE);
+    DumpBuffer(TransmitBuffer.pvBuffer, TransmitBuffer.cbBuffer);
     printf("\n");
 
     WrapBufferDesc.cBuffers = 2;
@@ -766,12 +608,13 @@ error:
     goto finish;
 }
 
+static
 DWORD
 ServerEstablishContext(
     IN INT nSocket,
     IN CredHandle *pServerCreds,
     OUT CtxtHandle *pContext,
-    IN OM_uint32 AscFlags
+    IN ULONG AscFlags
     )
 {
     DWORD dwError = ERROR_SUCCESS;
@@ -807,7 +650,8 @@ ServerEstablishContext(
         BAIL_ON_ERROR(dwError);
 
         printf("RECEIVED:\n");
-        PrintHexDump(RecvTokenBuffer.cbBuffer, RecvTokenBuffer.pvBuffer, TRUE);
+        DumpBuffer(RecvTokenBuffer.pvBuffer, RecvTokenBuffer.cbBuffer);
+        DumpNtlmMessage(RecvTokenBuffer.pvBuffer, RecvTokenBuffer.cbBuffer);
         printf("\n");
 
         RecvTokenBuffer.BufferType = SECBUFFER_TOKEN;
@@ -840,14 +684,15 @@ ServerEstablishContext(
         if (SEC_I_CONTINUE_NEEDED == dwLoopError)
         {
             printf("Context partially accepted...\n");
-            PrintHexDump(SendTokenBuffer.cbBuffer, SendTokenBuffer.pvBuffer, TRUE);
+            DumpBuffer(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
+            DumpNtlmMessage(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             printf("\n");
         }
         else
         {
             printf("Context FULLY accepted!\n");
             printf("Flags used:\n");
-            DumpNtlmFlags(nRetFlags);
+            DumpAscRetFlags(nRetFlags);
             printf("\n");
         }
 
@@ -887,444 +732,4 @@ error:
         DeleteSecurityContext(pContext);
     }
     goto finish;
-}
-
-DWORD
-SendToken(
-    IN INT nSocket,
-    IN PSecBuffer pToken
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    ULONG ulLen = 0;
-    INT nBytesWritten = 0;
-
-    ulLen = htonl(pToken->cbBuffer);
-
-    dwError = WriteAll(
-        nSocket,
-        (PCHAR)&ulLen,
-        4,
-        &nBytesWritten
-        );
-
-    BAIL_ON_ERROR(dwError);
-
-    if (4 != nBytesWritten)
-    {
-        dwError = ERROR_INCORRECT_SIZE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = WriteAll(
-        nSocket,
-        pToken->pvBuffer,
-        pToken->cbBuffer,
-        &nBytesWritten
-        );
-
-    BAIL_ON_ERROR(dwError);
-
-    if (nBytesWritten != pToken->cbBuffer)
-    {
-        dwError = ERROR_INCORRECT_SIZE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-error:
-    return dwError;
-}
-
-DWORD
-WriteAll(
-    IN INT nSocket,
-    IN PCHAR pBuffer,
-    IN UINT nBytes,
-    OUT PINT nBytesWritten
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    INT nReturn = 0;
-    PCHAR pTrav = NULL;
-
-    *nBytesWritten = 0;
-
-    for (pTrav = pBuffer; nBytes; pTrav += nReturn, nBytes -= nReturn)
-    {
-        nReturn = send(nSocket, pTrav, nBytes, 0);
-
-        if (nReturn < 0)
-        {
-            dwError = GetLastError();
-            BAIL_ON_ERROR(dwError);
-        }
-
-        if (nReturn == 0)
-        {
-            break;
-        }
-    }
-
-    *nBytesWritten = pTrav - pBuffer;
-
-error:
-    return dwError;
-}
-
-DWORD
-RecvToken(
-    IN INT nSocket,
-    OUT PSecBuffer pToken
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    INT nBytesRead = 0;
-
-    memset(pToken, 0, sizeof(SecBuffer));
-
-    pToken->BufferType = SECBUFFER_TOKEN;
-
-    dwError = ReadAll(
-        nSocket,
-        (PCHAR)&pToken->cbBuffer,
-        4,
-        &nBytesRead
-        );
-
-    BAIL_ON_ERROR(dwError);
-
-    if (4 != nBytesRead)
-    {
-        printf("%u\n", nBytesRead);
-        dwError = ERROR_INCORRECT_SIZE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    pToken->cbBuffer = ntohl(pToken->cbBuffer);
-    pToken->pvBuffer = (char *) malloc(pToken->cbBuffer);
-
-    if (pToken->pvBuffer == NULL)
-    {
-        dwError = ERROR_NOT_ENOUGH_MEMORY;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = ReadAll(
-        nSocket,
-        (PCHAR)pToken->pvBuffer,
-        pToken->cbBuffer,
-        &nBytesRead
-        );
-
-    BAIL_ON_ERROR(dwError);
-
-    if (nBytesRead != pToken->cbBuffer)
-    {
-        dwError = ERROR_INCORRECT_SIZE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-finish:
-    return dwError;
-error:
-    if (pToken->pvBuffer)
-    {
-        free(pToken->pvBuffer);
-        memset(pToken, 0, sizeof(SecBuffer));
-    }
-    goto finish;
-}
-
-DWORD
-ReadAll(
-    IN INT nSocket,
-    OUT PCHAR pBuffer,
-    IN UINT nBytes,
-    OUT PINT nBytesRead
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    INT nReturn = 0;
-    PCHAR pTrav = NULL;
-
-    memset(pBuffer, 0, nBytes);
-    *nBytesRead = 0;
-
-    for (pTrav = pBuffer; nBytes; pTrav += nReturn, nBytes -= nReturn)
-    {
-        nReturn = recv(nSocket, pTrav, nBytes, 0);
-
-        if (nReturn < 0)
-        {
-            dwError = GetLastError();
-            BAIL_ON_ERROR(dwError);
-        }
-
-        if (nReturn == 0)
-        {
-            printf("Connection closed\n");
-            break;
-        }
-    }
-
-    *nBytesRead = pTrav - pBuffer;
-
-error:
-    return dwError;
-}
-
-VOID
-DumpNtlmFlags(
-    DWORD dwFlags
-    )
-{
-    printf("NTLM flag information (0x%X):\n", dwFlags);
-    if (dwFlags & 0x00000001)
-    {
-        printf("NTLM_FLAG_UNICODE\n");
-        dwFlags &= ~0x00000001;
-    }
-    if (dwFlags & 0x00000002)
-    {
-        printf("NTLM_FLAG_OEM\n");
-        dwFlags &= ~0x00000002;
-    }
-    if (dwFlags & 0x00000004)
-    {
-        printf("NTLM_FLAG_REQUEST_TARGET\n");
-        dwFlags &= ~0x00000004;
-    }
-    if (dwFlags & 0x00000010)
-    {
-        printf("NTLM_FLAG_SIGN\n");
-        dwFlags &= ~0x00000010;
-    }
-    if (dwFlags & 0x00000020)
-    {
-        printf("NTLM_FLAG_SEAL\n");
-        dwFlags &= ~0x00000020;
-    }
-    if (dwFlags & 0x00000040)
-    {
-        printf("NTLM_FLAG_DATAGRAM\n");
-        dwFlags &= ~0x00000040;
-    }
-    if (dwFlags & 0x00000080)
-    {
-        printf("NTLM_FLAG_LM_KEY\n");
-        dwFlags &= ~0x00000080;
-    }
-    if (dwFlags & 0x00000100)
-    {
-        printf("NTLM_FLAG_NETWARE\n");
-        dwFlags &= ~0x00000100;
-    }
-    if (dwFlags & 0x00000200)
-    {
-        printf("NTLM_FLAG_NTLM\n");
-        dwFlags &= ~0x00000200;
-    }
-    if (dwFlags & 0x00001000)
-    {
-        printf("NTLM_FLAG_DOMAIN\n");
-        dwFlags &= ~0x00001000;
-    }
-    if (dwFlags & 0x00002000)
-    {
-        printf("NTLM_FLAG_WORKSTATION\n");
-        dwFlags &= ~0x00002000;
-    }
-    if (dwFlags & 0x00004000)
-    {
-        printf("NTLM_FLAG_LOCAL_CALL\n");
-        dwFlags &= ~0x00004000;
-    }
-    if (dwFlags & 0x00008000)
-    {
-        printf("NTLM_FLAG_ALWAYS_SIGN\n");
-        dwFlags &= ~0x00008000;
-    }
-    if (dwFlags & 0x00010000)
-    {
-        printf("NTLM_FLAG_TYPE_DOMAIN\n");
-        dwFlags &= ~0x00010000;
-    }
-    if (dwFlags & 0x00020000)
-    {
-        printf("NTLM_FLAG_TYPE_SERVER\n");
-        dwFlags &= ~0x00020000;
-    }
-    if (dwFlags & 0x00040000)
-    {
-        printf("NTLM_FLAG_TYPE_SHARE\n");
-        dwFlags &= ~0x00040000;
-    }
-    if (dwFlags & 0x00080000)
-    {
-        printf("NTLM_FLAG_NTLM2\n");
-        dwFlags &= ~0x00080000;
-    }
-    if (dwFlags & 0x00100000)
-    {
-        printf("NTLM_FLAG_INIT_RESPONSE\n");
-        dwFlags &= ~0x00100000;
-    }
-    if (dwFlags & 0x00200000)
-    {
-        printf("NTLM_FLAG_ACCEPT_RESPONSE\n");
-        dwFlags &= ~0x00200000;
-    }
-    if (dwFlags & 0x00400000)
-    {
-        printf("NTLM_FLAG_NON_NT_SESSION_KEY\n");
-        dwFlags &= ~0x00400000;
-    }
-    if (dwFlags & 0x00800000)
-    {
-        printf("NTLM_FLAG_TARGET_INFO\n");
-        dwFlags &= ~0x00800000;
-    }
-    if (dwFlags & 0x02000000)
-    {
-        printf("NTLM_FLAG_UNKNOWN_02000000\n");
-        dwFlags &= ~0x02000000;
-    }
-    if (dwFlags & 0x20000000)
-    {
-        printf("NTLM_FLAG_128\n");
-        dwFlags &= ~0x20000000;
-    }
-    if (dwFlags & 0x40000000)
-    {
-        printf("NTLM_FLAG_KEY_EXCH\n");
-        dwFlags &= ~0x40000000;
-    }
-    if (dwFlags & 0x80000000)
-    {
-        printf("NTLM_FLAG_56\n");
-        dwFlags &= ~0x80000000;
-    }
-    if (dwFlags)
-    {
-        printf("Unknown flags: 0x%X\n", dwFlags);
-    }
-}
-
-VOID
-DumpNegMessage(
-    PNTLM_NEGOTIATE_MESSAGE pMsg,
-    DWORD dwSize
-    )
-{
-    printf("Message type: Negotiate\n");
-    DumpNtlmFlags(pMsg->NtlmFlags);
-}
-
-VOID
-DumpChlngMessage(
-    PNTLM_CHALLENGE_MESSAGE pMsg,
-    DWORD dwSize
-    )
-{
-    printf("Message type: Challenge\n");
-    DumpNtlmFlags(pMsg->NtlmFlags);
-}
-
-VOID
-DumpRespMessage(
-    PNTLM_RESPONSE_MESSAGE pMsg,
-    DWORD dwSize
-    )
-{
-    printf("Message type: Response\n");
-}
-
-VOID
-DumpNtlmMessage(
-    PBYTE pBuffer,
-    DWORD dwSize
-    )
-{
-
-    PNTLM_MESSAGE pMsg = (PNTLM_MESSAGE)pBuffer;
-
-    printf("NTLM message information:\n");
-
-    switch (pMsg->MessageType)
-    {
-    case 1:
-        DumpNegMessage((PNTLM_NEGOTIATE_MESSAGE)pMsg, dwSize);
-        break;
-    case 2:
-        DumpChlngMessage((PNTLM_CHALLENGE_MESSAGE)pMsg, dwSize);
-        break;
-    case 3:
-        DumpRespMessage((PNTLM_RESPONSE_MESSAGE)pMsg, dwSize);
-        break;
-    }
-}
-
-VOID
-PrintHexDump(
-    DWORD dwLength,
-    PBYTE pBuffer,
-    INT bIsNtlmMessage
-    )
-{
-    DWORD i,count,index;
-    CHAR rgbDigits[]="0123456789abcdef";
-    CHAR rgbLine[100];
-    int cbLine;
-    PBYTE pToken = pBuffer;
-
-    for (index = 0; dwLength;
-        dwLength -= count, pBuffer += count, index += count)
-    {
-        count = (dwLength > 16) ? 16:dwLength;
-
-        sprintf(rgbLine, "%4.4x  ",index);
-        cbLine = 6;
-
-        for (i=0;i<count;i++)
-        {
-            rgbLine[(cbLine)++] = rgbDigits[pBuffer[i] >> 4];
-            rgbLine[(cbLine)++] = rgbDigits[pBuffer[i] & 0x0f];
-            if (i == 7)
-            {
-                rgbLine[(cbLine)++] = ':';
-            }
-            else
-            {
-                rgbLine[(cbLine)++] = ' ';
-            }
-        }
-        for (; i < 16; i++)
-        {
-            rgbLine[(cbLine)++] = ' ';
-            rgbLine[(cbLine)++] = ' ';
-            rgbLine[(cbLine)++] = ' ';
-        }
-
-        rgbLine[(cbLine)++] = ' ';
-
-        for (i = 0; i < count; i++)
-        {
-            if (pBuffer[i] < 32 || pBuffer[i] > 126)
-            {
-                rgbLine[(cbLine)++] = '.';
-            }
-            else
-            {
-                rgbLine[(cbLine)++] = pBuffer[i];
-            }
-        }
-
-        rgbLine[(cbLine)++] = 0;
-        printf("%s\n", rgbLine);
-    }
-
-    if (bIsNtlmMessage)
-    {
-        DumpNtlmMessage(pToken, dwLength);
-    }
 }
