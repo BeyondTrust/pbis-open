@@ -606,4 +606,56 @@ error:
     }
 
     goto cleanup;
+
+}
+
+LSASS_API
+DWORD
+LsaGetSmartCardUser(
+    IN HANDLE hLsaConnection,
+    IN DWORD dwUserInfoLevel,
+    OUT PVOID* ppUserInfo,
+    OUT PSTR* ppszSmartCardReader
+    )
+{
+    PLSA_SECURITY_OBJECT pObject = NULL;
+    DWORD dwError = 0;
+
+    BAIL_ON_INVALID_HANDLE(hLsaConnection);
+
+    dwError = LsaValidateUserInfoLevel(dwUserInfoLevel);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    BAIL_ON_INVALID_POINTER(ppUserInfo);
+
+    dwError = LsaTransactGetSmartCardUserObject(
+        hLsaConnection,
+        &pObject,
+        ppszSmartCardReader);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pObject == NULL)
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LsaMarshalUserInfo(
+        pObject,
+        dwUserInfoLevel,
+        ppUserInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    if (pObject)
+    {
+        LsaUtilFreeSecurityObject(pObject);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
 }

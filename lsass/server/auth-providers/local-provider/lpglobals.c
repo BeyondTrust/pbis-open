@@ -59,6 +59,7 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
     .pfnEnumGroupMembers = LocalEnumMembers,
     .pfnCloseEnum = LocalCloseEnum,
     .pfnQueryMemberOf = LocalQueryMemberOf,
+    .pfnGetSmartCardUserObject = LocalGetSmartCardUserObject,
     .pfnOpenHandle = LocalOpenHandle,
     .pfnCloseHandle = LocalCloseHandle,
     .pfnShutdownProvider             = &LocalShutdownProvider,

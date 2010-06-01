@@ -259,6 +259,12 @@ typedef DWORD (*PFNOPENHANDLE_2)(
     PHANDLE phProvider
     );
 
+typedef DWORD (*PFN_LSA_PROVIDER_GET_SMARTCARD_USER_OBJECT)(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    );
+
 typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
 
     PFN_LSA_PROVIDER_FIND_OBJECTS pfnFindObjects;
@@ -324,6 +330,8 @@ typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
     //
     // ability to get members of groups as something other than aliases.
     //
+
+    PFN_LSA_PROVIDER_GET_SMARTCARD_USER_OBJECT pfnGetSmartCardUserObject;
 
 #if 1
     //

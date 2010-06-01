@@ -428,6 +428,13 @@ AD_QueryMemberOf(
     OUT PSTR** pppszGroupSids
     );
 
+DWORD
+AD_GetSmartCardUserObject(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    );
+
 VOID
 AD_CloseEnum(
     IN OUT HANDLE hEnum

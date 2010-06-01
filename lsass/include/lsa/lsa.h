@@ -1982,6 +1982,14 @@ LsaAddUser2(
     PLSA_USER_ADD_INFO pUserAddInfo
     );
 
+LW_DWORD
+LsaGetSmartCardUser(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_DWORD dwUserInfoLevel,
+    LW_OUT LW_PVOID* ppUserInfo,
+    LW_OUT LW_PSTR* ppszSmartCardReader
+    );
+
 #endif /* __LSA_H__ */
 
 

@@ -3855,6 +3855,19 @@ error:
     goto cleanup;
 }
 
+DWORD
+AD_GetSmartCardUserObject(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    )
+{
+    *ppObject = NULL;
+    *ppszSmartCardReader = NULL;
+
+    return LW_ERROR_NOT_HANDLED;
+}
+
 VOID
 AD_CloseEnum(
     IN OUT HANDLE hEnum

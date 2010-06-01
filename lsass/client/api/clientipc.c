@@ -1419,6 +1419,62 @@ error:
 }
 
 
+DWORD
+LsaTransactGetSmartCardUserObject(
+    HANDLE hServer,
+    PLSA_SECURITY_OBJECT* ppObject,
+    PSTR* ppszSmartCardReader
+    )
+{
+    DWORD dwError = 0;
+    PLSA_IPC_ERROR pError = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+    LSA2_IPC_GET_SMART_CARD_USER_RES* getSmartCardUserResponse;
+
+    dwError = LsaIpcAcquireCall(hServer, &pCall);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    in.tag = LSA2_Q_GET_SMARTCARD_USER_OBJECT;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out,
+                NULL, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case LSA2_R_GET_SMARTCARD_USER_OBJECT:
+        getSmartCardUserResponse = out.data;
+        *ppObject = getSmartCardUserResponse->pObject;
+        *ppszSmartCardReader = getSmartCardUserResponse->pszSmartCardReader;
+        getSmartCardUserResponse->pObject = NULL;
+        getSmartCardUserResponse->pszSmartCardReader = NULL;
+        break;
+    case LSA2_R_ERROR:
+        pError = (PLSA_IPC_ERROR) out.data;
+        BAIL_WITH_LSA_ERROR(pError->dwError);
+        break;
+    default:
+        BAIL_WITH_LSA_ERROR(LW_ERROR_INTERNAL);
+    }
+    
+cleanup:
+    
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c

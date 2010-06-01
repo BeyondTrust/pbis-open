@@ -1119,6 +1119,19 @@ LocalQueryMemberOf(
 }
 
 DWORD
+LocalGetSmartCardUserObject(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    )
+{
+    *ppObject = NULL;
+    *ppszSmartCardReader = NULL;
+
+    return LW_ERROR_NOT_HANDLED;
+}
+
+DWORD
 LocalShutdownProvider(
     VOID
     )

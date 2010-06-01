@@ -123,5 +123,12 @@ LsaSrvCloseEnum(
     IN OUT HANDLE hEnum
     );
 
+DWORD
+LsaSrvGetSmartCardUserObject(
+    IN HANDLE hServer,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    );
+
 
 #endif

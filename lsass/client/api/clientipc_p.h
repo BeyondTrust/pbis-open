@@ -230,5 +230,12 @@ LsaTransactCloseEnum(
     IN OUT HANDLE hEnum
     );
 
+DWORD
+LsaTransactGetSmartCardUserObject(
+    HANDLE hServer,
+    PLSA_SECURITY_OBJECT* ppObject,
+    PSTR* ppszSmartCardReader
+    );
+
 #endif /* __CLIENTIPC_P_H__ */
 

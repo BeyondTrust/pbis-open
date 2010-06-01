@@ -239,6 +239,13 @@ LocalFindObjects(
     );
 
 DWORD
+LocalGetSmartCardUserObject(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    );
+
+DWORD
 LocalOpenEnumObjects(
     IN HANDLE hProvider,
     OUT PHANDLE phEnum,

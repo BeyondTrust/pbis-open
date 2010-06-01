@@ -1274,6 +1274,16 @@ static LWMsgTypeSpec gLsa2IpcDeleteObjectReqSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsa2IpcGetSmartCardUserObjectResSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA2_IPC_GET_SMART_CARD_USER_RES),
+    LWMSG_MEMBER_POINTER(LSA2_IPC_GET_SMART_CARD_USER_RES, pObject,
+            LWMSG_TYPESPEC(gLsaSecurityObjectSpec)),
+    LWMSG_MEMBER_PSTR(LSA2_IPC_GET_SMART_CARD_USER_RES, pszSmartCardReader),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgProtocolSpec gLsaIPCSpec[] =
 {
     LWMSG_MESSAGE(LSA_Q_AUTH_USER_PAM, gLsaAuthUserPamParamsSpec),
@@ -1377,6 +1387,8 @@ static LWMsgProtocolSpec gLsaIPCSpec[] =
     LWMSG_MESSAGE(LSA2_R_ADD_USER, NULL),
     LWMSG_MESSAGE(LSA2_Q_MODIFY_USER, gLsa2IpcModifyUserReqSpec),
     LWMSG_MESSAGE(LSA2_R_MODIFY_USER, NULL),
+    LWMSG_MESSAGE(LSA2_Q_GET_SMARTCARD_USER_OBJECT, NULL),
+    LWMSG_MESSAGE(LSA2_R_GET_SMARTCARD_USER_OBJECT, gLsa2IpcGetSmartCardUserObjectResSpec),
     LWMSG_PROTOCOL_END
 };
 

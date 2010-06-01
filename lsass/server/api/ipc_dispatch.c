@@ -2013,6 +2013,63 @@ error:
     goto cleanup;
 }
 
+static LWMsgStatus
+LsaSrvIpcGetSmartCardUserObject(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    )
+{
+    DWORD dwError = 0;
+    PLSA2_IPC_GET_SMART_CARD_USER_RES pRes = NULL;
+    PLSA_SECURITY_OBJECT pObject = NULL;
+    PSTR pszSmartCardReader = NULL;
+
+    dwError = LsaSrvGetSmartCardUserObject(
+        LsaSrvIpcGetSessionData(pCall),
+        &pObject, &pszSmartCardReader);
+
+    if (!dwError)
+    {
+        dwError = LwAllocateMemory(sizeof(*pRes), OUT_PPVOID(&pRes));
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pRes->pObject = pObject;
+        pObject = NULL;
+        pRes->pszSmartCardReader = pszSmartCardReader;
+        pszSmartCardReader = NULL;
+
+        pOut->tag = LSA2_R_GET_SMARTCARD_USER_OBJECT;
+        pOut->data = pRes;
+    }
+    else
+    {
+        PLSA_IPC_ERROR pError = NULL;
+
+        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pOut->tag = LSA2_R_ERROR;
+        pOut->data = pError;
+    }
+
+cleanup:
+
+    if (pObject)
+    {
+        LsaUtilFreeSecurityObject(pObject);
+    }
+
+    LW_SAFE_FREE_STRING(pszSmartCardReader);
+
+    return MAP_LW_ERROR_IPC(dwError);
+
+error:
+
+    goto cleanup;
+}
+
 static LWMsgDispatchSpec gMessageHandlers[] =
 {
     LWMSG_DISPATCH_BLOCK(LSA_Q_AUTH_USER_PAM, LsaSrvIpcAuthenticateUserPam),
@@ -2052,6 +2109,7 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(LSA2_Q_MODIFY_GROUP, LsaSrvIpcModifyGroup2),
     LWMSG_DISPATCH_BLOCK(LSA2_Q_DELETE_OBJECT, LsaSrvIpcDeleteObject),
     LWMSG_DISPATCH_BLOCK(LSA2_Q_ADD_USER, LsaSrvIpcAddUser2),
+    LWMSG_DISPATCH_BLOCK(LSA2_Q_GET_SMARTCARD_USER_OBJECT, LsaSrvIpcGetSmartCardUserObject),
     LWMSG_DISPATCH_END
 };
 

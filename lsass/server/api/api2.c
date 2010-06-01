@@ -2002,3 +2002,65 @@ error:
 
     goto cleanup;
 }
+
+DWORD
+LsaSrvGetSmartCardUserObject(
+    IN HANDLE hServer,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwTraceFlags[] = {LSA_TRACE_FLAG_USER_GROUP_ADMINISTRATION};
+    BOOLEAN bInLock = FALSE;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    HANDLE hProvider = (HANDLE)NULL;
+
+    LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    dwError = LW_ERROR_NOT_HANDLED;
+
+    for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
+    {
+        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = pProvider->pFnTable2->pfnGetSmartCardUserObject(
+                                        hProvider,
+                                        ppObject,
+                                        ppszSmartCardReader);
+        if (dwError == LW_ERROR_SUCCESS)
+        {
+            break;
+        }
+        else if (dwError == LW_ERROR_NOT_HANDLED)
+        {
+            dwError = 0;
+            LsaSrvCloseProvider(pProvider, hProvider);
+            hProvider = NULL;
+        }
+        else
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+cleanup:
+
+    if (hProvider != (HANDLE)NULL)
+    {
+        LsaSrvCloseProvider(pProvider, hProvider);
+    }
+
+    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    LSA_TRACE_END_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}

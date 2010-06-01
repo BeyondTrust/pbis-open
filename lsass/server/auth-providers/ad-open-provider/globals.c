@@ -63,6 +63,7 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
     .pfnEnumGroupMembers = AD_EnumMembers,
     .pfnCloseEnum = AD_CloseEnum,
     .pfnQueryMemberOf = AD_QueryMemberOf,
+    .pfnGetSmartCardUserObject = AD_GetSmartCardUserObject,
     .pfnOpenHandle = AD_OpenHandle,
     .pfnCloseHandle = AD_CloseHandle,
     .pfnShutdownProvider = AD_ShutdownProvider,
