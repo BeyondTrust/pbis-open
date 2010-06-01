@@ -158,6 +158,12 @@ RtlAppendRidSid(
     );
 
 NTSTATUS
+RtlGetRidSid(
+    OUT PULONG Rid,
+    IN PSID Sid
+    );
+
+NTSTATUS
 RtlDuplicateSid(
     OUT PSID* NewSid,
     IN PSID OriginalSid

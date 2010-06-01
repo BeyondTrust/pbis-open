@@ -204,6 +204,35 @@ cleanup:
 }
 
 NTSTATUS
+RtlGetRidSid(
+    OUT PULONG Rid,
+    IN PSID Sid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (!Rid || !Sid)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+    
+    if (Sid->SubAuthorityCount == 0)
+    {
+        status = STATUS_INVALID_SUB_AUTHORITY;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+    
+    *Rid = Sid->SubAuthority[Sid->SubAuthorityCount-1];
+
+cleanup:
+
+    return status;
+}
+
+
+
+NTSTATUS
 RtlDuplicateSid(
     OUT PSID* NewSid,
     IN PSID OriginalSid
