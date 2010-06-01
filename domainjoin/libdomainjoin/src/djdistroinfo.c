@@ -130,9 +130,9 @@ DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 */
                 //Find a matching distro name
                 "^[[:space:]]*((Red Hat)|(Enterprise Linux)) ((Enterprise Linux)|(Linux (Advanced|Enterprise) Server))[[:space:]]+(AS |ES |Client |Server )?"
-                "release ([[:digit:]]+(\\.[[:digit:]]+)?(AS|ES)?) \\(\\S+ Update ([[:digit:]]+)\\)",
+                "release ([[:digit:]]+(\\.[[:digit:]]+)?(AS|ES)?) (\\(\\S+ Update ([[:digit:]]+)\\))?",
                 9,
-                12,
+                13,
                 1
             },
             {
