@@ -102,6 +102,12 @@ LocalProvisionHomeDir(
     );
 
 DWORD
+LocalCheckIsGuest(
+    PLSA_SECURITY_OBJECT pObject,
+    PBOOLEAN pbUserIsGuest
+    );
+
+DWORD
 LocalCheckAccountFlags(
     PLSA_SECURITY_OBJECT pObject
     );

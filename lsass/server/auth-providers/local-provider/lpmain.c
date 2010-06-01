@@ -214,6 +214,7 @@ LocalAuthenticateUserPam(
     PLSA_SECURITY_OBJECT pObject = NULL;
     DWORD dwBadPasswordCount = 0;
     PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
+    BOOLEAN bUserIsGuest = FALSE;
 
     if (ppPamAuthInfo)
     {
@@ -242,6 +243,15 @@ LocalAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     /* Check for disable, expired, etc..  accounts */
+
+    dwError = LocalCheckIsGuest(pObject, &bUserIsGuest);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bUserIsGuest)
+    {
+        dwError = LW_ERROR_LOGON_FAILURE;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LocalCheckAccountFlags(pObject);
     BAIL_ON_LSA_ERROR(dwError);

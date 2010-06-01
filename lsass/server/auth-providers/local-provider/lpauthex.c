@@ -97,6 +97,7 @@ LocalAuthenticateUserExInternal(
     BOOLEAN bAcceptNTLMv1 = TRUE;
     PLSA_DATA_BLOB pSessionKey = NULL;
     LSA_QUERY_LIST QueryList;
+    BOOLEAN bUserIsGuest = FALSE;
 
     BAIL_ON_INVALID_POINTER(pUserParams->pszAccountName);
 
@@ -140,6 +141,15 @@ LocalAuthenticateUserExInternal(
     if (ppObjects[0] == NULL)
     {
         dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LocalCheckIsGuest(ppObjects[0], &bUserIsGuest);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bUserIsGuest)
+    {
+        dwError = LW_ERROR_LOGON_FAILURE;
         BAIL_ON_LSA_ERROR(dwError);
     }
 

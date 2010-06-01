@@ -1325,6 +1325,50 @@ error:
 }
 
 DWORD
+LocalCheckIsGuest(
+    PLSA_SECURITY_OBJECT pObject,
+    PBOOLEAN pbUserIsGuest
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PSID pUserSid = NULL;
+    ULONG ulRid = 0;
+    BOOLEAN bUserIsGuest = FALSE;
+
+    dwError = LwNtStatusToWin32Error(
+                  RtlAllocateSidFromCString(
+                      &pUserSid,
+                      pObject->pszObjectSid));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+                  RtlGetRidSid(
+                      &ulRid,
+                      pUserSid));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (ulRid == DOMAIN_USER_RID_GUEST)
+    {
+        bUserIsGuest = TRUE;
+    }    
+
+cleanup:
+
+    if (pUserSid)
+    {
+        LW_RTL_FREE(&pUserSid);
+    }    
+
+    *pbUserIsGuest = bUserIsGuest;
+    
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
 LocalCheckAccountFlags(
     PLSA_SECURITY_OBJECT pObject
     )
