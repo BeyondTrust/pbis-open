@@ -76,9 +76,10 @@ typedef struct _LW_MAP_SECURITY_PLUGIN_CONTEXT {
 
 typedef UCHAR LSA_MAP_SECURITY_OBJECT_INFO_FLAGS, *PLSA_MAP_SECURITY_OBJECT_INFO_FLAGS;
 
-#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER   0x01
-#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID 0x02
-#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID 0x04
+#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER          0x01
+#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID        0x02
+#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID        0x04
+#define LSA_MAP_SECURITY_OBJECT_INFO_FLAG_ACCOUNT_DISABLED 0x08
 
 typedef struct _LSA_MAP_SECURITY_OBJECT_INFO {
     LSA_MAP_SECURITY_OBJECT_INFO_FLAGS Flags;
@@ -286,6 +287,11 @@ LsaMapSecurityResolveObjectInfo(
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER);
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID);
         SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID);
+
+        if (ppObjects[0]->userInfo.bAccountDisabled)
+        {
+            SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_ACCOUNT_DISABLED);
+        }
 
         objectInfo.Uid = ppObjects[0]->userInfo.uid;
         objectInfo.Gid = ppObjects[0]->userInfo.gid;
@@ -800,6 +806,14 @@ LsaMapSecurityGetAccessTokenCreateInformationFromObjectInfo(
     PSTR pszSid = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_LIST QueryList;
+
+    if (IsSetFlag(
+            pObjectInfo->Flags,
+            LSA_MAP_SECURITY_OBJECT_INFO_FLAG_ACCOUNT_DISABLED))
+    {
+        status = STATUS_ACCOUNT_DISABLED;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
 
     status = RtlAllocateCStringFromSid(&pszSid, pObjectInfo->Sid);
     GOTO_CLEANUP_ON_STATUS(status);
