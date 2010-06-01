@@ -9,13 +9,12 @@
 
 #include "DomainJoinException.h"
 
-const int DomainJoinException::CENTERROR_DOMAINJOIN_NON_ROOT_USER          = 524289;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_HOSTNAME       = 524290;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_DOMAIN_NAME    = 524323;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_USERID         = 524322;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME = 524326;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_OU             = 524334;
-const int DomainJoinException::CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS     = 524343;
+const int DomainJoinException::ERROR_INVALID_COMPUTERNAME       = 1210;
+const int DomainJoinException::ERROR_INVALID_DOMAINNAME    = 1212;
+const int DomainJoinException::ERROR_BAD_FORMAT         = 11;
+const int DomainJoinException::LW_ERROR_FAILED_TO_LOOKUP_DC = 40108;
+const int DomainJoinException::LW_ERROR_INVALID_OU             = 42500;
+const int DomainJoinException::LW_ERROR_FAILED_ADMIN_PRIVS     = 42508;
 
 DomainJoinException::DomainJoinException()
 : _errCode(0)

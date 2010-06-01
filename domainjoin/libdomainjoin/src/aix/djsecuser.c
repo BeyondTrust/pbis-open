@@ -31,16 +31,16 @@
 #include "domainjoin.h"
 #include "djaixparser.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 static PCSTR USER_SECURITY_CONFIG_PATH = "/etc/security/user";
 
 static
-CENTERROR
+DWORD
 GetAuthSystem(const DynamicArray *lines, PSTR *result)
 {
-    CENTERROR ceError = DJGetOptionValue(lines, "default", "SYSTEM", result);
-    if(ceError == CENTERROR_CFG_VALUE_NOT_FOUND)
+    DWORD ceError = DJGetOptionValue(lines, "default", "SYSTEM", result);
+    if(ceError == ERROR_NOT_FOUND)
     {
         //return the default
         ceError = CTStrdup("compat", result);
@@ -49,17 +49,17 @@ GetAuthSystem(const DynamicArray *lines, PSTR *result)
 }
 
 static
-CENTERROR
+DWORD
 SetAuthSystem(DynamicArray *lines, PCSTR value)
 {
     return DJSetOptionValue(lines, "default", "SYSTEM", value);
 }
-CENTERROR
+DWORD
 UnconfigureUserSecurity(
     PCSTR pszConfigFilePath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR pszFilePath = NULL;
     PSTR pszFinalPath = NULL;
     PSTR pszTmpPath = NULL;
@@ -130,12 +130,12 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 ConfigureUserSecurity(
     PCSTR pszConfigFilePath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR pszFilePath = NULL;
     PSTR pszTmpPath = NULL;
     BOOLEAN bFileExists = FALSE;

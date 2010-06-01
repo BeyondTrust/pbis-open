@@ -39,7 +39,7 @@ typedef enum
     ENABLE_TYPE_AUTO,
 } EnableType;
 
-CENTERROR
+DWORD
 GetPassword(
     PSTR* ppszPassword
     );

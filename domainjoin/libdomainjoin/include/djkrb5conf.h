@@ -33,7 +33,7 @@
 
 #include "djmodule.h"
 
-CENTERROR
+DWORD
 DJModifyKrb5Conf(
     const char *testPrefix,
     BOOLEAN enable,

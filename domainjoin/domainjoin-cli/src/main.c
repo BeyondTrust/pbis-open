@@ -38,16 +38,16 @@
 #include "ctprocutils.h"
 #include "lwexc.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-CENTERROR ParseUInt(PCSTR in, unsigned int *out)
+DWORD ParseUInt(PCSTR in, unsigned int *out)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR endPtr;
     *out = strtoul(in, &endPtr, 10);
     if(*endPtr != '\0')
     {
-        GCE(ceError = CENTERROR_INVALID_OPTION_VALUE);
+        GCE(ceError = ERROR_INVALID_PARAMETER);
     }
 
 cleanup:
@@ -108,13 +108,13 @@ ShowUsageInternal()
 }
 
 static
-CENTERROR
+DWORD
 FillMissingPassword(
     PCSTR username,
     PSTR* ppszPassword
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszPassword = NULL;
     PCSTR pszEnvPassword = NULL;
 
@@ -172,12 +172,12 @@ void PrintWarning(const JoinProcessOptions *options, const char *title, const ch
 {
     PSTR      wrapped = NULL;
     int columns;
-    if(!CENTERROR_IS_OK(CTGetTerminalWidth(fileno(stdout), &columns)))
+    if(CTGetTerminalWidth(fileno(stdout), &columns))
         columns = -1;
 
-    //This function doesn't return a CENTERROR, so we have to recover as much
+    //This function doesn't return a DWORD, so we have to recover as much
     //as possible.
-    if(CENTERROR_IS_OK(CTWordWrap(message, &wrapped, 4, columns)))
+    if(!CTWordWrap(message, &wrapped, 4, columns))
         fprintf(stdout, "Warning: %s\n%s\n\n", title, wrapped);
     else
         fprintf(stdout, "Warning: %s\n%s\n\n", title, message);
@@ -329,7 +329,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         }
         else if(argc < 2)
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         else if(!strcmp(argv[0], "--enable"))
@@ -359,7 +359,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         }
         else
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         argv++;
@@ -376,7 +376,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         ;
     else if(argc != 2)
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
     options.joiningDomain = TRUE;
@@ -406,7 +406,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
                     &enableModules, i, sizeof(PCSTR));
         if(CTArrayFindString(&disableModules, module) != -1)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_OPTION_VALUE, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
         LW_TRY(exc, DJEnableModule(&options, module, TRUE, &LW_EXC));
@@ -418,7 +418,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
                     &disableModules, i, sizeof(PCSTR));
         if(CTArrayFindString(&enableModules, module) != -1)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_OPTION_VALUE, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
         LW_TRY(exc, DJEnableModule(&options, module, FALSE, &LW_EXC));
@@ -431,7 +431,7 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
         ModuleState *state = DJGetModuleStateByName(&options, module);
         if(state == NULL)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_PARAMETER, "Unable to find module.", "Please check the spelling of '%s'. This module cannot be found", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to find module.", "Please check the spelling of '%s'. This module cannot be found", module);
             goto cleanup;
         }
         PrintModuleState(state);
@@ -511,7 +511,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
             preview = TRUE;
         else if(argc < 2)
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         else if(!strcmp(argv[0], "--enable"))
@@ -534,7 +534,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
         }
         else
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         argv++;
@@ -548,7 +548,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
     }
     else if(argc > 2)
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
     options.joiningDomain = FALSE;
@@ -576,7 +576,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
                     &enableModules, i, sizeof(PCSTR));
         if(CTArrayFindString(&disableModules, module) != -1)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_OPTION_VALUE, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
         LW_TRY(exc, DJEnableModule(&options, module, TRUE, &LW_EXC));
@@ -588,7 +588,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
                     &disableModules, i, sizeof(PCSTR));
         if(CTArrayFindString(&enableModules, module) != -1)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_OPTION_VALUE, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Module already specified", "The module '%s' is listed as being disabled and enabled", module);
             goto cleanup;
         }
         LW_TRY(exc, DJEnableModule(&options, module, FALSE, &LW_EXC));
@@ -601,7 +601,7 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
         ModuleState *state = DJGetModuleStateByName(&options, module);
         if(state == NULL)
         {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_PARAMETER, "Unable to find module.", "Please check the spelling of '%s'. This module cannot be found", module);
+            LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to find module.", "Please check the spelling of '%s'. This module cannot be found", module);
             goto cleanup;
         }
         PrintModuleState(state);
@@ -673,7 +673,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
             dwEnable = ENABLE_TYPE_DISABLE;
         else if(argc < 2)
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         else if(!strcmp(argv[0], "--testprefix"))
@@ -696,7 +696,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         }
         else
         {
-            LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+            LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
             goto cleanup;
         }
         argv++;
@@ -705,7 +705,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
 
     if(argc < 1)
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
 
@@ -725,7 +725,7 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         LW_CLEANUP_CTERR(exc, DJConfigureReapSyslog(testPrefix, GetEnableBoolean(dwEnable)));
     else
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
     fprintf(stdout, "SUCCESS\n");
@@ -752,7 +752,7 @@ void DoGetDistroInfo(int argc, char **argv, LWException **exc)
     }
     if(argc > 0)
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
 
@@ -775,7 +775,7 @@ void DoGetDistroInfo(int argc, char **argv, LWException **exc)
     }
     else
     {
-        LW_RAISE(exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
     fprintf(stdout, "%s\n", str);
@@ -803,7 +803,7 @@ int main(
     char **argPos = argv;
     int i;
 
-    if(!CENTERROR_IS_OK(CTGetTerminalWidth(fileno(stdout), &columns)))
+    if(CTGetTerminalWidth(fileno(stdout), &columns))
         columns = -1;
 
     /* Skip the program name */
@@ -863,7 +863,7 @@ int main(
     else if (!strcasecmp(logLevel, "verbose"))
         dwLogLevel = LOG_LEVEL_VERBOSE;
     else {
-        LW_CLEANUP_CTERR(&exc, CENTERROR_DOMAINJOIN_INVALID_LOG_LEVEL);
+        LW_CLEANUP_CTERR(&exc, LW_ERROR_INVALID_LOG_LEVEL);
     }
 
     if (bNoLog) {
@@ -872,12 +872,12 @@ int main(
                !strcmp(pszLogFilePath, ".")) {
         LW_CLEANUP_CTERR(&exc, dj_init_logging_to_console(dwLogLevel));
     } else {
-        CENTERROR ceError = dj_init_logging_to_file(dwLogLevel, pszLogFilePath);
-        if(ceError == CENTERROR_ACCESS_DENIED)
+        DWORD ceError = dj_init_logging_to_file(dwLogLevel, pszLogFilePath);
+        if(ceError == ERROR_ACCESS_DENIED)
         {
             fprintf(stderr, "Warning: insufficient permissions to log to %s. To enable logging, please specify a different filename with --logfile <file>.\n",
                     pszLogFilePath);
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
             LW_CLEANUP_CTERR(&exc, dj_disable_logging());
         }
         LW_CLEANUP_CTERR(&exc, ceError);
@@ -949,30 +949,15 @@ int main(
     {
         LW_TRY(&exc, DoGetDistroInfo(remainingArgs, argPos, &LW_EXC));
     }
-    else if(!strcmp(argPos[0], "raise_error"))
-    {
-        CENTERROR ceError;
-        argPos++;
-        if(--remainingArgs != 1)
-        {
-            ShowUsage();
-            goto cleanup;
-        }
-        if (isdigit((int) *argPos[0]))
-            ceError = (CENTERROR) strtoul(argPos[0], NULL, 0);
-        else
-            ceError = (CENTERROR) CTErrorFromName(argPos[0]);
-        LW_CLEANUP_CTERR(&exc, ceError);
-    }
     else
     {
-        LW_RAISE(&exc, CENTERROR_DOMAINJOIN_SHOW_USAGE);
+        LW_RAISE(&exc, LW_ERROR_SHOW_USAGE);
         goto cleanup;
     }
 
 cleanup:
 
-    if (!LW_IS_OK(exc) && exc->code == CENTERROR_DOMAINJOIN_SHOW_USAGE)
+    if (!LW_IS_OK(exc) && exc->code == LW_ERROR_SHOW_USAGE)
     {
         ShowUsage();
         LWHandle(&exc);

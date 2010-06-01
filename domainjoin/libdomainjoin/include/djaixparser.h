@@ -36,9 +36,9 @@ DJFindStanza(const DynamicArray *lines, PCSTR name);
 
 ssize_t DJFindLine(const DynamicArray *lines, const char *stanza, const char *name);
 
-CENTERROR DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, PSTR *value);
+DWORD DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, PSTR *value);
 
-CENTERROR
+DWORD
 DJSetOptionValue(DynamicArray *lines, PCSTR stanza, PCSTR name, PCSTR value);
 
 #endif /* __DJAIXPARSER_H__ */

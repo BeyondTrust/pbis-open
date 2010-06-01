@@ -31,7 +31,7 @@
 #ifndef __DJLOGINCFG_H__
 #define __DJLOGINCFG_H__
 
-CENTERROR
+DWORD
 DJFixLoginConfigFile(
     PCSTR pszPath
     );

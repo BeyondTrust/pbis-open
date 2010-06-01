@@ -43,7 +43,7 @@ FreeProcInfo(
     CTFreeProcInfo(pProcInfo);
 }
 
-CENTERROR
+DWORD
 DJSpawnProcessWithEnvironment(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -65,7 +65,7 @@ DJSpawnProcessWithEnvironment(
         );
 }
 
-CENTERROR
+DWORD
 DJSpawnProcess(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -75,7 +75,7 @@ DJSpawnProcess(
     return DJSpawnProcessWithEnvironment(pszCommand, ppszArgs, NULL, -1, -1, -1, ppProcInfo);
 }
 
-CENTERROR
+DWORD
 DJSpawnProcessWithFds(
     PCSTR pszCommand,
     PSTR* ppszArgs,
@@ -88,7 +88,7 @@ DJSpawnProcessWithFds(
     return CTSpawnProcessWithFds(pszCommand, ppszArgs, dwFdIn, dwFdOut, dwFdErr, ppProcInfo);
 }
 
-CENTERROR
+DWORD
 DJSpawnProcessSilent(
     PCSTR pszCommand,
     PSTR* ppArgs,
@@ -96,13 +96,13 @@ DJSpawnProcessSilent(
     )
 {
     int dwFdIn = -1, dwFdOut = -1, dwFdErr = -1;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     dwFdIn = open("/dev/zero", O_RDONLY);
 
     if (dwFdIn < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -110,7 +110,7 @@ DJSpawnProcessSilent(
 
     if (dwFdOut < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -118,7 +118,7 @@ DJSpawnProcessSilent(
 
     if (dwFdErr < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -137,7 +137,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJSpawnProcessOutputToFile(
     PCSTR pszCommand,
     PSTR* ppArgs,
@@ -146,13 +146,13 @@ DJSpawnProcessOutputToFile(
     )
 {
     int dwFdIn = -1, dwFdOut = -1, dwFdErr = -1;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     dwFdIn = open("/dev/zero", O_RDONLY);
 
     if (dwFdIn < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -160,7 +160,7 @@ DJSpawnProcessOutputToFile(
 
     if (dwFdOut < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -168,7 +168,7 @@ DJSpawnProcessOutputToFile(
 
     if (dwFdErr < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -187,7 +187,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJTimedReadData(
     PPROCINFO pProcInfo,
     PPROCBUFFER pProcBuffer,
@@ -195,7 +195,7 @@ DJTimedReadData(
     PBOOLEAN pbTimedout
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszBuf = NULL;
     DWORD dwBytesRead = 0;
     int maxfd;
@@ -238,7 +238,7 @@ DJTimedReadData(
             if (errno == EINTR)
                 continue;
 
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
 
         } else if (select_status == 0) {
@@ -262,7 +262,7 @@ DJTimedReadData(
                     if (dwBytesRead < 0) {
 
                         if (errno != EAGAIN && errno != EINTR) {
-                            ceError = CTMapSystemError(errno);
+                            ceError = LwMapErrnoToLwError(errno);
                             BAIL_ON_CENTERIS_ERROR(ceError);
                         }
 
@@ -289,7 +289,7 @@ error:
     return (ceError);
 }
 
-CENTERROR
+DWORD
 DJReadData(
     PPROCINFO pProcInfo,
     PPROCBUFFER pProcBuffer
@@ -299,14 +299,14 @@ DJReadData(
     return DJTimedReadData(pProcInfo, pProcBuffer, 5, &bTimedout);
 }
 
-CENTERROR
+DWORD
 DJWriteData(
     DWORD dwFd,
     PSTR pszBuf,
     DWORD dwLen
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DWORD nWritten = 0;
     DWORD dwRemaining = 0;
     PSTR pStr;
@@ -320,7 +320,7 @@ DJWriteData(
         {
             if (errno != EAGAIN && errno != EINTR)
             {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
         }
@@ -336,20 +336,20 @@ error:
     return (ceError);
 }
 
-CENTERROR
+DWORD
 DJGetProcessStatus(
     PPROCINFO pProcInfo,
     PLONG plstatus
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int status = 0;
 
     do {
         if (waitpid(pProcInfo->pid, &status, 0) < 0) {
             if (errno == EINTR)
                 continue;
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -369,12 +369,12 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJKillProcess(
     PPROCINFO pProcInfo
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DWORD dwFlag = 0;
     DWORD dwTimeout = 30;
     int status = 0;
@@ -389,18 +389,18 @@ DJKillProcess(
 #ifdef HAVE_SIGPROCMASK
     if(sigemptyset(&newset) < 0 || sigaddset(&newset, SIGALRM) < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     if(sigprocmask(SIG_BLOCK, &newset, &oldset) < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 #else
     if((long)(oldhandler = sigset(SIGALRM, WaitTimeout)) == -1)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 #endif
@@ -431,14 +431,14 @@ error:
     if(oldhandlerset)
     {
 #ifdef HAVE_SIGPROCMASK
-        if(sigprocmask(SIG_SETMASK, &oldset, NULL) < 0 && CENTERROR_IS_OK(ceError))
+        if(sigprocmask(SIG_SETMASK, &oldset, NULL) < 0 && !ceError)
         {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
         }
 #else
-        if(sigset(SIGALRM, oldhandler) == -1 && CENTERROR_IS_OK(ceError))
+        if(sigset(SIGALRM, oldhandler) == -1 && !ceError)
         {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
         }
 #endif
     }

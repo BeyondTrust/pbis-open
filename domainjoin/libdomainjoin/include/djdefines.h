@@ -42,7 +42,7 @@
 //The do while forces the user to put a semicolon after BAIL_ON_CENTERIS_ERROR
 #define BAIL_ON_CENTERIS_ERROR(ceError)                                 \
     do {                                                                \
-        CENTERROR macroCeError = (ceError);                             \
+        DWORD macroCeError = (ceError);                             \
         if (macroCeError) {                                             \
             DJ_LOG_ERROR("Error at %s:%d. Error code [0x%8x]", __FILE__, __LINE__, macroCeError); \
             goto error;                                                 \

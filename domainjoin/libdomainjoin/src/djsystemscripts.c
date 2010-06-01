@@ -32,7 +32,7 @@
 #include "djdistroinfo.h"
 #include "djsystemscripts.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 //Replace this (on Ubuntu):
 // PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
@@ -108,9 +108,9 @@ cleanup:
     return result;
 }
 
-static CENTERROR WritePromptFile(PCSTR filename, PCSTR contents)
+static DWORD WritePromptFile(PCSTR filename, PCSTR contents)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE *file = NULL;
 
     GCE(CTOpenFile(filename, "w", &file));

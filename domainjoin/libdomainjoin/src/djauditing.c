@@ -33,13 +33,13 @@
 #include <djmodule.h>
 
 
-CENTERROR
+DWORD
 DJConfigureEventFwd(
     const char * testPrefix,
     BOOLEAN enable
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException *innerExc = NULL;
     int firstStart = 0;
     int firstStop = 0;
@@ -49,39 +49,31 @@ DJConfigureEventFwd(
                 &firstStart,
                 &firstStop,
                 &stopLaterOffset);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if(enable)
         DJ_LOG_INFO("Configuring Likewise Enterprise to run eventfwdd daemon");
     else
         DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running eventfwdd daemon");
 
-    if (geteuid() == 0)
+    DJManageDaemon("eventfwdd", enable, firstStart + 2,
+            firstStop + stopLaterOffset * 0, &innerExc);
+    if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
     {
-        DJManageDaemon("eventfwdd", enable, firstStart + 2,
-                firstStop + stopLaterOffset * 0, &innerExc);
-        if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
-        {
-            DJLogException(LOG_LEVEL_WARNING, innerExc);
-        }
-    }
-    else
-    {
-        ceError = CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-        GOTO_CLEANUP_ON_CENTERROR(ceError);
+        DJLogException(LOG_LEVEL_WARNING, innerExc);
     }
 
 cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJConfigureReapSyslog(
     const char * testPrefix,
     BOOLEAN enable
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException *innerExc = NULL;
     int firstStart = 0;
     int firstStop = 0;
@@ -91,26 +83,18 @@ DJConfigureReapSyslog(
                 &firstStart,
                 &firstStop,
                 &stopLaterOffset);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if(enable)
         DJ_LOG_INFO("Configuring Likewise Enterprise to run reapsysld daemon");
     else
         DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running reapsysld daemon");
 
-    if (geteuid() == 0)
+    DJManageDaemon("reapsysld", enable, firstStart + 0,
+            firstStop + stopLaterOffset * 0, &innerExc);
+    if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
     {
-        DJManageDaemon("reapsysld", enable, firstStart + 0,
-                firstStop + stopLaterOffset * 0, &innerExc);
-        if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
-        {
-            DJLogException(LOG_LEVEL_WARNING, innerExc);
-        }
-    }
-    else
-    {
-        ceError = CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-        GOTO_CLEANUP_ON_CENTERROR(ceError);
+        DJLogException(LOG_LEVEL_WARNING, innerExc);
     }
 
 cleanup:

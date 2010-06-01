@@ -60,102 +60,102 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTRemoveFile(
     PCSTR pszPath
     );
 
-CENTERROR
+DWORD
 CTRemoveDirectory(
     PCSTR pszPath
     );
 
-CENTERROR
+DWORD
 CTCheckFileExists(
     PCSTR pszPath,
     PBOOLEAN pbFileExists
     );
 
-CENTERROR
+DWORD
 CTCheckLinkExists(
     PCSTR pszPath,
     PBOOLEAN pbLinkExists
     );
 
-CENTERROR
+DWORD
 CTCheckFileOrLinkExists(
     PCSTR pszPath,
     PBOOLEAN pbExists
     );
 
-CENTERROR
+DWORD
 CTGetSymLinkTarget(
    PCSTR pszPath,
    PSTR* ppszTargetPath
    );
 
-CENTERROR
+DWORD
 CTCheckDirectoryExists(
     PCSTR pszPath,
     PBOOLEAN pbFileExists
     );
 
-CENTERROR
+DWORD
 CTCheckSockExists(
     PCSTR pszPath,
     PBOOLEAN pbSockExists
     );
 
-CENTERROR
+DWORD
 CTCreateSymLink(
     PCSTR pszOldPath,
     PCSTR pszNewPath
     );
 
-CENTERROR
+DWORD
 CTMoveFile(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     );
 
-CENTERROR
+DWORD
 CTMoveFileEx(
     PCSTR pszSrcPath,
     PCSTR pszDstPath,
     BOOLEAN bCrossDevice
     );
 
-CENTERROR
+DWORD
 CTSafeReplaceFile(
         PCSTR finalName,
         PCSTR replaceWith);
 
-CENTERROR
+DWORD
 CTCopyFileWithPerms(
     PCSTR pszSrcPath,
     PCSTR pszDstPath,
     mode_t dwPerms
     );
     
-CENTERROR
+DWORD
 CTGetOwnerUID(
     PCSTR pszFilePath,
     uid_t* pUid
     );
 
-CENTERROR
+DWORD
 CTCopyFileWithOriginalPerms(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     );
 
-CENTERROR
+DWORD
 CTChangePermissions(
     PCSTR pszPath,
     mode_t dwFileMode
     );
 
-CENTERROR
+DWORD
 CTGetOwnerAndPermissions(
     PCSTR pszSrcPath,
     uid_t * uid,
@@ -163,21 +163,21 @@ CTGetOwnerAndPermissions(
     mode_t * mode
     );
 	
-CENTERROR
+DWORD
 CTGetFileTimeStamps(
 	PCSTR pszFilePath,
 	time_t *patime,
     time_t *pmtime,
     time_t *pctime );
 
-CENTERROR
+DWORD
 CTChangeOwner(
     PCSTR pszPath,
     uid_t uid,
     gid_t gid
     );
 
-CENTERROR
+DWORD
 CTChangeOwnerAndPermissions(
     PCSTR pszPath,
     uid_t uid,
@@ -186,19 +186,19 @@ CTChangeOwnerAndPermissions(
     );
 
 /* Copies the file mode, owner, and group from the template file */
-CENTERROR
+DWORD
 CTCloneFilePerms(
     PCSTR pszTemplatePath,
     PCSTR pszDstPath
     );
 
-CENTERROR
+DWORD
 CTCreateDirectory(
     PCSTR pszPath,
     mode_t dwFileMode
     );
 
-CENTERROR
+DWORD
 CTCopyDirectory(
     PCSTR source,
     PCSTR dest
@@ -207,12 +207,12 @@ CTCopyDirectory(
 /* Safely creates a temporary directory that is only accessible by the current
  * user and root.
  */
-CENTERROR
+DWORD
 CTCreateTempDirectory(
     PSTR *pszPath
     );
 
-CENTERROR
+DWORD
 CTGetMatchingFilePathsInFolder(
     PCSTR pszDirPath,
     PCSTR pszFileNameRegExp,
@@ -220,7 +220,7 @@ CTGetMatchingFilePathsInFolder(
     PDWORD pdwNPaths
     );
 
-CENTERROR
+DWORD
 CTGetMatchingDirPathsInFolder(
     PCSTR pszDirPath,
     PCSTR pszDirNameRegExp,
@@ -228,68 +228,70 @@ CTGetMatchingDirPathsInFolder(
     PDWORD pdwNPaths
     );
 
-CENTERROR
+DWORD
 CTCheckFileHoldsPattern(
     PCSTR pszFilePath,
     PCSTR pszPattern,
     PBOOLEAN pbPatternExists
     );
 
-CENTERROR
+DWORD
 CTFileContentsSame(
     PCSTR pszFilePath1,
     PCSTR pszFilePath2,
     PBOOLEAN pbSame
     );
 
-CENTERROR
+DWORD
 CTStreamContentsSame(
     FILE *fp1,
     FILE *fp2,
     PBOOLEAN pbSame
     );
 
-CENTERROR
+DWORD
 CTGetAbsolutePath(
     PSTR pszRelativePath,
     PSTR* ppszAbsolutePath
     );
 
-CENTERROR
+DWORD
 CTRemoveFiles(
     PSTR pszPath,
     BOOLEAN fDirectory,
     BOOLEAN fRecursive
     );
 
-CENTERROR
+DWORD
 CTBackupFile(
     PCSTR path
     );
 	
-CENTERROR
+DWORD
 CTReadFile(
-	PCSTR pszFilePath,
-	PSTR *ppBuffer,
-	PLONG pSize );
+    PCSTR pszFilePath,
+    size_t sReadMax,
+    PSTR* ppBuffer,
+    PLONG pSize
+    );
 
-CENTERROR
+DWORD
 CTOpenFile(
     PCSTR path,
     PCSTR mode, 
     FILE** handle);
 
-CENTERROR
+DWORD
 CTSetCloseOnExec(
     int fd);
 
-CENTERROR
+DWORD
 CTFileStreamWrite(
     FILE* handle,
     PCSTR data,
     unsigned int size);
 
-CENTERROR
+DWORD
 CTFilePrintf(
     FILE* handle,
     PCSTR format,
@@ -297,7 +299,7 @@ CTFilePrintf(
     );
 
 //Use CTSafeCloseFile instead
-CENTERROR
+DWORD
 CTCloseFile(
     FILE* handle);
 
@@ -319,17 +321,17 @@ CTCloseFile(
  * If this function is called with *handle == NULL, it will simply return
  * success.
  */
-CENTERROR
+DWORD
 CTSafeCloseFile(
     FILE** handle);
 
-CENTERROR
+DWORD
 CTMoveFileAcrossDevices(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     );
 
-CENTERROR
+DWORD
 CTGetCurrentDirectoryPath(
     PSTR* ppszPath
     );
@@ -342,7 +344,7 @@ The worst that can happen if this command is used to write to a user writeable d
 
 So, that means if this function succeeds, a nonroot user did not tampered with the output file before or during the sed operation.
 */
-CENTERROR
+DWORD
 CTRunSedOnFile(
     PCSTR pszSrcPath,
     PCSTR pszDstPath,
@@ -353,14 +355,14 @@ CTRunSedOnFile(
 /* Sets changes to true if running sed on the source file with the given
  * expression outputs data different from the source file.
  */
-CENTERROR
+DWORD
 CTWillSedChangeFile(
     PCSTR pszSrcPath,
     PCSTR pszExpression,
     BOOLEAN *changes
     );
 
-CENTERROR
+DWORD
 CTFindSed(
         PSTR *sedPath
         );
@@ -369,19 +371,19 @@ CTFindSed(
  *
  * If the file is found, then the result is stored in foundPath. If multiple
  * paths are found, then the first one takes precedence. If the file is not
- * found, then CENTERROR_FILE_NOT_FOUND is returned, and foundPath is set to
+ * found, then ERROR_FILE_NOT_FOUND is returned, and foundPath is set to
  * NULL.
  *
  * It is the caller's responsibility to free foundPath.
  */
-CENTERROR
+DWORD
 CTFindFileInPath(
     PCSTR filename,
     PCSTR searchPath,
     PSTR* foundPath
     );
 
-CENTERROR
+DWORD
 CTFindInPath(
     PCSTR rootPrefix,
     PCSTR filename,
@@ -389,14 +391,14 @@ CTFindInPath(
     PSTR* foundPath
     );
 
-CENTERROR
+DWORD
 CTGetFileTempPath(
     PCSTR unresolvedSrcPath,
     PSTR* resolvedSrcPath,
     PSTR* tempPath
     );
 
-CENTERROR
+DWORD
 CTGetFileDiff(
     PCSTR first,
     PCSTR second,
@@ -404,7 +406,7 @@ CTGetFileDiff(
     BOOLEAN failIfNoDiff
     );
 
-CENTERROR
+DWORD
 CTReadNextLine(
     FILE* fp,
     PSTR *output,
@@ -414,10 +416,10 @@ CTReadNextLine(
 /* Reads a file and separates into individual lines
  * The dynamic array must be initialized (at least zeroed out) beforehand
  */
-CENTERROR
+DWORD
 CTReadLines(FILE *file, DynamicArray *dest);
 
-CENTERROR
+DWORD
 CTWriteLines(FILE *file, const DynamicArray *lines);
 
 void

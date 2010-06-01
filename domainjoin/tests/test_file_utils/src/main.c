@@ -33,10 +33,10 @@
 #define TEST_GET_MATCHING_FILE_PATHS_IN_FOLDER 1
 
 #if TEST_GET_MATCHING_FILE_PATHS_IN_FOLDER
-CENTERROR
+DWORD
 TestGetMatchingFilePathsInFolder()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR* ppszFilePaths = NULL;
     DWORD nPaths = 0;
     int   iPath = 0;
@@ -65,7 +65,7 @@ error:
 int
 main(int argc, char* argv[])
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
  
 #if TEST_CREATE_DIRECTORY
     ceError = DJCreateDirectory("/tmp/mydir", S_IRUSR);

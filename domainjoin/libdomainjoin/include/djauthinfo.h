@@ -31,20 +31,6 @@
 #ifndef __DJ_AUTHINFO_H__
 #define __DJ_AUTHINFO_H__
 
-#define LW_RAISE_LSERR(dest, code)			\
-    LWRaiseLsassError((dest), (code), __FILE__, __LINE__)
-
-#define LW_CLEANUP_LSERR(dest, err)		\
-    do						\
-    {						\
-	DWORD _err = (err);			\
-	if (_err)				\
-	{					\
-	    LW_RAISE_LSERR(dest, _err);		\
-	    goto cleanup;			\
-	}					\
-    } while (0)					\
-
 //The answer is non-authoritative
 void
 DJGetDomainRwDC(PCSTR domain, PSTR *dc, LWException **exc);
@@ -87,12 +73,12 @@ DJGetConfiguredShortDomain(
     LWException **exc
     );
 
-CENTERROR
+DWORD
 DJSetMachineSID(
     PSTR pszMachineSID
     );
 
-CENTERROR
+DWORD
 DJGetMachineSID(
     PSTR* ppszMachineSID
     );
@@ -164,14 +150,6 @@ VOID
 DJLogDomainLeaveFailedEvent(
     JoinProcessOptions * JoinOptions,
     LWException *exc
-    );
-
-void
-LWRaiseLsassError(
-    LWException** dest,
-    DWORD code,
-    const char* file,
-    unsigned int line
     );
 
 void SetLsassTimeSync(PCSTR rootPrefix, BOOLEAN sync, LWException **exc);

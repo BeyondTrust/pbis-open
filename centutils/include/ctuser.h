@@ -60,38 +60,9 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
-CTVerifyUID(
-    uid_t uid
-    );
-
-CENTERROR
-CTGetLoginId(
-    uid_t uid,
-    PSTR* ppszLoginId
-    );
-
-CENTERROR
-CTGetUID(
-    PCSTR pszUID,
-    uid_t* pUID
-    );
-
-CENTERROR
-CTGetUserGID(
-    PCSTR pszGID,
-    gid_t* pGID
-    );
-
-CENTERROR
-CTGetHomeDirectory(
-		uid_t uid,
-		PSTR* ppszHomeDir
-		);
-
 //This function is not thread safe. Use your own locking before calling this function if you need it to be thread safe.
 //This function sets inX to true if a user is logged into X windows.
-CENTERROR
+DWORD
 CTIsUserInX(BOOLEAN *inX);
 
 LW_END_EXTERN_C

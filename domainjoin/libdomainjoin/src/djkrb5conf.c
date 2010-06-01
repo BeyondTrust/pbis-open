@@ -36,7 +36,7 @@
 #include "djauthinfo.h"
 #include <lsa/lsa.h>
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 /*Krb5 configuration files follow a modified ini file format. In it there are several stanzas:
 [logging]
@@ -137,14 +137,14 @@ static const Krb5Entry * GetChildConst(const Krb5Entry *entry, size_t child)
     return ((const Krb5Entry **)entry->subelements.data)[child];
 }
 
-static CENTERROR InsertChildNode(Krb5Entry *parent, size_t index, Krb5Entry *child)
+static DWORD InsertChildNode(Krb5Entry *parent, size_t index, Krb5Entry *child)
 {
     child->parent = parent;
     return CTArrayInsert(&parent->subelements, index, sizeof(child),
             &child, 1);
 }
 
-static CENTERROR AddChildNode(Krb5Entry *parent, Krb5Entry *child)
+static DWORD AddChildNode(Krb5Entry *parent, Krb5Entry *child)
 {
     //If the new node is a comment, add it at the bottom, otherwise add it at
     //the bottom before the existing comments (mostly blank lines).
@@ -200,9 +200,9 @@ static void FreeKrb5Entry(Krb5Entry **entry)
     }
 }
 
-static CENTERROR CopyEntry(const Krb5Entry *source, Krb5Entry **copy)
+static DWORD CopyEntry(const Krb5Entry *source, Krb5Entry **copy)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *created = NULL;
     Krb5Entry *copiedChild = NULL;
     size_t i;
@@ -227,9 +227,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entry *conf);
+static DWORD ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entry *conf);
 
-static CENTERROR WriteKrb5Configuration(const char *rootPrefix, const char *filename, Krb5Entry *conf, BOOLEAN *modified);
+static DWORD WriteKrb5Configuration(const char *rootPrefix, const char *filename, Krb5Entry *conf, BOOLEAN *modified);
 
 static Krb5Entry * GetRootNode(Krb5Entry *child)
 {
@@ -251,9 +251,9 @@ static int GetEntryDepth(const Krb5Entry *entry)
     return depth;
 }
 
-static CENTERROR ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr)
+static DWORD ParseLine(Krb5Entry **parent, const char *linestr, const char **endptr)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     const char *pos = linestr;
     const char *token_start = NULL;
     const char *oldpos;
@@ -285,7 +285,7 @@ static CENTERROR ParseLine(Krb5Entry **parent, const char *linestr, const char *
         {
             DJ_LOG_ERROR("Expecting line '%s' to end a compound statement, but no compound statement appears before it",
                     linestr);
-            GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+            GCE(ceError = ERROR_BAD_FORMAT);
         }
         GCE(ceError = CTReadToken(&pos, &(*parent)->value, "", "\r\n", " \t"));
         *parent = (*parent)->parent;
@@ -309,7 +309,7 @@ static CENTERROR ParseLine(Krb5Entry **parent, const char *linestr, const char *
         {
             DJ_LOG_ERROR("Expecting krb5 stanza name '%s' to end with ]",
                     line->name.value);
-            GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+            GCE(ceError = ERROR_BAD_FORMAT);
         }
         //Add future lines under this stanza
         expectChildren = TRUE;
@@ -322,7 +322,7 @@ static CENTERROR ParseLine(Krb5Entry **parent, const char *linestr, const char *
         {
             DJ_LOG_ERROR("Expecting krb5 name value or compound statement '%s' to have a = at position %d",
                     linestr, pos - linestr);
-            GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+            GCE(ceError = ERROR_BAD_FORMAT);
         }
         oldpos = pos;
         GCE(ceError = CTReadToken(&pos, &line->beginSeparator, " \t", "\r\n", ""));
@@ -337,7 +337,7 @@ static CENTERROR ParseLine(Krb5Entry **parent, const char *linestr, const char *
             {
                 DJ_LOG_ERROR("Expecting krb5 compound statement line '%s' to end with a {",
                         linestr);
-                GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+                GCE(ceError = ERROR_BAD_FORMAT);
             }
             //Add future lines under this statement
             expectChildren = TRUE;
@@ -360,14 +360,14 @@ cleanup:
     if(endptr != NULL)
         *endptr = pos;
 
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         FreeKrb5Entry(&line);
     return ceError;
 }
 
-static CENTERROR ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entry *conf)
+static DWORD ReadKrb5File(const char *rootPrefix, const char *filename, Krb5Entry *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE *file = NULL;
     PSTR buffer = NULL;
     char *fullPath = NULL;
@@ -384,7 +384,7 @@ static CENTERROR ReadKrb5File(const char *rootPrefix, const char *filename, Krb5
     if(!exists)
     {
         DJ_LOG_INFO("File %s does not exist", fullPath);
-        ceError = CENTERROR_INVALID_FILENAME;
+        ceError = ERROR_FILE_NOT_FOUND;
         goto cleanup;
     }
 
@@ -404,7 +404,7 @@ cleanup:
     if(file != NULL)
         CTCloseFile(file);
     CT_SAFE_FREE_STRING(fullPath);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         FreeKrb5EntryContents(conf);
     return ceError;
 }
@@ -476,9 +476,9 @@ static Krb5Entry *FindEntryOfType(Krb5Entry *parent, int desiredDepth, NodeClass
     return NULL;
 }
 
-static CENTERROR CreateValueNode(Krb5Entry *conf, int depth, const char *name, const char *value, Krb5Entry **result)
+static DWORD CreateValueNode(Krb5Entry *conf, int depth, const char *name, const char *value, Krb5Entry **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *existing;
     Krb5Entry *created = NULL;
 
@@ -511,16 +511,16 @@ static CENTERROR CreateValueNode(Krb5Entry *conf, int depth, const char *name, c
     GCE(ceError = CTStrdup(value, &created->value.value));
 
 cleanup:
-    if(CENTERROR_IS_OK(ceError))
+    if(!ceError)
         *result = created;
     else
         FreeKrb5Entry(&created);
     return ceError;
 }
 
-static CENTERROR CreateGroupNode(Krb5Entry *conf, int depth, const char *name, Krb5Entry **result)
+static DWORD CreateGroupNode(Krb5Entry *conf, int depth, const char *name, Krb5Entry **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *existing;
     Krb5Entry *created = NULL;
 
@@ -552,16 +552,16 @@ static CENTERROR CreateGroupNode(Krb5Entry *conf, int depth, const char *name, K
     DeleteAllChildren(created);
 
 cleanup:
-    if(CENTERROR_IS_OK(ceError))
+    if(!ceError)
         *result = created;
     else
         FreeKrb5Entry(&created);
     return ceError;
 }
 
-static CENTERROR CreateStanzaNode(Krb5Entry *conf, const char *name, Krb5Entry **result)
+static DWORD CreateStanzaNode(Krb5Entry *conf, const char *name, Krb5Entry **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *existing;
     Krb5Entry *created = NULL;
 
@@ -586,7 +586,7 @@ static CENTERROR CreateStanzaNode(Krb5Entry *conf, const char *name, Krb5Entry *
     DeleteAllChildren(created);
 
 cleanup:
-    if(CENTERROR_IS_OK(ceError))
+    if(!ceError)
         *result = created;
     else
         FreeKrb5Entry(&created);
@@ -604,9 +604,9 @@ static Krb5Entry *GetFirstNode(Krb5Entry *parent, const char *name)
     return NULL;
 }
 
-static CENTERROR EnsureGroupNode(Krb5Entry *parent, const char *name, Krb5Entry **result)
+static DWORD EnsureGroupNode(Krb5Entry *parent, const char *name, Krb5Entry **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *created = NULL;
     *result = GetFirstNode(parent, name);
     if(*result == NULL)
@@ -625,9 +625,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR EnsureStanzaNode(Krb5Entry *conf, const char *name, Krb5Entry **result)
+static DWORD EnsureStanzaNode(Krb5Entry *conf, const char *name, Krb5Entry **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *created = NULL;
     *result = GetFirstNode(conf, name);
     if(*result == NULL)
@@ -647,9 +647,9 @@ cleanup:
 }
 
 //Deletes all children that have the specified name
-CENTERROR DeleteChildNode(Krb5Entry *parent, const char *name, size_t *removed)
+DWORD DeleteChildNode(Krb5Entry *parent, const char *name, size_t *removed)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     if(removed)
         *removed = 0;
     while(TRUE)
@@ -668,9 +668,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR SetNodeValue(Krb5Entry *parent, const char *name, const char *value)
+static DWORD SetNodeValue(Krb5Entry *parent, const char *name, const char *value)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *created = NULL;
     ssize_t existingIndex = FindNodeIndex(parent, 0, name);
     DJ_LOG_VERBOSE("Setting krb5 name value '%s' to '%s' ", name, value);
@@ -695,9 +695,9 @@ const char *GetFirstNodeValue(Krb5Entry *parent, const char *name)
     return entry->value.value;
 }
 
-static CENTERROR SetChildNode(Krb5Entry *parent, Krb5Entry *child)
+static DWORD SetChildNode(Krb5Entry *parent, Krb5Entry *child)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     ssize_t existingIndex = FindNodeIndex(parent, 0, child->name.value);
     if(existingIndex != -1)
     {
@@ -711,10 +711,10 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 AddEncTypes(Krb5Entry *parent, const char *elementName, const char **add, size_t addCount)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char *setEncTypes = NULL;
     const char *currentEncTypes = GetFirstNodeValue(parent, elementName);
     size_t i;
@@ -750,9 +750,9 @@ typedef struct
     PSTR longName;
 } DomainMapping;
 
-static CENTERROR GetEscapedDomainName(const char *input, char **result)
+static DWORD GetEscapedDomainName(const char *input, char **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t i;
     DynamicArray array;
     *result = NULL;
@@ -775,9 +775,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR GetAuthToLocalRule(DomainMapping *mapping, char **result)
+static DWORD GetAuthToLocalRule(DomainMapping *mapping, char **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char *escapedDomain = NULL;
     char *shortUpper = NULL;
     *result = NULL;
@@ -795,9 +795,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR GetMappingsValueString(DomainMapping *mapping, char **result)
+static DWORD GetMappingsValueString(DomainMapping *mapping, char **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     *result = NULL;
     GCE(ceError = CTAllocateStringPrintf(result,
                 "%s\\\\(.*) $1@%s",
@@ -807,9 +807,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR GetReverseMappingsValueString(DomainMapping *mapping, char **result)
+static DWORD GetReverseMappingsValueString(DomainMapping *mapping, char **result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char *escapedDomain = NULL;
     *result = NULL;
     GCE(ceError = GetEscapedDomainName(mapping->longName, &escapedDomain));
@@ -834,13 +834,13 @@ static void FreeDomainMappings(DynamicArray *mappings)
     CTArrayFree(mappings);
 }
 
-static CENTERROR
+static DWORD
 GatherDomainMappings(
     DynamicArray *mappings,
     PCSTR pszShortDomainName,
     PCSTR pszDomainName)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DomainMapping add;
     HANDLE hLsa = NULL;
     PLSASTATUS pStatus = NULL;
@@ -883,7 +883,7 @@ GatherDomainMappings(
     }
 
 cleanup:
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         FreeDomainMappings(mappings);
     CT_SAFE_FREE_STRING(add.shortName);
     CT_SAFE_FREE_STRING(add.longName);
@@ -899,12 +899,12 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 RestoreMacKeberosFile(
     void
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN   bFileExists = FALSE;
 
     (void) CTRemoveFile("/Library/Preferences/edu.mit.Kerberos");
@@ -923,12 +923,12 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 CreateMacKeberosFile(
     PSTR pszDomainName,
     PSTR pszRealm)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN   bDirExists = FALSE;
     BOOLEAN   bFileExists = FALSE;
     FILE    * file = NULL;
@@ -961,7 +961,7 @@ CreateMacKeberosFile(
         }
 
         ceError = CTOpenFile("/Library/Preferences/edu.mit.Kerberos", "w", &file);
-        if(!CENTERROR_IS_OK(ceError))
+        if(ceError)
         {
             DJ_LOG_ERROR("Unable to open '%s' for writing", "/Library/Preferences/edu.mit.Kerberos");
             GCE(ceError);
@@ -991,10 +991,10 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 Krb5LeaveDomain(Krb5Entry *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *libdefaults;
     GCE(ceError = EnsureStanzaNode(conf, "libdefaults", &libdefaults));
     GCE(ceError = DeleteChildNode(libdefaults, "default_realm", NULL));
@@ -1006,12 +1006,12 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 Krb5JoinDomain(Krb5Entry *conf,
     PCSTR pszDomainName,
     PCSTR pszShortDomainName)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry *libdefaults;
     Krb5Entry *realms;
     Krb5Entry *domain_realm = NULL;
@@ -1036,7 +1036,7 @@ Krb5JoinDomain(Krb5Entry *conf,
     if(IsNullOrEmptyString(pszDomainName))
     {
         DJ_LOG_ERROR("Please specify the long domain name");
-        GCE(ceError = CENTERROR_INVALID_PARAMETER);
+        GCE(ceError = ERROR_INVALID_PARAMETER);
     }
     if(IsNullOrEmptyString(pszShortDomainName))
     {
@@ -1132,7 +1132,7 @@ cleanup:
 }
 
 static
-CENTERROR
+DWORD
 ReadKrb5Configuration(
     const char *rootPrefix,
     Krb5Entry *conf,
@@ -1143,7 +1143,7 @@ ReadKrb5Configuration(
     char *altPath = NULL;
     char *altDir = NULL;
     FILE *file = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN _modified = FALSE;
     BOOLEAN exists;
     BOOLEAN solarisTemplateFile;
@@ -1169,7 +1169,7 @@ ReadKrb5Configuration(
         {
             DJ_LOG_INFO("Creating blank krb5.conf");
             ceError = CTOpenFile(fullPath, "w", &file);
-            if(!CENTERROR_IS_OK(ceError))
+            if(ceError)
             {
                 DJ_LOG_ERROR("Unable to open '%s' for writing", fullPath);
                 GCE(ceError);
@@ -1213,7 +1213,7 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJModifyKrb5Conf(
     const char *testPrefix,
     BOOLEAN enable,
@@ -1222,7 +1222,7 @@ DJModifyKrb5Conf(
     BOOLEAN *modified
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     Krb5Entry conf;
     BOOLEAN readModified = FALSE;
     memset(&conf, 0, sizeof(conf));
@@ -1251,9 +1251,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR WriteEntry(FILE *file, Krb5Entry *lineObj)
+static DWORD WriteEntry(FILE *file, Krb5Entry *lineObj)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t i;
     if(lineObj->leadingWhiteSpace != NULL)
     {
@@ -1294,9 +1294,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR WriteKrb5Configuration(const char *rootPrefix, const char *filename, Krb5Entry *conf, BOOLEAN *modified)
+static DWORD WriteKrb5Configuration(const char *rootPrefix, const char *filename, Krb5Entry *conf, BOOLEAN *modified)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE *file = NULL;
     char *prefixedPath = NULL;
     char *tempName = NULL;
@@ -1319,7 +1319,7 @@ static CENTERROR WriteKrb5Configuration(const char *rootPrefix, const char *file
     DJ_LOG_INFO("Writing krb5 file %s", finalName);
 
     ceError = CTOpenFile(tempName, "w", &file);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJ_LOG_ERROR("Unable to open '%s' for writing", tempName);
         GCE(ceError);
@@ -1442,13 +1442,13 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
     Krb5Entry conf;
     Krb5Entry *libdefaults;
     Krb5Entry *default_realm;
-    CENTERROR ceError;
+    DWORD ceError;
 
     memset(&conf, 0, sizeof(conf));
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
     LW_TRY(exc, DJCopyKrb5ToRootDir(NULL, tempDir, &LW_EXC));
     ceError = ReadKrb5Configuration(tempDir, &conf, &modified);
-    if(ceError == CENTERROR_DOMAINJOIN_INVALID_FORMAT)
+    if(ceError == ERROR_BAD_FORMAT)
     {
         LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to Likewise technical support.");
         goto cleanup;
@@ -1610,7 +1610,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     Krb5Entry *libdefaults;
     Krb5Entry *default_keytab_name;
     BOOLEAN exists;
-    CENTERROR ceError;
+    DWORD ceError;
     PSTR tempDir = NULL;
     PSTR currentTarget = NULL;
     Krb5Entry conf;
@@ -1631,7 +1631,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     }
 
     ceError = ReadKrb5Configuration(tempDir, &conf, NULL);
-    if(ceError == CENTERROR_DOMAINJOIN_INVALID_FORMAT)
+    if(ceError == ERROR_BAD_FORMAT)
     {
         LW_RAISE_EX(exc, ceError, "Unable to parse krb5.conf", "The krb5.conf file on your system (located in either /etc/krb5.conf or /etc/krb5/krb5.conf) could not be parsed. Please send the file to Likewise technical support.");
         goto cleanup;
@@ -1670,7 +1670,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
 
     if(default_keytab_name->value.value == NULL)
     {
-        LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+        LW_CLEANUP_CTERR(exc, ERROR_BAD_FORMAT);
     }
 
     trueLocation = default_keytab_name->value.value;
@@ -1711,12 +1711,12 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
     }
 
     ceError = CTGetSymLinkTarget("/etc/krb5.keytab", &currentTarget);
-    if(CENTERROR_IS_OK(ceError) && !strcmp(currentTarget, trueLocation))
+    if(!ceError && !strcmp(currentTarget, trueLocation))
     {
         //Already points to the right place
         goto nochanges;
     }
-    else if(ceError == CTMapSystemError(EINVAL) || ceError == CENTERROR_SUCCESS)
+    else if(ceError == LwMapErrnoToLwError(EINVAL) || ceError == ERROR_SUCCESS)
     {
         // The file already exists and isn't a symlink (EINVAL) or it exists
         // and is a symlink (0).
@@ -1734,15 +1734,15 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
         }
         if(makeChanges)
         {
-            LW_CLEANUP_CTERR(exc, CENTERROR_INVALID_OPERATION);
+            LW_CLEANUP_CTERR(exc, ERROR_INVALID_OPERATION);
         }
         else
         {
             result = CannotConfigure;
         }
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
-    else if(ceError == CTMapSystemError(ENOENT))
+    else if(ceError == LwMapErrnoToLwError(ENOENT))
     {
         //We can make the symlink
         if(description)
@@ -1761,7 +1761,7 @@ static QueryResult QueryOrDoKeytab(const JoinProcessOptions *options, PSTR *desc
         {
             result = NotConfigured;
         }
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
     LW_CLEANUP_CTERR(exc, ceError);
 

@@ -33,12 +33,12 @@
 
 #include "djmodule.h"
 
-CENTERROR
+DWORD
 DJGetComputerName(
     PSTR* ppszComputerName
     );
 
-CENTERROR
+DWORD
 DJGetFQDN(
     PSTR *shortName,
     PSTR *fqdn
@@ -51,7 +51,7 @@ DJSetComputerName(
     LWException **exc
     );
 
-CENTERROR
+DWORD
 DJIsValidComputerName(
     PCSTR pszComputerName,
     PBOOLEAN bIsValid
@@ -62,13 +62,13 @@ void DJCheckValidComputerName(
     LWException **exc
     );
 
-CENTERROR
+DWORD
 DJIsDomainNameResolvable(
     PCSTR pszDomainName,
     PBOOLEAN bIsResolvable
     );
 
-CENTERROR
+DWORD
 DJGetFinalFqdn(
     const JoinProcessOptions *options,
     PSTR *fqdn

@@ -416,7 +416,7 @@
 #define LW_ERROR_NO_SUCH_SERVICE                           41204
 #define LW_ERROR_DEPENDENT_SERVICE_STILL_RUNNING           41205
 
-/* Range 41701 - 42500 is reserved for Kerberos errors.
+/* Range 41701 - 42499 is reserved for Kerberos errors.
  * Using the same spacing as the original error tables
  * to facilitate adding new errors.
  */
@@ -725,6 +725,18 @@
 #define LW_ERROR_KRB5_PROF_BAD_BOOLEAN                     42179
 #define LW_ERROR_KRB5_PROF_BAD_INTEGER                     42180
 #define LW_ERROR_KRB5_PROF_MAGIC_FILE_DATA                 42181
+
+/* Range 42500 - 42550 is reserved for domain join */
+
+#define LW_ERROR_INVALID_OU                                42500
+#define LW_ERROR_BAD_LICENSE_KEY                           42501
+#define LW_ERROR_MODULE_NOT_ENABLED                        42502
+#define LW_ERROR_MODULE_ALREADY_DONE                       42503
+#define LW_ERROR_PAM_MISSING_SERVICE                       42504
+#define LW_ERROR_PAM_BAD_CONF                              42505
+#define LW_ERROR_SHOW_USAGE                                42506
+#define LW_ERROR_DOMAINJOIN_WARNING                        42507
+#define LW_ERROR_FAILED_ADMIN_PRIVS                        42508
 
 //
 // 49900-49999 reserved for internal PAM error code mapping

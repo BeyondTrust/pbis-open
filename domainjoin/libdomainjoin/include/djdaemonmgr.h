@@ -59,7 +59,7 @@ DJManageDaemonDescription(
     LWException **exc
     );
 
-CENTERROR
+DWORD
 DJGetBaseDaemonPriorities(
     int *startPriority,
     int *stopPriority,

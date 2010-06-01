@@ -44,7 +44,7 @@
 #include "djconfig_mac.h"
 #include "djddns.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 //Make sure all modules are included in both lists, even if the module
 //doesn't apply to start or stop
@@ -175,7 +175,7 @@ void NormalizeUsername(PSTR *username, PCSTR domainName, LWException **exc)
 
     if(IsNullOrEmptyString(domainName))
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_PARAMETER, "Unable to determine user domain", "The domain that '%s' belongs to could not be automatically determined. Please pass the user name in user@domain.com syntax.", *username);
+        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to determine user domain", "The domain that '%s' belongs to could not be automatically determined. Please pass the user name in user@domain.com syntax.", *username);
         goto cleanup;
     }
 
@@ -243,10 +243,10 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
             case NotConfigured:
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state.module->shortName);
                 goto cleanup;
             default:
-                LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state.module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state.module->shortName);
                 goto cleanup;
         }
     }
@@ -269,13 +269,13 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
         {
             case CannotConfigure:
                 LW_TRY(exc, exceptionMessage = state->module->GetChangeDescription(options, &LW_EXC));
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MODULE_NOT_ENABLED, "Manual configuration required", "The configuration stage '%s' cannot be completed automatically. Please manually perform the following steps and rerun the domain join:\n\n%s", state->module->longName, exceptionMessage);
+                LW_RAISE_EX(exc, LW_ERROR_MODULE_NOT_ENABLED, "Manual configuration required", "The configuration stage '%s' cannot be completed automatically. Please manually perform the following steps and rerun the domain join:\n\n%s", state->module->longName, exceptionMessage);
                 goto cleanup;
             case NotConfigured:
                 if(!state->runModule)
                 {
                     LW_TRY(exc, exceptionMessage = state->module->GetChangeDescription(options, &LW_EXC));
-                    LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MODULE_NOT_ENABLED, "Required configuration stage not enabled", "The configuration of module '%s' is required. Please either allow this configuration stage to be performed automatically (by passing '--enable %s'), or manually perform these configuration steps and rerun the domain join:\n\n%s", state->module->longName, state->module->shortName, exceptionMessage);
+                    LW_RAISE_EX(exc, LW_ERROR_MODULE_NOT_ENABLED, "Required configuration stage not enabled", "The configuration of module '%s' is required. Please either allow this configuration stage to be performed automatically (by passing '--enable %s'), or manually perform these configuration steps and rerun the domain join:\n\n%s", state->module->longName, state->module->shortName, exceptionMessage);
                     goto cleanup;
                 }
                 break;
@@ -286,15 +286,15 @@ void DJCheckRequiredEnabled(const JoinProcessOptions *options, LWException **exc
                 if(state->runModule)
                 {
                     //The UI shouldn't even let this happen.
-                    LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MODULE_ALREADY_DONE, "Invalid module enabled", "Running module '%s' is not valid at this time because it is already configured. Please disable it and try again.", state->module->longName);
+                    LW_RAISE_EX(exc, LW_ERROR_MODULE_ALREADY_DONE, "Invalid module enabled", "Running module '%s' is not valid at this time because it is already configured. Please disable it and try again.", state->module->longName);
                     goto cleanup;
                 }
                 break;
             case ApplePluginInUse:
-                LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                 goto cleanup;
             default:
-                LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
+                LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
                 goto cleanup;
         }
     }
@@ -347,10 +347,10 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionTitle);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
-                    LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
                     goto cleanup;
             }
         }
@@ -365,7 +365,7 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                 case NotConfigured:
                 case CannotConfigure:
                     LW_RAISE_EX(exc,
-                            CENTERROR_DOMAINJOIN_MODULE_NOT_CONFIGURED, "Module not configured",
+                            ERROR_CAN_NOT_COMPLETE, "Module not configured",
                             "Even though the configuration of '%s' was executed, the configuration is not complete. Please contact Likewise support.",
                             state->module->shortName);
                     goto cleanup;
@@ -383,10 +383,10 @@ void DJRunJoinProcess(JoinProcessOptions *options, LWException **exc)
                     CT_SAFE_FREE_STRING(exceptionMessage);
                     break;
                 case ApplePluginInUse:
-                    LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Apple AD Directory Plugin in use.", "The configuration of module '%s' detected that the computer is already joined to Active Directory with the built in Apple AD plugin. To use Likewise, please first unbind your Mac from Active Directory by using the Directory Utility of your system.\n", state->module->shortName);
                     goto cleanup;
                 default:
-                    LW_RAISE_EX(exc, CENTERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_OPERATION, "Invalid module state", "The configuration of module '%s' returned an invalid configuration state.\n", state->module->shortName);
                     goto cleanup;
             }
         }
@@ -403,7 +403,7 @@ void DJEnableModule(JoinProcessOptions *options, PCSTR shortName, BOOLEAN enable
     ModuleState *state = DJGetModuleStateByName(options, shortName);
     if(!state)
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_PARAMETER, "Unable to enable/disable module", "Unable to enable/disable module '%s'. This module could not be found. Please check the name and try again. Keep in mind that some domainjoin modules may not be applicable on all platforms.", shortName);
+        LW_RAISE_EX(exc, ERROR_INVALID_PARAMETER, "Unable to enable/disable module", "Unable to enable/disable module '%s'. This module could not be found. Please check the name and try again. Keep in mind that some domainjoin modules may not be applicable on all platforms.", shortName);
         return;
     }
     state->runModule = enable;

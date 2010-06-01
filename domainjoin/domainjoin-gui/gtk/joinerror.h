@@ -32,9 +32,9 @@
 #define __JOINERROR_H__
 
 #include <stdint.h>
-#include <cterr.h>
 #include <lwexc.h>
 #include <gtk/gtk.h>
+#include <lwerror.h>
 
 #define JOINERROR_CLOSE 0
 #define JOINERROR_SAVE_LOG 1

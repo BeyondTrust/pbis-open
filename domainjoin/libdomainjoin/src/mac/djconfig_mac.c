@@ -49,12 +49,12 @@ typedef enum
 
 #if 0
 static
-CENTERROR
+DWORD
 DJGetConfigDPID(
     pid_t* ppid
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bFileExists = FALSE;
     char contents[PID_FILE_CONTENTS_SIZE];
     int  fd = -1;
@@ -72,13 +72,13 @@ DJGetConfigDPID(
     fd = open(CONFIGD_PID_FILE, O_RDONLY, 0644);
     if (fd < 0)
     {
-       ceError = CTMapSystemError(errno);
+       ceError = LwMapErrnoToLwError(errno);
        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if ((len = read(fd, contents, sizeof(contents)-1)) < 0)
     {
-       ceError = CTMapSystemError(errno);
+       ceError = LwMapErrnoToLwError(errno);
        BAIL_ON_CENTERIS_ERROR(ceError);
     }
     else if (len == 0)
@@ -102,12 +102,12 @@ error:
 #endif /* 0 */
 
 static
-CENTERROR
+DWORD
 DJSetSearchPath(
    SearchPolicyType searchPolicyType
    )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;
@@ -159,7 +159,7 @@ DJSetSearchPath(
 
     if (status != 0)
     {
-       ceError = CENTERROR_DOMAINJOIN_FAILED_SET_SEARCHPATH;
+       ceError = ERROR_BAD_COMMAND;
        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -180,10 +180,10 @@ error:
 
 /* Use dscl to place the LWIDSPlugin in the authenticator list */
 static
-CENTERROR
+DWORD
 DJRegisterLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;
@@ -240,7 +240,7 @@ DJRegisterLWIDSPlugin()
         sleep(5);
 
         // Set last error
-        ceError = CENTERROR_DOMAINJOIN_FAILED_REG_OPENDIR;
+        ceError = ERROR_REGISTRY_IO_FAILED;
     }
 
 error:
@@ -260,10 +260,10 @@ error:
 
 /* Remove LWIDSPlugin from the authenticator list */
 static
-CENTERROR
+DWORD
 DJUnregisterLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;
@@ -300,7 +300,7 @@ DJUnregisterLWIDSPlugin()
 
     if (status != 0)
     {
-       ceError = CENTERROR_DOMAINJOIN_FAILED_UNREG_OPENDIR;
+       ceError = ERROR_REGISTRY_IO_FAILED;
        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -337,10 +337,10 @@ error:
 */
 #if 0
 static
-CENTERROR
+DWORD
 DJEngageLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bDirExists = FALSE;
     BOOLEAN bLinkExists = FALSE;
     BOOLEAN bCreateSymlink = TRUE;
@@ -392,10 +392,10 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 DJDisengageLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bLinkExists = FALSE;
     BOOLEAN bDirExists = FALSE;
 
@@ -431,11 +431,11 @@ error:
 
 
 static
-CENTERROR
+DWORD
 DJFlushCache(
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int i;
     const char* cacheUtils[] = {
         "/usr/sbin/lookupd", /* Before Mac OS X 10.5 */
@@ -470,17 +470,17 @@ DJFlushCache(
     }
 
     DJ_LOG_ERROR("Could not locate cache flush utility");
-    ceError = CENTERROR_FILE_NOT_FOUND;
+    ceError = ERROR_FILE_NOT_FOUND;
 
 error:
     return ceError;
 }
 
 
-CENTERROR
+DWORD
 DJConfigureLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = DJRegisterLWIDSPlugin();
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -493,10 +493,10 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJUnconfigureLWIDSPlugin()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = DJUnregisterLWIDSPlugin();
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -509,10 +509,10 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJIsAppleADPluginInUse(BOOLEAN* pExists)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;

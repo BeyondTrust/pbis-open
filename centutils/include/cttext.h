@@ -60,7 +60,7 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTTextFormatParagraph(
     const char* source,
     unsigned int indent_first,

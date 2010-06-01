@@ -38,12 +38,12 @@
 #include <lwmem.h>
 #include <lw/base.h>
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-// aka: CENTERROR_LICENSE_INCORRECT
+// aka: DWORD_LICENSE_INCORRECT
 // static DWORD GPAGENT_LICENSE_ERROR = 0x00002001;
 
-// CENTERROR_LICENSE_EXPIRED
+// DWORD_LICENSE_EXPIRED
 // static DWORD GPAGENT_LICENSE_EXPIRED_ERROR = 0x00002002;
 
 // static PSTR pszAuthdStartPriority = "90";
@@ -53,44 +53,44 @@
 
 // Runs an xpath expression on an xml file. If the resultant nodeset contains
 // exactly one text node, it is returned through result, otherwise
-// CENTERROR_CFG_VALUE_NOT_FOUND or CENTERROR_INVALID_VALUE is returned.
-static CENTERROR GetXPathString(PCSTR file, PSTR *result, PCSTR expression)
+// ERROR_NOT_FOUND or ERROR_INVALID_DATA is returned.
+static DWORD GetXPathString(PCSTR file, PSTR *result, PCSTR expression)
 {
     xmlDocPtr xmlDoc = NULL;
     xmlXPathContextPtr xpathCtx = NULL; 
     xmlXPathObjectPtr xpathObj = NULL; 
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bExists = FALSE;
 
     *result = NULL;
 
     GCE(ceError = CTCheckFileExists(file, &bExists));
     if (bExists == FALSE)
-        GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+        GCE(ceError = ERROR_BAD_FORMAT);
 
     xmlDoc = xmlReadFile(file, NULL, XML_PARSE_NONET | XML_PARSE_NOERROR);
     if(xmlDoc == NULL)
-        GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+        GCE(ceError = ERROR_BAD_FORMAT);
 
     xpathCtx = xmlXPathNewContext(xmlDoc);
     if(xpathCtx == NULL)
-        GCE(ceError = CENTERROR_OUT_OF_MEMORY);
+        GCE(ceError = ERROR_OUTOFMEMORY);
 
     xpathObj = xmlXPathEvalExpression((xmlChar*)expression, xpathCtx);
 
     if(xpathObj == NULL)
-        GCE(ceError = CENTERROR_DOMAINJOIN_INVALID_FORMAT);
+        GCE(ceError = ERROR_BAD_FORMAT);
 
     if(xpathObj->type != XPATH_NODESET)
-        GCE(ceError = CENTERROR_INVALID_VALUE);
+        GCE(ceError = ERROR_INVALID_DATA);
     if(xpathObj->nodesetval == NULL)
-        GCE(ceError = CENTERROR_CFG_VALUE_NOT_FOUND);
+        GCE(ceError = ERROR_NOT_FOUND);
     if(xpathObj->nodesetval->nodeNr < 1)
-        GCE(ceError = CENTERROR_CFG_VALUE_NOT_FOUND);
+        GCE(ceError = ERROR_NOT_FOUND);
     if(xpathObj->nodesetval->nodeNr > 1 ||
             xpathObj->nodesetval->nodeTab[0]->type != XML_TEXT_NODE)
     {
-        GCE(ceError = CENTERROR_INVALID_VALUE);
+        GCE(ceError = ERROR_INVALID_DATA);
     }
     GCE(ceError = CTStrdup((PCSTR)xpathObj->nodesetval->nodeTab[0]->content, result));
 
@@ -104,18 +104,18 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR DJDaemonLabelToConfigFile(PSTR *configFile, PCSTR dirName, PCSTR label)
+static DWORD DJDaemonLabelToConfigFile(PSTR *configFile, PCSTR dirName, PCSTR label)
 {
     DIR *dir = NULL;
     PSTR filePath = NULL;
     struct dirent *dirEntry = NULL;
     PSTR fileLabel = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     *configFile = NULL;
 
     if ((dir = opendir(dirName)) == NULL) {
-        GCE(ceError = CTMapSystemError(errno));
+        GCE(ceError = LwMapErrnoToLwError(errno));
     }
 
     while(1)
@@ -125,7 +125,7 @@ static CENTERROR DJDaemonLabelToConfigFile(PSTR *configFile, PCSTR dirName, PCST
         if(dirEntry == NULL)
         {
             if(errno != 0)
-                GCE(ceError = CTMapSystemError(errno));
+                GCE(ceError = LwMapErrnoToLwError(errno));
             else
             {
                 //No error here. We simply read the last entry
@@ -142,10 +142,10 @@ static CENTERROR DJDaemonLabelToConfigFile(PSTR *configFile, PCSTR dirName, PCST
         CT_SAFE_FREE_STRING(fileLabel);
         ceError = GetXPathString(filePath, &fileLabel,
             "/plist/dict/key[text()='Label']/following-sibling::string[position()=1]/text()");
-        if(!CENTERROR_IS_OK(ceError))
+        if(ceError)
         {
             DJ_LOG_INFO("Cannot read daemon label from '%s' file. Error code %X. Ignoring it.", filePath, ceError);
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
             continue;
         }
         if(!strcmp(fileLabel, label))
@@ -157,7 +157,7 @@ static CENTERROR DJDaemonLabelToConfigFile(PSTR *configFile, PCSTR dirName, PCST
         }
     }
 
-    GCE(ceError = CENTERROR_DOMAINJOIN_MISSING_DAEMON);
+    GCE(ceError = ERROR_SERVICE_NOT_FOUND);
 
 cleanup:
     CT_SAFE_FREE_STRING(fileLabel);
@@ -207,11 +207,11 @@ DJWaitDaemonStatus(
 
         if(bStatus)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start.", pszDaemonPath);
+            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start.", pszDaemonPath);
         }
         else
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop.", pszDaemonPath);
+            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop.", pszDaemonPath);
         }
         goto cleanup;
     }
@@ -271,7 +271,7 @@ DJGetDaemonStatus(
     PPROCINFO pProcInfo = NULL;
     CHAR  szBuf[1024+1];
     FILE* fp = NULL;
-    CENTERROR ceError;
+    DWORD ceError;
     PSTR configFile = NULL;
     PSTR command = NULL;
     PSTR pszServiceName = NULL;
@@ -298,12 +298,12 @@ DJGetDaemonStatus(
 
     /* Find the .plist file for the daemon */
     ceError = DJDaemonLabelToConfigFile(&configFile, "/Library/LaunchDaemons", pszDaemonPath);
-    if(ceError == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if(ceError == ERROR_SERVICE_NOT_FOUND)
         ceError = DJDaemonLabelToConfigFile(&configFile, SYSCONFDIR "/LaunchDaemons", pszDaemonPath);
-    if(ceError == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if(ceError == ERROR_SERVICE_NOT_FOUND)
     {
         DJ_LOG_ERROR("Checking status of daemon [%s] failed: Missing", pszDaemonPath);
-        LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MISSING_DAEMON, "Unable to find daemon plist file", "The plist file for the '%s' daemon could not be found in /Library/LaunchDaemons or " SYSCONFDIR "/LaunchDaemons .", pszDaemonPath);
+        LW_RAISE_EX(exc, ERROR_SERVICE_NOT_FOUND, "Unable to find daemon plist file", "The plist file for the '%s' daemon could not be found in /Library/LaunchDaemons or " SYSCONFDIR "/LaunchDaemons .", pszDaemonPath);
         goto cleanup;
     }
     LW_CLEANUP_CTERR(exc, ceError);
@@ -353,14 +353,14 @@ DJGetDaemonStatus(
             
             fp = fdopen(pProcInfo->fdout, "r");
             if (!fp) {
-                LW_CLEANUP_CTERR(exc, CTMapSystemError(errno));
+                LW_CLEANUP_CTERR(exc, LwMapErrnoToLwError(errno));
             }
             
             while (1) {
                 
                 if (fgets(szBuf, 1024, fp) == NULL) {
                     if (!feof(fp)) {
-                        LW_CLEANUP_CTERR(exc, CTMapSystemError(errno));
+                        LW_CLEANUP_CTERR(exc, LwMapErrnoToLwError(errno));
                     }
                     else
                         break;
@@ -445,13 +445,13 @@ cleanup:
 }
 
 static
-CENTERROR
+DWORD
 DJExistsInLaunchCTL(
     PCSTR pszName,
     PBOOLEAN pbExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     LONG  status = 0;
@@ -476,13 +476,13 @@ DJExistsInLaunchCTL(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        ceError = CENTERROR_DOMAINJOIN_LISTSVCS_FAILED;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     fp = fdopen(pProcInfo->fdout, "r");
     if (fp == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -496,7 +496,7 @@ DJExistsInLaunchCTL(
             }
             else
             {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
         }
@@ -527,12 +527,12 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 DJPrepareServiceLaunchScript(
     PCSTR pszName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     LONG  status = 0;
@@ -554,7 +554,7 @@ DJPrepareServiceLaunchScript(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (!bFileExists)
-	BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_DOMAINJOIN_MISSING_DAEMON);
+	BAIL_ON_CENTERIS_ERROR(ceError = ERROR_SERVICE_NOT_FOUND);
 
     ceError = CTAllocateString(szBuf, ppszArgs+2);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -570,7 +570,7 @@ DJPrepareServiceLaunchScript(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        ceError = CENTERROR_DOMAINJOIN_PREPSVC_FAILED;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -586,12 +586,12 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 DJRemoveFromLaunchCTL(
     PCSTR pszName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bExistsInLaunchCTL = FALSE;
     CHAR    szBuf[1024+1];
     PPROCINFO pProcInfo = NULL;
@@ -626,7 +626,7 @@ DJRemoveFromLaunchCTL(
         BAIL_ON_CENTERIS_ERROR(ceError);
 
         if (status != 0) {
-            ceError = CENTERROR_DOMAINJOIN_SVC_UNLOAD_FAILED;
+            ceError = ERROR_BAD_COMMAND;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -639,9 +639,9 @@ DJRemoveFromLaunchCTL(
 
         sprintf(szBuf, "/Library/LaunchDaemons/%s.plist", pszName);
         ceError = CTRemoveFile(szBuf);
-        if (!CENTERROR_IS_OK(ceError)) {
+        if (ceError) {
             DJ_LOG_WARNING("Failed to remove file [%s]", szBuf);
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
     }
 
@@ -658,12 +658,12 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 DJAddToLaunchCTL(
     PCSTR pszName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bExistsInLaunchCTL = FALSE;
     BOOLEAN bFileExists = FALSE;
     CHAR    szBuf[1024+1];
@@ -687,7 +687,7 @@ DJAddToLaunchCTL(
         BAIL_ON_CENTERIS_ERROR(ceError);
 
         if (!bFileExists) {
-            ceError = CENTERROR_DOMAINJOIN_MISSING_DAEMON;
+            ceError = ERROR_SERVICE_NOT_FOUND;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
     }
@@ -718,7 +718,7 @@ DJAddToLaunchCTL(
         BAIL_ON_CENTERIS_ERROR(ceError);
 
         if (status != 0) {
-            ceError = CENTERROR_DOMAINJOIN_SVC_LOAD_FAILED;
+            ceError = ERROR_BAD_COMMAND;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
     }

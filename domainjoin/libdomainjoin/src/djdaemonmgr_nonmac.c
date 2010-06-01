@@ -33,14 +33,14 @@
 #include "djdistroinfo.h"
 #include "djdaemonmgr.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 static PSTR pszChkConfigPath = "/sbin/chkconfig";
 static PSTR pszUpdateRcDFilePath = "/usr/sbin/update-rc.d";
 
 #define DAEMON_BINARY_SEARCH_PATH "/usr/local/sbin:/usr/local/bin:/usr/dt/bin:/opt/dce/sbin:/usr/sbin:/usr/bin:/sbin:/bin:" BINDIR ":" SBINDIR
 
-CENTERROR
+DWORD
 GetInitScriptDir(PSTR *store)
 {
 #if defined(_AIX)
@@ -71,7 +71,7 @@ DJGetDaemonStatus(
     long status = 0;
     PPROCINFO pProcInfo = NULL;
     BOOLEAN daemon_installed = FALSE;
-    CENTERROR ceError;
+    DWORD ceError;
 
     if(pszDaemonName[0] == '/')
         LW_CLEANUP_CTERR(exc, CTStrdup(pszDaemonName, &prefixedPath));
@@ -85,7 +85,7 @@ DJGetDaemonStatus(
     LW_CLEANUP_CTERR(exc, CTCheckFileExists(prefixedPath, &daemon_installed));
 
     if (!daemon_installed) {
-        LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_MISSING_DAEMON);
+        LW_CLEANUP_CTERR(exc, ERROR_SERVICE_NOT_FOUND);
     }
 
     /* AIX has /etc/rc.dt. When '/etc/rc.dt status' is run, it tries to
@@ -149,7 +149,7 @@ DJGetDaemonStatus(
 
         ceError = CTFindFileInPath(daemonBaseName,
                 DAEMON_BINARY_SEARCH_PATH, &daemonPath);
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
             CT_SAFE_FREE_STRING(altDaemonName);
             LW_CLEANUP_CTERR(exc, CTStrdup(daemonBaseName, &altDaemonName));
@@ -157,7 +157,7 @@ DJGetDaemonStatus(
             ceError = CTFindFileInPath(altDaemonName,
                     DAEMON_BINARY_SEARCH_PATH, &daemonPath);
         }
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
             CT_SAFE_FREE_STRING(altDaemonName);
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&altDaemonName,
@@ -165,16 +165,16 @@ DJGetDaemonStatus(
             ceError = CTFindFileInPath(altDaemonName,
                     DAEMON_BINARY_SEARCH_PATH, &daemonPath);
         }
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
-            LW_RAISE_EX(exc, CENTERROR_FILE_NOT_FOUND, "Cannot find daemon binary", "Querying the daemon init script with '%s status' returned code 1. This either means the init script does not support the status option, or the daemon died leaving a pid file. This program is instead attempting to see if the program is running using the ps command, however the daemon binary (%s) that goes along with the init script cannot be found.", prefixedPath, daemonBaseName);
+            LW_RAISE_EX(exc, ERROR_FILE_NOT_FOUND, "Cannot find daemon binary", "Querying the daemon init script with '%s status' returned code 1. This either means the init script does not support the status option, or the daemon died leaving a pid file. This program is instead attempting to see if the program is running using the ps command, however the daemon binary (%s) that goes along with the init script cannot be found.", prefixedPath, daemonBaseName);
             goto cleanup;
         }
         LW_CLEANUP_CTERR(exc, ceError);
 
         DJ_LOG_VERBOSE("Found %s", daemonPath);
         ceError = CTGetPidOfCmdLine(NULL, daemonPath, NULL, 0, &daemonPid, NULL);
-        if(ceError == CENTERROR_NO_SUCH_PROCESS || ceError == CENTERROR_NOT_IMPLEMENTED)
+        if(ceError == ERROR_PROC_NOT_FOUND || ceError == ERROR_NOT_SUPPORTED)
         {
             //Nope, couldn't find the daemon running
             *pbStarted = FALSE;
@@ -187,7 +187,7 @@ DJGetDaemonStatus(
         }
     }
     else {
-        LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_UNEXPECTED_ERRCODE, "Non-standard return code from init script", "According to http://forgeftp.novell.com/library/SUSE%20Package%20Conventions/spc_init_scripts.html, init scripts should return 0, 1, 2, 3, or 4. However, '%s status' returned %d.", status, prefixedPath);
+        LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Non-standard return code from init script", "According to http://forgeftp.novell.com/library/SUSE%20Package%20Conventions/spc_init_scripts.html, init scripts should return 0, 1, 2, 3, or 4. However, '%s status' returned %d.", status, prefixedPath);
         goto cleanup;
     }
 
@@ -205,7 +205,7 @@ cleanup:
 static void FindDaemonScript(PCSTR name, PSTR *path, LWException **exc)
 {
     PSTR altName = NULL;
-    CENTERROR ceError;
+    DWORD ceError;
     const char *searchPath = "/etc/init.d:/etc/rc.d/init.d:/sbin/init.d:/etc/rc.d";
     BOOLEAN fileExists = FALSE;
 
@@ -216,7 +216,7 @@ static void FindDaemonScript(PCSTR name, PSTR *path, LWException **exc)
         LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(name, &fileExists));
         if (!fileExists)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MISSING_DAEMON,
+            LW_RAISE_EX(exc, ERROR_SERVICE_NOT_FOUND,
                     "Unable to find daemon",
                     "The '%s' daemon could not be found.",
                     name);
@@ -226,23 +226,23 @@ static void FindDaemonScript(PCSTR name, PSTR *path, LWException **exc)
     else
     {
         ceError = CTFindFileInPath(name, searchPath, path);
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
             CT_SAFE_FREE_STRING(altName);
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&altName,
                         "%s.rc", name));
             ceError = CTFindFileInPath(altName, searchPath, path);
         }
-        if(ceError == CENTERROR_FILE_NOT_FOUND && !strcmp(name, "dtlogin"))
+        if(ceError == ERROR_FILE_NOT_FOUND && !strcmp(name, "dtlogin"))
         {
             CT_SAFE_FREE_STRING(altName);
             LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&altName,
                         "rc.dt"));
             ceError = CTFindFileInPath(altName, searchPath, path);
         }
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_MISSING_DAEMON,
+            LW_RAISE_EX(exc, ERROR_SERVICE_NOT_FOUND,
                     "Unable to find daemon",
                     "The '%s' daemon could not be found in the search path '%s'. It could not be found with the alternative name '%s' either.",
                     name, searchPath, altName);
@@ -311,11 +311,11 @@ DJStartStopDaemon(
 
         if(bStatus)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start. Try running '%s start; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start. Try running '%s start; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
         }
         else
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop. Try running '%s stop; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop. Try running '%s stop; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
         }
         goto cleanup;
     }
@@ -360,24 +360,18 @@ DJDoUpdateRcD(
     }
 
     CTCaptureOutputToExc(command, exc);
-    if(exc != NULL && *exc != NULL &&
-            (*exc)->code == CENTERROR_COMMAND_FAILED)
-    {
-        // Put in a more specific error code
-        (*exc)->code = CENTERROR_DOMAINJOIN_UPDATERCD_FAILED;
-    }
 
 cleanup:
     CT_SAFE_FREE_STRING(command);
 }
 
-CENTERROR
+DWORD
 DJDoChkConfig(
     PCSTR pszDaemonName,
     BOOLEAN bStatus
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szDaemonPath[PATH_MAX+1];
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 4;
@@ -422,7 +416,7 @@ DJDoChkConfig(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        ceError = CENTERROR_DOMAINJOIN_CHKCONFIG_FAILED;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -437,7 +431,7 @@ DJDoChkConfig(
 
     fp = fopen(szDaemonPath, "r");
     if (fp == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -447,7 +441,7 @@ DJDoChkConfig(
             if (feof(fp))
                 break;
             else {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
 
@@ -470,7 +464,7 @@ DJDoChkConfig(
                 BAIL_ON_CENTERIS_ERROR(ceError);
 
                 if (status != 0) {
-                    ceError = CENTERROR_DOMAINJOIN_CHKCONFIG_FAILED;
+                    ceError = ERROR_BAD_COMMAND;
                     BAIL_ON_CENTERIS_ERROR(ceError);
                 }
 
@@ -577,13 +571,13 @@ DJConfigureForDaemonRestart(
     LW_CLEANUP_CTERR(exc, CTCheckFileExists(pszChkConfigPath, &bFileExists));
 
     if (bFileExists) {
-        CENTERROR ceError;
+        DWORD ceError;
 
         DJ_LOG_VERBOSE("Found '%s'", pszChkConfigPath);
         ceError = DJDoChkConfig(pszDaemonName, bStatus);
-        if(ceError == CENTERROR_DOMAINJOIN_CHKCONFIG_FAILED)
+        if(ceError == ERROR_BAD_COMMAND)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_CHKCONFIG_FAILED, "chkconfig failed", "An error occurred while using chkconfig to process the '%s' daemon. This daemon was being %s the list of processes to start on reboot.", pszDaemonName, bStatus? "added to" : "removed from");
+            LW_RAISE_EX(exc, ERROR_BAD_COMMAND, "chkconfig failed", "An error occurred while using chkconfig to process the '%s' daemon. This daemon was being %s the list of processes to start on reboot.", pszDaemonName, bStatus? "added to" : "removed from");
             goto cleanup;
         }
         LW_CLEANUP_CTERR(exc, ceError);
@@ -732,7 +726,7 @@ DJConfigureForDaemonRestart(
                 DJ_LOG_INFO("Daemon [%s]: svccfg import /etc/likewise/svcs-solaris/%s.xml status [%d]", pszDaemonName, pszDaemonName, status);
 
                 if (status) {
-                    LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "svccfg import failed", "An error occurred while using svccfg to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_STATE, "svccfg import failed", "An error occurred while using svccfg to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
                     goto cleanup;
                 }
 
@@ -745,7 +739,7 @@ DJConfigureForDaemonRestart(
                 DJ_LOG_INFO("Daemon [%s]: svcadm enable %s status [%d]", pszDaemonName, pszDaemonName, status);
 
                 if (status) {
-                    LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "svcadm enable failed", "An error occurred while using svcadm to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
+                    LW_RAISE_EX(exc, ERROR_INVALID_STATE, "svcadm enable failed", "An error occurred while using svcadm to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
                     goto cleanup;
                 }
             }

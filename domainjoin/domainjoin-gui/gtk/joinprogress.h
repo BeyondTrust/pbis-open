@@ -35,7 +35,7 @@
 #include <gtk/gtk.h>
 
 #include <stdint.h>
-#include <cterr.h>
+#include <lwerror.h>
 #include <lwexc.h>
 
 #define JOINPROGRESS_CLOSE 0

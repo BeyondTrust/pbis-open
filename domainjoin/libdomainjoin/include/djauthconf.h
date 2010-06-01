@@ -31,48 +31,48 @@
 #ifndef __DJ_AUTHCONF_H__
 #define __DJ_AUTHCONF_H__
 
-CENTERROR
+DWORD
 SetWorkgroup(
         const char *rootPrefix,
     char* psz_workgroup
     );
 
-CENTERROR
+DWORD
 SetRealm(
         PCSTR rootPrefix,
     PCSTR p_domain
     );
 
-CENTERROR
+DWORD
 ConfigureSambaEx(
     PCSTR pszDomainName,
     PCSTR pszWorkgroupName
     );
 
-CENTERROR
+DWORD
 DJRevertToOriginalWorkgroup(
     PSTR pszWorkgroupName
     );
 
-CENTERROR
+DWORD
 DJGetSambaValue(
     PSTR pszName,
     PSTR* ppszValue
     );
 
-CENTERROR
+DWORD
 DJSetSambaValue(
         const char *rootPrefix,
     PCSTR pszName,
     PCSTR pszValue
     );
 
-CENTERROR
+DWORD
 DJSambaConfExists(
         PBOOLEAN exists
         );
 
-CENTERROR
+DWORD
 DJInitSmbConfig(PCSTR rootPrefix);
 
 #endif /* __DJ_AUTHCONF_H__ */

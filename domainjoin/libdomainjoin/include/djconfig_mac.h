@@ -31,13 +31,13 @@
 #ifndef __DJCONFIG_MAC_H__
 #define __DJCONFIG_MAC_H__
 
-CENTERROR
+DWORD
 DJConfigureLWIDSPlugin();
 
-CENTERROR
+DWORD
 DJUnconfigureLWIDSPlugin();
 
-CENTERROR
+DWORD
 DJIsAppleADPluginInUse(BOOLEAN* pExists);
 
 extern const JoinModule DJDSPlugin;

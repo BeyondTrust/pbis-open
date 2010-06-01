@@ -57,12 +57,14 @@
 #include "config.h"
 #include "lwexc.h"
 #include "ctstrutils.h"
+#include <lw/winerror.h>
+#include <lwerror.h>
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 static LWException memExc =
 {
-    .code = CENTERROR_OUT_OF_MEMORY,
+    .code = ERROR_OUTOFMEMORY,
     .shortMsg = "Out of memory",
     .longMsg = "A memory allocation failed due to insufficient system resources.",
     .stack =
@@ -75,7 +77,7 @@ static LWException memExc =
 
 static LWException successExc =
 {
-    .code = CENTERROR_SUCCESS,
+    .code = ERROR_SUCCESS,
     .shortMsg = "Success",
     .longMsg = "The operation succeeded without error.",
     .stack =
@@ -88,7 +90,7 @@ static LWException successExc =
 
 static LWException*
 CreateException(
-    CENTERROR code,
+    DWORD code,
     const char* file,
     unsigned int line,
     char* shortMsg,
@@ -99,9 +101,9 @@ CreateException(
 
     switch (code)
     {
-    case CENTERROR_SUCCESS:
+    case ERROR_SUCCESS:
 	return &successExc;
-    case CENTERROR_OUT_OF_MEMORY:
+    case ERROR_OUTOFMEMORY:
 	return &memExc;
     default:
 	exc = malloc(sizeof(*exc));
@@ -122,14 +124,14 @@ CreateException(
 void
 LWRaise(
     LWException** dest, 
-    CENTERROR code
+    DWORD code
     )
 {
-    CENTERROR ceError;
+    DWORD ceError;
     char *shortMsg;
     char *longMsg;
-    const char* desc = CTErrorDescription(code);
-    const char* help = CTErrorHelp(code);
+    const char* desc = LwWin32ExtErrorToName(code);
+    const char* help = LwWin32ExtErrorToDescription(code);
 
     if (!desc)
     {
@@ -157,7 +159,7 @@ LWRaise(
 void
 LWRaiseEx(
     LWException** dest,
-    CENTERROR code,
+    DWORD code,
     const char* file,
     unsigned int line,
     const char* _shortMsg,
@@ -167,7 +169,7 @@ LWRaiseEx(
 {
     if (dest)
     {
-	CENTERROR ceError;
+	DWORD ceError;
 	char* shortMsg;
 	char* longMsg;
 	va_list ap;
@@ -176,7 +178,7 @@ LWRaiseEx(
 	
 	if (!_shortMsg)
 	{
-	    _shortMsg = CTErrorDescription(code);
+	    _shortMsg = LwWin32ExtErrorToName(code);
 	}
         if (!_shortMsg)
         {
@@ -185,7 +187,7 @@ LWRaiseEx(
 
 	if (!fmt)
 	{
-	    fmt = CTErrorHelp(code);
+	    fmt = LwWin32ExtErrorToDescription(code);
 	}
         if (!fmt)
         {
@@ -255,7 +257,7 @@ LWReraiseEx(
 	if (!down)
 	{
 	    LWHandle(src);
-	    *dest = CreateException(CENTERROR_OUT_OF_MEMORY, file, line, NULL, NULL);
+	    *dest = CreateException(ERROR_OUTOFMEMORY, file, line, NULL, NULL);
 	}
 	else
 	{
@@ -299,9 +301,9 @@ LWHandle(
     }
 }
 
-CENTERROR LWExceptionToString(const LWException *conv, PCSTR titlePrefix, BOOLEAN showSymbolicCode, BOOLEAN showTrace, PSTR *result)
+DWORD LWExceptionToString(const LWException *conv, PCSTR titlePrefix, BOOLEAN showSymbolicCode, BOOLEAN showTrace, PSTR *result)
 {
-    CENTERROR ceError;
+    DWORD ceError;
     PSTR ret = NULL;
     PSTR temp = NULL;
     PCSTR codeName = NULL;
@@ -310,7 +312,7 @@ CENTERROR LWExceptionToString(const LWException *conv, PCSTR titlePrefix, BOOLEA
         titlePrefix = "";
     
     if(showSymbolicCode)
-        codeName = CTErrorName(conv->code);
+        codeName = LwWin32ExtErrorToName(conv->code);
 
     if(codeName != NULL)
     {
@@ -348,9 +350,9 @@ cleanup:
     return ceError;
 }
 
-CENTERROR LWPrintException(FILE *dest, const LWException *print, BOOLEAN showTrace)
+DWORD LWPrintException(FILE *dest, const LWException *print, BOOLEAN showTrace)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR string = NULL;
     PSTR wrapped = NULL;
     int columns;
@@ -358,14 +360,14 @@ CENTERROR LWPrintException(FILE *dest, const LWException *print, BOOLEAN showTra
     ceError = LWExceptionToString(print, "Error: ", FALSE, showTrace, &string);
     GCE(ceError);
     //Don't word wrap if the terminal width can't be determined
-    if(!CENTERROR_IS_OK(CTGetTerminalWidth(fileno(dest), &columns)))
+    if (CTGetTerminalWidth(fileno(dest), &columns))
         columns = -1;
     ceError = CTWordWrap(string, &wrapped, 4, columns);
     GCE(ceError);
     fprintf(dest, "%s\n", wrapped);
 
 cleanup:
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         fprintf(dest, "Error %x occurred while trying to print exception\n", ceError);
     }

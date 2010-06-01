@@ -35,13 +35,13 @@
 #include "djdistroinfo.h"
 #include <lsa/lsa.h>
 
-// aka: CENTERROR_LICENSE_INCORRECT
+// aka: DWORD_LICENSE_INCORRECT
 static DWORD GPAGENT_LICENSE_ERROR = 0x00002001;
 
-// CENTERROR_LICENSE_EXPIRED
+// DWORD_LICENSE_EXPIRED
 static DWORD GPAGENT_LICENSE_EXPIRED_ERROR = 0x00002002;
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 #define PWGRD "/etc/rc.config.d/pwgr"
 
 static QueryResult QueryStopDaemons(const JoinProcessOptions *options, LWException **exc)
@@ -53,7 +53,7 @@ static QueryResult QueryStopDaemons(const JoinProcessOptions *options, LWExcepti
     /* Check for lwiauthd and likewise-open */
 
     DJGetDaemonStatus("gpagentd", &running, &inner);
-    if (!LW_IS_OK(inner) && inner->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if (!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
     {
         /* The gpagentd may not be installed so ignore */
         LW_HANDLE(&inner);
@@ -110,7 +110,7 @@ static QueryResult QueryStartDaemons(const JoinProcessOptions *options, LWExcept
     }
 
     DJGetDaemonStatus("gpagentd", &running, &inner);
-    if (!LW_IS_OK(inner) && inner->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if (!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
     {
         /* The gpagentd may not be installed so ignore */
         LW_HANDLE(&inner);
@@ -160,7 +160,7 @@ void DJRestartIfRunning(PCSTR daemon, LWException **exc)
     LWException *inner = NULL;
 
     DJGetDaemonStatus(daemon, &running, &inner);
-    if(!LW_IS_OK(inner) && inner->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if(!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
     {
         //The daemon isn't installed
         LW_HANDLE(&inner);
@@ -233,7 +233,7 @@ DJManageDaemonsDescription(
 
         //Try the alternate daemon name if there is one
         for(j = 0; !LW_IS_OK(innerExc) &&
-                innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                 daemonList[i].alternativeNames[j] != NULL; j++)
         {
             LW_HANDLE(&innerExc);
@@ -244,7 +244,7 @@ DJManageDaemonsDescription(
                              &daemonDescription,
                              &innerExc);
             if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+                    innerExc->code == ERROR_SERVICE_NOT_FOUND)
             {
                 LW_HANDLE(&innerExc);
             }
@@ -252,7 +252,7 @@ DJManageDaemonsDescription(
                 break;
         }
         if (!LW_IS_OK(innerExc) &&
-                innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                 !daemonList[i].required)
         {
             LW_HANDLE(&innerExc);
@@ -278,7 +278,7 @@ cleanup:
     CTStringBufferDestroy(&buffer);
 }
 
-CENTERROR
+DWORD
 DJGetBaseDaemonPriorities(
     int *startPriority,
     int *stopPriority,
@@ -286,12 +286,12 @@ DJGetBaseDaemonPriorities(
     )
 {
     DistroInfo distro;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     memset(&distro, 0, sizeof(distro));
 
     ceError = DJGetDistroInfo(NULL, &distro);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if (distro.os == OS_HPUX)
     {
@@ -373,7 +373,7 @@ DJManageDaemons(
 
             //Try the alternate daemon name if there is one
             for(j = 0; !LW_IS_OK(innerExc) &&
-                    innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                     daemonList[i].alternativeNames[j] != NULL; j++)
             {
                 LW_HANDLE(&innerExc);
@@ -384,7 +384,7 @@ DJManageDaemons(
                                      daemonList[i].stopPriority,
                                  &innerExc);
                 if (!LW_IS_OK(innerExc) &&
-                        innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+                        innerExc->code == ERROR_SERVICE_NOT_FOUND)
                 {
                     LW_HANDLE(&innerExc);
                 }
@@ -392,42 +392,10 @@ DJManageDaemons(
                     break;
             }
             if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                     !daemonList[i].required)
             {
                 LW_HANDLE(&innerExc);
-            }
-            if (LW_IS_OK(innerExc) && !strcmp(daemonList[i].primaryName, "gpagentd"))
-            {
-                LW_CLEANUP_CTERR(exc, CTCheckFileExists(pszErrFilePath, &bFileExists));
-
-                if (bFileExists) {
-
-                    LW_HANDLE(&innerExc);
-                    fp = fopen(pszErrFilePath, "r");
-                    if (fp != NULL) {
-
-                        if (fgets(szBuf, 256, fp) != NULL) {
-
-                            CTStripWhitespace(szBuf);
-
-                            dwGPErrCode = atoi(szBuf);
-
-                            if (dwGPErrCode == GPAGENT_LICENSE_ERROR ||
-                                dwGPErrCode == GPAGENT_LICENSE_EXPIRED_ERROR) {
-
-                                LW_RAISE(exc, CENTERROR_DOMAINJOIN_LICENSE_ERROR);
-                                goto cleanup;
-
-                            }
-                        }
-
-                    } else {
-
-                        DJ_LOG_ERROR("Failed to open file [%s]", pszErrFilePath);
-
-                    }
-                }
             }
             LW_CLEANUP(exc, innerExc);
         }
@@ -451,13 +419,13 @@ DJManageDaemons(
                 sleep(1);
                 continue;
             }
-            LW_CLEANUP_LSERR(exc, dwError);
-            LW_CLEANUP_LSERR(exc, LsaGetLogInfo(hLsa, &pLogInfo));
+            LW_CLEANUP_CTERR(exc, dwError);
+            LW_CLEANUP_CTERR(exc, LsaGetLogInfo(hLsa, &pLogInfo));
             bLsassContacted = TRUE;
         }
         if (!bLsassContacted)
         {
-            LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INCORRECT_STATUS, "Unable to reach lsassd", "The lsass daemon could not be reached for 30 seconds after trying to start it. Please verify it is running.");
+            LW_RAISE_EX(exc, ERROR_SERVICE_NOT_ACTIVE, "Unable to reach lsassd", "The lsass daemon could not be reached for 30 seconds after trying to start it. Please verify it is running.");
             goto cleanup;
         }
     }
@@ -475,7 +443,7 @@ DJManageDaemons(
 
             //Try the alternate daemon name if there is one
             for(j = 0; !LW_IS_OK(innerExc) &&
-                    innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                     daemonList[i].alternativeNames[j] != NULL; j++)
             {
                 LW_HANDLE(&innerExc);
@@ -486,7 +454,7 @@ DJManageDaemons(
                                      daemonList[i].stopPriority,
                                  &innerExc);
                 if (!LW_IS_OK(innerExc) &&
-                        innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+                        innerExc->code == ERROR_SERVICE_NOT_FOUND)
                 {
                     LW_HANDLE(&innerExc);
                 }
@@ -494,7 +462,7 @@ DJManageDaemons(
                     break;
             }
             if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON &&
+                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
                     !daemonList[i].required)
             {
                 LW_HANDLE(&innerExc);

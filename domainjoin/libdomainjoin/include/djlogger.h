@@ -57,29 +57,29 @@ typedef struct _LOGINFO {
     LOGFILEINFO logfile;
 } LOGINFO, *PLOGINFO;
 
-CENTERROR
+DWORD
 dj_set_log_level(
     DWORD dwLogLevel
     );
 
-CENTERROR
+DWORD
 dj_init_logging_to_file(
     DWORD dwLogLevel,
     PSTR  pszLogFilePath
     );
 
-CENTERROR
+DWORD
 dj_init_logging_to_file_handle(
     DWORD dwLogLevel,
     FILE* handle
     );
 
-CENTERROR
+DWORD
 dj_init_logging_to_console(
     DWORD dwLogLevel
     );
 
-CENTERROR
+DWORD
 dj_disable_logging();
 
 void
@@ -91,7 +91,7 @@ dj_log_message(
 void
 dj_close_log();
 
-CENTERROR DJLogException(
+DWORD DJLogException(
     DWORD dwLogLevel,
     const LWException *exc);
 

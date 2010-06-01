@@ -102,12 +102,12 @@ cleanup:
     CT_SAFE_FREE_STRING(dn);
 }
 
-CENTERROR
+DWORD
 GetPassword(
     PSTR* ppszPassword
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szBuf[129];
     DWORD idx = 0;
     struct termios old, new;
@@ -136,14 +136,14 @@ GetPassword(
 
         } else {
 
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
 
         }
     }
 
     if (idx == 128) {
-        ceError = CTMapSystemError(ENOBUFS);
+        ceError = LwMapErrnoToLwError(ENOBUFS);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 

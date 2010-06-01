@@ -58,7 +58,7 @@
 #include "ctbase.h"
 #include "cthash.h"
 
-CENTERROR
+DWORD
 CTStableHashTableInit(
     PSHASH_TABLE tab,
     LWGHashFunc hash_func,
@@ -67,13 +67,13 @@ CTStableHashTableInit(
     LWGDestroyNotify value_free
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     
     tab->table = lwg_hash_table_new(hash_func, equal_func);
     
     if (!tab->table)
     {
-        ceError = CENTERROR_OUT_OF_MEMORY;
+        ceError = ERROR_OUTOFMEMORY;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     
@@ -86,7 +86,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStableHashTableNew(
     PSHASH_TABLE* tab,
     LWGHashFunc hash_func,
@@ -95,7 +95,7 @@ CTStableHashTableNew(
     LWGDestroyNotify value_free
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     
     ceError = CTAllocateMemory(sizeof(SHASH_TABLE), (PVOID*) tab);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -109,14 +109,14 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStableHashTableInsert(
     PSHASH_TABLE tab,
     lwgpointer key,
     lwgpointer value
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWGList* old_link;
     if ((old_link = (LWGList*) lwg_hash_table_lookup(tab->table, key)) != NULL)
     {

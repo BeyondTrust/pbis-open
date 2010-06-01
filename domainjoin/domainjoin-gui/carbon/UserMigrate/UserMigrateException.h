@@ -71,13 +71,12 @@ class UserMigrateException : public std::exception
                 
     public:
     
-        static const int CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-        static const int CENTERROR_DOMAINJOIN_INVALID_HOSTNAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_DOMAIN_NAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_USERID;
-        static const int CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_OU;
-        static const int CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS;
+        static const int ERROR_INVALID_COMPUTERNAME;
+        static const int ERROR_INVALID_DOMAINNAME;
+        static const int ERROR_BAD_FORMAT;
+        static const int LW_ERROR_FAILED_TO_LOOKUP_DC;
+        static const int LW_ERROR_INVALID_OU;
+        static const int LW_ERROR_FAILED_ADMIN_PRIVS;
 
     private:
     
@@ -87,23 +86,12 @@ class UserMigrateException : public std::exception
 
 };
 
-class NonRootUserException : public UserMigrateException
-{
-    public:
-        NonRootUserException()
-        : UserMigrateException(
-              UserMigrateException::CENTERROR_DOMAINJOIN_NON_ROOT_USER
-              )
-        {
-        }
-};
-
 class InvalidHostnameException : public UserMigrateException
 {
     public:
            InvalidHostnameException()
                : UserMigrateException(
-                     UserMigrateException::CENTERROR_DOMAINJOIN_INVALID_HOSTNAME
+                     UserMigrateException::ERROR_INVALID_COMPUTERNAME
                  )
                {
                }
@@ -114,7 +102,7 @@ class InvalidDomainnameException : public UserMigrateException
     public:
            InvalidDomainnameException()
                : UserMigrateException(
-                    UserMigrateException::CENTERROR_DOMAINJOIN_INVALID_DOMAIN_NAME)
+                    UserMigrateException::ERROR_INVALID_DOMAINNAME)
            {
            }
 };
@@ -124,7 +112,7 @@ class InvalidUsernameException : public UserMigrateException
     public:
            InvalidUsernameException()
                : UserMigrateException(
-                     UserMigrateException::CENTERROR_DOMAINJOIN_INVALID_USERID
+                     UserMigrateException::ERROR_BAD_FORMAT
                      )
                {
                }
@@ -135,7 +123,7 @@ class InvalidOUPathException : public UserMigrateException
     public:
            InvalidOUPathException()
                : UserMigrateException(
-                     UserMigrateException::CENTERROR_DOMAINJOIN_INVALID_OU
+                     UserMigrateException::LW_ERROR_INVALID_OU
                      )
                {
                }
@@ -146,12 +134,12 @@ class FailedAdminPrivilegeException : public UserMigrateException
     public:
           FailedAdminPrivilegeException()
               : UserMigrateException(
-                     UserMigrateException::CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS)
+                     UserMigrateException::LW_ERROR_FAILED_ADMIN_PRIVS)
             {
             }
            FailedAdminPrivilegeException(const std::string& errMsg)
                : UserMigrateException(
-					 UserMigrateException::CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS,
+					 UserMigrateException::LW_ERROR_FAILED_ADMIN_PRIVS,
                      errMsg
                      )
             {
@@ -162,7 +150,7 @@ class UnresolvedDomainNameException : public UserMigrateException
 {
     public:
            UnresolvedDomainNameException()
-               : UserMigrateException(UserMigrateException::CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME)
+               : UserMigrateException(UserMigrateException::LW_ERROR_FAILED_TO_LOOKUP_DC)
                {
                }
 };

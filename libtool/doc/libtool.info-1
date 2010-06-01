@@ -1,7 +1,7 @@
 This is
-/export/home/kstemen/svn/Platform/src/linux/libtool/doc/libtool.info,
+/private/var/automount/Users/kstemen/svn/Platform/src/linux/libtool/doc/libtool.info,
 produced by makeinfo version 4.7 from
-/export/home/kstemen/svn/Platform/src/linux/libtool/doc/libtool.texi.
+/private/var/automount/Users/kstemen/svn/Platform/src/linux/libtool/doc/libtool.texi.
 
 INFO-DIR-SECTION GNU programming tools
 START-INFO-DIR-ENTRY
@@ -6127,9 +6127,9 @@ Index
 * AM_PROG_LIBTOOL:                       LT_INIT.             (line  23)
 * application-level dynamic linking <1>: Dlopened modules.    (line   6)
 * application-level dynamic linking:     Using libltdl.       (line   6)
+* ar:                                    Linking libraries.   (line   6)
 * AR:                                    libtool script contents.
                                                               (line  30)
-* ar:                                    Linking libraries.   (line   6)
 * archive_cmds:                          libtool script contents.
                                                               (line  88)
 * archive_expsym_cmds:                   libtool script contents.
@@ -6218,23 +6218,23 @@ Index
 * design philosophy:                     Motivation.          (line   6)
 * developing libraries:                  Static-only libraries.
                                                               (line   6)
-* dlclose <1>:                           Dlopened modules.    (line   6)
-* dlclose:                               Using libltdl.       (line   6)
+* dlclose <1>:                           Using libltdl.       (line   6)
+* dlclose:                               Dlopened modules.    (line   6)
 * dlerror:                               Using libltdl.       (line   6)
 * DLLTOOL:                               LT_INIT.             (line 259)
-* dlopen <1>:                            Dlopened modules.    (line   6)
-* dlopen:                                Using libltdl.       (line   6)
+* dlopen <1>:                            Using libltdl.       (line   6)
+* dlopen:                                Dlopened modules.    (line   6)
 * dlopen_self:                           libtool script contents.
                                                               (line 139)
 * dlopen_self_static:                    libtool script contents.
                                                               (line 143)
 * dlopen_support:                        libtool script contents.
                                                               (line 135)
-* dlopening modules <1>:                 Using libltdl.       (line   6)
-* dlopening modules:                     Dlopened modules.    (line   6)
+* dlopening modules <1>:                 Dlopened modules.    (line   6)
+* dlopening modules:                     Using libltdl.       (line   6)
 * dlopening, pitfalls:                   Dlopen issues.       (line   6)
-* dlsym <1>:                             Dlopened modules.    (line   6)
-* dlsym:                                 Using libltdl.       (line   6)
+* dlsym <1>:                             Using libltdl.       (line   6)
+* dlsym:                                 Dlopened modules.    (line   6)
 * double-compilation, avoiding:          Static-only libraries.
                                                               (line   6)
 * dynamic dependencies:                  Versioning.          (line   6)
@@ -6531,8 +6531,8 @@ Index
 * mode, install:                         Install mode.        (line   6)
 * mode, link:                            Link mode.           (line   6)
 * mode, uninstall:                       Uninstall mode.      (line   6)
-* modules, dynamic <1>:                  Using libltdl.       (line   6)
-* modules, dynamic:                      Dlopened modules.    (line   6)
+* modules, dynamic <1>:                  Dlopened modules.    (line   6)
+* modules, dynamic:                      Using libltdl.       (line   6)
 * motivation for writing libtool:        Motivation.          (line   6)
 * names of dynamic modules:              Finding the dlname.  (line   6)
 * need_lib_prefix:                       libtool script contents.
@@ -6604,10 +6604,10 @@ Index
 * problems, solving:                     Troubleshooting.     (line   6)
 * program wrapper scripts:               Linking executables. (line  71)
 * quote.test:                            Test descriptions.   (line 178)
+* RANLIB <1>:                            LT_INIT.             (line 251)
 * RANLIB:                                libtool script contents.
                                                               (line  73)
 * ranlib:                                Linking libraries.   (line  12)
-* RANLIB:                                LT_INIT.             (line 251)
 * reload_cmds:                           libtool script contents.
                                                               (line 355)
 * reload_flag:                           libtool script contents.

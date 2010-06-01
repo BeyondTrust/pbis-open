@@ -54,7 +54,7 @@ typedef struct __HOSTSFILELINE
 
 } HOSTSFILELINE, *PHOSTSFILELINE;
 
-CENTERROR
+DWORD
 DJReplaceNameInHostsFile(
     PCSTR filename,
     PSTR  oldShortHostname,
@@ -63,7 +63,7 @@ DJReplaceNameInHostsFile(
     PCSTR dnsDomainName
     );
 
-CENTERROR
+DWORD
 DJReplaceHostnameInMemory(
     PHOSTSFILELINE pHostsFileLineList,
     PCSTR oldShortHostname,
@@ -72,7 +72,7 @@ DJReplaceHostnameInMemory(
     PCSTR dnsDomainName
     );
 
-CENTERROR
+DWORD
 DJParseHostsFile(
     const char *filename,
     PHOSTSFILELINE* ppHostsFileLineList
@@ -88,7 +88,7 @@ DJFreeHostsFileLineList(
     PHOSTSFILELINE pHostsLineList
     );
 
-CENTERROR
+DWORD
 DJCopyMissingHostsEntry(
         PCSTR destFile, PCSTR srcFile,
         PCSTR entryName1, PCSTR entryName2);

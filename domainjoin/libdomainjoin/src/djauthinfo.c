@@ -65,10 +65,10 @@
 extern char** environ;
 #endif
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 #define LW_RAISE_LSERR(dest, code)			\
-    LWRaiseLsassError((dest), (code), __FILE__, __LINE__)
+    LW_RAISE(dest, code);
 
 #define LW_CLEANUP_LSERR(dest, err)		\
     do						\
@@ -104,52 +104,8 @@ GetCacheDescription(
     );
 
 static
-CENTERROR
+DWORD
 RemoveCacheFiles();
-
-void
-LWRaiseLsassError(
-    LWException** dest,
-    DWORD code,
-    const char* file,
-    unsigned int line
-    )
-{
-    PSTR buffer = NULL;
-    PCSTR symbol = NULL;
-    PCSTR description = "Unknown error";
-    DWORD err = CENTERROR_DOMAINJOIN_LSASS_ERROR;
-    size_t bufferSize;
-
-    symbol = LwWin32ExtErrorToName(code);
-    if (symbol == NULL)
-    {
-        symbol = "Unknown";
-    }
-
-    bufferSize = LwGetErrorString(code, NULL, 0);
-    LW_CLEANUP_CTERR(dest, CTAllocateMemory(bufferSize, PPCAST(&buffer)));
-    if (LwGetErrorString(code, buffer, bufferSize) == bufferSize && bufferSize > 0 && strlen(buffer) > 0)
-    {
-        description = buffer;
-    }
-
-    switch (code)
-    {
-        case LW_ERROR_FAILED_TO_LOOKUP_DC:
-            err = CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME;
-            break;
-    }
-
-    LWRaiseEx(dest, err, file, line, "Lsass Error", "%d (0x%X) %s - %s", code, code, symbol, description);
-    if (dest != NULL)
-    {
-        (*dest)->subcode = code;
-    }
-
-cleanup:
-    CT_SAFE_FREE_STRING(buffer);
-}
 
 VOID
 FixCfgString(
@@ -248,10 +204,10 @@ cleanup:
 }
 
 static
-CENTERROR
+DWORD
 DeletePolicyTreeFromRegistry()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     HANDLE hReg = (HANDLE)NULL;
     HKEY pRootKey = NULL;
 
@@ -278,7 +234,7 @@ DeletePolicyTreeFromRegistry()
     if (ceError)
     {
         //Donot log if ceError is about the key which is not present
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
 
 cleanup:
@@ -296,10 +252,10 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 RemoveCacheFiles()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bFileExists = FALSE;
     BOOLEAN bDirExists = FALSE;
     CHAR szSudoOrigFile[PATH_MAX+1];
@@ -409,8 +365,8 @@ RemoveCacheFiles()
                                  pszSearchPath,
                                  &pszSudoersPath);
 
-    if( ceError == CENTERROR_FILE_NOT_FOUND )
-        ceError = CENTERROR_SUCCESS;
+    if( ceError == ERROR_FILE_NOT_FOUND )
+        ceError = ERROR_SUCCESS;
 
     if(pszSudoersPath)
     {
@@ -591,14 +547,14 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 CanonicalizeOrganizationalUnit(
     PSTR* pszCanonicalizedOrganizationalUnit,
     PCSTR pszOrganizationalUnit,
     PCSTR pszDomainName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     PSTR comma;
     PSTR current;
@@ -609,7 +565,7 @@ CanonicalizeOrganizationalUnit(
     if (!pszOrganizationalUnit || !pszOrganizationalUnit[0])
     {
         result = NULL;
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         GOTO_CLEANUP_EE(EE);
     }
 
@@ -623,7 +579,7 @@ CanonicalizeOrganizationalUnit(
 
     /* create a temporary buffer in which to party */
     ceError = CTAllocateString(pszOrganizationalUnit, &temp);
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
 
     CTStripWhitespace(temp);
 
@@ -645,7 +601,7 @@ CanonicalizeOrganizationalUnit(
         equalSign = strchr(current, '=');
         if (!equalSign)
         {
-            ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+            ceError = LW_ERROR_INVALID_OU;
             GOTO_CLEANUP_EE(EE);
         }
         equalSign[0] = 0;
@@ -657,49 +613,49 @@ CanonicalizeOrganizationalUnit(
         isOu = !strcasecmp("ou", type) || !strcasecmp("cn", type);
         if (!isDc && !isOu)
         {
-            ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+            ceError = LW_ERROR_INVALID_OU;
             GOTO_CLEANUP_EE(EE);
         }
         if (!isDc)
         {
             if (dnsDomain)
             {
-                ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+                ceError = LW_ERROR_INVALID_OU;
                 GOTO_CLEANUP_EE(EE);
             }
             if (result)
             {
                 PSTR newResult;
                 ceError = CTAllocateStringPrintf(&newResult, "%s/%s", component, result);
-                GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
                 CT_SAFE_FREE_STRING(result);
                 result = newResult;
             }
             else
             {
                 ceError = CTAllocateString(component, &result);
-                GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
             }
         }
         else
         {
             if (!result)
             {
-                ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+                ceError = LW_ERROR_INVALID_OU;
                 GOTO_CLEANUP_EE(EE);
             }
             if (dnsDomain)
             {
                 PSTR newDnsDomain;
                 ceError = CTAllocateStringPrintf(&newDnsDomain, "%s.%s", dnsDomain, component);
-                GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
                 CT_SAFE_FREE_STRING(dnsDomain);
                 dnsDomain = newDnsDomain;
             }
             else
             {
                 ceError = CTAllocateString(component, &dnsDomain);
-                GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+                GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
             }
         }
         if (!comma)
@@ -712,19 +668,19 @@ CanonicalizeOrganizationalUnit(
 
     if (IsNullOrEmptyString(dnsDomain))
     {
-        ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+        ceError = LW_ERROR_INVALID_OU;
         GOTO_CLEANUP_EE(EE);
     }
 
     if (IsNullOrEmptyString(result))
     {
-        ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+        ceError = LW_ERROR_INVALID_OU;
         GOTO_CLEANUP_EE(EE);
     }
 
     if (strcasecmp(dnsDomain, pszDomainName))
     {
-        ceError = CENTERROR_DOMAINJOIN_INVALID_OU;
+        ceError = LW_ERROR_INVALID_OU;
         GOTO_CLEANUP_EE(EE);
     }
 
@@ -754,7 +710,7 @@ static QueryResult QueryDoJoin(const JoinProcessOptions *options, LWException **
 
     if(((options->username != NULL) && (strchr(options->username, '\\') != NULL)))
     {
-        LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_USERID, "Invalid username", "The username '%s' is invalid because it contains a backslash. Please use UPN syntax (user@domain.com) if you wish to use a username from a different domain.", options->username);
+        LW_RAISE_EX(exc, ERROR_BAD_FORMAT, "Invalid username", "The username '%s' is invalid because it contains a backslash. Please use UPN syntax (user@domain.com) if you wish to use a username from a different domain.", options->username);
         return CannotConfigure;
     }
 
@@ -852,7 +808,7 @@ static QueryResult QueryLeave(const JoinProcessOptions *options, LWException **e
 
     if(((options->username != NULL) && (strchr(options->username, '\\') != NULL)))
     {
-        LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_USERID, "Invalid username", "The username '%s' is invalid because it contains a backslash. Please use UPN syntax (user@domain.com) if you wish to use a username from a different domain.", options->username);
+        LW_RAISE_EX(exc, ERROR_BAD_FORMAT, "Invalid username", "The username '%s' is invalid because it contains a backslash. Please use UPN syntax (user@domain.com) if you wish to use a username from a different domain.", options->username);
         return CannotConfigure;
     }
 
@@ -912,7 +868,7 @@ DJGetConfiguredDnsDomain(
             switch(_err)
             {
                 case LW_ERROR_NOT_JOINED_TO_AD:
-                    (*exc)->code = CENTERROR_DOMAINJOIN_DOMAIN_NOT_FOUND;
+                    (*exc)->code = ERROR_NO_SUCH_DOMAIN;
                     break;
             }
         }
@@ -960,7 +916,7 @@ DJGetComputerDN(PSTR *dn, LWException **exc)
             switch(_err)
             {
                 case LW_ERROR_NOT_JOINED_TO_AD:
-                    (*exc)->code = CENTERROR_DOMAINJOIN_DOMAIN_NOT_FOUND;
+                    (*exc)->code = ERROR_NO_SUCH_DOMAIN;
                     break;
             }
         }
@@ -1028,7 +984,7 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                         firstStart + 1,
                         firstStop + stopLaterOffset * 1,
                         &innerExc);
-            if (!LW_IS_OK(innerExc) && innerExc->code != CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+            if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
             {
                 DJLogException(LOG_LEVEL_WARNING, innerExc);
             }
@@ -1136,7 +1092,7 @@ void DJCreateComputerAccount(
     sprintf(krb5ConfEnv, "KRB5_CONFIG=%s/etc/krb5.conf", tempDir);
 
     if (putenv(krb5ConfEnv) != 0) {
-       LW_CLEANUP_CTERR(exc, CTMapSystemError(errno));
+       LW_CLEANUP_CTERR(exc, LwMapErrnoToLwError(errno));
     }
 
     LW_CLEANUP_LSERR(exc, LWNetExtendEnvironmentForKrb5Affinity(TRUE));
@@ -1172,16 +1128,16 @@ void DJCreateComputerAccount(
         switch(dwError)
         {
             case ERROR_FILE_NOT_FOUND:
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_OU, "Lsass Error", "The OU is invalid.");
+                LW_RAISE_EX(exc, LW_ERROR_INVALID_OU, "Lsass Error", "The OU is invalid.");
                 break;
             case ERROR_CRC:
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_BAD_LICENSE_KEY, "Lsass Error", "An invalid license key exists in AD");
+                LW_RAISE_EX(exc, LW_ERROR_BAD_LICENSE_KEY, "Lsass Error", "An invalid license key exists in AD");
                 break;
             case ERROR_INVALID_PARAMETER:
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_INVALID_FORMAT, "Lsass Error", "The OU format is invalid.");
+                LW_RAISE_EX(exc, ERROR_BAD_FORMAT, "Lsass Error", "The OU format is invalid.");
                 break;
             case ERROR_DS_NAME_ERROR_NO_MAPPING:
-                LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Lsass Error", "The dnsHostName attribute cannot be set on the computer account because your user account does not have permission to write arbitrary values, and your computer's domain name is not listed in the msDS-AllowedDNSSuffixes attribute.");
+                LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Lsass Error", "The dnsHostName attribute cannot be set on the computer account because your user account does not have permission to write arbitrary values, and your computer's domain name is not listed in the msDS-AllowedDNSSuffixes attribute.");
                 break;
                 break;
             default:
@@ -1268,21 +1224,21 @@ cleanup:
     ;
 }
 
-CENTERROR
+DWORD
 DJGetMachineSID(
     PSTR* ppszMachineSID
     )
 {
     *ppszMachineSID = NULL;
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
-CENTERROR
+DWORD
 DJSetMachineSID(
     PSTR pszMachineSID
     )
 {
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 DWORD
@@ -1424,7 +1380,7 @@ DJLogDomainJoinSucceededEvent(
     PSTR pszLikewiseVersion
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     HANDLE hEventLog = NULL;
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
@@ -1480,7 +1436,7 @@ DJLogDomainJoinFailedEvent(
     LWException *exc
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     HANDLE hEventLog = NULL;
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
@@ -1538,7 +1494,7 @@ DJLogDomainLeaveSucceededEvent(
     JoinProcessOptions * JoinOptions
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     HANDLE hEventLog = NULL;
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
@@ -1585,7 +1541,7 @@ DJLogDomainLeaveFailedEvent(
     LWException *exc
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     HANDLE hEventLog = NULL;
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
@@ -1654,7 +1610,7 @@ void SetLsassTimeSync(PCSTR rootPrefix, BOOLEAN sync, LWException **exc)
                 "SyncSystemTime",
                 0,
                 REG_DWORD,
-                &dwSync,
+                (BYTE*)&dwSync,
                 sizeof(dwSync)));
 
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));

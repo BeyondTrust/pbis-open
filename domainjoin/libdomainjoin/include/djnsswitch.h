@@ -32,16 +32,16 @@
 #define __DJNSSWITCH_H__
 
 
-CENTERROR
+DWORD
 UnConfigureNameServiceSwitch();
 
-CENTERROR
+DWORD
 ConfigureNameServiceSwitch();
 
-CENTERROR
+DWORD
 DJConfigureNameServiceSwitch(const char *testPrefix, BOOLEAN enable);
 
-CENTERROR
+DWORD
 DJConfigureHostsEntry(const char *testPrefix);
 
 extern const JoinModule DJNsswitchModule;

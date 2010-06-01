@@ -31,16 +31,16 @@
 #ifndef __DJMETHODCFG_H__
 #define __DJMETHODCFG_H__
 
-CENTERROR
+DWORD
 DJHasMethodsCfg(BOOLEAN *exists);
 
-CENTERROR
+DWORD
 DJIsMethodsCfgConfigured(BOOLEAN *configured);
 
-CENTERROR
+DWORD
 DJUnconfigMethodsConfigFile();
 
-CENTERROR
+DWORD
 DJFixMethodsConfigFile();
 
 #endif /* __DJMETHODCFG_H__ */

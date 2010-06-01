@@ -6,7 +6,7 @@
 
 COMP_INCREMENTAL=1
 COMP_SOURCES="${BUILD_ROOT}/src/linux/centutils"
-COMP_DEPENDENCIES="autoconf automake libtool moonunit lwbase"
+COMP_DEPENDENCIES="autoconf automake libtool moonunit lwbase lwadvapi"
 
 function component_bootstrap
 {

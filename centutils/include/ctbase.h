@@ -57,20 +57,21 @@
 #ifndef __CTBASE_H__
 #define __CTBASE_H__
 
+#include <lw/types.h>
+#include <lw/attrs.h>
+#include <lwerror.h>
+
 #include "ctsys.h"
 #include "ctdef.h"
-#include "cterr.h"
 #include "ctmem.h"
 #include "ctrwlock.h"
 #include "ctstrutils.h"
 #include "ctfileutils.h"
 #include "ctsysfuncs.h"
-#include "ctcfgparser.h"
 #include "ctprocutils.h"
 #include "cthash.h"
 #include "ctexec.h"
 #include "ctuser.h"
-#include "ctgroup.h"
 #include "cttext.h"
 
 #endif /* __CTBASE_H__ */

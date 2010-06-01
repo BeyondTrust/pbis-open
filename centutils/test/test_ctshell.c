@@ -8,10 +8,10 @@
 
 #define MU_TRY_CTERR(_e_)					\
     do {							\
-	CENTERROR ceError = (_e_);				\
+	DWORD ceError = (_e_);				\
 	if (ceError)						\
 	{							\
-	    const char* name = CTErrorName(ceError);		\
+	    const char* name = LwWin32ExtErrorToName(ceError);		\
 	    if (!name)						\
 		name = "Unknown";				\
 	    MU_FAILURE("%s failed: %s (0x%x)",			\

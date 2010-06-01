@@ -1503,6 +1503,11 @@ LsaFreeStatus(
     PLSASTATUS pLsaStatus
     );
 
+DWORD
+LsaReadVersionFile(
+    PLSA_VERSION pVersion
+    );
+
 /**
  * @ingroup connection
  * @brief Closes connection to LSASS server

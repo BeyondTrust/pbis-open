@@ -44,24 +44,24 @@ LOGINFO gdjLogInfo =
     {"", NULL}
 };
 
-CENTERROR
+DWORD
 dj_validate_log_level(
     DWORD dwLogLevel
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (dwLogLevel < 1) {
-        ceError = CENTERROR_INVALID_VALUE;
+        ceError = ERROR_INVALID_PARAMETER;
     }
 
     return (ceError);
 }
 
-CENTERROR
+DWORD
 dj_disable_logging()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (gdjLogInfo.logfile.logHandle != NULL &&
         gdjLogInfo.logfile.logHandle != stdout) {
@@ -74,12 +74,12 @@ dj_disable_logging()
     return ceError;
 }
 
-CENTERROR
+DWORD
 dj_init_logging_to_console(
     DWORD dwLogLevel
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (gdjLogInfo.logfile.logHandle != NULL &&
         gdjLogInfo.logfile.logHandle != stdout) {
@@ -96,13 +96,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 dj_init_logging_to_file(
     DWORD dwLogLevel,
     PSTR  pszLogFilePath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     gdjLogInfo.dwLogTarget = LOG_TO_FILE;
 
@@ -115,11 +115,11 @@ dj_init_logging_to_file(
             &gdjLogInfo.logfile.logHandle);
         BAIL_ON_CENTERIS_ERROR(ceError);
         ceError = CTChangePermissions(gdjLogInfo.logfile.szLogPath, 0600);
-        if(ceError == CENTERROR_INVALID_OPERATION)
+        if(ceError == LwMapErrnoToLwError(EPERM))
         {
             //Some other user owns the file, so we can't change the
             //permissions.
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         BAIL_ON_CENTERIS_ERROR(ceError);
         ceError = CTSetCloseOnExec(fileno(gdjLogInfo.logfile.logHandle));
@@ -141,13 +141,13 @@ error:
     return (ceError);
 }
 
-CENTERROR
+DWORD
 dj_init_logging_to_file_handle(
     DWORD dwLogLevel,
     FILE* handle
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     gdjLogInfo.dwLogTarget = LOG_TO_FILE;
 
@@ -258,12 +258,12 @@ dj_log_message(
     va_end(argp);
 }
 
-CENTERROR
+DWORD
 dj_set_log_level(
     DWORD dwLogLevel
     )
 {
-    DWORD ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = dj_validate_log_level(dwLogLevel);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -275,12 +275,12 @@ error:
     return (ceError);
 }
 
-CENTERROR DJLogException(
+DWORD DJLogException(
     DWORD dwLogLevel,
     const LWException *exc)
 {
     PSTR exceptionString = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = LWExceptionToString(exc, NULL, TRUE, TRUE, &exceptionString);
     BAIL_ON_CENTERIS_ERROR(ceError);

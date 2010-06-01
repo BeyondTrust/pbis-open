@@ -52,9 +52,9 @@ struct SshConf
 
 static int FindOption(struct SshConf *conf, int startLine, const char *name);
 
-static CENTERROR SetOption(struct SshConf *conf, const char *name, const char *value);
+static DWORD SetOption(struct SshConf *conf, const char *name, const char *value);
 
-static CENTERROR WriteSshConfiguration(const char *rootPrefix, struct SshConf *conf);
+static DWORD WriteSshConfiguration(const char *rootPrefix, struct SshConf *conf);
 
 static void UpdatePublicLines(struct SshConf *conf)
 {
@@ -62,17 +62,17 @@ static void UpdatePublicLines(struct SshConf *conf)
     conf->lineCount = conf->private_data.size;
 }
 
-static CENTERROR GetLineStrings(char ***dest, struct SshLine *line, int *destSize)
+static DWORD GetLineStrings(char ***dest, struct SshLine *line, int *destSize)
 {
     if(*destSize < 5)
-        return CENTERROR_OUT_OF_MEMORY;
+        return ERROR_OUTOFMEMORY;
     dest[0] = &line->leadingWhiteSpace;
     dest[1] = &line->name.value;
     dest[2] = &line->name.trailingSeparator;
     dest[3] = &line->value.value;
     dest[4] = &line->value.trailingSeparator;
     *destSize = 5;
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 static void FreeSshLineContents(struct SshLine *line)
@@ -105,9 +105,9 @@ static int FindOption(struct SshConf *conf, int startLine, const char *name)
 }
 
 /* Get the printed form of a line from the parsed form by concatenating all of the strings together */
-static CENTERROR GetPrintedLine(DynamicArray *dest, struct SshConf *conf, int line)
+static DWORD GetPrintedLine(DynamicArray *dest, struct SshConf *conf, int line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t len = 0;
     char **strings[5];
     size_t stringLengths[5];
@@ -139,9 +139,9 @@ error:
     return ceError;
 }
 
-static CENTERROR RemoveLine(struct SshConf *conf, int *line)
+static DWORD RemoveLine(struct SshConf *conf, int *line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BAIL_ON_CENTERIS_ERROR(ceError = CTArrayRemove(&conf->private_data, *line, sizeof(struct SshLine), 1));
     UpdatePublicLines(conf);
     conf->modified = 1;
@@ -153,9 +153,9 @@ error:
     return ceError;
 }
 
-static CENTERROR RemoveOption(struct SshConf *conf, const char *name)
+static DWORD RemoveOption(struct SshConf *conf, const char *name)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line;
 
     for(line = 0; line < conf->lineCount; line++)
@@ -175,9 +175,9 @@ error:
 }
 
 /* Copy a ssh configuration line and add it below the old line. */
-static CENTERROR SetOption(struct SshConf *conf, const char *name, const char *value)
+static DWORD SetOption(struct SshConf *conf, const char *name, const char *value)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = -1;
     DynamicArray printedLine;
     struct SshLine lineObj;
@@ -272,9 +272,9 @@ error:
     return ceError;
 }
 
-static CENTERROR AddFormattedLine(struct SshConf *conf, const char *filename, const char *linestr, const char **endptr)
+static DWORD AddFormattedLine(struct SshConf *conf, const char *filename, const char *linestr, const char **endptr)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct SshLine lineObj;
     const char *pos = linestr;
     const char *token_start = NULL;
@@ -337,9 +337,9 @@ static void FreeSshConfContents(struct SshConf *conf)
     CT_SAFE_FREE_STRING(conf->filename);
 }
 
-static CENTERROR ReadSshFile(struct SshConf *conf, const char *rootPrefix, const char *filename)
+static DWORD ReadSshFile(struct SshConf *conf, const char *rootPrefix, const char *filename)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE *file = NULL;
     PSTR buffer = NULL;
     char *fullPath = NULL;
@@ -353,7 +353,7 @@ static CENTERROR ReadSshFile(struct SshConf *conf, const char *rootPrefix, const
     if(!exists)
     {
         DJ_LOG_INFO("File %s does not exist", fullPath);
-        ceError = CENTERROR_INVALID_FILENAME;
+        ceError = ERROR_FILE_NOT_FOUND;
         goto error;
     }
 
@@ -383,9 +383,9 @@ error:
     return ceError;
 }
 
-static CENTERROR WriteSshConfiguration(const char *rootPrefix, struct SshConf *conf)
+static DWORD WriteSshConfiguration(const char *rootPrefix, struct SshConf *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DynamicArray printedLine;
     int i;
     char *tempName = NULL;
@@ -405,7 +405,7 @@ static CENTERROR WriteSshConfiguration(const char *rootPrefix, struct SshConf *c
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTOpenFile(tempName, "w", &file);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJ_LOG_ERROR("Unable to open '%s' for writing", tempName);
         BAIL_ON_CENTERIS_ERROR(ceError);
@@ -444,7 +444,7 @@ BOOLEAN FindSshAndConfig(PCSTR rootPrefix, PCSTR sshOrSshd,
     /* CSW ssh on Solaris uses /opt/csw/sbin/sshd */
     const char *sshBinaryPath = "/usr/sbin:/opt/ssh/sbin:/usr/local/sbin:/usr/bin:/opt/ssh/bin:/usr/local/bin:/usr/lib/ssh:/usr/openssh/sbin:/usr/openssh/bin:/opt/csw/sbin:/opt/csw/bin";
 
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR configFilename = NULL;
     PSTR binaryFilename = NULL;
 
@@ -457,22 +457,22 @@ BOOLEAN FindSshAndConfig(PCSTR rootPrefix, PCSTR sshOrSshd,
         &binaryFilename, "%s", sshOrSshd));
 
     ceError = CTFindInPath(rootPrefix, configFilename, sshConfigPath, sshConfig);
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
-        ceError = CENTERROR_SUCCESS;
-    else if(ceError == CENTERROR_SUCCESS)
+    if(ceError == ERROR_FILE_NOT_FOUND)
+        ceError = ERROR_SUCCESS;
+    else if(ceError == ERROR_SUCCESS)
         DJ_LOG_INFO("Found config file %s", *sshConfig);
     LW_CLEANUP_CTERR(exc, ceError);
 
     ceError = CTFindInPath(rootPrefix, binaryFilename, sshBinaryPath, sshBinary);
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
-        ceError = CENTERROR_SUCCESS;
-    else if(ceError == CENTERROR_SUCCESS)
+    if(ceError == ERROR_FILE_NOT_FOUND)
+        ceError = ERROR_SUCCESS;
+    else if(ceError == ERROR_SUCCESS)
         DJ_LOG_INFO("Found binary %s", *sshBinary);
     LW_CLEANUP_CTERR(exc, ceError);
 
     if(*sshConfig != NULL && *sshBinary == NULL)
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_FILENAME,
+        LW_RAISE_EX(exc, ERROR_FILE_NOT_FOUND,
                 "Unable to find ssh binary",
 "A %s config file was found at '%s', which indicates that %s is installed on your system. However the %s binary could not be found in the search path '%s'. In order to configure %s, please either symlink the %s binary into an existing search path, or ask Likewise support to extend the search path."
                 , sshOrSshd, *sshConfig, sshOrSshd,
@@ -481,7 +481,7 @@ BOOLEAN FindSshAndConfig(PCSTR rootPrefix, PCSTR sshOrSshd,
     }
     else if(*sshConfig == NULL && *sshBinary != NULL)
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_FILENAME,
+        LW_RAISE_EX(exc, ERROR_FILE_NOT_FOUND,
                 "Unable to find ssh config",
 "A %s binary was found at '%s', which indicates that %s is installed on your system. However the %s config could not be found in the search path '%s'. In order to configure %s, please either symlink the %s config file into an existing search path, or ask Likewise support to extend the search path."
                 , sshOrSshd, *sshBinary, sshOrSshd,
@@ -502,7 +502,7 @@ cleanup:
 
 static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, PCSTR testFlag, PCSTR optionName, LWException **exc)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN result = FALSE;
     PSTR command = NULL;
     PSTR commandOutput = NULL;
@@ -554,8 +554,8 @@ static BOOLEAN TestOption(PCSTR rootPrefix, struct SshConf *conf, PCSTR binary, 
     ceError = CTCaptureOutput(command, &commandOutput);
     /* Some versions of sshd will return an error code because an invalid
        option was passed, but not all will. */
-    if(ceError == CENTERROR_COMMAND_FAILED)
-        ceError = CENTERROR_SUCCESS;
+    if(ceError == ERROR_BAD_COMMAND)
+        ceError = ERROR_SUCCESS;
     LW_CLEANUP_CTERR(exc, ceError);
 
     if(strstr(commandOutput, optionName) != NULL)
@@ -591,7 +591,7 @@ typedef struct
 
 static void GetSshVersion(PCSTR rootPrefix, SshdVersion *version, PCSTR binaryPath, LWException **exc)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR command = NULL;
     PSTR commandOutput = NULL;
     PCSTR versionStart;
@@ -611,8 +611,8 @@ static void GetSshVersion(PCSTR rootPrefix, SshdVersion *version, PCSTR binaryPa
         rootPrefix, binaryPath));
 
     ceError = CTCaptureOutput(command, &commandOutput);
-    if(ceError == CENTERROR_COMMAND_FAILED)
-        ceError = CENTERROR_SUCCESS;
+    if(ceError == ERROR_BAD_COMMAND)
+        ceError = ERROR_SUCCESS;
     LW_CLEANUP_CTERR(exc, ceError);
 
     // The version string is in the form OpenSSH_4.6p1
@@ -1069,7 +1069,7 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
 
     exists = FindSshAndConfig(testPrefix, "sshd",
         &binaryPath, &configPath, &caught);
-    if(caught != NULL && caught->code == CENTERROR_INVALID_FILENAME)
+    if(caught != NULL && caught->code == ERROR_FILE_NOT_FOUND)
     {
         //Show a warning instead of an exception
         temp = message;
@@ -1098,7 +1098,7 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
 
     exists = FindSshAndConfig(testPrefix, "ssh",
         &binaryPath, &configPath, &caught);
-    if(caught != NULL && caught->code == CENTERROR_INVALID_FILENAME)
+    if(caught != NULL && caught->code == ERROR_FILE_NOT_FOUND)
     {
         //Show a warning instead of an exception
         temp = message;

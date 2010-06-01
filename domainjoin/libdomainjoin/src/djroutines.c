@@ -41,17 +41,13 @@ QueryInformation(
     PDOMAINJOININFO pDomainJoinInfo = NULL;
     LWException *inner = NULL;
 
-    if (geteuid() != 0) {
-       LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_NON_ROOT_USER);
-    }
-
     LW_CLEANUP_CTERR(exc, CTAllocateMemory(sizeof(DOMAINJOININFO), (PVOID*)&pDomainJoinInfo));
 
     LW_CLEANUP_CTERR(exc, DJGetComputerName(&pDomainJoinInfo->pszName));
 
     DJGetConfiguredDnsDomain(&pDomainJoinInfo->pszDomainName, &inner);
     if (!LW_IS_OK(inner) &&
-            inner->code == CENTERROR_DOMAINJOIN_DOMAIN_NOT_FOUND)
+            inner->code == ERROR_NO_SUCH_DOMAIN)
     {
         LW_HANDLE(&inner);
     }

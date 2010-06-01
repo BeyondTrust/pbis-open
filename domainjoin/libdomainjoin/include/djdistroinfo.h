@@ -85,18 +85,18 @@ OSType DJGetOSFromString(const char *str);
 DistroType DJGetDistroFromString(const char *str);
 ArchType DJGetArchFromString(const char * str);
 
-CENTERROR DJGetOSString(OSType type, char **result);
-CENTERROR DJGetDistroString(DistroType type, char **result);
-CENTERROR DJGetArchString(ArchType type, char **result);
+DWORD DJGetOSString(OSType type, char **result);
+DWORD DJGetDistroString(DistroType type, char **result);
+DWORD DJGetArchString(ArchType type, char **result);
 
 //Fills in fields with correct values
-CENTERROR
+DWORD
 DJGetDistroInfo(const char *testPrefix, DistroInfo *info);
 
 //Safe to call after DJGetDistroInfo has been called, or the structure has
 //been zeroed out.
 void DJFreeDistroInfo(DistroInfo *info);
 
-CENTERROR DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision);
+DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision);
 
 #endif // __DJDISTROINFO_H__

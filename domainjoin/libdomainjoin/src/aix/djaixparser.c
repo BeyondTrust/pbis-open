@@ -32,7 +32,7 @@
 #include "ctfileutils.h"
 #include "djaixparser.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 ssize_t
 DJFindStanza(const DynamicArray *lines, PCSTR name)
@@ -84,9 +84,9 @@ ssize_t DJFindLine(const DynamicArray *lines, const char *stanza, const char *na
     return -1;
 }
 
-CENTERROR DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, PSTR *value)
+DWORD DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, PSTR *value)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     ssize_t i = DJFindLine(lines, stanza, name);
     PCSTR line;
     PSTR _value = NULL;
@@ -94,7 +94,7 @@ CENTERROR DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, 
     *value = NULL;
     
     if(i == -1)
-        GCE(ceError = CENTERROR_CFG_VALUE_NOT_FOUND);
+        GCE(ceError = ERROR_NOT_FOUND);
 
     line = *(PCSTR *)CTArrayGetItem((DynamicArray*)lines, i,
             sizeof(PCSTR));
@@ -109,7 +109,7 @@ CENTERROR DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, 
 
     if(*line != '=')
     {
-        GCE(ceError = CENTERROR_CFG_INVALID_SIGNATURE);
+        GCE(ceError = ERROR_BAD_FORMAT);
     }
     line++;
 
@@ -131,12 +131,12 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJSetOptionValue(DynamicArray *lines, PCSTR stanza, PCSTR name, PCSTR value)
 {
     ssize_t index;
     PSTR newLine = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if(strchr(value, ' '))
     {
@@ -152,7 +152,7 @@ DJSetOptionValue(DynamicArray *lines, PCSTR stanza, PCSTR name, PCSTR value)
     {
         index = DJFindStanza(lines, stanza);
         if(index == -1)
-            GCE(ceError = CENTERROR_INVALID_OPERATION);
+            GCE(ceError = ERROR_INVALID_OPERATION);
         index++;
     }
     else

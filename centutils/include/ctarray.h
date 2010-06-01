@@ -83,7 +83,7 @@ typedef struct
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR CTArrayConstruct(DynamicArray* array, size_t itemSize);
+DWORD CTArrayConstruct(DynamicArray* array, size_t itemSize);
 
 /**
  * Change the available space in the array
@@ -91,7 +91,7 @@ CENTERROR CTArrayConstruct(DynamicArray* array, size_t itemSize);
  * @errcode
  * @canfail
  */
-CENTERROR CTSetCapacity(DynamicArray *array, size_t itemSize, size_t capacity);
+DWORD CTSetCapacity(DynamicArray *array, size_t itemSize, size_t capacity);
 
 /**
  * Insert one or more items into the array at any position.
@@ -99,7 +99,7 @@ CENTERROR CTSetCapacity(DynamicArray *array, size_t itemSize, size_t capacity);
  * @errcode
  * @canfail
  */
-CENTERROR CTArrayInsert(DynamicArray *array, int insertPos, int itemSize, const void *data, size_t dataLen);
+DWORD CTArrayInsert(DynamicArray *array, int insertPos, int itemSize, const void *data, size_t dataLen);
 
 /**
  * Append one or more items to the end of the array.
@@ -108,7 +108,7 @@ CENTERROR CTArrayInsert(DynamicArray *array, int insertPos, int itemSize, const 
  * @errcode
  * @canfail
  */
-CENTERROR CTArrayAppend(DynamicArray *array, int itemSize, const void *data, size_t dataLen);
+DWORD CTArrayAppend(DynamicArray *array, int itemSize, const void *data, size_t dataLen);
 
 /**
  * Remove one or more items from the array at any position. This will not
@@ -117,7 +117,7 @@ CENTERROR CTArrayAppend(DynamicArray *array, int itemSize, const void *data, siz
  * @errcode
  * @canfail
  */
-CENTERROR CTArrayRemove(DynamicArray *array, int removePos, int itemSize, size_t dataLen);
+DWORD CTArrayRemove(DynamicArray *array, int removePos, int itemSize, size_t dataLen);
 
 /**
  * Pop items off of the head of the list. They first get copied into the user

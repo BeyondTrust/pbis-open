@@ -31,12 +31,12 @@
 #ifndef __DJ_SECUSER_H__
 #define __DJ_SECUSER_H__
 
-CENTERROR
+DWORD
 ConfigureUserSecurity(
     PCSTR pszConfigFilePath
     );
 
-CENTERROR
+DWORD
 UnconfigureUserSecurity(
     PCSTR pszConfigFilePath
     );

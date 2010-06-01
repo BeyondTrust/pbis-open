@@ -31,13 +31,13 @@
 #ifndef __DJAUDITING_H__
 #define __DJAUDITING_H__
 
-CENTERROR
+DWORD
 DJConfigureEventFwd(
     const char *testPrefix,
     BOOLEAN enable
     );
 
-CENTERROR
+DWORD
 DJConfigureReapSyslog(
     const char *testPrefix,
     BOOLEAN enable

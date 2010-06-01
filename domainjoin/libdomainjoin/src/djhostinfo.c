@@ -31,25 +31,21 @@
 #include "domainjoin.h"
 #include "ctshell.h"
 #include "djauthinfo.h"
+#include "djdistroinfo.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-CENTERROR
+DWORD
 DJGetComputerName(
     PSTR* ppszComputerName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szBuf[256+1];
     PSTR pszTmp = NULL;
 
-    if (geteuid() != 0) {
-       ceError = CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
     if (gethostname(szBuf, 256) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -63,7 +59,7 @@ DJGetComputerName(
     }
 
     if (IsNullOrEmptyString(szBuf)) {
-        ceError = CENTERROR_DOMAINJOIN_INVALID_HOSTNAME;
+        ceError = ERROR_INVALID_COMPUTERNAME;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -76,13 +72,13 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 WriteHostnameToFiles(
     PSTR pszComputerName,
     PSTR* ppszHostfilePaths
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszFilePath = (ppszHostfilePaths ? *ppszHostfilePaths : NULL);
     BOOLEAN bFileExists = FALSE;
     FILE* fp = NULL;
@@ -95,7 +91,7 @@ WriteHostnameToFiles(
         if (bFileExists) {
             fp = fopen(pszFilePath, "w");
             if (fp == NULL) {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
             fprintf(fp, "%s\n", pszComputerName);
@@ -115,11 +111,10 @@ error:
     return ceError;
 }
 
-#if defined(_HPUX_SOURCE)
 #define NETCONF "/etc/rc.config.d/netconf"
-static CENTERROR SetHPUXHostname(PSTR pszComputerName)
+static DWORD SetHPUXHostname(PSTR pszComputerName)
 {
-  CENTERROR ceError = CENTERROR_SUCCESS;
+  DWORD ceError = ERROR_SUCCESS;
   PPROCINFO pProcInfo = NULL;
   PSTR *ppszArgs = NULL;
   DWORD nArgs = 6;
@@ -149,7 +144,7 @@ static CENTERROR SetHPUXHostname(PSTR pszComputerName)
   BAIL_ON_CENTERIS_ERROR(ceError);
 
   if (status != 0) {
-    ceError = CENTERROR_DOMAINJOIN_FAILED_SET_HOSTNAME;
+    ceError = ERROR_BAD_COMMAND;
     BAIL_ON_CENTERIS_ERROR(ceError);
   }
 
@@ -181,7 +176,7 @@ static CENTERROR SetHPUXHostname(PSTR pszComputerName)
   BAIL_ON_CENTERIS_ERROR(ceError);
 
   if (status != 0) {
-    ceError = CENTERROR_DOMAINJOIN_FAILED_SET_HOSTNAME;
+    ceError = ERROR_BAD_COMMAND;
     BAIL_ON_CENTERIS_ERROR(ceError);
   }
 
@@ -194,16 +189,14 @@ static CENTERROR SetHPUXHostname(PSTR pszComputerName)
 
   return ceError;
 }
-#endif /* _HPUX_SOURCE */
 
-#if defined(_AIX)
 static
-CENTERROR
+DWORD
 SetAIXHostname(
     PSTR pszComputerName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 6;
@@ -238,7 +231,7 @@ SetAIXHostname(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        ceError = CENTERROR_DOMAINJOIN_FAILED_SET_HOSTNAME;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -253,16 +246,13 @@ error:
     return ceError;
 }
 
-#endif
-
-#if defined(__LWI_SOLARIS__)
 static
-CENTERROR
+DWORD
 WriteHostnameToSunFiles(
     PSTR pszComputerName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE* fp = NULL;
     PSTR* ppszHostfilePaths = NULL;
     DWORD nPaths = 0;
@@ -274,7 +264,7 @@ WriteHostnameToSunFiles(
 
     fp = fopen("/etc/nodename", "w");
     if (fp == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     fprintf(fp, "%s\n", pszComputerName);
@@ -289,7 +279,7 @@ WriteHostnameToSunFiles(
 
     for (iPath = 0; iPath < nPaths; iPath++) {
 
-        CTReadFile(*(ppszHostfilePaths+iPath), &contents, &fileLen);
+        CTReadFile(*(ppszHostfilePaths+iPath), SIZE_MAX, &contents, &fileLen);
         CTStripWhitespace(contents);
         if(!strcasecmp(contents, pszComputerName))
         {
@@ -303,7 +293,7 @@ WriteHostnameToSunFiles(
 
         fp = fopen(*(ppszHostfilePaths+iPath), "w");
         if (fp == NULL) {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
         fprintf(fp, "%s\n", pszComputerName);
@@ -325,16 +315,14 @@ done:
 
     return ceError;
 }
-#endif
 
-#if defined(__LWI_MACOSX__)
 static
-CENTERROR
+DWORD
 SetMacOsXHostName(
     PCSTR HostName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     char command[] = "scutil";
     /* ISSUE-2007/08/01-dalmeida -- Fix const-ness of arg array in procutils */
@@ -343,15 +331,15 @@ SetMacOsXHostName(
     LONG status = 0;
 
     ceError = DJSpawnProcessSilent(command, args, &procInfo);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(procInfo, &status);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
 
     if (status != 0) {
         DJ_LOG_ERROR("%s failed [Status code: %d]", command, status);
-        ceError = CENTERROR_DOMAINJOIN_FAILED_SET_HOSTNAME;
-        GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        ceError = ERROR_BAD_COMMAND;
+        GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
     }
 
 cleanup:
@@ -364,16 +352,15 @@ cleanup:
 
     return ceError;
 }
-#endif
 
 static
-CENTERROR
+DWORD
 DJCheckIfDHCPHost(
     PSTR pszPathifcfg,
     PBOOLEAN pbDHCPHost
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszFilter = "^[[:space:]]*BOOTPROTO.*dhcp.*$";
     BOOLEAN bDHCPHost = FALSE;
 
@@ -417,14 +404,14 @@ IsComment(
 }
 
 static
-CENTERROR
+DWORD
 DJReplaceNameValuePair(
     PSTR pszFilePath,
     PSTR pszName,
     PSTR pszValue
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszTmpPath = NULL;
     PSTR pszFinalPath = NULL;
     FILE* fpSrc = NULL;
@@ -445,17 +432,17 @@ DJReplaceNameValuePair(
     sprintf(szRegExp, "^[[:space:]]*%s[[:space:]]*=.*$", pszName);
 
     if (regcomp(&rx, szRegExp, REG_EXTENDED) < 0) {
-        ceError = CENTERROR_REGEX_COMPILE_FAILED;
+        ceError = LW_ERROR_REGEX_COMPILE_FAILED;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if ((fpSrc = fopen(pszFinalPath, "r")) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if ((fpDst = fopen(pszTmpPath, "w")) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -467,7 +454,7 @@ DJReplaceNameValuePair(
             if (feof(fpSrc)) {
                 break;
             } else {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
         }
@@ -476,14 +463,14 @@ DJReplaceNameValuePair(
             !regexec(&rx, szBuf, (size_t)0, NULL, 0)) {
 
             if (fprintf(fpDst, "%s=%s\n", pszName, pszValue) < 0) {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
 
         } else {
 
             if (fputs(szBuf, fpDst) == EOF) {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
 
@@ -519,23 +506,23 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 DJAppendNameValuePair(
     PSTR pszFilePath,
     PSTR pszName,
     PSTR pszValue
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE* fp = NULL;
 
     if ((fp = fopen(pszFilePath, "a")) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if (fprintf(fp, "\n%s=%s\n", pszName, pszValue) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -549,13 +536,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJFixDHCPHost(
     PSTR pszPathifcfg,
     PSTR pszComputerName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bPatternExists = FALSE;
 
     ceError = CTCheckFileHoldsPattern(pszPathifcfg,
@@ -586,11 +573,11 @@ error:
 
 #if !defined(HAVE_SETHOSTNAME) || ! HAVE_DECL_SETHOSTNAME
 static
-CENTERROR
+DWORD
 DJFixNetworkManagerOnlineTimeout(
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszFilePath = "/etc/sysconfig/network/config";
     DWORD dwTimeout = 60;
     int EE = 0;
@@ -602,7 +589,7 @@ DJFixNetworkManagerOnlineTimeout(
     char *conversionEnd;
 
     ceError = CTCheckFileExists(pszFilePath, &bFileExists);
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
     if(!bFileExists)
         goto cleanup;
 
@@ -610,7 +597,7 @@ DJFixNetworkManagerOnlineTimeout(
             CTSHELL_STRING (pszFilePath, pszFilePath),
             CTSHELL_BUFFER (enabled, &isEnabled),
             CTSHELL_BUFFER (timeout, &currentTimeout));
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
     CTStripTrailingWhitespace(isEnabled);
     CTStripTrailingWhitespace(currentTimeout);
 
@@ -635,9 +622,9 @@ DJFixNetworkManagerOnlineTimeout(
         ceError = CTAllocateStringPrintf(&sedExpression,
                 "s/^\\([ \t]*NM_ONLINE_TIMEOUT[ \t]*=[ \t]*\\).*$/\\1%d/",
                 dwTimeout);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
         ceError = CTRunSedOnFile(pszFilePath, pszFilePath, FALSE, sedExpression);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
     }
 
 cleanup:
@@ -652,12 +639,12 @@ cleanup:
 #endif
 
 static
-CENTERROR
+DWORD
 DJConfigureDHCPService(
     PSTR pszComputerName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     BOOLEAN bFileExists = FALSE;
     PSTR dhcpFilePath = "/etc/sysconfig/network/dhcp";
@@ -685,7 +672,7 @@ DJConfigureDHCPService(
     PSTR pszTmpPath = NULL;
 
     ceError = CTCheckFileExists(dhcpFilePath, &bFileExists);
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
 
     if (bFileExists)
     {
@@ -693,22 +680,22 @@ DJConfigureDHCPService(
                             dhcpFilePath,
                             &pszFinalPath,
                             &pszTmpPath);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
 
         ppszArgs[2] = pszFinalPath;
         ceError = DJSpawnProcessOutputToFile(ppszArgs[0], ppszArgs, pszTmpPath, &pProcInfo);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
 
         ceError = DJGetProcessStatus(pProcInfo, &status);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
 
         if (status != 0) {
-            ceError = CENTERROR_DOMAINJOIN_DHCPRESTART_SET_FAIL;
-            CLEANUP_ON_CENTERROR_EE(ceError, EE);
+            ceError = ERROR_FAIL_RESTART;
+            CLEANUP_ON_DWORD_EE(ceError, EE);
         }
 
         ceError = CTSafeReplaceFile(pszFinalPath, pszTmpPath);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
     }
 
     if (pProcInfo) {
@@ -719,24 +706,24 @@ DJConfigureDHCPService(
 #if defined(HAVE_SETHOSTNAME) && HAVE_DECL_SETHOSTNAME
     if (sethostname(pszComputerName, strlen(pszComputerName)) < 0)
     {
-        ceError = CTMapSystemError(errno);
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        ceError = LwMapErrnoToLwError(errno);
+        CLEANUP_ON_DWORD_EE(ceError, EE);
     }
 #else
     ceError = DJFixNetworkManagerOnlineTimeout();
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
 
     /* Restart network */
 
     ceError = DJSpawnProcess(ppszNetArgs[0], ppszNetArgs, &pProcInfo);
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(pProcInfo, &status);
-    CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    CLEANUP_ON_DWORD_EE(ceError, EE);
 
     if (status != 0) {
-        ceError = CENTERROR_DOMAINJOIN_DHCPRESTART_FAIL;
-        CLEANUP_ON_CENTERROR_EE(ceError, EE);
+        ceError = ERROR_BAD_COMMAND;
+        CLEANUP_ON_DWORD_EE(ceError, EE);
     }
 #endif
 
@@ -760,7 +747,7 @@ FixNetworkInterfaces(
     LWException **exc
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     BOOLEAN bFileExists = FALSE;
     BOOLEAN bDirExists = FALSE;
@@ -829,9 +816,9 @@ FixNetworkInterfaces(
                                                          searchPaths[iPath].glob,
                                                          &ppszPaths,
                                                          &nPaths);
-            if(ceError == CENTERROR_INVALID_DIRECTORY)
+            if(ceError == ERROR_DIRECTORY)
             {
-                ceError = CENTERROR_SUCCESS;
+                ceError = ERROR_SUCCESS;
                 continue;
             }
             LW_CLEANUP_CTERR(exc, ceError);
@@ -843,7 +830,7 @@ FixNetworkInterfaces(
         }
 
         if (IsNullOrEmptyString(pszPathifcfg)) {
-            LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_NO_ETH_ITF_CFG_FILE);
+            LW_CLEANUP_CTERR(exc, ERROR_FILE_NOT_FOUND);
         }
 
         DJ_LOG_INFO("Found ifcfg file at %s", pszPathifcfg);
@@ -858,9 +845,6 @@ FixNetworkInterfaces(
     ceError = CTShell("/bin/hostname %hostname >/dev/null",
             CTSHELL_STRING(hostname, pszComputerName));
 
-    if (ceError == CENTERROR_COMMAND_FAILED) {
-        ceError = CENTERROR_DOMAINJOIN_HOSTS_EDIT_FAIL;
-    }
     LW_CLEANUP_CTERR(exc, ceError);
 
     // Only DHCP boxes need to restart their networks
@@ -903,7 +887,7 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
     BOOLEAN describedFqdn = FALSE;
     QueryResult result = CannotConfigure;
     BOOLEAN modified = FALSE;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if(!options->joiningDomain)
     {
@@ -1008,11 +992,11 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
         pHostsFileLineList = NULL;
     }
     ceError = DJParseHostsFile("/etc/inet/ipnodes", &pHostsFileLineList);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
-    else if(CENTERROR_IS_OK(ceError))
+    else if(!ceError)
     {
         LW_CLEANUP_CTERR(exc, DJReplaceHostnameInMemory(
                     pHostsFileLineList,
@@ -1089,7 +1073,7 @@ static QueryResult QuerySetHostname(const JoinProcessOptions *options, LWExcepti
 static void DoSetHostname(JoinProcessOptions *options, LWException **exc)
 {
     LWException *inner = NULL;
-    CENTERROR ceError;
+    DWORD ceError;
 
     LW_TRY(exc,
         DJSetComputerName(options->computerName,
@@ -1097,9 +1081,9 @@ static void DoSetHostname(JoinProcessOptions *options, LWException **exc)
 
 #ifndef ENABLE_MINIMAL
     ceError = DJConfigureHostsEntry(NULL);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
 #if !defined(__LWI_MACOSX__)
         DJ_LOG_WARNING("Warning: Could not find nsswitch file");
 #endif
@@ -1109,7 +1093,7 @@ static void DoSetHostname(JoinProcessOptions *options, LWException **exc)
 
 #ifndef ENABLE_MINIMAL
     DJRestartIfRunning("nscd", &inner);
-    if(!LW_IS_OK(inner) && inner->code == CENTERROR_FILE_NOT_FOUND)
+    if(!LW_IS_OK(inner) && inner->code == ERROR_FILE_NOT_FOUND)
         LW_HANDLE(&inner);
     LW_CLEANUP(exc, inner);
 #endif
@@ -1127,13 +1111,13 @@ static PSTR GetSetHostnameDescription(const JoinProcessOptions *options, LWExcep
 
 const JoinModule DJSetHostname = { TRUE, "hostname", "set computer hostname", QuerySetHostname, DoSetHostname, GetSetHostnameDescription };
 
-CENTERROR
+DWORD
 DJGetFQDN(
     PSTR *shortName,
     PSTR *fqdn
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR _shortName = NULL;
     PSTR _fqdn = NULL;
     size_t i;
@@ -1145,7 +1129,7 @@ DJGetFQDN(
         *fqdn = NULL;
 
     ceError = DJGetComputerName(&_shortName);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     //We have the short hostname that the hostname command returns, now we're
     //going to get the long hostname. This is the same as 'hostname -f' on
@@ -1188,7 +1172,7 @@ DJGetFQDN(
             foundFqdn = pHostent->h_name;
         }
         ceError = CTAllocateString(foundFqdn, &_fqdn);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
         break;
     }
 
@@ -1216,21 +1200,22 @@ DJSetComputerName(
     LWException **exc
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bValidComputerName = FALSE;
     PSTR oldShortHostname = NULL;
     PSTR oldFqdnHostname = NULL;
     PSTR pszComputerName_lower = NULL;
     PSTR ppszHostfilePaths[] = { "/etc/hostname", "/etc/HOSTNAME", NULL };
+    DistroInfo distro;
 
-    if (geteuid() != 0) {
-       LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_NON_ROOT_USER);
-    }
+    memset(&distro, 0, sizeof(distro));
+
+    LW_CLEANUP_CTERR(exc, DJGetDistroInfo(NULL, &distro));
 
     LW_CLEANUP_CTERR(exc, DJIsValidComputerName(pszComputerName, &bValidComputerName));
 
     if (!bValidComputerName) {
-        LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_INVALID_HOSTNAME);
+        LW_CLEANUP_CTERR(exc, ERROR_INVALID_COMPUTERNAME);
     }
 
     LW_CLEANUP_CTERR(exc, CTAllocateString(pszComputerName, &pszComputerName_lower));
@@ -1274,8 +1259,8 @@ DJSetComputerName(
 
     ceError = DJCopyMissingHostsEntry("/etc/inet/ipnodes", "/etc/hosts",
             pszComputerName_lower, oldShortHostname);
-    if(ceError == CENTERROR_INVALID_FILENAME)
-        ceError = CENTERROR_SUCCESS;
+    if(ceError == ERROR_FILE_NOT_FOUND)
+        ceError = ERROR_SUCCESS;
     LW_CLEANUP_CTERR(exc, ceError);
 
     LW_CLEANUP_CTERR(exc, DJReplaceNameInHostsFile("/etc/hosts",
@@ -1285,25 +1270,27 @@ DJSetComputerName(
     ceError = DJReplaceNameInHostsFile("/etc/inet/ipnodes",
             oldShortHostname, oldFqdnHostname,
             pszComputerName_lower, pszDnsDomainName);
-    if(ceError == CENTERROR_INVALID_FILENAME)
-        ceError = CENTERROR_SUCCESS;
+    if(ceError == ERROR_FILE_NOT_FOUND)
+        ceError = ERROR_SUCCESS;
     LW_CLEANUP_CTERR(exc, ceError);
 
-#if defined(__LWI_SOLARIS__)
-    LW_CLEANUP_CTERR(exc, WriteHostnameToSunFiles(pszComputerName_lower));
-#endif
-
-#if defined(_AIX)
-    LW_CLEANUP_CTERR(exc, SetAIXHostname(pszComputerName_lower));
-#endif
-
-#if defined(_HPUX_SOURCE)
-    LW_CLEANUP_CTERR(exc, SetHPUXHostname(pszComputerName_lower));
-#endif
-
-#if defined(__LWI_MACOSX__)
-    LW_CLEANUP_CTERR(exc, SetMacOsXHostName(pszComputerName_lower));
-#endif
+    switch (distro.os)
+    {
+        case OS_SUNOS:
+            LW_CLEANUP_CTERR(exc, WriteHostnameToSunFiles(pszComputerName_lower));
+            break;
+        case OS_AIX:
+            LW_CLEANUP_CTERR(exc, SetAIXHostname(pszComputerName_lower));
+            break;
+        case OS_HPUX:
+            LW_CLEANUP_CTERR(exc, SetHPUXHostname(pszComputerName_lower));
+            break;
+        case OS_DARWIN:
+            LW_CLEANUP_CTERR(exc, SetMacOsXHostName(pszComputerName_lower));
+            break;
+        default:
+            break;
+    }
 
     LW_TRY(exc, FixNetworkInterfaces(pszComputerName_lower, &LW_EXC));
 
@@ -1311,6 +1298,7 @@ cleanup:
     CT_SAFE_FREE_STRING(oldShortHostname);
     CT_SAFE_FREE_STRING(oldFqdnHostname);
     CT_SAFE_FREE_STRING(pszComputerName_lower);
+    DJFreeDistroInfo(&distro);
 }
 
 void DJCheckValidComputerName(
@@ -1322,7 +1310,7 @@ void DJCheckValidComputerName(
 
     if (IsNullOrEmptyString(pszComputerName))
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Invalid hostname", "Hostname is empty");
+        LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Invalid hostname", "Hostname is empty");
         goto cleanup;
     }
 
@@ -1331,20 +1319,20 @@ void DJCheckValidComputerName(
     //Zero length hostnames are already handled above
     if (dwLen > 63)
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The name '%s' is %d characters long. Hostnames may only be up to 63 characters long.", pszComputerName, dwLen);
+        LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The name '%s' is %d characters long. Hostnames may only be up to 63 characters long.", pszComputerName, dwLen);
         goto cleanup;
     }
 
     if (!strcasecmp(pszComputerName, "linux") ||
         !strcasecmp(pszComputerName, "localhost"))
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The hostname may not be 'linux' or 'localhost'.");
+        LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The hostname may not be 'linux' or 'localhost'.");
         goto cleanup;
     }
 
     if (pszComputerName[0] == '-' || pszComputerName[dwLen - 1] == '-')
     {
-        LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The hostname may not start or end with a hyphen.");
+        LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The hostname may not start or end with a hyphen.");
         goto cleanup;
     }
 
@@ -1355,7 +1343,7 @@ void DJCheckValidComputerName(
               (c >= 'a' && c <= 'z') ||
               (c >= 'A' && c <= 'Z') ||
               (c >= '0' && c <= '9'))) {
-            LW_RAISE_EX(exc, CENTERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The given hostname, '%s', contains a '%c'. Valid hostnames may only contain hyphens, letters, and digits.", pszComputerName, c);
+            LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Invalid hostname", "The given hostname, '%s', contains a '%c'. Valid hostnames may only contain hyphens, letters, and digits.", pszComputerName, c);
             goto cleanup;
         }
     }
@@ -1364,13 +1352,13 @@ cleanup:
     ;
 }
 
-CENTERROR
+DWORD
 DJIsValidComputerName(
     PCSTR pszComputerName,
     PBOOLEAN pbIsValid
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException *exc = NULL;
 
     *pbIsValid = FALSE;
@@ -1385,33 +1373,28 @@ DJIsValidComputerName(
         LWHandle(&exc);
     }
 
-    if (ceError == CENTERROR_DOMAINJOIN_INVALID_HOSTNAME || 
-            ceError == CENTERROR_INVALID_COMPUTERNAME)
+    if (ceError == ERROR_INVALID_COMPUTERNAME || 
+            ceError == ERROR_INVALID_COMPUTERNAME)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJIsDomainNameResolvable(
     PCSTR pszDomainName,
     PBOOLEAN pbIsResolvable
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct hostent* pHostent = NULL;
     int i = 0;
-
-    if (geteuid() != 0) {
-       ceError = CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
 
     *pbIsResolvable = FALSE;
 
     if (IsNullOrEmptyString(pszDomainName)) {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1439,13 +1422,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJGetFinalFqdn(
     const JoinProcessOptions *options,
     PSTR *fqdn
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     const ModuleState *state = DJGetModuleStateByName((JoinProcessOptions *)options, "hostname");
 
     *fqdn = NULL;

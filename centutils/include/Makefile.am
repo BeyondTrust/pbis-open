@@ -3,13 +3,9 @@ centutilsincludedir = $(includedir)
 centutilsinclude_HEADERS = \
     ctarray.h         \
     ctbase.h          \
-    ctcfgparser.h     \
     ctdef.h           \
-    cterr_catalog.h   \
-    cterr.h           \
     ctexec.h          \
     ctfileutils.h     \
-    ctgroup.h         \
     cthash.h          \
     ctmem.h           \
     ctprocutils.h     \

@@ -57,14 +57,14 @@
 #include "config.h"
 #include "ctbase.h"
 
-CENTERROR
+DWORD
 CTAllocateMemory(
     DWORD dwSize,
     PVOID * ppMemory
     )
 {
 
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PVOID pMemory = NULL;
 
     /* malloc is supposed to return a non-NULL pointer when it is asked to
@@ -77,7 +77,7 @@ CTAllocateMemory(
 
     pMemory = malloc(dwSize);
     if (!pMemory){
-        ceError = CENTERROR_OUT_OF_MEMORY;
+        ceError = ERROR_OUTOFMEMORY;
         *ppMemory = NULL;
     }else {
         memset(pMemory,0, dwSize);
@@ -86,14 +86,14 @@ CTAllocateMemory(
     return (ceError);
 }
 
-CENTERROR
+DWORD
 CTReallocMemory(
     PVOID  pMemory,
     PVOID * ppNewMemory,
     DWORD dwSize
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PVOID pNewMemory = NULL;
 
     if (pMemory == NULL) {
@@ -103,7 +103,7 @@ CTReallocMemory(
         pNewMemory = realloc(pMemory, dwSize);
     }
     if (!pNewMemory){
-        ceError = CENTERROR_OUT_OF_MEMORY;
+        ceError = ERROR_OUTOFMEMORY;
         *ppNewMemory = NULL;
     }else {
         *ppNewMemory = pNewMemory;

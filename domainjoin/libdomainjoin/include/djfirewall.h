@@ -31,7 +31,7 @@
 #ifndef __DJFIREWALL_H__
 #define __DJFIREWALL_H__
 
-CENTERROR
+DWORD
 DJConfigureFirewallForAuth(
     const char *testPrefix,
     BOOLEAN enable

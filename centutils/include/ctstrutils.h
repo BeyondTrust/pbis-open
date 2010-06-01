@@ -62,7 +62,7 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTAllocateString(
     PCSTR pszInputString,
     PSTR * ppszOutputString
@@ -70,7 +70,7 @@ CTAllocateString(
 
 #define CTStrdup CTAllocateString
 
-CENTERROR
+DWORD
 CTStrndup(
     PCSTR pszInputString,
     size_t size,
@@ -131,20 +131,20 @@ CTStrToLower(
     PSTR pszString
     );
 
-CENTERROR
+DWORD
 CTEscapeString(
     PCSTR pszOrig,
     PSTR * ppszEscapedString
     );
 
-CENTERROR
+DWORD
 CTAllocateStringPrintfV(
     PSTR* result,
     PCSTR format,
     va_list args
     );
 
-CENTERROR
+DWORD
 CTAllocateStringPrintf(
     PSTR* result,
     PCSTR format,
@@ -169,7 +169,7 @@ CTStrEndsWith(
 
 typedef DynamicArray StringBuffer;
 
-CENTERROR
+DWORD
 CTStringBufferConstruct(StringBuffer* buffer);
 
 //Sets the string to zero length, but does not free the data.
@@ -190,20 +190,20 @@ CTStringBufferFreeze(
 		StringBuffer* buffer
 		);
 
-CENTERROR
+DWORD
 CTStringBufferAppend(
 		StringBuffer* buffer,
 		const char* str
 		);
 
-CENTERROR
+DWORD
 CTStringBufferAppendLength(
 		StringBuffer* buffer,
 		const char* str,
 		unsigned int length
 		);
 
-CENTERROR
+DWORD
 CTStringBufferAppendChar(
 		StringBuffer* buffer,
 		char c
@@ -214,7 +214,7 @@ CTIsAllDigit(
     PCSTR pszVal
     );
 
-CENTERROR CTDupOrNullStr(const char *src, char **dest);
+DWORD CTDupOrNullStr(const char *src, char **dest);
 
 typedef struct
 {
@@ -242,14 +242,14 @@ void CTAppendTokenString(char **pos, const CTParseToken *token);
  * trimmed on the right side. Any token inside of trimBack will be trimmed.
  * The trimmed characters will be included in the trailingSeparator.
  */
-CENTERROR CTReadToken(const char **pos, CTParseToken *store, const char *includeSeparators, const char *excludeSeparators, const char *trimBack);
-CENTERROR CTCopyTokenContents(CTParseToken *dest, const CTParseToken *source);
-CENTERROR CTCopyToken(const CTParseToken *source, CTParseToken **dest);
+DWORD CTReadToken(const char **pos, CTParseToken *store, const char *includeSeparators, const char *excludeSeparators, const char *trimBack);
+DWORD CTCopyTokenContents(CTParseToken *dest, const CTParseToken *source);
+DWORD CTCopyToken(const CTParseToken *source, CTParseToken **dest);
 
-CENTERROR CTWriteToken(FILE *file, CTParseToken *token);
+DWORD CTWriteToken(FILE *file, CTParseToken *token);
 
-CENTERROR CTGetTerminalWidth(int terminalFid, int *width);
-CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns);
+DWORD CTGetTerminalWidth(int terminalFid, int *width);
+DWORD CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns);
 
 LW_END_EXTERN_C
 

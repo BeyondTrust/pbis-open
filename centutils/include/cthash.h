@@ -128,7 +128,7 @@ LW_BEGIN_EXTERN_C
  * @errcode
  * @canfail
  */
-CENTERROR
+DWORD
 CTStableHashTableInit(
     PSHASH_TABLE tab,
     LWGHashFunc hash_func,
@@ -150,7 +150,7 @@ CTStableHashTableInit(
  * @errcode
  * @canfail
  */
-CENTERROR
+DWORD
 CTStableHashTableNew(
     PSHASH_TABLE* tab,
     LWGHashFunc hash_func,
@@ -173,7 +173,7 @@ CTStableHashTableNew(
  * @errcode
  * @canfail
  */
-CENTERROR
+DWORD
 CTStableHashTableInsert(
     PSHASH_TABLE tab,
     lwgpointer key,

@@ -65,18 +65,18 @@
 #include <sys/termio.h>
 #endif
 
-CENTERROR
+DWORD
 CTAllocateString(
     PCSTR pszInputString,
     PSTR * ppszOutputString
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t len = 0;
     PSTR pszOutputString = NULL;
 
     if (!pszInputString || !ppszOutputString){
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     len = strlen(pszInputString);
@@ -93,19 +93,19 @@ error:
     return(ceError);
 }
 
-CENTERROR
+DWORD
 CTStrndup(
     PCSTR pszInputString,
     size_t size2,
     PSTR * ppszOutputString
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t copylen = 0;
     PSTR pszOutputString = NULL;
 
     if (!pszInputString || !ppszOutputString){
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     copylen = strlen(pszInputString);
@@ -205,20 +205,20 @@ CTStrToLower(
     }
 }
 
-CENTERROR
+DWORD
 CTEscapeString(
     PCSTR pszOrig,
     PSTR * ppszEscapedString
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int nQuotes = 0;
     PCSTR pszTmp = pszOrig;
     PSTR pszNew = NULL;
     PSTR pszNewTmp = NULL;
 
     if ( !ppszEscapedString || !pszOrig ) {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -384,14 +384,14 @@ CTStripWhitespace(
     CTStripTrailingWhitespace(pszString);
 }
 
-CENTERROR
+DWORD
 CTAllocateStringPrintfV(
     PSTR* result,
     PCSTR format,
     va_list args
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char *smallBuffer;
     unsigned int bufsize;
     int requiredLength;
@@ -406,7 +406,7 @@ CTAllocateStringPrintfV(
     do
     {
         ceError = CTAllocateMemory(bufsize, (PVOID*) &smallBuffer);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
         requiredLength = vsnprintf(smallBuffer, bufsize, format, args);
         if (requiredLength < 0)
         {
@@ -417,24 +417,24 @@ CTAllocateStringPrintfV(
 
     if (requiredLength >= (UINT32_MAX - 1))
     {
-        ceError = CENTERROR_OUT_OF_MEMORY;
-        CLEANUP_ON_CENTERROR(ceError);
+        ceError = ERROR_OUTOFMEMORY;
+        CLEANUP_ON_DWORD(ceError);
     }
 
     ceError = CTAllocateMemory(requiredLength + 2, (PVOID*)&outputString);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     newRequiredLength = vsnprintf(outputString, requiredLength + 1, format, args2);
     if (newRequiredLength < 0)
     {
-        ceError = CTMapSystemError(errno);
-        CLEANUP_ON_CENTERROR(ceError);
+        ceError = LwMapErrnoToLwError(errno);
+        CLEANUP_ON_DWORD(ceError);
     }
     else if (newRequiredLength > requiredLength)
     {
         /* unexpected, ideally should log something, or use better error code */
-        ceError = CENTERROR_OUT_OF_MEMORY;
-        CLEANUP_ON_CENTERROR(ceError);
+        ceError = ERROR_OUTOFMEMORY;
+        CLEANUP_ON_DWORD(ceError);
     }
     else if (newRequiredLength < requiredLength)
     {
@@ -456,14 +456,14 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTAllocateStringPrintf(
     PSTR* result,
     PCSTR format,
     ...
     )
 {
-    CENTERROR ceError;
+    DWORD ceError;
 
     va_list args;
     va_start(args, format);
@@ -507,19 +507,19 @@ CTStrEndsWith(
     return strcmp(str + strLen - suffixLen, suffix) == 0;
 }
 
-static CENTERROR NullTerminate(StringBuffer *buffer)
+static DWORD NullTerminate(StringBuffer *buffer)
 {
-    CENTERROR ceError = CTArrayAppend(buffer, 1, "\0", 1);
-    CLEANUP_ON_CENTERROR(ceError);
+    DWORD ceError = CTArrayAppend(buffer, 1, "\0", 1);
+    CLEANUP_ON_DWORD(ceError);
     buffer->size--;
 cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStringBufferConstruct(StringBuffer* buffer)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BAIL_ON_CENTERIS_ERROR(ceError = CTArrayConstruct(buffer, 1));
 
 error:
@@ -552,41 +552,41 @@ CTStringBufferFreeze(StringBuffer* buffer)
     return data;
 }
 
-CENTERROR
+DWORD
 EnsureSpace(StringBuffer* buffer, unsigned int space)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     if(space <= buffer->capacity)
     {
         ceError = CTSetCapacity(buffer, 1, space + 1);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
         ceError = NullTerminate(buffer);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
     }
     
 cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStringBufferAppend(StringBuffer* buffer, const char* str)
 {
     return CTStringBufferAppendLength(buffer, str, strlen(str));
 }
 
-CENTERROR
+DWORD
 CTStringBufferAppendLength(StringBuffer* buffer, const char* str, unsigned int length)
 {
-    CENTERROR ceError = CTArrayAppend(buffer, 1, str, length);
-    CLEANUP_ON_CENTERROR(ceError);
+    DWORD ceError = CTArrayAppend(buffer, 1, str, length);
+    CLEANUP_ON_DWORD(ceError);
     ceError = NullTerminate(buffer);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
 cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStringBufferAppendChar(StringBuffer* buffer, char c)
 {
     return CTStringBufferAppendLength(buffer, &c, 1);
@@ -640,9 +640,9 @@ void CTAppendTokenString(char **pos, const CTParseToken *token)
     }
 }
 
-CENTERROR CTReadToken(const char **pos, CTParseToken *store, const char *includeSeparators, const char *excludeSeparators, const char *trimBack)
+DWORD CTReadToken(const char **pos, CTParseToken *store, const char *includeSeparators, const char *excludeSeparators, const char *trimBack)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char const * token_start = *pos;
     char const * white_start, * white_end;
 
@@ -678,14 +678,14 @@ CENTERROR CTReadToken(const char **pos, CTParseToken *store, const char *include
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 error:
-    if(!CENTERROR_IS_OK(ceError))
+    if (ceError)
         CTFreeParseTokenContents(store);
     return ceError;
 }
 
-CENTERROR CTCopyTokenContents(CTParseToken *dest, const CTParseToken *source)
+DWORD CTCopyTokenContents(CTParseToken *dest, const CTParseToken *source)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     memset(dest, 0, sizeof(*dest));
     if(source->value != NULL)
     {
@@ -699,22 +699,22 @@ CENTERROR CTCopyTokenContents(CTParseToken *dest, const CTParseToken *source)
     }
 
 error:
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         CTFreeParseTokenContents(dest);
     return ceError;
 }
 
-CENTERROR CTDupOrNullStr(const char *src, char **dest)
+DWORD CTDupOrNullStr(const char *src, char **dest)
 {
     if(src == NULL)
     {
         *dest = NULL;
-        return CENTERROR_SUCCESS;
+        return ERROR_SUCCESS;
     }
     return CTStrdup(src, dest);
 }
 
-CENTERROR CTWriteToken(FILE *file, CTParseToken *token)
+DWORD CTWriteToken(FILE *file, CTParseToken *token)
 {
     const char *value = token->value;
     const char *white = token->trailingSeparator;
@@ -734,9 +734,9 @@ void CTFreeParseToken(CTParseToken **token)
     }
 }
 
-CENTERROR CTCopyToken(const CTParseToken *source, CTParseToken **dest)
+DWORD CTCopyToken(const CTParseToken *source, CTParseToken **dest)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     *dest = NULL;
     if(source != NULL)
     {
@@ -745,16 +745,16 @@ CENTERROR CTCopyToken(const CTParseToken *source, CTParseToken **dest)
     }
 
 error:
-    if(!CENTERROR_IS_OK(ceError))
+    if (ceError)
     {
         CTFreeParseToken(dest);
     }
     return ceError;
 }
 
-CENTERROR CTGetTerminalWidth(int terminalFid, int *width)
+DWORD CTGetTerminalWidth(int terminalFid, int *width)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 #ifdef TIOCGWINSZ
     struct winsize size = {0};
     const char *fromEnv = getenv("COLUMNS");
@@ -767,15 +767,15 @@ CENTERROR CTGetTerminalWidth(int terminalFid, int *width)
         }
         else
         {
-            ceError = CTMapSystemError(errno);
-            CLEANUP_ON_CENTERROR(ceError);
+            ceError = LwMapErrnoToLwError(errno);
+            CLEANUP_ON_DWORD(ceError);
         }
     }
 
     if(size.ws_col < 1)
     {
-        ceError = CENTERROR_INVALID_OPERATION;
-        CLEANUP_ON_CENTERROR(ceError);
+        ceError = ERROR_INVALID_OPERATION;
+        CLEANUP_ON_DWORD(ceError);
     }
     *width = size.ws_col;
 #else
@@ -826,9 +826,9 @@ static int NextLineIndent(PCSTR input, int tabWidth)
     return indent;
 }
 
-CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
+DWORD CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     StringBuffer result;
     int pos = 0;
     int start;
@@ -871,7 +871,7 @@ CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
         for(i = 0; i < column; i++)
         {
             ceError = CTStringBufferAppendLength(&result, " ", 1);
-            CLEANUP_ON_CENTERROR(ceError);
+            CLEANUP_ON_DWORD(ceError);
         }
         start = pos;
         while(input[pos] != '\n' && input[pos] != '\r' && input[pos] != '\0')
@@ -880,7 +880,7 @@ CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
             {
                 //This marks how far to indent the text
                 ceError = CTStringBufferAppendLength(&result, input + start, pos - start);
-                CLEANUP_ON_CENTERROR(ceError);
+                CLEANUP_ON_DWORD(ceError);
                 indentColumns = column;
                 pos++;
                 start = pos;
@@ -895,15 +895,15 @@ CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
                     pos = lastWhite;
                 //First the text in this line
                 ceError = CTStringBufferAppendLength(&result, input + start, pos - start);
-                CLEANUP_ON_CENTERROR(ceError);
+                CLEANUP_ON_DWORD(ceError);
                 //Now add the newline
                 ceError = CTStringBufferAppendLength(&result, "\n", 1);
-                CLEANUP_ON_CENTERROR(ceError);
+                CLEANUP_ON_DWORD(ceError);
                 //Finally the indent for the new line
                 for(column = 0; column < indentColumns; column++)
                 {
                     ceError = CTStringBufferAppendLength(&result, " ", 1);
-                    CLEANUP_ON_CENTERROR(ceError);
+                    CLEANUP_ON_DWORD(ceError);
                 }
      
                 //Skip any whitespace
@@ -920,12 +920,12 @@ CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
             {
                 //First add the text before the tab
                 ceError = CTStringBufferAppendLength(&result, input + start, pos - start);
-                CLEANUP_ON_CENTERROR(ceError);
+                CLEANUP_ON_DWORD(ceError);
                 //Now expand the tab into spaces
                 for(i = 0; i < tabWidth; i++)
                 {
                     ceError = CTStringBufferAppendLength(&result, " ", 1);
-                    CLEANUP_ON_CENTERROR(ceError);
+                    CLEANUP_ON_DWORD(ceError);
                 }
                 start = pos + 1;
             }
@@ -938,10 +938,10 @@ CENTERROR CTWordWrap(PCSTR input, PSTR *output, int tabWidth, int columns)
             pos++;
         //Copy the line
         ceError = CTStringBufferAppendLength(&result, input + start, pos - start);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
     }
     ceError = CTStringBufferAppendLength(&result, "\0", 1);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     *output = result.data;
     result.data = NULL;

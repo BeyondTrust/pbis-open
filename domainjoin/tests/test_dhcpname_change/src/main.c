@@ -33,7 +33,7 @@
 int
 main(int argc, char* argv[])
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (argc < 3) {
        printf("Usage: test_dhcpname_change <file path> <dhcp name>");

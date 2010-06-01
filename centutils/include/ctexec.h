@@ -95,7 +95,7 @@ LW_BEGIN_EXTERN_C
  * @canfail
  */
 
-CENTERROR
+DWORD
 CTCaptureOutput(
     PCSTR command,
     PSTR* output
@@ -136,14 +136,14 @@ void CTCaptureOutputToExc(
  * @errcode
  * @canfail
  */
-CENTERROR
+DWORD
 CTCaptureOutputWithStderr(
     PCSTR command,
     BOOLEAN captureStderr,
     PSTR* output
     );
 
-CENTERROR
+DWORD
 CTCaptureOutputWithStderrEx(
     PCSTR command,
     PCSTR* ppszArgs,
@@ -161,7 +161,7 @@ CTCaptureOutputWithStderrEx(
  * it; shell features such as pipelines may be used, but
  * care must be taken to properly escape commands.
  *
- * This command returns CENTERROR_COMMAND_FAILED if the program returns a non-
+ * This command returns ERROR_BAD_COMMAND if the program returns a non-
  * zero exit code.
  *
  * @see CTEscapeString
@@ -169,12 +169,12 @@ CTCaptureOutputWithStderrEx(
  * @errcode
  * @canfail
  */
-CENTERROR
+DWORD
 CTRunCommand(
     PCSTR command
     );
 
-CENTERROR
+DWORD
 CTSpawnProcessWithFds(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -184,7 +184,7 @@ CTSpawnProcessWithFds(
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 CTSpawnProcessWithEnvironment(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -200,7 +200,7 @@ CTFreeProcInfo(
     PPROCINFO pProcInfo
     );
 
-CENTERROR
+DWORD
 CTGetExitStatus(
     PPROCINFO pProcInfo,
     PLONG plstatus

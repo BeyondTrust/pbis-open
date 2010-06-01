@@ -40,12 +40,12 @@
 #include <unistd.h>
 #endif
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
+DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
 {
     BOOLEAN exists;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct utsname unameStruct;
     char *path = NULL;
     PSTR fileContents = NULL;
@@ -61,7 +61,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     //indicates success. In fact, Solaris 8 returns 1, while Linux returns
     //0.
     if(uname(&unameStruct) < 0)
-        return CTMapSystemError(errno);
+        return LwMapErrnoToLwError(errno);
 
     //Check for os override file
     if(testPrefix == NULL)
@@ -73,7 +73,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     if(exists)
     {
         GCE(ceError = CTReadFile(
-                path, &fileContents, NULL));
+                path, SIZE_MAX, &fileContents, NULL));
     }
     if(fileContents != NULL)
     {
@@ -93,7 +93,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     if(exists)
     {
         GCE(ceError = CTReadFile(
-                path, &distroString, NULL));
+                path, SIZE_MAX, &distroString, NULL));
     }
     CT_SAFE_FREE_STRING(path);
 
@@ -250,10 +250,10 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 if(!distroSearch[i].compareCase)
                     flags |= REG_ICASE;
 
-                GCE(ceError = CTReadFile(path, &fileContents, NULL));
+                GCE(ceError = CTReadFile(path, SIZE_MAX, &fileContents, NULL));
                 if(regcomp(&rx, distroSearch[i].matchRegex, flags) != 0)
                 {
-                    GCE(ceError = CENTERROR_REGEX_COMPILE_FAILED);
+                    GCE(ceError = LW_ERROR_REGEX_COMPILE_FAILED);
                 }
                 rxAlloced = TRUE;
                 if(regexec(&rx, fileContents,
@@ -370,7 +370,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     if(exists)
     {
         GCE(ceError = CTReadFile(
-                path, &fileContents, NULL));
+                path, SIZE_MAX, &fileContents, NULL));
     }
     if(fileContents != NULL)
     {
@@ -476,7 +476,7 @@ CENTERROR DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
     if(exists)
     {
         GCE(ceError = CTReadFile(
-                path, &fileContents, NULL));
+                path, SIZE_MAX, &fileContents, NULL));
         info->arch = DJGetArchFromString(fileContents);
         CT_SAFE_FREE_STRING(fileContents);
     }
@@ -488,7 +488,7 @@ cleanup:
     CT_SAFE_FREE_STRING(distroString);
     if(rxAlloced)
         regfree(&rx);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJFreeDistroInfo(info);
     }
@@ -522,7 +522,7 @@ OSType DJGetOSFromString(const char *str)
     return OS_UNKNOWN;
 }
 
-CENTERROR DJGetOSString(OSType type, char **result)
+DWORD DJGetOSString(OSType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(osList)/sizeof(osList[0]); i++)
@@ -568,7 +568,7 @@ DistroType DJGetDistroFromString(const char *str)
     return DISTRO_UNKNOWN;
 }
 
-CENTERROR DJGetDistroString(DistroType type, char **result)
+DWORD DJGetDistroString(DistroType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(distroList)/sizeof(distroList[0]); i++)
@@ -610,7 +610,7 @@ ArchType DJGetArchFromString(const char * str)
     return ARCH_UNKNOWN;
 }
 
-CENTERROR DJGetArchString(ArchType type, char **result)
+DWORD DJGetArchString(ArchType type, char **result)
 {
     int i;
     for(i = 0; i < sizeof(archList)/sizeof(archList[0]); i++)
@@ -627,12 +627,12 @@ void DJFreeDistroInfo(DistroInfo *info)
         CT_SAFE_FREE_STRING(info->version);
 }
 
-CENTERROR DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
+DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
 {
     FILE *versionFile = NULL;
     PSTR line = NULL; 
     BOOLEAN isEndOfFile = FALSE;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     PSTR _version = NULL;
     PSTR _build = NULL;

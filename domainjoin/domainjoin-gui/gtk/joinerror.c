@@ -123,7 +123,7 @@ joinerror_new(GtkWindow* parent, LWException* exc)
         if (CTAllocateStringPrintf(&details,
                                    "Error code: %s (0x%.8x)\n\n"
                                    "Backtrace:",
-                                   CTErrorName(exc->code), exc->code))
+                                   LwWin32ExtErrorToName(exc->code), exc->code))
             abort();
 
         gtk_text_buffer_set_text(

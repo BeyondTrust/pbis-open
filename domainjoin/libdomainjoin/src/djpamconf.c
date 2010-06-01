@@ -37,7 +37,7 @@
 #include "djdistroinfo.h"
 #include "djpamconf.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 struct PamLine
 {
@@ -96,39 +96,39 @@ static int NextService(struct PamConf *conf, int line);
 /* Returns an array of all the service names in the file. The array is NULL
  * terminated, and the size can optionally be returned through serviceCount.
  */
-static CENTERROR ListServices(struct PamConf *conf, char ***result, int *serviceCount);
+static DWORD ListServices(struct PamConf *conf, char ***result, int *serviceCount);
 
 static void FreeServicesList(char **list);
 
 /* Copy all lines that contain a given service name. */
-static CENTERROR CopyService(struct PamConf *conf, const char *oldName, const char *newName);
+static DWORD CopyService(struct PamConf *conf, const char *oldName, const char *newName);
 
 #if 0
 /* Parse and add a service to the list. */
-static CENTERROR AddFormattedService(struct PamConf *conf, const char *filename, const char *contents);
+static DWORD AddFormattedService(struct PamConf *conf, const char *filename, const char *contents);
 #endif
 
 /* Copy a pam configuration line and add it below the old line. */
-static CENTERROR CopyLine(struct PamConf *conf, int oldLine, int *newLine);
+static DWORD CopyLine(struct PamConf *conf, int oldLine, int *newLine);
 
-static CENTERROR CopyLineAndUpdateSkips(struct PamConf *conf, int oldLine, int *newLine);
+static DWORD CopyLineAndUpdateSkips(struct PamConf *conf, int oldLine, int *newLine);
 
-static CENTERROR RemoveLine(struct PamConf *conf, int *line);
+static DWORD RemoveLine(struct PamConf *conf, int *line);
 
-static CENTERROR AddOption(struct PamConf *conf, int line, const char *option);
+static DWORD AddOption(struct PamConf *conf, int line, const char *option);
 
 static int ContainsOption(struct PamConf *conf, int line, const char *option);
 
-static CENTERROR RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound);
+static DWORD RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound);
 
 /* On a real system, set the rootPrefix to "". When testing, set it to the
  * test directory that mirrors the target file system.
  */
-static CENTERROR ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf);
+static DWORD ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf);
 
-static CENTERROR WritePamConfiguration(const char *rootPrefix, struct PamConf *conf, PSTR *diff);
+static DWORD WritePamConfiguration(const char *rootPrefix, struct PamConf *conf, PSTR *diff);
 
-static CENTERROR FindModulePath(const char *testPrefix, const char *basename, char **destName, DWORD *moduleFlags);
+static DWORD FindModulePath(const char *testPrefix, const char *basename, char **destName, DWORD *moduleFlags);
 
 static BOOLEAN IsRequiredService(PCSTR service, const struct PamConf *conf);
 
@@ -220,9 +220,9 @@ static int NextService(struct PamConf *conf, int line)
     return -1;
 }
 
-static CENTERROR ListServices(struct PamConf *conf, char ***result, int *serviceCount)
+static DWORD ListServices(struct PamConf *conf, char ***result, int *serviceCount)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line;
     DynamicArray services;
     char *service;
@@ -274,9 +274,9 @@ static const char *Basename(const char *path)
 }
 
 //This function is only used on AIX right now
-static CENTERROR CopyService(struct PamConf *conf, const char *oldName, const char *newName)
+static DWORD CopyService(struct PamConf *conf, const char *oldName, const char *newName)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = -1;
     int newLine;
     struct PamLine *oldLineObj, *newLineObj;
@@ -332,9 +332,9 @@ static void FreePamLineContents(struct PamLine *line)
     line->optionCount = 0;
 }
 
-static CENTERROR ParsePamLine(struct PamLine *lineObj, const char *filename, const char *linestr, const char **endptr)
+static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const char *linestr, const char **endptr)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     const char *pos = linestr;
     const char *token_start = NULL;
     DynamicArray tokens;
@@ -447,9 +447,9 @@ error:
     return ceError;
 }
 
-static CENTERROR AddFormattedLine(struct PamConf *conf, const char *filename, const char *linestr, const char **endptr)
+static DWORD AddFormattedLine(struct PamConf *conf, const char *filename, const char *linestr, const char **endptr)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamLine lineObj;
 
     BAIL_ON_CENTERIS_ERROR(ceError = ParsePamLine(&lineObj, filename, linestr, endptr));
@@ -466,9 +466,9 @@ error:
 //This function is currently unused
 #if 0
 /* Parse and add a service to the list. */
-static CENTERROR AddFormattedService(struct PamConf *conf, const char *filename, const char *contents)
+static DWORD AddFormattedService(struct PamConf *conf, const char *filename, const char *contents)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     const char *pos = contents;
     while(*pos != '\0')
     {
@@ -485,9 +485,9 @@ error:
 #endif
 
 /* Copy a pam configuration line and add it below the old line. */
-static CENTERROR CopyLine(struct PamConf *conf, int oldLine, int *newLine)
+static DWORD CopyLine(struct PamConf *conf, int oldLine, int *newLine)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamLine lineObj;
     struct PamLine *oldObj = &conf->lines[oldLine];
     int i;
@@ -526,12 +526,12 @@ error:
     return ceError;
 }
 
-static CENTERROR UpdateSkipCounts(
+static DWORD UpdateSkipCounts(
         struct PamLine *lineObj,
         unsigned long minSkipCount,
         int offsetSkipCount)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR inputPos = lineObj->control->value;
     PCSTR inputCopiedPos = lineObj->control->value;
     PSTR parsedSkipCountEnd = NULL;
@@ -602,10 +602,10 @@ error:
     return ceError;
 }
 
-static CENTERROR CopyLineAndUpdateSkips(
+static DWORD CopyLineAndUpdateSkips(
         struct PamConf *conf, int oldLine, int *newLine)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int searchLine = oldLine;
     struct PamLine *oldLineObj = NULL;
     int minSkipDistance = 0;
@@ -632,9 +632,9 @@ error:
     return ceError;
 }
 
-static CENTERROR RemoveLine(struct PamConf *conf, int *line)
+static DWORD RemoveLine(struct PamConf *conf, int *line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BAIL_ON_CENTERIS_ERROR(ceError = CTArrayRemove(&conf->private_data, *line, sizeof(struct PamLine),
             1));
     UpdatePublicLines(conf);
@@ -647,9 +647,9 @@ error:
     return ceError;
 }
 
-static CENTERROR RemoveLineAndUpdateSkips(struct PamConf *conf, int *line)
+static DWORD RemoveLineAndUpdateSkips(struct PamConf *conf, int *line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int searchLine = *line;
     struct PamLine *oldLineObj = &conf->lines[*line];
     int minSkipDistance = 0;
@@ -688,9 +688,9 @@ static int ContainsOption(struct PamConf *conf, int line, const char *option)
     return found;
 }
 
-static CENTERROR AddOption(struct PamConf *conf, int line, const char *option)
+static DWORD AddOption(struct PamConf *conf, int line, const char *option)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamLine *lineObj = &conf->lines[line];
     CTParseToken newOption;
     CTParseToken *prevToken;
@@ -737,9 +737,9 @@ error:
     return ceError;
 }
 
-static CENTERROR RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound)
+static DWORD RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamLine *lineObj = &conf->lines[line];
     /* Do not free the options variable */
     DynamicArray options;
@@ -793,9 +793,9 @@ error:
 
 void GetModuleControl(struct PamLine *lineObj, const char **module, const char **control);
 
-static CENTERROR ReadPamFile(struct PamConf *conf, const char *rootPrefix, const char *filename)
+static DWORD ReadPamFile(struct PamConf *conf, const char *rootPrefix, const char *filename)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct stat statbuf;
     FILE *file = NULL;
     PSTR buffer = NULL;
@@ -816,13 +816,13 @@ static CENTERROR ReadPamFile(struct PamConf *conf, const char *rootPrefix, const
     if (stat(fullPath, &statbuf) < 0)
     {
         DJ_LOG_INFO("File %s does not exist", fullPath);
-        ceError = CENTERROR_INVALID_FILENAME;
+        ceError = ERROR_FILE_NOT_FOUND;
         goto error;
     }
     if (!S_ISREG(statbuf.st_mode))
     {
         DJ_LOG_INFO("File %s is not a regular file", fullPath);
-        ceError = CENTERROR_INVALID_FILENAME;
+        ceError = ERROR_FILE_NOT_FOUND;
         goto error;
     }
 
@@ -890,9 +890,9 @@ error:
 /* On a real system, set the rootPrefix to "". When testing, set it to the
  * test directory that mirrors the target file system.
  */
-static CENTERROR ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf)
+static DWORD ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DIR *dp = NULL;
     struct dirent *dirp;
     PSTR pszDirPath = NULL;
@@ -958,9 +958,9 @@ static CENTERROR ReadPamConfiguration(const char *rootPrefix, struct PamConf *co
 
     ceError = ReadPamFile(conf, rootPrefix, "/etc/pam.conf");
 
-    if(ceError == CENTERROR_INVALID_FILENAME && foundPamd)
+    if(ceError == ERROR_FILE_NOT_FOUND && foundPamd)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
     BAIL_ON_CENTERIS_ERROR(ceError);
 
@@ -988,9 +988,9 @@ struct OpenFile
     BOOLEAN followSymlinks;
 };
 
-static CENTERROR FindFile(const char *rootPrefix, const char *filename, DynamicArray *openFiles, int *lastIndexed, FILE **file)
+static DWORD FindFile(const char *rootPrefix, const char *filename, DynamicArray *openFiles, int *lastIndexed, FILE **file)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct OpenFile *files = (struct OpenFile *)openFiles->data;
     int i;
     struct OpenFile newFile;
@@ -1046,7 +1046,7 @@ static CENTERROR FindFile(const char *rootPrefix, const char *filename, DynamicA
     newFile.followSymlinks = followSymlinks;
 
     ceError = CTOpenFile(newFile.tempPath, "w", &newFile.file);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJ_LOG_ERROR("Unable to open '%s' for writing", tempPath);
         BAIL_ON_CENTERIS_ERROR(ceError);
@@ -1068,9 +1068,9 @@ error:
     return ceError;
 }
 
-static CENTERROR MoveFiles(const char *rootPrefix, DynamicArray *openFiles, PSTR *diff)
+static DWORD MoveFiles(const char *rootPrefix, DynamicArray *openFiles, PSTR *diff)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int i;
     char *finalName = NULL;
     char *prefixedPath = NULL;
@@ -1131,9 +1131,9 @@ error:
     return ceError;
 }
 
-static CENTERROR CloseFiles(const char *rootPrefix, DynamicArray *openFiles)
+static DWORD CloseFiles(const char *rootPrefix, DynamicArray *openFiles)
 {
-    CENTERROR firstError = CENTERROR_SUCCESS, lastError;
+    DWORD firstError = ERROR_SUCCESS, lastError;
     int i;
     struct OpenFile *files = (struct OpenFile *)openFiles->data;
     for(i = 0; i < openFiles->size; i++)
@@ -1143,7 +1143,7 @@ static CENTERROR CloseFiles(const char *rootPrefix, DynamicArray *openFiles)
         if(files[i].file != NULL)
         {
             lastError = CTCloseFile(files[i].file);
-            if(CENTERROR_IS_OK(firstError))
+            if(!firstError)
                 firstError = lastError;
             files[i].file = NULL;
         }
@@ -1152,9 +1152,9 @@ static CENTERROR CloseFiles(const char *rootPrefix, DynamicArray *openFiles)
     return firstError;
 }
 
-static CENTERROR AppendToken(StringBuffer *save, CTParseToken *token)
+static DWORD AppendToken(StringBuffer *save, CTParseToken *token)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     if(token != NULL)
     {
         BAIL_ON_CENTERIS_ERROR(ceError = CTStringBufferAppend(save, token->value));
@@ -1166,9 +1166,9 @@ error:
 }
 
 //The string buffer must have already been constructed
-static CENTERROR AppendPamLine(StringBuffer *save, struct PamLine *lineObj)
+static DWORD AppendPamLine(StringBuffer *save, struct PamLine *lineObj)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int j;
 
     GCE(ceError = CTStringBufferAppend(save, lineObj->leadingWhiteSpace));
@@ -1191,9 +1191,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR WritePamConfiguration(const char *rootPrefix, struct PamConf *conf, PSTR *diff)
+static DWORD WritePamConfiguration(const char *rootPrefix, struct PamConf *conf, PSTR *diff)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DynamicArray openFiles;
     struct OpenFile *files = NULL;
     int lastIndexedFile = 0;
@@ -1691,7 +1691,7 @@ static BOOLEAN PamModuleGrantsDomainLogins( const char * phase, const char * mod
 }
 */
 
-static CENTERROR GetIncludeName(struct PamLine *lineObj, PSTR *includeService)
+static DWORD GetIncludeName(struct PamLine *lineObj, PSTR *includeService)
 {
     char buffer[256] = "";
     if(lineObj->module != NULL)
@@ -1725,7 +1725,7 @@ static CENTERROR GetIncludeName(struct PamLine *lineObj, PSTR *includeService)
         return CTStrdup(lineObj->defaultInclude, includeService);
     }
     *includeService = NULL;
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 struct ConfigurePamModuleState
@@ -1761,9 +1761,9 @@ struct ConfigurePamModuleState
     int includeLevel;
 };
 
-static CENTERROR PamOldCenterisDisable(struct PamConf *conf, const char *service, const char * phase, struct ConfigurePamModuleState *state)
+static DWORD PamOldCenterisDisable(struct PamConf *conf, const char *service, const char * phase, struct ConfigurePamModuleState *state)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = NextLineForService(conf, -1, service, phase);
     /* Do not free this variable */
     struct PamLine *lineObj;
@@ -1786,10 +1786,10 @@ static CENTERROR PamOldCenterisDisable(struct PamConf *conf, const char *service
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             ceError = PamOldCenterisDisable(conf, includeService, phase, state);
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_BAD_CONF)
+                ceError = ERROR_SUCCESS;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -1835,9 +1835,9 @@ void GetModuleControl(struct PamLine *lineObj, const char **module, const char *
     }
 }
 
-static CENTERROR PamLwidentityDisable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state)
+static DWORD PamLwidentityDisable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line;
     /* Do not free this variable */
     struct PamLine *lineObj;
@@ -1889,10 +1889,10 @@ static CENTERROR PamLwidentityDisable(struct PamConf *conf, const char *service,
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             ceError = PamLwidentityDisable(conf, includeService, phase, pam_lwidentity, state);
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_BAD_CONF)
+                ceError = ERROR_SUCCESS;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -1937,9 +1937,9 @@ error:
     return ceError;
 }
 
-static CENTERROR SetPamTokenValue(CTParseToken **token, CTParseToken *prev, const char *value)
+static DWORD SetPamTokenValue(CTParseToken **token, CTParseToken *prev, const char *value)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if(prev != NULL && (prev->trailingSeparator == NULL ||
         strlen(prev->trailingSeparator) < 1))
@@ -1961,20 +1961,20 @@ error:
     return ceError;
 }
 
-static CENTERROR FindPamDenyLikeModule(const char *testPrefix, char **modulePath, char **moduleOption)
+static DWORD FindPamDenyLikeModule(const char *testPrefix, char **modulePath, char **moduleOption)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DistroInfo distro;
     memset(&distro, 0, sizeof(distro));
     *modulePath = NULL;
     *moduleOption = NULL;
 
     ceError = FindModulePath(testPrefix, "pam_deny", modulePath, NULL);
-    if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_MODULE)
+    if(ceError == ERROR_MISSING_SYSTEMFILE)
     {
         ceError = FindModulePath(testPrefix, "pam_prohibit", modulePath, NULL);
     }
-    if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_MODULE)
+    if(ceError == ERROR_MISSING_SYSTEMFILE)
     {
         /*Solaris 8 does not have pam_deny. It does have pam_sample that has a
          * mode to act like pam_deny. pam_sample should be available on all
@@ -1989,7 +1989,7 @@ static CENTERROR FindPamDenyLikeModule(const char *testPrefix, char **modulePath
         if(distro.os == OS_SUNOS)
         {
             ceError = FindModulePath(testPrefix, "pam_sample", modulePath, NULL);
-            if(CENTERROR_IS_OK(ceError))
+            if(!ceError)
             {
                 ceError = CTStrdup("always_fail", moduleOption);
                 BAIL_ON_CENTERIS_ERROR(ceError);
@@ -1997,7 +1997,7 @@ static CENTERROR FindPamDenyLikeModule(const char *testPrefix, char **modulePath
         }
     }
 error:
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         CT_SAFE_FREE_STRING(*modulePath);
         CT_SAFE_FREE_STRING(*moduleOption);
@@ -2083,7 +2083,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             lineObj->optionCount = 0;
             goto cleanup;
         }
-        LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+        LW_CLEANUP_CTERR(exc, LW_ERROR_PAM_MISSING_SERVICE);
     }
 
     /* Pam enable algorithm:
@@ -2131,7 +2131,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
                     break;
                 }
             }
-            else if(nestedException->code == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
+            else if(nestedException->code == LW_ERROR_PAM_MISSING_SERVICE)
             {
                 LW_HANDLE(&nestedException);
             }
@@ -2449,13 +2449,13 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             DJ_LOG_ERROR("Nothing seems to be protecting logins for service %s", service);
             if(!strcmp(control, "sufficient"))
             {
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_PAM_BAD_CONF, "Unknown pam module", "The likewise PAM module cannot be configured for the %s service. This services uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam module", "The likewise PAM module cannot be configured for the %s service. This services uses the '%s' module, which is not in this program's list of known modules. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service, module);
             }
             //It is somewhat normal to not require a password in an included
             //pam file. It is up to the top-most parent to require the password.
             else if(state->includeLevel == 0)
             {
-                LW_RAISE_EX(exc, CENTERROR_DOMAINJOIN_PAM_BAD_CONF, "Unknown pam configuration", "The likewise PAM module cannot be configured for the %s service. Either this service is unprotected (does not require a valid password for access), or it is using a pam module that this program is unfamiliar with. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
+                LW_RAISE_EX(exc, LW_ERROR_PAM_BAD_CONF, "Unknown pam configuration", "The likewise PAM module cannot be configured for the %s service. Either this service is unprotected (does not require a valid password for access), or it is using a pam module that this program is unfamiliar with. Please email Likewise technical support and include a copy of /etc/pam.conf or /etc/pam.d.", service);
             }
             goto cleanup;
         }
@@ -2491,7 +2491,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         {
             if (!state->sawNonincludeLine)
             {
-                LW_CLEANUP_CTERR(exc, CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+                LW_CLEANUP_CTERR(exc, LW_ERROR_PAM_MISSING_SERVICE);
             }
             /*There was nothing to block domain users. We'll add our module at the bottom of the stack.
              * prevLine != -1, because a noninclude line was seen.
@@ -2657,9 +2657,9 @@ cleanup:
     LW_HANDLE(&nestedException);
 }
 
-static CENTERROR PamLwiPassPolicyDisable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwipasspolicy, struct ConfigurePamModuleState *state)
+static DWORD PamLwiPassPolicyDisable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwipasspolicy, struct ConfigurePamModuleState *state)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = NextLineForService(conf, -1, service, phase);
     /* Do not free this variable */
     struct PamLine *lineObj;
@@ -2670,7 +2670,7 @@ static CENTERROR PamLwiPassPolicyDisable(struct PamConf *conf, const char *servi
     if(strcmp(phase, "password"))
     {
         /*Only install the password policy for the password phase*/
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         goto error;
     }
 
@@ -2689,10 +2689,10 @@ static CENTERROR PamLwiPassPolicyDisable(struct PamConf *conf, const char *servi
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             ceError = PamLwiPassPolicyDisable(conf, includeService, phase, pam_lwipasspolicy, state);
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_BAD_CONF)
+                ceError = ERROR_SUCCESS;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -2734,9 +2734,9 @@ error:
     return ceError;
 }
 
-static CENTERROR PamLwiPassPolicyEnable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwipasspolicy, struct ConfigurePamModuleState *state)
+static DWORD PamLwiPassPolicyEnable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwipasspolicy, struct ConfigurePamModuleState *state)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = NextLineForService(conf, -1, service, phase);
     /* Do not free this variable */
     struct PamLine *lineObj;
@@ -2747,7 +2747,7 @@ static CENTERROR PamLwiPassPolicyEnable(struct PamConf *conf, const char *servic
     if(strcmp(phase, "password"))
     {
         /*Only install the password policy for the password phase*/
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         goto error;
     }
 
@@ -2758,7 +2758,7 @@ static CENTERROR PamLwiPassPolicyEnable(struct PamConf *conf, const char *servic
         /* This means that this service is not defined for this phase.
          * This function will return an error, and the parent function should decide whether or not to ignore the error.
          */
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+        BAIL_ON_CENTERIS_ERROR(ceError = LW_ERROR_PAM_MISSING_SERVICE);
     }
 
     /* Insert the password policy module before the first module that prompts and isn't pam_lwidentity. Add use_authtok to the prompting module if necessary. */
@@ -2775,10 +2775,10 @@ static CENTERROR PamLwiPassPolicyEnable(struct PamConf *conf, const char *servic
         {
             DJ_LOG_INFO("Including %s for service %s", includeService, service);
             ceError = PamLwiPassPolicyEnable(conf, includeService, phase, pam_lwipasspolicy, state);
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_BAD_CONF)
+                ceError = ERROR_SUCCESS;
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -2851,7 +2851,7 @@ static CENTERROR PamLwiPassPolicyEnable(struct PamConf *conf, const char *servic
 
     if(!state->configuredRequestedModule && !state->sawNonincludeLine)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+        BAIL_ON_CENTERIS_ERROR(ceError = LW_ERROR_PAM_MISSING_SERVICE);
     }
 
 error:
@@ -2862,10 +2862,10 @@ error:
 #define MODULE_FLAG_32BIT   1
 #define MODULE_FLAG_64BIT   2
 
-static CENTERROR FindModulePath(const char *testPrefix, const char *basename, char **destName, DWORD *moduleFlags)
+static DWORD FindModulePath(const char *testPrefix, const char *basename, char **destName, DWORD *moduleFlags)
 {
     /*If you update this function, update NormalizeModuleName too */
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int i, j, k;
     int foundPath = -1;
     char *fullPath = NULL;
@@ -2907,8 +2907,8 @@ static CENTERROR FindModulePath(const char *testPrefix, const char *basename, ch
     {
         *moduleFlags = 0;
         ceError = CTFindFileInPath("file", "/bin:/usr/bin:/usr/local/bin", &fileProgPath);
-        if(ceError == CENTERROR_FILE_NOT_FOUND)
-            ceError = CENTERROR_SUCCESS;
+        if(ceError == ERROR_FILE_NOT_FOUND)
+            ceError = ERROR_SUCCESS;
         GCE(ceError);
     }
 
@@ -2980,7 +2980,7 @@ static CENTERROR FindModulePath(const char *testPrefix, const char *basename, ch
     if(foundPath == -1)
     {
         DJ_LOG_INFO("Unable to find %s", basename);
-        GCE(ceError = CENTERROR_DOMAINJOIN_PAM_MISSING_MODULE);
+        GCE(ceError = ERROR_MISSING_SYSTEMFILE);
     }
     else
     {
@@ -2998,20 +2998,20 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR FindPamLwiPassPolicy(const char *testPrefix, char **destName)
+static DWORD FindPamLwiPassPolicy(const char *testPrefix, char **destName)
 {
     return FindModulePath(testPrefix, "pam_lwipasspolicy", destName, NULL);
 }
 
-static CENTERROR FindPamLwidentity(const char *testPrefix, char **destName, DWORD *flags)
+static DWORD FindPamLwidentity(const char *testPrefix, char **destName, DWORD *flags)
 {
-    CENTERROR ceError;
+    DWORD ceError;
     ceError = FindModulePath(testPrefix, "pam_lsass", destName, flags);
-    if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_MODULE)
+    if(ceError == ERROR_MISSING_SYSTEMFILE)
     {
         ceError = FindModulePath(testPrefix, "pam_lwidentity", destName, flags);
     }
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJ_LOG_ERROR("Unable to find pam_lwidentity or pam_lsass");
     }
@@ -3025,7 +3025,7 @@ void DJUpdatePamConf(const char *testPrefix,
         BOOLEAN enable,
         LWException **exc)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct ConfigurePamModuleState state;
     char *pam_lwidentity = NULL;
     char *pam_lwipasspolicy = NULL;
@@ -3049,8 +3049,8 @@ void DJUpdatePamConf(const char *testPrefix,
                     &moduleFlags));
         ceError = FindPamLwiPassPolicy(testPrefix, &pam_lwipasspolicy);
         /* Ignore the password policy on systems that don't have it */
-        if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_MODULE)
-            ceError = CENTERROR_SUCCESS;
+        if(ceError == ERROR_MISSING_SYSTEMFILE)
+            ceError = ERROR_SUCCESS;
         LW_CLEANUP_CTERR(exc, ceError);
     }
 
@@ -3117,7 +3117,7 @@ void DJUpdatePamConf(const char *testPrefix,
                 if(!LW_IS_OK(nestedException))
                 {
                     if(nestedException->code ==
-                            CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
+                            LW_ERROR_PAM_MISSING_SERVICE)
                     {
                         LW_HANDLE(&nestedException);
                     }
@@ -3135,15 +3135,15 @@ void DJUpdatePamConf(const char *testPrefix,
             else
             {
                 ceError = PamLwidentityDisable(conf, services[i], phases[j], pam_lwidentity, &state);
-                if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                    ceError = CENTERROR_SUCCESS;
+                if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                    ceError = ERROR_SUCCESS;
                 LW_CLEANUP_CTERR(exc, ceError);
             }
 
             memset(&state, 0, sizeof(state));
             ceError = PamOldCenterisDisable(conf, services[i], phases[j], &state);
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
             LW_CLEANUP_CTERR(exc, ceError);
         }
         memset(&state, 0, sizeof(state));
@@ -3155,8 +3155,8 @@ void DJUpdatePamConf(const char *testPrefix,
         {
             ceError = PamLwiPassPolicyDisable(conf, services[i], "password", pam_lwipasspolicy, &state);
         }
-        if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-            ceError = CENTERROR_SUCCESS;
+        if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+            ceError = ERROR_SUCCESS;
         LW_CLEANUP_CTERR(exc, ceError);
     }
 
@@ -3169,10 +3169,10 @@ cleanup:
     CT_SAFE_FREE_STRING(pam_lwipasspolicy);
 }
 
-static CENTERROR
+static DWORD
 AddMissingAIXServices(struct PamConf *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     /*AIX does not use PAM by default. It's default pam.conf is actually broken for a few services.
      *
      * During the install we switch it over to pam mode, so we have to fix up its default services
@@ -3208,10 +3208,10 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJAddMissingAIXServices(PCSTR rootPrefix)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamConf conf;
     memset(&conf, 0, sizeof(conf));
 
@@ -3238,7 +3238,7 @@ void DJNewConfigurePamForADLogin(
     LWException **exc
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct PamConf conf;
     char *pam_lwidentityconf = NULL;
     DistroInfo distro;
@@ -3249,10 +3249,10 @@ void DJNewConfigurePamForADLogin(
         testPrefix = "";
     ceError = ReadPamConfiguration(testPrefix, &conf);
 #ifdef __LWI_AIX__
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
         /* This is an AIX 5.2 machine that doesn't have a pam.conf */
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         goto cleanup;
     }
 #endif
@@ -3294,9 +3294,9 @@ cleanup:
 }
 
 
-static CENTERROR IsLwidentityEnabled(struct PamConf *conf, const char *service, const char * phase, BOOLEAN *configured)
+static DWORD IsLwidentityEnabled(struct PamConf *conf, const char *service, const char * phase, BOOLEAN *configured)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = NextLineForService(conf, -1, service, phase);
     /* Do not free this variable */
     struct PamLine *lineObj;
@@ -3317,7 +3317,7 @@ static CENTERROR IsLwidentityEnabled(struct PamConf *conf, const char *service, 
         /* This means that this service is not defined for this phase. An example is the session phase of passwd.
          * This function will return an error, and the parent function should decide whether or not to ignore the error.
          */
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+        BAIL_ON_CENTERIS_ERROR(ceError = LW_ERROR_PAM_MISSING_SERVICE);
     }
 
     while(line != -1)
@@ -3330,12 +3330,12 @@ static CENTERROR IsLwidentityEnabled(struct PamConf *conf, const char *service, 
         if(includeService != NULL)
         {
             ceError = IsLwidentityEnabled(conf, includeService, phase, configured);
-            if(CENTERROR_IS_OK(ceError) && *configured)
+            if(!ceError && *configured)
                 goto error;
-            if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
-                ceError = CENTERROR_SUCCESS;
-            else if(ceError == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
-                ceError = CENTERROR_SUCCESS;
+            if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
+                ceError = ERROR_SUCCESS;
+            else if(ceError == LW_ERROR_PAM_BAD_CONF)
+                ceError = ERROR_SUCCESS;
             else
                 sawNonincludeLine = TRUE;
             BAIL_ON_CENTERIS_ERROR(ceError);
@@ -3368,7 +3368,7 @@ static CENTERROR IsLwidentityEnabled(struct PamConf *conf, const char *service, 
     }
 
     if(!sawNonincludeLine)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE);
+        BAIL_ON_CENTERIS_ERROR(ceError = LW_ERROR_PAM_MISSING_SERVICE);
 
 error:
     CT_SAFE_FREE_STRING(includeService);
@@ -3376,13 +3376,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJCopyPamToRootDir(
         const char *srcPrefix,
         const char *destPrefix
         )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR srcPath = NULL;
     PSTR destPath = NULL;
     BOOLEAN exists;
@@ -3455,7 +3455,7 @@ BOOLEAN IsRequiredService(PCSTR service, const struct PamConf *conf)
 
 static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException *nestedException = NULL;
     QueryResult result = NotConfigured;
     PSTR tempDir = NULL;
@@ -3480,7 +3480,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
     LW_CLEANUP_CTERR(exc, DJCopyPamToRootDir(NULL, tempDir));
     ceError = ReadPamConfiguration(tempDir, &conf);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
         result = NotApplicable;
         goto cleanup;
@@ -3513,10 +3513,10 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         if(!IsRequiredService(service, &conf))
             continue;
         ceError = IsLwidentityEnabled(&conf, service, "auth", &configured);
-        if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
+        if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
         {
             configured = TRUE;
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         LW_CLEANUP_CTERR(exc, ceError);
         if(!configured)
@@ -3524,10 +3524,10 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
 
         ceError = IsLwidentityEnabled(&conf,
                     service, "account", &configured);
-        if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
+        if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
         {
             configured = TRUE;
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         LW_CLEANUP_CTERR(exc, ceError);
         if(!configured)
@@ -3535,10 +3535,10 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
 
         ceError = IsLwidentityEnabled(&conf,
                     service, "password", &configured);
-        if(ceError == CENTERROR_DOMAINJOIN_PAM_MISSING_SERVICE)
+        if(ceError == LW_ERROR_PAM_MISSING_SERVICE)
         {
             configured = TRUE;
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         LW_CLEANUP_CTERR(exc, ceError);
         if(!configured)
@@ -3549,7 +3549,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     DJUpdatePamConf(NULL, &conf, NULL, NULL, TRUE,
             &nestedException);
     if(!LW_IS_OK(nestedException) &&
-            nestedException->code == CENTERROR_DOMAINJOIN_PAM_BAD_CONF)
+            nestedException->code == LW_ERROR_PAM_BAD_CONF)
     {
         //Eat this error because the configuration is sufficient
         conf.modified = TRUE;

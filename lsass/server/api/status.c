@@ -75,7 +75,7 @@ LsaSrvGetStatus(
                     &pLsaStatus->lsassVersion);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaSrvGetProductVersion(
+    dwError = LsaReadVersionFile(
                     &pLsaStatus->productVersion);
     BAIL_ON_LSA_ERROR(dwError);
     
@@ -510,125 +510,5 @@ error:
 
     memset(pVersion, 0, sizeof(*pVersion));
     
-    goto cleanup;
-}
-
-DWORD
-LsaSrvGetProductVersion(
-    PLSA_VERSION pVersion
-    )
-{  
-    DWORD dwError = 0;
-    DWORD dwMajor = 0;
-    DWORD dwMinor = 0;
-    DWORD dwBuild = 0;
-    DWORD dwRevision = 0;
-    int versionFile = -1;
-    // A typical version file is 40 bytes long. The whole file can be read into
-    // a static buffer, because if the file is too long, then it is invalid.
-    char szFileBuffer[200];
-    ssize_t dwCount = 0;
-    // Do not free
-    PSTR pszPos = szFileBuffer;
-
-#ifdef MINIMAL_LSASS
-    versionFile = open(LOCALSTATEDIR "/VERSION", O_RDONLY, 0);
-#else
-    versionFile = open(PREFIXDIR "/data/VERSION", O_RDONLY, 0);
-#endif
-    if (versionFile < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwCount = read(versionFile, szFileBuffer, sizeof(szFileBuffer));
-    if (dwCount < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (dwCount == sizeof(szFileBuffer))
-    {
-        dwError = LW_ERROR_INVALID_AGENT_VERSION;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    szFileBuffer[dwCount] = 0;
-
-    while (*pszPos)
-    {
-        LwStripWhitespace(pszPos, TRUE, TRUE);
-        if (!strncmp(pszPos, "VERSION=", sizeof("VERSION=") - 1))
-        {
-            pszPos += sizeof("VERSION=") - 1;
-
-            errno = 0;
-            dwMajor = strtoul(pszPos, &pszPos, 10);
-
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            if (pszPos[0] != '.')
-            {
-                dwError = LW_ERROR_INVALID_AGENT_VERSION;
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-            pszPos++;
-            dwMinor = strtoul(pszPos, &pszPos, 10);
-
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        else if (!strncmp(pszPos, "BUILD=", sizeof("BUILD=") - 1))
-        {
-            pszPos += sizeof("BUILD=") - 1;
-
-            errno = 0;
-            dwBuild = strtoul(pszPos, &pszPos, 10);
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        else if (!strncmp(pszPos, "REVISION=", sizeof("REVISION=") - 1))
-        {
-            pszPos += sizeof("REVISION=") - 1;
-
-            errno = 0;
-            dwRevision = strtoul(pszPos, &pszPos, 10);
-            dwError = LwMapErrnoToLwError(errno);
-            if (dwError != 0)
-            {
-                LSA_LOG_DEBUG("Unable to parse revision due to error %d", dwError);
-                dwRevision = 0;
-                dwError = 0;
-            }
-        }
-        pszPos = strchr(pszPos, '\n');
-        if (!pszPos)
-        {
-            break;
-        }
-        // Skip the \n
-        pszPos++;
-        if (*pszPos == '\r')
-        {
-            pszPos++;
-        }
-    }
-    
-    pVersion->dwMajor = dwMajor;
-    pVersion->dwMinor = dwMinor;
-    pVersion->dwBuild = dwBuild;
-    pVersion->dwRevision = dwRevision;
-    
-cleanup:
-    if (versionFile != -1)
-    {
-        close(versionFile);
-    }
-    return dwError;
-    
-error:
-    memset(pVersion, 0, sizeof(*pVersion));
     goto cleanup;
 }

@@ -58,9 +58,9 @@
 #include "ctbase.h"
 #include "ctarray.h"
 
-CENTERROR CTArrayConstruct(DynamicArray* array, size_t itemSize)
+DWORD CTArrayConstruct(DynamicArray* array, size_t itemSize)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     array->size = 0;
     array->capacity = 32;
 
@@ -71,9 +71,9 @@ error:
     return ceError;
 }
 
-CENTERROR CTSetCapacity(DynamicArray *array, size_t itemSize, size_t capacity)
+DWORD CTSetCapacity(DynamicArray *array, size_t itemSize, size_t capacity)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     /* Resize the array */
     ceError = CTReallocMemory(array->data, &array->data, capacity * itemSize);
@@ -86,9 +86,9 @@ error:
     return ceError;
 }
 
-CENTERROR CTArrayInsert(DynamicArray *array, int insertPos, int itemSize, const void *data, size_t dataLen)
+DWORD CTArrayInsert(DynamicArray *array, int insertPos, int itemSize, const void *data, size_t dataLen)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if(array->size + dataLen > array->capacity)
     {
@@ -106,22 +106,22 @@ error:
     return ceError;
 }
 
-CENTERROR CTArrayAppend(DynamicArray *array, int itemSize, const void *data, size_t dataLen)
+DWORD CTArrayAppend(DynamicArray *array, int itemSize, const void *data, size_t dataLen)
 {
     return CTArrayInsert(array, array->size, itemSize, data, dataLen);
 }
 
-CENTERROR CTArrayRemove(DynamicArray *array, int removePos, int itemSize, size_t dataLen)
+DWORD CTArrayRemove(DynamicArray *array, int removePos, int itemSize, size_t dataLen)
 {
     if(dataLen + removePos > array->size)
         dataLen = array->size - removePos;
     if(dataLen < 0)
-        return CENTERROR_INVALID_PARAMETER;
+        return ERROR_INVALID_PARAMETER;
     memmove((char *)array->data + removePos*itemSize,
             (char *)array->data + (removePos + dataLen)*itemSize,
             (array->size - removePos - dataLen)*itemSize);
     array->size -= dataLen;
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 size_t CTArrayRemoveHead(DynamicArray *array, int itemSize, void *store, size_t dataLen)

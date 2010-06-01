@@ -31,7 +31,7 @@
 #ifndef __DJPROCUTILS_H__
 #define __DJPROCUTILS_H__
 
-CENTERROR
+DWORD
 DJKillProcess(
     PPROCINFO pProcInfo
     );
@@ -41,14 +41,14 @@ FreeProcInfo(
     PPROCINFO pProcInfo
     );
 
-CENTERROR
+DWORD
 DJSpawnProcess(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 DJSpawnProcessWithFds(
     PCSTR pszCommand,
     PSTR* ppszArgs,
@@ -58,14 +58,14 @@ DJSpawnProcessWithFds(
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 DJSpawnProcessSilent(
     PCSTR pszCommand,
     PSTR* ppArgs,
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 DJSpawnProcessOutputToFile(
     PCSTR pszCommand,
     PSTR* ppArgs,
@@ -73,7 +73,7 @@ DJSpawnProcessOutputToFile(
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 DJSpawnProcessWithEnvironment(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -84,13 +84,13 @@ DJSpawnProcessWithEnvironment(
     PPROCINFO* ppProcInfo
     );
 
-CENTERROR
+DWORD
 DJReadData(
     PPROCINFO pProcInfo,
     PPROCBUFFER pProcBuffer
     );
 
-CENTERROR
+DWORD
 DJTimedReadData(
     PPROCINFO pProcInfo,
     PPROCBUFFER pProcBuffer,
@@ -98,14 +98,14 @@ DJTimedReadData(
     PBOOLEAN pbTimedout
     );
 
-CENTERROR
+DWORD
 DJWriteData(
     DWORD dwFd,
     PSTR pszBuf,
     DWORD dwLen
     );
 
-CENTERROR
+DWORD
 DJGetProcessStatus(
     PPROCINFO pProcInfo,
     PLONG plstatus

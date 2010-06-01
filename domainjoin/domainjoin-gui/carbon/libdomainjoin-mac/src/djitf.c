@@ -40,7 +40,7 @@ DJInitJoinInterface(
 {
     LWException* pException = NULL;
     PSTR pszLogFilePath = "/tmp/lwidentity.join.log";
-    CENTERROR ceError = 0;
+    DWORD ceError = 0;
 
     ceError = dj_init_logging_to_file(LOG_LEVEL_VERBOSE, pszLogFilePath);
 
@@ -76,7 +76,7 @@ DJItfJoinDomain(
     PDOMAIN_JOIN_ERROR* ppError
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     JoinProcessOptions options;
     DynamicArray enableModules, disableModules;
     DynamicArray detailModules;
@@ -125,7 +125,7 @@ DJItfJoinDomain(
         if(CTArrayFindString(&disableModules, module) != -1)
         {
             LW_RAISE_EX(&pException,
-						CENTERROR_INVALID_OPTION_VALUE,
+						ERROR_INVALID_PARAMETER,
 						"Module already specified",
 						"The module '%s' is listed as being disabled and enabled",
 						module);
@@ -141,7 +141,7 @@ DJItfJoinDomain(
         if(CTArrayFindString(&enableModules, module) != -1)
         {
             LW_RAISE_EX(&pException,
-						CENTERROR_INVALID_OPTION_VALUE,
+						ERROR_INVALID_PARAMETER,
 						"Module already specified",
 						"The module '%s' is listed as being disabled and enabled",
 						module);
@@ -164,10 +164,10 @@ cleanup:
     if (pException) {
     
        PDOMAIN_JOIN_ERROR pError = NULL;
-       CENTERROR ceError_2 = CENTERROR_SUCCESS;
+       DWORD ceError_2 = ERROR_SUCCESS;
        
        ceError_2 = DJItfBuildDomainJoinError(pException, &pError);
-       if (CENTERROR_IS_OK(ceError_2)) {
+       if (!ceError_2) {
           *ppError = pError;
        }
        
@@ -189,7 +189,7 @@ DJItfLeaveDomain(
     PDOMAIN_JOIN_ERROR* ppError
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException* pException = NULL;
     JoinProcessOptions options;
     DynamicArray enableModules, disableModules;
@@ -222,7 +222,7 @@ DJItfLeaveDomain(
         if(CTArrayFindString(&disableModules, module) != -1)
         {
             LW_RAISE_EX(&pException,
-						CENTERROR_INVALID_OPTION_VALUE,
+						ERROR_INVALID_PARAMETER,
 						"Module already specified",
 						"The module '%s' is listed as being disabled and enabled",
 						module);
@@ -245,10 +245,10 @@ cleanup:
     if (pException) {
     
        PDOMAIN_JOIN_ERROR pError = NULL;
-       CENTERROR ceError_2 = CENTERROR_SUCCESS;
+       DWORD ceError_2 = ERROR_SUCCESS;
        
        ceError_2 = DJItfBuildDomainJoinError(pException, &pError);
-       if (CENTERROR_IS_OK(ceError_2)) {
+       if (!ceError_2) {
           *ppError = pError;
        }
        
@@ -270,7 +270,7 @@ DJItfSetComputerName(
     PDOMAIN_JOIN_ERROR* ppError
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException* pException = NULL;
     
     LW_TRY(&pException, DJSetComputerName(pszComputerName, pszDomainName, &LW_EXC));
@@ -280,10 +280,10 @@ cleanup:
     if (pException) {
     
        PDOMAIN_JOIN_ERROR pError = NULL;
-       CENTERROR ceError_2 = CENTERROR_SUCCESS;
+       DWORD ceError_2 = ERROR_SUCCESS;
        
        ceError_2 = DJItfBuildDomainJoinError(pException, &pError);
-       if (CENTERROR_IS_OK(ceError_2)) {
+       if (!ceError_2) {
           *ppError = pError;
        }
        
@@ -304,7 +304,7 @@ DJItfQueryInformation(
     PDOMAIN_JOIN_ERROR* ppError
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException* pException = NULL;
     PDOMAINJOININFO pJoinInfo = NULL;
     PDOMAIN_JOIN_INFO pJoinInfo_client = NULL;
@@ -313,7 +313,7 @@ DJItfQueryInformation(
     LW_TRY(&pException, QueryInformation(&pJoinInfo, &LW_EXC));
     
     ceError = DJItfConvertDomainJoinInfo(pJoinInfo, &pJoinInfo_client);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if (pJoinInfo_client->pszDomainName)
     {
@@ -342,10 +342,10 @@ cleanup:
     if (pException) {
     
        PDOMAIN_JOIN_ERROR pError = NULL;
-       CENTERROR ceError_2 = CENTERROR_SUCCESS;
+       DWORD ceError_2 = ERROR_SUCCESS;
        
        ceError_2 = DJItfBuildDomainJoinError(pException, &pError);
-       if (CENTERROR_IS_OK(ceError_2)) {
+       if (!ceError_2) {
           *ppError = pError;
        }
        
@@ -367,7 +367,7 @@ DJItfIsDomainNameResolvable(
     PDOMAIN_JOIN_ERROR* ppError
     ) 
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWException* pException = NULL;
     BOOLEAN bResolvable = FALSE;
     
@@ -380,10 +380,10 @@ cleanup:
     if (pException) {
     
        PDOMAIN_JOIN_ERROR pError = NULL;
-       CENTERROR ceError_2 = CENTERROR_SUCCESS;
+       DWORD ceError_2 = ERROR_SUCCESS;
        
        ceError_2 = DJItfBuildDomainJoinError(pException, &pError);
-       if (CENTERROR_IS_OK(ceError_2)) {
+       if (!ceError_2) {
           *ppError = pError;
        }
        
@@ -395,7 +395,7 @@ cleanup:
        
     }
     
-    if (!CENTERROR_IS_OK(ceError)) {
+    if (ceError) {
        *pbIsResolvable = FALSE;
     }
 
@@ -436,19 +436,19 @@ DJItfConvertDomainJoinInfo(
     PDOMAIN_JOIN_INFO* ppJoinInfo
     )
 {
-    CENTERROR ctError = CENTERROR_SUCCESS;
+    DWORD ctError = ERROR_SUCCESS;
     PDOMAIN_JOIN_INFO pNewInfo = NULL;
     
     ctError = CTAllocateMemory(
                     sizeof(DOMAIN_JOIN_INFO),
                     (PVOID*)&pNewInfo);
-    GOTO_CLEANUP_ON_CENTERROR(ctError);
+    GOTO_CLEANUP_ON_DWORD(ctError);
     
     if (!IsNullOrEmptyString(pJoinInfo->pszName)) {
         ctError = CTAllocateString(
                         pJoinInfo->pszName,
                         &pNewInfo->pszName);
-        GOTO_CLEANUP_ON_CENTERROR(ctError);
+        GOTO_CLEANUP_ON_DWORD(ctError);
     }
 
     if (!IsNullOrEmptyString(pJoinInfo->pszDnsDomain)) {
@@ -456,7 +456,7 @@ DJItfConvertDomainJoinInfo(
                         pJoinInfo->pszDnsDomain,
                         &pNewInfo->pszDnsDomain
                         );
-        GOTO_CLEANUP_ON_CENTERROR(ctError);
+        GOTO_CLEANUP_ON_DWORD(ctError);
     }
     
     if (!IsNullOrEmptyString(pJoinInfo->pszDomainName)) {
@@ -464,21 +464,21 @@ DJItfConvertDomainJoinInfo(
                         pJoinInfo->pszDomainName,
                         &pNewInfo->pszDomainName
                         );
-        GOTO_CLEANUP_ON_CENTERROR(ctError);
+        GOTO_CLEANUP_ON_DWORD(ctError);
     }
     
     if (!IsNullOrEmptyString(pJoinInfo->pszDomainShortName)) {
         ctError = CTAllocateString(
                         pJoinInfo->pszDomainShortName,
                         &pNewInfo->pszDomainShortName);
-        GOTO_CLEANUP_ON_CENTERROR(ctError);
+        GOTO_CLEANUP_ON_DWORD(ctError);
     }
 
     if (!IsNullOrEmptyString(pJoinInfo->pszLogFilePath)) {
         ctError = CTAllocateString(
                         pJoinInfo->pszLogFilePath,
                         &pNewInfo->pszLogFilePath);
-        GOTO_CLEANUP_ON_CENTERROR(ctError);
+        GOTO_CLEANUP_ON_DWORD(ctError);
     }
     
     *ppJoinInfo = pNewInfo;
@@ -499,7 +499,7 @@ DJItfBuildDomainJoinError(
     PDOMAIN_JOIN_ERROR* ppError
     )
 {
-    CENTERROR ctError = CENTERROR_SUCCESS;
+    DWORD ctError = ERROR_SUCCESS;
     PDOMAIN_JOIN_ERROR pError = NULL;
     PSTR pszShortErrorMsg = NULL;
     PSTR pszLongErrorMsg = NULL;
@@ -507,7 +507,7 @@ DJItfBuildDomainJoinError(
     ctError = CTAllocateMemory(
                     sizeof(DOMAIN_JOIN_ERROR),
                     (PVOID*)&pError);
-    GOTO_CLEANUP_ON_CENTERROR(ctError);
+    GOTO_CLEANUP_ON_DWORD(ctError);
     
     pError->code = pException->code;
     
@@ -515,14 +515,14 @@ DJItfBuildDomainJoinError(
        ctError = CTAllocateString(
                         pException->shortMsg,
                         &pszShortErrorMsg);
-       GOTO_CLEANUP_ON_CENTERROR(ctError);
+       GOTO_CLEANUP_ON_DWORD(ctError);
     }
     
     if (!IsNullOrEmptyString(pException->longMsg)) {
        ctError = CTAllocateString(
                         pException->longMsg,
                         &pszLongErrorMsg);
-       GOTO_CLEANUP_ON_CENTERROR(ctError);
+       GOTO_CLEANUP_ON_DWORD(ctError);
     }
     
     pError->pszShortError = pszShortErrorMsg;

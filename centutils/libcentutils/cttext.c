@@ -57,7 +57,7 @@
 #include "config.h"
 #include "ctbase.h"
 
-CENTERROR
+DWORD
 CTTextFormatParagraph(
     const char* source,
     unsigned int indent_first,
@@ -66,7 +66,7 @@ CTTextFormatParagraph(
     char** dest
     )
 {
-    CENTERROR ceError;
+    DWORD ceError;
     StringBuffer buffer;
 
     char* cursor = (char*) source;

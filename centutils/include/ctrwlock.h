@@ -88,7 +88,7 @@ CTInitRWLock(
     PCTRWLOCK pLock
     );
 
-CENTERROR
+DWORD
 CTFreeRWLock(
     PCTRWLOCK pLock
     );

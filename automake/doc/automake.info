@@ -1,7 +1,7 @@
 This is
-/export/home/kstemen/svn/Platform/src/linux/automake/doc/automake.info,
+/private/var/automount/Users/kstemen/svn/Platform/src/linux/automake/doc/automake.info,
 produced by makeinfo version 4.7 from
-/export/home/kstemen/svn/Platform/src/linux/automake/doc/automake.texi.
+/private/var/automount/Users/kstemen/svn/Platform/src/linux/automake/doc/automake.texi.
 
    This manual is for GNU Automake (version 1.9.6, 9 July 2005), a
 program that creates GNU standards-compliant Makefiles from template
@@ -34,139 +34,139 @@ END-INFO-DIR-ENTRY
 
 
 Indirect:
-automake.info-1: 1393
-automake.info-2: 301347
+automake.info-1: 1425
+automake.info-2: 301379
 
 Tag Table:
 (Indirect)
-Node: Top1393
-Node: Introduction10557
-Ref: Introduction-Footnote-112025
-Ref: Introduction-Footnote-212174
-Node: Generalities12431
-Node: General Operation13039
-Node: Strictness15687
-Node: Uniform17420
-Node: Canonicalization21226
-Node: User Variables22259
-Node: Auxiliary Programs23704
-Node: Examples27409
-Node: Complete27737
-Node: Hello29721
-Node: true32518
-Node: Invoking Automake35247
-Node: configure41852
-Node: Requirements43016
-Node: Optional44267
-Node: Invoking aclocal50373
-Node: aclocal options53209
-Node: Macro search path54392
-Node: Macros58590
-Node: Public macros59145
-Node: Obsolete macros64210
-Node: Private macros65437
-Node: Extending aclocal66840
-Node: Local Macros70130
-Node: Future of aclocal73463
-Node: Directories75847
-Node: Subdirectories76785
-Node: Conditional Subdirectories79089
-Node: Alternative86613
-Ref: Alternative-Footnote-188538
-Node: Subpackages88663
-Node: Programs91839
-Node: A Program93178
-Node: Program Sources93899
-Node: Linking95708
-Node: Conditional Sources98014
-Node: Conditional Programs100861
-Node: A Library102709
-Node: A Shared Library105148
-Node: Libtool Concept106134
-Node: Libtool Libraries108190
-Node: Conditional Libtool Libraries109864
-Node: Conditional Libtool Sources112228
-Node: Libtool Convenience Libraries113567
-Node: Libtool Modules116891
-Node: Libtool Flags118160
-Node: LTLIBOBJS118665
-Node: Libtool Issues119256
-Node: Program and Library Variables122128
-Ref: Program and Library Variables-Footnote-1130887
-Node: Default _SOURCES130962
-Node: LIBOBJS133184
-Node: Program variables137724
-Node: Yacc and Lex140127
-Node: C++ Support145069
-Node: Assembly Support145908
-Node: Fortran 77 Support146756
-Ref: Fortran 77 Support-Footnote-1148389
-Node: Preprocessing Fortran 77148592
-Node: Compiling Fortran 77 Files149169
-Node: Mixing Fortran 77 With C and C++149742
-Ref: Mixing Fortran 77 With C and C++-Footnote-1152087
-Node: How the Linker is Chosen152390
-Node: Fortran 9x Support153608
-Node: Compiling Fortran 9x Files154612
-Node: Java Support154944
-Node: Support for Other Languages156155
-Node: ANSI156756
-Node: Dependencies159191
-Node: EXEEXT160920
-Node: Other objects163122
-Node: Scripts163714
-Node: Headers165340
-Node: Data167058
-Node: Sources167717
-Node: Built sources example170487
-Node: Other GNU Tools177400
-Node: Emacs Lisp177889
-Node: gettext179727
-Node: Libtool180232
-Node: Java180485
-Node: Python182371
-Node: Documentation186520
-Node: Texinfo186824
-Node: Man pages192066
-Node: Install194370
-Node: Clean199068
-Node: Dist200866
-Node: Tests210119
-Node: Rebuilding213764
-Node: Options217379
-Node: Miscellaneous226226
-Node: Tags226616
-Node: Suffixes228914
-Node: Multilibs230488
-Node: Include231122
-Node: Conditionals232013
-Node: Gnits234721
-Node: Cygnus236585
-Node: Not Enough238411
-Node: Extending238849
-Node: Third-Party Makefiles243229
-Node: Distributing249718
-Node: API versioning250355
-Node: Upgrading252994
-Node: FAQ254943
-Node: CVS255824
-Node: maintainer-mode262601
-Node: wildcards266266
-Node: distcleancheck269526
-Node: Flag Variables Ordering274232
-Node: renamed objects281881
-Node: Per-Object Flags283430
-Node: Multiple Outputs286326
-Node: Hard-Coded Install Paths295811
-Node: History300782
-Node: Timeline301347
-Node: Dependency Tracking Evolution332452
-Node: Releases344677
-Node: Copying This Manual349372
-Node: GNU Free Documentation License349606
-Node: Indices372018
-Node: Macro Index372307
-Node: Variable Index376968
-Node: General Index397119
+Node: Top1425
+Node: Introduction10589
+Ref: Introduction-Footnote-112057
+Ref: Introduction-Footnote-212206
+Node: Generalities12463
+Node: General Operation13071
+Node: Strictness15719
+Node: Uniform17452
+Node: Canonicalization21258
+Node: User Variables22291
+Node: Auxiliary Programs23736
+Node: Examples27441
+Node: Complete27769
+Node: Hello29753
+Node: true32550
+Node: Invoking Automake35279
+Node: configure41884
+Node: Requirements43048
+Node: Optional44299
+Node: Invoking aclocal50405
+Node: aclocal options53241
+Node: Macro search path54424
+Node: Macros58622
+Node: Public macros59177
+Node: Obsolete macros64242
+Node: Private macros65469
+Node: Extending aclocal66872
+Node: Local Macros70162
+Node: Future of aclocal73495
+Node: Directories75879
+Node: Subdirectories76817
+Node: Conditional Subdirectories79121
+Node: Alternative86645
+Ref: Alternative-Footnote-188570
+Node: Subpackages88695
+Node: Programs91871
+Node: A Program93210
+Node: Program Sources93931
+Node: Linking95740
+Node: Conditional Sources98046
+Node: Conditional Programs100893
+Node: A Library102741
+Node: A Shared Library105180
+Node: Libtool Concept106166
+Node: Libtool Libraries108222
+Node: Conditional Libtool Libraries109896
+Node: Conditional Libtool Sources112260
+Node: Libtool Convenience Libraries113599
+Node: Libtool Modules116923
+Node: Libtool Flags118192
+Node: LTLIBOBJS118697
+Node: Libtool Issues119288
+Node: Program and Library Variables122160
+Ref: Program and Library Variables-Footnote-1130919
+Node: Default _SOURCES130994
+Node: LIBOBJS133216
+Node: Program variables137756
+Node: Yacc and Lex140159
+Node: C++ Support145101
+Node: Assembly Support145940
+Node: Fortran 77 Support146788
+Ref: Fortran 77 Support-Footnote-1148421
+Node: Preprocessing Fortran 77148624
+Node: Compiling Fortran 77 Files149201
+Node: Mixing Fortran 77 With C and C++149774
+Ref: Mixing Fortran 77 With C and C++-Footnote-1152119
+Node: How the Linker is Chosen152422
+Node: Fortran 9x Support153640
+Node: Compiling Fortran 9x Files154644
+Node: Java Support154976
+Node: Support for Other Languages156187
+Node: ANSI156788
+Node: Dependencies159223
+Node: EXEEXT160952
+Node: Other objects163154
+Node: Scripts163746
+Node: Headers165372
+Node: Data167090
+Node: Sources167749
+Node: Built sources example170519
+Node: Other GNU Tools177432
+Node: Emacs Lisp177921
+Node: gettext179759
+Node: Libtool180264
+Node: Java180517
+Node: Python182403
+Node: Documentation186552
+Node: Texinfo186856
+Node: Man pages192098
+Node: Install194402
+Node: Clean199100
+Node: Dist200898
+Node: Tests210151
+Node: Rebuilding213796
+Node: Options217411
+Node: Miscellaneous226258
+Node: Tags226648
+Node: Suffixes228946
+Node: Multilibs230520
+Node: Include231154
+Node: Conditionals232045
+Node: Gnits234753
+Node: Cygnus236617
+Node: Not Enough238443
+Node: Extending238881
+Node: Third-Party Makefiles243261
+Node: Distributing249750
+Node: API versioning250387
+Node: Upgrading253026
+Node: FAQ254975
+Node: CVS255856
+Node: maintainer-mode262633
+Node: wildcards266298
+Node: distcleancheck269558
+Node: Flag Variables Ordering274264
+Node: renamed objects281913
+Node: Per-Object Flags283462
+Node: Multiple Outputs286358
+Node: Hard-Coded Install Paths295843
+Node: History300814
+Node: Timeline301379
+Node: Dependency Tracking Evolution332484
+Node: Releases344709
+Node: Copying This Manual349404
+Node: GNU Free Documentation License349638
+Node: Indices372050
+Node: Macro Index372339
+Node: Variable Index377000
+Node: General Index397224
 
 End Tag Table

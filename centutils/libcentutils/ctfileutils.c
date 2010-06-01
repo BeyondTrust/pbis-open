@@ -58,22 +58,26 @@
 #include "ctbase.h"
 #include "ctarray.h"
 #include <unistd.h>
+#include <lwstr.h>
+#include <lwmem.h>
+#include <lwerror.h>
+#include <lwfile.h>
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-CENTERROR
+DWORD
 CTRemoveFile(
     PCSTR pszPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     while (1) {
         if (unlink(pszPath) < 0) {
             if (errno == EINTR) {
                 continue;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             break;
@@ -88,19 +92,19 @@ error:
 /*
 // TODO: Check access and removability before actual deletion
 */
-CENTERROR
+DWORD
 CTRemoveDirectory(
     PCSTR pszPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DIR* pDir = NULL;
     struct dirent* pDirEntry = NULL;
     struct stat statbuf;
     CHAR szBuf[PATH_MAX+1];
 
     if ((pDir = opendir(pszPath)) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -115,7 +119,7 @@ CTRemoveDirectory(
         memset(&statbuf, 0, sizeof(struct stat));
 
         if (stat(szBuf, &statbuf) < 0) {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -124,7 +128,7 @@ CTRemoveDirectory(
             BAIL_ON_CENTERIS_ERROR(ceError);
 
             if (rmdir(szBuf) < 0) {
-                ceError = CTMapSystemError(ceError);
+                ceError = LwMapErrnoToLwError(ceError);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
 
@@ -138,13 +142,13 @@ CTRemoveDirectory(
     if(closedir(pDir) < 0)
     {
         pDir = NULL;
-        ceError = CTMapSystemError(ceError);
+        ceError = LwMapErrnoToLwError(ceError);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     pDir = NULL;
 
     if (rmdir(pszPath) < 0) {
-        ceError = CTMapSystemError(ceError);
+        ceError = LwMapErrnoToLwError(ceError);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -156,13 +160,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCheckLinkExists(
     PCSTR pszPath,
     PBOOLEAN pbLinkExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     struct stat statbuf;
 
@@ -179,7 +183,7 @@ CTCheckLinkExists(
                 *pbLinkExists = FALSE;
                 break;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             *pbLinkExists = (((statbuf.st_mode & S_IFMT) == S_IFLNK) ? TRUE : FALSE);
@@ -192,13 +196,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCheckSockExists(
     PCSTR pszPath,
     PBOOLEAN pbSockExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     struct stat statbuf;
 
@@ -215,7 +219,7 @@ CTCheckSockExists(
                 *pbSockExists = FALSE;
                 break;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             *pbSockExists = (((statbuf.st_mode & S_IFMT) == S_IFSOCK) ? TRUE : FALSE);
@@ -228,13 +232,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCheckFileExists(
     PCSTR pszPath,
     PBOOLEAN pbFileExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     struct stat statbuf;
 
@@ -251,7 +255,7 @@ CTCheckFileExists(
                 *pbFileExists = FALSE;
                 break;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             *pbFileExists = (((statbuf.st_mode & S_IFMT) == S_IFREG) ? TRUE : FALSE);
@@ -264,13 +268,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCheckDirectoryExists(
     PCSTR pszPath,
     PBOOLEAN pbDirExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     struct stat statbuf;
 
@@ -287,7 +291,7 @@ CTCheckDirectoryExists(
                 *pbDirExists = FALSE;
                 break;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
 
         }
@@ -305,29 +309,29 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTMoveFile(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (rename(pszSrcPath, pszDstPath) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
     }
 
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCopyFileWithPerms(
     PCSTR pszSrcPath,
     PCSTR pszDstPath,
     mode_t dwPerms
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR pszTmpSuffix = ".tmp_likewise";
     PSTR pszTmpPath = NULL;
     BOOLEAN bRemoveFile = FALSE;
@@ -338,7 +342,7 @@ CTCopyFileWithPerms(
 
     if (IsNullOrEmptyString(pszSrcPath) ||
         IsNullOrEmptyString(pszDstPath)) {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -350,12 +354,12 @@ CTCopyFileWithPerms(
     strcat(pszTmpPath, pszTmpSuffix);
 
     if ((iFd = open(pszSrcPath, O_RDONLY, S_IRUSR)) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if ((oFd = open(pszTmpPath, O_WRONLY|O_TRUNC|O_CREAT, S_IRUSR|S_IWUSR)) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -368,7 +372,7 @@ CTCopyFileWithPerms(
             if (errno == EINTR)
                 continue;
 
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -380,7 +384,7 @@ CTCopyFileWithPerms(
             if (errno == EINTR)
                 continue;
 
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -415,7 +419,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetOwnerAndPermissions(
     PCSTR pszSrcPath,
     uid_t * uid,
@@ -423,13 +427,13 @@ CTGetOwnerAndPermissions(
     mode_t * mode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct stat statbuf;
 
     memset(&statbuf, 0, sizeof(struct stat));
 
     if (stat(pszSrcPath, &statbuf) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -442,19 +446,19 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetOwnerUID(
     PCSTR pszFilePath,
     uid_t* pUid
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct stat statbuf;
 
     memset(&statbuf, 0, sizeof(struct stat));
 
     if (stat(pszFilePath, &statbuf) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -465,13 +469,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCheckFileOrLinkExists(
     PCSTR pszPath,
     PBOOLEAN pbExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BAIL_ON_CENTERIS_ERROR(ceError = CTCheckFileExists(pszPath, pbExists));
     if(*pbExists == TRUE)
         goto error;
@@ -482,20 +486,20 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetFileTimeStamps(
     PCSTR pszFilePath,
     time_t *patime,   /* time of last access */
     time_t *pmtime,   /* time of last modification */
     time_t *pctime )  /* time of last status change */
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     struct stat statbuf;
 
     memset(&statbuf, 0, sizeof(struct stat));
 
     if (stat(pszFilePath, &statbuf) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -516,13 +520,13 @@ error:
 }
 
 
-CENTERROR
+DWORD
 CTCopyFileWithOriginalPerms(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     uid_t uid;
     gid_t gid;
     mode_t mode;
@@ -541,20 +545,20 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTChangePermissions(
     PCSTR pszPath,
     mode_t dwFileMode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     while (1) {
         if (chmod(pszPath, dwFileMode) < 0) {
             if (errno == EINTR) {
                 continue;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             break;
@@ -566,21 +570,21 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTChangeOwner(
     PCSTR pszPath,
     uid_t uid,
     gid_t gid
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     while (1) {
         if (chown(pszPath, uid, gid) < 0) {
             if (errno == EINTR) {
                 continue;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         } else {
             break;
@@ -592,7 +596,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTChangeOwnerAndPermissions(
     PCSTR pszPath,
     uid_t uid,
@@ -600,7 +604,7 @@ CTChangeOwnerAndPermissions(
     mode_t dwFileMode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = CTChangeOwner(pszPath, uid, gid);
     BAIL_ON_CENTERIS_ERROR(ceError);
@@ -613,17 +617,17 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetCurrentDirectoryPath(
     PSTR* ppszPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szBuf[PATH_MAX+1];
     PSTR pszPath = NULL;
 
     if (getcwd(szBuf, PATH_MAX) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -643,32 +647,32 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTChangeDirectory(
     PSTR pszPath
     )
 {
     if (pszPath == NULL || *pszPath == '\0')
-        return CENTERROR_INVALID_PARAMETER;
+        return ERROR_INVALID_PARAMETER;
 
     if (chdir(pszPath) < 0)
-        return CTMapSystemError(errno);
+        return LwMapErrnoToLwError(errno);
 
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
-CENTERROR
+DWORD
 CTCreateTempDirectory(
     PSTR *pszPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR tmpDir;
     PSTR template = NULL;
 
     if (pszPath == NULL)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_INVALID_PARAMETER);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_INVALID_PARAMETER);
     }
     *pszPath = NULL;
 
@@ -680,7 +684,7 @@ CTCreateTempDirectory(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (mkdtemp(template) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -692,14 +696,14 @@ error:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 CTCreateDirectoryInternal(
     PSTR pszPath,
     PSTR pszLastSlash,
     mode_t dwFileMode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszSlash = NULL;
     BOOLEAN bDirExists = FALSE;
     BOOLEAN bDirCreated = FALSE;
@@ -720,7 +724,7 @@ CTCreateDirectoryInternal(
         {
             if (mkdir(pszPath, S_IRWXU) != 0)
             {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
             bDirCreated = TRUE;
@@ -778,18 +782,18 @@ error:
     goto cleanup;
 }
 
-CENTERROR
+DWORD
 CTCreateDirectory(
     PCSTR pszPath,
     mode_t dwFileMode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszTmpPath = NULL;
 
     if (pszPath == NULL)
     {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     
@@ -811,7 +815,7 @@ error:
 }
 
 static
-CENTERROR
+DWORD
 CTGetMatchingDirEntryPathsInFolder(PCSTR pszDirPath,
                                    PCSTR pszFileNameRegExp,
                                    PSTR** pppszHostFilePaths,
@@ -824,7 +828,7 @@ CTGetMatchingDirEntryPathsInFolder(PCSTR pszDirPath,
         struct __PATHNODE *pNext;
     } PATHNODE, *PPATHNODE;
 
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DIR* pDir = NULL;
     struct dirent*  pDirEntry = NULL;
     regex_t rx;
@@ -847,10 +851,10 @@ CTGetMatchingDirEntryPathsInFolder(PCSTR pszDirPath,
     BAIL_ON_CENTERIS_ERROR(ceError);
     
     if(!isDirPathDir)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_INVALID_DIRECTORY);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_DIRECTORY);
 
     if (regcomp(&rx, pszFileNameRegExp, REG_EXTENDED) != 0) {
-        ceError = CENTERROR_REGEX_COMPILE_FAILED;
+        ceError = LW_ERROR_REGEX_COMPILE_FAILED;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     rxAllocated = TRUE;
@@ -860,7 +864,7 @@ CTGetMatchingDirEntryPathsInFolder(PCSTR pszDirPath,
 
     pDir = opendir(pszDirPath);
     if (pDir == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -882,7 +886,7 @@ CTGetMatchingDirEntryPathsInFolder(PCSTR pszDirPath,
                 //just skip it.
                 continue;
             }
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
         /*
@@ -961,7 +965,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetMatchingFilePathsInFolder(PCSTR pszDirPath,
                                PCSTR pszFileNameRegExp,
                                PSTR** pppszHostFilePaths,
@@ -974,7 +978,7 @@ CTGetMatchingFilePathsInFolder(PCSTR pszDirPath,
                                               S_IFREG);
 }
 
-CENTERROR
+DWORD
 CTGetMatchingDirPathsInFolder(PCSTR pszDirPath,
                               PCSTR pszDirNameRegExp,
                               PSTR** pppszHostDirPaths,
@@ -987,14 +991,14 @@ CTGetMatchingDirPathsInFolder(PCSTR pszDirPath,
                                               S_IFDIR);
 }
 
-CENTERROR
+DWORD
 CTCheckFileHoldsPattern(
     PCSTR pszFilePath,
     PCSTR pszPattern,
     PBOOLEAN pbPatternExists
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE* fp = NULL;
     CHAR szBuf[1024+1];
     regex_t rx;
@@ -1005,7 +1009,7 @@ CTCheckFileHoldsPattern(
     memset(&rx, 0, sizeof(regex_t));
 
     if (regcomp(&rx, pszPattern, REG_EXTENDED) != 0) {
-        ceError = CENTERROR_REGEX_COMPILE_FAILED;
+        ceError = LW_ERROR_REGEX_COMPILE_FAILED;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1014,7 +1018,7 @@ CTCheckFileHoldsPattern(
 
     fp = fopen(pszFilePath, "r");
     if (fp == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1025,7 +1029,7 @@ CTCheckFileHoldsPattern(
                 break;
             }
         } else if (!feof(fp)) {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
     }
@@ -1045,17 +1049,17 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetAbsolutePath(
     PSTR pszRelativePath,
     PSTR* ppszAbsolutePath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szBuf[PATH_MAX+1];
 
     if (realpath(pszRelativePath, szBuf) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1067,14 +1071,14 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTRemoveFiles(
     PSTR pszPath,
     BOOLEAN fDirectory,
     BOOLEAN fRecursive
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR  szCommand[2 * PATH_MAX + 1];
 
     sprintf(szCommand, "/bin/rm -f %s %s %s",
@@ -1083,7 +1087,7 @@ CTRemoveFiles(
             pszPath);
 
     if (system(szCommand) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1092,13 +1096,13 @@ error:
     return(ceError);
 }
 
-CENTERROR
+DWORD
 CTGetSymLinkTarget(
    PCSTR pszPath,
    PSTR* ppszTargetPath
    )
 {
-   CENTERROR ceError = CENTERROR_SUCCESS;
+   DWORD ceError = ERROR_SUCCESS;
    CHAR szBuf[PATH_MAX+1];
 
    memset(szBuf, 0, PATH_MAX);
@@ -1109,7 +1113,7 @@ CTGetSymLinkTarget(
          if (errno == EINTR)
             continue;
 
-         ceError = CTMapSystemError(errno);
+         ceError = LwMapErrnoToLwError(errno);
          BAIL_ON_CENTERIS_ERROR(ceError);
       }
 
@@ -1124,22 +1128,22 @@ CTGetSymLinkTarget(
    return ceError;
 }
 
-CENTERROR
+DWORD
 CTCreateSymLink(
     PCSTR pszOldPath,
     PCSTR pszNewPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (IsNullOrEmptyString(pszOldPath) ||
         IsNullOrEmptyString(pszNewPath)) {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if (symlink(pszOldPath, pszNewPath) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1148,17 +1152,17 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTBackupFile(
     PCSTR path
     )
 {
-    CENTERROR ceError;
+    DWORD ceError;
     PSTR backupPath = NULL;
     BOOLEAN exists;
 
     ceError = CTCheckFileExists(path, &exists);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
     if (!exists)
     {
         /* Do not need to backup, since the file does not yet exist. */
@@ -1166,10 +1170,10 @@ CTBackupFile(
     }
 
     ceError = CTAllocateStringPrintf(&backupPath, "%s.lwidentity.orig", path);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     ceError = CTCheckFileExists(backupPath, &exists);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     if (exists)
     {
@@ -1177,11 +1181,11 @@ CTBackupFile(
         backupPath = NULL;
 
         ceError = CTAllocateStringPrintf(&backupPath, "%s.lwidentity.bak", path);
-        CLEANUP_ON_CENTERROR(ceError);
+        CLEANUP_ON_DWORD(ceError);
     }
 
     ceError = CTCopyFileWithOriginalPerms(path, backupPath);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
 cleanup:
     if (backupPath)
@@ -1198,13 +1202,13 @@ cleanup:
 // tmp file and then move it to the target location -
 // and remove the original file
 */
-CENTERROR
+DWORD
 CTMoveFileAcrossDevices(
     PCSTR pszSrcPath,
     PCSTR pszDstPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szTmpPath[PATH_MAX+1] = "";
     BOOLEAN bRemoveFile = FALSE;
     uid_t uid;
@@ -1240,87 +1244,120 @@ error:
     return ceError;
 }
 
-/*
-// Do not use this function on very large files since it reads the
-// entire file into memory.
-*/
-CENTERROR
+DWORD
 CTReadFile(
     PCSTR pszFilePath,
-    PSTR *ppBuffer,
-    PLONG pSize )
+    size_t sReadMax,
+    PSTR* ppBuffer,
+    PLONG pSize
+    )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD dwError = 0;
+    int fd = -1;
     struct stat statbuf;
-    FILE *fp = NULL;
-
-    *ppBuffer = NULL;
-    if(pSize != NULL)
-        *pSize = 0;
+    size_t allocateSize = 0;
+    char* pbBuffer = NULL;
+    size_t readPos = 0;
+    ssize_t readBytes = 0;
 
     memset(&statbuf, 0, sizeof(struct stat));
 
     if (stat(pszFilePath, &statbuf) < 0) {
-        ceError = CTMapSystemError(errno);
-        BAIL_ON_CENTERIS_ERROR(ceError);
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_CENTERIS_ERROR(dwError);
     }
 
-    /* allocate one additional byte of memory and set it to NULL to
-       allow for functions like strtok() to work properly */
-    ceError = CTAllocateMemory(statbuf.st_size + 1, (VOID*)ppBuffer);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (statbuf.st_size > 0)
+    if (statbuf.st_size > sReadMax)
     {
-        fp = fopen( pszFilePath, "r" );
+        allocateSize = sReadMax;
+    }
+    else
+    {
+        allocateSize = statbuf.st_size;
+    }
 
-        if ( fp == NULL ){
-            ceError = CENTERROR_GP_FILE_OPEN_FAILED;
-            BAIL_ON_CENTERIS_ERROR(ceError);
+    /* allocate 2 additional bytes of memory and set it to NULL to
+       allow for functions like strtok() to work properly */
+    if (allocateSize + 2 > allocateSize)
+    {
+        allocateSize += 2;
+    }
+
+    dwError = LwAllocateMemory(allocateSize, (PVOID*)&pbBuffer);
+    BAIL_ON_CENTERIS_ERROR(dwError);
+
+    if (allocateSize > 2)
+    {
+        fd = open(pszFilePath, O_RDONLY, 0);
+        if ( fd < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_CENTERIS_ERROR(dwError);
         }
 
-        if ( fread( *ppBuffer, statbuf.st_size, 1, fp ) != 1 ) {
-            ceError = CTMapSystemError(errno);
-            BAIL_ON_CENTERIS_ERROR(ceError);
+        while (readPos < allocateSize - 2)
+        {
+            readBytes = read(
+                            fd,
+                            pbBuffer + readPos,
+                            allocateSize - 2 - readPos);
+            if (readBytes < 0)
+            {
+                switch (errno)
+                {
+                    case EAGAIN:
+                    case EINTR:
+                        break;
+                    default:
+                        dwError = LwMapErrnoToLwError(errno);
+                        BAIL_ON_CENTERIS_ERROR(dwError);
+                }
+            }
+            else
+            {
+                readPos += readBytes;
+            }
         }
-
-        fclose(fp);
-        fp = NULL;
-
     }
     if (pSize != NULL)
     {
         *pSize = statbuf.st_size;
     }
+    *ppBuffer = pbBuffer;
 
-    return ceError;
+cleanup:
+    if (fd != -1)
+    {
+        close(fd);
+    }
+    return dwError;
 
 error:
-    if (*ppBuffer) {
-           CTFreeMemory( *ppBuffer );
-           *ppBuffer = NULL;
+    if (ppBuffer)
+    {
+       *ppBuffer = NULL;
     }
-
-    if (fp) {
-        fclose( fp );
+    LW_SAFE_FREE_MEMORY(pbBuffer);
+    if (pSize)
+    {
+        *pSize = 0;
     }
-
-    return ceError;
+    goto cleanup;
 }
 
-CENTERROR
+DWORD
 CTOpenFile(
     PCSTR path,
     PCSTR mode,
     FILE** handle)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     *handle = fopen(path, mode);
 
     if (!*handle)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 error:
@@ -1328,13 +1365,13 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTFileStreamWrite(
     FILE* handle,
     PCSTR data,
     unsigned int size)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     unsigned int written = 0;
 
@@ -1343,7 +1380,7 @@ CTFileStreamWrite(
         int amount = fwrite(data+written, 1, size-written, handle);
         if (amount < 0)
         {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
         written += amount;
@@ -1353,14 +1390,14 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTFilePrintf(
     FILE* handle,
     PCSTR format,
     ...
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     va_list args;
     int count;
 
@@ -1370,7 +1407,7 @@ CTFilePrintf(
 
     if (count < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1378,16 +1415,16 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCloseFile(
     FILE* handle
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if (fclose(handle))
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1396,19 +1433,19 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTSafeCloseFile(
     FILE** handle
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     if(*handle == NULL)
         goto cleanup;
 
     if (fclose(*handle))
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         GCE(ceError);
     }
 
@@ -1417,14 +1454,14 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTFileContentsSame(
     PCSTR pszFilePath1,
     PCSTR pszFilePath2,
     PBOOLEAN pbSame
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE* fp1 = NULL;
     FILE* fp2 = NULL;
     BOOLEAN f1IsFile, f1IsLink;
@@ -1474,14 +1511,14 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTStreamContentsSame(
     FILE *fp1,
     FILE *fp2,
     PBOOLEAN pbSame
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     unsigned char buffer1[1024], buffer2[1024];
     size_t read1, read2;
 
@@ -1489,14 +1526,14 @@ CTStreamContentsSame(
         read1 = fread(buffer1, 1, sizeof(buffer1), fp1);
         if(read1 < sizeof(buffer1) && ferror(fp1))
         {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
         read2 = fread(buffer2, 1, sizeof(buffer2), fp2);
         if(read2 < sizeof(buffer2) && ferror(fp2))
         {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -1516,25 +1553,25 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTFindSed(
         PSTR *sedPath
         )
 {
-    CENTERROR ceError = CTFindFileInPath("sed", "/bin:/usr/bin", sedPath);
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
-        ceError = CENTERROR_SED_NOT_FOUND;
+    DWORD ceError = CTFindFileInPath("sed", "/bin:/usr/bin", sedPath);
+    if(ceError == ERROR_FILE_NOT_FOUND)
+        ceError = ERROR_MISSING_SYSTEMFILE;
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTWillSedChangeFile(
     PCSTR pszSrcPath,
     PCSTR pszExpression,
     BOOLEAN *changes
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR  ppszArgs[] =
         { NULL,
           NULL,
@@ -1565,14 +1602,14 @@ CTWillSedChangeFile(
     duppedFdout = dup(pProcInfo->fdout);
     if (duppedFdout < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     sedOut = fdopen(duppedFdout, "r");
     if(sedOut == NULL)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     duppedFdout = -1;
@@ -1592,7 +1629,7 @@ CTWillSedChangeFile(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_COMMAND_FAILED);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_BAD_COMMAND);
     }
 
     ceError = CTCloseFile(srcFile);
@@ -1619,7 +1656,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTRunSedOnFile(
     PCSTR pszSrcPath,
     PCSTR pszDstPath,
@@ -1627,7 +1664,7 @@ CTRunSedOnFile(
     PCSTR pszExpression
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR  ppszArgs[] =
         { NULL,
           NULL,
@@ -1662,14 +1699,14 @@ CTRunSedOnFile(
     dwFdIn = open(pszSrcPath, O_RDONLY);
     if (dwFdIn < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     dwFdOut = open(tempPath, O_WRONLY | O_EXCL | O_CREAT, S_IRUSR | S_IWUSR);
     if (dwFdOut < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -1683,7 +1720,7 @@ CTRunSedOnFile(
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     if (status != 0) {
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_COMMAND_FAILED);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_BAD_COMMAND);
     }
 
     BAIL_ON_CENTERIS_ERROR(ceError = CTFileContentsSame(tempPath, pszFinalPath, &isSame));
@@ -1703,7 +1740,7 @@ error:
     if(dwFdOut != -1)
     {
         close(dwFdOut);
-        if(!CENTERROR_IS_OK(ceError))
+        if(ceError)
         {
             CTRemoveFile(tempPath);
         }
@@ -1717,28 +1754,28 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCloneFilePerms(
     PCSTR pszTemplatePath,
     PCSTR pszDstPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     uid_t uid;
     gid_t gid;
     mode_t mode;
 
     ceError = CTGetOwnerAndPermissions(pszTemplatePath, &uid, &gid, &mode);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
     ceError = CTChangeOwnerAndPermissions(pszDstPath, uid, gid, mode);
-    CLEANUP_ON_CENTERROR(ceError);
+    CLEANUP_ON_DWORD(ceError);
 
 cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTFindFileInPath(
     PCSTR filename,
     PCSTR searchPath,
@@ -1748,7 +1785,7 @@ CTFindFileInPath(
     return CTFindInPath(NULL, filename, searchPath, foundPath);
 }
 
-CENTERROR
+DWORD
 CTFindInPath(
     PCSTR rootPrefix,
     PCSTR filename,
@@ -1756,7 +1793,7 @@ CTFindInPath(
     PSTR* foundPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     //Copy the search path so that strtok can be run on it
     PSTR mySearchPath = NULL;
     PSTR strtokSavePtr = NULL;
@@ -1790,7 +1827,7 @@ CTFindInPath(
         currentDir = strtok_r(NULL, ":", &strtokSavePtr);
         if(currentDir == NULL)
         {
-            GCE(ceError = CENTERROR_FILE_NOT_FOUND);
+            GCE(ceError = ERROR_FILE_NOT_FOUND);
         }
     }
 
@@ -1800,7 +1837,7 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetFileDiff(
     PCSTR first,
     PCSTR second,
@@ -1808,7 +1845,7 @@ CTGetFileDiff(
     BOOLEAN failIfNoDiff
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR diffPath = NULL;
     PCSTR args[4] = { NULL, first, second, NULL };
     int exitCode;
@@ -1816,7 +1853,7 @@ CTGetFileDiff(
     *diff = NULL;
     ceError = CTFindFileInPath("diff",
             "/bin:/usr/bin:/sbin:/usr/sbin", &diffPath);
-    if(ceError == CENTERROR_FILE_NOT_FOUND && !failIfNoDiff)
+    if(ceError == ERROR_FILE_NOT_FOUND && !failIfNoDiff)
     {
         GCE(ceError = CTStrdup("Diff command not found", diff));
         goto cleanup;
@@ -1832,14 +1869,14 @@ CTGetFileDiff(
         exitCode = 0;
     }
     if(exitCode != 0)
-        GCE(ceError = CENTERROR_COMMAND_FAILED);
+        GCE(ceError = ERROR_BAD_COMMAND);
 
 cleanup:
     CT_SAFE_FREE_STRING(diffPath);
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTGetFileTempPath(
         PCSTR unresolvedSrcPath,
         PSTR* resolvedSrcPath,
@@ -1848,7 +1885,7 @@ CTGetFileTempPath(
     PSTR symTarget = NULL;
     PSTR newPath = NULL;
     PSTR currentPath = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     // do not free
     PSTR separator = NULL;
 
@@ -1869,13 +1906,13 @@ CTGetFileTempPath(
         ceError = CTGetSymLinkTarget(
                         currentPath,
                         &symTarget);
-        if (ceError == CTMapSystemError(EINVAL))
+        if (ceError == LwMapErrnoToLwError(EINVAL))
         {
             // The last symlink component was resolved
             ceError = 0;
             break;
         }
-        else if (ceError == CTMapSystemError(ENOENT))
+        else if (ceError == LwMapErrnoToLwError(ENOENT))
         {
             // The target does not exist yet. The caller should create this path
             ceError = 0;
@@ -1924,12 +1961,12 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTSafeReplaceFile(
         PCSTR finalName,
         PCSTR replaceWith)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     GCE(ceError = CTCloneFilePerms(finalName, replaceWith));
     GCE(ceError = CTBackupFile(finalName));
     GCE(ceError = CTMoveFile(replaceWith, finalName));
@@ -1938,7 +1975,7 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTCopyDirectory(
     PCSTR source,
     PCSTR dest
@@ -1947,7 +1984,7 @@ CTCopyDirectory(
     uid_t uid;
     gid_t gid;
     mode_t mode;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DIR* pDir = NULL;
     struct dirent* pDirEntry = NULL;
     struct stat statbuf;
@@ -1960,7 +1997,7 @@ CTCopyDirectory(
 
 
     if ((pDir = opendir(source)) == NULL) {
-        GCE(ceError = CTMapSystemError(errno));
+        GCE(ceError = LwMapErrnoToLwError(errno));
     }
 
     while ((pDirEntry = readdir(pDir)) != NULL) {
@@ -1977,7 +2014,7 @@ CTCopyDirectory(
         memset(&statbuf, 0, sizeof(struct stat));
 
         if (stat(srcPath, &statbuf) < 0) {
-            GCE(ceError = CTMapSystemError(errno));
+            GCE(ceError = LwMapErrnoToLwError(errno));
         }
 
         if ((statbuf.st_mode & S_IFMT) == S_IFDIR) {
@@ -1989,7 +2026,7 @@ CTCopyDirectory(
     if(closedir(pDir) < 0)
     {
         pDir = NULL;
-        GCE(ceError = CTMapSystemError(ceError));
+        GCE(ceError = LwMapErrnoToLwError(ceError));
     }
     pDir = NULL;
 
@@ -2001,14 +2038,14 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTReadNextLine(
     FILE* fp,
     PSTR *output,
     PBOOLEAN pbEndOfFile
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DynamicArray buffer;
     const char nullTerm = '\0';
 
@@ -2025,7 +2062,7 @@ CTReadNextLine(
             if (feof(fp)) {
                 *pbEndOfFile = 1;
             } else {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 GCE(ceError);
             }
         }
@@ -2050,10 +2087,10 @@ cleanup:
 }
 
 //The dynamic array must be initialized (at least zeroed out) beforehand
-CENTERROR
+DWORD
 CTReadLines(FILE *file, DynamicArray *dest)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     BOOLEAN eof = FALSE;
     PSTR readLine = NULL;
@@ -2071,11 +2108,11 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTWriteLines(FILE *file, const DynamicArray *lines)
 {
     size_t i;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     for(i = 0; i < lines->size; i++)
     {
@@ -2101,17 +2138,17 @@ CTFreeLines(DynamicArray *lines)
     CTArrayFree(lines);
 }
 
-CENTERROR
+DWORD
 CTSetCloseOnExec(
     int fd)
 {
     long flags = fcntl(fd, F_GETFD);
     if(flags < 0)
-        return CTMapSystemError(errno);
+        return LwMapErrnoToLwError(errno);
 
     flags |= FD_CLOEXEC;
     if(fcntl(fd, F_SETFD, flags) < 0)
-        return CTMapSystemError(errno);
+        return LwMapErrnoToLwError(errno);
 
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }

@@ -62,13 +62,13 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTAllocateMemory(
     DWORD dwSize,
     PVOID * ppMemory
     );
 
-CENTERROR
+DWORD
 CTReallocMemory(
     PVOID  pMemory,
     PVOID * ppNewMemory,

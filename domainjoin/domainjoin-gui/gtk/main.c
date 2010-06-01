@@ -297,9 +297,9 @@ PrintWarning(
     LWException *_exc = NULL;
     PSTR warningTitle = NULL;
 
-    if(CENTERROR_IS_OK(CTAllocateStringPrintf(&warningTitle, "Warning: %s", title)))
+    if(!CTAllocateStringPrintf(&warningTitle, "Warning: %s", title))
     {
-        LW_RAISE_EX(&_exc, CENTERROR_DOMAINJOIN_WARNING, warningTitle, "%s", message);
+        LW_RAISE_EX(&_exc, LW_ERROR_DOMAINJOIN_WARNING, warningTitle, "%s", message);
         gdk_threads_enter();
         show_error_dialog(joinprogress_get_gtk_window(
                     (JoinProgressDialog *)options->userData), _exc);
@@ -469,7 +469,7 @@ join_mode(PJOINSTATE pJoinState, LWException** exc)
 
     if (!dialog)
     {
-        LW_CLEANUP_CTERR(exc, CENTERROR_OUT_OF_MEMORY);
+        LW_CLEANUP_CTERR(exc, ERROR_OUTOFMEMORY);
     }
 
     switch ((result = joindialog_run(dialog)))
@@ -506,7 +506,7 @@ status_mode(LWException** exc)
 
     if (!dialog)
     {
-        LW_CLEANUP_CTERR(exc, CENTERROR_OUT_OF_MEMORY);
+        LW_CLEANUP_CTERR(exc, ERROR_OUTOFMEMORY);
     }
 
     switch ((result = statusdialog_run(dialog)))
@@ -565,7 +565,7 @@ ensure_gtk_version(int major, int minor, int micro, LWException** exc)
 
     if ((msg = gtk_check_version(major, minor, micro)))
     {
-        LW_RAISE_EX(exc, CENTERROR_INCOMPATIBLE_LIBRARY,
+        LW_RAISE_EX(exc, ERROR_DLL_MIGHT_BE_INCOMPATIBLE,
             "Incompatible library detected", 
             "%s.  Likewise does not support graphical domain joins on this platform.  "
             "Please use the command-line domain join application instead.",

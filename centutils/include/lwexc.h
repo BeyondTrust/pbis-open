@@ -59,7 +59,6 @@
 
 #include "ctsys.h"
 #include "ctdef.h"
-#include "cterr.h"
 
 typedef struct _LWStackFrame
 {
@@ -70,27 +69,27 @@ typedef struct _LWStackFrame
 
 typedef struct _LWException
 {
-    CENTERROR code;
-    CENTERROR subcode;
+    DWORD code;
+    DWORD subcode;
     char* shortMsg;
     char* longMsg;
     LWStackFrame stack;
 } LWException;
 
-CENTERROR LWExceptionToString(const LWException *conv, PCSTR titlePrefix, BOOLEAN showSymbolicCode, BOOLEAN showTrace, PSTR *result);
+DWORD LWExceptionToString(const LWException *conv, PCSTR titlePrefix, BOOLEAN showSymbolicCode, BOOLEAN showTrace, PSTR *result);
 
-CENTERROR LWPrintException(FILE *dest, const LWException *print, BOOLEAN showTrace);
+DWORD LWPrintException(FILE *dest, const LWException *print, BOOLEAN showTrace);
 
 void
 LWRaise(
     LWException** dest, 
-    CENTERROR code
+    DWORD code
     );
 
 void
 LWRaiseEx(
     LWException** dest,
-    CENTERROR code,
+    DWORD code,
     const char* file,
     unsigned int line,
     const char* shortMsg,
@@ -149,7 +148,7 @@ LWHandle(
 #define LW_CLEANUP_CTERR(dest, err)		\
     do						\
     {						\
-	CENTERROR _err = (err);			\
+	DWORD _err = (err);			\
 	if (_err)				\
 	{					\
 	    LW_RAISE(dest, _err);		\
@@ -160,7 +159,7 @@ LWHandle(
 #define LW_CLEANUP_DLERROR(dest)		\
     do						\
     {						\
-        LW_RAISE_EX((dest), CENTERROR_INCOMPATIBLE_LIBRARY, \
+        LW_RAISE_EX((dest), DWORD_INCOMPATIBLE_LIBRARY, \
                 "An error occurred loading/unloading a library", \
                 "The following error dlerror occurred '%s'.", \
                 dlerror());             	\

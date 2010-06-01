@@ -1,14 +1,12 @@
 lib_LTLIBRARIES = libcentutils.la
 
-AM_CPPFLAGS += -I@top_srcdir@/include
+AM_CPPFLAGS += -I$(top_srcdir)/include \
+	       $(LWADVAPI_INCLUDES)
 
 libcentutils_la_SOURCES = \
     ctarray.c      \
-    ctcfgparser.c  \
-    cterr.c        \
     ctexec.c       \
     ctfileutils.c  \
-    ctgroup.c      \
     cthash.c       \
     ctmem.c        \
     ctprocutils.c  \
@@ -21,7 +19,10 @@ libcentutils_la_SOURCES = \
     ctsysfuncs.c
 
 libcentutils_la_LIBADD = \
-    @top_builddir@/libgpglib/libgpglib.la \
-    @PROC_LIBS@ \
-    @KVM_LIBS@  \
-    @RT_LIBS@
+    $(top_builddir)/libgpglib/libgpglib.la \
+    $(PROC_LIBS) \
+    $(KVM_LIBS)  \
+    $(RT_LIBS) \
+    $(LWADVAPI_NOTHR_LIBS)
+
+libcentutils_la_LDFLAGS = $(LWADVAPI_LDFLAGS)

@@ -60,7 +60,7 @@
 #include <sys/wait.h>
 #include <sys/resource.h>
 
-CENTERROR
+DWORD
 CTCaptureOutput(
     PCSTR command,
     PSTR* output
@@ -69,7 +69,7 @@ CTCaptureOutput(
     return CTCaptureOutputWithStderr(command, FALSE, output);
 }
 
-CENTERROR
+DWORD
 CTCaptureOutputWithStderr(
     PCSTR command,
     BOOLEAN captureStderr,
@@ -82,7 +82,7 @@ CTCaptureOutputWithStderr(
                    CTSHELL_INTEGER(redirect_stderr, captureStderr ? 1 : 2));
 }
 
-CENTERROR
+DWORD
 CTCaptureOutputWithStderrEx(
     PCSTR command,
     PCSTR* ppszArgs,
@@ -91,7 +91,7 @@ CTCaptureOutputWithStderrEx(
     int *exitCode
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     unsigned int buffer_size = 1024;
     unsigned int read_size, write_size;
     int out[2];
@@ -103,7 +103,7 @@ CTCaptureOutputWithStderrEx(
     
     if (pipe(out))
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);   
     }
     
@@ -111,7 +111,7 @@ CTCaptureOutputWithStderrEx(
     
     if (pid < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);     
     }
     else if (pid == 0)
@@ -130,7 +130,7 @@ CTCaptureOutputWithStderrEx(
     
     if (close(out[1]))
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);     
     }
     
@@ -152,19 +152,19 @@ CTCaptureOutputWithStderrEx(
     
     if (read_size < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError); 
     }
     
     if (close(out[0]))
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError); 
     }
     
     if (waitpid(pid, &status, 0) != pid)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -178,7 +178,7 @@ CTCaptureOutputWithStderrEx(
         *exitCode = WEXITSTATUS(status);
     else if (status)
     {
-        ceError = CENTERROR_COMMAND_FAILED;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError); 
     }
     
@@ -187,23 +187,23 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTRunCommand(
     PCSTR command
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     
     int code = system(command);
     
     if (code < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);   
     }
     else if (code > 0)
     {
-        ceError = CENTERROR_COMMAND_FAILED;
+        ceError = ERROR_BAD_COMMAND;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
     
@@ -211,7 +211,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTSpawnProcessWithFds(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -224,7 +224,7 @@ CTSpawnProcessWithFds(
     return CTSpawnProcessWithEnvironment(pszCommand, ppszArgs, NULL, dwFdIn, dwFdOut, dwFdErr, ppProcInfo);
 }
 
-CENTERROR
+DWORD
 CTSpawnProcessWithEnvironment(
     PCSTR pszCommand,
     const PSTR* ppszArgs,
@@ -235,7 +235,7 @@ CTSpawnProcessWithEnvironment(
     PPROCINFO* ppProcInfo
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PPROCINFO pProcInfo = NULL;
     int pid = -1;
     int iFd = 0;
@@ -250,7 +250,7 @@ CTSpawnProcessWithEnvironment(
     memset(&rlm, 0, sizeof(struct rlimit));
 
     if (getrlimit(RLIMIT_NOFILE, &rlm) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -261,7 +261,7 @@ CTSpawnProcessWithEnvironment(
     {
         fd0[0] = dup(dwFdIn);
     } else if (pipe(fd0) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -269,7 +269,7 @@ CTSpawnProcessWithEnvironment(
     {
         fd1[1] = dup(dwFdOut);
     } else if (pipe(fd1) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -277,12 +277,12 @@ CTSpawnProcessWithEnvironment(
     {
         fd2[1] = dup(dwFdErr);
     } else if (pipe(fd2) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if ((pid = fork()) < 0) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -389,13 +389,13 @@ CTFreeProcInfo(
     CTFreeMemory(pProcInfo);
 }
 
-CENTERROR
+DWORD
 CTGetExitStatus(
     PPROCINFO pProcInfo,
     PLONG plstatus
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int status = 0;
 
     while(1)
@@ -403,7 +403,7 @@ CTGetExitStatus(
         if (waitpid(pProcInfo->pid, &status, 0) < 0) {
             if (errno == EINTR)
                 continue;
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
         else
@@ -413,7 +413,7 @@ CTGetExitStatus(
     if (WIFEXITED(status)) {
         *plstatus = WEXITSTATUS(status);
     } else {
-        BAIL_ON_CENTERIS_ERROR(CENTERROR_ABNORMAL_TERMINATION);
+        BAIL_ON_CENTERIS_ERROR(ERROR_FATAL_APP_EXIT);
     }
 
 error:
@@ -430,9 +430,9 @@ void CTCaptureOutputToExc(
     )
 {
     PSTR output = NULL;
-    CENTERROR ceError = CTCaptureOutputWithStderr(command, TRUE, &output);
+    DWORD ceError = CTCaptureOutputWithStderr(command, TRUE, &output);
 
-    if(ceError == CENTERROR_COMMAND_FAILED)
+    if(ceError == ERROR_BAD_COMMAND)
     {
         PSTR showOutput = output;
         if(showOutput == NULL)

@@ -94,10 +94,10 @@ struct CTShellVar __CTVarZero(const char* name);
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTShell(const char* format, ...);
 
-CENTERROR
+DWORD
 CTShellEx(char * const envp[], const char* format, ...);
 
 LW_END_EXTERN_C

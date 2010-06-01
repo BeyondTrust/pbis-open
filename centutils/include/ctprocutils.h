@@ -60,7 +60,7 @@
 
 LW_BEGIN_EXTERN_C
 
-CENTERROR
+DWORD
 CTMatchProgramToPID(
     PCSTR pszProgramName,
     pid_t    pid
@@ -70,15 +70,15 @@ CTMatchProgramToPID(
  *
  * If more programs match than there is space for in the buffer, as many processes as possible will be filled in. count will be set to how many processes matched, not how many were stored.
  *
- * If count is NULL, then it is assumed that the pid buffer has space for exactly 1 pid. In this case, if at least one pid is found, the first one is stored in the buffer. If no matching pids are found, CENTERROR_NO_SUCH_PROCESS is returned. When count is not NULL, it is not considered an error when no processes match.
+ * If count is NULL, then it is assumed that the pid buffer has space for exactly 1 pid. In this case, if at least one pid is found, the first one is stored in the buffer. If no matching pids are found, DWORD_NO_SUCH_PROCESS is returned. When count is not NULL, it is not considered an error when no processes match.
  *
  * pid may be NULL. This is only useful when count is also NULL, in which case the error code can be used to determine whether a process is running or not without actually finding the pid.
  *
  * (uid_t)-1 is treated as wildcard for the owner parameter, and all uids will be matched in this case.
  *
- * Please check the implementation of this function before using it. It may not be implemented for your platform. In this case, it will return CENTERROR_NOT_IMPLEMENTED.
+ * Please check the implementation of this function before using it. It may not be implemented for your platform. In this case, it will return DWORD_NOT_IMPLEMENTED.
  */
-CENTERROR
+DWORD
 CTGetPidOf(
     PCSTR programName,
     uid_t owner,
@@ -91,7 +91,7 @@ CTGetPidOf(
  *
  * Searching via programFilename may require root access.
  */
-CENTERROR
+DWORD
 CTGetPidOfCmdLine(
     PCSTR programName,
     PCSTR programFilename,
@@ -101,7 +101,7 @@ CTGetPidOfCmdLine(
     size_t *count
     );
 
-CENTERROR
+DWORD
 CTIsProgramRunning(
 	PCSTR pszPidFile,
 	PCSTR pszProgramName,
@@ -109,7 +109,7 @@ CTIsProgramRunning(
     PBOOLEAN pbRunning
     );
 	
-CENTERROR
+DWORD
 CTSendSignal(
 	pid_t pid,
 	int sig

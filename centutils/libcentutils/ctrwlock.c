@@ -72,7 +72,7 @@ CTInitRWLock(
     pthread_cond_init (&pLock->write_condition, NULL);
 }
 
-CENTERROR
+DWORD
 CTFreeRWLock(
     PCTRWLOCK pLock
     )
@@ -83,14 +83,14 @@ CTFreeRWLock(
 
         pthread_mutex_unlock (&pLock->mutex);
 
-        return CTMapSystemError(EBUSY);
+        return LwMapErrnoToLwError(EBUSY);
     }
 
     if (pLock->num_waiting_readers != 0 || pLock->num_waiting_writers != 0) {
 
         pthread_mutex_unlock (&pLock->mutex);
 
-        return CTMapSystemError(EBUSY);
+        return LwMapErrnoToLwError(EBUSY);
     }
 
     pthread_mutex_unlock (&pLock->mutex);
@@ -101,7 +101,7 @@ CTFreeRWLock(
 
     pthread_cond_destroy (&pLock->write_condition);
 
-    return CENTERROR_SUCCESS;
+    return ERROR_SUCCESS;
 }
 
 void

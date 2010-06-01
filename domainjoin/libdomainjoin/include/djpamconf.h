@@ -45,7 +45,7 @@ void
 DJSetUseNewPamConfigurator(
         BOOLEAN bNewValue);
 
-CENTERROR
+DWORD
 DJAddMissingAIXServices(PCSTR rootPrefix);
 
 extern const JoinModule DJPamModule;

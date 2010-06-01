@@ -141,10 +141,10 @@ free_variable_key(void* _ptr)
     CTFreeString(key);
 }
 
-static CENTERROR
+static DWORD
 CountVariables(const char* format, unsigned int* result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     LWGHashTable* table = NULL;
     unsigned int i;
 
@@ -153,7 +153,7 @@ CountVariables(const char* format, unsigned int* result)
 				     NULL);
 
     if (!table)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_OUT_OF_MEMORY);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_OUTOFMEMORY);
 
     for (i = 0; format[i]; i++)
     {
@@ -209,15 +209,15 @@ DestroyVariableTable(LWGHashTable* table)
     lwg_hash_table_destroy(table);
 }
 
-static CENTERROR
+static DWORD
 BuildVariableTable(unsigned int size, va_list ap, LWGHashTable** table)
 {   
     unsigned int i;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     *table = lwg_hash_table_new(lwg_str_hash, lwg_str_equal);
 
     if (!*table)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_OUT_OF_MEMORY);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_OUTOFMEMORY);
 
     for (i = 0; i < size; i++)
     {
@@ -285,10 +285,10 @@ NeedsEscape(char c, BOOLEAN inDouble)
     }
 }
 
-static CENTERROR
+static DWORD
 AppendStringEscaped(StringBuffer* buffer, const char* str, int length, BOOLEAN inDouble)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     unsigned int i;
 
     if (inDouble)
@@ -336,17 +336,17 @@ FreePipe(Pipe* pipe)
     CTFreeMemory(pipe);
 }
 
-static CENTERROR
+static DWORD
 AppendVariable(Command* result, struct CTShellVar* var, BOOLEAN inDouble)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     char* str = NULL;
     char const * const * ptr = NULL;
     Pipe* ppipe = NULL;
     int fd;
     
     if (!var)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_SHELL_VARIABLE_UNKNOWN);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_INVALID_LABEL);
 
     switch (var->type)
     {
@@ -373,7 +373,7 @@ AppendVariable(Command* result, struct CTShellVar* var, BOOLEAN inDouble)
 
         ppipe->variable = var;
         if (pipe(ppipe->fds))
-            BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+            BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
         BAIL_ON_CENTERIS_ERROR(ceError = CTStringBufferConstruct(&ppipe->buffer));
 
         fd = result->pipes.size - 1 + 3;
@@ -395,10 +395,10 @@ error:
     return ceError;
 }
 
-static CENTERROR
+static DWORD
 CommandConstruct(Command* command)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     memset(command, 0, sizeof(Command));
 
     BAIL_ON_CENTERIS_ERROR(ceError = CTStringBufferConstruct(&command->buffer));
@@ -437,10 +437,10 @@ CommandDestroy(Command* command)
     }
 }
 
-static CENTERROR
+static DWORD
 ConstructShellCommand(const char* format, Command *result)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     unsigned int i, length;
     char* variable = NULL;
@@ -506,16 +506,16 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 ExecuteShellCommand(char * const envp[], Command* command)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     pid_t pid, wpid;
 
     pid = fork();
     if (pid < 0)
     {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         goto error;
     }
     else if (pid == 0)
@@ -569,7 +569,7 @@ ExecuteShellCommand(char * const envp[], Command* command)
                     while (close(pipes[i]->fds[1]))
                     {
                         if (errno != EAGAIN)
-                            BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+                            BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
                     }
                     pipes[i]->fds[1] = -1;
                 }
@@ -590,7 +590,7 @@ ExecuteShellCommand(char * const envp[], Command* command)
             ready = select(maxfd+1, &readfds, NULL, &exceptfds, NULL);
 
             if (ready < 0 && errno != EINTR)
-                BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+                BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
 
             if (ready > 0)
             {
@@ -604,7 +604,7 @@ ExecuteShellCommand(char * const envp[], Command* command)
                         while ((amount = read(pipes[i]->fds[0], buffer, sizeof(buffer)-1)) < 0)
                         {
                             if (errno != EAGAIN)
-                                BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+                                BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
                         }
 
                         if (!amount)
@@ -612,7 +612,7 @@ ExecuteShellCommand(char * const envp[], Command* command)
                             while (close(pipes[i]->fds[0]))
                             {
                                 if (errno != EAGAIN)
-                                    BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+                                    BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
                             }
                             pipes[i]->fds[0] = -1;
                             *(pipes[i]->variable->value.out) = CTStringBufferFreeze(&pipes[i]->buffer);
@@ -634,19 +634,19 @@ ExecuteShellCommand(char * const envp[], Command* command)
 	    wpid = waitpid(pid, &status, 0);
 	} while (wpid != pid && errno == EINTR);
 	if (wpid != pid)
-	    BAIL_ON_CENTERIS_ERROR(ceError = CTMapSystemError(errno));
+	    BAIL_ON_CENTERIS_ERROR(ceError = LwMapErrnoToLwError(errno));
 	else if (status)
-	    BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_COMMAND_FAILED);
+	    BAIL_ON_CENTERIS_ERROR(ceError = ERROR_BAD_COMMAND);
     }
 
 error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTShellEx(char * const envp[], const char* format, ...)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     unsigned int numvars = 0;
     va_list ap;
     Command command;
@@ -667,10 +667,10 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTShell(const char* format, ...)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     unsigned int numvars = 0;
     va_list ap;
     Command command;

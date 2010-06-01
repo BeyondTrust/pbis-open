@@ -32,16 +32,16 @@
 
 static PCSTR methodsPath = "/usr/lib/security/methods.cfg";
 
-CENTERROR
+DWORD
 DJHasMethodsCfg(BOOLEAN *exists)
 {
     return CTCheckFileExists(methodsPath, exists);
 }
 
-CENTERROR
+DWORD
 DJIsMethodsCfgConfigured(BOOLEAN *configured)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR pszRegExp32 = "^[[:space:]]*program[[:space:]]*=[[:space:]]*\\/usr\\/lib\\/security\\/LSASS[[:space:]]*$";
     PCSTR pszRegExp64 = "^[[:space:]]*program_64[[:space:]]*=[[:space:]]*\\/usr\\/lib\\/security\\/LSASS_64[[:space:]]*$";
     BOOLEAN bPatternExists32 = FALSE;
@@ -51,7 +51,7 @@ DJIsMethodsCfgConfigured(BOOLEAN *configured)
     *configured = FALSE;
 
     ceError = CTCheckFileExists(methodsPath, &bFileExists);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if (!bFileExists)
     {
@@ -60,10 +60,10 @@ DJIsMethodsCfgConfigured(BOOLEAN *configured)
     }
 
     ceError = CTCheckFileHoldsPattern(methodsPath, pszRegExp32, &bPatternExists32);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     ceError = CTCheckFileHoldsPattern(methodsPath, pszRegExp64, &bPatternExists64);
-    GOTO_CLEANUP_ON_CENTERROR(ceError);
+    GOTO_CLEANUP_ON_DWORD(ceError);
 
     if(bPatternExists32 && bPatternExists64)
         *configured = TRUE;
@@ -72,11 +72,11 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJUnconfigMethodsConfigFile()
 {
     BOOLEAN exists;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR exprRemoveBlankLine = "/^$/ {\nN\n/\\nLSASS.*/ D\n}";
 
     ceError = DJHasMethodsCfg(&exists);
@@ -100,10 +100,10 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJFixMethodsConfigFile()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszTmpPath = NULL;
     PSTR pszFinalPath = NULL;
     BOOLEAN bRemoveFile = FALSE;
@@ -127,7 +127,7 @@ DJFixMethodsConfigFile()
     bRemoveFile = TRUE;
 
     if ((fp = fopen(pszTmpPath, "a")) == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 

@@ -84,15 +84,15 @@
 #include <sys/user.h>
 #endif
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
-CENTERROR
+DWORD
 CTMatchProgramToPID(
     PCSTR pszProgramName,
     pid_t    pid
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     CHAR szBuf[PATH_MAX+1];
     FILE* pFile = NULL;
 
@@ -106,12 +106,12 @@ CTMatchProgramToPID(
 
     pFile = popen(szBuf, "r");
     if (pFile == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     /* Assume that we won't find the process we are looking for */
-    ceError = CENTERROR_NO_SUCH_PROCESS;
+    ceError = ERROR_PROC_NOT_FOUND;
 
     while (TRUE) {
 
@@ -119,7 +119,7 @@ CTMatchProgramToPID(
             if (feof(pFile)) {
                 break;
             } else {
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
         }
@@ -127,7 +127,7 @@ CTMatchProgramToPID(
         CTStripWhitespace(szBuf);
         if (!IsNullOrEmptyString(szBuf)) {
             /* Well what do you know, it was found! */
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
             break;
         }
 
@@ -141,7 +141,7 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 CTIsProgramRunning(
 	PCSTR pszPidFile,
 	PCSTR pszProgramName,
@@ -149,7 +149,7 @@ CTIsProgramRunning(
     PBOOLEAN pbRunning
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     pid_t pid = 0;
     int fd = -1;
     int result;
@@ -168,13 +168,13 @@ CTIsProgramRunning(
 
        fd = open(pszPidFile, O_RDONLY, 0644);
        if (fd < 0) {
-          ceError = CTMapSystemError(errno);
+          ceError = LwMapErrnoToLwError(errno);
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
 
        result = read(fd, contents, sizeof(contents)-1);
        if (result < 0) {
-          ceError = CTMapSystemError(errno);
+          ceError = LwMapErrnoToLwError(errno);
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
        else if (result > 0) {
@@ -183,7 +183,7 @@ CTIsProgramRunning(
        }
 
        if (result <= 0) {
-          ceError = CENTERROR_NO_SUCH_PROCESS;
+          ceError = ERROR_PROC_NOT_FOUND;
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
 
@@ -205,12 +205,12 @@ CTIsProgramRunning(
        }
        else if (errno == ESRCH) {
 
-          ceError = CENTERROR_NO_SUCH_PROCESS;
+          ceError = ERROR_PROC_NOT_FOUND;
           BAIL_ON_CENTERIS_ERROR(ceError);
 
        } else {
 
-          ceError = CTMapSystemError(errno);
+          ceError = LwMapErrnoToLwError(errno);
           BAIL_ON_CENTERIS_ERROR(ceError);
        }
 
@@ -222,10 +222,10 @@ error:
         close(fd);
     }
 
-    return (ceError == CENTERROR_NO_SUCH_PROCESS ? CENTERROR_SUCCESS : ceError);
+    return (ceError == ERROR_PROC_NOT_FOUND ? ERROR_SUCCESS : ceError);
 }
 
-CENTERROR
+DWORD
 CTSendSignal(
 	pid_t pid,
 	int sig 
@@ -235,13 +235,13 @@ CTSendSignal(
 	ret = kill(pid, sig);
 	
 	if (ret < 0) {
-		return CTMapSystemError(errno);
+		return LwMapErrnoToLwError(errno);
 	}
 	
-	return CENTERROR_SUCCESS;
+	return ERROR_SUCCESS;
 }
 
-CENTERROR
+DWORD
 CTGetPidOf(
     PCSTR programName,
     uid_t owner,
@@ -252,7 +252,7 @@ CTGetPidOf(
     return CTGetPidOfCmdLine(programName, NULL, NULL, owner, pid, count);
 }
 
-CENTERROR
+DWORD
 CTGetPidOfCmdLine(
     PCSTR programName,
     PCSTR programFilename,
@@ -262,7 +262,7 @@ CTGetPidOfCmdLine(
     size_t *count
     )
 {
-    CENTERROR ceError = CENTERROR_NOT_IMPLEMENTED;
+    DWORD ceError = ERROR_NOT_SUPPORTED;
     size_t fillCount = 0;
     size_t foundCount = 0;
     struct stat findStat;
@@ -313,7 +313,7 @@ CTGetPidOfCmdLine(
         {
             if(errno == EINTR)
                 continue;
-            GCE(ceError = CTMapSystemError(errno));
+            GCE(ceError = LwMapErrnoToLwError(errno));
         }
     }
     
@@ -322,13 +322,13 @@ CTGetPidOfCmdLine(
     inBuffer = pstat_getproc(&mystatus, sizeof(mystatus), 0,
             getpid());
     if(inBuffer != 1)
-        GCE(ceError = CTMapSystemError(errno));
+        GCE(ceError = LwMapErrnoToLwError(errno));
 
     //Now look at all processes
     inBuffer = pstat_getproc(status, sizeof(status[0]),
             sizeof(status)/sizeof(status[0]), 0);
     if(inBuffer < 0)
-        GCE(ceError = CTMapSystemError(errno));
+        GCE(ceError = LwMapErrnoToLwError(errno));
     while(inBuffer > 0)
     {
         for(i = 0; i < inBuffer; i++)
@@ -371,14 +371,14 @@ CTGetPidOfCmdLine(
                 sizeof(status)/sizeof(status[0]),
                 status[inBuffer - 1].pst_idx + 1);
         if(inBuffer < 0)
-            GCE(ceError = CTMapSystemError(errno));
+            GCE(ceError = LwMapErrnoToLwError(errno));
     }
-    ceError = CENTERROR_SUCCESS;
+    ceError = ERROR_SUCCESS;
 #endif
 
 #ifdef HAVE_STRUCT_PSINFO
     if ((dir = opendir("/proc")) == NULL) {
-        GCE(ceError = CTMapSystemError(errno));
+        GCE(ceError = LwMapErrnoToLwError(errno));
     }
 
     while(1)
@@ -388,7 +388,7 @@ CTGetPidOfCmdLine(
         if(dirEntry == NULL)
         {
             if(errno != 0)
-                GCE(ceError = CTMapSystemError(errno));
+                GCE(ceError = LwMapErrnoToLwError(errno));
             else
             {
                 //No error here. We simply read the last entry
@@ -413,7 +413,7 @@ CTGetPidOfCmdLine(
         GCE(ceError = CTOpenFile(filePath, "r", &infoFile));
         if(fread(&infoStruct, sizeof(infoStruct), 1, infoFile) != 1)
         {
-            GCE(ceError = CTMapSystemError(errno));
+            GCE(ceError = LwMapErrnoToLwError(errno));
         }
 
         if (owner != (uid_t)-1 && owner != infoStruct.pr_euid)
@@ -444,7 +444,7 @@ CTGetPidOfCmdLine(
                     //This process wasn't executed from a file?
                     goto not_match;
                 }
-                GCE(ceError = CTMapSystemError(errno));
+                GCE(ceError = LwMapErrnoToLwError(errno));
             }
             if(findStat.st_ino != compareStat.st_ino)
                 continue;
@@ -466,11 +466,11 @@ not_match:
 #if defined(HAVE_KVM_GETPROCS) && HAVE_DECL_KERN_PROC_PATHNAME
     kd = kvm_open(NULL, "/dev/null", NULL, O_RDONLY, NULL);
     if (kd == NULL)
-        GCE(ceError = CENTERROR_ACCESS_DENIED);
+        GCE(ceError = DWORD_ACCESS_DENIED);
 
     procs = kvm_getprocs(kd, KERN_PROC_PROC, 0, &unfilteredCount);
     if (procs == NULL)
-        GCE(ceError = CENTERROR_ACCESS_DENIED);
+        GCE(ceError = DWORD_ACCESS_DENIED);
 
     pos = procs;
     for(i = 0; i < unfilteredCount; i++,
@@ -525,7 +525,7 @@ not_match:
 		       the program started), move on */
 		    if (errno == ENOENT)
 			continue;
-                    GCE(ceError = CTMapSystemError(errno));
+                    GCE(ceError = LwMapErrnoToLwError(errno));
                 }
             }
             if(strcmp(programFilename, pathBuffer))
@@ -537,13 +537,13 @@ not_match:
             pid[foundCount] = pos->ki_pid;
         foundCount++;
     }
-    ceError = CENTERROR_SUCCESS;
+    ceError = ERROR_SUCCESS;
 #endif
 
     if(count)
         *count = foundCount;
-    else if(CENTERROR_IS_OK(ceError) && foundCount == 0)
-        ceError = CENTERROR_NO_SUCH_PROCESS;
+    else if(!ceError && foundCount == 0)
+        ceError = ERROR_PROC_NOT_FOUND;
 
 cleanup:
 #ifdef HAVE_STRUCT_PSINFO

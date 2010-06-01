@@ -38,7 +38,7 @@
 #define NSSWITCH_CONF_PATH "/etc/nsswitch.conf"
 #define NSSWITCH_LWIDEFAULTS "/etc/nsswitch.lwi_defaults"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 typedef struct
 {
@@ -93,9 +93,9 @@ static void FreeNsswitchConfContents(NsswitchConf *conf)
 }
 
 /* Get the printed form of a line from the parsed form by concatenating all of the strings together */
-static CENTERROR GetPrintedLine(DynamicArray *dest, NsswitchConf *conf, int line)
+static DWORD GetPrintedLine(DynamicArray *dest, NsswitchConf *conf, int line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     size_t len = 0;
     char *pos;
     int i;
@@ -132,9 +132,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR AddFormattedLine(NsswitchConf *conf, const char *filename, const char *linestr, const char **endptr)
+static DWORD AddFormattedLine(NsswitchConf *conf, const char *filename, const char *linestr, const char **endptr)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchEntry lineObj;
     const char *pos = linestr;
     const char *token_start = NULL;
@@ -179,9 +179,9 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR ReadNsswitchFile(NsswitchConf *conf, const char *rootPrefix, const char *filename)
+static DWORD ReadNsswitchFile(NsswitchConf *conf, const char *rootPrefix, const char *filename)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     FILE *file = NULL;
     PSTR buffer = NULL;
     char *fullPath = NULL;
@@ -198,7 +198,7 @@ static CENTERROR ReadNsswitchFile(NsswitchConf *conf, const char *rootPrefix, co
     if(!exists)
     {
         DJ_LOG_INFO("File %s does not exist", fullPath);
-        ceError = CENTERROR_INVALID_FILENAME;
+        ceError = ERROR_FILE_NOT_FOUND;
         goto cleanup;
     }
 
@@ -222,14 +222,14 @@ cleanup:
     if(file != NULL)
         CTCloseFile(file);
     CT_SAFE_FREE_STRING(fullPath);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         FreeNsswitchConfContents(conf);
     return ceError;
 }
 
-static CENTERROR WriteNsswitchConfiguration(const char *rootPrefix, NsswitchConf *conf)
+static DWORD WriteNsswitchConfiguration(const char *rootPrefix, NsswitchConf *conf)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DynamicArray printedLine;
     int i;
     char *tempName = NULL;
@@ -248,7 +248,7 @@ static CENTERROR WriteNsswitchConfiguration(const char *rootPrefix, NsswitchConf
     DJ_LOG_INFO("Writing nsswitch configuration for %s", finalName);
 
     ceError = CTOpenFile(tempName, "w", &file);
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
     {
         DJ_LOG_ERROR("Unable to open '%s' for writing", tempName);
         GCE(ceError);
@@ -294,10 +294,10 @@ static int FindEntry(const NsswitchConf *conf, int startLine, const char *name)
     return -1;
 }
 
-static CENTERROR AddEntry(NsswitchConf *conf, const DistroInfo *distro,
+static DWORD AddEntry(NsswitchConf *conf, const DistroInfo *distro,
         int *addedIndex, const char *name)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int line = -1;
     NsswitchEntry lineObj;
     const NsswitchEntry *copy;
@@ -377,10 +377,10 @@ static int FindModuleOnLine(const NsswitchConf *conf, int line, const char *name
     return -1;
 }
 
-static CENTERROR InsertModule(NsswitchConf *conf, const DistroInfo *distro,
+static DWORD InsertModule(NsswitchConf *conf, const DistroInfo *distro,
         int line, int insertIndex, const char *name)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchEntry *lineObj = (NsswitchEntry *)GetEntry(conf, line);
     CTParseToken *beforeModule = NULL, *afterModule = NULL;
     CTParseToken addModule;
@@ -443,10 +443,10 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR RemoveModule(NsswitchConf *conf, 
+static DWORD RemoveModule(NsswitchConf *conf, 
         int line, int moduleIndex)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchEntry *lineObj = (NsswitchEntry *)GetEntry(conf, line);
     CTParseToken *beforeModule = NULL, *afterModule = NULL;
     CTParseToken *removeModule;
@@ -475,14 +475,14 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR RemoveLine(NsswitchConf *conf, int line)
+static DWORD RemoveLine(NsswitchConf *conf, int line)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchEntry *lineObj = (NsswitchEntry *)GetEntry(conf, line);
 
     if(lineObj == NULL)
     {
-        GCE(ceError = CENTERROR_INVALID_PARAMETER);
+        GCE(ceError = ERROR_INVALID_PARAMETER);
     }
 
     FreeNsswitchEntryContents(lineObj);
@@ -494,19 +494,19 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 UnConfigureNameServiceSwitch()
 {
     return DJConfigureNameServiceSwitch(NULL, FALSE);
 }
 
-CENTERROR
+DWORD
 ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
         BOOLEAN allowFileCreate)
 {
     PSTR copyDestPath = NULL;
     PSTR defaultFilePath = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN bFileExists = FALSE;
     memset(conf, 0, sizeof(*conf));
     
@@ -515,10 +515,10 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
     {
         bFileExists = TRUE;
         ceError = ReadNsswitchFile(conf, testPrefix, "/etc/nsswitch.conf");
-        if(ceError == CENTERROR_INVALID_FILENAME)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
             bFileExists = FALSE;
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         GCE(ceError);
     }
@@ -527,10 +527,10 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
     {
         bFileExists = TRUE;
         ceError = ReadNsswitchFile(conf, testPrefix, "/etc/netsvc.conf");
-        if(ceError == CENTERROR_INVALID_FILENAME)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
             bFileExists = FALSE;
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
         }
         GCE(ceError);
     }
@@ -570,7 +570,7 @@ ReadNsswitchConf(NsswitchConf *conf, const char *testPrefix,
 
     if(!bFileExists)
     {
-        GCE(ceError = CENTERROR_INVALID_FILENAME);
+        GCE(ceError = ERROR_FILE_NOT_FOUND);
     }
 
 cleanup:
@@ -580,16 +580,16 @@ cleanup:
     return ceError;
 }
 
-static CENTERROR UsingLsass(BOOLEAN *using)
+static DWORD UsingLsass(BOOLEAN *using)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     ceError = CTFindFileInPath("lsassd", BINDIR ":" SBINDIR, NULL);
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
         *using = FALSE;
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
-    else if(CENTERROR_IS_OK(ceError))
+    else if(!ceError)
         *using = TRUE;
     return ceError;
 }
@@ -735,10 +735,10 @@ cleanup:
     return result;
 }
 
-CENTERROR
+DWORD
 UpdateNsswitchConf(NsswitchConf *conf, BOOLEAN enable)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DistroInfo distro;
     int line;
     int lwiIndex;
@@ -837,19 +837,19 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJConfigureNameServiceSwitch(const char *testPrefix, BOOLEAN enable)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchConf conf;
 
     if(testPrefix == NULL)
         testPrefix = "";
 
     ceError = ReadNsswitchConf(&conf, testPrefix, TRUE);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         DJ_LOG_WARNING("Warning: Could not find nsswitch file");
         goto cleanup;
     }
@@ -902,10 +902,10 @@ const char *GetNameOfHostsByDns(const NsswitchConf *conf, const DistroInfo *dist
 
 //Does the platform-specific equivalent of this in nsswitch.conf:
 // hosts: files dns
-CENTERROR
+DWORD
 DJConfigureHostsEntry(const char *testPrefix)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     NsswitchConf conf;
     DistroInfo distro;
     int line;
@@ -959,10 +959,10 @@ cleanup:
     return ceError;
 }
 
-CENTERROR
+DWORD
 ConfigureNameServiceSwitch()
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     DistroInfo distro;
     GCE(ceError = DJGetDistroInfo(NULL, &distro));
     GCE(ceError = DJConfigureNameServiceSwitch(NULL, TRUE));
@@ -984,17 +984,17 @@ cleanup:
 
 #define APPARMOR_NSSWITCH "/etc/apparmor.d/abstractions/nameservice"
 
-static CENTERROR
+static DWORD
 HasApparmor(BOOLEAN *hasApparmor)
 {
     return CTCheckFileOrLinkExists(APPARMOR_NSSWITCH,
                 hasApparmor);
 }
 
-static CENTERROR
+static DWORD
 IsApparmorConfigured(BOOLEAN *configured)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN hasApparmor;
 
     *configured = FALSE;
@@ -1022,7 +1022,7 @@ cleanup:
 
 static void ConfigureApparmor(BOOLEAN enable, LWException **exc)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     BOOLEAN hasApparmor;
     BOOLEAN configured;
     BOOLEAN usingMr;
@@ -1085,16 +1085,16 @@ LOCALSTATEDIR "/tmp/.lsaclient_*              rw,\n";
 
 
     ceError = CTFindFileInPath("rcapparmor", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", &restartPath);
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
         ceError = CTFindFileInPath("apparmor", "/etc/init.d/apparmor", &restartPath);
     }
     
-    if(ceError == CENTERROR_FILE_NOT_FOUND)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
     }
-    else if(CENTERROR_IS_OK(ceError))
+    else if(!ceError)
     {
         LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&restartCommand,
                     "%s restart", restartPath));
@@ -1114,10 +1114,10 @@ cleanup:
     CT_SAFE_FREE_STRING(finalName);
 }
 
-static CENTERROR UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
+static DWORD UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
 {
     BOOLEAN hasSeLinux;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR output = NULL;
     DistroInfo distro;
 
@@ -1133,10 +1133,10 @@ static CENTERROR UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
         goto cleanup;
 
     ceError = CTRunCommand("/usr/sbin/selinuxenabled >/dev/null 2>&1");
-    if(ceError == CENTERROR_COMMAND_FAILED)
+    if(ceError == ERROR_BAD_COMMAND)
     {
         //selinux is not enabled
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         goto cleanup;
     }
     GCE(ceError);
@@ -1175,7 +1175,7 @@ static CENTERROR UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
     *hasBadSeLinux = TRUE;
 
 cleanup:
-    if(!CENTERROR_IS_OK(ceError))
+    if(ceError)
         *hasBadSeLinux = TRUE;
 
     CT_SAFE_FREE_STRING(output);
@@ -1191,16 +1191,16 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
     BOOLEAN exists;
     BOOLEAN hasBadSeLinux;
     NsswitchConf conf;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     memset(&conf, 0, sizeof(conf));
 
     if (options->joiningDomain)
     {
         ceError = ReadNsswitchConf(&conf, NULL, FALSE);
-        if(ceError == CENTERROR_INVALID_FILENAME)
+        if(ceError == ERROR_FILE_NOT_FOUND)
         {
-            ceError = CENTERROR_SUCCESS;
+            ceError = ERROR_SUCCESS;
             DJ_LOG_WARNING("Warning: Could not find nsswitch file");
             goto cleanup;
         }
@@ -1262,7 +1262,7 @@ static void RestartDtloginIfRunning(JoinProcessOptions *options, LWException **e
     memset(&distro, 0, sizeof(distro));
 
     DJGetDaemonStatus("dtlogin", &doRestart, &inner);
-    if(!LW_IS_OK(inner) && inner->code == CENTERROR_DOMAINJOIN_MISSING_DAEMON)
+    if(!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
     {
         LW_HANDLE(&inner);
         goto cleanup;
@@ -1338,7 +1338,7 @@ static void DoNsswitch(JoinProcessOptions *options, LWException **exc)
 {
     LWException *restartException = NULL;
     NsswitchConf conf;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     memset(&conf, 0, sizeof(conf));
 
@@ -1350,9 +1350,9 @@ static void DoNsswitch(JoinProcessOptions *options, LWException **exc)
         LW_CLEANUP_CTERR(exc, DJUnconfigMethodsConfigFile());
 
     ceError = ReadNsswitchConf(&conf, "", TRUE);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         if (options->warningCallback != NULL)
         {
             options->warningCallback(options, "Could not find file", "Could not find nsswitch file");
@@ -1375,7 +1375,7 @@ static void DoNsswitch(JoinProcessOptions *options, LWException **exc)
 
     CTCaptureOutputToExc( SCRIPTDIR "/ConfigureLogin nsswitch_restart",
             &restartException);
-    if(restartException != NULL && restartException->code == CENTERROR_COMMAND_FAILED)
+    if(restartException != NULL && restartException->code == ERROR_BAD_COMMAND)
     {
         if (options->warningCallback)
         {
@@ -1410,7 +1410,7 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
     QueryResult compatResult = FullyConfigured;
     PSTR compatDescription = NULL;
     NsswitchConf conf;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     memset(&conf, 0, sizeof(conf));
 
@@ -1423,9 +1423,9 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
     }
 
     ceError = ReadNsswitchConf(&conf, "", TRUE);
-    if(ceError == CENTERROR_INVALID_FILENAME)
+    if(ceError == ERROR_FILE_NOT_FOUND)
     {
-        ceError = CENTERROR_SUCCESS;
+        ceError = ERROR_SUCCESS;
         if (options->warningCallback != NULL)
         {
             options->warningCallback(options, "Could not find file", "Could not find nsswitch file");

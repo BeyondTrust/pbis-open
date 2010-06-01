@@ -33,16 +33,16 @@
 #include "djpamconf.h"
 #include "djaixparser.h"
 
-#define GCE(x) GOTO_CLEANUP_ON_CENTERROR((x))
+#define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
 static PCSTR LOGIN_CONFIG_PATH = "/etc/security/login.cfg";
 
 static
-CENTERROR
+DWORD
 GetAuthType(const DynamicArray *lines, PSTR *result)
 {
-    CENTERROR ceError = DJGetOptionValue(lines, "usw", "auth_type", result);
-    if(ceError == CENTERROR_CFG_VALUE_NOT_FOUND)
+    DWORD ceError = DJGetOptionValue(lines, "usw", "auth_type", result);
+    if(ceError == ERROR_NOT_FOUND)
     {
         //return the default
         ceError = CTStrdup("STD_AUTH", result);
@@ -51,18 +51,18 @@ GetAuthType(const DynamicArray *lines, PSTR *result)
 }
 
 static
-CENTERROR
+DWORD
 SetAuthType(DynamicArray *lines, PCSTR value)
 {
     return DJSetOptionValue(lines, "usw", "auth_type", value);
 }
 
-CENTERROR
+DWORD
 DJFixLoginConfigFile(
     PCSTR pszPath
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PCSTR pszFilePath = NULL;
     PSTR pszTmpPath = NULL;
     PSTR pszFinalPath = NULL;

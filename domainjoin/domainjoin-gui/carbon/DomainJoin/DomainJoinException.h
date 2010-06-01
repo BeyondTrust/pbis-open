@@ -71,13 +71,13 @@ class DomainJoinException : public std::exception
                 
     public:
     
-        static const int CENTERROR_DOMAINJOIN_NON_ROOT_USER;
-        static const int CENTERROR_DOMAINJOIN_INVALID_HOSTNAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_DOMAIN_NAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_USERID;
-        static const int CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME;
-        static const int CENTERROR_DOMAINJOIN_INVALID_OU;
-        static const int CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS;
+        static const int DWORD_DOMAINJOIN_NON_ROOT_USER;
+        static const int ERROR_INVALID_COMPUTERNAME;
+        static const int ERROR_INVALID_DOMAINNAME;
+        static const int ERROR_BAD_FORMAT;
+        static const int LW_ERROR_FAILED_TO_LOOKUP_DC;
+        static const int LW_ERROR_INVALID_OU;
+        static const int LW_ERROR_FAILED_ADMIN_PRIVS;
 
     private:
     
@@ -92,7 +92,7 @@ class NonRootUserException : public DomainJoinException
     public:
         NonRootUserException()
         : DomainJoinException(
-              DomainJoinException::CENTERROR_DOMAINJOIN_NON_ROOT_USER
+              DomainJoinException::DWORD_DOMAINJOIN_NON_ROOT_USER
               )
         {
         }
@@ -103,7 +103,7 @@ class InvalidHostnameException : public DomainJoinException
     public:
            InvalidHostnameException()
                : DomainJoinException(
-                     DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_HOSTNAME
+                     DomainJoinException::ERROR_INVALID_COMPUTERNAME
                  )
                {
                }
@@ -114,7 +114,7 @@ class InvalidDomainnameException : public DomainJoinException
     public:
            InvalidDomainnameException()
                : DomainJoinException(
-                    DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_DOMAIN_NAME)
+                    DomainJoinException::ERROR_INVALID_DOMAINNAME)
            {
            }
 };
@@ -124,7 +124,7 @@ class InvalidUsernameException : public DomainJoinException
     public:
            InvalidUsernameException()
                : DomainJoinException(
-                     DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_USERID
+                     DomainJoinException::ERROR_BAD_FORMAT
                      )
                {
                }
@@ -135,7 +135,7 @@ class InvalidOUPathException : public DomainJoinException
     public:
            InvalidOUPathException()
                : DomainJoinException(
-                     DomainJoinException::CENTERROR_DOMAINJOIN_INVALID_OU
+                     DomainJoinException::LW_ERROR_INVALID_OU
                      )
                {
                }
@@ -146,12 +146,12 @@ class FailedAdminPrivilegeException : public DomainJoinException
     public:
           FailedAdminPrivilegeException()
               : DomainJoinException(
-                     DomainJoinException::CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS)
+                     DomainJoinException::LW_ERROR_FAILED_ADMIN_PRIVS)
             {
             }
            FailedAdminPrivilegeException(const std::string& errMsg)
                : DomainJoinException(
-					 DomainJoinException::CENTERROR_DOMAINJOIN_FAILED_ADMIN_PRIVS,
+					 DomainJoinException::LW_ERROR_FAILED_ADMIN_PRIVS,
                      errMsg
                      )
             {
@@ -162,7 +162,7 @@ class UnresolvedDomainNameException : public DomainJoinException
 {
     public:
            UnresolvedDomainNameException()
-               : DomainJoinException(DomainJoinException::CENTERROR_DOMAINJOIN_UNRESOLVED_DOMAIN_NAME)
+               : DomainJoinException(DomainJoinException::LW_ERROR_FAILED_TO_LOOKUP_DC)
                {
                }
 };

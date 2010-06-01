@@ -75,7 +75,7 @@ sys_vsyslog(
 #if defined(HAVE_VSYSLOG)
     vsyslog(priority, format, ap);
 #else
-    CENTERROR ceError;
+    DWORD ceError;
     PSTR buffer = NULL;
 
     ceError = CTAllocateStringPrintfV(&buffer, format, ap);

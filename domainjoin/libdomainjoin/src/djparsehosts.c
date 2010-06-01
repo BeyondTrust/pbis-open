@@ -33,23 +33,23 @@
 
 #if defined(__LWI_MACOSX__)
 static
-CENTERROR
+DWORD
 RunSilentWithStatus(
     PCSTR Command,
     PSTR* Args,
     PLONG Status
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     LONG status = 0;
     PPROCINFO procInfo = NULL;
 
     ceError = DJSpawnProcessSilent(Command, Args, &procInfo);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
 
     ceError = DJGetProcessStatus(procInfo, &status);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
 
 cleanup:
     if (procInfo)
@@ -73,7 +73,7 @@ void
 KickLookupd(
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     int EE = 0;
     char stopCommand[] = "/usr/bin/killall";
     PSTR stopArgs[3] = { stopCommand, "lookupd" };
@@ -84,7 +84,7 @@ KickLookupd(
     LONG status = 0;
 
     ceError = RunSilentWithStatus(stopCommand, stopArgs, &status);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
     if (status != 0)
     {
         DJ_LOG_ERROR("%s failed [Status code: %d]", stopCommand, status);
@@ -95,7 +95,7 @@ KickLookupd(
     // demand.
 #if 0
     ceError = RunSilentWithStatus(startCommand, startArgs, &status);
-    GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE);
+    GOTO_CLEANUP_ON_DWORD_EE(ceError, EE);
     if (status != 0)
     {
         DJ_LOG_ERROR("%s failed [Status code: %d]", startCommand, status);
@@ -210,13 +210,13 @@ DJReverseAliasList(
     return pP;
 }
 
-CENTERROR
+DWORD
 DJParseHostsFile(
     const char *filename,
     PHOSTSFILELINE* ppHostsFileLineList
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTSFILELINE pLineHead = NULL;
     PHOSTSFILELINE pHostsLine = NULL;
     PHOSTFILEALIAS pAlias = NULL;
@@ -229,11 +229,11 @@ DJParseHostsFile(
 
     BAIL_ON_CENTERIS_ERROR(ceError = CTCheckFileOrLinkExists(filename, &exists));
     if(!exists)
-        BAIL_ON_CENTERIS_ERROR(ceError = CENTERROR_INVALID_FILENAME);
+        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_FILE_NOT_FOUND);
 
     fp = fopen(filename, "r");
     if (fp == NULL) {
-        ceError = CTMapSystemError(errno);
+        ceError = LwMapErrnoToLwError(errno);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -243,7 +243,7 @@ DJParseHostsFile(
 
             if (!feof(fp)) {
 
-                ceError = CTMapSystemError(errno);
+                ceError = LwMapErrnoToLwError(errno);
                 BAIL_ON_CENTERIS_ERROR(ceError);
 
             } else {
@@ -373,7 +373,7 @@ DJEntryHasAlias(
 
 //Adds an alias to the head of the alias list
 static
-CENTERROR
+DWORD
 DJAddAlias(
     PHOSTSFILELINE pLine,
     PCSTR pszName,
@@ -381,7 +381,7 @@ DJAddAlias(
     PBOOLEAN pbAdded
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTFILEALIAS pAlias = NULL;
 
     if (alwaysAdd || !DJEntryHasAlias(pLine->pEntry->pAliasList, pszName)) {
@@ -419,13 +419,13 @@ error:
 #if 0
 // Currently unused
 static
-CENTERROR
+DWORD
 DJGetDnsDomain(
     PSTR pszHostname,
     PSTR* ppszDnsDomain
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszDnsDomain = NULL;
     PSTR pszTmp = strchr(pszHostname, '.');
 
@@ -484,13 +484,13 @@ DJHostsFileWasModified(
 }
 
 static
-CENTERROR
+DWORD
 DJWriteHostsFileIfModified(
     const char *filename,
     PHOSTSFILELINE pHostFileLineList
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTSFILELINE pLine = pHostFileLineList;
     FILE* fp = NULL;
     PHOSTFILEALIAS pAlias = NULL;
@@ -509,7 +509,7 @@ DJWriteHostsFileIfModified(
         DJ_LOG_INFO("Writing out updated %s file", finalName);
         fp = fopen(tempName, "w");
         if (fp == NULL) {
-            ceError = CTMapSystemError(errno);
+            ceError = LwMapErrnoToLwError(errno);
             BAIL_ON_CENTERIS_ERROR(ceError);
         }
 
@@ -588,7 +588,7 @@ PCSTR Disp(PCSTR in)
 }
 
 static
-CENTERROR
+DWORD
 DJUpdateHostEntry(
     PHOSTSFILELINE pLine,
     PCSTR pszShortName,
@@ -597,7 +597,7 @@ DJUpdateHostEntry(
     PCSTR pszRemoveName2
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTFILEALIAS *aliasPos;
 
     //This updates our hostname in a line of the hosts file
@@ -685,7 +685,7 @@ error:
 }
 
 // newFdqnHostname = <shortHostname>.<dnsDomainName>
-CENTERROR
+DWORD
 DJReplaceHostnameInMemory(
     PHOSTSFILELINE pHostsFileLineList,
     PCSTR oldShortHostname,
@@ -694,7 +694,7 @@ DJReplaceHostnameInMemory(
     PCSTR dnsDomainName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PSTR pszDomainName = NULL;
     PSTR pszHostName = NULL;
     PSTR pszCanonicalName = NULL;
@@ -716,12 +716,12 @@ DJReplaceHostnameInMemory(
     //
 
     if (IsNullOrEmptyString(shortHostname)) {
-        ceError = CENTERROR_INVALID_PARAMETER;
+        ceError = ERROR_INVALID_PARAMETER;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
     if (strchr(shortHostname, '.')) {
-        ceError = CENTERROR_DOMAINJOIN_HOSTNAME_CONTAINS_DOT;
+        ceError = ERROR_INVALID_COMPUTERNAME;
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
@@ -834,14 +834,14 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJCopyLine(
         PHOSTSFILELINE pSrc, 
         PHOSTSFILELINE *ppDest)
 {
     PHOSTSFILELINE ret = NULL;
     PHOSTFILEALIAS srcAlias = NULL, *destAlias = NULL;
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
 
     ceError = CTAllocateMemory(sizeof(HOSTSFILELINE),
                                (PVOID*)(PVOID)&ret);
@@ -886,12 +886,12 @@ error:
     return ceError;
 }
 
-CENTERROR
+DWORD
 DJCopyMissingHostsEntry(
         PCSTR destFile, PCSTR srcFile,
         PCSTR entryName1, PCSTR entryName2)
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTSFILELINE pDestList = NULL;
     PHOSTSFILELINE pSrcList = NULL;
     PHOSTSFILELINE pLine = NULL;
@@ -957,7 +957,7 @@ error:
 }
 
 // newFdqnHostname = <shortHostname>.<dnsDomainName>
-CENTERROR
+DWORD
 DJReplaceNameInHostsFile(
     PCSTR filename,
     PSTR  oldShortHostname,
@@ -966,7 +966,7 @@ DJReplaceNameInHostsFile(
     PCSTR dnsDomainName
     )
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
     PHOSTSFILELINE pHostsFileLineList = NULL;
 
     ceError = DJParseHostsFile(filename, &pHostsFileLineList);

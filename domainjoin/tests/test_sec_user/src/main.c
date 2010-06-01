@@ -33,7 +33,7 @@
 int
 main(int argc, char* argv[])
 {
-    CENTERROR ceError = CENTERROR_SUCCESS;
+    DWORD ceError = ERROR_SUCCESS;
  
 #if defined(_AIX)
 
@@ -55,7 +55,7 @@ main(int argc, char* argv[])
 
 error:
 
-    if (CENTERROR_IS_OK(ceError))
+    if (!ceError)
       printf("Success\n");
     else
       printf("Failed\n");

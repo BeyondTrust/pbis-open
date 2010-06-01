@@ -101,15 +101,15 @@ typedef struct __DBLBYTE {
 #define GOTO_CLEANUP_EE(EE) \
     do { (EE) = __LINE__; goto cleanup; } while (0)
 
-#define GOTO_CLEANUP_ON_CENTERROR(ceError) \
+#define GOTO_CLEANUP_ON_DWORD(ceError) \
     do { if (ceError) goto cleanup; } while (0)
 
-#define GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE) \
+#define GOTO_CLEANUP_ON_DWORD_EE(ceError, EE) \
     do { if (ceError) { (EE) = __LINE__; goto cleanup; } } while (0)
 
 /* Deprecated -- please use GOTO_CLEANUP versions */
-#define CLEANUP_ON_CENTERROR(ceError) GOTO_CLEANUP_ON_CENTERROR(ceError)
-#define CLEANUP_ON_CENTERROR_EE(ceError, EE) GOTO_CLEANUP_ON_CENTERROR_EE(ceError, EE)
+#define CLEANUP_ON_DWORD(ceError) GOTO_CLEANUP_ON_DWORD(ceError)
+#define CLEANUP_ON_DWORD_EE(ceError, EE) GOTO_CLEANUP_ON_DWORD_EE(ceError, EE)
 
 #ifndef WIN32
 #define BAIL_ON_CENTERIS_ERROR(__ceError__) \
