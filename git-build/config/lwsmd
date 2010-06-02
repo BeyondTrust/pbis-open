@@ -20,7 +20,7 @@
 
 PROG_DESC="Likewise Service Manager"
 PROG_BIN=PREFIX_DIR/sbin/lwsmd
-PROG_ARGS="--start-as-daemon"
+PROG_ARGS="--start-as-daemon --syslog"
 PIDFILE=/var/run/lwsmd.pid
 SCRIPTNAME="lwsmd"
 
