@@ -1382,7 +1382,6 @@ AD_PreLeaveDomain(
         BAIL_ON_LSA_ERROR(dwError);
         break;
     case LSA_AD_JOINED:
-        AD_TransitionNotJoined(pState);
         break;
     }
 
@@ -1398,9 +1397,7 @@ AD_PostLeaveDomain(
     PLSA_AD_PROVIDER_STATE pState
     )
 {
-    DWORD dwError = 0;
-
-    return dwError;
+    return AD_TransitionNotJoined(pState);
 }
 
 static
