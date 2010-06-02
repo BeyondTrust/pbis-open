@@ -85,3 +85,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\iotest]
 "Path"="@providerdir@/libiotest.sys@MOD_EXT@"
+
+[HKEY_THIS_MACHINE\Software\Likewise\lwiosrvstat]
+"Target"="syslog"
+"Path"="/tmp/lwiosrvstat.log"
