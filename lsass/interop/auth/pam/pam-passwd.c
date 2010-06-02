@@ -153,7 +153,14 @@ cleanup:
 
 error:
 
-    LSA_LOG_PAM_ERROR("pam_sm_chauthtok failed [error code: %d]", dwError);
+    if (dwError ==  LW_ERROR_NO_SUCH_USER)
+    {
+        LSA_LOG_PAM_DEBUG("pam_sm_chauthtok failed since the user could not be found [error code: %d]", dwError);
+    }
+    else
+    {
+        LSA_LOG_PAM_ERROR("pam_sm_chauthtok failed [error code: %d]", dwError);
+    }
 
     goto cleanup;
 }
@@ -285,9 +292,18 @@ error:
 
     *pbCheckOldPassword = TRUE;
 
-    LSA_LOG_PAM_ERROR("LsaPamMustCheckCurrentPassword failed [login:%s][error code: %d]",
-                      LSA_SAFE_LOG_STRING(pszLoginId),
-                      dwError);
+    if (dwError == LW_ERROR_NO_SUCH_USER)
+    {
+        LSA_LOG_PAM_DEBUG("LsaPamMustCheckCurrentPassword failed since the user could not be found [login:%s][error code: %d]",
+                          LSA_SAFE_LOG_STRING(pszLoginId),
+                          dwError);
+    }
+    else
+    {
+        LSA_LOG_PAM_ERROR("LsaPamMustCheckCurrentPassword failed [login:%s][error code: %d]",
+                          LSA_SAFE_LOG_STRING(pszLoginId),
+                          dwError);
+    }
 
     goto cleanup;
 }
@@ -406,9 +422,18 @@ error:
             NULL);
     }
 
-    LSA_LOG_PAM_ERROR("LsaPamUpdatePassword failed [login:%s][error code: %d]",
-                      LSA_SAFE_LOG_STRING(pszLoginId),
-                      dwError);
+    if (dwError == LW_ERROR_NO_SUCH_USER)
+    {
+        LSA_LOG_PAM_DEBUG("LsaPamUpdatePassword failed since the user could not be found [login:%s][error code: %d]",
+                          LSA_SAFE_LOG_STRING(pszLoginId),
+                          dwError);
+    }
+    else
+    {
+        LSA_LOG_PAM_ERROR("LsaPamUpdatePassword failed [login:%s][error code: %d]",
+                          LSA_SAFE_LOG_STRING(pszLoginId),
+                          dwError);
+    }
 
     goto cleanup;
 }
