@@ -562,6 +562,7 @@ RtlAccessCheck(
 {
     NTSTATUS status = STATUS_ACCESS_DENIED;
     ACCESS_MASK grantedAccess = PreviouslyGrantedAccess;
+    ACCESS_MASK deniedAccess = 0;
     ACCESS_MASK desiredAccess = DesiredAccess;
     BOOLEAN wantMaxAllowed = FALSE;
     USHORT aclSizeUsed = 0;
@@ -734,7 +735,7 @@ RtlAccessCheck(
                     {
                         if (wantMaxAllowed)
                         {
-                            SetFlag(grantedAccess, mask);
+                            SetFlag(grantedAccess, mask & ~deniedAccess);
                         }
                         else
                         {
@@ -754,14 +755,24 @@ RtlAccessCheck(
 
                 RtlMapGenericMask(&mask, GenericMapping);
 
-                if (IsSetFlag(desiredAccess, mask))
+                if (wantMaxAllowed || IsSetFlag(desiredAccess, mask))
                 {
                     // SID in token => exit with STATUS_ACCESS_DENIED
                     PSID sid = RtlpGetSidAccessAllowedAce(ace);
+
                     if (RtlIsSidMemberOfToken(AccessToken, sid))
                     {
-                        status = STATUS_ACCESS_DENIED;
-                        GOTO_CLEANUP();
+                        if (wantMaxAllowed)
+                        {
+                            SetFlag(deniedAccess, mask);
+                        }
+                        else
+                        {
+                            status = STATUS_ACCESS_DENIED;
+                            GOTO_CLEANUP();
+                        }
+
+                        ClearFlag(desiredAccess, deniedAccess);
                     }
                 }
                 break;
