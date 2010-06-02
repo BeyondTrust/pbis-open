@@ -1408,6 +1408,31 @@ cmp_gss_type(gss_buffer_t token, gss_OID oid)
    return memcmp(p, oid->elements, oid->length);
 }
 
+struct auth_krb_context {
+  gss_ctx_id_t gss_context;
+};
+
+static int krb_pre_conn(conn_rec *c, void *csd) {
+    struct auth_krb_context *ctxt = apr_pcalloc(c->pool,
+	    sizeof(struct auth_krb_context));
+
+    ctxt->gss_context = GSS_C_NO_CONTEXT;
+
+    ap_set_module_config(c->conn_config, &auth_kerb_module, ctxt);
+
+    return OK;
+
+}
+
+static struct auth_krb_context * get_context(struct conn_rec * connection)
+{
+    struct auth_krb_context *retval = NULL;
+
+    retval = (struct auth_krb_context *)ap_get_module_config(connection->conn_config, &auth_kerb_module);
+
+    return retval;
+}
+
 static int
 authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
 		      const char *auth_line, char **negotiate_ret_value)
@@ -1430,6 +1455,8 @@ authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
   char* tmp = NULL;
   krb5_context kcontext = NULL;
   krb5_error_code code;
+  struct auth_krb_context *ctxt = get_context(r->connection);
+  int free_context = 1;
 
   *negotiate_ret_value = "\0";
 
@@ -1491,7 +1518,7 @@ authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
 	       : "SPNEGO GSS-API");
 
   major_status = accept_sec_token(&minor_status,
-				  &context,
+				  &ctxt->gss_context,
 				  server_creds,
 				  &input_token,
 				  GSS_C_NO_CHANNEL_BINDINGS,
@@ -1502,7 +1529,7 @@ authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
 				  NULL,
 				  &delegated_cred);
   log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-	     "Verification returned code %d", major_status);
+	     "Verification returned code 0x%x", major_status);
 
   if (output_token.length && ( !is_basic_auth_on(conf) || major_status & GSS_S_CONTINUE_NEEDED )) {
      char *token = NULL;
@@ -1529,51 +1556,55 @@ authenticate_user_gss(request_rec *r, kerb_auth_config *conf,
       /* don't offer more Kerberos */
       *negotiate_ret_value = NULL;
 
-  if (GSS_ERROR(major_status)) {
-     if (input_token.length > 7 && memcmp(input_token.value, "NTLMSSP", 7) == 0)
-	log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
-	          "Warning: received token seems to be NTLM, which isn't supported by the Kerberos module. Check your IE configuration.");
-
-     log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-	        "%s", get_gss_error(r->pool, major_status, minor_status,
-		                    "gss_accept_sec_context() failed"));
-     ret = HTTP_UNAUTHORIZED;
-     goto end;
-  }
-
-  major_status = gss_display_name(&minor_status, client_name, &output_token, NULL);
-  gss_release_name(&minor_status, &client_name); 
-  if (GSS_ERROR(major_status)) {
-    log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-	       "%s", get_gss_error(r->pool, major_status, minor_status,
-		                   "gss_display_name() failed"));
-    ret = HTTP_INTERNAL_SERVER_ERROR;
-    goto end;
-  }
+  switch (major_status) {
+  case GSS_S_COMPLETE:
+      major_status = gss_display_name(&minor_status, client_name, &output_token, NULL);
+      gss_release_name(&minor_status, &client_name); 
+      if (GSS_ERROR(major_status)) {
+          log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+	             "%s", get_gss_error(r->pool, major_status, minor_status,
+		     "gss_display_name() failed"));
+          ret = HTTP_INTERNAL_SERVER_ERROR;
+          goto end;
+      }
  
-  code = krb5_init_context(&kcontext);
-  if (code) {
-      log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+      code = krb5_init_context(&kcontext);
+      if (code) {
+          log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
     		 "Cannot initialize Kerberos5 context (%d)", code);
-      ret = HTTP_INTERNAL_SERVER_ERROR;
-      goto end;
-  }
+          ret = HTTP_INTERNAL_SERVER_ERROR;
+          goto end;
+      }
 
-  tmp = map_principal_to_domain_user( r, &kcontext, output_token.value );
+      tmp = map_principal_to_domain_user( r, &kcontext, output_token.value );
 
-  log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
+      log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
              "Setting the request user to %s",
 	     tmp ? tmp : "(NULL)");
 
-  MK_AUTH_TYPE = MECH_NEGOTIATE;
-  MK_USER = tmp;
+      MK_AUTH_TYPE = MECH_NEGOTIATE;
+      MK_USER = tmp;
 
-  if (conf->krb_save_credentials && delegated_cred != GSS_C_NO_CREDENTIAL)
-     store_gss_creds(r, conf, (char *)output_token.value, delegated_cred);
+      if (conf->krb_save_credentials && delegated_cred != GSS_C_NO_CREDENTIAL)
+         store_gss_creds(r, conf, (char *)output_token.value, delegated_cred);
 
-  gss_release_buffer(&minor_status, &output_token);
+      gss_release_buffer(&minor_status, &output_token);
 
-  ret = OK;
+      ret = OK;
+      break;
+  case GSS_S_CONTINUE_NEEDED:
+      ret = HTTP_UNAUTHORIZED;
+      free_context = 0;
+      break;
+  default:
+      log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+	        "%s", get_gss_error(r->pool, major_status, minor_status,
+		                    "gss_accept_sec_context() failed"));
+      /* Don't offer the Negotiate method again if call to GSS layer failed */
+      /* *negotiate_ret_value = NULL; */
+      ret = HTTP_UNAUTHORIZED;
+      break;
+  }
 
 end:
   if (delegated_cred)
@@ -1588,8 +1619,8 @@ end:
   if (server_creds != GSS_C_NO_CREDENTIAL)
      gss_release_cred(&minor_status, &server_creds);
 
-  if (context != GSS_C_NO_CONTEXT)
-     gss_delete_sec_context(&minor_status, &context, GSS_C_NO_BUFFER);
+  if (free_context && ctxt->gss_context != GSS_C_NO_CONTEXT)
+     gss_delete_sec_context(&minor_status, &ctxt->gss_context, GSS_C_NO_BUFFER);
 
   if ( kcontext )
      krb5_free_context(kcontext);
@@ -1839,6 +1870,7 @@ kerb_init_handler(apr_pool_t *p, apr_pool_t *plog,
 static void
 kerb_register_hooks(apr_pool_t *p)
 {
+   ap_hook_pre_connection(krb_pre_conn, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_post_config(kerb_init_handler, NULL, NULL, APR_HOOK_MIDDLE);
    ap_hook_check_user_id(kerb_authenticate_user, NULL, NULL, APR_HOOK_MIDDLE);
 }
