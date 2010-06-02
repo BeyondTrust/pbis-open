@@ -69,6 +69,8 @@ typedef struct _SRV_STAT_CONNECTION_INFO
 typedef struct _SRV_STAT_SESSION_INFO
 {
     PWSTR   pwszUserPrincipal;
+    ULONG   ulUid;
+    ULONG   ulGid;
     ULONG64 ullSessionId;
 
 } SRV_STAT_SESSION_INFO, *PSRV_STAT_SESSION_INFO;
