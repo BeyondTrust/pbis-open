@@ -213,7 +213,10 @@ RegDB_ReadPassword(
                   NULL,
                   (PVOID) &pszHostDnsDomain,
                   NULL);
-    BAIL_ON_LWPS_ERROR(dwError);
+    if (dwError != LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        BAIL_ON_LWPS_ERROR(dwError);
+    }
 
     dwError = RegUtilGetValue(
                   pContext->hReg,
@@ -296,8 +299,16 @@ RegDB_ReadPassword(
     dwError = LwpsMbsToWc16s(pszDomainSID, &pInfo->pwszSID);
     BAIL_ON_LWPS_ERROR(dwError);
 
-    dwError = LwpsMbsToWc16s(pszHostDnsDomain, &pInfo->pwszHostDnsDomain);
-    BAIL_ON_LWPS_ERROR(dwError);
+    if (IsNullOrEmptyString(pszHostDnsDomain))
+    {
+        dwError = LwpsMbsToWc16s(pszDomainDnsName, &pInfo->pwszHostDnsDomain);
+        BAIL_ON_LWPS_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwpsMbsToWc16s(pszHostDnsDomain, &pInfo->pwszHostDnsDomain);
+        BAIL_ON_LWPS_ERROR(dwError);
+    }
 
     dwError = LwpsMbsToWc16s(pszHostNameValue, &pInfo->pwszHostname);
     BAIL_ON_LWPS_ERROR(dwError);
