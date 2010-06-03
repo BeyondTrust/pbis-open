@@ -4037,7 +4037,7 @@ LsaAdProviderStateAcquireWrite(
 {
     int status = 0;
 
-    pthread_rwlock_wrlock(pState->pStateLock);
+    status = pthread_rwlock_wrlock(pState->pStateLock);
     LW_ASSERT(status == 0);
 }
 
