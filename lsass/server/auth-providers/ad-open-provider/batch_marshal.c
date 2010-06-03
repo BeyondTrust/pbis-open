@@ -515,6 +515,7 @@ LsaAdBatchMarshal(
         SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED);
     }
 
+#if 0
     if (IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED) &&
         (pItem->ObjectType != LSA_AD_BATCH_OBJECT_TYPE_GROUP))
     {
@@ -526,6 +527,7 @@ LsaAdBatchMarshal(
         dwError = 0;
         goto cleanup;
     }
+#endif
 
     dwError = LwAllocateMemory(sizeof(*pObject), (PVOID*)&pObject);
     BAIL_ON_LSA_ERROR(dwError);

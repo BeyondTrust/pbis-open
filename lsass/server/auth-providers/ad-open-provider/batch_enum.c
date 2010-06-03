@@ -308,7 +308,10 @@ LsaAdBatchEnumProcessRealMessages(
                             &ppObjects[dwObjectsCount]);
             BAIL_ON_LSA_ERROR(dwError);
             
-            dwObjectsCount++;
+            if (ppObjects[dwObjectsCount])
+            {
+                dwObjectsCount++;
+            }
         }
 
         LsaAdBatchDestroyBatchItemContents(&batchItem);
