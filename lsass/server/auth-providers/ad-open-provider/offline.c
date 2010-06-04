@@ -137,8 +137,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pbHash);
     LW_SAFE_FREE_STRING(pszNT4UserName);
 
-    *ppPamAuthInfo = NULL;
-
     return dwError;
 
 error:
