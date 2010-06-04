@@ -466,6 +466,47 @@ LsaDmWrappLookupSidsByNamesCallback(
 
 static
 DWORD
+LsaDmWrappAddTrailingDot(
+    IN PCSTR pszFqdn,
+    OUT PSTR* ppszDottedFqdn
+    )
+{
+    DWORD dwError = 0;
+    size_t sLen = 0;
+    PSTR pszResult = NULL;
+
+    BAIL_ON_INVALID_STRING(pszFqdn);
+
+    sLen = strlen(pszFqdn);
+    if (pszFqdn[sLen - 1] == '.')
+    {
+        dwError = LwAllocateString(
+                        pszFqdn,
+                        &pszResult);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(
+                        &pszResult,
+                        "%s.",
+                        pszFqdn);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppszDottedFqdn = pszResult;
+
+cleanup:
+    return dwError;
+
+error:
+    LW_SAFE_FREE_STRING(pszResult);
+    *ppszDottedFqdn = NULL;
+    goto cleanup;
+}
+
+static
+DWORD
 LsaDmWrappDsEnumerateDomainTrustsCallback(
     IN PCSTR pszDnsDomainOrForestName,
     IN OPTIONAL PLWNET_DC_INFO pDcInfo,
@@ -475,13 +516,26 @@ LsaDmWrappDsEnumerateDomainTrustsCallback(
 {
     DWORD dwError = 0;
     PLSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT) pContext;
+    PSTR pszFqdnDC = NULL;
 
-    dwError = AD_DsEnumerateDomainTrusts(pDcInfo->pszDomainControllerName,
+    dwError = LsaDmWrappAddTrailingDot(
+                    pDcInfo->pszDomainControllerName,
+                    &pszFqdnDC);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_DsEnumerateDomainTrusts(pszFqdnDC,
                                          pCtx->dwFlags,
                                          &pCtx->pTrusts,
                                          &pCtx->dwCount,
                                          pbIsNetworkError);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_STRING(pszFqdnDC);
     return dwError;
+
+error:
+    goto cleanup;
 }
 
 static

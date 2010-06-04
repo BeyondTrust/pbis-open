@@ -62,7 +62,12 @@ NetpGetRwDcName(
         goto cleanup;
     }
 
-    domain_controller_name = ambstowc16s(pDC->pszDomainControllerName);
+    // Add a trailing dot to the name to indicate that the address is
+    // fully-qualified and the default domain suffix does not need to be
+    // appended.
+    domain_controller_name = asw16printfw(
+                                L"%hhs.",
+                                pDC->pszDomainControllerName);
 
  cleanup:
     LW_SAFE_FREE_MEMORY(dns_domain_name_mbs);

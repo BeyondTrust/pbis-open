@@ -306,12 +306,6 @@ LwLdapOpenDirectoryServerSingleAttempt(
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
-    dwError = ldap_set_option(ld, LDAP_OPT_HOST_NAME, pszServerName);
-    if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP host name option");
-        BAIL_ON_LDAP_ERROR(dwError);
-    }
-
     dwError = LwAllocateMemory(sizeof(*pDirectory), OUT_PPVOID(&pDirectory));
     BAIL_ON_LW_ERROR(dwError);
 

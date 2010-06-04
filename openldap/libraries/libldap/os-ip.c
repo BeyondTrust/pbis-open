@@ -546,7 +546,16 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	ldap_pvt_thread_mutex_lock(&ldap_int_resolv_mutex);
 #endif
 
+	/* The hostname may be an IP address, depending on what is stored in
+	 * the configuration file. To avoid issuing any unnecessary network
+	 * traffic, try looking it up as a numerical host first.
+	 */
+	hints.ai_flags |= AI_NUMERICHOST;
 	err = getaddrinfo( host, serv, &hints, &res );
+	if (err == EAI_NONAME) {
+		hints.ai_flags &= ~AI_NUMERICHOST;
+		err = getaddrinfo( host, serv, &hints, &res );
+	}
 
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock(&ldap_int_resolv_mutex);

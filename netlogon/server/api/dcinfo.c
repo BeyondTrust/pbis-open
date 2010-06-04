@@ -52,7 +52,7 @@
 static
 DWORD
 LWNetSrvGetDCTimeFromDC(
-    IN PCSTR pszDCName,
+    IN PCSTR pszDCAddress,
     OUT PLWNET_UNIX_TIME_T pDCTime,
     OUT PBOOLEAN pbIsNetworkError
     );
@@ -445,7 +445,7 @@ LWNetSrvGetDCTime(
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LWNetSrvGetDCTimeFromDC(
-        pDcInfo->pszDomainControllerName,
+        pDcInfo->pszDomainControllerAddress,
         &result,
         &bIsNetworkError);
     if (bIsNetworkError)
@@ -464,7 +464,7 @@ LWNetSrvGetDCTime(
         BAIL_ON_LWNET_ERROR(dwError);
 
         dwError = LWNetSrvGetDCTimeFromDC(
-            pDcInfo->pszDomainControllerName,
+            pDcInfo->pszDomainControllerAddress,
             &result,
             &bIsNetworkError);
         BAIL_ON_LWNET_ERROR(dwError);
@@ -491,7 +491,7 @@ error:
 static
 DWORD
 LWNetSrvGetDCTimeFromDC(
-    IN PCSTR pszDCName,
+    IN PCSTR pszDCAddress,
     OUT PLWNET_UNIX_TIME_T pDCTime,
     OUT PBOOLEAN pbIsNetworkError
     )
@@ -518,12 +518,12 @@ LWNetSrvGetDCTimeFromDC(
 
     BAIL_ON_INVALID_POINTER(pDCTime);
 
-    dwError = LwCLdapOpenDirectory(pszDCName, &hDirectory);
+    dwError = LwCLdapOpenDirectory(pszDCAddress, &hDirectory);
     if (dwError)
     {
         LWNET_LOG_ERROR(
             "Failed ldap open on %s error=%d\n",
-            pszDCName,
+            pszDCAddress,
             dwError);
     }
     BAIL_ON_LWNET_ERROR(dwError);
@@ -533,7 +533,7 @@ LWNetSrvGetDCTimeFromDC(
     {
         LWNET_LOG_ERROR(
             "Failed ldap bind on %s error=%d\n",
-            pszDCName,
+            pszDCAddress,
             dwError);
     }
     BAIL_ON_LWNET_ERROR(dwError);
@@ -551,7 +551,7 @@ LWNetSrvGetDCTimeFromDC(
     {
         LWNET_LOG_ERROR(
             "Failed ldap search on %s error=%d\n",
-            pszDCName,
+            pszDCAddress,
             dwError);
     }
     BAIL_ON_LWNET_ERROR(dwError);

@@ -191,6 +191,7 @@ SMBGSSContextBuild(
         .length = GSS_MECH_NTLM_LEN,
         .elements = GSS_MECH_NTLM
     };
+    size_t sCopyServerChars = 0;
 
     dwError = LwRtlCStringAllocateFromWC16String(&pszServerName, pwszServerName);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -217,12 +218,27 @@ SMBGSSContextBuild(
             BAIL_ON_LWIO_ERROR(dwError);
             
             SMBStrToUpper(pszDomainName);
+
+            sCopyServerChars = strlen(pszServerName);
+            if (sCopyServerChars > 0 &&
+                    pszServerName[sCopyServerChars - 1] == '.')
+            {
+                // Strip the trailing dot
+                sCopyServerChars --;
+            }
             
+            if (sCopyServerChars > INT_MAX)
+            {
+                dwError = STATUS_INTEGER_OVERFLOW;
+                BAIL_ON_LWIO_ERROR(dwError);
+            }
+
             dwError = SMBAllocateStringPrintf(
-                &pszTargetName,
-                "cifs/%s@%s",
-                pszServerName,
-                pszDomainName);
+                            &pszTargetName,
+                            "cifs/%.*s@%s",
+                            (int)sCopyServerChars,
+                            pszServerName,
+                            pszDomainName);
             BAIL_ON_LWIO_ERROR(dwError);
 
             inputNameBuffer.value = pszTargetName;
@@ -640,6 +656,7 @@ SMBGetServerDomain(
     char* pDot = NULL;
     PSTR pszDomain = NULL;
     PSTR pszNormal = NULL;
+    size_t sDomain = 0;
 
     pDot = strchr(pszServerName, '.');
 
@@ -656,6 +673,13 @@ SMBGetServerDomain(
 
     dwError = SMBAllocateString(strchr(pszNormal, '.') + 1, &pszDomain);
     BAIL_ON_LWIO_ERROR(dwError);
+
+    sDomain = strlen(pszDomain);
+    if (sDomain > 0 && pszDomain[sDomain - 1] == '.')
+    {
+        // Strip the trailing dot off
+        pszDomain[sDomain - 1] = 0;
+    }
 
     *ppszDomain = pszDomain;
 
