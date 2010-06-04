@@ -62,8 +62,9 @@ LwpsStrError(
     // On Solaris, strerror is MT-Safe
     char *pszResult = strerror(errnum);
 
+    // strerror may not set errno
     if (pszResult == NULL)
-        return errno;
+        return EINVAL;
 
     if (pszResult != pszBuf)
     {
@@ -99,8 +100,9 @@ LwpsStrError(
 #ifdef STRERROR_R_CHAR_P
     char *pszResult = strerror_r(errnum, pszBuf, buflen);
 
+    // strerror_r does not set errno
     if (pszResult == NULL)
-        return errno;
+        return ERANGE;
 
     if (pszResult != pszBuf)
     {
