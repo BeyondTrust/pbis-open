@@ -2887,7 +2887,10 @@ AD_RefreshConfiguration(
         BAIL_ON_LSA_ERROR(dwError);
     }
     LsaAdProviderLogConfigReloadEvent();
-    LsaAdProviderLogRequireMembershipOfChangeEvent(hProvider);
+    if (gpLsaAdProviderState->joinState == LSA_AD_JOINED)
+    {
+        LsaAdProviderLogRequireMembershipOfChangeEvent(hProvider);
+    }
     LsaAdProviderLogEventLogEnableChangeEvent();
 
 cleanup:
