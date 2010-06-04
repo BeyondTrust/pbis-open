@@ -448,7 +448,7 @@ SignServer(
     BAIL_ON_ERROR(nError);
 
     printf("Successfully decoded '%.*s'\n",
-            MsgBuffer.length,
+            (int)MsgBuffer.length,
             (char *)MsgBuffer.value);
     if (!nConfState)
     {

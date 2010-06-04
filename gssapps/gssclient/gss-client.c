@@ -316,7 +316,7 @@ ShowContextDetails(
                 &nameOID);
     BAIL_ON_ERROR(dwError);
 
-    printf("%.*s to ", buffer.length, (char *)buffer.value);
+    printf("%.*s to ", (int)buffer.length, (char *)buffer.value);
 
     /*dwError = gss_display_name(
                 &minorStatus,
@@ -333,7 +333,7 @@ ShowContextDetails(
                 &minorStatus,
                 mech,
                 &buffer);
-    printf("mech = %.*s\n", buffer.length, (char *)buffer.value);
+    printf("mech = %.*s\n", (int)buffer.length, (char *)buffer.value);
 
     //printf("flags = 0x%X\n", flags);
     //printf("locally created = %d\n", locallyCreated);
