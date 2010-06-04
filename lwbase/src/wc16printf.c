@@ -821,7 +821,7 @@ StringPrintfWriteMbs(
         }
 
         sConverted = mbstowc16s(pBuffer->pwszBuffer, pszWrite, cchWrite);
-        if (sConverted != cchWrite)
+        if (sConverted == -1)
         {
             pBuffer->dwError = errno;
             goto error;
