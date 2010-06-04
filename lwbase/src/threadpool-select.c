@@ -927,6 +927,9 @@ SelectThreadInit(
         GOTO_ERROR_ON_STATUS(status = LwErrnoToNtStatus(errno));
     }
 
+    SetCloseOnExec(pThread->SignalFds[0]);
+    SetCloseOnExec(pThread->SignalFds[1]);
+
     RingInit(&pThread->Tasks);
 
     if (pAttrs && pAttrs->ulTaskThreadStackSize)

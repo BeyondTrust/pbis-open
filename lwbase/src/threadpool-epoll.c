@@ -569,7 +569,7 @@ EventLoop(
         status = ClockGetMonotonicTime(&clock, &llNow);
         GOTO_ERROR_ON_STATUS(status);
 
-        /* Schedule any timed tasks that are have reached their deadline */
+        /* Schedule any timed tasks that have reached their deadline */
         ScheduleTimedTasks(
             &timed,
             llNow,
@@ -1115,11 +1115,16 @@ InitEventThread(
         GOTO_ERROR_ON_STATUS(status);
     }
 
+    SetCloseOnExec(pThread->SignalFds[0]);
+    SetCloseOnExec(pThread->SignalFds[1]);
+
     if ((pThread->EpollFd = epoll_create(MAX_EVENTS)) < 0)
     {
         status = LwErrnoToNtStatus(errno);
         GOTO_ERROR_ON_STATUS(status);
     }
+
+    SetCloseOnExec(pThread->EpollFd);
 
     /* Add signal fd to epoll set */
     event.events = EPOLLIN;

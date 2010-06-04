@@ -189,3 +189,11 @@ LwRtlFreeThreadPoolAttributes(
 {
     RTL_FREE(ppAttrs);
 }
+
+VOID
+SetCloseOnExec(
+    int Fd
+    )
+{
+    fcntl(Fd, F_SETFD, FD_CLOEXEC);
+}

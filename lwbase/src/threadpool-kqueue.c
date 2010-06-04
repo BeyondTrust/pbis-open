@@ -1200,11 +1200,16 @@ InitEventThread(
         GOTO_ERROR_ON_STATUS(status);
     }
 
+    SetCloseOnExec(pThread->SignalFds[0]);
+    SetCloseOnExec(pThread->SignalFds[1]);
+
     if ((pThread->KqueueFd = kqueue()) < 0)
     {
         status = LwErrnoToNtStatus(errno);
         GOTO_ERROR_ON_STATUS(status);
     }
+
+    SetCloseOnExec(pThread->KqueueFd);
 
     /* Add signal fd to kqueue set */
     EV_SET(&event, pThread->SignalFds[0], EVFILT_READ, EV_ADD, 0, 0, NULL);

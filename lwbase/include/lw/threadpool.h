@@ -242,9 +242,7 @@ typedef enum LW_THREAD_POOL_OPTION
  * a task are met.  Before returning, the function should set
  * the pWaitMask parameter to the mask of conditions under
  * which it should next wake up, and the pllTime parameter to the
- * next timeout.  Setting an empty mask indicates that
- * the task is complete and should no longer be scheduled
- * to run.
+ * next timeout.
  * 
  * If a non-zero time is set and the task is woken before
  * the time expires, on the next call to the function the pllTime
@@ -320,7 +318,7 @@ LW_VOID
  * the specified group.  The task will be immediately ready to
  * run but will not be woken until an explicit trigger is caused
  * by #LwRtlWakeTask() or similar.  On first wakeup, the
- * #LW_TASK_EVENT_INIT bit will be set on pMask parameter
+ * #LW_TASK_EVENT_INIT bit will be set on WakeMask parameter
  * to the #LW_TASK_FUNCTION.
  *
  * When the task is no longer referenced externally (outside of
@@ -604,6 +602,7 @@ LwRtlFreeThreadPoolAttributes(
  * Creates a new thread pool.
  *
  * @param[out] ppPool the created pool
+ * @param[in] pAttrs optional thread pool attributes
  * @retval #LW_STATUS_SUCCESS success
  * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
  */

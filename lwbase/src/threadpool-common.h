@@ -94,4 +94,9 @@ GetWorkThreadsAttr(
     return lCount < 0 ? -lCount * numCpus : lCount;
 }
 
+VOID
+SetCloseOnExec(
+    int Fd
+    );
+
 #endif
