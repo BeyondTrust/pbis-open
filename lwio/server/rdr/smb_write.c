@@ -45,7 +45,7 @@ WireWriteFile(
     uint32_t ntStatus = 0;
     SMB_PACKET packet = {0};
     uint32_t packetByteCount = 0;
-    WRITE_ANDX_REQUEST_HEADER *pRequestHeader = NULL;
+    WRITE_ANDX_REQUEST_HEADER_WC_14 *pRequestHeader = NULL;
     WRITE_ANDX_RESPONSE_HEADER *pResponseHeader = NULL;
     SMB_RESPONSE *pResponse = NULL;
     SMB_PACKET *pResponsePacket = NULL;
@@ -80,13 +80,13 @@ WireWriteFile(
                 &packet);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    packet.pData = packet.pParams + sizeof(WRITE_ANDX_REQUEST_HEADER);
+    packet.pData = packet.pParams + sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14);
     /* @todo: handle size restart */
-    packet.bufferUsed += sizeof(WRITE_ANDX_REQUEST_HEADER);
+    packet.bufferUsed += sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14);
 
     packet.pSMBHeader->wordCount = 14;
 
-    pRequestHeader = (WRITE_ANDX_REQUEST_HEADER *) packet.pParams;
+    pRequestHeader = (WRITE_ANDX_REQUEST_HEADER_WC_14 *) packet.pParams;
 
     pRequestHeader->fid = fid;
     pRequestHeader->offset = llFileWriteOffset & 0x00000000FFFFFFFFLL;
@@ -95,7 +95,7 @@ WireWriteFile(
     pRequestHeader->remaining = 0;
 
     /* ignored if CAP_LARGE_WRITEX is set */
-    wNumBytesWriteable = UINT16_MAX - (packet.pParams - (uint8_t*)packet.pSMBHeader) - sizeof(WRITE_ANDX_REQUEST_HEADER);
+    wNumBytesWriteable = UINT16_MAX - (packet.pParams - (uint8_t*)packet.pSMBHeader) - sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14);
     // And, then the alignment
     wNumBytesWriteable -= (packet.pData - (uint8_t *) pRequestHeader) % 2;
     if (wWriteLen > wNumBytesWriteable)

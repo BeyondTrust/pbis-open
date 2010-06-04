@@ -1354,6 +1354,29 @@ typedef struct
                                    CAP_LARGE_WRITEX; else MUST BE ZERO */
     uint16_t dataLength;        /* Number of data bytes in buffer (>=0) */
     uint16_t dataOffset;        /* Offset to data bytes */
+    uint16_t byteCount;         /* Count of data bytes; ignored if
+                                   CAP_LARGE_WRITEX */
+    uint8_t pad[];              /* Pad to SHORT or LONG */
+
+    /* Data immediately follows */
+}  __attribute__((__packed__))  WRITE_ANDX_REQUEST_HEADER_WC_12,
+                               *PWRITE_ANDX_REQUEST_HEADER_WC_12;
+
+typedef struct
+{
+    /* wordCount and byteCount are handled at a higher layer */
+    /* AndX chains will be handled at a higher layer */
+
+    uint16_t fid;               /* File handle */
+    uint32_t offset;            /* Offset in file to begin write */
+    uint32_t reserved;          /* Must be 0 */
+    uint16_t writeMode;         /* Write mode bits:
+                                        0 - write through */
+    uint16_t remaining;         /* Bytes remaining to satisfy request */
+    uint16_t dataLengthHigh;    /* High 16 bits of data length if
+                                   CAP_LARGE_WRITEX; else MUST BE ZERO */
+    uint16_t dataLength;        /* Number of data bytes in buffer (>=0) */
+    uint16_t dataOffset;        /* Offset to data bytes */
     uint32_t offsetHigh;        /* Upper 32 bits of offset (only present if
                                    WordCount = 14) */
     uint16_t byteCount;         /* Count of data bytes; ignored if
@@ -1361,8 +1384,8 @@ typedef struct
     uint8_t pad[];              /* Pad to SHORT or LONG */
 
     /* Data immediately follows */
-}  __attribute__((__packed__))  WRITE_ANDX_REQUEST_HEADER,
-                               *PWRITE_ANDX_REQUEST_HEADER;
+}  __attribute__((__packed__))  WRITE_ANDX_REQUEST_HEADER_WC_14,
+                               *PWRITE_ANDX_REQUEST_HEADER_WC_14;
 
 typedef struct
 {
@@ -2332,11 +2355,20 @@ WireMarshallNtTransactionRequest(
     );
 
 NTSTATUS
-WireUnmarshallWriteAndXRequest(
+WireUnmarshallWriteAndXRequest_WC_12(
     const PBYTE            pParams,
     ULONG                  ulBytesAvailable,
     ULONG                  ulBytesUsed,
-    PWRITE_ANDX_REQUEST_HEADER* ppHeader,
+    PWRITE_ANDX_REQUEST_HEADER_WC_12* ppHeader,
+    PBYTE*                 ppData
+    );
+
+NTSTATUS
+WireUnmarshallWriteAndXRequest_WC_14(
+    const PBYTE            pParams,
+    ULONG                  ulBytesAvailable,
+    ULONG                  ulBytesUsed,
+    PWRITE_ANDX_REQUEST_HEADER_WC_14* ppHeader,
     PBYTE*                 ppData
     );
 

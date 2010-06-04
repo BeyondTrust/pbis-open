@@ -31,30 +31,80 @@
 #include "includes.h"
 
 NTSTATUS
-WireUnmarshallWriteAndXRequest(
+WireUnmarshallWriteAndXRequest_WC_12(
     const PBYTE            pParams,
     ULONG                  ulBytesAvailable,
     ULONG                  ulOffset,
-    PWRITE_ANDX_REQUEST_HEADER* ppHeader,
+    PWRITE_ANDX_REQUEST_HEADER_WC_12* ppHeader,
     PBYTE*                 ppData
     )
 {
     NTSTATUS ntStatus = 0;
-    PWRITE_ANDX_REQUEST_HEADER pHeader = NULL;
+    PWRITE_ANDX_REQUEST_HEADER_WC_12 pHeader = NULL;
     PBYTE pDataCursor = pParams;
     PBYTE pSmbHeader = pParams - ulOffset;
     ULONG ulTotalBytesAvailable = ulBytesAvailable + ulOffset;
 
-    if (ulBytesAvailable < sizeof(WRITE_ANDX_REQUEST_HEADER))
+    if (ulBytesAvailable < sizeof(WRITE_ANDX_REQUEST_HEADER_WC_12))
     {
         ntStatus = STATUS_INVALID_BUFFER_SIZE;
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    pHeader = (PWRITE_ANDX_REQUEST_HEADER)pDataCursor;
+    pHeader = (PWRITE_ANDX_REQUEST_HEADER_WC_12)pDataCursor;
 
-    ulBytesAvailable -= sizeof(WRITE_ANDX_REQUEST_HEADER);
-    pDataCursor += sizeof(WRITE_ANDX_REQUEST_HEADER);
+    ulBytesAvailable -= sizeof(WRITE_ANDX_REQUEST_HEADER_WC_12);
+    pDataCursor += sizeof(WRITE_ANDX_REQUEST_HEADER_WC_12);
+
+    // Total number of bytes must be more than the data offset
+    if (ulTotalBytesAvailable < pHeader->dataOffset)
+    {
+        ntStatus = STATUS_INVALID_BUFFER_SIZE;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    // TODO: check if we have enough data bytes available
+
+    *ppHeader = pHeader;
+    *ppData = pSmbHeader + pHeader->dataOffset;
+
+cleanup:
+
+    return ntStatus;
+
+error:
+
+    *ppHeader = NULL;
+    *ppData = NULL;
+
+    goto cleanup;
+}
+
+NTSTATUS
+WireUnmarshallWriteAndXRequest_WC_14(
+    const PBYTE            pParams,
+    ULONG                  ulBytesAvailable,
+    ULONG                  ulOffset,
+    PWRITE_ANDX_REQUEST_HEADER_WC_14* ppHeader,
+    PBYTE*                 ppData
+    )
+{
+    NTSTATUS ntStatus = 0;
+    PWRITE_ANDX_REQUEST_HEADER_WC_14 pHeader = NULL;
+    PBYTE pDataCursor = pParams;
+    PBYTE pSmbHeader = pParams - ulOffset;
+    ULONG ulTotalBytesAvailable = ulBytesAvailable + ulOffset;
+
+    if (ulBytesAvailable < sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14))
+    {
+        ntStatus = STATUS_INVALID_BUFFER_SIZE;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    pHeader = (PWRITE_ANDX_REQUEST_HEADER_WC_14)pDataCursor;
+
+    ulBytesAvailable -= sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14);
+    pDataCursor += sizeof(WRITE_ANDX_REQUEST_HEADER_WC_14);
 
     // Total number of bytes must be more than the data offset
     if (ulTotalBytesAvailable < pHeader->dataOffset)
