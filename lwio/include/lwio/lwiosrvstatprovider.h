@@ -283,7 +283,7 @@ typedef struct _LWIO_SRV_STAT_PROVIDER_FUNCTION_TABLE
  *        to return an interface table of methods which are called during
  *        various phases of request processing in srv.
  *
- *        If the logging of statistics in the srv driver was disabled when it
+ *        If the logging of statistics in the srv driver was disabled when srv
  *        was activated, the statistics provider will not be dynamically loaded.
  *        If the statistics logging was dynamically disabled at runtime, the
  *        srv driver will not dynamically unload the statistics provider.
