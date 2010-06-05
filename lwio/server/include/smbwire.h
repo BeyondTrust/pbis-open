@@ -123,7 +123,8 @@ typedef enum
     COM_READ_BULK               = 0xD8,
     COM_WRITE_BULK              = 0xD9,
     COM_WRITE_BULK_DATA         = 0xDA,
-    COM_LW_OPLOCK               = 0xDD
+    COM_LW_OPLOCK               = 0xDD,
+    COM_NO_ANDX_COMMAND         = 0xFF
 } COMMAND;
 
 typedef USHORT SMB_SEARCH_FLAGS;
