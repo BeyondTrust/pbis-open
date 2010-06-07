@@ -140,6 +140,18 @@ typedef NTSTATUS
             );
 
 /**
+ * @brief Method to set the number of responses expected from the incoming
+ *        SMB request. This method is used for the ECHO request which might
+ *        generate multiple responses.
+ *
+ */
+typedef NTSTATUS
+        (*PFN_SRV_STAT_SET_RESPONSE_COUNT)(
+            HANDLE hContext,                               /* IN              */
+            ULONG  ulNumResponses                          /* IN              */
+            );
+
+/**
  * @brief Method to indicate the beginning of processing for an SMB message
  *        that belongs in the current SMB request, associated with the
  *        statistics context. This method will be called once for each chained
@@ -265,6 +277,7 @@ typedef NTSTATUS
 typedef struct _LWIO_SRV_STAT_PROVIDER_FUNCTION_TABLE
 {
     PFN_SRV_STAT_CREATE_REQUEST_CONTEXT pfnCreateRequestContext;
+    PFN_SRV_STAT_SET_RESPONSE_COUNT     pfnSetResponseCount;
     PFN_SRV_STAT_PUSH_MESSAGE           pfnPushMessage;
     PFN_SRV_STAT_SET_SUB_OP_CODE        pfnSetSubOpCode;
     PFN_SRV_STAT_SET_IOCTL              pfnSetIOCTL;
