@@ -58,7 +58,7 @@ LsaProcessConfig(
     dwError = LsaOpenConfig(pszConfigKey, pszPolicyKey, &pReg);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if ( pReg == NULL )
+    if ( pReg == NULL || pReg->hConnection == NULL )
     {
         goto error;
     }
