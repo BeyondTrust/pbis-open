@@ -44,51 +44,39 @@
 // Type: FILE_DEVICE_FILE_SYSTEM
 //
 
-#define IO_FSCTL_FUNC_SET_COMPRESSION           0x010
-#define IO_FSCTL_FUNC_GET_REPARSE_POINT         0x02a
-#define IO_FSCTL_FUNC_CREATE_OR_GET_OBJECT_ID   0x030  
-#define IO_FSCTL_FUNC_SET_SPARSE                0x031
-
-// Likewise Internal Codes
-
-#define IO_FSCTL_FUNC_OPLOCK_REQUEST            CUSTOM_CTL_FUNCTION(0x001)
-#define IO_FSCTL_FUNC_OPLOCK_BREAK_ACK          CUSTOM_CTL_FUNCTION(0x002)
-
-// CTL_CODE's
-
 #define IO_FSCTL_SET_COMPRESSION                \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,           \
-             IO_FSCTL_FUNC_SET_COMPRESSION,     \
+             16,                                \
              METHOD_BUFFERED,                   \
              FILE_READ_ACCESS|FILE_WRITE_ACCESS)
 
 #define IO_FSCTL_GET_REPARSE_POINT              \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,           \
-             IO_FSCTL_FUNC_GET_REPARSE_POINT,   \
+             42,                                \
              METHOD_BUFFERED,                   \
              FILE_ANY_ACCESS)
 
 #define IO_FSCTL_CREATE_OR_GET_OBJECT_ID            \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,               \
-             IO_FSCTL_FUNC_CREATE_OR_GET_OBJECT_ID, \
+             48,                                    \
              METHOD_BUFFERED,                       \
              FILE_ANY_ACCESS)
 
 #define IO_FSCTL_SET_SPARSE              \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,    \
-             IO_FSCTL_FUNC_SET_SPARSE,   \
+             49,                         \
              METHOD_BUFFERED,            \
              FILE_ANY_ACCESS)
 
 #define IO_FSCTL_OPLOCK_REQUEST            \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,      \
-             IO_FSCTL_FUNC_OPLOCK_REQUEST, \
+             CUSTOM_CTL_FUNCTION(1),       \
              METHOD_NEITHER,               \
              FILE_ANY_ACCESS)
 
 #define IO_FSCTL_OPLOCK_BREAK_ACK            \
     CTL_CODE(FILE_DEVICE_FILE_SYSTEM,        \
-             IO_FSCTL_FUNC_OPLOCK_BREAK_ACK, \
+             CUSTOM_CTL_FUNCTION(2),         \
              METHOD_NEITHER,                 \
              FILE_ANY_ACCESS)
 
@@ -96,13 +84,9 @@
 // Type: FILE_DEVICE_NETWORK_FILE_SYSTEM
 //
 
-#define IO_FSCTL_FUNC_ENUMERATE_SNAPSHOTS       0x019
-
-// CTL_CODE's
-
 #define IO_FSCTL_ENUMERATE_SNAPSHOTS             \
     CTL_CODE(FILE_DEVICE_NETWORK_FILE_SYSTEM,    \
-             IO_FSCTL_FUNC_ENUMERATE_SNAPSHOTS,  \
+             25,                                 \
              METHOD_BUFFERED,                    \
              FILE_READ_ACCESS)
 
