@@ -311,3 +311,6 @@ recreate_dir "${BUILD_IMAGE_ROOT}/packages"
 if [ -d "${BUILD_DIST_OS_ROOT}/packages" ]; then
     rsync -a "${BUILD_DIST_OS_ROOT}/packages/" "${BUILD_IMAGE_ROOT}/packages/"
 fi
+
+echo "PLATFORM_PKG_VERSION=${PKG_VERSION}" > "${BUILD_IMAGE_ROOT}/PLATFORM_VARS"
+echo "PLATFORM_PKG_RELEASE=${PKG_RELEASE}" >> "${BUILD_IMAGE_ROOT}/PLATFORM_VARS"
