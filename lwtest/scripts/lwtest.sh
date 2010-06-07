@@ -39,8 +39,7 @@ fi
 ARGUMENTS="${ARGUMENTS} --append"
 
 
-lwt_test_programs="lwt-lsa-authenticate-user lwt-lsaenumusers lwt-lsa-find-group-by-name lwt-lsa-findgroupsbyid lwt-lsa-find-user-by-id lwt-lsafinduserbyname lwt-lsaopensession lwt-lsa-validate-user lwt-lsa-verify-sid-info lwt-lsa-enumgroups lwt-lsa-validate-groupinfo-byname lwt-lsa-validate-groupinfo-byid"
-
+lwt_test_programs="lwt-lsa-authenticate-user lwt-lsa-check-user-info lwt-lsa-enum-users lwt-lsa-find-group-by-name lwt-lsa-find-group-by-id lwt-lsa-find-user-by-id lwt-lsa-find-user-by-name lwt-lsa-open-session lwt-lsa-validate-user lwt-lsa-verify-sid-info lwt-lsa-enum-groups lwt-lsa-validate-groupinfo-by-name lwt-lsa-validate-groupinfo-by-id lwt-lsa-validate-groupinfo-by-api lwt-lsa-get-metrics lwt-lsa-get-status "
 
 
 lwt_check_lsass "lsassd"

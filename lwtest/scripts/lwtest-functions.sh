@@ -160,7 +160,7 @@ lw_error_failure=1;
 
 # Source helper functions.
 #. /opt/likewise/bin/lwtest-functions.sh
-LWT_LOG_FILE=/tmp/apitest.log
+#LWT_LOG_FILE=/tmp/apitest.log
 LWT_LOG_LEVEL=1
 LWT_USER=root
 LIKEWISE_BIN="/opt/likewise/bin"
@@ -181,6 +181,7 @@ fi
 
 LWT_FILE_USERS=$LIKEWISE_BIN/$DOMAIN.${OU}.users.csv
 LWT_FILE_GROUPS=$LIKEWISE_BIN/$DOMAIN.${OU}.groups.csv
+LWT_LOG_FILE=/tmp/$DOMAIN.$OU.api
 
 lwt_init $@
 trap lwt_cleanup INT
@@ -216,7 +217,7 @@ then
 fi
 ARGUMENTS="${ARGUMENTS} --append"
 
-lwt_test_programs="lwt-lsa-authenticate-user lwt-lsa-checkuserinfo lwt-lsaenumusers lwt-lsa-find-group-by-name lwt-lsa-findgroupsbyid lwt-lsa-find-user-by-id lwt-lsafinduserbyname lwt-lsaopensession lwt-lsa-validate-user lwt-lsa-verify-sid-info lwt-lsa-enumgroups lwt-lsa-validate-groupinfo-byname lwt-lsa-validate-groupinfo-byid lwt-lsa-validate-groupinfo-byapi lwt-lsagetmetrics lwt-lsa-get-status "
+lwt_test_programs="lwt-lsa-authenticate-user lwt-lsa-check-user-info lwt-lsa-enum-users lwt-lsa-find-group-by-name lwt-lsa-find-group-by-id lwt-lsa-find-user-by-id lwt-lsa-find-user-by-name lwt-lsa-open-session lwt-lsa-validate-user lwt-lsa-verify-sid-info lwt-lsa-enum-groups lwt-lsa-validate-groupinfo-by-name lwt-lsa-validate-groupinfo-by-id lwt-lsa-validate-groupinfo-by-api lwt-lsa-get-metrics lwt-lsa-get-status "
 
 
 lwt_check_lsass "lsassd"
