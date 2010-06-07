@@ -367,7 +367,6 @@ typedef struct LWMsgTypeClass
     LWMsgTypeDestroyTransmittedFunction destroy_transmitted;
     /** @brief Print callback function */
     LWMsgTypePrintFunction print;
-    const char* (*get_name) (void* data);
 } LWMsgTypeClass;
 
 /**
@@ -924,15 +923,17 @@ typedef enum LWMsgTypeDirective
  *
  * Defines a custom type with user-specified marshaller logic.
  *
+ * @param type the C type
  * @param tclass a constant pointer to the LWMsgCustomTypeClass structure
  * containing marshalling methods
  * @param tdata a constant pointer to arbitrary data which will be passed
  * to the marshalling methods
  * @hideinitializer
  */
-#define LWMSG_CUSTOM(tclass, tdata)             \
-    _TYPECMD(LWMSG_CMD_CUSTOM),                 \
-        _TYPEARG(tclass),                       \
+#define LWMSG_CUSTOM(type, tclass, tdata)        \
+    _TYPECMD_TYPE(LWMSG_CMD_CUSTOM, type),       \
+        _TYPEARG(sizeof(type)),                  \
+        _TYPEARG(tclass),                        \
         _TYPEARG(tdata)
 
 /**

@@ -371,15 +371,6 @@ error:
     return status;
 }
 
-static
-const char*
-lwmsg_assoc_handle_get_name(
-    void *data
-    )
-{
-    return (const char*) data;
-}
-
 static LWMsgTypeSpec handle_enum_spec[] =
 {
     LWMSG_ENUM_BEGIN(LWMsgHandleType, 1, LWMSG_UNSIGNED),
@@ -421,6 +412,5 @@ LWMsgTypeClass lwmsg_handle_type_class =
     .unmarshal = lwmsg_assoc_unmarshal_handle,
     .destroy_presented = lwmsg_assoc_free_handle,
     .destroy_transmitted = NULL, /* Nothing to free in transmitted form */
-    .print = lwmsg_assoc_print_handle,
-    .get_name = lwmsg_assoc_handle_get_name
+    .print = lwmsg_assoc_print_handle
 };

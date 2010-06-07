@@ -673,7 +673,7 @@ extern LWMsgTypeClass lwmsg_handle_type_class;
  * @param htype the name of the handle type
  * @hideinitializer
  */
-#define LWMSG_HANDLE(htype) LWMSG_CUSTOM(&lwmsg_handle_type_class, (void*) #htype)
+#define LWMSG_HANDLE(htype) LWMSG_CUSTOM(void*, &lwmsg_handle_type_class, (void*) #htype)
 
 /**
  * @ingroup types

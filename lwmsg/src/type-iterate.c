@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
  *
@@ -121,7 +122,7 @@ lwmsg_type_find_end(
             spec += 2;
             break;
         case LWMSG_CMD_CUSTOM:
-            spec += is_member ? 4 : 2;
+            spec += is_member ? 4 : 3;
             break;
         case LWMSG_CMD_CUSTOM_ATTR:
             spec += 1;
@@ -265,20 +266,14 @@ lwmsg_type_iterate_inner(
         iter->offset = my_offset;
         break;
     case LWMSG_CMD_CUSTOM:
+        iter->size = *(spec++);
         if (cmd & LWMSG_FLAG_MEMBER)
         {
-            iter->size = *(spec++);
             iter->offset = *(spec++);
         }
         iter->kind = LWMSG_KIND_CUSTOM;
         iter->info.kind_custom.typeclass = (LWMsgTypeClass*) *(spec++);
         iter->info.kind_custom.typedata = (void*) *(spec++);
-
-        if (iter->info.kind_custom.typeclass->get_name)
-        {
-            iter->meta.type_name = iter->info.kind_custom.typeclass->get_name(
-                iter->info.kind_custom.typedata);
-        }
         break;
     case LWMSG_CMD_VOID:
         iter->kind = LWMSG_KIND_VOID;

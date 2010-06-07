@@ -1210,6 +1210,8 @@ MU_TEST(assoc, fd_send_recv)
     }
 }
 
+typedef struct AHandle AHandle;
+
 static LWMsgTypeSpec local_handle_spec[] =
 {
     LWMSG_HANDLE(AHandle),
