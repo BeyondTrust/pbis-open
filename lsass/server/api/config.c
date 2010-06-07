@@ -108,7 +108,11 @@ LsaSrvRefreshConfiguration(
 
         dwError = pProvider->pFnTable2->pfnRefreshConfiguration(
                                         hProvider);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (dwError)
+        {
+            LSA_LOG_ERROR("Refreshing provider %s failed.",
+                          pProvider->pszName ? pProvider->pszName : "");
+        }
 
         LsaSrvCloseProvider(pProvider, hProvider);
         hProvider = (HANDLE)NULL;

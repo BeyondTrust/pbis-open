@@ -1642,7 +1642,10 @@ LsaSrvAddUser2(
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         }
-        BAIL_ON_LSA_ERROR(dwError);
+        else
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
     }
 
     if (pszTargetProvider && !bFoundProvider)
@@ -1805,7 +1808,10 @@ LsaSrvAddGroup2(
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         }
-        BAIL_ON_LSA_ERROR(dwError);
+        else
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
     }
 
     if (pszTargetProvider && !bFoundProvider)
