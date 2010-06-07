@@ -316,6 +316,17 @@ lwmsg_data_print_string(
     ssize_t output_length = 0;
     size_t element_size = 0;
     size_t element_count = 0;
+    const char* encoding = iter->info.kind_indirect.encoding;
+
+    /* Convert encoding aliases to iconv names */
+    if (!strcmp(encoding, "ucs-2"))
+    {
+#ifdef WORDS_BIGENDIAN
+        encoding = "UCS-2BE";
+#else
+        encoding = "UCS-2LE";
+#endif
+    }
 
     if (iter->kind == LWMSG_KIND_POINTER)
     {
@@ -347,7 +358,7 @@ lwmsg_data_print_string(
             input_string,
             input_length,
             (void**) (void*) &output_string,
-            iter->info.kind_indirect.encoding,
+            encoding,
             "");
         
         if (output_length == -1)
@@ -404,7 +415,7 @@ lwmsg_data_print_hex_ascii(
 
     BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(element_count, element_size, &input_length));
 
-    BAIL_ON_ERROR(status = print(info, "<hex+ascii>", (unsigned long) cluster));
+    BAIL_ON_ERROR(status = print(info, "<hex+ascii>"));
     BAIL_ON_ERROR(status = newline(info));
     BAIL_ON_ERROR(status = print(info, "{"));
     info->depth += 4;
@@ -455,7 +466,7 @@ lwmsg_data_print_hex_ascii(
             }
             else
             {
-                BAIL_ON_ERROR(status = print(info, ".", input_string[index]));
+                BAIL_ON_ERROR(status = print(info, "."));
             }
         }
 
@@ -472,6 +483,32 @@ error:
     return status;
 }
 
+static
+LWMsgStatus
+lwmsg_data_print_in_encoding(
+    LWMsgTypeIter* iter,
+    unsigned char* object,
+    PrintInfo* info
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    
+    if (!strcmp(iter->info.kind_indirect.encoding, "hex+ascii"))
+    {
+        BAIL_ON_ERROR(status = lwmsg_data_print_hex_ascii(iter, object, info));
+    }
+    else
+    {
+        BAIL_ON_ERROR(status = print(info, "\""));
+        BAIL_ON_ERROR(status = lwmsg_data_print_string(iter, object, info));
+        BAIL_ON_ERROR(status = print(info, "\""));
+    }
+    
+error:
+
+    return status;
+}
+    
 static
 LWMsgStatus
 lwmsg_data_print_custom(
@@ -628,19 +665,10 @@ lwmsg_data_print_graph_visit(
 
                 /* Print pointee */
 
-                /* String case */
+                /* Explicit encoding case */
                 if (iter->info.kind_indirect.encoding != NULL)
                 {
-                    if (!strcmp(iter->info.kind_indirect.encoding, "hex+ascii"))
-                    {
-                        BAIL_ON_ERROR(status = lwmsg_data_print_hex_ascii(iter, object, info));
-                    }
-                    else
-                    {
-                        BAIL_ON_ERROR(status = print(info, "\""));
-                        BAIL_ON_ERROR(status = lwmsg_data_print_string(iter, object, info));
-                        BAIL_ON_ERROR(status = print(info, "\""));
-                    }
+                    BAIL_ON_ERROR(status = lwmsg_data_print_in_encoding(iter, object, info));
                 }
                 /* Singleton case */
                 else if (iter->info.kind_indirect.term == LWMSG_TERM_STATIC &&
