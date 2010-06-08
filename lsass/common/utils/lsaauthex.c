@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -38,7 +38,7 @@
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
- * 
+ *
  * Authors: Gerald Carter <gcarter@likewise.com>
  *
  */
@@ -77,14 +77,14 @@ LsaFreeAuthUserInfo(
     LW_SAFE_FREE_MEMORY(p->pszDomain);
     LW_SAFE_FREE_MEMORY(p->pszDnsDomain);
 
-    if (p->pSessionKey) {        
+    if (p->pSessionKey) {
         LsaDataBlobFree(&p->pSessionKey);
     }
-    
-    if (p->pLmSessionKey) {        
+
+    if (p->pLmSessionKey) {
         LsaDataBlobFree(&p->pLmSessionKey);
-    }    
-	
+    }
+
     LW_SAFE_FREE_MEMORY(p->pszLogonServer);
     LW_SAFE_FREE_MEMORY(p->pszLogonScript);
     LW_SAFE_FREE_MEMORY(p->pszProfilePath);
@@ -96,7 +96,7 @@ LsaFreeAuthUserInfo(
 
 
     LW_SAFE_FREE_MEMORY(p);
-	
+
     *ppAuthUserInfo = NULL;
 
     return LW_ERROR_SUCCESS;
@@ -134,7 +134,7 @@ LsaFreeAuthUserParams(
     }
 
     LW_SAFE_FREE_MEMORY(p);
-	
+
     *ppAuthUserParams = NULL;
 
     return LW_ERROR_SUCCESS;
