@@ -63,6 +63,7 @@ LsaFreeAuthUserInfo(
     )
 {
     PLSA_AUTH_USER_INFO p = NULL;
+    DWORD i = 0;
 
     if (!ppAuthUserInfo || !*ppAuthUserInfo)
     {
@@ -91,7 +92,15 @@ LsaFreeAuthUserInfo(
     LW_SAFE_FREE_MEMORY(p->pszHomeDirectory);
     LW_SAFE_FREE_MEMORY(p->pszHomeDrive);
 
+    LW_SAFE_FREE_MEMORY(p->pszDomainSid);
+
     LW_SAFE_FREE_MEMORY(p->pRidAttribList);
+
+    for (i = 0; i < p->dwNumSids; i++)
+    {
+        LW_SAFE_FREE_MEMORY(p->pSidAttribList[i].pszSid);
+    }
+
     LW_SAFE_FREE_MEMORY(p->pSidAttribList);
 
 
