@@ -14,7 +14,7 @@ AM_CPPFLAGS = -DSCRIPTDIR=\"$(SCRIPTDIR)\" -DLIBDIR=\"$(libdir)\" -DSYSCONFDIR=\
 lib_LTLIBRARIES = libdomainjoin-mac.la
 
 libdomainjoin_mac_la_LIBADD = \
-	$(top_builddir)/libdomainjoin/src/libdomainjoin.la
+	$(top_builddir)/libdomainjoin/libdomainjoin.la
 
 libdomainjoin_mac_la_SOURCES = \
 	djitf.c \

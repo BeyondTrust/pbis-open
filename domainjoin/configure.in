@@ -530,7 +530,7 @@ m4_foreach([name], [[bindir], [libexecdir]], [dnl
 ])
 
 AC_CONFIG_FILES([Makefile
-                 libdomainjoin/src/Makefile
+                 libdomainjoin/Makefile
                  domainjoin-cli/src/Makefile
 		 domainjoin-gui/gtk/Makefile
 		 scripts/ConfigureLogin

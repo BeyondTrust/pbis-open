@@ -9,5 +9,5 @@ check_PROGRAMS = test_login_cfg
 
 test_login_cfg_SOURCES = main.c
 
-test_login_cfg_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la \
+test_login_cfg_LDADD = $(top_builddir)/libdomainjoin/libdomainjoin.la \
 		       $(CENTUTILS_LDFLAGS) $(CENTUTILS_LIBS)

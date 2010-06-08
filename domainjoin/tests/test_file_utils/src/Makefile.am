@@ -9,5 +9,5 @@ check_PROGRAMS = test_file_utils
 
 test_file_utils_SOURCES = main.c
 
-test_file_utils_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la \
+test_file_utils_LDADD = $(top_builddir)/libdomainjoin/libdomainjoin.la \
 		       $(CENTUTILS_LDFLAGS) $(CENTUTILS_LIBS)

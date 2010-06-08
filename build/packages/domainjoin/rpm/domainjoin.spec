@@ -47,6 +47,7 @@ rm ${RPM_BUILD_ROOT}/%{PrefixDir}/%{_lib}/*.la
 %{PrefixDir}/bin/domainjoin-cli
 /usr/bin/domainjoin-cli
 %{PrefixDir}/data/VERSION
+%{PrefixDir}/include/*
 
 
 %changelog

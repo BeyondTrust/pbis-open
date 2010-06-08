@@ -9,5 +9,5 @@ check_PROGRAMS = test_nsswitch_change
 
 test_nsswitch_change_SOURCES = main.c
 
-test_nsswitch_change_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la \
+test_nsswitch_change_LDADD = $(top_builddir)/libdomainjoin/libdomainjoin.la \
 		       $(CENTUTILS_LDFLAGS) $(CENTUTILS_LIBS)

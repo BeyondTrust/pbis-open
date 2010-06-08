@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4
 AUTOMAKE_OPTIONS=foreign
-SUBDIRS=libdomainjoin/src         \
+SUBDIRS=libdomainjoin         \
         domainjoin-cli/src        \
         tests
 

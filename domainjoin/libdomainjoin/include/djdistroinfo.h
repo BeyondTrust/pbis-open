@@ -31,6 +31,8 @@
 #ifndef __DJDISTROINFO_H__
 #define __DJDISTROINFO_H__
 
+#include <lw/types.h>
+
 typedef enum
 {
     OS_UNKNOWN,

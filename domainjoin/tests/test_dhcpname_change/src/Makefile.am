@@ -9,5 +9,5 @@ check_PROGRAMS = test_dhcpname_change
 
 test_dhcpname_change_SOURCES = main.c
 
-test_dhcpname_change_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la \
+test_dhcpname_change_LDADD = $(top_builddir)/libdomainjoin/libdomainjoin.la \
 		       $(CENTUTILS_LDFLAGS) $(CENTUTILS_LIBS)

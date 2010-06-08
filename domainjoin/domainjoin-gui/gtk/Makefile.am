@@ -16,4 +16,4 @@ bin_PROGRAMS = domainjoin-gtk
 domainjoin_gtk_SOURCES = common.c joindialog.c joinprogress.c \
        statusdialog.c joinauth.c joinerror.c main.c
 
-domainjoin_gtk_LDADD = $(top_builddir)/libdomainjoin/src/libdomainjoin.la $(GTK_LIBS)
+domainjoin_gtk_LDADD = $(top_builddir)/libdomainjoin/libdomainjoin.la $(GTK_LIBS)
