@@ -644,6 +644,9 @@ ServerEstablishContext(
     OutputDesc.ulVersion = SECBUFFER_VERSION;
     OutputDesc.pBuffers = &SendTokenBuffer;
 
+    printf("ASC flags requested (0x%08x):\n", AscFlags);
+    DumpAscReqFlags(AscFlags);
+
     do
     {
         dwError = RecvToken(nSocket, &RecvTokenBuffer);
@@ -686,12 +689,17 @@ ServerEstablishContext(
             printf("Context partially accepted...\n");
             DumpBuffer(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             DumpNtlmMessage(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
+            if (nRetFlags)
+            {
+                printf("ASC flags returned (0x%08x):\n", nRetFlags);
+                DumpAscRetFlags(nRetFlags);
+            }
             printf("\n");
         }
         else
         {
             printf("Context FULLY accepted!\n");
-            printf("Flags used:\n");
+            printf("ASC flags returned (0x%08x):\n", nRetFlags);
             DumpAscRetFlags(nRetFlags);
             printf("\n");
         }
