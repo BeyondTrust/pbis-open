@@ -1724,7 +1724,6 @@ LsaSrvModifyUser2(
                   dwError == LW_ERROR_NO_SUCH_USER) &&
                  !pszTargetProvider)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         } else
@@ -1889,7 +1888,6 @@ LsaSrvModifyGroup2(
              dwError == LW_ERROR_NO_SUCH_GROUP) &&
             !pszTargetProvider)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         }
@@ -1975,7 +1973,6 @@ LsaSrvDeleteObject(
                   dwError == LW_ERROR_NO_SUCH_GROUP) &&
                  !pszTargetProvider)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = (HANDLE)NULL;
         }
@@ -2043,7 +2040,6 @@ LsaSrvGetSmartCardUserObject(
         }
         else if (dwError == LW_ERROR_NOT_HANDLED)
         {
-            dwError = 0;
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
         }

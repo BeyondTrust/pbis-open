@@ -112,6 +112,7 @@ LsaSrvRefreshConfiguration(
         {
             LSA_LOG_ERROR("Refreshing provider %s failed.",
                           pProvider->pszName ? pProvider->pszName : "");
+            dwError = 0;
         }
 
         LsaSrvCloseProvider(pProvider, hProvider);
