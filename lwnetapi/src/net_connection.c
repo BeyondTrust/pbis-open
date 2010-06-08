@@ -667,12 +667,12 @@ NetDisconnectSamr(
     *ppConn = NULL;
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pConn->Rpc.Samr.pwszDomainName);
-    RTL_FREE(&pConn->Rpc.Samr.pDomainSid);
-    LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
-
     if (pConn)
     {
+        LW_SAFE_FREE_MEMORY(pConn->Rpc.Samr.pwszDomainName);
+        RTL_FREE(&pConn->Rpc.Samr.pDomainSid);
+        LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
+
         NetFreeMemory(pConn);
     }
 
@@ -719,10 +719,10 @@ NetDisconnectLsa(
     }
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
-
     if (pConn)
     {
+        LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
+
         NetFreeMemory(pConn);
     }
 
@@ -761,10 +761,10 @@ NetDisconnectWkssvc(
     }
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
-
     if (pConn)
     {
+        LW_SAFE_FREE_MEMORY(pConn->pwszHostname);
+
         NetFreeMemory(pConn);
     }
 
