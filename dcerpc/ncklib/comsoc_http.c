@@ -20,6 +20,7 @@
 #define HTTP_KEEPALIVE 300000
 #define HTTP_RECEIVE_WINDOW_SIZE 65536
 #define HTTP_PACKET_TYPE 20
+#define HTTP_FLAG_PING              0x1
 #define HTTP_COMMAND_VERSION        0x6
 #define HTTP_COMMAND_COOKIE         0x3
 #define HTTP_COMMAND_LIFETIME       0x4
@@ -446,6 +447,30 @@ rpc__http_format_packet_header(
         0); /* minor_ver */
 }
 
+
+INTERNAL
+inline
+size_t
+rpc__http_packet_size(
+    rpc_cn_common_hdr_p_t packet
+    )
+{
+    uint16_t result = 0;
+    int packet_order = ((packet->drep[0] >> 4) & 1);
+    int native_order = (NDR_LOCAL_INT_REP == ndr_c_int_big_endian) ? 0 : 1;
+    
+    if (packet_order != native_order)
+    {
+        result = SWAB_16(packet->frag_len);
+    }
+    else
+    {
+        result = packet->frag_len;
+    }
+    
+    return (size_t) result;
+}
+
 INTERNAL
 void
 rpc__http_format_int16(
@@ -481,6 +506,68 @@ rpc__http_format_uuid(
     memcpy(ptr + *offset, uuid, sizeof(*uuid));
     *offset += sizeof(*uuid);
 }
+
+INTERNAL
+int
+rpc__http_parse_int16(
+    unsigned char* ptr,
+    size_t* offset,
+    unsigned16* value
+    )
+{
+    size_t off = *offset;
+    rpc_cn_common_hdr_p_t hdr = (rpc_cn_common_hdr_p_t) ptr;
+
+    if (off + 2 > rpc__http_packet_size(hdr))
+    {
+        return EBADMSG;
+    }
+    
+    *offset += 2;
+
+    if ((hdr->drep[0] >> 4) & 1)
+    {
+        *value = ptr[off+1] << 8 | ptr[off];
+    }
+    else
+    {
+        *value = ptr[off] << 8 | ptr[off+1];
+    }
+
+    return 0;
+}
+
+#if 0
+INTERNAL
+int
+rpc__http_parse_int32(
+    unsigned char* ptr,
+    size_t* offset,
+    unsigned32* value
+    )
+{
+    size_t off = *offset;
+    rpc_cn_common_hdr_p_t hdr = (rpc_cn_common_hdr_p_t) ptr;
+
+    if (off + 4 > rpc__http_packet_size(hdr))
+    {
+        return EBADMSG;
+    }
+    
+    *offset += 4;
+
+    if ((hdr->drep[0] >> 4) & 1)
+    {
+        *value = ptr[off+3] << 24 | ptr[off+2] << 16 | ptr[off+1] << 8 | ptr[off];
+    }
+    else
+    {
+        *value = ptr[off] << 24 | ptr[off+1] << 16 | ptr[off+2] << 8 | ptr[off+3];
+    }
+
+    return 0;
+}
+#endif
 
 INTERNAL
 void
@@ -565,6 +652,31 @@ rpc__http_format_outbound_packet(
     /* Write receive window size */
     rpc__http_format_int32(buffer, &offset, HTTP_COMMAND_RECEIVE_WINDOW);
     rpc__http_format_int32(buffer, &offset, HTTP_RECEIVE_WINDOW_SIZE);
+
+    /* Format header */
+    rpc__http_format_packet_header(hdr, offset);
+
+    *len = offset;
+}
+
+INTERNAL
+void
+rpc__http_format_ping_response_packet(
+    rpc_http_socket_p_t sock,
+    unsigned char* buffer,
+    size_t* len
+    )
+{
+    rpc_cn_common_hdr_p_t hdr = (rpc_cn_common_hdr_p_t) buffer;
+    size_t offset = 0;
+
+    offset += sizeof(*hdr);
+
+    /* Write flags field */
+    rpc__http_format_int16(buffer, &offset, HTTP_FLAG_PING);
+
+    /* Write number of commands */
+    rpc__http_format_int16(buffer, &offset, 0);
 
     /* Format header */
     rpc__http_format_packet_header(hdr, offset);
@@ -715,6 +827,38 @@ error:
 }
 
 INTERNAL
+int
+rpc__http_send_ping_response(
+    rpc_http_socket_p_t sock
+    )
+{
+    int serr = 0;
+    union
+    {
+        rpc_cn_common_hdr_t hdr;
+        unsigned char buffer[HTTP_FRAG_SIZE];
+    } u;
+    size_t len = sizeof(u);
+
+    rpc__http_format_ping_response_packet(sock, u.buffer, &len);
+
+    HTTP_SOCKET_LOCK_SEND(sock);
+
+    serr = rpc__http_raw_send(sock->send, u.buffer, len);
+    if (serr)
+    {
+        goto error;
+    }
+
+error:
+
+    HTTP_SOCKET_UNLOCK_SEND(sock);
+
+    return serr;
+}
+
+
+INTERNAL
 inline
 size_t
 rpc__http_recv_packet_size(
@@ -722,7 +866,6 @@ rpc__http_recv_packet_size(
     )
 {
     rpc_cn_common_hdr_p_t packet = (rpc_cn_common_hdr_p_t) sock->recv_buffer;
-    uint16_t result = 0;
 
     if (sock->recv_buffer_used < sizeof(*packet))
     {
@@ -730,19 +873,7 @@ rpc__http_recv_packet_size(
     }
     else
     {
-        int packet_order = ((packet->drep[0] >> 4) & 1);
-        int native_order = (NDR_LOCAL_INT_REP == ndr_c_int_big_endian) ? 0 : 1;
-
-        if (packet_order != native_order)
-        {
-            result = SWAB_16(packet->frag_len);
-        }
-        else
-        {
-            result = packet->frag_len;
-        }
-
-        return (size_t) result;
+        return rpc__http_packet_size(packet);
     }
 }
 
@@ -1188,6 +1319,38 @@ rpc__http_socket_recvfrom(
 }
 
 INTERNAL
+int
+rpc__http_handle_proxy_packet(
+    rpc_http_socket_p_t http
+    )
+{
+    int serr = -1;
+    size_t offset = sizeof(rpc_cn_common_hdr_t);
+    unsigned16 flags = 0;
+    unsigned16 commands = 0;
+    unsigned char* packet = http->recv_buffer;
+    
+    serr = rpc__http_parse_int16(packet, &offset, &flags);
+    if (serr) goto error;
+
+    serr = rpc__http_parse_int16(packet, &offset, &commands);
+    if (serr) goto error;
+
+    if (commands == 0)
+    {
+        if (flags & HTTP_FLAG_PING)
+        {
+            serr = rpc__http_send_ping_response(http);
+            if (serr) goto error;
+        }
+    }
+    
+error:
+
+    return serr;
+}
+
+INTERNAL
 rpc_socket_error_t
 rpc__http_socket_recvmsg(
     rpc_socket_t sock,
@@ -1241,7 +1404,11 @@ rpc__http_socket_recvmsg(
         /* If we have a proxy PDU, handle it */
         else if (rpc__http_recv_packet_type(http) == HTTP_PACKET_TYPE)
         {
-            /* FIXME: do something with proxy packets */
+            serr = rpc__http_handle_proxy_packet(http);
+            if (serr)
+            {
+                goto error;
+            }
             rpc_http_clear_recv_packet(http);
         }
     }

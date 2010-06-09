@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 struct
 {
@@ -17,6 +18,8 @@ struct
     char* cert_type;
     char* ca_file;
     char* server;
+    unsigned int loop;
+    unsigned int sleep;
 } global =
 {
     .use_tls = FALSE,
@@ -25,7 +28,9 @@ struct
     .cert = NULL,
     .cert_type = NULL,
     .ca_file = NULL,
-    .server = NULL
+    .server = NULL,
+    .loop = 1,
+    .sleep = 0
 };
 
 static
@@ -63,6 +68,14 @@ parse_args(
         {
             global.ca_file = argv[++i];
         }
+        else if (!strcmp(argv[i], "--loop"))
+        {
+            global.loop = atoi(argv[++i]);
+        }
+        else if (!strcmp(argv[i], "--sleep"))
+        {
+            global.sleep = atoi(argv[++i]);
+        }
         else
         {
             global.server = argv[i];
@@ -83,6 +96,7 @@ main(
     rpc_stats_vector_t* stats = NULL;
     unsigned32 status = 0;
     unsigned32 i = 0;
+    unsigned32 j = 0;
     rpc_transport_info_handle_t info = NULL;
 
     status = parse_args(argc, argv);
@@ -135,20 +149,25 @@ main(
         goto error;
     }
 
-    rpc_mgmt_inq_stats(
-        binding,
-        &stats,
-        &status);
-
-    if (status)
+    for (i = 0; i < global.loop; i++)
     {
-        goto error;
-    }
+        rpc_mgmt_inq_stats(
+            binding,
+            &stats,
+            &status);
+        
+        if (status)
+        {
+            goto error;
+        }
+        
+        printf("Statistics: %u\n", stats->count);
+        for (j = 0; j < stats->count; j++)
+        {
+            printf("  [%u] = %u\n", j, stats->stats[j]);
+        }
 
-    printf("Statistics: %u\n", stats->count);
-    for (i = 0; i < stats->count; i++)
-    {
-        printf("  [%u] = %u\n", i, stats->stats[i]);
+        sleep(global.sleep);
     }
 
 cleanup:
