@@ -6,7 +6,7 @@ COMP_SOURCES="${BUILD_ROOT}/src/linux/openssl"
 
 function component_bootstrap
 {
-    echo "Nothing to bootstrap for libcrypto"
+    echo "Nothing to bootstrap for openssl"
 }
 
 function component_gather
@@ -77,14 +77,14 @@ function component_build
     else
         SHARED_LDFLAGS="-dynamiclib ${LDFLAGS}"
     fi
-    ${MAKE} DIRS="crypto" SHARED_LDFLAGS="$SHARED_LDFLAGS" all
+    ${MAKE} SHARED_LDFLAGS="$SHARED_LDFLAGS" all
 }
 
 function component_stage
 {
     _setup_build_env
 
-    ${MAKE} INSTALL_PREFIX="${STAGING_ROOT_DIR}" DIRS="crypto" install_sw
+    ${MAKE} INSTALL_PREFIX="${STAGING_ROOT_DIR}" install_sw
 
     if [ -z "$IS_COMPAT" ]; then
        if [ -d ${STAGING_PREFIX_DIR}/lib ]; then
@@ -96,18 +96,12 @@ function component_stage
        fi
     fi
 
-    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/libssl.so
-    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/pkgconfig/libssl.pc
-    /bin/rm -f ${STAGING_PREFIX_DIR}/${_lib}/pkgconfig/openssl.pc
-    /bin/rm -rf ${STAGING_PREFIX_DIR}/${_lib}/engines
-    /bin/rm -rf ${STAGING_PREFIX_DIR}/ssl
-
     libtool_rewrite_staging
 }
 
 function component_populate
 {
-    COMP_NAME=libcrypto
+    COMP_NAME=openssl
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 

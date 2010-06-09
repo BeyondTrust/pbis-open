@@ -3,7 +3,7 @@
 COMP_NEED_COMPAT=1
 COMP_NEED_FOREIGN=1
 COMP_INCREMENTAL=1
-COMP_DEPENDENCIES="autoconf automake libtool sqlite netlogon pstore libcrypto libuuid eventlog lwdns lwmsg lwbase lwio dcerpc lwadvapi lwreg"
+COMP_DEPENDENCIES="autoconf automake libtool sqlite netlogon pstore openssl libuuid eventlog lwdns lwmsg lwbase lwio dcerpc lwadvapi lwreg"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/lsass
 
 

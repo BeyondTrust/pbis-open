@@ -7,7 +7,7 @@
 COMP_VERSION="1.7"
 COMP_RELEASE="0"
 COMP_NEED_COMPAT=1
-COMP_DEPENDENCIES="autoconf libtool libcrypto"
+COMP_DEPENDENCIES="autoconf libtool openssl"
 SRC_DIR=${BUILD_ROOT}/src/linux/krb5
 COMP_SOURCES=$SRC_DIR
 
