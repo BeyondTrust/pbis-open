@@ -216,6 +216,7 @@ void rpc__cn_init_func(void);
 void rpc__dg_init_func(void);
 void rpc__ip_naf_init_func(void);
 void rpc__np_naf_init_func(void);
+void rpc__http_naf_init_func(void);
 void rpc__gssauth_init_func(void);
 void rpc__schnauth_init_func(void);
 
@@ -232,6 +233,9 @@ static void (*rpc__g_static_modules[])(void) =
 #endif
 #ifdef ENABLE_NAF_NP
     rpc__np_naf_init_func,
+#endif
+#ifdef ENABLE_NAF_HTTP
+    rpc__http_naf_init_func,
 #endif
 #ifdef ENABLE_AUTH_GSS_NEGOTIATE
     rpc__gssauth_init_func,

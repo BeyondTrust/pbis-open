@@ -872,6 +872,9 @@ rpc_naf_id_elt_p_t      naf;
     
     if (naf->naf_id == 0)
         return (false);
+    else if (naf->naf_id >= RPC_C_NAF_ID_VIRTUAL)
+        /* NAF id is not known by OS, so assume it is supported */
+        return (true);
     
     socket_error = rpc__socket_open_basic
         (naf->naf_id, naf->network_if_id, 0, &socket);
@@ -940,6 +943,11 @@ rpc_network_protocol_id_t network_protocol;
 {
     rpc_socket_basic_t            socket;
     rpc_socket_error_t      socket_error;
+
+    if (naf >= RPC_C_NAF_ID_VIRTUAL)
+    {
+        return (true);
+    }
 
     socket_error = rpc__socket_open_basic
         (naf, network_if, network_protocol, &socket);

@@ -406,6 +406,14 @@ fi
 
 AM_CONDITIONAL(NAF_NP, test x${rpc_arg_afnp} = xyes)
 
+RPC_ARG_DEFINE(afhttp, NAF_HTTP,yes,HTTP network address family support)
+if test x"$rpc_arg_afhttp" = xyes
+then
+	AC_DEFINE([ENABLE_NAF_HTTP], [], [HTTP address family support])
+fi
+
+AM_CONDITIONAL(NAF_HTTP, test x${rpc_arg_afhttp} = xyes)
+
 RPC_ARG_DEFINE(afuxd, NAF_UXD,no,AF_LOCAL network address family support (untested))
 AM_CONDITIONAL(NAF_UXD, test x${rpc_arg_afuxd} = xyes)
 
@@ -535,5 +543,6 @@ demos/echo_number/Makefile
 demos/echo_union/Makefile
 demos/samr_test/Makefile
 demos/access/Makefile
+demos/rpcping/Makefile
 perf/Makefile
 )

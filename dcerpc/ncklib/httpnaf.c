@@ -1,3 +1,32 @@
+/* ex: set shiftwidth=4 expandtab: */
+/*
+ * Copyright (c) 2007, Novell, Inc.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Novell, Inc. nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * 
  * (c) Copyright 1989 OPEN SOFTWARE FOUNDATION, INC.
@@ -24,7 +53,7 @@
 **
 **  NAME
 **
-**      ipnaf.c
+**      httpnaf.c
 **
 **  FACILITY:
 **
@@ -45,15 +74,12 @@
 #include <commonp.h>
 #include <com.h>
 #include <comnaf.h>
-#include <ipnaf.h>
-#include <comsoc_bsd.h>
-
-#undef __USE_GNU
-
-#ifndef DO_NOT_ALLOW_HOSTNAMES
-#  include <netdb.h>
-#endif
-
+#include <httpnaf.h>
+#include <comsoc_http.h>
+#include <ctype.h>
+#include <sys/param.h>
+#include <syslog.h>
+#include <stddef.h>
 
 
 /***********************************************************************
@@ -61,25 +87,14 @@
  *  Macros for sprint/scanf substitutes.
  */
 
-#ifndef NO_SSCANF
-#  define RPC__IP_ENDPOINT_SSCANF   sscanf
-#else
-#  define RPC__IP_ENDPOINT_SSCANF   rpc__ip_endpoint_sscanf
-#endif
-
-#ifndef NO_SPRINTF
-#  define RPC__IP_ENDPOINT_SPRINTF  sprintf
-#  define RPC__IP_NETWORK_SPRINTF   sprintf
-#else
-#  define RPC__IP_ENDPOINT_SPRINTF  rpc__ip_endpoint_sprintf
-#  define RPC__IP_NETWORK_SPRINTF   rpc__ip_network_sprintf
-#endif
-
 
 /***********************************************************************
  *
  *  Routine Prototypes for the Internet Extension service routines.
  */
+
+#define MAX_FRAG_SIZE 8192
+#define RPC_NO_TOWER_SUPPORT
 
 INTERNAL void addr_alloc _DCE_PROTOTYPE_ ((
         rpc_protseq_id_t             /*rpc_protseq_id*/,
@@ -224,18 +239,17 @@ INTERNAL void inq_max_frag_size _DCE_PROTOTYPE_ ((
         unsigned32                  * /*status*/
     ));
 
-
 
 /*
 **++
 **
-**  ROUTINE NAME:       rpc__ip_init
+**  ROUTINE NAME:       rpc__http_init
 **
-**  SCOPE:              PRIVATE - EPV declared in ipnaf.h
+**  SCOPE:              PRIVATE - EPV declared in httpnaf.h
 **
 **  DESCRIPTION:
 **      
-**  Internet Address Family Initialization routine, rpc__ip_init, is
+**  Named Pipe Family Initialization routine, rpc__http_init, is
 **  calld only once, by the Communications Service initialization
 **  procedure,  at the time RPC is initialized.  If the Communications
 **  Service initialization determines that the Internet protocol
@@ -252,7 +266,7 @@ INTERNAL void inq_max_frag_size _DCE_PROTOTYPE_ ((
 **
 **      naf_epv         The address of a pointer in the Network Address Family
 **                      Table whre the pointer to the Entry Point Vectorto
-**                      the IP service routines is inserted by this routine.
+**                      the HTTP service routines is inserted by this routine.
 **
 **  OUTPUTS:
 **
@@ -273,70 +287,52 @@ INTERNAL void inq_max_frag_size _DCE_PROTOTYPE_ ((
 **--
 **/
 
+#if !NAF_HTTP_STATIC
 #include <comp.h>
-PRIVATE void rpc__ip_naf_init_func(void)
+PRIVATE void rpc__http_naf_init_func(void)
 {
     static rpc_naf_id_elt_t naf[1] = {
         {
-            rpc__ip_init,
-            RPC_C_NAF_ID_IP,
-            RPC_C_NETWORK_IF_ID_DGRAM,
+            rpc__http_init,
+            RPC_C_NAF_ID_HTTP,
+            RPC_C_NETWORK_IF_ID_STREAM,
             NULL
         }
     };
-
-    static rpc_tower_prot_ids_t prot_ids[2] = {
-        { RPC_C_PROTSEQ_ID_NCADG_IP_UDP,   3, 
-          { {0x0A,   { 0, 0, 0, 0, 0, {0} }}, /* DG */
-            {0x08,   { 0, 0, 0, 0, 0, {0} }}, /* port */
-            {0x09,   { 0, 0, 0, 0, 0, {0} }}, /* IP addr */
-            {0x00,   { 0, 0, 0, 0, 0, {0} }}
-          } 
-        },
-        
-        { RPC_C_PROTSEQ_ID_NCACN_IP_TCP,   3, 
+    
+    static rpc_tower_prot_ids_t prot_ids[1] = {
+        { RPC_C_PROTSEQ_ID_NCACN_HTTP,   3, 
           { {0x0B,   { 0, 0, 0, 0, 0, {0} }}, /* CN */
-            {0x07,   { 0, 0, 0, 0, 0, {0} }}, /* port */
-            {0x09,   { 0, 0, 0, 0, 0, {0} }}, /* IP addr */
+            {0x11,   { 0, 0, 0, 0, 0, {0} }}, /* server */
+            {0x11,   { 0, 0, 0, 0, 0, {0} }}, /* rpc proxy */
             {0x00,   { 0, 0, 0, 0, 0, {0} }} 
           }
         }
     };
 
-    static rpc_protseq_id_elt_t seq_ids[2] = 
+    static rpc_protseq_id_elt_t seq_ids[1] = 
     {
-        {                                   /* Connection-RPC / IP / TCP */
-            0,
-            1, /* Uses endpoint mapper */
-            RPC_C_PROTSEQ_ID_NCACN_IP_TCP,
+        {                                   /* Connection-RPC / IP / TCP / HTTP */
+            1,
+            0, /* Does not uses endpoint mapper */
+            RPC_C_PROTSEQ_ID_NCACN_HTTP,
             RPC_C_PROTOCOL_ID_NCACN,
-            RPC_C_NAF_ID_IP,
-            RPC_C_NETWORK_PROTOCOL_ID_TCP,
+            RPC_C_NAF_ID_HTTP,
+            RPC_C_NETWORK_PROTOCOL_ID_HTTP,
             RPC_C_NETWORK_IF_ID_STREAM,
-            RPC_PROTSEQ_NCACN_IP_TCP,
+            RPC_PROTSEQ_NCACN_HTTP,
             (rpc_port_restriction_list_p_t) NULL,
-            &rpc_g_bsd_socket_vtbl
-        },
-        {                                   /* Datagram-RPC / IP / UDP */
-            0,
-            1, /* Uses endpoint mapper */
-            RPC_C_PROTSEQ_ID_NCADG_IP_UDP,
-            RPC_C_PROTOCOL_ID_NCADG,
-            RPC_C_NAF_ID_IP,
-            RPC_C_NETWORK_PROTOCOL_ID_UDP,
-            RPC_C_NETWORK_IF_ID_DGRAM,
-            RPC_PROTSEQ_NCADG_IP_UDP,
-            (rpc_port_restriction_list_p_t) NULL,
-            &rpc_g_bsd_socket_vtbl
+            &rpc_g_http_socket_vtbl
         }
     };
-    
-    rpc__register_protseq(seq_ids, 2);
-    rpc__register_tower_prot_id(prot_ids, 2);
+
+    rpc__register_protseq(seq_ids, 1);
+    rpc__register_tower_prot_id(prot_ids, 1);
     rpc__register_naf_id(naf, 1);
 }
+#endif
 
-PRIVATE void  rpc__ip_init 
+PRIVATE void  rpc__http_init 
 #ifdef _DCE_PROTO_
 (
     rpc_naf_epv_p_t         *naf_epv,
@@ -351,12 +347,12 @@ unsigned32              *status;
     /*  
      * The Internal Entry Point Vectors for the Internet Protocol Family
      * Extension service routines.  At RPC startup time, the IP init routine,
-     * rpc__ip_init, is responsible for inserting  a pointer to this EPV into
+     * rpc__http_init, is responsible for inserting  a pointer to this EPV into
      * the  Network Address Family Table.  Afterward,  all calls to the IP
      * Extension  Service are vectored through these  EPVs.
      */
 
-    static rpc_naf_epv_t rpc_ip_epv =
+    static rpc_naf_epv_t rpc_http_epv =
     {
         addr_alloc,
         addr_copy,
@@ -367,10 +363,10 @@ unsigned32              *status;
         addr_inq_netaddr,
         addr_set_options,
         addr_inq_options,
-        rpc__ip_desc_inq_addr,
+        rpc__http_desc_inq_addr,
         desc_inq_network,
         inq_max_tsdu,
-        rpc__ip_get_broadcast,
+        rpc__http_get_broadcast,
         addr_compare,
         inq_max_pth_unfrag_tpdu,
         inq_max_loc_unfrag_tpdu,
@@ -385,12 +381,12 @@ unsigned32              *status;
     };      
     unsigned32 lstatus;
 
-    rpc__ip_init_local_addr_vec (&lstatus);
+    rpc__http_init_local_addr_vec (&lstatus);
 
     /*
      * place the address of EPV into Network Address Family Table
      */
-    *naf_epv = &rpc_ip_epv;
+    *naf_epv = &rpc_http_epv;
 
     *status = rpc_s_ok;
 }
@@ -405,12 +401,12 @@ unsigned32              *status;
 **  DESCRIPTION:
 **      
 **  Create a copy of an RPC address. Allocate memory for a variable
-**  length RPC address, for the IP service.  Insert the Internet
+**  length RPC address, for the HTTP service.  Insert the Internet
 **  address and endpoint along with the overall length of the allocated
 **  memory, together with any additional parameters required by the IP
 **  service.
 **
-**  INPUTS:
+**  IHTTPUTS:
 **
 **      rpc_protseq_id  Protocol Sequence ID representing an IP Network
 **                      Address Family, its Transport Protocol, and type.
@@ -425,7 +421,7 @@ unsigned32              *status;
 **                      address to be inserted in RPC addr.
 **
 **      network_options String containing options to be placed in
-**                      RPC address.  - Not used by IP service.
+**                      RPC address.  - Not used by HTTP service.
 **
 **  INPUTS/OUTPUTS:
 **
@@ -486,7 +482,7 @@ unsigned32              *status;
     RPC_MEM_ALLOC (
         *rpc_addr,
         rpc_addr_p_t,
-        sizeof (rpc_ip_addr_t),
+        sizeof (rpc_http_addr_t),
         RPC_C_MEM_RPC_ADDR,
         RPC_C_MEM_WAITOK);
 
@@ -499,17 +495,15 @@ unsigned32              *status;
     /*
      * zero allocated memory
      */
-    /* b_z_e_r_o ((unsigned8 *) *rpc_addr, sizeof (rpc_ip_addr_t));*/
-
-    memset( *rpc_addr, 0, sizeof (rpc_ip_addr_t));
+    memset( *rpc_addr, 0, sizeof (rpc_http_addr_t));
 
     /*
      * insert id, length, family into rpc address
      */
     (*rpc_addr)->rpc_protseq_id = rpc_protseq_id;
-    (*rpc_addr)->len = sizeof (struct sockaddr_in);
+    (*rpc_addr)->len = sizeof (struct sockaddr);
     (*rpc_addr)->sa.family = naf_id;
-    
+
     /*
      * set the endpoint in the RPC addr
      */
@@ -598,7 +592,7 @@ unsigned32              *status;
     /*
      * if the source RPC address looks valid - IP family ok
      */
-    if (src_rpc_addr->sa.family == RPC_C_NAF_ID_IP)
+    if (src_rpc_addr->sa.family == RPC_C_NAF_ID_HTTP)
     {
         /*
          * allocate memory for the new RPC address
@@ -606,7 +600,7 @@ unsigned32              *status;
         RPC_MEM_ALLOC (
             *dst_rpc_addr,
             rpc_addr_p_t,
-            sizeof (rpc_ip_addr_t),
+            sizeof (rpc_http_addr_t),
             RPC_C_MEM_RPC_ADDR,
             RPC_C_MEM_WAITOK);
 
@@ -620,9 +614,9 @@ unsigned32              *status;
          * Copy source rpc address to destination rpc address
          */
         /* b_c_o_p_y ((unsigned8 *) src_rpc_addr, (unsigned8 *) *dst_rpc_addr,
-                sizeof (rpc_ip_addr_t));*/
+                sizeof (rpc_http_addr_t));*/
 
-        memmove( *dst_rpc_addr, src_rpc_addr, sizeof (rpc_ip_addr_t));
+        memmove( *dst_rpc_addr, src_rpc_addr, sizeof (rpc_http_addr_t));
 
 
         *status = rpc_s_ok;
@@ -762,11 +756,8 @@ rpc_addr_p_t            *rpc_addr;
 unsigned32              *status;
 #endif
 {
-    rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) *rpc_addr;
-    int                 ep;
-    int                 ret;
-
-    
+    rpc_http_addr_p_t   http_addr = (rpc_http_addr_p_t) *rpc_addr;
+ 
     CODING_ERROR (status);
     
     /*
@@ -774,31 +765,12 @@ unsigned32              *status;
      */
     if (endpoint == NULL || strlen ((char *) endpoint) == 0)
     {
-        ip_addr->sa.sin_port = 0;
+        http_addr->endpoint = 0;
         *status = rpc_s_ok;
         return;
     }
 
-    if ((strspn ((char *)endpoint, "0123456789")) 
-         != (strlen ((char *)endpoint)))
-    {
-        *status = rpc_s_invalid_endpoint_format;
-        return;
-    }
-
-    /*
-     * convert the endpoint string to network format
-     * and insert in RPC address
-     */
-
-    ret = RPC__IP_ENDPOINT_SSCANF((char *) endpoint, "%d", &ep);
-    if (ret != 1)
-    {
-        *status = rpc_s_invalid_endpoint_format;
-        return;
-    }
-
-    ip_addr->sa.sin_port = htons (ep);
+    http_addr->endpoint = atoi((char*) endpoint);
 
     *status = rpc_s_ok;
 }
@@ -868,23 +840,12 @@ unsigned_char_t         **endpoint;
 unsigned32              *status;
 #endif
 {
-#define     RPC_C_ENDPOINT_IP_MAX   6   /* 5 ascii digits + nul */
-    rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) rpc_addr;
-    unsigned16          ep;
-
+    rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) rpc_addr;
+    static const unsigned int max_endpoint_len = 6;
 
     CODING_ERROR (status);
 
-    /*
-     * convert endpoint to local platform byte order format
-     */
-    ep = ntohs (ip_addr->sa.sin_port);
-
-    /*
-     * if no endpoint present, return null string. Otherwise,
-     * return the endpoint in Internet "dot" notation.
-     */    
-    if (ep  ==  0)
+    if (http_addr->endpoint == 0)
     {
         RPC_MEM_ALLOC(
             *endpoint,
@@ -892,17 +853,18 @@ unsigned32              *status;
             sizeof(unsigned32),     /* can't stand to get just 1 byte */
             RPC_C_MEM_STRING,
             RPC_C_MEM_WAITOK);
-        *endpoint[0] = 0;
+        (*endpoint)[0] = 0;
     }
     else
     {
         RPC_MEM_ALLOC(
             *endpoint,
             unsigned_char_p_t,
-            RPC_C_ENDPOINT_IP_MAX,
+            max_endpoint_len,
             RPC_C_MEM_STRING,
             RPC_C_MEM_WAITOK);
-        RPC__IP_ENDPOINT_SPRINTF((char *) *endpoint, "%u", ep);
+
+        snprintf((char*) *endpoint, max_endpoint_len, "%u", http_addr->endpoint);
     }
 
     *status = rpc_s_ok;    
@@ -966,18 +928,7 @@ rpc_addr_p_t            *rpc_addr;
 unsigned32              *status;
 #endif
 {
-    rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) *rpc_addr;
-    boolean             numeric;
-#if (GETHOSTBYNAME_R_ARGS - 0) == 3
-#define he (&hbuf)
-    ATTRIBUTE_UNUSED struct hostent      hbuf;
-    ATTRIBUTE_UNUSED struct hostent_data hdbuf;
-#else
-    ATTRIBUTE_UNUSED struct hostent      *he;
-    ATTRIBUTE_UNUSED struct hostent      hbuf;
-    ATTRIBUTE_UNUSED char                buf[1024];
-    ATTRIBUTE_UNUSED int                 herr;
-#endif /* GETHOSTBYNAME_R_ARGS == 3 */
+    rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) *rpc_addr;
 
     CODING_ERROR (status);  
 
@@ -986,60 +937,12 @@ unsigned32              *status;
      */
     if (netaddr == NULL || strlen ((char *) netaddr) == 0)
     {
-        ip_addr->sa.sin_addr.s_addr = 0;
+        http_addr->server[0] = '\0';
         *status = rpc_s_ok;
         return;
     }
 
-    /*
-     * See if there's a leading "#" -- means numeric address must follow.
-     * Note we accept numeric addresses withOUT the "#" too.
-     */
-    numeric = (netaddr[0] == '#');
-    if (numeric)
-        netaddr++;
-
-    /*
-     * convert Internet dot notation address to network address
-     * formatted unsigned32 - check for validity
-     */
-    ip_addr->sa.sin_addr.s_addr = inet_addr ((char*) netaddr);
-    if (ip_addr->sa.sin_addr.s_addr != (unsigned)-1)
-    {
-        *status = rpc_s_ok;
-        return;
-    }
-
-    if (numeric)
-    {
-        *status = rpc_s_inval_net_addr;
-        return;
-    }
-
-#if (GETHOSTBYNAME_R_ARGS - 0) == 6
-    if (gethostbyname_r((char *)netaddr, &hbuf,
-                        buf, sizeof(buf), &he, &herr) != 0)
-#elif (GETHOSTBYNAME_R_ARGS - 0) == 5
-    if ((he = gethostbyname_r((char *)netaddr, &hbuf, buf,
-                              sizeof(buf), &herr)) == NULL)
-#elif (GETHOSTBYNAME_R_ARGS - 0) == 3
-    if (gethostbyname_r((char *)netaddr, &hbuf, &hdbuf) != 0)
-#else
-    /* As a last resort, fall back on gethostbyname */
-    if((he = gethostbyname((char *)netaddr)) == NULL)
-#endif /* GETHOSTBYNAME_R_ARGS */
-    {
-        *status = rpc_s_inval_net_addr;
-        return;
-    }
-
-    if (he == NULL)
-    {
-        *status = rpc_s_inval_net_addr;
-        return;
-    }
-
-    ip_addr->sa.sin_addr.s_addr = * (unsigned32 *) he->h_addr;
+    strncpy((char*) &http_addr->server, (char*) netaddr, sizeof(http_addr->server));
 
     *status = rpc_s_ok;
 }
@@ -1091,42 +994,38 @@ INTERNAL void addr_inq_netaddr
 #ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr,
-    unsigned_char_t         **netaddr,
+    unsigned_char_t         **p_netaddr,
     unsigned32              *status
 )
 #else
 (rpc_addr, netaddr, status)
 rpc_addr_p_t            rpc_addr;
-unsigned_char_t         **netaddr;
+unsigned_char_t         **p_netaddr;
 unsigned32              *status;
 #endif
 {
-#define NA_SIZE 16      /* big enough for 255.255.255.255 */
+    rpc_http_addr_p_t     http_addr = (rpc_http_addr_p_t) rpc_addr;
+    unsigned_char_p_t netaddr;
+    size_t addr_length = 0;
 
-    rpc_ip_addr_p_t     ip_addr = (rpc_ip_addr_p_t) rpc_addr;
-    unsigned8           *p;
-    
-    
     CODING_ERROR (status);
-    
+
+    addr_length = strlen(http_addr->server);
+
     RPC_MEM_ALLOC(
-        *netaddr,
+        *p_netaddr,
         unsigned_char_p_t,
-        NA_SIZE,
+        addr_length + 1,
         RPC_C_MEM_STRING,
         RPC_C_MEM_WAITOK);
+    if (*p_netaddr == NULL) {
+        *status = rpc_s_no_memory;
+        return;
+    }
+    netaddr = *p_netaddr;
 
-    /*
-     * get an unsigned8 pointer to IP address - network format
-     */
-    p = (unsigned8 *) &(ip_addr->sa.sin_addr.s_addr);
-
-    /*
-     * convert IP address to IP dot notation string - (eg, 16.0.0.4)
-     * placed in buffer indicated by arg.netaddr.
-     */
-    RPC__IP_NETWORK_SPRINTF((char *) *netaddr, "%d.%d.%d.%d",
-        UC(p[0]), UC(p[1]), UC(p[2]), UC(p[3]));
+    memcpy(netaddr, http_addr->server, addr_length);
+    netaddr[addr_length] = 0;
 
     *status = rpc_s_ok;
 }
@@ -1143,7 +1042,7 @@ unsigned32              *status;
 **     Receive a NULL terminated network options string and insert
 **     into the RPC address indicated by art., rpc_addr.
 **
-**      NOTE - there are no options used with the IP service this
+**      NOTE - there are no options used with the HTTP service this
 **             routine is here only to serve as a stub.
 **
 **  INPUTS:
@@ -1203,7 +1102,7 @@ unsigned32              *status;
 **      by rpc_addr and convert to a NULL terminated string placed
 **      in a buffer indicated by the options arg.
 **
-**      NOTE - there are no options used with the IP service this
+**      NOTE - there are no options used with the HTTP service this
 **             routine is here only to serve as a stub.
 **
 **  INPUTS:
@@ -1300,8 +1199,8 @@ INTERNAL void inq_max_tsdu
 #ifdef _DCE_PROTO_
 (
     rpc_naf_id_t            naf_id ATTRIBUTE_UNUSED,
-    rpc_network_if_id_t     iftype,
-    rpc_network_protocol_id_t protocol,
+    rpc_network_if_id_t     iftype ATTRIBUTE_UNUSED,
+    rpc_network_protocol_id_t protocol ATTRIBUTE_UNUSED,
     unsigned32              *max_tsdu,
     unsigned32              *status
 )
@@ -1314,23 +1213,7 @@ unsigned32              *max_tsdu;
 unsigned32              *status;
 #endif
 {
-    if (iftype == RPC_C_NETWORK_IF_ID_DGRAM &&
-        protocol == RPC_C_NETWORK_PROTOCOL_ID_UDP)    
-    {
-        *max_tsdu = RPC_C_IP_UDP_MAX_TSDU;
-    }
-    else
-    {
-        assert(false);      /* !!! */
-    }
-
-#ifdef DEBUG
-    if (RPC_DBG (rpc_es_dbg_ip_max_tsdu, 1))
-    {
-        *max_tsdu = ((unsigned32)
-            (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_tsdu])) * 1024;
-    }
-#endif
+    *max_tsdu = MAX_FRAG_SIZE;
 
     *status = rpc_s_ok;
 }
@@ -1384,20 +1267,11 @@ rpc_addr_p_t            addr1, addr2;
 unsigned32              *status;
 #endif
 {
-    rpc_ip_addr_p_t     ip_addr1 = (rpc_ip_addr_p_t) addr1;
-    rpc_ip_addr_p_t     ip_addr2 = (rpc_ip_addr_p_t) addr2;
+    rpc_http_addr_p_t     http_addr1 = (rpc_http_addr_p_t) addr1;
+    rpc_http_addr_p_t     http_addr2 = (rpc_http_addr_p_t) addr2;
 
-    if (ip_addr1->sa.sin_family == ip_addr2->sa.sin_family &&
-        ip_addr1->sa.sin_port == ip_addr2->sa.sin_port &&
-        ip_addr1->sa.sin_addr.s_addr == ip_addr2->sa.sin_addr.s_addr &&
-        ip_addr1->sa.sin_addr.s_addr == ip_addr2->sa.sin_addr.s_addr)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return (!strncmp(http_addr1->server, http_addr2->server, sizeof(http_addr1->server)) &&
+            !strncmp(http_addr1->rpc_proxy, http_addr2->rpc_proxy, sizeof(http_addr1->rpc_proxy)));
 }
 
 
@@ -1442,8 +1316,8 @@ INTERNAL void inq_max_pth_unfrag_tpdu
 #ifdef _DCE_PROTO_
 (
     rpc_addr_p_t            rpc_addr ATTRIBUTE_UNUSED,
-    rpc_network_if_id_t     iftype,
-    rpc_network_protocol_id_t protocol,
+    rpc_network_if_id_t     iftype ATTRIBUTE_UNUSED,
+    rpc_network_protocol_id_t protocol ATTRIBUTE_UNUSED,
     unsigned32              *max_tpdu,
     unsigned32              *status
 )
@@ -1456,23 +1330,7 @@ unsigned32              *max_tpdu;
 unsigned32              *status;
 #endif
 {
-    if (iftype == RPC_C_NETWORK_IF_ID_DGRAM &&
-        protocol == RPC_C_NETWORK_PROTOCOL_ID_UDP)    
-    {
-        *max_tpdu = RPC_C_IP_UDP_MAX_PTH_UNFRG_TPDU;
-    }
-    else
-    {
-        assert(false);      /* !!! */
-    }
-
-#ifdef DEBUG
-    if (RPC_DBG (rpc_es_dbg_ip_max_pth_unfrag_tpdu, 1))
-    {
-        *max_tpdu = ((unsigned32)
-            (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_pth_unfrag_tpdu])) * 32;
-    }
-#endif
+    *max_tpdu = MAX_FRAG_SIZE;
 
     *status = rpc_s_ok;
 }
@@ -1532,23 +1390,9 @@ unsigned32              *max_tpdu;
 unsigned32              *status;
 #endif
 {
-    if (iftype == RPC_C_NETWORK_IF_ID_DGRAM &&
-        protocol == RPC_C_NETWORK_PROTOCOL_ID_UDP)    
-    {
-        *max_tpdu = RPC_C_IP_UDP_MAX_LOC_UNFRG_TPDU;
-    }
-    else
-    {
-        assert(false);      /* !!! */
-    }
-
-#ifdef DEBUG
-    if (RPC_DBG (rpc_es_dbg_ip_max_loc_unfrag_tpdu, 1))
-    {
-        *max_tpdu = ((unsigned32)
-            (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_loc_unfrag_tpdu])) * 32;
-    }
-#endif
+	iftype = 0;
+	protocol = 0;
+    *max_tpdu = MAX_FRAG_SIZE;
 
     *status = rpc_s_ok;
 }
@@ -1609,46 +1453,33 @@ unsigned32                *status;
 #endif
 {
     rpc_socket_error_t serr;
-    
+    rpc_http_addr_t addr;
+
     CODING_ERROR (status);
 
     /*
      * Get the socket type.
      */
-     
+    *protocol_id = 0;
+ 
     serr = rpc__socket_get_if_id (desc, socket_type);
     if (RPC_SOCKET_IS_ERR (serr))
     {
-        RPC_DBG_GPRINTF (("rpc__socket_get_if_id: serr=%d\n",serr));
+        RPC_DBG_GPRINTF (("(desc_inq_network) rpc__socket_get_if_id serr->%d\n",serr));
         *status = rpc_s_cant_get_if_id;
         return;
     }
 
-    /*
-     * For now, there is a one to one relationship between the protocol family
-     * and the socket type.
-     */
-
-    switch ((int)(*socket_type))
+    addr.len = sizeof(addr) - offsetof(rpc_http_addr_t, sa);
+    serr = rpc__socket_inq_endpoint (desc, (rpc_addr_p_t)&addr);
+    if (RPC_SOCKET_IS_ERR (serr))
     {
-        case SOCK_STREAM:       *protocol_id = RPC_C_NETWORK_PROTOCOL_ID_TCP;
-                                break;
-
-        case SOCK_DGRAM:        *protocol_id = RPC_C_NETWORK_PROTOCOL_ID_UDP;
-                                break;
-
-        default:		/*
-				 * rpc_m_unk_sock_type
-				 * "(%s) Unknown socket type"
-				 */
-				RPC_DCE_SVC_PRINTF ((
-				    DCE_SVC(RPC__SVC_HANDLE, "%s"),
-				    rpc_svc_general,
-				    svc_c_sev_fatal | svc_c_action_abort,
-				    rpc_m_unk_sock_type,
-				    "desc_inq_network" ));
-				break;
+       RPC_DBG_GPRINTF (("(desc_inq_network) rpc__socket_inq_endpoint serr->%d\n", serr));
+       *status = rpc_s_cant_get_if_id;
+       return;
     }
+
+    *protocol_id = RPC_C_NETWORK_PROTOCOL_ID_HTTP;
 
     *status = rpc_s_ok;
 }
@@ -1686,32 +1517,19 @@ unsigned32                *status;
 **/
 
 INTERNAL void set_pkt_nodelay 
+#ifdef _DCE_PROTO_
 (
-    rpc_socket_t            sock,
+    rpc_socket_t            desc,
     unsigned32              *status
 )
+#else
+(desc, status)
+rpc_socket_t            desc;
+unsigned32              *status;
+#endif
 {
-    int                 err;
-    int                 delay = 1;
-    /* FIXME: this really ought to become a new socket vtbl entry point */
-    int                 desc = rpc__socket_get_select_desc(sock);
-
-    /*
-     * Assume this is a TCP socket and corresponding connection. If
-     * not the setsockopt will fail.
-     */
-    if ((err = setsockopt (desc, 
-                           IPPROTO_TCP, 
-                           TCP_NODELAY, 
-                           (char *) &delay,
-                           sizeof (delay))) < 0)
-    {
-        *status = rpc_s_cannot_set_nodelay;
-    }
-    else
-    {
-        *status = rpc_s_ok;
-    }
+	desc = 0;
+    *status = rpc_s_ok;
 }
 
 
@@ -1818,7 +1636,7 @@ twr_p_t            *lower_flrs;
 unsigned32         *status;
 #endif
 {
-    unsigned32    net_prot_id;
+    unsigned32    net_prot_id ATTRIBUTE_UNUSED;
 
     CODING_ERROR (status);
 
@@ -1852,7 +1670,16 @@ unsigned32         *status;
     /*
      * Convert sockaddr to lower tower floors.
      */
-    twr_ip_lower_flrs_from_sa (net_prot_id, (sockaddr_t *) &(rpc_addr->sa), 
+    if (rpc_addr->rpc_protseq_id == RPC_C_PROTSEQ_ID_NCACN_HTTP)
+        twr_http_lower_flrs_from_sa ((sockaddr_t *) &(rpc_addr->sa), 
+#if 0
+        &temp_lower_flrs, 
+#else
+        lower_flrs, 
+#endif
+        status);
+    else
+        twr_uxd_lower_flrs_from_sa ((sockaddr_t *) &(rpc_addr->sa),
 #if 0
         &temp_lower_flrs, 
 #else
@@ -1871,7 +1698,7 @@ unsigned32         *status;
      * representation of the lower tower floors returned from twr_*().
      *
      * The size includes the sizof twr_t + length of the tower floors 
-     * returned from twr_ip_lower_flrs_from_sa - 1 (for tower_octet_string[0].
+     * returned from twr_http_lower_flrs_from_sa - 1 (for tower_octet_string[0].
      */
     RPC_MEM_ALLOC (
         *lower_flrs, 
@@ -1882,7 +1709,7 @@ unsigned32         *status;
 
     /*
      * Set the tower length to the length of the tower flrs returnd from 
-     * twr_ip_lower_flrs_from_sa.
+     * twr_http_lower_flrs_from_sa.
      */
     (*lower_flrs)->tower_length = temp_lower_flrs->tower_length;
 
@@ -1894,7 +1721,7 @@ unsigned32         *status;
         temp_lower_flrs->tower_length);
 
     /*
-     * Free the twr_ip_lower_flrs_from_sa allocated memory.
+     * Free the twr_http_lower_flrs_from_sa allocated memory.
      */
     RPC_MEM_FREE (temp_lower_flrs, RPC_C_MEM_TOWER);
 #endif
@@ -1955,8 +1782,8 @@ rpc_addr_p_t       *rpc_addr;
 unsigned32         *status;
 #endif
 {
-    sockaddr_t    *sa;
-    unsigned32    sa_len;
+    sockaddr_t    *sa ATTRIBUTE_UNUSED;
+    unsigned32    sa_len ATTRIBUTE_UNUSED;
 
     CODING_ERROR (status);
 
@@ -1969,17 +1796,22 @@ unsigned32         *status;
     /*
      * Convert the lower floors of a tower to a sockaddr.
      */
-    twr_ip_lower_flrs_to_sa (
-        tower_octet_string,        /* tower octet string (has flr count). */
-        &sa,                       /* returned sockaddr     */
-        &sa_len,                   /* returned sockaddr len */
-        status);
+    if (tower_octet_string[0] == 0x05) /* 5 floors for HTTP, 4 for LPC */
+        twr_http_lower_flrs_to_sa (
+            tower_octet_string,        /* tower octet string (has flr count). */
+            &sa,                       /* returned sockaddr     */
+            &sa_len,                   /* returned sockaddr len */
+            status);
+    else
+        twr_uxd_lower_flrs_to_sa (
+            tower_octet_string,        /* tower octet string (has flr count). */
+            &sa,                       /* returned sockaddr     */
+            &sa_len,                   /* returned sockaddr len */
+            status);
 
-    if (*status != twr_s_ok)
-    {
+    if (*status != rpc_s_ok)
         return;
-    }
-
+ 
     /*
      * Call the common NAF routine to create an RPC addr from a sockaddr.
      * (rpc__naf_addr_from_sa doesn't dispatch to a naf-specific routine.)
@@ -1987,7 +1819,7 @@ unsigned32         *status;
     rpc__naf_addr_from_sa (sa, sa_len, rpc_addr, status);
 
     /*
-     * Always free the twr_ip_lower_flrs_to_sa allocated memory - regardless 
+     * Always free the twr_http_lower_flrs_to_sa allocated memory - regardless 
      * of the status from rpc__naf_addr_from_sa.
      */
     RPC_MEM_FREE (sa, RPC_C_MEM_SOCKADDR);
@@ -2073,33 +1905,35 @@ unsigned32              *status;
 #endif
 {
     rpc_socket_error_t  serr;
-    
+    rpc_http_addr_p_t http_addr;
+
     CODING_ERROR (status);
 
 
     /*
      * allocate memory for the new RPC address
      */
-    RPC_MEM_ALLOC (*rpc_addr,
-                   rpc_addr_p_t,
-                   sizeof (rpc_ip_addr_t),
+    RPC_MEM_ALLOC (http_addr,
+                   rpc_http_addr_p_t,
+                   sizeof (rpc_http_addr_t),
                    RPC_C_MEM_RPC_ADDR,
                    RPC_C_MEM_WAITOK);
-    
+
     /*
      * successful malloc
      */
-    if (*rpc_addr == NULL)
+    if (http_addr == NULL)
     {
         *status = rpc_s_no_memory;
         return;
     }
+    *rpc_addr = (rpc_addr_p_t) http_addr;
 
     /*
      * insert individual parameters into RPC address
      */
-    (*rpc_addr)->rpc_protseq_id = protseq_id;
-    (*rpc_addr)->len = sizeof (struct sockaddr_in);
+    http_addr->rpc_protseq_id = protseq_id;
+    http_addr->len = sizeof (struct sockaddr);
 
     /*
      * Get the peer address (name).
@@ -2108,15 +1942,20 @@ unsigned32              *status;
      * the status from the getpeername() call, not the free() call.
      */
 
-    serr = rpc__socket_getpeername (desc, *rpc_addr);
+    http_addr->server[0] = '\0';
+
+    serr = rpc__socket_getpeername (desc, (rpc_addr_p_t)http_addr);
     if (RPC_SOCKET_IS_ERR (serr))
     {
-        RPC_MEM_FREE (*rpc_addr, RPC_C_MEM_RPC_ADDR);
+        RPC_MEM_FREE (http_addr, RPC_C_MEM_RPC_ADDR);
         *rpc_addr = (rpc_addr_p_t)NULL;
         *status = rpc_s_cant_getpeername;
     }
     else
     {
+        /* Force the address family to a correct value since getpeername can fail
+           silently on some platforms for UNIX domain sockets */
+        http_addr->sa.sa_family = RPC_C_NAF_ID_HTTP;
         *status = rpc_s_ok;
     }
 }
@@ -2186,113 +2025,14 @@ unsigned_char_p_t           *last_port_name_list;
 unsigned32                  *status;
 #endif
 {
-
-    rpc_port_restriction_list_p_t list_p;
-    rpc_port_range_element_p_t   range_elements;
-    unsigned32                   i;
-
-
     CODING_ERROR (status);
 
-    /* 
-     * It is only meaningful to do this once per protocol sequence.
-     */
+	protseq_id = 0;
+	n_elements = 0;
+	first_port_name_list = NULL;
+	last_port_name_list = NULL;
 
-    if (rpc_g_protseq_id [protseq_id].port_restriction_list != NULL)
-    {
-        *status = rpc_s_already_registered;
-        return;
-    }
-
-    /* 
-     * Allocate the port_restriction_list.
-     */
-
-    RPC_MEM_ALLOC 
-        (list_p,
-         rpc_port_restriction_list_p_t,
-         sizeof (rpc_port_restriction_list_t),
-         RPC_C_MEM_PORT_RESTRICT_LIST,
-         RPC_C_MEM_WAITOK);
-
-    if (list_p == NULL)
-    {
-        *status = rpc_s_no_memory;
-        return;
-    }
-                   
-    /* 
-     * Allocate the port_range_element vector.
-     */
-
-    RPC_MEM_ALLOC (range_elements,        
-                   rpc_port_range_element_p_t,
-                   sizeof (rpc_port_range_element_t) * n_elements,
-                   RPC_C_MEM_PORT_RANGE_ELEMENTS,
-                   RPC_C_MEM_WAITOK);
-
-    if (range_elements == NULL)
-    {
-        *status = rpc_s_no_memory;
-        return;
-    }
-
-    /* 
-     * Initialize the rpc_port_restriction_list 
-     */
-
-    list_p -> n_tries = 0;
-    list_p -> n_elements = n_elements;
-    list_p -> range_elements = range_elements;
-
-    /* 
-     * Loop and initialize the range element list.
-     */
-
-    for (i = 0; i < n_elements; i++)
-    {
-	unsigned long low, high;
-        if ((RPC__IP_ENDPOINT_SSCANF
-             ((char *) first_port_name_list[i], "%lu", &low)
-             != 1)       ||
-            (RPC__IP_ENDPOINT_SSCANF
-             ((char *) last_port_name_list[i], "%lu", &high) 
-             != 1)       ||
-            (low > high))
-        {
-            RPC_MEM_FREE (list_p, RPC_C_MEM_PORT_RESTRICT_LIST);
-            RPC_MEM_FREE (range_elements, RPC_C_MEM_PORT_RANGE_ELEMENTS);
-
-            *status = rpc_s_invalid_endpoint_format;
-
-            return;
-        }                               /* error from scanf */
-
-	range_elements[i].low = (unsigned32) low;
-	range_elements[i].high = (unsigned32) high;
-
-        list_p -> n_tries += 
-            range_elements[i].high - range_elements[i].low + 1;
-    }                                   /* for i */
-
-    /* 
-     * Randomly choose a starting range and a port within the range.
-     */
-
-    list_p -> current_range_element = RPC_RANDOM_GET (0, n_elements - 1);
-    i = list_p -> current_range_element;
-
-    list_p -> current_port_in_range = 
-        RPC_RANDOM_GET (range_elements[i].low, range_elements[i].high);
-
-    /* 
-     * Everything was successful.  Wire the port_restriction_list into the 
-     * protseq descriptor table.
-     */
-
-    rpc_g_protseq_id [protseq_id].port_restriction_list = list_p;
-    *status = rpc_s_ok;
-
+    *status = rpc_s_invalid_arg;
 }                                       /* set_port_restriction */
 
 
@@ -2346,77 +2086,18 @@ unsigned_char_p_t          *port_name;
 unsigned32                 *status;
 #endif
 {
-
-    rpc_port_restriction_list_p_t list_p;
-    rpc_port_range_element_p_t  range_p;
-
     CODING_ERROR (status);
 
-    /* 
-     * Validate that this protocol sequence has a port restriction.
-     */
+	protseq_id = 0;
+	port_name = NULL;
 
-    list_p = rpc_g_protseq_id [protseq_id].port_restriction_list;
+	/* 
+	 * Return an error to tell the caller that there is no range
+	 * restriction on this protocol sequence.
+	 */
 
-    if (list_p == NULL)
-    {
-        /* 
-         * Return an error to tell the caller that there is no range
-         * restriction on this protocol sequence.
-         */
-
-        *status = rpc_s_invalid_arg;
-        return;
-    }
-
-    /* 
-     * Alloc a string and return to caller.
-     */
-
-    RPC_MEM_ALLOC
-        (*port_name,
-         unsigned_char_p_t,
-         RPC_C_ENDPOINT_IP_MAX,
-         RPC_C_MEM_STRING,
-         RPC_C_MEM_WAITOK);
-
-
-    RPC__IP_ENDPOINT_SPRINTF
-        ((char *) *port_name, "%lu", (unsigned long) list_p -> current_port_in_range);
-
-    /* 
-     * Increment to the next restricted port number.  Handle wrapping 
-     * beyond end of this range.
-     */
-    
-    range_p = (rpc_port_range_element_p_t) list_p -> range_elements + 
-        list_p -> current_range_element;
-
-    if (++ (list_p -> current_port_in_range) > range_p -> high)
-    {
-        /* 
-         * Advance to next range and wraparound as needed.
-         */
-        
-        list_p -> current_range_element =
-            (list_p -> current_range_element + 1) % (list_p -> n_elements);
-
-        range_p = (rpc_port_range_element_p_t) list_p -> range_elements +
-            list_p -> current_range_element;
-
-        /* 
-         * Set next port in new range to the lowest in that range.
-         */
-
-        list_p -> current_port_in_range = range_p -> low;
-
-    }                                   /* wrapped to end of range */
-        
-    /* 
-     * Success
-     */
-
-    *status = rpc_s_ok;
+	*status = rpc_s_invalid_arg;
+	return;
 }                                       /* get_next_restricted_port */
 
 /*
@@ -2470,103 +2151,12 @@ unsigned32   *max_frag_size;
 unsigned32   *status;
 #endif
 {
-    boolean     flag;
-    unsigned32  lstatus;
-
-    /*
-     * This should be called from ncadg_ip_udp only.
-     */
-    if (RPC_PROTSEQ_INQ_NET_IF_ID(rpc_addr->rpc_protseq_id)
-          != RPC_C_NETWORK_IF_ID_DGRAM
-        || RPC_PROTSEQ_INQ_NET_PROT_ID(rpc_addr->rpc_protseq_id)
-            != RPC_C_NETWORK_PROTOCOL_ID_UDP)    
-    {
-        assert(false);      /* !!! */
-    }
+    rpc_addr = 0;
 
     *status = rpc_s_ok;
 
-    flag = rpc__ip_is_local_addr (rpc_addr, &lstatus);
-    if (lstatus == rpc_s_ok && flag)
-    {
-        *max_frag_size = RPC_C_IP_UDP_MAX_LOCAL_FRAG_SIZE;
-#ifdef DEBUG
-        switch (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_loc_unfrag_tpdu])
-        {
-        case 0:
-            break;
-        case 1:
-            *max_frag_size = RPC_C_IP_UDP_MAX_LOC_UNFRG_TPDU;
-            break;
-        case 2:
-            *max_frag_size = RPC_C_FDDI_MAX_DATA_SIZE -
-                (RPC_C_IP_LLC_SIZE + RPC_C_IP_HDR_SIZE +
-                 RPC_C_IP_OPTS_SIZE + RPC_C_UDP_HDR_SIZE);
-            break;
-        case 3:
-            *max_frag_size = 4608 -
-                (RPC_C_IP_LLC_SIZE + RPC_C_IP_HDR_SIZE +
-                 RPC_C_IP_OPTS_SIZE + RPC_C_UDP_HDR_SIZE);
-            break;
-        default:
-            if (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_loc_unfrag_tpdu] > 200)
-            {
-                *max_frag_size = ((unsigned32)
-                    (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_loc_unfrag_tpdu])
-                     - 200) * 1024;
-            }
-            else
-            {
-                *max_frag_size = ((unsigned32)
-                    (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_loc_unfrag_tpdu])) * 32;
-            }
-            break;
-        }
-#endif
-        return;
-    }
-
-    flag = rpc__ip_is_local_network (rpc_addr, &lstatus);
-    if (lstatus == rpc_s_ok && flag)
-    {
-        *max_frag_size = RPC_C_IP_UDP_MAX_PATH_FRAG_SIZE;
-#ifdef DEBUG
-        switch (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_pth_unfrag_tpdu])
-        {
-        case 0:
-            break;
-        case 1:
-            *max_frag_size = RPC_C_IP_UDP_MAX_LOC_UNFRG_TPDU;
-            break;
-        case 2:
-            *max_frag_size = RPC_C_FDDI_MAX_DATA_SIZE -
-                (RPC_C_IP_LLC_SIZE + RPC_C_IP_HDR_SIZE +
-                 RPC_C_IP_OPTS_SIZE + RPC_C_UDP_HDR_SIZE);
-            break;
-        case 3:
-            *max_frag_size = 4608 -
-                (RPC_C_IP_LLC_SIZE + RPC_C_IP_HDR_SIZE +
-                 RPC_C_IP_OPTS_SIZE + RPC_C_UDP_HDR_SIZE);
-            break;
-        default:
-            if (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_pth_unfrag_tpdu] > 200)
-            {
-                *max_frag_size = ((unsigned32)
-                    (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_pth_unfrag_tpdu])
-                     - 200) * 1024;
-            }
-            else
-            {
-                *max_frag_size = ((unsigned32)
-                    (rpc_g_dbg_switches[(int) rpc_es_dbg_ip_max_pth_unfrag_tpdu])) * 32;
-            }
-            break;
-        }
-#endif
-        return;
-    }
-
-    *max_frag_size = RPC_C_IP_UDP_MAX_LOC_UNFRG_TPDU;
+    *max_frag_size = MAX_FRAG_SIZE;
     return;
 
 }
+

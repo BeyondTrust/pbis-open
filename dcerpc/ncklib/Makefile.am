@@ -50,6 +50,7 @@ noinst_HEADERS+= \
 	comsoc.h		\
 	comsoc_bsd.h		\
 	comsoc_smb.h            \
+	comsoc_http.h           \
 	comtwr.h		\
 	comtwrflr.h		\
 	comtwrref.h		\
@@ -141,8 +142,8 @@ librpc_la_SOURCES=dce_error.c rpcclock.c rpcdbg.c rpclist.c \
 noinst_LTLIBRARIES+=libtrans.la
 
 libtrans_la_CPPFLAGS = $(AM_CPPFLAGS)
-libtrans_la_SOURCES = comsoc.c comsoc_bsd.c comsoc_smb.c xnet.c
-libtrans_la_LIBADD = -llwioclient -llwbase
+libtrans_la_SOURCES = comsoc.c comsoc_bsd.c comsoc_smb.c comsoc_http.c xnet.c
+libtrans_la_LIBADD = -llwioclient -llwbase -lcurl -luuid
 
 ######################################################################
 ## COMPONENT: auth - comprises of libauth_none shared lib
@@ -267,6 +268,12 @@ if NAF_UXD
 noinst_LTLIBRARIES+=libnaf_uxd.la
 libnck_la_LIBADD+=libnaf_uxd.la
 libnaf_uxd_la_SOURCES=uxdnaf.c uxdnaf_linux.c twr_uxd.c
+endif
+
+if NAF_HTTP
+noinst_LTLIBRARIES+=libnaf_http.la
+libnck_la_LIBADD+=libnaf_http.la
+libnaf_http_la_SOURCES=httpnaf.c httpnaf_linux.c
 endif
 
 # Unused: twr_dnet.c

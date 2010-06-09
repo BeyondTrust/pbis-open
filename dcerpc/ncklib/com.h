@@ -151,6 +151,7 @@ EXTERNAL unsigned32    rpc_g_fork_count;
 #define RPC_C_PROTSEQ_ID_NCALRPC        5
 #define RPC_C_PROTSEQ_ID_NCACN_NP       6
 #define RPC_C_PROTSEQ_ID_NCACN_NB       7
+#define RPC_C_PROTSEQ_ID_NCACN_HTTP     8
 
 #ifdef TEST_PROTOCOL
 #define RPC_C_PROTSEQ_ID_NCATP_IP_TCP   15
@@ -192,6 +193,7 @@ typedef unsigned_char_t rpc_protseq_t[RPC_C_PROTSEQ_MAX];
 #define RPC_PROTSEQ_NCACN_NB_TCP        "ncacn_nb_tcp"
 #define RPC_PROTSEQ_NCACN_VNS_SPP       "ncacn_vns_spp"
 #define RPC_PROTSEQ_NCADG_IPX           "ncadg_ipx"
+#define RPC_PROTSEQ_NCACN_HTTP          "ncacn_http"
 
 #ifdef PROT_NCATP
 #define RPC_PROTSEQ_NCATP_IP_TCP        "ncatp_ip_tcp"
@@ -239,7 +241,9 @@ typedef unsigned32       rpc_protocol_id_t, *rpc_protocol_id_p_t;
 #define RPC_C_NAF_ID_DDS     13         /* ###Check this one ###*/
 #define RPC_C_NAF_ID_NP      14
 #define RPC_C_NAF_ID_OSI     19
-#define RPC_C_NAF_ID_MAX     20
+#define RPC_C_NAF_ID_HTTP    20
+#define RPC_C_NAF_ID_MAX     21
+#define RPC_C_NAF_ID_VIRTUAL 20
 
 typedef unsigned32       rpc_naf_id_t, *rpc_naf_id_p_t;
 
@@ -260,6 +264,8 @@ typedef unsigned32       rpc_naf_id_t, *rpc_naf_id_p_t;
 #define RPC_C_NETWORK_PROTOCOL_ID_UNS   0
 /* This is a big hack - 1 is ICMP */
 #define RPC_C_NETWORK_PROTOCOL_ID_NP    1
+#define RPC_C_NETWORK_PROTOCOL_ID_HTTP  20
+#define RPC_C_NETWORK_PROTOCOL_ID_VIRTUAL 20
 
 typedef unsigned32 rpc_network_protocol_id_t, *rpc_network_protocol_id_p_t;
 
