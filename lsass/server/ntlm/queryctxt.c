@@ -238,6 +238,7 @@ NtlmServerQueryCtxtPacLogonInfoAttribute(
     NTLM_STATE State = NtlmStateBlank;
     PBYTE pKey = NULL;
     PSecPkgContext_PacLogonInfo pLogonInfo = NULL;
+    PLSA_AUTH_USER_INFO pUserInfo = ((PNTLM_CONTEXT) *phContext)->pUserInfo;
 
     *ppLogonInfo = NULL;
 
@@ -256,6 +257,13 @@ NtlmServerQueryCtxtPacLogonInfoAttribute(
         dwError = LW_ERROR_INVALID_CONTEXT;
         BAIL_ON_LSA_ERROR(dwError);
     }
+
+    if (pUserInfo == NULL)
+    {
+        dwError = ERROR_BAD_LOGON_SESSION_STATE;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
 
     dwError = NtlmServerMarshalUserInfoToEncodedPac(
         ((PNTLM_CONTEXT) *phContext)->pUserInfo,

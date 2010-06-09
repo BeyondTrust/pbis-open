@@ -1096,7 +1096,7 @@ ntlm_gss_accept_sec_context(
         NTLM_NATIVE_DATA_REP,
         &NewCtxtHandle,
         &OutputBuffer,
-        pTimeRec,
+        &dwRetFlags,
         &tsExpiry);
 
     if (MinorStatus == LW_WARNING_CONTINUE_NEEDED)

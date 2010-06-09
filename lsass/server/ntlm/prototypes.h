@@ -481,6 +481,11 @@ NtlmFixUserName(
     );
 
 DWORD
+NtlmCreateGuestContext(
+    OUT PNTLM_CONTEXT *ppNtlmContext
+    );
+
+DWORD
 NtlmCreateValidatedContext(
     IN PNTLM_RESPONSE_MESSAGE_V1 pNtlmRespMsg,
     IN DWORD dwMsgSize,

@@ -71,6 +71,7 @@ NtlmServerAcceptSecurityContext(
     PNTLM_RESPONSE_MESSAGE_V1 pRespMsg = NULL;
     DWORD dwMessageSize = 0;
     BYTE SessionKey[NTLM_SESSION_KEY_SIZE] = {0};
+    DWORD dwRetFlags = 0;
 
     ptsTimeStamp = 0;
 
@@ -126,29 +127,51 @@ NtlmServerAcceptSecurityContext(
             dwMessageSize,
             pNtlmCtxtChlng,
             SessionKey);
-        BAIL_ON_LSA_ERROR(dwError);
+        switch(dwError)
+        {
+            case LW_ERROR_SUCCESS:
+                // The response has been validated and contains all the information we
+                // are looking for; retain it... the original (challenge) context will
+                // be freed when we return.
+                dwError = NtlmCreateValidatedContext(
+                    pRespMsg,
+                    dwMessageSize,
+                    pNtlmCtxtChlng->NegotiatedFlags,
+                    SessionKey,
+                    NTLM_SESSION_KEY_SIZE,
+                    hCred,
+                    &pNtlmCtxtOut
+                    );
+                BAIL_ON_LSA_ERROR(dwError);
 
-        // The response has been validated and contains all the information we
-        // are looking for; retain it... the original (challenge) context will
-        // be freed when we return.
-        dwError = NtlmCreateValidatedContext(
-            pRespMsg,
-            dwMessageSize,
-            pNtlmCtxtChlng->NegotiatedFlags,
-            SessionKey,
-            NTLM_SESSION_KEY_SIZE,
-            hCred,
-            &pNtlmCtxtOut
-            );
-        BAIL_ON_LSA_ERROR(dwError);
+                pNtlmCtxtOut->pUserInfo = pNtlmCtxtChlng->pUserInfo;
+                pNtlmCtxtChlng->pUserInfo = NULL;
+                break;
 
-        pNtlmCtxtOut->pUserInfo = pNtlmCtxtChlng->pUserInfo;
-        pNtlmCtxtChlng->pUserInfo = NULL;
+            case LW_ERROR_NOT_HANDLED:
+                // Attempt to fallback to Guest access
+                dwError = NtlmCreateGuestContext(&pNtlmCtxtOut);
+
+                // Restore previous error code on failure
+                if (dwError != LW_ERROR_SUCCESS)
+                {
+                    dwError = LW_ERROR_NOT_HANDLED;
+                }
+                BAIL_ON_LSA_ERROR(dwError);
+
+                break;
+
+            default:
+                BAIL_ON_LSA_ERROR(dwError);
+                break;
+        }
     }
 
     ContextHandle = pNtlmCtxtOut;
 
 cleanup:
+    *pfContextAttr = dwRetFlags;
+
     *phNewContext = ContextHandle;
 
     return(dwError);
@@ -156,6 +179,7 @@ error:
     LW_SAFE_FREE_MEMORY(pOutput->pvBuffer);
     pOutput->cbBuffer = 0;
     pOutput->BufferType = 0;
+    dwRetFlags = 0;
     if (ContextHandle)
     {
         NtlmReleaseContext(&ContextHandle);
@@ -243,6 +267,90 @@ error:
     pOutput->pvBuffer = NULL;
     goto cleanup;
 }
+
+DWORD
+NtlmCreateGuestContext(
+    OUT PNTLM_CONTEXT *ppNtlmContext
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PNTLM_CONTEXT pNtlmContext = NULL;
+    HANDLE hConnection = (HANDLE)NULL;
+    LSA_QUERY_LIST QueryList = {0};
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
+    PSTR pszQueryName = "Guest";
+
+    *ppNtlmContext = NULL;
+
+    dwError = NtlmCreateContext(NULL, &pNtlmContext);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pNtlmContext->NtlmState = NtlmStateResponse;
+
+    // Set the NegotiatedFlags to 0 since there's the resulting
+    // context has no direct relation to the original user authentication
+    // request and no session key.  This may change with future
+    // investigation.
+
+    pNtlmContext->NegotiatedFlags = 0;
+
+    // Verify that the local Guest account has been enabled
+
+    dwError = LsaSrvOpenServer(0, 0, getpid(), &hConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    QueryList.ppszStrings = (PCSTR*)&pszQueryName;
+
+    dwError = LsaSrvFindObjects(
+                  hConnection,
+                  LSA_PROVIDER_TAG_LOCAL,
+                  0,
+                  LSA_OBJECT_TYPE_USER,
+                  LSA_QUERY_TYPE_BY_NAME,
+                  1,
+                  QueryList,
+                  &ppObjects);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (ppObjects[0]->userInfo.bAccountDisabled)
+    {
+        dwError = LW_ERROR_ACCOUNT_DISABLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwAllocateStringPrintf(
+                  &pNtlmContext->pszClientUsername,
+                  "%s\\%s",
+                  ppObjects[0]->pszNetbiosDomainName,
+                  ppObjects[0]->pszSamAccountName);
+ 
+    // NULL session key
+    memset(pNtlmContext->SessionKey, 0x0, NTLM_SESSION_KEY_SIZE);
+    pNtlmContext->cbSessionKeyLen = NTLM_SESSION_KEY_SIZE;
+    pNtlmContext->bInitiatedSide = FALSE;
+
+cleanup:
+
+    LsaUtilFreeSecurityObjectList(1, ppObjects);
+
+    if (hConnection)
+    {
+        LsaSrvCloseServer(hConnection);
+    }
+
+    *ppNtlmContext = pNtlmContext;
+
+    return dwError;
+
+error:
+
+    if (pNtlmContext)
+    {
+        NtlmFreeContext(&pNtlmContext);
+    }
+    goto cleanup;
+}
+
 
 DWORD
 NtlmCreateValidatedContext(
@@ -765,3 +873,13 @@ error:
     LW_SAFE_FREE_STRING(pName);
     goto cleanup;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

@@ -69,6 +69,7 @@
 
 #include <lsa/lsa.h>
 #include <lsasrvcred.h>
+#include <lsasrvapi2.h>
 #include <lsalist.h>
 #include <lwsecurityidentifier.h>
 #include <lsautils.h>
