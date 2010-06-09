@@ -223,20 +223,6 @@ LsaUnjoinDomain(
                                          &pPassInfo);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    dwError = LwWc16sLen(pPassInfo->pwszMachinePassword,
-                         &sMachinePasswordLen);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    /* zero the machine password */
-    memset(pPassInfo->pwszMachinePassword,
-           0,
-           sMachinePasswordLen);
-
-    pPassInfo->last_change_time = time(NULL);
-
-    ntStatus = LwpsWritePasswordToAllStores(pPassInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
-
     /* disable the account only if requested */
     if (dwUnjoinFlags & LSAJOIN_ACCT_DELETE)
     {
@@ -261,6 +247,20 @@ LsaUnjoinDomain(
                                             dwUnjoinFlags);
         BAIL_ON_NT_STATUS(ntStatus);
     }
+
+    dwError = LwWc16sLen(pPassInfo->pwszMachinePassword,
+                         &sMachinePasswordLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* zero the machine password */
+    memset(pPassInfo->pwszMachinePassword,
+           0,
+           sMachinePasswordLen);
+
+    pPassInfo->last_change_time = time(NULL);
+
+    ntStatus = LwpsWritePasswordToAllStores(pPassInfo);
+    BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pszLocalname);
