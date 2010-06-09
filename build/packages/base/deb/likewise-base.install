@@ -2,4 +2,5 @@ __PKG_PREFIX/bin
 __PKG_PREFIX/sbin
 __PKG_PREFIX/lib*/{*.so,*.so.*}
 __PKG_PREFIX/lib*/lwsm-loader/{*.so,*.so*}
+__PKG_PREFIX/ssl/*
 etc/init.d

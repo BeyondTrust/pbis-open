@@ -112,6 +112,7 @@ done
 %attr(0644,root,root) %{PrefixDir}/include/*
 %attr(0644,root,root) %{PrefixDir}/share/man/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
+%attr(0644,root,root) %{PrefixDir}/ssl/*
 %endif
 
 %changelog
