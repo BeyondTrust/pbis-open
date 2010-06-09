@@ -442,7 +442,7 @@ LsaEnumGroups(
             dwError = LsaEnumObjects(
                 hLsaConnection,
                 pEnum->hEnum,
-                pEnum->dwMaxNumGroups,
+                pEnum->dwMaxNumGroups - dwTotalInfoCount,
                 &pEnum->dwObjectCount,
                 &pEnum->ppObjects);
             if (dwError == ERROR_NO_MORE_ITEMS)

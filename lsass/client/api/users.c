@@ -340,7 +340,7 @@ LsaEnumUsers(
             dwError = LsaEnumObjects(
                 hLsaConnection,
                 pEnum->hEnum,
-                pEnum->dwMaxNumUsers,
+                pEnum->dwMaxNumUsers - dwTotalInfoCount,
                 &pEnum->dwObjectCount,
                 &pEnum->ppObjects);
             if (dwError == ERROR_NO_MORE_ITEMS)
