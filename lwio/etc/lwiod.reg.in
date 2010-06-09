@@ -71,6 +71,8 @@
 "SupportSmb2"=dword:00000000
 "EnableSecuritySignatures"=dword:00000001
 "RequireSecuritySignatures"=dword:00000001
+"BootstrapDefaultSharePath"=dword:00000001
+"DefaultSharePath"="/lwcifs"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\statistics]
 "Path"="@providerdir@/libsrv.stat@MOD_EXT@"
