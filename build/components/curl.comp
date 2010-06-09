@@ -24,6 +24,8 @@ function _setup_build_env
     CFLAGS="${_cflags}"
     LDFLAGS="${_ldflags} $(libtool_staging_ldflags)"
 
+    libtool_set_staging_library_path
+
     export PATH CPPFLAGS LDFLAGS CFLAGS CC
 }
 
