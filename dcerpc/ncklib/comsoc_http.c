@@ -34,6 +34,11 @@
 typedef struct rpc_http_transport_info_s
 {
     unsigned use_tls:1;
+    unsigned tls_verify_peer:1;
+    unsigned tls_verify_name:1;
+    char* tls_cert;
+    char* tls_cert_type;
+    char* tls_ca_file;
 } rpc_http_transport_info_t, *rpc_http_transport_info_p_t;
 
 typedef struct rpc_http_socket_s
@@ -57,11 +62,56 @@ typedef struct rpc_http_socket_s
     dcethread_mutex recv_lock;
 } rpc_http_socket_t, *rpc_http_socket_p_t;
 
+INTERNAL
+int
+rpc__http_map_curl_error(
+    CURLcode error
+    )
+{
+    switch (error)
+    {
+    case CURLE_OK:
+        return 0;
+    case CURLE_COULDNT_CONNECT:
+        return ECONNREFUSED;
+    case CURLE_OUT_OF_MEMORY:
+        return ENOMEM;
+    case CURLE_OPERATION_TIMEDOUT:
+        return ETIMEDOUT;
+    case CURLE_SSL_CONNECT_ERROR:
+    case CURLE_SSL_CACERT:
+    case CURLE_SSL_ISSUER_ERROR:
+        return EACCES;
+    case CURLE_SEND_ERROR:
+    case CURLE_RECV_ERROR:
+        return ECONNRESET;
+    case CURLE_AGAIN:
+        return EAGAIN;       
+    default:
+        return EIO;
+    }
+}
+
 void
 rpc__http_transport_info_destroy(
     rpc_http_transport_info_p_t http_info
     )
 {
+    if (http_info->tls_cert)
+    {
+        free(http_info->tls_cert);
+    }
+
+    if (http_info->tls_cert_type)
+    {
+        free(http_info->tls_cert_type);
+    }
+
+    if (http_info->tls_ca_file)
+    {
+        free(http_info->tls_ca_file);
+    }
+
     return;
 }
 
@@ -70,8 +120,112 @@ rpc_http_transport_info_free(
     rpc_transport_info_handle_t info
     )
 {
-    rpc__http_transport_info_destroy((rpc_http_transport_info_p_t) info);
     free(info);
+}
+
+void
+rpc_http_transport_info_create(
+    rpc_transport_info_handle_t* info,
+    unsigned32 *st
+    )
+{
+    rpc_http_transport_info_p_t http_info = NULL;
+
+    http_info = calloc(1, sizeof(*http_info));
+    
+    if (!http_info)
+    {
+        *st = rpc_s_no_memory;
+        goto error;
+    }
+
+    http_info->use_tls = FALSE;
+    http_info->tls_verify_peer = TRUE;
+    http_info->tls_verify_name = TRUE;
+
+    *info = (rpc_transport_info_handle_t) http_info;
+
+    *st = rpc_s_ok;
+
+error:
+
+    if (*st != rpc_s_ok && http_info)
+    {
+        rpc_http_transport_info_free((rpc_transport_info_handle_t) http_info);
+    }
+
+    return;
+}
+
+void
+rpc_http_transport_info_set_use_tls(
+    rpc_transport_info_handle_t info,
+    boolean use_tls
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->use_tls = use_tls;
+}
+
+void
+rpc_http_transport_info_set_tls_verify_peer(
+    rpc_transport_info_handle_t info,
+    boolean verify_peer
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->tls_verify_peer = verify_peer;
+}
+
+void
+rpc_http_transport_info_set_tls_verify_name(
+    rpc_transport_info_handle_t info,
+    boolean verify_name
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->tls_verify_name = verify_name;
+}
+
+void rpc_http_transport_info_set_tls_cert(
+    rpc_transport_info_handle_t info,
+    char* path
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->tls_cert = path;
+}
+
+void rpc_http_transport_info_set_tls_cert_type(
+    rpc_transport_info_handle_t info,
+    char* type
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->tls_cert_type = type;
+}
+
+void rpc_http_transport_info_set_tls_ca_file(
+    rpc_transport_info_handle_t info,
+    char* path
+    )
+{
+    rpc_http_transport_info_p_t http_info = (rpc_http_transport_info_p_t) info;
+
+    http_info->tls_ca_file = path;
+}
+
+INTERNAL
+boolean
+strequal(const char* str1, const char* str2)
+{
+    return ((str1 == NULL && str2 == NULL) ||
+            (str1 != NULL && str2 != NULL && !strcmp(str1, str2)));
 }
 
 boolean
@@ -83,7 +237,43 @@ rpc__http_transport_info_equal(
     rpc_http_transport_info_p_t http_info1 = (rpc_http_transport_info_p_t) info1;
     rpc_http_transport_info_p_t http_info2 = (rpc_http_transport_info_p_t) info2;
 
-    return (http_info1->use_tls == http_info2->use_tls);
+    return ((http_info1->use_tls == http_info2->use_tls) &&
+            strequal(http_info1->tls_cert, http_info2->tls_cert) &&
+            strequal(http_info2->tls_ca_file, http_info2->tls_ca_file));
+}
+
+INTERNAL
+void
+rpc__http_socket_destroy(
+    rpc_http_socket_p_t sock
+    )
+{
+    if (sock)
+    {
+        rpc__http_transport_info_destroy(&sock->info);
+        
+        dcethread_mutex_destroy_throw(&sock->send_lock);
+        dcethread_mutex_destroy_throw(&sock->recv_lock);
+
+        if (sock->recv_buffer)
+        {
+            free(sock->recv_buffer);
+        }
+
+        if (sock->send)
+        {
+            curl_easy_cleanup(sock->send);
+        }
+
+        if (sock->recv)
+        {
+            curl_easy_cleanup(sock->recv);
+        }
+        
+        free(sock);
+    }
+    
+    return;
 }
 
 INTERNAL
@@ -120,32 +310,11 @@ error:
 
     if (sock)
     {
-        dcethread_mutex_destroy_throw(&sock->send_lock);
-        dcethread_mutex_destroy_throw(&sock->recv_lock);
+        rpc__http_socket_destroy(sock);
     }
     
     goto done;
 }
-
-INTERNAL
-void
-rpc__http_socket_destroy(
-    rpc_http_socket_p_t sock
-    )
-{
-    if (sock)
-    {
-        rpc__http_transport_info_destroy(&sock->info);
-        
-        dcethread_mutex_destroy_throw(&sock->send_lock);
-        dcethread_mutex_destroy_throw(&sock->recv_lock);
-        
-        free(sock);
-    }
-    
-    return;
-}
-
 
 INTERNAL
 int
@@ -160,7 +329,7 @@ rpc__http_raw_send(
     size_t remaining = len;
     size_t sent = 0;
     CURLcode code = 0;
-    int fd = 0;
+    long fd = 0;
     int ret = 0;
 
     curl_easy_getinfo(curl, CURLINFO_LASTSOCKET, &fd);
@@ -190,8 +359,7 @@ rpc__http_raw_send(
             }
             break;
         default:
-            /* FIXME: better mapping */
-            serr = -1;
+            serr = rpc__http_map_curl_error(code);
             goto error;
         }
     }
@@ -215,7 +383,7 @@ rpc__http_raw_recv(
     size_t remaining = len;
     size_t read = 0;
     CURLcode code = 0;
-    int fd = 0;
+    long fd = 0;
     int ret = 0;
 
     curl_easy_getinfo(curl, CURLINFO_LASTSOCKET, &fd);
@@ -245,8 +413,7 @@ rpc__http_raw_recv(
             }
             break;
         default:
-            /* FIXME: better mapping */
-            serr = -1;
+            serr = rpc__http_map_curl_error(code);
             goto error;
         }
     }
@@ -449,14 +616,38 @@ rpc__http_connect_send(
     int serr = 0;
     char url[512];
     char* rpcproxy = sock->peeraddr.rpc_proxy[0] ? sock->peeraddr.rpc_proxy : sock->peeraddr.server;
+    const char* prot = sock->info.use_tls ? "https" : "http";
+    CURLcode code = 0;
 
-    snprintf(url, sizeof(url), "http://%s/rpc/rpcproxy.dll?%s:%i", 
-             rpcproxy, sock->peeraddr.server, sock->peeraddr.endpoint);
+    snprintf(url, sizeof(url), "%s://%s/rpc/rpcproxy.dll?%s:%i",
+             prot,
+             rpcproxy,
+             sock->peeraddr.server,
+             sock->peeraddr.endpoint);
 
     curl_easy_setopt(sock->send, CURLOPT_URL, url);
-    curl_easy_setopt(sock->send, CURLOPT_CONNECT_ONLY, 1);
+    curl_easy_setopt(sock->send, CURLOPT_CONNECT_ONLY, 1L);
+    curl_easy_setopt(sock->send, CURLOPT_SSL_VERIFYPEER, (long) sock->info.tls_verify_peer);
+    curl_easy_setopt(sock->send, CURLOPT_SSL_VERIFYHOST, (long) sock->info.tls_verify_name);
+    if (sock->info.tls_cert)
+    {
+        curl_easy_setopt(sock->send, CURLOPT_SSLCERT, sock->info.tls_cert);
+    }
+    if (sock->info.tls_cert_type)
+    {
+        curl_easy_setopt(sock->send, CURLOPT_SSLCERTTYPE, sock->info.tls_cert_type);
+    }
+    if (sock->info.tls_ca_file)
+    {
+        curl_easy_setopt(sock->send, CURLOPT_CAINFO, sock->info.tls_ca_file);
+    }
 
-    curl_easy_perform(sock->send);
+    code = curl_easy_perform(sock->send);
+    if (code != CURLE_OK)
+    {
+        serr = rpc__http_map_curl_error(code);
+        goto error;
+    }
 
     serr = rpc__http_send_rpc_in_data(sock);
     if (serr)
@@ -623,15 +814,39 @@ rpc__http_connect_recv(
     int serr = 0;
     char url[512];
     char* rpcproxy = sock->peeraddr.rpc_proxy[0] ? sock->peeraddr.rpc_proxy : sock->peeraddr.server;
+    const char* prot = sock->info.use_tls ? "https" : "http";
+    CURLcode code = 0;
 
-    snprintf(url, sizeof(url), "http://%s/rpc/rpcproxy.dll?%s:%i", 
-             rpcproxy, sock->peeraddr.server, sock->peeraddr.endpoint);
+    snprintf(url, sizeof(url), "%s://%s/rpc/rpcproxy.dll?%s:%i",
+             prot,
+             rpcproxy,
+             sock->peeraddr.server,
+             sock->peeraddr.endpoint);
 
     curl_easy_setopt(sock->recv, CURLOPT_URL, url);
-    curl_easy_setopt(sock->recv, CURLOPT_CONNECT_ONLY, 1);
+    curl_easy_setopt(sock->recv, CURLOPT_CONNECT_ONLY, 1L);
+    curl_easy_setopt(sock->recv, CURLOPT_SSL_VERIFYPEER, (long) sock->info.tls_verify_peer);
+    curl_easy_setopt(sock->recv, CURLOPT_SSL_VERIFYHOST, (long) sock->info.tls_verify_name);
+    if (sock->info.tls_cert)
+    {
+        curl_easy_setopt(sock->recv, CURLOPT_SSLCERT, sock->info.tls_cert);
+    }
+    if (sock->info.tls_cert_type)
+    {
+        curl_easy_setopt(sock->recv, CURLOPT_SSLCERTTYPE, sock->info.tls_cert_type);
+    }
+    if (sock->info.tls_ca_file)
+    {
+        curl_easy_setopt(sock->recv, CURLOPT_CAINFO, sock->info.tls_ca_file);
+    }
 
-    curl_easy_perform(sock->recv);
-    
+    code = curl_easy_perform(sock->recv);
+    if (code != CURLE_OK)
+    {
+        serr = rpc__http_map_curl_error(code);
+        goto error;
+    }    
+
     serr = rpc__http_send_rpc_out_data(sock);
     if (serr)
     {
@@ -652,7 +867,6 @@ rpc__http_find_header_termination(
 {
     char* cursor = NULL;
     unsigned int cr = FALSE;
-    unsigned int lf = FALSE;
     unsigned int crlf = FALSE;
 
     for (cursor = buffer; cursor < buffer + len; cursor++)
@@ -660,13 +874,11 @@ rpc__http_find_header_termination(
         switch (*cursor)
         {
         case '\r':
-            lf = FALSE;
             cr = TRUE;
             break;
         case '\n':
             if (cr)
             {
-                lf = TRUE;
                 if (crlf)
                 {
                     return cursor + 1;
@@ -674,12 +886,12 @@ rpc__http_find_header_termination(
                 else
                 {
                     crlf = TRUE;
-                    cr = lf = FALSE;
+                    cr = FALSE;
                 }
             }
             break;
         default:
-            cr = lf = crlf = FALSE;
+            cr = crlf = FALSE;
             break;
         }
     }
@@ -705,7 +917,7 @@ rpc__http_recv_http_response(
         if (sock->recv_buffer_len - sock->recv_buffer_used == 0)
         {
             /* Buffer overrun */
-            serr = -1;
+            serr = EBADMSG;
             goto error;
         }
 
@@ -725,7 +937,7 @@ rpc__http_recv_http_response(
     if (strncmp((char*) sock->recv_buffer, expected, strlen(expected)))
     {
         /* Did not get success */
-        serr = -1;
+        serr = EBADMSG;
         goto error;
     }
 
@@ -762,6 +974,35 @@ rpc__http_socket_construct(
     if (http_info)
     {
         http_sock->info.use_tls = http_info->use_tls;
+        http_sock->info.tls_verify_peer = http_info->tls_verify_peer;
+        http_sock->info.tls_verify_name = http_info->tls_verify_name;
+        if (http_info->tls_cert)
+        {
+            http_sock->info.tls_cert = strdup(http_info->tls_cert);
+            if (!http_sock->info.tls_cert)
+            {
+                serr = ENOMEM;
+                goto error;
+            }
+        }
+        if (http_info->tls_cert_type)
+        {
+            http_sock->info.tls_cert_type = strdup(http_info->tls_cert_type);
+            if (!http_sock->info.tls_cert_type)
+            {
+                serr = ENOMEM;
+                goto error;
+            }
+        }
+        if (http_info->tls_ca_file)
+        {
+            http_sock->info.tls_ca_file = strdup(http_info->tls_ca_file);
+            if (!http_sock->info.tls_ca_file)
+            {
+                serr = ENOMEM;
+                goto error;
+            }
+        }
     }
 
     uuid_generate_random(http_sock->connection_cookie);
@@ -1237,7 +1478,7 @@ rpc__http_socket_inq_transport_info(
         goto error;
     }
 
-    http_info->use_tls = http->info.use_tls;
+    *http_info = http->info;
 
     *info = (rpc_transport_info_handle_t) http_info;
 
