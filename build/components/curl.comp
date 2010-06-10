@@ -5,7 +5,8 @@ COMP_INCREMENTAL=1
 
 function component_bootstrap
 {
-    echo "Nothing to bootstrap for ${COMP_NAME}"
+    cd "${COMP_SOURCES}" && autoreconf -fi
+    exit_on_error "$?"
 }
 
 function component_gather
