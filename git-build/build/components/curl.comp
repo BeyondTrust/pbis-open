@@ -10,6 +10,8 @@ function _setup_build_env
     cd ${COMP_SOURCES}/.
     exit_on_error $?
 
+    PATH=${STAGE_INSTALL_DIR}/${PREFIXDIR}/bin:$PATH
+
     # We need no-strict aliasing if we get optimized builds
     CFLAGS="${_cflags}"
     CPPFLAGS="${_cppflags}"
@@ -24,12 +26,13 @@ function component_configure
 
     _setup_build_env
 
-    run_autogen ${COMP_SOURCES}
-    exit_on_error $?
+    #run_autogen ${COMP_SOURCES}
+    #exit_on_error $?
 
     run_configure                      \
 	--prefix=${PREFIXDIR}          \
-        --libdir=${PREFIXDIR}/${_lib}
+        --libdir=${PREFIXDIR}/${_lib}  \
+	--with-ssl="${STAGE_INSTALL_DIR}/${PREFIXDIR}" 
 }
 
 function component_build

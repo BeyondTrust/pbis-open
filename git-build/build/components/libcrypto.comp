@@ -35,7 +35,7 @@ function component_build
 {
     _setup_build_env
 
-    ${MAKE} DIRS="crypto" SHARED_LDFLAGS="-shared ${LDFLAGS}" all
+    ${MAKE} DIRS="crypto ssl" SHARED_LDFLAGS="-shared ${LDFLAGS}" all
 }
 
 function component_install
@@ -50,18 +50,17 @@ function component_install
     mkdir -p ${INSTALL_ROOT}
     mkdir -p ${STAGE_INSTALL_DIR}
 
-    ${MAKE} INSTALL_PREFIX="${INSTALL_ROOT}" DIRS="crypto" install_sw
+    ${MAKE} INSTALL_PREFIX="${INSTALL_ROOT}" DIRS="crypto ssl" install_sw
 
     if [ "lib" != "${_lib}" ]; then
         mv "${INSTALL_PREFIX_DIR}/lib" "${INSTALL_PREFIX_DIR}/${_lib}" 
     fi
 
     rsync -a \
-        --filter '- bin/' \
-        --filter '- engines/' \
-        --filter '- pkgconfig/' \
-        --filter "- ${PREFIXDIR}/ssl/" \
-        --filter "- libssl.*" \
+	--exclude=bin \
+	--exclude=engines \
+	--exclude=pkgconfig \
+	--exclude=ssl \
         ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
 
     libtool_rewrite_staging
@@ -86,7 +85,6 @@ function component_populate
 share
 *.a
 *.la
-libssl.so
 pkgconfig
 *.pc
 engines
