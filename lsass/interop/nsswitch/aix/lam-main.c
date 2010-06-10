@@ -85,7 +85,7 @@ LsaNssOpen(
 
 cleanup:
 
-    LSA_LOG_PAM_DEBUG("Open finishing with code %d", dwError);
+    LSA_LOG_PAM_DEBUG("Open finishing with code %u", dwError);
     if (pConfig)
     {
         LsaPamFreeConfig(pConfig);
@@ -209,7 +209,7 @@ LsaNssGetEntry(
 
 cleanup:
 
-    LSA_LOG_PAM_DEBUG("Getentry finishing with code %d", dwError);
+    LSA_LOG_PAM_DEBUG("Getentry finishing with code %u", dwError);
     if (dwError != LW_ERROR_SUCCESS)
     {
         LsaNssMapErrorCode(dwError, &errno);

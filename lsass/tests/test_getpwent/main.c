@@ -109,7 +109,7 @@ main(
 
     while ((pUser = getpwent()) != NULL)
     {
-          printf("User #%d", ++iUser);
+          printf("User #%u", ++iUser);
           printf("==========\n");
           printf("Name:     %s\n",
                   LW_IS_NULL_OR_EMPTY_STR(pUser->pw_name) ? "<null>" : pUser->pw_name);

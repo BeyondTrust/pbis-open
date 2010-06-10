@@ -65,7 +65,7 @@ LsaDbSetup(
                                 &pszError);
     if (dwError)
     {
-        LSA_LOG_DEBUG("SQL failed: code = %d, message = '%s'\nSQL =\n%s",
+        LSA_LOG_DEBUG("SQL failed: code = %u, message = '%s'\nSQL =\n%s",
                       dwError, pszError, LSA_DB_CREATE_TABLES);
     }
     BAIL_ON_SQLITE3_ERROR(dwError, pszError);
@@ -603,7 +603,7 @@ LsaDbSafeClose(
     dwError = LsaDbFreePreparedStatements(pConn);
     if (dwError != LW_ERROR_SUCCESS)
     {
-        LSA_LOG_ERROR("Error freeing prepared statements [%d]", dwError);
+        LSA_LOG_ERROR("Error freeing prepared statements [%u]", dwError);
         dwError = LW_ERROR_SUCCESS;
     }
 
@@ -616,7 +616,7 @@ LsaDbSafeClose(
     dwError = pthread_rwlock_destroy(&pConn->lock);
     if (dwError != LW_ERROR_SUCCESS)
     {
-        LSA_LOG_ERROR("Error destroying lock [%d]", dwError);
+        LSA_LOG_ERROR("Error destroying lock [%u]", dwError);
         dwError = LW_ERROR_SUCCESS;
     }
     LW_SAFE_FREE_MEMORY(pConn);

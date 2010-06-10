@@ -57,7 +57,7 @@ SamrSrvLookupDomain(
     )
 {
     CHAR szDnToken[] = "DC";
-    wchar_t wszFilter[] = L"%ws=%d AND %ws=\'%ws\'";
+    wchar_t wszFilter[] = L"%ws=%u AND %ws=\'%ws\'";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;
     PCONNECT_CONTEXT pConnCtx = NULL;

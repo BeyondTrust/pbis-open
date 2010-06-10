@@ -58,7 +58,7 @@ SamrSrvOpenAccount(
     )
 {
     const ULONG ulSubAuthCount = 5;
-    const wchar_t wszFilterFmt[] = L"(%ws=%d AND %ws='%ws')";
+    const wchar_t wszFilterFmt[] = L"(%ws=%u AND %ws='%ws')";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PDOMAIN_CONTEXT pDomCtx = NULL;

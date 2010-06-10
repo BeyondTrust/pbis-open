@@ -492,7 +492,7 @@ SamDbBuildAddObjectQuery(
             dwColValuesLen += sizeof(SAMDB_ADD_OBJECT_QUERY_SEPARATOR) - 1;
         }
 
-        sprintf(szBuf, "\?%d", ++iCol);
+        sprintf(szBuf, "\?%u", ++iCol);
 
         dwColValuesLen += strlen(szBuf);
     }
@@ -560,7 +560,7 @@ SamDbBuildAddObjectQuery(
             dwColValuesLen += sizeof(SAMDB_ADD_OBJECT_QUERY_SEPARATOR)  - 1;
         }
 
-        sprintf(szBuf, "\?%d", ++iCol);
+        sprintf(szBuf, "\?%u", ++iCol);
 
         pszCursor = &szBuf[0];
         while (pszCursor && *pszCursor)
@@ -1668,7 +1668,7 @@ SamDbFindDomainSID(
     PSTR  pszDomainName = NULL;
     SAMDB_OBJECT_CLASS objectClass = SAMDB_OBJECT_CLASS_DOMAIN;
     PCSTR pszQueryClause = SAM_DB_COL_DOMAIN       " = \"%s\"" \
-                           "   AND " SAM_DB_COL_OBJECT_CLASS " = %d;";
+                           "   AND " SAM_DB_COL_OBJECT_CLASS " = %u;";
 
     dwError = LwWc16sToMbs(
                     pwszDomainName,

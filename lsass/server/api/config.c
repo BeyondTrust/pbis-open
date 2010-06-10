@@ -355,8 +355,8 @@ LsaSrvSetMachineSid(
     PCSTR pszSID
     )
 {
-    const wchar_t wszDomainFilterFmt[] = L"%ws=%d OR %ws=%d";
-    const wchar_t wszAccountFilterFmt[] = L"%ws='%ws' AND (%ws=%d OR %ws=%d)";
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%u OR %ws=%u";
+    const wchar_t wszAccountFilterFmt[] = L"%ws='%ws' AND (%ws=%u OR %ws=%u)";
     const DWORD dwInt32StrSize = 10;
 
     DWORD dwError = 0;
@@ -723,8 +723,8 @@ LsaSrvSetMachineName(
     PCSTR  pszNewMachineName
     )
 {
-    const wchar_t wszDomainFilterFmt[] = L"%ws=%d";
-    const wchar_t wszAccountFilterFmt[] = L"%ws='%ws' AND (%ws=%d OR %ws=%d)";
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%u";
+    const wchar_t wszAccountFilterFmt[] = L"%ws='%ws' AND (%ws=%u OR %ws=%u)";
     const wchar_t wszAnyObjectFilterFmt[] = L"%ws>0";
     const DWORD dwInt32StrSize = 10;
 

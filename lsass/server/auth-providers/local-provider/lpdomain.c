@@ -85,7 +85,7 @@ LocalSyncDomainInfo(
     DWORD dwNewLockoutDuration = LOCAL_LOCKOUT_DURATION;
     DWORD dwNewLockoutWindow = LOCAL_LOCKOUT_WINDOW;
     HANDLE hDirectory = NULL;
-    PSTR pszFilterFmt = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d";
+    PSTR pszFilterFmt = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
     DWORD dwDomainObjectClass = LOCAL_OBJECT_CLASS_DOMAIN;
     PSTR pszFilter = NULL;
     PWSTR pwszFilter = NULL;
@@ -617,7 +617,7 @@ LocalGetDomainInfo(
     DWORD  dwError = 0;
     HANDLE hDirectory  = NULL;
     DWORD  objectClass = LOCAL_OBJECT_CLASS_DOMAIN;
-    PCSTR  pszFilterTemplate = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d";
+    PCSTR  pszFilterTemplate = LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
     PSTR   pszFilter = NULL;
     PWSTR  pwszFilter = NULL;
     wchar16_t wszAttrNameDomain[]      = LOCAL_DIR_ATTR_DOMAIN;

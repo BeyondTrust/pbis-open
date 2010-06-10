@@ -637,7 +637,7 @@ LsaDmLdapDirectorySearch(
         {
             if (dwTry > 0)
             {
-                LSA_LOG_ERROR("Error code %d occurred during attempt %d of a ldap search. Retrying.", dwError, dwTry);
+                LSA_LOG_ERROR("Error code %u occurred during attempt %u of a ldap search. Retrying.", dwError, dwTry);
             }
             dwError = LsaDmpLdapReconnect(
                     gLsaDmState,
@@ -694,7 +694,7 @@ LsaDmLdapDirectoryExtendedDNSearch(
                         ppMessage);
         if (LsaDmpLdapIsRetryError(dwError) && dwTry < 3)
         {
-            LSA_LOG_ERROR("Error code %d occurred during attempt %d of a ldap search. Retrying.", dwError, dwTry);
+            LSA_LOG_ERROR("Error code %u occurred during attempt %u of a ldap search. Retrying.", dwError, dwTry);
             dwError = LsaDmpLdapReconnect(
                             gLsaDmState,
                             pConn);
@@ -763,12 +763,12 @@ LsaDmLdapDirectoryOnePagedSearch(
             // case.
             if (pCookie->pfnFree != NULL)
             {
-                LSA_LOG_ERROR("Error code %d occurred during attempt %d of a ldap search. The search cannot be retried, because a cookie was already received from the connection.", dwError, dwTry);
+                LSA_LOG_ERROR("Error code %u occurred during attempt %u of a ldap search. The search cannot be retried, because a cookie was already received from the connection.", dwError, dwTry);
                 BAIL_ON_LSA_ERROR(dwError);
             }
             else
             {
-                LSA_LOG_ERROR("Error code %d occurred during attempt %d of a ldap search. Retrying.", dwError, dwTry);
+                LSA_LOG_ERROR("Error code %u occurred during attempt %u of a ldap search. Retrying.", dwError, dwTry);
                 dwError = LsaDmpLdapReconnect(
                             gLsaDmState,
                             pConn);
@@ -960,7 +960,7 @@ error:
                 bUseGc);
         if (dwLocalError)
         {
-            LSA_LOG_DEBUG("Error %d transitioning %s offline",
+            LSA_LOG_DEBUG("Error %u transitioning %s offline",
                           dwLocalError, pszDnsDomainOrForestName);
         }
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;

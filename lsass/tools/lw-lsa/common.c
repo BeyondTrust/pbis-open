@@ -63,11 +63,11 @@ PrintSecurityObject(
     case LSA_OBJECT_TYPE_GROUP:
         if (dwObjectTotal)
         {
-            printf("Group object [%d of %d] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            printf("Group object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
         }
         else
         {
-            printf("Group object [%d] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));   
+            printf("Group object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));   
         }
         printf("============\n");
         printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");
@@ -81,11 +81,11 @@ PrintSecurityObject(
     case LSA_OBJECT_TYPE_USER:
         if (dwObjectTotal)
         {
-            printf("User object [%d of %d] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
+            printf("User object [%u of %u] (%s)\n", dwObjectNumber+1, dwObjectTotal, SAFE_STRING(pObject->pszObjectSid));
         }
         else
         {
-            printf("User object [%d] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));
+            printf("User object [%u] (%s)\n", dwObjectNumber+1, SAFE_STRING(pObject->pszObjectSid));
         }
         printf("============\n");
         printf("Enabled: %s\n", pObject->enabled ? "yes" : "no");

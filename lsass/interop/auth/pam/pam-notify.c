@@ -144,13 +144,13 @@ error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogon failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogon failed [login:%s][error code: %u]", 
                             LSA_SAFE_LOG_STRING(pszLoginId),
                             dwError);
     }
     else
     {
-        LSA_LOG_PAM_INFO("LsaPamNotifyUserLogon failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_INFO("LsaPamNotifyUserLogon failed [login:%s][error code: %u]", 
                          LSA_SAFE_LOG_STRING(pszLoginId),
                          dwError);
     }
@@ -186,11 +186,11 @@ error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogoff error [error code:%d]", dwError);
+        LSA_LOG_PAM_WARNING("LsaPamNotifyUserLogoff error [error code:%u]", dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("LsaPamNotifyUserLogoff error [error code:%d]", dwError);
+        LSA_LOG_PAM_ERROR("LsaPamNotifyUserLogoff error [error code:%u]", dwError);
     }
 
     goto cleanup;

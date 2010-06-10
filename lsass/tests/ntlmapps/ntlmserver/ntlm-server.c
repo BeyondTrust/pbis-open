@@ -143,7 +143,7 @@ main(
 
         if (dwError)
         {
-            printf("Finished with error code: %d\n", dwError);
+            printf("Finished with error code: %u\n", dwError);
             LwGetErrorString(dwError, Error, 256);
             printf("%s\n", Error);
         }
@@ -161,7 +161,7 @@ main(
 finish:
     if (dwError)
     {
-        printf("Finished with error code: %d\n", dwError);
+        printf("Finished with error code: %u\n", dwError);
         LwGetErrorString(dwError, Error, 256);
         printf("%s\n", Error);
     }

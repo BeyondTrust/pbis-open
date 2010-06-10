@@ -51,7 +51,7 @@
 static
 void
 LsaSrvCrashHandler(
-    int dwSignal,
+    int iSignal,
     siginfo_t* pSigInfo,
     void* pvContext
     );
@@ -61,7 +61,7 @@ LsaSrvCrashHandler(
 static
 void
 LsaSrvCrashHandler(
-    int dwSignal,
+    int iSignal,
     siginfo_t* pSigInfo,
     void* pvContext
     )
@@ -69,10 +69,10 @@ LsaSrvCrashHandler(
     void *ppFunctions[100];
     int dwFunctionsSize = sizeof(ppFunctions)/sizeof(ppFunctions[0]);
     PSTR* ppszSymbols = NULL;
-    int dwIndex = 0;
+    int iIndex = 0;
     ucontext_t* pContext = (ucontext_t*)pvContext;
 
-    LSA_LOG_ALWAYS("Lsass crashed with signal %d", dwSignal);
+    LSA_LOG_ALWAYS("Lsass crashed with signal %d", iSignal);
 
     // This gets an array of the function return pointers for all of the
     // functions on the stack.
@@ -107,9 +107,9 @@ LsaSrvCrashHandler(
 
     if (ppszSymbols)
     {
-        for (dwIndex = 0; dwIndex < dwFunctionsSize; dwIndex++)
+        for (iIndex = 0; iIndex < dwFunctionsSize; iIndex++)
         {
-            LSA_LOG_ALWAYS("%d - %s", dwIndex, ppszSymbols[dwIndex]);
+            LSA_LOG_ALWAYS("%d - %s", iIndex, ppszSymbols[iIndex]);
         }
         LW_SAFE_FREE_MEMORY(ppszSymbols);
     }

@@ -89,7 +89,7 @@ typedef DWORD (*LSA_AD_LDAP_FIND_OBJECTS_BY_LIST_BATCHED_CALLBACK)(
     do { \
         if ((ErrorVariable) != (DesiredError)) \
         { \
-            LSA_LOG_DEBUG("Failed to find " ObjectTypeString " " IndexString " " IndexFormatString " (error = %d)", \
+            LSA_LOG_DEBUG("Failed to find " ObjectTypeString " " IndexString " " IndexFormatString " (error = %u)", \
                           IndexValue, ErrorVariable); \
             if ((IsOfflineCode) || (LW_ERROR_DOMAIN_IS_OFFLINE != (ErrorVariable))) \
             { \

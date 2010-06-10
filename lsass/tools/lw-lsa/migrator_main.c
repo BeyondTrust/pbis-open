@@ -60,7 +60,7 @@
 
 #define DB_QUERY_INSERT_GROUP_MEMBERSHIP                     \
     "INSERT INTO lwigroupmembers                             \
-                 (Gid, Uid) values (%d, %d)"
+                 (Gid, Uid) values (%u, %u)"
 
 static
 IsComment(

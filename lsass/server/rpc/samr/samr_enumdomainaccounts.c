@@ -59,7 +59,7 @@ SamrSrvEnumDomainAccounts(
     OUT UINT32           *pdwNumEntries
     )
 {
-    wchar_t wszFilterFmt[] = L"%ws=%d AND %ws='%ws'";
+    wchar_t wszFilterFmt[] = L"%ws=%u AND %ws='%ws'";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     NTSTATUS ntEnumStatus = STATUS_SUCCESS;
     DWORD dwError = 0;

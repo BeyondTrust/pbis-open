@@ -183,7 +183,7 @@ LsaSrvInitRpcServers(
         dwError = LsaSrvInitRpcServer(pRpc);
         if (dwError)
         {
-            LSA_LOG_ERROR("Failed to load rpc server [%s] at [%s] [error code:%d]",
+            LSA_LOG_ERROR("Failed to load rpc server [%s] at [%s] [error code:%u]",
                 (pRpc->pszName ? pRpc->pszName : "<null>"),
                 (pRpc->pszSrvLibPath ? pRpc->pszSrvLibPath : "<null>"),
                 dwError);
@@ -260,7 +260,7 @@ LsaStartRpcSrv(
 
     dwError = pRpc->pfnTable->pfnStart();
     if (dwError) {
-        LSA_LOG_ERROR("Couldn't start %s rpc server (error: %d)",
+        LSA_LOG_ERROR("Couldn't start %s rpc server (error: %u)",
                       pRpc->pszName, dwError);
 
     } else {
@@ -299,7 +299,7 @@ LsaStopRpcSrv(
 
     dwError = pRpc->pfnTable->pfnStop();
     if (dwError) {
-        LSA_LOG_ERROR("Couldn't stop %s rpc server (error: %d)",
+        LSA_LOG_ERROR("Couldn't stop %s rpc server (error: %u)",
                       pRpc->pszName, dwError);
 
     } else {

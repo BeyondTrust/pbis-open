@@ -133,13 +133,13 @@ error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("pam_sm_open_session failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_WARNING("pam_sm_open_session failed [login:%s][error code: %u]", 
                             LSA_SAFE_LOG_STRING(pszLoginId),
                             dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_open_session failed [login:%s][error code: %d]", 
+        LSA_LOG_PAM_ERROR("pam_sm_open_session failed [login:%s][error code: %u]", 
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
@@ -205,7 +205,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_PAM_ERROR("Error: Failed to set MOTD. [error code: %d]", dwError);
+    LSA_LOG_PAM_ERROR("Error: Failed to set MOTD. [error code: %u]", dwError);
 
     goto cleanup;
 }
@@ -291,11 +291,11 @@ error:
 
     if ((dwError == LW_ERROR_NO_SUCH_USER) || (dwError == LW_ERROR_NOT_HANDLED))
     {
-        LSA_LOG_PAM_WARNING("pam_sm_close_session error [error code:%d]", dwError);
+        LSA_LOG_PAM_WARNING("pam_sm_close_session error [error code:%u]", dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_close_session error [error code:%d]", dwError);
+        LSA_LOG_PAM_ERROR("pam_sm_close_session error [error code:%u]", dwError);
     }
 
     goto cleanup;

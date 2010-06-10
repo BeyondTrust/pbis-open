@@ -57,7 +57,7 @@ SamrSrvEnumDomains(
     OUT PDWORD          pdwNumEntries
     )
 {
-    wchar_t wszFilter[] = L"%ws=%d OR %ws=%d";
+    wchar_t wszFilter[] = L"%ws=%u OR %ws=%u";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PCONNECT_CONTEXT pConnCtx = NULL;

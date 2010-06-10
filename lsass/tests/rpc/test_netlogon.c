@@ -327,17 +327,17 @@ TestValidateSamLogonInfo(
     {
         NetrValidationInfo **ppLogonInfo = pppLogonInfo[i];
 
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.account_name, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.full_name, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.logon_script, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.profile_path, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.home_directory, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.home_drive, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.logon_server, ("(i = %d)\n", i));
-        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.domain, ("(i = %d)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.account_name, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.full_name, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.logon_script, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.profile_path, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.home_directory, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.home_drive, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.logon_server, ("(i = %u)\n", i));
+        ASSERT_UNICODE_STRING_VALID_MSG(&ppLogonInfo[2]->sam2->base.domain, ("(i = %u)\n", i));
         ASSERT_TEST_MSG((ppLogonInfo[2]->sam2->base.domain_sid != NULL &&
-                         RtlValidSid(ppLogonInfo[2]->sam2->base.domain_sid)), ("(i = %d)\n", i));
-        ASSERT_TEST_MSG(ppLogonInfo[2]->sam2->base.acct_flags & ACB_NORMAL, ("(i = %d)\n", i));
+                         RtlValidSid(ppLogonInfo[2]->sam2->base.domain_sid)), ("(i = %u)\n", i));
+        ASSERT_TEST_MSG(ppLogonInfo[2]->sam2->base.acct_flags & ACB_NORMAL, ("(i = %u)\n", i));
     }
 
     return bRet;
@@ -358,12 +358,12 @@ TestValidateDomainTrusts(
     {
         NetrDomainTrust *pTrust = &(pTrusts[i]);
 
-        ASSERT_TEST_MSG(pTrust->netbios_name != NULL, ("(i = %d)\n", i));
-        ASSERT_TEST_MSG(pTrust->dns_name != NULL, ("(i = %d)\n", i));
+        ASSERT_TEST_MSG(pTrust->netbios_name != NULL, ("(i = %u)\n", i));
+        ASSERT_TEST_MSG(pTrust->dns_name != NULL, ("(i = %u)\n", i));
         ASSERT_TEST_MSG((pTrust->trust_type >= 1 &&
-                         pTrust->trust_type <= 4), ("(i = %d)\n", i));
+                         pTrust->trust_type <= 4), ("(i = %u)\n", i));
         ASSERT_TEST_MSG((pTrust->sid != NULL &&
-                         RtlValidSid(pTrust->sid)), ("(i = %d)\n", i));
+                         RtlValidSid(pTrust->sid)), ("(i = %u)\n", i));
     }
 
     return bRet;

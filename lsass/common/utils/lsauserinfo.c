@@ -252,7 +252,7 @@ LsaFreeUserInfo(
         }
         default:
         {
-            LSA_LOG_ERROR("Unsupported User Info Level [%d]", dwLevel);
+            LSA_LOG_ERROR("Unsupported User Info Level [%u]", dwLevel);
         }
     }
     if (dwLevel < 3)
@@ -884,7 +884,7 @@ LsaFreeIpcUserInfoList(
             default:
             {
                 LSA_LOG_ERROR(
-                        "Unsupported User Info Level [%d]",
+                        "Unsupported User Info Level [%u]",
                         pUserIpcInfoList->dwUserInfoLevel);
             }
         }

@@ -428,8 +428,8 @@ PrintUserInfo_1(
     fprintf(stdout, "Gecos:             %s\n", LW_PRINTF_STRING(pUserInfo->pszGecos));
     fprintf(stdout, "Shell:             %s\n", LW_PRINTF_STRING(pUserInfo->pszShell));
     fprintf(stdout, "Home dir:          %s\n", LW_PRINTF_STRING(pUserInfo->pszHomedir));
-    fprintf(stdout, "LMHash length:     %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:     %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "LMHash length:     %u\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:     %u\n", pUserInfo->dwNTHashLen);
     fprintf(stdout, "Local User:        %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsLocalUser));
     if (bCheckUserInList)
     {
@@ -457,8 +457,8 @@ PrintUserInfo_2(
     fprintf(stdout, "Gecos:                        %s\n", LW_PRINTF_STRING(pUserInfo->pszGecos));
     fprintf(stdout, "Shell:                        %s\n", LW_PRINTF_STRING(pUserInfo->pszShell));
     fprintf(stdout, "Home dir:                     %s\n", LW_PRINTF_STRING(pUserInfo->pszHomedir));
-    fprintf(stdout, "LMHash length:                %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:                %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "LMHash length:                %u\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:                %u\n", pUserInfo->dwNTHashLen);
     fprintf(stdout, "Local User:                   %s\n", LW_PRINTF_YES_NO(pUserInfo->bIsLocalUser));
     fprintf(stdout, "Account disabled (or locked): %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountDisabled));
     fprintf(stdout, "Account Expired:              %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bAccountExpired));
@@ -466,7 +466,7 @@ PrintUserInfo_2(
     fprintf(stdout, "Password Expired:             %s\n", LW_PRINTF_TRUE_FALSE(pUserInfo->bPasswordExpired));
     fprintf(stdout, "Prompt for password change:   %s\n", LW_PRINTF_YES_NO(pUserInfo->bPromptPasswordChange));
     fprintf(stdout, "User can change password:     %s\n", LW_PRINTF_YES_NO(pUserInfo->bUserCanChangePassword));
-    fprintf(stdout, "Days till password expires:   %d\n", pUserInfo->dwDaysToPasswordExpiry);
+    fprintf(stdout, "Days till password expires:   %u\n", pUserInfo->dwDaysToPasswordExpiry);
     if (bCheckUserInList)
     {
         fprintf(stdout, "Logon restriction:            %s\n", LW_PRINTF_YES_NO(bAllowedLogon));

@@ -240,7 +240,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("LSA Process exiting due to error [Code:%d]", dwError);
+    LSA_LOG_ERROR("LSA Process exiting due to error [Code:%u]", dwError);
 
     LsaSrvLogProcessFailureEvent(dwError);
 
@@ -279,7 +279,7 @@ LsaSrvStartupPreCheck(
     if (iter >= STARTUP_PRE_CHECK_WAIT)
     {
         dwError = LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK;
-        LSA_LOG_ERROR("LSA start up pre-check failed to get updated hostname after %d seconds of waiting [Code:%d]",
+        LSA_LOG_ERROR("LSA start up pre-check failed to get updated hostname after %u seconds of waiting [Code:%u]",
                       STARTUP_PRE_CHECK_WAIT*10,
                       dwError);
         BAIL_ON_LSA_ERROR(dwError);
@@ -305,7 +305,7 @@ LsaSrvStartupPreCheck(
     if (iter >= STARTUP_NETLOGON_WAIT)
     {
         dwError = LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK;
-        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use NetLogonD after %d seconds of waiting [Code:%d]",
+        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use NetLogonD after %u seconds of waiting [Code:%u]",
                       STARTUP_NETLOGON_WAIT,
                       dwError);
         BAIL_ON_LSA_ERROR(dwError);
@@ -330,7 +330,7 @@ LsaSrvStartupPreCheck(
     if (iter >= STARTUP_LWIO_WAIT)
     {
         dwError = LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK;
-        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use LwIoD after %d seconds of waiting [Code:%d]",
+        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use LwIoD after %u seconds of waiting [Code:%u]",
                       STARTUP_LWIO_WAIT,
                       dwError);
         BAIL_ON_LSA_ERROR(dwError);
@@ -350,7 +350,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("LSA Process exiting due to error checking hostname at startup [Code:%d]", dwError);
+    LSA_LOG_ERROR("LSA Process exiting due to error checking hostname at startup [Code:%u]", dwError);
 
     goto cleanup;
 }
@@ -364,7 +364,7 @@ LsaSrvVerifyNetLogonStatus(
     PSTR pszDomain = NULL;
 
     dwError = LWNetGetCurrentDomain(&pszDomain);
-    LSA_LOG_INFO("LsaSrvVerifyNetLogonStatus call to LWNet API returned %d", dwError);
+    LSA_LOG_INFO("LsaSrvVerifyNetLogonStatus call to LWNet API returned %u", dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -396,13 +396,13 @@ LsaSrvVerifyLwIoStatus(
     PIO_CONTEXT pContext = NULL;
 
     dwError = LwIoOpenContext(&pContext);
-    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %d", dwError);
+    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %u", dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwIoGetLogInfo(
                   (HANDLE) pContext,
                   &pLogInfo);
-    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %d", dwError);
+    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %u", dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -441,7 +441,7 @@ LsaSrvRaiseMaxFiles(
 
     if (maxFiles.rlim_cur < dwMaxFiles)
     {
-        LSA_LOG_INFO("Raising soft max fd limit from %d to %d",
+        LSA_LOG_INFO("Raising soft max fd limit from %lu to %u",
                 maxFiles.rlim_cur,
                 dwMaxFiles);
         maxFiles.rlim_cur = dwMaxFiles;
@@ -449,7 +449,7 @@ LsaSrvRaiseMaxFiles(
     }
     if (maxFiles.rlim_max < dwMaxFiles)
     {
-        LSA_LOG_INFO("Raising hard max fd limit from %d to %d",
+        LSA_LOG_INFO("Raising hard max fd limit from %lu to %u",
                 maxFiles.rlim_max,
                 dwMaxFiles);
         maxFiles.rlim_max = dwMaxFiles;
@@ -718,7 +718,7 @@ LsaSrvExitHandler(
           dwError = LwMapErrnoToLwError(errno);
           BAIL_ON_LSA_ERROR(dwError);
        }
-       fprintf(fp, "%d\n", dwExitCode);
+       fprintf(fp, "%u\n", dwExitCode);
     }
 
 error:

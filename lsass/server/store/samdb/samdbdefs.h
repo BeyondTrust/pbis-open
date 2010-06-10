@@ -73,7 +73,7 @@
 
 #define BAIL_ON_SAMDB_SQLITE_ERROR(dwError, pszError)   \
     if (dwError) {                                      \
-        SAMDB_LOG_DEBUG("Sqlite3 Error (code: %d): %s", \
+        SAMDB_LOG_DEBUG("Sqlite3 Error (code: %u): %s", \
                         dwError,                        \
                         LSA_SAFE_LOG_STRING(pszError)); \
         dwError = LW_ERROR_SAM_DATABASE_ERROR;         \

@@ -80,7 +80,7 @@ LsaFreeNSSArtefactInfo(
         }
         default:
         {
-            LSA_LOG_ERROR("Unsupported NSSArtefact Info Level [%d]", dwLevel);
+            LSA_LOG_ERROR("Unsupported NSSArtefact Info Level [%u]", dwLevel);
         }
     }
 }
@@ -110,7 +110,7 @@ LsaFreeIpcNssArtefactInfoList(
 
             default:
             {
-                LSA_LOG_ERROR("Unsupported Nss Artefact Info Level [%d]", pNssArtefactIpcInfoList->dwNssArtefactInfoLevel);
+                LSA_LOG_ERROR("Unsupported Nss Artefact Info Level [%u]", pNssArtefactIpcInfoList->dwNssArtefactInfoLevel);
             }
         }
         LwFreeMemory(pNssArtefactIpcInfoList);

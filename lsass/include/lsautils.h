@@ -86,7 +86,7 @@
 #define BAIL_ON_NT_STATUS(err) \
     do { \
         if ((err) != STATUS_SUCCESS) { \
-            LSA_LOG_DEBUG("Error at %s:%d [code: %d]", \
+            LSA_LOG_DEBUG("Error at %s:%d [code: %X]", \
                           __FILE__, __LINE__, (err));  \
 		    goto error; \
 	    } \
@@ -95,7 +95,7 @@
 
 #define BAIL_ON_LSA_ERROR(dwError) \
     if (dwError) {\
-       LSA_LOG_DEBUG("Error code: %d (symbol: %s)", dwError, LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError))); \
+       LSA_LOG_DEBUG("Error code: %u (symbol: %s)", dwError, LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError))); \
        goto error;                 \
     }
 
@@ -206,7 +206,7 @@ extern PFN_LSA_LOG_MESSAGE gpfnLogger;
     _LSA_LOG_IF(LSA_LOG_LEVEL_TRACE, szFmt, ## __VA_ARGS__)
 
 #define LSA_LOG_ERROR_API_FAILED(hServer, dwError, szFmt, ...) \
-    LSA_LOG_ERROR("Failed to " szFmt " -> error = %d, symbol = %s, client pid = %ld", \
+    LSA_LOG_ERROR("Failed to " szFmt " -> error = %u, symbol = %s, client pid = %ld", \
          ## __VA_ARGS__, \
          dwError, \
          LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(dwError)), \

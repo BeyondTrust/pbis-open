@@ -277,7 +277,7 @@ cleanup:
 error:
 
     LSA_LOG_VERBOSE("Failed to post service success event.");
-    LSA_LOG_VERBOSE("Error code: [%d]", dwError);
+    LSA_LOG_VERBOSE("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -316,7 +316,7 @@ cleanup:
 error:
 
     LSA_LOG_VERBOSE("Failed to post service warning event.");
-    LSA_LOG_VERBOSE("Error code: [%d]", dwError);
+    LSA_LOG_VERBOSE("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -355,7 +355,7 @@ cleanup:
 error:
 
     LSA_LOG_VERBOSE("Failed to post service failure event.");
-    LSA_LOG_VERBOSE("Error code: [%d]", dwError);
+    LSA_LOG_VERBOSE("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -376,7 +376,7 @@ LsaSrvLogUserIDConflictEvent(
                  "Likewise account provisioning conflict.\r\n\r\n" \
                  "     Authentication provider: %s\r\n\r\n" \
                  "     Reason:                  Found duplicate entries for UIDs:\r\n" \
-                 "     UID:                     %d",
+                 "     UID:                     %u",
                  pszProviderName,
                  uid);
     BAIL_ON_LSA_ERROR(dwError);

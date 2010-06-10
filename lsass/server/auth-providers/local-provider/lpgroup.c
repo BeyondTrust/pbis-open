@@ -324,7 +324,7 @@ LocalDirModifyGroup(
     DWORD dwObjectClassLocalUser = LOCAL_OBJECT_CLASS_USER;
     PWSTR pwszBase = NULL;
     ULONG ulScope = 0;
-    wchar_t wszFilterFmtSidOnly[] = L"(%ws=%d OR %ws=%d) AND %ws=\'%ws\'";
+    wchar_t wszFilterFmtSidOnly[] = L"(%ws=%u OR %ws=%u) AND %ws=\'%ws\'";
     PWSTR pwszFilter = NULL;
     DWORD dwFilterLen = 0;
     WCHAR wszAttrObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
@@ -762,7 +762,7 @@ LocalDirCreateForeignPrincipalDN(
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
     PWSTR pwszBase = NULL;
     ULONG ulScope = 0;
-    wchar_t wszFilterFmt[] = L"%ws=%d";
+    wchar_t wszFilterFmt[] = L"%ws=%u";
     DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
     WCHAR wszAttrObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;

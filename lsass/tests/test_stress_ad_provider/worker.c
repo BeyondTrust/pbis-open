@@ -113,7 +113,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to find user by name [%s] [error code: %d]",
+    LSA_LOG_ERROR("Failed to find user by name [%s] [error code: %u]",
                   (LW_IS_NULL_OR_EMPTY_STR(pszName) ? "" : pszName), dwError);
 
     LADSStopProcess();
@@ -187,7 +187,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to find user by id [%ld] [error code: %d]", (long)userId, dwError);
+    LSA_LOG_ERROR("Failed to find user by id [%ld] [error code: %u]", (long)userId, dwError);
 
     LADSStopProcess();
 
@@ -286,7 +286,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to enumerate users [error code: %d]", dwError);
+    LSA_LOG_ERROR("Failed to enumerate users [error code: %u]", dwError);
 
     LADSStopProcess();
 
@@ -360,7 +360,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to find group by name [%s] [error code: %d]",
+    LSA_LOG_ERROR("Failed to find group by name [%s] [error code: %u]",
                   (LW_IS_NULL_OR_EMPTY_STR(pszName) ? "" : pszName), dwError);
 
     LADSStopProcess();
@@ -435,7 +435,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to find group by id [%ld] [error code: %d]", (long)groupId, dwError);
+    LSA_LOG_ERROR("Failed to find group by id [%ld] [error code: %u]", (long)groupId, dwError);
 
     LADSStopProcess();
 
@@ -536,7 +536,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to enumerate groups [error code: %d]", dwError);
+    LSA_LOG_ERROR("Failed to enumerate groups [error code: %u]", dwError);
 
     LADSStopProcess();
 

@@ -539,9 +539,9 @@ TestLsaLookupNames(
                                         pTestNames[iName].pszSid);
                 BAIL_ON_NT_STATUS(ntStatus);
 
-                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %d)\n", iName));
+                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %u)\n", iName));
 
-                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %d)\n", iName));
+                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %u)\n", iName));
 
                 if (ppSids[iName])
                 {
@@ -549,12 +549,12 @@ TestLsaLookupNames(
                         ppSids[iName]->SubAuthority[ppSids[iName]->SubAuthorityCount - 1];
 
                     ASSERT_TEST_MSG(dwReturnedRid == pTestNames[iName].dwRid,
-                                    ("(i = %d)\n", iName));
+                                    ("(i = %u)\n", iName));
                 }
             }
 
             ASSERT_TEST_MSG(dwReturnedType == pTestNames[iName].dwType,
-                            ("(i = %d)\n", iName));
+                            ("(i = %u)\n", iName));
 
             RTL_FREE(&pSid);
         }
@@ -752,9 +752,9 @@ TestLsaLookupNames2(
                                         pTestNames[iName].pszSid);
                 BAIL_ON_NT_STATUS(ntStatus);
 
-                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %d)\n", iName));
+                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %u)\n", iName));
 
-                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %d)\n", iName));
+                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %u)\n", iName));
 
                 if (ppSids[iName])
                 {
@@ -762,12 +762,12 @@ TestLsaLookupNames2(
                         ppSids[iName]->SubAuthority[ppSids[iName]->SubAuthorityCount - 1];
 
                     ASSERT_TEST_MSG(dwReturnedRid == pTestNames[iName].dwRid,
-                                    ("(i = %d)\n", iName));
+                                    ("(i = %u)\n", iName));
                 }
             }
 
             ASSERT_TEST_MSG(dwReturnedType == pTestNames[iName].dwType,
-                            ("(i = %d)\n", iName));
+                            ("(i = %u)\n", iName));
 
             RTL_FREE(&pSid);
         }
@@ -965,9 +965,9 @@ TestLsaLookupNames3(
                                         pTestNames[iName].pszSid);
                 BAIL_ON_NT_STATUS(ntStatus);
 
-                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %d)\n", iName));
+                ASSERT_TEST_MSG((ppSids[iName] != NULL), ("(i = %u)\n", iName));
 
-                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %d)\n", iName));
+                ASSERT_SID_EQUAL_MSG(pSid, ppSids[iName], ("(i = %u)\n", iName));
 
                 if (ppSids[iName])
                 {
@@ -975,12 +975,12 @@ TestLsaLookupNames3(
                         ppSids[iName]->SubAuthority[ppSids[iName]->SubAuthorityCount - 1];
 
                     ASSERT_TEST_MSG(dwReturnedRid == pTestNames[iName].dwRid,
-                                    ("(i = %d)\n", iName));
+                                    ("(i = %u)\n", iName));
                 }
             }
 
             ASSERT_TEST_MSG(dwReturnedType == pTestNames[iName].dwType,
-                            ("(i = %d)\n", iName));
+                            ("(i = %u)\n", iName));
 
             RTL_FREE(&pSid);
         }
@@ -1186,18 +1186,18 @@ TestLsaLookupSids(
             dwError = TestFormatNT4Name(&pwszNT4Name, pwszDomain, pwszName);
             BAIL_ON_WIN_ERROR(dwError);
 
-            ASSERT_TEST_MSG(ppwszNames[iSid] != NULL, ("(i = %d)\n", iSid));
+            ASSERT_TEST_MSG(ppwszNames[iSid] != NULL, ("(i = %u)\n", iSid));
 
             if (ppwszNames[iSid])
             {
                 ASSERT_TEST_MSG(RtlWC16StringIsEqual(ppwszNames[iSid],
                                                      pwszNT4Name,
                                                      FALSE),
-                                ("(i = %d)\n", iSid));
+                                ("(i = %u)\n", iSid));
             }
 
             ASSERT_TEST_MSG(dwReturnedType == pTestSids[iSid].dwType,
-                            ("(i = %d)\n", iSid));
+                            ("(i = %u)\n", iSid));
 
             LW_SAFE_FREE_MEMORY(pwszDomain);
             LW_SAFE_FREE_MEMORY(pwszName);
@@ -1275,7 +1275,7 @@ int TestLsaQueryInfoPolicy(struct test *t, const wchar16_t *hostname,
     if (level) {
         if (level == 1)
         {
-            DISPLAY_ERROR(("Level %d unsupported. Exiting...\n", level));
+            DISPLAY_ERROR(("Level %u unsupported. Exiting...\n", level));
             bRet = FALSE;
             goto error;
         }
@@ -1375,7 +1375,7 @@ int TestLsaQueryInfoPolicy2(struct test *t, const wchar16_t *hostname,
     if (level) {
         if (level == 1)
         {
-            DISPLAY_ERROR(("Level %d unsupported. Exiting...\n", level));
+            DISPLAY_ERROR(("Level %u unsupported. Exiting...\n", level));
             bRet = FALSE;
             goto error;
         }
@@ -1484,7 +1484,7 @@ CallLsaLookupNames(
         }
 
         ASSERT_TEST_MSG(iDomain < pDomains->count,
-                        ("invalid domain index = %d (i = %d)\n",
+                        ("invalid domain index = %u (i = %u)\n",
                          iDomain, iSid));
 
         if (iDomain >= 0 && iDomain < pDomains->count)
@@ -1492,7 +1492,7 @@ CallLsaLookupNames(
             pDomainSid = pDomains->domains[iDomain].sid;
 
             ASSERT_TEST_MSG(pDomainSid != NULL && RtlValidSid(pDomainSid),
-                            ("invalid domain SID (i = %d)\n", iSid));
+                            ("invalid domain SID (i = %u)\n", iSid));
 
             if (RtlValidSid(pDomainSid))
             {
@@ -1510,11 +1510,11 @@ CallLsaLookupNames(
         }
 
         ASSERT_TEST_MSG(dwRid > 0,
-                        ("invalid RID = %d (i = %d)\n", dwRid, iSid));
+                        ("invalid RID = %u (i = %u)\n", dwRid, iSid));
 
         ASSERT_TEST_MSG((dwType >= SID_TYPE_USE_NONE &&
                          dwType <= SID_TYPE_LABEL),
-                        ("invalid type = %d (i = %d)\n", dwType, iSid));
+                        ("invalid type = %u (i = %u)\n", dwType, iSid));
 
 
         pdwTypes[iSid] = dwType;
@@ -1619,7 +1619,7 @@ CallLsaLookupNames2(
         }
 
         ASSERT_TEST_MSG(iDomain < pDomains->count,
-                        ("invalid domain index = %d (i = %d)\n",
+                        ("invalid domain index = %u (i = %u)\n",
                          iDomain, iSid));
 
         if (iDomain >= 0 && iDomain < pDomains->count)
@@ -1627,7 +1627,7 @@ CallLsaLookupNames2(
             pDomainSid = pDomains->domains[iDomain].sid;
 
             ASSERT_TEST_MSG(pDomainSid != NULL && RtlValidSid(pDomainSid),
-                            ("invalid domain SID (i = %d)\n", iSid));
+                            ("invalid domain SID (i = %u)\n", iSid));
 
             if (RtlValidSid(pDomainSid))
             {
@@ -1645,11 +1645,11 @@ CallLsaLookupNames2(
         }
 
         ASSERT_TEST_MSG(dwRid > 0,
-                        ("invalid RID = %d (i = %d)\n", dwRid, iSid));
+                        ("invalid RID = %u (i = %u)\n", dwRid, iSid));
 
         ASSERT_TEST_MSG((dwType >= SID_TYPE_USE_NONE &&
                          dwType <= SID_TYPE_LABEL),
-                        ("invalid type = %d (i = %d)\n", dwType, iSid));
+                        ("invalid type = %u (i = %u)\n", dwType, iSid));
 
 
         pdwTypes[iSid] = dwType;
@@ -1753,7 +1753,7 @@ CallLsaLookupNames3(
         }
 
         ASSERT_TEST_MSG(iDomain < pDomains->count,
-                        ("invalid domain index = %d (i = %d)\n",
+                        ("invalid domain index = %u (i = %u)\n",
                          iDomain, iSid));
 
         if (iDomain >= 0 && iDomain < pDomains->count)
@@ -1761,11 +1761,11 @@ CallLsaLookupNames3(
             pDomainSid = pDomains->domains[iDomain].sid;
 
             ASSERT_TEST_MSG(pDomainSid != NULL && RtlValidSid(pDomainSid),
-                            ("invalid domain SID (i = %d)\n", iSid));
+                            ("invalid domain SID (i = %u)\n", iSid));
         }
 
         ASSERT_TEST_MSG(pSid != NULL && RtlValidSid(pSid),
-                        ("invalid SID (i = %d)\n", iSid));
+                        ("invalid SID (i = %u)\n", iSid));
 
         if (RtlValidSid(pSid))
         {
@@ -1775,7 +1775,7 @@ CallLsaLookupNames3(
 
         ASSERT_TEST_MSG((dwType >= SID_TYPE_USE_NONE &&
                          dwType <= SID_TYPE_LABEL),
-                        ("invalid type = %d (i = %d)\n", dwType, iSid));
+                        ("invalid type = %u (i = %u)\n", dwType, iSid));
 
         pdwTypes[iSid] = dwType;
         ppSids[iSid]   = pRetSid;
@@ -1899,21 +1899,21 @@ CallLsaLookupSids(
         }
 
         ASSERT_TEST_MSG(iDomain < pDomains->count,
-                        ("invalid domain index = %d (i = %d)\n",
+                        ("invalid domain index = %u (i = %u)\n",
                          iDomain, iName));
 
         ASSERT_TEST_MSG((dwType >= SID_TYPE_USE_NONE &&
                          dwType <= SID_TYPE_LABEL),
-                        ("invalid type = %d (i = %d)\n", dwType, iName));
+                        ("invalid type = %u (i = %u)\n", dwType, iName));
 
         if (iDomain >= 0 && iDomain < pDomains->count)
         {
             ASSERT_UNICODE_STRING_VALID_MSG(&(pDomains->domains[iDomain].name),
-                                          ("invalid unicode name (i = %d)\n",
+                                          ("invalid unicode name (i = %u)\n",
                                            iName));
 
             ASSERT_UNICODE_STRING_VALID_MSG(&(pTransNames[iName].name),
-                                          ("invalid unicode name (i = %d)\n",
+                                          ("invalid unicode name (i = %u)\n",
                                            iName));
 
             dwError = LwAllocateWc16StringFromUnicodeString(
@@ -2031,7 +2031,7 @@ CallLsaOpenPolicy(
     {
         if (i == 1) continue;
 
-        DISPLAY_COMMENT(("Testing LsaQueryInfoPolicy (level = %d)\n", i));
+        DISPLAY_COMMENT(("Testing LsaQueryInfoPolicy (level = %u)\n", i));
 
         CALL_MSRPC(ntStatus, LsaQueryInfoPolicy(hBinding,
                                                 hPolicy,
@@ -2083,7 +2083,7 @@ CallLsaOpenPolicy(
     {
         if (i == 1) continue;
 
-        DISPLAY_COMMENT(("Testing LsaQueryInfoPolicy2 (level = %d)\n", i));
+        DISPLAY_COMMENT(("Testing LsaQueryInfoPolicy2 (level = %u)\n", i));
 
         ntStatus = LsaQueryInfoPolicy2(hBinding, hPolicy, i, &pPolicyInfo);
 

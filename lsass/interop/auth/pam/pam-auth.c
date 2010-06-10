@@ -102,7 +102,7 @@ pam_sm_authenticate(
             dwError = LsaPamUnmapErrorCode(iPamError);
             if (dwError)
             {
-                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %d]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
+                LSA_LOG_PAM_WARNING("pam_sm_authenticate: warning unable to set pam repository [error code: %u]. This will cause password changes on login to fail, and it may cause password changes in general to fail.", dwError);
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
@@ -272,13 +272,13 @@ error:
 
     if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
     {
-        LSA_LOG_PAM_WARNING("pam_sm_authenticate error [login:%s][error code:%d]",
+        LSA_LOG_PAM_WARNING("pam_sm_authenticate error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_authenticate error [login:%s][error code:%d]",
+        LSA_LOG_PAM_ERROR("pam_sm_authenticate error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
@@ -381,13 +381,13 @@ cleanup:
 error:
     if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
     {
-        LSA_LOG_PAM_WARNING("pam_sm_setcred error [login:%s][error code:%d]",
+        LSA_LOG_PAM_WARNING("pam_sm_setcred error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_setcred error [login:%s][error code:%d]",
+        LSA_LOG_PAM_ERROR("pam_sm_setcred error [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }

@@ -429,7 +429,7 @@ EnumMembers(
                     }
                     else
                     {
-                        printf("Unresolvable SID [%d] (%s)\n\n", dwTotalIndex + 1, ppszMembers[dwIndex]);
+                        printf("Unresolvable SID [%u] (%s)\n\n", dwTotalIndex + 1, ppszMembers[dwIndex]);
                     }
                 }
 

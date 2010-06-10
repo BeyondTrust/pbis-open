@@ -111,7 +111,7 @@ main(
     dwError = LsaGetSecurityIdentifierBinary(pSID, &pucSIDByteArr, &dwSIDByteCount);
     BAIL_ON_LSA_ERROR(dwError);
 
-    printf("LsaGetSecurityIdentifierBinary() successful, byte count = %d\n",
+    printf("LsaGetSecurityIdentifierBinary() successful, byte count = %u\n",
            dwSIDByteCount);
 
     dwError = LsaByteArrayToHexStr(pucSIDByteArr, dwSIDByteCount, &pszSIDHexStr);

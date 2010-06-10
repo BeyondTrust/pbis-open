@@ -56,7 +56,7 @@ SamrSrvOpenDomain(
     OUT DOMAIN_HANDLE  *phDomain
     )
 {
-    wchar_t wszFilter[] = L"(%ws=%d OR %ws=%d) AND %ws='%ws'";
+    wchar_t wszFilter[] = L"(%ws=%u OR %ws=%u) AND %ws='%ws'";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;
     PCONNECT_CONTEXT pConnCtx = NULL;

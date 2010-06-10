@@ -60,7 +60,7 @@
     do { \
         if (dwError) \
         { \
-           LSA_LOG_DEBUG("Sqlite3 error '%s' (code = %d)", \
+           LSA_LOG_DEBUG("Sqlite3 error '%s' (code = %u)", \
                          LSA_SAFE_LOG_STRING(pszError), dwError); \
            goto error;                               \
         } \
