@@ -87,7 +87,7 @@ cleanup:
     return dwError;
 
 error:
-    LSA_LOG_ERROR_API_FAILED(hServer, dwError, "get metrics (level=%d)", dwInfoLevel);
+    LSA_LOG_ERROR_API_FAILED(hServer, dwError, "get metrics (level=%u)", dwInfoLevel);
 
     *ppMetricPack = NULL;
 
@@ -241,7 +241,7 @@ LsaSrvFreeIpcMetriPack(
                 break;
             default:
                 {
-                    LSA_LOG_ERROR("Unsupported Metric Pack Info Level [%d]", pMetricPack->dwInfoLevel);
+                    LSA_LOG_ERROR("Unsupported Metric Pack Info Level [%u]", pMetricPack->dwInfoLevel);
                 }
         }
         LwFreeMemory(pMetricPack);

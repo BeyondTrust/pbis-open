@@ -261,7 +261,7 @@ LsaNssIsPasswordExpired(
     {
         dwError = LwAllocateStringPrintf(
                 ppszMessage,
-                "Your password will expire in %d days\n",
+                "Your password will expire in %u days\n",
                 pInfo->dwDaysToPasswordExpiry);
         BAIL_ON_LSA_ERROR(dwError);
     }

@@ -243,7 +243,7 @@ ADSyncMachinePasswordThreadRoutine(
         dwError = AD_MachineCredentialsCacheInitialize();
         if (dwError)
         {
-            LSA_LOG_DEBUG("Failed to initialize credentials cache (error = %d)", dwError);
+            LSA_LOG_DEBUG("Failed to initialize credentials cache (error = %u)", dwError);
             dwError = 0;
             goto lsa_wait_resync;
         }

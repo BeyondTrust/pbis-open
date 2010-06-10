@@ -71,10 +71,10 @@ SamDbInitConfig(
             "  Version"         \
             " )"                \
             " VALUES ("         \
-            "  %d,"             \
-            "  %d,"             \
-            "  %d,"             \
-            "  %d"              \
+            "  %u,"             \
+            "  %u,"             \
+            "  %u,"             \
+            "  %u"              \
             " )";
     PSTR  pszQuery = NULL;
     PSTR  pszError = NULL;
@@ -113,7 +113,7 @@ cleanup:
 
 error:
 
-    SAMDB_LOG_DEBUG("Error (code: %d): %s",
+    SAMDB_LOG_DEBUG("Error (code: %u): %s",
                     dwError,
                     LSA_SAFE_LOG_STRING(pszError));
 
@@ -271,7 +271,7 @@ error:
 
     *pdwId = 0;
 
-    SAMDB_LOG_DEBUG("Sqlite3 Error (code: %d): %s",
+    SAMDB_LOG_DEBUG("Sqlite3 Error (code: %u): %s",
                     dwError,
                     LSA_SAFE_LOG_STRING(pszError));
 

@@ -302,7 +302,7 @@ SamDbUpdateBuildObjectQuery(
 
         dwColNamesLen += sizeof(SAMDB_UPDATE_OBJECT_QUERY_EQUALS) - 1;
 
-        sprintf(szBuf, "\?%d", ++iCol);
+        sprintf(szBuf, "\?%u", ++iCol);
 
         dwColNamesLen += strlen(szBuf);
     }
@@ -313,7 +313,7 @@ SamDbUpdateBuildObjectQuery(
 
     dwQueryLen += sizeof(SAM_DB_COL_DISTINGUISHED_NAME) - 1;
     dwQueryLen += sizeof(SAMDB_UPDATE_OBJECT_QUERY_EQUALS) - 1;
-    sprintf(szBuf, "\?%d", ++iCol);
+    sprintf(szBuf, "\?%u", ++iCol);
     dwQueryLen += strlen(szBuf);
     dwQueryLen += sizeof(SAMDB_UPDATE_OBJECT_QUERY_SUFFIX) - 1;
     dwQueryLen++;
@@ -368,7 +368,7 @@ SamDbUpdateBuildObjectQuery(
         }
         dwColNamesLen += sizeof(SAMDB_UPDATE_OBJECT_QUERY_EQUALS)  - 1;
 
-        sprintf(szBuf, "\?%d", ++iCol);
+        sprintf(szBuf, "\?%u", ++iCol);
         pszCursor = &szBuf[0];
         while (pszCursor && *pszCursor)
         {
@@ -398,7 +398,7 @@ SamDbUpdateBuildObjectQuery(
         dwColNamesLen++;
     }
 
-    sprintf(szBuf, "\?%d", ++iCol);
+    sprintf(szBuf, "\?%u", ++iCol);
     pszCursor = &szBuf[0];
     while (pszCursor && *pszCursor)
     {

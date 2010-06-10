@@ -164,7 +164,7 @@ SamrSrvQueryDomainInfo(
     /* [out] */ DomainInfo **ppInfo
     )
 {
-    const wchar_t wszFilterFmt[] = L"(%ws=%d OR %ws=%d) AND %ws='%ws'";
+    const wchar_t wszFilterFmt[] = L"(%ws=%u OR %ws=%u) AND %ws='%ws'";
 
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
     WCHAR wszAttrDn[] = DS_ATTR_DISTINGUISHED_NAME;
@@ -542,7 +542,7 @@ SamrSrvFillDomainInfo2(
     DomainInfo *pInfo
     )
 {
-    const wchar_t wszFilterFmt[] = L"%ws=%d AND %ws='%ws'";
+    const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws='%ws'";
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;

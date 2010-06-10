@@ -144,7 +144,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed in stress-testing ad-provider [error code: %d]", dwError);
+    LSA_LOG_ERROR("Failed in stress-testing ad-provider [error code: %u]", dwError);
 
     goto cleanup;
 }

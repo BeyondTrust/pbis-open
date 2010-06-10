@@ -1486,7 +1486,7 @@ ADLdap_GetAttributeValuesList(
 
         dwError = LwAllocateStringPrintf(
                         &pszRangeAttr,
-                        "%s%d-*",
+                        "%s%u-*",
                         pszAttributeRangedName,
                         dwTotalCount);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1628,7 +1628,7 @@ error:
     *psCount = 0;
     *pppResults = NULL;
 
-    LSA_LOG_ERROR("Failed to find group's members of objectSid=%s. [error code:%d]",
+    LSA_LOG_ERROR("Failed to find group's members of objectSid=%s. [error code:%u]",
                   LSA_SAFE_LOG_STRING(pszSid), dwError);
 
     ADCacheSafeFreeObjectList((DWORD)sFoundCount, &ppResults);
@@ -1746,7 +1746,7 @@ error:
 
     if ( dwError != LW_ERROR_DOMAIN_IS_OFFLINE )
     {
-        LSA_LOG_ERROR("Failed to group memberships of SID=%s. [error code:%d]",
+        LSA_LOG_ERROR("Failed to group memberships of SID=%s. [error code:%u]",
                       pObject->pszObjectSid, dwError);
     }
 

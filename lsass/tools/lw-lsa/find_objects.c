@@ -293,12 +293,12 @@ FindObjects(
             switch (gState.QueryType)
             {
             case LSA_QUERY_TYPE_BY_UNIX_ID:
-                printf("Not found [%d of %d]: %lu\n",
+                printf("Not found [%u of %u]: %lu\n",
                        dwIndex + 1, gState.dwCount,
                        (unsigned long) gState.QueryList.pdwIds[dwIndex]);
                 break;
             default:
-                printf("Not found [%d of %d]: %s\n", 
+                printf("Not found [%u of %u]: %s\n", 
                        dwIndex + 1, gState.dwCount,
                        gState.QueryList.ppszStrings[dwIndex]);
                 break;

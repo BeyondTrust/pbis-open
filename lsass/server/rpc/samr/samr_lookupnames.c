@@ -57,8 +57,8 @@ SamrSrvLookupNames(
     OUT IDS            *pOutTypes
     )
 {
-    const wchar_t wszFilterFmt[] = L"(%ws=%d AND %ws='%ws' AND %ws='%ws') OR "
-                                   L"(%ws=%d AND %ws='%ws' AND %ws='%ws')";
+    const wchar_t wszFilterFmt[] = L"(%ws=%u AND %ws='%ws' AND %ws='%ws') OR "
+                                   L"(%ws=%u AND %ws='%ws' AND %ws='%ws')";
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = 0;
     PDOMAIN_CONTEXT pDomCtx = NULL;

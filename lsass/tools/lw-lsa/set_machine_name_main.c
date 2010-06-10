@@ -149,7 +149,7 @@ error:
 
     if (bPrintOrigError)
     {
-        fprintf(stderr, "Failed to modify machine name. Error code [%d]\n", dwRetError);
+        fprintf(stderr, "Failed to modify machine name. Error code [%u]\n", dwRetError);
     }
 
     dwError = dwRetError;

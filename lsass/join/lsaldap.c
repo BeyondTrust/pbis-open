@@ -151,7 +151,7 @@ LsaLdapOpenDirectoryWithReaffinity(
                         &pDCInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
-        LSA_LOG_DEBUG("Using DC '%s' for domain '%s' (affinitization attempt %d)",
+        LSA_LOG_DEBUG("Using DC '%s' for domain '%s' (affinitization attempt %u)",
                       pDCInfo->pszDomainControllerName,
                       pDCInfo->pszFullyQualifiedDomainName,
                       dwBlackListCount);
@@ -165,7 +165,7 @@ LsaLdapOpenDirectoryWithReaffinity(
         {
             break;
         }
-        LSA_LOG_DEBUG("Ldap open failed for %s '%s' (dwError = %d (symbol: %s))",
+        LSA_LOG_DEBUG("Ldap open failed for %s '%s' (dwError = %u (symbol: %s))",
                       bNeedGc ? "forest" : "domain",
                       pszDnsDomainOrForestName,
                       dwError,

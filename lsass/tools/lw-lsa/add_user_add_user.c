@@ -434,7 +434,7 @@ error:
                fprintf(stderr, "Error: %s\n", pszError);
             } else {
                fprintf(stderr,
-                    "Error: Failed to add user. code [%d]\n",
+                    "Error: Failed to add user. code [%u]\n",
                     dwError);
             }
             break;

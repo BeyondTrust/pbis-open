@@ -108,7 +108,7 @@ SamrSrvQueryDisplayInfo(
     /* [out] */ SamrDisplayInfo *info
     )
 {
-    const wchar_t wszFilterFmt[] = L"%ws=%d AND %ws>%d";
+    const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws>%u";
 
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
     WCHAR wszAttrRecordId[] = DS_ATTR_RECORD_ID;

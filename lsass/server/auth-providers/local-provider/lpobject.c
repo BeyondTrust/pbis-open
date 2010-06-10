@@ -172,7 +172,7 @@ LocalDirResolveUserObjectPrimaryGroupSid(
         wszAttrNameObjectSID,
         NULL
     };
-    PCSTR pszTemplate = LOCAL_DB_DIR_ATTR_GID " = %d";
+    PCSTR pszTemplate = LOCAL_DB_DIR_ATTR_GID " = %u";
     PSTR pszFilter = NULL;
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
@@ -296,8 +296,8 @@ LocalDirFindObjectsInternal(
         LOCAL_DB_DIR_ATTR_NETBIOS_NAME " = \"%s\"" \
         " AND " LOCAL_DB_DIR_ATTR_SAM_ACCOUNT_NAME " = \"%s\"%s";
     PCSTR pszFilterTemplateString = "%s = \"%s\"%s";
-    PCSTR pszFilterTemplateDword = "%s = %d%s";
-    PCSTR pszFilterTemplateType = " AND " LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d";
+    PCSTR pszFilterTemplateDword = "%s = %u%s";
+    PCSTR pszFilterTemplateType = " AND " LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
     PCSTR pszFilterBy = NULL;
     PSTR pszFilterType = NULL;
     PSTR  pszFilter = NULL;
@@ -650,7 +650,7 @@ LocalDirOpenEnumObjects(
     {
         dwError = LwAllocateStringPrintf(
             &pszTypeFilter,
-            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d",
+            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u",
             dwObjectClass);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -658,8 +658,8 @@ LocalDirOpenEnumObjects(
     {
         dwError = LwAllocateStringPrintf(
             &pszTypeFilter,
-            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d OR "
-            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d",
+            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u OR "
+            LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u",
             LOCAL_OBJECT_CLASS_USER,
             LOCAL_OBJECT_CLASS_GROUP);
         BAIL_ON_LSA_ERROR(dwError);

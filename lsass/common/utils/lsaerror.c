@@ -76,7 +76,7 @@ LsaGetErrorMessageForLoggingEvent(
     {
         dwError = LwAllocateStringPrintf(
                      &pszErrorMsg,
-                     "Error: %s [error code: %d]",
+                     "Error: %s [error code: %u]",
                      pszErrorBuffer,
                      dwErrCode);
         BAIL_ON_LSA_ERROR(dwError);

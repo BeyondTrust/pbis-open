@@ -155,11 +155,11 @@ error:
 
     if (dwError ==  LW_ERROR_NO_SUCH_USER)
     {
-        LSA_LOG_PAM_DEBUG("pam_sm_chauthtok failed since the user could not be found [error code: %d]", dwError);
+        LSA_LOG_PAM_DEBUG("pam_sm_chauthtok failed since the user could not be found [error code: %u]", dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_chauthtok failed [error code: %d]", dwError);
+        LSA_LOG_PAM_ERROR("pam_sm_chauthtok failed [error code: %u]", dwError);
     }
 
     goto cleanup;
@@ -236,7 +236,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_PAM_ERROR("LsaPamCheckCurrentPassword failed [login:%s][error code: %d]",
+    LSA_LOG_PAM_ERROR("LsaPamCheckCurrentPassword failed [login:%s][error code: %u]",
                       LSA_SAFE_LOG_STRING(pszLoginId),
                       dwError);
 
@@ -294,13 +294,13 @@ error:
 
     if (dwError == LW_ERROR_NO_SUCH_USER)
     {
-        LSA_LOG_PAM_DEBUG("LsaPamMustCheckCurrentPassword failed since the user could not be found [login:%s][error code: %d]",
+        LSA_LOG_PAM_DEBUG("LsaPamMustCheckCurrentPassword failed since the user could not be found [login:%s][error code: %u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("LsaPamMustCheckCurrentPassword failed [login:%s][error code: %d]",
+        LSA_LOG_PAM_ERROR("LsaPamMustCheckCurrentPassword failed [login:%s][error code: %u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
@@ -424,13 +424,13 @@ error:
 
     if (dwError == LW_ERROR_NO_SUCH_USER)
     {
-        LSA_LOG_PAM_DEBUG("LsaPamUpdatePassword failed since the user could not be found [login:%s][error code: %d]",
+        LSA_LOG_PAM_DEBUG("LsaPamUpdatePassword failed since the user could not be found [login:%s][error code: %u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("LsaPamUpdatePassword failed [login:%s][error code: %d]",
+        LSA_LOG_PAM_ERROR("LsaPamUpdatePassword failed [login:%s][error code: %u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
@@ -526,7 +526,7 @@ error:
 
     *ppszPassword = NULL;
 
-    LSA_LOG_PAM_ERROR("LsaPamGetCurrentPassword failed [error code: %d]", dwError);
+    LSA_LOG_PAM_ERROR("LsaPamGetCurrentPassword failed [error code: %u]", dwError);
 
     goto cleanup;
 }
@@ -636,7 +636,7 @@ error:
 
     *ppszPassword = NULL;
 
-    LSA_LOG_PAM_ERROR("LsaPamGetOldPassword failed [error code: %d]", dwError);
+    LSA_LOG_PAM_ERROR("LsaPamGetOldPassword failed [error code: %u]", dwError);
 
     goto cleanup;
 }
@@ -740,7 +740,7 @@ error:
 
     *ppszPassword = NULL;
 
-    LSA_LOG_PAM_ERROR("LsaPamGetNewPassword failed [error code: %d]", dwError);
+    LSA_LOG_PAM_ERROR("LsaPamGetNewPassword failed [error code: %u]", dwError);
 
     goto cleanup;
 }

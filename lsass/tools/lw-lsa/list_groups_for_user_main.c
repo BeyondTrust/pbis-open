@@ -315,11 +315,11 @@ list_groups_for_user_main(
 
     if (pszUserName)
     {
-        printf("Number of groups found for user '%s' : %d\n", pszUserName, dwNumGroups);
+        printf("Number of groups found for user '%s' : %u\n", pszUserName, dwNumGroups);
     }
     else
     {
-        printf("Number of groups found for uid %u : %d\n", dwId, dwNumGroups);
+        printf("Number of groups found for uid %u : %u\n", dwId, dwNumGroups);
     }
 
     switch(dwGroupInfoLevel)
@@ -333,7 +333,7 @@ list_groups_for_user_main(
                 if (bShowSid)
                 {
                     fprintf(stdout,
-                            "Group[%d of %d] name = %s (gid = %u, sid = %s)\n",
+                            "Group[%u of %u] name = %s (gid = %u, sid = %s)\n",
                             iGroup+1,
                             dwNumGroups,
                             pGroupInfoList[iGroup]->pszName,
@@ -343,7 +343,7 @@ list_groups_for_user_main(
                 else
                 {
                     fprintf(stdout,
-                            "Group[%d of %d] name = %s (gid = %u)\n",
+                            "Group[%u of %u] name = %s (gid = %u)\n",
                             iGroup+1,
                             dwNumGroups,
                             pGroupInfoList[iGroup]->pszName,

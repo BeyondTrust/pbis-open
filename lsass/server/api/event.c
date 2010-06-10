@@ -144,7 +144,7 @@ LsaSrvWriteLoginSuccessEvent(
                      &pszDescription,
                      "Successful Logon:\r\n\r\n" \
                      "     Authentication provider: %s\r\n" \
-                     "     Caller euid:             %d\r\n" \
+                     "     Caller euid:             %u\r\n" \
                      "\r\n" \
                      "     User Name:               %s\r\n" \
                      "     Login phase:             %s\r\n" \
@@ -161,7 +161,7 @@ LsaSrvWriteLoginSuccessEvent(
                      &pszDescription,
                      "Successful Logon:\r\n\r\n" \
                      "     Authentication provider: %s\r\n" \
-                     "     Caller euid:             %d\r\n" \
+                     "     Caller euid:             %u\r\n" \
                      "\r\n" \
                      "     User Name:               %s\r\n" \
                      "     Login phase:             %s\r\n",
@@ -196,7 +196,7 @@ cleanup:
 error:
 
     LSA_LOG_ERROR("Failed to post login success event for [%s]", LSA_SAFE_LOG_STRING(pszLoginId));
-    LSA_LOG_ERROR("Error code: [%d]", dwError);
+    LSA_LOG_ERROR("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -323,7 +323,7 @@ LsaSrvWriteLoginFailedEvent(
                      &pszDescription,
                      "Logon Failure:\r\n\r\n" \
                      "     Authentication provider: %s\r\n" \
-                     "     Caller euid:             %d\r\n" \
+                     "     Caller euid:             %u\r\n" \
                      "\r\n" \
                      "     Reason:                  %s\r\n" \
                      "     User Name:               %s\r\n" \
@@ -342,7 +342,7 @@ LsaSrvWriteLoginFailedEvent(
                      &pszDescription,
                      "Logon Failure:\r\n\r\n" \
                      "     Authentication provider: %s\r\n" \
-                     "     Caller euid:             %d\r\n" \
+                     "     Caller euid:             %u\r\n" \
                      "\r\n" \
                      "     Reason:                  %s\r\n" \
                      "     User Name:               %s\r\n" \
@@ -379,7 +379,7 @@ cleanup:
 error:
 
     LSA_LOG_ERROR("Failed to post login failure event for [%s]", LSA_SAFE_LOG_STRING(pszLoginId));
-    LSA_LOG_ERROR("Error code: [%d]", dwError);
+    LSA_LOG_ERROR("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -454,7 +454,7 @@ cleanup:
 error:
 
     LSA_LOG_ERROR("Failed to post logout success event for [%s]", LSA_SAFE_LOG_STRING(pszLoginId));
-    LSA_LOG_ERROR("Error code: [%d]", dwError);
+    LSA_LOG_ERROR("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -505,7 +505,7 @@ cleanup:
 error:
 
     LSA_LOG_ERROR("Failed to post user password change success event.");
-    LSA_LOG_ERROR("Error code: [%d]", dwError);
+    LSA_LOG_ERROR("Error code: [%u]", dwError);
 
     goto cleanup;
 }
@@ -564,7 +564,7 @@ cleanup:
 error:
 
     LSA_LOG_ERROR("Failed to post user password change failed event.");
-    LSA_LOG_ERROR("Error code: [%d]", dwError);
+    LSA_LOG_ERROR("Error code: [%u]", dwError);
 
     goto cleanup;
 }

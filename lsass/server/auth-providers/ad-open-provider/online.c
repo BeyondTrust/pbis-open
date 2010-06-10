@@ -990,7 +990,7 @@ AD_PacMembershipFilterWithLdap(
     if (bGroupsMatch && sCacheNonNullCount != pMembershipHashTable->sCount)
     {
         LSA_LOG_VERBOSE(
-                "The user group membership information for user %s\\%s does not match what is in the cache, because the cache contains %d memberships, but the pac contains %d memberships. The group membership now needs to be compared against LDAP.",
+                "The user group membership information for user %s\\%s does not match what is in the cache, because the cache contains %zu memberships, but the pac contains %zu memberships. The group membership now needs to be compared against LDAP.",
                 LSA_SAFE_LOG_STRING(pUserInfo->pszNetbiosDomainName),
                 LSA_SAFE_LOG_STRING(pUserInfo->pszSamAccountName),
                 sCacheNonNullCount,
@@ -1676,7 +1676,7 @@ AD_OnlineCheckUserPassword(
     }
     else
     {
-        LSA_LOG_ERROR("no pac was received for %s\\%s (uid %d). The user's group memberships and password expiration may show up incorrectly on this machine.", 
+        LSA_LOG_ERROR("no pac was received for %s\\%s (uid %u). The user's group memberships and password expiration may show up incorrectly on this machine.", 
                     LSA_SAFE_LOG_STRING(pUserInfo->pszNetbiosDomainName),
                     LSA_SAFE_LOG_STRING(pUserInfo->pszSamAccountName),
                     pUserInfo->userInfo.uid);
@@ -2589,7 +2589,7 @@ error:
 
     if ( dwError != LW_ERROR_DOMAIN_IS_OFFLINE && pUserInfo )
     {
-        LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %d)",
+        LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %u)",
                       pUserInfo->pszNetbiosDomainName,
                       pUserInfo->pszSamAccountName,
                       dwError);
@@ -2848,7 +2848,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to create home directory for user (%s), actual error %d", LSA_SAFE_LOG_STRING(pObject->userInfo.pszUnixName), dwError);
+    LSA_LOG_ERROR("Failed to create home directory for user (%s), actual error %u", LSA_SAFE_LOG_STRING(pObject->userInfo.pszUnixName), dwError);
     dwError = LW_ERROR_FAILED_CREATE_HOMEDIR;
 
     goto cleanup;
@@ -2902,7 +2902,7 @@ error:
        LsaRemoveDirectory(pObject->userInfo.pszHomedir);
     }
 
-    LSA_LOG_ERROR("Failed to create home directory for user (%s), actual error %d", pObject->userInfo.pszUnixName, dwError);
+    LSA_LOG_ERROR("Failed to create home directory for user (%s), actual error %u", pObject->userInfo.pszUnixName, dwError);
     dwError = LW_ERROR_FAILED_CREATE_HOMEDIR;
 
     goto cleanup;
@@ -3157,7 +3157,7 @@ cleanup:
 
         DWORD dwError2 = LsaRemoveFile(pszK5LoginPath_tmp);
         if (dwError2) {
-            LSA_LOG_ERROR("Failed to remove file at [%s][Error code: %d]",
+            LSA_LOG_ERROR("Failed to remove file at [%s][Error code: %u]",
                           pszK5LoginPath_tmp,
                           dwError2);
         }
@@ -4968,7 +4968,7 @@ error:
 
     if ( dwError != LW_ERROR_DOMAIN_IS_OFFLINE && pUserInfo )
     {
-        LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %d)",
+        LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %u)",
                       pUserInfo->pszNetbiosDomainName,
                       pUserInfo->pszSamAccountName,
                       dwError);

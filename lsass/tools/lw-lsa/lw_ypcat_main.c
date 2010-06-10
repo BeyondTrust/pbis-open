@@ -637,7 +637,7 @@ EnumerateMaps(
                 default:
 
                     fprintf(stderr,
-                            "Error: Invalid map info level [%d]\n",
+                            "Error: Invalid map info level [%u]\n",
                             dwMapInfoLevel);
                     break;
             }

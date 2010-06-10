@@ -474,7 +474,7 @@ LsaSrvGetLsassVersion(
                 dwError = LwMapErrnoToLwError(errno);
                 if (dwError != 0)
                 {
-                    LSA_LOG_DEBUG("Unable to parse revision due to error %d", dwError);
+                    LSA_LOG_DEBUG("Unable to parse revision due to error %u", dwError);
                     dwRevision = 0;
                     dwError = 0;
                 }

@@ -329,7 +329,7 @@ error:
     *pppResult = NULL;
     *psNumGroupsFound = 0;
 
-    LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %d)",
+    LSA_LOG_ERROR("Failed to find memberships for user '%s\\%s' (error = %u)",
                   pUserInfo->pszNetbiosDomainName,
                   pUserInfo->pszSamAccountName,
                   dwError);

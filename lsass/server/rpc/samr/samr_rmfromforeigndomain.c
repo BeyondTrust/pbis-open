@@ -55,7 +55,7 @@ SamrSrvRemoveMemberFromForeignDomain(
     )
 {
     const DWORD dwAccessMask = ALIAS_ACCESS_REMOVE_MEMBER;
-    const wchar_t wszFilterFmt[] = L"%ws=%d AND %ws='%ws'";
+    const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws='%ws'";
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;

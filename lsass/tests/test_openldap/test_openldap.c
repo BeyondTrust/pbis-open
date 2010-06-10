@@ -206,7 +206,7 @@ SearchTest(
 cleanup:
     if (dwError)
     {
-        LOG_TID("dwError = %d, EE = %d", tid, dwError, EE);
+        LOG_TID("dwError = %u, EE = %d", tid, dwError, EE);
     }
     return dwError;
 }
@@ -262,7 +262,7 @@ SearchTestThread(
 cleanup:
     if (dwError)
     {
-        LOG("dwError = %d, EE = %d", dwError, EE);
+        LOG("dwError = %u, EE = %d", dwError, EE);
     }
     return NULL;
 }
@@ -321,7 +321,7 @@ SearchTestThreaded(
 cleanup:
     if (dwError)
     {
-        LOG("dwError = %d, EE = %d", dwError, EE);
+        LOG("dwError = %u, EE = %d", dwError, EE);
     }
     if (bIsAcquired)
     {
@@ -452,7 +452,7 @@ main(
 cleanup:
     if (dwError)
     {
-        LOG("dwError = %d (EE = %d)", dwError, EE);
+        LOG("dwError = %u (EE = %d)", dwError, EE);
         printf("ERROR\n");
     }
     else

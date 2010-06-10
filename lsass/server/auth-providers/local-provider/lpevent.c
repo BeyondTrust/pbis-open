@@ -205,7 +205,7 @@ LocalEventLogUserAdd(
                  "User account created.\r\n\r\n" \
                  "     Authentication provider: %s\r\n\r\n" \
                  "     User name:               %s\r\n" \
-                 "     UID:                     %d",
+                 "     UID:                     %u",
                  LSA_SAFE_LOG_STRING(gpszLocalProviderName),
                  LSA_SAFE_LOG_STRING(pszUsername),
                  uid);
@@ -239,7 +239,7 @@ LocalEventLogUserDelete(
                  &pszDescription,
                  "User account deleted.\r\n\r\n" \
                  "     Authentication provider: %s\r\n\r\n" \
-                 "     UID: %d",
+                 "     UID: %u",
                  LSA_SAFE_LOG_STRING(gpszLocalProviderName),
                  uid);
     BAIL_ON_LSA_ERROR(dwError);
@@ -274,7 +274,7 @@ LocalEventLogGroupAdd(
                  "Group created.\r\n\r\n" \
                  "     Authentication provider: %s\r\n\r\n" \
                  "     Group name:  %s\r\n" \
-                 "     GID: %d",
+                 "     GID: %u",
                  LSA_SAFE_LOG_STRING(gpszLocalProviderName),
                  LSA_SAFE_LOG_STRING(pszGroupname),
                  gid);
@@ -308,7 +308,7 @@ LocalEventLogGroupDelete(
                  &pszDescription,
                  "Group deleted.\r\n\r\n" \
                  "     Authentication provider: %s\r\n\r\n" \
-                 "     GID: %d",
+                 "     GID: %u",
                  LSA_SAFE_LOG_STRING(gpszLocalProviderName),
                  gid);
     BAIL_ON_LSA_ERROR(dwError);

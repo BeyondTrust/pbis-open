@@ -302,7 +302,7 @@ DirectoryFreeProvider(
                             pProvider->pProviderFnTbl);
             if (dwError)
             {
-                DIRECTORY_LOG_ERROR("Failed to shutdown provider [Name:%s][code: %d]",
+                DIRECTORY_LOG_ERROR("Failed to shutdown provider [Name:%s][code: %u]",
                                     (pProvider->pszProviderName ? pProvider->pszProviderName : ""),
                                     dwError);
             }

@@ -79,7 +79,7 @@ LocalDirGetUserInfoFlags(
     DWORD dwNumAttrs = (sizeof(pwszAttrs)/sizeof(pwszAttrs[0])) - 1;
     PCSTR pszFilterTemplate =
                         LOCAL_DB_DIR_ATTR_UID " = %u" \
-                        " AND " LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %d";
+                        " AND " LOCAL_DB_DIR_ATTR_OBJECT_CLASS " = %u";
     PSTR  pszFilter = NULL;
     PWSTR pwszFilter = NULL;
     PDIRECTORY_ENTRY pEntry = NULL;
@@ -674,7 +674,7 @@ error:
                         pwszUserDN);
         if (dwError2)
         {
-            LSA_LOG_ERROR("Failed to remove user [code: %d]", dwError2);
+            LSA_LOG_ERROR("Failed to remove user [code: %u]", dwError2);
         }
     }
 

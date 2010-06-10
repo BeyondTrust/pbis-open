@@ -109,7 +109,7 @@ LsaFreeGroupInfo(
         }
         default:
         {
-            LSA_LOG_ERROR("Unsupported Group Info Level [%d]", dwLevel);
+            LSA_LOG_ERROR("Unsupported Group Info Level [%u]", dwLevel);
         }
     }
 }
@@ -441,7 +441,7 @@ LsaFreeIpcGroupInfoList(
 
             default:
             {
-                LSA_LOG_ERROR("Unsupported Group Info Level [%d]", pGroupIpcInfoList->dwGroupInfoLevel);
+                LSA_LOG_ERROR("Unsupported Group Info Level [%u]", pGroupIpcInfoList->dwGroupInfoLevel);
             }
         }
         LwFreeMemory(pGroupIpcInfoList);

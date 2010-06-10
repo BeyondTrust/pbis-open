@@ -351,7 +351,7 @@ AD_ShutdownProvider(
     dwError = AD_NetShutdownMemory();
     if (dwError)
     {
-        LSA_LOG_DEBUG("AD Provider Shutdown: Failed to shutdown net memory (error = %d)", dwError);
+        LSA_LOG_DEBUG("AD Provider Shutdown: Failed to shutdown net memory (error = %u)", dwError);
         dwError = 0;
     }
 
@@ -4329,8 +4329,8 @@ LsaAdProviderLogConfigReloadEvent(
                  "Likewise authentication service provider configuration settings have been reloaded.\r\n\r\n" \
                  "     Authentication provider:           %s\r\n" \
                  "     Current settings are...\r\n" \
-                 "     Cache reaper timeout (secs):       %d\r\n" \
-                 "     Cache entry expiry (secs):         %d\r\n" \
+                 "     Cache reaper timeout (secs):       %u\r\n" \
+                 "     Cache entry expiry (secs):         %u\r\n" \
                  "     Space replacement character:       '%c'\r\n" \
                  "     Domain separator character:        '%c'\r\n" \
                  "     Enable event log:                  %s\r\n" \
@@ -4342,19 +4342,19 @@ LsaAdProviderLogConfigReloadEvent(
                  "     Assume default domain:             %s\r\n" \
                  "     Sync system time:                  %s\r\n" \
                  "     Refresh user credentials:          %s\r\n" \
-                 "     Machine password sync lifetime:    %d\r\n" \
+                 "     Machine password sync lifetime:    %u\r\n" \
                  "     Default Shell:                     %s\r\n" \
                  "     Default home directory prefix:     %s\r\n" \
                  "     Home directory template:           %s\r\n" \
-                 "     Umask:                             %d\r\n" \
+                 "     Umask:                             %u\r\n" \
                  "     Skeleton directory:                %s\r\n" \
                  "     Cell support:                      %s\r\n" \
                  "     Trim user membership:              %s\r\n" \
                  "     NSS group members from cache only: %s\r\n" \
                  "     NSS user members from cache only:  %s\r\n" \
                  "     NSS enumeration enabled:           %s\r\n"
-                 "     Domain Manager check domain online (secs):          %d\r\n"
-                 "     Domain Manager unknown domain cache timeout (secs): %d",
+                 "     Domain Manager check domain online (secs):          %u\r\n"
+                 "     Domain Manager unknown domain cache timeout (secs): %u",
                  LSA_SAFE_LOG_STRING(gpszADProviderName),
                  gpLsaAdProviderState->config.dwCacheReaperTimeoutSecs,
                  gpLsaAdProviderState->config.dwCacheEntryExpirySecs,

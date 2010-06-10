@@ -137,7 +137,7 @@ find_group_by_id_main(
             break;
         default:
 
-            fprintf(stderr, "Error: Invalid group info level [%d]\n", dwInfoLevel);
+            fprintf(stderr, "Error: Invalid group info level [%u]\n", dwInfoLevel);
             break;
     }
 
@@ -398,7 +398,7 @@ PrintGroupInfo_1(
         }
     }
 
-    printf("Members Count: %d\n", iMember);
+    printf("Members Count: %u\n", iMember);
 }
 
 DWORD

@@ -316,7 +316,7 @@ LsaDmpAcquireMutex(
     DWORD dwError = pthread_mutex_lock(pMutex);
     if (dwError)
     {
-        LSA_LOG_ERROR("pthread_mutex_lock() failed: %d", dwError);
+        LSA_LOG_ERROR("pthread_mutex_lock() failed: %u", dwError);
     }
 }
 
@@ -329,7 +329,7 @@ LsaDmpReleaseMutex(
     DWORD dwError = pthread_mutex_unlock(pMutex);
     if (dwError)
     {
-        LSA_LOG_ERROR("pthread_mutex_unlock() failed: %d", dwError);
+        LSA_LOG_ERROR("pthread_mutex_unlock() failed: %u", dwError);
     }
 }
 
@@ -3021,7 +3021,7 @@ cleanup:
     }
     if (dwError != LW_ERROR_SUCCESS)
     {
-        LSA_LOG_ERROR("Error %d occurred while putting an ldap connection back in the domain free list.", dwError);
+        LSA_LOG_ERROR("Error %u occurred while putting an ldap connection back in the domain free list.", dwError);
     }
     if (pConn != NULL)
     {

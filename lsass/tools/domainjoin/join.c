@@ -63,7 +63,7 @@ void printError(PSTR msg, DWORD dwError)
     {
         pszError = (PSTR) LwWin32ExtErrorToName(dwError);
     }
-    printf("%s (%d) %s\n", msg ? msg : "", dwError, pszError);
+    printf("%s (%u) %s\n", msg ? msg : "", dwError, pszError);
 }
 
 

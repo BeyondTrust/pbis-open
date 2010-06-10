@@ -64,12 +64,12 @@
         DWORD dwError1 = 0; \
         if (dwError) { \
             if ((dwError1 = SamDbRollbackTransaction(hDirectory))) { \
-                SAMDB_LOG_ERROR("Failed to rollback transaction [code:%d]", dwError1); \
+                SAMDB_LOG_ERROR("Failed to rollback transaction [code:%u]", dwError1); \
             } \
         } \
         else { \
             if ((dwError1 = SamDbCommitTransaction(hDirectory))) { \
-                SAMDB_LOG_ERROR("Failed to commit transaction [code:%d]", dwError1); \
+                SAMDB_LOG_ERROR("Failed to commit transaction [code:%u]", dwError1); \
             } \
         } \
     }

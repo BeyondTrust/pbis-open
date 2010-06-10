@@ -936,7 +936,7 @@ CallSamrEnumDomains(
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -955,7 +955,7 @@ CallSamrEnumDomains(
 
             for (i = 0; i < dwNumEntries; i++)
             {
-                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %d)\n", i));
+                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %u)\n", i));
             }
 
             if (ppwszDomains)
@@ -970,7 +970,7 @@ CallSamrEnumDomains(
     dwResume    = 0;
     dwMaxSize  *= 2;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -989,7 +989,7 @@ CallSamrEnumDomains(
 
             for (i = 0; i < dwNumEntries; i++)
             {
-                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %d)\n", i));
+                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %u)\n", i));
             }
 
             if (ppwszDomains)
@@ -1004,7 +1004,7 @@ CallSamrEnumDomains(
     dwResume    = 0;
     dwMaxSize  *= 2;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -1023,7 +1023,7 @@ CallSamrEnumDomains(
 
             for (i = 0; i < dwNumEntries; i++)
             {
-                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %d)\n", i));
+                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %u)\n", i));
             }
 
             if (ppwszDomains)
@@ -1038,7 +1038,7 @@ CallSamrEnumDomains(
     dwResume   = 0;
     dwMaxSize  = (DWORD)(-1);
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomains with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -1059,7 +1059,7 @@ CallSamrEnumDomains(
             {
                 PWSTR pwszDomain = ppwszDomains[i];
 
-                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %d)\n", i));
+                ASSERT_TEST_MSG((ppwszDomains[i] != NULL), ("(i = %u)\n", i));
 
                 DISPLAY_COMMENT(("Testing SamrLookupDomain\n"));
 
@@ -1171,7 +1171,7 @@ CallSamrOpenDomains(
                     continue;
                 }
 
-                DISPLAY_COMMENT(("Testing SamrQueryDomainInfo (level=%d)\n", i));
+                DISPLAY_COMMENT(("Testing SamrQueryDomainInfo (level=%u)\n", i));
 
                 CALL_MSRPC(ntStatus, SamrQueryDomainInfo(hBinding,
                                                          hDomain, i, &pDomainInfo[i]));
@@ -1220,7 +1220,7 @@ CallSamrOpenDomains(
                     continue;
                 }
 
-                DISPLAY_COMMENT(("Testing SamrQueryDomainInfo (level=%d)\n", i));
+                DISPLAY_COMMENT(("Testing SamrQueryDomainInfo (level=%u)\n", i));
 
                 CALL_MSRPC(ntStatus, SamrQueryDomainInfo(hBinding,
                                                          hBuiltin, i, &pDomainInfo[i]));
@@ -1335,7 +1335,7 @@ CallSamrEnumDomainUsers(
     PWSTR ppwszNames[2] = {0};
     PDWORD pdwUserRids = NULL;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %u\n", dwMaxSize));
 
     dwResume       = 0;
     dwAccountFlags = ACB_NORMAL;
@@ -1372,7 +1372,7 @@ CallSamrEnumDomainUsers(
     dwResume    = 0;
     dwMaxSize  *= 2;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -1406,7 +1406,7 @@ CallSamrEnumDomainUsers(
     dwResume    = 0;
     dwMaxSize  *= 2;
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -1440,7 +1440,7 @@ CallSamrEnumDomainUsers(
     dwResume   = 0;
     dwMaxSize  = (UINT32)(-1);
 
-    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %d\n", dwMaxSize));
+    DISPLAY_COMMENT(("Testing SamrEnumDomainUsers with max_size = %u\n", dwMaxSize));
 
     do
     {
@@ -1996,7 +1996,7 @@ CallSamrGetMembersInAlias(
         for (iSid = 0; iSid < dwSidsCount; iSid++)
         {
             ASSERT_TEST_MSG((ppSids[iSid] != NULL && RtlValidSid(ppSids[iSid])),
-                            ("(i = %d)\n", iSid));
+                            ("(i = %u)\n", iSid));
         }
 
 cleanup:
@@ -2384,7 +2384,7 @@ CallCleanupAccounts(
     {
         ASSERT_TEST_MSG((pdwTypes[iRid] >= SID_TYPE_USE_NONE &&
                          pdwTypes[iRid] <= SID_TYPE_LABEL),
-                        ("(iRid = %d)\n", iRid));
+                        ("(iRid = %u)\n", iRid));
 
         if (pdwTypes[iRid] == SID_TYPE_UNKNOWN)
         {
@@ -2706,7 +2706,7 @@ TestVerifyUsers(
         dwFieldsPresent1 = ppNewUserInfo[i]->info21.fields_present;
         dwFieldsPresent2 = pppUserInfo[i][21]->info21.fields_present;
 
-        DISPLAY_COMMENT(("Verifying user (i = %d)\n", i));
+        DISPLAY_COMMENT(("Verifying user (i = %u)\n", i));
 
         if ((dwFieldsPresent1 & SAMR_FIELD_ACCOUNT_NAME) &&
             (dwFieldsPresent2 & SAMR_FIELD_ACCOUNT_NAME))

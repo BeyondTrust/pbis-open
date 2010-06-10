@@ -157,7 +157,7 @@ find_user_by_name_main(
             break;
         default:
             
-            fprintf(stderr, "Error: Invalid user info level [%d]\n", dwInfoLevel);
+            fprintf(stderr, "Error: Invalid user info level [%u]\n", dwInfoLevel);
             break;
     }
 
@@ -369,8 +369,8 @@ PrintUserInfo_1(
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
     fprintf(stdout, "Home dir:          %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-    fprintf(stdout, "LMHash length:     %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:     %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "LMHash length:     %u\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:     %u\n", pUserInfo->dwNTHashLen);
     fprintf(stdout, "Local User:        %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
     fprintf(stdout, "Logon restriction: %s\n", bAllowedLogon ? "NO" : "YES");
 }
@@ -400,8 +400,8 @@ PrintUserInfo_2(
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
     fprintf(stdout, "Home dir:                     %s\n",
                 LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-    fprintf(stdout, "LMHash length:                %d\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:                %d\n", pUserInfo->dwNTHashLen);
+    fprintf(stdout, "LMHash length:                %u\n", pUserInfo->dwLMHashLen);
+    fprintf(stdout, "NTHash length:                %u\n", pUserInfo->dwNTHashLen);
     fprintf(stdout, "Local User:                   %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
     fprintf(stdout, "Account disabled (or locked): %s\n",
             pUserInfo->bAccountDisabled ? "TRUE" : "FALSE");
@@ -415,7 +415,7 @@ PrintUserInfo_2(
             pUserInfo->bPromptPasswordChange ? "YES" : "NO");
     fprintf(stdout, "User can change password:     %s\n",
             pUserInfo->bUserCanChangePassword ? "YES" : "NO");
-    fprintf(stdout, "Days till password expires:   %d\n",
+    fprintf(stdout, "Days till password expires:   %u\n",
             pUserInfo->dwDaysToPasswordExpiry);
     fprintf(stdout, "Logon restriction:            %s\n",
             bAllowedLogon ? "NO" : "YES");

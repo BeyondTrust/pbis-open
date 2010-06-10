@@ -78,7 +78,7 @@ main(
        LsaCloseServer(hLsaConnection);
     }
 
-    LSA_LOG_ERROR("Failed communication with the LSA Agent. Error code [%d]\n", dwError);
+    LSA_LOG_ERROR("Failed communication with the LSA Agent. Error code [%u]\n", dwError);
 
     return (dwError);
 }

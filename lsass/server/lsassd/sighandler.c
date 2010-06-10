@@ -126,7 +126,7 @@ cleanup:
 
 error:
 
-    LSA_LOG_ERROR("Failed to refresh configuration. [Error code:%d]", dwError);
+    LSA_LOG_ERROR("Failed to refresh configuration. [Error code:%u]", dwError);
 
     goto cleanup;
 }

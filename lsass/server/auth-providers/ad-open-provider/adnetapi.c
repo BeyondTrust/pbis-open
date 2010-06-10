@@ -417,7 +417,7 @@ error:
     *ppszObjectSid = NULL;
     LW_SAFE_FREE_STRING(pszObjectSid);
     *pObjectType = LSA_OBJECT_TYPE_UNDEFINED;
-    LSA_LOG_ERROR("Failed to find user, group, or domain by name (name = '%s', searched host = '%s') -> error = %d, symbol = %s",
+    LSA_LOG_ERROR("Failed to find user, group, or domain by name (name = '%s', searched host = '%s') -> error = %u, symbol = %s",
             LSA_SAFE_LOG_STRING(pszObjectName),
             LSA_SAFE_LOG_STRING(pszHostname),
             dwError,
@@ -473,7 +473,7 @@ AD_NetLookupObjectSidsByNames(
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %u (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -506,7 +506,7 @@ AD_NetLookupObjectSidsByNames(
                             &hPolicy);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %u (0x%08x)", status, status);
 
         if (AD_NtStatusIsTgtRevokedError(status))
         {
@@ -562,7 +562,7 @@ AD_NetLookupObjectSidsByNames(
         }
         else
         {
-            LSA_LOG_DEBUG("LsaLookupNames2() failed with %d (0x%08x)", status, status);
+            LSA_LOG_DEBUG("LsaLookupNames2() failed with %u (0x%08x)", status, status);
 
             if (AD_NtStatusIsTgtRevokedError(status))
             {
@@ -677,7 +677,7 @@ cleanup:
     status = LsaClose(lsa_binding, hPolicy);
     if (status != 0 && dwError == 0)
     {
-        LSA_LOG_DEBUG("LsaClose() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaClose() failed with %u (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_CLOSEPOLICY_FAILED;
     }
     if (lsa_binding)
@@ -775,7 +775,7 @@ error:
     LW_SAFE_FREE_STRING(pszNT4Name);
     *pObjectType = LSA_OBJECT_TYPE_UNDEFINED;
 
-    LSA_LOG_ERROR("Failed to find user, group, or domain by sid (sid = '%s', searched host = '%s') -> error = %d, symbol = %s",
+    LSA_LOG_ERROR("Failed to find user, group, or domain by sid (sid = '%s', searched host = '%s') -> error = %u, symbol = %s",
             LSA_SAFE_LOG_STRING(pszObjectSid),
             LSA_SAFE_LOG_STRING(pszHostname),
             dwError,
@@ -835,7 +835,7 @@ AD_NetLookupObjectNamesBySids(
     status = LsaInitBindingDefault(&lsa_binding, pwcHost, pCreds);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaInitBindingDefault() failed with %u (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_LSABINDING_FAILED;
         bIsNetworkError = TRUE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -872,7 +872,7 @@ AD_NetLookupObjectNamesBySids(
                             &hPolicy);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaOpenPolicy2() failed with %u (0x%08x)", status, status);
 
         if (AD_NtStatusIsTgtRevokedError(status))
         {
@@ -926,7 +926,7 @@ AD_NetLookupObjectNamesBySids(
         }
         else
         {
-            LSA_LOG_DEBUG("LsaLookupSids() failed with %d (0x%08x)", status, status);
+            LSA_LOG_DEBUG("LsaLookupSids() failed with %u (0x%08x)", status, status);
 
             if (AD_NtStatusIsTgtRevokedError(status))
             {
@@ -1080,7 +1080,7 @@ cleanup:
 
     status = LsaClose(lsa_binding, hPolicy);
     if (status != 0 && dwError == 0){
-        LSA_LOG_DEBUG("LsaClose() failed with %d (0x%08x)", status, status);
+        LSA_LOG_DEBUG("LsaClose() failed with %u (0x%08x)", status, status);
         dwError = LW_ERROR_RPC_CLOSEPOLICY_FAILED;
     }
 
@@ -1165,7 +1165,7 @@ AD_DsEnumerateDomainTrusts(
                                     FALSE);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
+        LSA_LOG_DEBUG("Failed to bind to %s (error %u)",
                       pszDomainControllerName, status);
         dwError = LW_ERROR_RPC_NETLOGON_FAILED;
         bIsNetworkError = TRUE;
@@ -1179,7 +1179,7 @@ AD_DsEnumerateDomainTrusts(
                                         &dwCount);
     if (winError)
     {
-        LSA_LOG_DEBUG("Failed to enumerate trusts at %s (error %d)",
+        LSA_LOG_DEBUG("Failed to enumerate trusts at %s (error %u)",
                       pszDomainControllerName, winError);
 
         if (AD_WinErrorIsTgtRevokedError(winError))
@@ -1298,7 +1298,7 @@ AD_DsGetDcName(
                                     FALSE);
     if (status != 0)
     {
-        LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
+        LSA_LOG_DEBUG("Failed to bind to %s (error %u)",
                        pszServerName, status);
         dwError = LW_ERROR_RPC_NETLOGON_FAILED;
         bIsNetworkError = TRUE;
@@ -1317,7 +1317,7 @@ AD_DsGetDcName(
                             &pDcNameInfo);
     if (winError)
     {
-        LSA_LOG_DEBUG("Failed to get dc name information for %s at %s (error %d)",
+        LSA_LOG_DEBUG("Failed to get dc name information for %s at %s (error %u)",
                       pszDomainName,
                       pszServerName,
                       winError);
@@ -1718,7 +1718,7 @@ AD_NetlogonAuthenticationUserEx(
         status = NetrInitBindingDefault(&netr_b, pwszDomainController, pCreds, FALSE);
         if (status != 0)
         {
-            LSA_LOG_DEBUG("Failed to bind to %s (error %d)",
+            LSA_LOG_DEBUG("Failed to bind to %s (error %u)",
                           pszDomainController, status);
             dwError = LW_ERROR_RPC_NETLOGON_FAILED;
             bIsNetworkError = TRUE;
@@ -1739,7 +1739,7 @@ AD_NetlogonAuthenticationUserEx(
 
         if (nt_status != STATUS_SUCCESS)
         {
-            LSA_LOG_DEBUG("NetrOpenSchannel() failed with %d (0x%08x)", nt_status, nt_status);
+            LSA_LOG_DEBUG("NetrOpenSchannel() failed with %u (0x%08x)", nt_status, nt_status);
 
             if (AD_NtStatusIsTgtRevokedError(nt_status))
             {
@@ -1798,7 +1798,7 @@ AD_NetlogonAuthenticationUserEx(
 
     if (nt_status)
     {
-        LSA_LOG_DEBUG("NetrSamLogonNetwork() failed with %d (0x%08x) (symbol: '%s')", nt_status, nt_status, LSA_SAFE_LOG_STRING(LwNtStatusToName(nt_status)));
+        LSA_LOG_DEBUG("NetrSamLogonNetwork() failed with %u (0x%08x) (symbol: '%s')", nt_status, nt_status, LSA_SAFE_LOG_STRING(LwNtStatusToName(nt_status)));
 
         if (AD_NtStatusIsTgtRevokedError(nt_status))
         {

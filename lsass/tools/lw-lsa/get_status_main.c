@@ -308,7 +308,7 @@ PrintStatus(
                 printf("\tDomain:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomain) ? "" : pProviderStatus->pszDomain);
                 printf("\tForest:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszForest) ? "" : pProviderStatus->pszForest);
                 printf("\tSite:          %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszSite) ? "" : pProviderStatus->pszSite);
-                printf("\tOnline check interval:  %d seconds\n", pProviderStatus->dwNetworkCheckInterval);
+                printf("\tOnline check interval:  %u seconds\n", pProviderStatus->dwNetworkCheckInterval);
 
                 break;
                 
@@ -342,7 +342,7 @@ PrintStatus(
         {
             DWORD iDomain = 0;
             
-            printf("\t[Trusted Domains: %d]\n\n", pProviderStatus->dwNumTrustedDomains);
+            printf("\t[Trusted Domains: %u]\n\n", pProviderStatus->dwNumTrustedDomains);
             
             for (; iDomain < pProviderStatus->dwNumTrustedDomains; iDomain++)
             {

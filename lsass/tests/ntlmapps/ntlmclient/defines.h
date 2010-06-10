@@ -27,7 +27,7 @@
     do { \
         if (dwError) \
         { \
-            printf("Error at %s:%d [code: %d]", __FILE__, __LINE__, dwError); \
+            printf("Error at %s:%d [code: %u]", __FILE__, __LINE__, dwError); \
             goto error; \
         } \
     } while (0)

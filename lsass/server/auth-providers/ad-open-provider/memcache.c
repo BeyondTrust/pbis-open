@@ -254,7 +254,7 @@ cleanup:
     return (void *)(size_t)dwError;
 
 error:
-    LSA_LOG_INFO("The in-memory backup thread is exiting with error code %d\n", dwError);
+    LSA_LOG_INFO("The in-memory backup thread is exiting with error code %u\n", dwError);
     goto cleanup;
 }
 
@@ -1367,7 +1367,7 @@ MemCacheCheckSizeInLock(
 
     if (pConn->sCacheSize != sCacheSize)
     {
-        LSA_LOG_ERROR("Recorded cache size not equal calculated size: %d, $d", pConn->sCacheSize, sCacheSize);
+        LSA_LOG_ERROR("Recorded cache size not equal calculated size: %zu, %zu", pConn->sCacheSize, sCacheSize);
     }
 
 error:
@@ -2206,7 +2206,7 @@ MemCacheMaintainSizeCap(
         goto cleanup;
     }
 
-    LSA_LOG_WARNING("The current cache size (%d) is larger than the cap (%d) - evicting old objects", pConn->sCacheSize, pConn->sSizeCap);
+    LSA_LOG_WARNING("The current cache size (%zu) is larger than the cap (%zu) - evicting old objects", pConn->sCacheSize, pConn->sSizeCap);
 
     // Remove any orphaned memberships (memberships where the parent or child
     // security object is not cached)
@@ -2401,7 +2401,7 @@ MemCacheMaintainSizeCap(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    LSA_LOG_VERBOSE("The cache size reduced to (%d)", pConn->sCacheSize);
+    LSA_LOG_VERBOSE("The cache size reduced to (%zu)", pConn->sCacheSize);
 
     // The caller will notify the backup thread
 

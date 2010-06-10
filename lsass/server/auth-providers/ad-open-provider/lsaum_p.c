@@ -306,7 +306,7 @@ LsaUmpAcquireMutex(
     DWORD dwError = pthread_mutex_lock(pMutex);
     if (dwError)
     {
-        LSA_LOG_ERROR("pthread_mutex_lock() failed: %d", dwError);
+        LSA_LOG_ERROR("pthread_mutex_lock() failed: %u", dwError);
     }
 }
 
@@ -319,7 +319,7 @@ LsaUmpReleaseMutex(
     DWORD dwError = pthread_mutex_unlock(pMutex);
     if (dwError)
     {
-        LSA_LOG_ERROR("pthread_mutex_unlock() failed: %d", dwError);
+        LSA_LOG_ERROR("pthread_mutex_unlock() failed: %u", dwError);
     }
 }
 
@@ -1598,13 +1598,14 @@ LsaUmpLogUserTGTRefreshSuccessEvent(
                  "Refreshed Active Directory user account Kerberos credentials.\r\n\r\n" \
                  "     Authentication provider:   %s\r\n\r\n" \
                  "     User name:                 %s\r\n" \
-                 "     UID:                       %d\r\n" \
+                 "     UID:                       %u\r\n" \
                  "     Domain name:               %s\r\n" \
-                 "     TGT end time:              %d\r\n",
+                 "     TGT end time:              %u\r\n",
                  LSA_SAFE_LOG_STRING(gpszADProviderName),
                  LSA_SAFE_LOG_STRING(pszUsername),
                  uid,
-                 LSA_SAFE_LOG_STRING(pszDomainName));
+                 LSA_SAFE_LOG_STRING(pszDomainName),
+                 dwTgtEndTime);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaSrvLogServiceSuccessEvent(
@@ -1642,9 +1643,9 @@ LsaUmpLogUserTGTRefreshFailureEvent(
                  "The Active Directory user account Kerberos credentials failed to refresh.\r\n\r\n" \
                  "     Authentication provider:   %s\r\n\r\n" \
                  "     User name:                 %s\r\n" \
-                 "     UID:                       %d\r\n" \
+                 "     UID:                       %u\r\n" \
                  "     Domain name:               %s\r\n" \
-                 "     Failure number:            %d\r\n",
+                 "     Failure number:            %u\r\n",
                  LSA_SAFE_LOG_STRING(gpszADProviderName),
                  LSA_SAFE_LOG_STRING(pszUsername),
                  uid,

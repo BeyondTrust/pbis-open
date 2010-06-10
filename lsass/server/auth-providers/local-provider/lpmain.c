@@ -356,7 +356,7 @@ LocalValidateUser(
     {
         LSA_LOG_DEBUG(
                 "Failed to find user '%s' while validating login "
-                "[error code:%d]",
+                "[error code:%u]",
                 pszLoginId,
                 dwError);
         dwError = LW_ERROR_NOT_HANDLED;

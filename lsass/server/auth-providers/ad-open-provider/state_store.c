@@ -200,7 +200,7 @@ ADState_SafeCloseDb(
     dwError = pthread_rwlock_destroy(&hDb->lock);
     if (dwError != LW_ERROR_SUCCESS)
     {
-        LSA_LOG_ERROR("Error destroying lock [%d]", dwError);
+        LSA_LOG_ERROR("Error destroying lock [%u]", dwError);
         dwError = LW_ERROR_SUCCESS;
     }
 

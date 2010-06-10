@@ -420,7 +420,7 @@ QueryMemberOf(
         }
         else
         {
-            printf("Unresolvable SID [%d of %d] (%s)\n\n",
+            printf("Unresolvable SID [%u of %u] (%s)\n\n",
                    dwIndex + 1, dwGroupSidCount, ppszMembers[dwIndex]);
         }
     }

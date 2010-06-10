@@ -152,7 +152,7 @@ pam_sm_acct_mgmt(
                 sprintf(szMessage, "Your password will expire in 1 day\n");
                 break;
             default:
-                sprintf(szMessage, "Your password will expire in %d days\n",
+                sprintf(szMessage, "Your password will expire in %u days\n",
                        pUserInfo->dwDaysToPasswordExpiry);
                 break;
         }
@@ -185,19 +185,19 @@ error:
 
     if (dwError == LW_ERROR_NO_SUCH_USER || dwError == LW_ERROR_NOT_HANDLED)
     {
-        LSA_LOG_PAM_WARNING("pam_sm_acct_mgmt failed [login:%s][error code:%d]",
+        LSA_LOG_PAM_WARNING("pam_sm_acct_mgmt failed [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
     }
     else
     {
-        LSA_LOG_PAM_ERROR("pam_sm_acct_mgmt failed [login:%s][error code:%d]",
+        LSA_LOG_PAM_ERROR("pam_sm_acct_mgmt failed [login:%s][error code:%u]",
                           LSA_SAFE_LOG_STRING(pszLoginId),
                           dwError);
         if (pszLoginId && !strcmp(pszLoginId, "root"))
         {
             dwError = LW_ERROR_NO_SUCH_USER;
-            LSA_LOG_PAM_ERROR("Converting error to %d for root", dwError);
+            LSA_LOG_PAM_ERROR("Converting error to %u for root", dwError);
         }
     }
 
