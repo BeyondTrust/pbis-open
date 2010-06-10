@@ -56,12 +56,16 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 
 %files 
 %defattr(-,root,root)
-%{PrefixDir}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 %{_sysconfdir}/init.d/*
 %dir /var/rpc
 
 %if ! %{Compat32}
+%{PrefixDir}/bin/rpcping
+%{PrefixDir}/sbin
 %{PrefixDir}/share/config/*
+%{PrefixDir}/share/dce-rpc/*
 %define initScriptPathList %{INIT_DIR}/dcerpcd
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
@@ -99,6 +103,8 @@ done
 %files devel
 %defattr(0644,root,root,0755)
 
+%attr(0755,root,root) %{PrefixDir}/bin/uuid
+%attr(0755,root,root) %{PrefixDir}/bin/dceidl
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
 %if ! %{Compat32}

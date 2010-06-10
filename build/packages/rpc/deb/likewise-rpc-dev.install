@@ -1,3 +1,5 @@
 __PKG_PREFIX/lib*/{*.la,*.a}
 __PKG_PREFIX/include
-__PKG_PREFIX/bin
+__PKG_PREFIX/bin/dceidl
+__PKG_PREFIX/bin/uuid
+
