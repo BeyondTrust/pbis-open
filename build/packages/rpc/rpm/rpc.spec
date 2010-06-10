@@ -65,7 +65,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/rpcping
 %{PrefixDir}/sbin
 %{PrefixDir}/share/config/*
-%{PrefixDir}/share/dce-rpc/*
 %define initScriptPathList %{INIT_DIR}/dcerpcd
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
@@ -111,6 +110,7 @@ done
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/share/man/*
 #%attr(0644,root,root) %{PrefixDir}/share/doc/*
+%attr(0644,root,root) %{PrefixDir}/share/dcerpc/*
 %endif
 
 %changelog

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.13])
-AC_INIT([DCE RPC], [1.1.0.7])
+AC_INIT([dcerpc], [1.1.0.7])
 AC_CONFIG_AUX_DIR([build])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([foreign])
