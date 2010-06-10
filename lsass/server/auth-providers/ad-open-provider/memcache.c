@@ -2490,7 +2490,8 @@ MemCacheStoreObjectEntryInLock(
                             pConn->pObjects);
             BAIL_ON_LSA_ERROR(dwError);
 
-            if (pObject->groupInfo.pszAliasName)
+            if (pObject->groupInfo.pszAliasName &&
+                    pObject->groupInfo.pszAliasName[0])
             {
                 sObjectSize += HASH_ENTRY_SPACE;
                 dwError = LsaHashSetValue(
@@ -2523,7 +2524,8 @@ MemCacheStoreObjectEntryInLock(
                 BAIL_ON_LSA_ERROR(dwError);
             }
 
-            if (pObject->userInfo.pszAliasName)
+            if (pObject->userInfo.pszAliasName &&
+                    pObject->userInfo.pszAliasName[0])
             {
                 sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszAliasName);
                 sObjectSize += HASH_ENTRY_SPACE;
