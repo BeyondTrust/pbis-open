@@ -615,15 +615,19 @@ function libtool_staging_path
 
 function libtool_set_staging_library_path
 {
-#    set +x
+    set +x
     local libpath=`libtool_staging_library_path`
     
     case "${BUILD_OS_TYPE}" in
         darwin)
-            export DYLD_LIBRARY_PATH=${libpath}
+            export DYLD_LIBRARY_PATH="${libpath}"
             ;;
+	hpux)
+	    export SHLIB_PATH="${libpath}"
+	    export LD_LIBRARY_PATH="${libpath}"
+	    ;;
         *)
-            export LD_LIBRARY_PATH=${libpath}
+            export LD_LIBRARY_PATH="${libpath}"
             ;;
     esac
     set -x
