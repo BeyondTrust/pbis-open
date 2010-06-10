@@ -136,7 +136,7 @@ LsaJoinDomainInternal(
     );
 
 
-NTSTATUS
+DWORD
 LsaGetRwDcName(
     PCWSTR    pwszDnsDomainName,
     BOOLEAN   bForce,

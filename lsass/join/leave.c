@@ -209,10 +209,10 @@ LsaUnjoinDomain(
     dwError = LsaGetHostInfo(&pszLocalname);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = LsaGetRwDcName(pwszDomainName,
-                              FALSE,
-                              &pwszDCName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LsaGetRwDcName(pwszDomainName,
+                             FALSE,
+                             &pwszDCName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
                                      &hStore);

@@ -789,15 +789,15 @@ LsaJoinDomainInternal(
     dwError = LwWc16sToUpper(pwszMachineName);
     BAIL_ON_LSA_ERROR(dwError)
 
-    ntStatus = LsaGetRwDcName(pwszDomain,
-                              FALSE,
-                              &pwszDCName);
-    if (ntStatus)
+    dwError = LsaGetRwDcName(pwszDomain,
+                             FALSE,
+                             &pwszDCName);
+    if (dwError)
     {
-        ntStatus = LsaGetRwDcName(pwszDomain,
-                                  TRUE,
-                                  &pwszDCName);
-        BAIL_ON_NT_STATUS(ntStatus);
+        dwError = LsaGetRwDcName(pwszDomain,
+                                 TRUE,
+                                 &pwszDCName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     if (pwszAccount && pwszPassword)
@@ -2809,7 +2809,7 @@ LsaMachAcctSetAttribute(
 }
 
 
-NTSTATUS
+DWORD
 LsaGetRwDcName(
     const wchar16_t *DnsDomainName,
     BOOLEAN Force,
@@ -3129,9 +3129,9 @@ LsaMachineChangePassword(
         goto error;
     }
 
-    ntStatus = LsaGetRwDcName(pPassInfo->pwszDnsDomainName, FALSE,
+    dwError = LsaGetRwDcName(pPassInfo->pwszDnsDomainName, FALSE,
                             &pwszDCName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_LSA_ERROR(dwError);
 
     pwszUserName     = pPassInfo->pwszMachineAccount;
     pwszOldPassword  = pPassInfo->pwszMachinePassword;
