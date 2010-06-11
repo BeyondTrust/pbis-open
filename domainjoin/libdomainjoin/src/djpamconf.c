@@ -1420,6 +1420,11 @@ static BOOLEAN PamModuleChecksCaller( const char * phase, const char * module)
     // Used on Fedora Core 11. This is a Finger Print reader authentication module, does not prompt for password.
     if(!strcmp(buffer, "pam_fprintd"))
         return TRUE;
+    // Used on Solaris. Automatically enabled by SunRay Server Software
+    if(!strcmp(buffer, "pam_kiosk"))
+        return TRUE;
+    if(!strcmp(buffer, "pam_sunray_admingui"))
+        return TRUE;
 
     return FALSE;
 }
