@@ -516,6 +516,14 @@ LsaAdBatchMarshal(
     }
 
 #if 0
+    // Disable in svn commit r45217
+    // Fix regression that could cause NULL objects to be returned by LsaEnumObjects():
+    // Don't filter out disabled objects when enumerating in the AD provider - If we
+    // ever do filter out objects, don't leave NULLs in the array
+    //
+    // This code also has to be disabled for to support returning non-provisioned objects
+    // (computers, users, ...) that need an access token for use in Likewise-CIFS
+
     if (IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED) &&
         (pItem->ObjectType != LSA_AD_BATCH_OBJECT_TYPE_GROUP))
     {
