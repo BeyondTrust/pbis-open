@@ -1,5 +1,5 @@
 #!/bin/sh
-COMP_DEPENDENCIES="autoconf automake libtool openssl krb5 pkg-config"
+COMP_DEPENDENCIES="autoconf automake libtool openssl krb5 openldap pkg-config"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/curl"
 COMP_INCREMENTAL=1
 
