@@ -209,10 +209,10 @@ main(
             goto error;
         }
         
-        printf("Statistics [%u]: %u\n", i, stats->count);
+        printf("Statistics [%u]: %u\n", (unsigned int)i, (unsigned int)stats->count);
         for (j = 0; j < stats->count; j++)
         {
-            printf("  [%u] = %u\n", j, stats->stats[j]);
+            printf("  [%u] = %u\n", (unsigned int)j, (unsigned int)stats->stats[j]);
         }
 
         sleep(global.sleep);
@@ -224,7 +224,7 @@ cleanup:
 
 error:
 
-    fprintf(stderr, "Error: %x\n", status);
+    fprintf(stderr, "Error: %x\n", (unsigned int)status);
 
     goto cleanup;
 }
