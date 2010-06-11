@@ -1404,13 +1404,17 @@ LsaMapSecurityGetPacInfoFromGssContext(
         &more);
     if (majorStatus != GSS_S_COMPLETE)
     {
-        status = STATUS_UNSUCCESSFUL;
+        // Try to convert the minorStatus as a Win32 error.  At worst we'll end
+        // up with a squashed error code if it is not a valid Win32 error. But to
+        // be fair we were always returning STATUS_UNSUCCESSFUL here before.
+
+        status = LwWin32ErrorToNtStatus(minorStatus);
         BAIL_ON_NT_STATUS(status);
     }
     
     if (pacData.value == NULL)
     {
-        status = STATUS_UNSUCCESSFUL;
+        status = STATUS_INVALID_USER_BUFFER;
         BAIL_ON_NT_STATUS(status);
     }
 
