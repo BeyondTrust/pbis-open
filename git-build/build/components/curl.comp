@@ -32,6 +32,16 @@ function component_configure
     run_configure                      \
 	--prefix=${PREFIXDIR}          \
         --libdir=${PREFIXDIR}/${_lib}  \
+	--disable-ldap \
+	--disable-ldaps \
+	--disable-ftp \
+	--disable-rtsp \
+	--disable-dict \
+	--disable-telnet \
+	--disable-tftp \
+	--disable-pop3 \
+	--disable-imap \
+	--disable-smtp \
 	--with-ssl="${STAGE_INSTALL_DIR}/${PREFIXDIR}" 
 }
 
