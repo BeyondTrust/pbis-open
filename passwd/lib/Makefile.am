@@ -27,19 +27,19 @@ MAINTAINERCLEANFILES =
 
 AM_CPPFLAGS =
 
-noinst_LIBRARIES += libgnu.a
+noinst_LTLIBRARIES += libgnu.la
 
-libgnu_a_SOURCES =
-libgnu_a_LIBADD = $(gl_LIBOBJS)
-libgnu_a_DEPENDENCIES = $(gl_LIBOBJS)
-EXTRA_libgnu_a_SOURCES =
+libgnu_la_SOURCES =
+libgnu_la_LIBADD = $(gl_LIBOBJS)
+libgnu_la_DEPENDENCIES = $(gl_LIBOBJS)
+EXTRA_libgnu_la_SOURCES =
 
 ## begin gnulib module malloc
 
 
 EXTRA_DIST += malloc.c
 
-EXTRA_libgnu_a_SOURCES += malloc.c
+EXTRA_libgnu_la_SOURCES += malloc.c
 
 ## end   gnulib module malloc
 
@@ -48,13 +48,13 @@ EXTRA_libgnu_a_SOURCES += malloc.c
 
 EXTRA_DIST += realloc.c
 
-EXTRA_libgnu_a_SOURCES += realloc.c
+EXTRA_libgnu_la_SOURCES += realloc.c
 
 ## end   gnulib module realloc
 
 ## begin gnulib module dummy
 
-libgnu_a_SOURCES += dummy.c
+libgnu_la_SOURCES += dummy.c
 
 ## end   gnulib module dummy
 

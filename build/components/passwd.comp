@@ -2,6 +2,7 @@
 
 COMP_INCREMENTAL=1
 COMP_SOURCES=${BUILD_ROOT}/src/linux/passwd
+COMP_DEPENDENCIES="lsass"
 
 function component_bootstrap
 {
@@ -24,41 +25,21 @@ function _setup_build_env
     CFLAGS="${_cflags} -D_REENTRANT -fPIC"
     LDSHFLAGS="${_ldshflags}"
     LDFLAGS="${_ldflags}"
+    CPPFLAGS="${_cppflags} ${CPPFLAGS}"
 
-    case "${BUILD_OS_TYPE}" in
-        linux)
-            LDFLAGS="$LDFLAGS -Wl,-rpath,${PREFIX_DIR}/${_lib}"
-            ;;
-        freebsd)
-            LDFLAGS="$LDFLAGS -Wl,-rpath,${PREFIX_DIR}/${_lib}"
-            ;;
-        solaris)
-            LDFLAGS="$LDFLAGS -R${PREFIX_DIR}/${_lib}"
-            ;;
-        aix)
-	    CC="$(echo $CC | sed 's/^gcc/gcc-wrap.sh/')"
-            CFLAGS="$CFLAGS -D_THREAD_SAFE"
-            LDFLAGS="$LDFLAGS -Wl,-bsvr4 -Wl,-R${PREFIX_DIR}/${_lib}"
-            ;;
-	hpux)
-	    LDFLAGS="$LDFLAGS -Wl,+b -Wl,${PREFIX_DIR}/${_lib}"
-	    ;;
-	darwin)
-	    ;;
-        *)
-            echo "Unsupported OS: ${BUILD_OS_TYPE}"
-            exit 1
-            ;;
-    esac
+    export LDFLAGS CFLAGS LDSHFLAGS CPPFLAGS
 
-    export LDFLAGS CFLAGS LDSHFLAGS
+    libtool_set_staging_library_path
+    libtool_set_staging_path
 }
 
 function component_configure
 {
     _setup_build_env
 
-    "${COMP_SOURCES}/configure" --prefix=${PREFIX_DIR} ${DEPENDENCY_TRACKING}
+    "${COMP_SOURCES}/configure" --prefix=${PREFIX_DIR} ${DEPENDENCY_TRACKING} \
+	LDFLAGS="$(libtool_staging_ldflags) $LDFLAGS"  \
+	CPPFLAGS="$(libtool_staging_cppflags) $CPPFLAGS"
 }
 
 function component_build
@@ -78,7 +59,6 @@ function component_stage
 	bindir=${STAGING_PREFIX_DIR}/bin \
 	sbindir=${STAGING_PREFIX_DIR}/sbin
 }
-#!/bin/bash
 
 function component_populate
 {

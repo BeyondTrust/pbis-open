@@ -7,9 +7,12 @@ AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([main.c])
 AC_CONFIG_HEADER([config.h])
 
+AM_CFLAGS="$AM_CFLAGS -Wall -Werror -fno-strict-aliasing"
+AC_SUBST(AM_CFLAGS)
+
 # Checks for programs.
 AC_PROG_CC
-AC_PROG_RANLIB
+AC_PROG_LIBTOOL
 gl_EARLY
 
 # Checks for libraries.
@@ -38,6 +41,7 @@ AC_CHECK_TYPES([struct pam_repository], [], [],
 #endif
 ])
 
+AC_MSG_CHECKING([if pam_conv takes a const struct pam_message **])
 AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM(
     [#ifdef HAVE_SECURITY_PAM_APPL_H
@@ -46,13 +50,15 @@ AC_COMPILE_IFELSE(
     ],
     [
         struct pam_conv conversation = { (int (*)(
-            int, const struct pam_message **, const struct pam_response **, void *))NULL,
+            int, const struct pam_message **, struct pam_response **, void *))NULL,
             NULL
         };
     ])],
     [
+    AC_MSG_RESULT([yes])
     CONST_PAM_MESSAGE="const struct pam_message"
     ], [
+    AC_MSG_RESULT([no])
     CONST_PAM_MESSAGE="struct pam_message"
     ]
 )

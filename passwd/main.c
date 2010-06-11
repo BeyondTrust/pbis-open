@@ -38,12 +38,15 @@
 #include <termios.h>
 #include <pwd.h>
 #include <errno.h>
+#include <unistd.h>
 #ifdef HAVE_SECURITY_PAM_APPL_H
 #include <security/pam_appl.h>
 #endif
 #ifdef HAVE_USERSEC_H
 #include <usersec.h>
 #endif
+#include <lwerror.h>
+#include <lsa/lsa.h>
 
 ssize_t afgets(char **strp, FILE *stream)
 {
@@ -364,80 +367,224 @@ error:
 }
 #endif
 
+int ChangePasswordViaLsass(const char *username, FILE *tty)
+{
+    int error_code = 0;
+    struct pam_message message = { 0 };
+    CONST_PAM_MESSAGE *message_ptr = &message;
+    struct pam_response *responses = NULL;
+    char *old_password = NULL;
+    char *new_password = NULL;
+    char *reenter_password = NULL;
+    HANDLE lsa = NULL;
+
+    message.msg_style = PAM_PROMPT_ECHO_OFF;
+
+    message.msg = "Current password: ";
+    if (tty_conv(1, &message_ptr, &responses, tty) != PAM_SUCCESS)
+    {
+        goto errno_failure;
+    }
+    old_password = responses[0].resp;
+    free(responses);
+    responses = NULL;
+
+    while (1)
+    {
+        message.msg = "New password: ";
+        if (tty_conv(1, &message_ptr, &responses, tty) != PAM_SUCCESS)
+        {
+            goto errno_failure;
+        }
+        new_password = responses[0].resp;
+        free(responses);
+        responses = NULL;
+
+        message.msg = "Re-enter password: ";
+        if (tty_conv(1, &message_ptr, &responses, tty) != PAM_SUCCESS)
+        {
+            goto errno_failure;
+        }
+        reenter_password = responses[0].resp;
+        free(responses);
+        responses = NULL;
+
+        if (!strcmp(new_password, reenter_password))
+        {
+            break;
+        }
+        else
+        {
+            fprintf(tty, "Error: passwords do not match\n");
+
+            memset(new_password, 0, strlen(new_password));
+            free(new_password);
+            new_password = NULL;
+            memset(reenter_password, 0, strlen(reenter_password));
+            free(reenter_password);
+            reenter_password = NULL;
+        }
+    }
+
+    error_code = LsaOpenServer(&lsa);
+    if (error_code != 0)
+    {
+        goto lsass_failure;
+    }
+
+    error_code = LsaChangePassword(lsa, username, new_password, old_password);
+    if (error_code != 0)
+    {
+        goto lsass_failure;
+    }
+
+    error_code = LsaCloseServer(lsa);
+    lsa = NULL;
+    if (error_code != 0)
+    {
+        goto lsass_failure;
+    }
+
+cleanup:
+    free(responses);
+    if (old_password)
+    {
+        memset(old_password, 0, strlen(old_password));
+        free(old_password);
+    }
+    if (new_password)
+    {
+        memset(new_password, 0, strlen(new_password));
+        free(new_password);
+    }
+    if (reenter_password)
+    {
+        memset(reenter_password, 0, strlen(reenter_password));
+        free(reenter_password);
+    }
+    if (lsa != NULL)
+    {
+        LsaCloseServer(lsa);
+    }
+    return error_code;
+
+errno_failure:
+    fprintf(stderr, "passwd: %s\n", strerror(errno));
+    error_code = -1;
+    goto cleanup;
+
+lsass_failure:
+    fprintf(stderr, "passwd: %s [%d]\n%s\n",
+            LwWin32ExtErrorToName(error_code),
+            error_code,
+            LwWin32ExtErrorToDescription(error_code));
+    error_code = -1;
+    goto cleanup;
+}
+
 int main(int argc, char *argv[])
 {
     int showHelp = 0;
     FILE *tty = fopen("/dev/tty", "r+");
     char *username = NULL;
     int exit_code = 1;
+    int argIndex = 1;
+    int lsassDirect = 0;
 
-    if(argc == 1)
+    for (; argIndex < argc; argIndex++)
+    {
+        if (strcmp(argv[argIndex], "-h") == 0 ||
+            strcmp(argv[argIndex], "-?") == 0 ||
+            strcmp(argv[argIndex], "--help") == 0)
+        {
+            showHelp = 1;
+        }
+        else if(strcmp(argv[argIndex], "-l") == 0 ||
+            strcmp(argv[argIndex], "--lsass") == 0)
+        {
+            lsassDirect = 1;
+        }
+        else if (username == NULL)
+        {
+            if (getuid() != 0)
+            {
+                fprintf(stderr, "Only root can change the password of other users\n");
+                goto error;
+            }
+            else
+                username = strdup(argv[argIndex]);
+        }
+        else
+        {
+            showHelp = 1;
+        }
+    }
+
+    if (!username)
     {
         uid_t uid = getuid();
         struct passwd *calling_user = getpwuid(uid);
-        if(calling_user == NULL)
+        if (calling_user == NULL)
         {
             fprintf(stderr, "Unable to lookup caller's username\n");
             goto error;
         }
         username = strdup(calling_user->pw_name);
     }
-    else if(argc == 2)
-    {
-        if(strcmp(argv[1], "-h") == 0 ||
-            strcmp(argv[1], "-?") == 0 ||
-            strcmp(argv[1], "--help") == 0)
-        {
-            showHelp = 1;
-        }
-        else if(getuid() !=0)
-        {
-            fprintf(stderr, "Only root can change the password of other users\n");
-            goto error;
-        }
-        else
-            username = strdup(argv[1]);
-    }
-    else
-        showHelp = 1;
 
     if(showHelp)
     {
         printf(
-"%s [username]\n"
+"%s [options] {username}\n"
 "Changes the password of a user. If the username is not specified on the\n"
-"command line, the current user's password will be changed.\n",
+"command line, the current user's password will be changed.\n"
+"\n"
+"Options:\n"
+" --help, -h, -?\n"
+"    Shows this message\n"
+"\n"
+" --lsass, -l\n"
+"    By-passes pam and calls lsass directly. This option is used to work\n"
+"    around systems with a broken pam implementation, but it will only work\n"
+"    for AD users.\n",
             argv[0]);
         goto error;
     }
 
-    if(tty == NULL)
+    if (tty == NULL)
     {
         fprintf(stderr, "Unable to open /dev/tty\n");
         goto error;
     }
-    if(!isatty(fileno(tty)))
+    if (!isatty(fileno(tty)))
     {
         fprintf(stderr, "/dev/tty is not a terminal\n");
         goto error;
     }
 
-    exit_code = ChangePasswordViaPam(username, tty);
-#ifdef HAVE_CHPASS
-    if(exit_code < 0)
+    if (lsassDirect)
     {
-        exit_code = ChangePasswordViaLam(username, tty);
+        exit_code = ChangePasswordViaLsass(username, tty);
     }
+    else
+    {
+        exit_code = ChangePasswordViaPam(username, tty);
+#ifdef HAVE_CHPASS
+        if (exit_code < 0)
+        {
+            exit_code = ChangePasswordViaLam(username, tty);
+        }
 #endif
-    if(exit_code == ERROR_CANT_START_PAM)
+    }
+    if (exit_code == ERROR_CANT_START_PAM)
     {
         fprintf(stderr, "Unable to start pam\n");
     }
 
 error:
-    if(tty != NULL)
+    if (tty != NULL)
         fclose(tty);
-    if(username != NULL)
+    if (username != NULL)
         free(username);
     return exit_code;
 }
