@@ -790,6 +790,7 @@ LwMapSecurityCreateAccessTokenFromUidGid(
         TOKEN_PRIMARY_GROUP tokenPrimaryGroup = { 0 };
         TOKEN_DEFAULT_DACL tokenDefaultDacl = { 0 };
         TOKEN_UNIX tokenUnix = { 0 };
+        ULONG ulDaclSize = 0;
 
         /* Force gid to be 0 to avoid deadlocking call back into
            lsass when it runs with non-zero gid (Solaris, HP-UX) */
@@ -812,6 +813,31 @@ LwMapSecurityCreateAccessTokenFromUidGid(
         tokenUnix.Uid = Uid;
         tokenUnix.Gid = Gid;
         tokenUnix.Umask = 0;
+
+        ulDaclSize = ACL_HEADER_SIZE +
+            sizeof(ACCESS_ALLOWED_ACE) +
+            RtlLengthSid(userSid) +
+            sizeof(ULONG);
+
+        status = LW_RTL_ALLOCATE(
+                     &tokenDefaultDacl.DefaultDacl,
+                     VOID,
+                     ulDaclSize);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = RtlCreateAcl(
+                     tokenDefaultDacl.DefaultDacl,
+                     ulDaclSize,
+                     ACL_REVISION);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        status = RtlAddAccessAllowedAceEx(
+                     tokenDefaultDacl.DefaultDacl,
+                     ACL_REVISION,
+                     0,
+                     GENERIC_ALL,
+                     userSid);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         status = LwMapSecurityCreateExtendedAccessToken(
                         &accessToken,
