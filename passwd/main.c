@@ -79,7 +79,7 @@ int tty_conv(int num_msg, CONST_PAM_MESSAGE **msg,
         struct pam_response **resp, void *appdata_ptr)
 {
     FILE *tty = (FILE *)appdata_ptr;
-    int i;
+    int i = 0;
     char *msg_copy = NULL;
     size_t msg_len = 0;
     ssize_t resp_len = 0;
