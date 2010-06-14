@@ -80,9 +80,9 @@ int tty_conv(int num_msg, CONST_PAM_MESSAGE **msg,
 {
     FILE *tty = (FILE *)appdata_ptr;
     int i;
-    char *msg_copy;
-    size_t msg_len;
-    ssize_t resp_len;
+    char *msg_copy = NULL;
+    size_t msg_len = 0;
+    ssize_t resp_len = 0;
     struct termios old, new;
     struct pam_response *responses = malloc(
             num_msg * sizeof(struct pam_response));
@@ -169,7 +169,7 @@ int ChangePasswordViaPam(const char *username, FILE *tty)
 {
     pam_handle_t *pamh = NULL;
     int retCode = -1;
-    int error_code;
+    int error_code = 0;
     struct pam_conv conversation = { tty_conv, tty };
     if(pam_start("passwd", username, &conversation, &pamh) != PAM_SUCCESS)
     {

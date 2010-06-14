@@ -45,6 +45,7 @@ AC_MSG_CHECKING([if pam_conv takes a const struct pam_message **])
 AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM(
     [#ifdef HAVE_SECURITY_PAM_APPL_H
+    #include <stdlib.h>
     #include <security/pam_appl.h>
     #endif
     ],
