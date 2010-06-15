@@ -117,7 +117,7 @@ AD_OfflineAuthenticateUserPam(
         &pszNT4UserName,
         "%s\\%s",
         pUserInfo->pszNetbiosDomainName,
-        pUserInfo->userInfo.pszUPN);
+        pUserInfo->pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaUmAddUser(
@@ -605,11 +605,6 @@ AD_OfflineFindObjectsByName(
             break;
         }
 
-        if (dwError == LW_ERROR_SUCCESS)
-        {
-            dwError = AD_CheckExpiredObject(&pCachedUser);
-        }
-        
         switch (dwError)
         {
         case LW_ERROR_SUCCESS:
@@ -694,11 +689,7 @@ AD_OfflineFindObjectsById(
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
         }
-        if (dwError == LW_ERROR_SUCCESS)
-        {
-            dwError = AD_CheckExpiredObject(&pCachedUser);
-        }
-        
+
         switch (dwError)
         {
         case LW_ERROR_SUCCESS:
@@ -847,10 +838,19 @@ AD_OfflineQueryMemberOfForSid(
     PLSA_GROUP_MEMBERSHIP* ppMemberships = NULL;
     // Only free top level array, do not free string pointers.
     PSTR pszGroupSid = NULL;
-    PLSA_SECURITY_OBJECT pUserInfo = NULL;
+    PLSA_SECURITY_OBJECT* ppUserObject = NULL;
     DWORD dwIndex = 0;
 
-    dwError = AD_FindObjectBySid(hProvider, pszSid, &pUserInfo);
+    dwError = AD_OfflineFindObjectsBySidList(
+                  1,
+                  &pszSid,
+                  &ppUserObject);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!ppUserObject[0])
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheGetGroupsForUser(
@@ -887,7 +887,7 @@ AD_OfflineQueryMemberOfForSid(
 cleanup:
 
     LW_SAFE_FREE_MEMORY(pszGroupSid);
-    ADCacheSafeFreeObject(&pUserInfo);
+    ADCacheSafeFreeObjectList(1, &ppUserObject);
     ADCacheSafeFreeGroupMembershipList(sMembershipCount, &ppMemberships);
 
     return dwError;

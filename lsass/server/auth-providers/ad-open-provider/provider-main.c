@@ -3506,15 +3506,7 @@ AD_FindObjects(
 
     if (AD_IsOffline())
     {
-        dwError = AD_OfflineFindObjects(
-            hProvider,
-            FindFlags,
-            ObjectType,
-            QueryType,
-            dwCount,
-            QueryList,
-            &ppObjects);
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
     }
     else
     {
@@ -3526,8 +3518,20 @@ AD_FindObjects(
             dwCount,
             QueryList,
             &ppObjects);
-        BAIL_ON_LSA_ERROR(dwError);
     }
+
+    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+    {
+        dwError = AD_OfflineFindObjects(
+            hProvider,
+            FindFlags,
+            ObjectType,
+            QueryType,
+            dwCount,
+            QueryList,
+            &ppObjects);
+    }
+    BAIL_ON_LSA_ERROR(dwError);
 
     if (ppObjects)
     {
@@ -3712,13 +3716,7 @@ AD_OpenEnumMembers(
    
     if (AD_IsOffline())
     {
-        dwError = AD_OfflineGetGroupMemberSids(
-            hProvider,
-            FindFlags,
-            pszSid,
-            &pEnum->dwSidCount,
-            &pEnum->ppszSids);
-        BAIL_ON_LSA_ERROR(dwError);
+        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
     }
     else
     {
@@ -3728,8 +3726,18 @@ AD_OpenEnumMembers(
             pszSid,
             &pEnum->dwSidCount,
             &pEnum->ppszSids);
-        BAIL_ON_LSA_ERROR(dwError);
     }
+
+    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
+    {
+        dwError = AD_OfflineGetGroupMemberSids(
+            hProvider,
+            FindFlags,
+            pszSid,
+            &pEnum->dwSidCount,
+            &pEnum->ppszSids);
+    }
+    BAIL_ON_LSA_ERROR(dwError);
 
     *phEnum = pEnum;
 
@@ -3825,7 +3833,11 @@ AD_QueryMemberOf(
 
     if (AD_IsOffline())
     {
-        dwError = AD_OfflineQueryMemberOf(
+        dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
+    }
+    else
+    {
+        dwError = AD_OnlineQueryMemberOf(
             hProvider,
             FindFlags,
             dwSidCount,
@@ -3833,9 +3845,10 @@ AD_QueryMemberOf(
             pdwGroupSidCount,
             pppszGroupSids);
     }
-    else
+
+    if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
-        dwError = AD_OnlineQueryMemberOf(
+        dwError = AD_OfflineQueryMemberOf(
             hProvider,
             FindFlags,
             dwSidCount,
