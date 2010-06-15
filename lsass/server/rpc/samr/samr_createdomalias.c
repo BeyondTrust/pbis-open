@@ -51,10 +51,10 @@ NTSTATUS
 SamrSrvCreateDomAlias(
     /* [in] */ handle_t hBinding,
     /* [in] */ DOMAIN_HANDLE hDomain,
-    /* [in] */ UNICODE_STRING *alias_name,
-    /* [in] */ UINT32 access_mask,
-    /* [out] */ ACCOUNT_HANDLE *hAlias,
-    /* [out] */ UINT32 *rid
+    /* [in] */ UNICODE_STRING *pAliasName,
+    /* [in] */ UINT32 dwAccessMask,
+    /* [out] */ ACCOUNT_HANDLE *phAlias,
+    /* [out] */ UINT32 *pdwRid
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -78,7 +78,7 @@ SamrSrvCreateDomAlias(
     }
 
     ntStatus = SamrSrvGetFromUnicodeString(&pwszAliasName,
-                                           alias_name);
+                                           pAliasName);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeStringEx(&Name,
@@ -90,10 +90,10 @@ SamrSrvCreateDomAlias(
                                     &Name,
                                     DS_OBJECT_CLASS_LOCAL_GROUP,
                                     0,
-                                    access_mask,
-                                    hAlias,
+                                    dwAccessMask,
+                                    phAlias,
                                     &ulAccessGranted,
-                                    rid);
+                                    pdwRid);
     if (ntStatus == STATUS_USER_EXISTS)
     {
         ntStatus = STATUS_ALIAS_EXISTS;
@@ -111,8 +111,8 @@ cleanup:
     return ntStatus;
 
 error:
-    *hAlias = NULL;
-    *rid    = 0;
+    *phAlias = NULL;
+    *pdwRid  = 0;
     goto cleanup;
 }
 
