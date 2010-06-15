@@ -13,7 +13,6 @@ AC_SUBST(AM_CFLAGS)
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_LIBTOOL
-gl_EARLY
 
 # Checks for libraries.
 AC_SEARCH_LIBS([pam_start], [pam])
@@ -21,8 +20,6 @@ AC_SEARCH_LIBS([pam_start], [pam])
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([stdlib.h string.h termios.h security/pam_appl.h usersec.h])
-
-gl_INIT
 
 AC_LANG_WERROR
 
@@ -73,5 +70,5 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([memset strdup chpass])
 
-AC_CONFIG_FILES([Makefile lib/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
