@@ -98,8 +98,16 @@ lwmsg_error_map_errno(
     case ENOBUFS:
     case ENOMEM:
         return LWMSG_STATUS_RESOURCE_LIMIT;
+    case EBUSY:
+        return LWMSG_STATUS_BUSY;
     case ENOENT:
         return LWMSG_STATUS_FILE_NOT_FOUND;
+    case ECONNREFUSED:
+        return LWMSG_STATUS_CONNECTION_REFUSED;
+    case ECONNRESET:
+        return LWMSG_STATUS_PEER_RESET;
+    case ECONNABORTED:
+        return LWMSG_STATUS_PEER_ABORT;
     default:
         return LWMSG_STATUS_SYSTEM;
     }

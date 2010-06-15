@@ -918,6 +918,7 @@ lwmsg_peer_task_run_listen(
     LWMsgAssoc* assoc = NULL;
     PeerAssocTask* client_task = NULL;
     LWMsgBool slot = LWMSG_FALSE;
+    int err = 0;
     
     while (status == LWMSG_STATUS_SUCCESS)
     {
@@ -929,25 +930,38 @@ lwmsg_peer_task_run_listen(
         if (trigger & LWMSG_TASK_TRIGGER_CANCEL)
         {
             lwmsg_peer_listen_task_delete_self(task);
-            BAIL_ON_ERROR(status = LWMSG_STATUS_CANCELLED);
+            *next_trigger = 0;
+            goto done;
         }
         
         if ((slot = lwmsg_peer_acquire_client_slot(task->peer)))
         {
-            client_fd = accept(task->fd, &addr, &addrlen);
-            
-            if (client_fd < 0)
+            do
             {
-            switch (errno)
-            {
-            case EAGAIN:
-            case EINTR:
-                *next_trigger = LWMSG_TASK_TRIGGER_FD_READABLE;
-                BAIL_ON_ERROR(status = LWMSG_STATUS_PENDING);
-            default:
-                BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
-            }
-            }
+                client_fd = accept(task->fd, &addr, &addrlen);
+                
+                if (client_fd < 0)
+                {
+                    switch (errno)
+                    {
+                    case EAGAIN:
+#if defined(EWOULDBLOCK) && (EWOULDBLOCK != EAGAIN)
+                    case EWOULDBLOCK:
+#endif
+                        /* We are blocked, wake up when fd is readable */
+                        *next_trigger = LWMSG_TASK_TRIGGER_FD_READABLE;
+                        goto done;
+                    case EINTR:
+                    case ECONNABORTED:
+                        /* Trivially retriable errors.  Ignore them and loop again */
+                        continue;
+                    default:
+                        err = errno;
+                        LWMSG_LOG_ERROR(task->peer->context, "System error on accept(): %i", err);
+                        BAIL_ON_ERROR(status = lwmsg_error_map_errno(err));
+                    }
+                }
+            } while (client_fd < 0);
             
             BAIL_ON_ERROR(status = lwmsg_set_close_on_exec(client_fd));
             
@@ -966,10 +980,10 @@ lwmsg_peer_task_run_listen(
         }
         else
         {
-            /* We've run out of client slots, so stop waiting for new ones
+            /* We've run out of client slots, so stop accepting clients
                until we are explicitly woken up */
             *next_trigger = LWMSG_TASK_TRIGGER_EXPLICIT;
-            BAIL_ON_ERROR(status = LWMSG_STATUS_PENDING);
+            goto done;
         }
     }
 
@@ -999,11 +1013,28 @@ error:
         lwmsg_peer_task_cancel_and_unref(client_task);
     }
 
-    if (status == LWMSG_STATUS_CANCELLED)
+    /* If the listen task aborts, the server will be left in a state
+       where it is running but cannot be contacted.  Invoke the
+       exception function set on the server to give the application
+       a chance to bail out if it wishes.  Also, attempt to keep running
+       if the error appears to be recoverable */
+    if (task->peer->except)
     {
-        *next_trigger = 0;
+        task->peer->except(task->peer, status, task->peer->except_data);
     }
 
+    switch (status)
+    {
+    case LWMSG_STATUS_BUSY:
+    case LWMSG_STATUS_MEMORY:
+    case LWMSG_STATUS_RESOURCE_LIMIT:
+        *next_trigger = LWMSG_TASK_TRIGGER_YIELD;
+        break;
+    default:
+        *next_trigger = 0;
+        break;
+    }
+    
     goto done;
 }
 

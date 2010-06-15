@@ -178,7 +178,8 @@ typedef enum LWMsgTaskTrigger
      *
      * @hideinitializer
      */
-    LWMSG_TASK_TRIGGER_FD_EXCEPTION = 0x40
+    LWMSG_TASK_TRIGGER_FD_EXCEPTION = 0x40,
+    LWMSG_TASK_TRIGGER_YIELD = 0x80
 } LWMsgTaskTrigger;
 
 /**
