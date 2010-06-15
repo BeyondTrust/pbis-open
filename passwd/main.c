@@ -284,8 +284,12 @@ int ChangePasswordViaLam(const char *username, FILE *tty)
     char encodedUsername[10];
 
     userinfo = getpwnam(username);
-    if(userinfo != NULL)
-        uid = userinfo->pw_uid;
+    if (userinfo == NULL)
+    {
+        fprintf(stderr, "passwd: user '%s' unknown\n", username);
+        goto error;
+    }
+    uid = userinfo->pw_uid;
 
     WblMangleAIX((unsigned int) uid, encodedUsername);
 
