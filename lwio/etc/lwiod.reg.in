@@ -68,7 +68,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
 "Path"="@providerdir@/libsrv.sys@MOD_EXT@"
-"SupportSmb2"=dword:00000000
+"SupportSmb2"=dword:00000001
 "EnableSecuritySignatures"=dword:00000001
 "RequireSecuritySignatures"=dword:00000001
 "BootstrapDefaultSharePath"=dword:00000001
