@@ -170,17 +170,6 @@ SamrSrvRemoveMemberFromForeignDomain(
         ntStatus = SamrSrvClose(hBinding, &hAlias);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        /*
-         * Release the account handle. Normally DCE/RPC runtime
-         * would take care of that but this time the handle wasn't
-         * returned as [context_handle] argument
-         */
-        pAcctCtx = (PACCOUNT_CONTEXT)hAlias;
-        hAlias   = NULL;
-
-        ACCOUNT_HANDLE_rundown(pAcctCtx);
-        RTL_FREE(&pAcctCtx);
-
         RTL_FREE(&pAliasSid);
     }
 
@@ -197,8 +186,7 @@ cleanup:
         pAcctCtx = (PACCOUNT_CONTEXT)hAlias;
         hAlias   = NULL;
 
-        ACCOUNT_HANDLE_rundown(pAcctCtx);
-        RTL_FREE(&pAcctCtx);
+        SamrSrvAccountContextFree(pAcctCtx);
     }
 
     RTL_FREE(&pAliasSid);
