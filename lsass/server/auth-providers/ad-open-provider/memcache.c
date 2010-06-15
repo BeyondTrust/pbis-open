@@ -713,12 +713,16 @@ MemCacheRemoveMembership(
     )
 {
     DWORD dwError = 0;
+    BOOLEAN bLastItem = FALSE;
 
     pConn->sCacheSize -= pMembership->membership.version.dwObjectSize;
 
+    // See if only this membership plus the guardian is in the list
+    bLastItem = (pMembership->parentListNode.Next->Next ==
+            &pMembership->parentListNode);
     LsaListRemove(&pMembership->parentListNode);
 
-    if (pMembership->parentListNode.Prev->Prev == pMembership->parentListNode.Prev)
+    if (bLastItem)
     {
         // Only the guardian is left, so remove the hash entry
         dwError = LsaHashRemoveKey(
@@ -727,9 +731,12 @@ MemCacheRemoveMembership(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    // See if only this membership plus the guardian is in the list
+    bLastItem = (pMembership->childListNode.Next->Next ==
+            &pMembership->childListNode);
     LsaListRemove(&pMembership->childListNode);
 
-    if (pMembership->childListNode.Prev->Prev == pMembership->childListNode.Prev)
+    if (bLastItem)
     {
         // Only the guardian is left, so remove the hash entry
         dwError = LsaHashRemoveKey(
