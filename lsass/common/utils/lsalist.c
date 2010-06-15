@@ -106,6 +106,7 @@ LsaListRemove(
 {
     Element->Prev->Next = Element->Next;
     Element->Next->Prev = Element->Prev;
+    LsaListInit(Element);
 }
 
 LSA_LIST_LINKS*
