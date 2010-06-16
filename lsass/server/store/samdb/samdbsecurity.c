@@ -1063,7 +1063,7 @@ SamDbCreateLocalGroupDacl(
                                   ALIAS_ACCESS_LOOKUP_INFO |
                                   ALIAS_ACCESS_SET_INFO;
 
-    ACCESS_MASK AllAccessMask = STANDARD_RIGHTS_REQUIRED |
+    ACCESS_MASK AllAccessMask = STANDARD_RIGHTS_READ |
                                 ALIAS_ACCESS_GET_MEMBERS |
                                 ALIAS_ACCESS_LOOKUP_INFO;
 
@@ -1160,7 +1160,7 @@ SamDbCreateBuiltinGroupDacl(
                                   ALIAS_ACCESS_LOOKUP_INFO |
                                   ALIAS_ACCESS_SET_INFO;
 
-    ACCESS_MASK AllAccessMask = STANDARD_RIGHTS_REQUIRED |
+    ACCESS_MASK AllAccessMask = STANDARD_RIGHTS_READ |
                                 ALIAS_ACCESS_GET_MEMBERS |
                                 ALIAS_ACCESS_LOOKUP_INFO;
 
