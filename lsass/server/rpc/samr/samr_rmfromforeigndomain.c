@@ -55,6 +55,7 @@ SamrSrvRemoveMemberFromForeignDomain(
     )
 {
     const DWORD dwAccessMask = ALIAS_ACCESS_REMOVE_MEMBER;
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%u";
     const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws='%ws'";
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -66,11 +67,18 @@ SamrSrvRemoveMemberFromForeignDomain(
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
     WCHAR wszAttrObjectSid[] = DS_ATTR_OBJECT_SID;
     WCHAR wszAttrDomainName[] = DS_ATTR_DOMAIN;
+    DWORD dwDomainObjectClass = DIR_OBJECT_CLASS_DOMAIN;
+    DWORD dwDomainFilterLen = 0;
+    PWSTR pwszDomainFilter = NULL;
+    PWSTR pwszBase = NULL;
+    DWORD dwScope = 0;
+    PDIRECTORY_ENTRY pDomainEntries = NULL;
+    DWORD dwNumDomainEntries = 0;
+    PWSTR pwszDomainSid = NULL;
+    PSID pDomainSid = NULL;
     PWSTR pwszDomainName = NULL;
     DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
-    PWSTR pwszBase = NULL;
-    DWORD dwScope = 0;
     DWORD dwObjectClass = DS_OBJECT_CLASS_LOCAL_GROUP;
     PDIRECTORY_ENTRY pEntries = NULL;
     DWORD dwEntriesNum = 0;
@@ -96,6 +104,61 @@ SamrSrvRemoveMemberFromForeignDomain(
     pConnCtx       = pDomCtx->pConnCtx;
     pwszDomainName = pDomCtx->pwszDomainName;
     hDirectory     = pConnCtx->hDirectory;
+
+    /*
+     * Get the local domain SID and make sure we're not trying to
+     * remove one of well-known SIDs from given domain
+     */
+    dwDomainFilterLen = ((sizeof(wszAttrObjectClass)/sizeof(WCHAR)) - 1) +
+                        10 +
+                        (sizeof(wszDomainFilterFmt)/
+                         sizeof(wszDomainFilterFmt[0]));
+
+    dwError = LwAllocateMemory(dwDomainFilterLen * sizeof(*pwszDomainFilter),
+                               OUT_PPVOID(&pwszDomainFilter));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszDomainFilter, dwDomainFilterLen, wszDomainFilterFmt,
+                    wszAttrObjectClass,
+                    dwDomainObjectClass) < 0)
+    {
+        ntStatus = LwErrnoToNtStatus(errno);
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    }
+
+    dwError = DirectorySearch(hDirectory,
+                              pwszBase,
+                              dwScope,
+                              pwszDomainFilter,
+                              wszAttributes,
+                              FALSE,
+                              &pDomainEntries,
+                              &dwNumDomainEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumDomainEntries != 1)
+    {
+        ntStatus = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    }
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                                &(pDomainEntries[0]),
+                                wszAttrObjectSid,
+                                DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                                &pwszDomainSid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateSidFromWC16String(&pDomainSid,
+                                            pwszDomainSid);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    if (SamrSrvIsBuiltinAccount(pDomainSid,
+                                pSid))
+    {
+        ntStatus = STATUS_SPECIAL_ACCOUNT;
+        BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    }
 
     dwFilterLen = ((sizeof(wszAttrObjectClass)/sizeof(WCHAR)) - 1) +
                   10 +
@@ -174,7 +237,15 @@ SamrSrvRemoveMemberFromForeignDomain(
     }
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pwszDomainFilter);
     LW_SAFE_FREE_MEMORY(pwszFilter);
+
+    if (pDomainEntries)
+    {
+        DirectoryFreeEntries(pDomainEntries, dwNumDomainEntries);
+    }
+
+    RTL_FREE(&pDomainSid);
 
     if (pEntries)
     {
