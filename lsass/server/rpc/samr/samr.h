@@ -233,6 +233,13 @@ SamrSrvDeleteAccount(
     );
 
 
+BOOLEAN
+SamrSrvIsBuiltinAccount(
+    IN  PSID pDomainSid,
+    IN  PSID pAccountSid
+    );
+
+
 NTSTATUS
 SamrSrvDeleteDomAlias(
     handle_t hBinding,
