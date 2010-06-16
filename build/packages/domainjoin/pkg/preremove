@@ -7,7 +7,4 @@ then
        /opt/likewise/bin/domainjoin-cli configure --disable nsswitch >/dev/null
        /opt/likewise/bin/domainjoin-cli configure --disable pam >/dev/null
    fi
-   AUTHD=`ps -e -o pid,comm | grep likewise-winbindd | awk '{print $1}'`
-   [ ! -z "$AUTHD" ] && kill -TERM $AUTHD
-   sleep 2
 fi
