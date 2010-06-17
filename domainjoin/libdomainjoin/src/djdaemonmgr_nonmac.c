@@ -102,7 +102,17 @@ DJGetDaemonStatus(
          */
         status = 1;
     }
-    else
+#ifdef __LWI_FREEBSD7__
+    /* FreeBSD 7.x, running the script nscd w/ status option returns 0 (and
+     * prints nothing) even when nscd is not running.
+     */
+    else if (!strcmp(prefixedPath, "/etc/rc.d/nscd"))
+    {
+        status = 1;
+    }
+#endif
+
+    if (!status)
     {
         LW_CLEANUP_CTERR(exc, CTShell("%script status >/dev/null 2>&1; echo $? >%statusBuffer",
                     CTSHELL_STRING(script, prefixedPath),
