@@ -500,11 +500,13 @@ RtlpObjectSetDacl(
     PTOKEN_DEFAULT_DACL pTokenDefaultDaclInformation = NULL;
     ULONG ulTokenDefaultDaclLength = 0;
     ULONG ulTokenDefaultDaclSize = 0;
-
+    SECURITY_DESCRIPTOR_CONTROL DaclControlSet = 0;
+    SECURITY_DESCRIPTOR_CONTROL DaclControlChange = (SE_DACL_PROTECTED|
+                                                     SE_DACL_AUTO_INHERITED);
 
     // Pull the DACLs so we have something to work with
 
-    if (pParentSecDesc)
+    if (pParentSecDesc && (AutoInheritFlags & SEF_DACL_AUTO_INHERIT))
     {
         status = RtlGetDaclSecurityDescriptor(
                      pParentSecDesc,
@@ -606,10 +608,26 @@ RtlpObjectSetDacl(
                      pGenericMap);
         GOTO_CLEANUP_ON_STATUS(status);
 
-        bFinalIsDaclDefaulted = TRUE;
+        // Final DACL is defaulted only if there is no parent DACL
+
+        bFinalIsDaclDefaulted = bParentIsDaclPresent ? FALSE : TRUE;
     }
 
     // Finally set the new DACL in the outgoing Seccurity Descriptor
+
+    if (CreatorSecDescControl & SE_DACL_PROTECTED)
+    {
+        DaclControlSet |= SE_DACL_PROTECTED;
+    } else if (AutoInheritFlags & SEF_DACL_AUTO_INHERIT)
+    {
+        DaclControlSet |= SE_DACL_AUTO_INHERITED;
+    }
+
+    status = RtlSetSecurityDescriptorControl(
+                 pSecurityDescriptor,
+                 DaclControlChange,
+                 DaclControlSet);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlSetDaclSecurityDescriptor(
                  pSecurityDescriptor,
