@@ -186,6 +186,7 @@ ProcessImportedValue(
     DWORD cbData = 0;
     DWORD dwDataType = 0;
     BOOLEAN bSetValue = TRUE;
+    PWSTR pwszValueName = NULL;
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -279,14 +280,33 @@ ProcessImportedValue(
 
     if (bSetValue)
     {
-        dwError = RegSetValueExA(
-            hReg,
-            hKey,
-            pItem->valueName,
-            0,
-            pItem->type,
-            pData,
-            cbData);
+        if (pItem->type == REG_MULTI_SZ)
+        {
+            dwError = RegWC16StringAllocateFromCString(
+                          &pwszValueName,
+                          pItem->valueName);
+            BAIL_ON_REG_ERROR(dwError);
+   
+            dwError = RegSetValueExW(
+                          hReg,
+                          hKey,
+                          pwszValueName,
+                          0,
+                          pItem->type,
+                          pData,
+                          cbData);
+        }
+        else 
+        {
+            dwError = RegSetValueExA(
+                          hReg,
+                          hKey,
+                          pItem->valueName,
+                          0,
+                          pItem->type,
+                          pData,
+                          cbData);
+        }
         BAIL_ON_REG_ERROR(dwError);
     }
 
@@ -295,6 +315,7 @@ cleanup:
     LWREG_SAFE_FREE_MEMORY(pSubKey);
     LWREG_SAFE_FREE_STRING(pszKeyName);
     LWREG_SAFE_FREE_MEMORY(pData);
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
 
     if (hSubKey)
     {

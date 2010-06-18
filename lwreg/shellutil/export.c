@@ -276,8 +276,6 @@ DWORD RegExportString(
     BAIL_ON_INVALID_POINTER(dumpString);
     BAIL_ON_INVALID_POINTER(retDumpStringLen);
 
-    /*
-     */
     dwError = RegShellUtilEscapeString(
                   value,
                   &valueEscName,
@@ -492,12 +490,15 @@ ProcessExportedKeyInfo(
 {
     DWORD dwError = 0;
     DWORD dwValueNameLen = MAX_KEY_LENGTH;
-    CHAR valueName[MAX_KEY_LENGTH];   // buffer for subkey name
+    WCHAR pwszValueName[MAX_KEY_LENGTH];   // buffer for subkey name WCHAR format
+    PSTR  pszValueName = NULL; // buffer for subkey name
+    PSTR pszValue = NULL;
     REG_DATA_TYPE dataType = REG_UNKNOWN;
-    BYTE value[MAX_VALUE_LENGTH] = {0};
+    BYTE value[MAX_VALUE_LENGTH * 2] = {0};
     DWORD dwValueLen = 0;
     int iCount = 0;
     DWORD dwValuesCount = 0;
+    PVOID pValue = NULL;
 
     dwError = PrintToRegFile(
                           fp,
@@ -510,7 +511,7 @@ ProcessExportedKeyInfo(
                           pPrevType);
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = RegQueryInfoKeyA(
+    dwError = RegQueryInfoKeyW(
         hReg,
         hKey,
         NULL,
@@ -533,36 +534,49 @@ ProcessExportedKeyInfo(
 
     for (iCount = 0; iCount < dwValuesCount; iCount++)
    {
-       memset(valueName, 0, MAX_KEY_LENGTH);
+       memset(pwszValueName, 0, MAX_KEY_LENGTH);
        dwValueNameLen = MAX_KEY_LENGTH;
        memset(value, 0, MAX_VALUE_LENGTH);
        dwValueLen = MAX_VALUE_LENGTH;
 
-       dwError = RegEnumValueA((HANDLE)hReg,
+       dwError = RegEnumValueW((HANDLE)hReg,
                                hKey,
                                iCount,
-                               valueName,
+                               pwszValueName,
                                &dwValueNameLen,
                                NULL,
                                &dataType,
                                value,
                                &dwValueLen);
        BAIL_ON_REG_ERROR(dwError);
+       dwError = RegCStringAllocateFromWC16String(&pszValueName, pwszValueName);
+       BAIL_ON_REG_ERROR(dwError);
+
+       if (dataType == REG_SZ)
+       {
+           dwError = RegCStringAllocateFromWC16String(&pszValue, (PWSTR) value);
+           pValue = pszValue;
+       }
+       else
+       {
+           pValue = value;
+       }
 
        dwError = PrintToRegFile(
                       fp,
                       pszFullKeyName,
                       dataType,
-                      valueName,
+                      pszValueName,
                       dataType,
-                      value,
+                      pValue,
                       dwValueLen,
                       pPrevType);
        BAIL_ON_REG_ERROR(dwError);
    }
 
 cleanup:
-    memset(valueName, 0 , MAX_KEY_LENGTH);
+    LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_MEMORY(pszValue);
     memset(value, 0 , MAX_KEY_LENGTH);
 
     return dwError;
