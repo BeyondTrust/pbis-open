@@ -387,6 +387,11 @@ case `uname -s` in
 
     FreeBSD|"Isilon OneFS")
         LWI_OS_FLAGS="-D__LWI_FREEBSD__"
+        case `uname -r` in
+            7.*-RELEASE)
+                AC_DEFINE([__LWI_FREEBSD7__], [], [Define if OS is FreeBSD 7.x])
+            ;;
+        esac
         BUILD_SHLIB_CMD='$(CC) -shared -fPIC -o $@ $(OBJS) $(LDFLAGS) $(LIBS) -Wl,-h$@'
         BUILD_DYNLIB_CMD=$BUILD_SHLIB_CMD
         LIBDOMAINJOIN_OS_SPECIFIC_OBJECTS="djdaemonmgr_nonmac.o"
