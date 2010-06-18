@@ -147,7 +147,7 @@ AD_InitializeConfig(
     pConfig->CellSupport = AD_CELL_SUPPORT_UNPROVISIONED;
     pConfig->CacheBackend = AD_CACHE_SQLITE;
     pConfig->bTrimUserMembershipEnabled = TRUE;
-    pConfig->bNssGroupMembersCacheOnlyEnabled = FALSE;
+    pConfig->bNssGroupMembersCacheOnlyEnabled = TRUE;
     pConfig->bNssUserMembershipCacheOnlyEnabled = FALSE;
     pConfig->bNssEnumerationEnabled = FALSE;
 

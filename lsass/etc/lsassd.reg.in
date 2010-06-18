@@ -51,7 +51,7 @@
 "SkeletonDirs"="@default_skeldirs@"
 "RefreshUserCredentials"=dword:00000001
 "TrimUserMembership"=dword:00000001
-"NssGroupMembersQueryCacheOnly"=dword:00000000
+"NssGroupMembersQueryCacheOnly"=dword:00000001
 "NssUserMembershipQueryCacheOnly"=dword:00000000
 "NssEnumerationEnabled"=dword:@ENABLE_NSS_ENUM_DEFAULT_DWORD@
 "DomainManagerCheckDomainOnlineInterval"=dword:0000012C
