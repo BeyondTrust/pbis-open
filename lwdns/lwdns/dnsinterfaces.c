@@ -24,12 +24,14 @@ DNSGetInfoUsingIoctl(
 
 #endif
 
+#ifdef LW_SKIP_ALIASED_INTERFACES
 static
 BOOLEAN
 DNSInterfaceIsInList(
     PCSTR pszName,
     PDNSDLINKEDLIST pInterfaceList
     );
+#endif
 
 static
 DWORD
@@ -171,12 +173,14 @@ DNSGetInfoUsingGetIfAddrs(
             continue;
         }
         
+#ifdef LW_SKIP_ALIASED_INTERFACES
         if (DNSInterfaceIsInList(pIter->ifa_name, pInterfaceList))
         {
             LWDNS_LOG_VERBOSE("Skipping aliased network interface [%s]",
                               pIter->ifa_name);
             continue;
         }
+#endif
         
         dwError = DNSAllocateMemory(
                     sizeof(LW_INTERFACE_INFO),
@@ -312,12 +316,14 @@ DNSGetInfoUsingIoctl(
     {
         CHAR   szItfName[IFNAMSIZ+1];
         PSTR   pszIpAddress = NULL;
-        PSTR   pszIndex = NULL;
         DWORD  dwFlags = 0;
         struct ifreq* pInterfaceRecord = NULL;
         struct ifreq  interfaceRecordCopy;
         struct sockaddr * pSA = NULL;
         DWORD dwLen = 0;
+#ifdef LW_SKIP_ALIASED_INTERFACES
+        PSTR   pszIndex = NULL;
+#endif
         
         pInterfaceRecord = (struct ifreq*)pIter;
         
@@ -367,13 +373,15 @@ DNSGetInfoUsingIoctl(
 
         pIter += sizeof(pInterfaceRecord->ifr_name) + dwLen;
         
+#ifdef LW_SKIP_ALIASED_INTERFACES
         // On Solaris, the name for an aliased interface contains
         // a colon.
         if ((pszIndex = strchr(pInterfaceRecord->ifr_name, ':')))
         {
             *pszIndex = '\0';
         }
-        
+#endif
+
         memset(szItfName, 0, sizeof(szItfName));
         memcpy(szItfName, pInterfaceRecord->ifr_name, IFNAMSIZ);
         
@@ -411,14 +419,16 @@ DNSGetInfoUsingIoctl(
                               IsNullOrEmptyString(szItfName) ? "" : szItfName);
             continue;
         }
-        
+
+#ifdef LW_SKIP_ALIASED_INTERFACES
         if (DNSInterfaceIsInList(szItfName, pInterfaceList))
         {
             LWDNS_LOG_VERBOSE("Skipping aliased network interface [%s]",
                               IsNullOrEmptyString(szItfName) ? "" : szItfName);
             continue;
         }
-        
+#endif
+
         dwError = DNSAllocateMemory(
                         sizeof(LW_INTERFACE_INFO),
                         (PVOID*)&pInterfaceInfo);
@@ -494,6 +504,7 @@ error:
 
 #endif
 
+#ifdef LW_SKIP_ALIASED_INTERFACES
 static
 BOOLEAN
 DNSInterfaceIsInList(
@@ -519,6 +530,7 @@ DNSInterfaceIsInList(
     
     return bResult;
 }
+#endif
 
 static
 DWORD
