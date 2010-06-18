@@ -23,5 +23,29 @@ PROG_BIN=PREFIX_DIR/sbin/lwsmd
 PROG_ARGS="--start-as-daemon"
 PIDFILE=/var/run/lwsmd.pid
 SCRIPTNAME="lwsmd"
+STARTHOOK="fix_locale"
+
+lookup_user_locale()
+{
+    source /etc/sysconfig/language
+    printf 'LANG=%q; export LANG\n' "$RC_LANG"
+    printf 'LC_ALL=%q; export LC_ALL\n' "$RC_LC_ALL"
+    printf 'LC_CTYPE=%q; export LC_CTYPE\n' "$RC_LC_CTYPE"
+}
+
+fix_locale()
+{
+    if [ "$LC_ALL" = "POSIX" ]
+    then
+        unset LC_ALL
+        export LC_ALL
+    fi
+    if type locale >/dev/null &&
+        locale | grep LC_CTYPE | grep POSIX >/dev/null &&
+        [ -f /etc/sysconfig/language ]
+    then
+        eval "`lookup_user_locale`"
+    fi
+}
 
 . PREFIX_DIR/bin/init-base.sh
