@@ -836,6 +836,7 @@ AC_CONFIG_FILES([Makefile
         server/srv/protocols/smb2/Makefile
         server/srv/transport/Makefile
         server/srv/transport/threadpool/Makefile
+        server/srv/oem/Makefile
         server/srv/driver/Makefile
         server/srvstat/Makefile
         server/npfs/Makefile
