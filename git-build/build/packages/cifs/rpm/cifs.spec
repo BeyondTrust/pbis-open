@@ -161,7 +161,7 @@ fi
 
 %{PrefixDir}/share/likewise/*
 %{PrefixDir}/share/config/*
-%{PrefixDir}/share/dce-rpc/
+%{PrefixDir}/share/dcerpc/
 %{PrefixDir}/share/doc/*
 %{PrefixDir}/data/VERSION
 
