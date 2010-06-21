@@ -939,6 +939,7 @@ WireMarshallTransaction2Response(
     pResponseHeader->parameterCount = usParamLength;
     pResponseHeader->totalParameterCount = usParamLength;
     pResponseHeader->parameterOffset = (USHORT)ulOffset;
+    pResponseHeader->parameterDisplacement = 0;
 
     if (pParams)
     {
@@ -977,6 +978,7 @@ WireMarshallTransaction2Response(
     pResponseHeader->dataCount = usDataLen;
     pResponseHeader->totalDataCount = usDataLen;
     pResponseHeader->dataOffset = (USHORT)ulOffset;
+    pResponseHeader->dataDisplacement = 0;
 
     if (pData)
     {
