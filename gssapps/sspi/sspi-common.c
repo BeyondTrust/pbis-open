@@ -218,9 +218,15 @@ DumpIscReqFlags(
     DUMP_FLAG(dwRemainder, ISC_REQ_MANUAL_CRED_VALIDATION);
     DUMP_FLAG(dwRemainder, ISC_REQ_RESERVED1);
     DUMP_FLAG(dwRemainder, ISC_REQ_FRAGMENT_TO_FIT);
+#ifdef ISC_REQ_FORWARD_CREDENTIALS
     DUMP_FLAG(dwRemainder, ISC_REQ_FORWARD_CREDENTIALS);
+#endif
+#ifdef ISC_REQ_NO_INTEGRITY
     DUMP_FLAG(dwRemainder, ISC_REQ_NO_INTEGRITY);
+#endif
+#ifdef ISC_REQ_USE_HTTP_STYLE
     DUMP_FLAG(dwRemainder, ISC_REQ_USE_HTTP_STYLE);
+#endif
 
     if (dwRemainder)
     {
@@ -257,10 +263,18 @@ DumpIscRetFlags(
     DUMP_FLAG(dwRemainder, ISC_RET_MANUAL_CRED_VALIDATION);
     DUMP_FLAG(dwRemainder, ISC_RET_RESERVED1);
     DUMP_FLAG(dwRemainder, ISC_RET_FRAGMENT_ONLY);
+#ifdef ISC_RET_FORWARD_CREDENTIALS
     DUMP_FLAG(dwRemainder, ISC_RET_FORWARD_CREDENTIALS);
+#endif
+#ifdef  ISC_RET_USED_HTTP_STYLE
     DUMP_FLAG(dwRemainder, ISC_RET_USED_HTTP_STYLE);
+#endif
+#ifdef ISC_RET_NO_ADDITIONAL_TOKEN
     DUMP_FLAG(dwRemainder, ISC_RET_NO_ADDITIONAL_TOKEN);
+#endif
+#ifdef ISC_RET_REAUTHENTICATION
     DUMP_FLAG(dwRemainder, ISC_RET_REAUTHENTICATION);
+#endif
 
     if (dwRemainder)
     {
@@ -297,8 +311,12 @@ DumpAscReqFlags(
     DUMP_FLAG(dwRemainder, ASC_REQ_FRAGMENT_TO_FIT);
     DUMP_FLAG(dwRemainder, ASC_REQ_FRAGMENT_SUPPLIED);
     DUMP_FLAG(dwRemainder, ASC_REQ_NO_TOKEN);
+#ifdef ASC_REQ_PROXY_BINDINGS
     DUMP_FLAG(dwRemainder, ASC_REQ_PROXY_BINDINGS);
+#endif
+#ifdef ASC_REQ_ALLOW_MISSING_BINDINGS
     DUMP_FLAG(dwRemainder, ASC_REQ_ALLOW_MISSING_BINDINGS);
+#endif
 
     if (dwRemainder)
     {
@@ -335,9 +353,15 @@ DumpAscRetFlags(
     DUMP_FLAG(dwRemainder, ASC_RET_ALLOW_CONTEXT_REPLAY);
     DUMP_FLAG(dwRemainder, ASC_RET_FRAGMENT_ONLY);
     DUMP_FLAG(dwRemainder, ASC_RET_NO_TOKEN);
+#ifdef ASC_RET_NO_ADDITIONAL_TOKEN
     DUMP_FLAG(dwRemainder, ASC_RET_NO_ADDITIONAL_TOKEN);
+#endif
+#ifdef ASC_RET_NO_PROXY_BINDINGS
     DUMP_FLAG(dwRemainder, ASC_RET_NO_PROXY_BINDINGS);
+#endif
+#ifdef ASC_RET_MISSING_BINDINGS
     DUMP_FLAG(dwRemainder, ASC_RET_MISSING_BINDINGS);
+#endif
 
     if (dwRemainder)
     {
