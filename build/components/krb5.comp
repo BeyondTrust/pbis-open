@@ -32,7 +32,6 @@ function _setup_build_env
 
     CFLAGS="${_cflags} -fPIC"
     LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib})"
-    DEFINES="-DMAX_POLL_FDS=32"
 
     case "${BUILD_OS_TYPE}" in
 	linux)
@@ -46,6 +45,10 @@ function _setup_build_env
 	    CC="$(echo $CC | sed 's/^gcc/gcc-wrap.sh/')"
 	    ;;
     esac
+
+    # Set poll FD array size (default is 1024) to smallish value since
+    # only client support is needed.
+    DEFINES="${DEFINES} -DMAX_POLL_FDS=32"
 
     CFLAGS="$CFLAGS $DEFINES"
     CPPFLAGS="$DEFINES"
