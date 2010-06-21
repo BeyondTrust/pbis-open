@@ -204,7 +204,8 @@ ParseArgs(
         INIT_FLAGMAPPING( USE_SESSION_KEY ),
         INIT_FLAGMAPPING( REPLAY_DETECT ),
         INIT_FLAGMAPPING( SEQUENCE_DETECT ),
-        INIT_FLAGMAPPING( MUTUAL_AUTH )
+        INIT_FLAGMAPPING( MUTUAL_AUTH ),
+        INIT_FLAGMAPPING( NULL_SESSION )
     };
 
     /* Parse arguments. */
@@ -851,6 +852,9 @@ ClientEstablishContext(
             printf("Context partially initialized...\n");
             DumpBuffer(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             DumpNtlmMessage(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
+            printf("\n");
+            printf("Flags returned:\n");
+            DumpIscRetFlags(*pRetFlags);
             printf("\n");
         }
         else

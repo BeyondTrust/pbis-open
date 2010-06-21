@@ -35,7 +35,7 @@
 #define NTLM_FLAG_NETWARE               0x00000100  /* netware - unsupported */
 #define NTLM_FLAG_NTLM                  0x00000200  /* use NTLM auth */
 #define NTLM_FLAG_UNDEFINED_00000400    0x00000400
-#define NTLM_FLAG_UNDEFINED_00000800    0x00000800
+#define NTLM_FLAG_ANONYMOUS             0x00000800
 
 #define NTLM_FLAG_DOMAIN                0x00001000  /* domain supplied */
 #define NTLM_FLAG_WORKSTATION           0x00002000  /* wks supplied */
@@ -117,8 +117,10 @@ typedef struct _NTLM_RESPONSE_MESSAGE
     NTLM_SEC_BUFFER AuthTargetName;
     NTLM_SEC_BUFFER UserName;
     NTLM_SEC_BUFFER Workstation;
-    // Optional Session Key NTLM_SEC_BUFFER
-    // Optional Flags 4 bytes
+    // Optional
+    NTLM_SEC_BUFFER SessionKey;
+    // Optional
+    DWORD NtlmFlags;
     // Optional OS Version 8 bytes
     // Optional Data
 } NTLM_RESPONSE_MESSAGE, *PNTLM_RESPONSE_MESSAGE;
@@ -392,7 +394,7 @@ DumpNtlmFlags(
     DUMP_FLAG(dwRemainder, NTLM_FLAG_NETWARE);
     DUMP_FLAG(dwRemainder, NTLM_FLAG_NTLM);
     DUMP_FLAG(dwRemainder, NTLM_FLAG_UNDEFINED_00000400);
-    DUMP_FLAG(dwRemainder, NTLM_FLAG_UNDEFINED_00000800);
+    DUMP_FLAG(dwRemainder, NTLM_FLAG_ANONYMOUS);
 
     DUMP_FLAG(dwRemainder, NTLM_FLAG_DOMAIN);
     DUMP_FLAG(dwRemainder, NTLM_FLAG_WORKSTATION);
@@ -463,8 +465,30 @@ DumpResponseMessage(
     )
 {
     PNTLM_RESPONSE_MESSAGE pMsg = (PNTLM_RESPONSE_MESSAGE) pBuffer;
-    UNREFERENCED_PARAMETER(dwSize);
-    UNREFERENCED_PARAMETER(pMsg);
+    DWORD firstDataOffset = (DWORD)-1;
+
+    if (dwSize < RTL_SIZEOF_THROUGH_FIELD(NTLM_RESPONSE_MESSAGE, Workstation))
+    {
+        return;
+    }
+
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+
+    firstDataOffset = MIN(firstDataOffset, pMsg->LmResponse.dwOffset);
+    firstDataOffset = MIN(firstDataOffset, pMsg->NtResponse.dwOffset);
+    firstDataOffset = MIN(firstDataOffset, pMsg->AuthTargetName.dwOffset);
+    firstDataOffset = MIN(firstDataOffset, pMsg->UserName.dwOffset);
+    firstDataOffset = MIN(firstDataOffset, pMsg->Workstation.dwOffset);
+
+    if (firstDataOffset >= RTL_SIZEOF_THROUGH_FIELD(NTLM_RESPONSE_MESSAGE, SessionKey) && firstDataOffset <= dwSize)
+    {
+	firstDataOffset = MIN(firstDataOffset, pMsg->SessionKey.dwOffset);
+    }
+
+    if (firstDataOffset >= RTL_SIZEOF_THROUGH_FIELD(NTLM_RESPONSE_MESSAGE, NtlmFlags) && firstDataOffset <= dwSize)
+    {
+	DumpNtlmFlags(pMsg->NtlmFlags);
+    }
 }
 
 VOID
