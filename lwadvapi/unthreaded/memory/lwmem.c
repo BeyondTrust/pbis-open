@@ -52,12 +52,14 @@ LwAllocateMemory(
     DWORD dwError = 0;
     PVOID pMemory = NULL;
 
-    pMemory = malloc(dwSize);
-    if (!pMemory){
+    pMemory = calloc(1, dwSize);
+    if (!pMemory)
+    {
         dwError = LW_ERROR_OUT_OF_MEMORY;
         *ppMemory = NULL;
-    }else {
-        memset(pMemory,0, dwSize);
+    }
+    else
+    {
         *ppMemory = pMemory;
     }
 
