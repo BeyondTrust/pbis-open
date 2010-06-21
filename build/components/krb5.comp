@@ -50,6 +50,9 @@ function _setup_build_env
     # only client support is needed.
     DEFINES="${DEFINES} -DMAX_POLL_FDS=32"
 
+    # Allow disabling of SPNEGO MIC check (via environment variable).
+    # DEFINES="${DEFINES} -DMS_BUG_TEST"
+
     CFLAGS="$CFLAGS $DEFINES"
     CPPFLAGS="$DEFINES"
 
