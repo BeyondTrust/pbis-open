@@ -795,7 +795,7 @@ ClientEstablishContext(
     AuthIdentity.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
     dwError = AcquireCredentialsHandle(
-        "join@CORPQA.CENTERIS.COM",                       // no principal name
+        NULL,                       // no principal name
         (PSTR) pSecPkgName,                // package name
         SECPKG_CRED_OUTBOUND,
         NULL,                       // no logon id
