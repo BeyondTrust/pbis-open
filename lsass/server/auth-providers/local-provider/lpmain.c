@@ -883,6 +883,7 @@ LocalGetStatus(
 {
     DWORD dwError = 0;
     PLSA_AUTH_PROVIDER_STATUS pProviderStatus = NULL;
+    BOOLEAN bInLock = FALSE;
 
     dwError = LwAllocateMemory(
                    sizeof(LSA_AUTH_PROVIDER_STATUS),
@@ -897,9 +898,18 @@ LocalGetStatus(
     pProviderStatus->mode = LSA_PROVIDER_MODE_LOCAL_SYSTEM;
     pProviderStatus->status = LSA_AUTH_PROVIDER_STATUS_ONLINE;
 
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+
+    dwError = LwAllocateString(
+                    gLPGlobals.pszLocalDomain,
+                    &pProviderStatus->pszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
     *ppProviderStatus = pProviderStatus;
 
 cleanup:
+
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
 
     return dwError;
 
