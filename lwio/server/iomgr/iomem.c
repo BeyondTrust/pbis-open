@@ -44,7 +44,7 @@ IoMemoryAllocate(
     IN size_t Size
     )
 {
-    return RtlMemoryAllocate(Size);
+    return RtlMemoryAllocate(Size, TRUE);
 }
 
 

@@ -75,7 +75,8 @@ LW_BEGIN_EXTERN_C
 // TODO-Prefix name with underscore.
 LW_PVOID
 LwRtlMemoryAllocate(
-    LW_IN size_t Size
+    LW_IN size_t Size,
+    LW_IN BOOLEAN Clear
     );
 
 LW_PVOID
@@ -93,13 +94,15 @@ LwRtlMemoryFree(
 // are next to each other.
 // TODO-Make Type a pointer type -- for opaque types...
 #define LW_RTL_ALLOCATE(ppMemory, Type, Size) \
-    ( (*(ppMemory)) = (Type*) LwRtlMemoryAllocate(Size), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
+	( (*(ppMemory)) = (Type*) LwRtlMemoryAllocate(Size, TRUE), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
+#define LW_RTL_ALLOCATE_NOCLEAR(ppMemory, Type, Size) \
+	( (*(ppMemory)) = (Type*) LwRtlMemoryAllocate(Size, FALSE), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
 
 #define LW_RTL_ALLOCATE_AUTO(ppMemory) \
-    ( (*(ppMemory)) = LwRtlMemoryAllocate(sizeof(**(ppMemory))), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
+	( (*(ppMemory)) = LwRtlMemoryAllocate(sizeof(**(ppMemory)), TRUE), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
 
 #define LW_RTL_ALLOCATE_ARRAY_AUTO(ppMemory, ulCount) \
-    ( (*(ppMemory)) = LwRtlMemoryAllocate(sizeof(**(ppMemory)) * (ulCount)), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
+	( (*(ppMemory)) = LwRtlMemoryAllocate(sizeof(**(ppMemory)) * (ulCount), TRUE), (*(ppMemory)) ? LW_STATUS_SUCCESS : LW_STATUS_INSUFFICIENT_RESOURCES )
 
 
 #define LW_RTL_FREE(ppMemory) \
@@ -119,7 +122,7 @@ LwRtlMemoryFree(
 #define RtlMoveMemory(Destination, Source, Length)  LwRtlMoveMemory(Destination, Source, Length) 
 #define RtlEqualMemory(Source1, Source2, Length)    LwRtlEqualMemory(Source1, Source2, Length) 
 
-#define RtlMemoryAllocate(Size)             LwRtlMemoryAllocate(Size)
+#define RtlMemoryAllocate(Size, Clear)      LwRtlMemoryAllocate(Size, Clear)
 #define RtlMemoryRealloc(Pointer, Size)     LwRtlMemoryRealloc(Pointer, Size)
 #define RtlMemoryFree(Pointer)              LwRtlMemoryFree(Pointer)
 
@@ -134,3 +137,13 @@ LwRtlMemoryFree(
 LW_END_EXTERN_C
 
 #endif /* __RTL_MEMORY_H__ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

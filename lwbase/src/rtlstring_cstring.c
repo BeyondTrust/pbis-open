@@ -145,7 +145,7 @@ LwRtlCStringDuplicate(
 
     size = (strlen(pszOriginalString) + 1) * sizeof(pszOriginalString[0]);
 
-    status = RTL_ALLOCATE(&pszNewString, CHAR, size);
+    status = LW_RTL_ALLOCATE_NOCLEAR(&pszNewString, CHAR, size);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     memcpy(pszNewString, pszOriginalString, size);

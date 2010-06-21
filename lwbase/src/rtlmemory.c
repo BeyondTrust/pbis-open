@@ -47,7 +47,8 @@
 
 PVOID
 LwRtlMemoryAllocate(
-    IN size_t Size
+    IN size_t Size,
+    IN BOOLEAN Clear
     )
 {
     PVOID pMemory = NULL;
@@ -60,7 +61,14 @@ LwRtlMemoryAllocate(
     }
 
     // Note -- If this allocator changes, need to change iostring routines.
-    pMemory = calloc(1, Size);
+    if (Clear)
+    {
+        pMemory = calloc(1, Size);
+    }
+    else
+    {
+        pMemory = malloc(Size);
+    }
 
 cleanup:
 
@@ -86,3 +94,16 @@ LwRtlMemoryFree(
     assert(pMemory);
     free(pMemory);
 }
+
+
+
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
