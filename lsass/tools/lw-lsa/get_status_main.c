@@ -299,6 +299,7 @@ PrintStatus(
         switch (pProviderStatus->mode)
         {
             case LSA_PROVIDER_MODE_LOCAL_SYSTEM:
+                printf("\tDomain:        %s\n", LW_IS_NULL_OR_EMPTY_STR(pProviderStatus->pszDomain) ? "" : pProviderStatus->pszDomain);
                 break;
             
             case LSA_PROVIDER_MODE_UNPROVISIONED:
