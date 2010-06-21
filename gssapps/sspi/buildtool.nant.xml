@@ -9,7 +9,7 @@
         <include name="${build.meta.current}/*.exe" />
       </fileset>      
     </delete>
-    <cl outputdir="${build.meta.current}/">
+    <cl outputdir="${build.meta.current}/" options="/Zi">
       <defines>
         <define name="UNICODE"/>
         <define name="_UNICODE"/>
