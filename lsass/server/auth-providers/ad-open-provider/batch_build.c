@@ -959,7 +959,7 @@ LsaAdBatchBuildQueryForReal(
 	   connect using their machine account credentials for dfs referrals,
 	   querying server capabilities, etc....  -- gcarter@likewise.com */
 
-        pszPrefix = "(&(|(objectClass=user)(objectClass=group))";
+        pszPrefix = "(&(|(objectClass=user)(&(objectClass=group)(groupType<=0)))";
 #endif
     }
 
