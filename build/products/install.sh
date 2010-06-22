@@ -336,7 +336,8 @@ stop_daemons()
 
 stop_obsolete_daemons()
 {
-    for daemon in ${OBSOLETE_DAEMONS}; do
+    for daemon in ${OBSOLETE_DAEMONS}
+    do
         stop_daemon $daemon
     done
     if type svccfg >/dev/null 2>&1; then
@@ -527,7 +528,7 @@ install_freebsds()
     for pkg in $@
     do
         echo "Installing ${pkg}"
-        pkg_add ${PKGDIR}/${pkg}-*.tbz
+        pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
         exit_on_error $? "Failed to install package ${pkg}"
     done
     return 0
@@ -862,6 +863,94 @@ start_daemon_lwsmd()
     $LWSMD --start-as-daemon
 }
 
+determine_upgrade_type()
+{
+    VERSIONFILE=`get_prefix_dir`/data/VERSION
+    if [ -f $VERSIONFILE ]; then
+        if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5.1' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5.2' $VERSIONFILE`" -o \
+             -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_5_0123=1
+            UPGRADEDIR5=`get_prefix_dir`/share/config/oldconfig
+            mkdir -p "${UPGRADEDIR5}"
+            log_info "Older 5.x configuration found."
+            log_info "Preserving 5.x configuration."
+        fi
+    fi
+}
+
+preserve_5_0123_configuration()
+{
+    if [ -n "${UPGRADING_FROM_5_0123}" ]; then
+        if [ -f "/etc/likewise/eventlogd.conf" ]; then
+            cp "/etc/likewise/eventlogd.conf" "${UPGRADEDIR5}"
+        fi
+
+        if [ -f "/etc/likewise/lsassd.conf" ]; then
+            cp "/etc/likewise/lsassd.conf" "${UPGRADEDIR5}"
+        fi
+
+        if [ -f "/etc/likewise/netlogon.conf" ]; then
+            cp "/etc/likewise/netlogon.conf" "${UPGRADEDIR5}"
+        fi
+
+        if [ -f "/var/lib/likewise/db/pstore.db" ]; then
+            cp "/var/lib/likewise/db/pstore.db" "${UPGRADEDIR5}"
+            chmod 700 "${UPGRADEDIR5}/pstore.db"
+        fi
+    fi
+}
+
+import_5_0123_file()
+{
+    CONVERT="`get_prefix_dir`/bin/conf2reg"
+    REGIMPORT="`get_prefix_dir`/bin/lwregshell import"
+
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
+
+    if [ -f $SOURCE ]; then
+        $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            log_info "Error converting ${CONFFILE} from older configuration."
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            $REGIMPORT $DEST > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                log_info "Error importing older configuration ${REGFILE} into the registry."
+                return 1
+            fi
+        fi
+        return 0
+    fi
+    log_info "Unable to find configuration ${CONFFILE}."
+    return 1
+}
+
+restore_5_0123_configuration()
+{
+    CONVERT="`get_prefix_dir`/bin/conf2reg"
+
+    if [ -z "${UPGRADING_FROM_5_0123}" ]; then
+        return 0;
+    fi
+
+    import_5_0123_file "--lsass" "${UPGRADEDIR5}/lsassd.conf" \
+        "${UPGRADEDIR5}/lsassd.conf.reg"
+
+    import_5_0123_file "--netlogon" "${UPGRADEDIR5}/netlogon.conf" \
+        "${UPGRADEDIR5}/netlogon.conf.reg"
+
+    import_5_0123_file "--eventlog" "${UPGRADEDIR5}/eventlogd.conf" \
+        "${UPGRADEDIR5}/eventlogd.conf.reg"
+
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
+}
 
 import_registry()
 {
@@ -869,7 +958,7 @@ import_registry()
 
     for regfile in ${REGFILES}
     do
-        FILEPATH="/opt/likewise/share/config/${regfile}"
+        FILEPATH="`get_prefix_dir`/share/config/${regfile}"
         if [ -f ${FILEPATH} ]
         then
             ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1
@@ -881,21 +970,6 @@ import_registry()
             fi
         fi
     done
-}
-
-upgrade_pstore()
-{
-    PSTORE_PATH=/var/lib/likewise/db/pstore.db
-    SQLITE3_PATH=`get_prefix_dir`/bin/sqlite3
-
-    if [ -w $PSTORE_PATH -a -x $SQLITE3_PATH ]; then
-         echo alter table machinepwd add column HostDnsDomain varchar\(256\) default NULL\; | ${SQLITE3_PATH} ${PSTORE_PATH} >/dev/null
-    fi
-}
-
-upgrade_databases()
-{
-    upgrade_pstore
 }
 
 get_prefix_dir()
@@ -938,11 +1012,17 @@ do_install()
     log_info "Install started"
     log_info ""
 
+    # Determine if we are upgrading and what we are upgrading from.
+    determine_upgrade_type
+
     # Stop obsolete daemons
     stop_obsolete_daemons
 
     # Save the daemon state
     save_daemons
+
+    # Save 5.[0123] configuration files and pstore.
+    preserve_5_0123_configuration
 
     prefix_dir=`get_prefix_dir`
     if [ $? -eq 0 -a -d "$prefix_dir" ]; then
@@ -963,13 +1043,13 @@ do_install()
 
 do_postinstall()
 {
-    # Upgrade database schemas
-    upgrade_databases
-
     # Start service manager for registry import *** NOT USING SYSTEM SCRIPT
     start_daemon_lwsmd
 
-    # Popuplate registry
+    # Import configuration files and the old pstore into the registry
+    restore_5_0123_configuration
+
+    # Populate registry
     import_registry
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
@@ -1034,6 +1114,7 @@ do_uninstall()
 {
     log_info "Uninstall started"
     log_info ""
+
     stop_daemons
 
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
