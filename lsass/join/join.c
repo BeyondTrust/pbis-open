@@ -53,30 +53,19 @@
 
 #define LSA_JOIN_MAX_ALLOWED_CLOCK_DRIFT_SECONDS 60
 
-
 static
-VOID
+DWORD
 LsaGenerateMachinePassword(
     PWSTR  pwszPassword,
     size_t sPasswordLen
     );
 
 
-static
-VOID
+DWORD
 LsaGenerateRandomString(
-    PWSTR   pwszBuffer,
+    PSTR    pszBuffer,
     size_t  sBufferLen
     );
-
-
-static
-DWORD
-LsaCharacterClassesInPassword(
-    const wchar16_t* password,
-    size_t len
-    );
-
 
 static
 DWORD
@@ -862,9 +851,10 @@ LsaJoinDomainInternal(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    LsaGenerateMachinePassword(
+    dwError = LsaGenerateMachinePassword(
                (PWSTR)pwszMachinePassword,
                sizeof(pwszMachinePassword)/sizeof(pwszMachinePassword[0]));
+    BAIL_ON_LSA_ERROR(dwError);
 
     if (pwszMachinePassword[0] == '\0')
     {
@@ -1325,51 +1315,68 @@ NetHashToWc16s(
 
 
 static
-VOID
+DWORD
 LsaGenerateMachinePassword(
     PWSTR  pwszPassword,
     size_t sPasswordLen
     )
 {
-    const DWORD dwMaxGenerationAttempts = 1000;
-    DWORD dwGenerationAttempts = 0;
+    DWORD dwError = 0;
+    DWORD i = 0;
+    PSTR pszPassword = NULL;
 
-    pwszPassword[0] = '\0';
-    do
+    BAIL_ON_INVALID_POINTER(pwszPassword);
+    pwszPassword[0] = (WCHAR) '\0';
+
+    dwError = LwAllocateMemory(sizeof(pszPassword[0]) * sPasswordLen,
+                               OUT_PPVOID(&pszPassword));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaGenerateRandomString(pszPassword, sPasswordLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* "Cast" A string to W string */
+    for (i=0; i<sPasswordLen; i++)
     {
-        LsaGenerateRandomString(pwszPassword, sPasswordLen);
-
-        dwGenerationAttempts++;
-
-    } while (dwGenerationAttempts <= dwMaxGenerationAttempts &&
-             LsaCharacterClassesInPassword(pwszPassword, sPasswordLen) < 3);
-
-    if (!(dwGenerationAttempts <= dwMaxGenerationAttempts))
-    {
-        abort();
+        pwszPassword[i] = (WCHAR) pszPassword[i];
     }
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszPassword);
+    return dwError;
+
+error:
+    goto cleanup;
 }
 
 
-static
-const CHAR
-RandomCharsSet[] = "abcdefghijklmnopqrstuvwxyz"
-                   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                   "-+/*,.;:!<=>%'&()0123456789";
+static const CHAR RandomCharsLc[] = "abcdefghijklmnopqrstuvwxyz";
+static const CHAR RandomCharsUc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+static const CHAR RandomCharsDigits[] = "0123456789";
+static const CHAR RandomCharsPunct[] = "-+/*,.;:!<=>%'&()";
 
-static
-VOID
+DWORD
 LsaGenerateRandomString(
-    PWSTR   pwszBuffer,
+    PSTR    pszBuffer,
     size_t  sBufferLen
     )
 {
     DWORD dwError = ERROR_SUCCESS;
     PBYTE pBuffer = NULL;
+    PBYTE pClassBuffer = NULL;
     DWORD i = 0;
+    DWORD iClass = 0;
+    CHAR iChar = 0;
+    DWORD iLcCount = 0;
+    DWORD iUcCount = 0;
+    DWORD iDigitsCount = 0;
+    DWORD iPunctCount = 0;
 
     dwError = LwAllocateMemory(sizeof(pBuffer[0]) * sBufferLen,
                                OUT_PPVOID(&pBuffer));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(pClassBuffer[0]) * sBufferLen,
+                               OUT_PPVOID(&pClassBuffer));
     BAIL_ON_LSA_ERROR(dwError);
 
     if (!RAND_bytes((unsigned char*)pBuffer, (int)sBufferLen))
@@ -1378,71 +1385,83 @@ LsaGenerateRandomString(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    for (i = 0; i < sBufferLen - 1; i++)
+    if (!RAND_bytes((unsigned char*)pClassBuffer, (int)sBufferLen))
     {
-        DWORD iChar = pBuffer[i] % (sizeof(RandomCharsSet) - 2);
-        pwszBuffer[i] = (WCHAR)RandomCharsSet[iChar];
+        dwError = ERROR_ENCRYPTION_FAILED;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    pwszBuffer[sBufferLen - 1] = (WCHAR)'\0';
+    for (i = 0; i < sBufferLen-1; i++)
+    {
+        /*
+         * Check for missing character class,
+         * and force selection of the missing class.
+         * The two missing classes will be at the end of
+         * the string, which may be a password weakness
+         * issue.
+         */
+        if (i >= sBufferLen-3)
+        {
+            if (iLcCount == 0)
+            {
+                iClass = 0;
+            }
+            else if (iUcCount == 0)
+            {
+                iClass = 1;
+            }
+            else if (iDigitsCount == 0)
+            {
+                iClass = 2;
+            }
+            else if (iPunctCount == 0)
+            {
+                iClass = 3;
+            }
+        }
+        else
+        {
+            iClass = pClassBuffer[i] % 4;
+        }
+     
+        switch (iClass)
+        {
+            case 0:
+                iChar = RandomCharsLc[
+                            pBuffer[i] % (sizeof(RandomCharsLc) - 1)];
+                iLcCount++;
+                break;
+            case 1:
+                iChar = RandomCharsUc[
+                            pBuffer[i] % (sizeof(RandomCharsUc) - 1)];
+                iUcCount++;
+                break;
+            case 2:
+                iChar = RandomCharsDigits[
+                            pBuffer[i] % (sizeof(RandomCharsDigits) - 1)];
+                iDigitsCount++;
+                break;
+            case 3:
+                iChar = RandomCharsPunct[
+                            pBuffer[i] % (sizeof(RandomCharsPunct) - 1)];
+                iPunctCount++;
+                break;
+        }
+        pszBuffer[i] = iChar;
+    }
+
+    pszBuffer[sBufferLen-1] = '\0';
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pBuffer);
+    LW_SAFE_FREE_MEMORY(pClassBuffer);
 
-    return;
+    return dwError;
 
 error:
-    memset(pwszBuffer, 0, sizeof(pwszBuffer[0] * sBufferLen));
+    memset(pszBuffer, 0, sizeof(pszBuffer[0]) * sBufferLen);
 
     goto cleanup;
-}
-
-
-static
-DWORD
-LsaCharacterClassesInPassword(
-    const wchar16_t* password,
-    size_t len
-    )
-{
-    DWORD dwClassesSeen = 0;
-    BOOLEAN bHasUpperCase = FALSE;
-    BOOLEAN bHasLowerCase = FALSE;
-    BOOLEAN bHasDigit = FALSE;
-    BOOLEAN bHasNonAlphaNumeric = FALSE;
-    size_t i = 0;
-
-    for (i = 0; i < len; i++)
-    {
-        if ('A' <= password[i] && password[i] <= 'Z')
-        {
-            bHasUpperCase = TRUE;
-        }
-        else if ('a' <= password[i] && password[i] <= 'z')
-        {
-            bHasLowerCase = TRUE;
-        }
-        else if ('0' <= password[i] && password[i] <= '9')
-        {
-            bHasDigit = TRUE;
-        }
-        else if (strchr( "-+/*,.;:!<=>%'&()", password[i]) != NULL)
-        {
-            // This may be a better list to check against:
-            //       `~!@#$%^&*()_+-={}|[]\:";'<>?,./
-            bHasNonAlphaNumeric = TRUE;
-        }
-    }
-    if (bHasUpperCase)
-        dwClassesSeen++;
-    if (bHasLowerCase)
-        dwClassesSeen++;
-    if (bHasDigit)
-        dwClassesSeen++;
-    if (bHasNonAlphaNumeric)
-        dwClassesSeen++;
-
-    return dwClassesSeen;
 }
 
 
