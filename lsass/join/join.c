@@ -858,6 +858,7 @@ LsaJoinDomainInternal(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaDirectoryDisconnect(pLdap);
+        pLdap = NULL;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -883,6 +884,17 @@ LsaJoinDomainInternal(
                                             pDomainSid);
     BAIL_ON_NT_STATUS(ntStatus);
 
+    // Make sure we can access the account
+    dwError = LsaDirectoryConnect(pwszDCName, &pLdap, &pwszBaseDn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaMachAcctSearch(pLdap, pwszMachineAcctName, pwszBaseDn, &pwszDn);
+    if (dwError == ERROR_INVALID_PARAMETER)
+    {
+        dwError = ERROR_ACCESS_DENIED;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaSaveMachinePassword(
               pwszMachineName,
               pwszMachineAcctName,
@@ -900,12 +912,6 @@ LsaJoinDomainInternal(
     if (!(dwJoinFlags & LSAJOIN_DEFER_SPN_SET) ||
         pwszOsName || pwszOsVersion || pwszOsServicePack)
     {
-
-        dwError = LsaDirectoryConnect(pwszDCName, &pLdap, &pwszBaseDn);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LsaMachAcctSearch(pLdap, pwszMachineAcctName, pwszBaseDn, &pwszDn);
-        BAIL_ON_LSA_ERROR(dwError);
 
         /*
          * Set SPN and dnsHostName attributes unless this part is to be deferred
@@ -1047,9 +1053,6 @@ LsaJoinDomainInternal(
                 BAIL_ON_LSA_ERROR(dwError);
             }
         }
-
-        dwError = LsaDirectoryDisconnect(pLdap);
-        BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
@@ -1068,6 +1071,11 @@ cleanup:
     if (pCreds)
     {
         LwIoDeleteCreds(pCreds);
+    }
+
+    if (pLdap)
+    {
+        LsaDirectoryDisconnect(pLdap);
     }
 
     LW_SAFE_FREE_MEMORY(pwszDomainName);
@@ -2630,8 +2638,7 @@ LsaMachAcctCreate(
 
         dn_val = LdapAttributeGet(ld, machacct, dn_name, NULL);
         if (dn_val == NULL) {
-            /* TODO: find more descriptive error code */
-            lderr = LDAP_NO_SUCH_ATTRIBUTE;
+            dwError = ERROR_ACCESS_DENIED;
             goto error;
         }
 
