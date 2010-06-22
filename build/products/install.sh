@@ -874,8 +874,14 @@ determine_upgrade_type()
             UPGRADING_FROM_5_0123=1
             UPGRADEDIR5=`get_prefix_dir`/share/config/oldconfig
             mkdir -p "${UPGRADEDIR5}"
-            log_info "Older 5.x configuration found."
-            log_info "Preserving 5.x configuration."
+            log_info "Preserving 5.x (0 <= x <= 3) configuration."
+        else
+            if [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
+                UPGRADING_FROM_5_4=1
+                UPGRADEDIR5=`get_prefix_dir`/share/config/oldconfig
+                mkdir -p "${UPGRADEDIR5}"
+                log_info "Preserving 5.4 configuration."
+            fi
         fi
     fi
 }
@@ -899,6 +905,18 @@ preserve_5_0123_configuration()
             cp "/var/lib/likewise/db/pstore.db" "${UPGRADEDIR5}"
             chmod 700 "${UPGRADEDIR5}/pstore.db"
         fi
+    fi
+}
+
+preserve_5_4_configuration()
+{
+    if [ -n "${UPGRADING_FROM_5_4}" ]; then
+        for file in dcerpcd.reg eventlogd.reg lsassd.reg lwiod.reg lwreg.reg netlogond.reg pstore.reg srvsvcd.reg
+        do
+            if [ -f "/etc/likewise/${file}" ]; then
+                cp "/etc/likewise/${file}" "${UPGRADEDIR5}"
+            fi
+        done
     fi
 }
 
@@ -950,6 +968,16 @@ restore_5_0123_configuration()
         "${UPGRADEDIR5}/eventlogd.conf.reg"
 
     import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
+}
+
+# Fix registry settings that can't be upgraded automatically
+fix_5_4_configuration()
+{
+    if [ -z "${UPGRADING_FROM_5_4}" ]; then
+        return 0;
+    fi
+
+    switch_to_open_provider
 }
 
 import_registry()
@@ -1024,6 +1052,9 @@ do_install()
     # Save 5.[0123] configuration files and pstore.
     preserve_5_0123_configuration
 
+    # Save 5.4 registry files.
+    preserve_5_4_configuration
+
     prefix_dir=`get_prefix_dir`
     if [ $? -eq 0 -a -d "$prefix_dir" ]; then
         #If the Bitrock installer was called with a restrictive umask, the
@@ -1041,6 +1072,37 @@ do_install()
     log_info "Install complete"
 }
 
+get_ad_provider_path()
+{
+    ${PREFIX}/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep '"Path"' | awk '{ print $3; }' | sed 's/"//g'
+}
+
+set_ad_provider_path()
+{
+     ${PREFIX}/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' 'Path' "$1"
+}
+
+# We are upgrading and need to be careful about what value may be present.
+# This may be overly meticulous, but I want to make sure then have the path
+# to the open provider.
+switch_to_open_provider()
+{
+    # Test registry for Open 6.0 Active Directory provider path.
+    if [ -z `get_ad_provider_path | grep liblsass_auth_provider_ad_open` ]; then
+        new_value=""
+        # Test registry for Enterprise 6.0 Active Directory provider path.
+        if [ -z `get_ad_provider_path | grep liblsass_auth_provider_ad_enterprise` ]; then
+            # Still has  5.4 value -- which is expected and good. Transform to
+            # 6.0 open provider path.
+            new_value=`get_ad_provider_path | sed 's/liblsass_auth_provider_ad/liblsass_auth_provider_ad_open/'`
+        else
+            # Has Enterprise 6.0 path (odd). Transform to Open 6.0 path.
+            new_value=`get_ad_provider_path | sed 's/liblsass_auth_provider_ad_enterprise/liblsass_auth_provider_ad_open'`
+        fi
+        set_ad_provider_path "$new_value"
+    fi
+}
+
 do_postinstall()
 {
     # Start service manager for registry import *** NOT USING SYSTEM SCRIPT
@@ -1051,6 +1113,9 @@ do_postinstall()
 
     # Populate registry
     import_registry
+
+    # Update AD provider path in 5.4 registry to 6.0 name.
+    fix_5_4_configuration
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
     stop_daemon lwsmd
