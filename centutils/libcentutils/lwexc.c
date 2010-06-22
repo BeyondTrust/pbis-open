@@ -56,9 +56,11 @@
 
 #include "config.h"
 #include "lwexc.h"
+#include "ctbase.h"
 #include "ctstrutils.h"
 #include <lw/winerror.h>
 #include <lwerror.h>
+#include <lwstr.h>
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -127,30 +129,50 @@ LWRaise(
     DWORD code
     )
 {
-    DWORD ceError;
-    char *shortMsg;
-    char *longMsg;
+    DWORD ceError = 0;
+    char *shortMsg = NULL;
+    char *longMsg = NULL;
     const char* desc = LwWin32ExtErrorToName(code);
-    const char* help = LwWin32ExtErrorToDescription(code);
+    const char* help = NULL;
+    DWORD dwLen = 0;
+    DWORD dwErrorBufferSize = 0;
 
     if (!desc)
     {
         shortMsg = "Undocumented exception";
     }
-    if ((ceError = CTAllocateString(desc, &shortMsg)));
+    if ((ceError = CTAllocateString(desc, &shortMsg)))
     {
 	*dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
 	return;
     }
 
-    if (!help)
+    dwErrorBufferSize = LwGetErrorString(code, NULL, 0);
+    if (dwErrorBufferSize > 0)
     {
-        longMsg = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
+        if ((ceError = CTAllocateMemory(dwErrorBufferSize, (PVOID*)&longMsg)))
+        {
+	    CTFreeString(shortMsg);
+            *dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
+            return;
+        }
+  
+        dwLen = LwGetErrorString(code, longMsg, dwErrorBufferSize);
+        if ((dwLen != dwErrorBufferSize) || LW_IS_NULL_OR_EMPTY_STR(longMsg))
+        {
+            CTFreeMemory(longMsg);
+            longMsg = NULL;
+        }
     }
-    if ((ceError = CTAllocateString(help, &longMsg)))
+
+    if (!longMsg)
     {
-	*dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
-	return;
+        help = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
+        if ((ceError = CTAllocateString(help, &longMsg)))
+        {
+	    *dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
+            return;
+        }
     }
     
     *dest = CreateException(code, NULL, 0, shortMsg, longMsg);
@@ -169,9 +191,11 @@ LWRaiseEx(
 {
     if (dest)
     {
-	DWORD ceError;
-	char* shortMsg;
-	char* longMsg;
+	DWORD ceError = 0;
+	char* shortMsg = NULL;
+	char* longMsg = NULL;
+        DWORD dwLen = 0;
+        DWORD dwErrorBufferSize = 0;
 	va_list ap;
 	
 	va_start(ap, fmt);
@@ -183,15 +207,6 @@ LWRaiseEx(
         if (!_shortMsg)
         {
             _shortMsg = "Undocumented exception";
-        }
-
-	if (!fmt)
-	{
-	    fmt = LwWin32ExtErrorToDescription(code);
-	}
-        if (!fmt)
-        {
-            fmt = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
         }
 
 	if (_shortMsg)
@@ -207,18 +222,41 @@ LWRaiseEx(
 	    shortMsg = NULL;
 	}
 	    
-	if (fmt)
+        if (!fmt)
 	{
+            dwErrorBufferSize = LwGetErrorString(code, NULL, 0);
+            if (dwErrorBufferSize > 0)
+            {
+                if ((ceError = CTAllocateMemory( dwErrorBufferSize, (PVOID*)&longMsg)))
+                {
+	            CTFreeString(shortMsg);
+                    *dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
+                    return;
+                }
+
+                dwLen = LwGetErrorString(code, longMsg, dwErrorBufferSize);
+                if ((dwLen != dwErrorBufferSize) || LW_IS_NULL_OR_EMPTY_STR(longMsg))
+                {
+                    CTFreeMemory(longMsg);
+                    longMsg = NULL;
+                }
+
+            }
+	}
+
+	if (!longMsg)
+	{
+            if (!fmt)
+            {
+                fmt = "An undocumented exception has occurred. Please contact Likewise technical support and use the error code to identify this exception.";
+            }
+
 	    if ((ceError = CTAllocateStringPrintfV(&longMsg, fmt, ap)))
 	    {
 		CTFreeString(shortMsg);
 		*dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
 		return;
 	    }
-	}
-	else
-	{
-	    longMsg = NULL;
 	}
 
 	*dest = CreateException(code, file, line, shortMsg, longMsg);
