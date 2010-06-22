@@ -949,6 +949,56 @@ LwTranslateKrb5Error(
     return dwError;
 }
 
+size_t
+LwKrb5GetErrorString(
+    DWORD  winError,
+    PSTR   pszBuffer,
+    size_t stBufSize
+    )
+{
+    krb5_error_code krbError = 0;
+    PCSTR pszKrb5Error = NULL;
+    krb5_context ctx = NULL;
+    size_t sRequiredLen = 0;
+    unsigned int i = 0;
+
+    for (i = 0; krb5err_lwerr_map[i].pszKrb5errStr; i++)
+    {
+        if (krb5err_lwerr_map[i].lwerr == winError)
+        {
+            krbError = krb5err_lwerr_map[i].krb5err;
+            break;
+        }
+    }
+
+    if (krbError)
+    {
+        krb5_init_context(&ctx);
+        if (ctx)
+        {
+            pszKrb5Error = krb5_get_error_message(ctx, krbError);
+        }
+    }
+
+    if (pszKrb5Error)
+    {
+        sRequiredLen = strlen(pszKrb5Error) + 1;
+        if (stBufSize >= sRequiredLen)
+        {
+            strcpy(pszBuffer, pszKrb5Error);
+        }
+
+        krb5_free_error_message(ctx, pszKrb5Error);
+    }
+
+    if (ctx)
+    {
+        krb5_free_context(ctx);
+    }
+
+    return sRequiredLen;
+}
+
 DWORD
 LwKrb5VerifyPac(
     krb5_context ctx,

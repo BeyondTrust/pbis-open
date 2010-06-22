@@ -149,6 +149,13 @@ LwTranslateKrb5Error(
     DWORD dwLine
     );
 
+size_t
+LwKrb5GetErrorString(
+    DWORD  winError,
+    PSTR   pszBuffer,
+    size_t stBufSize
+    );
+
 DWORD
 LwSetupUserLoginSession(
     uid_t uid,

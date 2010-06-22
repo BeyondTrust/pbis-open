@@ -59,16 +59,28 @@ LwGetErrorString(
        memset(pszBuffer, 0, stBufSize);
     }
 
-    if (!pszDesc)
+    if (!pszDesc || !pszDesc[0])
     {
-        pszDesc = "Unknown error";
+        sRequiredLen = LwKrb5GetErrorString(
+                           dwError,
+                           pszBuffer,
+                           stBufSize);
     }
 
-    sRequiredLen = strlen(pszDesc) + 1;
-    if (stBufSize >= sRequiredLen)
+    if (!sRequiredLen)
     {
-        strcpy(pszBuffer, pszDesc);
+        if (!pszDesc)
+        {
+            pszDesc = "Unknown error";
+        }
+
+        sRequiredLen = strlen(pszDesc) + 1;
+        if (stBufSize >= sRequiredLen)
+        {
+            strcpy(pszBuffer, pszDesc);
+        }
     }
+
     return sRequiredLen;
 }
 

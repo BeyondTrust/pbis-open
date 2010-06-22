@@ -48,6 +48,7 @@
 #include "lwstr.h"
 #include "lwerror.h"
 #include "lwlogging.h"
+#include "lwkrb5.h"
 #include "bail.h"
 
 #if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)

@@ -4,6 +4,7 @@ lib_LTLIBRARIES = liblwadvapi_nothr.la
 
 liblwadvapi_nothr_la_LIBADD = \
 	error/liblwadvapi_error.la \
+	../join/liblwadvapi_join.la \
 	file/liblwadvapi_file.la \
 	dscache/liblwadvapi_dscache.la \
 	memory/liblwadvapi_memory.la \

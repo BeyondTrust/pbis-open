@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = liblwadvapi.la
 
-SUBDIRS = include unthreaded
+SUBDIRS = include
 
 liblwadvapi_la_LIBADD = \
 	unthreaded/liblwadvapi_nothr.la
@@ -10,5 +10,7 @@ SUBDIRS += join
 liblwadvapi_la_LIBADD += \
 	join/liblwadvapi_join.la
 endif
+
+SUBDIRS += unthreaded
 
 liblwadvapi_la_SOURCES = dummy.c
