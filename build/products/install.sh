@@ -56,10 +56,10 @@ setup_os_vars()
             # Use -m because it works on old Linux distros
             OS_ARCH_COMMAND="uname -m"
             ;;
-	FreeBSD|"Isilon OneFS")
-	    OS_TYPE='freebsd'
+        FreeBSD|"Isilon OneFS")
+            OS_TYPE='freebsd'
             INIT_SCRIPT_PREFIX_DIR="/etc/rc.d"
-	    ;;
+            ;;
         SunOS)
             OS_TYPE='solaris'
             ;;
@@ -71,9 +71,9 @@ setup_os_vars()
             OS_ARCH_COMMAND="getconf CPU_VERSION"
             INIT_SCRIPT_PREFIX_DIR="/sbin/init.d"
             ;;
-	*)
-	    exit_on_error 1 "OS type \"${OS_TYPE}\" is not supported"
-	    ;;
+        *)
+            exit_on_error 1 "OS type \"${OS_TYPE}\" is not supported"
+            ;;
     esac
 
     OS_ARCH=`$OS_ARCH_COMMAND`
@@ -131,17 +131,17 @@ find_pkg_type()
 {
     if test "${OS_TYPE}" = "freebsd"
     then
-	echo "freebsd"
+        echo "freebsd"
     else
-	for _find_pkg_type_file in "${PKGDIR}"/* ; do
-	    if [ -f "${_find_pkg_type_file}" ]; then
-		_find_pkg_type_ext=`echo "${_find_pkg_type_file}" | sed -e 's/^.*\.\([^.]*\)$/\1/'`
-		exit_on_error $? "Could not get extension for ${_find_pkg_type_file}"
-		echo "${_find_pkg_type_ext}"
-		return 0
-	    fi
-	done
-	exit_on_error 1 "Could not find ${PKGDIR}/*"
+        for _find_pkg_type_file in "${PKGDIR}"/* ; do
+            if [ -f "${_find_pkg_type_file}" ]; then
+                _find_pkg_type_ext=`echo "${_find_pkg_type_file}" | sed -e 's/^.*\.\([^.]*\)$/\1/'`
+                exit_on_error $? "Could not get extension for ${_find_pkg_type_file}"
+                echo "${_find_pkg_type_ext}"
+                return 0
+            fi
+        done
+        exit_on_error 1 "Could not find ${PKGDIR}/*"
     fi
 }
 
@@ -239,10 +239,10 @@ update_packages_list()
             IS_COMPAT=""
             ;;
         auto|'')
-	    if [ -n "${NEED_COMPAT}" -a -n "${HAVE_COMPAT}" ]
-	    then
-		IS_COMPAT="${NEED_COMPAT}"
-	    fi
+            if [ -n "${NEED_COMPAT}" -a -n "${HAVE_COMPAT}" ]
+            then
+                IS_COMPAT="${NEED_COMPAT}"
+            fi
             ;;
         *)
             exit_on_error 1 "Invalid compatibility mode: \"$1\""
@@ -251,7 +251,7 @@ update_packages_list()
 
     if [ -n "${IS_COMPAT}" ]; then
         if [ -z "${HAVE_COMPAT}" ]; then
-	    echo "${1}"
+            echo "${1}"
             exit_on_error 1 "INTERNAL: The installer is missing required 32-bit compatibility libraries in $PKGDIR/compat"
         fi
     fi
@@ -294,12 +294,12 @@ check_deb_installed()
     _status="`dpkg -s "$1" 2>/dev/null`"
     if [ $? -ne 0 ]
     then
-	return 1
+        return 1
     fi
 
     if echo "$_status" | grep 'not-installed' >/dev/null 2>&1
     then
-	return 1
+        return 1
     fi
 
     return 0
@@ -466,15 +466,15 @@ install_debs()
 
     for _pkg in ${PACKAGES}
     do
-	_debs="$_debs ${PKGDIR}/${_pkg}_*.deb"
+        _debs="$_debs ${PKGDIR}/${_pkg}_*.deb"
 
-	if $OPT_DEVEL
-	then
-	    if test -f ${PKGDIR}/${_pkg}-dev_*.deb
-	    then
-		_debs="$_debs ${PKGDIR}/${_pkg}-dev_*.deb"
-	    fi
-	fi
+        if $OPT_DEVEL
+        then
+            if test -f ${PKGDIR}/${_pkg}-dev_*.deb
+            then
+                _debs="$_debs ${PKGDIR}/${_pkg}-dev_*.deb"
+            fi
+        fi
     done
 
     dpkg ${DPKG_INSTALL_OPTIONS} ${_debs}
@@ -581,12 +581,12 @@ uninstall_debs()
     _pkgs=""
     for pkg in $@ ; do
         if check_deb_installed ${pkg}
-	then
+        then
             _pkgs="${_pkgs} ${pkg}"
         fi
 
         if check_deb_installed "${pkg}-dev"
-	then
+        then
             _pkgs="${_pkgs} ${pkg}-dev"
         fi
     done
@@ -629,11 +629,11 @@ uninstall_freebsds()
     for pkg in $@
     do
         if check_freebsd_installed "${pkg}"
-	then
-	    echo "Removing ${pkg}"
-	    pkg_delete "${pkg}-*"
-	    exit_on_error $? "Failed to uninstall package ${pkg}"
-	fi
+        then
+            echo "Removing ${pkg}"
+            pkg_delete "${pkg}-*"
+            exit_on_error $? "Failed to uninstall package ${pkg}"
+        fi
     done
     return 0
 }
@@ -690,11 +690,11 @@ preinstall_rpms()
     obsolete=""
     for pkg in ${OBSOLETE_PACKAGES}
     do
-	if check_rpm_installed "${pkg}"
-	then
-	    echo "Removing obsolete package: `rpm -q ${pkg}`"
-	    obsolete="$obsolete $pkg"
-	fi
+        if check_rpm_installed "${pkg}"
+        then
+            echo "Removing obsolete package: `rpm -q ${pkg}`"
+            obsolete="$obsolete $pkg"
+        fi
     done
     uninstall_rpms $obsolete
 }
@@ -705,11 +705,11 @@ preinstall_debs()
     obsolete=""
     for pkg in ${OBSOLETE_PACKAGES}
     do
-	if check_deb_installed "${pkg}"
-	then
-	    echo "Removing obsolete package: ${pkg}"
-	    obsolete="$obsolete $pkg"
-	fi
+        if check_deb_installed "${pkg}"
+        then
+            echo "Removing obsolete package: ${pkg}"
+            obsolete="$obsolete $pkg"
+        fi
     done
     uninstall_debs $obsolete
 }
@@ -806,7 +806,7 @@ stop_daemon()
 reload_daemon()
 {
     if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
-	$INIT_SCRIPT_PREFIX_DIR/$1 reload
+        $INIT_SCRIPT_PREFIX_DIR/$1 reload
     fi
 }
 
@@ -814,8 +814,8 @@ save_daemon()
 {
     if check_daemon_running "$1"
     then
-	eval "${1}_RUNNING=1"
-	stop_daemon "${1}"
+        eval "${1}_RUNNING=1"
+        stop_daemon "${1}"
     fi
 }
 
@@ -824,7 +824,7 @@ restore_daemon()
     eval "running=\$${1}_RUNNING"
     if [ -n "${running}" ]
     then
-	start_daemon "${1}"
+        start_daemon "${1}"
     fi
 }
 
@@ -833,7 +833,7 @@ save_daemons()
     daemon=""
     for daemon in `reverse_list ${DAEMONS}`
     do
-	save_daemon "${daemon}"
+        save_daemon "${daemon}"
     done
 }
 
@@ -842,7 +842,7 @@ restore_daemons()
     daemon=""
     for daemon in ${DAEMONS}
     do
-	restore_daemon "${daemon}"
+        restore_daemon "${daemon}"
     done
 }
 
@@ -851,7 +851,7 @@ autostart_daemons()
     daemon=""
     for daemon in ${AUTOSTART}
     do
-	start_daemon "${daemon}"
+        start_daemon "${daemon}"
     done
 }
 
@@ -995,17 +995,17 @@ scrub_prefix()
 {
     if [ -d "${PREFIX}" ]
     then
-	(
-	    IFS='
+        (
+            IFS='
 '
-	    for file in `find ${PREFIX}`
-	    do
-		if [ -d "${file}" ]
-		then
-		    echo "${file}"
-		fi
-	    done
-	    ) | sort -r | xargs rmdir >/dev/null 2>&1
+            for file in `find ${PREFIX}`
+            do
+                if [ -d "${file}" ]
+                then
+                    echo "${file}"
+                fi
+            done
+            ) | sort -r | xargs rmdir >/dev/null 2>&1
     fi
 }
 
@@ -1141,16 +1141,16 @@ do_interactive()
     fi
 
     if [ -f "${DIRNAME}/EULA" ]; then
-	cat "${DIRNAME}/EULA" | ${PAGER}
-	prompt_yes_no "Do you accept the terms of these licenses?"
-	if [ "x$answer" != "xyes" ]; then
+        cat "${DIRNAME}/EULA" | ${PAGER}
+        prompt_yes_no "Do you accept the terms of these licenses?"
+        if [ "x$answer" != "xyes" ]; then
             echo "License not accepted."
             exit 1
-	fi
+        fi
 
-	echo ""
-	echo "License accepted."
-	echo ""
+        echo ""
+        echo "License accepted."
+        echo ""
     fi
 
     prompt_yes_no "Would you like to install now?"
@@ -1252,10 +1252,10 @@ main()
                 OPT_COMPAT=no
                 shift 1
                 ;;
-	    --devel)
-		OPT_DEVEL=true
-		shift 1
-		;;
+            --devel)
+                OPT_DEVEL=true
+                shift 1
+                ;;
             --type|-t)
                 if [ -n "${PKGTYPE}" ]; then
                     echo "Only one --type option allowed"
@@ -1297,7 +1297,7 @@ main()
         uninstall)
             do_setup
             do_uninstall
-	    echo "Success"
+            echo "Success"
             ;;
         purge)
             do_setup
