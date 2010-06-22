@@ -849,7 +849,11 @@ ClientEstablishContext(
 
         if (SEC_I_CONTINUE_NEEDED == dwLoopError)
         {
+	    PNTLM_NEGOTIATE_MESSAGE pMsg = (PNTLM_NEGOTIATE_MESSAGE) SendTokenBuffer.pvBuffer;
+	    // Adjust any flags for debugging
+	    // pMsg->NtlmFlags |= NTLM_FLAG_SEAL;
             printf("Context partially initialized...\n");
+
             DumpBuffer(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             DumpNtlmMessage(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             printf("\n");
@@ -859,6 +863,10 @@ ClientEstablishContext(
         }
         else
         {
+	    PNTLM_RESPONSE_MESSAGE pMsg = (PNTLM_RESPONSE_MESSAGE) SendTokenBuffer.pvBuffer;
+	    // Adjust any flags for debugging
+	    //pMsg->NtlmFlags |= NTLM_FLAG_SEAL;
+
             printf("Context FULLY initialized!\n");
             DumpBuffer(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
             DumpNtlmMessage(SendTokenBuffer.pvBuffer, SendTokenBuffer.cbBuffer);
