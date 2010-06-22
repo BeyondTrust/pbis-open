@@ -647,6 +647,18 @@ remove_extra_files()
         fi
     done
 
+    echo "Remove Likewise created backup/restore files"
+    for file in /etc/pam.d/* /etc/krb5.conf /etc/hosts /etc/sshd_config /etc/ssh_config ; do
+        orig="$file.lwidentity.orig"
+        bak="$file.lwidentity.bak"
+        if [ -f "$orig" ]; then
+            rm -fv $orig
+        fi
+        if [ -f "$bak" ]; then
+            rm -fv $bak
+        fi
+    done
+
     return 0
 }
 
@@ -1048,6 +1060,8 @@ do_purge()
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
+        $domainjoin_cli configure --disable pam > /dev/null 2>&1
+        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
     fi
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
