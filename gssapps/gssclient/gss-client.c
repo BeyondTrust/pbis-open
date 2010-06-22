@@ -109,8 +109,8 @@ main(
     DWORD nError = 0;
     USHORT usPort = 4444;
     OM_uint32 nGssFlags = 
-            //GSS_C_CONF_FLAG |
-            //GSS_C_INTEG_FLAG |
+            GSS_C_CONF_FLAG |
+            GSS_C_INTEG_FLAG |
             GSS_C_REPLAY_FLAG |
             GSS_C_MUTUAL_FLAG;
     INT nFormat = 0;
@@ -151,6 +151,10 @@ main(
         else if (strcmp(*argv, "-nomutual") == 0)
         {
             nGssFlags &= ~GSS_C_MUTUAL_FLAG;
+        }
+        else if (strcmp(*argv, "-anon") == 0)
+        {
+            nGssFlags |= GSS_C_ANON_FLAG;
         }
         else if (strcmp(*argv, "-spnego") == 0)
         {
@@ -263,13 +267,14 @@ DWORD
 Usage(VOID)
 {
     fprintf(stderr, "Usage: gssclient [-port port] [-d] [-seq] [-noreplay]\n");
-    fprintf(stderr, "  [-nomutual] [-spnego] [-h host] \n");
+    fprintf(stderr, "  [-nomutual] [-spnego] [-anon] [-h host] \n");
     fprintf(stderr, "  [-c user password domain] [-m message]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "  -d         delegate credentials\n");
     fprintf(stderr, "  -seq       add sequence number\n");
     fprintf(stderr, "  -noreplay  disable replay checking\n");
     fprintf(stderr, "  -nomutual  disable mutual auth\n");
+    fprintf(stderr, "  -anon      perform anonymous authentication\n");
     fprintf(stderr, "  -spnego    use spnego instead of ntlm directly\n");
     fprintf(stderr, "  -c         use supplemental credentials\n");
 
