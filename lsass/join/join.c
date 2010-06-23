@@ -3245,7 +3245,6 @@ LsaUserChangePassword(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    PSTR pszHostname = NULL;
     SAMR_BINDING hSamrBinding = NULL;
     size_t sOldPasswordLen = 0;
     size_t sNewPasswordLen = 0;
@@ -3258,9 +3257,6 @@ LsaUserChangePassword(
 
     ntStatus = LwIoGetActiveCreds(NULL, &pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
-
-    dwError = LwWc16sToMbs(pwszDCName, &pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = SamrInitBindingDefault(&hSamrBinding, pwszDCName, pCreds);
     BAIL_ON_NT_STATUS(ntStatus);

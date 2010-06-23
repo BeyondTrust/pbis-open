@@ -267,6 +267,15 @@ unsigned char pkinit_4096_dhprime[4096/8] = {
 
 static int pkinit_oids_refs = 0;
 
+static void pkinit_terminate(void);
+
+MAKE_FINI_FUNCTION(pkinit_terminate);
+
+static void pkinit_terminate(void)
+{
+    EVP_cleanup();
+}
+
 krb5_error_code
 pkinit_init_plg_crypto(pkinit_plg_crypto_context *cryptoctx) {
 
