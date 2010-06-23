@@ -284,7 +284,8 @@ typedef enum LW_THREAD_POOL_OPTION
  * @param[in] WakeMask the mask of trigger conditions which woke the task
  * @param[in, out] pWaitMask the mask of trigger conditions to wait for
  * before the next wakeup
- * @param[in,out] pllTime the time remaining until the next timeout
+ * @param[in,out] pllTime the time remaining until the next timeout (in
+ * nanoseconds).
  */
 typedef
 LW_VOID
