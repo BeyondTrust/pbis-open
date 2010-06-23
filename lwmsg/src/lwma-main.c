@@ -47,27 +47,6 @@
 
 static
 LWMsgStatus
-wrap_print(
-    LWMsgBuffer* buffer,
-    size_t count
-    )
-{
-    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
-
-    if (fwrite(buffer->base, 1, buffer->cursor - buffer->base, stdout) < 0)
-    {
-        BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
-    }
-
-    buffer->cursor = buffer->base;
-
-error:
-
-    return status;
-}
-
-static
-LWMsgStatus
 archive_dump(
     const char* filename
     )
@@ -76,15 +55,8 @@ archive_dump(
     LWMsgProtocol* protocol = NULL;
     LWMsgArchive* archive = NULL;
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgBuffer buffer = {0};
-    unsigned char buf[2048];
     char* text = NULL;
     unsigned int i = 0;
-
-    buffer.base = buf;
-    buffer.cursor = buffer.base;
-    buffer.end = buffer.base + sizeof(buf);
-    buffer.wrap = wrap_print;
 
     BAIL_ON_ERROR(status = lwmsg_protocol_new(NULL, &protocol));
     BAIL_ON_ERROR(status = lwmsg_archive_new(NULL, protocol, &archive));
@@ -96,9 +68,10 @@ archive_dump(
     printf("Schema\n");
     printf("------\n\n");
 
-    BAIL_ON_ERROR(status = lwmsg_protocol_print(protocol, 0, &buffer));
-
-    BAIL_ON_ERROR(status = lwmsg_buffer_finish(&buffer));
+    BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(protocol, &text));
+    printf("%s\n", text);
+    free(text);
+    text = NULL;
 
     printf("--------\n");
     printf("Messages\n");
@@ -146,6 +119,16 @@ error:
     return status;
 }
 
+static
+void
+help()
+{
+    printf(
+        "Usage: lwma <command> <file>\n\n"
+        "Commands:\n"
+        "  dump                Dump contents of archive\n\n");
+}
+
 int
 main(
     int argc,
@@ -154,9 +137,20 @@ main(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
+    if (argc < 3)
+    {
+        help();
+        exit(1);
+    }
+
     if (!strcmp(argv[1], "dump"))
     {
         BAIL_ON_ERROR(status = archive_dump(argv[2]));
+    }
+    else
+    {
+        help();
+        exit(1);
     }
 
 error:
