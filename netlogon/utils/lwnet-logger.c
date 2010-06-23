@@ -52,6 +52,7 @@ static const PSTR WARN_TAG    = "WARNING";
 static const PSTR INFO_TAG    = "INFO";
 static const PSTR VERBOSE_TAG = "VERBOSE";
 static const PSTR DEBUG_TAG   = "DEBUG";
+static const PSTR TRACE_TAG   = "TRACE";
 
 static const PSTR LOG_TIME_FORMAT = "%Y%m%d%H%M%S";
 
@@ -106,7 +107,7 @@ lwnet_set_syslogmask(
     {
         case LWNET_LOG_LEVEL_ALWAYS:
         {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
+            dwSysLogLevel = LOG_UPTO(LOG_NOTICE);
             break;
         }
         case LWNET_LOG_LEVEL_ERROR:
@@ -122,13 +123,24 @@ lwnet_set_syslogmask(
         }
 
         case LWNET_LOG_LEVEL_INFO:
+        {
+            dwSysLogLevel = LOG_UPTO(LOG_INFO);
+            break;
+        }
+
         case LWNET_LOG_LEVEL_VERBOSE:
         {
             dwSysLogLevel = LOG_UPTO(LOG_INFO);
             break;
         }
 
-        default:
+        case LWNET_LOG_LEVEL_DEBUG:
+        {
+            dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
+            break;
+        }
+        
+        case LWNET_LOG_LEVEL_TRACE:
         {
             dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
             break;
@@ -304,9 +316,13 @@ static PSTR logLevel2EntryType(
             return(INFO_TAG);
         case LWNET_LOG_LEVEL_VERBOSE:
             return(VERBOSE_TAG);
-        default:
+        case LWNET_LOG_LEVEL_DEBUG:
             return(DEBUG_TAG);
+        case LWNET_LOG_LEVEL_TRACE:
+            return(TRACE_TAG);
     }
+
+    return "UNKNOWN";
 }
 
 static void

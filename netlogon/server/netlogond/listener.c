@@ -46,8 +46,54 @@
  */
 #include "includes.h"
 
+static LWMsgContext* gpContext = NULL;
 static LWMsgProtocol* gpProtocol = NULL;
 static LWMsgServer* gpServer = NULL;
+
+static
+LWMsgBool
+LWNetSrvLogIpc (
+    LWMsgLogLevel level,
+    const char* pszMessage,
+    const char* pszFilename,
+    unsigned int line,
+    void* pData
+    )
+{
+    DWORD dwLevel = 0;
+    LWMsgBool result;
+
+    switch (level)
+    {
+    case LWMSG_LOGLEVEL_ERROR:
+        dwLevel = LWNET_LOG_LEVEL_ERROR;
+        break;
+    case LWMSG_LOGLEVEL_WARNING:
+        dwLevel = LWNET_LOG_LEVEL_WARNING;
+        break;
+    case LWMSG_LOGLEVEL_INFO:
+        dwLevel = LWNET_LOG_LEVEL_INFO;
+        break;
+    case LWMSG_LOGLEVEL_VERBOSE:
+        dwLevel = LWNET_LOG_LEVEL_VERBOSE;
+        break;
+    case LWMSG_LOGLEVEL_DEBUG:
+        dwLevel = LWNET_LOG_LEVEL_DEBUG;
+        break;
+    case LWMSG_LOGLEVEL_TRACE:
+    default:
+        dwLevel = LWNET_LOG_LEVEL_TRACE;
+        break;
+    }
+
+    result = gLwnetLogInfo.dwLogLevel >= dwLevel;
+    if (pszMessage && result)
+    {
+        lwnet_log_message(dwLevel, "[IPC] %s", pszMessage);
+    }
+
+    return result;
+}
 
 DWORD
 LWNetSrvStartListenThread(
@@ -80,6 +126,11 @@ LWNetSrvStartListenThread(
     dwError = LwAllocateStringPrintf(&pszCommPath, "%s/%s",
                                         pszCachePath, LWNET_SERVER_FILENAME);
     BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &gpContext));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    lwmsg_context_set_log_function(gpContext, LWNetSrvLogIpc, NULL);
 
     /* Set up IPC protocol object */
     dwError = MAP_LWMSG_ERROR(lwmsg_protocol_new(NULL, &gpProtocol));

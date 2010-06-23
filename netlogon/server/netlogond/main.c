@@ -307,6 +307,11 @@ LWNetSrvParseArgs(
                 pLWNetServerInfo->bEnableDebugLogs = TRUE;
                 pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_DEBUG;
             }
+            else if (!strcasecmp(pArg, "trace"))
+            {
+                pLWNetServerInfo->bEnableDebugLogs = TRUE;
+                pLWNetServerInfo->dwLogLevel = LWNET_LOG_LEVEL_TRACE;
+            }
             else
             {
                 fprintf(stderr, "Invalid log level specified: '%s'.\n", pArg);
