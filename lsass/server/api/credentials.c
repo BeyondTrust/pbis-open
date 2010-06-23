@@ -236,8 +236,6 @@ LsaAddCredential(
 
     if (!pszUserName  ||
         !pszPassword  ||
-        !*pszUserName ||
-        !*pszPassword ||
         (pUid && !*pUid))
     {
         dwError = LW_ERROR_INVALID_PARAMETER;

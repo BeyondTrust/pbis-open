@@ -703,7 +703,7 @@ size_t mbstowc16s(wchar16_t *dest, const char *src, size_t cchcopy)
         return (size_t)-1;
     inbuf = (char *)src;
     outbuf = (char *)dest;
-    cbin = strlen(src) * sizeof(src[0]);
+    cbin = src ? strlen(src) * sizeof(src[0]) : 0;
     cbout = cchcopy * sizeof(dest[0]);
     converted = iconv(handle, (ICONV_IN_TYPE) &inbuf, &cbin, &outbuf, &cbout);
 

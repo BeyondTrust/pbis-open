@@ -277,12 +277,17 @@ SMBGSSContextBuild(
                 usernameBuffer.value = pszUsername;
                 usernameBuffer.length = strlen(pszUsername);
                 
-                dwMajorStatus = gss_import_name(
-                    (OM_uint32 *)&dwMinorStatus,
-                    &usernameBuffer,
-                    GSS_C_NT_USER_NAME,
-                    &pUsername);
-                BAIL_ON_SEC_ERROR(dwMajorStatus);
+                // If "" is passed in, that means to use anonymous
+                // authentication. gss_import_name fails on "" though
+                if (usernameBuffer.length)
+                {
+                    dwMajorStatus = gss_import_name(
+                        (OM_uint32 *)&dwMinorStatus,
+                        &usernameBuffer,
+                        GSS_C_NT_USER_NAME,
+                        &pUsername);
+                    BAIL_ON_SEC_ERROR(dwMajorStatus);
+                }
             }
             
             desiredMechs.count = 1;

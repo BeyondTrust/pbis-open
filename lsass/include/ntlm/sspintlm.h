@@ -239,6 +239,7 @@ typedef struct
 #define NTLM_FLAG_LM_KEY                0x00000080  /* use LM key for crypto */
 #define NTLM_FLAG_NETWARE               0x00000100  /* netware - unsupported */
 #define NTLM_FLAG_NTLM                  0x00000200  /* use NTLM auth */
+#define NTLM_FLAG_ANONYMOUS             0x00000800
 #define NTLM_FLAG_DOMAIN                0x00001000  /* domain supplied */
 #define NTLM_FLAG_WORKSTATION           0x00002000  /* wks supplied */
 #define NTLM_FLAG_LOCAL_CALL            0x00004000  /* loopback auth */
@@ -256,19 +257,21 @@ typedef struct
 #define NTLM_FLAG_KEY_EXCH              0x40000000  /* perform key exchange */
 #define NTLM_FLAG_56                    0x80000000  /* 56-bit encryption */
 
-#define NTLM_FLAG_NEGOTIATE_DEFAULT ( \
-    NTLM_FLAG_SIGN                  | \
-    NTLM_FLAG_SEAL                  | \
-    NTLM_FLAG_OEM                   | \
-    NTLM_FLAG_REQUEST_TARGET        | \
-    NTLM_FLAG_NTLM                  | \
-    NTLM_FLAG_DOMAIN                | \
-    NTLM_FLAG_56                    | \
-    NTLM_FLAG_128                   | \
-    NTLM_FLAG_UNICODE               | \
-    NTLM_FLAG_NTLM2                 | \
-    NTLM_FLAG_KEY_EXCH              | \
-    0 )
+#define ISC_REQ_INTEGRITY           0x01
+#define ISC_REQ_CONFIDENTIALITY     0x02
+#define ISC_REQ_NULL_SESSION        0x04
+
+#define ISC_RET_INTEGRITY           0x01
+#define ISC_RET_CONFIDENTIALITY     0x02
+#define ISC_RET_NULL_SESSION        0x04
+
+#define ASC_REQ_INTEGRITY           0x01
+#define ASC_REQ_CONFIDENTIALITY     0x02
+#define ASC_REQ_NULL_SESSION        0x04
+
+#define ASC_RET_INTEGRITY           0x01
+#define ASC_RET_CONFIDENTIALITY     0x02
+#define ASC_RET_NULL_SESSION        0x04
 
 // Possible information to query our context for
 #define SECPKG_ATTR_ACCESS_TOKEN                1

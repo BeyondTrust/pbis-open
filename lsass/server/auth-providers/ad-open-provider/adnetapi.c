@@ -250,28 +250,13 @@ AD_NetUserChangePassword(
     PWSTR pwszOldPassword = NULL;
     PWSTR pwszNewPassword = NULL;
     PLSA_CREDS_FREE_INFO pFreeInfo = NULL;
-    LW_PIO_CREDS pOldCreds = NULL;
-    BOOLEAN bChangedToken = FALSE;
 
     BAIL_ON_INVALID_STRING(pszDomainName);
     BAIL_ON_INVALID_STRING(pszLoginId);
 
-    if (bIsInOneWayTrustedDomain)
-    {
-        dwError = LsaSetSMBCreds(
-                        pszDomainName,
-                        pszUserPrincipalName,
-                        pszOldPassword,
-                        FALSE,
-                        &pFreeInfo);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        dwError = AD_SetSystemAccess(&pOldCreds);
-        BAIL_ON_LSA_ERROR(dwError);
-        bChangedToken = TRUE;
-    }
+    dwError = LsaSetSMBAnonymousCreds(
+                    &pFreeInfo);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwMbsToWc16s(
                     pszDomainName,
@@ -315,14 +300,6 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszOldPassword);
     LW_SAFE_FREE_MEMORY(pwszNewPassword);
     LsaFreeSMBCreds(&pFreeInfo);
-    if (bChangedToken)
-    {
-        LwIoSetThreadCreds(pOldCreds);
-    }
-    if (pOldCreds != NULL)
-    {
-        LwIoDeleteCreds(pOldCreds);
-    }
 
     return AD_MapNetApiError(dwError);
 

@@ -72,7 +72,8 @@
 #define NTLM_RESPONSE_TYPE_NTLM         2
 #define NTLM_RESPONSE_TYPE_NTLMv2       3
 #define NTLM_RESPONSE_TYPE_NTLM2        4
-#define NTLM_RESPONSE_TYPE_ANONYMOUS    5
+#define NTLM_RESPONSE_TYPE_ANON_LM      5
+#define NTLM_RESPONSE_TYPE_ANON_NTLM    6
 
 // Response sizes... NTLMv2 is not listed since it is a variable sized response
 
@@ -80,7 +81,8 @@
 #define NTLM_RESPONSE_SIZE_LMv2         24
 #define NTLM_RESPONSE_SIZE_NTLM         24
 #define NTLM_RESPONSE_SIZE_NTLM2        24
-#define NTLM_RESPONSE_SIZE_ANONYMOUS    1
+#define NTLM_RESPONSE_SIZE_ANON_LM      1
+#define NTLM_RESPONSE_SIZE_ANON_NTLM    0
 
 #define NTLM_LM_MAX_PASSWORD_SIZE       14
 #define NTLM_HASH_SIZE                  16

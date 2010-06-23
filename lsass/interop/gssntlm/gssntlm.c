@@ -841,7 +841,7 @@ ntlm_gss_init_sec_context(
     SecBuffer OutputToken = {0};
     NTLM_CRED_HANDLE CredHandle = NULL;
     TimeStamp Expiry = 0;
-    DWORD dwNtlmFlags = NTLM_FLAG_NEGOTIATE_DEFAULT;
+    DWORD dwNtlmFlags = 0;
     DWORD dwOutNtlmFlags = 0;
     OM_uint32 RetFlags = 0;
 
@@ -865,7 +865,11 @@ ntlm_gss_init_sec_context(
     }
 
     // if no credentials are passed in, create default creds
-    if (GSS_C_NO_CREDENTIAL == InitiatorCredHandle)
+    if (nReqFlags & GSS_C_ANON_FLAG)
+    {
+        CredHandle = NULL;
+    }
+    else if (GSS_C_NO_CREDENTIAL == InitiatorCredHandle)
     {
         MinorStatus = NtlmClientAcquireCredentialsHandle(
             NULL,
@@ -882,7 +886,7 @@ ntlm_gss_init_sec_context(
     {
         CredHandle = ((PNTLM_GSS_CREDS)InitiatorCredHandle)->
             CredHandle;
-        if(CredHandle == NULL)
+        if (CredHandle == NULL)
         {
             // This means ntlm_gss_acquire_cred was called, but not default
             // credentials were available. The user should have called
@@ -895,11 +899,19 @@ ntlm_gss_init_sec_context(
         }
     }
 
-    // NTLM supports only signing and sealing (both at the same time)
-    if ((nReqFlags & GSS_C_INTEG_FLAG) ||
-        (nReqFlags & GSS_C_CONF_FLAG))
+    // The server will ignore these flags and always perform signing and
+    // sealing, but they are translated here for the sake of consistency.
+    if (nReqFlags & GSS_C_INTEG_FLAG)
     {
-        dwNtlmFlags |= (NTLM_FLAG_SIGN | NTLM_FLAG_SEAL);
+        dwNtlmFlags |= ISC_REQ_INTEGRITY;
+    }
+    if (nReqFlags & GSS_C_CONF_FLAG)
+    {
+        dwNtlmFlags |= ISC_REQ_CONFIDENTIALITY;
+    }
+    if (nReqFlags & GSS_C_ANON_FLAG)
+    {
+        dwNtlmFlags |= ISC_REQ_NULL_SESSION;
     }
 
     MinorStatus = NtlmClientInitializeSecurityContext(
@@ -926,14 +938,17 @@ ntlm_gss_init_sec_context(
         BAIL_ON_LSA_ERROR(MinorStatus);
     }
 
-    if (dwOutNtlmFlags & NTLM_FLAG_SIGN)
+    if (dwOutNtlmFlags & ISC_RET_INTEGRITY)
     {
         RetFlags |= GSS_C_INTEG_FLAG;
     }
-
-    if (dwOutNtlmFlags & NTLM_FLAG_SEAL)
+    if (dwOutNtlmFlags & ISC_RET_CONFIDENTIALITY)
     {
         RetFlags |= GSS_C_CONF_FLAG;
+    }
+    if (dwOutNtlmFlags & ISC_RET_NULL_SESSION)
+    {
+        RetFlags |= GSS_C_ANON_FLAG;
     }
 
 cleanup:
@@ -997,7 +1012,8 @@ ntlm_gss_accept_sec_context(
     OM_uint32 MajorStatus = GSS_S_COMPLETE;
     OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
     DWORD dwRetFlags = 0;
-    DWORD dwFinalFlags = 0;
+    DWORD dwReqFlags = 0;
+    DWORD dwGssRetFlags = 0;
     SecBufferDesc InputBuffer = {0};
     SecBufferDesc OutputBuffer = {0};
     SecBuffer InputToken = {0};
@@ -1029,7 +1045,18 @@ ntlm_gss_accept_sec_context(
     }
     if (pRetFlags)
     {
-        dwRetFlags = *pRetFlags;
+        if (*pRetFlags & GSS_C_INTEG_FLAG)
+        {
+            dwReqFlags |= ASC_REQ_INTEGRITY;
+        }
+        if (*pRetFlags & GSS_C_CONF_FLAG)
+        {
+            dwReqFlags |= ASC_REQ_CONFIDENTIALITY;
+        }
+        if (*pRetFlags & GSS_C_ANON_FLAG)
+        {
+            dwReqFlags |= ASC_REQ_NULL_SESSION;
+        }
     }
 
     if (AcceptorCredHandle)
@@ -1051,31 +1078,6 @@ ntlm_gss_accept_sec_context(
         PassAcceptorCredHandle = LocalCreds;
     }
 
-#if 0
-    // convert
-    switch (dwRetFlags)
-    {
-    case GSS_C_DELEG_FLAG:
-        break;
-    case GSS_C_MUTUAL_FLAG:
-        break;
-    case GSS_C_REPLAY_FLAG:
-        break;
-    case GSS_C_SEQUENCE_FLAG:
-        break;
-    case GSS_C_CONF_FLAG:
-        break;
-    case GSS_C_INTEG_FLAG:
-        break;
-    case GSS_C_ANON_FLAG:
-        break;
-    case GSS_C_PROT_READY_FLAG:
-        break;
-    case GSS_C_TRANS_FLAG:
-        break;
-    }
-#endif
-
     memset(pOutputToken, 0, sizeof(*pOutputToken));
 
     InputBuffer.cBuffers = 1;
@@ -1092,7 +1094,7 @@ ntlm_gss_accept_sec_context(
         &((PNTLM_GSS_CREDS)PassAcceptorCredHandle)->CredHandle,
         (PNTLM_CONTEXT_HANDLE)pContextHandle,
         &InputBuffer,
-        dwFinalFlags,
+        dwReqFlags,
         NTLM_NATIVE_DATA_REP,
         &NewCtxtHandle,
         &OutputBuffer,
@@ -1106,9 +1108,6 @@ ntlm_gss_accept_sec_context(
     else
     {
         BAIL_ON_LSA_ERROR(MinorStatus);
-
-        dwRetFlags |= GSS_C_CONF_FLAG;
-        dwRetFlags |= GSS_C_INTEG_FLAG;
 
         MajorStatus = ntlm_gss_inquire_context(
                           &MinorStatus,
@@ -1152,7 +1151,19 @@ cleanup:
 
     if (pRetFlags)
     {
-        *pRetFlags = dwRetFlags;
+        if (dwRetFlags & ASC_RET_INTEGRITY)
+        {
+            dwGssRetFlags |= GSS_C_INTEG_FLAG;
+        }
+        if (dwRetFlags & ASC_RET_CONFIDENTIALITY)
+        {
+            dwGssRetFlags |= GSS_C_CONF_FLAG;
+        }
+        if (dwRetFlags & ASC_RET_NULL_SESSION)
+        {
+            dwGssRetFlags |= GSS_C_ANON_FLAG;
+        }
+        *pRetFlags = dwGssRetFlags;
     }
 
     if (pTimeRec)
@@ -1791,7 +1802,7 @@ ntlm_gss_unwrap(
     NtlmBuffer[1].cbBuffer = dwBufferSize;
     NtlmBuffer[1].pvBuffer = pBuffer;
 
-    if (dwNtlmFlags & (NTLM_FLAG_SEAL | NTLM_FLAG_SIGN))
+    if (dwNtlmFlags & (ISC_RET_CONFIDENTIALITY | ISC_RET_INTEGRITY))
     {
         MinorStatus = NtlmClientDecryptMessage(
             &ContextHandle,
@@ -1800,7 +1811,7 @@ ntlm_gss_unwrap(
             &bEncrypted
             );
     }
-    else if (dwNtlmFlags & NTLM_FLAG_SIGN)
+    else if (dwNtlmFlags & ISC_RET_INTEGRITY)
     {
         MinorStatus = NtlmClientVerifySignature(
             &ContextHandle,
@@ -2266,12 +2277,12 @@ ntlm_gss_inquire_context(
             &dwNtlmFlags);
         BAIL_ON_LSA_ERROR(MinorStatus);
 
-        if (dwNtlmFlags & NTLM_FLAG_SIGN)
+        if (dwNtlmFlags & ISC_RET_INTEGRITY)
         {
             *pCtxtFlags |= GSS_C_INTEG_FLAG;
         }
 
-        if (dwNtlmFlags & NTLM_FLAG_SEAL)
+        if (dwNtlmFlags & ISC_RET_CONFIDENTIALITY)
         {
             *pCtxtFlags |= GSS_C_CONF_FLAG;
         }

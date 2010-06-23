@@ -667,21 +667,24 @@ ClientEstablishContext(
 
     if (pszUsername)
     {
-        Username.value = pszUsername;
-        Username.length = strlen(Username.value);
-
-        nError = gss_import_name(
-            &MinorStatus,
-            &Username,
-            GSS_C_NT_USER_NAME, //(gss_OID) gss_nt_service_name,
-            &pSourceName
-            );
-        display_status("gss_import_name", nError, MinorStatus);
-        if ((GSS_S_FAILURE == nError) && MinorStatus)
+        if (pszUsername[0])
         {
-             nError = MinorStatus;
+            Username.value = pszUsername;
+            Username.length = strlen(Username.value);
+
+            nError = gss_import_name(
+                &MinorStatus,
+                &Username,
+                GSS_C_NT_USER_NAME, //(gss_OID) gss_nt_service_name,
+                &pSourceName
+                );
+            display_status("gss_import_name", nError, MinorStatus);
+            if ((GSS_S_FAILURE == nError) && MinorStatus)
+            {
+                 nError = MinorStatus;
+            }
+            BAIL_ON_ERROR(nError);
         }
-        BAIL_ON_ERROR(nError);
 
         OidString.value = GSS_NTLM_OID_STRING;
         OidString.length = strlen(GSS_NTLM_OID_STRING);

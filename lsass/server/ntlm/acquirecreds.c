@@ -68,6 +68,8 @@ NtlmServerAcquireCredentialsHandle(
     PSTR pPassword = NULL;
     uid_t InvalidUid = -1;
 
+    // Per Windows behavior, ignore pszPrincipal
+
     // While it is true that 0 is the id for root, for now we don't store root
     // credentials in our list so we can use it as an invalid value
     uid_t Uid = (uid_t)0;
@@ -131,14 +133,10 @@ NtlmServerAcquireCredentialsHandle(
                     BAIL_ON_LSA_ERROR(dwError);
                 }
             }
-            else if (pszPrincipal)
-            {
-                dwError = LwAllocateString(pszPrincipal, &pUserName);
-                BAIL_ON_LSA_ERROR(dwError);
-            }
             else
             {
-                dwError = LW_ERROR_INVALID_PARAMETER;
+                // This is an anonymous cred.
+                dwError = LwAllocateString("", &pUserName);
                 BAIL_ON_LSA_ERROR(dwError);
             }
 

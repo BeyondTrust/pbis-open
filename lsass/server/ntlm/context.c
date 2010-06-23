@@ -77,15 +77,30 @@ NtlmGetContextInfo(
     )
 {
     PNTLM_CONTEXT pContext = ContextHandle;
+    DWORD dwRetFlags = 0;
+
+    if (pContext->NegotiatedFlags & NTLM_FLAG_SIGN)
+    {
+        dwRetFlags |= ISC_RET_INTEGRITY;
+    }
+    if (pContext->NegotiatedFlags & NTLM_FLAG_SEAL)
+    {
+        dwRetFlags |= ISC_RET_CONFIDENTIALITY;
+    }
+    if (pContext->bDoAnonymous)
+    {
+        dwRetFlags |= ISC_RET_NULL_SESSION;
+    }
 
     if (pNtlmState)
     {
         *pNtlmState = pContext->NtlmState;
     }
 
+
     if (pNegotiatedFlags)
     {
-        *pNegotiatedFlags = pContext->NegotiatedFlags;
+        *pNegotiatedFlags = dwRetFlags;
     }
 
     if (ppSessionKey)
@@ -844,12 +859,12 @@ NtlmCopyStringToSecBuffer(
 
     if (dwFlags & NTLM_FLAG_UNICODE)
     {
-        dwLen = mbstrlen(pszInput) * sizeof(WCHAR);
+        dwLen = pszInput ? mbstrlen(pszInput) * sizeof(WCHAR) : 0;
         mbstowc16s((WCHAR*)*ppBufferPos, pszInput, dwLen/sizeof(WCHAR));
     }
     else
     {
-        dwLen = strlen(pszInput);
+        dwLen = pszInput ? strlen(pszInput) : 0;
         memcpy(*ppBufferPos, pszInput, dwLen);
     }
 
@@ -865,7 +880,7 @@ NtlmGetStringProtocolSize(
     PCSTR pszString
     )
 {
-    DWORD dwLen = strlen(pszString);
+    DWORD dwLen = pszString ? strlen(pszString) : 0;
 
     if (dwFlags & NTLM_FLAG_UNICODE)
     {
@@ -1000,22 +1015,17 @@ NtlmCreateResponseMessage(
     pMessage->NtResponse.usMaxLength = pMessage->NtResponse.usLength;
 
     pMessage->Flags = pChlngMsg->NtlmFlags;
+    if (dwLmRespType == NTLM_RESPONSE_TYPE_ANON_LM &&
+        dwNtRespType == NTLM_RESPONSE_TYPE_ANON_NTLM)
+    {
+        pMessage->Flags |= NTLM_FLAG_ANONYMOUS;
+    }
 
     memcpy(&pMessage->Version, pOsVersion, NTLM_WIN_SPOOF_SIZE);
 
     // We've filled in the main structure, now add the data for the sec buffers
     // at the end.
     pBuffer = (PBYTE)pMessage + sizeof(*pMessage);
-
-    pMessage->LmResponse.dwOffset = pBuffer - (PBYTE)pMessage;
-    memcpy(pBuffer, pLmMsg, dwLmMsgSize);
-
-    pBuffer += pMessage->LmResponse.usLength;
-
-    pMessage->NtResponse.dwOffset = pBuffer - (PBYTE)pMessage;
-    memcpy(pBuffer, pNtMsg, dwNtMsgSize);
-
-    pBuffer += pMessage->NtResponse.usLength;
 
     NtlmCopyStringToSecBuffer(
         pDomainName,
@@ -1035,6 +1045,16 @@ NtlmCreateResponseMessage(
         (PBYTE)pMessage,
         &pBuffer,
         &pMessage->Workstation);
+
+    pMessage->LmResponse.dwOffset = pBuffer - (PBYTE)pMessage;
+    memcpy(pBuffer, pLmMsg, dwLmMsgSize);
+
+    pBuffer += pMessage->LmResponse.usLength;
+
+    pMessage->NtResponse.dwOffset = pBuffer - (PBYTE)pMessage;
+    memcpy(pBuffer, pNtMsg, dwNtMsgSize);
+
+    pBuffer += pMessage->NtResponse.usLength;
 
     pMessage->SessionKey.usLength = 0;
     if (pChlngMsg->NtlmFlags & NTLM_FLAG_KEY_EXCH)
@@ -1234,10 +1254,22 @@ NtlmBuildResponse(
             );
         BAIL_ON_LSA_ERROR(dwError);
         break;
-    case NTLM_RESPONSE_TYPE_ANONYMOUS:
+    case NTLM_RESPONSE_TYPE_ANON_LM:
         {
-            dwError = NtlmBuildAnonymousResponse();
+            dwError = LwAllocateMemory(
+                            NTLM_RESPONSE_SIZE_ANON_LM,
+                            OUT_PPVOID(ppBuffer));
             BAIL_ON_LSA_ERROR(dwError);
+            *pdwBufferSize = NTLM_RESPONSE_SIZE_ANON_LM;
+        }
+        break;
+    case NTLM_RESPONSE_TYPE_ANON_NTLM:
+        {
+            dwError = LwAllocateMemory(
+                            NTLM_RESPONSE_SIZE_ANON_NTLM,
+                            OUT_PPVOID(ppBuffer));
+            BAIL_ON_LSA_ERROR(dwError);
+            *pdwBufferSize = NTLM_RESPONSE_SIZE_ANON_NTLM;
         }
         break;
     default:

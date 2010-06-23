@@ -61,6 +61,11 @@
 typedef struct _LSA_CREDS_FREE_INFO *PLSA_CREDS_FREE_INFO;
 
 DWORD
+LsaSetSMBAnonymousCreds(
+    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo
+    );
+
+DWORD
 LsaSetSMBCreds(
     IN PCSTR pszDomain,
     IN PCSTR pszUsername,

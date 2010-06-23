@@ -216,6 +216,7 @@ typedef struct _NTLM_CONTEXT
     LONG nRefCount;
     BYTE SessionKey[NTLM_SESSION_KEY_SIZE];
     DWORD cbSessionKeyLen;
+    BOOLEAN bDoAnonymous;
     PLSA_AUTH_USER_INFO pUserInfo;
     // Set to true if this context was generated through
     // InitializeSecurityContext.

@@ -49,11 +49,67 @@
 
 typedef struct _LSA_CREDS_FREE_INFO
 {
+    BOOLEAN bKrbCreds;
     krb5_context ctx;
     krb5_ccache cc;
-    LW_PIO_CREDS pRestoreCreds;
     PSTR pszRestoreCache;
+
+    LW_PIO_CREDS pRestoreCreds;
 } LSA_CREDS_FREE_INFO;
+
+DWORD
+LsaSetSMBAnonymousCreds(
+    OUT PLSA_CREDS_FREE_INFO* ppFreeInfo
+    )
+{
+    DWORD dwError = 0;
+    LW_PIO_CREDS pNewCreds = NULL;
+    LW_PIO_CREDS pOldCreds = NULL;
+    PLSA_CREDS_FREE_INFO pFreeInfo = NULL;
+
+    BAIL_ON_INVALID_POINTER(ppFreeInfo);
+
+    dwError = LwIoCreatePlainCredsA(
+        "",
+        "",
+        "",
+        &pNewCreds);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(*pFreeInfo), (PVOID*)&pFreeInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwIoGetThreadCreds(&pOldCreds);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwIoSetThreadCreds(pNewCreds);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pFreeInfo->pRestoreCreds = pOldCreds;
+    pFreeInfo->bKrbCreds = FALSE;
+    pOldCreds = NULL;
+
+cleanup:
+    *ppFreeInfo = pFreeInfo;
+    if (pOldCreds != NULL)
+    {
+        LwIoDeleteCreds(pOldCreds);
+    }
+
+    if (pNewCreds != NULL)
+    {
+        LwIoDeleteCreds(pNewCreds);
+    }
+    return dwError;
+
+error:
+    if (pFreeInfo)
+    {
+        LwFreeMemory(pFreeInfo);
+        pFreeInfo = NULL;
+    }
+    goto cleanup;
+}
 
 DWORD
 LsaSetSMBCreds(
@@ -135,6 +191,7 @@ LsaSetSMBCreds(
     pFreeInfo->cc = cc;
     pFreeInfo->pRestoreCreds = pOldCreds;
     pFreeInfo->pszRestoreCache = pszOldCachePath;
+    pFreeInfo->bKrbCreds = TRUE;
     pOldCreds = NULL;
 
 cleanup:
@@ -195,18 +252,22 @@ LsaFreeSMBCreds(
     {
         LwIoDeleteCreds(pFreeInfo->pRestoreCreds);
     }
-    LwKrb5SetDefaultCachePath(
-                  pFreeInfo->pszRestoreCache,
-                  NULL);
-    LW_SAFE_FREE_STRING(pFreeInfo->pszRestoreCache);
-
-    if (pFreeInfo->ctx != NULL)
+    
+    if (pFreeInfo->bKrbCreds)
     {
-        if (pFreeInfo->cc != NULL)
+        LwKrb5SetDefaultCachePath(
+                      pFreeInfo->pszRestoreCache,
+                      NULL);
+        LW_SAFE_FREE_STRING(pFreeInfo->pszRestoreCache);
+
+        if (pFreeInfo->ctx != NULL)
         {
-            krb5_cc_destroy(pFreeInfo->ctx, pFreeInfo->cc);
+            if (pFreeInfo->cc != NULL)
+            {
+                krb5_cc_destroy(pFreeInfo->ctx, pFreeInfo->cc);
+            }
+            krb5_free_context(pFreeInfo->ctx);
         }
-        krb5_free_context(pFreeInfo->ctx);
     }
 
     LwFreeMemory(pFreeInfo);

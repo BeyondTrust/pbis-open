@@ -115,6 +115,7 @@ NtlmServerInitializeSecurityContext(
         dwError = NtlmCreateResponseContext(
             pMessage,
             hCredential,
+            pNtlmContext->bDoAnonymous,
             &pNtlmContext,
             pOutput);
         BAIL_ON_LSA_ERROR(dwError);
@@ -161,7 +162,7 @@ error:
 DWORD
 NtlmCreateNegotiateContext(
     IN NTLM_CRED_HANDLE hCred,
-    IN DWORD dwOptions,
+    IN DWORD fContextReq,
     IN PCSTR pDomain,
     IN PCSTR pWorkstation,
     IN PBYTE pOsVersion,
@@ -174,6 +175,16 @@ NtlmCreateNegotiateContext(
     DWORD dwMessageSize = 0;
     PNTLM_NEGOTIATE_MESSAGE_V1 pMessage = NULL;
     NTLM_CONFIG config;
+    DWORD dwOptions =
+            // Always do signing and sealing since they cannot be turned off on
+            // Windows
+            NTLM_FLAG_SIGN                  |
+            NTLM_FLAG_SEAL                  |
+            NTLM_FLAG_OEM                   |
+            NTLM_FLAG_REQUEST_TARGET        |
+            NTLM_FLAG_NTLM                  |
+            NTLM_FLAG_DOMAIN                |
+            0;
 
     *ppNtlmContext = NULL;
 
@@ -183,25 +194,30 @@ NtlmCreateNegotiateContext(
     dwError = NtlmReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!config.bSupportUnicode)
+    if (config.bSupportUnicode)
     {
-        dwOptions &= ~NTLM_FLAG_UNICODE;
+        dwOptions |= NTLM_FLAG_UNICODE;
     }
-    if (!config.bSupportNTLM2SessionSecurity)
+    if (config.bSupportNTLM2SessionSecurity)
     {
-        dwOptions &= ~NTLM_FLAG_NTLM2;
+        dwOptions |= NTLM_FLAG_NTLM2;
     }
-    if (!config.bSupportKeyExchange)
+    if (config.bSupportKeyExchange)
     {
-        dwOptions &= ~NTLM_FLAG_KEY_EXCH;
+        dwOptions |= NTLM_FLAG_KEY_EXCH;
     }
-    if (!config.bSupport56bit)
+    if (config.bSupport56bit)
     {
-        dwOptions &= ~NTLM_FLAG_56;
+        dwOptions |= NTLM_FLAG_56;
     }
-    if (!config.bSupport128bit)
+    if (config.bSupport128bit)
     {
-        dwOptions &= ~NTLM_FLAG_128;
+        dwOptions |= NTLM_FLAG_128;
+    }
+
+    if (fContextReq & ISC_REQ_NULL_SESSION)
+    {
+        pNtlmContext->bDoAnonymous = TRUE;
     }
 
     dwError = NtlmCreateNegotiateMessage(
@@ -240,6 +256,7 @@ DWORD
 NtlmCreateResponseContext(
     IN PNTLM_CHALLENGE_MESSAGE pChlngMsg,
     IN NTLM_CRED_HANDLE hCred,
+    IN BOOLEAN bDoAnonymous,
     OUT PNTLM_CONTEXT* ppNtlmContext,
     OUT PSecBuffer pOutput
     )
@@ -265,17 +282,49 @@ NtlmCreateResponseContext(
     dwError = NtlmReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    NtlmGetCredentialInfo(
-        hCred,
-        &pUserNameTemp,
-        &pPassword,
-        NULL);
+    if (bDoAnonymous)
+    {
+        pUserNameTemp = "";
+        pPassword = "";
+    }
+    else
+    {
+        NtlmGetCredentialInfo(
+            hCred,
+            &pUserNameTemp,
+            &pPassword,
+            NULL);
 
-    dwError = LsaCrackDomainQualifiedName(
-                        pUserNameTemp,
-                        NULL,
-                        &pUserNameInfo);
-    BAIL_ON_LSA_ERROR(dwError);
+        if (!pUserNameTemp[0] && !pPassword[0])
+        {
+            bDoAnonymous = TRUE;
+        }
+    }
+
+    if (bDoAnonymous)
+    {
+        dwError = LwAllocateMemory(
+                        sizeof(*pUserNameInfo),
+                        OUT_PPVOID(&pUserNameInfo));
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwAllocateString(
+                        "",
+                        &pUserNameInfo->pszName);
+        BAIL_ON_LSA_ERROR(dwError);
+        dwError = LwAllocateString(
+                        "",
+                        &pUserNameInfo->pszDomainNetBiosName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LsaCrackDomainQualifiedName(
+                            pUserNameTemp,
+                            NULL,
+                            &pUserNameInfo);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = NtlmCreateContext(hCred, &pNtlmContext);
     BAIL_ON_LSA_ERROR(dwError);
@@ -285,7 +334,12 @@ NtlmCreateResponseContext(
                 &pNtlmContext->pszClientUsername);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (config.bSendNTLMv2)
+    if (bDoAnonymous)
+    {
+        dwNtRespType = NTLM_RESPONSE_TYPE_ANON_NTLM;
+        dwLmRespType = NTLM_RESPONSE_TYPE_ANON_LM;
+    }
+    else if (config.bSendNTLMv2)
     {
         dwNtRespType = NTLM_RESPONSE_TYPE_NTLMv2;
         // TODO: the correct thing is to use LMv2
@@ -363,6 +417,7 @@ NtlmCreateResponseContext(
     pOutput->pvBuffer = pMessage;
     pNtlmContext->NtlmState = NtlmStateResponse;
     pNtlmContext->bInitiatedSide = TRUE;
+    pNtlmContext->bDoAnonymous = bDoAnonymous;
 
     dwError = NtlmInitializeKeys(pNtlmContext);
     BAIL_ON_LSA_ERROR(dwError);
