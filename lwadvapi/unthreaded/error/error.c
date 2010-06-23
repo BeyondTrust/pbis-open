@@ -59,6 +59,7 @@ LwGetErrorString(
        memset(pszBuffer, 0, stBufSize);
     }
 
+#ifndef ENABLE_COMPAT
     if (!pszDesc || !pszDesc[0])
     {
         sRequiredLen = LwKrb5GetErrorString(
@@ -66,6 +67,7 @@ LwGetErrorString(
                            pszBuffer,
                            stBufSize);
     }
+#endif
 
     if (!sRequiredLen)
     {

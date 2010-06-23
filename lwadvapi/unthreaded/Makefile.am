@@ -4,12 +4,16 @@ lib_LTLIBRARIES = liblwadvapi_nothr.la
 
 liblwadvapi_nothr_la_LIBADD = \
 	error/liblwadvapi_error.la \
-	../join/liblwadvapi_join.la \
 	file/liblwadvapi_file.la \
 	dscache/liblwadvapi_dscache.la \
 	memory/liblwadvapi_memory.la \
 	lwunistr/liblwadvapi_lwunistr.la \
 	time/liblwadvapi_time.la \
 	logging/liblwadvapi_logging.la
+
+if !ENABLE_COMPAT
+liblwadvapi_nothr_la_LIBADD += \
+	../join/liblwadvapi_join.la
+endif
 
 liblwadvapi_nothr_la_SOURCES = 
