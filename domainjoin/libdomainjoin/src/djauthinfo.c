@@ -838,6 +838,15 @@ static void DoLeave(JoinProcessOptions *options, LWException **exc)
         LW_CLEANUP(exc, inner);
     }
 
+#ifndef ENABLE_MINIMAL
+    /* Restart NSCD service to clear any NS switch cached results collected when joined to a domain */
+    DJ_LOG_VERBOSE("Restarting NSCD service to flush stale cached results");
+    DJRestartIfRunning("nscd", &inner);
+    if(!LW_IS_OK(inner) && inner->code == ERROR_FILE_NOT_FOUND)
+        LW_HANDLE(&inner);
+    LW_CLEANUP(exc, inner);
+#endif
+
 cleanup:
     LW_HANDLE(&inner);
 }
