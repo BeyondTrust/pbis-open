@@ -1,0 +1,28 @@
+# Prevent all diagnostic messages
+VERBOSE=0
+
+!INCLUDE ..\win32\common.mak
+
+docdir = $(prefix)\doc
+
+all: all-recursive
+
+#
+# /I flag to xcopy tells to treat the last parameter as directory and create all missing levels
+#
+# In order to force xcopy not to confirm if the second parameter is file or directory,
+# the first parameter has to contain a wildcard character. For example, we use libsasl.l*,
+# instead of libsasl.lib. Ugly, but works!
+#
+install:
+	@xcopy *.txt $(docdir) /I /F /Y
+	@xcopy *.fig $(docdir) /I /F /Y
+	@xcopy *.html $(docdir) /I /F /Y
+	@xcopy TODO $(docdir) /I /F /Y
+	@xcopy ONEWS $(docdir) /I /F /Y
+
+all-recursive:
+	@echo Nothing to build for target all
+
+clean:
+	@echo Nothing to do for target clean

@@ -1,0 +1,4 @@
+This directory contains the saslauthd daemon.  Similar to pwcheck, it
+allows password verification from a separate process.
+
+For more information, consult the main Cyrus SASL documentation.

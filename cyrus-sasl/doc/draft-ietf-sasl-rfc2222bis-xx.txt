@@ -1,0 +1,1320 @@
+
+
+
+
+
+
+Network Working Group                                        A. Melnikov
+Internet Draft                                                    Editor
+Document: draft-ietf-sasl-rfc2222bis-03.txt                 October 2003
+                                                   Expires in six months
+
+
+            Simple Authentication and Security Layer (SASL)
+
+Status of this Memo
+
+   This document is an Internet Draft and is in full conformance with
+   all provisions of Section 10 of RFC 2026.
+
+   Internet Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its Areas, and its Working Groups.  Note that
+   other groups may also distribute working documents as Internet
+   Drafts. Internet Drafts are draft documents valid for a maximum of
+   six months.  Internet Drafts may be updated, replaced, or obsoleted
+   by other documents at any time.  It is not appropriate to use
+   Internet Drafts as reference material or to cite them other than as
+   ``work in progress''.
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+   A revised version of this draft document will be submitted to the RFC
+   editor as a Draft Standard for the Internet Community.  Discussion
+   and suggestions for improvement are requested.  Distribution of this
+   draft is unlimited.
+
+   When published as an RFC this document will obsolete RFC 2222.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A. Melnikov                                             FORMFEED[Page i]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+1.    Abstract
+
+   The Simple Authentication and Security Layer (SASL) provides a method
+   for adding authentication support with an optional security layer to
+   connection-based protocols.  It also describes a structure for
+   authentication mechanisms.  The result is an abstraction layer
+   between protocols and authentication mechanisms such that any SASL-
+   compatible authentication mechanism can be used with any SASL-
+   compatible protocol.
+
+   This document describes how a SASL authentication mechanism is
+   structured, describes how a protocol adds support for SASL, defines
+   the protocol for carrying a security layer over a connection, and
+   defines the EXTERNAL SASL authentication mechanism.
+
+2.    Organization of this document
+
+2.1.  How to read this document
+
+   This document is written to serve two different audiences, protocol
+   designers using this specification to support authentication in their
+   protocol, and implementors of clients or servers for those protocols
+   using this specification.
+
+   The sections "Overview", "Authentication Mechanisms", "Protocol
+   Profile Requirements", "Specific Issues", and "Security
+   Considerations" cover issues that protocol designers need to
+   understand and address in profiling this specification for use in a
+   specific protocol.
+
+   Implementors of a protocol using this specification need the
+   protocol-specific profiling information in addition to the
+   information in this document.
+
+2.2.  Conventions used in this document
+
+   In examples, "C:" and "S:" indicate lines sent by the client and
+   server respectively.
+
+   The key words "MUST", "MUST NOT", "SHOULD", "SHOULD NOT", and "MAY"
+   in this document are to be interpreted as defined in "Key words for
+   use in RFCs to Indicate Requirement Levels" [KEYWORDS].
+
+   Character names in this document use the notation for code points and
+   names from the Unicode Standard [Unicode].  For example, the letter
+   "a" may be represented as either <U+0061> or <LATIN SMALL LETTER A>.
+
+
+
+
+
+A. Melnikov                                             FORMFEED[Page 2]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+3.    Overview
+
+   The Simple Authentication and Security Layer (SASL) is a method for
+   adding authentication support to connection-based protocols.
+
+   The SASL specification has three layers, as indicated in the diagram
+   below.  At the top, a protocol definition using SASL specifies a
+   profile, including a command for identifying and authenticating a
+   user to a server and for optionally negotiating a security layer for
+   subsequent protocol interactions.  At the bottom, a SASL mechanism
+   definition specifies an authentication mechanism.  The SASL
+   framework, specified by this document, constrains the behavior of
+   protocol profiles and mechanisms, separating protocol from mechanism
+   and defining how they interact.
+
+                SMTP Protocol     LDAP Protocol          Etc
+                   Profile           Profile            . . .
+                          -----        |       -----//
+                                       |      //
+                                 SASL framework
+                                /       |      \
+                          /-----        |       -----\
+                   EXTERNAL         DIGEST-MD5           Etc
+                SASL mechanism    SASL mechanism        . . .
+
+   This separation between the definition of protocols and the
+   definition of authentication mechanisms is crucial.  It permits an
+   authentication mechanism to be defined once, making it usable by any
+   SASL protocol profile.  In many implementations, the same SASL
+   mechanism code is used for multiple protocols.
+
+4.    Authentication mechanisms
+
+   SASL mechanisms are named by strings, from 1 to 20 characters in
+   length, consisting of upper-case ASCII [ASCII] letters, digits,
+   hyphens, and/or underscores.  SASL mechanism names must be registered
+   with the Internet Assigned Numbers Authority (IANA). IETF standards
+   track documents may direct the IANA to reserve a portion of the SASL
+   mechanism namespace and may specify different registration criteria
+   for the reserved portion; the GSSAPI mechanism specification [SASL-
+   GSSAPI] does this. Procedures for registering new SASL mechanisms are
+   given in the section 8.
+
+   The "sasl-mech" rule below defines the syntax of a SASL mechanism
+   name.  This uses the Augmented Backus-Naur Form (ABNF) notation as
+   specified in [ABNF] and the ABNF core rules as specified in Appendix
+   A of the ABNF specification [ABNF].
+
+
+
+
+A. Melnikov                                             FORMFEED[Page 3]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   sasl-mech    = 1*20mech-char
+   mech-char    = %x41-5A / DIGIT / "-" / "_"
+                  ; mech names restricted to uppercase ASCII letters,
+                  ; digits, "-" and "_"
+
+
+4.1.  Authentication protocol exchange
+
+   A SASL mechanism is responsible for conducting an authentication
+   protocol exchange.  This consists of a series of server challenges
+   and client responses, the contents of which are specific to and
+   defined by the mechanism.  To the protocol, the challenges and
+   responses are opaque binary tokens of arbitrary length.  The
+   protocol's profile then specifies how these binary tokens are then
+   encoded for transfer over the connection.
+
+   After receiving an authentication command or any client response, a
+   server mechanism may issue a challenge, indicate failure, or indicate
+   completion.  The server mechanism may return additional data with a
+   completion indication.  The protocol's profile specifies how each of
+   these is then represented over the connection.
+
+   After receiving a challenge, a client mechanism may issue a response
+   or abort the exchange.  The protocol's profile specifies how each of
+   these is then represented over the connection.
+
+   During the authentication protocol exchange, the mechanism performs
+   authentication, transmits an authorization identity (frequently known
+   as a userid) from the client to server, and negotiates the use of a
+   mechanism-specific security layer.  If the use of a security layer is
+   agreed upon, then the mechanism must also define or negotiate the
+   maximum security layer buffer size that each side is able to receive.
+
+4.2.  Authorization identities and proxy authentication
+
+   An authorization identity is a string of zero or more ISO 10646
+   [ISO-10646] coded characters.  The NUL <U+0000> character is not
+   permitted in authorization identities. The meaning of an
+   authorization identity of the empty string (zero length) is defined
+   below in this section. The authorization identity is used by the
+   server as the primary identity for making access policy decisions.
+
+   The character encoding scheme used (see [CHARSET-POLICY] for IETF
+   policy regarding character sets in IETF protocols) for transmitting
+   an authorization identity over protocol is specified in each
+   authentication mechanism (with the authentication mechanism's data
+   being further restricted/encoded by the protocol profile).
+   Authentication mechanisms SHOULD encode these and other strings in
+
+
+
+A. Melnikov                                             FORMFEED[Page 4]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   UTF-8 [UTF-8]. While some legacy mechanisms are incapable of
+   transmitting an authorization identity other than the empty string,
+   newly defined mechanisms are expected to be capable of carrying the
+   entire Unicode repertoire (with the exception of the NUL character).
+   An authorization identity of the empty string and an absent
+   authorization identity MUST be treated as equivalent.  However,
+   mechanisms SHOULD NOT allow both. That is, a mechanism which provides
+   an optional field for an authorization identity, SHOULD NOT allow
+   that field, when present, to be empty.
+
+   The identity derived from the client's authentication credentials is
+   known as the "authentication identity".  With any mechanism,
+   transmitting an authorization identity of the empty string directs
+   the server to derive an authorization identity from the client's
+   authentication identity.
+
+   If the authorization identity transmitted during the authentication
+   protocol exchange is not the empty string, this is typically referred
+   to as "proxy authentication".  This feature permits agents such as
+   proxy servers to authenticate using their own credentials, yet
+   request the access privileges of the identity for which they are
+   proxying.
+
+   The server makes an implementation defined policy decision as to
+   whether the authentication identity is permitted to have the access
+   privileges of the authorization identity and whether the
+   authorization identity is permitted to receive service.  If it is
+   not, the server indicates failure of the authentication protocol
+   exchange.
+
+   As a client might not have the same information as the server,
+   clients SHOULD NOT derive authorization identities from
+   authentication identities. Instead, clients SHOULD provide no (or
+   empty) authorization identity when the user has not provided an
+   authorization identity.
+
+   The server MUST verify that a received authorization identity is in
+   the correct form. Profiles whose authorization identities are simple
+   user names (e.g. IMAP [RFC 3501]) SHOULD use "SASLPrep" profile
+   [SASLPrep] of the "stringprep" algorithm [StringPrep] to prepare
+   these names for matching. The profiles MAY use a stringprep profile
+   that is more strict than "SASLPrep". If the preparation of the
+   authorization identity fails or results in an empty string, the
+   server MUST fail the authentication exchange. The only exception to
+   this rule is when the received authorization identity is already the
+   empty string.
+
+
+
+
+
+A. Melnikov                                             FORMFEED[Page 5]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+4.3.  Security layers
+
+   If use of a security layer is negotiated by the authentication
+   protocol exchange, the security layer is applied to all subsequent
+   data sent over the connection (until another security layer or no
+   security layer is negotiated; see also section 6.3). The security
+   layer takes effect immediately following the last response of the
+   authentication exchange for data sent by the client and the
+   completion indication for data sent by the server.
+
+   Once the security layer is in effect, the protocol stream is
+   processed by the security layer into buffers of security encoded
+   data.  Each buffer of security encoded data is transferred over the
+   connection as a stream of octets prepended with a four octet field in
+   network byte order that represents the length of the following
+   buffer.  The length of the security encoded data buffer MUST be no
+   larger than the maximum size that was either defined in the mechanism
+   specification or negotiated by the other side during the
+   authentication protocol exchange.  Upon the receipt of a data buffer
+   which is larger than the defined/negotiated maximal buffer size, the
+   receiver SHOULD close the connection.  This might be a sign of an
+   attack or a buggy implementation.
+
+4.4.  Character string issues
+
+   Authentication mechanisms SHOULD encode character strings in UTF-8
+   [UTF-8] (see [CHARSET-POLICY] for IETF policy regarding character
+   sets in IETF protocols).  In order to avoid noninteroperability due
+   to differing normalizations, when a mechanism specifies that a string
+   authentication identity or password used as input to a cryptographic
+   function (or used for comparison) it SHOULD specify that the string
+   first be prepared using the "SASLPrep" profile [SASLPrep] of the
+   "stringprep" algorithm [StringPrep].  There are three entities that
+   has to deal with this issue: a client (upon getting user input or
+   retrieving a value from configuration), a server (upon receiving the
+   value from the client) and a utility that is able to store
+   passwords/hashes in a database that can be later used by the server.
+   The preparation must be done by the client and the utility and may be
+   done by the server. If preparation fails or results in an empty
+   string, the entity doing the preparation SHALL fail the
+   authentication exchange.
+
+
+5.    Protocol profile requirements
+
+   In order to use this specification, a protocol definition MUST supply
+   the following information:
+
+
+
+
+A. Melnikov                                             FORMFEED[Page 6]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   A service name, to be selected from the IANA registry of "service"
+   elements for the GSSAPI host-based service name form [GSSAPI]. This
+   service name is made available to the authentication mechanism.
+
+   The registry is available at the URL
+   <http://www.iana.org/assignments/gssapi-service-names>.
+
+   A definition of the command to initiate the authentication protocol
+   exchange.  This command must have as a parameter the name of the
+   mechanism being selected by the client.
+
+   The command SHOULD have an optional parameter giving an initial
+   response.  This optional parameter allows the client to avoid a round
+   trip when using a mechanism which is defined to have the client send
+   data first.  When this initial response is sent by the client and the
+   selected mechanism is defined to have the server start with an
+   initial challenge, the command fails.  See section 6.1 of this
+   document for further information.
+
+   A definition of the method by which the authentication protocol
+   exchange is carried out, including how the challenges and responses
+   are encoded, how the server indicates completion or failure of the
+   exchange, how the client aborts an exchange, and how the exchange
+   method interacts with any line length limits in the protocol.
+
+   The exchange method SHOULD allow the server to include an optional
+   data ("optional challenge") with a success notification.  This allows
+   the server to avoid a round trip when using a mechanism which is
+   defined to have the server send additional data along with the
+   indication of successful completion.  See section 6.2 of this
+   document for further information.
+
+   In addition, a protocol profile SHOULD specify a mechanism through
+   which a client may obtain the names of the SASL mechanisms available
+   to it.  This is typically done through the protocol's extensions or
+   capabilities mechanism.
+
+   Identification of the octet where any negotiated security layer
+   starts to take effect, in both directions.
+
+   Specify if the protocol supports "multiple authentications" (see
+   section 6.3).
+
+   If both TLS and SASL security layer are allowed to be negotiated by
+   the protocol, the protocol profile MUST define in which order they
+   are applied to a cleartext data sent over the connection.
+
+   A protocol profile MAY further refine the definition of an
+
+
+
+A. Melnikov                                             FORMFEED[Page 7]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   authorization identity by adding additional syntactic restrictions
+   and protocol-specific semantics. A protocol profile MUST specify the
+   form of the authorization identity (since it is protocol specific, as
+   opposed to the authentication identity, which is mechanism specific)
+   and how authorization identities are to be compared. Profiles whose
+   authorization identities are simple user names (e.g. IMAP [RFC 3501])
+   SHOULD use "SASLPrep" profile [SASLPrep] of the "stringprep"
+   algorithm [StringPrep] to prepare these names for matching. The
+   profiles MAY use a stringprep profile that is more strict than
+   SASLPrep.
+
+   A protocol profile SHOULD NOT attempt to amend the definition of
+   mechanisms or make mechanism-specific encodings.  This breaks the
+   separation between protocol and mechanism that is fundamental to the
+   design of SASL. Likewise, SASL mechanisms SHOULD be profile neutral.
+
+6.    Specific issues
+
+6.1.  Client sends data first
+
+   Some mechanisms specify that the first data sent in the
+   authentication protocol exchange is from the client to the server.
+
+   If a protocol's profile permits the command which initiates an
+   authentication protocol exchange to contain an initial client
+   response, this parameter SHOULD be used with such mechanisms.
+
+   If the initial client response parameter is not given, or if a
+   protocol's profile does not permit the command which initiates an
+   authentication protocol exchange to contain an initial client
+   response, then the server issues a challenge with no data.  The
+   client's response to this challenge is then used as the initial
+   client response.  (The server then proceeds to send the next
+   challenge, indicates completion, or indicates failure.)
+
+6.2.  Server returns success with additional data
+
+   Some mechanisms may specify that additional data be sent to the
+   client along with an indication of successful completion of the
+   exchange.  This data would, for example, authenticate the server to
+   the client.
+
+   If a protocol's profile does not permit this additional data to be
+   returned with a success indication, then the server issues the data
+   as a server challenge, without an indication of successful
+   completion.  The client then responds with no data.  After receiving
+   this empty response, the server then indicates successful completion
+   (with no additional data).
+
+
+
+A. Melnikov                                             FORMFEED[Page 8]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   Client implementors should be aware of an additional failure case
+   that might occur when the profile supports sending the additional
+   data with success. Imagine that an active attacker is trying to
+   impersonate the server and sends faked data, which should be used to
+   authenticate the server to the client, with success.  (A similar
+   situation can happen when either the server and/or the client has a
+   bug and they calculate different responses.) After checking the data,
+   the client will think that the authentication exchange has failed,
+   however the server will think that the authentication exchange has
+   completed successfully.  At this point the client can not abort the
+   authentication exchange, it SHOULD close the connection instead.
+   However, if the profile did not support sending of additional data
+   with success, the client could have aborted the exchange at the very
+   last step of the authentication exchange.
+
+6.3.  Multiple authentications
+
+   Unless otherwise stated by the protocol's profile, only one
+   successful SASL negotiation may occur in a protocol session.  In this
+   case, once an authentication protocol exchange has successfully
+   completed, further attempts to initiate an authentication protocol
+   exchange fail.
+
+   If a profile explicitly permits multiple successful SASL negotiations
+   to occur, then in no case may multiple security layers be
+   simultaneously in effect.  If a security layer is in effect and a
+   subsequent SASL negotiation selects a second security layer, then the
+   second security layer replaces the first. If a security layer is in
+   effect and a subsequent SASL negotiation selects no security layer,
+   the original security layer MUST be removed. The next paragraphs
+   explain why this is important.
+
+   Let's assume that the protected resources on a server are partitioned
+   into a set of protection spaces, each with its own authentication
+   mechanisms and/or authorization database. Let's use the term "realm"
+   to reference any such protected space. Conceptually, realm is a named
+   collection of user's accounts. For example, a proxy/frontend can use
+   different realms for different servers/backends it represents.
+
+   Now consider the following scenario. A client has already
+   authenticated and established a security layer with "Realm A" which
+   is managed by the server AA.  Now the same client authenticates to
+   "Realm B" (managed by the server BB) without negotiating a new
+   security layer, while the security layer negotiated with "Realm A"
+   remains in effect. The server BB is now able observe how known
+   cleartext is encrypted. This scenario enables the server BB to make
+   guesses about previously observed ciphertext between the client and
+   the server AA using the server's SASL engine as an oracle.  This
+
+
+
+A. Melnikov                                             FORMFEED[Page 9]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   scenario is illustrated below:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 10]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+              +---------+                   +---------+
+              |         |                   |         |
+              | Realm B |                   | Realm A |
+              |         |                   |         |
+              +---------+                   +---------+
+                  |  ^                           |
+                  |  :      +-----------+        |
+     Traffic from |  :      | Encryption|        | Traffic from A
+      B to client +-------->| end point |<-------+ to client
+                     :      | (SSL/SASL)|
+                     :      +-----------+
+                     :            |
+                     :            |
+                     :          +---+
+                     :          |   |
+                     :          |   |
+                     :          |   | Encryption tunnel, e.g. SASL or SSL,
+                     :          |   | between the server
+       (1) Recording +---------:|   | and a single client only.
+           encrypted            |   | Separate tunnels to different
+           traffic between      |   | clients.
+           Realm A and client   +---+
+                                  |
+                                  |
+                                  +-----------> Traffic to clients
+
+7.    The EXTERNAL mechanism
+
+   The mechanism name associated with external authentication is
+   "EXTERNAL".
+
+   The client sends an initial response with the UTF-8 encoding of the
+   authorization identity. The form of the authorization identity is
+   further restricted by the application-level protocol's SASL profile.
+
+   The server uses information, external to SASL, to determine whether
+   the client is authorized to authenticate as the authorization
+   identity.  If the client is so authorized, the server indicates
+   successful completion of the authentication exchange; otherwise the
+   server indicates failure.
+
+   The system providing this external information may be, for example,
+   IPSec or TLS. However, the client can make no assumptions as to what
+   information the server can use in determining client authorization.
+   E.g., just because TLS was established, doesn't mean that the server
+   will use the information provided by TLS.
+
+   If the client sends the empty string as the authorization identity
+
+
+
+A. Melnikov                                            FORMFEED[Page 11]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   (thus requesting that the authorization identity be derived from the
+   client's authentication credentials), the authorization identity is
+   to be derived from authentication credentials which exist in the
+   system that is providing the external authentication.
+
+7.1.  Formal syntax
+
+   The following syntax specification uses the augmented Backus-Naur
+   Form (BNF) notation as specified in [ABNF].  This uses the ABNF core
+   rules as specified in Appendix A of the ABNF specification [ABNF].
+   Non-terminals referenced but not defined below are as defined by
+   [UTF-8].
+
+   The "extern-init-resp" rule below defines the initial response sent
+   from client to server.
+
+   extern-init-resp  = *( UTF8-char-no-nul )
+
+   UTF8-char-no-nul  = UTF8-1-no-nul / UTF8-2 / UTF8-3 / UTF8-4
+
+   UTF8-1-no-nul     = %x01-7F
+
+
+7.2.  Example
+
+   The following is an example of an EXTERNAL authentication in the SMTP
+   protocol [SMTP].  In this example, the client is proxy
+   authenticating, sending the authorization id "fred".  The server has
+   determined the client's identity through IPsec and has a security
+   policy that permits that identity to proxy authenticate as any other
+   identity.
+
+   To the protocol profile, the four octet sequence "fred" is an opaque
+   binary data. The SASL protocol profile for SMTP [SMTP-AUTH] specifies
+   that server challenges and client responses are encoded in BASE64
+   [BASE64]; the BASE64 encoding of "fred" is "ZnJlZA==".
+
+      S: 220 smtp.example.com ESMTP server ready
+      C: EHLO jgm.example.com
+      S: 250-smtp.example.com
+      S: 250 AUTH DIGEST-MD5 EXTERNAL
+      C: AUTH EXTERNAL ZnJlZA==
+      S: 235 Authentication successful.
+
+8.    IANA Considerations
+
+
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 12]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+8.1.  Guidelines for IANA
+
+
+   It is requested that IANA updates the SASL mechanisms registry as
+   follows:
+
+
+      Change the "Intended usage" of the KERBEROS_V4 and SKEY mechanism
+      registrations to OBSOLETE.  Change the "Published specification"
+      of the EXTERNAL mechanism to this document. Updated registration
+      is provided in Section 8.6.
+
+8.2.  Registration procedure
+
+
+   Registration of a SASL mechanism is done by filling in the template
+   in section 8.5 and sending it via electronic mail to <iana@iana.org>.
+   IANA has the right to reject obviously bogus registrations, but will
+   perform no review of claims made in the registration form.  SASL
+   mechanism registrations are currently available at the URL
+   <http://www.iana.org/assignments/sasl-mechanisms>.
+
+   There is no naming convention for SASL mechanisms; any name that
+   conforms to the syntax of a SASL mechanism name can be registered.
+   An IETF Standards Track document may reserve a portion of the SASL
+   mechanism namespace ("family of SASL mechanisms") for its own use,
+   amending the registration rules for that portion of the namespace.
+   Each family of SASL mechanisms MUST be identified by a prefix.
+
+   While the registration procedures do not require it, authors of SASL
+   mechanisms are encouraged to seek community review and comment
+   whenever that is feasible.  Authors may seek community review by
+   posting a specification of their proposed mechanism as an Internet-
+   Draft.  SASL mechanisms intended for widespread use should be
+   standardized through the normal IETF process, when appropriate.
+
+8.3.  Comments on SASL mechanism registrations
+
+   Comments on registered SASL mechanisms should first be sent to the
+   "owner" of the mechanism and/or to the SASL WG mailing list.
+   Submitters of comments may, after a reasonable attempt to contact the
+   owner, request IANA to attach their comment to the SASL mechanism
+   registration itself.  If IANA approves of this, the comment will be
+   made accessible in conjunction with the SASL mechanism registration
+   itself.
+
+
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 13]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+8.4.  Change control
+
+   Once a SASL mechanism registration has been published by IANA, the
+   author may request a change to its definition.  The change request
+   follows the same procedure as the registration request.
+
+   The owner of a SASL mechanism may pass responsibility for the SASL
+   mechanism to another person or agency by informing IANA; this can be
+   done without discussion or review.
+
+   The IESG may reassign responsibility for a SASL mechanism. The most
+   common case of this will be to enable changes to be made to
+   mechanisms where the author of the registration has died, moved out
+   of contact or is otherwise unable to make changes that are important
+   to the community.
+
+   SASL mechanism registrations may not be deleted; mechanisms which are
+   no longer believed appropriate for use can be declared OBSOLETE by a
+   change to their "intended use" field; such SASL mechanisms will be
+   clearly marked in the lists published by IANA.
+
+   The IESG is considered to be the owner of all SASL mechanisms which
+   are on the IETF standards track.
+
+8.5.  Registration template
+
+
+     Subject: Registration of SASL mechanism X
+
+     Family of SASL mechanisms: (YES or NO)
+
+     SASL mechanism name (or prefix for the family):
+
+     Security considerations:
+
+     Published specification (optional, recommended):
+
+     Person & email address to contact for further information:
+
+     Intended usage:
+
+     (One of COMMON, LIMITED USE or OBSOLETE)
+
+     Owner/Change controller:
+
+     (Any other information that the author deems interesting may be
+     added below this line.)
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 14]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+8.6.  The EXTERNAL mechanism registration
+
+   It is requested that the SASL Mechanism registry [IANA-SASL] entry
+   for the EXTERNAL mechanism be updated to reflect that this document
+   now provides its technical specification.
+
+
+      Subject: Updated Registration of SASL mechanism EXTERNAL
+
+      Family of SASL mechanisms: NO
+
+      SASL mechanism name: EXTERNAL
+
+      Security considerations: See RFC XXXX, section 9.
+
+      Published specification (optional, recommended): RFC XXXX
+
+      Person & email address to contact for further information:
+        Alexey Melnikov <Alexey.Melnikov@isode.com>
+
+      Intended usage: COMMON
+
+      Owner/Change controller: IESG <iesg@ietf.org>
+
+      Note: Updates existing entry for EXTERNAL
+
+9.   Security considerations
+
+   Security issues are discussed throughout this memo.
+
+   The mechanisms that support integrity protection are designed such
+   that the negotiation of the security layer and authorization identity
+   is integrity protected.  When the client selects a security layer
+   with at least integrity protection, this protects against an active
+   attacker hijacking the connection and modifying the authentication
+   exchange to negotiate a plaintext connection.
+
+   When a server or client supports multiple authentication mechanisms,
+   each of which has a different security strength, it is possible for
+   an active attacker to cause a party to use the least secure mechanism
+   supported.  To protect against this sort of attack, a client or
+   server which supports mechanisms of different strengths should have a
+   configurable minimum strength that it will use.  It is not sufficient
+   for this minimum strength check to only be on the server, since an
+   active attacker can change which mechanisms the client sees as being
+   supported, causing the client to send authentication credentials for
+   its weakest supported mechanism.
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 15]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   The client's selection of a SASL mechanism is done in the clear and
+   may be modified by an active attacker.  It is important for any new
+   SASL mechanisms to be designed such that an active attacker cannot
+   obtain an authentication with weaker security properties by modifying
+   the SASL mechanism name and/or the challenges and responses.
+
+   Any protocol interactions prior to authentication are performed in
+   the clear and may be modified by an active attacker.  In the case
+   where a client selects integrity protection, it is important that any
+   security-sensitive protocol negotiations be performed after
+   authentication is complete.  Protocols should be designed such that
+   negotiations performed prior to authentication should be either
+   ignored or revalidated once authentication is complete.
+
+   When use of a security layer is negotiated by the authentication
+   protocol exchange, the receiver should handle gracefully any security
+   encoded data buffer larger than the defined/negotiated maximal size.
+   In particular, it must not blindly allocate the amount of memory
+   specified in the buffer size field, as this might cause the "out of
+   memory" condition. If the receiver detects a large block, it SHOULD
+   close the connection.
+
+   "stringprep" and Unicode security considerations apply to
+   authentication identities, authorization identities and passwords.
+
+   The EXTERNAL mechanism provides no security protection; it is
+   vulnerable to spoofing by either client or server, active attack, and
+   eavesdropping.  It should only be used when external security
+   mechanisms are present and have sufficient strength.
+
+10.    References
+
+10.1.  Normative References
+
+   [ABNF] Crocker, Overell, "Augmented BNF for Syntax Specifications:
+   ABNF", RFC 2234, November 1997
+
+   [ASCII] American National Standards Institute, "Code Extension
+   Techniques for Use with the 7-bit Coded Character Set of American
+   National Standard Code (ASCII) for Information Interchange", FIPS PUB
+   35, 1974
+
+   [CHARSET-POLICY] Alvestrand, "IETF Policy on Character Sets and
+   Languages", RFC 2277, January 1998
+
+   [GSSAPI] Linn, "Generic Security Service Application Program
+   Interface, Version 2, Update 1", RFC 2743, January 2000
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 16]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   [ISO-10646] "Universal Multiple-Octet Coded Character Set (UCS) -
+   Architecture and Basic Multilingual Plane", ISO/IEC 10646-1 : 1993.
+
+   [KEYWORDS] Bradner, "Key words for use in RFCs to Indicate
+   Requirement Levels", RFC 2119, March 1997
+
+   [Unicode] The Unicode Consortium, "The Unicode Standard, Version
+   3.2.0" is defined by "The Unicode Standard, Version 3.0" (Reading,
+   MA, Addison-Wesley, 2000. ISBN 0-201-61633-5), as amended by the
+   "Unicode Standard Annex #27: Unicode 3.1"
+   (http://www.unicode.org/reports/tr27/) and by the "Unicode Standard
+   Annex #28: Unicode 3.2" (http://www.unicode.org/reports/tr28/).
+
+   [Stringprep] P. Hoffman, M. Blanchet, "Preparation of
+   Internationalized Strings ("stringprep")", RFC 3454, December 2002.
+
+   [SASLPrep] Zeilenga, K., "SASLprep: Stringprep profile for user names
+   and passwords", Work in progress, draft-ietf-sasl-saslprep-XX.txt.
+
+   [UTF-8] Yergeau, "UTF-8, a transformation format of ISO 10646", work
+   in progress (draft-yergeau-rfc2279bis-XX) that replaces RFC 2279,
+   Janyary 1998
+
+10.2.  Informative References
+
+   <<Update the reference below>> [SASL-GSSAPI] Myers, J., "SASL GSSAPI
+   mechanisms", work in progress, draft-ietf-cat-sasl-gssapi-XX.txt,
+   September 2000
+
+   [SASL-DIGEST] Leach, P., Newman, C., Melnikov, A., "Using Digest
+   Authentication as a SASL Mechanism", work in progress, draft-ietf-
+   sasl-rfc2831bis-XX.txt, replaces RFC 2831
+
+   [SASL-OTP] Newman, C., "The One-Time-Password SASL Mechanism", RFC
+   2444, October 1998
+
+   [SMTP] Klensin, J., "Simple Mail Transfer Protocol", RFC 2821, April
+   2001
+
+   [SMTP-AUTH] Myers, J., "SMTP Service Extension for Authentication",
+   RFC 2554, March 1999
+
+   [BASE64] Josefsson, S., "The Base16, Base32, and Base64 Data
+   Encodings", RFC 3548, July 2003
+
+   [RFC-INSTRUCTIONS] Postel, Reynolds, "Instructions to RFC Authors",
+   RFC 2223, October 1997
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 17]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   [IANA-SASL]  IANA, "SIMPLE AUTHENTICATION AND SECURITY LAYER (SASL)
+   MECHANISMS", http://www.iana.org/assignments/sasl-mechanisms.
+
+11.   Editor's Address
+
+     Alexey Melnikov
+     Isode
+
+     Email: Alexey.Melnikov@isode.com
+
+12.   Acknowledgments
+
+   This document is a revision of RFC 2222 written by John G. Myers.  He
+   also contributed significantly to this revision.
+
+   Magnus Nystrom provided the ASCII art used in Section 6.3.
+
+   Definition of realm was extracted from RFC 2617 ("HTTP
+   Authentication: Basic and Digest Access Authentication").
+
+   Contributions of many members of the SASL mailing list are gratefully
+   acknowledged, in particular Kurt D. Zeilenga, Peter Saint-Andre, Rob
+   Siemborski, Jeffrey Hutzelman and  Hallvard B Furuseth for
+   proofreading the document and various editorial suggestions.
+
+
+13.   Full Copyright Statement
+
+   Copyright (C) The Internet Society (2003).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+
+
+
+A. Melnikov                                            FORMFEED[Page 18]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+
+Acknowledgement
+
+   Funding for the RFC Editor function is currently provided by the
+   Internet Society.
+
+Appendix A. Relation of SASL to transport security
+
+   Questions have been raised about the relationship between SASL and
+   various services (such as IPsec and TLS) which provide a secured
+   connection.
+
+   Two of the key features of SASL are:
+
+      The separation of the authorization identity from the identity in
+      the client's credentials.  This permits agents such as proxy
+      servers to authenticate using their own credentials, yet request
+      the access privileges of the identity for which they are proxying.
+
+      Upon successful completion of an authentication exchange, the
+      server knows the authorization identity the client wishes to use.
+      This allows servers to move to a "user is authenticated" state in
+      the protocol.
+
+   These features are extremely important to some application protocols,
+   yet Transport Security services do not always provide them.  To
+   define SASL mechanisms based on these services would be a very messy
+   task, as the framing of these services would be redundant with the
+   framing of SASL and some method of providing these important SASL
+   features would have to be devised.
+
+   Sometimes it is desired to enable within an existing connection the
+   use of a security service which does not fit the SASL model.  (TLS is
+   an example of such a service.)  This can be done by adding a command,
+   for example "STARTTLS", to the protocol.  Such a command is outside
+   the scope of SASL, and should be different from the command which
+   starts a SASL authentication protocol exchange.
+
+   In certain situations, it is reasonable to use SASL underneath one of
+   these Transport Security services.  The transport service would
+   secure the connection, either service would authenticate the client,
+   and SASL would negotiate the authorization identity.  The SASL
+   negotiation would be what moves the protocol from "unauthenticated"
+
+
+
+A. Melnikov                                            FORMFEED[Page 19]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   to "authenticated" state.  The "EXTERNAL" SASL mechanism is
+   explicitly intended to handle the case where the transport service
+   secures the connection and authenticates the client and SASL
+   negotiates the authorization identity.
+
+Appendix B. Changes since RFC 2222
+
+   The GSSAPI mechanism was removed.  It is now specified in a separate
+   document [SASL-GSSAPI].
+
+   The "KERBEROS_V4" mechanism defined in RFC 2222 is obsolete and has
+   been removed.
+
+   The "SKEY" mechanism described in RFC 2222 is obsolete and has been
+   removed.  It has been replaced by the OTP mechanism [SASL-OTP].
+
+   The overview has been substantially reorganized and clarified.
+
+   Clarified the definition and semantics of the authorization identity.
+
+   Prohibited the NUL character in authorization identities.
+
+   Added a section on character string issues.
+
+   The word "must" in the first paragraph of the "Protocol profile
+   requirements" section was changed to "MUST".
+
+   Specified that protocol profiles SHOULD provide a way for clients to
+   discover available SASL mechanisms.
+
+   Made the requirement that protocol profiles specify the semantics of
+   the authorization identity optional to the protocol profile.
+   Clarified that such a specification is a refinement of the definition
+   in the base SASL spec.
+
+   Added a requirement discouraging protocol profiles from breaking the
+   separation between protocol and mechanism.
+
+   Mentioned that standards track documents may carve out their own
+   portions of the SASL mechanism namespace and may amend registration
+   rules for the portion. However registration of individual SASL
+   mechanisms is still required.
+
+   Specified that the authorization identity in the EXTERNAL mechanism
+   is encoded in UTF-8.
+
+   Added a statement that a protocol profile SHOULD allow challenge data
+   to be sent with a success indication.
+
+
+
+A. Melnikov                                            FORMFEED[Page 20]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   Added a security consideration for the EXTERNAL mechansim.
+
+   Clarified sections concerning success with additional data.
+
+   Cleaned up IANA considerations/registrations and assembled them in
+   one place.
+
+   Updated references and split them into Informative and Normative.
+
+   Added text to the Security Considerations section regarding handling
+   of extremely large SASL blocks.
+
+   Replaced UTF-8 ABNF with the reference to the UTF-8 document.
+
+   Added text about SASLPrep for authentication identities and
+   passwords.  Described where SASLPrep preparation should take place.
+
+   Added paragraph about verifying authorization identities.
+
+   This document requires to drop a security layer on reauthentication
+   when no security layer is negotiated. This differs from RFC 2222,
+   which required to keep the last security layer in this case.
+
+   Added a protocol profile requirement to specify interaction between
+   SASL and TLS security layers.
+
+   Added a protocol profile requirement to specify if it supports
+   reauthentication.
+
+   Removed the text that seemed to suggest that SASL security layer must
+   not be used when TLS is available.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A. Melnikov                                            FORMFEED[Page 21]
+
+
+
+
+
+Internet DRAFT                    SASL                   18 October 2003
+
+
+   Status of this Memo .......................................... i
+   1.    Abstract ............................................... 2
+   2.    Organization of this document .......................... 2
+   2.1.  How to read this document .............................. 2
+   2.2.  Conventions used in this document ...................... 2
+   3.    Overview ............................................... 3
+   4.    Authentication mechanisms .............................. 3
+   4.1.  Authentication protocol exchange ....................... 4
+   4.2.  Authorization identities and proxy authentication ...... 4
+   4.3.  Security layers ........................................ 6
+   4.4.  Character string issues ................................ 6
+   5.    Protocol profile requirements .......................... 6
+   6.    Specific issues ........................................ 8
+   6.1.  Client sends data first ................................ 8
+   6.2.  Server returns success with additional data ............ 8
+   6.3.  Multiple authentications ............................... 9
+   7.    The EXTERNAL mechanism ................................ 11
+   7.1.  Formal syntax ......................................... 12
+   7.2.  Example ............................................... 12
+   8.    IANA Considerations ................................... 12
+   8.1.  Guidelines for IANA ................................... 13
+   8.2.  Registration procedure ................................ 13
+   8.3.  Comments on SASL mechanism registrations .............. 13
+   8.4.  Change control ........................................ 14
+   8.5.  Registration template ................................. 14
+   8.6.  The EXTERNAL mechanism registration ................... 15
+   9.   Security considerations ................................ 15
+   10.    References ........................................... 16
+   10.1.  Normative References ................................. 16
+   10.2.  Informative References ............................... 17
+   11.   Editor's Address ...................................... 18
+   12.   Acknowledgments ....................................... 18
+   13.   Full Copyright Statement .............................. 18
+   Appendix A. Relation of SASL to transport security .......... 19
+   Appendix B. Changes since RFC 2222 .......................... 20
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+A. Melnikov                                            FORMFEED[Page ii]
+
+

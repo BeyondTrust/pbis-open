@@ -1,0 +1,502 @@
+<HTML><HEAD>
+<title>Cyrus SASL for System Administrators</title>
+<!-- $Id: sysadmin.html,v 1.50 2005/02/16 20:52:05 shadow Exp $ -->
+</HEAD>
+<BODY>
+<H1>Cyrus SASL for System Administrators</H1>
+
+This document covers configuring SASL for system administrators,
+specifically those administrators who are installing a server that
+uses the Cyrus SASL library.  You may want to read
+<a href=components.html>this document</a> which presents an
+overview of the major components of the Cyrus SASL distribution
+and describes how they interact, as well as <a href=install.html>
+the installation guide</a>.
+
+<h2><A NAME="saslintro">What SASL is</A></h2>
+
+SASL, the Simple Authentication and Security Layer, is a generic
+mechanism for protocols to accomplish authentication.  Since protocols
+(such as SMTP or IMAP) use SASL, it is a natural place for code
+sharing between applications.  Some notable applications that use the
+Cyrus SASL library include <a
+href="http://www.sendmail.org">Sendmail</a>,
+<a href="http://web.asg.cmu.edu/cyrus">Cyrus imapd</a>,
+and <a href="http://www.openldap.org">OpenLDAP</a>.
+
+<p> Applications use the SASL library to tell them how to accomplish
+the SASL protocol exchange, and what the results were.
+
+<p> SASL is only a framework: specific SASL mechanisms govern the
+exact protocol exchange.  If there are n protocols and m different
+ways of authenticating, SASL attempts to make it so only n plus m
+different specifications need be written instead of n times m
+different specifications.  With the Cyrus SASL library, the mechanisms
+need only be written once, and they'll work with all servers that use
+it.
+
+<h3><a name="authid">Authentication and authorization identifiers</a></h3>
+
+An important concept to become familiar with is the difference between
+an "authorization identifier" and an "authentication identifier".
+
+<DL compact>
+<DT>userid (user id, authorization id)<dd> The userid is the
+identifier an application uses to check allowable options.  On my Unix
+system, the user "<tt>bovik</tt>" (the account of Harry Q. Bovik) is
+allowed to write to "<tt>/home/bovik</tt>" and its subdirectories but
+not to "<tt>/etc</tt>".
+
+<DT>authid (authentication id)<dd> The authentication identifier is
+the identifier that is being checked.  "bovik"'s password might be
+"qqqq", and the system will authenticate anyone who knows "qqqq" as
+"bovik".  However, it's possible to authenticate as one user but
+<b>act as</b> another user.  For instance, Harry might be away on
+vacation and assign one of his graduate students, Jane, to read his
+mail.  He might then allow Jane to act as him merely by supplying her
+password and her id as authentication but requesting authorization as
+"bovik". So Jane might log in with an authentication identifier of
+"jane" and an authorization id of "bovik" and her own (Jane's)
+password.
+</DL>
+
+<p>Applications can set their own proxy policies; by default, the SASL
+library will only allow the same user to act for another (that is,
+userid must equal authid).  See your application's documentation for
+details about changing the default proxy/authorization policies.
+
+<h3><a name="realms">Realms</a></h3>
+
+The Cyrus SASL library supports the concept of "realms".  A realm is
+an abstract set of users and certain mechanisms authenticate users in
+a certain realm.
+
+<p>In the simplest case, a single server on a single machine, the
+realm might be the fully-qualified domain name of the server.  If the
+applications don't specify a realm to SASL, most mechanisms will
+default to this.
+
+<p> If a site wishes to share passwords between multiple machines, it
+might choose it's authentication realm as a domain name, such as
+"CMU.EDU".  On the other hand, in order to prevent the entire site's
+security from being compromised when one machine is compromised, each
+server could have it's own realm. Certain mechanisms force the user
+(client side) to manually configure what realm they're in, making it
+harder for users to authenticate.
+
+<p>A single site might support multiple different realms.  This can
+confuse applications that weren't written in anticipation of this; make
+sure your application can support it before adding users from different
+realms into your databases.
+
+<p>To add users of different realms to sasldb, you can use the
+<tt>-u</tt> option to saslpasswd2.  The SQL plugin has a way of
+integrating the realm name into the query string with the '%r' macro.
+
+<p>The Kerberos mechanisms treat the SASL realm as the Kerberos
+realm.  Thus, the realm for Kerberos mechanisms defaults to the
+default Kerberos realm on the server.  They may support cross-realm
+authentication; check your application on how it deals with this.
+
+<p>Realms will be passed to saslauthd as part of the saslauthd protocol,
+however the way each saslauthd module deals with the situation is
+different (for example, the LDAP plugin allows you to use the realm
+to query the server, while the rimap and PAM plugins ignore it entirely).
+
+<p>Realms are represented in a username string by any text followinhg
+the '@' sign.  So, usernames like rjs3@ANDREW.CMU.EDU, is user 'rjs3'
+in the realm 'ANDREW.CMU.EDU'.  If no realm is provided, the server's
+FQDN is assumed (likewise when specifying a realm for saslpasswd2).
+
+<h2><a name="saslhow">How SASL works</a></h2>
+
+How SASL works is governed by what mechanism the client and server 
+choose to use and the exact implementation of that mechanism.  This
+section describes the way these mechanisms act in the Cyrus SASL
+implementation.
+
+<h3>The PLAIN mechanism, <tt>sasl_checkpass()</tt>, and plaintext
+passwords</h3>
+
+The PLAIN mechanism is not a secure method of authentication by
+itself.  It is intended for connections that are being encrypted by
+another level.  (For example, the IMAP command "STARTTLS" creates an
+encrypted connection over which PLAIN might be used.) The PLAIN
+mechanism works by transmitting a userid, an authentication id, and a
+password to the server, and the server then determines whether that is
+an allowable triple.
+
+<p>The principal concern for system administrators is how the
+authentication identifier and password are verified.  The Cyrus SASL
+library is flexible in this regard:
+
+<DL>
+<dt><i>auxprop</i> 
+<dd> checks passwords agains the <tt>userPassword</tt> attribute
+supplied by an auxiliary property plugin.  For example, SASL ships
+with a sasldb auxiliary property plugin, that can be used to
+authenticate against the passwords stored in <tt>/etc/sasldb2</tt>.
+Since other mechanisms also use this database for passwords, using
+this method will allow SASL to provide a uniform password database to
+a large number of mechanisms.
+
+<dt><i>saslauthd</i>
+
+<dd> contacts the <tt>saslauthd</tt> daemon to to check passwords
+using a variety of mechanisms.  More information about the various invocations
+of saslauthd can be can be found in <tt>saslauthd(8)</tt>.  Generally you
+want something like <tt>saslauthd -a pam</tt>.  If plaintext authentications
+seem to be taking some time under load, increasing the value of the <tt>-n</tt>
+parameter can help.<p>
+
+Saslauthd keeps its named socket in "/var/state/saslauthd" by default.
+This can be overridden by specifying an alternate value to
+--with-saslauthd=/foo/bar at compile time, or by passing the -m
+parameter to saslauthd (along with setting the saslauthd_path SASL
+option).  Whatever directory this is, it must exist in order for
+saslauthd to function.<p>
+
+Once you configure (and start) <tt>saslauthd</tt>, there is a
+<tt>testsaslauthd</tt> program that can be built with <tt>make
+testsaslauthd</tt> in the <tt>saslauthd</tt> subdirectory of the
+source.  This can be used to check that that the <tt>saslauthd</tt>
+daemon is installed and running properly.  An invocation like
+<tt>testsaslauthd -u rjs3 -p 1234</tt> with appropriate values for the
+username and password should do the trick.<p>
+
+If you are using the PAM method to verify passwords with saslauthd, keep in
+mind that your PAM configuration will need to be configured for each service
+name that is using saslauthd for authentication. Common service names
+are &quot;imap&quot;, &quot;sieve&quot;, and &quot;smtp&quot;.
+
+<dt><i>Courier-IMAP authdaemond</i>
+
+<dd> contacts Courier-IMAP's <tt>authdaemond</tt> daemon to check passwords.
+This daemon is simliar in functionality to <tt>saslauthd</tt>, and is shipped
+separately with the <a href="http://www.courier-mta.org">Courier</a> mail server.
+
+<p>Note: this feature is <b>not</b> compiled in the library by default, and its 
+provided for sites with custom/special requirements only (because the
+internal authentication protocol its not documented anywhere so it could
+change at any time).  We have tested against the authdaemond included with
+Courier-IMAP 2.2.1.
+
+<p>To enable <tt>authdaemond</tt> support, pass <tt>--with-authdaemon</tt> to the 
+configuration script, set pwcheck_method to ``authdaemond'' and point 
+authdaemon_path to <tt>authdaemond</tt>'s unix socket. Optionally, you can
+specify --with-authdaemond=PATH to the configure script so that
+authdaemond_path points to a default, static, location.
+
+<dt><i>pwcheck</i>
+
+<dd> checks passwords with the use of a separate,
+  helper daemon.  This feature is for backwards-compatibility
+  only. New installations should use saslauthd.<p>
+
+<dt><i>write your own</i>
+<dd> Last, but not least, the most flexible method of authentication
+for PLAIN is to write your own.  If you do so, any application that
+calls the "<tt>sasl_checkpass()</tt>" routine or uses PLAIN will
+invoke your code.  The easiest place to modify the plaintext
+authentication routines is to modify the routine
+"<tt>_sasl_checkpass()</tt>" in the file <tt>lib/server.c</tt> to
+support a new method, and to add that method to
+<tt>lib/checkpw.c</tt>.  Be sure to add a prototype in
+<tt>lib/saslint.h</tt>!
+
+<p>However, the more flexible and preferred method of
+adding a routine is to create a new saslauthd mechanism.<p> </dl>
+
+<p>The LOGIN mechanism (not to be confused with IMAP4's LOGIN command)
+is an undocumented, unsupported mechanism.  It's included in the Cyrus
+SASL distribution for the sake of SMTP servers that might want to
+interoperate with old clients.  Do not enable this mechanism unless
+you know you're going to need it.  When enabled, it verifies passwords
+the same way the PLAIN mechanism does.
+
+<h3>Shared secrets mechanisms</h3>
+
+The Cyrus SASL library also supports some "shared secret"
+authentication methods: CRAM-MD5 and its successor DIGEST-MD5.  These
+methods rely on the client and the server sharing a "secret", usually
+a password.  The server generates a challenge and the client a
+response proving that it knows the shared secret.  This is much more
+secure than simply sending the secret over the wire proving that the
+client knows it.
+
+<p>There's a downside: in order to verify such responses, the
+server must keep passwords or password equivalents in a database;
+if this database is compromised, it is the same as if all the
+passwords for the realm are compromised.
+
+<p>Put another way, <i>you cannot use saslauthd with these methods</i>.  
+If you do not wish to advertise these methods for that reason (i.e. you
+are only using saslauthd for password verification), then either remove
+the non-plaintext plugins (those other than login and plain) from the
+plugin directory, or use the <tt>mech_list</tt> option to disable them.
+
+<p>For simplicity sake, the Cyrus SASL library stores plaintext
+passwords only in the <tt>/etc/sasldb2</tt> database.  These passwords
+are then shared among all mechanisms which choose to use it.
+Depending on the exact database method
+used (gdbm, ndbm, or db) the file may have different suffixes or may
+even have two different files ("<tt>sasldb.dir</tt>" and
+"<tt>sasldb.pag</tt>").  It is also possible for a server to define
+it's own way of storing authentication secrets.  Currently, no
+application is known to do this.
+
+<p>The principle problem for a system administrator is to make sure that
+sasldb is properly protected. Only the servers that need to read it to
+verify passwords should be able to.  If there are any normal shell
+users on the system, they must not be able to read it.
+
+<p>This point is important, so we will repeat it: <b>sasldb stores the
+plaintext versions of all of its passwords. If it is compromised so
+are all of the passwords that it stores</b>.
+
+<p>Managing password changes is outside the scope of the library.
+However, system administrators should probably make a way of letting
+user's change their passwords available to users.  The
+"<tt>saslpasswd2</tt>" utility is provided to change the secrets in
+sasldb.  It does not affect PAM, <tt>/etc/passwd</tt>, or any other
+standard system library; it only affects secrets stored in sasldb.
+
+<p>Finally, system administrators should think if they want to enable
+"auto_transition".  If set, the library will automatically create
+secrets in sasldb when a user uses PLAIN to successfully authenticate.
+However, this means that the individual servers, such as imapd, need
+read/write access to sasldb, not just read access.  By default,
+"auto_transition" is set to false; set it to true to enable.  (There's
+no point in enabling this option if "pwcheck_method" is "auxprop",
+and the sasldb plugin is installed, since you'll be transitioning from
+a plaintext store to a plaintext store)
+
+<h3>Kerberos mechanisms</h3>
+
+The Cyrus SASL library also comes with two mechanisms that make use of
+Kerberos: KERBEROS_V4, which should be able to use any Kerberos v4
+implementation, and GSSAPI (tested against MIT Kerberos 5, Heimdal
+Kerberos 5 and CyberSafe Kerberos 5).  These mechanisms make use of the kerberos infrastructure
+and thus have no password database.
+
+<p>Applications that wish to use a kerberos mechanism will need access
+to a service key, stored either in a "srvtab" file (Kerberos 4) or a
+"keytab" file (Kerberos 5).  Currently, the keytab file location is
+not configurable and defaults to the system default (probably
+<tt>/etc/krb5.keytab</tt>).
+
+<p>The Kerberos 4 srvtab file location is configurable; by default it is
+<tt>/etc/srvtab</tt>, but this is modifiable by the "srvtab" option.
+Different SASL applications can use different srvtab files.
+
+<p>A SASL application must be able to read its srvtab or keytab file.
+
+<p>You may want to consult the <a href="gssapi.html">GSSAPI Tutorial</a>.</p>
+
+<h3>The OTP mechanism</h3>
+
+The Cyrus SASL library also supports the One-Time-Password (OTP)
+mechanism.  This mechanism is similar to CRAM-MD5 and DIGEST-MD5 in
+that is uses a shared secret and a challenge/response exchange.
+However, OTP is more secure than the other shared secret mechanisms in
+that the secret is used to generate a sequence of one-time (single
+use) passwords which prevents reply attacks, and that secret need
+not be stored on the system.  These one-time passwords are stored in the
+<tt>/etc/sasldb2</tt> database.  See the <i>Shared secrets
+mechanisms</i> section for a discussion of the <tt>/etc/sasldb2</tt>
+database.
+
+<h4>OTP via OPIE</h4>
+For sites with an existing OTP infrastructure using OPIE, Cyrus SASL
+can be configured to use OPIE v2.4 instead of using its own database
+and server-side routines.
+OPIE should be configured with the <tt>--disable-user-locking</tt> 
+option if the SASL server application will not be running as "root". 
+
+<p>OPIE uses its own "opiekeys" database for storing the data necessary
+for generating the server challenges.  The location of the opiekeys
+file is configurable in SASL; by default it is <tt>/etc/opiekeys</tt>,
+but this is modifiable by the "opiekeys" option.
+
+<p>A SASL server application must be able to read and write the
+opiekeys file.
+
+<h2>Auxiliary Properties</h2>
+
+SASLv2 introduces the concept of Auxilliary Properties.  That is, the ability
+for information related to authentication and authorization to all be looked
+up at once from a directory during the authentication process.  SASL Plugins
+internally take advantage of this to do password lookups in directories
+such as the SASLdb, LDAP or a SQL database.  Applications can look up arbitrary properties through them.<p>
+
+Note that this means that if your password database is in a SASLdb, and
+you wish to use it for plaintext password lookups through the sasldb, you
+will need to set the sasl <a href=options.html>option</a>
+<tt>pwcheck_method</tt> to be <tt>auxprop</tt>. 
+
+<h2>How to set configuration options</h2>
+
+The Cyrus SASL library comes with a built-in configuration file
+reader.  However, it is also possible for applications to redefine
+where the library gets it's configuration options from.
+
+<h3><a name="saslconf">The default configuration file</a></h3>
+
+<p>By default, the Cyrus SASL library reads it's options from
+<tt>/usr/lib/sasl2/App.conf</tt> (where "App" is the application
+defined name of the application).  For instance, Sendmail reads it's
+configuration from "<tt>/usr/lib/sasl2/Sendmail.conf</tt>" and the
+sample server application included with the library looks in
+"<tt>/usr/lib/sasl2/sample.conf</tt>".
+
+<p>A standard Cyrus SASL configuration file looks like: 
+<pre>
+srvtab: /var/app/srvtab
+pwcheck_method: saslauthd
+</pre>
+
+<h3>Application configuration</h3>
+
+Applications can redefine how the SASL library looks for configuration
+information.  Check your application's documentation for specifics.
+
+<p>For instance, Cyrus imapd reads its sasl options from it's own
+configuration file, <tt>/etc/imapd.conf</tt>, by prepending all SASL
+options with "<tt>sasl_</tt>": the SASL option "pwcheck_method" is set
+by changing "sasl_pwcheck_method" in <tt>/etc/imapd.conf</tt>.
+
+<h2>Troubleshooting</h2>
+
+<dl compact>
+<dt><b>Q:</b> Why doesn't KERBEROS_V4 doesn't appear as an
+available mechanism?
+<dd>
+<p><b>A:</b> Check that the <tt>srvtab</tt> file is readable by the
+user running as the daemon.  For Cyrus imapd, it must be readable by
+the Cyrus user.  By default, the library looks for the srvtab in
+<tt>/etc/srvtab</tt>, but it's configurable using the <tt>srvtab</tt>
+option.
+
+<p>
+<dt><b>Q:</b> Why doesn't OTP doesn't appear as an available
+mechanism?
+<dd>
+<p><b>A:</b> If using OPIE, check that the <tt>opiekeys</tt> file is
+readable by the user running the daemon.  For Cyrus imapd, it must
+be readable by the Cyrus user.  By default, the library looks for the
+opiekeys in <tt>/etc/opiekeys</tt>, but it's configurable using the
+<tt>opiekeys</tt> option.
+
+<p>
+<dt><b>Q:</b> Why don't CRAM-MD5 and DIGEST-MD5 work with my old sasldb?
+<dd>
+<p><b>A:</b> Because sasldb now stores plaintext passwords only, the old
+sasldb is completely incompatible.
+
+<p>
+<dt><b>Q:</b> I'm having performance problems on each authentication, there is
+a noticeable slowdown when sasl initializes, what can I do?
+<dd>
+<p><b>A:</b>libsasl reads from <tt>/dev/random</tt> as part of its
+initialization. <tt>/dev/random</tt> is a "secure" source of entropy,
+and will block your application until a sufficient amount of
+randomness has been collected to meet libsasl's needs.</p>
+
+<p>To improve performance, you can change DEV_RANDOM in
+<tt>config.h</tt> to be <tt>/dev/urandom</tt> and recompile
+libsasl. <tt>/dev/urandom</tt> offers less secure random numbers but
+should return immediately. The included mechanisms, besides OTP and
+SRP, use random numbers only to generate nonces, so using
+<tt>/dev/urandom</tt> is safe if you aren't using OTP or SRP.
+
+<p>
+<dt><b>Q:</b> I've converted the sasldb database to the new format. 
+Why can't anybody authenticate?
+<dd>
+<p><b>A:</b> sasldb is now a plugin module for the auxprop method.
+Make sure you changed the /usr/lib/sasl2/*.conf files to reflect<br>
+<tt>pwcheck_method: auxprop</tt><br>
+<br>
+...and if you're using cyrus-imapd, /etc/imapd.conf must reflect:
+<tt>sasl_pwcheck_method: auxprop</tt>
+
+<p>
+<dt><b>Q:</b> Is LOGIN supported?
+<dd>
+<p><b>A:</b> The LOGIN mechanism is a non-standard, undocumented
+plaintext mechanism.  It's included in the SASL distribution purely
+for sites that need it to interoperate with old clients; we don't
+support it.  Don't enable it unless you know you need it.
+
+<p>
+<dt><b>Q:</b> Is NTLM supported?
+<dd>
+<p><b>A:</b> The NTLM mechanism is a non-standard, undocumented
+mechanism developed by Microsoft.  It's included in the SASL
+distribution purely for sites that need it to interoperate with
+Microsoft clients (ie, Outlook) and/or servers (ie, Exchange); we
+don't support it.  Don't enable it unless you know you need it.
+
+<p>
+<dt><b>Q:</b> How can I get a non-root application to check plaintext
+passwords?
+<dd>
+<p><b>A:</b> Use the "saslauthd" daemon and setting "pwcheck_method"
+to "saslauthd".
+
+<p>
+<dt><b>Q:</b> I want to use Berkeley DB, but it's installed in
+<tt>/usr/local/BerkeleyDB.3.1</tt> and <tt>configure</tt> can't find
+it.
+<dd>
+<p><b>A:</b> Try setting "CPPFLAGS" and "LDFLAGS" environment
+variables before running <tt>configure</tt>, like so:
+<pre>
+env CPPFLAGS="-I/usr/local/BerkeleyDB.3.1/include" \
+  LDFLAGS="-L/usr/local/BerkeleyDB.3.1/lib -R/usr/local/BerkeleyDB.3.1/lib" \
+  ./configure --with-dblib=berkeley 
+</pre>
+
+<p>
+<dt><b>Q:</b> It's not working and won't tell me why! Help!
+<dd>
+<p><b>A:</b> Check syslog output (usually stored in
+<tt>/var/log</tt>) for more information. You might want to change your
+syslog configuration (usually <tt>/etc/syslogd.conf</tt>) to log
+"debug.*" to a file while debugging a problem.</p>
+
+<p>The developers make heavy use of <tt>strace</tt> or <tt>truss</tt>
+when debugging a problem that isn't outputting any useful
+information.</p>
+
+<p>
+<dt><b>Q:</b> Is there a mailing list to discuss the Cyrus SASL
+library?
+<dd>
+<p><b>A:</b> <tt>cyrus-sasl@lists.andrew.cmu.edu</tt> is available for
+discussion.  To subscribe, send a message to
+<a href=
+"mailto:majordomo@lists.andrew.cmu.edu?subject=subscribe cyrus-sasl">
+<tt>majordomo@lists.andrew.cmu.edu</tt></a>
+with the body of 'subscribe cyrus-sasl'.
+
+<p> An archive is available via
+<ul>
+ <li> anonymous IMAP at <a
+href="imap://cyrus.andrew.cmu.edu/archive.cyrus-sasl">imap://cyrus.andrew.cmu.edu/archive.cyrus-sasl</a>.
+  <li> HTTP at <a
+href="http://asg.web.cmu.edu/archive/mailbox.php3?mailbox=archive.cyrus-sasl">
+http://asg.web.cmu.edu/archive/mailbox.php3?mailbox=archive.cyrus-sasl</a>
+</ul>
+
+<p>Note: If you are not subscribed, your posts go through human
+approval before they go out to the list and so posting may be
+(greatly) delayed.
+</dl>
+
+<hr>
+Back to the <A href=index.html>index</a>
+
+</body>
+</html>
+

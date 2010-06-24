@@ -1,0 +1,96 @@
+<HTML><HEAD>
+<title>Upgrading from Cyrus SASLv1 to Cyrus SASLv2</title>
+<!-- $Id: upgrading.html,v 1.12 2003/08/14 21:04:13 rjs3 Exp $ -->
+</HEAD>
+<BODY>
+<H1>Upgrading from Cyrus SASLv1 to Cyrus SASLv2</H1>
+
+This document covers issues with upgrading from SASLv1 to SASLv2.
+To upgrade:
+
+<ul>
+<li> Install Cyrus SASL v2 as normal according to <a
+href="install.html">the installation guide</a>.  This will overwrite
+some manpages, but will not affect your current applications.  Do NOT
+attempt to make it use the same directories, otherwise old Cyrus SASLv1
+applications will no longer function.</li>
+
+<li> Install your new Cyrus SASL v2 applications. Applications that
+use Cyrus SASLv1 will <em>not</em> use the Cyrus SASL v2
+infrastructure (and vice-versa).
+
+<li> If you used <tt>/etc/sasldb</tt> for authentication, you'll need
+to take the following steps to convert to using <tt>/etc/sasldb2</tt>
+with Cyrus SASL v2:
+      <ol>
+      <li> run <tt>utils/dbconverter-2</tt> after installation.</li>
+      <li> change the <tt>pwcheck_method</tt> in any config files to
+      <tt>auxprop</tt></li> 
+      <li> (optional) add <tt>auxprop_plugin</tt> to the config files,
+      set to <tt>sasldb</tt></li>
+      </ol>
+
+<li> If you used <tt>passwd</tt>, <tt>shadow</tt>, <tt>pam</tt>,
+<tt>kerberos_v4</tt> or <tt>sia</tt> as your <tt>pwcheck_method</tt>
+in libsasl v1, you'll need to convert to using
+<tt>saslauthd</tt>. Arrange to start <tt>saslauthd -a
+<i>method</i></tt> on boot. Change <tt>pwcheck_method</tt> in any
+configuration files to <tt>saslauthd</tt>.</li>
+
+<li> If you used <tt>pwcheck</tt> with libsasl v1, you can either
+continue to use <tt>pwcheck</tt> with libsasl v1 or you can switch to
+<tt>saslauthd</tt>, which offers more flexibility and a potentially
+much more efficient implementation.</li>
+
+<li> If you are continuing to use some libsasl v1 applications, read
+onwards to understand the ramifications.</li>
+
+<li> If you want to learn how to port applications from libsasl v1 to
+libsasl v2, you should read <A HREF=appconvert.html>this document</A>.
+</ul>
+
+<h2><A NAME="overview">Backwards Compatibility</A></h2>
+
+Cyrus SASLv2 is completely incompatible with applications that use
+Cyrus SASLv1.  This means that applications are unable to
+simultaneously link both versions of the library, and developers are
+encouraged to instead develop or upgrade their applications to link
+against the new libsasl.<p>
+
+Likewise, the format for the sasldb database has been completely
+revamped.  See <A HREF="#db">here</A> for a discussion of the relevant
+upgrade issues related to sasldb.  All new passwords stored in the
+sasldb database will be in plaintext, meaning that a compromised
+sasldb will compromise all services with the same passwords.  (This
+situation isn't significantly worse, cryptographicly speaking, than
+the old method and allows the database to be easy to transition to
+another format, when the need arises.)  Mechanisms requiring a more
+secure password database backend (e.g. SRP) should implement their own
+or use alternate property names within sasldb.<P>
+
+<h2><A NAME="coexist">Coexistence with SASLv1</A></h2>
+
+The two library versions and the associated utilities should be able
+to coexist on the same system.  The man pages will be unable to
+coexist (but luckily the new manpages are much better!).  The libsasl
+v2-specific utilities have had a "2" appended to their name for this
+purpose (e.g. <tt>saslpasswd2</tt>, <tt>sasldblistusers2</tt>).  The
+new-style sasldb now defaults to the name <tt>/etc/sasldb2</tt>, but
+this is configurable.
+
+<h2><A NAME="db">Database Upgrades</A></h2>
+
+While there does not seem to be any conflict with the keys stored in
+the database, it is not recommended for both versions of the library
+to use the same database file.  Included in the utils directory is a
+program called <tt>dbconverter-2</tt> which will allow you to convert
+from the old-format database to the new format.  Note that if you continue to
+run older applications that rely on Cyrus SASLv1, the databases for SASLv1
+and SASLv2 will not automatically be kept in sync.<p>
+
+<hr>
+Back to the <A href=index.html>index</a>
+
+</body>
+</html>
+
