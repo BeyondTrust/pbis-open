@@ -101,7 +101,7 @@ lwnet_set_syslogmask(
     DWORD dwLogLevel
     )
 {
-    DWORD dwSysLogLevel;
+    DWORD dwSysLogLevel = 0;
 
     switch (dwLogLevel)
     {
