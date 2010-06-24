@@ -3,8 +3,8 @@
 ## Likewise Open version
 ##   The REVISION is generated from the SVN rev number sin the log
 ##
-LIKEWISE_OPEN_MAJOR=5
-LIKEWISE_OPEN_MINOR=5
+LIKEWISE_OPEN_MAJOR=6
+LIKEWISE_OPEN_MINOR=1
 LIKEWISE_OPEN_BUILD=0
 LIKEWISE_OPEN_REVISION=`git log | grep '\(.*: r[1-9].*\)' | cut -d: -f2 | sed -e 's:\s*r::' -e 's:)$::' | sort -n | tail -1`
 LIKEWISE_OPEN_EXTRA_TAG=""
