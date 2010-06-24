@@ -142,10 +142,12 @@ cleanup:
     }
     else
     {
-        iPamError = LsaPamMapErrorCode(dwError, pPamContext);
+        iPamError = LsaPamOpenPamFilterChauthtok(
+                                    LsaPamMapErrorCode(dwError, pPamContext));
     }
 #else
-    iPamError = LsaPamMapErrorCode(dwError, pPamContext);
+    iPamError = LsaPamOpenPamFilterChauthtok(
+                                LsaPamMapErrorCode(dwError, pPamContext));
 #endif
 
     LSA_LOG_PAM_DEBUG("pam_sm_chauthtok::returning pam error code %d", iPamError);

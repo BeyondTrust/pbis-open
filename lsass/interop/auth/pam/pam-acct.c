@@ -179,7 +179,8 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_acct_mgmt::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return LsaPamOpenPamFilterAcctMgmt(
+                                LsaPamMapErrorCode(dwError, pPamContext));
 
 error:
 

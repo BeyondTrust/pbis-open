@@ -140,6 +140,7 @@ case "$host_os:$host_cpu" in
 		pam_libdir="/usr/local/lib"
 		NSS_SUBDIR="freebsd"
                 ENABLE_NSS_ENUM_DEFAULT="no"
+                AC_DEFINE([__LWI_HAS_OPENPAM__], [], [Define if OS uses OpenPAM])
 		AC_DEFINE([__LWI_FREEBSD__], [], [Define if OS is FreeBSD])
 		;;
 	netbsd*:*)

@@ -266,7 +266,8 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return LsaPamOpenPamFilterAuthenticate(
+                            LsaPamMapErrorCode(dwError, pPamContext));
 
 error:
 
@@ -303,11 +304,12 @@ pam_sm_setcred(
     PLSA_USER_INFO_0 pUserInfo = NULL;
     int iPamError = 0;
 
+    LSA_LOG_PAM_DEBUG("pam_sm_setcred::begin");
+
     dwError = LsaPamGetConfig(&pConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaPamSetLogLevel(pConfig->dwLogLevel);
-    LSA_LOG_PAM_DEBUG("pam_sm_setcred::begin");
 
     dwError = LsaPamGetContext(
                     pamh,
@@ -364,7 +366,8 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_setcred::end");
 
-    iPamError = LsaPamMapErrorCode(dwError, pPamContext);
+    iPamError = LsaPamOpenPamFilterSetCred(
+                                LsaPamMapErrorCode(dwError, pPamContext));
 #ifdef __LWI_SOLARIS__
     if (iPamError == PAM_SUCCESS)
     {

@@ -114,3 +114,132 @@ cleanup:
 
     return ret;
 }
+
+int
+LsaPamOpenPamFilterAuthenticate(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_AUTH_ERR ||
+        ret == PAM_CRED_INSUFFICIENT ||
+        ret == PAM_AUTHINFO_UNAVAIL ||
+        ret == PAM_USER_UNKNOWN ||
+        ret == PAM_MAXTRIES)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}
+
+int
+LsaPamOpenPamFilterSetCred(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_CRED_UNAVAIL ||
+        ret == PAM_CRED_EXPIRED ||
+        ret == PAM_USER_UNKNOWN ||
+        ret == PAM_CRED_ERR)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}
+
+int
+LsaPamOpenPamFilterAcctMgmt(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_USER_UNKNOWN ||
+        ret == PAM_AUTH_ERR ||
+        ret == PAM_NEW_AUTHTOK_REQD ||
+        ret == PAM_ACCT_EXPIRED)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}
+
+int
+LsaPamOpenPamFilterOpenSession(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_SESSION_ERR)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}
+
+int
+LsaPamOpenPamFilterCloseSession(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_SESSION_ERR)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}
+
+int
+LsaPamOpenPamFilterChauthtok(
+    int ret
+    )
+{
+#ifdef __LWI_HAS_OPENPAM__
+    LSA_PAM_OPENPAM_FILTER_COMMON(ret);
+
+    if (ret == PAM_PERM_DENIED ||
+        ret == PAM_AUTHTOK_ERR ||
+        ret == PAM_AUTHTOK_RECOVERY_ERR ||
+        ret == PAM_AUTHTOK_LOCK_BUSY ||
+        ret == PAM_AUTHTOK_DISABLE_AGING ||
+        ret == PAM_TRY_AGAIN)
+        goto cleanup;
+
+    ret = PAM_SERVICE_ERR;
+
+cleanup:
+#endif
+
+    return ret;
+}

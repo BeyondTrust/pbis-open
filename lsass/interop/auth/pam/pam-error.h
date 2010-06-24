@@ -49,6 +49,15 @@
 #ifndef __PAM_ERROR_H__
 #define __PAM_ERROR_H__
 
+#define LSA_PAM_OPENPAM_FILTER_COMMON(ret) \
+    if (ret == PAM_SUCCESS || \
+        ret == PAM_SERVICE_ERR || \
+        ret == PAM_BUF_ERR || \
+        ret == PAM_CONV_ERR || \
+        ret == PAM_PERM_DENIED || \
+        ret == PAM_ABORT || \
+        ret == PAM_IGNORE) \
+        goto cleanup
 int
 LsaPamMapErrorCode(
     DWORD       dwError,
@@ -65,6 +74,36 @@ LsaPamUnmapErrorCode(
     assert(iPamError <= (_LW_ERROR_PAM_MAX - _LW_ERROR_PAM_BASE));
     return iPamError ? (_LW_ERROR_PAM_BASE + iPamError) : LW_ERROR_SUCCESS;
 }
+
+int
+LsaPamOpenPamFilterAuthenticate(
+    int ret
+    );
+
+int
+LsaPamOpenPamFilterSetCred(
+    int ret
+    );
+
+int
+LsaPamOpenPamFilterAcctMgmt(
+    int ret
+    );
+
+int
+LsaPamOpenPamFilterOpenSession(
+    int ret
+    );
+
+int
+LsaPamOpenPamFilterCloseSession(
+    int ret
+    );
+
+int
+LsaPamOpenPamFilterChauthtok(
+    int ret
+    );
 
 #endif /* __PAM_ERROR_H__ */
 

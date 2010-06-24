@@ -127,7 +127,8 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_open_session::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return LsaPamOpenPamFilterOpenSession(
+                            LsaPamMapErrorCode(dwError, pPamContext));
 
 error:
 
@@ -285,7 +286,8 @@ cleanup:
 
     LSA_LOG_PAM_DEBUG("pam_sm_close_session::end");
 
-    return LsaPamMapErrorCode(dwError, pPamContext);
+    return LsaPamOpenPamFilterCloseSession(
+                            LsaPamMapErrorCode(dwError, pPamContext));
 
 error:
 
