@@ -71,13 +71,23 @@ function component_configure
 function component_build
 {
     _setup_build_env
+    local SHARED_LDFLAGS CUSTOM_CC
 
-    if [ "${BUILD_OS_TYPE}" != "darwin" ]; then
-        SHARED_LDFLAGS="-shared ${LDFLAGS}"
-    else
-        SHARED_LDFLAGS="-dynamiclib ${LDFLAGS}"
-    fi
-    ${MAKE} SHARED_LDFLAGS="$SHARED_LDFLAGS" all
+    case "${BUILD_OS_TYPE}" in
+	"darwin")
+            SHARED_LDFLAGS="-dynamiclib ${LDFLAGS}"
+	    CC="$CC"
+	    ;;
+	"linux")
+            SHARED_LDFLAGS="-shared ${LDFLAGS}"
+	    CC="$CC -Wa,--noexecstack"
+	    ;;
+	*)
+            SHARED_LDFLAGS="-shared ${LDFLAGS}"
+	    CC="$CC"
+	    ;;
+    esac
+    ${MAKE} SHARED_LDFLAGS="$SHARED_LDFLAGS" CC="$CC" all
 }
 
 function component_stage
