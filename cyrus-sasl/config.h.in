@@ -308,6 +308,10 @@
 /* Ignore IP Address in Kerberos 4 tickets? */
 #undef KRB4_IGNORE_IP_ADDRESS
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
 /* Name of package */
 #undef PACKAGE
 
@@ -359,7 +363,7 @@
 /* Use NDBM for SASLdb */
 #undef SASL_NDBM
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
 /* Link ANONYMOUS Staticly */
@@ -434,9 +438,11 @@
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
 
-/* Define as `__inline' if that's what the C compiler calls it, or to nothing
-   if it is not supported. */
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
 #undef inline
+#endif
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t
