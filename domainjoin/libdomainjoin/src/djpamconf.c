@@ -1618,6 +1618,8 @@ static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char
     /* These modules return errors for users they don't know about */
     if(!strcmp(buffer, "pam_unix_account"))
         return TRUE;
+    if(!strcmp(buffer, "pam_unix_session"))
+        return TRUE;
     if(!strcmp(buffer, "pam_authtok_store"))
         return TRUE;
 
