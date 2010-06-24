@@ -289,16 +289,20 @@ service_refresh()
     return $status
 }
 
+if [ -f /etc/rc.subr ]; then
+    . /etc/rc.subr
+fi
+
 case "$1" in
-    start)
+    start|faststart|forcestart|onestart)
 	service_start "$SERVICE_NAME"
 	exit $?
 	;;
-    stop)
+    stop|faststop|forcestop|onestop)
 	service_stop "$SERVICE_NAME"
 	exit $?
 	;;
-    status)
+    status|faststatus|forcestatus|onestop)
 	$LWSM status "$SERVICE_NAME"
 	case "$?" in
 	    0)
@@ -328,7 +332,7 @@ case "$1" in
 	$LWSM info "$SERVICE_NAME"
 	exit $?
 	;;
-    restart)
+    restart|fastrestart|forcerestart|onerestart)
 	service_restart "$SERVICE_NAME"
 	exit $?
 	;;
@@ -344,6 +348,21 @@ case "$1" in
 	echo "Stopping `service_description $SERVICE_NAME`"
 	exit 0
 	;;
+    rcvar|fastrcvar|forcercvar|onercvar)
+    if type run_rc_command >/dev/null 2>&1; then
+        # Looks like this is a FreeBSD based system.
+        name="$SERVICE_NAME"d
+        rcvar="`set_rcvar`"
+        command="$PROG_BIN"
+        command_args="$PROG_ARGS"
+        pidfile="$PIDFILE"
+        eval "${name}_enable=YES"
+
+        load_rc_config "$name"
+        run_rc_command "$1" || exit $?
+        exit 0
+    fi
+    ;;
     *)
 	echo "Unrecognized command: $1"
 	exit 1
