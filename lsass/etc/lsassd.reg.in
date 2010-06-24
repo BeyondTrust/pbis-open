@@ -56,7 +56,7 @@
 "NssEnumerationEnabled"=dword:@ENABLE_NSS_ENUM_DEFAULT_DWORD@
 "DomainManagerCheckDomainOnlineInterval"=dword:0000012C
 "DomainManagerUnknownDomainCacheTimeout"=dword:00000E10
-"CacheType"="sqlite"
+"CacheType"="memory"
 "MemoryCacheSizeCap"=dword:00000000
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]

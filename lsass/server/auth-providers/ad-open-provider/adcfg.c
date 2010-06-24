@@ -145,7 +145,7 @@ AD_InitializeConfig(
     pConfig->bShouldLogNetworkConnectionEvents = TRUE;
     pConfig->bRefreshUserCreds = TRUE;
     pConfig->CellSupport = AD_CELL_SUPPORT_UNPROVISIONED;
-    pConfig->CacheBackend = AD_CACHE_SQLITE;
+    pConfig->CacheBackend = AD_CACHE_IN_MEMORY;
     pConfig->bTrimUserMembershipEnabled = TRUE;
     pConfig->bNssGroupMembersCacheOnlyEnabled = TRUE;
     pConfig->bNssUserMembershipCacheOnlyEnabled = FALSE;
