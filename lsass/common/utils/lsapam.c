@@ -36,7 +36,7 @@ LsaUtilAllocatePamConfig(
     PLSA_PAM_CONFIG pConfig = NULL;
 
     dwError = LwAllocateMemory(
-                    sizeof(PLSA_PAM_CONFIG),
+                    sizeof(LSA_PAM_CONFIG),
                     OUT_PPVOID(&pConfig));
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -65,7 +65,7 @@ LsaUtilInitializePamConfig(
 {
     DWORD dwError = 0;
 
-    memset(pConfig, 0, sizeof(PLSA_PAM_CONFIG));
+    memset(pConfig, 0, sizeof(LSA_PAM_CONFIG));
 
     pConfig->bLsaPamDisplayMOTD = FALSE;
     pConfig->dwLogLevel = LSA_PAM_LOG_LEVEL_ERROR;
@@ -105,7 +105,7 @@ LsaUtilFreePamConfigContents(
     if (pConfig)
     {
         LW_SAFE_FREE_STRING(pConfig->pszAccessDeniedMessage);
-        memset(pConfig, 0, sizeof(PLSA_PAM_CONFIG));
+        memset(pConfig, 0, sizeof(LSA_PAM_CONFIG));
     }
 }
 
