@@ -321,20 +321,23 @@ LWHandle(
 {
     if (exc && *exc)
     {
-	LWStackFrame* frame;
-	LWStackFrame* nextFrame;
-	
-	for (frame = (*exc)->stack.down; frame; frame = nextFrame)
-	{
-            nextFrame = frame->down;
-	    free(frame);
-	}
+	if (*exc != &memExc && *exc != &successExc)
+        {
+            LWStackFrame* frame;
+            LWStackFrame* nextFrame;
+            
+            for (frame = (*exc)->stack.down; frame; frame = nextFrame)
+            {
+                nextFrame = frame->down;
+                free(frame);
+            }
 
-	if ((*exc)->shortMsg)
-	    free((*exc)->shortMsg);
-	if ((*exc)->longMsg)
-	    free((*exc)->longMsg);
-	free(*exc);
+            if ((*exc)->shortMsg)
+                free((*exc)->shortMsg);
+            if ((*exc)->longMsg)
+                free((*exc)->longMsg);
+            free(*exc);
+        }
 	*exc = NULL;
     }
 }
