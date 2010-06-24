@@ -1219,18 +1219,24 @@ NtRegSetValueExA(
     {
         if (REG_MULTI_SZ == dwType)
         {
-                status = NtRegConvertByteStreamA2W((PBYTE)pData,
-                                                          cbData,
-                                                          &pOutData,
-                                                          &cbOutDataLen);
+            /* Verify correct null termination of input data */
+            if (cbData < 2 || pData[cbData - 1] || pData[cbData - 2])
+            {
+                status = STATUS_INVALID_PARAMETER;
                 BAIL_ON_NT_STATUS(status);
- 
-                bIsStrType = TRUE;
+            }
+            status = NtRegConvertByteStreamA2W((PBYTE)pData,
+                                                      cbData,
+                                                      &pOutData,
+                                                      &cbOutDataLen);
+            BAIL_ON_NT_STATUS(status);
+
+            bIsStrType = TRUE;
         }
         else if (REG_SZ == dwType)
     	{
             /* Verify correct null termination of input data */
-            if (strlen((char *) pData) != (cbData-1))
+            if (cbData < 1 || pData[cbData - 1])
             {
                 status = STATUS_INVALID_PARAMETER;
                 BAIL_ON_NT_STATUS(status);
@@ -1276,6 +1282,26 @@ NtRegSetValueExW(
     IN DWORD cbData
     )
 {
+    if (pData)
+    {
+        if (REG_MULTI_SZ == dwType)
+        {
+            /* Verify correct null termination of input data */
+            if (cbData < 4 || memcmp(pData + cbData - 4, "\0\0\0\0", 4))
+            {
+                return STATUS_INVALID_PARAMETER;
+            }
+        }
+        else if (REG_SZ == dwType)
+        {
+            /* Verify correct null termination of input data */
+            if (cbData < 2 || memcmp(pData + cbData - 2, "\0\0", 2))
+            {
+                return STATUS_INVALID_PARAMETER;
+            }
+        }
+    }
+
     return RegTransactSetValueExW(
         hRegConnection,
         hKey,
