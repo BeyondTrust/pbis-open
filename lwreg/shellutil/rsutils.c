@@ -742,7 +742,6 @@ RegShellUtilSetValue(
     HANDLE hRegLocal = NULL;
     DWORD dwError = 0;
     PBYTE pData = NULL;
-    PBYTE pFreeData = NULL;
     SSIZE_T dwDataLen = 0;
     HKEY pFullKey = NULL;
     HKEY pRootKey = NULL;
@@ -804,27 +803,21 @@ RegShellUtilSetValue(
     switch (type)
     {
         case REG_MULTI_SZ:
-            dwError = RegMultiStrsToByteArrayA(
-                data,
-                &pFreeData,
-                &dwDataLen);
-            BAIL_ON_REG_ERROR(dwError);
-
-            pData = pFreeData;
+            pData = (PBYTE) data;
+            dwDataLen = dataLen;
             break;
 
         case REG_SZ:
-            dwError = RegCStringDuplicate((LW_PVOID) &pFreeData, data?data:"");
+
+            dwError = RegCStringDuplicate((LW_PVOID) &pData, data?data:"");
             BAIL_ON_REG_ERROR(dwError);
-            pData = pFreeData;
             dwDataLen = strlen((PSTR) pData)+1;
             break;
 
         case REG_DWORD:
-            dwError = RegAllocateMemory(sizeof(DWORD), (PVOID*)&pFreeData);
+            dwError = RegAllocateMemory(sizeof(*pData) * sizeof(DWORD), (PVOID*)&pData);
             BAIL_ON_REG_ERROR(dwError);
 
-            pData = pFreeData;
             dwDataLen = (SSIZE_T) dataLen;
             memcpy(pData, data, dwDataLen);
             break;
@@ -848,6 +841,10 @@ RegShellUtilSetValue(
         pData,
         dwDataLen);
     BAIL_ON_REG_ERROR(dwError);
+    if (type != REG_BINARY && type != REG_MULTI_SZ)
+    {
+        LWREG_SAFE_FREE_MEMORY(pData);
+    }
 
 cleanup:
     RegCloseServer(hRegLocal);
@@ -860,7 +857,6 @@ cleanup:
         RegCloseKey(hReg, pRootKey);
     }
     LWREG_SAFE_FREE_STRING(pszParentPath);
-    LWREG_SAFE_FREE_MEMORY(pFreeData);
     return dwError;
 
 error:
