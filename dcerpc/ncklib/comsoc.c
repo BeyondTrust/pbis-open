@@ -394,6 +394,8 @@ rpc__transport_info_equal(
 {
     return
         (info1 == NULL && info2 == NULL) ||
+        (info1 != NULL && info2 == NULL &&
+         rpc_g_protseq_id[info1->protseq].socket_vtbl->transport_info_equal(info1->handle, NULL)) ||
         (info1 != NULL && info2 != NULL && info1->protseq == info2->protseq &&
          rpc_g_protseq_id[info1->protseq].socket_vtbl->transport_info_equal(info1->handle, info2->handle));
 }
