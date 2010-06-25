@@ -11,9 +11,4 @@ liblwadvapi_nothr_la_LIBADD = \
 	time/liblwadvapi_time.la \
 	logging/liblwadvapi_logging.la
 
-if !ENABLE_COMPAT
-liblwadvapi_nothr_la_LIBADD += \
-	../join/liblwadvapi_join.la
-endif
-
 liblwadvapi_nothr_la_SOURCES = 
