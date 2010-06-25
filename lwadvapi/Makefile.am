@@ -6,9 +6,9 @@ liblwadvapi_la_LIBADD = \
 	unthreaded/liblwadvapi_nothr.la
 
 if !ENABLE_COMPAT
-SUBDIRS += join
+SUBDIRS += threaded
 liblwadvapi_la_LIBADD += \
-	join/liblwadvapi_join.la
+	threaded/liblwadvapi_threaded.la
 endif
 
 liblwadvapi_la_SOURCES = dummy.c
