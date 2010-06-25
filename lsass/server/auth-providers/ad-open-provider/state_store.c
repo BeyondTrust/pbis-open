@@ -1360,6 +1360,7 @@ ADState_WriteRegCellEntry(
                   (PVOID) &ppszNewMultiCellListOrder,
                   (dwValueLen+2) * sizeof(PSTR));
     BAIL_ON_LSA_ERROR(dwError);
+    LW_SAFE_FREE_MEMORY(ppszMultiCellListOrder);
     ppszMultiCellListOrder = ppszNewMultiCellListOrder;
     ppszMultiCellListOrder[dwValueLen] = pCellEntry->pszCellDN;
     ppszMultiCellListOrder[dwValueLen+1] = NULL;
