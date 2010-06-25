@@ -815,18 +815,19 @@ RegShellUtilSetValue(
             BAIL_ON_REG_ERROR(dwError);
 
             pData = (PBYTE) pMultiStr;
-            dwDataLen = dwOffset * sizeof(CHAR);
+            dwDataLen = dwDataLen * sizeof(CHAR);
             break;
 
         case REG_SZ:
-
             dwError = RegCStringDuplicate((LW_PVOID) &pData, data?data:"");
             BAIL_ON_REG_ERROR(dwError);
             dwDataLen = strlen((PSTR) pData)+1;
             break;
 
         case REG_DWORD:
-            dwError = RegAllocateMemory(sizeof(*pData) * sizeof(DWORD), (PVOID*)&pData);
+            dwError = RegAllocateMemory(
+                          sizeof(*pData) * sizeof(DWORD),
+                          (PVOID*)&pData);
             BAIL_ON_REG_ERROR(dwError);
 
             dwDataLen = (SSIZE_T) dataLen;
@@ -852,10 +853,6 @@ RegShellUtilSetValue(
         pData,
         dwDataLen);
     BAIL_ON_REG_ERROR(dwError);
-    if (type != REG_BINARY && type != REG_MULTI_SZ)
-    {
-        LWREG_SAFE_FREE_MEMORY(pData);
-    }
 
 cleanup:
     RegCloseServer(hRegLocal);
@@ -866,6 +863,10 @@ cleanup:
     if (pRootKey)
     {
         RegCloseKey(hReg, pRootKey);
+    }
+    if (type != REG_BINARY)
+    {
+        LWREG_SAFE_FREE_MEMORY(pData);
     }
     LWREG_SAFE_FREE_STRING(pszParentPath);
     return dwError;
