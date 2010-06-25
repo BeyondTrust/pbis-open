@@ -1215,6 +1215,17 @@ NtRegSetValueExA(
         BAIL_ON_NT_STATUS(status);
     }
 
+    if (dwType == REG_MULTI_SZ)
+    {
+        if (!pData)
+        {
+            pData = (PBYTE) "";
+        }
+        if (cbData == 0)
+        {
+            cbData = 1;
+        }
+    }
     if (pData)
     {
         if (REG_MULTI_SZ == dwType)
@@ -1276,6 +1287,17 @@ NtRegSetValueExW(
     IN DWORD cbData
     )
 {
+    if (dwType == REG_MULTI_SZ)
+    {
+        if (!pData)
+        {
+            pData = (PBYTE) "\0\0";
+        }
+        if (cbData == 0)
+        {
+            cbData = sizeof(WCHAR);
+        }
+    }
     return RegTransactSetValueExW(
         hRegConnection,
         hKey,

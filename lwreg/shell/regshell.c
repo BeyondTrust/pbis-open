@@ -292,8 +292,7 @@ RegShellSetValue(
     switch (type)
     {
         case REG_MULTI_SZ:
-            data = rsItem->binaryValue;
-            dataLen = rsItem->binaryValueLen;
+            data = rsItem->args;
             break;
         case REG_SZ:
             data = rsItem->args[0];

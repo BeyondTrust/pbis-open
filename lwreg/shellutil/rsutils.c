@@ -747,6 +747,7 @@ RegShellUtilSetValue(
     HKEY pRootKey = NULL;
     PSTR pszParentPath = NULL;
     DWORD dwOffset = 0;
+    PBYTE pMultiStr = NULL;
 
     if (!hReg)
     {
@@ -803,8 +804,18 @@ RegShellUtilSetValue(
     switch (type)
     {
         case REG_MULTI_SZ:
-            pData = (PBYTE) data;
-            dwDataLen = dataLen;
+            if (!data)
+            {
+                data = "";
+            }
+            dwError = RegMultiStrsToByteArrayA(
+                          data,
+                          &pMultiStr,
+                          &dwDataLen);
+            BAIL_ON_REG_ERROR(dwError);
+
+            pData = (PBYTE) pMultiStr;
+            dwDataLen = dwOffset * sizeof(CHAR);
             break;
 
         case REG_SZ:
