@@ -238,9 +238,13 @@ rpc__http_transport_info_equal(
     rpc_http_transport_info_p_t http_info1 = (rpc_http_transport_info_p_t) info1;
     rpc_http_transport_info_p_t http_info2 = (rpc_http_transport_info_p_t) info2;
 
-    return ((http_info1->use_tls == http_info2->use_tls) &&
-            strequal(http_info1->tls_cert, http_info2->tls_cert) &&
-            strequal(http_info2->tls_ca_file, http_info2->tls_ca_file));
+    return 
+        (http_info2 == NULL &&
+         http_info1->use_tls == FALSE) ||
+        (http_info2 != NULL &&
+         http_info1->use_tls == http_info2->use_tls &&
+         strequal(http_info1->tls_cert, http_info2->tls_cert) &&
+         strequal(http_info2->tls_ca_file, http_info2->tls_ca_file));
 }
 
 INTERNAL

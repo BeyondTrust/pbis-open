@@ -2607,7 +2607,16 @@ rpc__bsd_socket_transport_info_equal(
     rpc_transport_info_handle_t info2
     )
 {
-    return (info1 == info2);
+    rpc_bsd_transport_info_p_t bsd_info1 = (rpc_bsd_transport_info_p_t) info1;
+    rpc_bsd_transport_info_p_t bsd_info2 = (rpc_bsd_transport_info_p_t) info2;
+
+    return 
+        (bsd_info2 == NULL) ||
+        (bsd_info2 != NULL &&
+         bsd_info1->session_key.length == bsd_info2->session_key.length &&
+         !memcmp(bsd_info1->session_key.data, bsd_info2->session_key.data, bsd_info1->session_key.length) &&
+         bsd_info1->peer_uid == bsd_info2->peer_gid &&
+         bsd_info1->peer_gid == bsd_info2->peer_gid);
 }
 
 INTERNAL

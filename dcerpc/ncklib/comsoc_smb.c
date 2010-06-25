@@ -168,10 +168,15 @@ rpc__smb_transport_info_equal(
     rpc_smb_transport_info_p_t smb_info1 = (rpc_smb_transport_info_p_t) info1;
     rpc_smb_transport_info_p_t smb_info2 = (rpc_smb_transport_info_p_t) info2;
 
-    return (smb_info1->schannel == smb_info2->schannel &&
-            ((smb_info1->creds == NULL && smb_info2->creds == NULL) ||
-             (smb_info1->creds != NULL && smb_info2->creds != NULL &&
-              LwIoCompareCredss(smb_info1->creds, smb_info2->creds))));
+    return 
+        (smb_info2 == NULL
+         && smb_info1->creds == NULL
+         && smb_info1->schannel == FALSE) ||
+        (smb_info2 != NULL &&
+         smb_info1->schannel == smb_info2->schannel &&
+         ((smb_info1->creds == NULL && smb_info2->creds == NULL) ||
+          (smb_info1->creds != NULL && smb_info2->creds != NULL &&
+           LwIoCompareCredss(smb_info1->creds, smb_info2->creds))));
 }
 
 INTERNAL
