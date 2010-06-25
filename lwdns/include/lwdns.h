@@ -164,12 +164,6 @@ DNSStrToLower(
      PSTR pszString
      );
 
-BOOLEAN
-DNSIsNameServerAuthoritative(
-    PCSTR pszDomain,
-    PCSTR pszNameServer
-    );
-
 DWORD
 DNSGetNameServers(
     IN PCSTR pszDomain,
