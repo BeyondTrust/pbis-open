@@ -51,4 +51,4 @@
 
 #include "externs.h"
 
-
+#define LW_UPDATE_DNS_TIMEOUT 30

@@ -81,6 +81,11 @@ DNSTCPOpen(
     unsigned long ulAddress = 0;
     struct hostent * pHost = NULL;
     PDNS_CONNECTION_CONTEXT pDNSContext = NULL;
+    int err = 0;
+    int connErr = 0;
+    socklen_t connErrLen = 0;
+    fd_set wmask;
+    struct timeval timeOut;
 
     dwError = DNSAllocateMemory(
                     sizeof(DNS_CONNECTION_CONTEXT),
@@ -116,20 +121,91 @@ DNSTCPOpen(
     pDNSContext->RecvAddr.sin_addr.s_addr = ulAddress;
     pDNSContext->RecvAddr.sin_port = htons (DNS_TCP_PORT);
 
+    /* Enable nonblock on this socket for the duration of the connet */
+    err = fcntl(pDNSContext->s, F_GETFL, 0);
+    if (err == -1)
+    {
+        dwError = err;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    /* enable nonblock on this socket. Either err is status or current flags */
+    err = fcntl(pDNSContext->s, F_SETFL, err | O_NONBLOCK);
+    if (err == -1)
+    {
+        dwError = errno;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
     // connect to remote endpoint
     //
-    dwError = connect(
-                pDNSContext->s,
-                (PSOCKADDR) &pDNSContext->RecvAddr,
-                sizeof(pDNSContext->RecvAddr));
-    if (dwError == SOCKET_ERROR) {
-        dwError = errno;
+    err = connect(pDNSContext->s,
+                  (PSOCKADDR) &pDNSContext->RecvAddr,
+                  sizeof(pDNSContext->RecvAddr));
+    if (err == -1 && errno == EINPROGRESS)
+    {
+        dwError = 0;
+        for (;;)
+        {
+            FD_ZERO(&wmask);
+            FD_SET(pDNSContext->s, &wmask);
+
+            memset(&timeOut, 0, sizeof(timeOut));
+            timeOut.tv_sec = LW_UPDATE_DNS_TIMEOUT;
+            timeOut.tv_usec = 0;
+            err = select(pDNSContext->s + 1, 0, &wmask, 0, &timeOut);
+            if (err == -1)
+            {
+                if (errno != EINTR)
+                {
+                    dwError = errno;
+                    BAIL_ON_LWDNS_ERROR(dwError);
+                }
+            }
+            else if (err == 0)
+            {
+                /* select() timed out */
+                dwError = ETIMEDOUT;
+                BAIL_ON_LWDNS_ERROR(dwError);
+            }
+            else if (err > 0)
+            {
+                connErrLen = (socklen_t) sizeof(connErr);
+                err = getsockopt(
+                          pDNSContext->s,
+                          SOL_SOCKET,
+                          SO_ERROR,
+                          &connErr,
+                          &connErrLen);
+                if (err == -1)
+                {
+                    dwError = errno;
+                    BAIL_ON_LWDNS_ERROR(dwError);
+                }
+                else if (connErr != 0)
+                {
+                    dwError = connErr;
+                    BAIL_ON_LWDNS_ERROR(dwError);
+                }
+                /* socket connected successfully */
+                break;
+            }
+        }
+    }
+    if (dwError)
+    {
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
     *phDNSServer = (HANDLE)pDNSContext;
 
 cleanup:
+    /* Disable nonblock on this socket. Either err is status or current flags */
+    err = fcntl(pDNSContext->s, F_GETFL, 0);
+    if (err != -1)
+    {
+        err = fcntl(pDNSContext->s, F_SETFL, err & ~O_NONBLOCK);
+    }
 
     return dwError;
 
