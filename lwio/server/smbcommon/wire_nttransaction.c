@@ -413,6 +413,7 @@ WireMarshallNtTransactionResponse(
     pResponseHeader->ulParameterCount = ulParamLength;
     pResponseHeader->ulTotalParameterCount = ulParamLength;
     pResponseHeader->ulParameterOffset = ulOffset;
+    pResponseHeader->ulParameterDisplacement = 0;
 
     if (pParams)
     {
@@ -451,6 +452,7 @@ WireMarshallNtTransactionResponse(
     pResponseHeader->ulDataCount = ulDataLen;
     pResponseHeader->ulTotalDataCount = ulDataLen;
     pResponseHeader->ulDataOffset = ulOffset;
+    pResponseHeader->ulDataDisplacement = 0;
 
     if (pData)
     {
