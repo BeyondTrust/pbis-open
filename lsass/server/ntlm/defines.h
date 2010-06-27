@@ -47,6 +47,24 @@
 
 #define MAP_LWNET_ERROR(_e_) ((_e_) ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS)
 
+#define NTLM_LOCK_MUTEX(bInLock, mutex) \
+    if (!bInLock) { \
+       int thr_err = pthread_mutex_lock(mutex); \
+       if (thr_err) { \
+           abort(); \
+       } \
+       bInLock = TRUE; \
+    }
+
+#define NTLM_UNLOCK_MUTEX(bInLock, mutex) \
+    if (bInLock) { \
+       int thr_err = pthread_mutex_unlock(mutex); \
+       if (thr_err) { \
+           abort(); \
+       } \
+       bInLock = FALSE; \
+    }
+
 // Message signature and sizes
 
 #define NTLM_NETWORK_SIGNATURE      "NTLMSSP"

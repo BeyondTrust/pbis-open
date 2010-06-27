@@ -468,6 +468,7 @@ NtlmCreateChallengeMessage(
     PNTLM_SEC_BUFFER pTargetInfoSecBuffer= NULL;
     PNTLM_TARGET_INFO_BLOCK pTargetInfoBlock = NULL;
     NTLM_CONFIG config;
+    BOOLEAN bConfigLocked = FALSE;
 
     // sanity checks
     if (!pNegMsg || !ppChlngMsg)
@@ -479,8 +480,22 @@ NtlmCreateChallengeMessage(
     *ppChlngMsg = NULL;
     *pdwSize = 0;
     
-    dwError = NtlmReadRegistry(&config);
-    BAIL_ON_LSA_ERROR(dwError);
+    NTLM_LOCK_MUTEX(bConfigLocked, pgNtlmConfigMutex);
+    if (pgNtlmConfig == NULL)
+    {
+        dwError = NtlmReadRegistry(&config);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        // Assign using structure copy
+        pgNtlmConfig = &gNtlmConfig;
+        *pgNtlmConfig = config;
+    }
+    else
+    {
+        // Assign using structure copy
+        config = *pgNtlmConfig;
+    }
+    NTLM_UNLOCK_MUTEX(bConfigLocked, pgNtlmConfigMutex);
 
     dwSize = sizeof(NTLM_CHALLENGE_MESSAGE);
 
@@ -837,12 +852,18 @@ NtlmCreateChallengeMessage(
     LW_ASSERT(pBuffer == (PBYTE)pMessage + dwSize);
 
 cleanup:
+    NTLM_UNLOCK_MUTEX(bConfigLocked, pgNtlmConfigMutex);
+
     *pdwSize = dwSize;
     *ppChlngMsg = pMessage;
+
     return dwError;
+
 error:
+
     dwSize = 0;
     LW_SAFE_FREE_MEMORY(pMessage);
+
     goto cleanup;
 }
 
@@ -2061,3 +2082,14 @@ NtlmSetParityBit(
 
     *pKey = NewKey;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
+ 

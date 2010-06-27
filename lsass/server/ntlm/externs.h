@@ -51,4 +51,9 @@ extern WIN_VERSION_INFO gXpSpoof;
 
 extern LWMsgDispatchSpec gNtlmMessageHandlers[];
 
+extern pthread_mutex_t gNtlmConfigMutex;
+extern pthread_mutex_t *pgNtlmConfigMutex;
+extern NTLM_CONFIG gNtlmConfig;
+extern PNTLM_CONFIG pgNtlmConfig;
+
 #endif /* __NTLM_EXTERNS_H__ */

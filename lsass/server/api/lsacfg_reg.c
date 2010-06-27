@@ -149,7 +149,7 @@ LsaOpenConfig(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = RegOpenServer(&(pReg->hConnection));
-    if ( dwError )
+    if ( dwError || (pReg->hConnection == NULL))
     {
         dwError = 0;
         goto error;

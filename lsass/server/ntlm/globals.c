@@ -66,3 +66,9 @@ LWMsgDispatchSpec gNtlmMessageHandlers[] =
 
 WIN_VERSION_INFO gW2KSpoof = {5, 0, 2195, 0x0f000000};
 WIN_VERSION_INFO gXpSpoof = {5, 1, 2600, 0x0f000000};
+
+pthread_mutex_t gNtlmConfigMutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t *pgNtlmConfigMutex = &gNtlmConfigMutex;
+
+NTLM_CONFIG gNtlmConfig = { 0 };
+PNTLM_CONFIG pgNtlmConfig = NULL;

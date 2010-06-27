@@ -50,6 +50,8 @@
 
 #include <config.h>
 
+#include <pthread.h>
+
 #include <ntlm/sspintlm.h>
 #include <ntlmipc.h>
 
