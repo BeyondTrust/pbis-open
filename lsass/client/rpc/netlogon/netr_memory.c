@@ -451,7 +451,7 @@ NetrAllocateLogonNetworkInfo(
                                     pwszDomain,
                                     pwszWorkstation,
                                     pwszAccount,
-                                    0,
+                                    MSV1_0_ALLOW_WORKSTATION_TRUST_ACCOUNT | MSV1_0_ALLOW_SERVER_TRUST_ACCOUNT,
                                     0,
                                     0,
                                     pdwSize);

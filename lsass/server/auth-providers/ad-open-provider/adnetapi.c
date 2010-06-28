@@ -1775,7 +1775,10 @@ AD_NetlogonAuthenticationUserEx(
 
     if (nt_status)
     {
-        LSA_LOG_DEBUG("NetrSamLogonNetwork() failed with %u (0x%08x) (symbol: '%s')", nt_status, nt_status, LSA_SAFE_LOG_STRING(LwNtStatusToName(nt_status)));
+        LSA_LOG_DEBUG("NetrSamLogonNetworkEx() failed with %u (0x%08x) (symbol: '%s')"
+                      " while authenticating user '%s\\%s'",
+                      nt_status, nt_status, LSA_SAFE_LOG_STRING(LwNtStatusToName(nt_status)),
+                      pUserParams->pszDomain, pUserParams->pszAccountName);
 
         if (AD_NtStatusIsTgtRevokedError(nt_status))
         {
@@ -1820,15 +1823,18 @@ AD_NetlogonAuthenticationUserEx(
         break;
     case STATUS_ACCOUNT_RESTRICTION:
     case STATUS_LOGON_FAILURE:
+    case STATUS_NOLOGON_WORKSTATION_TRUST_ACCOUNT:
+    case STATUS_NOLOGON_SERVER_TRUST_ACCOUNT:
         dwError = LW_ERROR_LOGON_FAILURE;
         break;
     case STATUS_UNHANDLED_EXCEPTION:
     default:
         bResetSchannel = TRUE;
         dwError = LW_ERROR_RPC_NETLOGON_FAILED;
-        LSA_LOG_ERROR("Resetting schannel due to nt status 0x%x while "
-                      "authenticating user '%s'",
-                      nt_status, pUserParams->pszAccountName);
+        LSA_LOG_ERROR("Resetting schannel due to status 0x%08x while "
+                      "authenticating user '%s\\%s'",
+                      nt_status,
+                      pUserParams->pszDomain, pUserParams->pszAccountName);
         break;
     }
   
