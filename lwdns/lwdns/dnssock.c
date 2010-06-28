@@ -121,11 +121,11 @@ DNSTCPOpen(
     pDNSContext->RecvAddr.sin_addr.s_addr = ulAddress;
     pDNSContext->RecvAddr.sin_port = htons (DNS_TCP_PORT);
 
-    /* Enable nonblock on this socket for the duration of the connet */
+    /* Enable nonblock on this socket for the duration of the connect */
     err = fcntl(pDNSContext->s, F_GETFL, 0);
     if (err == -1)
     {
-        dwError = err;
+        dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
@@ -192,20 +192,30 @@ DNSTCPOpen(
             }
         }
     }
-    if (dwError)
+    else if (err == -1)
     {
+        dwError = errno;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    /* Disable nonblock on this socket. Either err is status or current flags */
+    err = fcntl(pDNSContext->s, F_GETFL, 0);
+    if (err == -1)
+    {
+        dwError = errno;
+        BAIL_ON_LWDNS_ERROR(dwError);
+    }
+
+    err = fcntl(pDNSContext->s, F_SETFL, err & ~O_NONBLOCK);
+    if (err == -1)
+    {
+        dwError = errno;
         BAIL_ON_LWDNS_ERROR(dwError);
     }
 
     *phDNSServer = (HANDLE)pDNSContext;
 
 cleanup:
-    /* Disable nonblock on this socket. Either err is status or current flags */
-    err = fcntl(pDNSContext->s, F_GETFL, 0);
-    if (err != -1)
-    {
-        err = fcntl(pDNSContext->s, F_SETFL, err & ~O_NONBLOCK);
-    }
 
     return dwError;
 
