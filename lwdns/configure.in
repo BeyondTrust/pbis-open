@@ -179,6 +179,7 @@ case "$host_os:$host_cpu" in
 	;;
      hpux11.*:ia64*)
 	AC_DEFINE([__LWI_HP_UX__], [], [Define if the host system is HP-UX])
+	AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
 	;;
      darwin8.*:*)
         echo "Detected Mac OS X - Tiger"
