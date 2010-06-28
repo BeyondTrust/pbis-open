@@ -781,7 +781,7 @@ LwCaselessStringSearch(
 
     while (*pszPos)
     {
-        if (!strncasecmp(pszHaystack, pszNeedle, sNeedle))
+        if (!strncasecmp(pszPos, pszNeedle, sNeedle))
         {
             return pszPos;
         }
