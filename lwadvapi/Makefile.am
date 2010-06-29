@@ -6,7 +6,7 @@ liblwadvapi_la_LIBADD = \
 	unthreaded/liblwadvapi_nothr.la
 
 if !ENABLE_COMPAT
-SUBDIRS += threaded
+SUBDIRS += threaded tools
 liblwadvapi_la_LIBADD += \
 	threaded/liblwadvapi_threaded.la
 endif
