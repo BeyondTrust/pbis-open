@@ -10,6 +10,8 @@
 #ifndef __LWISTRUCT_H__
 #define __LWISTRUCT_H__
 
+#include "includes.h"
+
 typedef struct __DSATTRIBUTEVALUE
 {
     uint32_t valLen;

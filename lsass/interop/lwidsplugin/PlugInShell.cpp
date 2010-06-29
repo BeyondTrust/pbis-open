@@ -17,8 +17,8 @@
 #include "LWIAttrValDataQuery.h"
 #include "LWIDirNodeQuery.h"
 #include "LWIRecordQuery.h"
+#include "lwerror.h"
 #include "wbl.h"
-#include "lsa.h"
 
 // Local helper functions
 //
@@ -87,6 +87,237 @@ static PLUGIN_STATE GlobalState;
 
 #define GET_NODE_SIZE(node) \
                     ((node) ? (node)->fBufferSize : 0)
+
+static
+long MapErrorToMacError(
+    uint32_t dwError
+    )
+{
+    long macError = eDSNoErr;
+
+    switch (dwError)
+    {
+        case 0:
+            macError = eDSNoErr;
+            break;
+
+        case LW_ERROR_NO_SUCH_USER:
+            macError = eDSAuthUnknownUser;
+            break;
+
+        case LW_ERROR_DATA_ERROR:
+        case LW_ERROR_NOT_IMPLEMENTED:
+        case LW_ERROR_NO_CONTEXT_ITEM:
+        case LW_ERROR_NO_SUCH_GROUP:
+        case LW_ERROR_REGEX_COMPILE_FAILED:
+        case LW_ERROR_NSS_EDIT_FAILED:
+        case LW_ERROR_NO_HANDLER:
+        case LW_ERROR_INTERNAL:
+        case LW_ERROR_NOT_HANDLED:
+        case LW_ERROR_INVALID_DNS_RESPONSE:
+        case LW_ERROR_DNS_RESOLUTION_FAILED:
+        case LW_ERROR_FAILED_TIME_CONVERSION:
+        case LW_ERROR_INVALID_SID:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_PASSWORD_MISMATCH:
+            macError = eDSAuthBadPassword;
+            break;
+
+        case LW_ERROR_UNEXPECTED_DB_RESULT:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_PASSWORD_EXPIRED:
+            macError = eDSAuthPasswordExpired;
+            break;
+
+        /* BUGBUG - Should there be an LSASS error for password must change? Or others? */
+        //  macError = eDSAuthNewPasswordRequired;
+        //  macError = eDSAuthPasswordTooShort;
+        //  macError = eDSAuthPasswordTooLong;
+        //  macError = eDSAuthPasswordNeedsLetter;
+        //  macError = eDSAuthPasswordNeedsDigit;
+        //  macError = eDSAuthNewPasswordRequired;
+        //  macError = eDSAuthAccountInactive;
+
+        case LW_ERROR_ACCOUNT_EXPIRED:
+            macError = eDSAuthAccountExpired;
+            break;
+
+        case LW_ERROR_USER_EXISTS:
+        case LW_ERROR_GROUP_EXISTS:
+        case LW_ERROR_INVALID_GROUP_INFO_LEVEL:
+        case LW_ERROR_INVALID_USER_INFO_LEVEL:
+        case LW_ERROR_UNSUPPORTED_USER_LEVEL:
+        case LW_ERROR_UNSUPPORTED_GROUP_LEVEL:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_INVALID_LOGIN_ID:
+            macError = eDSAuthUnknownUser;
+            break;
+
+        case LW_ERROR_INVALID_HOMEDIR:
+        case LW_ERROR_INVALID_GROUP_NAME:
+        case LW_ERROR_NO_MORE_GROUPS:
+        case LW_ERROR_NO_MORE_USERS:
+        case LW_ERROR_FAILED_ADD_USER:
+        case LW_ERROR_FAILED_ADD_GROUP:
+        case LW_ERROR_INVALID_LSA_CONNECTION:
+        case LW_ERROR_INVALID_AUTH_PROVIDER:
+        case LW_ERROR_INVALID_PARAMETER:
+        case LW_ERROR_LDAP_NO_PARENT_DN:
+        case LW_ERROR_LDAP_ERROR:
+        case LW_ERROR_NO_SUCH_DOMAIN:
+        case LW_ERROR_LDAP_FAILED_GETDN:
+        case LW_ERROR_DUPLICATE_DOMAINNAME:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_KRB5_CALL_FAILED:
+        case LW_ERROR_GSS_CALL_FAILED:
+            macError = eDSAuthFailed;
+            break;
+
+        case LW_ERROR_FAILED_FIND_DC:
+        case LW_ERROR_NO_SUCH_CELL:
+        case LW_ERROR_GROUP_IN_USE:
+        case LW_ERROR_FAILED_CREATE_HOMEDIR:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_PASSWORD_TOO_WEAK:
+        case LW_ERROR_PASSWORD_RESTRICTION:
+            macError = eDSAuthPasswordQualityCheckFailed;
+            break;
+
+        case LW_ERROR_INVALID_SID_REVISION:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_ACCOUNT_LOCKED:
+            macError = eDSAuthFailed;
+            break;
+
+        case LW_ERROR_ACCOUNT_DISABLED:
+            macError = eDSAuthAccountDisabled;
+            break;
+
+        case LW_ERROR_USER_CANNOT_CHANGE_PASSWD:
+        case LW_ERROR_LOAD_LIBRARY_FAILED:
+        case LW_ERROR_LOOKUP_SYMBOL_FAILED:
+        case LW_ERROR_INVALID_EVENTLOG:
+        case LW_ERROR_INVALID_CONFIG:
+        case LW_ERROR_UNEXPECTED_TOKEN:
+        case LW_ERROR_LDAP_NO_RECORDS_FOUND:
+        case LW_ERROR_DUPLICATE_USERNAME:
+        case LW_ERROR_DUPLICATE_GROUPNAME:
+        case LW_ERROR_DUPLICATE_CELLNAME:
+        case LW_ERROR_STRING_CONV_FAILED:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_INVALID_ACCOUNT:
+            macError = eDSAuthUnknownUser;
+            break;
+
+        case LW_ERROR_INVALID_PASSWORD:
+            macError = eDSAuthBadPassword;
+            break;
+
+        case LW_ERROR_QUERY_CREATION_FAILED:
+        case LW_ERROR_NO_SUCH_OBJECT:
+        case LW_ERROR_DUPLICATE_USER_OR_GROUP:
+        case LW_ERROR_INVALID_KRB5_CACHE_TYPE:
+        case LW_ERROR_NOT_JOINED_TO_AD:
+        case LW_ERROR_FAILED_TO_SET_TIME:
+        case LW_ERROR_NO_NETBIOS_NAME:
+        case LW_ERROR_INVALID_NETLOGON_RESPONSE:
+        case LW_ERROR_INVALID_OBJECTGUID:
+        case LW_ERROR_INVALID_DOMAIN:
+        case LW_ERROR_NO_DEFAULT_REALM:
+        case LW_ERROR_NOT_SUPPORTED:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_LOGON_FAILURE:
+            macError = eDSAuthFailed;
+            break;
+
+        case LW_ERROR_NO_SITE_INFORMATION:
+        case LW_ERROR_INVALID_LDAP_STRING:
+        case LW_ERROR_INVALID_LDAP_ATTR_VALUE:
+        case LW_ERROR_NULL_BUFFER:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_CLOCK_SKEW:
+        case LW_ERROR_KRB5_NO_KEYS_FOUND:
+            macError = eDSAuthFailed;
+            break;
+
+        case LW_ERROR_SERVICE_NOT_AVAILABLE:
+        case LW_ERROR_INVALID_SERVICE_RESPONSE:
+        case LW_ERROR_NSS_ERROR:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_AUTH_ERROR:
+            macError = eDSAuthFailed;
+            break;
+
+        case LW_ERROR_INVALID_LDAP_DN:
+        case LW_ERROR_NOT_MAPPED:
+        case LW_ERROR_RPC_NETLOGON_FAILED:
+        case LW_ERROR_ENUM_DOMAIN_TRUSTS_FAILED:
+        case LW_ERROR_RPC_LSABINDING_FAILED:
+        case LW_ERROR_RPC_OPENPOLICY_FAILED:
+        case LW_ERROR_RPC_LSA_LOOKUPNAME2_FAILED:
+        case LW_ERROR_RPC_SET_SESS_CREDS_FAILED:
+        case LW_ERROR_RPC_REL_SESS_CREDS_FAILED:
+        case LW_ERROR_RPC_CLOSEPOLICY_FAILED:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_RPC_LSA_LOOKUPNAME2_NOT_FOUND:
+            macError = eDSAuthUnknownUser;
+            break;
+
+        case LW_ERROR_RPC_LSA_LOOKUPNAME2_FOUND_DUPLICATES:
+        case LW_ERROR_NO_TRUSTED_DOMAIN_FOUND:
+        case LW_ERROR_INCOMPATIBLE_MODES_BETWEEN_TRUSTEDDOMAINS:
+        case LW_ERROR_DCE_CALL_FAILED:
+        case LW_ERROR_FAILED_TO_LOOKUP_DC:
+        case LW_ERROR_INVALID_NSS_ARTEFACT_INFO_LEVEL:
+        case LW_ERROR_UNSUPPORTED_NSS_ARTEFACT_LEVEL:
+            macError = eDSOperationFailed;
+            break;
+
+        case LW_ERROR_INVALID_USER_NAME:
+            macError = eDSAuthUnknownUser;
+            break;
+
+        case LW_ERROR_INVALID_LOG_LEVEL:
+        case LW_ERROR_INVALID_METRIC_TYPE:
+        case LW_ERROR_INVALID_METRIC_PACK:
+        case LW_ERROR_INVALID_METRIC_INFO_LEVEL:
+        case LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK:
+        case LW_ERROR_MAC_FLUSH_DS_CACHE_FAILED:
+        case LW_ERROR_LSA_SERVER_UNREACHABLE:
+        case LW_ERROR_INVALID_NSS_ARTEFACT_TYPE:
+        case LW_ERROR_INVALID_AGENT_VERSION:
+            macError = eDSOperationFailed;
+            break;
+
+        default:
+            LOG_ERROR("Unexpected auth result %d", dwError);
+            macError = eDSAuthFailed;
+    }
+
+    return macError;
+}
 
 
 // -------------------------------------------------------------------------
@@ -834,6 +1065,7 @@ static long ProcessDirNodeAuth(sDoDirNodeAuth* pDoDirNodeAuth)
         if (dwError)
         {
 	    LOG("Password change attempt failed for user %s with error: %d", username, dwError);
+            goto map_error_and_exit;
         }
     }
     else
@@ -843,231 +1075,16 @@ static long ProcessDirNodeAuth(sDoDirNodeAuth* pDoDirNodeAuth)
         if (dwError)
         {
 	    LOG("Logon attempt failed for user %s with error: %d", username, dwError);
+            goto map_error_and_exit;
         }
     }
 
-    switch (dwError)
-    {
-        case 0:
-            macError = eDSNoErr;
-            break;
+map_error_and_exit:
 
-        case LSA_ERROR_NO_SUCH_USER:
-            macError = eDSAuthUnknownUser;
-            break;
-
-        case LSA_ERROR_DATA_ERROR:
-        case LSA_ERROR_NOT_IMPLEMENTED:
-        case LSA_ERROR_NO_CONTEXT_ITEM:
-        case LSA_ERROR_NO_SUCH_GROUP:
-        case LSA_ERROR_REGEX_COMPILE_FAILED:
-        case LSA_ERROR_NSS_EDIT_FAILED:
-        case LSA_ERROR_NO_HANDLER:
-        case LSA_ERROR_INTERNAL:
-        case LSA_ERROR_NOT_HANDLED:
-        case LSA_ERROR_INVALID_DNS_RESPONSE:
-        case LSA_ERROR_DNS_RESOLUTION_FAILED:
-        case LSA_ERROR_FAILED_TIME_CONVERSION:
-        case LSA_ERROR_INVALID_SID:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_PASSWORD_MISMATCH:
-            macError = eDSAuthBadPassword;
-            break;
-
-        case LSA_ERROR_UNEXPECTED_DB_RESULT:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_PASSWORD_EXPIRED:
-            macError = eDSAuthPasswordExpired;
-            break;
-
-        /* BUGBUG - Should there be an LSASS error for password must change? Or others? */
-        //  macError = eDSAuthNewPasswordRequired;
-        //  macError = eDSAuthPasswordTooShort;
-        //  macError = eDSAuthPasswordTooLong;
-        //  macError = eDSAuthPasswordNeedsLetter;
-        //  macError = eDSAuthPasswordNeedsDigit;
-        //  macError = eDSAuthNewPasswordRequired;
-        //  macError = eDSAuthAccountInactive;
-
-        case LSA_ERROR_ACCOUNT_EXPIRED:
-            macError = eDSAuthAccountExpired;
-            break;
-
-        case LSA_ERROR_USER_EXISTS:
-        case LSA_ERROR_GROUP_EXISTS:
-        case LSA_ERROR_INVALID_GROUP_INFO_LEVEL:
-        case LSA_ERROR_INVALID_USER_INFO_LEVEL:
-        case LSA_ERROR_UNSUPPORTED_USER_LEVEL:
-        case LSA_ERROR_UNSUPPORTED_GROUP_LEVEL:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_INVALID_LOGIN_ID:
-            macError = eDSAuthUnknownUser;
-            break;
-
-        case LSA_ERROR_INVALID_GROUP_NAME:
-        case LSA_ERROR_NO_MORE_GROUPS:
-        case LSA_ERROR_NO_MORE_USERS:
-        case LSA_ERROR_FAILED_ADD_USER:
-        case LSA_ERROR_FAILED_ADD_GROUP:
-        case LSA_ERROR_INVALID_LSA_CONNECTION:
-        case LSA_ERROR_INVALID_AUTH_PROVIDER:
-        case LSA_ERROR_INVALID_PARAMETER:
-        case LSA_ERROR_LDAP_NO_PARENT_DN:
-        case LSA_ERROR_LDAP_ERROR:
-        case LSA_ERROR_NO_SUCH_DOMAIN:
-        case LSA_ERROR_LDAP_FAILED_GETDN:
-        case LSA_ERROR_DUPLICATE_DOMAINNAME:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_KRB5_CALL_FAILED:
-        case LSA_ERROR_GSS_CALL_FAILED:
-            macError = eDSAuthFailed;
-            break;
-
-        case LSA_ERROR_FAILED_FIND_DC:
-        case LSA_ERROR_NO_SUCH_CELL:
-        case LSA_ERROR_GROUP_IN_USE:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_PASSWORD_TOO_WEAK:
-        case LSA_ERROR_PASSWORD_RESTRICTION:
-            macError = eDSAuthPasswordQualityCheckFailed;
-            break;
-
-        case LSA_ERROR_INVALID_SID_REVISION:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_ACCOUNT_LOCKED:
-        case LSA_ERROR_INVALID_HOMEDIR:
-        case LSA_ERROR_FAILED_CREATE_HOMEDIR:
-            macError = eDSAuthFailed;
-            break;
-
-        case LSA_ERROR_ACCOUNT_DISABLED:
-            macError = eDSAuthAccountDisabled;
-            break;
-
-        case LSA_ERROR_USER_CANNOT_CHANGE_PASSWD:
-        case LSA_ERROR_LOAD_LIBRARY_FAILED:
-        case LSA_ERROR_LOOKUP_SYMBOL_FAILED:
-        case LSA_ERROR_INVALID_EVENTLOG:
-        case LSA_ERROR_INVALID_CONFIG:
-        case LSA_ERROR_UNEXPECTED_TOKEN:
-        case LSA_ERROR_LDAP_NO_RECORDS_FOUND:
-        case LSA_ERROR_DUPLICATE_USERNAME:
-        case LSA_ERROR_DUPLICATE_GROUPNAME:
-        case LSA_ERROR_DUPLICATE_CELLNAME:
-        case LSA_ERROR_STRING_CONV_FAILED:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_INVALID_ACCOUNT:
-            macError = eDSAuthUnknownUser;
-            break;
-
-        case LSA_ERROR_INVALID_PASSWORD:
-            macError = eDSAuthBadPassword;
-            break;
-
-        case LSA_ERROR_QUERY_CREATION_FAILED:
-        case LSA_ERROR_NO_SUCH_OBJECT:
-        case LSA_ERROR_DUPLICATE_USER_OR_GROUP:
-        case LSA_ERROR_INVALID_KRB5_CACHE_TYPE:
-        case LSA_ERROR_NOT_JOINED_TO_AD:
-        case LSA_ERROR_FAILED_TO_SET_TIME:
-        case LSA_ERROR_NO_NETBIOS_NAME:
-        case LSA_ERROR_INVALID_NETLOGON_RESPONSE:
-        case LSA_ERROR_INVALID_OBJECTGUID:
-        case LSA_ERROR_INVALID_DOMAIN:
-        case LSA_ERROR_NO_DEFAULT_REALM:
-        case LSA_ERROR_NOT_SUPPORTED:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_LOGON_FAILURE:
-            macError = eDSAuthFailed;
-            break;
-
-        case LSA_ERROR_NO_SITE_INFORMATION:
-        case LSA_ERROR_INVALID_LDAP_STRING:
-        case LSA_ERROR_INVALID_LDAP_ATTR_VALUE:
-        case LSA_ERROR_NULL_BUFFER:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_CLOCK_SKEW:
-        case LSA_ERROR_KRB5_NO_KEYS_FOUND:
-            macError = eDSAuthFailed;
-            break;
-
-        case LSA_ERROR_SERVICE_NOT_AVAILABLE:
-        case LSA_ERROR_INVALID_SERVICE_RESPONSE:
-        case LSA_ERROR_NSS_ERROR:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_AUTH_ERROR:
-            macError = eDSAuthFailed;
-            break;
-
-        case LSA_ERROR_INVALID_LDAP_DN:
-        case LSA_ERROR_NOT_MAPPED:
-        case LSA_ERROR_RPC_NETLOGON_FAILED:
-        case LSA_ERROR_ENUM_DOMAIN_TRUSTS_FAILED:
-        case LSA_ERROR_RPC_LSABINDING_FAILED:
-        case LSA_ERROR_RPC_OPENPOLICY_FAILED:
-        case LSA_ERROR_RPC_LSA_LOOKUPNAME2_FAILED:
-        case LSA_ERROR_RPC_SET_SESS_CREDS_FAILED:
-        case LSA_ERROR_RPC_REL_SESS_CREDS_FAILED:
-        case LSA_ERROR_RPC_CLOSEPOLICY_FAILED:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_RPC_LSA_LOOKUPNAME2_NOT_FOUND:
-            macError = eDSAuthUnknownUser;
-            break;
-
-        case LSA_ERROR_RPC_LSA_LOOKUPNAME2_FOUND_DUPLICATES:
-        case LSA_ERROR_NO_TRUSTED_DOMAIN_FOUND:
-        case LSA_ERROR_INCOMPATIBLE_MODES_BETWEEN_TRUSTEDDOMAINS:
-        case LSA_ERROR_DCE_CALL_FAILED:
-        case LSA_ERROR_FAILED_TO_LOOKUP_DC:
-        case LSA_ERROR_INVALID_NSS_ARTEFACT_INFO_LEVEL:
-        case LSA_ERROR_UNSUPPORTED_NSS_ARTEFACT_LEVEL:
-            macError = eDSOperationFailed;
-            break;
-
-        case LSA_ERROR_INVALID_USER_NAME:
-            macError = eDSAuthUnknownUser;
-            break;
-
-        case LSA_ERROR_INVALID_LOG_LEVEL:
-        case LSA_ERROR_INVALID_METRIC_TYPE:
-        case LSA_ERROR_INVALID_METRIC_PACK:
-        case LSA_ERROR_INVALID_METRIC_INFO_LEVEL:
-        case LSA_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK:
-        case LSA_ERROR_MAC_FLUSH_DS_CACHE_FAILED:
-        case LSA_ERROR_LSA_SERVER_UNREACHABLE:
-        case LSA_ERROR_INVALID_NSS_ARTEFACT_TYPE:
-        case LSA_ERROR_INVALID_AGENT_VERSION:
-            macError = eDSOperationFailed;
-            break;
-
-        default:
-            LOG_ERROR("Unexpected auth result %d", dwError);
-            macError = eDSAuthFailed;
-    }
+    macError = MapErrorToMacError(dwError);
 
 cleanup:
+
     if (oldPassword)
     {
         free(oldPassword);

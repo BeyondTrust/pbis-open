@@ -121,6 +121,7 @@
 // associated with it.
 //
 //
+#include "includes.h"
 #include "LWIAttrValDataQuery.h"
 
 long

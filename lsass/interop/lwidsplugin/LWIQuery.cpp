@@ -7,6 +7,7 @@
  *
  */
 
+#include "includes.h"
 #include "LWIQuery.h"
 #include "LWICRC.h"
 #include <sys/stat.h>

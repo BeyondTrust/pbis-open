@@ -1,3 +1,4 @@
+#include "includes.h"
 #include "LWIDirNodeQuery.h"
 
 #define LIST_SEPARATOR ", "

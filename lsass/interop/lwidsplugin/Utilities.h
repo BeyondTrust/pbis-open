@@ -5,8 +5,6 @@
 extern "C" {
 #endif
 
-typedef void* PVOID;
-
 long
 LWIAllocateMemory(
     size_t dwSize,
@@ -45,8 +43,6 @@ void LogBuffer(void* Buffer, int Length);
 const char* StateToString(unsigned long State);
 const char* TypeToString(unsigned long Type);
 const char* MacErrorToString(long MacError);
-
-#define MIN(a, b) ((a < b)?(a):(b))
 
 #define BOOL_STRING(x) ((x) ? "Y" : "N")
 
@@ -114,12 +110,6 @@ const char* MacErrorToString(long MacError);
             GOTO_CLEANUP();                             \
         }                                               \
     } while (0)
-
-#define SetFlag(var, flag) \
-            ((var) |= (flag))
-
-#define ClearFlag(var, flag) \
-            ((var) &= ~(flag))
 
 #define FlagOn(var, flag) \
             ((var) & (flag))

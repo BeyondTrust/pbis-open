@@ -51,10 +51,9 @@
 #include <CoreFoundation/CoreFoundation.h>
 
 // Project Headers
-#include "ServerModule.h"
+#include "ServerModulePrivate.h"
 #include "ServerModuleLib.h"
 #include "PlugInShell.h"
-
 #include <DirectoryService/DirServicesTypes.h>
 
 // ----------------------------------------------------------------------------
