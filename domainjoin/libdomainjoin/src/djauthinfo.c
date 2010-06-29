@@ -829,6 +829,9 @@ static void DoLeave(JoinProcessOptions *options, LWException **exc)
 {
     LWException *inner = NULL;
     DJDisableComputerAccount(options->username, options->password, options, &inner);
+#ifndef ENABLE_MINIMAL
+    BOOLEAN nscdRunning = FALSE;
+#endif
 
     if(!LW_IS_OK(inner))
     {
@@ -839,12 +842,21 @@ static void DoLeave(JoinProcessOptions *options, LWException **exc)
     }
 
 #ifndef ENABLE_MINIMAL
-    /* Restart NSCD service to clear any NS switch cached results collected when joined to a domain */
-    DJ_LOG_VERBOSE("Restarting NSCD service to flush stale cached results");
-    DJRestartIfRunning("nscd", &inner);
-    if(!LW_IS_OK(inner) && inner->code == ERROR_FILE_NOT_FOUND)
+    DJGetDaemonStatus("nscd", &nscdRunning, &inner);
+    if(!LW_IS_OK(inner) && (inner->code == ERROR_SERVICE_NOT_FOUND ||
+            inner->code == ERROR_FILE_NOT_FOUND))
+    {
+        //The daemon isn't installed
         LW_HANDLE(&inner);
+        nscdRunning = FALSE;
+    }
     LW_CLEANUP(exc, inner);
+
+    if (nscdRunning)
+    {
+        LW_CLEANUP_CTERR(exc, CTRunCommand("/usr/sbin/nscd -i passwd"));
+        LW_CLEANUP_CTERR(exc, CTRunCommand("/usr/sbin/nscd -i group"));
+    }
 #endif
 
 cleanup:
