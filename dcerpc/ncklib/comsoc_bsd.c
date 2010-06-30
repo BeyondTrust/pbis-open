@@ -1886,6 +1886,7 @@ unsigned16        *session_key_len;
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     unsigned16 key_len = 0;
     unsigned char *key = NULL;
+#if 0
     unsigned32 seed = 0;
     unsigned32 rand = 0;
     unsigned32 i = 0;
@@ -1897,6 +1898,7 @@ unsigned16        *session_key_len;
     seed *= (unsigned32)getpid();
 
     RPC_RANDOM_INIT(seed);
+#endif
 
     /* Default key length is 16 bytes */
     key_len = 16;
@@ -1908,6 +1910,7 @@ unsigned16        *session_key_len;
         goto cleanup;
     }
 
+#if 0
     for (i = 0; i < (key_len / sizeof(rand)); i++)
     {    
         rand = RPC_RANDOM_GET(1, 0xffffffff);
@@ -1918,6 +1921,12 @@ unsigned16        *session_key_len;
 	key[2 + offset] = (unsigned char)((rand >> 8) & 0xff);
 	key[3 + offset] = (unsigned char)((rand) & 0xff);
     }
+#endif
+
+    /* Since we only generate this session key for ncalrpc connections,
+       and UNIX domain sockets are not sniffable by unpriveledged users,
+       we can use a well-known session key of all zeros */
+    memset(key, 0, key_len);
 
     *session_key     = key;
     *session_key_len = key_len;
