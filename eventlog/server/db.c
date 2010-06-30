@@ -648,8 +648,7 @@ SrvWriteEventLog(
 static
 DWORD
 SrvMaintainDB(
-    HANDLE hDB,
-    PBOOLEAN pbSafeInsert
+    HANDLE hDB
     )
 {
     DWORD dwError = 0;
@@ -720,18 +719,12 @@ SrvMaintainDB(
         BAIL_ON_EVT_ERROR(dwError);
     }
 	
-    //Safe to insert record,set bSafeInsert to TRUE
-    *pbSafeInsert = TRUE;
-
     EVT_LOG_VERBOSE("Pruned DB returning");
 
 cleanup:
-
-	return dwError;
+    return dwError;
 
 error:
-
-    *pbSafeInsert = FALSE;
     goto cleanup;
 }
 
@@ -743,34 +736,43 @@ SrvWriteToDB(
     )
 {
     DWORD dwError = 0;
-    BOOLEAN bSafeInsert = TRUE;
     BOOLEAN bRemoveAsNeeded = FALSE;
+    BOOLEAN bInLock = FALSE;
 
-    dwError = EVTGetRemoveAsNeeded(&bRemoveAsNeeded);
+    //Write the eventlog
+    dwError = SrvWriteEventLog(
+                    hDB,
+                    cRecords,
+                    pEventRecords);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (bSafeInsert)
+    ENTER_RW_WRITER_LOCK;
+    bInLock = TRUE;
+    gdwNewEventCount += cRecords;
+    if (gdwNewEventCount >= EVT_MAINTAIN_EVENT_COUNT)
     {
-        //Write the eventlog
-        dwError = SrvWriteEventLog(
-                        hDB,
-                        cRecords,
-                        pEventRecords);
+        dwError = EVTGetRemoveAsNeeded(&bRemoveAsNeeded);
         BAIL_ON_EVT_ERROR(dwError);
+
+        gdwNewEventCount = 0;
     }
+    LEAVE_RW_WRITER_LOCK;
+    bInLock = FALSE;
 
     if (bRemoveAsNeeded)
     {
         //Trim the DB
         EVT_LOG_VERBOSE("Going to trim database .....");
-        dwError = SrvMaintainDB(hDB,&bSafeInsert);
+        dwError = SrvMaintainDB(hDB);
         BAIL_ON_EVT_ERROR(dwError);
     }
 
 error:
-
+    if (bInLock)
+    {
+        LEAVE_RW_WRITER_LOCK;
+    }
     return dwError;
-
 }
 
 
