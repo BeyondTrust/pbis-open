@@ -209,7 +209,7 @@ DOXYGEN_DEPS = \
 	doc/example_fserv_source.doxy \
 	$(DOXYGEN_SOURCE_DEPS)
 
-doc/doxygen-html: $(DOXYGEN_DEPS)
+doc/doxygen-html: $(DOXYGEN_DEPS) doc/doxy-header.html doc/doxy-footer.html doc/doxygen.css
 	$(MKDIR_P) $@ && \
 	cd doc && ( cat Doxyfile; echo GENERATE_HTML=yes ) | $(DOXYGEN) - && \
 	touch doxygen-html
