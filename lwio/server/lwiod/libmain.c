@@ -919,6 +919,7 @@ LWMsgBool
 LwIoDaemonLogIpc (
     LWMsgLogLevel level,
     const char* pszMessage,
+    const char* pszFunction,
     const char* pszFilename,
     unsigned int line,
     void* pData
@@ -929,6 +930,9 @@ LwIoDaemonLogIpc (
 
     switch (level)
     {
+    case LWMSG_LOGLEVEL_ALWAYS:
+        ioLevel = LWIO_LOG_LEVEL_ALWAYS;
+        break;
     case LWMSG_LOGLEVEL_ERROR:
         ioLevel = LWIO_LOG_LEVEL_ERROR;
         break;
@@ -945,7 +949,6 @@ LwIoDaemonLogIpc (
         ioLevel = LWIO_LOG_LEVEL_DEBUG;
         break;
     case LWMSG_LOGLEVEL_TRACE:
-    default:
         ioLevel = LWIO_LOG_LEVEL_TRACE;
         break;
     }

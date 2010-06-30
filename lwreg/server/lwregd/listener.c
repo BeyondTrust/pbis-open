@@ -58,6 +58,7 @@ LWMsgBool
 RegSrvLogIpc (
     LWMsgLogLevel level,
     const char* pszMessage,
+    const char* pszFunction,
     const char* pszFilename,
     unsigned int line,
     void* pData
@@ -68,6 +69,9 @@ RegSrvLogIpc (
 
     switch (level)
     {
+    case LWMSG_LOGLEVEL_ALWAYS:
+        regLevel = REG_LOG_LEVEL_ALWAYS;
+        break;
     case LWMSG_LOGLEVEL_ERROR:
         regLevel = REG_LOG_LEVEL_ERROR;
         break;

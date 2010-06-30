@@ -30,7 +30,7 @@
  *
  * Abstract:
  *
- *        Marshalling context API (public header)
+ *        Application Context API (public header)
  *
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
@@ -45,39 +45,65 @@
 
 /**
  * @file context.h
- * @brief Low-level marshalling context API
+ * @brief Application context API
  */
 
+/**
+ * @defgroup context Application contexts
+ * @ingroup public
+ * @brief Application contexts
+ *
+ * The application context API allows you to customize the way
+ * <tt>lwmsg</tt> integrates with your application.  You can override
+ * the default memory allocator or register a logging callback to
+ * receive logging messages from the library.  Application contexts
+ * can be chained together in a hierarchy, with contexts lower
+ * in the hierarchy inheriting default settings from their parents.
+ */
+
+/*@{*/
+
+/**
+ * @brief Log level
+ * 
+ * Represents the severity of a log message
+ */
 typedef enum LWMsgLogLevel
 {
+    /** Message should always be logged */
+    LWMSG_LOGLEVEL_ALWAYS,
+    /** Error message */
     LWMSG_LOGLEVEL_ERROR,
+    /** Warning message */
     LWMSG_LOGLEVEL_WARNING,
+    /** Informational message */
     LWMSG_LOGLEVEL_INFO,
+    /** Verbose message */
     LWMSG_LOGLEVEL_VERBOSE,
+    /** Debugging message */
     LWMSG_LOGLEVEL_DEBUG,
+    /** Trace message */
     LWMSG_LOGLEVEL_TRACE
 } LWMsgLogLevel;
 
 /**
- * @ingroup marshal
- * @brief A marshaller context
+ * @brief Application context
  *
- * An opaque type which stores all marshalling context information.
- * Contexts are not inherently thread-safe and should not be
- * concurrently modified.
+ * An opaque type which stores all application context information.
  */
 typedef struct LWMsgContext LWMsgContext;
 
 /**
- * @ingroup marshal
  * @brief Callback to allocate a memory object
  * 
- * A callback used by the marshaller to allocate memory.
- * The allocated space must initialized to zero.
+ * A callback used whenever memory that needs to be freed by
+ * the user is allocated -- for example, when unmarshalling
+ * a data structure.  The allocated space must initialized to zero.
+ * A request for zero bytes should not return <tt>NULL</tt>.
  * 
- * @param size the number of bytes to allocate
- * @param out the allocated object
- * @param data the user data pointer registered by lwmsg_context_set_memory_functions()
+ * @param[in] size the number of bytes to allocate
+ * @param[out] out the allocated object
+ * @param[in] data the user data pointer registered by #lwmsg_context_set_memory_functions()
  * @lwmsg_status
  * @lwmsg_success
  * @lwmsg_memory
@@ -91,13 +117,12 @@ typedef LWMsgStatus
     );
 
 /**
- * @ingroup marshal
  * @brief Callback to free a memory object
  *
- * A callback used by the marshaller to free allocated memory.
+ * A callback used to free allocated memory.
  *
- * @param object the memory object to free
- * @param data the user data pointer registered by lwmsg_context_set_memory_functions()
+ * @param[in,out] object the memory object to free
+ * @param[in] data the user data pointer registered by lwmsg_context_set_memory_functions()
  */ 
 typedef void
 (*LWMsgFreeFunction) (
@@ -106,11 +131,10 @@ typedef void
     );
 
 /**
- * @ingroup marshal
  * @brief Callback to reallocate a memory object
  *
- * A callback used by the marshaller to reallocate a block of memory.
- * If the reallocation grows the block, the additional space must be
+ * A callback used to reallocate a block of memory. If the
+ * reallocation grows the block, the additional space must be
  * initialized to zero.  If object is NULL, it should behave
  * as a simple allocation with the same semantics as #LWMsgAllocFunction.
  * 
@@ -133,24 +157,45 @@ typedef LWMsgStatus
     void* data
     );
 
+#ifndef DOXYGEN
 typedef LWMsgStatus
 (*LWMsgContextDataFunction) (
     const char* key,
     void** out_value,
     void* data
     );
+#endif
 
+/**
+ * @brief Logging callback
+ *
+ * A callback which is invoked by <tt>lwmsg</tt> when it has something to log.
+ * The function should indicate with its return value whether the message
+ * was actually logged (#LWMSG_TRUE) or filtered (#LWMSG_FALSE).  If the message
+ * parameter is NULL, the function should not log anything but still return
+ * a value indicating whether it would have logged at the given log level.  This
+ * mechanism is used to avoid expensive calculations to produce log messages
+ * that would be filtered out anyway.
+ *
+ * @param[in] level the level of message
+ * @param[in] message the message
+ * @param[in] name the name of the function that logged the message
+ * @param[in] filename the name of the source file where the message was logged
+ * @param[in] line the line number where the message was logged
+ * @param[in] data a user data pointer registered with #lwmsg_context_set_log_function().
+ * @return #LWMSG_TRUE if a message was or would be logged, #LWMSG_FALSE otherwise
+ */
 typedef LWMsgBool
 (*LWMsgLogFunction) (
     LWMsgLogLevel level,
     const char* message,
+    const char* function,
     const char* filename,
     unsigned int line,
     void* data
     );
 
 /**
- * @ingroup marshal
  * @brief Create a new context
  *
  * Creates a new context with an optional parent.
@@ -159,7 +204,10 @@ typedef LWMsgBool
  *
  * @param parent an optional parent context
  * @param context the created context
- * @return LWMSG_STATUS_SUCCESS on success or LWMSG_STATUS_MEMORY if out of memory
+ * @lwmsg_status
+ * @lwmsg_success
+ * @lwmsg_memory
+ * @lwmsg_endstatus
  */
 LWMsgStatus
 lwmsg_context_new(
@@ -168,7 +216,6 @@ lwmsg_context_new(
     );
 
 /**
- * @ingroup marshal
  * @brief Delete a context
  *
  * Deletes a context.  It is the caller's responsibility to ensure that
@@ -182,18 +229,17 @@ lwmsg_context_delete(
     );
 
 /**
- * @ingroup marshal
  * @brief Set context memory management functions
  *
  * Sets the memory management callbacks associated with the context.
  * If a function is set to null and a parent context is available,
  * the function in the parent context will be used.
  *
- * @param context the context
- * @param alloc a callback to allocate memory
- * @param free a callback to free memory
- * @param realloc a callback to reallocate a memory block
- * @param data a user data pointer which will be passed to the callbacks when they are invoked
+ * @param[in,out] context the context
+ * @param[in] alloc a callback to allocate memory
+ * @param[in] free a callback to free memory
+ * @param[in] realloc a callback to reallocate a memory block
+ * @param[in] data a user data pointer which will be passed to the callbacks when they are invoked
  */
 void
 lwmsg_context_set_memory_functions(
@@ -204,6 +250,19 @@ lwmsg_context_set_memory_functions(
     void* data
     );
 
+/**
+ * @brief Get context memory management functions
+ *
+ * Gets the memory management callbacks associated with the context.
+ * If a given function was not explicitly set, the default function
+ * provided by <tt>lwmsg</tt> will be returned.
+ *
+ * @param[in] context the context
+ * @param[out] alloc a callback to allocate memory
+ * @param[out] free a callback to free memory
+ * @param[out] realloc a callback to reallocate a memory block
+ * @param[out] data a user data pointer which should be passed to the callbacks when they are invoked
+ */
 void
 lwmsg_context_get_memory_functions(
     const LWMsgContext* context,
@@ -213,13 +272,25 @@ lwmsg_context_get_memory_functions(
     void** data
     );
 
+#ifndef DOXYGEN
 void
 lwmsg_context_set_data_function(
     LWMsgContext* context,
     LWMsgContextDataFunction fn,
     void* data
     );
+#endif
 
+/**
+ * @brief Set log call function
+ *
+ * Sets a callback function which will be called whenever <tt>lwmsg</tt>
+ * wishes to log a message.
+ *
+ * @param[in,out] context the context
+ * @param[in] logfn the logging function
+ * @param[in] data a user data pointer that will be passed to the logging function
+ */
 void
 lwmsg_context_set_log_function(
     LWMsgContext* context,
@@ -227,6 +298,7 @@ lwmsg_context_set_log_function(
     void* data
     );
 
+#ifndef DOXYGEN
 LWMsgStatus
 lwmsg_context_alloc(
     const LWMsgContext* context,
@@ -248,22 +320,25 @@ lwmsg_context_realloc(
     size_t new_size,
     void** new_object
     );
+#endif
     
 /**
- * @ingroup marshal
  * @brief Fetch detailed error message
  *
- * Retrieves a human-readable description of the last marshalling error which occured.
- * The returned string becomes undefined when another function is called which uses this
- * context or the context is deleted.
+ * Retrieves a human-readable description of the last error which occured
+ * when calling a function on the context.  The returned string becomes 
+ * undefined when another function called on the context returns an error.
  *
- * @param context the context
- * @param status the status code of the most recent error
+ * @param[in] context the context
+ * @param[in] status the status code of the most recent error
+ * @return an error string
  */
 const char*
 lwmsg_context_get_error_message(
     LWMsgContext* context,
     LWMsgStatus status
     );
+
+/*@}*/
 
 #endif

@@ -593,6 +593,7 @@ LWMsgBool
 LwSmLogIpc (
     LWMsgLogLevel level,
     const char* pszMessage,
+    const char* pszFunction,
     const char* pszFilename,
     unsigned int line,
     void* pData
@@ -603,6 +604,9 @@ LwSmLogIpc (
 
     switch (level)
     {
+    case LWMSG_LOGLEVEL_ALWAYS:
+        smLevel = LW_SM_LOG_LEVEL_ALWAYS;
+        break;
     case LWMSG_LOGLEVEL_ERROR:
         smLevel = LW_SM_LOG_LEVEL_ERROR;
         break;
@@ -619,7 +623,6 @@ LwSmLogIpc (
         smLevel = LW_SM_LOG_LEVEL_DEBUG;
         break;
     case LWMSG_LOGLEVEL_TRACE:
-    default:
         smLevel = LW_SM_LOG_LEVEL_TRACE;
         break;
     }

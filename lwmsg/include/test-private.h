@@ -106,6 +106,7 @@ LWMsgBool
 lwmsg_test_log_function(
     LWMsgLogLevel level,
     const char* message,
+    const char* function,
     const char* filename,
     unsigned int line,
     void* data

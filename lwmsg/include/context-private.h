@@ -88,6 +88,7 @@ lwmsg_context_log(
     const LWMsgContext* context,
     LWMsgLogLevel level,
     const char* message,
+    const char* function,
     const char* filename,
     unsigned int line
     );
@@ -96,6 +97,7 @@ void
 lwmsg_context_log_printf(
     const LWMsgContext* context,
     LWMsgLogLevel level,
+    const char* function,
     const char* filename,
     unsigned int line,
     const char* format,
@@ -129,8 +131,9 @@ lwmsg_memlist_context(
 }
 
 #define LWMSG_LOG(context, level, ...) \
-    (lwmsg_context_log_printf((context), (level), __FILE__, __LINE__, __VA_ARGS__))
+    (lwmsg_context_log_printf((context), (level), __func__, __FILE__, __LINE__, __VA_ARGS__))
 
+#define LWMSG_LOG_ALWAYS(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_ALWAYS, __VA_ARGS__)
 #define LWMSG_LOG_ERROR(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_ERROR, __VA_ARGS__)
 #define LWMSG_LOG_WARNING(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_WARNING, __VA_ARGS__)
 #define LWMSG_LOG_INFO(context, ...) LWMSG_LOG(context, LWMSG_LOGLEVEL_INFO, __VA_ARGS__)

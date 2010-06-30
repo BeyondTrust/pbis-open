@@ -65,6 +65,7 @@ LWMsgBool
 LsaSrvLogIpc (
     LWMsgLogLevel level,
     const char* pszMessage,
+    const char* pszFunction,
     const char* pszFilename,
     unsigned int line,
     void* pData
@@ -75,6 +76,9 @@ LsaSrvLogIpc (
 
     switch (level)
     {
+    case LWMSG_LOGLEVEL_ALWAYS:
+        lsaLevel = LSA_LOG_LEVEL_ALWAYS;
+        break;
     case LWMSG_LOGLEVEL_ERROR:
         lsaLevel = LSA_LOG_LEVEL_ERROR;
         break;
@@ -91,7 +95,6 @@ LsaSrvLogIpc (
         lsaLevel = LSA_LOG_LEVEL_DEBUG;
         break;
     case LWMSG_LOGLEVEL_TRACE:
-    default:
         lsaLevel = LSA_LOG_LEVEL_TRACE;
         break;
     }

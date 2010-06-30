@@ -55,6 +55,7 @@ LWMsgBool
 LWNetSrvLogIpc (
     LWMsgLogLevel level,
     const char* pszMessage,
+    const char* pszFunction,
     const char* pszFilename,
     unsigned int line,
     void* pData
@@ -65,6 +66,9 @@ LWNetSrvLogIpc (
 
     switch (level)
     {
+    case LWMSG_LOGLEVEL_ALWAYS:
+        dwLevel = LWNET_LOG_LEVEL_ALWAYS;
+        break;
     case LWMSG_LOGLEVEL_ERROR:
         dwLevel = LWNET_LOG_LEVEL_ERROR;
         break;
@@ -81,7 +85,6 @@ LWNetSrvLogIpc (
         dwLevel = LWNET_LOG_LEVEL_DEBUG;
         break;
     case LWMSG_LOGLEVEL_TRACE:
-    default:
         dwLevel = LWNET_LOG_LEVEL_TRACE;
         break;
     }

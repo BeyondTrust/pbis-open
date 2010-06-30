@@ -302,6 +302,7 @@ void
 lwmsg_context_log(
     const LWMsgContext* context,
     LWMsgLogLevel level,
+    const char* function,
     const char* message,
     const char* filename,
     unsigned int line
@@ -314,7 +315,7 @@ lwmsg_context_log(
 
     if (logfn)
     {
-        logfn(level, message, filename, line, logfndata);
+        logfn(level, message, function, filename, line, logfndata);
     }
 }
 
@@ -322,6 +323,7 @@ void
 lwmsg_context_log_printf(
     const LWMsgContext* context,
     LWMsgLogLevel level,
+    const char* function,
     const char* filename,
     unsigned int line,
     const char* format,
@@ -343,7 +345,7 @@ lwmsg_context_log_printf(
 
         if (message)
         {
-            logfn(level, message, filename, line, logfndata);
+            logfn(level, message, function, filename, line, logfndata);
             free(message);
         }
     }
@@ -457,7 +459,7 @@ lwmsg_context_would_log(
 
     if (logfn)
     {
-        return logfn(level, NULL, NULL, 0, logfndata);
+        return logfn(level, NULL, NULL, NULL, 0, logfndata);
     }
     else
     {

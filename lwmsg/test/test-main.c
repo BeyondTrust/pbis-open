@@ -146,6 +146,7 @@ LWMsgBool
 lwmsg_test_log_function(
     LWMsgLogLevel level,
     const char* message,
+    const char* function,
     const char* filename,
     unsigned int line,
     void* data
@@ -158,6 +159,7 @@ lwmsg_test_log_function(
     {
         switch (level)
         {
+        case LWMSG_LOGLEVEL_ALWAYS:
         case LWMSG_LOGLEVEL_ERROR:
             /* MoonUnit does not have an error loglevel because errors
                are considered a test failure.  Log a warning
@@ -182,7 +184,7 @@ lwmsg_test_log_function(
             break;
         }
     
-        Mu_Interface_Event(filename, line, mu_level, is_error ? "ERROR: %s" : "%s", message);
+        Mu_Interface_Event(filename, line, mu_level, is_error ? "ERROR: %s():%s" : "%s():%s", function, message);
     }
 
     return LWMSG_TRUE;
