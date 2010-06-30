@@ -1201,7 +1201,6 @@ do_purge()
 {
     log_info "Purge uninstall started"
     log_info ""
-    stop_daemons
 
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
@@ -1209,6 +1208,8 @@ do_purge()
         $domainjoin_cli configure --disable pam > /dev/null 2>&1
         $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
     fi
+
+    stop_daemons
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
 
