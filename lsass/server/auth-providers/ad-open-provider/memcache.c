@@ -216,9 +216,9 @@ MemCacheBackupRoutine(
     {
         while (!pConn->bNeedBackup && !pConn->bNeedShutdown)
         {
-            dwError = pthread_cond_wait(
+            dwError = LwMapErrnoToLwError(pthread_cond_wait(
                             &pConn->signalBackup,
-                            &pConn->backupMutex);
+                            &pConn->backupMutex));
             BAIL_ON_LSA_ERROR(dwError);
         }
         if (!pConn->bNeedBackup)
@@ -231,10 +231,10 @@ MemCacheBackupRoutine(
         timeout.tv_nsec = 0;
         while (!pConn->bNeedShutdown && time(NULL) < timeout.tv_sec)
         {
-            dwError = pthread_cond_timedwait(
+            dwError = LwMapErrnoToLwError(pthread_cond_timedwait(
                             &pConn->signalShutdown,
                             &pConn->backupMutex,
-                            &timeout);
+                            &timeout));
             if (dwError == ETIMEDOUT)
             {
                 dwError = 0;
@@ -272,7 +272,7 @@ MemCacheOpen(
                     (PVOID*)&pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = pthread_rwlock_init(&pConn->lock, NULL);
+    dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pConn->lock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
     pConn->bLockCreated = TRUE;
 
@@ -384,31 +384,31 @@ MemCacheOpen(
     dwError = MemCacheLoadFile((LSA_DB_HANDLE)pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = pthread_mutex_init(
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(
             &pConn->backupMutex,
-            NULL);
+            NULL));
     BAIL_ON_LSA_ERROR(dwError);
     pConn->bBackupMutexCreated = TRUE;
 
     pConn->dwBackupDelay = BACKUP_DELAY;
 
     pConn->bNeedBackup = FALSE;
-    dwError = pthread_cond_init(
+    dwError = LwMapErrnoToLwError(pthread_cond_init(
                     &pConn->signalBackup,
-                    NULL);
+                    NULL));
     pConn->bSignalBackupCreated = TRUE;
 
     pConn->bNeedShutdown = FALSE;
-    dwError = pthread_cond_init(
+    dwError = LwMapErrnoToLwError(pthread_cond_init(
                     &pConn->signalShutdown,
-                    NULL);
+                    NULL));
     pConn->bSignalShutdownCreated = TRUE;
 
-    dwError = pthread_create(
+    dwError = LwMapErrnoToLwError(pthread_create(
                     &pConn->backupThread,
                     NULL,
                     MemCacheBackupRoutine,
-                    pConn);
+                    pConn));
     BAIL_ON_LSA_ERROR(dwError);
     pConn->bBackupThreadCreated = TRUE;
 
@@ -545,8 +545,11 @@ MemCacheLoadFile(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (pConn->bSignalBackupCreated)
+    {
+        dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
 cleanup:
     LEAVE_RW_LOCK(&pConn->lock, bInLock);
@@ -769,18 +772,18 @@ MemCacheSafeClose(
         {
             // Notify the backup thread that it needs to shutdown. It will
             // backup one last time if necessary.
-            dwError = pthread_mutex_lock(&pConn->backupMutex);
+            dwError = LwMapErrnoToLwError(pthread_mutex_lock(&pConn->backupMutex));
             LSA_ASSERT(dwError == 0);
             pConn->bNeedShutdown = TRUE;
-            dwError = pthread_cond_signal(&pConn->signalBackup);
+            dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
             LSA_ASSERT(dwError == 0);
-            dwError = pthread_cond_signal(&pConn->signalShutdown);
+            dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalShutdown));
             LSA_ASSERT(dwError == 0);
-            dwError = pthread_mutex_unlock(&pConn->backupMutex);
+            dwError = LwMapErrnoToLwError(pthread_mutex_unlock(&pConn->backupMutex));
             LSA_ASSERT(dwError == 0);
 
             // Wait for the thread to exit
-            dwError = pthread_join(pConn->backupThread, &pError);
+            dwError = LwMapErrnoToLwError(pthread_join(pConn->backupThread, &pError));
             LSA_ASSERT(dwError == 0);
             LSA_ASSERT(pError == NULL);
         }
@@ -807,21 +810,21 @@ MemCacheSafeClose(
 
         if (pConn->bLockCreated)
         {
-            pthread_rwlock_destroy(&pConn->lock);
+            LwMapErrnoToLwError(pthread_rwlock_destroy(&pConn->lock));
         }
         if (pConn->bBackupMutexCreated)
         {
-            dwError = pthread_mutex_destroy(&pConn->backupMutex);
+            dwError = LwMapErrnoToLwError(pthread_mutex_destroy(&pConn->backupMutex));
             LSA_ASSERT(dwError == 0);
         }
         if (pConn->bSignalBackupCreated)
         {
-            dwError = pthread_cond_destroy(&pConn->signalBackup);
+            dwError = LwMapErrnoToLwError(pthread_cond_destroy(&pConn->signalBackup));
             LSA_ASSERT(dwError == 0);
         }
         if (pConn->bSignalShutdownCreated)
         {
-            dwError = pthread_cond_destroy(&pConn->signalShutdown);
+            dwError = LwMapErrnoToLwError(pthread_cond_destroy(&pConn->signalShutdown));
             LSA_ASSERT(dwError == 0);
         }
 
@@ -1133,7 +1136,7 @@ MemCacheRemoveUserBySid(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1166,7 +1169,7 @@ MemCacheRemoveGroupBySid(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1292,7 +1295,7 @@ MemCacheEmptyCache(
     if (bMutexLocked)
     {
         pConn->bNeedBackup = TRUE;
-        dwError = pthread_cond_signal(&pConn->signalBackup);
+        dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1698,7 +1701,7 @@ MemCacheStoreObjectEntries(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -3000,7 +3003,7 @@ MemCacheStoreGroupMembership(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -3181,7 +3184,7 @@ MemCacheStoreGroupsForUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -3798,7 +3801,7 @@ MemCacheStorePasswordVerifier(
     BAIL_ON_LSA_ERROR(dwError);
 
     pConn->bNeedBackup = TRUE;
-    dwError = pthread_cond_signal(&pConn->signalBackup);
+    dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
