@@ -925,8 +925,8 @@ LwIoDaemonLogIpc (
     void* pData
     )
 {
-    LWIO_LOG_LEVEL ioLevel;
-    LWMsgBool result;
+    LWIO_LOG_LEVEL ioLevel = LWIO_LOG_LEVEL_DEBUG;
+    LWMsgBool result = LWMSG_FALSE;
 
     switch (level)
     {

@@ -71,8 +71,8 @@ LsaSrvLogIpc (
     void* pData
     )
 {
-    LsaLogLevel lsaLevel;
-    LWMsgBool result;
+    LsaLogLevel lsaLevel = LSA_LOG_LEVEL_DEBUG;
+    LWMsgBool result = LWMSG_FALSE;
 
     switch (level)
     {

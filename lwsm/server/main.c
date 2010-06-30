@@ -599,8 +599,8 @@ LwSmLogIpc (
     void* pData
     )
 {
-    LW_SM_LOG_LEVEL smLevel;
-    LWMsgBool result;
+    LW_SM_LOG_LEVEL smLevel = LW_SM_LOG_LEVEL_DEBUG;
+    LWMsgBool result = LWMSG_FALSE;
 
     switch (level)
     {

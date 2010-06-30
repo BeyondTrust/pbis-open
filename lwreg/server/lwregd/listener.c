@@ -64,8 +64,8 @@ RegSrvLogIpc (
     void* pData
     )
 {
-    RegLogLevel regLevel;
-    LWMsgBool result;
+    RegLogLevel regLevel = REG_LOG_LEVEL_DEBUG;
+    LWMsgBool result = LWMSG_FALSE;
 
     switch (level)
     {
