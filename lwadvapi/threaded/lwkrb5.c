@@ -332,6 +332,7 @@ LwSetupMachineSession(
     DWORD dwError = LW_ERROR_SUCCESS;
     PSTR pszHostKeytabFile = NULL;
     PSTR pszKrb5CcPath = NULL;
+    PSTR pszKrb5CcPathNew = NULL;
     PSTR pszDomname = NULL;
     PSTR pszRealmCpy = NULL;
     PSTR pszMachPrincipal = NULL;
@@ -342,6 +343,13 @@ LwSetupMachineSession(
 
     dwError = LwKrb5GetSystemCachePath(&pszKrb5CcPath);
     BAIL_ON_LW_ERROR(dwError);
+
+    if (!strncmp(pszKrb5CcPath, "FILE:", sizeof("FILE:") - 1))
+    {
+        dwError = LwAllocateStringPrintf(&pszKrb5CcPathNew, "%s.new",
+                                          pszKrb5CcPath);
+        BAIL_ON_LW_ERROR(dwError);
+    }
 
     dwError = LwAllocateString(pszRealm, &pszRealmCpy);
     BAIL_ON_LW_ERROR(dwError);
@@ -356,15 +364,22 @@ LwSetupMachineSession(
     LwStrToLower(pszDomname);
 
     dwError = LwKrb5GetTgt(
-    		      pszMachPrincipal,
+                  pszMachPrincipal,
                   pszPassword,
-                  pszKrb5CcPath,
+                  pszKrb5CcPathNew ? pszKrb5CcPathNew : pszKrb5CcPath,
                   &dwGoodUntilTime);
     BAIL_ON_LW_ERROR(dwError);
 
+    if (pszKrb5CcPathNew)
+    {
+        dwError = LwMoveFile(pszKrb5CcPathNew + sizeof("FILE:") - 1,
+                        pszKrb5CcPath + sizeof("FILE:") - 1);
+        BAIL_ON_LW_ERROR(dwError);
+    }
+
     if (pdwGoodUntilTime)
     {
-    	*pdwGoodUntilTime = dwGoodUntilTime;
+        *pdwGoodUntilTime = dwGoodUntilTime;
     }
 
 cleanup:
@@ -374,6 +389,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszRealmCpy);
     LW_SAFE_FREE_STRING(pszKrb5CcPath);
     LW_SAFE_FREE_STRING(pszHostKeytabFile);
+    LW_SAFE_FREE_STRING(pszKrb5CcPathNew);
     
     return (dwError);
     
@@ -381,10 +397,10 @@ error:
 
     if (pdwGoodUntilTime)
     {
-    	*pdwGoodUntilTime = 0;
+        *pdwGoodUntilTime = 0;
     }
 
-	goto cleanup;
+    goto cleanup;
 }
 
 DWORD
