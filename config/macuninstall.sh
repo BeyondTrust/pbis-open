@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script completely uninstalls all Likewise 5.0 products from the Mac
+# This script completely uninstalls all Likewise products from the Mac
 
 warn()
 {
@@ -223,7 +223,7 @@ usage()
 {
     echo "usage: `basename $0` [--test]"
     echo ""
-    echo "    This script completely uninstalls all Likewise 5.0 products from the Mac."
+    echo "    This script completely uninstalls all Likewise products from the Mac."
     echo ""
     exit 1
 }
