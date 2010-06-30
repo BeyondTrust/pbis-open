@@ -50,6 +50,7 @@
 extern pthread_t gSignalHandlerThread;
 extern PVOID     pgSignalHandlerThread;
 extern pthread_rwlock_t g_dbLock;
+extern DWORD gdwNewEventCount;
 
 #define ENTER_RW_READER_LOCK pthread_rwlock_rdlock(&g_dbLock)
 #define LEAVE_RW_READER_LOCK pthread_rwlock_unlock(&g_dbLock)
@@ -68,5 +69,6 @@ extern pthread_rwlock_t g_dbLock;
 #define EVT_DEFAULT_MAX_RECORDS     100000	//100k,converting it 100 * 1000
 #define EVT_DEFAULT_MAX_AGE         90 //days
 #define EVT_DEFAULT_PURGE_INTERVAL  1 //days
+#define EVT_MAINTAIN_EVENT_COUNT  50
 
 #endif /* __SERVER_EXTERNS_H__ */
