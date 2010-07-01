@@ -872,15 +872,15 @@ determine_upgrade_type()
              -n "`grep '^VERSION=5.2' $VERSIONFILE`" -o \
              -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
             UPGRADING_FROM_5_0123=1
-            UPGRADEDIR5=`get_prefix_dir`/share/config/oldconfig
+            UPGRADEDIR5=/tmp/lw-upgrade
             mkdir -p "${UPGRADEDIR5}"
-            log_info "Preserving 5.x (0 <= x <= 3) configuration."
+            log_info "Preserving 5.x (0 <= x <= 3) configuration in ${UPGRADEDIR5}."
         else
             if [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
                 UPGRADING_FROM_5_4=1
-                UPGRADEDIR5=`get_prefix_dir`/share/config/oldconfig
+                UPGRADEDIR5=/tmp/lw-upgrade
                 mkdir -p "${UPGRADEDIR5}"
-                log_info "Preserving 5.4 configuration."
+                log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
             fi
         fi
     fi
@@ -933,20 +933,20 @@ import_5_0123_file()
     if [ -f $SOURCE ]; then
         $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
         if [ $? -ne 0 ]; then
-            log_info "Error converting ${CONFFILE} from older configuration."
+            log_info "Error converting ${SOURCE} to new format."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
             $REGIMPORT $DEST > /dev/null 2>&1
             if [ $? -ne 0 ]; then
-                log_info "Error importing older configuration ${REGFILE} into the registry."
+                log_info "Error importing ${DEST} into the registry."
                 return 1
             fi
         fi
         return 0
     fi
-    log_info "Unable to find configuration ${CONFFILE}."
+    log_info "Unable to find ${SOURCE}."
     return 1
 }
 
