@@ -2624,7 +2624,7 @@ rpc__bsd_socket_transport_info_equal(
         (bsd_info2 != NULL &&
          bsd_info1->session_key.length == bsd_info2->session_key.length &&
          !memcmp(bsd_info1->session_key.data, bsd_info2->session_key.data, bsd_info1->session_key.length) &&
-         bsd_info1->peer_uid == bsd_info2->peer_gid &&
+         bsd_info1->peer_uid == bsd_info2->peer_uid &&
          bsd_info1->peer_gid == bsd_info2->peer_gid);
 }
 
