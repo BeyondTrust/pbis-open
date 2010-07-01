@@ -1134,6 +1134,12 @@ do_postinstall()
 
     # Restore configuration if still joined to a domain
     restore_configuration
+
+    if [ -n "${UPGRADING_FROM_5_0123}" -o -n "${UPGRADING_FROM_5_4}" ]; then
+        log_info "Your Likewise software has been successfully upgraded, but the nsswitch "
+        log_info "file has changed. Please reboot your system so your running processes pick "
+        log_info "up the new copy."
+    fi
 }
 
 scrub_prefix()
