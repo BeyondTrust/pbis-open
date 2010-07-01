@@ -543,14 +543,17 @@ DNSUpdateSecure(
                     pDNSSecureUpdateResponse,
                     &dwResponseCode);
         BAIL_ON_LWDNS_ERROR(dwError);
+
+        dwError = DNSMapRCode(dwResponseCode);
+        BAIL_ON_LWDNS_ERROR(dwError);
     }
     else
     {
+        dwError = DNSMapRCode(dwResponseCode);
+        BAIL_ON_LWDNS_ERROR(dwError);
+
         LWDNS_LOG_INFO("DNS Update (in-secure) succeeded");
     }
-
-    dwError = DNSMapRCode(dwResponseCode);
-    BAIL_ON_LWDNS_ERROR(dwError);
 
 cleanup:
 
