@@ -13,7 +13,7 @@ PACKAGES="\
     srvsvc domainjoin lwupgrade \
     lwnetapi lwtools \
     "
-OBSOLETE_PACKAGES="lwmgmt"
+OBSOLETE_PACKAGES="lwmgmt lwreg-32bit"
 
 DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
