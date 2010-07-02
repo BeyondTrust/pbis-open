@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,56 +33,27 @@
  *
  * Module Name:
  *
- *        filelog.h
+ *        defs.h
  *
  * Abstract:
  *
  *        Likewise IO (LWIO)
  *
- *        File Logging API
+ *        Definitions
  *
- * Authors: Sriram Nambakam (snambakam@likewisesoftware.com)
- * 
+ *        Utilities
+ *
+ * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *
  */
 
-#ifndef __FILELOG_P_H__
-#define __FILELOG_P_H__
+#define LWIO_ALWAYS_TAG  "ALWAYS"
+#define LWIO_ERROR_TAG   "ERROR"
+#define LWIO_WARN_TAG    "WARNING"
+#define LWIO_INFO_TAG    "INFO"
+#define LWIO_VERBOSE_TAG "VERBOSE"
+#define LWIO_DEBUG_TAG   "DEBUG"
+#define LWIO_TRACE_TAG   "TRACE"
+#define LWIO_UNKNOWN_TAG "UNKNOWN"
 
-typedef struct
-{ 
-    PSTR  pszFilePath;
-    FILE* fp;
-} SMB_FILE_LOG, *PSMB_FILE_LOG;
-
-DWORD
-LwioOpenFileLog(
-    PCSTR       pszFilePath,
-    LWIO_LOG_LEVEL maxAllowedLogLevel,
-    PHANDLE     phLog
-    );
-
-VOID
-SMBLogToFile(
-    HANDLE      hLog,
-    LWIO_LOG_LEVEL dwLogLevel,
-    PCSTR       pszFormat,
-    va_list     msgList
-    );
-
-DWORD
-LwioGetFileLogInfo(
-    HANDLE hLog,
-    PLWIO_LOG_INFO* ppLogInfo
-    );
-
-DWORD
-LwioCloseFileLog(
-    HANDLE hLog
-    );
-
-VOID
-SMBFreeFileLogInfo(
-    PSMB_FILE_LOG pFileLog
-    );
-
-#endif /* __FILELOG_P_H__ */
+#define LWIO_LOG_TIME_FORMAT "%Y%m%d%H%M%S"

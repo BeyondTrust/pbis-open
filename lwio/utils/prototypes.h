@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,28 +33,130 @@
  *
  * Module Name:
  *
- *        syslog.h
+ *        prototypes.h
  *
  * Abstract:
  *
  *        Likewise IO (LWIO)
- * 
- *        Syslog Logging API
  *
- * Authors: Sriram Nambakam (snambakam@likewisesoftware.com)
- * 
+ *        Prototypes
+ *
+ *        Utilities
+ *
+ * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *
  */
 
-#ifndef __SYSLOG_P_H__
-#define __SYSLOG_P_H__
+// consolelog.c
 
-typedef struct
-{ 
-    PSTR    pszIdentifier;
-    BOOLEAN bOpened;
-    DWORD   dwFacility;
-    DWORD   dwOptions;
-} SMB_SYS_LOG, *PSMB_SYS_LOG;
+DWORD
+LwioOpenConsoleLog(
+    LWIO_LOG_LEVEL maxAllowedLogLevel,
+    PHANDLE     phLog
+    );
+
+VOID
+SMBLogToConsole(
+    HANDLE      hLog,
+    LWIO_LOG_LEVEL dwLogLevel,
+    PCSTR       pszFormat,
+    va_list     msgList
+    );
+
+DWORD
+LwioCloseConsoleLog(
+    HANDLE hLog
+    );
+
+VOID
+SMBFreeConsoleLogInfo(
+    PSMB_CONSOLE_LOG pFileLog
+    );
+
+// filelog.c
+
+DWORD
+LwioOpenFileLog(
+    PCSTR       pszFilePath,
+    LWIO_LOG_LEVEL maxAllowedLogLevel,
+    PHANDLE     phLog
+    );
+
+VOID
+SMBLogToFile(
+    HANDLE      hLog,
+    LWIO_LOG_LEVEL dwLogLevel,
+    PCSTR       pszFormat,
+    va_list     msgList
+    );
+
+DWORD
+LwioGetFileLogInfo(
+    HANDLE hLog,
+    PLWIO_LOG_INFO* ppLogInfo
+    );
+
+DWORD
+LwioCloseFileLog(
+    HANDLE hLog
+    );
+
+VOID
+SMBFreeFileLogInfo(
+    PSMB_FILE_LOG pFileLog
+    );
+
+// logger.c
+
+DWORD
+LwioSetupLogging(
+    HANDLE              hLog,
+    LWIO_LOG_LEVEL         maxAllowedLogLevel,
+    PFN_LWIO_LOG_MESSAGE pfnLogger
+    );
+
+VOID
+LwioResetLogging(
+    VOID
+    );
+
+// sysfuncs.c
+
+#if !HAVE_DECL_ISBLANK
+int isblank(int c);
+#endif
+
+void
+lsmb_vsyslog(
+    int priority,
+    const char *format,
+    va_list ap
+    );
+
+#if defined(__LWI_AIX__) || defined(__LWI_HP_UX__)
+
+#if !defined(HAVE_RPL_MALLOC)
+
+void*
+rpl_malloc(
+    size_t n
+    );
+
+#endif /* ! HAVE_RPL_MALLOC */
+
+#if !defined(HAVE_RPL_REALLOC)
+
+void*
+rpl_realloc(
+    void* buf,
+    size_t n
+    );
+
+#endif /* ! HAVE_RPL_REALLOC */
+
+#endif /* defined(__LWI_AIX__) || defined(__LWI_HP_UX__) */
+
+// syslog.c
 
 DWORD
 LwioOpenSyslog(
@@ -67,7 +169,7 @@ LwioOpenSyslog(
 
 VOID
 LwioSetSyslogMask(
-    LWIO_LOG_LEVEL logLevel
+    LWIO_LOG_LEVEL maxLogLevel
     );
 
 VOID
@@ -88,4 +190,4 @@ SMBFreeSysLogInfo(
     PSMB_SYS_LOG pSysLog
     );
 
-#endif /* __SYSLOG_P_H__ */
+

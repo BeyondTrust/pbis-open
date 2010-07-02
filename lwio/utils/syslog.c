@@ -87,7 +87,7 @@ LwioOpenSyslog(
     
     pSyslog->bOpened = TRUE;
 
-    LwioSetSyslogMask(maxAllowedLogLevel);
+    LwioSetSyslogMask(LWIO_LOG_LEVEL_DEBUG);
     
     dwError = LwioSetupLogging(
                     (HANDLE)pSyslog,
@@ -118,44 +118,39 @@ error:
     
 VOID
 LwioSetSyslogMask(
-    LWIO_LOG_LEVEL logLevel
+    LWIO_LOG_LEVEL maxLogLevel
     )
 {
-    DWORD dwSysLogLevel;
+    int mask = LOG_UPTO(LOG_INFO);
 
-    switch (logLevel)
+    switch (maxLogLevel)
     {
-        case LWIO_LOG_LEVEL_ALWAYS:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
         case LWIO_LOG_LEVEL_ERROR:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_ERR);
+
+            mask = LOG_UPTO(LOG_ERR);
+
             break;
-        }
 
         case LWIO_LOG_LEVEL_WARNING:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_WARNING);
-            break;
-        }
 
-        case LWIO_LOG_LEVEL_INFO:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
+            mask = LOG_UPTO(LOG_WARNING);
+
             break;
-        }
+
+        case LWIO_LOG_LEVEL_DEBUG:
+
+            mask = LOG_UPTO(LOG_DEBUG);
+
+            break;
 
         default:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
+
+            mask = LOG_UPTO(LOG_INFO);
+
             break;
-        }
     }
 
-    setlogmask(dwSysLogLevel);
+    setlogmask(mask);
 }
 
 VOID
@@ -169,33 +164,34 @@ SMBLogToSyslog(
     switch (logLevel)
     {
         case LWIO_LOG_LEVEL_ALWAYS:
-        {
+
             lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
             break;
-        }
+
         case LWIO_LOG_LEVEL_ERROR:
-        {
+
             lsmb_vsyslog(LOG_ERR, pszFormat, msgList);
             break;
-        }
 
         case LWIO_LOG_LEVEL_WARNING:
-        {
+
             lsmb_vsyslog(LOG_WARNING, pszFormat, msgList);
             break;
-        }
 
         case LWIO_LOG_LEVEL_INFO:
-        {
+
             lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
             break;
-        }
+
+        case LWIO_LOG_LEVEL_DEBUG:
+
+            lsmb_vsyslog(LOG_DEBUG, pszFormat, msgList);
+            break;
 
         default:
-        {
+
             lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
             break;
-        }
     }
 }
 

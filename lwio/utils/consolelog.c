@@ -122,7 +122,6 @@ SMBLogToConsole(
     )
 {
     PSMB_CONSOLE_LOG pConsoleLog = (PSMB_CONSOLE_LOG)hLog;
-    PSTR pszEntryType = NULL;
     time_t currentTime = 0;
     struct tm tmp = {0};
     char timeBuf[128];
@@ -130,60 +129,16 @@ SMBLogToConsole(
     
     switch (logLevel)
     {
-        case LWIO_LOG_LEVEL_ALWAYS:
-        {
-            pszEntryType = LWIO_INFO_TAG;
-            pTarget = pConsoleLog->fp_out;
-            break;
-        }
         case LWIO_LOG_LEVEL_ERROR:
-        {
-            pszEntryType = LWIO_ERROR_TAG;
-            pTarget = pConsoleLog->fp_err;
-            break;
-        }
-
         case LWIO_LOG_LEVEL_WARNING:
-        {
-            pszEntryType = LWIO_WARN_TAG;
+
             pTarget = pConsoleLog->fp_err;
             break;
-        }
-
-        case LWIO_LOG_LEVEL_INFO:
-        {
-            pszEntryType = LWIO_INFO_TAG;
-            pTarget = pConsoleLog->fp_out;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_VERBOSE:
-        {
-            pszEntryType = LWIO_VERBOSE_TAG;
-            pTarget = pConsoleLog->fp_out;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_DEBUG:
-        {
-            pszEntryType = LWIO_DEBUG_TAG;
-            pTarget = pConsoleLog->fp_out;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_TRACE:
-        {
-            pszEntryType = LWIO_TRACE_TAG;
-            pTarget = pConsoleLog->fp_out;
-            break;
-        }
 
         default:
-        {
-            pszEntryType = LWIO_VERBOSE_TAG;
+
             pTarget = pConsoleLog->fp_out;
             break;
-        }
     }
 
     currentTime = time(NULL);
@@ -191,7 +146,7 @@ SMBLogToConsole(
 
     strftime(timeBuf, sizeof(timeBuf), LWIO_LOG_TIME_FORMAT, &tmp);
 
-    fprintf(pTarget, "%s:%s:", timeBuf, pszEntryType);
+    fprintf(pTarget, "%s:", timeBuf);
     vfprintf(pTarget, pszFormat, msgList);
     fprintf(pTarget, "\n");
     fflush(pTarget);

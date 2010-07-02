@@ -57,11 +57,9 @@
 #include "lwioutils.h"
 #include "lwiocfg.h"
 
-#include "sysfuncs_p.h"
-#include "syslog_p.h"
-#include "consolelog_p.h"
-#include "filelog_p.h"
-#include "logger.h"
+#include "defs.h"
+#include "structs.h"
+#include "prototypes.h"
 
 #include "externs.h"
 

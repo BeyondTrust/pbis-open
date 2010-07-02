@@ -50,15 +50,6 @@
 #ifndef __EXTERNS_H__
 #define __EXTERNS_H__
 
-#define LWIO_ERROR_TAG   "ERROR"
-#define LWIO_WARN_TAG    "WARNING"
-#define LWIO_INFO_TAG    "INFO"
-#define LWIO_VERBOSE_TAG "VERBOSE"
-#define LWIO_DEBUG_TAG   "DEBUG"
-#define LWIO_TRACE_TAG   "TRACE"
-
-#define LWIO_LOG_TIME_FORMAT "%Y%m%d%H%M%S"
-
 extern HANDLE               ghLwioLog;
 extern LWIO_LOG_LEVEL       gLwioLsaMaxLogLevel;
 extern LWIO_LOG_TARGET      gLWIO_LOG_TARGET;

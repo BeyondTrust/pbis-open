@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,32 +33,36 @@
  *
  * Module Name:
  *
- *        logger.h
+ *        structs.h
  *
  * Abstract:
  *
  *        Likewise IO (LWIO)
  *
+ *        Structures
+ *
  *        Utilities
  *
- *        Logger
+ * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
-#ifndef __SMBLOGGER_H_
-#define __SMBLOGGER_H_
 
-DWORD
-LwioSetupLogging(
-	HANDLE              hLog,
-	LWIO_LOG_LEVEL         maxAllowedLogLevel,
-	PFN_LWIO_LOG_MESSAGE pfnLogger
-	);
+typedef struct
+{
+    PSTR  pszFilePath;
+    FILE* fp;
+} SMB_FILE_LOG, *PSMB_FILE_LOG;
 
-VOID
-LwioResetLogging(
-    VOID
-    );
+typedef struct
+{
+    FILE* fp_out;
+    FILE* fp_err;
+} SMB_CONSOLE_LOG, *PSMB_CONSOLE_LOG;
 
-#endif /*__SMBLOGGER_H__*/
+typedef struct
+{
+    PSTR    pszIdentifier;
+    BOOLEAN bOpened;
+    DWORD   dwFacility;
+    DWORD   dwOptions;
+} SMB_SYS_LOG, *PSMB_SYS_LOG;

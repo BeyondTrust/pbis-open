@@ -340,7 +340,7 @@ extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
 #define _LWIO_LOG_IF_CUSTOM(Level, Format, ...)                   \
     do {                                                          \
         LWIO_LOCK_LOGGER;                                         \
-        if (gpfnLwioLogger && (gLwioMaxLogLevel >= (Level)))      \
+        if (gpfnLwioLogger)                                       \
         {                                                         \
             _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
         }                                                         \
@@ -350,8 +350,8 @@ extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
 #define LWIO_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
 
-#define LWIO_LOG_ALWAYS_CUSTOM(szFmt, ...) \
-    _LWIO_LOG_IF_CUSTOM(LWIO_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
+#define LWIO_LOG_ALWAYS_CUSTOM(logLevel, szFmt, ...) \
+    _LWIO_LOG_IF_CUSTOM(logLevel, szFmt, ## __VA_ARGS__)
 
 #define LWIO_LOG_ALWAYS(szFmt, ...) \
     _LWIO_LOG_IF(LWIO_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
@@ -1008,41 +1008,6 @@ SMBHashCaselessWc16String(
     PCVOID str);
 
 DWORD
-SMBHandleManagerCreate(
-    SMBHANDLE dwHandleMax,
-    PSMB_HANDLE_MANAGER* ppHandleManager
-    );
-
-DWORD
-SMBHandleManagerAddItem(
-    PSMB_HANDLE_MANAGER pHandleMgr,
-    SMBHandleType       hType,
-    PVOID               pItem,
-    PSMBHANDLE          phItem
-    );
-
-DWORD
-SMBHandleManagerGetItem(
-    PSMB_HANDLE_MANAGER pHandleMgr,
-    SMBHANDLE           handleId,
-    SMBHandleType*      phType,
-    PVOID*              ppItem
-    );
-
-DWORD
-SMBHandleManagerDeleteItem(
-    PSMB_HANDLE_MANAGER pHandleMgr,
-    SMBHANDLE           hItem,
-    SMBHandleType*      phType,
-    PVOID*              ppItem
-    );
-
-VOID
-SMBHandleManagerFree(
-    PSMB_HANDLE_MANAGER pHandleManager
-    );
-
-DWORD
 SMBRemoveFile(
     PCSTR pszPath
     );
@@ -1188,6 +1153,11 @@ LwioInitLogging(
     LWIO_LOG_TARGET  logTarget,
     LWIO_LOG_LEVEL   maxAllowedLogLevel,
     PCSTR         pszPath
+    );
+
+PCSTR
+LwioLogLevelGetLabel(
+    LWIO_LOG_LEVEL logLevel
     );
 
 DWORD

@@ -125,6 +125,47 @@ LwioInitLogging(
     goto cleanup;
 }
 
+PCSTR
+LwioLogLevelGetLabel(
+    LWIO_LOG_LEVEL logLevel
+    )
+{
+    switch (logLevel)
+    {
+        case LWIO_LOG_LEVEL_ALWAYS:
+
+            return LWIO_ALWAYS_TAG;
+
+        case LWIO_LOG_LEVEL_ERROR:
+
+            return LWIO_ERROR_TAG;
+
+        case LWIO_LOG_LEVEL_WARNING:
+
+            return LWIO_WARN_TAG;
+
+        case LWIO_LOG_LEVEL_INFO:
+
+            return LWIO_INFO_TAG;
+
+        case LWIO_LOG_LEVEL_VERBOSE:
+
+            return LWIO_VERBOSE_TAG;
+
+        case LWIO_LOG_LEVEL_DEBUG:
+
+            return LWIO_DEBUG_TAG;
+
+        case LWIO_LOG_LEVEL_TRACE:
+
+            return LWIO_TRACE_TAG;
+
+        default:
+
+            return LWIO_UNKNOWN_TAG;
+    }
+}
+
 DWORD
 LwioLogGetInfo(
     PLWIO_LOG_INFO* ppLogInfo
@@ -200,7 +241,7 @@ LwioLogSetInfo(
     {
         case LWIO_LOG_TARGET_SYSLOG:
             
-            LwioSetSyslogMask(gLwioMaxLogLevel);
+            LwioSetSyslogMask(LWIO_LOG_LEVEL_DEBUG);
             
             break;
             

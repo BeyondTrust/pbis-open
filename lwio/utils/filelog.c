@@ -190,67 +190,16 @@ SMBLogToFile(
     )
 {
     PSMB_FILE_LOG pFileLog = (PSMB_FILE_LOG)hLog;
-    PSTR pszEntryType = NULL;
     time_t currentTime = 0;
     struct tm tmp = {0};
     char timeBuf[128];
-    
-    switch (logLevel)
-    {
-        case LWIO_LOG_LEVEL_ALWAYS:
-        {
-            pszEntryType = LWIO_INFO_TAG;
-            break;
-        }
-        case LWIO_LOG_LEVEL_ERROR:
-        {
-            pszEntryType = LWIO_ERROR_TAG;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_WARNING:
-        {
-            pszEntryType = LWIO_WARN_TAG;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_INFO:
-        {
-            pszEntryType = LWIO_INFO_TAG;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_VERBOSE:
-        {
-            pszEntryType = LWIO_VERBOSE_TAG;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_DEBUG:
-        {
-            pszEntryType = LWIO_DEBUG_TAG;
-            break;
-        }
-
-        case LWIO_LOG_LEVEL_TRACE:
-        {
-            pszEntryType = LWIO_TRACE_TAG;
-            break;
-        }
-
-        default:
-        {
-            pszEntryType = LWIO_VERBOSE_TAG;
-            break;
-        }
-    }
 
     currentTime = time(NULL);
     localtime_r(&currentTime, &tmp);
 
     strftime(timeBuf, sizeof(timeBuf), LWIO_LOG_TIME_FORMAT, &tmp);
 
-    fprintf(pFileLog->fp, "%s:%s:", timeBuf, pszEntryType);
+    fprintf(pFileLog->fp, "%s:", timeBuf);
     vfprintf(pFileLog->fp, pszFormat, msgList);
     fprintf(pFileLog->fp, "\n");
     fflush(pFileLog->fp);

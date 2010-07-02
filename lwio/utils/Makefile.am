@@ -9,7 +9,6 @@ liblwioutils_la_SOURCES = \
     filelog.c     \
     fileutils.c   \
     globals.c     \
-    handlemgr.c   \
     hashtable.c   \
     hostinfo.c    \
     libmain.c     \
