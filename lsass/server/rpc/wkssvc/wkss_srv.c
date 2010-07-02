@@ -112,13 +112,14 @@ WkssRpcStartServer(
     ENDPOINT EndPoints[] = {
         { "ncacn_np",      "\\\\pipe\\\\wkssvc" },
         { "ncacn_np",      "\\\\pipe\\\\lsass" },
-        { "ncacn_ip_tcp",  NULL },
         { "ncalrpc",       NULL },  /* endpoint is fetched from config parameter */
+        { NULL,  NULL },
         { NULL,            NULL }
     };
     DWORD dwError = 0;
     DWORD i = 0;
     PSTR pszLpcSocketPath = NULL;
+    BOOLEAN bRegisterTcpIp = FALSE;
 
     dwError = WkssSrvConfigGetLpcSocketPath(&pszLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
@@ -134,7 +135,14 @@ WkssRpcStartServer(
         i++;
     }
 
-    dwError = RpcSvcBindRpcInterface(gpWkssSrvBinding,
+    dwError = WkssSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+    if (bRegisterTcpIp)
+    {
+        EndPoints[i++].pszProtocol = "ncacn_ip_tcp";
+    }
+
+    dwError = RpcSvcBindRpcInterface(&gpWkssSrvBinding,
                                      wkssvc_v1_0_s_ifspec,
                                      EndPoints,
                                      pszDescription);
@@ -152,7 +160,7 @@ WkssRpcStopServer(
 {
     DWORD dwError = 0;
 
-    dwError = RpcSvcUnbindRpcInterface(gpWkssSrvBinding,
+    dwError = RpcSvcUnbindRpcInterface(&gpWkssSrvBinding,
                                        wkssvc_v1_0_s_ifspec);
     BAIL_ON_LSA_ERROR(dwError);
 

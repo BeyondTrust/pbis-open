@@ -18,7 +18,7 @@ RpcSvcRegisterRpcInterface(
 
 DWORD
 RpcSvcBindRpcInterface(
-    rpc_binding_vector_p_t pSrvBinding,
+    rpc_binding_vector_p_t *ppSrvBinding,
     rpc_if_handle_t SrvInterface,
     PENDPOINT pEndPoints,
     PCSTR pszSrvDescription
@@ -33,7 +33,7 @@ RpcSvcUnregisterRpcInterface(
 
 DWORD
 RpcSvcUnbindRpcInterface(
-    rpc_binding_vector_p_t pSrvBinding,
+    rpc_binding_vector_p_t *ppSrvBinding,
     rpc_if_handle_t SrvInterface
     );
 

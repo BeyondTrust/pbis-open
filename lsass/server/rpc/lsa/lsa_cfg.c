@@ -67,6 +67,8 @@ LsaSrvInitialiseConfig(
                 &pConfig->pszSamrLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
+    pConfig->bRegisterTcpIp = FALSE;
+
 cleanup:
     return dwError;
 
@@ -136,6 +138,13 @@ LsaSrvReadRegistry(
                 &pConfig->pszSamrLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LsaReadConfigBoolean(
+                pReg,
+                "RegisterTcpIp",
+                TRUE,
+                &pConfig->bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+
     LsaCloseConfig(pReg);
     pReg = NULL;
 
@@ -155,7 +164,6 @@ LsaSrvConfigGetLpcSocketPath(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszLpcSocketPath = NULL;
 
@@ -186,7 +194,6 @@ LsaSrvConfigGetSamrLpcSocketPath(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszLpcSocketPath = NULL;
 
@@ -210,6 +217,27 @@ error:
     goto cleanup;
 }
 
+DWORD
+LsaSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    )
+{
+    DWORD dwError = 0;
+    BOOL bLocked = 0;
+ 
+    GLOBAL_DATA_LOCK(bLocked);
+
+    *pbResult = gLsaSrvConfig.bRegisterTcpIp;
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    GLOBAL_DATA_UNLOCK(bLocked);
+    return dwError;
+
+error:
+    *pbResult = FALSE;
+    goto cleanup;
+}
 
 /*
 local variables:

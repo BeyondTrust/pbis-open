@@ -106,24 +106,13 @@ typedef enum _LSA_ACCOUNT_TYPE
     } while (0)
 
 
-#define BAIL_ON_INVALID_PARAMETER(cond)                  \
-    do {                                                 \
-        if (!(cond)) {                                   \
-            ntStatus = STATUS_INVALID_PARAMETER;         \
-            LSA_LOG_ERROR("Error: invalid parameter");   \
-            goto error;                                  \
-        }                                                \
-    } while (0)
-
-
 #define GLOBAL_DATA_LOCK(locked)                         \
     do {                                                 \
         int ret = 0;                                     \
         ret = pthread_mutex_lock(&gLsaSrvDataMutex);     \
         if (ret) {                                       \
-            ntStatus = STATUS_UNSUCCESSFUL;		         \
-            goto error;                                  \
-                                                         \
+            dwError = LwErrnoToWin32Error(ret);          \
+            BAIL_ON_LSA_ERROR(dwError);                  \
         } else {                                         \
             (locked) = 1;                                \
         }                                                \
@@ -135,9 +124,9 @@ typedef enum _LSA_ACCOUNT_TYPE
         int ret = 0;                                     \
         if (!locked) break;                              \
         ret = pthread_mutex_unlock(&gLsaSrvDataMutex);   \
-        if (ret && ntStatus == STATUS_SUCCESS) {         \
-            ntStatus = STATUS_UNSUCCESSFUL;              \
-                                                         \
+        if (ret && dwError == STATUS_SUCCESS) {          \
+            dwError = LwErrnoToWin32Error(ret);          \
+            BAIL_ON_LSA_ERROR(dwError);                  \
         } else {                                         \
             (locked) = 0;                                \
         }                                                \

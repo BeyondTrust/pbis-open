@@ -7,6 +7,7 @@ typedef struct _WKSS_SRV_CONFIG
     PSTR pszLpcSocketPath;
     PSTR pszLsaLpcSocketPath;
 
+    BOOLEAN bRegisterTcpIp;
 } WKSS_SRV_CONFIG, *PWKSS_SRV_CONFIG;
 
 
@@ -39,6 +40,10 @@ WkssSrvConfigGetLsaLpcSocketPath(
     PSTR *ppszSamrLpcSocketPath
     );
 
+DWORD
+WkssSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    );
 
 #endif /* _WKSS_CFG_H_ */
 

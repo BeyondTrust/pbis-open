@@ -8,7 +8,7 @@ typedef struct samr_srv_config
     PSTR pszDefaultLoginShell;
     PSTR pszHomedirPrefix;
     PSTR pszHomedirTemplate;
-
+    BOOLEAN bRegisterTcpIp;
 } SAMR_SRV_CONFIG, *PSAMR_SRV_CONFIG;
 
 
@@ -53,6 +53,10 @@ SamrSrvConfigGetHomedirTemplate(
     PSTR *ppszHomedirTemplate
     );
 
+DWORD
+SamrSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    );
 
 #endif /* _SAMR_CFG_H_ */
 

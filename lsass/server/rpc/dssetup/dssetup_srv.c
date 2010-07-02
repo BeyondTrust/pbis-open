@@ -111,12 +111,20 @@ DsrRpcStartServer(
     
     ENDPOINT EndPoints[] = {
         { "ncacn_np",      "\\\\pipe\\\\lsass" },
-        { "ncacn_ip_tcp",  NULL },
-        { NULL,            NULL }
+        { NULL,            NULL },
+        { NULL,            NULL },
     };
     DWORD dwError = 0;
+    BOOLEAN bRegisterTcpIp = FALSE;
 
-    dwError = RpcSvcBindRpcInterface(gpDsrSrvBinding,
+    dwError = DsrSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+    if (bRegisterTcpIp)
+    {
+        EndPoints[1].pszProtocol = "ncacn_ip_tcp";
+    }
+
+    dwError = RpcSvcBindRpcInterface(&gpDsrSrvBinding,
                                      dssetup_v0_0_s_ifspec,
                                      EndPoints,
                                      pszDescription);
@@ -134,7 +142,7 @@ DsrRpcStopServer(
 {
     DWORD dwError = 0;
 
-    dwError = RpcSvcUnbindRpcInterface(gpDsrSrvBinding,
+    dwError = RpcSvcUnbindRpcInterface(&gpDsrSrvBinding,
                                        dssetup_v0_0_s_ifspec);
     BAIL_ON_LSA_ERROR(dwError);
 

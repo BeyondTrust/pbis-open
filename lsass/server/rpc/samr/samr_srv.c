@@ -114,14 +114,15 @@ SamrRpcStartServer(
     PCSTR pszDescription = "Security Accounts Manager";
     ENDPOINT EndPoints[] = {
         { "ncacn_np",      "\\\\pipe\\\\samr" },
-        { "ncacn_ip_tcp",  NULL },
         { "ncalrpc",       NULL },  /* endpoint is fetched from config parameter */
+        { NULL,            NULL },
         { NULL,            NULL }
     };
 
     DWORD dwError = 0;
     DWORD i = 0;
     PSTR pszLpcSocketPath = NULL;
+    BOOLEAN bRegisterTcpIp = FALSE;
 
     dwError = SamrSrvConfigGetLpcSocketPath(&pszLpcSocketPath);
     BAIL_ON_LSA_ERROR(dwError);
@@ -135,7 +136,14 @@ SamrRpcStartServer(
         i++;
     }
 
-    dwError = RpcSvcBindRpcInterface(gpSamrSrvBinding,
+    dwError = SamrSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+    if (bRegisterTcpIp)
+    {
+        EndPoints[i++].pszProtocol = "ncacn_ip_tcp";
+    }
+
+    dwError = RpcSvcBindRpcInterface(&gpSamrSrvBinding,
                                      samr_v1_0_s_ifspec,
                                      EndPoints,
                                      pszDescription);
@@ -153,7 +161,7 @@ SamrRpcStopServer(
 {
     DWORD dwError = 0;
 
-    dwError = RpcSvcUnbindRpcInterface(gpSamrSrvBinding,
+    dwError = RpcSvcUnbindRpcInterface(&gpSamrSrvBinding,
                                        samr_v1_0_s_ifspec);
     BAIL_ON_LSA_ERROR(dwError);
 

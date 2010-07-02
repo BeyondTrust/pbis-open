@@ -85,6 +85,7 @@
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\lsarpc]
 "Path"="@rpcserverdir@/liblsa_srv@MOD_EXT@"
 "LpcSocketPath"="@CACHEDIR@/rpc/lsass"
+"RegisterTcpIp"=dword:00000000
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\samr]
 "Path"="@rpcserverdir@/libsamr_srv@MOD_EXT@"
@@ -92,6 +93,7 @@
 "LoginShellTemplate"="/bin/sh"
 "HomeDirPrefix"="@default_homedir_prefix@"
 "HomeDirTemplate"="%H/local/%D/%U"
+"RegisterTcpIp"=dword:00000000
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\RPCServers\dssetup]
 "Path"="@rpcserverdir@/libdssetup_srv@MOD_EXT@"

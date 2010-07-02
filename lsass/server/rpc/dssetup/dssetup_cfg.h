@@ -5,6 +5,7 @@
 typedef struct dssetup_srv_config {
     PSTR pszLpcSocketPath;
     PSTR pszLsaLpcSocketPath;
+    BOOLEAN bRegisterTcpIp;
 } DSSETUP_SRV_CONFIG, *PDSSETUP_SRV_CONFIG;
 
 
@@ -31,6 +32,10 @@ DsrSrvConfigGetLsaLpcSocketPath(
     PSTR *ppszSamrLpcSocketPath
     );
 
+DWORD
+DsrSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    );
 
 #endif /* _DSSETUP_CFG_H_ */
 

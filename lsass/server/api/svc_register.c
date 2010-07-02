@@ -184,7 +184,7 @@ error:
 
 DWORD
 RpcSvcBindRpcInterface(
-    rpc_binding_vector_p_t pSrvBinding,
+    rpc_binding_vector_p_t *ppSrvBinding,
     rpc_if_handle_t SrvInterface,
     PENDPOINT pEndPoints,
     PCSTR pszSrvDescription
@@ -195,7 +195,7 @@ RpcSvcBindRpcInterface(
 
     DCETHREAD_TRY
     {
-        dwError = RpcSvcInitServerBinding(&pSrvBinding, pEndPoints);
+        dwError = RpcSvcInitServerBinding(ppSrvBinding, pEndPoints);
     }
     DCETHREAD_CATCH_ALL(THIS_CATCH)
     {
@@ -215,7 +215,7 @@ RpcSvcBindRpcInterface(
     DCETHREAD_TRY
     {
         rpc_ep_register(SrvInterface,
-                        pSrvBinding,
+                        *ppSrvBinding,
                         NULL,
                         (unsigned char*)pszSrvDescription,
                         &rpcstatus);

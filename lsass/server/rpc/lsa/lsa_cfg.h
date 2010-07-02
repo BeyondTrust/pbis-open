@@ -5,6 +5,8 @@
 typedef struct samr_srv_config {
     PSTR pszLpcSocketPath;
     PSTR pszSamrLpcSocketPath;
+
+    BOOLEAN bRegisterTcpIp;
 } LSA_SRV_CONFIG, *PLSA_SRV_CONFIG;
 
 
@@ -37,6 +39,10 @@ LsaSrvConfigGetSamrLpcSocketPath(
     PSTR *ppszSamrLpcSocketPath
     );
 
+DWORD
+LsaSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    );
 
 #endif /* _LSA_CFG_H_ */
 

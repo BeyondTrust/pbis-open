@@ -77,6 +77,8 @@ SamrSrvInitialiseConfig(
                 &pConfig->pszHomedirTemplate);
     BAIL_ON_LSA_ERROR(dwError);
 
+    pConfig->bRegisterTcpIp = FALSE;
+
 cleanup:    
     return dwError;
 
@@ -147,6 +149,13 @@ SamrSrvReadRegistry(
                 &pConfig->pszHomedirTemplate);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LsaReadConfigBoolean(
+                pReg,
+                "RegisterTcpIp",
+                TRUE,
+                &pConfig->bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+
 cleanup:
     LsaCloseConfig(pReg);
     pReg = NULL;
@@ -163,7 +172,6 @@ SamrSrvConfigGetLpcSocketPath(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszLpcSocketPath = NULL;
 
@@ -194,7 +202,6 @@ SamrSrvConfigGetDefaultLoginShell(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszDefaultLoginShell = NULL;
 
@@ -224,7 +231,6 @@ SamrSrvConfigGetHomedirPrefix(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszHomedirPrefix = NULL;
 
@@ -255,7 +261,6 @@ SamrSrvConfigGetHomedirTemplate(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOL bLocked = 0;
     PSTR pszHomedirTemplate = NULL;
 
@@ -276,6 +281,28 @@ cleanup:
     return dwError;
 
 error:
+    goto cleanup;
+}
+
+DWORD
+SamrSrvConfigGetRegisterTcpIp(
+    BOOLEAN* pbResult
+    )
+{
+    DWORD dwError = 0;
+    BOOL bLocked = 0;
+
+    GLOBAL_DATA_LOCK(bLocked);
+
+    *pbResult = gSamrSrvConfig.bRegisterTcpIp;
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    GLOBAL_DATA_UNLOCK(bLocked);
+    return dwError;
+
+error:
+    *pbResult = FALSE;
     goto cleanup;
 }
 

@@ -49,9 +49,8 @@
         int ret = 0;                                     \
         ret = pthread_mutex_lock(&gDsrSrvDataMutex);     \
         if (ret) {                                       \
-            status = STATUS_UNSUCCESSFUL;		         \
-            goto error;                                  \
-                                                         \
+            dwError = LwErrnoToWin32Error(ret);          \
+            BAIL_ON_LSA_ERROR(dwError);                  \
         } else {                                         \
             (locked) = 1;                                \
         }                                                \
@@ -63,9 +62,9 @@
         int ret = 0;                                     \
         if (!locked) break;                              \
         ret = pthread_mutex_unlock(&gDsrSrvDataMutex);   \
-        if (ret && status == STATUS_SUCCESS) {           \
-            status = STATUS_UNSUCCESSFUL;                \
-                                                         \
+        if (ret && dwError == STATUS_SUCCESS) {          \
+            dwError = LwErrnoToWin32Error(ret);          \
+            BAIL_ON_LSA_ERROR(dwError);                  \
         } else {                                         \
             (locked) = 0;                                \
         }                                                \
