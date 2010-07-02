@@ -97,7 +97,7 @@ LwIoDaemonIpcSetLogInfo(
 
     BAIL_ON_INVALID_POINTER(pIn->data);
 
-    dwError = SMBLogSetInfo_r((PLWIO_LOG_INFO)pIn->data);
+    dwError = LwioLogSetInfo_r((PLWIO_LOG_INFO)pIn->data);
 
     /* Transmit failure to client but do not bail out of dispatch loop */
     if (dwError)
@@ -141,7 +141,7 @@ LwIoDaemonIpcGetLogInfo(
                     (PVOID*)&pStatusResponse);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBLogGetInfo_r(&pLogInfo);
+    dwError = LwioLogGetInfo_r(&pLogInfo);
 
     if (dwError)
     {

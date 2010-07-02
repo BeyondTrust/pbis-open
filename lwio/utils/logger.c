@@ -50,11 +50,11 @@
 #include "includes.h"
 
 DWORD
-SMBInitLogging(
-    PCSTR         pszProgramName,
-    LWIO_LOG_TARGET  logTarget,
-    LWIO_LOG_LEVEL   maxAllowedLogLevel,
-    PCSTR         pszPath
+LwioInitLogging(
+    PCSTR           pszProgramName,
+    LWIO_LOG_TARGET logTarget,
+    LWIO_LOG_LEVEL  maxAllowedLogLevel,
+    PCSTR           pszPath
     )
 {
     DWORD dwError = 0;
@@ -68,7 +68,7 @@ SMBInitLogging(
             
         case LWIO_LOG_TARGET_SYSLOG:
         
-            dwError = SMBOpenSyslog(
+            dwError = LwioOpenSyslog(
                         pszProgramName,
                         maxAllowedLogLevel,
                         LOG_PID,
@@ -80,7 +80,7 @@ SMBInitLogging(
             
         case LWIO_LOG_TARGET_CONSOLE:
 
-            dwError = SMBOpenConsoleLog(
+            dwError = LwioOpenConsoleLog(
                             maxAllowedLogLevel,
                             &hLog);
             BAIL_ON_LWIO_ERROR(dwError);
@@ -95,7 +95,7 @@ SMBInitLogging(
                 BAIL_ON_LWIO_ERROR(dwError);
             }
                         
-            dwError = SMBOpenFileLog(
+            dwError = LwioOpenFileLog(
                           pszPath,
                           maxAllowedLogLevel,
                           &hLog);
@@ -110,8 +110,8 @@ SMBInitLogging(
     }
     
     gLWIO_LOG_TARGET = logTarget;
-    gSMBMaxLogLevel = maxAllowedLogLevel;
-    ghSMBLog = hLog;
+    gLwioMaxLogLevel = maxAllowedLogLevel;
+    ghLwioLog = hLog;
 
  cleanup:
     
@@ -120,13 +120,13 @@ SMBInitLogging(
  error:
  
     gLWIO_LOG_TARGET = LWIO_LOG_TARGET_DISABLED;
-    ghSMBLog = (HANDLE)NULL;
+    ghLwioLog = (HANDLE)NULL;
 
     goto cleanup;
 }
 
 DWORD
-SMBLogGetInfo(
+LwioLogGetInfo(
     PLWIO_LOG_INFO* ppLogInfo
     )
 {
@@ -145,14 +145,14 @@ SMBLogGetInfo(
             BAIL_ON_LWIO_ERROR(dwError);
             
             pLogInfo->logTarget = gLWIO_LOG_TARGET;
-            pLogInfo->maxAllowedLogLevel = gSMBMaxLogLevel;
+            pLogInfo->maxAllowedLogLevel = gLwioMaxLogLevel;
             
             break;
             
         case LWIO_LOG_TARGET_FILE:
             
-            dwError = SMBGetFileLogInfo(
-                            ghSMBLog,
+            dwError = LwioGetFileLogInfo(
+                            ghLwioLog,
                             &pLogInfo);
             BAIL_ON_LWIO_ERROR(dwError);
             
@@ -182,7 +182,7 @@ error:
 }
 
 DWORD
-SMBLogSetInfo(
+LwioLogSetInfo(
     PLWIO_LOG_INFO pLogInfo
     )
 {
@@ -194,13 +194,13 @@ SMBLogSetInfo(
     // to be set after the log is initialized
     // is the log level
     
-    gSMBMaxLogLevel = pLogInfo->maxAllowedLogLevel;
+    gLwioMaxLogLevel = pLogInfo->maxAllowedLogLevel;
     
     switch (gLWIO_LOG_TARGET)
     {
         case LWIO_LOG_TARGET_SYSLOG:
             
-            SMBSetSyslogMask(gSMBMaxLogLevel);
+            LwioSetSyslogMask(gLwioMaxLogLevel);
             
             break;
             
@@ -219,13 +219,13 @@ error:
 }
 
 DWORD
-SMBShutdownLogging(
+LwioShutdownLogging(
     VOID
     )
 {
     DWORD dwError = 0;
     
-    if (ghSMBLog != (HANDLE)NULL)
+    if (ghLwioLog != (HANDLE)NULL)
     {
         switch(gLWIO_LOG_TARGET)
         {
@@ -233,15 +233,15 @@ SMBShutdownLogging(
                 break;
                 
             case LWIO_LOG_TARGET_CONSOLE:
-                SMBCloseConsoleLog(ghSMBLog);
+                LwioCloseConsoleLog(ghLwioLog);
                 break;
                 
             case LWIO_LOG_TARGET_FILE:
-                SMBCloseFileLog(ghSMBLog);
+                LwioCloseFileLog(ghLwioLog);
                 break;
                 
             case LWIO_LOG_TARGET_SYSLOG:
-                SMBCloseSyslog(ghSMBLog);
+                LwioCloseSyslog(ghLwioLog);
             break;
         }
     }
@@ -250,7 +250,7 @@ SMBShutdownLogging(
 }
 
 DWORD
-SMBSetupLogging(
+LwioSetupLogging(
 	HANDLE              hLog,
 	LWIO_LOG_LEVEL         maxAllowedLogLevel,
 	PFN_LWIO_LOG_MESSAGE pfnLogger
@@ -265,9 +265,9 @@ SMBSetupLogging(
 		goto error;
 	}
 	
-	ghSMBLog = hLog;
-	gSMBMaxLogLevel = maxAllowedLogLevel;
-	gpfnSMBLogger = pfnLogger;
+	ghLwioLog = hLog;
+	gLwioMaxLogLevel = maxAllowedLogLevel;
+	gpfnLwioLogger = pfnLogger;
 	
 error:
 
@@ -275,17 +275,17 @@ error:
 }
 
 VOID
-SMBResetLogging(
+LwioResetLogging(
     VOID
     )
 {
-	gSMBMaxLogLevel = LWIO_LOG_LEVEL_ERROR;
-	gpfnSMBLogger = NULL;
-	ghSMBLog = (HANDLE)NULL;
+	gLwioMaxLogLevel = LWIO_LOG_LEVEL_ERROR;
+	gpfnLwioLogger = NULL;
+	ghLwioLog = (HANDLE)NULL;
 }
 
 VOID
-SMBLogMessage(
+LwioLogMessage(
 	PFN_LWIO_LOG_MESSAGE pfnLogger,
 	HANDLE hLog,
 	LWIO_LOG_LEVEL logLevel,
@@ -302,7 +302,7 @@ SMBLogMessage(
 }
 
 DWORD
-SMBValidateLogLevel(
+LwioValidateLogLevel(
     DWORD dwLogLevel
     )
 {

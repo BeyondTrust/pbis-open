@@ -50,7 +50,7 @@
 #include "includes.h"
 
 DWORD
-SMBOpenFileLog(
+LwioOpenFileLog(
     PCSTR       pszFilePath,
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     PHANDLE     phLog
@@ -87,7 +87,7 @@ SMBOpenFileLog(
         goto error;
     }
     
-    dwError = SMBSetupLogging(
+    dwError = LwioSetupLogging(
                     (HANDLE)pFileLog,
                     maxAllowedLogLevel,
                     &SMBLogToFile
@@ -116,7 +116,7 @@ error:
 }
 
 DWORD
-SMBGetFileLogInfo(
+LwioGetFileLogInfo(
     HANDLE hLog,
     PLWIO_LOG_INFO* ppLogInfo
     )
@@ -140,7 +140,7 @@ SMBGetFileLogInfo(
     BAIL_ON_LWIO_ERROR(dwError);
     
     pLogInfo->logTarget = LWIO_LOG_TARGET_FILE;
-    pLogInfo->maxAllowedLogLevel = gSMBMaxLogLevel;
+    pLogInfo->maxAllowedLogLevel = gLwioMaxLogLevel;
     
     dwError = SMBAllocateString(
                     pFileLog->pszFilePath,
@@ -166,13 +166,13 @@ error:
 }
 
 DWORD
-SMBCloseFileLog(
+LwioCloseFileLog(
     HANDLE hLog
     )
 {
     PSMB_FILE_LOG pFileLog = (PSMB_FILE_LOG)hLog;
     
-    SMBResetLogging();
+    LwioResetLogging();
     
     if (pFileLog)
     {
@@ -191,7 +191,7 @@ SMBLogToFile(
 {
     PSMB_FILE_LOG pFileLog = (PSMB_FILE_LOG)hLog;
     PSTR pszEntryType = NULL;
-    time_t currentTime;
+    time_t currentTime = 0;
     struct tm tmp = {0};
     char timeBuf[128];
     

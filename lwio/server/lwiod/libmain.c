@@ -57,7 +57,7 @@ LwioSrvSetDefaults(
 
 static
 DWORD
-SMBSrvParseArgs(
+LwioSrvParseArgs(
     int argc,
     PSTR argv[],
     PSMBSERVERINFO pSMBServerInfo
@@ -224,12 +224,12 @@ lwiod_main(
     dwError = LwNtStatusToWin32Error(ntStatus);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBSrvParseArgs(argc,
+    dwError = LwioSrvParseArgs(argc,
                               argv,
                               &gServerInfo);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBInitLogging_r(
+    dwError = LwioInitLogging_r(
                     SMBGetProgramName(argv[0]),
                     gServerInfo.logTarget,
                     gServerInfo.maxAllowedLogLevel,
@@ -272,23 +272,23 @@ lwiod_main(
 
 cleanup:
 
-    LWIO_LOG_VERBOSE("SMB main cleaning up");
+    LWIO_LOG_VERBOSE("LWIO main cleaning up");
 
     IoCleanup();
 
-    LWIO_LOG_INFO("SMB Service exiting...");
+    LWIO_LOG_INFO("LWIO Service exiting...");
 
     LwDsCacheRemovePidException(getpid());
 
     SMBSrvSetProcessExitCode(dwError);
 
-    SMBShutdownLogging_r();
+    LwioShutdownLogging_r();
 
     return dwError;
 
 error:
 
-    LWIO_LOG_ERROR("SMB Process exiting due to error [Code:%d]", dwError);
+    LWIO_LOG_ERROR("LWIO Process exiting due to error [Code:%d]", dwError);
 
     goto cleanup;
 }
@@ -366,7 +366,7 @@ error:
 
 static
 DWORD
-SMBSrvParseArgs(
+LwioSrvParseArgs(
     int argc,
     PSTR argv[],
     PSMBSERVERINFO pSMBServerInfo
@@ -956,9 +956,9 @@ LwIoDaemonLogIpc (
     LWIO_LOCK_LOGGER;
     if (pszMessage)
     {
-        if (gSMBMaxLogLevel >= ioLevel)
+        if (gLwioMaxLogLevel >= ioLevel)
         {
-            SMBLogMessage(gpfnSMBLogger, ghSMBLog, ioLevel, "[IPC] %s", pszMessage);
+            LwioLogMessage(gpfnLwioLogger, ghLwioLog, ioLevel, "[IPC] %s", pszMessage);
             result = LWMSG_TRUE;
         }
         else
@@ -968,7 +968,7 @@ LwIoDaemonLogIpc (
     }
     else
     {
-        result = (gSMBMaxLogLevel >= ioLevel);
+        result = (gLwioMaxLogLevel >= ioLevel);
     }
     LWIO_UNLOCK_LOGGER;
 

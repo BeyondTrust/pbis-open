@@ -51,7 +51,7 @@
 #define __SMBLOG_R_H__
 
 DWORD
-SMBInitLogging_r(
+LwioInitLogging_r(
     PCSTR         pszProgramName,
     LWIO_LOG_TARGET  logTarget,
     LWIO_LOG_LEVEL   maxAllowedLogLevel,
@@ -59,17 +59,17 @@ SMBInitLogging_r(
     );
 
 DWORD
-SMBLogGetInfo_r(
+LwioLogGetInfo_r(
     PLWIO_LOG_INFO* ppLogInfo
     );
 
 DWORD
-SMBLogSetInfo_r(
+LwioLogSetInfo_r(
     PLWIO_LOG_INFO pLogInfo
     );
 
 DWORD
-SMBShutdownLogging_r(
+LwioShutdownLogging_r(
     VOID
     );
 

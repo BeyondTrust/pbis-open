@@ -55,7 +55,7 @@ typedef struct
 } SMB_FILE_LOG, *PSMB_FILE_LOG;
 
 DWORD
-SMBOpenFileLog(
+LwioOpenFileLog(
     PCSTR       pszFilePath,
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     PHANDLE     phLog
@@ -70,13 +70,13 @@ SMBLogToFile(
     );
 
 DWORD
-SMBGetFileLogInfo(
+LwioGetFileLogInfo(
     HANDLE hLog,
     PLWIO_LOG_INFO* ppLogInfo
     );
 
 DWORD
-SMBCloseFileLog(
+LwioCloseFileLog(
     HANDLE hLog
     );
 

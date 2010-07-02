@@ -187,7 +187,7 @@
            }                      \
         } while(0);
 
-#define SMB_SAFE_CLEAR_FREE_STRING(str)       \
+#define LWIO_SAFE_CLEAR_FREE_STRING(str)       \
         do {                                  \
            if (str) {                         \
               if (*str) {                     \
@@ -274,10 +274,10 @@
 
 #if defined(LW_ENABLE_THREADS)
 
-extern pthread_mutex_t gSMBLogLock;
+extern pthread_mutex_t gLwioLogLock;
 
-#define LWIO_LOCK_LOGGER   pthread_mutex_lock(&gSMBLogLock)
-#define LWIO_UNLOCK_LOGGER pthread_mutex_unlock(&gSMBLogLock)
+#define LWIO_LOCK_LOGGER   pthread_mutex_lock(&gLwioLogLock)
+#define LWIO_UNLOCK_LOGGER pthread_mutex_unlock(&gLwioLogLock)
 
 #define _LWIO_LOG_PREFIX_THREAD(Format) \
     "0x%lx:" Format, ((unsigned long)pthread_self())
@@ -313,19 +313,19 @@ extern pthread_mutex_t gSMBLogLock;
                             __FUNCTION__, __FILE__, __LINE__, \
                             ## __VA_ARGS__)
 
-extern HANDLE              ghSMBLog;
-extern LWIO_LOG_LEVEL      gSMBMaxLogLevel;
-extern PFN_LWIO_LOG_MESSAGE gpfnSMBLogger;
+extern HANDLE               ghLwioLog;
+extern LWIO_LOG_LEVEL       gLwioMaxLogLevel;
+extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
 
 #define _LWIO_LOG_MESSAGE(Level, Format, ...) \
-    SMBLogMessage(gpfnSMBLogger, ghSMBLog, Level, Format, ## __VA_ARGS__)
+    LwioLogMessage(gpfnLwioLogger, ghLwioLog, Level, Format, ## __VA_ARGS__)
 
 #define _LWIO_LOG_IF(Level, Format, ...)                     \
     do {                                                    \
         LWIO_LOCK_LOGGER;                                    \
-        if (gpfnSMBLogger && (gSMBMaxLogLevel >= (Level)))  \
+        if (gpfnLwioLogger && (gLwioMaxLogLevel >= (Level)))  \
         {                                                   \
-            if (gSMBMaxLogLevel >= LWIO_LOG_LEVEL_DEBUG)     \
+            if (gLwioMaxLogLevel >= LWIO_LOG_LEVEL_DEBUG)     \
             {                                               \
                 _LWIO_LOG_WITH_DEBUG(Level, Format, ## __VA_ARGS__); \
             }                                               \
@@ -337,8 +337,21 @@ extern PFN_LWIO_LOG_MESSAGE gpfnSMBLogger;
         LWIO_UNLOCK_LOGGER;                                  \
     } while (0)
 
-#define SMB_SAFE_LOG_STRING(x) \
+#define _LWIO_LOG_IF_CUSTOM(Level, Format, ...)                   \
+    do {                                                          \
+        LWIO_LOCK_LOGGER;                                         \
+        if (gpfnLwioLogger && (gLwioMaxLogLevel >= (Level)))      \
+        {                                                         \
+            _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
+        }                                                         \
+        LWIO_UNLOCK_LOGGER;                                       \
+    } while (0)
+
+#define LWIO_SAFE_LOG_STRING(x) \
     ( (x) ? (x) : "<null>" )
+
+#define LWIO_LOG_ALWAYS_CUSTOM(szFmt, ...) \
+    _LWIO_LOG_IF_CUSTOM(LWIO_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
 
 #define LWIO_LOG_ALWAYS(szFmt, ...) \
     _LWIO_LOG_IF(LWIO_LOG_LEVEL_ALWAYS, szFmt, ## __VA_ARGS__)
@@ -1170,7 +1183,7 @@ LwioGetHostInfo(
     );
 
 DWORD
-SMBInitLogging(
+LwioInitLogging(
     PCSTR         pszProgramName,
     LWIO_LOG_TARGET  logTarget,
     LWIO_LOG_LEVEL   maxAllowedLogLevel,
@@ -1178,17 +1191,17 @@ SMBInitLogging(
     );
 
 DWORD
-SMBLogGetInfo(
+LwioLogGetInfo(
     PLWIO_LOG_INFO* ppLogInfo
     );
 
 DWORD
-SMBLogSetInfo(
+LwioLogSetInfo(
     PLWIO_LOG_INFO pLogInfo
     );
 
 VOID
-SMBLogMessage(
+LwioLogMessage(
     PFN_LWIO_LOG_MESSAGE pfnLogger,
     HANDLE hLog,
     LWIO_LOG_LEVEL logLevel,
@@ -1204,12 +1217,12 @@ lsmb_vsyslog(
     );
 
 DWORD
-SMBShutdownLogging(
+LwioShutdownLogging(
     VOID
     );
 
 DWORD
-SMBValidateLogLevel(
+LwioValidateLogLevel(
     DWORD dwLogLevel
     );
 

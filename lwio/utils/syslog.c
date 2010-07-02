@@ -50,7 +50,7 @@
 #include "includes.h"
 
 DWORD
-SMBOpenSyslog(
+LwioOpenSyslog(
     PCSTR       pszIdentifier,
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     DWORD       dwOptions,
@@ -87,9 +87,9 @@ SMBOpenSyslog(
     
     pSyslog->bOpened = TRUE;
 
-    SMBSetSyslogMask(maxAllowedLogLevel);
+    LwioSetSyslogMask(maxAllowedLogLevel);
     
-    dwError = SMBSetupLogging(
+    dwError = LwioSetupLogging(
                     (HANDLE)pSyslog,
                     maxAllowedLogLevel,
                     &SMBLogToSyslog);
@@ -117,7 +117,7 @@ error:
 }
     
 VOID
-SMBSetSyslogMask(
+LwioSetSyslogMask(
     LWIO_LOG_LEVEL logLevel
     )
 {
@@ -200,13 +200,13 @@ SMBLogToSyslog(
 }
 
 DWORD
-SMBCloseSyslog(
+LwioCloseSyslog(
     HANDLE hLog
     )
 {
     PSMB_SYS_LOG pSysLog = (PSMB_SYS_LOG)hLog;
     
-    SMBResetLogging();
+    LwioResetLogging();
     
     if (pSysLog)
     {    

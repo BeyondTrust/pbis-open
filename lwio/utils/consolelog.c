@@ -50,7 +50,7 @@
 #include "includes.h"
 
 DWORD
-SMBOpenConsoleLog(
+LwioOpenConsoleLog(
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     PHANDLE     phLog
     )
@@ -69,7 +69,7 @@ SMBOpenConsoleLog(
     pConsoleLog->fp_out = stdout;
     pConsoleLog->fp_err = stderr;
     
-    dwError = SMBSetupLogging(
+    dwError = LwioSetupLogging(
                     (HANDLE)pConsoleLog,
                     maxAllowedLogLevel,
                     &SMBLogToConsole
@@ -98,13 +98,13 @@ error:
 }
 
 DWORD
-SMBCloseConsoleLog(
+LwioCloseConsoleLog(
     HANDLE hLog
     )
 {
     PSMB_CONSOLE_LOG pConsoleLog = (PSMB_CONSOLE_LOG)hLog;
     
-    SMBResetLogging();
+    LwioResetLogging();
     
     if (pConsoleLog)
     {
@@ -123,7 +123,7 @@ SMBLogToConsole(
 {
     PSMB_CONSOLE_LOG pConsoleLog = (PSMB_CONSOLE_LOG)hLog;
     PSTR pszEntryType = NULL;
-    time_t currentTime;
+    time_t currentTime = 0;
     struct tm tmp = {0};
     char timeBuf[128];
     FILE* pTarget = NULL;

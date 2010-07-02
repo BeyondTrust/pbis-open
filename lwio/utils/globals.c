@@ -58,7 +58,7 @@
 // if LW_ENABLE_THREADS is enabled when compiling those
 // components. Also use liblsalog_r.so
 //
-HANDLE              ghSMBLog           = (HANDLE)NULL;
-LWIO_LOG_LEVEL         gSMBMaxLogLevel    = LWIO_LOG_LEVEL_ERROR;
-LWIO_LOG_TARGET        gLWIO_LOG_TARGET      = LWIO_LOG_TARGET_DISABLED;
-PFN_LWIO_LOG_MESSAGE gpfnSMBLogger      = NULL;
+HANDLE               ghLwioLog           = (HANDLE)NULL;
+LWIO_LOG_LEVEL       gLwioMaxLogLevel    = LWIO_LOG_LEVEL_ERROR;
+LWIO_LOG_TARGET      gLWIO_LOG_TARGET    = LWIO_LOG_TARGET_DISABLED;
+PFN_LWIO_LOG_MESSAGE gpfnLwioLogger      = NULL;

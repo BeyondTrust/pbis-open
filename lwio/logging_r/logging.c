@@ -49,7 +49,7 @@
 #include "includes.h"
 
 DWORD
-SMBInitLogging_r(
+LwioInitLogging_r(
     PCSTR         pszProgramName,
     LWIO_LOG_TARGET  logTarget,
     LWIO_LOG_LEVEL   maxAllowedLogLevel,
@@ -60,7 +60,7 @@ SMBInitLogging_r(
     
     LWIO_LOCK_LOGGER;
     
-    dwError = SMBInitLogging(
+    dwError = LwioInitLogging(
                     pszProgramName,
                     logTarget,
                     maxAllowedLogLevel,
@@ -72,7 +72,7 @@ SMBInitLogging_r(
 }
 
 DWORD
-SMBLogGetInfo_r(
+LwioLogGetInfo_r(
     PLWIO_LOG_INFO* ppLogInfo
     )
 {
@@ -80,7 +80,7 @@ SMBLogGetInfo_r(
     
     LWIO_LOCK_LOGGER;
     
-    dwError = SMBLogGetInfo(ppLogInfo);
+    dwError = LwioLogGetInfo(ppLogInfo);
     
     LWIO_UNLOCK_LOGGER;
     
@@ -88,7 +88,7 @@ SMBLogGetInfo_r(
 }
 
 DWORD
-SMBLogSetInfo_r(
+LwioLogSetInfo_r(
     PLWIO_LOG_INFO pLogInfo
     )
 {
@@ -96,7 +96,7 @@ SMBLogSetInfo_r(
     
     LWIO_LOCK_LOGGER;
     
-    dwError = SMBLogSetInfo(pLogInfo);
+    dwError = LwioLogSetInfo(pLogInfo);
     
     LWIO_UNLOCK_LOGGER;
     
@@ -104,7 +104,7 @@ SMBLogSetInfo_r(
 }
 
 DWORD
-SMBShutdownLogging_r(
+LwioShutdownLogging_r(
     VOID
     )
 {
@@ -112,7 +112,7 @@ SMBShutdownLogging_r(
     
     LWIO_LOCK_LOGGER;
     
-    dwError = SMBShutdownLogging();
+    dwError = LwioShutdownLogging();
     
     LWIO_UNLOCK_LOGGER;
     

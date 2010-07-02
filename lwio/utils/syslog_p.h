@@ -57,7 +57,7 @@ typedef struct
 } SMB_SYS_LOG, *PSMB_SYS_LOG;
 
 DWORD
-SMBOpenSyslog(
+LwioOpenSyslog(
     PCSTR       pszIdentifier,
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     DWORD       dwOptions,
@@ -66,7 +66,7 @@ SMBOpenSyslog(
     );
 
 VOID
-SMBSetSyslogMask(
+LwioSetSyslogMask(
     LWIO_LOG_LEVEL logLevel
     );
 
@@ -79,7 +79,7 @@ SMBLogToSyslog(
     );
 
 DWORD
-SMBCloseSyslog(
+LwioCloseSyslog(
     HANDLE hLog
     );
 

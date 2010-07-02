@@ -300,7 +300,7 @@ main(
     // TODO-clean up logging stuff used here
     // We should really be using printf and just doing logging
     // for diagnostics.
-    if (SMBInitLogging(pszProgramName,
+    if (LwioInitLogging(pszProgramName,
                        LWIO_LOG_TARGET_CONSOLE,
                        LWIO_LOG_LEVEL_DEBUG,
                        NULL))

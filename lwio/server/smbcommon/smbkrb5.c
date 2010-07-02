@@ -104,7 +104,7 @@ SMBKrb5SetDefaultCachePath(
         }
     }
 
-    LWIO_LOG_DEBUG("Cache path set to [%s]", SMB_SAFE_LOG_STRING(pszCachePath));
+    LWIO_LOG_DEBUG("Cache path set to [%s]", LWIO_SAFE_LOG_STRING(pszCachePath));
 
 cleanup:
 
@@ -196,7 +196,7 @@ SMBGSSContextBuild(
     dwError = LwRtlCStringAllocateFromWC16String(&pszServerName, pwszServerName);
     BAIL_ON_LWIO_ERROR(dwError);
     
-    LWIO_LOG_DEBUG("Build GSS Context for server [%s]", SMB_SAFE_LOG_STRING(pszServerName));
+    LWIO_LOG_DEBUG("Build GSS Context for server [%s]", LWIO_SAFE_LOG_STRING(pszServerName));
 
     dwError = SMBAllocateMemory(
         sizeof(SMB_GSS_SEC_CONTEXT),

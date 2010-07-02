@@ -50,14 +50,14 @@
 #define __SMBLOGGER_H_
 
 DWORD
-SMBSetupLogging(
+LwioSetupLogging(
 	HANDLE              hLog,
 	LWIO_LOG_LEVEL         maxAllowedLogLevel,
 	PFN_LWIO_LOG_MESSAGE pfnLogger
 	);
 
 VOID
-SMBResetLogging(
+LwioResetLogging(
     VOID
     );
 

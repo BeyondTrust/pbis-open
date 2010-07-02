@@ -55,7 +55,7 @@ typedef struct
 } SMB_CONSOLE_LOG, *PSMB_CONSOLE_LOG;
 
 DWORD
-SMBOpenConsoleLog(
+LwioOpenConsoleLog(
     LWIO_LOG_LEVEL maxAllowedLogLevel,
     PHANDLE     phLog
     );
@@ -69,7 +69,7 @@ SMBLogToConsole(
     );
 
 DWORD
-SMBCloseConsoleLog(
+LwioCloseConsoleLog(
     HANDLE hLog
     );
 
