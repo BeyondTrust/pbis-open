@@ -791,6 +791,24 @@ start_daemon()
     fi
 }
 
+kill_process()
+{
+    pkill -KILL -x $1 > /dev/null 2> /dev/null
+}
+
+kill_likewise_daemons()
+{
+    kill_process srvsvcd
+    kill_process lsassd
+    kill_process lwiod
+    kill_process netlogond
+    kill_process eventlogd
+    kill_process dcerpcd
+    kill_process netlogond
+    kill_process lwsmd
+    kill_process lwregd
+}
+
 stop_daemon()
 {
     if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
@@ -1072,6 +1090,10 @@ do_install()
     fi
 
     dispatch_pkgtype preinstall ${PACKAGES}
+
+    # Likewise Identity 5.3.0.7798 with purge leaves daemons running -- kill them
+    kill_likewise_daemons
+
     # Do the install/upgrade
     dispatch_pkgtype install ${PACKAGES}
 
