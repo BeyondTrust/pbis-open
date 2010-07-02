@@ -867,6 +867,7 @@ determine_upgrade_type()
 {
     VERSIONFILE=`get_prefix_dir`/data/VERSION
     if [ -f $VERSIONFILE ]; then
+        UPGRADING=1
         if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" -o \
              -n "`grep '^VERSION=5.1' $VERSIONFILE`" -o \
              -n "`grep '^VERSION=5.2' $VERSIONFILE`" -o \
@@ -875,13 +876,11 @@ determine_upgrade_type()
             UPGRADEDIR5=/tmp/lw-upgrade
             mkdir -p "${UPGRADEDIR5}"
             log_info "Preserving 5.x (0 <= x <= 3) configuration in ${UPGRADEDIR5}."
-        else
-            if [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
-                UPGRADING_FROM_5_4=1
-                UPGRADEDIR5=/tmp/lw-upgrade
-                mkdir -p "${UPGRADEDIR5}"
-                log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
-            fi
+        elif [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
+            UPGRADING_FROM_5_4=1
+            UPGRADEDIR5=/tmp/lw-upgrade
+            mkdir -p "${UPGRADEDIR5}"
+            log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
         fi
     elif [ -x /usr/bin/dpkg ]; then
         if check_deb_installed likewise-open
@@ -1148,7 +1147,7 @@ do_postinstall()
         JOINED="yes"
     fi
 
-    if [ -n "${UPGRADING_FROM_5_0123}" -o -n "${UPGRADING_FROM_5_4}" ]; then
+    if [ -n "${UPGRADING}" ]; then
         log_info "Your Likewise software has been successfully upgraded."
         log_info "Your computer is joined to the following domain:"
         domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
