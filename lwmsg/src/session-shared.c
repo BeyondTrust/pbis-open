@@ -516,16 +516,17 @@ shared_accept(
         memcpy(session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
         lwmsg_session_generate_cookie(&session->id.accept);
 
-        session->sec_token = token;
         session->refs = 1;
 
         if (priv->construct)
         {
             BAIL_ON_ERROR(status = priv->construct(
-                              session->sec_token,
+                              token,
                               priv->construct_data,
                               &session->data));
         }
+
+        session->sec_token = token;
         
         lwmsg_hash_insert_entry(&priv->sessions, session);
     }

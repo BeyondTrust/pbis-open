@@ -296,16 +296,17 @@ default_accept(
         memcpy(session->id.connect.bytes, connect->bytes, sizeof(connect->bytes));
         lwmsg_session_generate_cookie(&session->id.accept);
 
-        session->sec_token = token;
         session->refs = 1;
 
         if (DEFAULT_MANAGER(manager)->construct)
         {
             BAIL_ON_ERROR(status = DEFAULT_MANAGER(manager)->construct(
-                              session->sec_token,
+                              token,
                               DEFAULT_MANAGER(manager)->construct_data,
                               &session->data));
         }
+
+        session->sec_token = token;
 
         if (priv->sessions)
         {
