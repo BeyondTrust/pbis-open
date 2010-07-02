@@ -1143,25 +1143,27 @@ do_postinstall()
     # Restore configuration if still joined to a domain
     restore_configuration
 
-    if `get_prefix_dir`/bin/lw-get-current-domain > /dev/null 2>&1; then
-        JOINED="yes"
-    fi
-
     if [ -n "${UPGRADING}" ]; then
-        log_info "Your Likewise software has been successfully upgraded."
-        log_info "Your computer is joined to the following domain:"
-        domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
-        log_info "`$domainjoin_cli query`"
         log_info ""
-        log_info "However the nsswitch file has changed. Please reboot your system so your "
-        log_info "running processes pick up the new copy."
-    fi
+        log_info "Likewise Open has been successfully upgraded."
+        log_info ""
 
-    if [ -z "$JOINED" ]; then
+        command="`get_prefix_dir`/bin/lw-get-current-domain"
+        domain=`$command 2>/dev/null`
+        if [ $? -eq 0 ]; then
+            domain=`echo $domain | sed -e 's/^Current Domain = //'`
+            log_info "This computer is joined to $domain"
+            log_info ""
+        fi
+
+        log_info "The nsswitch file has been modified."
+        log_info "Please reboot so that all processes pick up the new copy."
         log_info ""
-        log_info "Use the domainjoin-cli program to connect your computer to an Active "
-        log_info "Directory domain and enable logging in on your system with Active Directory "
-        log_info "user accounts."
+    else
+        log_info ""
+        log_info "Use the utility domainjoin-cli to join your computer to a domain"
+        log_info "and enable logging on with Active Directory credentials."
+        log_info ""
     fi
 }
 
