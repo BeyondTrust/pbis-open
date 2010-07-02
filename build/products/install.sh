@@ -883,6 +883,15 @@ determine_upgrade_type()
                 log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
             fi
         fi
+    elif [ -x /usr/bin/dpkg ]; then
+        if check_deb_installed likewise-open
+        then
+            if [ -f /usr/sbin/lsassd ]; then
+                log_info "You have the likewise-open package from Ubuntu installed."
+                log_info "Upgrading from the likewise-open package is not supported."
+                exit 1
+            fi
+        fi
     fi
 }
 
