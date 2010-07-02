@@ -432,8 +432,13 @@ ADState_WriteToRegistry(
 {
     DWORD dwError = 0;
     DWORD dwCount = 0;
+    DWORD i = 0;
+    REG_DATA_TYPE domainTrustOrderType = 0;
     PDLINKEDLIST pCellList = NULL;
     HANDLE hReg = NULL;
+    PSTR *ppszDomainTrustOrder = NULL;
+    PSTR *ppszDomainTrustOrderAppend = NULL;
+    PSTR pszDomainTrustName = NULL;
 
     /* Handle the ADState_EmptyDb case */
     if (!pProviderData && !ppDomainInfo && !pDomainInfoAppend)
@@ -484,24 +489,115 @@ ADState_WriteToRegistry(
 
     if (ppDomainInfo)
     {
+        /* reg_multi_sz value for domain trust ordering */
+        dwError = LwAllocateMemory(
+                      sizeof(*ppszDomainTrustOrder) * (dwDomainInfoCount + 1), 
+                      (PVOID) &ppszDomainTrustOrder);
+        BAIL_ON_LSA_ERROR(dwError);
         for (dwCount=0; dwCount<dwDomainInfoCount; dwCount++)
         {
             dwError = ADState_WriteRegDomainEntry(
                           ppDomainInfo[dwCount]);
             BAIL_ON_LSA_ERROR(dwError);
+
+            /* Add the domain entry order into a reg_multi_sz list */
+            dwError = LwRtlCStringDuplicate(
+                          &pszDomainTrustName,
+                          ppDomainInfo[dwCount]->pszNetbiosDomainName);
+            BAIL_ON_LSA_ERROR(dwError);
+            ppszDomainTrustOrder[dwCount] = pszDomainTrustName;
         }
+        dwError = RegUtilSetValue(
+                      hReg,
+                      HKEY_THIS_MACHINE,
+                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      NULL,
+                      "DomainTrustOrder",
+                      REG_MULTI_SZ,
+                      ppszDomainTrustOrder,
+                      dwCount);
+        BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
         if (pDomainInfoAppend)
         {
+            /*
+             * Read domain trust order value, allocate array one entry larger, then append
+             * new entry onto the end of the append list and write value back out to registry.
+             */
+            dwError = RegUtilGetValue(
+                          hReg,
+                          HKEY_THIS_MACHINE,
+                          AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                              NULL,
+                          "DomainTrustOrder",
+                          &domainTrustOrderType,
+                          (PVOID) &ppszDomainTrustOrder,
+                          &dwCount);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            /* Allocate 2 extra entries; convenient to treat as NULL terminated list */
+            dwError = LwAllocateMemory(
+                          sizeof(*ppszDomainTrustOrderAppend) * (dwCount + 2), 
+                          (PVOID) &ppszDomainTrustOrderAppend);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            /* Alias existing entries from old multistring array to new one */
+            for (i=0; i<dwCount; i++)
+            {
+                /* 
+                 * Alias entry in append list from entry in TrustOrder, so NULL
+                 * out value to avoid a double free problem.
+                 */
+                ppszDomainTrustOrderAppend[i] = ppszDomainTrustOrder[i];
+                ppszDomainTrustOrder[i] = NULL;
+            }
+
+            /* Add new trusted domain to the end of the append list */
+            dwError = LwRtlCStringDuplicate(
+                          &pszDomainTrustName,
+                          pDomainInfoAppend->pszNetbiosDomainName);
+            BAIL_ON_LSA_ERROR(dwError);
+            ppszDomainTrustOrderAppend[i++] = pszDomainTrustName;
+            ppszDomainTrustOrderAppend[i] = NULL;
+
+            /* Write the appended trust entry to registry */
             dwError = ADState_WriteRegDomainEntry(
                           pDomainInfoAppend);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            /* Write the updated order list back to the registry */
+            dwError = RegUtilSetValue(
+                          hReg,
+                          HKEY_THIS_MACHINE,
+                          AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                          NULL,
+                          "DomainTrustOrder",
+                          REG_MULTI_SZ,
+                          ppszDomainTrustOrderAppend,
+                          i);
             BAIL_ON_LSA_ERROR(dwError);
         }
     }
 
 cleanup:
+    if (ppszDomainTrustOrder)
+    {
+        for (i=0; ppszDomainTrustOrder[i]; i++)
+        {
+            LW_SAFE_FREE_STRING(ppszDomainTrustOrder[i]);
+        }
+    }
+    if (ppszDomainTrustOrderAppend)
+    {
+        for (i=0; ppszDomainTrustOrderAppend[i]; i++)
+        {
+            LW_SAFE_FREE_STRING(ppszDomainTrustOrderAppend[i]);
+        }
+    }
+    LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder);
+    LW_SAFE_FREE_MEMORY(ppszDomainTrustOrderAppend);
     RegCloseServer(hReg);
     return dwError;
 error: 
@@ -842,6 +938,8 @@ ADState_ReadRegDomainEntry(
     DWORD dwSubKeysLen = 0;
     DWORD dwValueLen = 0;
     DWORD i = 0;
+    PSTR *ppszDomainTrustOrder = NULL;
+    REG_DATA_TYPE domainTrustOrderType = 0;
 
     pDomainInfo = NULL;
     BAIL_ON_LSA_ERROR(dwError);
@@ -859,30 +957,50 @@ ADState_ReadRegDomainEntry(
         goto cleanup;
     }
 
-    dwError = RegUtilGetKeys(
+    dwError = RegUtilGetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
-                  AD_DOMAIN_TRUST_REGKEY,
-                  &ppwszSubKeys,
+                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  NULL,
+                  "DomainTrustOrder",
+                  &domainTrustOrderType,
+                  (PVOID) &ppszDomainTrustOrder,
                   &dwSubKeysLen);
-    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwError || domainTrustOrderType != REG_MULTI_SZ)
+    {
+        dwError = RegUtilGetKeys(
+                      hReg,
+                      HKEY_THIS_MACHINE,
+                      AD_PROVIDER_REGKEY,
+                      AD_DOMAIN_TRUST_REGKEY,
+                      &ppwszSubKeys,
+                      &dwSubKeysLen);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     for (i=0; i<dwSubKeysLen; i++)
     {
         LW_SAFE_FREE_STRING(pszSID);
         LW_SAFE_FREE_STRING(pszGUID);
 
-        dwError = LwWc16sToMbs(ppwszSubKeys[i], &pszSubKey);
-        BAIL_ON_LSA_ERROR(dwError);
-        pszSubKeyPtr = strrchr(pszSubKey, '\\');
-        if (pszSubKeyPtr)
+        if (ppszDomainTrustOrder)
         {
-            pszSubKeyPtr++;
+            pszSubKeyPtr = ppszDomainTrustOrder[i];
         }
         else
         {
-            pszSubKeyPtr = pszSubKey;
+            dwError = LwWc16sToMbs(ppwszSubKeys[i], &pszSubKey);
+            BAIL_ON_LSA_ERROR(dwError);
+            pszSubKeyPtr = strrchr(pszSubKey, '\\');
+            if (pszSubKeyPtr)
+            {
+                pszSubKeyPtr++;
+            }
+            else
+            {
+                pszSubKeyPtr = pszSubKey;
+            }
         }
         
         dwError = LwAllocateMemory(
@@ -1098,9 +1216,17 @@ cleanup:
     LW_SAFE_FREE_STRING(pszGUID);
     for (i = 0; i < dwSubKeysLen; i++)
     {
-        LW_SAFE_FREE_MEMORY(ppwszSubKeys[i]);
+        if (ppwszSubKeys)
+        {
+            LW_SAFE_FREE_MEMORY(ppwszSubKeys[i]);
+        }
+        if (ppszDomainTrustOrder)
+        {
+            LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder[i]);
+        }
     }
     LW_SAFE_FREE_MEMORY(ppwszSubKeys);
+    LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder);
     return dwError;
 
 error:
