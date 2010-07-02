@@ -76,6 +76,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\logging]
 "EnableLogging"=dword:00000000
+"MaxRequestLogLength"=dword:00000100
 "Filters"=sza:"{10.100.1.1,10.100.1.2},smb1,{0x72,0x73,0x74},info" "{10.100.1.4},smb2,{0xA,0xB,2},verbose"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\statistics]
