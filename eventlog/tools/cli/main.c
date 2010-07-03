@@ -122,6 +122,7 @@ ParseArgs(
     DWORD actionLocal = 0;
     PSTR   pszEventTableCategoryId = 0;
     BOOLEAN bEventTableCategoryIdInCSV = TRUE;
+    PSTR fqdn = NULL;;
 
     if (iArg > maxIndex || maxIndex > 8) {
         ShowUsage();
@@ -194,7 +195,30 @@ ParseArgs(
         exit(0);
     }
     else {
-        strcpy(ipAddress, pszArg);
+        if(!LWIIsLocalHost(ipAddress)) {
+            switch(LWIStr2Inet4Addr(pszArg, &fqdn)) {
+                case 1:
+                    dwError = LW_ERROR_DNS_RESOLUTION_FAILED;
+                    goto error;
+
+                case 2:
+                    strcpy(ipAddress, pszArg);
+                    break;
+
+                default: // Success
+                    strncpy(ipAddress, fqdn, 255);
+
+                    if(fqdn) {
+                        free(fqdn);
+                    }
+                    break;
+            }
+        }
+        else {
+            strcpy(ipAddress, pszArg);
+        }
+
+        fprintf(stderr, "Connecting to %s ...\n", ipAddress);
     }
 
     *action = actionLocal;

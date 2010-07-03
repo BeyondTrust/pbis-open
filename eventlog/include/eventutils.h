@@ -461,4 +461,15 @@ EVTCloseLog(
     VOID
     );
 
+BOOLEAN
+LWIIsLocalHost(
+    const char * hostname
+    );
+
+DWORD
+LWIStr2Inet4Addr(
+    IN PCSTR src,
+    OUT PSTR *dst
+    );
+
 #endif /* __EVENTUTILS_H__ */

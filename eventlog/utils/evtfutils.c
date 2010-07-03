@@ -504,3 +504,97 @@ error:
     return dwError;
 }
 
+BOOLEAN
+LWIIsLocalHost(
+    const char * hostname
+    )
+{
+    DWORD            dwError = 0;
+    BOOLEAN          bResult = FALSE;
+    char             localHost[256];
+    struct addrinfo* localInfo = NULL;
+    struct addrinfo* remoteInfo = NULL;
+    PCSTR            pcszLocalHost = NULL;
+    PCSTR            pcszRemoteHost = NULL;
+
+
+    memset(localHost, 0, sizeof(localHost));
+
+    if ( !strcasecmp(hostname, "localhost") ||
+         !strcmp(hostname, "127.0.0.1") )
+    {
+        bResult = TRUE;
+        goto cleanup;
+    }
+
+    dwError = gethostname(localHost, sizeof(localHost) - 1);
+    if ( !IsNullOrEmptyString(localHost) )
+    {
+        dwError = getaddrinfo(localHost, NULL, NULL, &localInfo);
+        if ( dwError )
+        {
+            pcszLocalHost = localHost;
+        }
+        else
+        {
+            pcszLocalHost = localInfo->ai_canonname ?
+                            localInfo->ai_canonname :
+                            localHost;
+        }
+
+        dwError = getaddrinfo(hostname, NULL, NULL, &remoteInfo);
+        if ( dwError )
+        {
+            pcszRemoteHost = hostname;
+        }
+        else
+        {
+            pcszRemoteHost = remoteInfo->ai_canonname ?
+                             remoteInfo->ai_canonname :
+                             hostname;
+        }
+
+        if ( !strcasecmp(pcszLocalHost,pcszRemoteHost) )
+        {
+            bResult = TRUE;
+        }
+    }
+
+cleanup:
+
+    if (localInfo)
+    {
+        freeaddrinfo(localInfo);
+    }
+    if (remoteInfo)
+    {
+        freeaddrinfo(remoteInfo);
+    }
+
+    return bResult;
+}
+
+DWORD
+LWIStr2Inet4Addr(IN PCSTR src, OUT PSTR *dst)
+{
+    unsigned char a[4];
+    unsigned int b0, b1, b2, b3;
+    struct hostent *he = NULL;
+
+    if(sscanf(src, "%d.%d.%d.%d", &b0, &b1, &b2, &b3) != 4) {
+        return 2;
+    }
+
+    a[0] = (unsigned char) b0;
+    a[1] = (unsigned char) b1;
+    a[2] = (unsigned char) b2;
+    a[3] = (unsigned char) b3;
+
+    he = gethostbyaddr(a, 4, AF_INET);
+
+    if(!he || !(*dst = strdup(he->h_name))) {
+        return 1;
+    }
+
+    return 0;
+}
