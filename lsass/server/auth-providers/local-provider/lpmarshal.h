@@ -101,6 +101,13 @@ LocalMarshalAttrToBOOLEAN(
     );
 
 DWORD
+LocalMarshalAttrToSid(
+    PDIRECTORY_ENTRY  pEntry,
+    PWSTR             pwszAttrName,
+    PSID             *ppSid
+    );
+
+DWORD
 LocalMarshalEntryToSecurityObject(
     PDIRECTORY_ENTRY pEntry,
     PLSA_SECURITY_OBJECT* ppObject

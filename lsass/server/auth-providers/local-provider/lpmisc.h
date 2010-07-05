@@ -74,5 +74,11 @@ LocalBuildHomeDirPathFromTemplate(
     PSTR* ppszHomedir
     );
 
-#endif /* __LP_MISC_H__ */
+BOOLEAN
+LocalDirIsBuiltinAccount(
+    PSID pDomainSid,
+    PSID pAccountSid
+    );
 
+
+#endif /* __LP_MISC_H__ */

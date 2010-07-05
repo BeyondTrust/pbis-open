@@ -401,3 +401,56 @@ error:
     goto cleanup;
 }
 
+
+BOOLEAN
+LocalDirIsBuiltinAccount(
+    PSID pDomainSid,
+    PSID pAccountSid
+    )
+{
+    BOOLEAN bBuiltin = FALSE;
+    DWORD dwRid = 0;
+    union {
+        SID BuiltinSid;
+        UCHAR Buffer[SID_MAX_SIZE];
+    } sidBuffer = { .Buffer = { 0 } };
+    ULONG ulSidSize = sizeof(sidBuffer);
+
+    RtlCreateWellKnownSid(WinBuiltinDomainSid,
+                          NULL,
+                          &sidBuffer.BuiltinSid,
+                          &ulSidSize);
+
+    if (RtlIsPrefixSid(pDomainSid,
+                       pAccountSid))
+    {
+        /*
+         * We're only interested in subauthority immediately
+         * following the domain prefix
+         */
+        dwRid = pAccountSid->SubAuthority[pDomainSid->SubAuthorityCount];
+        bBuiltin = (dwRid <= DOMAIN_USER_RID_MAX);
+    }
+    else if (RtlIsPrefixSid(&sidBuffer.BuiltinSid,
+                            pAccountSid))
+    {
+        /*
+         * We're only interested in subauthority immediately
+         * following the domain prefix
+         */
+        dwRid = pAccountSid->SubAuthority[sidBuffer.BuiltinSid.SubAuthorityCount];
+        bBuiltin = (dwRid <= DOMAIN_USER_RID_MAX);
+    }
+
+    return bBuiltin;
+}
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

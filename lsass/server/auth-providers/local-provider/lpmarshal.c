@@ -592,6 +592,94 @@ error:
     goto cleanup;
 }
 
+DWORD
+LocalMarshalAttrToSid(
+    PDIRECTORY_ENTRY  pEntry,
+    PWSTR             pwszAttrName,
+    PSID             *ppSid
+    )
+{
+    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
+    PDIRECTORY_ATTRIBUTE pAttr = NULL;
+    PATTRIBUTE_VALUE pAttrValue = NULL;
+    PSID pSid = NULL;
+    DWORD dwSidSize = 0;
+    PSID pRetSid = NULL;
+
+    BAIL_ON_INVALID_POINTER(pEntry);
+
+    dwError = LocalFindAttribute(
+                    pEntry,
+                    pwszAttrName,
+                    &pAttr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pAttr->ulNumValues > 1)
+    {
+        dwError = LW_ERROR_DATA_ERROR;
+    }
+    else if (pAttr->ulNumValues == 0)
+    {
+        dwError = LW_ERROR_NO_ATTRIBUTE_VALUE;
+    }
+    else
+    {
+        pAttrValue = &pAttr->pValues[0];
+
+        if (pAttrValue->Type == DIRECTORY_ATTR_TYPE_UNICODE_STRING)
+        {
+            ntStatus = RtlAllocateSidFromWC16String(
+                                  &pSid,
+                                  pAttrValue->data.pwszStringValue);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+        else if (pAttrValue->Type == DIRECTORY_ATTR_TYPE_ANSI_STRING)
+        {
+            ntStatus = RtlAllocateSidFromCString(
+                                  &pSid,
+                                  pAttrValue->data.pszStringValue);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+        else
+        {
+            dwError = LW_ERROR_INVALID_ATTRIBUTE_VALUE;
+        }
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwSidSize = RtlLengthSid(pSid);
+    dwError = LwAllocateMemory(
+                    dwSidSize,
+                    OUT_PPVOID(&pRetSid));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlCopySid(
+                    dwSidSize,
+                    pRetSid,
+                    pSid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *ppSid = pRetSid;
+
+cleanup:
+    RTL_FREE(&pSid);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pRetSid);
+    *ppSid = NULL;
+
+    goto cleanup;
+}
+
 static
 DWORD
 LocalFindAttribute(

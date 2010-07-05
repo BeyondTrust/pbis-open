@@ -875,17 +875,85 @@ LocalDirDeleteGroup(
     PWSTR  pwszGroupDN
     )
 {
+    const wchar_t wszFilterTemplate[] = L"%ws=%u AND %ws='%ws'";
     DWORD dwError = 0;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
+    WCHAR wszAttrNameDN[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrNameObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrNameObjectSid[] = LOCAL_DIR_ATTR_OBJECT_SID;
+    PWSTR pwszFilter = NULL;
+    PDIRECTORY_ENTRY pEntry = NULL;
+    DWORD dwNumEntries = 0;
+    PSID pGroupSid = NULL;
+    PSID pDomainSid = NULL;
+
+    PWSTR pwszAttributes[] = {
+        wszAttrNameObjectClass,
+        wszAttrNameObjectSid
+    };
+
+    dwError = LwAllocateWc16sPrintfW(
+                    &pwszFilter,
+                    wszFilterTemplate,
+                    wszAttrNameObjectClass, LOCAL_OBJECT_CLASS_GROUP,
+                    wszAttrNameDN, pwszGroupDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectorySearch(
+                    pContext->hDirectory,
+                    NULL,
+                    0,
+                    pwszFilter,
+                    pwszAttributes,
+                    FALSE,
+                    &pEntry,
+                    &dwNumEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumEntries == 0)
+    {
+        dwError = ERROR_NO_SUCH_GROUP;
+    }
+    else if (dwNumEntries != 1)
+    {
+        dwError = LW_ERROR_DATA_ERROR;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LocalMarshalAttrToSid(
+                    pEntry,
+                    &wszAttrNameObjectSid[0],
+                    &pGroupSid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pDomainSid = gLPGlobals.pLocalDomainSID;
+
+    if (LocalDirIsBuiltinAccount(
+                    pDomainSid,
+                    pGroupSid))
+    {
+        dwError = ERROR_SPECIAL_ACCOUNT;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = DirectoryDeleteObject(
                     pContext->hDirectory,
                     pwszGroupDN);
     BAIL_ON_LSA_ERROR(dwError);
 
-error:
+cleanup:
+    if (pEntry)
+    {
+        DirectoryFreeEntries(pEntry, dwNumEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+    LW_SAFE_FREE_MEMORY(pGroupSid);
 
     return dwError;
+
+error:
+    goto cleanup;
 }
 
 VOID
