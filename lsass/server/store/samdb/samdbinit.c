@@ -1926,7 +1926,6 @@ SamDbFixAcls(
         BAIL_ON_SAMDB_ERROR(dwError);
 
         pCurrentSecDesc  = (PSECURITY_DESCRIPTOR_RELATIVE)pSecDescBlob->pBytes;
-        pSecDescBlob->pBytes = NULL;
 
         if (!pCurrentSecDesc)
             continue;
