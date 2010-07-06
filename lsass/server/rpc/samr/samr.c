@@ -504,15 +504,13 @@ NTSTATUS srv_SamrSetAliasInfo(
 
 NTSTATUS srv_SamrDeleteDomAlias(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ ACCOUNT_HANDLE hAliasIn,
-    /* [out] */ ACCOUNT_HANDLE *hAliasOut
+    /* [in,out] */ ACCOUNT_HANDLE *phAlias
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvDeleteDomAlias(IDL_handle,
-                                   hAliasIn,
-                                   hAliasOut);
+                                   phAlias);
     return status;
 }
 

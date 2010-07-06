@@ -50,16 +50,22 @@
 NTSTATUS
 SamrSrvDeleteDomAlias(
     /* [in] */ handle_t hBinding,
-    /* [in] */ ACCOUNT_HANDLE hAliasIn,
-    /* [out] */ ACCOUNT_HANDLE *phAliasOut
+    /* [in,out] */ ACCOUNT_HANDLE *phAlias
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
+    BAIL_ON_INVALID_PTR(phAlias);
+
     ntStatus = SamrSrvDeleteAccount(hBinding,
-                                    hAliasIn,
-                                    phAliasOut);
+                                    *phAlias,
+                                    phAlias);
+
+cleanup:
     return ntStatus;
+
+error:
+    goto cleanup;
 }
 
 

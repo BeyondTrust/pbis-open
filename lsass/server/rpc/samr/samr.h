@@ -243,8 +243,7 @@ SamrSrvIsBuiltinAccount(
 NTSTATUS
 SamrSrvDeleteDomAlias(
     handle_t hBinding,
-    ACCOUNT_HANDLE hAccountIn,
-    ACCOUNT_HANDLE *hAccountOut
+    ACCOUNT_HANDLE *phAlias
     );
 
 
