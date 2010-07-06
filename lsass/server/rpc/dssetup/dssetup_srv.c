@@ -117,7 +117,7 @@ DsrRpcStartServer(
     DWORD dwError = 0;
     BOOLEAN bRegisterTcpIp = FALSE;
 
-    dwError = DsrSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    dwError = DsrSrvConfigShouldRegisterTcpIp(&bRegisterTcpIp);
     BAIL_ON_LSA_ERROR(dwError);
     if (bRegisterTcpIp)
     {

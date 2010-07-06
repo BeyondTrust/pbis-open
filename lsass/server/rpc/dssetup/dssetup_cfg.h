@@ -33,7 +33,7 @@ DsrSrvConfigGetLsaLpcSocketPath(
     );
 
 DWORD
-DsrSrvConfigGetRegisterTcpIp(
+DsrSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     );
 

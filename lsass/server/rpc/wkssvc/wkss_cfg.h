@@ -41,7 +41,7 @@ WkssSrvConfigGetLsaLpcSocketPath(
     );
 
 DWORD
-WkssSrvConfigGetRegisterTcpIp(
+WkssSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     );
 

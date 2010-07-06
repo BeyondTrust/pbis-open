@@ -54,7 +54,7 @@ SamrSrvConfigGetHomedirTemplate(
     );
 
 DWORD
-SamrSrvConfigGetRegisterTcpIp(
+SamrSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     );
 

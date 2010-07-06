@@ -210,7 +210,7 @@ error:
 }
 
 DWORD
-DsrSrvConfigGetRegisterTcpIp(
+DsrSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     )
 {
@@ -220,7 +220,6 @@ DsrSrvConfigGetRegisterTcpIp(
     GLOBAL_DATA_LOCK(bLocked);
 
     *pbResult = gDsrSrvConfig.bRegisterTcpIp;
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     GLOBAL_DATA_UNLOCK(bLocked);

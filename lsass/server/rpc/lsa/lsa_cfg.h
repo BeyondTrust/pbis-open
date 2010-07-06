@@ -40,7 +40,7 @@ LsaSrvConfigGetSamrLpcSocketPath(
     );
 
 DWORD
-LsaSrvConfigGetRegisterTcpIp(
+LsaSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     );
 

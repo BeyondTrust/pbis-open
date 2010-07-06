@@ -134,7 +134,7 @@ LsaRpcStartServer(
         i++;
     }
 
-    dwError = LsaSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    dwError = LsaSrvConfigShouldRegisterTcpIp(&bRegisterTcpIp);
     BAIL_ON_LSA_ERROR(dwError);
     if (bRegisterTcpIp)
     {

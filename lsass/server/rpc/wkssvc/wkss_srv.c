@@ -135,7 +135,7 @@ WkssRpcStartServer(
         i++;
     }
 
-    dwError = WkssSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    dwError = WkssSrvConfigShouldRegisterTcpIp(&bRegisterTcpIp);
     BAIL_ON_LSA_ERROR(dwError);
     if (bRegisterTcpIp)
     {

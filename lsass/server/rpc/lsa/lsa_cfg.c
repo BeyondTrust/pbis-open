@@ -218,7 +218,7 @@ error:
 }
 
 DWORD
-LsaSrvConfigGetRegisterTcpIp(
+LsaSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     )
 {
@@ -228,7 +228,6 @@ LsaSrvConfigGetRegisterTcpIp(
     GLOBAL_DATA_LOCK(bLocked);
 
     *pbResult = gLsaSrvConfig.bRegisterTcpIp;
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     GLOBAL_DATA_UNLOCK(bLocked);

@@ -136,7 +136,7 @@ SamrRpcStartServer(
         i++;
     }
 
-    dwError = SamrSrvConfigGetRegisterTcpIp(&bRegisterTcpIp);
+    dwError = SamrSrvConfigShouldRegisterTcpIp(&bRegisterTcpIp);
     BAIL_ON_LSA_ERROR(dwError);
     if (bRegisterTcpIp)
     {

@@ -285,7 +285,7 @@ error:
 }
 
 DWORD
-SamrSrvConfigGetRegisterTcpIp(
+SamrSrvConfigShouldRegisterTcpIp(
     BOOLEAN* pbResult
     )
 {
@@ -295,7 +295,6 @@ SamrSrvConfigGetRegisterTcpIp(
     GLOBAL_DATA_LOCK(bLocked);
 
     *pbResult = gSamrSrvConfig.bRegisterTcpIp;
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     GLOBAL_DATA_UNLOCK(bLocked);
