@@ -259,8 +259,7 @@ cpp_quote("#endif")
 
     /* function 0x1e */
     NTSTATUS SamrDeleteDomAlias(
-        [in] ACCOUNT_HANDLE hAliasIn,
-        [out] ACCOUNT_HANDLE *hAliasOut
+        [in,out] ACCOUNT_HANDLE *phAlias
         );
 
     /* function 0x1f */
