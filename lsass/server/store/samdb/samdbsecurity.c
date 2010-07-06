@@ -127,6 +127,7 @@ SamDbCreateLocalDomainSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -184,9 +185,12 @@ SamDbCreateLocalDomainSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -235,6 +239,7 @@ SamDbCreateBuiltinDomainSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -292,9 +297,12 @@ SamDbCreateBuiltinDomainSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -343,6 +351,7 @@ SamDbCreateLocalUserSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -398,9 +407,12 @@ SamDbCreateLocalUserSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -449,6 +461,7 @@ SamDbCreateLocalGroupSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -504,9 +517,12 @@ SamDbCreateLocalGroupSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -555,6 +571,7 @@ SamDbCreateBuiltinGroupSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -610,9 +627,12 @@ SamDbCreateBuiltinGroupSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -661,6 +681,7 @@ SamDbCreateNewLocalAccountSecDesc(
     PSID pGroupSid = NULL;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
+    PSECURITY_DESCRIPTOR_RELATIVE pNewSecDescRel = NULL;
     ULONG ulSecDescLen = 1024;
     PACL pDacl = NULL;
 
@@ -716,9 +737,12 @@ SamDbCreateNewLocalAccountSecDesc(
     do
     {
         dwError = LwReallocMemory(pSecDescRel,
-                                  OUT_PPVOID(&pSecDescRel),
+                                  OUT_PPVOID(&pNewSecDescRel),
                                   ulSecDescLen);
         BAIL_ON_SAMDB_ERROR(dwError);
+
+        pSecDescRel    = pNewSecDescRel;
+        pNewSecDescRel = NULL;
 
         ntStatus = RtlAbsoluteToSelfRelativeSD(
                                     pSecDesc,
@@ -832,13 +856,17 @@ SamDbCreateLocalDomainDacl(
                                pLocalAdminSid,
                                DOMAIN_USER_RID_ADMIN);
 
-    ntStatus = RtlAllocateSidFromCString(&pBuiltinAdminsSid,
-                                         "S-1-5-32-544");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
-    ntStatus = RtlAllocateSidFromCString(&pWorldSid,
-                                         "S-1-1-0");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbCreateDacl(&pDacl, AccessList);
     BAIL_ON_LSA_ERROR(dwError);
@@ -846,9 +874,8 @@ SamDbCreateLocalDomainDacl(
     *ppDacl = pDacl;
 
 cleanup:
-
-    RTL_FREE(&pBuiltinAdminsSid);
-    RTL_FREE(&pWorldSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -917,13 +944,17 @@ SamDbCreateBuiltinDomainDacl(
         }
     };
 
-    ntStatus = RtlAllocateSidFromCString(&pBuiltinAdminsSid,
-                                         "S-1-5-32-544");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
-    ntStatus = RtlAllocateSidFromCString(&pWorldSid,
-                                         "S-1-1-0");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbCreateDacl(&pDacl, AccessList);
     BAIL_ON_LSA_ERROR(dwError);
@@ -931,8 +962,8 @@ SamDbCreateBuiltinDomainDacl(
     *ppDacl = pDacl;
 
 cleanup:
-    RTL_FREE(&pBuiltinAdminsSid);
-    RTL_FREE(&pWorldSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1033,6 +1064,9 @@ SamDbCreateLocalUserDacl(
     *ppDacl = pDacl;
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
@@ -1113,13 +1147,17 @@ SamDbCreateLocalGroupDacl(
                                pLocalAdminSid,
                                DOMAIN_USER_RID_ADMIN);
 
-    ntStatus = RtlAllocateSidFromCString(&pBuiltinAdminsSid,
-                                         "S-1-5-32-544");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
-    ntStatus = RtlAllocateSidFromCString(&pWorldSid,
-                                         "S-1-1-0");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbCreateDacl(&pDacl, AccessList);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1127,8 +1165,8 @@ SamDbCreateLocalGroupDacl(
     *ppDacl = pDacl;
 
 cleanup:
-    RTL_FREE(&pBuiltinAdminsSid);
-    RTL_FREE(&pWorldSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1188,13 +1226,17 @@ SamDbCreateBuiltinGroupDacl(
         }
     };
 
-    ntStatus = RtlAllocateSidFromCString(&pBuiltinAdminsSid,
-                                         "S-1-5-32-544");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
-    ntStatus = RtlAllocateSidFromCString(&pWorldSid,
-                                         "S-1-1-0");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbCreateDacl(&pDacl, AccessList);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1202,6 +1244,9 @@ SamDbCreateBuiltinGroupDacl(
     *ppDacl = pDacl;
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
@@ -1277,13 +1322,17 @@ SamDbCreateNewLocalAccountDacl(
         }
     };
 
-    ntStatus = RtlAllocateSidFromCString(&pBuiltinAdminsSid,
-                                         "S-1-5-32-544");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinBuiltinAdministratorsSid,
+                                   NULL,
+                                   &pBuiltinAdminsSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
-    ntStatus = RtlAllocateSidFromCString(&pWorldSid,
-                                         "S-1-1-0");
-    BAIL_ON_NT_STATUS(ntStatus);
+    dwError = LwCreateWellKnownSid(WinWorldSid,
+                                   NULL,
+                                   &pWorldSid,
+                                   NULL);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbCreateDacl(&pDacl, AccessList);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1291,9 +1340,8 @@ SamDbCreateNewLocalAccountDacl(
     *ppDacl = pDacl;
 
 cleanup:
-
-    RTL_FREE(&pBuiltinAdminsSid);
-    RTL_FREE(&pWorldSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)

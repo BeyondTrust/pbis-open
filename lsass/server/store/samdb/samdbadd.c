@@ -1439,6 +1439,8 @@ SamDbAddConvertUnicodeAttrValues(
             case DIRECTORY_ATTR_TYPE_OCTET_STREAM:
             case DIRECTORY_ATTR_TYPE_NT_SECURITY_DESCRIPTOR:
 
+                pTgtValue->Type = DIRECTORY_ATTR_TYPE_OCTET_STREAM;
+
                 dwError = DirectoryAllocateMemory(
                             sizeof(OCTET_STRING),
                             (PVOID*)&pTgtValue->data.pOctetString);

@@ -732,6 +732,7 @@ cleanup:
     DIRECTORY_FREE_MEMORY(pwszDomainName);
     DIRECTORY_FREE_MEMORY(pwszNetBIOSName);
     RTL_FREE(&pMachineSID);
+    DIRECTORY_FREE_MEMORY(pSecDesc);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -886,6 +887,7 @@ cleanup:
     DIRECTORY_FREE_MEMORY(pwszDomainName);
     DIRECTORY_FREE_MEMORY(pwszNetBIOSName);
     RTL_FREE(&pBuiltinSID);
+    DIRECTORY_FREE_MEMORY(pSecDesc)
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1160,6 +1162,7 @@ SamDbAddBuiltinAccounts(
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszDomainName);
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszNetBIOSDomain);
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszDescription);
+        DIRECTORY_FREE_MEMORY_AND_RESET(pSecDesc);
 
         RTL_FREE(&pAccountSid);
     }
@@ -1173,6 +1176,7 @@ cleanup:
     DIRECTORY_FREE_MEMORY(pwszDomainName);
     DIRECTORY_FREE_MEMORY(pwszNetBIOSDomain);
     DIRECTORY_FREE_MEMORY(pwszDescription);
+    DIRECTORY_FREE_MEMORY(pSecDesc);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1533,13 +1537,9 @@ SamDbAddLocalAccounts(
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszHomedir);
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszDomain);
         DIRECTORY_FREE_MEMORY_AND_RESET(pwszNetBIOSDomain);
-
-        if (pwszSID) {
-            RTL_FREE(&pwszSID);
-            pwszSID = NULL;
-        }
-
+        DIRECTORY_FREE_MEMORY_AND_RESET(pSecDesc);
         DIRECTORY_FREE_MEMORY_AND_RESET(pAccountSid);
+        RTL_FREE(&pwszSID);
     }
 
 cleanup:
@@ -1552,12 +1552,9 @@ cleanup:
     DIRECTORY_FREE_MEMORY(pwszHomedir);
     DIRECTORY_FREE_MEMORY(pwszDomain);
     DIRECTORY_FREE_MEMORY(pwszNetBIOSDomain);
-
-    if (pwszSID) {
-        RTL_FREE(&pwszSID);
-    }
-
-    LW_SAFE_FREE_MEMORY(pAccountSid);
+    DIRECTORY_FREE_MEMORY(pSecDesc);
+    DIRECTORY_FREE_MEMORY(pAccountSid);
+    RTL_FREE(&pwszSID);
 
     return dwError;
 
@@ -1705,10 +1702,14 @@ SamDbSetupLocalGroupMemberships(
                                            OUT_PPVOID(&pwszMemberFilter));
                 BAIL_ON_SAMDB_ERROR(dwError);
 
-                sw16printfw(pwszMemberFilter, dwMemberFilterLen,
-                            wszMemberFilterFmt,
-                            wszAttrSamAccountName,
-                            pwszMemberName);
+                if (sw16printfw(pwszMemberFilter, dwMemberFilterLen,
+                                wszMemberFilterFmt,
+                                wszAttrSamAccountName,
+                                pwszMemberName) < 0)
+                {
+                    dwError = LwErrnoToWin32Error(errno);
+                    BAIL_ON_SAMDB_ERROR(dwError);
+                }
 
                 dwError = SamDbSearchObject(hDirectory,
                                             pwszBase,
@@ -1739,7 +1740,14 @@ SamDbSetupLocalGroupMemberships(
                         DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
                                               .pValues[0].data.pwszStringValue);
                         DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[0]
+                                              .pValues);
+                        DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
+                                              .pValues);
+                        DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[0]
                                               .pwszName);
+                        DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
+                                              .pwszName);
+                        DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes);
                     }
 
                     DIRECTORY_FREE_MEMORY(pMemberEntries);
@@ -1758,7 +1766,10 @@ SamDbSetupLocalGroupMemberships(
                 DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
                                       .pValues[0].data.pwszStringValue);
                 DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
+                                      .pValues);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
                                       .pwszName);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes);
             }
 
             DIRECTORY_FREE_MEMORY(pGroupEntries);
@@ -1774,10 +1785,13 @@ cleanup:
     {
         for (i = 0; i < dwGroupEntriesNum; i++)
         {
-            DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
-                                  .pValues[0].data.pwszStringValue);
-            DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
-                                  .pwszName);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
+                                      .pValues[0].data.pwszStringValue);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
+                                      .pValues);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes[0]
+                                      .pwszName);
+                DIRECTORY_FREE_MEMORY(pGroupEntries[i].pAttributes);
         }
 
         DIRECTORY_FREE_MEMORY(pGroupEntries);
@@ -1792,7 +1806,14 @@ cleanup:
             DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
                                   .pValues[0].data.pwszStringValue);
             DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[0]
+                                  .pValues);
+            DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
+                                  .pValues);
+            DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[0]
                                   .pwszName);
+            DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes[1]
+                                  .pwszName);
+            DIRECTORY_FREE_MEMORY(pMemberEntries[i].pAttributes);
         }
 
         DIRECTORY_FREE_MEMORY(pMemberEntries);
