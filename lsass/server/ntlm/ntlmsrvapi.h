@@ -86,6 +86,7 @@
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/krb5pac.h>
+#include <lw/swab.h>
 
 #include "defines.h"
 #include "structs.h"

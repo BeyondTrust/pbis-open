@@ -19,5 +19,6 @@ libgssapi_ntlm_la_LDFLAGS = \
     -module -avoid-version -export-dynamic
 
 libgssapi_ntlm_la_LIBADD =  \
-    @top_builddir@/common/liblsacommon.la \
-    @top_builddir@/client/ntlm/liblsaclient_ntlm.la
+    $(top_builddir)/common/liblsacommon.la \
+    $(top_builddir)/client/ntlm/liblsaclient_ntlm.la \
+    $(KRB5_LIBS)

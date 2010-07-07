@@ -367,8 +367,8 @@ NtlmCreateNegotiateMessage(
         &pMessage->NtlmSignature,
         NTLM_NETWORK_SIGNATURE,
         NTLM_NETWORK_SIGNATURE_SIZE);
-    pMessage->MessageType = NTLM_NEGOTIATE_MSG;
-    pMessage->NtlmFlags = dwOptions;
+    pMessage->MessageType = LW_HTOL32(NTLM_NEGOTIATE_MSG);
+    pMessage->NtlmFlags = LW_HTOL32(dwOptions);
 
     // Start writing optional information (if there is any) after the structure
     pBuffer = (PBYTE)pMessage + sizeof(NTLM_NEGOTIATE_MESSAGE_V1);
@@ -383,8 +383,8 @@ NtlmCreateNegotiateMessage(
             pDomainSecBuffer = (PNTLM_SEC_BUFFER)pBuffer;
 
             // The Domain name is ALWAYS given as an OEM (i.e. ASCII) string
-            pDomainSecBuffer->usLength = strlen(pDomain);
-            pDomainSecBuffer->usMaxLength = pDomainSecBuffer->usLength;
+            pDomainSecBuffer->usLength = LW_HTOL16(strlen(pDomain));
+            pDomainSecBuffer->usMaxLength = LW_HTOL16(pDomainSecBuffer->usLength);
         }
 
         pBuffer += sizeof(NTLM_SEC_BUFFER);
@@ -401,8 +401,8 @@ NtlmCreateNegotiateMessage(
             pWorkstationSecBuffer = (PNTLM_SEC_BUFFER)pBuffer;
 
             // The Workstation name is also ALWAYS given as an OEM string
-            pWorkstationSecBuffer->usLength = strlen(pWorkstation);
-            pWorkstationSecBuffer->usMaxLength = pWorkstationSecBuffer->usLength;
+            pWorkstationSecBuffer->usLength = LW_HTOL16(strlen(pWorkstation));
+            pWorkstationSecBuffer->usMaxLength = LW_HTOL16(pWorkstationSecBuffer->usLength);
         }
 
         pBuffer += sizeof(NTLM_SEC_BUFFER);
@@ -418,16 +418,16 @@ NtlmCreateNegotiateMessage(
     // So now we're at the very end of the buffer; copy the optional data
     if (pWorkstationSecBuffer && pWorkstationSecBuffer->usLength)
     {
-        memcpy(pBuffer, pWorkstation, pWorkstationSecBuffer->usLength);
-        pWorkstationSecBuffer->dwOffset = pBuffer - (PBYTE)pMessage;
-        pBuffer += pWorkstationSecBuffer->usLength;
+        memcpy(pBuffer, pWorkstation, LW_LTOH16(pWorkstationSecBuffer->usLength));
+        pWorkstationSecBuffer->dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
+        pBuffer += LW_LTOH16(pWorkstationSecBuffer->usLength);
     }
 
     if (pDomainSecBuffer && pDomainSecBuffer->usLength)
     {
-        memcpy(pBuffer, pDomain, pDomainSecBuffer->usLength);
-        pDomainSecBuffer->dwOffset = pBuffer - (PBYTE)pMessage;
-        pBuffer += pDomainSecBuffer->usLength;
+        memcpy(pBuffer, pDomain, LW_LTOH16(pDomainSecBuffer->usLength));
+        pDomainSecBuffer->dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
+        pBuffer += LW_LTOH16(pDomainSecBuffer->usLength);
     }
 
     LW_ASSERT(pBuffer == (PBYTE)pMessage + dwSize);
@@ -469,6 +469,7 @@ NtlmCreateChallengeMessage(
     PNTLM_TARGET_INFO_BLOCK pTargetInfoBlock = NULL;
     NTLM_CONFIG config;
     BOOLEAN bConfigLocked = FALSE;
+    DWORD dwHostNtlmFlags = 0;
 
     // sanity checks
     if (!pNegMsg || !ppChlngMsg)
@@ -498,10 +499,11 @@ NtlmCreateChallengeMessage(
     NTLM_UNLOCK_MUTEX(bConfigLocked, pgNtlmConfigMutex);
 
     dwSize = sizeof(NTLM_CHALLENGE_MESSAGE);
+    dwHostNtlmFlags = LW_LTOH32(pNegMsg->NtlmFlags);
 
     // sanity check... we need to have at least NTLM or NTLM2 requested
-    if (!(pNegMsg->NtlmFlags & NTLM_FLAG_NTLM) &&
-       !(pNegMsg->NtlmFlags & NTLM_FLAG_NTLM2))
+    if (!(dwHostNtlmFlags & NTLM_FLAG_NTLM) &&
+       !(dwHostNtlmFlags & NTLM_FLAG_NTLM2))
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
@@ -510,12 +512,12 @@ NtlmCreateChallengeMessage(
     // We need to build up the challenge options based on the negotiate options.
     // We *must* have either unicode or ansi string set
     //
-    if ((pNegMsg->NtlmFlags & NTLM_FLAG_UNICODE) &&
+    if ((dwHostNtlmFlags & NTLM_FLAG_UNICODE) &&
             config.bSupportUnicode)
     {
         dwOptions |= NTLM_FLAG_UNICODE;
     }
-    else if (pNegMsg->NtlmFlags & NTLM_FLAG_OEM)
+    else if (dwHostNtlmFlags & NTLM_FLAG_OEM)
     {
         dwOptions |= NTLM_FLAG_OEM;
     }
@@ -526,31 +528,31 @@ NtlmCreateChallengeMessage(
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }
-    if ((pNegMsg->NtlmFlags & NTLM_FLAG_NTLM2) &&
+    if ((dwHostNtlmFlags & NTLM_FLAG_NTLM2) &&
             config.bSupportNTLM2SessionSecurity)
     {
         dwOptions |= NTLM_FLAG_NTLM2;
     }
-    if ((pNegMsg->NtlmFlags & NTLM_FLAG_KEY_EXCH) &&
+    if ((dwHostNtlmFlags & NTLM_FLAG_KEY_EXCH) &&
             config.bSupportKeyExchange)
     {
         dwOptions |= NTLM_FLAG_KEY_EXCH;
     }
-    if ((pNegMsg->NtlmFlags & NTLM_FLAG_56) &&
+    if ((dwHostNtlmFlags & NTLM_FLAG_56) &&
             config.bSupport56bit)
     {
         dwOptions |= NTLM_FLAG_56;
     }
-    if ((pNegMsg->NtlmFlags & NTLM_FLAG_128) &&
+    if ((dwHostNtlmFlags & NTLM_FLAG_128) &&
             config.bSupport128bit)
     {
         dwOptions |= NTLM_FLAG_128;
     }
-    if (pNegMsg->NtlmFlags & NTLM_FLAG_SIGN)
+    if (dwHostNtlmFlags & NTLM_FLAG_SIGN)
     {
         dwOptions |= NTLM_FLAG_SIGN;
     }
-    if (pNegMsg->NtlmFlags & NTLM_FLAG_SEAL)
+    if (dwHostNtlmFlags & NTLM_FLAG_SEAL)
     {
         dwOptions |= NTLM_FLAG_SEAL;
     }
@@ -606,7 +608,7 @@ NtlmCreateChallengeMessage(
 
     dwSize += dwTargetInfoSize;
 
-    if (pNegMsg->NtlmFlags & NTLM_FLAG_REQUEST_TARGET)
+    if (dwHostNtlmFlags & NTLM_FLAG_REQUEST_TARGET)
     {
         // To determine what name will be returned we check in this order:
         // 1). Domain name
@@ -645,8 +647,8 @@ NtlmCreateChallengeMessage(
 
     // If the client wants to support a dummy signature, we will too... as long
     // as it doesn't support real signing.
-    if (pNegMsg->NtlmFlags & NTLM_FLAG_ALWAYS_SIGN &&
-        !(pNegMsg->NtlmFlags & NTLM_FLAG_SIGN))
+    if (dwHostNtlmFlags & NTLM_FLAG_ALWAYS_SIGN &&
+        !(dwHostNtlmFlags & NTLM_FLAG_SIGN))
     {
         dwOptions |= NTLM_FLAG_ALWAYS_SIGN;
     }
@@ -666,14 +668,14 @@ NtlmCreateChallengeMessage(
         NTLM_NETWORK_SIGNATURE_SIZE
         );
 
-    pMessage->MessageType = NTLM_CHALLENGE_MSG;
+    pMessage->MessageType = LW_HTOL32(NTLM_CHALLENGE_MSG);
 
-    pMessage->NtlmFlags = dwOptions;
+    pMessage->NtlmFlags = LW_HTOL32(dwOptions);
 
-    if (pMessage->NtlmFlags & NTLM_FLAG_REQUEST_TARGET)
+    if (dwOptions & NTLM_FLAG_REQUEST_TARGET)
     {
-        pMessage->Target.usLength = dwTargetNameSize;
-        pMessage->Target.usMaxLength = pMessage->Target.usLength;
+        pMessage->Target.usLength = LW_HTOL16(dwTargetNameSize);
+        pMessage->Target.usMaxLength = LW_HTOL16(pMessage->Target.usLength);
     }
     else
     {
@@ -689,19 +691,19 @@ NtlmCreateChallengeMessage(
     // Main structure has been filled, now fill in optional data
     pBuffer = (PBYTE)pMessage + sizeof(NTLM_CHALLENGE_MESSAGE);
 
-    if (pOsVersion || pMessage->NtlmFlags & NTLM_FLAG_TARGET_INFO)
+    if (pOsVersion || dwOptions & NTLM_FLAG_TARGET_INFO)
     {
         // We have to fill in a local context which we will never use
         // ... so make it all zeros
         memset(pBuffer, 0, NTLM_LOCAL_CONTEXT_SIZE);
         pBuffer += NTLM_LOCAL_CONTEXT_SIZE;
 
-        if (pMessage->NtlmFlags & NTLM_FLAG_TARGET_INFO)
+        if (dwOptions & NTLM_FLAG_TARGET_INFO)
         {
             pTargetInfoSecBuffer = (PNTLM_SEC_BUFFER)pBuffer;
 
-            pTargetInfoSecBuffer->usLength = dwTargetInfoSize;
-            pTargetInfoSecBuffer->usMaxLength = pTargetInfoSecBuffer->usLength;
+            pTargetInfoSecBuffer->usLength = LW_HTOL16(dwTargetInfoSize);
+            pTargetInfoSecBuffer->usMaxLength = LW_HTOL16(pTargetInfoSecBuffer->usLength);
 
         }
 
@@ -720,9 +722,9 @@ NtlmCreateChallengeMessage(
 
     if (pMessage->Target.usLength)
     {
-        pMessage->Target.dwOffset = pBuffer - (PBYTE)pMessage;
+        pMessage->Target.dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
 
-        if (pMessage->NtlmFlags & NTLM_FLAG_TYPE_DOMAIN)
+        if (dwOptions & NTLM_FLAG_TYPE_DOMAIN)
         {
             pTrav = (PBYTE)pDomainName;
         }
@@ -748,15 +750,15 @@ NtlmCreateChallengeMessage(
     if (pTargetInfoSecBuffer)
     {
         // Remember, target block information is ALWAYS in UNICODE
-        pTargetInfoSecBuffer->dwOffset = pBuffer - (PBYTE)pMessage;
+        pTargetInfoSecBuffer->dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pDomainName))
         {
             pTargetInfoBlock = (PNTLM_TARGET_INFO_BLOCK)pBuffer;
 
-            pTargetInfoBlock->sLength = strlen(pDomainName) * sizeof(WCHAR);
+            pTargetInfoBlock->sLength = LW_HTOL16(strlen(pDomainName) * sizeof(WCHAR));
 
-            pTargetInfoBlock->sType = NTLM_TIB_DOMAIN_NAME;
+            pTargetInfoBlock->sType = LW_HTOL16(NTLM_TIB_DOMAIN_NAME);
 
             pTrav = (PBYTE)pDomainName;
 
@@ -777,9 +779,9 @@ NtlmCreateChallengeMessage(
         {
             pTargetInfoBlock = (PNTLM_TARGET_INFO_BLOCK)pBuffer;
 
-            pTargetInfoBlock->sLength = strlen(pServerName) * sizeof(WCHAR);
+            pTargetInfoBlock->sLength = LW_HTOL16(strlen(pServerName) * sizeof(WCHAR));
 
-            pTargetInfoBlock->sType = NTLM_TIB_SERVER_NAME;
+            pTargetInfoBlock->sType = LW_HTOL16(NTLM_TIB_SERVER_NAME);
 
             pTrav = (PBYTE)pServerName;
 
@@ -800,9 +802,9 @@ NtlmCreateChallengeMessage(
         {
             pTargetInfoBlock = (PNTLM_TARGET_INFO_BLOCK)pBuffer;
 
-            pTargetInfoBlock->sLength = strlen(pDnsDomainName) * sizeof(WCHAR);
+            pTargetInfoBlock->sLength = LW_HTOL16(strlen(pDnsDomainName) * sizeof(WCHAR));
 
-            pTargetInfoBlock->sType = NTLM_TIB_DNS_DOMAIN_NAME;
+            pTargetInfoBlock->sType = LW_HTOL16(NTLM_TIB_DNS_DOMAIN_NAME);
 
             pTrav = (PBYTE)pDnsDomainName;
 
@@ -823,9 +825,9 @@ NtlmCreateChallengeMessage(
         {
             pTargetInfoBlock = (PNTLM_TARGET_INFO_BLOCK)pBuffer;
 
-            pTargetInfoBlock->sLength = strlen(pDnsServerName) * sizeof(WCHAR);
+            pTargetInfoBlock->sLength = LW_HTOL16(strlen(pDnsServerName) * sizeof(WCHAR));
 
-            pTargetInfoBlock->sType = NTLM_TIB_DNS_SERVER_NAME;
+            pTargetInfoBlock->sType = LW_HTOL16(NTLM_TIB_DNS_SERVER_NAME);
 
             pTrav = (PBYTE)pDnsServerName;
 
@@ -844,7 +846,7 @@ NtlmCreateChallengeMessage(
 
         pTargetInfoBlock = (PNTLM_TARGET_INFO_BLOCK)pBuffer;
         pTargetInfoBlock->sLength = 0;
-        pTargetInfoBlock->sType = NTLM_TIB_TERMINATOR;
+        pTargetInfoBlock->sType = LW_HTOL16(NTLM_TIB_TERMINATOR);
 
         pBuffer += sizeof(*pTargetInfoBlock);
     }
@@ -889,9 +891,9 @@ NtlmCopyStringToSecBuffer(
         memcpy(*ppBufferPos, pszInput, dwLen);
     }
 
-    pSec->usLength = dwLen;
-    pSec->usMaxLength = dwLen;
-    pSec->dwOffset = *ppBufferPos - pBufferStart;
+    pSec->usLength = LW_HTOL16(dwLen);
+    pSec->usMaxLength = LW_HTOL16(dwLen);
+    pSec->dwOffset = LW_HTOL32(*ppBufferPos - pBufferStart);
     *ppBufferPos += dwLen;
 }
 
@@ -939,6 +941,7 @@ NtlmCreateResponseMessage(
     CHAR pWorkstation[HOST_NAME_MAX];
     // The following pointers point into pMessage and will not be freed on error
     PBYTE pBuffer = NULL;
+    DWORD dwHostNtlmFlags = 0;
 
     // sanity checks
     if (!pChlngMsg || !ppRespMsg)
@@ -958,15 +961,16 @@ NtlmCreateResponseMessage(
     *pdwSize = 0;
 
     dwSize += sizeof(*pMessage);
+    dwHostNtlmFlags = LW_LTOH32(pChlngMsg->NtlmFlags);
 
     dwSize += NtlmGetStringProtocolSize(
-                pChlngMsg->NtlmFlags,
+                dwHostNtlmFlags,
                 pDomainName);
     dwSize += NtlmGetStringProtocolSize(
-                pChlngMsg->NtlmFlags,
+                dwHostNtlmFlags,
                 pUserName);
     dwSize += NtlmGetStringProtocolSize(
-                pChlngMsg->NtlmFlags,
+                dwHostNtlmFlags,
                 pWorkstation);
 
     if (dwLmRespType == NTLM_RESPONSE_TYPE_NTLM2)
@@ -1012,7 +1016,7 @@ NtlmCreateResponseMessage(
     dwSize += dwNtMsgSize;
     dwSize += dwLmMsgSize;
 
-    if (pChlngMsg->NtlmFlags & NTLM_FLAG_KEY_EXCH)
+    if (dwHostNtlmFlags & NTLM_FLAG_KEY_EXCH)
     {
         dwSize += NTLM_SESSION_KEY_SIZE;
     }
@@ -1027,19 +1031,19 @@ NtlmCreateResponseMessage(
         NTLM_NETWORK_SIGNATURE,
         NTLM_NETWORK_SIGNATURE_SIZE);
 
-    pMessage->MessageType = NTLM_RESPONSE_MSG;
+    pMessage->MessageType = LW_HTOL32(NTLM_RESPONSE_MSG);
 
-    pMessage->LmResponse.usLength = dwLmMsgSize;
-    pMessage->LmResponse.usMaxLength = pMessage->LmResponse.usLength;
+    pMessage->LmResponse.usLength = LW_HTOL16(dwLmMsgSize);
+    pMessage->LmResponse.usMaxLength = LW_HTOL16(pMessage->LmResponse.usLength);
 
-    pMessage->NtResponse.usLength = dwNtMsgSize;
-    pMessage->NtResponse.usMaxLength = pMessage->NtResponse.usLength;
+    pMessage->NtResponse.usLength = LW_HTOL16(dwNtMsgSize);
+    pMessage->NtResponse.usMaxLength = LW_HTOL16(pMessage->NtResponse.usLength);
 
     pMessage->Flags = pChlngMsg->NtlmFlags;
     if (dwLmRespType == NTLM_RESPONSE_TYPE_ANON_LM &&
         dwNtRespType == NTLM_RESPONSE_TYPE_ANON_NTLM)
     {
-        pMessage->Flags |= NTLM_FLAG_ANONYMOUS;
+        pMessage->Flags |= LW_HTOL32(NTLM_FLAG_ANONYMOUS);
     }
 
     memcpy(&pMessage->Version, pOsVersion, NTLM_WIN_SPOOF_SIZE);
@@ -1050,46 +1054,46 @@ NtlmCreateResponseMessage(
 
     NtlmCopyStringToSecBuffer(
         pDomainName,
-        pChlngMsg->NtlmFlags,
+        dwHostNtlmFlags,
         (PBYTE)pMessage,
         &pBuffer,
         &pMessage->AuthTargetName);
     NtlmCopyStringToSecBuffer(
         pUserName,
-        pChlngMsg->NtlmFlags,
+        dwHostNtlmFlags,
         (PBYTE)pMessage,
         &pBuffer,
         &pMessage->UserName);
     NtlmCopyStringToSecBuffer(
         pWorkstation,
-        pChlngMsg->NtlmFlags,
+        dwHostNtlmFlags,
         (PBYTE)pMessage,
         &pBuffer,
         &pMessage->Workstation);
 
-    pMessage->LmResponse.dwOffset = pBuffer - (PBYTE)pMessage;
+    pMessage->LmResponse.dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
     memcpy(pBuffer, pLmMsg, dwLmMsgSize);
 
-    pBuffer += pMessage->LmResponse.usLength;
+    pBuffer += dwLmMsgSize;
 
-    pMessage->NtResponse.dwOffset = pBuffer - (PBYTE)pMessage;
+    pMessage->NtResponse.dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
     memcpy(pBuffer, pNtMsg, dwNtMsgSize);
 
-    pBuffer += pMessage->NtResponse.usLength;
+    pBuffer += dwNtMsgSize;
 
     pMessage->SessionKey.usLength = 0;
-    if (pChlngMsg->NtlmFlags & NTLM_FLAG_KEY_EXCH)
+    if (dwHostNtlmFlags & NTLM_FLAG_KEY_EXCH)
     {
         // we won't fill this in until after we return from this function, but
         // we'll save space to fill in later
-        pMessage->SessionKey.usLength = NTLM_SESSION_KEY_SIZE;
+        pMessage->SessionKey.usLength = LW_HTOL16(NTLM_SESSION_KEY_SIZE);
     }
     pMessage->SessionKey.usMaxLength = pMessage->SessionKey.usLength;
-    pMessage->SessionKey.dwOffset = pBuffer - (PBYTE)pMessage;
+    pMessage->SessionKey.dwOffset = LW_HTOL32(pBuffer - (PBYTE)pMessage);
 
     // This is only a partial validation since we may be adding a session key
     // to this message.
-    LW_ASSERT(pBuffer + pMessage->SessionKey.usLength == (PBYTE)pMessage + dwSize);
+    LW_ASSERT(pBuffer + LW_LTOH16(pMessage->SessionKey.usLength) == (PBYTE)pMessage + dwSize);
 
 cleanup:
     LW_SAFE_FREE_MEMORY(pNtMsg);
@@ -1122,7 +1126,7 @@ NtlmStoreSecondaryKey(
     RC4_set_key(&Rc4Key, NTLM_SESSION_KEY_SIZE, pMasterKey);
     RC4(&Rc4Key, NTLM_SESSION_KEY_SIZE, pSecondaryKey, EncryptedKey);
 
-    pSessionKeyData = pV2Message->SessionKey.dwOffset + (PBYTE)pMessage;
+    pSessionKeyData = LW_LTOH32(pV2Message->SessionKey.dwOffset) + (PBYTE)pMessage;
 
     memcpy(pSessionKeyData, EncryptedKey, pV2Message->SessionKey.usLength);
 }
@@ -1135,10 +1139,14 @@ NtlmWeakenSessionKey(
     OUT PDWORD pcbKeyLength
     )
 {
+    DWORD dwHostNtlmFlags = 0;
+
+    dwHostNtlmFlags = LW_LTOH32(pChlngMsg->NtlmFlags);
+
     // Only weaken the key if LanManagerSessionKey was used
-    if (pChlngMsg->NtlmFlags & NTLM_FLAG_LM_KEY)
+    if (dwHostNtlmFlags & NTLM_FLAG_LM_KEY)
     {
-        if (pChlngMsg->NtlmFlags & NTLM_FLAG_56)
+        if (dwHostNtlmFlags & NTLM_FLAG_56)
         {
             pMasterKey[7] = 0xa0;
             memset(&pMasterKey[8], 0, 8);
@@ -1146,7 +1154,7 @@ NtlmWeakenSessionKey(
             // key strength is 56 bits
             *pcbKeyLength = 7;
         }
-        else if (!(pChlngMsg->NtlmFlags & NTLM_FLAG_128))
+        else if (!(dwHostNtlmFlags & NTLM_FLAG_128))
         {
             pMasterKey[5] = 0xe5;
             pMasterKey[6] = 0x38;
@@ -1187,10 +1195,10 @@ NtlmGetAuthTargetNameFromChallenge(
 
     *ppAuthTargetName = NULL;
 
-    dwNameLength = pTargetSecBuffer->usLength;
-    pBuffer = pTargetSecBuffer->dwOffset + (PBYTE)pChlngMsg;
+    dwNameLength = LW_LTOH16(pTargetSecBuffer->usLength);
+    pBuffer = LW_LTOH32(pTargetSecBuffer->dwOffset) + (PBYTE)pChlngMsg;
 
-    if (pChlngMsg->NtlmFlags & NTLM_FLAG_OEM)
+    if (LW_LTOH32(pChlngMsg->NtlmFlags) & NTLM_FLAG_OEM)
     {
         dwError = LwAllocateMemory(dwNameLength + 1, OUT_PPVOID(&pName));
         BAIL_ON_LSA_ERROR(dwError);
@@ -1588,14 +1596,14 @@ NtlmCreateNtlmV2Blob(
             sizeof(NTLM_CHALLENGE_MESSAGE) +
             NTLM_LOCAL_CONTEXT_SIZE);
 
-    pTargetBuffer = (PBYTE)pChlngMsg + pTargetInfo->dwOffset;
+    pTargetBuffer = (PBYTE)pChlngMsg + LW_LTOH32(pTargetInfo->dwOffset);
 
     // We're going to allocate the entire blob at this point and just use
     // portions of it as needed.
     dwBlobSize =
         NTLM_HASH_SIZE +
         sizeof(NTLM_BLOB) +
-        pTargetInfo->usLength +
+        LW_LTOH16(pTargetInfo->usLength) +
         NTLM_BLOB_TRAILER_SIZE;
 
     dwError = LwAllocateMemory(dwBlobSize, OUT_PPVOID(&pOriginal));
@@ -1624,7 +1632,7 @@ NtlmCreateNtlmV2Blob(
 
     // Copy in the target info buffer
     pBuffer = (PBYTE)pNtlmBlob + sizeof(NTLM_BLOB);
-    memcpy(pBuffer, pTargetBuffer, pTargetInfo->usLength);
+    memcpy(pBuffer, pTargetBuffer, LW_LTOH16(pTargetInfo->usLength));
 
     // The last 4 bytes should never have changed so they should still be 0
 
@@ -1955,7 +1963,7 @@ NtlmGenerateLanManagerSessionKey(
     memset(&DesKeySchedule, 0, sizeof(DES_key_schedule));
 
     pLmSecBuffer = &pMessage->LmResponse;
-    pLmResponse = (PBYTE)pMessage + pLmSecBuffer->dwOffset;
+    pLmResponse = (PBYTE)pMessage + LW_LTOH32(pLmSecBuffer->dwOffset);
 
     memcpy(KeyBuffer, pLmUserSessionKey, 8);
     memset(&KeyBuffer[8], 0xbd, 6);

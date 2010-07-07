@@ -616,9 +616,12 @@ LsaPamGetOldPassword(
        dwError = LsaPamUnmapErrorCode(iPamError);
        BAIL_ON_LSA_ERROR(dwError);
 
-#ifdef __LWI_HP_UX__
+#if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
        /* HP-UX clears PAM_OLDAUTHTOK between the two phases of chauthtok, so
           save a copy of the old password where we can find it later */
+
+       /* For Solaris, we read PAM_LSASS_OLDAUTHTOK instead of 
+          PAM_OLDAUTHTOK. */
        dwError = LsaPamSetDataString(pamh, PAM_LSASS_OLDAUTHTOK, pszPassword);
        BAIL_ON_LSA_ERROR(dwError);
 #endif
