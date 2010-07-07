@@ -531,6 +531,7 @@ typedef struct
 {
     unsigned32                  grp_id;
     rpc_cn_syntax_t             *pres_context;
+    boolean                     reuse_context;
     rpc_cn_sec_context_t        *sec_context;
 } rpc_cn_assoc_sm_work_t, *rpc_cn_assoc_sm_work_p_t;
 

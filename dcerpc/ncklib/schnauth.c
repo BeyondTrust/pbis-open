@@ -152,6 +152,12 @@ PRIVATE void rpc__schnauth_bnd_set_auth
         goto poison;
     }
 
+    schnauth_info->sec_ctx.fqdn  = rpc_stralloc(auth_info->fqdn);
+    if (schnauth_info->sec_ctx.fqdn == NULL) {
+        st = rpc_s_no_memory;
+        goto poison;
+    }
+
     schnauth_info->sec_ctx.machine_name = rpc_stralloc(auth_info->machine_name);
     if (schnauth_info->sec_ctx.machine_name == NULL) {
         st = rpc_s_no_memory;
@@ -268,6 +274,11 @@ PRIVATE void rpc__schnauth_free_info
     if (schnauth_info->sec_ctx.domain_name)
     {
 	rpc_string_free(&schnauth_info->sec_ctx.domain_name, &tst);
+    }
+
+    if (schnauth_info->sec_ctx.fqdn)
+    {
+	rpc_string_free(&schnauth_info->sec_ctx.fqdn, &tst);
     }
 
     memset(schnauth_info, 0x69, sizeof(*schnauth_info));

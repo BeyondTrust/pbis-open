@@ -43,6 +43,7 @@ extern const unsigned char schannel_sig_seal[];
 struct schn_auth_ctx {
     uint8           session_key[16];
     unsigned char  *domain_name;
+    unsigned char  *fqdn;
     unsigned char  *machine_name;
     uint32          sender_flags;
     uint32          seq_num;

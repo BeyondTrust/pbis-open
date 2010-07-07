@@ -111,6 +111,7 @@ INTERNAL void send_pdu _DCE_PROTOTYPE_ ((
     rpc_cn_assoc_p_t            /*assoc*/,
     unsigned32                  /*pdu_type*/,
     rpc_cn_syntax_p_t           /*pres_context*/,
+    boolean                     /*reuse_context*/,
     unsigned32                  /*grp_id*/,
     rpc_cn_sec_context_p_t      /*sec_context*/,
     boolean                     /*old_server*/,
@@ -1618,6 +1619,7 @@ pointer_t       sm;
     send_pdu (assoc,
               RPC_C_CN_PKT_BIND,
               assoc_sm_work->pres_context,
+              assoc_sm_work->reuse_context,
               assoc_sm_work->grp_id,
               assoc_sm_work->sec_context,
               old_server,
@@ -2367,6 +2369,7 @@ pointer_t       sm;
     send_pdu (assoc,
               RPC_C_CN_PKT_AUTH3,
               NULL,
+              FALSE,
               assoc_sm_work->grp_id,
               assoc_sm_work->sec_context,
               old_server,
@@ -2468,7 +2471,8 @@ pointer_t       sm;
     send_pdu (assoc, 
               RPC_C_CN_PKT_ALTER_CONTEXT,
               assoc_sm_work->pres_context,
-              0,
+              assoc_sm_work->reuse_context,
+              assoc_sm_work->grp_id,
               assoc_sm_work->sec_context,
               old_server,
               &(assoc->assoc_status));
@@ -4604,6 +4608,7 @@ pointer_t       sm;
     send_pdu (assoc,
               RPC_C_CN_PKT_BIND,
               assoc->assoc_sm_work->pres_context,
+              assoc->assoc_sm_work->reuse_context,
               assoc->assoc_sm_work->grp_id,
               assoc->assoc_sm_work->sec_context,
               true,
@@ -4801,27 +4806,16 @@ rpc_g_cn_assoc_client_events[assoc->assoc_state.cur_event-RPC_C_CN_STATEBASE],
 **/
 
 INTERNAL void send_pdu 
-#ifdef _DCE_PROTO_
 (
   rpc_cn_assoc_p_t        assoc,
   unsigned32              pdu_type,
   rpc_cn_syntax_p_t       pres_context,
+  boolean                 reuse_context,
   unsigned32              grp_id,
   rpc_cn_sec_context_p_t  sec_context,
   boolean                 old_server,
   unsigned32              *st
 )
-#else
-(assoc, pdu_type, pres_context, grp_id, sec_context, old_server, st)
-rpc_cn_assoc_p_t        assoc;
-unsigned32              pdu_type;
-rpc_cn_syntax_p_t       pres_context;
-unsigned32              grp_id;
-rpc_cn_sec_context_p_t  sec_context;
-boolean                 old_server;
-unsigned32              *st;
-
-#endif
 {
     rpc_cn_fragbuf_t            *fragbuf;
     rpc_cn_packet_t             *header;
@@ -4883,7 +4877,10 @@ unsigned32              *st;
                        (sizeof (rpc_cn_pres_syntax_id_t) *
                        (pres_context->syntax_vector->count - 1)); 
         pres_cont_list->n_context_elem = 1;
-        RPC_CN_ASSOC_CONTEXT_ID (assoc)++;
+        if (!reuse_context)
+        {
+            RPC_CN_ASSOC_CONTEXT_ID (assoc)++;
+        }
         pres_cont_list->pres_cont_elem[0].pres_context_id = RPC_CN_ASSOC_CONTEXT_ID (assoc);
         pres_context->syntax_pres_id = RPC_CN_ASSOC_CONTEXT_ID (assoc);
         pres_cont_list->pres_cont_elem[0].n_transfer_syn = pres_context->syntax_vector->count;

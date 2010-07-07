@@ -714,9 +714,8 @@ LsaSrvConnectDomainByName(
          */
 
         ntStatus = NetrInitBindingDefault(&hNetrBinding,
-                                           pPolCtx->pwszDcName,
-                                           pCreds,
-                                           FALSE);
+                                          pPolCtx->pwszDcName,
+                                          pCreds);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = DsrEnumerateDomainTrusts(hNetrBinding,
@@ -922,8 +921,7 @@ LsaSrvConnectDomainBySid(
 
         ntStatus = NetrInitBindingDefault(&hNetrBinding,
                                           pPolCtx->pwszDcName,
-                                          pCreds,
-                                          FALSE);
+                                          pCreds);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = DsrEnumerateDomainTrusts(hNetrBinding,

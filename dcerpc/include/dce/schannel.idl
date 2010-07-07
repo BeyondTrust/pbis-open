@@ -48,6 +48,7 @@ const unsigned32 rpc_schn_acceptor_flags  = 0x0000;
 
 typedef struct {
     unsigned_char_p_t domain_name;
+    unsigned_char_p_t fqdn;
     unsigned_char_p_t machine_name;
     unsigned8  session_key[16];
     unsigned32 sender_flags;

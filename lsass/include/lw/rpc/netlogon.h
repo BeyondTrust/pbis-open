@@ -517,8 +517,7 @@ NTSTATUS
 NetrInitBindingDefault(
     OUT PNETR_BINDING   phNetrBinding,
     IN  PCWSTR          pwszHostname,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     );
 
 
@@ -530,8 +529,7 @@ NetrInitBindingFull(
     IN  PCWSTR          pszEndpoint,
     IN  PCWSTR          pszUuid,
     IN  PCWSTR          pszOptions,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     );
 
 
@@ -548,6 +546,7 @@ NetrOpenSchannel(
     IN  PCWSTR            pwszHostname,
     IN  PCWSTR            pwszServer,
     IN  PCWSTR            pwszDomain,
+    IN  PCWSTR            pwszFqdn,
     IN  PCWSTR            pwszComputer,
     IN  PCWSTR            pwszMachinePassword,
     IN  NetrCredentials  *pCreds,

@@ -52,8 +52,7 @@ NTSTATUS
 NetrInitBindingDefaultA(
     OUT PNETR_BINDING   phBinding,
     IN  PCSTR           pszHostname,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     );
 
 
@@ -66,8 +65,7 @@ NetrInitBindingFullA(
     IN  PCSTR           pszEndpoint,
     IN  PCSTR           pszUuid,
     IN  PCSTR           pszOptions,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     );
 
 
@@ -75,8 +73,7 @@ NTSTATUS
 NetrInitBindingDefault(
     OUT PNETR_BINDING   phBinding,
     IN  PCWSTR          pwszHostname,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -91,8 +88,7 @@ NetrInitBindingDefault(
 
     ntStatus = NetrInitBindingDefaultA(phBinding,
                                        pszHostname,
-                                       pCreds,
-                                       bIsSchannel);
+                                       pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
@@ -110,8 +106,7 @@ NTSTATUS
 NetrInitBindingDefaultA(
     OUT PNETR_BINDING  phBinding,
     IN  PCSTR          pszHostname,
-    IN  LW_PIO_CREDS   pCreds,
-    IN  BOOLEAN        bIsSchannel
+    IN  LW_PIO_CREDS   pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -130,8 +125,7 @@ NetrInitBindingDefaultA(
                       (pszHostname) ? pszEndpoint : pszLpcEndpoint,
                       pszUuid,
                       pszOptions,
-                      pCreds,
-                      bIsSchannel);
+                      pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
     *phBinding = hBinding;
@@ -152,8 +146,7 @@ NetrInitBindingFull(
     IN  PCWSTR          pwszEndpoint,
     IN  PCWSTR          pwszUuid,
     IN  PCWSTR          pwszOptions,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -189,8 +182,7 @@ NetrInitBindingFull(
                                     pszEndpoint,
                                     pszUuid,
                                     pszOptions,
-                                    pCreds,
-                                    bIsSchannel);
+                                    pCreds);
     BAIL_ON_NT_STATUS(ntStatus);
 
     *phBinding = hBinding;
@@ -226,8 +218,7 @@ NetrInitBindingFullA(
     IN  PCSTR           pszEndpoint,
     IN  PCSTR           pszUuid,
     IN  PCSTR           pszOptions,
-    IN  LW_PIO_CREDS    pCreds,
-    IN  BOOLEAN         bIsSchannel
+    IN  LW_PIO_CREDS    pCreds
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
@@ -293,7 +284,6 @@ NetrInitBindingFullA(
     {
         rpc_smb_transport_info_from_lwio_creds(
             pCreds,
-            bIsSchannel,
             &hInfo,
             &rpcStatus);
         BAIL_ON_RPC_STATUS(rpcStatus);

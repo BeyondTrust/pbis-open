@@ -56,6 +56,7 @@ NetrOpenSchannel(
     IN  PCWSTR            pwszHostname,
     IN  PCWSTR            pwszServer,
     IN  PCWSTR            pwszDomain,
+    IN  PCWSTR            pwszFqdn,
     IN  PCWSTR            pwszComputer,
     IN  PCWSTR            pwszMachinePassword,
     IN  NetrCredentials  *pCreds,
@@ -118,6 +119,10 @@ NetrOpenSchannel(
                            (PSTR*)&SchannelAuthInfo.domain_name);
     BAIL_ON_WIN_ERROR(dwError);
 
+    dwError = LwWc16sToMbs(pwszFqdn,
+                           (PSTR*)&SchannelAuthInfo.fqdn);
+    BAIL_ON_WIN_ERROR(dwError);
+
     dwError = LwWc16sToMbs(pwszComputer,
                            (PSTR*)&SchannelAuthInfo.machine_name);
     BAIL_ON_WIN_ERROR(dwError);
@@ -129,8 +134,7 @@ NetrOpenSchannel(
 
     ntStatus = NetrInitBindingDefault(&hSchannelBinding,
                                       pwszHostname,
-                                      pIoCreds,
-                                      TRUE);
+                                      pIoCreds);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
     rpc_binding_set_auth_info(hSchannelBinding,
@@ -153,6 +157,7 @@ NetrOpenSchannel(
 cleanup:
     LW_SAFE_FREE_MEMORY(SchannelAuthInfo.domain_name);
     LW_SAFE_FREE_MEMORY(SchannelAuthInfo.machine_name);
+    LW_SAFE_FREE_MEMORY(SchannelAuthInfo.fqdn);
 
     if (pIoCreds)
     {

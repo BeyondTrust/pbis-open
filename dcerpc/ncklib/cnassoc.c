@@ -3575,6 +3575,7 @@ unsigned32              *st;
     boolean                     pres_context_setup;
     boolean                     sec_context_setup = false;
     boolean32                   sec_cred_changed = false;
+    rpc_cn_assoc_grp_t          * volatile assoc_grp = NULL;
 
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_alter_context);
     CODING_ERROR (st);
@@ -3700,6 +3701,15 @@ unsigned32              *st;
             RPC_LIST_ADD_TAIL (assoc->syntax_list, pres_context, rpc_cn_syntax_p_t);
             assoc_sm_work.pres_context = pres_context;
         }
+        else
+        {
+            /* MSRPC seems to expect a context negotiation even if we aren't
+               changing the presentation context, so just send what we already
+               have */
+            assoc_sm_work.pres_context = pres_context;
+            assoc_sm_work.reuse_context = TRUE;
+        }
+        
 
         /*
          * If authentication is required on this call, we may have
@@ -3756,6 +3766,9 @@ unsigned32              *st;
                 assoc_sm_work.sec_context = sec_context;
             }
         }
+
+        assoc_grp = RPC_CN_ASSOC_GRP(assoc->assoc_grp_id);
+        assoc_sm_work.grp_id = assoc_grp->grp_remid.all;
 
         /*
          * Evaluate an alter_context event through the client

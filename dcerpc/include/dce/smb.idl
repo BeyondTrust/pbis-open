@@ -45,7 +45,6 @@
     
     void rpc_smb_transport_info_from_lwio_creds(
         [in] void* creds,
-        [in] boolean schannel,
         [out] rpc_transport_info_handle_t* info,
         [out] unsigned32 *st
         );

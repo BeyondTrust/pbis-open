@@ -28,7 +28,6 @@ typedef struct rpc_smb_transport_info_s
         unsigned char* data;
     } session_key;
     PIO_CREDS creds;
-    boolean schannel;
 } rpc_smb_transport_info_t, *rpc_smb_transport_info_p_t;
 
 typedef enum rpc_smb_state_e
@@ -73,7 +72,6 @@ typedef struct rpc_smb_socket_s
 void
 rpc_smb_transport_info_from_lwio_creds(
     void* creds,
-    boolean schannel,
     rpc_transport_info_handle_t* info,
     unsigned32* st
     )
@@ -93,8 +91,6 @@ rpc_smb_transport_info_from_lwio_creds(
         *st = rpc_s_no_memory;
         goto error;
     }
-
-    smb_info->schannel = schannel;
 
     *info = (rpc_transport_info_handle_t) smb_info;
 
@@ -170,10 +166,8 @@ rpc__smb_transport_info_equal(
 
     return 
         (smb_info2 == NULL
-         && smb_info1->creds == NULL
-         && smb_info1->schannel == FALSE) ||
+         && smb_info1->creds == NULL) ||
         (smb_info2 != NULL &&
-         smb_info1->schannel == smb_info2->schannel &&
          ((smb_info1->creds == NULL && smb_info2->creds == NULL) ||
           (smb_info1->creds != NULL && smb_info2->creds != NULL &&
            LwIoCompareCredss(smb_info1->creds, smb_info2->creds))));
@@ -565,8 +559,6 @@ rpc__smb_socket_construct(
                 goto error;
             }
         }
-
-        smb_sock->info.schannel = smb_info->schannel;
     }
 
     sock->data.pointer = (void*) smb_sock;
@@ -1607,8 +1599,6 @@ rpc__smb_socket_inq_transport_info(
         serr = ENOMEM;
         goto error;
     }
-
-    smb_info->schannel = smb->info.schannel;
 
     if (smb->info.creds)
     {
