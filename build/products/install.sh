@@ -1182,10 +1182,18 @@ do_postinstall()
         log_info "Please reboot so that all processes pick up the new copy."
         log_info ""
     else
-        log_info ""
-        log_info "Use the utility domainjoin-cli to join your computer to a domain"
-        log_info "and enable logging on with Active Directory credentials."
-        log_info ""
+        command="`get_prefix_dir`/bin/lw-get-current-domain"
+        domain=`$command 2>/dev/null`
+        if [ $? -eq 0 ]; then
+            domain=`echo $domain | sed -e 's/^Current Domain = //'`
+            log_info "This computer is joined to $domain"
+            log_info ""
+        else
+            log_info ""
+            log_info "Use the utility domainjoin-cli to join your computer to a domain"
+            log_info "and enable logging on with Active Directory credentials."
+            log_info ""
+        fi
     fi
 }
 
