@@ -1575,6 +1575,7 @@ unsigned32                      *st;
 	{
 	    rpc__schnauth_cn_unwrap_pdu(assoc_sec, sec, pdu, pdu_len, cred_len,
 					auth_tlr, unpack_ints, st);
+            return;
         }
         case RPC_C_CN_PKT_FAULT:
         case RPC_C_CN_PKT_BIND:
