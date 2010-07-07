@@ -197,3 +197,226 @@ SetCloseOnExec(
 {
     fcntl(Fd, F_SETFD, FD_CLOEXEC);
 }
+
+NTSTATUS
+InitWorkThreads(
+    PLW_WORK_THREADS pThreads,
+    PLW_THREAD_POOL_ATTRIBUTES pAttrs,
+    int numCpus
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    RingInit(&pThreads->WorkItems);
+
+    status = LwErrnoToNtStatus(pthread_mutex_init(&pThreads->Lock, NULL));
+    GOTO_ERROR_ON_STATUS(status);
+    pThreads->bDestroyLock = TRUE;
+
+    status = LwErrnoToNtStatus(pthread_cond_init(&pThreads->Event, NULL));
+    GOTO_ERROR_ON_STATUS(status);
+    pThreads->bDestroyEvent = TRUE;
+
+    pThreads->ulWorkThreadCount = GetWorkThreadsAttr(pAttrs, numCpus);
+    pThreads->ulWorkThreadStackSize = pAttrs ? pAttrs->ulWorkThreadStackSize : 0;
+
+error:
+
+    return status;
+}
+
+VOID
+DestroyWorkThreads(
+    PLW_WORK_THREADS pThreads
+    )
+{
+    size_t i = 0;
+
+    if (pThreads->pWorkThreads)
+    {
+        LOCK_THREADS(pThreads);
+        pThreads->bShutdown = TRUE;
+        pthread_cond_broadcast(&pThreads->Event);
+        UNLOCK_THREADS(pThreads);
+        
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            pthread_join(pThreads->pWorkThreads[i].Thread, NULL);
+        }
+            
+        RtlMemoryFree(pThreads->pWorkThreads);
+    }
+
+    if (pThreads->bDestroyLock)
+    {        
+        pthread_mutex_destroy(&pThreads->Lock);
+    }
+
+    if (pThreads->bDestroyEvent)
+    {
+        pthread_cond_destroy(&pThreads->Event);
+    }
+}
+
+
+static
+NTSTATUS
+WorkLoop(
+    PLW_WORK_THREAD pThread
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRING pRing = NULL;
+    PLW_WORK_ITEM pItem = NULL;
+
+    LOCK_THREADS(pThread->pThreads);
+
+    for(;;)
+    {
+        while (!pThread->pThreads->bShutdown && RingIsEmpty(&pThread->pThreads->WorkItems))
+        {
+            pthread_cond_wait(&pThread->pThreads->Event, &pThread->pThreads->Lock);
+        }
+
+        if (pThread->pThreads->bShutdown)
+        {
+            break;
+        }
+
+        RingDequeue(&pThread->pThreads->WorkItems, &pRing);
+
+        UNLOCK_THREADS(pThread->pThreads);
+
+        pItem = LW_STRUCT_FROM_FIELD(pRing, LW_WORK_ITEM, Ring);
+        
+        pItem->pfnFunc(pItem->pContext);
+        RtlMemoryFree(pItem);
+
+        LOCK_THREADS(pThread->pThreads);
+    }
+
+    UNLOCK_THREADS(pThread->pThreads);
+
+    return status;
+}
+
+static
+PVOID
+WorkThread(
+    PVOID pContext
+    )
+{
+    WorkLoop((PLW_WORK_THREAD) pContext);
+
+    return NULL;
+}
+
+static
+NTSTATUS
+StartWorkThread(
+    PLW_WORK_THREADS pThreads,
+    PLW_WORK_THREAD pThread
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    pthread_attr_t threadAttr;
+    pthread_attr_t* pThreadAttr = NULL;
+
+    pThread->pThreads = pThreads;
+
+    if (pThreads->ulWorkThreadStackSize)
+    {
+        status = LwErrnoToNtStatus(pthread_attr_init(&threadAttr));
+        GOTO_ERROR_ON_STATUS(status);
+        
+        pThreadAttr = &threadAttr;
+        
+        status = LwErrnoToNtStatus(
+            pthread_attr_setstacksize(pThreadAttr, pThreads->ulWorkThreadStackSize));
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
+    status = LwErrnoToNtStatus(
+        pthread_create(
+            &pThread->Thread,
+            pThreadAttr,
+            WorkThread,
+            pThread));
+    GOTO_ERROR_ON_STATUS(status);
+
+error:
+    
+    if (pThreadAttr)
+    {
+        pthread_attr_destroy(pThreadAttr);
+    }
+
+    return status;
+}
+
+static
+NTSTATUS
+StartWorkThreads(
+    PLW_WORK_THREADS pThreads
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    size_t i = 0;
+
+    if (pThreads->ulWorkThreadCount && !pThreads->pWorkThreads)
+    {
+        status = LW_RTL_ALLOCATE_ARRAY_AUTO(
+            &pThreads->pWorkThreads,
+            pThreads->ulWorkThreadCount);
+        GOTO_ERROR_ON_STATUS(status);
+        
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            status = StartWorkThread(pThreads, &pThreads->pWorkThreads[i]);
+            GOTO_ERROR_ON_STATUS(status);
+        }
+    }
+
+error:
+
+    return status;
+}
+
+NTSTATUS
+QueueWorkItem(
+    PLW_WORK_THREADS pThreads,
+    LW_WORK_ITEM_FUNCTION pfnFunc,
+    PVOID pContext,
+    LW_WORK_ITEM_FLAGS Flags
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PLW_WORK_ITEM pItem = NULL;
+
+    LOCK_THREADS(pThreads);
+
+    status = LW_RTL_ALLOCATE_AUTO(&pItem);
+    GOTO_ERROR_ON_STATUS(status);
+    
+    RingInit(&pItem->Ring);
+    pItem->pfnFunc = pfnFunc;
+    pItem->pContext = pContext;
+    
+    status = StartWorkThreads(pThreads);
+    GOTO_ERROR_ON_STATUS(status);
+    
+    RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
+    pthread_cond_signal(&pThreads->Event);
+    pItem = NULL;
+
+error:
+
+    UNLOCK_THREADS(pThreads);
+
+    if (pItem)
+    {
+        RtlMemoryFree(pItem);
+    }
+
+    return status;
+}

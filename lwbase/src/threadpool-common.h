@@ -30,7 +30,7 @@
  *
  * Abstract:
  *
- *        Thread pool API
+ *        Thread pool API common elements
  *
  * Authors: Brian Koropoff (bkoropoff@likewise.com)
  *
@@ -38,6 +38,18 @@
 
 #ifndef __LWBASE_THREADPOOL_COMMON_H__
 #define __LWBASE_THREADPOOL_COMMON_H__
+
+typedef struct _RING
+{
+    struct _RING* pPrev;
+    struct _RING* pNext;
+} RING, *PRING;
+
+typedef struct _CLOCK
+{
+    LONG64 llLastTime;
+    LONG64 llAdjust;
+} CLOCK, *PCLOCK;
 
 struct _LW_THREAD_POOL_ATTRIBUTES
 {
@@ -47,6 +59,222 @@ struct _LW_THREAD_POOL_ATTRIBUTES
     ULONG ulTaskThreadStackSize;
     ULONG ulWorkThreadStackSize;
 };
+
+typedef struct _LW_WORK_ITEM
+{
+    LW_WORK_ITEM_FUNCTION pfnFunc;
+    PVOID pContext;
+    RING Ring;
+} LW_WORK_ITEM, *PLW_WORK_ITEM;
+
+typedef struct _WORK_ITEM_THREAD
+{
+    struct _LW_WORK_THREADS* pThreads;
+    pthread_t Thread;
+} LW_WORK_THREAD, *PLW_WORK_THREAD;
+
+typedef struct _LW_WORK_THREADS
+{
+    PLW_WORK_THREAD pWorkThreads;
+    ULONG ulWorkThreadCount;
+    ULONG ulWorkThreadStackSize;
+    RING WorkItems;
+    BOOLEAN volatile bShutdown;
+    pthread_mutex_t Lock;
+    pthread_cond_t Event;
+    unsigned bDestroyLock:1;
+    unsigned bDestroyEvent:1;
+} LW_WORK_THREADS, *PLW_WORK_THREADS;
+
+#define LOCK_THREADS(m) (pthread_mutex_lock(&(m)->Lock))
+#define UNLOCK_THREADS(m) (pthread_mutex_unlock(&(m)->Lock))
+
+/* Ring functions */
+static inline
+VOID
+RingInit(
+    PRING pRing
+    )
+{
+    pRing->pPrev = pRing->pNext = pRing;
+}
+
+static inline
+VOID
+RingInsertAfter(
+    PRING pAnchor,
+    PRING pElement
+    )
+{
+    pElement->pNext = pAnchor->pNext;
+    pElement->pPrev = pAnchor;
+    
+    pAnchor->pNext->pPrev = pElement;
+    pAnchor->pNext = pElement;
+}
+
+static inline
+VOID
+RingInsertBefore(
+    PRING pAnchor,
+    PRING pElement
+    )
+{
+    pElement->pNext = pAnchor;
+    pElement->pPrev = pAnchor->pPrev;
+
+    pAnchor->pPrev->pNext = pElement;
+    pAnchor->pPrev = pElement;
+}
+
+static inline
+VOID
+RingRemove(
+    PRING pElement
+    )
+{
+    pElement->pPrev->pNext = pElement->pNext;
+    pElement->pNext->pPrev = pElement->pPrev;
+    RingInit(pElement);
+}
+
+static inline
+VOID
+RingEnqueue(
+    PRING pAnchor,
+    PRING pElement
+    )
+{
+    RingInsertBefore(pAnchor, pElement);
+}
+
+static inline
+VOID
+RingDequeue(
+    PRING pAnchor,
+    PRING* pElement
+    )
+{
+    *pElement = pAnchor->pNext;
+    RingRemove(*pElement);
+}
+
+static inline
+VOID
+RingMove(
+    PRING pFrom,
+    PRING pTo
+    )
+{
+    PRING pFromFirst = pFrom->pNext;
+    PRING pFromLast = pFrom->pPrev;
+    PRING pToLast = pTo->pPrev;
+
+    if (pFrom->pNext != pFrom)
+    {
+        pToLast->pNext = pFromFirst;
+        pFromFirst->pPrev = pToLast;
+        
+        pFromLast->pNext = pTo;
+        pTo->pPrev = pFromLast;
+        
+        pFrom->pNext = pFrom->pPrev = pFrom;
+    }
+}
+
+static inline
+size_t
+RingCount(
+    PRING ring
+    )
+{
+    PRING iter = NULL;
+    size_t count = 0;
+
+    for (iter = ring->pNext; iter != ring; iter = iter->pNext, count++);
+
+    return count;
+}
+
+static inline
+BOOLEAN
+RingIsEmpty(
+    PRING ring
+    )
+{
+    return ring->pNext == ring;
+}
+
+/* Time functions */
+
+static inline
+NTSTATUS
+TimeNow(
+    PLONG64 pllNow
+    )
+{
+    struct timeval tv;
+
+    if (gettimeofday(&tv, NULL))
+    {
+        return LwErrnoToNtStatus(errno);
+    }
+    else
+    {
+        *pllNow = 
+            tv.tv_sec * 1000000000ll +
+            tv.tv_usec * 1000ll;
+
+        return STATUS_SUCCESS;
+    }
+}
+
+static inline
+NTSTATUS
+ClockUpdate(
+    PCLOCK pClock
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    LONG64 llNow = 0;
+
+    status = TimeNow(&llNow);
+    GOTO_ERROR_ON_STATUS(status);
+
+    if (pClock->llLastTime == 0)
+    {
+        pClock->llAdjust = -llNow;
+    }
+    else if (llNow < pClock->llLastTime)
+    {
+        pClock->llAdjust += (pClock->llLastTime - llNow + 1);
+    }
+
+    pClock->llLastTime = llNow;
+    
+error:
+
+    return status;
+}
+
+static inline
+NTSTATUS
+ClockGetMonotonicTime(
+    PCLOCK pClock,
+    PLONG64 pllTime
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = ClockUpdate(pClock);
+    GOTO_ERROR_ON_STATUS(status);
+
+    *pllTime = pClock->llLastTime + pClock->llAdjust;
+
+error:
+    
+    return status; 
+}
 
 NTSTATUS
 AcquireDelegatePool(
@@ -97,6 +325,26 @@ GetWorkThreadsAttr(
 VOID
 SetCloseOnExec(
     int Fd
+    );
+
+NTSTATUS
+InitWorkThreads(
+    PLW_WORK_THREADS pThreads,
+    PLW_THREAD_POOL_ATTRIBUTES pAttrs,
+    int numCpus
+    );
+
+VOID
+DestroyWorkThreads(
+    PLW_WORK_THREADS pThreads
+    );
+
+NTSTATUS
+QueueWorkItem(
+    PLW_WORK_THREADS pThreads,
+    LW_WORK_ITEM_FUNCTION pfnFunc,
+    PVOID pContext,
+    LW_WORK_ITEM_FLAGS Flags
     );
 
 #endif

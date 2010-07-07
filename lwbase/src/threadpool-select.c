@@ -525,58 +525,6 @@ EventThread(
     return NULL;
 }
 
-static
-NTSTATUS
-WorkLoop(
-    PWORK_ITEM_THREAD pThread
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    PRING pRing = NULL;
-    PWORK_ITEM pItem = NULL;
-
-    LOCK_POOL(pThread->pPool);
-
-    for(;;)
-    {
-        while (!pThread->pPool->bShutdown && RingIsEmpty(&pThread->pPool->WorkItems))
-        {
-            pthread_cond_wait(&pThread->pPool->Event, &pThread->pPool->Lock);
-        }
-
-        if (pThread->pPool->bShutdown)
-        {
-            break;
-        }
-
-        RingDequeue(&pThread->pPool->WorkItems, &pRing);
-
-        UNLOCK_POOL(pThread->pPool);
-
-        pItem = LW_STRUCT_FROM_FIELD(pRing, WORK_ITEM, Ring);
-        
-        pItem->pfnFunc(pItem->pContext);
-        RtlMemoryFree(pItem);
-
-        LOCK_POOL(pThread->pPool);
-    }
-
-    UNLOCK_POOL(pThread->pPool);
-
-    return status;
-}
-
-static
-PVOID
-WorkThread(
-    PVOID pContext
-    )
-{
-    WorkLoop((PWORK_ITEM_THREAD) pContext);
-
-    return NULL;
-}
-
 NTSTATUS
 LwRtlCreateTask(
     PLW_THREAD_POOL pPool,
@@ -965,48 +913,6 @@ SelectThreadDestroy(
     pthread_cond_destroy(&pThread->Event);
 }
 
-static
-NTSTATUS
-WorkThreadInit(
-    PSELECT_POOL pPool,
-    PLW_THREAD_POOL_ATTRIBUTES pAttrs,
-    PWORK_ITEM_THREAD pThread
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    pthread_attr_t pthreadAttr;
-    BOOLEAN bAttrInit = FALSE;
-
-    status = LwErrnoToNtStatus(pthread_attr_init(&pthreadAttr));
-    GOTO_ERROR_ON_STATUS(status);
-
-    bAttrInit = TRUE;
-
-    pThread->pPool = pPool;
-
-    if (pAttrs && pAttrs->ulWorkThreadStackSize)
-    {
-        GOTO_ERROR_ON_STATUS(status = LwErrnoToNtStatus(
-                                 pthread_attr_setstacksize(&pthreadAttr, pAttrs->ulWorkThreadStackSize)));
-    }
-    
-    GOTO_ERROR_ON_STATUS(status = LwErrnoToNtStatus(
-                             pthread_create(
-                                 &pThread->Thread,
-                                 &pthreadAttr,
-                                 WorkThread,
-                                 pThread)));
-    
-error:
-
-    if (bAttrInit)
-    {
-        pthread_attr_destroy(&pthreadAttr);
-    }
-
-    return status;
-}
-
 NTSTATUS
 LwRtlCreateThreadPool(
     PLW_THREAD_POOL* ppPool,
@@ -1032,8 +938,6 @@ LwRtlCreateThreadPool(
 
     GOTO_ERROR_ON_STATUS(status = LW_RTL_ALLOCATE_AUTO(&pPool));
     
-    RingInit(&pPool->WorkItems);
-
     GOTO_ERROR_ON_STATUS(status = LwErrnoToNtStatus(pthread_mutex_init(&pPool->Lock, NULL)));
     GOTO_ERROR_ON_STATUS(status = LwErrnoToNtStatus(pthread_cond_init(&pPool->Event, NULL)));
 
@@ -1059,19 +963,8 @@ LwRtlCreateThreadPool(
         }
     }
 
-    pPool->ulWorkThreadCount = GetWorkThreadsAttr(pAttrs, numCpus);
-
-    if (pPool->ulWorkThreadCount)
-    {
-        GOTO_ERROR_ON_STATUS(status = LW_RTL_ALLOCATE_ARRAY_AUTO(
-                                 &pPool->pWorkThreads,
-                                 pPool->ulWorkThreadCount));
-        
-        for (i = 0; i < pPool->ulWorkThreadCount; i++)
-        {
-            GOTO_ERROR_ON_STATUS(status = WorkThreadInit(pPool, pAttrs, &pPool->pWorkThreads[i]));
-        }
-    }
+    status = InitWorkThreads(&pPool->WorkThreads, pAttrs, numCpus);
+    GOTO_ERROR_ON_STATUS(status);
 
     *ppPool = pPool;
 
@@ -1112,16 +1005,6 @@ LwRtlFreeThreadPool(
             RtlMemoryFree(pPool->pEventThreads);
         }
         
-        if (pPool->pWorkThreads)
-        {
-            for (i = 0; i < pPool->ulWorkThreadCount; i++)
-            {
-                pthread_join(pPool->pWorkThreads[i].Thread, NULL);
-            }
-            
-            RtlMemoryFree(pPool->pWorkThreads);
-        }
-        
         if (pPool->pDelegate)
         {
             ReleaseDelegatePool(&pPool->pDelegate);
@@ -1129,6 +1012,8 @@ LwRtlFreeThreadPool(
 
         pthread_mutex_destroy(&pPool->Lock);
         
+        DestroyWorkThreads(&pPool->WorkThreads);
+
         RtlMemoryFree(pPool);
 
         *ppPool = NULL;
@@ -1143,30 +1028,7 @@ LwRtlQueueWorkItem(
     LW_WORK_ITEM_FLAGS Flags
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
-    PWORK_ITEM pItem = NULL;
-
-    GOTO_ERROR_ON_STATUS(status = LW_RTL_ALLOCATE_AUTO(&pItem));
-    RingInit(&pItem->Ring);
-    pItem->pfnFunc = pfnFunc;
-    pItem->pContext = pContext;
-
-    LOCK_POOL(pPool);
-
-    RingEnqueue(&pPool->WorkItems, &pItem->Ring);
-    pthread_cond_signal(&pPool->Event);
-    pItem = NULL;
-
-error:
-
-    UNLOCK_POOL(pPool);
-
-    if (pItem)
-    {
-        RtlMemoryFree(pItem);
-    }
-
-    return status;
+    return QueueWorkItem(&pPool->WorkThreads, pfnFunc, pContext, Flags);
 }
 
 

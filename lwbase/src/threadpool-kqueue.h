@@ -53,12 +53,6 @@
 
 #define TASK_COMPLETE_MASK 0xFFFFFFFF
 
-typedef struct _RING
-{
-    struct _RING* pPrev;
-    struct _RING* pNext;
-} RING, *PRING;
-
 typedef struct _KQUEUE_COMMANDS
 {
   struct kevent* pCommands;
@@ -80,12 +74,6 @@ typedef struct _KQUEUE_THREAD
     BOOLEAN volatile bSignalled;
     BOOLEAN volatile bShutdown;
 } KQUEUE_THREAD, *PKQUEUE_THREAD;
-
-typedef struct _WORK_ITEM_THREAD
-{
-    PLW_THREAD_POOL pPool;
-    pthread_t Thread;
-} WORK_ITEM_THREAD, *PWORK_ITEM_THREAD;
 
 typedef struct _LW_TASK
 {
@@ -120,13 +108,6 @@ typedef struct _LW_TASK
     RING SignalRing;
 } KQUEUE_TASK, *PKQUEUE_TASK;
 
-typedef struct _WORK_ITEM
-{
-    LW_WORK_ITEM_FUNCTION pfnFunc;
-    PVOID pContext;
-    RING Ring;
-} WORK_ITEM, *PWORK_ITEM;
-
 typedef struct _LW_TASK_GROUP
 {
     PLW_THREAD_POOL pPool;
@@ -140,19 +121,11 @@ typedef struct _LW_THREAD_POOL
     PLW_THREAD_POOL pDelegate;
     PKQUEUE_THREAD pEventThreads;
     ULONG ulEventThreadCount;
-    PWORK_ITEM_THREAD pWorkThreads;
-    ULONG ulWorkThreadCount;
-    RING WorkItems;
     BOOLEAN volatile bShutdown;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
+    LW_WORK_THREADS WorkThreads;
 } KQUEUE_POOL, *PKQUEUE_POOL;
-
-typedef struct _CLOCK
-{
-    LONG64 llLastTime;
-    LONG64 llAdjust;
-} CLOCK, *PCLOCK;
 
 /*
  * Lock order discipline:
@@ -168,192 +141,5 @@ typedef struct _CLOCK
 #define UNLOCK_GROUP(g) (pthread_mutex_unlock(&(g)->Lock))
 #define LOCK_POOL(m) (pthread_mutex_lock(&(m)->Lock))
 #define UNLOCK_POOL(m) (pthread_mutex_unlock(&(m)->Lock))
-
-/* Ring functions */
-static inline
-VOID
-RingInit(
-    PRING pRing
-    )
-{
-    pRing->pPrev = pRing->pNext = pRing;
-}
-
-static inline
-VOID
-RingInsertAfter(
-    PRING pAnchor,
-    PRING pElement
-    )
-{
-    pElement->pNext = pAnchor->pNext;
-    pElement->pPrev = pAnchor;
-    
-    pAnchor->pNext->pPrev = pElement;
-    pAnchor->pNext = pElement;
-}
-
-static inline
-VOID
-RingInsertBefore(
-    PRING pAnchor,
-    PRING pElement
-    )
-{
-    pElement->pNext = pAnchor;
-    pElement->pPrev = pAnchor->pPrev;
-
-    pAnchor->pPrev->pNext = pElement;
-    pAnchor->pPrev = pElement;
-}
-
-static inline
-VOID
-RingRemove(
-    PRING pElement
-    )
-{
-    pElement->pPrev->pNext = pElement->pNext;
-    pElement->pNext->pPrev = pElement->pPrev;
-    RingInit(pElement);
-}
-
-static inline
-VOID
-RingEnqueue(
-    PRING pAnchor,
-    PRING pElement
-    )
-{
-    RingInsertBefore(pAnchor, pElement);
-}
-
-static inline
-VOID
-RingDequeue(
-    PRING pAnchor,
-    PRING* pElement
-    )
-{
-    *pElement = pAnchor->pNext;
-    RingRemove(*pElement);
-}
-
-static inline
-VOID
-RingMove(
-    PRING pFrom,
-    PRING pTo
-    )
-{
-    PRING pFromFirst = pFrom->pNext;
-    PRING pFromLast = pFrom->pPrev;
-    PRING pToLast = pTo->pPrev;
-
-    if (pFrom->pNext != pFrom)
-    {
-        pToLast->pNext = pFromFirst;
-        pFromFirst->pPrev = pToLast;
-        
-        pFromLast->pNext = pTo;
-        pTo->pPrev = pFromLast;
-        
-        pFrom->pNext = pFrom->pPrev = pFrom;
-    }
-}
-
-static inline
-size_t
-RingCount(
-    PRING ring
-    )
-{
-    PRING iter = NULL;
-    size_t count = 0;
-
-    for (iter = ring->pNext; iter != ring; iter = iter->pNext, count++);
-
-    return count;
-}
-
-static inline
-BOOLEAN
-RingIsEmpty(
-    PRING ring
-    )
-{
-    return ring->pNext == ring;
-}
-
-/* Time functions */
-
-static inline
-NTSTATUS
-TimeNow(
-    PLONG64 pllNow
-    )
-{
-    struct timeval tv;
-
-    if (gettimeofday(&tv, NULL))
-    {
-        return LwErrnoToNtStatus(errno);
-    }
-    else
-    {
-        *pllNow = 
-            tv.tv_sec * 1000000000ll +
-            tv.tv_usec * 1000ll;
-
-        return STATUS_SUCCESS;
-    }
-}
-
-static inline
-NTSTATUS
-ClockUpdate(
-    PCLOCK pClock
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    LONG64 llNow = 0;
-
-    status = TimeNow(&llNow);
-    GOTO_ERROR_ON_STATUS(status);
-
-    if (pClock->llLastTime == 0)
-    {
-        pClock->llAdjust = -llNow;
-    }
-    else if (llNow <= pClock->llLastTime)
-    {
-        pClock->llAdjust += (pClock->llLastTime - llNow + 1);
-    }
-
-    pClock->llLastTime = llNow;
-    
-error:
-
-    return status;
-}
-
-static inline
-NTSTATUS
-ClockGetMonotonicTime(
-    PCLOCK pClock,
-    PLONG64 pllTime
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-
-    status = ClockUpdate(pClock);
-    GOTO_ERROR_ON_STATUS(status);
-
-    *pllTime = pClock->llLastTime + pClock->llAdjust;
-
-error:
-    
-    return status; 
-}
 
 #endif
