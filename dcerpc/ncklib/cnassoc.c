@@ -470,10 +470,19 @@ unsigned32              *st;
                                              assoc,
                                              assoc->cn_ctlblk.cn_sock,
                                              *st));
-                           rpc__cn_assoc_dealloc (assoc, 
-						  call_r,
-                                                  &temp_st);
-                           return (NULL);
+                            
+                            /* 
+                             * The call is about to be orphaned, so remove it from the assoc
+                             */
+                            if (assoc->call_rep == call_r)
+                            {
+                                assoc->call_rep = NULL;
+                            }
+                            
+                            rpc__cn_assoc_dealloc (assoc, 
+                                                   call_r,
+                                                   &temp_st);
+                            return (NULL);
                         }
                         else
                         {
