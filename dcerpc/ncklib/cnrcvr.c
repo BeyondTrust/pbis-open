@@ -889,7 +889,20 @@ rpc_cn_assoc_p_t        assoc;
          */
         if (packet_info_table[ptype].class == CALL_CLASS_PKT)
         {
-            if ((ptype == RPC_C_CN_PKT_REQUEST) 
+            if (assoc->assoc_flags & RPC_C_CN_ASSOC_CLIENT &&
+                assoc->alter_call_id >= 0 &&
+                assoc->alter_call_id == RPC_CN_PKT_CALL_ID (pktp))
+            {
+                /* We got a call-level response to a network-level request.
+                   Neither the association state machine nor the call
+                   state machine are prepared to handle this.  Abort the
+                   association */
+                RPC_CN_ASSOC_EVAL_NETWORK_EVENT (assoc, 
+                                                 RPC_C_ASSOC_ABORT_REQ,
+                                                 fragbuf_p,
+                                                 st);
+            }
+            else if ((ptype == RPC_C_CN_PKT_REQUEST) 
                 && 
                 (RPC_CN_PKT_FLAGS (pktp) & RPC_C_CN_FLAGS_FIRST_FRAG))
             {

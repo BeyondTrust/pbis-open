@@ -4709,6 +4709,7 @@ rpc_cn_assoc_p_t        assoc;
     RPC_CN_DBG_RTN_PRINTF(rpc__cn_assoc_acb_create);
     
     memset (assoc, 0, sizeof (rpc_cn_assoc_t));
+    assoc->alter_call_id = -1;
     RPC_COND_INIT (assoc->cn_ctlblk.cn_rcvr_cond, rpc_g_global_mutex); 
     RPC_COND_INIT (assoc->assoc_msg_cond, rpc_g_global_mutex);
 
