@@ -1,6 +1,9 @@
 opt/likewise/bin
 opt/likewise/sbin
+opt/likewise/share
 opt/likewise/share/likewise
+opt/likewise/share/config
+opt/likewise/share/doc
 opt/likewise/lib64
 opt/likewise/data
 var/lib/likewise
@@ -13,4 +16,3 @@ opt/likewise/lib64/krb5/plugins
 opt/likewise/lib64/krb5/plugins/authdata
 opt/likewise/lib64/krb5/plugins/libkrb5
 opt/likewise/lib64/krb5/plugins/preauth
-

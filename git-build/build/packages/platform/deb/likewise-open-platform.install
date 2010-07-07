@@ -1,6 +1,8 @@
 opt/likewise/bin/*
 opt/likewise/sbin/*
 opt/likewise/share/likewise/*
+opt/likewise/share/config/*
+opt/likewise/share/doc/*
 opt/likewise/__LIB/*
 opt/likewise/__LIB/gss/*
 opt/likewise/data/VERSION

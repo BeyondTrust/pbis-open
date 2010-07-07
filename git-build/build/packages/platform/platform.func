@@ -15,7 +15,7 @@ case `uname -s` in
 esac
 
 PKG="platform"
-COMPONENTS="krb5 openldap libcrypto lwbase ${_UUID} ${_ICONV} \
+COMPONENTS="krb5 openldap libcrypto curl lwbase ${_UUID} ${_ICONV} \
             lwmsg lwadvapi centutils \
             libschannel sqlite pstore lsass lwdns \
             domainjoin eventlog lwio lwreg lwsm netlogon dcerpc \

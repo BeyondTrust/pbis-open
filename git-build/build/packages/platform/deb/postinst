@@ -20,7 +20,15 @@ case "$1" in
         /etc/init.d/lwsmd restart
     fi
 
-    for file in /etc/likewise/*reg; do
+    echo -n "Waiting for lwreg startup."
+    while( test -z "`/opt/likewise/bin/lwsm status lwreg | grep standalone:`" )
+    do
+        echo -n "."
+        sleep 1
+    done
+    echo "ok"
+
+    for file in /opt/likewise/share/config/*reg; do
 	echo "Importing $file..."
         lwregshell upgrade $file > /dev/null
     done

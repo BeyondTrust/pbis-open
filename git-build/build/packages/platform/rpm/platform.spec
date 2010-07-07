@@ -61,10 +61,19 @@ case "$1" in
     done
 
     %{_sysconfdir}/init.d/lwsmd start
-    for file in %{_sysconfdir}/likewise/*reg; do
+    echo -n "Waiting for lwreg startup."
+    while( test -z "`/opt/likewise/bin/lwsm status lwreg | grep standalone:`" )
+    do
+        echo -n "."
+        sleep 1
+    done
+    echo "ok"
+    for file in %{PrefixDir}/share/config/*.reg; do
+        echo "Installing settings from $file..."
         %{PrefixDir}/bin/lwregshell import $file
     done
     %{_sysconfdir}/init.d/lwsmd reload
+    sleep 2
     %{PrefixDir}/bin/lwsm start srvsvc
     ;;
 
@@ -73,11 +82,12 @@ case "$1" in
     [ -z "`pidof lwsmd`" ] && %{_sysconfdir}/init.d/lwsmd start
     [ -z "`pidof lwreg`" ] && %{PrefixDir}/bin/lwsm start lwreg
 
-    for file in %{_sysconfdir}/likewise/*reg; do
-        echo "Importing ${file}..."
-        %{PrefixDir}/bin/lwregshell update $file
+    for file in %{PrefixDir}/share/config/*.reg; do
+        echo "Upgrading settings from $file..."
+        %{PrefixDir}/bin/lwregshell upgrade $file
     done
     %{_sysconfdir}/init.d/lwsmd reload
+    sleep 2
     %{PrefixDir}/bin/lwsm stop lwreg
     %{PrefixDir}/bin/lwsm start srvsvc
     ;;
