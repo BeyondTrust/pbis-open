@@ -868,6 +868,12 @@ SMBEnqueue(
     PVOID      pItem
     );
 
+DWORD
+SMBEnqueueFront(
+    PLWIO_QUEUE pQueue,
+    PVOID      pItem
+    );
+
 PVOID
 SMBDequeue(
     PLWIO_QUEUE pQueue

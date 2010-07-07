@@ -111,6 +111,43 @@ error:
     goto cleanup;
 }
 
+DWORD
+SMBEnqueueFront(
+    PLWIO_QUEUE pQueue,
+    PVOID      pItem
+    )
+{
+    DWORD dwError = 0;
+    PLWIO_QUEUE_ITEM pQueueItem = NULL;
+
+    dwError = SMBAllocateMemory(
+                    sizeof(LWIO_QUEUE_ITEM),
+                    (PVOID*)&pQueueItem);
+    BAIL_ON_LWIO_ERROR(dwError);
+
+    pQueueItem->pItem = pItem;
+
+    if (!pQueue->pHead)
+    {
+        pQueue->pHead = pQueue->pTail = pQueueItem;
+    }
+    else
+    {
+        pQueueItem->pNext = pQueue->pHead;
+	pQueue->pHead = pQueueItem;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LWIO_SAFE_FREE_MEMORY(pQueueItem);
+
+    goto cleanup;
+}
+
 PVOID
 SMBDequeue(
     PLWIO_QUEUE pQueue
