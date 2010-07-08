@@ -214,6 +214,29 @@ AC_TRY_LINK(, , [AC_MSG_RESULT([yes])
 LDFLAGS="$old_LDFLAGS"
 AC_SUBST(DS_FRAMEWORK_LDFLAGS)
 
+AC_MSG_CHECKING([whether clock_settime crashes])
+old_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $RT_LIBS"
+AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+#include <errno.h>]],
+[[struct timespec timevar;
+if (clock_gettime(CLOCK_REALTIME, &timevar) < 0)
+{
+	printf("clock_gettime failed with errno %d\n", errno);
+	return 1;
+}
+if (clock_settime(CLOCK_PROCESS_CPUTIME_ID, &timevar) < 0)
+{
+	printf("clock_settime failed with errno %d\n", errno);
+	return 0;
+}]])],
+	[AC_MSG_RESULT(no)],
+	[AC_MSG_RESULT([yes])
+	AC_DEFINE([CLOCK_SETTIME_CRASHES], [1], [If set, do not use clock_settime, because it crashes])])
+LDFLAGS="$old_LDFLAGS"
+
 AC_SUBST(LIB_PTHREAD)
 AC_SUBST(LIBUUID_LIBS)
 AC_SUBST(RT_LIBS)

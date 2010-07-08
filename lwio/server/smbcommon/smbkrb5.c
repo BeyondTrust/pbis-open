@@ -884,14 +884,14 @@ smb_display_status_1(
 #endif
                 LWIO_LOG_VERBOSE("GSS-API error calling %s: %d (%s)\n",
                         pszId, code,
-                        (char *)msg.value);
+                        SMB_SAFE_LOG_STRING((char *)msg.value));
                 break;
 
             default:
 
                 LWIO_LOG_ERROR("GSS-API error calling %s: %d (%s)\n",
                         pszId, code,
-                        (char *)msg.value);
+                        SMB_SAFE_LOG_STRING((char *)msg.value));
         }
 
         (void) gss_release_buffer(&min_stat, &msg);

@@ -142,7 +142,7 @@ LwSetSystemTime(
     DWORD dwCount = 0;
 
     // The aix implementation of clock_settime segfaults
-#ifdef __LWI_AIX__
+#ifdef CLOCK_SETTIME_CRASHES
 #undef HAVE_CLOCK_SETTIME
 #endif
 
