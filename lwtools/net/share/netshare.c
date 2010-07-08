@@ -105,7 +105,7 @@ DeconstructSecurityDescriptor(
 
 DWORD
 NetExecShareAdd(
-	NET_SHARE_ADD_OR_SET_INFO_PARAMS ShareAddInfo
+    NET_SHARE_ADD_OR_SET_INFO_PARAMS ShareAddInfo
     )
 {
     static const DWORD dwLevel = 502;
@@ -155,11 +155,11 @@ error:
 
 DWORD
 NetExecShareEnum(
-	NET_SHARE_ENUM_INFO_PARAMS ShareEnumInfo
+    NET_SHARE_ENUM_INFO_PARAMS ShareEnumInfo
     )
 {
     static const DWORD dwLevel = 2;
-    static const DWORD dwMaxLen = 128;
+    static const DWORD dwMaxLen = 1024;
 
     DWORD dwError = 0;
     PSHARE_INFO_2 pShareInfo = NULL;
@@ -182,13 +182,17 @@ NetExecShareEnum(
     do
     {
         dwError = NetShareEnumW(
-        	ShareEnumInfo.pwszServerName,
+            ShareEnumInfo.pwszServerName,
             dwLevel,
             (PBYTE*)&pShareInfo,
             dwMaxLen,
             &dwNumShares,
             &dwTotalShares,
             &dwResume);
+        if (dwError == ERROR_MORE_DATA)
+        {
+            dwError = 0;
+        }
         BAIL_ON_LTNET_ERROR(dwError);
 
         if (!ppszShareName)
@@ -205,24 +209,24 @@ NetExecShareEnum(
 
         if (!ppszShareComment)
         {
-        	dwError = LwNetAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareComment);
+            dwError = LwNetAllocateMemory((dwTotalShares+1)*sizeof(PCSTR), (PVOID *)&ppszShareComment);
             BAIL_ON_LTNET_ERROR(dwError);
         }
 
         for (dwIndex = 0; dwIndex < dwNumShares; dwIndex++)
         {
             dwError = LwWc16sToMbs(pShareInfo[dwIndex].shi2_netname,
-            		               &ppszShareName[dwIndex+dwVisitedShares]);
+                                   &ppszShareName[dwIndex+dwVisitedShares]);
             BAIL_ON_LTNET_ERROR(dwError);
 
             dwError = LwWc16sToMbs(pShareInfo[dwIndex].shi2_path,
-            		               &ppszSharePath[dwIndex+dwVisitedShares]);
+                                   &ppszSharePath[dwIndex+dwVisitedShares]);
             BAIL_ON_LTNET_ERROR(dwError);
 
             if (pShareInfo[dwIndex].shi2_remark)
             {
                 dwError = LwWc16sToMbs(pShareInfo[dwIndex].shi2_remark,
-                		               &ppszShareComment[dwIndex+dwVisitedShares]);
+                                       &ppszShareComment[dwIndex+dwVisitedShares]);
                 BAIL_ON_LTNET_ERROR(dwError);
             }
         }
@@ -251,13 +255,13 @@ NetExecShareEnum(
         dwShareNameLen = strlen(ppszShareName[dwIndex]);
         if (dwShareNameLen>dwShareNameLenMax)
         {
-        	dwShareNameLenMax = dwShareNameLen;
+            dwShareNameLenMax = dwShareNameLen;
         }
 
         dwSharePathLen = strlen(ppszSharePath[dwIndex]);
         if (dwSharePathLen>dwSharePathLenMax)
         {
-        	dwSharePathLenMax = dwSharePathLen;
+            dwSharePathLenMax = dwSharePathLen;
         }
 
         if (ppszShareComment[dwIndex])
@@ -273,15 +277,15 @@ NetExecShareEnum(
     //print share enum header
 
     printf("  %s%*s",
-    		NET_SHARE_NAME_TITLE,
+           NET_SHARE_NAME_TITLE,
            (int) (strlen(NET_SHARE_NAME_TITLE)-dwShareNameLenMax),
            "");
     printf("  %s%*s",
-    		NET_SHARE_PATH_TITLE,
+           NET_SHARE_PATH_TITLE,
            (int) (strlen(NET_SHARE_PATH_TITLE)-dwSharePathLenMax),
            "");
     printf("  %s%*s\n",
-    		NET_SHARE_COMMENT_TITLE,
+           NET_SHARE_COMMENT_TITLE,
            (int) (strlen(NET_SHARE_COMMENT_TITLE)-dwShareCommentLenMax),
            "");
 
@@ -294,21 +298,21 @@ NetExecShareEnum(
     for (dwIndex = 0; dwIndex < dwTotalShares; dwIndex++)
     {
         printf("  %s%*s",
-        		ppszShareName[dwIndex],
+               ppszShareName[dwIndex],
                (int) (strlen(ppszShareName[dwIndex])-dwShareNameLenMax),
                "");
 
         printf("  %s%*s",
-        		ppszSharePath[dwIndex],
+               ppszSharePath[dwIndex],
                (int) (strlen(ppszSharePath[dwIndex])-dwSharePathLenMax),
                "");
 
         if (ppszShareComment[dwIndex])
         {
-        	printf("  %s%*s",
-        		ppszShareComment[dwIndex],
-               (int) (strlen(ppszShareComment[dwIndex])-dwShareCommentLenMax),
-               "");
+            printf("  %s%*s",
+                   ppszShareComment[dwIndex],
+                   (int) (strlen(ppszShareComment[dwIndex])-dwShareCommentLenMax),
+                   "");
         }
 
         printf("\n");
@@ -344,7 +348,7 @@ error:
 
 DWORD
 NetExecShareDel(
-	NET_SHARE_DEL_INFO_PARAMS ShareDelInfo
+    NET_SHARE_DEL_INFO_PARAMS ShareDelInfo
     )
 {
     DWORD dwError = 0;
@@ -384,10 +388,10 @@ NetExecSetInfo(
     BOOLEAN bReadOnly = FALSE;
 
     dwError = NetShareGetInfoW(
-            ShareSetInfo.pwszServerName,
-            ShareSetInfo.pwszShareName,
-            dwLevel,
-            (PBYTE*)(&pShareInfo));
+        ShareSetInfo.pwszServerName,
+        ShareSetInfo.pwszShareName,
+        dwLevel,
+        (PBYTE*)(&pShareInfo));
     BAIL_ON_LTNET_ERROR(dwError);
 
     dwError = DeconstructSecurityDescriptor(
@@ -418,14 +422,14 @@ NetExecSetInfo(
     }
 
     dwError = ConstructSecurityDescriptor(
-            ShareSetInfo.dwAllowUserCount
-            || ShareSetInfo.bClearAllow ? ShareSetInfo.dwAllowUserCount : dwAllowUserCount,
-            ShareSetInfo.dwAllowUserCount || ShareSetInfo.bClearAllow ? ShareSetInfo.ppwszAllowUsers : ppwszAllowUsers,
-            ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.dwDenyUserCount : dwDenyUserCount,
-            ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.ppwszDenyUsers : ppwszDenyUsers,
-            ShareSetInfo.bReadOnly || ShareSetInfo.bReadWrite ? (ShareSetInfo.bReadOnly && !ShareSetInfo.bReadWrite) : bReadOnly,
-            &pSecDesc,
-            &dwSecDescSize);
+        ShareSetInfo.dwAllowUserCount
+        || ShareSetInfo.bClearAllow ? ShareSetInfo.dwAllowUserCount : dwAllowUserCount,
+        ShareSetInfo.dwAllowUserCount || ShareSetInfo.bClearAllow ? ShareSetInfo.ppwszAllowUsers : ppwszAllowUsers,
+        ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.dwDenyUserCount : dwDenyUserCount,
+        ShareSetInfo.dwDenyUserCount || ShareSetInfo.bClearDeny ? ShareSetInfo.ppwszDenyUsers : ppwszDenyUsers,
+        ShareSetInfo.bReadOnly || ShareSetInfo.bReadWrite ? (ShareSetInfo.bReadOnly && !ShareSetInfo.bReadWrite) : bReadOnly,
+        &pSecDesc,
+        &dwSecDescSize);
     BAIL_ON_LTNET_ERROR(dwError);
 
     newShareInfo.shi502_type = pShareInfo->shi502_type;
@@ -433,11 +437,11 @@ NetExecSetInfo(
     newShareInfo.shi502_security_descriptor = (PBYTE) pSecDesc;
 
     dwError = NetShareSetInfoW(
-            ShareSetInfo.pwszServerName,
-            ShareSetInfo.pwszShareName,
-            dwLevel,
-            (PBYTE)&newShareInfo,
-            &dwParmErr);
+        ShareSetInfo.pwszServerName,
+        ShareSetInfo.pwszShareName,
+        dwLevel,
+        (PBYTE)&newShareInfo,
+        &dwParmErr);
     BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
@@ -549,10 +553,10 @@ MapSidToName(
     }
 
     dwError = LwAllocateWc16sPrintfW(
-            ppwszName,
-            L"%s\\%s",
-            ppObjects[0]->pszNetbiosDomainName,
-            ppObjects[0]->pszSamAccountName);
+        ppwszName,
+        L"%s\\%s",
+        ppObjects[0]->pszNetbiosDomainName,
+        ppObjects[0]->pszSamAccountName);
     BAIL_ON_LTNET_ERROR(dwError);
 
 cleanup:
@@ -588,24 +592,24 @@ MapBuiltinNameToSid(
     PWSTR pwszEveryone = NULL;
 
     dwError = LwNetWC16StringAllocateFromCString(
-                      &pwszEveryone,
-                      "Everyone");
+        &pwszEveryone,
+        "Everyone");
     BAIL_ON_LTNET_ERROR(dwError);
 
 
     if (LwRtlWC16StringIsEqual(pwszName, pwszEveryone, FALSE))
     {
         dwError = LwNtStatusToWin32Error(
-                      RtlCreateWellKnownSid(
-                          WinWorldSid,
-                          NULL,
-                          &Sid.sid,
-                          &SidSize));
+            RtlCreateWellKnownSid(
+                WinWorldSid,
+                NULL,
+                &Sid.sid,
+                &SidSize));
     }
     BAIL_ON_LTNET_ERROR(dwError);
 
     dwError = LwNtStatusToWin32Error(
-                  RtlDuplicateSid(ppSid, &Sid.sid));
+        RtlDuplicateSid(ppSid, &Sid.sid));
 
 cleanup:
     LwNetWC16StringFree(pwszEveryone);
@@ -633,19 +637,19 @@ MapBuiltinSidToName(
     PWSTR pwszEveryone = NULL;
 
     dwError = LwNtStatusToWin32Error(
-                  RtlCreateWellKnownSid(
-                      WinWorldSid,
-                      NULL,
-                      &Sid.sid,
-                      &SidSize));
+        RtlCreateWellKnownSid(
+            WinWorldSid,
+            NULL,
+            &Sid.sid,
+            &SidSize));
     BAIL_ON_LTNET_ERROR(dwError);
 
     if (RtlEqualSid(&Sid.sid, pSid))
     {
         dwError = LwNtStatusToWin32Error(
-                      RtlWC16StringAllocateFromCString(
-                          &pwszEveryone,
-                          "Everyone"));
+            RtlWC16StringAllocateFromCString(
+                &pwszEveryone,
+                "Everyone"));
         BAIL_ON_LTNET_ERROR(dwError);
 
     }
@@ -696,8 +700,8 @@ ConstructSecurityDescriptor(
     ULONG ulRelativeSize = 0;
     HANDLE hLsa = NULL;
     ACCESS_MASK mask = bReadOnly ?
-                       (FILE_GENERIC_READ|FILE_GENERIC_EXECUTE) :
-                       FILE_ALL_ACCESS;
+        (FILE_GENERIC_READ|FILE_GENERIC_EXECUTE) :
+        FILE_ALL_ACCESS;
 
     dwError = LsaOpenServer(&hLsa);
     BAIL_ON_LTNET_ERROR(dwError);
@@ -754,7 +758,7 @@ ConstructSecurityDescriptor(
         RTL_FREE(&pSid);
     }
 
-   for (dwIndex = 0; dwIndex < dwAllowUserCount; dwIndex++)
+    for (dwIndex = 0; dwIndex < dwAllowUserCount; dwIndex++)
     {
         dwError = MapNameToSid(hLsa, ppwszAllowUsers[dwIndex], &pSid);
         if (dwError != LW_ERROR_SUCCESS)
