@@ -311,6 +311,9 @@ WorkThread(
     return NULL;
 }
 
+/*
+ * Called with pThreads->Lock held
+ */
 static
 NTSTATUS
 StartWorkThread(
@@ -354,6 +357,9 @@ error:
     return status;
 }
 
+/*
+ * Called with pThreads->Lock held
+ */
 static
 NTSTATUS
 StartWorkThreads(
@@ -362,6 +368,7 @@ StartWorkThreads(
 {
     NTSTATUS status = STATUS_SUCCESS;
     size_t i = 0;
+    size_t n = 0;
 
     if (pThreads->ulWorkThreadCount && !pThreads->pWorkThreads)
     {
@@ -377,9 +384,39 @@ StartWorkThreads(
         }
     }
 
-error:
+cleanup:
 
     return status;
+    
+error:
+    
+    /* If we failed in the middle of starting work threads,
+       we need to tear down any we started so far */
+    if (pThreads->pWorkThreads)
+    {
+        /* Save index of thread that we failed to create */
+        n = i;
+
+        /* Tell threads to exit */
+        pThreads->bShutdown = TRUE;
+        pthread_cond_broadcast(&pThreads->Event);
+
+        /* We need to join the threads outside the lock
+           since the threads need to acquire it to check
+           bShutdown */
+        UNLOCK_THREADS(pThreads);
+        for (i = 0; i < n; i++)
+        {
+            pthread_join(pThreads->pWorkThreads[i].Thread, NULL);
+        }
+        LOCK_THREADS(pThreads);
+        
+        RtlMemoryFree(pThreads->pWorkThreads);
+        pThreads->pWorkThreads = NULL;
+        pThreads->bShutdown = FALSE;
+    }
+
+    goto cleanup;
 }
 
 NTSTATUS
