@@ -100,7 +100,7 @@ function component_populate
     else
  
        mkdir -p ${POPULATE_PREFIX_DIR}/${_lib}
-       rsync -a ${COMP_PREFIX_DIR}/${_lib} ${POPULATE_PREFIX_DIR}/${_lib}/
+       rsync -a ${COMP_PREFIX_DIR}/${_lib}/ ${POPULATE_PREFIX_DIR}/${_lib}/
 
     fi
 
