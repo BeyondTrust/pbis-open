@@ -7,6 +7,7 @@ fi
 
 COMP_DEPENDENCIES="autoconf automake libtool lwio lwnetapi lwbase lwadvapi ${extra_deps}"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwtools"
+COMP_INCREMENTAL=1
 
 function component_bootstrap
 {
