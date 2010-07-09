@@ -49,6 +49,8 @@
 
 #include "includes.h"
 
+#define LSA_SYSLOG_MAX_LEVEL LOG_INFO
+
 DWORD
 LsaOpenSyslog(
     PCSTR       pszIdentifier,
@@ -87,7 +89,9 @@ LsaOpenSyslog(
     
     pSyslog->bOpened = TRUE;
 
-    LsaSetSyslogMask(maxAllowedLogLevel);
+    // This always need to be the max log level
+    // with which this module can call syslog.
+    setlogmask(LOG_UPTO(LSA_SYSLOG_MAX_LEVEL));
     
     dwError = LsaSetupLogging(
                     (HANDLE)pSyslog,
@@ -115,48 +119,6 @@ error:
 
     goto cleanup;
 }
-    
-VOID
-LsaSetSyslogMask(
-    LsaLogLevel logLevel
-    )
-{
-    DWORD dwSysLogLevel;
-
-    switch (logLevel)
-    {
-        case LSA_LOG_LEVEL_ALWAYS:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-        case LSA_LOG_LEVEL_ERROR:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_ERR);
-            break;
-        }
-
-        case LSA_LOG_LEVEL_WARNING:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_WARNING);
-            break;
-        }
-
-        case LSA_LOG_LEVEL_INFO:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-
-        default:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-    }
-
-    setlogmask(dwSysLogLevel);
-}
 
 VOID
 LsaLogToSyslog(
@@ -166,37 +128,24 @@ LsaLogToSyslog(
     va_list     msgList
     )
 {
+    int priority = LOG_INFO;
+
     switch (logLevel)
     {
-        case LSA_LOG_LEVEL_ALWAYS:
-        {
-            lsass_vsyslog(LOG_INFO, pszFormat, msgList);
-            break;
-        }
         case LSA_LOG_LEVEL_ERROR:
-        {
-            lsass_vsyslog(LOG_ERR, pszFormat, msgList);
+            priority = LOG_ERR;
             break;
-        }
-
         case LSA_LOG_LEVEL_WARNING:
-        {
-            lsass_vsyslog(LOG_WARNING, pszFormat, msgList);
+            priority = LOG_WARNING;
             break;
-        }
-
-        case LSA_LOG_LEVEL_INFO:
-        {
-            lsass_vsyslog(LOG_INFO, pszFormat, msgList);
-            break;
-        }
-
         default:
-        {
-            lsass_vsyslog(LOG_INFO, pszFormat, msgList);
-            break;
-        }
+            priority = LOG_INFO;
     }
+
+    // Sanity check
+    priority = LW_MIN(priority, LSA_SYSLOG_MAX_LEVEL);
+
+    lsass_vsyslog(priority, pszFormat, msgList);
 }
 
 DWORD

@@ -192,19 +192,6 @@ LsaLogSetInfo(
 
     gLsaMaxLogLevel = pLogInfo->maxAllowedLogLevel;
 
-    switch (gLogTarget)
-    {
-        case LSA_LOG_TARGET_SYSLOG:
-
-            LsaSetSyslogMask(gLsaMaxLogLevel);
-
-            break;
-
-        default:
-
-            break;
-    }
-
 cleanup:
 
     return dwError;

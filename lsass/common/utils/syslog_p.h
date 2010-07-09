@@ -66,11 +66,6 @@ LsaOpenSyslog(
     );
 
 VOID
-LsaSetSyslogMask(
-    LsaLogLevel logLevel
-    );
-
-VOID
 LsaLogToSyslog(
     HANDLE      hLog,
     LsaLogLevel dwLogLevel,
