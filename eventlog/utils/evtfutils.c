@@ -590,7 +590,7 @@ LWIStr2Inet4Addr(IN PCSTR src, OUT PSTR *dst)
     a[2] = (unsigned char) b2;
     a[3] = (unsigned char) b3;
 
-    he = gethostbyaddr(a, 4, AF_INET);
+    he = gethostbyaddr((const void *) a, 4, AF_INET);
 
     if(!he || !(*dst = strdup(he->h_name))) {
         return 1;
