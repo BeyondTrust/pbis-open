@@ -216,8 +216,8 @@ typedef enum LW_THREAD_POOL_OPTION
      */
     LW_THREAD_POOL_OPTION_TASK_THREADS,
     /**
-     * (LONG) Number of work threads to create.  A negative number indicates
-     * a multiple of the number of CPUs present on the system.
+     * (LONG) Maximum number of work threads to create.  A negative number
+     * indicates a multiple of the number of CPUs present on the system.
      * (Default: -4)
      */
     LW_THREAD_POOL_OPTION_WORK_THREADS,
@@ -232,7 +232,13 @@ typedef enum LW_THREAD_POOL_OPTION
      * the system default.
      * (Default: 0)
      */
-    LW_THREAD_POOL_OPTION_WORK_THREAD_STACK_SIZE
+    LW_THREAD_POOL_OPTION_WORK_THREAD_STACK_SIZE,
+    /**
+     * (ULONG) Time in seconds before an idle work thread exits.  0 indicates
+     * no timeout.
+     * (Default: 30)
+     */
+    LW_THREAD_POOL_OPTION_WORK_THREAD_TIMEOUT
 } LW_THREAD_POOL_OPTION;
 
 /**

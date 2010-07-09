@@ -166,6 +166,9 @@ LwRtlSetThreadPoolAttribute(
     case LW_THREAD_POOL_OPTION_WORK_THREAD_STACK_SIZE:
         pAttrs->ulWorkThreadStackSize = va_arg(ap, ULONG);
         break;
+    case LW_THREAD_POOL_OPTION_WORK_THREAD_TIMEOUT:
+        pAttrs->ulWorkThreadTimeout = va_arg(ap, ULONG);
+        break;
     default:
         status = STATUS_NOT_SUPPORTED;
         GOTO_ERROR_ON_STATUS(status);
@@ -206,6 +209,7 @@ InitWorkThreads(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    size_t i = 0;
 
     RingInit(&pThreads->WorkItems);
 
@@ -219,7 +223,21 @@ InitWorkThreads(
 
     pThreads->ulWorkThreadCount = GetWorkThreadsAttr(pAttrs, numCpus);
     pThreads->ulWorkThreadStackSize = pAttrs ? pAttrs->ulWorkThreadStackSize : 0;
+    pThreads->ulWorkThreadTimeout = GetWorkThreadTimeoutAttr(pAttrs);
 
+    if (pThreads->ulWorkThreadCount)
+    {
+        status = LW_RTL_ALLOCATE_ARRAY_AUTO(
+            &pThreads->pWorkThreads,
+            pThreads->ulWorkThreadCount);
+        GOTO_ERROR_ON_STATUS(status);
+
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            pThreads->pWorkThreads[i].Thread = INVALID_THREAD_HANDLE;
+        }
+    }
+        
 error:
 
     return status;
@@ -237,11 +255,16 @@ DestroyWorkThreads(
         LOCK_THREADS(pThreads);
         pThreads->bShutdown = TRUE;
         pthread_cond_broadcast(&pThreads->Event);
-        UNLOCK_THREADS(pThreads);
         
         for (i = 0; i < pThreads->ulWorkThreadCount; i++)
         {
-            pthread_join(pThreads->pWorkThreads[i].Thread, NULL);
+            if (pThreads->pWorkThreads[i].Thread != INVALID_THREAD_HANDLE)
+            {
+                /* We must pthread_join() outside of the lock */
+                UNLOCK_THREADS(pThreads);
+                pthread_join(pThreads->pWorkThreads[i].Thread, NULL);
+                LOCK_THREADS(pThreads);
+            }
         }
             
         RtlMemoryFree(pThreads->pWorkThreads);
@@ -258,6 +281,45 @@ DestroyWorkThreads(
     }
 }
 
+static
+NTSTATUS
+WorkWait(
+    PLW_WORK_THREAD pThread
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    struct timespec ts = {0};
+    struct timespec* pTs = NULL;
+    LONG64 llDeadline = 0;
+    int err = 0;
+
+    if (pThread->pThreads->ulWorkThreadTimeout)
+    {
+        status = TimeNow(&llDeadline);
+        GOTO_ERROR_ON_STATUS(status);
+
+        llDeadline += (LONG64) 1000000000ll * pThread->pThreads->ulWorkThreadTimeout;
+        ts.tv_sec = llDeadline / 1000000000ll;
+        ts.tv_nsec = llDeadline % 1000000000ll;
+        pTs = &ts;
+    }
+        
+    err = pthread_cond_timedwait(&pThread->pThreads->Event, &pThread->pThreads->Lock, pTs);
+    
+    switch(err)
+    {
+    case ETIMEDOUT:
+        status = STATUS_TIMEOUT;
+        GOTO_ERROR_ON_STATUS(status);
+    default:
+        status = LwErrnoToNtStatus(err);
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
+error:
+
+    return status;
+}
 
 static
 NTSTATUS
@@ -268,34 +330,55 @@ WorkLoop(
     NTSTATUS status = STATUS_SUCCESS;
     PRING pRing = NULL;
     PLW_WORK_ITEM pItem = NULL;
+    PLW_WORK_THREADS pThreads = pThread->pThreads;
 
     LOCK_THREADS(pThread->pThreads);
 
     for(;;)
     {
-        while (!pThread->pThreads->bShutdown && RingIsEmpty(&pThread->pThreads->WorkItems))
+        pThreads->ulAvailable++;
+
+        while (!pThreads->bShutdown && pThreads->ulQueued == 0)
         {
-            pthread_cond_wait(&pThread->pThreads->Event, &pThread->pThreads->Lock);
+            status = WorkWait(pThread);
+            GOTO_ERROR_ON_STATUS(status);
         }
 
-        if (pThread->pThreads->bShutdown)
+        if (pThreads->bShutdown)
         {
             break;
         }
 
-        RingDequeue(&pThread->pThreads->WorkItems, &pRing);
+        RingDequeue(&pThreads->WorkItems, &pRing);
+        pThreads->ulQueued--;
+        pThreads->ulAvailable--;
 
-        UNLOCK_THREADS(pThread->pThreads);
+        UNLOCK_THREADS(pThreads);
 
         pItem = LW_STRUCT_FROM_FIELD(pRing, LW_WORK_ITEM, Ring);
         
         pItem->pfnFunc(pItem->pContext);
         RtlMemoryFree(pItem);
 
-        LOCK_THREADS(pThread->pThreads);
+        LOCK_THREADS(pThreads);
     }
 
-    UNLOCK_THREADS(pThread->pThreads);
+error:
+
+    pThreads->ulAvailable--;
+    pThreads->ulStarted--;
+    pThread->bStarted = FALSE;
+
+    /* If the thread pool is not being shut down, nothing is
+       going to call pthread_join() on this thread, so call
+       pthread_detach() now */
+    if (!pThreads->bShutdown)
+    {
+        pthread_detach(pThread->Thread);
+        pThread->Thread = INVALID_THREAD_HANDLE;
+    }
+
+    UNLOCK_THREADS(pThreads);
 
     return status;
 }
@@ -347,6 +430,9 @@ StartWorkThread(
             pThread));
     GOTO_ERROR_ON_STATUS(status);
 
+    pThread->bStarted = TRUE;
+    pThreads->ulStarted++;
+
 error:
     
     if (pThreadAttr)
@@ -355,68 +441,6 @@ error:
     }
 
     return status;
-}
-
-/*
- * Called with pThreads->Lock held
- */
-static
-NTSTATUS
-StartWorkThreads(
-    PLW_WORK_THREADS pThreads
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    size_t i = 0;
-    size_t n = 0;
-
-    if (pThreads->ulWorkThreadCount && !pThreads->pWorkThreads)
-    {
-        status = LW_RTL_ALLOCATE_ARRAY_AUTO(
-            &pThreads->pWorkThreads,
-            pThreads->ulWorkThreadCount);
-        GOTO_ERROR_ON_STATUS(status);
-        
-        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
-        {
-            status = StartWorkThread(pThreads, &pThreads->pWorkThreads[i]);
-            GOTO_ERROR_ON_STATUS(status);
-        }
-    }
-
-cleanup:
-
-    return status;
-    
-error:
-    
-    /* If we failed in the middle of starting work threads,
-       we need to tear down any we started so far */
-    if (pThreads->pWorkThreads)
-    {
-        /* Save index of thread that we failed to create */
-        n = i;
-
-        /* Tell threads to exit */
-        pThreads->bShutdown = TRUE;
-        pthread_cond_broadcast(&pThreads->Event);
-
-        /* We need to join the threads outside the lock
-           since the threads need to acquire it to check
-           bShutdown */
-        UNLOCK_THREADS(pThreads);
-        for (i = 0; i < n; i++)
-        {
-            pthread_join(pThreads->pWorkThreads[i].Thread, NULL);
-        }
-        LOCK_THREADS(pThreads);
-        
-        RtlMemoryFree(pThreads->pWorkThreads);
-        pThreads->pWorkThreads = NULL;
-        pThreads->bShutdown = FALSE;
-    }
-
-    goto cleanup;
 }
 
 NTSTATUS
@@ -429,8 +453,33 @@ QueueWorkItem(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PLW_WORK_ITEM pItem = NULL;
+    size_t i = 0;
 
     LOCK_THREADS(pThreads);
+    
+    /* If there are not enough available threads
+       to handle the item we are about to queue,
+       and not all work threads are currently started,
+       start a thread now */
+    if (pThreads->ulAvailable < pThreads->ulQueued + 1 &&
+        pThreads->ulStarted < pThreads->ulWorkThreadCount)
+    {
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            if (!pThreads->pWorkThreads[i].bStarted)
+            {
+                status = StartWorkThread(pThreads, &pThreads->pWorkThreads[i]);
+                GOTO_ERROR_ON_STATUS(status);
+                break;
+            }
+        }
+    }
+    /* Otherwise, if a thread is available, signal
+       one now so it picks up the item we are about to queue */
+    else if (pThreads->ulAvailable)
+    {
+        pthread_cond_signal(&pThreads->Event);
+    }
 
     status = LW_RTL_ALLOCATE_AUTO(&pItem);
     GOTO_ERROR_ON_STATUS(status);
@@ -438,12 +487,9 @@ QueueWorkItem(
     RingInit(&pItem->Ring);
     pItem->pfnFunc = pfnFunc;
     pItem->pContext = pContext;
-    
-    status = StartWorkThreads(pThreads);
-    GOTO_ERROR_ON_STATUS(status);
-    
+
     RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
-    pthread_cond_signal(&pThreads->Event);
+    pThreads->ulQueued++;
     pItem = NULL;
 
 error:

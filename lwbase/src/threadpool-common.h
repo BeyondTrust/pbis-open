@@ -39,6 +39,8 @@
 #ifndef __LWBASE_THREADPOOL_COMMON_H__
 #define __LWBASE_THREADPOOL_COMMON_H__
 
+#include <pthread.h>
+
 typedef struct _RING
 {
     struct _RING* pPrev;
@@ -58,6 +60,7 @@ struct _LW_THREAD_POOL_ATTRIBUTES
     LONG lWorkThreads;
     ULONG ulTaskThreadStackSize;
     ULONG ulWorkThreadStackSize;
+    ULONG ulWorkThreadTimeout;
 };
 
 typedef struct _LW_WORK_ITEM
@@ -67,10 +70,11 @@ typedef struct _LW_WORK_ITEM
     RING Ring;
 } LW_WORK_ITEM, *PLW_WORK_ITEM;
 
-typedef struct _WORK_ITEM_THREAD
+typedef struct _LW_WORK_THREAD
 {
     struct _LW_WORK_THREADS* pThreads;
     pthread_t Thread;
+    unsigned volatile bStarted:1;
 } LW_WORK_THREAD, *PLW_WORK_THREAD;
 
 typedef struct _LW_WORK_THREADS
@@ -78,6 +82,13 @@ typedef struct _LW_WORK_THREADS
     PLW_WORK_THREAD pWorkThreads;
     ULONG ulWorkThreadCount;
     ULONG ulWorkThreadStackSize;
+    ULONG ulWorkThreadTimeout;
+    /* Number of started threads */
+    ULONG volatile ulStarted;
+    /* Number of queued items */
+    ULONG volatile ulQueued;
+    /* Number of threads available to process an item */
+    ULONG volatile ulAvailable;
     RING WorkItems;
     BOOLEAN volatile bShutdown;
     pthread_mutex_t Lock;
@@ -88,6 +99,8 @@ typedef struct _LW_WORK_THREADS
 
 #define LOCK_THREADS(m) (pthread_mutex_lock(&(m)->Lock))
 #define UNLOCK_THREADS(m) (pthread_mutex_unlock(&(m)->Lock))
+
+#define INVALID_THREAD_HANDLE ((pthread_t) (size_t) - 1)
 
 /* Ring functions */
 static inline
@@ -320,6 +333,16 @@ GetWorkThreadsAttr(
     LONG lCount = pAttrs ? pAttrs->lWorkThreads : -4;
 
     return lCount < 0 ? -lCount * numCpus : lCount;
+}
+
+static
+inline
+ULONG
+GetWorkThreadTimeoutAttr(
+    PLW_THREAD_POOL_ATTRIBUTES pAttrs
+    )
+{
+    return pAttrs ? pAttrs->ulWorkThreadTimeout : 30;
 }
 
 VOID
