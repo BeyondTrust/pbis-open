@@ -78,6 +78,14 @@ SamDbInsertObjectToDatabase(
 
 static
 DWORD
+SamDbValidateIds(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext,
+    DWORD                  objectClass,
+    PDIRECTORY_MOD         pMods
+    );
+
+static
+DWORD
 SamDbBuildAddObjectQuery(
     PSAM_DIRECTORY_CONTEXT              pDirectoryContext,
     PSAMDB_OBJECTCLASS_TO_ATTR_MAP_INFO pObjectClassMapInfo,
@@ -361,6 +369,15 @@ SamDbInsertObjectToDatabase(
                     &pObjectClassMapInfo);
     BAIL_ON_SAMDB_ERROR(dwError);
 
+    if (objectClass == SAMDB_OBJECT_CLASS_USER ||
+        objectClass == SAMDB_OBJECT_CLASS_LOCAL_GROUP)
+    {
+        dwError = SamDbValidateIds(pDirectoryContext,
+                                   objectClass,
+                                   modifications);
+        BAIL_ON_SAMDB_ERROR(dwError);
+    }
+
     dwError = SamDbBuildAddObjectQuery(
                     pDirectoryContext,
                     pObjectClassMapInfo,
@@ -430,6 +447,78 @@ error:
 
     goto cleanup;
 }
+
+static
+DWORD
+SamDbValidateIds(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext,
+    DWORD                  objectClass,
+    PDIRECTORY_MOD         pMods
+    )
+{
+    DWORD dwError = 0;
+    DWORD iMod = 0;
+    PDIRECTORY_MOD pMod = &(pMods[iMod]);
+    WCHAR wszAttrObjectSid[] = SAM_DB_DIR_ATTR_OBJECT_SID;
+    WCHAR wszAttrUid[] = SAM_DB_DIR_ATTR_UID;
+    WCHAR wszAttrGid[] = SAM_DB_DIR_ATTR_GID;
+    PSTR pszSid = NULL;
+    DWORD dwUID = 0;
+    DWORD dwGID = 0;
+
+    while (pMod->pwszAttrName)
+    {
+        if (!wc16scasecmp(pMod->pwszAttrName, wszAttrObjectSid))
+        {
+            if (pMod->pAttrValues[0].Type == DIRECTORY_ATTR_TYPE_UNICODE_STRING)
+            {
+                dwError = LwWc16sToMbs(
+                                 pMod->pAttrValues[0].data.pwszStringValue,
+                                 &pszSid);
+            }
+            else if (pMod->pAttrValues[0].Type == DIRECTORY_ATTR_TYPE_ANSI_STRING)
+            {
+                dwError = LwAllocateString(
+                                 pMod->pAttrValues[0].data.pszStringValue,
+                                 &pszSid);
+            }
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = SamDbCheckAvailableSID(pDirectoryContext,
+                                             pszSid);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else if (objectClass == SAMDB_OBJECT_CLASS_USER &&
+                 !wc16scasecmp(pMod->pwszAttrName, wszAttrUid))
+        {
+            dwUID = pMod->pAttrValues[0].data.ulValue;
+
+            dwError = SamDbCheckAvailableUID(pDirectoryContext,
+                                             dwUID);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else if (objectClass == SAMDB_OBJECT_CLASS_LOCAL_GROUP &&
+                 !wc16scasecmp(pMod->pwszAttrName, wszAttrGid))
+        {
+            dwGID = pMod->pAttrValues[0].data.ulValue;
+
+            dwError = SamDbCheckAvailableGID(pDirectoryContext,
+                                             dwGID);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        pMod = &(pMods[++iMod]);
+    }
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pszSid);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 #define SAMDB_ADD_OBJECT_QUERY_ROWID     "rowid"
 #define SAMDB_ADD_OBJECT_QUERY_SEPARATOR ","

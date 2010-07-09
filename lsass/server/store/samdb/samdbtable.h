@@ -43,6 +43,8 @@
  *      Database Schema
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewise.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  *
  */
 
@@ -61,9 +63,16 @@
 #define SAM_DB_UID_FROM_RID(rid)  (SAM_DB_UID_RID_OFFSET + (rid))
 #define SAM_DB_GID_FROM_RID(rid)  (SAM_DB_GID_RID_OFFSET + (rid))
 
+#define SAM_DB_ID_FROM_RID_OFFSET (MAX(SAM_DB_UID_RID_OFFSET, SAM_DB_GID_RID_OFFSET))
+
 #define SAM_DB_MIN_RID            (1000)
+#define SAM_DB_MAX_RID            (0xffffffff -                                 \
+                                   (SAM_DB_MIN_RID + SAM_DB_ID_FROM_RID_OFFSET) \
+                                   - 1)
 #define SAM_DB_MIN_UID            SAM_DB_UID_FROM_RID(SAM_DB_MIN_RID)
+#define SAM_DB_MAX_UID            SAM_DB_UID_FROM_RID(SAM_DB_MAX_RID)
 #define SAM_DB_MIN_GID            SAM_DB_GID_FROM_RID(SAM_DB_MIN_RID)
+#define SAM_DB_MAX_GID            SAM_DB_GID_FROM_RID(SAM_DB_MAX_RID)
 
 #define SAM_DB_CONFIG_TABLE              "samdbconfig"
 #define SAM_DB_OBJECTS_TABLE             "samdbobjects"

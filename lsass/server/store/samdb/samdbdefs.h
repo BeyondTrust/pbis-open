@@ -69,7 +69,7 @@
 #define SAMDB_LOG_DEBUG(pszFormat, ...) LSA_LOG_DEBUG(pszFormat, ## __VA_ARGS__)
 
 #define BAIL_ON_SAMDB_ERROR(dwError) \
-    if (dwError) goto error;
+    BAIL_ON_LSA_ERROR((dwError))
 
 #define BAIL_ON_SAMDB_SQLITE_ERROR(dwError, pszError)   \
     if (dwError) {                                      \

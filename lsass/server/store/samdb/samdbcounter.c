@@ -43,6 +43,8 @@
  *      Database Counters
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewise.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  *
  */
 
@@ -50,10 +52,18 @@
 
 static
 DWORD
-SamDbGetNextAvailableId(
+SamDbGetNextId(
     HANDLE hDirectory,
     PCSTR  pszQuery,
     PDWORD pdwId
+    );
+
+static
+DWORD
+SamDbIsAvailableId(
+    HANDLE hDirectory,
+    PCSTR  pszQuery,
+    DWORD  dwId
     );
 
 DWORD
@@ -136,13 +146,40 @@ SamDbGetNextAvailableUID(
         "SELECT UIDCounter FROM " SAM_DB_CONFIG_TABLE \
         "; UPDATE " SAM_DB_CONFIG_TABLE               \
         "   SET UIDCounter = UIDCounter + 1";
+    PCSTR pszUIDQueryTemplate =
+        "SELECT " SAM_DB_COL_UID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_UID " = %u";
     DWORD dwUID = 0;
 
-    // TODO: Make sure the id is not being used
-    dwError = SamDbGetNextAvailableId(
-                    hDirectory,
-                    pszQueryTemplate,
-                    &dwUID);
+    /*
+     * Get the next UID and make sure it's not used yet
+     */
+    do
+    {
+        dwError = SamDbGetNextId(
+                        hDirectory,
+                        pszQueryTemplate,
+                        &dwUID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIsAvailableId(
+                        hDirectory,
+                        pszUIDQueryTemplate,
+                        dwUID);
+        if (dwError != LW_ERROR_SUCCESS &&
+            dwError != LW_ERROR_USER_EXISTS)
+        {
+            BAIL_ON_SAMDB_ERROR(dwError);
+        }
+
+    } while (dwError == LW_ERROR_USER_EXISTS &&
+             dwUID <= SAM_DB_MAX_UID);
+
+    if (dwUID > SAM_DB_MAX_UID)
+    {
+        /* Not likely but it's happened - we've run out of UID space */
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+    }
     BAIL_ON_SAMDB_ERROR(dwError);
 
     *pdwUID = dwUID;
@@ -169,13 +206,40 @@ SamDbGetNextAvailableGID(
         "SELECT GIDCounter FROM " SAM_DB_CONFIG_TABLE \
         "; UPDATE " SAM_DB_CONFIG_TABLE               \
         "   SET GIDCounter = GIDCounter + 1";
+    PCSTR pszGIDQueryTemplate =
+        "SELECT " SAM_DB_COL_GID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_GID " = %u";
     DWORD dwGID = 0;
 
-    // TODO: Make sure the id is not being used
-    dwError = SamDbGetNextAvailableId(
-                    hDirectory,
-                    pszQueryTemplate,
-                    &dwGID);
+    /*
+     * Get the next GID and make sure it's not used yet
+     */
+    do
+    {
+        dwError = SamDbGetNextId(
+                        hDirectory,
+                        pszQueryTemplate,
+                        &dwGID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIsAvailableId(
+                        hDirectory,
+                        pszGIDQueryTemplate,
+                        dwGID);
+        if (dwError != LW_ERROR_SUCCESS &&
+            dwError != LW_ERROR_USER_EXISTS)
+        {
+            BAIL_ON_SAMDB_ERROR(dwError);
+        }
+
+    } while (dwError == LW_ERROR_USER_EXISTS &&
+             dwGID <= SAM_DB_MAX_GID);
+
+    if (dwGID > SAM_DB_MAX_GID)
+    {
+        /* Not likely but it's happened - we've run out of GID space */
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+    }
     BAIL_ON_SAMDB_ERROR(dwError);
 
     *pdwGID = dwGID;
@@ -198,35 +262,235 @@ SamDbGetNextAvailableRID(
     )
 {
     DWORD dwError = 0;
+    PSAM_DIRECTORY_CONTEXT pDirContext = NULL;
+    PCSTR pszDomainQueryTemplate =
+        "SELECT " SAM_DB_COL_OBJECT_SID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_OBJECT_CLASS " = %u";
     PCSTR pszQueryTemplate =
         "SELECT RIDCounter FROM " SAM_DB_CONFIG_TABLE \
         "; UPDATE " SAM_DB_CONFIG_TABLE               \
         "   SET RIDCounter = RIDCounter + 1";
+    PCSTR pszObjectSIDQueryTemplate =
+        "SELECT " SAM_DB_COL_OBJECT_SID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_OBJECT_SID " = '%s-%s'";
+    PSTR pszDomainQuery = NULL;
+    PSTR *ppszDomainResult = NULL;
+    int nDomainRows = 0;
+    int nDomainCols = 0;
+    PSTR pszError = NULL;
+    PSTR pszDomainSID = NULL;
+    PSTR pszObjectRIDQueryTemplate = NULL;
     DWORD dwRID = 0;
 
-    // TODO: Make sure the id is not being used
-    dwError = SamDbGetNextAvailableId(
-                    hDirectory,
-                    pszQueryTemplate,
-                    &dwRID);
+    pDirContext = (PSAM_DIRECTORY_CONTEXT)hDirectory;
+
+    dwError = LwAllocateStringPrintf(
+                    &pszDomainQuery,
+                    pszDomainQueryTemplate,
+                    SAMDB_OBJECT_CLASS_DOMAIN);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    dwError = sqlite3_get_table(
+                    pDirContext->pDbContext->pDbHandle,
+                    pszDomainQuery,
+                    &ppszDomainResult,
+                    &nDomainRows,
+                    &nDomainCols,
+                    &pszError);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    if ((nDomainRows != 1) || (nDomainCols != 1))
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+        BAIL_ON_SAMDB_ERROR(dwError);
+    }
+
+    pszDomainSID = ppszDomainResult[nDomainRows * nDomainCols];
+
+    dwError = LwAllocateStringPrintf(
+                    &pszObjectRIDQueryTemplate,
+                    pszObjectSIDQueryTemplate,
+                    pszDomainSID,
+                    "%u");
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    /*
+     * Get the next RID and make sure it's not used yet
+     */
+    do
+    {
+        dwError = SamDbGetNextId(
+                        hDirectory,
+                        pszQueryTemplate,
+                        &dwRID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIsAvailableId(
+                        hDirectory,
+                        pszObjectRIDQueryTemplate,
+                        dwRID);
+        if (dwError != LW_ERROR_SUCCESS &&
+            dwError != LW_ERROR_USER_EXISTS)
+        {
+            BAIL_ON_SAMDB_ERROR(dwError);
+        }
+
+    } while (dwError == LW_ERROR_USER_EXISTS &&
+             dwRID <= SAM_DB_MAX_RID);
+
+    if (dwRID > SAM_DB_MAX_RID)
+    {
+        /* Not likely but it's happened - we've run out of RID space */
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+    }
     BAIL_ON_SAMDB_ERROR(dwError);
 
     *pdwRID = dwRID;
 
 cleanup:
+    if (ppszDomainResult)
+    {
+        sqlite3_free_table(ppszDomainResult);
+    }
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    DIRECTORY_FREE_MEMORY(pszDomainQuery);
+    DIRECTORY_FREE_MEMORY(pszObjectRIDQueryTemplate);
 
     return dwError;
 
 error:
-
     *pdwRID = 0;
 
     goto cleanup;
 }
 
+
+DWORD
+SamDbCheckAvailableUID(
+    HANDLE hDirectory,
+    DWORD  dwUID
+    )
+{
+    DWORD dwError = 0;
+    PCSTR pszUIDQueryTemplate =
+        "SELECT " SAM_DB_COL_UID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_UID " = %u";
+
+    dwError = SamDbIsAvailableId(
+                    hDirectory,
+                    pszUIDQueryTemplate,
+                    dwUID);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+SamDbCheckAvailableGID(
+    HANDLE hDirectory,
+    DWORD  dwGID
+    )
+{
+    DWORD dwError = 0;
+    PCSTR pszGIDQueryTemplate =
+        "SELECT " SAM_DB_COL_GID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_GID " = %u";
+
+    dwError = SamDbIsAvailableId(
+                    hDirectory,
+                    pszGIDQueryTemplate,
+                    dwGID);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+SamDbCheckAvailableSID(
+    HANDLE hDirectory,
+    PCSTR pszSID
+    )
+{
+    DWORD dwError = 0;
+    PSAM_DIRECTORY_CONTEXT pDirContext = NULL;
+    PCSTR pszQueryTemplate =
+        "SELECT " SAM_DB_COL_OBJECT_SID " FROM " SAM_DB_OBJECTS_TABLE \
+        " WHERE " SAM_DB_COL_OBJECT_SID " = '%s'";
+    PSTR pszQuery = NULL;
+    PSTR *ppszResult = NULL;
+    int nRows = 0;
+    int nCols = 0;
+    PSTR pszError = NULL;
+
+    pDirContext = (PSAM_DIRECTORY_CONTEXT)hDirectory;
+
+    dwError = LwAllocateStringPrintf(
+                    &pszQuery,
+                    pszQueryTemplate,
+                    pszSID);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    dwError = sqlite3_get_table(
+                    pDirContext->pDbContext->pDbHandle,
+                    pszQuery,
+                    &ppszResult,
+                    &nRows,
+                    &nCols,
+                    &pszError);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    if (nRows == 0)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    else if (nRows == 1)
+    {
+        dwError = LW_ERROR_USER_EXISTS;
+    }
+    else
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+    }
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+cleanup:
+    if (ppszResult)
+    {
+        sqlite3_free_table(ppszResult);
+    }
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    DIRECTORY_FREE_MEMORY(pszQuery);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 static
 DWORD
-SamDbGetNextAvailableId(
+SamDbGetNextId(
     HANDLE hDirectory,
     PCSTR  pszQuery,
     PDWORD pdwId
@@ -256,13 +520,17 @@ SamDbGetNextAvailableId(
         BAIL_ON_SAMDB_ERROR(dwError);
     }
 
-    *pdwId = atoi(ppszResult[1]);
+    *pdwId = strtoul(ppszResult[1], NULL, 10);
 
 cleanup:
-
     if (ppszResult)
     {
         sqlite3_free_table(ppszResult);
+    }
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
     }
 
     return dwError;
@@ -281,6 +549,70 @@ error:
     }
 
     goto cleanup;
+}
+
+
+static
+DWORD
+SamDbIsAvailableId(
+    HANDLE hDirectory,
+    PCSTR  pszQueryTemplate,
+    DWORD  dwId
+    )
+{
+    DWORD dwError = 0;
+    PSAM_DIRECTORY_CONTEXT pDirContext = NULL;
+    PSTR pszQuery = NULL;
+    PSTR *ppszResult = NULL;
+    int nRows = 0;
+    int nCols = 0;
+    PSTR pszError = NULL;
+
+    pDirContext = (PSAM_DIRECTORY_CONTEXT)hDirectory;
+
+    dwError = LwAllocateStringPrintf(
+                    &pszQuery,
+                    pszQueryTemplate,
+                    dwId);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    dwError = sqlite3_get_table(
+                    pDirContext->pDbContext->pDbHandle,
+                    pszQuery,
+                    &ppszResult,
+                    &nRows,
+                    &nCols,
+                    &pszError);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    if (nRows == 0)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    else if (nRows == 1)
+    {
+        dwError = LW_ERROR_USER_EXISTS;
+    }
+    else
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+    }
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+error:
+    if (ppszResult)
+    {
+        sqlite3_free_table(ppszResult);
+    }
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    DIRECTORY_FREE_MEMORY(pszQuery);
+
+    return dwError;
 }
 
 

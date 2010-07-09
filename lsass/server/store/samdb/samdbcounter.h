@@ -43,6 +43,8 @@
  *      Database Counters
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewise.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  *
  */
 #ifndef __SAM_DB_COUNTER_H__
@@ -70,6 +72,28 @@ SamDbGetNextAvailableRID(
     HANDLE hDirectory,
     PDWORD pdwRID
     );
+
+
+DWORD
+SamDbCheckAvailableUID(
+    HANDLE hDirectory,
+    DWORD  dwUID
+    );
+
+
+DWORD
+SamDbCheckAvailableGID(
+    HANDLE hDirectory,
+    DWORD  dwGID
+    );
+
+
+DWORD
+SamDbCheckAvailableSID(
+    HANDLE hDirectory,
+    PCSTR pszSID
+    );
+
 
 #endif /* __SAM_DB_COUNTER_H__ */
 
