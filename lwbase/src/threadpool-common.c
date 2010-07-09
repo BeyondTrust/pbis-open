@@ -289,7 +289,6 @@ WorkWait(
 {
     NTSTATUS status = STATUS_SUCCESS;
     struct timespec ts = {0};
-    struct timespec* pTs = NULL;
     LONG64 llDeadline = 0;
     int err = 0;
 
@@ -301,10 +300,12 @@ WorkWait(
         llDeadline += (LONG64) 1000000000ll * pThread->pThreads->ulWorkThreadTimeout;
         ts.tv_sec = llDeadline / 1000000000ll;
         ts.tv_nsec = llDeadline % 1000000000ll;
-        pTs = &ts;
+        err = pthread_cond_timedwait(&pThread->pThreads->Event, &pThread->pThreads->Lock, &ts);
     }
-        
-    err = pthread_cond_timedwait(&pThread->pThreads->Event, &pThread->pThreads->Lock, pTs);
+    else
+    {
+        err = pthread_cond_wait(&pThread->pThreads->Event, &pThread->pThreads->Lock);
+    }
     
     switch(err)
     {
