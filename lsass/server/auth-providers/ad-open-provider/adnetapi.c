@@ -53,6 +53,7 @@
 static NetrCredentials gSchannelCreds = { 0 };
 static NetrCredentials* gpSchannelCreds = NULL;
 static NETR_BINDING ghSchannelBinding = NULL;
+static PSTR gpszSchannelServer = NULL;
 static pthread_mutex_t gSchannelLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
@@ -1672,8 +1673,21 @@ AD_NetlogonAuthenticationUserEx(
     // Remove $ from account name
     pwszComputer[wc16slen(pwszComputer) - 1] = 0;
 
+    if (gpszSchannelServer && strcasecmp(gpszSchannelServer, pszDomainController))
+    {
+        LSA_LOG_VERBOSE("Resetting schannel due to switching DC from '%s' to '%s'",
+                        gpszSchannelServer, pszDomainController);
+        AD_ClearSchannelStateInLock();
+    }
+
     if (!ghSchannelBinding)
     {
+        if (!gpszSchannelServer)
+        {
+            dwError = LwAllocateString(pszDomainController, &gpszSchannelServer);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
         dwError = LwMbsToWc16s(pszDomainController, &pwszDomainController);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -1938,6 +1952,8 @@ AD_ClearSchannelStateInLock(
 
         memset(&gSchannelCreds, 0, sizeof(gSchannelCreds));
         gpSchannelCreds = NULL;
+
+        LW_SAFE_FREE_MEMORY(gpszSchannelServer);
     }
 }
 
