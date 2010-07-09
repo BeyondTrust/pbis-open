@@ -1190,8 +1190,9 @@ do_postinstall()
             log_info ""
         else
             log_info ""
-            log_info "Use the utility domainjoin-cli to join your computer to a domain"
-            log_info "and enable logging on with Active Directory credentials."
+            log_info "As root, run domainjoin-cli to join a domain so you can log on"
+            log_info "with Active Directory credentials. Example:"
+            log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
             log_info ""
         fi
     fi
