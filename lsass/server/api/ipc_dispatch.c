@@ -724,75 +724,6 @@ error:
 
 
 static LWMsgStatus
-LsaSrvIpcSetMachineSid(
-    LWMsgCall *pCall,
-    const LWMsgParams *pIn,
-    LWMsgParams *pOut,
-    void *data
-    )
-{
-    DWORD dwError = 0;
-    PLSA_IPC_ERROR pError = NULL;
-    PLSA_IPC_SET_MACHINE_SID pReq = pIn->data;
-
-    dwError = LsaSrvSetMachineSid(LsaSrvIpcGetSessionData(pCall), pReq->pszSid);
-    if (!dwError)
-    {
-        pOut->tag  = LSA_R_SET_MACHINE_SID_SUCCESS;
-        pOut->data = NULL;
-    }
-    else
-    {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pOut->tag    = LSA_R_SET_MACHINE_SID_FAILURE;
-        pOut->data = pError;
-    }
-
-cleanup:
-    return MAP_LW_ERROR_IPC(dwError);
-
-error:
-    goto cleanup;
-}
-
-static LWMsgStatus
-LsaSrvIpcSetMachineName(
-    LWMsgCall *pCall,
-    const LWMsgParams *pIn,
-    LWMsgParams *pOut,
-    void *data
-    )
-{
-    DWORD dwError = 0;
-    PLSA_IPC_ERROR pError = NULL;
-    PLSA_IPC_SET_MACHINE_NAME pReq = pIn->data;
-
-    dwError = LsaSrvSetMachineName(LsaSrvIpcGetSessionData(pCall),
-				   pReq->pszMachineName);
-    if (!dwError)
-    {
-        pOut->tag  = LSA_R_SET_MACHINE_NAME_SUCCESS;
-        pOut->data = NULL;
-    }
-    else 
-    {
-        dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        pOut->tag  = LSA_R_SET_MACHINE_NAME_FAILURE;
-        pOut->data = pError;
-    }
-
-cleanup:
-    return MAP_LW_ERROR_IPC(dwError);
-
-error:
-    goto cleanup;
-}
-
-static LWMsgStatus
 LsaSrvIpcAddGroup2(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
@@ -2093,8 +2024,6 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(LSA_Q_GET_TRACE_INFO, LsaSrvIpcGetTraceInfo),
     LWMSG_DISPATCH_BLOCK(LSA_Q_ENUM_TRACE_INFO, LsaSrvIpcEnumTraceInfo),
     LWMSG_DISPATCH_BLOCK(LSA_Q_PROVIDER_IO_CONTROL, LsaSrvIpcProviderIoControl),
-    LWMSG_DISPATCH_BLOCK(LSA_Q_SET_MACHINE_SID, LsaSrvIpcSetMachineSid),
-    LWMSG_DISPATCH_BLOCK(LSA_Q_SET_MACHINE_NAME, LsaSrvIpcSetMachineName),
     LWMSG_DISPATCH_BLOCK(LSA_Q_GET_PAM_CONFIG, LsaSrvIpcGetPamConfig),
     LWMSG_DISPATCH_BLOCK(LSA2_Q_FIND_OBJECTS, LsaSrvIpcFindObjects),
     LWMSG_DISPATCH_BLOCK(LSA2_Q_OPEN_ENUM_OBJECTS, LsaSrvIpcOpenEnumObjects),

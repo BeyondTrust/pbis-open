@@ -30,14 +30,15 @@ noinst_HEADERS = \
     xpg_socket.h
 
 lsainternaldir = $(includedir)/lsa/internal
-lsainternal_HEADERS = \
-    lsaadprovider.h \
-    lsadatablob.h \
-    lsadef.h \
-    lsaipc.h \
-    lsakrb5smb.h \
-    lsalist.h \
-    lsasrvcred.h \
-    lsasystem.h \
-    lsautils.h \
+lsainternal_HEADERS =       \
+    lsaadprovider.h         \
+    lsalocalprovider.h      \
+    lsadatablob.h           \
+    lsadef.h                \
+    lsaipc.h                \
+    lsakrb5smb.h            \
+    lsalist.h               \
+    lsasrvcred.h            \
+    lsasystem.h             \
+    lsautils.h              \
     lwsecurityidentifier.h

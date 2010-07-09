@@ -55,6 +55,7 @@
 #include <lwmsg/lwmsg.h>
 
 #include "lsaclient.h"
+#include "lsalocalprovider.h"
 #include "lsaipc.h"
 
 #include "auth_p.h"

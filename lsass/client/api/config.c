@@ -105,51 +105,28 @@ LsaSetMachineSid(
     )
 {
     DWORD dwError = 0;
-    PLSA_CLIENT_CONNECTION_CONTEXT pContext =
-                     (PLSA_CLIENT_CONNECTION_CONTEXT)hLsaConnection;
-    LSA_IPC_SET_MACHINE_SID SetMachineSid = {0};
-    PLSA_IPC_ERROR pError = NULL;
+    size_t sSidLen = 0;
 
-    LWMsgMessage request = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgMessage response = LWMSG_MESSAGE_INITIALIZER;
+    BAIL_ON_INVALID_POINTER(pszSid);
 
-    SetMachineSid.pszSid = pszSid;    
+    sSidLen = strlen(pszSid);
+    if (sSidLen == 0)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
-    request.tag    = LSA_Q_SET_MACHINE_SID;
-    request.object = &SetMachineSid;
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_assoc_send_message_transact(
-                              pContext->pAssoc,
-                              &request,
-                              &response));
+    dwError = LsaProviderIoControl(hLsaConnection,
+                                   LSA_LOCAL_TAG_PROVIDER,
+                                   LSA_LOCAL_IO_SETDOMAINSID,
+                                   (DWORD)(sSidLen + 1),
+                                   (PVOID)pszSid,
+                                   NULL,
+                                   NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    switch (response.tag)
-    {
-    case LSA_R_SET_MACHINE_SID_SUCCESS:
-        break;
-
-    case LSA_R_SET_MACHINE_SID_FAILURE:
-        pError = (PLSA_IPC_ERROR) response.object;
-        dwError = pError->dwError;
-        BAIL_ON_LSA_ERROR(dwError);
-        break;
-
-    default:
-        dwError = LW_ERROR_UNEXPECTED_MESSAGE;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-cleanup:
-    if (response.object)
-    {
-        lwmsg_assoc_free_message(pContext->pAssoc, &response);
-    }
-
-    return dwError;
-
 error:
-    goto cleanup;
+    return dwError;
 }
 
 LSASS_API
@@ -160,52 +137,29 @@ LsaSetMachineName(
     )
 {
     DWORD dwError = 0;
-    PLSA_CLIENT_CONNECTION_CONTEXT pContext =
-                     (PLSA_CLIENT_CONNECTION_CONTEXT)hLsaConnection;
-    LSA_IPC_SET_MACHINE_NAME SetMachineName = {0};
-    PLSA_IPC_ERROR pError = NULL;
+    size_t sNameLen = 0;
 
-    LWMsgMessage request = LWMSG_MESSAGE_INITIALIZER;
-    LWMsgMessage response = LWMSG_MESSAGE_INITIALIZER;
+    BAIL_ON_INVALID_POINTER(pszMachineName);
 
-    SetMachineName.pszMachineName = pszMachineName;
-
-    request.tag    = LSA_Q_SET_MACHINE_NAME;
-    request.object = &SetMachineName;
-
-    dwError = MAP_LWMSG_ERROR(lwmsg_assoc_send_message_transact(
-                              pContext->pAssoc,
-                              &request,
-                              &response));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch (response.tag)
+    sNameLen = strlen(pszMachineName);
+    if (sNameLen == 0)
     {
-    case LSA_R_SET_MACHINE_NAME_SUCCESS:
-        break;
-
-    case LSA_R_SET_MACHINE_NAME_FAILURE:
-        pError = (PLSA_IPC_ERROR) response.object;
-        dwError = pError->dwError;
-        BAIL_ON_LSA_ERROR(dwError);
-        break;
-
-    default:
-        dwError = LW_ERROR_UNEXPECTED_MESSAGE;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-cleanup:
-    if (response.object)
-    {
-        lwmsg_assoc_free_message(pContext->pAssoc, &response);
-    }
-
-    return dwError;
+    dwError = LsaProviderIoControl(hLsaConnection,
+                                   LSA_LOCAL_TAG_PROVIDER,
+                                   LSA_LOCAL_IO_SETDOMAINNAME,
+                                   (DWORD)(sNameLen + 1),
+                                   (PVOID)pszMachineName,
+                                   NULL,
+                                   NULL);
 
 error:
-    goto cleanup;
+    return dwError;
 }
+
 
 LSASS_API
 DWORD
