@@ -40,6 +40,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %files
 %defattr(-,root,root)
 %{PrefixDir}/bin/*
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 
 %changelog

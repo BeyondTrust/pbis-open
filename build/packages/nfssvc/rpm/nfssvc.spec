@@ -76,8 +76,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{INIT_DIR}/*
 /etc/likewise/*.reg
 %{PrefixDir}/sbin/*
-
-%{PrefixDir}/%{_LIB}/*
+%{PrefixDir}/%{_LIB}/*.so
+%{PrefixDir}/%{_LIB}/*.so.*
 
 %define initScriptPathList %{INIT_DIR}/nfssvcd
 %post

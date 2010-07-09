@@ -74,7 +74,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %defattr(-,root,root)
 %{INIT_DIR}/*
 %{PrefixDir}/sbin/*
-%{PrefixDir}/%{_LIB}/*
+%{PrefixDir}/%{_LIB}/*.so
+%{PrefixDir}/%{_LIB}/*.so.*
 %{PrefixDir}/share/config/*
 
 %define initScriptPathList %{INIT_DIR}/srvsvcd

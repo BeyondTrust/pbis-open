@@ -81,8 +81,12 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 %{PrefixDir}/share/config/*
 %endif
-%{PrefixDir}/%{_lib}/*
-/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
+%{PrefixDir}/%{_lib}/gss/*.so
+/%{_lib}/*.so
+/%{_lib}/*.so.*
+/%{_lib}/security/*.so
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lsassd
@@ -124,6 +128,11 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%{PrefixDir}/%{_lib}/gss/*.a
+%{PrefixDir}/%{_lib}/gss/*.la
+/%{_lib}/*.a
+/%{_lib}/*.la
+/%{_lib}/security/*.la
 %if ! %{Compat32}
 %attr(0644,root,root) %{PrefixDir}/include/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*

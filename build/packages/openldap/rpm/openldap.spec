@@ -57,15 +57,17 @@ rm -rf $RPM_BUILD_ROOT
 
 %files
 %defattr(-,root,root)
-%{PrefixDir}/%{_lib}/libldap*
-%{PrefixDir}/%{_lib}/liblber*
+%{PrefixDir}/%{_lib}/libldap*.so
+%{PrefixDir}/%{_lib}/libldap*.so.*
+%{PrefixDir}/%{_lib}/liblber*.so
+%{PrefixDir}/%{_lib}/liblber*.so.*
 %{PrefixDir}/bin/openldap/*
 
 %files devel
 %defattr(0644,root,root,0755)
 
 #%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
-#%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/man/*
 

@@ -63,7 +63,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %config %{_sysconfdir}/likewise/likewise-krb5-ad.conf
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 %{PrefixDir}/share/config/*
 
 %define initScriptPathList %{INIT_DIR}/netlogond

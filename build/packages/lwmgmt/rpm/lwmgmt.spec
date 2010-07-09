@@ -46,8 +46,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %config(noreplace) /etc/likewise/lwmgmtd.conf
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
-
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 
 %define initScriptPathList %{INIT_DIR}/lwmgmtd
 %post

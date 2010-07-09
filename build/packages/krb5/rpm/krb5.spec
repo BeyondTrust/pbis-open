@@ -70,7 +70,9 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 %endif
 
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
+%{PrefixDir}/%{_lib}/krb5/plugins/preauth/*.so
 
 %files devel
 %defattr(0644,root,root,0755)

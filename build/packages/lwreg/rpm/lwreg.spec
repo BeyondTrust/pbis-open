@@ -79,10 +79,12 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 %{PrefixDir}/share/config/*
 %endif
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/lwregd
+
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
 ## So, we massage the init script according to the release, for now.
@@ -121,6 +123,7 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(-,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
 %if ! %{Compat32}
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/man/*

@@ -66,7 +66,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 
 %files
 %defattr(-,root,root)
-%{PrefixDir}/%{_lib}/*
+%{PrefixDir}/%{_lib}/*.so
+%{PrefixDir}/%{_lib}/*.so.*
 
 %files devel
 %defattr(0644,root,root,0755)
