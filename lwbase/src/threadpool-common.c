@@ -489,7 +489,14 @@ QueueWorkItem(
     pItem->pfnFunc = pfnFunc;
     pItem->pContext = pContext;
 
-    RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
+    if (Flags & LW_WORK_ITEM_HIGH_PRIORITY)
+    {
+        RingEnqueueFront(&pThreads->WorkItems, &pItem->Ring);
+    }
+    else
+    {
+        RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
+    }
     pThreads->ulQueued++;
     pItem = NULL;
 

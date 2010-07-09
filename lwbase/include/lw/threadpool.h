@@ -187,11 +187,10 @@ typedef enum _LW_TASK_EVENT_MASK
 typedef enum LW_WORK_ITEM_FLAGS
 {
     /**
-     * Indicates that a work item should be
-     * given its own dedicated thread in which to
-     * run.
+     * Indicates the the work item should be placed at the front
+     * of the work queue.
      */
-    LW_WORK_ITEM_DEDICATED         = 0x00
+    LW_WORK_ITEM_HIGH_PRIORITY         = 0x00010000
 } LW_WORK_ITEM_FLAGS;
 
 /**

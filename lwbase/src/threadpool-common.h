@@ -163,6 +163,16 @@ RingEnqueue(
 
 static inline
 VOID
+RingEnqueueFront(
+    PRING pAnchor,
+    PRING pElement
+    )
+{
+    RingInsertAfter(pAnchor, pElement);
+}
+
+static inline
+VOID
 RingDequeue(
     PRING pAnchor,
     PRING* pElement
