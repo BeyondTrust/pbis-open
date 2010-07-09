@@ -50,6 +50,30 @@
 
 static
 DWORD
+LocalSetDomainName(
+    IN HANDLE  hProvider,
+    IN uid_t   peerUID,
+    IN gid_t   peerGID,
+    IN DWORD   dwInputBufferSize,
+    IN PVOID   pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    );
+
+static
+DWORD
+LocalSetDomainSid(
+    IN HANDLE  hProvider,
+    IN uid_t   peerUID,
+    IN gid_t   peerGID,
+    IN DWORD   dwInputBufferSize,
+    IN PVOID   pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    );
+
+static
+DWORD
 LocalInitializeProvider(
     OUT PCSTR* ppszProviderName,
     OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
@@ -898,7 +922,7 @@ LocalGetStatus(
     pProviderStatus->mode = LSA_PROVIDER_MODE_LOCAL_SYSTEM;
     pProviderStatus->status = LSA_AUTH_PROVIDER_STATUS_ONLINE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     dwError = LwAllocateString(
                     gLPGlobals.pszLocalDomain,
@@ -909,7 +933,7 @@ LocalGetStatus(
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     return dwError;
 
@@ -937,20 +961,20 @@ LocalRefreshConfiguration(
     dwError = LocalCfgReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwError = LocalCfgTransferContents(
                     &config,
                     &gLPGlobals.cfg);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     LocalEventLogConfigReload();
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return dwError;
 
@@ -988,14 +1012,39 @@ LocalIoControl(
     )
 {
     DWORD dwError = 0;
+    PVOID pOutputBuffer = NULL;
+    DWORD dwOutputBufferSize = 0;
 
     switch (dwIoControlCode)
     {
+    case LSA_LOCAL_IO_SETDOMAINNAME:
+        dwError = LocalSetDomainName(hProvider,
+                                     peerUID,
+                                     peerGID,
+                                     dwInputBufferSize,
+                                     pInputBuffer,
+                                     NULL,
+                                     NULL);
+        break;
+
+    case LSA_LOCAL_IO_SETDOMAINSID:
+        dwError = LocalSetDomainSid(hProvider,
+                                    peerUID,
+                                    peerGID,
+                                    dwInputBufferSize,
+                                    pInputBuffer,
+                                    NULL,
+                                    NULL);
+        break;
+
     default:
         dwError = LW_ERROR_NOT_HANDLED;
         break;
     }
     BAIL_ON_LSA_ERROR(dwError);
+
+    *pdwOutputBufferSize = dwOutputBufferSize;
+    *ppOutputBuffer      = pOutputBuffer;
 
 cleanup:
     return dwError;
@@ -1004,6 +1053,66 @@ error:
     *pdwOutputBufferSize = 0;
     *ppOutputBuffer      = NULL;
 
+    goto cleanup;
+}
+
+static
+DWORD
+LocalSetDomainName(
+    IN HANDLE  hProvider,
+    IN uid_t   peerUID,
+    IN gid_t   peerGID,
+    IN DWORD   dwInputBufferSize,
+    IN PVOID   pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    if (peerUID)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LocalDirSetDomainName((PSTR)pInputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
+LocalSetDomainSid(
+    IN HANDLE  hProvider,
+    IN uid_t   peerUID,
+    IN gid_t   peerGID,
+    IN DWORD   dwInputBufferSize,
+    IN PVOID   pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    if (peerUID)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LocalDirSetDomainSid((PSTR)pInputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
     goto cleanup;
 }
 
@@ -1160,6 +1269,7 @@ LsaInitializeProvider2(
 {
     return LocalInitializeProvider(ppszProviderName, ppFunctionTable);
 }
+
 
 /*
 local variables:

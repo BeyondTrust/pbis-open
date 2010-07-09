@@ -91,6 +91,7 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
 
 LOCAL_PROVIDER_GLOBALS gLPGlobals =
 {
-    PTHREAD_MUTEX_INITIALIZER,
-    "BUILTIN"
+    .rwlock           = PTHREAD_RWLOCK_INITIALIZER,
+    .pszBuiltinDomain = "BUILTIN",
+    .cfgMutex         = PTHREAD_MUTEX_INITIALIZER
 };

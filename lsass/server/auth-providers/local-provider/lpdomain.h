@@ -73,5 +73,15 @@ LocalGetDomainInfo(
     PLONG64 pllPwdChangeTime
     );
 
+DWORD
+LocalDirSetDomainName(
+    IN PCSTR  pszNewName
+    );
+
+DWORD
+LocalDirSetDomainSid(
+    IN PCSTR  pszNewSid
+    );
+
 #endif /* __LP_DOMAIN_H__ */
 

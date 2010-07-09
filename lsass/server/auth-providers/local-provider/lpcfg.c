@@ -142,11 +142,11 @@ LocalCfgGetMinPasswordAge(
     LONG64 llMinPwdAge = 0;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     llMinPwdAge = gLPGlobals.llMinPwdAge;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     *pllMinPwdAge = llMinPwdAge;
 
@@ -162,11 +162,11 @@ LocalCfgGetMaxPasswordAge(
     LONG64 llMaxPwdAge = 0;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     llMaxPwdAge = gLPGlobals.llMaxPwdAge;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     *pllMaxPwdAge = llMaxPwdAge;
 
@@ -182,11 +182,11 @@ LocalCfgGetMinPwdLength(
     DWORD dwMinPwdLength = 0;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     dwMinPwdLength = gLPGlobals.dwMinPwdLength;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     *pdwMinPwdLength = dwMinPwdLength;
 
@@ -202,11 +202,11 @@ LocalCfgGetPasswordChangeWarningTime(
     LONG64 llPasswdChangeWarningTime = 0;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     llPasswdChangeWarningTime = gLPGlobals.llPwdChangeTime;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     *pllPasswdChangeWarningTime = llPasswdChangeWarningTime;
 
@@ -222,11 +222,11 @@ LocalCfgIsEventlogEnabled(
     BOOLEAN bResult = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_RDLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     bResult = gLPGlobals.cfg.bEnableEventLog;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_RWLOCK(bInLock, &gLPGlobals.rwlock);
 
     *pbValue = bResult;
 
@@ -242,11 +242,11 @@ LocalCfgGetMaxGroupNestingLevel(
     DWORD dwMaxGroupNestingLevel = LOCAL_CFG_MAX_GROUP_NESTING_LEVEL_DEFAULT;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwMaxGroupNestingLevel = gLPGlobals.cfg.dwMaxGroupNestingLevel;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     *pdwNestingLevel = dwMaxGroupNestingLevel;
 
@@ -262,7 +262,7 @@ LocalCfgGetDefaultShell(
     PSTR  pszLoginShell = NULL;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwError = LwAllocateString(
                     gLPGlobals.cfg.pszLoginShell,
@@ -273,7 +273,7 @@ LocalCfgGetDefaultShell(
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return dwError;
 
@@ -295,7 +295,7 @@ LocalCfgGetHomedirPrefix(
     PSTR  pszHomedirPrefix = NULL;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwError = LwAllocateString(
                     gLPGlobals.cfg.pszHomedirPrefix,
@@ -306,7 +306,7 @@ LocalCfgGetHomedirPrefix(
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return dwError;
 
@@ -328,7 +328,7 @@ LocalCfgGetHomedirTemplate(
     PSTR  pszHomedirTemplate = NULL;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwError = LwAllocateString(
                     gLPGlobals.cfg.pszHomedirTemplate,
@@ -339,7 +339,7 @@ LocalCfgGetHomedirTemplate(
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return dwError;
 
@@ -359,11 +359,11 @@ LocalCfgGetHomedirUmask(
 {
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     *pUmask = gLPGlobals.cfg.dwHomedirUMask;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return 0;
 
@@ -376,11 +376,11 @@ LocalCfgMustCreateHomedir(
 {
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     *pbCreateHomedir = gLPGlobals.cfg.bCreateHomedir;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return 0;
 }
@@ -392,11 +392,11 @@ LocalCfgAcceptNTLMv1(
 {
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     *pbResult = gLPGlobals.cfg.bAcceptNTLMv1;
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return 0;
 }
@@ -410,7 +410,7 @@ LocalCfgGetSkeletonDirs(
     PSTR  pszSkelDirs = NULL;
     BOOLEAN bInLock = FALSE;
 
-    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_LOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     dwError = LwAllocateString(
                     gLPGlobals.cfg.pszSkelDirs,
@@ -421,7 +421,7 @@ LocalCfgGetSkeletonDirs(
 
 cleanup:
 
-    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.mutex);
+    LOCAL_UNLOCK_MUTEX(bInLock, &gLPGlobals.cfgMutex);
 
     return dwError;
 

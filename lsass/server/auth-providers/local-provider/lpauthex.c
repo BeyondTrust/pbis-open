@@ -98,6 +98,7 @@ LocalAuthenticateUserExInternal(
     PLSA_DATA_BLOB pSessionKey = NULL;
     LSA_QUERY_LIST QueryList;
     BOOLEAN bUserIsGuest = FALSE;
+    BOOLEAN bLocked = FALSE;
 
     BAIL_ON_INVALID_POINTER(pUserParams->pszAccountName);
 
@@ -106,9 +107,13 @@ LocalAuthenticateUserExInternal(
 
     /* Assume the local domain (localhost) if we don't have one */
 
-    if (pUserParams->pszDomain) {        
+    if (pUserParams->pszDomain)
+    {
         pszDomain = pUserParams->pszDomain;
-    } else {        
+    }
+    else
+    {
+        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
         pszDomain = gLPGlobals.pszLocalDomain;
     }    
 
@@ -202,6 +207,7 @@ LocalAuthenticateUserExInternal(
     pUserInfo = NULL;    
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     LsaUtilFreeSecurityObjectList(1, ppObjects);
 

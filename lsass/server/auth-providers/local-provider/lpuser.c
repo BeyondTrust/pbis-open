@@ -348,6 +348,7 @@ LocalDirAddUser(
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_LIST QueryList;
     DWORD dwGid = -1;
+    BOOLEAN bLocked = FALSE;
 
     PWSTR wszMemberAttrs[] = {
         wszAttrObjectClass,
@@ -400,6 +401,8 @@ LocalDirAddUser(
                         &pGroupSID,
                         ppObjects[0]->pszObjectSid);
         BAIL_ON_LSA_ERROR(dwError);
+
+        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
         if (!RtlIsPrefixSid(
                         gLPGlobals.pLocalDomainSID,
@@ -590,6 +593,8 @@ LocalDirAddUser(
                         ppObjects[0]->pszObjectSid);
         BAIL_ON_LSA_ERROR(dwError);
 
+        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
         if (!RtlIsPrefixSid(
                         gLPGlobals.pLocalDomainSID,
                         pGroupSID))
@@ -633,6 +638,7 @@ LocalDirAddUser(
     }
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     LsaUtilFreeSecurityObjectList(1, ppObjects);
 
@@ -1125,6 +1131,7 @@ LocalDirDeleteUser(
     DWORD dwNumEntries = 0;
     PSID pUserSid = NULL;
     PSID pDomainSid = NULL;
+    BOOLEAN bLocked = FALSE;
 
     PWSTR pwszAttributes[] = {
         wszAttrNameObjectClass,
@@ -1165,6 +1172,8 @@ LocalDirDeleteUser(
                     &pUserSid);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
     pDomainSid = gLPGlobals.pLocalDomainSID;
 
     if (LocalDirIsBuiltinAccount(
@@ -1181,6 +1190,8 @@ LocalDirDeleteUser(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
     if (pEntry)
     {
         DirectoryFreeEntries(pEntry, dwNumEntries);

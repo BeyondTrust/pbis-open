@@ -102,22 +102,24 @@ typedef struct __LOCAL_CONFIG
 
 typedef struct _LOCAL_PROVIDER_GLOBALS
 {
-    pthread_mutex_t mutex;
+    pthread_rwlock_t  rwlock;
 
-    PSTR            pszBuiltinDomain;
-    PSTR            pszLocalDomain;
-    PSTR            pszNetBIOSName;
-    PSID            pLocalDomainSID;
+    PSTR              pszBuiltinDomain;
+    PSTR              pszLocalDomain;
+    PSTR              pszNetBIOSName;
+    PSID              pLocalDomainSID;
 
-    LONG64          llMinPwdAge;
-    LONG64          llMaxPwdAge;
-    DWORD           dwMinPwdLength;
-    LONG64          llPwdChangeTime;
-    DWORD           dwLockoutThreshold;
-    LONG64          llLockoutDuration;
-    LONG64          llLockoutWindow;
+    LONG64            llMinPwdAge;
+    LONG64            llMaxPwdAge;
+    DWORD             dwMinPwdLength;
+    LONG64            llPwdChangeTime;
+    DWORD             dwLockoutThreshold;
+    LONG64            llLockoutDuration;
+    LONG64            llLockoutWindow;
 
-    LOCAL_CONFIG    cfg;
+    pthread_mutex_t   cfgMutex;
+
+    LOCAL_CONFIG      cfg;
 
 } LOCAL_PROVIDER_GLOBALS, *PLOCAL_PROVIDER_GLOBALS;
 

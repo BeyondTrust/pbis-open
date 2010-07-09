@@ -71,6 +71,24 @@
            bInLock = FALSE;                 \
         }
 
+#define LOCAL_WRLOCK_RWLOCK(bInLock, pRwLock) \
+        if (!bInLock) {                       \
+            pthread_rwlock_wrlock(pRwLock);   \
+            bInLock = TRUE;                   \
+        }
+
+#define LOCAL_RDLOCK_RWLOCK(bInLock, pRwLock) \
+        if (!bInLock) {                       \
+            pthread_rwlock_rdlock(pRwLock);   \
+            bInLock = TRUE;                   \
+        }
+
+#define LOCAL_UNLOCK_RWLOCK(bInLock, pRwLock) \
+        if (bInLock) {                        \
+            pthread_rwlock_unlock(pRwLock);   \
+            bInLock = FALSE;                  \
+        }
+
 #define LOCAL_OBJECT_CLASS_UNKNOWN         0
 #define LOCAL_OBJECT_CLASS_DOMAIN          1
 #define LOCAL_OBJECT_CLASS_GROUP           4

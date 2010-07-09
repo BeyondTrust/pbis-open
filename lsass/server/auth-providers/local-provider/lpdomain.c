@@ -865,6 +865,396 @@ error:
 }
 
 
+DWORD
+LocalDirSetDomainName(
+    IN PCSTR  pszNewDomainName
+    )
+{
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%d";
+    const DWORD dwInt32StrSize = 10;
+
+    DWORD dwError = 0;
+    PWSTR pwszNewDomainName = NULL;
+    PWSTR pwszDomainObjectDN = NULL;
+    HANDLE hDirectory = (HANDLE)NULL;
+    PWSTR pwszDomainFilter = NULL;
+    DWORD dwDomainFilterLen = 0;
+    PWSTR pwszBase = NULL;
+    ULONG ulScope = 0;
+    ULONG ulAttributesOnly = 0;
+    PDIRECTORY_ENTRY pDomainEntries = NULL;
+    PDIRECTORY_ENTRY pDomainEntry = NULL;
+    DWORD dwNumDomainEntries = 0;
+    DWORD iMod = 0;
+    PWSTR pwszUserDN = NULL;
+    PWSTR pwszCredentials = NULL;
+    ULONG ulMethod = 0;
+    BOOLEAN bLocked = FALSE;
+
+    WCHAR wszAttrObjectClass[] = DIRECTORY_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrObjectDN[] = DIRECTORY_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrDomainName[] = DIRECTORY_ATTR_DOMAIN_NAME;
+    WCHAR wszAttrNetbiosName[] = DIRECTORY_ATTR_NETBIOS_NAME;
+    WCHAR wszAttrCommonName[] = DIRECTORY_ATTR_COMMON_NAME;
+    WCHAR wszAttrSamAccountName[] = DIRECTORY_ATTR_SAM_ACCOUNT_NAME;
+
+    PWSTR wszAttributes[] = {
+        &wszAttrObjectDN[0],
+        NULL
+    };
+
+    enum AttrValueIndex {
+        ATTR_IDX_DOMAIN_NAME  = 0,
+        ATTR_IDX_NETBIOS_NAME,
+        ATTR_IDX_COMMON_NAME,
+        ATTR_IDX_SAM_ACCOUNT_NAME,
+        ATTR_IDX_SENTINEL
+    };
+
+    ATTRIBUTE_VALUE AttrValues[] = {
+        {   /* ATTR_IDX_DOMAIN_NAME */
+            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+            .data.pwszStringValue = NULL
+        },
+        {   /* ATTR_IDX_NETBIOS_NAME */
+            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+            .data.pwszStringValue = NULL
+        },
+        {   /* ATTR_IDX_COMMON_NAME */
+            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+            .data.pwszStringValue = NULL
+        },
+        {   /* ATTR_IDX_SAM_ACCOUNT_NAME */
+            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+            .data.pwszStringValue = NULL
+        },
+    };
+
+    DIRECTORY_MOD modDomainName = {
+        DIR_MOD_FLAGS_REPLACE,
+        &wszAttrDomainName[0],
+        1,
+        &AttrValues[ATTR_IDX_DOMAIN_NAME]
+    };
+
+    DIRECTORY_MOD modNetbiosName = {
+        DIR_MOD_FLAGS_REPLACE,
+        &wszAttrNetbiosName[0],
+        1,
+        &AttrValues[ATTR_IDX_NETBIOS_NAME]
+    };
+
+    DIRECTORY_MOD modCommonName = {
+        DIR_MOD_FLAGS_REPLACE,
+        &wszAttrCommonName[0],
+        1,
+        &AttrValues[ATTR_IDX_COMMON_NAME]
+    };
+
+    DIRECTORY_MOD modSamAccountName = {
+        DIR_MOD_FLAGS_REPLACE,
+        &wszAttrSamAccountName[0],
+        1,
+        &AttrValues[ATTR_IDX_SAM_ACCOUNT_NAME]
+    };
+
+    DIRECTORY_MOD mods[ATTR_IDX_SENTINEL + 1];
+
+
+    /*
+     * Freeze local provider to prevent from changing
+     * database contents in the background
+     */
+    LOCAL_WRLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    dwError = LwMbsToWc16s(pszNewDomainName,
+                           &pwszNewDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectoryOpen(&hDirectory);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /*
+     * Search and modify MACHINE domain object
+     */
+
+    dwDomainFilterLen = ((sizeof(wszAttrObjectClass)/sizeof(WCHAR) - 1) +
+                         dwInt32StrSize +
+                         (sizeof(wszDomainFilterFmt)/
+                          sizeof(wszDomainFilterFmt[0])));
+    dwError = LwAllocateMemory(dwDomainFilterLen * sizeof(WCHAR),
+                               (PVOID*)&pwszDomainFilter);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszDomainFilter, dwDomainFilterLen, wszDomainFilterFmt,
+                    &wszAttrObjectClass[0],
+                    DIR_OBJECT_CLASS_DOMAIN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectorySearch(hDirectory,
+                              pwszBase,
+                              ulScope,
+                              pwszDomainFilter,
+                              wszAttributes,
+                              ulAttributesOnly,
+                              &pDomainEntries,
+                              &dwNumDomainEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumDomainEntries != 1)
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    pDomainEntry = &(pDomainEntries[0]);
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                                pDomainEntry,
+                                wszAttrObjectDN,
+                                DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                                &pwszDomainObjectDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    iMod = 0;
+    memset(&mods[0], 0, sizeof(mods));
+
+    AttrValues[ATTR_IDX_DOMAIN_NAME].data.pwszStringValue  = pwszNewDomainName;
+    AttrValues[ATTR_IDX_NETBIOS_NAME].data.pwszStringValue = pwszNewDomainName;
+    AttrValues[ATTR_IDX_COMMON_NAME].data.pwszStringValue  = pwszNewDomainName;
+    AttrValues[ATTR_IDX_SAM_ACCOUNT_NAME].data.pwszStringValue
+        = pwszNewDomainName;
+
+    mods[iMod++] = modDomainName;
+    mods[iMod++] = modNetbiosName;
+    mods[iMod++] = modCommonName;
+    mods[iMod++] = modSamAccountName;
+
+    dwError = DirectoryModifyObject(hDirectory,
+                                    pwszDomainObjectDN,
+                                    mods);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /*
+     * Reload local domain info
+     */
+
+    LW_SAFE_FREE_STRING(gLPGlobals.pszLocalDomain);
+    LW_SAFE_FREE_STRING(gLPGlobals.pszNetBIOSName);
+    LW_SAFE_FREE_MEMORY(gLPGlobals.pLocalDomainSID);
+
+    dwError = LocalGetDomainInfo(
+                    pwszUserDN,
+                    pwszCredentials,
+                    ulMethod,
+                    &gLPGlobals.pszLocalDomain,
+                    &gLPGlobals.pszNetBIOSName,
+                    &gLPGlobals.pLocalDomainSID,
+                    &gLPGlobals.llMaxPwdAge,
+                    &gLPGlobals.llPwdChangeTime);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    if (pDomainEntries)
+    {
+        DirectoryFreeEntries(pDomainEntries,
+                             dwNumDomainEntries);
+    }
+
+    if (hDirectory)
+    {
+        DirectoryClose(hDirectory);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszNewDomainName);
+    LW_SAFE_FREE_MEMORY(pwszDomainFilter);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+LocalDirSetDomainSid(
+    IN PCSTR  pszSid
+    )
+{
+    const wchar_t wszDomainFilterFmt[] = L"%ws=%d";
+    const DWORD dwInt32StrSize = 10;
+
+    DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PWSTR pwszNewDomainSid = NULL;
+    PSID pNewDomainSid = NULL;
+    HANDLE hDirectory = (HANDLE)NULL;
+    PWSTR pwszDomainFilter = NULL;
+    DWORD dwDomainFilterLen = 0;
+    PWSTR pwszBase = NULL;
+    ULONG ulScope = 0;
+    ULONG ulAttributesOnly = 0;
+    PDIRECTORY_ENTRY pDomainEntries = NULL;
+    PDIRECTORY_ENTRY pDomainEntry = NULL;
+    DWORD dwNumDomainEntries = 0;
+    PWSTR pwszDomainObjectDN = NULL;
+    PWSTR pwszUserDN = NULL;
+    PWSTR pwszCredentials = NULL;
+    ULONG ulMethod = 0;
+    BOOLEAN bLocked = FALSE;
+
+    WCHAR wszAttrObjectDN[] = DIRECTORY_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrObjectClass[] = DIRECTORY_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrObjectSID[] = DIRECTORY_ATTR_OBJECT_SID;
+
+    PWSTR wszAttributes[] = {
+        &wszAttrObjectDN[0],
+        NULL
+    };
+
+    enum AttrValueIndex {
+        ATTR_IDX_OBJECT_SID = 0,
+        ATTR_IDX_SENTINEL
+    };
+
+    ATTRIBUTE_VALUE AttrValues[] = {
+        {
+            .Type = DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+            .data.pwszStringValue = NULL
+        }
+    };
+
+    DIRECTORY_MOD modObjectSID = {
+        DIR_MOD_FLAGS_REPLACE,
+        &wszAttrObjectSID[0],
+        1,
+        &AttrValues[ATTR_IDX_OBJECT_SID]
+    };
+
+    DIRECTORY_MOD mods[ATTR_IDX_SENTINEL + 1];
+
+
+    /*
+     * Freeze local provider to prevent from changing
+     * database contents in the background
+     */
+    LOCAL_WRLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    dwError = LwMbsToWc16s(pszSid,
+                           &pwszNewDomainSid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateSidFromWC16String(&pNewDomainSid,
+                                            pwszNewDomainSid);
+    if (ntStatus != STATUS_SUCCESS)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectoryOpen(&hDirectory);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwDomainFilterLen = ((sizeof(wszAttrObjectClass)/sizeof(WCHAR) - 1) +
+                         dwInt32StrSize +
+                         (sizeof(wszDomainFilterFmt)/
+                          sizeof(wszDomainFilterFmt[0])));
+    dwError = LwAllocateMemory(dwDomainFilterLen * sizeof(WCHAR),
+                               (PVOID*)&pwszDomainFilter);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszDomainFilter, dwDomainFilterLen, wszDomainFilterFmt,
+                    &wszAttrObjectClass[0],
+                    DIR_OBJECT_CLASS_DOMAIN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectorySearch(hDirectory,
+                              pwszBase,
+                              ulScope,
+                              pwszDomainFilter,
+                              wszAttributes,
+                              ulAttributesOnly,
+                              &pDomainEntries,
+                              &dwNumDomainEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumDomainEntries != 1)
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    pDomainEntry = &(pDomainEntries[0]);
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                                pDomainEntry,
+                                wszAttrObjectDN,
+                                DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                                &pwszDomainObjectDN);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    memset(&mods[0], 0, sizeof(mods));
+
+    AttrValues[ATTR_IDX_OBJECT_SID].data.pwszStringValue = pwszNewDomainSid;
+    mods[0] = modObjectSID;
+
+    dwError = DirectoryModifyObject(hDirectory,
+                                    pwszDomainObjectDN,
+                                    mods);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /*
+     * Reload local domain info
+     */
+
+    LW_SAFE_FREE_STRING(gLPGlobals.pszLocalDomain);
+    LW_SAFE_FREE_STRING(gLPGlobals.pszNetBIOSName);
+    LW_SAFE_FREE_MEMORY(gLPGlobals.pLocalDomainSID);
+
+    dwError = LocalGetDomainInfo(
+                    pwszUserDN,
+                    pwszCredentials,
+                    ulMethod,
+                    &gLPGlobals.pszLocalDomain,
+                    &gLPGlobals.pszNetBIOSName,
+                    &gLPGlobals.pLocalDomainSID,
+                    &gLPGlobals.llMaxPwdAge,
+                    &gLPGlobals.llPwdChangeTime);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    if (pDomainEntries)
+    {
+        DirectoryFreeEntries(pDomainEntries,
+                             dwNumDomainEntries);
+    }
+
+    if (hDirectory)
+    {
+        DirectoryClose(hDirectory);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszDomainFilter);
+    LW_SAFE_FREE_MEMORY(pwszNewDomainSid);
+    RTL_FREE(&pNewDomainSid);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c

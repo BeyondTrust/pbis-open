@@ -57,6 +57,9 @@ LocalCrackDomainQualifiedName(
 {
     DWORD dwError = 0;
     PLSA_LOGIN_NAME_INFO pNameInfo = NULL;
+    BOOLEAN bLocked = FALSE;
+
+    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     dwError = LsaCrackDomainQualifiedName(
                     pszId,
@@ -91,6 +94,7 @@ LocalCrackDomainQualifiedName(
     *ppNameInfo = pNameInfo;
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     return dwError;
 
