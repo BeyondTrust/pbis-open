@@ -102,6 +102,8 @@ typedef struct _LW_WORK_THREADS
 
 #define INVALID_THREAD_HANDLE ((pthread_t) (size_t) - 1)
 
+#define DEFAULT_WORK_THREAD_TIMEOUT 30
+
 /* Ring functions */
 static inline
 VOID
@@ -352,7 +354,7 @@ GetWorkThreadTimeoutAttr(
     PLW_THREAD_POOL_ATTRIBUTES pAttrs
     )
 {
-    return pAttrs ? pAttrs->ulWorkThreadTimeout : 30;
+    return pAttrs ? pAttrs->ulWorkThreadTimeout : DEFAULT_WORK_THREAD_TIMEOUT;
 }
 
 VOID

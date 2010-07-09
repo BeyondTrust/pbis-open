@@ -123,6 +123,7 @@ LwRtlCreateThreadPoolAttributes(
     pAttrs->lWorkThreads = -4;
     pAttrs->ulTaskThreadStackSize = 0;
     pAttrs->ulWorkThreadStackSize = 0;
+    pAttrs->ulWorkThreadTimeout = DEFAULT_WORK_THREAD_TIMEOUT;
 
     *ppAttrs = pAttrs;
 
