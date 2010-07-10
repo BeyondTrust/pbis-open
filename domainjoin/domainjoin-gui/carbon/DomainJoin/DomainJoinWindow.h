@@ -49,66 +49,55 @@
 class DomainJoinWindow : public TWindow
 {
     public:
-		DomainJoinWindow(int inAppSignature);
+        DomainJoinWindow(int inAppSignature);
         virtual ~DomainJoinWindow();
-	
-	protected:
-	    DomainJoinWindow(const DomainJoinWindow& other);
-		DomainJoinWindow& operator=(const DomainJoinWindow& other);
-		
-	public:
-
-		void SetComputerName(const std::string& name);
-		void SetDomainName(const std::string& name);
-        
-		virtual void Close();
+        void SetComputerName(const std::string& name);
+        void SetDomainName(const std::string& name);
+        virtual void Close();
 
     protected:
-    
+        DomainJoinWindow(const DomainJoinWindow& other);
+        DomainJoinWindow& operator=(const DomainJoinWindow& other);
         virtual Boolean     HandleCommand( const HICommandExtended& inCommand );
-		
-		std::string GetComputerName();
-		std::string GetDomainName();
-		std::string GetOUPath();
-		
-		void HandleJoinDomain();
-		void GetCredentials();
-		bool ValidateData();
-		
-		void ValidateDomainname(const std::string& domainName);
-		void ValidateUsername(const std::string& userName);
-		void ValidateHostname(const std::string& hostName);
-		void ValidateOUPath(const std::string& ouPath);
-		
-		void ShowDomainWelcomeDialog(const std::string& domainName);
-		
-		TWindow& GetCredentialsDialog();
-		
-	protected:
-	
-	    static const int COMPUTER_NAME_ID;
-		static const int DOMAIN_NAME_ID;
-		static const int DEFAULT_OU_RADIO_ID;
-		static const int OU_PATH_RADIO_ID;
-		static const int OU_PATH_TEXT_ID;
-		static const int CANCEL_ID;
-		static const int JOIN_ID;
-		
-		static const int COMPUTER_NAME_CMD_ID;
-		static const int DOMAIN_NAME_CMD_ID;
-		static const int DEFAULT_OU_CMD_ID;
-		static const int OU_PATH_RADIO_CMD_ID;
-		static const int OU_PATH_TEXT_CMD_ID;
-		static const int CANCEL_CMD_ID;
-		static const int JOIN_CMD_ID;
-		
-	private:
-	
-	    std::string _originalComputerName;
-	    std::string _userName;
-	    std::string _password;
-		
-		TWindow*    _credentialsDialog;
+        std::string GetComputerName();
+        std::string GetDomainName();
+        std::string GetOUPath();
+        std::string GetUserDomainPrefix();
+
+        void HandleJoinDomain();
+        void GetCredentials();
+        bool ValidateData();
+        void ValidateDomainname(const std::string& domainName);
+        void ValidateUsername(const std::string& userName);
+        void ValidateHostname(const std::string& hostName);
+        void ValidateOUPath(const std::string& ouPath);
+        void ShowDomainWelcomeDialog(const std::string& domainName);
+        TWindow& GetCredentialsDialog();
+
+        static const int COMPUTER_NAME_ID;
+        static const int DOMAIN_NAME_ID;
+        static const int DEFAULT_OU_RADIO_ID;
+        static const int OU_PATH_RADIO_ID;
+        static const int OU_PATH_TEXT_ID;
+        static const int CANCEL_ID;
+        static const int JOIN_ID;
+        static const int DEFAULT_USER_DOMAIN_PREFIX_ID;
+        static const int USE_SHORT_NAME_FOR_LOGON_ID;
+        static const int COMPUTER_NAME_CMD_ID;
+        static const int DOMAIN_NAME_CMD_ID;
+        static const int DEFAULT_OU_CMD_ID;
+        static const int OU_PATH_RADIO_CMD_ID;
+        static const int OU_PATH_TEXT_CMD_ID;
+        static const int CANCEL_CMD_ID;
+        static const int JOIN_CMD_ID;
+        static const int USE_SHORT_NAME_CMD_ID;
+
+    private:
+
+        std::string _originalComputerName;
+        std::string _userName;
+        std::string _password;
+        TWindow*    _credentialsDialog;
 };
 
 #endif /* __DOMAINJOINWINDOW_H__ */

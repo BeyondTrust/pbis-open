@@ -13,21 +13,24 @@
 #include "DomainJoinException.h"
 #include "CredentialsDialog.h"
 
-const int DomainJoinWindow::COMPUTER_NAME_ID    = 131;
-const int DomainJoinWindow::DOMAIN_NAME_ID      = 133;
-const int DomainJoinWindow::DEFAULT_OU_RADIO_ID = 135;
-const int DomainJoinWindow::OU_PATH_RADIO_ID    = 136;
-const int DomainJoinWindow::OU_PATH_TEXT_ID     = 137;
-const int DomainJoinWindow::CANCEL_ID           = 139;
-const int DomainJoinWindow::JOIN_ID             = 140;
+const int DomainJoinWindow::COMPUTER_NAME_ID              = 131;
+const int DomainJoinWindow::DOMAIN_NAME_ID                = 133;
+const int DomainJoinWindow::DEFAULT_OU_RADIO_ID           = 135;
+const int DomainJoinWindow::OU_PATH_RADIO_ID              = 136;
+const int DomainJoinWindow::OU_PATH_TEXT_ID               = 137;
+const int DomainJoinWindow::CANCEL_ID                     = 139;
+const int DomainJoinWindow::JOIN_ID                       = 140;
+const int DomainJoinWindow::USE_SHORT_NAME_FOR_LOGON_ID   = 150;
+const int DomainJoinWindow::DEFAULT_USER_DOMAIN_PREFIX_ID = 152;
 
-const int DomainJoinWindow::COMPUTER_NAME_CMD_ID = 'cnam';
-const int DomainJoinWindow::DOMAIN_NAME_CMD_ID   = 'dnam';
-const int DomainJoinWindow::DEFAULT_OU_CMD_ID    = 'oudf';
-const int DomainJoinWindow::OU_PATH_RADIO_CMD_ID = 'oupt';
-const int DomainJoinWindow::OU_PATH_TEXT_CMD_ID  = 'ouph';
-const int DomainJoinWindow::CANCEL_CMD_ID        = 'not!';
-const int DomainJoinWindow::JOIN_CMD_ID          = 'join';
+const int DomainJoinWindow::COMPUTER_NAME_CMD_ID          = 'cnam';
+const int DomainJoinWindow::DOMAIN_NAME_CMD_ID            = 'dnam';
+const int DomainJoinWindow::DEFAULT_OU_CMD_ID             = 'oudf';
+const int DomainJoinWindow::OU_PATH_RADIO_CMD_ID          = 'oupt';
+const int DomainJoinWindow::OU_PATH_TEXT_CMD_ID           = 'ouph';
+const int DomainJoinWindow::CANCEL_CMD_ID                 = 'not!';
+const int DomainJoinWindow::JOIN_CMD_ID                   = 'join';
+const int DomainJoinWindow::USE_SHORT_NAME_CMD_ID         = 'shrt';
 
 DomainJoinWindow::DomainJoinWindow(int inAppSignature)
 : TWindow( inAppSignature, CFSTR("Window"), CFSTR("Join") ),
@@ -39,6 +42,8 @@ DomainJoinWindow::DomainJoinWindow(int inAppSignature)
     SetRadioButton(DEFAULT_OU_RADIO_ID);
     UnsetRadioButton(OU_PATH_RADIO_ID);
     DisableLocalControl(OU_PATH_TEXT_ID);
+    SetRadioButton(USE_SHORT_NAME_FOR_LOGON_ID);
+    EnableLocalControl(DEFAULT_USER_DOMAIN_PREFIX_ID);
 }
 
 DomainJoinWindow::~DomainJoinWindow()
@@ -82,29 +87,46 @@ std::string
 DomainJoinWindow::GetOUPath()
 {
     std::string result;
-	if (!IsRadioButtonSet(DEFAULT_OU_RADIO_ID))
-	{
-	   OSStatus err = GetTextControlString(OU_PATH_TEXT_ID, result);
-	   if (err != noErr)
-	   {
-	      std::string errMsg("Failed to get OU Path from control");
-	      throw DomainJoinException(-1, "Domain Join Error", errMsg);
-	   }
-	}
-	
-	return result;
+    if (!IsRadioButtonSet(DEFAULT_OU_RADIO_ID))
+    {
+        OSStatus err = GetTextControlString(OU_PATH_TEXT_ID, result);
+        if (err != noErr)
+        {
+            std::string errMsg("Failed to get OU Path from control");
+            throw DomainJoinException(-1, "Domain Join Error", errMsg);
+        }
+    }
+
+    return result;
 }
-		
+
+std::string
+DomainJoinWindow::GetUserDomainPrefix()
+{
+    std::string result;
+    if (IsRadioButtonSet(USE_SHORT_NAME_FOR_LOGON_ID))
+    {
+        OSStatus err = GetTextControlString(DEFAULT_USER_DOMAIN_PREFIX_ID, result);
+        if (err != noErr)
+        {
+            std::string errMsg("Failed to get user domain prefix from control");
+            throw DomainJoinException(-1, "Domain Join Error", errMsg);
+        }
+    }
+
+    return result;
+}
+
 void
 DomainJoinWindow::SetComputerName(const std::string& name)
 {
     _originalComputerName = name;
     OSStatus err = SetTextControlString(COMPUTER_NAME_ID, name);
-	if (err != noErr)
-	{
-	   std::string errMsg("Failed to set computer name in control");
-	   throw DomainJoinException(-1, "Domain Join Error", errMsg);
-	}
+    if (err != noErr)
+    {
+        std::string errMsg("Failed to set computer name in control");
+        throw DomainJoinException(-1, "Domain Join Error", errMsg);
+    }
 }
 
 void
@@ -142,23 +164,23 @@ void
 DomainJoinWindow::ValidateOUPath(const std::string& ouPath)
 {
     if (!IsRadioButtonSet(DEFAULT_OU_RADIO_ID) && !ouPath.length())
-	{
-	   throw InvalidOUPathException();
-	}
+    {
+        throw InvalidOUPathException();
+    }
 }
 
 void
 DomainJoinWindow::ValidateHostname(const std::string& hostName)
 {
     // Length must be between 1 and 15
-	// must not be "localhost" or "linux"
-	// must not start or end with '-'
-	// chars must be alphanumeric or '-'
-	bool bInvalidHostname = false;
-	int len = hostName.length();
-	if ((len < 1) ||
-		(len > 15) ||
-		(hostName == "localhost") ||
+    // must not be "localhost" or "linux"
+    // must not start or end with '-'
+    // chars must be alphanumeric or '-'
+    bool bInvalidHostname = false;
+    int len = hostName.length();
+    if ((len < 1) ||
+        (len > 15) ||
+        (hostName == "localhost") ||
 		(hostName == "linux") ||
 		(hostName[0] == '-') ||
 		(hostName[len-1] == '-'))
@@ -215,24 +237,24 @@ DomainJoinWindow::ValidateData()
 	
     try
 	{
-	    domainName = GetDomainName();
-        ValidateHostname(GetComputerName());
-		ValidateDomainname(domainName);
-		ValidateOUPath(GetOUPath());
-		result = true;
+            domainName = GetDomainName();
+            ValidateHostname(GetComputerName());
+            ValidateDomainname(domainName);
+            ValidateOUPath(GetOUPath());
+            result = true;
 	}
 	catch(InvalidDomainnameException& ide)
 	{
-	     SInt16 outItemHit;
-		 char msgStr[256];
-		 sprintf(msgStr, "Please specify a valid domain name");
-		 CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
-		 CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
-		 StandardAlert(kAlertStopAlert,
-					   "\pDomain Join Error",
-					   (StringPtr)msgStr,
-					   NULL,
-					   &outItemHit);
+            SInt16 outItemHit;
+            char msgStr[256];
+            sprintf(msgStr, "Please specify a valid domain name");
+            CFStringRef msgStrRef = CFStringCreateWithCString(NULL, msgStr, kCFStringEncodingASCII);
+            CFStringGetPascalString(msgStrRef, (StringPtr)msgStr, 255, kCFStringEncodingASCII);
+            StandardAlert(kAlertStopAlert,
+			   "\pDomain Join Error",
+			   (StringPtr)msgStr,
+			   NULL,
+			   &outItemHit);
 	}
 	catch(InvalidHostnameException& ihe)
 	{
@@ -308,6 +330,9 @@ DomainJoinWindow::HandleJoinDomain()
         std::string ouPath = GetOUPath();
         ValidateOUPath(ouPath);
 
+        bool bUseShortNameLogons = IsRadioButtonSet(USE_SHORT_NAME_FOR_LOGON_ID);
+        std::string userDomainPrefix = GetUserDomainPrefix();
+
         // Need to call SetComputerName since it in not always safe to
         // assume that the hostname is configured permanently. We have
         // seen cases where the GetComputerName results are from a DHCP
@@ -322,6 +347,8 @@ DomainJoinWindow::HandleJoinDomain()
                                         _userName,
                                         _password,
                                         ouPath,
+                                        userDomainPrefix,
+                                        bUseShortNameLogons,
                                         false);
 
         ShowDomainWelcomeDialog(domainName);
@@ -398,38 +425,49 @@ DomainJoinWindow::HandleCommand( const HICommandExtended& inCommand )
     switch ( inCommand.commandID )
     {
         case CANCEL_CMD_ID:
-			this->Close();
-			return true;
-			
-		case DEFAULT_OU_CMD_ID:
-		     UnsetRadioButton(OU_PATH_RADIO_ID);
-			 DisableLocalControl(OU_PATH_TEXT_ID);
-		     return true;
+            this->Close();
+            return true;
+
+        case DEFAULT_OU_CMD_ID:
+            UnsetRadioButton(OU_PATH_RADIO_ID);
+            DisableLocalControl(OU_PATH_TEXT_ID);
+            return true;
+
+        case OU_PATH_RADIO_CMD_ID:
+            UnsetRadioButton(DEFAULT_OU_RADIO_ID);
+            EnableLocalControl(OU_PATH_TEXT_ID);
+            return true;
+
+        case USE_SHORT_NAME_CMD_ID:
+            if (IsRadioButtonSet(USE_SHORT_NAME_FOR_LOGON_ID))
+            {
+                EnableLocalControl(DEFAULT_USER_DOMAIN_PREFIX_ID);
+            }
+            else
+            {
+                DisableLocalControl(DEFAULT_USER_DOMAIN_PREFIX_ID);
+            }
+            return true;
+
+        case JOIN_CMD_ID:
+            if (ValidateData())
+            {
+                GetCredentials();
+            }
+            return true;
+ 
+        case CREDENTIALS_CMD_OK:
+        {
+            CredentialsDialog& credsDialog = dynamic_cast<CredentialsDialog&>(GetCredentialsDialog());
+            _userName = credsDialog.GetUsername();
+            _password = credsDialog.GetPassword();
+            HandleJoinDomain();
+        }
+        return true;
 			 
-		case OU_PATH_RADIO_CMD_ID:
-		     UnsetRadioButton(DEFAULT_OU_RADIO_ID);
-			 EnableLocalControl(OU_PATH_TEXT_ID);
-		     return true;
-	
-	    case JOIN_CMD_ID:
-		     if (ValidateData())
-			 {
-		        GetCredentials();
-			 }
-		     return true;
-			 
-		case CREDENTIALS_CMD_OK:
-		{
-		     CredentialsDialog& credsDialog = dynamic_cast<CredentialsDialog&>(GetCredentialsDialog());
-	         _userName = credsDialog.GetUsername();
-			 _password = credsDialog.GetPassword();
-		     HandleJoinDomain();
-		}
-		     return true;
-			 
-		case CREDENTIALS_CMD_CANCEL:
-		     return true;
-        
+        case CREDENTIALS_CMD_CANCEL:
+            return true;
+     
         default:
             return false;
     }

@@ -70,6 +70,9 @@ struct _JoinProcessOptions
     PSTR shortDomainName;
     PSTR computerName;
     PSTR ouName;
+    // Optional alternate user domain prefix used with assumeDefaultDomain (true) setting.
+    // If null, the computer domain name prefix is assumed.
+    PSTR userDomainPrefix;
     PSTR username;
     PSTR password;
     void *userData;
@@ -78,6 +81,10 @@ struct _JoinProcessOptions
     BOOLEAN showTraces;
     BOOLEAN disableTimeSync;
     BOOLEAN ignorePam;
+    // TRUE means that lsass will be configured to append a domain prefix so user logons
+    // can be with short account names.
+    // FALSE means that logons will require a UPN or NT4 style domain user account.
+    BOOLEAN assumeDefaultDomain;
     WarningFunction warningCallback;
     /* Contains modules that are enabled and disabled by the user, but does
      * not contain NA modules. This list is populated from the moduleTable.
