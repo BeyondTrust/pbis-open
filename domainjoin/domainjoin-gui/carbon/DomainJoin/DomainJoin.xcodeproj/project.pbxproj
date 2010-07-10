@@ -81,7 +81,7 @@
 		61E547320C73A887006C3011 /* App.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = App.rsrc; sourceTree = "<group>"; };
 		61E547340C73A8A1006C3011 /* keys.rsrc */ = {isa = PBXFileReference; lastKnownFileType = archive.rsrc; path = keys.rsrc; sourceTree = "<group>"; };
 		61EA2ABE0C718B2C0054FE40 /* DomainJoin.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = DomainJoin.icns; sourceTree = "<group>"; };
-		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = Info.plist; sourceTree = "<group>"; };
+		8D0C4E960486CD37000505A6 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F22FEAF20F200BD100D859C2 /* DirectoryService.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DirectoryService.framework; path = /Developer/SDKs/MacOSX10.4u.sdk/System/Library/Frameworks/DirectoryService.framework; sourceTree = "<absolute>"; };
 		F27E68550F1DC51800DA4135 /* English */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = English; path = English.lproj/Migrate.nib; sourceTree = "<group>"; };
 		F2971E2A0F1DDF24000C3A41 /* DomainMigrateWindow.cp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DomainMigrateWindow.cp; sourceTree = "<group>"; };
@@ -235,6 +235,7 @@
 		20286C28FDCF999611CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = C0E91AC908A95435008D54AB /* Build configuration list for PBXProject "DomainJoin" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 20286C29FDCF999611CA2CEA /* DomainJoin */;
 			projectDirPath = "";

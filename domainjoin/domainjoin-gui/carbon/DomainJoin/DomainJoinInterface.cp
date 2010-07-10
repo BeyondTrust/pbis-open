@@ -158,6 +158,8 @@ DomainJoinInterface::JoinDomain(std::string& pszDomainName,
                                 std::string& pszUserName,
                                 std::string& pszPassword,
                                 std::string& pszOU,
+                                std::string& pszUserDomainPrefix,
+                                bool bAssumeDefaultDomain,
                                 bool bNoHosts)
 {
      PDOMAIN_JOIN_ERROR pError = NULL;
@@ -167,6 +169,8 @@ DomainJoinInterface::JoinDomain(std::string& pszDomainName,
                                     const_cast<char*>(pszOU.c_str()),
                                     const_cast<char*>(pszUserName.c_str()), 
                                     const_cast<char*>(pszPassword.c_str()), 
+                                    const_cast<char*>(pszUserDomainPrefix.c_str()),
+                                    bAssumeDefaultDomain,
                                     bNoHosts,
                                     &pError);
     if (pError) {

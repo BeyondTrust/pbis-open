@@ -72,6 +72,8 @@ DJItfJoinDomain(
     const char*         pszOU,
     const char*         pszUsername,
     const char*         pszPassword,
+    const char*         pszUserDomainPrefix,
+    short               bAssumeDefaultDomain,
     short               bNoHosts,
     PDOMAIN_JOIN_ERROR* ppError
     )
@@ -112,6 +114,15 @@ DJItfJoinDomain(
     
     if (!IsNullOrEmptyString(pszPassword)) {
         LW_CLEANUP_CTERR(&pException, CTStrdup(pszPassword, &options.password));
+    }
+
+    if (bAssumeDefaultDomain)
+    {
+        options.assumeDefaultDomain = TRUE;
+        if (pszUserDomainPrefix)
+        {
+            LW_CLEANUP_CTERR(&pException, CTStrdup(pszUserDomainPrefix, &options.userDomainPrefix));
+        }
     }
 
     LW_CLEANUP_CTERR(&pException, DJGetComputerName(&options.computerName));

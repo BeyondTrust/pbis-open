@@ -61,6 +61,8 @@ class DomainJoinInterface
                                std::string& pszUserName,
                                std::string& pszPassword,
                                std::string& pszOU,
+                               std::string& pszUserDomainPrefix,
+                               bool bAssumeDefaultDomain,
                                bool bNoHosts);
         
         static void LeaveDomain();

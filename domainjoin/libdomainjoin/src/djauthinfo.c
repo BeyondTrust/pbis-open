@@ -253,6 +253,163 @@ error:
 
 static
 DWORD
+SetBoolRegistryValue(
+    PCSTR path,
+    PCSTR name,
+    BOOL  value
+    )
+{
+    DWORD ceError = ERROR_SUCCESS;
+    HANDLE hReg = (HANDLE)NULL;
+    HKEY pRootKey = NULL;
+    HKEY pNodeKey = NULL;
+    DWORD dwValue = 0;
+
+    if (value)
+    {
+        dwValue = 1;
+    }
+
+    ceError = RegOpenServer(&hReg);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = RegOpenKeyExA(
+                hReg,
+                NULL,
+                HKEY_THIS_MACHINE,
+                0,
+                KEY_ALL_ACCESS,
+                &pRootKey);
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to open registry root key %s",HKEY_THIS_MACHINE);
+        goto error;
+    }
+
+    ceError = RegOpenKeyExA(
+                hReg,
+                pRootKey,
+                path,
+                0,
+                KEY_ALL_ACCESS,
+                &pNodeKey);
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to open registry key %s\\%s",HKEY_THIS_MACHINE, path);
+        goto error;
+    }
+
+    ceError = RegSetValueExA(
+                hReg,
+                pNodeKey,
+                name,
+                0,
+                REG_DWORD,
+                (const BYTE*) &dwValue,
+                sizeof(dwValue));
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to set registry value %s with value %d", name, value ? 1 : 0);
+        goto error;
+    }
+
+cleanup:
+
+    RegCloseKey(hReg, pNodeKey);
+    pNodeKey = NULL;
+    RegCloseKey(hReg, pRootKey);
+    pRootKey = NULL;
+
+    RegCloseServer(hReg);
+    hReg = NULL;
+
+    return(ceError);
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
+SetStringRegistryValue(
+    PCSTR path,
+    PCSTR name,
+    PSTR  value
+    )
+{
+    DWORD ceError = ERROR_SUCCESS;
+    HANDLE hReg = (HANDLE)NULL;
+    HKEY pRootKey = NULL;
+    HKEY pNodeKey = NULL;
+    char szEmpty[2] = "";
+
+    if (!value)
+    {
+        value = szEmpty;
+    }
+
+    ceError = RegOpenServer(&hReg);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = RegOpenKeyExA(
+                hReg,
+                NULL,
+                HKEY_THIS_MACHINE,
+                0,
+                KEY_ALL_ACCESS,
+                &pRootKey);
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to open registry root key %s",HKEY_THIS_MACHINE);
+        goto error;
+    }
+
+    ceError = RegOpenKeyExA(
+                hReg,
+                pRootKey,
+                path,
+                0,
+                KEY_ALL_ACCESS,
+                &pNodeKey);
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to open registry key %s\\%s",HKEY_THIS_MACHINE, path);
+        goto error;
+    }
+
+    ceError = RegSetValueExA(
+                hReg,
+                pNodeKey,
+                name,
+                0,
+                REG_SZ,
+                value,
+                (DWORD) strlen(value)+1);
+    if (ceError)
+    {
+        DJ_LOG_ERROR( "Failed to set registry value %s with value %s", name, value);
+        goto error;
+    }
+
+
+cleanup:
+
+    RegCloseKey(hReg, pNodeKey);
+    pNodeKey = NULL;
+    RegCloseKey(hReg, pRootKey);
+    pRootKey = NULL;
+
+    RegCloseServer(hReg);
+    hReg = NULL;
+
+    return(ceError);
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
 RemoveCacheFiles()
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -1130,6 +1287,24 @@ void DJCreateComputerAccount(
         dnsDomain = hostFqdn + strlen(shortHostname) + 1;
     }
 
+    dwError = SetBoolRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                                   "AssumeDefaultDomain",
+                                   options->assumeDefaultDomain);
+    if (dwError)
+    {
+        LW_RAISE_LSERR(exc, dwError);
+        goto cleanup;
+    }
+
+    dwError = SetStringRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                                     "UserDomainPrefix",
+                                     options->userDomainPrefix);
+    if (dwError)
+    {
+        LW_RAISE_LSERR(exc, dwError);
+        goto cleanup;
+    }
+
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
 
     dwError = LsaAdJoinDomain(
@@ -1416,6 +1591,8 @@ DJLogDomainJoinSucceededEvent(
                  "     Domain name (short):     %s\r\n" \
                  "     Computer name:           %s\r\n" \
                  "     Organizational unit:     %s\r\n" \
+                 "     Assume default domain:   %s\r\n" \
+                 "     User domain prefix:      %s\r\n" \
                  "     User name:               %s\r\n" \
                  "     Operating system:        %s\r\n" \
                  "     Distribution version:    %s\r\n" \
@@ -1424,7 +1601,8 @@ DJLogDomainJoinSucceededEvent(
                  JoinOptions->shortDomainName ? JoinOptions->shortDomainName : "<not set>",
                  JoinOptions->computerName ? JoinOptions->computerName : "<not set>",
                  JoinOptions->ouName ? JoinOptions->ouName : "<not set>",
-                 JoinOptions->username ? JoinOptions->username : "<not set>",
+                 JoinOptions->assumeDefaultDomain ? "true" : "false",
+                 JoinOptions->userDomainPrefix ? JoinOptions->userDomainPrefix : "<not set>",
                  pszOSName ? pszOSName : "<not set>",
                  pszDistroVersion ? pszDistroVersion : "<not set>",
                  pszLikewiseVersion ? pszLikewiseVersion : "<not set>");
@@ -1475,6 +1653,8 @@ DJLogDomainJoinFailedEvent(
                  "     Domain name (short):     %s\r\n" \
                  "     Computer name:           %s\r\n" \
                  "     Organizational unit:     %s\r\n" \
+                 "     Assume default domain:   %s\r\n" \
+                 "     User domain prefix:      %s\r\n" \
                  "     User name:               %s\r\n" \
                  "     Operating system:        %s\r\n" \
                  "     Distribution version:    %s\r\n" \
@@ -1486,6 +1666,8 @@ DJLogDomainJoinFailedEvent(
                  JoinOptions->shortDomainName ? JoinOptions->shortDomainName : "<not set>",
                  JoinOptions->computerName ? JoinOptions->computerName : "<not set>",
                  JoinOptions->ouName ? JoinOptions->ouName : "<not set>",
+                 JoinOptions->assumeDefaultDomain ? "true" : "false",
+                 JoinOptions->userDomainPrefix ? JoinOptions->userDomainPrefix : "<not set>",
                  JoinOptions->username ? JoinOptions->username : "<not set>",
                  pszOSName ? pszOSName : "<not set>",
                  pszDistroVersion ? pszDistroVersion : "<not set>",

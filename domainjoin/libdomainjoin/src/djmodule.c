@@ -116,6 +116,7 @@ void DJFreeJoinProcessOptions(JoinProcessOptions *options)
     CT_SAFE_FREE_STRING(options->shortDomainName);
     CT_SAFE_FREE_STRING(options->computerName);
     CT_SAFE_FREE_STRING(options->ouName);
+    CT_SAFE_FREE_STRING(options->userDomainPrefix);
     CT_SAFE_FREE_STRING(options->username);
     CT_SAFE_FREE_STRING(options->password);
 
