@@ -72,12 +72,13 @@
 "EnableSecuritySignatures"=dword:00000001
 "RequireSecuritySignatures"=dword:00000001
 "BootstrapDefaultSharePath"=dword:00000001
+"MonitorIntervalMinutes"=dword:00000000
 "DefaultSharePath"="/lwcifs"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\logging]
 "EnableLogging"=dword:00000000
 "MaxRequestLogLength"=dword:00000100
-"Filters"=sza:"{10.100.1.1,10.100.1.2},smb1,{0x72,0x73,0x74},info" "{10.100.1.4},smb2,{0xA,0xB,2},verbose"
+"Filters"=sza:"*,smb1,*,debug" "*,smb2,*,debug"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv\statistics]
 "Path"="@providerdir@/libsrv.stat@MOD_EXT@"
