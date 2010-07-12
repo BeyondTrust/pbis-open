@@ -23,7 +23,7 @@ function _setup_build_env
 
     CPPFLAGS="${_cppflags} $(libtool_staging_cppflags)"
     CFLAGS="${_cflags}"
-    LDFLAGS="${_ldflags} $(libtool_staging_ldflags)"
+    LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib}) $(libtool_staging_ldflags)"
 
     libtool_set_staging_library_path
 

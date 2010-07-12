@@ -58,6 +58,7 @@ function component_configure
 	--with-http=no \
 	--with-ftp=no \
 	--enable-ipv6=no \
+	--with-python=no \
         ${DEPENDENCY_TRACKING}
 }
 
