@@ -245,15 +245,6 @@ extern PFN_LSA_LOG_MESSAGE gpfnLogger;
 #define LSA_IS_XOR(Expression1, Expression2) \
     (!!(Expression1) ^ !!(Expression2))
 
-#define LSA_SAFE_FREE_LOGIN_NAME_INFO(pLoginNameInfo) \
-    do { \
-        if (pLoginNameInfo) \
-        { \
-            LsaFreeNameInfo(pLoginNameInfo); \
-            (pLoginNameInfo) = NULL; \
-        } \
-    } while(0);
-
 #if defined(LW_ENABLE_THREADS)
 
 extern pthread_mutex_t gTraceLock;
@@ -432,22 +423,6 @@ typedef struct _LSA_STRING_BUFFER
 
 typedef struct passwd * passwd_ptr_t;
 typedef struct group  * group_ptr_t;
-
-typedef enum
-{
-    NameType_NT4 = 0,
-    NameType_UPN = 1,
-    NameType_Alias
-} ADLogInNameType;
-
-typedef struct __LSA_LOGIN_NAME_INFO
-{
-    ADLogInNameType nameType;
-    PSTR  pszDomainNetBiosName;
-    PSTR  pszFullDomainName;
-    PSTR  pszName;
-    PSTR  pszObjectSid;
-} LSA_LOGIN_NAME_INFO, *PLSA_LOGIN_NAME_INFO;
 
 typedef enum
 {
@@ -950,30 +925,6 @@ LsaValidateUserInfoLevel(
 DWORD
 LsaValidateUserName(
     PCSTR pszName
-    );
-
-#define LSA_DOMAIN_SEPARATOR_DEFAULT    '\\'
-
-CHAR
-LsaGetDomainSeparator(
-    VOID
-    );
-
-DWORD
-LsaSetDomainSeparator(
-    CHAR chValue
-    );
-
-DWORD
-LsaCrackDomainQualifiedName(
-    PCSTR pszId,
-    PCSTR pszDefaultDomain,
-    PLSA_LOGIN_NAME_INFO* ppNameInfo
-    );
-
-void
-LsaFreeNameInfo(
-    PLSA_LOGIN_NAME_INFO pNameInfo
     );
 
 DWORD

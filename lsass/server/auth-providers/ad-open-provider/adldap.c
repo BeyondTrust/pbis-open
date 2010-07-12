@@ -65,7 +65,7 @@ ADGetDomainQualifiedString(
                     &pszQualifiedName,
                     "%s%c%s",
                     pszNetBIOSDomainName,
-                    LsaGetDomainSeparator(),
+                    LsaSrvGetDomainSeparator(),
                     pszName);
     BAIL_ON_LSA_ERROR(dwError);
 

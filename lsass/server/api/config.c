@@ -142,6 +142,8 @@ LsaSrvApiInitConfig(
 
     pConfig->bEnableEventLog = FALSE;
     pConfig->bLogNetworkConnectionEvents = TRUE;
+    pConfig->cDomainSeparator = '\\';
+    pConfig->cSpaceReplacement = ' ';
 
     return 0;
 }
@@ -154,6 +156,8 @@ LsaSrvApiReadRegistry(
     DWORD dwError = 0;
 
     LSA_SRV_API_CONFIG StagingConfig;
+    PSTR pszDomainSeparator = NULL;
+    PSTR pszSpaceReplacement = NULL;
     LSA_CONFIG Config[] =
     {
         {
@@ -173,7 +177,25 @@ LsaSrvApiReadRegistry(
            MAXDWORD,
            NULL,
            &StagingConfig.bLogNetworkConnectionEvents
-        }
+        },
+        {
+           "DomainSeparator",
+           TRUE,
+           LsaTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszDomainSeparator
+        },
+        {
+           "SpaceReplacement",
+           TRUE,
+           LsaTypeString,
+           0,
+           MAXDWORD,
+           NULL,
+           &pszSpaceReplacement
+        },
     };
 
     memset(&StagingConfig, 0, sizeof(StagingConfig));
@@ -187,14 +209,24 @@ LsaSrvApiReadRegistry(
                 sizeof(Config)/sizeof(Config[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (pszDomainSeparator && strlen(pszDomainSeparator) == 1)
+    {
+        StagingConfig.cDomainSeparator = pszDomainSeparator[0];
+    }
+    if (pszSpaceReplacement && strlen(pszSpaceReplacement) == 1)
+    {
+        StagingConfig.cSpaceReplacement = pszSpaceReplacement[0];
+    }
+
     dwError = LsaSrvApiTransferConfigContents(
                     &StagingConfig,
                     pConfig);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    
     LsaSrvApiFreeConfigContents(&StagingConfig);
+    LW_SAFE_FREE_STRING(pszDomainSeparator);
+    LW_SAFE_FREE_STRING(pszSpaceReplacement);
 
     return dwError;
 
@@ -324,6 +356,38 @@ LsaSrvShouldLogNetworkConnectionEvents(
     pthread_mutex_unlock(&gAPIConfigLock);
 
     return bResult;
+}
+
+char
+LsaSrvGetSpaceReplacement(
+    VOID
+    )
+{
+    char cResult = 0;
+
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    cResult = gAPIConfig.cSpaceReplacement;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+
+    return cResult;
+}
+
+char
+LsaSrvDomainSeparator(
+    VOID
+    )
+{
+    char cResult = 0;
+
+    pthread_mutex_lock(&gAPIConfigLock);
+
+    cResult = gAPIConfig.cDomainSeparator;
+
+    pthread_mutex_unlock(&gAPIConfigLock);
+
+    return cResult;
 }
 
 VOID

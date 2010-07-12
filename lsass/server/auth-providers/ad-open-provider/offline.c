@@ -228,7 +228,6 @@ AD_OfflineFindGroupObjectByName(
 
     dwError = LsaCrackDomainQualifiedName(
                         pszGroupNameCopy,
-                        gpADProviderData->szDomain,
                         &pGroupNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -412,7 +411,6 @@ AD_OfflineFindUserObjectByName(
 
     dwError = LsaCrackDomainQualifiedName(
                         pszLoginId_copy,
-                        gpADProviderData->szDomain,
                         &pUserNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -552,7 +550,6 @@ AD_OfflineFindObjectsByName(
         
         dwError = LsaCrackDomainQualifiedName(
             pszLoginId_copy,
-            gpADProviderData->szDomain,
             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 

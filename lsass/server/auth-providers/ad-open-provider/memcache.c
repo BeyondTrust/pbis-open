@@ -861,7 +861,7 @@ MemCacheFindUserByName(
                             &pszKey,
                             "%s@%s",
                             pUserNameInfo->pszName,
-                            pUserNameInfo->pszFullDomainName);
+                            pUserNameInfo->pszDomain);
             BAIL_ON_LSA_ERROR(dwError);
             break;
        case NameType_NT4:
@@ -870,7 +870,7 @@ MemCacheFindUserByName(
             dwError = LwAllocateStringPrintf(
                             &pszKey,
                             "%s\\%s",
-                            pUserNameInfo->pszDomainNetBiosName,
+                            pUserNameInfo->pszDomain,
                             pUserNameInfo->pszName);
             BAIL_ON_LSA_ERROR(dwError);
             break;
@@ -1007,7 +1007,7 @@ MemCacheFindGroupByName(
             dwError = LwAllocateStringPrintf(
                             &pszKey,
                             "%s\\%s",
-                            pGroupNameInfo->pszDomainNetBiosName,
+                            pGroupNameInfo->pszDomain,
                             pGroupNameInfo->pszName);
             BAIL_ON_LSA_ERROR(dwError);
             break;

@@ -186,6 +186,28 @@ typedef struct __LSA_CONFIG
     PVOID pValue;
 } LSA_CONFIG, *PLSA_CONFIG;
 
+typedef enum
+{
+    NameType_NT4 = 0,
+    NameType_UPN = 1,
+    NameType_Alias
+} ADLogInNameType;
+
+typedef struct __LSA_LOGIN_NAME_INFO
+{
+    ADLogInNameType nameType;
+    PSTR  pszDomain;
+    PSTR  pszName;
+} LSA_LOGIN_NAME_INFO, *PLSA_LOGIN_NAME_INFO;
+
+#define LSA_SAFE_FREE_LOGIN_NAME_INFO(pLoginNameInfo) \
+    do { \
+        if (pLoginNameInfo) \
+        { \
+            LsaSrvFreeNameInfo(pLoginNameInfo); \
+            (pLoginNameInfo) = NULL; \
+        } \
+    } while(0);
 
 	
 //Convert to seconds string of form ##s, ##m, ##h, or ##d
@@ -381,6 +403,17 @@ LsaReadConfigEnum(
     DWORD dwMax,
     const PCSTR *ppszEnumNames,
     PDWORD pdwValue
+    );
+
+DWORD
+LsaSrvCrackDomainQualifiedName(
+    PCSTR pszName,
+    PLSA_LOGIN_NAME_INFO* ppNameInfo
+    );
+
+void
+LsaSrvFreeNameInfo(
+    PLSA_LOGIN_NAME_INFO pNameInfo
     );
 
 #endif /* __LSASRVUTILS_H__ */

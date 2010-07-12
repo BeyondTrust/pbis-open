@@ -76,19 +76,7 @@ service_start()
 	    status=$?
 	    log_end_msg $status
 	    ;;
-	AIX)
-	    printf "%s" "Starting `service_description $1`"
-            if (lssrc -s dhcpcd | grep active >/dev/null); then
-                # Wait up to 30 seconds for an ip address
-                for i in `seq 30`; do
-                    ifconfig -a | grep inet | grep -v 127.0.0 | grep -v 0.0.0.0 | grep -v ::1/0 >/dev/null && break
-                    sleep 1
-                done
-            fi
-            ${LWSM} -q start "${1}"
-            status=$?
-            ;;
-	 HP-UX | SOLARIS | FREEBSD | ESXI)
+	 HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Starting `service_description $1`"
             ${LWSM} -q start "${1}"
             status=$?
@@ -145,19 +133,7 @@ service_restart()
 	    status=$?
 	    log_end_msg $status
 	    ;;
-	AIX)
-	    printf "%s" "Restarting `service_description $1`"
-            if (lssrc -s dhcpcd | grep active >/dev/null); then
-                # Wait up to 30 seconds for an ip address
-                for i in `seq 30`; do
-                    ifconfig -a | grep inet | grep -v 127.0.0 | grep -v 0.0.0.0 | grep -v ::1/0 >/dev/null && break
-                    sleep 1
-                done
-            fi
-            ${LWSM} -q restart "${1}"
-            status=$?
-            ;;
-	 HP-UX | SOLARIS | FREEBSD | ESXI)
+	 HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Restarting `service_description $1`"
             ${LWSM} -q restart "${1}"
             status=$?

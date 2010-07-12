@@ -111,122 +111,6 @@ LsaFreeUserInfoContents_2(
     LsaFreeUserInfoContents_1(&pUserInfo->info1);
 }
 
-CHAR
-LsaGetDomainSeparator(
-    VOID
-    )
-{
-    return gchDomainSeparator;
-}
-
-DWORD
-LsaSetDomainSeparator(
-    CHAR chValue
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-
-    if (!ispunct((int)chValue))
-    {
-        LSA_LOG_ERROR(
-                "Error: the domain separator must be set to a punctuation character; the value provided is '%c'.",
-                chValue);
-        dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    gchDomainSeparator = chValue;
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-DWORD
-LsaCrackDomainQualifiedName(
-    PCSTR pszId,
-    PCSTR pszDefaultDomain,
-    PLSA_LOGIN_NAME_INFO* ppNameInfo
-    )
-{
-    DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pNameInfo = NULL;
-    PCSTR pszIndex = NULL;
-    int idx = 0;
-
-    dwError = LwAllocateMemory(
-                    sizeof(LSA_LOGIN_NAME_INFO),
-                    (PVOID*)&pNameInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if ((pszIndex = strchr(pszId, LsaGetDomainSeparator())) != NULL) {
-        idx = pszIndex-pszId;
-        dwError = LwStrndup(pszId, idx, &pNameInfo->pszDomainNetBiosName);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (!LW_IS_NULL_OR_EMPTY_STR(pszId+idx+1)) {
-            dwError = LwAllocateString(pszId+idx+1, &pNameInfo->pszName);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        pNameInfo->nameType = NameType_NT4;
-    }
-    else if ((pszIndex = strchr(pszId, '@')) != NULL) {
-        idx = pszIndex-pszId;
-        dwError = LwStrndup(pszId, idx, &pNameInfo->pszName);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (!LW_IS_NULL_OR_EMPTY_STR(pszId+idx+1)) {
-            dwError = LwAllocateString(pszId+idx+1, &pNameInfo->pszDomainNetBiosName);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        pNameInfo->nameType = NameType_UPN;
-    }
-    else {
-        dwError = LwAllocateString(pszId, &pNameInfo->pszName);
-        BAIL_ON_LSA_ERROR(dwError);
-        pNameInfo->nameType = NameType_Alias;
-    }
-
-    if (LW_IS_NULL_OR_EMPTY_STR(pNameInfo->pszDomainNetBiosName) &&
-        !LW_IS_NULL_OR_EMPTY_STR(pszDefaultDomain)) {
-       dwError = LwAllocateString(pszDefaultDomain, &pNameInfo->pszDomainNetBiosName);
-       BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    *ppNameInfo = pNameInfo;
-
-cleanup:
-
-    return(dwError);
-
-error:
-
-    *ppNameInfo = NULL;
-
-    if (pNameInfo)
-    {
-        LsaFreeNameInfo(pNameInfo);
-    }
-
-    goto cleanup;
-}
-
-void
-LsaFreeNameInfo(
-    PLSA_LOGIN_NAME_INFO pNameInfo
-    )
-{
-    LW_SAFE_FREE_STRING(pNameInfo->pszDomainNetBiosName);
-    LW_SAFE_FREE_STRING(pNameInfo->pszName);
-    LW_SAFE_FREE_STRING(pNameInfo->pszFullDomainName);
-    LW_SAFE_FREE_STRING(pNameInfo->pszObjectSid);
-    LwFreeMemory(pNameInfo);
-}
-
 void
 LsaFreeUserInfo(
     DWORD dwLevel,
@@ -898,22 +782,9 @@ LsaValidateUserName(
     )
 {
     DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pParsedName = NULL;
     size_t sNameLen = 0;
 
-    dwError = LsaCrackDomainQualifiedName(
-                pszName,
-                "unset",
-                &pParsedName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (pParsedName->pszName == NULL)
-    {
-        dwError = LW_ERROR_INVALID_USER_NAME;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    sNameLen = strlen(pParsedName->pszName);
+    sNameLen = strlen(pszName);
     if (sNameLen > LSA_MAX_USER_NAME_LENGTH || sNameLen == 0)
     {
         dwError = LW_ERROR_INVALID_USER_NAME;
@@ -921,11 +792,6 @@ LsaValidateUserName(
     }
 
 cleanup:
-
-    if (pParsedName != NULL)
-    {
-        LsaFreeNameInfo(pParsedName);
-    }
     return dwError;
 
 error:
