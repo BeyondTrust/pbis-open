@@ -409,6 +409,17 @@ then
     AM_CFLAGS="$AM_CFLAGS -DUNICODE"
 fi
 
+# nano-second timestamps
+
+AC_ARG_ENABLE([nanosecond_timestamps],
+        [AC_HELP_STRING([--enable-nanosecond-timestamps], [enable nanosecond timestamps (default: disabled)])],
+        [
+                if test x"$enableval" = x"yes"
+                then
+                    AC_DEFINE([LW_SUPPORT_NANOSECOND_TIMESTAMP], [1], ["Define if nano second timestamps must be used when logging"])
+                fi
+        ])
+
 # debugging
 
 AC_ARG_ENABLE([debug],
@@ -514,6 +525,9 @@ AC_CHECK_TYPES([struct psinfo], , , [
 #endif
 ])
 
+AC_CHECK_LIB([rt], [sem_init], [RT_LIBS="-lrt"])
+AC_SUBST(RT_LIBS)
+
 AC_CHECK_FUNCS([pstat_getproc])
 
 # Checks for library functions
@@ -529,6 +543,11 @@ AC_CHECK_FUNCS([strtoll __strtoll strtoull __strtoull strtol strtoul])
 AC_CHECK_FUNCS([stpncpy strnlen])
 AC_CHECK_FUNCS([atexit localtime_r memset strchr strerror strerror_r vsyslog])
 AC_CHECK_FUNCS([rpl_realloc rpl_malloc])
+
+old_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $RT_LIBS"
+AC_CHECK_FUNCS([clock_gettime clock_getres])
+LDFLAGS="$old_LDFLAGS"
 
 TRANSPORT_FOUND=false
 HAVE_EPOLL=false
@@ -601,9 +620,6 @@ AC_SUBST(SOCKET_LIBS)
 
 AC_CHECK_LIB([dl], [dlopen], [DL_LIBS="-ldl"])
 AC_SUBST(DL_LIBS)
-
-AC_CHECK_LIB([rt], [sem_init], [SEM_LIBS="-lrt"])
-AC_SUBST(SEM_LIBS)
 
 AC_CHECK_LIB([crypto], [DES_set_key], [CRYPTO_LIBS="-lcrypto"], [], [$CRYPTO_LDFLAGS])
 

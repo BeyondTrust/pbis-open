@@ -1132,6 +1132,12 @@ LwioGetHostInfo(
     PSTR* ppszHostname
     );
 
+VOID
+LwioGetSystemTimeString(
+    PSTR   pszBuf,  /* IN OUT */
+    size_t sBufLen  /* IN     */
+    );
+
 DWORD
 LwioInitLogging(
     PCSTR         pszProgramName,
@@ -1172,13 +1178,13 @@ lsmb_vsyslog(
     );
 
 DWORD
-LwioShutdownLogging(
-    VOID
+LwioValidateLogLevel(
+    DWORD dwLogLevel
     );
 
 DWORD
-LwioValidateLogLevel(
-    DWORD dwLogLevel
+LwioShutdownLogging(
+    VOID
     );
 
 #endif /* __SMBUTILS_H__ */

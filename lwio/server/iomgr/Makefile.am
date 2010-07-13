@@ -32,7 +32,7 @@ libiomgr_la_LIBADD = \
     @LWMSG_LIBS@ \
     @UUID_LIBS@  \
     @PTHREAD_LIBS@ \
-    @SEM_LIBS@ \
+    @RT_LIBS@ \
     @SOCKET_LIBS@ \
 	@LWREG_LIBS@
 

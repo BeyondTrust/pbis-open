@@ -48,5 +48,5 @@ liblwiosmbcommon_la_CPPFLAGS =    \
 
 liblwiosmbcommon_la_LIBADD = \
 	@CRYPTO_LIBS@ \
-	@SEM_LIBS@ \
+	@RT_LIBS@ \
 	@KRB5_LIBS@

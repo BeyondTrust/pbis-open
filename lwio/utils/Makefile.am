@@ -22,6 +22,7 @@ liblwioutils_la_SOURCES = \
     strings.c     \
     sysfuncs.c    \
     syslog.c      \
+    time.c        \
     unistr.c      \
     regcfg.c
 
@@ -31,8 +32,9 @@ liblwioutils_la_CPPFLAGS = \
 
 liblwioutils_la_LIBADD = \
     @LWBASE_LIBS@ \
-    @DL_LIBS@  \
-	@LWREG_LIBS@
+    @LWREG_LIBS@  \
+    @DL_LIBS@     \
+    @RT_LIBS@
 
 liblwioutils_la_LDFLAGS = \
    $(AM_LDFLAGS) \

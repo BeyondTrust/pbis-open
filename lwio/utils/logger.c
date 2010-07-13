@@ -113,6 +113,21 @@ LwioInitLogging(
     gLwioMaxLogLevel = maxAllowedLogLevel;
     ghLwioLog = hLog;
 
+#ifdef LW_SUPPORT_NANOSECOND_TIMESTAMP
+
+#if defined(HAVE_CLOCK_GETRES) && defined(HAVE_CLOCK_GETTIME)
+    {
+        struct timespec ts;
+
+        if (!clock_getres(CLOCK_REALTIME, &ts) && (ts.tv_nsec == 1))
+        {
+            gbDoNanoSecondTime = TRUE;
+        }
+    }
+#endif /* defined(HAVE_CLOCK_GETRES) && defined(HAVE_CLOCK_GETTIME) */
+
+#endif /* LW_SUPPORT_NANOSECOND_TIMESTAMP */
+
  cleanup:
     
     return dwError;

@@ -190,4 +190,11 @@ SMBFreeSysLogInfo(
     PSMB_SYS_LOG pSysLog
     );
 
+// time.c
+
+NTSTATUS
+LwioGetSystemTime(
+    struct timespec* pTimeSpec /* IN OUT */
+    );
+
 
