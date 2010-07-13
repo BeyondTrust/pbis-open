@@ -314,13 +314,14 @@ NtlmCreateResponseContext(
         BAIL_ON_LSA_ERROR(dwError);
         dwError = LwAllocateString(
                         "",
-                        &pUserNameInfo->pszDomain);
+                        &pUserNameInfo->pszDomainNetBiosName);
         BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
-        dwError = LsaSrvCrackDomainQualifiedName(
+        dwError = LsaCrackDomainQualifiedName(
                             pUserNameTemp,
+                            NULL,
                             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -358,7 +359,7 @@ NtlmCreateResponseContext(
     dwError = NtlmCreateResponseMessage(
         pChlngMsg,
         pUserNameInfo->pszName,
-        pUserNameInfo->pszDomain,
+        pUserNameInfo->pszDomainNetBiosName,
         pPassword,
         (PBYTE)&gXpSpoof,
         dwNtRespType,
@@ -424,7 +425,7 @@ NtlmCreateResponseContext(
 cleanup:
     if (pUserNameInfo)
     {
-        LsaSrvFreeNameInfo(pUserNameInfo);
+        LsaFreeNameInfo(pUserNameInfo);
     }
 
     *ppNtlmContext = pNtlmContext;

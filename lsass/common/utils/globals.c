@@ -63,3 +63,4 @@ LsaLogLevel         gLsaMaxLogLevel    = LSA_LOG_LEVEL_ERROR;
 LsaLogTarget        gLogTarget         = LSA_LOG_TARGET_DISABLED;
 PFN_LSA_LOG_MESSAGE gpfnLogger         = NULL;
 PLSA_BIT_VECTOR     gpTraceFlags       = NULL;
+CHAR                gchDomainSeparator = LSA_DOMAIN_SEPARATOR_DEFAULT;

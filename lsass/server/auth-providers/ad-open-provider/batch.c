@@ -3358,6 +3358,7 @@ LsaAdBatchProcessRpcObject(
         case LSA_AD_BATCH_QUERY_TYPE_BY_SID:
             dwError = LsaCrackDomainQualifiedName(
                                  pTranslatedName->pszNT4NameOrSid,
+                                 gpADProviderData->szDomain,
                                  &pLoginNameInfo);
             BAIL_ON_LSA_ERROR(dwError);
 

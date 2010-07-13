@@ -376,7 +376,7 @@ LocalDirFindObjectsInternal(
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
 
-            if (!pLoginInfo->pszDomain)
+            if (!pLoginInfo->pszDomainNetBiosName)
             {
                 continue;
             }
@@ -384,7 +384,7 @@ LocalDirFindObjectsInternal(
             dwError = LwAllocateStringPrintf(
                 &pszFilter,
                 pszFilterTemplateQualified,
-                pLoginInfo->pszDomain,
+                pLoginInfo->pszDomainNetBiosName,
                 pLoginInfo->pszName,
                 pszFilterType ? pszFilterType : "");
             BAIL_ON_LSA_ERROR(dwError);

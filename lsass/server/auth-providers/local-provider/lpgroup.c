@@ -195,21 +195,21 @@ LocalDirAddGroup(
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!LocalServicesDomain(pLoginInfo->pszDomain))
+    if (!LocalServicesDomain(pLoginInfo->pszDomainNetBiosName))
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     dwError = LwMbsToWc16s(
-                    pLoginInfo->pszDomain,
+                    pLoginInfo->pszFullDomainName,
                     &pwszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     attrValues[LOCAL_DAG1_IDX_DOMAIN].data.pwszStringValue = pwszDomain;
 
     dwError = LwMbsToWc16s(
-                    pLoginInfo->pszDomain,
+                    pLoginInfo->pszDomainNetBiosName,
                     &pwszNetBIOSDomain);
     BAIL_ON_LSA_ERROR(dwError);
 

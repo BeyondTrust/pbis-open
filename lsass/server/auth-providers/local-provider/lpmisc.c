@@ -63,8 +63,33 @@ LocalCrackDomainQualifiedName(
 
     dwError = LsaCrackDomainQualifiedName(
                     pszId,
+                    gLPGlobals.pszNetBIOSName,
                     &pNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
+
+    // TODO: Handle aliases
+    //       Handle AD Domains
+    if (!strcasecmp(pNameInfo->pszDomainNetBiosName,
+                    gLPGlobals.pszBuiltinDomain))
+    {
+        LW_SAFE_FREE_STRING(pNameInfo->pszFullDomainName);
+
+        dwError = LwAllocateString(
+                        gLPGlobals.pszBuiltinDomain,
+                        &pNameInfo->pszFullDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (!strcasecmp(pNameInfo->pszDomainNetBiosName,
+                         gLPGlobals.pszNetBIOSName))
+    {
+        LW_SAFE_FREE_STRING(pNameInfo->pszFullDomainName);
+
+        dwError = LwAllocateString(
+                        gLPGlobals.pszLocalDomain,
+                        &pNameInfo->pszFullDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
 
     *ppNameInfo = pNameInfo;
 
@@ -113,10 +138,10 @@ LocalBuildDN(
     dwLenName = strlen (pLoginInfo->pszName);
     sLenRequired += dwLenName;
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pLoginInfo->pszDomain))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pLoginInfo->pszFullDomainName))
     {
-        PCSTR pszCursor = pLoginInfo->pszDomain;
-        size_t sLenAvailable = strlen(pLoginInfo->pszDomain);
+        PCSTR pszCursor = pLoginInfo->pszFullDomainName;
+        size_t sLenAvailable = strlen(pLoginInfo->pszFullDomainName);
         size_t sLen2 = 0;
 
         do
@@ -152,10 +177,10 @@ LocalBuildDN(
     memcpy(pszDNCursor, pLoginInfo->pszName, dwLenName);
     pszDNCursor += dwLenName;
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(pLoginInfo->pszDomain))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pLoginInfo->pszFullDomainName))
     {
-        PCSTR pszCursor = pLoginInfo->pszDomain;
-        size_t sLenAvailable = strlen(pLoginInfo->pszDomain);
+        PCSTR pszCursor = pLoginInfo->pszFullDomainName;
+        size_t sLenAvailable = strlen(pLoginInfo->pszFullDomainName);
         size_t sLen2 = 0;
 
         do

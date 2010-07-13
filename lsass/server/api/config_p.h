@@ -93,16 +93,6 @@ LsaSrvSetLogNetworkConnectionEvents(
     BOOLEAN bValue
     );
 
-char
-LsaSrvGetSpaceReplacement(
-    VOID
-    );
-
-char
-LsaSrvDomainSeparator(
-    VOID
-    );
-
 DWORD
 LsaSrvSetMachineSid(
     HANDLE hServer,

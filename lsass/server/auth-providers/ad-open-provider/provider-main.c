@@ -770,10 +770,11 @@ AD_ValidateUser(
 
     dwError = LsaCrackDomainQualifiedName(
                     pszLoginId,
+                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!AD_ServicesDomain(pLoginInfo->pszDomain)) {
+    if (!AD_ServicesDomain(pLoginInfo->pszDomainNetBiosName)) {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -1103,6 +1104,7 @@ AD_RemoveUserByNameFromCache(
     {
         dwError = LsaCrackDomainQualifiedName(
                       pszLoginId,
+                      gpADProviderData->szDomain,
                       &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -2077,6 +2079,7 @@ AD_OpenSession(
 
     dwError = LsaCrackDomainQualifiedName(
                     pszLoginId,
+                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2163,6 +2166,7 @@ AD_CloseSession(
 
     dwError = LsaCrackDomainQualifiedName(
                     pszLoginId,
+                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3147,6 +3151,7 @@ AD_FindUserObjectByName(
     {
         dwError = LsaCrackDomainQualifiedName(
                             pszLoginId,
+                            gpADProviderData->szDomain,
                             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -3317,6 +3322,7 @@ AD_FindGroupObjectByName(
     {
         dwError = LsaCrackDomainQualifiedName(
                             pszGroupName,
+                            gpADProviderData->szDomain,
                             &pGroupNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -4590,6 +4596,7 @@ AD_ResolveConfiguredLists(
         {
             dwError = LsaCrackDomainQualifiedName(
                 pszMember,
+                gpADProviderData->szDomain,
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
             

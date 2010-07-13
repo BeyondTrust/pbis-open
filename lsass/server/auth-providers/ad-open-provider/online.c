@@ -1727,11 +1727,12 @@ AD_OnlineAuthenticateUserPam(
 
     dwError = LsaCrackDomainQualifiedName(
                     pParams->pszLoginName,
+                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomain,
+                    pLoginInfo->pszDomainNetBiosName,
                     &bFoundDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2622,6 +2623,7 @@ AD_OnlineFindGroupObjectByName(
 
     dwError = LsaCrackDomainQualifiedName(
                         pszGroupName_copy,
+                        gpADProviderData->szDomain,
                         &pGroupNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2704,11 +2706,12 @@ AD_OnlineChangePassword(
 
     dwError = LsaCrackDomainQualifiedName(
                     pszLoginId,
+                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomain,
+                    pLoginInfo->pszDomainNetBiosName,
                     &bFoundDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3873,6 +3876,7 @@ AD_OnlineFindUserObjectByName(
 
     dwError = LsaCrackDomainQualifiedName(
                         pszLoginId_copy,
+                        gpADProviderData->szDomain,
                         &pUserNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -4280,6 +4284,7 @@ AD_OnlineFindObjectsByName(
         
         dwError = LsaCrackDomainQualifiedName(
             pszLoginId_copy,
+            gpADProviderData->szDomain,
             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -4344,6 +4349,7 @@ AD_OnlineFindObjectsByName(
 
                 dwError = LsaCrackDomainQualifiedName(
                     pszLoginId_copy,
+                    gpADProviderData->szDomain,
                     &pUserNameInfo);
                 BAIL_ON_LSA_ERROR(dwError);
 

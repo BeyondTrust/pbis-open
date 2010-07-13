@@ -240,7 +240,8 @@ LsaSrvAuthenticateUserEx(
     }
 
     /* Fix up the name.  This allows us to handle a UPN */
-    dwError = LsaSrvCrackDomainQualifiedName(pUserParams->pszAccountName,
+    dwError = LsaCrackDomainQualifiedName(pUserParams->pszAccountName,
+                                          NULL,
                                           &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -316,7 +317,7 @@ cleanup:
 
     if (pLoginInfo)
     {
-        LsaSrvFreeNameInfo(pLoginInfo);
+        LsaFreeNameInfo(pLoginInfo);
     }
 
     if (!dwError) 

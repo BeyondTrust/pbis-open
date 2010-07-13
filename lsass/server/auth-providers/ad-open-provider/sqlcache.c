@@ -650,7 +650,7 @@ LsaDbFindUserByName(
     {
        case NameType_UPN:
             dwError = LsaDmQueryDomainInfo(
-                            pUserNameInfo->pszDomain,
+                            pUserNameInfo->pszDomainNetBiosName,
                             &pszDnsDomain,
                             NULL,
                             NULL,
@@ -692,7 +692,7 @@ LsaDbFindUserByName(
             dwError = sqlite3_bind_text(
                     pstQuery,
                     1,
-                    pUserNameInfo->pszDomain,
+                    pUserNameInfo->pszDomainNetBiosName,
                     -1, // let sqlite calculate the length
                     SQLITE_TRANSIENT //let sqlite make its own copy
                     );
@@ -818,7 +818,7 @@ LsaDbFindGroupByName(
             dwError = sqlite3_bind_text(
                     pstQuery,
                     1,
-                    pGroupNameInfo->pszDomain,
+                    pGroupNameInfo->pszDomainNetBiosName,
                     -1, // let sqlite calculate the length
                     SQLITE_TRANSIENT //let sqlite make its own copy
                     );

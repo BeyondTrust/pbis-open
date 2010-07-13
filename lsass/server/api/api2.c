@@ -585,8 +585,9 @@ LsaSrvFindObjects(
            the appropriate query type for each name */
         for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
         {
-            dwError = LsaSrvCrackDomainQualifiedName(
+            dwError = LsaCrackDomainQualifiedName(
                 QueryList.ppszStrings[dwIndex],
+                NULL,
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -621,7 +622,7 @@ LsaSrvFindObjects(
 
             if (pLoginInfo)
             {
-                LsaSrvFreeNameInfo(pLoginInfo);
+                LsaFreeNameInfo(pLoginInfo);
                 pLoginInfo = NULL;
             }
         }
@@ -634,7 +635,7 @@ cleanup:
 
     if (pLoginInfo)
     {
-        LsaSrvFreeNameInfo(pLoginInfo);
+        LsaFreeNameInfo(pLoginInfo);
         pLoginInfo = NULL;
     }
 

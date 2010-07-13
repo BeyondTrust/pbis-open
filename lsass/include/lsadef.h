@@ -57,8 +57,8 @@
 #define LSA_SECONDS_IN_HOUR   (60 * LSA_SECONDS_IN_MINUTE)
 #define LSA_SECONDS_IN_DAY    (24 * LSA_SECONDS_IN_HOUR)
 
-#define LSA_MAX_USER_NAME_LENGTH  512
-#define LSA_MAX_GROUP_NAME_LENGTH 512
+#define LSA_MAX_USER_NAME_LENGTH  256
+#define LSA_MAX_GROUP_NAME_LENGTH 256
 
 #ifndef LSA_MAX
 #define LSA_MAX(a, b) (((a) > (b)) ? (a) : (b))
