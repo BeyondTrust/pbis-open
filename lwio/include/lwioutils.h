@@ -1073,14 +1073,6 @@ SMBRemoveDirectory(
     );
 
 DWORD
-SMBCopyDirectory(
-    PCSTR pszSourceDirPath,
-    uid_t ownerUid,
-    gid_t ownerGid,
-    PCSTR pszDestDirPath
-    );
-
-DWORD
 SMBCheckDirectoryExists(
     PCSTR pszPath,
     PBOOLEAN pbDirExists
@@ -1114,11 +1106,6 @@ SMBCopyFileWithOriginalPerms(
     );
 
 DWORD
-SMBBackupFile(
-    PCSTR pszPath
-    );
-
-DWORD
 SMBGetSymlinkTarget(
    PCSTR pszPath,
    PSTR* ppszTargetPath
@@ -1129,14 +1116,6 @@ SMBCreateSymlink(
    PCSTR pszOldPath,
    PCSTR pszNewPath
    );
-
-DWORD
-SMBGetMatchingFilePathsInFolder(
-    PCSTR pszDirPath,
-    PCSTR pszFileNameRegExp,
-    PSTR** pppszHostFilePaths,
-    PDWORD pdwNPaths
-    );
 
 DWORD
 SMBGetPrefixDirPath(
