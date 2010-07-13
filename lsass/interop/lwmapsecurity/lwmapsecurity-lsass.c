@@ -423,51 +423,45 @@ LsaMapSecurityConstructSid(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PSID pSid = NULL;
+    ULONG ulNewSidLength = RtlLengthRequiredSid(pDomainSid->SubAuthorityCount + 1);
 
-    status = RTL_ALLOCATE(&pSid, SID, SID_MAX_SIZE);
-    BAIL_ON_NT_STATUS(status);
+    status = RTL_ALLOCATE(&pSid, SID, ulNewSidLength);
+    GOTO_CLEANUP_ON_STATUS(status);
 
-    status = RtlCopySid(SID_MAX_SIZE, pSid, pDomainSid);
-    BAIL_ON_NT_STATUS(status);
+    status = RtlCopySid(ulNewSidLength, pSid, pDomainSid);
+    GOTO_CLEANUP_ON_STATUS(status);
 
-    status = RtlAppendRidSid(SID_MAX_SIZE, pSid, rid);
-    BAIL_ON_NT_STATUS(status);
+    status = RtlAppendRidSid(ulNewSidLength, pSid, rid);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     *ppSid = pSid;
 
 cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        *ppSid = NULL;
+        RTL_FREE(&pSid);
+    }
     
     return status;
-
-error:
-
-    *ppSid = NULL;
-
-    RTL_FREE(&pSid);
-
-    goto cleanup;
 }
 
 static
 NTSTATUS
-LsaMapSecurityResolveObjectInfoFromPac(
+LsaMapSecurityCompleteObjectInfoFromSid(
     IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
-    IN PAC_LOGON_INFO* pPac,
-    OUT PLSA_MAP_SECURITY_OBJECT_INFO pObjectInfo
+    IN OUT PLSA_MAP_SECURITY_OBJECT_INFO pObjectInfo
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
     DWORD dwError = LW_ERROR_SUCCESS;
-    LSA_MAP_SECURITY_OBJECT_INFO objectInfo = { 0 };
     PSTR pszSid = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_LIST QueryList;
     HANDLE hConnection = NULL;
 
-    status = LsaMapSecurityConstructSid(pPac->info3.base.domain_sid, pPac->info3.base.rid, &objectInfo.Sid);
-    GOTO_CLEANUP_ON_STATUS(status);
-
-    status = RtlAllocateCStringFromSid(&pszSid, objectInfo.Sid);
+    status = RtlAllocateCStringFromSid(&pszSid, pObjectInfo->Sid);
     GOTO_CLEANUP_ON_STATUS(status);
 
     status = LsaMapSecurityOpenConnection(Context, &hConnection);
@@ -487,26 +481,58 @@ LsaMapSecurityResolveObjectInfoFromPac(
     status = LwWin32ErrorToNtStatus(dwError);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    LsaMapSecurityCloseConnection(Context, &hConnection);
-
-    status = LsaMapSecurityConstructSid(
-        pPac->info3.base.domain_sid,
-        pPac->info3.base.primary_gid,
-        &objectInfo.PrimaryGroupSid);
-    GOTO_CLEANUP_ON_STATUS(status);
-
-    SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER);
+    SetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_IS_USER);
 
     if (ppObjects[0] && ppObjects[0]->enabled)
     {
         assert(ppObjects[0]->type == LSA_OBJECT_TYPE_USER);
             
-        SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID);
-        SetFlag(objectInfo.Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID);
+        SetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_UID);
+        SetFlag(pObjectInfo->Flags, LSA_MAP_SECURITY_OBJECT_INFO_FLAG_VALID_GID);
         
-        objectInfo.Uid = ppObjects[0]->userInfo.uid;
-        objectInfo.Gid = ppObjects[0]->userInfo.gid;
+        pObjectInfo->Uid = ppObjects[0]->userInfo.uid;
+        pObjectInfo->Gid = ppObjects[0]->userInfo.gid;
     }
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszSid);
+
+    LsaUtilFreeSecurityObjectList(1, ppObjects);
+    LsaMapSecurityCloseConnection(Context, &hConnection);
+
+    return status;
+}
+
+static
+NTSTATUS
+LsaMapSecurityResolveObjectInfoFromAuthUserInfo(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    IN PLSA_AUTH_USER_INFO pAuthUserInfo,
+    OUT PLSA_MAP_SECURITY_OBJECT_INFO pObjectInfo
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    LSA_MAP_SECURITY_OBJECT_INFO objectInfo = { 0 };
+    PSID pDomainSid = NULL;
+
+    status = RtlAllocateSidFromCString(&pDomainSid, pAuthUserInfo->pszDomainSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    // Sid and PrimaryGroupSid
+    status = LsaMapSecurityConstructSid(pDomainSid, 
+                                        pAuthUserInfo->dwUserRid, 
+                                        &objectInfo.Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LsaMapSecurityConstructSid(pDomainSid, 
+                                        pAuthUserInfo->dwPrimaryGroupRid, 
+                                        &objectInfo.PrimaryGroupSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    // The rest
+    status = LsaMapSecurityCompleteObjectInfoFromSid(Context, &objectInfo);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
 
@@ -515,9 +541,45 @@ cleanup:
         LsaMapSecurityFreeObjectInfo(&objectInfo);
     }
 
-    LW_SAFE_FREE_STRING(pszSid);
+    RTL_FREE(&pDomainSid);
 
-    LsaUtilFreeSecurityObjectList(1, ppObjects);
+    *pObjectInfo = objectInfo;
+
+    return status;
+}
+
+static
+NTSTATUS
+LsaMapSecurityResolveObjectInfoFromPac(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    IN PAC_LOGON_INFO* pPac,
+    OUT PLSA_MAP_SECURITY_OBJECT_INFO pObjectInfo
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    LSA_MAP_SECURITY_OBJECT_INFO objectInfo = { 0 };
+    
+    status = LsaMapSecurityConstructSid(
+        pPac->info3.base.domain_sid, 
+        pPac->info3.base.rid, 
+        &objectInfo.Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LsaMapSecurityConstructSid(
+        pPac->info3.base.domain_sid,
+        pPac->info3.base.primary_gid,
+        &objectInfo.PrimaryGroupSid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LsaMapSecurityCompleteObjectInfoFromSid(Context, &objectInfo);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        LsaMapSecurityFreeObjectInfo(&objectInfo);
+    }
 
     *pObjectInfo = objectInfo;
 
@@ -1053,7 +1115,7 @@ LsaMapSecurityMergeStringLists(
     BOOLEAN bFound = FALSE;
 
     status = RTL_ALLOCATE(&ppszMergedStrings, PSTR, sizeof(PSTR) * (dwCount1 + dwCount2));
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     memcpy(ppszMergedStrings, ppszStrings1, sizeof(*ppszStrings1) * dwCount1);
     
@@ -1080,13 +1142,12 @@ LsaMapSecurityMergeStringLists(
 
 cleanup:
 
+    if (!NT_SUCCESS(status))
+    {
+        RTL_FREE(ppszMergedStrings);
+    }
+
     return status;
-
-error:
-
-    RTL_FREE(ppszMergedStrings);
-
-    goto cleanup;
 }
 
 static
@@ -1390,7 +1451,7 @@ LsaMapSecurityGetPacInfoFromGssContext(
     if (majorStatus != GSS_S_COMPLETE)
     {
         status = STATUS_UNSUCCESSFUL;
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
     
     majorStatus = gss_get_name_attribute(
@@ -1409,24 +1470,33 @@ LsaMapSecurityGetPacInfoFromGssContext(
         // be fair we were always returning STATUS_UNSUCCESSFUL here before.
 
         status = LwWin32ErrorToNtStatus(minorStatus);
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
     
     if (pacData.value == NULL)
     {
         status = STATUS_INVALID_USER_BUFFER;
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
     }
 
     status = DecodePacLogonInfo(
         pacData.value,
         pacData.length,
         &pPac);
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     *ppPac = pPac;
 
 cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        *ppPac = NULL;
+        if (pPac)
+        {
+            FreePacLogonInfo(pPac);
+        }
+    }
 
     if (pacData.value)
     {
@@ -1444,17 +1514,6 @@ cleanup:
     }
 
     return status;
-
-error:
-
-    *ppPac = NULL;
-
-    if (pPac)
-    {
-        FreePacLogonInfo(pPac);
-    }
-
-    goto cleanup;
 }
 
 static
@@ -1510,16 +1569,16 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
         Context,
         &pPac,
         GssContext);
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = LsaMapSecurityResolveObjectInfoFromPac(Context, pPac, &objectInfo);
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = RTL_ALLOCATE(&ppInputSids, PSID, sizeof(PSID) * 
                           (pPac->info3.base.groups.dwCount +
                            pPac->res_groups.dwCount +
                            pPac->info3.sidcount));
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     for (dwIndex = 0; dwIndex < pPac->info3.base.groups.dwCount; dwIndex++)
     {
@@ -1527,7 +1586,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
             pPac->info3.base.domain_sid,
             pPac->info3.base.groups.pRids[dwIndex].dwRid,
             &pSid);
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         ppInputSids[dwInputSidCount++] = pSid;
         pSid = NULL;
@@ -1539,7 +1598,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
             pPac->res_group_dom_sid,
             pPac->res_groups.pRids[dwIndex].dwRid,
             &pSid);
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         ppInputSids[dwInputSidCount++] = pSid;
         pSid = NULL;
@@ -1548,7 +1607,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
     for (dwIndex = 0; dwIndex < pPac->info3.sidcount; dwIndex++)
     {
         status = RtlDuplicateSid(&pSid, pPac->info3.sids[dwIndex].sid);
-        BAIL_ON_NT_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS(status);
 
         ppInputSids[dwInputSidCount++] = pSid;
         pSid = NULL;
@@ -1560,7 +1619,7 @@ LsaMapSecurityGetAccessTokenCreateInformationFromGssContext(
         &objectInfo,
         dwInputSidCount,
         ppInputSids);
-    BAIL_ON_NT_STATUS(status);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
 
@@ -1581,10 +1640,6 @@ cleanup:
     LsaMapSecurityFreeObjectInfo(&objectInfo);    
     
     return status;
-
-error:
-
-    goto cleanup;
 }
 
 static
@@ -1602,6 +1657,189 @@ LsaMapSecurityFreeContext(
     }
 }
 
+static
+VOID
+LsaMapSecurityFreeNtlmLogonResult(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmResult
+    )
+{
+    PLW_MAP_SECURITY_NTLM_LOGON_RESULT pNtlmResult = *ppNtlmResult;
+
+    if (pNtlmResult)
+    {
+        if (pNtlmResult->pszUsername)
+        {
+            LwRtlCStringFree(&pNtlmResult->pszUsername);
+        }
+        RTL_FREE(&pNtlmResult);
+
+        *ppNtlmResult = pNtlmResult;
+    }
+}
+
+static
+NTSTATUS
+LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
+    IN PLW_MAP_SECURITY_PLUGIN_CONTEXT Context,
+    OUT PACCESS_TOKEN_CREATE_INFORMATION* ppCreateInformation,
+    IN PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmInfo,
+    OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    DWORD dwError = LW_ERROR_SUCCESS;
+    HANDLE hLsaConnection = NULL;
+    LSA_AUTH_USER_PARAMS lsaUserParams = { 0 };
+    LW_LSA_DATA_BLOB Challenge = { 0 };
+    LW_LSA_DATA_BLOB LMResp = { 0 };
+    LW_LSA_DATA_BLOB NTResp = { 0 };
+    PLSA_AUTH_USER_INFO pUserInfo = NULL;
+    PLW_MAP_SECURITY_NTLM_LOGON_RESULT pNtlmResult = NULL;
+    PACCESS_TOKEN_CREATE_INFORMATION pCreateInformation = NULL;
+    LSA_MAP_SECURITY_OBJECT_INFO objectInfo = {0};
+    DWORD dwInputSidCount = 0;
+    PSID* ppInputSids = NULL;
+    PSID pDomainSid = NULL;
+    DWORD dwIndex = 0;
+    PSID pSid = NULL;
+
+    status = LsaMapSecurityOpenConnection(Context, &hLsaConnection);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    // Create LSA_AUTH_USER_PARAMS
+    Challenge.dwLen = sizeof(pNtlmInfo->Challenge);
+    Challenge.pData = pNtlmInfo->Challenge;
+    LMResp.dwLen = pNtlmInfo->ulLmResponseSize;
+    LMResp.pData = pNtlmInfo->pLmResponse;
+    NTResp.dwLen = pNtlmInfo->ulNtResponseSize;
+    NTResp.pData = pNtlmInfo->pNtResponse;
+
+    status = LwRtlCStringAllocateFromWC16String(
+                &lsaUserParams.pszAccountName,
+                pNtlmInfo->pwszAccountName);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwRtlCStringAllocateFromWC16String(
+                &lsaUserParams.pszDomain,
+                pNtlmInfo->pwszDomain);
+    GOTO_CLEANUP_ON_STATUS(status);
+    
+    lsaUserParams.AuthType = LSA_AUTH_CHAP;
+    lsaUserParams.pszWorkstation = NULL;
+    lsaUserParams.pass.chap.pChallenge = &Challenge;
+    lsaUserParams.pass.chap.pLM_resp = &LMResp;
+    lsaUserParams.pass.chap.pNT_resp = &NTResp;
+
+    // Authenticate
+    dwError = LsaAuthenticateUserEx(hLsaConnection, &lsaUserParams, &pUserInfo);
+    status = LsaLsaErrorToNtStatus(dwError);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    // Copy data to the result struct
+    status = RTL_ALLOCATE(&pNtlmResult, LW_MAP_SECURITY_NTLM_LOGON_RESULT, 
+                          sizeof(*pNtlmResult));
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pUserInfo->pszUserPrincipalName)
+    {
+        status = LwRtlCStringDuplicate(
+                    &pNtlmResult->pszUsername, 
+                    pUserInfo->pszUserPrincipalName);
+    }
+    else if (pUserInfo->pszAccount)
+    {
+        status = LwRtlCStringDuplicate(
+                    &pNtlmResult->pszUsername, 
+                    pUserInfo->pszAccount);
+    }
+    GOTO_CLEANUP_ON_STATUS(status);
+    
+    assert(pUserInfo->pSessionKey->dwLen == NTLM_SESSION_KEY_SIZE);    
+    RtlCopyMemory(pNtlmResult->SessionKey, 
+                  pUserInfo->pSessionKey->pData, 
+                  NTLM_SESSION_KEY_SIZE);
+
+    pNtlmResult->bMappedToGuest = 
+        (pUserInfo->dwUserRid == DOMAIN_USER_RID_GUEST) ? TRUE : FALSE;
+    
+    // Create CreateInformation
+    status = LsaMapSecurityResolveObjectInfoFromAuthUserInfo(
+                Context,
+                pUserInfo,
+                &objectInfo);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (pUserInfo->dwNumRids != 0 || pUserInfo->dwNumSids != 0)
+    {
+        status = RTL_ALLOCATE(&ppInputSids, PSID, 
+                              sizeof(*ppInputSids) * (pUserInfo->dwNumRids + pUserInfo->dwNumSids));
+        GOTO_CLEANUP_ON_STATUS(status);
+    
+        status = RtlAllocateSidFromCString(&pDomainSid, pUserInfo->pszDomainSid);
+        GOTO_CLEANUP_ON_STATUS(status);
+    
+        for (dwIndex = 0; dwIndex < pUserInfo->dwNumRids; dwIndex++)
+        {
+            status = LsaMapSecurityConstructSid(
+                pDomainSid,
+                pUserInfo->pRidAttribList[dwIndex].Rid,
+                &pSid);
+            GOTO_CLEANUP_ON_STATUS(status);
+    
+            ppInputSids[dwInputSidCount++] = pSid;
+            pSid = NULL;
+        }
+    
+        for (dwIndex = 0; dwIndex < pUserInfo->dwNumSids; dwIndex++)
+        {
+            status = RtlAllocateSidFromCString(&pSid, pUserInfo->pSidAttribList[dwIndex].pszSid);
+            GOTO_CLEANUP_ON_STATUS(status);
+    
+            ppInputSids[dwInputSidCount++] = pSid;
+            pSid = NULL;
+        }
+    }
+
+    status = LsaMapSecurityGetAccessTokenCreateInformationFromObjectInfoAndGroups(
+                Context,
+                &pCreateInformation,
+                &objectInfo,
+                dwInputSidCount,
+                ppInputSids);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        LsaMapSecurityFreeNtlmLogonResult(Context, &pNtlmResult);
+        LsaMapSecurityFreeAccessTokenCreateInformation(Context, &pCreateInformation);
+    }
+
+    LwRtlCStringFree(&lsaUserParams.pszAccountName);
+    LwRtlCStringFree(&lsaUserParams.pszDomain);
+    LsaFreeAuthUserInfo(&pUserInfo);
+
+    RTL_FREE(&pDomainSid);
+    RTL_FREE(&pSid);
+
+    for (dwIndex = 0; dwIndex < dwInputSidCount; dwIndex++)
+    {
+        RTL_FREE(&ppInputSids[dwIndex]);
+    }
+
+    RTL_FREE(&ppInputSids);
+    
+    LsaMapSecurityCloseConnection(Context, &hLsaConnection);
+    LsaMapSecurityFreeObjectInfo(&objectInfo);    
+
+    *ppNtlmResult = pNtlmResult;
+    *ppCreateInformation = pCreateInformation;
+
+    return status;
+}
+
 static LW_MAP_SECURITY_PLUGIN_INTERFACE gLsaMapSecurityPluginInterface = {
     .FreeContext = LsaMapSecurityFreeContext,
     .GetIdFromSid = LsaMapSecurityGetIdFromSid,
@@ -1612,6 +1850,8 @@ static LW_MAP_SECURITY_PLUGIN_INTERFACE gLsaMapSecurityPluginInterface = {
     .GetAccessTokenCreateInformationFromUsername = LsaMapSecurityGetAccessTokenCreateInformationFromUsername,
     .GetAccessTokenCreateInformationFromGssContext = LsaMapSecurityGetAccessTokenCreateInformationFromGssContext,
     .FreeAccessTokenCreateInformation = LsaMapSecurityFreeAccessTokenCreateInformation,
+    .GetAccessTokenCreateInformationFromNtlmLogon = LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon,
+    .FreeNtlmLogonResult = LsaMapSecurityFreeNtlmLogonResult,
 };
 
 NTSTATUS

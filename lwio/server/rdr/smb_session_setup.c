@@ -79,7 +79,7 @@ SessionSetup(
     DWORD     dwSessionKeyLength = 0;
 
     SMB_PACKET *pResponsePacket = NULL;
-    PSESSION_SETUP_RESPONSE_HEADER pResponseHeader = NULL;
+    PSESSION_SETUP_RESPONSE_HEADER_WC_4 pResponseHeader = NULL;
     WORD wUid = 0;
 
     ntStatus = SMBGSSContextBuild(
@@ -125,14 +125,14 @@ SessionSetup(
                         &packet);
         BAIL_ON_NT_STATUS(ntStatus);
 
-        packet.pData = packet.pParams + sizeof(SESSION_SETUP_REQUEST_HEADER);
-        packet.bufferUsed += sizeof(SESSION_SETUP_REQUEST_HEADER);
+        packet.pData = packet.pParams + sizeof(SESSION_SETUP_REQUEST_HEADER_WC_12);
+        packet.bufferUsed += sizeof(SESSION_SETUP_REQUEST_HEADER_WC_12);
         /* If most commands have word counts which are easy to compute, this
            should be folded into a parameter to SMBPacketMarshallHeader() */
         packet.pSMBHeader->wordCount = 12;
 
-        SESSION_SETUP_REQUEST_HEADER *pHeader =
-            (SESSION_SETUP_REQUEST_HEADER *) packet.pParams;
+        SESSION_SETUP_REQUEST_HEADER_WC_12 *pHeader =
+            (SESSION_SETUP_REQUEST_HEADER_WC_12 *) packet.pParams;
         pHeader->maxBufferSize = 12288;
         pHeader->maxMpxCount = 50;
         pHeader->vcNumber = 1;
@@ -213,7 +213,7 @@ SessionSetup(
            requests */
         wUid = pResponsePacket->pSMBHeader->uid;
 
-        ntStatus = UnmarshallSessionSetupResponse(
+        ntStatus = UnmarshallSessionSetupResponse_WC_4(
                         pResponsePacket->pParams,
                         pResponsePacket->bufferLen - pResponsePacket->bufferUsed,
                         0,

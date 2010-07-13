@@ -436,6 +436,18 @@ IoSecurityCreateSecurityContextFromGssContext(
     IN LW_MAP_SECURITY_GSS_CONTEXT hGssContext
     );
 
+NTSTATUS
+IoSecurityCreateSecurityContextFromNtlmLogon(
+    OUT PIO_CREATE_SECURITY_CONTEXT* ppSecurityContext,
+    OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmLogonResult,
+    IN PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmLogonInfo
+    );
+
+VOID
+IoSecurityFreeNtlmLogonResult(
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmLogonResult
+    );
+
 //
 // Logging
 //

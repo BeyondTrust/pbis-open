@@ -43,6 +43,7 @@
 #include "lwiocfg.h"
 
 #include <lw/ntstatus.h>
+#include <lw/mapsecurity-types.h>
 
 #include "marshal.h"
 #include "smbwire.h"

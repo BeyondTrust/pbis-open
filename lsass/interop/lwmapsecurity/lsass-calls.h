@@ -64,6 +64,7 @@
 #define LsaCloseServer(hLsa) (LsaSrvCloseServer((hLsa)), 0)
 #define LsaFindObjects LsaSrvFindObjects
 #define LsaQueryMemberOf LsaSrvQueryMemberOf
+#define LsaAuthenticateUserEx LsaSrvAuthenticateUserEx
 
 #endif /* LSASS_INTERNAL_PLUGIN */
 

@@ -1029,7 +1029,29 @@ typedef struct
     uint16_t  byteCount;       /* Count of data bytes; min = 0 */
 
     /* Data immediately follows */
-}  __attribute__((__packed__))  SESSION_SETUP_REQUEST_HEADER;
+}  __attribute__((__packed__))  SESSION_SETUP_REQUEST_HEADER_WC_12;
+
+
+typedef struct
+{
+    /* wordCount and byteCount are handled at a higher layer */
+    /* AndX chains will be handled at a higher layer */
+
+    uint16_t  maxBufferSize;   /* Client's maximum buffer size */
+    uint16_t  maxMpxCount;     /* Actual maximum multiplexed pending
+                                * requests */
+    uint16_t  vcNumber;        /* 0 = first (only), nonzero=additional VC
+                                * number */
+    uint32_t  sessionKey;      /* Session key (valid iff VcNumber != 0) */
+    uint16_t  lmResponseLength;/* Length of LMv2 value */
+    uint16_t  ntResponseLength;/* Length of NTLMv2 value */
+    uint32_t  reserved;        /* Must be 0 */
+    uint32_t  capabilities;    /* Client capabilities */
+    uint16_t  byteCount;       /* Count of data bytes; min = 0 */
+
+    /* Data immediately follows */
+}  __attribute__((__packed__))  SESSION_SETUP_REQUEST_HEADER_WC_13;
+
 
 typedef struct
 {
@@ -1043,8 +1065,21 @@ typedef struct
     uint16_t    byteCount;          /* Count of data bytes */
 
      /* Data immediately follows */
-}  __attribute__((__packed__)) SESSION_SETUP_RESPONSE_HEADER,
-                              *PSESSION_SETUP_RESPONSE_HEADER;
+}  __attribute__((__packed__)) SESSION_SETUP_RESPONSE_HEADER_WC_4,
+                              *PSESSION_SETUP_RESPONSE_HEADER_WC_4;
+
+typedef struct
+{
+    /* wordCount and byteCount are handled at a higher layer */
+    /* AndX chains will be handled at a higher layer */
+
+    uint16_t    action;             /* Request mode: */
+                                    /*      bit0 = logged in as GUEST */
+    uint16_t    byteCount;          /* Count of data bytes */
+
+     /* Data immediately follows */
+}  __attribute__((__packed__)) SESSION_SETUP_RESPONSE_HEADER_WC_3,
+                              *PSESSION_SETUP_RESPONSE_HEADER_WC_3;
 
 typedef struct
 {
@@ -1079,7 +1114,7 @@ typedef struct
     uint32_t systemTimeLow;       /* System (UTC) time of the server (low) */
     uint32_t systemTimeHigh;      /* System (UTC) time of the server (high) */
      int16_t serverTimeZone;      /* Time zone of server (minutes from UTC) */
-    uint8_t  encryptionKeyLength; /* Length of encryption key (unused) */
+    uint8_t  encryptionKeyLength; /* Length of encryption key */
 
     uint16_t byteCount;           /* Count of data bytes */
 
@@ -2123,11 +2158,11 @@ MarshallSessionSetupResponseData(
     );
 
 NTSTATUS
-UnmarshallSessionSetupResponse(
+UnmarshallSessionSetupResponse_WC_4(
     const uint8_t   *pBuffer,
     uint32_t         bufferLen,
     uint8_t          messageAlignment,
-    SESSION_SETUP_RESPONSE_HEADER **ppHeader,
+    SESSION_SETUP_RESPONSE_HEADER_WC_4 **ppHeader,
     uint8_t        **ppSecurityBlob,
     wchar16_t      **ppwszNativeOS,
     wchar16_t      **ppwszNativeLanMan,
@@ -2135,15 +2170,26 @@ UnmarshallSessionSetupResponse(
     );
 
 NTSTATUS
-UnmarshallSessionSetupRequest(
+UnmarshallSessionSetupRequest_WC_12(
     const uint8_t *pBuffer,
     uint32_t       bufferLen,
     uint8_t        messageAlignment,
-    SESSION_SETUP_REQUEST_HEADER **ppHeader,
+    SESSION_SETUP_REQUEST_HEADER_WC_12 **ppHeader,
     uint8_t      **ppSecurityBlob,
     wchar16_t    **ppwszNativeOS,
     wchar16_t    **ppwszNativeLanMan,
     wchar16_t    **ppwszNativeDomain
+    );
+
+NTSTATUS
+UnmarshallSessionSetupRequest_WC_13(
+    const uint8_t *pBuffer,
+    uint32_t       bufferLen,
+    uint8_t        messageAlignment,
+    SESSION_SETUP_REQUEST_HEADER_WC_13 **ppHeader,
+    PLW_MAP_SECURITY_NTLM_LOGON_INFO     pSrvUserParams,
+    wchar16_t    **ppwszNativeOS,
+    wchar16_t    **ppwszNativeLanMan
     );
 
 NTSTATUS

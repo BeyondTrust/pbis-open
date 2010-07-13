@@ -28,6 +28,7 @@
 
 #include <lw/security-types.h>
 #include <lw/ntstatus.h>
+#include <lw/mapsecurity-types.h>
 
 LW_BEGIN_EXTERN_C
 
@@ -127,6 +128,20 @@ LwMapSecurityCreateAccessTokenFromGssContext(
     IN PLW_MAP_SECURITY_CONTEXT Context,
     OUT PACCESS_TOKEN* AccessToken,
     IN LW_MAP_SECURITY_GSS_CONTEXT GssContext
+    );
+
+NTSTATUS
+LwMapSecurityCreateAccessTokenFromNtlmLogon(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PACCESS_TOKEN* pAccessToken,
+    IN PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmInfo,
+    OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmResult
+    );
+
+VOID
+LwMapSecurityFreeNtlmLogonResult(
+    IN PLW_MAP_SECURITY_CONTEXT                 Context,
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT*  pNtlmResult
     );
 
 LW_END_EXTERN_C

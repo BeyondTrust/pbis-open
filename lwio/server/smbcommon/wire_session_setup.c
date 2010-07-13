@@ -133,7 +133,7 @@ MarshallSessionSetupRequestData(
 
 /* ASCII is not supported */
 static NTSTATUS
-_UnmarshallSessionSetupData(
+_UnmarshallSessionSetupData_WC_12(
     const uint8_t *pBuffer,
     uint32_t       bufferLen,
     uint8_t        messageAlignment,
@@ -147,7 +147,7 @@ _UnmarshallSessionSetupData(
     uint32_t bufferUsed = 0;
 
     if (blobLen > bufferLen)
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
 
     if (blobLen == 0)
     {
@@ -163,7 +163,7 @@ _UnmarshallSessionSetupData(
     bufferUsed += (bufferUsed + messageAlignment) % 2;
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     // TODO -- change function to copy strings so we handle alignment.
@@ -177,7 +177,7 @@ _UnmarshallSessionSetupData(
         (bufferLen - bufferUsed) / sizeof(wchar16_t)) + sizeof(WNUL);
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     *ppwszNativeLanMan = (wchar16_t *) (pBuffer + bufferUsed);
@@ -185,7 +185,7 @@ _UnmarshallSessionSetupData(
         (bufferLen - bufferUsed) / sizeof(wchar16_t)) + sizeof(WNUL);
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     *ppwszNativeDomain = (wchar16_t *) (pBuffer + bufferUsed);
@@ -193,19 +193,146 @@ _UnmarshallSessionSetupData(
         (bufferLen - bufferUsed) / sizeof(wchar16_t)) + sizeof(WNUL);
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 #endif
 
     return 0;
 }
 
+static
 NTSTATUS
-UnmarshallSessionSetupRequest(
+UnmarshallField(
+    PVOID*      ppField,
+    uint32_t    fieldLength,
+    uint8_t**   ppBuffer,
+    uint32_t*   pBufferUsed,
+    uint32_t    bufferLen
+    )
+{
+    if (fieldLength == 0)
+    {
+        *ppField = NULL;
+    }
+    else
+    {
+        *ppField = *ppBuffer;
+    }
+    *ppBuffer += fieldLength;
+    *pBufferUsed += fieldLength;
+    if (*pBufferUsed > bufferLen)
+    {
+        return STATUS_INVALID_NETWORK_RESPONSE;
+    }
+    return 0;
+}
+
+static
+NTSTATUS
+UnmarshallStringFieldW(
+    PWSTR*      ppwszField,
+    uint8_t**   ppBuffer,
+    uint32_t*   pBufferUsed,
+    uint32_t    bufferLen
+    )
+{
+    *ppwszField = (PWSTR)(*ppBuffer);
+    while (*((wchar16_t*)(*ppBuffer)) != 0)
+    {
+        *ppBuffer += sizeof(wchar16_t);
+        *pBufferUsed += sizeof(wchar16_t);
+        if (*pBufferUsed > bufferLen)
+        {
+            return STATUS_INVALID_NETWORK_RESPONSE;
+        }
+    }
+    *ppBuffer += sizeof(wchar16_t);   // NULL termination
+    *pBufferUsed += sizeof(wchar16_t);
+    if (*pBufferUsed > bufferLen)
+    {
+        return STATUS_INVALID_NETWORK_RESPONSE;
+    }
+
+    return 0;
+}
+
+/* ASCII is not supported */
+static NTSTATUS
+_UnmarshallSessionSetupData_WC_13(
     const uint8_t *pBuffer,
     uint32_t       bufferLen,
     uint8_t        messageAlignment,
-    SESSION_SETUP_REQUEST_HEADER **ppHeader,
+    PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmLogonInfo,
+    uint16_t       lmResponseLength,
+    uint16_t       ntResponseLength,
+    wchar16_t    **ppwszNativeOS,
+    wchar16_t    **ppwszNativeLanMan
+    )
+{
+    NTSTATUS    ntStatus = 0;
+    uint32_t    bufferUsed = 0;
+
+    if ((lmResponseLength + ntResponseLength) > bufferLen)
+    {
+        ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    
+    // LM response
+    pNtlmLogonInfo->ulLmResponseSize = lmResponseLength;
+    ntStatus = UnmarshallField(
+                    &pNtlmLogonInfo->pLmResponse, 
+                    lmResponseLength,
+                    (uint8_t**)&pBuffer,
+                    &bufferUsed,
+                    bufferLen);
+    BAIL_ON_NT_STATUS(ntStatus);
+    
+    // NT response
+    pNtlmLogonInfo->ulNtResponseSize = ntResponseLength;
+    ntStatus = UnmarshallField(
+                    &pNtlmLogonInfo->pNtResponse, 
+                    ntResponseLength,
+                    (uint8_t**)&pBuffer,
+                    &bufferUsed,
+                    bufferLen);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    // Align before unmarshalling WSTR
+    pBuffer += messageAlignment;
+    bufferUsed += messageAlignment;
+
+    // Account name
+    ntStatus = UnmarshallStringFieldW(
+                    &pNtlmLogonInfo->pwszAccountName,
+                    (uint8_t**)&pBuffer,
+                    &bufferUsed,
+                    bufferLen);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    // Domain
+    ntStatus = UnmarshallStringFieldW(
+                    &pNtlmLogonInfo->pwszDomain,
+                    (uint8_t**)&pBuffer,
+                    &bufferUsed,
+                    bufferLen);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    // Setting these to NULL now...
+    *ppwszNativeOS = NULL;
+    *ppwszNativeLanMan = NULL;
+
+error:
+
+    return ntStatus;
+}
+
+NTSTATUS
+UnmarshallSessionSetupRequest_WC_12(
+    const uint8_t *pBuffer,
+    uint32_t       bufferLen,
+    uint8_t        messageAlignment,
+    SESSION_SETUP_REQUEST_HEADER_WC_12 **ppHeader,
     uint8_t      **ppSecurityBlob,
     wchar16_t    **ppwszNativeOS,
     wchar16_t    **ppwszNativeLanMan,
@@ -213,17 +340,47 @@ UnmarshallSessionSetupRequest(
     )
 {
     /* NOTE: The buffer format cannot be trusted! */
-    uint32_t bufferUsed = sizeof(SESSION_SETUP_REQUEST_HEADER);
+    uint32_t bufferUsed = sizeof(SESSION_SETUP_REQUEST_HEADER_WC_12);
     if (bufferLen < bufferUsed)
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
 
     /* @todo: endian swap as appropriate */
-    *ppHeader = (SESSION_SETUP_REQUEST_HEADER*) pBuffer;
+    *ppHeader = (SESSION_SETUP_REQUEST_HEADER_WC_12*) pBuffer;
 
-    return _UnmarshallSessionSetupData(pBuffer + bufferUsed,
+    return _UnmarshallSessionSetupData_WC_12(pBuffer + bufferUsed,
         bufferLen - bufferUsed, messageAlignment, ppSecurityBlob,
         (*ppHeader)->securityBlobLength, ppwszNativeOS, ppwszNativeLanMan,
         ppwszNativeDomain);
+}
+
+NTSTATUS
+UnmarshallSessionSetupRequest_WC_13(
+    const uint8_t *pBuffer,
+    uint32_t       bufferLen,
+    uint8_t        messageAlignment,
+    SESSION_SETUP_REQUEST_HEADER_WC_13 **ppHeader,
+    PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmLogonInfo,
+    wchar16_t    **ppwszNativeOS,
+    wchar16_t    **ppwszNativeLanMan
+    )
+{
+    /* NOTE: The buffer format cannot be trusted! */
+    uint32_t bufferUsed = sizeof(SESSION_SETUP_REQUEST_HEADER_WC_13);
+    if (bufferLen < bufferUsed)
+        return STATUS_INVALID_NETWORK_RESPONSE;
+
+    /* @todo: endian swap as appropriate */
+    *ppHeader = (SESSION_SETUP_REQUEST_HEADER_WC_13*) pBuffer;
+
+    return _UnmarshallSessionSetupData_WC_13(
+                pBuffer + bufferUsed,
+                bufferLen - bufferUsed, 
+                messageAlignment, 
+                pNtlmLogonInfo,
+                (*ppHeader)->lmResponseLength,
+                (*ppHeader)->ntResponseLength,
+                ppwszNativeOS, 
+                ppwszNativeLanMan);
 }
 
 typedef struct
@@ -256,11 +413,11 @@ MarshallSessionSetupResponseData(
 }
 
 NTSTATUS
-UnmarshallSessionSetupResponse(
+UnmarshallSessionSetupResponse_WC_4(
     const uint8_t    *pBuffer,
     uint32_t          bufferLen,
     uint8_t           messageAlignment,
-    SESSION_SETUP_RESPONSE_HEADER **ppHeader,
+    SESSION_SETUP_RESPONSE_HEADER_WC_4 **ppHeader,
     uint8_t         **ppSecurityBlob,
     wchar16_t       **ppwszNativeOS,
     wchar16_t       **ppwszNativeLanMan,
@@ -268,8 +425,8 @@ UnmarshallSessionSetupResponse(
     )
 {
     NTSTATUS ntStatus = 0;
-    PSESSION_SETUP_RESPONSE_HEADER pHeader = (PSESSION_SETUP_RESPONSE_HEADER) pBuffer;
-    ULONG bufferUsed = sizeof(SESSION_SETUP_RESPONSE_HEADER);
+    PSESSION_SETUP_RESPONSE_HEADER_WC_4 pHeader = (PSESSION_SETUP_RESPONSE_HEADER_WC_4) pBuffer;
+    ULONG bufferUsed = sizeof(SESSION_SETUP_RESPONSE_HEADER_WC_4);
 
     /* NOTE: The buffer format cannot be trusted! */
     if (bufferLen < bufferUsed)
@@ -283,7 +440,7 @@ UnmarshallSessionSetupResponse(
     SMB_LTOH16_INPLACE(pHeader->securityBlobLength);
     SMB_LTOH16_INPLACE(pHeader->byteCount);
 
-    ntStatus = _UnmarshallSessionSetupData(pBuffer + bufferUsed,
+    ntStatus = _UnmarshallSessionSetupData_WC_12(pBuffer + bufferUsed,
         bufferLen - bufferUsed, messageAlignment, ppSecurityBlob,
         pHeader->securityBlobLength, ppwszNativeOS, ppwszNativeLanMan,
         ppwszNativeDomain);

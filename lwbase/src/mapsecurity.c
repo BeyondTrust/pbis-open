@@ -937,7 +937,7 @@ LwMapSecurityCreateAccessTokenFromGssContext(
     IN LW_MAP_SECURITY_GSS_CONTEXT GssContext
     )
 {
-       NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
     PACCESS_TOKEN accessToken = NULL;
     PACCESS_TOKEN_CREATE_INFORMATION createInformation = NULL;
 
@@ -1087,6 +1087,71 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+LwMapSecurityCreateAccessTokenFromNtlmLogon(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PACCESS_TOKEN* ppAccessToken,
+    IN PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmInfo,
+    OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PACCESS_TOKEN pAccessToken = NULL;
+    PLW_MAP_SECURITY_NTLM_LOGON_RESULT pNtlmResult = NULL;
+    PACCESS_TOKEN_CREATE_INFORMATION pCreateInformation = NULL;
+
+    status = Context->PluginInterface->GetAccessTokenCreateInformationFromNtlmLogon(
+                    Context->PluginContext,
+                    &pCreateInformation,
+                    pNtlmInfo,
+                    &pNtlmResult);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = LwMapSecurityCreateExtendedAccessToken(
+                    &pAccessToken,
+                    pCreateInformation->User,
+                    pCreateInformation->Groups,
+                    pCreateInformation->Owner,
+                    pCreateInformation->PrimaryGroup,
+                    pCreateInformation->DefaultDacl,
+                    pCreateInformation->Unix);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+
+    if (!NT_SUCCESS(status))
+    {
+        if (pAccessToken)
+        {
+            RtlReleaseAccessToken(&pAccessToken);
+        }
+        if (pNtlmResult)
+        {
+            LwMapSecurityFreeNtlmLogonResult(Context, &pNtlmResult);
+        }
+    }
+
+    LwMapSecurityFreeAccessTokenCreateInformation(Context, &pCreateInformation);
+
+    *ppAccessToken = pAccessToken;
+    *ppNtlmResult = pNtlmResult;
+
+    return status;
+}
+
+VOID
+LwMapSecurityFreeNtlmLogonResult(
+    IN PLW_MAP_SECURITY_CONTEXT                 Context,
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT*  ppNtlmResult
+    )
+{
+    if (*ppNtlmResult)
+    {
+        Context->PluginInterface->FreeNtlmLogonResult(
+                    Context->PluginContext,
+                    ppNtlmResult);
+    }
+}
 
 /*
 local variables:

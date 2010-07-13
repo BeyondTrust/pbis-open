@@ -30,11 +30,11 @@
 
 
 NTSTATUS
-UnmarshallSessionSetupRequest(
+UnmarshallSessionSetupRequest_WC_12(
     const uint8_t   *pBuffer,
     uint32_t         bufferLen,
     uint8_t          messageAlignment,
-    SESSION_SETUP_REQUEST_HEADER **ppHeader,
+    SESSION_SETUP_REQUEST_HEADER_WC_12 **ppHeader,
     uint8_t        **ppSecurityBlob,
     wchar16_t      **ppwszNativeOS,
     wchar16_t      **ppwszNativeLanMan,

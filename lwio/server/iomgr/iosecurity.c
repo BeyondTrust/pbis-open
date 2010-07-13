@@ -310,6 +310,99 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+IoSecurityCreateSecurityContextFromNtlmLogon(
+    OUT PIO_CREATE_SECURITY_CONTEXT* ppSecurityContext,
+    OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmLogonResult,
+    IN PLW_MAP_SECURITY_NTLM_LOGON_INFO pNtlmLogonInfo
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PLW_MAP_SECURITY_CONTEXT pMapSecurityContext = NULL;
+    PACCESS_TOKEN pAccessToken = NULL;
+    TOKEN_UNIX tokenUnix = { 0 };
+
+    PIO_CREATE_SECURITY_CONTEXT pSecurityContext = NULL;
+    PLW_MAP_SECURITY_NTLM_LOGON_RESULT pNtlmLogonResult = NULL;
+
+    // TOOD - make the context to be a global variable within the module.  Take a look at pvfs code.
+    status = LwMapSecurityCreateContext(&pMapSecurityContext);
+    GOTO_CLEANUP_ON_STATUS(status);
+    
+    status = LwMapSecurityCreateAccessTokenFromNtlmLogon(
+                    pMapSecurityContext,
+                    &pAccessToken,
+                    pNtlmLogonInfo,
+                    &pNtlmLogonResult);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlQueryAccessTokenUnixInformation(
+                    pAccessToken,
+                    &tokenUnix);
+    if (status == STATUS_NOT_FOUND)
+    {
+       tokenUnix.Uid = IO_SECURITY_INVALID_UID;
+       tokenUnix.Gid = IO_SECURITY_INVALID_GID;
+       status = STATUS_SUCCESS;
+    }
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = IopSecurityCreateSecurityContext(
+                    &pSecurityContext,
+                    tokenUnix.Uid,
+                    tokenUnix.Gid,
+                    pAccessToken,
+                    NULL);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+    
+    if (!NT_SUCCESS(status))
+    {
+        IoSecurityDereferenceSecurityContext(&pSecurityContext);
+
+        if (pMapSecurityContext && pNtlmLogonResult)
+        {
+            LwMapSecurityFreeNtlmLogonResult(pMapSecurityContext, &pNtlmLogonResult);
+        }
+    }
+
+    if (pAccessToken)
+    {
+        RtlReleaseAccessToken(&pAccessToken);
+    }
+
+    LwMapSecurityFreeContext(&pMapSecurityContext);
+
+    *ppSecurityContext = pSecurityContext;
+    *ppNtlmLogonResult = pNtlmLogonResult;
+
+    return status;
+}
+
+VOID
+IoSecurityFreeNtlmLogonResult(
+    IN OUT PLW_MAP_SECURITY_NTLM_LOGON_RESULT* ppNtlmLogonResult
+    )
+{
+    PLW_MAP_SECURITY_CONTEXT pMapSecurityContext = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    PLW_MAP_SECURITY_NTLM_LOGON_RESULT pNtlmLogonResult = *ppNtlmLogonResult;
+
+    if (pNtlmLogonResult)
+    {
+        status = LwMapSecurityCreateContext(&pMapSecurityContext);
+    
+        if (status == STATUS_SUCCESS)
+        {
+            LwMapSecurityFreeNtlmLogonResult(pMapSecurityContext, &pNtlmLogonResult);
+        }
+        LwMapSecurityFreeContext(&pMapSecurityContext);
+
+        *ppNtlmLogonResult = pNtlmLogonResult;
+    }
+}
+
 /*
 local variables:
 mode: c
