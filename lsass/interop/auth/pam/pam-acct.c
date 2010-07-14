@@ -138,8 +138,9 @@ pam_sm_acct_mgmt(
                     (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pUserInfo->bPromptPasswordChange &&
-        !pUserInfo->bPasswordExpired) {
+    if (pUserInfo->bPromptPasswordChange == TRUE &&
+        pUserInfo->bPasswordExpired == FALSE &&
+        pUserInfo->bPasswordNeverExpires == FALSE) {
 
         CHAR szMessage[512];
 
