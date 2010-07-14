@@ -249,6 +249,52 @@ typedef struct _USER_INFO_1011
 } USER_INFO_1011, *PUSER_INFO_1011;
 
 
+/*
+ * Possible values returned in pdwParmErr pointer indicating
+ * invalid parameter when ERROR_INVALID_PARAMETER is returned
+ * from NetUserAdd or NetUserSetInfo
+ */
+
+#define USER_NAME_PARMNUM           (1)
+#define USER_PASSWORD_PARMNUM       (2)
+#define USER_PASSWORD_AGE_PARMNUM   (3)
+#define USER_PRIV_PARMNUM           (4)
+#define USER_HOME_DIR_PARMNUM       (5)
+#define USER_COMMENT_PARMNUM        (6)
+#define USER_FLAGS_PARMNUM          (7)
+#define USER_SCRIPT_PATH_PARMNUM    (8)
+#define USER_AUTH_FLAGS_PARMNUM     (9)
+#define USER_FULL_NAME_PARMNUM      (10)
+#define USER_USR_COMMENT_PARMNUM    (11)
+#define USER_PARMS_PARMNUM          (12)
+#define USER_WORKSTATIONS_PARMNUM   (13)
+#define USER_LAST_LOGON_PARMNUM     (14)
+#define USER_LAST_LOGOFF_PARMNUM    (15)
+#define USER_ACCT_EXPIRES_PARMNUM   (16)
+#define USER_MAX_STORAGE_PARMNUM    (17)
+#define USER_UNITS_PER_WEEK_PARMNUM (18)
+#define USER_LOGON_HOURS_PARMNUM    (19)
+#define USER_BAD_PW_COUNT_PARMNUM   (20)
+#define USER_NUM_LOGONS_PARMNUM     (21)
+#define USER_LOGON_SERVER_PARMNUM   (22)
+#define USER_COUNTRY_CODE_PARMNUM   (23)
+#define USER_CODE_PAGE_PARMNUM      (24)
+#define USER_PRIMARY_GROUP_PARMNUM  (25)
+#define USER_PROFILE_PARMNUM        (26)
+#define USER_HOME_DIR_DRIVE_PARMNUM (27)
+
+/*
+ * Maximum length of user account name
+ */
+#define USER_NAME_LEN   (20)
+
+
+/*
+ * Maximum length of user account password
+ */
+#define PWLEN   (64)
+
+
 //
 // LOCALGROUP_USERS_INFO levels
 //
