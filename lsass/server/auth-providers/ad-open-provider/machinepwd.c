@@ -187,6 +187,50 @@ error:
 }
 
 static
+DWORD
+ADChangeMachinePasswordInThreadLock(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+
+    LSA_LOG_VERBOSE("Changing machine password");
+
+    dwError = AD_SetSystemAccess(NULL);
+    if (dwError)
+    {
+        LSA_LOG_ERROR("Error: Failed to acquire credentials (error = %u)", dwError);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LsaMachineChangePassword();
+    if (dwError)
+    {
+        LSA_LOG_ERROR("Error: Failed to change machine password (error = %u)", dwError);
+
+        if (AD_EventlogEnabled())
+        {
+            ADLogMachinePWUpdateFailureEvent(dwError);
+        }
+
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (AD_EventlogEnabled())
+    {
+        ADLogMachinePWUpdateSuccessEvent();
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
 PVOID
 ADSyncMachinePasswordThreadRoutine(
     PVOID pData
@@ -213,7 +257,7 @@ ADSyncMachinePasswordThreadRoutine(
         dwError = LsaDnsGetHostInfo(&pszHostname);
         if (dwError)
         {
-            LSA_LOG_ERROR("Error: Failed to find hostname (Error code: %ld)",
+            LSA_LOG_ERROR("Error: Failed to find hostname (error = %u)",
                           dwError);
             dwError = 0;
             goto lsa_wait_resync;
@@ -227,7 +271,7 @@ ADSyncMachinePasswordThreadRoutine(
                         &pAcctInfo);
         if (dwError)
         {
-            LSA_LOG_ERROR("Error: Failed to re-sync machine account (Error code: %ld)", dwError);
+            LSA_LOG_ERROR("Error: Failed to get machine password information (error = %u)", dwError);
             dwError = 0;
             goto lsa_wait_resync;
         }
@@ -250,39 +294,18 @@ ADSyncMachinePasswordThreadRoutine(
 
         if ((dwReapingAge > 0) && (dwCurrentPasswordAge >= dwReapingAge))
         {
-            LSA_LOG_VERBOSE("Changing machine password");
-
-            dwError = AD_SetSystemAccess(NULL);
+            dwError = ADChangeMachinePasswordInThreadLock();
             if (dwError)
             {
-                LSA_LOG_ERROR("Error: Failed to acquire credentials, error = %u", dwError);
-
                 dwError = 0;
-                goto lsa_wait_resync;
             }
-
-            dwError = LsaMachineChangePassword();           
-            if (dwError)
+            else
             {
-                LSA_LOG_ERROR("Error: Failed to re-sync machine account [Error code: %ld]", dwError);                
-
-                if (AD_EventlogEnabled())
-                {
-                    ADLogMachinePWUpdateFailureEvent(dwError);      
-                }
-
-                dwError = 0;
-                goto lsa_wait_resync;
-            }            
-
-            if (AD_EventlogEnabled())
-            {
-                ADLogMachinePWUpdateSuccessEvent();      
-            }            
-
-            bRefreshTGT = TRUE;
+                bRefreshTGT = TRUE;
+            }
         }
-        else
+
+        if (!bRefreshTGT)
         {
             bRefreshTGT = ADShouldRefreshMachineTGT();
         }
@@ -294,10 +317,10 @@ ADSyncMachinePasswordThreadRoutine(
             {
                 if (AD_EventlogEnabled())
                 {
-                    ADLogMachineTGTRefreshFailureEvent(dwError);      
+                    ADLogMachineTGTRefreshFailureEvent(dwError);
                 }
-                
-                LSA_LOG_ERROR("Error: Failed to refresh machine TGT [Error code: %ld]", dwError);
+
+                LSA_LOG_ERROR("Error: Failed to refresh machine TGT (error = %u)", dwError);
 
                 if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
                 {
@@ -305,7 +328,7 @@ ADSyncMachinePasswordThreadRoutine(
 
                     dwError = LwWc16sToMbs(pAcctInfo->pwszDnsDomainName, &pszDnsDomainName);
                     BAIL_ON_LSA_ERROR(dwError);
-                    
+
                     LsaDmTransitionOffline(pszDnsDomainName, FALSE);
                 }
 
@@ -320,10 +343,10 @@ ADSyncMachinePasswordThreadRoutine(
 
             if (AD_EventlogEnabled())
             {
-                ADLogMachineTGTRefreshSuccessEvent();      
+                ADLogMachineTGTRefreshSuccessEvent();
             }
         }
-        
+
 lsa_wait_resync:
 
         if (pAcctInfo)
