@@ -70,6 +70,7 @@ NetLocalGroupGetInfo(
     DWORD dwSpaceAvailable = 0;
     PVOID pBuffer = NULL;
     PIO_CREDS pCreds = NULL;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
 
     BAIL_ON_INVALID_PTR(pwszAliasname, err);
     BAIL_ON_INVALID_PTR(ppBuffer, err);
@@ -111,7 +112,8 @@ NetLocalGroupGetInfo(
                                     NULL,
                                     dwLevel,
                                     pSourceBuffer,
-                                    &dwSize);
+                                    &dwSize,
+                                    eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     dwSpaceAvailable = dwSize;
@@ -125,7 +127,8 @@ NetLocalGroupGetInfo(
                                     &dwSpaceAvailable,
                                     dwLevel,
                                     pSourceBuffer,
-                                    &dwSize);
+                                    &dwSize,
+                                    eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     status = SamrClose(hSamrBinding, hAlias);

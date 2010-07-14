@@ -61,21 +61,23 @@ NET_RESOLVED_NAME, *PNET_RESOLVED_NAME;
 
 DWORD
 NetAllocateLocalGroupMembersInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft, 
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocateLocalGroupUsersInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft,
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft,
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 

@@ -81,6 +81,7 @@ NetUserAdd(
     PWSTR pwszUsername = NULL;
     DWORD dwRid = 0;
     BOOL bPasswordSet = FALSE;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_USER_ADD;
 
     BAIL_ON_INVALID_PTR(pBuffer, err);
 
@@ -102,7 +103,9 @@ NetUserAdd(
                                   dwLevel,
                                   pBuffer,
                                   pConn,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation,
+                                  &dwParmErr);
     BAIL_ON_WIN_ERROR(err);
 
     dwSpaceLeft = dwSize;
@@ -121,7 +124,9 @@ NetUserAdd(
                                   dwLevel,
                                   pBuffer,
                                   pConn,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation,
+                                  &dwParmErr);
     BAIL_ON_WIN_ERROR(err);
 
     status = NetConnectSamr(&pConn,
@@ -161,7 +166,9 @@ NetUserAdd(
                                   dwLevel,
                                   pBuffer,
                                   pConn,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation,
+                                  &dwParmErr);
     if (err == ERROR_SUCCESS)
     {
         dwSpaceLeft = dwSize;
@@ -180,7 +187,9 @@ NetUserAdd(
                                       dwLevel,
                                       pBuffer,
                                       pConn,
-                                      &dwSize);
+                                      &dwSize,
+                                      eValidation,
+                                      &dwParmErr);
         BAIL_ON_WIN_ERROR(err);
 
         status = SamrSetUserInfo(hSamrBinding,
@@ -215,7 +224,7 @@ NetUserAdd(
     }
 
     /*
-     * Disable the account only if was no password
+     * Disable the account only if there was no password
      */
     if (!bPasswordSet &&
         dwSamrInfoLevel == 21)
@@ -247,7 +256,7 @@ cleanup:
 
     if (pSamrPasswordUserInfo)
     {
-        NetFreeMemory(pSamrUserInfo);
+        NetFreeMemory(pSamrPasswordUserInfo);
     }
 
     LW_SAFE_FREE_MEMORY(pwszUsername);

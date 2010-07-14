@@ -94,6 +94,7 @@ NetLocalGroupEnum(
     PVOID pBuffer = NULL;
     PVOID pBufferCursor = NULL;
     PIO_CREDS pCreds = NULL;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
 
     BAIL_ON_INVALID_PTR(ppBuffer, err);
     BAIL_ON_INVALID_PTR(pdwNumEntries, err);
@@ -339,7 +340,8 @@ NetLocalGroupEnum(
                                         NULL,
                                         dwLevel,
                                         pSourceBuffer,
-                                        &dwSize);
+                                        &dwSize,
+                                        eValidation);
         BAIL_ON_WIN_ERROR(err);
 
         dwTotalSize += dwSize;
@@ -387,7 +389,8 @@ NetLocalGroupEnum(
                                         &dwSpaceAvailable,
                                         dwLevel,
                                         pSourceBuffer,
-                                        &dwSize);
+                                        &dwSize,
+                                        eValidation);
         BAIL_ON_WIN_ERROR(err);
 
     }

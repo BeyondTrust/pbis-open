@@ -50,11 +50,12 @@
 
 DWORD
 NetAllocateLocalGroupInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft, 
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 

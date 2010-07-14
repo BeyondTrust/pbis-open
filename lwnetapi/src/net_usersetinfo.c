@@ -80,11 +80,13 @@ NetUserSetInfo(
     DWORD dwUserRid = 0;
     DWORD dwSamrInfoLevel = 0;
     DWORD dwSamrPasswordInfoLevel = 0;
+    DWORD dwParmErr = 0;
     UserInfo *pSamrUserInfo = NULL;
     UserInfo *pSamrPasswordUserInfo = NULL;
     DWORD dwSize = 0;
     DWORD dwSpaceLeft = 0;
     PIO_CREDS pCreds = NULL;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_USER_SET;
 
     if (!(dwLevel == 0 ||
           dwLevel == 1 ||
@@ -113,7 +115,9 @@ NetUserSetInfo(
                                   dwLevel,
                                   pBuffer,
                                   pConn,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation,
+                                  &dwParmErr);
     BAIL_ON_WIN_ERROR(err);
 
     dwSpaceLeft = dwSize;
@@ -131,7 +135,9 @@ NetUserSetInfo(
                                       dwLevel,
                                       pBuffer,
                                       pConn,
-                                      &dwSize);
+                                      &dwSize,
+                                      eValidation,
+                                      &dwParmErr);
         BAIL_ON_WIN_ERROR(err);
     }
 
@@ -165,7 +171,9 @@ NetUserSetInfo(
                                   dwLevel,
                                   pBuffer,
                                   pConn,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation,
+                                  &dwParmErr);
     if (err == ERROR_SUCCESS)
     {
         dwSpaceLeft = dwSize;
@@ -184,7 +192,9 @@ NetUserSetInfo(
                                       dwLevel,
                                       pBuffer,
                                       pConn,
-                                      &dwSize);
+                                      &dwSize,
+                                      eValidation,
+                                      &dwParmErr);
         BAIL_ON_WIN_ERROR(err);
 
         status = SamrSetUserInfo(hSamrBinding,
@@ -222,6 +232,11 @@ NetUserSetInfo(
 
 cleanup:
     NetDisconnectSamr(&pConn);
+
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
 
     if (pSamrUserInfo)
     {

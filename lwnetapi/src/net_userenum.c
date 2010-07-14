@@ -94,6 +94,7 @@ NetUserEnum(
     DWORD dwTotalSize = 0;
     DWORD dwSize = 0;
     DWORD dwSpaceAvailable = 0;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
 
     BAIL_ON_INVALID_PTR(ppBuffer, err);
     BAIL_ON_INVALID_PTR(pdwNumEntries, err);
@@ -212,7 +213,8 @@ NetUserEnum(
                                   NULL,
                                   dwLevel,
                                   pSourceBuffer,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation);
         BAIL_ON_WIN_ERROR(err);
 
         dwTotalSize += dwSize;
@@ -260,7 +262,8 @@ NetUserEnum(
                                   &dwSpaceAvailable,
                                   dwLevel,
                                   pSourceBuffer,
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation);
         BAIL_ON_WIN_ERROR(err);
 
         /*

@@ -49,213 +49,277 @@
 static
 DWORD
 NetAllocateUserInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo2(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo3(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo4(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo10(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo11(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo20(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateUserInfo23(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo7FromUserInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo2(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo3(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo4(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo26FromUserInfo1(
-    PVOID     *ppCursor,
-    PDWORD     pdwSpaceLeft,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo26FromUserInfo1003(
-    PVOID     *ppCursor,
-    PDWORD     pdwSpaceLeft,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo26FromPassword(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PWSTR       pwszPassword,
-    PNET_CONN   pConn,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo13FromUserInfo1007(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo16FromUserInfo1008(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 
 static
 DWORD
 NetAllocateSamrUserInfo8FromUserInfo1011(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
+    );
+
+
+static
+DWORD
+NetValidateUserName(
+    IN PWSTR                pwszUserName,
+    IN NET_VALIDATION_LEVEL eValidation
+    );
+
+
+static
+DWORD
+NetValidateUserFlags(
+    IN DWORD                dwFlags,
+    IN NET_VALIDATION_LEVEL eValidation
+    );
+
+
+static
+DWORD
+NetValidatePrivilege(
+    IN DWORD                dwPrivilege,
+    IN NET_VALIDATION_LEVEL eValidation
+    );
+
+
+static
+DWORD
+NetValidatePassword(
+    IN PWSTR                pwszPassword,
+    IN NET_VALIDATION_LEVEL eValidation
     );
 
 
 DWORD
 NetAllocateUserInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft, 
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -267,63 +331,72 @@ NetAllocateUserInfo(
         err = NetAllocateUserInfo0(&pCursor,
                                    pdwSpaceLeft,
                                    pSource,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation);
         break;
 
     case 1:
         err = NetAllocateUserInfo1(&pCursor,
                                    pdwSpaceLeft,
                                    pSource,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation);
         break;
 
     case 2:
         err = NetAllocateUserInfo2(&pCursor,
                                    pdwSpaceLeft,
                                    pSource,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation);
         break;
 
     case 3:
         err = NetAllocateUserInfo3(&pCursor,
                                    pdwSpaceLeft,
                                    pSource,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation);
         break;
 
     case 4:
         err = NetAllocateUserInfo4(&pCursor,
                                    pdwSpaceLeft,
                                    pSource,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation);
         break;
 
     case 10:
         err = NetAllocateUserInfo10(&pCursor,
                                     pdwSpaceLeft,
                                     pSource,
-                                    pdwSize);
+                                    pdwSize,
+                                    eValidation);
         break;
 
     case 11:
         err = NetAllocateUserInfo11(&pCursor,
                                     pdwSpaceLeft,
                                     pSource,
-                                    pdwSize);
+                                    pdwSize,
+                                    eValidation);
         break;
 
     case 20:
         err = NetAllocateUserInfo20(&pCursor,
                                     pdwSpaceLeft,
                                     pSource,
-                                    pdwSize);
+                                    pdwSize,
+                                    eValidation);
         break;
 
     case 23:
         err = NetAllocateUserInfo23(&pCursor,
                                     pdwSpaceLeft,
                                     pSource,
-                                    pdwSize);
+                                    pdwSize,
+                                    eValidation);
         break;
 
     default:
@@ -343,10 +416,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -374,7 +448,8 @@ NetAllocateUserInfo0(
     err = NetAllocBufferWC16String(&pCursor,
                                    &dwSpaceLeft,
                                    pwszName,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -398,10 +473,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -432,7 +508,9 @@ NetAllocateUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->account_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation
+                                   );
     BAIL_ON_WIN_ERROR(err);
 
     /* usri1_password: SKIP */
@@ -440,7 +518,8 @@ NetAllocateUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri1_password_age */
@@ -466,7 +545,8 @@ NetAllocateUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->home_directory,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri1_comment */
@@ -474,7 +554,8 @@ NetAllocateUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->description,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri1_flags */
@@ -493,7 +574,8 @@ NetAllocateUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->logon_script,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -522,10 +604,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo2(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -552,7 +635,8 @@ NetAllocateUserInfo2(
     err = NetAllocateUserInfo1(&pCursor,
                                &dwSpaceLeft,
                                pSource,
-                               &dwSize);
+                               &dwSize,
+                               eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_auth_flags: SKIP */
@@ -570,7 +654,8 @@ NetAllocateUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_usr_comment */
@@ -578,7 +663,8 @@ NetAllocateUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_parms */
@@ -586,7 +672,8 @@ NetAllocateUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->parameters,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
     
     /* usri2_workstations */
@@ -594,7 +681,8 @@ NetAllocateUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->workstations,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_last_logon */
@@ -639,7 +727,8 @@ NetAllocateUserInfo2(
     err = NetAllocBufferLogonHours(&pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_bad_pw_count */
@@ -664,7 +753,8 @@ NetAllocateUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri2_country_code */
@@ -707,10 +797,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo3(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -737,7 +828,8 @@ NetAllocateUserInfo3(
     err = NetAllocateUserInfo2(&pCursor,
                                &dwSpaceLeft,
                                pSource,
-                               &dwSize);
+                               &dwSize,
+                               eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_user_id */
@@ -755,7 +847,8 @@ NetAllocateUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->profile_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_home_dir_drive */
@@ -763,7 +856,8 @@ NetAllocateUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->home_drive,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_password_expired */
@@ -799,10 +893,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo4(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -829,7 +924,8 @@ NetAllocateUserInfo4(
     err = NetAllocateUserInfo2(&pCursor,
                                &dwSpaceLeft,
                                pSource,
-                               &dwSize);
+                               &dwSize,
+                               eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     ALIGN_PTR_IN_BUFFER(USER_INFO_4, usri4_code_page,
@@ -841,7 +937,8 @@ NetAllocateUserInfo4(
                             &dwSpaceLeft,
                             NULL,
                             0,
-                            &dwSize);
+                            &dwSize,
+                            eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_profile */
@@ -849,7 +946,8 @@ NetAllocateUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->profile_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_home_dir_drive */
@@ -857,7 +955,8 @@ NetAllocateUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->home_drive,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri3_password_expired */
@@ -893,10 +992,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo10(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -925,7 +1025,8 @@ NetAllocateUserInfo10(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->account_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri10_comment */
@@ -933,7 +1034,8 @@ NetAllocateUserInfo10(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->description,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri10_usr_comment */
@@ -941,7 +1043,8 @@ NetAllocateUserInfo10(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri10_full_name */
@@ -949,7 +1052,8 @@ NetAllocateUserInfo10(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -978,10 +1082,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo11(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1010,7 +1115,8 @@ NetAllocateUserInfo11(
     err = NetAllocateUserInfo10(&pCursor,
                                 &dwSpaceLeft,
                                 pSource,
-                                &dwSize);
+                                &dwSize,
+                                eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri11_priv: SKIP (it is set outside this function) */
@@ -1046,7 +1152,8 @@ NetAllocateUserInfo11(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->home_directory,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri11_parms */
@@ -1054,7 +1161,8 @@ NetAllocateUserInfo11(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->parameters,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
     
     /* usri11_last_logon */
@@ -1093,7 +1201,8 @@ NetAllocateUserInfo11(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri11_country_code */
@@ -1111,7 +1220,8 @@ NetAllocateUserInfo11(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->workstations,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri11_max_storage: SKIP */
@@ -1134,7 +1244,8 @@ NetAllocateUserInfo11(
     err = NetAllocBufferLogonHours(&pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri11_code_page */
@@ -1170,10 +1281,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo20(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1202,7 +1314,8 @@ NetAllocateUserInfo20(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->account_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri20_full_name */
@@ -1210,7 +1323,8 @@ NetAllocateUserInfo20(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri20_comment */
@@ -1218,7 +1332,8 @@ NetAllocateUserInfo20(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->description,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri20_flags */
@@ -1263,10 +1378,11 @@ error:
 static
 DWORD
 NetAllocateUserInfo23(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1295,7 +1411,8 @@ NetAllocateUserInfo23(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->account_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri23_full_name */
@@ -1303,7 +1420,8 @@ NetAllocateUserInfo23(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri23_comment */
@@ -1311,7 +1429,8 @@ NetAllocateUserInfo23(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pSamrInfo21->description,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* usri23_user_sid - it's copied outside this function,
@@ -1320,7 +1439,8 @@ NetAllocateUserInfo23(
                             &dwSpaceLeft,
                             NULL,
                             0,
-                            &dwSize);
+                            &dwSize,
+                            eValidation);
     BAIL_ON_WIN_ERROR(err);
 
 
@@ -1419,13 +1539,15 @@ error:
 
 DWORD
 NetAllocateSamrUserInfo(
-    PVOID      pInfoBuffer,
-    PDWORD     pdwSamrLevel,
-    PDWORD     pdwSpaceLeft, 
-    DWORD      dwLevel,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSamrLevel,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1457,7 +1579,9 @@ NetAllocateSamrUserInfo(
                                          pdwSpaceLeft,
                                          pSource,
                                          pConn,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             break;
 
         case 1003:
@@ -1466,7 +1590,9 @@ NetAllocateSamrUserInfo(
                                          pdwSpaceLeft,
                                          pSource,
                                          pConn,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             break;
 
         default:
@@ -1487,7 +1613,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 7;
             break;
 
@@ -1496,7 +1624,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 21;
             break;
 
@@ -1505,7 +1635,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 21;
             break;
 
@@ -1514,7 +1646,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 21;
             break;
 
@@ -1523,7 +1657,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 21;
             break;
 
@@ -1538,7 +1674,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 13;
             break;
 
@@ -1547,7 +1685,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 16;
             break;
 
@@ -1556,7 +1696,9 @@ NetAllocateSamrUserInfo(
                                          &pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation,
+                                         pdwParmErr);
             dwSamrLevel = 8;
             break;
 
@@ -1583,10 +1725,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo7FromUserInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1594,6 +1738,7 @@ NetAllocateSamrUserInfo7FromUserInfo0(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
     PUSER_INFO_0 pUserInfo0 = (PUSER_INFO_0)pSource;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -1610,12 +1755,24 @@ NetAllocateSamrUserInfo7FromUserInfo0(
         pCursor = *ppCursor;
     }
 
+    dwParmErr = USER_NAME_PARMNUM;
+    if (pUserInfo0->usri0_name == NULL)
+    {
+        err = ERROR_INVALID_PARAMETER;
+        BAIL_ON_WIN_ERROR(err);
+    }
+
+    err = NetValidateUserName(pUserInfo0->usri0_name,
+                              eValidation);
+    BAIL_ON_WIN_ERROR(err);
+
     /* account_name */
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo0->usri0_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -1629,6 +1786,11 @@ NetAllocateSamrUserInfo7FromUserInfo0(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -1646,10 +1808,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1659,6 +1823,7 @@ NetAllocateSamrUserInfo21FromUserInfo1(
     DWORD dwSize = 0;
     PUSER_INFO_1 pUserInfo1 = (PUSER_INFO_1)pSource;
     DWORD dwFieldsPresent = 0;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -1675,6 +1840,11 @@ NetAllocateSamrUserInfo21FromUserInfo1(
         pCursor         = *ppCursor;
         pSamrUserInfo21 = *ppCursor;
     }
+
+    dwParmErr = USER_PRIV_PARMNUM;
+    err = NetValidatePrivilege(pUserInfo1->usri1_priv,
+                               eValidation);
+    BAIL_ON_WIN_ERROR(err);
 
     /* last_logon: SKIP */
     err = NetAllocBufferUlong64(&pCursor,
@@ -1719,11 +1889,21 @@ NetAllocateSamrUserInfo21FromUserInfo1(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_name */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_NAME_PARMNUM;
+
+        err = NetValidateUserName(pUserInfo1->usri1_name,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1->usri1_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo1->usri1_name,
@@ -1734,7 +1914,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* home_directory */
@@ -1742,7 +1923,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1->usri1_home_dir,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo1->usri1_home_dir,
@@ -1753,7 +1935,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* logon_script */
@@ -1761,7 +1944,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1->usri1_script_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo1->usri1_script_path,
@@ -1772,7 +1956,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* description */
@@ -1780,7 +1965,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1->usri1_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo1->usri1_comment,
@@ -1791,7 +1977,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* comment */
@@ -1799,7 +1986,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* parameters: SKIP */
@@ -1807,7 +1995,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown1: SKIP */
@@ -1815,7 +2004,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown2: SKIP */
@@ -1823,7 +2013,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown3: SKIP */
@@ -1831,7 +2022,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* buf_count: SKIP */
@@ -1848,7 +2040,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                  &dwSpaceLeft,
                                  NULL,
                                  0,
-                                 &dwSize);
+                                 &dwSize,
+                                 eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* rid: SKIP */
@@ -1866,10 +2059,19 @@ NetAllocateSamrUserInfo21FromUserInfo1(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_flags (make sure the normal user account flag is set */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_FLAGS_PARMNUM;
+
+        err = NetValidateUserFlags(pUserInfo1->usri1_flags,
+                                   NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferAcbFlagsFromUserFlags(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   pUserInfo1->usri1_flags | UF_NORMAL_ACCOUNT,
+                                   pUserInfo1->usri1_flags,
                                    &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
@@ -1887,7 +2089,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                        &pCursor,
                                        &dwSpaceLeft,
                                        NULL,
-                                       &dwSize);
+                                       &dwSize,
+                                       eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* bad_password_count: SKIP */
@@ -1929,7 +2132,7 @@ NetAllocateSamrUserInfo21FromUserInfo1(
     err = NetAllocBufferByte(&pCursor,
                              &dwSpaceLeft,
                              0,
-                              &dwSize);
+                             &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
     /* password_expired: SKIP */
@@ -1966,6 +2169,11 @@ NetAllocateSamrUserInfo21FromUserInfo1(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -1976,10 +2184,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo2(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                   *ppCursor,
+    PDWORD                   pdwSpaceLeft,
+    PVOID                    pSource,
+    PDWORD                   pdwSize,
+    NET_VALIDATION_LEVEL     eValidation,
+    PDWORD                   pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1989,6 +2199,7 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     DWORD dwSize = 0;
     PUSER_INFO_2 pUserInfo2 = (PUSER_INFO_2)pSource;
     DWORD dwFieldsPresent = 0;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -2005,6 +2216,11 @@ NetAllocateSamrUserInfo21FromUserInfo2(
         pCursor         = *ppCursor;
         pSamrUserInfo21 = *ppCursor;
     }
+
+    dwParmErr = USER_PRIV_PARMNUM;
+    err = NetValidatePrivilege(pUserInfo2->usri2_priv,
+                               eValidation);
+    BAIL_ON_WIN_ERROR(err);
 
     /* last_logon: SKIP */
     err = NetAllocBufferUlong64(&pCursor,
@@ -2050,11 +2266,21 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_name */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_NAME_PARMNUM;
+
+        err = NetValidateUserName(pUserInfo2->usri2_name,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo2->usri2_name,
@@ -2065,7 +2291,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* home_directory */
@@ -2073,7 +2300,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_home_dir,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo2->usri2_home_dir,
@@ -2084,7 +2312,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* logon_script */
@@ -2092,7 +2321,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_script_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo2->usri2_script_path,
@@ -2103,7 +2333,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* description: SKIP */
@@ -2111,7 +2342,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* workstations */
@@ -2119,7 +2351,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_workstations,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* comment */
@@ -2127,7 +2360,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo2->usri2_comment,
@@ -2138,7 +2372,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo2->usri2_parms,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown1: SKIP */
@@ -2146,7 +2381,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown2: SKIP */
@@ -2154,7 +2390,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown3: SKIP */
@@ -2162,7 +2399,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* buf_count: SKIP */
@@ -2179,7 +2417,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                  &dwSpaceLeft,
                                  NULL,
                                  0,
-                                 &dwSize);
+                                 &dwSize,
+                                 eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* rid: SKIP */
@@ -2197,10 +2436,15 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_flags (make sure the normal user account flag is set */
+    dwParmErr = USER_FLAGS_PARMNUM;
+    err = NetValidateUserFlags(pUserInfo2->usri2_flags,
+                               eValidation);
+    BAIL_ON_WIN_ERROR(err);
+
     err = NetAllocBufferAcbFlagsFromUserFlags(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   pUserInfo2->usri2_flags | UF_NORMAL_ACCOUNT,
+                                   pUserInfo2->usri2_flags,
                                    &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
@@ -2218,7 +2462,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                        &pCursor,
                                        &dwSpaceLeft,
                                        NULL,
-                                       &dwSize);
+                                       &dwSize,
+                                       eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* bad_password_count: SKIP */
@@ -2260,7 +2505,7 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     err = NetAllocBufferByte(&pCursor,
                              &dwSpaceLeft,
                              0,
-                              &dwSize);
+                             &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
     /* password_expired: SKIP */
@@ -2297,6 +2542,11 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -2307,10 +2557,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo3(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -2320,6 +2572,7 @@ NetAllocateSamrUserInfo21FromUserInfo3(
     DWORD dwSize = 0;
     PUSER_INFO_3 pUserInfo3 = (PUSER_INFO_3)pSource;
     DWORD dwFieldsPresent = 0;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -2336,6 +2589,11 @@ NetAllocateSamrUserInfo21FromUserInfo3(
         pCursor         = *ppCursor;
         pSamrUserInfo21 = *ppCursor;
     }
+
+    dwParmErr = USER_PRIV_PARMNUM;
+    err = NetValidatePrivilege(pUserInfo3->usri3_priv,
+                               eValidation);
+    BAIL_ON_WIN_ERROR(err);
 
     /* last_logon: SKIP */
     err = NetAllocBufferUlong64(&pCursor,
@@ -2381,11 +2639,21 @@ NetAllocateSamrUserInfo21FromUserInfo3(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_name */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_NAME_PARMNUM;
+
+        err = NetValidateUserName(pUserInfo3->usri3_name,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo3->usri3_name,
@@ -2396,7 +2664,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* home_directory */
@@ -2404,7 +2673,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_home_dir,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo3->usri3_home_dir,
@@ -2415,7 +2685,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* logon_script */
@@ -2423,7 +2694,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_script_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo3->usri3_script_path,
@@ -2434,7 +2706,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* description */
@@ -2442,7 +2715,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo3->usri3_comment,
@@ -2453,7 +2727,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_workstations,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* comment */
@@ -2461,7 +2736,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_usr_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo3->usri3_usr_comment,
@@ -2472,7 +2748,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo3->usri3_parms,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown1: SKIP */
@@ -2480,7 +2757,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown2: SKIP */
@@ -2488,7 +2766,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown3: SKIP */
@@ -2496,7 +2775,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* buf_count: SKIP */
@@ -2513,7 +2793,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                  &dwSpaceLeft,
                                  NULL,
                                  0,
-                                 &dwSize);
+                                 &dwSize,
+                                 eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* rid: SKIP */
@@ -2531,10 +2812,19 @@ NetAllocateSamrUserInfo21FromUserInfo3(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_flags (make sure the normal user account flag is set */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_FLAGS_PARMNUM;
+
+        err = NetValidateUserFlags(pUserInfo3->usri3_flags,
+                                   NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferAcbFlagsFromUserFlags(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   pUserInfo3->usri3_flags | UF_NORMAL_ACCOUNT,
+                                   pUserInfo3->usri3_flags,
                                    &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
@@ -2552,7 +2842,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                        &pCursor,
                                        &dwSpaceLeft,
                                        NULL,
-                                       &dwSize);
+                                       &dwSize,
+                                       eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* bad_password_count: SKIP */
@@ -2594,7 +2885,7 @@ NetAllocateSamrUserInfo21FromUserInfo3(
     err = NetAllocBufferByte(&pCursor,
                              &dwSpaceLeft,
                              0,
-                              &dwSize);
+                             &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
     /* password_expired: SKIP */
@@ -2631,6 +2922,11 @@ NetAllocateSamrUserInfo21FromUserInfo3(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -2641,10 +2937,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo21FromUserInfo4(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -2654,6 +2952,7 @@ NetAllocateSamrUserInfo21FromUserInfo4(
     DWORD dwSize = 0;
     PUSER_INFO_4 pUserInfo4 = (PUSER_INFO_4)pSource;
     DWORD dwFieldsPresent = 0;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -2670,6 +2969,11 @@ NetAllocateSamrUserInfo21FromUserInfo4(
         pCursor         = *ppCursor;
         pSamrUserInfo21 = *ppCursor;
     }
+
+    dwParmErr = USER_PRIV_PARMNUM;
+    err = NetValidatePrivilege(pUserInfo4->usri4_priv,
+                               eValidation);
+    BAIL_ON_WIN_ERROR(err);
 
     /* last_logon: SKIP */
     err = NetAllocBufferUlong64(&pCursor,
@@ -2715,11 +3019,21 @@ NetAllocateSamrUserInfo21FromUserInfo4(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_name */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_NAME_PARMNUM;
+
+        err = NetValidateUserName(pUserInfo4->usri4_name,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo4->usri4_name,
@@ -2730,7 +3044,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* home_directory */
@@ -2738,7 +3053,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_home_dir,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo4->usri4_home_dir,
@@ -2749,7 +3065,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* logon_script */
@@ -2757,7 +3074,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_script_path,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo4->usri4_script_path,
@@ -2768,7 +3086,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* description */
@@ -2776,7 +3095,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo4->usri4_comment,
@@ -2787,7 +3107,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_workstations,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* comment */
@@ -2795,7 +3116,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_usr_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     SAMR_FIELD_PRESENT(pUserInfo4->usri4_usr_comment,
@@ -2806,7 +3128,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo4->usri4_parms,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown1: SKIP */
@@ -2814,7 +3137,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown2: SKIP */
@@ -2822,7 +3146,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* unknown3: SKIP */
@@ -2830,7 +3155,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    NULL,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* buf_count: SKIP */
@@ -2847,7 +3173,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                  &dwSpaceLeft,
                                  NULL,
                                  0,
-                                 &dwSize);
+                                 &dwSize,
+                                 eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* rid: SKIP */
@@ -2865,10 +3192,19 @@ NetAllocateSamrUserInfo21FromUserInfo4(
     BAIL_ON_WIN_ERROR(err);
 
     /* account_flags (make sure the normal user account flag is set */
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        dwParmErr = USER_FLAGS_PARMNUM;
+
+        err = NetValidateUserFlags(pUserInfo4->usri4_flags,
+                                   NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
+
     err = NetAllocBufferAcbFlagsFromUserFlags(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   pUserInfo4->usri4_flags | UF_NORMAL_ACCOUNT,
+                                   pUserInfo4->usri4_flags,
                                    &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
@@ -2886,7 +3222,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                        &pCursor,
                                        &dwSpaceLeft,
                                        NULL,
-                                       &dwSize);
+                                       &dwSize,
+                                       eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* bad_password_count: SKIP */
@@ -2928,7 +3265,7 @@ NetAllocateSamrUserInfo21FromUserInfo4(
     err = NetAllocBufferByte(&pCursor,
                              &dwSpaceLeft,
                              0,
-                              &dwSize);
+                             &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
     /* password_expired: SKIP */
@@ -2965,6 +3302,11 @@ NetAllocateSamrUserInfo21FromUserInfo4(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -2975,11 +3317,13 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo26FromUserInfo1(
-    PVOID     *ppCursor,
-    PDWORD     pdwSpaceLeft,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -2992,7 +3336,9 @@ NetAllocateSamrUserInfo26FromUserInfo1(
                                    pdwSpaceLeft,
                                    pUserInfo1->usri1_password,
                                    pConn,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation,
+                                   pdwParmErr);
 cleanup:
     return err;
 
@@ -3004,25 +3350,44 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo26FromUserInfo1003(
-    PVOID     *ppCursor,
-    PDWORD     pdwSpaceLeft,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
     PUSER_INFO_1003 pUserInfo1003 = (PUSER_INFO_1003)pSource;
+    DWORD dwParmErr = 0;
 
     BAIL_ON_INVALID_PTR(pConn, err);
+
+    if (eValidation == NET_VALIDATION_USER_SET)
+    {
+        dwParmErr = USER_PASSWORD_PARMNUM;
+
+        err = NetValidatePassword(pUserInfo1003->usri1003_password,
+                                  NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     err = NetAllocateSamrUserInfo26FromPassword(
                                    ppCursor,
                                    pdwSpaceLeft,
                                    pUserInfo1003->usri1003_password,
                                    pConn,
-                                   pdwSize);
+                                   pdwSize,
+                                   eValidation,
+                                   pdwParmErr);
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
@@ -3033,11 +3398,13 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo26FromPassword(
-    PVOID     *ppCursor,
-    PDWORD     pdwSpaceLeft,
-    PWSTR      pwszPassword,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PWSTR                 pwszPassword,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -3088,7 +3455,8 @@ NetAllocateSamrUserInfo26FromPassword(
                                   &dwSpaceLeft,
                                   PasswordBuffer,
                                   sizeof(PasswordBuffer),
-                                  &dwSize);
+                                  &dwSize,
+                                  eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     err = NetAllocBufferByte(&pCursor,
@@ -3132,10 +3500,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo8FromUserInfo1011(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -3164,7 +3534,8 @@ NetAllocateSamrUserInfo8FromUserInfo1011(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1011->usri1011_full_name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -3188,10 +3559,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo13FromUserInfo1007(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -3220,7 +3593,8 @@ NetAllocateSamrUserInfo13FromUserInfo1007(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    pUserInfo1007->usri1007_comment,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -3245,10 +3619,12 @@ error:
 static
 DWORD
 NetAllocateSamrUserInfo16FromUserInfo1008(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -3256,6 +3632,7 @@ NetAllocateSamrUserInfo16FromUserInfo1008(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
     PUSER_INFO_1008 pUserInfo1008 = (PUSER_INFO_1008)pSource;
+    DWORD dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
@@ -3270,6 +3647,15 @@ NetAllocateSamrUserInfo16FromUserInfo1008(
     if (ppCursor)
     {
         pCursor = *ppCursor;
+    }
+
+    if (eValidation == NET_VALIDATION_USER_SET)
+    {
+        dwParmErr = USER_FLAGS_PARMNUM;
+
+        err = NetValidateUserFlags(pUserInfo1008->usri1008_flags,
+                                   NET_VALIDATION_REQUIRED);
+        BAIL_ON_WIN_ERROR(err);
     }
 
     /* account_flags (make sure the normal user account flag is set */
@@ -3292,10 +3678,133 @@ NetAllocateSamrUserInfo16FromUserInfo1008(
     }
 
 cleanup:
+    if (pdwParmErr)
+    {
+        *pdwParmErr = dwParmErr;
+    }
+
     return err;
 
 error:
     goto cleanup;
+}
+
+
+static
+DWORD
+NetValidateUserName(
+    IN PWSTR                pwszUserName,
+    IN NET_VALIDATION_LEVEL eValidation
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sNameLen = 0;
+    size_t sMaxNameLen = USER_NAME_LEN;
+
+    if (eValidation != NET_VALIDATION_REQUIRED)
+    {
+        goto error;
+    }
+
+    dwError = LwWc16sLen(pwszUserName, &sNameLen);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    if (sNameLen > sMaxNameLen)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+error:
+    return dwError;
+}
+
+
+static
+DWORD
+NetValidateUserFlags(
+    IN DWORD                dwFlags,
+    IN NET_VALIDATION_LEVEL eValidation
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    DWORD dwType = dwFlags & (UF_NORMAL_ACCOUNT |
+                              UF_TEMP_DUPLICATE_ACCOUNT | 
+                              UF_WORKSTATION_TRUST_ACCOUNT |
+                              UF_SERVER_TRUST_ACCOUNT |
+                              UF_INTERDOMAIN_TRUST_ACCOUNT);
+    
+    if (eValidation != NET_VALIDATION_REQUIRED)
+    {
+        goto error;
+    }
+
+    if (dwType != UF_NORMAL_ACCOUNT)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+error:
+    return dwError;
+}
+
+
+static
+DWORD
+NetValidatePrivilege(
+    IN DWORD                dwPrivilege,
+    IN NET_VALIDATION_LEVEL eValidation
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+
+    if (eValidation == NET_VALIDATION_USER_ADD)
+    {
+        if (dwPrivilege != USER_PRIV_USER)
+        {
+            dwError = ERROR_INVALID_PARAMETER;
+            BAIL_ON_WIN_ERROR(dwError);
+        }
+    }
+
+error:
+    return dwError;
+}
+
+
+static
+DWORD
+NetValidatePassword(
+    IN PWSTR                pwszPassword,
+    IN NET_VALIDATION_LEVEL eValidation
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sMaxPasswordLen = PWLEN;
+    size_t sPasswordLen = 0;
+
+    if (eValidation == NET_VALIDATION_REQUIRED &&
+        pwszPassword == NULL)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (pwszPassword)
+    {
+        dwError = LwWc16sLen(pwszPassword, &sPasswordLen);
+        BAIL_ON_WIN_ERROR(dwError);
+
+        if (sPasswordLen > sMaxPasswordLen)
+        {
+            dwError = ERROR_INVALID_PARAMETER;
+            BAIL_ON_WIN_ERROR(dwError);
+        }
+    }
+
+error:
+    return dwError;
 }
 
 

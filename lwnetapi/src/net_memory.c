@@ -478,10 +478,11 @@ NetAllocBufferAcbFlagsFromUserFlags(
 
 DWORD
 NetAllocBufferWC16String(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PCWSTR  pwszSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PCWSTR                pwszSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -573,10 +574,11 @@ error:
 
 DWORD
 NetAllocBufferWC16StringFromUnicodeString(
-    PVOID          *ppCursor,
-    PDWORD          pdwSpaceLeft,
-    UNICODE_STRING *pSource,
-    PDWORD          pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    UNICODE_STRING       *pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -671,13 +673,14 @@ error:
 
 DWORD
 NetAllocBufferUnicodeStringFromWC16String(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PCWSTR  pwszSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PCWSTR                pwszSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
-    const WCHAR wszNullStr[] = { '\0' };
+    const WCHAR wszNullStr[] = {'\0'};
     DWORD err = ERROR_SUCCESS;
     PVOID pCursor = NULL;
     DWORD dwStrSize = 0;
@@ -731,7 +734,8 @@ NetAllocBufferUnicodeStringFromWC16String(
         err = NetAllocBufferWC16String(&pCursor,
                                        &dwSpaceLeft,
                                        pwszSource,
-                                       &dwSize);
+                                       &dwSize,
+                                       eValidation);
         BAIL_ON_WIN_ERROR(err);
                                         
         *ppCursor     = pCursor;
@@ -770,10 +774,11 @@ error:
 
 DWORD
 NetAllocBufferLogonHours(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    LogonHours *pHours,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    LogonHours           *pHours,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -863,10 +868,11 @@ error:
  */
 DWORD
 NetAllocBufferSamrLogonHoursFromNetLogonHours(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PDWORD      pdwHours,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PDWORD                pdwHours,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -903,7 +909,8 @@ NetAllocBufferSamrLogonHoursFromNetLogonHours(
                                      &dwSpaceLeft,
                                      pbUnits,
                                      (DWORD)wUnitsPerWeek,
-                                     &dwSize);
+                                     &dwSize,
+                                     eValidation);
         BAIL_ON_WIN_ERROR(err);
                                       
         *ppCursor     = pCursor;
@@ -939,11 +946,12 @@ error:
 
 DWORD
 NetAllocBufferSid(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PSID        pSourceSid,
-    DWORD       dwSourceSidLength,
-    PDWORD      pdwSize
+    PVOID               *ppCursor,
+    PDWORD               pdwSpaceLeft,
+    PSID                 pSourceSid,
+    DWORD                dwSourceSidLength,
+    PDWORD               pdwSize,
+    NET_VALIDATION_LEVEL eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1042,11 +1050,12 @@ error:
 
 DWORD
 NetAllocBufferByteBlob(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PBYTE       pbBlob,
-    DWORD       dwBlobSize,
-    PDWORD      pdwSize
+    PVOID               *ppCursor,
+    PDWORD               pdwSpaceLeft,
+    PBYTE                pbBlob,
+    DWORD                dwBlobSize,
+    PDWORD               pdwSize,
+    NET_VALIDATION_LEVEL eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -1132,11 +1141,12 @@ error:
 
 DWORD
 NetAllocBufferFixedBlob(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PBYTE       pbBlob,
-    DWORD       dwBlobSize,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PBYTE                 pbBlob,
+    DWORD                 dwBlobSize,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;

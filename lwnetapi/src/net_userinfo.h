@@ -47,6 +47,7 @@
 #ifndef _NETUSERINFO_H_
 #define _NETUSERINFO_H_
 
+
 union user_info_id {
     DWORD  dwId;
     PSID   pSid;
@@ -55,23 +56,26 @@ union user_info_id {
 
 DWORD
 NetAllocateUserInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft, 
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocateSamrUserInfo(
-    PVOID      pInfoBuffer,
-    PDWORD     pdwSamrLevel,
-    PDWORD     pdwSpaceLeft, 
-    DWORD      dwLevel,
-    PVOID      pSource,
-    PNET_CONN  pConn,
-    PDWORD     pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSamrLevel,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PNET_CONN             pConn,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation,
+    PDWORD                pdwParmErr
     );
 
 

@@ -49,30 +49,33 @@
 static
 DWORD
 NetAllocateLocalGroupInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 static
 DWORD
 NetAllocateLocalGroupInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocateLocalGroupInfo(
-    PVOID   pInfoBuffer,
-    PDWORD  pdwSpaceLeft, 
-    DWORD   dwLevel,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft, 
+    DWORD                 dwLevel,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -84,14 +87,16 @@ NetAllocateLocalGroupInfo(
         err = NetAllocateLocalGroupInfo0(&pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation);
         break;
 
     case 1:
         err = NetAllocateLocalGroupInfo1(&pCursor,
                                          pdwSpaceLeft,
                                          pSource,
-                                         pdwSize);
+                                         pdwSize,
+                                         eValidation);
         break;
 
     default:
@@ -111,10 +116,11 @@ error:
 static
 DWORD
 NetAllocateLocalGroupInfo0(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -142,7 +148,8 @@ NetAllocateLocalGroupInfo0(
     err = NetAllocBufferWC16String(&pCursor,
                                    &dwSpaceLeft,
                                    pwszName,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)
@@ -166,10 +173,11 @@ error:
 static
 DWORD
 NetAllocateLocalGroupInfo1(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PVOID   pSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PVOID                 pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     )
 {
     DWORD err = ERROR_SUCCESS;
@@ -199,7 +207,8 @@ NetAllocateLocalGroupInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pInfoAll->name,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     /* lgrpi1_comment */
@@ -207,7 +216,8 @@ NetAllocateLocalGroupInfo1(
                                    &pCursor,
                                    &dwSpaceLeft,
                                    &pInfoAll->description,
-                                   &dwSize);
+                                   &dwSize,
+                                   eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     if (pdwSpaceLeft)

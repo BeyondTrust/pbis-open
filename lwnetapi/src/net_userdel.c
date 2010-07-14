@@ -82,6 +82,11 @@ NetUserDel(
                          dwUserAccess,
                          &hUser,
                          &dwUserRid);
+    if (status == STATUS_NONE_MAPPED)
+    {
+        err = NERR_UserNotFound;
+        BAIL_ON_WIN_ERROR(err);
+    }
     BAIL_ON_NT_STATUS(status);
 
     status = SamrDeleteUser(hSamrBinding, hUser);

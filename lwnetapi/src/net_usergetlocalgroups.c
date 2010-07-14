@@ -97,6 +97,7 @@ NetUserGetLocalGroups(
     DWORD dwNumEntries = 0;
     DWORD dwSpaceAvailable = 0;
     PIO_CREDS pCreds = NULL;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
 
     BAIL_ON_INVALID_PTR(pwszUsername, err);
     BAIL_ON_INVALID_PTR(ppBuffer, err);
@@ -219,7 +220,8 @@ NetUserGetLocalGroups(
                                              NULL,
                                              dwLevel,
                                              pSourceBuffer,
-                                             &dwSize);
+                                             &dwSize,
+                                             eValidation);
         BAIL_ON_WIN_ERROR(err);
 
         dwTotalSize += dwSize;
@@ -259,7 +261,8 @@ NetUserGetLocalGroups(
                                              &dwSpaceAvailable,
                                              dwLevel,
                                              pSourceBuffer,
-                                             &dwSize);
+                                             &dwSize,
+                                             eValidation);
         BAIL_ON_WIN_ERROR(err);
     }
 

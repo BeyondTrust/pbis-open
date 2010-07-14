@@ -76,6 +76,7 @@ NetUserGetInfo(
     DWORD dwSpaceAvailable = 0;
     PVOID pBuffer = NULL;
     PIO_CREDS pCreds = NULL;
+    NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
 
     BAIL_ON_INVALID_PTR(pwszUsername, err);
     BAIL_ON_INVALID_PTR(ppBuffer, err);
@@ -136,7 +137,8 @@ NetUserGetInfo(
                               NULL,
                               dwLevel,
                               pSourceBuffer,
-                              &dwSize);
+                              &dwSize,
+                              eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     dwSpaceAvailable = dwSize;
@@ -150,7 +152,8 @@ NetUserGetInfo(
                               &dwSpaceAvailable,
                               dwLevel,
                               pSourceBuffer,
-                              &dwSize);
+                              &dwSize,
+                              eValidation);
     BAIL_ON_WIN_ERROR(err);
 
     status = SamrClose(hSamrBinding, hUser);

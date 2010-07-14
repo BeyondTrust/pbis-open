@@ -65,6 +65,17 @@
     }
 
 
+typedef enum _NET_VALIDATION_LEVEL
+{
+    NET_VALIDATION_NONE      = 0,
+    NET_VALIDATION_OPTIONAL,
+    NET_VALIDATION_REQUIRED,
+    NET_VALIDATION_USER_ADD,
+    NET_VALIDATION_USER_SET
+
+} NET_VALIDATION_LEVEL;
+
+
 NTSTATUS
 NetAllocateMemory(
     OUT PVOID *ppOut,
@@ -152,76 +163,84 @@ NetAllocBufferAcbFlagsFromUserFlags(
 
 DWORD
 NetAllocBufferWC16String(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PCWSTR  pwszSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PCWSTR                pwszSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocBufferWC16StringFromUnicodeString(
-    PVOID          *ppCursor,
-    PDWORD          pdwSpaceLeft,
-    UNICODE_STRING *pSource,
-    PDWORD          pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    UNICODE_STRING       *pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocBufferUnicodeStringFromWC16String(
-    PVOID  *ppCursor,
-    PDWORD  pdwSpaceLeft,
-    PCWSTR  pwszSource,
-    PDWORD  pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PCWSTR                pwszSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocBufferLogonHours(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    LogonHours *pHours,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    LogonHours           *pHours,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocBufferSamrLogonHoursFromNetLogonHours(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PDWORD      pdwHours,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PDWORD                pdwHours,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 
 DWORD
 NetAllocBufferSid(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PSID        pSourceSid,
-    DWORD       dwSourceSidLength,
-    PDWORD      pdwSize
+    PVOID               *ppCursor,
+    PDWORD               pdwSpaceLeft,
+    PSID                 pSourceSid,
+    DWORD                dwSourceSidLength,
+    PDWORD               pdwSize,
+    NET_VALIDATION_LEVEL eValidation
     );
 
 
 DWORD
 NetAllocBufferByteBlob(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PBYTE       pbBlob,
-    DWORD       dwBlobSize,
-    PDWORD      pdwSize
+    PVOID               *ppCursor,
+    PDWORD               pdwSpaceLeft,
+    PBYTE                pbBlob,
+    DWORD                dwBlobSize,
+    PDWORD               pdwSize,
+    NET_VALIDATION_LEVEL eValidation
     );
 
 
 DWORD
 NetAllocBufferFixedBlob(
-    PVOID      *ppCursor,
-    PDWORD      pdwSpaceLeft,
-    PBYTE       pbBlob,
-    DWORD       dwBlobSize,
-    PDWORD      pdwSize
+    PVOID                *ppCursor,
+    PDWORD                pdwSpaceLeft,
+    PBYTE                 pbBlob,
+    DWORD                 dwBlobSize,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
     );
 
 

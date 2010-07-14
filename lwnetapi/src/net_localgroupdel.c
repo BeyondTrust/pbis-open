@@ -80,6 +80,11 @@ NetLocalGroupDel(
                           dwAliasAccessRights,
                           &hAlias,
                           &dwAliasRid);
+    if (status == STATUS_NONE_MAPPED)
+    {
+        err = NERR_GroupNotFound;
+        BAIL_ON_WIN_ERROR(err);
+    }
     BAIL_ON_NT_STATUS(status);
 
     hSamrBinding = pConn->Rpc.Samr.hBinding;
