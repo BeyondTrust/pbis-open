@@ -342,6 +342,38 @@ typedef struct _LOCALGROUP_MEMBERS_INFO_3
 } LOCALGROUP_MEMBERS_INFO_3, *PLOCALGROUP_MEMBERS_INFO_3;
 
 
+typedef struct _NET_DISPLAY_USER
+{
+    PWSTR  usri1_name;
+    PWSTR  usri1_comment;
+    DWORD  usri1_flags;
+    PWSTR  usri1_full_name;
+    DWORD  usri1_user_id;
+    DWORD  usri1_next_index;
+
+} NET_DISPLAY_USER, *PNET_DISPLAY_USER;
+
+typedef struct _NET_DISPLAY_MACHINE
+{
+    PWSTR  usri2_name;
+    PWSTR  usri2_comment;
+    DWORD  usri2_flags;
+    DWORD  usri2_user_id;
+    DWORD  usri2_next_index;
+
+} NET_DISPLAY_MACHINE, *PNET_DISPLAY_MACHINE;
+
+typedef struct _NET_DISPLAY_GROUP
+{
+    PWSTR  grpi3_name;
+    PWSTR  grpi3_comment;
+    DWORD  grpi3_group_id;
+    DWORD  grpi3_attributes;
+    DWORD  grpi3_next_index;
+
+} NET_DISPLAY_GROUP, *PNET_DISPLAY_GROUP;
+
+
 #ifndef NET_API_STATUS_DEFINED
 typedef WINERROR NET_API_STATUS;
 
@@ -487,6 +519,18 @@ NetLocalGroupGetMembers(
     PDWORD  pdwNumEntries,
     PDWORD  pdwTotalNumEntries,
     PDWORD  pdwResume
+    );
+
+
+NET_API_STATUS
+NetQueryDisplayInformation(
+    PCWSTR  pwszHostname,
+    DWORD   dwLevel,
+    DWORD   dwIndex,
+    DWORD   dwEntriesRequested,
+    DWORD   dwMaxBufferSize,
+    PDWORD  pdwNumEntries,
+    PVOID   pBuffer
     );
 
 
