@@ -49,6 +49,30 @@
 
 #include "includes.h"
 
+static
+VOID
+LwioGetSystemTimeString(
+    PSTR   pszBuf,  /* IN OUT */
+    size_t sBufLen  /* IN     */
+    );
+
+static
+NTSTATUS
+LwioGetSystemTime(
+    struct timespec* pTimeSpec /* IN OUT */
+    );
+
+PSTR
+_LwioLogGetTimeStampPrefix(
+    VOID
+    )
+{
+    // Logger lock must be held.
+    LwioGetSystemTimeString(gszLwioLogTimeStampPrefix, sizeof(gszLwioLogTimeStampPrefix));
+    return gszLwioLogTimeStampPrefix;
+}
+
+static
 VOID
 LwioGetSystemTimeString(
     PSTR   pszBuf,  /* IN OUT */
@@ -68,14 +92,21 @@ LwioGetSystemTimeString(
 
     localtime_r(&ts.tv_sec, &tmbuf);
 
-    sWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT, &tmbuf);
+    if (gbLwioLogDoNanoSecondTime)
+    {
+        sWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT, &tmbuf);
+    }
+    else
+    {
+        sWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT ":", &tmbuf);
+    }
     if (sWritten == 0)
     {
         status = STATUS_UNSUCCESSFUL;
         goto error;
     }
 
-    if (gbDoNanoSecondTime)
+    if (gbLwioLogDoNanoSecondTime)
     {
         size_t sRemaining = sBufLen - sWritten;
 
@@ -85,7 +116,7 @@ LwioGetSystemTimeString(
             goto error;
         }
 
-        sWritten = snprintf(pszBuf + sWritten, sRemaining, ".%ld", ts.tv_nsec);
+        sWritten = snprintf(pszBuf + sWritten, sRemaining, ".%09ld:", ts.tv_nsec);
         if (sWritten < 0)
         {
             status = STATUS_INTERNAL_ERROR;
@@ -100,20 +131,29 @@ LwioGetSystemTimeString(
         }
     }
 
+
 cleanup:
 
     return;
 
 error:
 
-    if (sBufLen)
+    switch (sBufLen)
     {
-        memset(pszBuf, 0, sBufLen);
+        case 0:
+            break;
+        case 1:
+            pszBuf[0] = '0';
+            break;
+        default:
+            pszBuf[0] = ':';
+            pszBuf[1] = '0';
     }
 
     goto cleanup;
 }
 
+static
 NTSTATUS
 LwioGetSystemTime(
     struct timespec* pTimeSpec /* IN OUT */
@@ -122,7 +162,7 @@ LwioGetSystemTime(
     NTSTATUS status = STATUS_SUCCESS;
     struct timespec ts = {0};
 
-    if (gbDoNanoSecondTime)
+    if (gbLwioLogDoNanoSecondTime)
     {
         if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
         {

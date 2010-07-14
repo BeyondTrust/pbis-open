@@ -122,7 +122,6 @@ SMBLogToConsole(
     )
 {
     PSMB_CONSOLE_LOG pConsoleLog = (PSMB_CONSOLE_LOG)hLog;
-    char timeBuf[128];
     FILE* pTarget = NULL;
     
     switch (logLevel)
@@ -139,9 +138,11 @@ SMBLogToConsole(
             break;
     }
 
-    LwioGetSystemTimeString(&timeBuf[0], sizeof(timeBuf));
+    if (!gbLwioLogDoNanoSecondTime)
+    {
+        fprintf(pTarget, "%s", _LwioLogGetTimeStampPrefix());
+    }
 
-    fprintf(pTarget, "%s:", timeBuf);
     vfprintf(pTarget, pszFormat, msgList);
     fprintf(pTarget, "\n");
     fflush(pTarget);

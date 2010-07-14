@@ -62,4 +62,5 @@ HANDLE               ghLwioLog           = (HANDLE)NULL;
 LWIO_LOG_LEVEL       gLwioMaxLogLevel    = LWIO_LOG_LEVEL_ERROR;
 LWIO_LOG_TARGET      gLWIO_LOG_TARGET    = LWIO_LOG_TARGET_DISABLED;
 PFN_LWIO_LOG_MESSAGE gpfnLwioLogger      = NULL;
-BOOLEAN              gbDoNanoSecondTime  = FALSE;
+BOOLEAN              gbLwioLogDoNanoSecondTime  = FALSE;
+CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE] = { 0 };

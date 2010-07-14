@@ -121,7 +121,7 @@ LwioInitLogging(
 
         if (!clock_getres(CLOCK_REALTIME, &ts) && (ts.tv_nsec == 1))
         {
-            gbDoNanoSecondTime = TRUE;
+            gbLwioLogDoNanoSecondTime = TRUE;
         }
     }
 #endif /* defined(HAVE_CLOCK_GETRES) && defined(HAVE_CLOCK_GETTIME) */

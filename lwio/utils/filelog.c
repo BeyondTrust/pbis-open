@@ -190,11 +190,12 @@ SMBLogToFile(
     )
 {
     PSMB_FILE_LOG pFileLog = (PSMB_FILE_LOG)hLog;
-    char timeBuf[128];
 
-    LwioGetSystemTimeString(&timeBuf[0], sizeof(timeBuf));
+    if (!gbLwioLogDoNanoSecondTime)
+    {
+        fprintf(pFileLog->fp, "%s", _LwioLogGetTimeStampPrefix());
+    }
 
-    fprintf(pFileLog->fp, "%s:", timeBuf);
     vfprintf(pFileLog->fp, pszFormat, msgList);
     fprintf(pFileLog->fp, "\n");
     fflush(pFileLog->fp);

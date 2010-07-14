@@ -272,6 +272,45 @@
  * Logging
  */
 
+#define _LWIO_LOG_TIME_STAMP_PREFIX_SIZE 128
+
+extern HANDLE               ghLwioLog;
+extern LWIO_LOG_LEVEL       gLwioMaxLogLevel;
+extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
+extern BOOLEAN              gbLwioLogDoNanoSecondTime;
+extern CHAR                 gszLwioLogTimeStampPrefix[_LWIO_LOG_TIME_STAMP_PREFIX_SIZE];
+
+// Logger lock must be held
+PSTR
+_LwioLogGetTimeStampPrefix(
+    VOID
+    );
+
+#if defined(LW_SUPPORT_NANOSECOND_TIMESTAMP)
+static
+inline
+PSTR
+_LwioLogGetTimeStampPrefixIf(
+    VOID
+    )
+{
+    if (gbLwioLogDoNanoSecondTime)
+    {
+        return _LwioLogGetTimeStampPrefix();
+    }
+    else
+    {
+        gszLwioLogTimeStampPrefix[0] = 0;
+        return gszLwioLogTimeStampPrefix;
+    }
+}
+#define _LWIO_LOG_PREFIX_NS(Format) \
+    "%s" Format, _LwioLogGetTimeStampPrefixIf()
+#else
+#define _LWIO_LOG_PREFIX_NS(Format) \
+    Format
+#endif
+
 #if defined(LW_ENABLE_THREADS)
 
 extern pthread_mutex_t gLwioLogLock;
@@ -280,7 +319,7 @@ extern pthread_mutex_t gLwioLogLock;
 #define LWIO_UNLOCK_LOGGER pthread_mutex_unlock(&gLwioLogLock)
 
 #define _LWIO_LOG_PREFIX_THREAD(Format) \
-    "0x%lx:" Format, ((unsigned long)pthread_self())
+    _LWIO_LOG_PREFIX_NS("0x%lx:" Format), ((unsigned long)pthread_self())
 
 #else
 
@@ -288,7 +327,7 @@ extern pthread_mutex_t gLwioLogLock;
 #define LWIO_UNLOCK_LOGGER
 
 #define _LWIO_LOG_PREFIX_THREAD(Format) \
-    Format
+    _LWIO_LOG_PREFIX_NS(Format)
 
 #endif
 
@@ -312,10 +351,6 @@ extern pthread_mutex_t gLwioLogLock;
     _LWIO_LOG_WITH_LOCATION(Level, Format, \
                             __FUNCTION__, __FILE__, __LINE__, \
                             ## __VA_ARGS__)
-
-extern HANDLE               ghLwioLog;
-extern LWIO_LOG_LEVEL       gLwioMaxLogLevel;
-extern PFN_LWIO_LOG_MESSAGE gpfnLwioLogger;
 
 #define _LWIO_LOG_MESSAGE(Level, Format, ...) \
     LwioLogMessage(gpfnLwioLogger, ghLwioLog, Level, Format, ## __VA_ARGS__)
@@ -1130,12 +1165,6 @@ SMBGetLibDirPath(
 DWORD
 LwioGetHostInfo(
     PSTR* ppszHostname
-    );
-
-VOID
-LwioGetSystemTimeString(
-    PSTR   pszBuf,  /* IN OUT */
-    size_t sBufLen  /* IN     */
     );
 
 DWORD
