@@ -1068,6 +1068,21 @@ Krb5JoinDomain(Krb5Entry *conf,
                 "RC4-HMAC DES-CBC-MD5 DES-CBC-CRC" ));
     GCE(ceError = SetNodeValue( libdefaults, "dns_lookup_kdc", "true" ));
 
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_kdc_hostname",
+                "<DNS>" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_anchors",
+                "DIR:/var/lib/likewise/trusted_certs" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_cert_match",
+                "&&<EKU>msScLogin<PRINCIPAL>" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_eku_checking",
+                "kpServerAuth" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_win2k",
+                "true" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_win2k_require_binding",
+                "false" ));
+    GCE(ceError = SetNodeValue( libdefaults, "pkinit_identities",
+                "PKCS11:" LIBDIR "/libpkcs11.so" ));
+
     GCE(ceError = EnsureStanzaNode(conf, "domain_realm", &domain_realm));
     GCE(ceError = EnsureStanzaNode(conf, "realms", &realms));
     GCE(ceError = CTStrdup(pszDomainName, &domainUpper));
