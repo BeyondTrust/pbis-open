@@ -74,6 +74,10 @@ void (*k5int_set_prompt_types)
 	(krb5_context, krb5_prompt_type *);
 krb5_error_code (*k5int_encode_krb5_authdata_elt)
 	(const krb5_authdata *rep, krb5_data **code);
+krb5_error_code (*k5int_make_srv_query_realm)
+        (const krb5_data *realm, const char *service,
+         const char *protocol, struct srv_dns_entry **answers);
+void (*k5int_free_srv_dns_data)(struct srv_dns_entry *);
 
 
 
@@ -114,5 +118,7 @@ k5int_decode_##type = k5int.decode_##type;
     k5int_krb5_free_kdc_req = k5int.krb5_free_kdc_req;
     k5int_set_prompt_types = k5int.krb5int_set_prompt_types;
     k5int_encode_krb5_authdata_elt = k5int.encode_krb5_authdata_elt;
+    k5int_make_srv_query_realm = k5int.make_srv_query_realm;
+    k5int_free_srv_dns_data = k5int.free_srv_dns_data;
     return 0;
 }
