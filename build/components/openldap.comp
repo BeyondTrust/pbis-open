@@ -3,7 +3,7 @@
 COMP_VERSION="2.4.16"
 COMP_RELEASE="0"
 COMP_NEED_COMPAT=1
-COMP_DEPENDENCIES="autoconf libtool krb5"
+COMP_DEPENDENCIES="autoconf libtool krb5 cyrus-sasl"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/openldap
 
 # NOTE: IS_COMPAT build is only for headers (for error mappings in lwadvapi).
@@ -60,7 +60,6 @@ function component_configure
         --disable-static \
         --enable-shared \
         --without-kerberos \
-        --without-cyrus-sasl \
         --disable-slapd \
         --disable-slurpd \
         --without-tls \

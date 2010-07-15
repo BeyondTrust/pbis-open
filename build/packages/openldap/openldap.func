@@ -1,4 +1,4 @@
-PKG_COMPONENTS="openldap"
+PKG_COMPONENTS="cyrus-sasl openldap"
 
 function package_populate
 {

@@ -61,6 +61,8 @@ rm -rf $RPM_BUILD_ROOT
 %{PrefixDir}/%{_lib}/libldap*.so.*
 %{PrefixDir}/%{_lib}/liblber*.so
 %{PrefixDir}/%{_lib}/liblber*.so.*
+%{PrefixDir}/%{_lib}/libsasl*
+%{PrefixDir}/%{_lib}/sasl2/lib*
 %{PrefixDir}/bin/openldap/*
 
 %files devel
@@ -68,6 +70,8 @@ rm -rf $RPM_BUILD_ROOT
 
 #%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/sasl2/*.a
+#%attr(0644,root,root) %{PrefixDir}/%{_lib}/sasl2/*.la
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/man/*
 
