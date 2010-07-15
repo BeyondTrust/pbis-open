@@ -162,6 +162,10 @@ LwioGetSystemTime(
     NTSTATUS status = STATUS_SUCCESS;
     struct timespec ts = {0};
 
+#ifdef LW_SUPPORT_NANOSECOND_TIMESTAMP
+
+#if defined(HAVE_CLOCK_GETTIME)
+
     if (gbLwioLogDoNanoSecondTime)
     {
         if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
@@ -171,6 +175,11 @@ LwioGetSystemTime(
         }
     }
     else
+
+#endif /* defined(HAVE_CLOCK_GETRES) && defined(HAVE_CLOCK_GETTIME) */
+
+#endif /* LW_SUPPORT_NANOSECOND_TIMESTAMP */
+
     {
         ts.tv_sec  = time(NULL);
         ts.tv_nsec = 0;
