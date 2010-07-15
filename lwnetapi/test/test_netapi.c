@@ -1389,7 +1389,6 @@ TestNetUserAdd(
 
     BOOL ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
     DWORD dwLevel = 0;
     PWSTR pwszUsername = NULL;
@@ -1510,8 +1509,8 @@ done:
     LW_SAFE_FREE_MEMORY(pwszScriptPath);
     LW_SAFE_FREE_MEMORY(pwszPassword);
 
-    return (err == ERROR_SUCCESS &&
-            status == STATUS_SUCCESS);
+    return (ret &&
+            err == ERROR_SUCCESS);
 }
 
 
