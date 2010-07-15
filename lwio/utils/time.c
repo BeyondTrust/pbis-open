@@ -171,7 +171,6 @@ LwioGetSystemTime(
         if (clock_gettime(CLOCK_REALTIME, &ts) < 0)
         {
             status = LwErrnoToNtStatus(errno);
-            goto error;
         }
     }
     else
@@ -187,13 +186,5 @@ LwioGetSystemTime(
 
     *pTimeSpec = ts;
 
-cleanup:
-
     return status;
-
-error:
-
-    pTimeSpec->tv_nsec = pTimeSpec->tv_sec = 0;
-
-    goto cleanup;
 }
