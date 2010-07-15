@@ -75,7 +75,7 @@ plugindir = @plugindir@
 
 common_sources = plugin_common.c plugin_common.h
 
-sasldir = $(prefix)/lib/sasl2
+sasldir = $(libdir)/sasl2
 sasl_LTLIBRARIES = @SASL_MECHS@
 EXTRA_LTLIBRARIES = libplain.la libanonymous.la libkerberos4.la libcrammd5.la \
 	libgssapiv2.la libdigestmd5.la liblogin.la libsrp.la libotp.la \

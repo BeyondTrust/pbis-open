@@ -43,6 +43,7 @@ dnl OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 AC_INIT(lib/saslint.h)
 AC_PREREQ([2.54])
+AC_CONFIG_MACRO_DIR([config])
 
 dnl use ./config.cache as the default cache file.
 dnl we require a cache file to successfully configure our build.
