@@ -91,6 +91,8 @@ LocalInitializeProvider(
     dwError = LocalCfgInitialize(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
+    pthread_rwlock_init(&gLPGlobals.rwlock, NULL);
+
     dwError = LocalSyncDomainInfo(
                     pwszUserDN,
                     pwszCredentials,
