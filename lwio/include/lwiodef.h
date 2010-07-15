@@ -66,6 +66,10 @@
 
 #define SMB_DEFAULT_HANDLE_MAX 100000
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX 255
+#endif
+
 #if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
 #    define SOCKLEN_T socklen_t
 #else
