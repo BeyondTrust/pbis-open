@@ -70,12 +70,12 @@ rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
 
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
-%{PrefixDir}/%{_lib}/engines/*.so
-%{PrefixDir}/%{_lib}/lwsm-loader/*.so
 %if !%{Compat32}
 /etc/init.d/*
 %{PrefixDir}/bin/*
 %{PrefixDir}/sbin/*
+%{PrefixDir}/%{_lib}/engines/*.so
+%{PrefixDir}/%{_lib}/lwsm-loader/*.so
 %endif
 
 %if ! %{Compat32}
@@ -111,13 +111,13 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/lwsm-loader/*.la
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
 %if ! %{Compat32}
 %attr(0644,root,root) %{PrefixDir}/include/*
 %attr(0644,root,root) %{PrefixDir}/share/man/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
 %attr(0644,root,root) %{PrefixDir}/ssl/*
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/lwsm-loader/*.la
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
 %endif
 
 %changelog
