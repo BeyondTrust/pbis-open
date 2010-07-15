@@ -653,10 +653,10 @@ remove_extra_files()
         orig="$file.lwidentity.orig"
         bak="$file.lwidentity.bak"
         if [ -f "$orig" ]; then
-            rm -fv $orig
+            rm -f $orig
         fi
         if [ -f "$bak" ]; then
-            rm -fv $bak
+            rm -f $bak
         fi
     done
 
