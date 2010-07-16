@@ -71,12 +71,13 @@ DIRS=""
 AC_ARG_ENABLE(cmulocal,
               [AC_HELP_STRING([--enable-cmulocal],
                               [enable local mods for CMU [[no]]])],
-              [],
+              enable_cmulocal=$enable_val,
               enable_cmulocal=no)
 
 AC_ARG_ENABLE(sample,
               [AC_HELP_STRING([--enable-sample],
                               [compile sample code [[yes]]])],
+              enable_sample=$enable_val,
               enable_sample=yes)
 
 AC_PROG_CC

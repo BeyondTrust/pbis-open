@@ -49,6 +49,9 @@ function component_configure
         --with-configdir=${PREFIX_DIR}/${_lib}/sasl2 \
         --with-plugindir=${PREFIX_DIR}/${_lib}/sasl2 \
         --without-dblib \
+        --without-saslauthd \
+        --without-authdaemond \
+        --disable-macos-framework \
         --disable-sample \
         --disable-cram \
         --disable-digest \
