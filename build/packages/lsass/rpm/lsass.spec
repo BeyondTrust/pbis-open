@@ -80,10 +80,10 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
 %{PrefixDir}/share/config/*
+%{PrefixDir}/%{_lib}/gss/*.so
 %endif
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
-%{PrefixDir}/%{_lib}/gss/*.so
 /%{_lib}/*.so
 /%{_lib}/*.so.*
 /%{_lib}/security/*.so
@@ -128,8 +128,6 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
-%{PrefixDir}/%{_lib}/gss/*.a
-%{PrefixDir}/%{_lib}/gss/*.la
 /%{_lib}/*.a
 /%{_lib}/*.la
 /%{_lib}/security/*.la
@@ -137,6 +135,8 @@ done
 %attr(0644,root,root) %{PrefixDir}/include/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
 #%attr(0644,root,root) %{PrefixDir}/share/man/*
+%{PrefixDir}/%{_lib}/gss/*.a
+%{PrefixDir}/%{_lib}/gss/*.la
 %endif
 
 %changelog
