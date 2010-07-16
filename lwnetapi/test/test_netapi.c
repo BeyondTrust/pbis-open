@@ -118,6 +118,166 @@ TEST_NET_USER_ADD LocalUserAddValidationTest[] = {
 };
 
 
+typedef struct _TEST_NET_USER_DEL
+{
+    PSTR    pszUserName;
+    BOOLEAN bPrepare;
+    BOOLEAN bCleanup;
+    DWORD   dwError;
+
+} TEST_NET_USER_DEL, *PTEST_NET_USER_DEL;
+
+
+static
+TEST_NET_USER_DEL LocalUserDelValidationTest[] = {
+    {
+        .pszUserName   = "testuser1",
+        .bPrepare      = TRUE,
+        .bCleanup      = TRUE,
+        .dwError       = ERROR_SUCCESS
+    },
+    {
+        .pszUserName   = "testuser2",
+        .bPrepare      = TRUE,
+        .bCleanup      = TRUE,
+        .dwError       = ERROR_SUCCESS
+    },
+    {
+        .pszUserName   = "testuser2",
+        .bPrepare      = FALSE,
+        .bCleanup      = TRUE,
+        .dwError       = NERR_UserNotFound
+    },
+    {
+        .pszUserName   = "testuser1",
+        .bPrepare      = TRUE,
+        .bCleanup      = TRUE,
+        .dwError       = ERROR_SUCCESS
+    },
+    {
+        .pszUserName   = "testuser1",
+        .bPrepare      = TRUE,
+        .bCleanup      = TRUE,
+        .dwError       = ERROR_SUCCESS
+    }
+};
+
+
+typedef struct _TEST_NET_USER_SET_INFO
+{
+    DWORD   dwLevel;
+    PSTR    pszUserName;
+    PSTR    pszFullName;
+    PSTR    pszComment;
+    PSTR    pszHomeDir;
+    PSTR    pszScriptPath;
+    DWORD   dwPrivilege;
+    DWORD   dwFlags;
+    DWORD   dwExpectedFlags;
+    PSTR    pszPassword;
+    BOOLEAN bPrepare;
+    BOOLEAN bCleanup;
+    DWORD   dwError;
+    DWORD   dwParmError;
+
+} TEST_NET_USER_SET_INFO, *PTEST_NET_USER_SET_INFO;
+
+
+static
+TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = "###Testing full name###",
+        .pszComment      = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = UF_NORMAL_ACCOUNT,
+        .pszPassword     = NULL,
+        .bPrepare        = TRUE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 2,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = "###Testing comment###",
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = 0,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszHomeDir      = "###Testing homedir###",
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = 0,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = "###Testing script path###",
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = UF_NORMAL_ACCOUNT,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_GUEST,
+        .dwFlags         = 0,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_INVALID_PARAMETER,
+        .dwParmError     = USER_PRIV_PARMNUM
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_GUEST,
+        .dwFlags         = 0,
+        .pszPassword     = "newPas88-+word",
+        .bPrepare        = FALSE,
+        .bCleanup        = TRUE,
+        .dwError         = ERROR_INVALID_PARAMETER,
+        .dwParmError     = USER_PRIV_PARMNUM
+    }
+};
+
+
 DWORD
 TestGetNetUserAddTestSet(
     PCSTR                pszTestSetName,
@@ -150,6 +310,69 @@ error:
 
 
 DWORD
+TestGetNetUserDelTestSet(
+    PCSTR                pszTestSetName,
+    PTEST_NET_USER_DEL  *ppTestSet,
+    PDWORD               pdwNumTests
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PTEST_NET_USER_DEL pTestSet = NULL;
+    DWORD dwNumTests = 0;
+
+    if (strcasecmp(pszTestSetName, "validation") == 0)
+    {
+        pTestSet = LocalUserDelValidationTest;
+        dwNumTests = (sizeof(LocalUserDelValidationTest)/
+                      sizeof(LocalUserDelValidationTest[0]));
+    }
+    else
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+    }
+    BAIL_ON_WIN_ERROR(dwError);
+
+    *ppTestSet   = pTestSet;
+    *pdwNumTests = dwNumTests;
+
+error:
+    return dwError;
+}
+
+
+DWORD
+TestGetNetUserSetInfoTestSet(
+    PCSTR                    pszTestSetName,
+    PTEST_NET_USER_SET_INFO *ppTestSet,
+    PDWORD                   pdwNumTests
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PTEST_NET_USER_SET_INFO pTestSet = NULL;
+    DWORD dwNumTests = 0;
+
+    if (strcasecmp(pszTestSetName, "validation") == 0)
+    {
+        pTestSet = LocalUserSetInfoValidationTest;
+        dwNumTests = (sizeof(LocalUserSetInfoValidationTest)/
+                      sizeof(LocalUserSetInfoValidationTest[0]));
+    }
+    else
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+    }
+    BAIL_ON_WIN_ERROR(dwError);
+
+    *ppTestSet   = pTestSet;
+    *pdwNumTests = dwNumTests;
+
+error:
+    return dwError;
+}
+
+
+static
+DWORD
 CleanupAccount(
     PCWSTR  pwszHostname,
     PWSTR   pwszUsername
@@ -168,21 +391,24 @@ CleanupAccount(
 }
 
 
+static
 DWORD
 EnsureUserAccount(
     PCWSTR     pwszHostname,
     PWSTR      pwszUsername,
-    PBOOLEAN  pbCreated
+    PBOOLEAN   pbCreated
     )
 {
     DWORD err = ERROR_SUCCESS;
-    USER_INFO_0 Info = {0};
+    USER_INFO_1 Info = {0};
     DWORD dwParmError = 0;
 
-    Info.usri0_name = pwszUsername;
+    Info.usri1_name  = pwszUsername;
+    Info.usri1_priv  = USER_PRIV_USER;
+    Info.usri1_flags = UF_NORMAL_ACCOUNT;
 
     err = NetUserAdd(pwszHostname,
-                     0,
+                     1,
                      (PVOID)&Info,
                      &dwParmError);
     if (err == ERROR_SUCCESS)
@@ -199,8 +425,9 @@ EnsureUserAccount(
 }
 
 
+static
 DWORD
-CleanupAlias(
+CleanupLocalGroup(
     PCWSTR  pwszHostname,
     PWSTR   pwszAliasname
     )
@@ -218,8 +445,9 @@ CleanupAlias(
 }
 
 
+static
 DWORD
-EnsureAlias(
+EnsureLocalGroup(
     PCWSTR     pwszHostname,
     PWSTR      pwszAliasname,
     PBOOLEAN  pbCreated
@@ -737,22 +965,24 @@ CallNetUserAdd(
 
 
 static
-BOOL
+BOOLEAN
 CallNetUserSetInfo(
     PCWSTR   pwszHostname,
     DWORD    dwLevel,
     PWSTR    pwszUsername,
-    PWSTR    pwszChangedUsername,
     PWSTR    pwszFullName,
     PWSTR    pwszComment,
     PWSTR    pwszHomedir,
     PWSTR    pwszScriptPath,
     PWSTR    pwszPassword,
     DWORD    dwFlags,
+    DWORD    dwPrivilege,
+    DWORD    dwExpectedError,
+    DWORD    dwExpectedParmError,
     PBOOLEAN pbRenamed
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     USER_INFO_0 Info0 = {0};
@@ -764,12 +994,12 @@ CallNetUserSetInfo(
     USER_INFO_1007 Info1007 = {0};
     USER_INFO_1008 Info1008 = {0};
     USER_INFO_1011 Info1011 = {0};
-    DWORD dwParmErr = 0;
+    DWORD dwParmError = 0;
 
     switch (dwLevel)
     {
     case 0:
-        Info0.usri0_name        = pwszChangedUsername;
+        Info0.usri0_name        = pwszUsername;
 
         pBuffer = (PVOID)&Info0;
         break;
@@ -777,7 +1007,7 @@ CallNetUserSetInfo(
     case 1:
         Info1.usri1_name        = pwszUsername;
         Info1.usri1_password    = pwszPassword;
-        Info1.usri1_priv        = USER_PRIV_USER;
+        Info1.usri1_priv        = dwPrivilege;
         Info1.usri1_home_dir    = pwszHomedir;
         Info1.usri1_comment     = pwszComment;
         Info1.usri1_flags       = dwFlags;
@@ -789,7 +1019,7 @@ CallNetUserSetInfo(
     case 2:
         Info2.usri2_name        = pwszUsername;
         Info2.usri2_password    = pwszPassword;
-        Info2.usri2_priv        = USER_PRIV_USER;
+        Info2.usri2_priv        = dwPrivilege;
         Info2.usri2_home_dir    = pwszHomedir;
         Info2.usri2_comment     = pwszComment;
         Info2.usri2_flags       = dwFlags;
@@ -801,7 +1031,7 @@ CallNetUserSetInfo(
     case 3:
         Info3.usri3_name        = pwszUsername;
         Info3.usri3_password    = pwszPassword;
-        Info3.usri3_priv        = USER_PRIV_USER;
+        Info3.usri3_priv        = dwPrivilege;
         Info3.usri3_home_dir    = pwszHomedir;
         Info3.usri3_comment     = pwszComment;
         Info3.usri3_flags       = dwFlags;
@@ -813,7 +1043,7 @@ CallNetUserSetInfo(
     case 4:
         Info4.usri4_name        = pwszUsername;
         Info4.usri4_password    = pwszPassword;
-        Info4.usri4_priv        = USER_PRIV_USER;
+        Info4.usri4_priv        = dwPrivilege;
         Info4.usri4_home_dir    = pwszHomedir;
         Info4.usri4_comment     = pwszComment;
         Info4.usri4_flags       = dwFlags;
@@ -851,9 +1081,10 @@ CallNetUserSetInfo(
                          pwszUsername,
                          dwLevel,
                          pBuffer,
-                         &dwParmErr);
+                         &dwParmError);
 
-    ret = (err == ERROR_SUCCESS);
+    ret = (err == dwExpectedError &&
+           dwParmError == dwExpectedParmError);
 
     if (dwLevel == 0 && pbRenamed)
     {
@@ -1375,6 +1606,26 @@ TestNetUserEnum(
 }
 
 
+static
+BOOLEAN
+CallNetUserDel(
+    PCWSTR  pwszHostname,
+    PWSTR   pwszUsername,
+    DWORD   dwExpectedError
+    )
+{
+    BOOLEAN bRet = TRUE;
+    NET_API_STATUS err = ERROR_SUCCESS;
+
+    err = NetUserDel(pwszHostname,
+                     pwszUsername);
+
+    bRet = (err == dwExpectedError);
+
+    return bRet;
+}
+
+
 int
 TestNetUserAdd(
     struct test *t,
@@ -1518,33 +1769,69 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
                    const wchar16_t *user, const wchar16_t *pass,
                    struct parameter *options, int optcount)
 {
-    PCSTR pszDefaultUsername = "TestUser";
+    PCSTR pszDefaultTestSetName = "validation";
 
+    BOOL ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
-    NTSTATUS status = STATUS_SUCCESS;
     enum param_err perr = perr_success;
+    PSTR pszTestSetName = NULL;
+    PTEST_NET_USER_DEL pTestSet = NULL;
+    DWORD dwNumTests = 0;
+    DWORD i = 0;
     PWSTR pwszUsername = NULL;
     BOOLEAN bCreated = FALSE;
+    DWORD dwExpectedError = 0;
 
     TESTINFO(t, hostname, user, pass);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
-                       &pwszUsername, &pszDefaultUsername);
+    perr = fetch_value(options, optcount, "testset", pt_string,
+                       &pszTestSetName, &pszDefaultTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    PARAM_INFO("username", pt_w16string, pwszUsername);
+    PARAM_INFO("testset", pt_string, &pszTestSetName);
 
-    err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+    err = TestGetNetUserDelTestSet(pszTestSetName,
+                                   &pTestSet,
+                                   &dwNumTests);
     if (err != 0) netapi_fail(err);
 
-    CALL_NETAPI(err, NetUserDel(hostname, pwszUsername));
-    if (err != 0) netapi_fail(err);
+    for (i = 0; i < dwNumTests; i++)
+    {
+        if (pTestSet[i].pszUserName)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszUserName,
+                               &pwszUsername);
+            if (err != 0) netapi_fail(err);
+        }
+
+        dwExpectedError = pTestSet[i].dwError;
+
+        if (pTestSet[i].bPrepare)
+        {
+            err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+            if (err != 0) netapi_fail(err);
+        }
+
+        ret &= CallNetUserDel(hostname,
+                              pwszUsername,
+                              dwExpectedError);
+
+        if (pTestSet[i].bCleanup && bCreated)
+        {
+            err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+            if (err != 0) netapi_fail(err);
+        }
+
+        LW_SAFE_FREE_MEMORY(pwszUsername);
+
+        pwszUsername = NULL;
+    }
 
 done:
     LW_SAFE_FREE_MEMORY(pwszUsername);
 
-    return (err == ERROR_SUCCESS &&
-            status == STATUS_SUCCESS);
+    return (ret &&
+            err == ERROR_SUCCESS);
 }
 
 
@@ -1643,24 +1930,16 @@ TestNetUserSetInfo(
     int optcount
     )
 {
-    PCSTR pszDefaultUsername = "TestUser";
-    PCSTR pszChangedUsername = "TestUserRename";
-    PCSTR pszDefaultFullName = "Full user name";
-    PCSTR pszDefaultComment = "sample comment";
-    PCSTR pszDefaultHomedir = "c:\\";
-    PCSTR pszDefaultScriptPath = "\\\\server\\share\\dir\\script.cmd";
-    PCSTR pszDefaultPassword = NULL;
-    const DWORD dwDefaultFlags = UF_NORMAL_ACCOUNT | UF_ACCOUNTDISABLE;
-    const DWORD dwDefaultLevel = (DWORD)(-1);
+    PCSTR pszDefaultTestSetName = "validation";
 
     BOOL ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
-    DWORD dwSelectedLevels[] = { 0 };
-    DWORD dwAvailableLevels[] = { 0, 1, 2, 3, 4, 1003, 1007, 1008, 1011 };
+    PSTR pszTestSetName = NULL;
+    PTEST_NET_USER_SET_INFO pTestSet = NULL;
+    DWORD dwNumTests = 0;
     DWORD dwLevel = 0;
-    PDWORD pdwLevels = NULL;
-    DWORD dwNumLevels = 0;
+    DWORD i = 0;
     PWSTR pwszUsername = NULL;
     PWSTR pwszFullName = NULL;
     PWSTR pwszChangedUsername = NULL;
@@ -1669,122 +1948,118 @@ TestNetUserSetInfo(
     PWSTR pwszScriptPath = NULL;
     PWSTR pwszPassword = NULL;
     DWORD dwFlags = 0;
-    DWORD i = 0;
+    DWORD dwPrivilege = 0;
+    DWORD dwExpectedError = 0;
+    DWORD dwExpectedParmError = 0;
     BOOLEAN bCreated = FALSE;
     BOOLEAN bRenamed = FALSE;
 
     TESTINFO(t, hostname, user, pass);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
-                       &pwszUsername, &pszDefaultUsername);
+    perr = fetch_value(options, optcount, "testset", pt_string,
+                       &pszTestSetName, &pszDefaultTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "fullname", pt_w16string,
-                       &pwszFullName, &pszDefaultFullName);
-    if (!perr_is_ok(perr)) perr_fail(perr);
+    PARAM_INFO("testset", pt_string, &pszTestSetName);
 
-    perr = fetch_value(options, optcount, "comment", pt_w16string,
-                       &pwszComment, &pszDefaultComment);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "homedir", pt_w16string,
-                       &pwszHomedir, &pszDefaultHomedir);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "scriptpath", pt_w16string,
-                       &pwszScriptPath, &pszDefaultScriptPath);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "password", pt_w16string,
-                       &pwszPassword, &pszDefaultPassword);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "flags", pt_uint32,
-                       (UINT32*)&dwFlags, (UINT32*)&dwDefaultFlags);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    perr = fetch_value(options, optcount, "level", pt_uint32,
-                       (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
-    if (!perr_is_ok(perr)) perr_fail(perr);
-
-    err = LwMbsToWc16s(pszChangedUsername,
-                       &pwszChangedUsername);
+    err = TestGetNetUserSetInfoTestSet(pszTestSetName,
+                                       &pTestSet,
+                                       &dwNumTests);
     if (err != 0) netapi_fail(err);
-
-    PARAM_INFO("username", pt_w16string, &pwszUsername);
-    PARAM_INFO("fullname", pt_w16string, &pwszFullName);
-    PARAM_INFO("usernamechange", pt_w16string, &pwszChangedUsername);
-    PARAM_INFO("comment", pt_w16string, &pwszComment);
-    PARAM_INFO("homedir", pt_w16string, &pwszHomedir);
-    PARAM_INFO("scriptpath", pt_w16string, &pwszScriptPath);
-    PARAM_INFO("password", pt_w16string, &pwszPassword);
-    PARAM_INFO("flags", pt_uint32, &dwFlags);
-    PARAM_INFO("level", pt_uint32, &dwLevel);
-
-    if (dwLevel == (DWORD)(-1))
+    
+    for (i = 0; i < dwNumTests; i++)
     {
-        pdwLevels   = dwAvailableLevels;
-        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
-    }
-    else
-    {
-        dwSelectedLevels[0] = dwLevel;
-        pdwLevels   = dwSelectedLevels;
-        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
-    }
+        dwLevel = pTestSet[i].dwLevel;
 
-    for (i = 0; i < dwNumLevels; i++)
-    {
-        dwLevel = pdwLevels[i];
+        if (pTestSet[i].pszUserName)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszUserName,
+                               &pwszUsername);
+            if (err != 0) netapi_fail(err);
+        }
 
-        /* Don't test setting new password if there's no password supplied */
-        if (dwLevel == 1003 &&
-            pwszPassword == NULL) continue;
+        if (pTestSet[i].bPrepare)
+        {
+            err = EnsureUserAccount(hostname,
+                                    pwszUsername,
+                                    &bCreated);
+            if (err != 0) netapi_fail(err);
+        }
 
-        err = EnsureUserAccount(hostname,
-                                pwszUsername,
-                                &bCreated);
-        if (err != 0) netapi_fail(err);
+        if (pTestSet[i].pszFullName)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszFullName,
+                               &pwszFullName);
+            if (err != 0) netapi_fail(err);
+        }
 
-        err = CleanupAccount(hostname,
-                             pwszChangedUsername);
-        if (err != 0) netapi_fail(err);
+        if (pTestSet[i].pszComment)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszComment,
+                               &pwszComment);
+            if (err != 0) netapi_fail(err);
+        }
+
+        if (pTestSet[i].pszHomeDir)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszHomeDir,
+                               &pwszHomedir);
+            if (err != 0) netapi_fail(err);
+        }
+
+        if (pTestSet[i].pszScriptPath)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszScriptPath,
+                               &pwszScriptPath);
+            if (err != 0) netapi_fail(err);
+        }
+
+        if (pTestSet[i].pszPassword)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszPassword,
+                               &pwszPassword);
+            if (err != 0) netapi_fail(err);
+        }
+
+        dwFlags             = pTestSet[i].dwFlags;
+        dwPrivilege         = pTestSet[i].dwPrivilege;
+        dwExpectedError     = pTestSet[i].dwError;
+        dwExpectedParmError = pTestSet[i].dwParmError;
 
         ret &= CallNetUserSetInfo(hostname,
                                   dwLevel,
                                   pwszUsername,
-                                  pwszChangedUsername,
                                   pwszFullName,
                                   pwszComment,
                                   pwszHomedir,
                                   pwszScriptPath,
                                   pwszPassword,
                                   dwFlags,
+                                  dwPrivilege,
+                                  dwExpectedError,
+                                  dwExpectedParmError,
                                   &bRenamed);
 
-        if (bRenamed)
+        if (pTestSet[i].bCleanup)
         {
-            ret &= CallNetUserSetInfo(hostname,
-                                      0,
-                                      pwszChangedUsername,
-                                      pwszUsername,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      NULL,
-                                      0,
-                                      &bRenamed);
-
-            /* account has been renamed back to original name */
-            bRenamed = FALSE;
+            err = CleanupAccount(hostname,
+                                 pwszUsername);
+            if (err != 0) netapi_fail(err);
         }
-    }
 
-    if (bCreated)
-    {
-        err = CleanupAccount(hostname, pwszUsername);
-        if (err != 0) rpc_fail(err);
+        LW_SAFE_FREE_MEMORY(pwszUsername);
+        LW_SAFE_FREE_MEMORY(pwszFullName);
+        LW_SAFE_FREE_MEMORY(pwszComment);
+        LW_SAFE_FREE_MEMORY(pwszHomedir);
+        LW_SAFE_FREE_MEMORY(pwszScriptPath);
+        LW_SAFE_FREE_MEMORY(pwszPassword);
+
+        pwszUsername   = NULL;
+        pwszFullName   = NULL;
+        pwszComment    = NULL;
+        pwszHomedir    = NULL;
+        pwszScriptPath = NULL;
+        pwszPassword   = NULL;
     }
 
 done:
@@ -1796,7 +2071,8 @@ done:
     LW_SAFE_FREE_MEMORY(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszChangedUsername);
 
-    return ret;
+    return (ret &&
+            err == ERROR_SUCCESS);
 }
 
 
@@ -2183,8 +2459,8 @@ TestNetLocalGroupAdd(
     {
         dwLevel = pdwLevels[i];
 
-        err = CleanupAlias(hostname,
-                           pwszAliasname);
+        err = CleanupLocalGroup(hostname,
+                                pwszAliasname);
         if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupAdd(hostname,
@@ -2193,8 +2469,8 @@ TestNetLocalGroupAdd(
                                     pwszComment);
     }
 
-    err = CleanupAlias(hostname,
-                       pwszAliasname);
+    err = CleanupLocalGroup(hostname,
+                            pwszAliasname);
     if (err != 0) netapi_fail(err);
 
 done:
@@ -2289,9 +2565,9 @@ TestNetLocalGroupGetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureAlias(hostname,
-                          pwszAliasname,
-                          &bCreated);
+        err = EnsureLocalGroup(hostname,
+                               pwszAliasname,
+                               &bCreated);
         if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupGetInfo(hostname,
@@ -2300,8 +2576,8 @@ TestNetLocalGroupGetInfo(
 
         if (bCreated)
         {
-            err = CleanupAlias(hostname,
-                               pwszAliasname);
+            err = CleanupLocalGroup(hostname,
+                                    pwszAliasname);
             if (err != 0) netapi_fail(err);
         }
     }
@@ -2386,13 +2662,13 @@ TestNetLocalGroupSetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureAlias(hostname,
-                          pwszAliasname,
-                          &bCreated);
+        err = EnsureLocalGroup(hostname,
+                               pwszAliasname,
+                               &bCreated);
         if (err != 0) netapi_fail(err);
 
-        err = CleanupAlias(hostname,
-                           pwszChangedAliasname);
+        err = CleanupLocalGroup(hostname,
+                                pwszChangedAliasname);
         if (err != 0) netapi_fail(err);
 
         ret &= CallNetLocalGroupSetInfo(hostname,
@@ -2418,8 +2694,8 @@ TestNetLocalGroupSetInfo(
 
     if (bCreated)
     {
-        err = CleanupAlias(hostname,
-                           pwszAliasname);
+        err = CleanupLocalGroup(hostname,
+                                pwszAliasname);
         if (err != 0) netapi_fail(err);
     }
 
