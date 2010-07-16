@@ -1998,6 +1998,9 @@ AD_NtStatusIsConnectionError(
 
     switch (status)
     {
+    case STATUS_CONNECTION_ABORTED:
+    case STATUS_CONNECTION_DISCONNECTED:
+    case STATUS_CONNECTION_REFUSED
     case STATUS_CONNECTION_RESET:
     case STATUS_IO_TIMEOUT:
     case STATUS_ACCESS_DENIED:
