@@ -2037,6 +2037,8 @@ AD_WinErrorIsConnectionError(
 {
     switch (winError)
     {
+        case ERROR_CONNECTION_ABORTED:
+        case ERROR_CONNECTION_REFUSED:
         case ERROR_NETNAME_DELETED:
         case ERROR_SEM_TIMEOUT:
         case ERROR_ACCESS_DENIED:
