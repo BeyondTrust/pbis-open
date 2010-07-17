@@ -127,6 +127,8 @@ NetrCredentialsInit(
         HMAC_Update(&HmacCtx, Digest, sizeof(Digest));
         HMAC_Final(&HmacCtx, pCreds->session_key, &dwSessionKeyLen);
 
+        HMAC_CTX_cleanup(&HmacCtx);
+
         ntStatus = NetrEncryptChallenge(pCreds->cli_chal.data,
                                         CliChal,
                                         pCreds->session_key);

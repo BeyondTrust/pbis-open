@@ -155,6 +155,7 @@ NtlmInitializeSignature(
             {
                 if (!pData->pvBuffer)
                 {
+                    HMAC_CTX_cleanup(&c);
                     dwError = LW_ERROR_INVALID_PARAMETER;
                     BAIL_ON_LSA_ERROR(dwError);
                 }
@@ -170,6 +171,7 @@ NtlmInitializeSignature(
 
         if (!bFoundData)
         {
+            HMAC_CTX_cleanup(&c);
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
         }
@@ -178,6 +180,9 @@ NtlmInitializeSignature(
                 &c,
                 tempHmac,
                 NULL);
+
+        HMAC_CTX_cleanup(&c);
+
         // Copy only the first part of the hmac
         memcpy(pSignature->v2.encrypted.hmac,
                 tempHmac,

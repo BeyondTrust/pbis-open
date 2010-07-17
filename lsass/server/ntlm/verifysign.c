@@ -141,6 +141,7 @@ NtlmVerifySignature(
             {
                 if (!pData->pvBuffer)
                 {
+                    HMAC_CTX_cleanup(&c);
                     dwError = LW_ERROR_INVALID_PARAMETER;
                     BAIL_ON_LSA_ERROR(dwError);
                 }
@@ -155,6 +156,7 @@ NtlmVerifySignature(
         }
         if (!bFoundData)
         {
+            HMAC_CTX_cleanup(&c);
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
         }
@@ -163,6 +165,8 @@ NtlmVerifySignature(
                 &c,
                 tempHmac,
                 NULL);
+
+        HMAC_CTX_cleanup(&c);
 
         // The davenport doc says that the hmac is sealed after being generated
         // with the signing key. In reality that only happens if the key
