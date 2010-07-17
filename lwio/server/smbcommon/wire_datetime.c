@@ -198,6 +198,7 @@ WireNTTimeToSMBUTime(
 NTSTATUS
 WireSMBUTimetoNTTime(
     ULONG   ulSmbUTime,
+    BOOLEAN bAdjustToLocalTimeZone,
     PLONG64 pllNTTime
     )
 {
@@ -205,14 +206,65 @@ WireSMBUTimetoNTTime(
     struct tm stTime = {0};
     time_t tSmbUTime = ulSmbUTime;
 
-    /* Adjust to local time zone. */
-    tSmbUTime -= (tSmbUTime - mktime(gmtime_r(&tSmbUTime, &stTime)));
+    if (bAdjustToLocalTimeZone == TRUE)
+    {
+        tSmbUTime -= (tSmbUTime - mktime(gmtime_r(&tSmbUTime, &stTime)));
+    }
 
     /**
      * @todo - Handle overflow
      */
     *pllNTTime = (tSmbUTime + WIRE_NTTIME_EPOCH_DIFFERENCE_SECS) *
                                     WIRE_FACTOR_SECS_TO_HUNDREDS_OF_NANOSECS;
+
+    return ntStatus;
+}
+
+static
+ULONG64
+MinutesInTimeFromYearZero(
+    const struct tm* tmTime
+    )
+{
+    ULONG64 ulMinutes = 0;
+    ULONG ulLeapYears = 0;
+    ULONG ulYear = tmTime->tm_year + 1900;  // tm_year uses 1900 as a base year
+    
+    // We do not have to include the current year in the computation of leap
+    // years.  The current year is taken into account several lines below
+    // when adding tm_yday to the number of days.
+    ulLeapYears = (ulYear - 1) / 4 - 
+                  (ulYear - 1) / 100 + 
+                  (ulYear - 1) / 400 + 
+                  1;    // The "0" leap year
+
+    // ulMinutes variable is used to accumulate the number of minutes in the 
+    // computation below.
+    ulMinutes = ulYear * 365 + ulLeapYears + tmTime->tm_yday;
+    ulMinutes = ulMinutes * 24 + tmTime->tm_hour;
+    ulMinutes = ulMinutes * 60 + tmTime->tm_min;
+
+    return ulMinutes;
+}
+
+// Returns minutes west from UTC
+NTSTATUS
+WireSMBUTimeToTimeZone(
+    time_t utcTime,
+    PSHORT psTimezone)
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    struct tm localTime = { 0 };
+    struct tm gmTime = { 0 };
+
+    // Ignoring errors - will not fail if cannot get times from the system
+    localtime_r(&utcTime, &localTime);
+    gmtime_r(&utcTime, &gmTime);
+
+    // localtime_r takes into account DST, while gmtime_r returns UTC, where
+    // DST is not relevant.  Thus, the below calculation takes DST into account
+    *psTimezone = MinutesInTimeFromYearZero(&gmTime) - 
+                  MinutesInTimeFromYearZero(&localTime);
 
     return ntStatus;
 }

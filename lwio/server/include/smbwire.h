@@ -2970,7 +2970,14 @@ WireNTTimeToSMBUTime(
 NTSTATUS
 WireSMBUTimetoNTTime(
     ULONG   ulSmbUTime,
+    BOOLEAN bAdjustToLocalTimeZone,
     PLONG64 pllNTTime
+    );
+
+NTSTATUS
+WireSMBUTimeToTimeZone(
+    time_t Time,
+    PSHORT psTimezone
     );
 
 #endif /* __SMBWIRE_H__ */
