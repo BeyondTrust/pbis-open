@@ -75,7 +75,7 @@ function component_populate
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
-    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+    rsync -a --exclude idl ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
     # Remove dcerpcd on HP-UX, install init script otherwise
     case "${BUILD_OS_TYPE}" in
