@@ -248,16 +248,18 @@ lwmsg_protocol_get_protocol_rep(
                                   &message->type));
             }
 
-            lwmsg_strdup(
-                prot->context,
-                prot->types[i]->tag_name,
-                &message->name);
-        }
+            BAIL_ON_ERROR(status = lwmsg_strdup(
+                              prot->context,
+                              prot->types[i]->tag_name,
+                              &message->name));
+          }
     }
 
     *rep = my_rep;
 
 done:
+
+    lwmsg_type_rep_map_destroy(&map);
 
     return status;
 

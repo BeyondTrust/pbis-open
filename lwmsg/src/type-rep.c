@@ -424,7 +424,6 @@ error:
     goto done;
 }
 
-static
 void
 lwmsg_type_rep_map_destroy(
     LWMsgTypeRepMap* map

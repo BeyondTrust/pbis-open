@@ -466,6 +466,11 @@ lwmsg_type_rep_is_assignable(
     LWMsgTypeRep* right
     );
 
+void
+lwmsg_type_rep_map_destroy(
+    LWMsgTypeRepMap* map
+    );
+
 extern LWMsgTypeSpec lwmsg_type_rep_spec[];
 
 #endif
