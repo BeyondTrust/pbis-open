@@ -272,8 +272,31 @@ extern int verbose_mode;
         bRet = FALSE;                                              \
     }
 
+#define ASSERT_DWORD_EQUAL(val1, val2)                             \
+    if ((val1) != (val2))                                          \
+    {                                                              \
+        DISPLAY_ERROR(("assert failed: %s != %s\n",                \
+                       #val1, #val2));                             \
+        bRet = FALSE;                                              \
+    }
+
+
+#define ASSERT_WC16STRING_EQUAL(str1_ptr, str2_ptr)                \
+    if (((str1_ptr) == NULL && (str2_ptr) != NULL) ||              \
+        ((str1_ptr) != NULL && (str2_ptr) == NULL) ||              \
+        (((str1_ptr) != (str2_ptr)) &&                             \
+         !LwRtlWC16StringIsEqual((str1_ptr), (str2_ptr), FALSE)))  \
+    {                                                              \
+        DISPLAY_ERROR(("assert failed: %s != %s\n",                \
+                       #str1_ptr, #str2_ptr));                     \
+        bRet = FALSE;                                              \
+    }
+
+
 #define ASSERT_UNICODE_STRING_EQUAL(str1_ptr, str2_ptr)            \
-    if (!LwRtlUnicodeStringIsEqual((str1_ptr), (str2_ptr), FALSE)) \
+    if (((str1_ptr) != (str2_ptr)) &&                              \
+        !LwRtlUnicodeStringIsEqual((str1_ptr), (str2_ptr),         \
+                                   FALSE))                         \
     {                                                              \
         DISPLAY_ERROR(("assert failed: %s != %s\n",                \
                        #str1_ptr, #str2_ptr));                     \

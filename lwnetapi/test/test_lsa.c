@@ -2220,6 +2220,19 @@ TestLsaInfoPolicy(struct test *t, const wchar16_t *hostname,
 
     LsaFreeBinding(&hLsa);
 
+    CreateLsaBinding(&hLsa, hostname);
+    if (hLsa == NULL)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    bRet &= CallLsaOpenPolicy(hLsa, pwszSysName, 0, &hPolicy, NULL, NULL, NULL);
+
+    bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
+
+    LsaFreeBinding(&hLsa);
+
 done:
     LW_SAFE_FREE_MEMORY(pwszSysName);
 

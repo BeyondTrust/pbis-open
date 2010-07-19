@@ -433,7 +433,7 @@ TestNetrUnjoinDomain2(
     size_t sPasswordSize = 0;
     PWSTR pwszPasswordLE = NULL;
     rpc_transport_info_handle_t hTransportInfo = NULL;
-    DWORD dwProtSeq = 0;
+    unsigned32 ProtSeq = 0;
     DWORD iByte = 0;
     BYTE PasswordBlob[516] = {0};
     BYTE KeyInit[8] = {0};
@@ -442,6 +442,8 @@ TestNetrUnjoinDomain2(
     RC4_KEY key;
     ENC_JOIN_PASSWORD_BUFFER PasswordBuffer;
     DWORD dwUnjoinFlags = 0;
+    unsigned char *SessionKey = NULL;
+    unsigned16 SessionKeyLen = 0;
     PBYTE pSessionKey = NULL;
     DWORD dwSessionKeyLen = 0;
 
@@ -486,25 +488,28 @@ TestNetrUnjoinDomain2(
     if (hTransportInfo)
     {
         rpc_binding_inq_prot_seq(hBinding,
-                                 (unsigned32*)&dwProtSeq,
+                                 &ProtSeq,
                                  &rpcStatus);
 
-        switch (dwProtSeq)
+        switch (ProtSeq)
         {
         case rpc_c_protseq_id_ncacn_np:
             rpc_smb_transport_info_inq_session_key(
                                        hTransportInfo,
-                                       (unsigned char**)&pSessionKey,
-                                       (unsigned16*)&dwSessionKeyLen);
+                                       &SessionKey,
+                                       &SessionKeyLen);
             break;
 
         case rpc_c_protseq_id_ncalrpc:
             rpc_lrpc_transport_info_inq_session_key(
                                        hTransportInfo,
-                                       (unsigned char**)&pSessionKey,
-                                       (unsigned16*)&dwSessionKeyLen);
+                                       &SessionKey,
+                                       &SessionKeyLen);
             break;
         }
+
+        dwSessionKeyLen = SessionKeyLen;
+        pSessionKey     = SessionKey;
     }
     else
     {

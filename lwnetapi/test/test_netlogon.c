@@ -98,7 +98,7 @@ CreateNetlogonBinding(
 
     if (LwIoGetActiveCreds(NULL, &creds) != STATUS_SUCCESS) return NULL;
 
-    ntStatus = NetrInitBindingDefault(binding, host, creds, FALSE);
+    ntStatus = NetrInitBindingDefault(binding, host, creds);
     if (ntStatus)
     {
         *binding = NULL;
@@ -144,7 +144,7 @@ TestOpenSchannel(
     if (machine_acct == NULL) goto error;
 
     status = NetrOpenSchannel(hNetr, machine_acct, hostname, server, domain,
-                              computer, machpass, creds, &schn_b);
+                              domain, computer, machpass, creds, &schn_b);
     BAIL_ON_NT_STATUS(status);
 
     if (!NetrCredentialsCorrect(creds, srv_cred))
@@ -207,6 +207,7 @@ CallOpenSchannel(
                                           pwszMachineAccount,
                                           pwszMachineName,
                                           pwszServer,
+                                          pwszDomain,
                                           pwszDomain,
                                           pwszComputer,
                                           pwszMachpass,
@@ -672,8 +673,8 @@ int TestNetlogonSamLogon(struct test *t, const wchar16_t *hostname,
     }
 
     ntStatus = NetrOpenSchannel(hNetr, pwszMachAcct, hostname, pwszServer,
-                                pwszDomain, pwszComputer, pwszMachpass,
-                                &Creds, &hSchn);
+                                pwszDomain, pwszDomain, pwszComputer,
+                                pwszMachpass, &Creds, &hSchn);
     BAIL_ON_NT_STATUS(ntStatus);
 
     memset(&Query1, 0, sizeof(Query1));
@@ -874,8 +875,8 @@ int TestNetlogonSamLogoff(struct test *t, const wchar16_t *hostname,
     }
 
     ntStatus = NetrOpenSchannel(hNetr, pwszMachAcct, hostname, pwszServer,
-                                pwszDomain, pwszComputer, pwszMachpass,
-                                &Creds, &hSchn);
+                                pwszDomain, pwszDomain, pwszComputer,
+                                pwszMachpass, &Creds, &hSchn);
     BAIL_ON_NT_STATUS(ntStatus);
 
     CALL_MSRPC(ntStatus, NetrSamLogoff(hSchn, &Creds, pwszServer, pwszDomain,
@@ -1030,8 +1031,8 @@ int TestNetlogonSamLogonEx(struct test *t, const wchar16_t *hostname,
     }
 
     ntStatus = NetrOpenSchannel(hNetr, pwszMachAcct, hostname, pwszServer,
-                                pwszDomain, pwszComputer, pwszMachpass,
-                                &Creds, &hSchn);
+                                pwszDomain, pwszDomain, pwszComputer,
+                                pwszMachpass, &Creds, &hSchn);
     BAIL_ON_NT_STATUS(ntStatus);
 
     CALL_MSRPC(ntStatus, NetrSamLogonEx(hSchn, &Creds, pwszServer,
