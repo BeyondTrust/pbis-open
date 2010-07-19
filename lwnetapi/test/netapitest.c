@@ -123,10 +123,25 @@ StartTest(
 
 void display_usage()
 {
-    printf("Usage: testrpc [-v] -h hostname [-k] [-u username] [-p password]\n"
-           "               [-d domain] [-w workstation] [-r principal] [-c creds cache]\n"
-           "               [-o options] testname\n");
-    printf("\thostname - host to connect when performing a test\n");
+    printf("Usage: testrpc [-v] [-k] -h hostname\n"
+           "               [-u username]\n"
+           "               [-p password]\n"
+           "               [-d domain]\n"
+           "               [-w workstation]\n"
+           "               [-r principal]\n"
+           "               [-c creds cache]\n"
+           "               [-b binding string]\n"
+           "               [-o options]\n"
+           "               testname\n");
+    printf("\thostname       - host to connect when performing a test\n");
+    printf("\tusername       - user name (NTLM authentication)\n");
+    printf("\tpassword       - password (NTLM authentication)\n");
+    printf("\tdomain         - domain name (NTLM authentication)\n");
+    printf("\tworkstation    - workstation name (NTLM authentication)\n");
+    printf("\tprincipal      - user principal name (Kerberos authentication)\n");
+    printf("\tcreds cache    - kerberos credentials cache path (Kerberos authentication)\n");
+    printf("\tbinding string - binding string specifying rpc endpoint (rpc client functions)\n");
+    printf("\toptions        - \"key1=value1,key2=value2\" options passed to the test\n");
 }
 
 
@@ -149,6 +164,7 @@ int main(int argc, char *argv[])
     char *dom = NULL;
     char *princ = NULL;
     char *cache = NULL;
+    char *binding = NULL;
     int krb5_auth = 1;
     struct test *tests  = NULL;
     struct test *runtest = NULL;
@@ -161,7 +177,7 @@ int main(int argc, char *argv[])
 
     verbose_mode = false;
 
-    while ((opt = getopt(argc, argv, "h:o:vu:p:d:r:c:k")) != -1) {
+    while ((opt = getopt(argc, argv, "h:o:vu:p:d:r:c:kb:")) != -1) {
         switch (opt) {
         case 'h':
             host = optarg;
@@ -198,6 +214,9 @@ int main(int argc, char *argv[])
         case 'k':
             krb5_auth = 1;
             break;
+
+        case 'b':
+            binding = optarg;
 
         default:
             display_usage();
