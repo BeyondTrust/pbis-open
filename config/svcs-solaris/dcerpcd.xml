@@ -48,6 +48,10 @@
                 exec='/opt/likewise/bin/lwsm -q stop dcerpc'
                timeout_seconds='60' />
 
+        <property_group name='startd' type='framework'>
+                <propval name='duration' type='astring' value='child' />
+        </property_group>
+
         <stability value='Unstable' />
 
         <template>
