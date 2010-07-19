@@ -123,25 +123,25 @@ StartTest(
 
 void display_usage()
 {
-    printf("Usage: testrpc [-v] [-k] -h hostname\n"
-           "               [-u username]\n"
-           "               [-p password]\n"
-           "               [-d domain]\n"
-           "               [-w workstation]\n"
-           "               [-r principal]\n"
-           "               [-c creds cache]\n"
-           "               [-b binding string]\n"
-           "               [-o options]\n"
-           "               testname\n");
-    printf("\thostname       - host to connect when performing a test\n");
-    printf("\tusername       - user name (NTLM authentication)\n");
-    printf("\tpassword       - password (NTLM authentication)\n");
-    printf("\tdomain         - domain name (NTLM authentication)\n");
-    printf("\tworkstation    - workstation name (NTLM authentication)\n");
-    printf("\tprincipal      - user principal name (Kerberos authentication)\n");
-    printf("\tcreds cache    - kerberos credentials cache path (Kerberos authentication)\n");
-    printf("\tbinding string - binding string specifying rpc endpoint (rpc client functions)\n");
-    printf("\toptions        - \"key1=value1,key2=value2\" options passed to the test\n");
+    printf("Usage: netapitest [-v] [-k] -h hostname\n"
+           "\t[-u username]\n"
+           "\t[-p password]\n"
+           "\t[-d domain]\n"
+           "\t[-w workstation]\n"
+           "\t[-r principal]\n"
+           "\t[-c creds cache]\n"
+           "\t[-b binding string]\n"
+           "\t[-o options]\n"
+           "\ttestname\n");
+    printf("hostname       - host to connect when performing a test\n");
+    printf("username       - user name (NTLM authentication)\n");
+    printf("password       - password (NTLM authentication)\n");
+    printf("domain         - domain name (NTLM authentication)\n");
+    printf("workstation    - workstation name (NTLM authentication)\n");
+    printf("principal      - user principal name (Kerberos authentication)\n");
+    printf("creds cache    - kerberos credentials cache path (Kerberos authentication)\n");
+    printf("binding string - binding string specifying rpc endpoint (rpc client functions)\n");
+    printf("options        - \"key1=value1,key2=value2\" options passed to the test\n");
 }
 
 
