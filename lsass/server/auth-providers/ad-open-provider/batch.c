@@ -280,7 +280,7 @@ LsaAdBatchGetDomainFromNT4Name(
     size_t sLength = 0;
     PSTR pszDomainName = NULL;
 
-    pszSeparator = strchr(pszNT4Name, LsaGetDomainSeparator());
+    pszSeparator = strchr(pszNT4Name, LsaSrvDomainSeparator());
     if (!pszSeparator)
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
@@ -530,7 +530,7 @@ LsaAdBatchCreateBatchItem(
 
         // We only want the SAM account name portion.
 
-        pszQueryString = index(pszQueryString, LsaGetDomainSeparator());
+        pszQueryString = index(pszQueryString, LsaSrvDomainSeparator());
         if (!pszQueryString)
         {
             dwError = LW_ERROR_INVALID_PARAMETER;
@@ -687,7 +687,7 @@ LsaAdBatchIsDomainNameMatch(
                      pszDomainName,
                      sDomainNameLength) &&
         (!pszObjectNT4Name[sDomainNameLength] ||
-         (LsaGetDomainSeparator() == pszObjectNT4Name[sDomainNameLength])))
+         (LsaSrvDomainSeparator() == pszObjectNT4Name[sDomainNameLength])))
     {
         bIsMatch = TRUE;
     }
@@ -3356,9 +3356,8 @@ LsaAdBatchProcessRpcObject(
     switch (QueryType)
     {
         case LSA_AD_BATCH_QUERY_TYPE_BY_SID:
-            dwError = LsaCrackDomainQualifiedName(
+            dwError = LsaSrvCrackDomainQualifiedName(
                                  pTranslatedName->pszNT4NameOrSid,
-                                 gpADProviderData->szDomain,
                                  &pLoginNameInfo);
             BAIL_ON_LSA_ERROR(dwError);
 

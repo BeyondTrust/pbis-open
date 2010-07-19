@@ -1357,16 +1357,6 @@ PrintADConfig(
     dwError = UpPrintDword(fp, "MachinePasswordLifespan", pConfig->dwMachinePasswordSyncLifetime); 
     BAIL_ON_UP_ERROR(dwError);
 
-    szString[0] = pConfig->chSpaceReplacement;
-    szString[1] = '\0';
-    dwError = UpPrintString(fp, "SpaceReplacement", szString);
-    BAIL_ON_UP_ERROR(dwError);
-
-    szString[0] = pConfig->chDomainSeparator;
-    szString[1] = '\0';
-    dwError = UpPrintString(fp, "DomainSeparator", szString);
-    BAIL_ON_UP_ERROR(dwError);
-
     dwError = UpPrintBoolean(fp, "AssumeDefaultDomain", pConfig->bAssumeDefaultDomain);
     BAIL_ON_UP_ERROR(dwError);
 
@@ -1419,6 +1409,26 @@ PrintADConfig(
     BAIL_ON_UP_ERROR(dwError);
 
     dwError = UpPrintDword(fp, "MemoryCacheSizeCap", pConfig->dwCacheSizeCap);
+    BAIL_ON_UP_ERROR(dwError);
+
+    fputs("\n", fp);
+
+    if (fputs(
+            "[HKEY_THIS_MACHINE\\Services\\lsass\\Parameters]\n",
+            fp) < 0)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+    }
+    BAIL_ON_UP_ERROR(dwError);
+
+    szString[0] = pConfig->chSpaceReplacement;
+    szString[1] = '\0';
+    dwError = UpPrintString(fp, "SpaceReplacement", szString);
+    BAIL_ON_UP_ERROR(dwError);
+
+    szString[0] = pConfig->chDomainSeparator;
+    szString[1] = '\0';
+    dwError = UpPrintString(fp, "DomainSeparator", szString);
     BAIL_ON_UP_ERROR(dwError);
 
     fputs("\n", fp);

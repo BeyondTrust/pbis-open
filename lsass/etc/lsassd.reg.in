@@ -12,6 +12,8 @@
 "EnableEventlog"=dword:00000000
 "LogNetworkConnectionEvents"=dword:00000001
 "LogLevel"="error"
+"SpaceReplacement"="^"
+"DomainSeparator"="\\"
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\NTLM]
 "SendNTLMv2"=dword:00000000
@@ -39,8 +41,6 @@
 "LdapSignAndSeal"=dword:00000000
 "CacheEntryExpiry"=dword:00003840
 "MachinePasswordLifespan"=dword:00278D00
-"SpaceReplacement"="^"
-"DomainSeparator"="\\"
 "AssumeDefaultDomain"=dword:00000000
 "SyncSystemTime"=dword:00000001
 "CachePurgeTimeout"=dword:00278D00

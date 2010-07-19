@@ -69,7 +69,7 @@ ADMarshalGetCanonicalName(
         LwStrCharReplace(
             pszResult,
             ' ',
-            AD_GetSpaceReplacement());
+            LsaSrvSpaceReplacement());
     }
     else if(pObject->type == LSA_OBJECT_TYPE_USER &&
             !LW_IS_NULL_OR_EMPTY_STR(pObject->userInfo.pszAliasName))
@@ -82,7 +82,7 @@ ADMarshalGetCanonicalName(
         LwStrCharReplace(
             pszResult,
             ' ',
-            AD_GetSpaceReplacement());
+            LsaSrvSpaceReplacement());
     }
     else
     {
@@ -90,14 +90,14 @@ ADMarshalGetCanonicalName(
             &pszResult,
             "%s%c%s",
             pObject->pszNetbiosDomainName,
-            LsaGetDomainSeparator(),
+            LsaSrvDomainSeparator(),
             pObject->pszSamAccountName);
         BAIL_ON_LSA_ERROR(dwError);
 
         LwStrCharReplace(
             pszResult,
             ' ',
-            AD_GetSpaceReplacement());
+            LsaSrvSpaceReplacement());
 
         LwStrnToUpper(
             pszResult,

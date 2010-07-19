@@ -224,11 +224,10 @@ AD_OfflineFindGroupObjectByName(
                     &pszGroupNameCopy);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LwStrCharReplace(pszGroupNameCopy, AD_GetSpaceReplacement(), ' ');
+    LwStrCharReplace(pszGroupNameCopy, LsaSrvSpaceReplacement(), ' ');
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                         pszGroupNameCopy,
-                        gpADProviderData->szDomain,
                         &pGroupNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -244,7 +243,7 @@ cleanup:
 
     if (pGroupNameInfo)
     {
-        LsaFreeNameInfo(pGroupNameInfo);
+        LsaSrvFreeNameInfo(pGroupNameInfo);
     }
     LW_SAFE_FREE_STRING(pszGroupNameCopy);
 
@@ -408,11 +407,10 @@ AD_OfflineFindUserObjectByName(
                     &pszLoginId_copy);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LwStrCharReplace(pszLoginId_copy, AD_GetSpaceReplacement(),' ');
+    LwStrCharReplace(pszLoginId_copy, LsaSrvSpaceReplacement(),' ');
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                         pszLoginId_copy,
-                        gpADProviderData->szDomain,
                         &pUserNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -428,7 +426,7 @@ cleanup:
 
     if (pUserNameInfo)
     {
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
     }
     LW_SAFE_FREE_STRING(pszLoginId_copy);
 
@@ -547,12 +545,11 @@ AD_OfflineFindObjectsByName(
 
         LwStrCharReplace(
             pszLoginId_copy,
-            AD_GetSpaceReplacement(),
+            LsaSrvSpaceReplacement(),
             ' ');
         
-        dwError = LsaCrackDomainQualifiedName(
+        dwError = LsaSrvCrackDomainQualifiedName(
             pszLoginId_copy,
-            gpADProviderData->szDomain,
             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -622,7 +619,7 @@ AD_OfflineFindObjectsByName(
         }
 
         LW_SAFE_FREE_STRING(pszLoginId_copy);
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
         pUserNameInfo = NULL;
     }
 
@@ -634,7 +631,7 @@ cleanup:
 
     if (pUserNameInfo)
     {
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
     }
 
     return dwError;

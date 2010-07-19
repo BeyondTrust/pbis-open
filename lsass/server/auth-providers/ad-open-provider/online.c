@@ -1725,14 +1725,13 @@ AD_OnlineAuthenticateUserPam(
                     (PVOID*)&pPamAuthInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                     pParams->pszLoginName,
-                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomainNetBiosName,
+                    pLoginInfo->pszDomain,
                     &bFoundDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1819,7 +1818,7 @@ cleanup:
 
     if (pLoginInfo)
     {
-        LsaFreeNameInfo(pLoginInfo);
+        LsaSrvFreeNameInfo(pLoginInfo);
     }
 
     ADCacheSafeFreeObject(&pUserInfo);
@@ -2619,11 +2618,10 @@ AD_OnlineFindGroupObjectByName(
                     &pszGroupName_copy);
     BAIL_ON_LSA_ERROR(dwError);
 
-    LwStrCharReplace(pszGroupName_copy, AD_GetSpaceReplacement(),' ');
+    LwStrCharReplace(pszGroupName_copy, LsaSrvSpaceReplacement(),' ');
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                         pszGroupName_copy,
-                        gpADProviderData->szDomain,
                         &pGroupNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2676,7 +2674,7 @@ cleanup:
 
     if (pGroupNameInfo)
     {
-        LsaFreeNameInfo(pGroupNameInfo);
+        LsaSrvFreeNameInfo(pGroupNameInfo);
     }
     LW_SAFE_FREE_STRING(pszGroupName_copy);
 
@@ -2704,14 +2702,13 @@ AD_OnlineChangePassword(
     PLWNET_DC_INFO pDcInfo = NULL;
     DWORD dwGoodUntilTime = 0;
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                     pszLoginId,
-                    gpADProviderData->szDomain,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomainNetBiosName,
+                    pLoginInfo->pszDomain,
                     &bFoundDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2804,7 +2801,7 @@ cleanup:
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
     if (pLoginInfo)
     {
-        LsaFreeNameInfo(pLoginInfo);
+        LsaSrvFreeNameInfo(pLoginInfo);
     }
 
     ADCacheSafeFreeObject(&pCachedUser);
@@ -3871,12 +3868,11 @@ AD_OnlineFindUserObjectByName(
 
     LwStrCharReplace(
             pszLoginId_copy,
-            AD_GetSpaceReplacement(),
+            LsaSrvSpaceReplacement(),
             ' ');
 
-    dwError = LsaCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                         pszLoginId_copy,
-                        gpADProviderData->szDomain,
                         &pUserNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3920,7 +3916,7 @@ cleanup:
 
     if (pUserNameInfo)
     {
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
     }
     LW_SAFE_FREE_STRING(pszLoginId_copy);
 
@@ -4279,12 +4275,11 @@ AD_OnlineFindObjectsByName(
 
         LwStrCharReplace(
             pszLoginId_copy,
-            AD_GetSpaceReplacement(),
+            LsaSrvSpaceReplacement(),
             ' ');
         
-        dwError = LsaCrackDomainQualifiedName(
+        dwError = LsaSrvCrackDomainQualifiedName(
             pszLoginId_copy,
-            gpADProviderData->szDomain,
             &pUserNameInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -4332,7 +4327,7 @@ AD_OnlineFindObjectsByName(
                 AD_ShouldAssumeDefaultDomain())
             {
                 LW_SAFE_FREE_STRING(pszLoginId_copy);
-                LsaFreeNameInfo(pUserNameInfo);
+                LsaSrvFreeNameInfo(pUserNameInfo);
                 pUserNameInfo = NULL;
 
                 dwError = LwAllocateStringPrintf(
@@ -4344,12 +4339,11 @@ AD_OnlineFindObjectsByName(
 
                 LwStrCharReplace(
                     pszLoginId_copy,
-                    AD_GetSpaceReplacement(),
+                    LsaSrvSpaceReplacement(),
                     ' ');
 
-                dwError = LsaCrackDomainQualifiedName(
+                dwError = LsaSrvCrackDomainQualifiedName(
                     pszLoginId_copy,
-                    gpADProviderData->szDomain,
                     &pUserNameInfo);
                 BAIL_ON_LSA_ERROR(dwError);
 
@@ -4382,7 +4376,7 @@ AD_OnlineFindObjectsByName(
         }
 
         LW_SAFE_FREE_STRING(pszLoginId_copy);
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
         pUserNameInfo = NULL;
     }
 
@@ -4394,7 +4388,7 @@ cleanup:
 
     if (pUserNameInfo)
     {
-        LsaFreeNameInfo(pUserNameInfo);
+        LsaSrvFreeNameInfo(pUserNameInfo);
     }
 
     return dwError;

@@ -608,7 +608,7 @@ LsaAdBatchMarshal(
             pObject->type == LSA_OBJECT_TYPE_USER ?
             pObject->userInfo.pszAliasName : pObject->groupInfo.pszAliasName,
             ' ',
-            AD_GetSpaceReplacement());
+            LsaSrvSpaceReplacement());
     }
 
 cleanup:

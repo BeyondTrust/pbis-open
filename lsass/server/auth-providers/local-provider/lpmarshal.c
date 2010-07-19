@@ -886,7 +886,7 @@ LocalMarshalEntryToSecurityObject(
             &pObject->userInfo.pszUnixName,
             "%s%c%s",
             pObject->pszNetbiosDomainName,
-            LsaGetDomainSeparator(),
+            LsaSrvDomainSeparator(),
             pObject->pszSamAccountName);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -964,7 +964,7 @@ LocalMarshalEntryToSecurityObject(
             &pObject->groupInfo.pszUnixName,
             "%s%c%s",
             pObject->pszNetbiosDomainName,
-            LsaGetDomainSeparator(),
+            LsaSrvDomainSeparator(),
             pObject->pszSamAccountName);
         BAIL_ON_LSA_ERROR(dwError);
         break;

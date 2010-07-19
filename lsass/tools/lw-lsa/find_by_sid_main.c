@@ -73,50 +73,18 @@ ShowUsage();
 
 static
 DWORD
-LookupUserByName(
+PrintUser(
     HANDLE hLsaConnection,
-    PCSTR  pszDomain,
-    PCSTR  pszSamAccountName,
+    PLSA_SECURITY_OBJECT pObject,
     DWORD  dwInfoLevel
-    );
-
-static
-VOID
-PrintUserInfo_0(
-    PLSA_USER_INFO_0 pUserInfo
-    );
-
-static
-VOID
-PrintUserInfo_1(
-    PLSA_USER_INFO_1 pUserInfo
-    );
-
-static
-VOID
-PrintUserInfo_2(
-    PLSA_USER_INFO_2 pUserInfo
     );
 
 static
 DWORD
-LookupGroupByName(
+PrintGroup(
     HANDLE hLsaConnection,
-    PCSTR  pszDomain,
-    PCSTR  pszSamAccountName,
+    PLSA_SECURITY_OBJECT pObject,
     DWORD  dwInfoLevel
-    );
-
-static
-VOID
-PrintGroupInfo_0(
-    PLSA_GROUP_INFO_0 pGroupInfo
-    );
-
-static
-VOID
-PrintGroupInfo_1(
-    PLSA_GROUP_INFO_1 pGroupInfo
     );
 
 static
@@ -138,8 +106,8 @@ find_by_sid_main(
     size_t  dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
     size_t  stSids = 1;
-    PLSA_SID_INFO pSidInfoList = NULL;
-    CHAR  chDomainSeparator = 0;
+    LSA_QUERY_LIST QueryList;
+    PLSA_SECURITY_OBJECT* ppObjects = NULL;
 
     dwError = ParseArgs(argc, argv, &pszSID, &dwInfoLevel);
     BAIL_ON_LSA_ERROR(dwError);
@@ -147,36 +115,40 @@ find_by_sid_main(
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetNamesBySidList(
-                    hLsaConnection,
-                    stSids,
-                    &pszSID,
-                    &pSidInfoList,
-                    &chDomainSeparator);
-    BAIL_ON_LSA_ERROR(dwError);
+    QueryList.ppszStrings = (PCSTR*) &pszSID;
 
-    dwError = LsaSetDomainSeparator(
-                chDomainSeparator);
+    dwError = LsaFindObjects(
+        hLsaConnection,
+        NULL,
+        0,
+        LSA_OBJECT_TYPE_UNDEFINED,
+        LSA_QUERY_TYPE_BY_SID,
+        (DWORD) stSids,
+        QueryList,
+        &ppObjects);
     BAIL_ON_LSA_ERROR(dwError);
+    if (ppObjects[0] == NULL)
+    {
+        dwError = LW_ERROR_NO_SUCH_OBJECT;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
-    switch (pSidInfoList[0].accountType)
+    switch (ppObjects[0]->type)
     {
         case AccountType_Group:
 
-            dwError = LookupGroupByName(
+            dwError = PrintGroup(
                             hLsaConnection,
-                            pSidInfoList[0].pszDomainName,
-                            pSidInfoList[0].pszSamAccountName,
+                            ppObjects[0],
                             dwInfoLevel);
 
             break;
 
         case AccountType_User:
 
-            dwError = LookupUserByName(
+            dwError = PrintUser(
                             hLsaConnection,
-                            pSidInfoList[0].pszDomainName,
-                            pSidInfoList[0].pszSamAccountName,
+                            ppObjects[0],
                             dwInfoLevel);
 
             break;
@@ -196,11 +168,6 @@ find_by_sid_main(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-
-    if (pSidInfoList)
-    {
-        LsaFreeSIDInfoList(pSidInfoList, stSids);
-    }
 
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
@@ -343,272 +310,185 @@ ShowUsage()
 }
 
 DWORD
-LookupUserByName(
+PrintUser(
     HANDLE hLsaConnection,
-    PCSTR  pszDomain,
-    PCSTR  pszSamAccountName,
+    PLSA_SECURITY_OBJECT pObject,
     DWORD  dwInfoLevel
     )
 {
     DWORD dwError = 0;
-    PSTR  pszUsername = NULL;
-    PVOID pUserInfo = NULL;
+    struct timeval current_tv;
+    UINT64 u64current_NTtime = 0;
 
-    dwError = LwAllocateStringPrintf(
-                    &pszUsername,
-                    "%s%c%s",
-                    pszDomain,
-                    LsaGetDomainSeparator(),
-                    pszSamAccountName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaFindUserByName(
-                    hLsaConnection,
-                    pszUsername,
-                    dwInfoLevel,
-                    &pUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch(dwInfoLevel)
+    if (gettimeofday(&current_tv, NULL) < 0)
     {
-        case 0:
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    u64current_NTtime = (current_tv.tv_sec + 11644473600LL) * 10000000LL;
 
-            PrintUserInfo_0((PLSA_USER_INFO_0)pUserInfo);
-            break;
+    if (dwInfoLevel > 2)
+    {
+        dwError = LW_ERROR_INVALID_USER_INFO_LEVEL;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (pObject->type != LSA_OBJECT_TYPE_USER)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (!pObject->enabled)
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
-        case 1:
+    fprintf(stdout, "User info (Level-%d):\n", dwInfoLevel);
 
-            PrintUserInfo_1((PLSA_USER_INFO_1)pUserInfo);
-            break;
+    fprintf(stdout, "====================\n");
+    fprintf(stdout, "Name:     %s\n",
+            LW_PRINTF_STRING(pObject->userInfo.pszUnixName));
+    fprintf(stdout, "SID:      %s\n",
+            LW_PRINTF_STRING(pObject->pszObjectSid));
+    fprintf(stdout, "Uid:      %u\n",
+            pObject->userInfo.uid);
 
-        case 2:
+    if (dwInfoLevel >= 1)
+    {
+        fprintf(stdout, "UPN:           %s\n",
+                LW_PRINTF_STRING(pObject->userInfo.pszUPN));
+        fprintf(stdout, "Generated UPN: %s\n",
+                pObject->userInfo.bIsGeneratedUPN ? "YES" : "NO");
+    }
 
-            PrintUserInfo_2((PLSA_USER_INFO_2)pUserInfo);
-            break;
+    fprintf(stdout, "Gid:      %u\n",
+            pObject->userInfo.gid);
+    fprintf(stdout, "Gecos:    %s\n",
+            LW_PRINTF_STRING(pObject->userInfo.pszGecos));
+    fprintf(stdout, "Shell:    %s\n",
+            LW_PRINTF_STRING(pObject->userInfo.pszShell));
+    fprintf(stdout, "Home dir: %s\n",
+            LW_PRINTF_STRING(pObject->userInfo.pszHomedir));
 
-        default:
+    if (dwInfoLevel >= 1)
+    {
+        fprintf(stdout, "LMHash length: %u\n", pObject->userInfo.dwLmHashLen);
+        fprintf(stdout, "NTHash length: %u\n", pObject->userInfo.dwNtHashLen);
+        fprintf(stdout, "Local User:    %s\n", pObject->bIsLocal ? "YES" : "NO");
+    }
 
-            dwError = LW_ERROR_INVALID_USER_INFO_LEVEL;
-            BAIL_ON_LSA_ERROR(dwError);
-
-            break;
+    if (dwInfoLevel >= 2)
+    {
+        fprintf(stdout, "Account disabled (or locked): %s\n",
+                pObject->userInfo.bAccountDisabled ? "TRUE" : "FALSE");
+        fprintf(stdout, "Account Expired:              %s\n",
+                pObject->userInfo.bAccountExpired ? "TRUE" : "FALSE");
+        fprintf(stdout, "Password never expires:       %s\n",
+                pObject->userInfo.bPasswordNeverExpires ? "TRUE" : "FALSE");
+        fprintf(stdout, "Password Expired:             %s\n",
+                pObject->userInfo.bPasswordExpired ? "TRUE" : "FALSE");
+        fprintf(stdout, "Prompt for password change:   %s\n",
+                pObject->userInfo.bPromptPasswordChange ? "YES" : "NO");
+        fprintf(stdout, "User can change password:     %s\n",
+                pObject->userInfo.bUserCanChangePassword ? "YES" : "NO");
+        if (pObject->userInfo.bIsAccountInfoKnown)
+        {
+            fprintf(stdout, "Days till password expires:   %llu\n",
+                    (unsigned long long)(pObject->userInfo.qwPwdExpires -
+                        u64current_NTtime) /
+                    (10000000LL * 24*60*60));
+        }
+        else
+        {
+            fprintf(stdout, "Days till password expires:   unknown\n");
+        }
     }
 
 cleanup:
-
-    LW_SAFE_FREE_STRING(pszUsername);
-
-    if (pUserInfo)
-    {
-        LsaFreeUserInfo(dwInfoLevel, pUserInfo);
-    }
-
     return dwError;
 
 error:
-
     goto cleanup;
-}
-
-VOID
-PrintUserInfo_0(
-    PLSA_USER_INFO_0 pUserInfo
-    )
-{
-    fprintf(stdout, "User info (Level-0):\n");
-    fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:     %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszName) ? "<null>" : pUserInfo->pszName);
-    fprintf(stdout, "SID:      %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszSid) ? "<null>" : pUserInfo->pszSid);
-    fprintf(stdout, "Uid:      %u\n", (unsigned int)pUserInfo->uid);
-    fprintf(stdout, "Gid:      %u\n", (unsigned int)pUserInfo->gid);
-    fprintf(stdout, "Gecos:    %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszGecos) ? "<null>" : pUserInfo->pszGecos);
-    fprintf(stdout, "Shell:    %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
-    fprintf(stdout, "Home dir: %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-}
-
-VOID
-PrintUserInfo_1(
-    PLSA_USER_INFO_1 pUserInfo
-    )
-{
-    fprintf(stdout, "User info (Level-1):\n");
-    fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:          %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszName) ? "<null>" : pUserInfo->pszName);
-    fprintf(stdout, "SID:           %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszSid) ? "<null>" : pUserInfo->pszSid);
-    fprintf(stdout, "UPN:           %s\n",
-                    LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszUPN) ? "<null>" : pUserInfo->pszUPN);
-    fprintf(stdout, "Generated UPN: %s\n", pUserInfo->bIsGeneratedUPN ? "YES" : "NO");
-    fprintf(stdout, "Uid:           %u\n", (unsigned int)pUserInfo->uid);
-    fprintf(stdout, "Gid:           %u\n", (unsigned int)pUserInfo->gid);
-    fprintf(stdout, "Gecos:         %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszGecos) ? "<null>" : pUserInfo->pszGecos);
-    fprintf(stdout, "Shell:         %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
-    fprintf(stdout, "Home dir:      %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-    fprintf(stdout, "LMHash length: %u\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length: %u\n", pUserInfo->dwNTHashLen);
-    fprintf(stdout, "Local User:    %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
-}
-
-VOID
-PrintUserInfo_2(
-    PLSA_USER_INFO_2 pUserInfo
-    )
-{
-    fprintf(stdout, "User info (Level-2):\n");
-    fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:                         %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszName) ? "<null>" : pUserInfo->pszName);
-    fprintf(stdout, "SID:                          %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszSid) ? "<null>" : pUserInfo->pszSid);
-    fprintf(stdout, "UPN:                          %s\n",
-                    LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszUPN) ? "<null>" : pUserInfo->pszUPN);
-    fprintf(stdout, "Generated UPN:                %s\n", pUserInfo->bIsGeneratedUPN ? "YES" : "NO");
-    fprintf(stdout, "Uid:                          %u\n", (unsigned int)pUserInfo->uid);
-    fprintf(stdout, "Gid:                          %u\n", (unsigned int)pUserInfo->gid);
-    fprintf(stdout, "Gecos:                        %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszGecos) ? "<null>" : pUserInfo->pszGecos);
-    fprintf(stdout, "Shell:                        %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszShell) ? "<null>" : pUserInfo->pszShell);
-    fprintf(stdout, "Home dir:                     %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pUserInfo->pszHomedir) ? "<null>" : pUserInfo->pszHomedir);
-    fprintf(stdout, "LMHash length:                %u\n", pUserInfo->dwLMHashLen);
-    fprintf(stdout, "NTHash length:                %u\n", pUserInfo->dwNTHashLen);
-    fprintf(stdout, "Local User:                   %s\n", pUserInfo->bIsLocalUser ? "YES" : "NO");
-    fprintf(stdout, "Account disabled (or locked): %s\n",
-            pUserInfo->bAccountDisabled ? "TRUE" : "FALSE");
-    fprintf(stdout, "Account Expired:              %s\n",
-            pUserInfo->bAccountExpired ? "TRUE" : "FALSE");
-    fprintf(stdout, "Password never expires:       %s\n",
-            pUserInfo->bPasswordNeverExpires ? "TRUE" : "FALSE");
-    fprintf(stdout, "Password Expired:             %s\n",
-            pUserInfo->bPasswordExpired ? "TRUE" : "FALSE");
-    fprintf(stdout, "Prompt for password change:   %s\n",
-            pUserInfo->bPromptPasswordChange ? "YES" : "NO");
-    fprintf(stdout, "User can change password:     %s\n",
-            pUserInfo->bUserCanChangePassword ? "YES" : "NO");
-    fprintf(stdout, "Days till password expires:   %u\n",
-            pUserInfo->dwDaysToPasswordExpiry);
 }
 
 DWORD
-LookupGroupByName(
+PrintGroup(
     HANDLE hLsaConnection,
-    PCSTR  pszDomain,
-    PCSTR  pszSamAccountName,
+    PLSA_SECURITY_OBJECT pObject,
     DWORD  dwInfoLevel
     )
 {
     DWORD dwError = 0;
-    PSTR  pszGroupname = NULL;
-    PVOID pGroupInfo = NULL;
+    DWORD dwMemberCount = 0;
+    PLSA_SECURITY_OBJECT* ppMembers = NULL;
+    DWORD iMember = 0;
 
-    dwError = LwAllocateStringPrintf(
-                    &pszGroupname,
-                    "%s%c%s",
-                    pszDomain,
-                    LsaGetDomainSeparator(),
-                    pszSamAccountName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaFindGroupByName(
-                    hLsaConnection,
-                    pszGroupname,
-                    0,
-                    dwInfoLevel,
-                    &pGroupInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    switch(dwInfoLevel)
+    if (dwInfoLevel > 1)
     {
-        case 0:
+        dwError = LW_ERROR_INVALID_GROUP_INFO_LEVEL;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (pObject->type != LSA_OBJECT_TYPE_GROUP)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    if (!pObject->enabled)
+    {
+        dwError = LW_ERROR_NO_SUCH_GROUP;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
-            PrintGroupInfo_0((PLSA_GROUP_INFO_0)pGroupInfo);
-            break;
+    fprintf(stdout, "Group info (Level-%d):\n", dwInfoLevel);
+    if (dwInfoLevel > 1)
+    fprintf(stdout, "====================\n");
+    fprintf(stdout, "Name:     %s\n",
+            LW_PRINTF_STRING(pObject->groupInfo.pszUnixName));
+    fprintf(stdout, "Gid:      %u\n", (unsigned int)pObject->groupInfo.gid);
+    fprintf(stdout, "SID:      %s\n",
+            LW_PRINTF_STRING(pObject->pszObjectSid));
 
-        case 1:
+    if (dwInfoLevel >= 1)
+    {
+        fprintf(stdout, "Members:\n");
 
-            PrintGroupInfo_1((PLSA_GROUP_INFO_1)pGroupInfo);
-            break;
+        dwError = LsaQueryExpandedGroupMembers(
+            hLsaConnection,
+            NULL,
+            0,
+            LSA_OBJECT_TYPE_USER,
+            pObject->pszObjectSid,
+            &dwMemberCount,
+            &ppMembers);
+        BAIL_ON_LSA_ERROR(dwError);
 
-        default:
-
-            dwError = LW_ERROR_INVALID_GROUP_INFO_LEVEL;
-            BAIL_ON_LSA_ERROR(dwError);
-
-            break;
+        for (iMember = 0; iMember < dwMemberCount; iMember++)
+        {
+            if (ppMembers[iMember]->type == LSA_OBJECT_TYPE_USER &&
+                    ppMembers[iMember]->enabled)
+            {
+              if (iMember)
+              {
+                 fprintf(stdout, "\n%s", LW_PRINTF_STRING(ppMembers[iMember]->userInfo.pszUnixName));
+              }
+              else
+              {
+                 fprintf(stdout, "%s", LW_PRINTF_STRING(ppMembers[iMember]->userInfo.pszUnixName));
+              }
+          }
+        }
+        fprintf(stdout, "\n");
     }
 
 cleanup:
-
-    LW_SAFE_FREE_STRING(pszGroupname);
-
-    if (pGroupInfo)
+    if (ppMembers)
     {
-        LsaFreeGroupInfo(dwInfoLevel, pGroupInfo);
+        LsaUtilFreeSecurityObjectList(dwMemberCount, ppMembers);
     }
-
     return dwError;
 
 error:
-
     goto cleanup;
-}
-
-VOID
-PrintGroupInfo_0(
-    PLSA_GROUP_INFO_0 pGroupInfo
-    )
-{
-    fprintf(stdout, "Group info (Level-0):\n");
-    fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:     %s\n",
-                LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszName) ? "<null>" : pGroupInfo->pszName);
-    fprintf(stdout, "Gid:      %u\n", (unsigned int)pGroupInfo->gid);
-    fprintf(stdout, "SID:     %s\n",
-                    LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszSid) ? "<null>" : pGroupInfo->pszSid);
-}
-
-VOID
-PrintGroupInfo_1(
-    PLSA_GROUP_INFO_1 pGroupInfo
-    )
-{
-    PSTR* ppszMembers = NULL;
-    DWORD iMember = 0;
-
-    fprintf(stdout, "Group info (Level-1):\n");
-    fprintf(stdout, "====================\n");
-    fprintf(stdout, "Name:     %s\n",
-            LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszName) ? "<null>" : pGroupInfo->pszName);
-    fprintf(stdout, "Gid:      %u\n", (unsigned int)pGroupInfo->gid);
-    fprintf(stdout, "SID:     %s\n",
-                        LW_IS_NULL_OR_EMPTY_STR(pGroupInfo->pszSid) ? "<null>" : pGroupInfo->pszSid);
-
-    fprintf(stdout, "Members:\n");
-
-    ppszMembers = pGroupInfo->ppszMembers;
-
-    if (ppszMembers){
-    while (!LW_IS_NULL_OR_EMPTY_STR(*ppszMembers)) {
-          if (iMember) {
-             fprintf(stdout, "\n%s", *ppszMembers);
-          } else {
-             fprintf(stdout, "%s", *ppszMembers);
-          }
-          iMember++;
-          ppszMembers++;
-       }
-    }
-    fprintf(stdout, "\n");
 }
 
 DWORD

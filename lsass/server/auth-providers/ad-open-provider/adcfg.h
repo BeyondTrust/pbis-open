@@ -96,11 +96,6 @@ AD_GetUnprovisionedModeHomedirTemplate(
     PSTR* ppszUnprovisionedModeHomedirTemplate
     );
 
-CHAR
-AD_GetSpaceReplacement(
-    VOID
-    );
-
 DWORD
 AD_GetCacheReaperTimeoutSecs(
     VOID

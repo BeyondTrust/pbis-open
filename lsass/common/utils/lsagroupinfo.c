@@ -479,22 +479,9 @@ LsaValidateGroupName(
     )
 {
     DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pParsedName = NULL;
     size_t sNameLen = 0;
 
-    dwError = LsaCrackDomainQualifiedName(
-                pszName,
-                "unset",
-                &pParsedName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (pParsedName->pszName == NULL)
-    {
-        dwError = LW_ERROR_INVALID_GROUP_NAME;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    sNameLen = strlen(pParsedName->pszName);
+    sNameLen = strlen(pszName);
     if (sNameLen > LSA_MAX_GROUP_NAME_LENGTH || sNameLen == 0)
     {
         dwError = LW_ERROR_INVALID_GROUP_NAME;
@@ -502,11 +489,6 @@ LsaValidateGroupName(
     }
 
 cleanup:
-
-    if (pParsedName != NULL)
-    {
-        LsaFreeNameInfo(pParsedName);
-    }
     return dwError;
 
 error:

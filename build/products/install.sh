@@ -996,6 +996,21 @@ restore_5_0123_configuration()
     import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
 }
 
+fix_old_registry()
+{
+    DomainSeparator="`${PREFIX}/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`"
+    SpaceReplacement="`${PREFIX}/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`"
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
+        fi
+        ${PREFIX}/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+    fi
+    if [ -n "${SpaceReplacement}" ]; then
+        ${PREFIX}/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
 # Fix registry settings that can't be upgraded automatically
 fix_5_4_configuration()
 {
@@ -1146,6 +1161,8 @@ do_postinstall()
 
     # Update AD provider path in 5.4 registry to 6.0 name.
     fix_5_4_configuration
+
+    fix_old_registry
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
     stop_daemon lwsmd

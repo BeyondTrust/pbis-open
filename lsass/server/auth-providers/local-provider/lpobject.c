@@ -376,7 +376,7 @@ LocalDirFindObjectsInternal(
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
 
-            if (!pLoginInfo->pszDomainNetBiosName)
+            if (!pLoginInfo->pszDomain)
             {
                 continue;
             }
@@ -384,7 +384,7 @@ LocalDirFindObjectsInternal(
             dwError = LwAllocateStringPrintf(
                 &pszFilter,
                 pszFilterTemplateQualified,
-                pLoginInfo->pszDomainNetBiosName,
+                pLoginInfo->pszDomain,
                 pLoginInfo->pszName,
                 pszFilterType ? pszFilterType : "");
             BAIL_ON_LSA_ERROR(dwError);
@@ -479,7 +479,7 @@ LocalDirFindObjectsInternal(
 
         if (pLoginInfo)
         {
-            LsaFreeNameInfo(pLoginInfo);
+            LsaSrvFreeNameInfo(pLoginInfo);
             pLoginInfo = NULL;
         }
     }
@@ -497,7 +497,7 @@ cleanup:
 
     if (pLoginInfo)
     {
-        LsaFreeNameInfo(pLoginInfo);
+        LsaSrvFreeNameInfo(pLoginInfo);
     }
 
     return dwError;
@@ -1323,7 +1323,7 @@ cleanup:
 
     if (pLoginInfo)
     {
-        LsaFreeNameInfo(pLoginInfo);
+        LsaSrvFreeNameInfo(pLoginInfo);
     }
 
     LsaUtilFreeSecurityObjectList(1, ppObjects);

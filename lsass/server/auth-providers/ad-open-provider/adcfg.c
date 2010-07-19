@@ -51,30 +51,6 @@
 
 static
 DWORD
-AD_CheckPunctuationChar(
-    IN PCSTR pszName,
-    IN PCSTR pszValue,
-    IN BOOLEAN bAllowSpace
-    );
-
-static
-DWORD
-AD_SetConfig_SpaceReplacement(
-    PLSA_AD_CONFIG pConfig,
-    PCSTR          pszName,
-    PCSTR          pszValue
-    );
-
-static
-DWORD
-AD_SetConfig_DomainSeparator(
-    PLSA_AD_CONFIG pConfig,
-    PCSTR          pszName,
-    PCSTR          pszValue
-    );
-
-static
-DWORD
 AD_SetConfig_Umask(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
@@ -127,14 +103,6 @@ AD_InitializeConfig(
     pConfig->bCreateK5Login   = TRUE;
     pConfig->bLDAPSignAndSeal = FALSE;
     pConfig->bSyncSystemTime  = TRUE;
-    /* Leave chSpaceReplacement and chDomainSeparator set as '\0' for now.
-     * After the config file is parsed, they will be assigned default values
-     * if they are still set to '\0'.
-     *
-     * This is done so that their values
-     * can be swapped (chSpaceReplacement=\ chDomainSeparator=^), but not
-     * assigned to the same value.
-     */
     pConfig->dwCacheReaperTimeoutSecs = AD_CACHE_REAPER_TIMEOUT_DEFAULT_SECS;
     pConfig->dwCacheEntryExpirySecs   = AD_CACHE_ENTRY_EXPIRY_DEFAULT_SECS;
     pConfig->dwCacheSizeCap           = 0;
@@ -230,8 +198,6 @@ AD_ReadRegistry(
     )
 {
     DWORD dwError = 0;
-    PSTR pszSpaceReplacement = NULL;
-    PSTR pszDomainSeparator = NULL;
     PSTR pszUmask = NULL;
     PSTR pszUnresolvedMemberList = NULL;
     DWORD dwMachinePasswordSyncLifetime = 0;
@@ -249,24 +215,6 @@ AD_ReadRegistry(
 
     LSA_CONFIG ADConfigDescription[] =
     {
-        {
-            "SpaceReplacement",
-            TRUE,
-            LsaTypeString,
-            0,
-            MAXDWORD,
-            NULL,
-            &pszSpaceReplacement
-        },
-        {
-            "DomainSeparator",
-            TRUE,
-            LsaTypeString,
-            0,
-            MAXDWORD,
-            NULL,
-            &pszDomainSeparator
-        },
         {
             "HomeDirUmask",
             TRUE,
@@ -526,17 +474,6 @@ AD_ReadRegistry(
                 sizeof(LsaConfigDescription)/sizeof(LsaConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* Special handling is used for some values. */
-    AD_SetConfig_SpaceReplacement(
-            &StagingConfig,
-            "SpaceReplacement",
-            pszSpaceReplacement);
-
-    AD_SetConfig_DomainSeparator(
-            &StagingConfig,
-            "DomainSeparator",
-            pszDomainSeparator);
-
     AD_SetConfig_Umask(
             &StagingConfig,
             "HomeDirUmask",
@@ -552,31 +489,9 @@ AD_ReadRegistry(
             "MachinePasswordLifespan",
             dwMachinePasswordSyncLifetime);
 
-    if (StagingConfig.chSpaceReplacement == 0)
-    {
-        StagingConfig.chSpaceReplacement = AD_SPACE_REPLACEMENT_DEFAULT;
-    }
-    if (StagingConfig.chDomainSeparator == 0)
-    {
-        StagingConfig.chDomainSeparator = LSA_DOMAIN_SEPARATOR_DEFAULT;
-    }
-
-    if (StagingConfig.chSpaceReplacement == StagingConfig.chDomainSeparator)
-    {
-        LSA_LOG_ERROR("Error: %s and %s are both set to '%c' in the config file. Their values must be unique.",
-                        "SpaceReplacement",
-                        "DomainSeparator",
-                        StagingConfig.chSpaceReplacement);
-        dwError = LW_ERROR_INVALID_CONFIG;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
     AD_TransferConfigContents(&StagingConfig, pConfig);
 
 cleanup:
-
-    LW_SAFE_FREE_STRING(pszSpaceReplacement);
-    LW_SAFE_FREE_STRING(pszDomainSeparator);
     LW_SAFE_FREE_STRING(pszUmask);
     LW_SAFE_FREE_STRING(pszUnresolvedMemberList);
 
@@ -587,122 +502,6 @@ cleanup:
 error:
     AD_FreeConfigContents(pConfig);
     goto cleanup;
-}
-
-static
-DWORD
-AD_CheckPunctuationChar(
-    IN PCSTR pszName,
-    IN PCSTR pszValue,
-    IN BOOLEAN bAllowSpace
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-
-    BAIL_ON_INVALID_STRING(pszValue);
-
-    if (pszValue[0] == 0 || pszValue[1] != 0)
-    {
-        LSA_LOG_ERROR(
-                "Error: '%s' is an invalid setting for %s. "
-                "%s may only be set to a single character.",
-                pszValue,
-                pszName,
-                pszName);
-        dwError = LW_ERROR_INVALID_CONFIG;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (!ispunct((int)pszValue[0]) && !(bAllowSpace && pszValue[0] == ' '))
-    {
-        LSA_LOG_ERROR(
-                "Error: %s must be set to a punctuation character%s; the value provided is '%s'.",
-                pszName,
-                bAllowSpace ? " or space" : "",
-                pszValue);
-        dwError = LW_ERROR_INVALID_CONFIG;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (pszValue[0] == '@')
-    {
-        LSA_LOG_ERROR(
-                "Error: %s may not be set to @; the value provided is '%s'.",
-                pszName,
-                pszValue);
-        dwError = LW_ERROR_INVALID_CONFIG;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-static
-DWORD
-AD_SetConfig_SpaceReplacement(
-    PLSA_AD_CONFIG pConfig,
-    PCSTR          pszName,
-    PCSTR          pszValue
-    )
-{
-    DWORD dwError = 0;
-
-    if (LW_IS_NULL_OR_EMPTY_STR(pszValue))
-    {
-        goto error;
-    }
-
-    dwError = AD_CheckPunctuationChar(
-                    pszName,
-                    pszValue,
-                    TRUE);
-    if (dwError)
-    {
-        goto error;
-    }
-
-    pConfig->chSpaceReplacement = pszValue[0];
-
-error:
-
-    return dwError;
-}
-
-static
-DWORD
-AD_SetConfig_DomainSeparator(
-    IN OUT PLSA_AD_CONFIG pConfig,
-    IN PCSTR          pszName,
-    IN PCSTR          pszValue
-    )
-{
-    DWORD dwError = 0;
-
-    if (LW_IS_NULL_OR_EMPTY_STR(pszValue))
-    {
-        goto error;
-    }
-
-    dwError = AD_CheckPunctuationChar(
-                    pszName,
-                    pszValue,
-                    FALSE);
-    if (dwError)
-    {
-        goto error;
-    }
-
-    pConfig->chDomainSeparator = pszValue[0];
-
-error:
-
-    return dwError;
 }
 
 static
@@ -957,23 +756,6 @@ error:
     *ppszUnprovisionedModeHomedirTemplate = NULL;
 
     goto cleanup;
-}
-
-CHAR
-AD_GetSpaceReplacement(
-    VOID
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    CHAR chSaved = 0;
-
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-
-    chSaved = gpLsaAdProviderState->config.chSpaceReplacement;
-
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-
-    return chSaved;
 }
 
 DWORD

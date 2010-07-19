@@ -46,6 +46,7 @@ liblsaserverapi_la_SOURCES = \
        rpc_server.c    \
        svc_register.c  \
        svc_unregister.c \
+       parse_name.c    \
        svc_listen.c
 
 liblsaserverapi_la_CPPFLAGS =     \
