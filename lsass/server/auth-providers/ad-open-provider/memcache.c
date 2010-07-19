@@ -235,7 +235,7 @@ MemCacheBackupRoutine(
                             &pConn->signalShutdown,
                             &pConn->backupMutex,
                             &timeout));
-            if (dwError == ETIMEDOUT)
+            if (dwError == LW_ERROR_ERRNO_ETIMEDOUT)
             {
                 dwError = 0;
             }
