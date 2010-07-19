@@ -61,6 +61,11 @@ struct test
 
 void AddTest(struct test *ft, const char *name, test_fn function);
 void SetupNetApiTests(struct test *t);
+void SetupSamrTests(struct test *t);
+void SetupLsaTests(struct test *t);
+void SetupNetlogonTests(struct test *t);
+void SetupDsrTests(struct test *t);
+void SetupWkssvcTests(struct test *t);
 
 
 #define STATUS(a, b)                                                     \

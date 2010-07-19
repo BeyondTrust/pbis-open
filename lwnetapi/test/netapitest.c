@@ -268,6 +268,11 @@ int main(int argc, char *argv[])
     }
 
     SetupNetApiTests(tests);
+    SetupLsaTests(tests);
+    SetupSamrTests(tests);
+    SetupNetlogonTests(tests);
+    SetupDsrTests(tests);
+    SetupWkssvcTests(tests);
     
     for (i = 1; i < argc; i++)
     {
