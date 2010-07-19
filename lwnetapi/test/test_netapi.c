@@ -35,6 +35,7 @@ typedef struct _TEST_NET_USER_ADD
 {
     PSTR    pszUserName;
     PSTR    pszComment;
+    PSTR    pszDescription;
     PSTR    pszHomeDir;
     PSTR    pszScriptPath;
     DWORD   dwPrivilege;
@@ -55,6 +56,7 @@ TEST_NET_USER_ADD LocalUserAddValidationTest[] = {
     {
         .pszUserName     = "testuser1",
         .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_USER,
@@ -71,6 +73,7 @@ TEST_NET_USER_ADD LocalUserAddValidationTest[] = {
     {
         .pszUserName     = "testuser1",
         .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_USER,
@@ -86,6 +89,7 @@ TEST_NET_USER_ADD LocalUserAddValidationTest[] = {
     {
         .pszUserName     = "testuser1",
         .pszComment      = "### Comment testuser1 ###",
+        .pszDescription  = "### Description testuser1 ###",
         .pszHomeDir      = "c:\\tmp",
         .pszScriptPath   = "n:\\netlogon\\logon.cmd",
         .dwPrivilege     = USER_PRIV_USER,
@@ -102,6 +106,7 @@ TEST_NET_USER_ADD LocalUserAddValidationTest[] = {
     {
         .pszUserName     = "testuser1",
         .pszComment      = "### Comment testuser1 ###",
+        .pszDescription  = "### Description testuser1 ###",
         .pszHomeDir      = "c:\\tmp",
         .pszScriptPath   = "n:\\netlogon\\logon.cmd",
         .dwPrivilege     = 0,
@@ -169,6 +174,7 @@ typedef struct _TEST_NET_USER_SET_INFO
     PSTR    pszUserName;
     PSTR    pszFullName;
     PSTR    pszComment;
+    PSTR    pszDescription;
     PSTR    pszHomeDir;
     PSTR    pszScriptPath;
     DWORD   dwPrivilege;
@@ -188,13 +194,34 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
     {
         .dwLevel         = 1,
         .pszUserName     = "testuser1",
-        .pszFullName     = "###Testing full name###",
+        .pszFullName     = NULL,
         .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_USER,
         .dwFlags         = UF_NORMAL_ACCOUNT,
         .pszPassword     = NULL,
+        .bPrepare        = TRUE,
+        .bCleanup        = FALSE,
+        /*
+         * dwFlags has to include UF_ACCOUNTDISABLE because there's
+         * no password set on the account yet
+         */
+        .dwError         = ERROR_PASSWORD_RESTRICTION,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszDescription  = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = UF_NORMAL_ACCOUNT,
+        .pszPassword     = "newPas88-+word",
         .bPrepare        = TRUE,
         .bCleanup        = FALSE,
         .dwError         = ERROR_SUCCESS,
@@ -205,6 +232,23 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszUserName     = "testuser1",
         .pszFullName     = NULL,
         .pszComment      = "###Testing comment###",
+        .pszDescription  = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = NULL,
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = UF_NORMAL_ACCOUNT,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 2,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszDescription  = "###Testing description###",
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_USER,
@@ -220,23 +264,9 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszUserName     = "testuser1",
         .pszFullName     = NULL,
         .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = "###Testing homedir###",
         .pszScriptPath   = NULL,
-        .dwPrivilege     = USER_PRIV_USER,
-        .dwFlags         = 0,
-        .pszPassword     = NULL,
-        .bPrepare        = FALSE,
-        .bCleanup        = FALSE,
-        .dwError         = ERROR_SUCCESS,
-        .dwParmError     = 0
-    },
-    {
-        .dwLevel         = 1,
-        .pszUserName     = "testuser1",
-        .pszFullName     = NULL,
-        .pszComment      = NULL,
-        .pszHomeDir      = NULL,
-        .pszScriptPath   = "###Testing script path###",
         .dwPrivilege     = USER_PRIV_USER,
         .dwFlags         = UF_NORMAL_ACCOUNT,
         .pszPassword     = NULL,
@@ -250,6 +280,23 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszUserName     = "testuser1",
         .pszFullName     = NULL,
         .pszComment      = NULL,
+        .pszDescription  = NULL,
+        .pszHomeDir      = NULL,
+        .pszScriptPath   = "###Testing script path###",
+        .dwPrivilege     = USER_PRIV_USER,
+        .dwFlags         = UF_NORMAL_ACCOUNT | UF_ACCOUNTDISABLE,
+        .pszPassword     = NULL,
+        .bPrepare        = FALSE,
+        .bCleanup        = FALSE,
+        .dwError         = ERROR_SUCCESS,
+        .dwParmError     = 0
+    },
+    {
+        .dwLevel         = 1,
+        .pszUserName     = "testuser1",
+        .pszFullName     = NULL,
+        .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_GUEST,
@@ -257,6 +304,10 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszPassword     = NULL,
         .bPrepare        = FALSE,
         .bCleanup        = FALSE,
+        /*
+         * dwPrivilege has to be the same as returned from NetUserGetInfo
+         * and would have to be USER_PRIV_USER in this case
+         */
         .dwError         = ERROR_INVALID_PARAMETER,
         .dwParmError     = USER_PRIV_PARMNUM
     },
@@ -265,6 +316,7 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszUserName     = "testuser1",
         .pszFullName     = NULL,
         .pszComment      = NULL,
+        .pszDescription  = NULL,
         .pszHomeDir      = NULL,
         .pszScriptPath   = NULL,
         .dwPrivilege     = USER_PRIV_GUEST,
@@ -272,6 +324,10 @@ TEST_NET_USER_SET_INFO LocalUserSetInfoValidationTest[] = {
         .pszPassword     = "newPas88-+word",
         .bPrepare        = FALSE,
         .bCleanup        = TRUE,
+        /*
+         * dwPrivilege has to be the same as returned from NetUserGetInfo
+         * and would have to be USER_PRIV_USER in this case
+         */
         .dwError         = ERROR_INVALID_PARAMETER,
         .dwParmError     = USER_PRIV_PARMNUM
     }
@@ -881,6 +937,7 @@ CallNetUserAdd(
     PCWSTR pwszHostname,
     DWORD  dwLevel,
     PWSTR  pwszUsername,
+    PWSTR  pwszDescription,
     PWSTR  pwszComment,
     PWSTR  pwszHomedir,
     PWSTR  pwszScriptPath,
@@ -908,7 +965,7 @@ CallNetUserAdd(
         Info1.usri1_password    = pwszPassword;
         Info1.usri1_priv        = dwPrivilege;
         Info1.usri1_home_dir    = pwszHomedir;
-        Info1.usri1_comment     = pwszComment;
+        Info1.usri1_comment     = pwszDescription;
         Info1.usri1_flags       = dwFlags;
         Info1.usri1_script_path = pwszScriptPath;
 
@@ -920,9 +977,10 @@ CallNetUserAdd(
         Info2.usri2_password    = pwszPassword;
         Info2.usri2_priv        = dwPrivilege;
         Info2.usri2_home_dir    = pwszHomedir;
-        Info2.usri2_comment     = pwszComment;
+        Info2.usri2_comment     = pwszDescription;
         Info2.usri2_flags       = dwFlags;
         Info2.usri2_script_path = pwszScriptPath;
+        Info2.usri2_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info2;
         break;
@@ -932,9 +990,10 @@ CallNetUserAdd(
         Info3.usri3_password    = pwszPassword;
         Info3.usri3_priv        = dwPrivilege;
         Info3.usri3_home_dir    = pwszHomedir;
-        Info3.usri3_comment     = pwszComment;
+        Info3.usri3_comment     = pwszDescription;
         Info3.usri3_flags       = dwFlags;
         Info3.usri3_script_path = pwszScriptPath;
+        Info3.usri3_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info3;
         break;
@@ -944,9 +1003,10 @@ CallNetUserAdd(
         Info4.usri4_password    = pwszPassword;
         Info4.usri4_priv        = dwPrivilege;
         Info4.usri4_home_dir    = pwszHomedir;
-        Info4.usri4_comment     = pwszComment;
+        Info4.usri4_comment     = pwszDescription;
         Info4.usri4_flags       = dwFlags;
         Info4.usri4_script_path = pwszScriptPath;
+        Info4.usri4_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info4;
         break;
@@ -971,6 +1031,7 @@ CallNetUserSetInfo(
     DWORD    dwLevel,
     PWSTR    pwszUsername,
     PWSTR    pwszFullName,
+    PWSTR    pwszDescription,
     PWSTR    pwszComment,
     PWSTR    pwszHomedir,
     PWSTR    pwszScriptPath,
@@ -994,6 +1055,7 @@ CallNetUserSetInfo(
     USER_INFO_1007 Info1007 = {0};
     USER_INFO_1008 Info1008 = {0};
     USER_INFO_1011 Info1011 = {0};
+    USER_INFO_1012 Info1012 = {0};
     DWORD dwParmError = 0;
 
     switch (dwLevel)
@@ -1009,7 +1071,7 @@ CallNetUserSetInfo(
         Info1.usri1_password    = pwszPassword;
         Info1.usri1_priv        = dwPrivilege;
         Info1.usri1_home_dir    = pwszHomedir;
-        Info1.usri1_comment     = pwszComment;
+        Info1.usri1_comment     = pwszDescription;
         Info1.usri1_flags       = dwFlags;
         Info1.usri1_script_path = pwszScriptPath;
 
@@ -1021,9 +1083,10 @@ CallNetUserSetInfo(
         Info2.usri2_password    = pwszPassword;
         Info2.usri2_priv        = dwPrivilege;
         Info2.usri2_home_dir    = pwszHomedir;
-        Info2.usri2_comment     = pwszComment;
+        Info2.usri2_comment     = pwszDescription;
         Info2.usri2_flags       = dwFlags;
         Info2.usri2_script_path = pwszScriptPath;
+        Info2.usri2_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info2;
         break;
@@ -1033,9 +1096,10 @@ CallNetUserSetInfo(
         Info3.usri3_password    = pwszPassword;
         Info3.usri3_priv        = dwPrivilege;
         Info3.usri3_home_dir    = pwszHomedir;
-        Info3.usri3_comment     = pwszComment;
+        Info3.usri3_comment     = pwszDescription;
         Info3.usri3_flags       = dwFlags;
         Info3.usri3_script_path = pwszScriptPath;
+        Info3.usri3_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info3;
         break;
@@ -1045,9 +1109,10 @@ CallNetUserSetInfo(
         Info4.usri4_password    = pwszPassword;
         Info4.usri4_priv        = dwPrivilege;
         Info4.usri4_home_dir    = pwszHomedir;
-        Info4.usri4_comment     = pwszComment;
+        Info4.usri4_comment     = pwszDescription;
         Info4.usri4_flags       = dwFlags;
         Info4.usri4_script_path = pwszScriptPath;
+        Info4.usri4_usr_comment = pwszComment;
 
         pBuffer = (PVOID)&Info4;
         break;
@@ -1059,7 +1124,7 @@ CallNetUserSetInfo(
         break;
 
     case 1007:
-        Info1007.usri1007_comment = pwszComment;
+        Info1007.usri1007_comment = pwszDescription;
 
         pBuffer = (PVOID)&Info1007;
         break;
@@ -1074,6 +1139,12 @@ CallNetUserSetInfo(
         Info1011.usri1011_full_name = pwszFullName;
 
         pBuffer = (PVOID)&Info1011;
+        break;
+
+    case 1012:
+        Info1012.usri1012_usr_comment = pwszComment;
+
+        pBuffer = (PVOID)&Info1012;
         break;
     }
 
@@ -1098,30 +1169,215 @@ CallNetUserSetInfo(
 static
 BOOL
 CallNetUserGetInfo(
-    PCWSTR pwszHostname,
-    PCWSTR pwszUsername,
-    DWORD  dwLevel
+    PCWSTR   pwszHostname,
+    PWSTR    pwszUsername,
+    PVOID  **pppUserInfo,
+    PDWORD   pdwNumUserInfos
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
-    PVOID pBuffer = NULL;
+    DWORD dwLevels[] = { 0, 1, 2, 3, 4, 10, 11, 20, 23 };
+    DWORD i = 0;
+    PVOID *pBuffer = NULL;
+    DWORD dwNumBuffers = sizeof(pBuffer)/sizeof(pBuffer[0]);
+    DWORD dwLevel = 0;
 
-    err = NetUserGetInfo(pwszHostname,
-                         pwszUsername,
-                         dwLevel,
-                         &pBuffer);
-    if (err != ERROR_SUCCESS)
+    err = LwAllocateMemory(sizeof(pBuffer[0]) * 25,
+                           OUT_PPVOID(&pBuffer));
+    BAIL_ON_WIN_ERROR(err);
+
+    for (i = 0; i < sizeof(dwLevels)/sizeof(dwLevels[0]); i++)
     {
-        ret = FALSE;
+        dwLevel = dwLevels[i];
+
+        err = NetUserGetInfo(pwszHostname,
+                             pwszUsername,
+                             dwLevel,
+                             &pBuffer[dwLevel]);
+        if (err != ERROR_SUCCESS)
+        {
+            ret = FALSE;
+        }
     }
 
-    if (pBuffer)
-    {
-        NetApiBufferFree(pBuffer);
-    }
+    *pppUserInfo     = pBuffer;
+    *pdwNumUserInfos = dwNumBuffers;
 
+cleanup:
     return ret;
+
+error:
+    for (i = 0; i < 25; i++)
+    {
+        if (pBuffer[i])
+        {
+            NetApiBufferFree(pBuffer[i]);
+            pBuffer[i] = NULL;
+        }
+    }
+
+    LW_SAFE_FREE_MEMORY(pBuffer);
+    pBuffer = NULL;
+
+    goto cleanup;
+}
+
+
+static
+BOOLEAN
+TestVerifyUserInfo(
+    PWSTR    pwszUsername,
+    PWSTR    pwszFullName,
+    PWSTR    pwszDescription,
+    PWSTR    pwszComment,
+    PWSTR    pwszHomedir,
+    PWSTR    pwszScriptPath,
+    PWSTR    pwszPassword,
+    DWORD    dwFlags,
+    DWORD    dwPrivilege,
+    PVOID   *ppUserInfo
+    )
+{
+    BOOLEAN bRet = TRUE;
+
+    if (pwszUsername)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                                pwszUsername);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_1)ppUserInfo[1])->usri1_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_2)ppUserInfo[2])->usri2_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_10)ppUserInfo[10])->usri10_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_11)ppUserInfo[11])->usri11_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_20)ppUserInfo[20])->usri20_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_0)ppUserInfo[0])->usri0_name,
+                            ((PUSER_INFO_23)ppUserInfo[23])->usri23_name);
+
+    if (pwszFullName)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                                pwszFullName);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_full_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_full_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_10)ppUserInfo[10])->usri10_full_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_11)ppUserInfo[11])->usri11_full_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_20)ppUserInfo[20])->usri20_full_name);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_full_name,
+                            ((PUSER_INFO_23)ppUserInfo[23])->usri23_full_name);
+
+    if (pwszDescription)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                                pwszDescription);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_10)ppUserInfo[10])->usri10_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_11)ppUserInfo[11])->usri11_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_20)ppUserInfo[20])->usri20_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_comment,
+                            ((PUSER_INFO_23)ppUserInfo[23])->usri23_comment);
+
+    if (pwszComment)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_usr_comment,
+                                pwszComment);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_usr_comment,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_usr_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_usr_comment,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_usr_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_usr_comment,
+                            ((PUSER_INFO_10)ppUserInfo[10])->usri10_usr_comment);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_2)ppUserInfo[2])->usri2_usr_comment,
+                            ((PUSER_INFO_11)ppUserInfo[11])->usri11_usr_comment);
+
+    if (pwszHomedir)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                                pwszHomedir);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                            ((PUSER_INFO_2)ppUserInfo[2])->usri2_home_dir);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_home_dir);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_home_dir);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_home_dir);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_home_dir,
+                            ((PUSER_INFO_11)ppUserInfo[11])->usri11_home_dir);
+
+    if (pwszScriptPath)
+    {
+        ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_script_path,
+                                pwszScriptPath);
+    }
+
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_script_path,
+                            ((PUSER_INFO_2)ppUserInfo[2])->usri2_script_path);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_script_path,
+                            ((PUSER_INFO_3)ppUserInfo[3])->usri3_script_path);
+    ASSERT_WC16STRING_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_script_path,
+                            ((PUSER_INFO_4)ppUserInfo[4])->usri4_script_path);
+
+    if (dwFlags)
+    {
+        ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_flags,
+                           ((PUSER_INFO_1)ppUserInfo[1])->usri1_flags | dwFlags);
+    }
+
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_flags,
+                       ((PUSER_INFO_2)ppUserInfo[2])->usri2_flags);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_flags,
+                       ((PUSER_INFO_3)ppUserInfo[3])->usri3_flags);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_flags,
+                       ((PUSER_INFO_4)ppUserInfo[4])->usri4_flags);
+
+    if (dwPrivilege)
+    {
+        ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                           dwPrivilege);
+    }
+
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                       ((PUSER_INFO_2)ppUserInfo[2])->usri2_priv);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                       ((PUSER_INFO_3)ppUserInfo[3])->usri3_priv);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                       ((PUSER_INFO_4)ppUserInfo[4])->usri4_priv);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                       ((PUSER_INFO_3)ppUserInfo[3])->usri3_priv);
+    ASSERT_DWORD_EQUAL(((PUSER_INFO_1)ppUserInfo[1])->usri1_priv,
+                       ((PUSER_INFO_11)ppUserInfo[11])->usri11_priv);
+
+    return bRet;
 }
 
 
@@ -1643,6 +1899,7 @@ TestNetUserAdd(
     enum param_err perr = perr_success;
     DWORD dwLevel = 0;
     PWSTR pwszUsername = NULL;
+    PWSTR pwszDescription = NULL;
     PWSTR pwszComment = NULL;
     PWSTR pwszHomedir = NULL;
     PWSTR pwszScriptPath = NULL;
@@ -1688,6 +1945,13 @@ TestNetUserAdd(
             if (err != 0) netapi_fail(err);
         }
 
+        if (pTestSet[i].pszDescription)
+        {           
+            err = LwMbsToWc16s(pTestSet[i].pszDescription,
+                               &pwszDescription);
+            if (err != 0) netapi_fail(err);
+        }
+
         if (pTestSet[i].pszHomeDir)
         {           
             err = LwMbsToWc16s(pTestSet[i].pszHomeDir,
@@ -1724,6 +1988,7 @@ TestNetUserAdd(
         ret &= CallNetUserAdd(hostname,
                               dwLevel,
                               pwszUsername,
+                              pwszDescription,
                               pwszComment,
                               pwszHomedir,
                               pwszScriptPath,
@@ -1741,20 +2006,23 @@ TestNetUserAdd(
         }
 
         LW_SAFE_FREE_MEMORY(pwszUsername);
+        LW_SAFE_FREE_MEMORY(pwszDescription);
         LW_SAFE_FREE_MEMORY(pwszComment);
         LW_SAFE_FREE_MEMORY(pwszHomedir);
         LW_SAFE_FREE_MEMORY(pwszScriptPath);
         LW_SAFE_FREE_MEMORY(pwszPassword);
 
-        pwszUsername   = NULL;
-        pwszComment    = NULL;
-        pwszHomedir    = NULL;
-        pwszScriptPath = NULL;
-        pwszPassword   = NULL;
+        pwszUsername    = NULL;
+        pwszDescription = NULL;
+        pwszComment     = NULL;
+        pwszHomedir     = NULL;
+        pwszScriptPath  = NULL;
+        pwszPassword    = NULL;
     }
 
 done:
     LW_SAFE_FREE_MEMORY(pwszUsername);
+    LW_SAFE_FREE_MEMORY(pwszDescription);
     LW_SAFE_FREE_MEMORY(pwszComment);
     LW_SAFE_FREE_MEMORY(pwszHomedir);
     LW_SAFE_FREE_MEMORY(pwszScriptPath);
@@ -1895,10 +2163,6 @@ TestNetUserGetInfo(
                                 &bCreated);
         if (err != 0) netapi_fail(err);
 
-        ret &= CallNetUserGetInfo(hostname,
-                                  pwszUsername,
-                                  dwLevel);
-
         if (bCreated)
         {
             err = NetUserDel(hostname, pwszUsername);
@@ -1932,7 +2196,7 @@ TestNetUserSetInfo(
 {
     PCSTR pszDefaultTestSetName = "validation";
 
-    BOOL ret = TRUE;
+    BOOL bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     PSTR pszTestSetName = NULL;
@@ -1943,6 +2207,7 @@ TestNetUserSetInfo(
     PWSTR pwszUsername = NULL;
     PWSTR pwszFullName = NULL;
     PWSTR pwszChangedUsername = NULL;
+    PWSTR pwszDescription = NULL;
     PWSTR pwszComment = NULL;
     PWSTR pwszHomedir = NULL;
     PWSTR pwszScriptPath = NULL;
@@ -1953,6 +2218,9 @@ TestNetUserSetInfo(
     DWORD dwExpectedParmError = 0;
     BOOLEAN bCreated = FALSE;
     BOOLEAN bRenamed = FALSE;
+    PVOID *ppUserInfo = NULL;
+    DWORD dwNumUserInfos = 0;
+    DWORD iUserInfo = 0;
 
     TESTINFO(t, hostname, user, pass);
 
@@ -2026,19 +2294,36 @@ TestNetUserSetInfo(
         dwExpectedError     = pTestSet[i].dwError;
         dwExpectedParmError = pTestSet[i].dwParmError;
 
-        ret &= CallNetUserSetInfo(hostname,
-                                  dwLevel,
-                                  pwszUsername,
-                                  pwszFullName,
-                                  pwszComment,
-                                  pwszHomedir,
-                                  pwszScriptPath,
-                                  pwszPassword,
-                                  dwFlags,
-                                  dwPrivilege,
-                                  dwExpectedError,
-                                  dwExpectedParmError,
-                                  &bRenamed);
+        bRet &= CallNetUserSetInfo(hostname,
+                                   dwLevel,
+                                   pwszUsername,
+                                   pwszFullName,
+                                   pwszDescription,
+                                   pwszComment,
+                                   pwszHomedir,
+                                   pwszScriptPath,
+                                   pwszPassword,
+                                   dwFlags,
+                                   dwPrivilege,
+                                   dwExpectedError,
+                                   dwExpectedParmError,
+                                   &bRenamed);
+
+        bRet &= CallNetUserGetInfo(hostname,
+                                   pwszUsername,
+                                   &ppUserInfo,
+                                   &dwNumUserInfos);
+
+        bRet &= TestVerifyUserInfo(pwszUsername,
+                                   pwszFullName,
+                                   pwszDescription,
+                                   pwszComment,
+                                   pwszHomedir,
+                                   pwszScriptPath,
+                                   pwszPassword,
+                                   dwFlags,
+                                   dwPrivilege,
+                                   ppUserInfo);
 
         if (pTestSet[i].bCleanup)
         {
@@ -2047,31 +2332,49 @@ TestNetUserSetInfo(
             if (err != 0) netapi_fail(err);
         }
 
+        for (iUserInfo = 0;
+             iUserInfo < dwNumUserInfos;
+             iUserInfo++)
+        {
+            NetApiBufferFree(ppUserInfo[iUserInfo]);
+            ppUserInfo[iUserInfo] = NULL;
+        }
+
         LW_SAFE_FREE_MEMORY(pwszUsername);
         LW_SAFE_FREE_MEMORY(pwszFullName);
+        LW_SAFE_FREE_MEMORY(pwszDescription);
         LW_SAFE_FREE_MEMORY(pwszComment);
         LW_SAFE_FREE_MEMORY(pwszHomedir);
         LW_SAFE_FREE_MEMORY(pwszScriptPath);
         LW_SAFE_FREE_MEMORY(pwszPassword);
 
-        pwszUsername   = NULL;
-        pwszFullName   = NULL;
-        pwszComment    = NULL;
-        pwszHomedir    = NULL;
-        pwszScriptPath = NULL;
-        pwszPassword   = NULL;
+        pwszUsername    = NULL;
+        pwszFullName    = NULL;
+        pwszDescription = NULL;
+        pwszComment     = NULL;
+        pwszHomedir     = NULL;
+        pwszScriptPath  = NULL;
+        pwszPassword    = NULL;
     }
 
 done:
+    for (iUserInfo = 0;
+         iUserInfo < dwNumUserInfos;
+         iUserInfo++)
+    {
+        NetApiBufferFree(ppUserInfo[iUserInfo]);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszUsername);
     LW_SAFE_FREE_MEMORY(pwszFullName);
+    LW_SAFE_FREE_MEMORY(pwszDescription);
     LW_SAFE_FREE_MEMORY(pwszComment);
     LW_SAFE_FREE_MEMORY(pwszHomedir);
     LW_SAFE_FREE_MEMORY(pwszScriptPath);
     LW_SAFE_FREE_MEMORY(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszChangedUsername);
 
-    return (ret &&
+    return (bRet &&
             err == ERROR_SUCCESS);
 }
 
