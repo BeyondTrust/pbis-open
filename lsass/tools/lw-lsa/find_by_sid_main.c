@@ -350,8 +350,8 @@ PrintUser(
             LW_PRINTF_STRING(pObject->userInfo.pszUnixName));
     fprintf(stdout, "SID:      %s\n",
             LW_PRINTF_STRING(pObject->pszObjectSid));
-    fprintf(stdout, "Uid:      %u\n",
-            pObject->userInfo.uid);
+    fprintf(stdout, "Uid:      %lu\n",
+            (unsigned long)pObject->userInfo.uid);
 
     if (dwInfoLevel >= 1)
     {
@@ -361,8 +361,8 @@ PrintUser(
                 pObject->userInfo.bIsGeneratedUPN ? "YES" : "NO");
     }
 
-    fprintf(stdout, "Gid:      %u\n",
-            pObject->userInfo.gid);
+    fprintf(stdout, "Gid:      %lu\n",
+            (unsigned long)pObject->userInfo.gid);
     fprintf(stdout, "Gecos:    %s\n",
             LW_PRINTF_STRING(pObject->userInfo.pszGecos));
     fprintf(stdout, "Shell:    %s\n",
