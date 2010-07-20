@@ -1135,6 +1135,8 @@ MemCacheRemoveUserBySid(
                     pszSid);
     BAIL_ON_LSA_ERROR(dwError);
 
+    MemCacheRemoveMembershipsBySid(pConn, pszSid, FALSE, TRUE);
+
     pConn->bNeedBackup = TRUE;
     dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));
     BAIL_ON_LSA_ERROR(dwError);
@@ -1167,6 +1169,8 @@ MemCacheRemoveGroupBySid(
                     pConn->pSIDToSecurityObject,
                     pszSid);
     BAIL_ON_LSA_ERROR(dwError);
+
+    MemCacheRemoveMembershipsBySid(pConn, pszSid, TRUE, TRUE);
 
     pConn->bNeedBackup = TRUE;
     dwError = LwMapErrnoToLwError(pthread_cond_signal(&pConn->signalBackup));

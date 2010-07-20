@@ -44,6 +44,25 @@
  */
 #include "adprovider.h"
 
+static
+DWORD
+LsaDbStoreGroupMembership(
+    IN LSA_DB_HANDLE hDb,
+    IN PCSTR pszParentSid,
+    IN size_t sMemberCount,
+    IN PLSA_GROUP_MEMBERSHIP* ppMembers
+    );
+
+static
+DWORD
+LsaDbStoreGroupsForUser(
+    IN LSA_DB_HANDLE hDb,
+    IN PCSTR pszChildSid,
+    IN size_t sMemberCount,
+    IN PLSA_GROUP_MEMBERSHIP* ppMembers,
+    IN BOOLEAN bIsPacAuthoritative
+    );
+
 DWORD
 LsaDbStoreObjectEntries(
     LSA_DB_HANDLE hDb,
@@ -961,6 +980,10 @@ LsaDbRemoveUserBySid(
     dwError = (DWORD)sqlite3_reset(pstQuery);
     BAIL_ON_SQLITE3_ERROR_DB(dwError, pConn->pDb);
 
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    LsaDbStoreGroupsForUser(hDb, pszSid, 0, NULL, FALSE);
+
 cleanup:
 
     LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
@@ -1019,6 +1042,10 @@ LsaDbRemoveGroupBySid(
 
     dwError = (DWORD)sqlite3_reset(pstQuery);
     BAIL_ON_SQLITE3_ERROR_DB(dwError, pConn->pDb);
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    LsaDbStoreGroupMembership(hDb, pszSid, 0, NULL);
 
 cleanup:
 
