@@ -1888,7 +1888,7 @@ NetAllocateSamrUserInfo21FromUserInfo1(
                                 &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
-    /* account_name */
+    /* account_name - ignored unless we're called from NetUserAdd */
     if (eValidation == NET_VALIDATION_USER_ADD)
     {
         dwParmErr = USER_NAME_PARMNUM;
@@ -1896,18 +1896,30 @@ NetAllocateSamrUserInfo21FromUserInfo1(
         err = NetValidateUserName(pUserInfo1->usri1_name,
                                   NET_VALIDATION_REQUIRED);
         BAIL_ON_WIN_ERROR(err);
+
+        /* account_name */
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       pUserInfo1->usri1_name,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+
+        SAMR_FIELD_PRESENT(pUserInfo1->usri1_name,
+                           SAMR_FIELD_ACCOUNT_NAME);
     }
-
-    err = NetAllocBufferUnicodeStringFromWC16String(
-                                   &pCursor,
-                                   &dwSpaceLeft,
-                                   pUserInfo1->usri1_name,
-                                   &dwSize,
-                                   eValidation);
-    BAIL_ON_WIN_ERROR(err);
-
-    SAMR_FIELD_PRESENT(pUserInfo1->usri1_name,
-                       SAMR_FIELD_ACCOUNT_NAME);
+    else
+    {
+        /* account_name: SKIP */
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       NULL,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     /* full_name: SKIP */
     err = NetAllocBufferUnicodeStringFromWC16String(
@@ -2158,6 +2170,8 @@ NetAllocateSamrUserInfo21FromUserInfo1(
         pSamrUserInfo21->fields_present = dwFieldsPresent;
     }
 
+    dwParmErr = 0;
+
     if (pdwSpaceLeft)
     {
         *pdwSpaceLeft = dwSpaceLeft;
@@ -2265,7 +2279,7 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                 &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
-    /* account_name */
+    /* account_name - ignored unless we're called from NetUserAdd */
     if (eValidation == NET_VALIDATION_USER_ADD)
     {
         dwParmErr = USER_NAME_PARMNUM;
@@ -2273,18 +2287,29 @@ NetAllocateSamrUserInfo21FromUserInfo2(
         err = NetValidateUserName(pUserInfo2->usri2_name,
                                   NET_VALIDATION_REQUIRED);
         BAIL_ON_WIN_ERROR(err);
+
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       pUserInfo2->usri2_name,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+
+        SAMR_FIELD_PRESENT(pUserInfo2->usri2_name,
+                           SAMR_FIELD_ACCOUNT_NAME);
     }
-
-    err = NetAllocBufferUnicodeStringFromWC16String(
-                                   &pCursor,
-                                   &dwSpaceLeft,
-                                   pUserInfo2->usri2_name,
-                                   &dwSize,
-                                   eValidation);
-    BAIL_ON_WIN_ERROR(err);
-
-    SAMR_FIELD_PRESENT(pUserInfo2->usri2_name,
-                       SAMR_FIELD_ACCOUNT_NAME);
+    else
+    {
+        /* account_name: SKIP */
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       NULL,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     /* full_name */
     err = NetAllocBufferUnicodeStringFromWC16String(
@@ -2337,14 +2362,17 @@ NetAllocateSamrUserInfo21FromUserInfo2(
                                    eValidation);
     BAIL_ON_WIN_ERROR(err);
 
-    /* description: SKIP */
+    /* description */
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   NULL,
+                                   pUserInfo2->usri2_comment,
                                    &dwSize,
                                    eValidation);
     BAIL_ON_WIN_ERROR(err);
+
+    SAMR_FIELD_PRESENT(pUserInfo2->usri2_comment,
+                       SAMR_FIELD_DESCRIPTION);
 
     /* workstations */
     err = NetAllocBufferUnicodeStringFromWC16String(
@@ -2359,12 +2387,12 @@ NetAllocateSamrUserInfo21FromUserInfo2(
     err = NetAllocBufferUnicodeStringFromWC16String(
                                    &pCursor,
                                    &dwSpaceLeft,
-                                   pUserInfo2->usri2_comment,
+                                   pUserInfo2->usri2_usr_comment,
                                    &dwSize,
                                    eValidation);
     BAIL_ON_WIN_ERROR(err);
 
-    SAMR_FIELD_PRESENT(pUserInfo2->usri2_comment,
+    SAMR_FIELD_PRESENT(pUserInfo2->usri2_usr_comment,
                        SAMR_FIELD_COMMENT);
 
     /* parameters */
@@ -2531,6 +2559,8 @@ NetAllocateSamrUserInfo21FromUserInfo2(
         pSamrUserInfo21->fields_present = dwFieldsPresent;
     }
 
+    dwParmErr = 0;
+
     if (pdwSpaceLeft)
     {
         *pdwSpaceLeft = dwSpaceLeft;
@@ -2638,7 +2668,7 @@ NetAllocateSamrUserInfo21FromUserInfo3(
                                 &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
-    /* account_name */
+    /* account_name - ignored unless we're called from NetUserAdd */
     if (eValidation == NET_VALIDATION_USER_ADD)
     {
         dwParmErr = USER_NAME_PARMNUM;
@@ -2646,18 +2676,29 @@ NetAllocateSamrUserInfo21FromUserInfo3(
         err = NetValidateUserName(pUserInfo3->usri3_name,
                                   NET_VALIDATION_REQUIRED);
         BAIL_ON_WIN_ERROR(err);
+
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                      &pCursor,
+                                      &dwSpaceLeft,
+                                      pUserInfo3->usri3_name,
+                                      &dwSize,
+                                      eValidation);
+        BAIL_ON_WIN_ERROR(err);
+
+        SAMR_FIELD_PRESENT(pUserInfo3->usri3_name,
+                           SAMR_FIELD_ACCOUNT_NAME);
     }
-
-    err = NetAllocBufferUnicodeStringFromWC16String(
-                                   &pCursor,
-                                   &dwSpaceLeft,
-                                   pUserInfo3->usri3_name,
-                                   &dwSize,
-                                   eValidation);
-    BAIL_ON_WIN_ERROR(err);
-
-    SAMR_FIELD_PRESENT(pUserInfo3->usri3_name,
-                       SAMR_FIELD_ACCOUNT_NAME);
+    else
+    {
+        /* account_name: SKIP */
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       NULL,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     /* full_name */
     err = NetAllocBufferUnicodeStringFromWC16String(
@@ -2911,6 +2952,8 @@ NetAllocateSamrUserInfo21FromUserInfo3(
         pSamrUserInfo21->fields_present = dwFieldsPresent;
     }
 
+    dwParmErr = 0;
+
     if (pdwSpaceLeft)
     {
         *pdwSpaceLeft = dwSpaceLeft;
@@ -3018,7 +3061,7 @@ NetAllocateSamrUserInfo21FromUserInfo4(
                                 &dwSize);
     BAIL_ON_WIN_ERROR(err);
 
-    /* account_name */
+    /* account_name - ignored unless we're called from NetUserAdd */
     if (eValidation == NET_VALIDATION_USER_ADD)
     {
         dwParmErr = USER_NAME_PARMNUM;
@@ -3026,18 +3069,29 @@ NetAllocateSamrUserInfo21FromUserInfo4(
         err = NetValidateUserName(pUserInfo4->usri4_name,
                                   NET_VALIDATION_REQUIRED);
         BAIL_ON_WIN_ERROR(err);
+
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       pUserInfo4->usri4_name,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+
+        SAMR_FIELD_PRESENT(pUserInfo4->usri4_name,
+                           SAMR_FIELD_ACCOUNT_NAME);
     }
-
-    err = NetAllocBufferUnicodeStringFromWC16String(
-                                   &pCursor,
-                                   &dwSpaceLeft,
-                                   pUserInfo4->usri4_name,
-                                   &dwSize,
-                                   eValidation);
-    BAIL_ON_WIN_ERROR(err);
-
-    SAMR_FIELD_PRESENT(pUserInfo4->usri4_name,
-                       SAMR_FIELD_ACCOUNT_NAME);
+    else
+    {
+        /* account_name: SKIP */
+        err = NetAllocBufferUnicodeStringFromWC16String(
+                                       &pCursor,
+                                       &dwSpaceLeft,
+                                       NULL,
+                                       &dwSize,
+                                       eValidation);
+        BAIL_ON_WIN_ERROR(err);
+    }
 
     /* full_name */
     err = NetAllocBufferUnicodeStringFromWC16String(
@@ -3290,6 +3344,8 @@ NetAllocateSamrUserInfo21FromUserInfo4(
          */
         pSamrUserInfo21->fields_present = dwFieldsPresent;
     }
+
+    dwParmErr = 0;
 
     if (pdwSpaceLeft)
     {
