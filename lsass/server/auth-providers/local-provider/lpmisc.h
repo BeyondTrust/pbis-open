@@ -51,12 +51,6 @@
 #define __LP_MISC_H__
 
 DWORD
-LocalCrackDomainQualifiedName(
-    PCSTR pszId,
-    PLSA_LOGIN_NAME_INFO* ppNameInfo
-    );
-
-DWORD
 LocalBuildDN(
     PLSA_LOGIN_NAME_INFO pLoginInfo,
     PWSTR*               ppwszDN

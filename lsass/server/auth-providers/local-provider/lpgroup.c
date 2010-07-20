@@ -180,6 +180,7 @@ LocalDirAddGroup(
     PWSTR pwszSamAccountName = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszNetBIOSDomain = NULL;
+    BOOLEAN bLocked = FALSE;
 
     memset(&mods[0], 0, sizeof(mods));
 
@@ -190,10 +191,19 @@ LocalDirAddGroup(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LocalCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
                     pGroupInfo->pszName,
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pLoginInfo->pszDomain)
+    {
+        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+        dwError = LwAllocateString(
+                        gLPGlobals.pszNetBIOSName,
+                        &pLoginInfo->pszDomain);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     if (!LocalServicesDomain(pLoginInfo->pszDomain))
     {
@@ -264,6 +274,7 @@ LocalDirAddGroup(
     }
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     if (pLoginInfo)
     {

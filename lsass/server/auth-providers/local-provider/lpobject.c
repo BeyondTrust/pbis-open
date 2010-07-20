@@ -305,6 +305,7 @@ LocalDirFindObjectsInternal(
     DWORD dwObjectClass = LOCAL_OBJECT_CLASS_UNKNOWN;
     DWORD dwIndex = 0;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
+    BOOLEAN bLocked = FALSE;
 
     /* FIXME: support generic queries */
     switch (ObjectType)
@@ -371,14 +372,21 @@ LocalDirFindObjectsInternal(
         {
         case LSA_QUERY_TYPE_BY_ALIAS:
         case LSA_QUERY_TYPE_BY_NT4:
-            dwError = LocalCrackDomainQualifiedName(
+            dwError = LsaSrvCrackDomainQualifiedName(
                 QueryList.ppszStrings[dwIndex],
                 &pLoginInfo);
             BAIL_ON_LSA_ERROR(dwError);
 
             if (!pLoginInfo->pszDomain)
             {
-                continue;
+                LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+                dwError = LwAllocateString(
+                                gLPGlobals.pszNetBIOSName,
+                                &pLoginInfo->pszDomain);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
             }
 
             dwError = LwAllocateStringPrintf(
@@ -485,7 +493,7 @@ LocalDirFindObjectsInternal(
     }
 
 cleanup:
-
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
     LW_SAFE_FREE_STRING(pszFilterType);
     LW_SAFE_FREE_STRING(pszFilter);
     LW_SAFE_FREE_MEMORY(pwszFilter);
@@ -1267,7 +1275,7 @@ LocalDirFindObjectByGenericName(
 
     BAIL_ON_INVALID_HANDLE(hProvider);
 
-    dwError = LocalCrackDomainQualifiedName(
+    dwError = LsaSrvCrackDomainQualifiedName(
         pszName,
         &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);

@@ -50,42 +50,6 @@
 #include "includes.h"
 
 DWORD
-LocalCrackDomainQualifiedName(
-    PCSTR pszId,
-    PLSA_LOGIN_NAME_INFO* ppNameInfo
-    )
-{
-    DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pNameInfo = NULL;
-    BOOLEAN bLocked = FALSE;
-
-    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                    pszId,
-                    &pNameInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    *ppNameInfo = pNameInfo;
-
-cleanup:
-    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
-
-    return dwError;
-
-error:
-
-    *ppNameInfo = NULL;
-
-    if (pNameInfo)
-    {
-        LsaSrvFreeNameInfo(pNameInfo);
-    }
-
-    goto cleanup;
-}
-
-DWORD
 LocalBuildDN(
     PLSA_LOGIN_NAME_INFO pLoginInfo,
     PWSTR*               ppwszDN
