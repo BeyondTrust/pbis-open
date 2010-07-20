@@ -70,26 +70,12 @@ AD_OfflineValidateUser(
     );
 
 DWORD
-AD_OfflineFindUserObjectById(
-    IN HANDLE hProvider,
-    IN uid_t uid,
-    OUT PLSA_SECURITY_OBJECT* ppResult
-    );
-
-DWORD
 AD_OfflineEnumUsers(
     HANDLE  hProvider,
     HANDLE  hResume,
     DWORD   dwMaxNumUsers,
     PDWORD  pdwUsersFound,
     PVOID** pppUserInfoList
-    );
-
-DWORD
-AD_OfflineFindGroupObjectByName(
-    IN HANDLE hProvider,
-    IN PCSTR pszGroupName,
-    OUT PLSA_SECURITY_OBJECT *ppResult
     );
 
 DWORD
@@ -134,13 +120,6 @@ AD_OfflineEnumNSSArtefacts(
     DWORD   dwMaxNSSArtefacts,
     PDWORD  pdwNSSArtefactsFound,
     PVOID** pppNSSArtefactInfoList
-    );
-
-DWORD
-AD_OfflineFindUserObjectByName(
-    IN HANDLE  hProvider,
-    IN PCSTR   pszLoginId,
-    OUT PLSA_SECURITY_OBJECT* ppCachedUser
     );
 
 DWORD

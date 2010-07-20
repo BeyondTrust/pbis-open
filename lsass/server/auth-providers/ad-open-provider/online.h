@@ -196,13 +196,6 @@ AD_CrackDomainQualifiedName(
     );
 
 DWORD
-AD_OnlineFindUserObjectById(
-    HANDLE  hProvider,
-    uid_t   uid,
-    PLSA_SECURITY_OBJECT* ppResult
-    );
-
-DWORD
 AD_OnlineGetUserGroupObjectMembership(
     IN HANDLE hProvider,
     IN PLSA_SECURITY_OBJECT pUserInfo,
@@ -346,18 +339,6 @@ AD_FilterNullEntries(
     IN OUT PLSA_SECURITY_OBJECT* ppEntries,
     IN OUT size_t* psCount
     );
-
-DWORD
-AD_OnlineFindUserObjectByName(
-    HANDLE  hProvider,
-    PCSTR   pszLoginId,
-    PLSA_SECURITY_OBJECT* ppCachedUser);
-
-DWORD
-AD_OnlineFindGroupObjectByName(
-    HANDLE  hProvider,
-    PCSTR   pszGroupName,
-    PLSA_SECURITY_OBJECT* ppResult);
 
 DWORD
 AD_OnlineFindNSSArtefactByKey(

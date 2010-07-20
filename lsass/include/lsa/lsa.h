@@ -194,8 +194,10 @@ typedef LW_DWORD LSA_NIS_MAP_QUERY_FLAGS;
 
 typedef LW_DWORD LSA_FIND_FLAGS, *PLSA_FIND_FLAGS;
 
-#define LSA_FIND_FLAGS_NSS   0x00000001
-#define LSA_FIND_FLAGS_LOCAL 0x00000002
+#define LSA_FIND_FLAGS_NSS        0x00000001
+#define LSA_FIND_FLAGS_LOCAL      0x00000002
+// Only supported by the LsaFindObjects function
+#define LSA_FIND_FLAGS_CACHE_ONLY 0x00000004
 
 typedef struct __LW_LSA_DATA_BLOB
 {

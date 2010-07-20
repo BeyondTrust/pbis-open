@@ -150,44 +150,6 @@ error:
 }
 
 DWORD
-AD_OfflineFindUserObjectById(
-    IN HANDLE hProvider,
-    IN uid_t uid,
-    OUT PLSA_SECURITY_OBJECT* ppResult
-    )
-{
-    DWORD dwError = 0;
-    PLSA_SECURITY_OBJECT pCachedUser = NULL;
-
-    if (uid == 0)
-    {
-        dwError = LW_ERROR_NO_SUCH_USER;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = ADCacheFindUserById(
-            gpLsaAdProviderState->hCacheConnection,
-            uid,
-            &pCachedUser);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    *ppResult = pCachedUser;
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    *ppResult = NULL;
-    ADCacheSafeFreeObject(&pCachedUser);
-
-    LSA_REMAP_FIND_USER_BY_ID_ERROR(dwError, TRUE, uid);
-
-    goto cleanup;
-}
-
-DWORD
 AD_OfflineEnumUsers(
     HANDLE  hProvider,
     HANDLE  hResume,
@@ -197,66 +159,6 @@ AD_OfflineEnumUsers(
     )
 {
     return LW_ERROR_NO_MORE_USERS;
-}
-
-DWORD
-AD_OfflineFindGroupObjectByName(
-    IN HANDLE hProvider,
-    IN PCSTR pszGroupName,
-    OUT PLSA_SECURITY_OBJECT* ppResult
-    )
-{
-    DWORD dwError = 0;
-    PSTR pszGroupNameCopy = NULL;
-    PLSA_LOGIN_NAME_INFO pGroupNameInfo = NULL;
-    PLSA_SECURITY_OBJECT pGroupObject = NULL;
-
-    BAIL_ON_INVALID_STRING(pszGroupName);
-
-    if (!strcasecmp(pszGroupName, "root"))
-    {
-        dwError = LW_ERROR_NO_SUCH_GROUP;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LwAllocateString(
-                    pszGroupName,
-                    &pszGroupNameCopy);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrCharReplace(pszGroupNameCopy, LsaSrvSpaceReplacement(), ' ');
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                        pszGroupNameCopy,
-                        &pGroupNameInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = ADCacheFindGroupByName(
-                gpLsaAdProviderState->hCacheConnection,
-                pGroupNameInfo,
-                &pGroupObject);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    *ppResult = pGroupObject;
-
-cleanup:
-
-    if (pGroupNameInfo)
-    {
-        LsaSrvFreeNameInfo(pGroupNameInfo);
-    }
-    LW_SAFE_FREE_STRING(pszGroupNameCopy);
-
-    return dwError;
-
-error:
-
-    *ppResult = NULL;
-    ADCacheSafeFreeObject(&pGroupObject);
-
-    LSA_REMAP_FIND_GROUP_BY_NAME_ERROR(dwError, TRUE, pszGroupName);
-
-    goto cleanup;
 }
 
 DWORD
@@ -386,61 +288,6 @@ AD_OfflineEnumNSSArtefacts(
     )
 {
     return LW_ERROR_NO_MORE_GROUPS;
-}
-
-DWORD
-AD_OfflineFindUserObjectByName(
-    IN HANDLE  hProvider,
-    IN PCSTR   pszLoginId,
-    OUT PLSA_SECURITY_OBJECT* ppCachedUser
-    )
-{
-    DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pUserNameInfo = NULL;
-    PSTR  pszLoginId_copy = NULL;
-    PLSA_SECURITY_OBJECT pCachedUser = NULL;
-
-    BAIL_ON_INVALID_STRING(pszLoginId);
-
-    dwError = LwAllocateString(
-                    pszLoginId,
-                    &pszLoginId_copy);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrCharReplace(pszLoginId_copy, LsaSrvSpaceReplacement(),' ');
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                        pszLoginId_copy,
-                        &pUserNameInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = ADCacheFindUserByName(
-            gpLsaAdProviderState->hCacheConnection,
-            pUserNameInfo,
-            &pCachedUser);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    *ppCachedUser = pCachedUser;
-
-cleanup:
-
-    if (pUserNameInfo)
-    {
-        LsaSrvFreeNameInfo(pUserNameInfo);
-    }
-    LW_SAFE_FREE_STRING(pszLoginId_copy);
-
-    return dwError;
-
-error:
-
-    *ppCachedUser = NULL;
-
-    ADCacheSafeFreeObject(&pCachedUser);
-
-    LSA_REMAP_FIND_USER_BY_NAME_ERROR(dwError, TRUE, pszLoginId);
-
-    goto cleanup;
 }
 
 DWORD
