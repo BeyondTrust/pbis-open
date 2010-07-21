@@ -4877,12 +4877,13 @@ INTERNAL void send_pdu
                        (sizeof (rpc_cn_pres_syntax_id_t) *
                        (pres_context->syntax_vector->count - 1)); 
         pres_cont_list->n_context_elem = 1;
+
         if (!reuse_context)
         {
-            RPC_CN_ASSOC_CONTEXT_ID (assoc)++;
+            pres_context->syntax_pres_id = RPC_CN_ASSOC_CONTEXT_ID (assoc)++;
         }
-        pres_cont_list->pres_cont_elem[0].pres_context_id = RPC_CN_ASSOC_CONTEXT_ID (assoc);
-        pres_context->syntax_pres_id = RPC_CN_ASSOC_CONTEXT_ID (assoc);
+
+        pres_cont_list->pres_cont_elem[0].pres_context_id = pres_context->syntax_pres_id;
         pres_cont_list->pres_cont_elem[0].n_transfer_syn = pres_context->syntax_vector->count;
         pres_cont_list->pres_cont_elem[0].abstract_syntax.id =  pres_context->syntax_abstract_id.id;
         pres_cont_list->pres_cont_elem[0].abstract_syntax.version = pres_context->syntax_abstract_id.version;
@@ -4938,8 +4939,11 @@ INTERNAL void send_pdu
 #endif
 
         }
-        pres_context->syntax_call_id = rpc_g_cn_call_id;
 
+        if (!reuse_context)
+        {
+            pres_context->syntax_call_id = rpc_g_cn_call_id;
+        }
     }
     else if (pdu_type != RPC_C_CN_PKT_AUTH3)
     {
