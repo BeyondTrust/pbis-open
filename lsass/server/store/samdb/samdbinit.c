@@ -132,6 +132,12 @@ SamDbFixAcls(
     );
 
 static
+DWORD
+SamDbFixLocalAccounts(
+    HANDLE hDirectory
+    );
+
+static
 VOID
 SamDbFreeAbsoluteSecurityDescriptor(
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
@@ -257,6 +263,9 @@ SamDbInit(
 
         //Fix ACLs
         dwError = SamDbFixAcls(hDirectory1);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbFixLocalAccounts(hDirectory1);
         BAIL_ON_SAMDB_ERROR(dwError);
 
         goto cleanup;
@@ -1220,7 +1229,7 @@ SamDbAddLocalAccounts(
                                 "computer/domain",
             .pszShell         = SAM_DB_DEFAULT_ADMINISTRATOR_SHELL,
             .pszHomedir       = SAM_DB_DEFAULT_ADMINISTRATOR_HOMEDIR,
-            .flags            = SAMDB_ACB_NORMAL,
+            .flags            = SAMDB_ACB_NORMAL | SAMDB_ACB_DISABLED,
             .objectClass      = SAMDB_OBJECT_CLASS_USER
         },
         {
@@ -2092,6 +2101,145 @@ error:
 
     goto cleanup;
 }
+
+
+static
+DWORD
+SamDbFixLocalAccounts(
+    HANDLE hDirectory
+    )
+{
+
+    DWORD dwError = 0;
+    const wchar_t wszUserObjectFilterFmt[] = L"%ws = %u";
+    const DWORD dwInt32StrSize = 10;
+    WCHAR wszAttrObjectClass[] = SAM_DB_DIR_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrObjectDN[] = SAM_DB_DIR_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrAccountFlags[] = SAM_DB_DIR_ATTR_ACCOUNT_FLAGS;
+    WCHAR wszAttrNtHash[] = SAM_DB_DIR_ATTR_NT_HASH;
+    DWORD dwUserObjectFilterLen = 0;
+    PWSTR pwszUserObjectFilter = NULL;
+    ULONG ulScope = 0;
+    ULONG ulAttributesOnly = 0;
+    PWSTR pwszBase = NULL;
+    PWSTR wszAttributes[] = {
+        &wszAttrObjectDN[0],
+        &wszAttrAccountFlags[0],
+        &wszAttrNtHash[0],
+        NULL
+    };
+
+    PDIRECTORY_ENTRY pUserEntries = NULL;
+    DWORD dwNumUserEntries = 0;
+    PDIRECTORY_ENTRY pUserEntry = NULL;
+    DWORD iEntry = 0;
+    PWSTR pwszUserObjectDN = NULL;
+    DWORD dwAccountFlags = 0;
+    POCTET_STRING pNtHash = NULL;
+    DWORD iMod = 0;
+
+    enum AttrValueIndex {
+        ATTR_VAL_IDX_ACCOUNT_FLAGS = 0,
+        ATTR_VAL_IDX_SENTINEL
+    };
+
+    ATTRIBUTE_VALUE AttrValues[] = {
+        {   /* ATTR_VAL_IDX_ACCOUNT_FLAGS */
+            .Type = DIRECTORY_ATTR_TYPE_LARGE_INTEGER,
+            .data.ulValue = 0
+        }
+    };
+
+    DIRECTORY_MOD ModAccountFlags = {
+        DIR_MOD_FLAGS_REPLACE,
+        wszAttrAccountFlags,
+        1,
+        &AttrValues[ATTR_VAL_IDX_ACCOUNT_FLAGS]
+    };
+
+    DIRECTORY_MOD Mods[ATTR_VAL_IDX_SENTINEL + 1];
+    memset(&Mods, 0, sizeof(Mods));
+
+    dwUserObjectFilterLen = (sizeof(wszAttrObjectClass)/sizeof(wszAttrObjectClass[0]) +
+                             dwInt32StrSize +
+                             sizeof(wszUserObjectFilterFmt));
+    dwError = LwAllocateMemory(dwUserObjectFilterLen * sizeof(WCHAR),
+                               OUT_PPVOID(&pwszUserObjectFilter));
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    if (sw16printfw(pwszUserObjectFilter, dwUserObjectFilterLen,
+                    wszUserObjectFilterFmt,
+                    &wszAttrObjectClass[0], SAMDB_OBJECT_CLASS_USER) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_SAMDB_ERROR(dwError);
+    }
+
+    dwError = SamDbSearchObject(hDirectory,
+                                pwszBase,
+                                ulScope,
+                                pwszUserObjectFilter,
+                                wszAttributes,
+                                ulAttributesOnly,
+                                &pUserEntries,
+                                &dwNumUserEntries);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    for (iEntry = 0; iEntry < dwNumUserEntries; iEntry++)
+    {
+        pUserEntry = &(pUserEntries[iEntry]);
+
+        dwError = DirectoryGetEntryAttrValueByName(
+                                    pUserEntry,
+                                    wszAttrObjectDN,
+                                    DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                                    &pwszUserObjectDN);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = DirectoryGetEntryAttrValueByName(
+                                    pUserEntry,
+                                    wszAttrAccountFlags,
+                                    DIRECTORY_ATTR_TYPE_INTEGER,
+                                    &dwAccountFlags);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = DirectoryGetEntryAttrValueByName(
+                                    pUserEntry,
+                                    wszAttrNtHash,
+                                    DIRECTORY_ATTR_TYPE_OCTET_STREAM,
+                                    &pNtHash);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        if ((pNtHash == NULL || pNtHash->ulNumBytes == 0) &&
+            !(dwAccountFlags & SAMDB_ACB_DISABLED))
+        {
+            dwAccountFlags |= SAMDB_ACB_DISABLED;
+
+            AttrValues[ATTR_VAL_IDX_ACCOUNT_FLAGS].data.ulValue = dwAccountFlags;
+
+            Mods[iMod++] = ModAccountFlags;
+
+            dwError = SamDbModifyObject(hDirectory,
+                                        pwszUserObjectDN,
+                                        Mods);
+            BAIL_ON_SAMDB_ERROR(dwError);
+        }
+    }
+
+cleanup:
+    if (pUserEntries)
+    {
+        DirectoryFreeEntries(pUserEntries, dwNumUserEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszUserObjectFilter);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 static
 VOID

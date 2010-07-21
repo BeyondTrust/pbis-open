@@ -1221,7 +1221,75 @@ LocalDirChangePassword(
     )
 {
     DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
+    PLW_MAP_SECURITY_CONTEXT pSecCtx = NULL;
+    PACCESS_TOKEN pUserToken = NULL;
+    PWSTR pwszBase = NULL;
+    DWORD dwScope = 0;
+    PWSTR pwszFilter = NULL;
+    WCHAR wszAttrSecurityDescriptor[] = LOCAL_DIR_ATTR_SECURITY_DESCRIPTOR;
+
+    PWSTR wszAttributes[] = {
+        wszAttrSecurityDescriptor,
+        NULL
+    };
+
+    PDIRECTORY_ENTRY pUserEntry = NULL;
+    DWORD dwNumEntries = 0;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
+    GENERIC_MAPPING GenericMapping = {0};
+    DWORD dwAccessGranted = 0;
+
+    /*
+     * Check if user has right to change the password first
+     */
+    ntStatus = LwMapSecurityCreateContext(&pSecCtx);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = LwMapSecurityCreateAccessTokenFromUidGid(
+                    pSecCtx,
+                    &pUserToken,
+                    pContext->uid,
+                    pContext->gid);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = DirectorySearch(
+                    pContext->hDirectory,
+                    pwszBase,
+                    dwScope,
+                    pwszFilter,
+                    wszAttributes,
+                    FALSE,
+                    &pUserEntry,
+                    &dwNumEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumEntries == 0)
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+    }
+    else if (dwNumEntries != 1)
+    {
+        dwError = LW_ERROR_DATA_ERROR;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectoryGetEntrySecurityDescriptor(
+                    pUserEntry,
+                    &pSecDesc);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!RtlAccessCheck(pSecDesc,
+                        pUserToken,
+                        USER_ACCESS_CHANGE_PASSWORD,
+                        0,
+                        &GenericMapping,
+                        &dwAccessGranted,
+                        &ntStatus))
+    {
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     dwError = DirectoryChangePassword(
                     pContext->hDirectory,
@@ -1230,10 +1298,31 @@ LocalDirChangePassword(
                     pwszNewPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-error:
+cleanup:
+    if (pUserEntry)
+    {
+        DirectoryFreeEntries(pUserEntry, dwNumEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+
+    DirectoryFreeEntrySecurityDescriptor(&pSecDesc);
+
+    RtlReleaseAccessToken(&pUserToken);
+    LwMapSecurityFreeContext(&pSecCtx);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
 
     return dwError;
+
+error:
+    goto cleanup;
 }
+
 
 DWORD
 LocalDirSetPassword(

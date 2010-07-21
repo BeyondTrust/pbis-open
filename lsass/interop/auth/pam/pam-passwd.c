@@ -321,7 +321,6 @@ LsaPamUpdatePassword(
     PSTR   pszPassword = NULL;
     PSTR   pszLoginId = NULL;
     HANDLE hLsaConnection = (HANDLE)NULL;
-    BOOLEAN bCheckOldPassword = FALSE;
 
     LSA_LOG_PAM_DEBUG("LsaPamUpdatePassword::begin");
 
@@ -347,20 +346,11 @@ LsaPamUpdatePassword(
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaPamMustCheckCurrentPassword(
-                         hLsaConnection,
-                         pszLoginId,
-                         &bCheckOldPassword);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (bCheckOldPassword)
-    {
-    	dwError = LsaPamGetOldPassword(
+    dwError = LsaPamGetOldPassword(
                    pamh,
                    pPamContext,
                    &pszOldPassword);
-    	BAIL_ON_LSA_ERROR(dwError);
-    }
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaPamGetNewPassword(
                    pamh,
@@ -368,23 +358,12 @@ LsaPamUpdatePassword(
                    &pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (bCheckOldPassword)
-    {
-        dwError = LsaChangePassword(
-                       hLsaConnection,
-                       pszLoginId,
-                       pszPassword,
-                       pszOldPassword);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    else
-    {
-        dwError = LsaSetPassword(
-                       hLsaConnection,
-                       pszLoginId,
-                       pszPassword);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaChangePassword(
+                   hLsaConnection,
+                   pszLoginId,
+                   pszPassword,
+                   pszOldPassword);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 
