@@ -772,6 +772,7 @@ LocalMarshalEntryToSecurityObject(
 
     switch (dwObjectClass)
     {
+    case LOCAL_OBJECT_CLASS_GROUP_MEMBER:
     case LOCAL_OBJECT_CLASS_USER:
         pObject->type = LSA_OBJECT_TYPE_USER;
 

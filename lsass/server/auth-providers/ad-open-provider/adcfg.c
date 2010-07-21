@@ -171,6 +171,7 @@ AD_FreeConfigContents(
     LW_SAFE_FREE_STRING(pConfig->pszHomedirTemplate);
     LW_SAFE_FREE_STRING(pConfig->pszShell);
     LW_SAFE_FREE_STRING(pConfig->pszSkelDirs);
+    LW_SAFE_FREE_STRING(pConfig->pszUserDomainPrefix);
 
     if (pConfig->pUnresolvedMemberList)
     {
@@ -250,6 +251,15 @@ AD_ReadRegistry(
             MAXDWORD,
             NULL,
             &StagingConfig.pszHomedirTemplate
+        },
+        {
+            "UserDomainPrefix",
+            TRUE,
+            LsaTypeString,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.pszUserDomainPrefix
         },
         {
             "CachePurgeTimeout",
@@ -709,6 +719,49 @@ AD_GetHomedirPrefixPath(
     }
 
     *ppszPath = pszHomedirPrefixPath;
+
+cleanup:
+
+    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+
+    return dwError;
+
+error:
+
+    *ppszPath = NULL;
+
+    goto cleanup;
+}
+
+DWORD
+AD_GetUserDomainPrefix(
+    PSTR* ppszPath
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PSTR  pszValue = NULL;
+
+    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszUserDomainPrefix))
+    {
+        dwError = LwAllocateString(
+                        gpLsaAdProviderState->config.pszUserDomainPrefix,
+                        &pszValue
+                        );
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (!LW_IS_NULL_OR_EMPTY_STR(gpADProviderData->szShortDomain))
+    {
+        dwError = LwAllocateString(
+                        gpADProviderData->szShortDomain,
+                        &pszValue
+                        );
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    *ppszPath = pszValue;
 
 cleanup:
 

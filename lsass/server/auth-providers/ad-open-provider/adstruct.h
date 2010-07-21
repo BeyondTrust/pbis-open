@@ -117,6 +117,7 @@ typedef struct _LSA_AD_CONFIG {
     BOOLEAN             bSyncSystemTime;
     BOOLEAN             bRefreshUserCreds;
     DWORD               dwMachinePasswordSyncLifetime;
+    PSTR                pszUserDomainPrefix;
     PSTR                pszShell;
     PSTR                pszHomedirPrefix;
     PSTR                pszHomedirTemplate;

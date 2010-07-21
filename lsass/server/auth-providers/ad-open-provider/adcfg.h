@@ -92,6 +92,11 @@ AD_GetHomedirPrefixPath(
     );
 
 DWORD
+AD_GetUserDomainPrefix(
+    PSTR* ppszPath
+    );
+
+DWORD
 AD_GetUnprovisionedModeHomedirTemplate(
     PSTR* ppszUnprovisionedModeHomedirTemplate
     );

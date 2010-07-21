@@ -589,28 +589,6 @@ LsaAdBatchMarshal(
             BAIL_ON_LSA_ERROR(dwError);
     }
 
-    /* Fix up alias fields when in AssumeDefaultDomain mode */
-    if (AD_ShouldAssumeDefaultDomain() &&
-        pObject->enabled &&
-        ((pObject->type == LSA_OBJECT_TYPE_USER &&
-          !pObject->userInfo.pszAliasName) || 
-         (pObject->type == LSA_OBJECT_TYPE_GROUP &&
-          !pObject->groupInfo.pszAliasName)) &&
-        !strcmp(pObject->pszNetbiosDomainName, gpADProviderData->szShortDomain))
-    {
-        dwError = LwAllocateString(
-            pObject->pszSamAccountName,
-            pObject->type == LSA_OBJECT_TYPE_USER ?
-            &pObject->userInfo.pszAliasName : &pObject->groupInfo.pszAliasName);
-        BAIL_ON_LSA_ERROR(dwError);
-        
-        LwStrCharReplace(
-            pObject->type == LSA_OBJECT_TYPE_USER ?
-            pObject->userInfo.pszAliasName : pObject->groupInfo.pszAliasName,
-            ' ',
-            LsaSrvSpaceReplacement());
-    }
-
 cleanup:
     *ppObject = pObject;
     return dwError;

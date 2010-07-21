@@ -738,23 +738,12 @@ AD_ValidateUser(
     )
 {
     DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
 
     LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
 
     if (gpLsaAdProviderState->joinState != LSA_AD_JOINED)
     {
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                    pszLoginId,
-                    &pLoginInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!AD_ServicesDomain(pLoginInfo->pszDomain)) {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -774,11 +763,6 @@ cleanup:
     LsaAdProviderStateRelease(gpLsaAdProviderState);
 
     ADCacheSafeFreeObject(&pUserInfo);
-
-    if (pLoginInfo)
-    {
-        LsaSrvFreeNameInfo(pLoginInfo);
-    }
 
     return dwError;
 

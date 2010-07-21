@@ -263,6 +263,11 @@ ADSyncMachinePasswordThreadRoutine(
             goto lsa_wait_resync;
         }
 
+        if (!gpADProviderData)
+        {
+            dwError = 0;
+            goto lsa_wait_resync;
+        }
         ADSyncTimeToDC(gpADProviderData->szDomain);
         
         dwError = LwpsGetPasswordByHostName(

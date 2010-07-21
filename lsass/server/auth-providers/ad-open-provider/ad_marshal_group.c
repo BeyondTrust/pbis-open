@@ -57,6 +57,10 @@ ADMarshalGetCanonicalName(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PSTR    pszResult = NULL;
+    PSTR pszDefaultPrefix = NULL;
+
+    dwError = AD_GetUserDomainPrefix(&pszDefaultPrefix);
+    BAIL_ON_LSA_ERROR(dwError);
 
     if(pObject->type == LSA_OBJECT_TYPE_GROUP &&
        !LW_IS_NULL_OR_EMPTY_STR(pObject->groupInfo.pszAliasName))
@@ -79,6 +83,20 @@ ADMarshalGetCanonicalName(
             &pszResult);
         BAIL_ON_LSA_ERROR(dwError);
 
+        LwStrCharReplace(
+            pszResult,
+            ' ',
+            LsaSrvSpaceReplacement());
+    }
+    else if (AD_ShouldAssumeDefaultDomain() &&
+        pObject->enabled &&
+        !strcmp(pObject->pszNetbiosDomainName, pszDefaultPrefix))
+    {
+        dwError = LwAllocateString(
+            pObject->pszSamAccountName,
+            &pszResult);
+        BAIL_ON_LSA_ERROR(dwError);
+        
         LwStrCharReplace(
             pszResult,
             ' ',
@@ -110,6 +128,7 @@ ADMarshalGetCanonicalName(
     *ppszResult = pszResult;
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszDefaultPrefix);
     return dwError;
 
 error:

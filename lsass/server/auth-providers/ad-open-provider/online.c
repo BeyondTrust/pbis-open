@@ -1713,10 +1713,8 @@ AD_OnlineAuthenticateUserPam(
     )
 {
     DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
     DWORD dwGoodUntilTime = 0;
-    BOOLEAN bFoundDomain = FALSE;
     PSTR pszNT4UserName = NULL;
     PLSA_AUTH_USER_PAM_INFO pPamAuthInfo = NULL;
 
@@ -1724,22 +1722,6 @@ AD_OnlineAuthenticateUserPam(
                     sizeof(*pPamAuthInfo),
                     (PVOID*)&pPamAuthInfo);
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                    pParams->pszLoginName,
-                    &pLoginInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomain,
-                    &bFoundDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!bFoundDomain)
-    {
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = AD_FindUserObjectByName(
                     hProvider,
@@ -1815,11 +1797,6 @@ AD_OnlineAuthenticateUserPam(
 cleanup:
 
     LW_SAFE_FREE_STRING(pszNT4UserName);
-
-    if (pLoginInfo)
-    {
-        LsaSrvFreeNameInfo(pLoginInfo);
-    }
 
     ADCacheSafeFreeObject(&pUserInfo);
 
@@ -2555,29 +2532,11 @@ AD_OnlineChangePassword(
     )
 {
     DWORD dwError = 0;
-    PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     PLSA_SECURITY_OBJECT pCachedUser = NULL;
     PSTR pszFullDomainName = NULL;
-    BOOLEAN bFoundDomain = FALSE;
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
     PLWNET_DC_INFO pDcInfo = NULL;
     DWORD dwGoodUntilTime = 0;
-
-    dwError = LsaSrvCrackDomainQualifiedName(
-                    pszLoginId,
-                    &pLoginInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_ServicesDomainWithDiscovery(
-                    pLoginInfo->pszDomain,
-                    &bFoundDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!bFoundDomain)
-    {
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = AD_FindUserObjectByName(
                      hProvider,
@@ -2660,10 +2619,6 @@ AD_OnlineChangePassword(
 
 cleanup:
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
-    if (pLoginInfo)
-    {
-        LsaSrvFreeNameInfo(pLoginInfo);
-    }
 
     ADCacheSafeFreeObject(&pCachedUser);
 
@@ -4044,6 +3999,10 @@ AD_OnlineFindObjectsByName(
     DWORD dwIndex = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
+    PSTR pszDefaultPrefix = NULL;
+
+    dwError = AD_GetUserDomainPrefix(&pszDefaultPrefix);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*ppObjects) * dwCount, OUT_PPVOID(&ppObjects));
     BAIL_ON_LSA_ERROR(dwError);
@@ -4114,8 +4073,9 @@ AD_OnlineFindObjectsByName(
 
                 dwError = LwAllocateStringPrintf(
                     &pszLoginId_copy,
-                    "%s\\%s",
-                    gpADProviderData->szShortDomain,
+                    "%s%c%s",
+                    pszDefaultPrefix,
+                    LsaSrvDomainSeparator(),
                     QueryList.ppszStrings[dwIndex]);
                 BAIL_ON_LSA_ERROR(dwError);
 
@@ -4166,6 +4126,7 @@ AD_OnlineFindObjectsByName(
 
 cleanup:
 
+    LW_SAFE_FREE_STRING(pszDefaultPrefix);
     LW_SAFE_FREE_STRING(pszLoginId_copy);
 
     if (pUserNameInfo)
