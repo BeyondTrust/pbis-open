@@ -97,6 +97,8 @@ function main
         PRODUCT_VERSION="${MAIN_VERSION}"
         PRODUCT_FULL_RELEASE="${MAIN_RELEASE}.${SVN_REVISION}"
         PRODUCT_DIR="${BUILD_ROOT}/src/linux/build/products/${PRODUCT}/macpckgr"
+        PRODUCT_DMG_TEMPLATE_DIR="${BUILD_ROOT}/src/linux/build/products/${PRODUCT}/macdmg"
+        PRODUCT_DMG_TEMPLATE="${BUILD_ROOT}/src/linux/build/products/${PRODUCT}/macdmg/template.dmg"
 
         if [ -n "${OFFICIAL_BUILD_NUMBER}" ] ; then
             PRODUCT_FULL_RELEASE="${PRODUCT_FULL_RELEASE}.${OFFICIAL_BUILD_NUMBER}"
@@ -112,9 +114,12 @@ function main
         INFO_PLIST="${PRODUCT_BUILD_DIR_PMAKER}/Info.plist"
         DESC_PLIST="${PRODUCT_BUILD_DIR_PMAKER}/Resources/English.lproj/Description.plist"
 
-        OUT_MPKG="${PRODUCT_BUILD_DIR}/${PRODUCT_NAME}-${PRODUCT_FULL_VERSION}-${ARCH_RENAME}.mpkg"
+        NAME_MPKG="${PRODUCT_NAME}-${PRODUCT_FULL_VERSION}-${ARCH_RENAME}.mpkg"
+        OUT_MPKG="${PRODUCT_BUILD_DIR}/${NAME_MPKG}"
         OUT_DMG="${OUT_DIR}/${PRODUCT_NAME}-${PRODUCT_FULL_VERSION}-${ARCH_RENAME}.dmg"
+        OUT_DMG_TMP="${OUT_DIR}/${PRODUCT_NAME}-${PRODUCT_FULL_VERSION}-${ARCH_RENAME}-tmp.dmg"
         OUT_DMG_SPEC="${OUT_DIR}/${PRODUCT_NAME}-*-${ARCH_RENAME}.dmg"
+        OUT_DMG_TMP_SPEC="${OUT_DIR}/${PRODUCT_NAME}-*-${ARCH_RENAME}-tmp.dmg"
 
         # Recreate product build directory
         [ -d "${PRODUCT_BUILD_DIR}" ] && rm -rf "${PRODUCT_BUILD_DIR}"
@@ -130,6 +135,7 @@ function main
 
         # Remove old DMG files
         rm -f ${OUT_DMG_SPEC}
+        rm -f ${OUT_DMG_TMP_SPEC}
 
         # Prepare package maker files
         rsync -a "${PRODUCT_DIR}/" "${PRODUCT_BUILD_DIR_PMAKER}/"
@@ -155,8 +161,40 @@ function main
             echo "For Mac systems with OSX > 10.4, try adding /Developer/Applications/Utilities/PackageMaker-2.1.1/PackageMaker.app to your system to fix."
             exit $?
         fi
-        hdiutil create -fs HFS+ -srcfolder "${OUT_MPKG}" "${OUT_DMG}"
-        exit_on_error $?
+
+        echo "Template dir path: $PRODUCT_DMG_TEMPLATE_DIR"
+        if [ -d "$PRODUCT_DMG_TEMPLATE_DIR" ]; then
+            echo "Building DMG with template disk image ($PRODUCT_DMG_TEMPLATE)"
+            ditto "${PRODUCT_DMG_TEMPLATE}" "${OUT_DMG_TMP}"
+            exit_on_error $?
+            hdiutil attach "${OUT_DMG_TMP}" > /tmp/build_mount
+            exit_on_error $?
+            DMG_DEVICE=`cat /tmp/build_mount | grep "${PRODUCT_NAME}" | awk '{print $1;}'`
+            rm /tmp/build_mount
+            echo "Mounted with device: $DMG_DEVICE"
+            ditto "${OUT_MPKG}" "/Volumes/${PRODUCT_NAME}/Installer/$NAME_MPKG"
+            exit_on_error $?
+            sync
+            sync
+            echo "Set read only"
+            chmod -Rf go-w /Volumes/${PRODUCT_NAME}
+            exit_on_error $?
+            sync
+            sync
+            echo "Detach the DMG"
+            hdiutil detach "${DMG_DEVICE}"
+            exit_on_error $?
+            sync
+            sync
+            sleep 2
+            echo "Compress the DMG"
+            hdiutil convert ${OUT_DMG_TMP} -format UDZO -imagekey zlib-level=9 -o ${OUT_DMG}
+            exit_on_error $?
+            rm -r ${OUT_DMG_TMP}
+        else
+            hdiutil create -fs HFS+ -srcfolder "${OUT_MPKG}" "${OUT_DMG}"
+            exit_on_error $?
+        fi
     done
 
     return 0
