@@ -489,6 +489,9 @@ RemoveCacheFiles()
     pszCachePath = LOCALSTATEDIR "/lib/likewise/grouppolicy/user-cache";
     (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
 
+    pszCachePath = LOCALSTATEDIR "/lib/likewise/lwedsplugin/user-cache";
+    (void) CTRemoveFiles(pszCachePath, FALSE, TRUE);
+
     /* Revert any system configuration files that may have been changed by previous domain GPOs */
     ceError = CTCheckDirectoryExists( "/var/lib/likewise/grouppolicy", 
                                       &bDirExists);
