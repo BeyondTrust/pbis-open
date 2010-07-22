@@ -10,7 +10,7 @@ UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 PACKAGES="\
     krb5 openldap libxml2 sqlite base lwreg\
     pstore netlogon lwio rpc eventlog lsass \
-    srvsvc domainjoin lwupgrade \
+    srvsvc domainjoin reskit lwupgrade \
     lwnetapi lwtools \
     "
 OBSOLETE_PACKAGES="lwmgmt lwreg-32bit"
