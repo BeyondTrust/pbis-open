@@ -313,7 +313,9 @@ LWIAttrValDataQuery::Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData)
 
     if ( bytesWritten > 0 )
     {
+#ifdef SHOW_ALL_DEBUG_SPEW
         LOG_BUFFER(pAttrValueSearchWithData->fOutDataBuff->fBufferData, bytesWritten);
+#endif
     }
 
 cleanup:

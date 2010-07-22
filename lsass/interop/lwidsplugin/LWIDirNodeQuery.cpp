@@ -318,7 +318,9 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo)
 
     if ( bytesWritten > 0 )
     {
+#ifdef SHOW_ALL_DEBUG_SPEW
         LOG_BUFFER(pGetDirNodeInfo->fOutDataBuff->fBufferData, bytesWritten);
+#endif
     }
 
 cleanup:
@@ -440,7 +442,9 @@ LWIDirNodeQuery::GetAttributeEntry(sGetAttributeEntry * pGetAttributeEntry)
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
+#ifdef SHOW_ALL_DEBUG_SPEW
     LOG_BUFFER(pGetAttributeEntry->fInOutDataBuff->fBufferData, pGetAttributeEntry->fInOutDataBuff->fBufferLength);
+#endif
 
     macError = LWIQuery::ReadResponse(pGetAttributeEntry->fInOutDataBuff->fBufferData,
                                       pGetAttributeEntry->fInOutDataBuff->fBufferLength,
@@ -469,8 +473,10 @@ LWIDirNodeQuery::GetAttributeEntry(sGetAttributeEntry * pGetAttributeEntry)
         pGetAttributeEntry->fOutAttrInfoPtr->fAttributeValueMaxSize,
         pGetAttributeEntry->fOutAttrInfoPtr->fAttributeSignature.fBufferSize);
 
+#ifdef SHOW_ALL_DEBUG_SPEW
     LOG_BUFFER(pGetAttributeEntry->fOutAttrInfoPtr->fAttributeSignature.fBufferData,
                pGetAttributeEntry->fOutAttrInfoPtr->fAttributeSignature.fBufferLength);
+#endif
 
 cleanup:
     if (pMessage)
@@ -516,7 +522,9 @@ LWIDirNodeQuery::GetAttributeValue(sGetAttributeValue * pGetAttributeValue)
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
+#ifdef SHOW_ALL_DEBUG_SPEW
     LOG_BUFFER(pGetAttributeValue->fInOutDataBuff->fBufferData, pGetAttributeValue->fInOutDataBuff->fBufferLength);
+#endif
 
     macError = LWIQuery::ReadResponse(pGetAttributeValue->fInOutDataBuff->fBufferData,
                                       pGetAttributeValue->fInOutDataBuff->fBufferLength,
@@ -559,8 +567,10 @@ LWIDirNodeQuery::GetAttributeValue(sGetAttributeValue * pGetAttributeValue)
         pGetAttributeValue->fOutAttrValue->fAttributeValueID,
         pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferSize);
 
+#ifdef SHOW_ALL_DEBUG_SPEW
     LOG_BUFFER(pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferData,
                pGetAttributeValue->fOutAttrValue->fAttributeValueData.fBufferLength);
+#endif
 
 cleanup:
     if (pMessage)

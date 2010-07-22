@@ -138,17 +138,6 @@ LWIQuery::ShouldQueryGroupInformation()
     return (_recTypeSet && LWI_BITVECTOR_ISSET(_recTypeSet, LWIRecTypeLookup::idx_kDSStdRecordTypeGroups));
 }
 
-#define TEST_ENABLED_PATH "/lwidstest.enabled"
-
-bool
-LWIQuery::IsTestEnabled()
-{
-    struct stat statBuffer;
-
-    return (stat(TEST_ENABLED_PATH, &statBuffer) == 0) ? true : false;
-}
-
-
 bool
 LWIQuery::IsAllDigit(const char* pszBuf)
 {
@@ -273,6 +262,7 @@ LWIQuery::GetAuthString(
     }
 
 cleanup:
+    LOG_LEAVE("--> %d", macError);
     if (guidString)
     {
         LWIFreeString(guidString);
@@ -2177,8 +2167,6 @@ LWIQuery::WriteResponse(
     PDSRECORD pRecord = NULL;
     unsigned long offset = 0;
 
-    LOG("WriteResponse about to fill in callers buffer, maxBufferSize = %d", maxBufferSize );
-	
     macError = DetermineRecordsToFitInBuffer(maxBufferSize, nRecords);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -2198,9 +2186,6 @@ LWIQuery::WriteResponse(
     bytesWritten = offset;
 
     LOG("WriteResponse success, bytesWritten = %d, recordsWritten = %d", bytesWritten, nRecordsWritten );
-
-    // BUGBUG - We may need to save off the pRecordBlock and the last position of data that we wrote to buffer
-    // so that the caller can resume getting results with subsequent
 
 cleanup:
 
@@ -2807,7 +2792,7 @@ LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecor
     unsigned long currentSize = 0;
     int result = 0;
 
-    LOG("DetermineRecordsToFitInBuffer(max: %ld)", maxBufferSize);
+    LOG_ENTER("maxBufferSize: %ld", maxBufferSize);
 
     if (_pRecordListHead)
 	{

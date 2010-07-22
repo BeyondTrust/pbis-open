@@ -263,7 +263,9 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
 
     if ( bytesWritten > 0 )
     {
+#ifdef SHOW_ALL_DEBUG_SPEW
         LOG_BUFFER(pGetRecordList->fInDataBuff->fBufferData, bytesWritten);
+#endif
     }
 
 cleanup:
@@ -358,7 +360,9 @@ LWIRecordListQuery::Test(
 
     if (pData->fBufferLength > 0)
     {
+#ifdef SHOW_ALL_DEBUG_SPEW
         LOG_BUFFER(pData->fBufferData, pData->fBufferLength);
+#endif
     }
 
 cleanup:
