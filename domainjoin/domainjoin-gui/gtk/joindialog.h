@@ -47,6 +47,7 @@ const char* joindialog_get_domain_name(JoinDialog* dialog);
 gboolean  joindialog_get_ou_active(JoinDialog* dialog);
 const char* joindialog_get_ou_name(JoinDialog* dialog);
 gboolean joindialog_get_modify_hosts(JoinDialog* dialog);
+const char* joindialog_get_default_prefix(JoinDialog* dialog);
 GtkWindow* joindialog_get_gtk_window(JoinDialog* dialog);
 void joindialog_delete(JoinDialog* dialog);
 
