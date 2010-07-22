@@ -76,17 +76,28 @@ service_start()
 	    status=$?
 	    log_end_msg $status
 	    ;;
-	 HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
+         HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Starting `service_description $1`"
-            ${LWSM} -q start "${1}"
-            status=$?
-	    if [ $status -eq 0 ]
-	    then
-		echo " ...ok"
-	    else
-		echo " ...failed"
-	    fi
-	    ;;
+            if type svcadm >/dev/null 2>&1 ; then
+                # Use the solaris service manager
+
+                # This will start the program again if it was in maintenance
+                # mode.
+                svcadm clear "${1}d" 2>/dev/null
+                # This will start the program again if it was disabled.
+                svcadm enable "${1}d" 2>/dev/null
+                status=$?
+            else
+                ${LWSM} -q start "${1}"
+                status=$?
+            fi
+            if [ $status -eq 0 ]
+            then
+                echo " ...ok"
+            else
+                echo " ...failed"
+            fi
+            ;;
         UNKNOWN)
             ${LWSM} -q start "${1}"
             status=$?
@@ -133,10 +144,17 @@ service_restart()
 	    status=$?
 	    log_end_msg $status
 	    ;;
-	 HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
+         HP-UX | SOLARIS | FREEBSD | ESXI | AIX)
             printf "%s" "Restarting `service_description $1`"
-            ${LWSM} -q restart "${1}"
-            status=$?
+            if type svcadm >/dev/null 2>&1 ; then
+                # Use the solaris service manager
+                svcadm clear "${1}d" 2>/dev/null
+                svcadm restart "${1}d" 2>/dev/null
+                status=$?
+            else
+                ${LWSM} -q restart "${1}"
+                status=$?
+            fi
 	    if [ $status -eq 0 ]
 	    then
 		echo " ...ok"
@@ -192,15 +210,21 @@ service_stop()
             ;;
         AIX | HP-UX | SOLARIS | FREEBSD | ESXI)
             printf "%s" "Stopping `service_description $1`"
-	    ${LWSM} -q stop "${1}"
-	    status=$?
-	    if [ $status -eq 0 ]
-	    then
-		echo " ...ok"
-	    else
-		echo " ...failed"
-	    fi
-	    ;;
+            if type svcadm >/dev/null 2>&1 ; then
+                # Use the solaris service manager
+                svcadm disable "${1}d" 2>/dev/null
+                status=$?
+            else
+                ${LWSM} -q stop "${1}"
+                status=$?
+            fi
+            if [ $status -eq 0 ]
+            then
+                echo " ...ok"
+            else
+                echo " ...failed"
+            fi
+            ;;
         UNKNOWN)
 	    ${LWSM} -q stop "${1}"
             status=$?
