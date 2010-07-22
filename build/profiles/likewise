@@ -30,7 +30,7 @@ case "${BUILD_OS_TYPE}" in
     linux)
 	if ! my_check_is_rhel_21 >/dev/null 2>&1
 	then
-	    BUILD_PRODUCTS="$BUILD_PRODUCTS djgtk"
+	    BUILD_PRODUCTS="$BUILD_PRODUCTS"
 	fi		   
 	;;
     freebsd | solaris)
