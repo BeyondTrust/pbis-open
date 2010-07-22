@@ -325,13 +325,6 @@ stop_daemons()
     for daemon in `reverse_list ${DAEMONS}`; do
         stop_daemon $daemon
     done
-    if type svccfg >/dev/null 2>&1; then
-        for daemon in `reverse_list ${DAEMONS}`; do
-            if svccfg select $daemon 2>/dev/null; then
-                svccfg delete $daemon
-            fi
-        done
-    fi
 }
 
 stop_obsolete_daemons()
@@ -1259,13 +1252,13 @@ do_uninstall()
     log_info "Uninstall started"
     log_info ""
 
-    stop_daemons
-
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli configure --disable pam > /dev/null 2>&1
         $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
     fi
+
+    stop_daemons
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT} ${OBSOLETE_PACKAGES}`
 
