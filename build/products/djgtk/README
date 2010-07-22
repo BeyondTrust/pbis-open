@@ -1,6 +1,0 @@
-Likewise
---------
-
-To join an Active Directory domain using a graphical user interface, run:
-
-	/opt/likewise/bin/domainjoin-gui
