@@ -937,7 +937,7 @@ void rpc_ss_enable_reflect_deletes  _DCE_PROTOTYPE_ ((
  rpc_ss_node_table_t 
 ));
 
-long rpc_ss_register_node   _DCE_PROTOTYPE_ ((
+idl_ulong_int rpc_ss_register_node   _DCE_PROTOTYPE_ ((
     rpc_ss_node_table_t  /*tab*/,
     byte_p_t  /*ptr*/,
     long  /*marshalling*/,
@@ -947,19 +947,19 @@ long rpc_ss_register_node   _DCE_PROTOTYPE_ ((
 
 byte_p_t rpc_ss_lookup_node_by_num   _DCE_PROTOTYPE_ ((
     rpc_ss_node_table_t  /*tab*/,
-    unsigned long /*num*/
+    idl_ulong_int /*num*/
 ));
 
 byte_p_t rpc_ss_lookup_pointer_to_node   _DCE_PROTOTYPE_ ((
     rpc_ss_node_table_t  /*tab*/,
-    unsigned long  /*num*/,
+    idl_ulong_int  /*num*/,
     long * /*has_been_unmarshalled*/
 ));
 
 byte_p_t rpc_ss_return_pointer_to_node   _DCE_PROTOTYPE_ ((
     rpc_ss_node_table_t  /*tab*/,
-    unsigned long  /*num*/,
-    long  /*size*/,
+    idl_ulong_int  /*num*/,
+    idl_ulong_int  /*size*/,
     rpc_void_p_t (*p_allocate) _DCE_PROTOTYPE_(( idl_size_t)),
     long * /*has_been_unmarshalled*/,
     long * /*new_node*/
