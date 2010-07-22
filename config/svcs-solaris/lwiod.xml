@@ -41,7 +41,7 @@
         </dependent>
 
         <exec_method type='method' name='start'
-                exec='/opt/likewise/bin/lwsm -q start lwio'
+                exec='/opt/likewise/bin/lwsm -q proxy lwio'
                 timeout_seconds='60' />
 
         <exec_method type='method' name='stop'

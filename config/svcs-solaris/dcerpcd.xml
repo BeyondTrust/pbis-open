@@ -41,7 +41,7 @@
         </dependent>
 
         <exec_method type='method' name='start'
-                exec='/opt/likewise/bin/lwsm -q start dcerpc'
+                exec='/opt/likewise/bin/lwsm -q proxy dcerpc'
                 timeout_seconds='60' />
 
         <exec_method type='method' name='stop'
