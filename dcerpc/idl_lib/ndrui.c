@@ -412,6 +412,7 @@ void rpc_ss_ndr_unmar_struct
                                          struct_offset_vec_ptr,
                                          conf_dims,
                                          Z_values,
+                                         FALSE,
                                          NULL,
                                          IDL_msp );
                 rpc_ss_ndr_u_fix_or_conf_arr( conf_dims, Z_values,
@@ -444,6 +445,7 @@ void rpc_ss_ndr_unmar_struct
                                          struct_offset_vec_ptr,
                                          conf_dims,
                                          Z_values,
+                                         FALSE,
                                          &correl_bounds_list,
                                          IDL_msp );
                 rpc_ss_ndr_unmar_range_list( conf_dims,
@@ -1942,6 +1944,7 @@ void rpc_ss_ndr_unmar_interp
                                              NULL,
                                              conf_dims,
                                              Z_values,
+                                             FALSE,
                                              NULL,
                                              IDL_msp );
                     if (IDL_msp->IDL_side == IDL_server_side_k)
@@ -2005,6 +2008,7 @@ void rpc_ss_ndr_unmar_interp
                                              NULL,
                                              conf_dims,
                                              Z_values,
+                                             FALSE,
                                              &correl_bounds_list,
                                              IDL_msp );
                     rpc_ss_ndr_unmar_range_list( conf_dims,
@@ -2371,21 +2375,14 @@ void rpc_ss_ndr_unmar_interp
 /******************************************************************************/
 static void
 rpc_ss_ndr_unmar_cf_early
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte **p_defn_vec_ptr, /* if early, not modified */
                                           /* if late, points past bounds/limit info */
     /* [in] */ idl_ulong_int dimensionality, /* dimensionality of array */
+    /* [in] */ idl_boolean pre_unmar,
     /* [out] */ idl_boolean **p_early_list,
     IDL_msp_t IDL_msp
 )
-#else
-(p_defn_vec_ptr, dimensionality, p_early_list, IDL_msp)
-    idl_byte **p_defn_vec_ptr;
-    idl_ulong_int dimensionality;
-    idl_boolean **p_early_list;
-    IDL_msp_t IDL_msp;
-#endif
 {
     idl_ulong_int i;
     idl_byte *defn_vec_ptr = *p_defn_vec_ptr;
@@ -2421,13 +2418,8 @@ rpc_ss_ndr_unmar_cf_early
             defn_vec_ptr++;
             IDL_GET_LONG_FROM_VECTOR(attribute_index, defn_vec_ptr);
 
-            if (!early)
+            if (!early || pre_unmar)
             {
-#ifdef DEBUG_INTERP
-                printf("rpc_ss_ndr_unmar_cf_early: "
-                       "IDL_CF_EARLY not set for (lower) attribute %ld\n",
-                       attribute_index);
-#endif
                 early_list[i] = idl_false;
             }
         }
@@ -2448,23 +2440,8 @@ rpc_ss_ndr_unmar_cf_early
             defn_vec_ptr++;
             IDL_GET_LONG_FROM_VECTOR(attribute_index, defn_vec_ptr);
 
-            if (kind == IDL_LIMIT_LENGTH_IS && early)
+            if ((kind != IDL_LIMIT_UPPER_CONF && !early) || pre_unmar)
             {
-#ifdef DEBUG_INTERP
-                printf("rpc_ss_ndr_unmar_cf_early: "
-                       "IDL_CF_EARLY set for (size_is) attribute %ld\n",
-                       attribute_index);
-#endif
-                early = false;
-                early_list[i] = idl_false;
-            }
-            else if (kind != IDL_LIMIT_UPPER_CONF && !early)
-            {
-#ifdef DEBUG_INTERP
-                printf("rpc_ss_ndr_unmar_cf_early: "
-                       "IDL_CF_EARLY not set for (upper) attribute %ld\n",
-                       attribute_index);
-#endif
                 early_list[i] = idl_false;
             }
         }
@@ -2499,7 +2476,6 @@ rpc_ss_ndr_unmar_cf_early
 /*                                                                            */
 /******************************************************************************/
 void rpc_ss_ndr_unmar_check_bounds_correlation
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte **p_defn_vec_ptr,
     /* [in] */ rpc_void_p_t array_addr,
@@ -2507,21 +2483,10 @@ void rpc_ss_ndr_unmar_check_bounds_correlation
     /* [in] */ idl_ulong_int *struct_offset_vec_ptr,
     /* [in] */ idl_ulong_int dimensionality,
     /* [in] */ idl_ulong_int *Z_values,
+    /* [in] */ idl_boolean pre_unmar,
     /* [out] */ IDL_bound_pair_t **p_correl_bounds_list,
     IDL_msp_t IDL_msp
 )
-#else
-(p_defn_vec_ptr, array_addr, struct_addr, struct_offset_vec_ptr,
- dimensionality, Z_values, p_correl_bounds_list IDL_ms)
-    idl_byte **p_defn_vec_ptr;
-    rpc_void_p_t array_addr;
-    rpc_void_p_t struct_addr;
-    idl_ulong_int *struct_offset_vec_ptr;
-    idl_ulong_int dimensionality;
-    idl_ulong_int *Z_values;
-    IDL_bound_pair_t **p_correl_bounds_list;
-    IDL_msp_t IDL_msp;
-#endif
 {
     IDL_bound_pair_t *correl_bounds_list;
     IDL_bound_pair_t normal_correl_bounds_list[IDL_NORMAL_DIMS];
@@ -2546,7 +2511,7 @@ void rpc_ss_ndr_unmar_check_bounds_correlation
     else
         early_list = normal_early_list;
 
-    rpc_ss_ndr_unmar_cf_early(p_defn_vec_ptr, dimensionality,
+    rpc_ss_ndr_unmar_cf_early(p_defn_vec_ptr, dimensionality, pre_unmar,
                               &early_list, IDL_msp);
     if (early_list == NULL)
         return;
@@ -2670,7 +2635,7 @@ void rpc_ss_ndr_unmar_check_range_correlation
     else
         early_list = normal_early_list;
 
-    rpc_ss_ndr_unmar_cf_early(p_defn_vec_ptr, dimensionality,
+    rpc_ss_ndr_unmar_cf_early(p_defn_vec_ptr, dimensionality, FALSE,
                               &early_list, IDL_msp);
     if (early_list == NULL)
         return;

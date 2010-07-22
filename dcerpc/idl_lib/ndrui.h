@@ -660,7 +660,6 @@ void rpc_ss_complete_conf_arr_descs
 #endif
 
 void rpc_ss_ndr_unmar_check_bounds_correlation
-#ifdef IDL_PROTOTYPES
 (
     /* [in] */ idl_byte **p_defn_vec_ptr,
     /* [in] */ rpc_void_p_t array_addr,
@@ -668,9 +667,9 @@ void rpc_ss_ndr_unmar_check_bounds_correlation
     /* [in] */ idl_ulong_int *struct_offset_vec_ptr,
     /* [in] */ idl_ulong_int dimensionality,
     /* [in] */ idl_ulong_int *Z_values,
+    /* [in] */ idl_boolean pre_unmar,
     /* [out] */ IDL_bound_pair_t **p_correl_bounds_list,
     /* [in] */ IDL_msp_t IDL_msp
-#endif
 );
 
 void rpc_ss_ndr_unmar_check_range_correlation
