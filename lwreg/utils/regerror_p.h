@@ -49,13 +49,6 @@
 #ifndef __REGERROR_P_H__
 #define __REGERROR_P_H__
 
-size_t
-LwRegGetErrorString(
-    DWORD  dwError,
-    PSTR   pszBuffer,
-    size_t stBufSize
-    );
-
 DWORD
 RegGetErrorMessageForLoggingEvent(
     DWORD dwErrCode,

@@ -53,6 +53,13 @@
 #include <reg/reg.h>
 #include <reg/lwntreg.h>
 
+size_t
+LwRegGetErrorString(
+    DWORD  dwError,
+    PSTR   pszBuffer,
+    size_t stBufSize
+    );
+
 // Registry Client Side APIs
 DWORD
 LwRegOpenServer(
