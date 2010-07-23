@@ -23,10 +23,10 @@ REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg
 
 case "${BUILD_OS_TYPE}" in
     linux)
-        PACKAGES="$PACKAGES passwd domainjoin-gui"
+        PACKAGES="$PACKAGES passwd"
         check_is_rhel_21
         if [ $? -ne 0 ]; then
-            PACKAGES="$PACKAGES mod-auth-kerb"
+            PACKAGES="$PACKAGES mod-auth-kerb domainjoin-gui"
         fi
         ;;
     freebsd)
