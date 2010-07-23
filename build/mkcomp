@@ -885,8 +885,8 @@ function usage
         echo "                          ${_step}"
     done
     echo ""
-    echo "    --force-bootsrap  Allows bootstrap step in cases where it would otherwise"
-    echo "                      be skipped."
+    echo "    --force-bootstrap Force bootstrap step even in cases where it would otherwise"
+    echo "                      be skipped.  No other steps are performed."
     echo ""
     echo "  symbol options:"
     echo ""
@@ -1008,12 +1008,7 @@ function main
                 shift
                 ;;
             --force-bootstrap)
-                if [ -n "${OPT_STEP}" ]; then
-                    echo "Cannot use --force-bootstrap with --step."
-                    exit 1
-                fi
-                OPT_BOOTSTRAP=1
-                OPT_STEP=bootstrap
+                OPT_FORCE_BOOTSTRAP=1
                 shift
                 ;;
             --debug)
@@ -1037,6 +1032,15 @@ function main
                 ;;
         esac
     done
+
+    if [ -n "${OPT_FORCE_BOOTSTRAP}" ]; then
+        if [ -n "${OPT_STEP}" -a "${OPT_STEP}" != "bootstrap" ]; then
+            echo "Cannot use --force-bootstrap with --step."
+            exit 1
+        fi
+        OPT_STEP=bootstrap
+        OPT_NO_COPY=1
+    fi
 
     if [ -n "${OPT_STEP}" ]; then
         case "${OPT_STEP}" in
