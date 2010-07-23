@@ -51,6 +51,7 @@
 #include <djlogger.h>
 #include <djmodule.h>
 #include <djhostinfo.h>
+#include <djauthinfo.h>
 #include <ctstrutils.h>
 
 FILE* log_handle;
@@ -156,6 +157,7 @@ fill_state(JoinDialog* dialog)
     join_state.ou = safe_strdup(joindialog_get_ou_name(dialog));
     join_state.ou_active = joindialog_get_ou_active(dialog);
     join_state.noModifyHosts = !joindialog_get_modify_hosts(dialog);
+    join_state.prefix = safe_strdup(joindialog_get_default_prefix(dialog));
 }
 
 static void
@@ -174,6 +176,7 @@ free_state()
 {
     SAFE_FREE(join_state.computer);
     SAFE_FREE(join_state.domain);
+    SAFE_FREE(join_state.prefix);
     SAFE_FREE(join_state.ou);
 
     SAFE_FREE(join_state.user);
@@ -221,16 +224,17 @@ show_error_dialog(GtkWindow* parent, LWException* exc)
 {
     if(gtk_minor_version < 6)
     {
-        GtkDialog* dialog = gtk_message_dialog_new(
-                                    parent,
-                                    GTK_DIALOG_DESTROY_WITH_PARENT,
-                                    GTK_MESSAGE_ERROR,
-                                    GTK_BUTTONS_CLOSE,
-                                    "%s: %s",
-                                    exc->shortMsg,
-                                    exc->longMsg);
+        GtkDialog* dialog = GTK_DIALOG(
+            gtk_message_dialog_new(
+                parent,
+                GTK_DIALOG_DESTROY_WITH_PARENT,
+                GTK_MESSAGE_ERROR,
+                GTK_BUTTONS_CLOSE,
+                "%s: %s",
+                exc->shortMsg,
+                exc->longMsg));
         gtk_dialog_run(dialog);
-        gtk_widget_destroy(dialog);
+        gtk_widget_destroy(GTK_WIDGET(dialog));
         return;
     }
     else
@@ -289,7 +293,7 @@ typedef struct JoinInfo
 static
 void
 PrintWarning(
-    JoinProcessOptions *options,
+    const JoinProcessOptions *options,
     const char *title,
     const char *message
     )
@@ -416,6 +420,8 @@ do_join(JoinDialog* dialog, LWException** exc)
             info.options.ouName = NULL;
         info.options.domainName = safe_strdup(join_state.domain);
         info.options.joiningDomain = TRUE;
+        info.options.assumeDefaultDomain = join_state.prefix != NULL;
+        info.options.userDomainPrefix = join_state.prefix;
 
         joinauth_delete(auth_dialog);
 

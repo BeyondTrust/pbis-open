@@ -40,6 +40,7 @@ typedef struct __JOINSTATE
 {
     char* computer;
     char* domain;
+    char* prefix;
     gboolean ou_active;
     char* ou;
     char* user;

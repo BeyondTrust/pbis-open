@@ -1,4 +1,4 @@
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall -Werror
 AM_CFLAGS += -I$(srcdir)/../include    \
              -I$(top_srcdir)/include   \
              -I$(top_srcdir)/libdomainjoin/include   \

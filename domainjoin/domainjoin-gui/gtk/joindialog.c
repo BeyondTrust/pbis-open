@@ -33,6 +33,8 @@
 
 #include <glade/glade.h>
 #include <gtk/gtk.h>
+#include <string.h>
+#include <strings.h>
 
 struct JoinDialog
 {
@@ -40,9 +42,18 @@ struct JoinDialog
     GtkEntry* computer_entry;
     GtkEntry* domain_entry;
     GtkEntry* ou_entry;
+    GtkEntry* prefix_entry;
+    GtkCheckButton* prefix_check;
     GtkRadioButton* ou_specific;
     GtkCheckButton* modify_hosts;
 };
+
+static inline
+size_t
+min_size(size_t a, size_t b)
+{
+    return a < b ? a : b;
+}
 
 static void
 ou_specific_toggled(GtkToggleButton* ou_specific, gpointer _data)
@@ -50,7 +61,41 @@ ou_specific_toggled(GtkToggleButton* ou_specific, gpointer _data)
     JoinDialog* dialog = (JoinDialog*) _data;
 
     gtk_widget_set_sensitive(GTK_WIDGET(dialog->ou_entry),
-                                gtk_toggle_button_get_active(ou_specific));
+                             gtk_toggle_button_get_active(ou_specific));
+}
+
+static void
+prefix_check_toggled(GtkToggleButton* prefix_check, gpointer _data)
+{
+    JoinDialog* dialog = (JoinDialog*) _data;
+
+    gtk_widget_set_sensitive(GTK_WIDGET(dialog->prefix_entry),
+                             gtk_toggle_button_get_active(prefix_check));
+}
+
+static void
+domain_changed_event(GtkEntry* entry, gpointer _data)
+{
+    JoinDialog* dialog = (JoinDialog*) _data;
+    const gchar* domain_text = NULL;
+    const gchar* prefix_text = NULL;
+    gchar* dot = NULL;
+    gchar* new_text = NULL;
+
+    domain_text = gtk_entry_get_text(entry);
+    prefix_text = gtk_entry_get_text(dialog->prefix_entry);
+
+    if (!strncasecmp(domain_text, prefix_text, min_size(strlen(domain_text), strlen(prefix_text))))
+    {
+        new_text = g_utf8_strup(domain_text, -1);
+        dot = strchr(new_text, '.');
+        if (dot)
+        {
+            *dot = '\0';
+        }
+        gtk_entry_set_text(dialog->prefix_entry, new_text);
+        g_free(new_text);
+    }
 }
 
 JoinDialog*
@@ -78,6 +123,16 @@ joindialog_new(
     g_assert(dialog->domain_entry != NULL);
     g_object_ref(G_OBJECT(dialog->domain_entry));
 
+    // Prefix check
+    dialog->prefix_check = GTK_CHECK_BUTTON(glade_xml_get_widget(xml, "PrefixCheck"));
+    g_assert(dialog->prefix_check != NULL);
+    g_object_ref(G_OBJECT(dialog->prefix_check));
+
+    // Prefix field
+    dialog->prefix_entry = GTK_ENTRY(glade_xml_get_widget(xml, "PrefixEntry"));
+    g_assert(dialog->prefix_entry != NULL);
+    g_object_ref(G_OBJECT(dialog->prefix_entry));
+
     // OU text field
     dialog->ou_entry = GTK_ENTRY(glade_xml_get_widget(xml, "OUEntry"));
     g_assert(dialog->ou_entry != NULL);
@@ -99,6 +154,12 @@ joindialog_new(
     g_signal_connect(G_OBJECT(dialog->ou_specific), "toggled",
         G_CALLBACK(ou_specific_toggled), dialog);
 
+    g_signal_connect(G_OBJECT(dialog->prefix_check), "toggled",
+        G_CALLBACK(prefix_check_toggled), dialog);
+
+    g_signal_connect(G_OBJECT(dialog->domain_entry), "changed",
+                     G_CALLBACK(domain_changed_event), dialog);
+
     // Set values saved from previous iteration.
     if (pJoinState->computer)
         gtk_entry_set_text(dialog->computer_entry, pJoinState->computer);
@@ -106,17 +167,22 @@ joindialog_new(
     if (pJoinState->domain)
         gtk_entry_set_text(dialog->domain_entry, pJoinState->domain);
 
+    if (pJoinState->prefix)
+    {
+        gtk_entry_set_text(dialog->prefix_entry, pJoinState->prefix);
+    }
+
     if (pJoinState->ou)
     {
         gtk_entry_set_text(dialog->ou_entry, pJoinState->ou);
 
         if (pJoinState->ou_active)
-            gtk_toggle_button_set_active(dialog->ou_specific, TRUE);
+            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->ou_specific), TRUE);
     }
 
     if (pJoinState->noModifyHosts)
     {
-        gtk_toggle_button_set_active(dialog->modify_hosts, FALSE);
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(dialog->modify_hosts), FALSE);
     }
 
 
@@ -145,6 +211,13 @@ const char*
 joindialog_get_domain_name(JoinDialog* dialog)
 {
     return gtk_entry_get_text(dialog->domain_entry);
+}
+
+const char*
+joindialog_get_default_prefix(JoinDialog* dialog)
+{
+    return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(dialog->prefix_check)) ?
+        gtk_entry_get_text(dialog->prefix_entry) : NULL;
 }
 
 gboolean
@@ -177,6 +250,8 @@ joindialog_delete(JoinDialog* dialog)
     g_object_unref(G_OBJECT(dialog->dialog));
     g_object_unref(G_OBJECT(dialog->computer_entry));
     g_object_unref(G_OBJECT(dialog->domain_entry));
+    g_object_unref(G_OBJECT(dialog->prefix_entry));
+    g_object_unref(G_OBJECT(dialog->prefix_check));
     g_object_unref(G_OBJECT(dialog->ou_entry));
     g_object_unref(G_OBJECT(dialog->ou_specific));
     g_object_unref(G_OBJECT(dialog->modify_hosts));
