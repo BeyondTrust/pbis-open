@@ -2090,6 +2090,10 @@ unsigned32              *st;
         *st = rpc_s_auth_tkt_expired;
         break;
         
+        case -1:
+        *st = rpc_s_unknown_status_code;
+        break;
+
         default:
         *st = rpc_s_cannot_connect;
         break;
