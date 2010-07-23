@@ -61,8 +61,11 @@ pam_sm_open_session(
     HANDLE hLsaConnection = (HANDLE)NULL;
     PSTR pszLoginId = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
+
+#ifdef HAVE_PAM_PUTENV
     PSTR pszSmartCardReader = NULL;
     PSTR pszSmartCardReaderEnv = NULL;
+#endif /* HAVE_PAM_PUTENV */
 
     LSA_LOG_PAM_DEBUG("pam_sm_open_session::begin");
 
@@ -86,6 +89,7 @@ pam_sm_open_session(
                     TRUE);
     BAIL_ON_LSA_ERROR(dwError);
 
+#ifdef HAVE_PAM_PUTENV
     dwError = pam_get_data(
         pamh,
         PAM_LSASS_SMART_CARD_READER,
@@ -104,6 +108,7 @@ pam_sm_open_session(
             pszSmartCardReaderEnv);
         BAIL_ON_LSA_ERROR(dwError);
     }
+#endif /* HAVE_PAM_PUTENV */
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
@@ -145,7 +150,10 @@ cleanup:
     }
 
     LW_SAFE_FREE_STRING(pszLoginId);
+
+#ifdef HAVE_PAM_PUTENV
     LW_SAFE_FREE_STRING(pszSmartCardReaderEnv);
+#endif /* HAVE_PAM_PUTENV */
 
     LSA_LOG_PAM_DEBUG("pam_sm_open_session::end");
 

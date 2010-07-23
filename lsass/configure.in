@@ -799,6 +799,15 @@ AC_CHECK_LIB([proc], [openproc], [PROC_LIBS="-lproc"])
 AC_CHECK_LIB([crypto], [DES_set_key], [CRYPTO_LIBS="-lcrypto"], [], [$CRYPTO_LDFLAGS])
 AC_CHECK_LIB([pam], [pam_start], [PAM_LIBS="-lpam"])
 
+# Need to use PAM_LIBS for this, so temporarily change $LIBS.
+save_libs="$LIBS"
+LIBS="$LIBS $PAM_LIBS"
+
+AC_CHECK_FUNCS([pam_putenv])
+
+LIBS="$save_libs"
+unset save_libs
+
 AC_SUBST(NSL_LIBS)
 AC_SUBST(DL_LIBS)
 AC_SUBST(RESOLV_LIBS)
