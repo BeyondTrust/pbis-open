@@ -640,6 +640,11 @@ AD_AuthenticateUserPam(
         *ppPamAuthInfo = NULL;
     }
 
+    if (pParams->dwFlags & LSA_AUTH_USER_PAM_FLAG_SMART_CARD)
+    {
+        BAIL_WITH_LSA_ERROR(LW_ERROR_NOT_HANDLED);
+    }
+
     LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
 
     if (gpLsaAdProviderState->joinState != LSA_AD_JOINED)
