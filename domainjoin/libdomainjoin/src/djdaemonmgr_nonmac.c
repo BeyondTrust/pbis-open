@@ -916,6 +916,8 @@ cleanup:
 
 struct _DaemonList daemonList[] = {    
     { "gpagentd", {NULL}, FALSE, 3, 0 },
+    { "lwscd", {NULL}, FALSE, 3, 0 },
+    { "lwpkcs11d", {NULL}, FALSE, 3, 0 },
     { NULL, {NULL}, FALSE, 0, 0 },
 };
 
