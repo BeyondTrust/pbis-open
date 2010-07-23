@@ -915,6 +915,7 @@ rpc__smb_socket_listen_thread(void* data)
     size_t i;
     char c = 0;
     LONG64 default_timeout = 0;
+    struct timespec retry_wait = {10, 0};
 
     SMB_SOCKET_LOCK(smb);
 
@@ -965,8 +966,21 @@ rpc__smb_socket_listen_thread(void* data)
 
     while (smb->state == SMB_STATE_LISTEN)
     {
+        if (serr)
+        {
+            /* Wait before retrying */
+            dcethread_delay(&retry_wait);
+            serr = 0;
+        }
+
         SMB_SOCKET_UNLOCK(smb);
         
+        if (smb->np)
+        {
+            LwNtCtxCloseFile(smb->context, smb->np);
+            smb->np = NULL;
+        }
+
         serr = NtStatusToErrno(
             LwNtCtxCreateNamedPipeFile(
                 smb->context,                            /* IO context */ 
@@ -992,7 +1006,7 @@ rpc__smb_socket_listen_thread(void* data)
         if (serr)
         {
             SMB_SOCKET_LOCK(smb);
-            goto error;
+            continue;
         }
 
         serr = NtStatusToErrno(
@@ -1004,7 +1018,7 @@ rpc__smb_socket_listen_thread(void* data)
         if (serr)
         {
             SMB_SOCKET_LOCK(smb);
-            goto error;
+            continue;
         }
 
         SMB_SOCKET_LOCK(smb);
@@ -1040,6 +1054,7 @@ rpc__smb_socket_listen_thread(void* data)
     }
 
 error:
+
     if (filename.FileName)
     {
         RtlMemoryFree(filename.FileName);
