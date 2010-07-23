@@ -3265,16 +3265,20 @@ pkinit_login(krb5_context context,
 
 static krb5_error_code
 pkinit_open_session(krb5_context context,
-		    pkinit_identity_crypto_context cctx)
+		    pkinit_identity_crypto_context cctx,
+                    krb5_boolean do_login)
 {
-    int i, r;
+    int i, r = 0;
     unsigned char *cp;
     CK_ULONG count = 0;
     CK_SLOT_ID_PTR slotlist;
     CK_TOKEN_INFO tinfo;
+    CK_C_INITIALIZE_ARGS init_args = {
+        .flags = CKF_OS_LOCKING_OK,
+    };
 
     if (cctx->p11_module != NULL)
-	return 0; /* session already open */
+	goto login; /* session already open */
 
     /* Load module */
     cctx->p11_module =
@@ -3283,7 +3287,7 @@ pkinit_open_session(krb5_context context,
 	return KRB5KDC_ERR_PREAUTH_FAILED;
 
     /* Init */
-    if ((r = cctx->p11->C_Initialize(NULL)) != CKR_OK) {
+    if ((r = cctx->p11->C_Initialize(&init_args)) != CKR_OK) {
 	pkiDebug("C_Initialize: %s\n", pkinit_pkcs11_code_to_text(r));
 	return KRB5KDC_ERR_PREAUTH_FAILED;
     }
@@ -3338,9 +3342,23 @@ pkinit_open_session(krb5_context context,
     pkiDebug("open_session: slotid %d (%d of %d)\n", (int) cctx->slotid,
 	     i + 1, (int) count);
 
-    /* Login if needed */
-    if (tinfo.flags & CKF_LOGIN_REQUIRED)
-	r = pkinit_login(context, cctx, &tinfo);
+    if (r == 0)
+        cctx->tinfo = tinfo;
+
+login:
+    /* Login if requested and needed */
+    if (r == 0 && cctx->tinfo.flags & CKF_LOGIN_REQUIRED) {
+        if (cctx->prompter == NULL) {
+            pkiDebug("Token requires login but no prompter supplied\n");
+            return KRB5KDC_ERR_PREAUTH_FAILED;
+        }
+
+        if (do_login && !cctx->login_done) {
+            r = pkinit_login(context, cctx, &cctx->tinfo);
+            if (r == 0)
+                cctx->login_done = TRUE;
+        }
+    }
 
     return r;
 }
@@ -3475,7 +3493,7 @@ pkinit_decode_data_pkcs11(krb5_context context,
     unsigned char *cp;
     int r;
 
-    if (pkinit_open_session(context, id_cryptoctx)) {
+    if (pkinit_open_session(context, id_cryptoctx, TRUE)) {
 	pkiDebug("can't open pkcs11 session\n");
 	return KRB5KDC_ERR_PREAUTH_FAILED;
     }
@@ -3572,7 +3590,7 @@ pkinit_sign_data_pkcs11(krb5_context context,
     unsigned char *cp;
     int r;
 
-    if (pkinit_open_session(context, id_cryptoctx)) {
+    if (pkinit_open_session(context, id_cryptoctx, TRUE)) {
 	pkiDebug("can't open pkcs11 session\n");
 	return KRB5KDC_ERR_PREAUTH_FAILED;
     }
@@ -4053,7 +4071,7 @@ pkinit_get_certs_pkcs11(krb5_context context,
 
 
 
-    if (pkinit_open_session(context, id_cryptoctx)) {
+    if (pkinit_open_session(context, id_cryptoctx, FALSE)) {
 	pkiDebug("can't open pkcs11 session\n");
 	return KRB5KDC_ERR_PREAUTH_FAILED;
     }

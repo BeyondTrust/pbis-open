@@ -31,6 +31,7 @@
 #ifndef _PKINIT_H
 #define _PKINIT_H
 
+#include <autoconf.h>
 #include <krb5/krb5.h>
 #include <krb5/preauth_plugin.h>
 #include <k5-int-pkinit.h>
