@@ -1682,12 +1682,6 @@ AD_NetlogonAuthenticationUserEx(
 
     if (!ghSchannelBinding)
     {
-        if (!gpszSchannelServer)
-        {
-            dwError = LwAllocateString(pszDomainController, &gpszSchannelServer);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-
         dwError = LwMbsToWc16s(pszDomainController, &pwszDomainController);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -1748,7 +1742,7 @@ AD_NetlogonAuthenticationUserEx(
             {
                 bIsNetworkError = TRUE;
                 dwError = ERROR_NO_TRUST_SAM_ACCOUNT;
-        }
+            }
             else
             {
                 bResetSchannel = TRUE;
@@ -1760,6 +1754,12 @@ AD_NetlogonAuthenticationUserEx(
             }
         }
         BAIL_ON_LSA_ERROR(dwError);
+
+        if (!gpszSchannelServer)
+        {
+            dwError = LwAllocateString(pszDomainController, &gpszSchannelServer);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
 
         gpSchannelCreds = &gSchannelCreds;
     }
