@@ -91,18 +91,19 @@ pam_sm_open_session(
         PAM_LSASS_SMART_CARD_READER,
         (PAM_GET_DATA_TYPE)&pszSmartCardReader);
     /* pszSmartCardReader will be freed when the module is closed. */
-    BAIL_ON_LSA_ERROR(dwError);
+    if (dwError == PAM_SUCCESS && pszSmartCardReader != NULL)
+    {
+        dwError = LwAllocateStringPrintf(
+            &pszSmartCardReaderEnv,
+            "LW_SMART_CARD_READER=%s",
+            pszSmartCardReader);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateStringPrintf(
-        &pszSmartCardReaderEnv,
-        "LW_SMART_CARD_READER=%s",
-        pszSmartCardReader);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = pam_putenv(
-        pamh,
-        pszSmartCardReaderEnv);
-    BAIL_ON_LSA_ERROR(dwError);
+        dwError = pam_putenv(
+            pamh,
+            pszSmartCardReaderEnv);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
