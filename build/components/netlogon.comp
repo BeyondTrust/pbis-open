@@ -120,9 +120,10 @@ function component_populate
     fi
 
     mkdir -p ${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}
-    x_cp 0644 \
-	${BUILD_ROOT}/src/linux/config/likewise-krb5-ad.conf \
+    sed -e "s,@LIBDIR@,${MAIN_PREFIX_DIR}/${_lib}," \
+	${BUILD_ROOT}/src/linux/config/likewise-krb5-ad.conf > \
 	${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}/likewise-krb5-ad.conf
+    chmod 0644 ${POPULATE_ROOT_DIR}/${BUILD_SYSCONFDIR}/likewise-krb5-ad.conf
 
     libtool_rewrite_populate
 }
