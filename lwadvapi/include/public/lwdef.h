@@ -101,4 +101,7 @@
 #define LW_LOG_DEBUG(szFmt, ...) \
     LwLogMessage(LW_LOG_LEVEL_DEBUG, szFmt, ## __VA_ARGS__)
 
+#define LW_LOG_TRACE(szFmt, ...) \
+    LwLogMessage(LW_LOG_LEVEL_TRACE, szFmt, ## __VA_ARGS__)
+
 #endif /* __LWDEF_H__ */

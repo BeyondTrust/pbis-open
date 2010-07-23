@@ -52,7 +52,8 @@ typedef enum
     LW_LOG_LEVEL_WARNING,
     LW_LOG_LEVEL_INFO,
     LW_LOG_LEVEL_VERBOSE,
-    LW_LOG_LEVEL_DEBUG
+    LW_LOG_LEVEL_DEBUG,
+    LW_LOG_LEVEL_TRACE
 } LwLogLevel;
 
 typedef VOID (*PLWLOG_CALLBACK)(LwLogLevel level, PVOID pUserData, PCSTR pszMessage);
