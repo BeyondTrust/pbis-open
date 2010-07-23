@@ -347,6 +347,25 @@ lwmsg_data_print_string(
 
     if (!strcmp(iter->info.kind_indirect.encoding, ""))
     {
+        if (iter->info.kind_indirect.term == LWMSG_TERM_STATIC)
+        {
+            /*
+             * Handle static char arrays that contain NUL-terminated
+             * strings that are shorter than the array.
+             */
+            const char *s = input_string;
+            int i;
+
+            for (i = 0; i < input_length; ++i)
+            {
+                if (s[i] == '\0')
+                {
+                    input_length = i;
+                    break;
+                }
+            }
+        }
+
         BAIL_ON_ERROR(status = lwmsg_buffer_write(
                           info->buffer,
                           input_string,
