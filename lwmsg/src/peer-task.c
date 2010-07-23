@@ -1168,7 +1168,6 @@ lwmsg_peer_task_rundown(
         {
             cancel.status = LWMSG_STATUS_CANCELLED;
         }
-        lwmsg_hash_remove_entry(&task->outgoing_calls, call);
         lwmsg_peer_call_complete_outgoing(call, &cancel);
     }
     lwmsg_hash_iter_end(&task->outgoing_calls, &iter);
@@ -1272,7 +1271,6 @@ lwmsg_peer_task_complete_call(
 
     if (call)
     {
-        lwmsg_hash_remove_entry(&task->outgoing_calls, call);
         lwmsg_peer_log_message(task->peer, task->assoc, &task->incoming_message, LWMSG_TRUE);
         lwmsg_peer_call_complete_outgoing(call, &task->incoming_message);
     }
@@ -1572,6 +1570,16 @@ lwmsg_peer_task_dispatch_calls(
                 break;
             case LWMSG_STATUS_PENDING:
                 task->outgoing = LWMSG_TRUE;
+                break;
+            case LWMSG_STATUS_MALFORMED:
+            case LWMSG_STATUS_INVALID_HANDLE:
+                /* The association should still be usable, so just fail the call */
+                lwmsg_message_init(&message);
+                message.status = status;
+                message.flags = LWMSG_MESSAGE_FLAG_REPLY | LWMSG_MESSAGE_FLAG_SYNTHETIC;
+                message.cookie = call->cookie;
+                lwmsg_peer_call_complete_outgoing(call, &message);
+                status = LWMSG_STATUS_SUCCESS;
                 break;
             default:
                 BAIL_ON_ERROR(status);

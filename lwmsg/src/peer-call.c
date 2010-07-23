@@ -345,6 +345,8 @@ lwmsg_peer_call_complete_outgoing(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
+    lwmsg_hash_remove_entry(&call->task->outgoing_calls, call);
+
     if (call->state & PEER_CALL_RELEASED)
     {
         lwmsg_assoc_destroy_message(call->task->assoc, incoming_message);
