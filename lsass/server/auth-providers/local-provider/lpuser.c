@@ -1220,6 +1220,7 @@ LocalDirChangePassword(
     PWSTR  pwszNewPassword
     )
 {
+    const wchar_t wszUserFilter[] = L"%ws = '%ws'";
     DWORD dwError = 0;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
@@ -1228,6 +1229,9 @@ LocalDirChangePassword(
     PWSTR pwszBase = NULL;
     DWORD dwScope = 0;
     PWSTR pwszFilter = NULL;
+    DWORD dwFilterLen = 0;
+    size_t sUserDnLen = 0;
+    WCHAR wszAttrDN[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
     WCHAR wszAttrSecurityDescriptor[] = LOCAL_DIR_ATTR_SECURITY_DESCRIPTOR;
 
     PWSTR wszAttributes[] = {
@@ -1253,6 +1257,25 @@ LocalDirChangePassword(
                     pContext->uid,
                     pContext->gid);
     BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LwWc16sLen(pwszUserDN, &sUserDnLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwFilterLen = (sizeof(wszAttrDN)/sizeof(wszAttrDN[0]) +
+                   sUserDnLen +
+                   sizeof(wszUserFilter));
+
+    dwError = LwAllocateMemory(sizeof(pwszFilter[0]) * dwFilterLen,
+                               OUT_PPVOID(&pwszFilter));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszFilter, dwFilterLen,
+                    wszUserFilter,
+                    wszAttrDN, pwszUserDN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = DirectorySearch(
                     pContext->hDirectory,
