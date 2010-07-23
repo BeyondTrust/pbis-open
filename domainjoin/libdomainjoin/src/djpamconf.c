@@ -1489,6 +1489,9 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
     // This module is used on Max OS X 10.6 - Snow Leopard
     if(!strcmp(buffer, "pam_opendirectory"))
         return TRUE;
+    // This module is used on Max OS X 10.6 - Snow Leopard
+    if(!strcmp(buffer, "pam_mount"))
+        return TRUE;
     // Used on Mandriva 2009 as an alternative to pam_unix
     if (!strcmp(buffer, "pam_tcb"))
         return TRUE;
@@ -1630,6 +1633,11 @@ static BOOLEAN PamModuleAlwaysDeniesDomainLogins( const char * phase, const char
         return TRUE;
     if(!strcmp(buffer, "pam_pwcheck"))
         return TRUE;
+
+    /* The pam_mount module on OS X prompts, but doesn't actually authenticate
+     * the user. */
+    if(!strcmp(buffer, "pam_mount"))
+        return FALSE;
 
     /* pam_hpsec on HP-UX blocks only for auth and session.  It is a no-op for
      * account and password.  The issue is that it returns unknown user because
