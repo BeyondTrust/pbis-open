@@ -360,7 +360,8 @@ LsaRpcReadServer(
                 pReg,
                 "Path",
                 FALSE,
-                &pszPath);
+                &pszPath,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     if(!LW_IS_NULL_OR_EMPTY_STR(pszPath))
@@ -428,7 +429,8 @@ LsaRpcReadRegistry(
                 pReg,
                 "LoadOrder",
                 FALSE,
-                &pszServers);
+                &pszServers,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaCloseConfig(pReg);

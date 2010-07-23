@@ -135,7 +135,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewMinPasswordAge
+            &dwNewMinPasswordAge,
+            NULL
         },
         {
             "MaxPasswordAge",
@@ -144,7 +145,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewMaxPasswordAge
+            &dwNewMaxPasswordAge,
+            NULL
         },
         {
             "MinPasswordLength",
@@ -153,7 +155,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewMinPasswordLength
+            &dwNewMinPasswordLength,
+            NULL
         },
         {
             "PasswordPromptTime",
@@ -162,7 +165,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewPasswordPromptTime
+            &dwNewPasswordPromptTime,
+            NULL
         },
         {
             "LockoutThreshold",
@@ -171,7 +175,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewLockoutThreshold
+            &dwNewLockoutThreshold,
+            NULL
         },
         {
             "LockoutDuration",
@@ -180,7 +185,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewLockoutDuration
+            &dwNewLockoutDuration,
+            NULL
         },
         {
             "LockoutWindow",
@@ -189,7 +195,8 @@ LocalSyncDomainInfo(
             0,
             MAXDWORD,
             NULL,
-            &dwNewLockoutWindow
+            &dwNewLockoutWindow,
+            NULL
         }
     };
 

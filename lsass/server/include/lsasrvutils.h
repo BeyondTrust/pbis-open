@@ -184,6 +184,7 @@ typedef struct __LSA_CONFIG
     DWORD dwMax;
     const PCSTR *ppszEnumNames;
     PVOID pValue;
+    PDWORD pdwSize;
 } LSA_CONFIG, *PLSA_CONFIG;
 
 typedef enum
@@ -365,7 +366,8 @@ LsaReadConfigString(
     PLSA_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     );
 
 DWORD
@@ -373,7 +375,8 @@ LsaReadConfigMultiString(
     PLSA_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     );
 
 DWORD

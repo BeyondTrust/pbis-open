@@ -1765,6 +1765,9 @@ struct ConfigurePamModuleState
      */
     BOOLEAN sawNonincludeLine;
 
+    /* Set to true if our smartcard prompt line has been added. */
+    BOOLEAN hasAddedSmartCardPrompt;
+
     int includeLevel;
 };
 
@@ -1840,6 +1843,13 @@ void GetModuleControl(struct PamLine *lineObj, const char **module, const char *
         if(PamModuleIsLwidentity("auth", *module))
             *module = "pam_lwidentity_set_repo";
     }
+
+    /* Ditto for "pam_lwidentity.so smartcard_prompt". */
+    if(lineObj->optionCount == 1 && !strcmp(lineObj->options[0].value, "smartcard_prompt"))
+    {
+        if(PamModuleIsLwidentity("auth", *module))
+            *module = "pam_lwidentity_smartcard_prompt";
+    }
 }
 
 static DWORD PamLwidentityDisable(struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state)
@@ -1904,7 +1914,8 @@ static DWORD PamLwidentityDisable(struct PamConf *conf, const char *service, con
         }
 
         if(PamModuleIsLwidentity(phase, module) ||
-                !strcmp(module, "pam_lwidentity_set_repo"))
+                !strcmp(module, "pam_lwidentity_set_repo") ||
+                !strcmp(module, "pam_lwidentity_smartcard_prompt"))
         {
             DJ_LOG_INFO("Removing pam_lwidentity from service %s", service);
             BAIL_ON_CENTERIS_ERROR(ceError = RemoveLineAndUpdateSkips(conf, &line));
@@ -2040,6 +2051,54 @@ static void MoveLine(struct PamConf *conf, int oldPos, int newPos)
     conf->modified = TRUE;
 }
 #endif
+
+static void FixPromptingModule(struct PamConf *conf, const char *service, const char *phase, struct ConfigurePamModuleState *state, int line, LWException **exc)
+{
+    struct PamLine *lineObj;
+    const char *module;
+    const char *control;
+
+    /* If pam_lwidentity is the first prompting module on the stack, the next module needs to have something like try_first_pass added.
+     */
+    DJ_LOG_VERBOSE("FixPromptingModule(%s, %s, %d)", service, phase, line);
+    while(line != -1 && !state->sawPromptingModule)
+    {
+        lineObj = &conf->lines[line];
+        GetModuleControl(lineObj, &module, &control);
+
+        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
+        if(PamModulePrompts(phase, module))
+        {
+            DJ_LOG_INFO("Making sure module %s uses the password stored by pam_lwidentity", module);
+            if(!strcmp(phase, "auth"))
+            {
+                if(!ContainsOption(conf, line, "use_first_pass"))
+                {
+                    const char *optionName = "try_first_pass";
+                    if(!PamModuleUnderstandsTryFirstPass(phase, module))
+                        optionName = "use_first_pass";
+                    LW_CLEANUP_CTERR(exc, AddOption(conf, line, optionName));
+                }
+            }
+            /* Right now pam_lwidentity doesn't store the password for non-domain users, so we shouldn't do this for subsequent modules.
+            else if(!strcmp(phase, "password"))
+            {
+                if(!ContainsOption(conf, line, "use_first_pass"))
+                {
+                    * Try the old and new password, if it has been prompted *
+                    BAIL_ON_CENTERIS_ERROR(ceError = AddOption(conf, line, "try_first_pass"));
+                }
+                * Definitely use the new password *
+                BAIL_ON_CENTERIS_ERROR(ceError = AddOption(conf, line, "use_authtok"));
+            }
+            */
+            state->sawPromptingModule = TRUE;
+        }
+        line = NextLineForService(conf, line, service, phase);
+    }
+cleanup:
+    DJ_LOG_VERBOSE("FixPromptingModule done: line now %d", line);
+}
 
 static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro, struct PamConf *conf, const char *service, const char * phase, const char *pam_lwidentity, struct ConfigurePamModuleState *state, LWException **exc)
 {
@@ -2223,6 +2282,27 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             GetModuleControl(lineObj, &module, &control);
 
             state->hasSetDefaultRepository = TRUE;
+        }
+
+        if(!strcmp(module, "pam_lwidentity_smartcard_prompt"))
+            state->hasAddedSmartCardPrompt = TRUE;
+
+        if(!state->hasAddedSmartCardPrompt && !strcmp(phase, "auth") &&
+                PamModulePrompts(phase, module))
+        {
+            int newLine = -1;
+            LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, &newLine));
+            LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->control, lineObj->phase, "requisite"));
+            LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->module, lineObj->control, pam_lwidentity));
+            lineObj->optionCount = 0;
+            LW_CLEANUP_CTERR(exc, AddOption(conf, line, "smartcard_prompt"));
+
+            line = newLine;
+            lineObj = &conf->lines[newLine];
+            GetModuleControl(lineObj, &module, &control);
+            state->hasAddedSmartCardPrompt = TRUE;
+            state->sawPromptingModule = FALSE;
+            LW_TRY(exc, FixPromptingModule(conf, service, phase, state, line, &LW_EXC));
         }
 
         if(PamModuleAlwaysDeniesDomainLogins(phase, module, distro) && (
@@ -2617,44 +2697,8 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         state->configuredRequestedModule = TRUE;
     }
 
-    /* If pam_lwidentity is the first prompting module on the stack, the next module needs to have something like try_first_pass added.
-     */
-    while(line != -1 && state->configuredRequestedModule
-            && !state->sawPromptingModule)
-    {
-        lineObj = &conf->lines[line];
-        GetModuleControl(lineObj, &module, &control);
-
-        DJ_LOG_VERBOSE("Looking at entry %s %s %s %s", service, phase, control, module);
-        if(PamModulePrompts(phase, module))
-        {
-            DJ_LOG_INFO("Making sure module %s uses the password stored by pam_lwidentity", module);
-            if(!strcmp(phase, "auth"))
-            {
-                if(!ContainsOption(conf, line, "use_first_pass"))
-                {
-                    const char *optionName = "try_first_pass";
-                    if(!PamModuleUnderstandsTryFirstPass(phase, module))
-                        optionName = "use_first_pass";
-                    LW_CLEANUP_CTERR(exc, AddOption(conf, line, optionName));
-                }
-            }
-            /* Right now pam_lwidentity doesn't store the password for non-domain users, so we shouldn't do this for subsequent modules.
-            else if(!strcmp(phase, "password"))
-            {
-                if(!ContainsOption(conf, line, "use_first_pass"))
-                {
-                    * Try the old and new password, if it has been prompted *
-                    BAIL_ON_CENTERIS_ERROR(ceError = AddOption(conf, line, "try_first_pass"));
-                }
-                * Definitely use the new password *
-                BAIL_ON_CENTERIS_ERROR(ceError = AddOption(conf, line, "use_authtok"));
-            }
-            */
-            state->sawPromptingModule = TRUE;
-        }
-        line = NextLineForService(conf, line, service, phase);
-    }
+    if (state->configuredRequestedModule)
+        LW_TRY(exc, FixPromptingModule(conf, service, phase, state, line, &LW_EXC));
 cleanup:
     CTStringBufferDestroy(&comment);
     CT_SAFE_FREE_STRING(includeService);

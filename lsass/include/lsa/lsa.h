@@ -797,6 +797,10 @@ typedef struct _LSA_PAM_CONFIG
     LW_DWORD dwLogLevel;
     LW_BOOLEAN bLsaPamDisplayMOTD;
     LW_PSTR pszAccessDeniedMessage;
+    LW_DWORD dwNumSmartCardServices;
+    LW_PSTR *ppszSmartCardServices;
+    LW_DWORD dwNumSmartCardPromptGecos;
+    LW_PSTR *ppszSmartCardPromptGecos;
 } LSA_PAM_CONFIG, *PLSA_PAM_CONFIG;
 
 /**
@@ -1990,10 +1994,9 @@ LsaAddUser2(
     );
 
 LW_DWORD
-LsaGetSmartCardUser(
+LsaGetSmartCardUserObject(
     LW_IN LW_HANDLE hLsaConnection,
-    LW_IN LW_DWORD dwUserInfoLevel,
-    LW_OUT LW_PVOID* ppUserInfo,
+    LW_OUT PLSA_SECURITY_OBJECT* ppObject,
     LW_OUT LW_PSTR* ppszSmartCardReader
     );
 

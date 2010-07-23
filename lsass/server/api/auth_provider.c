@@ -302,7 +302,8 @@ LsaSrvAuthLoadProvider(
                 pReg,
                 "Id",
                 FALSE,
-                &pszId);
+                &pszId,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszId))
@@ -314,7 +315,8 @@ LsaSrvAuthLoadProvider(
                 pReg,
                 "Path",
                 FALSE,
-                &pszPath);
+                &pszPath,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszPath))
@@ -467,7 +469,8 @@ LsaSrvAuthProviderRegGetLoadOrder(
                 pReg,
                 "LoadOrder",
                 FALSE,
-                &pszLoadOrder);
+                &pszLoadOrder,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:

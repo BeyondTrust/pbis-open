@@ -56,13 +56,29 @@ LsaPamConverse(
     PSTR*         ppszResponse
     )
 {
+    LSA_PAM_CONVERSE_MESSAGE message;
+
+    message.messageStyle = messageStyle;
+    message.pszMessage = pszPrompt;
+    message.ppszResponse = ppszResponse;
+
+    return LsaPamConverseMulti(pamh, 1, &message);
+}
+
+DWORD
+LsaPamConverseMulti(
+    pam_handle_t*             pamh,
+    int                       numMessages,
+    PLSA_PAM_CONVERSE_MESSAGE pLsaPamConvMessages
+    )
+{
     DWORD  dwError = 0;
     struct pam_conv* pConv = NULL;
-    struct pam_response* pResponse = NULL;
-    struct pam_message msg;
-    struct pam_message* pMsg = NULL;
-    PSTR   pszResponse = NULL;
+    struct pam_response* pResponses = NULL;
+    struct pam_message* msgs;
+    struct pam_message** pMsgs = NULL;
     int    iPamError = 0;
+    int    i;
     
     iPamError = pam_get_item(pamh, PAM_CONV, (PAM_GET_ITEM_TYPE)&pConv);
     dwError = LsaPamUnmapErrorCode(iPamError);
@@ -73,18 +89,45 @@ LsaPamConverse(
         dwError = LsaPamUnmapErrorCode(PAM_CONV_ERR);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
-    memset(&msg, 0, sizeof(struct pam_message));
-    pMsg = &msg;
-    
-    pMsg->msg_style = messageStyle;
-    pMsg->msg       = (PAM_MESSAGE_MSG_TYPE)pszPrompt;
-    
-    if (pConv->conv)
+    else if (pConv->conv)
     {
-        iPamError = pConv->conv(1,
-                (PAM_CONV_2ND_ARG_TYPE)&pMsg,
-                &pResponse,
+        dwError = LwAllocateMemory(numMessages * sizeof(*msgs),
+                (PVOID*) &msgs);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwAllocateMemory(numMessages * sizeof(*pMsgs),
+                (PVOID*) &pMsgs);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        for (i = 0; i < numMessages; ++i)
+        {
+            msgs[i].msg_style = pLsaPamConvMessages[i].messageStyle;
+            msgs[i].msg = (PAM_MESSAGE_MSG_TYPE) pLsaPamConvMessages[i].pszMessage;
+
+            switch (msgs[i].msg_style)
+            {
+                case PAM_PROMPT_ECHO_ON:
+                case PAM_PROMPT_ECHO_OFF:
+                    if (pLsaPamConvMessages[i].ppszResponse == NULL)
+                    {
+                        BAIL_WITH_LSA_ERROR(LW_ERROR_INVALID_PARAMETER);
+                    }
+                    break;
+
+                default:
+                    if (pLsaPamConvMessages[i].ppszResponse != NULL)
+                    {
+                        BAIL_WITH_LSA_ERROR(LW_ERROR_INVALID_PARAMETER);
+                    }
+                    break;
+            }
+
+            pMsgs[i] = &msgs[i];
+        }
+
+        iPamError = pConv->conv(numMessages,
+                (PAM_CONV_2ND_ARG_TYPE)pMsgs,
+                &pResponses,
                 pConv->appdata_ptr);
         dwError = LsaPamUnmapErrorCode(iPamError);
         BAIL_ON_LSA_ERROR(dwError);
@@ -92,53 +135,61 @@ LsaPamConverse(
     else
     {
         LSA_LOG_PAM_INFO("Unable to send prompt to user from PAM. Most likely the calling program is non-interactive");
-        // Leave pResponse as NULL.
+        // Leave pResponses as NULL.
     }
-    
-    switch (messageStyle)
-    {
-        case PAM_PROMPT_ECHO_ON:
-        case PAM_PROMPT_ECHO_OFF:
-            if (pResponse == NULL || (pResponse->resp == NULL)) {
-                
-               dwError = LsaPamUnmapErrorCode(PAM_CONV_ERR);
-               BAIL_ON_LSA_ERROR(dwError);
-               
-            } else {
-               
-               dwError = LwAllocateString(pResponse->resp, &pszResponse);
-               BAIL_ON_LSA_ERROR(dwError);
-               
-            }
-            break;
-    }
-    
-    // We don't need a response for certain message styles
-    // For instance, PAM_ERROR_MSG or PAM_TEXT_INFO
-    if (ppszResponse) {
-       *ppszResponse = pszResponse;
-    }
-    
-cleanup:
 
-    if (pResponse) {
-        if (pResponse->resp) {
-            memset(pResponse->resp, 0, strlen(pResponse->resp));
-            free(pResponse->resp);
+    for (i = 0; i < numMessages; ++i)
+    {
+        switch (pLsaPamConvMessages[i].messageStyle)
+        {
+            case PAM_PROMPT_ECHO_ON:
+            case PAM_PROMPT_ECHO_OFF:
+                /*
+                 * The pResponses == NULL check is here because
+                 * it's perfectly OK for it to be NULL if none of the
+                 * messages required a response.
+                 */
+                if (pResponses == NULL || pResponses[i].resp == NULL)
+                {
+                   BAIL_WITH_LSA_ERROR(PAM_CONV_ERR);
+                }
+
+                *pLsaPamConvMessages[i].ppszResponse = pResponses[i].resp;
+                break;
+
+            default:
+                if (pResponses != NULL && pResponses[i].resp != NULL)
+                {
+                    /* Got a response we weren't expecting. */
+                    BAIL_WITH_LSA_ERROR(PAM_CONV_ERR);
+                }
+                break;
         }
-        free(pResponse);
     }
+
+cleanup:
+    if (pResponses)
+    {
+        /*
+         * All the .resp pointers have either been copied to
+         * the caller or freed.
+         */
+        free(pResponses);
+    }
+
+    LW_SAFE_FREE_MEMORY(msgs);
+    LW_SAFE_FREE_MEMORY(pMsgs);
 
     return dwError;
-    
-error:
 
-    if (ppszResponse != NULL)
+error:
+    if (pResponses)
     {
-        *ppszResponse = NULL;
+        for (i = 0; i < numMessages; ++i)
+        {
+            LW_SAFE_CLEAR_FREE_STRING(pResponses[i].resp);
+        }
     }
-    
-    LW_SAFE_CLEAR_FREE_STRING(pszResponse);
 
     goto cleanup;
 }

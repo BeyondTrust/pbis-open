@@ -72,7 +72,8 @@ LsaProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            pConfig[dwEntry].pValue);
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
                 break;
 
             case LsaTypeMultiString:
@@ -80,7 +81,8 @@ LsaProcessConfig(
                             pReg,
                             pConfig[dwEntry].pszName,
                             pConfig[dwEntry].bUsePolicy,
-                            pConfig[dwEntry].pValue);
+                            pConfig[dwEntry].pValue,
+                            pConfig[dwEntry].pdwSize);
                 break;
 
             case LsaTypeDword:
@@ -212,7 +214,8 @@ LsaReadConfigString(
     PLSA_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     )
 {
     DWORD dwError = 0;
@@ -265,6 +268,11 @@ LsaReadConfigString(
         LW_SAFE_FREE_STRING(*ppszValue);
         *ppszValue = pszValue;
         pszValue = NULL;
+
+        if (pdwSize)
+        {
+            *pdwSize = dwSize;
+        }
     }
 
     dwError = 0;
@@ -284,7 +292,8 @@ LsaReadConfigMultiString(
     PLSA_CONFIG_REG pReg,
     PCSTR   pszName,
     BOOLEAN bUsePolicy,
-    PSTR    *ppszValue
+    PSTR    *ppszValue,
+    PDWORD  pdwSize
     )
 {
     DWORD dwError = 0;
@@ -339,6 +348,11 @@ LsaReadConfigMultiString(
         LW_SAFE_FREE_MEMORY(*ppszValue);
         *ppszValue = pszValue;
         pszValue = NULL;
+
+        if (pdwSize)
+        {
+            *pdwSize = dwSize;
+        }
     }
 
     dwError = 0;
@@ -469,7 +483,8 @@ LsaReadConfigEnum(
                 pReg,
                 pszName,
                 bUsePolicy,
-                &pszValue);
+                &pszValue,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pszValue != NULL )

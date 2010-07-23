@@ -125,28 +125,32 @@ SamrSrvReadRegistry(
                 pReg,
                 "LpcSocketPath",
                 FALSE,
-                &pConfig->pszLpcSocketPath);
+                &pConfig->pszLpcSocketPath,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaReadConfigString(
                 pReg,
                 "LoginShellTemplate",
                 TRUE,
-                &pConfig->pszDefaultLoginShell);
+                &pConfig->pszDefaultLoginShell,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaReadConfigString(
                 pReg,
                 "HomeDirPrefix",
                 TRUE,
-                &pConfig->pszHomedirPrefix);
+                &pConfig->pszHomedirPrefix,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaReadConfigString(
                 pReg,
                 "HomeDirTemplate",
                 TRUE,
-                &pConfig->pszHomedirTemplate);
+                &pConfig->pszHomedirTemplate,
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaReadConfigBoolean(

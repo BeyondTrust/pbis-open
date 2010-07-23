@@ -104,7 +104,22 @@ LsaUtilFreePamConfigContents(
 {
     if (pConfig)
     {
+        DWORD i;
+
         LW_SAFE_FREE_STRING(pConfig->pszAccessDeniedMessage);
+
+        for (i = 0; i < pConfig->dwNumSmartCardServices; ++i)
+        {
+            LW_SAFE_FREE_STRING(pConfig->ppszSmartCardServices[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pConfig->ppszSmartCardServices);
+
+        for (i = 0; i < pConfig->dwNumSmartCardPromptGecos; ++i)
+        {
+            LW_SAFE_FREE_STRING(pConfig->ppszSmartCardPromptGecos[i]);
+        }
+        LW_SAFE_FREE_MEMORY(pConfig->ppszSmartCardPromptGecos);
+
         memset(pConfig, 0, sizeof(LSA_PAM_CONFIG));
     }
 }

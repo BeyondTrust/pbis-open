@@ -611,47 +611,25 @@ error:
 
 LSASS_API
 DWORD
-LsaGetSmartCardUser(
+LsaGetSmartCardUserObject(
     IN HANDLE hLsaConnection,
-    IN DWORD dwUserInfoLevel,
-    OUT PVOID* ppUserInfo,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
     )
 {
-    PLSA_SECURITY_OBJECT pObject = NULL;
     DWORD dwError = 0;
 
     BAIL_ON_INVALID_HANDLE(hLsaConnection);
-
-    dwError = LsaValidateUserInfoLevel(dwUserInfoLevel);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    BAIL_ON_INVALID_POINTER(ppUserInfo);
+    BAIL_ON_INVALID_POINTER(ppObject);
+    BAIL_ON_INVALID_POINTER(ppszSmartCardReader);
 
     dwError = LsaTransactGetSmartCardUserObject(
         hLsaConnection,
-        &pObject,
+        ppObject,
         ppszSmartCardReader);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pObject == NULL)
-    {
-        dwError = LW_ERROR_NO_SUCH_USER;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LsaMarshalUserInfo(
-        pObject,
-        dwUserInfoLevel,
-        ppUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
 cleanup:
-
-    if (pObject)
-    {
-        LsaUtilFreeSecurityObject(pObject);
-    }
 
     return dwError;
 

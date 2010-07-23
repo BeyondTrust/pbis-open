@@ -69,6 +69,9 @@ pam_sm_authenticate(
     int iPamError = 0;
     LSA_AUTH_USER_PAM_PARAMS params = { 0 };
     PLSA_AUTH_USER_PAM_INFO pInfo = NULL;
+    PLSA_SECURITY_OBJECT pObject = NULL;
+    PSTR pszSmartCardReader = NULL;
+    PSTR pszPINPrompt = NULL;
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::begin");
 
@@ -114,6 +117,224 @@ pam_sm_authenticate(
         BAIL_ON_LSA_ERROR(dwError);
 #endif
     }
+    else if (pPamContext->pamOptions.bSmartCardPrompt)
+    {
+        /*
+         * Prompt for the smartcard PIN, or the password if no smartcard
+         * is found.  This entry is added early in the PAM configuration,
+         * before other modules that are configured to expect it to
+         * always prompt for the password (try_first_pass isn't supported
+         * on some platforms, and doesn't work properly on others).
+         * Therefore, it takes a "prompt or bust" attitude, only
+         * bailing out for catastrophic errors that indicate that
+         * the whole authentication is likely to fail (such as memory
+         * allocation failures).  This entry is marked "requisite", so
+         * that if it fails the whole authentication sequence will fail.
+         */
+        DWORD i;
+        int bCheckForSmartCard = 0;
+
+        /*
+         * Clear any previous SMART_CARD_PIN and SMART_CARD_READER values.
+         * Failure probably indicates memory allocation failed.
+         */
+        iPamError = pam_set_data(
+            pamh,
+            PAM_LSASS_SMART_CARD_PIN,
+            NULL,
+            NULL);
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        iPamError = pam_set_data(
+            pamh,
+            PAM_LSASS_SMART_CARD_READER,
+            NULL,
+            NULL);
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        iPamError = pam_get_item(
+                        pamh,
+                        PAM_SERVICE,
+                        (PAM_GET_ITEM_TYPE)&params.pszPamSource);
+        if (iPamError == PAM_BAD_ITEM)
+        {
+            iPamError = 0;
+            params.pszPamSource = NULL;
+        }
+        dwError = LsaPamUnmapErrorCode(iPamError);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        for (i = 0; i < pConfig->dwNumSmartCardServices; ++i)
+        {
+            if (!strcmp(
+                    pConfig->ppszSmartCardServices[i],
+                    params.pszPamSource))
+            {
+                bCheckForSmartCard = 1;
+                break;
+            }
+        }
+
+        if (bCheckForSmartCard)
+        {
+            LSA_LOG_PAM_DEBUG("Checking for smartcard");
+
+            dwError = LsaOpenServer(&hLsaConnection);
+
+            if (dwError == LW_ERROR_SUCCESS)
+            {
+                dwError = LsaGetSmartCardUserObject(
+                                hLsaConnection,
+                                &pObject,
+                                &pszSmartCardReader);
+                if (dwError == LW_ERROR_SUCCESS)
+                {
+                    LSA_LOG_PAM_DEBUG(
+                        "Found smartcard for user '%s' in reader '%s'",
+                        pObject->userInfo.pszUnixName,
+                        pszSmartCardReader);
+
+                    if (pPamContext->pszLoginName && *pPamContext->pszLoginName)
+                    {
+                        /*
+                         * Verify that the passed-in username is the same as
+                         * the smartcard user.
+                         */
+                        if (strcmp(
+                                pPamContext->pszLoginName,
+                                pObject->userInfo.pszUnixName) != 0)
+                        {
+                            LSA_LOG_PAM_DEBUG(
+                                "Pam user '%s' does not match smartcard user",
+                                pPamContext->pszLoginName);
+                            LsaFreeSecurityObject(
+                                pObject);
+                            pObject = NULL;
+                        }
+                    }
+                }
+                else
+                {
+                    LSA_LOG_PAM_DEBUG("No smartcard user found");
+                }
+            }
+        }
+        else
+        {
+            LSA_LOG_PAM_DEBUG(
+                "Service '%s' is not on the SmartCardServices list; "
+                "not checking for smartcard.",
+                params.pszPamSource);
+        }
+
+        if (pObject != NULL)
+        {
+            /* SmartCard user found. */
+            int bPromptGecos = 0;
+
+            for (i = 0; i < pConfig->dwNumSmartCardPromptGecos; ++i)
+            {
+                if (!strcmp(
+                        pConfig->ppszSmartCardPromptGecos[i],
+                        params.pszPamSource))
+                {
+                    bPromptGecos = 1;
+                    break;
+                }
+            }
+
+            dwError = LwAllocateStringPrintf(
+                &pszPINPrompt,
+                "Enter PIN for %s: ",
+                pObject->userInfo.pszUnixName);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            if (bPromptGecos && pObject->userInfo.pszGecos)
+            {
+                LSA_PAM_CONVERSE_MESSAGE messages[2];
+
+                messages[0].messageStyle = PAM_TEXT_INFO;
+                messages[0].pszMessage = pObject->userInfo.pszGecos;
+                messages[0].ppszResponse = NULL;
+                messages[1].messageStyle = PAM_PROMPT_ECHO_OFF;
+                messages[1].pszMessage = pszPINPrompt;
+                messages[1].ppszResponse = &pszPassword;
+
+                dwError = LsaPamConverseMulti(
+                    pamh,
+                    2,
+                    messages);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LsaPamConverse(
+                    pamh,
+                    pszPINPrompt,
+                    PAM_PROMPT_ECHO_OFF,
+                    &pszPassword);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+
+            iPamError = pam_set_item(
+                pamh,
+                PAM_USER,
+                pObject->userInfo.pszUnixName);
+            dwError = LsaPamUnmapErrorCode(iPamError);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            /*
+             * Set a bogus password, so that later modules like
+             * pam_unix will be guaranteed to fail, even if there's
+             * a local user with the same name and the card's PIN
+             * as their password.  Put the PIN into a separate data
+             * item.
+             */
+            iPamError = pam_set_item(
+                       pamh,
+                       PAM_AUTHTOK,
+                       "\x01\xFFPIN ENTERED");
+            dwError = LsaPamUnmapErrorCode(iPamError);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaPamSetDataString(
+                pamh,
+                PAM_LSASS_SMART_CARD_PIN,
+                pszPassword);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaPamSetDataString(
+                pamh,
+                PAM_LSASS_SMART_CARD_READER,
+                pszSmartCardReader);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else
+        {
+            /*
+             * SmartCard user not found (or not even looked for).
+             * Prompt for username and password as usual.
+             * This is done here because some modules
+             * don't work properly with try_first_pass
+             * or use_first_pass if no earlier module
+             * prompted for the password.
+             */
+            dwError = LsaPamGetLoginId(
+                pamh,
+                pPamContext,
+                &pszLoginId,
+                TRUE);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LsaPamGetCurrentPassword(
+                pamh,
+                pPamContext,
+                &pszPassword);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
     /* Otherwise, proceed with usual authentication */
     else
     {
@@ -133,20 +354,33 @@ pam_sm_authenticate(
         dwError = LsaOpenServer(&hLsaConnection);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pam_get_item(
+        iPamError = pam_get_item(
                         pamh,
                         PAM_SERVICE,
                         (PAM_GET_ITEM_TYPE)&params.pszPamSource);
-        if (dwError == PAM_BAD_ITEM)
+        if (iPamError == PAM_BAD_ITEM)
         {
-            dwError = 0;
+            iPamError = 0;
             params.pszPamSource = NULL;
         }
+        dwError = LsaPamUnmapErrorCode(iPamError);
         BAIL_ON_LSA_ERROR(dwError);
 
         params.dwFlags = LSA_AUTH_USER_PAM_FLAG_RETURN_MESSAGE;
         params.pszLoginName = pszLoginId;
-        params.pszPassword = pszPassword;
+
+        iPamError = pam_get_data(
+            pamh,
+            PAM_LSASS_SMART_CARD_PIN,
+            (PAM_GET_DATA_TYPE)&params.pszPassword);
+        if (iPamError == PAM_SUCCESS && params.pszPassword != NULL)
+        {
+            params.dwFlags |= LSA_AUTH_USER_PAM_FLAG_SMART_CARD;
+        }
+        else
+        {
+            params.pszPassword = pszPassword;
+        }
 
         dwError = LsaAuthenticateUserPam(
             hLsaConnection,
@@ -259,9 +493,17 @@ cleanup:
 
     LW_SAFE_CLEAR_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
+    LW_SAFE_FREE_STRING(pszSmartCardReader);
+    LW_SAFE_FREE_STRING(pszPINPrompt);
+
     if (pInfo)
     {
         LsaFreeAuthUserPamInfo(pInfo);
+    }
+
+    if (pObject)
+    {
+        LsaFreeSecurityObject(pObject);
     }
 
     LSA_LOG_PAM_DEBUG("pam_sm_authenticate::end");
@@ -335,6 +577,11 @@ pam_sm_setcred(
         dwError = LW_ERROR_INTERNAL;
 #endif
         BAIL_ON_LSA_ERROR(dwError);
+    }
+    else if (pPamContext->pamOptions.bSmartCardPrompt)
+    {
+        dwError = 0;
+        goto cleanup;
     }
 
     dwError = LsaOpenServer(&hLsaConnection);

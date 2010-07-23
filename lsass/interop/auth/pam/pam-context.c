@@ -167,6 +167,10 @@ LsaPamGetOptions(
         {
             pPamOptions->bSetDefaultRepository = TRUE;
         }
+        else if (!strcasecmp(argv[iArg], "smartcard_prompt"))
+        {
+            pPamOptions->bSmartCardPrompt = TRUE;
+        }
     }
     
     LSA_LOG_PAM_DEBUG("LsaPamGetOptions::end");
@@ -302,10 +306,9 @@ LsaPamCleanupDataString(
     int pam_end_status
     )
 {
-    if (data)
-    {
-        LwFreeString((PSTR) data);
-    }
+    PSTR pStr = data;
+
+    LW_SAFE_CLEAR_FREE_STRING(pStr);
 }
 
 DWORD

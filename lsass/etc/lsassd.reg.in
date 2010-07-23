@@ -27,6 +27,8 @@
 "LogLevel"="error"
 "DisplayMotd"=dword:00000000
 "UserNotAllowedError"="Access denied"
+"SmartCardServices"=sza:"gdm" "gnome-screensaver"
+"SmartCardPromptGecos"=sza:"gdm"
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers]
 "LoadOrder"=sza:"ActiveDirectory" "Local"

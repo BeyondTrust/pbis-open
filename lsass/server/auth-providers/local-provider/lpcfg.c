@@ -475,7 +475,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pszLoginShell
+            &pszLoginShell,
+            NULL
         },
         {
             "HomeDirPrefix",
@@ -484,7 +485,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pszHomedirPrefix
+            &pszHomedirPrefix,
+            NULL
         },
         {
             "HomeDirUmask",
@@ -493,7 +495,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pszUmask
+            &pszUmask,
+            NULL
         },
         {
             "HomeDirTemplate",
@@ -502,7 +505,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.pszHomedirTemplate
+            &StagingConfig.pszHomedirTemplate,
+            NULL
         },
         {
             "CreateHomeDir",
@@ -511,7 +515,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.bCreateHomedir
+            &StagingConfig.bCreateHomedir,
+            NULL
         },
         {
             "SkeletonDirs",
@@ -520,7 +525,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.pszSkelDirs
+            &StagingConfig.pszSkelDirs,
+            NULL
         },
         {
             "AcceptNTLMv1",
@@ -529,7 +535,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.bAcceptNTLMv1
+            &StagingConfig.bAcceptNTLMv1,
+            NULL
         },
     };
 
@@ -542,7 +549,8 @@ LocalCfgReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.bEnableEventLog
+            &StagingConfig.bEnableEventLog,
+            NULL
         }
     };
 

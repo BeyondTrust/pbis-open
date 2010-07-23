@@ -34,6 +34,11 @@ LsaSrvGetPamConfig(
     DWORD dwError = 0;
     LSA_PAM_CONFIG PamConfig = { 0 };
     PLSA_PAM_CONFIG pPamConfig = NULL;
+    PSTR pszSmartCardServices = NULL;
+    PSTR pszSmartCardPromptGecos = NULL;
+    DWORD dwSmartCardServicesSize = 0;
+    DWORD dwSmartCardPromptGecosSize = 0;
+    DWORD dwCount;
 
     const PCSTR LogLevels[] = 
     {
@@ -55,7 +60,8 @@ LsaSrvGetPamConfig(
             LSA_PAM_LOG_LEVEL_DISABLED,
             LSA_PAM_LOG_LEVEL_DEBUG,
             LogLevels,
-            &PamConfig.dwLogLevel
+            &PamConfig.dwLogLevel,
+            NULL
         },
         {
             "DisplayMOTD",
@@ -64,7 +70,8 @@ LsaSrvGetPamConfig(
             0,
             0,
             NULL,
-            &PamConfig.bLsaPamDisplayMOTD
+            &PamConfig.bLsaPamDisplayMOTD,
+            NULL
         },
         {
             "UserNotAllowedError",
@@ -73,8 +80,29 @@ LsaSrvGetPamConfig(
             0,
             0,
             NULL,
-            &PamConfig.pszAccessDeniedMessage
-        }
+            &PamConfig.pszAccessDeniedMessage,
+            NULL
+        },
+        {
+            "SmartCardServices",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            0,
+            NULL,
+            &pszSmartCardServices,
+            &dwSmartCardServicesSize
+        },
+        {
+            "SmartCardPromptGecos",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            0,
+            NULL,
+            &pszSmartCardPromptGecos,
+            &dwSmartCardPromptGecosSize
+        },
     };
 
     dwError = LwAllocateMemory(
@@ -91,6 +119,32 @@ LsaSrvGetPamConfig(
                 ConfigDescription,
                 sizeof(ConfigDescription)/sizeof(ConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = RegByteArrayToMultiStrsA(
+            (PBYTE) pszSmartCardServices,
+            dwSmartCardServicesSize,
+            &PamConfig.ppszSmartCardServices);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwCount = 0;
+    while (PamConfig.ppszSmartCardServices[dwCount] != NULL)
+    {
+         ++dwCount;
+    }
+    PamConfig.dwNumSmartCardServices = dwCount;
+
+    dwError = RegByteArrayToMultiStrsA(
+            (PBYTE) pszSmartCardPromptGecos,
+            dwSmartCardPromptGecosSize,
+            &PamConfig.ppszSmartCardPromptGecos);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwCount = 0;
+    while (PamConfig.ppszSmartCardPromptGecos[dwCount] != NULL)
+    {
+         ++dwCount;
+    }
+    PamConfig.dwNumSmartCardPromptGecos = dwCount;
 
     *pPamConfig = PamConfig;
     memset(&PamConfig, 0, sizeof(LSA_PAM_CONFIG));

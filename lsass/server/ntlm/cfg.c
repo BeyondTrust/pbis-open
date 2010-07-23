@@ -69,7 +69,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSendNTLMv2
+            &pConfig->bSendNTLMv2,
+            NULL
         },
         {
             "SupportUnicode",
@@ -78,7 +79,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSupportUnicode
+            &pConfig->bSupportUnicode,
+            NULL
         },
         {
             "SupportNTLM2SessionSecurity",
@@ -87,7 +89,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSupportNTLM2SessionSecurity
+            &pConfig->bSupportNTLM2SessionSecurity,
+            NULL
         },
         {
             "SupportKeyExchange",
@@ -96,7 +99,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSupportKeyExchange
+            &pConfig->bSupportKeyExchange,
+            NULL
         },
         {
             "Support56bit",
@@ -105,7 +109,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSupport56bit
+            &pConfig->bSupport56bit,
+            NULL
         },
         {
             "Support128bit",
@@ -114,7 +119,8 @@ NtlmReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &pConfig->bSupport128bit
+            &pConfig->bSupport128bit,
+            NULL
         },
     };
 

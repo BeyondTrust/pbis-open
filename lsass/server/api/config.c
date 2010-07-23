@@ -167,7 +167,8 @@ LsaSrvApiReadRegistry(
            0,
            MAXDWORD,
            NULL,
-           &StagingConfig.bEnableEventLog
+           &StagingConfig.bEnableEventLog,
+           NULL
         },
         {
            "LogNetworkConnectionEvents",
@@ -176,7 +177,8 @@ LsaSrvApiReadRegistry(
            0,
            MAXDWORD,
            NULL,
-           &StagingConfig.bLogNetworkConnectionEvents
+           &StagingConfig.bLogNetworkConnectionEvents,
+           NULL
         },
         {
            "DomainSeparator",

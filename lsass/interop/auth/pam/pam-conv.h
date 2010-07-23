@@ -57,4 +57,18 @@ LsaPamConverse(
     PSTR*         ppszResponse
     );
 
+typedef struct __LSA_PAM_CONVERSE_MESSAGE
+{
+    int           messageStyle;
+    PCSTR         pszMessage;
+    PSTR*         ppszResponse;
+} LSA_PAM_CONVERSE_MESSAGE, *PLSA_PAM_CONVERSE_MESSAGE;
+
+DWORD
+LsaPamConverseMulti(
+    pam_handle_t*             pamh,
+    int                       numMessages,
+    PLSA_PAM_CONVERSE_MESSAGE pLsaPamConverseMessages
+    );
+
 #endif /* __PAM_CONV_H__ */

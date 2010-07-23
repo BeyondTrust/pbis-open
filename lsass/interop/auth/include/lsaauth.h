@@ -52,7 +52,9 @@
 #define MOTD_MAX_SIZE __LW_MOTD_MAX_SIZE__
 
 /* Custom data keys */
-#define PAM_LSASS_OLDAUTHTOK "PAM_LSASS_OLDAUTHTOK"
+#define PAM_LSASS_OLDAUTHTOK        "PAM_LSASS_OLDAUTHTOK"
+#define PAM_LSASS_SMART_CARD_PIN    "PAM_LSASS_SMART_CARD_PIN"
+#define PAM_LSASS_SMART_CARD_READER "PAM_LSASS_SMART_CARD_READER"
 
 /*
  * AIX declares functions like pam_get_data to take void* pointer

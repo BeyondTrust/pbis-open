@@ -105,7 +105,8 @@ DsrSrvReadRegistry(
                 pReg,
                 "LpcSocketPath",
                 FALSE,
-                &(pConfig->pszLpcSocketPath));
+                &(pConfig->pszLpcSocketPath),
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaCloseConfig(pReg);
@@ -127,7 +128,8 @@ DsrSrvReadRegistry(
                 pReg,
                 "LpcSocketPath",
                 FALSE,
-                &(pConfig->pszLsaLpcSocketPath));
+                &(pConfig->pszLsaLpcSocketPath),
+                NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaReadConfigBoolean(
