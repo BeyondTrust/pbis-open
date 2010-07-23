@@ -30,7 +30,7 @@ case "${BUILD_OS_TYPE}" in
         fi
         ;;
     freebsd)
-        PACKAGES="$PACKAGES passwd domainjoin-gui"
+        PACKAGES="$PACKAGES passwd"
         ;;
     aix|hpux)
         PACKAGES="$PACKAGES passwd"
