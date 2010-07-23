@@ -52,6 +52,7 @@
 #include <openssl/rc4.h>
 
 #include <lw/ntstatus.h>
+#include <lw/winerror.h>
 #include <lw/rpc/lsa.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/samr.h>

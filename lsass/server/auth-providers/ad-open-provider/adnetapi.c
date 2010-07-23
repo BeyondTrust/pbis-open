@@ -1744,6 +1744,11 @@ AD_NetlogonAuthenticationUserEx(
                 bIsNetworkError = TRUE;
                 dwError = LW_ERROR_KRB5KDC_ERR_TGT_REVOKED;
             }
+            else if (nt_status == STATUS_NO_TRUST_SAM_ACCOUNT)
+            {
+                bIsNetworkError = TRUE;
+                dwError = ERROR_NO_TRUST_SAM_ACCOUNT;
+        }
             else
             {
                 bResetSchannel = TRUE;
@@ -1753,8 +1758,8 @@ AD_NetlogonAuthenticationUserEx(
                     bIsNetworkError = TRUE;
                 }
             }
-            BAIL_ON_LSA_ERROR(dwError);
         }
+        BAIL_ON_LSA_ERROR(dwError);
 
         gpSchannelCreds = &gSchannelCreds;
     }

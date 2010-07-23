@@ -823,9 +823,11 @@ LsaDmConnectDomain(
     PLWNET_DC_INFO pLocalDcInfo = NULL;
     PLWNET_DC_INFO pActualDcInfo = pDcInfo;
     DWORD dwGetDcNameFlags = 0;
+    DWORD dwNewGetDcNameFlags = 0;
     BOOLEAN bIsNetworkError = FALSE;
     BOOLEAN bUseGc = IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_GC);
     BOOLEAN bUseDcInfo = IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO);
+    BOOLEAN bNeedRevertDc = FALSE;
     PSTR pszPrimaryDomain = NULL;
 
     if (bUseGc)
@@ -915,6 +917,21 @@ LsaDmConnectDomain(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    dwNewGetDcNameFlags = dwGetDcNameFlags;
+
+    //
+    // If no machine trust account was found on the DC and this is
+    // a NetrSamLogon authentication we could be talking to a read-only
+    // DC which does not replicate machine accounts. In such case we
+    // need to find a read-write DC.
+    //
+    if ((dwError == ERROR_NO_TRUST_SAM_ACCOUNT) &&
+        !IsSetFlag(pActualDcInfo->dwFlags, DS_WRITABLE_FLAG) &&
+        IsSetFlag(dwConnectFlags, LSA_DM_CONNECT_DOMAIN_FLAG_NETRSAMLOGON))
+    {
+        dwNewGetDcNameFlags |= DS_WRITABLE_REQUIRED;
+    }
+
     LWNET_SAFE_FREE_DC_INFO(pLocalDcInfo);
     pActualDcInfo = NULL;
     dwError = LWNetGetDCNameExt(
@@ -922,13 +939,20 @@ LsaDmConnectDomain(
         pszDnsDomainOrForestName,
         NULL,
         pszPrimaryDomain,
-        dwGetDcNameFlags | DS_FORCE_REDISCOVERY,
+        dwNewGetDcNameFlags | DS_FORCE_REDISCOVERY,
         0,
         NULL,
         &pLocalDcInfo);
     bIsNetworkError = LsaDmpIsNetworkError(dwError);
     BAIL_ON_LSA_ERROR(dwError);
     pActualDcInfo = pLocalDcInfo;
+
+    if ((dwNewGetDcNameFlags != dwGetDcNameFlags) &&
+        !IsSetFlag(pActualDcInfo->dwFlags, DS_CLOSEST_FLAG))
+    {
+        bNeedRevertDc = TRUE;
+    }
+
 
     dwError = pfConnectCallback(pszDnsDomainOrForestName,
                                 pActualDcInfo,
@@ -947,6 +971,30 @@ LsaDmConnectDomain(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+    //
+    // Get back to the nearest DC in case the required one was
+    // not the nearest at the same time
+    //
+    if (bNeedRevertDc)
+    {
+        DWORD dwLocalError = 0;
+
+        LWNET_SAFE_FREE_DC_INFO(pLocalDcInfo);
+        pActualDcInfo = NULL;
+
+        dwLocalError = LWNetGetDCName(
+                            NULL,
+                            pszDnsDomainOrForestName,
+                            NULL,
+                            dwGetDcNameFlags | DS_FORCE_REDISCOVERY,
+                            &pLocalDcInfo);
+        if (dwLocalError)
+        {
+            LSA_LOG_DEBUG("Error %d reverting DC for domain '%s'",
+                          dwLocalError, pszDnsDomainOrForestName);
+        }
+    }
+
     LWNET_SAFE_FREE_DC_INFO(pLocalDcInfo);
     LW_SAFE_FREE_STRING(pszDnsForestName);
     LW_SAFE_FREE_MEMORY(pszPrimaryDomain);

@@ -759,8 +759,8 @@ static
 DWORD
 LsaDmWrappAuthenticateUserExCallback(
     IN PCSTR pszDnsDomainOrForestName,
-    IN OPTIONAL PLWNET_DC_INFO pDcInfo,
-    IN OPTIONAL PVOID pContext,
+    IN PLWNET_DC_INFO pDcInfo,
+    IN PVOID pContext,
     OUT PBOOLEAN pbIsNetworkError
     )
 {
@@ -788,7 +788,8 @@ LsaDmWrapAuthenticateUserEx(
 
     dwError = LsaDmConnectDomain(pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
-                                      LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
+                                      LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO |
+                                      LSA_DM_CONNECT_DOMAIN_FLAG_NETRSAMLOGON,
                                       NULL,
                                       LsaDmWrappAuthenticateUserExCallback,
                                       &context);
