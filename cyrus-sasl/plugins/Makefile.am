@@ -50,6 +50,7 @@ anonymous_version = 2:23:0
 digestmd5_version = 2:23:0
 kerberos4_version = 2:23:0
 gssapiv2_version = 2:23:0
+gssspnego_version = 2:23:0
 crammd5_version = 2:23:0
 passdss_version = 2:23:0
 sasldb_version = 2:23:0
@@ -78,8 +79,8 @@ common_sources = plugin_common.c plugin_common.h
 sasldir = $(libdir)/sasl2
 sasl_LTLIBRARIES = @SASL_MECHS@
 EXTRA_LTLIBRARIES = libplain.la libanonymous.la libkerberos4.la libcrammd5.la \
-	libgssapiv2.la libdigestmd5.la liblogin.la libsrp.la libotp.la \
-	libntlm.la libpassdss.la libsasldb.la libsql.la libldapdb.la
+	libgssapiv2.la libgssspnego.la libdigestmd5.la liblogin.la libsrp.la \
+	libotp.la libntlm.la libpassdss.la libsasldb.la libsql.la libldapdb.la
 
 libplain_la_SOURCES = plain.c plain_init.c $(common_sources)
 libplain_la_LDFLAGS = -version-info $(plain_version)
@@ -100,6 +101,11 @@ libgssapiv2_la_SOURCES = gssapi.c gssapiv2_init.c $(common_sources)
 libgssapiv2_la_LDFLAGS = -version-info $(gssapiv2_version)
 libgssapiv2_la_DEPENDENCIES = $(COMPAT_OBJS)
 libgssapiv2_la_LIBADD = $(GSSAPIBASE_LIBS) $(GSSAPI_LIBS) $(LIB_SOCKET) $(COMPAT_OBJS)
+
+libgssspnego_la_SOURCES = gssspnego.c gssspnego_init.c $(common_sources)
+libgssspnego_la_LDFLAGS = -version-info $(gssspnego_version)
+libgssspnego_la_DEPENDENCIES = $(COMPAT_OBJS)
+libgssspnego_la_LIBADD = $(GSSAPIBASE_LIBS) $(GSSAPI_LIBS) $(LIB_SOCKET) $(COMPAT_OBJS)
 
 libcrammd5_la_SOURCES = cram.c crammd5_init.c $(common_sources)
 libcrammd5_la_LDFLAGS = -version-info $(crammd5_version)
@@ -156,8 +162,8 @@ libsql_la_LIBADD = $(COMPAT_OBJS)
 # Instructions for making the _init files
 
 init_src=anonymous_init.c crammd5_init.c digestmd5_init.c gssapiv2_init.c \
-kerberos4_init.c login_init.c plain_init.c srp_init.c otp_init.c ntlm_init.c \
-passdss_init.c sasldb_init.c sql_init.c ldapdb_init.c
+gssspnego_init.c kerberos4_init.c login_init.c plain_init.c srp_init.c \
+otp_init.c ntlm_init.c passdss_init.c sasldb_init.c sql_init.c ldapdb_init.c
 
 
 CLEANFILES=$(init_src)

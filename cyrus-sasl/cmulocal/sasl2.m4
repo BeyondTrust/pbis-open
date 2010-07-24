@@ -251,9 +251,9 @@ AC_MSG_CHECKING([GSSAPI])
 if test "$gssapi" != no; then
   AC_MSG_RESULT([with implementation ${gss_impl}])
   AC_CHECK_LIB(resolv,res_search,GSSAPIBASE_LIBS="$GSSAPIBASE_LIBS -lresolv")
-  SASL_MECHS="$SASL_MECHS libgssapiv2.la"
-  SASL_STATIC_OBJS="$SASL_STATIC_OBJS gssapi.o"
-  SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/gssapi.c"
+  SASL_MECHS="$SASL_MECHS libgssapiv2.la libgssspnego.la"
+  SASL_STATIC_OBJS="$SASL_STATIC_OBJS gssapi.o gssspnego.o"
+  SASL_STATIC_SRCS="$SASL_STATIC_SRCS ../plugins/gssapi.c ../plugins/gssspnego.o"
 
   cmu_save_LIBS="$LIBS"
   LIBS="$LIBS $GSSAPIBASE_LIBS"
