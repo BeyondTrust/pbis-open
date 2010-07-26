@@ -867,7 +867,6 @@ NTSTATUS srv_samr_Function38(
 
 NTSTATUS srv_SamrConnect2(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
     /* [in] */ UINT32 access_mask,
     /* [out] */ CONNECT_HANDLE *hConn
@@ -876,7 +875,6 @@ NTSTATUS srv_SamrConnect2(
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvConnect2(IDL_handle,
-                             size,
                              system_name,
                              access_mask,
                              hConn);
@@ -930,7 +928,6 @@ NTSTATUS srv_samr_Function3c(
 
 NTSTATUS srv_SamrConnect3(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
     /* [in] */ UINT32 unknown,
     /* [in] */ UINT32 access_mask,
@@ -940,7 +937,6 @@ NTSTATUS srv_SamrConnect3(
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvConnect3(IDL_handle,
-                             size,
                              system_name,
                              unknown,
                              access_mask,
@@ -951,7 +947,6 @@ NTSTATUS srv_SamrConnect3(
 
 NTSTATUS srv_SamrConnect4(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
     /* [in] */ UINT32 client_access,
     /* [in] */ UINT32 access_mask,
@@ -961,7 +956,6 @@ NTSTATUS srv_SamrConnect4(
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvConnect4(IDL_handle,
-                             size,
                              system_name,
                              client_access,
                              access_mask,
@@ -981,7 +975,6 @@ NTSTATUS srv_samr_Function3f(
 
 NTSTATUS srv_SamrConnect5(
     /* [in] */ handle_t IDL_handle,
-    /* [in] */ UINT32 size,
     /* [in] */ wchar16_t *system_name,
     /* [in] */ UINT32 access_mask,
     /* [in] */ UINT32 level_in,
@@ -994,7 +987,6 @@ NTSTATUS srv_SamrConnect5(
     NTSTATUS status = STATUS_SUCCESS;
 
     status = SamrSrvConnect5(IDL_handle,
-                             size,
                              system_name,
                              access_mask,
                              level_in,

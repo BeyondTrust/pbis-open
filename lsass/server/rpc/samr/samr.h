@@ -373,7 +373,6 @@ SamrSrvChangePasswordUser2(
 NTSTATUS
 SamrSrvConnect2(
     IN  handle_t        hBinding,
-    IN  DWORD           dwSize,
     IN  PCWSTR          pwszSystemName,
     IN  DWORD           dwAccessMask,
     OUT CONNECT_HANDLE *hConn
@@ -430,7 +429,6 @@ SamrSrvCreateAccount(
 NTSTATUS
 SamrSrvConnect3(
     IN  handle_t        hBinding,
-    IN  DWORD           dwSize,
     IN  PCWSTR          pwszSystemName,
     IN  DWORD           dwUnknown1,
     IN  DWORD           dwAccessMask,
@@ -441,7 +439,6 @@ SamrSrvConnect3(
 NTSTATUS
 SamrSrvConnect4(
     IN  handle_t         hBinding,
-    IN  DWORD            dwSize,
     IN  PCWSTR           pwszSystemName,
     IN  DWORD            dwUnknown1,
     IN  DWORD            dwAccessMask,
@@ -452,14 +449,13 @@ SamrSrvConnect4(
 NTSTATUS
 SamrSrvConnect5(
     IN  handle_t             hBinding,
-    IN  DWORD                dwSize,
     IN  PCWSTR               pwszSystemName,
     IN  DWORD                dwAccessMask,
     IN  DWORD                dwLevelIn,
     IN  PSAMR_CONNECT_INFO   pInfoIn,
-    OUT PDWORD              pdwLevelOut,
-    OUT PSAMR_CONNECT_INFO  pInfoOut,
-    OUT CONNECT_HANDLE     *hConn
+    OUT PDWORD               pdwLevelOut,
+    OUT PSAMR_CONNECT_INFO   pInfoOut,
+    OUT CONNECT_HANDLE      *hConn
     );
 
 

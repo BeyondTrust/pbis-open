@@ -81,7 +81,6 @@ SamrSrvChangePasswordUser2(
     size_t sDomainNameLen = 0;
     PWSTR pwszDomainName = NULL;
     WCHAR wszSystemName[] = { '\\', '\\', 0 };
-    DWORD dwSystemNameLen = (sizeof(wszSystemName)/sizeof(wszSystemName[0])) - 1;
     DWORD dwConnectFlags = SAMR_ACCESS_CONNECT_TO_SERVER;
     PCONNECT_CONTEXT pConnCtx = NULL;
     DWORD dwObjectClass = 0;
@@ -110,7 +109,6 @@ SamrSrvChangePasswordUser2(
     BAIL_ON_INVALID_PTR(pNtVerifier);
 
     ntStatus = SamrSrvConnect2(hBinding,
-                               dwSystemNameLen,
                                (PWSTR)wszSystemName,
                                dwConnectFlags,
                                (CONNECT_HANDLE*)&pConnCtx);

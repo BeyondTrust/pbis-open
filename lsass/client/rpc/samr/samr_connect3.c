@@ -59,7 +59,6 @@ SamrConnect3(
     DWORD dwError = ERROR_SUCCESS;
     WCHAR wszDefaultSysName[] = SAMR_DEFAULT_SYSNAME;
     PWSTR pwszSystemName = NULL;
-    size_t sSystemNameLen = 0;
     UINT32 Unknown = 0;
     CONNECT_HANDLE hConn = NULL;
 
@@ -71,13 +70,7 @@ SamrConnect3(
                         (pwszSysName) ? pwszSysName : &(wszDefaultSysName[0]));
     BAIL_ON_WIN_ERROR(dwError);
 
-    dwError = LwWc16sLen(pwszSystemName, &sSystemNameLen);
-    BAIL_ON_WIN_ERROR(dwError);
-
-    sSystemNameLen++;
-
     DCERPC_CALL(ntStatus, cli_SamrConnect3((handle_t)hBinding,
-                                           (UINT32)sSystemNameLen,
                                            pwszSystemName,
                                            Unknown,
                                            AccessMask,

@@ -379,8 +379,7 @@ cpp_quote("#endif")
 
     /* function 0x39 */
     NTSTATUS SamrConnect2(
-        [in] UINT32 size,
-        [in,string,size_is(size)] wchar16_t *system_name,
+        [in,string,ptr] wchar16_t *system_name,
         [in] UINT32 access_mask,
         [out] CONNECT_HANDLE *phConn
         );
@@ -397,8 +396,7 @@ cpp_quote("#endif")
 
     /* function 0x3d */
     NTSTATUS SamrConnect3(
-        [in] UINT32 size,
-        [in,string,size_is(size)] wchar16_t *system_name,
+        [in,string,ptr] wchar16_t *system_name,
         [in] UINT32 unknown,
         [in] UINT32 access_mask,
         [out] CONNECT_HANDLE *phConn
@@ -406,8 +404,7 @@ cpp_quote("#endif")
 
     /* function 0x3e */
     NTSTATUS SamrConnect4(
-        [in] UINT32 size,
-        [in,string,size_is(size)] wchar16_t *system_name,
+        [in,string,ptr] wchar16_t *system_name,
         [in] UINT32 client_version,
         [in] UINT32 access_mask,
         [out] CONNECT_HANDLE *phConn
@@ -417,8 +414,7 @@ cpp_quote("#endif")
 
     /* function 0x40 */
     NTSTATUS SamrConnect5(
-        [in] UINT32 size,
-        [in,string,size_is(size)] wchar16_t *system_name,
+        [in,string,ptr] wchar16_t *system_name,
         [in] UINT32 access_mask,
         [in] UINT32 level_in,
         [in,ref,switch_is(level_in)] SamrConnectInfo *info_in,

@@ -51,7 +51,6 @@
 NTSTATUS
 SamrSrvConnect5(
     /* [in] */ handle_t             hBinding,
-    /* [in] */ DWORD                dwSize,
     /* [in] */ PCWSTR               pwszSystemName,
     /* [in] */ DWORD                dwAccessMask,
     /* [in] */ DWORD                dwLevelIn,

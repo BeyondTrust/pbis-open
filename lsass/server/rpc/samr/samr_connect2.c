@@ -50,7 +50,6 @@
 NTSTATUS
 SamrSrvConnect2(
     /* [in] */  handle_t        hBinding,
-    /* [in] */  DWORD           dwSize,
     /* [in] */  PCWSTR          pwszSystemName,
     /* [in] */  DWORD           dwAccessMask,
     /* [out] */ CONNECT_HANDLE *hConn
