@@ -777,14 +777,14 @@ typedef struct rpc_ss_pvt_node_table_t {
                                             /* marshalling/unmarshalling    */
                                             /* status                       */
 
-    long depth;                             /* Number of levels in the      */
+    idl_ulong_int depth;                             /* Number of levels in the      */
                                             /* multi-level array            */
 
-    long currently_mapped;                  /* Number of entry currently    */
+    unsigned long long currently_mapped;                  /* Number of entry currently    */
                                             /* available in the multi-level */
                                             /* array for storing mappings   */
 
-    long high_num;                          /* Highest node number used     */
+    idl_ulong_int high_num;                          /* Highest node number used     */
 
     rpc_ss_mem_handle *mem_h;               /* Pointer to the mem handle    */
                                             /* used to free up local        */
@@ -810,7 +810,7 @@ typedef struct rpc_ss_pvt_node_table_t {
 **--
 */
 #define get_hash_chain_head(ghch_str,ghch_ptr) \
-&(ghch_str->hash_table[(((long)ghch_ptr>>5) & (RPC_SS_NODE_HASH_TABLE_SIZE-1))])
+&(ghch_str->hash_table[(((unsigned long)ghch_ptr>>5) & (RPC_SS_NODE_HASH_TABLE_SIZE-1))])
 
 
 /******************************************************************************/
@@ -847,17 +847,17 @@ static void rpc_ss_expand_array
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_ptr_array_p_t * array,
-    long *currently_mapped,
-    long *depth,
-    long num,
+    unsigned long long *currently_mapped,
+    idl_ulong_int *depth,
+    idl_ulong_int num,
     rpc_ss_mem_handle * p_mem_h
 )
 #else
 (array, currently_mapped, depth, num, p_mem_h)
     rpc_ss_ptr_array_p_t * array;
-    long *currently_mapped;
-    long *depth;
-    long num;
+    unsigned long long *currently_mapped;
+    idl_ulong_int *depth;
+    idl_ulong_int num;
     rpc_ss_mem_handle * p_mem_h;
 #endif
 {
@@ -894,8 +894,8 @@ static void rpc_ss_expand_array
     *currently_mapped = *currently_mapped * rpc_ss_node_array_size;
 
     DTRACE((
-        trace_fid, "Expanding: array=%p depth=%ld, mapped=%ld\n",
-        array, *depth, *currently_mapped
+        trace_fid, "Expanding: array=%p depth=%lu, mapped=%lu\n",
+        array, (unsigned long) *depth, (unsigned long) *currently_mapped
     ));
 
     if (*currently_mapped < num)
@@ -936,27 +936,27 @@ static void rpc_ss_register_node_num
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_ptr_array_p_t *root_array,
-    long *currently_mapped,
-    long *root_depth,
-    long num,
+    unsigned long long *currently_mapped,
+    idl_ulong_int *root_depth,
+    idl_ulong_int num,
     byte_p_t ptr,
     rpc_ss_mem_handle * p_mem_h
 )
 #else
 (root_array, currently_mapped, root_depth, num, ptr, p_mem_h)
     rpc_ss_ptr_array_p_t *root_array;
-    long *currently_mapped;
-    long *root_depth;
-    long num;
+    unsigned long long *currently_mapped;
+    idl_ulong_int *root_depth;
+    idl_ulong_int num;
     byte_p_t ptr;
     rpc_ss_mem_handle * p_mem_h;
 #endif
 {
     rpc_ss_ptr_array_p_t array;
     rpc_ss_ptr_array_p_t t_array;
-    long mapped;
-    long index;
-    long depth;
+    idl_ulong_int mapped;
+    idl_ulong_int index;
+    idl_ulong_int depth;
 
 #ifdef PERFMON
     RPC_SS_REGISTER_NODE_NUM_N;
@@ -1076,13 +1076,13 @@ static void rpc_ss_register_node_by_num
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
-    long num,
+    idl_ulong_int num,
     byte_p_t ptr
 )
 #else
 (tab, num, ptr)
     rpc_ss_node_table_t tab;
-    long num;
+    idl_ulong_int num;
     byte_p_t ptr;
 #endif
 {
@@ -1122,7 +1122,7 @@ static void rpc_ss_register_node_by_num
 
 
 #ifdef HASH_STATS
-    printf ("Hash value: %03d Hash chain:", (((long)ptr>>5) & 0xff));
+    printf ("Hash value: %03d Hash chain:", (((unsigned long)ptr>>5) & 0xff));
     for (temp = get_hash_chain_head (str, ptr); temp; temp=temp->next)
         printf (" %lx", temp->ptr);
     printf ("\n");
@@ -1165,7 +1165,7 @@ static void rpc_ss_register_node_by_num
 **
 **--
 */
-static long rpc_ss_lookup_node_by_ptr
+static idl_ulong_int rpc_ss_lookup_node_by_ptr
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
@@ -1180,7 +1180,7 @@ static long rpc_ss_lookup_node_by_ptr
 #endif
 {
     rpc_ss_hash_entry_t *hash_entry;
-    long node;
+    idl_ulong_int node;
     rpc_ss_pvt_node_table_t * str;
 
 #ifdef PERFMON
@@ -1410,17 +1410,17 @@ byte_p_t rpc_ss_lookup_node_by_num
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
-    unsigned long num
+    idl_ulong_int num
 )
 #else
 ( tab, num )
     rpc_ss_node_table_t tab;
-    unsigned long num;
+    idl_ulong_int num;
 #endif
 {
-    unsigned long mapped;
-    long depth;
-    long index;
+    idl_ulong_int mapped;
+    idl_ulong_int depth;
+    idl_ulong_int index;
     rpc_ss_ptr_array_p_t array;
     rpc_ss_pvt_node_table_t * str;
 
@@ -1515,7 +1515,7 @@ byte_p_t rpc_ss_lookup_node_by_num
 **
 **--
 */
-long rpc_ss_register_node
+idl_ulong_int rpc_ss_register_node
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
@@ -1531,7 +1531,7 @@ long rpc_ss_register_node
     long *has_been_marshalled;
 #endif
 {
-    long num;
+    idl_ulong_int num;
     rpc_ss_pvt_node_table_t * str;
     rpc_ss_hash_entry_t *hash_entry;
 
@@ -1587,7 +1587,7 @@ long rpc_ss_register_node
     }
 
     DTRACE((
-        trace_fid, "Register(%p): num=%ld, ptr=%p\n", str, num, ptr
+               trace_fid, "Register(%p): num=%lu, ptr=%p\n", str, (unsigned long) num, ptr
     ));
 
 #ifdef PERFMON
@@ -1825,8 +1825,8 @@ byte_p_t rpc_ss_return_pointer_to_node
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
-    unsigned long       num,
-    long                size,
+    idl_ulong_int       num,
+    idl_ulong_int                size,
     rpc_void_p_t        (*p_allocate)(idl_size_t size),
     long                *has_been_unmarshalled,
     long                *new_node               /* NULL or addr of return flag */
@@ -1834,8 +1834,8 @@ byte_p_t rpc_ss_return_pointer_to_node
 #else
 (tab, num, size, p_allocate, has_been_unmarshalled, new_node)
     rpc_ss_node_table_t tab;
-    unsigned long       num;
-    long                size;
+    idl_ulong_int       num;
+    idl_ulong_int                size;
     rpc_void_p_t        (*p_allocate)();
     long                *has_been_unmarshalled;
     long                *new_node;              /* NULL or addr of return flag */
@@ -1932,13 +1932,13 @@ byte_p_t rpc_ss_lookup_pointer_to_node
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
-    unsigned long num,
+    idl_ulong_int num,
     long *has_been_unmarshalled
 )
 #else
 (tab, num, has_been_unmarshalled)
     rpc_ss_node_table_t tab;
-    unsigned long num;
+    idl_ulong_int num;
     long *has_been_unmarshalled;
 #endif
 {
@@ -2005,13 +2005,13 @@ byte_p_t rpc_ss_inquire_pointer_to_node
 #ifdef IDL_PROTOTYPES
 (
     rpc_ss_node_table_t tab,
-    unsigned long num,
+    idl_ulong_int num,
     long *has_been_unmarshalled
 )
 #else
 (tab, num, has_been_unmarshalled)
     rpc_ss_node_table_t tab;
-    unsigned long num;
+    idl_ulong_int num;
     long *has_been_unmarshalled;
 #endif
 {
@@ -2128,9 +2128,9 @@ rpc_ss_node_table_t  str;
 
 main ()
 {
-long node;
+idl_ulong_int node;
 byte_p_t ptr;
-long high_node;
+idl_ulong_int high_node;
 long has_been_marshalled;
 
 rpc_ss_init_node_table( &str, 0);
