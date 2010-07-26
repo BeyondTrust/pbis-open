@@ -954,7 +954,7 @@ static void rpc_ss_register_node_num
 {
     rpc_ss_ptr_array_p_t array;
     rpc_ss_ptr_array_p_t t_array;
-    idl_ulong_int mapped;
+    unsigned long long mapped;
     idl_ulong_int index;
     idl_ulong_int depth;
 
