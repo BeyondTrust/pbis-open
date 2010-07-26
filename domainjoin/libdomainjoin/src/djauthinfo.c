@@ -1606,6 +1606,7 @@ DJLogDomainJoinSucceededEvent(
                  JoinOptions->ouName ? JoinOptions->ouName : "<not set>",
                  JoinOptions->assumeDefaultDomain ? "true" : "false",
                  JoinOptions->userDomainPrefix ? JoinOptions->userDomainPrefix : "<not set>",
+                 JoinOptions->username ? JoinOptions->username : "<not set>",
                  pszOSName ? pszOSName : "<not set>",
                  pszDistroVersion ? pszDistroVersion : "<not set>",
                  pszLikewiseVersion ? pszLikewiseVersion : "<not set>");
