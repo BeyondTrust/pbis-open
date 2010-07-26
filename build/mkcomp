@@ -101,18 +101,18 @@ function step_clean
     # Handle pivoting staging root for downstream incremental builds
     if [ ! -d "${COMP_STAGING_ROOT}-incremental" -a -d "${COMP_STAGING_ROOT}" ]
     then
-	echo "Pivoting ${COMP_STAGING_ROOT}"
+        echo "Pivoting ${COMP_STAGING_ROOT}"
         mv "${COMP_STAGING_ROOT}" "${COMP_STAGING_ROOT}-incremental"
     elif [ -d "${COMP_STAGING_ROOT}-incremental" ]
     then
-	cleandir "${COMP_STAGING_ROOT}"
+        cleandir "${COMP_STAGING_ROOT}"
     fi
 
     # Clean source directory and configure flag for non-incremental builds
     if ! is_incremental
     then
-	cleandir "${COMP_GATHER_ROOT}"
-	rm -f "${COMP_FLAGFILE_CONFIGURE}"
+        cleandir "${COMP_GATHER_ROOT}"
+        rm -f "${COMP_FLAGFILE_CONFIGURE}"
     fi
     
     # Always clean install root
@@ -125,16 +125,16 @@ function step_bootstrap
 {
     if [ -f "${BUILD_ROOT}/src/linux/BOOTSTRAP" -a -z "${OPT_FORCE_BOOTSTRAP}" ]
     then
-	echo "Build already bootstrapped -- skipping"
+        echo "Build already bootstrapped -- skipping"
     elif [ -f "${COMP_BOOTSTRAP}" -a -z "${BUILD_DISABLE_INCREMENTAL}" -a -z "${OPT_FORCE_BOOTSTRAP}" ]
     then
-	echo "Component already bootstrapped -- skipping"
+        echo "Component already bootstrapped -- skipping"
     else
-	echo "Bootstrapping component"
-	op_invoke bootstrap
-	exit_on_error $?
-	mkdir -p "${COMP_BUILD_ROOT}"
-	touch "${COMP_BOOTSTRAP}"
+        echo "Bootstrapping component"
+        op_invoke bootstrap
+        exit_on_error $?
+        mkdir -p "${COMP_BUILD_ROOT}"
+        touch "${COMP_BOOTSTRAP}"
     fi
 }
 
@@ -163,7 +163,7 @@ function step_configure
     then
         echo "Already configured, skipping"
     else
-        echo "Configuring in ${COMP_SOURCES_ROOT}..."
+        echo "Configuring in ${COMP_SOURCES_DIR}..."
         ( mkdir -p "${COMP_SOURCES_DIR}" && cd "${COMP_SOURCES_DIR}" && op_invoke configure )
         exit_on_error $?
         touch "${COMP_FLAGFILE_CONFIGURE}"
@@ -175,7 +175,7 @@ function step_build
 {
     echo "STEP: build"
 
-    echo "Building in ${COMP_SOURCES_ROOT}..."
+    echo "Building in ${COMP_SOURCES_DIR}..."
     ( cd "${COMP_SOURCES_DIR}" && op_invoke build )
     exit_on_error $?
 
@@ -189,7 +189,7 @@ function step_stage
     recreate_dir "${COMP_INSTALL_ROOT}"
     recreate_dir "${COMP_STAGING_ROOT}"
 
-    echo "Staging from ${COMP_SOURCES_ROOT} to ${COMP_STAGING_ROOT}..."
+    echo "Staging from ${COMP_SOURCES_DIR} to ${COMP_STAGING_ROOT}..."
     ( cd "${COMP_SOURCES_DIR}" && op_invoke stage )
     exit_on_error $?
 
@@ -416,8 +416,8 @@ function do_component
 
     if component_is_external "${COMP_NAME}"
     then
-	echo "Component \"${COMP_NAME}\" is externally satisfied -- skipping"
-	exit 0
+        echo "Component \"${COMP_NAME}\" is externally satisfied -- skipping"
+        exit 0
     fi
 
 
@@ -650,13 +650,13 @@ function setup_comp_vars
         solaris-i386)
             [ "`uname -r`" = "5.10" ] || COMP_NEED_COMPAT=""
             ;;
-	darwin-x86_64)
-	    if [ -z "${COMP_IS_TOOL}" ]
-	    then
-		COMP_NEED_COMPAT="1"
-		COMP_COMPAT_IS_FULL="1"
-	    fi
-	    ;;
+        darwin-x86_64)
+            if [ -z "${COMP_IS_TOOL}" ]
+            then
+                COMP_NEED_COMPAT="1"
+                COMP_COMPAT_IS_FULL="1"
+            fi
+            ;;
         *)
             COMP_NEED_COMPAT=""
             ;;
@@ -794,7 +794,7 @@ function op_invoke
     local -x COMP_IS_COMPAT="${COMP_IS_COMPAT}"
     if [ -z "${COMP_COMPAT_IS_FULL}" ]
     then
-	local -x IS_COMPAT="${COMP_IS_COMPAT}"
+        local -x IS_COMPAT="${COMP_IS_COMPAT}"
     fi
 
     local -x COMP_VERSION="${COMP_VERSION}"
