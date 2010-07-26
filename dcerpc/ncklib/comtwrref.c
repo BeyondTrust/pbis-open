@@ -297,6 +297,91 @@ unsigned32          *status;
     return;
 }
 
+PRIVATE void rpc__tower_verify
+(
+    byte_p_t            tower_octet_string,
+    unsigned32          length,
+    unsigned32          num_flrs,
+    unsigned32          *status
+)
+{
+    byte_p_t        bound = tower_octet_string + length;
+    byte_p_t        tower_floor;
+    unsigned32      i;
+    unsigned16      prot_count;
+    unsigned16      addr_count;
+
+    CODING_ERROR (status);
+
+    if (bound < tower_octet_string)
+    {
+        *status = rpc_s_not_rpc_tower;
+        return;
+    }
+
+    if (tower_octet_string + RPC_C_TOWER_FLR_COUNT_SIZE >= bound)
+    {
+        *status = rpc_s_not_rpc_tower;
+        return;
+    }
+
+    /*
+     * Initialize local to point to beginning of
+     * the canonical tower floor.
+     */
+    tower_floor = tower_octet_string + RPC_C_TOWER_FLR_COUNT_SIZE;
+
+    /*
+     * For each tower floor, starting at the desired floor,
+     * allocate the floor and initialize with the information 
+     * in the tower structure.
+     */
+    for (i = 0; i < num_flrs; i++)
+    {
+        if (tower_floor + RPC_C_TOWER_FLR_LHS_COUNT_SIZE >= bound)
+        {    
+            *status = rpc_s_not_rpc_tower;
+            return;
+        }
+
+        memcpy ((char *) &prot_count,
+                (char *) tower_floor,
+                RPC_C_TOWER_FLR_LHS_COUNT_SIZE);
+
+        /*
+         * Convert prot id count to host's endian representation.
+         */
+        RPC_RESOLVE_ENDIAN_INT16 (prot_count);
+
+        if (tower_floor + RPC_C_TOWER_FLR_LHS_COUNT_SIZE + prot_count >= bound)
+        {
+            *status = rpc_s_not_rpc_tower;
+            return;
+        }
+
+        /*
+         * Get the additional information count.
+         */
+        memcpy ((char *) &addr_count,
+                (char *) tower_floor + RPC_C_TOWER_FLR_LHS_COUNT_SIZE + prot_count,
+                RPC_C_TOWER_FLR_RHS_COUNT_SIZE);
+
+        /*
+         * Convert address count to host's endian representation.
+         */
+        RPC_RESOLVE_ENDIAN_INT16 (addr_count);
+
+        /*
+         * Point to the next tower floor in the tower octet string.
+         */
+        tower_floor += RPC_C_TOWER_FLR_LHS_COUNT_SIZE + prot_count +
+            RPC_C_TOWER_FLR_RHS_COUNT_SIZE + addr_count;
+    }
+
+    *status = rpc_s_ok;
+    return;
+}
+
 
 /*
 **++

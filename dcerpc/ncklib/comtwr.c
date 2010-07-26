@@ -296,12 +296,24 @@ unsigned32          *status;
 
     CODING_ERROR (status);
 
+    if (tower->tower_length < RPC_C_TOWER_FLR_COUNT_SIZE)
+    {
+        *status = rpc_s_not_rpc_tower;
+        return;
+    }
+
     /*
      * Get the tower floor count and correct for proper endian.
      */
     memcpy ((char *) &floor_count, (char *) tower->tower_octet_string, 
             RPC_C_TOWER_FLR_COUNT_SIZE);
     RPC_RESOLVE_ENDIAN_INT16 (floor_count);
+
+    rpc__tower_verify (tower->tower_octet_string, tower->tower_length, floor_count, status);
+    if (*status != rpc_s_ok)
+    {
+        return;
+    }
 
     /*
      * Allocate and initialize the tower reference structure to be returned.

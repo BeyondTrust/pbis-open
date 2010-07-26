@@ -109,5 +109,12 @@ PRIVATE void rpc__tower_ref_vec_from_binding _DCE_PROTOTYPE_ ((
     unsigned32                  * /*status*/ 
 ));
 
+PRIVATE void rpc__tower_verify (
+    byte_p_t            tower_octet_string,
+    unsigned32          length,
+    unsigned32          num_flrs,
+    unsigned32          *status
+    );
+
 #endif /* _COMTWRREF_H */
 
