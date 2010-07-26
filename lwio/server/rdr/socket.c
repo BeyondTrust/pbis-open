@@ -658,7 +658,7 @@ SMBSocketReaderMain(
             }
             else
             {
-                *pWaitMask = LW_TASK_EVENT_FD_WRITABLE;
+                *pWaitMask = LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_TIME;
                 *pllTime = llConnectTimeout;
                 goto cleanup;
             }
