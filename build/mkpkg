@@ -114,7 +114,7 @@ function package_deb
         file="`basename "$file"`"
         cat ${PKG_DIR}/$file | sed -e "s/__PKG_NAME/${PKG_NAME}/g" \
             -e "s/__PKG_VERSION/${PKG_VERSION}/g" \
-	    -e "s:__PKG_PREFIX:${BUILD_PREFIX}:g" \
+            -e "s:__PKG_PREFIX:${BUILD_PREFIX}:g" \
         > ${PKG_PACKAGE_ROOT}/${PKG_NAME}/debian/$file
     done
 
@@ -361,9 +361,9 @@ foreach (<STDIN>) {
 
     while [ "${dir}" != "/" ]
     do
-	grep -v "^d none ${dir}" < "${2}" > "${2}.out"
-	mv "${2}.out" "${2}"
-	dir="`dirname ${dir}`"
+        grep -v "^d none ${dir}" < "${2}" > "${2}.out"
+        mv "${2}.out" "${2}"
+        dir="`dirname ${dir}`"
     done
 
     exit_on_error $?
@@ -618,9 +618,9 @@ function package_source
 
     for p in ${PKG_COMPONENTS};
     do
-	source ${BUILD_ROOT}/src/linux/build/components/${p}.comp
-	echo "Copying source for component \"${p}\"..."
-	rsync -a --exclude=.svn ${COMP_SOURCES} ${PKG_POPULATE_ROOT}/${_pkg_dir}/
+        source ${BUILD_ROOT}/src/linux/build/components/${p}.comp
+        echo "Copying source for component \"${p}\"..."
+        rsync -a --exclude=.svn ${COMP_SOURCES} ${PKG_POPULATE_ROOT}/${_pkg_dir}/
     done
 
     echo "Creating $OUT_FILE"
@@ -692,10 +692,10 @@ function package_mac
     local ARCH_RENAME="$BUILD_OS_ARCH"
 
     case "`uname -r 2>/dev/null`" in
-	10.*)
-	    mac_combine_binaries
+        10.*)
+            mac_combine_binaries
             local ARCH_RENAME="OSX10.6-universal"
-	    ;;
+            ;;
     esac
     
     local PMAKER=/Developer/Applications/Utilities/PackageMaker-2.1.1/PackageMaker.app/Contents/MacOS/PackageMaker
@@ -747,11 +747,11 @@ function package_mac
     exit_on_error $?
 
     if [ -f "${_PROJ_FILE}" ]; then
-	sed -e "s/@LIKEWISE_VERSION@/${MAIN_VERSION}/g" \
-	    -e "s/@LIKEWISE_PKG_NAME@/${PKG_NAME}/g" \
-	    -e "s/@LIKEWISE_PKG_DESC@/${PKG_DESC}/g" \
-	    < ${_PROJ_FILE} \
-	    > ${PROJ_DIR}/proj.pmproj
+        sed -e "s/@LIKEWISE_VERSION@/${MAIN_VERSION}/g" \
+            -e "s/@LIKEWISE_PKG_NAME@/${PKG_NAME}/g" \
+            -e "s/@LIKEWISE_PKG_DESC@/${PKG_DESC}/g" \
+            < ${_PROJ_FILE} \
+            > ${PROJ_DIR}/proj.pmproj
         mac_make_package "${PROJ_DIR}/proj.pmproj" "${_OUT_FS}"
     else
         warn "${_PROJ_FILE} does not exist!"
@@ -806,19 +806,19 @@ function populate
 
     if [ -z "${OPT_NO_COMPAT}" -a -n "${PKG_NEED_COMPAT}" -a -z "${PKG_IS_COMPAT}" -a "${PKG_COMPAT_DISPOSITION}" = "comp" ]; then
         echo "Performing compat population"
-	if [ -n "$PKG_COMPAT_SEPARATE_POPULATE_ROOT" ]
-	then
-	    PKG_POPULATE_PREFIX_DIR="${PKG_POPULATE_ROOT}-compat"
+        if [ -n "$PKG_COMPAT_SEPARATE_POPULATE_ROOT" ]
+        then
+            PKG_POPULATE_PREFIX_DIR="${PKG_POPULATE_ROOT}-compat"
             PKG_POPULATE_ROOT_DIR="${PKG_POPULATE_ROOT}-compat"
-	    
-	    if [ -n "$1" ]; then
-		PKG_POPULATE_PREFIX_DIR="${PKG_POPULATE_PREFIX_DIR}/$1"
-	    fi
-	    
-	    if [ -n "$2" ]; then
-		PKG_POPULATE_ROOT_DIR="${PKG_POPULATE_ROOT_DIR}/$1"
-	    fi
-	fi
+            
+            if [ -n "$1" ]; then
+        	PKG_POPULATE_PREFIX_DIR="${PKG_POPULATE_PREFIX_DIR}/$1"
+            fi
+            
+            if [ -n "$2" ]; then
+        	PKG_POPULATE_ROOT_DIR="${PKG_POPULATE_ROOT_DIR}/$1"
+            fi
+        fi
         ( PKG_IS_COMPAT=1 && setup_package_vars && op_invoke populate )
         exit_on_error $?
     fi
@@ -914,10 +914,10 @@ function do_package
         freebsd)
             package_freebsd
             ;;
-	source)
-	    package_source
-	    return 0
-	    ;;
+        source)
+            package_source
+            return 0
+            ;;
         *)
             warn "Unsupported package type: ${PKG_TYPE}"
             exit 1
@@ -990,10 +990,10 @@ function setup_package_vars
         solaris-i386)
             [ "`uname -r`" = "5.10" ] || PKG_NEED_COMPAT=""
             ;;
-	darwin-x86_64)
-	    PKG_NEED_COMPAT="1"
-	    PKG_COMPAT_IS_FULL="1"
-	    ;;
+        darwin-x86_64)
+            PKG_NEED_COMPAT="1"
+            PKG_COMPAT_IS_FULL="1"
+            ;;
         *)
             PKG_NEED_COMPAT=""
             ;;
@@ -1121,7 +1121,7 @@ function op_invoke
     local -x PKG_IS_COMPAT="${PKG_IS_COMPAT}"
     if [ -z "${PKG_COMPAT_IS_FULL}" ]
     then
-	local -x IS_COMPAT="${PKG_IS_COMPAT}"
+        local -x IS_COMPAT="${PKG_IS_COMPAT}"
     fi
     local -x IS_FOREIGN="${PKG_IS_FOREIGN}"
     local -x POPULATE_ROOT="${PKG_POPULATE_ROOT}"
