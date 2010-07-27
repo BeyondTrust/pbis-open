@@ -12,7 +12,7 @@ endif
 else
 lib_LTLIBRARIES = librdr.sys.la
 DRIVER_CFLAGS = -shared
-DRIVER_LDFLAGS = -module -shared -avoid-version
+DRIVER_LDFLAGS = -module -shared -avoid-version -export-symbols $(srcdir)/rdr.sym
 ADDITIONAL_LIBS += $(NOINST_DEP_LIBS)
 endif
 
