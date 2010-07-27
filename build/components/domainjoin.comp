@@ -141,15 +141,14 @@ function component_populate
 
     mkdir -p ${POPULATE_PREFIX_DIR}
 
-    rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
+    rsync -a --exclude ${POPULATE_PREFIX_DIR}/share/ ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
     if ! [ -x ${POPULATE_ROOT_DIR}/usr/bin/domainjoin-cli ]
     then
-	mkdir -p ${POPULATE_ROOT_DIR}/usr/bin
-	ln -s ${PREFIX_DIR}/bin/domainjoin-cli ${POPULATE_ROOT_DIR}/usr/bin/domainjoin-cli
+        mkdir -p ${POPULATE_ROOT_DIR}/usr/bin
+        ln -s ${PREFIX_DIR}/bin/domainjoin-cli ${POPULATE_ROOT_DIR}/usr/bin/domainjoin-cli
     fi
-    
+
     /bin/rm -f ${POPULATE_PREFIX_DIR}/bin/domainjoin-gui
-    /bin/rm -rf ${POPULATE_PREFIX_DIR}/share
 
     # Create a version file so that domainjoin can read it at runtime
     mkdir -p ${POPULATE_PREFIX_DIR}/data
