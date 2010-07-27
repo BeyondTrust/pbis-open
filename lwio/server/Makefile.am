@@ -13,7 +13,7 @@ SUBDIRS += dfs
 endif
 
 if ENABLE_RDR
-SUBDIRS += rdr
+SUBDIRS += rdr rdr2
 endif
 
 if ENABLE_SRV
