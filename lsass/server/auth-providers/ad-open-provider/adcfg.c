@@ -1033,30 +1033,37 @@ AD_DeleteFromMembersList(
 
 static
 void
-AD_FreeHashStringKey(
+AD_FreeHashStringKeyValue(
     const LSA_HASH_ENTRY *pEntry)
 {
     PSTR pszKeyCopy = (PSTR)pEntry->pKey;
     LW_SAFE_FREE_STRING(pszKeyCopy);
+    PSTR pszValueCopy = (PSTR)pEntry->pValue;
+    LW_SAFE_FREE_STRING(pszValueCopy);
 }
 
 static
 DWORD
-AD_CopyHashStringKey(
+AD_CopyHashStringKeyValue(
     const LSA_HASH_ENTRY *pEntry,
     LSA_HASH_ENTRY       *pEntryCopy
     )
 {
     DWORD dwError = 0;
     PSTR  pszKeyCopy = NULL;
+    PSTR  pszValueCopy = NULL;
 
     dwError = LwAllocateString(
                     (PSTR)pEntry->pKey,
                     &pszKeyCopy);
     BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwAllocateString(
+                    (PSTR)pEntry->pValue,
+                    &pszValueCopy);
+    BAIL_ON_LSA_ERROR(dwError);
 
     pEntryCopy->pKey = pszKeyCopy;
-    pEntryCopy->pValue = pszKeyCopy;
+    pEntryCopy->pValue = pszValueCopy;
 
 cleanup:
 
@@ -1091,8 +1098,8 @@ AD_AddAllowedMember(
                         11,
                         LsaHashCaselessStringCompare,
                         LsaHashCaselessStringHash,
-                        AD_FreeHashStringKey,
-                        AD_CopyHashStringKey,
+                        AD_FreeHashStringKeyValue,
+                        AD_CopyHashStringKeyValue,
                         &gpAllowedSIDs);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -1103,8 +1110,8 @@ AD_AddAllowedMember(
                         11,
                         LsaHashCaselessStringCompare,
                         LsaHashCaselessStringHash,
-                        AD_FreeHashStringKey,
-                        AD_CopyHashStringKey,
+                        AD_FreeHashStringKeyValue,
+                        AD_CopyHashStringKeyValue,
                         &pAllowedMemberList);
         BAIL_ON_LSA_ERROR(dwError);
     }
