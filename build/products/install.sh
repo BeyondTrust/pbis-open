@@ -437,7 +437,7 @@ install_rpms()
 
              # If not installing the compatlibs, remove any already installed.
             if [ -z "${IS_COMPAT}" ]; then
-                uninstall_rpms `reverse_list ${PACKAGES_COMPAT}`
+                uninstall_rpms "`get_installed_compat_rpms`"
             fi
 
             _compatlibs=""
@@ -551,6 +551,12 @@ uninstall_bffs()
             exit_on_error $? "Failed to uninstall packages"
         fi
     done
+    return 0
+}
+
+get_installed_compat_rpms()
+{
+    rpm -qa|grep likewise-|grep 32bit\.
     return 0
 }
 
