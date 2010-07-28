@@ -117,6 +117,8 @@ typedef struct _LOCAL_PROVIDER_GLOBALS
     LONG64            llLockoutDuration;
     LONG64            llLockoutWindow;
 
+    PLW_MAP_SECURITY_CONTEXT pSecCtx;
+
     pthread_mutex_t   cfgMutex;
 
     LOCAL_CONFIG      cfg;

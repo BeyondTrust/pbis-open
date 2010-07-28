@@ -1224,7 +1224,7 @@ LocalDirChangePassword(
     DWORD dwError = 0;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
-    PLW_MAP_SECURITY_CONTEXT pSecCtx = NULL;
+    BOOLEAN bLocked = FALSE;
     PACCESS_TOKEN pUserToken = NULL;
     PWSTR pwszBase = NULL;
     DWORD dwScope = 0;
@@ -1232,31 +1232,24 @@ LocalDirChangePassword(
     DWORD dwFilterLen = 0;
     size_t sUserDnLen = 0;
     WCHAR wszAttrDN[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrUid[] = LOCAL_DIR_ATTR_UID;
+    WCHAR wszAttrGid[] = LOCAL_DIR_ATTR_GID;
     WCHAR wszAttrSecurityDescriptor[] = LOCAL_DIR_ATTR_SECURITY_DESCRIPTOR;
 
     PWSTR wszAttributes[] = {
+        wszAttrUid,
+        wszAttrGid,
         wszAttrSecurityDescriptor,
         NULL
     };
 
     PDIRECTORY_ENTRY pUserEntry = NULL;
     DWORD dwNumEntries = 0;
+    DWORD dwUid = 0;
+    DWORD dwGid = 0;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     GENERIC_MAPPING GenericMapping = {0};
     DWORD dwAccessGranted = 0;
-
-    /*
-     * Check if user has right to change the password first
-     */
-    ntStatus = LwMapSecurityCreateContext(&pSecCtx);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LwMapSecurityCreateAccessTokenFromUidGid(
-                    pSecCtx,
-                    &pUserToken,
-                    pContext->uid,
-                    pContext->gid);
-    BAIL_ON_NT_STATUS(ntStatus);
 
     dwError = LwWc16sLen(pwszUserDN, &sUserDnLen);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1298,10 +1291,36 @@ LocalDirChangePassword(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = DirectoryGetEntryAttrValueByName(
+                    pUserEntry,
+                    wszAttrUid,
+                    DIRECTORY_ATTR_TYPE_INTEGER,
+                    &dwUid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                    pUserEntry,
+                    wszAttrUid,
+                    DIRECTORY_ATTR_TYPE_INTEGER,
+                    &dwGid);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = DirectoryGetEntrySecurityDescriptor(
                     pUserEntry,
                     &pSecDesc);
     BAIL_ON_LSA_ERROR(dwError);
+
+    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    /*
+     * Check if user has right to change the password first
+     */
+    ntStatus = LwMapSecurityCreateAccessTokenFromUidGid(
+                    gLPGlobals.pSecCtx,
+                    &pUserToken,
+                    dwUid,
+                    dwGid);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     if (!RtlAccessCheck(pSecDesc,
                         pUserToken,
@@ -1322,6 +1341,8 @@ LocalDirChangePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
     if (pUserEntry)
     {
         DirectoryFreeEntries(pUserEntry, dwNumEntries);
@@ -1332,7 +1353,6 @@ cleanup:
     DirectoryFreeEntrySecurityDescriptor(&pSecDesc);
 
     RtlReleaseAccessToken(&pUserToken);
-    LwMapSecurityFreeContext(&pSecCtx);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)

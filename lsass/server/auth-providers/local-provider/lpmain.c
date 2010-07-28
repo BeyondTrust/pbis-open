@@ -80,6 +80,7 @@ LocalInitializeProvider(
     )
 {
     DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     LOCAL_CONFIG config;
     BOOLEAN bEventLogEnabled = FALSE;
     PWSTR   pwszUserDN = NULL;
@@ -92,6 +93,9 @@ LocalInitializeProvider(
     BAIL_ON_LSA_ERROR(dwError);
 
     pthread_rwlock_init(&gLPGlobals.rwlock, NULL);
+
+    ntStatus = LwMapSecurityCreateContext(&gLPGlobals.pSecCtx);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     dwError = LocalSyncDomainInfo(
                     pwszUserDN,
@@ -120,6 +124,11 @@ LocalInitializeProvider(
     *ppFunctionTable = &gLocalProviderAPITable2;
 
 cleanup:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
 
     return dwError;
 
@@ -131,6 +140,8 @@ error:
     }
 
     LocalCfgFreeContents(&config);
+
+    LwMapSecurityFreeContext(&gLPGlobals.pSecCtx);
 
     *ppszProviderName = NULL;
     *ppFunctionTable = NULL;
@@ -1257,10 +1268,28 @@ LocalShutdownProvider(
     VOID
     )
 {
+    DWORD dwError = ERROR_SUCCESS;
+    BOOLEAN bLocked = FALSE;
+    BOOLEAN bCfgLocked = FALSE;
+
+    LOCAL_WRLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    LwMapSecurityFreeContext(&gLPGlobals.pSecCtx);
+
     LW_SAFE_FREE_STRING(gLPGlobals.pszLocalDomain);
     LW_SAFE_FREE_STRING(gLPGlobals.pszNetBIOSName);
+    RTL_FREE(&gLPGlobals.pLocalDomainSID);
 
-    return 0;
+    LOCAL_LOCK_MUTEX(bCfgLocked, &gLPGlobals.cfgMutex);
+
+    LocalCfgFreeContents(&gLPGlobals.cfg);
+
+    LOCAL_UNLOCK_MUTEX(bCfgLocked, &gLPGlobals.cfgMutex);
+    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
+    pthread_rwlock_destroy(&gLPGlobals.rwlock);
+
+    return dwError;
 }
 
 DWORD
