@@ -96,7 +96,7 @@ for daemon in %{initScriptPathList}; do
             if [ -f /etc/redhat-release ]; then
                 base_pri=19
                 if [ -f /etc/rc2.d/*NetworkManager ]; then
-                    base_pri=$(( `basename /etc/rc2.d/*NetworkManager | sed 's/S\([0-9]\+\).*/\1/' ` + 1 ))
+                    base_pri=$(( `basename /etc/rc2.d/S*NetworkManager | sed 's/S\([0-9]\+\).*/\1/' ` + 1 ))
                 fi
                 start_pri=`/bin/sed -n -e 's/.* chkconfig: [^ ]\+ \([0-9]\+\) [0-9]\+.*$/\1/p' $daemon`
                 /bin/sed \
