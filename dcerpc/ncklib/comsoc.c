@@ -7,6 +7,26 @@
 #include <comsoc_bsd.h>
 #include <errno.h>
 
+pthread_mutex_t fuzzLogLock = PTHREAD_MUTEX_INITIALIZER;
+FILE *fuzzLog = NULL;
+
+void
+dump_packet(void *data, int len)
+{
+	unsigned char *bdata = (unsigned char *)data;
+	int i;
+
+	for (i = 0; i < len; i++)
+	{
+		if (i % 16 == 0 && i)
+		{
+			fprintf(fuzzLog, "\n");
+		}
+		fprintf(fuzzLog, "%02X ", bdata[i]);
+	}
+	fprintf(fuzzLog, "\n");
+}
+
 rpc_socket_error_t
 rpc__socket_open_basic (
     rpc_naf_id_t  naf,
@@ -135,7 +155,101 @@ rpc__socket_sendmsg (
     int * cc
     )
 {
-    return sock->vtbl->socket_sendmsg(sock, iov, iov_len, addr, cc);
+    struct timespec clock;
+    double failureType;
+    rpc_socket_error_t result = 0;
+    int modified = 0;
+    int index = 0;
+
+    if (getenv("FUZZ"))
+    {
+	pthread_mutex_lock(&fuzzLogLock);
+
+	if (fuzzLog == NULL)
+	{
+	    char buffer[100];
+	    sprintf(buffer, "/tmp/fuzzlog.%ld", (long)getpid());
+	    fuzzLog = fopen(buffer, "a+");
+	    fprintf(fuzzLog, "Starting fuzzing\n");
+
+	    clock_gettime(CLOCK_REALTIME, &clock);
+	    srand(clock.tv_nsec);
+	}
+
+	for (index = 0; index < iov_len; index++)
+	{
+	    fprintf(fuzzLog, "Original send packet of iov %d\n", index);
+	    dump_packet(iov[index].iov_base, iov[index].iov_len);
+
+	    failureType = (double)rand()/RAND_MAX;
+	    if (iov[index].iov_len == 0)
+	    {
+	    }
+	    else if (failureType < .02)
+	    {
+		    // Flip a random bit
+		    int bit = rand() % (iov[index].iov_len * 8);
+
+		    fprintf(fuzzLog, "Flipping bit %d\n", bit);
+		    ((unsigned char *)iov[index].iov_base)[bit / 8] ^= 1 << (bit % 8);
+		    modified = 1;
+	    }
+	    else if (failureType < .05)
+	    {
+		    // Set a byte to 0xFF
+		    int byte = rand() % (iov[index].iov_len);
+
+		    fprintf(fuzzLog, "Setting byte %d to 0xFF\n", byte);
+		    ((unsigned char *)iov[index].iov_base)[byte] = 0xFF;
+		    modified = 1;
+	    }
+	    else if (failureType < .1)
+	    {
+		    // Pick a new packet length
+		    iov[index].iov_len = rand() % iov[index].iov_len;
+		    fprintf(fuzzLog, "Changed length to %d\n", iov[index].iov_len);
+		    modified = 1;
+	    }
+	    else if (failureType < .11)
+	    {
+		    // Add one to a byte
+		    int byte = rand() % (iov[index].iov_len);
+
+		    fprintf(fuzzLog, "Adding 1 to byte %d\n", byte);
+		    ((unsigned char *)iov[index].iov_base)[byte]++;
+		    modified = 1;
+	    }
+	    else if (failureType < .15)
+	    {
+		int offset = rand() % (iov[index].iov_len - 3);
+		if (memcmp((char*)iov[index].iov_base + offset, "\0\0\0\0", 4))
+		{
+		    fprintf(fuzzLog, "Changing 0 0 0 0 at %d to FF FF FF FF\n", offset);
+		    ((unsigned char*)iov[index].iov_base)[offset + 0] = 0xFF;
+		    ((unsigned char*)iov[index].iov_base)[offset + 1] = 0xFF;
+		    ((unsigned char*)iov[index].iov_base)[offset + 2] = 0xFF;
+		    ((unsigned char*)iov[index].iov_base)[offset + 3] = 0xFF;
+		    modified = 1;
+		}
+	    }
+
+	    if (modified)
+	    {
+		    fprintf(fuzzLog, "Modified send packet\n");
+		    dump_packet(iov[index].iov_base, iov[index].iov_len);
+	    }
+	}
+    }
+
+    result = sock->vtbl->socket_sendmsg(sock, iov, iov_len, addr, cc);
+
+    if (fuzzLog)
+    {
+	fflush(fuzzLog);
+	pthread_mutex_unlock(&fuzzLogLock);
+    }
+
+    return result;
 }
 
 /* Receive data from the socket */

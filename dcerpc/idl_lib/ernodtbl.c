@@ -879,7 +879,7 @@ static void rpc_ss_expand_array
     /*
     ** Clear out the new storage
     */
-    memset( *t_array, 0, sizeof(rpc_ss_ptr_array_t));
+    memset( t_array, 0, sizeof(rpc_ss_ptr_array_t));
 
     /*
     ** Add another level of indirection.
@@ -983,7 +983,7 @@ static void rpc_ss_register_node_num
             t_array = (rpc_ss_ptr_array_p_t) rpc_ss_mem_alloc (
                        p_mem_h, sizeof(rpc_ss_ptr_array_t));
 
-            memset( *t_array, 0, sizeof(rpc_ss_ptr_array_t));
+            memset( t_array, 0, sizeof(rpc_ss_ptr_array_t));
 
             ((*array)[index]).array_ptr =
                      (union rpc_ss_ptr_array_element_t*)t_array;

@@ -199,6 +199,7 @@ sb_sasl_gssapi_encode(
 	if ( conf_req_flag && conf_state == 0 ) {
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
 				"sb_sasl_gssapi_encode: GSS_C_CONF_FLAG was ignored by our gss_wrap()\n" );
+		gss_release_buffer(&minor_status, &wrapped);
 		return -1;
 	}
 
@@ -211,6 +212,7 @@ sb_sasl_gssapi_encode(
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
 				"sb_sasl_gssapi_encode: failed to grow the buffer to %lu bytes\n",
 				pkt_len );
+		gss_release_buffer(&minor_status, &wrapped);
 		return -1;
 	}
 
