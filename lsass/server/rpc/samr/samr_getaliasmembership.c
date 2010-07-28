@@ -324,6 +324,11 @@ cleanup:
                              dwLocalGroupsNum);
     }
 
+    if (pSecDesc)
+    {
+        DirectoryFreeEntrySecurityDescriptor(&pSecDesc);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszFilter);
     RTL_FREE(&pwszSid);
 
