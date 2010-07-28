@@ -55,10 +55,17 @@ SamrSrvDeleteUser(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
 
+    BAIL_ON_INVALID_PTR(phUser);
+
     ntStatus = SamrSrvDeleteAccount(hBinding,
                                     *phUser,
                                     phUser);
+
+cleanup:
     return ntStatus;
+
+error:
+    goto cleanup;
 }
 
 
