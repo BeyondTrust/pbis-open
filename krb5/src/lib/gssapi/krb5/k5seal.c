@@ -364,6 +364,11 @@ kg_seal(minor_status, context_handle, conf_req_flag, qop_req,
         return(GSS_S_FAILURE);
     }
 
+    if (ctx->krb_times.endtime < now) {
+        *minor_status = 0;
+        return (GSS_S_CONTEXT_EXPIRED);
+    }
+
     switch (ctx->proto)
     {
     case 0:
@@ -395,5 +400,5 @@ kg_seal(minor_status, context_handle, conf_req_flag, qop_req,
         *conf_state = conf_req_flag;
 
     *minor_status = 0;
-    return((ctx->krb_times.endtime < now)?GSS_S_CONTEXT_EXPIRED:GSS_S_COMPLETE);
+    return (GSS_S_COMPLETE);
 }
