@@ -49,4 +49,8 @@
 
 extern BOOLEAN gbLogInitialized;
 
+extern PSTR gpszUserIgnoreList;
+extern PSTR gpszGroupIgnoreList;
+extern time_t gtIgnoreListLastUpdated;
+
 #endif /* __EXTERNS_H__ */

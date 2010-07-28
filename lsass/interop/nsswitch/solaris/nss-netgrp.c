@@ -187,6 +187,7 @@ LsaNssSolarisNetgroupDestructor(
         LsaNssFreeNetgroupList(&pLsaBackend->pExpand);
 
         LsaNssCommonCloseConnection(&pLsaBackend->base.lsaConnection);
+        LsaFreeIgnoreLists();
         LW_SAFE_FREE_MEMORY(pLsaBackend->pBuffer);
     }
 

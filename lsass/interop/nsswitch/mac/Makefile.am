@@ -9,11 +9,12 @@ libnss_lsass_la_SOURCES = \
 
 libnss_lsass_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I@srcdir@/../include
+	-I$(srcdir)/../include \
+	-I$(srcdir)/../../auth/include
 
 libnss_lsass_la_LIBADD = \
-	@builddir@/../common/libnsscommon.la \
-	@top_builddir@/client/liblsaclient.la
+	../common/libnsscommon.la \
+	$(top_builddir)/client/liblsaclient.la
 
 libnss_lsass_la_LDFLAGS = -module -version-number 2 -export-dynamic
 

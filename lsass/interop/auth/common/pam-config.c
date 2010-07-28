@@ -48,6 +48,10 @@
  */
 #include "includes.h"
 
+#define LSA_IGNORE_LIST_UPDATE_INTERVAL (5*60)
+#define LSA_USER_IGNORE_LIST_PATH CONFIGDIR "/user-ignore"
+#define LSA_GROUP_IGNORE_LIST_PATH CONFIGDIR "/group-ignore"
+
 static
 DWORD
 LsaPamGetConfigFromServer(
@@ -127,4 +131,231 @@ error:
     }
 
     goto cleanup;
+}
+
+DWORD
+LsaReadIgnoreLists()
+{
+    DWORD dwError = 0;
+    time_t tCurrentTime = 0;
+    struct stat fileStat = {0};
+    PSTR pszUserIgnoreList = NULL;
+    PSTR pszGroupIgnoreList = NULL;
+    int iListFd = -1;
+    size_t sOffset = 0;
+    ssize_t ssRead = 0;
+
+    if (time(&tCurrentTime) == (time_t)-1)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    
+    if (tCurrentTime < gtIgnoreListLastUpdated +
+            LSA_IGNORE_LIST_UPDATE_INTERVAL)
+    {
+        goto cleanup;
+    }
+
+    if (stat(LSA_USER_IGNORE_LIST_PATH, &fileStat) < 0)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+        if (dwError == LwMapErrnoToLwError(ENOENT) ||
+            dwError == LwMapErrnoToLwError(ENOTDIR))
+        {
+            dwError = 0;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        if ((iListFd = open(LSA_USER_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        dwError = LwAllocateMemory(
+                        fileStat.st_size + 1,
+                        (PVOID*)&pszUserIgnoreList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        sOffset = 0;
+        while (sOffset < fileStat.st_size)
+        {
+            ssRead = read(
+                        iListFd,
+                        pszUserIgnoreList,
+                        fileStat.st_size - sOffset);
+            if (ssRead < 0)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                if (dwError == LwMapErrnoToLwError(EINTR))
+                {
+                    dwError = 0;
+                    ssRead = 0;
+                }
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            sOffset += ssRead;
+        }
+        pszUserIgnoreList[sOffset] = 0;
+    }
+
+    if (iListFd != -1)
+    {
+        close(iListFd);
+        iListFd = -1;
+    }
+    if (stat(LSA_GROUP_IGNORE_LIST_PATH, &fileStat) < 0)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+        if (dwError == LwMapErrnoToLwError(ENOENT) ||
+            dwError == LwMapErrnoToLwError(ENOTDIR))
+        {
+            dwError = 0;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        if ((iListFd = open(LSA_GROUP_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        dwError = LwAllocateMemory(
+                        fileStat.st_size + 1,
+                        (PVOID*)&pszGroupIgnoreList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        sOffset = 0;
+        while (sOffset < fileStat.st_size)
+        {
+            ssRead = read(
+                        iListFd,
+                        pszGroupIgnoreList,
+                        fileStat.st_size - sOffset);
+            if (ssRead < 0)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                if (dwError == LwMapErrnoToLwError(EINTR))
+                {
+                    dwError = 0;
+                    ssRead = 0;
+                }
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+            sOffset += ssRead;
+        }
+        pszGroupIgnoreList[sOffset] = 0;
+    }
+
+    LW_SAFE_FREE_MEMORY(gpszUserIgnoreList);
+    gpszUserIgnoreList = pszUserIgnoreList;
+    LW_SAFE_FREE_MEMORY(gpszGroupIgnoreList);
+    gpszGroupIgnoreList = pszGroupIgnoreList;
+
+    gtIgnoreListLastUpdated = tCurrentTime;
+
+cleanup:
+    if (iListFd != -1)
+    {
+        close(iListFd);
+        iListFd = -1;
+    }
+    return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pszUserIgnoreList);
+    LW_SAFE_FREE_MEMORY(pszGroupIgnoreList);
+    goto cleanup;
+}
+
+BOOLEAN
+LsaShouldIgnoreGroup(
+    PCSTR pszName
+    )
+{
+    PCSTR pszEntryStart = NULL;
+    PCSTR pszEntryEnd = NULL;
+    PCSTR pszNextEntry = NULL;
+    // Ignore errors
+    LsaReadIgnoreLists();
+
+    pszEntryStart = gpszGroupIgnoreList;
+    while (pszEntryStart && pszEntryStart[0])
+    {
+        pszNextEntry = strchr(pszEntryStart, '\n');
+        if (!pszNextEntry)
+        {
+            pszEntryEnd = pszEntryStart + strlen(pszEntryStart);
+        }
+        else if (pszNextEntry > pszEntryStart && pszNextEntry[-1] == '\r')
+        {
+            pszEntryEnd = pszNextEntry - 1;
+            pszNextEntry++;
+        }
+        else
+        {
+            pszEntryEnd = pszNextEntry;
+            pszNextEntry++;
+        }
+
+        if (pszEntryEnd - pszEntryStart == strlen(pszName) &&
+                !strncmp(pszName, pszEntryStart, pszEntryEnd - pszEntryStart))
+        {
+            return 1;
+        }
+        pszEntryStart = pszNextEntry;
+    }
+
+    return 0;
+}
+
+BOOLEAN
+LsaShouldIgnoreUser(
+    PCSTR pszName
+    )
+{
+    PCSTR pszEntryStart = NULL;
+    PCSTR pszEntryEnd = NULL;
+    PCSTR pszNextEntry = NULL;
+    // Ignore errors
+    LsaReadIgnoreLists();
+
+    pszEntryStart = gpszUserIgnoreList;
+    while (pszEntryStart && pszEntryStart[0])
+    {
+        pszNextEntry = strchr(pszEntryStart, '\n');
+        if (!pszNextEntry)
+        {
+            pszEntryEnd = pszEntryStart + strlen(pszEntryStart);
+        }
+        else if (pszNextEntry > pszEntryStart && pszNextEntry[-1] == '\r')
+        {
+            pszEntryEnd = pszNextEntry - 1;
+            pszNextEntry++;
+        }
+        else
+        {
+            pszEntryEnd = pszNextEntry;
+            pszNextEntry++;
+        }
+
+        if (pszEntryEnd - pszEntryStart == strlen(pszName) &&
+                !strncmp(pszName, pszEntryStart, pszEntryEnd - pszEntryStart))
+        {
+            return 1;
+        }
+        pszEntryStart = pszNextEntry;
+    }
+
+    return 0;
+}
+
+VOID
+LsaFreeIgnoreLists(VOID)
+{
+    LW_SAFE_FREE_MEMORY(gpszUserIgnoreList);
+    LW_SAFE_FREE_MEMORY(gpszGroupIgnoreList);
 }

@@ -448,6 +448,12 @@ LsaNssCommonGroupGetgrnam(
     PVOID pGroupInfo = NULL;
     DWORD dwGroupInfoLevel = 1;
 
+    if (LsaShouldIgnoreGroup(pszGroupName))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
+        BAIL_ON_NSS_ERROR(ret);
+    }
+
     ret = MAP_LSA_ERROR(NULL,
             LsaNssCommonEnsureConnected(pConnection));
     BAIL_ON_NSS_ERROR(ret);
@@ -511,6 +517,12 @@ LsaNssCommonGroupGetGroupsByUserName(
     {
         ret = NSS_STATUS_UNAVAIL;
         *pErrorNumber = EINVAL;
+        BAIL_ON_NSS_ERROR(ret);
+    }
+    
+    if (LsaShouldIgnoreUser(pszUserName))
+    {
+        ret = MAP_LSA_ERROR(NULL, LW_ERROR_NOT_HANDLED);
         BAIL_ON_NSS_ERROR(ret);
     }
 

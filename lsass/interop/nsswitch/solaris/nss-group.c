@@ -73,6 +73,7 @@ LsaNssSolarisGroupDestructor(
         &pLsaBackend->lsaConnection,
         pEnumGroupsState);
     LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
+    LsaFreeIgnoreLists();
     LwFreeMemory(pBackend);
 
     return ret;

@@ -74,6 +74,7 @@ LsaNssSolarisPasswdDestructor(
         &pLsaBackend->lsaConnection,
         pEnumUsersState);
     LsaNssCommonCloseConnection(&pLsaBackend->lsaConnection);
+    LsaFreeIgnoreLists();
     LwFreeMemory(pBackend);
 
     return ret;

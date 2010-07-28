@@ -8,7 +8,8 @@ libnss_lsass_la_SOURCES = \
 
 libnss_lsass_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	-I$(srcdir)/../include
+	-I$(srcdir)/../include \
+	-I$(srcdir)/../../auth/include
 
 libnss_lsass_la_LIBADD = \
 	./../common/libnsscommon.la \

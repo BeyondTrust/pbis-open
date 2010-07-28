@@ -214,6 +214,19 @@ LsaPamFreeConfig(
     PLSA_PAM_CONFIG pConfig
     );
 
+BOOLEAN
+LsaShouldIgnoreGroup(
+    PCSTR pszName
+    );
+
+BOOLEAN
+LsaShouldIgnoreUser(
+    PCSTR pszName
+    );
+
+VOID
+LsaFreeIgnoreLists(VOID);
+
 #endif /* __LSA_AUTH_H__ */
 
 

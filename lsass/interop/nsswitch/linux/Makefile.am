@@ -1,4 +1,4 @@
-AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include -I$(srcdir)/../include
+AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include -I$(srcdir)/../include -I$(srcdir)/../../auth/include
 
 nsslib_LTLIBRARIES = libnss_lsass.la
 

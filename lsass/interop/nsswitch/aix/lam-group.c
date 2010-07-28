@@ -228,6 +228,12 @@ struct group *LsaNssGetGrNam(PCSTR pszName)
     const DWORD dwInfoLevel = 1;
     struct group *pResult = NULL;
 
+    if (LsaShouldIgnoreGroup(pszName))
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaNssCommonEnsureConnected(&lsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
 

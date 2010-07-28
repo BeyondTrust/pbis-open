@@ -77,6 +77,8 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %if ! %{Compat32}
 %{INIT_DIR}/*
 %config(noreplace) /etc/likewise/gss/mech
+%config(noreplace) /etc/likewise/user-ignore
+%config(noreplace) /etc/likewise/group-ignore
 %{PrefixDir}/sbin/*
 %{PrefixDir}/bin/*
 %{PrefixDir}/share/config/*

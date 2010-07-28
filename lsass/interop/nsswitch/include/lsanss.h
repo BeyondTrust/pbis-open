@@ -99,6 +99,7 @@ typedef enum
 #include "lsadef.h"
 #include "lsaclient.h"
 #include "nss-error.h"
+#include "lsaauth.h"
 
 typedef struct __LSA_ENUMGROUPS_STATE
 {
