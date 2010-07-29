@@ -3044,6 +3044,7 @@ LsaDmpLdapIsRetryError(
         case LW_ERROR_LDAP_SERVER_UNAVAILABLE:
         case LW_ERROR_LDAP_SERVER_DOWN:
         case LW_ERROR_LDAP_TIMEOUT:
+        case LW_ERROR_LDAP_CONNECT_ERROR:
             return TRUE;
         default:
             return FALSE;
