@@ -110,7 +110,7 @@ function package_deb
     populate "${PKG_PREFIX_DIR}" ""
 
     mkdir -p ${PKG_PACKAGE_ROOT}/${PKG_NAME}/debian
-    for file in ${PKG_DIR}/{control,rules,changelog,*.install}; do
+    for file in ${PKG_DIR}/{control,rules,changelog,*.install,*.postinst,*.preinst,*.postrm,*.prerm,*.pam-auth-update}; do
         file="`basename "$file"`"
         cat ${PKG_DIR}/$file | sed -e "s/__PKG_NAME/${PKG_NAME}/g" \
             -e "s/__PKG_VERSION/${PKG_VERSION}/g" \
