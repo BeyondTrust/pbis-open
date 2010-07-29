@@ -731,6 +731,8 @@ nextresp2:
 		char		*lr_res_error = NULL;
 
 		tmpber = *ber; 	/* struct copy */
+		lr->lr_res_matched = NULL;
+		lr_res_error = NULL;
 		if ( ber_scanf( &tmpber, "{eAA", &lderr,
 				&lr->lr_res_matched, &lr_res_error )
 				!= LBER_ERROR )
@@ -826,6 +828,12 @@ nextresp2:
 			} else {
 				lr->lr_res_errno = LDAP_PARTIAL_RESULTS;
 			}
+		}
+		else
+		{
+			/* Free lr_res_matched in case it was allocated before
+			 * ber_scanf found an error */
+			LDAP_FREE(lr->lr_res_matched);
 		}
 
 		/* in any case, don't leave any lr_res_error 'round */
@@ -993,6 +1001,7 @@ nextresp2:
 
 			/* need to return -1, because otherwise
 			 * a valid result is expected */
+			ber_free( ber, 1 );
 			ld->ld_errno = LDAP_CONNECT_ERROR;
 			return -1;
 		}
