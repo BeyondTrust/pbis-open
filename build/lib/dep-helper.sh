@@ -125,6 +125,16 @@ product_native_obsolete_packages()
     ) | xargs
 }
 
+product_native_optional_packages()
+{
+    (
+        for pkg in `( source ${PRODUCTS_DIR}/${1}/config && echo $OPTIONAL_PACKAGES )`
+    do
+        package_native_name "${pkg}"
+    done
+    ) | xargs
+}
+
 product_native_packages_compat()
 {
     if [ "${PKG_TYPE}" = "rpm" -a "${BUILD_OS_TYPE}" = "linux" ]

@@ -5,8 +5,6 @@
 # Copyright Likewise, 2006-2007.  All rights reserved.
 #
 
-# TODO - perhaps remove obsolete packages when upgrading for rpm and deb.
-
 log_info()
 {
     echo "$@" 1>&2
@@ -116,6 +114,22 @@ exit_on_error()
         fi
         exit $1
     fi
+}
+
+needle_in_list()
+{
+    _needle=$1
+    shift
+    _haystack=$@
+
+    for _hay in $_haystack; do
+        if [ "$_needle" = "$_hay" ]; then
+            echo $_needle
+            return 0
+        fi
+    done
+    echo ""
+    return 1
 }
 
 reverse_list()
@@ -444,8 +458,28 @@ install_rpms()
             if [ -n "${IS_COMPAT}" ]; then
                 _compatlibs="${PKGDIR}"/compat/*.rpm
             fi
-            rpm ${RPM_INSTALL_OPTIONS} "${PKGDIR}"/*.rpm ${_compatlibs}
+
+            _rpms=""
+            for _pkg in ${PACKAGES}
+            do
+                if [ -z "`needle_in_list $_pkg $OPTIONAL_PACKAGES`"]; then
+                    _rpms="$_rpms ${PKGDIR}/${_pkg}-[0-9]*.rpm"
+                fi
+            done
+
+            rpm ${RPM_INSTALL_OPTIONS} ${_rpms} ${_compatlibs}
             exit_on_error $? "Failed to install packages"
+
+            for _pkg in "$OPTIONAL_PACKAGES"
+            do
+                if [ -f "${PKGDIR}"/"${_pkg}"-[0-9]*.rpm ]; then
+                    rpm ${RPM_INSTALL_OPTIONS} "${PKGDIR}"/"${_pkg}"-[0-9]*.rpm  2>&1
+                    if [ $? -ne 0 ]; then
+                        echo "Optional rpm ${_pkg} failed to install -- ok"
+                    fi
+                fi
+            done
+
             ;;
         *)
             exit_on_error 1 "Unexpected OS \"${OS_TYPE}\" for installing RPMs"
@@ -521,8 +555,12 @@ install_freebsds()
     for pkg in $@
     do
         echo "Installing ${pkg}"
-        pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
-        exit_on_error $? "Failed to install package ${pkg}"
+        if [ -z "`needle_in_list $pkg $OPTIONAL_PACKAGES`"]; then
+            pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
+            exit_on_error $? "Failed to install package ${pkg}"
+        else
+            pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
+        fi
     done
     return 0
 }
