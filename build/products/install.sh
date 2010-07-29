@@ -555,7 +555,7 @@ install_freebsds()
     for pkg in $@
     do
         echo "Installing ${pkg}"
-        if [ -z "`needle_in_list $pkg $OPTIONAL_PACKAGES`"]; then
+        if [ -z "`needle_in_list $pkg $OPTIONAL_PACKAGES`" ]; then
             pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
             exit_on_error $? "Failed to install package ${pkg}"
         else
