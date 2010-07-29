@@ -140,6 +140,7 @@ LsaNssAuthenticate(
     PLSA_USER_INFO_0 pInfo = NULL;
     const DWORD dwInfoLevel = 0;
     PSTR pszMessage = NULL;
+    PLSA_USER_INFO_2 pInfo2 = NULL;
 
     LSA_LOG_PAM_DEBUG("Lsass LAM authenticating user [%s]",
             pszUser? pszUser: "(null)");
@@ -159,6 +160,22 @@ LsaNssAuthenticate(
                 pInfo->pszName,
                 pszResponse,
                 &pszMessage);
+    if (dwError == LW_ERROR_PASSWORD_EXPIRED)
+    {
+        // Double check that the user's password is marked as expired
+        dwError = LsaFindUserByName(
+                    lsaConnection.hLsaConnection,
+                    pInfo->pszName,
+                    2,
+                    (PVOID*)&pInfo2);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (!pInfo2->bPasswordExpired)
+        {
+            // Something went wrong in lsassd -- don't let the user login
+            dwError = LW_ERROR_PASSWORD_EXPIRED;
+        }
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaCheckUserInList(
@@ -188,6 +205,12 @@ cleanup:
         LsaFreeUserInfo(
                 dwInfoLevel,
                 pInfo);
+    }
+    if (pInfo2 != NULL)
+    {
+        LsaFreeUserInfo(
+                2,
+                pInfo2);
     }
 
     switch(dwError)
