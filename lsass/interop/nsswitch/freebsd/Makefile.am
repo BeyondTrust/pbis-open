@@ -8,6 +8,7 @@ nss_lsass_la_SOURCES = \
 
 nss_lsass_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
+	-I$(srcdir)/../include \
 	-I$(srcdir)/../../auth/include
 
 nss_lsass_la_LIBADD = \
