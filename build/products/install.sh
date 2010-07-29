@@ -462,7 +462,7 @@ install_rpms()
             _rpms=""
             for _pkg in ${PACKAGES}
             do
-                if [ -z "`needle_in_list $_pkg $OPTIONAL_PACKAGES`"]; then
+                if [ -z "`needle_in_list $_pkg $OPTIONAL_PACKAGES`" ]; then
                     _rpms="$_rpms ${PKGDIR}/${_pkg}-[0-9]*.rpm"
                 fi
             done
@@ -1218,6 +1218,28 @@ do_postinstall()
 
     # Restore configuration if still joined to a domain
     restore_configuration
+}
+
+do_postinstall_messages()
+{
+    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
+    run_join_gui=true
+    guimsg=""
+
+    if [ "$1" != 'interactive' ]; then
+        run_join_gui=false
+    fi
+
+    if [ -x "$domainjoin_gui" ]; then
+        guimsg="domainjoin-gui or "
+    else
+        run_join_gui=false
+    fi
+
+    if $OPT_DONT_JOIN
+    then
+        run_join_gui=false
+    fi
 
     if [ -n "${UPGRADING}" ]; then
         log_info ""
@@ -1244,12 +1266,18 @@ do_postinstall()
             log_info ""
         else
             log_info ""
-            log_info "As root, run domainjoin-cli to join a domain so you can log on"
+            log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
             log_info "with Active Directory credentials. Example:"
             log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
             log_info ""
+
+            if $run_join_gui
+            then
+                $domainjoin_gui >/dev/null 2>&1 &
+            fi
         fi
     fi
+
 }
 
 scrub_prefix()
@@ -1419,6 +1447,7 @@ do_interactive()
     prompt_yes_no "Would you like to install now?"
     if [ "x$answer" != "xyes" ]; then
         do_info
+        exit 0
     else
         if [ -z "${OPT_COMPAT}" ]; then
             if [ -n "${HAVE_COMPAT}" ]; then
@@ -1428,7 +1457,6 @@ do_interactive()
         fi
         do_install
     fi
-    exit 0
 }
 
 # must check before shift to avoid shift error on some sh versions.
@@ -1452,6 +1480,7 @@ usage()
     echo "    --echo-dir <DIR> prefix to output for packages directory (w/info command)"
     echo "    --compat         install 32-bit compatibility libraries (default: auto)"
     echo "    --nocompat       do not install 32-bit compatibility libraries (default: auto)"
+    echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
     echo "    --devel          install development packages"
     #echo "    --type <pkgType> type of package to install"
     echo ""
@@ -1471,6 +1500,7 @@ usage()
 main()
 {
     OPT_DEVEL=false
+    OPT_DONT_JOIN=false
     OPT_COMPAT=""
     DIRNAME=`dirname $0`
     if [ -z "${DIRNAME}" ]; then
@@ -1519,6 +1549,10 @@ main()
                 OPT_DEVEL=true
                 shift 1
                 ;;
+            --dont-join)
+                OPT_DONT_JOIN=true
+                shift 1
+                ;;
             --type|-t)
                 if [ -n "${PKGTYPE}" ]; then
                     echo "Only one --type option allowed"
@@ -1552,10 +1586,12 @@ main()
         install)
             do_setup
             do_install
+            do_postinstall_messages
             ;;
         postinstall)
             setup_os_vars
             do_postinstall
+            do_postinstall_messages
             ;;
         uninstall)
             do_setup
@@ -1574,6 +1610,7 @@ main()
         interactive)
             do_setup
             do_interactive
+            do_postinstall_messages 'interactive'
             ;;
         *)
             usage
