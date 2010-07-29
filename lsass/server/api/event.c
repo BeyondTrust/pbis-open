@@ -61,6 +61,7 @@ LsaSrvGetPamSourceOffset(
         { 0, "sshd-kbdint" }, // Used by Solaris 10
         { 1, "gdm" },
         { 1, "kdm" },
+        { 1, "kde" }, // Used by Ubuntu 10.04
         { 1, "dtlogin" }, // Used by Solaris 10
         { 2, "login" },
         { 3, "ftp" }, // Used by Solaris 10
