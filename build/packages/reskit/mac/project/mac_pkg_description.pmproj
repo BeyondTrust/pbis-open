@@ -584,7 +584,7 @@
 		</dict>
 		<string>description</string>
 		<string>title</string>
-		<string>Likewise Resource Kit</string>
+		<string>Likewise Resources</string>
 		<string>likewise-reskit-@LIKEWISE_VERSION@</string>
 		<string>/Users/glennc/centeris/Sapphire_dist/darwin/i386/packages/DMG/likewise-enterprise-@LIKEWISE_VERSION@.pkg</string>
 		<dict>

@@ -8,6 +8,6 @@ Standards-Version: 3.7.2
 Package: __PKG_NAME
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Likewise Resource Kit
- The Likewise Resource Kit provides software deployment diagnostics utilities.
+Description: Likewise Resources
+ The Likewise Resources package provides product documentation and software deployment diagnostics utilities.
 

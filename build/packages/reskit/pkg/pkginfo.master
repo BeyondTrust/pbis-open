@@ -1,10 +1,10 @@
 PKG=__PKG__
-NAME=Likewise Resource Kit
+NAME=Likewise Resources
 ARCH=__ARCH__
 VERSION=__VERSION__
 CATEGORY=system
 VENDOR=Likewise Software
-DESC=Likewise Resource Kit
+DESC=Likewise Resources
 HOTLINE=425-378-7887
 EMAIL=support@likewise.com
 CLASSES=none
