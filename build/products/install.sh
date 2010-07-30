@@ -1152,6 +1152,11 @@ do_install()
     do_postinstall
 
     log_info "Install complete"
+    log_info ""
+    log_info "Latest product documentation is available online at the following URL:"
+    log_info "   http://www.likewise.com/resources/documentation_library/manuals/open/likewise-open-guide.html"
+    log_info "A PDF version of the documentation is also installed here:"
+    log_info "   /opt/likewise/docs/likewise-open-guide.pdf"
 }
 
 get_ad_provider_path()
