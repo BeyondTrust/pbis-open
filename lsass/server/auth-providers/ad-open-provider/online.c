@@ -3949,11 +3949,6 @@ AD_OnlineFindObjectByName(
             BAIL_ON_LSA_ERROR(dwError);
             
             break;
-        case LW_ERROR_NO_SUCH_USER:
-        case LW_ERROR_NO_SUCH_GROUP:
-        case LW_ERROR_NO_SUCH_OBJECT:
-            dwError = LW_ERROR_SUCCESS;
-            break;
         default:
             BAIL_ON_LSA_ERROR(dwError);
             break;
