@@ -798,6 +798,9 @@ FixNetworkInterfaces(
             {"/etc/sysconfig/network", "ifcfg-ctc-bus.*\\.[0-9]\\+$"},
             // Redhat uses /etc/sysconfig/network-scripts/ifcfg-eth<number>
             {"/etc/sysconfig/network-scripts", "ifcfg-eth[^.]*$"},
+            // ESX 3.5 and 4.0 use
+            // /etc/sysconfig/network-scripts/ifcfg-vswif<number>
+            {"/etc/sysconfig/network-scripts", "ifcfg-vswif[^.]*$"},
             {NULL, NULL}
         };
 
