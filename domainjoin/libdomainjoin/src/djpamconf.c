@@ -2505,6 +2505,11 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
                 normalizedService[
                     strlen(normalizedService) - strlen(".rpmnew")] = '\0';
             }
+            if(CTStrEndsWith(normalizedService, ".dpkg-new"))
+            {
+                normalizedService[
+                    strlen(normalizedService) - strlen(".dpkg-new")] = '\0';
+            }
             if(!strcmp(normalizedService, "gdm-autologin"))
                 goto cleanup;
             if(!strcmp(normalizedService, "passwd"))
