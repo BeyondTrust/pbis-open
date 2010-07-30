@@ -299,6 +299,7 @@ typedef USHORT SMB_SUB_COMMAND, *PSMB_SUB_COMMAND;
 #define SMB_SUB_COMMAND_TRANS2_FIND_FIRST2                  0x01
 #define SMB_SUB_COMMAND_TRANS2_FIND_NEXT2                   0x02
 #define SMB_SUB_COMMAND_TRANS2_QUERY_FS_INFORMATION         0x03
+#define SMB_SUB_COMMAND_TRANS2_SET_FS_QUOTA                 0x04
 #define SMB_SUB_COMMAND_TRANS2_QUERY_PATH_INFORMATION       0x05
 #define SMB_SUB_COMMAND_TRANS2_SET_PATH_INFORMATION         0x06
 #define SMB_SUB_COMMAND_TRANS2_QUERY_FILE_INFORMATION       0x07
@@ -1652,6 +1653,17 @@ typedef struct _TRANS2_FILE_INTERNAL_INFORMATION {
     LONG64 IndexNumber;
 } __attribute__((__packed__)) TRANS2_FILE_INTERNAL_INFORMATION,
                              *PTRANS2_FILE_INTERNAL_INFORMATION;
+
+typedef struct _TRANS2_FILE_FS_CONTROL_INFORMATION {
+    LONG64          FreeSpaceStartFiltering;
+    LONG64          FreeSpaceThreshold;
+    LONG64          FreeSpaceStopFiltering;
+    LONG64          DefaultQuotaThreshold;
+    LONG64          DefaultQuotaLimit;
+    FILE_VC_FLAGS   FileSystemControlFlags;
+    ULONG           pad;
+} __attribute__((__packed__)) TRANS2_FILE_FS_CONTROL_INFORMATION,
+                             *PTRANS2_FILE_FS_CONTROL_INFORMATION;
 
 typedef struct _TRANS2_FILE_NETWORK_OPEN_INFORMATION {
     LONG64    CreationTime;

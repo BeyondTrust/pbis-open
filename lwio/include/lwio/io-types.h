@@ -467,11 +467,7 @@ typedef ULONG FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 #define FileIdFullDirectoryInformation    38 // DIR: FILE_ID_FULL_DIR_INFORMATION
 #define FileValidDataLengthInformation    39 // unused
 #define FileShortNameInformation          40 // SET: FILE_NAME_INFORMATION (set 8.3 name)
-#define FileFsAttributeInformation        41 // VOL: FILE_FS_ATTRIBUTE_INFORMATION
-#define FileFsVolumeInformation           42 // VOL: FILE_FS_VOLUME_INFORMATION
-#define FileFsSizeInformation             43 // VOL: FILE_FS_SIZE_INFORMATION
-#define FileFsDeviceInformation           44 // VOL: FILE_FS_DEVICE_INFORMATION
-#define FileMaximumInformation            45 // SENTINEL
+#define FileMaximumInformation            41 // SENTINEL
 
 //
 // Notes:
@@ -851,6 +847,43 @@ typedef struct _FILE_QUOTA_INFORMATION {
 
 typedef ULONG FS_INFORMATION_CLASS, *PFS_INFORMATION_CLASS;
 
+#define FileFsVolumeInformation           1  // FILE_FS_VOLUME_INFORMATION
+#define FileFsLabelInformation            2  // unused
+#define FileFsSizeInformation             3  // FILE_FS_SIZE_INFORMATION
+#define FileFsDeviceInformation           4  // FILE_FS_DEVICE_INFORMATION
+#define FileFsAttributeInformation        5  // FILE_FS_ATTRIBUTE_INFORMATION
+#define FileFsControlInformation          6  // FILE_FS_CONTROL_INFORMATION
+#define FileFsFullSizeInformation         7  // unused
+#define FileFsObjectIdInformation         8  // unused
+#define FileFsDriverPathInformation       9  // unused
+#define FileFsVolumeFlagsInformation      10 // unused
+#define FileFsMaximumInformation          11 // SENTINEL
+
+
+typedef ULONG FILE_VC_FLAGS, *PFILE_VC_FLAGS;
+
+// Quota Tracking/Enforcement Setting
+#define FILE_VC_QUOTA_NONE                       0x00000000
+#define FILE_VC_QUOTA_TRACK                      0x00000001
+#define FILE_VC_QUOTA_ENFORCE                    0x00000002
+#define FILE_VC_QUOTA_MASK                       0x00000003
+
+// Content Indexing Setting
+#define FILE_VC_CONTENT_INDEX_DISABLED           0x00000008
+
+// Quota Logging Settings
+#define FILE_VC_LOG_QUOTA_THRESHOLD              0x00000010
+#define FILE_VC_LOG_QUOTA_LIMIT                  0x00000020
+#define FILE_VC_LOG_VOLUME_THRESHOLD             0x00000040
+#define FILE_VC_LOG_VOLUME_LIMIT                 0x00000080
+
+// Quota Transient State (is this settable?)
+#define FILE_VC_QUOTAS_INCOMPLETE                0x00000100
+#define FILE_VC_QUOTAS_REBUILDING                0x00000200
+
+#define FILE_VC_VALID_MASK                       0x000003FB
+
+
 #define FILE_CASE_SENSITIVE_SEARCH               0x00000001
 #define FILE_CASE_PRESERVED_NAMES                0x00000002
 #define FILE_UNICODE_ON_DISK                     0x00000004
@@ -892,6 +925,16 @@ typedef struct _FILE_FS_SIZE_INFORMATION {
     ULONG   SectorsPerAllocationUnit;
     ULONG   BytesPerSector;	
 } FILE_FS_SIZE_INFORMATION, *PFILE_FS_SIZE_INFORMATION;
+
+// FileFsControlInformation
+typedef struct _FILE_FS_CONTROL_INFORMATION {
+    LONG64          FreeSpaceStartFiltering;    // must be ignored
+    LONG64          FreeSpaceThreshold;         // must be ignored
+    LONG64          FreeSpaceStopFiltering;     // must be ignored
+    LONG64          DefaultQuotaThreshold;
+    LONG64          DefaultQuotaLimit;
+    FILE_VC_FLAGS   FileSystemControlFlags;
+} FILE_FS_CONTROL_INFORMATION, *PFILE_FS_CONTROL_INFORMATION;
 
 // VOL: FileFsDeviceInformation
 typedef struct _FILE_FS_DEVICE_INFORMATION {
