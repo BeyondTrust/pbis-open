@@ -15,7 +15,7 @@ umask 022
 ## Check if we have any overrides
 function setup_build_vars
 {
-    local _upcomp=$(echo $1 | tr "[a-z]" "[A-Z]")
+    local _upcomp=$(echo $1 | tr "[a-z]-" "[A-Z]_")
 
     ##
     ## Autoconf paths picked up by the components

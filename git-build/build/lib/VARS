@@ -20,7 +20,7 @@ case `uname -s` in
 esac
 
 ## List of all components necessary 
-__COMP_LIST="krb5 openldap libcrypto curl ${_UUID} ${_ICONV} lwbase \
+__COMP_LIST="krb5 cyrus-sasl openldap libcrypto curl ${_UUID} ${_ICONV} lwbase \
     lwmsg sqlite lwreg pstore \
     lwadvapi centutils netlogon lwio lwsm libschannel \
     dcerpc eventlog lsass srvsvc \

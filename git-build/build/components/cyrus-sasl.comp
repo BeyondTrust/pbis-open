@@ -1,6 +1,6 @@
 #!/bin/sh
 
-COMP_NAME="openldap"
+COMP_NAME="cyrus-sasl"
 COMP_SOURCES="${BUILD_ROOT}/${COMP_NAME}"
 
 function _setup_build_env
@@ -9,7 +9,7 @@ function _setup_build_env
 
     cd ${COMP_SOURCES}/.
 
-    CFLAGS="${_cflags} -D_REENTRANT -fPIC -DLDAP_CONNECTIONLESS -Wimplicit-function-declaration"
+    CFLAGS="${_cflags} -D_REENTRANT -fPIC -Wimplicit-function-declaration"
     CPPFLAGS="${_cppflags}"
     LDFLAGS="${_ldflags}"
 
@@ -26,12 +26,22 @@ function component_configure
     run_configure \
         --prefix=${PREFIXDIR} \
         --libdir=${PREFIXDIR}/${_lib} \
+        --with-configdir=${PREFIXDIR}/${_lib}/sasl2 \
+        --with-plugindir=${PREFIXDIR}/${_lib}/sasl2 \
+        --without-dblib \
+        --without-saslauthd \
+        --without-authdaemond \
+        --disable-macos-framework \
+        --disable-sample \
+        --disable-cram \
+        --disable-digest \
+        --disable-otp \
+        --disable-plain \
+        --disable-anon \
+        --enable-gss_mutexes \
         --disable-static \
-        --enable-shared \
-        --without-kerberos \
-        --disable-slapd \
-        --disable-slurpd \
-        --without-tls 
+        --enable-shared
+    exit_on_error $?
 }
 
 function component_build
@@ -54,6 +64,7 @@ function component_install
     mkdir -p ${STAGE_INSTALL_DIR}
 
     ${MAKE} DESTDIR=${INSTALL_ROOT} install
+    exit_on_error $?
 
     /bin/rm -rf ${INSTALL_PREFIX_DIR}/{bin,sbin,etc,share}
 
