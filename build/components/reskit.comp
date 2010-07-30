@@ -37,5 +37,6 @@ function component_populate
 
     mkdir -p ${POPULATE_ROOT_DIR}/opt/likewise/reskit
     x_cp 0755 ${BUILD_ROOT}/src/linux/reskit/likewise-support.pl ${POPULATE_ROOT_DIR}/opt/likewise/reskit/.
+    mkdir -p ${POPULATE_ROOT_DIR}/opt/likewise/docs
     x_cp 0755 ${BUILD_ROOT}/src/linux/reskit/likewise-open-guide.pdf ${POPULATE_ROOT_DIR}/opt/likewise/docs/.
 }
