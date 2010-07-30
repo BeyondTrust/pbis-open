@@ -459,6 +459,9 @@ SMBGSSContextNegotiate(
                 case ((DWORD) KRB5KDC_ERR_TGT_REVOKED):
                     dwError = LW_STATUS_KDC_CERT_REVOKED;
                     break;
+                case ((DWORD) KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN):
+                    dwError = STATUS_ACCESS_DENIED;
+                    break;
                 default:
                     dwError = LWIO_ERROR_GSS;
             }
