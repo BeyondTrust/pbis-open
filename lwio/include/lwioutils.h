@@ -471,11 +471,11 @@ LwIoAssertionFailedFormat(
            BAIL_ON_LWIO_ERROR(dwError);            \
         }
 
-typedef struct __SMB_BIT_VECTOR
+typedef struct __LWIO_BIT_VECTOR
 {
-    DWORD  dwNumBits;
-    PDWORD pVector;
-} SMB_BIT_VECTOR, *PSMB_BIT_VECTOR;
+    ULONG  ulNumBits;
+    PULONG pVector;
+} LWIO_BIT_VECTOR, *PLWIO_BIT_VECTOR;
 
 typedef struct __SMB_HASH_ENTRY SMB_HASH_ENTRY, *PSMB_HASH_ENTRY;
 
@@ -563,8 +563,32 @@ typedef struct __SMB_HANDLE_MANAGER
 {
     SMBHANDLE       dwHandleMax;
     PSMB_HASH_TABLE pHandleTable;
-    PSMB_BIT_VECTOR pFreeHandleIndex;
+    PLWIO_BIT_VECTOR pFreeHandleIndex;
 } SMB_HANDLE_MANAGER, *PSMB_HANDLE_MANAGER;
+
+
+typedef struct __LWIO_CONFIG_REG LWIO_CONFIG_REG, *PLWIO_CONFIG_REG;
+
+typedef enum
+{
+    LwIoTypeString,
+    LwIoTypeMultiString,
+    LwIoTypeDword,
+    LwIoTypeBoolean,
+    LwIoTypeChar,
+    LwIoTypeEnum
+} LWIO_CONFIG_TYPE;
+
+typedef struct __LWIO_CONFIG_TABLE
+{
+    PCSTR   pszName;
+    BOOLEAN bUsePolicy;
+    LWIO_CONFIG_TYPE Type;
+    DWORD dwMin;
+    DWORD dwMax;
+    const PCSTR *ppszEnumNames;
+    PVOID pValue;
+} LWIO_CONFIG_TABLE, *PLWIO_CONFIG_TABLE;
 
 #if !defined(HAVE_STRTOLL)
 
@@ -931,44 +955,44 @@ LWIOQueueFree(
     PLWIO_QUEUE pQueue
     );
 
-DWORD
-SMBBitVectorCreate(
-    DWORD dwNumBits,
-    PSMB_BIT_VECTOR* ppBitVector
+NTSTATUS
+LwioBitVectorCreate(
+    ULONG             ulNumBits,
+    PLWIO_BIT_VECTOR* ppBitVector
     );
 
 BOOLEAN
-SMBBitVectorIsSet(
-    PSMB_BIT_VECTOR pBitVector,
-    DWORD           iBit
+LwioBitVectorIsSet(
+    PLWIO_BIT_VECTOR pBitVector,
+    ULONG            iBit
     );
 
-DWORD
-SMBBitVectorSetBit(
-    PSMB_BIT_VECTOR pBitVector,
-    DWORD           iBit
+NTSTATUS
+LwioBitVectorSetBit(
+    PLWIO_BIT_VECTOR pBitVector,
+    ULONG            iBit
     );
 
-DWORD
-SMBBitVectorUnsetBit(
-    PSMB_BIT_VECTOR pBitVector,
-    DWORD           iBit
+NTSTATUS
+LwioBitVectorUnsetBit(
+    PLWIO_BIT_VECTOR pBitVector,
+    ULONG            iBit
     );
 
-DWORD
-SMBBitVectorFirstUnsetBit(
-    PSMB_BIT_VECTOR pBitVector,
-    PDWORD  pdwUnsetBit
-    );
-
-VOID
-SMBBitVectorReset(
-    PSMB_BIT_VECTOR pBitVector
+NTSTATUS
+LwioBitVectorFirstUnsetBit(
+    PLWIO_BIT_VECTOR pBitVector,
+    PULONG           pulUnsetBit
     );
 
 VOID
-SMBBitVectorFree(
-    PSMB_BIT_VECTOR pBitVector
+LwioBitVectorReset(
+    PLWIO_BIT_VECTOR pBitVector
+    );
+
+VOID
+LwioBitVectorFree(
+    PLWIO_BIT_VECTOR pBitVector
     );
 
 DWORD
@@ -1214,6 +1238,77 @@ LwioValidateLogLevel(
 DWORD
 LwioShutdownLogging(
     VOID
+    );
+
+NTSTATUS
+LwIoProcessConfig(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWIO_CONFIG_TABLE pConfig,
+    DWORD dwConfigEntries,
+    BOOLEAN bIgnoreNotFound
+    );
+
+NTSTATUS
+LwIoOpenConfig(
+    PCSTR pszConfigKey,
+    PCSTR pszPolicyKey,
+    PLWIO_CONFIG_REG *ppReg
+    );
+
+VOID
+LwIoCloseConfig(
+    PLWIO_CONFIG_REG pReg
+    );
+
+NTSTATUS
+LwIoReadConfigString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    *ppszValue
+    );
+
+NTSTATUS
+LwIoReadConfigMultiString(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR   pszName,
+    BOOLEAN bUsePolicy,
+    PSTR    **pppszValue
+    );
+
+VOID
+LwIoMultiStringFree(
+    PSTR *ppszValue
+    );
+
+NTSTATUS
+LwIoReadConfigDword(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    DWORD   dwMin,
+    DWORD   dwMax,
+    PDWORD pdwValue
+    );
+
+NTSTATUS
+LwIoReadConfigBoolean(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    PBOOLEAN pbValue
+    );
+
+NTSTATUS
+LwIoReadConfigEnum(
+    PLWIO_CONFIG_REG pReg,
+    PCSTR pszName,
+    BOOLEAN bUsePolicy,
+    DWORD dwMin,
+    DWORD dwMax,
+    const PCSTR *ppszEnumNames,
+    PDWORD pdwValue
     );
 
 #endif /* __SMBUTILS_H__ */

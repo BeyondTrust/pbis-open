@@ -39,7 +39,6 @@
 
 #include "lwlist.h"
 #include "lwioutils.h"
-#include "lwiocfg.h"
 #include "ntlogmacros.h"
 
 #include "lwthreads.h"

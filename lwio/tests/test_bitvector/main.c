@@ -94,7 +94,7 @@ main(
     )
 {
     DWORD dwError = 0;
-    PSMB_BIT_VECTOR pBitVector = NULL;
+    PLWIO_BIT_VECTOR pBitVector = NULL;
     DWORD dwNumBits = 100;
     DWORD dwTestBit = 51;
     DWORD iBit = 0;
@@ -103,26 +103,26 @@ main(
     dwError = ParseArgs(argc, argv);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBBitVectorCreate(
+    dwError = LwioBitVectorCreate(
                   dwNumBits,
                   &pBitVector);
     BAIL_ON_LWIO_ERROR(dwError);
 
     // Index starts from 0
     //
-    dwError = SMBBitVectorSetBit(pBitVector, 0);
+    dwError = LwioBitVectorSetBit(pBitVector, 0);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBBitVectorSetBit(pBitVector, dwNumBits);
+    dwError = LwioBitVectorSetBit(pBitVector, dwNumBits);
     if (dwError != LWIO_ERROR_INVALID_PARAMETER)
     {
        BAIL_ON_LWIO_ERROR(dwError);
     }
 
-    dwError = SMBBitVectorSetBit(pBitVector, dwTestBit);
+    dwError = LwioBitVectorSetBit(pBitVector, dwTestBit);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    if (SMBBitVectorIsSet(pBitVector, dwTestBit))
+    if (LwioBitVectorIsSet(pBitVector, dwTestBit))
     {
        printf("Bit Set succeeded\n");
     }
@@ -131,13 +131,13 @@ main(
        printf("Bit Set failed\n");
     }
 
-    dwError = SMBBitVectorUnsetBit(pBitVector, dwTestBit);
+    dwError = LwioBitVectorUnsetBit(pBitVector, dwTestBit);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBBitVectorUnsetBit(pBitVector, 0);
+    dwError = LwioBitVectorUnsetBit(pBitVector, 0);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    if (SMBBitVectorIsSet(pBitVector, dwTestBit))
+    if (LwioBitVectorIsSet(pBitVector, dwTestBit))
     {
         printf("Bit Unset failed\n");
     }
@@ -146,7 +146,7 @@ main(
         printf("Bit Unset succeeded\n");
     }
 
-    dwError = SMBBitVectorFirstUnsetBit(
+    dwError = LwioBitVectorFirstUnsetBit(
                 pBitVector,
                 &dwUnsetBit);
     if ((dwError == LWIO_ERROR_NO_BIT_AVAILABLE) ||
@@ -163,11 +163,11 @@ main(
     {
         if (iBit != dwTestBit)
         {
-            SMBBitVectorSetBit(pBitVector, iBit);
+            LwioBitVectorSetBit(pBitVector, iBit);
         }
     }
 
-    dwError = SMBBitVectorFirstUnsetBit(
+    dwError = LwioBitVectorFirstUnsetBit(
                 pBitVector,
                 &dwUnsetBit);
     if ((dwError == LWIO_ERROR_NO_BIT_AVAILABLE) ||
@@ -180,10 +180,10 @@ main(
         printf("Bit %d is available as expected\n", dwTestBit);
     }
 
-    dwError = SMBBitVectorSetBit(pBitVector, dwTestBit);
+    dwError = LwioBitVectorSetBit(pBitVector, dwTestBit);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = SMBBitVectorFirstUnsetBit(
+    dwError = LwioBitVectorFirstUnsetBit(
                 pBitVector,
                 &dwUnsetBit);
     if (dwError != LWIO_ERROR_NO_BIT_AVAILABLE)
@@ -199,7 +199,7 @@ cleanup:
 
     if (pBitVector)
     {
-        SMBBitVectorFree(pBitVector);
+        LwioBitVectorFree(pBitVector);
     }
 
     return (dwError);

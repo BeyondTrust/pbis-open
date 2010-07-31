@@ -40,7 +40,6 @@
 
 #include "lwiodef.h"
 #include "lwioutils.h"
-#include "lwiocfg.h"
 
 #include <lw/ntstatus.h>
 #include <lw/mapsecurity-types.h>

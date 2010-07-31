@@ -55,7 +55,6 @@
 
 #include "lwiodef.h"
 #include "lwioutils.h"
-#include "lwiocfg.h"
 
 #include "defs.h"
 #include "structs.h"
