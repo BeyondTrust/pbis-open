@@ -93,34 +93,32 @@ main(
     char* argv[]
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS status = 0;
     PLWIO_BIT_VECTOR pBitVector = NULL;
     DWORD dwNumBits = 100;
     DWORD dwTestBit = 51;
     DWORD iBit = 0;
     DWORD dwUnsetBit = 0;
 
-    dwError = ParseArgs(argc, argv);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = ParseArgs(argc, argv);
+    BAIL_ON_LWIO_ERROR(status);
 
-    dwError = LwioBitVectorCreate(
-                  dwNumBits,
-                  &pBitVector);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorCreate(dwNumBits, &pBitVector);
+    BAIL_ON_LWIO_ERROR(status);
 
     // Index starts from 0
     //
-    dwError = LwioBitVectorSetBit(pBitVector, 0);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorSetBit(pBitVector, 0);
+    BAIL_ON_LWIO_ERROR(status);
 
-    dwError = LwioBitVectorSetBit(pBitVector, dwNumBits);
-    if (dwError != LWIO_ERROR_INVALID_PARAMETER)
+    status = LwioBitVectorSetBit(pBitVector, dwNumBits);
+    if (status != STATUS_INVALID_PARAMETER)
     {
-       BAIL_ON_LWIO_ERROR(dwError);
+       BAIL_ON_LWIO_ERROR(status);
     }
 
-    dwError = LwioBitVectorSetBit(pBitVector, dwTestBit);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorSetBit(pBitVector, dwTestBit);
+    BAIL_ON_LWIO_ERROR(status);
 
     if (LwioBitVectorIsSet(pBitVector, dwTestBit))
     {
@@ -131,11 +129,11 @@ main(
        printf("Bit Set failed\n");
     }
 
-    dwError = LwioBitVectorUnsetBit(pBitVector, dwTestBit);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorUnsetBit(pBitVector, dwTestBit);
+    BAIL_ON_LWIO_ERROR(status);
 
-    dwError = LwioBitVectorUnsetBit(pBitVector, 0);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorUnsetBit(pBitVector, 0);
+    BAIL_ON_LWIO_ERROR(status);
 
     if (LwioBitVectorIsSet(pBitVector, dwTestBit))
     {
@@ -146,11 +144,8 @@ main(
         printf("Bit Unset succeeded\n");
     }
 
-    dwError = LwioBitVectorFirstUnsetBit(
-                pBitVector,
-                &dwUnsetBit);
-    if ((dwError == LWIO_ERROR_NO_BIT_AVAILABLE) ||
-        (!dwError && (dwUnsetBit != 0)))
+    status = LwioBitVectorFirstUnsetBit(pBitVector, &dwUnsetBit);
+    if ((status == STATUS_NOT_FOUND) || (!status && (dwUnsetBit != 0)))
     {
         printf("Error: Expected (0)\n");
     }
@@ -167,11 +162,8 @@ main(
         }
     }
 
-    dwError = LwioBitVectorFirstUnsetBit(
-                pBitVector,
-                &dwUnsetBit);
-    if ((dwError == LWIO_ERROR_NO_BIT_AVAILABLE) ||
-        (!dwError && (dwUnsetBit != dwTestBit)))
+    status = LwioBitVectorFirstUnsetBit(pBitVector, &dwUnsetBit);
+    if ((status == STATUS_NOT_FOUND) || (!status && (dwUnsetBit != dwTestBit)))
     {
         printf("Error: Expected (%d) Found (%d)\n", dwTestBit, dwUnsetBit);
     }
@@ -180,19 +172,17 @@ main(
         printf("Bit %d is available as expected\n", dwTestBit);
     }
 
-    dwError = LwioBitVectorSetBit(pBitVector, dwTestBit);
-    BAIL_ON_LWIO_ERROR(dwError);
+    status = LwioBitVectorSetBit(pBitVector, dwTestBit);
+    BAIL_ON_LWIO_ERROR(status);
 
-    dwError = LwioBitVectorFirstUnsetBit(
-                pBitVector,
-                &dwUnsetBit);
-    if (dwError != LWIO_ERROR_NO_BIT_AVAILABLE)
+    status = LwioBitVectorFirstUnsetBit(pBitVector, &dwUnsetBit);
+    if (status != STATUS_NOT_FOUND)
     {
         printf("Error: Expected no bits available. Found (%d)\n", dwUnsetBit);
     }
     else
     {
-        dwError = 0;
+        status = 0;
     }
 
 cleanup:
@@ -202,7 +192,7 @@ cleanup:
         LwioBitVectorFree(pBitVector);
     }
 
-    return (dwError);
+    return (status);
 
 error:
 
