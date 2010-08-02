@@ -1,0 +1,39 @@
+#!/bin/sh -e
+
+DOMAINJOIN=/usr/bin/domainjoin-cli
+LWSMD=/etc/init.d/lwsmd
+
+case "$1" in
+    remove)
+    # Removing this package; no upgrade in progress
+
+        # Remove references in PAM.
+        pam-auth-update --package --remove likewise-open
+
+        # Remove references elsewhere.
+        if [ -x $DOMAINJOIN ]
+        then
+            $DOMAINJOIN configure --disable nsswitch > /dev/null 2>&1
+            $DOMAINJOIN configure --disable ssh > /dev/null 2>&1
+            $DOMAINJOIN configure --long `hostname --long` \
+                                  --short `hostname --short` \
+                                  --disable krb5 > /dev/null 2>&1
+        fi
+
+        # Stop all daemons; none should be needed anymore.
+        if [ -x $LWSMD ]
+        then
+            $LWSMD stop
+        fi
+    ;;
+
+    failed-upgrade)
+    # The prerm script of a previous version failed for upgrade.
+    ;;
+
+    upgrade)
+    # A newer version is about to be installed; do nothing and let it handle it.
+    ;;
+esac
+
+#DEBHELPER#

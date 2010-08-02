@@ -1,0 +1,120 @@
+Source: likewise-open
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2), lsb-base
+Standards-Version: 3.7.2
+Homepage: http://www.likewiseopen.org/
+
+Package: likewise-open
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Provides: likewise-open, likewise-open5
+Conflicts: winbind, likewise-open,
+ likewise-open5 (<< 5.4.0.39115-3),
+ likewise-open5-libs (<< 5.4.0.39115-3),
+ likewise-open5-lsass (<< 5.4.0.39115-3),
+ likewise-open5-eventlog (<< 5.4.0.39115-3),
+ likewise-open5-netlogon (<< 5.4.0.39115-3),
+ likewise-open5-rpc (<< 5.4.0.39115-3),
+ likewise-base (<< 6.0),
+ likewise-domainjoin (<< 6.0),
+ likewise-eventlog (<< 6.0),
+ likewise-krb5 (<< 6.0),
+ likewise-libxml2 (<< 6.0),
+ likewise-lsass (<< 6.0),
+ likewise-lwio (<< 6.0),
+ likewise-lwreg (<< 6.0),
+ likewise-mod-auth-kerb (<< 6.0),
+ likewise-netlogon (<< 6.0),
+ likewise-openldap (<< 6.0),
+ likewise-passwd (<< 6.0),
+ likewise-pstore (<< 6.0),
+ likewise-rpc (<< 6.0),
+ likewise-sqlite (<< 6.0),
+ likewise-srvsvc (<< 6.0),
+Replaces: likewise-open,
+ likewise-open5 (<< 5.4.0.39115-3),
+ likewise-open5-libs (<< 5.4.0.39115-3),
+ likewise-open5-lsass (<< 5.4.0.39115-3),
+ likewise-open5-eventlog (<< 5.4.0.39115-3),
+ likewise-open5-netlogon (<< 5.4.0.39115-3),
+ likewise-open5-rpc (<< 5.4.0.39115-3),
+ likewise-base (<< 6.0),
+ likewise-domainjoin (<< 6.0),
+ likewise-eventlog (<< 6.0),
+ likewise-krb5 (<< 6.0),
+ likewise-libxml2 (<< 6.0),
+ likewise-lsass (<< 6.0),
+ likewise-lwio (<< 6.0),
+ likewise-lwreg (<< 6.0),
+ likewise-mod-auth-kerb (<< 6.0),
+ likewise-netlogon (<< 6.0),
+ likewise-openldap (<< 6.0),
+ likewise-passwd (<< 6.0),
+ likewise-pstore (<< 6.0),
+ likewise-rpc (<< 6.0),
+ likewise-sqlite (<< 6.0),
+ likewise-srvsvc (<< 6.0),
+Description: Authentication services for Active Directory Domains
+ Likewise Open 6.1 provides a means of integrating Unix desktops and servers
+ into an Active Directory (AD) environment by providing a means for hosts
+ to join the domain as member servers and make the Windows users and groups
+ available to other Unix applications and services via the PAM and Name
+ Service Switch libraries.
+
+Package: likewise-open-dev
+Section: libdevel
+Architecture: any
+#Depends: likewise_open (= ${binary:Version})
+Description: Likewise Software Development Kit
+ Likewise Open 6.1 SDK is awesome for developers!
+
+Package: likewise-open5
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: dummy package to support likewise-open
+ This is a dummy package to facilitate clean upgrades. You can safely remove
+ this package after the upgrade.
+
+Package: likewise-open5-libs
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: transitional dummy package
+ This is a dummy package to faciliate clean upgrades. You can safely remove
+ this package after the upgrade.
+
+Package: likewise-open5-lsass
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: transitional dummy package
+ This is a dummy package to faciliate clean upgrades. You can safely remove
+ this package after the upgrade.
+
+Package: likewise-open5-eventlog
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: transitional dummy package
+ This is a dummy package to faciliate clean upgrades. You can safely remove
+ this package after the upgrade.
+
+Package: likewise-open5-netlogon
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: transitional dummy package
+ This is a dummy package to faciliate clean upgrades. You can safely remove
+ this package after the upgrade.
+
+Package: likewise-open5-rpc
+Section: oldlibs
+Depends: ${misc:Depends}, likewise-open
+Architecture: all
+Description: transitional dummy package
+ This is a dummy package to faciliate clean upgrades. You can safely remove
+ this package after the upgrade.
+

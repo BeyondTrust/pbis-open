@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    abort-upgrade)
+    ;;
+
+    upgrade)
+        pam-auth-update --package
+
+        if dpkg --compare-versions "$2" le "4.1.2982-0ubuntu3"; then
+            # Shutdown old daemons (if running)
+            if [ -f /etc/init.d/likewise-open ]
+            then
+                /etc/init.d/likewise-open stop || true
+            fi
+
+            save_4_1_files
+
+            pam-auth-update --package --remove likewise-open
+
+            if [ -x /usr/bin/domainjoin-cli ]; then
+                /usr/bin/domainjoin-cli leave || true
+            fi
+        fi
+
+        # remove obsolete conffiles from previous versions
+        if dpkg --compare-versions "$2" lt-nl "6.0.0"; then
+
+        # from 4.1
+        rm_conffile /etc/samba/lwiauthd.conf
+        rm_conffile /etc/security/pam_lwidentity.conf
+        rm_conffile /etc/default/likewise-open
+        rm_conffile /etc/init.d/likewise-open
+        # from 5.0
+        rm_conffile /etc/init.d/npcmuxd
+        fi
+    ;;
+
+    install)
+    ;;
+esac
+
+#DEBHELPER#

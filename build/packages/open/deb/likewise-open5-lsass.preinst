@@ -1,0 +1,63 @@
+#!/bin/sh
+
+set -e
+
+UPGRADEDIR5="/etc/likewise-open/5_0_upgrade"
+
+save_5_0_files()
+{
+    OLDCONFDIR=/etc/likewise-open5
+    OLDVARDIR=/var/lib/likewise-open5
+
+    if [ -f "${OLDCONFDIR}/lsassd.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/lsassd.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDCONFDIR}/eventlogd.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/eventlogd.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDCONFDIR}/netlogon.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/netlogon.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDVARDIR}/db/pstore.db" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDVARDIR}/db/pstore.db" ${UPGRADEDIR5}
+    fi
+}
+
+case "$1" in
+    abort-upgrade)
+    ;;
+
+    upgrade)
+
+    if [ -n "$2" ]; then
+        if dpkg --compare-versions "$2" le "5.0.3991.1+krb5-0ubuntu2"; then
+            # Already shutdown by 5.0.3991.1+krb5-0ubuntu2
+            ## Shutdown old daemons (if running)
+            ##if [ -f /etc/init.d/lsassd ]
+            ##then
+            ##    /etc/init.d/lsassd stop || true
+            ##fi
+
+            save_5_0_files
+
+            if [ -x /usr/sbin/pam-auth-update ]; then
+               /usr/sbin/pam-auth-update --package --remove likewise-open5-lsass
+            fi
+
+            if [ -x /usr/bin/domainjoin-cli ]; then
+                /usr/bin/domainjoin-cli leave > /dev/null 2>&1 || true
+            fi
+        fi
+    fi
+    ;;
+
+esac
+
+#DEBHELPER#

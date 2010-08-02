@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
+LWSM=/opt/likewise/bin/lwsm
+LWSMD=/etc/init.d/lwsmd
+REGSHELL=/opt/likewise/bin/lwregshell
+
+$LWSMD start || exit 4
+
+$REGSHELL import /opt/likewise/share/config/dcerpcd.reg || exit 100
+$REGSHELL import /opt/likewise/share/config/eventlogd.reg || exit 101
+$REGSHELL import /opt/likewise/share/config/lwreg.reg || exit 102
+$REGSHELL import /opt/likewise/share/config/lsassd.reg || exit 103
+$REGSHELL import /opt/likewise/share/config/lwiod.reg || exit 104
+$REGSHELL import /opt/likewise/share/config/netlogond.reg || exit 105
+$REGSHELL import /opt/likewise/share/config/pstore.reg || exit 106
+
+$LWSMD reload || exit 5
+
+$DOMAINJOIN query > /dev/null 2>&1 || exit 6
+
