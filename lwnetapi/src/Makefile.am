@@ -9,6 +9,7 @@ liblwnetapi_la_SOURCES = \
     net_userinfo.c                \
     net_groupinfo.c               \
     net_memberinfo.c              \
+    net_displayinfo.c             \
     net_crypto.c                  \
     net_userenum.c                \
     net_useradd.c                 \
@@ -30,6 +31,7 @@ liblwnetapi_la_SOURCES = \
     net_getdcname.c               \
     net_joindomain.c              \
     net_unjoindomain.c            \
+    net_querydisplayinformation.c \
     net_credentials.c
 
 liblwnetapi_la_CPPFLAGS =    \

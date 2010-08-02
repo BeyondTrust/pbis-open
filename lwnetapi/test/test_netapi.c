@@ -1781,6 +1781,262 @@ done:
 }
 
 
+static
+BOOLEAN
+TestValidateDisplayUserInfo(
+    PNET_DISPLAY_USER  pUser
+    )
+{
+    BOOLEAN bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sUsernameLen = 0;
+
+    ASSERT_TEST(pUser->usri1_name != NULL);
+
+    if (pUser->usri1_name)
+    {
+        dwError = LwWc16sLen(pUser->usri1_name, &sUsernameLen);
+        if (dwError)
+        {
+            bRet = FALSE;
+            return bRet;
+        }
+    }
+
+    ASSERT_TEST((pUser->usri1_flags & UF_NORMAL_ACCOUNT) ||
+                (pUser->usri1_flags & UF_TEMP_DUPLICATE_ACCOUNT));
+    ASSERT_TEST(pUser->usri1_user_id > 0);
+
+    return bRet;
+}
+
+
+static
+BOOLEAN
+TestValidateDisplayMachineInfo(
+    PNET_DISPLAY_MACHINE  pMachine
+    )
+{
+    BOOLEAN bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sMachnameLen = 0;
+
+    ASSERT_TEST(pMachine->usri2_name != NULL);
+
+    if (pMachine->usri2_name)
+    {
+        dwError = LwWc16sLen(pMachine->usri2_name, &sMachnameLen);
+        if (dwError)
+        {
+            bRet = FALSE;
+            return bRet;
+        }
+    }
+
+    ASSERT_TEST((pMachine->usri2_flags & UF_WORKSTATION_TRUST_ACCOUNT) ||
+                (pMachine->usri2_flags & UF_SERVER_TRUST_ACCOUNT));
+    ASSERT_TEST(pMachine->usri2_user_id > 0);
+
+    return bRet;
+}
+
+
+static
+BOOLEAN
+TestValidateDisplayGroupInfo(
+    PNET_DISPLAY_GROUP  pGroup
+    )
+{
+    BOOLEAN bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sGroupnameLen = 0;
+
+    ASSERT_TEST(pGroup->grpi3_name != NULL);
+
+    if (pGroup->grpi3_name)
+    {
+        dwError = LwWc16sLen(pGroup->grpi3_name, &sGroupnameLen);
+        if (dwError)
+        {
+            bRet = FALSE;
+            return bRet;
+        }
+    }
+
+    ASSERT_TEST(pGroup->grpi3_group_id > 0);
+
+    return bRet;
+}
+
+
+static
+BOOL
+CallNetQueryDisplayInfo(
+    PCWSTR pwszHostname,
+    DWORD  dwLevel
+    )
+{
+    BOOL bRet = TRUE;
+    NET_API_STATUS err = ERROR_SUCCESS;
+    PVOID pBuffer = NULL;
+    DWORD dwIndex = 0;
+    DWORD dwRequested = 50;
+    DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
+    DWORD dwNumEntries = 0;
+    DWORD dwPrevTotalNumEntries = 0;
+    DWORD dwTotalNumEntries = 0;
+    DWORD iEntry = 0;
+    PNET_DISPLAY_USER pDispUser = NULL;
+    PNET_DISPLAY_MACHINE pDispMachine = NULL;
+    PNET_DISPLAY_GROUP pDispGroup = NULL;
+
+    /* max buffer size below 10 bytes doesn't make much sense */
+    while (dwPrefMaxLen > 10)
+    {
+        do
+        {
+            err = NetQueryDisplayInformation(pwszHostname,
+                                             dwLevel,
+                                             dwIndex,
+                                             dwRequested,
+                                             dwPrefMaxLen,
+                                             &dwNumEntries,
+                                             &pBuffer);
+            if (err != ERROR_SUCCESS &&
+                err != ERROR_MORE_DATA)
+            {
+                bRet = FALSE;
+                goto done;
+            }
+
+            ASSERT_TEST(dwNumEntries <= dwRequested);
+
+            dwTotalNumEntries += dwNumEntries;
+
+            for (iEntry = 0; iEntry < dwNumEntries; iEntry++)
+            {
+                switch (dwLevel)
+                {
+                case 1:
+                    pDispUser = &(((PNET_DISPLAY_USER)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateDisplayUserInfo(pDispUser);
+                    dwIndex = pDispUser->usri1_next_index;
+                    break;
+
+                case 2:
+                    pDispMachine = &(((PNET_DISPLAY_MACHINE)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateDisplayMachineInfo(pDispMachine);
+                    dwIndex = pDispMachine->usri2_next_index;
+                    break;
+
+                case 3:
+                    pDispGroup = &(((PNET_DISPLAY_GROUP)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateDisplayGroupInfo(pDispGroup);
+                    dwIndex = pDispGroup->grpi3_next_index;
+                    break;
+
+                default:
+                    bRet = FALSE;
+                    goto done;
+                }
+            }
+
+            if (pBuffer)
+            {
+                NetApiBufferFree(pBuffer);
+                pBuffer = NULL;
+            }
+        }
+        while (err == ERROR_MORE_DATA);
+
+        if (dwPrefMaxLen > 65536)
+        {
+            dwPrefMaxLen /= 256;
+        }
+        else if (dwPrefMaxLen <= 65536 && dwPrefMaxLen > 512)
+        {
+            dwPrefMaxLen /= 4;
+        }
+        else if (dwPrefMaxLen <= 512)
+        {
+            dwPrefMaxLen /= 2;
+        }
+        else if (dwPrefMaxLen < 32)
+        {
+            dwPrefMaxLen = 0;
+        }
+
+        if (dwPrevTotalNumEntries)
+        {
+            ASSERT_TEST(dwPrevTotalNumEntries == dwTotalNumEntries);
+        }
+
+        dwPrevTotalNumEntries = dwTotalNumEntries;
+        dwTotalNumEntries     = 0;
+        dwIndex               = 0;
+    }
+
+    dwLevel      = 0;
+    dwNumEntries = 0;
+    err = NetQueryDisplayInformation(pwszHostname,
+                                     dwLevel,
+                                     dwIndex,
+                                     dwRequested,
+                                     dwPrefMaxLen,
+                                     &dwNumEntries,
+                                     &pBuffer);
+    if (err != ERROR_INVALID_LEVEL)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    if (pBuffer)
+    {
+        /*
+         * There shouldn't be any buffer returned
+         */
+        bRet = FALSE;
+        goto done;
+    }
+
+    dwLevel      = 4;
+    dwNumEntries = 0;
+    err = NetQueryDisplayInformation(pwszHostname,
+                                     dwLevel,
+                                     dwIndex,
+                                     dwRequested,
+                                     dwPrefMaxLen,
+                                     &dwNumEntries,
+                                     &pBuffer);
+    if (err != ERROR_INVALID_LEVEL)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    if (pBuffer)
+    {
+        /*
+         * There shouldn't be any buffer returned
+         */
+        bRet = FALSE;
+        goto done;
+    }
+
+done:
+    if (pBuffer)
+    {
+        NetApiBufferFree(pBuffer);
+    }
+
+    return bRet;
+}
+
+
 int
 TestNetUserEnum(
     struct test *t,
@@ -3098,6 +3354,59 @@ done:
 }
 
 
+int
+TestNetQueryDisplayInformation(
+    struct test *t,
+    const wchar16_t *hostname,
+    const wchar16_t *user,
+    const wchar16_t *pass,
+    struct parameter *options,
+    int optcount
+    )
+{
+    const DWORD dwDefaultLevel = (DWORD)(-1);
+
+    BOOL ret = TRUE;
+    enum param_err perr = perr_success;
+    DWORD i = 0;
+    DWORD dwSelectedLevels[] = { 0 };
+    DWORD dwAvailableLevels[] = { 1, 2, 3 };
+    PDWORD pdwLevels = NULL;
+    DWORD dwNumLevels = 0;
+    DWORD dwLevel = 0;
+
+    TESTINFO(t, hostname, user, pass);
+
+    perr = fetch_value(options, optcount, "level", pt_uint32,
+                       (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    PARAM_INFO("level", pt_uint32, &dwLevel);
+
+    if (dwLevel == (DWORD)(-1))
+    {
+        pdwLevels   = dwAvailableLevels;
+        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
+    }
+    else
+    {
+        dwSelectedLevels[0] = dwLevel;
+        pdwLevels   = dwSelectedLevels;
+        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
+    }
+
+    for (i = 0; i < dwNumLevels; i++)
+    {
+        dwLevel = pdwLevels[i];
+
+        ret &= CallNetQueryDisplayInfo(hostname,
+                                       dwLevel);
+    }
+
+    return ret;
+}
+
+
 void SetupNetApiTests(struct test *t)
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -3120,6 +3429,7 @@ void SetupNetApiTests(struct test *t)
     AddTest(t, "NETAPI-LOCAL-GROUP-GETINFO", TestNetLocalGroupGetInfo);
     AddTest(t, "NETAPI-LOCAL-GROUP-SETINFO", TestNetLocalGroupSetInfo);
     AddTest(t, "NETAPI-LOCAL-GROUP-MEMBERS", TestNetLocalGroupGetMembers);
+    AddTest(t, "NETAPI-QUERY-DISP-INFO", TestNetQueryDisplayInformation);
 }
 
 

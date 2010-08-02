@@ -248,6 +248,12 @@ typedef struct _USER_INFO_1011
 
 } USER_INFO_1011, *PUSER_INFO_1011;
 
+typedef struct _USER_INFO_1012
+{
+    PWSTR  usri1012_usr_comment;
+
+} USER_INFO_1012, *PUSER_INFO_1012;
+
 
 /*
  * Possible values returned in pdwParmErr pointer indicating
@@ -524,13 +530,13 @@ NetLocalGroupGetMembers(
 
 NET_API_STATUS
 NetQueryDisplayInformation(
-    PCWSTR  pwszHostname,
-    DWORD   dwLevel,
-    DWORD   dwIndex,
-    DWORD   dwEntriesRequested,
-    DWORD   dwMaxBufferSize,
-    PDWORD  pdwNumEntries,
-    PVOID   pBuffer
+    PCWSTR   pwszHostname,
+    DWORD    dwLevel,
+    DWORD    dwIndex,
+    DWORD    dwEntriesRequested,
+    DWORD    dwMaxBufferSize,
+    PDWORD   pdwNumEntries,
+    PVOID   *pBuffer
     );
 
 

@@ -1,9 +1,9 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -28,58 +28,45 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        includes.h
+ *        net_displayinfo.h
  *
  * Abstract:
  *
- *        Likewise Net API
+ *        Remote Procedure Call (RPC) Client Interface
  *
- * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *        NetAPI display info buffer handling functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
-#include "config.h"
-#include "lwnetapisys.h"
 
-#include <lw/base.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwtime.h>
+#ifndef _NETDISPLAYINFO_H_
+#define _NETDISPLAYINFO_H_
 
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/des.h>
-#include <openssl/rc4.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
 
-#include <lwio/lwio.h>
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/lrpc.h>
-#include <lwnet.h>
+DWORD
+NetAllocateDisplayInformation(
+    PVOID                 pInfoBuffer,
+    PDWORD                pdwSpaceLeft,
+    DWORD                 dwLevel,
+    SamrDisplayInfo      *pSource,
+    PDWORD                pdwSize,
+    NET_VALIDATION_LEVEL  eValidation
+    );
 
-#include <lw/lm.h>
-#include <lw/srvsvc.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/lsa.h>
-#include <lw/rpc/wkssvc.h>
 
-#include <lwnetapidefs.h>
+#endif /* _NETDISPLAYINFO_H_ */
 
-#include "net_connection.h"
-#include "net_user.h"
-#include "net_util.h"
-#include "net_memory.h"
-#include "net_userinfo.h"
-#include "net_groupinfo.h"
-#include "net_memberinfo.h"
-#include "net_displayinfo.h"
-#include "net_crypto.h"
-#include "net_getdcname.h"
-#include "externs.h"
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
