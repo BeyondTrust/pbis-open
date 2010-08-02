@@ -5,7 +5,12 @@ bin_PROGRAMS = netapitest
 netapitest_SOURCES =    \
     netapitest.c     \
     params.c         \
-    test_netapi.c
+    test_netapi.c    \
+    test_samr.c      \
+    test_lsa.c       \
+    test_netlogon.c  \
+    test_dssetup.c   \
+    test_wkssvc.c
 
 netapitest_CPPFLAGS =          \
     $(AM_CPPFLAGS)             \
