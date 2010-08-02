@@ -75,7 +75,7 @@ LsaPamConverseMulti(
     DWORD  dwError = 0;
     struct pam_conv* pConv = NULL;
     struct pam_response* pResponses = NULL;
-    struct pam_message* msgs;
+    struct pam_message* msgs = NULL;
     struct pam_message** pMsgs = NULL;
     int    iPamError = 0;
     int    i;
