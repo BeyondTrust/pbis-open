@@ -445,6 +445,8 @@ SamrCleanStubDisplayInfoFull(
         rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
         rpc_sm_client_free(pEntry->full_name.Buffer, &rpcStatus);
     }
+
+    rpc_sm_client_free(pInfo->entries, &rpcStatus);
 }
 
 
@@ -463,6 +465,8 @@ SamrCleanStubDisplayInfoGeneral(
         rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
         rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
     }
+
+    rpc_sm_client_free(pInfo->entries, &rpcStatus);
 }
 
 
@@ -481,6 +485,8 @@ SamrCleanStubDisplayInfoGeneralGroups(
         rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
         rpc_sm_client_free(pEntry->description.Buffer, &rpcStatus);
     }
+
+    rpc_sm_client_free(pInfo->entries, &rpcStatus);
 }
 
 
@@ -500,6 +506,8 @@ SamrCleanStubDisplayInfoAscii(
             rpc_sm_client_free(pEntry->account_name.Buffer, &rpcStatus);
         }
     }
+
+    rpc_sm_client_free(pInfo->entries, &rpcStatus);
 }
 
 
