@@ -1,0 +1,16 @@
+Likewise Open is provided under the terms of the GNU General
+Public License (GPL version 2) and the GNU Library General 
+Public License (LGPL version 2.1). The additional components 
+listed below are covered under separate license agreements:
+
+    MIT Kerberos - MIT Kerberos 5 and other licenses
+    OpenLDAP - OpenLDAP Public License
+    Likewise DCE-RPC - BSD
+    LibXML2 - BSD
+    libuuid from e2fsprogs - BSD
+    libiconv - LGPLv2
+    OpenSSL - BSD
+
+For more details and for the full text for each of these 
+licenses, read the LICENSES and COPYING files included with 
+this software.
