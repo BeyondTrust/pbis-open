@@ -1,0 +1,21 @@
+Name: Likewise
+Default: yes
+Priority: 250
+Conflicts: winbind
+Auth-Type: Primary
+Auth:
+	[success=end default=ignore]	pam_lsass.so try_first_pass
+Auth-Initial:
+	[success=end default=ignore]	pam_lsass.so
+Account-Type: Primary
+Account:
+	[success=ok new_authtok_reqd=ok default=ignore]		pam_lsass.so unknown_ok
+	[success=end new_authtok_reqd=done default=ignore]	pam_lsass.so
+Session-Type: Additional
+Session:
+	sufficient	pam_lsass.so
+Password-Type: Primary
+Password:
+	[success=end default=ignore]	pam_lsass.so use_authtok try_first_pass
+Password-Initial:
+	[success=end default=ignore]	pam_lsass.so
