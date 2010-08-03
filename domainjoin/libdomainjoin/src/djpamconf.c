@@ -3275,6 +3275,120 @@ error:
     return ceError;
 }
 
+static void
+CheckForPamAuthUpdate(
+    const char *testPrefix,
+    BOOLEAN *pbUsesPamAuthUpdate,
+    BOOLEAN *pbUsedPamAuthUpdate,
+    LWException **exc
+    )
+{
+    char *pamauthupdate = NULL;
+    BOOLEAN pamauthupdateExists = FALSE;
+    char *pamauthupdatedir = NULL;
+    BOOLEAN pamauthupdatedirExists = FALSE;
+    char *pamauthupdatedirconf = NULL;
+    BOOLEAN pamauthupdatedirconfExists = FALSE;
+    char *pamauthupdateconf = NULL;
+    BOOLEAN pamauthupdateconfExists = FALSE;
+
+    *pbUsesPamAuthUpdate = FALSE;
+
+    if (testPrefix == NULL)
+        testPrefix="";
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update"));
+    LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdate, &pamauthupdateExists));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+        &pamauthupdatedir, "%s%s", testPrefix, "/usr/share/pam-configs"));
+    LW_CLEANUP_CTERR(exc, CTCheckDirectoryExists(pamauthupdatedir, &pamauthupdatedirExists));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+    LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdatedirconf, &pamauthupdatedirconfExists));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+        &pamauthupdateconf, "%s%s", testPrefix, "/opt/likewise/share/likewise.pam-auth-update"));
+    LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdateconf, &pamauthupdateconfExists));
+
+    if (pamauthupdateExists && pamauthupdatedirExists && pamauthupdateconfExists)
+    {
+        *pbUsesPamAuthUpdate = TRUE;
+        if (pamauthupdatedirconfExists)
+            *pbUsedPamAuthUpdate = TRUE;
+    }
+
+cleanup:
+    CT_SAFE_FREE_STRING(pamauthupdate);
+    CT_SAFE_FREE_STRING(pamauthupdatedir);
+    CT_SAFE_FREE_STRING(pamauthupdatedirconf);
+    CT_SAFE_FREE_STRING(pamauthupdateconf);
+}
+
+static void
+EnablePamAuthUpdate(
+    const char *testPrefix,
+    LWException **exc
+    )
+{
+    char *pamauthupdate = NULL;
+    char *pamauthupdateconf = NULL;
+    char *pamauthupdatedirconf = NULL;
+    BOOLEAN pamauthupdatedirconfExists = FALSE;
+
+    if (testPrefix == NULL)
+        testPrefix="";
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package likewise"));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+        &pamauthupdateconf, "%s%s", testPrefix, "/opt/likewise/share/likewise.pam-auth-update"));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+        &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+    LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(pamauthupdatedirconf, &pamauthupdatedirconfExists));
+
+    if (!pamauthupdatedirconfExists)
+        LW_CLEANUP_CTERR(exc, CTCopyFileWithOriginalPerms(pamauthupdateconf, pamauthupdatedirconf));
+
+    LW_CLEANUP_CTERR(exc, CTRunCommand(pamauthupdate));
+
+cleanup:
+    CT_SAFE_FREE_STRING(pamauthupdate);
+    CT_SAFE_FREE_STRING(pamauthupdateconf);
+    CT_SAFE_FREE_STRING(pamauthupdatedirconf);
+}
+
+static void
+DisablePamAuthUpdate(
+    const char *testPrefix,
+    LWException **exc
+    )
+{
+    char *pamauthupdate = NULL;
+    char *pamauthupdatedirconf = NULL;
+
+    if (testPrefix == NULL)
+        testPrefix="";
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+         &pamauthupdate, "%s%s", testPrefix, "/usr/sbin/pam-auth-update --package --remove likewise"));
+
+    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(
+         &pamauthupdatedirconf, "%s%s", testPrefix, "/usr/share/pam-configs/likewise"));
+
+    LW_CLEANUP_CTERR(exc, CTRunCommand(pamauthupdate));
+
+    unlink(pamauthupdatedirconf);
+
+cleanup:
+    CT_SAFE_FREE_STRING(pamauthupdate);
+    CT_SAFE_FREE_STRING(pamauthupdatedirconf);
+}
+
 DWORD
 DJAddMissingAIXServices(PCSTR rootPrefix)
 {
@@ -3309,6 +3423,8 @@ void DJNewConfigurePamForADLogin(
     struct PamConf conf;
     char *pam_lwidentityconf = NULL;
     DistroInfo distro;
+    BOOLEAN bPamAuthUpdateSupported = FALSE;
+    BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
     memset(&conf, 0, sizeof(conf));
     memset(&distro, 0, sizeof(distro));
 
@@ -3344,6 +3460,29 @@ void DJNewConfigurePamForADLogin(
         {
             LW_CLEANUP_CTERR(exc, CTRunSedOnFile(pam_lwidentityconf, pam_lwidentityconf,
                 FALSE, "s/^\\([ \t]*try_first_pass[ \t]*=.*\\)$/# \\1/"));
+        }
+    }
+
+    /* On systems that support it, we want to use 'pam-auth-update'.
+       But we are adding support rather late and the pam configuration may have
+       already been edited by domainjoin -- so try to get the system to the
+       state where pam-auth-update can work.
+       */
+    LW_TRY(exc, CheckForPamAuthUpdate(testPrefix, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
+    if (bPamAuthUpdateSupported)
+    {
+        if (enable)
+        {
+            LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
+            if(conf.modified)
+                LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+            LW_TRY(exc, EnablePamAuthUpdate(testPrefix, &LW_EXC));
+            goto cleanup;
+        }
+        else if (bPamAuthUpdateLikewiseEnabled)
+        {
+            LW_TRY(exc, DisablePamAuthUpdate(testPrefix, &LW_EXC));
+            goto cleanup;
         }
     }
 
@@ -3531,6 +3670,8 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     PCSTR services[] = {"ssh", "sshd", "login", "su", "other"};
     int i;
     DistroInfo distro;
+    BOOLEAN bPamAuthUpdateSupported = FALSE;
+    BOOLEAN bPamAuthUpdateLikewiseEnabled = FALSE;
 
     memset(&distro, 0, sizeof(distro));
     memset(&conf, 0, sizeof(conf));
@@ -3553,6 +3694,8 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         goto cleanup;
     }
     LW_CLEANUP_CTERR(exc, ceError);
+
+    LW_TRY(exc, CheckForPamAuthUpdate(NULL, &bPamAuthUpdateSupported, &bPamAuthUpdateLikewiseEnabled, &LW_EXC));
 
     if(!options->joiningDomain)
     {
@@ -3623,7 +3766,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
         LW_HANDLE(&nestedException);
     }
     LW_CLEANUP(exc, nestedException);
-    if(conf.modified)
+    if(!bPamAuthUpdateSupported && conf.modified)
         goto cleanup;
 
     result = FullyConfigured;
