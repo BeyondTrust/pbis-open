@@ -377,7 +377,7 @@ stop_daemons_on_reboot()
             svccfg delete $daemon
 
             solaris_zones svcadm disable $daemon
-            solaris_zones svcadm delete $daemon
+            solaris_zones svccfg delete $daemon
         fi
 
         # Simply deleting the init scripts in /etc/rc.d (already happened
