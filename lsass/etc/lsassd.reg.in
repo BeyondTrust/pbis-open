@@ -10,7 +10,6 @@
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters]
 "EnableEventlog"=dword:00000000
-"LogNetworkConnectionEvents"=dword:00000001
 "LogLevel"="error"
 "SpaceReplacement"="^"
 "DomainSeparator"="\\"

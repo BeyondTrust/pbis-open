@@ -83,16 +83,6 @@ LsaSrvEnableEventlog(
     BOOLEAN bValue
     );
 
-BOOLEAN
-LsaSrvShouldLogNetworkConnectionEvents(
-    VOID
-    );
-
-VOID
-LsaSrvSetLogNetworkConnectionEvents(
-    BOOLEAN bValue
-    );
-
 DWORD
 LsaSrvSetMachineSid(
     HANDLE hServer,
