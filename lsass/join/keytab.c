@@ -480,10 +480,6 @@ KtKrb5AddKeyW(
     dwError = LwWc16sToMbs(pwszPrincipal, &pszPrincipal);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwAllocateMemory(dwKeyLen + 1,
-                               OUT_PPVOID(&pszKey));
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = LwWc16snToMbs((PWSTR)pKey,
                             &pszKey,
                             dwKeyLen + 1);

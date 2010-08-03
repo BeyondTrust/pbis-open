@@ -1820,6 +1820,7 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pBuiltinSid);
+    LW_SAFE_FREE_MEMORY(pwszMachineName);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)

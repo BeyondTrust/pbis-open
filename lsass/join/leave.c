@@ -553,6 +553,7 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pBuiltinSid);
+    RTL_FREE(&pDomainSid);
 
     return ntStatus;
 
