@@ -1856,7 +1856,7 @@ void GetModuleControl(struct PamLine *lineObj, const char **module, const char *
     }
 
     /* Ditto for "pam_lwidentity.so smartcard_prompt". */
-    if(lineObj->optionCount == 1 && !strcmp(lineObj->options[0].value, "smartcard_prompt"))
+    if((lineObj->optionCount == 1 || lineObj->optionCount == 2) && !strcmp(lineObj->options[0].value, "smartcard_prompt"))
     {
         if(PamModuleIsLwidentity("auth", *module))
             *module = "pam_lwidentity_smartcard_prompt";
@@ -2307,6 +2307,18 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->module, lineObj->control, pam_lwidentity));
             lineObj->optionCount = 0;
             LW_CLEANUP_CTERR(exc, AddOption(conf, line, "smartcard_prompt"));
+
+            /*
+             * RHEL4 doesn't clear the old password when retrying after a
+             * failed password attempt, so we can't use try_first_pass
+             * there.  On all other platforms this makes calling into
+             * PAM with pre-populated username and password work properly.
+             */
+            if (distro->distro != DISTRO_RHEL || distro->version[0] > '4' ||
+                    distro->version[1] != '.')
+            {
+                LW_CLEANUP_CTERR(exc, AddOption(conf, line, "try_first_pass"));
+            }
 
             line = newLine;
             lineObj = &conf->lines[newLine];
