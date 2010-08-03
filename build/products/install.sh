@@ -347,6 +347,7 @@ stop_obsolete_daemons()
     do
         stop_daemon $daemon
     done
+
     if type svccfg >/dev/null 2>&1; then
         for daemon in ${OBSOLETE_DAEMONS}; do
             if svccfg select $daemon 2>/dev/null; then
@@ -374,6 +375,9 @@ stop_daemons_on_reboot()
         if type svccfg >/dev/null 2>&1 && svccfg select $daemon 2>/dev/null; then
             svcadm disable $daemon
             svccfg delete $daemon
+
+            solaris_zones svcadm disable $daemon
+            solaris_zones svcadm delete $daemon
         fi
 
         # Simply deleting the init scripts in /etc/rc.d (already happened
@@ -532,8 +536,14 @@ install_dmgs()
 
 install_pkgs()
 {
+    EXTRA_OPTIONS=""
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        EXTRA_OPTIONS="$EXTRA_OPTIONS -G"
+    fi
+
     for pkg in $@ ; do
-        pkgadd -a "${DIRNAME}/response" -d "${PKGDIR}/${pkg}"-*.pkg all
+        pkgadd ${EXTRA_OPTIONS} -a "${DIRNAME}/response" -d "${PKGDIR}/${pkg}"-*.pkg all
         exit_on_error $? "Failed to install package ${pkg}"
     done
     return 0
@@ -633,6 +643,67 @@ uninstall_debs()
         exit_on_error $? "Failed to uninstall packages"
     fi
     return 0
+}
+
+solaris_zones()
+{
+    if [ "${OS_TYPE}" != "solaris" ]; then
+        return 0
+    fi
+
+    if [ ! -x /usr/sbin/zoneadm ]; then
+        return 0;
+    fi
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        return 0
+    fi
+
+    for zone in `zoneadm list`; do
+        if [ $zone = "global" ]; then
+            continue
+        fi
+
+        zlogin $zone $@ > /dev/null 2>&1
+
+    done
+}
+
+solaris_deconfigure_zones()
+{
+    if [ "${OS_TYPE}" != "solaris" ]; then
+        return 0
+    fi
+
+    if [ ! -x /usr/sbin/zoneadm ]; then
+        return 0;
+    fi
+
+    if [ "${OPT_SOLARIS_CURRENT_ZONE}" = "yes" ]; then
+        return 0
+    fi
+
+    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
+    for zone in `zoneadm list`; do
+        if [ $zone = "global" ]; then
+            continue
+        fi
+
+        if [ "$1" = "purge" ]; then
+            zlogin $zone $domainjoin_cli leave > /dev/null 2>/dev/null
+        fi
+
+        zlogin $zone $domainjoin_cli configure --disable pam > /dev/null 2>/dev/null
+        zlogin $zone $domainjoin_cli configure --disable nsswitch > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable srvsvcd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable lsassd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable lwiod > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable netlogond > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable eventlogd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable dcerpcd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable lwsmd > /dev/null 2>/dev/null
+        zlogin $zone svcadm disable lwregd > /dev/null 2>/dev/null
+    done
 }
 
 uninstall_pkgs()
@@ -761,9 +832,11 @@ preinstall_pkgs()
     done
     echo "Uninstalling previous install"
     uninstall_pkgs `reverse_list "$@"`
-    
+
     echo "Creating base directory"
     mkdir -p "`get_prefix_dir`"
+
+    solaris_zones mkdir -p "`get_prefix_dir`"
 }
 
 preinstall_depots()
@@ -916,6 +989,7 @@ start_daemon_lwsmd()
     LWSMD=`get_prefix_dir`/sbin/lwsmd
 
     $LWSMD --start-as-daemon
+    solaris_zones $LWSMD --start-as-daemon
 }
 
 determine_upgrade_type()
@@ -1074,6 +1148,7 @@ import_registry()
             then
                 echo "There was an error importing ${FILEPATH} into the registry."
             fi
+            solaris_zones ${REGIMPORT} $FILEPATH
         fi
     done
 }
@@ -1208,12 +1283,18 @@ do_postinstall()
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
     stop_daemon lwsmd
+    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd stop
+    solaris_zones svccfg delete lwsmd
 
     # Start service manager for normal usage
     start_daemon lwsmd
+    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd start
+    solaris_zones svccfg delete lwmsd
+    solaris_zones svccfg import /etc/likewise/svcs-solaris/lwsmd.xml
 
     # Tell service manager to re-read service list
     reload_daemon lwsmd
+    solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd restart
 
     # Restore the daemon state
     restore_daemons
@@ -1311,6 +1392,7 @@ restore_configuration()
     # This starts all needed likewise services
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli query > /dev/null 2>&1
+        zlogin $domainjoin_cli query > /dev/null 2>&1
     fi
 
     if [ -x "$get_current_domain" ]; then
@@ -1337,6 +1419,9 @@ do_uninstall()
 
     stop_daemons
 
+    # Both disable pam/nsswitch and stop/disable daemons.
+    solaris_deconfigure_zones
+
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT} ${OBSOLETE_PACKAGES}`
 
     scrub_prefix
@@ -1359,6 +1444,9 @@ do_purge()
     fi
 
     stop_daemons
+
+    # Both disable pam/nsswitch and stop/disable daemons.
+    solaris_deconfigure_zones purge
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
 
@@ -1477,6 +1565,13 @@ check_arg_present()
 
 usage()
 {
+    localOS_TYPE=`uname`
+    case "${localOS_TYPE}" in
+        SunOS)
+            localOS_TYPE=solaris
+            ;;
+    esac
+
     echo "usage: install.sh [options] [command]"
     echo ""
     echo "  where options:"
@@ -1487,6 +1582,12 @@ usage()
     echo "    --nocompat       do not install 32-bit compatibility libraries (default: auto)"
     echo "    --dont-join      do not run the domainjoin GUI tool after install completes (default: auto)"
     echo "    --devel          install development packages"
+
+    if [ "${localOS_TYPE}" = "solaris" ]; then
+        echo "    --all-zones      install to all zones (default)"
+        echo "    --current-zone   install only to the current zone"
+    fi
+
     #echo "    --type <pkgType> type of package to install"
     echo ""
     echo "  where command is one of:"
@@ -1507,6 +1608,7 @@ main()
     OPT_DEVEL=false
     OPT_DONT_JOIN=false
     OPT_COMPAT=""
+    OPT_SOLARIS_CURRENT_ZONE=""
     DIRNAME=`dirname $0`
     if [ -z "${DIRNAME}" ]; then
         DIRNAME=.
@@ -1552,6 +1654,26 @@ main()
                 ;;
             --devel)
                 OPT_DEVEL=true
+                shift 1
+                ;;
+            --current-zone)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "yes" ]; then
+                        echo "Cannot use $1 with --all-zones"
+                        usage
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="yes"
+                shift 1
+                ;;
+            --all-zones)
+                if [ -n "${OPT_SOLARIS_CURRENT_ZONE}" ]; then
+                    if [ "${OPT_SOLARIS_CURRENT_ZONE}" != "no" ]; then
+                        echo "Cannot use $1 with --current-zone"
+                        usage
+                    fi
+                fi
+                OPT_SOLARIS_CURRENT_ZONE="no"
                 shift 1
                 ;;
             --dont-join)
