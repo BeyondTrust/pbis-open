@@ -472,7 +472,7 @@ LsaSrvStopEventLoggingThread(
                     &pvReturned));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = (DWORD)pvReturned;
+    dwError = (DWORD)(size_t)pvReturned;
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -559,7 +559,7 @@ LsaSrvEventWriterRoutine(
     }
     bInLock = TRUE;
 
-    while (!gEventLogState.bShouldExit || gEventLogState.pQueue->sSize)
+    while (TRUE)
     {
         while (gEventLogState.pQueue->sSize)
         {
@@ -644,6 +644,11 @@ LsaSrvEventWriterRoutine(
             bInLock = TRUE;
         }
 
+        if (gEventLogState.bShouldExit && !gEventLogState.pQueue->sSize)
+        {
+            break;
+        }
+
         dwError = LwMapErrnoToLwError(
                         pthread_cond_wait(&gEventLogState.wakeUp,
                                           &gEventLogState.queueMutex));
@@ -674,7 +679,7 @@ cleanup:
     {
         LWICloseEventLog(hEventLog);
     }
-    return (PVOID)dwError;
+    return (PVOID)(size_t)dwError;
 
 error:
     LSA_LOG_ERROR("Aborting on fatal error in event log thread - %d", dwError);

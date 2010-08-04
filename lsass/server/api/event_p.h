@@ -58,10 +58,10 @@ typedef struct _EVENTLOG_THREAD_STATE
 {
     pthread_t writerThread;
     pthread_cond_t wakeUp;
-    BOOLEAN bShouldExit;
+    volatile BOOLEAN bShouldExit;
 
     pthread_mutex_t queueMutex;
-    PEVENT_LOG_RECORD_QUEUE pQueue;
+    volatile PEVENT_LOG_RECORD_QUEUE pQueue;
 } EVENTLOG_THREAD_STATE;
 
 #define LSA_MAX_EVENT_ERROR_BACKLOG 100
