@@ -122,6 +122,9 @@ extern pthread_mutex_t    gAPIConfigLock;
 
 extern LSA_SRV_API_CONFIG gAPIConfig;
 
+extern EVENTLOG_THREAD_STATE gEventLogState;
+extern EVENT_LOG_RECORD_QUEUE gEventLogQueues[2];
+
 #endif /* __EXTERNS_P_H__ */
 
 

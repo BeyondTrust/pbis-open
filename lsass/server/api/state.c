@@ -91,11 +91,6 @@ LsaSrvCloseServer(
 {
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
 
-    if (pServerState->hEventLog != (HANDLE)NULL)
-    {
-       LsaSrvCloseEventLog(pServerState->hEventLog);
-    }
-
     LwFreeMemory(pServerState);
 }
 

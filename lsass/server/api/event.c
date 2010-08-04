@@ -131,14 +131,6 @@ LsaSrvWriteLoginSuccessEvent(
             sprintf(szLoginPhase, "Unknown login phase");
     }
 
-    if (pServerState->hEventLog == (HANDLE)NULL)
-    {
-        dwError = LsaSrvOpenEventLog(
-                      "Security",
-                      &pServerState->hEventLog);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
     if (pszPamSource != NULL)
     {
         dwError = LwAllocateStringPrintf(
@@ -179,7 +171,6 @@ LsaSrvWriteLoginSuccessEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvLogSuccessAuditEvent(
-                     pServerState->hEventLog,
                      dwEventID,
                      pszLoginId,
                      LOGIN_LOGOFF_EVENT_CATEGORY,
@@ -219,14 +210,6 @@ LsaSrvWriteLoginFailedEvent(
     PSTR  pszData = NULL;
     DWORD dwEventID = 0;
     PSTR  pszDescription = NULL;
-
-    if (pServerState->hEventLog == (HANDLE)NULL)
-    {
-        dwError = LsaSrvOpenEventLog(
-                      "Security",
-                      &pServerState->hEventLog);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     switch(dwLoginPhase)
     {
@@ -362,7 +345,6 @@ LsaSrvWriteLoginFailedEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvLogFailureAuditEvent(
-                     pServerState->hEventLog,
                      dwEventID,
                      pszLoginId,
                      LOGIN_LOGOFF_EVENT_CATEGORY,
@@ -394,17 +376,8 @@ LsaSrvWriteLogoutSuccessEvent(
     )
 {
     DWORD dwError = 0;
-    PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PSTR pszDescription = NULL;
     char  szLoginPhase[256] = {0};
-
-    if (pServerState->hEventLog == (HANDLE)NULL)
-    {
-        dwError = LsaSrvOpenEventLog(
-                      "Security",
-                      &pServerState->hEventLog);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     switch(dwLoginPhase)
     {
@@ -438,7 +411,6 @@ LsaSrvWriteLogoutSuccessEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvLogSuccessAuditEvent(
-                     pServerState->hEventLog,
                      LSASS_EVENT_SUCCESSFUL_LOGOFF,
                      pszLoginId,
                      LOGIN_LOGOFF_EVENT_CATEGORY,
@@ -468,17 +440,8 @@ LsaSrvWriteUserPWChangeSuccessEvent(
     )
 {   
     DWORD dwError = 0;
-    PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PSTR pszDescription = NULL;
 
-    if (pServerState->hEventLog == (HANDLE)NULL)
-    {
-        dwError = LsaSrvOpenEventLog(
-                      "Security",
-                      &pServerState->hEventLog);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-   
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
                  "Change Password Attempt:\r\n\r\n" \
@@ -489,7 +452,6 @@ LsaSrvWriteUserPWChangeSuccessEvent(
     BAIL_ON_LSA_ERROR(dwError);
    
     dwError = LsaSrvLogSuccessAuditEvent(
-                  pServerState->hEventLog,
                   LSASS_EVENT_SUCCESSFUL_PASSWORD_CHANGE,
                   pszLoginId,
                   PASSWORD_EVENT_CATEGORY,
@@ -520,17 +482,8 @@ LsaSrvWriteUserPWChangeFailureEvent(
     )
 {
     DWORD dwError = 0;
-    PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PSTR pszDescription = NULL;
     PSTR pszData = NULL;
-
-    if (pServerState->hEventLog == (HANDLE)NULL)
-    {
-        dwError = LsaSrvOpenEventLog(
-                      "Security",
-                      &pServerState->hEventLog);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
 
     dwError = LwAllocateStringPrintf(
                  &pszDescription,
@@ -547,7 +500,6 @@ LsaSrvWriteUserPWChangeFailureEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvLogFailureAuditEvent(
-                  pServerState->hEventLog,
                   LSASS_EVENT_FAILED_PASSWORD_CHANGE,
                   pszLoginId,
                   PASSWORD_EVENT_CATEGORY,

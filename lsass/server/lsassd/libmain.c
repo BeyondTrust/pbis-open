@@ -157,6 +157,9 @@ lsassd_main(
     dwError = LsaSrvStartupPreCheck();
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LsaSrvStartEventLoggingThread();
+    BAIL_ON_LSA_ERROR(dwError);
+
 #ifdef ENABLE_PIDFILE
     LsaSrvCreatePIDFile();
 #endif
@@ -225,6 +228,8 @@ cleanup:
     NtlmClientIpcShutdown();
 
     LSA_LOG_INFO("LSA Service exiting...");
+
+    dwError = LsaSrvStopEventLoggingThread();
 
     LsaSrvSetProcessExitCode(dwError);
 

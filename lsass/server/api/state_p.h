@@ -77,7 +77,6 @@ typedef struct __LSA_SRV_API_STATE
     uid_t  peerUID;
     gid_t  peerGID;
     gid_t  peerPID;
-    HANDLE hEventLog;
 } LSA_SRV_API_STATE, *PLSA_SRV_API_STATE;
 
 DWORD

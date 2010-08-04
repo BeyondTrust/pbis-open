@@ -47,6 +47,24 @@
 #ifndef __EVENT_P_H__
 #define __EVENT_P_H__
 
+typedef struct _EVENT_LOG_RECORD_QUEUE
+{
+    size_t sCapacity;
+    size_t sSize;
+    PEVENT_LOG_RECORD pRecords;
+} EVENT_LOG_RECORD_QUEUE, *PEVENT_LOG_RECORD_QUEUE;
+
+typedef struct _EVENTLOG_THREAD_STATE
+{
+    pthread_t writerThread;
+    pthread_cond_t wakeUp;
+    BOOLEAN bShouldExit;
+
+    pthread_mutex_t queueMutex;
+    PEVENT_LOG_RECORD_QUEUE pQueue;
+} EVENTLOG_THREAD_STATE;
+
+#define LSA_MAX_EVENT_ERROR_BACKLOG 100
 
 VOID
 LsaSrvWriteLoginSuccessEvent(  
@@ -89,6 +107,27 @@ LsaSrvWriteUserPWChangeFailureEvent(
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
     DWORD  dwErrCode
+    );
+
+VOID
+LsaSrvEmptyQueue(
+    PEVENT_LOG_RECORD_QUEUE pWriteQueue
+    );
+
+DWORD
+LsaSrvSendQueue(
+    PHANDLE phEventLog,
+    PEVENT_LOG_RECORD_QUEUE pWriteQueue
+    );
+
+VOID *
+LsaSrvEventWriterRoutine(
+    PVOID pvUnused
+    );
+
+DWORD
+LsaSrvQueueEvent(
+    PEVENT_LOG_RECORD pEvent
     );
 
 #endif /* __EVENT_P_H__ */
