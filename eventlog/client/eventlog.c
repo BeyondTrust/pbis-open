@@ -50,10 +50,11 @@ LWIFreeEventRecord(
     LWIFreeEventRecordList(1, pEventRecord);
 }
 
+static
 VOID
 LWIFreeEventRecordContents(
     PEVENT_LOG_RECORD pEventRecord
-    )
+)
 {
     EVT_SAFE_FREE_STRING(pEventRecord->pszEventTableCategoryId);
     EVT_SAFE_FREE_STRING(pEventRecord->pszEventType);

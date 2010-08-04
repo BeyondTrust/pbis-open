@@ -198,6 +198,9 @@ ParseArgs(
         if(!LWIIsLocalHost(ipAddress)) {
             switch(LWIStr2Inet4Addr(pszArg, &fqdn)) {
                 case 1:
+                    dwError = LW_ERROR_DNS_RESOLUTION_FAILED;
+                    goto error;
+
                 case 2:
                     strcpy(ipAddress, pszArg);
                     break;
