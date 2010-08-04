@@ -47,40 +47,7 @@
 #include "api.h"
 
 DWORD
-LsaSrvOpenEventLog(
-    PSTR pszCategoryType,   
-    PHANDLE phEventLog
-    )
-{
-#if defined(MINIMAL_LSASS)
-    return LW_ERROR_SUCCESS;
-#else
-    return LWIOpenEventLogEx(
-                  NULL,             // Server name (defaults to local computer eventlogd)
-                  pszCategoryType,  // Table Category ID (Security, System, ...)
-                  "Likewise LSASS", // Source
-                  0,                // Source Event ID
-                  "SYSTEM",         // User
-                  NULL,             // Computer (defaults to assigning local hostname)
-                  phEventLog);
-#endif
-}
-
-DWORD
-LsaSrvCloseEventLog(
-    HANDLE hEventLog
-    )
-{
-#if defined(MINIMAL_LSASS)
-    return LW_ERROR_SUCCESS;
-#else
-    return LWICloseEventLog(hEventLog);
-#endif
-}
-
-DWORD
 LsaSrvLogInformationEvent(
-    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
     PCSTR  pszCategory,
@@ -105,15 +72,12 @@ LsaSrvLogInformationEvent(
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
-    return LWIWriteEventLogBase(
-                   hEventLog,
-                   event);
+    return LsaSrvQueueEvent(&event);
 #endif
 }
 
 DWORD
 LsaSrvLogWarningEvent(
-    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
     PCSTR  pszCategory,
@@ -138,15 +102,12 @@ LsaSrvLogWarningEvent(
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
-    return LWIWriteEventLogBase(
-                   hEventLog,
-                   event);
+    return LsaSrvQueueEvent(&event);
 #endif
 }
 
 DWORD
 LsaSrvLogErrorEvent(
-    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
     PCSTR  pszCategory,
@@ -171,15 +132,12 @@ LsaSrvLogErrorEvent(
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
-    return LWIWriteEventLogBase(
-                   hEventLog,
-                   event);
+    return LsaSrvQueueEvent(&event);
 #endif
 }
 
 DWORD
 LsaSrvLogSuccessAuditEvent(
-    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
     PCSTR  pszCategory,
@@ -204,15 +162,12 @@ LsaSrvLogSuccessAuditEvent(
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
-    return LWIWriteEventLogBase(
-                   hEventLog,
-                   event);
+    return LsaSrvQueueEvent(&event);
 #endif
 }
 
 DWORD
 LsaSrvLogFailureAuditEvent(
-    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser, // NULL defaults to SYSTEM
     PCSTR  pszCategory,
@@ -237,9 +192,7 @@ LsaSrvLogFailureAuditEvent(
     event.pszDescription = (PSTR) pszDescription;
     event.pszData = (PSTR) pszData;
 
-    return LWIWriteEventLogBase(
-                   hEventLog,
-                   event);
+    return LsaSrvQueueEvent(&event);
 #endif
 }
 
@@ -252,15 +205,8 @@ LsaSrvLogServiceSuccessEvent(
     )
 {
     DWORD dwError = 0;
-    HANDLE hEventLog = (HANDLE)NULL;
-    
-    dwError = LsaSrvOpenEventLog(
-                  "System",
-                  &hEventLog);       
-    BAIL_ON_LSA_ERROR(dwError);    
     
     dwError = LsaSrvLogInformationEvent(            
-                  hEventLog,
                   dwEventID,
                   NULL, // defaults to SYSTEM
                   pszEventCategory,
@@ -269,8 +215,6 @@ LsaSrvLogServiceSuccessEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-
-    LsaSrvCloseEventLog(hEventLog);
 
     return;
 
@@ -291,15 +235,8 @@ LsaSrvLogServiceWarningEvent(
     )
 {
     DWORD dwError = 0;
-    HANDLE hEventLog = (HANDLE)NULL;
-    
-    dwError = LsaSrvOpenEventLog(
-                  "System",
-                  &hEventLog);       
-    BAIL_ON_LSA_ERROR(dwError);    
     
     dwError = LsaSrvLogWarningEvent(            
-                  hEventLog,
                   dwEventID,
                   NULL, // defaults to SYSTEM
                   pszEventCategory,
@@ -308,8 +245,6 @@ LsaSrvLogServiceWarningEvent(
     BAIL_ON_LSA_ERROR(dwError);
     
 cleanup:
-    
-    LsaSrvCloseEventLog(hEventLog);
     
     return;
 
@@ -330,15 +265,8 @@ LsaSrvLogServiceFailureEvent(
     )
 {
     DWORD dwError = 0;
-    HANDLE hEventLog = (HANDLE)NULL;
-    
-    dwError = LsaSrvOpenEventLog(
-                  "System",
-                  &hEventLog);       
-    BAIL_ON_LSA_ERROR(dwError);    
     
     dwError = LsaSrvLogErrorEvent(            
-                  hEventLog,
                   dwEventID,
                   NULL, // defaults to SYSTEM
                   pszEventCategory,
@@ -347,9 +275,6 @@ LsaSrvLogServiceFailureEvent(
     BAIL_ON_LSA_ERROR(dwError);
     
 cleanup:
-    
-    LsaSrvCloseEventLog(hEventLog);
-    
     return;
 
 error:
@@ -495,3 +420,273 @@ error:
 
 }
 
+DWORD
+LsaSrvStartEventLoggingThread(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+
+    gEventLogState.bShouldExit = FALSE;
+    dwError = LwMapErrnoToLwError(pthread_create(
+                    &gEventLogState.writerThread,
+                    NULL,
+                    LsaSrvEventWriterRoutine,
+                    NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+LsaSrvStopEventLoggingThread(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+    PVOID pvReturned = NULL;
+
+    if (pthread_mutex_lock(&gEventLogState.queueMutex))
+    {
+        // Only fails if the mutex was not properly initalized
+        abort();
+    }
+    gEventLogState.bShouldExit = TRUE;
+    if (pthread_cond_signal(&gEventLogState.wakeUp))
+    {
+        // POSIX says it never fails
+        abort();
+    }
+    if (pthread_mutex_unlock(&gEventLogState.queueMutex))
+    {
+        // Only fails if the mutex was not properly initalized
+        abort();
+    }
+
+    dwError = LwMapErrnoToLwError(pthread_join(
+                    gEventLogState.writerThread,
+                    &pvReturned));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = (DWORD)pvReturned;
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+VOID *
+LsaSrvEventWriterRoutine(
+    PVOID pvUnused
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hEventLog = NULL;
+    PEVENT_LOG_RECORD_QUEUE pWriteQueue = NULL;
+    BOOLEAN bInLock = 0;
+    DWORD dwIndex = 0;
+
+    dwError = LWIOpenEventLogEx(
+                  NULL,             // Server name (defaults to local computer eventlogd)
+                  "System",         // Table Category ID (Security, System, ...)
+                  "Likewise LSASS", // Source
+                  0,                // Source Event ID
+                  "SYSTEM",         // User
+                  NULL,             // Computer (defaults to assigning local hostname)
+                  &hEventLog);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pthread_mutex_lock(&gEventLogState.queueMutex))
+    {
+        // Only fails if the mutex was not properly initalized
+        abort();
+    }
+    bInLock = TRUE;
+
+    while (!gEventLogState.bShouldExit || gEventLogState.pQueue->sSize)
+    {
+        dwError = LwMapErrnoToLwError(
+                        pthread_cond_wait(&gEventLogState.wakeUp,
+                                          &gEventLogState.queueMutex));
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (gEventLogState.pQueue->sSize)
+        {
+            // There are two queues in existence. This thread will take
+            // ownership of the current queue and send its contents to the
+            // event log in the background. The current thread pointer will be
+            // swapped, and the other threads will write to the other queue.
+            pWriteQueue = gEventLogState.pQueue;
+
+            // If pQueue was at index 0, set it to index 1. If it was at index
+            // 1, move it to index 0
+            *(size_t *)&gEventLogState.pQueue ^= (size_t)&gEventLogQueues[0] ^
+                            (size_t)&gEventLogQueues[1]; 
+            // Let other threads continue queuing events
+            if (pthread_mutex_unlock(&gEventLogState.queueMutex))
+            {
+                // Only fails if the mutex was not properly initalized
+                abort();
+            }
+            bInLock = FALSE;
+
+            dwError = LWIWriteEventLogRecords(
+                            hEventLog,
+                            pWriteQueue->sSize,
+                            pWriteQueue->pRecords);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            // Prepare the queue for writing again, but leave its capacity as
+            // is. This avoids extra reallocations the next time around.
+            for (dwIndex = 0; dwIndex < pWriteQueue->sSize; dwIndex++)
+            {
+                LWIFreeEventRecordContents(&pWriteQueue->pRecords[dwIndex]);
+            }
+            pWriteQueue->sSize = 0;
+
+            if (pthread_mutex_lock(&gEventLogState.queueMutex))
+            {
+                // Only fails if the mutex was not properly initalized
+                abort();
+            }
+            bInLock = TRUE;
+        }
+    }
+
+cleanup:
+    if (bInLock)
+    {
+        if (!gEventLogQueues[0].sSize)
+        {
+            LW_SAFE_FREE_MEMORY(gEventLogQueues[0].pRecords);
+            gEventLogQueues[0].sCapacity = 0;
+        }
+        if (!gEventLogQueues[1].sSize)
+        {
+            LW_SAFE_FREE_MEMORY(gEventLogQueues[1].pRecords);
+            gEventLogQueues[1].sCapacity = 0;
+        }
+        if (pthread_mutex_unlock(&gEventLogState.queueMutex))
+        {
+            // Only fails if the mutex was not properly initalized
+            abort();
+        }
+    }
+
+    if (hEventLog)
+    {
+        LWICloseEventLog(hEventLog);
+    }
+    return (PVOID)dwError;
+
+error:
+    LSA_LOG_ERROR("Terminating on fatal eventlog error %d", dwError);
+    kill(getpid(), SIGTERM);
+
+    goto cleanup;
+}
+
+DWORD
+LsaSrvQueueEvent(
+    PEVENT_LOG_RECORD pEvent
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = 0;
+    PEVENT_LOG_RECORD pNewEvent = NULL;
+
+    if (pthread_mutex_lock(&gEventLogState.queueMutex))
+    {
+        // Only fails if the mutex was not properly initalized
+        abort();
+    }
+    bInLock = TRUE;
+
+    if (gEventLogState.pQueue->sSize + 1 > gEventLogState.pQueue->sCapacity)
+    {
+        PEVENT_LOG_RECORD pNewRecords = NULL;
+        size_t sNewCapacity = (gEventLogState.pQueue->sCapacity + 10) * 3 / 2;
+
+        dwError = LwReallocMemory(
+                        gEventLogState.pQueue->pRecords,
+                        (PVOID*)&pNewRecords,
+                        sNewCapacity *
+                            sizeof(*gEventLogState.pQueue->pRecords));
+        BAIL_ON_LSA_ERROR(dwError);
+        gEventLogState.pQueue->pRecords = pNewRecords;
+        gEventLogState.pQueue->sCapacity = sNewCapacity;
+    }
+
+    pNewEvent = gEventLogState.pQueue->pRecords + gEventLogState.pQueue->sSize;
+
+    pNewEvent->dwEventRecordId = pEvent->dwEventRecordId;
+    dwError = LwStrDupOrNull(
+                    pEvent->pszEventTableCategoryId,
+                    &pNewEvent->pszEventTableCategoryId);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszEventType,
+                    &pNewEvent->pszEventType);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pNewEvent->dwEventDateTime = pEvent->dwEventDateTime;
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszEventSource,
+                    &pNewEvent->pszEventSource);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszEventCategory,
+                    &pNewEvent->pszEventCategory);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pNewEvent->dwEventSourceId = pEvent->dwEventSourceId;
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszUser,
+                    &pNewEvent->pszUser);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszComputer,
+                    &pNewEvent->pszComputer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszDescription,
+                    &pNewEvent->pszDescription);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pEvent->pszData,
+                    &pNewEvent->pszData);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    gEventLogState.pQueue->sSize++;
+
+    if (pthread_cond_signal(&gEventLogState.wakeUp))
+    {
+        // POSIX says it never fails
+        abort();
+    }
+
+cleanup:
+    if (bInLock && pthread_mutex_unlock(&gEventLogState.queueMutex))
+    {
+        // Can't fail if the lock succeeded
+        abort();
+    }
+    return dwError;
+
+error:
+    goto cleanup;
+}
