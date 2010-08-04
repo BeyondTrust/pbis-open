@@ -1,4 +1,4 @@
-/* GSSAPI SASL plugin
+/* GSS-SPNEGO SASL plugin
  * Leif Johansson
  * Rob Siemborski (SASL v2 Conversion)
  * $Id: gssapi.c,v 1.92 2004/07/21 14:39:06 rjs3 Exp $
@@ -168,6 +168,7 @@ typedef struct context {
     
     char *authid; /* hold the authid between steps - server */
     const char *user;   /* hold the userid between steps - client */
+    const char *server; /* hold the server FQDN between steps - client */
 } context_t;
 
 enum {
@@ -176,6 +177,87 @@ enum {
     SASL_GSSAPI_STATE_SSFREQ = 3,
     SASL_GSSAPI_STATE_AUTHENTICATED = 4
 };
+
+/*
+ *  * Trys to find the prompt with the lookingfor id in the prompt list
+ *   * Returns it if found. NULL otherwise
+ *    */
+static
+sasl_interact_t *gssspnego_find_prompt(sasl_interact_t **promptlist,
+                                       unsigned int lookingfor)
+{
+    sasl_interact_t *prompt;
+
+    if (promptlist && *promptlist) {
+        for (prompt = *promptlist; prompt->id != SASL_CB_LIST_END; ++prompt) {
+            if (prompt->id==lookingfor)
+                return prompt;
+        }
+    }
+
+    return NULL;
+}
+
+
+/*
+ *  * Make the requested prompts. (prompt==NULL means we don't want it)
+ *   */
+static
+int gssspnego_make_prompts(const sasl_utils_t *utils,
+                           sasl_interact_t **prompts_res,
+                           const char *user_prompt,
+                           const char *user_def,
+                           const char *server_prompt,
+                           const char *server_def)
+{
+    int num = 1;
+    int alloc_size;
+    sasl_interact_t *prompts;
+
+    if (user_prompt) num++;
+    if (server_prompt) num++;
+
+    if (num == 1) {
+        SETERROR( utils, "make_prompts() called with no actual prompts" );
+        return SASL_FAIL;
+    }
+
+    alloc_size = sizeof(sasl_interact_t)*num;
+    prompts = utils->malloc(alloc_size);
+    if (!prompts) {
+        MEMERROR( utils );
+        return SASL_NOMEM;
+    }
+    memset(prompts, 0, alloc_size);
+
+    *prompts_res = prompts;
+
+    if (user_prompt) {
+        (prompts)->id = SASL_CB_USER;
+        (prompts)->challenge = "Authorization Name";
+        (prompts)->prompt = user_prompt;
+        (prompts)->defresult = user_def;
+
+        prompts++;
+    }
+
+    if (server_prompt) {
+        (prompts)->id = SASL_CB_SERVERFQDN;
+        (prompts)->challenge = "Server FQDN";
+        (prompts)->prompt = server_prompt;
+        (prompts)->defresult = server_def;
+
+        prompts++;
+    }
+
+    /* add the ending one */
+    (prompts)->id = SASL_CB_LIST_END;
+    (prompts)->challenge = NULL;
+    (prompts)->prompt = NULL;
+    (prompts)->defresult = NULL;
+
+    return SASL_OK;
+}
 
 /* sasl_gss_log: only logs status string returned from gss_display_status() */
 #define sasl_gss_log(x,y,z) sasl_gss_seterror_(x,y,z,1)
@@ -1316,16 +1398,51 @@ static int gssspnego_client_mech_step(void *conn_context,
 
     case SASL_GSSAPI_STATE_AUTHNEG:
 	/* try to get the userid */
-	if (text->user == NULL) {
+	if (text->user == NULL || text->server == NULL)
+        {
 	    int user_result = SASL_OK;
-	    
-	    user_result = _plug_get_userid(params->utils, &text->user,
-					   prompt_need);
-	    
-	    if ((user_result != SASL_OK) && (user_result != SASL_INTERACT)) {
-		sasl_gss_free_context_contents(text);
-		return user_result;
-	    }
+	    int server_result = SASL_OK;
+
+            if (text->user == NULL)
+            {   
+                user_result = _plug_get_userid(params->utils, &text->user,
+                                               prompt_need);
+
+                if ((user_result != SASL_OK) && (user_result != SASL_INTERACT)) {
+                    sasl_gss_free_context_contents(text);
+                    return user_result;
+                }
+            }
+
+            if (params->serverFQDN == NULL
+                || strlen(params->serverFQDN) == 0)
+            {
+                SETERROR(text->utils, "GSSAPI Failure: no serverFQDN");
+                return SASL_FAIL;
+            }
+
+            if (text->server == NULL)
+            {
+                if (inet_addr(params->serverFQDN) == INADDR_NONE)
+                {
+                    text->server = params->serverFQDN;
+                }
+                else
+                {
+                    sasl_interact_t *prompt_found = NULL;
+
+                    prompt_found = gssspnego_find_prompt(prompt_need,
+                                                     SASL_CB_SERVERFQDN);
+                    if (prompt_found == NULL)
+                    {
+                        server_result = SASL_INTERACT;
+                    }
+                    else
+                    {
+                        text->server = prompt_found->result;
+                    }
+                }
+            }
 		    
 	    /* free prompts we got */
 	    if (prompt_need && *prompt_need) {
@@ -1334,16 +1451,14 @@ static int gssspnego_client_mech_step(void *conn_context,
 	    }
 		    
 	    /* if there are prompts not filled in */
-	    if (user_result == SASL_INTERACT) {
+	    if (user_result == SASL_INTERACT || server_result == SASL_INTERACT) {
 		/* make the prompt list */
 		int result =
-		    _plug_make_prompts(params->utils, prompt_need,
+		    gssspnego_make_prompts(params->utils, prompt_need,
 				       user_result == SASL_INTERACT ?
 				       "Please enter your authorization name" : NULL, NULL,
-				       NULL, NULL,
-				       NULL, NULL,
-				       NULL, NULL, NULL,
-				       NULL, NULL, NULL);
+				       server_result == SASL_INTERACT ?
+				       "Please enter the server's FQDN" : NULL, params->serverFQDN);
 		if (result != SASL_OK) return result;
 		
 		return SASL_INTERACT;
@@ -1351,19 +1466,14 @@ static int gssspnego_client_mech_step(void *conn_context,
 	}
 	    
 	if (text->server_name == GSS_C_NO_NAME) { /* only once */
-	    name_token.length = strlen(params->service) + 1 + strlen(params->serverFQDN);
+	    name_token.length = strlen(params->service) + 1 + strlen(text->server);
 	    name_token.value = (char *)params->utils->malloc((name_token.length + 1) * sizeof(char));
 	    if (name_token.value == NULL) {
 		sasl_gss_free_context_contents(text);
 		return SASL_NOMEM;
 	    }
-	    if (params->serverFQDN == NULL
-		|| strlen(params->serverFQDN) == 0) {
-		SETERROR(text->utils, "GSSAPI Failure: no serverFQDN");
-		return SASL_FAIL;
-	    }
 	    
-	    sprintf(name_token.value,"%s@%s", params->service, params->serverFQDN);
+	    sprintf(name_token.value,"%s@%s", params->service, text->server);
 	    
 	    GSS_LOCK_MUTEX(params->utils);
 	    maj_stat = gss_import_name (&min_stat,

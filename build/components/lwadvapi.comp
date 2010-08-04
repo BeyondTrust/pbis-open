@@ -2,7 +2,7 @@
 
 COMP_NEED_COMPAT=1
 COMP_NEED_FOREIGN=1
-COMP_DEPENDENCIES="autoconf automake libtool lwbase krb5 pstore openldap lwmsg"
+COMP_DEPENDENCIES="autoconf automake libtool lwbase krb5 pstore openldap cyrus-sasl lwmsg"
 COMP_SOURCES="${BUILD_ROOT}/src/linux/lwadvapi"
 COMP_INCREMENTAL=1
 

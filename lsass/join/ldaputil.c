@@ -165,7 +165,7 @@ int LdapMessageFree(LDAPMessage *msg)
 
 
 int LdapInitConnection(LDAP **ldconn, const wchar16_t *host,
-                       UINT32 security)
+                       BOOLEAN bSeal)
 {
     const char *url_prefix = "ldap://";
 
@@ -201,17 +201,11 @@ int LdapInitConnection(LDAP **ldconn, const wchar16_t *host,
     lderr = ldap_set_option(ld, LDAP_OPT_REFERRALS, LDAP_OPT_OFF);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    security |= GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG;
-
-    lderr = ldap_set_option(ld, LDAP_OPT_SSPI_FLAGS, &security);
-    BAIL_ON_LDAP_ERROR(lderr);
-
-    lderr = ldap_set_option(ld, LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL,
-                            LDAP_OPT_ON);
-    BAIL_ON_LDAP_ERROR(lderr);
-
-    lderr = ldap_gssapi_bind_s(ld, NULL, NULL);
-    BAIL_ON_LDAP_ERROR(lderr);
+    dwError = LwLdapBindDirectorySasl(
+                  ld,
+                  ldap_srv,
+                  bSeal);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *ldconn = ld;
 

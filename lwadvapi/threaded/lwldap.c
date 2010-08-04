@@ -238,7 +238,7 @@ LwLdapOpenDirectoryServerSingleAttempt(
     int rc = LDAP_VERSION3;
     DWORD dwPort = 389;
     struct timeval timeout = {0};
-    DWORD dwSecurity = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG;
+    BOOLEAN bLdapSeal = FALSE;
 
     timeout.tv_sec = dwTimeoutSec;
 
@@ -284,26 +284,9 @@ LwLdapOpenDirectoryServerSingleAttempt(
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
-    dwSecurity |= GSS_C_INTEG_FLAG;
-    
     if (dwFlags & LW_LDAP_OPT_SIGN_AND_SEAL)
     {
-        dwSecurity |= GSS_C_CONF_FLAG;
-    }
-
-    dwError = ldap_set_option(ld, LDAP_OPT_SSPI_FLAGS, (void*)&dwSecurity);
-    if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP GSS-API option to"
-                      " sign and/or seal");
-        BAIL_ON_LDAP_ERROR(dwError);
-    }
-
-    dwError = ldap_set_option(ld, LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL,
-                              LDAP_OPT_ON);
-    if (dwError) {
-        LW_LOG_ERROR("Failed to set LDAP GSS-API option to allow"
-                      " remote principals");
-        BAIL_ON_LDAP_ERROR(dwError);
+        bLdapSeal = TRUE;
     }
 
     dwError = LwAllocateMemory(sizeof(*pDirectory), OUT_PPVOID(&pDirectory));
@@ -318,7 +301,10 @@ LwLdapOpenDirectoryServerSingleAttempt(
     }
     else
     {
-        dwError = LwLdapBindDirectory((HANDLE)pDirectory, pszServerName);
+        dwError = LwLdapBindDirectory(
+                      (HANDLE)pDirectory,
+                      pszServerName,
+                      bLdapSeal);
     }
     // The above functions return -1 when a connection times out.
     if (dwError == (DWORD)-1)
@@ -460,7 +446,8 @@ error:
 DWORD
 LwLdapBindDirectory(
     HANDLE hDirectory,
-    PCSTR pszServerName
+    PCSTR pszServerName,
+    BOOLEAN bSeal 
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -570,12 +557,8 @@ LwLdapBindDirectory(
         BAIL_ON_SEC_ERROR(dwMajorStatus);
     }
 
-
-    dwError = ldap_gssapi_bind_s(pDirectory->ld, NULL, NULL);
-    if (dwError != 0) {
-        LW_LOG_ERROR("ldap_gssapi_bind_s failed with error code %d", dwError);
-        BAIL_ON_LDAP_ERROR(dwError);
-    }
+    dwError = LwLdapBindDirectorySasl(pDirectory->ld, pszServerName, bSeal);
+    BAIL_ON_LW_ERROR(dwError);
 
 error:
 
@@ -595,6 +578,99 @@ error:
 
     return(dwError);
 
+}
+
+static int
+LwLdapGssSpnegoInteract(
+    LDAP *ld,
+    unsigned flags,
+    void *defaults,
+    void *in
+){
+    sasl_interact_t *interact = in;
+
+    while (interact->id != SASL_CB_LIST_END)
+    {
+        switch (interact->id)
+        {
+            case SASL_CB_SERVERFQDN:
+                // Supply the server's FQDN which is
+                // required for Kerberos authentication
+
+                interact->result = defaults;
+                interact->len = strlen(interact->result);
+                interact++;
+                break;
+
+            default:
+                interact->result = "";
+                interact->len = strlen(interact->result);
+                interact++;
+        }
+    }
+
+    return LDAP_SUCCESS;
+}
+
+DWORD
+LwLdapBindDirectorySasl(
+    LDAP *ld,
+    PCSTR pszServerName,
+    BOOLEAN bSeal
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+
+    // Do not attempt to canonicalize the server
+    // name which isn't necessary since we used
+    // the server's FQDN or address.
+
+    dwError = ldap_set_option(
+                  ld,
+                  LDAP_OPT_X_SASL_NOCANON,
+                  LDAP_OPT_ON);
+    BAIL_ON_LDAP_ERROR(dwError);
+
+    // ssf=1 is sign, ssf>1 is seal.  By default
+    // it will use the maximum available ssf level
+    // so setting minssf isn't strictly necessary.
+    // Setting minssf guarantees an error if it
+    // cannot provide the minimum level.
+
+    if (bSeal)
+    {
+        dwError = ldap_set_option(
+                      ld,
+                      LDAP_OPT_X_SASL_SECPROPS,
+                      (void *)"minssf=2");
+        BAIL_ON_LDAP_ERROR(dwError);
+    }
+    else
+    {
+        dwError = ldap_set_option(
+                      ld,
+                      LDAP_OPT_X_SASL_SECPROPS,
+                      (void *)"minssf=1,maxssf=1");
+        BAIL_ON_LDAP_ERROR(dwError);
+    }
+
+    dwError = ldap_sasl_interactive_bind_s(
+                  ld,
+                  NULL,
+                  "GSS-SPNEGO",
+                  NULL,
+                  NULL,
+                  LDAP_SASL_QUIET,
+                  LwLdapGssSpnegoInteract,
+                  (void *)pszServerName);
+    if (dwError != 0) {
+        LW_LOG_ERROR("ldap_sasl_interactive_bind_s failed with error code %d", dwError);
+        BAIL_ON_LDAP_ERROR(dwError);
+    }
+
+error:
+
+    return dwError;
 }
 
 void display_status(char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)

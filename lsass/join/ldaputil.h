@@ -79,7 +79,7 @@ int
 LdapInitConnection(
     LDAP **ldconn,
     const wchar16_t *host,
-    UINT32 security
+    BOOLEAN bSeal
     );
 
 

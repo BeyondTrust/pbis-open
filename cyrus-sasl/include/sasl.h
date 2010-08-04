@@ -487,6 +487,7 @@ typedef int sasl_getsimple_t(void *context, int id,
 				      * or server error codes */
 #define SASL_CB_CNONCE       0x4007  /* caller supplies client-nonce
 				      * primarily for testing purposes */
+#define SASL_CB_SERVERFQDN   0xc0004001  /* Likewise server FQDN */
 
 /* get a sasl_secret_t (plaintext password with length)
  * inputs:

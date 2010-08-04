@@ -51,6 +51,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sasl/sasl.h>
 
 #include <lwps/lwps.h>
 #include <lw/rtlmemory.h>

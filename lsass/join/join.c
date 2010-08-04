@@ -2539,7 +2539,7 @@ LsaDirectoryConnect(
     *ldconn     = NULL;
     *dn_context = NULL;
 
-    lderr = LdapInitConnection(&ld, domain, GSS_C_INTEG_FLAG);
+    lderr = LdapInitConnection(&ld, domain, FALSE);
     BAIL_ON_LDAP_ERROR(lderr);
 
     lderr = LdapGetDirectoryInfo(&info, &res, ld);

@@ -344,6 +344,13 @@ LwLdapBindDirectoryAnonymous(
     HANDLE hDirectory
     );
 
+DWORD
+LwLdapBindDirectorySasl(
+    LDAP *ld,
+    PCSTR pszServerName,
+    BOOLEAN bSeal
+    );
+
 LW_END_EXTERN_C
 
 

@@ -13,6 +13,7 @@ liblwadvapi_threaded_la_CPPFLAGS =              \
         -DLW_ENABLE_THREADS=1         \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/include/public \
+	$(CYRUSSASL_INCLUDES) \
 	$(OPENLDAP_INCLUDES) \
 	$(PSTORE_INCLUDES) \
 	$(KRB5_INCLUDES)

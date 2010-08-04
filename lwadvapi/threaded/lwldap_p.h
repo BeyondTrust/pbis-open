@@ -72,7 +72,8 @@ LwLdapBindDirectoryAnonymous(
 DWORD
 LwLdapBindDirectory(
     HANDLE hDirectory,
-    PCSTR pszServerName
+    PCSTR pszServerName,
+    BOOLEAN bSeal
     );
 
 

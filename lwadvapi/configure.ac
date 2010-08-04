@@ -170,6 +170,22 @@ AC_SUBST(OPENLDAP_INCLUDES)
 AC_SUBST(OPENLDAP_LDFLAGS)
 AC_SUBST(OPENLDAP_LIBS)
 
+# cyrus-sasl
+
+AC_ARG_WITH([cyrus-sasl],
+        [AC_HELP_STRING([--with-cyrus-sasl=<dir>], [use cyrus-sasl located in prefix <dir>])],
+        [
+		CYRUSSASL_INCLUDES="-I$withval/include"
+        ])
+
+AC_ARG_WITH([cyrus-sasl-includes],
+        [AC_HELP_STRING([--with-cyrus-sasl-includes=<dir>], [use cyrus-sasl includes located in <dir>])],
+        [
+		CYRUSSASL_INCLUDES="-I$withval"
+        ])
+
+AC_SUBST(CYRUSSASL_INCLUDES)
+
 AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/types.h>
 #include <sys/socket.h>

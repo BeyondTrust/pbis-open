@@ -58,7 +58,6 @@ KtLdapBind(
     int lderr = 0;
     PSTR pszUrl = NULL;
     LDAP *pLd = NULL;
-    int secflags = GSS_C_MUTUAL_FLAG | GSS_C_REPLAY_FLAG | GSS_C_INTEG_FLAG;
 
     dwError = LwAllocateStringPrintf(&pszUrl,
                                      "ldap://%s",
@@ -79,20 +78,8 @@ KtLdapBind(
                             LDAP_OPT_OFF);
     BAIL_ON_LDAP_ERROR(lderr);
 
-    lderr = ldap_set_option(pLd,
-                            LDAP_OPT_X_GSSAPI_ALLOW_REMOTE_PRINCIPAL,
-                            LDAP_OPT_ON);
-    BAIL_ON_LDAP_ERROR(lderr);
-
-    lderr = ldap_set_option(pLd,
-                            LDAP_OPT_SSPI_FLAGS,
-                            &secflags);
-    BAIL_ON_LDAP_ERROR(lderr);
-
-    lderr = ldap_gssapi_bind_s(pLd,
-                               NULL,
-                               NULL);
-    BAIL_ON_LDAP_ERROR(lderr);
+    dwError = LwLdapBindDirectorySasl(pLd, pszDc, FALSE);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *ppLd = pLd;
 
