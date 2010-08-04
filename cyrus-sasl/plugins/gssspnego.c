@@ -50,6 +50,7 @@
 #else
 #include <gssapi/gssapi.h>
 #endif
+#include <gssapi/gssapi_krb5.h>
 
 #ifdef WIN32
 #  include <winsock2.h>
@@ -1466,19 +1467,19 @@ static int gssspnego_client_mech_step(void *conn_context,
 	}
 	    
 	if (text->server_name == GSS_C_NO_NAME) { /* only once */
-	    name_token.length = strlen(params->service) + 1 + strlen(text->server);
+	    name_token.length = strlen(params->service) + 2 + strlen(text->server);
 	    name_token.value = (char *)params->utils->malloc((name_token.length + 1) * sizeof(char));
 	    if (name_token.value == NULL) {
 		sasl_gss_free_context_contents(text);
 		return SASL_NOMEM;
 	    }
 	    
-	    sprintf(name_token.value,"%s@%s", params->service, text->server);
+	    sprintf(name_token.value,"%s/%s@", params->service, text->server);
 	    
 	    GSS_LOCK_MUTEX(params->utils);
 	    maj_stat = gss_import_name (&min_stat,
 					&name_token,
-					GSS_C_NT_HOSTBASED_SERVICE,
+					GSS_KRB5_NT_PRINCIPAL_NAME,
 					&text->server_name);
 	    GSS_UNLOCK_MUTEX(params->utils);
 	    
