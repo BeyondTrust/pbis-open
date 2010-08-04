@@ -106,6 +106,7 @@ LwListRemove(
 {
     Element->Prev->Next = Element->Next;
     Element->Next->Prev = Element->Prev;
+    Element->Next = Element->Prev = Element;
 }
 
 LW_LIST_LINKS*
@@ -114,7 +115,15 @@ LwListRemoveAfter(
     )
 {
     LW_LIST_LINKS* element = Head->Next;
-    LwListRemove(element);
+    if (element != Head)
+    {
+        LwListRemove(element);
+    }
+    else
+    {
+        element = NULL;
+    }
+
     return element;
 }
 
@@ -124,7 +133,15 @@ LwListRemoveBefore(
     )
 {
     LW_LIST_LINKS* element = Head->Prev;
-    LwListRemove(element);
+    if (element != Head)
+    {
+        LwListRemove(element);
+    }
+    else
+    {
+        element = NULL;
+    }
+
     return element;
 }
 
