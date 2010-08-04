@@ -267,11 +267,6 @@ LWIFreeEventRecord(
     );
 
 VOID
-LWIFreeEventRecordContents(
-    PEVENT_LOG_RECORD pEventRecord
-    );
-
-VOID
 LWIFreeEventRecordList(
     DWORD dwRecords,
     PEVENT_LOG_RECORD pEventRecordList

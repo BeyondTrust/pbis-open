@@ -251,16 +251,6 @@ LsaSrvLogDuplicateObjectFoundEvent(
     DWORD dwErrCode
     );
 
-DWORD
-LsaSrvStartEventLoggingThread(
-    VOID
-    );
-
-DWORD
-LsaSrvStopEventLoggingThread(
-    VOID
-    );
-
 VOID
 LsaSrvLogServiceSuccessEvent(
     DWORD dwEventID,
@@ -286,7 +276,14 @@ LsaSrvLogServiceFailureEvent(
     );
 
 DWORD
+LsaSrvOpenEventLog(
+    PSTR pszCategoryType,   
+    PHANDLE phEventLog
+    );
+
+DWORD
 LsaSrvLogInformationEvent(
+    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser,
     PCSTR  pszCategory,
@@ -296,6 +293,7 @@ LsaSrvLogInformationEvent(
 
 DWORD
 LsaSrvLogWarningEvent(
+    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser,
     PCSTR  pszCategory,
@@ -305,6 +303,7 @@ LsaSrvLogWarningEvent(
 
 DWORD
 LsaSrvLogErrorEvent(
+    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser,
     PCSTR  pszCategory,
@@ -314,6 +313,7 @@ LsaSrvLogErrorEvent(
 
 DWORD
 LsaSrvLogSuccessAuditEvent(
+    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser,
     PCSTR  pszCategory,
@@ -323,11 +323,17 @@ LsaSrvLogSuccessAuditEvent(
 
 DWORD
 LsaSrvLogFailureAuditEvent(
+    HANDLE hEventLog,
     DWORD  dwEventID,
     PCSTR  pszUser,
     PCSTR  pszCategory,
     PCSTR  pszDescription,
     PCSTR  pszData
+    );
+
+DWORD
+LsaSrvCloseEventLog(
+    HANDLE hEventLog
     );
 
 DWORD

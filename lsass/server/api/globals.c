@@ -64,9 +64,6 @@ LSA_SRV_API_CONFIG gAPIConfig = {0};
 
 PLW_MAP_SECURITY_CONTEXT gpLsaSecCtx;
 
-// Do not directly access this. Use gEventLogState
-EVENT_LOG_RECORD_QUEUE gEventLogQueues[2] = { {0}, {0} };
-EVENTLOG_THREAD_STATE gEventLogState = { (pthread_t)NULL, PTHREAD_COND_INITIALIZER, 0, PTHREAD_MUTEX_INITIALIZER, &gEventLogQueues[0] };
 
 DWORD
 LsaSrvApiInit(
