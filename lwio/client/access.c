@@ -242,6 +242,7 @@ LwIoCopyCreds(
             pCredsCopy->payload.krb5Tgt.startTime = pCreds->payload.krb5Tgt.startTime;
             pCredsCopy->payload.krb5Tgt.endTime = pCreds->payload.krb5Tgt.endTime;
             pCredsCopy->payload.krb5Tgt.renewTillTime = pCreds->payload.krb5Tgt.renewTillTime;
+            pCredsCopy->payload.krb5Tgt.keyType = pCreds->payload.krb5Tgt.keyType;
             pCredsCopy->payload.krb5Tgt.ulKeySize = pCreds->payload.krb5Tgt.ulKeySize;
             Status = LwIoAllocateMemory(
                 pCreds->payload.krb5Tgt.ulKeySize,
