@@ -84,7 +84,10 @@ lwmsg_call_release(
     LWMsgCall* call
     )
 {
-    call->vtbl->release(call);
+    if (call)
+    {
+        call->vtbl->release(call);
+    }
 }
 
 LWMsgStatus
