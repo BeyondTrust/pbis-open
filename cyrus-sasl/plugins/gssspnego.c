@@ -1424,24 +1424,17 @@ static int gssspnego_client_mech_step(void *conn_context,
 
             if (text->server == NULL)
             {
-                if (inet_addr(params->serverFQDN) == INADDR_NONE)
+                sasl_interact_t *prompt_found = NULL;
+
+                prompt_found = gssspnego_find_prompt(prompt_need,
+                                                 SASL_CB_SERVERFQDN);
+                if (prompt_found == NULL)
                 {
-                    text->server = params->serverFQDN;
+                    server_result = SASL_INTERACT;
                 }
                 else
                 {
-                    sasl_interact_t *prompt_found = NULL;
-
-                    prompt_found = gssspnego_find_prompt(prompt_need,
-                                                     SASL_CB_SERVERFQDN);
-                    if (prompt_found == NULL)
-                    {
-                        server_result = SASL_INTERACT;
-                    }
-                    else
-                    {
-                        text->server = prompt_found->result;
-                    }
+                    text->server = prompt_found->result;
                 }
             }
 		    
