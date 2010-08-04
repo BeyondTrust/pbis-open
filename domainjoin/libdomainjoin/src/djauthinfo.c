@@ -894,9 +894,15 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
         if (options->warningCallback != NULL)
         {
             options->warningCallback(options, "Unsupported loader flags set",
-                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environmental variables (see http://linuxmafia.com/faq/Admin/ld-lib-path.html for more information). Likewise does not support environments where either variable is set.\n"
+                                 "LD_LIBRARY_PATH and/or LD_PRELOAD are currently set on your system. Best practices for Unix and Linux administration strongly recommend not to use these environmental variables. Likewise does not support environments where either variable is set.\n"
+                                  "\n"
+                                 "If this operation fails you should stop all likewise daemons, clear the environmental variable, then retry the join operation.\n"
                                  "\n"
-                                 "If this operation fails you should stop all likewise daemons, clear the environmental variable, then retry the join operation.");
+                                 "For more information, see the Likewise guide online at:\n"
+                                 "http://www.likewise.com/resources/documentation_library/manuals/open/likewise-open-guide.html#AgentRequirements\n"
+                                 "\n"
+                                 "Or a local PDF file is available in:\n"
+                                 "/opt/likewise/docs/likewise-open-guide.pdf (See section 4.2 Requirements for the Agent");
         }
     }
 
