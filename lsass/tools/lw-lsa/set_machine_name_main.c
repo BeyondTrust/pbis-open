@@ -244,6 +244,8 @@ ValidateParameters(
 
     if (strlen(pszName) > 15)
     {
+        fprintf(stdout, "Machine name can have up to 15 characters\n");
+
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }

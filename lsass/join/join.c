@@ -78,20 +78,6 @@ LsaGetAccountName(
 
 
 static
-UINT32
-NetWc16sHash(
-    const wchar16_t *str
-    );
-
-
-static
-wchar16_t *
-NetHashToWc16s(
-    UINT32    hash
-    );
-
-
-static
 NTSTATUS
 LsaCreateMachineAccount(
     PWSTR          pwszDCName,
@@ -1169,19 +1155,18 @@ LsaGetAccountName(
       */
     if (!samname)
     {
-        hash = NetWc16sHash(machname_lc);
+        err = LsaWc16sHash(machname_lc, &hash);
+        BAIL_ON_LSA_ERROR(err);
 
         for (offset = 0 ; offset < 100 ; offset++)
         {
-            hashstr = NetHashToWc16s(hash + offset);
-            if (hashstr == NULL)
-            {
-                err = ERROR_OUTOFMEMORY;
-                BAIL_ON_LSA_ERROR(err);
-            }
+            err = LsaHashToWc16s(hash + offset, &hashstr);
+            BAIL_ON_LSA_ERROR(err);
+
             hashstrlen = wc16slen(hashstr);
 
             wc16sncpy(newname, machname, 15 - hashstrlen);
+            newname[15 - hashstrlen - 1] = (WCHAR)'-';
             wc16sncpy(newname + 15 - hashstrlen, hashstr, hashstrlen);
 
             LW_SAFE_FREE_MEMORY(hashstr);
@@ -1253,64 +1238,6 @@ error:
     *account_name = NULL;
 
     goto cleanup;
-}
-
-
-static
-UINT32
-NetWc16sHash(
-    const wchar16_t *str
-    )
-{
-    DWORD  dwLen = 0;
-    DWORD  dwPos = 0;
-    UINT32 result = 0;
-    char   *data = (char *)str;
-
-    dwLen = wc16slen(str) * 2;
-
-    for (dwPos = 0 ; dwPos < dwLen ; dwPos++)
-    {
-        if ( data[dwPos] )
-        {
-            // rotate result to the left 3 bits with wrap around
-            result = (result << 3) | (result >> (sizeof(UINT32)*8 - 3));
-            result += data[dwPos];
-        }
-    }
-
-    return result;
-}
-
-
-static
-wchar16_t *
-NetHashToWc16s(
-    UINT32    hash
-    )
-{
-    char *pszValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    DWORD dwNumValid = strlen(pszValidChars);
-    char pszHashStr[16];
-    UINT32 hash_local = hash;
-    DWORD dwPos = 0;
-    DWORD new_char = 0;
-    wchar16_t *result = NULL;
-
-    memset(pszHashStr, 0, sizeof(pszHashStr));
-
-    pszHashStr[dwPos++] = '-';
-
-    while( hash_local )
-    {
-        new_char = hash_local % dwNumValid;
-        pszHashStr[dwPos++] = pszValidChars[new_char];
-        hash_local /= dwNumValid;
-    }
-
-    result = ambstowc16s(pszHashStr);
-
-    return result;
 }
 
 

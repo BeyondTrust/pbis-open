@@ -967,6 +967,13 @@ LocalDirSetDomainName(
 
     DIRECTORY_MOD mods[ATTR_IDX_SENTINEL + 1];
 
+    BAIL_ON_INVALID_POINTER(pszNewDomainName);
+
+    if (strlen(pszNewDomainName) > 15)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     /*
      * Freeze local provider to prevent from changing

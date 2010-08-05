@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -104,6 +104,164 @@ error:
     
     goto cleanup;
 }
+
+
+DWORD
+LsaWc16sHash(
+    PCWSTR  pwszStr,
+    PDWORD  pdwResult
+    )
+{
+    DWORD  dwError = ERROR_SUCCESS;
+    size_t sLen = 0;
+    DWORD  dwPos = 0;
+    DWORD  dwResult = 0;
+    PSTR   pszData = (PSTR)pwszStr;
+
+    BAIL_ON_INVALID_POINTER(pwszStr);
+    BAIL_ON_INVALID_POINTER(pdwResult);
+
+    dwError = LwWc16sLen(pwszStr, &sLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    sLen *= 2;
+
+    for (dwPos = 0; dwPos < sLen ; dwPos++)
+    {
+        if (pszData[dwPos])
+        {
+            // rotate result to the left 3 bits with wrap around
+            dwResult = (dwResult << 3) | (dwResult >> (sizeof(DWORD)*8 - 3));
+            dwResult += pszData[dwPos];
+        }
+    }
+
+    *pdwResult = dwResult;
+
+cleanup:
+    return dwError;
+
+error:
+    if (pdwResult)
+    {
+        *pdwResult = 0;
+    }
+
+    goto cleanup;
+}
+
+
+DWORD
+LsaStrHash(
+    PCSTR   pszStr,
+    PDWORD  pdwResult
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PWSTR pwszStr = NULL;
+
+    BAIL_ON_INVALID_POINTER(pszStr);
+    BAIL_ON_INVALID_POINTER(pdwResult);
+
+    dwError = LwMbsToWc16s(pszStr, &pwszStr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaWc16sHash(pwszStr, pdwResult);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pwszStr);
+
+    return dwError;
+
+error:
+    if (pdwResult)
+    {
+        *pdwResult = 0;
+    }
+
+    goto cleanup;
+}
+
+
+DWORD
+LsaHashToWc16s(
+    DWORD   dwHash,
+    PWSTR  *ppwszHashStr
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PSTR pszValidChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    DWORD dwNumValid = strlen(pszValidChars);
+    CHAR pszHashStr[16] = {0};
+    DWORD dwHashLocal = dwHash;
+    DWORD dwPos = 0;
+    DWORD dwNewChar = 0;
+    PWSTR pwszHashStr = NULL;
+
+    BAIL_ON_INVALID_POINTER(ppwszHashStr);
+
+    memset(pszHashStr, 0, sizeof(pszHashStr));
+
+    while(dwHashLocal)
+    {
+        dwNewChar = dwHashLocal % dwNumValid;
+        pszHashStr[dwPos++] = pszValidChars[dwNewChar];
+        dwHashLocal /= dwNumValid;
+    }
+
+    dwError = LwMbsToWc16s(pszHashStr, &pwszHashStr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppwszHashStr = pwszHashStr;
+
+cleanup:
+    return dwError;
+
+error:
+    if (*ppwszHashStr)
+    {
+        *ppwszHashStr = NULL;
+    }
+
+    goto cleanup;
+}
+
+
+DWORD
+LsaHashToStr(
+    DWORD   dwHash,
+    PSTR   *ppszHashStr
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PWSTR pwszHashStr = NULL;
+    PSTR pszHashStr = NULL;
+
+    BAIL_ON_INVALID_POINTER(ppszHashStr);
+
+    dwError = LsaHashToWc16s(dwHash, &pwszHashStr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(pwszHashStr, &pszHashStr);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *ppszHashStr = pszHashStr;
+
+cleanup:
+    LW_SAFE_FREE_MEMORY(pwszHashStr);
+
+    return dwError;
+
+error:
+    if (*ppszHashStr)
+    {
+        *ppszHashStr = NULL;
+    }
+
+    goto cleanup;
+}
+
 
 /*
 local variables:

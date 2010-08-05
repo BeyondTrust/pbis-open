@@ -375,17 +375,53 @@ SamDbAddDefaultEntries(
 {
     DWORD  dwError = 0;
     PSTR   pszHostname = NULL;
+    size_t sHostnameLen = 0;
+    PSTR   pszHostnameLower = NULL;
+    DWORD  dwHostnameHash = 0;
+    PSTR   pszHashStr = NULL;
+    size_t sHashStrLen = 0;
     PSTR   pszDomainDN = NULL;
-    CHAR   szNetBIOSName[16];
+    CHAR   szDomainName[16] = {0};
     PSID   pMachineSid = NULL;
 
     dwError = LsaDnsGetHostInfo(&pszHostname);
     BAIL_ON_SAMDB_ERROR(dwError);
 
     LwStrToUpper(pszHostname);
+    sHostnameLen = strlen(pszHostname);
 
-    memset(szNetBIOSName, 0, sizeof(szNetBIOSName));
-    strncpy(szNetBIOSName, pszHostname, 15);
+    if (sHostnameLen < 16)
+    {
+        strncpy(szDomainName, pszHostname, sHostnameLen);
+    }
+    else
+    {
+        /*
+         * The hostname is too long for NetBIOS max size
+         * so format the machine domain name based on the hostname
+         * and its hash (separated with '-').
+         */
+        dwError = LwAllocateString(pszHostname, &pszHostnameLower);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        LwStrToLower(pszHostnameLower);
+
+        dwError = LsaStrHash(pszHostnameLower, &dwHostnameHash);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = LsaHashToStr(dwHostnameHash, &pszHashStr);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        sHashStrLen = strlen(pszHashStr);
+
+        strncpy(szDomainName,
+                pszHostname,
+                sizeof(szDomainName) - sHashStrLen - 1);
+        szDomainName[sizeof(szDomainName) - sHashStrLen - 2] = '-';
+        strncpy(&szDomainName[sizeof(szDomainName) - sHashStrLen - 1],
+                pszHashStr,
+                sHashStrLen);
+    }
 
     dwError = SamDbInitConfig(hDirectory);
     BAIL_ON_SAMDB_ERROR(dwError);
@@ -393,14 +429,14 @@ SamDbAddDefaultEntries(
     dwError = LwAllocateStringPrintf(
                     &pszDomainDN,
                     "DC=%s",
-                    pszHostname);
+                    &szDomainName[0]);
     BAIL_ON_SAMDB_ERROR(dwError);
 
     dwError = SamDbAddMachineDomain(
                     hDirectory,
                     pszDomainDN,
-                    pszHostname,
-                    &szNetBIOSName[0],
+                    &szDomainName[0],
+                    &szDomainName[0],
                     &pMachineSid);
     BAIL_ON_SAMDB_ERROR(dwError);
 
@@ -417,7 +453,7 @@ SamDbAddDefaultEntries(
     dwError = SamDbAddLocalAccounts(
                     hDirectory,
                     pszDomainDN,
-                    szNetBIOSName,
+                    &szDomainName[0],
                     pMachineSid);
     BAIL_ON_SAMDB_ERROR(dwError);
 
@@ -426,9 +462,10 @@ SamDbAddDefaultEntries(
     BAIL_ON_SAMDB_ERROR(dwError);
 
 cleanup:
-
     DIRECTORY_FREE_STRING(pszHostname);
     DIRECTORY_FREE_STRING(pszDomainDN);
+    DIRECTORY_FREE_STRING(pszHashStr);
+    DIRECTORY_FREE_STRING(pszHostnameLower);
 
     return dwError;
 

@@ -1114,6 +1114,30 @@ LsaDnsGetHostInfo(
     PSTR* ppszHostname
     );
 
+DWORD
+LsaWc16sHash(
+    PCWSTR  pwszStr,
+    PDWORD  pdwResult
+    );
+
+DWORD
+LsaStrHash(
+    PCSTR   pszStr,
+    PDWORD  pdwResult
+    );
+
+DWORD
+LsaHashToWc16s(
+    DWORD   dwHash,
+    PWSTR  *ppwszHashStr
+    );
+
+DWORD
+LsaHashToStr(
+    DWORD   dwHash,
+    PSTR   *ppszHashStr
+    );
+
 VOID
 LsaDnsFreeFQDNList(
     PDNS_FQDN* ppFQDNList,
