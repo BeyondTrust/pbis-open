@@ -164,7 +164,9 @@ IopIrpAttach(
 
     IopFileObjectLock(pFileObject);
     // TODO-Add FILE_OBJECT_FLAG_CLOSED
-    if ((Type != IRP_TYPE_CLOSE) && IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RUNDOWN))
+    if ((Type != IRP_TYPE_CLOSE) &&
+        (IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_CANCELLED) ||
+         IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RUNDOWN)))
     {
         status = STATUS_CANCELLED;
     }
@@ -720,9 +722,11 @@ cleanup:
 
 VOID
 IopIrpCancelFileObject(
-    IN PIO_FILE_OBJECT pFileObject
+    IN PIO_FILE_OBJECT pFileObject,
+    IN BOOLEAN IsForRundown
     )
 {
+    BOOLEAN isLocked = FALSE;
     PLW_LIST_LINKS pLinks = NULL;
     PIRP_INTERNAL irpInternal = NULL;
     LW_LIST_LINKS cancelList = { 0 };
@@ -732,6 +736,18 @@ IopIrpCancelFileObject(
 
     // Gather IRPs we want to cancel while holding FO lock.
     IopFileObjectLock(pFileObject);
+    isLocked = TRUE;
+
+    if (IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_CANCELLED))
+    {
+        GOTO_CLEANUP();
+    }
+
+    if (IsForRundown)
+    {
+        SetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_CANCELLED);
+    }
+
     // gather list of IRPs
     for (pLinks = pFileObject->IrpList.Next;
          pLinks != &pFileObject->IrpList;
@@ -749,6 +765,7 @@ IopIrpCancelFileObject(
         }
     }
     IopFileObjectUnlock(pFileObject);
+    isLocked = FALSE;
 
     // Iterate over list, calling IopIrpCancel as appropriate.
     while (!LwListIsEmpty(&cancelList))
@@ -759,6 +776,12 @@ IopIrpCancelFileObject(
 
         IopIrpCancel(pIrp);
         IopIrpDereference(&pIrp);
+    }
+
+cleanup:
+    if (isLocked)
+    {
+        IopFileObjectUnlock(pFileObject);
     }
 }
 

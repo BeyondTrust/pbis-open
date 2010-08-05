@@ -108,6 +108,11 @@ IoCancelFile(
     IN IO_FILE_HANDLE FileHandle
     );
 
+VOID
+IoCancelForRundownFile(
+    IN IO_FILE_HANDLE FileHandle
+    );
+
 NTSTATUS
 IoRundownFile(
     IN OUT IO_FILE_HANDLE FileHandle,

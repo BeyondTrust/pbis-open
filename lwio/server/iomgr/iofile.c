@@ -372,7 +372,7 @@ IopFileObjectRundown(
     isLocked = FALSE;
 
     // Cancel everything now that rundown flag is set.
-    IopIrpCancelFileObject(pFileObject);
+    IopIrpCancelFileObject(pFileObject, TRUE);
 
     // Now check whether we need to wait for rundown.
     IopFileObjectLock(pFileObject);
@@ -454,7 +454,8 @@ IopFileObjectAddDispatched(
     IopFileObjectLock(pFileObject);
 
     if ((Type != IRP_TYPE_CLOSE) &&
-        IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RUNDOWN))
+        (IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_CANCELLED) ||
+         IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RUNDOWN)))
     {
         status = STATUS_CANCELLED;
     }

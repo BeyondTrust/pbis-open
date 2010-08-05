@@ -228,7 +228,15 @@ IoCancelFile(
     IN IO_FILE_HANDLE FileHandle
     )
 {
-    IopIrpCancelFileObject(FileHandle);
+    IopIrpCancelFileObject(FileHandle, FALSE);
+}
+
+VOID
+IoCancelForRundownFile(
+    IN IO_FILE_HANDLE FileHandle
+    )
+{
+    IopIrpCancelFileObject(FileHandle, TRUE);
 }
 
 NTSTATUS

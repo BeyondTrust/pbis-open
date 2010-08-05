@@ -385,7 +385,8 @@ IopIrpDispatch(
 
 VOID
 IopIrpCancelFileObject(
-    IN PIO_FILE_OBJECT pFileObject
+    IN PIO_FILE_OBJECT pFileObject,
+    IN BOOLEAN IsForRundown
     );
 
 VOID
