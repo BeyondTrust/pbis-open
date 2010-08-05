@@ -60,6 +60,7 @@ libdomainjoin_la_SOURCES = \
        src/djroutines.c   \
        src/djprocutils.c  \
        src/djmodule.c \
+       src/djsmartcard.c \
        src/djapi.c
 
 if ENABLE_MINIMAL
