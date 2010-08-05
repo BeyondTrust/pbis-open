@@ -242,13 +242,14 @@ sb_sasl_gssapi_decode(
 	gss_ctx_id_t gss_ctx = (gss_ctx_id_t)p->ops_private;
 	int gss_rc;
 	OM_uint32 minor_status;
-	gss_buffer_desc unwrapped, wrapped;
+	gss_buffer_desc unwrapped = { 0 }, wrapped;
 	gss_OID ctx_mech = GSS_C_NO_OID;
 	OM_uint32 ctx_flags = 0;
 	int conf_req_flag = 0;
 	int conf_state;
 	unsigned char *b;
 	ber_len_t pkt_len;
+	ber_int_t result = 0;
 
 	wrapped.value	= src->buf_base + 4;
 	wrapped.length	= src->buf_end - 4;
@@ -275,13 +276,15 @@ sb_sasl_gssapi_decode(
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
 				"sb_sasl_gssapi_decode: failed to decode packet: %s\n",
 				gsserrstr( msg, sizeof(msg), ctx_mech, gss_rc, minor_status ) );
-		return -1;
+		result = -1;
+		goto cleanup;
 	}
 
 	if ( conf_req_flag && conf_state == 0 ) {
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
 				"sb_sasl_gssapi_encode: GSS_C_CONF_FLAG was ignored by our peer\n" );
-		return -1;
+		result = -1;
+		goto cleanup;
 	}
 
 	/* Grow the packet buffer if neccessary */
@@ -291,7 +294,8 @@ sb_sasl_gssapi_decode(
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
 				"sb_sasl_gssapi_decode: failed to grow the buffer to %lu bytes\n",
 				pkt_len );
-		return -1;
+		result = -1;
+		goto cleanup;
 	}
 
 	dst->buf_end = unwrapped.length;
@@ -301,9 +305,9 @@ sb_sasl_gssapi_decode(
 	/* copy the wrapped blob to the right location */
 	memcpy(b, unwrapped.value, unwrapped.length);
 
+cleanup:
 	gss_release_buffer(&minor_status, &unwrapped);
-
-	return 0;
+	return result;
 }
 
 static void
