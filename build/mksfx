@@ -71,6 +71,12 @@ build_sfx()
     _META_DIR=${META_DIR}/${PKG_TYPE}/${OSARCH}
     _BASE_NAME=${PKG_NAME}-${SFX_VER}-${OSNAME}
     TARDIR=${_META_DIR}/${_BASE_NAME}
+
+    if [ -n "${OPT_SHOW}" ]; then
+        echo "${DIST_DIR}/`basename ${TARDIR}.sh`"
+        return 0
+    fi
+
     _TARGET_SUBDIR="packages/${BUILD_OS_TYPE}/${OSARCH}"
 
     rm -rf ${_META_DIR}
@@ -198,17 +204,26 @@ _build_loop()
         OSNAME="${BUILD_OS_TYPE}${EXTRA_NAME}-${larch}-${PKG_TYPE}"
         OSARCH="${arch}"
         if [ -n "${PKG_FILES_SPEC}" ]; then
-            echo "Building shell archive for ${OSNAME}..."
+            if [ -z "${OPT_QUIET}" ]; then
+                echo "Building shell archive for ${OSNAME}..."
+            fi
             build_sfx
         else
-            echo "Skipping shell archive for ${OSNAME}..."
+            if [ -z "${OPT_QUIET}" ]; then
+                echo "Skipping shell archive for ${OSNAME}..."
+            fi
         fi
     done
 }
 
 function build_loop
 {
-    time_command "SFX ${BUILD_OS_TYPE}${EXTRA_NAME} ${PKG_TYPE}" _build_loop "$@"
+    if [ -z "${OPT_QUIET}" ]; then
+        time_command "SFX ${BUILD_OS_TYPE}${EXTRA_NAME} ${PKG_TYPE}" _build_loop "$@"
+    else
+        _build_loop "$@"
+    fi
+
     exit_on_error $?
 }
 
@@ -217,7 +232,9 @@ function build_manifest
     local name="${PKG_CONFIG_NAME}"
     local manifest="${BUILD_META_OS_ROOT}/sfx/${PKG_CONFIG_NAME}/MANIFEST"
 
-    installer_build_manifest "${name}" "${manifest}"
+    if [ -z "${OPT_SHOW}" ]; then
+        installer_build_manifest "${name}" "${manifest}"
+    fi
 
     echo "${manifest}"
 }
@@ -240,6 +257,8 @@ function usage
     echo "    --all, -a - Create SFX files for all architectures for this platform"
     echo "      (${_arch_list}) instead of just the current one (${BUILD_OS_ARCH})."
     echo ""
+    echo "    --show - Just show the SFX installer files that would be built."
+    echo ""
     echo "  products:"
     echo ""
     local _config
@@ -255,6 +274,8 @@ function main
 
     OPT_ALL_ARCH=""
     OPT_PKG_TYPE_LIST=""
+    OPT_SHOW=""
+    OPT_QUIET=""
 
     while true; do
         case "$1" in
@@ -270,6 +291,10 @@ function main
                 exit_on_error $? "Invalid package type '$2'"
 		OPT_PKG_TYPE_LIST="${OPT_PKG_TYPE_LIST} $2"
                 shift
+                ;;
+            --show)
+                OPT_SHOW=1
+                OPT_QUIET=1
                 ;;
             --all|-a)
                 OPT_ALL_ARCH=1
@@ -294,7 +319,7 @@ function main
     fi
 
     if ! product_exists "${PKG_CONFIG_NAME}" ; then
-        echo "Product '${PKG_CONFIG_NAME}' does not exist"
+        warn "Product '${PKG_CONFIG_NAME}' does not exist"
         exit 1
     fi
 
@@ -307,7 +332,9 @@ function main
                 OPT_PKG_TYPE_LIST=dmg
                 ;;
         esac
-	echo "Using default package type list: '${OPT_PKG_TYPE_LIST}'"
+        if [ -z "${OPT_QUIET}" ]; then
+            echo "Using default package type list: '${OPT_PKG_TYPE_LIST}'"
+        fi
     fi
 
     #
