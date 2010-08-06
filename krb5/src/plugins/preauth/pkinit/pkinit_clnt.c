@@ -1269,8 +1269,10 @@ pkinit_client_get_flags(krb5_context kcontext, krb5_preauthtype patype)
 }
 
 static krb5_preauthtype supported_client_pa_types[] = {
+#if 0 /* Doesn't work yet. */
     KRB5_PADATA_PK_AS_REP,
     KRB5_PADATA_PK_AS_REQ,
+#endif
     KRB5_PADATA_PK_AS_REP_OLD,
     KRB5_PADATA_PK_AS_REQ_OLD,
     0
