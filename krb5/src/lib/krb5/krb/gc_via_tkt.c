@@ -403,6 +403,11 @@ krb5_get_cred_via_tkt_ext (krb5_context context, krb5_creds *tkt,
 			       &in_cred->second_ticket,  out_cred);
 
 error_3:;
+    memset(dec_rep->enc_part2->session->contents, 0,
+	   dec_rep->enc_part2->session->length);
+    krb5_free_kdc_rep(context, dec_rep);
+
+error_4:;
     if (subkey != NULL) {
       if (retval == 0 && out_subkey != NULL)
 	  *out_subkey = subkey;
@@ -410,11 +415,6 @@ error_3:;
 	  krb5_free_keyblock(context, subkey);
     }
     
-    memset(dec_rep->enc_part2->session->contents, 0,
-	   dec_rep->enc_part2->session->length);
-    krb5_free_kdc_rep(context, dec_rep);
-
-error_4:;
     free(tgsrep.response.data);
 #ifdef DEBUG_REFERRALS
     printf("krb5_get_cred_via_tkt ending; %s\n", retval?error_message(retval):"no error");
