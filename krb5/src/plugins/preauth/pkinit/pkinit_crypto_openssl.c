@@ -268,6 +268,8 @@ unsigned char pkinit_4096_dhprime[4096/8] = {
 static int pkinit_oids_refs = 0;
 
 static void pkinit_terminate(void);
+static int fix_signeddata(unsigned char *data, unsigned int data_len,
+	       unsigned char **out, unsigned int *out_len);
 
 MAKE_FINI_FUNCTION(pkinit_terminate);
 
