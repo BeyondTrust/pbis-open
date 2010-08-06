@@ -2426,7 +2426,7 @@ AD_GetStatus(
 
     LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
 
-    if (gpLsaAdProviderState->joinState != LSA_AD_JOINED)
+    if (gpLsaAdProviderState->joinState != LSA_AD_JOINED || !gpADProviderData)
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
