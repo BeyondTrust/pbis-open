@@ -1473,6 +1473,9 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
         return TRUE;
     if(!strcmp(buffer, "pam_ldap"))
         return TRUE;
+    // Part of freeradius. It authenticates the user by a radius server
+    if (!strcmp(buffer, "pam_radius_auth"))
+        return TRUE;
     //This was found on SLED10 SP1. It is used for Novell's E-Directory.
     if(!strcmp(buffer, "pam_nam"))
         return TRUE;
