@@ -27,8 +27,8 @@ typedef struct _REGSHELL_UTIL_IMPORT_CONTEXT
 
 DWORD
 RegShellCanonicalizePath(
-    PSTR pszInDefaultKey,
-    PSTR pszInKeyName,
+    PCSTR pszInDefaultKey,
+    PCSTR pszInKeyName,
     PSTR *ppszFullPath,
     PSTR *ppszParentPath,
     PSTR *ppszSubKey
@@ -37,25 +37,25 @@ RegShellCanonicalizePath(
 DWORD
 RegShellIsValidKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszKey
+    PCSTR pszRootKeyName,
+    PCSTR pszKey
     );
 
 DWORD
 RegShellUtilAddKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR pszKeyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR pszKeyName,
     BOOLEAN bDoBail
     );
 
 DWORD
 RegShellUtilAddKeySecDesc(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR pszKeyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR pszKeyName,
     BOOLEAN bDoBail,
     ACCESS_MASK AccessDesired,
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDescriptor
@@ -64,25 +64,25 @@ RegShellUtilAddKeySecDesc(
 DWORD
 RegShellUtilDeleteKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName
     );
 
 DWORD
 RegShellUtilDeleteTree(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName
     );
 
 DWORD
 RegShellUtilGetKeys(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
     LW_WCHAR ***pppRetSubKeys,
     PDWORD pdwRetSubKeyCount
     );
@@ -90,10 +90,10 @@ RegShellUtilGetKeys(
 DWORD
 RegShellUtilSetValue(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
-    PSTR valueName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID data,
     DWORD dataLen
@@ -102,9 +102,9 @@ RegShellUtilSetValue(
 DWORD
 RegShellUtilGetValues(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
     PREGSHELL_UTIL_VALUE *valueArray,
     PDWORD pdwValueArrayLen
     );
@@ -112,19 +112,19 @@ RegShellUtilGetValues(
 DWORD
 RegShellUtilDeleteValue(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
-    PSTR valueName
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PCSTR valueName
     );
 
 DWORD
 RegShellUtilGetValue(
     IN OPTIONAL HANDLE hReg,
-    IN OPTIONAL PSTR pszRootKeyName,
-    IN OPTIONAL PSTR pszDefaultKey,
-    IN OPTIONAL PSTR pszKeyName,
-    IN PSTR pszValueName,
+    IN OPTIONAL PCSTR pszRootKeyName,
+    IN OPTIONAL PCSTR pszDefaultKey,
+    IN OPTIONAL PCSTR pszKeyName,
+    IN PCSTR pszValueName,
     OUT OPTIONAL PREG_DATA_TYPE pRegType,
     OUT OPTIONAL PVOID *ppValue,
     OUT OPTIONAL PDWORD pdwValueLen
@@ -147,14 +147,14 @@ RegShellUtilExport(
     HANDLE hReg,
     FILE* fp,
     HKEY hKey,
-    PSTR pszKeyName,
+    PCSTR pszKeyName,
     DWORD dwNumSubKeys,
     DWORD dwMaxSubKeyLen
     );
 
 DWORD
 RegShellUtilEscapeString(
-    PSTR pszValue,
+    PCSTR pszValue,
     PSTR *ppszRetValue,
     PDWORD pdwEscapeValueLen
     );
@@ -168,9 +168,9 @@ RegExportBinaryTypeToString(
 
 DWORD
 RegExportEntry(
-    PSTR keyName,
+    PCSTR keyName,
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID value,
     DWORD valueLen,
@@ -180,29 +180,29 @@ RegExportEntry(
 DWORD
 RegExportDword(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     DWORD value,
     PSTR *dumpString,
     PDWORD dumpStringLen);
 
 DWORD
 RegExportRegKey(
-    PSTR keyName,
+    PCSTR keyName,
     PSTR *dumpString,
     PDWORD dumpStringLen);
 
 DWORD
 RegExportString(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
-    PCHAR value,
+    PCSTR valueName,
+    PCSTR value,
     PSTR *dumpString,
     PDWORD dumpStringLen);
 
 DWORD
 RegExportBinaryData(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     UCHAR *value,
     DWORD valueLen,

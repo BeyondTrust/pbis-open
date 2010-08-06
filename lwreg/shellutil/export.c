@@ -49,7 +49,7 @@ ProcessSubKeys(
     HANDLE hReg,
     FILE* fp,
     HKEY hKey,
-    PSTR pszFullKeyName,
+    PCSTR pszFullKeyName,
     DWORD dwNumSubKeys,
     DWORD dwMaxSubKeyLen
     );
@@ -118,9 +118,9 @@ error:
 
 DWORD
 RegExportEntry(
-    PSTR keyName,
+    PCSTR keyName,
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID value,
     DWORD valueLen,
@@ -180,7 +180,7 @@ RegExportEntry(
 DWORD
 RegExportDword(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     DWORD value,
     PSTR *dumpString,
     PDWORD dumpStringLen)
@@ -226,7 +226,7 @@ error:
 
 DWORD
 RegExportRegKey(
-    PSTR keyName,
+    PCSTR keyName,
     PSTR *dumpString,
     PDWORD dumpStringLen)
 {
@@ -260,8 +260,8 @@ error:
 
 DWORD RegExportString(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
-    PSTR value,
+    PCSTR valueName,
+    PCSTR value,
     PSTR *dumpString,
     PDWORD retDumpStringLen)
 {
@@ -342,7 +342,7 @@ error:
 DWORD
 RegExportBinaryData(
     REG_DATA_TYPE valueType,
-    PSTR valueName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     UCHAR *value,
     DWORD valueLen,
@@ -424,9 +424,9 @@ static
 DWORD
 PrintToRegFile(
     IN FILE* fp,
-    IN PSTR pszKeyName,
+    IN PCSTR pszKeyName,
     IN REG_DATA_TYPE dataType,
-    IN PSTR pszValueName,
+    IN PCSTR pszValueName,
     IN REG_DATA_TYPE type,
     IN PVOID value,
     IN DWORD dwValueLen,
@@ -484,7 +484,7 @@ ProcessExportedKeyInfo(
     IN HANDLE hReg,
     IN FILE* fp,
     IN HKEY hKey,
-    IN PSTR pszFullKeyName,
+    IN PCSTR pszFullKeyName,
     IN OUT PREG_DATA_TYPE pPrevType
     )
 {
@@ -592,7 +592,7 @@ ProcessSubKeys(
     HANDLE hReg,
     FILE* fp,
     HKEY hKey,
-    PSTR pszFullKeyName,
+    PCSTR pszFullKeyName,
     DWORD dwNumSubKeys,
     DWORD dwMaxSubKeyLen
     )
@@ -798,7 +798,7 @@ RegShellUtilExport(
     HANDLE hReg,
     FILE* fp,
     HKEY hKey,
-    PSTR pszKeyName,
+    PCSTR pszKeyName,
     DWORD dwNumSubKeys,
     DWORD dwMaxSubKeyLen
     )

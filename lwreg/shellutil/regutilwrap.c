@@ -144,10 +144,10 @@ RegUtilGetKeys(
 DWORD
 RegUtilSetValue(
     IN OPTIONAL HANDLE hReg,
-    IN PSTR pszRootKeyName,
-    IN PSTR pszSubKeyPath,
-    IN PSTR keyName,
-    IN PSTR valueName,
+    IN PCSTR pszRootKeyName,
+    IN PCSTR pszSubKeyPath,
+    IN PCSTR keyName,
+    IN PCSTR valueName,
     IN REG_DATA_TYPE type,
     IN PVOID data,
     IN DWORD dataLen)

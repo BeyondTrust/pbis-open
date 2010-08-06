@@ -45,8 +45,8 @@
 
 DWORD
 RegShellCanonicalizePath(
-    PSTR pszInDefaultKey,
-    PSTR pszInKeyName,
+    PCSTR pszInDefaultKey,
+    PCSTR pszInKeyName,
     PSTR *ppszFullPath,
     PSTR *ppszParentPath,
     PSTR *ppszSubKey)
@@ -203,8 +203,8 @@ error:
 DWORD
 RegShellIsValidKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszKey)
+    PCSTR pszRootKeyName,
+    PCSTR pszKey)
 {
     DWORD dwError = 0;
     HKEY pFullKey = NULL;
@@ -254,9 +254,9 @@ error:
 DWORD
 RegShellUtilAddKeySecDesc(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR pszKeyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR pszKeyName,
     BOOLEAN bDoBail,
     IN ACCESS_MASK AccessDesired,
     IN OPTIONAL PSECURITY_DESCRIPTOR_ABSOLUTE pSecurityDescriptor
@@ -360,9 +360,9 @@ error:
 DWORD
 RegShellUtilAddKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR pszKeyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR pszKeyName,
     BOOLEAN bDoBail
     )
 {
@@ -380,9 +380,9 @@ RegShellUtilAddKey(
 DWORD
 RegShellUtilDeleteKey(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName)
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName)
 {
     HANDLE hRegLocal = NULL;
     PWSTR pwszSubKey = NULL;
@@ -473,9 +473,9 @@ error:
 DWORD
 RegShellUtilDeleteTree(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName)
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName)
 {
     HANDLE hRegLocal = NULL;
     PWSTR pwszSubKey = NULL;
@@ -561,9 +561,9 @@ error:
 DWORD
 RegShellUtilGetKeys(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
     LW_WCHAR ***pppRetSubKeys,
     PDWORD pdwRetSubKeyCount)
 {
@@ -730,10 +730,10 @@ error:
 DWORD
 RegShellUtilSetValue(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
-    PSTR valueName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID data,
     DWORD dataLen
@@ -904,9 +904,9 @@ error:
 DWORD
 RegShellUtilGetValues(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
     PREGSHELL_UTIL_VALUE *valueArray,
     PDWORD pdwValueArrayLen
     )
@@ -1079,10 +1079,10 @@ error:
 DWORD
 RegShellUtilDeleteValue(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR keyName,
-    PSTR valueName)
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PCSTR valueName)
 {
     HANDLE hRegLocal = NULL;
     HKEY hRootKey = NULL;
@@ -1170,7 +1170,7 @@ RegShellUtilAllocateMemory(
     HANDLE hReg,
     HKEY hKey,
     REG_DATA_TYPE regType,
-    PSTR pszValueName,
+    PCSTR pszValueName,
     PVOID *ppRetBuf,
     PDWORD pdwRetBufLen)
 {
@@ -1219,10 +1219,10 @@ error:
 DWORD
 RegShellUtilGetValue(
     HANDLE hReg,
-    PSTR pszRootKeyName,
-    PSTR pszDefaultKey,
-    PSTR pszKeyName,
-    PSTR pszValueName,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR pszKeyName,
+    PCSTR pszValueName,
     PREG_DATA_TYPE pRegType,
     PVOID *ppValue,
     PDWORD pdwValueLen)
@@ -1445,7 +1445,7 @@ error:
 
 DWORD
 RegShellUtilEscapeString(
-    PSTR pszValue,
+    PCSTR pszValue,
     PSTR *ppszRetValue,
     PDWORD pdwEscapeValueLen)
 {
