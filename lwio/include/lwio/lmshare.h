@@ -191,7 +191,7 @@ cpp_quote("#endif")
 #endif
 
 #ifndef SHARE_INFO_502_I_DEFINED
-#define SHAER_INFO_502_I_DEFINED 1
+#define SHARE_INFO_502_I_DEFINED 1
 
 #ifdef _DCE_IDL_
 cpp_quote("#ifndef SHARE_INFO_502_I_DEFINED")
