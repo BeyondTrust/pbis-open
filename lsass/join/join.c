@@ -765,15 +765,9 @@ LsaJoinDomainInternal(
     BAIL_ON_LSA_ERROR(dwError)
 
     dwError = LsaGetRwDcName(pwszDomain,
-                             FALSE,
+                             TRUE,
                              &pwszDCName);
-    if (dwError)
-    {
-        dwError = LsaGetRwDcName(pwszDomain,
-                                 TRUE,
-                                 &pwszDCName);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    BAIL_ON_LSA_ERROR(dwError);
 
     if (pwszAccount && pwszPassword)
     {
