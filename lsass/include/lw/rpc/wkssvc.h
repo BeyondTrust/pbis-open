@@ -126,11 +126,84 @@ typedef union _NETR_WKSTA_INFO
 #endif
 
 
+typedef struct _NETR_WKSTA_USER_INFO_0
+{
+#ifdef _DCE_IDL_
+    [string]
+#endif
+    PWSTR  wkui0_username;
+
+} NETR_WKSTA_USER_INFO_0, *PNETR_WKSTA_USER_INFO_0;
+
+
+typedef struct _NETR_WKSTA_USER_INFO_1
+{
+#ifdef _DCE_IDL_
+    [string]
+#endif
+    PWSTR  wkui1_username;
+#ifdef _DCE_IDL_
+    [string]
+#endif
+    PWSTR  wkui1_logon_domain;
+#ifdef _DCE_IDL_
+    [string]
+#endif
+    PWSTR  wkui1_oth_domains;
+#ifdef _DCE_IDL_
+    [string]
+#endif
+    PWSTR  wkui1_logon_server;
+
+} NETR_WKSTA_USER_INFO_1, *PNETR_WKSTA_USER_INFO_1;
+
+
+typedef struct _NETR_WKSTA_USER_INFO_CTR_0
+{
+    DWORD  dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    NETR_WKSTA_USER_INFO_0 *pInfo;
+
+} NETR_WKSTA_USER_INFO_CTR_0, *PNETR_WKSTA_USER_INFO_CTR_0;
+
+
+typedef struct _NETR_WKSTA_USER_INFO_CTR_1
+{
+    DWORD  dwCount;
+#ifdef _DCE_IDL_
+    [size_is(dwCount)]
+#endif
+    NETR_WKSTA_USER_INFO_1 *pInfo;
+
+} NETR_WKSTA_USER_INFO_CTR_1, *PNETR_WKSTA_USER_INFO_CTR_1;
+
+
+#ifndef _DCE_IDL_
+typedef union _NETR_WKSTA_USER_INFO_CTR
+{
+    NETR_WKSTA_USER_INFO_CTR_0  *pInfo0;
+    NETR_WKSTA_USER_INFO_CTR_1  *pInfo1;
+
+} NETR_WKSTA_USER_INFO_CTR, *PNETR_WKSTA_USER_INFO_CTR;
+
+
+typedef struct _NETR_WKSTA_USER_INFO
+{
+    DWORD  dwLevel;
+    NETR_WKSTA_USER_INFO_CTR Ctr;
+
+} NETR_WKSTA_USER_INFO, *PNETR_WKSTA_USER_INFO;
+#endif
+
+
 typedef struct _ENC_JOIN_PASSWORD_BUFFER
 {
     BYTE data[524];
 
 } ENC_JOIN_PASSWORD_BUFFER, *PENC_JOIN_PASSWORD_BUFFER;
+
 
 #ifndef _DCE_IDL_
 
@@ -173,6 +246,20 @@ NetrWkstaGetInfo(
     IN  PWSTR              pwszServerName,
     IN  DWORD              dwLevel,
     OUT PNETR_WKSTA_INFO   pInfo
+    );
+
+
+WINERROR
+NetrWkstaUserEnum(
+    IN  WKSS_BINDING    hBinding,
+    IN  PWSTR           pwszServerName,
+    IN  DWORD           dwLevel,
+    IN  DWORD           dwPrefMaxLen,
+    OUT PVOID          *ppInfo,
+    OUT PDWORD          pdwSize,
+    OUT PDWORD          pdwNumEntries,
+    OUT PDWORD          pdwTotalNumEntries,
+    IN OUT PDWORD       pdwResume
     );
 
 
