@@ -920,6 +920,9 @@ nextresp2:
 
 				if ( lr != &dummy_lr ) {
 					ldap_return_request( ld, lr, 1 );
+				} else {
+					LDAP_FREE(lr->lr_res_error);
+					lr->lr_res_error = NULL;
 				}
 				lr = NULL;
 			}
