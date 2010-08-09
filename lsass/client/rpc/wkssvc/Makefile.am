@@ -9,6 +9,7 @@ libwkssvc_la_SOURCES =       \
     wkss_binding.c           \
     wkss_memory.c            \
     wkss_stubmemory.c        \
+    netr_wkstauserenum.c     \
     netr_wkstagetinfo.c      \
     netr_joindomain2.c       \
     netr_unjoindomain2.c

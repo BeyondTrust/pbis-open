@@ -17,6 +17,18 @@ cpp_quote("#ifdef DCERPC_STUB_BUILD")
         [case(102)]    WKSTA_INFO_102 *pInfo102;
     } NETR_WKSTA_INFO;
 
+    typedef [switch_type(UINT32)] union _NETR_WKSTA_USER_INFO_CTR
+    {
+        [case(0)]  NETR_WKSTA_USER_INFO_CTR_0  *pInfo0;
+        [case(1)]  NETR_WKSTA_USER_INFO_CTR_1  *pInfo1;
+    } NETR_WKSTA_USER_INFO_CTR;
+
+    typedef struct _NETR_WKSTA_USER_INFO
+    {
+        DWORD  dwLevel;
+        [switch_is(dwLevel)] NETR_WKSTA_USER_INFO_CTR Ctr;
+    } NETR_WKSTA_USER_INFO;
+
 cpp_quote("#endif /* DCERPC_STUB_BUILD */") 
 
 
@@ -25,10 +37,19 @@ cpp_quote("#endif /* DCERPC_STUB_BUILD */")
         [in,string,unique] wchar16_t *pwszServerName,
         [in] DWORD dwLevel,
         [out,ref,switch_is(dwLevel)] NETR_WKSTA_INFO *pInfo
-    );
+        );
 
     WINERROR wkssvc_Function0x01();
-    WINERROR wkssvc_Function0x02();
+
+    /* Function 0x02 */
+    WINERROR NetrWkstaUserEnum(
+        [in,string,unique] wchar16_t *pwszServerName,
+        [in,out,ref] NETR_WKSTA_USER_INFO  *pInfo,
+        [in] DWORD dwPrefMaxLen,
+        [out,ref] DWORD *dwNumEntries,
+        [in,out,unique] DWORD *pdwResume
+        );
+
     WINERROR wkssvc_Function0x03();
     WINERROR wkssvc_Function0x04();
     WINERROR wkssvc_Function0x05();

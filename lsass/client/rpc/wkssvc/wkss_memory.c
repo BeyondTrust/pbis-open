@@ -47,6 +47,28 @@
 #include "includes.h"
 
 
+static
+DWORD
+WkssAllocateNetrWkstaUserInfo0(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PNETR_WKSTA_USER_INFO_0    pIn,
+    IN OUT PDWORD                  pdwSize
+    );
+
+
+static
+DWORD
+WkssAllocateNetrWkstaUserInfo1(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PNETR_WKSTA_USER_INFO_1    pIn,
+    IN OUT PDWORD                  pdwSize
+    );
+
+
 WINERROR
 WkssAllocateMemory(
     OUT PVOID *ppOut,
@@ -135,6 +157,155 @@ WkssAllocateNetrWkstaInfo(
         dwError = ERROR_INVALID_LEVEL;
         BAIL_ON_WIN_ERROR(dwError);
     }
+
+cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+WkssAllocateNetrWkstaUserInfo(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN DWORD                       dwLevel,
+    IN  PNETR_WKSTA_USER_INFO_CTR  pIn,
+    IN OUT PDWORD                  pdwSize
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD iUser = 0;
+    DWORD dwCount = 0;
+    PVOID pBuffer = pOut;
+
+    BAIL_ON_INVALID_PTR(pdwOffset, ntStatus);
+    BAIL_ON_INVALID_PTR(pIn, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
+
+    switch (dwLevel)
+    {
+    case 0:
+        dwCount = pIn->pInfo0->dwCount;
+        break;
+
+    case 1:
+        dwCount = pIn->pInfo1->dwCount;
+        break;
+
+    default:
+        dwError = ERROR_INVALID_LEVEL;
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    for (iUser = 0; iUser < dwCount; iUser++)
+    {
+        switch (dwLevel)
+        {
+        case 0:
+            dwError = WkssAllocateNetrWkstaUserInfo0(
+                                           pBuffer,
+                                           pdwOffset,
+                                           pdwSpaceLeft,
+                                           &(pIn->pInfo0->pInfo[iUser]),
+                                           pdwSize);
+            break;
+
+        case 1:
+            dwError = WkssAllocateNetrWkstaUserInfo1(
+                                           pBuffer,
+                                           pdwOffset,
+                                           pdwSpaceLeft,
+                                           &(pIn->pInfo1->pInfo[iUser]),
+                                           pdwSize);
+            break;
+
+        default:
+            dwError = ERROR_INVALID_LEVEL;
+            break;
+        }
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+cleanup:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+static
+DWORD
+WkssAllocateNetrWkstaUserInfo0(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PNETR_WKSTA_USER_INFO_0    pIn,
+    IN OUT PDWORD                  pdwSize
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PVOID pBuffer = pOut;
+
+    BAIL_ON_INVALID_PTR(pdwOffset, ntStatus);
+    BAIL_ON_INVALID_PTR(pIn, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
+
+    LWBUF_ALLOC_WC16STR(pBuffer, pIn->wkui0_username);
+
+cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+static
+DWORD
+WkssAllocateNetrWkstaUserInfo1(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN  PNETR_WKSTA_USER_INFO_1    pIn,
+    IN OUT PDWORD                  pdwSize
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PVOID pBuffer = pOut;
+
+    BAIL_ON_INVALID_PTR(pdwOffset, ntStatus);
+    BAIL_ON_INVALID_PTR(pIn, ntStatus);
+    BAIL_ON_INVALID_PTR(pdwSize, ntStatus);
+
+    LWBUF_ALLOC_WC16STR(pBuffer, pIn->wkui1_username);
+    LWBUF_ALLOC_WC16STR(pBuffer, pIn->wkui1_logon_domain);
+    LWBUF_ALLOC_WC16STR(pBuffer, pIn->wkui1_oth_domains);
+    LWBUF_ALLOC_WC16STR(pBuffer, pIn->wkui1_logon_server);
 
 cleanup:
     if (ntStatus == STATUS_SUCCESS &&

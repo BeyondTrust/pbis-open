@@ -214,6 +214,17 @@ WkssAllocateNetrWkstaInfo(
     );
 
 
+DWORD
+WkssAllocateNetrWkstaUserInfo(
+    OUT PVOID                      pOut,
+    IN OUT PDWORD                  pdwOffset,
+    IN OUT PDWORD                  pdwSpaceLeft,
+    IN DWORD                       dwLevel,
+    IN  PNETR_WKSTA_USER_INFO_CTR  pIn,
+    IN OUT PDWORD                  pdwSize
+    );
+
+
 #endif /* _WKSS_MEMORY_H_ */
 
 

@@ -55,6 +55,12 @@ WkssCleanStubNetrWkstaInfo(
     );
 
 
+VOID
+WkssCleanStubNetrWkstaUserInfo(
+    PNETR_WKSTA_USER_INFO pInfo
+    );
+
+
 #endif /* _WKSS_STUB_MEMORY_H_ */
 
 

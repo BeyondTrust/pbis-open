@@ -75,6 +75,59 @@ WkssCleanStubNetrWkstaInfo(
 }
 
 
+VOID
+WkssCleanStubNetrWkstaUserInfo(
+    PNETR_WKSTA_USER_INFO pInfo
+    )
+{
+    unsigned32 rpcStatus = 0;
+    DWORD i = 0;
+
+    switch (pInfo->dwLevel)
+    {
+    case 0:
+        for (i = 0; i < pInfo->Ctr.pInfo0->dwCount; i++)
+        {
+            if (pInfo->Ctr.pInfo0->pInfo[i].wkui0_username)
+            {
+                rpc_sm_client_free(pInfo->Ctr.pInfo0->pInfo[i].wkui0_username,
+                                   &rpcStatus);
+            }
+        }
+        break;
+
+    case 1:
+        for (i = 0; i < pInfo->Ctr.pInfo1->dwCount; i++)
+        {
+            if (pInfo->Ctr.pInfo1->pInfo[i].wkui1_username)
+            {
+                rpc_sm_client_free(pInfo->Ctr.pInfo1->pInfo[i].wkui1_username,
+                                   &rpcStatus);
+            }
+
+            if (pInfo->Ctr.pInfo1->pInfo[i].wkui1_logon_domain)
+            {
+                rpc_sm_client_free(pInfo->Ctr.pInfo1->pInfo[i].wkui1_logon_domain,
+                                   &rpcStatus);
+            }
+
+            if (pInfo->Ctr.pInfo1->pInfo[i].wkui1_oth_domains)
+            {
+                rpc_sm_client_free(pInfo->Ctr.pInfo1->pInfo[i].wkui1_oth_domains,
+                                   &rpcStatus);
+            }
+
+            if (pInfo->Ctr.pInfo1->pInfo[i].wkui1_logon_server)
+            {
+                rpc_sm_client_free(pInfo->Ctr.pInfo1->pInfo[i].wkui1_logon_server,
+                                   &rpcStatus);
+            }
+        }
+        break;
+    }
+}
+
+
 /*
 local variables:
 mode: c
