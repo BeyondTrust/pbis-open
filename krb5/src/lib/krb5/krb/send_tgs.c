@@ -341,24 +341,23 @@ send_again:
             if (!tcp_only) {
                 krb5_error *err_reply;
                 retval = decode_krb5_error(&rep->response, &err_reply);
-            if (retval)
-                goto send_tgs_error;
-            if (err_reply->error == KRB_ERR_RESPONSE_TOO_BIG) {
-                tcp_only = 1;
+            if (!retval)
+            {
+                if (err_reply->error == KRB_ERR_RESPONSE_TOO_BIG) {
+                    tcp_only = 1;
+                    krb5_free_error(context, err_reply);
+                    free(rep->response.data);
+                    rep->response.data = NULL;
+                    goto send_again;
+                }
                 krb5_free_error(context, err_reply);
-                free(rep->response.data);
-                rep->response.data = NULL;
-                goto send_again;
             }
-            krb5_free_error(context, err_reply);
-            send_tgs_error_3:
-                ;
         }
         rep->message_type = KRB5_ERROR;
     } else if (krb5_is_tgs_rep(&rep->response)) {
         rep->message_type = KRB5_TGS_REP;
         *subkey = local_subkey;
-        local_key = NULL;
+        local_subkey = NULL;
     } else /* XXX: assume it's an error */
         rep->message_type = KRB5_ERROR;
     }
