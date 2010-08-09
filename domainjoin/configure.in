@@ -545,7 +545,8 @@ AC_CONFIG_FILES([Makefile
                  tests/test_dhcpname_change/src/Makefile
                  tests/test_sec_user/src/Makefile
                  tests/test_login_cfg/src/Makefile
-                 tests/test_file_utils/src/Makefile])
+                 tests/test_file_utils/src/Makefile
+                 tests/test_join_api/src/Makefile])
 
 case `uname -s` in
     Darwin)

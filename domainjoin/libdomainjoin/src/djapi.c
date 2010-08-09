@@ -34,6 +34,171 @@
 
 #include <stdio.h>
 
+
+DWORD
+DJInit(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+    LWException *exc = NULL; 
+    BOOLEAN bEnableDcerpcd = FALSE;
+
+    setlocale(LC_ALL, "");
+
+    LW_CLEANUP_CTERR(&exc, dj_disable_logging());
+
+    LW_TRY(&exc, DJNetInitialize(bEnableDcerpcd, &LW_EXC));
+
+cleanup:
+
+    if (!LW_IS_OK(exc))
+    {
+        dwError = exc->code;
+        LWHandle(&exc);
+    }
+
+    return dwError;
+}
+
+DWORD
+DJJoinDomain(
+    PCSTR pszDomain,
+    PCSTR pszOU,
+    PCSTR pszUsername,
+    PCSTR pszPassword
+    )
+{
+    DWORD dwError = 0;
+    LWException *exc = NULL; 
+    JoinProcessOptions options;
+
+    DJZeroJoinProcessOptions(&options);
+    options.joiningDomain = TRUE;
+
+    if (IsNullOrEmptyString(pszDomain))
+    {
+        LW_RAISE(&exc, ERROR_INVALID_PARAMETER);
+    }
+
+    LW_CLEANUP_CTERR(&exc, CTStrdup(pszDomain, &options.domainName));
+
+    if (!IsNullOrEmptyString(pszOU))
+    {
+        LW_CLEANUP_CTERR(&exc, CTStrdup(pszOU, &options.ouName));
+    }
+
+    if (!IsNullOrEmptyString(pszUsername))
+    {
+        LW_CLEANUP_CTERR(&exc, CTStrdup(pszUsername, &options.username));
+    }
+
+    if (!IsNullOrEmptyString(pszPassword))
+    {
+        LW_CLEANUP_CTERR(&exc, CTStrdup(pszPassword, &options.password));
+    }
+
+    LW_CLEANUP_CTERR(&exc, DJGetComputerName(&options.computerName));
+
+    LW_TRY(&exc, DJInitModuleStates(&options, &LW_EXC));
+
+    LW_TRY(&exc, DJRunJoinProcess(&options, &LW_EXC));
+
+cleanup:
+
+    DJFreeJoinProcessOptions(&options);
+
+    if (!LW_IS_OK(exc))
+    {
+        dwError = exc->code;
+        LWHandle(&exc);
+    }
+
+    return dwError;
+}
+
+DWORD
+DJQueryJoinInformation(
+    PSTR* ppszComputerName,
+    PSTR* ppszDomainName
+    )
+{
+    DWORD dwError = 0;
+    LWException *exc = NULL;
+
+    LW_TRY(&exc, DJQuery(ppszComputerName, ppszDomainName, NULL, &LW_EXC));
+
+cleanup:
+
+    if (!LW_IS_OK(exc))
+    {
+        dwError = exc->code;
+        LWHandle(&exc);
+    }
+
+    return dwError;
+}
+
+DWORD
+DJUnjoinDomain(
+    PCSTR pszUsername,
+    PCSTR pszPassword
+    )
+{
+    DWORD dwError = 0;
+    LWException *exc = NULL; 
+    JoinProcessOptions options;
+
+    DJZeroJoinProcessOptions(&options);
+    options.joiningDomain = FALSE;
+
+    if (!IsNullOrEmptyString(pszUsername))
+    {
+        LW_CLEANUP_CTERR(&exc, CTStrdup(pszUsername, &options.username));
+    }
+
+    if (!IsNullOrEmptyString(pszPassword))
+    {
+        LW_CLEANUP_CTERR(&exc, CTStrdup(pszPassword, &options.password));
+    }
+
+    LW_CLEANUP_CTERR(&exc, DJGetComputerName(&options.computerName));
+
+    LW_TRY(&exc, DJInitModuleStates(&options, &LW_EXC));
+
+    LW_TRY(&exc, DJRunJoinProcess(&options, &LW_EXC));
+
+cleanup:
+
+    DJFreeJoinProcessOptions(&options);
+
+    if (!LW_IS_OK(exc))
+    {
+        dwError = exc->code;
+        LWHandle(&exc);
+    }
+
+    return dwError;
+}
+
+VOID
+DJFreeMemory(
+    PVOID pMemory
+    )
+{
+    CTFreeMemory(pMemory);
+}
+
+DWORD
+DJShutdown(
+    VOID
+    )
+{
+     DJNetShutdown(NULL);
+
+     return 0;
+}
+
 void
 DJQuery(
     char **computer, 

@@ -107,6 +107,41 @@ struct _JoinModule
     void (*FreeModuleData)(const JoinProcessOptions *, ModuleState *state);
 };
 
+DWORD
+DJInit(
+    VOID
+    );
+
+DWORD
+DJJoinDomain(
+    PCSTR pszDomain,
+    PCSTR pszOU,
+    PCSTR pszUsername,
+    PCSTR pszPassword
+    );
+
+DWORD
+DJQueryJoinInformation(
+    PSTR* ppszComputerName,
+    PSTR* ppszDomainName
+    );
+
+DWORD
+DJUnjoinDomain(
+    PCSTR pszUsername,
+    PCSTR pszPassword
+    );
+
+VOID
+DJFreeMemory(
+    PVOID pMemory
+    );
+
+DWORD
+DJShutdown(
+    VOID
+    );
+
 void DJZeroJoinProcessOptions(JoinProcessOptions *options);
 void DJFreeJoinProcessOptions(JoinProcessOptions *options);
 void DJRefreshModuleStates(JoinProcessOptions *options, LWException **err);
