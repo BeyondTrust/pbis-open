@@ -1843,6 +1843,86 @@ TestValidateDisplayMachineInfo(
 
 static
 BOOLEAN
+TestValidateWkstaUserInfo(
+    PVOID  pInfo,
+    DWORD  dwLevel
+    )
+{
+    BOOLEAN bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    PWKSTA_USER_INFO_0 pInfo0 = (PWKSTA_USER_INFO_0)pInfo;
+    PWKSTA_USER_INFO_1 pInfo1 = (PWKSTA_USER_INFO_1)pInfo;
+    size_t sUsernameLen = 0;
+    size_t sLogonDomainLen = 0;
+    size_t sOthDomainsLen = 0;
+    size_t sLogonServerLen = 0;
+
+    if (dwLevel == 0 ||
+        dwLevel == 1)
+    {
+        ASSERT_TEST(pInfo0->wkui0_username != NULL);
+
+        if (pInfo0->wkui0_username)
+        {
+            /*
+             * Assuming the account name can be up to 63-chars long
+             */
+            dwError = LwWc16sLen(pInfo0->wkui0_username, &sUsernameLen);
+            if (dwError ||
+                !(sUsernameLen > 0 && sUsernameLen < 64))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+    }
+
+    if (dwLevel == 1)
+    {
+        ASSERT_TEST(pInfo1->wkui1_logon_domain != NULL);
+        if (pInfo1->wkui1_logon_domain)
+        {
+            /*
+             * Assuming the domain name can be up to 15-chars long
+             */
+            dwError = LwWc16sLen(pInfo1->wkui1_logon_domain, &sLogonDomainLen);
+            if (dwError ||
+                !(sLogonDomainLen > 0 && sLogonDomainLen < 16))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+
+        ASSERT_TEST(pInfo1->wkui1_oth_domains != NULL);
+        if (pInfo1->wkui1_oth_domains)
+        {
+            dwError = LwWc16sLen(pInfo1->wkui1_oth_domains, &sOthDomainsLen);
+            if (dwError)
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+
+        ASSERT_TEST(pInfo1->wkui1_logon_server != NULL);
+        if (pInfo1->wkui1_logon_server)
+        {
+            dwError = LwWc16sLen(pInfo1->wkui1_logon_server, &sLogonServerLen);
+            if (dwError)
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+    }
+
+    return bRet;
+}
+
+
+static
+BOOLEAN
 TestValidateDisplayGroupInfo(
     PNET_DISPLAY_GROUP  pGroup
     )
@@ -2012,6 +2092,147 @@ CallNetQueryDisplayInfo(
                                      dwPrefMaxLen,
                                      &dwNumEntries,
                                      &pBuffer);
+    if (err != ERROR_INVALID_LEVEL)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    if (pBuffer)
+    {
+        /*
+         * There shouldn't be any buffer returned
+         */
+        bRet = FALSE;
+        goto done;
+    }
+
+done:
+    if (pBuffer)
+    {
+        NetApiBufferFree(pBuffer);
+    }
+
+    return bRet;
+}
+
+
+static
+BOOL
+CallNetWkstaUserEnum(
+    PCWSTR pwszHostname,
+    DWORD  dwLevel
+    )
+{
+    BOOL bRet = TRUE;
+    NET_API_STATUS err = ERROR_SUCCESS;
+    PWSTR pwszHost = NULL;
+    PVOID pBuffer = NULL;
+    DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
+    DWORD dwNumEntries = 0;
+    DWORD dwTotalNumEntries = 0;
+    DWORD dwTotalCounted = 0;
+    DWORD dwResume = 0;
+    DWORD dwPrevTotalCounted = 0;
+    DWORD iEntry = 0;
+    PWKSTA_USER_INFO_0 pWkstaUserInfo0 = NULL;
+    PWKSTA_USER_INFO_1 pWkstaUserInfo1 = NULL;
+
+    err = LwAllocateWc16String(&pwszHost, pwszHostname);
+    if (err)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    /* max buffer size below 32 bytes doesn't make much sense */
+    while (dwPrefMaxLen > 32)
+    {
+        do
+        {
+            err = NetWkstaUserEnum(pwszHost,
+                                   dwLevel,
+                                   &pBuffer,
+                                   dwPrefMaxLen,
+                                   &dwNumEntries,
+                                   &dwTotalNumEntries,
+                                   &dwResume);
+            if (err != ERROR_SUCCESS &&
+                err != ERROR_MORE_DATA)
+            {
+                bRet = FALSE;
+                goto done;
+            }
+
+            dwTotalCounted    += dwNumEntries;
+            dwTotalNumEntries  = 0;
+
+            for (iEntry = 0; iEntry < dwNumEntries; iEntry++)
+            {
+                switch (dwLevel)
+                {
+                case 0:
+                    pWkstaUserInfo0 = &(((PWKSTA_USER_INFO_0)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateWkstaUserInfo(pWkstaUserInfo0, dwLevel);
+                    break;
+
+                case 1:
+                    pWkstaUserInfo1 = &(((PWKSTA_USER_INFO_1)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateWkstaUserInfo(pWkstaUserInfo1, dwLevel);
+                    break;
+
+                default:
+                    bRet = FALSE;
+                    goto done;
+                }
+            }
+
+            if (pBuffer)
+            {
+                NetApiBufferFree(pBuffer);
+                pBuffer = NULL;
+            }
+        }
+        while (err == ERROR_MORE_DATA);
+
+        if (dwPrefMaxLen > 65536)
+        {
+            dwPrefMaxLen /= 256;
+        }
+        else if (dwPrefMaxLen <= 65536 && dwPrefMaxLen > 512)
+        {
+            dwPrefMaxLen /= 4;
+        }
+        else if (dwPrefMaxLen <= 512)
+        {
+            dwPrefMaxLen /= 2;
+        }
+        else if (dwPrefMaxLen < 32)
+        {
+            dwPrefMaxLen = 0;
+        }
+
+        if (dwPrevTotalCounted)
+        {
+            ASSERT_TEST(dwPrevTotalCounted == dwTotalCounted);
+        }
+
+        dwPrevTotalCounted  = dwTotalCounted;
+        dwTotalCounted      = 0;
+        dwResume            = 0;
+    }
+
+    dwLevel      = 2;
+    dwNumEntries = 0;
+    err = NetWkstaUserEnum(pwszHost,
+                           dwLevel,
+                           &pBuffer,
+                           dwPrefMaxLen,
+                           &dwNumEntries,
+                           &dwTotalNumEntries,
+                           &dwResume);
     if (err != ERROR_INVALID_LEVEL)
     {
         bRet = FALSE;
@@ -3407,6 +3628,59 @@ TestNetQueryDisplayInformation(
 }
 
 
+int
+TestNetWkstaUserEnum(
+    struct test *t,
+    const wchar16_t *hostname,
+    const wchar16_t *user,
+    const wchar16_t *pass,
+    struct parameter *options,
+    int optcount
+    )
+{
+    const DWORD dwDefaultLevel = (DWORD)(-1);
+
+    BOOL ret = TRUE;
+    enum param_err perr = perr_success;
+    DWORD i = 0;
+    DWORD dwSelectedLevels[] = { 0 };
+    DWORD dwAvailableLevels[] = { 0, 1 };
+    PDWORD pdwLevels = NULL;
+    DWORD dwNumLevels = 0;
+    DWORD dwLevel = 0;
+
+    TESTINFO(t, hostname, user, pass);
+
+    perr = fetch_value(options, optcount, "level", pt_uint32,
+                       (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    PARAM_INFO("level", pt_uint32, &dwLevel);
+
+    if (dwLevel == (DWORD)(-1))
+    {
+        pdwLevels   = dwAvailableLevels;
+        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
+    }
+    else
+    {
+        dwSelectedLevels[0] = dwLevel;
+        pdwLevels   = dwSelectedLevels;
+        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
+    }
+
+    for (i = 0; i < dwNumLevels; i++)
+    {
+        dwLevel = pdwLevels[i];
+
+        ret &= CallNetWkstaUserEnum(hostname,
+                                    dwLevel);
+    }
+
+    return ret;
+}
+
+
 void SetupNetApiTests(struct test *t)
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -3430,6 +3704,7 @@ void SetupNetApiTests(struct test *t)
     AddTest(t, "NETAPI-LOCAL-GROUP-SETINFO", TestNetLocalGroupSetInfo);
     AddTest(t, "NETAPI-LOCAL-GROUP-MEMBERS", TestNetLocalGroupGetMembers);
     AddTest(t, "NETAPI-QUERY-DISP-INFO", TestNetQueryDisplayInformation);
+    AddTest(t, "NETAPI-WKSTA-USER-ENUM", TestNetWkstaUserEnum);
 }
 
 

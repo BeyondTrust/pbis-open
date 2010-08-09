@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -12,7 +12,7 @@
  * your option) any later version.
  *
  * This library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser
  * General Public License for more details.  You should have received a copy
  * of the GNU Lesser General Public License along with this program.  If
@@ -33,28 +33,63 @@
  *
  * Module Name:
  *
- *        lm.h
+ *        lmwksta.h
  *
  * Abstract:
  *
  *        Likewise Network Management API
  *
+ *        LanMan API (rpc client library)
+ *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#ifndef _LM_H_
-#define _LM_H_
+#ifndef _LM_WKSTA_H_
+#define _LM_WKSTA_H_
 
-#ifdef _GNU_SOURCE
-#include <lw/lmerr.h>
-#endif
-#include <lw/lmaccess.h>
-#include <lw/lmjoin.h>
-#include <lw/lmdebug.h>
-#include <lw/lmcrypt.h>
-#include <lw/lmmem.h>
-#include <lw/lmcreds.h>
-#include <lw/lmshare.h>
-#include <lw/lmwksta.h>
+#include <lw/security-types.h>
 
-#endif /* _LM_H_ */
+/*
+ * WKSTA_USER_INFO levels
+ */
+
+typedef struct _WKSTA_USER_INFO_0
+{
+    PWSTR  wkui0_username;
+
+} WKSTA_USER_INFO_0, *PWKSTA_USER_INFO_0;
+
+
+typedef struct _WKSTA_USER_INFO_1
+{
+    PWSTR  wkui1_username;
+    PWSTR  wkui1_logon_domain;
+    PWSTR  wkui1_oth_domains;
+    PWSTR  wkui1_logon_server;
+
+} WKSTA_USER_INFO_1, *PWKSTA_USER_INFO_1;
+
+
+NET_API_STATUS
+NetWkstaUserEnum(
+    PWSTR   pwszHostname,
+    DWORD   dwLevel,
+    PVOID  *ppBuffer,
+    DWORD   dwPrefMaxLen,
+    PDWORD  pdwNumEntries,
+    PDWORD  pdwTotalNumEntries,
+    PDWORD  pdwResume
+    );
+
+
+#endif /* _LM_WKSTA_H_ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

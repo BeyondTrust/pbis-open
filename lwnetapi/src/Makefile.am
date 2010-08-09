@@ -32,6 +32,7 @@ liblwnetapi_la_SOURCES = \
     net_joindomain.c              \
     net_unjoindomain.c            \
     net_querydisplayinformation.c \
+    net_wkstauserenum.c           \
     net_credentials.c
 
 liblwnetapi_la_CPPFLAGS =    \
