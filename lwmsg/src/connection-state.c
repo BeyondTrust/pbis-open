@@ -548,12 +548,12 @@ lwmsg_connection_state_finish_recv_connect(
                           priv->params.accept.manager,
                           &session));
 
-        if (priv->session)
+        if (priv->active_session)
         {
-            lwmsg_session_release(priv->session);
+            lwmsg_session_release(priv->active_session);
         }
 
-        priv->session = session;
+        priv->active_session = session;
 
         /* Set output parameter to accept() call */
         if (priv->params.accept.session)
@@ -597,7 +597,7 @@ lwmsg_connection_state_begin_send_accept(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
 
-    BAIL_ON_ERROR(status = lwmsg_connection_begin_send_accept(assoc, priv->session));
+    BAIL_ON_ERROR(status = lwmsg_connection_begin_send_accept(assoc, priv->active_session));
 
 done:
 
@@ -698,12 +698,12 @@ lwmsg_connection_state_finish_recv_accept(
                           assoc,
                           priv->params.connect.session));
 
-        if (priv->session)
+        if (priv->active_session)
         {
-            lwmsg_session_release(priv->session);
+            lwmsg_session_release(priv->active_session);
         }
 
-        priv->session = priv->params.connect.session;
+        priv->active_session = priv->params.connect.session;
                       
         *state = CONNECTION_STATE_ESTABLISHED;
         *event = CONNECTION_EVENT_NONE;
@@ -1061,10 +1061,10 @@ lwmsg_connection_finish_close(
         priv->fd = -1;
     }
 
-    if (priv->session)
+    if (priv->active_session)
     {
-        lwmsg_session_release(priv->session);
-        priv->session = NULL;
+        lwmsg_session_release(priv->active_session);
+        priv->active_session = NULL;
     }
 
     lwmsg_connection_buffer_destruct(&priv->recvbuffer);

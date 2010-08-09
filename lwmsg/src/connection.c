@@ -90,15 +90,19 @@ lwmsg_connection_destruct(
         priv->endpoint = NULL;
     }
 
-    if (priv->session)
+    if (priv->active_session)
     {
-        lwmsg_session_release(priv->session);
-        priv->session = NULL;
+        lwmsg_session_release(priv->active_session);
     }
 
-    if (priv->manager)
+    if (priv->default_session)
     {
-        lwmsg_session_manager_delete(priv->manager);
+        lwmsg_session_release(priv->default_session);
+    }
+
+    if (priv->default_manager)
+    {
+        lwmsg_session_manager_delete(priv->default_manager);
     }
     
     if (priv->marshal_context)
@@ -233,12 +237,12 @@ lwmsg_connection_get_session(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
     
-    if (!priv->session)
+    if (!priv->active_session)
     {
         BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
     }
     
-    *session = priv->session;
+    *session = priv->active_session;
 
 error:
 
@@ -352,30 +356,30 @@ lwmsg_connection_connect(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
 
-    if (!priv->session)
+    if (!session)
     {
-        if (!session)
+        if (!priv->default_manager)
         {
-            if (!priv->manager)
-            {
-                BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &priv->manager));
-            }
-
-            BAIL_ON_ERROR(status = lwmsg_session_create(priv->manager, &priv->session));
-
-            priv->params.connect.session = priv->session;
-        }
-        else
-        {
-            priv->params.connect.session = session;
+            BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
+                              NULL,
+                              NULL,
+                              NULL,
+                              &priv->default_manager));
         }
 
-        BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_CONNECT));
+        if (!priv->default_session)
+        {
+            BAIL_ON_ERROR(status = lwmsg_session_create(
+                              priv->default_manager,
+                              &priv->default_session));
+        }
+
+        session = priv->default_session;
     }
+
+    priv->params.connect.session = session;
+
+    BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_CONNECT));
 
 error:
 
@@ -393,30 +397,24 @@ lwmsg_connection_accept(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
 
-    if (!priv->session)
+    if (!manager)
     {
-        if (!manager)
+        if (!priv->default_manager)
         {
-            if (!priv->manager)
-            {
-                BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
-                                  NULL,
-                                  NULL,
-                                  NULL,
-                                  &priv->manager));
-            }
-
-            priv->params.accept.manager = priv->manager;
-        }
-        else
-        {
-            priv->params.accept.manager = manager;
+            BAIL_ON_ERROR(status = lwmsg_default_session_manager_new(
+                              NULL,
+                              NULL,
+                              NULL,
+                              &priv->default_manager));
         }
 
-        priv->params.accept.session = session;
-
-        BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_ACCEPT));
+        manager = priv->default_manager;
     }
+
+    priv->params.accept.manager = manager;
+    priv->params.accept.session = session;
+    
+    BAIL_ON_ERROR(status = lwmsg_connection_run(assoc, CONNECTION_EVENT_ACCEPT));
 
 error:
 
@@ -476,7 +474,7 @@ lwmsg_connection_set_packet_size(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     ConnectionPrivate* priv = CONNECTION_PRIVATE(assoc);
 
-    if (priv->session)
+    if (priv->active_session)
     {
         ASSOC_RAISE_ERROR(assoc, status = LWMSG_STATUS_INVALID_STATE, "Cannot change packet size of established connection");
     }

@@ -179,14 +179,16 @@ typedef struct ConnectionPrivate
     } timeout;
     /* Negotiated packet size */
     size_t packet_size;
-    /* Private session manager */
-    LWMsgSessionManager* manager;
-    /* Session handle */
-    LWMsgSession* session;
+    /* Handle for active session */
+    LWMsgSession* active_session;
     /* Flag: this connection is nonblocking */
     unsigned is_nonblock:1;
     /* Marshal handle */
     LWMsgDataContext* marshal_context;
+    /* Default session manager */
+    LWMsgSessionManager* default_manager;
+    /* Default session */
+    LWMsgSession* default_session;
 } ConnectionPrivate;
 
 typedef enum ConnectionGreetingFlags
