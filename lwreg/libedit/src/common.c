@@ -553,10 +553,12 @@ ed_newline(EditLine *el, int c __attribute__((__unused__)))
 	re_goto_bottom(el);
 	*el->el_line.lastchar++ = '\n';
 	*el->el_line.lastchar = '\0';
+#ifdef __LW_MULTIBYTE__
 	el->el_multibyte.charlen_map_indx = 0;
 	memset(el->el_multibyte.charlen_map,
 		   0,
 		   sizeof(el->el_multibyte.charlen_map));
+#endif
 
 	return (CC_NEWLINE);
 }

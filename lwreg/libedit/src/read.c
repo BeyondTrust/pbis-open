@@ -272,12 +272,16 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 
 		/* remove command characters from the character map */
 		if (cmd == EM_KILL_LINE) {
+#ifdef __LW_MULTIBYTE__
 			el->el_multibyte.charlen_map_indx = 0;
+#endif
 		}
 		else if (cmd != ED_INSERT &&
 			cmd != ED_DIGIT &&
 			(*ch & 0200) != 0200) {
+#ifdef __LW_MULTIBYTE__
 			el->el_multibyte.charlen_map_indx--;
+#endif
 		}
 
 		if (cmd == ED_SEQUENCE_LEAD_IN) {

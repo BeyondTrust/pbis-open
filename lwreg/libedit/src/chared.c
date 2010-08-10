@@ -188,7 +188,6 @@ protected void
 c_delbefore1(EditLine *el)
 {
 	int len = 0;
-	int i = 0;
 	char *cp = NULL;
 
 	/* Backspace character is in length map, but not in the data */
@@ -208,7 +207,9 @@ c_delbefore1(EditLine *el)
 	el->el_line.lastchar -= len;
 	el->el_multibyte.charlen_map_indx--;
 	el->el_state.argument = 0;
+#if 0
 	el->el_line.cursor -= len;
+#endif
 }
 #else
 /* c_delbefore1():

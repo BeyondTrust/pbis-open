@@ -45,7 +45,9 @@
 #define	KSHVI
 #define	VIDEFAULT
 #define	ANCHOR
+#if 0
 #define __LW_MULTIBYTE__
+#endif
 
 #include <limits.h>
 #include <stdio.h>
