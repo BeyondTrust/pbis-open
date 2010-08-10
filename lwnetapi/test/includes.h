@@ -20,6 +20,7 @@
 #include <lwstr.h>
 #include <lwsid.h>
 #include <lwio/lwio.h>
+#include <lwio/lmsession.h>
 #include <lwps/lwps.h>
 #include <lwnet.h>
 #include <openssl/rc4.h>
@@ -31,6 +32,7 @@
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/dssetup.h>
 #include <lw/rpc/wkssvc.h>
+#include <lw/srvsvc.h>
 #include <lw/lm.h>
 
 #include "netapitest.h"

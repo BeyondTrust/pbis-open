@@ -840,7 +840,7 @@ void DumpNetUserInfo1(const char *prefix, USER_INFO_1 *info)
 
 
 static
-BOOL
+BOOLEAN
 CallNetUserEnum(
     PCWSTR pwszHostname,
     DWORD  dwLevel,
@@ -1843,6 +1843,34 @@ TestValidateDisplayMachineInfo(
 
 static
 BOOLEAN
+TestValidateDisplayGroupInfo(
+    PNET_DISPLAY_GROUP  pGroup
+    )
+{
+    BOOLEAN bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    size_t sGroupnameLen = 0;
+
+    ASSERT_TEST(pGroup->grpi3_name != NULL);
+
+    if (pGroup->grpi3_name)
+    {
+        dwError = LwWc16sLen(pGroup->grpi3_name, &sGroupnameLen);
+        if (dwError)
+        {
+            bRet = FALSE;
+            return bRet;
+        }
+    }
+
+    ASSERT_TEST(pGroup->grpi3_group_id > 0);
+
+    return bRet;
+}
+
+
+static
+BOOLEAN
 TestValidateWkstaUserInfo(
     PVOID  pInfo,
     DWORD  dwLevel
@@ -1921,42 +1949,121 @@ TestValidateWkstaUserInfo(
 }
 
 
+
+
 static
 BOOLEAN
-TestValidateDisplayGroupInfo(
-    PNET_DISPLAY_GROUP  pGroup
+TestValidateSessionInfo(
+    PVOID  pInfo,
+    DWORD  dwLevel
     )
 {
     BOOLEAN bRet = TRUE;
     DWORD dwError = ERROR_SUCCESS;
-    size_t sGroupnameLen = 0;
+    PSESSION_INFO_0 pInfo0 = (PSESSION_INFO_0)pInfo;
+    PSESSION_INFO_1 pInfo1 = (PSESSION_INFO_1)pInfo;
+    PSESSION_INFO_2 pInfo2 = (PSESSION_INFO_2)pInfo;
+    PSESSION_INFO_10 pInfo10 = (PSESSION_INFO_10)pInfo;
+    PSESSION_INFO_502 pInfo502 = (PSESSION_INFO_502)pInfo;
+    size_t sClientNameLen = 0;
+    size_t sUserNameLen = 0;
+    size_t sClientTypeNameLen = 0;
+    size_t sTransportNameLen = 0;
 
-    ASSERT_TEST(pGroup->grpi3_name != NULL);
-
-    if (pGroup->grpi3_name)
+    if (dwLevel == 0 ||
+        dwLevel == 1 ||
+        dwLevel == 2)
     {
-        dwError = LwWc16sLen(pGroup->grpi3_name, &sGroupnameLen);
-        if (dwError)
+        ASSERT_TEST(pInfo0->sesi0_cname != NULL);
+        if (pInfo0->sesi0_cname)
         {
-            bRet = FALSE;
-            return bRet;
+            dwError = LwWc16sLen(pInfo0->sesi0_cname, &sClientNameLen);
+            if (dwError ||
+                !(sClientNameLen > 0))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
         }
     }
 
-    ASSERT_TEST(pGroup->grpi3_group_id > 0);
+    if (dwLevel == 1 ||
+        dwLevel == 2 ||
+        dwLevel == 10 ||
+        dwLevel == 502)
+    {
+        ASSERT_TEST(pInfo1->sesi1_username != NULL);
+        if (pInfo1->sesi1_username)
+        {
+            /*
+             * Assuming the account name can be up to 63-chars long
+             */
+            dwError = LwWc16sLen(pInfo1->sesi1_username, &sUserNameLen);
+            if (dwError ||
+                !(sUserNameLen > 0))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+    }
+
+    if (dwLevel == 2 ||
+        dwLevel == 502)
+    {
+        ASSERT_TEST(pInfo2->sesi2_time > 0);
+    }
+
+    if (dwLevel == 10)
+    {
+        ASSERT_TEST(pInfo10->sesi10_time > 0);
+    }
+
+    if (dwLevel == 2 ||
+        dwLevel == 502)
+    {
+        ASSERT_TEST(pInfo2->sesi2_cltype_name != NULL);
+        if (pInfo2->sesi2_cltype_name)
+        {
+            dwError = LwWc16sLen(pInfo2->sesi2_cltype_name,
+                                 &sClientTypeNameLen);
+            if (dwError ||
+                !(sClientTypeNameLen > 0))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+    }
+
+    if (dwLevel == 502)
+    {
+        ASSERT_TEST(pInfo502->sesi502_transport != NULL);
+        if (pInfo502->sesi502_transport)
+        {
+            dwError = LwWc16sLen(pInfo502->sesi502_transport,
+                                 &sTransportNameLen);
+            if (dwError ||
+                !(sTransportNameLen > 0))
+            {
+                bRet = FALSE;
+                return bRet;
+            }
+        }
+    }
 
     return bRet;
 }
 
 
 static
-BOOL
+BOOLEAN
 CallNetQueryDisplayInfo(
     PCWSTR pwszHostname,
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwIndex = 0;
@@ -2118,7 +2225,7 @@ done:
 
 
 static
-BOOL
+BOOLEAN
 CallNetWkstaUserEnum(
     PCWSTR pwszHostname,
     DWORD  dwLevel
@@ -2233,6 +2340,178 @@ CallNetWkstaUserEnum(
                            &dwNumEntries,
                            &dwTotalNumEntries,
                            &dwResume);
+    if (err != ERROR_INVALID_LEVEL)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    if (pBuffer)
+    {
+        /*
+         * There shouldn't be any buffer returned
+         */
+        bRet = FALSE;
+        goto done;
+    }
+
+done:
+    if (pBuffer)
+    {
+        NetApiBufferFree(pBuffer);
+    }
+
+    return bRet;
+}
+
+
+static
+BOOLEAN
+CallNetSessionEnum(
+    PCWSTR pwszHostname,
+    PWSTR  pwszClientName,
+    PWSTR  pwszUserName,
+    DWORD  dwLevel
+    )
+{
+    BOOL bRet = TRUE;
+    NET_API_STATUS err = ERROR_SUCCESS;
+    PVOID pBuffer = NULL;
+    PWSTR pwszHost = NULL;
+    DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
+    DWORD dwNumEntries = 0;
+    DWORD dwTotalNumEntries = 0;
+    DWORD dwTotalCounted = 0;
+    DWORD dwResume = 0;
+    DWORD dwPrevTotalCounted = 0;
+    DWORD iEntry = 0;
+    PSESSION_INFO_0 pSessionInfo0 = NULL;
+    PSESSION_INFO_1 pSessionInfo1 = NULL;
+    PSESSION_INFO_2 pSessionInfo2 = NULL;
+    PSESSION_INFO_10 pSessionInfo10 = NULL;
+    PSESSION_INFO_502 pSessionInfo502 = NULL;
+
+    err = LwAllocateWc16String(&pwszHost, pwszHostname);
+    if (err)
+    {
+        bRet = FALSE;
+        goto done;
+    }
+
+    /* max buffer size below 32 bytes doesn't make much sense */
+    while (dwPrefMaxLen > 32)
+    {
+        do
+        {
+            err = NetSessionEnum(pwszHost,
+                                 pwszClientName,
+                                 pwszUserName,
+                                 dwLevel,
+                                 (PBYTE*)&pBuffer,
+                                 dwPrefMaxLen,
+                                 &dwNumEntries,
+                                 &dwTotalNumEntries,
+                                 &dwResume);
+            if (err == NERR_BufTooSmall)
+            {
+                goto done;
+            }
+            else if (err != ERROR_SUCCESS &&
+                     err != ERROR_MORE_DATA)
+            {
+                bRet = FALSE;
+                goto done;
+            }
+
+            dwTotalCounted    += dwNumEntries;
+            dwTotalNumEntries  = 0;
+
+            for (iEntry = 0; iEntry < dwNumEntries; iEntry++)
+            {
+                switch (dwLevel)
+                {
+                case 0:
+                    pSessionInfo0 = &(((PSESSION_INFO_0)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateSessionInfo(pSessionInfo0, dwLevel);
+                    break;
+
+                case 1:
+                    pSessionInfo1 = &(((PSESSION_INFO_1)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateSessionInfo(pSessionInfo1, dwLevel);
+                    break;
+
+                case 2:
+                    pSessionInfo2 = &(((PSESSION_INFO_2)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateSessionInfo(pSessionInfo2, dwLevel);
+                    break;
+
+                case 10:
+                    pSessionInfo10 = &(((PSESSION_INFO_10)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateSessionInfo(pSessionInfo10, dwLevel);
+                    break;
+
+                case 502:
+                    pSessionInfo502 = &(((PSESSION_INFO_502)(pBuffer))[iEntry]);
+
+                    bRet   &= TestValidateSessionInfo(pSessionInfo502, dwLevel);
+                    break;
+
+                default:
+                    bRet = FALSE;
+                    goto done;
+                }
+            }
+
+            if (pBuffer)
+            {
+                NetApiBufferFree(pBuffer);
+                pBuffer = NULL;
+            }
+        }
+        while (err == ERROR_MORE_DATA);
+
+        if (dwPrefMaxLen > 65536)
+        {
+            dwPrefMaxLen /= 256;
+        }
+        else if (dwPrefMaxLen <= 65536 && dwPrefMaxLen > 512)
+        {
+            dwPrefMaxLen /= 4;
+        }
+        else if (dwPrefMaxLen <= 512)
+        {
+            dwPrefMaxLen /= 2;
+        }
+        else if (dwPrefMaxLen < 32)
+        {
+            dwPrefMaxLen = 0;
+        }
+
+        if (dwPrevTotalCounted)
+        {
+            ASSERT_TEST(dwPrevTotalCounted == dwTotalCounted);
+        }
+
+        dwPrevTotalCounted  = dwTotalCounted;
+        dwTotalCounted      = 0;
+        dwResume            = 0;
+    }
+
+    dwLevel      = 20;
+    dwNumEntries = 0;
+    err = NetSessionEnum(pwszHost,
+                         pwszClientName,
+                         pwszUserName,
+                         dwLevel,
+                         (PBYTE*)&pBuffer,
+                         dwPrefMaxLen,
+                         &dwNumEntries,
+                         &dwTotalNumEntries,
+                         &dwResume);
     if (err != ERROR_INVALID_LEVEL)
     {
         bRet = FALSE;
@@ -3681,12 +3960,102 @@ TestNetWkstaUserEnum(
 }
 
 
+int
+TestNetSessionEnum(
+    struct test *t,
+    const wchar16_t *hostname,
+    const wchar16_t *user,
+    const wchar16_t *pass,
+    struct parameter *options,
+    int optcount
+    )
+{
+    const DWORD dwDefaultLevel = (DWORD)(-1);
+    PCSTR pszDefaultName = "(unknown)";
+
+    BOOL bRet = TRUE;
+    DWORD dwError = ERROR_SUCCESS;
+    enum param_err perr = perr_success;
+    DWORD i = 0;
+    DWORD dwSelectedLevels[] = { 0 };
+    DWORD dwAvailableLevels[] = { 0, 1, 2, 10, 502 };
+    PDWORD pdwLevels = NULL;
+    DWORD dwNumLevels = 0;
+    DWORD dwLevel = 0;
+    PWSTR pwszClientName = NULL;
+    PWSTR pwszUserName = NULL;
+    PWSTR pwszDefaultName = NULL;
+
+    TESTINFO(t, hostname, user, pass);
+
+    perr = fetch_value(options, optcount, "level", pt_uint32,
+                       (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    perr = fetch_value(options, optcount, "clientname", pt_w16string,
+                       &pwszClientName, &pszDefaultName);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    perr = fetch_value(options, optcount, "username", pt_w16string,
+                       &pwszUserName, &pszDefaultName);
+    if (!perr_is_ok(perr)) perr_fail(perr);
+
+    PARAM_INFO("level", pt_uint32, &dwLevel);
+    PARAM_INFO("clientname", pt_w16string, &pwszClientName);
+    PARAM_INFO("username", pt_w16string, &pwszUserName);
+
+    dwError = LwMbsToWc16s(pszDefaultName, &pwszDefaultName);
+    BAIL_ON_WIN_ERROR(dwError);
+
+    if (wc16scmp(pwszClientName, pwszDefaultName) == 0)
+    {
+        LW_SAFE_FREE_MEMORY(pwszClientName);
+        pwszClientName = NULL;
+    }
+
+    if (wc16scmp(pwszUserName, pwszDefaultName) == 0)
+    {
+        LW_SAFE_FREE_MEMORY(pwszUserName);
+        pwszUserName = NULL;
+    }
+
+    if (dwLevel == (DWORD)(-1))
+    {
+        pdwLevels   = dwAvailableLevels;
+        dwNumLevels = sizeof(dwAvailableLevels)/sizeof(dwAvailableLevels[0]);
+    }
+    else
+    {
+        dwSelectedLevels[0] = dwLevel;
+        pdwLevels   = dwSelectedLevels;
+        dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
+    }
+
+    for (i = 0; i < dwNumLevels; i++)
+    {
+        dwLevel = pdwLevels[i];
+
+        bRet &= CallNetSessionEnum(hostname,
+                                   pwszClientName,
+                                   pwszUserName,
+                                   dwLevel);
+    }
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszDefaultName);
+    LW_SAFE_FREE_MEMORY(pwszClientName);
+    LW_SAFE_FREE_MEMORY(pwszUserName);
+
+    return bRet;
+}
+
+
 void SetupNetApiTests(struct test *t)
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
 
-    status = NetInitMemory();
-    if (status) return;
+    dwError = SrvSvcInitMemory();
+    if (dwError) return;
 
     AddTest(t, "NETAPI-USER-ENUM", TestNetUserEnum);
     AddTest(t, "NETAPI-USER-ADD", TestNetUserAdd);
@@ -3705,6 +4074,7 @@ void SetupNetApiTests(struct test *t)
     AddTest(t, "NETAPI-LOCAL-GROUP-MEMBERS", TestNetLocalGroupGetMembers);
     AddTest(t, "NETAPI-QUERY-DISP-INFO", TestNetQueryDisplayInformation);
     AddTest(t, "NETAPI-WKSTA-USER-ENUM", TestNetWkstaUserEnum);
+    AddTest(t, "NETAPI-SESSION-ENUM", TestNetSessionEnum);
 }
 
 
