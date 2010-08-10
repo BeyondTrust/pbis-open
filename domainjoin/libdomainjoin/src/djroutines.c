@@ -41,7 +41,7 @@ QueryInformation(
     PDOMAINJOININFO pDomainJoinInfo = NULL;
     LWException *inner = NULL;
 
-    LW_CLEANUP_CTERR(exc, CTAllocateMemory(sizeof(DOMAINJOININFO), (PVOID*)&pDomainJoinInfo));
+    LW_CLEANUP_CTERR(exc, CTAllocateMemory(sizeof(DOMAINJOININFO), (PVOID*)(PVOID)&pDomainJoinInfo));
 
     LW_CLEANUP_CTERR(exc, DJGetComputerName(&pDomainJoinInfo->pszName));
 
