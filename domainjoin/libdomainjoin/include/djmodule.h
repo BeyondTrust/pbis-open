@@ -113,6 +113,11 @@ DJInit(
     );
 
 DWORD
+DJSetComputerNameEx(
+    PCSTR pszComputerName
+    );
+
+DWORD
 DJJoinDomain(
     PCSTR pszDomain,
     PCSTR pszOU,

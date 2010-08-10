@@ -62,6 +62,27 @@ cleanup:
 }
 
 DWORD
+DJSetComputerNameEx(
+    PCSTR pszComputerName
+    )
+{
+    DWORD dwError = 0;
+    LWException *exc = NULL;
+
+    LW_TRY(&exc, DJSetComputerName(pszComputerName, NULL, &LW_EXC));
+
+cleanup:
+
+    if (!LW_IS_OK(exc))
+    {
+        dwError = exc->code;
+        LWHandle(&exc);
+    }
+
+    return dwError;
+}
+
+DWORD
 DJJoinDomain(
     PCSTR pszDomain,
     PCSTR pszOU,
