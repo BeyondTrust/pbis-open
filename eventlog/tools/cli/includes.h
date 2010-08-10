@@ -7,5 +7,4 @@
 #include "wc16printf.h"
 
 #include "evtparser.h"
-#include <lwerror.h>
 
