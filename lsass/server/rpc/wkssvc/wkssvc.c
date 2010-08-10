@@ -76,11 +76,23 @@ srv_wkssvc_Function0x01(
 
 
 WINERROR
-srv_wkssvc_Function0x02(
-    /* [in] */ handle_t IDL_handle
+srv_NetrWkstaUserEnum(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in, out] */ NETR_WKSTA_USER_INFO *pInfo,
+    /* [in] */ DWORD dwPrefMaxLen,
+    /* [out] */ DWORD *pdwNumEntries,
+    /* [in, out] */ DWORD *pdwResume
     )
 {
     WINERROR winError = ERROR_SUCCESS;
+
+    winError = NetrSrvWkstaUserEnum(IDL_handle,
+                                    pwszServerName,
+                                    pInfo,
+                                    dwPrefMaxLen,
+                                    pdwNumEntries,
+                                    pdwResume);
     return winError;
 }
 

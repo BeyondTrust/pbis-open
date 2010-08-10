@@ -19,6 +19,7 @@ libwkssvc_la_SOURCES =          \
     wkss_crypto.c               \
     wkss_security.c             \
     netr_wkstagetinfo.c         \
+    netr_wkstauserenum.c        \
     netr_joindomain2.c          \
     netr_unjoindomain2.c
 

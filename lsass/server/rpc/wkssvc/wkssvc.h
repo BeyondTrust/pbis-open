@@ -58,6 +58,17 @@ NetrSrvWkstaGetInfo(
 
 
 WINERROR
+NetrSrvWkstaUserEnum(
+    /* [in] */ handle_t IDL_handle,
+    /* [in] */ wchar16_t *pwszServerName,
+    /* [in, out] */ NETR_WKSTA_USER_INFO *pInfo,
+    /* [in] */ DWORD dwPrefMaxLen,
+    /* [out] */ DWORD *pdwNumEntries,
+    /* [in, out] */ DWORD *pdwResume
+    );
+
+
+WINERROR
 NetrSrvJoinDomain2(
     /* [in] */ handle_t IDL_handle,
     /* [in] */ wchar16_t *pwszServerName,
