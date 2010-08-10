@@ -274,7 +274,7 @@ DJStartStopDaemon(
 {
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 4;
-    long status = 0;
+    LONG status = 0;
     PPROCINFO pProcInfo = NULL;
     BOOLEAN bStarted = FALSE;
     PSTR pszDaemonPath = NULL;
@@ -852,7 +852,6 @@ DJManageDaemonDescription(
     LWException **exc
     )
 {
-    BOOLEAN bStarted = FALSE;
     PSTR daemonPath = NULL;
 
     *description = NULL;

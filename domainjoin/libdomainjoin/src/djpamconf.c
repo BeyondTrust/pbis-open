@@ -1518,12 +1518,16 @@ static BOOLEAN PamModulePrompts( const char * phase, const char * module)
 
 static BOOLEAN PamModuleUnderstandsTryFirstPass( const char * phase, const char * module)
 {
-    const char *moduleBasename = strrchr(module, "/");
+    const char *moduleBasename = strrchr(module, '/');
     char buffer[256];
 
     if (!moduleBasename)
     {
         moduleBasename = module;
+    }
+    else
+    {
+        moduleBasename++;
     }
 
     if(!PamModulePrompts(phase, module))

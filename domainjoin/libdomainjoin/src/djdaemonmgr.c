@@ -35,12 +35,6 @@
 #include "djdistroinfo.h"
 #include <lsa/lsa.h>
 
-// aka: DWORD_LICENSE_INCORRECT
-static DWORD GPAGENT_LICENSE_ERROR = 0x00002001;
-
-// DWORD_LICENSE_EXPIRED
-static DWORD GPAGENT_LICENSE_EXPIRED_ERROR = 0x00002002;
-
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 #define PWGRD "/etc/rc.config.d/pwgr"
 
@@ -326,9 +320,6 @@ DJManageDaemons(
 {
     BOOLEAN bFileExists = TRUE;
     FILE* fp = NULL;
-    PSTR pszErrFilePath = "/var/cache/likewise/grouppolicy/gpagentd.err";
-    CHAR szBuf[256+1];
-    DWORD dwGPErrCode = 0;
     LWException *innerExc = NULL;
     int daemonCount;
     int i;

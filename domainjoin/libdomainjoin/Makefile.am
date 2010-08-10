@@ -13,7 +13,7 @@ ADDITIONAL_LIBS = \
 	$(LWREG_LIBS)
 endif
 
-AM_CFLAGS = $(CPPFLAGS) -Wall -Werror-implicit-function-declaration
+AM_CFLAGS = $(CPPFLAGS) -Wall -Werror-implicit-function-declaration -Werror
 
 AM_CFLAGS += -I$(top_srcdir)/include  \
           -I$(srcdir)/include \
