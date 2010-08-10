@@ -266,12 +266,12 @@ krb5int_send_tgs(krb5_context context, krb5_flags kdcoptions,
     tgsreq.padata = (krb5_pa_data **)calloc(2, sizeof(krb5_pa_data *));
     if (tgsreq.padata == NULL) {
         free(scratch2.data);
-        goto send_tgs_error_2;
+        goto send_tgs_error;
     }
     tgsreq.padata[0] = (krb5_pa_data *)malloc(sizeof(krb5_pa_data));
     if (tgsreq.padata[0] == NULL) {
         free(scratch2.data);
-        goto send_tgs_error_2;
+        goto send_tgs_error;
     }
     tgsreq.padata[0]->pa_type = KRB5_PADATA_AP_REQ;
     tgsreq.padata[0]->length = scratch2.length;
@@ -304,7 +304,7 @@ krb5int_send_tgs(krb5_context context, krb5_flags kdcoptions,
             pa = tgsreq.padata[1 + i] = (krb5_pa_data *)malloc(sizeof(krb5_pa_data));
             if (tgsreq.padata == NULL) {
                 retval = ENOMEM;
-                goto send_tgs_error_2;
+                goto send_tgs_error;
             }
 
             pa->pa_type = padata[i]->pa_type;
@@ -312,7 +312,7 @@ krb5int_send_tgs(krb5_context context, krb5_flags kdcoptions,
             pa->contents = (krb5_octet *)malloc(padata[i]->length);
             if (pa->contents == NULL) {
                 retval = ENOMEM;
-                goto send_tgs_error_2;
+                goto send_tgs_error;
             }
             memcpy(pa->contents, padata[i]->contents, padata[i]->length);
         }
