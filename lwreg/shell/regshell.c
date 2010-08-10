@@ -1,5 +1,5 @@
 /*
- * Copyright Likewise Software    2004-2009
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -63,6 +63,7 @@ typedef struct _EDITLINE_CLIENT_DATA
     PSTR *ppszCompleteMatches;
     DWORD dwCompleteMatchesLen;
     DWORD dwEnteredTextLen;
+    REGSHELL_TAB_COMPLETION_E ePrevState;
 } EDITLINE_CLIENT_DATA, *PEDITLINE_CLIENT_DATA;
 
 void
@@ -816,15 +817,11 @@ RegShellProcessCmd(
                      * a non-zero length pszKeyName string. This is essentially
                      * the cd \ case
                      */
-                    if (pParseState->pszDefaultKey)
-                    {
-                        LWREG_SAFE_FREE_MEMORY(pParseState->pszDefaultKey);
-                        dwError = 0;
-                        goto cleanup;
-                    }
+                    LWREG_SAFE_FREE_MEMORY(pParseState->pszDefaultKey);
                     LWREG_SAFE_FREE_MEMORY(pParseState->pszDefaultRootKeyName);
+                    dwError = 0;
+                    goto cleanup;
                 }
-
 
                 if (pParseState->pszDefaultKey)
                 {
@@ -1160,14 +1157,12 @@ error:
 }
 
 
-
 DWORD
 RegShellCompletionMatch(
     PSTR pszMatchStr,
     PWSTR *ppSubKeys,
     DWORD dwSubKeyLen,
     PSTR pszDefaultRootKeyName,
-    PSTR pszDefaultKey,
     PSTR **pppMatchArgs,
     PDWORD pdwMatchArgsLen,
     PDWORD pdwMatchCommonIndex,
@@ -1185,14 +1180,22 @@ RegShellCompletionMatch(
     DWORD dwStrLen = 0;
     BOOLEAN bBackslashEnd = FALSE;
     PSTR pszSubKey = NULL;
+    PSTR pszTmpSubKey = NULL;
 
     PSTR *ppMatchArgs = NULL;
     PSTR pszPtr = NULL;
 
 
+    BAIL_ON_INVALID_POINTER(pszMatchStr);
+    BAIL_ON_INVALID_POINTER(ppSubKeys);
+    BAIL_ON_INVALID_POINTER(pppMatchArgs);
+    BAIL_ON_INVALID_POINTER(pdwMatchCommonIndex);
+    BAIL_ON_INVALID_POINTER(pdwMatchCommonLen);
     if (dwSubKeyLen > 0)
     {
-        dwError = RegAllocateMemory(sizeof(*ppMatchArgs) * dwSubKeyLen, (PVOID*)&ppMatchArgs);
+        dwError = RegAllocateMemory(
+                      sizeof(*ppMatchArgs) * dwSubKeyLen,
+                      (PVOID*)&ppMatchArgs);
         BAIL_ON_REG_ERROR(dwError);
     }
  
@@ -1202,28 +1205,45 @@ RegShellCompletionMatch(
         dwMatchMaxLen = dwStrLen-1;
         pszMatchStr[dwMatchMaxLen] = '\0';
     }
+
     for (i=0; i<dwSubKeyLen; i++)
     {
         dwError = LwRtlCStringAllocateFromWC16String(&pszSubKey, ppSubKeys[i]);
         BAIL_ON_REG_ERROR(dwError);
 
+        pszTmpSubKey = strrchr(pszSubKey, '\\');
+        if (pszTmpSubKey)
+        {
+            pszTmpSubKey++;
+        }
+        else
+        {
+            pszTmpSubKey = pszSubKey;
+        }
         pszPtr = NULL;
         if (pszMatchStr && *pszMatchStr)
         {
-            pszPtr = strstr(pszSubKey, pszMatchStr);
+            pszPtr = strstr(pszTmpSubKey, pszMatchStr);
         }
-        if (pszPtr && pszPtr == pszSubKey && 
-            (dwMatchMaxLen == 0 || pszPtr[dwMatchMaxLen] == '\0'))
+        if (pszPtr && pszPtr == pszTmpSubKey)
         {
             dwError = LwRtlCStringDuplicate(
-                          &ppMatchArgs[dwMatchArgsLen], pszSubKey);
+                          &ppMatchArgs[dwMatchArgsLen], pszTmpSubKey);
             BAIL_ON_REG_ERROR(dwError);
-            dwStrLen = strlen(pszSubKey);
+            dwStrLen = strlen(pszTmpSubKey);
             if (dwStrLen < dwMinCommonLen)
             {
                 dwMinCommonLen = dwStrLen;
                 dwMinCommonLenIndex = dwMatchArgsLen;
             }
+            dwMatchArgsLen++;
+        }
+        else if (!pszMatchStr || strlen(pszMatchStr) == 0)
+        {
+            /* Treat empty match string as wildcard, match everything */
+            dwError = LwRtlCStringDuplicate(
+                          &ppMatchArgs[dwMatchArgsLen], pszTmpSubKey);
+            BAIL_ON_REG_ERROR(dwError);
             dwMatchArgsLen++;
         }
         LWREG_SAFE_FREE_STRING(pszSubKey);
@@ -1268,389 +1288,707 @@ error:
 }
 
 
+
+
+void RegShellSetInputLine(EditLine *el, PSTR pszInput)
+{
+    el_insertstr(el, pszInput);
+}
+
+
+void RegShellSetSubStringInputLine(
+    EditLine *el, 
+    PSTR pszSubString,
+    PSTR pszInput,
+    PDWORD pdwLenAppended)
+{
+    DWORD dwLenSubString = 0;
+    DWORD dwLenInput = 0;
+    DWORD dwLenAppended = 0;
+
+    if (pszInput)
+    {
+        if (pszSubString)
+        {
+            dwLenSubString = strlen(pszSubString);
+        }
+        dwLenInput = strlen(pszInput);
+
+        if (dwLenSubString < dwLenInput)
+        {
+            el_insertstr(el, &pszInput[dwLenSubString]);
+            dwLenAppended = strlen(&pszInput[dwLenSubString]);
+        }
+    }
+    else
+    {
+        /* No substring prefix, so just set substring as the complete value */
+        el_insertstr(el, pszSubString);
+        dwLenAppended = strlen(pszSubString);
+    }
+    *pdwLenAppended = dwLenAppended;
+}
+
+
+DWORD RegShellCompleteGetInput(EditLine *el, PSTR *ppszLine)
+{
+
+    const LineInfo *lineInfoCtx = el_line(el);
+    DWORD dwError = CC_ERROR;
+    DWORD dwLineLen = 0;
+    PSTR pszLine = NULL;
+
+    dwLineLen = lineInfoCtx->cursor - lineInfoCtx->buffer;
+    if (dwLineLen == 0)
+    {
+        return dwError;
+    }
+    dwError = RegAllocateMemory(sizeof(*pszLine) * (dwLineLen+1),
+                               (PVOID*)&pszLine);
+    BAIL_ON_REG_ERROR(dwError);
+    strncat(pszLine, lineInfoCtx->buffer, dwLineLen);
+    *ppszLine = pszLine;
+
+cleanup:
+    return dwError;
+error:
+    goto cleanup;
+}
+
+
+DWORD RegShellSplitCmdParam(
+    PSTR pszInput,
+    PSTR *ppszOutCmd,
+    PSTR *ppszOutParam)
+{
+    DWORD dwError = 0;
+    DWORD dwLen = 0;
+    DWORD dwCmdLen = 0;
+    PSTR pszTmp = NULL;
+    PSTR pszOutCmd = NULL;
+    PSTR pszOutParam = NULL;
+
+    BAIL_ON_INVALID_POINTER(pszInput);
+    BAIL_ON_INVALID_POINTER(ppszOutCmd);
+    BAIL_ON_INVALID_POINTER(ppszOutParam);
+    dwLen = strlen((char *) pszInput); 
+    if (dwLen == 0)
+    {
+        dwError = EINVAL;
+        BAIL_ON_REG_ERROR(dwError);
+    }
+
+    dwError = RtlCStringDuplicate(&pszOutCmd, pszInput);
+    BAIL_ON_REG_ERROR(dwError);
+
+    pszTmp = pszOutCmd;
+    while (*pszTmp && !isspace(*pszTmp))
+    {
+        pszTmp++;
+    }
+    *pszTmp = '\0';
+    dwCmdLen = pszTmp - pszOutCmd;
+
+    if (dwCmdLen+1 < dwLen)
+    {
+        pszTmp++;
+        while (*pszTmp && isspace(*pszTmp))
+        {
+            pszTmp++;
+        }
+        if (*pszTmp)
+        {
+            dwError = RtlCStringDuplicate(&pszOutParam, pszTmp);
+            BAIL_ON_REG_ERROR(dwError);
+        }
+    }
+
+    /* Force default "parameter" of an empty string */
+    if (!pszOutParam)
+    {
+        dwError = RtlCStringDuplicate(&pszOutParam, "");
+        BAIL_ON_REG_ERROR(dwError);
+    }
+cleanup:
+    *ppszOutCmd = pszOutCmd;
+    *ppszOutParam = pszOutParam;
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+void RegShellCompletePrint(EditLine *el, PREGSHELL_PARSE_STATE pParseState)
+{
+    el_set(el, EL_REFRESH);
+}
+
+
+DWORD
+RegShellGetLongestValidKey(
+    HANDLE hReg,
+    PSTR pszRootKey,
+    PSTR pszDefaultKey,
+    PSTR pszInSubKey,
+    PSTR *ppszRetSubKey,
+    PSTR *ppszResidualSubKey)
+{
+
+    DWORD dwError = 0;
+    DWORD dwStrLen = 0;
+    PSTR pszPath = NULL;
+    PSTR pszTmp = NULL;
+    PSTR pszResidual = NULL;
+
+    if (pszDefaultKey)
+    {
+        /* Splice together pwd and input from command line */
+        if (pszInSubKey && *pszInSubKey == '\\')
+        {
+            /* Nuke out leading \ */
+            pszInSubKey++;
+        }
+
+        /* strtok modifies input parameter, so make copy */
+        dwError = RtlCStringAllocateAppendPrintf(
+                      &pszPath, "%s%s%s",
+                      pszDefaultKey,
+                      pszInSubKey ? "\\" : "",
+                      pszInSubKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    else
+    {
+        dwError = LwRtlCStringDuplicate(&pszPath, pszInSubKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+
+    /*
+     * p=Valid SubKeyPath; r=Residual subject to further analysis
+     * Input: Ser
+     *        Services
+     *        Services\
+     *        Services\lsa
+     *        Services\lsass\Par
+     *        Services\lsss\Par
+     * Result:
+     *        p=NULL, r=Ser
+     *        p=Services, r=NULL
+     *        p=Services, r=NULL
+     *        p=Services, r=lsa
+     *        p=Services\lsass, r=Par
+     *        p=NULL, r=NULL dwError=40700
+     *        
+     */
+
+
+    /* 1: Test pszPath for validity */
+    dwError = RegShellIsValidKey(
+                  hReg,
+                  pszRootKey,
+                  pszPath);
+
+    if (dwError)
+    {
+        /* 
+         * Is there a \ separator in pszPath? No, then pszPath is the
+         * return residual value.
+         */
+        pszTmp = strrchr(pszPath, '\\');
+        if (!pszTmp)
+        {
+            pszResidual = pszPath;
+            pszPath = NULL;
+            dwError = 0;
+        }
+        else
+        {
+            dwError = LwRtlCStringDuplicate(
+                          &pszResidual,
+                          &pszTmp[1]);
+            BAIL_ON_REG_ERROR(dwError);
+            *pszTmp = '\0';
+  
+            /*
+             * Test modified pszPath (less residual) for validity. If this is
+             * not a valid subkey, then the entire path is bogus.
+             */
+            dwError = RegShellIsValidKey(
+                          hReg,
+                          pszRootKey,
+                          pszPath);
+            if (dwError)
+            {
+                LWREG_SAFE_FREE_STRING(pszResidual);
+                LWREG_SAFE_FREE_STRING(pszPath);
+            }
+        }
+    }
+    else
+    {
+        /* 
+         * A valid path ending in \ means this IS the subkey.
+         * A valid path without a terminating \ could be ambiguous,
+         * so return the stuff after \ as residual for subsequent
+         * prefix matching by the caller.
+         */
+        dwStrLen = strlen(pszPath);
+        if (dwStrLen > 0 && pszPath[dwStrLen-1] != '\\')
+        {
+            pszTmp = strrchr(pszPath, '\\');
+            if (pszTmp)
+            {
+                dwError = LwRtlCStringDuplicate(
+                              &pszResidual,
+                              &pszTmp[1]);
+                BAIL_ON_REG_ERROR(dwError);
+                *pszTmp = '\0';
+            }
+        }
+    }
+    
+    *ppszRetSubKey = pszPath;
+    *ppszResidualSubKey = pszResidual;
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+
+
+DWORD
+RegShellIsValidRootKey(
+    HANDLE hReg,
+    PSTR pszRootKey)
+{
+    DWORD dwError = 0;
+    HKEY hRootKey = NULL;
+
+    dwError = RegOpenKeyExA(hReg, NULL, pszRootKey, 0, KEY_READ, &hRootKey);
+    BAIL_ON_REG_ERROR(dwError);
+
+cleanup:
+    if (hRootKey)
+    {
+        RegCloseKey(hReg, hRootKey);
+    }
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+/* Add \ line termination if one does not already exist */
+void
+RegShellInputLineTerminate(
+    EditLine *el, 
+    PSTR pszInLine)
+{
+    DWORD dwLen = 0;
+
+    if (pszInLine)
+    {
+        dwLen = strlen(pszInLine);
+        if (dwLen > 0 && pszInLine[dwLen-1] != '\\')
+        {
+            RegShellSetInputLine(el, "\\");
+        }
+    }
+    
+}
+
+
+/* Return a value when pszSubKey doesn't match the pszDefaultKey */
+DWORD
+RegShellGetSubKeyValue(
+    PSTR pszDefaultKey,
+    PSTR pszSubKey,
+    PSTR *ppszRetSubKey)
+{
+    DWORD dwError = 0;
+    DWORD dwDefaultKeyLen = 0;
+    PSTR pszRetSubKey = NULL;
+    PSTR pszSubMatch = NULL;
+
+    if (!pszDefaultKey && pszSubKey)
+    {
+        dwError = LwRtlCStringDuplicate(
+                      &pszRetSubKey,
+                      pszSubKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    else if (!pszDefaultKey || !pszSubKey)
+    {
+        return dwError;
+    }
+    else if (strcmp(pszDefaultKey, pszSubKey) == 0)
+    {
+        return dwError;
+    }
+    else
+    {
+        pszSubMatch = strstr(pszSubKey, pszDefaultKey);
+        if (pszSubMatch == pszSubKey)
+        {
+            dwDefaultKeyLen = strlen(pszDefaultKey);
+            if (dwDefaultKeyLen > 0)
+            {
+                pszRetSubKey = &pszSubKey[dwDefaultKeyLen];
+                if (*pszRetSubKey && *pszRetSubKey == '\\')
+                {
+                    pszRetSubKey++;
+                }
+                dwError = LwRtlCStringDuplicate(
+                              &pszRetSubKey,
+                              pszRetSubKey);
+                BAIL_ON_REG_ERROR(dwError);
+            }
+        }
+    }
+
+ 
+cleanup:
+    *ppszRetSubKey = pszRetSubKey;
+
+    return dwError;
+error:
+    goto cleanup;
+}
+
+
 unsigned char
 pfnRegShellCompleteCallback(
     EditLine *el,
     int ch)
 {
-    const LineInfo *lineInfoCtx = el_line(el);
-    PEDITLINE_CLIENT_DATA cldata = NULL;
-    BOOLEAN bExactMatch = FALSE;
-    BOOLEAN bBackslashEnd = FALSE;
-    BOOLEAN bAllocArgs = FALSE;
-    DWORD dwError = 0;
-    DWORD dwSubKeyLen = 0;
+    BOOLEAN bProcessingCommand = TRUE;
+    BOOLEAN bHasRootKey = FALSE;
+    DWORD dwError = CC_ERROR;
+    DWORD dwRootKeysCount = 0;
     DWORD i = 0;
-    DWORD dwLineLen = 0;
-    DWORD dwArgPtrLen = 0;
     DWORD dwMatchArgsLen = 0;
     DWORD dwMatchBestIndex = 0;
     DWORD dwMatchBestLen = 0;
-    DWORD dwStrLen = 0;
-    LW_WCHAR **ppSubKeys = NULL;
-    PSTR pszCurrentCmd = NULL;
-    PSTR pszPtr = NULL;
-    PSTR pszArgPtr = NULL;
+    DWORD dwSubKeyLen = 0;
+    DWORD dwLenAppended = 0;
+    PREGSHELL_PARSE_STATE pParseState = NULL;
+    PEDITLINE_CLIENT_DATA cldata = NULL;
+    PSTR pszInLine = NULL;
+    PWSTR *ppwszRootKeys = NULL;
+    PSTR pszCommand = NULL;
+    PSTR pszTmp = NULL;
+    PSTR pszInRootKey = NULL;
+    PSTR pszRootKey = NULL;
+    PSTR pszParam = NULL;
+    PSTR pszParamSave = NULL;
     PSTR pszSubKey = NULL;
+    PSTR pszResidualSubKey = NULL;
+    PWSTR *ppwszSubKeys = NULL;
     PSTR *ppMatchArgs = NULL;
-    PSTR pszBestMatchValue = NULL;
-    PSTR pszFullMatchStr = NULL;
 
-    dwError =  CC_ERROR;
     el_get(el, EL_CLIENTDATA, (void *) &cldata);
     BAIL_ON_INVALID_HANDLE(cldata);
     BAIL_ON_INVALID_HANDLE(cldata->pParseState);
     BAIL_ON_INVALID_HANDLE(cldata->pParseState->hReg);
 
-    if (cldata->pParseState->pszDefaultKey &&
-        !cldata->pParseState->pszDefaultKeyCompletion)
-    {
-        dwError = LwRtlCStringDuplicate(
-                      &cldata->pParseState->pszDefaultKeyCompletion,
-                      cldata->pParseState->pszDefaultKey);
-        BAIL_ON_REG_ERROR(dwError);
-    }
+    pParseState = cldata->pParseState;
 
-    dwLineLen = lineInfoCtx->cursor - lineInfoCtx->buffer;
-
-    dwError = RegAllocateMemory(sizeof(*pszCurrentCmd) * (dwLineLen+1), (PVOID*)&pszCurrentCmd);
+    dwError = RegShellCompleteGetInput(el, &pszInLine);
     BAIL_ON_REG_ERROR(dwError);
 
-    strncat(pszCurrentCmd, lineInfoCtx->buffer, dwLineLen);
-
-    /* Find end of current command */
-    for (pszPtr = pszCurrentCmd; *pszPtr && !isspace((int) *pszPtr); pszPtr++)
-        ;
-
-    /* Find the start of the current key */
-    for (;*pszPtr && isspace((int) *pszPtr); pszPtr++)
+    /* Nothing changed in the input since the tab was tapped last */
+    if (cldata->pszCompletePrevCmd && pszInLine && 
+        cldata->ePrevState == pParseState->tabState.eTabState &&
+        !strcmp(cldata->pszCompletePrevCmd, pszInLine) &&
+        pParseState->dwTabPressCount > 0)
     {
-        *pszPtr = '\0';
+        return dwError;
     }
-    if (pszPtr && *pszPtr)
+    pParseState->dwTabPressCount++;
+    
+
+    pParseState->tabState.eTabState = REGSHELL_TAB_CMD;
+    do 
     {
-        dwArgPtrLen = strlen(pszPtr);
-        dwLineLen = pszPtr - pszCurrentCmd;
-        pszArgPtr = pszCurrentCmd + dwLineLen;
-   
-        if (pszArgPtr[strlen(pszArgPtr)-1] != '\\')
+        switch (pParseState->tabState.eTabState)
         {
-            pszPtr = strrchr(pszArgPtr, '\\');
-            if (pszPtr)
-            {
-                pszArgPtr = pszPtr + 1;
-            }
-        }
-        else
-        {
-            /* 
-             * This is not quite right here. 
-             * When user enters "cd a\b\c" then tries tab
-             * completion, this code breaks.
-             */
-            pszPtr = strchr(pszArgPtr, '\\');
-            if (pszPtr && pszPtr != &pszArgPtr[strlen(pszArgPtr)-1])
-            {
-                pszArgPtr = pszPtr + 1;
-            }
-            bBackslashEnd = TRUE;
-        }
-           
-        dwStrLen = strlen(pszArgPtr) + 3;
-        if (cldata->pParseState->pszDefaultRootKeyName)
-        {
-            dwStrLen += strlen(cldata->pParseState->pszDefaultRootKeyName);
-        }
-        if (cldata->pParseState->pszDefaultKeyCompletion)
-        {
-            dwStrLen += strlen(cldata->pParseState->pszDefaultKeyCompletion);
-        }
-
-        dwError = RegAllocateMemory(sizeof(*pszFullMatchStr) * dwStrLen, (PVOID*)&pszFullMatchStr);
-        BAIL_ON_REG_ERROR(dwError);
-
-        if (cldata->pParseState->pszDefaultRootKeyName)
-        {
-            strcat(pszFullMatchStr,
-                   cldata->pParseState->pszDefaultRootKeyName);
-            strcat(pszFullMatchStr, "\\");
-        }
-        if (cldata->pParseState->pszDefaultKeyCompletion)
-        {
-            strcat(pszFullMatchStr, 
-                   cldata->pParseState->pszDefaultKeyCompletion);
-            strcat(pszFullMatchStr, "\\");
-        }
-
-        if (cldata->pParseState->pszDefaultKeyCompletion)
-        {
-            pszPtr = strstr(pszArgPtr,
-                            cldata->pParseState->pszDefaultKeyCompletion);
-  
-        }
-        else {
-            pszPtr = NULL;
-        }
-        if (!pszPtr || 
-            (pszPtr && pszPtr != pszArgPtr))
-        {
-            strcat(pszFullMatchStr, pszArgPtr);
-        }
-        pszArgPtr = pszFullMatchStr;
-    }
-    else
-    {
-        pszArgPtr = "";
-    }
-
-    /*
-     * Something was looked up already by tab completion. Look to see if
-     * any input has changed since the last list was presented. If not,
-     * just display the existing list again.
-     */
-    if (cldata->pszCompletePrevCmd && cldata->pszCompletePrevArg &&
-        strcmp(cldata->pszCompletePrevCmd,  pszCurrentCmd) == 0 &&
-        strcmp(cldata->pszCompletePrevArg, pszArgPtr) == 0)
-    {
-        ppMatchArgs = cldata->ppszCompleteMatches;
-        dwMatchArgsLen = cldata->dwCompleteMatchesLen;
-        printf("\n");
-        for (i=0; i<dwMatchArgsLen; i++)
-        {
-            pszPtr = strrchr(ppMatchArgs[i], '\\');
-            if (pszPtr)
-            {
-                pszPtr++;
-            }
-            else
-            {
-                pszPtr = ppMatchArgs[i];
-            }
-            printf("%s\t", pszPtr);
-        }
-        
-        putchar('\a');
-        printf("\n");
-        el_set(el, EL_REFRESH);
-    }
-    else 
-    {
-        dwError = RegShellUtilGetKeys(
-                      cldata->pParseState->hReg,
-                      RegShellGetRootKey(cldata->pParseState),
-                      cldata->pParseState->pszDefaultKeyCompletion,
-                      NULL,
-                      &ppSubKeys,
-                      &dwSubKeyLen);
-        BAIL_ON_REG_ERROR(dwError);
-        bAllocArgs = TRUE;
-
-        dwError = RegShellCompletionMatch(
-                      pszArgPtr,
-                      ppSubKeys,
-                      dwSubKeyLen,
-                      cldata->pParseState->pszDefaultRootKeyName,
-                      cldata->pParseState->pszDefaultKeyCompletion,
-                      &ppMatchArgs,
-                      &dwMatchArgsLen,
-                      &dwMatchBestIndex,
-                      &dwMatchBestLen);
-        /*
-         * Match is ambiguous. Display the longest matches that are all common.
-         */
-        if (dwMatchArgsLen > 1)
-        {
-            if (pszArgPtr && *pszArgPtr)
-            {
-                dwStrLen = strlen(pszArgPtr);
-                dwError = LwRtlCStringDuplicate(
-                              &pszBestMatchValue,
-                              ppMatchArgs[dwMatchBestIndex]);
-                BAIL_ON_REG_ERROR(dwError);
-
-                pszBestMatchValue[dwMatchBestLen] = '\0';
-                if (pszBestMatchValue[dwStrLen] && 
-                    el_insertstr(el, &pszBestMatchValue[dwStrLen]) == -1)
+            case REGSHELL_TAB_CMD:
+                dwError = RegShellSplitCmdParam(
+                              pszInLine,
+                              &pszCommand,
+                              &pszParam);
+                if (dwError == 0)
                 {
-                    printf("Oops: 1 el_insertstr failed\n");
+                    pParseState->tabState.eTabState =
+                        REGSHELL_TAB_BRACKET_PREFIX;
+                
+                    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCommand);
+                    pParseState->tabState.pszCommand = pszCommand;
                 }
                 else
                 {
-                    putchar('\a');
+                    BAIL_ON_REG_ERROR(dwError);
                 }
-            }
-            else
-            {
-                /*
-                 * No input provided, display all keys at this level
-                 */
-                putchar('\a');
-                for (i=0; i<dwMatchArgsLen; i++)
-                {
-                    printf("%s\t", ppMatchArgs[i]);
-                }
-                printf("\n");
-            }
+                break;
     
-        }
-        else if (dwMatchArgsLen == 1 ||
-                 (dwSubKeyLen == 1 &&
-                  (dwArgPtrLen-cldata->dwEnteredTextLen) == 0))
-        {
-            if (dwMatchArgsLen == 1)
-            {
-                dwStrLen = strlen(pszArgPtr);
-                /*
-                 * Completion is unique. add to command line.
-                 */
-                if (ppMatchArgs[i][dwStrLen] &&
-                    el_insertstr(el, &ppMatchArgs[i][dwStrLen]) == -1)
+            case REGSHELL_TAB_BRACKET_PREFIX:
+                if (pszParam && pszParam[0] == '[')
                 {
-                    printf("Oops: 2 el_insertstr failed\n");
+                    dwError = LwRtlCStringDuplicate(
+                                  &pszParamSave,
+                                  &pszParam[1]);
+                    BAIL_ON_REG_ERROR(dwError);
+                    LWREG_SAFE_FREE_STRING(pszParam);
+                    pszParam = pszParamSave;
+                    pszParamSave = NULL;
+                    pParseState->bBracketPrefix = TRUE;
                 }
-                else if (!bBackslashEnd)
+                pParseState->tabState.eTabState = REGSHELL_TAB_ROOT_KEY;
+                break;
+
+            case REGSHELL_TAB_ROOT_KEY:
+                /* First, check for valid root key in pParseState */
+                dwError = RegShellIsValidRootKey(
+                              pParseState->hReg,
+                              RegShellGetRootKey(pParseState));
+                if (dwError == 0)
                 {
-                    /* No string to append */
-                    if (el_insertstr(el, "\\") == -1)
+                    /* Root key is valid, move to the next level... */
+                    pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
+                    bHasRootKey = TRUE;
+                }
+    
+                /* 
+                 * Determine if valid root key was provided in input
+                 * Separate root key from remainder of input parameters.
+                 */
+                if (pszParam)
+                {
+                    dwError = LwRtlCStringDuplicate(
+                                  &pszInRootKey,
+                                  pszParam);
+                    BAIL_ON_REG_ERROR(dwError);
+                    pszTmp = strchr(pszInRootKey, '\\'); 
+                    if (pszTmp)
                     {
-                        printf("Oops: 3 el_insertstr failed\n");
+                        *pszTmp++ = '\0';
+                        if (*pszTmp)
+                        {
+                            dwError = LwRtlCStringDuplicate(
+                                          &pszParamSave,
+                                          pszTmp);
+                            BAIL_ON_REG_ERROR(dwError);
+                        }
+                    }
+    
+                    dwError = RegShellIsValidRootKey(
+                                  pParseState->hReg,
+                                  pszInRootKey);
+                    if (dwError == 0)
+                    {
+                        pszRootKey = pszInRootKey;
+                        LWREG_SAFE_FREE_STRING(pszParam);
+                        pszParam = pszParamSave;
+                    }
+                    else
+                    {
+                        LWREG_SAFE_FREE_STRING(pszParamSave);
                     }
                 }
-            }
-            else
-            {
-                dwError = LwRtlCStringAllocateFromWC16String(&pszSubKey, ppSubKeys[0]);
-                BAIL_ON_REG_ERROR(dwError);
     
-                /*
-                 * Completion is unique. add to command line.
+                if (!RegShellGetRootKey(pParseState))
+                {
+                    if (dwError)
+                    {
+                        /* Above test for valid root key failed... */
+                        dwError = LwRegEnumRootKeysW(
+                                      pParseState->hReg,
+                                      &ppwszRootKeys,
+                                      &dwRootKeysCount);
+                        BAIL_ON_REG_ERROR(dwError);
+            
+                        dwError = RegShellCompletionMatch(
+                                      pszInRootKey ? pszInRootKey : "",
+                                      ppwszRootKeys,
+                                      dwRootKeysCount,
+                                      NULL,
+                                      &ppMatchArgs,
+                                      &dwMatchArgsLen,
+                                      &dwMatchBestIndex,
+                                      &dwMatchBestLen);
+                        if (dwError)
+                        {
+                            continue;
+                        }
+                                      
+                        if (dwMatchArgsLen > 1)
+                        {
+                            for (i=0; i<dwMatchArgsLen; i++)
+                            {
+                                printf("%s\t", ppMatchArgs[i]);
+                            }
+                            printf("\n");
+                            bProcessingCommand = FALSE;
+                            break;
+                        }
+                        else
+                        {
+                            pszRootKey = ppMatchArgs[0];
+                        }
+                    }
+    
+                    /* Fill in matching root key on command line */
+                    RegShellSetSubStringInputLine(el,
+                        pszInRootKey ? pszInRootKey : "",
+                        pszRootKey,
+                        &dwLenAppended);
+                    pParseState->dwTabPressCount = 0;
+                    if (dwLenAppended > 0)
+                    {
+                        /* Add a \ termination only if characters were added */
+                        RegShellSetInputLine(el, "\\");
+                    }
+        
+                    /* Save root key in parse state context */
+                    dwError = LwRtlCStringDuplicate(
+                                  &pParseState->pszFullRootKeyName, 
+                                  pszRootKey);
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+    
+                LWREG_SAFE_FREE_STRING(pszInLine);
+                dwError = RegShellCompleteGetInput(el, &pszInLine);
+                BAIL_ON_REG_ERROR(dwError);
+                pParseState->tabState.eTabState = REGSHELL_TAB_SUBKEY;
+                if ((!pszParam || !pszParam[0]) && !bHasRootKey)
+                {
+                    bProcessingCommand = FALSE;
+                }
+                break;
+    
+            case REGSHELL_TAB_SUBKEY:
+                if (pszParam)
+                {
+                    if (pParseState->pszDefaultKey && pszParam[0] == '\\')
+                    {
+                        LWREG_SAFE_FREE_STRING(pParseState->pszDefaultKey);
+                    }
+                }
+
+                if (pszParam)
+                {
+                    dwError = RegShellGetLongestValidKey(
+                                      pParseState->hReg,
+                                      RegShellGetRootKey(pParseState),
+                                      pParseState->pszDefaultKey,
+                                      pszParam,
+                                      &pszSubKey,
+                                      &pszResidualSubKey);
+                    /* Failed because subkey path is not valid */
+                    if (dwError)
+                    {
+                        el_beep(el);
+                        bProcessingCommand = FALSE;
+                        break;
+                    }
+                }
+
+                dwError = RegShellUtilGetKeys(
+                              pParseState->hReg,
+                              RegShellGetRootKey(pParseState),
+                              NULL,
+                              pszSubKey,
+                              &ppwszSubKeys,
+                              &dwSubKeyLen);
+                BAIL_ON_REG_ERROR(dwError);
+
+                /* 
+                 * Partial key, find best match. Found unique matching key
+                 * when dwMatchArgsLen == 1 
                  */
-                pszPtr = strrchr(pszSubKey, '\\');
-                if (pszPtr)
+                dwMatchArgsLen = 0;
+                dwError = RegShellCompletionMatch(
+                              pszResidualSubKey,
+                              ppwszSubKeys,
+                              dwSubKeyLen,
+                              RegShellGetRootKey(pParseState),
+                              &ppMatchArgs,
+                              &dwMatchArgsLen,
+                              &dwMatchBestIndex,
+                              &dwMatchBestLen);
+                if (dwMatchArgsLen == 1)
                 {
-                    pszPtr++;
+                    /* First element in return list is the subkey match. */
+                    RegShellSetSubStringInputLine(el,
+                        pszResidualSubKey,
+                        ppMatchArgs[0],
+                        &dwLenAppended);
+                    LWREG_SAFE_FREE_STRING(pszInLine);
+                    dwError = RegShellCompleteGetInput(el, &pszInLine);
+                    BAIL_ON_REG_ERROR(dwError);
+                    RegShellInputLineTerminate(el, pszInLine);
+                    pParseState->dwTabPressCount = 0;
+                }
+                else if (dwMatchArgsLen > 0)
+                {
+                    /* Display list of parameters that match */
+                    printf("\n");
+                    for (i=0; i<dwMatchArgsLen; i++)
+                    {
+                        printf("%s\n", ppMatchArgs[i]);
+                    }
+                    ppMatchArgs[dwMatchBestIndex][dwMatchBestLen] = '\0';
+                    RegShellSetSubStringInputLine(el,
+                        pszResidualSubKey,
+                        ppMatchArgs[dwMatchBestIndex],
+                        &dwLenAppended);
+                    printf("\n");
+                    el_beep(el);
+                    bProcessingCommand = FALSE;
+                    break;
+                }
+                else if (dwSubKeyLen > 0)
+                {
+                    /* Nothing matches, dump full list of subkeys */
+                    printf("\n");
+                    for (i=0; i<dwSubKeyLen; i++)
+                    {  
+                        dwError = LwRtlCStringAllocateFromWC16String(
+                                      &pszSubKey, ppwszSubKeys[i]);
+                        BAIL_ON_REG_ERROR(dwError);
+                        printf("%s\n", pszSubKey);
+                        LWREG_SAFE_FREE_STRING(pszSubKey);
+                    }
+                    printf("\n");
+                    el_beep(el);
+                }
+                bProcessingCommand = FALSE;
+                break;
 
-                }
-                else
-                {
-                    pszPtr = pszSubKey;
-                }
-    
-                if (el_insertstr(el, pszPtr) == -1)
-                {
-                    printf("Oops: 2 el_insertstr failed\n");
-                }
-                /* No string to append */
-                if (el_insertstr(el, "\\") == -1)
-                {
-                    printf("Oops: 3 el_insertstr failed\n");
-                }
-            }
-
-            if (ppMatchArgs[i])
-            {
-                pszPtr = strchr(ppMatchArgs[i], '\\');
-                if (pszPtr)
-                {
-                    pszPtr++;
-                }
-                else
-                {
-                    pszPtr = ppMatchArgs[i];
-                }
-            }
-            else
-            {
-                pszPtr = strchr(pszSubKey, '\\');
-                if (pszPtr)
-                {
-                    pszPtr++;
-                }
-                else
-                {
-                    pszPtr = pszSubKey;
-                }
-            }
-
-            LWREG_SAFE_FREE_STRING(cldata->pParseState->pszDefaultKeyCompletion);
-            dwError = LwRtlCStringDuplicate(
-                          &cldata->pParseState->pszDefaultKeyCompletion,
-                          pszPtr);
-            BAIL_ON_REG_ERROR(dwError);
-            LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
-            LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevArg);
-            for (i=0;
-                 cldata->ppszCompleteMatches && i<cldata->dwCompleteMatchesLen;
-                 i++)
-            {
-                LWREG_SAFE_FREE_STRING(cldata->ppszCompleteMatches[i]);
-            }
-            LWREG_SAFE_FREE_MEMORY(cldata->ppszCompleteMatches);
-            cldata->dwCompleteMatchesLen = 0;
-            cldata-> dwEnteredTextLen = strlen(pszPtr) + 1;
-            bExactMatch = TRUE;
-            dwError = CC_REFRESH;
-        }
-        else
-        {
-            printf("\a\n");
-            for (i=0; i<dwSubKeyLen; i++)
-            {
-                dwError = LwRtlCStringAllocateFromWC16String(&pszSubKey, ppSubKeys[i]);
-                BAIL_ON_REG_ERROR(dwError);
-
-                pszPtr = strrchr(pszSubKey, '\\');
-                if (pszPtr)
-                {
-                    pszPtr++;
-                }
-                else
-                {
-                    pszPtr = pszSubKey;
-                }
-                printf("%s\t", pszPtr);
-                LWREG_SAFE_FREE_STRING(pszSubKey);
-            }
-            printf("\n");
-            el_set(el, EL_REFRESH);
+            default:
+                bProcessingCommand = FALSE;
+                break;
         }
     }
-
+    while (bProcessingCommand);
+    cldata->ePrevState = pParseState->tabState.eTabState;
+    LWREG_SAFE_FREE_STRING(pszInLine);
+    dwError = RegShellCompleteGetInput(el, &pszInLine);
+    BAIL_ON_REG_ERROR(dwError);
+    LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
+    dwError = LwRtlCStringDuplicate(&cldata->pszCompletePrevCmd, pszInLine);
+    BAIL_ON_REG_ERROR(dwError);
 
 cleanup:
-    for (i=0; ppSubKeys && i<dwSubKeyLen; i++)
-    {
-        LWREG_SAFE_FREE_MEMORY(ppSubKeys[i]);
-    }
-    LWREG_SAFE_FREE_MEMORY(ppSubKeys);
-
-    if (!bExactMatch)
-    {
-        LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
-        cldata->pszCompletePrevCmd = pszCurrentCmd;
-        pszCurrentCmd = NULL;
-        LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevArg);
-        cldata->pszCompletePrevArg = pszBestMatchValue;
-        pszBestMatchValue = NULL;
-
-        /* Free previous command line entered */
-        if (bAllocArgs)
-        {
-            RegShellCmdlineParseFree(cldata->dwCompleteMatchesLen, 
-                                     cldata->ppszCompleteMatches);
-        }
-        cldata->ppszCompleteMatches = ppMatchArgs;
-        cldata->dwCompleteMatchesLen = dwMatchArgsLen;
-    }
-    else {
-        RegShellCmdlineParseFree(dwMatchArgsLen,
-                                 ppMatchArgs);
-    }
-        
-    LWREG_SAFE_FREE_MEMORY(pszFullMatchStr);
+    LWREG_SAFE_FREE_MEMORY(ppwszRootKeys);
+    LWREG_SAFE_FREE_STRING(pszInRootKey);
     LWREG_SAFE_FREE_STRING(pszSubKey);
-    LWREG_SAFE_FREE_STRING(pszCurrentCmd);
-    LWREG_SAFE_FREE_STRING(pszBestMatchValue);
+    RegShellCompletePrint(el, pParseState);
     return dwError;
 
 error:
@@ -1665,7 +2003,7 @@ pfnRegShellPromptCallback(EditLine *el)
     EDITLINE_CLIENT_DATA *cldata = NULL;
 
     el_get(el, EL_CLIENTDATA, (void *) &cldata);
-    snprintf(promptBuf, sizeof(promptBuf), "%s%s%s%s ",
+    snprintf(promptBuf, sizeof(promptBuf), "\n%s%s%s%s ",
              cldata->pParseState->pszDefaultRootKeyName ?
                  cldata->pParseState->pszDefaultRootKeyName : "",
              cldata->pParseState->pszDefaultKey ? "\\" : "",
@@ -1843,6 +2181,10 @@ RegShellProcessInteractiveEditLine(
         {
             ncontinuation = 0;
         }
+        pParseState->tabState.eTabState = REGSHELL_TAB_CMD;
+#if 0
+printf("\n\n got line '%.*s'\n\n", num, buf);
+#endif
 
 #if 1 /* This mess needs to be put into a completion cleanup function */
         LWREG_SAFE_FREE_STRING(el_cdata.pParseState->pszDefaultKeyCompletion);
@@ -1859,23 +2201,34 @@ RegShellProcessInteractiveEditLine(
         el_cdata.continuation = ncontinuation;
 
         dwError = RegAllocateMemory(
-                      sizeof(*pszNewCmdLine) * (dwCmdLineLen + num + 1),
+                      sizeof(*pszNewCmdLine) * (num + 3),
                       (PVOID*)&pszNewCmdLine);
         BAIL_ON_REG_ERROR(dwError);
 
-        if (pszCmdLine)
-        {
-            strncat(pszNewCmdLine, pszCmdLine, dwCmdLineLen);
-            LWREG_SAFE_FREE_STRING(pszCmdLine);
-        }
         if (ncontinuation)
         {
             num -= 2;
         }
-        strncat(&pszNewCmdLine[dwCmdLineLen], buf, num);
-        dwCmdLineLen += num;
+        strncat(pszNewCmdLine, buf, num);
+
+        /*
+         * Put a terminating ] if a [ was provided, but only if one does not
+         * already exist. This is needed to pass the syntax check of 
+         * a subkey parameter.
+         */
+
+        if (pParseState->bBracketPrefix &&
+            num > 0 &&
+            pszNewCmdLine[num-2] != ']')
+        {
+            strcpy(&pszNewCmdLine[num-1], "]\n");
+            num++;
+        }
+
+        dwCmdLineLen = num;
         pszCmdLine = pszNewCmdLine;
         pszNewCmdLine = NULL;
+        pParseState->bBracketPrefix = FALSE;
         if (ncontinuation)
         {
             ncontinuation = 0;

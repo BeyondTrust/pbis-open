@@ -1315,6 +1315,7 @@ error:
 
 DWORD
 RegShellAllocKey(
+    PREGSHELL_PARSE_STATE pParseState,
     PSTR pszKeyName,
     PSTR *pszNewKey)
 {
@@ -1323,9 +1324,16 @@ RegShellAllocKey(
     dwError = RegAllocateMemory(strlen(pszKeyName) + 3, (PVOID*)pszNewKey);
     BAIL_ON_REG_ERROR(dwError);
 
-    strcpy(*pszNewKey, "[");
-    strcat(*pszNewKey, pszKeyName);
-    strcat(*pszNewKey, "]");
+    if (!pParseState->bBracketPrefix)
+    {
+        strcpy(*pszNewKey, "[");
+        strcat(*pszNewKey, pszKeyName);
+        strcat(*pszNewKey, "]");
+    }
+    else
+    {
+        strcat(*pszNewKey, pszKeyName);
+    }
 
 cleanup:
     return dwError;
@@ -1580,7 +1588,7 @@ RegShellCmdlineParseToArgv(
                 RegLexGetAttribute(pParseState->lexHandle,
                                    &attrSize,
                                    &pszAttr);
-                RegShellAllocKey(pszAttr, &pszArgv[dwArgc-1]);
+                RegShellAllocKey(pParseState, pszAttr, &pszArgv[dwArgc-1]);
                 BAIL_ON_REG_ERROR(dwError);
                 state = REGSHELL_CMDLINE_STATE_LIST_KEYS_STOP;
                 break;
@@ -1612,6 +1620,7 @@ RegShellCmdlineParseToArgv(
                 else
                 {
                     if (token == REGLEX_REG_KEY ||
+                        token == REGLEX_KEY_PREFIX ||
                         token == REGLEX_PLAIN_TEXT)
                     {
                         state = REGSHELL_CMDLINE_STATE_CD_REGKEY;
@@ -1625,7 +1634,7 @@ RegShellCmdlineParseToArgv(
 
 
             case REGSHELL_CMDLINE_STATE_CD_REGKEY:
-                dwError = RegShellAllocKey(pszAttr, &pszArgv[2]);
+                dwError = RegShellAllocKey(pParseState, pszAttr, &pszArgv[2]);
                 BAIL_ON_REG_ERROR(dwError);
                 dwArgc += 1;
 
@@ -1639,7 +1648,7 @@ RegShellCmdlineParseToArgv(
                                          &eof);
                 BAIL_ON_REG_ERROR(dwError);
                 stop = eof;
-                if (!eof)
+                if (!eof && !pParseState->bBracketPrefix)
                 {
                     dwError = LWREG_ERROR_INVALID_CONTEXT;
                 }
@@ -1671,7 +1680,7 @@ RegShellCmdlineParseToArgv(
                 break;
 
             case REGSHELL_CMDLINE_STATE_ADDKEY_REGKEY:
-                dwError = RegShellAllocKey(pszAttr, &pszArgv[2]);
+                dwError = RegShellAllocKey(pParseState, pszAttr, &pszArgv[2]);
                 BAIL_ON_REG_ERROR(dwError);
                 state = REGSHELL_CMDLINE_STATE_ADDKEY_STOP;
                 break;
@@ -1755,7 +1764,7 @@ RegShellCmdlineParseToArgv(
                     BAIL_ON_REG_ERROR(dwError);
                     if (pCmdItem->keyName)
                     {
-                        dwError = RegShellAllocKey(pCmdItem->keyName, &pszArgv[dwArgc++]);
+                        dwError = RegShellAllocKey(pParseState, pCmdItem->keyName, &pszArgv[dwArgc++]);
                         BAIL_ON_REG_ERROR(dwError);
                     }
 

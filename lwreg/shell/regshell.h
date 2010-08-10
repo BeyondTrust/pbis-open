@@ -122,6 +122,29 @@ typedef struct _REGSHELL_CMD_ITEM
 } REGSHELL_CMD_ITEM, *PREGSHELL_CMD_ITEM;
 
 
+typedef enum _REGSHELL_TAB_COMPLETION_E
+{
+    REGSHELL_TAB_BRACKET_PREFIX = 0,
+    REGSHELL_TAB_CMD,
+    REGSHELL_TAB_ROOT_KEY,
+    REGSHELL_TAB_SUBKEY,
+    REGSHELL_TAB_DONE,
+    REGSHELL_TAB_ERROR,
+} REGSHELL_TAB_COMPLETION_E;
+
+
+typedef struct _REGSHELL_TAB_COMPLETION_STATE
+{
+    REGSHELL_TAB_COMPLETION_E eTabState;
+    PSTR pszCommand;
+    PSTR pszRootKey;
+    PSTR pszSubKey;
+    PSTR pszInputLine;
+    PSTR pszPrevLine;
+    PSTR pszCurLine;
+} REGSHELL_TAB_COMPLETION_STATE;
+
+
 typedef struct _REGSHELL_PARSE_STATE
 {
     HANDLE ioHandle;
@@ -136,6 +159,9 @@ typedef struct _REGSHELL_PARSE_STATE
     // Overrides pszDefaultKey when root key path is specified
     PSTR pszFullRootKeyName;
     PSTR pszFullKeyPath; 
+    REGSHELL_TAB_COMPLETION_STATE tabState;
+    BOOLEAN bBracketPrefix;
+    DWORD dwTabPressCount;
 } REGSHELL_PARSE_STATE, *PREGSHELL_PARSE_STATE;
 
 
@@ -196,6 +222,7 @@ RegShellUsage(
 
 DWORD
 RegShellAllocKey(
+    PREGSHELL_PARSE_STATE pParseState,
     PSTR pszKeyName,
     PSTR *pszNewKey);
 
