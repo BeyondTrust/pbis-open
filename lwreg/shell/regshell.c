@@ -1752,6 +1752,25 @@ pfnRegShellCompleteCallback(
                 break;
 
             case REGSHELL_TAB_ROOT_KEY:
+                pszTmp = strchr(pszParam, '\\'); 
+                if (!pszTmp)
+                {
+                    /* Maybe just the undecorated root key, so \ terminate */
+                    dwError = RegShellIsValidRootKey(
+                                  pParseState->hReg,
+                                  pszParam);
+                    if (dwError == 0)
+                    {
+                        RegShellInputLineTerminate(el, pszInLine);
+                        bProcessingCommand = FALSE;
+                        pParseState->dwTabPressCount = 0;
+                    }
+                    else
+                    {
+                        LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
+                    }
+                }
+
                 /* First, check for valid root key in pParseState */
                 dwError = RegShellIsValidRootKey(
                               pParseState->hReg,
@@ -1833,13 +1852,13 @@ pfnRegShellCompleteCallback(
                                 printf("%s\t", ppMatchArgs[i]);
                             }
                             printf("\n");
-                            bProcessingCommand = FALSE;
                             break;
                         }
                         else
                         {
                             pszRootKey = ppMatchArgs[0];
                         }
+                        bProcessingCommand = FALSE;
                     }
     
                     /* Fill in matching root key on command line */
