@@ -35,6 +35,7 @@
 #include "djcli.h"
 #include "djfirewall.h"
 #include "djauditing.h"
+#include "djsmartcard.h"
 #include "ctprocutils.h"
 #include "lwexc.h"
 
