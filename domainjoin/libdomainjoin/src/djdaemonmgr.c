@@ -138,17 +138,12 @@ cleanup:
 
 static PSTR GetStartDescription(const JoinProcessOptions *options, LWException **exc)
 {
-    PSTR daemonsDescription = NULL;
     PSTR ret = NULL;
 
-    LW_TRY(exc, DJManageDaemonsDescription(TRUE, &daemonsDescription,
+    LW_TRY(exc, DJManageDaemonsDescription(TRUE, &ret,
         &LW_EXC));
 
-    LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&ret,
-        "rm /var/lib/lwidentity/*_cache.tdb\n%s", daemonsDescription));
-
 cleanup:
-    CT_SAFE_FREE_STRING(daemonsDescription);
     return ret;
 }
 
