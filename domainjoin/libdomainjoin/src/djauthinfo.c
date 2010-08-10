@@ -383,7 +383,7 @@ SetStringRegistryValue(
                 name,
                 0,
                 REG_SZ,
-                value,
+                (const BYTE*) value,
                 (DWORD) strlen(value)+1);
     if (ceError)
     {
