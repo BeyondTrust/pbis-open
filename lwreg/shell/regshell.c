@@ -1095,6 +1095,12 @@ RegShellCloseParseState(
     LWREG_SAFE_FREE_STRING(pParseState->pszDefaultKeyCompletion);
     LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
     LWREG_SAFE_FREE_STRING(pParseState->pszFullKeyPath);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCommand);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszRootKey);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszSubKey);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszInputLine);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszPrevLine);
+    LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCurLine);
     RegIOClose(pParseState->ioHandle);
     RegLexClose(pParseState->lexHandle);
     RegCloseServer(pParseState->hReg);
@@ -1151,11 +1157,27 @@ RegShellStrcmpLen(
     
 cleanup:
     return dwError;
-
 error:
     goto cleanup;
 }
 
+
+void RegShellFreeStrList(
+    PSTR *ppszList)
+{
+    DWORD i = 0;
+ 
+    if (ppszList)
+    {
+        for (i=0; ppszList[i]; i++)
+        {
+            LWREG_SAFE_FREE_STRING(ppszList[i]);
+        }
+        LWREG_SAFE_FREE_MEMORY(ppszList);
+    }
+}
+
+    
 
 DWORD
 RegShellCompletionMatch(
@@ -1194,7 +1216,7 @@ RegShellCompletionMatch(
     if (dwSubKeyLen > 0)
     {
         dwError = RegAllocateMemory(
-                      sizeof(*ppMatchArgs) * dwSubKeyLen,
+                      sizeof(*ppMatchArgs) * (dwSubKeyLen + 1),
                       (PVOID*)&ppMatchArgs);
         BAIL_ON_REG_ERROR(dwError);
     }
@@ -1874,6 +1896,7 @@ pfnRegShellCompleteCallback(
                     }
         
                     /* Save root key in parse state context */
+                    LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
                     dwError = LwRtlCStringDuplicate(
                                   &pParseState->pszFullRootKeyName, 
                                   pszRootKey);
@@ -1977,6 +2000,7 @@ pfnRegShellCompleteCallback(
                     printf("\n");
                     for (i=0; i<dwSubKeyLen; i++)
                     {  
+                        LWREG_SAFE_FREE_STRING(pszSubKey);
                         dwError = LwRtlCStringAllocateFromWC16String(
                                       &pszSubKey, ppwszSubKeys[i]);
                         BAIL_ON_REG_ERROR(dwError);
@@ -2000,13 +2024,16 @@ pfnRegShellCompleteCallback(
     dwError = RegShellCompleteGetInput(el, &pszInLine);
     BAIL_ON_REG_ERROR(dwError);
     LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
-    dwError = LwRtlCStringDuplicate(&cldata->pszCompletePrevCmd, pszInLine);
+    cldata->pszCompletePrevCmd = pszInLine;
     BAIL_ON_REG_ERROR(dwError);
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(ppwszRootKeys);
     LWREG_SAFE_FREE_STRING(pszInRootKey);
     LWREG_SAFE_FREE_STRING(pszSubKey);
+    LWREG_SAFE_FREE_STRING(pszParam);
+    LWREG_SAFE_FREE_STRING(pszResidualSubKey);
+    RegShellFreeStrList(ppMatchArgs);
     RegShellCompletePrint(el, pParseState);
     return dwError;
 

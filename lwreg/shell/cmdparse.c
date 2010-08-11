@@ -373,6 +373,8 @@ RegShellCmdParseKeyName(
     {
         /* Valid root key found */
         RegCloseKey(pParseState->hReg, hRootKey);
+    
+        LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
         pParseState->pszFullRootKeyName = pszRootKeyName;
         pszRootKeyName = NULL;
         bFoundRootKey = TRUE;
