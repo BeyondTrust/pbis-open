@@ -52,7 +52,10 @@
     {                                                           \
         if (!bInLock)                                           \
         {                                                       \
-            pthread_mutex_lock(&gLsaCredState.LsaCredsListLock);   \
+            if (pthread_mutex_lock(&gLsaCredState.LsaCredsListLock) < 0) \
+            { \
+                abort(); \
+            } \
             bInLock = TRUE;                                     \
         }                                                       \
     } while (0)
@@ -62,7 +65,10 @@
     {                                                           \
         if (bReleaseLock)                                       \
         {                                                       \
-            pthread_mutex_unlock(&gLsaCredState.LsaCredsListLock); \
+            if (pthread_mutex_unlock(&gLsaCredState.LsaCredsListLock) < 0) \
+            { \
+                abort(); \
+            } \
             bReleaseLock = FALSE;                               \
         }                                                       \
     } while (0)
@@ -275,10 +281,7 @@ LsaAddCredential(
     }
 
 cleanup:
-    if (bInLock)
-    {
-        LEAVE_CREDS_LIST(bInLock);
-    }
+    LEAVE_CREDS_LIST(bInLock);
 
     if (dwError)
     {
