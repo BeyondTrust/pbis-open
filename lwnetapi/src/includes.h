@@ -80,6 +80,7 @@
 #include "net_groupinfo.h"
 #include "net_memberinfo.h"
 #include "net_displayinfo.h"
+#include "net_serverinfo.h"
 #include "net_crypto.h"
 #include "net_getdcname.h"
 #include "externs.h"

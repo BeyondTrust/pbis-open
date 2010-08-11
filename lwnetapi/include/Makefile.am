@@ -10,4 +10,5 @@ lwnetapiinclude_HEADERS = \
         lw/lmjoin.h       \
         lw/lmmem.h        \
         lw/lmshare.h      \
-        lw/lmwksta.h
+        lw/lmwksta.h      \
+        lw/lmserver.h
