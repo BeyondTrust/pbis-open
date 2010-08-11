@@ -64,7 +64,7 @@ IoDeviceCreate(
     pFoundDevice = IopRootFindDevice(DriverHandle->Root, &deviceName);
     if (pFoundDevice)
     {
-        status = STATUS_DUPLICATE_NAME;
+        status = STATUS_OBJECT_NAME_COLLISION;
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     }
 

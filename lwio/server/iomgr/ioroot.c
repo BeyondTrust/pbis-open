@@ -115,6 +115,19 @@ IopRootLoadDriver(
     status = RtlCStringAllocateFromWC16String(&pszDriverName, pwszDriverName);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
+    for (pLinks = pRoot->DriverObjectList.Next;
+         pLinks != &pRoot->DriverObjectList;
+         pLinks = pLinks->Next)
+    {
+        PIO_DRIVER_OBJECT pDriverObject = LW_STRUCT_FROM_FIELD(pLinks, IO_DRIVER_OBJECT, RootLinks);
+
+        if (RtlCStringIsEqual(pszDriverName, pDriverObject->Config->pszName, TRUE))
+        {
+            status = STATUS_OBJECT_NAME_COLLISION;
+            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        }
+    }
+
     for (pLinks = pRoot->Config->DriverConfigList.Next;
          pLinks != &pRoot->Config->DriverConfigList;
          pLinks = pLinks->Next)
