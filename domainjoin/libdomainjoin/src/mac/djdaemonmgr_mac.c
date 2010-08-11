@@ -267,7 +267,7 @@ DJGetDaemonStatus(
 {
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 7;
-    long status = 0;
+    LONG status = 0;
     PPROCINFO pProcInfo = NULL;
     CHAR  szBuf[1024+1];
     FILE* fp = NULL;
@@ -275,10 +275,8 @@ DJGetDaemonStatus(
     PSTR configFile = NULL;
     PSTR command = NULL;
     PSTR pszServiceName = NULL;
-    PSTR command2 = NULL;
     int argNum = 0;
     PSTR whitePos = NULL;
-    PSTR wrapPos = NULL;
 
     /* Translate the Unix daemon names into the mac daemon names */
     if(!strcmp(pszDaemonPath, "lsassd"))
@@ -408,7 +406,7 @@ DJStartStopDaemon(
 {
     PSTR* ppszArgs = NULL;
     DWORD nArgs = 4;
-    long status = 0;
+    LONG status = 0;
     PPROCINFO pProcInfo = NULL;
 
     if (bStatus) {
