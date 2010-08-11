@@ -1404,7 +1404,7 @@ DWORD RegShellSplitCmdParam(
     BAIL_ON_REG_ERROR(dwError);
 
     pszTmp = pszOutCmd;
-    while (*pszTmp && !isspace(*pszTmp))
+    while (*pszTmp && !isspace((int) *pszTmp))
     {
         pszTmp++;
     }
@@ -1414,7 +1414,7 @@ DWORD RegShellSplitCmdParam(
     if (dwCmdLen+1 < dwLen)
     {
         pszTmp++;
-        while (*pszTmp && isspace(*pszTmp))
+        while (*pszTmp && isspace((int) *pszTmp))
         {
             pszTmp++;
         }
