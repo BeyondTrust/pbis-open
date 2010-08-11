@@ -925,7 +925,7 @@ cleanup:
 
 static DWORD
 CreateMacKeberosFile(
-    PSTR pszDomainName,
+    PCSTR pszDomainName,
     PSTR pszRealm)
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -1089,7 +1089,7 @@ Krb5JoinDomain(Krb5Entry *conf,
     CTStrToUpper(domainUpper);
     GCE(ceError = CreateGroupNode(conf, 2, domainUpper, &domainGroup));
     /* Enable SSO for Mac platforms, by creating a suitable /Library/Preferences/edu.mit.Kerberos file */
-    GCE(ceError = CreateMacKeberosFile((PSTR) pszDomainName, domainUpper));
+    GCE(ceError = CreateMacKeberosFile(pszDomainName, domainUpper));
 
     for(i = 0; i < trusts.size; i++)
     {

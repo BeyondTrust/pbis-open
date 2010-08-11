@@ -388,32 +388,32 @@ static DWORD ParsePamLine(struct PamLine *lineObj, const char *filename, const c
         /* this did not come from a pam.d system */
         if(tokens.size > 0)
         {
-            BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) &lineObj->service));
+            BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **)(PVOID) &lineObj->service));
             CTArrayRemoveHead(&tokens, sizeof(CTParseToken), lineObj->service, 1);
         }
     }
     else
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) &lineObj->service));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) (PVOID)&lineObj->service));
         BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateString(Basename(filename), &lineObj->service->value));
         BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateString(" ", &lineObj->service->trailingSeparator));
     }
 
     if(tokens.size > 0)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) &lineObj->phase));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) (PVOID)&lineObj->phase));
         CTArrayRemoveHead(&tokens, sizeof(CTParseToken), lineObj->phase, 1);
     }
 
     if(tokens.size > 0)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) &lineObj->control));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) (PVOID)&lineObj->control));
         CTArrayRemoveHead(&tokens, sizeof(CTParseToken), lineObj->control, 1);
     }
 
     if(tokens.size > 0)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) &lineObj->module));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) (PVOID)&lineObj->module));
         CTArrayRemoveHead(&tokens, sizeof(CTParseToken), lineObj->module, 1);
     }
 
@@ -500,7 +500,7 @@ static DWORD CopyLine(struct PamConf *conf, int oldLine, int *newLine)
     BAIL_ON_CENTERIS_ERROR(ceError = CTCopyToken(oldObj->phase, &lineObj.phase));
     BAIL_ON_CENTERIS_ERROR(ceError = CTCopyToken(oldObj->control, &lineObj.control));
     BAIL_ON_CENTERIS_ERROR(ceError = CTCopyToken(oldObj->module, &lineObj.module));
-    BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken)*oldObj->optionCount, (void **) &lineObj.options));
+    BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken)*oldObj->optionCount, (void **) (PVOID)&lineObj.options));
     lineObj.optionCount = oldObj->optionCount;
 
     for(i = 0; i < oldObj->optionCount; i++)
@@ -1985,7 +1985,7 @@ static DWORD SetPamTokenValue(CTParseToken **token, CTParseToken *prev, const ch
     }
     if(*token == NULL)
     {
-        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) token));
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateMemory(sizeof(CTParseToken), (void **) (PVOID)token));
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrdup("", &(*token)->trailingSeparator));
     }
     else

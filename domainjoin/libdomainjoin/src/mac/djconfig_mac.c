@@ -115,7 +115,7 @@ DJSetSearchPath(
 
     DJ_LOG_INFO("Setting search policy to %s", searchPolicyType == CSPSearchPath ? "Custom path" : "Automatic");
 
-    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)&ppszArgs);
+    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)(PVOID)&ppszArgs);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateString("/usr/bin/dscl", ppszArgs);
@@ -195,7 +195,7 @@ DJRegisterLWIDSPlugin()
     ceError = DJSetSearchPath(CSPSearchPath);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)&ppszArgs);
+    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)(PVOID)&ppszArgs);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateString("/usr/bin/dscl", ppszArgs);
@@ -271,7 +271,7 @@ DJUnregisterLWIDSPlugin()
 
     DJ_LOG_INFO("Unregistering LWIDSPlugin from Open Directory Authentication");
 
-    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)&ppszArgs);
+    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)(PVOID)&ppszArgs);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateString("/usr/bin/dscl", ppszArgs);
@@ -521,7 +521,7 @@ DJIsAppleADPluginInUse(BOOLEAN* pExists)
 
     DJ_LOG_INFO("Testing to see if Apple AD plugin is already in use");
 
-    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)&ppszArgs);
+    ceError = CTAllocateMemory(sizeof(PSTR)*nArgs, (PVOID*)(PVOID)&ppszArgs);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     ceError = CTAllocateString("/usr/bin/dscl", ppszArgs);
