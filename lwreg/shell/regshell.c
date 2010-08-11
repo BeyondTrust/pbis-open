@@ -1101,10 +1101,8 @@ RegShellCloseParseState(
     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszInputLine);
     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszPrevLine);
     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCurLine);
-    RegIOClose(pParseState->ioHandle);
-    RegLexClose(pParseState->lexHandle);
     RegCloseServer(pParseState->hReg);
-    LwRtlMemoryFree(pParseState);
+    RegParseClose(pParseState);
 
 cleanup:
     return dwError;
@@ -1729,7 +1727,7 @@ pfnRegShellCompleteCallback(
         !strcmp(cldata->pszCompletePrevCmd, pszInLine) &&
         pParseState->dwTabPressCount > 0)
     {
-        return dwError;
+        goto cleanup;
     }
     pParseState->dwTabPressCount++;
     
@@ -2023,16 +2021,27 @@ pfnRegShellCompleteCallback(
     LWREG_SAFE_FREE_STRING(pszInLine);
     dwError = RegShellCompleteGetInput(el, &pszInLine);
     BAIL_ON_REG_ERROR(dwError);
+
     LWREG_SAFE_FREE_STRING(cldata->pszCompletePrevCmd);
     cldata->pszCompletePrevCmd = pszInLine;
-    BAIL_ON_REG_ERROR(dwError);
+    pszInLine = NULL;
 
 cleanup:
+    for (i=0; i<dwRootKeysCount; i++)
+    {
+        LWREG_SAFE_FREE_MEMORY(ppwszRootKeys[i]);
+    }
     LWREG_SAFE_FREE_MEMORY(ppwszRootKeys);
+    for (i=0; i<dwSubKeyLen; i++)
+    {
+        LWREG_SAFE_FREE_MEMORY(ppwszSubKeys[i]);
+    }
+    LWREG_SAFE_FREE_MEMORY(ppwszSubKeys);
     LWREG_SAFE_FREE_STRING(pszInRootKey);
     LWREG_SAFE_FREE_STRING(pszSubKey);
     LWREG_SAFE_FREE_STRING(pszParam);
     LWREG_SAFE_FREE_STRING(pszResidualSubKey);
+    LWREG_SAFE_FREE_STRING(pszInLine);
     RegShellFreeStrList(ppMatchArgs);
     RegShellCompletePrint(el, pParseState);
     return dwError;
