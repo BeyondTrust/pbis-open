@@ -1043,7 +1043,8 @@ unsigned32              *status;
         return;
     }
 
-    strncpy((char*) &np_addr->remote_host, (char*) netaddr, sizeof(np_addr->remote_host));
+    strncpy((char*) &np_addr->remote_host, (char*) netaddr, sizeof(np_addr->remote_host) - 1);
+    np_addr->remote_host[sizeof(np_addr->remote_host) - 1] = '\0';
 
     *status = rpc_s_ok;
 }
