@@ -335,7 +335,7 @@ cleanup:
     LWPS_SAFE_FREE_MEMORY(pszHostDnsDomain);
     LWPS_SAFE_FREE_MEMORY(pszHostNameValue);
     LWPS_SAFE_FREE_MEMORY(pszMachineAccountName);
-    LWPS_SAFE_FREE_MEMORY(pszMachineAccountPassword);
+    LWPS_SECURE_FREE_STRING(pszMachineAccountPassword);
     if (bUnlock)
     {
        LwpsReleaseReadLock(pContext->hRWLock);
@@ -738,7 +738,7 @@ cleanup:
     LWPS_SAFE_FREE_MEMORY(pszHostname);
     LWPS_SAFE_FREE_MEMORY(pszHostDnsDomain);
     LWPS_SAFE_FREE_MEMORY(pszMachineAccount);
-    LWPS_SAFE_FREE_MEMORY(pszMachinePassword);
+    LWPS_SECURE_FREE_STRING(pszMachinePassword);
     RegDB_FreeAbsoluteSecurityDescriptor(&pSecDescAbs);
 
     return dwError;
@@ -840,7 +840,7 @@ RegDB_FreePassword(
     LWPS_SAFE_FREE_MEMORY(pInfo->pwszHostname);
     LWPS_SAFE_FREE_MEMORY(pInfo->pwszHostDnsDomain);
     LWPS_SAFE_FREE_MEMORY(pInfo->pwszMachineAccount);
-    LWPS_SAFE_FREE_MEMORY(pInfo->pwszMachinePassword);
+    LWPS_SECURE_FREE_WSTRING(pInfo->pwszMachinePassword);
     LwpsFreeMemory(pInfo);
 }
 

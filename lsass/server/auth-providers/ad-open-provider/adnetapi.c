@@ -124,7 +124,7 @@ AD_GetSystemCreds(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszMachPrincipal);
@@ -307,8 +307,8 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszDomainName);
     LW_SAFE_FREE_MEMORY(pwszLoginId);
-    LW_SAFE_FREE_MEMORY(pwszOldPassword);
-    LW_SAFE_FREE_MEMORY(pwszNewPassword);
+    LW_SECURE_FREE_WSTRING(pwszOldPassword);
+    LW_SECURE_FREE_WSTRING(pwszNewPassword);
     LsaFreeSMBCreds(&pFreeInfo);
 
     return AD_MapNetApiError(dwError);

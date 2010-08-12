@@ -573,7 +573,7 @@ ParseArgs(
 
 cleanup:
 
-    LW_SAFE_FREE_STRING (pszPassword);
+    LW_SECURE_FREE_STRING (pszPassword);
 
     return dwError;
 

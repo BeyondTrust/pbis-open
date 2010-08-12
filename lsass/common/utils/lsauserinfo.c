@@ -82,7 +82,7 @@ LsaFreeUserInfoContents_0(
     )
 {
     LW_SAFE_FREE_STRING(pUserInfo->pszName);
-    LW_SAFE_FREE_STRING(pUserInfo->pszPasswd);
+    LW_SECURE_FREE_STRING(pUserInfo->pszPasswd);
     LW_SAFE_FREE_STRING(pUserInfo->pszGecos);
     LW_SAFE_FREE_STRING(pUserInfo->pszShell);
     LW_SAFE_FREE_STRING(pUserInfo->pszHomedir);
@@ -98,8 +98,8 @@ LsaFreeUserInfoContents_1(
     LsaFreeUserInfoContents_0(&pUserInfo->info0);
     LW_SAFE_FREE_STRING(pUserInfo->pszDN);
     LW_SAFE_FREE_STRING(pUserInfo->pszUPN);
-    LW_SAFE_FREE_MEMORY(pUserInfo->pLMHash);
-    LW_SAFE_FREE_MEMORY(pUserInfo->pNTHash);
+    LW_SECURE_FREE_MEMORY(pUserInfo->pLMHash, pUserInfo->dwLMHashLen);
+    LW_SECURE_FREE_MEMORY(pUserInfo->pNTHash, pUserInfo->dwNTHashLen);
 }
 
 static
@@ -640,7 +640,7 @@ cleanup:
 error:
     if (pHashBlob &&
         pHashBlob->pData) {
-        LW_SAFE_FREE_MEMORY(pHashBlob->pData);
+        LW_SECURE_FREE_MEMORY(pHashBlob->pData, pHashBlob->dwLen);
     }
 
     if (pHashBlob) {
@@ -663,15 +663,15 @@ LsaFreeUserModInfo(
     LW_SAFE_FREE_STRING(pUserModInfo->pszHomedir);
     LW_SAFE_FREE_STRING(pUserModInfo->pszShell);
     LW_SAFE_FREE_STRING(pUserModInfo->pszGecos);
-    LW_SAFE_FREE_STRING(pUserModInfo->pszPassword);
+    LW_SECURE_FREE_STRING(pUserModInfo->pszPassword);
 
     if (pUserModInfo->pNtPasswordHash) {
-        LW_SAFE_FREE_MEMORY(pUserModInfo->pNtPasswordHash->pData);
+        LW_SECURE_FREE_MEMORY(pUserModInfo->pNtPasswordHash->pData, pUserModInfo->pNtPasswordHash->dwLen);
     }
     LW_SAFE_FREE_MEMORY(pUserModInfo->pNtPasswordHash);
 
     if (pUserModInfo->pLmPasswordHash) {
-        LW_SAFE_FREE_MEMORY(pUserModInfo->pLmPasswordHash->pData);
+        LW_SECURE_FREE_MEMORY(pUserModInfo->pLmPasswordHash->pData, pUserModInfo->pLmPasswordHash->dwLen);
     }
     LW_SAFE_FREE_MEMORY(pUserModInfo->pLmPasswordHash);
 
@@ -691,15 +691,15 @@ LsaFreeUserModInfo2(
     LW_SAFE_FREE_STRING(pUserModInfo->pszHomedir);
     LW_SAFE_FREE_STRING(pUserModInfo->pszShell);
     LW_SAFE_FREE_STRING(pUserModInfo->pszGecos);
-    LW_SAFE_FREE_STRING(pUserModInfo->pszPassword);
+    LW_SECURE_FREE_STRING(pUserModInfo->pszPassword);
 
     if (pUserModInfo->pNtPasswordHash) {
-        LW_SAFE_FREE_MEMORY(pUserModInfo->pNtPasswordHash->pData);
+        LW_SECURE_FREE_MEMORY(pUserModInfo->pNtPasswordHash->pData, pUserModInfo->pNtPasswordHash->dwLen);
     }
     LW_SAFE_FREE_MEMORY(pUserModInfo->pNtPasswordHash);
 
     if (pUserModInfo->pLmPasswordHash) {
-        LW_SAFE_FREE_MEMORY(pUserModInfo->pLmPasswordHash->pData);
+        LW_SECURE_FREE_MEMORY(pUserModInfo->pLmPasswordHash->pData, pUserModInfo->pLmPasswordHash->dwLen);
     }
     LW_SAFE_FREE_MEMORY(pUserModInfo->pLmPasswordHash);
 
@@ -713,7 +713,7 @@ LsaFreeUserAddInfo(
 {
     LW_SAFE_FREE_STRING(pUserAddInfo->pszName);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszPrimaryGroupSid);
-    LW_SAFE_FREE_STRING(pUserAddInfo->pszPassword);
+    LW_SECURE_FREE_STRING(pUserAddInfo->pszPassword);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszGecos);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszShell);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszHomedir);

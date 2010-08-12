@@ -149,21 +149,9 @@ cleanup:
 
     WkssSrvFreeAuthInfo(&SrvCtx);
 
-    if (pszPassword)
-    {
-        memset(pszPassword, 0, sizeof(pszPassword[0]) * sPasswordLen);
-        LW_SAFE_FREE_MEMORY(pszPassword);
-    }
-
-    if (pwszPassword)
-    {
-        memset(pwszPassword, 0, sizeof(pwszPassword[0]) * sPasswordLen);
-        LW_SAFE_FREE_MEMORY(pwszPassword);
-    }
-
-    memset(pInputBlob, 0, sInputBlobSize);
-    LW_SAFE_FREE_MEMORY(pInputBlob);
-
+    LW_SECURE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_WSTRING(pwszPassword);
+    LW_SECURE_FREE_MEMORY(pInputBlob, sInputBlobSize);
     LW_SAFE_FREE_MEMORY(pszUsername);
 
     return (WINERROR)dwError;

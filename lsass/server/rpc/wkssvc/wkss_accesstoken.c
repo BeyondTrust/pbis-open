@@ -229,7 +229,7 @@ WkssSrvFreeAuthInfo(
 
     if (pSrvCtx->pSessionKey)
     {
-        LW_SAFE_FREE_MEMORY(pSrvCtx->pSessionKey);
+        LW_SECURE_FREE_MEMORY(pSrvCtx->pSessionKey, pSrvCtx->dwSessionKeyLen);
         pSrvCtx->pSessionKey     = NULL;
         pSrvCtx->dwSessionKeyLen = 0;
     }
@@ -273,7 +273,7 @@ WkssSrvGetSystemCreds(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszMachinePrincipal);

@@ -190,11 +190,7 @@ SamrSrvDecryptPasswordBlobEx(
     *ppwszPassword = pwszPassword;
 
 cleanup:
-    if (pPlainTextBlob)
-    {
-        memset(pPlainTextBlob, 0, dwPlainTextBlobSize);
-        LW_SAFE_FREE_MEMORY(pPlainTextBlob);
-    }
+    LW_SECURE_FREE_MEMORY(pPlainTextBlob, dwPlainTextBlobSize);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -313,11 +309,7 @@ SamrSrvDecryptPasswordBlob(
     *ppwszPassword = pwszPassword;
 
 cleanup:
-    if (pPlainTextBlob)
-    {
-        memset(pPlainTextBlob, 0, dwPlainTextBlobSize);
-        LW_SAFE_FREE_MEMORY(pPlainTextBlob);
-    }
+    LW_SECURE_FREE_MEMORY(pPlainTextBlob, dwPlainTextBlobSize);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -388,11 +380,7 @@ SamrSrvDecodePasswordBuffer(
     *pdwPasswordLen = dwPasswordLen / 2;
 
 cleanup:
-    if (pwszPasswordLE)
-    {
-        memset(pwszPasswordLE, 0, dwPasswordLen);
-        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPasswordLE);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -403,11 +391,7 @@ cleanup:
     return ntStatus;
 
 error:
-    if (pwszPassword)
-    {
-        memset(pwszPassword, 0, dwPasswordLen);
-        LW_SAFE_FREE_MEMORY(pwszPassword);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPassword);
 
     *ppwszPassword = NULL;
 
@@ -496,17 +480,8 @@ SamrSrvEncryptPasswordBlobEx(
            dwKeyInitLen);
 
 cleanup:
-    if (pPassBlob)
-    {
-        memset(pPassBlob, 0, dwPassBlobLen);
-        LW_SAFE_FREE_MEMORY(pPassBlob);
-    }
-
-    if (pEncryptedBlob)
-    {
-        memset(pEncryptedBlob, 0, dwPassBlobLen);
-        LW_SAFE_FREE_MEMORY(pEncryptedBlob);
-    }
+    LW_SECURE_FREE_MEMORY(pPassBlob, dwPassBlobLen);
+    LW_SECURE_FREE_MEMORY(pEncryptedBlob, dwPassBlobLen);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -590,17 +565,8 @@ SamrSrvEncryptPasswordBlob(
            dwPassBlobLen);
 
 cleanup:
-    if (pPassBlob)
-    {
-        memset(pPassBlob, 0, dwPassBlobLen);
-        LW_SAFE_FREE_MEMORY(pPassBlob);
-    }
-
-    if (pEncryptedBlob)
-    {
-        memset(pEncryptedBlob, 0, dwPassBlobLen);
-        LW_SAFE_FREE_MEMORY(pEncryptedBlob);
-    }
+    LW_SECURE_FREE_MEMORY(pPassBlob, dwPassBlobLen);
+    LW_SECURE_FREE_MEMORY(pEncryptedBlob, dwPassBlobLen);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -688,11 +654,7 @@ cleanup:
         memset(PasswordBlob, 0, sizeof(PasswordBlob));
     }
 
-    if (pwszPasswordLE)
-    {
-        memset(pwszPasswordLE, 0, sPasswordSize);
-        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPasswordLE);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -703,11 +665,7 @@ cleanup:
     return ntStatus;
 
 error:
-    if (pBlob)
-    {
-        memset(pBlob, 0, dwBlobSize);
-        LW_SAFE_FREE_MEMORY(pBlob);
-    }
+    LW_SECURE_FREE_MEMORY(pBlob, dwBlobSize);
 
     *ppBlob      = NULL;
     *pdwBlobSize = 0;
@@ -762,11 +720,7 @@ cleanup:
     return ntStatus;
 
 error:
-    if (pNtHash)
-    {
-        memset(pNtHash, 0, dwNtHashLen);
-        LW_SAFE_FREE_MEMORY(pNtHash);
-    }
+    LW_SECURE_FREE_MEMORY(pNtHash, dwNtHashLen);
 
     *ppNtHash     = NULL;
     *pdwNtHashLen = 0;

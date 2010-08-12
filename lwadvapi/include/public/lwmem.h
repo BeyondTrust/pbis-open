@@ -56,6 +56,16 @@
         } \
     } while (0)
 
+#define LW_SECURE_FREE_MEMORY(mem, len) \
+    do { \
+        if (mem) \
+        { \
+            memset(mem, 0, len); \
+            LwFreeMemory(mem); \
+            (mem) = NULL; \
+        } \
+    } while (0)
+
 
 LW_BEGIN_EXTERN_C
 

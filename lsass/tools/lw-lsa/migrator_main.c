@@ -161,7 +161,7 @@ LsaSrvPopulateGroups(
 
         LW_SAFE_FREE_STRING(pszBuf);
         LW_SAFE_FREE_STRING(pszGroupname);
-        LW_SAFE_FREE_STRING(pszPassword);
+        LW_SECURE_FREE_STRING(pszPassword);
     }
 
 cleanup:
@@ -176,7 +176,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszBuf);
     LW_SAFE_FREE_STRING(pszGroupname);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
 
     return dwError;
 
@@ -310,7 +310,7 @@ LsaSrvPopulateUsers(
 
         LW_SAFE_FREE_STRING(pszBuf);
         LW_SAFE_FREE_STRING(pszUsername);
-        LW_SAFE_FREE_STRING(pszPassword);
+        LW_SECURE_FREE_STRING(pszPassword);
         LW_SAFE_FREE_STRING(pszGecos);
         LW_SAFE_FREE_STRING(pszHomedir);
         LW_SAFE_FREE_STRING(pszShell);
@@ -328,7 +328,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszBuf);
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszGecos);
     LW_SAFE_FREE_STRING(pszHomedir);
     LW_SAFE_FREE_STRING(pszShell);
@@ -481,7 +481,7 @@ LsaSrvPopulateGroupMembers(
 
         LW_SAFE_FREE_STRING(pszBuf);
         LW_SAFE_FREE_STRING(pszGroupname);
-        LW_SAFE_FREE_STRING(pszPassword);
+        LW_SECURE_FREE_STRING(pszPassword);
         LW_SAFE_FREE_STRING(pszGroupMembers);
     }
 
@@ -501,7 +501,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszBuf);
     LW_SAFE_FREE_STRING(pszGroupname);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszGroupMembers);
 
     return dwError;

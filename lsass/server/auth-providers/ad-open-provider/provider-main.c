@@ -436,7 +436,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
 
@@ -3943,7 +3943,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
 

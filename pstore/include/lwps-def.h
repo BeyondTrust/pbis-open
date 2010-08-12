@@ -79,7 +79,7 @@
            }                       \
         } while(0);
 
-#define LWPS_SAFE_CLEAR_FREE_STRING(str)      \
+#define LWPS_SECURE_FREE_STRING(str)      \
         do {                                  \
            if (str) {                         \
               if (*str) {                     \
@@ -89,6 +89,19 @@
               (str) = NULL;                   \
            }                                  \
         } while(0);
+
+#define LWPS_SECURE_FREE_WSTRING(str) \
+    do { \
+       if (str) \
+       { \
+           if (*str) \
+           { \
+               memset(str, 0, wc16slen(str) * sizeof(str[0])); \
+           } \
+           LwpsFreeMemory(str); \
+           (str) = NULL; \
+       } \
+    } while(0)
 
 #define LWPS_SAFE_FREE_MEMORY(mem)              \
         do {                                    \

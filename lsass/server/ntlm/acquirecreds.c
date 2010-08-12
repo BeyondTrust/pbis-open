@@ -159,7 +159,7 @@ NtlmServerAcquireCredentialsHandle(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    LW_SAFE_FREE_STRING(pPassword);
+    LW_SECURE_FREE_STRING(pPassword);
     LW_SAFE_FREE_STRING(pUserName);
     LW_SAFE_FREE_STRING(pNT4UserName);
 

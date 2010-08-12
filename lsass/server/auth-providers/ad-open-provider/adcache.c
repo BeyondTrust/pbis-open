@@ -478,7 +478,7 @@ ADCacheFreePasswordVerifier(
     )
 {
     LW_SAFE_FREE_STRING(pVerifier->pszObjectSid);
-    LW_SAFE_FREE_STRING(pVerifier->pszPasswordVerifier);
+    LW_SECURE_FREE_STRING(pVerifier->pszPasswordVerifier);
     LW_SAFE_FREE_MEMORY(pVerifier);    
 }
 

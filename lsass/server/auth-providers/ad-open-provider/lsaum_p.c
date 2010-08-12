@@ -838,7 +838,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_CLEAR_FREE_STRING(pszServicePassword);
+    LW_SECURE_FREE_STRING(pszServicePassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
 
@@ -991,7 +991,7 @@ error:
 
     *ppszString = NULL;
 
-    LW_SAFE_CLEAR_FREE_STRING(pszString);
+    LW_SECURE_FREE_STRING(pszString);
 
     goto cleanup;
 }
@@ -1003,11 +1003,7 @@ LsaUmpFreePassword(
     DWORD dwPasswordLen
     )
 {
-    if ( pPassword )
-    {
-        memset(pPassword, 0, dwPasswordLen);
-        LW_SAFE_FREE_MEMORY(pPassword);
-    }
+    LW_SECURE_FREE_MEMORY(pPassword, dwPasswordLen);
 }
 #endif
 

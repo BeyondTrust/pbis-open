@@ -53,15 +53,28 @@
 
 #define LW_IS_NULL_OR_EMPTY_STR(str) (!(str) || !(*(str)))
 
-#define LW_SAFE_CLEAR_FREE_STRING(str) \
+#define LW_SECURE_FREE_STRING(str) \
     do { \
        if (str) \
        { \
-           if (*str) \
+           if (*(str)) \
            { \
                memset(str, 0, strlen(str)); \
            } \
            LwFreeString(str); \
+           (str) = NULL; \
+       } \
+    } while(0)
+
+#define LW_SECURE_FREE_WSTRING(str) \
+    do { \
+       if (str) \
+       { \
+           if (*(str)) \
+           { \
+               memset(str, 0, wc16slen(str) * sizeof(str[0])); \
+           } \
+           LwFreeMemory(str); \
            (str) = NULL; \
        } \
     } while(0)

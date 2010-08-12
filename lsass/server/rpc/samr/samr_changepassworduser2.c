@@ -271,24 +271,14 @@ cleanup:
 
     DirectoryFreeEntrySecurityDescriptor(&pSecDesc);
 
-    if (pwszNewPassword)
-    {
-        memset(pwszNewPassword,
-               0,
-               sNewPasswordLen * sizeof(pwszNewPassword[0]));
-        LW_SAFE_FREE_MEMORY(pwszNewPassword);
-    }
+    LW_SECURE_FREE_WSTRING(pwszNewPassword);
 
     if (pOldNtHashBlob)
     {
         memset(pOldNtHashBlob->pBytes, 0, pOldNtHashBlob->ulNumBytes);
     }
 
-    if (NewNtHashBlob.pBytes)
-    {
-        memset(NewNtHashBlob.pBytes, 0, NewNtHashBlob.ulNumBytes);
-        LW_SAFE_FREE_MEMORY(NewNtHashBlob.pBytes);
-    }
+    LW_SECURE_FREE_MEMORY(NewNtHashBlob.pBytes, NewNtHashBlob.ulNumBytes);
 
     if (pEntries)
     {

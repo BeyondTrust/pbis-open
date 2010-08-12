@@ -134,7 +134,7 @@ LsaFreeCred(
     if (pCredential)
     {
         LW_SAFE_FREE_MEMORY(pCredential->pUserName);
-        LW_SAFE_FREE_MEMORY(pCredential->pPassword);
+        LW_SECURE_FREE_STRING(pCredential->pPassword);
         LwFreeMemory(pCredential);
     }
 }

@@ -791,11 +791,7 @@ SamrSrvSetUserInfoInternal(
     }
 
 cleanup:
-    if (pwszPassword)
-    {
-        memset(pwszPassword, 0, dwPasswordLen * sizeof(WCHAR));
-        LW_SAFE_FREE_MEMORY(pwszPassword);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPassword);
 
     for (i = ATTR_VAL_IDX_FULL_NAME;
          i < ATTR_VAL_IDX_SENTINEL;

@@ -167,7 +167,7 @@ LsaSrvFreeAuthInfo(
 
     if (pPolCtx->pSessionKey)
     {
-        LW_SAFE_FREE_MEMORY(pPolCtx->pSessionKey);
+        LW_SECURE_FREE_MEMORY(pPolCtx->pSessionKey, pPolCtx->dwSessionKeyLen);
         pPolCtx->pSessionKey     = NULL;
         pPolCtx->dwSessionKeyLen = 0;
     }
@@ -212,7 +212,7 @@ LsaSrvGetSystemCreds(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszMachinePrincipal);

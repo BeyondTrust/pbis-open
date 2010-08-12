@@ -308,7 +308,7 @@ LsaPamCleanupDataString(
 {
     PSTR pStr = data;
 
-    LW_SAFE_CLEAR_FREE_STRING(pStr);
+    LW_SECURE_FREE_STRING(pStr);
 }
 
 DWORD

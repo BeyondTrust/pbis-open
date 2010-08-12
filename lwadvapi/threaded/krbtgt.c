@@ -192,7 +192,7 @@ cleanup:
         }
         LW_SAFE_FREE_MEMORY(pwszPass);
     }
-    LW_SAFE_CLEAR_FREE_STRING(pszPass);
+    LW_SECURE_FREE_STRING(pszPass);
 
     return dwError;
     

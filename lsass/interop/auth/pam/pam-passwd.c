@@ -229,7 +229,7 @@ cleanup:
     }
 
     LW_SAFE_FREE_STRING(pszLoginId);
-    LW_SAFE_CLEAR_FREE_STRING(pszOldPassword);
+    LW_SECURE_FREE_STRING(pszOldPassword);
     LW_SAFE_FREE_STRING(pszMessage);
 
     LSA_LOG_PAM_DEBUG("LsaPamCheckCurrentPassword::end");
@@ -367,8 +367,8 @@ LsaPamUpdatePassword(
 
 cleanup:
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
-    LW_SAFE_CLEAR_FREE_STRING(pszOldPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszOldPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
 
     if (hLsaConnection != (HANDLE)NULL)
@@ -503,7 +503,7 @@ cleanup:
 
 error:
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
 
     *ppszPassword = NULL;
 
@@ -616,7 +616,7 @@ cleanup:
 
 error:
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
 
     *ppszPassword = NULL;
 
@@ -691,8 +691,8 @@ LsaPamGetNewPassword(
            LsaPamConverse(pamh, "Passwords do not match", PAM_ERROR_MSG, NULL);
            dwError = 0;
 
-           LW_SAFE_CLEAR_FREE_STRING(pszPassword_1);
-           LW_SAFE_CLEAR_FREE_STRING(pszPassword_2);
+           LW_SECURE_FREE_STRING(pszPassword_1);
+           LW_SECURE_FREE_STRING(pszPassword_2);
 
        }
        else
@@ -712,7 +712,7 @@ LsaPamGetNewPassword(
 
 cleanup:
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword_2);
+    LW_SECURE_FREE_STRING(pszPassword_2);
 
     LSA_LOG_PAM_DEBUG("LsaPamGetNewPassword::end");
 
@@ -720,7 +720,7 @@ cleanup:
 
 error:
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword_1);
+    LW_SECURE_FREE_STRING(pszPassword_1);
 
     *ppszPassword = NULL;
 

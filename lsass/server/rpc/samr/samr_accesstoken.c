@@ -168,7 +168,7 @@ SamrSrvFreeAuthInfo(
 
     if (pConnCtx->pSessionKey)
     {
-        LW_SAFE_FREE_MEMORY(pConnCtx->pSessionKey);
+        LW_SECURE_FREE_MEMORY(pConnCtx->pSessionKey, pConnCtx->dwSessionKeyLen);
         pConnCtx->pSessionKey     = NULL;
         pConnCtx->dwSessionKeyLen = 0;
     }
@@ -213,7 +213,7 @@ SamrSrvGetSystemCreds(
 
 cleanup:
     LW_SAFE_FREE_STRING(pszUsername);
-    LW_SAFE_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszMachinePrincipal);

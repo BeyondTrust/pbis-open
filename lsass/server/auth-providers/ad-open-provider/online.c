@@ -1390,7 +1390,7 @@ AD_GetCachedPasswordHash(
 
 cleanup:
 
-    LW_SAFE_FREE_MEMORY(pwszPassword);
+    LW_SECURE_FREE_WSTRING(pwszPassword);
     LW_SAFE_FREE_MEMORY(pbPrehashedVerifier);
 
     return dwError;
@@ -1689,7 +1689,7 @@ cleanup:
     }
     LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszMachineAccountName);
-    LW_SAFE_FREE_STRING(pszServicePassword);
+    LW_SECURE_FREE_STRING(pszServicePassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszServicePrincipal);

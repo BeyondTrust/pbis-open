@@ -498,7 +498,7 @@ cleanup:
         LsaFreeUserInfo(dwUserInfoLevel, (PVOID)pUserInfo);
     }
 
-    LW_SAFE_CLEAR_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszLoginId);
     LW_SAFE_FREE_STRING(pszSmartCardReader);
     LW_SAFE_FREE_STRING(pszPINPrompt);

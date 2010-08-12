@@ -338,7 +338,7 @@ cleanup:
     LsaUtilFreeSecurityObject(pObject);
 
     LW_SAFE_FREE_MEMORY(pwszUserDN);
-    LW_SAFE_FREE_MEMORY(pwszPassword);
+    LW_SECURE_FREE_WSTRING(pwszPassword);
 
     if (dwUpdateError != ERROR_SUCCESS)
     {
@@ -493,8 +493,8 @@ cleanup:
 
     LsaUtilFreeSecurityObject(pObject);
 
-    LW_SAFE_FREE_MEMORY(pwszNewPassword);
-    LW_SAFE_FREE_MEMORY(pwszOldPassword);
+    LW_SECURE_FREE_WSTRING(pwszNewPassword);
+    LW_SECURE_FREE_WSTRING(pwszOldPassword);
     LW_SAFE_FREE_MEMORY(pwszUserDN);
 
     return dwError;
@@ -551,7 +551,7 @@ cleanup:
 
     LsaUtilFreeSecurityObject(pObject);
 
-    LW_SAFE_FREE_MEMORY(pwszNewPassword);
+    LW_SECURE_FREE_WSTRING(pwszNewPassword);
     LW_SAFE_FREE_MEMORY(pwszUserDN);
 
     return dwError;

@@ -57,8 +57,8 @@ LsaFreeSecurityObjectPrivateAttrs(
     {
         if (pObject->type == LSA_OBJECT_TYPE_USER)
         {
-            LW_SAFE_FREE_MEMORY(pObject->userInfo.pLmHash);
-            LW_SAFE_FREE_MEMORY(pObject->userInfo.pNtHash);
+            LW_SECURE_FREE_MEMORY(pObject->userInfo.pLmHash, pObject->userInfo.dwLmHashLen);
+            LW_SECURE_FREE_MEMORY(pObject->userInfo.pNtHash, pObject->userInfo.dwNtHashLen);
         }
     }
 }

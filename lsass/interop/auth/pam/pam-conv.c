@@ -187,7 +187,7 @@ error:
     {
         for (i = 0; i < numMessages; ++i)
         {
-            LW_SAFE_CLEAR_FREE_STRING(pResponses[i].resp);
+            LW_SECURE_FREE_STRING(pResponses[i].resp);
         }
     }
 

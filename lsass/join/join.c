@@ -698,7 +698,7 @@ LsaFreeMachineAccountInfo(
     LW_SAFE_FREE_STRING(pAcctInfo->pszDomainName);
     LW_SAFE_FREE_STRING(pAcctInfo->pszHostname);
     LW_SAFE_FREE_STRING(pAcctInfo->pszMachineAccount);
-    LW_SAFE_FREE_STRING(pAcctInfo->pszMachinePassword);
+    LW_SECURE_FREE_STRING(pAcctInfo->pszMachinePassword);
     LW_SAFE_FREE_STRING(pAcctInfo->pszSID);
     LwFreeMemory(pAcctInfo);
 }
@@ -1262,7 +1262,7 @@ LsaGenerateMachinePassword(
         pwszPassword[i] = (WCHAR) pszPassword[i];
     }
 cleanup:
-    LW_SAFE_FREE_MEMORY(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     return dwError;
 
 error:
@@ -1374,8 +1374,8 @@ LsaGenerateRandomString(
     pszBuffer[sBufferLen-1] = '\0';
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pBuffer);
-    LW_SAFE_FREE_MEMORY(pClassBuffer);
+    LW_SECURE_FREE_MEMORY(pBuffer, sBufferLen);
+    LW_SECURE_FREE_MEMORY(pClassBuffer, sBufferLen);
 
     return dwError;
 
@@ -1917,11 +1917,7 @@ LsaEncodePasswordBuffer(
 cleanup:
     memset(PasswordBlob, 0, sizeof(PasswordBlob));
 
-    if (pwszPasswordLE)
-    {
-        memset(pwszPasswordLE, 0, dwPasswordSize);
-        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPasswordLE);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -3294,11 +3290,7 @@ LsaGetNtPasswordHash(
     memcpy(pNtHash, Hash, sizeof(Hash));
 
 cleanup:
-    if (pwszPasswordLE)
-    {
-        memset(pwszPasswordLE, 0, sPasswordLen * sizeof(pwszPasswordLE[0]));
-        LW_SAFE_FREE_MEMORY(pwszPasswordLE);
-    }
+    LW_SECURE_FREE_WSTRING(pwszPasswordLE);
 
     memset(Hash, 0, sizeof(Hash));
 

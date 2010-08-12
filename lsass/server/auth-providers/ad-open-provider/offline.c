@@ -133,7 +133,7 @@ cleanup:
 
     ADCacheSafeFreeObject(&pUserInfo);
     LSA_DB_SAFE_FREE_PASSWORD_VERIFIER(pVerifier);
-    LW_SAFE_FREE_STRING(pszEnteredPasswordVerifier);
+    LW_SECURE_FREE_STRING(pszEnteredPasswordVerifier);
     LW_SAFE_FREE_MEMORY(pbHash);
     LW_SAFE_FREE_STRING(pszNT4UserName);
 

@@ -206,7 +206,7 @@ cleanup:
         sqlite3_finalize(pSqlStatement);
     }
 
-    DIRECTORY_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     DIRECTORY_FREE_STRING(pszUserDN);
 
     return dwError;
@@ -422,7 +422,7 @@ cleanup:
         sqlite3_finalize(pSqlStatement);
     }
 
-    DIRECTORY_FREE_STRING(pszPassword);
+    LW_SECURE_FREE_STRING(pszPassword);
     DIRECTORY_FREE_STRING(pszUserDN);
 
     return dwError;

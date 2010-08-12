@@ -661,7 +661,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszShell);
     LW_SAFE_FREE_MEMORY(pwszHomedir);
     LW_SAFE_FREE_STRING(pszHomedir);
-    LW_SAFE_FREE_MEMORY(pwszPassword);
+    LW_SECURE_FREE_WSTRING(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszDomain);
     LW_SAFE_FREE_MEMORY(pwszNetBIOSDomain);
     RTL_FREE(&pGroupSID);
@@ -1109,7 +1109,7 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszGroupDN_remove);
     LW_SAFE_FREE_MEMORY(pwszGroupDN_add);
-    LW_SAFE_FREE_MEMORY(pwszPassword);
+    LW_SECURE_FREE_WSTRING(pwszPassword);
     LW_SAFE_FREE_MEMORY(pwszUserDN);
     LW_SAFE_FREE_MEMORY(pwszPrimaryGroupDn);
 

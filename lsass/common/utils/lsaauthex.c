@@ -133,7 +133,7 @@ LsaFreeAuthUserParams(
     switch (p->AuthType)
     {
     case LSA_AUTH_PLAINTEXT:
-        LW_SAFE_FREE_MEMORY(p->pass.clear.pszPassword);
+        LW_SECURE_FREE_STRING(p->pass.clear.pszPassword);
         break;
     case LSA_AUTH_CHAP:
         LsaDataBlobFree(&p->pass.chap.pChallenge);
