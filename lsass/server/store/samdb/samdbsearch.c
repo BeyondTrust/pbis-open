@@ -796,6 +796,11 @@ error:
     *ppDirectoryEntries = NULL;
     *pdwNumEntries = 0;
 
+    if (pAttrs)
+    {
+        DirectoryFreeAttributes(pAttrs, dwNumAttrs);
+    }
+
     if (pDirectoryEntries)
     {
         DirectoryFreeEntries(pDirectoryEntries, dwTotalEntries);

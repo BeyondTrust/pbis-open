@@ -70,32 +70,43 @@ DirectoryFreeEntries(
 
         if (pEntry->pAttributes)
         {
-            DWORD iDirAttr = 0;
-
-            for (; iDirAttr < pEntry->ulNumAttributes; iDirAttr++)
-            {
-                PDIRECTORY_ATTRIBUTE pDirAttr = NULL;
-
-                pDirAttr = &pEntry->pAttributes[iDirAttr];
-
-                if (pDirAttr->pwszName)
-                {
-                    DirectoryFreeStringW(pDirAttr->pwszName);
-                }
-
-                if (pDirAttr->pValues)
-                {
-                    DirectoryFreeAttributeValues(
-                            pDirAttr->pValues,
-                            pDirAttr->ulNumValues);
-                }
-            }
-
-            DirectoryFreeMemory(pEntry->pAttributes);
+            DirectoryFreeAttributes(
+                    pEntry->pAttributes,
+                    pEntry->ulNumAttributes);
         }
     }
 
     DirectoryFreeMemory(pEntries);
+}
+
+VOID
+DirectoryFreeAttributes(
+    PDIRECTORY_ATTRIBUTE pAttributes,
+    DWORD                dwNumAttributes
+    )
+{
+    DWORD iDirAttr = 0;
+
+    for (; iDirAttr < dwNumAttributes; iDirAttr++)
+    {
+        PDIRECTORY_ATTRIBUTE pDirAttr = NULL;
+
+        pDirAttr = &pAttributes[iDirAttr];
+
+        if (pDirAttr->pwszName)
+        {
+            DirectoryFreeStringW(pDirAttr->pwszName);
+        }
+
+        if (pDirAttr->pValues)
+        {
+            DirectoryFreeAttributeValues(
+                    pDirAttr->pValues,
+                    pDirAttr->ulNumValues);
+        }
+    }
+
+    DirectoryFreeMemory(pAttributes);
 }
 
 VOID

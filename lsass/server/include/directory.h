@@ -401,6 +401,12 @@ DirectoryFreeEntries(
     );
 
 VOID
+DirectoryFreeAttributes(
+    PDIRECTORY_ATTRIBUTE pAttributes,
+    DWORD                dwNumAttributes
+    );
+
+VOID
 DirectoryFreeAttributeValues(
     PATTRIBUTE_VALUE pAttrValues,
     DWORD            dwNumValues
