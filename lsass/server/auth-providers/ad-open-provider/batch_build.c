@@ -889,6 +889,7 @@ cleanup:
     if (dwError)
     {
         LwFreeStringArray(ppszQueryList, dwSavedQueryCount);
+        ppszQueryList = NULL;
         dwQueryCount = 0;
         dwSavedQueryCount = 0;
         pLastLinks = pFirstLinks;
