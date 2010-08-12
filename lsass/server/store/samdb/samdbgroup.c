@@ -677,8 +677,6 @@ error:
 
     if (pDirectoryEntries)
     {
-        pDirectoryEntries[dwNumEntries].ulNumAttributes = dwNumAttrs;
-        pDirectoryEntries[dwNumEntries].pAttributes = pAttrs;
         DirectoryFreeEntries(pDirectoryEntries, dwTotalEntries);
     }
 
