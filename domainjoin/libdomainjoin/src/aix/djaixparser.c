@@ -44,7 +44,7 @@ DJFindStanza(const DynamicArray *lines, PCSTR name)
     {
         PCSTR line = *(PCSTR *)CTArrayGetItem((DynamicArray*)lines, i,
                 sizeof(PCSTR));
-        while (*line != '\0' && isspace(*line))
+        while (*line != '\0' && isspace((int)*line))
             line++;
 
         if(!strncmp(line, name, namelen) && line[namelen] == ':')
@@ -65,14 +65,14 @@ ssize_t DJFindLine(const DynamicArray *lines, const char *stanza, const char *na
         PCSTR line = *(PCSTR *)CTArrayGetItem((DynamicArray*)lines, i,
                 sizeof(PCSTR));
 
-        while (*line != '\0' && isspace(*line))
+        while (*line != '\0' && isspace((int)*line))
             line++;
 
         if(strncmp(line, name, strlen(name)))
             continue;
         line += strlen(name);
        
-        while (*line != '\0' && isspace(*line))
+        while (*line != '\0' && isspace((int)*line))
             line++;
 
         if(*line != '=')
@@ -99,12 +99,12 @@ DWORD DJGetOptionValue(const DynamicArray *lines, PCSTR stanza, PCSTR name, PSTR
     line = *(PCSTR *)CTArrayGetItem((DynamicArray*)lines, i,
             sizeof(PCSTR));
 
-    while (*line != '\0' && isspace(*line))
+    while (*line != '\0' && isspace((int)*line))
         line++;
 
     line += strlen(name);
    
-    while (*line != '\0' && isspace(*line))
+    while (*line != '\0' && isspace((int)*line))
         line++;
 
     if(*line != '=')

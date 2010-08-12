@@ -288,7 +288,7 @@ static DWORD AddFormattedLine(struct SshConf *conf, const char *filename, const 
 
     /* Find the option name in the line */
     token_start = pos;
-    while(!isspace(*pos) && *pos != '\0' && *pos != '#')
+    while(!isspace((int)*pos) && *pos != '\0' && *pos != '#')
     {
         pos++;
     }
