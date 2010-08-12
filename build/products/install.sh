@@ -1392,7 +1392,7 @@ restore_configuration()
     # This starts all needed likewise services
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli query > /dev/null 2>&1
-        zlogin $domainjoin_cli query > /dev/null 2>&1
+        solaris_zones $domainjoin_cli query > /dev/null 2>&1
     fi
 
     if [ -x "$get_current_domain" ]; then
