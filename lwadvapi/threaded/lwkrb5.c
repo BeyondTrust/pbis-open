@@ -49,6 +49,8 @@
 
 #include "includes.h"
 
+static volatile LONG glLibraryRefCount = 0;
+
 DWORD
 LwKrb5GetDefaultRealm(
     PSTR* ppszRealm
@@ -695,14 +697,27 @@ error:
 }
 
 static
+__attribute__((constructor))
+VOID
+LwKrb5Constructor(
+    VOID
+    )
+{
+    LwInterlockedIncrement(&glLibraryRefCount);
+}
+
+static
 void
 __attribute__((destructor))
 LwKrb5Shutdown(
     VOID
     )
 {
-    pthread_mutex_destroy(&gLwKrb5State.ExistingClientLock);
-    pthread_mutex_destroy(&gLwKrb5State.UserCacheMutex);
+    if (!LwInterlockedDecrement(&glLibraryRefCount))
+    {
+        pthread_mutex_destroy(&gLwKrb5State.ExistingClientLock);
+        pthread_mutex_destroy(&gLwKrb5State.UserCacheMutex);
+    }
 }
 
 DWORD

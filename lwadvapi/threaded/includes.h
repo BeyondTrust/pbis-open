@@ -58,6 +58,7 @@
 #include <lw/security-types.h>
 #include <lw/security-api.h>
 #include <lw/attrs.h>
+#include <lw/atomic.h>
 #include <wc16str.h>
 
 #include "lwdef.h"

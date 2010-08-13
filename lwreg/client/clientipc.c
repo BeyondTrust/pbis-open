@@ -48,6 +48,7 @@
 #include "client.h"
 
 static REG_CLIENT_CONNECTION_CONTEXT gContext = {0};
+static volatile LONG glLibraryRefCount = 0;
 static pthread_mutex_t gLock = PTHREAD_MUTEX_INITIALIZER;
 
 static
@@ -171,23 +172,36 @@ NtRegCloseServer(
 }
 
 static
+__attribute__((constructor))
+VOID
+NtRegOpenServerOnce(
+    VOID
+    )
+{
+    LwInterlockedIncrement(&glLibraryRefCount);
+}
+
+static
 __attribute__((destructor))
 VOID
 NtRegCloseServerOnce(
     VOID
     )
 {
-    if (gContext.pClient)
+    if (!LwInterlockedDecrement(&glLibraryRefCount))
     {
-        lwmsg_peer_delete(gContext.pClient);
-    }
+        if (gContext.pClient)
+        {
+            lwmsg_peer_delete(gContext.pClient);
+        }
 
-    if (gContext.pProtocol)
-    {
-        lwmsg_protocol_delete(gContext.pProtocol);
-    }
+        if (gContext.pProtocol)
+        {
+            lwmsg_protocol_delete(gContext.pProtocol);
+        }
 
-    memset(&gContext, 0, sizeof(gContext));
+        memset(&gContext, 0, sizeof(gContext));
+    }
 }
 
 NTSTATUS

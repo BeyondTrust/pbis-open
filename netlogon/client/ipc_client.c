@@ -48,6 +48,7 @@
 #include "includes.h"
 
 static LWNET_CLIENT_CONNECTION_CONTEXT gContext = {0};
+static volatile LONG glLibraryRefCount = 0;
 #if defined(__LWI_SOLARIS__) || defined (__LWI_AIX__)
 static pthread_once_t gOnceControl = {PTHREAD_ONCE_INIT};
 #else
@@ -139,23 +140,37 @@ LWNetCloseServer(
 }
 
 static
+__attribute__((constructor))
+VOID
+LWNetOpenServerConstructor(
+    VOID
+    )
+{
+    LwInterlockedIncrement(&glLibraryRefCount);
+}
+
+
+static
 __attribute__((destructor))
 VOID
 LWNetCloseServerOnce(
     VOID
     )
 {
-    if (gContext.pClient)
+    if (!LwInterlockedDecrement(&glLibraryRefCount))
     {
-        lwmsg_client_delete(gContext.pClient);
-    }
+        if (gContext.pClient)
+        {
+            lwmsg_client_delete(gContext.pClient);
+        }
 
-    if (gContext.pProtocol)
-    {
-        lwmsg_protocol_delete(gContext.pProtocol);
-    }
+        if (gContext.pProtocol)
+        {
+            lwmsg_protocol_delete(gContext.pProtocol);
+        }
 
-    memset(&gContext, 0, sizeof(gContext));
+        memset(&gContext, 0, sizeof(gContext));
+    }
 }
 
 DWORD

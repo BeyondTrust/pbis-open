@@ -51,6 +51,7 @@
 #include "lwnet-system.h"
 #include "lwnet-def.h"
 #include <lwstr.h>
+#include <lw/atomic.h>
 
 #include "lwnet.h"
 
