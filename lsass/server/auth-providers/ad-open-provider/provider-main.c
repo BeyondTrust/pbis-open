@@ -3182,18 +3182,14 @@ AD_UpdateObject(
             }
         }
 
-        if (!pObject->userInfo.pszUnixName)
-        {
-            dwError = ADMarshalGetCanonicalName(pObject, &pObject->userInfo.pszUnixName);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
+        LW_SAFE_FREE_STRING(pObject->userInfo.pszUnixName);
+        dwError = ADMarshalGetCanonicalName(pObject, &pObject->userInfo.pszUnixName);
+        BAIL_ON_LSA_ERROR(dwError);
         break;
     case LSA_OBJECT_TYPE_GROUP:
-        if (!pObject->groupInfo.pszUnixName)
-        {
-            dwError = ADMarshalGetCanonicalName(pObject, &pObject->groupInfo.pszUnixName);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
+        LW_SAFE_FREE_STRING(pObject->groupInfo.pszUnixName);
+        dwError = ADMarshalGetCanonicalName(pObject, &pObject->groupInfo.pszUnixName);
+        BAIL_ON_LSA_ERROR(dwError);
         break;
     default:
         break;
