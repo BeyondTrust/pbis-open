@@ -1,8 +1,9 @@
 bin_PROGRAMS = lwtask-cli
 
 lwtask_cli_SOURCES  = \
-    log.c \
-    main.c
+    log.c  \
+    main.c \
+    task.c
 
 lwtask_cli_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1   \

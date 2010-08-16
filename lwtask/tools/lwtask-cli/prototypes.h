@@ -51,3 +51,11 @@ LwTaskHandleLogRequest(
     int argc,
     char* argv[]
     );
+
+// task.c
+
+DWORD
+LwTaskHandleTaskRequest(
+    int argc,
+    char* argv[]
+    );

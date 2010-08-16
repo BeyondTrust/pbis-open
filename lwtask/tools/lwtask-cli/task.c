@@ -33,85 +33,24 @@
  *
  * Module Name:
  *
- *        main.c
+ *        task.c
  *
  * Abstract:
  *
  *        Likewise Task Client
+ *
+ *        Task Request Handler
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
 #include "includes.h"
 
-static
-VOID
-ShowUsage(
-    VOID
-    );
-
-int
-main(
-    int   argc,
+DWORD
+LwTaskHandleTaskRequest(
+    int argc,
     char* argv[]
     )
 {
-    DWORD dwError = 0;
-
-    if (argc < 2)
-    {
-        dwError = ERROR_BAD_ARGUMENTS;
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-
-    if (!strcmp(argv[1], "log"))
-    {
-        dwError = LwTaskHandleLogRequest(argc-2, &argv[2]);
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-    else if (!strcmp(argv[1], "task"))
-    {
-        dwError = LwTaskHandleTaskRequest(argc-2, &argv[2]);
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-    else
-    {
-        dwError = ERROR_BAD_ARGUMENTS;
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    switch (dwError)
-    {
-        case ERROR_BAD_ARGUMENTS:
-
-            ShowUsage();
-
-            break;
-
-        default:
-
-            fprintf(stderr, "Failed to execute command (error: %u)\n", dwError);
-
-            break;
-    }
-
-    goto cleanup;
+    return 0;
 }
-
-static
-VOID
-ShowUsage(
-    VOID
-    )
-{
-    printf("Usage: lwtask-cli {log, task} <arguments>\n");
-    printf("Arguments:\n");
-    printf("log {get-info | (set-level {warning, error, info, verbose, debug}) }\n");
-}
-
