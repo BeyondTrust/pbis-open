@@ -1,2 +1,2 @@
-SUBDIRS = lwmigrate
+SUBDIRS = lwtask-cli
 
