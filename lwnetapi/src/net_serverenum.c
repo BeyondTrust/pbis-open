@@ -184,8 +184,11 @@ NetServerEnum(
             dwTotalNumEntries++;
         }
 
+        LW_SAFE_FREE_MEMORY(pwszDcName);
         SrvSvcCloseContext(pSrvsCtx);
-        pSrvsCtx = NULL;
+
+        pSrvsCtx   = NULL;
+        pwszDcName = NULL;
     }
 
     for (iDc = 0; iDc + dwResume < dwTotalNumEntries; iDc++)
@@ -287,6 +290,14 @@ cleanup:
     pszDomainName = NULL;
 
     LWNetFreeDCList(pDcList, dwDcCount);
+
+    LW_SAFE_FREE_MEMORY(pwszDcName);
+
+    if (winError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        winError = LwNtStatusToWin32Error(ntStatus);
+    }
 
     return (NET_API_STATUS)winError;
 
