@@ -152,6 +152,8 @@ NetAllocateServerInfo100(
                                   &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
 
+    ALIGN_PTR_IN_BUFFER(SERVER_INFO_100, sv100_platform_id,
+                        pCursor, dwSize, dwSpaceLeft);
     /* sv100_name */
     dwError = NetAllocBufferWC16String(&pCursor,
                                        &dwSpaceLeft,
@@ -241,6 +243,9 @@ NetAllocateServerInfo101(
                                   pInfo->sv101_type,
                                   &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
+
+    ALIGN_PTR_IN_BUFFER(SERVER_INFO_101, sv101_type,
+                        pCursor, dwSize, dwSpaceLeft);
 
     /* sv101_comment */
     dwError = NetAllocBufferWC16String(&pCursor,

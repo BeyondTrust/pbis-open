@@ -233,6 +233,9 @@ NetAllocateDisplayUserInformation(
                               &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
 
+    ALIGN_PTR_IN_BUFFER(NET_DISPLAY_USER, usri1_next_index,
+                        pCursor, dwSize, dwSpaceLeft);
+
     if (pdwSpaceLeft)
     {
         *pdwSpaceLeft = dwSpaceLeft;
@@ -329,6 +332,9 @@ NetAllocateDisplayMachineInformation(
                               &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
 
+    ALIGN_PTR_IN_BUFFER(NET_DISPLAY_MACHINE, usri2_next_index,
+                        pCursor, dwSize, dwSpaceLeft);
+
     if (pdwSpaceLeft)
     {
         *pdwSpaceLeft = dwSpaceLeft;
@@ -393,7 +399,7 @@ NetAllocateDisplayGroupInformation(
                                    );
     BAIL_ON_WIN_ERROR(dwError);
 
-    /* grpi2_comment */
+    /* grpi3_comment */
     dwError = NetAllocBufferWC16StringFromUnicodeString(
                                    &pCursor,
                                    &dwSpaceLeft,
@@ -403,26 +409,29 @@ NetAllocateDisplayGroupInformation(
                                    );
     BAIL_ON_WIN_ERROR(dwError);
 
-    /* grpi2_group_id */
+    /* grpi3_group_id */
     dwError = NetAllocBufferDword(&pCursor,
                               &dwSpaceLeft,
                               pEntry->rid,
                               &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
 
-    /* grpi2_attributes */
+    /* grpi3_attributes */
     dwError = NetAllocBufferDword(&pCursor,
                               &dwSpaceLeft,
                               pEntry->account_flags,
                               &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
 
-    /* grpi2_next_index */
+    /* grpi3_next_index */
     dwError = NetAllocBufferDword(&pCursor,
                               &dwSpaceLeft,
                               pEntry->idx,
                               &dwSize);
     BAIL_ON_WIN_ERROR(dwError);
+
+    ALIGN_PTR_IN_BUFFER(NET_DISPLAY_GROUP, grpi3_next_index,
+                        pCursor, dwSize, dwSpaceLeft);
 
     if (pdwSpaceLeft)
     {
