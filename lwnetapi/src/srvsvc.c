@@ -981,7 +981,8 @@ NetSessionEnumW(
     PDWORD  pdwResumeHandle    /* IN OUT OPTIONAL */
     )
 {
-    NET_API_STATUS  status = 0;
+    NET_API_STATUS status = 0;
+    NET_API_STATUS ret = 0;
     PSRVSVC_CONTEXT pContext = NULL;
     PBYTE pBuffer        = NULL;
     DWORD dwEntriesRead  = 0;
@@ -992,6 +993,11 @@ NetSessionEnumW(
     {
         status = ERROR_INVALID_PARAMETER;
         BAIL_ON_NETAPI_ERROR(status);
+    }
+
+    if (pdwResumeHandle)
+    {
+        dwResumeHandle = *pdwResumeHandle;
     }
 
     status = SrvSvcCreateContext(pwszServername, &pContext);
@@ -1008,18 +1014,32 @@ NetSessionEnumW(
                     &dwEntriesRead,
                     &dwTotalEntries,
                     &dwResumeHandle);
+    if (status == ERROR_MORE_DATA)
+    {
+        ret = status;
+        status = ERROR_SUCCESS;
+    }
     BAIL_ON_NETAPI_ERROR(status);
 
     *ppBuffer = pBuffer;
     *pdwEntriesRead = dwEntriesRead;
     *pdwTotalEntries = dwTotalEntries;
-    *pdwResumeHandle = dwResumeHandle;
+
+    if (pdwResumeHandle)
+    {
+        *pdwResumeHandle = dwResumeHandle;
+    }
 
 cleanup:
-
     if (pContext)
     {
         SrvSvcCloseContext(pContext);
+    }
+
+    if (status == ERROR_SUCCESS &&
+        ret != ERROR_SUCCESS)
+    {
+        status = ret;
     }
 
     return status;
