@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Task System"
+DEPENDS="likewise-lwnetapi likewise-sqlite"
