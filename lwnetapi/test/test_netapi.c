@@ -847,7 +847,7 @@ CallNetUserEnum(
     DWORD  dwFilter
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwMaxLen = MAX_PREFERRED_LENGTH;
@@ -932,7 +932,7 @@ done:
 
 
 static
-BOOL
+BOOLEAN
 CallNetUserAdd(
     PCWSTR pwszHostname,
     DWORD  dwLevel,
@@ -949,7 +949,7 @@ CallNetUserAdd(
     DWORD  dwExpectedParmError
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     USER_INFO_1 Info1 = {0};
@@ -1382,7 +1382,7 @@ TestVerifyUserInfo(
 
 
 static
-BOOL
+BOOLEAN
 CallNetUserGetLocalGroups(
     PCWSTR pwszHostname,
     PCWSTR pwszUserName,
@@ -1390,7 +1390,7 @@ CallNetUserGetLocalGroups(
     DWORD  dwFlags
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwMaxLen = MAX_PREFERRED_LENGTH;
@@ -1471,13 +1471,13 @@ done:
 
 
 static
-BOOL
+BOOLEAN
 CallNetLocalGroupEnum(
     PCWSTR pwszHostname,
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwMaxLen = MAX_PREFERRED_LENGTH;
@@ -1560,7 +1560,7 @@ done:
 
 
 static
-BOOL
+BOOLEAN
 CallNetLocalGroupAdd(
     PCWSTR pwszHostname,
     DWORD  dwLevel,
@@ -1568,7 +1568,7 @@ CallNetLocalGroupAdd(
     PWSTR  pwszComment
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     LOCALGROUP_INFO_0 Info0 = {0};
@@ -1602,7 +1602,7 @@ CallNetLocalGroupAdd(
 
 
 static
-BOOL
+BOOLEAN
 CallNetLocalGroupSetInfo(
     PCWSTR    pwszHostname,
     DWORD     dwLevel,
@@ -1612,7 +1612,7 @@ CallNetLocalGroupSetInfo(
     PBOOLEAN  pbRenamed
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     LOCALGROUP_INFO_0 Info0 = {0};
@@ -1661,14 +1661,14 @@ CallNetLocalGroupSetInfo(
 
 
 static
-BOOL
+BOOLEAN
 CallNetLocalGroupGetInfo(
     PCWSTR pwszHostname,
     PCWSTR pwszAliasname,
     DWORD  dwLevel
     )
 {
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
 
@@ -1691,14 +1691,14 @@ CallNetLocalGroupGetInfo(
 
 
 static
-BOOL
+BOOLEAN
 CallNetLocalGroupGetMembers(
     PCWSTR pwszHostname,
     PCWSTR pwszLocalGroupName,
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwMaxLen = MAX_PREFERRED_LENGTH;
@@ -2264,7 +2264,7 @@ CallNetWkstaUserEnum(
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PWSTR pwszHost = NULL;
     PVOID pBuffer = NULL;
@@ -2407,7 +2407,7 @@ CallNetSessionEnum(
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     PWSTR pwszHost = NULL;
@@ -2566,6 +2566,8 @@ done:
         NetApiBufferFree(pBuffer);
     }
 
+    LW_SAFE_FREE_MEMORY(pwszHost);
+
     return bRet;
 }
 
@@ -2578,7 +2580,7 @@ CallNetServerEnum(
     DWORD  dwLevel
     )
 {
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     PVOID pBuffer = NULL;
     DWORD dwPrefMaxLen = MAX_PREFERRED_LENGTH;
@@ -2732,7 +2734,7 @@ TestNetUserEnum(
     const DWORD dwDefaultFilter = 0;
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD i = 0;
     DWORD dwSelectedLevels[] = { 0 };
@@ -2832,7 +2834,7 @@ TestNetUserAdd(
 {
     PCSTR pszDefaultTestSetName = "validation";
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     DWORD dwLevel = 0;
@@ -2977,7 +2979,7 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
 {
     PCSTR pszDefaultTestSetName = "validation";
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     PSTR pszTestSetName = NULL;
@@ -3054,7 +3056,7 @@ TestNetUserGetInfo(
     const PSTR pszDefaultUsername = "TestUser";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD err = ERROR_SUCCESS;
     NTSTATUS status = STATUS_SUCCESS;
@@ -3134,7 +3136,7 @@ TestNetUserSetInfo(
 {
     PCSTR pszDefaultTestSetName = "validation";
 
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     PSTR pszTestSetName = NULL;
@@ -3330,7 +3332,7 @@ TestNetUserGetLocalGroups(
     const PSTR pszDefaultUsername = "TestUser";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD err = ERROR_SUCCESS;
     PWSTR pwszUsername = NULL;
@@ -3600,7 +3602,7 @@ TestNetLocalGroupEnum(
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD i = 0;
     DWORD dwSelectedLevels[] = { 0 };
@@ -3655,7 +3657,7 @@ TestNetLocalGroupAdd(
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
     DWORD err = ERROR_SUCCESS;
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD dwSelectedLevels[] = { 0 };
     DWORD dwAvailableLevels[] = { 0, 1 };
@@ -3765,7 +3767,7 @@ TestNetLocalGroupGetInfo(
     const PSTR pszDefaultAliasname = "TestLocalGroup";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD err = ERROR_SUCCESS;
     PWSTR pwszAliasname = NULL;
@@ -3845,7 +3847,7 @@ TestNetLocalGroupSetInfo(
     PCSTR pszDefaultComment = "Test comment for local group";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     NET_API_STATUS err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     DWORD dwSelectedLevels[] = { 0 };
@@ -3962,7 +3964,7 @@ TestNetLocalGroupGetMembers(
     PCSTR pszDefaultLocalGroupName = "Administrators";
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD i = 0;
     DWORD dwSelectedLevels[] = { 0 };
@@ -4048,7 +4050,7 @@ TestNetQueryDisplayInformation(
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD i = 0;
     DWORD dwSelectedLevels[] = { 0 };
@@ -4101,7 +4103,7 @@ TestNetWkstaUserEnum(
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
 
-    BOOL ret = TRUE;
+    BOOLEAN ret = TRUE;
     enum param_err perr = perr_success;
     DWORD i = 0;
     DWORD dwSelectedLevels[] = { 0 };
@@ -4155,7 +4157,7 @@ TestNetSessionEnum(
     const DWORD dwDefaultLevel = (DWORD)(-1);
     PCSTR pszDefaultName = "(unknown)";
 
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     DWORD dwError = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     DWORD i = 0;
@@ -4245,7 +4247,7 @@ TestNetServerEnum(
     const DWORD dwDefaultLevel = (DWORD)(-1);
     PCSTR pszDefaultName = "(unknown)";
 
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     DWORD dwError = ERROR_SUCCESS;
     enum param_err perr = perr_success;
     DWORD i = 0;
