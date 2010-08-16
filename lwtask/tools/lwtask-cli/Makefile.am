@@ -1,6 +1,7 @@
 bin_PROGRAMS = lwtask-cli
 
 lwtask_cli_SOURCES  = \
+    log.c \
     main.c
 
 lwtask_cli_CPPFLAGS = \

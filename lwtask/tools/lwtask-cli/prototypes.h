@@ -33,80 +33,21 @@
  *
  * Module Name:
  *
- *        main.c
+ *        prototypes.h
  *
  * Abstract:
  *
  *        Likewise Task Client
  *
+ *        Function Prototypes
+ *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
-#include "includes.h"
+// log.c
 
-static
-VOID
-ShowUsage(
-    VOID
-    );
-
-int
-main(
-    int   argc,
+DWORD
+LwTaskHandleLogRequest(
+    int argc,
     char* argv[]
-    )
-{
-    DWORD dwError = 0;
-
-    if (argc < 2)
-    {
-        dwError = ERROR_BAD_ARGUMENTS;
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-
-    if (!strcmp(argv[1], "log"))
-    {
-        dwError = LwTaskHandleLogRequest(argc-2, &argv[2]);
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-    else
-    {
-        dwError = ERROR_BAD_ARGUMENTS;
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    switch (dwError)
-    {
-        case ERROR_BAD_ARGUMENTS:
-
-            ShowUsage();
-
-            break;
-
-        default:
-
-            fprintf(stderr, "Failed to execute command (error: %u)\n", dwError);
-
-            break;
-    }
-
-    goto cleanup;
-}
-
-static
-VOID
-ShowUsage(
-    VOID
-    )
-{
-    printf("Usage: lwtask-cli {log, task} <arguments>\n");
-    printf("Arguments:\n");
-    printf("log {get-info | (set-level {warning, error, info, verbose, debug}) }\n");
-}
-
+    );

@@ -56,4 +56,7 @@
 #include <lwtaskutils.h>
 #include <lwtaskclient.h>
 
+#include "prototypes.h"
+
+
 
