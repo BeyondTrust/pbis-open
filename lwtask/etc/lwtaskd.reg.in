@@ -1,0 +1,4 @@
+[HKEY_THIS_MACHINE\Services]
+
+[HKEY_THIS_MACHINE\Software\Likewise\lwtaskd]
+"Target"="file"
