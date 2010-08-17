@@ -434,12 +434,12 @@ IoQueryQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
+    OUT PFILE_QUOTA_INFORMATION Buffer,
     IN ULONG Length,
     IN BOOLEAN ReturnSingleEntry,
-    IN OPTIONAL PVOID SidList,
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION SidList,
     IN ULONG SidListLength,
-    IN OPTIONAL PSID StartSid,
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION StartSid,
     IN BOOLEAN RestartScan
     );
 
@@ -448,7 +448,7 @@ IoSetQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
+    IN PFILE_QUOTA_INFORMATION Buffer,
     IN ULONG Length
     );
 

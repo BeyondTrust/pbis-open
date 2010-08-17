@@ -1361,16 +1361,58 @@ IoQueryQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    OUT PVOID Buffer,
+    OUT PFILE_QUOTA_INFORMATION Buffer,
     IN ULONG Length,
     IN BOOLEAN ReturnSingleEntry,
-    IN OPTIONAL PVOID SidList,
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION SidList,
     IN ULONG SidListLength,
-    IN OPTIONAL PSID StartSid,
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION StartSid,
     IN BOOLEAN RestartScan
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIRP pIrp = NULL;
+    IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IRP_TYPE irpType = IRP_TYPE_QUERY_QUOTA;
+
+    if (!FileHandle || !IoStatusBlock)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    status = IopIrpCreate(&pIrp, irpType, FileHandle);
+    ioStatusBlock.Status = status;
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    pIrp->Args.QueryQuota.Buffer = Buffer;
+    pIrp->Args.QueryQuota.Length = Length;
+    pIrp->Args.QueryQuota.ReturnSingleEntry = ReturnSingleEntry;
+    pIrp->Args.QueryQuota.SidList = SidList;
+    pIrp->Args.QueryQuota.SidListLength = SidListLength;
+    pIrp->Args.QueryQuota.StartSid = StartSid;
+    pIrp->Args.QueryQuota.RestartScan = RestartScan;
+
+    status = IopIrpDispatch(
+                    pIrp,
+                    AsyncControlBlock,
+                    IoStatusBlock);
+    if (STATUS_PENDING != status)
+    {
+        ioStatusBlock = pIrp->IoStatusBlock;
+        LWIO_ASSERT(ioStatusBlock.BytesTransferred <= Length);
+    }
+
+cleanup:
+    IopIrpDereference(&pIrp);
+
+    if (STATUS_PENDING != status)
+    {
+        *IoStatusBlock = ioStatusBlock;
+    }
+
+    LOG_LEAVE_IF_STATUS_EE(status, EE);
     return status;
 }
 
@@ -1383,11 +1425,48 @@ IoSetQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN PVOID Buffer,
+    IN PFILE_QUOTA_INFORMATION Buffer,
     IN ULONG Length
     )
 {
-    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIRP pIrp = NULL;
+    IO_STATUS_BLOCK ioStatusBlock = { 0 };
+    IRP_TYPE irpType = IRP_TYPE_SET_QUOTA;
+
+    if (!FileHandle || !IoStatusBlock)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    status = IopIrpCreate(&pIrp, irpType, FileHandle);
+    ioStatusBlock.Status = status;
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    pIrp->Args.SetQuota.Buffer = Buffer;
+    pIrp->Args.SetQuota.Length = Length;
+    
+    status = IopIrpDispatch(
+                    pIrp,
+                    AsyncControlBlock,
+                    IoStatusBlock);
+    if (STATUS_PENDING != status)
+    {
+        ioStatusBlock = pIrp->IoStatusBlock;
+        LWIO_ASSERT(ioStatusBlock.BytesTransferred == 0);
+    }
+
+cleanup:
+    IopIrpDereference(&pIrp);
+
+    if (STATUS_PENDING != status)
+    {
+        *IoStatusBlock = ioStatusBlock;
+    }
+
+    LOG_LEAVE_IF_STATUS_EE(status, EE);
     return status;
 }
 

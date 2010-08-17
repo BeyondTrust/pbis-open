@@ -76,6 +76,8 @@ IoGetIrpTypeString(
     CASE_ASSIGN_STRING(result, IRP_TYPE_LOCK_CONTROL);
     CASE_ASSIGN_STRING(result, IRP_TYPE_QUERY_SECURITY);
     CASE_ASSIGN_STRING(result, IRP_TYPE_SET_SECURITY);
+    CASE_ASSIGN_STRING(result, IRP_TYPE_QUERY_QUOTA);
+    CASE_ASSIGN_STRING(result, IRP_TYPE_SET_QUOTA);
     default:
         result = "*Unknown*";
     }

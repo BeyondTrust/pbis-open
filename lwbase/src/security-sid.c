@@ -1179,6 +1179,84 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+RtlConvertLittleEndianToSid(
+    IN PVOID Buffer,
+    IN ULONG Length,
+    OUT PSID Sid,
+    IN OUT PULONG SidSize
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSID srcSid = NULL;
+    UCHAR i = 0;
+
+    if (*SidSize < Length)
+    {
+        *SidSize = Length;     // Required length
+        status = STATUS_BUFFER_TOO_SMALL;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    srcSid = (PSID)Buffer;
+
+    Sid->Revision = LW_LTOH8(srcSid->Revision);
+    Sid->SubAuthorityCount = LW_LTOH8(srcSid->SubAuthorityCount);
+    Sid->IdentifierAuthority = srcSid->IdentifierAuthority;   // Byte array
+    for (i = 0; i < Sid->SubAuthorityCount; ++i)
+    {
+        Sid->SubAuthority[i] = LW_LTOH32(srcSid->SubAuthority[i]);
+    }
+    
+    *SidSize = RtlLengthRequiredSid(Sid->SubAuthorityCount);
+
+cleanup:
+
+    return status;
+}
+
+NTSTATUS
+RtlConvertSidToLittleEndian(
+    IN PSID Sid,
+    OUT PVOID Buffer,
+    IN ULONG Length,
+    OUT OPTIONAL PULONG UsedLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    ULONG sidSize = RtlLengthRequiredSid(Sid->SubAuthorityCount);
+    ULONG usedLength = 0;
+    PSID dstSid = NULL;
+    UCHAR i = 0;
+
+    if (sidSize > Length)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    dstSid = (PSID)Buffer;
+
+    dstSid->Revision = LW_HTOL8(Sid->Revision);
+    dstSid->SubAuthorityCount = LW_HTOL8(Sid->SubAuthorityCount);
+    dstSid->IdentifierAuthority = Sid->IdentifierAuthority;    // Byte array
+    for (i = 0; i < Sid->SubAuthorityCount; ++i)
+    {
+        dstSid->SubAuthority[i] = LW_HTOL32(Sid->SubAuthority[i]);
+    }
+
+    usedLength = sidSize;
+
+cleanup:
+
+    if (UsedLength)
+    {
+        *UsedLength = usedLength;
+    }
+
+    return status;
+}
+
 
 /*
 local variables:

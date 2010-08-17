@@ -169,6 +169,22 @@ RtlDuplicateSid(
     IN PSID OriginalSid
     );
 
+NTSTATUS
+RtlConvertLittleEndianToSid(
+    IN PVOID Buffer,
+    IN ULONG Length,
+    OUT PSID Sid,           /* The pBuffer MAY be used here */
+    IN OUT PULONG SidSize
+    );
+
+NTSTATUS
+RtlConvertSidToLittleEndian(
+    IN PSID Sid,
+    OUT PVOID Buffer,        /* The pSid MAY be used here */
+    IN ULONG Length,
+    OUT OPTIONAL PULONG UsedLength
+    );
+
 //
 // ACL Functions
 //

@@ -79,8 +79,10 @@ typedef ULONG IRP_TYPE;
 #if 0
 #define IPP_TYPE_QUERY_EA                 19
 #define IPP_TYPE_SET_EA                   20
+#endif
 #define IRP_TYPE_QUERY_QUOTA              21
 #define IRP_TYPE_SET_QUOTA                22
+#if 0
 #define IRP_TYPE_QUERY_FULL_ATTRIBUTES    23
 #define IRP_TYPE_RENAME                   24
 #define IRP_TYPE_LINK                     25
@@ -199,6 +201,21 @@ typedef struct _IRP_ARGS_QUERY_SET_SECURITY {
     IN ULONG Length;
 } IRP_ARGS_QUERY_SET_SECURITY, *PIRP_ARGS_QUERY_SET_SECUIRTY;
 
+typedef struct _IRP_ARGS_QUERY_QUOTA {
+    OUT PFILE_QUOTA_INFORMATION Buffer;
+    IN ULONG Length;
+    IN BOOLEAN ReturnSingleEntry;
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION SidList;
+    IN ULONG SidListLength;
+    IN OPTIONAL PFILE_GET_QUOTA_INFORMATION StartSid;
+    IN BOOLEAN RestartScan;
+} IRP_ARGS_QUERY_QUOTA, *PIRP_ARGS_QUERY_QUOTA;
+
+typedef struct _IRP_ARGS_SET_QUOTA {
+    IN PFILE_QUOTA_INFORMATION Buffer;
+    IN ULONG Length;
+} IRP_ARGS_SET_QUOTA, *PIRP_ARGS_SET_QUOTA;
+
 typedef struct _IRP {
     IN IRP_TYPE Type;
     OUT IO_STATUS_BLOCK IoStatusBlock;
@@ -224,6 +241,10 @@ typedef struct _IRP {
         IRP_ARGS_LOCK_CONTROL LockControl;	    
         // IRP_TYPE_QUERY_SECURITY, IRP_TYPE_SET_SECURITY
         IRP_ARGS_QUERY_SET_SECURITY QuerySetSecurity;
+        // IRP_TYPE_QUERY_QUOTA
+        IRP_ARGS_QUERY_QUOTA QueryQuota;
+        // IRP_TYPE_SET_QUOTA
+        IRP_ARGS_SET_QUOTA SetQuota;
         // No args for IRP_TYPE_CLOSE, IRP_TYPE_FLUSH
     } Args;
     // TODO: Rename Args to Params?
