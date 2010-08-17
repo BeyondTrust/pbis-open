@@ -51,6 +51,9 @@ RegIOOpen(
     PCSTR pszRegFile,
     PHANDLE pHandle);
 
+DWORD
+RegIOClose(
+    HANDLE handle);
 
 DWORD
 RegIOBufferOpen(

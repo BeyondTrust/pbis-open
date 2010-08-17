@@ -1090,6 +1090,8 @@ RegShellCloseParseState(
     DWORD dwError = 0;
     BAIL_ON_INVALID_POINTER(pParseState);
 
+    RegLexClose(pParseState->lexHandle);
+    RegIOClose(pParseState->ioHandle);
     LWREG_SAFE_FREE_STRING(pParseState->pszDefaultRootKeyName);
     LWREG_SAFE_FREE_STRING(pParseState->pszDefaultKey);
     LWREG_SAFE_FREE_STRING(pParseState->pszDefaultKeyCompletion);
@@ -1102,7 +1104,7 @@ RegShellCloseParseState(
     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszPrevLine);
     LWREG_SAFE_FREE_STRING(pParseState->tabState.pszCurLine);
     RegCloseServer(pParseState->hReg);
-    RegParseClose(pParseState);
+    LWREG_SAFE_FREE_MEMORY(pParseState);
 
 cleanup:
     return dwError;
