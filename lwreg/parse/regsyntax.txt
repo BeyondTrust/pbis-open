@@ -84,12 +84,15 @@
 <continuation_char> ::= "\"
 
 <reg_multi_sz_value> ::= <reg_multi_sz_type> <reg_binhex_string>
-<reg_multi_sz_type> ::= "hex(7):"
+<reg_multi_sz_type> ::= "hex(7):" | "sza:" | <reg_attribute_range>
 
 <reg_attribute_value> ::= <reg_attribute_type><reg_attribute_values><reg_attribute_end>
 <reg_attribute_type> ::= "{\n"
 <reg_attribute_end> ::= "}\n"
 <reg_attribute_values> ::= <reg_attribute_value> <reg_attribute_values> | 
                            <reg_attribute_value>
-
+#
+# The intent of this type is it is only valid within { attribute } block
+#
+<reg_attribute_range> ::= "string:"
 <reg_attribute_value> ::= <reg_entry_value_spec>
