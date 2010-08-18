@@ -254,6 +254,11 @@ ADSyncMachinePasswordThreadRoutine(
         DWORD dwCurrentPasswordAge = 0;
         BOOLEAN bRefreshTGT = FALSE;
 
+        if (gAdMachinePasswordSyncState.bThreadShutdown)
+        {
+           break;
+        }
+
         dwError = LsaDnsGetHostInfo(&pszHostname);
         if (dwError)
         {
