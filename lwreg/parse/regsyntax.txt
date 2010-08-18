@@ -40,7 +40,7 @@
                          <drive_spec> <key_sep>
 <key_sep_string> ::= <key_sep> <ascii_string> | <key_sep> <ascii_string> <key_sep_string>
 <quote> ::= '"'
-<equals_char ::= "="
+<equals_char> ::= "="
 <ascii_string> ::= <key_text> | <key_text> <ascii_string>
 <key_text> ::= "[A-Za-z0-9_*]"
 
@@ -66,7 +66,7 @@
 #  00,6d,00,73,00,76,00,31,00
 #
 <reg_entry_value_spec> ::= <reg_sz_value> | <reg_dword_value> | <reg_binary_value> |
-                           <reg_multi_sz_value>
+                           <reg_multi_sz_value> | <reg_attribute_value>
 
 <reg_sz_value> ::= <quote><TEXT><quote>
 
@@ -85,3 +85,11 @@
 
 <reg_multi_sz_value> ::= <reg_multi_sz_type> <reg_binhex_string>
 <reg_multi_sz_type> ::= "hex(7):"
+
+<reg_attribute_value> ::= <reg_attribute_type><reg_attribute_values><reg_attribute_end>
+<reg_attribute_type> ::= "{\n"
+<reg_attribute_end> ::= "}\n"
+<reg_attribute_values> ::= <reg_attribute_value> <reg_attribute_values> | 
+                           <reg_attribute_value>
+
+<reg_attribute_value> ::= <reg_entry_value_spec>
