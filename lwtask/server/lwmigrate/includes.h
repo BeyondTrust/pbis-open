@@ -39,6 +39,8 @@
  *
  *        Likewise Task Service (LWTASK)
  *
+ *        Share Migration Management
+ *
  *        Includes
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
@@ -49,20 +51,27 @@
 #include <lwtasksystem.h>
 #include <lwtaskdef.h>
 
+#include <krb5/krb5.h>
+
 #include <lwdef.h>
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
 #include <lwfile.h>
+#include <lwkrb5.h>
 
 #include <lwmsg/lwmsg.h>
 #include <lwmsg/protocol.h>
+
+#include <lw/lm.h>
+
+#include <lwio/lwio.h>
+#include <lwio/lmshare.h>
 
 #include <lwtaskutils.h>
 #include <lwtaskipc.h>
 #include <lwtasklog_r.h>
 
-#include <taskrepository.h>
 #include <lwmigrate.h>
 
 #include "defs.h"

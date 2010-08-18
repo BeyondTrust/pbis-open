@@ -33,40 +33,63 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        prototypes.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Management
+ *
+ *        Function Prototypes
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
+// fileitem.c
 
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
+DWORD
+LwTaskCreateFileItem(
+    PWSTR          pwszRemotePath,
+    PWSTR          pwszLocalPath,
+    BOOLEAN        bIsDir,
+    PLW_FILE_ITEM* ppFileItem
+    );
 
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
+VOID
+LwTaskFreeFileItemList(
+    PLW_FILE_ITEM  pFileItem
+    );
 
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
+// krb5.c
 
-#include <taskrepository.h>
-#include <lwmigrate.h>
+DWORD
+LwTaskAcquireCredsW(
+    PWSTR           pwszUsername,  /* IN     */
+    PWSTR           pwszPassword,  /* IN     */
+    PLW_TASK_CREDS* ppCreds        /* IN OUT */
+    );
 
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
+DWORD
+LwTaskAcquireCredsA(
+    PCSTR           pszUsername,  /* IN     */
+    PCSTR           pszPassword,  /* IN     */
+    PLW_TASK_CREDS* ppCreds       /* IN OUT */
+    );
 
-#include "externs.h"
+VOID
+LwTaskFreeCreds(
+    PLW_TASK_CREDS pCreds         /* IN OUT */
+    );
+
+// migrate.c
+
+DWORD
+LwTaskMigrateShareEx(
+    PLW_TASK_CREDS   pCreds,
+    PWSTR            pwszServer,
+    PWSTR            pwszShare,
+    PWSTR            pwszSharePath,
+    LW_MIGRATE_FLAGS dwFlags
+    );

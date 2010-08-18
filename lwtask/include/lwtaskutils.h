@@ -182,6 +182,12 @@ extern pthread_mutex_t gLwTaskLogLock;
            BAIL_ON_LW_TASK_ERROR(dwError);    \
         }
 
+#define BAIL_ON_INVALID_STRING(str)           \
+        if (IsNullOrEmptyString(str)) {       \
+           dwError = ERROR_INVALID_PARAMETER; \
+           BAIL_ON_LW_TASK_ERROR(dwError);    \
+        }
+
 #define LW_TASK_LOCK_MUTEX(bInLock, mutex) \
     if (!bInLock) { \
        int thr_err = pthread_mutex_lock(mutex); \

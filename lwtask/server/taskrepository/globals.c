@@ -33,40 +33,18 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        globals.c
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Task Repository
+ *
+ *        Globals
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
-
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
-
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
-
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
-
-#include <taskrepository.h>
-#include <lwmigrate.h>
-
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
-
-#include "externs.h"
+#include "includes.h"

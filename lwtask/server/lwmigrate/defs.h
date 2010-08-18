@@ -33,40 +33,25 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        defs.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Management
+ *
+ *        Definitions
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
-
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
-
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
-
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
-
-#include <taskrepository.h>
-#include <lwmigrate.h>
-
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
-
-#include "externs.h"
+#define BAIL_ON_KRB_ERROR(ctx, ret) \
+    do { \
+        if (ret) \
+        { \
+           (dwError) = LwTranslateKrb5Error(ctx, ret, __FUNCTION__, __FILE__, __LINE__); \
+           goto error; \
+        } \
+    } while (0)

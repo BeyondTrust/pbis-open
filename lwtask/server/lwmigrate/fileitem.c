@@ -33,40 +33,85 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        fileitem.c
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Management
+ *
+ *        File Item to be processed for migration
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
+#include "includes.h"
 
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
+DWORD
+LwTaskCreateFileItem(
+    PWSTR          pwszRemotePath,
+    PWSTR          pwszLocalPath,
+    BOOLEAN        bIsDir,
+    PLW_FILE_ITEM* ppFileItem
+    )
+{
+    DWORD dwError = 0;
+    PLW_FILE_ITEM pFileItem = NULL;
 
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
+    dwError = LwAllocateMemory(sizeof(LW_FILE_ITEM), (PVOID*)&pFileItem);
+    BAIL_ON_LW_TASK_ERROR(dwError);
 
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
+    if (pwszRemotePath)
+    {
+        dwError = LwAllocateWc16String(
+                        &pFileItem->pwszRemotePath,
+                        pwszRemotePath);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
 
-#include <taskrepository.h>
-#include <lwmigrate.h>
+    if (pwszLocalPath)
+    {
+        dwError = LwAllocateWc16String(
+                        &pFileItem->pwszLocalPath,
+                        pwszLocalPath);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
 
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
+    pFileItem->bIsDir = bIsDir;
 
-#include "externs.h"
+    *ppFileItem = pFileItem;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppFileItem = NULL;
+
+    if (pFileItem)
+    {
+        LwTaskFreeFileItemList(pFileItem);
+    }
+
+    goto cleanup;
+}
+
+VOID
+LwTaskFreeFileItemList(
+    PLW_FILE_ITEM  pFileItem
+    )
+{
+    while (pFileItem)
+    {
+        PLW_FILE_ITEM pItem = pFileItem;
+
+        pFileItem = pFileItem->pNext;
+
+        LW_SAFE_FREE_MEMORY(pItem->pwszRemotePath);
+        LW_SAFE_FREE_MEMORY(pItem->pwszLocalPath);
+        LwFreeMemory(pItem);
+    }
+}

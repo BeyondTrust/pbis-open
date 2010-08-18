@@ -33,40 +33,67 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        lwmigrate.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Management
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
- *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
+#ifndef __LWMIGRATE_H__
+#define __LWMIGRATE_H__
 
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
+typedef DWORD LW_MIGRATE_FLAGS;
 
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
+#define LW_MIGRATE_FLAGS_OVERWRITE 0x00000001
 
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
+DWORD
+LwTaskMigrateInit(
+    VOID
+    );
 
-#include <taskrepository.h>
-#include <lwmigrate.h>
+DWORD
+LwTaskMigrateAllSharesA(
+    PSTR             pszServer,
+    PSTR             pszUsername,
+    PSTR             pszPassword,
+    LW_MIGRATE_FLAGS dwFlags
+    );
 
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
+DWORD
+LwTaskMigrateAllSharesW(
+    PWSTR            pwszServer,
+    PWSTR            pwszUsername,
+    PWSTR            pwszPassword,
+    LW_MIGRATE_FLAGS dwFlags
+    );
 
-#include "externs.h"
+DWORD
+LwTaskMigrateShareA(
+    PSTR             pszServer,
+    PSTR             pszShare,
+    PSTR             pszUsername,
+    PSTR             pszPassword,
+    LW_MIGRATE_FLAGS dwFlags
+    );
+
+DWORD
+LwTaskMigrateShareW(
+    PWSTR            pwszServer,
+    PWSTR            pwszShare,
+    PWSTR            pwszUsername,
+    PWSTR            pwszPassword,
+    LW_MIGRATE_FLAGS dwFlags
+    );
+
+VOID
+LwTaskMigrateShutdown(
+    VOID
+    );
+
+#endif /* __LWMIGRATE_H__ */
+

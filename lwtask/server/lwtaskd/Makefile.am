@@ -13,6 +13,8 @@ lwtaskd_CPPFLAGS = \
     -I$(top_srcdir)/server/include
  
 lwtaskd_LDADD = \
+    $(top_builddir)/server/lwmigrate/liblwmigrate.la \
+    $(top_builddir)/server/taskrepository/libtaskrepository.la \
     $(top_builddir)/utils/liblwtaskutils.la \
     $(top_builddir)/logging_r/liblwtasklog_r.la \
     $(top_builddir)/ipc/liblwtaskipc.la

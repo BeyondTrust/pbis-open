@@ -33,11 +33,13 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        taskrepository.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
+ *
+ *        Task Repository
  *
  *        Includes
  *
@@ -48,6 +50,8 @@
 #include <config.h>
 #include <lwtasksystem.h>
 #include <lwtaskdef.h>
+
+#include <sqlite3.h>
 
 #include <lwdef.h>
 #include <lwerror.h>
@@ -63,7 +67,6 @@
 #include <lwtasklog_r.h>
 
 #include <taskrepository.h>
-#include <lwmigrate.h>
 
 #include "defs.h"
 #include "structs.h"

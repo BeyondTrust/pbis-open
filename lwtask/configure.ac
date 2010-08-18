@@ -587,8 +587,12 @@ AC_CONFIG_FILES([
         ipc/Makefile
         client/Makefile
         server/Makefile
+        server/taskrepository/Makefile
+        server/lwmigrate/Makefile
         server/lwtaskd/Makefile
         tools/Makefile
-        tools/lwtask-cli/Makefile])
+        tools/lwtask-cli/Makefile
+        tests/Makefile
+        tests/lwmigrate/Makefile])
 
 AC_OUTPUT

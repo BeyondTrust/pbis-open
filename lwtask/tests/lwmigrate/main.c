@@ -33,13 +33,13 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        main.c
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Test Driver
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
@@ -51,22 +51,88 @@
 
 #include <lwdef.h>
 #include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
-
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
 
 #include <lwtaskutils.h>
-#include <lwtaskipc.h>
 #include <lwtasklog_r.h>
 
-#include <taskrepository.h>
 #include <lwmigrate.h>
 
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
+static
+VOID
+ShowUsage(
+    VOID
+    );
 
-#include "externs.h"
+int
+main(
+    int   argc,
+    char* argv[]
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bShutdown = FALSE;
+
+    if (argc == 2 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")))
+    {
+        ShowUsage();
+        goto cleanup;
+    }
+
+    if (argc < 5)
+    {
+        dwError = ERROR_BAD_ARGUMENTS;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    dwError = LwTaskMigrateInit();
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    bShutdown = TRUE;
+
+    dwError = LwTaskMigrateShareA(
+                    argv[1], /* Server name */
+                    argv[2], /* Share name  */
+                    argv[3], /* User name   */
+                    argv[4], /* Password    */
+                    0        /* Flags       */
+                    );
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    if (bShutdown)
+    {
+        LwTaskMigrateShutdown();
+    }
+
+    return dwError;
+
+error:
+
+    switch (dwError)
+    {
+        case ERROR_BAD_ARGUMENTS:
+
+            ShowUsage();
+
+            break;
+
+        default:
+
+            fprintf(stderr, "Error migrating share. Code %u\n", dwError);
+
+            break;
+    }
+
+    goto cleanup;
+}
+
+static
+VOID
+ShowUsage(
+    VOID
+    )
+{
+    fprintf(stderr,
+            "Usage: lwmigrate <server> <share> <user> <password>\n");
+}

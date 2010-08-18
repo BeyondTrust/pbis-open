@@ -33,40 +33,28 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        taskrepository.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Task Repository
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
- *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
+#ifndef __TASKREPOSITORY_H__
+#define __TASKREPOSITORY_H__
 
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
+DWORD
+LwTaskRepositoryInit(
+    VOID
+    );
 
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
+VOID
+LwTaskRepositoryShutdown(
+    VOID
+    );
 
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
-
-#include <taskrepository.h>
-#include <lwmigrate.h>
-
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
-
-#include "externs.h"
+#endif /* __TASKREPOSITORY_H__ */

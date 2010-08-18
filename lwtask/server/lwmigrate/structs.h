@@ -33,40 +33,47 @@
  *
  * Module Name:
  *
- *        includes.h
+ *        structs.h
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Share Migration Management
+ *
+ *        Structure Definitions
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-#include <config.h>
-#include <lwtasksystem.h>
-#include <lwtaskdef.h>
+typedef struct _LW_TASK_CREDS
+{
+    krb5_context ctx;
+    krb5_ccache  cc;
+    PSTR         pszRestoreCache;
 
-#include <lwdef.h>
-#include <lwerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwfile.h>
+    LW_PIO_CREDS pRestoreCreds;
 
-#include <lwmsg/lwmsg.h>
-#include <lwmsg/protocol.h>
+} LW_TASK_CREDS, *PLW_TASK_CREDS;
 
-#include <lwtaskutils.h>
-#include <lwtaskipc.h>
-#include <lwtasklog_r.h>
+typedef struct _LW_FILE_ITEM
+{
+    BOOLEAN bIsDir;
 
-#include <taskrepository.h>
-#include <lwmigrate.h>
+    PWSTR   pwszRemotePath;
+    PWSTR   pwszLocalPath;
 
-#include "defs.h"
-#include "structs.h"
-#include "prototypes.h"
+    struct _LW_FILE_ITEM* pNext;
+    struct _LW_FILE_ITEM* pPrev;
 
-#include "externs.h"
+} LW_FILE_ITEM, *PLW_FILE_ITEM;
+
+typedef struct _LW_SHARE_MIGRATION_CONTEXT
+{
+
+    PLW_FILE_ITEM pHead;
+    PLW_FILE_ITEM pTail;
+
+} LW_SHARE_MIGRATION_CONTEXT, *PLW_SHARE_MIGRATION_CONTEXT;
+
