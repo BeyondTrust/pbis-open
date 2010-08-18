@@ -75,6 +75,10 @@ typedef enum __REGLEX_TOKEN
     REGLEX_REG_KEY,
     REGLEX_KEY_NAME_DEFAULT,
     REGLEX_REG_STRING_ARRAY,               /* sza:      */
+    REGLEX_REG_ATTRIBUTES,                 /* hex(aa):  */
+
+    REGLEX_BRACE_BEGIN,
+    REGLEX_BRACE_END,
 } REGLEX_TOKEN, *PREGLEX_TOKEN;
 
 
@@ -83,6 +87,7 @@ typedef enum __REGLEX_STATE
     REGLEX_STATE_INIT = 0,
     REGLEX_STATE_IN_QUOTE,   /* Found '"', looking for close '"' */
     REGLEX_STATE_IN_KEY,     /* Found '[', looking for ']'       */
+    REGLEX_STATE_IN_BRACE,   /* Found '{', looking for '}'       */
     REGLEX_STATE_BINHEX_STR,
     REGLEX_STATE_DWORD,
     REGLEX_STATE_QUADWORD,
@@ -111,6 +116,7 @@ typedef struct __REGLEX_ITEM
     REGLEX_STATE state;
     BOOLEAN isToken;
     REGLEX_PARSE_FUNC_T parseFuncArray[256];
+    BOOLEAN bInAttribute;
 } REGLEX_ITEM;
 
 DWORD
@@ -165,6 +171,18 @@ RegLexParseOpenBracket(
 
 DWORD
 RegLexParseCloseBracket(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC);
+
+DWORD
+RegLexParseOpenBrace(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC);
+
+DWORD
+RegLexParseCloseBrace(
     PREGLEX_ITEM lexHandle,
     HANDLE ioHandle,
     CHAR inC);

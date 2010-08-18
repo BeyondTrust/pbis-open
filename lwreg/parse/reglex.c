@@ -65,6 +65,8 @@ RegLexOpen(
         RegLexParseOpenBracket;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX(']')]  =
         RegLexParseCloseBracket;
+    pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('{')]  = RegLexParseOpenBrace;
+    pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('}')]  = RegLexParseCloseBrace;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('"')]  = RegLexParseQuote;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('@')]  = RegLexParseAt;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('=')]  = RegLexParseEquals;
@@ -132,6 +134,9 @@ DWORD RegLexTokenToString(
         "REGLEX_REG_KEY",
         "REGLEX_REG_NAME_DEFAULT",
         "REGLEX_REG_STRING_ARRAY",                       /* sza:      */
+        "REGLEX_ATTRIBUTES",                             /* { attributes } */
+        "REGLEX_ATTRIBUTES_START",                       /* { attributes start */
+        "REGLEX_ATTRIBUTES_END",                         /* attributes end } */
     };
     if (token < (sizeof(tokenStrs)/sizeof(char *)))
     {
@@ -335,12 +340,76 @@ RegLexParseCloseBracket(
 }
 
 DWORD
+RegLexParseOpenBrace(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC)
+{
+    DWORD dwError = 0;
+
+    if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
+        lexHandle->state != REGLEX_STATE_IN_KEY)
+    {
+        lexHandle->curToken.token = REGLEX_BRACE_BEGIN;
+        if (lexHandle->state == REGLEX_STATE_IN_BRACE)
+        {
+            /* This is a problem, can't have { then another { */
+            dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+        }
+        else
+        {
+            lexHandle->curToken.token = REGLEX_BRACE_BEGIN;
+            lexHandle->bInAttribute = TRUE;
+            lexHandle->curToken.valueCursor = 0;
+        }
+    }
+    else
+    {
+        RegLexAppendChar(lexHandle, inC);
+    }
+    return dwError;
+}
+
+DWORD
+RegLexParseCloseBrace(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC)
+{
+    DWORD dwError = 0;
+
+    if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
+        lexHandle->state != REGLEX_STATE_IN_KEY)
+    {
+        if (!lexHandle->bInAttribute)
+        {
+            /* This is a problem, can't have ] without a previous [ */
+            dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+        }
+        else
+        {
+            lexHandle->isToken = TRUE;
+            lexHandle->bInAttribute = FALSE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+            lexHandle->curToken.token = REGLEX_BRACE_END;
+            lexHandle->state = REGLEX_STATE_INIT;
+        }
+    }
+    else
+    {
+        RegLexAppendChar(lexHandle, inC);
+    }
+    return dwError;
+}
+
+DWORD
 RegLexParseAt(
     PREGLEX_ITEM lexHandle,
     HANDLE ioHandle,
     CHAR inC)
 {
     DWORD dwError = 0;
+    BOOLEAN eof = FALSE;
 
     if (lexHandle->state != REGLEX_STATE_IN_QUOTE)
     {
@@ -354,7 +423,19 @@ RegLexParseAt(
     }
     else
     {
+        /* Handle the case of @frob, i.e. "@security" */
         RegLexAppendChar(lexHandle, inC);
+        dwError = RegIOGetChar(ioHandle, &inC, &eof);
+        while (dwError == 0 && !eof && isalpha((int) inC))
+        {
+            RegLexAppendChar(lexHandle, inC);
+            dwError = RegIOGetChar(ioHandle, &inC, &eof);
+        }
+        if (eof)
+        {
+            return dwError;
+        }
+        dwError = RegIOUnGetChar(ioHandle, NULL);
     }
     return dwError;
 }
@@ -531,7 +612,9 @@ RegLexParseBinary(
             lexHandle->curToken.valueCursor = 0;
         }
         else if (strcasecmp(lexHandle->curToken.pszValue, "sza") == 0 ||
-                 strcasecmp(lexHandle->curToken.pszValue, "REG_STRING_ARRAY") == 0)
+                 strcasecmp(lexHandle->curToken.pszValue, "REG_STRING_ARRAY") == 0 ||
+                 (strcasecmp(lexHandle->curToken.pszValue, "string") == 0 &&
+                  lexHandle->bInAttribute))
         {
             /* REG_STRING_ARRAY
              * Similar to REG_MULTI_SZ (token type returned will be MULTI_SZ).
