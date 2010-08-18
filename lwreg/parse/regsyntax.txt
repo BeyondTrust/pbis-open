@@ -32,8 +32,16 @@
 # "C:\\Documents and Settings\\*\\Local Settings\\*"=",,4"
 
 <reg_entry_spec> ::= <reg_entry_key_spec> <equals_char> <reg_entry_value_spec>
-<reg_entry_key_spec> ::= <reg_entry_key_empty_spec> | <reg_entry_key_name_spec>
-<reg_entry_key_empty_spec ::= "@"
+<reg_entry_key_spec> ::= <reg_entry_key_empty_spec> | <reg_entry_key_name_spec> |
+                         <reg_entry_key_security_spec> 
+<reg_entry_key_empty_spec> ::= "@"
+<reg_entry_key_security_spec> ::= <reg_entry_key_security_spec_id> <equals_char> <reg_key_security_spec_sddl>
+<reg_entry_key_security_spec_id> ::= "@security"
+#
+# TBD: String representation of Security Descriptor
+#
+<reg_key_security_spec_sddl> ::= "sddl-string"
+
 <reg_entry_key_name_spec> ::= <quote> <reg_entry_key_name> <quote>
 <reg_entry_key_name> ::= <ascii_string> | <key_sep_string> |
                          <drive_spec> <key_sep_string> |
