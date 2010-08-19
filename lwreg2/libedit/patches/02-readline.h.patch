@@ -1,0 +1,15 @@
+--- export/src/editline/readline.h	2009-09-05 13:37:56.000000000 +0200
++++ ../src/editline/readline.h	2009-09-05 13:47:56.000000000 +0200
+@@ -44,9 +44,11 @@
+ typedef char	**CPPFunction(const char *, int, int);
+ typedef char     *rl_compentry_func_t(const char *, int);
+ 
++typedef void *histdata_t;
++
+ typedef struct _hist_entry {
+ 	const char	*line;
+-	const char	*data;
++	histdata_t	*data;
+ } HIST_ENTRY;
+ 
+ typedef struct _keymap_entry {

@@ -1,0 +1,86 @@
+Manifest:
+
+Folder:       <root>/utils
+Output type:  convenience library 
+Output name:  libregutils.la
+Dependencies: <lwbase>
+Function:
+
+Folder:       <root>/ipc
+Output type:  convenience library
+Output name:  libregipc.la
+Dependencies: libregutils.la
+Function:
+
+Folder:       <root>/client
+Output type:  shared library
+Output name:  libregclient.la
+Dependencies: libregipc.la
+Function:
+
+Folder:       <root>/logging_r
+Output type:  convenience library
+Output name:  libreglog_r.la
+Dependencies: libregutils.la
+              <pthreads>
+Function:
+
+Folder:       <root>/parse
+Output type:  Convenience library
+Output name:  libregparse.a
+Dependencies: libregutils.la
+              <lwbase>
+Function:
+
+Folder:       <root>/server/providers/sqlite
+Output type:  convenience library
+Output name:  libregserver_provider_sqlite.la
+Dependencies:
+Function:
+
+Folder:       <root>/server/providers/file
+Output type:  convenience library
+Output name:  libregserver_provider_file.la
+Dependencies:
+Function:
+
+Folder:       <root>/server/api
+Output type:  convenience library 
+Output name:  libregserverapi.la
+Dependencies:
+Function:
+
+Folder:       <root>/server/lwregd
+Output type:  executable (daemon) 
+Output name:  lwregd
+Dependencies:
+Function:
+
+Folder:       <root>/shellutil
+Output type:  convenience library
+Output name:  librsutils.la
+Dependencies:
+Function:
+
+Folder:       <root>/shell
+Output type:  executable program
+Output name:  lwregshell
+Dependencies:
+Function:
+
+Output type:  executable program
+Output name:  lw-edit-reg
+Dependencies:
+Function:
+
+Folder:       <root>/common
+Output type:  static library
+Output name:  libregcommon.la 
+Dependencies:
+Function:
+
+Folder:       <root>/test
+Output: 
+Dependencies:
+Function:
+
