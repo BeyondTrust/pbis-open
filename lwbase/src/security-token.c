@@ -868,7 +868,7 @@ RtlAccessTokenRelativeSize(
     ulRelativeSize += RtlLengthSid(pToken->User.Sid);
     Align32(&ulRelativeSize);
 
-    if (pToken->Groups);
+    if (pToken->Groups)
     {
         ulRelativeSize += sizeof(SID_AND_ATTRIBUTES_SELF_RELATIVE) * pToken->GroupCount;
         Align32(&ulRelativeSize);
