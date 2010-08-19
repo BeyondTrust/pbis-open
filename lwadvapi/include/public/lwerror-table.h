@@ -386,6 +386,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_SERVICE_DEPENDENCY_UNMET, -1, "The ser
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_SERVICE_UNRESPONSIVE, -1, "The service is not responding to requests" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NO_SUCH_SERVICE, -1, "No service with the specified name exists" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DEPENDENT_SERVICE_STILL_RUNNING, -1, "The service cannot be stopped because another service that depends on it is still running" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_INVALID_OU, -1, "An invalid Organizational Unit was specified" )
 
 #include "lwerror-table-krb5.h"
 
