@@ -1059,17 +1059,17 @@ RtlCreateWellKnownSid(
         case WinAccountDomainUsersSid:
         case WinAccountDomainGuestsSid:
         {
-            SID_IDENTIFIER_AUTHORITY identifierAuthority = { SECURITY_NT_AUTHORITY };
-            status = RtlInitializeSid(&sidBuffer.Sid,
-                                      &identifierAuthority,
-                                      DomainOrComputerSid->SubAuthorityCount + 1);
-            GOTO_CLEANUP_ON_STATUS(status);
-
             if (DomainOrComputerSid == NULL)
             {
                 status = STATUS_INVALID_PARAMETER;
                 GOTO_CLEANUP_ON_STATUS(status);
             }
+
+            SID_IDENTIFIER_AUTHORITY identifierAuthority = { SECURITY_NT_AUTHORITY };
+            status = RtlInitializeSid(&sidBuffer.Sid,
+                                      &identifierAuthority,
+                                      DomainOrComputerSid->SubAuthorityCount + 1);
+            GOTO_CLEANUP_ON_STATUS(status);
 
             for (i = 0; i < DomainOrComputerSid->SubAuthorityCount; i++)
             {
