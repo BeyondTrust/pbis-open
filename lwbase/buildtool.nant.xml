@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<project>
+  <target name="local.build">
+
+    <property name="local.output" value="lwbase" />
+    <if test="${build.vsarch!='x86'}">
+      <fail message="${local.output} only builds for the x86 architecture!" />
+    </if>
+
+    <if test="${build.vsarch=='x86'}">
+      <choose>
+        <when test="${build.debug.boolean}">
+          <property name="build.cflags" value="/Od /GL /FD /EHsc /Wp64 /Zi /MD /W3" />
+          <property name="build.lflags" value="/DEBUG /MACHINE:X86" />
+        </when>
+        <otherwise>
+          <property name="build.cflags" value="/O2 /FD /EHsc /Wp64 /Zi /MD /W3" />
+          <property name="build.lflags" value="/DEBUG /MACHINE:X86" />
+        </otherwise>
+      </choose>
+    </if>
+
+    <cl outputdir="${build.meta.current}/">
+      <includedirs>
+        <include name="include"/>
+        <include name="include\win32"/>
+      </includedirs>
+      <sources>
+	      <include name="src/rtlmemory.c"/>
+	      <include name="src/rtlstring*.c"/>
+	      <include name="src/wc16*.c"/>
+      </sources>
+      <defines>
+        <define name="UNICODE"/>
+        <define name="_UNICODE"/>
+        <define name="WIN32"/>
+        <define name="_WINDOWS"/>
+        <define name="NDEBUG"/>
+        <define name="_USRDLL"/>
+        <define name="LWBASE_EXPORTS"/>
+        <define name="LIBUNISTR_EXPORTS"/>
+      </defines>
+      <arg line="${build.cflags}" />
+    </cl>
+    <link output="${build.meta.current}/${local.output}.dll" options="/dll">
+      <sources basedir="${build.meta.current}/">
+	      <include name="*.obj"/>
+      </sources>
+      <arg value="/DEF:lwbase.def"/>
+      <arg line="${build.lflags}" />
+      <arg value="/PDB:${build.meta.current}/${local.output}.pdb" />
+    </link>
+    <exec program="mt.exe">
+      <arg line='-manifest lwbase.dll.manifest -outputresource:"${build.meta.current}/${local.output}.dll;2"' />
+    </exec>
+    <copy todir="${build.dist.os}">
+      <fileset basedir="${build.meta.current}">
+	      <include name="*.dll"/>
+	      <include name="*.exe"/>
+	      <include name="*.pdb"/>
+      </fileset>
+    </copy>
+  </target>
+</project>
