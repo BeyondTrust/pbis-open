@@ -292,7 +292,7 @@ error:
 
     if (pStat != NULL)
     {
-        memset(pStat, 0, sizeof(pStat));
+        memset(pStat, 0, sizeof(*pStat));
     }
 
     goto cleanup;
