@@ -9,4 +9,5 @@ SUBDIRS=utils   \
         include \
         tests   \
         tools   \
-        scripts
+        scripts \
+        service_locator

@@ -65,6 +65,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
+%{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so*
 %{PrefixDir}/share/config/*
 
 %define initScriptPathList %{INIT_DIR}/netlogond
@@ -105,6 +106,8 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.la
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/man/*
 

@@ -88,6 +88,32 @@ AC_ARG_WITH([openldap-libs],
 
 OPENLDAP_LIBS="-lldap_r -llber"
 
+# krb5
+
+AC_ARG_WITH([krb5],
+        [AC_HELP_STRING([--with-krb5=<dir>], [use krb5 located in prefix <dir>])],
+        [
+		KRB5_INCLUDES="-I$withval/include"
+                KRB5_LDFLAGS="-L$withval/lib"
+        ])
+
+AC_ARG_WITH([krb5-includes],
+        [AC_HELP_STRING([--with-krb5-includes=<dir>], [use krb5 includes located in <dir>])],
+        [
+		KRB5_INCLUDES="-I$withval"
+        ])
+
+AC_ARG_WITH([krb5-libs],
+        [AC_HELP_STRING([--with-krb5-libs=<dir>], [use krb5 libs located in <dir>])],
+        [
+		KRB5_LDFLAGS="-L$withval"
+        ])
+
+KRB5_LIBS="-lgssapi_krb5 -lkrb5 -lk5crypto"
+
+AC_SUBST(KRB5_INCLUDES)
+AC_SUBST(KRB5_LDFLAGS)
+AC_SUBST(KRB5_LIBS)
 
 # lwreg
 
@@ -382,6 +408,7 @@ AC_CONFIG_FILES([Makefile
                  etc/Makefile
                  etc/netlogond.reg
                  include/Makefile
+		 service_locator/Makefile
                  tests/Makefile
                  tests/netlogonclient/Makefile
                  tests/get_domain_controller/Makefile
