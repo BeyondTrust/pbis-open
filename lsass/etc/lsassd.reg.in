@@ -43,6 +43,7 @@
 "CacheEntryExpiry"=dword:00003840
 "MachinePasswordLifespan"=dword:00278D00
 "AssumeDefaultDomain"=dword:00000000
+"UserDomainPrefix"=""
 "SyncSystemTime"=dword:00000001
 "CachePurgeTimeout"=dword:00278D00
 "RequireMembershipOf"=sza:""
