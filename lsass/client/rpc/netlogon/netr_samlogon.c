@@ -245,8 +245,15 @@ error:
         NetrFreeMemory(pValidationInfo);
     }
 
-    *ppValidationInfo  = NULL;
-    *pAuthoritative    = 0;
+    if (ppValidationInfo)
+    {
+        *ppValidationInfo  = NULL;
+    }
+
+    if (pAuthoritative)
+    {
+        *pAuthoritative = 0;
+    }
 
     goto cleanup;
 }
@@ -456,8 +463,15 @@ error:
         NetrFreeMemory(pValidationInfo);
     }
 
-    *ppValidationInfo  = NULL;
-    *pAuthoritative    = 0;
+    if (ppValidationInfo)
+    {
+        *ppValidationInfo  = NULL;
+    }
+
+    if (pAuthoritative)
+    {
+        *pAuthoritative    = 0;
+    }
 
     goto cleanup;
 }

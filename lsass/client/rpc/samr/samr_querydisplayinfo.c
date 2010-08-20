@@ -143,9 +143,20 @@ error:
         SamrFreeMemory(pDispInfo);
     }
 
-    *pTotalSize    = 0;
-    *pReturnedSize = 0;
-    *ppInfo        = NULL;
+    if (pTotalSize)
+    {
+        *pTotalSize = 0;
+    }
+
+    if (pReturnedSize)
+    {
+        *pReturnedSize = 0;
+    }
+
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
 
     goto cleanup;
 }

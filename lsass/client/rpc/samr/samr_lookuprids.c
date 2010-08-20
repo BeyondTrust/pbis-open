@@ -155,8 +155,15 @@ error:
         SamrFreeMemory(pTypes);
     }
 
-    *pppwszNames = NULL;
-    *ppTypes     = NULL;
+    if (pppwszNames)
+    {
+        *pppwszNames = NULL;
+    }
+
+    if (ppTypes)
+    {
+        *ppTypes = NULL;
+    }
 
     goto cleanup;
 }

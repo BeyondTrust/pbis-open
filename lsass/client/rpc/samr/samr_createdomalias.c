@@ -97,7 +97,15 @@ cleanup:
     return ntStatus;
 
 error:
-    *phAlias = NULL;
+    if (phAlias)
+    {
+        *phAlias = NULL;
+    }
+
+    if (pRid)
+    {
+        *pRid = 0;
+    }
 
     goto cleanup;
 }

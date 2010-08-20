@@ -76,7 +76,10 @@ cleanup:
     return ntStatus;
 
 error:
-    phUser = NULL;
+    if (phUser)
+    {
+        *phUser = NULL;
+    }
 
     goto cleanup;
 }

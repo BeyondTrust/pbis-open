@@ -97,8 +97,15 @@ cleanup:
     return ntStatus;
 
 error:
-    *phUser = NULL;
-    *pRid   = 0;
+    if (phUser)
+    {
+        *phUser = NULL;
+    }
+
+    if (pRid)
+    {
+        *pRid = 0;
+    }
 
     goto cleanup;
 }

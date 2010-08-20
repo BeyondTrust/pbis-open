@@ -178,7 +178,10 @@ error:
         NetrFreeBinding(&hSchannelBinding);
     }
 
-    *phSchannelBinding = NULL;
+    if (phSchannelBinding)
+    {
+        *phSchannelBinding = NULL;
+    }
 
     goto cleanup;
 }

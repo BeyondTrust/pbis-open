@@ -159,7 +159,6 @@ NetrWkstaUserEnum(
         break;
     }
 
-cleanup:
     *ppInfo             = pInfo;
     *pdwNumEntries      = dwNumEntries;
     *pdwTotalNumEntries = dwTotalNumEntries;
@@ -174,6 +173,7 @@ cleanup:
         *pdwResume = dwResume;
     }
 
+cleanup:
     WkssCleanStubNetrWkstaUserInfo(&WkstaUserInfo);
 
     if (winError == ERROR_SUCCESS &&
@@ -197,9 +197,25 @@ error:
         pInfo = NULL;
     }
 
-    dwSize            = 0;
-    dwNumEntries      = 0;
-    dwTotalNumEntries = 0;
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
+
+    if (pdwSize)
+    {
+        *pdwSize = 0;
+    }
+
+    if (pdwNumEntries)
+    {
+        *pdwNumEntries = 0;
+    }
+
+    if (pdwTotalNumEntries)
+    {
+        *pdwTotalNumEntries = 0;
+    }
 
     goto cleanup;
 }

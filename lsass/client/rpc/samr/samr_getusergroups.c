@@ -121,9 +121,20 @@ cleanup:
     return ntStatus;
 
 error:
-    *ppRids       = NULL;
-    *ppAttributes = NULL;
-    *pCount       = 0;
+    if (ppRids)
+    {
+        *ppRids = NULL;
+    }
+
+    if (ppAttributes)
+    {
+        *ppAttributes = NULL;
+    }
+
+    if (pCount)
+    {
+        *pCount = 0;
+    }
 
     goto cleanup;
 }

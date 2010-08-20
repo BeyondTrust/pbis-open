@@ -118,6 +118,8 @@ LsaInitBindingDefaultA(
     PSTR pszOptions = NULL;
     LSA_BINDING hBinding = NULL;
 
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+
     ntStatus = LsaInitBindingFullA(
                     &hBinding,
                     (pszHostname) ? pszProtSeq : pszLpcProtSeq,
@@ -134,6 +136,11 @@ cleanup:
     return ntStatus;
 
 error:
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -157,6 +164,9 @@ LsaInitBindingFull(
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     LSA_BINDING hBinding = NULL;
+
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
@@ -209,7 +219,10 @@ cleanup:
     return ntStatus;
 
 error:
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }
@@ -343,7 +356,10 @@ error:
         rpc_binding_free(&hBinding, &rpcStatus2);
     }
 
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }

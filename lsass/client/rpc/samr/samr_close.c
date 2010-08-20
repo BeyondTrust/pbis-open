@@ -50,7 +50,7 @@
 NTSTATUS
 SamrClose(
     IN  LSA_BINDING  hBinding,
-    IN  void        *hIn
+    IN  PVOID        hIn
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;

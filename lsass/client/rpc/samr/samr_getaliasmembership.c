@@ -117,8 +117,15 @@ error:
         SamrFreeMemory(pRids);
     }
 
-    *ppdwRids  = NULL;
-    *pdwCount  = 0;
+    if (ppdwRids)
+    {
+        *ppdwRids = NULL;
+    }
+
+    if (pdwCount)
+    {
+        *pdwCount = 0;
+    }
 
     goto cleanup;
 }

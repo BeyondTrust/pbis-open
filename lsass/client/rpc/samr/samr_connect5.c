@@ -111,8 +111,15 @@ error:
         memset(pInfoOut, 0, sizeof(*pInfoOut));
     }
 
-    *phConn    = NULL;
-    *pLevelOut = 0;
+    if (phConn)
+    {
+        *phConn = NULL;
+    }
+
+    if (pLevelOut)
+    {
+        *pLevelOut = 0;
+    }
 
     goto cleanup;
 }

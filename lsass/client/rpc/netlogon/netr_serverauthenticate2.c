@@ -123,8 +123,15 @@ cleanup:
     return ntStatus;
 
 error:
-    memset(SrvCreds, 0, sizeof(Creds.data));
-    *pNegFlags = 0;
+    if (SrvCreds)
+    {
+        memset(SrvCreds, 0, sizeof(Creds.data));
+    }
+
+    if (pNegFlags)
+    {
+        *pNegFlags = 0;
+    }
 
     goto cleanup;
 }

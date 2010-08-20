@@ -91,7 +91,10 @@ cleanup:
     return ntStatus;
 
 error:
-    phConn = NULL;
+    if (phConn)
+    {
+        *phConn = NULL;
+    }
 
     goto cleanup;
 }

@@ -50,7 +50,7 @@
 NTSTATUS
 LsaClose(
     IN  LSA_BINDING  hBinding,
-    IN  void*        hObject
+    IN  PVOID        hObject
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;

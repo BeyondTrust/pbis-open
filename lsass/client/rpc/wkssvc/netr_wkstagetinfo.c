@@ -121,9 +121,9 @@ error:
     {
         /* See the above comment about allocating */
         WkssFreeMemory(pWkstaInfo->pInfo100);
+        memset(pWkstaInfo, 0, sizeof(*pWkstaInfo));
     }
 
-    memset(pWkstaInfo, 0, sizeof(*pWkstaInfo));
     goto cleanup;
 }
 

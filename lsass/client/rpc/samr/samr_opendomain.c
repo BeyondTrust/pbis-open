@@ -77,7 +77,10 @@ cleanup:
     return ntStatus;
 
 error:
-    *phDomain = NULL;
+    if (phDomain)
+    {
+        *phDomain = NULL;
+    }
 
     goto cleanup;
 }

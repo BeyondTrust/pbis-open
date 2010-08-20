@@ -124,6 +124,8 @@ SamrInitBindingDefaultA(
     PSTR pszOptions = NULL;
     SAMR_BINDING hBinding = NULL;
 
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+
     ntStatus = SamrInitBindingFullA(
                     &hBinding,
                     (pszHostname) ? pszProtSeq : pszLpcProtSeq,
@@ -140,6 +142,11 @@ cleanup:
     return ntStatus;
 
 error:
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -163,6 +170,9 @@ SamrInitBindingFull(
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     SAMR_BINDING hBinding = NULL;
+
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
@@ -215,7 +225,10 @@ cleanup:
     return ntStatus;
 
 error:
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }
@@ -350,7 +363,10 @@ error:
         rpc_binding_free(&hBinding, &rpcStatus);
     }
 
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }

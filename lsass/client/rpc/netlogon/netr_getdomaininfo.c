@@ -170,7 +170,11 @@ error:
         NetrFreeMemory(pDomainInfo);
     }
 
-    *ppDomainInfo = NULL;
+    if (ppDomainInfo)
+    {
+        *ppDomainInfo = NULL;
+    }
+
     goto cleanup;
 }
 

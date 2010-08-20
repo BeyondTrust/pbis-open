@@ -176,15 +176,15 @@ cleanup:
     }
 
     if (ntStatus == STATUS_SUCCESS &&
-        ntLookupStatus != STATUS_SUCCESS)
-    {
-        ntStatus = ntLookupStatus;
-    }
-
-    if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
     {
         ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
+        ntLookupStatus != STATUS_SUCCESS)
+    {
+        ntStatus = ntLookupStatus;
     }
 
     return ntStatus;
@@ -205,8 +205,15 @@ error:
         *pRidsCount = 0;
     }
 
-    *ppRids  = NULL;
-    *ppTypes = NULL;
+    if (ppRids)
+    {
+        *ppRids = NULL;
+    }
+
+    if (ppTypes)
+    {
+        *ppTypes = NULL;
+    }
 
     goto cleanup;
 }

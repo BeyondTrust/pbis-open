@@ -115,7 +115,10 @@ error:
         SamrFreeMemory(pOutInfo);
     }
 
-    *ppInfo = NULL;
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
 
     goto cleanup;
 }

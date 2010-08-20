@@ -123,7 +123,15 @@ error:
         NetrFreeMemory(pTrusts);
     }
 
-    *ppTrusts = NULL;
+    if (ppTrusts)
+    {
+        *ppTrusts = NULL;
+    }
+
+    if (pCount)
+    {
+        *pCount = 0;
+    }
 
     goto cleanup;
 }

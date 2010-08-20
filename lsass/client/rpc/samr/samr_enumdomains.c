@@ -142,9 +142,20 @@ error:
         SamrFreeMemory(ppwszNames);
     }
 
-    *pResume     = 0;
-    *pCount      = 0;
-    *pppwszNames = NULL;
+    if (pResume)
+    {
+        *pResume = 0;
+    }
+
+    if (pCount)
+    {
+        *pCount = 0;
+    }
+
+    if (pppwszNames)
+    {
+        *pppwszNames = NULL;
+    }
 
     goto cleanup;
 }

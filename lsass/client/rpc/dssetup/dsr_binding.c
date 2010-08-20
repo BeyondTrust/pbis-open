@@ -109,6 +109,7 @@ DsrInitBindingDefaultA(
     )
 {
     DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PSTR pszProtSeq = (PSTR)DSR_DEFAULT_PROT_SEQ;
     PSTR pszLpcProtSeq = (PSTR)"ncalrpc";
     PSTR pszEndpoint = (PSTR)DSR_DEFAULT_ENDPOINT;
@@ -116,6 +117,8 @@ DsrInitBindingDefaultA(
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     DSR_BINDING hBinding = NULL;
+
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
 
     dwError = DsrInitBindingFullA(
                     &hBinding,
@@ -130,9 +133,20 @@ DsrInitBindingDefaultA(
     *phBinding = hBinding;
 
 cleanup:
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
     return dwError;
 
 error:
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -149,12 +163,16 @@ DsrInitBindingFull(
     )
 {
     DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PSTR pszProtSeq = NULL;
     PSTR pszHostname = NULL;
     PSTR pszEndpoint = NULL;
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     DSR_BINDING hBinding = NULL;
+
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
@@ -192,10 +210,19 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pszUuid);
     LW_SAFE_FREE_MEMORY(pszOptions);
 
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
     return dwError;
 
 error:
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }
@@ -335,6 +362,11 @@ error:
     if (hBinding)
     {
         rpc_binding_free(&hBinding, &st);
+    }
+
+    if (phBinding)
+    {
+        *phBinding = NULL;
     }
 
     goto cleanup;

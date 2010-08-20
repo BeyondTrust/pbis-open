@@ -76,7 +76,10 @@ cleanup:
     return ntStatus;
 
 error:
-    phGroup = NULL;
+    if (phGroup)
+    {
+        *phGroup = NULL;
+    }
 
     goto cleanup;
 }

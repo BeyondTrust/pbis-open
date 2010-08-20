@@ -103,7 +103,10 @@ cleanup:
     return ntStatus;
 
 error:
-    *phPolicy = NULL;
+    if (phPolicy)
+    {
+        *phPolicy = NULL;
+    }
 
     goto cleanup;
 }

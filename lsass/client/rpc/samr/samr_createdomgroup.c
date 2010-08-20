@@ -96,8 +96,15 @@ cleanup:
     return ntStatus;
 
 error:
-    *phGroup = NULL;
-    *pRid    = 0;
+    if (phGroup)
+    {
+        *phGroup = NULL;
+    }
+
+    if (pRid)
+    {
+        *pRid = 0;
+    }
 
     goto cleanup;
 }

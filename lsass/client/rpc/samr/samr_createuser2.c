@@ -104,9 +104,20 @@ cleanup:
     return ntStatus;
 
 error:
-    phUser          = NULL;
-    *pAccessGranted = 0;
-    *pRid           = 0;
+    if (phUser)
+    {
+        *phUser = NULL;
+    }
+
+    if (pAccessGranted)
+    {
+        *pAccessGranted = 0;
+    }
+
+    if (pRid)
+    {
+        *pRid = 0;
+    }
 
     goto cleanup;
 }

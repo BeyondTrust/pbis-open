@@ -195,16 +195,16 @@ cleanup:
     }
 
     if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    if (ntStatus == STATUS_SUCCESS &&
         (ntRetStatus == STATUS_SUCCESS ||
          ntRetStatus == LW_STATUS_SOME_NOT_MAPPED))
     {
         ntStatus = ntRetStatus;
-    }
-
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
-    {
-        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;
@@ -220,9 +220,20 @@ error:
         LsaRpcFreeMemory(pOutDomains);
     }
 
-    *ppSids    = NULL;
-    *ppDomList = NULL;
-    *pdwCount  = 0;
+    if (ppSids)
+    {
+        *ppSids = NULL;
+    }
+
+    if (ppDomList)
+    {
+        *ppDomList = NULL;
+    }
+
+    if (pdwCount)
+    {
+        *pdwCount = 0;
+    }
 
     goto cleanup;
 }

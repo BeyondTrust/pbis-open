@@ -55,11 +55,14 @@ DsrRoleGetPrimaryDomainInformation(
     )
 {
     DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PDSR_ROLE_INFO pStubInfo = NULL;
     PDSR_ROLE_INFO pInfo = NULL;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
+
+    BAIL_ON_INVALID_PTR(ppInfo, ntStatus);
 
     DCERPC_CALL(dwError, cli_DsrRoleGetPrimaryDomainInformation(
                               (handle_t)hBinding,
@@ -103,6 +106,12 @@ cleanup:
         DsrFreeStubDsRoleInfo(pStubInfo, swLevel);
     }
 
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
     return (WINERROR)dwError;
 
 error:
@@ -111,7 +120,11 @@ error:
         DsrFreeMemory(pInfo);
     }
 
-    *ppInfo = NULL;
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
+
     goto cleanup;
 }
 

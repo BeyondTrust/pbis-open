@@ -171,7 +171,10 @@ error:
         NetrFreeMemory(pDcRetInfo);
     }
 
-    *ppInfo = NULL;
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
 
     goto cleanup;
 }

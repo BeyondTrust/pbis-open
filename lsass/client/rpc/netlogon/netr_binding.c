@@ -118,6 +118,8 @@ NetrInitBindingDefaultA(
     PSTR pszOptions = NULL;
     NETR_BINDING hBinding = NULL;
 
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+
     ntStatus = NetrInitBindingFullA(
                       &hBinding,
                       (pszHostname) ? pszProtSeq : pszLpcProtSeq,
@@ -134,6 +136,11 @@ cleanup:
     return ntStatus;
 
 error:
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -157,6 +164,9 @@ NetrInitBindingFull(
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     NETR_BINDING hBinding = NULL;
+
+    BAIL_ON_INVALID_PTR(phBinding, ntStatus);
+    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
@@ -203,7 +213,10 @@ cleanup:
     return ntStatus;
 
 error:
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }
@@ -234,7 +247,6 @@ NetrInitBindingFullA(
     rpc_transport_info_handle_t hInfo = NULL;
 
     BAIL_ON_INVALID_PTR(phBinding, ntStatus);
-    BAIL_ON_INVALID_PTR(pszHostname, ntStatus);
     BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
 
     prot_seq = (unsigned char*) strdup(pszProtSeq);
@@ -339,7 +351,10 @@ error:
         rpc_binding_free(&hBinding, &rpcRetStatus);
     }
 
-    *phBinding = NULL;
+    if (phBinding)
+    {
+        *phBinding = NULL;
+    }
 
     goto cleanup;
 }

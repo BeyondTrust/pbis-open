@@ -182,9 +182,20 @@ error:
         LsaRpcFreeMemory(pOutDomains);
     }
 
-    *ppTransNames = NULL;
-    *ppRefDomList = NULL;
-    *pdwCount     = 0;
+    if (ppTransNames)
+    {
+        *ppTransNames = NULL;
+    }
+
+    if (ppRefDomList)
+    {
+        *ppRefDomList = NULL;
+    }
+
+    if (pdwCount)
+    {
+        *pdwCount = 0;
+    }
 
     goto cleanup;
 }

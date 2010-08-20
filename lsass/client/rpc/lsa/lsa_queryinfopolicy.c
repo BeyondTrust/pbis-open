@@ -119,7 +119,11 @@ error:
         LsaRpcFreeMemory(pOutInfo);
     }
 
-    *ppInfo = NULL;
+    if (ppInfo)
+    {
+        *ppInfo = NULL;
+    }
+
     goto cleanup;
 }
 

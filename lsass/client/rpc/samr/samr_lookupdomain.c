@@ -115,7 +115,10 @@ error:
         SamrFreeMemory(pRetSid);
     }
 
-    *ppSid = NULL;
+    if (ppSid)
+    {
+        *ppSid = NULL;
+    }
 
     goto cleanup;
 }

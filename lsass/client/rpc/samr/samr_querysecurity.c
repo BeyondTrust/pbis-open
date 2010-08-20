@@ -92,8 +92,15 @@ error:
         SamrFreeMemory(pSecDesc);
     }
 
-    *ppSecDesc     = NULL;
-    *pulSecDescLen = 0;
+    if (ppSecDesc)
+    {
+        *ppSecDesc = NULL;
+    }
+
+    if (pulSecDescLen)
+    {
+        *pulSecDescLen = 0;
+    }
 
     goto cleanup;
 }

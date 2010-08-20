@@ -103,7 +103,10 @@ cleanup:
     return ntStatus;
 
 error:
-    memset(SrvChal, 0, sizeof(Creds.data));
+    if (SrvChal)
+    {
+        memset(SrvChal, 0, sizeof(Creds.data));
+    }
 
     goto cleanup;
 }
