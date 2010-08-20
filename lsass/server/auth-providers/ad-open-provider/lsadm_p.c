@@ -625,6 +625,7 @@ LsaDmpStateCreate(
 
     dwError = pthread_create(&pState->OnlineDetectionThread.Thread, NULL,
                              LsaDmpThreadRoutine, pState);
+    dwError = LwMapErrnoToLwError(dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Indicate that the thread is created
