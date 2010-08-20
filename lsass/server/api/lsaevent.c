@@ -733,6 +733,11 @@ LsaSrvQueueEvent(
     BAIL_ON_LSA_ERROR(dwError);
 
     pNewEvent->dwEventDateTime = pEvent->dwEventDateTime;
+    
+    if (pNewEvent->dwEventDateTime == 0)
+    {
+        time((time_t *)&pNewEvent->dwEventDateTime);
+    }
 
     dwError = LwStrDupOrNull(
                     pEvent->pszEventSource,
