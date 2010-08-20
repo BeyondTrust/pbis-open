@@ -68,6 +68,8 @@ pam_sm_acct_mgmt(
     DWORD dwUserInfoLevel = 2;
     PSTR  pszLoginId = NULL;
     PLSA_PAM_CONFIG pConfig = NULL;
+    int iPamError = 0;
+    PSTR pszExpireDone;
 
     LSA_LOG_PAM_DEBUG("pam_sm_acct_mgmt::begin");
 
@@ -138,33 +140,46 @@ pam_sm_acct_mgmt(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaFindUserByName(
-                    hLsaConnection,
-                    pszLoginId,
-                    dwUserInfoLevel,
-                    (PVOID*)&pUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
+    iPamError = pam_get_data(
+        pamh,
+        PAM_LSASS_EXPIRE_WARNING_DONE,
+        (PAM_GET_DATA_TYPE)&pszExpireDone);
+    if (iPamError == PAM_NO_MODULE_DATA)
+    {
+        dwError = LsaFindUserByName(
+                        hLsaConnection,
+                        pszLoginId,
+                        dwUserInfoLevel,
+                        (PVOID*)&pUserInfo);
+        BAIL_ON_LSA_ERROR(dwError);
 
-    if (pUserInfo->bPromptPasswordChange == TRUE &&
-        pUserInfo->bPasswordExpired == FALSE &&
-        pUserInfo->bPasswordNeverExpires == FALSE) {
+        if (pUserInfo->bPromptPasswordChange == TRUE &&
+            pUserInfo->bPasswordExpired == FALSE && 
+            pUserInfo->bPasswordNeverExpires == FALSE) {
 
-        CHAR szMessage[512];
+            CHAR szMessage[512];
 
-        switch (pUserInfo->dwDaysToPasswordExpiry)
-        {
-            case 0:
-                sprintf(szMessage, "Your password will expire today\n");
-                break;
-            case 1:
-                sprintf(szMessage, "Your password will expire in 1 day\n");
-                break;
-            default:
-                sprintf(szMessage, "Your password will expire in %u days\n",
-                       pUserInfo->dwDaysToPasswordExpiry);
-                break;
+            switch (pUserInfo->dwDaysToPasswordExpiry)
+            {
+                case 0:
+                    sprintf(szMessage, "Your password will expire today\n");
+                    break;
+                case 1:
+                    sprintf(szMessage, "Your password will expire in 1 day\n");
+                    break;
+                default:
+                    sprintf(szMessage, "Your password will expire in %u days\n",
+                           pUserInfo->dwDaysToPasswordExpiry);
+                    break;
+            }
+            LsaPamConverse(pamh, szMessage, PAM_TEXT_INFO, NULL);
         }
-        LsaPamConverse(pamh, szMessage, PAM_TEXT_INFO, NULL);
+
+        dwError = LsaPamSetDataString(
+            pamh,
+            PAM_LSASS_EXPIRE_WARNING_DONE,
+            "TRUE");
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
