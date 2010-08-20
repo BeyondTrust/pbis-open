@@ -881,6 +881,7 @@ AC_CONFIG_FILES([Makefile
 	tests/test_load/Makefile
         tests/tcon/Makefile
         tests/transactnp/Makefile
+        tests/test_createfile/Makefile
         scripts/Makefile
         scripts/lwnet
         libshareinfo/Makefile
