@@ -158,7 +158,7 @@ RdrCommonCreate(
     ntStatus = RdrCreateFileEx(
         pSecurityToken,
         pProcessInfo,
-        pFileName->FileName,
+        pFileName,
         DesiredAccess,
         AllocationSize,
         FileAttributes,

@@ -175,7 +175,7 @@ NTSTATUS
 RdrCreateFileEx(
     PIO_CREDS pSecurityToken,
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo,
-    PCWSTR pwszPath,
+    PIO_FILE_NAME pFilename,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
     FILE_ATTRIBUTES fileAttributes,

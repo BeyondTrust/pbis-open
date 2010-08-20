@@ -61,6 +61,7 @@ static
 NTSTATUS
 RdrTransactCreateFile(
     SMB_TREE *pTree,
+    USHORT usRootFid,
     PCWSTR pwszPath,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
@@ -76,7 +77,7 @@ NTSTATUS
 RdrCreateFileEx(
     PIO_CREDS pCreds,
     PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo,
-    PCWSTR pwszPath,
+    PIO_FILE_NAME pFilename,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
     FILE_ATTRIBUTES fileAttributes,
@@ -96,6 +97,7 @@ RdrCreateFileEx(
     PWSTR  pwszUsername = NULL;
     PWSTR  pwszDomain = NULL;
     PWSTR  pwszPassword = NULL;
+    USHORT usRootFid    = 0;
 
     if (!pCreds)
     {
@@ -134,37 +136,59 @@ RdrCreateFileEx(
     
     pFile->pMutex = &pFile->mutex;
     
-    ntStatus = ParseSharePath(
-        pwszPath,
-        &pwszServer,
-        &pszShare,
-        &pszFilename);
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (pFilename->RootFileHandle == NULL)
+    {
+        ntStatus = ParseSharePath(
+                        pFilename->FileName,
+                        &pwszServer,
+                        &pszShare,
+                        &pszFilename);
+        BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = SMBSrvClientTreeOpen(
-        pwszServer,
-        pszShare,
-        pCreds,
-        pProcessInfo->Uid,
-        &pFile->pTree);
-    BAIL_ON_NT_STATUS(ntStatus);
+        ntStatus = SMBSrvClientTreeOpen(
+                        pwszServer,
+                        pszShare,
+                        pCreds,
+                        pProcessInfo->Uid,
+                        &pFile->pTree);
+        BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = SMBMbsToWc16s(
-                    pszFilename,
-                    &pwszFilename);
-    BAIL_ON_NT_STATUS(ntStatus);
+        ntStatus = SMBMbsToWc16s(
+                        pszFilename,
+                        &pwszFilename);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        PSMB_CLIENT_FILE_HANDLE pRoot =
+                IoFileGetContext(pFilename->RootFileHandle);
+
+        pFile->pTree = pRoot->pTree;
+
+        SMBTreeAddReference(pRoot->pTree);
+
+        usRootFid = pRoot->fid;
+
+        ntStatus = LwRtlWC16StringAllocatePrintfW(
+                        &pwszFilename,
+                        L"%ws\\%ws",
+                        pRoot->pwszPath,
+                        pFilename->FileName);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     ntStatus = RdrTransactCreateFile(
-        pFile->pTree,
-        pwszFilename,
-        desiredAccess,
-        llAllocationSize,
-        fileAttributes,
-        shareAccess,
-        createDisposition,
-        createOptions,
-        &pFile->fid,
-        &pFile->usFileType);
+                    pFile->pTree,
+                    usRootFid,
+                    usRootFid ? pFilename->FileName : pwszFilename,
+                    desiredAccess,
+                    llAllocationSize,
+                    fileAttributes,
+                    shareAccess,
+                    createDisposition,
+                    createOptions,
+                    &pFile->fid,
+                    &pFile->usFileType);
     BAIL_ON_NT_STATUS(ntStatus);
 
     pFile->pwszPath = pwszFilename;
@@ -371,6 +395,7 @@ static
 NTSTATUS
 RdrTransactCreateFile(
     SMB_TREE *pTree,
+    USHORT usRootFid,
     PCWSTR pwszPath,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
@@ -433,7 +458,7 @@ RdrTransactCreateFile(
     /* @todo: does the length include alignment padding? */
     pHeader->nameLength = (wc16slen(pwszPath) + 1) * sizeof(wchar16_t);
     pHeader->flags = 0;
-    pHeader->rootDirectoryFid = 0;
+    pHeader->rootDirectoryFid = usRootFid;
     pHeader->desiredAccess = desiredAccess;
     pHeader->allocationSize = llAllocationSize;
     pHeader->extFileAttributes = fileAttributes;
