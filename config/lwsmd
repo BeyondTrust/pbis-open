@@ -41,10 +41,12 @@ fix_locale()
         export LC_ALL
     fi
     if type locale >/dev/null &&
-        locale | grep LC_CTYPE | grep POSIX >/dev/null &&
-        [ -f /etc/sysconfig/language ]
-    then
-        eval "`lookup_user_locale`"
+        locale | grep LC_CTYPE | grep POSIX >/dev/null; then
+        if [ -f /etc/sysconfig/language ]; then
+            eval "`lookup_user_locale`"
+        elif [ -f /etc/default/locale ]; then
+            source /etc/default/locale
+        fi
     fi
 }
 
