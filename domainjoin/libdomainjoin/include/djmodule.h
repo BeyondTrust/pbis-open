@@ -128,7 +128,8 @@ DJJoinDomain(
 DWORD
 DJQueryJoinInformation(
     PSTR* ppszComputerName,
-    PSTR* ppszDomainName
+    PSTR* ppszDomainName,
+    PSTR* ppszComptuterDN
     );
 
 DWORD

@@ -141,18 +141,35 @@ cleanup:
 DWORD
 DJQueryJoinInformation(
     PSTR* ppszComputerName,
-    PSTR* ppszDomainName
+    PSTR* ppszDomainName,
+    PSTR* ppszComputerDN
     )
 {
     DWORD dwError = 0;
     LWException *exc = NULL;
+    PSTR  pszComputerName = NULL;
+    PSTR  pszDomainName = NULL;
+    PSTR  pszComputerDN = NULL;
 
-    LW_TRY(&exc, DJQuery(ppszComputerName, ppszDomainName, NULL, &LW_EXC));
+    LW_TRY(&exc, DJQuery(&pszComputerName, &pszDomainName, NULL, &LW_EXC));
+
+    if (!IsNullOrEmptyString(pszDomainName))
+    {
+       LW_TRY(&exc, DJGetComputerDN(&pszComputerDN, &LW_EXC));
+    }
+
+    *ppszComputerName = pszComputerName;
+    *ppszDomainName = pszDomainName;
+    *ppszComputerDN = pszComputerDN;
 
 cleanup:
 
     if (!LW_IS_OK(exc))
     {
+        CT_SAFE_FREE_STRING(pszComputerName);
+        CT_SAFE_FREE_STRING(pszDomainName);
+        CT_SAFE_FREE_STRING(pszComputerDN);
+
         dwError = exc->code;
         LWHandle(&exc);
     }
