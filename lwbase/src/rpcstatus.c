@@ -447,6 +447,8 @@ LwRpcStatusToNtStatus(
             return LW_STATUS_KDC_CERT_REVOKED;
         case LW_ERROR_RPC_S_AUTH_SKEW:
             return LW_STATUS_TIME_DIFFERENCE_AT_DC;
+        case LW_ERROR_RPC_S_NO_NAME_MAPPING:
+            return LW_STATUS_BAD_NETWORK_NAME;
 
         case LW_ERROR_RPC_S_MOD:
         case LW_ERROR_RPC_S_OP_RNG_ERROR:
@@ -589,7 +591,6 @@ LwRpcStatusToNtStatus(
         case LW_ERROR_RPC_S_NO_MORE_MEMBERS:
         case LW_ERROR_RPC_S_NO_MORE_INTERFACES:
         case LW_ERROR_RPC_S_INVALID_NAME_SERVICE:
-        case LW_ERROR_RPC_S_NO_NAME_MAPPING:
         case LW_ERROR_RPC_S_PROFILE_NOT_FOUND:
         case LW_ERROR_RPC_S_NOT_FOUND:
         case LW_ERROR_RPC_S_NO_UPDATES:

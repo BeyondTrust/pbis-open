@@ -2094,6 +2094,10 @@ unsigned32              *st;
         *st = rpc_s_unknown_status_code;
         break;
 
+	case ENOENT:
+        *st = rpc_s_no_name_mapping;
+	break;
+
         default:
         *st = rpc_s_cannot_connect;
         break;

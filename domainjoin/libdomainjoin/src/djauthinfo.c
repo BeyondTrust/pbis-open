@@ -1344,6 +1344,17 @@ void DJCreateComputerAccount(
             case ERROR_DS_NAME_ERROR_NO_MAPPING:
                 LW_RAISE_EX(exc, ERROR_INVALID_COMPUTERNAME, "Lsass Error", "The dnsHostName attribute cannot be set on the computer account because your user account does not have permission to write arbitrary values, and your computer's domain name is not listed in the msDS-AllowedDNSSuffixes attribute.");
                 break;
+            case ERROR_BAD_NET_NAME:
+                if (strlen(dnsDomain) > sizeof(".local") - 1 &&
+                    !strcasecmp(dnsDomain + strlen(dnsDomain) -
+                        sizeof(".local") + 1, ".local"))
+                {
+                    LW_RAISE_EX(exc, dwError, "Lsass Error", "%s. Failure to lookup a domain name ending in \".local\" may be the result of configuring the local system's hostname resolution (or equivalent) to use Multi-cast DNS. Please refer to the Likewise manual at http://www.likewise.com/resources/documentation_library/manuals/open/likewise-open-guide.html#ConfigNsswitch for more information.", LwWin32ExtErrorToDescription(dwError));
+                }
+                else
+                {
+                    LW_RAISE_LSERR(exc, dwError);
+                }
                 break;
             default:
                 LW_RAISE_LSERR(exc, dwError);
