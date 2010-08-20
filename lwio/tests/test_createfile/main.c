@@ -53,12 +53,12 @@ main(
                     &fileName,
                     pSecDesc,                           /* SecurityDescriptor */
                     NULL,                               /* Security QOS       */
-                    WRITE_OWNER|WRITE_DAC|READ_CONTROL, /* Desired Access     */
+                    WRITE_OWNER|WRITE_DAC|READ_CONTROL|DELETE, /* Desired Access     */
                     0,                                  /* AllocationSize     */
                     FILE_ATTRIBUTE_NORMAL,              /* FileAttributes     */
                     0,                                  /* ShareAccess: None  */
                     FILE_OPEN_IF,                       /* CreateDisposition  */
-                    FILE_DIRECTORY_FILE,                /* CreateOptions      */
+                    FILE_DIRECTORY_FILE|FILE_DELETE_ON_CLOSE,/* CreateOptions */
                     NULL,                               /* EaBuffer           */
                     0,                                  /* EaLength           */
                     NULL                                /* EcpList            */
@@ -85,12 +85,12 @@ main(
                     &fileName,
                     pSecDesc,                           /* SecurityDescriptor */
                     NULL,                               /* Security QOS       */
-                    WRITE_OWNER|WRITE_DAC|READ_CONTROL, /* Desired Access     */
+                    WRITE_OWNER|WRITE_DAC|READ_CONTROL|DELETE, /* Desired Access     */
                     0,                                  /* AllocationSize     */
                     FILE_ATTRIBUTE_NORMAL,              /* FileAttributes     */
                     0,                                  /* ShareAccess: None  */
                     FILE_OPEN_IF,                       /* CreateDisposition  */
-                    FILE_NON_DIRECTORY_FILE,            /* CreateOptions      */
+                    FILE_NON_DIRECTORY_FILE|FILE_DELETE_ON_CLOSE,/* CreateOptions */
                     NULL,                               /* EaBuffer           */
                     0,                                  /* EaLength           */
                     NULL                                /* EcpList            */
@@ -104,14 +104,14 @@ cleanup:
 
     RTL_FREE(&fileName.FileName);
 
-    if (hDir)
-    {
-        LwNtCloseFile(hDir);
-    }
-
     if (hFile)
     {
         LwNtCloseFile(hFile);
+    }
+
+    if (hDir)
+    {
+        LwNtCloseFile(hDir);
     }
 
     return status;
