@@ -29,12 +29,11 @@ main(
         }
     }
 
-#if 0
     status = LwRtlWC16StringAllocatePrintfW(
                     &fileName.FileName,
                     L"/rdr/%s/C$/testdir",
                     szHostname);
-#else
+#if 0
     status = LwRtlWC16StringAllocateFromCString(
                     &fileName.FileName,
                     "/pvfs/lwcifs/testdir");
