@@ -49,37 +49,101 @@
 
 #include "includes.h"
 
+static
+VOID
+LwTaskFreeFile(
+    PLW_TASK_FILE pFile
+    );
+
+static
+VOID
+LwTaskFreeDirectory(
+    PLW_TASK_DIRECTORY pItem
+    );
+
 DWORD
-LwTaskCreateFileItem(
-    PWSTR          pwszRemotePath,
-    PWSTR          pwszLocalPath,
-    BOOLEAN        bIsDir,
-    PLW_FILE_ITEM* ppFileItem
+LwTaskCreateFile(
+    PLW_TASK_FILE* ppFile
     )
 {
     DWORD dwError = 0;
-    PLW_FILE_ITEM pFileItem = NULL;
+    PLW_TASK_FILE pFile = NULL;
 
-    dwError = LwAllocateMemory(sizeof(LW_FILE_ITEM), (PVOID*)&pFileItem);
+    dwError = LwAllocateMemory(sizeof(LW_TASK_FILE), (PVOID*)&pFile);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    if (pwszRemotePath)
+    pFile->refCount = 1;
+
+    *ppFile = pFile;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppFile = NULL;
+
+    goto cleanup;
+}
+
+PLW_TASK_FILE
+LwTaskAcquireFile(
+    PLW_TASK_FILE pFile
+    )
+{
+    InterlockedIncrement(&pFile->refCount);
+
+    return pFile;
+}
+
+VOID
+LwTaskReleaseFile(
+    PLW_TASK_FILE pFile
+    )
+{
+    if (InterlockedDecrement(&pFile->refCount) == 0)
     {
-        dwError = LwAllocateWc16String(
-                        &pFileItem->pwszRemotePath,
-                        pwszRemotePath);
+        LwTaskFreeFile(pFile);
+    }
+}
+
+static
+VOID
+LwTaskFreeFile(
+    PLW_TASK_FILE pFile
+    )
+{
+    if (pFile->hFile)
+    {
+        LwNtCloseFile(pFile->hFile);
+    }
+
+    LwFreeMemory(pFile);
+}
+
+DWORD
+LwTaskCreateDirectory(
+    PWSTR               pwszDirname,
+    PLW_TASK_FILE       pParentRemote,
+    PLW_TASK_FILE       pParentLocal,
+    PLW_TASK_DIRECTORY* ppFileItem
+    )
+{
+    DWORD dwError = 0;
+    PLW_TASK_DIRECTORY pFileItem = NULL;
+
+    dwError = LwAllocateMemory(sizeof(LW_TASK_DIRECTORY), (PVOID*)&pFileItem);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (pwszDirname)
+    {
+        dwError = LwAllocateWc16String(&pFileItem->pwszName, pwszDirname);
         BAIL_ON_LW_TASK_ERROR(dwError);
     }
 
-    if (pwszLocalPath)
-    {
-        dwError = LwAllocateWc16String(
-                        &pFileItem->pwszLocalPath,
-                        pwszLocalPath);
-        BAIL_ON_LW_TASK_ERROR(dwError);
-    }
-
-    pFileItem->bIsDir = bIsDir;
+    pFileItem->pParentRemote = LwTaskAcquireFile(pParentRemote);
+    pFileItem->pParentLocal  = LwTaskAcquireFile(pParentLocal);
 
     *ppFileItem = pFileItem;
 
@@ -93,25 +157,44 @@ error:
 
     if (pFileItem)
     {
-        LwTaskFreeFileItemList(pFileItem);
+        LwTaskFreeDirectoryList(pFileItem);
     }
 
     goto cleanup;
 }
 
 VOID
-LwTaskFreeFileItemList(
-    PLW_FILE_ITEM  pFileItem
+LwTaskFreeDirectoryList(
+    PLW_TASK_DIRECTORY  pFileItem
     )
 {
     while (pFileItem)
     {
-        PLW_FILE_ITEM pItem = pFileItem;
+        PLW_TASK_DIRECTORY pItem = pFileItem;
 
         pFileItem = pFileItem->pNext;
 
-        LW_SAFE_FREE_MEMORY(pItem->pwszRemotePath);
-        LW_SAFE_FREE_MEMORY(pItem->pwszLocalPath);
-        LwFreeMemory(pItem);
+        LwTaskFreeDirectory(pItem);
     }
+}
+
+static
+VOID
+LwTaskFreeDirectory(
+    PLW_TASK_DIRECTORY pItem
+    )
+{
+    if (pItem->pParentLocal)
+    {
+        LwTaskReleaseFile(pItem->pParentLocal);
+    }
+
+    if (pItem->pParentRemote)
+    {
+        LwTaskReleaseFile(pItem->pParentRemote);
+    }
+
+    LW_SAFE_FREE_MEMORY(pItem->pwszName);
+
+    LwFreeMemory(pItem);
 }

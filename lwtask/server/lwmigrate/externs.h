@@ -46,3 +46,5 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
+
+extern LW_SHARE_MIGRATION_GLOBALS gLwTaskGlobals;

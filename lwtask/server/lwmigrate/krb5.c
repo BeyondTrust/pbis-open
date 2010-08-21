@@ -100,8 +100,7 @@ LwTaskAcquireCredsA(
     DWORD dwError = 0;
     krb5_error_code ret = 0;
     PSTR   pszNewCachePath = NULL;
-    LW_PIO_CREDS pNewCreds = NULL;
-    PLW_TASK_CREDS pCreds  = NULL;
+    PLW_TASK_CREDS pCreds = NULL;
 
     BAIL_ON_INVALID_POINTER(ppCreds);
     BAIL_ON_INVALID_STRING(pszUsername);
@@ -133,23 +132,15 @@ LwTaskAcquireCredsA(
                     &pCreds->pszRestoreCache);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwIoCreateKrb5CredsA(pszUsername, pszNewCachePath, &pNewCreds);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    dwError = LwIoGetThreadCreds(&pCreds->pRestoreCreds);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    dwError = LwIoSetThreadCreds(pNewCreds);
+    dwError = LwIoCreateKrb5CredsA(
+                    pszUsername,
+                    pszNewCachePath,
+                    &pCreds->pKrb5Creds);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
     *ppCreds = pCreds;
 
 cleanup:
-
-    if (pNewCreds != NULL)
-    {
-        LwIoDeleteCreds(pNewCreds);
-    }
 
     LW_SAFE_FREE_STRING(pszNewCachePath);
 
@@ -157,12 +148,12 @@ cleanup:
 
 error:
 
+    *ppCreds = NULL;
+
     if (pCreds)
     {
         LwTaskFreeCreds(pCreds);
     }
-
-    *ppCreds = NULL;
 
     goto cleanup;
 }
@@ -172,28 +163,26 @@ LwTaskFreeCreds(
     PLW_TASK_CREDS pCreds /* IN OUT */
     )
 {
-    if (pCreds->pRestoreCreds != NULL)
+    if (pCreds->pKrb5Creds != NULL)
     {
-        LwIoSetThreadCreds(pCreds->pRestoreCreds);
+        LwIoDeleteCreds(pCreds->pKrb5Creds);
+    }
 
-        LwIoDeleteCreds(pCreds->pRestoreCreds);
+    if (pCreds->pszRestoreCache)
+    {
+        LwKrb5SetDefaultCachePath(pCreds->pszRestoreCache, NULL);
 
-        if (pCreds->pszRestoreCache)
+        LwFreeString(pCreds->pszRestoreCache);
+    }
+
+    if (pCreds->ctx != NULL)
+    {
+        if (pCreds->cc != NULL)
         {
-            LwKrb5SetDefaultCachePath(pCreds->pszRestoreCache, NULL);
-
-            LwFreeString(pCreds->pszRestoreCache);
+            krb5_cc_destroy(pCreds->ctx, pCreds->cc);
         }
 
-        if (pCreds->ctx != NULL)
-        {
-            if (pCreds->cc != NULL)
-            {
-                krb5_cc_destroy(pCreds->ctx, pCreds->cc);
-            }
-
-            krb5_free_context(pCreds->ctx);
-        }
+        krb5_free_context(pCreds->ctx);
     }
 
     LwFreeMemory(pCreds);

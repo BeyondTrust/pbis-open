@@ -60,6 +60,8 @@
 #include <lwfile.h>
 #include <lwkrb5.h>
 
+#include <reg/lwreg.h>
+
 #include <lwmsg/lwmsg.h>
 #include <lwmsg/protocol.h>
 

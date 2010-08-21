@@ -54,57 +54,88 @@ LwTaskMigrateInit(
     VOID
     )
 {
-    return 0;
-}
-
-DWORD
-LwTaskMigrateAllSharesA(
-    PSTR             pszServer,
-    PSTR             pszUsername,
-    PSTR             pszPassword,
-    LW_MIGRATE_FLAGS dwFlags
-    )
-{
     DWORD dwError = 0;
-    PWSTR pwszServer = NULL;
-    PWSTR pwszUsername = NULL;
-    PWSTR pwszPassword = NULL;
+    PWSTR pwszDefaultSharePath = NULL;
 
-    dwError = LwMbsToWc16s(pszServer, &pwszServer);
+    dwError = LwTaskGetDefaultSharePathW(&pwszDefaultSharePath);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwMbsToWc16s(pszUsername, &pwszUsername);
+    dwError = NetApiInitialize();
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwMbsToWc16s(pszPassword, &pwszPassword);
-    BAIL_ON_LW_TASK_ERROR(dwError);
+    gLwTaskGlobals.bNetApiInitialized = TRUE;
 
-    dwError = LwTaskMigrateAllSharesW(
-                    pwszServer,
-                    pwszUsername,
-                    pwszPassword,
-                    dwFlags);
-    BAIL_ON_LW_TASK_ERROR(dwError);
+    gLwTaskGlobals.pwszDefaultSharePath = pwszDefaultSharePath;
 
 cleanup:
-
-    LW_SAFE_FREE_MEMORY(pwszServer);
-    LW_SAFE_FREE_MEMORY(pwszUsername);
-    LW_SAFE_FREE_MEMORY(pwszPassword);
 
     return dwError;
 
 error:
 
+    LW_SAFE_FREE_MEMORY(pwszDefaultSharePath);
+
     goto cleanup;
 }
 
 DWORD
-LwTaskMigrateAllSharesW(
-    PWSTR            pwszServer,
-    PWSTR            pwszUsername,
-    PWSTR            pwszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+LwTaskMigrateCreateContext(
+    PCSTR                        pszUsername,
+    PCSTR                        pszPassword,
+    PLW_SHARE_MIGRATION_CONTEXT* ppContext
+    )
+{
+    DWORD dwError = 0;
+    PLW_SHARE_MIGRATION_CONTEXT pContext = NULL;
+
+    BAIL_ON_INVALID_STRING(pszUsername);
+    BAIL_ON_INVALID_POINTER(pszPassword);
+    BAIL_ON_INVALID_POINTER(ppContext);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_SHARE_MIGRATION_CONTEXT),
+                    (PVOID*)&pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pthread_mutex_init(&pContext->mutex, NULL);
+    pContext->pMutex = &pContext->mutex;
+
+    dwError = LwNtStatusToWin32Error(
+                    LwIoGetActiveCreds(NULL, &pContext->pLocalCreds));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskAcquireCredsA(
+                    pszUsername,
+                    pszPassword,
+                    &pContext->pRemoteCreds);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *ppContext = pContext;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    if (ppContext)
+    {
+        *ppContext = NULL;
+    }
+
+    if (pContext)
+    {
+        LwTaskMigrateCloseContext(pContext);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskMigrateAllShares(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PWSTR                       pwszServer,
+    LW_MIGRATE_FLAGS            dwFlags
     )
 {
     DWORD dwError       = 0;
@@ -113,16 +144,19 @@ LwTaskMigrateAllSharesW(
     DWORD dwTotalShares = 0;
     DWORD dwVisited     = 0;
     DWORD dwResume      = 0;
-    PLW_TASK_CREDS pCreds     = NULL;
     PSHARE_INFO_2  pShareInfo = NULL;
 
-    dwError = LwTaskAcquireCredsW(pwszUsername, pwszPassword, &pCreds);
-    BAIL_ON_LW_TASK_ERROR(dwError);
+    BAIL_ON_INVALID_POINTER(pContext);
+    BAIL_ON_INVALID_POINTER(pwszServer);
 
     do
     {
         DWORD dwNumShares = 0;
         DWORD dwIndex     = 0;
+
+        dwError = LwNtStatusToWin32Error(
+                        LwIoSetThreadCreds(pContext->pRemoteCreds->pKrb5Creds));
+        BAIL_ON_LW_TASK_ERROR(dwError);
 
         dwError = NetShareEnumW(
                         pwszServer,
@@ -140,13 +174,16 @@ LwTaskMigrateAllSharesW(
 
         for (dwIndex = 0; dwIndex < dwNumShares; dwIndex++)
         {
+#if 0
+            // TODO:
             dwError = LwTaskMigrateShareEx(
-                            pCreds,
+                            pContext,
                             pwszServer,
                             pShareInfo[dwIndex].shi2_netname,
                             pShareInfo[dwIndex].shi2_path,
                             dwFlags);
             BAIL_ON_LW_TASK_ERROR(dwError);
+#endif
         }
 
         if (pShareInfo)
@@ -166,11 +203,6 @@ cleanup:
         NetApiBufferFree(pShareInfo);
     }
 
-    if (pCreds)
-    {
-        LwTaskFreeCreds(pCreds);
-    }
-
     return dwError;
 
 error:
@@ -180,18 +212,19 @@ error:
 
 DWORD
 LwTaskMigrateShareA(
-    PSTR             pszServer,
-    PSTR             pszShare,
-    PSTR             pszUsername,
-    PSTR             pszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PSTR                        pszServer,
+    PSTR                        pszShare,
+    LW_MIGRATE_FLAGS            dwFlags
     )
 {
     DWORD dwError = 0;
     PWSTR pwszServer = NULL;
     PWSTR pwszShare  = NULL;
-    PWSTR pwszUsername = NULL;
-    PWSTR pwszPassword = NULL;
+
+    BAIL_ON_INVALID_POINTER(pContext);
+    BAIL_ON_INVALID_STRING(pszServer);
+    BAIL_ON_INVALID_STRING(pszShare);
 
     dwError = LwMbsToWc16s(pszServer, &pwszServer);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -199,17 +232,10 @@ LwTaskMigrateShareA(
     dwError = LwMbsToWc16s(pszShare, &pwszShare);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwMbsToWc16s(pszUsername, &pwszUsername);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    dwError = LwMbsToWc16s(pszPassword, &pwszPassword);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
     dwError = LwTaskMigrateShareW(
+                    pContext,
                     pwszServer,
                     pwszShare,
-                    pwszUsername,
-                    pwszPassword,
                     dwFlags);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
@@ -217,8 +243,6 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pwszServer);
     LW_SAFE_FREE_MEMORY(pwszShare);
-    LW_SAFE_FREE_MEMORY(pwszUsername);
-    LW_SAFE_FREE_MEMORY(pwszPassword);
 
     return dwError;
 
@@ -229,19 +253,31 @@ error:
 
 DWORD
 LwTaskMigrateShareW(
-    PWSTR            pwszServer,
-    PWSTR            pwszShare,
-    PWSTR            pwszUsername,
-    PWSTR            pwszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PWSTR                       pwszServer,
+    PWSTR                       pwszShare,
+    LW_MIGRATE_FLAGS            dwFlags
     )
 {
     DWORD dwError = 0;
-    PLW_TASK_CREDS pCreds = NULL;
-    PSHARE_INFO_2 pShareInfo = NULL;
-    DWORD dwInfoLevel = 2;
+    PSHARE_INFO_502 pShareInfoRemote = NULL;
+    PLW_TASK_FILE   pRemoteFile      = NULL;
+    PSHARE_INFO_502 pShareInfoLocal  = NULL;
+    PLW_TASK_FILE   pLocalFile       = NULL;
+    DWORD dwInfoLevel = 502;
 
-    dwError = LwTaskAcquireCredsW(pwszUsername, pwszPassword, &pCreds);
+    BAIL_ON_INVALID_POINTER(pContext);
+    BAIL_ON_INVALID_STRING(pwszServer);
+    BAIL_ON_INVALID_STRING(pwszShare);
+
+    dwError = LwTaskCreateFile(&pRemoteFile);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskCreateFile(&pLocalFile);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwIoSetThreadCreds(pContext->pRemoteCreds->pKrb5Creds));
     BAIL_ON_LW_TASK_ERROR(dwError);
 
     // Verify that the remote server and share exist
@@ -249,27 +285,74 @@ LwTaskMigrateShareW(
                     pwszServer,
                     pwszShare,
                     dwInfoLevel,
-                    (PBYTE*)&pShareInfo);
+                    (PBYTE*)&pShareInfoRemote);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwTaskMigrateShareEx(
-                    pCreds,
+    dwError = LwTaskMigrateOpenRemoteShare(
                     pwszServer,
-                    pShareInfo->shi2_netname,
-                    pShareInfo->shi2_path,
-                    dwFlags);
+                    pwszShare,
+                    &pRemoteFile->hFile);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwIoSetThreadCreds(pContext->pLocalCreds));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = NetShareGetInfoW(
+                    NULL,
+                    pwszShare,
+                    dwInfoLevel,
+                    (PBYTE*)&pShareInfoLocal);
+    switch (dwError)
+    {
+        case NERR_NetNameNotFound:
+        case ERROR_NOT_FOUND:
+
+            break;
+
+        default:
+
+            BAIL_ON_LW_TASK_ERROR(dwError);
+
+            // The share exists locally
+            // Make sure it points to the path we expect
+
+            if (wc16scasecmp(   pShareInfoRemote->shi502_path,
+                                pShareInfoLocal->shi502_path))
+            {
+                dwError = NERR_DeviceShareConflict;
+                BAIL_ON_LW_TASK_ERROR(dwError);
+            }
+
+            break;
+    }
+
+    dwError = LwTaskMigrateCreateShare(pShareInfoRemote, &pLocalFile->hFile);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateShareEx(pContext, pRemoteFile, pLocalFile, dwFlags);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
 cleanup:
 
-    if (pShareInfo)
+    if (pShareInfoRemote)
     {
-        NetApiBufferFree(pShareInfo);
+        NetApiBufferFree(pShareInfoRemote);
     }
 
-    if (pCreds)
+    if (pShareInfoLocal)
     {
-        LwTaskFreeCreds(pCreds);
+        NetApiBufferFree(pShareInfoLocal);
+    }
+
+    if (pRemoteFile)
+    {
+        LwTaskReleaseFile(pRemoteFile);
+    }
+
+    if (pLocalFile)
+    {
+        LwTaskReleaseFile(pLocalFile);
     }
 
     return dwError;
@@ -280,8 +363,45 @@ error:
 }
 
 VOID
+LwTaskMigrateCloseContext(
+    PLW_SHARE_MIGRATION_CONTEXT pContext
+    )
+{
+    if (pContext->pLocalCreds)
+    {
+        LwIoDeleteCreds(pContext->pLocalCreds);
+    }
+
+    if (pContext->pRemoteCreds)
+    {
+        LwTaskFreeCreds(pContext->pRemoteCreds);
+    }
+
+    if (pContext->pHead)
+    {
+        LwTaskFreeDirectoryList(pContext->pHead);
+    }
+
+    if (pContext->pMutex)
+    {
+        pthread_mutex_destroy(&pContext->mutex);
+    }
+
+    LwFreeMemory(pContext);
+}
+
+VOID
 LwTaskMigrateShutdown(
     VOID
     )
 {
+    LW_SAFE_FREE_MEMORY(gLwTaskGlobals.pwszDefaultSharePath);
+    gLwTaskGlobals.pwszDefaultSharePath = NULL;
+
+    if (gLwTaskGlobals.bNetApiInitialized)
+    {
+        NetApiShutdown();
+
+        gLwTaskGlobals.bNetApiInitialized = FALSE;
+    }
 }

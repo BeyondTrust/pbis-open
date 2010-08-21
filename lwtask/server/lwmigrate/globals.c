@@ -48,3 +48,11 @@
  */
 
 #include "includes.h"
+
+LW_SHARE_MIGRATION_GLOBALS gLwTaskGlobals =
+{
+    .bNetApiInitialized    = FALSE,
+    .pwszDefaultSharePath  = NULL,
+    .wszRemoteDriverPrefix = {'/', 'r', 'd', 'r', 0 },
+    .wszDiskDriverPrefix   = { '\\', 'p', 'v', 'f', 's', 0 }
+};

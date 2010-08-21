@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        prototypes.h
+ *        config.c
  *
  * Abstract:
  *
@@ -41,98 +41,79 @@
  *
  *        Share Migration Management
  *
- *        Function Prototypes
+ *        Configuration
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
 
-// config.c
+#include "includes.h"
 
 DWORD
 LwTaskGetDefaultSharePathW(
     PWSTR* ppwszFileSystemRoot
-    );
+    )
+{
+    DWORD  dwError = 0;
+    PCSTR  pszConfigKey   = "Services\\lwio\\Parameters\\Drivers\\srv";
+    PCSTR  pszKeyName     = "DefaultSharePath";
+    PWSTR  pwszKeyValue    = NULL;
+    HANDLE hConnection    = NULL;
+    HKEY   hKey           = NULL;
+    char   szValue[MAX_VALUE_LENGTH] = {0};
+    ULONG  ulType         = 0;
+    ULONG  ulSize         = 0;
 
-// fileitem.c
+    dwError = LwRegOpenServer(&hConnection);
+    BAIL_ON_LW_TASK_ERROR(dwError);
 
-DWORD
-LwTaskCreateFile(
-    PLW_TASK_FILE* ppFile
-    );
+    dwError = LwRegOpenKeyExA(
+                    hConnection,
+                    NULL,
+                    HKEY_THIS_MACHINE,
+                    0,
+                    KEY_READ,
+                    &hKey);
+    BAIL_ON_LW_TASK_ERROR(dwError);
 
-PLW_TASK_FILE
-LwTaskAcquireFile(
-    PLW_TASK_FILE pFile
-    );
+    ulSize = sizeof(szValue);
 
-VOID
-LwTaskReleaseFile(
-    PLW_TASK_FILE pFile
-    );
+    dwError = LwRegGetValueA(
+                    hConnection,
+                    hKey,
+                    pszConfigKey,
+                    pszKeyName,
+                    RRF_RT_REG_SZ,
+                    &ulType,
+                    szValue,
+                    &ulSize);
+    BAIL_ON_LW_TASK_ERROR(dwError);
 
-DWORD
-LwTaskCreateDirectory(
-    PWSTR               pwszDirname,
-    PLW_TASK_FILE       pParentRemote,
-    PLW_TASK_FILE       pParentLocal,
-    PLW_TASK_DIRECTORY* ppFileItem
-    );
+    dwError = LwMbsToWc16s(szValue, &pwszKeyValue);
+    BAIL_ON_LW_TASK_ERROR(dwError);
 
-VOID
-LwTaskFreeDirectoryList(
-    PLW_TASK_DIRECTORY  pFileItem
-    );
+    *ppwszFileSystemRoot = pwszKeyValue;
 
-// krb5.c
+cleanup:
 
-DWORD
-LwTaskAcquireCredsW(
-    PWSTR           pwszUsername,  /* IN     */
-    PWSTR           pwszPassword,  /* IN     */
-    PLW_TASK_CREDS* ppCreds        /* IN OUT */
-    );
+    if (hConnection)
+    {
+        if ( hKey )
+        {
+            LwRegCloseKey(hConnection, hKey);
+        }
+        LwRegCloseServer(hConnection);
+    }
 
-DWORD
-LwTaskAcquireCredsA(
-    PCSTR           pszUsername,  /* IN     */
-    PCSTR           pszPassword,  /* IN     */
-    PLW_TASK_CREDS* ppCreds       /* IN OUT */
-    );
+    return dwError;
 
-VOID
-LwTaskFreeCreds(
-    PLW_TASK_CREDS pCreds         /* IN OUT */
-    );
+error:
 
-// migrate.c
+    *ppwszFileSystemRoot = NULL;
 
-DWORD
-LwTaskMigrateOpenRemoteShare(
-    PWSTR           pwszServer,
-    PWSTR           pwszShare,
-    PIO_FILE_HANDLE phFileRemote
-    );
+    LW_SAFE_FREE_MEMORY(pwszKeyValue);
 
-DWORD
-LwTaskMigrateCreateShare(
-    PSHARE_INFO_502 pShareInfoRemote,
-    PIO_FILE_HANDLE phShare
-    );
+    goto cleanup;
+}
 
-DWORD
-LwTaskMigrateShareEx(
-    PLW_SHARE_MIGRATION_CONTEXT pContext,
-    PLW_TASK_FILE               pRemoteFile,
-    PLW_TASK_FILE               pLocalFile,
-    LW_MIGRATE_FLAGS            dwFlags
-    );
 
-// path.c
-
-DWORD
-LwTaskGetMappedSharePathW(
-    PWSTR  pwszDriverPrefix,
-    PWSTR  pwszInputPath,
-    PWSTR* ppwszPath
-    );

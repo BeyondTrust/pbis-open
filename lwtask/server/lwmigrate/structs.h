@@ -53,27 +53,61 @@ typedef struct _LW_TASK_CREDS
     krb5_ccache  cc;
     PSTR         pszRestoreCache;
 
-    LW_PIO_CREDS pRestoreCreds;
+    LW_PIO_CREDS pKrb5Creds;
 
 } LW_TASK_CREDS, *PLW_TASK_CREDS;
 
-typedef struct _LW_FILE_ITEM
+typedef struct _LW_TASK_FILE
 {
-    BOOLEAN bIsDir;
+    LONG           refCount;
 
-    PWSTR   pwszRemotePath;
-    PWSTR   pwszLocalPath;
+    IO_FILE_HANDLE hFile;
 
-    struct _LW_FILE_ITEM* pNext;
-    struct _LW_FILE_ITEM* pPrev;
+} LW_TASK_FILE, *PLW_TASK_FILE;
 
-} LW_FILE_ITEM, *PLW_FILE_ITEM;
+typedef struct _LW_TASK_DIRECTORY
+{
+    PLW_TASK_FILE pParentRemote;
+    PLW_TASK_FILE pParentLocal;
+
+    PWSTR         pwszName;
+
+    struct _LW_TASK_DIRECTORY* pNext;
+    struct _LW_TASK_DIRECTORY* pPrev;
+
+} LW_TASK_DIRECTORY, *PLW_TASK_DIRECTORY;
+
+typedef struct _LW_SHARE_MIGRATION_COUNTERS
+{
+    ULONG64 ullNumFolders;
+    ULONG64 ullNumFiles;
+
+} LW_SHARE_MIGRATION_COUNTERS, *PLW_SHARE_MIGRATION_COUNTERS;
 
 typedef struct _LW_SHARE_MIGRATION_CONTEXT
 {
+    pthread_mutex_t  mutex;
+    pthread_mutex_t* pMutex;
 
-    PLW_FILE_ITEM pHead;
-    PLW_FILE_ITEM pTail;
+    PWSTR          pwszServer;
 
-} LW_SHARE_MIGRATION_CONTEXT, *PLW_SHARE_MIGRATION_CONTEXT;
+    PLW_TASK_CREDS pRemoteCreds;
+    LW_PIO_CREDS   pLocalCreds;
+
+    LW_SHARE_MIGRATION_COUNTERS expected;
+    LW_SHARE_MIGRATION_COUNTERS visited;
+
+    PLW_TASK_DIRECTORY pHead;
+    PLW_TASK_DIRECTORY pTail;
+
+} LW_SHARE_MIGRATION_CONTEXT;
+
+typedef struct _LW_SHARE_MIGRATION_GLOBALS
+{
+    BOOLEAN   bNetApiInitialized;
+    PWSTR     pwszDefaultSharePath;
+    wchar16_t wszRemoteDriverPrefix[32];
+    wchar16_t wszDiskDriverPrefix[32];
+
+} LW_SHARE_MIGRATION_GLOBALS, *PLW_SHARE_MIGRATION_GLOBALS;
 

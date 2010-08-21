@@ -51,43 +51,46 @@ typedef DWORD LW_MIGRATE_FLAGS;
 
 #define LW_MIGRATE_FLAGS_OVERWRITE 0x00000001
 
+typedef struct _LW_SHARE_MIGRATION_CONTEXT *PLW_SHARE_MIGRATION_CONTEXT;
+
 DWORD
 LwTaskMigrateInit(
     VOID
     );
 
 DWORD
-LwTaskMigrateAllSharesA(
-    PSTR             pszServer,
-    PSTR             pszUsername,
-    PSTR             pszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+LwTaskMigrateCreateContext(
+    PCSTR                        pszUsername,
+    PCSTR                        pszPassword,
+    PLW_SHARE_MIGRATION_CONTEXT* ppContext
     );
 
 DWORD
-LwTaskMigrateAllSharesW(
-    PWSTR            pwszServer,
-    PWSTR            pwszUsername,
-    PWSTR            pwszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+LwTaskMigrateAllShares(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PWSTR                       pwszServer,
+    LW_MIGRATE_FLAGS            dwFlags
     );
 
 DWORD
 LwTaskMigrateShareA(
-    PSTR             pszServer,
-    PSTR             pszShare,
-    PSTR             pszUsername,
-    PSTR             pszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PSTR                        pszServer,
+    PSTR                        pszShare,
+    LW_MIGRATE_FLAGS            dwFlags
     );
 
 DWORD
 LwTaskMigrateShareW(
-    PWSTR            pwszServer,
-    PWSTR            pwszShare,
-    PWSTR            pwszUsername,
-    PWSTR            pwszPassword,
-    LW_MIGRATE_FLAGS dwFlags
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PWSTR                       pwszServer,
+    PWSTR                       pwszShare,
+    LW_MIGRATE_FLAGS            dwFlags
+    );
+
+VOID
+LwTaskMigrateCloseContext(
+    PLW_SHARE_MIGRATION_CONTEXT pContext
     );
 
 VOID

@@ -47,6 +47,8 @@
  *
  */
 
+#define MAX_BUFFER 4096
+
 #define BAIL_ON_KRB_ERROR(ctx, ret) \
     do { \
         if (ret) \

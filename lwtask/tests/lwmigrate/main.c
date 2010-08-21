@@ -71,6 +71,7 @@ main(
 {
     DWORD dwError = 0;
     BOOLEAN bShutdown = FALSE;
+    PLW_SHARE_MIGRATION_CONTEXT pContext = NULL;
 
     if (argc == 2 && (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")))
     {
@@ -89,16 +90,26 @@ main(
 
     bShutdown = TRUE;
 
-    dwError = LwTaskMigrateShareA(
-                    argv[1], /* Server name */
-                    argv[2], /* Share name  */
+    dwError = LwTaskMigrateCreateContext(
                     argv[3], /* User name   */
                     argv[4], /* Password    */
+                    &pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateShareA(
+                    pContext,
+                    argv[1], /* Server name */
+                    argv[2], /* Share name  */
                     0        /* Flags       */
                     );
     BAIL_ON_LW_TASK_ERROR(dwError);
 
 cleanup:
+
+    if (pContext)
+    {
+        LwTaskMigrateCloseContext(pContext);
+    }
 
     if (bShutdown)
     {

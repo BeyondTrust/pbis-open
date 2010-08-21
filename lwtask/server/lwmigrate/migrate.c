@@ -50,12 +50,11 @@
 #include "includes.h"
 
 static
-DWORD
-LwTaskMigrateCreateContextW(
-    PWSTR                        pwszServer,
-    PWSTR                        pwszShare,
-    PWSTR                        pwszLocalPath,
-    PLW_SHARE_MIGRATION_CONTEXT* ppContext
+VOID
+LwTaskReplaceCurrent(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY*         ppCurrent,
+    PLW_TASK_DIRECTORY*         ppDirectoryList
     );
 
 static
@@ -70,153 +69,273 @@ LwTaskMigrateBuildPathW(
 static
 DWORD
 LwTaskMigrateProcessDir(
-    PLW_FILE_ITEM pFileItem,
-    PLW_FILE_ITEM* ppChildFileItems
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY               pFileItem,
+    PLW_TASK_DIRECTORY*              ppChildFileItems
     );
 
 static
 DWORD
 LwTaskMigrateProcessFile(
-    PLW_FILE_ITEM pFileItem
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY          pFileItem,
+    PWSTR                       pwszFilename
     );
 
 static
-VOID
-LwTaskMigrateFreeContext(
-    PLW_SHARE_MIGRATION_CONTEXT pContext
+DWORD
+LwTaskMigrateCreateFile(
+    PIO_FILE_NAME                 pFilename,
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDesc,
+    DWORD                         dwDesiredAccess,
+    DWORD                         dwFileAttributes,
+    DWORD                         dwCreateDisposition,
+    DWORD                         dwCreateOptions,
+    PIO_FILE_HANDLE               phFile,
+    FILE_CREATE_RESULT*           pCreateResult
+    );
+
+static
+DWORD
+LwTaskGetFileSize(
+    IO_FILE_HANDLE hFile,
+    PLONG64        pllFileSize
+    );
+
+static
+DWORD
+LwTaskCopyFile(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    IO_FILE_HANDLE              hFileTarget,
+    IO_FILE_HANDLE              hFileSource
+    );
+
+static
+DWORD
+LwTaskReadFile(
+    HANDLE hFile,
+    PBYTE  pBuffer,
+    DWORD  dwNumberOfBytesToRead,
+    PDWORD pdwBytesRead
+    );
+
+static
+DWORD
+LwTaskWriteFile(
+    HANDLE hFile,
+    PBYTE  pBuffer,
+    DWORD  dwNumBytesToWrite,
+    PDWORD pdwNumBytesWritten
     );
 
 DWORD
-LwTaskMigrateShareEx(
-    PLW_TASK_CREDS   pCreds,
-    PWSTR            pwszServer,
-    PWSTR            pwszShare,
-    PWSTR            pwszSharePath,
-    LW_MIGRATE_FLAGS dwFlags
+LwTaskMigrateOpenRemoteShare(
+    PWSTR           pwszServer,
+    PWSTR           pwszShare,
+    PIO_FILE_HANDLE phFileRemote
+    )
+{
+    DWORD           dwError = 0;
+    IO_FILE_HANDLE  hFile   = NULL;
+    IO_FILE_NAME    fileName = {0};
+    DWORD           dwDesiredAccess =
+                                READ_CONTROL|FILE_LIST_DIRECTORY|FILE_TRAVERSE;
+    DWORD           dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    DWORD           dwCreateDisposition = FILE_OPEN;
+    DWORD           dwCreateOptions = FILE_DIRECTORY_FILE;
+
+    dwError = LwTaskMigrateBuildPathW(
+                    &gLwTaskGlobals.wszRemoteDriverPrefix[0],
+                    pwszServer,
+                    pwszShare,
+                    &fileName.FileName);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateCreateFile(
+                    &fileName,
+                    NULL,                 /* security descriptor */
+                    dwDesiredAccess,
+                    dwFileAttributes,
+                    dwCreateDisposition,
+                    dwCreateOptions,
+                    &hFile,
+                    NULL);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *phFileRemote = hFile;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(fileName.FileName);
+
+    return dwError;
+
+error:
+
+    *phFileRemote = NULL;
+
+    if (hFile)
+    {
+        LwNtCloseFile(hFile);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskMigrateCreateShare(
+    PSHARE_INFO_502 pShareInfoRemote,
+    PIO_FILE_HANDLE phShare
     )
 {
     DWORD dwError = 0;
-    PLW_SHARE_MIGRATION_CONTEXT pContext = NULL;
-    PLW_FILE_ITEM pFileList = NULL;
+    DWORD dwParmError = 0;
+    PWSTR pwszLocalPath = NULL;
+    IO_FILE_HANDLE hFile = NULL;
+#if 0
+    PIO_ASYNC_CONTROL_BLOCK pAcb = NULL;
+    IO_STATUS_BLOCK ioStatusBlock = {0};
+#endif
+    IO_FILE_NAME fileName = {0};
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDesc = NULL;
+#if 0
+    DWORD dwSecDescLen = 0;
+#endif
+    SHARE_INFO_502 shareInfoLocal = {0};
+    DWORD dwDesiredAccess = WRITE_OWNER|WRITE_DAC|READ_CONTROL|FILE_TRAVERSE;
+    DWORD dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    DWORD dwCreateDisposition = FILE_OPEN_IF;
+    DWORD dwCreateOptions = FILE_DIRECTORY_FILE;
 
-    dwError = LwTaskMigrateCreateContextW(
-                    pwszServer,
-                    pwszShare,
-                    pwszSharePath,
-                    &pContext);
+    dwError = LwTaskGetMappedSharePathW(
+                    &gLwTaskGlobals.wszDiskDriverPrefix[0],
+                    pShareInfoRemote->shi502_path,
+                    &pwszLocalPath);
     BAIL_ON_LW_TASK_ERROR(dwError);
+
+    fileName.FileName = pwszLocalPath;
+
+    dwError = LwTaskMigrateCreateFile(
+                    &fileName,
+                    pSecDesc,
+                    dwDesiredAccess,
+                    dwFileAttributes,
+                    dwCreateDisposition,
+                    dwCreateOptions,
+                    &hFile,
+                    NULL);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+#if 0
+    //
+    // TODO: The server should apply the default security descriptor
+    //       Otherwise, we should create the one we want and apply it
+    //
+    if (ioStatusBlock.CreateResult == FILE_CREATED)
+    {
+        SECURITY_INFORMATION secInfo = (OWNER_SECURITY_INFORMATION|
+                                            GROUP_SECURITY_INFORMATION|
+                                            DACL_SECURITY_INFORMATION);
+
+        dwError = LwNtStatusToWin32Error(
+                        LwNtSetSecurityFile(
+                            hFile,
+                            pAcb,
+                            &ioStatusBlock,
+                            secInfo,
+                            pSecDesc,
+                            dwSecDescLen
+                            ));
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+#endif
+
+    shareInfoLocal.shi502_netname  = pShareInfoRemote->shi502_netname;
+    shareInfoLocal.shi502_max_uses = pShareInfoRemote->shi502_max_uses;
+    shareInfoLocal.shi502_path     = pShareInfoRemote->shi502_path;
+    shareInfoLocal.shi502_type     = pShareInfoRemote->shi502_type;
+    shareInfoLocal.shi502_remark   = pShareInfoRemote->shi502_remark;
+    shareInfoLocal.shi502_reserved = pShareInfoRemote->shi502_reserved;
+    shareInfoLocal.shi502_security_descriptor =
+                pShareInfoRemote->shi502_security_descriptor;
+
+    dwError = NetShareAddW(
+                    NULL,
+                    502,
+                    (PBYTE)&shareInfoLocal,
+                    &dwParmError);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *phShare = hFile;
+
+cleanup:
+
+    if (pSecDesc)
+    {
+        LwFreeMemory(pSecDesc);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszLocalPath);
+
+    return dwError;
+
+error:
+
+    *phShare = NULL;
+
+    if (hFile)
+    {
+        LwNtCloseFile(hFile);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskMigrateShareEx(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_FILE               pRemoteFile,
+    PLW_TASK_FILE               pLocalFile,
+    LW_MIGRATE_FLAGS            dwFlags
+    )
+{
+    DWORD dwError = 0;
+    PLW_TASK_DIRECTORY pDirectoryList = NULL;
+
+    dwError = LwTaskCreateDirectory(
+                    NULL,
+                    pRemoteFile,
+                    pLocalFile,
+                    &pContext->pHead);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pContext->pTail = pContext->pHead;
 
     while (pContext->pHead)
     {
-        PLW_FILE_ITEM pCursor = pContext->pHead;
+        PLW_TASK_DIRECTORY pCursor = pContext->pHead;
 
         while (pCursor)
         {
-            PLW_FILE_ITEM pCurrent = pCursor;
+            PLW_TASK_DIRECTORY pCurrent = pCursor;
 
-            if (pCursor->bIsDir)
-            {
-                dwError = LwTaskMigrateProcessDir(pCursor, &pFileList);
-                BAIL_ON_LW_TASK_ERROR(dwError);
-            }
-            else // file
-            {
-                dwError = LwTaskMigrateProcessFile(pCursor);
-                BAIL_ON_LW_TASK_ERROR(dwError);
-            }
+            dwError = LwTaskMigrateProcessDir(
+                                pContext,
+                                pCursor,
+                                &pDirectoryList);
+            BAIL_ON_LW_TASK_ERROR(dwError);
 
             pCursor = pCursor->pNext; // First advance the cursor
 
-            // Replace the current file item with the new list
-            if (pContext->pHead == pCurrent)
-            {
-                if (pFileList)
-                {
-                    pContext->pHead = pFileList;
-                    // Seek end of list
-                    while (pFileList->pNext)
-                    {
-                        pFileList = pFileList->pNext;
-                    }
-                    pFileList->pNext = pCurrent->pNext;
-                    if (pCurrent->pNext)
-                    {
-                        pCurrent->pNext->pPrev = pFileList;
-                    }
-
-                    pCurrent->pNext = pCurrent->pPrev = NULL;
-
-                    if (!pFileList->pNext)
-                    {
-                        pContext->pTail = pFileList;
-                    }
-
-                    pFileList = NULL;
-                }
-                else
-                {
-                    pContext->pHead = pCurrent->pNext;
-                    if (pCurrent->pNext)
-                    {
-                        pCurrent->pNext->pPrev = pContext->pHead;
-                    }
-                    if (!pContext->pHead)
-                    {
-                        pContext->pTail = NULL;
-                    }
-                    pCurrent->pNext = pCurrent->pPrev = NULL;
-                }
-            }
-            else if (pContext->pTail == pCurrent)
-            {
-                pContext->pTail->pPrev = pFileList;
-                if (pFileList)
-                {
-                    pFileList->pPrev = pContext->pTail;
-                    pContext->pTail = pFileList;
-                    pFileList = NULL;
-                }
-            }
-            else
-            {
-                if (pFileList)
-                {
-                    pCurrent->pPrev->pNext = pFileList;
-                    while (pFileList->pNext)
-                    {
-                        pFileList = pFileList->pNext;
-                    }
-
-                    pFileList->pNext = pCurrent->pNext;
-                    pCurrent->pNext->pPrev = pFileList;
-                    pFileList = NULL;
-                }
-                else
-                {
-                    pCurrent->pPrev->pNext = pCurrent->pNext;
-                    if (pCurrent->pNext)
-                    {
-                        pCurrent->pNext->pPrev = pCurrent->pPrev;
-                    }
-                }
-
-                pCurrent->pPrev = pCurrent->pNext = NULL;
-            }
-
-            LwTaskFreeFileItemList(pCurrent);
+            LwTaskReplaceCurrent(pContext, &pCurrent, &pDirectoryList);
         }
     }
 
 cleanup:
 
-    if (pFileList)
+    if (pDirectoryList)
     {
-        LwTaskFreeFileItemList(pFileList);
-    }
-
-    if (pContext)
-    {
-        LwTaskMigrateFreeContext(pContext);
+        LwTaskFreeDirectoryList(pDirectoryList);
     }
 
     return dwError;
@@ -227,64 +346,94 @@ error:
 }
 
 static
-DWORD
-LwTaskMigrateCreateContextW(
-    PWSTR                        pwszServer,
-    PWSTR                        pwszShare,
-    PWSTR                        pwszLocalPath,
-    PLW_SHARE_MIGRATION_CONTEXT* ppContext
+VOID
+LwTaskReplaceCurrent(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY*         ppCurrent,
+    PLW_TASK_DIRECTORY*         ppDirectoryList
     )
 {
-    DWORD dwError = 0;
-    wchar16_t wszRemotePrefix[] = { '/', 'r', 'd', 'r', 0 };
-    wchar16_t wszLocalPrefix[]  = { '/', 'p', 'v', 'f', 's', 0 };
-    PLW_SHARE_MIGRATION_CONTEXT pContext = NULL;
+    PLW_TASK_DIRECTORY pCurrent = *ppCurrent;
+    PLW_TASK_DIRECTORY pDirectoryList = *ppDirectoryList;
 
-    dwError = LwAllocateMemory(
-                    sizeof(LW_SHARE_MIGRATION_CONTEXT),
-                    (PVOID*)&pContext);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    dwError = LwTaskCreateFileItem(
-                    NULL,
-                    NULL,
-                    TRUE,
-                    &pContext->pHead);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    pContext->pTail = pContext->pHead;
-
-    dwError = LwTaskMigrateBuildPathW(
-                    &wszRemotePrefix[0],
-                    pwszServer,
-                    pwszShare,
-                    &pContext->pHead->pwszRemotePath);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    // TODO: Build the local path
-    dwError = LwTaskMigrateBuildPathW(
-                    &wszLocalPrefix[0],
-                    pwszServer,
-                    pwszShare,
-                    &pContext->pHead->pwszLocalPath);
-    BAIL_ON_LW_TASK_ERROR(dwError);
-
-    *ppContext = pContext;
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    *ppContext = NULL;
-
-    if (pContext)
+    if (pContext->pHead == pCurrent)
     {
-        LwTaskMigrateFreeContext(pContext);
+        if (pDirectoryList)
+        {
+            pContext->pHead = pDirectoryList;
+            // Seek end of list
+            while (pDirectoryList->pNext)
+            {
+                pDirectoryList = pDirectoryList->pNext;
+            }
+            pDirectoryList->pNext = pCurrent->pNext;
+            if (pCurrent->pNext)
+            {
+                pCurrent->pNext->pPrev = pDirectoryList;
+            }
+
+            pCurrent->pNext = pCurrent->pPrev = NULL;
+
+            if (!pDirectoryList->pNext)
+            {
+                pContext->pTail = pDirectoryList;
+            }
+        }
+        else
+        {
+            pContext->pHead = pCurrent->pNext;
+            if (pCurrent->pNext)
+            {
+                pCurrent->pNext->pPrev = pContext->pHead;
+            }
+            if (!pContext->pHead)
+            {
+                pContext->pTail = NULL;
+            }
+            pCurrent->pNext = pCurrent->pPrev = NULL;
+        }
+    }
+    else if (pContext->pTail == pCurrent)
+    {
+        pContext->pTail->pPrev = pDirectoryList;
+        if (pDirectoryList)
+        {
+            pDirectoryList->pPrev = pContext->pTail;
+            pContext->pTail = pDirectoryList;
+        }
+    }
+    else
+    {
+        if (pDirectoryList)
+        {
+            pCurrent->pPrev->pNext = pDirectoryList;
+            while (pDirectoryList->pNext)
+            {
+                pDirectoryList = pDirectoryList->pNext;
+            }
+
+            pDirectoryList->pNext = pCurrent->pNext;
+            pCurrent->pNext->pPrev = pDirectoryList;
+        }
+        else
+        {
+            pCurrent->pPrev->pNext = pCurrent->pNext;
+            if (pCurrent->pNext)
+            {
+                pCurrent->pNext->pPrev = pCurrent->pPrev;
+            }
+        }
+
+        pCurrent->pPrev = pCurrent->pNext = NULL;
     }
 
-    goto cleanup;
+    *ppDirectoryList = NULL;
+
+    if (pCurrent)
+    {
+        LwTaskFreeDirectoryList(pCurrent);
+        *ppCurrent = NULL;
+    }
 }
 
 static
@@ -301,12 +450,6 @@ LwTaskMigrateBuildPathW(
     DWORD dwLen = 0;
     PWSTR pwszPath = NULL;
     PWSTR pwszCursor = NULL;
-    PLW_SHARE_MIGRATION_CONTEXT pContext = NULL;
-
-    dwError = LwAllocateMemory(
-                    sizeof(LW_SHARE_MIGRATION_CONTEXT),
-                    (PVOID*)&pContext);
-    BAIL_ON_LW_TASK_ERROR(dwError);
 
     dwLen =  (wc16slen(pwszPrefix) +
               ((sizeof(wszSeparator)/sizeof(wszSeparator[0])) - 1) +
@@ -352,39 +495,584 @@ error:
 static
 DWORD
 LwTaskMigrateProcessDir(
-    PLW_FILE_ITEM  pFileItem,
-    PLW_FILE_ITEM* ppChildFileItems
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY          pFileItem,
+    PLW_TASK_DIRECTORY*         ppChildDirs
     )
 {
     DWORD dwError = 0;
+    BOOLEAN bDone = FALSE;
+    BOOLEAN bRestart = TRUE;
+    wchar16_t wszDot[]    = {'.'};
+    wchar16_t wszDotDot[] = { '.', '.'};
+    PLW_TASK_DIRECTORY pChildDirsHead = NULL;
+    PLW_TASK_DIRECTORY pChildDirsTail = NULL;
+    PLW_TASK_DIRECTORY pChildDir = NULL;
+    PWSTR pwszFilename = NULL;
+    PLW_TASK_FILE pChildRemote = NULL;
+    PLW_TASK_FILE pChildLocal  = NULL;
+
+    do
+    {
+        NTSTATUS        status = STATUS_SUCCESS;
+        IO_STATUS_BLOCK ioStatusBlock = {0};
+        BYTE            buffer[MAX_BUFFER] = {0};
+
+        dwError = LwNtStatusToWin32Error(
+                        LwIoSetThreadCreds(pContext->pRemoteCreds->pKrb5Creds));
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        status = LwNtQueryDirectoryFile(
+                        pFileItem->pParentRemote->hFile,
+                        NULL,                          /* Async control block */
+                        &ioStatusBlock,                /* IO status block     */
+                        buffer,                        /* Info structure      */
+                        sizeof(buffer),                /* Info structure size */
+                        FileBothDirectoryInformation,  /* Info level          */
+                        FALSE,                         /* no single entry     */
+                        NULL,                          /* File spec           */
+                        bRestart);                     /* Restart scan        */
+
+        switch (status)
+        {
+            case STATUS_NO_MORE_MATCHES:
+
+                status = STATUS_SUCCESS;
+
+                bDone = TRUE;
+
+                break;
+
+            default:
+
+                dwError = LwNtStatusToWin32Error(status);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        if (!bDone)
+        {
+            PFILE_BOTH_DIR_INFORMATION pInfo = NULL;
+
+            bRestart = FALSE;
+
+            pInfo = (PFILE_BOTH_DIR_INFORMATION) buffer;
+            while (pInfo)
+            {
+                // TODO: Handle short (8.3) file names
+                if ((pInfo->FileNameLength == sizeof(wszDot) &&
+                     pInfo->FileName[0] == wszDot[0]) ||
+                    (pInfo->FileNameLength == sizeof(wszDotDot) &&
+                     pInfo->FileName[0] == wszDot[0] &&
+                     pInfo->FileName[1] == wszDot[1]))
+                {
+                    continue;
+                }
+
+                if (pInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
+                {
+                    continue;
+                }
+                else if(pInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    IO_FILE_NAME fileName = {0};
+                    DWORD  dwDesiredAccess =
+                                 READ_CONTROL|FILE_LIST_DIRECTORY|FILE_TRAVERSE;
+                    DWORD  dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+                    DWORD  dwCreateDisposition = FILE_OPEN;
+                    DWORD  dwCreateOptions = FILE_DIRECTORY_FILE;
+
+                    LW_SAFE_FREE_MEMORY(pwszFilename);
+                    pwszFilename = NULL;
+
+                    dwError = LwAllocateMemory(
+                                    pInfo->FileNameLength + sizeof(wchar16_t),
+                                    (PVOID*)&pwszFilename);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    memcpy( (PBYTE)pwszFilename,
+                            (PBYTE)pInfo->FileName,
+                            pInfo->FileNameLength);
+
+                    fileName.FileName = pwszFilename;
+                    fileName.RootFileHandle = pFileItem->pParentRemote->hFile;
+
+                    if (pChildRemote)
+                    {
+                        LwTaskReleaseFile(pChildRemote);
+                        pChildRemote = NULL;
+                    }
+
+                    dwError = LwTaskCreateFile(&pChildRemote);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    // Make sure we are using remote creds
+                    dwError = LwNtStatusToWin32Error(
+                                    LwIoSetThreadCreds(
+                                        pContext->pRemoteCreds->pKrb5Creds));
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    dwError = LwTaskMigrateCreateFile(
+                                    &fileName,
+                                    NULL,
+                                    dwDesiredAccess,
+                                    dwFileAttributes,
+                                    dwCreateDisposition,
+                                    dwCreateOptions,
+                                    &pChildRemote->hFile,
+                                    NULL);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    fileName.RootFileHandle = pFileItem->pParentLocal->hFile;
+
+                    if (pChildLocal)
+                    {
+                        LwTaskReleaseFile(pChildLocal);
+                        pChildLocal = NULL;
+                    }
+
+                    dwError = LwTaskCreateFile(&pChildLocal);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    dwDesiredAccess =
+                            WRITE_OWNER|WRITE_DAC|READ_CONTROL|FILE_TRAVERSE;
+                    dwCreateDisposition = FILE_OPEN_IF;
+
+                    // switch to local creds
+                    dwError = LwNtStatusToWin32Error(
+                                    LwIoSetThreadCreds(
+                                            pContext->pLocalCreds));
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    dwError = LwTaskMigrateCreateFile(
+                                    &fileName,
+                                    NULL,
+                                    dwDesiredAccess,
+                                    dwFileAttributes,
+                                    dwCreateDisposition,
+                                    dwCreateOptions,
+                                    &pChildLocal->hFile,
+                                    NULL);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    dwError = LwTaskCreateDirectory(
+                                    NULL,
+                                    pChildRemote,
+                                    pChildLocal,
+                                    &pChildDir);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    if (!pChildDirsHead)
+                    {
+                        pChildDirsHead = pChildDirsTail = pChildDir;
+                    }
+                    else
+                    {
+                        pChildDirsTail->pNext = pChildDir;
+                        pChildDirsTail = pChildDir;
+                        pChildDir = NULL;
+                    }
+                }
+                else // File
+                {
+                    LW_SAFE_FREE_MEMORY(pwszFilename);
+                    pwszFilename = NULL;
+
+                    dwError = LwAllocateMemory(
+                                    pInfo->FileNameLength + sizeof(wchar16_t),
+                                    (PVOID*)&pwszFilename);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    memcpy( (PBYTE)pwszFilename,
+                            (PBYTE)pInfo->FileName,
+                            pInfo->FileNameLength);
+
+                    dwError = LwTaskMigrateProcessFile(
+                                    pContext,
+                                    pFileItem,
+                                    pwszFilename);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+                }
+            }
+
+            if (pInfo->NextEntryOffset)
+            {
+                pInfo = (PFILE_BOTH_DIR_INFORMATION)(((PBYTE) pInfo) + pInfo->NextEntryOffset);
+            }
+            else
+            {
+                pInfo = NULL;
+            }
+        }
+
+    } while (!bDone);
+
+    *ppChildDirs = pChildDirsHead;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pwszFilename);
+
+    if (pChildRemote)
+    {
+        LwTaskReleaseFile(pChildRemote);
+        pChildRemote = NULL;
+    }
+    if (pChildLocal)
+    {
+        LwTaskReleaseFile(pChildLocal);
+        pChildLocal = NULL;
+    }
+
+    return dwError;
+
+error:
+
+    *ppChildDirs = NULL;
+
+    if (pChildDirsHead)
+    {
+        LwTaskFreeDirectoryList(pChildDirsHead);
+    }
+
+    if (pChildDir)
+    {
+        LwTaskFreeDirectoryList(pChildDir);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskMigrateProcessFile(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PLW_TASK_DIRECTORY          pFileItem,
+    PWSTR                       pwszFilename
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwDesiredAccess = READ_CONTROL|GENERIC_READ;
+    DWORD dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    DWORD dwCreateDisposition = FILE_OPEN;
+    DWORD dwCreateOptions = FILE_NON_DIRECTORY_FILE;
+    IO_FILE_NAME   fileName    = {0};
+    IO_FILE_HANDLE hFileRemote = NULL;
+    IO_FILE_HANDLE hFileLocal  = NULL;
+    LONG64 llRemoteFileSize    = 0LL;
+    LONG64 llLocalFileSize     = 0LL;
+    FILE_CREATE_RESULT createResult = 0;
+
+    fileName.FileName = pwszFilename;
+    fileName.RootFileHandle = pFileItem->pParentRemote->hFile;
+
+    // Make sure we are using remote creds
+    dwError = LwNtStatusToWin32Error(
+                    LwIoSetThreadCreds(
+                        pContext->pRemoteCreds->pKrb5Creds));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateCreateFile(
+                    &fileName,
+                    NULL,
+                    dwDesiredAccess,
+                    dwFileAttributes,
+                    dwCreateDisposition,
+                    dwCreateOptions,
+                    &hFileRemote,
+                    NULL);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskGetFileSize(hFileRemote, &llRemoteFileSize);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwDesiredAccess = WRITE_DAC|WRITE_OWNER|READ_CONTROL|GENERIC_WRITE;
+    dwCreateDisposition = FILE_OPEN_IF;
+
+    fileName.RootFileHandle = pFileItem->pParentLocal->hFile;
+
+    // switch to local creds
+    dwError = LwNtStatusToWin32Error(
+                    LwIoSetThreadCreds(
+                            pContext->pLocalCreds));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateCreateFile(
+                    &fileName,
+                    NULL,
+                    dwDesiredAccess,
+                    dwFileAttributes,
+                    dwCreateDisposition,
+                    dwCreateOptions,
+                    &hFileLocal,
+                    &createResult);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    switch (createResult)
+    {
+        case FILE_OPENED:
+
+            dwError = LwTaskGetFileSize(hFileLocal, &llLocalFileSize);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+
+        default:
+
+            break;
+    }
+
+    if (llLocalFileSize != llRemoteFileSize)
+    {
+        dwError = LwTaskCopyFile(pContext, hFileLocal, hFileRemote);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (hFileRemote)
+    {
+        LwNtCloseFile(hFileRemote);
+    }
+    if (hFileLocal)
+    {
+        LwNtCloseFile(hFileLocal);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskMigrateCreateFile(
+    PIO_FILE_NAME                 pFilename,
+    PSECURITY_DESCRIPTOR_RELATIVE pSecDesc,
+    DWORD                         dwDesiredAccess,
+    DWORD                         dwFileAttributes,
+    DWORD                         dwCreateDisposition,
+    DWORD                         dwCreateOptions,
+    PIO_FILE_HANDLE               phFile,
+    FILE_CREATE_RESULT*           pCreateResult
+    )
+{
+    DWORD dwError = 0;
+    IO_STATUS_BLOCK ioStatusBlock = {0};
+    IO_FILE_HANDLE hFile = NULL;
+
+    dwError = LwNtStatusToWin32Error(
+                LwNtCreateFile(
+                    &hFile,
+                    NULL,                           /* Async control block */
+                    &ioStatusBlock,
+                    pFilename,
+                    pSecDesc,
+                    NULL,                           /* Security QOS        */
+                    dwDesiredAccess,
+                    0,                              /* AllocationSize      */
+                    dwFileAttributes,
+                    0,                              /* ShareAccess: None   */
+                    dwCreateDisposition,
+                    dwCreateOptions,
+                    NULL,                           /* EaBuffer            */
+                    0,                              /* EaLength            */
+                    NULL                            /* EcpList             */
+                    ));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *phFile = hFile;
+    if (pCreateResult)
+    {
+        *pCreateResult = ioStatusBlock.CreateResult;
+    }
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *phFile = NULL;
+    if (pCreateResult)
+    {
+        *pCreateResult = 0;
+    }
+
+    if (hFile)
+    {
+        LwNtCloseFile(hFile);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskGetFileSize(
+    IO_FILE_HANDLE hFile,
+    PLONG64        pllFileSize
+    )
+{
+    DWORD dwError = 0;
+    FILE_END_OF_FILE_INFORMATION fileEofInfo = {0};
+    IO_STATUS_BLOCK ioStatusBlock = {0};
+
+    dwError = LwNtStatusToWin32Error(
+                    LwNtQueryInformationFile(
+                        hFile,
+                        NULL, /* Async control block */
+                        &ioStatusBlock,
+                        &fileEofInfo,
+                        sizeof(fileEofInfo),
+                        FileEndOfFileInformation));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *pllFileSize = fileEofInfo.EndOfFile;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *pllFileSize = 0;
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskCopyFile(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    IO_FILE_HANDLE              hFileTarget,
+    IO_FILE_HANDLE              hFileSource
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwRead  = 0;
+
+    do
+    {
+        BYTE  buffer[MAX_BUFFER] = {0};
+        DWORD dwWritten = 0;
+
+        dwError = LwNtStatusToWin32Error(
+                        LwIoSetThreadCreds(
+                            pContext->pRemoteCreds->pKrb5Creds));
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        dwRead = 0;
+
+        dwError = LwTaskReadFile(
+                        hFileSource,
+                        buffer,
+                        sizeof(buffer),
+                        &dwRead);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        if (dwRead)
+        {
+            dwError = LwNtStatusToWin32Error(
+                            LwIoSetThreadCreds(
+                                    pContext->pLocalCreds));
+            BAIL_ON_LW_TASK_ERROR(dwError);
+
+            dwError = LwTaskWriteFile(
+                            hFileTarget,
+                            buffer,
+                            dwRead,
+                            &dwWritten);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+    } while (dwRead > 0);
+
+error:
 
     return dwError;
 }
 
 static
 DWORD
-LwTaskMigrateProcessFile(
-    PLW_FILE_ITEM pFileItem
+LwTaskReadFile(
+    HANDLE hFile,
+    PBYTE  pBuffer,
+    DWORD  dwNumberOfBytesToRead,
+    PDWORD pdwBytesRead
     )
 {
     DWORD dwError = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK ioStatusBlock = {0};
+
+    status = LwNtReadFile(
+                    hFile,
+                    NULL,                                // Async control block
+                    &ioStatusBlock,
+                    pBuffer,
+                    dwNumberOfBytesToRead,
+                    NULL,                                // File offset
+                    NULL);                               // Key
+    if (status != STATUS_END_OF_FILE)
+    {
+        dwError = LwNtStatusToWin32Error(status);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+    // else
+    // {
+    //     status = STATUS_SUCCESS;
+    // }
+
+    *pdwBytesRead = ioStatusBlock.BytesTransferred;
+
+cleanup:
 
     return dwError;
+
+error:
+
+    *pdwBytesRead = 0;
+
+    goto cleanup;
 }
 
 static
-VOID
-LwTaskMigrateFreeContext(
-    PLW_SHARE_MIGRATION_CONTEXT pContext
+DWORD
+LwTaskWriteFile(
+    HANDLE hFile,
+    PBYTE  pBuffer,
+    DWORD  dwNumBytesToWrite,
+    PDWORD pdwNumBytesWritten
     )
 {
-    if (pContext->pHead)
-    {
-        LwTaskFreeFileItemList(pContext->pHead);
-    }
+    DWORD dwError = 0;
+    IO_STATUS_BLOCK ioStatusBlock = {0};
 
-    LwFreeMemory(pContext);
+    dwError = LwNtStatusToWin32Error(
+                LwNtWriteFile(
+                    hFile,
+                    NULL,                                 // Async control block
+                    &ioStatusBlock,
+                    pBuffer,
+                    dwNumBytesToWrite,
+                    NULL,                                 // File offset
+                    NULL));                               // Key
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *pdwNumBytesWritten = ioStatusBlock.BytesTransferred;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *pdwNumBytesWritten = 0;
+
+    goto cleanup;
 }
+
+
 
 
 
