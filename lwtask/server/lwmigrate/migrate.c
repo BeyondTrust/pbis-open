@@ -928,7 +928,7 @@ LwTaskGetFileSize(
     )
 {
     DWORD dwError = 0;
-    FILE_END_OF_FILE_INFORMATION fileEofInfo = {0};
+    FILE_STANDARD_INFORMATION fileStdInfo = {0};
     IO_STATUS_BLOCK ioStatusBlock = {0};
 
     dwError = LwNtStatusToWin32Error(
@@ -936,12 +936,12 @@ LwTaskGetFileSize(
                         hFile,
                         NULL, /* Async control block */
                         &ioStatusBlock,
-                        &fileEofInfo,
-                        sizeof(fileEofInfo),
-                        FileEndOfFileInformation));
+                        &fileStdInfo,
+                        sizeof(fileStdInfo),
+                        FileStandardInformation));
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    *pllFileSize = fileEofInfo.EndOfFile;
+    *pllFileSize = fileStdInfo.EndOfFile;
 
 cleanup:
 
