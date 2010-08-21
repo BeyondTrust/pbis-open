@@ -574,6 +574,7 @@ DJConfigureForDaemonRestart(
     PSTR symlinkName = NULL;
     long status = 0;
     PSTR statusBuffer = NULL;
+    PSTR outputBuffer = NULL;
 
     memset(&distro, 0, sizeof(distro));
 
@@ -724,8 +725,9 @@ DJConfigureForDaemonRestart(
              */
             if(bStatus)
             {
-                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svccfg import /etc/likewise/svcs-solaris/%daemonName.xml >/dev/null 2>&1; echo $? >%statusBuffer",
+                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svccfg import /etc/likewise/svcs-solaris/%daemonName.xml >%outputBuffer 2>&1; echo $? >%statusBuffer",
                             CTSHELL_STRING(daemonName, pszDaemonName),
+                            CTSHELL_BUFFER(outputBuffer, &outputBuffer),
                             CTSHELL_BUFFER(statusBuffer, &statusBuffer)));
 
                 status = atol(statusBuffer);
@@ -734,19 +736,34 @@ DJConfigureForDaemonRestart(
                 statusBuffer = NULL;
 
                 DJ_LOG_INFO("Daemon [%s]: svccfg import /etc/likewise/svcs-solaris/%s.xml status [%d]", pszDaemonName, pszDaemonName, status);
+                if (outputBuffer[0] != '\0')
+                {
+                    DJ_LOG_VERBOSE("svccfg command output: %s", outputBuffer);
+                }
+
+                CT_SAFE_FREE_STRING(outputBuffer);
+                outputBuffer = NULL;
 
                 if (status) {
                     LW_RAISE_EX(exc, ERROR_INVALID_STATE, "svccfg import failed", "An error occurred while using svccfg to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
                     goto cleanup;
                 }
 
-                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svcadm enable %daemonName >/dev/null 2>&1; echo $? >%statusBuffer",
+                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svcadm enable %daemonName >%outputBuffer 2>&1; echo $? >%statusBuffer",
                             CTSHELL_STRING(daemonName, pszDaemonName),
+                            CTSHELL_BUFFER(outputBuffer, &outputBuffer),
                             CTSHELL_BUFFER(statusBuffer, &statusBuffer)));
 
                 status = atol(statusBuffer);
 
                 DJ_LOG_INFO("Daemon [%s]: svcadm enable %s status [%d]", pszDaemonName, pszDaemonName, status);
+                if (outputBuffer[0] != '\0')
+                {
+                    DJ_LOG_VERBOSE("svcadm command output: %s", outputBuffer);
+                }
+
+                CT_SAFE_FREE_STRING(outputBuffer);
+                outputBuffer = NULL;
 
                 if (status) {
                     LW_RAISE_EX(exc, ERROR_INVALID_STATE, "svcadm enable failed", "An error occurred while using svcadm to process the '%s' daemon. This daemon was being added to the list of processes to start on reboot.", pszDaemonName);
@@ -755,8 +772,9 @@ DJConfigureForDaemonRestart(
             }
             else
             {
-                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svcadm disable %daemonName >/dev/null 2>&1; echo $? >%statusBuffer",
+                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svcadm disable %daemonName >%outputBuffer 2>&1; echo $? >%statusBuffer",
                             CTSHELL_STRING(daemonName, pszDaemonName),
+                            CTSHELL_BUFFER(outputBuffer, &outputBuffer),
                             CTSHELL_BUFFER(statusBuffer, &statusBuffer)));
 
                 status = atol(statusBuffer);
@@ -765,14 +783,29 @@ DJConfigureForDaemonRestart(
                 statusBuffer = NULL;
 
                 DJ_LOG_INFO("Daemon [%s]: svcadm disable %s status [%d]", pszDaemonName, pszDaemonName, status);
+                if (outputBuffer[0] != '\0')
+                {
+                    DJ_LOG_VERBOSE("svcadm command output: %s", outputBuffer);
+                }
 
-                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svccfg delete %daemonName >/dev/null 2>&1; echo $? >%statusBuffer",
+                CT_SAFE_FREE_STRING(outputBuffer);
+                outputBuffer = NULL;
+
+                LW_CLEANUP_CTERR(exc, CTShell("/usr/sbin/svccfg delete %daemonName >%outputBuffer 2>&1; echo $? >%statusBuffer",
                             CTSHELL_STRING(daemonName, pszDaemonName),
+                            CTSHELL_BUFFER(outputBuffer, &outputBuffer),
                             CTSHELL_BUFFER(statusBuffer, &statusBuffer)));
 
                 status = atol(statusBuffer);
 
                 DJ_LOG_INFO("Daemon [%s]: svccfg delete %s status [%d]", pszDaemonName, pszDaemonName, status);
+                if (outputBuffer[0] != '\0')
+                {
+                    DJ_LOG_VERBOSE("svccfg command output: %s", outputBuffer);
+                }
+
+                CT_SAFE_FREE_STRING(outputBuffer);
+                outputBuffer = NULL;
             }
         }
         else
@@ -840,6 +873,7 @@ cleanup:
     CT_SAFE_FREE_STRING(symlinkTarget);
     CT_SAFE_FREE_STRING(symlinkName);
     CT_SAFE_FREE_STRING(statusBuffer);
+    CT_SAFE_FREE_STRING(outputBuffer);
 }
 
 void
