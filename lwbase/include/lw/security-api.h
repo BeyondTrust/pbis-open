@@ -274,6 +274,11 @@ RtlLengthSecurityDescriptor(
     IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor
     );
 
+ULONG
+RtlLengthSecurityDescriptorRelative(
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor
+    );
+
 NTSTATUS
 RtlGetSecurityDescriptorControl(
     IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,

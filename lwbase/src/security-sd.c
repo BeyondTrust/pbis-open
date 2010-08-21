@@ -416,6 +416,48 @@ RtlLengthSecurityDescriptor(
     return size;
 }
 
+ULONG
+RtlLengthSecurityDescriptorRelative(
+    IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor
+    )
+{
+    ULONG size = SECURITY_DESCRIPTOR_RELATIVE_MIN_SIZE;
+
+    if (SecurityDescriptor->Owner)
+    {
+        PSID pOwnerlittleEndianSid = (PSID)LwRtlOffsetToPointer(SecurityDescriptor,
+                                                                SecurityDescriptor->Owner);
+
+        size += RtlLengthRequiredSid(LW_LTOH8(pOwnerlittleEndianSid->SubAuthorityCount));
+    }
+
+    if (SecurityDescriptor->Group)
+    {
+        PSID pGrouplittleEndianSid = (PSID)LwRtlOffsetToPointer(SecurityDescriptor,
+                                                                 SecurityDescriptor->Group);
+
+        size += RtlLengthRequiredSid(LW_LTOH8(pGrouplittleEndianSid->SubAuthorityCount));
+    }
+
+    if (SecurityDescriptor->Dacl)
+    {
+        PACL plittleEndianDacl = (PACL)LwRtlOffsetToPointer(SecurityDescriptor,
+                                                             SecurityDescriptor->Dacl);
+
+        size +=  LW_LTOH16(plittleEndianDacl->AclSize);
+    }
+
+    if (SecurityDescriptor->Sacl)
+    {
+        PACL plittleEndianSacl = (PACL)LwRtlOffsetToPointer(SecurityDescriptor,
+                                                            SecurityDescriptor->Sacl);
+
+        size += LW_LTOH16(plittleEndianSacl->AclSize);
+    }
+
+    return size;
+}
+
 NTSTATUS
 RtlGetSecurityDescriptorControl(
     IN PSECURITY_DESCRIPTOR_ABSOLUTE SecurityDescriptor,
