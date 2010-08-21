@@ -117,6 +117,7 @@ LwTaskMigrateOpenRemoteShare(
 DWORD
 LwTaskMigrateCreateShare(
     PSHARE_INFO_502 pShareInfoRemote,
+    BOOLEAN         bAddShare,
     PIO_FILE_HANDLE phShare
     );
 

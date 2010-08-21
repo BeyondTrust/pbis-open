@@ -91,6 +91,7 @@ LwTaskMigrateCreateFile(
     DWORD                         dwFileAttributes,
     DWORD                         dwCreateDisposition,
     DWORD                         dwCreateOptions,
+    DWORD                         dwShareAccess,
     PIO_FILE_HANDLE               phFile,
     FILE_CREATE_RESULT*           pCreateResult
     );
@@ -138,11 +139,11 @@ LwTaskMigrateOpenRemoteShare(
     DWORD           dwError = 0;
     IO_FILE_HANDLE  hFile   = NULL;
     IO_FILE_NAME    fileName = {0};
-    DWORD           dwDesiredAccess =
-                                READ_CONTROL|FILE_LIST_DIRECTORY|FILE_TRAVERSE;
+    DWORD           dwDesiredAccess = READ_CONTROL|FILE_LIST_DIRECTORY;
     DWORD           dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
     DWORD           dwCreateDisposition = FILE_OPEN;
     DWORD           dwCreateOptions = FILE_DIRECTORY_FILE;
+    DWORD           dwShareAccess  = FILE_SHARE_READ;
 
     dwError = LwTaskMigrateBuildPathW(
                     &gLwTaskGlobals.wszRemoteDriverPrefix[0],
@@ -158,6 +159,7 @@ LwTaskMigrateOpenRemoteShare(
                     dwFileAttributes,
                     dwCreateDisposition,
                     dwCreateOptions,
+                    dwShareAccess,
                     &hFile,
                     NULL);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -185,6 +187,7 @@ error:
 DWORD
 LwTaskMigrateCreateShare(
     PSHARE_INFO_502 pShareInfoRemote,
+    BOOLEAN         bAddShare,
     PIO_FILE_HANDLE phShare
     )
 {
@@ -222,6 +225,7 @@ LwTaskMigrateCreateShare(
                     dwFileAttributes,
                     dwCreateDisposition,
                     dwCreateOptions,
+                    0, /* Share access */
                     &hFile,
                     NULL);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -250,21 +254,24 @@ LwTaskMigrateCreateShare(
     }
 #endif
 
-    shareInfoLocal.shi502_netname  = pShareInfoRemote->shi502_netname;
-    shareInfoLocal.shi502_max_uses = pShareInfoRemote->shi502_max_uses;
-    shareInfoLocal.shi502_path     = pShareInfoRemote->shi502_path;
-    shareInfoLocal.shi502_type     = pShareInfoRemote->shi502_type;
-    shareInfoLocal.shi502_remark   = pShareInfoRemote->shi502_remark;
-    shareInfoLocal.shi502_reserved = pShareInfoRemote->shi502_reserved;
-    shareInfoLocal.shi502_security_descriptor =
-                pShareInfoRemote->shi502_security_descriptor;
+    if (bAddShare)
+    {
+        shareInfoLocal.shi502_netname  = pShareInfoRemote->shi502_netname;
+        shareInfoLocal.shi502_max_uses = pShareInfoRemote->shi502_max_uses;
+        shareInfoLocal.shi502_path     = pShareInfoRemote->shi502_path;
+        shareInfoLocal.shi502_type     = pShareInfoRemote->shi502_type;
+        shareInfoLocal.shi502_remark   = pShareInfoRemote->shi502_remark;
+        shareInfoLocal.shi502_reserved = pShareInfoRemote->shi502_reserved;
+        shareInfoLocal.shi502_security_descriptor =
+                    pShareInfoRemote->shi502_security_descriptor;
 
-    dwError = NetShareAddW(
-                    NULL,
-                    502,
-                    (PBYTE)&shareInfoLocal,
-                    &dwParmError);
-    BAIL_ON_LW_TASK_ERROR(dwError);
+        dwError = NetShareAddW(
+                        NULL,
+                        502,
+                        (PBYTE)&shareInfoLocal,
+                        &dwParmError);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
 
     *phShare = hFile;
 
@@ -372,8 +379,6 @@ LwTaskReplaceCurrent(
                 pCurrent->pNext->pPrev = pDirectoryList;
             }
 
-            pCurrent->pNext = pCurrent->pPrev = NULL;
-
             if (!pDirectoryList->pNext)
             {
                 pContext->pTail = pDirectoryList;
@@ -382,24 +387,23 @@ LwTaskReplaceCurrent(
         else
         {
             pContext->pHead = pCurrent->pNext;
-            if (pCurrent->pNext)
-            {
-                pCurrent->pNext->pPrev = pContext->pHead;
-            }
             if (!pContext->pHead)
             {
                 pContext->pTail = NULL;
             }
-            pCurrent->pNext = pCurrent->pPrev = NULL;
+            else
+            {
+                pContext->pHead->pPrev = NULL;
+            }
         }
     }
     else if (pContext->pTail == pCurrent)
     {
-        pContext->pTail->pPrev = pDirectoryList;
-        if (pDirectoryList)
+        pContext->pTail = pCurrent->pPrev;
+        pCurrent->pPrev->pNext = pDirectoryList;
+        while (pContext->pTail->pNext)
         {
-            pDirectoryList->pPrev = pContext->pTail;
-            pContext->pTail = pDirectoryList;
+            pContext->pTail = pContext->pTail->pNext;
         }
     }
     else
@@ -418,14 +422,11 @@ LwTaskReplaceCurrent(
         else
         {
             pCurrent->pPrev->pNext = pCurrent->pNext;
-            if (pCurrent->pNext)
-            {
-                pCurrent->pNext->pPrev = pCurrent->pPrev;
-            }
+            pCurrent->pNext->pPrev = pCurrent->pPrev;
         }
-
-        pCurrent->pPrev = pCurrent->pNext = NULL;
     }
+
+    pCurrent->pPrev = pCurrent->pNext = NULL;
 
     *ppDirectoryList = NULL;
 
@@ -562,15 +563,24 @@ LwTaskMigrateProcessDir(
                 if ((pInfo->FileNameLength == sizeof(wszDot) &&
                      pInfo->FileName[0] == wszDot[0]) ||
                     (pInfo->FileNameLength == sizeof(wszDotDot) &&
-                     pInfo->FileName[0] == wszDot[0] &&
-                     pInfo->FileName[1] == wszDot[1]))
+                     pInfo->FileName[0] == wszDotDot[0] &&
+                     pInfo->FileName[1] == wszDotDot[1]))
                 {
+                    if (pInfo->NextEntryOffset)
+                    {
+                        pInfo = (PFILE_BOTH_DIR_INFORMATION)(((PBYTE) pInfo) + pInfo->NextEntryOffset);
+                    }
+                    else
+                    {
+                        pInfo = NULL;
+                    }
+
                     continue;
                 }
 
                 if (pInfo->FileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)
                 {
-                    continue;
+                    ;
                 }
                 else if(pInfo->FileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {
@@ -618,6 +628,7 @@ LwTaskMigrateProcessDir(
                                     dwFileAttributes,
                                     dwCreateDisposition,
                                     dwCreateOptions,
+                                    FILE_SHARE_READ,
                                     &pChildRemote->hFile,
                                     NULL);
                     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -650,6 +661,7 @@ LwTaskMigrateProcessDir(
                                     dwFileAttributes,
                                     dwCreateDisposition,
                                     dwCreateOptions,
+                                    0, /* Share access */
                                     &pChildLocal->hFile,
                                     NULL);
                     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -668,6 +680,7 @@ LwTaskMigrateProcessDir(
                     else
                     {
                         pChildDirsTail->pNext = pChildDir;
+                        pChildDir->pPrev = pChildDirsTail;
                         pChildDirsTail = pChildDir;
                         pChildDir = NULL;
                     }
@@ -692,15 +705,15 @@ LwTaskMigrateProcessDir(
                                     pwszFilename);
                     BAIL_ON_LW_TASK_ERROR(dwError);
                 }
-            }
 
-            if (pInfo->NextEntryOffset)
-            {
-                pInfo = (PFILE_BOTH_DIR_INFORMATION)(((PBYTE) pInfo) + pInfo->NextEntryOffset);
-            }
-            else
-            {
-                pInfo = NULL;
+                if (pInfo->NextEntryOffset)
+                {
+                    pInfo = (PFILE_BOTH_DIR_INFORMATION)(((PBYTE) pInfo) + pInfo->NextEntryOffset);
+                }
+                else
+                {
+                    pInfo = NULL;
+                }
             }
         }
 
@@ -715,12 +728,10 @@ cleanup:
     if (pChildRemote)
     {
         LwTaskReleaseFile(pChildRemote);
-        pChildRemote = NULL;
     }
     if (pChildLocal)
     {
         LwTaskReleaseFile(pChildLocal);
-        pChildLocal = NULL;
     }
 
     return dwError;
@@ -778,6 +789,7 @@ LwTaskMigrateProcessFile(
                     dwFileAttributes,
                     dwCreateDisposition,
                     dwCreateOptions,
+                    0, /* Share access */
                     &hFileRemote,
                     NULL);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -803,6 +815,7 @@ LwTaskMigrateProcessFile(
                     dwFileAttributes,
                     dwCreateDisposition,
                     dwCreateOptions,
+                    0, /* Share access */
                     &hFileLocal,
                     &createResult);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -852,6 +865,7 @@ LwTaskMigrateCreateFile(
     DWORD                         dwFileAttributes,
     DWORD                         dwCreateDisposition,
     DWORD                         dwCreateOptions,
+    DWORD                         dwShareAccess,
     PIO_FILE_HANDLE               phFile,
     FILE_CREATE_RESULT*           pCreateResult
     )
@@ -871,7 +885,7 @@ LwTaskMigrateCreateFile(
                     dwDesiredAccess,
                     0,                              /* AllocationSize      */
                     dwFileAttributes,
-                    0,                              /* ShareAccess: None   */
+                    dwShareAccess,
                     dwCreateDisposition,
                     dwCreateOptions,
                     NULL,                           /* EaBuffer            */

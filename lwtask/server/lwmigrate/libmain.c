@@ -265,6 +265,7 @@ LwTaskMigrateShareW(
     PSHARE_INFO_502 pShareInfoLocal  = NULL;
     PLW_TASK_FILE   pLocalFile       = NULL;
     DWORD dwInfoLevel = 502;
+    BOOLEAN         bAddShare = FALSE;
 
     BAIL_ON_INVALID_POINTER(pContext);
     BAIL_ON_INVALID_STRING(pwszServer);
@@ -308,6 +309,8 @@ LwTaskMigrateShareW(
         case NERR_NetNameNotFound:
         case ERROR_NOT_FOUND:
 
+            bAddShare = TRUE;
+
             break;
 
         default:
@@ -327,7 +330,10 @@ LwTaskMigrateShareW(
             break;
     }
 
-    dwError = LwTaskMigrateCreateShare(pShareInfoRemote, &pLocalFile->hFile);
+    dwError = LwTaskMigrateCreateShare(
+                    pShareInfoRemote,
+                    bAddShare,
+                    &pLocalFile->hFile);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
     dwError = LwTaskMigrateShareEx(pContext, pRemoteFile, pLocalFile, dwFlags);
