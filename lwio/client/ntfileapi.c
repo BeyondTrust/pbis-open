@@ -133,7 +133,7 @@ NtCreateFile(
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
     IN PIO_FILE_NAME FileName,
-    IN OPTIONAL PVOID SecurityDescriptor, // TBD
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     IN OPTIONAL PVOID SecurityQualityOfService, // TBD
     IN ACCESS_MASK DesiredAccess,
     IN OPTIONAL LONG64 AllocationSize,

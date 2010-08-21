@@ -345,14 +345,14 @@ IopIpcCreateFile(
         }
     }
 
-    // TODO -- SDs, etc.
+    // TODO -- QOS, etc.
     pReply->Status = IoCreateFile(
                             &fileHandle,
                             NULL,
                             &ioStatusBlock,
                             securityContext,
                             &fileName,
-                            NULL,
+                            pMessage->SecurityDescriptor,
                             NULL,
                             pMessage->DesiredAccess,
                             pMessage->AllocationSize,

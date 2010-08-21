@@ -169,9 +169,10 @@ typedef struct _NT_IPC_MESSAGE_CREATE_FILE {
     IN FILE_CREATE_OPTIONS CreateOptions;
     IN OPTIONAL PVOID EaBuffer; // FILE_FULL_EA_INFORMATION
     IN ULONG EaLength;
-    // TODO -- Add stuff for SDs, etc.
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
+    IN ULONG SecDescLength;
 #if 0
-    IN OPTIONAL PVOID SecurityDescriptor; // TBD
+    // TODO -- Add stuff for QOS.
     IN OPTIONAL PVOID SecurityQualityOfService; // TBD
 #endif
     IN OPTIONAL PNT_IPC_HELPER_ECP EcpList;

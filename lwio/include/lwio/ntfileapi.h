@@ -94,7 +94,7 @@ LwNtCtxCreateFile(
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
     IN PIO_FILE_NAME FileName,
-    IN OPTIONAL PVOID SecurityDescriptor, // TBD
+    IN OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     IN OPTIONAL PVOID SecurityQualityOfService, // TBD
     IN ACCESS_MASK DesiredAccess,
     IN OPTIONAL LONG64 AllocationSize,
@@ -403,7 +403,7 @@ LwNtCreateFile(
     LW_IN LW_OUT LW_OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     LW_OUT PIO_STATUS_BLOCK IoStatusBlock,
     LW_IN PIO_FILE_NAME FileName,
-    LW_IN LW_OPTIONAL LW_PVOID SecurityDescriptor, // TBD
+    LW_IN LW_OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     LW_IN LW_OPTIONAL LW_PVOID SecurityQualityOfService, // TBD
     LW_IN ACCESS_MASK DesiredAccess,
     LW_IN LW_OPTIONAL LONG64 AllocationSize,
