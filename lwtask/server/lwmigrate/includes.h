@@ -49,7 +49,6 @@
 
 #include <config.h>
 #include <lwtasksystem.h>
-#include <lwtaskdef.h>
 
 #include <krb5/krb5.h>
 
@@ -70,6 +69,7 @@
 #include <lwio/lwio.h>
 #include <lwio/lmshare.h>
 
+#include <lwtaskdef.h>
 #include <lwtaskutils.h>
 #include <lwtaskipc.h>
 #include <lwtasklog_r.h>

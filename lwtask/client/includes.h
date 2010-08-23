@@ -48,7 +48,6 @@
 
 #include <config.h>
 #include <lwtasksystem.h>
-#include <lwtaskdef.h>
 
 #include <lwdef.h>
 #include <lwerror.h>
@@ -60,6 +59,7 @@
 #include <lwmsg/lwmsg.h>
 #include <lwmsg/protocol.h>
 
+#include <lwtaskdef.h>
 #include <lwtaskutils.h>
 #include <lwtaskipc.h>
 #include <lwtasklog_r.h>

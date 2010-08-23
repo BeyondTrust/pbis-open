@@ -45,7 +45,7 @@
 #include "includes.h"
 
 DWORD
-LwTestSrvStartListenThread(
+LwTaskSrvStartListenThread(
     void
     )
 {
@@ -132,8 +132,10 @@ LwTestSrvStartListenThread(
 
 cleanup:
 
-    LW_SAFE_FREE_STRING(pszCachePath);
-    LW_SAFE_FREE_STRING(pszCommPath);
+    if (pszCommPath)
+    {
+        LwFreeMemory(pszCommPath);
+    }
 
     return dwError;
 

@@ -46,3 +46,11 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
+
+typedef struct _LW_TASK_DB_CONTEXT
+{
+
+    sqlite3* pDbHandle;
+
+} LW_TASK_DB_CONTEXT, *PLW_TASK_DB_CONTEXT;
+

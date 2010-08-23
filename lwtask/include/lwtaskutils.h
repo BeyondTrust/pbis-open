@@ -50,6 +50,10 @@
  * Logging
  */
 
+#ifndef IsNullOrEmptyString
+#define IsNullOrEmptyString(str) (!(str) || !(*(str)))
+#endif
+
 typedef enum
 {
     LW_TASK_LOG_LEVEL_ALWAYS = 0,

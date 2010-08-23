@@ -46,3 +46,25 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  *
  */
+
+// db.c
+
+DWORD
+LwTaskDbOpen(
+    PLW_TASK_DB_CONTEXT* ppDbContext
+    );
+
+DWORD
+LwTaskDbCreateTables(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );
+
+DWORD
+LwTaskDbAddDefaultEntries(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );
+
+VOID
+LwTaskDbClose(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );

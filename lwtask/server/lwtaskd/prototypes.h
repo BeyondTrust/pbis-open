@@ -54,7 +54,7 @@ LwTaskDaemonIpcAddDispatch(
 // listener.c
 
 DWORD
-LwTestSrvStartListenThread(
+LwTaskSrvStartListenThread(
     void
     );
 

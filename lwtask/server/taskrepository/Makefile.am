@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES = libtaskrepository.la
 
 libtaskrepository_la_SOURCES = \
+    db.c      \
     globals.c \
     libmain.c
 

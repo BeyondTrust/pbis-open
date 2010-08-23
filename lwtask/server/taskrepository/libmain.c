@@ -49,17 +49,81 @@
 
 #include "includes.h"
 
-DWORD
-LwTaskRepositoryInit(
-    VOID
-    )
+DWORD LwTaskRepositoryInit(VOID)
 {
-    return 0;
+    DWORD dwError = 0;
+    PCSTR pszDbDirPath = LW_TASK_DB_DIR;
+    PCSTR pszDbPath = LW_TASK_DB;
+    BOOLEAN bExists = FALSE;
+    BOOLEAN bCleanupDb = FALSE;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+
+    dwError = LwCheckFileTypeExists(
+                    pszDbDirPath,
+                    LWFILE_DIRECTORY,
+                    &bExists);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!bExists)
+    {
+        mode_t mode = S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
+
+        /* Allow go+rx to the base folder */
+        dwError = LwCreateDirectory(pszDbDirPath, mode);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    /* restrict access to u+rwx to the db folder */
+    dwError = LwChangeOwnerAndPermissions(
+                    pszDbDirPath,
+                    0, /* uid: root */
+                    0, /* gid: root */
+                    S_IRWXU);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwCheckFileTypeExists(pszDbPath, LWFILE_REGULAR, &bExists);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!bExists)
+    {
+        dwError = LwTaskDbOpen(&pDbContext);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        bCleanupDb = TRUE;
+
+        dwError = LwTaskDbCreateTables(pDbContext);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        dwError = LwTaskDbAddDefaultEntries(pDbContext);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        dwError = LwChangeOwnerAndPermissions(
+                        pszDbPath,
+                        0, /* uid: root */
+                        0, /* gid: root */
+                        S_IRWXU);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    return dwError;
+
+error:
+
+    if (bCleanupDb)
+    {
+        LwRemoveFile(pszDbPath);
+    }
+
+    goto cleanup;
 }
 
-VOID
-LwTaskRepositoryShutdown(
-    VOID
-    )
+VOID LwTaskRepositoryShutdown(VOID)
 {
 }

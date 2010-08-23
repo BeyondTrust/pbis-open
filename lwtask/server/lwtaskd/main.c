@@ -126,7 +126,13 @@ main(
     dwError = LwTaskInitCacheFolders();
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwTestSrvStartListenThread();
+    dwError = LwTaskRepositoryInit();
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateInit();
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvStartListenThread();
     BAIL_ON_LW_TASK_ERROR(dwError);
 
     // Handle signals, blocking until we are supposed to exit.
@@ -140,6 +146,10 @@ cleanup:
     LwTaskSrvStopProcess();
 
     LwTaskSrvStopListenThread();
+
+    LwTaskMigrateShutdown();
+
+    LwTaskRepositoryShutdown();
 
     LW_TASK_LOG_INFO("Likewise Task Service exiting...");
 
@@ -362,7 +372,6 @@ LwTaskSrvExitHandler(
     DWORD dwError = 0;
     DWORD dwExitCode = 0;
     CHAR  szErrCodeFilePath[PATH_MAX+1];
-    PSTR  pszCachePath = NULL;
     BOOLEAN  bFileExists = 0;
     FILE* fp = NULL;
 
@@ -397,8 +406,6 @@ LwTaskSrvExitHandler(
 
 error:
 
-    LW_SAFE_FREE_STRING(pszCachePath);
-
     if (fp != NULL)
     {
        fclose(fp);
@@ -426,8 +433,6 @@ LwTaskInitCacheFolders(
     }
 
 cleanup:
-
-    LW_SAFE_FREE_STRING(pszCachePath);
 
     return dwError;
 

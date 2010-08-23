@@ -46,13 +46,13 @@
 
 #include <config.h>
 #include <lwtasksystem.h>
-#include <lwtaskdef.h>
 
 #include <lwdef.h>
 #include <lwerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
 
+#include <lwtaskdef.h>
 #include <lwtaskutils.h>
 
 #include "defs.h"

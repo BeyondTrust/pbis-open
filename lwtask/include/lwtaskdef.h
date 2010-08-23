@@ -45,6 +45,29 @@
 #ifndef __LWTASKDEF_H__
 #define __LWTASKDEF_H__
 
-#define IsNullOrEmptyString(str) (!(str) || !(*(str)))
+typedef enum
+{
+    LW_TASK_TYPE_UNKNOWN = 0,
+    LW_TASK_TYPE_MIGRATE
+
+} LW_TASK_TYPE;
+
+typedef enum
+{
+    LW_TASK_ARG_TYPE_UNKNOWN = 0,
+    LW_TASK_ARG_TYPE_STRING,
+    LW_TASK_ARG_TYPE_STRING_MULTI_CSV,
+    LW_TASK_ARG_TYPE_INTEGER,
+    LW_TASK_ARG_TYPE_DATETIME,
+    LW_TASK_ARG_TYPE_FLOAT,
+    LW_TASK_ARG_TYPE_DOUBLE
+
+} LW_TASK_ARG_TYPE;
+
+typedef DWORD LW_TASK_ARG_FLAG;
+
+#define LW_TASK_ARG_FLAG_NONE      0x00000000
+#define LW_TASK_ARG_FLAG_MANDATORY 0x00000001
+#define LW_TASK_ARG_FLAG_PERSIST   0x00000002
 
 #endif /* __LWTASKDEF_H__ */
