@@ -141,6 +141,119 @@ typedef IO_FSCTL_OPLOCK_REQUEST_OUTPUT_BUFFER
             *PIO_FSCTL_OPLOCK_BREAK_ACK_OUTPUT_BUFFER;
 
 
+
+//
+// Set Compression
+// Only returns NTSTATUS (no output buffer)
+//
+
+#define IO_COMPRESSION_FORMAT_NONE         1
+#define IO_COMPRESSION_FORMAT_DEFAULT      2
+#define IO_COMPRESSION_FORMAT_LZNT1        3
+
+typedef struct _IO_FSCTL_SET_COMPRESSION_INPUT_BUFFER
+{
+    SHORT CompressionFormat;
+
+} IO_FSCTL_SET_COMPRESSION_INPUT_BUFFER, 
+    *PIO_FSCTL_SET_COMPRESSION_INPUT_BUFFER;
+
+
+
+//
+// Set Sparse File
+// Only returns NTSTATUS (no output buffer)
+//
+
+typedef struct _IO_FSCTL_SET_SPARSE_INPUT_BUFFER
+{
+    BOOLEAN SetSparse;
+
+} IO_FSCTL_SET_SPARSE_INPUT_BUFFER, 
+    *PIO_FSCTL_SET_SPARSE_INPUT_BUFFER;
+
+
+//
+// Get Reparse Point
+// No input buffer
+//
+
+typedef struct _IO_REPARSE_DATA_BUFFER
+{
+    LONG ReparseTag;
+    SHORT ReparseDataLength;
+    SHORT Sbz1;
+    BYTE  DataBuffer[1];
+
+} IO_REPARSE_DATA_BUFFER, *PIO_REPARSE_DATA_BUFFER;
+
+typedef struct _IO_REPARSE_GUID_DATA_BUFFER
+{
+    LONG ReparseTag;
+    SHORT ReparseDataLength;
+    SHORT Sbz1;
+    LW_GUID ReparseGuid;
+    BYTE  DataBuffer[1];
+
+} IO_REPARSE_GUID_DATA_BUFFER, *PIO_REPARSE_GUID_DATA_BUFFER;
+
+    
+typedef struct _IO_FSCTL_GET_REPARSE_POINT_OUTPUT_BUFFER
+{
+    union
+    {
+        IO_REPARSE_DATA_BUFFER ReparseDataBuffer;
+        IO_REPARSE_GUID_DATA_BUFFER ReparseGuidDataBuffer;
+
+    } ReparseData;
+    
+} IO_FSCTL_GET_REPARSE_POINT_OUTPUT_BUFFER,
+    *PIO_FSCTL_GET_REPARSE_POINT_OUTPUT_BUFFER;
+    
+
+//
+// Create Or Get Object ID
+// No Input buffer
+//
+
+typedef struct _IO_FILE_OBJECT_ID_BUFFER_TYPE_1
+{
+    LW_GUID ObjectId;
+    LW_GUID BirthVolumeId;
+    LW_GUID BirthObjectId;
+    LW_GUID DomainId;
+
+} IO_FILE_OBJECT_ID_BUFFER_TYPE_1, *PIO_FILE_OBJECT_ID_BUFFER_TYPE_1;
+
+
+#define FILE_OBJECT_EXTENDED_INFO_LENGTH    48
+
+typedef struct _IO_FILE_OBJECT_ID_BUFFER_TYPE_2
+{
+    LW_GUID ObjectId;
+    BYTE ObjectExtendedInfo[FILE_OBJECT_EXTENDED_INFO_LENGTH];
+
+} IO_FILE_OBJECT_ID_BUFFER_TYPE_2, *PIO_FILE_OBJECT_ID_BUFFER_TYPE_2;
+
+    
+typedef struct _IO_FSCTL_CREATE_OR_GET_OBJECT_ID_OUTPUT_BUFFER
+{
+    union
+    {
+        IO_FILE_OBJECT_ID_BUFFER_TYPE_1 ObjectIdBufferType1;
+        IO_FILE_OBJECT_ID_BUFFER_TYPE_2 ObjectIdBufferType2;
+
+    } ObjectIdBuffer;
+    
+} IO_FSCTL_CREATE_OR_GET_OBJECT_ID_OUTPUT_BUFFER,
+    *PIO_FSCTL_CREATE_OR_GET_OBJECT_ID_OUTPUT_BUFFER;
+    
+
+//
+// Shadow Copy (a.k.a. Snapshot)
+// No input buffer
+//
+
 typedef struct _IO_FSCTL_ENUMERATE_SNAPSHOTS_OUTPUT_BUFFER
 {
     ULONG ulNumberOfSnapshots;
