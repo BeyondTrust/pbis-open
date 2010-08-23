@@ -53,12 +53,16 @@
 #define IO_DEVICE_FUNC_CODE_LIST_OPEN_FILES 0x00008010
 #define IO_DEVICE_FUNC_CODE_STATISTICS      0x00008020
 
+#define IO_DEVICE_FUNC_CODE_GET_DFS         0x00008030
+#define IO_DEVICE_FUNC_CODE_SET_DFS         0x00008040
+
 #define IO_DEVICE_TRANSFER_TYPE_BUFFERED    0x00000000
 #define IO_DEVICE_TRANSFER_TYPE_IN_DIRECT   0x00000001
 #define IO_DEVICE_TRANSFER_TYPE_OUT_DIRECT  0x00000002
 #define IO_DEVICE_TRANSFER_TYPE_NEITHER     0x00000003
 
 // TODO: Assign standard codes
+
 #define SRV_DEVCTL_ADD_SHARE      1
 #define SRV_DEVCTL_DELETE_SHARE   2
 #define SRV_DEVCTL_ENUM_SHARE     3
@@ -76,6 +80,7 @@
                                          IO_DEVICE_FUNC_CODE_LIST_OPEN_FILES | \
                                          IO_DEVICE_TRANSFER_TYPE_NEITHER       \
                                        )
+
 #define IO_DEVICE_CTL_STATISTICS ( IO_DEVICE_TYPE_NETWORK_FILE_SYSTEM | \
                                          IO_DEVICE_REQ_ACCESS_READ_DATA     | \
                                          IO_DEVICE_REQ_ACCESS_WRITE_DATA    | \
@@ -83,6 +88,21 @@
                                          IO_DEVICE_FUNC_CODE_STATISTICS     | \
                                          IO_DEVICE_TRANSFER_TYPE_NEITHER      \
                                        )
+
+#define IO_DEVICE_CTL_GET_DFS_REFERRAL ( IO_DEVICE_TYPE_DISK_FILE_SYSTEM     | \
+                                         IO_DEVICE_REQ_ACCESS_READ_DATA      | \
+                                         IO_DEVICE_CUSTOM_CONTROL_CODE       | \
+                                         IO_DEVICE_FUNC_CODE_GET_DFS         | \
+                                         IO_DEVICE_TRANSFER_TYPE_NEITHER       \
+                                       )
+
+#define IO_DEVICE_CTL_SET_DFS_REFERRAL ( IO_DEVICE_TYPE_DISK_FILE_SYSTEM     | \
+                                         IO_DEVICE_REQ_ACCESS_READ_DATA      | \
+                                         IO_DEVICE_CUSTOM_CONTROL_CODE       | \
+                                         IO_DEVICE_FUNC_CODE_SET_DFS         | \
+                                         IO_DEVICE_TRANSFER_TYPE_NEITHER       \
+                                       )
+
 
 /* Device IoControl structures */
 
