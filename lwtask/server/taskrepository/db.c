@@ -84,6 +84,14 @@ LwTaskDbGetTaskTypeCount_inlock(
     PDWORD              pdwNumTaskTypes
     );
 
+static
+DWORD
+LwTaskDbGetSchemaCount_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    LW_TASK_TYPE        taskType,
+    PDWORD              pdwNumArgInfos
+    );
+
 DWORD
 LwTaskDbOpen(
     PLW_TASK_DB_CONTEXT* ppDbContext
@@ -595,6 +603,196 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwTaskDbGetSchema(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    LW_TASK_TYPE        taskType,
+    PLW_TASK_ARG_INFO*  ppArgInfoArray,
+    PDWORD              pdwNumArgInfos
+    )
+{
+    DWORD   dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLW_TASK_ARG_INFO  pArgInfoArray = NULL;
+    DWORD   dwNumArgInfos = 0;
+    DWORD   iArgInfo = 0;
+    sqlite3_stmt* pSqlStatement = NULL;
+
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskDbGlobals.mutex);
+
+    dwError = LwTaskDbGetSchemaCount_inlock(
+                    pDbContext,
+                    taskType,
+                    &dwNumArgInfos);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!dwNumArgInfos)
+    {
+        goto done;
+    }
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_ARG_INFO) * dwNumArgInfos,
+                    (PVOID*)&pArgInfoArray);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!pDbContext->pQueryTaskArgs)
+    {
+        PCSTR pszQueryTemplate = "SELECT " LW_TASK_DB_COL_ARG_TYPE "," \
+                                           LW_TASK_DB_COL_ARG_NAME "," \
+                                           LW_TASK_DB_COL_ARG_FLAGS    \
+                                 " FROM "  LW_TASK_SCHEMA_TABLE        \
+                                 " WHERE " LW_TASK_DB_COL_TASK_TYPE " = ?1";
+
+        dwError = sqlite3_prepare_v2(
+                        pDbContext->pDbHandle,
+                        pszQueryTemplate,
+                        -1,
+                        &pDbContext->pQueryTaskArgs,
+                        NULL);
+            BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(
+                            dwError,
+                            pDbContext->pDbHandle);
+    }
+
+    pSqlStatement = pDbContext->pQueryTaskArgs;
+
+    dwError = sqlite3_bind_int(
+                    pSqlStatement,
+                    1,
+                    taskType);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+    while ((dwError = sqlite3_step(pSqlStatement)) == SQLITE_ROW)
+    {
+        const unsigned char* pszStringVal = NULL;
+        PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
+
+        DWORD dwNumAttrs = sqlite3_column_count(pSqlStatement);
+        if (dwNumAttrs != 3)
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        pArgInfo->argType = sqlite3_column_int(pSqlStatement, 0);
+
+        pszStringVal = sqlite3_column_text(pSqlStatement, 1);
+        if (pszStringVal)
+        {
+            dwError = LwAllocateString(
+                            (PCSTR)pszStringVal,
+                            &pArgInfo->pszArgName);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        pArgInfo->dwFlags = sqlite3_column_int(pSqlStatement, 2);
+
+        iArgInfo++;
+    }
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+done:
+
+    *ppArgInfoArray = pArgInfoArray;
+    *pdwNumArgInfos = dwNumArgInfos;
+
+cleanup:
+
+    if (pDbContext->pQueryTaskArgs)
+    {
+        sqlite3_reset(pDbContext->pQueryTaskArgs);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskDbGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    *ppArgInfoArray = NULL;
+    *pdwNumArgInfos   = 0;
+
+    if (pArgInfoArray)
+    {
+        LwTaskFreeArgInfoArray(pArgInfoArray, dwNumArgInfos);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskDbGetSchemaCount_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    LW_TASK_TYPE        taskType,
+    PDWORD              pdwNumArgInfos
+    )
+{
+    DWORD   dwError = 0;
+    DWORD   dwNumArgInfos = 0;
+    sqlite3_stmt* pSqlStatement = NULL;
+
+    if (!pDbContext->pQueryTaskArgCountStmt)
+    {
+        PCSTR pszQueryTemplate = "SELECT count(*) FROM " LW_TASK_SCHEMA_TABLE \
+                                 "WHERE " LW_TASK_DB_COL_TASK_TYPE " = ?1";
+
+        dwError = sqlite3_prepare_v2(
+                        pDbContext->pDbHandle,
+                        pszQueryTemplate,
+                        -1,
+                        &pDbContext->pQueryTaskArgCountStmt,
+                        NULL);
+            BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(
+                            dwError,
+                            pDbContext->pDbHandle);
+    }
+
+    pSqlStatement = pDbContext->pQueryTaskArgCountStmt;
+
+    dwError = sqlite3_bind_int(
+                    pSqlStatement,
+                    1,
+                    taskType);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+    if ((dwError = sqlite3_step(pSqlStatement) == SQLITE_ROW))
+    {
+        if (sqlite3_column_count(pSqlStatement) != 1)
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        dwNumArgInfos = sqlite3_column_int(pSqlStatement, 0);
+
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+    *pdwNumArgInfos   = dwNumArgInfos;
+
+cleanup:
+
+    if (pDbContext->pQueryTaskArgCountStmt)
+    {
+        sqlite3_reset(pDbContext->pQueryTaskArgCountStmt);
+    }
+
+    return dwError;
+
+error:
+
+    *pdwNumArgInfos   = 0;
+
+    goto cleanup;
+}
+
 VOID
 LwTaskDbClose(
     PLW_TASK_DB_CONTEXT pDbContext
@@ -608,6 +806,16 @@ LwTaskDbClose(
     if (pDbContext->pQueryTaskTypeCountStmt)
     {
         sqlite3_finalize(pDbContext->pQueryTaskTypeCountStmt);
+    }
+
+    if (pDbContext->pQueryTaskArgCountStmt)
+    {
+        sqlite3_finalize(pDbContext->pQueryTaskArgCountStmt);
+    }
+
+    if (pDbContext->pQueryTaskArgs)
+    {
+        sqlite3_finalize(pDbContext->pQueryTaskArgs);
     }
 
     if (pDbContext->pDbHandle)

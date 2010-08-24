@@ -286,4 +286,15 @@ LwTaskValidateLogLevel(
     DWORD dwLogLevel
     );
 
+VOID
+LwTaskFreeTaskInfoArray(
+    PLW_TASK_INFO pTaskInfoArray,
+    DWORD         dwNumTaskInfos
+    );
+
+VOID
+LwTaskFreeArgInfoArray(
+    PLW_TASK_ARG_INFO pArgInfoArray,
+    DWORD             dwNumArgInfos
+    );
 

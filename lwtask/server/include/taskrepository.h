@@ -66,6 +66,14 @@ LwTaskDbGetTypes(
     PDWORD              pdwNumTaskTypes
     );
 
+DWORD
+LwTaskDbGetSchema(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    LW_TASK_TYPE        taskType,
+    PLW_TASK_ARG_INFO*  ppArgInfoArray,
+    PDWORD              pdwNumArgInfos
+    );
+
 VOID
 LwTaskDbClose(
     PLW_TASK_DB_CONTEXT pDbContext

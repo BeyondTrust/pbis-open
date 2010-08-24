@@ -139,7 +139,44 @@ LwTaskSrvGetSchema(
     PDWORD             pdwNumArgInfos
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD  dwError = 0;
+    PLW_TASK_ARG_INFO pArgInfoArray = NULL;
+    DWORD  dwNumArgInfos = 0;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbGetSchema(
+                    pDbContext,
+                    taskType,
+                    &pArgInfoArray,
+                    &dwNumArgInfos);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *ppArgInfoArray = pArgInfoArray;
+    *pdwNumArgInfos = dwNumArgInfos;
+
+cleanup:
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    return dwError;
+
+error:
+
+    *ppArgInfoArray = NULL;
+    *pdwNumArgInfos = 0;
+
+    if (pArgInfoArray)
+    {
+        LwTaskFreeArgInfoArray(pArgInfoArray, dwNumArgInfos);
+    }
+
+    goto cleanup;
 }
 
 DWORD
