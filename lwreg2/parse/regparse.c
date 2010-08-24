@@ -94,6 +94,8 @@
  */
 
 #include "includes.h"
+DWORD 
+RegParseAttributes(PREGPARSE_HANDLE parseHandle);
 
 void RegParseExternDataType(
     REGLEX_TOKEN valueType,
@@ -141,6 +143,9 @@ void RegParseExternDataType(
         case REGLEX_KEY_NAME_DEFAULT:
             *externValueType = REG_KEY_DEFAULT;
             break;
+        case REGLEX_REG_ATTRIBUTES:
+            *externValueType = REG_ATTRIBUTES;
+            break;
         case REGLEX_PLAIN_TEXT:
         default:
             *externValueType = REG_PLAIN_TEXT;
@@ -160,7 +165,6 @@ RegParseTypeNone(
 
     return dwError;
 }
-
 
 DWORD
 RegParseReAllocateData(
@@ -192,6 +196,52 @@ error:
     goto cleanup;
 }
 
+DWORD
+RegParseAssignAttrData(
+    PREGPARSE_HANDLE parseHandle,
+    PVOID pData,
+    DWORD dwDataLen)
+{
+    PWSTR pwszDocString = NULL;
+    DWORD dwError = 0;
+
+    if (parseHandle->lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES)
+    {
+        if (!strcmp(parseHandle->attrName, "value"))
+        {
+            parseHandle->registryEntry.regAttr.CurrentValue = pData;
+            parseHandle->registryEntry.regAttr.CurrentValueLen = dwDataLen;
+        }
+        else if (!strcmp(parseHandle->attrName, "default"))
+        {
+            parseHandle->registryEntry.regAttr.DefaultValue = pData;
+            parseHandle->registryEntry.regAttr.DefaultValueLen = dwDataLen;
+        }
+        else if (!strcmp(parseHandle->attrName, "doc"))
+        {
+/* memory management issue here... */
+            dwError = LwRtlWC16StringAllocateFromCString(
+                          &pwszDocString, 
+                          (PSTR) pData);
+            BAIL_ON_REG_ERROR(dwError);
+            parseHandle->registryEntry.regAttr.DocString = pwszDocString;
+        }
+        else if (!strcmp(parseHandle->attrName, "hint"))
+        {
+            parseHandle->registryEntry.regAttr.DocString = pData;
+        }
+        RegParseExternDataType(
+            parseHandle->dataType, 
+            (PREG_DATA_TYPE) &parseHandle->registryEntry.regAttr.ValueType);
+    }
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 DWORD 
 RegParseAppendData(
@@ -202,6 +252,7 @@ RegParseAppendData(
     DWORD attrSize = 0;
     PSTR pszAttr = 0;
     DWORD binaryValue = 0;
+    REG_DATA_TYPE eDataType = 0;
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
@@ -219,6 +270,7 @@ RegParseAppendData(
                    &binaryValue,
                    sizeof(binaryValue));
             parseHandle->binaryDataLen += sizeof(binaryValue);
+            eDataType = REG_DWORD;
             break;
 
         case REGLEX_REG_MULTI_SZ:
@@ -240,6 +292,12 @@ RegParseAppendData(
         default:
             break;
     }
+
+    RegParseAssignAttrData(
+        parseHandle,
+        (PVOID) parseHandle->binaryData,
+        parseHandle->binaryDataLen);
+    
 cleanup:
     return dwError;
 
@@ -345,8 +403,17 @@ RegParseBinaryData(
 
             RegParseAppendData(parseHandle,
                                parseHandle->lexHandle->curToken.pszValue);
-            parseHandle->registryEntry.valueLen = parseHandle->binaryDataLen;
-            parseHandle->registryEntry.value = parseHandle->binaryData;
+            if (parseHandle->lexHandle->eValueNameType ==
+                REGLEX_VALUENAME_ATTRIBUTES)
+            {
+            }
+            else
+            {
+                parseHandle->registryEntry.valueLen =
+                    parseHandle->binaryDataLen;
+                parseHandle->registryEntry.value =
+                    parseHandle->binaryData;
+            }
 
             return dwError;
         }
@@ -676,6 +743,15 @@ RegParseTypeStringValue(
         parseHandle->registryEntry.value = pszAttr;
         parseHandle->registryEntry.valueLen = attrSize;
     }
+    RegParseAssignAttrData(
+        parseHandle,
+        (PVOID) pszAttr,
+        attrSize);
+    if (parseHandle->lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES)
+    {
+        parseHandle->registryEntry.value = NULL;
+        parseHandle->registryEntry.valueLen = 0;
+    }
     return dwError;
 }
 
@@ -708,6 +784,7 @@ RegParseTypeValue(
     DWORD dwError = 0;
     BOOLEAN eof = FALSE;
     PSTR pszAttr = 0;
+    PSTR pszTmp = 0;
     CHAR tokenName[256];
     REGLEX_TOKEN token = 0;
 
@@ -741,6 +818,12 @@ RegParseTypeValue(
         case REGLEX_REG_MULTI_SZ:
             parseHandle->dataType = REGLEX_REG_MULTI_SZ;
             RegParseTypeMultiStringValue(parseHandle);
+            if (parseHandle->lexHandle->eValueNameType ==
+                REGLEX_VALUENAME_ATTRIBUTES)
+            {
+                parseHandle->registryEntry.regAttr.RangeType =
+                        LWREG_VALUE_RANGE_TYPE_ENUM;
+            }
             break;
 
         case REGLEX_REG_STRING_ARRAY:
@@ -788,17 +871,167 @@ RegParseTypeValue(
             RegParseTypeNone(parseHandle);
             break;
 
-        default:
-            printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
-                   "unknown line=%d\n\n",
-                   tokenName, lineNum);
+        case REGLEX_ATTRIBUTES_BEGIN:
+            parseHandle->dataType = REGLEX_REG_ATTRIBUTES;
+            RegParseAttributes(parseHandle);
             break;
+
+        case REGLEX_ATTRIBUTES_END:
+printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
+            break;
+
+        case REGLEX_PLAIN_TEXT:
+            /*
+             * Supported unquoted data values when in a security context:
+             * @security = frob
+             *
+             * Supported unquoted data values when in an attribute context:
+             * "range" = boolean
+             * "range" = integer:m - n
+             * "range" = string:"s1" "s2"
+             */
+            if (parseHandle->lexHandle->eValueNameType ==
+                REGLEX_VALUENAME_SECURITY)
+            {
+                parseHandle->dataType = REGLEX_REG_SZ;
+                RegParseTypeStringValue(parseHandle);
+                parseHandle->lexHandle->eValueNameType = 0;
+            }
+            else if (parseHandle->lexHandle->eValueNameType ==
+                     REGLEX_VALUENAME_ATTRIBUTES && pszAttr &&
+                     (!strcmp(pszAttr, "value") ||
+                      !strcmp(pszAttr, "default") ||
+                      !strcmp(pszAttr, "doc") ||
+                      !strcmp(pszAttr, "range") ||
+                      !strcmp(pszAttr, "hint") ||
+                      !strcmp(pszAttr, "seconds") ||
+                      !strcmp(pszAttr, "boolean"))
+                    )
+            {
+                if (!strcmp(parseHandle->attrName, "range") &&
+                    !strcmp(pszAttr, "boolean"))
+                {
+                    parseHandle->registryEntry.regAttr.RangeType = 
+                        LWREG_VALUE_RANGE_TYPE_BOOLEAN;
+                }
+                else
+                {
+                    parseHandle->dataType = REGLEX_REG_SZ;
+                    RegParseTypeStringValue(parseHandle);
+                }
+            }
+            else
+            {
+                RegLexTokenToString(token, tokenName);
+                printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
+                       "unknown line=%d\n\n",
+                       tokenName, lineNum);
+            }
+            break;
+
+        case REGLEX_REG_INTEGER_RANGE:
+            if (strcmp(pszAttr, "integer") != 0)
+            {
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+            }
+            else
+            {
+                parseHandle->registryEntry.regAttr.RangeType =
+                    LWREG_VALUE_RANGE_TYPE_INTEGER;
+                dwError = RegLexGetToken(parseHandle->ioHandle,
+                                         parseHandle->lexHandle,
+                                         &token,
+                                         &eof);
+                if (eof)
+                {
+                    return dwError;
+                }
+
+                RegLexGetAttribute(
+                    parseHandle->lexHandle,
+                    &attrSize,
+                    &pszAttr);
+                pszTmp = pszAttr;
+                while (isdigit((int) *pszTmp))
+                {
+                    pszTmp++;
+                }
+                if (*pszTmp)
+                {
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    return dwError;
+                }
+                else
+                {
+                    parseHandle->registryEntry.regAttr.Range.RangeInteger.Min =
+                        strtoul(pszAttr, NULL, 0);
+                }
+
+                dwError = RegLexGetToken(parseHandle->ioHandle,
+                                         parseHandle->lexHandle,
+                                         &token,
+                                         &eof);
+                if (eof)
+                {
+                    return dwError;
+                }
+ 
+                RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
+                if (strcmp(pszAttr, "-") != 0)
+                {
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    return dwError;
+                }  
+                dwError = RegLexGetToken(parseHandle->ioHandle,
+                                         parseHandle->lexHandle,
+                                         &token,
+                                         &eof);
+                if (eof)
+                {
+                    return dwError;
+                }
+
+                pszTmp = pszAttr;
+                while (isdigit((int) *pszTmp))
+                {
+                    pszTmp++;
+                }
+                if (*pszTmp)
+                {
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    return dwError;
+                }
+                else
+                {
+                    parseHandle->registryEntry.regAttr.Range.RangeInteger.Max =
+                        strtoul(pszAttr, NULL, 0);
+                }
+            }
+
+            break;
+
+        default:
+            if (parseHandle->valueType == REGLEX_KEY_NAME_DEFAULT)
+            {
+                /* Handle @security name default */
+                RegParseTypeStringValue(parseHandle);
+            }
+            else
+            {
+                RegLexTokenToString(token, tokenName);
+                printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
+                       "unknown line=%d\n\n",
+                       tokenName, lineNum);
+                break;
+            }
     }
-    RegLexResetToken(parseHandle->lexHandle);
     return 0;
 }
 
 
+/*
+ * Function that parses "valueName" = datatype:data
+ */
 DWORD
 RegParseKeyValue(
     PREGPARSE_HANDLE parseHandle)
@@ -806,10 +1039,12 @@ RegParseKeyValue(
     DWORD attrSize = 0;
     DWORD lineNum = 0;
     DWORD dwError = 0;
-    BOOLEAN eof = FALSE;
     PSTR pszAttr = 0;
     REGLEX_TOKEN token = 0;
+    BOOLEAN eof = FALSE;
 
+
+    /* Parse valueName component of data entry */
     dwError = RegLexGetToken(
                   parseHandle->ioHandle,
                   parseHandle->lexHandle,
@@ -823,17 +1058,63 @@ RegParseKeyValue(
     RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
     parseHandle->registryEntry.lineNumber = lineNum;
 
+    if (parseHandle->valueType == REGLEX_KEY_NAME_DEFAULT &&
+        token == REGLEX_PLAIN_TEXT)
+    {
+        /* Look for something of the format @security = binary_string */
+        if (strcmp(pszAttr, "@security") == 0)
+        {
+            dwError = RegCStringDuplicate(
+                          &parseHandle->registryEntry.valueName, "@security");
+            BAIL_ON_REG_ERROR(dwError);
+        }
+        else
+        {
+            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            BAIL_ON_REG_ERROR(dwError);
+        }
+        dwError = RegLexGetToken(
+                      parseHandle->ioHandle,
+                      parseHandle->lexHandle,
+                      &token,
+                      &eof);
+        if (eof)
+        {
+            return dwError;
+        }
+    }
+
+    /* '=' between valueName and data */
     if (token == REGLEX_EQUALS)
     {
-        if (pszAttr)
+        if ((parseHandle->lexHandle->eValueNameType !=
+             REGLEX_VALUENAME_ATTRIBUTES) &&
+            pszAttr)
         {
             if (parseHandle->registryEntry.valueName)
             {
                 RegMemoryFree(parseHandle->registryEntry.valueName);
                 parseHandle->registryEntry.valueName = NULL;
             }
-            dwError = RegCStringDuplicate(&parseHandle->registryEntry.valueName, pszAttr);
+            dwError = RegCStringDuplicate(
+                          &parseHandle->registryEntry.valueName,
+                          pszAttr);
             BAIL_ON_INVALID_POINTER(parseHandle->registryEntry.valueName);
+        }
+        else
+        {
+            /* 
+             * This name is the registry attribute field to be populated:
+             * value | default | doc | range | hint
+             */
+            if (parseHandle->attrName)
+            {
+                LWREG_SAFE_FREE_MEMORY(parseHandle->attrName);
+            }
+            dwError = RegCStringDuplicate(
+                          &parseHandle->attrName,
+                          pszAttr);
+            BAIL_ON_INVALID_POINTER(parseHandle->attrName);
         }
     }
     else
@@ -842,6 +1123,7 @@ RegParseKeyValue(
         return dwError;
     }
 
+    /* Parse data value */
     dwError = RegParseTypeValue(parseHandle);
     if (dwError == 0)
     {
@@ -856,7 +1138,20 @@ RegParseKeyValue(
             parseHandle->registryEntry.value = parseHandle->binaryData;
         }
     }
-    RegParseRunCallbacks(parseHandle);
+
+    if (parseHandle->lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES &&
+        parseHandle->lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES_RESET)
+    {
+        RegParseRunCallbacks(parseHandle); 
+    }
+    if (parseHandle->lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES_RESET)
+    {
+        parseHandle->lexHandle->eValueNameType = 0;
+        memset(&parseHandle->registryEntry.regAttr, 
+               0,
+               sizeof(parseHandle->registryEntry.regAttr));
+    }
+    RegLexResetToken(parseHandle->lexHandle);
 
 cleanup:
     return dwError;
@@ -865,6 +1160,8 @@ error:
 
     goto cleanup;
 }
+
+
 
 DWORD
 RegParseKey(
@@ -913,14 +1210,27 @@ RegParseKey(
                                        &parseHandle->registryEntry.valueType);
                 parseHandle->registryEntry.valueLen = 0;
                 parseHandle->registryEntry.value = NULL;
-                RegParseRunCallbacks(parseHandle);
+                if (parseHandle->lexHandle->eValueNameType !=
+                    REGLEX_VALUENAME_ATTRIBUTES)
+                {
+                    RegParseRunCallbacks(parseHandle);
+                }
             }
             return dwError;
         }
-        else if (token == REGLEX_REG_SZ || token == REGLEX_KEY_NAME_DEFAULT)
+        else if (token == REGLEX_REG_SZ ||
+                 token == REGLEX_KEY_NAME_DEFAULT ||
+                 (token == REGLEX_PLAIN_TEXT &&
+                  parseHandle->lexHandle->eValueNameType ==
+                          REGLEX_VALUENAME_ATTRIBUTES
+                 )
+                )
         {
+            /* 
+             * Value names can be "valueName", @, or valueName when in the
+             * registry attribute context.
+             */
             parseHandle->valueType = token;
-            RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
             RegParseKeyValue(parseHandle);
         }
         else if (token == REGLEX_PLAIN_TEXT)
@@ -936,8 +1246,21 @@ RegParseKey(
                                        &parseHandle->registryEntry.valueType);
                 parseHandle->registryEntry.value = pszAttr;
                 parseHandle->registryEntry.valueLen = attrSize;
-                RegParseRunCallbacks(parseHandle);
+                if (parseHandle->lexHandle->eValueNameType !=
+                    REGLEX_VALUENAME_ATTRIBUTES) 
+                {
+                    RegParseRunCallbacks(parseHandle);
+                }
             }
+        }
+        else if (token == REGLEX_ATTRIBUTES_END)
+        {
+            RegLexUnGetToken(parseHandle->lexHandle);
+            parseHandle->registryEntry.type = REG_ATTRIBUTES;
+            RegParseRunCallbacks(parseHandle); 
+            parseHandle->lexHandle->eValueNameType =
+                REGLEX_VALUENAME_ATTRIBUTES_RESET;
+            return 0;
         }
         else
         {
@@ -948,7 +1271,7 @@ RegParseKey(
             parseHandle->valueType = token;
             RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
             RegParseKeyValue(parseHandle);
-printf("Unhandled token '%s'!\n", pszAttr);
+            printf("Unhandled token '%s'!\n", pszAttr);
             return dwError;
         }
         dwError = RegLexGetToken(parseHandle->ioHandle,
@@ -960,6 +1283,7 @@ printf("Unhandled token '%s'!\n", pszAttr);
             return dwError;
         }
     } while (!eof);
+    RegLexUnGetToken(parseHandle->lexHandle);
 
 cleanup:
     return dwError;
@@ -969,6 +1293,47 @@ error:
     goto cleanup;
 }
 
+
+DWORD
+RegParseAttributes(
+    PREGPARSE_HANDLE parseHandle)
+{
+    DWORD dwError = 0;
+    BOOLEAN eof = FALSE;
+    REGLEX_TOKEN token = 0;
+    CHAR tokenName[256];
+    PSTR pszAttr = NULL;
+    DWORD attrSize = 0;
+
+    RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
+    do {
+        dwError = RegLexGetToken(parseHandle->ioHandle,
+                                 parseHandle->lexHandle,
+                                 &token,
+                                 &eof);
+        if (eof)
+        {
+            return dwError;
+        }
+        RegLexTokenToString(token, tokenName);
+        RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
+        if (token != REGLEX_ATTRIBUTES_END)
+        {
+            /* Scary recursive call to RegParseKey() here */
+            dwError = RegParseKey(parseHandle, token);
+            dwError = RegLexGetToken(parseHandle->ioHandle,
+                                     parseHandle->lexHandle,
+                                     &token,
+                                     &eof);
+            if (eof)
+            {
+                return dwError;
+            }
+        }
+    }
+    while (token != REGLEX_ATTRIBUTES_END);
+    return dwError;
+}
 
 DWORD
 RegParseOpen(

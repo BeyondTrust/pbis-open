@@ -53,57 +53,74 @@ typedef struct _USER_CONTEXT
 } USER_CONTEXT;
 
 
-DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
+
+DWORD
+parseCallbackPrintData(
+    USER_CONTEXT *ctx,
+    PREG_PARSE_ITEM pItem,
+    DWORD dwIndent)
 {
-    DWORD dwError = 0;
-    CHAR tokenName[128];
-    USER_CONTEXT *ctx = (USER_CONTEXT *) userContext;
-    FILE *outStream = stdout;
-    PWSTR *outMultiSz = NULL;
+    CHAR typeString[128];
+    PWSTR  *outMultiSz = NULL;
     PSTR   pszString = NULL;
+    FILE *outStream = stdout;
     DWORD count = 0;
+    DWORD dwError = 0;
+    PSTR pszIndentStr = NULL;
 
-    ctx->pfn_fprintf(outStream, "parseCallback: Line number = %d\n", pItem->lineNumber);
-    ctx->pfn_fprintf(outStream, "parseCallback: Key Name    = %s\n", pItem->keyName);
-    if (pItem->valueName && pItem->valueLen)
-    {
-        ctx->pfn_fprintf(outStream, "parseCallback: Value name  = '%s'\n", pItem->valueName);
-        ctx->pfn_fprintf(outStream, "parseCallback: Value length= %d\n", pItem->valueLen);
-    }
-    else
-    {
-        ctx->pfn_fprintf(outStream, "parseCallback: Value name  = (EMPTY)\n");
-    }
+    pszIndentStr = dwIndent ? " " : "";
 
-    RegExportBinaryTypeToString(pItem->type, tokenName, FALSE);
-    ctx->pfn_fprintf(outStream, "parseCallback: Value type   = %d (%s)\n",
-           pItem->valueType, tokenName);
-    ctx->pfn_fprintf(outStream, "parseCallback: Data type   = %d (%s) - ", pItem->type, tokenName);
+    RegExportBinaryTypeToString(pItem->type, typeString, FALSE);
     switch (pItem->type)
     {
+        case REG_KEY:
+            ctx->pfn_fprintf(outStream, 
+                             "%*s%5d: {%s/(%d)} [%s]\n", 
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber, typeString, pItem->type,
+                             pItem->keyName);
+            break;
         case REG_SZ:
-            ctx->pfn_fprintf(outStream, "'%*s'\n", pItem->valueLen, (PCHAR) pItem->value);
+            ctx->pfn_fprintf(outStream, 
+                             "%*s%5d: {%s/(%d)} \"%s\"=\"%*s\"\n",
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber,
+                             typeString,
+                             pItem->type,
+                             pItem->valueName,
+                             pItem->valueLen,
+                             (PCHAR) pItem->value);
             break;
 
         case REG_MULTI_SZ:
+            ctx->pfn_fprintf(outStream,
+                             "%*s%5d: {%s/(%d)} \"%s\"=\n",
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber, 
+                             typeString,
+                             pItem->type,
+                             pItem->valueName);
             RegByteArrayToMultiStrsW(
                 pItem->value,
                 pItem->valueLen,
                 &outMultiSz);
-            printf("\n");
             for (count=0; outMultiSz[count]; count++)
             {
                 if (pszString)
                 {
-                	RegMemoryFree(pszString);
+                    RegMemoryFree(pszString);
                     pszString = NULL;
                 }
 
-            	dwError = RegCStringAllocateFromWC16String(&pszString, outMultiSz[count]);
+                dwError = RegCStringAllocateFromWC16String(
+                              &pszString,
+                              outMultiSz[count]);
                 BAIL_ON_REG_ERROR(dwError);
 
-                printf("outMultiSz[%d] = '%s'\n", count, pszString);
+                printf("    REG_MULTI_SZ[%d] = '%s'\n", count, pszString);
             }
+            printf("\n");
+
             if (outMultiSz)
             {
                 RegFreeMultiStrsW(outMultiSz);
@@ -113,11 +130,24 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
             break;
 
         case REG_DWORD:
-            ctx->pfn_fprintf(outStream, "0x%08x\n", *((unsigned int *) pItem->value));
+            ctx->pfn_fprintf(outStream, "%*s%5d: {%s/(%d)} \"%s\"=0x%08x\n", 
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber,
+                             typeString,
+                             pItem->type,
+                             pItem->valueName, 
+                             *((unsigned int *) pItem->value));
             break;
 
         case REG_QWORD:
-            ctx->pfn_fprintf(outStream, "0x%016llx\n", *((ULONG64 *) pItem->value));
+            ctx->pfn_fprintf(outStream, 
+                             "%*s%5d: {%s\(%d)} \"%s\"=0x%016llx\n",
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber,
+                             typeString,
+                             pItem->type,
+                             pItem->valueName, 
+                             *((ULONG64 *) pItem->value));
             break;
 
         case REG_BINARY:
@@ -126,27 +156,126 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
         case REG_RESOURCE_LIST:
         case REG_FULL_RESOURCE_DESCRIPTOR:
         case REG_NONE:
+            ctx->pfn_fprintf(outStream, 
+                             "%*s%5d: {%s\(%d)} \"%s\"=",
+                             dwIndent, pszIndentStr,
+                             pItem->lineNumber,
+                             typeString,
+                             pItem->type,
+                             pItem->valueName);
             RegParsePrintBinaryData(pItem->value, pItem->valueLen);
             break;
+
 
         default:
             break;
     }
-    ctx->pfn_fprintf(outStream, "parseCallback: >>>\n\n");
+cleanup:
+    return dwError;
 
 error:
-
     if (pszString)
     {
-    	RegMemoryFree(pszString);
+        RegMemoryFree(pszString);
     }
     if (outMultiSz)
     {
         RegFreeMultiStrsW(outMultiSz);
         outMultiSz = NULL;
     }
+    goto cleanup;
+}
 
+
+DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
+{
+    CHAR typeString[128];
+    USER_CONTEXT *ctx = (USER_CONTEXT *) userContext;
+    FILE *outStream = stdout;
+    DWORD dwError = 0;
+    REG_PARSE_ITEM schemaItem = {0};
+    PVOID pValue = NULL;
+    DWORD dwValue = 0;
+    PSTR pszDocString = NULL;
+
+    pValue = pItem->regAttr.CurrentValue ?
+                 pItem->regAttr.CurrentValue : pItem->regAttr.DefaultValue;
+    RegExportBinaryTypeToString(pItem->type, typeString, FALSE);
+    switch (pItem->type)
+    {
+        case REG_ATTRIBUTES:
+            ctx->pfn_fprintf(outStream, "%5d: {%s/(%d)} \"%s\"= {\n", 
+                pItem->lineNumber,
+                typeString,
+                pItem->type,
+                pItem->valueName);
+              
+            if (pItem->regAttr.RangeType == LWREG_VALUE_RANGE_TYPE_INTEGER)
+            {
+                ctx->pfn_fprintf(outStream, 
+                    "     %5d: {%s/(%d)} \"range\"=%d-%d\n", 
+                    pItem->lineNumber,
+                    "REG_RANGE",
+                    101,
+                    pItem->regAttr.Range.RangeInteger.Min,
+                    pItem->regAttr.Range.RangeInteger.Max);
+            }
+            else if (pItem->regAttr.RangeType == LWREG_VALUE_RANGE_TYPE_ENUM)
+            {
+                printf("RegAttrEnum...\n");
+            }
+            else if (pItem->regAttr.RangeType ==
+                     LWREG_VALUE_RANGE_TYPE_BOOLEAN &&
+                     pValue)
+            {
+                dwValue = *((PDWORD) pValue);
+                ctx->pfn_fprintf(outStream, 
+                    "      %5d: {%s/(%d)} \"boolean\"=%d\n", 
+                    pItem->lineNumber,
+                    "REG_BOOLEAN",
+                    100,
+                    dwValue ? 1 : 0);
+            }
+
+            /* Handle "doc" string attribute */
+            if (pItem->regAttr.DocString)
+            {
+                dwError = LwRtlCStringAllocateFromWC16String(
+                              &pszDocString,
+                              pItem->regAttr.DocString);
+                BAIL_ON_REG_ERROR(dwError);
+
+                /* Synthesize a REG_SZ for the "doc" attribute */
+                schemaItem = *pItem;
+                schemaItem.type = REG_SZ;
+                schemaItem.valueName = "doc";
+                schemaItem.value = pszDocString;
+                parseCallbackPrintData(ctx, &schemaItem, 5);
+                LWREG_SAFE_FREE_STRING(pszDocString);
+            }
+
+            if (pItem->value && *((PSTR)pItem->value))
+            {
+                /* Handle data value (non-attribute data */
+                schemaItem = *pItem;
+                schemaItem.type = pItem->regAttr.ValueType;
+                schemaItem.value = pValue;
+                parseCallbackPrintData(ctx, &schemaItem, 5);
+            }
+            ctx->pfn_fprintf(outStream, "    }\n\n");
+            break;
+
+        default:
+            parseCallbackPrintData(ctx, pItem, 0);
+            break;
+    }
+
+cleanup:
     return dwError;
+
+error:
+    goto cleanup;
+
 }
 
 

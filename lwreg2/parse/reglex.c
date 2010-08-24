@@ -350,16 +350,16 @@ RegLexParseOpenBrace(
     if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
         lexHandle->state != REGLEX_STATE_IN_KEY)
     {
-        lexHandle->curToken.token = REGLEX_BRACE_BEGIN;
-        if (lexHandle->state == REGLEX_STATE_IN_BRACE)
+        lexHandle->curToken.token = REGLEX_ATTRIBUTES_BEGIN;
+        if (lexHandle->state == REGLEX_STATE_IN_ATTRIBUTES)
         {
             /* This is a problem, can't have { then another { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
         }
         else
         {
-            lexHandle->curToken.token = REGLEX_BRACE_BEGIN;
-            lexHandle->bInAttribute = TRUE;
+            lexHandle->curToken.token = REGLEX_ATTRIBUTES_BEGIN;
+            lexHandle->eValueNameType = REGLEX_VALUENAME_ATTRIBUTES;
             lexHandle->curToken.valueCursor = 0;
         }
     }
@@ -381,7 +381,7 @@ RegLexParseCloseBrace(
     if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
         lexHandle->state != REGLEX_STATE_IN_KEY)
     {
-        if (!lexHandle->bInAttribute)
+        if (lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES)
         {
             /* This is a problem, can't have ] without a previous [ */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
@@ -389,9 +389,8 @@ RegLexParseCloseBrace(
         else
         {
             lexHandle->isToken = TRUE;
-            lexHandle->bInAttribute = FALSE;
             lexHandle->curToken.lineNum = lexHandle->parseLineNum;
-            lexHandle->curToken.token = REGLEX_BRACE_END;
+            lexHandle->curToken.token = REGLEX_ATTRIBUTES_END;
             lexHandle->state = REGLEX_STATE_INIT;
         }
     }
@@ -420,11 +419,8 @@ RegLexParseAt(
         lexHandle->state = REGLEX_STATE_INIT;
         lexHandle->curToken.valueCursor = 0;
         RegLexAppendChar(lexHandle, inC);
-    }
-    else
-    {
+
         /* Handle the case of @frob, i.e. "@security" */
-        RegLexAppendChar(lexHandle, inC);
         dwError = RegIOGetChar(ioHandle, &inC, &eof);
         while (dwError == 0 && !eof && isalpha((int) inC))
         {
@@ -436,6 +432,10 @@ RegLexParseAt(
             return dwError;
         }
         dwError = RegIOUnGetChar(ioHandle, NULL);
+        if (strcmp(lexHandle->curToken.pszValue, "@security") == 0)
+        {
+            lexHandle->eValueNameType = REGLEX_VALUENAME_SECURITY;
+        }
     }
     return dwError;
 }
@@ -614,7 +614,7 @@ RegLexParseBinary(
         else if (strcasecmp(lexHandle->curToken.pszValue, "sza") == 0 ||
                  strcasecmp(lexHandle->curToken.pszValue, "REG_STRING_ARRAY") == 0 ||
                  (strcasecmp(lexHandle->curToken.pszValue, "string") == 0 &&
-                  lexHandle->bInAttribute))
+                  lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES))
         {
             /* REG_STRING_ARRAY
              * Similar to REG_MULTI_SZ (token type returned will be MULTI_SZ).
@@ -663,6 +663,14 @@ RegLexParseBinary(
             lexHandle->isToken = TRUE;
             lexHandle->curToken.token = REGLEX_REG_QUADWORD;
             lexHandle->state = REGLEX_STATE_BINHEX_STR;
+            lexHandle->curToken.valueCursor = 0;
+        }
+        else if (strcasecmp(lexHandle->curToken.pszValue, "integer") == 0)
+        {
+            /* integer:m-n range  */
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.token = REGLEX_REG_INTEGER_RANGE;
+            lexHandle->state = REGLEX_STATE_INTEGER_RANGE;
             lexHandle->curToken.valueCursor = 0;
         }
     }
@@ -781,7 +789,8 @@ RegLexParseNewline(
             return dwError;
         }
     }
-    else if (lexHandle->state == REGLEX_STATE_INIT &&
+    else if ((lexHandle->state == REGLEX_STATE_INIT ||
+              lexHandle->state == REGLEX_STATE_INTEGER_RANGE) &&
              lexHandle->curToken.valueCursor > 0)
     {
         /*

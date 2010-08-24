@@ -44,15 +44,59 @@
 #ifndef REGPARSE_R_H
 #define REGPARSE_R_H
 
+
+typedef enum _LWREG_VALUE_RANGE_TYPE
+{
+    LWREG_VALUE_RANGE_TYPE_BOOLEAN = 1,
+    LWREG_VALUE_RANGE_TYPE_ENUM,
+    LWREG_VALUE_RANGE_TYPE_INTEGER,
+} LWREG_VALUE_RANGE_TYPE;
+
+typedef enum _LWREG_VALUE_HINT
+{
+    LWREG_VALUE_HINT_SECONDS = 1,
+    LWREG_VALUE_HINT_PATH,
+    LWREG_VALUE_HINT_ACCOUNT
+} LWREG_VALUE_HINT;
+
+
+typedef struct _REG_VALUE_ATTRIBUTES
+{
+    DWORD ValueType;
+    PVOID CurrentValue;
+    DWORD CurrentValueLen;
+    PVOID DefaultValue;
+    DWORD DefaultValueLen;
+    PWSTR DocString;
+    LWREG_VALUE_RANGE_TYPE RangeType;
+    LWREG_VALUE_HINT Hint;
+    union {
+        struct {
+            DWORD Min;
+            DWORD Max;
+        } RangeInteger;
+        PWSTR *RangeEnumStrings;
+    } Range;
+} REG_VALUE_ATTRIBUTES, *PREG_VALUE_ATTRIBUTES;
+
+
 typedef struct _REG_PARSE_ITEM
 {
-    REG_DATA_TYPE type;
-    REG_DATA_TYPE valueType;
+    /* 
+     * Use these values below when "type" != REG_ATTRIBUTES.
+     * When type == REG_ATTRIBUTES, these values are not valid,
+     * and regAttributeEntry should be used.
+     */
+    REG_DATA_TYPE type;       /* Type of value name */
+    REG_DATA_TYPE valueType;  /* Type of data value */
     PSTR keyName;
     PSTR valueName;
     DWORD lineNumber;
     void *value;
     DWORD valueLen;
+
+    /* valid when type = REG_ATTRIBUTES. */
+    REG_VALUE_ATTRIBUTES regAttr;
 } REG_PARSE_ITEM, *PREG_PARSE_ITEM;
 
 #endif /* __REGPARSE_R_H__ */

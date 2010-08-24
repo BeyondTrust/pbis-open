@@ -43,7 +43,7 @@
 #ifndef REGLEX_H
 #define REGLEX_H
 
-#define REGLEX_DEFAULT_SZ_LEN 1024
+#define REGLEX_DEFAULT_SZ_LEN 1024 
 #define REGLEX_CHAR_INDEX(c) ((unsigned char) (c))
 
 
@@ -72,13 +72,14 @@ typedef enum __REGLEX_TOKEN
     REGLEX_REG_FULL_RESOURCE_DESCRIPTOR,   /* hex(9):   */
     REGLEX_REG_RESOURCE_REQUIREMENTS_LIST, /* hex(a):   */
     REGLEX_REG_QUADWORD,                   /* hex(b):   */
-    REGLEX_REG_KEY,
-    REGLEX_KEY_NAME_DEFAULT,
+    REGLEX_REG_KEY,                        /* [ HIVE\subkey] */
+    REGLEX_KEY_NAME_DEFAULT,               /* @ token   */
     REGLEX_REG_STRING_ARRAY,               /* sza:      */
     REGLEX_REG_ATTRIBUTES,                 /* hex(aa):  */
 
-    REGLEX_BRACE_BEGIN,
-    REGLEX_BRACE_END,
+    REGLEX_ATTRIBUTES_BEGIN,               /* "{" attibutes */
+    REGLEX_ATTRIBUTES_END,                 /* attributes "}" */
+    REGLEX_REG_INTEGER_RANGE,              /* integer:M - N */
 } REGLEX_TOKEN, *PREGLEX_TOKEN;
 
 
@@ -87,11 +88,20 @@ typedef enum __REGLEX_STATE
     REGLEX_STATE_INIT = 0,
     REGLEX_STATE_IN_QUOTE,   /* Found '"', looking for close '"' */
     REGLEX_STATE_IN_KEY,     /* Found '[', looking for ']'       */
-    REGLEX_STATE_IN_BRACE,   /* Found '{', looking for '}'       */
+    REGLEX_STATE_IN_ATTRIBUTES, /* Found '{', looking for '}'       */
     REGLEX_STATE_BINHEX_STR,
     REGLEX_STATE_DWORD,
     REGLEX_STATE_QUADWORD,
+    REGLEX_STATE_INTEGER_RANGE,
 } REGLEX_STATE;
+
+typedef enum __REGLEX_VALUENAME_TYPE
+{
+    REGLEX_VALUENAME_NAME = 0,
+    REGLEX_VALUENAME_SECURITY,
+    REGLEX_VALUENAME_ATTRIBUTES,
+    REGLEX_VALUENAME_ATTRIBUTES_RESET
+} REGLEX_VALUENAME_TYPE;
 
 typedef struct __REGLEX_ITEM *PREGLEX_ITEM;
 typedef DWORD (*REGLEX_PARSE_FUNC_T)(PREGLEX_ITEM lexH, HANDLE ioH, CHAR inC);
@@ -116,7 +126,7 @@ typedef struct __REGLEX_ITEM
     REGLEX_STATE state;
     BOOLEAN isToken;
     REGLEX_PARSE_FUNC_T parseFuncArray[256];
-    BOOLEAN bInAttribute;
+    REGLEX_VALUENAME_TYPE eValueNameType;
 } REGLEX_ITEM;
 
 DWORD

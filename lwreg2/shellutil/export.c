@@ -88,6 +88,7 @@ DWORD RegExportBinaryTypeToString(
         { "REG_PLAIN_TEXT", "REG_PLAIN_TEXT" },
         { "REG_UNKNOWN", "REG_UNKNOWN" },
         { "sza:", "REG_STRING_ARRAY" }, /* Maps to REG_MULTI_SZ */
+        { "REG_ATTRIBUTES", "REG_ATTRIBUTES" },
     };
 
     BAIL_ON_INVALID_POINTER(tokenStr);

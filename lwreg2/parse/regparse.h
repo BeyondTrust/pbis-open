@@ -68,10 +68,11 @@ struct _REGPARSE_HANDLE
 {
     HANDLE ioHandle;
     PREGLEX_ITEM lexHandle;
-    REGLEX_TOKEN valueType;
-    REGLEX_TOKEN dataType;
-    PSTR keyName;
-    PSTR valueName;
+    REGLEX_TOKEN valueType; /* Distinguish between default @ and valueName */
+    REGLEX_TOKEN dataType;  /* Type of data stored in valueName */
+    PSTR keyName;           /* Current registry subkey */
+    PSTR valueName;         /* Current valueName */
+    PSTR attrName;          /* Registry schema field being addressed */
     REG_PARSE_ITEM registryEntry;
     PSTR pszStringData;
     UCHAR *binaryData;
