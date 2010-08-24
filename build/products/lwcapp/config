@@ -1,0 +1,58 @@
+NAME="LikewiseCIFSAppliance"
+FULL_NAME="Likewise CIFS Appliance"
+DESCRIPTION="This package installs the Likewise CIFS Appliance which provides integration with Active Directory."
+_BITROCK_DESCRIPTION="This package installs the Likewise CIFS Appliance which provides integration with Active Directory." # unused
+_MAC_DESCRIPTION="This package installs the Likewise CIFS Appliance which provides integration with Active Directory." # unused
+FILES="COPYING README EULA"
+SCRIPT="../install.sh"
+UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
+
+PACKAGES="\
+    krb5 openldap libxml2 sqlite base lwreg\
+    pstore netlogon lwio rpc eventlog lsass \
+    srvsvc domainjoin reskit lwupgrade \
+    lwnetapi lwtools lwtask \
+    "
+OBSOLETE_PACKAGES="lwmgmt lwreg-32bit"
+OPTIONAL_PACKAGES=""
+
+DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd lwtaskd"
+OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
+# lwregd is started elsewhere since it must be started first.
+AUTOSTART=""
+REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg lwtaskd.reg"
+
+case "${BUILD_OS_TYPE}" in
+    linux)
+        PACKAGES="$PACKAGES passwd"
+        check_is_rhel_21
+        if [ $? -ne 0 ]; then
+            PACKAGES="$PACKAGES"
+        fi
+        ;;
+    freebsd)
+        PACKAGES="$PACKAGES passwd"
+        ;;
+    aix|hpux)
+        PACKAGES="$PACKAGES passwd"
+        ;;
+    solaris)
+        PACKAGES="$PACKAGES passwd mod-auth-kerb"
+        ;;
+    darwin)
+        case "$UNAME_RELEASE" in
+            8.*)
+                PACKAGES="$PACKAGES domainjoin-gui mod-auth-kerb"
+                ;;
+            9.*)
+                PACKAGES="$PACKAGES domainjoin-gui mod-auth-kerb"
+                ;;
+            10.*)
+                PACKAGES="$PACKAGES domainjoin-gui"
+                ;;
+        esac
+        ;;
+    source)
+	PACKAGES="$PACKAGES passwd mod-auth-kerb"
+	;;
+esac
