@@ -9,7 +9,6 @@ The utilities for componentized build are in src/linux/build:
   - mkcomp -- builds one or more components
   - mkpkg -- build a package (using built components)
   - mksfx -- builds sfx installer (from packages)
-  - mkbitrock -- builds bitrock installer (from packages)
 
 Main Versioning
 ---------------
