@@ -5,7 +5,8 @@ lwtaskd_SOURCES = \
     ipc.c        \
     listener.c   \
     main.c       \
-    sighandler.c
+    sighandler.c \
+    task.c
 
 lwtaskd_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1   \

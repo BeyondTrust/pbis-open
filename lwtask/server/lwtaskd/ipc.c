@@ -270,12 +270,40 @@ LwTaskDaemonIpcTaskStart(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
 
-    pOut->tag = LW_TASK_START_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvStart((PCSTR)pIn->data);
+
+    /* Transmit failure to client but do not bail out of dispatch loop */
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_START_FAILED;
+        pOut->data = pStatusResponse;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_START_SUCCESS;
+    pOut->data = pStatusResponse;
+
+cleanup:
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -287,12 +315,40 @@ LwTaskDaemonIpcTaskStop(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
 
-    pOut->tag = LW_TASK_STOP_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvStop((PCSTR)pIn->data);
+
+    /* Transmit failure to client but do not bail out of dispatch loop */
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_STOP_FAILED;
+        pOut->data = pStatusResponse;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_STOP_SUCCESS;
+    pOut->data = pStatusResponse;
+
+cleanup:
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -304,12 +360,40 @@ LwTaskDaemonIpcTaskDelete(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
 
-    pOut->tag = LW_TASK_DELETE_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvDelete((PCSTR)pIn->data);
+
+    /* Transmit failure to client but do not bail out of dispatch loop */
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_DELETE_FAILED;
+        pOut->data = pStatusResponse;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_DELETE_SUCCESS;
+    pOut->data = pStatusResponse;
+
+cleanup:
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -321,12 +405,54 @@ LwTaskDaemonIpcGetTypes(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
+    PLW_TASK_IPC_GET_TYPES pResult = NULL;
 
-    pOut->tag = LW_TASK_GET_TYPES_FAILED;
-    pOut->data = NULL;
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_IPC_GET_TYPES),
+                    (PVOID*)&pResult);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvGetTypes(
+                    &pResult->pdwTaskTypeArray,
+                    &pResult->dwNumTaskTypes);
+
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_GET_TYPES_FAILED;
+        pOut->data = pStatusResponse;
+        pStatusResponse = NULL;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_GET_TYPES_SUCCESS;
+    pOut->data = pResult;
+    pResult = NULL;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pStatusResponse);
+
+    if (pResult)
+    {
+        LwFreeMemory(pResult);
+    }
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -338,12 +464,52 @@ LwTaskDaemonIpcGetStatus(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
+    PLW_TASK_STATUS pResult = NULL;
 
-    pOut->tag = LW_TASK_GET_STATUS_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(LW_TASK_STATUS), (PVOID*)&pResult);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvGetStatus((PCSTR)pIn->data, pResult);
+
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_GET_STATUS_FAILED;
+        pOut->data = pStatusResponse;
+        pStatusResponse = NULL;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_GET_STATUS_SUCCESS;
+    pOut->data = pResult;
+    pResult = NULL;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pStatusResponse);
+
+    if (pResult)
+    {
+        LwFreeMemory(pResult);
+    }
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -355,12 +521,46 @@ LwTaskDaemonIpcCreate(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
+    PLW_TASK_IPC_CREATE_ARGS pCreateArgs = NULL;
 
-    pOut->tag = LW_TASK_CREATE_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pCreateArgs = (PLW_TASK_IPC_CREATE_ARGS)pIn->data;
+
+    dwError = LwTaskSrvCreate(
+                    pCreateArgs->taskType,
+                    pCreateArgs->pArgArray,
+                    pCreateArgs->dwNumArgs);
+
+    /* Transmit failure to client but do not bail out of dispatch loop */
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_CREATE_FAILED;
+        pOut->data = pStatusResponse;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_CREATE_SUCCESS;
+    pOut->data = pStatusResponse;
+
+cleanup:
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -372,12 +572,55 @@ LwTaskDaemonIpcGetSchema(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
+    PLW_TASK_IPC_SCHEMA pResult = NULL;
 
-    pOut->tag = LW_TASK_GET_SCHEMA_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(LW_TASK_IPC_SCHEMA), (PVOID*)&pResult);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvGetSchema(
+                    ((PLW_TASK_IPC_GET_SCHEMA)pIn->data)->taskType,
+                    &pResult->pArgInfoArray,
+                    &pResult->dwNumArgInfos);
+
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_GET_SCHEMA_FAILED;
+        pOut->data = pStatusResponse;
+        pStatusResponse = NULL;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_GET_SCHEMA_SUCCESS;
+    pOut->data = pResult;
+    pResult = NULL;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pStatusResponse);
+
+    if (pResult)
+    {
+        LwFreeMemory(pResult);
+    }
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -389,11 +632,62 @@ LwTaskDaemonIpcEnum(
     void*              pData   /* IN     */
     )
 {
+    DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
+    PLW_TASK_IPC_ENUM_REQUEST pRequest = NULL;
+    PLW_TASK_IPC_ENUM_RESPONSE pResult = NULL;
 
-    pOut->tag = LW_TASK_ENUM_FAILED;
-    pOut->data = NULL;
+    BAIL_ON_INVALID_POINTER(pIn->data);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_STATUS_REPLY),
+                    (PVOID*)&pStatusResponse);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_IPC_ENUM_RESPONSE),
+                    (PVOID*)&pResult);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pRequest = (PLW_TASK_IPC_ENUM_REQUEST)pIn->data;
+    pResult->dwResume = pRequest->dwResume;
+
+    dwError = LwTaskSrvEnum(
+                    pRequest->taskType,
+                    &pResult->dwTotalTaskInfos,
+                    &pResult->dwNumTaskInfos,
+                    &pResult->pTaskInfoArray,
+                    &pResult->dwResume);
+
+    if (dwError)
+    {
+        pStatusResponse->dwError = dwError;
+        pOut->tag = LW_TASK_ENUM_FAILED;
+        pOut->data = pStatusResponse;
+        pStatusResponse = NULL;
+
+        dwError = 0;
+        goto cleanup;
+    }
+
+    pOut->tag = LW_TASK_ENUM_SUCCESS;
+    pOut->data = pResult;
+    pResult = NULL;
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pStatusResponse);
+
+    if (pResult)
+    {
+        LwFreeMemory(pResult);
+    }
 
     return status;
+
+error:
+
+    goto cleanup;
 }
 

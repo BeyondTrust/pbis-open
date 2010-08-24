@@ -33,142 +33,81 @@
  *
  * Module Name:
  *
- *        prototypes.h
+ *        task.c
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Function prototypes
+ *        Server side Task Handlers
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *
  */
 
-// ipc.c
-
-DWORD
-LwTaskDaemonIpcAddDispatch(
-    LWMsgServer* pServer /* IN OUT */
-    );
-
-// listener.c
-
-DWORD
-LwTaskSrvStartListenThread(
-    void
-    );
-
-DWORD
-LwTaskSrvStopListenThread(
-    void
-    );
-
-// main.c
-
-VOID
-LwTaskSrvExitHandler(
-    VOID
-    );
-
-DWORD
-LwTaskInitCacheFolders(
-    VOID
-    );
-
-BOOLEAN
-LwTaskSrvShouldStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LwTaskSrvStartAsDaemon(
-    VOID
-    );
-
-DWORD
-LwTaskSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-VOID
-LwTaskSrvSetProcessExitCode(
-    DWORD dwExitCode
-    );
-
-DWORD
-LwTaskBlockSelectedSignals(
-    VOID
-    );
-
-BOOLEAN
-LwTaskSrvShouldProcessExit(
-    VOID
-    );
-
-VOID
-LwTaskSrvSetProcessToExit(
-    BOOLEAN bExit
-    );
-
-// signalhandler.c
-
-DWORD
-LwTaskSrvIgnoreSIGHUP(
-    VOID
-    );
-
-DWORD
-LwTaskSrvHandleSignals(
-    VOID
-    );
-
-DWORD
-LwTaskSrvStopProcess(
-    VOID
-    );
-
-// task.c
+#include "includes.h"
 
 DWORD
 LwTaskSrvGetTypes(
     PDWORD* ppdwTaskTypeArray,
     PDWORD  pdwNumTypes
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvStart(
     PCSTR pszTaskId
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvStop(
     PCSTR pszTaskId
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvDelete(
     PCSTR pszTaskId
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvGetStatus(
     PCSTR           pszTaskId,
     PLW_TASK_STATUS pTaskStatus
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvCreate(
     LW_TASK_TYPE taskType,
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvGetSchema(
     LW_TASK_TYPE       taskType,
     PLW_TASK_ARG_INFO* ppArgInfoArray,
     PDWORD             pdwNumArgInfos
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD
 LwTaskSrvEnum(
@@ -177,4 +116,7 @@ LwTaskSrvEnum(
     PDWORD         pdwNumTaskInfos,
     PLW_TASK_INFO* ppTaskInfoArray,
     PDWORD         pdwResume
-    );
+    )
+{
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
