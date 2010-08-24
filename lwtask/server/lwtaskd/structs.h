@@ -60,8 +60,10 @@ typedef struct _LW_SRV_TASK
 
     DWORD        dwError;
 
-    time_t       start;
-    time_t       end;
+    DWORD        dwPercentComplete;
+
+    time_t       startTime;
+    time_t       endTime;
 
 } LW_SRV_TASK, *PLW_SRV_TASK;
 

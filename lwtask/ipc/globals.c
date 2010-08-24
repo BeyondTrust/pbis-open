@@ -103,7 +103,7 @@ static LWMsgTypeSpec gLwTaskStatusSpec[] =
     /* 32-bit unsigned integer */
     LWMSG_MEMBER_UINT32(LW_TASK_STATUS, dwError),
     /* 32-bit unsigned integer */
-    LWMSG_MEMBER_UINT32(LW_TASK_STATUS, percentComplete),
+    LWMSG_MEMBER_UINT32(LW_TASK_STATUS, dwPercentComplete),
     /* 32-bit unsigned integer */
     LWMSG_MEMBER_UINT32(LW_TASK_STATUS, startTime),
     /* 32-bit unsigned integer */

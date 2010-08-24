@@ -48,6 +48,13 @@
 #include "includes.h"
 
 static
+DWORD
+LwTaskSrvTreeFind(
+    PCSTR         pszTaskName,
+    PLW_SRV_TASK* ppTask
+    );
+
+static
 int
 LwTaskSrvTreeCompare(
     PVOID pKey1,
@@ -134,6 +141,55 @@ cleanup:
     return dwError;
 
 error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskSrvTreeFind(
+    PCSTR         pszTaskName,
+    PLW_SRV_TASK* ppTask
+    )
+{
+    DWORD        dwError = 0;
+    BOOLEAN      bInLock = FALSE;
+    PLW_SRV_TASK pTask   = NULL;
+    uuid_t       uuid;
+
+    if (uuid_parse((PSTR)pszTaskName, uuid) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeFind(
+                            gLwTaskSrvGlobals.pTaskCollection,
+                            &uuid,
+                            (PVOID*)&pTask));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    InterlockedIncrement(&pTask->refCount);
+
+    *ppTask = pTask;
+
+cleanup:
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    *ppTask = NULL;
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
+    }
 
     goto cleanup;
 }
@@ -227,11 +283,40 @@ LwTaskSrvDelete(
 
 DWORD
 LwTaskSrvGetStatus(
-    PCSTR           pszTaskId,
+    PCSTR           pszTaskname,
     PLW_TASK_STATUS pTaskStatus
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    PLW_SRV_TASK pTask = NULL;
+    BOOLEAN bInLock = FALSE;
+
+    dwError = LwTaskSrvTreeFind(pszTaskname, &pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    pTaskStatus->dwError = pTask->dwError;
+    pTaskStatus->dwPercentComplete = pTask->dwPercentComplete;
+    pTaskStatus->startTime = pTask->startTime;
+    pTaskStatus->endTime   = pTask->endTime;
+
+cleanup:
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
+    }
+
+    return dwError;
+
+error:
+
+    memset(&pTaskStatus, 0, sizeof(*pTaskStatus));
+
+    goto cleanup;
 }
 
 DWORD

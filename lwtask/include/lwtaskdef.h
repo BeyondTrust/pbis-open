@@ -74,7 +74,7 @@ typedef struct _LW_TASK_STATUS
 {
     DWORD dwError;
 
-    DWORD percentComplete;
+    DWORD dwPercentComplete;
 
     time_t startTime;
     time_t endTime;
