@@ -52,5 +52,15 @@ typedef struct _LW_TASK_DB_CONTEXT
 
     sqlite3* pDbHandle;
 
-} LW_TASK_DB_CONTEXT, *PLW_TASK_DB_CONTEXT;
+    sqlite3_stmt* pQueryTaskTypeCountStmt;
+    sqlite3_stmt* pQueryTaskTypes;
+
+} LW_TASK_DB_CONTEXT;
+
+typedef struct _LW_TASK_DB_GLOBALS
+{
+    pthread_rwlock_t  mutex;
+    pthread_rwlock_t* pMutex;
+
+} LW_TASK_DB_GLOBALS, *PLW_TASK_DB_GLOBALS;
 

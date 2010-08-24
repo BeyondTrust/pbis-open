@@ -50,11 +50,6 @@
 // db.c
 
 DWORD
-LwTaskDbOpen(
-    PLW_TASK_DB_CONTEXT* ppDbContext
-    );
-
-DWORD
 LwTaskDbCreateTables(
     PLW_TASK_DB_CONTEXT pDbContext
     );
@@ -64,7 +59,3 @@ LwTaskDbAddDefaultEntries(
     PLW_TASK_DB_CONTEXT pDbContext
     );
 
-VOID
-LwTaskDbClose(
-    PLW_TASK_DB_CONTEXT pDbContext
-    );

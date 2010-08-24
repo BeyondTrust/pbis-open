@@ -47,9 +47,28 @@
 #ifndef __TASKREPOSITORY_H__
 #define __TASKREPOSITORY_H__
 
+typedef struct _LW_TASK_DB_CONTEXT *PLW_TASK_DB_CONTEXT;
+
 DWORD
 LwTaskRepositoryInit(
     VOID
+    );
+
+DWORD
+LwTaskDbOpen(
+    PLW_TASK_DB_CONTEXT* ppDbContext
+    );
+
+DWORD
+LwTaskDbGetTypes(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PDWORD*             ppdwTaskTypeArray,
+    PDWORD              pdwNumTaskTypes
+    );
+
+VOID
+LwTaskDbClose(
+    PLW_TASK_DB_CONTEXT pDbContext
     );
 
 VOID

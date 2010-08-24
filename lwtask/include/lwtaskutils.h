@@ -214,6 +214,36 @@ extern pthread_mutex_t gLwTaskLogLock;
        bInLock = FALSE; \
     }
 
+#define LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, mutex) \
+    if (!bInLock) { \
+       int thr_err = pthread_rwlock_rdlock(mutex); \
+       if (thr_err) { \
+           LW_TASK_LOG_ERROR("Failed to acquire shared lock on rw mutex. Aborting program"); \
+           abort(); \
+       } \
+       bInLock = TRUE; \
+    }
+
+#define LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, mutex) \
+    if (!bInLock) { \
+       int thr_err = pthread_rwlock_wrlock(mutex); \
+       if (thr_err) { \
+           LW_TASK_LOG_ERROR("Failed to acquire exclusive lock on rw mutex. Aborting program"); \
+           abort(); \
+       } \
+       bInLock = TRUE; \
+    }
+
+#define LW_TASK_UNLOCK_RWMUTEX(bInLock, mutex) \
+    if (bInLock) { \
+       int thr_err = pthread_rwlock_unlock(mutex); \
+       if (thr_err) { \
+           LW_TASK_LOG_ERROR("Failed to unlock rw mutex. Aborting program"); \
+           abort(); \
+       } \
+       bInLock = FALSE; \
+    }
+
 DWORD
 LwTaskInitLogging(
     PCSTR              pszProgramName,

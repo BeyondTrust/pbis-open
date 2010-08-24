@@ -48,3 +48,8 @@
  */
 
 #include "includes.h"
+
+LW_TASK_DB_GLOBALS gLwTaskDbGlobals =
+{
+    .pMutex = NULL
+};

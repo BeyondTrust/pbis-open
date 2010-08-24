@@ -77,6 +77,13 @@ LwTaskDbAddArgsForTaskType(
     LW_TASK_ARG_FLAG    dwArgFlags
     );
 
+static
+DWORD
+LwTaskDbGetTaskTypeCount_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PDWORD              pdwNumTaskTypes
+    );
+
 DWORD
 LwTaskDbOpen(
     PLW_TASK_DB_CONTEXT* ppDbContext
@@ -436,11 +443,173 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwTaskDbGetTypes(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PDWORD*             ppdwTaskTypeArray,
+    PDWORD              pdwNumTaskTypes
+    )
+{
+    DWORD   dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PDWORD  pdwTaskTypeArray = NULL;
+    PDWORD  pCursor = NULL;
+    DWORD   dwNumTaskTypes = 0;
+    sqlite3_stmt* pSqlStatement = NULL;
+
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskDbGlobals.mutex);
+
+    dwError = LwTaskDbGetTaskTypeCount_inlock(pDbContext, &dwNumTaskTypes);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!dwNumTaskTypes)
+    {
+        goto done;
+    }
+
+    dwError = LwAllocateMemory(
+                    sizeof(DWORD) * dwNumTaskTypes,
+                    (PVOID*)&pdwTaskTypeArray);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pCursor = pdwTaskTypeArray;
+
+    if (!pDbContext->pQueryTaskTypeCountStmt)
+    {
+        PCSTR pszQueryTemplate = "SELECT " LW_TASK_DB_COL_TASK_TYPE \
+                                 " FROM "  LW_TASK_TYPES_TABLE;
+
+        dwError = sqlite3_prepare_v2(
+                        pDbContext->pDbHandle,
+                        pszQueryTemplate,
+                        -1,
+                        &pDbContext->pQueryTaskTypes,
+                        NULL);
+            BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(
+                            dwError,
+                            pDbContext->pDbHandle);
+    }
+
+    pSqlStatement = pDbContext->pQueryTaskTypes;
+
+    while ((dwError = sqlite3_step(pSqlStatement)) == SQLITE_ROW)
+    {
+        DWORD dwNumAttrs = sqlite3_column_count(pSqlStatement);
+        if (dwNumAttrs != 1)
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        *pCursor++ = sqlite3_column_int(pSqlStatement, 0);
+    }
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+done:
+
+    *ppdwTaskTypeArray = pdwTaskTypeArray;
+    *pdwNumTaskTypes   = dwNumTaskTypes;
+
+cleanup:
+
+    if (pDbContext->pQueryTaskTypes)
+    {
+        sqlite3_reset(pDbContext->pQueryTaskTypes);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskDbGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    *ppdwTaskTypeArray = NULL;
+    *pdwNumTaskTypes   = 0;
+
+    LW_SAFE_FREE_MEMORY(pdwTaskTypeArray);
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskDbGetTaskTypeCount_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PDWORD              pdwNumTaskTypes
+    )
+{
+    DWORD   dwError = 0;
+    DWORD   dwNumTaskTypes = 0;
+    sqlite3_stmt* pSqlStatement = NULL;
+
+    if (!pDbContext->pQueryTaskTypeCountStmt)
+    {
+        PCSTR pszQueryTemplate = "SELECT count(*) FROM " LW_TASK_TYPES_TABLE;
+
+        dwError = sqlite3_prepare_v2(
+                        pDbContext->pDbHandle,
+                        pszQueryTemplate,
+                        -1,
+                        &pDbContext->pQueryTaskTypeCountStmt,
+                        NULL);
+            BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(
+                            dwError,
+                            pDbContext->pDbHandle);
+    }
+
+    pSqlStatement = pDbContext->pQueryTaskTypeCountStmt;
+
+    if ((dwError = sqlite3_step(pSqlStatement) == SQLITE_ROW))
+    {
+        if (sqlite3_column_count(pSqlStatement) != 1)
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        dwNumTaskTypes = sqlite3_column_int(pSqlStatement, 0);
+
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+    *pdwNumTaskTypes   = dwNumTaskTypes;
+
+cleanup:
+
+    if (pDbContext->pQueryTaskTypeCountStmt)
+    {
+        sqlite3_reset(pDbContext->pQueryTaskTypeCountStmt);
+    }
+
+    return dwError;
+
+error:
+
+    *pdwNumTaskTypes   = 0;
+
+    goto cleanup;
+}
+
 VOID
 LwTaskDbClose(
     PLW_TASK_DB_CONTEXT pDbContext
     )
 {
+    if (pDbContext->pQueryTaskTypes)
+    {
+        sqlite3_finalize(pDbContext->pQueryTaskTypes);
+    }
+
+    if (pDbContext->pQueryTaskTypeCountStmt)
+    {
+        sqlite3_finalize(pDbContext->pQueryTaskTypeCountStmt);
+    }
+
     if (pDbContext->pDbHandle)
     {
         sqlite3_close(pDbContext->pDbHandle);

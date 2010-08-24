@@ -53,7 +53,37 @@ LwTaskSrvGetTypes(
     PDWORD  pdwNumTypes
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD  dwError = 0;
+    PDWORD pdwTaskTypeArray = NULL;
+    DWORD  dwNumTypes = 0;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbGetTypes(pDbContext, &pdwTaskTypeArray, &dwNumTypes);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *ppdwTaskTypeArray = pdwTaskTypeArray;
+    *pdwNumTypes = dwNumTypes;
+
+cleanup:
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    return dwError;
+
+error:
+
+    *ppdwTaskTypeArray = NULL;
+    *pdwNumTypes = 0;
+
+    LW_SAFE_FREE_MEMORY(pdwTaskTypeArray);
+
+    goto cleanup;
 }
 
 DWORD

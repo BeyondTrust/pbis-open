@@ -58,6 +58,9 @@ DWORD LwTaskRepositoryInit(VOID)
     BOOLEAN bCleanupDb = FALSE;
     PLW_TASK_DB_CONTEXT pDbContext = NULL;
 
+    pthread_rwlock_init(&gLwTaskDbGlobals.mutex, NULL);
+    gLwTaskDbGlobals.pMutex = &gLwTaskDbGlobals.mutex;
+
     dwError = LwCheckFileTypeExists(
                     pszDbDirPath,
                     LWFILE_DIRECTORY,
@@ -124,6 +127,14 @@ error:
     goto cleanup;
 }
 
-VOID LwTaskRepositoryShutdown(VOID)
+VOID
+LwTaskRepositoryShutdown(
+    VOID
+    )
 {
+    if (gLwTaskDbGlobals.pMutex)
+    {
+        pthread_rwlock_destroy(&gLwTaskDbGlobals.mutex);
+        gLwTaskDbGlobals.pMutex = NULL;
+    }
 }
