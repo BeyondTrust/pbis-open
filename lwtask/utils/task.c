@@ -28,123 +28,91 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        lwtaskclient.h
+ *        syslog.c
  *
  * Abstract:
  *
  *        Likewise Task System (LWTASK)
  *
- *        Client API
+ *        Task API
+ *
+ *        Utilities
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *
  */
 
-#ifndef __LW_TASK_CLIENT_H__
-#define __LW_TASK_CLIENT_H__
-
-typedef struct _LW_TASK_CLIENT_CONNECTION* PLW_TASK_CLIENT_CONNECTION;
-
-DWORD
-LwTaskOpenServer(
-    PLW_TASK_CLIENT_CONNECTION* ppConnection
-    );
-
-DWORD
-LwTaskGetTypes(
-    LW_TASK_TYPE* pTaskTypes,
-    PDWORD        pdwNumTypes
-    );
-
-DWORD
-LwTaskGetSchema(
-    LW_TASK_TYPE       taskType,
-    PLW_TASK_ARG_INFO* ppArgInfoArray,
-    PDWORD             pdwNumArgInfo
-    );
-
-DWORD
-LwTaskEnum(
-    LW_TASK_TYPE   taskType,
-    PLW_TASK_INFO* pTaskInfoArray,
-    PDWORD         pdwNumTaskInfos,
-    PDWORD         pdwResume
-    );
-
-DWORD
-LwTaskCreate(
-    LW_TASK_TYPE taskType,
-    PLW_TASK_ARG pArgArray,
-    DWORD        dwNumArgs
-    );
-
-DWORD
-LwTaskStart(
-    PCSTR pszTaskId
-    );
-
-DWORD
-LwTaskGetStatus(
-    PCSTR           pszTaskId,
-    PLW_TASK_STATUS pStatus
-    );
-
-DWORD
-LwTaskStop(
-    PCSTR pszTaskId
-    );
-
-DWORD
-LwTaskDelete(
-    PCSTR pszTaskId
-    );
+#include "includes.h"
 
 VOID
 LwTaskFreeTaskInfoArray(
     PLW_TASK_INFO pTaskInfoArray,
     DWORD         dwNumTaskInfos
-    );
+    )
+{
+    if (pTaskInfoArray)
+    {
+        DWORD iTaskInfos = 0;
+
+        for (; iTaskInfos < dwNumTaskInfos; iTaskInfos++)
+        {
+            PLW_TASK_INFO pTaskInfo = &pTaskInfoArray[iTaskInfos];
+            DWORD         iArg = 0;
+
+            if (pTaskInfo->pArgArray)
+            {
+                for (; iArg < pTaskInfo->dwNumArgs; iArg++)
+                {
+                    PLW_TASK_ARG pTaskArg = &pTaskInfo->pArgArray[iArg];
+
+                    if (pTaskArg->pszArgName)
+                    {
+                        LwFreeMemory(pTaskArg->pszArgName);
+                    }
+                    if (pTaskArg->pszArgValue)
+                    {
+                        LwFreeMemory(pTaskArg->pszArgValue);
+                    }
+                }
+
+                LwFreeMemory(pTaskInfo->pArgArray);
+            }
+
+            if (pTaskInfo->pszTaskId)
+            {
+                LwFreeMemory(pTaskInfo->pszTaskId);
+            }
+        }
+
+        LwFreeMemory(pTaskInfoArray);
+    }
+}
 
 VOID
 LwTaskFreeArgInfoArray(
     PLW_TASK_ARG_INFO pArgInfoArray,
     DWORD             dwNumArgInfos
-    );
+    )
+{
+    if (pArgInfoArray)
+    {
+        DWORD iArgInfo = 0;
 
-DWORD
-LwTaskSetLogLevel(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    LW_TASK_LOG_LEVEL          logLevel
-    );
+        for (; iArgInfo < dwNumArgInfos; iArgInfo++)
+        {
+            PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
 
-DWORD
-LwTaskSetLogInfo(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    PLW_TASK_LOG_INFO          pLogInfo
-    );
+            if (pArgInfo->pszArgName)
+            {
+                LwFreeMemory(pArgInfo->pszArgName);
+            }
+        }
 
-DWORD
-LwTaskGetLogInfo(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    PLW_TASK_LOG_INFO*         ppLogInfo
-    );
-
-DWORD
-LwTaskGetPid(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    pid_t*                     pPid
-    );
-
-DWORD
-LwTaskCloseServer(
-    PLW_TASK_CLIENT_CONNECTION pConnection
-    );
-
-#endif /* __LW_TASK_CLIENT_H__ */
-
+        LwFreeMemory(pArgInfoArray);
+    }
+}

@@ -8,7 +8,8 @@ liblwtaskutils_la_SOURCES = \
     logger.c        \
     lwtaskloginfo.c \
     sysfuncs.c      \
-    syslog.c
+    syslog.c        \
+    task.c
 
 liblwtaskutils_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

@@ -70,4 +70,34 @@ typedef DWORD LW_TASK_ARG_FLAG;
 #define LW_TASK_ARG_FLAG_MANDATORY 0x00000001
 #define LW_TASK_ARG_FLAG_PERSIST   0x00000002
 
+typedef struct _LW_TASK_STATUS
+{
+    DWORD  dwError;
+
+    double percentComplete;
+
+} LW_TASK_STATUS, *PLW_TASK_STATUS;
+
+typedef struct _LW_TASK_ARG
+{
+    PSTR pszArgName;
+    PSTR pszArgValue;
+
+} LW_TASK_ARG, *PLW_TASK_ARG;
+
+typedef struct _LW_TASK_ARG_INFO
+{
+    PSTR             pszArgName;
+    LW_TASK_ARG_TYPE argType;
+    LW_TASK_ARG_FLAG dwFlags;
+
+} LW_TASK_ARG_INFO, *PLW_TASK_ARG_INFO;
+
+typedef struct _LW_TASK_INFO
+{
+    PSTR             pszTaskId;
+    PLW_TASK_ARG     pArgArray;
+    DWORD            dwNumArgs;
+} LW_TASK_INFO, *PLW_TASK_INFO;
+
 #endif /* __LWTASKDEF_H__ */
