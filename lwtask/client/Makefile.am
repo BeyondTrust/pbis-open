@@ -3,7 +3,8 @@ lib_LTLIBRARIES = liblwtaskclient.la
 liblwtaskclient_la_SOURCES = \
     connect.c \
     logging.c \
-    pid.c
+    pid.c     \
+    task.c
 
 liblwtaskclient_la_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1   \

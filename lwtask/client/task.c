@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,76 +28,30 @@
  * license@likewisesoftware.com
  */
 
-
-
-/*
- * Copyright (C) Likewise Software. All rights reserved.
- *
- * Module Name:
- *
- *        lwtaskclient.h
- *
- * Abstract:
- *
- *        Likewise Task System (LWTASK)
- *
- *        Client API
- *
- * Authors: Sriram Nambakam (snambakam@likewise.com)
- */
-
-#ifndef __LW_TASK_CLIENT_H__
-#define __LW_TASK_CLIENT_H__
-
-typedef struct _LW_TASK_CLIENT_CONNECTION* PLW_TASK_CLIENT_CONNECTION;
-
-typedef struct _LW_TASK_STATUS
-{
-    DWORD  dwError;
-
-    double percentComplete;
-
-} LW_TASK_STATUS, *PLW_TASK_STATUS;
-
-typedef struct _LW_TASK_ARG
-{
-    PSTR pszArgName;
-    PSTR pszArgValue;
-
-} LW_TASK_ARG, *PLW_TASK_ARG;
-
-typedef struct _LW_TASK_ARG_INFO
-{
-    PSTR             pszArgName;
-    LW_TASK_ARG_TYPE argType;
-    LW_TASK_ARG_FLAG dwFlags;
-
-} LW_TASK_ARG_INFO, *PLW_TASK_ARG_INFO;
-
-typedef struct _LW_TASK_INFO
-{
-    PSTR             pszTaskId;
-    PLW_TASK_ARG     pArgArray;
-    DWORD            dwNumArgs;
-} LW_TASK_INFO, *PLW_TASK_INFO;
-
-DWORD
-LwTaskOpenServer(
-    PLW_TASK_CLIENT_CONNECTION* ppConnection
-    );
+#include "includes.h"
 
 DWORD
 LwTaskGetTypes(
     LW_TASK_TYPE* pTaskTypes,
     PDWORD        pdwNumTypes
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskGetSchema(
     LW_TASK_TYPE       taskType,
     PLW_TASK_ARG_INFO* ppArgInfoArray,
     PDWORD             pdwNumArgInfo
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskEnum(
@@ -105,76 +59,131 @@ LwTaskEnum(
     PLW_TASK_INFO* pTaskInfoArray,
     PDWORD         pdwNumTaskInfos,
     PDWORD         pdwResume
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskCreate(
     LW_TASK_TYPE taskType,
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskStart(
     PCSTR pszTaskId
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskGetStatus(
     PCSTR           pszTaskId,
     PLW_TASK_STATUS pStatus
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskStop(
     PCSTR pszTaskId
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 DWORD
 LwTaskDelete(
     PCSTR pszTaskId
-    );
+    )
+{
+    DWORD dwError = 0;
+
+    return dwError;
+}
 
 VOID
 LwTaskFreeTaskInfoArray(
     PLW_TASK_INFO pTaskInfoArray,
     DWORD         dwNumTaskInfos
-    );
+    )
+{
+    if (pTaskInfoArray)
+    {
+        DWORD iTaskInfos = 0;
+
+        for (; iTaskInfos < dwNumTaskInfos; iTaskInfos++)
+        {
+            PLW_TASK_INFO pTaskInfo = &pTaskInfoArray[iTaskInfos];
+            DWORD         iArg = 0;
+
+            if (pTaskInfo->pArgArray)
+            {
+                for (; iArg < pTaskInfo->dwNumArgs; iArg++)
+                {
+                    PLW_TASK_ARG pTaskArg = &pTaskInfo->pArgArray[iArg];
+
+                    if (pTaskArg->pszArgName)
+                    {
+                        LwFreeMemory(pTaskArg->pszArgName);
+                    }
+                    if (pTaskArg->pszArgValue)
+                    {
+                        LwFreeMemory(pTaskArg->pszArgValue);
+                    }
+                }
+
+                LwFreeMemory(pTaskInfo->pArgArray);
+            }
+
+            if (pTaskInfo->pszTaskId)
+            {
+                LwFreeMemory(pTaskInfo->pszTaskId);
+            }
+        }
+
+        LwFreeMemory(pTaskInfoArray);
+    }
+}
 
 VOID
 LwTaskFreeArgInfoArray(
     PLW_TASK_ARG_INFO pArgInfoArray,
     DWORD             dwNumArgInfos
-    );
+    )
+{
+    if (pArgInfoArray)
+    {
+        DWORD iArgInfo = 0;
 
-DWORD
-LwTaskSetLogLevel(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    LW_TASK_LOG_LEVEL          logLevel
-    );
+        for (; iArgInfo < dwNumArgInfos; iArgInfo++)
+        {
+            PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
 
-DWORD
-LwTaskSetLogInfo(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    PLW_TASK_LOG_INFO          pLogInfo
-    );
+            if (pArgInfo->pszArgName)
+            {
+                LwFreeMemory(pArgInfo->pszArgName);
+            }
+        }
 
-DWORD
-LwTaskGetLogInfo(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    PLW_TASK_LOG_INFO*         ppLogInfo
-    );
-
-DWORD
-LwTaskGetPid(
-    PLW_TASK_CLIENT_CONNECTION pConnection,
-    pid_t*                     pPid
-    );
-
-DWORD
-LwTaskCloseServer(
-    PLW_TASK_CLIENT_CONNECTION pConnection
-    );
-
-#endif /* __LW_TASK_CLIENT_H__ */
+        LwFreeMemory(pArgInfoArray);
+    }
+}
 
