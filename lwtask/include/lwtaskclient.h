@@ -58,51 +58,59 @@ LwTaskOpenServer(
 
 DWORD
 LwTaskGetTypes(
-    LW_TASK_TYPE* pTaskTypes,
-    PDWORD        pdwNumTypes
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE*              pTaskTypes,
+    PDWORD                     pdwNumTypes
     );
 
 DWORD
 LwTaskGetSchema(
-    LW_TASK_TYPE       taskType,
-    PLW_TASK_ARG_INFO* ppArgInfoArray,
-    PDWORD             pdwNumArgInfo
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_ARG_INFO*         ppArgInfoArray,
+    PDWORD                     pdwNumArgInfo
     );
 
 DWORD
 LwTaskEnum(
-    LW_TASK_TYPE   taskType,
-    PLW_TASK_INFO* pTaskInfoArray,
-    PDWORD         pdwNumTaskInfos,
-    PDWORD         pdwResume
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_INFO*             pTaskInfoArray,
+    PDWORD                     pdwNumTaskInfos,
+    PDWORD                     pdwResume
     );
 
 DWORD
 LwTaskCreate(
-    LW_TASK_TYPE taskType,
-    PLW_TASK_ARG pArgArray,
-    DWORD        dwNumArgs
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_ARG               pArgArray,
+    DWORD                      dwNumArgs
     );
 
 DWORD
 LwTaskStart(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     );
 
 DWORD
 LwTaskGetStatus(
-    PCSTR           pszTaskId,
-    PLW_TASK_STATUS pStatus
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId,
+    PLW_TASK_STATUS            pStatus
     );
 
 DWORD
 LwTaskStop(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     );
 
 DWORD
 LwTaskDelete(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     );
 
 VOID

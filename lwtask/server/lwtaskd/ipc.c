@@ -29,12 +29,42 @@ LwTaskDaemonIpcGetPid(
     );
 
 static
+LWMsgStatus
+LwTaskDaemonIpcTaskStart(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcTaskStop(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcTaskDelete(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
 LWMsgDispatchSpec
 gLwTaskDaemonIpcDispatchSpec[] =
 {
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_SET_LOG_INFO, LwTaskDaemonIpcSetLogInfo),
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_LOG_INFO, LwTaskDaemonIpcGetLogInfo),
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_PID,      LwTaskDaemonIpcGetPid),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_START,        LwTaskDaemonIpcTaskStart),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_STOP,         LwTaskDaemonIpcTaskStop),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_DELETE,       LwTaskDaemonIpcTaskDelete),
     LWMSG_DISPATCH_END
 };
 
@@ -179,4 +209,55 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcTaskStart(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_START_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcTaskStop(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_STOP_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcTaskDelete(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_DELETE_FAILED;
+    pOut->data = NULL;
+
+    return status;
 }

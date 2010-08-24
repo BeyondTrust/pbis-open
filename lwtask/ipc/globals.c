@@ -46,6 +46,12 @@
 
 #include "includes.h"
 
+static LWMsgTypeSpec gLwTaskIdSpec[] =
+{
+        LWMSG_PSTR,
+        LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLwTaskStatusReplySpec[] =
 {
     /* Begin structure */
@@ -89,6 +95,15 @@ LWMsgProtocolSpec gLwTaskDaemonProtocolSpec[] =
     LWMSG_MESSAGE(LW_TASK_GET_PID,                     NULL),
     LWMSG_MESSAGE(LW_TASK_GET_PID_SUCCESS,             gLwTaskPidSpec),
     LWMSG_MESSAGE(LW_TASK_GET_PID_FAILED,              gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_START,                       gLwTaskIdSpec),
+    LWMSG_MESSAGE(LW_TASK_START_SUCCESS,               gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_START_FAILED,                gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_STOP,                        gLwTaskIdSpec),
+    LWMSG_MESSAGE(LW_TASK_STOP_SUCCESS,                gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_STOP_FAILED,                 gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_DELETE,                      gLwTaskIdSpec),
+    LWMSG_MESSAGE(LW_TASK_DELETE_SUCCESS,              gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_DELETE_FAILED,               gLwTaskStatusReplySpec),
     LWMSG_PROTOCOL_END
 };
 

@@ -32,91 +32,281 @@
 
 DWORD
 LwTaskGetTypes(
-    LW_TASK_TYPE* pTaskTypes,
-    PDWORD        pdwNumTypes
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE*              pTaskTypes,
+    PDWORD                     pdwNumTypes
     )
 {
     DWORD dwError = 0;
 
+    BAIL_ON_INVALID_POINTER(pConnection);
+
+cleanup:
+
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskGetSchema(
-    LW_TASK_TYPE       taskType,
-    PLW_TASK_ARG_INFO* ppArgInfoArray,
-    PDWORD             pdwNumArgInfo
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_ARG_INFO*         ppArgInfoArray,
+    PDWORD                     pdwNumArgInfo
     )
 {
     DWORD dwError = 0;
 
+    BAIL_ON_INVALID_POINTER(pConnection);
+
+cleanup:
+
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskEnum(
-    LW_TASK_TYPE   taskType,
-    PLW_TASK_INFO* pTaskInfoArray,
-    PDWORD         pdwNumTaskInfos,
-    PDWORD         pdwResume
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_INFO*             pTaskInfoArray,
+    PDWORD                     pdwNumTaskInfos,
+    PDWORD                     pdwResume
     )
 {
     DWORD dwError = 0;
 
+    BAIL_ON_INVALID_POINTER(pConnection);
+
+cleanup:
+
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskCreate(
-    LW_TASK_TYPE taskType,
-    PLW_TASK_ARG pArgArray,
-    DWORD        dwNumArgs
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    LW_TASK_TYPE               taskType,
+    PLW_TASK_ARG               pArgArray,
+    DWORD                      dwNumArgs
     )
 {
     DWORD dwError = 0;
 
+    BAIL_ON_INVALID_POINTER(pConnection);
+
+cleanup:
+
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskStart(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     )
 {
     DWORD dwError = 0;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    BAIL_ON_INVALID_POINTER(pConnection);
+    BAIL_ON_INVALID_STRING(pszTaskId);
+
+    dwError = LwTaskContextAcquireCall(pConnection, &pCall);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    in.tag = LW_TASK_START;
+    in.data = (PVOID)pszTaskId;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    switch (out.tag)
+    {
+        case LW_TASK_START_SUCCESS:
+
+            break;
+
+        case LW_TASK_START_FAILED:
+
+            dwError = ((PLW_TASK_STATUS_REPLY) out.data)->dwError;
+
+            break;
+
+        default:
+
+            dwError = LwErrnoToWin32Error(EINVAL);
+
+            break;
+    }
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
 
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskGetStatus(
-    PCSTR           pszTaskId,
-    PLW_TASK_STATUS pStatus
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId,
+    PLW_TASK_STATUS            pStatus
     )
 {
     DWORD dwError = 0;
 
+    BAIL_ON_INVALID_POINTER(pConnection);
+    BAIL_ON_INVALID_STRING(pszTaskId);
+
+cleanup:
+
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskStop(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     )
 {
     DWORD dwError = 0;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    BAIL_ON_INVALID_POINTER(pConnection);
+    BAIL_ON_INVALID_STRING(pszTaskId);
+
+    dwError = LwTaskContextAcquireCall(pConnection, &pCall);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    in.tag = LW_TASK_STOP;
+    in.data = (PVOID)pszTaskId;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    switch (out.tag)
+    {
+        case LW_TASK_STOP_SUCCESS:
+
+            break;
+
+        case LW_TASK_STOP_FAILED:
+
+            dwError = ((PLW_TASK_STATUS_REPLY) out.data)->dwError;
+
+            break;
+
+        default:
+
+            dwError = LwErrnoToWin32Error(EINVAL);
+
+            break;
+    }
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
 
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
 LwTaskDelete(
-    PCSTR pszTaskId
+    PLW_TASK_CLIENT_CONNECTION pConnection,
+    PCSTR                      pszTaskId
     )
 {
     DWORD dwError = 0;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    BAIL_ON_INVALID_POINTER(pConnection);
+    BAIL_ON_INVALID_STRING(pszTaskId);
+
+    dwError = LwTaskContextAcquireCall(pConnection, &pCall);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    in.tag = LW_TASK_DELETE;
+    in.data = (PVOID)pszTaskId;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    switch (out.tag)
+    {
+        case LW_TASK_DELETE_SUCCESS:
+
+            break;
+
+        case LW_TASK_DELETE_FAILED:
+
+            dwError = ((PLW_TASK_STATUS_REPLY) out.data)->dwError;
+
+            break;
+
+        default:
+
+            dwError = LwErrnoToWin32Error(EINVAL);
+
+            break;
+    }
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
 
     return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 
