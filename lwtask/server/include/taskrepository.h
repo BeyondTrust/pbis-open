@@ -94,6 +94,12 @@ LwTaskDbGetTasks(
     PDWORD              pdwNumTasks
     );
 
+DWORD
+LwTaskDbDeleteTask(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    DWORD               dwTaskId
+    );
+
 VOID
 LwTaskDbFreeTaskArray(
     PLW_SRV_DB_TASK pTaskArray,

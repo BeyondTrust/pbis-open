@@ -296,10 +296,50 @@ LwTaskSrvStop(
 
 DWORD
 LwTaskSrvDelete(
-    PCSTR pszTaskId
+    PCSTR pszTaskname
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    PLW_SRV_TASK pTask = NULL;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+    BOOLEAN bInLock = FALSE;
+
+    dwError = LwTaskSrvTreeFind(pszTaskname, &pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    dwError = LwTaskDbDeleteTask(pDbContext, pTask->dwTaskId);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeRemove(
+                            gLwTaskSrvGlobals.pTaskCollection,
+                            &pTask->uuid));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD

@@ -64,6 +64,8 @@ typedef struct _LW_TASK_DB_CONTEXT
     sqlite3_stmt* pQueryTaskArgCountStmt;
     sqlite3_stmt* pQueryTaskArgs;
 
+    sqlite3_stmt* pDelTaskStmt;
+
 } LW_TASK_DB_CONTEXT;
 
 typedef struct _LW_TASK_DB_GLOBALS

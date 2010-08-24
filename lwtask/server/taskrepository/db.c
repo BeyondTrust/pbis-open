@@ -1187,6 +1187,56 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwTaskDbDeleteTask(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    DWORD               dwTaskId
+    )
+{
+    DWORD dwError = 0;
+
+    if (!pDbContext->pDelTaskStmt)
+    {
+        PCSTR pszDelQueryTemplate =
+                        "DELETE FROM " LW_TASK_TABLE \
+                        " WHERE " LW_TASK_DB_COL_TASK_ID " = ?1;";
+
+        dwError = sqlite3_prepare_v2(
+                    pDbContext->pDbHandle,
+                    pszDelQueryTemplate,
+                    -1,
+                    &pDbContext->pDelTaskStmt,
+                    NULL);
+        BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(dwError, pDbContext->pDbHandle);
+    }
+
+    dwError = sqlite3_bind_int(
+                    pDbContext->pDelTaskStmt,
+                    1,
+                    dwTaskId);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pDelTaskStmt);
+
+    dwError = sqlite3_step(pDbContext->pDelTaskStmt);
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pDelTaskStmt);
+
+cleanup:
+
+    if (pDbContext->pDelTaskStmt)
+    {
+        sqlite3_reset(pDbContext->pDelTaskStmt);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
 VOID
 LwTaskDbFreeTaskArray(
     PLW_SRV_DB_TASK pTaskArray,
@@ -1256,6 +1306,11 @@ LwTaskDbClose(
     if (pDbContext->pQueryTaskArgs)
     {
         sqlite3_finalize(pDbContext->pQueryTaskArgs);
+    }
+
+    if (pDbContext->pDelTaskStmt)
+    {
+        sqlite3_finalize(pDbContext->pDelTaskStmt);
     }
 
     if (pDbContext->pDbHandle)
