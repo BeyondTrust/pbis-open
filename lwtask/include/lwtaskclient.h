@@ -86,7 +86,8 @@ LwTaskCreate(
     PLW_TASK_CLIENT_CONNECTION pConnection,
     LW_TASK_TYPE               taskType,
     PLW_TASK_ARG               pArgArray,
-    DWORD                      dwNumArgs
+    DWORD                      dwNumArgs,
+    PSTR*                      ppszTaskId
     );
 
 DWORD

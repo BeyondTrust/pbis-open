@@ -261,7 +261,7 @@ LWMsgProtocolSpec gLwTaskDaemonProtocolSpec[] =
     LWMSG_MESSAGE(LW_TASK_GET_STATUS_SUCCESS,          gLwTaskStatusSpec),
     LWMSG_MESSAGE(LW_TASK_GET_STATUS_FAILED,           gLwTaskStatusReplySpec),
     LWMSG_MESSAGE(LW_TASK_CREATE,                      gLwTaskCreateSpec),
-    LWMSG_MESSAGE(LW_TASK_CREATE_SUCCESS,              gLwTaskStatusReplySpec),
+    LWMSG_MESSAGE(LW_TASK_CREATE_SUCCESS,              gLwTaskIdSpec),
     LWMSG_MESSAGE(LW_TASK_CREATE_FAILED,               gLwTaskStatusReplySpec),
     LWMSG_MESSAGE(LW_TASK_GET_SCHEMA,                  gLwTaskGetSchemaSpec),
     LWMSG_MESSAGE(LW_TASK_GET_SCHEMA_SUCCESS,          gLwTaskSchemaReplySpec),

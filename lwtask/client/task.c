@@ -403,7 +403,8 @@ LwTaskCreate(
     PLW_TASK_CLIENT_CONNECTION pConnection,
     LW_TASK_TYPE               taskType,
     PLW_TASK_ARG               pArgArray,
-    DWORD                      dwNumArgs
+    DWORD                      dwNumArgs,
+    PSTR*                      ppszTaskId
     )
 {
     DWORD dwError = 0;
@@ -416,9 +417,11 @@ LwTaskCreate(
         .dwNumArgs = dwNumArgs,
         .pArgArray = pArgArray
     };
+    PSTR pszTaskId = NULL;
 
     BAIL_ON_INVALID_POINTER(pConnection);
     BAIL_ON_INVALID_POINTER(pArgArray);
+    BAIL_ON_INVALID_POINTER(ppszTaskId);
 
     dwError = LwTaskContextAcquireCall(pConnection, &pCall);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -432,6 +435,9 @@ LwTaskCreate(
     switch (out.tag)
     {
         case LW_TASK_CREATE_SUCCESS:
+
+            dwError = LwAllocateString((PSTR)out.data, &pszTaskId);
+            BAIL_ON_LW_TASK_ERROR(dwError);
 
             break;
 
@@ -449,6 +455,8 @@ LwTaskCreate(
     }
     BAIL_ON_LW_TASK_ERROR(dwError);
 
+    *ppszTaskId = pszTaskId;
+
 cleanup:
 
     if (pCall)
@@ -460,6 +468,13 @@ cleanup:
     return dwError;
 
 error:
+
+    if (ppszTaskId)
+    {
+        *ppszTaskId = NULL;
+    }
+
+    LW_SAFE_FREE_MEMORY(pszTaskId);
 
     goto cleanup;
 }

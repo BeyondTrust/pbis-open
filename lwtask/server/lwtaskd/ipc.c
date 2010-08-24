@@ -531,6 +531,7 @@ LwTaskDaemonIpcCreate(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
     PLW_TASK_IPC_CREATE_ARGS pCreateArgs = NULL;
+    PSTR  pszTaskId = NULL;
 
     BAIL_ON_INVALID_POINTER(pIn->data);
 
@@ -544,7 +545,8 @@ LwTaskDaemonIpcCreate(
     dwError = LwTaskSrvCreate(
                     pCreateArgs->taskType,
                     pCreateArgs->pArgArray,
-                    pCreateArgs->dwNumArgs);
+                    pCreateArgs->dwNumArgs,
+                    &pszTaskId);
 
     /* Transmit failure to client but do not bail out of dispatch loop */
     if (dwError)
@@ -558,9 +560,14 @@ LwTaskDaemonIpcCreate(
     }
 
     pOut->tag = LW_TASK_CREATE_SUCCESS;
-    pOut->data = pStatusResponse;
+    pOut->data = pszTaskId;
+    pszTaskId = NULL;
 
 cleanup:
+
+    LW_SAFE_FREE_MEMORY(pStatusResponse);
+
+    LW_SAFE_FREE_MEMORY(pszTaskId);
 
     return status;
 

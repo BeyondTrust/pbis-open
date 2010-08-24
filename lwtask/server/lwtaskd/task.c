@@ -95,7 +95,8 @@ DWORD
 LwTaskSrvCreate(
     LW_TASK_TYPE taskType,
     PLW_TASK_ARG pArgArray,
-    DWORD        dwNumArgs
+    DWORD        dwNumArgs,
+    PSTR*        ppszTaskId
     )
 {
     return ERROR_CALL_NOT_IMPLEMENTED;
