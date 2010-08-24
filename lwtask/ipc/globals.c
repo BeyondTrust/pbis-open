@@ -104,6 +104,10 @@ static LWMsgTypeSpec gLwTaskStatusSpec[] =
     LWMSG_MEMBER_UINT32(LW_TASK_STATUS, dwError),
     /* 32-bit unsigned integer */
     LWMSG_MEMBER_UINT32(LW_TASK_STATUS, percentComplete),
+    /* 32-bit unsigned integer */
+    LWMSG_MEMBER_UINT32(LW_TASK_STATUS, startTime),
+    /* 32-bit unsigned integer */
+    LWMSG_MEMBER_UINT32(LW_TASK_STATUS, endTime),
     /* End structure */
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END

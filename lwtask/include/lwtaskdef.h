@@ -76,6 +76,9 @@ typedef struct _LW_TASK_STATUS
 
     DWORD percentComplete;
 
+    time_t startTime;
+    time_t endTime;
+
 } LW_TASK_STATUS, *PLW_TASK_STATUS;
 
 typedef struct _LW_TASK_ARG
