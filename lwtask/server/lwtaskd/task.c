@@ -69,6 +69,34 @@ LwTaskSrvTreeRelease(
 
 static
 DWORD
+LwTaskSrvCreateMigrateTask(
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs,
+    PSTR*        ppszTaskname
+    );
+
+static
+DWORD
+LwTaskBuildMigrateArgArray(
+    PLW_TASK_ARG_INFO pArgInfoArray,
+    DWORD             dwNumArgInfos,
+    PLW_TASK_ARG      pArgArray,
+    DWORD             dwNumArgs,
+    PLW_TASK_ARG*     ppArgArray,
+    PDWORD            pdwNumArgs
+    );
+
+static
+PLW_TASK_ARG
+LwTaskFindArg(
+    PCSTR        pszArgName,
+    DWORD        dwArgType,
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
+    );
+
+static
+DWORD
 LwTaskSrvCreateInternal(
     PCSTR         pszTaskName,
     DWORD         dwTaskId,
@@ -385,11 +413,288 @@ LwTaskSrvCreate(
     LW_TASK_TYPE taskType,
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs,
-    PSTR*        ppszTaskId
+    PSTR*        ppszTaskname
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    PSTR  pszTaskname = NULL;
+
+    switch (taskType)
+    {
+        case LW_TASK_TYPE_MIGRATE:
+
+            dwError = LwTaskSrvCreateMigrateTask(
+                                pArgArray,
+                                dwNumArgs,
+                                &pszTaskname);
+
+            break;
+
+        default:
+
+            dwError = ERROR_NOT_SUPPORTED;
+    }
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *ppszTaskname = pszTaskname;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppszTaskname = NULL;
+
+    if (pszTaskname)
+    {
+        LwFreeMemory(pszTaskname);
+    }
+
+    goto cleanup;
 }
+
+static
+DWORD
+LwTaskSrvCreateMigrateTask(
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs,
+    PSTR*        ppszTaskname
+    )
+{
+    DWORD dwError = 0;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+    PLW_TASK_ARG_INFO   pArgInfoArray = NULL;
+    DWORD               dwNumArgInfos = 0;
+    uuid_t              uuid;
+    CHAR                szUUID[37];
+    DWORD               dwTaskId = 0;
+    DWORD               iArg = 0;
+    PLW_SRV_TASK        pTask = NULL;
+    PLW_TASK_ARG        pArgArrayLocal = NULL;
+    DWORD               dwNumArgsLocal = 0;
+    BOOLEAN             bInLock = FALSE;
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbGetSchema(
+                    pDbContext,
+                    LW_TASK_TYPE_MIGRATE,
+                    &pArgInfoArray,
+                    &dwNumArgInfos);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskBuildMigrateArgArray(
+                    pArgInfoArray,
+                    dwNumArgInfos,
+                    pArgArray,
+                    dwNumArgs,
+                    &pArgArrayLocal,
+                    &dwNumArgsLocal);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    memset(szUUID, 0, sizeof(szUUID));
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, szUUID);
+
+    // TODO: Start a transaction
+
+    dwError = LwTaskDbCreateTask(
+                    pDbContext,
+                    &szUUID[0],
+                    LW_TASK_TYPE_MIGRATE,
+                    &dwTaskId);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskSrvCreateInternal(
+                    &szUUID[0],
+                    dwTaskId,
+                    &pArgArrayLocal,
+                    &dwNumArgsLocal,
+                    &pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    for (; iArg < pTask->dwNumArgs; iArg++)
+    {
+        PLW_TASK_ARG pArg = &pTask->pArgArray[iArg];
+
+        dwError = LwTaskDbCreateTaskArg(
+                        pDbContext,
+                        pTask->dwTaskId,
+                        pArg->pszArgName,
+                        pArg->pszArgValue,
+                        pArg->dwArgType);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeAdd(
+                            gLwTaskSrvGlobals.pTaskCollection,
+                            &pTask->uuid,
+                            pTask));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pTask = NULL;
+
+cleanup:
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
+    }
+
+    if (pArgInfoArray)
+    {
+        LwTaskFreeArgInfoArray(pArgInfoArray, dwNumArgInfos);
+    }
+
+    if (pArgArrayLocal)
+    {
+        LwTaskFreeArgArray(pArgArrayLocal, dwNumArgsLocal);
+    }
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskBuildMigrateArgArray(
+    PLW_TASK_ARG_INFO pArgInfoArray,
+    DWORD             dwNumArgInfos,
+    PLW_TASK_ARG      pArgArray,
+    DWORD             dwNumArgs,
+    PLW_TASK_ARG*     ppArgArray,
+    PDWORD            pdwNumArgs
+    )
+{
+    DWORD        dwError    = 0;
+    PLW_TASK_ARG pArgArray2 = NULL;
+    DWORD        dwNumArgs2 = 0;
+    DWORD        iArg2      = 0;
+    DWORD        iArgInfo   = 0;
+
+    for(; iArgInfo < dwNumArgInfos; iArgInfo++)
+    {
+        PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
+
+        if (LwIsSetFlag(pArgInfo->dwFlags,LW_TASK_ARG_FLAG_MANDATORY) &&
+            LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_PERSIST))
+        {
+            PLW_TASK_ARG pArg = LwTaskFindArg(
+                                    pArgInfo->pszArgName,
+                                    pArgInfo->argType,
+                                    pArgArray,
+                                    dwNumArgs);
+
+            // TODO: Check for empty string also?
+            if (!pArg || !pArg->pszArgValue)
+            {
+                dwError = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LW_TASK_ERROR(dwError);
+            }
+
+            dwNumArgs2++;
+        }
+    }
+
+    if (dwNumArgs2)
+    {
+        dwError = LwAllocateMemory(
+                        sizeof(LW_TASK_ARG) * dwNumArgs2,
+                        (PVOID*)&pArgArray2);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        for(iArgInfo = 0; iArgInfo < dwNumArgInfos; iArgInfo++)
+        {
+            PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
+            PLW_TASK_ARG pArg2 = &pArgArray2[iArg2++];
+
+            if (LwIsSetFlag(pArgInfo->dwFlags,LW_TASK_ARG_FLAG_MANDATORY) &&
+                LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_PERSIST))
+            {
+                PLW_TASK_ARG pArg = LwTaskFindArg(
+                                        pArgInfo->pszArgName,
+                                        pArgInfo->argType,
+                                        pArgArray,
+                                        dwNumArgs);
+
+                dwError = LwAllocateString(
+                                    pArg->pszArgName,
+                                    &pArg2->pszArgName);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+
+                dwError = LwAllocateString(
+                                    pArg->pszArgValue,
+                                    &pArg2->pszArgValue);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+
+                pArg2->dwArgType = pArg->dwArgType;
+            }
+        }
+    }
+
+    *ppArgArray = pArgArray2;
+    *pdwNumArgs = dwNumArgs2;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppArgArray = NULL;
+    *pdwNumArgs = 0;
+
+    if (pArgArray2)
+    {
+        LwTaskFreeArgArray(pArgArray2, dwNumArgs2);
+    }
+
+    goto cleanup;
+}
+
+static
+PLW_TASK_ARG
+LwTaskFindArg(
+    PCSTR        pszArgName,
+    DWORD        dwArgType,
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
+    )
+{
+    DWORD iArg = 0;
+    PLW_TASK_ARG pCandidate = NULL;
+
+    for (; iArg < dwNumArgs; iArg++)
+    {
+        PLW_TASK_ARG pArg = &pArgArray[iArg];
+
+        if (    !strcmp(pArg->pszArgName, pszArgName) &&
+                (dwArgType == pArg->dwArgType))
+        {
+            pCandidate = pArg;
+            break;
+        }
+    }
+
+    return pCandidate;
+}
+
 
 DWORD
 LwTaskSrvGetSchema(

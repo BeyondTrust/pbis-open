@@ -94,6 +94,14 @@ LwTaskDbGetSchemaCount_inlock(
 
 static
 DWORD
+LwTaskDbGetTaskId_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PCSTR               pszTaskname,
+    PDWORD              pdwTaskId
+    );
+
+static
+DWORD
 LwTaskDbGetTaskCount_inlock(
     PLW_TASK_DB_CONTEXT pDbContext,
     PDWORD              pdwNumTasks
@@ -818,6 +826,241 @@ error:
 }
 
 DWORD
+LwTaskDbCreateTask(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PCSTR               pszTaskname,
+    LW_TASK_TYPE        taskType,
+    PDWORD              pdwTaskId
+    )
+{
+    DWORD   dwError  = 0;
+    BOOLEAN bInLock  = FALSE;
+    DWORD   dwTaskId = 0;
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskDbGlobals.mutex);
+
+    if (!pDbContext->pInsertTaskStmt)
+    {
+        PCSTR pszDelQueryTemplate =
+                        "INSERT INTO " LW_TASK_TABLE "("            \
+                                       LW_TASK_DB_COL_TASK_NAME "," \
+                                       LW_TASK_DB_COL_TASK_TYPE ")" \
+                        " VALUES (?1,?2)";
+
+        dwError = sqlite3_prepare_v2(
+                    pDbContext->pDbHandle,
+                    pszDelQueryTemplate,
+                    -1,
+                    &pDbContext->pInsertTaskStmt,
+                    NULL);
+        BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(dwError, pDbContext->pDbHandle);
+    }
+
+    dwError = sqlite3_bind_text(
+                    pDbContext->pInsertTaskStmt,
+                    1,
+                    pszTaskname,
+                    -1,
+                    SQLITE_TRANSIENT);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskStmt);
+
+    dwError = sqlite3_bind_int(
+                    pDbContext->pInsertTaskStmt,
+                    2,
+                    taskType);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskStmt);
+
+    dwError = sqlite3_step(pDbContext->pInsertTaskStmt);
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskStmt);
+
+    dwError = LwTaskDbGetTaskId_inlock(pDbContext, pszTaskname, &dwTaskId);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *pdwTaskId = dwTaskId;
+
+cleanup:
+
+    if (pDbContext->pInsertTaskStmt)
+    {
+        sqlite3_reset(pDbContext->pInsertTaskStmt);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskDbGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    *pdwTaskId = 0;
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskDbGetTaskId_inlock(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PCSTR               pszTaskname,
+    PDWORD              pdwTaskId
+    )
+{
+    DWORD   dwError = 0;
+    DWORD   dwTaskId = 0;
+    sqlite3_stmt* pSqlStatement = NULL;
+
+    if (!pDbContext->pQueryTaskId)
+    {
+        PCSTR pszQueryTemplate = "SELECT " LW_TASK_DB_COL_TASK_ID \
+                                 " FROM  " LW_TASK_TABLE \
+                                 " WHERE " LW_TASK_DB_COL_TASK_NAME " = ?1";
+
+        dwError = sqlite3_prepare_v2(
+                        pDbContext->pDbHandle,
+                        pszQueryTemplate,
+                        -1,
+                        &pDbContext->pQueryTaskId,
+                        NULL);
+        BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(dwError, pDbContext->pDbHandle);
+    }
+
+    pSqlStatement = pDbContext->pQueryTaskId;
+
+    dwError = sqlite3_bind_text(
+                    pDbContext->pQueryTaskId,
+                    1,
+                    pszTaskname,
+                    -1,
+                    SQLITE_TRANSIENT);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pQueryTaskId);
+
+    if ((dwError = sqlite3_step(pSqlStatement) == SQLITE_ROW))
+    {
+        if (sqlite3_column_count(pSqlStatement) != 1)
+        {
+            dwError = LW_ERROR_DATA_ERROR;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        dwTaskId = sqlite3_column_int(pSqlStatement, 0);
+
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+    *pdwTaskId = dwTaskId;
+
+cleanup:
+
+    if (pDbContext->pQueryTaskId)
+    {
+        sqlite3_reset(pDbContext->pQueryTaskId);
+    }
+
+    return dwError;
+
+error:
+
+    *pdwTaskId = 0;
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskDbCreateTaskArg(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    DWORD               dwTaskId,
+    PCSTR               pszArgName,
+    PCSTR               pszArgValue,
+    DWORD               dwArgType
+    )
+{
+    DWORD   dwError  = 0;
+    BOOLEAN bInLock  = FALSE;
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskDbGlobals.mutex);
+
+    if (!pDbContext->pInsertTaskArgStmt)
+    {
+        PCSTR pszQueryTemplate =
+                        "INSERT INTO " LW_TASK_ARGS_TABLE "(" \
+                        LW_TASK_DB_COL_TASK_ID   "," \
+                        LW_TASK_DB_COL_ARG_TYPE  "," \
+                        LW_TASK_DB_COL_ARG_NAME  "," \
+                        LW_TASK_DB_COL_ARG_VALUE ")" \
+                        " VALUES (?1,?2,?3,?4)";
+
+        dwError = sqlite3_prepare_v2(
+                    pDbContext->pDbHandle,
+                    pszQueryTemplate,
+                    -1,
+                    &pDbContext->pInsertTaskArgStmt,
+                    NULL);
+        BAIL_ON_LW_TASK_DB_SQLITE_ERROR_DB(dwError, pDbContext->pDbHandle);
+    }
+
+    dwError = sqlite3_bind_int(
+                    pDbContext->pInsertTaskArgStmt,
+                    1,
+                    dwTaskId);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskArgStmt);
+
+    dwError = sqlite3_bind_int(
+                    pDbContext->pInsertTaskArgStmt,
+                    2,
+                    dwArgType);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskArgStmt);
+
+    dwError = sqlite3_bind_text(
+                    pDbContext->pInsertTaskArgStmt,
+                    3,
+                    pszArgName,
+                    -1,
+                    SQLITE_TRANSIENT);
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskArgStmt);
+
+    if (pszArgValue)
+    {
+        dwError = sqlite3_bind_text(
+                        pDbContext->pInsertTaskArgStmt,
+                        4,
+                        pszArgValue,
+                        -1,
+                        SQLITE_TRANSIENT);
+    }
+    else
+    {
+        dwError = sqlite3_bind_null(pDbContext->pInsertTaskArgStmt, 4);
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskArgStmt);
+
+    dwError = sqlite3_step(pDbContext->pInsertTaskArgStmt);
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = LW_ERROR_SUCCESS;
+    }
+    BAIL_ON_LW_TASK_DB_SQLITE_ERROR_STMT(dwError, pDbContext->pInsertTaskArgStmt);
+
+cleanup:
+
+    if (pDbContext->pInsertTaskArgStmt)
+    {
+        sqlite3_reset(pDbContext->pInsertTaskArgStmt);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskDbGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
 LwTaskDbGetTasks(
     PLW_TASK_DB_CONTEXT pDbContext,
     PLW_SRV_DB_TASK*    ppTaskArray,
@@ -1031,6 +1274,7 @@ LwTaskDbGetTaskArgs_inlock(
     if (!pDbContext->pQueryTaskArgs)
     {
         PCSTR pszQueryTemplate = "SELECT " LW_TASK_DB_COL_ARG_NAME "," \
+                                           LW_TASK_DB_COL_ARG_TYPE "," \
                                            LW_TASK_DB_COL_ARG_VALUE    \
                                  " FROM  " LW_TASK_ARGS_TABLE          \
                                  " WHERE " LW_TASK_DB_COL_TASK_ID " = ?1";
@@ -1075,7 +1319,9 @@ LwTaskDbGetTaskArgs_inlock(
             BAIL_ON_LW_TASK_ERROR(dwError);
         }
 
-        pszStringVal = sqlite3_column_text(pSqlStatement, 1);
+        pArg->dwArgType = sqlite3_column_int(pSqlStatement, 1);
+
+        pszStringVal = sqlite3_column_text(pSqlStatement, 2);
         if (pszStringVal)
         {
             dwError = LwAllocateString(
@@ -1316,6 +1562,21 @@ LwTaskDbClose(
     if (pDbContext->pDelTaskStmt)
     {
         sqlite3_finalize(pDbContext->pDelTaskStmt);
+    }
+
+    if (pDbContext->pInsertTaskStmt)
+    {
+        sqlite3_finalize(pDbContext->pInsertTaskStmt);
+    }
+
+    if (pDbContext->pInsertTaskArgStmt)
+    {
+        sqlite3_finalize(pDbContext->pInsertTaskArgStmt);
+    }
+
+    if (pDbContext->pQueryTaskId)
+    {
+        sqlite3_finalize(pDbContext->pQueryTaskId);
     }
 
     if (pDbContext->pDbHandle)

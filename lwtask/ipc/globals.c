@@ -117,9 +117,9 @@ static LWMsgTypeSpec gLwTaskArgSpec[] =
 {
     /* Begin structure */
     LWMSG_STRUCT_BEGIN(LW_TASK_ARG),
-    /* 32-bit unsigned integer */
     LWMSG_MEMBER_PSTR(LW_TASK_ARG, pszArgName),
     /* 32-bit unsigned integer */
+    LWMSG_MEMBER_UINT32(LW_TASK_ARG, dwArgType),
     LWMSG_MEMBER_PSTR(LW_TASK_ARG, pszArgValue),
     /* End structure */
     LWMSG_STRUCT_END,

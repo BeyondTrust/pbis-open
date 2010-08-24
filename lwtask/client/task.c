@@ -323,6 +323,8 @@ LwTaskEnum(
                                             &pTargetTaskArg->pszArgName);
                             BAIL_ON_LW_TASK_ERROR(dwError);
 
+                            pTargetTaskArg->dwArgType = pSrcTaskArg->dwArgType;
+
                             if (pSrcTaskArg->pszArgValue)
                             {
                                 dwError = LwAllocateString(

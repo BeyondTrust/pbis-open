@@ -83,8 +83,9 @@ typedef struct _LW_TASK_STATUS
 
 typedef struct _LW_TASK_ARG
 {
-    PSTR pszArgName;
-    PSTR pszArgValue;
+    PSTR  pszArgName;
+    DWORD dwArgType;
+    PSTR  pszArgValue;
 
 } LW_TASK_ARG, *PLW_TASK_ARG;
 

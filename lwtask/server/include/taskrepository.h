@@ -88,6 +88,23 @@ LwTaskDbGetSchema(
     );
 
 DWORD
+LwTaskDbCreateTask(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PCSTR               pszTaskname,
+    LW_TASK_TYPE        taskType,
+    PDWORD              pdwTaskId
+    );
+
+DWORD
+LwTaskDbCreateTaskArg(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    DWORD               dwTaskId,
+    PCSTR               pszArgName,
+    PCSTR               pszArgValue,
+    DWORD               dwArgType
+    );
+
+DWORD
 LwTaskDbGetTasks(
     PLW_TASK_DB_CONTEXT pDbContext,
     PLW_SRV_DB_TASK*    ppTaskArray,
