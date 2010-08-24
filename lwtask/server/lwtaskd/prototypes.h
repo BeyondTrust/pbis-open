@@ -137,7 +137,9 @@ LwTaskSrvGetTypes(
 
 DWORD
 LwTaskSrvStart(
-    PCSTR pszTaskId
+    PCSTR        pszTaskId,
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
     );
 
 DWORD

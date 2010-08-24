@@ -467,13 +467,21 @@ error:
 DWORD
 LwTaskStart(
     PLW_TASK_CLIENT_CONNECTION pConnection,
-    PCSTR                      pszTaskId
+    PCSTR                      pszTaskId,
+    PLW_TASK_ARG               pArgArray,
+    DWORD                      dwNumArgs
     )
 {
     DWORD dwError = 0;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
+    LW_TASK_IPC_START_ARGS startArgs =
+    {
+        .pszTaskId = pszTaskId,
+        .pArgArray = pArgArray,
+        .dwNumArgs = dwNumArgs
+    };
 
     BAIL_ON_INVALID_POINTER(pConnection);
     BAIL_ON_INVALID_STRING(pszTaskId);
@@ -482,7 +490,7 @@ LwTaskStart(
     BAIL_ON_LW_TASK_ERROR(dwError);
 
     in.tag = LW_TASK_START;
-    in.data = (PVOID)pszTaskId;
+    in.data = &startArgs;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
     BAIL_ON_LW_TASK_ERROR(dwError);

@@ -71,6 +71,13 @@ typedef struct _LW_TASK_IPC_CREATE_ARGS
     PLW_TASK_ARG pArgArray;
 } LW_TASK_IPC_CREATE_ARGS, *PLW_TASK_IPC_CREATE_ARGS;
 
+typedef struct _LW_TASK_IPC_START_ARGS
+{
+    PCSTR        pszTaskId;
+    DWORD        dwNumArgs;
+    PLW_TASK_ARG pArgArray;
+} LW_TASK_IPC_START_ARGS, *PLW_TASK_IPC_START_ARGS;
+
 typedef struct _LW_TASK_IPC_GET_SCHEMA
 {
     LW_TASK_TYPE taskType;

@@ -272,6 +272,7 @@ LwTaskDaemonIpcTaskStart(
 {
     DWORD dwError = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    PLW_TASK_IPC_START_ARGS pRequest = NULL;
     PLW_TASK_STATUS_REPLY pStatusResponse = NULL;
 
     BAIL_ON_INVALID_POINTER(pIn->data);
@@ -281,7 +282,12 @@ LwTaskDaemonIpcTaskStart(
                     (PVOID*)&pStatusResponse);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    dwError = LwTaskSrvStart((PCSTR)pIn->data);
+    pRequest = (PLW_TASK_IPC_START_ARGS)pIn->data;
+
+    dwError = LwTaskSrvStart(
+                    pRequest->pszTaskId,
+                    pRequest->pArgArray,
+                    pRequest->dwNumArgs);
 
     /* Transmit failure to client but do not bail out of dispatch loop */
     if (dwError)

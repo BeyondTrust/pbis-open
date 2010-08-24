@@ -92,7 +92,9 @@ LwTaskCreate(
 DWORD
 LwTaskStart(
     PLW_TASK_CLIENT_CONNECTION pConnection,
-    PCSTR                      pszTaskId
+    PCSTR                      pszTaskId,
+    PLW_TASK_ARG               pArgArray,
+    DWORD                      dwNumArgs
     );
 
 DWORD

@@ -58,7 +58,9 @@ LwTaskSrvGetTypes(
 
 DWORD
 LwTaskSrvStart(
-    PCSTR pszTaskId
+    PCSTR        pszTaskId,
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
     )
 {
     return ERROR_CALL_NOT_IMPLEMENTED;

@@ -39,10 +39,29 @@
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Includes
+ *        Structures
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
+
+typedef struct _LW_TASK
+{
+    LONG   refCount;
+
+    uuid_t uuid;
+
+    pthread_mutex_t  mutex;
+    pthread_mutex_t* pMutex;
+
+    PLW_TASK_ARG pArgArray;
+    DWORD        dwNumArgs;
+
+    DWORD        dwError;
+
+    time_t       start;
+    time_t       end;
+
+} LW_TASK, *PLW_TASK;
 
 typedef struct _LW_TASKD_GLOBALS
 {

@@ -137,6 +137,20 @@ static LWMsgTypeSpec gLwTaskCreateSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLwTaskStartSpec[] =
+{
+    /* Begin structure */
+    LWMSG_STRUCT_BEGIN(LW_TASK_IPC_START_ARGS),
+    LWMSG_MEMBER_PSTR(LW_TASK_IPC_START_ARGS, pszTaskId),
+    /* 32-bit unsigned integer */
+    LWMSG_MEMBER_UINT32(LW_TASK_IPC_START_ARGS, dwNumArgs),
+    LWMSG_MEMBER_POINTER(LW_TASK_IPC_START_ARGS, pArgArray, LWMSG_TYPESPEC(gLwTaskArgSpec)),
+    LWMSG_ATTR_LENGTH_MEMBER(LW_TASK_IPC_START_ARGS, dwNumArgs),
+    /* End structure */
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLwTaskArgInfoSpec[] =
 {
     /* Begin structure */
@@ -231,7 +245,7 @@ LWMsgProtocolSpec gLwTaskDaemonProtocolSpec[] =
     LWMSG_MESSAGE(LW_TASK_GET_PID,                     NULL),
     LWMSG_MESSAGE(LW_TASK_GET_PID_SUCCESS,             gLwTaskPidSpec),
     LWMSG_MESSAGE(LW_TASK_GET_PID_FAILED,              gLwTaskStatusReplySpec),
-    LWMSG_MESSAGE(LW_TASK_START,                       gLwTaskIdSpec),
+    LWMSG_MESSAGE(LW_TASK_START,                       gLwTaskStartSpec),
     LWMSG_MESSAGE(LW_TASK_START_SUCCESS,               gLwTaskStatusReplySpec),
     LWMSG_MESSAGE(LW_TASK_START_FAILED,                gLwTaskStatusReplySpec),
     LWMSG_MESSAGE(LW_TASK_STOP,                        gLwTaskIdSpec),

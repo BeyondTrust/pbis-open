@@ -48,6 +48,8 @@
 #include <config.h>
 #include <lwtasksystem.h>
 
+#include <uuid/uuid.h>
+
 #include <lwdef.h>
 #include <lwerror.h>
 #include <lwmem.h>

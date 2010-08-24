@@ -18,5 +18,6 @@ lwtaskd_LDADD = \
     $(top_builddir)/server/taskrepository/libtaskrepository.la \
     $(top_builddir)/utils/liblwtaskutils.la \
     $(top_builddir)/logging_r/liblwtasklog_r.la \
-    $(top_builddir)/ipc/liblwtaskipc.la
+    $(top_builddir)/ipc/liblwtaskipc.la \
+    @UUID_LIBS@
 
