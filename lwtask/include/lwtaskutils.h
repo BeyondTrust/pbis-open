@@ -298,3 +298,10 @@ LwTaskFreeArgInfoArray(
     DWORD             dwNumArgInfos
     );
 
+VOID
+LwTaskFreeArgArray(
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
+    );
+
+

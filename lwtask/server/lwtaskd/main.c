@@ -92,6 +92,9 @@ main(
 {
     DWORD dwError = 0;
 
+    pthread_rwlock_init(&gLwTaskSrvGlobals.mutex, NULL);
+    gLwTaskSrvGlobals.pMutex = &gLwTaskSrvGlobals.mutex;
+
     dwError = LwTaskSrvParseArgs(argc, argv);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
@@ -132,6 +135,9 @@ main(
     dwError = LwTaskMigrateInit();
     BAIL_ON_LW_TASK_ERROR(dwError);
 
+    dwError = LwTaskSrvInit();
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
     dwError = LwTaskSrvStartListenThread();
     BAIL_ON_LW_TASK_ERROR(dwError);
 
@@ -147,6 +153,8 @@ cleanup:
 
     LwTaskSrvStopListenThread();
 
+    LwTaskSrvShutdown();
+
     LwTaskMigrateShutdown();
 
     LwTaskRepositoryShutdown();
@@ -160,6 +168,11 @@ cleanup:
     #ifdef ENABLE_PIDFILE
     LwTaskSrvRemovePidFile();
     #endif
+
+    if (gLwTaskSrvGlobals.pMutex)
+    {
+        pthread_rwlock_destroy(&gLwTaskSrvGlobals.mutex);
+    }
 
     return dwError;
 
@@ -449,11 +462,11 @@ LwTaskSrvShouldStartAsDaemon(
     BOOLEAN bResult = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    LW_TASK_LOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskSrvGlobals.mutex);
 
     bResult = (gLwTaskSrvGlobals.dwStartAsDaemon != 0);
 
-    LW_TASK_UNLOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 
     return bResult;
 }
@@ -532,11 +545,11 @@ LwTaskSrvGetProcessExitCode(
     DWORD dwError = 0;
     BOOLEAN bInLock = FALSE;
 
-    LW_TASK_LOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskSrvGlobals.mutex);
 
     *pdwExitCode = gLwTaskSrvGlobals.dwExitCode;
 
-    LW_TASK_UNLOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 
     return dwError;
 }
@@ -548,11 +561,11 @@ LwTaskSrvSetProcessExitCode(
 {
     BOOLEAN bInLock = FALSE;
 
-    LW_TASK_LOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
 
     gLwTaskSrvGlobals.dwExitCode = dwExitCode;
 
-    LW_TASK_UNLOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 }
 
 #ifdef ENABLE_PIDFILE
@@ -698,11 +711,11 @@ LwTaskSrvShouldProcessExit(
     BOOLEAN bExit = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    LW_TASK_LOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskSrvGlobals.mutex);
 
     bExit = gLwTaskSrvGlobals.bProcessShouldExit;
 
-    LW_TASK_UNLOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 
     return bExit;
 }
@@ -714,9 +727,9 @@ LwTaskSrvSetProcessToExit(
 {
     BOOLEAN bInLock = FALSE;
 
-    LW_TASK_LOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
 
     gLwTaskSrvGlobals.bProcessShouldExit = bExit;
 
-    LW_TASK_UNLOCK_MUTEX(bInLock, &gLwTaskSrvGlobals.lock);
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 }

@@ -62,25 +62,10 @@ LwTaskFreeTaskInfoArray(
         for (; iTaskInfos < dwNumTaskInfos; iTaskInfos++)
         {
             PLW_TASK_INFO pTaskInfo = &pTaskInfoArray[iTaskInfos];
-            DWORD         iArg = 0;
 
             if (pTaskInfo->pArgArray)
             {
-                for (; iArg < pTaskInfo->dwNumArgs; iArg++)
-                {
-                    PLW_TASK_ARG pTaskArg = &pTaskInfo->pArgArray[iArg];
-
-                    if (pTaskArg->pszArgName)
-                    {
-                        LwFreeMemory(pTaskArg->pszArgName);
-                    }
-                    if (pTaskArg->pszArgValue)
-                    {
-                        LwFreeMemory(pTaskArg->pszArgValue);
-                    }
-                }
-
-                LwFreeMemory(pTaskInfo->pArgArray);
+                LwTaskFreeArgArray(pTaskInfo->pArgArray, pTaskInfo->dwNumArgs);
             }
 
             if (pTaskInfo->pszTaskId)
@@ -116,3 +101,33 @@ LwTaskFreeArgInfoArray(
         LwFreeMemory(pArgInfoArray);
     }
 }
+
+VOID
+LwTaskFreeArgArray(
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
+    )
+{
+    if (pArgArray)
+    {
+        DWORD iArg = 0;
+
+        for (; iArg < dwNumArgs; iArg++)
+        {
+            PLW_TASK_ARG pArg = &pArgArray[iArg];
+
+            if (pArg->pszArgName)
+            {
+                LwFreeMemory(pArg->pszArgName);
+            }
+
+            if (pArg->pszArgValue)
+            {
+                LwFreeMemory(pArg->pszArgName);
+            }
+        }
+
+        LwFreeMemory(pArgArray);
+    }
+}
+

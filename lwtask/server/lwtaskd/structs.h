@@ -44,11 +44,13 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
-typedef struct _LW_TASK
+typedef struct _LW_SRV_TASK
 {
     LONG   refCount;
 
     uuid_t uuid;
+
+    DWORD  dwTaskId;
 
     pthread_mutex_t  mutex;
     pthread_mutex_t* pMutex;
@@ -61,11 +63,13 @@ typedef struct _LW_TASK
     time_t       start;
     time_t       end;
 
-} LW_TASK, *PLW_TASK;
+} LW_SRV_TASK, *PLW_SRV_TASK;
 
 typedef struct _LW_TASKD_GLOBALS
 {
-    pthread_mutex_t    lock;                       /* MT safety               */
+    pthread_rwlock_t   mutex;                      /* MT safety               */
+    pthread_rwlock_t*  pMutex;
+
     DWORD              dwStartAsDaemon;            /* Should start as daemon  */
     LW_TASK_LOG_TARGET logTarget;                  /* where are we logging    */
     LW_TASK_LOG_LEVEL  maxAllowedLogLevel;         /* How much logging ?      */
@@ -76,5 +80,8 @@ typedef struct _LW_TASKD_GLOBALS
     LWMsgContext*      pContext;
     LWMsgProtocol*     pProtocol;
     LWMsgServer*       pServer;
+
+
+    PLWRTL_RB_TREE     pTaskCollection;
 
 } LW_TASKD_GLOBALS, *PLW_TASKD_GLOBALS;

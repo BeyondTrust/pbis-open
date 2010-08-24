@@ -47,6 +47,119 @@
 
 #include "includes.h"
 
+static
+int
+LwTaskSrvTreeCompare(
+    PVOID pKey1,
+    PVOID pKey2
+    );
+
+static
+VOID
+LwTaskSrvTreeRelease(
+    PVOID pTask
+    );
+
+static
+DWORD
+LwTaskSrvCreateInternal(
+    PCSTR         pszTaskName,
+    DWORD         dwTaskId,
+    PLW_TASK_ARG* ppArgArray,
+    PDWORD        pdwNumArgs,
+    PLW_SRV_TASK* ppTask
+    );
+
+static
+VOID
+LwTaskSrvFree(
+    PLW_SRV_TASK pTask
+    );
+
+DWORD
+LwTaskSrvInit(
+    VOID
+    )
+{
+    DWORD   dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+    PLW_SRV_DB_TASK pTaskArray = NULL;
+    DWORD           dwNumTasks = 0;
+    DWORD           iTask = 0;
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeCreate(
+                        &LwTaskSrvTreeCompare,
+                        NULL,
+                        &LwTaskSrvTreeRelease,
+                        &gLwTaskSrvGlobals.pTaskCollection));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbGetTasks(pDbContext, &pTaskArray, &dwNumTasks);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    for (; iTask < dwNumTasks; iTask++)
+    {
+        PLW_SRV_DB_TASK pTask = &pTaskArray[iTask];
+
+        dwError = LwTaskSrvCreateInternal(
+                    pTask->pszTaskName,
+                    pTask->dwTaskId,
+                    &pTask->pArgArray,
+                    &pTask->dwNumArgs,
+                    NULL);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (pTaskArray)
+    {
+        LwTaskDbFreeTaskArray(pTaskArray, dwNumTasks);
+    }
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+int
+LwTaskSrvTreeCompare(
+    PVOID pKey1,
+    PVOID pKey2
+    )
+{
+    uuid_t* pUUID1 = (uuid_t*)pKey1;
+    uuid_t* pUUID2 = (uuid_t*)pKey2;
+
+    return uuid_compare(*pUUID1, *pUUID2);
+}
+
+static
+VOID
+LwTaskSrvTreeRelease(
+    PVOID pTask
+    )
+{
+    LwTaskSrvRelease((PLW_SRV_TASK)pTask);
+}
+
 DWORD
 LwTaskSrvGetTypes(
     PDWORD* ppdwTaskTypeArray,
@@ -189,4 +302,111 @@ LwTaskSrvEnum(
     )
 {
     return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+static
+DWORD
+LwTaskSrvCreateInternal(
+    PCSTR         pszTaskName,
+    DWORD         dwTaskId,
+    PLW_TASK_ARG* ppArgArray,
+    PDWORD        pdwNumArgs,
+    PLW_SRV_TASK* ppTask
+    )
+{
+    DWORD dwError = 0;
+    PLW_SRV_TASK pTask = NULL;
+
+    dwError = LwAllocateMemory(sizeof(LW_SRV_TASK), (PVOID*)&pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pTask->refCount = 1;
+
+    pthread_mutex_init(&pTask->mutex, NULL);
+    pTask->pMutex = &pTask->mutex;
+
+    if (uuid_parse((PSTR)pszTaskName, pTask->uuid) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pTask->dwTaskId = dwTaskId;
+
+    pTask->pArgArray = *ppArgArray;
+    *ppArgArray      = NULL;
+    pTask->dwNumArgs = *pdwNumArgs;
+    *pdwNumArgs      = 0;
+
+    if (ppTask)
+    {
+        *ppTask = pTask;
+        pTask = NULL;
+    }
+
+cleanup:
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
+    }
+
+    return dwError;
+
+error:
+
+    if (ppTask)
+    {
+        *ppTask = NULL;
+    }
+
+    goto cleanup;
+}
+
+VOID
+LwTaskSrvRelease(
+    PLW_SRV_TASK pTask
+    )
+{
+    if (InterlockedDecrement(&pTask->refCount) == 0)
+    {
+        LwTaskSrvFree(pTask);
+    }
+}
+
+static
+VOID
+LwTaskSrvFree(
+    PLW_SRV_TASK pTask
+    )
+{
+    if (pTask->pMutex)
+    {
+        pthread_mutex_destroy(&pTask->mutex);
+        pTask->pMutex = NULL;
+    }
+
+    if (pTask->pArgArray)
+    {
+        LwTaskFreeArgArray(pTask->pArgArray, pTask->dwNumArgs);
+    }
+
+    LwFreeMemory(pTask);
+}
+
+VOID
+LwTaskSrvShutdown(
+    VOID
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    if (gLwTaskSrvGlobals.pTaskCollection)
+    {
+        LwRtlRBTreeFree(gLwTaskSrvGlobals.pTaskCollection);
+    }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
 }

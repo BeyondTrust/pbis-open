@@ -50,6 +50,8 @@
 
 #include <uuid/uuid.h>
 
+#include <lw/base.h>
+
 #include <lwdef.h>
 #include <lwerror.h>
 #include <lwmem.h>

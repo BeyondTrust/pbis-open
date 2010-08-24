@@ -130,6 +130,11 @@ LwTaskSrvStopProcess(
 // task.c
 
 DWORD
+LwTaskSrvInit(
+    VOID
+    );
+
+DWORD
 LwTaskSrvGetTypes(
     PDWORD* ppdwTaskTypeArray,
     PDWORD  pdwNumTypes
@@ -181,3 +186,14 @@ LwTaskSrvEnum(
     PLW_TASK_INFO* ppTaskInfoArray,
     PDWORD         pdwResume
     );
+
+VOID
+LwTaskSrvRelease(
+    PLW_SRV_TASK pTask
+    );
+
+VOID
+LwTaskSrvShutdown(
+    VOID
+    );
+

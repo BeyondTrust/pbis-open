@@ -48,7 +48,7 @@
 
 LW_TASKD_GLOBALS gLwTaskSrvGlobals =
 {
-    .lock               = PTHREAD_MUTEX_INITIALIZER,
+    .pMutex             = NULL,
     .dwStartAsDaemon    = FALSE,
     .logTarget          = LW_TASK_LOG_TARGET_DISABLED,
     .maxAllowedLogLevel = LW_TASK_LOG_LEVEL_ERROR,
@@ -57,5 +57,6 @@ LW_TASKD_GLOBALS gLwTaskSrvGlobals =
     .dwExitCode         = 0,
     .pContext           = NULL,
     .pProtocol          = NULL,
-    .pServer            = NULL
+    .pServer            = NULL,
+    .pTaskCollection    = NULL
 };

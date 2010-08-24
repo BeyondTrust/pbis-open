@@ -49,6 +49,19 @@
 
 typedef struct _LW_TASK_DB_CONTEXT *PLW_TASK_DB_CONTEXT;
 
+typedef struct _LW_SRV_DB_TASK
+{
+    PSTR         pszTaskName;
+
+    DWORD        dwTaskId;
+
+    LW_TASK_TYPE taskType;
+
+    PLW_TASK_ARG pArgArray;
+    DWORD        dwNumArgs;
+
+} LW_SRV_DB_TASK, *PLW_SRV_DB_TASK;
+
 DWORD
 LwTaskRepositoryInit(
     VOID
@@ -72,6 +85,19 @@ LwTaskDbGetSchema(
     LW_TASK_TYPE        taskType,
     PLW_TASK_ARG_INFO*  ppArgInfoArray,
     PDWORD              pdwNumArgInfos
+    );
+
+DWORD
+LwTaskDbGetTasks(
+    PLW_TASK_DB_CONTEXT pDbContext,
+    PLW_SRV_DB_TASK*    ppTaskArray,
+    PDWORD              pdwNumTasks
+    );
+
+VOID
+LwTaskDbFreeTaskArray(
+    PLW_SRV_DB_TASK pTaskArray,
+    DWORD           dwNumTasks
     );
 
 VOID
