@@ -73,6 +73,21 @@ LwTaskDbOpen(
     );
 
 DWORD
+LwTaskDbBeginTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );
+
+DWORD
+LwTaskDbRollbackTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );
+
+DWORD
+LwTaskDbCommitTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    );
+
+DWORD
 LwTaskDbGetTypes(
     PLW_TASK_DB_CONTEXT pDbContext,
     PDWORD*             ppdwTaskTypeArray,

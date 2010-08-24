@@ -158,6 +158,109 @@ error:
 }
 
 DWORD
+LwTaskDbBeginTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszError = NULL;
+
+    dwError = sqlite3_exec(
+                    pDbContext->pDbHandle,
+                    "BEGIN",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_TASK_LOG_DEBUG(  "Sqlite3 Error (code: %u): %s",
+                        dwError,
+                        LW_SAFE_LOG_STRING(pszError));
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskDbRollbackTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszError = NULL;
+
+    dwError = sqlite3_exec(
+                    pDbContext->pDbHandle,
+                    "ROLLBACK",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_TASK_LOG_DEBUG(  "Sqlite3 Error (code: %u): %s",
+                        dwError,
+                        LW_SAFE_LOG_STRING(pszError));
+
+    if (pszError)
+    {
+
+        sqlite3_free(pszError);
+    }
+
+    goto cleanup;
+}
+
+DWORD
+LwTaskDbCommitTransaction(
+    PLW_TASK_DB_CONTEXT pDbContext
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszError = NULL;
+
+    dwError = sqlite3_exec(
+                    pDbContext->pDbHandle,
+                    "COMMIT",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    LW_TASK_LOG_DEBUG(  "Sqlite3 Error (code: %u): %s",
+                        dwError,
+                        LW_SAFE_LOG_STRING(pszError));
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+
+    goto cleanup;
+}
+
+DWORD
 LwTaskDbCreateTables(
     PLW_TASK_DB_CONTEXT pDbContext
     )

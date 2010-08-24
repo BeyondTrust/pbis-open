@@ -474,6 +474,7 @@ LwTaskSrvCreateMigrateTask(
     PLW_TASK_ARG        pArgArrayLocal = NULL;
     DWORD               dwNumArgsLocal = 0;
     BOOLEAN             bInLock = FALSE;
+    BOOLEAN             bInTransaction = FALSE;
 
     dwError = LwTaskDbOpen(&pDbContext);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -499,7 +500,10 @@ LwTaskSrvCreateMigrateTask(
     uuid_generate(uuid);
     uuid_unparse(uuid, szUUID);
 
-    // TODO: Start a transaction
+    dwError = LwTaskDbBeginTransaction(pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    bInTransaction = TRUE;
 
     dwError = LwTaskDbCreateTask(
                     pDbContext,
@@ -540,6 +544,9 @@ LwTaskSrvCreateMigrateTask(
 
     pTask = NULL;
 
+    dwError = LwTaskDbCommitTransaction(pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
 cleanup:
 
     LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
@@ -567,6 +574,11 @@ cleanup:
     return dwError;
 
 error:
+
+    if (bInTransaction)
+    {
+        LwTaskDbRollbackTransaction(pDbContext);
+    }
 
     goto cleanup;
 }
