@@ -1194,6 +1194,9 @@ LwTaskDbDeleteTask(
     )
 {
     DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+
+    LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskDbGlobals.mutex);
 
     if (!pDbContext->pDelTaskStmt)
     {
@@ -1229,6 +1232,8 @@ cleanup:
     {
         sqlite3_reset(pDbContext->pDelTaskStmt);
     }
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskDbGlobals.mutex);
 
     return dwError;
 
