@@ -146,7 +146,7 @@ static void DoBash(JoinProcessOptions *options, LWException **exc)
                 LW_CLEANUP_CTERR(exc, WritePromptFile(
                         "/etc/sysconfig/bash-prompt-screen",
                         "#!/bin/bash\n"
-                        "echo -n $'\\033'\"_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/~}\"$'\\033\\\\\\\\'\n"
+                        "echo -n $'\\033'\"_${USER}@${HOSTNAME%%.*}:${PWD/#$HOME/~}\"$'\\033\\\\'\n"
                         ));
             }
             LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/etc/sysconfig/bash-prompt-xterm", &exists));
