@@ -148,7 +148,7 @@ done:
 
 error:
 
-    if (status != NSS_STATUS_TRYAGAIN)
+    if (status != NSS_STATUS_TRYAGAIN && status != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }

@@ -231,7 +231,7 @@ error:
 
     LsaNssClearEnumUsersState(hLsaConnection, pEnumUsersState);
 
-    if (ret != NSS_STATUS_TRYAGAIN)
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
@@ -323,7 +323,10 @@ error:
         
         if ( hLsaConnection != (HANDLE)NULL)
         {
-            LsaNssCommonCloseConnection(pConnection);
+            if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
+            {
+                LsaNssCommonCloseConnection(pConnection);
+            }
         }
     }
 
@@ -394,7 +397,8 @@ cleanup:
     return ret;
 
 error:
-    if (ret != NSS_STATUS_TRYAGAIN)
+
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
@@ -449,7 +453,8 @@ cleanup:
     return ret;
 
 error:
-    if (ret != NSS_STATUS_TRYAGAIN)
+
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }

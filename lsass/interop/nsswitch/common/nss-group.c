@@ -259,7 +259,7 @@ error:
 
     LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
 
-    if (ret != NSS_STATUS_TRYAGAIN)
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
@@ -350,7 +350,7 @@ error:
     else
     {
         LsaNssClearEnumGroupsState(hLsaConnection, pEnumGroupsState);
-        if (ret != NSS_STATUS_TRYAGAIN)
+        if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
         {
             LsaNssCommonCloseConnection(pConnection);
         }
@@ -425,7 +425,7 @@ cleanup:
 
 error:
 
-    if (ret != NSS_STATUS_TRYAGAIN)
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
@@ -487,7 +487,7 @@ cleanup:
 
 error:
 
-    if (ret != NSS_STATUS_TRYAGAIN)
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
@@ -575,7 +575,7 @@ error:
 
     LW_SAFE_FREE_MEMORY(pGidNewResult);
 
-    if (ret != NSS_STATUS_TRYAGAIN)
+    if (ret != NSS_STATUS_TRYAGAIN && ret != NSS_STATUS_NOTFOUND)
     {
         LsaNssCommonCloseConnection(pConnection);
     }
