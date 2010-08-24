@@ -92,6 +92,7 @@ LwTaskSrvInit(
     BOOLEAN bInLock = FALSE;
     PLW_TASK_DB_CONTEXT pDbContext = NULL;
     PLW_SRV_DB_TASK pTaskArray = NULL;
+    PLW_SRV_TASK    pSrvTask   = NULL;
     DWORD           dwNumTasks = 0;
     DWORD           iTask = 0;
 
@@ -115,16 +116,36 @@ LwTaskSrvInit(
     {
         PLW_SRV_DB_TASK pTask = &pTaskArray[iTask];
 
+        if (pSrvTask)
+        {
+            LwTaskSrvRelease(pSrvTask);
+            pSrvTask = NULL;
+        }
+
         dwError = LwTaskSrvCreateInternal(
                     pTask->pszTaskName,
                     pTask->dwTaskId,
                     &pTask->pArgArray,
                     &pTask->dwNumArgs,
-                    NULL);
+                    &pSrvTask);
         BAIL_ON_LW_TASK_ERROR(dwError);
+
+        dwError = LwNtStatusToWin32Error(
+                        LwRtlRBTreeAdd(
+                                gLwTaskSrvGlobals.pTaskCollection,
+                                &pSrvTask->uuid,
+                                pSrvTask));
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        pSrvTask = NULL;
     }
 
 cleanup:
+
+    if (pSrvTask)
+    {
+        LwTaskSrvRelease(pSrvTask);
+    }
 
     if (pTaskArray)
     {
@@ -423,18 +444,9 @@ LwTaskSrvCreateInternal(
     pTask->dwNumArgs = *pdwNumArgs;
     *pdwNumArgs      = 0;
 
-    if (ppTask)
-    {
-        *ppTask = pTask;
-        pTask = NULL;
-    }
+    *ppTask = pTask;
 
 cleanup:
-
-    if (pTask)
-    {
-        LwTaskSrvRelease(pTask);
-    }
 
     return dwError;
 
@@ -443,6 +455,11 @@ error:
     if (ppTask)
     {
         *ppTask = NULL;
+    }
+
+    if (pTask)
+    {
+        LwTaskSrvRelease(pTask);
     }
 
     goto cleanup;
