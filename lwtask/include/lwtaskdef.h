@@ -72,9 +72,9 @@ typedef DWORD LW_TASK_ARG_FLAG;
 
 typedef struct _LW_TASK_STATUS
 {
-    DWORD  dwError;
+    DWORD dwError;
 
-    double percentComplete;
+    DWORD percentComplete;
 
 } LW_TASK_STATUS, *PLW_TASK_STATUS;
 

@@ -59,7 +59,7 @@ LwTaskOpenServer(
 DWORD
 LwTaskGetTypes(
     PLW_TASK_CLIENT_CONNECTION pConnection,
-    LW_TASK_TYPE*              pTaskTypes,
+    LW_TASK_TYPE**             ppTaskTypes,
     PDWORD                     pdwNumTypes
     );
 
@@ -75,8 +75,9 @@ DWORD
 LwTaskEnum(
     PLW_TASK_CLIENT_CONNECTION pConnection,
     LW_TASK_TYPE               taskType,
-    PLW_TASK_INFO*             pTaskInfoArray,
+    PLW_TASK_INFO*             ppTaskInfoArray,
     PDWORD                     pdwNumTaskInfos,
+    PDWORD                     pdwNumTotalTaskInfos,
     PDWORD                     pdwResume
     );
 

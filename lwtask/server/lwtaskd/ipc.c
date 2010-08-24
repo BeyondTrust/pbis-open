@@ -56,6 +56,51 @@ LwTaskDaemonIpcTaskDelete(
     );
 
 static
+LWMsgStatus
+LwTaskDaemonIpcGetTypes(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcGetStatus(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcCreate(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcGetSchema(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
+LWMsgStatus
+LwTaskDaemonIpcEnum(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    );
+
+static
 LWMsgDispatchSpec
 gLwTaskDaemonIpcDispatchSpec[] =
 {
@@ -65,6 +110,11 @@ gLwTaskDaemonIpcDispatchSpec[] =
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_START,        LwTaskDaemonIpcTaskStart),
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_STOP,         LwTaskDaemonIpcTaskStop),
     LWMSG_DISPATCH_NONBLOCK(LW_TASK_DELETE,       LwTaskDaemonIpcTaskDelete),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_TYPES,    LwTaskDaemonIpcGetTypes),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_STATUS,   LwTaskDaemonIpcGetStatus),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_CREATE,       LwTaskDaemonIpcCreate),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_SCHEMA,   LwTaskDaemonIpcGetSchema),
+    LWMSG_DISPATCH_NONBLOCK(LW_TASK_ENUM,         LwTaskDaemonIpcEnum),
     LWMSG_DISPATCH_END
 };
 
@@ -261,3 +311,89 @@ LwTaskDaemonIpcTaskDelete(
 
     return status;
 }
+
+static
+LWMsgStatus
+LwTaskDaemonIpcGetTypes(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_GET_TYPES_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcGetStatus(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_GET_STATUS_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcCreate(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_CREATE_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcGetSchema(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_GET_SCHEMA_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
+static
+LWMsgStatus
+LwTaskDaemonIpcEnum(
+    LWMsgCall*         pCall,  /* IN     */
+    const LWMsgParams* pIn,    /* IN     */
+    LWMsgParams*       pOut,   /*    OUT */
+    void*              pData   /* IN     */
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    pOut->tag = LW_TASK_ENUM_FAILED;
+    pOut->data = NULL;
+
+    return status;
+}
+
