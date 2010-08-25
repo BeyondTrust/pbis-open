@@ -244,6 +244,26 @@ extern pthread_mutex_t gLwTaskLogLock;
        bInLock = FALSE; \
     }
 
+typedef VOID (*PFNLW_TASK_QUEUE_FUNC)(PVOID pData, PVOID pUserData);
+
+typedef DWORD (*PFNLW_TASK_FOREACH_QUEUE_ITEM)(PVOID pItem, PVOID pUserData);
+
+typedef struct __LW_TASK_QUEUE_ITEM
+{
+    PVOID pItem;
+
+    struct __LW_TASK_QUEUE_ITEM * pNext;
+
+} LW_TASK_QUEUE_ITEM, *PLW_TASK_QUEUE_ITEM;
+
+typedef struct __LW_TASK_QUEUE
+{
+
+    PLW_TASK_QUEUE_ITEM pHead;
+    PLW_TASK_QUEUE_ITEM pTail;
+
+} LW_TASK_QUEUE, *PLW_TASK_QUEUE;
+
 DWORD
 LwTaskInitLogging(
     PCSTR              pszProgramName,
@@ -302,6 +322,44 @@ VOID
 LwTaskFreeArgArray(
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs
+    );
+
+DWORD
+LwTaskQueueCreate(
+    PLW_TASK_QUEUE* ppQueue
+    );
+
+DWORD
+LwTaskEnqueue(
+    PLW_TASK_QUEUE pQueue,
+    PVOID          pItem
+    );
+
+DWORD
+LwTaskEnqueueFront(
+    PLW_TASK_QUEUE pQueue,
+    PVOID          pItem
+    );
+
+PVOID
+LwTaskDequeue(
+    PLW_TASK_QUEUE pQueue
+    );
+
+BOOLEAN
+LwTaskQueueIsEmpty(
+    PLW_TASK_QUEUE pQueue
+    );
+
+DWORD
+LwTaskQueueForeach(
+    PLW_TASK_QUEUE pQueue,
+    PFNLW_TASK_FOREACH_QUEUE_ITEM pfnAction,
+    PVOID pUserData
+    );
+VOID
+LwTaskQueueFree(
+    PLW_TASK_QUEUE pQueue
     );
 
 

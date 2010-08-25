@@ -104,17 +104,17 @@ static
 LWMsgDispatchSpec
 gLwTaskDaemonIpcDispatchSpec[] =
 {
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_SET_LOG_INFO, LwTaskDaemonIpcSetLogInfo),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_LOG_INFO, LwTaskDaemonIpcGetLogInfo),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_PID,      LwTaskDaemonIpcGetPid),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_START,        LwTaskDaemonIpcTaskStart),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_STOP,         LwTaskDaemonIpcTaskStop),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_DELETE,       LwTaskDaemonIpcTaskDelete),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_TYPES,    LwTaskDaemonIpcGetTypes),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_STATUS,   LwTaskDaemonIpcGetStatus),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_CREATE,       LwTaskDaemonIpcCreate),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_GET_SCHEMA,   LwTaskDaemonIpcGetSchema),
-    LWMSG_DISPATCH_NONBLOCK(LW_TASK_ENUM,         LwTaskDaemonIpcEnum),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_SET_LOG_INFO, LwTaskDaemonIpcSetLogInfo),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_GET_LOG_INFO, LwTaskDaemonIpcGetLogInfo),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_GET_PID,      LwTaskDaemonIpcGetPid),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_START,        LwTaskDaemonIpcTaskStart),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_STOP,         LwTaskDaemonIpcTaskStop),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_DELETE,       LwTaskDaemonIpcTaskDelete),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_GET_TYPES,    LwTaskDaemonIpcGetTypes),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_GET_STATUS,   LwTaskDaemonIpcGetStatus),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_CREATE,       LwTaskDaemonIpcCreate),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_GET_SCHEMA,   LwTaskDaemonIpcGetSchema),
+    LWMSG_DISPATCH_BLOCK(LW_TASK_ENUM,         LwTaskDaemonIpcEnum),
     LWMSG_DISPATCH_END
 };
 

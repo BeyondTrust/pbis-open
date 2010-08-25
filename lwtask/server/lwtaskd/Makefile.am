@@ -1,12 +1,15 @@
 sbin_PROGRAMS = lwtaskd
 
 lwtaskd_SOURCES = \
+    context.c    \
     globals.c    \
     ipc.c        \
     listener.c   \
     main.c       \
+    prodcons.c   \
     sighandler.c \
-    task.c
+    task.c       \
+    worker.c
 
 lwtaskd_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1   \

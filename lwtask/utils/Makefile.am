@@ -7,6 +7,7 @@ liblwtaskutils_la_SOURCES = \
     libmain.c       \
     logger.c        \
     lwtaskloginfo.c \
+    queue.c         \
     sysfuncs.c      \
     syslog.c        \
     task.c

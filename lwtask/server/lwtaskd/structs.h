@@ -44,6 +44,13 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
+typedef enum
+{
+    LW_TASK_EXECUTION_STATUS_STOPPED = 0,
+    LW_TASK_EXECUTION_STATUS_RUNNING
+
+} LW_TASK_EXECUTION_STATUS;
+
 typedef struct _LW_SRV_TASK
 {
     LONG   refCount;
@@ -58,6 +65,10 @@ typedef struct _LW_SRV_TASK
     PLW_TASK_ARG pArgArray;
     DWORD        dwNumArgs;
 
+    LW_TASK_EXECUTION_STATUS execStatus;
+
+    BOOLEAN      bCancel;
+
     DWORD        dwError;
 
     DWORD        dwPercentComplete;
@@ -66,6 +77,57 @@ typedef struct _LW_SRV_TASK
     time_t       endTime;
 
 } LW_SRV_TASK, *PLW_SRV_TASK;
+
+typedef struct _LW_TASK_CONTEXT
+{
+    LONG         refCount;
+
+    PLW_SRV_TASK pTask;
+    PLW_TASK_ARG pArgArray;
+    DWORD        dwNumArgs;
+
+} LW_TASK_CONTEXT, *PLW_TASK_CONTEXT;
+
+typedef VOID (*PFN_LW_TASK_PROD_CONS_QUEUE_FREE_ITEM)(PVOID pItem);
+
+typedef struct _LW_TASK_PROD_CONS_QUEUE
+{
+    pthread_mutex_t  mutex;
+    pthread_mutex_t* pMutex;
+
+    LW_TASK_QUEUE    queue;
+
+    ULONG            ulNumMaxItems;
+    ULONG            ulNumItems;
+
+    PFN_LW_TASK_PROD_CONS_QUEUE_FREE_ITEM pfnFreeItem;
+
+    pthread_cond_t  event;
+    pthread_cond_t* pEvent;
+
+} LW_TASK_PROD_CONS_QUEUE, *PLW_TASK_PROD_CONS_QUEUE;
+
+typedef struct _LW_TASK_SRV_WORKER_CONTEXT
+{
+    pthread_mutex_t  mutex;
+    pthread_mutex_t* pMutex;
+
+    BOOLEAN bStop;
+
+    DWORD   dwWorkerId;
+
+} LW_TASK_SRV_WORKER_CONTEXT, *PLW_TASK_SRV_WORKER_CONTEXT;
+
+typedef struct _LW_TASK_SRV_WORKER
+{
+    pthread_t  worker;
+    pthread_t* pWorker;
+
+    DWORD      dwWorkerId;
+
+    LW_TASK_SRV_WORKER_CONTEXT context;
+
+} LW_TASK_SRV_WORKER, *PLW_TASK_SRV_WORKER;
 
 typedef struct _LW_TASKD_GLOBALS
 {
@@ -85,5 +147,11 @@ typedef struct _LW_TASKD_GLOBALS
 
 
     PLWRTL_RB_TREE     pTaskCollection;
+
+    LW_TASK_PROD_CONS_QUEUE   workQueue;
+    DWORD                     dwMaxNumWorkItemsInQueue;
+
+    PLW_TASK_SRV_WORKER       pWorkerArray;
+    DWORD                     dwNumWorkers;
 
 } LW_TASKD_GLOBALS, *PLW_TASKD_GLOBALS;

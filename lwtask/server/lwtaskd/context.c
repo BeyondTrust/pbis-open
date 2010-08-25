@@ -33,32 +33,107 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        context.c
  *
  * Abstract:
  *
  *        Likewise Task Service (LWTASK)
  *
- *        Inter-process Communication
+ *        Execution context
  *
  * Authors: Sriram Nambakam (snambakam@likewise.com)
+ *
  */
 
 #include "includes.h"
 
-LW_TASKD_GLOBALS gLwTaskSrvGlobals =
+static
+VOID
+LwTaskFreeContext(
+    PLW_TASK_CONTEXT pContext
+    );
+
+DWORD
+LwTaskCreateContext(
+    PLW_SRV_TASK      pTask,
+    PLW_TASK_ARG*     ppArgArray,
+    PDWORD            pdwNumArgs,
+    PLW_TASK_CONTEXT* ppContext
+    )
 {
-    .pMutex             = NULL,
-    .dwStartAsDaemon    = FALSE,
-    .logTarget          = LW_TASK_LOG_TARGET_DISABLED,
-    .maxAllowedLogLevel = LW_TASK_LOG_LEVEL_ERROR,
-    .szLogFilePath      = "/tmp/lwtaskd.log",
-    .bProcessShouldExit = FALSE,
-    .dwExitCode         = 0,
-    .pContext           = NULL,
-    .pProtocol          = NULL,
-    .pServer            = NULL,
-    .pTaskCollection    = NULL,
-    .dwNumWorkers       = 4,
-    .dwMaxNumWorkItemsInQueue = 1024
-};
+    DWORD dwError = 0;
+    PLW_TASK_CONTEXT pContext = NULL;
+
+    dwError = LwAllocateMemory(sizeof(LW_TASK_CONTEXT), (PVOID*)&pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pContext->pTask = pTask;
+    InterlockedIncrement(&pTask->refCount);
+
+    pContext->pArgArray = *ppArgArray;
+    *ppArgArray = NULL;
+
+    pContext->dwNumArgs = *pdwNumArgs;
+    *pdwNumArgs = 0;
+
+    *ppContext = pContext;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppContext = NULL;
+
+    if (pContext)
+    {
+        LwTaskReleaseContext(pContext);
+    }
+
+    goto cleanup;
+}
+
+BOOLEAN
+LwTaskIsValidContext(
+    PLW_TASK_CONTEXT pContext
+    )
+{
+    return (pContext && pContext->pTask) ? TRUE : FALSE;
+}
+
+VOID
+LwTaskReleaseContextHandle(
+    HANDLE hContext
+    )
+{
+    LwTaskReleaseContext((PLW_TASK_CONTEXT)hContext);
+}
+
+VOID
+LwTaskReleaseContext(
+    PLW_TASK_CONTEXT pContext
+    )
+{
+    if (InterlockedDecrement(&pContext->refCount) == 0)
+    {
+        LwTaskFreeContext(pContext);
+    }
+}
+
+static
+VOID
+LwTaskFreeContext(
+    PLW_TASK_CONTEXT pContext
+    )
+{
+    if (pContext->pTask)
+    {
+        LwTaskSrvRelease(pContext->pTask);
+    }
+
+    if (pContext->pArgArray)
+    {
+        LwTaskFreeArgArray(pContext->pArgArray, pContext->dwNumArgs);
+    }
+}

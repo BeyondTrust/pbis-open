@@ -44,6 +44,31 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
+// context.c
+
+DWORD
+LwTaskCreateContext(
+    PLW_SRV_TASK      pTask,
+    PLW_TASK_ARG*     ppArgArray,
+    PDWORD            pdwNumArgs,
+    PLW_TASK_CONTEXT* ppContext
+    );
+
+BOOLEAN
+LwTaskIsValidContext(
+    PLW_TASK_CONTEXT pContext
+    );
+
+VOID
+LwTaskReleaseContextHandle(
+    HANDLE hContext
+    );
+
+VOID
+LwTaskReleaseContext(
+    PLW_TASK_CONTEXT pContext
+    );
+
 // ipc.c
 
 DWORD
@@ -110,6 +135,57 @@ LwTaskSrvSetProcessToExit(
     BOOLEAN bExit
     );
 
+// prodcons.c
+
+DWORD
+LwTaskProdConsInit(
+    ULONG                                 ulNumMaxItems,
+    PFN_LW_TASK_PROD_CONS_QUEUE_FREE_ITEM pfnFreeItem,
+    PLW_TASK_PROD_CONS_QUEUE*             ppQueue
+    );
+
+DWORD
+LwTaskProdConsInitContents(
+    PLW_TASK_PROD_CONS_QUEUE              pQueue,
+    ULONG                                 ulNumMaxItems,
+    PFN_LW_TASK_PROD_CONS_QUEUE_FREE_ITEM pfnFreeItem
+    );
+
+DWORD
+LwTaskProdConsEnqueue(
+    PLW_TASK_PROD_CONS_QUEUE pQueue,
+    PVOID                pItem
+    );
+
+DWORD
+LwTaskProdConsEnqueueFront(
+    PLW_TASK_PROD_CONS_QUEUE pQueue,
+    PVOID                pItem
+    );
+
+DWORD
+LwTaskProdConsDequeue(
+    PLW_TASK_PROD_CONS_QUEUE pQueue,
+    PVOID*               ppItem
+    );
+
+DWORD
+LwTaskProdConsTimedDequeue(
+    PLW_TASK_PROD_CONS_QUEUE pQueue,
+    struct timespec*         pTimespec,
+    PVOID*                   ppItem
+    );
+
+VOID
+LwTaskProdConsFree(
+    PLW_TASK_PROD_CONS_QUEUE pQueue
+    );
+
+VOID
+LwTaskProdConsFreeContents(
+    PLW_TASK_PROD_CONS_QUEUE pQueue
+    );
+
 // signalhandler.c
 
 DWORD
@@ -142,19 +218,19 @@ LwTaskSrvGetTypes(
 
 DWORD
 LwTaskSrvStart(
-    PCSTR        pszTaskId,
+    PCSTR        pszTaskname,
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs
     );
 
 DWORD
 LwTaskSrvStop(
-    PCSTR pszTaskId
+    PCSTR pszTaskname
     );
 
 DWORD
 LwTaskSrvDelete(
-    PCSTR pszTaskId
+    PCSTR pszTaskname
     );
 
 DWORD
@@ -197,3 +273,18 @@ LwTaskSrvShutdown(
     VOID
     );
 
+// worker.c
+
+DWORD
+LwTaskWorkerInit(
+    PLW_TASK_SRV_WORKER pWorker
+    );
+
+VOID
+LwTaskWorkerIndicateStop(
+    PLW_TASK_SRV_WORKER pWorker
+    );
+VOID
+LwTaskWorkerFreeContents(
+    PLW_TASK_SRV_WORKER pWorker
+    );

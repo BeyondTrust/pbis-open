@@ -69,6 +69,16 @@ LwTaskSrvTreeRelease(
 
 static
 DWORD
+LwTaskBuildExecArgs(
+    PLW_SRV_TASK  pTask,
+    PLW_TASK_ARG  pArgArray,
+    DWORD         dwNumArgs,
+    PLW_TASK_ARG* ppArgArray,
+    PDWORD        pdwNumArgs
+    );
+
+static
+DWORD
 LwTaskSrvCreateMigrateTask(
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs,
@@ -111,6 +121,12 @@ LwTaskSrvFree(
     PLW_SRV_TASK pTask
     );
 
+static
+VOID
+LwTaskUnblockOneWorker(
+    IN PLW_TASK_PROD_CONS_QUEUE pWorkQueue
+    );
+
 DWORD
 LwTaskSrvInit(
     VOID
@@ -123,6 +139,7 @@ LwTaskSrvInit(
     PLW_SRV_TASK    pSrvTask   = NULL;
     DWORD           dwNumTasks = 0;
     DWORD           iTask = 0;
+    DWORD           iWorker = 0;
 
     LW_TASK_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gLwTaskSrvGlobals.mutex);
 
@@ -166,6 +183,21 @@ LwTaskSrvInit(
         BAIL_ON_LW_TASK_ERROR(dwError);
 
         pSrvTask = NULL;
+    }
+
+    dwError = LwAllocateMemory(
+                    gLwTaskSrvGlobals.dwNumWorkers * sizeof(LW_TASK_SRV_WORKER),
+                    (PVOID*)&gLwTaskSrvGlobals.pWorkerArray);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    for (; iWorker < gLwTaskSrvGlobals.dwNumWorkers; iWorker++)
+    {
+        PLW_TASK_SRV_WORKER pWorker = &gLwTaskSrvGlobals.pWorkerArray[iWorker];
+
+        pWorker->dwWorkerId = iWorker + 1;
+
+        dwError = LwTaskWorkerInit(pWorker);
+        BAIL_ON_LW_TASK_ERROR(dwError);
     }
 
 cleanup:
@@ -306,9 +338,87 @@ error:
 
 DWORD
 LwTaskSrvStart(
-    PCSTR        pszTaskId,
+    PCSTR        pszTaskname,
     PLW_TASK_ARG pArgArray,
     DWORD        dwNumArgs
+    )
+{
+    DWORD dwError = 0;
+    PLW_SRV_TASK pTask = NULL;
+    BOOLEAN bInLock = FALSE;
+    PLW_TASK_CONTEXT pContext = NULL;
+    PLW_TASK_ARG pArgArray2 = NULL;
+    DWORD        dwNumArgs2 = 0;
+
+    dwError = LwTaskSrvTreeFind(pszTaskname, &pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskBuildExecArgs(
+                    pTask,
+                    pArgArray,
+                    dwNumArgs,
+                    &pArgArray2,
+                    &dwNumArgs2);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    if (pTask->execStatus == LW_TASK_EXECUTION_STATUS_RUNNING)
+    {
+        dwError = ERROR_PROCESS_IN_JOB;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pTask->bCancel = FALSE;
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+
+    dwError = LwTaskCreateContext(
+                    pTask,
+                    &pArgArray2,
+                    &dwNumArgs2,
+                    &pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskProdConsEnqueue(&gLwTaskSrvGlobals.workQueue, pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pContext = NULL;
+
+cleanup:
+
+    if (pTask)
+    {
+        LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+
+        LwTaskSrvRelease(pTask);
+    }
+
+    if (pContext)
+    {
+        LwTaskReleaseContext(pContext);
+    }
+
+    return dwError;
+
+error:
+
+    if (pArgArray2)
+    {
+        LwTaskFreeArgArray(pArgArray2, dwNumArgs2);
+    }
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskBuildExecArgs(
+    PLW_SRV_TASK  pTask,
+    PLW_TASK_ARG  pArgArray,
+    DWORD         dwNumArgs,
+    PLW_TASK_ARG* ppArgArray,
+    PDWORD        pdwNumArgs
     )
 {
     return ERROR_CALL_NOT_IMPLEMENTED;
@@ -316,10 +426,38 @@ LwTaskSrvStart(
 
 DWORD
 LwTaskSrvStop(
-    PCSTR pszTaskId
+    PCSTR pszTaskname
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    PLW_SRV_TASK pTask = NULL;
+    BOOLEAN bInLock = FALSE;
+
+    dwError = LwTaskSrvTreeFind(pszTaskname, &pTask);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    // TODO : Should we wait for the task to stop executing?
+    if (pTask->execStatus == LW_TASK_EXECUTION_STATUS_RUNNING)
+    {
+        pTask->bCancel = TRUE;
+    }
+
+cleanup:
+
+    if (pTask)
+    {
+        LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+
+        LwTaskSrvRelease(pTask);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 DWORD
@@ -867,5 +1005,67 @@ LwTaskSrvShutdown(
         LwRtlRBTreeFree(gLwTaskSrvGlobals.pTaskCollection);
     }
 
+    if (gLwTaskSrvGlobals.pWorkerArray)
+    {
+        INT iWorker = 0;
+
+        for (iWorker = 0; iWorker < gLwTaskSrvGlobals.dwNumWorkers; iWorker++)
+        {
+            PLW_TASK_SRV_WORKER pWorker = &gLwTaskSrvGlobals.pWorkerArray[iWorker];
+
+            LwTaskWorkerIndicateStop(pWorker);
+        }
+
+        // Must indicate stop for all workers before queueing the
+        // unblocks.
+        for (iWorker = 0; iWorker < gLwTaskSrvGlobals.dwNumWorkers; iWorker++)
+        {
+            LwTaskUnblockOneWorker(&gLwTaskSrvGlobals.workQueue);
+        }
+
+        for (iWorker = 0; iWorker < gLwTaskSrvGlobals.dwNumWorkers; iWorker++)
+        {
+            PLW_TASK_SRV_WORKER pWorker = &gLwTaskSrvGlobals.pWorkerArray[iWorker];
+
+            LwTaskWorkerFreeContents(pWorker);
+        }
+
+        LwFreeMemory(gLwTaskSrvGlobals.pWorkerArray);
+        gLwTaskSrvGlobals.pWorkerArray = NULL;
+    }
+
+    LwTaskProdConsFreeContents(&gLwTaskSrvGlobals.workQueue);
+
     LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+}
+
+static
+VOID
+LwTaskUnblockOneWorker(
+    IN PLW_TASK_PROD_CONS_QUEUE pWorkQueue
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PLW_TASK_CONTEXT pContext = NULL;
+
+    dwError = LwAllocateMemory(sizeof(LW_TASK_CONTEXT), (PVOID*)&pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    pContext->refCount = 1;
+
+    dwError = LwTaskProdConsEnqueue(pWorkQueue, pContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    return;
+
+error:
+
+    if (pContext)
+    {
+        LwTaskReleaseContext(pContext);
+    }
+
+    goto cleanup;
 }

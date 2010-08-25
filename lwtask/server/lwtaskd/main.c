@@ -95,6 +95,12 @@ main(
     pthread_rwlock_init(&gLwTaskSrvGlobals.mutex, NULL);
     gLwTaskSrvGlobals.pMutex = &gLwTaskSrvGlobals.mutex;
 
+    dwError = LwTaskProdConsInitContents(
+                    &gLwTaskSrvGlobals.workQueue,
+                    gLwTaskSrvGlobals.dwMaxNumWorkItemsInQueue,
+                    &LwTaskReleaseContextHandle);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
     dwError = LwTaskSrvParseArgs(argc, argv);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
