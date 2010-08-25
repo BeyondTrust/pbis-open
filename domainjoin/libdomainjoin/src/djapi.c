@@ -31,6 +31,7 @@
 #include "djapi.h"
 
 #include "domainjoin.h"
+#include <lsa/lsa.h>
 
 #include <stdio.h>
 
@@ -68,10 +69,20 @@ DJSetComputerNameEx(
 {
     DWORD dwError = 0;
     LWException *exc = NULL;
+    HANDLE hLsaConnection = NULL;
 
     LW_TRY(&exc, DJSetComputerName(pszComputerName, NULL, &LW_EXC));
 
+    LW_CLEANUP_CTERR(&exc, LsaOpenServer(&hLsaConnection));
+
+    LW_CLEANUP_CTERR(&exc, LsaSetMachineName(hLsaConnection, pszComputerName));
+
 cleanup:
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
 
     if (!LW_IS_OK(exc))
     {
