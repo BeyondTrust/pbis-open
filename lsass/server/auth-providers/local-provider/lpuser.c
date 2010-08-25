@@ -634,6 +634,8 @@ LocalDirAddUser(
                     pwszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LOCAL_UNLOCK_MUTEX(bLocked, &gLPGlobals.mutex);
+
     dwError = LocalCfgIsEventlogEnabled(&bEventlogEnabled);
     BAIL_ON_LSA_ERROR(dwError);
 

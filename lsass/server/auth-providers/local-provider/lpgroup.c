@@ -199,10 +199,13 @@ LocalDirAddGroup(
     if (!pLoginInfo->pszDomain)
     {
         LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
         dwError = LwAllocateString(
                         gLPGlobals.pszNetBIOSName,
                         &pLoginInfo->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
+
+        LOCAL_UNLOCK_MUTEX(bLocked, &gLPGlobals.mutex);
     }
 
     if (!LocalServicesDomain(pLoginInfo->pszDomain))
