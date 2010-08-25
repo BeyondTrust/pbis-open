@@ -1,23 +1,102 @@
 #!/bin/sh
 
-set -e
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
 
-DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
-LWSM=/opt/likewise/bin/lwsm
-LWSMD=/etc/init.d/lwsmd
-REGSHELL=/opt/likewise/bin/lwregshell
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
 
-$LWSMD start || exit 4
+import_service_configuration()
+{
+    if svccfg select TEMP/network/$1 2>/dev/null; then
+        svccfg delete TEMP/network/$1
+    fi
 
-$REGSHELL import /opt/likewise/share/config/dcerpcd.reg || exit 100
-$REGSHELL import /opt/likewise/share/config/eventlogd.reg || exit 101
-$REGSHELL import /opt/likewise/share/config/lwreg.reg || exit 102
-$REGSHELL import /opt/likewise/share/config/lsassd.reg || exit 103
-$REGSHELL import /opt/likewise/share/config/lwiod.reg || exit 104
-$REGSHELL import /opt/likewise/share/config/netlogond.reg || exit 105
-$REGSHELL import /opt/likewise/share/config/pstore.reg || exit 106
+    svccfg import /etc/likewise/svcs-solaris/$1.xml > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then 
+        log "Error: svccfg import /etc/likewise/svcs-solaris/$1.xml returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
 
-$LWSMD reload || exit 5
+import_service_configurations()
+{
+    if type svccfg >/dev/null 2>&1; then
+        log "Importing service configurations"
+        import_service_configuration dcerpcd
+        import_service_configuration eventlogd
+        import_service_configuration lsassd
+        import_service_configuration lwiod
+        import_service_configuration lwregd
+        import_service_configuration lwsmd
+        import_service_configuration netlogond
+    fi
+}
 
-$DOMAINJOIN query > /dev/null 2>&1 || exit 6
+import_registry_configuration()
+{
+    /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "Error: /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
 
+import_registry_configurations()
+{
+    log "Importing registry configurations"
+    import_registry_configuration dcerpcd
+    import_registry_configuration eventlogd
+    import_registry_configuration lsassd
+    import_registry_configuration lwiod
+    import_registry_configuration lwreg
+    import_registry_configuration netlogond
+    import_registry_configuration pstore
+}
+
+log "LikewiseOpen postinstall begins"
+
+import_service_configurations
+
+/opt/likewise/sbin/lwsmd --start-as-daemon > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "Error: /opt/likewise/sbin/lwsmd --start-as-daemon returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+import_registry_configurations
+
+/etc/init.d/lwsmd stop > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /etc/init.d/lwsmd stop returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+/etc/init.d/lwsmd start > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /etc/init.d/lwsmd start returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+/opt/likewise/bin/domainjoin-cli query > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /opt/likewise/bin/domainjoin-cli query returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+log "LikewiseOpen postinstall finished"
