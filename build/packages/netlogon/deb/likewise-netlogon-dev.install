@@ -1,2 +1,3 @@
 __PKG_PREFIX/lib*/{*.la,*.a}
+__PKG_PREFIX/lib*/krb5/plugins/libkrb5/{*.la,*.a}
 __PKG_PREFIX/include
