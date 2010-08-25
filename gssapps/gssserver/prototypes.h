@@ -104,7 +104,7 @@ WriteAll(
 VOID
 PrintHexDump(
     DWORD length,
-    PBYTE pBuffer,
+    PVOID pBuffer,
     INT bIsNtlmMessage
     );
 

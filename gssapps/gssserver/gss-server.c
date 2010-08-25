@@ -418,7 +418,7 @@ SignServer(
 
     printf("Session Key:\n");
     PrintHexDump(SessionKey->elements->length,
-            (char *)SessionKey->elements->value,
+            SessionKey->elements->value,
             FALSE);
     printf("\n");
 
@@ -1015,7 +1015,7 @@ DumpNtlmMessage(
 VOID
 PrintHexDump(
     DWORD dwLength,
-    PBYTE pBuffer,
+    PVOID pBuffer,
     INT bIsNtlmMessage
     )
 {
@@ -1023,10 +1023,11 @@ PrintHexDump(
     CHAR rgbDigits[]="0123456789abcdef";
     CHAR rgbLine[100];
     CHAR cbLine;
-    PBYTE pToken = pBuffer;
+    PBYTE pToken = (PBYTE)pBuffer;
+    PBYTE pLine = (PBYTE)pBuffer;
 
     for (index = 0; dwLength;
-        dwLength -= count, pBuffer += count, index += count)
+        dwLength -= count, pLine += count, index += count)
     {
         count = (dwLength > 16) ? 16:dwLength;
 
@@ -1035,8 +1036,8 @@ PrintHexDump(
 
         for (i=0;i<count;i++)
         {
-            rgbLine[((int)cbLine)++] = rgbDigits[pBuffer[i] >> 4];
-            rgbLine[((int)cbLine)++] = rgbDigits[pBuffer[i] & 0x0f];
+            rgbLine[((int)cbLine)++] = rgbDigits[pLine[i] >> 4];
+            rgbLine[((int)cbLine)++] = rgbDigits[pLine[i] & 0x0f];
             if (i == 7)
             {
                 rgbLine[((int)cbLine)++] = ':';
@@ -1057,13 +1058,13 @@ PrintHexDump(
 
         for (i = 0; i < count; i++)
         {
-            if (pBuffer[i] < 32 || pBuffer[i] > 126)
+            if (pLine[i] < 32 || pLine[i] > 126)
             {
                 rgbLine[((int)cbLine)++] = '.';
             }
             else
             {
-                rgbLine[((int)cbLine)++] = pBuffer[i];
+                rgbLine[((int)cbLine)++] = pLine[i];
             }
         }
 
