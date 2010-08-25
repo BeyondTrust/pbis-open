@@ -108,7 +108,7 @@ SamrSrvQueryDisplayInfo(
     /* [out] */ SamrDisplayInfo *info
     )
 {
-    const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws>%u";
+    const wchar_t wszFilterFmt[] = L"%ws=%u AND %ws>%u ORDER BY %ws";
 
     WCHAR wszAttrObjectClass[] = DS_ATTR_OBJECT_CLASS;
     WCHAR wszAttrRecordId[] = DS_ATTR_RECORD_ID;
@@ -116,6 +116,7 @@ SamrSrvQueryDisplayInfo(
     WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrDescription[] = DS_ATTR_DESCRIPTION;
     WCHAR wszAttrFullName[] = DS_ATTR_FULL_NAME;
+    WCHAR wszAttrAccountFlags[] = DS_ATTR_ACCOUNT_FLAGS;
 
     PWSTR wszAttributesLevel1[] = {
         wszAttrRecordId,
@@ -123,6 +124,7 @@ SamrSrvQueryDisplayInfo(
         wszAttrSamAccountName,
         wszAttrDescription,
         wszAttrFullName,
+        wszAttrAccountFlags,
         NULL
     };
 
@@ -131,6 +133,7 @@ SamrSrvQueryDisplayInfo(
         wszAttrObjectSid,
         wszAttrSamAccountName,
         wszAttrDescription,
+        wszAttrAccountFlags,
         NULL
     };
 
@@ -208,7 +211,7 @@ SamrSrvQueryDisplayInfo(
         break;
 
     case 3:
-        dwObjectClass = DS_OBJECT_CLASS_LOCAL_GROUP;
+        dwObjectClass = DIR_OBJECT_CLASS_DOMAIN_GROUP;
         break;
 
     default:
@@ -221,18 +224,24 @@ SamrSrvQueryDisplayInfo(
                   10 +
                   ((sizeof(wszAttrRecordId)/sizeof(WCHAR)) - 1) +
                   10 +
+                  ((sizeof(wszAttrSamAccountName)/sizeof(WCHAR)) - 1) +
                   (sizeof(wszFilterFmt)/sizeof(wszFilterFmt[0]));
 
     ntStatus = SamrSrvAllocateMemory(
-                                (void**)&pwszFilter,
+                                OUT_PPVOID(&pwszFilter),
                                 dwFilterLen * sizeof(*pwszFilter));
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
-                wszAttrObjectClass,
-                dwObjectClass,
-                wszAttrRecordId,
-                start_idx);
+    if (sw16printfw(pwszFilter, dwFilterLen, wszFilterFmt,
+                    wszAttrObjectClass,
+                    dwObjectClass,
+                    wszAttrRecordId,
+                    start_idx,
+                    wszAttrSamAccountName) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = DirectorySearch(pConnCtx->hDirectory,
                               pwszBase,
@@ -246,7 +255,8 @@ SamrSrvQueryDisplayInfo(
 
     dwTotalSize += sizeof(UINT32);    /* "count" field in info structure */
 
-    for (i = 0; i < dwEntriesNum; i++) {
+    for (i = 0; i < dwEntriesNum; i++)
+    {
         pEntry = &(pEntries[i]);
 
         switch (level) {
@@ -302,16 +312,19 @@ SamrSrvQueryDisplayInfo(
     dwSize += sizeof(UINT32);    /* "count" field in info structure */
     i       = start_idx;
 
-    if (dwEntriesNum == 0) {
+    if (dwEntriesNum == 0)
+    {
         i = 0;
         ntStatus = STATUS_NO_MORE_ENTRIES;
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
-    for (i = 0; i < dwCount && i < dwEntriesNum; i++) {
+    for (i = 0; i < dwCount && i < dwEntriesNum; i++)
+    {
         pEntry = &(pEntries[i]);
 
-        switch (level) {
+        switch (level)
+        {
         case 1:
             ntStatus = SamrSrvFillDisplayInfoFull(pDomCtx,
                                                   pEntry,
@@ -419,6 +432,7 @@ SamrSrvFillDisplayInfoFull(
     WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrDescription[] = DS_ATTR_DESCRIPTION;
     WCHAR wszAttrFullName[] = DS_ATTR_FULL_NAME;
+    WCHAR wszAttrAccountFlags[] = DS_ATTR_ACCOUNT_FLAGS;
     PWSTR pwszSid = NULL;
     PWSTR pwszUsername = NULL;
     PWSTR pwszDescription = NULL;
@@ -426,7 +440,7 @@ SamrSrvFillDisplayInfoFull(
     LONG64 llRecId = 0;
     PSID pSid = NULL;
     DWORD dwRid = 0;
-    ULONG ulAccountFlags = 0;
+    DWORD dwAccountFlags = 0;
     SamrDisplayInfoFull *pInfo1 = NULL;
     SamrDisplayEntryFull *pDisplayEntry = NULL;
     DWORD dwSize = 0;
@@ -461,6 +475,12 @@ SamrSrvFillDisplayInfoFull(
                                                &pwszFullName);
     BAIL_ON_LSA_ERROR(dwError);    
     
+    dwError = DirectoryGetEntryAttrValueByName(pEntry,
+                                               wszAttrAccountFlags,
+                                               DIRECTORY_ATTR_TYPE_INTEGER,
+                                               &dwAccountFlags);
+    BAIL_ON_LSA_ERROR(dwError);    
+    
     dwSize  = (*pdwSize);
     dwSize += sizeof(pInfo->info1.entries[0]);
     dwSize += wc16slen(pwszUsername) * sizeof(WCHAR);
@@ -487,18 +507,18 @@ SamrSrvFillDisplayInfoFull(
     dwRid = pSid->SubAuthority[pSid->SubAuthorityCount - 1];
 
     pDisplayEntry->rid           = (UINT32)dwRid;
-    pDisplayEntry->account_flags = (UINT32)ulAccountFlags;
+    pDisplayEntry->account_flags = (UINT32)dwAccountFlags;
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->account_name,
-                                      pwszUsername);
+                                        pwszUsername);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->full_name,
-                                      pwszFullName);
+                                        pwszFullName);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->description,
-                                      pwszDescription);
+                                        pwszDescription);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
 done:
@@ -538,13 +558,14 @@ SamrSrvFillDisplayInfoGeneral(
     WCHAR wszAttrObjectSid[] = DS_ATTR_OBJECT_SID;
     WCHAR wszAttrSamAccountName[] = DS_ATTR_SAM_ACCOUNT_NAME;
     WCHAR wszAttrDescription[] = DS_ATTR_DESCRIPTION;
+    WCHAR wszAttrAccountFlags[] = DS_ATTR_ACCOUNT_FLAGS;
     PWSTR pwszSid = NULL;
     PWSTR pwszUsername = NULL;
     PWSTR pwszDescription = NULL;
     LONG64 llRecId = 0;
     PSID pSid = NULL;
     ULONG dwRid = 0;
-    ULONG ulAccountFlags = 0;
+    DWORD dwAccountFlags = 0;
     SamrDisplayInfoGeneral *pInfo2 = NULL;
     SamrDisplayEntryGeneral *pDisplayEntry = NULL;
     DWORD dwSize = 0;
@@ -573,6 +594,12 @@ SamrSrvFillDisplayInfoGeneral(
                                                &pwszDescription);
     BAIL_ON_LSA_ERROR(dwError);    
 
+    dwError = DirectoryGetEntryAttrValueByName(pEntry,
+                                               wszAttrAccountFlags,
+                                               DIRECTORY_ATTR_TYPE_INTEGER,
+                                               &dwAccountFlags);
+    BAIL_ON_LSA_ERROR(dwError);    
+    
     dwSize  = (*pdwSize);
     dwSize += sizeof(pInfo->info2.entries[0]);
     dwSize += wc16slen(pwszUsername) * sizeof(WCHAR);
@@ -598,14 +625,14 @@ SamrSrvFillDisplayInfoGeneral(
     dwRid = pSid->SubAuthority[pSid->SubAuthorityCount - 1];
 
     pDisplayEntry->rid           = (UINT32)dwRid;
-    pDisplayEntry->account_flags = (UINT32)ulAccountFlags;
+    pDisplayEntry->account_flags = (UINT32)dwAccountFlags;
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->account_name,
-                                      pwszUsername);
+                                        pwszUsername);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->description,
-                                      NULL);
+                                        NULL);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
 done:
@@ -651,7 +678,7 @@ SamrSrvFillDisplayInfoGeneralGroups(
     LONG64 llRecId = 0;
     PSID pSid = NULL;
     ULONG dwRid = 0;
-    ULONG ulAccountFlags = 0;
+    DWORD dwGroupAttributes = 0;
     SamrDisplayInfoGeneralGroups *pInfo3 = NULL;
     SamrDisplayEntryGeneralGroup *pDisplayEntry = NULL;
     DWORD dwSize = 0;
@@ -705,14 +732,17 @@ SamrSrvFillDisplayInfoGeneralGroups(
     dwRid = pSid->SubAuthority[pSid->SubAuthorityCount - 1];
 
     pDisplayEntry->rid           = (UINT32)dwRid;
-    pDisplayEntry->account_flags = (UINT32)ulAccountFlags;
+
+    /* TODO: Add support for group attributes when it's time
+       for domain groups */
+    pDisplayEntry->account_flags = (UINT32)dwGroupAttributes;
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->account_name,
-                                      pwszUsername);
+                                        pwszUsername);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = SamrSrvInitUnicodeString(&pDisplayEntry->description,
-                                      NULL);
+                                        NULL);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
 done:
