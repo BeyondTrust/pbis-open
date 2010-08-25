@@ -1,32 +1,92 @@
 #!/bin/sh
 
-set -e
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
 
-DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
-LWSM=/opt/likewise/bin/lwsm
-LWSMD=/etc/init.d/lwsmd
-REGSHELL=/opt/likewise/bin/lwregshell
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
+
+import_registry_configuration()
+{
+    /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "Error: /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
+
+import_registry_configurations()
+{
+    log "Importing registry configurations"
+    import_registry_configuration dcerpcd
+    import_registry_configuration eventlogd
+    import_registry_configuration lsassd
+    import_registry_configuration lwiod
+    import_registry_configuration lwreg
+    import_registry_configuration netlogond
+    import_registry_configuration pstore
+}
+
+postinstall()
+{
+    log "LikewiseOpen postinstall begins"
+
+    /opt/likewise/sbin/lwsmd --start-as-daemon > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "Error: /opt/likewise/sbin/lwsmd --start-as-daemon returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    import_registry_configurations
+
+    /etc/init.d/lwsmd stop > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "error: /etc/init.d/lwsmd stop returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    /etc/init.d/lwsmd start > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "error: /etc/init.d/lwsmd start returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    /opt/likewise/bin/domainjoin-cli query > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "error: /opt/likewise/bin/domainjoin-cli query returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    pam-auth-update --package > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "error: pam-auth-update --pacakge returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    log "LikewiseOpen postinstall finished"
+}
 
 case "$1" in
     abort-upgrade)
     ;;
 
     configure)
-        $LWSMD start || exit 4
-
-        $REGSHELL import /opt/likewise/share/config/dcerpcd.reg || exit 100
-        $REGSHELL import /opt/likewise/share/config/eventlogd.reg || exit 101
-        $REGSHELL import /opt/likewise/share/config/lwreg.reg || exit 102
-        $REGSHELL import /opt/likewise/share/config/lsassd.reg || exit 103
-        $REGSHELL import /opt/likewise/share/config/lwiod.reg || exit 104
-        $REGSHELL import /opt/likewise/share/config/netlogond.reg || exit 105
-        $REGSHELL import /opt/likewise/share/config/pstore.reg || exit 106
-
-        $LWSMD reload || exit 5
-
-        $DOMAINJOIN query > /dev/null 2>&1 || exit 6
-
-        pam-auth-update --package || exit 7
+        postinstall
     ;;
 esac
 
