@@ -205,7 +205,7 @@ LocalDirAddGroup(
                         &pLoginInfo->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
 
-        LOCAL_UNLOCK_MUTEX(bLocked, &gLPGlobals.mutex);
+        LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
     }
 
     if (!LocalServicesDomain(pLoginInfo->pszDomain))
