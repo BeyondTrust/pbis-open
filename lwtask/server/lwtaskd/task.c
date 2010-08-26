@@ -432,7 +432,132 @@ LwTaskBuildExecArgs(
     PDWORD        pdwNumArgs
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    PLW_TASK_DB_CONTEXT pDbContext = NULL;
+    PLW_TASK_ARG_INFO pArgInfoArray = NULL;
+    DWORD             dwNumArgInfos = 0;
+    PLW_TASK_ARG      pExecArgArray = NULL;
+    DWORD             dwNumExecArgs = 0;
+    DWORD             iArgInfo = 0;
+    DWORD             iArg = 0;
+
+    dwError = LwTaskDbOpen(&pDbContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskDbGetSchema(
+                    pDbContext,
+                    pTask->taskType,
+                    &pArgInfoArray,
+                    &dwNumArgInfos);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_ARG) * dwNumArgInfos,
+                    (PVOID*)&pExecArgArray);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwNumExecArgs = dwNumArgInfos;
+
+    for (; iArgInfo < dwNumArgInfos; iArgInfo++)
+    {
+        PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
+        PLW_TASK_ARG pCandidate = NULL;
+
+        pCandidate = LwTaskFindArg(
+                            pArgInfo->pszArgName,
+                            pArgInfo->argType,
+                            pTask->pArgArray,
+                            pTask->dwNumArgs);
+
+        if (!pCandidate)
+        {
+            pCandidate = LwTaskFindArg(
+                                pArgInfo->pszArgName,
+                                pArgInfo->argType,
+                                pArgArray,
+                                dwNumArgs);
+        }
+
+        if (pCandidate)
+        {
+            PLW_TASK_ARG pExecArg = &pExecArgArray[iArg++];
+
+            dwError = LwAllocateString(
+                            pArgInfo->pszArgName,
+                            &pExecArg->pszArgName);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+
+            pExecArg->dwArgType = pArgInfo->argType;
+
+            if (pCandidate->pszArgValue)
+            {
+                dwError = LwAllocateString(
+                                pCandidate->pszArgValue,
+                                &pExecArg->pszArgValue);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+            }
+        }
+        else if (LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_MANDATORY))
+        {
+            dwError = ERROR_INVALID_PARAMETER;
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+    }
+
+    if (!iArg)
+    {
+        if (pExecArgArray)
+        {
+            LwTaskFreeArgArray(pExecArgArray, dwNumExecArgs);
+            pExecArgArray = NULL;
+            dwNumExecArgs = 0;
+        }
+    }
+    else if (iArg < dwNumExecArgs)
+    {
+        PLW_TASK_ARG pArgArrayNew = NULL;
+
+        dwError = LwAllocateMemory(
+                        sizeof(LW_TASK_ARG) * iArg,
+                        (PVOID*)&pArgArrayNew);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        memcpy(pArgArrayNew, pExecArgArray, sizeof(LW_TASK_ARG) * iArg);
+
+        LwFreeMemory(pExecArgArray);
+
+        pExecArgArray = pArgArrayNew;
+        dwNumExecArgs = iArg;
+    }
+
+    *ppArgArray = pExecArgArray;
+    *pdwNumArgs = dwNumExecArgs;
+
+cleanup:
+
+    if (pDbContext)
+    {
+        LwTaskDbClose(pDbContext);
+    }
+
+    if (pArgInfoArray)
+    {
+        LwTaskFreeArgInfoArray(pArgInfoArray, dwNumArgInfos);
+    }
+
+    return dwError;
+
+error:
+
+    *ppArgArray = NULL;
+    *pdwNumArgs = 0;
+
+    if (pExecArgArray)
+    {
+        LwTaskFreeArgArray(pExecArgArray, dwNumExecArgs);
+    }
+
+    goto cleanup;
 }
 
 DWORD
