@@ -1,0 +1,71 @@
+#!/bin/sh
+
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
+
+import_registry_configuration()
+{
+    /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "Error: /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
+
+import_registry_configurations()
+{
+    log "Importing registry configurations"
+    import_registry_configuration dcerpcd
+    import_registry_configuration eventlogd
+    import_registry_configuration lsassd
+    import_registry_configuration lwiod
+    import_registry_configuration lwreg
+    import_registry_configuration netlogond
+    import_registry_configuration pstore
+}
+
+log "LikewiseOpen postinstall begins"
+
+/opt/likewise/sbin/lwsmd --start-as-daemon > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "Error: /opt/likewise/sbin/lwsmd --start-as-daemon returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+import_registry_configurations
+
+/etc/rc.d/lwsmd stop > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /etc/rc.d/lwsmd stop returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+/etc/rc.d/lwsmd start > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /etc/rc.d/lwsmd start returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+/opt/likewise/bin/domainjoin-cli query > $TLOG 2>&1
+err=$?
+if [ $err -ne 0 ]; then
+    log "error: /opt/likewise/bin/domainjoin-cli query returned $err"
+    log `cat $TLOG`
+    exit 1
+fi
+
+log "LikewiseOpen postinstall finished"
