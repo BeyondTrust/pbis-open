@@ -114,11 +114,16 @@ log_copy(const char* dest)
 
     while ((amount = fread(buffer, 1, sizeof(buffer), log_handle)) > 0)
     {
-        fwrite(buffer, 1, amount, destfile);
+        if (fwrite(buffer, 1, amount, destfile) != 1)
+        {
+           goto error;
+        }
     }
 
     clearerr(log_handle);
     fseek(log_handle, 0, SEEK_END);
+
+error:
 
     fclose(destfile);
 }
@@ -141,7 +146,7 @@ safe_free(void** ptr)
     *ptr = NULL;
 }
 
-#define SAFE_FREE(var) safe_free((void**) &var);
+#define SAFE_FREE(var) safe_free((void**)(void*) &var);
 
 static void
 fill_state(JoinDialog* dialog)
