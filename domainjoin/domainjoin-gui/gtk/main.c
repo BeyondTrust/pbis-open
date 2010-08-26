@@ -114,16 +114,14 @@ log_copy(const char* dest)
 
     while ((amount = fread(buffer, 1, sizeof(buffer), log_handle)) > 0)
     {
-        if (fwrite(buffer, 1, amount, destfile) != 1)
+        if (fwrite(buffer, 1, amount, destfile) != amount)
         {
-           goto error;
+           break;
         }
     }
 
     clearerr(log_handle);
     fseek(log_handle, 0, SEEK_END);
-
-error:
 
     fclose(destfile);
 }
