@@ -180,6 +180,15 @@ extern pthread_mutex_t gLwTaskLogLock;
        goto error;                                    \
     }
 
+#define BAIL_ON_NT_STATUS(_status_)             \
+    do                                          \
+    {                                           \
+        if ((_status_) != STATUS_SUCCESS)       \
+        {                                       \
+            goto error;                         \
+        }                                       \
+    } while (0)
+
 #define BAIL_ON_INVALID_POINTER(p)            \
         if (NULL == p) {                      \
            dwError = ERROR_INVALID_PARAMETER; \
@@ -304,6 +313,14 @@ LwTaskLogMessage(
 DWORD
 LwTaskValidateLogLevel(
     DWORD dwLogLevel
+    );
+
+DWORD
+LwTaskDuplicateArgList(
+    PLW_TASK_ARG  pTaskArgArray,
+    DWORD         dwNumArgs,
+    PLW_TASK_ARG* ppTaskArgArray,
+    PDWORD        pdwNumArgs
     );
 
 VOID

@@ -49,6 +49,67 @@
 
 #include "includes.h"
 
+DWORD
+LwTaskDuplicateArgList(
+    PLW_TASK_ARG  pTaskArgArray,
+    DWORD         dwNumArgs,
+    PLW_TASK_ARG* ppTaskArgArray,
+    PDWORD        pdwNumArgs
+    )
+{
+    DWORD dwError = 0;
+    PLW_TASK_ARG pTaskArgArrayCopy = NULL;
+    DWORD        dwNumArgsCopy = 0;
+    DWORD        iArg = 0;
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_ARG) * dwNumArgs,
+                    (PVOID*)&pTaskArgArrayCopy);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwNumArgsCopy = dwNumArgs;
+
+    for (; iArg < dwNumArgs; iArg++)
+    {
+        PLW_TASK_ARG pSrcArg = &pTaskArgArray[iArg];
+        PLW_TASK_ARG pDstArg = &pTaskArgArrayCopy[iArg];
+
+        dwError = LwAllocateString(
+                        pSrcArg->pszArgName,
+                        &pDstArg->pszArgName);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+
+        pDstArg->dwArgType = pSrcArg->dwArgType;
+
+        if (pSrcArg->pszArgValue)
+        {
+            dwError = LwAllocateString(
+                        pSrcArg->pszArgValue,
+                        &pDstArg->pszArgValue);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+    }
+
+    *ppTaskArgArray = pTaskArgArrayCopy;
+    *pdwNumArgs = dwNumArgsCopy;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    *ppTaskArgArray = NULL;
+    *pdwNumArgs = 0;
+
+    if (pTaskArgArrayCopy)
+    {
+        LwTaskFreeArgArray(pTaskArgArrayCopy, dwNumArgsCopy);
+    }
+
+    goto cleanup;
+}
+
 VOID
 LwTaskFreeTaskInfoArray(
     PLW_TASK_INFO pTaskInfoArray,

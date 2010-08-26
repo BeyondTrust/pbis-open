@@ -97,6 +97,24 @@ LwTaskBuildMigrateArgArray(
     );
 
 static
+NTSTATUS
+LwTaskSrvCountCandidateTasks(
+    PVOID    pKey,
+    PVOID    pData,
+    PVOID    pUserData,
+    PBOOLEAN pbContinue
+    );
+
+static
+NTSTATUS
+LwTaskSrvEnumCandidateTasks(
+    PVOID    pKey,
+    PVOID    pData,
+    PVOID    pUserData,
+    PBOOLEAN pbContinue
+    );
+
+static
 DWORD
 LwTaskSrvCreateInternal(
     PCSTR         pszTaskName,
@@ -895,7 +913,169 @@ LwTaskSrvEnum(
     PDWORD         pdwResume
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    LW_SRV_TASK_ENUM_QUERY taskEnumQuery =
+    {
+        .taskType       = taskType,
+        .dwTotalEntries = 0,
+        .pTaskInfoArray = NULL,
+        .dwNumTaskInfos = 0,
+        .iInfo          = 0,
+        .dwResume       = *pdwResume
+    };
+
+    LW_TASK_LOCK_RWMUTEX_SHARED(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    // TODO: Implement resume support
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeTraverse(
+                            gLwTaskSrvGlobals.pTaskCollection,
+                            LWRTL_TREE_TRAVERSAL_TYPE_IN_ORDER,
+                            &LwTaskSrvCountCandidateTasks,
+                            &taskEnumQuery));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if (!taskEnumQuery.dwTotalEntries)
+    {
+        goto done;
+    }
+
+    dwError = LwAllocateMemory(
+                    sizeof(LW_TASK_INFO) * taskEnumQuery.dwTotalEntries,
+                    (PVOID*)&taskEnumQuery.pTaskInfoArray);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    taskEnumQuery.dwNumTaskInfos = taskEnumQuery.dwTotalEntries;
+
+    dwError = LwNtStatusToWin32Error(
+                    LwRtlRBTreeTraverse(
+                            gLwTaskSrvGlobals.pTaskCollection,
+                            LWRTL_TREE_TRAVERSAL_TYPE_IN_ORDER,
+                            &LwTaskSrvEnumCandidateTasks,
+                            &taskEnumQuery));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+done:
+
+    *ppTaskInfoArray = taskEnumQuery.pTaskInfoArray;
+    *pdwNumTaskInfos = taskEnumQuery.dwNumTaskInfos;
+    *pdwTotalTaskInfos = taskEnumQuery.dwTotalEntries;
+    *pdwResume         = taskEnumQuery.dwResume;
+
+cleanup:
+
+    LW_TASK_UNLOCK_RWMUTEX(bInLock, &gLwTaskSrvGlobals.mutex);
+
+    return dwError;
+
+error:
+
+    *pdwNumTaskInfos = 0;
+    *ppTaskInfoArray = NULL;
+    *pdwTotalTaskInfos = 0;
+
+    if (taskEnumQuery.pTaskInfoArray)
+    {
+        LwTaskFreeTaskInfoArray(
+                taskEnumQuery.pTaskInfoArray,
+                taskEnumQuery.dwNumTaskInfos);
+    }
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+LwTaskSrvCountCandidateTasks(
+    PVOID    pKey,
+    PVOID    pData,
+    PVOID    pUserData,
+    PBOOLEAN pbContinue
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLW_SRV_TASK pTask = (PLW_SRV_TASK)pData;
+    PLW_SRV_TASK_ENUM_QUERY pTaskEnumQuery =
+                                    (PLW_SRV_TASK_ENUM_QUERY)pUserData;
+    BOOLEAN bContinue = TRUE;
+
+    if (pTaskEnumQuery->taskType == pTask->taskType)
+    {
+        if (pTaskEnumQuery->dwTotalEntries == UINT32_MAX)
+        {
+            bContinue = FALSE;
+        }
+        else
+        {
+            pTaskEnumQuery->dwTotalEntries++;
+        }
+    }
+
+    *pbContinue = bContinue;
+
+    return ntStatus;
+}
+
+static
+NTSTATUS
+LwTaskSrvEnumCandidateTasks(
+    PVOID    pKey,
+    PVOID    pData,
+    PVOID    pUserData,
+    PBOOLEAN pbContinue
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PLW_SRV_TASK pTask = (PLW_SRV_TASK)pData;
+    PLW_SRV_TASK_ENUM_QUERY pTaskEnumQuery =
+                                    (PLW_SRV_TASK_ENUM_QUERY)pUserData;
+    PLW_TASK_INFO pTaskInfo = NULL;
+    BOOLEAN bInLock = FALSE;
+    CHAR    szUUID[37];
+
+    if (pTask->taskType != pTaskEnumQuery->taskType)
+    {
+        goto cleanup;
+    }
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    pTaskInfo = &pTaskEnumQuery->pTaskInfoArray[pTaskEnumQuery->iInfo++];
+
+    uuid_unparse(pTask->uuid, szUUID);
+
+    ntStatus = LwWin32ErrorToNtStatus(
+                    LwAllocateString(
+                              szUUID,
+                              &pTaskInfo->pszTaskId));
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (pTask->dwNumArgs)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(
+                        LwTaskDuplicateArgList(
+                                pTask->pArgArray,
+                                pTask->dwNumArgs,
+                                &pTaskInfo->pArgArray,
+                                &pTaskInfo->dwNumArgs));
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    *pbContinue = TRUE;
+
+cleanup:
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+
+    return ntStatus;
+
+error:
+
+    *pbContinue = FALSE;
+
+    goto cleanup;
 }
 
 static

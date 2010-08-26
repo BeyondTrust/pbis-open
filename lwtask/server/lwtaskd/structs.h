@@ -80,6 +80,21 @@ typedef struct _LW_SRV_TASK
 
 } LW_SRV_TASK, *PLW_SRV_TASK;
 
+typedef struct _LW_SRV_TASK_ENUM_QUERY
+{
+    LW_TASK_TYPE  taskType;
+
+    DWORD         dwTotalEntries;
+
+    PLW_TASK_INFO pTaskInfoArray;
+    DWORD         dwNumTaskInfos;
+
+    DWORD         dwResume;
+
+    DWORD         iInfo;
+
+} LW_SRV_TASK_ENUM_QUERY, *PLW_SRV_TASK_ENUM_QUERY;
+
 typedef struct _LW_TASK_CONTEXT
 {
     LONG         refCount;
