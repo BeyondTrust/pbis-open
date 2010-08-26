@@ -541,7 +541,7 @@ cleanup:
 
 error:
 
-    memset(&pTaskStatus, 0, sizeof(*pTaskStatus));
+    memset(pTaskStatus, 0, sizeof(*pTaskStatus));
 
     goto cleanup;
 }
