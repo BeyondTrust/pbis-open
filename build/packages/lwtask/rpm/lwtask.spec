@@ -79,8 +79,6 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %endif
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
-/%{_lib}/*.so
-/%{_lib}/*.so.*
 %{PrefixDir}/share/config/*
 
 %if ! %{Compat32}
@@ -123,8 +121,6 @@ done
 
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
-/%{_lib}/*.a
-/%{_lib}/*.la
 %if ! %{Compat32}
 %attr(0644,root,root) %{PrefixDir}/include/*
 #%attr(0644,root,root) %{PrefixDir}/share/doc/*
