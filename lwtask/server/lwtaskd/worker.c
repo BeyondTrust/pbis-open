@@ -44,6 +44,12 @@ LwTaskSrvExecute(
 
 static
 DWORD
+LwTaskSrvExecuteMigrate(
+    PLW_TASK_CONTEXT pContext
+    );
+
+static
+DWORD
 LwTaskGetNextExecutionContext(
     struct timespec*  pTimespec,
     PLW_TASK_CONTEXT* ppContext
@@ -158,7 +164,136 @@ LwTaskSrvExecute(
     PLW_TASK_CONTEXT pContext
     )
 {
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD dwError = 0;
+
+    switch (pContext->pTask->taskType)
+    {
+        case LW_TASK_TYPE_MIGRATE:
+
+            dwError = LwTaskSrvExecuteMigrate(pContext);
+
+            break;
+
+        default:
+
+            dwError = ERROR_NOT_SUPPORTED;
+
+            break;
+    }
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskSrvExecuteMigrate(
+    PLW_TASK_CONTEXT pContext
+    )
+{
+    DWORD dwError = 0;
+    PSTR  pszRemoteServer   = NULL; // Do not free
+    PSTR  pszRemoteShare    = NULL; // Do not free
+    PSTR  pszRemoteUser     = NULL; // Do not free
+    PSTR  pszRemotePassword = NULL; // Do not free
+    PLW_TASK_ARG pArg = NULL;       // Do not free
+    PLW_SHARE_MIGRATION_CONTEXT pMigrateContext = NULL;
+
+    LW_TASK_LOG_INFO(   "Starting execution of task [id:%d]",
+                        pContext->pTask->dwTaskId);
+
+    pArg = LwTaskFindArg(
+                LW_TASK_MIGRATE_ARG_REMOTE_SERVER_NAME,
+                LW_TASK_ARG_TYPE_STRING,
+                pContext->pArgArray,
+                pContext->dwNumArgs);
+    if (!pArg)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pszRemoteServer = pArg->pszArgValue;
+
+    pArg = LwTaskFindArg(
+                LW_TASK_MIGRATE_ARG_REMOTE_SHARE_NAME,
+                LW_TASK_ARG_TYPE_STRING_MULTI_CSV,
+                pContext->pArgArray,
+                pContext->dwNumArgs);
+    if (!pArg)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pszRemoteShare = pArg->pszArgValue;
+
+    pArg = LwTaskFindArg(
+                LW_TASK_MIGRATE_ARG_REMOTE_USER_PRINCIPAL,
+                LW_TASK_ARG_TYPE_STRING,
+                pContext->pArgArray,
+                pContext->dwNumArgs);
+    if (!pArg)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pszRemoteUser = pArg->pszArgValue;
+
+    pArg = LwTaskFindArg(
+                LW_TASK_MIGRATE_ARG_REMOTE_PASSWORD,
+                LW_TASK_ARG_TYPE_STRING,
+                pContext->pArgArray,
+                pContext->dwNumArgs);
+    if (!pArg)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+
+    pszRemotePassword = pArg->pszArgValue;
+
+    dwError = LwTaskMigrateCreateContext(
+                        pszRemoteUser,
+                        pszRemotePassword,
+                        &pMigrateContext);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    // TODO: Handle multiple shares
+    // TODO: Handle task cancellation
+    dwError = LwTaskMigrateShareA(
+                    pMigrateContext,
+                    pszRemoteServer,
+                    pszRemoteShare,
+                    0);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    LW_TASK_LOG_INFO(   "Completed execution of task [id:%d]",
+                        pContext->pTask->dwTaskId);
+
+    if (pMigrateContext)
+    {
+        LwTaskMigrateCloseContext(pMigrateContext);
+    }
+
+    return dwError;
+
+error:
+
+    LW_TASK_LOG_ERROR(  "Error executing task [id:%d] [code: %u]",
+                        pContext->pTask->dwTaskId,
+                        dwError);
+
+    goto cleanup;
 }
 
 VOID

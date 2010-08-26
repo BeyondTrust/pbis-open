@@ -59,6 +59,8 @@ typedef struct _LW_SRV_TASK
 
     DWORD  dwTaskId;
 
+    LW_TASK_TYPE taskType;
+
     pthread_mutex_t  mutex;
     pthread_mutex_t* pMutex;
 

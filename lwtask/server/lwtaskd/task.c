@@ -97,19 +97,11 @@ LwTaskBuildMigrateArgArray(
     );
 
 static
-PLW_TASK_ARG
-LwTaskFindArg(
-    PCSTR        pszArgName,
-    DWORD        dwArgType,
-    PLW_TASK_ARG pArgArray,
-    DWORD        dwNumArgs
-    );
-
-static
 DWORD
 LwTaskSrvCreateInternal(
     PCSTR         pszTaskName,
     DWORD         dwTaskId,
+    LW_TASK_TYPE  taskType,
     PLW_TASK_ARG* ppArgArray,
     PDWORD        pdwNumArgs,
     PLW_SRV_TASK* ppTask
@@ -170,6 +162,7 @@ LwTaskSrvInit(
         dwError = LwTaskSrvCreateInternal(
                     pTask->pszTaskName,
                     pTask->dwTaskId,
+                    pTask->taskType,
                     &pTask->pArgArray,
                     &pTask->dwNumArgs,
                     &pSrvTask);
@@ -653,6 +646,7 @@ LwTaskSrvCreateMigrateTask(
     dwError = LwTaskSrvCreateInternal(
                     &szUUID[0],
                     dwTaskId,
+                    LW_TASK_TYPE_MIGRATE,
                     &pArgArrayLocal,
                     &dwNumArgsLocal,
                     &pTask);
@@ -818,7 +812,6 @@ error:
     goto cleanup;
 }
 
-static
 PLW_TASK_ARG
 LwTaskFindArg(
     PCSTR        pszArgName,
@@ -910,6 +903,7 @@ DWORD
 LwTaskSrvCreateInternal(
     PCSTR         pszTaskName,
     DWORD         dwTaskId,
+    LW_TASK_TYPE  taskType,
     PLW_TASK_ARG* ppArgArray,
     PDWORD        pdwNumArgs,
     PLW_SRV_TASK* ppTask
@@ -933,6 +927,7 @@ LwTaskSrvCreateInternal(
     }
 
     pTask->dwTaskId = dwTaskId;
+    pTask->taskType = taskType;
 
     pTask->pArgArray = *ppArgArray;
     *ppArgArray      = NULL;

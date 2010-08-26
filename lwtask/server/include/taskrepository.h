@@ -47,6 +47,11 @@
 #ifndef __TASKREPOSITORY_H__
 #define __TASKREPOSITORY_H__
 
+#define LW_TASK_MIGRATE_ARG_REMOTE_SERVER_NAME    "remote-server-name"
+#define LW_TASK_MIGRATE_ARG_REMOTE_SHARE_NAME     "remote-share-name"
+#define LW_TASK_MIGRATE_ARG_REMOTE_USER_PRINCIPAL "remote-user-principal"
+#define LW_TASK_MIGRATE_ARG_REMOTE_PASSWORD       "remote-password"
+
 typedef struct _LW_TASK_DB_CONTEXT *PLW_TASK_DB_CONTEXT;
 
 typedef struct _LW_SRV_DB_TASK

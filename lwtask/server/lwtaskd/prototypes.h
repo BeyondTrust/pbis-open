@@ -247,6 +247,14 @@ LwTaskSrvCreate(
     PSTR*        ppszTaskId
     );
 
+PLW_TASK_ARG
+LwTaskFindArg(
+    PCSTR        pszArgName,
+    DWORD        dwArgType,
+    PLW_TASK_ARG pArgArray,
+    DWORD        dwNumArgs
+    );
+
 DWORD
 LwTaskSrvGetSchema(
     LW_TASK_TYPE       taskType,

@@ -474,19 +474,19 @@ LwTaskDbInitTaskArgs(
     }
     migrateTaskArgs[] =
     {
-        {   "\"remote-server-name\"",
+        {   "\"" LW_TASK_MIGRATE_ARG_REMOTE_SERVER_NAME "\"",
             LW_TASK_ARG_TYPE_STRING,
             LW_TASK_ARG_FLAG_MANDATORY | LW_TASK_ARG_FLAG_PERSIST
         },
-        {   "\"remote-share-name\"",
+        {   "\"" LW_TASK_MIGRATE_ARG_REMOTE_SHARE_NAME "\"",
             LW_TASK_ARG_TYPE_STRING_MULTI_CSV,
             LW_TASK_ARG_FLAG_PERSIST
         },
-        {   "\"remote-user-principal\"",
+        {   "\"" LW_TASK_MIGRATE_ARG_REMOTE_USER_PRINCIPAL "\"",
             LW_TASK_ARG_TYPE_STRING,
             LW_TASK_ARG_FLAG_MANDATORY | LW_TASK_ARG_FLAG_PERSIST
         },
-        {   "\"remote-password\"",
+        {   "\"" LW_TASK_MIGRATE_ARG_REMOTE_PASSWORD "\"",
             LW_TASK_ARG_TYPE_STRING,
             LW_TASK_ARG_FLAG_MANDATORY
         }
