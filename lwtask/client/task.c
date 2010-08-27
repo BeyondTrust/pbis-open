@@ -45,7 +45,7 @@ LwTaskGetTypes(
     DWORD dwNumTypes = 0;
 
     BAIL_ON_INVALID_POINTER(pConnection);
-    BAIL_ON_INVALID_POINTER(pTaskTypes);
+    BAIL_ON_INVALID_POINTER(ppTaskTypes);
     BAIL_ON_INVALID_POINTER(pdwNumTypes);
 
     dwError = LwTaskContextAcquireCall(pConnection, &pCall);
@@ -260,7 +260,7 @@ LwTaskEnum(
     DWORD         dwResume       = 0;
 
     BAIL_ON_INVALID_POINTER(pConnection);
-    BAIL_ON_INVALID_POINTER(pTaskInfoArray);
+    BAIL_ON_INVALID_POINTER(ppTaskInfoArray);
     BAIL_ON_INVALID_POINTER(pdwNumTaskInfos);
     BAIL_ON_INVALID_POINTER(pdwNumTotalTaskInfos);
     BAIL_ON_INVALID_POINTER(pdwResume);

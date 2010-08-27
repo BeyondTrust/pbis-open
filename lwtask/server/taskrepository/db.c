@@ -617,7 +617,7 @@ LwTaskDbGetTypes(
 
     pCursor = pdwTaskTypeArray;
 
-    if (!pDbContext->pQueryTaskTypeCountStmt)
+    if (!pDbContext->pQueryTaskTypes)
     {
         PCSTR pszQueryTemplate = "SELECT " LW_TASK_DB_COL_TASK_TYPE \
                                  " FROM "  LW_TASK_TYPES_TABLE;
@@ -875,7 +875,7 @@ LwTaskDbGetSchemaCount_inlock(
     if (!pDbContext->pQueryTaskSchemaArgCountStmt)
     {
         PCSTR pszQueryTemplate = "SELECT count(*) FROM " LW_TASK_SCHEMA_TABLE \
-                                 "WHERE " LW_TASK_DB_COL_TASK_TYPE " = ?1";
+                                 " WHERE " LW_TASK_DB_COL_TASK_TYPE " = ?1";
 
         dwError = sqlite3_prepare_v2(
                         pDbContext->pDbHandle,
@@ -1483,7 +1483,7 @@ LwTaskDbGetTaskArgCount_inlock(
     if (!pDbContext->pQueryTaskArgCountStmt)
     {
         PCSTR pszQueryTemplate = "SELECT count(*) FROM " LW_TASK_ARGS_TABLE \
-                                 "WHERE " LW_TASK_DB_COL_TASK_ID " = ?1";
+                                 " WHERE " LW_TASK_DB_COL_TASK_ID " = ?1";
 
         dwError = sqlite3_prepare_v2(
                         pDbContext->pDbHandle,
