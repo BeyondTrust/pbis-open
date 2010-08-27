@@ -192,3 +192,10 @@ LwTaskFreeArgArray(
     }
 }
 
+VOID
+LwTaskFreeMemory(
+    PVOID pMemory
+    )
+{
+	LW_SAFE_FREE_MEMORY(pMemory);
+}

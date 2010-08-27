@@ -135,6 +135,11 @@ LwTaskFreeArgArray(
     DWORD        dwNumArgs
     );
 
+VOID
+LwTaskFreeMemory(
+    PVOID pMemory
+    );
+
 DWORD
 LwTaskSetLogLevel(
     PLW_TASK_CLIENT_CONNECTION pConnection,
