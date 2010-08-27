@@ -45,7 +45,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NOT_HANDLED, -1, "The authentication r
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_INVALID_DNS_RESPONSE, -1, "Response from DNS is invalid" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DNS_RESOLUTION_FAILED, -1, "Failed to resolve query using DNS" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_TIME_CONVERSION, -1, "Failed to convert the time" )
-S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_INVALID_SID, -1, "The security descriptor (SID) is invalid" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_INVALID_SID, -1, "The security identifier (SID) is invalid" )
 // Triggered by passing a bad password for a valid username to domainjoin
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_PASSWORD_MISMATCH, -1, "The password is incorrect for the given username" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_UNEXPECTED_DB_RESULT, -1, "Unexpected cached data found" )
