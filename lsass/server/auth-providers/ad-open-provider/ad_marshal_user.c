@@ -198,6 +198,8 @@ AD_BuildHomeDirFromTemplate(
     DWORD dwHomedirPrefixLength = 0;
     PSTR pszHostName = NULL;
     DWORD dwHostNameLength = 0;
+    CHAR szEscapedPercent[2] = "%";
+    DWORD dwEscapedPercentLength = 0;
 
     BAIL_ON_INVALID_STRING(pszHomedirTemplate);
     BAIL_ON_INVALID_STRING(pszNetBIOSDomainName);
@@ -223,6 +225,11 @@ AD_BuildHomeDirFromTemplate(
         dwHostNameLength = strlen(pszHostName);
     }
 
+    if (strstr(pszHomedirTemplate, "%%"))
+    {
+        dwEscapedPercentLength = strlen(szEscapedPercent);
+    }
+
     dwNetBIOSDomainNameLength = strlen(pszNetBIOSDomainName);
     dwSamAccountNameLength = strlen(pszSamAccountName);
 
@@ -232,6 +239,7 @@ AD_BuildHomeDirFromTemplate(
                         dwSamAccountNameLength +
                         dwHomedirPrefixLength +
                         dwHostNameLength +
+                        dwEscapedPercentLength +
                         1);
 
     dwError = LwAllocateMemory(
@@ -271,6 +279,10 @@ AD_BuildHomeDirFromTemplate(
                 case 'L':
                     pszInsert = pszHostName;
                     dwInsertLength = dwHostNameLength;
+                    break;
+                case '%':
+                    pszInsert = szEscapedPercent;
+                    dwInsertLength = dwEscapedPercentLength;
                     break;
                 default:
                     dwError = LW_ERROR_INVALID_HOMEDIR_TEMPLATE;
