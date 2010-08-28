@@ -919,11 +919,12 @@ LwTaskBuildMigrateArgArray(
         for(iArgInfo = 0; iArgInfo < dwNumArgInfos; iArgInfo++)
         {
             PLW_TASK_ARG_INFO pArgInfo = &pArgInfoArray[iArgInfo];
-            PLW_TASK_ARG pArg2 = &pArgArray2[iArg2++];
 
             if (LwIsSetFlag(pArgInfo->dwFlags,LW_TASK_ARG_FLAG_MANDATORY) &&
                 LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_PERSIST))
             {
+                PLW_TASK_ARG pArg2 = &pArgArray2[iArg2++];
+
                 PLW_TASK_ARG pArg = LwTaskFindArg(
                                         pArgInfo->pszArgName,
                                         pArgInfo->argType,
