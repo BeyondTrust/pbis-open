@@ -184,7 +184,7 @@ LwTaskFreeArgArray(
 
             if (pArg->pszArgValue)
             {
-                LwFreeMemory(pArg->pszArgName);
+                LwFreeMemory(pArg->pszArgValue);
             }
         }
 

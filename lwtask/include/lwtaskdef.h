@@ -100,8 +100,8 @@ typedef struct _LW_TASK_ARG_INFO
 typedef struct _LW_TASK_INFO
 {
     PSTR             pszTaskId;
-    PLW_TASK_ARG     pArgArray;
     DWORD            dwNumArgs;
+    PLW_TASK_ARG     pArgArray;
 } LW_TASK_INFO, *PLW_TASK_INFO;
 
 #endif /* __LWTASKDEF_H__ */
