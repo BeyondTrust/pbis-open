@@ -1261,6 +1261,62 @@ error:
 }
 
 VOID
+LwTaskSrvInitStatus(
+    PLW_SRV_TASK pTask
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    pTask->dwPercentComplete = 0;
+
+    pTask->dwError = 0;
+
+    pTask->startTime = time(NULL);
+    pTask->endTime = 0;
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+}
+
+VOID
+LwTaskSrvSetErrorCode(
+    PLW_SRV_TASK pTask,
+    DWORD        dwError
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    pTask->dwError = dwError;
+
+    pTask->endTime = time(NULL);
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+}
+
+VOID
+LwTaskSrvSetPercentComplete(
+    PLW_SRV_TASK pTask,
+    DWORD        dwPercentComplete
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LW_TASK_LOCK_MUTEX(bInLock, &pTask->mutex);
+
+    pTask->dwPercentComplete = dwPercentComplete;
+
+    if (dwPercentComplete == 100)
+    {
+        pTask->endTime = time(NULL);
+    }
+
+    LW_TASK_UNLOCK_MUTEX(bInLock, &pTask->mutex);
+}
+
+VOID
 LwTaskSrvRelease(
     PLW_SRV_TASK pTask
     )

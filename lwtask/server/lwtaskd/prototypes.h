@@ -272,6 +272,23 @@ LwTaskSrvEnum(
     );
 
 VOID
+LwTaskSrvInitStatus(
+    PLW_SRV_TASK pTask
+    );
+
+VOID
+LwTaskSrvSetErrorCode(
+    PLW_SRV_TASK pTask,
+    DWORD        dwError
+    );
+
+VOID
+LwTaskSrvSetPercentComplete(
+    PLW_SRV_TASK pTask,
+    DWORD        dwPercentComplete
+    );
+
+VOID
 LwTaskSrvRelease(
     PLW_SRV_TASK pTask
     );

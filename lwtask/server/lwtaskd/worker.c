@@ -166,6 +166,8 @@ LwTaskSrvExecute(
 {
     DWORD dwError = 0;
 
+    LwTaskSrvInitStatus(pContext->pTask);
+
     switch (pContext->pTask->taskType)
     {
         case LW_TASK_TYPE_MIGRATE:
@@ -182,11 +184,15 @@ LwTaskSrvExecute(
     }
     BAIL_ON_LW_TASK_ERROR(dwError);
 
+    LwTaskSrvSetPercentComplete(pContext->pTask, 100);
+
 cleanup:
 
     return dwError;
 
 error:
+
+    LwTaskSrvSetErrorCode(pContext->pTask, dwError);
 
     goto cleanup;
 }
