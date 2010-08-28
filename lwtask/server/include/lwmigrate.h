@@ -66,17 +66,18 @@ LwTaskMigrateCreateContext(
     );
 
 DWORD
-LwTaskMigrateAllShares(
+LwTaskMigrateMultipleSharesA(
     PLW_SHARE_MIGRATION_CONTEXT pContext,
-    PWSTR                       pwszServer,
+    PCSTR                       pszServer,
+    PCSTR                       pszRemoteShares,
     LW_MIGRATE_FLAGS            dwFlags
     );
 
 DWORD
 LwTaskMigrateShareA(
     PLW_SHARE_MIGRATION_CONTEXT pContext,
-    PSTR                        pszServer,
-    PSTR                        pszShare,
+    PCSTR                       pszServer,
+    PCSTR                       pszShare,
     LW_MIGRATE_FLAGS            dwFlags
     );
 

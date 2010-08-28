@@ -272,13 +272,22 @@ LwTaskSrvExecuteMigrate(
                         &pMigrateContext);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
-    // TODO: Handle multiple shares
-    // TODO: Handle task cancellation
-    dwError = LwTaskMigrateShareA(
-                    pMigrateContext,
-                    pszRemoteServer,
-                    pszRemoteShare,
-                    0);
+    if (IsNullOrEmptyString(pszRemoteShare) || strchr(pszRemoteShare, (int)','))
+    {
+        dwError = LwTaskMigrateMultipleSharesA(
+                        pMigrateContext,
+                        pszRemoteServer,
+                        pszRemoteShare,
+                        0);
+    }
+    else
+    {
+        dwError = LwTaskMigrateShareA(
+                        pMigrateContext,
+                        pszRemoteServer,
+                        pszRemoteShare,
+                        0);
+    }
     BAIL_ON_LW_TASK_ERROR(dwError);
 
 cleanup:

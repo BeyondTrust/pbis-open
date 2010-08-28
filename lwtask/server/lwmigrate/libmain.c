@@ -49,6 +49,22 @@
 
 #include "includes.h"
 
+static
+DWORD
+LwTaskMigrateAllSharesA(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PCSTR                       pszServer,
+    LW_MIGRATE_FLAGS            dwFlags
+    );
+
+static
+DWORD
+LwTaskMigrateAllSharesW(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PWSTR                       pwszServer,
+    LW_MIGRATE_FLAGS            dwFlags
+    );
+
 DWORD
 LwTaskMigrateInit(
     VOID
@@ -132,7 +148,104 @@ error:
 }
 
 DWORD
-LwTaskMigrateAllShares(
+LwTaskMigrateMultipleSharesA(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PCSTR                       pszServer,
+    PCSTR                       pszRemoteShares,
+    LW_MIGRATE_FLAGS            dwFlags
+    )
+{
+    DWORD dwError = 0;
+    PSTR  pszRemoteShare = NULL;
+
+    if (IsNullOrEmptyString(pszRemoteShares))
+    {
+        dwError = LwTaskMigrateAllSharesA(pContext, pszServer, dwFlags);
+        BAIL_ON_LW_TASK_ERROR(dwError);
+    }
+    else
+    {
+        PCSTR  pszCursor = pszRemoteShares;
+
+        do
+        {
+            size_t sLen = strspn(pszCursor, ", \t");
+            if (sLen)
+            {
+                pszCursor += sLen;
+            }
+
+            if (IsNullOrEmptyString(pszCursor))
+            {
+                break;
+            }
+
+            sLen = strcspn(pszCursor, ", \t");
+            if (sLen)
+            {
+                LW_SAFE_FREE_MEMORY(pszRemoteShare);
+                pszRemoteShare = NULL;
+
+                dwError = LwStrndup(pszCursor, sLen, &pszRemoteShare);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+
+                LW_TASK_LOG_INFO("Migrating share [%s]", pszRemoteShare);
+
+                pszCursor += sLen;
+
+                dwError = LwTaskMigrateShareA(
+                                pContext,
+                                pszServer,
+                                pszRemoteShare,
+                                dwFlags);
+                BAIL_ON_LW_TASK_ERROR(dwError);
+            }
+
+        } while (!IsNullOrEmptyString(pszCursor));
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pszRemoteShare);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskMigrateAllSharesA(
+    PLW_SHARE_MIGRATION_CONTEXT pContext,
+    PCSTR                       pszServer,
+    LW_MIGRATE_FLAGS            dwFlags
+    )
+{
+    DWORD dwError = 0;
+    PWSTR pwszServer = NULL;
+
+    dwError = LwMbsToWc16s(pszServer, &pwszServer);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+    dwError = LwTaskMigrateAllSharesW(pContext, pwszServer, dwFlags);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pwszServer);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+LwTaskMigrateAllSharesW(
     PLW_SHARE_MIGRATION_CONTEXT pContext,
     PWSTR                       pwszServer,
     LW_MIGRATE_FLAGS            dwFlags
@@ -158,6 +271,12 @@ LwTaskMigrateAllShares(
                         LwIoSetThreadCreds(pContext->pRemoteCreds->pKrb5Creds));
         BAIL_ON_LW_TASK_ERROR(dwError);
 
+        if (pShareInfo)
+        {
+            NetApiBufferFree(pShareInfo);
+            pShareInfo = NULL;
+        }
+
         dwError = NetShareEnumW(
                         pwszServer,
                         dwInfoLevel,
@@ -174,22 +293,14 @@ LwTaskMigrateAllShares(
 
         for (dwIndex = 0; dwIndex < dwNumShares; dwIndex++)
         {
-#if 0
-            // TODO:
-            dwError = LwTaskMigrateShareEx(
+            // TODO: Since we have the path already, we should consider
+            //       using that directly instead of calling the following API.
+            dwError = LwTaskMigrateShareW(
                             pContext,
                             pwszServer,
                             pShareInfo[dwIndex].shi2_netname,
-                            pShareInfo[dwIndex].shi2_path,
                             dwFlags);
             BAIL_ON_LW_TASK_ERROR(dwError);
-#endif
-        }
-
-        if (pShareInfo)
-        {
-            NetApiBufferFree(pShareInfo);
-            pShareInfo = NULL;
         }
 
         dwVisited += dwNumShares;
@@ -213,8 +324,8 @@ error:
 DWORD
 LwTaskMigrateShareA(
     PLW_SHARE_MIGRATION_CONTEXT pContext,
-    PSTR                        pszServer,
-    PSTR                        pszShare,
+    PCSTR                       pszServer,
+    PCSTR                       pszShare,
     LW_MIGRATE_FLAGS            dwFlags
     )
 {
