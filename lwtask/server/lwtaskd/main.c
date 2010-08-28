@@ -91,6 +91,9 @@ main(
     )
 {
     DWORD dwError = 0;
+    PCSTR pszSmNotify = NULL;
+    int notifyFd = -1;
+    char notifyCode = 0;
 
     pthread_rwlock_init(&gLwTaskSrvGlobals.mutex, NULL);
     gLwTaskSrvGlobals.pMutex = &gLwTaskSrvGlobals.mutex;
@@ -146,6 +149,33 @@ main(
 
     dwError = LwTaskSrvStartListenThread();
     BAIL_ON_LW_TASK_ERROR(dwError);
+
+    if ((pszSmNotify = getenv("LIKEWISE_SM_NOTIFY")) != NULL)
+    {
+        int ret = -1;
+
+        notifyFd = atoi(pszSmNotify);
+
+        do
+        {
+            ret = write(notifyFd, &notifyCode, sizeof(notifyCode));
+
+        } while(ret != sizeof(notifyCode) && errno == EINTR);
+
+        if (ret < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+
+            LW_TASK_LOG_ERROR(
+                    "Could not notify service manager: %s (%i)",
+                    strerror(errno),
+                    errno);
+
+            BAIL_ON_LW_TASK_ERROR(dwError);
+        }
+
+        close(notifyFd);
+    }
 
     // Handle signals, blocking until we are supposed to exit.
     dwError = LwTaskSrvHandleSignals();
