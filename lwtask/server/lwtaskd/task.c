@@ -749,6 +749,7 @@ LwTaskSrvCreateMigrateTask(
     DWORD               dwNumArgsLocal = 0;
     BOOLEAN             bInLock = FALSE;
     BOOLEAN             bInTransaction = FALSE;
+    PSTR                pszTaskname = NULL;
 
     dwError = LwTaskDbOpen(&pDbContext);
     BAIL_ON_LW_TASK_ERROR(dwError);
@@ -819,8 +820,13 @@ LwTaskSrvCreateMigrateTask(
 
     pTask = NULL;
 
+    dwError = LwAllocateString(szUUID, &pszTaskname);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
     dwError = LwTaskDbCommitTransaction(pDbContext);
     BAIL_ON_LW_TASK_ERROR(dwError);
+
+    *ppszTaskname = pszTaskname;
 
 cleanup:
 
@@ -854,6 +860,10 @@ error:
     {
         LwTaskDbRollbackTransaction(pDbContext);
     }
+
+    *ppszTaskname = NULL;
+
+    LW_SAFE_FREE_MEMORY(pszTaskname);
 
     goto cleanup;
 }
