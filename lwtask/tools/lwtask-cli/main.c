@@ -112,6 +112,14 @@ ShowUsage(
 {
     printf("Usage: lwtask-cli {log, task} <arguments>\n");
     printf("Arguments:\n");
-    printf("log {get-info | (set-level {warning, error, info, verbose, debug}) }\n");
+    printf("log  get-info \n"
+    	   "     set-level {warning, error, info, verbose, debug}\n\n"
+           "task list   <task type>\n"
+           "     add    <task type> <arguments>\n"
+    	   "     del    <task id>\n"
+    	   "     exec   <task id> <arguments>\n"
+    	   "     schema <task type>\n"
+    	   "     status <task id>\n\n"
+    	   "Available task types: {migrate-share}\n");
 }
 

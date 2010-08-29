@@ -1,4 +1,4 @@
-noinst_PROGRAMS = lwmigrate
+bin_PROGRAMS = lwmigrate
 
 lwmigrate_SOURCES = \
     main.c
