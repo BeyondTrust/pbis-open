@@ -944,7 +944,7 @@ LwTaskDbCreateTask(
 
     if (!pDbContext->pInsertTaskStmt)
     {
-        PCSTR pszDelQueryTemplate =
+        PCSTR pszQueryTemplate =
                         "INSERT INTO " LW_TASK_TABLE "("            \
                                        LW_TASK_DB_COL_TASK_NAME "," \
                                        LW_TASK_DB_COL_TASK_TYPE ")" \
@@ -952,7 +952,7 @@ LwTaskDbCreateTask(
 
         dwError = sqlite3_prepare_v2(
                     pDbContext->pDbHandle,
-                    pszDelQueryTemplate,
+                    pszQueryTemplate,
                     -1,
                     &pDbContext->pInsertTaskStmt,
                     NULL);
@@ -1551,7 +1551,7 @@ LwTaskDbDeleteTask(
     {
         PCSTR pszDelQueryTemplate =
                         "DELETE FROM " LW_TASK_TABLE \
-                        " WHERE " LW_TASK_DB_COL_TASK_ID " = ?1;";
+                        " WHERE " LW_TASK_DB_COL_TASK_ID " = ?1";
 
         dwError = sqlite3_prepare_v2(
                     pDbContext->pDbHandle,
