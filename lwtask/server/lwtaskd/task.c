@@ -907,6 +907,18 @@ LwTaskBuildMigrateArgArray(
 
             dwNumArgs2++;
         }
+        else if (LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_PERSIST))
+        {
+        	PLW_TASK_ARG pArg = LwTaskFindArg(
+									pArgInfo->pszArgName,
+									pArgInfo->argType,
+									pArgArray,
+									dwNumArgs);
+        	if (pArg)
+        	{
+        		dwNumArgs2++;
+        	}
+        }
     }
 
     if (dwNumArgs2)
@@ -936,12 +948,42 @@ LwTaskBuildMigrateArgArray(
                                     &pArg2->pszArgName);
                 BAIL_ON_LW_TASK_ERROR(dwError);
 
-                dwError = LwAllocateString(
-                                    pArg->pszArgValue,
-                                    &pArg2->pszArgValue);
-                BAIL_ON_LW_TASK_ERROR(dwError);
+                if (pArg->pszArgValue)
+                {
+					dwError = LwAllocateString(
+										pArg->pszArgValue,
+										&pArg2->pszArgValue);
+					BAIL_ON_LW_TASK_ERROR(dwError);
+                }
 
                 pArg2->dwArgType = pArg->dwArgType;
+            }
+            else if (LwIsSetFlag(pArgInfo->dwFlags, LW_TASK_ARG_FLAG_PERSIST))
+            {
+            	PLW_TASK_ARG pArg2 = &pArgArray2[iArg2++];
+
+            	PLW_TASK_ARG pArg = LwTaskFindArg(
+    									pArgInfo->pszArgName,
+    									pArgInfo->argType,
+    									pArgArray,
+    									dwNumArgs);
+            	if (pArg)
+            	{
+                    dwError = LwAllocateString(
+                                        pArg->pszArgName,
+                                        &pArg2->pszArgName);
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
+                    if (pArg->pszArgValue)
+                    {
+    					dwError = LwAllocateString(
+    										pArg->pszArgValue,
+    										&pArg2->pszArgValue);
+    					BAIL_ON_LW_TASK_ERROR(dwError);
+                    }
+
+                    pArg2->dwArgType = pArg->dwArgType;
+            	}
             }
         }
     }
