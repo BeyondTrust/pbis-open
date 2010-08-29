@@ -7,6 +7,7 @@ liblwtaskclient_la_SOURCES = \
     task.c
 
 liblwtaskclient_la_CPPFLAGS = \
+    $(AM_CPPFLAGS) \
     -DLW_ENABLE_THREADS=1   \
     -I@top_srcdir@/include \
     @LWMSG_INCLUDES@

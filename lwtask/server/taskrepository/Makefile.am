@@ -6,6 +6,7 @@ libtaskrepository_la_SOURCES = \
     libmain.c
 
 libtaskrepository_la_CPPFLAGS = \
+    $(AM_CPPFLAGS) \
     -DLW_ENABLE_THREADS=1         \
     -I@top_srcdir@/include        \
     -I@top_srcdir@/server/include \

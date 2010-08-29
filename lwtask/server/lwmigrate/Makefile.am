@@ -10,6 +10,7 @@ liblwmigrate_la_SOURCES = \
     path.c
 
 liblwmigrate_la_CPPFLAGS = \
+    $(AM_CPPFLAGS) \
     -DLW_ENABLE_THREADS=1 \
     -I@top_srcdir@/include \
     -I@top_srcdir@/server/include \
