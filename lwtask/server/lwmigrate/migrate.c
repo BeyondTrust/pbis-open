@@ -590,6 +590,13 @@ LwTaskMigrateProcessDir(
                     DWORD  dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
                     DWORD  dwCreateDisposition = FILE_OPEN;
                     DWORD  dwCreateOptions = FILE_DIRECTORY_FILE;
+                    IO_STATUS_BLOCK ioStatusBlock = {0};
+                    SECURITY_INFORMATION dwSecInfo =
+                    								OWNER_SECURITY_INFORMATION |
+                    								GROUP_SECURITY_INFORMATION |
+                    								DACL_SECURITY_INFORMATION;
+                    BYTE  secDescBuffer[2048];
+                    DWORD dwSecDescLength = sizeof(secDescBuffer);
 
                     LW_SAFE_FREE_MEMORY(pwszFilename);
                     pwszFilename = NULL;
@@ -633,6 +640,18 @@ LwTaskMigrateProcessDir(
                                     NULL);
                     BAIL_ON_LW_TASK_ERROR(dwError);
 
+                    memset(&secDescBuffer, 0, sizeof(secDescBuffer));
+
+                    dwError = LwNtStatusToWin32Error(
+                                    LwNtQuerySecurityFile(
+                                        pChildRemote->hFile,
+                                        NULL,
+                                        &ioStatusBlock,
+                                        dwSecInfo,
+                                        (PSECURITY_DESCRIPTOR_RELATIVE)&secDescBuffer[0],
+                                        dwSecDescLength));
+                    BAIL_ON_LW_TASK_ERROR(dwError);
+
                     fileName.RootFileHandle = pFileItem->pParentLocal->hFile;
 
                     if (pChildLocal)
@@ -656,7 +675,7 @@ LwTaskMigrateProcessDir(
 
                     dwError = LwTaskMigrateCreateFile(
                                     &fileName,
-                                    NULL,
+                                    (PSECURITY_DESCRIPTOR_RELATIVE)&secDescBuffer[0],
                                     dwDesiredAccess,
                                     dwFileAttributes,
                                     dwCreateDisposition,
@@ -772,6 +791,12 @@ LwTaskMigrateProcessFile(
     LONG64 llRemoteFileSize    = 0LL;
     LONG64 llLocalFileSize     = 0LL;
     FILE_CREATE_RESULT createResult = 0;
+    IO_STATUS_BLOCK ioStatusBlock = {0};
+    SECURITY_INFORMATION dwSecInfo = 	OWNER_SECURITY_INFORMATION |
+    									GROUP_SECURITY_INFORMATION |
+    									DACL_SECURITY_INFORMATION;
+    BYTE  secDescBuffer[2048];
+    DWORD dwSecDescLength = sizeof(secDescBuffer);
 
     fileName.FileName = pwszFilename;
     fileName.RootFileHandle = pFileItem->pParentRemote->hFile;
@@ -794,6 +819,18 @@ LwTaskMigrateProcessFile(
                     NULL);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
+    memset(&secDescBuffer, 0, sizeof(secDescBuffer));
+
+    dwError = LwNtStatusToWin32Error(
+                    LwNtQuerySecurityFile(
+                        hFileRemote,
+                        NULL,
+                        &ioStatusBlock,
+                        dwSecInfo,
+                        (PSECURITY_DESCRIPTOR_RELATIVE)&secDescBuffer[0],
+                        dwSecDescLength));
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
     dwError = LwTaskGetFileSize(hFileRemote, &llRemoteFileSize);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
@@ -810,7 +847,7 @@ LwTaskMigrateProcessFile(
 
     dwError = LwTaskMigrateCreateFile(
                     &fileName,
-                    NULL,
+                    (PSECURITY_DESCRIPTOR_RELATIVE)&secDescBuffer[0],
                     dwDesiredAccess,
                     dwFileAttributes,
                     dwCreateDisposition,
