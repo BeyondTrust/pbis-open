@@ -61,6 +61,8 @@
 #include <lwmsg/lwmsg.h>
 #include <lwmsg/protocol.h>
 
+#include <lwnet.h>
+
 #include <lwtaskdef.h>
 #include <lwtaskutils.h>
 #include <lwtaskipc.h>

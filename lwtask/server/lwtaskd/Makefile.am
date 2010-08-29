@@ -22,5 +22,6 @@ lwtaskd_LDADD = \
     $(top_builddir)/utils/liblwtaskutils.la \
     $(top_builddir)/logging_r/liblwtasklog_r.la \
     $(top_builddir)/ipc/liblwtaskipc.la \
+    @NETLOGON_LIBS@ \
     @UUID_LIBS@
 

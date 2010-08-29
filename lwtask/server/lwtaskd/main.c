@@ -127,10 +127,8 @@ main(
        BAIL_ON_LW_TASK_ERROR(dwError);
     }
 
-#if 0
     dwError = LWNetExtendEnvironmentForKrb5Affinity(TRUE);
     BAIL_ON_LW_TASK_ERROR(dwError);
-#endif
 
     dwError = LwTaskBlockSelectedSignals();
     BAIL_ON_LW_TASK_ERROR(dwError);
