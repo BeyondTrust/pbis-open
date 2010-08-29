@@ -193,6 +193,7 @@ LwTaskMigrateCreateShare(
 {
     DWORD dwError = 0;
     DWORD dwParmError = 0;
+    PWSTR pwszLocalPathWithDriveLetter = NULL;
     PWSTR pwszLocalPath = NULL;
     IO_FILE_HANDLE hFile = NULL;
 #if 0
@@ -210,9 +211,14 @@ LwTaskMigrateCreateShare(
     DWORD dwCreateDisposition = FILE_OPEN_IF;
     DWORD dwCreateOptions = FILE_DIRECTORY_FILE;
 
+    dwError = LwTaskGetLocalSharePathW(
+    				pShareInfoRemote->shi502_path,
+					&pwszLocalPathWithDriveLetter);
+    BAIL_ON_LW_TASK_ERROR(dwError);
+
     dwError = LwTaskGetMappedSharePathW(
                     &gLwTaskGlobals.wszDiskDriverPrefix[0],
-                    pShareInfoRemote->shi502_path,
+                    pwszLocalPathWithDriveLetter,
                     &pwszLocalPath);
     BAIL_ON_LW_TASK_ERROR(dwError);
 
@@ -258,7 +264,8 @@ LwTaskMigrateCreateShare(
     {
         shareInfoLocal.shi502_netname  = pShareInfoRemote->shi502_netname;
         shareInfoLocal.shi502_max_uses = pShareInfoRemote->shi502_max_uses;
-        shareInfoLocal.shi502_path     = pShareInfoRemote->shi502_path;
+        // TODO: Map other drive letters appropriately
+        shareInfoLocal.shi502_path     = pwszLocalPathWithDriveLetter;
         shareInfoLocal.shi502_type     = pShareInfoRemote->shi502_type;
         shareInfoLocal.shi502_remark   = pShareInfoRemote->shi502_remark;
         shareInfoLocal.shi502_reserved = pShareInfoRemote->shi502_reserved;
@@ -282,6 +289,7 @@ cleanup:
         LwFreeMemory(pSecDesc);
     }
 
+    LW_SAFE_FREE_MEMORY(pwszLocalPathWithDriveLetter);
     LW_SAFE_FREE_MEMORY(pwszLocalPath);
 
     return dwError;

@@ -375,8 +375,9 @@ LwTaskMigrateShareW(
     PLW_TASK_FILE   pRemoteFile      = NULL;
     PSHARE_INFO_502 pShareInfoLocal  = NULL;
     PLW_TASK_FILE   pLocalFile       = NULL;
-    DWORD dwInfoLevel = 502;
-    BOOLEAN         bAddShare = FALSE;
+    DWORD           dwInfoLevel   = 502;
+    BOOLEAN         bAddShare     = FALSE;
+    PWSTR           pwszLocalPath = NULL;
 
     BAIL_ON_INVALID_POINTER(pContext);
     BAIL_ON_INVALID_STRING(pwszServer);
@@ -431,8 +432,13 @@ LwTaskMigrateShareW(
             // The share exists locally
             // Make sure it points to the path we expect
 
-            if (wc16scasecmp(   pShareInfoRemote->shi502_path,
-                                pShareInfoLocal->shi502_path))
+            dwError = LwTaskGetLocalSharePathW(
+							pShareInfoRemote->shi502_path,
+							&pwszLocalPath);
+            BAIL_ON_LW_TASK_ERROR(dwError);
+
+            if (wc16scasecmp(   pwszLocalPath,
+            					pShareInfoLocal->shi502_path))
             {
                 dwError = NERR_DeviceShareConflict;
                 BAIL_ON_LW_TASK_ERROR(dwError);
@@ -471,6 +477,8 @@ cleanup:
     {
         LwTaskReleaseFile(pLocalFile);
     }
+
+    LW_SAFE_FREE_MEMORY(pwszLocalPath);
 
     return dwError;
 

@@ -132,6 +132,12 @@ LwTaskMigrateShareEx(
 // path.c
 
 DWORD
+LwTaskGetLocalSharePathW(
+	PWSTR  pwszSharePathWindows,
+	PWSTR* ppwszSharePathLocal
+	);
+
+DWORD
 LwTaskGetMappedSharePathW(
     PWSTR  pwszDriverPrefix,
     PWSTR  pwszInputPath,
