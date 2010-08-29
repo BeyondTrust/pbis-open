@@ -273,7 +273,18 @@ LwTaskProdConsTimedDequeue(
                 }
             }
 
-            dwError = LwErrnoToWin32Error(unixErrorCode);
+            switch (unixErrorCode)
+            {
+				case ETIMEDOUT:
+
+					dwError = ERROR_TIMEOUT;
+
+					break;
+
+				default:
+
+					dwError = LwErrnoToWin32Error(unixErrorCode);
+            }
 
             /* Don't use BAIL_ON_XXX() here to reduce unnecessary noise */
             if (dwError != ERROR_SUCCESS)
