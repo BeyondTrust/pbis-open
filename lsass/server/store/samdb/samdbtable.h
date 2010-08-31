@@ -63,7 +63,7 @@
 #define SAM_DB_UID_FROM_RID(rid)  (SAM_DB_UID_RID_OFFSET + (rid))
 #define SAM_DB_GID_FROM_RID(rid)  (SAM_DB_GID_RID_OFFSET + (rid))
 
-#define SAM_DB_ID_FROM_RID_OFFSET (LSA_MAX(SAM_DB_UID_RID_OFFSET, SAM_DB_GID_RID_OFFSET))
+#define SAM_DB_ID_FROM_RID_OFFSET (LW_MAX(SAM_DB_UID_RID_OFFSET, SAM_DB_GID_RID_OFFSET))
 
 #define SAM_DB_MIN_RID            (1000)
 #define SAM_DB_MAX_RID            (0xffffffff -                                 \
