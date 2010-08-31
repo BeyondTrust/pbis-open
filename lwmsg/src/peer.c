@@ -1079,9 +1079,9 @@ lwmsg_peer_acquire_call(
         PEER_UNLOCK(peer, locked);
         
         /* Check that the connect task is in a good state */
-        pthread_mutex_lock(&peer->connect_task->call_lock);
-        status = peer->connect_task->status;
-        pthread_mutex_unlock(&peer->connect_task->call_lock);
+        pthread_mutex_lock(&task->call_lock);
+        status = task->status;
+        pthread_mutex_unlock(&task->call_lock);
         
         switch (status)
         {
