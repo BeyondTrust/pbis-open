@@ -19,14 +19,12 @@ MODE_NAMES = \
 	list-groups-for-user \
 	ypcat \
 	ypmatch \
-	migrator \
 	mod-group \
 	mod-user \
 	refresh-configuration \
 	set-log-level \
 	set-machine-sid \
 	set-machine-name \
-	trace-info \
 	find-objects \
 	enum-objects \
 	enum-members \
@@ -56,7 +54,6 @@ lw_lsa_SOURCES = \
 	list_groups_for_user_main.c \
 	lw_ypcat_main.c \
 	lw_ypmatch_main.c \
-	migrator_main.c \
 	mod_group_main.c \
 	mod_user_main.c \
 	refresh_configuration_main.c \
