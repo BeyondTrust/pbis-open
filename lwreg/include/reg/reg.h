@@ -92,45 +92,6 @@ typedef struct __REG_KEY_HANDLE *HKEY, **PHKEY;
 
 typedef ACCESS_MASK REGSAM;
 
-#define KEY_QUERY_VALUE         0x0001 //Required to query the values of a registry key
-#define KEY_SET_VALUE           0x0002 //Required to create, delete, or set a registry value
-#define KEY_CREATE_SUB_KEY      0x0004 //Required to create, delete, or rename a subkey of a registry key
-#define KEY_ENUMERATE_SUB_KEYS  0x0008 //Required to enumerate the subkeys of a registry key
-#define KEY_NOTIFY              0x0010 //Required to request change notifications for a registry key or for subkeys of a registry key.
-#define KEY_CREATE_LINK         0x0020 //Reserved for system use
-
-
-#define KEY_ALL_ACCESS ( \
-	    (~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_REQUIRED | \
-	    KEY_QUERY_VALUE |\
-		KEY_SET_VALUE |\
-		KEY_CREATE_SUB_KEY |\
-		KEY_ENUMERATE_SUB_KEYS |\
-		KEY_NOTIFY |\
-		KEY_CREATE_LINK) \
-		)
-
-#define KEY_READ ( \
-		(~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_READ | \
-	    KEY_QUERY_VALUE |\
-	    KEY_ENUMERATE_SUB_KEYS |\
-	    KEY_NOTIFY) \
-		)
-
-
-#define KEY_WRITE ( \
-		(~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_WRITE | \
-	    KEY_SET_VALUE |\
-	    KEY_CREATE_SUB_KEY) \
-		)
-
-#define KEY_EXECUTE ( \
-		(~SYNCHRONIZE) & \
-        (KEY_READ)\
-        )
 
 typedef DWORD REG_DATA_TYPE;
 typedef DWORD *PREG_DATA_TYPE;

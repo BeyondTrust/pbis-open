@@ -37,54 +37,6 @@
 
 // TODO-Create a header with device names.
 
-//
-// Specific Access Rights - File
-//
-
-#define FILE_READ_DATA              0x00000001 // File/Pipe
-#define FILE_LIST_DIRECTORY         0x00000001 // Directory
-#define FILE_WRITE_DATA             0x00000002 // File/Pipe
-#define FILE_ADD_FILE               0x00000002 // Directory
-#define FILE_APPEND_DATA            0x00000004 // File
-#define FILE_ADD_SUBDIRECTORY       0x00000004 // Directory
-#define FILE_CREATE_PIPE_INSTANCE   0x00000004 // Pipe
-#define FILE_READ_EA                0x00000008 // File/Directory
-#define FILE_WRITE_EA               0x00000010 // File/Directory
-#define FILE_EXECUTE                0x00000020 // File
-#define FILE_TRAVERSE               0x00000020 // Directory
-#define FILE_DELETE_CHILD           0x00000040 // Directory
-#define FILE_READ_ATTRIBUTES        0x00000080 // File/Pipe/Directory
-#define FILE_WRITE_ATTRIBUTES       0x00000100 // File/Pipe/Directory
-
-#define FILE_ALL_ACCESS ( \
-    SYNCHRONIZE | \
-    STANDARD_RIGHTS_REQUIRED | \
-    0x000001FF | \
-    0 )
-
-#define FILE_GENERIC_READ ( \
-    SYNCHRONIZE | \
-    STANDARD_RIGHTS_READ | \
-    FILE_READ_ATTRIBUTES | \
-    FILE_READ_DATA | \
-    FILE_READ_EA | \
-    0 )
-
-#define FILE_GENERIC_WRITE ( \
-    SYNCHRONIZE | \
-    STANDARD_RIGHTS_WRITE | \
-    FILE_WRITE_ATTRIBUTES | \
-    FILE_WRITE_DATA | \
-    FILE_WRITE_EA | \
-    FILE_APPEND_DATA | \
-    0 )
-
-#define FILE_GENERIC_EXECUTE ( \
-    SYNCHRONIZE | \
-    STANDARD_RIGHTS_EXECUTE | \
-    FILE_READ_ATTRIBUTES | \
-    FILE_EXECUTE | \
-    0 )
 
 //
 // Share Flags
