@@ -191,6 +191,15 @@ RtlLengthAccessDeniedAce(
             RtlLengthSid(Sid));
 }
 
+USHORT
+RtlLengthAccessAuditAce(
+    IN PSID Sid
+    )
+{
+    return (LW_FIELD_OFFSET(SYSTEM_AUDIT_ACE, SidStart) +
+            RtlLengthSid(Sid));
+}
+
 NTSTATUS
 RtlInitializeAccessAllowedAce(
     OUT PACCESS_ALLOWED_ACE Ace,

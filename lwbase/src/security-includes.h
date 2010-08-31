@@ -39,6 +39,7 @@
 #include <lw/security-api.h>
 #include "security-api2.h"
 #include "security-types-internal.h"
+#include "security-sddl-internal.h"
 #include <lw/rtlgoto.h>
 #include <lw/rtlmemory.h>
 #include <lw/swab.h>

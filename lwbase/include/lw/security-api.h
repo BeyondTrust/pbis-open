@@ -40,6 +40,7 @@
 #define __LWBASE_SECURITY_API_H__
 
 #include "security-types.h"
+#include "sddl.h"
 #include <lw/ntstatus.h>
 #include <lw/rtlstring.h>
 
@@ -597,6 +598,27 @@ RtlCreateWellKnownSid(
     OUT OPTIONAL PSID Sid,
     IN OUT PULONG SidSize
     );
+
+
+//
+// SDDL Functions
+NTSTATUS
+RtlAllocateSecurityDescriptorFromSddlCString(
+    OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecurityDescriptor,
+    OUT OPTIONAL PULONG pSecurityDescriptorLength,
+    IN PCSTR pszStringSecurityDescriptor,
+    IN ULONG SddlRevision
+    );
+
+
+NTSTATUS
+RtlAllocateSddlCStringFromSecurityDescriptor(
+    OUT PSTR* ppszStringSecurityDescriptor,
+    IN PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
+    IN ULONG SddlRevision,
+    IN SECURITY_INFORMATION SecurityInformation
+    );
+
 
 LW_END_EXTERN_C
 

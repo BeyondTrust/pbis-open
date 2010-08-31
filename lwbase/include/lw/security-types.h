@@ -150,6 +150,100 @@ typedef ULONG ACCESS_MASK, *PACCESS_MASK;
     VALID_SACL_ACCESS_MASK | \
     0 )
 
+
+//
+// Specific Access Rights - File
+//
+
+#define FILE_READ_DATA              0x00000001 // File/Pipe
+#define FILE_LIST_DIRECTORY         0x00000001 // Directory
+#define FILE_WRITE_DATA             0x00000002 // File/Pipe
+#define FILE_ADD_FILE               0x00000002 // Directory
+#define FILE_APPEND_DATA            0x00000004 // File
+#define FILE_ADD_SUBDIRECTORY       0x00000004 // Directory
+#define FILE_CREATE_PIPE_INSTANCE   0x00000004 // Pipe
+#define FILE_READ_EA                0x00000008 // File/Directory
+#define FILE_WRITE_EA               0x00000010 // File/Directory
+#define FILE_EXECUTE                0x00000020 // File
+#define FILE_TRAVERSE               0x00000020 // Directory
+#define FILE_DELETE_CHILD           0x00000040 // Directory
+#define FILE_READ_ATTRIBUTES        0x00000080 // File/Pipe/Directory
+#define FILE_WRITE_ATTRIBUTES       0x00000100 // File/Pipe/Directory
+
+#define FILE_ALL_ACCESS ( \
+    SYNCHRONIZE | \
+    STANDARD_RIGHTS_REQUIRED | \
+    0x000001FF | \
+    0 )
+
+#define FILE_GENERIC_READ ( \
+    SYNCHRONIZE | \
+    STANDARD_RIGHTS_READ | \
+    FILE_READ_ATTRIBUTES | \
+    FILE_READ_DATA | \
+    FILE_READ_EA | \
+    0 )
+
+#define FILE_GENERIC_WRITE ( \
+    SYNCHRONIZE | \
+    STANDARD_RIGHTS_WRITE | \
+    FILE_WRITE_ATTRIBUTES | \
+    FILE_WRITE_DATA | \
+    FILE_WRITE_EA | \
+    FILE_APPEND_DATA | \
+    0 )
+
+#define FILE_GENERIC_EXECUTE ( \
+    SYNCHRONIZE | \
+    STANDARD_RIGHTS_EXECUTE | \
+    FILE_READ_ATTRIBUTES | \
+    FILE_EXECUTE | \
+    0 )
+
+//
+// Specific Access Rights - Registry
+//
+
+#define KEY_QUERY_VALUE         0x0001 //Required to query the values of a registry key
+#define KEY_SET_VALUE           0x0002 //Required to create, delete, or set a registry value
+#define KEY_CREATE_SUB_KEY      0x0004 //Required to create, delete, or rename a subkey of a registry key
+#define KEY_ENUMERATE_SUB_KEYS  0x0008 //Required to enumerate the subkeys of a registry key
+#define KEY_NOTIFY              0x0010 //Required to request change notifications for a registry key or for subkeys of a registry key.
+#define KEY_CREATE_LINK         0x0020 //Reserved for system use
+
+
+#define KEY_ALL_ACCESS ( \
+        (~SYNCHRONIZE) & \
+        (STANDARD_RIGHTS_REQUIRED | \
+        KEY_QUERY_VALUE |\
+        KEY_SET_VALUE |\
+        KEY_CREATE_SUB_KEY |\
+        KEY_ENUMERATE_SUB_KEYS |\
+        KEY_NOTIFY |\
+        KEY_CREATE_LINK) \
+        )
+
+#define KEY_READ ( \
+        (~SYNCHRONIZE) & \
+        (STANDARD_RIGHTS_READ | \
+        KEY_QUERY_VALUE |\
+        KEY_ENUMERATE_SUB_KEYS |\
+        KEY_NOTIFY) \
+        )
+
+
+#define KEY_WRITE ( \
+        (~SYNCHRONIZE) & \
+        (STANDARD_RIGHTS_WRITE | \
+        KEY_SET_VALUE |\
+        KEY_CREATE_SUB_KEY) \
+        )
+
+#define KEY_EXECUTE ( \
+        (~SYNCHRONIZE) & \
+        (KEY_READ)\
+        )
+
 //
 // GENERIC_MAPPING - Used to map the GENERIC_{ALL,EXECUTE,WRITE,READ}
 // bits to specific rights.
@@ -527,6 +621,8 @@ typedef struct _ACE_HEADER {
 #define SYSTEM_AUDIT_CALLBACK_OBJECT_ACE_TYPE   15 // SYSTEM_AUDIT_CALLBACK_OBJECT_ACE
 #define SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE   16 // SYSTEM_ALARM_CALLBACK_OBJECT_ACE
 #define SYSTEM_MANDATORY_LABEL_ACE_TYPE         17 // SYSTEM_MANDATORY_LABEL_ACE
+
+#define ACCESS_UNKNOWN_ACE_TYPE                 20 // Unknown/unsupported ACE type
 
 // Min/Max
 #define ACCESS_MIN_MS_ACE_TYPE          ACCESS_ALLOWED_ACE_TYPE
