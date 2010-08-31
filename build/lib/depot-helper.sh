@@ -9,10 +9,10 @@ _depot_directory_nonempty()
 
     for file in "${path}"/*
     do
-	if [ -f "${file}" ]
-	then
-	    return 0
-	fi
+        if [ -f "${file}" ]
+        then
+            return 0
+        fi
     done
 
     return 1
@@ -26,10 +26,10 @@ _depot_directories()
 
     for file in `find "${path}"/*`
     do
-	if [ -d "${file}" ] && _depot_directory_nonempty "${file}"
-	then
-	    echo "${file}"
-	fi
+        if [ -d "${file}" ] && _depot_directory_nonempty "${file}"
+        then
+            echo "${file}"
+        fi
     done
 }
 
@@ -53,25 +53,32 @@ HEADER
 
     for dir in `_depot_directories "${PKG_PACKAGE_ROOT}/${name}"`
     do
-	if [ -z "${exclude}" ] || ! echo "${dir}" | grep "${exclude}" >/dev/null 2>&1
-	then
-	    local source="`echo $dir | sed "s:^${PKG_PACKAGE_ROOT}/::" | _depot_chomp_path`"
-	    local dest="`echo $source | sed "s:^${name}/:${destdir}/:" | _depot_chomp_path`"
-	    local file
-	    cat <<DIR
+        if [ -z "${exclude}" ] || ! echo "${dir}" | grep "${exclude}" >/dev/null 2>&1
+        then
+            local source="`echo $dir | sed "s:^${PKG_PACKAGE_ROOT}/::" | _depot_chomp_path`"
+            local dest="`echo $source | sed "s:^${name}/:${destdir}/:" | _depot_chomp_path`"
+            local file
+            cat <<DIR
         directory           ${source}=${dest}
 DIR
-	    for file in "${dir}"/*
-	    do
-		if [ -f "${file}" ]
-		then
-		    local base="`basename ${file}`"
-		    cat <<FILE
+            for file in "${dir}"/*
+            do
+                if [ -f "${file}" ]
+                then
+                    case ${file} in
+                        *\.la | *\.a | *\.h)
+                            # Ignore development files
+                            ;;
+                        *)
+                            local base="`basename ${file}`"
+                            cat <<FILE
         file                ${base}
 FILE
-		fi
-	    done
-	fi
+                            ;;
+                    esac
+                fi
+            done
+        fi
     done
 
 cat <<FOOTER
