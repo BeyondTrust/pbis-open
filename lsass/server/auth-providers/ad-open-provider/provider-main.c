@@ -851,7 +851,7 @@ error:
 
     if (dwError == LW_ERROR_ACCESS_DENIED)
     {
-        LSA_LOG_ERROR("Error: User [%s] not in restricted login list", pszUserName);
+        LSA_LOG_INFO("Error: User [%s] not in restricted login list", pszUserName);
     }
     else
     {

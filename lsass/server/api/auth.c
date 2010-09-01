@@ -496,7 +496,14 @@ cleanup:
     return(dwError);
 
 error:
-    LSA_LOG_ERROR_API_FAILED(hServer, dwError, "find user in list (user = '%s', list = '%s')", LSA_SAFE_LOG_STRING(pszLoginId), LSA_SAFE_LOG_STRING(pszListName));
+    if (dwError == LW_ERROR_ACCESS_DENIED)
+    {
+        LSA_LOG_VERBOSE_ENTRY_NOT_FOUND(hServer, dwError, "find user in list (user = '%s', list = '%s')", LSA_SAFE_LOG_STRING(pszLoginId), LSA_SAFE_LOG_STRING(pszListName));
+    }
+    else
+    {
+        LSA_LOG_ERROR_API_FAILED(hServer, dwError, "find user in list (user = '%s', list = '%s')", LSA_SAFE_LOG_STRING(pszLoginId), LSA_SAFE_LOG_STRING(pszListName));
+    }
 
     goto cleanup;
 }
