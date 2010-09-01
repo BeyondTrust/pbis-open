@@ -887,12 +887,18 @@ rpc__smb_socket_accept(
     }
     
     *newsock = npsock;
+    npsock = NULL;
 
 error:
 
     if (np)
     {
         NtCtxCloseFile(smb->context, np);
+    }
+
+    if (npsock)
+    {
+        rpc__socket_close(npsock);
     }
 
     SMB_SOCKET_UNLOCK(smb);
