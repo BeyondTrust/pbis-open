@@ -1114,7 +1114,7 @@ cleanup:
     CT_SAFE_FREE_STRING(finalName);
 }
 
-static DWORD UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
+DWORD UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
 {
     BOOLEAN hasSeLinux;
     DWORD ceError = ERROR_SUCCESS;
@@ -1141,7 +1141,7 @@ static DWORD UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
     }
     GCE(ceError);
 
-    GCE(ceError = CTCaptureOutputWithStderr("/usr/sbin/getenforce", TRUE, &output));
+    GCE(ceError = CTCaptureOutput("/usr/sbin/getenforce", &output));
     CTStripWhitespace(output);
     if(!strcmp(output, "Permissive"))
     {
