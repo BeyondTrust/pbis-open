@@ -125,12 +125,6 @@ lw_ypmatch_main(
     );
 
 int
-migrator_main(
-    int argc,
-    char* argv[]
-    );
-
-int
 mod_group_main(
     int argc,
     char* argv[]

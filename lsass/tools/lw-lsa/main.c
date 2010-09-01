@@ -34,7 +34,6 @@ static main_entry entry_list[] =
     {"list-groups-for-user", list_groups_for_user_main},
     {"ypcat", lw_ypcat_main},
     {"ypmatch", lw_ypmatch_main},
-    {"migrator", migrator_main},
     {"mod-group", mod_group_main},
     {"mod-user", mod_user_main},
     {"refresh-configuration", refresh_configuration_main},
