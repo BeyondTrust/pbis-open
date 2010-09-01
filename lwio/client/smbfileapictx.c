@@ -40,7 +40,7 @@
 #include "includes.h"
 
 #define MAX_KEY_LENGTH (1024*10)
-#define MAX_ACCESS_TOKEN_LENGTH (8192)
+#define ACCESS_TOKEN_LENGTH (8192)
 
 LW_NTSTATUS
 LwIoCtxGetSessionKey(
@@ -105,25 +105,46 @@ LwIoCtxGetPeerAccessToken(
 {
     NTSTATUS Status = STATUS_SUCCESS;
     IO_STATUS_BLOCK IoStatus;
-    CHAR Buffer[MAX_ACCESS_TOKEN_LENGTH];
+    ULONG ulLength = ACCESS_TOKEN_LENGTH;
+    PBYTE pBuffer = NULL;
+    PBYTE pNewBuffer = NULL;
 
-    Status = 
-        LwNtCtxFsControlFile(
-            pContext,
-            File,
-            NULL,
-            &IoStatus,
-            IO_FSCTL_SMB_GET_PEER_ACCESS_TOKEN,
-            NULL,
-            0,
-            Buffer,
-            sizeof(Buffer));
+    Status = RTL_ALLOCATE(&pBuffer, BYTE, ulLength);
     BAIL_ON_NT_STATUS(Status);
-    
+
+    do
+    {
+        Status =
+            LwNtCtxFsControlFile(
+                pContext,
+                File,
+                NULL,
+                &IoStatus,
+                IO_FSCTL_SMB_GET_PEER_ACCESS_TOKEN,
+                NULL,
+                0,
+                pBuffer,
+                ulLength);
+        
+        if (Status == STATUS_BUFFER_TOO_SMALL)
+        {
+            ulLength *= 2;
+            pNewBuffer = LwRtlMemoryRealloc(pBuffer, ulLength);
+            if (!pNewBuffer)
+            {
+                Status = STATUS_INSUFFICIENT_RESOURCES;
+                BAIL_ON_NT_STATUS(Status);
+            }
+            pBuffer = pNewBuffer;
+        }
+    } while (Status == STATUS_BUFFER_TOO_SMALL);
+
+    BAIL_ON_NT_STATUS(Status);
+        
     if (IoStatus.BytesTransferred > 0)
     {
         Status = RtlSelfRelativeAccessTokenToAccessToken(
-            (PACCESS_TOKEN_SELF_RELATIVE) Buffer,
+            (PACCESS_TOKEN_SELF_RELATIVE) pBuffer,
             IoStatus.BytesTransferred,
             ppToken);
         BAIL_ON_NT_STATUS(Status);
@@ -132,8 +153,10 @@ LwIoCtxGetPeerAccessToken(
     {
         *ppToken = NULL;
     }
-
+    
 cleanup:
+
+    RTL_FREE(&pBuffer);
 
     return Status;
 
