@@ -1082,11 +1082,11 @@ SMBSocketInvalidate_InLock(
     pSocket->error = ntStatus;
 
     LWIO_LOCK_MUTEX(bInGlobalLock, &gRdrRuntime.socketHashLock);
-    if (pSocket->bParentLink)
+    if (pSocket->bParentLink && pSocket->refCount == 0)
     {
-        SMBHashRemoveKey(gRdrRuntime.pSocketHashByName,
-                         pSocket->pwszHostname);
-        pSocket->bParentLink = FALSE;
+        pSocket->lastActiveTime = 0;
+        LWIO_UNLOCK_MUTEX(bInGlobalLock, &gRdrRuntime.socketHashLock);
+        RdrReaperPoke(&gRdrRuntime, pSocket->lastActiveTime);
     }
     LWIO_UNLOCK_MUTEX(bInGlobalLock, &gRdrRuntime.socketHashLock);
 
