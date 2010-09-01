@@ -422,6 +422,9 @@ StartWorkThread(
         status = LwErrnoToNtStatus(
             pthread_attr_setstacksize(pThreadAttr, pThreads->ulWorkThreadStackSize));
         GOTO_ERROR_ON_STATUS(status);
+
+        status = SetThreadAttrAffinity(pThreadAttr, -1);
+        GOTO_ERROR_ON_STATUS(status);
     }
 
     status = LwErrnoToNtStatus(
@@ -512,3 +515,70 @@ error:
 
     return status;
 }
+
+#if defined(_SC_NPROCESSORS_ONLN)
+int
+GetCpuCount(
+    VOID
+    )
+{
+    int numCpus = sysconf(_SC_NPROCESSORS_ONLN);
+
+    return numCpus >= 1 ? numCpus : 1;
+}
+#else
+int
+GetCpuCount(
+    VOID
+    )
+{
+    return 1;
+}
+#endif
+
+#if defined(HAVE_PTHREAD_ATTR_SETAFFINITY_NP)
+NTSTATUS
+SetThreadAttrAffinity(
+    pthread_attr_t* pAttr,
+    int cpuNum
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    CPU_SET_TYPE cpuSet;
+    int numCpus = 0;
+    int i = 0;
+
+    CPU_ZERO(&cpuSet);
+
+    if (cpuNum >= 0)
+    {
+        CPU_SET(cpuNum, &cpuSet);
+    }
+    else
+    {
+        numCpus = GetCpuCount();
+        
+        for (i = 0; i < numCpus; i++)
+        {
+            CPU_SET(i, &cpuSet);
+        }
+    }
+
+    status = LwErrnoToNtStatus(
+        pthread_attr_setaffinity_np(pAttr, sizeof(cpuSet), &cpuSet));
+    GOTO_ERROR_ON_STATUS(status);
+
+error:
+
+    return status;
+}
+#else
+NTSTATUS
+SetThreadAttrAffinity(
+    pthread_attr_t* pAttr,
+    int cpuNum
+    )
+{
+    return STATUS_SUCCESS;
+}
+#endif

@@ -109,16 +109,39 @@ AC_SUBST(LIB_PTHREAD)
 AC_CHECK_FUNCS([strndup strncasecmp])
 
 # Checks for header files.
-AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h sys/time.h pthread.h unistd.h])
-
-old_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS:$LIBUUID_INCLUDES"
-AC_CHECK_HEADERS([uuid/uuid.h])
-CFLAGS="$old_CFLAGSS"
+AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h sys/time.h sys/param.h pthread.h pthread_np.h unistd.h uuid/uuid.h])
+AC_CHECK_HEADERS([sys/cpuset.h],,,[
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_BIGENDIAN
 AC_CHECK_SIZEOF(wchar_t)
+
+# Check for cpu set type
+AC_CHECK_TYPE(
+	[cpu_set_t],
+	[AC_DEFINE_UNQUOTED(CPU_SET_TYPE, [cpu_set_t], [CPU set type])],
+	[],
+	[
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+])
+AC_CHECK_TYPE(
+	[cpuset_t],
+	[AC_DEFINE_UNQUOTED(CPU_SET_TYPE, [cpuset_t], [CPU set type])],
+	[],
+	[
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_CPUSET_H
+#include <sys/cpuset.h>
+#endif
+])
 
 # Checks for library functions.
 AC_HEADER_STDC
@@ -155,20 +178,25 @@ AC_CHECK_FUNCS([wcscasecmp])
 
 AC_CHECK_HEADERS([sys/epoll.h], [HAVE_EPOLL_H=true], [HAVE_EPOLL_H=false])
 AC_CHECK_FUNC([epoll_create], [HAVE_EPOLL_CREATE=true], [HAVE_EPOLL_CREATE=false])
-AC_CHECK_LIB(pthread, pthread_setaffinity_np, [HAVE_SET_AFFINITY=true], [HAVE_SET_AFFINITY=false])
 
 # Check for kqueue
 
 AC_CHECK_FUNC([kqueue], [HAVE_KQUEUE=true], [HAVE_KQUEUE=false])
 
+# Check for CPU affinity functions
+saved_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIB_PTHREAD"
+AC_CHECK_FUNCS([pthread_setaffinity_np pthread_attr_setaffinity_np])
+LDFLAGS="$saved_LDFLAGS"
+
 THREADPOOL_BACKEND=select
 
-if $HAVE_EPOLL_H && $HAVE_EPOLL_CREATE && $HAVE_SET_AFFINITY
+if $HAVE_EPOLL_H && $HAVE_EPOLL_CREATE
 then
 	THREADPOOL_BACKEND=epoll
 fi
 
-if $HAVE_KQUEUE && $HAVE_SET_AFFINITY
+if $HAVE_KQUEUE
 then
 	THREADPOOL_BACKEND=kqueue
 fi

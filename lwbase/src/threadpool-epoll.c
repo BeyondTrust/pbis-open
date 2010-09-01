@@ -1039,15 +1039,12 @@ InitEventThread(
 {
     NTSTATUS status = STATUS_SUCCESS;
     struct epoll_event event;
-    cpu_set_t cpuSet;
     pthread_attr_t threadAttr;
     BOOLEAN bThreadAttrInit = FALSE;
 
     status = LwErrnoToNtStatus(pthread_attr_init(&threadAttr));
     GOTO_ERROR_ON_STATUS(status);
     bThreadAttrInit = TRUE;
-
-    CPU_ZERO(&cpuSet);
 
     pThread->pPool = pPool;
 
@@ -1086,17 +1083,8 @@ InitEventThread(
 
     RingInit(&pThread->Tasks);
 
-    if (lCpu >= 0)
-    {
-        CPU_SET((int) lCpu, &cpuSet);
-
-        status = LwErrnoToNtStatus(
-            pthread_attr_setaffinity_np(
-                &threadAttr,
-                sizeof(cpuSet),
-                &cpuSet));
-        GOTO_ERROR_ON_STATUS(status);
-    }
+    status = SetThreadAttrAffinity(&threadAttr, lCpu);
+    GOTO_ERROR_ON_STATUS(status);
 
     if (pAttrs && pAttrs->ulTaskThreadStackSize)
     {
@@ -1168,12 +1156,7 @@ LwRtlCreateThreadPool(
     status = LwErrnoToNtStatus(pthread_cond_init(&pPool->Event, NULL));
     GOTO_ERROR_ON_STATUS(status);
 
-    numCpus = sysconf(_SC_NPROCESSORS_ONLN);
-    
-    if (numCpus < 0)
-    {
-        numCpus = 1;
-    }
+    numCpus = GetCpuCount();
 
     if (GetDelegateAttr(pAttrs))
     {
@@ -1193,7 +1176,7 @@ LwRtlCreateThreadPool(
             
             for (i = 0; i < pPool->ulEventThreadCount; i++)
             {
-                status = InitEventThread(pPool, pAttrs, &pPool->pEventThreads[i], numCpus >= 0 ? i % numCpus : -1);
+                status = InitEventThread(pPool, pAttrs, &pPool->pEventThreads[i], i % numCpus);
                 GOTO_ERROR_ON_STATUS(status);
             }
         }

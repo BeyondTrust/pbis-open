@@ -41,13 +41,10 @@
 
 #include <lw/threadpool.h>
 #include <lw/rtlgoto.h>
-#include <pthread.h>
-#include <pthread_np.h>
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
 #include <sys/param.h>
-#include <sys/cpuset.h>
 
 #include "threadpool-common.h"
 

@@ -31,6 +31,11 @@
 #ifdef HAVE_PTHREAD_H
 #include <pthread.h>
 #endif
+
+#ifdef HAVE_PTHREAD_NP_H
+#include <pthread_np.h>
+#endif
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +56,14 @@
 
 #ifdef HAVE_SYS_VARARGS_H
 #include <sys/varargs.h>
+#endif
+
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
+#ifdef HAVE_SYS_CPUSET_H
+#include <sys/cpuset.h>
 #endif
 
 #include <wc16str.h>

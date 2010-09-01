@@ -382,4 +382,14 @@ QueueWorkItem(
     LW_WORK_ITEM_FLAGS Flags
     );
 
+int
+GetCpuCount(
+    VOID
+    );
+
+NTSTATUS
+SetThreadAttrAffinity(
+    pthread_attr_t* pAttr,
+    int cpuNum
+    );
 #endif
