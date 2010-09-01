@@ -508,8 +508,8 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
 
         if (!IsNullOrEmptyString(pszOwnerSid))
         {
-            sSddlLength += strlen(SDDL_OWNER) + strlen(SDDL_DELIMINATOR_S); // O:
-            sSddlLength += strlen(pszOwnerSid);
+            sSddlLength += LwRtlCStringNumChars(SDDL_OWNER) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // O:
+            sSddlLength += LwRtlCStringNumChars(pszOwnerSid);
             sSddlLength ++; // '\n'
         }
     }
@@ -526,8 +526,8 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
 
         if (!IsNullOrEmptyString(pszGroupSid))
         {
-            sSddlLength += strlen(SDDL_GROUP) + strlen(SDDL_DELIMINATOR_S); // G:
-            sSddlLength += strlen(pszGroupSid);
+            sSddlLength += LwRtlCStringNumChars(SDDL_GROUP) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // G:
+            sSddlLength += LwRtlCStringNumChars(pszGroupSid);
             sSddlLength ++; // '\n'
         }
     }
@@ -549,12 +549,12 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
 
         if (!IsNullOrEmptyString(pszDacl))
         {
-            sSddlLength += strlen(SDDL_DACL) + strlen(SDDL_DELIMINATOR_S); // D:
+            sSddlLength += LwRtlCStringNumChars(SDDL_DACL) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // D:
             if (!IsNullOrEmptyString(pszDaclControl))
             {
-                sSddlLength += strlen(pszDaclControl);
+                sSddlLength += LwRtlCStringNumChars(pszDaclControl);
             }
-            sSddlLength += strlen(pszDacl);
+            sSddlLength += LwRtlCStringNumChars(pszDacl);
             sSddlLength ++; // '\n'
         }
     }
@@ -576,12 +576,12 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
 
         if (!IsNullOrEmptyString(pszSacl))
         {
-            sSddlLength += strlen(SDDL_SACL) + strlen(SDDL_DELIMINATOR_S); // S:
+            sSddlLength += LwRtlCStringNumChars(SDDL_SACL) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // S:
             if (!IsNullOrEmptyString(pszSaclControl))
             {
-                sSddlLength += strlen(pszSaclControl);
+                sSddlLength += LwRtlCStringNumChars(pszSaclControl);
             }
-            sSddlLength += strlen(pszSacl);
+            sSddlLength += LwRtlCStringNumChars(pszSacl);
             sSddlLength ++; // '\n'
         }
     }
@@ -747,12 +747,12 @@ RtlpGetSddlSidStringFromSid(
 
     // Deal with SECURITY_CREATOR_OWNER_RID and SECURITY_WORLD_RID first
     // Due to the rid value both being zero
-    if (!strcasecmp(pszSid, SID_SECURITY_WORLD_RID))
+    if (LwRtlCStringIsEqual(pszSid, SID_SECURITY_WORLD_RID, FALSE))
     {
         pszSddlSid = SDDL_EVERYONE;
 
     }
-    else if (!strcasecmp(pszSid, SID_SECURITY_CREATOR_OWNER_RID))
+    else if (LwRtlCStringIsEqual(pszSid, SID_SECURITY_CREATOR_OWNER_RID, FALSE))
     {
         pszSddlSid = SDDL_CREATOR_OWNER;
     }
@@ -892,11 +892,11 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
         // A sample ACE string (A;;RPWPCCDCLCSWRCWDWOGA;;;S-1-0-0)
         sAceStringLength = 1; // '('
         // ACE_TYPE + ";"
-        sAceStringLength += strlen(pszAceType) + 1;
+        sAceStringLength += LwRtlCStringNumChars(pszAceType) + 1;
         // ACE_FLAG + ";"
-        sAceStringLength += (!IsNullOrEmptyString(pszAceFlag) ? strlen(pszAceFlag) : 0) + 1;
+        sAceStringLength += (!IsNullOrEmptyString(pszAceFlag) ? LwRtlCStringNumChars(pszAceFlag) : 0) + 1;
         // ACE_ACCESS + ";"
-        sAceStringLength += (!IsNullOrEmptyString(pszAceAcl) ? strlen(pszAceAcl) : 0) + 1;
+        sAceStringLength += (!IsNullOrEmptyString(pszAceAcl) ? LwRtlCStringNumChars(pszAceAcl) : 0) + 1;
         // ;; unsupported guid, guid_inherited
         sAceStringLength += 1 + 1;
         // ACE_SID and ")"
@@ -908,7 +908,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
             GOTO_CLEANUP_ON_STATUS(status);
         }
 
-        sAceStringLength += strlen(pszSddlSidString) + 1;
+        sAceStringLength += LwRtlCStringNumChars(pszSddlSidString) + 1;
 
         status = RTL_ALLOCATE(&ppszAceStrings[ulAceIndex], CHAR, sAceStringLength+1);
         GOTO_CLEANUP_ON_STATUS(status);
@@ -952,7 +952,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
     {
         if (!IsNullOrEmptyString(ppszAceStrings[ulAceIndex]))
         {
-            sFullLength += strlen(ppszAceStrings[ulAceIndex]);
+            sFullLength += LwRtlCStringNumChars(ppszAceStrings[ulAceIndex]);
         }
     }
 
@@ -971,7 +971,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
             strcat(pszFullAceString, ppszAceStrings[ulAceIndex]);
 
 #if 0
-            sCurrLength = strlen(ppszAceStrings[ulAceIndex]);
+            sCurrLength = LwRtlCStringNumChars(ppszAceStrings[ulAceIndex]);
 
             memcpy(&pszFullAceString[sIndex], ppszAceStrings[ulAceIndex], sCurrLength);
             sIndex += sCurrLength;
@@ -1040,15 +1040,15 @@ RtlpMapSddlTypeToAceType(
     PCSTR pszAceType
     )
 {
-    if (!strcmp(pszAceType, SDDL_ACCESS_ALLOWED))
+    if (LwRtlCStringIsEqual(pszAceType, SDDL_ACCESS_ALLOWED, TRUE))
     {
         return ACCESS_ALLOWED_ACE_TYPE;
     }
-    if (!strcmp(pszAceType, SDDL_ACCESS_DENIED))
+    if (LwRtlCStringIsEqual(pszAceType, SDDL_ACCESS_DENIED, TRUE))
     {
         return ACCESS_DENIED_ACE_TYPE;
     }
-    if (!strcmp(pszAceType, SDDL_AUDIT))
+    if (LwRtlCStringIsEqual(pszAceType, SDDL_AUDIT, TRUE))
     {
         return SYSTEM_AUDIT_ACE_TYPE;
     }
@@ -1126,7 +1126,7 @@ RtlpMapSddlFlagToAceFlag(
     )
 {
     UCHAR AceFlag = 0;
-    size_t sLength = strlen(pszAceFlag);
+    size_t sLength = LwRtlCStringNumChars(pszAceFlag);
     int i = 0;
     CHAR szAceFlag[3] = {0};
 
@@ -1140,37 +1140,37 @@ RtlpMapSddlFlagToAceFlag(
         memset(szAceFlag, 0, 3);
         memcpy(szAceFlag, pszAceFlag+i*SDDL_ACEFLAG_SIZE, SDDL_ACEFLAG_SIZE);
 
-        if (!strcmp(szAceFlag, SDDL_CONTAINER_INHERIT))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_CONTAINER_INHERIT, TRUE))
         {
             SetFlag(AceFlag, CONTAINER_INHERIT_ACE);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_OBJECT_INHERIT))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_OBJECT_INHERIT, TRUE))
         {
             SetFlag(AceFlag, OBJECT_INHERIT_ACE);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_NO_PROPAGATE))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_NO_PROPAGATE, TRUE))
         {
             SetFlag(AceFlag, NO_PROPAGATE_INHERIT_ACE);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_INHERIT_ONLY))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_INHERIT_ONLY, TRUE))
         {
             SetFlag(AceFlag, INHERIT_ONLY_ACE);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_INHERITED))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_INHERITED, TRUE))
         {
             SetFlag(AceFlag, INHERITED_ACE);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_AUDIT_SUCCESS))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_AUDIT_SUCCESS, TRUE))
         {
             SetFlag(AceFlag, SUCCESSFUL_ACCESS_ACE_FLAG);
             continue;
         }
-        if (!strcmp(szAceFlag, SDDL_AUDIT_FAILURE))
+        if (LwRtlCStringIsEqual(szAceFlag, SDDL_AUDIT_FAILURE, TRUE))
         {
             SetFlag(AceFlag, FAILED_ACCESS_ACE_FLAG);
             continue;
@@ -1363,7 +1363,7 @@ RtlpMapSddlRightsToAccessMask(
     )
 {
     ACCESS_MASK Access = 0;
-    size_t sLength = strlen(pszMask);
+    size_t sLength = LwRtlCStringNumChars(pszMask);
     int i = 0;
     CHAR szRight[3] = {0};
 
@@ -1378,49 +1378,49 @@ RtlpMapSddlRightsToAccessMask(
         memcpy(szRight, pszMask+i*SDDL_RIGHT_SIZE, 2);
 
         // Generic access rights
-        if (!strcmp(szRight, SDDL_GENERIC_ALL))
+        if (LwRtlCStringIsEqual(szRight, SDDL_GENERIC_ALL, TRUE))
         {
             SetFlag(Access, GENERIC_ALL);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_GENERIC_READ))
+        if (LwRtlCStringIsEqual(szRight, SDDL_GENERIC_READ, TRUE))
         {
             SetFlag(Access, GENERIC_READ);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_GENERIC_WRITE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_GENERIC_WRITE, TRUE))
         {
             SetFlag(Access, GENERIC_WRITE);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_GENERIC_EXECUTE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_GENERIC_EXECUTE, TRUE))
         {
             SetFlag(Access, GENERIC_EXECUTE);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_READ_CONTROL))
+        if (LwRtlCStringIsEqual(szRight, SDDL_READ_CONTROL, TRUE))
         {
             SetFlag(Access, READ_CONTROL);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_STANDARD_DELETE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_STANDARD_DELETE, TRUE))
         {
             SetFlag(Access, DELETE);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_WRITE_DAC))
+        if (LwRtlCStringIsEqual(szRight, SDDL_WRITE_DAC, TRUE))
         {
             SetFlag(Access, WRITE_DAC);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_WRITE_OWNER))
+        if (LwRtlCStringIsEqual(szRight, SDDL_WRITE_OWNER, TRUE))
         {
             SetFlag(Access, WRITE_OWNER);
             continue;
@@ -1460,7 +1460,6 @@ RtlpMapSddlRightsToAccessMask(
         }
 
         if (Access & ADS_RIGHT_DS_LIST_OBJECT)
-        {        if (!strcmp(szRight, SDDL_WRITE_OWNER))
         {
             SetFlag(Access, WRITE_OWNER);
             continue;
@@ -1479,69 +1478,69 @@ RtlpMapSddlRightsToAccessMask(
         }
     #endif
         // File access rights
-        if (!strcmp(szRight, SDDL_FILE_ALL))
+        if (LwRtlCStringIsEqual(szRight, SDDL_FILE_ALL, TRUE))
         {
             SetFlag(Access, FILE_ALL_ACCESS);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_FILE_READ))
+        if (LwRtlCStringIsEqual(szRight, SDDL_FILE_READ, TRUE))
         {
             SetFlag(Access, FILE_GENERIC_READ);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_FILE_WRITE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_FILE_WRITE, TRUE))
         {
             SetFlag(Access, FILE_GENERIC_WRITE);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_FILE_EXECUTE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_FILE_EXECUTE, TRUE))
         {
             SetFlag(Access, FILE_GENERIC_EXECUTE);
             continue;
         }
 
         // Registry key access rights
-        if (!strcmp(szRight, SDDL_KEY_ALL))
+        if (LwRtlCStringIsEqual(szRight, SDDL_KEY_ALL, TRUE))
         {
             SetFlag(Access, KEY_ALL_ACCESS);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_KEY_READ))
+        if (LwRtlCStringIsEqual(szRight, SDDL_KEY_READ, TRUE))
         {
             SetFlag(Access, KEY_READ);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_KEY_WRITE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_KEY_WRITE, TRUE))
         {
             SetFlag(Access, KEY_WRITE);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_KEY_EXECUTE))
+        if (LwRtlCStringIsEqual(szRight, SDDL_KEY_EXECUTE, TRUE))
         {
             SetFlag(Access, KEY_EXECUTE);
             continue;
         }
 
         // Mandatory label rights
-        if (!strcmp(szRight, SDDL_NO_READ_UP))
+        if (LwRtlCStringIsEqual(szRight, SDDL_NO_READ_UP, TRUE))
         {
             SetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_READ_UP);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_NO_WRITE_UP))
+        if (LwRtlCStringIsEqual(szRight, SDDL_NO_WRITE_UP, TRUE))
         {
             SetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_WRITE_UP);
             continue;
         }
 
-        if (!strcmp(szRight, SDDL_NO_EXECUTE_UP))
+        if (LwRtlCStringIsEqual(szRight, SDDL_NO_EXECUTE_UP, TRUE))
         {
             SetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP);
             continue;
@@ -1605,9 +1604,9 @@ RtlpParseSddlString(
     while (pszTmp != NULL)
     {
         // SDDL OWNER
-        if (!strncmp(pszTmp, SDDL_OWNER, strlen(SDDL_OWNER)))
+        if (!strncmp(pszTmp, SDDL_OWNER, LwRtlCStringNumChars(SDDL_OWNER)))
         {
-            size_t sOwnerPrefix = strlen(SDDL_OWNER);
+            size_t sOwnerPrefix = LwRtlCStringNumChars(SDDL_OWNER);
             if (pszTmp[sOwnerPrefix] != SDDL_DELIMINATOR_C)
             {
                 status = STATUS_INVALID_PARAMETER;
@@ -1618,9 +1617,9 @@ RtlpParseSddlString(
                                             &pszTmp[sOwnerPrefix+1]);
             GOTO_CLEANUP_ON_STATUS(status);
         }
-        else if (!strncmp(pszTmp, SDDL_GROUP, strlen(SDDL_GROUP)))
+        else if (!strncmp(pszTmp, SDDL_GROUP, LwRtlCStringNumChars(SDDL_GROUP)))
         {
-            size_t sGroupPrefix = strlen(SDDL_GROUP);
+            size_t sGroupPrefix = LwRtlCStringNumChars(SDDL_GROUP);
             if (pszTmp[sGroupPrefix] != SDDL_DELIMINATOR_C)
             {
                 status = STATUS_INVALID_PARAMETER;
@@ -1631,9 +1630,9 @@ RtlpParseSddlString(
                                             &pszTmp[sGroupPrefix+1]);
             GOTO_CLEANUP_ON_STATUS(status);
         }
-        else if (!strncmp(pszTmp, SDDL_DACL, strlen(SDDL_DACL)))
+        else if (!strncmp(pszTmp, SDDL_DACL, LwRtlCStringNumChars(SDDL_DACL)))
         {
-            size_t sDaclPrefix = strlen(SDDL_DACL);
+            size_t sDaclPrefix = LwRtlCStringNumChars(SDDL_DACL);
             if (pszTmp[sDaclPrefix] != SDDL_DELIMINATOR_C)
             {
                 status = STATUS_INVALID_PARAMETER;
@@ -1644,9 +1643,9 @@ RtlpParseSddlString(
                                             &pszTmp[sDaclPrefix+1]);
             GOTO_CLEANUP_ON_STATUS(status);
         }
-        else if (!strncmp(pszTmp, SDDL_SACL, strlen(SDDL_SACL)))
+        else if (!strncmp(pszTmp, SDDL_SACL, LwRtlCStringNumChars(SDDL_SACL)))
         {
-            size_t sSaclPrefix = strlen(SDDL_SACL);
+            size_t sSaclPrefix = LwRtlCStringNumChars(SDDL_SACL);
             if (pszTmp[sSaclPrefix] != SDDL_DELIMINATOR_C)
             {
                 status = STATUS_INVALID_PARAMETER;
@@ -2193,7 +2192,7 @@ RtlpMapSddlControlToAclControl(
 {
     NTSTATUS status = 0;
     SECURITY_DESCRIPTOR_CONTROL Control = *pControl;
-    size_t sLength = strlen(pszControl);
+    size_t sLength = LwRtlCStringNumChars(pszControl);
     int i = 0;
     CHAR szControl[3] = {0};
     BOOLEAN bIsFirstSddlProtected = FALSE;
@@ -2203,7 +2202,7 @@ RtlpMapSddlControlToAclControl(
         GOTO_CLEANUP();
     }
 
-    bIsFirstSddlProtected = !strncmp(pszControl, SDDL_PROTECTED, strlen(SDDL_PROTECTED));
+    bIsFirstSddlProtected = !strncmp(pszControl, SDDL_PROTECTED, LwRtlCStringNumChars(SDDL_PROTECTED));
 
     if ((sLength%2 == 0 && bIsFirstSddlProtected) ||
          (sLength == 1 && !bIsFirstSddlProtected) ||
@@ -2223,20 +2222,20 @@ RtlpMapSddlControlToAclControl(
 
         for (i = 0; i < sLength/SDDL_CONTROL_SIZE; i++)
         {
-            int iOffset = bIsFirstSddlProtected?strlen(SDDL_PROTECTED):0;
+            int iOffset = bIsFirstSddlProtected ? LwRtlCStringNumChars(SDDL_PROTECTED) : 0;
 
             memset(szControl, 0, 3);
             memcpy(szControl,
                    pszControl+iOffset+i*SDDL_CONTROL_SIZE,
                    2);
 
-            if (!strcmp(szControl, SDDL_AUTO_INHERIT_REQ))
+            if (LwRtlCStringIsEqual(szControl, SDDL_AUTO_INHERIT_REQ, TRUE))
             {
                 SetFlag(Control, bIsDacl ? SE_DACL_AUTO_INHERIT_REQ : SE_SACL_AUTO_INHERIT_REQ);
                 continue;
             }
 
-            if (!strcmp(szControl, SDDL_AUTO_INHERITED))
+            if (LwRtlCStringIsEqual(szControl, SDDL_AUTO_INHERITED, TRUE))
             {
                 SetFlag(Control, bIsDacl ? SE_DACL_AUTO_INHERITED : SE_SACL_AUTO_INHERITED);
                 continue;
@@ -2247,7 +2246,7 @@ RtlpMapSddlControlToAclControl(
     else if (sLength == SDDL_CONTROL_LENGTH-SDDL_CONTROL_SIZE ||
              sLength == SDDL_CONTROL_LENGTH)
     {
-        if (strncmp(pszControl+SDDL_CONTROL_SIZE, SDDL_PROTECTED, strlen(SDDL_PROTECTED)))
+        if (strncmp(pszControl+SDDL_CONTROL_SIZE, SDDL_PROTECTED, LwRtlCStringNumChars(SDDL_PROTECTED)))
         {
             status = STATUS_INVALID_PARAMETER;
             GOTO_CLEANUP_ON_STATUS(status);
@@ -2260,14 +2259,14 @@ RtlpMapSddlControlToAclControl(
             {
                 memset(szControl, 0, 3);
                 memcpy(szControl,
-                       pszControl+i*SDDL_CONTROL_SIZE+strlen(SDDL_PROTECTED),
+                       pszControl + i*SDDL_CONTROL_SIZE + LwRtlCStringNumChars(SDDL_PROTECTED),
                        SDDL_CONTROL_SIZE);
 
-                if (!strcmp(szControl, SDDL_AUTO_INHERIT_REQ))
+                if (LwRtlCStringIsEqual(szControl, SDDL_AUTO_INHERIT_REQ, TRUE))
                 {
                     SetFlag(Control, bIsDacl ? SE_DACL_AUTO_INHERIT_REQ : SE_SACL_AUTO_INHERIT_REQ);
                 }
-                else if (!strcmp(szControl, SDDL_AUTO_INHERITED))
+                else if (LwRtlCStringIsEqual(szControl, SDDL_AUTO_INHERITED, TRUE))
                 {
                     SetFlag(Control, bIsDacl ? SE_DACL_AUTO_INHERITED : SE_SACL_AUTO_INHERITED);
                 }
@@ -2292,152 +2291,3 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
-
-#if 0
-static
-PCSTR
-RtlMapRidToSDDLSid(
-    IN ULONG ulRid
-    )
-{
-    switch(ulRid)
-    {
-        case SECURITY_ANONYMOUS_LOGON_RID:
-            return SDDL_ANONYMOUS;
-
-        case DOMAIN_ALIAS_RID_ACCOUNT_OPS:
-            return SDDL_ACCOUNT_OPERATORS;
-
-        case SECURITY_AUTHENTICATED_USER_RID:
-            return SDDL_AUTHENTICATED_USERS;
-
-        case DOMAIN_ALIAS_RID_ADMINS:
-            return SDDL_BUILTIN_ADMINISTRATORS;
-
-        case DOMAIN_ALIAS_RID_GUESTS:
-            return SDDL_BUILTIN_GUESTS;
-
-        case DOMAIN_ALIAS_RID_BACKUP_OPS:
-            return SDDL_BACKUP_OPERATORS;
-
-        case DOMAIN_ALIAS_RID_USERS:
-            return SDDL_BUILTIN_USERS;
-
-        case DOMAIN_GROUP_RID_CERT_ADMINS:
-            return SDDL_CERT_SERV_ADMINISTRATORS;
-
-        case SECURITY_CREATOR_GROUP_RID:
-            return SDDL_CREATOR_GROUP;
-
-        case SECURITY_CREATOR_OWNER_RID:
-            return SDDL_CREATOR_OWNER;
-
-        case DOMAIN_GROUP_RID_ADMINS:
-            return SDDL_DOMAIN_ADMINISTRATORS;
-
-        case DOMAIN_GROUP_RID_COMPUTERS:
-            return SDDL_DOMAIN_COMPUTERS;
-
-        case DOMAIN_GROUP_RID_CONTROLLERS:
-            return SDDL_DOMAIN_DOMAIN_CONTROLLERS;
-
-        case DOMAIN_GROUP_RID_GUESTS:
-            return SDDL_DOMAIN_GUESTS;
-
-        case DOMAIN_GROUP_RID_USERS:
-            return SDDL_DOMAIN_USERS;
-
-        case DOMAIN_GROUP_RID_ENTERPRISE_ADMINS:
-            return SDDL_ENTERPRISE_ADMINS;
-
-        case SECURITY_SERVER_LOGON_RID:
-            return SDDL_ENTERPRISE_DOMAIN_CONTROLLERS;
-
-        case SECURITY_MANDATORY_HIGH_RID:
-            return SDDL_ML_HIGH;
-
-        case SECURITY_MANDATORY_LOW_RID:
-            return SDDL_ML_LOW;
-
-        case SECURITY_INTERACTIVE_RID:
-            return SDDL_INTERACTIVE;
-
-        case DOMAIN_USER_RID_ADMIN:
-            return SDDL_LOCAL_ADMIN;
-
-        case DOMAIN_USER_RID_GUEST:
-            return SDDL_LOCAL_GUEST;
-
-        case SECURITY_LOCAL_SERVICE_RID:
-            return SDDL_LOCAL_SERVICE;
-
-        case SECURITY_MANDATORY_MEDIUM_RID:
-            return SDDL_ML_MEDIUM;
-
-        case DOMAIN_ALIAS_RID_NETWORK_CONFIGURATION_OPS:
-            return SDDL_NETWORK_CONFIGURATION_OPS;
-
-        case SECURITY_NETWORK_SERVICE_RID:
-            return SDDL_NETWORK_SERVICE;
-
-        case SECURITY_NETWORK_RID:
-            return SDDL_NETWORK;
-
-        case DOMAIN_GROUP_RID_POLICY_ADMINS:
-            return SDDL_GROUP_POLICY_ADMINS;
-
-        case DOMAIN_ALIAS_RID_PRINT_OPS:
-            return SDDL_PRINTER_OPERATORS;
-
-        case SECURITY_PRINCIPAL_SELF_RID:
-            return SDDL_PERSONAL_SELF;
-
-        case DOMAIN_ALIAS_RID_POWER_USERS:
-            return SDDL_POWER_USERS;
-
-        case SECURITY_RESTRICTED_CODE_RID:
-            return SDDL_RESTRICTED_CODE;
-
-        case DOMAIN_ALIAS_RID_REMOTE_DESKTOP_USERS:
-            return SDDL_REMOTE_DESKTOP;
-
-        case DOMAIN_ALIAS_RID_REPLICATOR:
-            return SDDL_REPLICATOR;
-
-        case DOMAIN_ALIAS_RID_RAS_SERVERS:
-            return SDDL_RAS_SERVERS;
-
-        case DOMAIN_ALIAS_RID_PREW2KCOMPACCESS:
-            return SDDL_ALIAS_PREW2KCOMPACC;
-
-        case DOMAIN_GROUP_RID_SCHEMA_ADMINS:
-            return SDDL_SCHEMA_ADMINISTRATORS;
-
-        case SECURITY_MANDATORY_SYSTEM_RID:
-            return SDDL_ML_SYSTEM;
-
-        case DOMAIN_ALIAS_RID_SYSTEM_OPS:
-            return SDDL_SERVER_OPERATORS;
-
-        case SECURITY_SERVICE_RID:
-            return SDDL_SERVICE;
-
-        case SECURITY_LOCAL_SYSTEM_RID:
-            return SDDL_LOCAL_SYSTEM;
-
-#if 0
-        case // performance users
-            return SDDL_PERFMON_USERS;
-
-        case DOMAIN_GROUP_RID_ENTERPRISE_READONLY_DOMAIN_CONTROLLERS:
-            return SDDL_ENTERPRISE_RO_DCs;
-
-        case DOMAIN_ALIAS_RID_CERTSVC_DCOM_ACCESS_GROUP: //(0x0000023EL   574)
-            return SDDL_CERTSVC_DCOM_ACCESS;
-#endif
-
-        default:
-            return NULL;
-    }
-}
-#endif
