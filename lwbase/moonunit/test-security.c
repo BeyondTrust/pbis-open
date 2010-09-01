@@ -408,17 +408,29 @@ MU_TEST(Security, 0003_AccessCheck)
     status = RTL_ALLOCATE(&sd, VOID, sdSize);
     MU_ASSERT_STATUS_SUCCESS(status);
 
-    status = RTL_ALLOCATE(&dacl, VOID, daclSize);
-    MU_ASSERT_STATUS_SUCCESS(status);
+    if (daclSize)
+    {
+        status = RTL_ALLOCATE(&dacl, VOID, daclSize);
+        MU_ASSERT_STATUS_SUCCESS(status);
+    }
 
-    status = RTL_ALLOCATE(&sacl, VOID, saclSize);
-    MU_ASSERT_STATUS_SUCCESS(status);
+    if (saclSize)
+    {
+        status = RTL_ALLOCATE(&sacl, VOID, saclSize);
+        MU_ASSERT_STATUS_SUCCESS(status);
+    }
 
-    status = RTL_ALLOCATE(&owner, VOID, ownerSize);
-    MU_ASSERT_STATUS_SUCCESS(status);
+    if (ownerSize)
+    {
+        status = RTL_ALLOCATE(&owner, VOID, ownerSize);
+        MU_ASSERT_STATUS_SUCCESS(status);
+    }
 
-    status = RTL_ALLOCATE(&primaryGroup, VOID, primaryGroupSize);
-    MU_ASSERT_STATUS_SUCCESS(status);
+    if (primaryGroupSize)
+    {
+        status = RTL_ALLOCATE(&primaryGroup, VOID, primaryGroupSize);
+        MU_ASSERT_STATUS_SUCCESS(status);
+    }
 
     status = RtlSelfRelativeToAbsoluteSD(
                     relativeSd,
