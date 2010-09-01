@@ -396,12 +396,14 @@ MemCacheOpen(
     dwError = LwMapErrnoToLwError(pthread_cond_init(
                     &pConn->signalBackup,
                     NULL));
+    BAIL_ON_LSA_ERROR(dwError);
     pConn->bSignalBackupCreated = TRUE;
 
     pConn->bNeedShutdown = FALSE;
     dwError = LwMapErrnoToLwError(pthread_cond_init(
                     &pConn->signalShutdown,
                     NULL));
+    BAIL_ON_LSA_ERROR(dwError);
     pConn->bSignalShutdownCreated = TRUE;
 
     dwError = LwMapErrnoToLwError(pthread_create(
@@ -847,6 +849,7 @@ MemCacheFindUserByName(
     // Do not free
     PLSA_HASH_TABLE pIndex = NULL;
     PSTR pszKey = NULL;
+    PSTR pszDnsDomain = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -855,13 +858,32 @@ MemCacheFindUserByName(
     switch (pUserNameInfo->nameType)
     {
         case NameType_UPN:
+            dwError = LsaDmQueryDomainInfo(
+                            pUserNameInfo->pszDomain,
+                            &pszDnsDomain,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+            BAIL_ON_LSA_ERROR(dwError);
+
             pIndex = pConn->pUPNToSecurityObject;
            
             dwError = LwAllocateStringPrintf(
                             &pszKey,
                             "%s@%s",
                             pUserNameInfo->pszName,
-                            pUserNameInfo->pszDomain);
+                            pszDnsDomain);
             BAIL_ON_LSA_ERROR(dwError);
             break;
        case NameType_NT4:
@@ -914,6 +936,7 @@ MemCacheFindUserByName(
 cleanup:
     LEAVE_RW_LOCK(&pConn->lock, bInLock);
     LW_SAFE_FREE_STRING(pszKey);
+    LW_SAFE_FREE_STRING(pszDnsDomain);
 
     return dwError;
 
