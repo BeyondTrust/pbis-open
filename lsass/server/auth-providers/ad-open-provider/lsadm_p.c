@@ -2983,7 +2983,7 @@ LsaDmpLdapClose(
     BOOLEAN bIsAcquired = FALSE;
     PLSA_DM_DOMAIN_STATE pDomain = NULL;
 
-    if (pConn == NULL)
+    if (pConn == NULL || Handle == NULL)
     {
         goto cleanup;
     }

@@ -3346,21 +3346,22 @@ AD_OpenEnumObjects(
     LwInitCookie(&pEnum->Cookie);
 
     *phEnum = pEnum;
+    pEnum = NULL;
 
 cleanup:
 
     LsaAdProviderStateRelease(gpLsaAdProviderState);
+
+    if (pEnum)
+    {
+        AD_CloseEnum(pEnum);
+    }
 
     return dwError;
 
 error:
 
     *phEnum = NULL;
-
-    if (pEnum)
-    {
-        AD_CloseEnum(pEnum);
-    }
 
     goto cleanup;
 }
@@ -3486,21 +3487,22 @@ AD_OpenEnumMembers(
     BAIL_ON_LSA_ERROR(dwError);
 
     *phEnum = pEnum;
+    pEnum = NULL;
 
 cleanup:
 
     LsaAdProviderStateRelease(gpLsaAdProviderState);
+
+    if (pEnum)
+    {
+        AD_CloseEnum(pEnum);
+    }
 
     return dwError;
 
 error:
 
     *phEnum = NULL;
-
-    if (pEnum)
-    {
-        AD_CloseEnum(pEnum);
-    }
 
     goto cleanup;
 }
@@ -3633,14 +3635,19 @@ AD_CloseEnum(
     )
 {
     PAD_ENUM_HANDLE pEnum = hEnum;
+
     if (pEnum)
     {
+        LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
+
         LwFreeCookieContents(&pEnum->Cookie);
         if (pEnum->ppszSids)
         {
             LwFreeStringArray(pEnum->ppszSids, pEnum->dwSidCount);
         }
         LwFreeMemory(pEnum);
+
+        LsaAdProviderStateRelease(gpLsaAdProviderState);
     }
 }
 
