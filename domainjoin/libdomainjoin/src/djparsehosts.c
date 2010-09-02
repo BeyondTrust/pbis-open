@@ -638,6 +638,8 @@ DJUpdateHostEntry(
 
         ceError = CTAllocateString(pszFqdnName, &pLine->pEntry->pszCanonicalName);
         BAIL_ON_CENTERIS_ERROR(ceError);
+
+        pLine->bModified = TRUE;
     }
 
     aliasPos = &pLine->pEntry->pAliasList;
