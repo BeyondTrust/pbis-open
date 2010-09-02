@@ -89,6 +89,8 @@ LocalInitializeProvider(
 
     memset(&config, 0, sizeof(config));
 
+    pthread_mutex_init(&gLPGlobals.cfgMutex, NULL);
+
     dwError = LocalCfgInitialize(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
