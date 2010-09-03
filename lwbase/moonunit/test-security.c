@@ -380,11 +380,14 @@ MU_TEST(Security, 0003_AccessCheck)
 
     DumpToken(token);
 
-    status = RtlValidRelativeSecurityDescriptor(
+    if (!RtlValidRelativeSecurityDescriptor(
                     relativeSd,
                     relativeSdLength,
-                    0);
-    MU_ASSERT_STATUS_SUCCESS(status);
+                    0))
+    {
+        status = STATUS_INVALID_ACL;
+        MU_ASSERT_STATUS_SUCCESS(status);
+    }
 
     status = RtlSelfRelativeToAbsoluteSD(
                     relativeSd,

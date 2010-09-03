@@ -66,11 +66,14 @@ MU_TEST(Sddl, 0000_SddlConversion)
     NTSTATUS status = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_RELATIVE relativeSd = (PSECURITY_DESCRIPTOR_RELATIVE) (PBYTE) buffer;
     ULONG relativeSdLength = 0;
-    SECURITY_INFORMATION secInfoAll = 0;
     PSTR pszStringSecurityDescriptor = NULL;
     PSTR pszStringSecurityDescriptor1 = NULL;
     PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor = NULL;
     ULONG pSdLength = 0;
+    SECURITY_INFORMATION secInfoAll = (OWNER_SECURITY_INFORMATION |
+                                       GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION |
+                                       SACL_SECURITY_INFORMATION);
 
     status = RtlAllocateSddlCStringFromSecurityDescriptor(
                 &pszStringSecurityDescriptor,

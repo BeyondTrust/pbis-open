@@ -431,11 +431,14 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
 
     ulSecDescRelLength = RtlLengthSecurityDescriptorRelative(pSecurityDescriptor);
 
-    status = RtlValidRelativeSecurityDescriptor(
+    if (!RtlValidRelativeSecurityDescriptor(
                     pSecurityDescriptor,
                     ulSecDescRelLength,
-                    0);
-    GOTO_CLEANUP_ON_STATUS(status);
+                    0))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
 
     status = RtlSelfRelativeToAbsoluteSD(
                    pSecurityDescriptor,
