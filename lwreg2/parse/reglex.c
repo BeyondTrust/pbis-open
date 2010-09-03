@@ -973,6 +973,7 @@ RegLexResetToken(
     lexHandle->state = REGLEX_FIRST;
     lexHandle->tokenDataType = REGLEX_FIRST;
     lexHandle->isToken = FALSE;
+    LWREG_SAFE_FREE_MEMORY(lexHandle->curToken.pszValue);
     memset(&lexHandle->curToken, 0, sizeof(lexHandle->curToken));
 
 cleanup:
@@ -1031,6 +1032,7 @@ RegLexGetToken(
 
     if (!lexHandle->curToken.pszValue)
     {   /* Extra byte for string termination */
+        LWREG_SAFE_FREE_MEMORY(lexHandle->curToken.pszValue);
         dwError = RegAllocateMemory(REGLEX_DEFAULT_SZ_LEN + 1,
                                     (LW_PVOID) &lexHandle->curToken.pszValue);
         BAIL_ON_REG_ERROR(dwError);

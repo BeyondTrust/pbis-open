@@ -215,10 +215,12 @@ RegParseAssignAttrData(
     {
         if (!strcmp(parseHandle->attrName, "value"))
         {
-            dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
+            dwError = RegAllocateMemory(dwDataLen + 1, (LW_PVOID) &pvData);
             BAIL_ON_REG_ERROR(dwError);
             memcpy(pvData, pData, dwDataLen);
 
+            LWREG_SAFE_FREE_MEMORY(
+                parseHandle->registryEntry.regAttr.CurrentValue);
             parseHandle->registryEntry.regAttr.CurrentValue = pvData;
             parseHandle->registryEntry.regAttr.CurrentValueLen = dwDataLen;
             RegParseExternDataType(
@@ -228,10 +230,12 @@ RegParseAssignAttrData(
         }
         else if (!strcmp(parseHandle->attrName, "default"))
         {
-            dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
+            dwError = RegAllocateMemory(dwDataLen + 1, (LW_PVOID) &pvData);
             BAIL_ON_REG_ERROR(dwError);
             memcpy(pvData, pData, dwDataLen);
 
+            LWREG_SAFE_FREE_MEMORY(
+                parseHandle->registryEntry.regAttr.DefaultValue);
             parseHandle->registryEntry.regAttr.DefaultValue = pvData;
             parseHandle->registryEntry.regAttr.DefaultValueLen = dwDataLen;
             RegParseExternDataType(
@@ -246,6 +250,8 @@ RegParseAssignAttrData(
                           pData);
             BAIL_ON_REG_ERROR(dwError);
 
+            LWREG_SAFE_FREE_MEMORY(
+                parseHandle->registryEntry.regAttr.DocString);
             parseHandle->registryEntry.regAttr.DocString = pwszDocString;
         }
         else if (!strcmp(parseHandle->attrName, "range"))
@@ -257,6 +263,13 @@ RegParseAssignAttrData(
                     dwDataLen,
                     &ppwszEnumString);
 
+                if (parseHandle->registryEntry.regAttr.Range.RangeEnumStrings)
+                {
+                    RegFreeMultiStrsW(parseHandle->registryEntry.
+                                      regAttr.Range.RangeEnumStrings);
+                    parseHandle->registryEntry.
+                        regAttr.Range.RangeEnumStrings = NULL;
+                }
                 parseHandle->registryEntry.regAttr.Range.RangeEnumStrings =
                     ppwszEnumString;
                 parseHandle->registryEntry.regAttr.RangeType =
@@ -268,7 +281,6 @@ RegParseAssignAttrData(
             parseHandle->registryEntry.regAttr.Hint =
                 RegFindHintByName((PSTR) pData);
         }
-
         else if (!parseHandle->bTypeSet)
         {
             RegParseExternDataType(
@@ -626,6 +638,7 @@ RegParseTypeStringArrayValue(
         RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
         if (token == REGLEX_REG_SZ)
         {
+            LWREG_SAFE_FREE_MEMORY(pwszString);
             ntStatus = LwRtlWC16StringAllocateFromCString(&pwszString, pszAttr);
             if (ntStatus)
             {
@@ -1148,6 +1161,7 @@ RegParseKeyValue(
                 RegMemoryFree(parseHandle->registryEntry.valueName);
                 parseHandle->registryEntry.valueName = NULL;
             }
+            LWREG_SAFE_FREE_STRING(parseHandle->registryEntry.valueName);
             dwError = RegCStringDuplicate(
                           &parseHandle->registryEntry.valueName,
                           pszAttr);
@@ -1159,10 +1173,7 @@ RegParseKeyValue(
              * This name is the registry attribute field to be populated:
              * value | default | doc | range | hint
              */
-            if (parseHandle->attrName)
-            {
-                LWREG_SAFE_FREE_MEMORY(parseHandle->attrName);
-            }
+            LWREG_SAFE_FREE_STRING(parseHandle->attrName);
             dwError = RegCStringDuplicate(
                           &parseHandle->attrName,
                           pszAttr);
@@ -1191,17 +1202,18 @@ RegParseKeyValue(
         }
     }
 
-    if (parseHandle->lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES &&
-        parseHandle->lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES_RESET)
+    if (parseHandle->lexHandle->eValueNameType !=
+            REGLEX_VALUENAME_ATTRIBUTES &&
+            parseHandle->lexHandle->eValueNameType !=
+            REGLEX_VALUENAME_ATTRIBUTES_RESET)
     {
         RegParseRunCallbacks(parseHandle); 
     }
-    if (parseHandle->lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES_RESET)
+    if (parseHandle->lexHandle->eValueNameType ==
+            REGLEX_VALUENAME_ATTRIBUTES_RESET)
     {
         parseHandle->lexHandle->eValueNameType = 0;
-        memset(&parseHandle->registryEntry.regAttr, 
-               0,
-               sizeof(parseHandle->registryEntry.regAttr));
+        RegParseFreeRegAttrData(parseHandle);
     }
     RegLexResetToken(parseHandle->lexHandle);
 
@@ -1438,6 +1450,32 @@ error:
 }
 
 
+void 
+RegParseFreeRegAttrData(
+    HANDLE pHandle)
+{
+    PREGPARSE_HANDLE pParseHandle = (PREGPARSE_HANDLE) pHandle;
+
+    /* Cleanup memory related to registry attributes */
+    LWREG_SAFE_FREE_MEMORY(
+        pParseHandle->registryEntry.regAttr.CurrentValue);
+    LWREG_SAFE_FREE_MEMORY(
+        pParseHandle->registryEntry.regAttr.DefaultValue);
+    LWREG_SAFE_FREE_MEMORY(pParseHandle->registryEntry.regAttr.DocString);
+    if (pParseHandle->registryEntry.regAttr.RangeType ==
+            LWREG_VALUE_RANGE_TYPE_ENUM &&
+        pParseHandle->registryEntry.regAttr.Range.RangeEnumStrings)
+    {
+        RegFreeMultiStrsW(
+            pParseHandle->registryEntry.regAttr.Range.RangeEnumStrings);
+        pParseHandle->registryEntry.regAttr.Range.RangeEnumStrings = NULL;
+    }
+    memset(&pParseHandle->registryEntry.regAttr, 
+           0,
+           sizeof(pParseHandle->registryEntry.regAttr));
+}
+
+
 void
 RegParseClose(
     HANDLE pHandle)
@@ -1447,15 +1485,12 @@ RegParseClose(
     if (pParseHandle)
     {
 
-        if (pParseHandle->registryEntry.keyName)
-        {
-            RegMemoryFree(pParseHandle->registryEntry.keyName);
-        }
+        LWREG_SAFE_FREE_STRING(pParseHandle->registryEntry.keyName);
+        LWREG_SAFE_FREE_STRING(pParseHandle->registryEntry.valueName);
+        LWREG_SAFE_FREE_MEMORY(pParseHandle->binaryData);
+        LWREG_SAFE_FREE_STRING(pParseHandle->attrName);
 
-        if (pParseHandle->binaryData)
-        {
-            RegMemoryFree(pParseHandle->binaryData);
-        }
+        RegParseFreeRegAttrData(pParseHandle);
         RegLexClose(pParseHandle->lexHandle);
         RegIOClose(pParseHandle->ioHandle);
         RegMemoryFree(pParseHandle);

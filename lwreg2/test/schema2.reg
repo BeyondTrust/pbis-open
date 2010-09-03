@@ -7,6 +7,10 @@
   "range" = string:"Now" "is" "the"
 }
 
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
+"r1" = {
+  "range" = integer:3 - 666
+}
 "mv1a" = {
   "range" = string:"Now" "is" "the"
   "default" = "error"

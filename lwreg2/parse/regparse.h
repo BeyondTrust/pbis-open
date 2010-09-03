@@ -89,6 +89,10 @@ typedef struct _UCS2_STRING_ENTRY
     DWORD ucs2StringLen;
 } UCS2_STRING_ENTRY, *PUCS2_STRING_ENTRY;
 
+void
+RegParseFreeRegAttrData(
+    HANDLE pHandle);
+
 #if 1 /* Public parser API. */
 
 DWORD

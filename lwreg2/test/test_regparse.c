@@ -144,14 +144,13 @@ parseCallbackPrintData(
                         pszIndentStr,
                         count,
                         pszString);
+                    LWREG_SAFE_FREE_MEMORY(pszString);
                 }
             }
             ctx->pfn_fprintf(outStream, "\n");
-
-            if (outMultiSz)
+            if (!bIsAttrData)
             {
                 RegFreeMultiStrsW(outMultiSz);
-                outMultiSz = NULL;
             }
 
             break;
@@ -300,6 +299,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                               (PSTR *) &schemaItem.value,
                               pItem->regAttr.DocString);
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
+                LWREG_SAFE_FREE_MEMORY(schemaItem.value);
             }
 
             if (pItem->regAttr.CurrentValue)
