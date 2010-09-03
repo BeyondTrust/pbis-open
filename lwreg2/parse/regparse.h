@@ -73,6 +73,7 @@ struct _REGPARSE_HANDLE
     PSTR keyName;           /* Current registry subkey */
     PSTR valueName;         /* Current valueName */
     PSTR attrName;          /* Registry schema field being addressed */
+    BOOLEAN bTypeSet;       /* Registry schema type field is set */
     REG_PARSE_ITEM registryEntry;
     PSTR pszStringData;
     UCHAR *binaryData;

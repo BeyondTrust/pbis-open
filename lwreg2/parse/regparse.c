@@ -94,6 +94,7 @@
  */
 
 #include "includes.h"
+
 DWORD 
 RegParseAttributes(PREGPARSE_HANDLE parseHandle);
 
@@ -202,37 +203,75 @@ RegParseAssignAttrData(
     PVOID pData,
     DWORD dwDataLen)
 {
-    PWSTR pwszDocString = NULL;
     DWORD dwError = 0;
+    PVOID pvData = NULL;
+    PWSTR pwszDocString = NULL;
 
-    if (parseHandle->lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES)
+    /* regAttr contains memory that must be freed by caller */
+    if (parseHandle->lexHandle->eValueNameType ==
+        REGLEX_VALUENAME_ATTRIBUTES &&
+        pData && dwDataLen > 0)
     {
         if (!strcmp(parseHandle->attrName, "value"))
         {
-            parseHandle->registryEntry.regAttr.CurrentValue = pData;
+            dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
+            BAIL_ON_REG_ERROR(dwError);
+            memcpy(pvData, pData, dwDataLen);
+
+            parseHandle->registryEntry.regAttr.CurrentValue = pvData;
             parseHandle->registryEntry.regAttr.CurrentValueLen = dwDataLen;
+            RegParseExternDataType(
+                parseHandle->dataType, 
+                (PREG_DATA_TYPE) &parseHandle->registryEntry.regAttr.ValueType);
+            parseHandle->bTypeSet = TRUE;
         }
         else if (!strcmp(parseHandle->attrName, "default"))
         {
-            parseHandle->registryEntry.regAttr.DefaultValue = pData;
+            dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
+            BAIL_ON_REG_ERROR(dwError);
+            memcpy(pvData, pData, dwDataLen);
+
+            parseHandle->registryEntry.regAttr.DefaultValue = pvData;
             parseHandle->registryEntry.regAttr.DefaultValueLen = dwDataLen;
+            RegParseExternDataType(
+                parseHandle->dataType, 
+                (PREG_DATA_TYPE) &parseHandle->registryEntry.regAttr.ValueType);
+            parseHandle->bTypeSet = TRUE;
         }
         else if (!strcmp(parseHandle->attrName, "doc"))
         {
-/* memory management issue here... */
             dwError = LwRtlWC16StringAllocateFromCString(
-                          &pwszDocString, 
-                          (PSTR) pData);
+                          &pwszDocString,
+                          pData);
             BAIL_ON_REG_ERROR(dwError);
+
             parseHandle->registryEntry.regAttr.DocString = pwszDocString;
+        }
+        else if (!strcmp(parseHandle->attrName, "range"))
+        {
+            if (parseHandle->registryEntry.type == REG_MULTI_SZ)
+            {
+                dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
+                BAIL_ON_REG_ERROR(dwError);
+                memcpy(pvData, pData, dwDataLen);
+                parseHandle->registryEntry.regAttr.Range.RangeEnumStrings =
+                    pvData;
+                parseHandle->registryEntry.regAttr.RangeType =
+                    LWREG_VALUE_RANGE_TYPE_ENUM;
+            }
         }
         else if (!strcmp(parseHandle->attrName, "hint"))
         {
-            parseHandle->registryEntry.regAttr.DocString = pData;
+            parseHandle->registryEntry.regAttr.Hint =
+                RegFindHintByName((PSTR) pData);
         }
-        RegParseExternDataType(
-            parseHandle->dataType, 
-            (PREG_DATA_TYPE) &parseHandle->registryEntry.regAttr.ValueType);
+
+        else if (!parseHandle->bTypeSet)
+        {
+            RegParseExternDataType(
+                parseHandle->dataType, 
+                (PREG_DATA_TYPE) &parseHandle->registryEntry.regAttr.ValueType);
+        }
     }
 
 cleanup:
@@ -544,6 +583,10 @@ RegParseTypeMultiStringValue(
     RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
 
     RegParseBinaryData(parseHandle);
+    RegParseAssignAttrData(
+        parseHandle,
+        (PVOID) parseHandle->registryEntry.value,
+        parseHandle->registryEntry.valueLen);
     return dwError;
 }
 
@@ -606,13 +649,21 @@ RegParseTypeStringArrayValue(
     }
     parseHandle->binaryData[parseHandle->binaryDataLen++] = '\0';
     parseHandle->binaryData[parseHandle->binaryDataLen++] = '\0';
-    RegLexUnGetToken(parseHandle->lexHandle);
+#if 1 /* 1250pm 9/2 */
+    if (token != REGLEX_FIRST)
+    {
+        RegLexUnGetToken(parseHandle->lexHandle);
+    }
+#endif
 
     parseHandle->dataType = REGLEX_REG_MULTI_SZ;
     parseHandle->lexHandle->isToken = TRUE;
     RegParseExternDataType(parseHandle->dataType,
                            &parseHandle->registryEntry.type);
-
+    RegParseAssignAttrData(
+        parseHandle,
+        (PVOID) parseHandle->binaryData,
+        parseHandle->binaryDataLen);
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszString);

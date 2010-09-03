@@ -68,3 +68,4 @@
 #include "syslog_p.h"
 #include "regerror_p.h"
 #include "externs.h"
+#include "regparse_r.h"

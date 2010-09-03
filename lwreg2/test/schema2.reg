@@ -1,11 +1,85 @@
 #
 # Example "Registry Schema" entry
 #
-"SupportSmb3" = {
-  "doc" = "doc string"
+[HKEY_THIS_MACHINE\Services\lsass\Parameters123]
+"mv1" = {
+  "default" = "error"
+  "range" = string:"Now" "is" "the"
+}
+
+"mv1a" = {
+  "range" = string:"Now" "is" "the"
+  "default" = "error"
+}
+
+"mv2" = {
+  "range" = string:"Now" "is" "the"
+  "default" = dword:01DF5E76
+}
+
+"SupportSmb1" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+  "hint" = "account"
   "value" = dword:00000003
-  #"default" = dword:00000001
-  #"range" = boolean
+  "default" = dword:00000314
+}
+"SupportSmb3" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+  "hint" = "account"
+  "value" = dword:00000003
+  "default" = dword:00000314
+}
+
+"LogLevel1" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "account"
+  "value" = dword:00000003
+  "default" = dword:00000314
+}
+
+"LogLevel2" = {
+  "range" = string:"Now" "is" "the"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "path"
+#  "value" = dword:00000003
+#  "default" = dword:00000314
+  "value" = "debug"
+  "default" = "error"
+}
+
+"LogLevel3" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "account"
+  "value" = dword:00000003
+  "default" = dword:00000314
+}
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
+"t2" = {
+  "hint" = "seconds"
+  value = dword:00000006
+  default = dword:00000001
+}
+
+"SupportSmb2" = {
+  # Show how to specify an explicit in the new syntax (sic)
+  "value" = dword:00000000
+  "default" = dword:00000001
+  "range" = boolean
+  "doc" = "Boolean value used to control whether the server will support SMB2 protocol dialect or not. Set the value to 1 (True) to enable SMB2 support and 0 (False) to disable."
+}
+
+"SupportSmb3" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+  "hint" = "account"
+  "value" = dword:00000003
+  "default" = dword:00000314
+#  "doc" = "doc string"
 }
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
@@ -24,11 +98,19 @@
   "value" = dword:00000009
 }
 
-"t" = {
+"b" = {
   "range" = boolean
   "value" = dword:31415926
 }
+"b2" = {
+  "range" = boolean
+  "value" = dword:00000000
+}
 
+"b3" = {
+  "range" = boolean
+  "value" = dword:00000001
+}
 
 @security = 3d347b284dadc155514e287328ff1021
 
@@ -55,6 +137,8 @@
 # Old format not in schema format
 #
 "multivalue" = sza:"error" "warning" "verbose" "debug" "trace"
+"multivalue2" = sza:"the quick brown fox" "Jumped over the" \
+                    "lazy dog's back" "1234567890"
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
 "MachinePasswordLifeSpan" = {

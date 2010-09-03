@@ -667,3 +667,52 @@ RegFreeMultiStrsW(
 
     LwRtlMemoryFree(ppwszStrings);
 }
+
+
+typedef struct _REG_HINT_ENTRY
+{
+   PSTR pszHintName;
+   LWREG_VALUE_HINT dwHintValue;
+} REG_HINT_ENTRY;
+
+static REG_HINT_ENTRY gHints[] =
+{
+   {"seconds", 1},
+   {"path",    2},
+   {"account", 3},
+   {NULL,      0}
+
+};
+
+
+DWORD
+RegFindHintByName(PSTR pszHint)
+{
+   DWORD dwI = 0;
+
+   for (dwI=0; gHints[dwI].pszHintName; dwI++)
+   {
+       if (strcmp(pszHint, gHints[dwI].pszHintName) == 0)
+       {
+           return gHints[dwI].dwHintValue;
+       }
+    }
+
+   return 0;
+}
+
+PSTR
+RegFindHintByValue(DWORD dwHint)
+{
+   DWORD dwI = 0;
+
+   for (dwI=0; gHints[dwI].pszHintName; dwI++)
+   {
+       if (dwHint == gHints[dwI].dwHintValue)
+       {
+           return gHints[dwI].pszHintName;
+       }
+    }
+
+   return NULL;
+}

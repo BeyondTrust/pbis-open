@@ -425,6 +425,16 @@ LwRegGetKeySecurity(
     IN OUT PULONG lpcbSecurityDescriptor
     );
 
+DWORD
+LwRegFindHintByName(
+    PSTR pszHint
+    );
+
+PSTR
+LwRegFindHintByValue(
+    DWORD dwHint
+    );
+
 
 #ifndef LW_STRICT_NAMESPACE
 #define RegOpenServer LwRegOpenServer
@@ -480,6 +490,8 @@ LwRegGetKeySecurity(
 #define RegQueryMultipleValues LwRegQueryMultipleValues
 #define RegSetKeySecurity LwRegSetKeySecurity
 #define RegGetKeySecurity LwRegGetKeySecurity
+#define RegFindHintByName LwRegFindHintByName
+#define RegFindHintByValue LwRegFindHintByValue
 
 #endif /* ! LW_STRICT_NAMESPACE */
 
