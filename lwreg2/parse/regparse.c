@@ -206,6 +206,7 @@ RegParseAssignAttrData(
     DWORD dwError = 0;
     PVOID pvData = NULL;
     PWSTR pwszDocString = NULL;
+    PWSTR *ppwszEnumString = NULL;
 
     /* regAttr contains memory that must be freed by caller */
     if (parseHandle->lexHandle->eValueNameType ==
@@ -251,11 +252,13 @@ RegParseAssignAttrData(
         {
             if (parseHandle->registryEntry.type == REG_MULTI_SZ)
             {
-                dwError = RegAllocateMemory(dwDataLen, (LW_PVOID) &pvData);
-                BAIL_ON_REG_ERROR(dwError);
-                memcpy(pvData, pData, dwDataLen);
+                RegByteArrayToMultiStrsW(
+                    pData,
+                    dwDataLen,
+                    &ppwszEnumString);
+
                 parseHandle->registryEntry.regAttr.Range.RangeEnumStrings =
-                    pvData;
+                    ppwszEnumString;
                 parseHandle->registryEntry.regAttr.RangeType =
                     LWREG_VALUE_RANGE_TYPE_ENUM;
             }
@@ -649,12 +652,10 @@ RegParseTypeStringArrayValue(
     }
     parseHandle->binaryData[parseHandle->binaryDataLen++] = '\0';
     parseHandle->binaryData[parseHandle->binaryDataLen++] = '\0';
-#if 1 /* 1250pm 9/2 */
     if (token != REGLEX_FIRST)
     {
         RegLexUnGetToken(parseHandle->lexHandle);
     }
-#endif
 
     parseHandle->dataType = REGLEX_REG_MULTI_SZ;
     parseHandle->lexHandle->isToken = TRUE;

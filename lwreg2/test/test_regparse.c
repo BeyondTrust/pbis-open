@@ -58,6 +58,7 @@ DWORD
 parseCallbackPrintData(
     USER_CONTEXT *ctx,
     PREG_PARSE_ITEM pItem,
+    BOOLEAN bIsAttrData,
     DWORD dwIndent)
 {
     CHAR typeString[128];
@@ -104,14 +105,24 @@ parseCallbackPrintData(
                              pItem->type,
                              pItem->valueName);
             /*
-             * The length parameter is only validated for % sizeof(WCHAR).
-             * This value is to allow conversion of a valid MULTI_SZ
-             * wide-character array when you don't know its length, i.e. 0.
+             * Possibly an inconsistency here. The registry schema
+             * clearly defines RangeEnumStrings to be a null terminated
+             * array of pointers to wide character strings. The data 
+             * passed in from the parser for MULTI_SZ is the marshalled 
+             * (byte array) form of this data. That is why this call
+             * is needed here.
              */
-            RegByteArrayToMultiStrsW(
-                pItem->value,
-                pItem->valueLen ? pItem->valueLen : sizeof(WCHAR),
-                &outMultiSz);
+            if (!bIsAttrData)
+            {
+                RegByteArrayToMultiStrsW(
+                    pItem->value,
+                    pItem->valueLen,
+                    &outMultiSz);
+            }
+            else
+            {
+                outMultiSz = pItem->regAttr.Range.RangeEnumStrings;
+            }
             if (outMultiSz)
             {
                 for (count=0; outMultiSz[count]; count++)
@@ -251,7 +262,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem.type = REG_MULTI_SZ;
                 schemaItem.valueName = "range";
                 schemaItem.value = pItem->regAttr.Range.RangeEnumStrings;
-                parseCallbackPrintData(ctx, &schemaItem, 10);
+                parseCallbackPrintData(ctx, &schemaItem, TRUE, 10);
             }
             else if (pItem->regAttr.RangeType ==
                      LWREG_VALUE_RANGE_TYPE_BOOLEAN &&
@@ -288,7 +299,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 dwError = LwRtlCStringAllocateFromWC16String(
                               (PSTR *) &schemaItem.value,
                               pItem->regAttr.DocString);
-                parseCallbackPrintData(ctx, &schemaItem, 5);
+                parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }
 
             if (pItem->regAttr.CurrentValue)
@@ -299,7 +310,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem.value = pItem->regAttr.CurrentValue;
                 schemaItem.valueLen = pItem->regAttr.CurrentValueLen;
                 schemaItem.valueName = "value";
-                parseCallbackPrintData(ctx, &schemaItem, 5);
+                parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }
             if (pItem->regAttr.DefaultValue)
             {
@@ -309,13 +320,13 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem.value = pItem->regAttr.DefaultValue;
                 schemaItem.valueLen = pItem->regAttr.DefaultValueLen;
                 schemaItem.valueName = "default";
-                parseCallbackPrintData(ctx, &schemaItem, 5);
+                parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }
             ctx->pfn_fprintf(outStream, "    }\n\n");
             break;
 
         default:
-            parseCallbackPrintData(ctx, pItem, 0);
+            parseCallbackPrintData(ctx, pItem, FALSE, 0);
             break;
     }
 
