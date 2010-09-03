@@ -411,11 +411,12 @@ get_shared_library_fullname ()
 /* Returns the pathname, relocated according to the current installation
    directory.  */
 const char *
-relocate (const char *pathname)
+relocate (const char *pathname, int *allocated)
 {
 #if defined PIC && defined INSTALLDIR
   static int initialized;
 
+  *allocated = 0;
   /* Initialization code for a shared library.  */
   if (!initialized)
     {
@@ -472,6 +473,7 @@ relocate (const char *pathname)
 	    {
 	      memcpy (result, curr_prefix, curr_prefix_len);
 	      strcpy (result + curr_prefix_len, pathname_tail);
+	      *allocated = 1;
 	      return result;
 	    }
 	}

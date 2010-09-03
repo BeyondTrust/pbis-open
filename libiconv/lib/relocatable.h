@@ -50,7 +50,7 @@ extern RELOCATABLE_DLL_EXPORTED void
 
 /* Returns the pathname, relocated according to the current installation
    directory.  */
-extern const char * relocate (const char *pathname);
+extern const char * relocate (const char *pathname, int *allocated);
 
 /* Memory management: relocate() leaks memory, because it has to construct
    a fresh pathname.  If this is a problem because your program calls
