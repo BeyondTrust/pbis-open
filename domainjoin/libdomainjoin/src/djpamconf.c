@@ -2500,6 +2500,10 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
              *    /etc/pam.d/shadow. I can't figure out what uses it.
              * - runuser/runlevel-l - Requires root-ness to do its job.  So it only
              *   checks for that.  (Found on CentOS 5.)
+             * - ekshell - this is a kerberized rsh. It first authenticates the
+             *     user outside of pam.
+             * - kshell - this is a kerberized rsh. It first authenticates the
+             *     user outside of pam.
              *
              * kde-np is the passwordless login. It is the kde equivalent of
              * gdm-autologin.
@@ -2540,6 +2544,10 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             if(!strcmp(normalizedService, "runuser"))
                 goto cleanup;
             if(!strcmp(normalizedService, "runuser-l"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "ekshell"))
+                goto cleanup;
+            if(!strcmp(normalizedService, "kshell"))
                 goto cleanup;
             /* I'm not sure if this is a typo or not */
             if(!strcmp(normalizedService, "kde-np"))
