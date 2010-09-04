@@ -391,7 +391,7 @@ SMBSrvClientTreeCreate(
     OUT PSMB_TREE* ppTree
     )
 {
-    DWORD     ntStatus = 0;
+    NTSTATUS  ntStatus = 0;
     PSMB_TREE pTree = NULL;
     BOOLEAN   bInLock = FALSE;
     PSMB_SESSION pSession = *ppSession;

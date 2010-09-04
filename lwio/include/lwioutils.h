@@ -995,7 +995,7 @@ LwioBitVectorFree(
     PLWIO_BIT_VECTOR pBitVector
     );
 
-DWORD
+NTSTATUS
 SMBHashCreate(
         size_t sTableSize,
         SMB_HASH_KEY_COMPARE fnComparator,
@@ -1003,18 +1003,18 @@ SMBHashCreate(
         SMB_HASH_FREE_ENTRY fnFree, //optional
         SMB_HASH_TABLE** ppResult);
 
-void
+VOID
 SMBHashSafeFree(
         SMB_HASH_TABLE** ppResult);
 
-DWORD
+NTSTATUS
 SMBHashSetValue(
         SMB_HASH_TABLE *pTable,
         PVOID  pKey,
         PVOID  pValue);
 
-//Returns ENOENT if pKey is not in the table
-DWORD
+//Returns STATUS_NOT_FOUND if pKey is not in the table
+NTSTATUS
 SMBHashGetValue(
         SMB_HASH_TABLE *pTable,
         PCVOID  pKey,
@@ -1027,12 +1027,12 @@ SMBHashExists(
     );
 
 //Invalidates all iterators
-DWORD
+NTSTATUS
 SMBHashResize(
         SMB_HASH_TABLE *pTable,
         size_t sTableSize);
 
-DWORD
+NTSTATUS
 SMBHashGetIterator(
         SMB_HASH_TABLE *pTable,
         SMB_HASH_ITERATOR *pIterator);
@@ -1043,7 +1043,7 @@ SMBHashNext(
         SMB_HASH_ITERATOR *pIterator
         );
 
-DWORD
+NTSTATUS
 SMBHashRemoveKey(
         SMB_HASH_TABLE *pTable,
         PCVOID  pKey);
