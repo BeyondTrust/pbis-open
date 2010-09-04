@@ -938,7 +938,12 @@ RegParseTypeValue(
 
         case REGLEX_ATTRIBUTES_BEGIN:
             parseHandle->dataType = REGLEX_REG_ATTRIBUTES;
-            RegParseAttributes(parseHandle);
+            dwError = RegParseAttributes(parseHandle);
+            /* Should BAIL_ON_ERROR idiom in this routine */
+            if (dwError)
+            {
+                return dwError;
+            }
             break;
 
         case REGLEX_ATTRIBUTES_END:
@@ -968,9 +973,9 @@ printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
                       !strcmp(pszAttr, "default") ||
                       !strcmp(pszAttr, "doc") ||
                       !strcmp(pszAttr, "range") ||
-                      !strcmp(pszAttr, "hint") ||
                       !strcmp(pszAttr, "seconds") ||
-                      !strcmp(pszAttr, "boolean"))
+                      !strcmp(pszAttr, "boolean") ||
+                      RegFindHintByName(pszAttr))
                     )
             {
                 if (!strcmp(parseHandle->attrName, "range") &&
@@ -991,6 +996,8 @@ printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
                 printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
                        "unknown line=%d\n\n",
                        tokenName, lineNum);
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                return dwError;
             }
             break;
 
@@ -1087,6 +1094,8 @@ printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
                 printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
                        "unknown line=%d\n\n",
                        tokenName, lineNum);
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                return dwError;
                 break;
             }
     }
@@ -1188,6 +1197,7 @@ RegParseKeyValue(
 
     /* Parse data value */
     dwError = RegParseTypeValue(parseHandle);
+    BAIL_ON_REG_ERROR(dwError);
     if (dwError == 0)
     {
         RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
@@ -1295,7 +1305,9 @@ RegParseKey(
              * registry attribute context.
              */
             parseHandle->valueType = token;
-            RegParseKeyValue(parseHandle);
+            dwError = RegParseKeyValue(parseHandle);
+            BAIL_ON_REG_ERROR(dwError);
+   
         }
         else if (token == REGLEX_PLAIN_TEXT)
         {
@@ -1334,7 +1346,7 @@ RegParseKey(
              */
             parseHandle->valueType = token;
             RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
-            RegParseKeyValue(parseHandle);
+            dwError = RegParseKeyValue(parseHandle);
             printf("Unhandled token '%s'!\n", pszAttr);
             return dwError;
         }
@@ -1385,6 +1397,10 @@ RegParseAttributes(
         {
             /* Scary recursive call to RegParseKey() here */
             dwError = RegParseKey(parseHandle, token);
+            if (dwError)
+            {
+                break;
+            }
             dwError = RegLexGetToken(parseHandle->ioHandle,
                                      parseHandle->lexHandle,
                                      &token,
@@ -1515,6 +1531,10 @@ RegParseRegistry(
         if (!eof)
         {
             dwError = RegParseKey(parseHandle, token);
+            if (dwError)
+            {
+                break;
+            }
         }
     } while (!eof);
 

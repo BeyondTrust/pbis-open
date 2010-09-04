@@ -351,7 +351,7 @@ RegLexParseOpenBrace(
         lexHandle->state != REGLEX_STATE_IN_KEY)
     {
         lexHandle->curToken.token = REGLEX_ATTRIBUTES_BEGIN;
-        if (lexHandle->state == REGLEX_STATE_IN_ATTRIBUTES)
+        if (lexHandle->eValueNameType == REGLEX_VALUENAME_ATTRIBUTES)
         {
             /* This is a problem, can't have { then another { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
