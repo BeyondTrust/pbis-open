@@ -22,4 +22,5 @@ lwinclude_HEADERS = \
 	threadpool.h \
 	mapsecurity.h \
 	mapsecurity-plugin.h \
-	mapsecurity-types.h
+	mapsecurity-types.h \
+	affinity.h

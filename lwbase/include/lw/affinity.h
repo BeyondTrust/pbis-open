@@ -26,35 +26,35 @@
 /*
  * Module Name:
  *
- *        base.h
+ *        affinity.h
  *
  * Abstract:
  *
- *        Base include header
+ *        CPU affinity operations
  *
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
+ *          Evgeny Popovich (epopovich@likewise.com)
  *
  */
 
-#ifndef __LWBASE_H__
-#define __LWBASE_H__
+#ifndef __LWBASE_AFFINITY_H__
+#define __LWBASE_AFFINITY_H__
+
+#include <pthread.h>
 
 #include <lw/types.h>
 #include <lw/attrs.h>
-#include <lw/atomic.h>
 #include <lw/ntstatus.h>
-#include <lw/errno.h>
-#include <lw/winerror.h>
-#include <lw/rpcstatus.h>
-#include <lw/rtlmemory.h>
-#include <lw/rtlstring.h>
-#include <lw/rbtree.h>
-#include <lw/security-types.h>
-#include <lw/security-api.h>
-#include <lw/dscache.h>
-#include <lw/threadpool.h>
-#include <lw/affinity.h>
-#include <lw/mapsecurity.h>
-#include <lw/safeint.h>
 
-#endif
+int
+GetCpuCount(
+    VOID
+    );
+
+NTSTATUS
+SetThreadAttrAffinity(
+    pthread_attr_t* pAttr,
+    int cpuNum
+    );
+
+#endif  // __LWBASE_AFFINITY_H__
