@@ -873,6 +873,7 @@ AC_CONFIG_FILES([Makefile
         tests/Makefile
         tests/moonunit/Makefile
         tests/test_bitvector/Makefile
+        tests/test_lru/Makefile
         tests/test_npclient/Makefile
         tests/test_npclient2/Makefile
         tests/test_npserver/Makefile

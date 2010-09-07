@@ -6,4 +6,5 @@ SUBDIRS = \
     test_npserver \
     test_pvfs \
     test_load \
-    test_createfile
+    test_createfile \
+    test_lru
