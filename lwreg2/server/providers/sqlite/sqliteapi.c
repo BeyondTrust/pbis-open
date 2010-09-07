@@ -547,7 +547,7 @@ SqliteEnumKeyEx(
 
     if (dwIndex >= pKeyCtx->dwNumSubKeys)
     {
-    	status = STATUS_NO_MORE_MATCHES;
+    	status = STATUS_NO_MORE_ENTRIES;
         BAIL_ON_NT_STATUS(status);
     }
 
@@ -653,7 +653,7 @@ SqliteEnumKeyEx_inDblock(
 
     if (dwIndex >= pKeyCtx->dwNumSubKeys)
     {
-    	status = STATUS_NO_MORE_MATCHES;
+    	status = STATUS_NO_MORE_ENTRIES;
         BAIL_ON_NT_STATUS(status);
     }
 
@@ -1087,7 +1087,7 @@ SqliteEnumValue(
 
     if (dwIndex >= pKeyCtx->dwNumValues)
     {
-    	status = STATUS_NO_MORE_MATCHES;
+    	status = STATUS_NO_MORE_ENTRIES;
         BAIL_ON_NT_STATUS(status);
     }
 

@@ -92,45 +92,6 @@ typedef struct __REG_KEY_HANDLE *HKEY, **PHKEY;
 
 typedef ACCESS_MASK REGSAM;
 
-#define KEY_QUERY_VALUE         0x0001 //Required to query the values of a registry key
-#define KEY_SET_VALUE           0x0002 //Required to create, delete, or set a registry value
-#define KEY_CREATE_SUB_KEY      0x0004 //Required to create, delete, or rename a subkey of a registry key
-#define KEY_ENUMERATE_SUB_KEYS  0x0008 //Required to enumerate the subkeys of a registry key
-#define KEY_NOTIFY              0x0010 //Required to request change notifications for a registry key or for subkeys of a registry key.
-#define KEY_CREATE_LINK         0x0020 //Reserved for system use
-
-
-#define KEY_ALL_ACCESS ( \
-	    (~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_REQUIRED | \
-	    KEY_QUERY_VALUE |\
-		KEY_SET_VALUE |\
-		KEY_CREATE_SUB_KEY |\
-		KEY_ENUMERATE_SUB_KEYS |\
-		KEY_NOTIFY |\
-		KEY_CREATE_LINK) \
-		)
-
-#define KEY_READ ( \
-		(~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_READ | \
-	    KEY_QUERY_VALUE |\
-	    KEY_ENUMERATE_SUB_KEYS |\
-	    KEY_NOTIFY) \
-		)
-
-
-#define KEY_WRITE ( \
-		(~SYNCHRONIZE) & \
-	    (STANDARD_RIGHTS_WRITE | \
-	    KEY_SET_VALUE |\
-	    KEY_CREATE_SUB_KEY) \
-		)
-
-#define KEY_EXECUTE ( \
-		(~SYNCHRONIZE) & \
-        (KEY_READ)\
-        )
 
 typedef DWORD REG_DATA_TYPE;
 typedef DWORD *PREG_DATA_TYPE;
@@ -205,6 +166,69 @@ typedef struct _SECURITY_ATTRIBUTES {
     BOOL   bInheritHandle;
 }SECURITY_ATTRIBUTES, *PSECURITY_ATTRIBUTES;
 
+//
+// Value attribute
+//
+typedef enum _LWREG_VALUE_RANGE_TYPE
+{
+    LWREG_VALUE_RANGE_TYPE_BOOLEAN = 1,
+    LWREG_VALUE_RANGE_TYPE_ENUM,
+    LWREG_VALUE_RANGE_TYPE_INTEGER,
+} LWREG_VALUE_RANGE_TYPE;
+
+typedef enum _LWREG_VALUE_HINT
+{
+    LWREG_VALUE_HINT_SECONDS = 1,
+    LWREG_VALUE_HINT_PATH,
+    LWREG_VALUE_HINT_ACCOUNT
+} LWREG_VALUE_HINT;
+
+typedef struct _LWREG_VALUE_ATTRIBUTES_A
+{
+    DWORD ValueType;
+    PVOID pCurrentValue;
+    DWORD CurrentValueLen;
+    PVOID pDefaultValue;
+    DWORD DefaultValueLen;
+    PSTR  pszDocString;
+    LWREG_VALUE_RANGE_TYPE RangeType;
+    LWREG_VALUE_HINT Hint;
+    union {
+        struct {
+            DWORD Min;
+            DWORD Max;
+        } RangeInteger;
+        PSTR* pszRangeEnumStrings;
+    } Range;
+} LWREG_VALUE_ATTRIBUTES_A, *PLWREG_VALUE_ATTRIBUTES_A;
+
+
+typedef struct _LWREG_VALUE_ATTRIBUTES
+{
+    DWORD ValueType;
+    PVOID pCurrentValue;
+    DWORD CurrentValueLen;
+    PVOID pDefaultValue;
+    DWORD DefaultValueLen;
+    PWSTR pwszDocString;
+    LWREG_VALUE_RANGE_TYPE RangeType;
+    LWREG_VALUE_HINT Hint;
+    union {
+        struct {
+            DWORD Min;
+            DWORD Max;
+        } RangeInteger;
+        PWSTR* pwszRangeEnumStrings;
+    } Range;
+} LWREG_VALUE_ATTRIBUTES, *PLWREG_VALUE_ATTRIBUTES;
+
+typedef struct _LWREG_CURRENT_VALUEINFO{
+    DWORD dwType;
+    PVOID pvData;
+    DWORD pcbData;
+}LWREG_CURRENT_VALUEINFO, *PLWREG_CURRENT_VALUEINFO;
+
+
 void
 RegFreeMultiStrsA(
     PSTR* ppszStrings
@@ -227,8 +251,6 @@ RegCopyValueBytes(
     OUT OPTIONAL PBYTE pData,
     IN OUT OPTIONAL PDWORD pcbData
     );
-
-#endif /* __REG_H__ */
 
 
 /*Range 40700 - 41200 is reserved for registry specific error*/
@@ -254,6 +276,9 @@ RegCopyValueBytes(
 #define LWREG_ERROR_NOT_HANDLED                               40725 //40017
 #define LWREG_ERROR_UNEXPECTED_TOKEN                          40726 //40062
 #define LWREG_ERROR_UNKNOWN                                   40727 //40188
+
+#endif /* __REG_H__ */
+
 
 /*
 local variables:

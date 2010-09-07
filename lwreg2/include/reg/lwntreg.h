@@ -350,7 +350,9 @@ LwNtRegQueryMultipleValues(
     IN OUT OPTIONAL PDWORD dwTotsize
     );
 
+//
 // Registry ACL APIs
+//
 NTSTATUS
 LwNtRegSetKeySecurity(
     IN HANDLE hNtRegConnection,
@@ -370,7 +372,9 @@ LwNtRegGetKeySecurity(
     );
 
 
-/* NtRegistry multi-str data type conversion functions */
+//
+// NtRegistry multi-str data type conversion functions
+//
 NTSTATUS
 LwNtRegMultiStrsToByteArrayW(
     IN PWSTR*   ppwszInMultiSz,
@@ -413,6 +417,64 @@ LwNtRegConvertByteStreamW2A(
     IN DWORD       cbData,
     OUT PBYTE*      ppOutData,
     OUT PDWORD      pcbOutDataLen
+    );
+
+
+//
+// Registry value attributes APIs
+//
+NTSTATUS
+LwNtRegSetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES_A pValueAttributes
+    );
+
+NTSTATUS
+LwNtRegSetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
+NTSTATUS
+LwNtRegGetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
+    );
+
+NTSTATUS
+LwNtRegGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+NTSTATUS
+LwNtRegDeleteValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName
+    );
+
+NTSTATUS
+LwNtRegDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
     );
 
 
@@ -471,6 +533,14 @@ LwNtRegConvertByteStreamW2A(
 #define NtRegSetKeySecurity LwNtRegSetKeySecurity
 #define NtRegGetKeySecurity LwNtRegGetKeySecurity
 
+
+#define NtRegSetValueAttributesA LwNtRegSetValueAttributesA
+#define NtRegSetValueAttributesW LwNtRegSetValueAttributesW
+#define NtRegGetValueAttributesA LwNtRegGetValueAttributesA
+#define NtRegGetValueAttributesW LwNtRegGetValueAttributesW
+#define NtRegDeleteValueAttributesA LwNtRegDeleteValueAttributesA
+#define NtRegDeleteValueAttributesW LwNtRegDeleteValueAttributesW
+
 #endif /* ! LW_STRICT_NAMESPACE */
 
 
@@ -521,6 +591,16 @@ LwNtRegConvertByteStreamW2A(
 #define LwNtRegDeleteValue(hNtRegConnection, hKey, pwszValueName) \
     LwNtRegDeleteValueW(hNtRegConnection, hKey, pwszValueName)
 
+
+#define LwNtRegSetValueAttributes(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes) \
+    LwNtRegSetValueAttributesW(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes)
+
+#define LwNtRegGetValueAttributes(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes) \
+    LwNtRegGetValueAttributesW(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes)
+
+#define LwNtRegDeleteValueAttributes(hRegConnection, hKey, pszSubKey, pszValueName) \
+    LwNtRegDeleteValueAttributesW(hRegConnection, hKey, pszSubKey, pszValueName)
+
 #else
 
 #define LwNtRegEnumRootKeys(hNtRegConnection, pppszRootKeyNames, pdwNumRootKeys) \
@@ -567,6 +647,17 @@ LwNtRegConvertByteStreamW2A(
 
 #define LwNtRegDeleteValue(hNtRegConnection, hKey, pszValueName) \
     LwNtRegDeleteValueA(hNtRegConnection, hKey, pszValueName)
+
+#define LwNtRegSetValueAttributes(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes) \
+    LwNtRegSetValueAttributesA(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes)
+
+#define LwNtRegGetValueAttributes(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes) \
+    LwNtRegGetValueAttributesA(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes)
+
+#define LwNtRegDeleteValueAttributes(hRegConnection, hKey, pszSubKey, pszValueName) \
+    LwNtRegDeleteValueAttributesA(hRegConnection, hKey, pszSubKey, pszValueName)
+
+
 #endif
 
 

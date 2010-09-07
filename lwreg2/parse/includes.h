@@ -54,6 +54,7 @@
 #include <regsystem.h>
 #include <iconv.h>
 
+#include <reg/reg.h>
 #include <reg/lwreg.h>
 #include <lwmsg/lwmsg.h>
 

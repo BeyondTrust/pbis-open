@@ -1347,3 +1347,76 @@ NtRegGetKeySecurity(
 	    	    );
 }
 
+
+NTSTATUS
+NtRegSetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES_A pValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+NtRegSetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+NtRegGetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+NtRegGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+NtRegDeleteValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+NtRegDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+

@@ -740,3 +740,130 @@ RegGetKeySecurity(
     		    );
 }
 
+
+
+REG_API
+DWORD
+LwRegSetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES_A pValueAttributes
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegSetValueAttributesA(
+                hRegConnection,
+                hKey,
+                pszSubKey,
+                pszValueName,
+                pValueAttributes
+                )
+               );
+}
+
+REG_API
+DWORD
+LwRegSetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegSetValueAttributesW(
+                hRegConnection,
+                hKey,
+                pwszSubKey,
+                pwszValueName,
+                pValueAttributes
+                )
+               );
+}
+
+REG_API
+DWORD
+LwRegGetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegGetValueAttributesA(
+                hRegConnection,
+                hKey,
+                pszSubKey,
+                pszValueName,
+                ppCurrentValue,
+                ppValueAttributes
+                )
+                );
+}
+
+REG_API
+DWORD
+LwRegGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegGetValueAttributesW(
+                hRegConnection,
+                hKey,
+                pwszSubKey,
+                pwszValueName,
+                ppCurrentValue,
+                ppValueAttributes
+                )
+                );
+}
+
+REG_API
+DWORD
+LwRegDeleteValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegDeleteValueAttributesA(
+                hRegConnection,
+                hKey,
+                pszSubKey,
+                pszValueName
+                )
+                );
+}
+
+REG_API
+DWORD
+LwRegDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    )
+{
+    return RegNtStatusToWin32Error(
+            NtRegDeleteValueAttributesW(
+                hRegConnection,
+                hKey,
+                pwszSubKey,
+                pwszValueName
+                )
+                );
+}

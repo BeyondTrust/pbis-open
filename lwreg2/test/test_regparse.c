@@ -106,7 +106,7 @@ parseCallbackPrintData(
                              pItem->valueName);
             /*
              * Possibly an inconsistency here. The registry schema
-             * clearly defines RangeEnumStrings to be a null terminated
+             * clearly defines pwszRangeEnumStrings to be a null terminated
              * array of pointers to wide character strings. The data 
              * passed in from the parser for MULTI_SZ is the marshalled 
              * (byte array) form of this data. That is why this call
@@ -121,7 +121,7 @@ parseCallbackPrintData(
             }
             else
             {
-                outMultiSz = pItem->regAttr.Range.RangeEnumStrings;
+                outMultiSz = pItem->regAttr.Range.pwszRangeEnumStrings;
             }
             if (outMultiSz)
             {
@@ -226,8 +226,8 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
     BAIL_ON_INVALID_HANDLE(userContext);
     BAIL_ON_INVALID_POINTER(outStream);
-    pValue = pItem->regAttr.CurrentValue ?
-                 pItem->regAttr.CurrentValue : pItem->regAttr.DefaultValue;
+    pValue = pItem->regAttr.pCurrentValue ?
+                 pItem->regAttr.pCurrentValue : pItem->regAttr.pDefaultValue;
     RegExportBinaryTypeToString(pItem->type, typeString, FALSE);
     switch (pItem->type)
     {
@@ -260,7 +260,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem = *pItem;
                 schemaItem.type = REG_MULTI_SZ;
                 schemaItem.valueName = "range";
-                schemaItem.value = pItem->regAttr.Range.RangeEnumStrings;
+                schemaItem.value = pItem->regAttr.Range.pwszRangeEnumStrings;
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 10);
             }
             else if (pItem->regAttr.RangeType ==
@@ -289,7 +289,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
             }
             
             /* Handle "doc" string attribute */
-            if (pItem->regAttr.DocString)
+            if (pItem->regAttr.pwszDocString)
             {
                 /* Synthesize a REG_SZ for the "doc" attribute */
                 schemaItem = *pItem;
@@ -297,27 +297,27 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem.valueName = "doc";
                 dwError = LwRtlCStringAllocateFromWC16String(
                               (PSTR *) &schemaItem.value,
-                              pItem->regAttr.DocString);
+                              pItem->regAttr.pwszDocString);
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
                 LWREG_SAFE_FREE_MEMORY(schemaItem.value);
             }
 
-            if (pItem->regAttr.CurrentValue)
+            if (pItem->regAttr.pCurrentValue)
             {
                 /* Handle data value (non-attribute data */
                 schemaItem = *pItem;
                 schemaItem.type = pItem->regAttr.ValueType;
-                schemaItem.value = pItem->regAttr.CurrentValue;
+                schemaItem.value = pItem->regAttr.pCurrentValue;
                 schemaItem.valueLen = pItem->regAttr.CurrentValueLen;
                 schemaItem.valueName = "value";
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }
-            if (pItem->regAttr.DefaultValue)
+            if (pItem->regAttr.pDefaultValue)
             {
                 /* Handle data value (non-attribute data */
                 schemaItem = *pItem;
                 schemaItem.type = pItem->regAttr.ValueType;
-                schemaItem.value = pItem->regAttr.DefaultValue;
+                schemaItem.value = pItem->regAttr.pDefaultValue;
                 schemaItem.valueLen = pItem->regAttr.DefaultValueLen;
                 schemaItem.valueName = "default";
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);

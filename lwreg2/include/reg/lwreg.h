@@ -436,6 +436,64 @@ LwRegFindHintByValue(
     );
 
 
+//
+// Registry value attributes APIs
+//
+DWORD
+LwRegSetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES_A pValueAttributes
+    );
+
+DWORD
+LwRegSetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
+DWORD
+LwRegGetValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
+    );
+
+DWORD
+LwRegGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+DWORD
+LwRegDeleteValueAttributesA(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCSTR pszSubKey,
+    IN PCSTR pszValueName
+    );
+
+DWORD
+LwRegDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    );
+
+
 #ifndef LW_STRICT_NAMESPACE
 #define RegOpenServer LwRegOpenServer
 #define RegCloseServer LwRegCloseServer
@@ -493,6 +551,13 @@ LwRegFindHintByValue(
 #define RegFindHintByName LwRegFindHintByName
 #define RegFindHintByValue LwRegFindHintByValue
 
+#define RegSetValueAttributesA LwRegSetValueAttributesA
+#define RegSetValueAttributesW LwRegSetValueAttributesW
+#define RegGetValueAttributesA LwRegGetValueAttributesA
+#define RegGetValueAttributesW LwRegGetValueAttributesW
+#define RegDeleteValueAttributesA LwRegDeleteValueAttributesA
+#define RegDeleteValueAttributesW LwRegDeleteValueAttributesW
+
 #endif /* ! LW_STRICT_NAMESPACE */
 
 
@@ -543,6 +608,16 @@ LwRegFindHintByValue(
 #define LwRegDeleteValue(hRegConnection, hKey, pwszValueName) \
     LwRegDeleteValueW(hRegConnection, hKey, pwszValueName)
 
+#define LwRegSetValueAttributes(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes) \
+    LwRegSetValueAttributesW(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes)
+
+#define LwRegGetValueAttributes(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes) \
+    LwRegGetValueAttributesW(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes)
+
+#define LwRegDeleteValueAttributes(hRegConnection, hKey, pszSubKey, pszValueName) \
+    LwRegDeleteValueAttributesW(hRegConnection, hKey, pszSubKey, pszValueName)
+
+
 #else
 
 #define LwRegEnumRootKeys(hRegConnection, pppszRootKeyNames, pdwNumRootKeys) \
@@ -589,6 +664,16 @@ LwRegFindHintByValue(
 
 #define LwRegDeleteValue(hRegConnection, hKey, pszValueName) \
     LwRegDeleteValueA(hRegConnection, hKey, pszValueName)
+
+#define LwRegSetValueAttributes(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes) \
+    LwRegSetValueAttributesA(hRegConnection, hKey, pSubKey, pValueName, pValueAttributes)
+
+#define LwRegGetValueAttributes(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes) \
+    LwRegGetValueAttributesA(hRegConnection, hKey, pwszSubKey, pwszValueName, ppCurrentValue, ppValueAttributes)
+
+#define LwRegDeleteValueAttributes(hRegConnection, hKey, pszSubKey, pszValueName) \
+    LwRegDeleteValueAttributesA(hRegConnection, hKey, pszSubKey, pszValueName)
+
 #endif
 
 
