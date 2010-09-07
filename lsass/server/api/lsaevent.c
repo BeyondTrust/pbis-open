@@ -61,10 +61,10 @@ LsaSrvLogInformationEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = INFORMATION_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -91,10 +91,10 @@ LsaSrvLogWarningEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = WARNING_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -121,10 +121,10 @@ LsaSrvLogErrorEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = ERROR_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -151,10 +151,10 @@ LsaSrvLogSuccessAuditEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = SUCCESS_AUDIT_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -181,10 +181,10 @@ LsaSrvLogFailureAuditEvent(
     EVENT_LOG_RECORD event = {0};
 
     event.dwEventRecordId = 0;
-    event.pszEventTableCategoryId = NULL;
+    event.pszEventTableCategoryId = "System";
     event.pszEventType = FAILURE_AUDIT_EVENT_TYPE;
     event.dwEventDateTime = 0;
-    event.pszEventSource = NULL;
+    event.pszEventSource = "Likewise LSASS";
     event.pszEventCategory = (PSTR) pszCategory;
     event.dwEventSourceId = dwEventID;
     event.pszUser = (PSTR) pszUser;
@@ -426,6 +426,7 @@ LsaSrvStartEventLoggingThread(
     )
 {
     DWORD dwError = 0;
+    char currentHost[129] = {0};
 
     gEventLogState.bShouldExit = FALSE;
     dwError = LwMapErrnoToLwError(pthread_create(
@@ -433,6 +434,16 @@ LsaSrvStartEventLoggingThread(
                     NULL,
                     LsaSrvEventWriterRoutine,
                     NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMapErrnoToLwError(gethostname(
+                    currentHost,
+                    sizeof(currentHost) - 1));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(
+                    currentHost,
+                    &gEventLogState.pszComputerName);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -466,6 +477,8 @@ LsaSrvStopEventLoggingThread(
         // Only fails if the mutex was not properly initalized
         abort();
     }
+
+    LW_SAFE_FREE_STRING(gEventLogState.pszComputerName);
 
     dwError = LwMapErrnoToLwError(pthread_join(
                     gEventLogState.writerThread,
@@ -760,6 +773,14 @@ LsaSrvQueueEvent(
                     pEvent->pszComputer,
                     &pNewEvent->pszComputer);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pNewEvent->pszComputer == NULL)
+    {
+        dwError = LwStrDupOrNull(
+                        gEventLogState.pszComputerName,
+                        &pNewEvent->pszComputer);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LwStrDupOrNull(
                     pEvent->pszDescription,

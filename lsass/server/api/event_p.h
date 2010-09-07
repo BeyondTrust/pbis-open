@@ -62,6 +62,7 @@ typedef struct _EVENTLOG_THREAD_STATE
 
     pthread_mutex_t queueMutex;
     volatile PEVENT_LOG_RECORD_QUEUE pQueue;
+    PSTR pszComputerName;
 } EVENTLOG_THREAD_STATE;
 
 #define LSA_MAX_EVENT_ERROR_BACKLOG 100
