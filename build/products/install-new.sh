@@ -2,10 +2,14 @@
 # ex: set tabstop=4 expandtab shiftwidth=4:
 
 #
-# Copyright Likewise, 2006-2007.  All rights reserved.
+# Copyright Likewise, 2006-2007, 2010.  All rights reserved.
 #
 
-# TODO - perhaps remove obsolete packages when upgrading for rpm and deb.
+ERR_PACKAGE_FILE_NOT_FOUND=1
+ERR_PACKAGE_ALREADY_INSTALLED=2
+ERR_PACKAGE_COULD_NOT_INSTALL=3
+ERR_PACKAGE_NOT_INSTALLED=4
+ERR_PACKAGE_COULD_NOT_UNINSTALL=5
 
 log_info()
 {
@@ -17,7 +21,18 @@ setup_os_vars()
     OS_TYPE=`uname`
     exit_on_error $? "Could not determine OS type"
     OS_ARCH_COMMAND="uname -p"
-    INIT_SCRIPT_PREFIX_DIR="/etc/init.d"
+
+    id=/usr/bin/id
+    # if /usr/xpg4/bin/id exists, it more likely to support -u
+    if [ -x /usr/xpg4/bin/id ]; then
+        id=/usr/xpg4/bin/id
+    fi
+
+    # Check whether it supports -u
+    "$id" -u >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        id=perl_uid
+    fi
 
     #
     # Interesting RPM install options:
@@ -41,35 +56,37 @@ setup_os_vars()
 
     DPKG_INSTALL_OPTIONS="-i --refuse-depends --force-confnew"
 
-    ## initial package list variables
-
-    ## Fill in packag lists from product manifest
-    . `dirname $0`/MANIFEST
-
     case "${OS_TYPE}" in
         AIX)
             OS_TYPE='aix'
-            INIT_SCRIPT_PREFIX_DIR="/etc/rc.d/init.d"
+            PKGTYPE="aix_bff"
             ;;
         Linux)
             OS_TYPE='linux'
             # Use -m because it works on old Linux distros
             OS_ARCH_COMMAND="uname -m"
+            if [ -f /etc/debian_version ]; then
+                PKGTYPE="linux_deb"
+            else
+                PKGTYPE="linux_rpm"
+            fi
             ;;
         FreeBSD|"Isilon OneFS")
             OS_TYPE='freebsd'
-            INIT_SCRIPT_PREFIX_DIR="/etc/rc.d"
+            PKGTYPE='freebsd'
             ;;
         SunOS)
             OS_TYPE='solaris'
+            PKGTYPE='solaris'
             ;;
         Darwin)
             OS_TYPE='darwin'
+            PKGTYPE='darwin'
             ;;
         HP-UX)
             OS_TYPE='hpux'
             OS_ARCH_COMMAND="getconf CPU_VERSION"
-            INIT_SCRIPT_PREFIX_DIR="/sbin/init.d"
+            PKGTYPE='hpux'
             ;;
         *)
             exit_on_error 1 "OS type \"${OS_TYPE}\" is not supported"
@@ -118,33 +135,6 @@ exit_on_error()
     fi
 }
 
-reverse_list()
-{
-    result=""
-    for item in $@ ; do
-        result="${item} ${result}"
-    done
-    echo "${result}"
-}
-
-find_pkg_type()
-{
-    if test "${OS_TYPE}" = "freebsd"
-    then
-        echo "freebsd"
-    else
-        for _find_pkg_type_file in "${PKGDIR}"/* ; do
-            if [ -f "${_find_pkg_type_file}" ]; then
-                _find_pkg_type_ext=`echo "${_find_pkg_type_file}" | sed -e 's/^.*\.\([^.]*\)$/\1/'`
-                exit_on_error $? "Could not get extension for ${_find_pkg_type_file}"
-                echo "${_find_pkg_type_ext}"
-                return 0
-            fi
-        done
-        exit_on_error 1 "Could not find ${PKGDIR}/*"
-    fi
-}
-
 perl_uid()
 {
     /usr/bin/perl -e 'print "$>\n"'
@@ -152,6 +142,8 @@ perl_uid()
 
 do_setup()
 {
+    setup_os_vars
+
     umask 022
 
     if [ ! -d "${DIRNAME}/packages" ]; then
@@ -160,25 +152,13 @@ do_setup()
         exit 1
     fi
 
-    id=/usr/bin/id
-    # if /usr/xpg4/bin/id exists, it more likely to support -u
-    if [ -x /usr/xpg4/bin/id ]; then
-        id=/usr/xpg4/bin/id
-    fi
-
-    # Check whether it supports -u
-    "$id" -u >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        id=perl_uid
-    fi
+    ## initial package list variables
+    . $DIRNAME/MANIFEST
 
     if [ `"$id" -u` != 0 ]; then
         log_info "ERROR: Root privileges are required to install this software. Try running this installer with su or sudo."
         exit 1
     fi
-
-    log_info "Checking setup environment..."
-    setup_os_vars
 
     PKGDIR_RELATIVE="packages/${OS_TYPE}/${OS_ARCH}"
     PKGDIR="${DIRNAME}/${PKGDIR_RELATIVE}"
@@ -189,11 +169,6 @@ do_setup()
     HAVE_COMPAT=""
     if [ -d "${PKGDIR}/compat" ]; then
         HAVE_COMPAT=1
-    fi
-
-    if [ -z "${PKGTYPE}" ]; then
-        PKGTYPE=`find_pkg_type`
-        exit_on_error $? "Could not determine package type"
     fi
 
     NEED_COMPAT=""
@@ -268,244 +243,127 @@ get_rpm_arch()
     return 0
 }
 
-get_rpm_version()
+package_file_exists_aix_bff()
 {
-    _get_rpm_version=`rpm -q --queryformat "%{VERSION}\n" $1`
-    if [ $? -ne 0 ]; then
-        return 1
+    pkgFile=${PKGDIR}/$1_*.bff
+    if [ -f $pkgFile ]; then
+        echo $pkgFile
+        return 0
     fi
-    # Only return the first entry in case we somehow have multiple.
-    echo "${_get_rpm_version}" | head -1
-    return 0
+    return $ERR_PACKAGE_FILE_NOT_FOUND
 }
 
-check_rpm_installed()
-{
-    rpm -q $1 > /dev/null 2>&1
-}
-
-check_bff_installed()
+is_package_installed_aix_bff()
 {
     lslpp -L $1 > /dev/null 2>&1
-}
-
-check_deb_installed()
-{
-    _status="`dpkg -s "$1" 2>/dev/null`"
-    if [ $? -ne 0 ]
-    then
-        return 1
+    if [ $? -eq 0 ]; then
+        echo $1
+        return 0
     fi
-
-    if echo "$_status" | grep 'not-installed' >/dev/null 2>&1
-    then
-        return 1
-    fi
-
-    return 0
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-check_pkg_installed()
+install_package_aix_bff()
 {
-    pkginfo $1 > /dev/null 2>&1
+    geninstall -I"aX" -d "${PKGDIR}" $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-check_depot_installed()
+uninstall_package_aix_bff()
+{
+    geninstall -u $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
+package_file_exists_aix_rpm()
+{
+    pkgFile=${PKGDIR}/$1_*.rpm
+    if [ -f $pkgFile ]; then
+        pkgFileBasename=`basename "${pkgFile}"`
+        echo "R:`basename ${pkgFileBasename}`"
+        return 0
+    fi
+    return $ERR_PACKAGE_FILE_NOT_FOUND
+}
+
+is_package_installed_aix_rpm()
+{
+    lslpp -L $1 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo $1
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+install_package_aix_rpm()
+{
+    geninstall -d "${PKGDIR}" -F $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+uninstall_package_aix_rpm()
+{
+    geninstall -u $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
+package_file_exists_freebsd()
+{
+    pkg_file=${PKGDIR}/$1-[0-9]*.tbz
+    if [ -f $pkg_file ]; then
+        echo "$pkg_file"
+        return 0
+    fi
+    return $ERR_PACKAGE_FILE_NOT_FOUND
+}
+
+is_package_installed_freebsd()
+{
+    pkgName=`pkg_info -E "$1-[0-9]*" 2>/dev/null`
+    if [ $? -eq 0 ]; then
+        echo "$pkgName"
+        return 0
+    fi
+    return $ERR_PACKAGE_NOT_INSTALLED
+}
+
+package_install_freebsd()
+{
+    pkg_add $@ > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+package_uninstall_freebsd()
+{
+    pkg_delete $@ >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+}
+
+is_package_installed_hpux()
 {
     swlist -l subproduct | grep "$1" >/dev/null 2>&1
 }
 
-check_freebsd_installed()
-{
-    pkg_info "$1-*" >/dev/null 2>&1
-}
-
-stop_daemons()
-{
-    for daemon in `reverse_list ${DAEMONS}`; do
-        stop_daemon $daemon
-    done
-}
-
-stop_obsolete_daemons()
-{
-    for daemon in ${OBSOLETE_DAEMONS}
-    do
-        stop_daemon $daemon
-    done
-    if type svccfg >/dev/null 2>&1; then
-        for daemon in ${OBSOLETE_DAEMONS}; do
-            if svccfg select $daemon 2>/dev/null; then
-                svccfg delete $daemon
-            fi
-        done
-    fi
-}
-
-stop_daemons_on_reboot()
-{
-    for daemon in ${DAEMONS} ${OBSOLETE_DAEMONS}; do
-        # Ubuntu, Debian, Solaris, and Redhat
-        rm -f /etc/rc?.d/S??${daemon} /etc/rc?.d/K??${daemon}
-
-        # AIX, and Redhat
-        rm -f /etc/rc.d/rc?.d/S??${daemon} /etc/rc.d/rc?.d/K??${daemon}
-
-        # HP-UX, old likewise install
-        rm -f /sbin/rc?.d/S??${daemon} /sbin/rc?.d/K??${daemon}
-        # HP-UX, new likewise install
-        rm -f /sbin/rc?.d/S???${daemon} /sbin/rc?.d/K???${daemon}
-
-        # Solaris 10 and newer
-        if type svccfg >/dev/null 2>&1 && svccfg select $daemon 2>/dev/null; then
-            svcadm disable $daemon
-            svccfg delete $daemon
-        fi
-
-        # Simply deleting the init scripts in /etc/rc.d (already happened
-        # through package uninstall) is all that is necessary for FreeBSD.
-
-        # OS X
-        if [ -x /bin/launchctl ] ; then
-            for file in /Library/LaunchDaemons/*${daemon}.plist /System/Library/LaunchDaemons/*${daemon}.plist; do
-                if [ -f $file ]; then
-                    /bin/launchctl unload $file
-                    rm -f $file
-                fi
-            done
-        fi
-    done
-}
-
-index_of()
-{
-    awk 'END { print index(myvalue,i) }' myvalue="$1", i="$2" /dev/null
-}
-
-# Changes ownership of files belonging to $1 (bff file) after installation
-# TODO: Why is this necessary?
-bff_chown()
-{
-    MARKER="/inst_root/"
-    for file in `restore -Tq -f $1 2>/dev/null | tr '\n' ' '` ; do
-        INDEX=`index_of "$file" "${MARKER}"`
-        exit_on_error $? "Failed to run awk"
-        # INDEX is 1-based index of first char in MARKER
-        if [ $INDEX -ne 0 ]; then
-            # Note that expr substr below uses a 1-based index
-            START_INDEX=`expr $INDEX + length "$MARKER" - 1`
-            exit_on_error $? "Failed to run expr"
-            REM_LEN=`expr length "$file" - $START_INDEX + 1`
-            exit_on_error $? "Failed to run expr"
-            # Only worry about stuft that is beyond /
-            if [ $REM_LEN -gt 1 ]; then
-                inst_file=`expr substr "$file" $START_INDEX $REM_LEN`
-                exit_on_error $? "Failed to run expr"
-                if [ -f "${inst_file}" ]; then
-                    chown root:system "${inst_file}"
-                fi
-            fi
-        fi
-    done
-}
-
-install_bffs()
-{
-    geninstall -I"aX" -d "${PKGDIR}" all
-    exit_on_error $? "Failed to install packages"
-
-    for file in "${PKGDIR}"/*.bff ; do
-        bff_chown $file
-    done
-
-    return 0
-}
-
-install_rpms()
-{
-    case "${OS_TYPE}" in
-        aix)
-            PACKAGE_SPEC=
-            for file in "${PKGDIR}"/*.rpm ; do
-                _basename=`basename "${file}"`
-                PACKAGE_SPEC="${PACKAGE_SPEC} R:`basename ${_basename}`"
-            done
-            geninstall -d "${PKGDIR}" -F ${PACKAGE_SPEC}
-            exit_on_error $? "Failed to install packages"
-            ;;
-        linux)
-
-             # If not installing the compatlibs, remove any already installed.
-            if [ -z "${IS_COMPAT}" ]; then
-                uninstall_rpms `reverse_list ${PACKAGES_COMPAT}`
-            fi
-
-            _compatlibs=""
-            if [ -n "${IS_COMPAT}" ]; then
-                _compatlibs="${PKGDIR}"/compat/*.rpm
-            fi
-            rpm ${RPM_INSTALL_OPTIONS} "${PKGDIR}"/*.rpm ${_compatlibs}
-            exit_on_error $? "Failed to install packages"
-            ;;
-        *)
-            exit_on_error 1 "Unexpected OS \"${OS_TYPE}\" for installing RPMs"
-            ;;
-    esac
-    return 0
-}
-
-install_debs()
-{
-    _debs=""
-
-    for _pkg in ${PACKAGES}
-    do
-        _debs="$_debs ${PKGDIR}/${_pkg}_*.deb"
-
-        if $OPT_DEVEL
-        then
-            if test -f ${PKGDIR}/${_pkg}-dev_*.deb
-            then
-                _debs="$_debs ${PKGDIR}/${_pkg}-dev_*.deb"
-            fi
-        fi
-    done
-
-    dpkg ${DPKG_INSTALL_OPTIONS} ${_debs}
-    exit_on_error $? "Failed to install packages"
-    return 0
-}
-
-install_dmgs()
-{
-    # On Mac OS X, we need to uninstall first since installing on top of an old
-    # install results in errors.
-
-    dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
-    for pkg in $@ ; do
-        file=`echo ${PKGDIR}/${pkg}-*.dmg`
-        hdiutil attach "${file}"
-        exit_on_error $? "Failed to attach ${file}"
-        name=`basename "${file}" | sed -e 's/^\(.*\)\.dmg$/\1/'`
-        exit_on_error $? "Failed to get package name from ${file}"
-        installer -pkg /Volumes/${name}/${name}.mpkg -target /
-        exit_on_error $? "Failed to install ${name} package"
-        hdiutil detach /Volumes/${name}
-        exit_on_error $? "Failed to detach /Volumes/${name}"
-    done
-    return 0
-}
-
-install_pkgs()
-{
-    for pkg in $@ ; do
-        pkgadd -a "${DIRNAME}/response" -d "${PKGDIR}/${pkg}"-*.pkg all
-        exit_on_error $? "Failed to install package ${pkg}"
-    done
-    return 0
-}
-
-install_depots()
+install_hpux()
 {
     # Need to get the absolute path of the depot file
 
@@ -516,18 +374,7 @@ install_depots()
     return 0
 }
 
-install_freebsds()
-{
-    for pkg in $@
-    do
-        echo "Installing ${pkg}"
-        pkg_add ${PKGDIR}/${pkg}-[0-9]*.tbz
-        exit_on_error $? "Failed to install package ${pkg}"
-    done
-    return 0
-}
-
-uninstall_depots()
+uninstall_hpux()
 {
     _pkgs=""
 
@@ -542,94 +389,133 @@ uninstall_depots()
     return 0
 }
 
-uninstall_bffs()
+package_file_exists_linux_rpm()
 {
-    for pkg in $@ ; do
-        check_bff_installed ${pkg}
-        if [ $? -eq 0 ]; then
-            geninstall -u ${pkg}
-            exit_on_error $? "Failed to uninstall packages"
-        fi
-    done
-    return 0
-}
-
-uninstall_rpms()
-{
-    _pkgs=""
-    for pkg in $@ ; do
-        check_rpm_installed ${pkg}
-        if [ $? -eq 0 ]; then
-            _pkgs="${_pkgs} ${pkg}"
-        fi
-    done
-    if [ -n "${_pkgs}" ]; then
-        rpm -e ${_pkgs}
-        exit_on_error $? "Failed to uninstall packages"
+    pkgFile=${PKGDIR}/$1_*.rpm
+    if [ -f $pkgFile ]; then
+        echo $pkgFile
+        return 0
     fi
-    return 0
+    return $ERR_PACKAGE_FILE_NOT_FOUND
 }
 
-uninstall_debs()
+is_package_installed_linux_rpm()
 {
-    _pkgs=""
-    for pkg in $@ ; do
-        if check_deb_installed ${pkg}
+    rpm -q $1 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_NOT_INSTALLED
+}
+
+package_install_linux_rpm()
+{
+    rpm ${RPM_INSTALL_OPTIONS} $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+package_uninstall_linux_rpm()
+{
+    rpm -e $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+package_file_exists_linux_deb()
+{
+    pkgFile=${PKGDIR}/$1_*.deb
+    if [ -f $pkgFile ]; then
+        echo $pkgFile
+        return 0
+    fi
+    return $ERR_PACKAGE_FILE_NOT_FOUND
+}
+
+is_package_installed_linux_deb()
+{
+    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    if [ $? -eq 0 ]
+    then
+        if echo "$_status" | grep ' installed' >/dev/null 2>&1
         then
-            _pkgs="${_pkgs} ${pkg}"
+            echo $1
+            return 0
         fi
-
-        if check_deb_installed "${pkg}-dev"
-        then
-            _pkgs="${_pkgs} ${pkg}-dev"
-        fi
-    done
-    if [ -n "${_pkgs}" ]; then
-        dpkg --purge ${_pkgs}
-        exit_on_error $? "Failed to uninstall packages"
     fi
-    return 0
+
+    return 1
 }
 
-uninstall_pkgs()
+package_install_linux_deb()
 {
-    for pkg in $@ ; do
-        check_pkg_installed ${pkg}
-        if [ $? -eq 0 ]; then
-            # TODO: Is the response file good for uninstall?
-            pkgrm -a "${DIRNAME}/response" -n ${pkg}
-            exit_on_error $? "Failed to uninstall package ${pkg}"
-        fi
-    done
-    return 0
+    dpkg ${DPKG_INSTALL_OPTIONS} $@
+    if [ $? -eq 0 ]; then
+        return 0;
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-uninstall_dmgs()
+package_uninstall_linux_deb()
 {
-    #
-    # No easy way to uninstall individual packages on Mac OS X
-    #
-    if [ -x /opt/likewise/bin/lwi-uninstall.sh ]; then
-       /opt/likewise/bin/lwi-uninstall.sh
+    dpkg --purge $@
+    if [ $? -eq 0 ]; then
+        return 0
     fi
-    if [ -d /opt/likewise ]; then
-       /bin/rm -rf /opt/likewise
-    fi
-    return 0
+
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
-uninstall_freebsds()
+package_file_exists_solaris()
 {
+    pkg_file=${PKGDIR}/$1-[0-9]*.pkg
+    if [ -f $pkg_file ]; then
+        echo "$pkg_file"
+        return 0
+    fi
+    return $ERR_PACKAGE_FILE_NOT_FOUND
+}
+
+is_package_installed_solaris()
+{
+    pkginfo $1 > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo $1
+        return 0
+    fi
+    return $ERR_PACKAGE_NOT_FOUND
+}
+
+package_install_solaris()
+{
+    # The input is a space delimited set of packages, but we need
+    # a comma separated list of packages
+    pkgList=$1
+    shift
+
     for pkg in $@
     do
-        if check_freebsd_installed "${pkg}"
-        then
-            echo "Removing ${pkg}"
-            pkg_delete "${pkg}-*"
-            exit_on_error $? "Failed to uninstall package ${pkg}"
-        fi
+        pkgList="$pkgList,$pkg"
     done
-    return 0
+
+    pkgadd -a "${DIRNAME}/response" -d $pkgList
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_INSTALL
+}
+
+package_uninstall_solaris()
+{
+    pkgrm -a "${DIRNAME}/response" -n $@
+    if [ $? -eq 0 ]; then
+        return 0
+    fi
+    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
 }
 
 remove_extra_files()
@@ -656,58 +542,6 @@ remove_extra_files()
     return 0
 }
 
-rpm_pkg_version()
-{
-    rpm -q "$1" --queryformat "%{VERSION}"
-}
-
-deb_pkg_version()
-{
-    dpkg-query -s "$1" | grep '^Version:' | awk '{ print $2; }' | sed 's/-.*$//'
-}
-
-convert_version()
-{
-    awk 'BEGIN { FS = "."; } { printf $1*100.$2; }'
-}
-
-version_less_than()
-{
-    first="`echo $1 | convert_version`"
-    second="`echo $2 | convert_version`"
-    test $first -lt $second
-}
-
-preinstall_rpms()
-{
-    pkg=""
-    obsolete=""
-    for pkg in ${OBSOLETE_PACKAGES}
-    do
-        if check_rpm_installed "${pkg}"
-        then
-            echo "Removing obsolete package: `rpm -q ${pkg}`"
-            obsolete="$obsolete $pkg"
-        fi
-    done
-    uninstall_rpms $obsolete
-}
-
-preinstall_debs()
-{
-    pkg=""
-    obsolete=""
-    for pkg in ${OBSOLETE_PACKAGES}
-    do
-        if check_deb_installed "${pkg}"
-        then
-            echo "Removing obsolete package: ${pkg}"
-            obsolete="$obsolete $pkg"
-        fi
-    done
-    uninstall_debs $obsolete
-}
-
 preinstall_pkgs()
 {
     FIXUP_DIRS="/etc/samba /var/lib /var/log/lwidentity /var/cache/likewise"
@@ -715,278 +549,33 @@ preinstall_pkgs()
     for _dir in ${FIXUP_DIRS}; do
         [ -d "$_dir" ] && chown -R root:other "$_dir"
     done
-    echo "Uninstalling previous install"
-    uninstall_pkgs `reverse_list "$@"`
-    
+
     echo "Creating base directory"
     mkdir -p "`get_prefix_dir`"
 }
 
-preinstall_depots()
+is_package_installed()
 {
-    echo "Uninstalling previous install"
-    uninstall_depots ${OBSOLETE_PACKAGES} `reverse_list "$@"`
+    is_package_installed_${PKGTYPE} "$@"
+    return $?
 }
 
-preinstall_bffs()
+package_file_exists()
 {
-    echo "Uninstalling previous install"
-    uninstall_bffs ${OBSOLETE_PACKAGES} `reverse_list "$@"`
+    package_file_exists_${PKGTYPE} "$@"
+    return $?
 }
 
-preinstall_freebsds()
+package_install()
 {
-    echo "Uninstalling previous install"
-    uninstall_freebsds ${OBSOLETE_PACKAGES} `reverse_list "$@"`
+    package_install_${PKGTYPE} "$@"
+    return $?
 }
 
-check_daemon_running()
+package_uninstall()
 {
-    for script in $@ ; do
-        if [ -f $INIT_SCRIPT_PREFIX_DIR/${script} ]; then
-            $INIT_SCRIPT_PREFIX_DIR/${script} status > /dev/null 2>&1
-            rc=$?
-            if [ $rc -eq 0 ]; then
-                return 0
-            fi
-        fi
-    done
-    return 1
-}
-
-dispatch_pkgtype()
-{
-    type "$1_${PKGTYPE}s" > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        exit_on_error $? "Invalid package type: ${PKGTYPE}"
-    fi
-    __dispatch_pkgtype="$1"
-    shift
-    ${__dispatch_pkgtype}_${PKGTYPE}s "$@"
-}
-
-start_daemon()
-{
-    if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
-        $INIT_SCRIPT_PREFIX_DIR/$1 status > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            if [ -n "$2" ]; then
-                log_info "Starting $1 daemon"
-            fi
-            if type svccfg >/dev/null 2>&1; then
-                if svccfg select TEMP/network/$1 2>/dev/null; then
-                    svccfg delete TEMP/network/$1
-                fi
-                svccfg import /etc/likewise/svcs-solaris/$1.xml
-            fi
-            $INIT_SCRIPT_PREFIX_DIR/$1 start
-        fi
-    fi
-}
-
-kill_process()
-{
-    pkill -KILL -x $1 > /dev/null 2> /dev/null
-}
-
-kill_likewise_daemons()
-{
-    kill_process srvsvcd
-    kill_process lsassd
-    kill_process lwiod
-    kill_process netlogond
-    kill_process eventlogd
-    kill_process dcerpcd
-    kill_process netlogond
-    kill_process lwsmd
-    kill_process lwregd
-}
-
-stop_daemon()
-{
-    if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
-        $INIT_SCRIPT_PREFIX_DIR/$1 status > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            if [ -n "$2" ]; then
-                log_info "Stopping $1 daemon"
-            fi
-            $INIT_SCRIPT_PREFIX_DIR/$1 stop
-        fi
-    fi
-}
-
-reload_daemon()
-{
-    if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
-        $INIT_SCRIPT_PREFIX_DIR/$1 reload
-    fi
-}
-
-save_daemon()
-{
-    if check_daemon_running "$1"
-    then
-        eval "${1}_RUNNING=1"
-        stop_daemon "${1}"
-    fi
-}
-
-restore_daemon()
-{
-    eval "running=\$${1}_RUNNING"
-    if [ -n "${running}" ]
-    then
-        start_daemon "${1}"
-    fi
-}
-
-save_daemons()
-{
-    daemon=""
-    for daemon in `reverse_list ${DAEMONS}`
-    do
-        save_daemon "${daemon}"
-    done
-}
-
-restore_daemons()
-{
-    daemon=""
-    for daemon in ${DAEMONS}
-    do
-        restore_daemon "${daemon}"
-    done
-}
-
-autostart_daemons()
-{
-    daemon=""
-    for daemon in ${AUTOSTART}
-    do
-        start_daemon "${daemon}"
-    done
-}
-
-start_daemon_lwsmd()
-{
-    LWSMD=`get_prefix_dir`/sbin/lwsmd
-
-    $LWSMD --start-as-daemon
-}
-
-determine_upgrade_type()
-{
-    VERSIONFILE=`get_prefix_dir`/data/VERSION
-    if [ -f $VERSIONFILE ]; then
-        UPGRADING=1
-        if [ -n "`grep '^VERSION=5.0' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.1' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.2' $VERSIONFILE`" -o \
-             -n "`grep '^VERSION=5.3' $VERSIONFILE`" ]; then
-            UPGRADING_FROM_5_0123=1
-            UPGRADEDIR5=/tmp/lw-upgrade
-            mkdir -p "${UPGRADEDIR5}"
-            log_info "Preserving 5.x (0 <= x <= 3) configuration in ${UPGRADEDIR5}."
-        elif [ -n "`grep '^VERSION=5.4' $VERSIONFILE`" ]; then
-            UPGRADING_FROM_5_4=1
-            UPGRADEDIR5=/tmp/lw-upgrade
-            mkdir -p "${UPGRADEDIR5}"
-            log_info "Preserving 5.4 configuration in ${UPGRADEDIR5}."
-        fi
-    elif [ -x /usr/bin/dpkg ]; then
-        if check_deb_installed likewise-open
-        then
-            if [ -f /usr/sbin/lsassd ]; then
-                log_info "You have the likewise-open package from Ubuntu installed."
-                log_info "Upgrading from the likewise-open package is not supported."
-                exit 1
-            fi
-        fi
-    fi
-}
-
-preserve_5_0123_configuration()
-{
-    if [ -n "${UPGRADING_FROM_5_0123}" ]; then
-        if [ -f "/etc/likewise/eventlogd.conf" ]; then
-            cp "/etc/likewise/eventlogd.conf" "${UPGRADEDIR5}"
-        fi
-
-        if [ -f "/etc/likewise/lsassd.conf" ]; then
-            cp "/etc/likewise/lsassd.conf" "${UPGRADEDIR5}"
-        fi
-
-        if [ -f "/etc/likewise/netlogon.conf" ]; then
-            cp "/etc/likewise/netlogon.conf" "${UPGRADEDIR5}"
-        fi
-
-        if [ -f "/var/lib/likewise/db/pstore.db" ]; then
-            cp "/var/lib/likewise/db/pstore.db" "${UPGRADEDIR5}"
-            chmod 700 "${UPGRADEDIR5}/pstore.db"
-        fi
-    fi
-}
-
-preserve_5_4_configuration()
-{
-    if [ -n "${UPGRADING_FROM_5_4}" ]; then
-        for file in dcerpcd.reg eventlogd.reg lsassd.reg lwiod.reg lwreg.reg netlogond.reg pstore.reg srvsvcd.reg
-        do
-            if [ -f "/etc/likewise/${file}" ]; then
-                cp "/etc/likewise/${file}" "${UPGRADEDIR5}"
-            fi
-        done
-    fi
-}
-
-import_5_0123_file()
-{
-    CONVERT="`get_prefix_dir`/bin/conf2reg"
-    REGIMPORT="`get_prefix_dir`/bin/lwregshell import"
-
-    COMMAND=$1
-    SOURCE=$2
-    # DEST is not necessary for some commands.
-    DEST=$3
-
-    if [ -f $SOURCE ]; then
-        $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
-        if [ $? -ne 0 ]; then
-            log_info "Error converting ${SOURCE} to new format."
-            return 1
-        fi
-
-        if [ -n "$DEST" -a -f "$DEST" ]; then
-            $REGIMPORT $DEST > /dev/null 2>&1
-            if [ $? -ne 0 ]; then
-                log_info "Error importing ${DEST} into the registry."
-                return 1
-            fi
-        fi
-        return 0
-    fi
-    log_info "Unable to find ${SOURCE}."
-    return 1
-}
-
-restore_5_0123_configuration()
-{
-    CONVERT="`get_prefix_dir`/bin/conf2reg"
-
-    if [ -z "${UPGRADING_FROM_5_0123}" ]; then
-        return 0;
-    fi
-
-    import_5_0123_file "--lsass" "${UPGRADEDIR5}/lsassd.conf" \
-        "${UPGRADEDIR5}/lsassd.conf.reg"
-
-    import_5_0123_file "--netlogon" "${UPGRADEDIR5}/netlogon.conf" \
-        "${UPGRADEDIR5}/netlogon.conf.reg"
-
-    import_5_0123_file "--eventlog" "${UPGRADEDIR5}/eventlogd.conf" \
-        "${UPGRADEDIR5}/eventlogd.conf.reg"
-
-    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
+    package_uninstall_${PKGTYPE} "$@"
+    return $?
 }
 
 fix_old_registry()
@@ -1014,77 +603,154 @@ fix_5_4_configuration()
     switch_to_open_provider
 }
 
-import_registry()
-{
-    REGIMPORT="`get_prefix_dir`/bin/lwregshell upgrade"
-
-    for regfile in ${REGFILES}
-    do
-        FILEPATH="`get_prefix_dir`/share/config/${regfile}"
-        if [ -f ${FILEPATH} ]
-        then
-            ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1
-            exitcode=$?
-
-            if [ $exitcode -ne '0' ]
-            then
-                echo "There was an error importing ${FILEPATH} into the registry."
-            fi
-        fi
-    done
-}
-
 get_prefix_dir()
 {
     echo "${PREFIX}"
 }
 
-do_install_ubuntu_desktop_shortcut()
+uninstall_darwin()
 {
-    # Check if user is not root and desktop shortcut exists
-    if [ `id -u $SUDO_USER` -ne 0 -a -f $HOME/Desktop/Likewise\ Domain\ Join\ Tool.desktop ]; then
-        # Add execute permission for local user
-        sudo chmod 745 $HOME/Desktop/Likewise\ Domain\ Join\ Tool.desktop
-        # Check whether gksudo is executable or not
-        if [ -x /usr/bin/gksudo ]; then
-            # Replace Exec= with Exec=/usr/bin/gksudo 
-            sudo sed -i 's/Exec=/Exec=\/usr\/bin\/gksudo /' $HOME/Desktop/Likewise\ Domain\ Join\ Tool.desktop
+    # No easy way to uninstall individual packages on Mac OS X
+    if [ -x /opt/likewise/bin/lwi-uninstall.sh ]; then
+       /opt/likewise/bin/lwi-uninstall.sh
+
+        if [ -d /opt/likewise ]; then
+            /bin/rm -rf /opt/likewise
         fi
     fi
-    exit $?
+    return 0
 }
 
-do_ubuntu()
+install_darwin()
 {
-    if [ -f /etc/lsb-release ]; then
-        grep -i ubuntu /etc/lsb-release >> /dev/null
-        if [ $? = 0 ]; then
-            case "$1" in
-                install)
-                    # do_install_ubuntu_desktop_shortcut
-                    ;;
-           esac
-        fi
-    fi
-    exit $?
+    uninstall_darwin
+
+    for pkg in $INSTALL_PACKAGES ; do
+        file=`echo ${PKGDIR}/${pkg}-[0-9]*.dmg`
+        hdiutil attach "${file}"
+        exit_on_error $? "Failed to attach ${file}"
+        name=`basename "${file}" | sed -e 's/^\(.*\)\.dmg$/\1/'`
+        exit_on_error $? "Failed to get package name from ${file}"
+        installer -pkg /Volumes/${name}/${name}.mpkg -target /
+        exit_on_error $? "Failed to install ${name} package"
+        hdiutil detach /Volumes/${name}
+        exit_on_error $? "Failed to detach /Volumes/${name}"
+    done
+    return 0
 }
 
 do_install()
 {
-    log_info "Install started"
-    log_info ""
+    log_info "Installing packages"
 
-    dispatch_pkgtype preinstall ${PACKAGES}
+    if [ "$PKGTYPE" = 'darwin' ]; then
+        install_darwin
+        return $?
+    fi
 
-    # Likewise Identity 5.3.0.7798 with purge leaves daemons running -- kill them
-    kill_likewise_daemons
+    # Install upgrade helper packages.
+    # First try to uninstall any previous upgrade package.
+    # Then, check for the file and add to the install list.
+    # Finally, install the packages in the list.
+    pkgList=""
+    for pkg in $UPGRADE_PACKAGES
+    do
+        pkgName=`is_package_installed $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        fi
+    done
+    if [ -n "$pkgList" ]; then
+        package_uninstall $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error uninstalling $pkgList"
+            exit 1
+        fi
+    fi
 
-    # Do the install/upgrade
-    dispatch_pkgtype install ${PACKAGES}
+    pkgList=""
+    for pkg in $UPGRADE_PACKAGES
+    do
+        pkgName=`package_file_exists $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        fi
+    done
 
-    do_postinstall
+    if [ -n "$pkgList" ]; then
+        package_install $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error installing $pkgList"
+            exit 1
+        fi
+    fi
 
-    log_info "Install complete"
+    # Uninstall all old packages in one call to ensure interpackage dependencies
+    # do not cause a failure.
+    pkgList=""
+    for pkg in $OBSOLETE_PACKAGES
+    do
+        pkgName=`is_package_installed $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        fi
+    done
+
+    if [ -n "$pkgList" ]; then
+        package_uninstall $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error uninstalling obsolete packages $pkgList"
+            exit 1
+        fi
+    fi
+
+    # Install all required packages.
+    pkgList=""
+    for pkg in $INSTALL_PACKAGES
+    do
+        pkgName=`package_file_exists $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        else
+            log_info "Missing file for package $pkg"
+            exit 1
+        fi
+    done
+
+    if [ -n "$pkgList" ]; then
+        package_install $pkgList
+        err=$?
+        if [ $err -ne 0 ]; then
+            log_info "Error installing $pkgList"
+            exit 1
+        fi
+    fi
+
+    # Install all optional packages.
+    for pkg in $OPTIONAL_PACKAGES
+    do
+        pkgName=`package_file_exists $pkg`
+        if [ $? -eq 0 ]; then
+            install_package $pkgName
+            err=$?
+            if [ $err -ne 0 ]; then
+                if [ $err -eq $ERR_PACKAGE_COULD_NOT_INSTALL ]; then
+                    log_info "Couldn't install optional package $pkgName"
+                fi
+            fi
+        fi
+    done
+
+    echo "PREFIX=\"$PREFIX\"" > /var/lib/likewise/uninstall
+    echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/likewise/uninstall
+    echo "UPGRADE_PACKAGES=\"$UPGRADE_PACKAGES\"" >> /var/lib/likewise/uninstall
+    echo "REQUIRED_PACKAGES=\"$REQUIRED_PACKAGES\"" >> /var/lib/likewise/uninstall
+    echo "OPTIONAL_PACKAGES=\"$OPTIONAL_PACKAGES\"" >> /var/lib/likewise/uninstall
+
+    log_info "Installing Packages was successful"
 }
 
 get_ad_provider_path()
@@ -1118,8 +784,27 @@ switch_to_open_provider()
     fi
 }
 
-do_postinstall()
+do_postinstall_messages()
 {
+    domainjoin_gui=`get_prefix_dir`/bin/domainjoin-gui
+    run_join_gui=true
+    guimsg=""
+
+    if [ "$1" != 'interactive' ]; then
+        run_join_gui=false
+    fi
+
+    if [ -x "$domainjoin_gui" ]; then
+        guimsg="domainjoin-gui or "
+    else
+        run_join_gui=false
+    fi
+
+    if $OPT_DONT_JOIN
+    then
+        run_join_gui=false
+    fi
+
     if [ -n "${UPGRADING}" ]; then
         log_info ""
         log_info "Likewise Open has been successfully upgraded."
@@ -1145,10 +830,15 @@ do_postinstall()
             log_info ""
         else
             log_info ""
-            log_info "As root, run domainjoin-cli to join a domain so you can log on"
+            log_info "As root, run ${guimsg}domainjoin-cli to join a domain so you can log on"
             log_info "with Active Directory credentials. Example:"
             log_info "domainjoin-cli join likewisedemo.com ADadminAccount"
             log_info ""
+
+            if $run_join_gui
+            then
+                $domainjoin_gui >/dev/null 2>&1 &
+            fi
         fi
     fi
 }
@@ -1171,47 +861,26 @@ scrub_prefix()
     fi
 }
 
-restore_configuration()
-{
-    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
-    get_current_domain=`get_prefix_dir`/bin/lw-get-current-domain
-
-    # This starts all needed likewise services
-    if [ -x "$domainjoin_cli" ]; then
-        $domainjoin_cli query > /dev/null 2>&1
-    fi
-
-    if [ -x "$get_current_domain" ]; then
-        $get_current_domain > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-            if [ -x "$domainjoin_cli" ]; then
-                $domainjoin_cli configure --enable pam > /dev/null 2>&1
-                $domainjoin_cli configure --enable nsswitch > /dev/null 2>&1
-            fi
-        fi
-    fi
-}
-
 do_uninstall()
 {
     log_info "Uninstall started"
-    log_info ""
 
-    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
-    if [ -x "$domainjoin_cli" ]; then
-        $domainjoin_cli configure --disable pam > /dev/null 2>&1
-        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
+    if [ "$PKGTYPE" = "darwin" ]; then
+        uninstall_darwin
+        return $?
     fi
 
-    stop_daemons
-
-    dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT} ${OBSOLETE_PACKAGES}`
+    pkgList=""
+    for pkg in $OPTIONAL_PACKAGES $INSTALL_PACKAGES $UPGRADE_PACKAGES $OBSOLETE_PACKAGES;
+    do
+        pkgName=`is_package_installed $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        fi
+    done
+    package_uninstall $pkgList
 
     scrub_prefix
-
-    stop_daemons_on_reboot
-
-    log_info "Uninstall complete"
 }
 
 do_purge()
@@ -1222,19 +891,21 @@ do_purge()
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     if [ -x "$domainjoin_cli" ]; then
         $domainjoin_cli leave > /dev/null 2>&1
-        $domainjoin_cli configure --disable pam > /dev/null 2>&1
-        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
     fi
 
-    stop_daemons
-
-    dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
+    pkgList=""
+    for pkg in $OPTIONAL_PACKAGES $INSTALL_PACKAGES $UPGRADE_PACKAGES $OBSOLETE_PACKAGES;
+    do
+        pkgName=`is_package_installed $pkg`
+        if [ $? -eq 0 ]; then
+            pkgList="$pkgList $pkgName"
+        fi
+    done
+    package_uninstall $pkgList
 
     remove_extra_files
 
     scrub_prefix
-
-    stop_daemons_on_reboot
 
     log_info "Uninstall complete"
 }
@@ -1369,20 +1040,14 @@ usage()
     exit 1
 }
 
-main()
+main_install()
 {
     OPT_DEVEL=false
     OPT_COMPAT=""
-    DIRNAME=`dirname $0`
-    if [ -z "${DIRNAME}" ]; then
-        DIRNAME=.
-    fi
-    if echo "$DIRNAME" | grep -v '^/' >/dev/null 2>&1; then
-        DIRNAME="`pwd`/$DIRNAME"
-    fi
 
     ECHO_DIRNAME=""
     PKGTYPE=""
+
     parseOptDone=""
     while [ -z "$parseOptDone" ]; do
         case "$1" in
@@ -1453,10 +1118,7 @@ main()
         install)
             do_setup
             do_install
-            ;;
-        postinstall)
-            setup_os_vars
-            do_postinstall
+            do_postinstall_messages
             ;;
         uninstall)
             do_setup
@@ -1475,11 +1137,85 @@ main()
         interactive)
             do_setup
             do_interactive
+            do_postinstall_messages
             ;;
         *)
             usage
             ;;
     esac
+
+    return 0
+}
+
+usage_uninstall()
+{
+    echo "usage: uninstall.sh [command]"
+    echo ""
+    echo "  where command is one of:"
+    echo ""
+    echo "    uninstall     silent uninstall"
+    echo "    purge         silent purge uninstall (same as uninstall but will unjoin domain"
+    echo "                  and delete all generated files)"
+    echo ""
+    exit 1
+
+}
+
+main_uninstall()
+{
+    setup_os_vars
+
+    if [ -f /var/lib/likewise/uninstall ]; then
+        . /var/lib/likewise/uninstall
+    else
+        echo "The file /var/lib/likewise/uninstall cannot be found and"
+        echo "is required for this uninstall procedure."
+        exit 1
+    fi
+
+    VERB="$1"
+    if [ -z "$VERB" ]; then
+        VERB="help"
+    else
+        shift
+    fi
+
+    case "${VERB}" in
+        help)
+            usage_uninstall
+            ;;
+        uninstall)
+            do_uninstall
+            echo "Success"
+            ;;
+        purge)
+            do_purge
+            echo "Success"
+            ;;
+        *)
+            usage_uninstall
+            ;;
+    esac
+}
+
+main()
+{
+    DIRNAME=`dirname $0`
+    BASENAME=`basename $0`
+
+    if [ -z "${DIRNAME}" ]; then
+        DIRNAME=.
+    fi
+
+    if echo "$DIRNAME" | grep -v '^/' >/dev/null 2>&1; then
+        DIRNAME="`pwd`/$DIRNAME"
+    fi
+
+    if [ "$BASENAME" = "uninstall.sh" ]; then
+        main_uninstall $@
+    else
+        main_install $@
+    fi
 
     return 0
 }

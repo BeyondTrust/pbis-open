@@ -1,17 +1,28 @@
 NAME="LikewiseOpen"
 FULL_NAME="Likewise Open"
-DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory."
-_BITROCK_DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory." # unused
-_MAC_DESCRIPTION="This package installs Likewise Open which provides integration with Active Directory." # unused
+DESCRIPTION="Likewise Open which provides integration with Active Directory."
 FILES="COPYING README EULA"
 SCRIPT="../install-new.sh"
 UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 
+# PACKAGES is used by the build system to determine what should be built
+# and installed.
 PACKAGES="open"
-OBSOLETE_PACKAGES="lwmgmt lwreg-32bit"
+case "${BUILD_OS_TYPE}" in
+    aix|freebsd|hpux|solaris)
+        PACKAGES="open-upgrade $PACKAGES"
+        ;;
+esac
 
-DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
-OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
-# lwregd is started elsewhere since it must be started first.
-AUTOSTART=""
-REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg"
+
+# Upgrade package. If present, it is installed before all others.
+UPGRADE_PACKAGES="open-upgrade"
+
+# Packages to uninstall. Anything important is preserved by the Upgrade package.
+OBSOLETE_PACKAGES="base domainjoin domainjoin-gui eventlog krb5 lac libxml2 lsass lwadutil lwio lwmgmt lwreg-32bit open-upgrade open open-gui open-32bit"
+
+# Everything needed for a basic installation.
+INSTALL_PACKAGES="open"
+
+# Nice to haves like GUI interface or 32-bit compatibility libraries.
+OPTIONAL_PACKAGES="open-gui open-32bit"
