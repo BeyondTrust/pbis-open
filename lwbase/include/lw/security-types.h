@@ -543,6 +543,13 @@ typedef ULONG SID_NAME_USE, *PSID_NAME_USE;
 #define SID_TYPE_LABEL              10
 #endif
 
+
+//
+// SDDL Version information
+//
+#define SDDL_REVISION_1     1
+#define SDDL_REVISION       SDDL_REVISION_1
+
 //
 // SID Attributes
 //
@@ -626,7 +633,6 @@ typedef struct _ACE_HEADER {
 #define SYSTEM_ALARM_CALLBACK_OBJECT_ACE_TYPE   16 // SYSTEM_ALARM_CALLBACK_OBJECT_ACE
 #define SYSTEM_MANDATORY_LABEL_ACE_TYPE         17 // SYSTEM_MANDATORY_LABEL_ACE
 
-#define ACCESS_UNKNOWN_ACE_TYPE                 20 // Unknown/unsupported ACE type
 
 // Min/Max
 #define ACCESS_MIN_MS_ACE_TYPE          ACCESS_ALLOWED_ACE_TYPE

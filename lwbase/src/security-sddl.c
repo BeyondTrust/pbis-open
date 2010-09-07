@@ -38,8 +38,6 @@
 
 #include "security-includes.h"
 
-#define IsNullOrEmptyString(pszStr)     \
-    (pszStr == NULL || *pszStr == '\0')
 
 typedef struct _SDDL_ACE {
     UCHAR AceType;
@@ -224,7 +222,7 @@ RtlAllocateSecurityDescriptorFromSddlCString(
     GOTO_CLEANUP_ON_STATUS(status);
 
     if (SDDL_REVISION_1 != SddlRevision ||
-        IsNullOrEmptyString(pszStringSecurityDescriptor))
+        LwRtlCStringIsNullOrEmpty(pszStringSecurityDescriptor))
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_ON_STATUS(status);
@@ -242,15 +240,15 @@ RtlAllocateSecurityDescriptorFromSddlCString(
 
     // Check to see if it is alias sddl sid-string
     // OWNER
-    pszOwnerSid = RtlpAliasSidStringToSidString(pszOwner);
+    pszOwnerSid = RtlpSddlToSidString(pszOwner);
 
-    if (IsNullOrEmptyString(pszOwnerSid))
+    if (LwRtlCStringIsNullOrEmpty(pszOwnerSid))
     {
         pszOwnerSid = pszOwner;
     }
 
     // Check OWNER
-    if (IsNullOrEmptyString(pszOwnerSid))
+    if (LwRtlCStringIsNullOrEmpty(pszOwnerSid))
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_ON_STATUS(status);
@@ -267,15 +265,15 @@ RtlAllocateSecurityDescriptorFromSddlCString(
     pOwnerSid = NULL;
 
     // GROUP
-    pszGroupSid = RtlpAliasSidStringToSidString(pszGroup);
+    pszGroupSid = RtlpSddlToSidString(pszGroup);
 
-    if (IsNullOrEmptyString(pszGroupSid))
+    if (LwRtlCStringIsNullOrEmpty(pszGroupSid))
     {
         pszGroupSid = pszGroup;
     }
 
     // Check GROUP
-    if (IsNullOrEmptyString(pszGroupSid))
+    if (LwRtlCStringIsNullOrEmpty(pszGroupSid))
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_ON_STATUS(status);
@@ -422,7 +420,6 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     PSTR pszStringSecurityDescriptor = NULL;
     size_t sSddlLength = 0;
 
-
     if (SDDL_REVISION_1 != SddlRevision || !pSecurityDescriptor)
     {
         status = STATUS_INVALID_PARAMETER;
@@ -509,11 +506,10 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
                                );
         GOTO_CLEANUP_ON_STATUS(status);
 
-        if (!IsNullOrEmptyString(pszOwnerSid))
+        if (!LwRtlCStringIsNullOrEmpty(pszOwnerSid))
         {
             sSddlLength += LwRtlCStringNumChars(SDDL_OWNER) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // O:
             sSddlLength += LwRtlCStringNumChars(pszOwnerSid);
-            sSddlLength ++; // '\n'
         }
     }
 
@@ -527,11 +523,10 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
                                );
         GOTO_CLEANUP_ON_STATUS(status);
 
-        if (!IsNullOrEmptyString(pszGroupSid))
+        if (!LwRtlCStringIsNullOrEmpty(pszGroupSid))
         {
             sSddlLength += LwRtlCStringNumChars(SDDL_GROUP) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // G:
             sSddlLength += LwRtlCStringNumChars(pszGroupSid);
-            sSddlLength ++; // '\n'
         }
     }
 
@@ -550,15 +545,14 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
                                                 &pszDaclControl);
         GOTO_CLEANUP_ON_STATUS(status);
 
-        if (!IsNullOrEmptyString(pszDacl))
+        if (!LwRtlCStringIsNullOrEmpty(pszDacl))
         {
             sSddlLength += LwRtlCStringNumChars(SDDL_DACL) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // D:
-            if (!IsNullOrEmptyString(pszDaclControl))
+            if (!LwRtlCStringIsNullOrEmpty(pszDaclControl))
             {
                 sSddlLength += LwRtlCStringNumChars(pszDaclControl);
             }
             sSddlLength += LwRtlCStringNumChars(pszDacl);
-            sSddlLength ++; // '\n'
         }
     }
 
@@ -577,15 +571,14 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
                                                 &pszSaclControl);
         GOTO_CLEANUP_ON_STATUS(status);
 
-        if (!IsNullOrEmptyString(pszSacl))
+        if (!LwRtlCStringIsNullOrEmpty(pszSacl))
         {
             sSddlLength += LwRtlCStringNumChars(SDDL_SACL) + LwRtlCStringNumChars(SDDL_DELIMINATOR_S); // S:
-            if (!IsNullOrEmptyString(pszSaclControl))
+            if (!LwRtlCStringIsNullOrEmpty(pszSaclControl))
             {
                 sSddlLength += LwRtlCStringNumChars(pszSaclControl);
             }
             sSddlLength += LwRtlCStringNumChars(pszSacl);
-            sSddlLength ++; // '\n'
         }
     }
 
@@ -593,43 +586,39 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     GOTO_CLEANUP_ON_STATUS(status);
 
     if ((SecurityInformation | OWNER_SECURITY_INFORMATION) &&
-         !IsNullOrEmptyString(pszOwnerSid))
+         !LwRtlCStringIsNullOrEmpty(pszOwnerSid))
     {
         strcat(pszStringSecurityDescriptor, SDDL_OWNER);
         strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
         strcat(pszStringSecurityDescriptor, pszOwnerSid);
-        strcat(pszStringSecurityDescriptor, SDDL_SECTION_DELIMINATOR_S);
     }
 
     if ((SecurityInformation | GROUP_SECURITY_INFORMATION) &&
-         !IsNullOrEmptyString(pszGroupSid))
+         !LwRtlCStringIsNullOrEmpty(pszGroupSid))
     {
         strcat(pszStringSecurityDescriptor, SDDL_GROUP);
         strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
         strcat(pszStringSecurityDescriptor, pszGroupSid);
-        strcat(pszStringSecurityDescriptor, SDDL_SECTION_DELIMINATOR_S);
     }
 
     if ((SecurityInformation | DACL_SECURITY_INFORMATION) &&
-         !IsNullOrEmptyString(pszDacl))
+         !LwRtlCStringIsNullOrEmpty(pszDacl))
     {
         strcat(pszStringSecurityDescriptor, SDDL_DACL);
         strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
-        if (!IsNullOrEmptyString(pszDaclControl))
+        if (!LwRtlCStringIsNullOrEmpty(pszDaclControl))
             strcat(pszStringSecurityDescriptor, pszDaclControl);
         strcat(pszStringSecurityDescriptor, pszDacl);
-        strcat(pszStringSecurityDescriptor, SDDL_SECTION_DELIMINATOR_S);
     }
 
     if ((SecurityInformation | SACL_SECURITY_INFORMATION) &&
-         !IsNullOrEmptyString(pszSacl))
+         !LwRtlCStringIsNullOrEmpty(pszSacl))
     {
         strcat(pszStringSecurityDescriptor, SDDL_SACL);
         strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
-        if (!IsNullOrEmptyString(pszSaclControl))
+        if (!LwRtlCStringIsNullOrEmpty(pszSaclControl))
             strcat(pszStringSecurityDescriptor, pszSaclControl);
         strcat(pszStringSecurityDescriptor, pszSacl);
-        strcat(pszStringSecurityDescriptor, SDDL_SECTION_DELIMINATOR_S);
     }
 
     status = STATUS_SUCCESS;
@@ -750,12 +739,12 @@ RtlpGetSddlSidStringFromSid(
 
     // Deal with SECURITY_CREATOR_OWNER_RID and SECURITY_WORLD_RID first
     // Due to the rid value both being zero
-    if (LwRtlCStringIsEqual(pszSid, SID_SECURITY_WORLD_RID, FALSE))
+    if (LwRtlCStringIsEqual(pszSid, SECURITY_WORLD_PREFIX, FALSE))
     {
         pszSddlSid = SDDL_EVERYONE;
 
     }
-    else if (LwRtlCStringIsEqual(pszSid, SID_SECURITY_CREATOR_OWNER_RID, FALSE))
+    else if (LwRtlCStringIsEqual(pszSid, SECURITY_CREATOR_OWNER_PREFIX, FALSE))
     {
         pszSddlSid = SDDL_CREATOR_OWNER;
     }
@@ -765,9 +754,14 @@ RtlpGetSddlSidStringFromSid(
                               pSid);
         GOTO_CLEANUP_ON_STATUS(status);
 
-       // pszSddlSid = RtlMapRidToSDDLSid(ulRid);
-        pszSddlSid = RtlpRidToAliasSidString(ulRid);
-        if (!pszSddlSid)
+        pszSddlSid = RtlpRidToSddl(ulRid);
+        // Exclude SDDL_EVERYONE and SDDL_CREATOR_OWNER
+        // As it is handled above
+        if (pszSddlSid == NULL ||
+            (pszSddlSid &&
+            (LwRtlCStringIsEqual(pszSddlSid, SDDL_EVERYONE, FALSE) ||
+            LwRtlCStringIsEqual(pszSddlSid, SDDL_CREATOR_OWNER, FALSE)))
+            )
         {
             pszSddlSid = pszSid;
         }
@@ -879,7 +873,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
         pszAceType = RtlpMapAceTypeToSddlType(pAceHeader->AceType);
 
         // An Ace has to have a valid supported type
-        if (IsNullOrEmptyString(pszAceType))
+        if (LwRtlCStringIsNullOrEmpty(pszAceType))
         {
             status = STATUS_NOT_SUPPORTED;
             GOTO_CLEANUP_ON_STATUS(status);
@@ -897,15 +891,15 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
         // ACE_TYPE + ";"
         sAceStringLength += LwRtlCStringNumChars(pszAceType) + 1;
         // ACE_FLAG + ";"
-        sAceStringLength += (!IsNullOrEmptyString(pszAceFlag) ? LwRtlCStringNumChars(pszAceFlag) : 0) + 1;
+        sAceStringLength += (!LwRtlCStringIsNullOrEmpty(pszAceFlag) ? LwRtlCStringNumChars(pszAceFlag) : 0) + 1;
         // ACE_ACCESS + ";"
-        sAceStringLength += (!IsNullOrEmptyString(pszAceAcl) ? LwRtlCStringNumChars(pszAceAcl) : 0) + 1;
+        sAceStringLength += (!LwRtlCStringIsNullOrEmpty(pszAceAcl) ? LwRtlCStringNumChars(pszAceAcl) : 0) + 1;
         // ;; unsupported guid, guid_inherited
         sAceStringLength += 1 + 1;
         // ACE_SID and ")"
 
         // An Ace has to have a valid Sid
-        if (IsNullOrEmptyString(pszSddlSidString))
+        if (LwRtlCStringIsNullOrEmpty(pszSddlSidString))
         {
             status = STATUS_INVALID_PARAMETER;
             GOTO_CLEANUP_ON_STATUS(status);
@@ -921,13 +915,13 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
         strcat(ppszAceStrings[ulAceIndex], pszAceType);
         strcat(ppszAceStrings[ulAceIndex], ";");
 
-        if (!IsNullOrEmptyString(pszAceFlag))
+        if (!LwRtlCStringIsNullOrEmpty(pszAceFlag))
         {
             strcat(ppszAceStrings[ulAceIndex], pszAceFlag);
         }
         strcat(ppszAceStrings[ulAceIndex], ";");
 
-        if (!IsNullOrEmptyString(pszAceAcl))
+        if (!LwRtlCStringIsNullOrEmpty(pszAceAcl))
         {
             strcat(ppszAceStrings[ulAceIndex], pszAceAcl);
         }
@@ -953,7 +947,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
 
     for (ulAceIndex = 0; ulAceIndex < usAceCount; ulAceIndex++)
     {
-        if (!IsNullOrEmptyString(ppszAceStrings[ulAceIndex]))
+        if (!LwRtlCStringIsNullOrEmpty(ppszAceStrings[ulAceIndex]))
         {
             sFullLength += LwRtlCStringNumChars(ppszAceStrings[ulAceIndex]);
         }
@@ -969,7 +963,7 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
         size_t sCurrLength = 0;
 #endif
 
-        if (!IsNullOrEmptyString(ppszAceStrings[ulAceIndex]))
+        if (!LwRtlCStringIsNullOrEmpty(ppszAceStrings[ulAceIndex]))
         {
             strcat(pszFullAceString, ppszAceStrings[ulAceIndex]);
 
@@ -1597,11 +1591,122 @@ RtlpParseSddlString(
     // Do not free
     PSTR pszTmp = NULL;
     PSTR pszstrtok_rSav = NULL;
+
     PSTR pszSddlStringTmp = NULL;
+    PSTR pszSddlStringTmp1 = NULL;
+    PSTR* ppszTokens = NULL;
+    PSTR pszFormattedToken = NULL;
+    PSTR pszTmpToken = NULL;
+    int iTokenCount = 0;
+    int i = 0;
 
     status  = LwRtlCStringDuplicate(&pszSddlStringTmp,
                                     pszSddlString);
     GOTO_CLEANUP_ON_STATUS(status);
+
+    status  = LwRtlCStringDuplicate(&pszSddlStringTmp1,
+                                    pszSddlString);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    pszTmp = strtok_r(pszSddlStringTmp, SDDL_DELIMINATOR_S, &pszstrtok_rSav);
+    while (pszTmp != NULL)
+    {
+        iTokenCount++;
+        pszTmp = strtok_r(NULL, SDDL_DELIMINATOR_S, &pszstrtok_rSav);
+    }
+
+    status = RTL_ALLOCATE(&ppszTokens, PSTR, sizeof(*ppszTokens) * iTokenCount);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    pszTmp = strtok_r(pszSddlStringTmp1, SDDL_DELIMINATOR_S, &pszstrtok_rSav);
+    while (pszTmp != NULL)
+    {
+        status  = LwRtlCStringDuplicate(&ppszTokens[i++],
+                                        pszTmp);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        pszTmp = strtok_r(NULL, SDDL_DELIMINATOR_S, &pszstrtok_rSav);
+    }
+
+    for (i = 0; i < iTokenCount-1; i++)
+    {
+        int iTokenLength = strlen(ppszTokens[i+1]);
+
+        status = RTL_ALLOCATE(&pszTmpToken,
+                              CHAR,
+                              sizeof(*pszTmpToken) * iTokenLength);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        memcpy(pszTmpToken, ppszTokens[i+1], iTokenLength-1);
+
+        status = RtlCStringAllocatePrintf(
+                      &pszFormattedToken,
+                      "%c%c%s",
+                      ppszTokens[i][strlen(ppszTokens[i])-1],
+                      SDDL_DELIMINATOR_C,
+                      pszTmpToken);
+        GOTO_CLEANUP_ON_STATUS(status);
+
+        if (!strncmp(pszFormattedToken, SDDL_OWNER, LwRtlCStringNumChars(SDDL_OWNER)))
+        {
+            size_t sOwnerPrefix = LwRtlCStringNumChars(SDDL_OWNER);
+            if (pszFormattedToken[sOwnerPrefix] != SDDL_DELIMINATOR_C)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+
+            status  = LwRtlCStringDuplicate(&pszOwner,
+                                            &pszFormattedToken[sOwnerPrefix+1]);
+            GOTO_CLEANUP_ON_STATUS(status);
+        }
+        else if (!strncmp(pszFormattedToken, SDDL_GROUP, LwRtlCStringNumChars(SDDL_GROUP)))
+        {
+            size_t sGroupPrefix = LwRtlCStringNumChars(SDDL_GROUP);
+            if (pszFormattedToken[sGroupPrefix] != SDDL_DELIMINATOR_C)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+
+            status  = LwRtlCStringDuplicate(&pszGroup,
+                                            &pszFormattedToken[sGroupPrefix+1]);
+            GOTO_CLEANUP_ON_STATUS(status);
+        }
+        else if (!strncmp(pszFormattedToken, SDDL_DACL, LwRtlCStringNumChars(SDDL_DACL)))
+        {
+            size_t sDaclPrefix = LwRtlCStringNumChars(SDDL_DACL);
+            if (pszFormattedToken[sDaclPrefix] != SDDL_DELIMINATOR_C)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+
+            status  = LwRtlCStringDuplicate(&pszDacl,
+                                            &pszFormattedToken[sDaclPrefix+1]);
+            GOTO_CLEANUP_ON_STATUS(status);
+        }
+        else if (!strncmp(pszFormattedToken, SDDL_SACL, LwRtlCStringNumChars(SDDL_SACL)))
+        {
+            size_t sSaclPrefix = LwRtlCStringNumChars(SDDL_SACL);
+            if (pszFormattedToken[sSaclPrefix] != SDDL_DELIMINATOR_C)
+            {
+                status = STATUS_INVALID_PARAMETER;
+                GOTO_CLEANUP_ON_STATUS(status);
+            }
+
+            status  = LwRtlCStringDuplicate(&pszSacl,
+                                            &pszFormattedToken[sSaclPrefix+1]);
+            GOTO_CLEANUP_ON_STATUS(status);
+        }
+
+        RTL_FREE(&pszFormattedToken);
+        RTL_FREE(&pszTmpToken);
+    }
+
+#if 0
+
+
 
     pszTmp = strtok_r(pszSddlStringTmp, SDDL_SECTION_DELIMINATOR_S, &pszstrtok_rSav);
     while (pszTmp != NULL)
@@ -1662,12 +1767,18 @@ RtlpParseSddlString(
 
         pszTmp = strtok_r(NULL, SDDL_SECTION_DELIMINATOR_S, &pszstrtok_rSav);
     }
+#endif
 
     status = STATUS_SUCCESS;
 
 cleanup:
 
     RTL_FREE(&pszSddlStringTmp);
+    RTL_FREE(&pszSddlStringTmp1);
+    RTL_FREE(&pszFormattedToken);
+    RTL_FREE(&pszTmpToken);
+
+    RtlpFreeStringArray(ppszTokens, iTokenCount);
 
     if (!NT_SUCCESS(status))
     {
@@ -1725,7 +1836,6 @@ RtlpParseSddlAclString(
 
     status = RTL_ALLOCATE(&ppszAceStrings, PSTR, sizeof(*ppszAceStrings) * sCount);
     GOTO_CLEANUP_ON_STATUS(status);
-
 
     pszTmp = strtok_r((PSTR)pszSddlAclString2, SDDL_ACE_END_S, &pszstrtok_rSav);
     while (pszTmp != NULL)
@@ -1879,7 +1989,7 @@ RtlpParseSddlAceString(
         sIndex++;
     }while(pszAceCursor);
 
-    if (!IsNullOrEmptyString(pszSddlAceStringTmp))
+    if (!LwRtlCStringIsNullOrEmpty(pszSddlAceStringTmp))
     {
         status  = LwRtlCStringDuplicate(&ppszAceParts[sIndex],
 
@@ -1929,11 +2039,23 @@ RtlpParseSddlAceString(
     // ace_sid ppszAceParts[5]
     if (ppszAceParts[5])
     {
-        pszSid = (PSTR)RtlpAliasSidStringToSidString((PCSTR)ppszAceParts[5]);
+        pszSid = (PSTR)RtlpSddlToSidString((PCSTR)ppszAceParts[5]);
 
-        if (IsNullOrEmptyString(pszSid))
+        if (LwRtlCStringIsNullOrEmpty(pszSid))
         {
-            pszSid = ppszAceParts[5];
+            if (LwRtlCStringIsEqual(ppszAceParts[5], SDDL_EVERYONE, FALSE))
+            {
+                pszSid = SECURITY_WORLD_PREFIX;
+
+            }
+            else if (LwRtlCStringIsEqual(ppszAceParts[5], SDDL_CREATOR_OWNER, FALSE))
+            {
+                pszSid = SECURITY_CREATOR_OWNER_PREFIX;
+            }
+            else
+            {
+                pszSid = ppszAceParts[5];
+            }
         }
 
         status = RtlAllocateSidFromCString(&pSddlAce->pSid,
@@ -1986,7 +2108,7 @@ RtlpGetAclFromSddlAclString(
     PACCESS_ALLOWED_ACE pAce = NULL;
 
 
-    if (IsNullOrEmptyString(pszAclString))
+    if (LwRtlCStringIsNullOrEmpty(pszAclString))
     {
         GOTO_CLEANUP();
     }
@@ -1998,13 +2120,10 @@ RtlpGetAclFromSddlAclString(
         memcpy(szAclFlag, pszAclString, pszAceBegin-pszAclString);
     }
 
-    if (!IsNullOrEmptyString(szAclFlag))
-    {
-       status = RtlpMapSddlControlToAclControl(szAclFlag,
-                                               bIsDacl,
-                                               pControl);
-       GOTO_CLEANUP_ON_STATUS(status);
-    }
+    status = RtlpMapSddlControlToAclControl(szAclFlag,
+                                            bIsDacl,
+                                            pControl);
+    GOTO_CLEANUP_ON_STATUS(status);
 
     status = RtlpParseSddlAclString(&ppszAceStrings,
                                     &sAceCount,

@@ -39,8 +39,7 @@
 #ifndef __LWBASE_SECURITY_API_H__
 #define __LWBASE_SECURITY_API_H__
 
-#include "security-types.h"
-#include "sddl.h"
+#include <lw/security-types.h>
 #include <lw/ntstatus.h>
 #include <lw/rtlstring.h>
 
@@ -602,6 +601,7 @@ RtlCreateWellKnownSid(
 
 //
 // SDDL Functions
+//
 NTSTATUS
 RtlAllocateSecurityDescriptorFromSddlCString(
     OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecurityDescriptor,
