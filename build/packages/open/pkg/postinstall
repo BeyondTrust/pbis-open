@@ -61,7 +61,7 @@ import_registry_configurations()
     import_registry_configuration pstore
 }
 
-log "LikewiseOpen postinstall begins"
+log "Package: Likewise Open post-install begins (`date`)"
 
 import_service_configurations
 
@@ -99,4 +99,4 @@ if [ $err -ne 0 ]; then
     exit 1
 fi
 
-log "LikewiseOpen postinstall finished"
+log "Package: Likewise Open post-install finished"
