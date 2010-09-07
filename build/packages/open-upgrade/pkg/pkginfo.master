@@ -1,0 +1,14 @@
+PKG=__PKG__
+NAME=Likewise Open Upgrade Helper
+ARCH=__ARCH__
+VERSION=__VERSION__
+CATEGORY=system
+VENDOR=Likewise Software
+DESC=Preserves important state information from previous versions of the product.
+HOTLINE=425-378-7887
+EMAIL=support@likewise.com
+CLASSES=none
+INTONLY=1
+ISTATES="S s 1 2 3"
+RSTATES="S s 1 2 3"
+BASEDIR=__BASEDIR__
