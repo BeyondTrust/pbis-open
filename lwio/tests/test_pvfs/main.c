@@ -122,6 +122,14 @@ main(
     {
         ntError = PrintMaxOpenFiles();
     }
+    else if (strcmp(argv[1], "--get-security") == 0)
+    {
+        ntError = GetFileSecurity(argv[2]);
+    }
+    else if (strcmp(argv[1], "--set-security") == 0)
+    {
+        ntError = SetFileSecurity(argc-2, argv+2);
+    }
     else
     {
         PrintUsage(argv[0]);
@@ -154,16 +162,18 @@ PrintUsage(
 {
     fprintf(stderr, "Usage: %s <command> [command options]\n", pszProgName);
     fprintf(stderr, "(All pvfs files should be given in the format \"/pvfs/path/...\")\n");
-    fprintf(stderr, "    -c <src> <dst>           Copy src to the Pvfs dst file\n");
-    fprintf(stderr, "    -C <src> <dst>           Copy the pvfs src file to the local dst file\n");
-    fprintf(stderr, "    -S <path>                Stat a Pvfs path (directory or file)\n");
-    fprintf(stderr, "    -l <dir>                 List the files in a directory\n");
-    fprintf(stderr, "    -F <file> <size>         Set the end-of-file\n");
-    fprintf(stderr, "    -D <path>                Delete a file or directory using delete-on-close\n");
-    fprintf(stderr, "    -L <filename>            Locking Tests\n");
-    fprintf(stderr, "    -O <filename>            Oplock Test\n");
-    fprintf(stderr, "    --ls-open-files <level>  List open files\n");
-    fprintf(stderr, "    --max-open-files         Print the maximum number of concurrent open fds\n");
+    fprintf(stderr, "    -c <src> <dst>                 Copy src to the Pvfs dst file\n");
+    fprintf(stderr, "    -C <src> <dst>                 Copy the pvfs src file to the local dst file\n");
+    fprintf(stderr, "    -S <path>                      Stat a Pvfs path (directory or file)\n");
+    fprintf(stderr, "    -l <dir>                       List the files in a directory\n");
+    fprintf(stderr, "    -F <file> <size>               Set the end-of-file\n");
+    fprintf(stderr, "    -D <path>                      Delete a file or directory using delete-on-close\n");
+    fprintf(stderr, "    -L <filename>                  Locking Tests\n");
+    fprintf(stderr, "    -O <filename>                  Oplock Test\n");
+    fprintf(stderr, "    --ls-open-files <level>        List open files\n");
+    fprintf(stderr, "    --max-open-files               Print the maximum number of concurrent open fds\n");
+    fprintf(stderr, "    --get-security <file>          Print the file security information in sddl format\n");
+    fprintf(stderr, "    --set-security <sddl> <file>   Set the file security information using the sddl string\n");
 
     fprintf(stderr, "\n");
 
@@ -1349,6 +1359,194 @@ cleanup:
 error:
     goto cleanup;
 }
+
+NTSTATUS
+GetFileSecurity(
+    char *pszFilename
+    )
+{
+    NTSTATUS ntError = STATUS_UNSUCCESSFUL;
+    IO_FILE_HANDLE hFile = NULL;
+    IO_STATUS_BLOCK StatusBlock = {0};
+    IO_FILE_NAME Filename = {0};
+    BYTE pSecurityDescriptor[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE] = {0};
+    PSTR pszStringSecurityDescriptor = NULL;
+    SECURITY_INFORMATION SecInfoAll = (OWNER_SECURITY_INFORMATION |
+                                       GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION |
+                                       SACL_SECURITY_INFORMATION);
+
+
+    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName, pszFilename);
+    BAIL_ON_NT_STATUS(ntError);
+
+    /* Open the remote source file */
+
+    ntError = NtCreateFile(&hFile,
+                           NULL,
+                           &StatusBlock,
+                           &Filename,
+                           NULL,
+                           NULL,
+                           FILE_GENERIC_READ | READ_CONTROL | ACCESS_SYSTEM_SECURITY,
+                           0,
+                           FILE_ATTRIBUTE_NORMAL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE,
+                           NULL,
+                           0,
+                           NULL);
+    BAIL_ON_NT_STATUS(ntError);
+
+    ntError = NtQuerySecurityFile(hFile,
+                                  NULL,
+                                  &StatusBlock,
+                                  SecInfoAll,
+                                  (PSECURITY_DESCRIPTOR_RELATIVE)pSecurityDescriptor,
+                                  SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE);
+    BAIL_ON_NT_STATUS(ntError);
+
+
+    ntError = RtlAllocateSddlCStringFromSecurityDescriptor(&pszStringSecurityDescriptor,
+                                                           (PSECURITY_DESCRIPTOR_RELATIVE)pSecurityDescriptor,
+                                                           SDDL_REVISION_1,
+                                                           SecInfoAll);
+    BAIL_ON_NT_STATUS(ntError);
+
+    printf("File '%s' security sddl information: \n%s\n",
+           pszFilename+strlen("/pvfs"),
+           pszStringSecurityDescriptor);
+
+    ntError = NtCloseFile(hFile);
+    BAIL_ON_NT_STATUS(ntError);
+
+cleanup:
+    LwRtlCStringFree(&pszStringSecurityDescriptor);
+    RtlWC16StringFree(&Filename.FileName);
+
+    return ntError;
+
+error:
+    if (hFile) {
+        NtCloseFile(hFile);
+    }
+
+    goto cleanup;
+}
+
+NTSTATUS
+SetFileSecurity(
+    int argc,
+    char *argv[]
+    )
+{
+    NTSTATUS ntError = STATUS_UNSUCCESSFUL;
+    IO_FILE_HANDLE hFile = NULL;
+    IO_STATUS_BLOCK StatusBlock = {0};
+    IO_FILE_NAME Filename = {0};
+    PSTR pszSddl = NULL;
+    PSTR pszFilePath = NULL;
+    SECURITY_INFORMATION SecInfoAll = (OWNER_SECURITY_INFORMATION |
+                                       GROUP_SECURITY_INFORMATION |
+                                       DACL_SECURITY_INFORMATION |
+                                       SACL_SECURITY_INFORMATION);
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor = NULL;
+    ULONG ulSecurityDescriptor = 0;
+    ULONG ulSecurityDescriptorRetrieved = 0;
+
+    BYTE pSecurityDescriptorRetrieved[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE] = {0};
+    BOOLEAN bIsSetSecuritySucceeded = TRUE;
+
+
+    if (argc != 2)
+    {
+        fprintf(stderr, "Missing parameters. Requires <sddl> and <file>\n");
+        ntError = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(ntError);
+    }
+
+    pszSddl = argv[0];
+    pszFilePath = argv[1];
+
+    ntError = RtlWC16StringAllocateFromCString(&Filename.FileName, pszFilePath);
+    BAIL_ON_NT_STATUS(ntError);
+
+    /* Open the remote Destination file */
+
+    ntError = NtCreateFile(&hFile,
+                           NULL,
+                           &StatusBlock,
+                           &Filename,
+                           NULL,
+                           NULL,
+                           FILE_GENERIC_WRITE | WRITE_DAC | WRITE_OWNER |
+                           FILE_GENERIC_READ | READ_CONTROL | ACCESS_SYSTEM_SECURITY,
+                           0,
+                           FILE_ATTRIBUTE_NORMAL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                           FILE_OPEN,
+                           FILE_NON_DIRECTORY_FILE,
+                           NULL,
+                           0,
+                           NULL);
+    BAIL_ON_NT_STATUS(ntError);
+
+    ntError = RtlAllocateSecurityDescriptorFromSddlCString(
+                           &pSecurityDescriptor,
+                           &ulSecurityDescriptor,
+                           pszSddl,
+                           SDDL_REVISION_1);
+    BAIL_ON_NT_STATUS(ntError);
+
+    ntError = NtSetSecurityFile(hFile,
+                                NULL,
+                                &StatusBlock,
+                                SecInfoAll,
+                                pSecurityDescriptor,
+                                ulSecurityDescriptor);
+    BAIL_ON_NT_STATUS(ntError);
+
+    ntError = NtQuerySecurityFile(hFile,
+                                  NULL,
+                                  &StatusBlock,
+                                  SecInfoAll,
+                                  (PSECURITY_DESCRIPTOR_RELATIVE)pSecurityDescriptorRetrieved,
+                                  SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE);
+    BAIL_ON_NT_STATUS(ntError);
+
+    ulSecurityDescriptorRetrieved = RtlLengthSecurityDescriptorRelative((PSECURITY_DESCRIPTOR_RELATIVE)pSecurityDescriptorRetrieved);
+    if (ulSecurityDescriptorRetrieved != ulSecurityDescriptor)
+    {
+        bIsSetSecuritySucceeded = FALSE;
+    }
+    else if (!LwRtlEqualMemory(pSecurityDescriptor, pSecurityDescriptorRetrieved, ulSecurityDescriptor))
+    {
+        bIsSetSecuritySucceeded = FALSE;
+    }
+
+    if (bIsSetSecuritySucceeded)
+    {
+        printf("Set security information succeeded.\n");
+    }
+
+    ntError = NtCloseFile(hFile);
+    BAIL_ON_NT_STATUS(ntError);
+
+cleanup:
+    RtlWC16StringFree(&Filename.FileName);
+    RTL_FREE(&pSecurityDescriptor);
+
+    return ntError;
+
+error:
+    if (hFile) {
+        NtCloseFile(hFile);
+    }
+
+    goto cleanup;
+}
+
 
 
 

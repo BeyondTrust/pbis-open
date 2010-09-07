@@ -128,6 +128,17 @@ PrintMaxOpenFiles(
     VOID
     );
 
+NTSTATUS
+GetFileSecurity(
+    char *pszFilename
+    );
+
+NTSTATUS
+SetFileSecurity(
+    int argc,
+    char *argv[]
+    );
+
 
 
 #endif /* _TEST_PVFS_PROTOTYPES_H_ */
