@@ -3910,8 +3910,9 @@ AD_OnlineFindObjectByName(
             gpLsaAdProviderState->hCacheConnection,
             pUserNameInfo,
             &pCachedUser);
-        if (dwError == LW_ERROR_NO_SUCH_USER ||
-            dwError == LW_ERROR_NOT_HANDLED)
+        if ((dwError == LW_ERROR_NO_SUCH_USER ||
+            dwError == LW_ERROR_NOT_HANDLED) &&
+            QueryType != LSA_QUERY_TYPE_BY_UPN)
         {
             dwError = ADCacheFindGroupByName(
                 gpLsaAdProviderState->hCacheConnection,
