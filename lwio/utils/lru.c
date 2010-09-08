@@ -139,8 +139,8 @@ LwioLruCreate(
     // Create hashtable
     ntStatus = SMBHashCreate(
                     ulHashSize,
-                    fnComparator,
-                    fnHash,
+                    (SMB_HASH_KEY_COMPARE)fnComparator,
+                    (SMB_HASH_KEY)fnHash,
                     NULL,
                     &pLru->pHashTable);
     BAIL_ON_NT_STATUS(ntStatus);
