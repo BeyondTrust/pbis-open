@@ -399,6 +399,30 @@ RegSrvGetKeySecurity(
     		pulSecDescLength);
 }
 
+//
+// Registry Value Attributes Server APIs
+//
+NTSTATUS
+RegSrvSetValueAttrsW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+   return gpRegProvider->pfnRegSrvSetValueAttributes(
+           hRegConnection,
+            hKey,
+            pSubKey,
+            pValueName,
+            pValueAttributes);
+}
+
+
+
+
+
 // Key Context (key handle) helper utility functions
 void
 RegSrvSafeFreeKeyContext(

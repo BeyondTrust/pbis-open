@@ -176,6 +176,14 @@ RegSrvIpcGetKeySecurity(
     void* data
     );
 
+LWMsgStatus
+RegSrvIpcSetValueAttrW(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
 VOID
 RegSrvFreeHandle(
     PVOID pData

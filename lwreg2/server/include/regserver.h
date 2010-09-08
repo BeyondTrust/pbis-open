@@ -353,9 +353,17 @@ RegSrvGetKeySecurity(
     OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
     IN OUT PULONG pulSecDescLength
     );
-
-
-
+//
+// Registry value attribute APIs
+//
+NTSTATUS
+RegSrvSetValueAttrsW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
 
 // Key context (key handle) utility functions
 BOOLEAN

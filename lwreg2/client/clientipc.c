@@ -1372,6 +1372,92 @@ error:
     goto cleanup;
 }
 
+
+NTSTATUS
+RegTransactSetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    NTSTATUS status = 0;
+    REG_IPC_SET_VALUE_ATTRS_REQ SetValueAttrsReq;
+    // Do not free pStatus
+    PREG_IPC_STATUS pStatus = NULL;
+
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    status = RegIpcAcquireCall(hRegConnection, &pCall);
+    BAIL_ON_NT_STATUS(status);
+
+    SetValueAttrsReq.hKey = hKey;
+    SetValueAttrsReq.pSubKey = pSubKey;
+    SetValueAttrsReq.pValueName = pValueName;
+    SetValueAttrsReq.pValueAttributes = pValueAttributes;
+
+    in.tag = REG_Q_SET_VALUEW_ATTRIBUTES;
+    in.data = &SetValueAttrsReq;
+
+    status = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_NT_STATUS(status);
+
+    switch (out.tag)
+    {
+        case REG_R_SET_VALUEW_ATTRIBUTES:
+            break;
+
+        case REG_R_ERROR:
+            pStatus = (PREG_IPC_STATUS) out.data;
+            status = pStatus->status;
+            BAIL_ON_NT_STATUS(status);
+            break;
+
+        default:
+            status = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+
+NTSTATUS
+RegTransactGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS
+RegTransactDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
 /*
 local variables:
 mode: c

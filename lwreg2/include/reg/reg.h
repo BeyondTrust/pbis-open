@@ -183,6 +183,12 @@ typedef enum _LWREG_VALUE_HINT
     LWREG_VALUE_HINT_ACCOUNT
 } LWREG_VALUE_HINT;
 
+typedef struct _LWREG_RANGE_INTEGER
+{
+    int Min;
+    int Max;
+} LWREG_RANGE_INTEGER;
+
 typedef struct _LWREG_VALUE_ATTRIBUTES_A
 {
     DWORD ValueType;
@@ -193,12 +199,9 @@ typedef struct _LWREG_VALUE_ATTRIBUTES_A
     PSTR  pszDocString;
     LWREG_VALUE_RANGE_TYPE RangeType;
     LWREG_VALUE_HINT Hint;
-    union {
-        struct {
-            DWORD Min;
-            DWORD Max;
-        } RangeInteger;
-        PSTR* pszRangeEnumStrings;
+    union _LWREG_RANGE_A{
+        LWREG_RANGE_INTEGER RangeInteger;
+        PSTR* ppszRangeEnumStrings;
     } Range;
 } LWREG_VALUE_ATTRIBUTES_A, *PLWREG_VALUE_ATTRIBUTES_A;
 
@@ -213,12 +216,9 @@ typedef struct _LWREG_VALUE_ATTRIBUTES
     PWSTR pwszDocString;
     LWREG_VALUE_RANGE_TYPE RangeType;
     LWREG_VALUE_HINT Hint;
-    union {
-        struct {
-            DWORD Min;
-            DWORD Max;
-        } RangeInteger;
-        PWSTR* pwszRangeEnumStrings;
+    union _LWREG_RANGE{
+        LWREG_RANGE_INTEGER RangeInteger;
+        PWSTR* ppwszRangeEnumStrings;
     } Range;
 } LWREG_VALUE_ATTRIBUTES, *PLWREG_VALUE_ATTRIBUTES;
 

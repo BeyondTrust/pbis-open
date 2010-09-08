@@ -88,7 +88,13 @@ typedef enum __REG_IPC_TAG
     REG_Q_SET_KEY_SECURITY,
     REG_R_SET_KEY_SECURITY,
     REG_Q_GET_KEY_SECURITY,
-    REG_R_GET_KEY_SECURITY
+    REG_R_GET_KEY_SECURITY,
+    REG_Q_SET_VALUEW_ATTRIBUTES,
+    REG_R_SET_VALUEW_ATTRIBUTES,
+    REG_Q_GET_VALUEW_ATTRIBUTES,
+    REG_R_GET_VALUEW_ATTRIBUTES,
+    REG_Q_DELETE_VALUEW_ATTRIBUTES,
+    REG_R_DELETE_VALUEW_ATTRIBUTES
 } REG_IPC_TAG;
 
 /* Opaque type -- actual definition in state_p.h - LSA_SRV_ENUM_STATE */
@@ -445,6 +451,37 @@ typedef struct __REG_IPC_GET_KEY_SECURITY_RES
     PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor;
     ULONG Length;
 } REG_IPC_GET_KEY_SECURITY_RES, *PREG_IPC_GET_KEY_SECURITY_RES;
+
+
+
+
+
+/******************************************************************************/
+
+// IN HKEY hKey,
+// IN OPTIONAL PCWSTR pSubKey,
+// IN OPTIONAL PCWSTR pValueName,
+// IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+typedef struct __REG_IPC_SET_VALUE_ATTRS_REQ
+{
+    HKEY hKey;
+    PCWSTR pSubKey;
+    PCWSTR pValueName;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes;
+} REG_IPC_SET_VALUE_ATTRS_REQ, *PREG_IPC_SET_VALUE_ATTRS_REQ;
+
+// NO RESPONSE
+
+
+
+
+
+
+
+
+
+
+
 
 
 #define MAP_LWMSG_ERROR(_e_) (RegMapLwmsgStatus(_e_))

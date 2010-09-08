@@ -48,6 +48,7 @@
 #include <config.h>
 
 #include <regsystem.h>
+#include <reg/reg.h>
 #include <reg/lwreg.h>
 #include <lwmsg/lwmsg.h>
 #include <lw/base.h>

@@ -205,6 +205,18 @@ SqliteGetKeySecurity(
     IN OUT PULONG pulSecDescRelLen
     );
 
+//
+// Attribute related APIs
+//
+NTSTATUS
+SqliteSetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
 /* Obsolete API */
 NTSTATUS
 SqliteQueryMultipleValues(

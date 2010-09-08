@@ -215,6 +215,16 @@ NTSTATUS
     PULONG lpcbSecurityDescriptor
     );
 
+typedef
+NTSTATUS
+(*PFNRegSrvSetValueAttributes)(
+     HANDLE hRegConnection,
+     HKEY hKey,
+     PCWSTR pwszSubKey,
+     PCWSTR pwszValueName,
+     PLWREG_VALUE_ATTRIBUTES pValueAttributes
+     );
+
 typedef struct __REGPROV_PROVIDER_FUNCTION_TABLE
 {
     PFNRegSrvCreateKeyEx         pfnRegSrvCreateKeyEx;
@@ -232,6 +242,7 @@ typedef struct __REGPROV_PROVIDER_FUNCTION_TABLE
     PFNRegSrvSetValueExW         pfnRegSrvSetValueExW;
     PFNRegSrvSetKeySecurity      pfnRegSrvSetKeySecurity;
     PFNRegSrvGetKeySecurity      pfnRegSrvGetKeySecurity;
+    PFNRegSrvSetValueAttributes  pfnRegSrvSetValueAttributes;
 } REGPROV_PROVIDER_FUNCTION_TABLE, *PREGPROV_PROVIDER_FUNCTION_TABLE;
 
 typedef

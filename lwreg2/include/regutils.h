@@ -794,7 +794,7 @@ NtRegReallocMemory(
     );
 
 void
-RegFreeValueAttributes(
+RegSafeFreeValueAttributes(
     PLWREG_VALUE_ATTRIBUTES* ppValueAttrs
     );
 

@@ -1350,6 +1350,18 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+SqliteSetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static
 REG_DATA_TYPE
 GetRegDataType(

@@ -170,7 +170,7 @@ RegFreeMemory(
 }
 
 void
-RegFreeValueAttributes(
+RegSafeFreeValueAttributes(
     PLWREG_VALUE_ATTRIBUTES* ppValueAttrs
     )
 {
@@ -185,8 +185,8 @@ RegFreeValueAttributes(
     RTL_FREE(&pValueAttrs->pDefaultValue);
     RTL_FREE(&pValueAttrs->pwszDocString);
     RegFreeWC16StringArrayWithNullTerminator(
-            pValueAttrs->Range.pwszRangeEnumStrings);
-    pValueAttrs->Range.pwszRangeEnumStrings = NULL;
+            pValueAttrs->Range.ppwszRangeEnumStrings);
+    pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
     RTL_FREE(&pValueAttrs);
 
     *ppValueAttrs = NULL;

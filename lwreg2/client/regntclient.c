@@ -1369,7 +1369,12 @@ NtRegSetValueAttributesW(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    return RegTransactSetValueAttributesW(
+            hRegConnection,
+            hKey,
+            pSubKey,
+            pValueName,
+            pValueAttributes);
 }
 
 NTSTATUS
@@ -1395,7 +1400,14 @@ NtRegGetValueAttributesW(
     OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    return RegTransactGetValueAttributesW(
+        hRegConnection,
+        hKey,
+        pwszSubKey,
+        pwszValueName,
+        ppCurrentValue,
+        ppValueAttributes
+        );
 }
 
 NTSTATUS
@@ -1417,6 +1429,11 @@ NtRegDeleteValueAttributesW(
     IN PCWSTR pwszValueName
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    return RegTransactDeleteValueAttributesW(
+            hRegConnection,
+            hKey,
+            pwszSubKey,
+            pwszValueName
+            );
 }
 
