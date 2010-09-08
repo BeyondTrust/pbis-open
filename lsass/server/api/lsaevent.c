@@ -769,6 +769,14 @@ LsaSrvQueueEvent(
                     &pNewEvent->pszUser);
     BAIL_ON_LSA_ERROR(dwError);
 
+    if (pNewEvent->pszUser == NULL)
+    {
+        dwError = LwAllocateString(
+                        "SYSTEM",
+                        &pNewEvent->pszUser);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LwStrDupOrNull(
                     pEvent->pszComputer,
                     &pNewEvent->pszComputer);
