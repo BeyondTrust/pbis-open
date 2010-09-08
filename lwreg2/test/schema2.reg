@@ -15,7 +15,10 @@
 "teststr1"="teststr1 value 1"
 
 
-
+"syntax_error" = {
+  hint =  seconds
+  default = "/foo/bar"
+}
 
 "pathhint" = {
   hint = path
@@ -195,3 +198,4 @@
   "default" = ""
   "doc" = "The password for the machine account created when joining a computer to an AD domain. The machine account name is stored as MachineAccount under this subkey: [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]"
 }
+

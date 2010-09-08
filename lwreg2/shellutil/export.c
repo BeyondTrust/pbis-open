@@ -117,6 +117,251 @@ error:
     goto cleanup;
 }
 
+
+DWORD
+RegExportAttributeEntries(
+    PREG_PARSE_ITEM pItem,
+    PSTR *ppszDumpString,
+    PDWORD pdwDumpStringLen)
+{
+    DWORD dwError = 0;
+    PSTR pszDumpString = NULL;
+    PSTR pszString = NULL;
+    DWORD dwAttrStringLen = 0;
+    PSTR pszIndentChar = " ";
+    PWSTR *ppwszRangeEnumStrings = NULL;
+    DWORD dwIndentLevel = 4;
+    DWORD dwI = 0;
+
+    BAIL_ON_INVALID_POINTER(pItem);
+    BAIL_ON_INVALID_POINTER(ppszDumpString);
+    BAIL_ON_INVALID_POINTER(pdwDumpStringLen);
+
+    dwError = RtlCStringAllocateAppendPrintf(
+                  &pszDumpString, "\"%s\" = {\n",
+                  pItem->valueName);
+    BAIL_ON_REG_ERROR(dwError);
+
+    if (pItem->regAttr.pCurrentValue)
+    {
+        dwError = RegExportEntry(
+                      NULL,
+                      REG_SZ,    /* Type of value name "value" */
+                      "value",
+                      pItem->regAttr.ValueType,
+                      pItem->regAttr.pCurrentValue,
+                      pItem->regAttr.CurrentValueLen,
+                      &pszString,
+                      &dwAttrStringLen);
+        BAIL_ON_REG_ERROR(dwError);
+
+        dwError = RtlCStringAllocateAppendPrintf(
+                      &pszDumpString, "%*s%s\n",
+                      dwIndentLevel, 
+                      pszIndentChar,
+                      pszString);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszString);
+    }
+
+    if (pItem->regAttr.pDefaultValue)
+    {
+        dwError = RegExportEntry(
+                      NULL,
+                      REG_SZ,    /* Type of value name "value" */
+                      "default",
+                      pItem->regAttr.ValueType,
+                      pItem->regAttr.pDefaultValue,
+                      pItem->regAttr.DefaultValueLen,
+                      &pszString,
+                      &dwAttrStringLen);
+        BAIL_ON_REG_ERROR(dwError);
+
+        dwError = RtlCStringAllocateAppendPrintf(
+                      &pszDumpString, "%*s%s\n",
+                      dwIndentLevel, 
+                      pszIndentChar,
+                      pszString);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszString);
+    }
+
+    if (pItem->regAttr.pwszDocString)
+    {
+        dwError = RegCStringAllocateFromWC16String(
+                      &pszString,
+                      pItem->regAttr.pwszDocString);
+        BAIL_ON_REG_ERROR(dwError);
+                  
+        dwError = RtlCStringAllocateAppendPrintf(
+                      &pszDumpString, "%*sdoc=\"%s\"\n",
+                      dwIndentLevel, 
+                      pszIndentChar,
+                      pszString);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszString);
+    }
+
+    switch (pItem->regAttr.RangeType)
+    {
+        case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*srange=boolean\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*srange=boolean\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+            
+            break;
+        case LWREG_VALUE_RANGE_TYPE_ENUM:
+            dwI = 0;
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*srange=string:\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+            for (ppwszRangeEnumStrings = 
+                     pItem->regAttr.Range.pwszRangeEnumStrings;
+                 *ppwszRangeEnumStrings;
+                 ppwszRangeEnumStrings++)
+            {
+                dwError = RegCStringAllocateFromWC16String(
+                              &pszString,
+                              *ppwszRangeEnumStrings);
+                BAIL_ON_REG_ERROR(dwError);
+ 
+                dwError = RtlCStringAllocateAppendPrintf(
+                              &pszDumpString, "%*s    entry[%d]=\"%s\"\n",
+                              dwIndentLevel, 
+                              pszIndentChar,
+                              dwI++,
+                              pszString);
+                BAIL_ON_REG_ERROR(dwError);
+                LWREG_SAFE_FREE_STRING(pszString);
+            }
+            break;
+        case LWREG_VALUE_RANGE_TYPE_INTEGER:
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*srange=integer:%d-%d\n",
+                          dwIndentLevel, 
+                          pszIndentChar,
+                          pItem->regAttr.Range.RangeInteger.Min,
+                          pItem->regAttr.Range.RangeInteger.Max);
+            BAIL_ON_REG_ERROR(dwError);
+            break;
+        default:
+            if (pItem->regAttr.RangeType > 0)
+            {
+                dwError = RtlCStringAllocateAppendPrintf(
+                              &pszDumpString, "%*srange=invalid value (%d)\n",
+                              dwIndentLevel,
+                              pszIndentChar,
+                              pItem->regAttr.RangeType);
+                BAIL_ON_REG_ERROR(dwError);
+            }
+            break;
+    }
+
+    switch (pItem->regAttr.Hint)
+    {
+        case LWREG_VALUE_HINT_SECONDS:
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*shint=seconds\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+            break;
+
+        case LWREG_VALUE_HINT_PATH:
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*shint=path\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+            break;
+
+        case LWREG_VALUE_HINT_ACCOUNT:
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*shint=account\n",
+                          dwIndentLevel, 
+                          pszIndentChar);
+            BAIL_ON_REG_ERROR(dwError);
+            break;
+
+        default:
+            if (pItem->regAttr.Hint > 0)
+            {
+                
+                dwError = RtlCStringAllocateAppendPrintf(
+                              &pszDumpString, "%*shint=invalid hint (%d)\n",
+                              dwIndentLevel, 
+                              pszIndentChar,
+                              pItem->regAttr.Hint);
+                BAIL_ON_REG_ERROR(dwError);
+            }
+    }
+
+
+    dwError = RtlCStringAllocateAppendPrintf(
+                  &pszDumpString, "}");
+cleanup:
+    *ppszDumpString = pszDumpString;
+    *pdwDumpStringLen = strlen(pszDumpString);
+    return dwError;
+
+error:
+    LWREG_SAFE_FREE_STRING(pszString);
+    LWREG_SAFE_FREE_STRING(pszDumpString);
+    goto cleanup;
+}
+
+
+DWORD
+RegExportAttributes(
+    PREG_PARSE_ITEM pItem,
+    PSTR *ppszDumpString,
+    PDWORD pdwDumpStringLen)
+{
+    DWORD dwError = 0;
+    BAIL_ON_INVALID_POINTER(pItem);
+    BAIL_ON_INVALID_POINTER(ppszDumpString);
+    BAIL_ON_INVALID_POINTER(pdwDumpStringLen);
+
+
+    if (pItem->type == REG_ATTRIBUTES)
+    {
+        dwError = RegExportAttributeEntries(
+                      pItem,
+                      ppszDumpString,
+                      pdwDumpStringLen);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    else
+    {
+        dwError = RegExportEntry(
+                      pItem->keyName,
+                      pItem->valueType,
+                      pItem->valueName,
+                      pItem->type,
+                      pItem->value,
+                      pItem->valueLen,
+                      ppszDumpString,
+                      pdwDumpStringLen);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+
+cleanup:
+    return dwError;
+error:
+    goto cleanup;
+}
+
+    
 DWORD
 RegExportEntry(
     PCSTR keyName,
@@ -168,6 +413,7 @@ RegExportEntry(
                                       dumpString,
                                       dumpStringLen);
             break;
+
         case REG_PLAIN_TEXT:
         default:
             dwError = RegExportPlainText((PCHAR) value,

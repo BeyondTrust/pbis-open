@@ -153,6 +153,14 @@ RegShellUtilExport(
     );
 
 DWORD
+RegExportAttributes(
+    PREG_PARSE_ITEM pItem,
+    PSTR *ppszDumpString,
+    PDWORD pdwDumpStringLen
+    );
+
+
+DWORD
 RegShellUtilEscapeString(
     PCSTR pszValue,
     PSTR *ppszRetValue,

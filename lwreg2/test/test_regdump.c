@@ -62,13 +62,8 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
     DWORD dumpStringLen = 0;
     USER_CONTEXT *ctx = (USER_CONTEXT *) userContext;
 
-    RegExportEntry(
-        pItem->keyName,
-        pItem->valueType,
-        pItem->valueName,
-        pItem->type,
-        pItem->value,
-        pItem->valueLen,
+    RegExportAttributes(
+        pItem,
         &dumpString,
         &dumpStringLen);
 
@@ -86,6 +81,10 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                     printf("\n");
                 }
                 printf("%*s ", pItem->valueLen, (PCHAR) pItem->value);
+                break;
+
+            case REG_ATTRIBUTES:
+                printf("%.*s\r\n\r\n", dumpStringLen, dumpString);
                 break;
 
             default:
