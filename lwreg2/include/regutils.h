@@ -794,6 +794,11 @@ NtRegReallocMemory(
     );
 
 void
+RegFreeValueAttributes(
+    PLWREG_VALUE_ATTRIBUTES* ppValueAttrs
+    );
+
+void
 RegFreeString(
     PSTR pszString
     );
@@ -808,6 +813,11 @@ void
 RegFreeWC16StringArray(
     PWSTR * ppwStringArray,
     DWORD dwCount
+    );
+
+void
+RegFreeWC16StringArrayWithNullTerminator(
+    PWSTR * ppwStringArray
     );
 
 void

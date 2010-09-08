@@ -169,6 +169,31 @@ RegFreeMemory(
 	LwRtlMemoryFree(pMemory);
 }
 
+void
+RegFreeValueAttributes(
+    PLWREG_VALUE_ATTRIBUTES* ppValueAttrs
+    )
+{
+    PLWREG_VALUE_ATTRIBUTES pValueAttrs = NULL;
+
+    if ((ppValueAttrs == NULL) || (*ppValueAttrs == NULL)) {
+        return;
+    }
+
+    pValueAttrs = *ppValueAttrs;
+    RTL_FREE(&pValueAttrs->pCurrentValue);
+    RTL_FREE(&pValueAttrs->pDefaultValue);
+    RTL_FREE(&pValueAttrs->pwszDocString);
+    RegFreeWC16StringArrayWithNullTerminator(
+            pValueAttrs->Range.ppwszRangeEnumStrings);
+    pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
+    RTL_FREE(&pValueAttrs);
+
+    *ppValueAttrs = NULL;
+
+    return;
+}
+
 DWORD
 RegReallocMemory(
     IN PVOID pMemory,
@@ -243,6 +268,26 @@ RegFreeStringArray(
 }
 
 void
+RegFreeWC16StringArrayWithNullTerminator(
+    PWSTR * ppwStringArray
+    )
+{
+    DWORD i = 0;
+
+    if ( ppwStringArray )
+    {
+        while (ppwStringArray[i])
+        {
+            LwRtlMemoryFree(ppwStringArray[i++]);
+        }
+
+        LwRtlMemoryFree(ppwStringArray);
+    }
+
+    return;
+}
+
+void
 RegFreeWC16StringArray(
     PWSTR * ppwStringArray,
     DWORD dwCount
@@ -256,7 +301,7 @@ RegFreeWC16StringArray(
         {
             if (ppwStringArray[i])
             {
-            	LwRtlMemoryFree(ppwStringArray[i]);
+                LwRtlMemoryFree(ppwStringArray[i]);
             }
         }
 
