@@ -102,6 +102,57 @@ LwFreeString(
     LwFreeMemory(pszString);
 }
 
+DWORD
+LwDuplicateStringArray(
+    PSTR** pppNewStringArray,
+    PDWORD pdwNewCount,
+    PSTR* ppStringArray,
+    DWORD dwCount
+    )
+{
+    DWORD dwError = 0;
+    PSTR* ppNewStringArray = NULL;
+    DWORD dwNewCount = 0;
+
+    if (dwCount)
+    {
+        DWORD i = 0;
+
+        dwError = LwAllocateMemory(
+                        dwCount * sizeof(*ppNewStringArray),
+                        OUT_PPVOID(&ppNewStringArray));
+        BAIL_ON_LW_ERROR(dwError);
+
+        dwNewCount = dwCount;
+
+        for (i = 0; i < dwCount; i++)
+        {
+            dwError = LwAllocateString(
+                            ppStringArray[i],
+                            &ppNewStringArray[i]);
+            BAIL_ON_LW_ERROR(dwError);
+        }
+    }
+
+cleanup:
+
+    *pppNewStringArray = ppNewStringArray;
+    if (pdwNewCount)
+    {
+        *pdwNewCount = dwNewCount;
+    }
+
+    return dwError;
+
+error:
+
+    LwFreeStringArray(ppNewStringArray, dwNewCount);
+    ppNewStringArray = NULL;
+    dwNewCount = 0;
+
+    goto cleanup;
+}
+
 void
 LwFreeStringArray(
     PSTR * ppStringArray,
