@@ -421,7 +421,7 @@ do_join(JoinDialog* dialog, LWException** exc)
         info.options.domainName = safe_strdup(join_state.domain);
         info.options.joiningDomain = TRUE;
         info.options.assumeDefaultDomain = join_state.prefix != NULL;
-        info.options.userDomainPrefix = join_state.prefix;
+        info.options.userDomainPrefix = safe_strdup(join_state.prefix);
 
         joinauth_delete(auth_dialog);
 
