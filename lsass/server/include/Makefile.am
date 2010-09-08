@@ -1,5 +1,4 @@
 lsainternal_HEADERS = \
-    adcache.h \
     lsaldap.h \
     lsasqlite.h \
     lsasrvapi2.h \
