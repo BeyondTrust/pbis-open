@@ -122,7 +122,7 @@ parseCallbackPrintData(
             }
             else
             {
-                outMultiSz = pItem->regAttr.Range.pwszRangeEnumStrings;
+                outMultiSz = pItem->regAttr.Range.ppwszRangeEnumStrings;
             }
             if (outMultiSz)
             {
@@ -261,7 +261,7 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 schemaItem = *pItem;
                 schemaItem.type = REG_MULTI_SZ;
                 schemaItem.valueName = "range";
-                schemaItem.value = pItem->regAttr.Range.pwszRangeEnumStrings;
+                schemaItem.value = pItem->regAttr.Range.ppwszRangeEnumStrings;
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 10);
             }
             else if (pItem->regAttr.RangeType ==
