@@ -213,6 +213,7 @@ RdrInitialize(
     memset(&gRdrRuntime, 0, sizeof(gRdrRuntime));
 
     pthread_mutex_init(&gRdrRuntime.socketHashLock, NULL);
+    gRdrRuntime.pSocketHashLock = &gRdrRuntime.socketHashLock;
 
     /* Pid used for SMB Header */
 
@@ -257,7 +258,11 @@ RdrShutdown(
     ntStatus = RdrSocketShutdown();
     BAIL_ON_NT_STATUS(ntStatus);
 
-    pthread_mutex_destroy(&gRdrRuntime.socketHashLock);
+    if (gRdrRuntime.pSocketHashLock)
+    {
+        pthread_mutex_destroy(&gRdrRuntime.socketHashLock);
+        gRdrRuntime.pSocketHashLock = NULL;
+    }
 
     if (gRdrRuntime.hPacketAllocator != (HANDLE)NULL)
     {

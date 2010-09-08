@@ -263,6 +263,7 @@ typedef struct _RDR_GLOBAL_RUNTIME
     RDR_CONFIG        config;
     SMB_HASH_TABLE   *pSocketHashByName;    /* Socket hash by name */
     pthread_mutex_t   socketHashLock;
+    pthread_mutex_t*  pSocketHashLock;
     PLWIO_PACKET_ALLOCATOR hPacketAllocator;
     BOOLEAN volatile bShutdown;
     pthread_mutex_t   reaperMutex;
