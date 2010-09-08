@@ -43,6 +43,7 @@
 #include <parse/includes.h>
 #include <shellutil/rsutils.h>
 #include <locale.h>
+#include <reg/lwreg.h>
 
 
 /* Just to demonstrate user context handle use. Not very useful otherwise */
@@ -341,7 +342,8 @@ error:
 
 int main(int argc, char *argv[])
 {
-    DWORD dwError;
+    DWORD dwError = 0;
+    DWORD dwLineNum = 0;
     HANDLE parseH = NULL;
     USER_CONTEXT ctx = {0};
 
@@ -370,12 +372,15 @@ int main(int argc, char *argv[])
     dwError = RegParseRegistry(parseH);
     BAIL_ON_REG_ERROR(dwError);
 
+cleanup:
     RegIconvConvertClose(ctx.ivHandle);
     RegParseClose(parseH);
 
-cleanup:
-    return dwError;
+    return dwError ? 1 : 0;
 
 error:
+    RegParseGetLineNumber(parseH, &dwLineNum);
+
+    printf("RegParseRegistry: failed error %d line=%d\n", dwError, dwLineNum);
     goto cleanup;
 }

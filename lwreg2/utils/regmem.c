@@ -185,8 +185,8 @@ RegFreeValueAttributes(
     RTL_FREE(&pValueAttrs->pDefaultValue);
     RTL_FREE(&pValueAttrs->pwszDocString);
     RegFreeWC16StringArrayWithNullTerminator(
-            pValueAttrs->Range.ppwszRangeEnumStrings);
-    pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
+            pValueAttrs->Range.pwszRangeEnumStrings);
+    pValueAttrs->Range.pwszRangeEnumStrings = NULL;
     RTL_FREE(&pValueAttrs);
 
     *ppValueAttrs = NULL;

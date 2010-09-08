@@ -2,7 +2,9 @@
 # Example "Registry Schema" entry
 #
 [HKEY_THIS_MACHINE\Services\lsass\Parameters123]
-
+"v1" = {
+  "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
+}
 "binary" = {
   hint = seconds
   default = hex:0102030405060708090A0b0c0d0e0ffffafbfcfd
@@ -12,12 +14,17 @@
 
 "teststr1"="teststr1 value 1"
 
+
+
+
 "pathhint" = {
   hint = path
   default = "/opt/likewise/bin"
   value = "/opt/local/likewise/bin"
   doc = "The default location where the Likewise product is installed"
 }
+
+
 "dword" = {
   default = dword:DEADBEEF
   value = dword:FEEBDAED

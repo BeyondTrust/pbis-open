@@ -1192,6 +1192,7 @@ RegParseKeyValue(
     else
     {
         printf("RegParseKeyValue: ERROR (syntax error) line=%d\n\n", lineNum);
+        dwError = LWREG_ERROR_INVALID_CONTEXT;
         return dwError;
     }
 
@@ -1354,6 +1355,7 @@ RegParseKey(
                                  parseHandle->lexHandle,
                                  &token,
                                  &eof);
+        BAIL_ON_REG_ERROR(dwError);
         if (eof)
         {
             return dwError;
@@ -1382,6 +1384,11 @@ RegParseAttributes(
     DWORD attrSize = 0;
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
+    if (!pszAttr  || !pszAttr[0])
+    {
+        dwError = LWREG_ERROR_INVALID_CONTEXT;
+        return dwError;
+    }
     do {
         dwError = RegLexGetToken(parseHandle->ioHandle,
                                  parseHandle->lexHandle,
@@ -1492,6 +1499,26 @@ RegParseFreeRegAttrData(
 }
 
 
+DWORD
+RegParseGetLineNumber(
+    HANDLE pHandle,
+    PDWORD pdwLineNum)
+{
+    PREGPARSE_HANDLE pParseHandle = (PREGPARSE_HANDLE) pHandle;
+    DWORD dwError = 0;
+
+    BAIL_ON_INVALID_POINTER(pHandle);
+    BAIL_ON_INVALID_POINTER(pdwLineNum);
+
+    *pdwLineNum = pParseHandle->registryEntry.lineNumber;
+    
+cleanup:
+    return dwError;
+error:
+    goto cleanup;
+}
+ 
+
 void
 RegParseClose(
     HANDLE pHandle)
@@ -1528,6 +1555,8 @@ RegParseRegistry(
                                  parseHandle->lexHandle,
                                  &token,
                                  &eof);
+        
+        BAIL_ON_REG_ERROR(dwError);
         if (!eof)
         {
             dwError = RegParseKey(parseHandle, token);
@@ -1538,5 +1567,9 @@ RegParseRegistry(
         }
     } while (!eof);
 
+cleanup:
     return dwError;
+
+error:
+    goto cleanup;
 }

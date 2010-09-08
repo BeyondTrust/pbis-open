@@ -151,4 +151,10 @@ RegParseRemoveCallback(
     PREGPARSE_HANDLE parseHandle,
     DWORD indexCallback);
 
+
+DWORD
+RegParseGetLineNumber(
+    HANDLE pHandle,
+    PDWORD pdwLineNum);
+
 #endif

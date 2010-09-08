@@ -356,6 +356,11 @@ RegLexParseOpenBrace(
             /* This is a problem, can't have { then another { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
         }
+        else if (!lexHandle->curToken.pszValue ||
+                 !lexHandle->curToken.pszValue[0])
+        {
+            dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+        }
         else
         {
             lexHandle->curToken.token = REGLEX_ATTRIBUTES_BEGIN;
@@ -383,7 +388,7 @@ RegLexParseCloseBrace(
     {
         if (lexHandle->eValueNameType != REGLEX_VALUENAME_ATTRIBUTES)
         {
-            /* This is a problem, can't have ] without a previous [ */
+            /* This is a problem, can't have } without a previous { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
         }
         else
