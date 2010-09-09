@@ -1119,7 +1119,7 @@ InitEventThread(
     PKQUEUE_POOL pPool,
     PLW_THREAD_POOL_ATTRIBUTES pAttrs,
     PKQUEUE_THREAD pThread,
-    LONG lCpu
+    ULONG ulCpu
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -1167,7 +1167,7 @@ InitEventThread(
 
     RingInit(&pThread->Tasks);
 
-    status = SetThreadAttrAffinity(&threadAttr, lCpu);
+    status = LwRtlSetAffinityThreadAttribute(&threadAttr, ulCpu);
     GOTO_ERROR_ON_STATUS(status);
 
     if (pAttrs && pAttrs->ulTaskThreadStackSize)
@@ -1240,7 +1240,7 @@ LwRtlCreateThreadPool(
     status = LwErrnoToNtStatus(pthread_cond_init(&pPool->Event, NULL));
     GOTO_ERROR_ON_STATUS(status);
 
-    numCpus = GetCpuCount();
+    numCpus = LwRtlGetCpuCount();
 
     if (GetDelegateAttr(pAttrs))
     {

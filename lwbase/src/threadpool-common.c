@@ -423,7 +423,7 @@ StartWorkThread(
             pthread_attr_setstacksize(pThreadAttr, pThreads->ulWorkThreadStackSize));
         GOTO_ERROR_ON_STATUS(status);
 
-        status = SetThreadAttrAffinity(pThreadAttr, -1);
+        status = LwRtlResetAffinityThreadAttribute(pThreadAttr);
         GOTO_ERROR_ON_STATUS(status);
     }
 
@@ -517,8 +517,8 @@ error:
 }
 
 #if defined(_SC_NPROCESSORS_ONLN)
-int
-GetCpuCount(
+ULONG
+LwRtlGetCpuCount(
     VOID
     )
 {
@@ -527,8 +527,8 @@ GetCpuCount(
     return numCpus >= 1 ? numCpus : 1;
 }
 #else
-int
-GetCpuCount(
+ULONG
+LwRtlGetCpuCount(
     VOID
     )
 {
@@ -538,32 +538,45 @@ GetCpuCount(
 
 #if defined(HAVE_PTHREAD_ATTR_SETAFFINITY_NP)
 NTSTATUS
-SetThreadAttrAffinity(
+LwRtlSetAffinityThreadAttribute(
     pthread_attr_t* pAttr,
-    int cpuNum
+    ULONG CpuNumber
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
     CPU_SET_TYPE cpuSet;
-    int numCpus = 0;
+
+    CPU_ZERO(&cpuSet);
+    CPU_SET(CpuNumber, &cpuSet);
+
+    status = LwErrnoToNtStatus(
+        pthread_attr_setaffinity_np(pAttr, sizeof(cpuSet), &cpuSet));
+    GOTO_ERROR_ON_STATUS(status);
+
+error:
+
+    return status;
+}
+
+NTSTATUS
+LwRtlResetAffinityThreadAttribute(
+    pthread_attr_t* pAttr
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    CPU_SET_TYPE cpuSet;
+    ULONG numCpus = 0;
     int i = 0;
 
     CPU_ZERO(&cpuSet);
 
-    if (cpuNum >= 0)
+    numCpus = LwRtlGetCpuCount();
+    
+    for (i = 0; i < numCpus; i++)
     {
-        CPU_SET(cpuNum, &cpuSet);
+        CPU_SET(i, &cpuSet);
     }
-    else
-    {
-        numCpus = GetCpuCount();
-        
-        for (i = 0; i < numCpus; i++)
-        {
-            CPU_SET(i, &cpuSet);
-        }
-    }
-
+    
     status = LwErrnoToNtStatus(
         pthread_attr_setaffinity_np(pAttr, sizeof(cpuSet), &cpuSet));
     GOTO_ERROR_ON_STATUS(status);
@@ -574,9 +587,17 @@ error:
 }
 #else
 NTSTATUS
-SetThreadAttrAffinity(
+LwRtlSetAffinityThreadAttribute(
     pthread_attr_t* pAttr,
-    int cpuNum
+    ULONG CpuNumber
+    )
+{
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS
+LwRtlResetAffinityThreadAttribute(
+    pthread_attr_t* pAttr
     )
 {
     return STATUS_SUCCESS;

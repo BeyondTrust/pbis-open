@@ -46,15 +46,20 @@
 #include <lw/attrs.h>
 #include <lw/ntstatus.h>
 
-int
-GetCpuCount(
+ULONG
+LwRtlGetCpuCount(
     VOID
     );
 
 NTSTATUS
-SetThreadAttrAffinity(
+LwRtlSetAffinityThreadAttribute(
     pthread_attr_t* pAttr,
-    int cpuNum
+    ULONG CpuNumber
+    );
+
+NTSTATUS
+LwRtlResetAffinityThreadAttribute(
+    pthread_attr_t* pAttr
     );
 
 #endif  // __LWBASE_AFFINITY_H__
