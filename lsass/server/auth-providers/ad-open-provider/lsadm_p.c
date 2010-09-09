@@ -157,6 +157,7 @@ typedef struct _LSA_DM_UNKNOWN_DOMAIN_ENTRY {
         PSTR pszName;
     };
     LSA_LIST_LINKS Links;
+    // If Time = 0, the entry is permanent (does not expire).
     time_t Time;
 } LSA_DM_UNKNOWN_DOMAIN_ENTRY, *PLSA_DM_UNKNOWN_DOMAIN_ENTRY;
 
@@ -183,6 +184,10 @@ typedef struct _LSA_DM_STATE {
     /// List of LSA_DM_UNKNOWN_DOMAIN_ENTRY.
     LSA_LIST_LINKS UnknownDomainSidList;
     LSA_LIST_LINKS UnknownDomainNameList;
+
+    /// Domain trusts to exclude/include.
+    PSTR* ppszTrustExceptionList;
+    ULONG dwTrustExceptionCount;
 
     /// @name Parameters
     /// @{
@@ -558,6 +563,7 @@ LsaDmpStateDestroy(
             PLSA_DM_UNKNOWN_DOMAIN_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_DM_UNKNOWN_DOMAIN_ENTRY, Links);
             LsaDmpFreeUnknownDomainEntry(pEntry, FALSE);
         }
+        LwFreeStringArray(Handle->ppszTrustExceptionList, Handle->dwTrustExceptionCount);
         LW_SAFE_FREE_MEMORY(Handle);
     }
 }
@@ -567,7 +573,10 @@ LsaDmpStateCreate(
     OUT PLSA_DM_STATE_HANDLE pHandle,
     IN BOOLEAN bIsOfflineBehaviorEnabled,
     IN DWORD dwCheckOnlineSeconds,
-    IN DWORD dwUnknownDomainCacheTimeoutSeconds
+    IN DWORD dwUnknownDomainCacheTimeoutSeconds,
+    IN BOOLEAN bIgnoreAllTrusts,
+    IN PSTR* ppszTrustExceptionList,
+    IN DWORD dwTrustExceptionCount
     )
 ///<
 /// Create an empty state object for the offline manager.
@@ -583,6 +592,16 @@ LsaDmpStateCreate(
 ///
 /// @param[in] dwUnknownDomainCacheTimeoutSeconds - Number of seconds to keep
 ///     entries in the unknown domain cache.
+///
+/// @param[in] bIgnoreAllTrusts - Whether to ignore all trusts (except for
+///     those in ppszTrustExceptionList).
+///
+/// @param[in] ppszTrustExceptionList - Specific trusts to exclude/include.
+///     If bIgnoreAllTrusts is not set, this is an exclusion list.
+///     If bIgnoreAllTrusts is set, this is an inclusion list.
+///
+/// @param[in] dwTrustExceptionCount - Count of entries in
+///     ppszTrustExceptionList.
 ///
 /// @return LSA status code.
 ///  @arg LW_ERROR_SUCCESS on success
@@ -607,6 +626,18 @@ LsaDmpStateCreate(
     pState->dwCheckOnlineSeconds = dwCheckOnlineSeconds;
     pState->dwUnknownDomainCacheTimeoutSeconds = dwUnknownDomainCacheTimeoutSeconds;
 
+    if (bIgnoreAllTrusts)
+    {
+        SetFlag(pState->StateFlags, LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS);
+    }
+
+    dwError = LwDuplicateStringArray(
+                    &pState->ppszTrustExceptionList,
+                    &pState->dwTrustExceptionCount,
+                    ppszTrustExceptionList,
+                    dwTrustExceptionCount);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaDmpCreateMutex(&pState->pMutex, PTHREAD_MUTEX_RECURSIVE);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -619,7 +650,6 @@ LsaDmpStateCreate(
 
     dwError = LsaDmpCreateCond(&pState->OnlineDetectionThread.pCondition);
     BAIL_ON_LSA_ERROR(dwError);
-
 
     // Now that everything is set up, we need to initialize the thread.
 
@@ -3164,7 +3194,8 @@ LsaDmpFindUnknownDomainEntry(
         }
 
         // Opportunistically remove expired entries.
-        if (now >= (pEntry->Time + Handle->dwUnknownDomainCacheTimeoutSeconds))
+        if (pEntry->Time &&
+            (now >= (pEntry->Time + Handle->dwUnknownDomainCacheTimeoutSeconds)))
         {
             LsaListRemove(&pEntry->Links);
             LsaDmpFreeUnknownDomainEntry(pEntry, bIsBySid);
@@ -3202,7 +3233,8 @@ DWORD
 LsaDmpCacheUnknownDomain(
     IN LSA_DM_STATE_HANDLE Handle,
     IN OPTIONAL PSID pDomainSid,
-    IN OPTIONAL PCSTR pszDomainName
+    IN OPTIONAL PCSTR pszDomainName,
+    IN BOOLEAN bIsPermanent
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -3231,7 +3263,10 @@ LsaDmpCacheUnknownDomain(
                         TRUE);
     if (pFoundEntry)
     {
-        pFoundEntry->Time = time(NULL);
+        if (pFoundEntry->Time)
+        {
+            pFoundEntry->Time = time(NULL);
+        }
         goto cleanup;
     }
 
@@ -3249,7 +3284,7 @@ LsaDmpCacheUnknownDomain(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    pNewEntry->Time = time(NULL);
+    pNewEntry->Time = bIsPermanent ? 0 : time(NULL);
 
     LsaListInsertHead(pHead, &pNewEntry->Links);
 
@@ -3313,7 +3348,7 @@ LsaDmpCacheUnknownDomainSid(
     IN PSID pDomainSid
     )
 {
-    return LsaDmpCacheUnknownDomain(Handle, pDomainSid, NULL);
+    return LsaDmpCacheUnknownDomain(Handle, pDomainSid, NULL, FALSE);
 }
 
 DWORD
@@ -3322,8 +3357,222 @@ LsaDmpCacheUnknownDomainName(
     IN PCSTR pszDomainName
     )
 {
-    return LsaDmpCacheUnknownDomain(Handle, NULL, pszDomainName);
+    return LsaDmpCacheUnknownDomain(Handle, NULL, pszDomainName, FALSE);
 }
+
+DWORD
+LsaDmpCacheUnknownDomainSidForever(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PSID pDomainSid
+    )
+{
+    return LsaDmpCacheUnknownDomain(Handle, pDomainSid, NULL, TRUE);
+}
+
+DWORD
+LsaDmpCacheUnknownDomainNameForever(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName
+    )
+{
+    return LsaDmpCacheUnknownDomain(Handle, NULL, pszDomainName, TRUE);
+}
+
+static
+BOOLEAN
+LsaDmpIsExceptionTrust(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName
+    )
+{
+    BOOLEAN bIsException = FALSE;
+    DWORD i = 0;
+
+    for (i = 0; i < Handle->dwTrustExceptionCount; i++)
+    {
+        if (!strcasecmp(Handle->ppszTrustExceptionList[i], pszDomainName))
+        {
+            bIsException = TRUE;
+            goto cleanup;
+        }
+    }
+
+    bIsException = FALSE;
+
+cleanup:
+
+    return bIsException;
+}
+
+static
+BOOLEAN
+LsaDmpIsIgnoreTrustInternal(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName,
+    IN OPTIONAL PCSTR pszOtherDomainName
+    )
+{
+    BOOLEAN bIsIgnoreTrust = FALSE;
+    BOOLEAN bIsAcquired = FALSE;
+    BOOLEAN bDefaultIsIgnoreTrust = FALSE;
+    BOOLEAN bIsException = FALSE;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pszDomainName))
+    {
+        LSA_ASSERT(FALSE);
+        bIsIgnoreTrust = FALSE;
+        goto cleanup;
+    }
+
+    LsaDmpAcquireMutex(Handle->pMutex);
+    bIsAcquired = TRUE;
+
+    if (!pszOtherDomainName &&
+        IsSetFlag(Handle->StateFlags, LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS) &&
+        (Handle->dwTrustExceptionCount > 0))
+    {
+        // Cannot be certain since there could be an exception (which
+        // includes the domain) for the other (DNS or NetBIOS) domain name.
+        bIsIgnoreTrust = FALSE;
+        goto cleanup;
+    }
+
+    // If the domain is already in the domain manager, it cannot be
+    // ignored no matter what.  Can lookup just one name.
+    if (LsaDmpFindDomain(Handle, pszDomainName))
+    {
+        bIsIgnoreTrust = FALSE;
+        goto cleanup;
+    }
+
+    if (IsSetFlag(Handle->StateFlags, LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS))
+    {
+        bDefaultIsIgnoreTrust = TRUE;
+    }
+    else
+    {
+        bDefaultIsIgnoreTrust = FALSE;
+    }
+
+    bIsException = LsaDmpIsExceptionTrust(Handle, pszDomainName);
+    if (!bIsException && pszOtherDomainName)
+    {
+        bIsException = LsaDmpIsExceptionTrust(
+                            Handle,
+                            pszOtherDomainName);
+    }
+
+    if (bIsException)
+    {
+        bIsIgnoreTrust = !bDefaultIsIgnoreTrust;
+    }
+    else
+    {
+        bIsIgnoreTrust = bDefaultIsIgnoreTrust;
+    }
+
+cleanup:
+    if (bIsAcquired)
+    {
+        LsaDmpReleaseMutex(Handle->pMutex);
+    }
+
+    return bIsIgnoreTrust;
+}
+
+BOOLEAN
+LsaDmpIsCertainIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName
+    )
+{
+    return LsaDmpIsIgnoreTrustInternal(
+                Handle,
+                pszDomainName,
+                NULL);
+}
+
+BOOLEAN
+LsaDmpIsIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDnsDomainName,
+    IN PCSTR pszNetbiosDomainName
+    )
+{
+    BOOLEAN bIsIgnoreTrust = FALSE;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pszNetbiosDomainName))
+    {
+        LSA_ASSERT(FALSE);
+        bIsIgnoreTrust = FALSE;
+    }
+    else
+    {
+        bIsIgnoreTrust = LsaDmpIsIgnoreTrustInternal(
+                                Handle,
+                                pszDnsDomainName,
+                                pszNetbiosDomainName);
+    }
+
+    return bIsIgnoreTrust;
+}
+
+DWORD
+LsaDmpQueryExcludeTrusts(
+    IN LSA_DM_STATE_HANDLE Handle,
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    )
+{
+    DWORD dwError = 0;
+
+    LsaDmpAcquireMutex(Handle->pMutex);
+    if (IsSetFlag(Handle->StateFlags, LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS))
+    {
+        *pppszTrustList = NULL;
+        *pdwTrustCount = 0;
+    }
+    else
+    {
+        dwError = LwDuplicateStringArray(
+                        pppszTrustList,
+                        pdwTrustCount,
+                        Handle->ppszTrustExceptionList,
+                        Handle->dwTrustExceptionCount);
+    }
+    LsaDmpReleaseMutex(Handle->pMutex);
+
+    return dwError;    
+}
+
+DWORD
+LsaDmpQueryIncludeTrusts(
+    IN LSA_DM_STATE_HANDLE Handle,
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    )
+{
+    DWORD dwError = 0;
+
+    LsaDmpAcquireMutex(Handle->pMutex);
+    if (!IsSetFlag(Handle->StateFlags, LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS))
+    {
+        *pppszTrustList = NULL;
+        *pdwTrustCount = 0;
+    }
+    else
+    {
+        dwError = LwDuplicateStringArray(
+                        pppszTrustList,
+                        pdwTrustCount,
+                        Handle->ppszTrustExceptionList,
+                        Handle->dwTrustExceptionCount);
+    }
+    LsaDmpReleaseMutex(Handle->pMutex);
+
+    return dwError;    
+}
+
 
 VOID
 ADLogMediaSenseOnlineEvent(

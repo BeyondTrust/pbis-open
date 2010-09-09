@@ -126,7 +126,7 @@ error:
 
 static
 DWORD
-AD_OnlineInitializeDomainTrustsInfo(
+AD_OnlineFinishInitializeDomainTrustsInfo(
     IN PSTR pszPrimaryDomainName
     )
 {
@@ -139,6 +139,11 @@ AD_OnlineInitializeDomainTrustsInfo(
     DWORD dwDomainInfoCount = 0;
     PSTR pszDomainSid = NULL;
     PSTR pszSid = NULL;
+
+    //
+    // Combine discovered state with previously stored 1-way child trusts
+    // (which are not directly discoverable).
+    //
 
     dwError = ADState_GetDomainTrustList(
                 gpLsaAdProviderState->hStateConnection,
@@ -193,6 +198,10 @@ AD_OnlineInitializeDomainTrustsInfo(
 
         pPos = pPos->pNext;
     }
+
+    //
+    // Saved combined information into store.
+    //
 
     dwError = LsaDmEnumDomainInfo(
                 NULL,
@@ -342,7 +351,7 @@ AD_OnlineInitializeOperatingMode(
                 pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_OnlineInitializeDomainTrustsInfo(
+    dwError = AD_OnlineFinishInitializeDomainTrustsInfo(
                 pProviderData->szDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1477,6 +1486,7 @@ AD_ServicesDomainWithDiscovery(
     if (!bFoundDomain)
     {
         dwError = LsaDmEngineGetDomainNameWithDiscovery(
+                     gpADProviderData->szDomain,
                      pszNetBiosName,
                      NULL,
                      NULL);
@@ -1570,6 +1580,7 @@ AD_OnlineCheckUserPassword(
         LSA_LOG_DEBUG("Using generated UPN instead of '%s'", pUserInfo->userInfo.pszUPN);
 
         dwError = LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
+                       gpADProviderData->szDomain,
                        pUserInfo->pszObjectSid,
                        &pszUserDnsDomainName,
                        NULL,
@@ -2569,6 +2580,7 @@ AD_OnlineChangePassword(
 
     // Make sure that we are affinitized.
     dwError = LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
+                       gpADProviderData->szDomain,
                        pCachedUser->pszObjectSid,
                        &pszFullDomainName,
                        NULL,

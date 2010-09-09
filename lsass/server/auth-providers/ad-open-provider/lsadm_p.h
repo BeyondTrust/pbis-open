@@ -69,7 +69,10 @@ LsaDmpStateCreate(
     OUT PLSA_DM_STATE_HANDLE pHandle,
     IN BOOLEAN bIsOfflineBehaviorEnabled,
     IN DWORD dwCheckOnlineSeconds,
-    IN DWORD dwUnknownCacheTimeoutSeconds
+    IN DWORD dwUnknownCacheTimeoutSeconds,
+    IN BOOLEAN bIgnoreAllTrusts,
+    IN PSTR* ppszTrustExceptionList,
+    IN DWORD dwTrustExceptionCount
     );
 
 VOID
@@ -322,6 +325,45 @@ DWORD
 LsaDmpCacheUnknownDomainName(
     IN LSA_DM_STATE_HANDLE Handle,
     IN PCSTR pszDomainName
+    );
+
+DWORD
+LsaDmpCacheUnknownDomainSidForever(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PSID pDomainSid
+    );
+
+DWORD
+LsaDmpCacheUnknownDomainNameForever(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName
+    );
+
+BOOLEAN
+LsaDmpIsCertainIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDomainName
+    );
+
+BOOLEAN
+LsaDmpIsIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE Handle,
+    IN PCSTR pszDnsDomainName,
+    IN PCSTR pszNetbiosDomainName
+    );
+
+DWORD
+LsaDmpQueryExcludeTrusts(
+    IN LSA_DM_STATE_HANDLE Handle,
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    );
+
+DWORD
+LsaDmpQueryIncludeTrusts(
+    IN LSA_DM_STATE_HANDLE Handle,
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
     );
 
 VOID

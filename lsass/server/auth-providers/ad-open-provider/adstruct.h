@@ -133,6 +133,9 @@ typedef struct _LSA_AD_CONFIG {
     struct {
         DWORD           dwCheckDomainOnlineSeconds;
         DWORD           dwUnknownDomainCacheTimeoutSeconds;
+        BOOLEAN         bIgnoreAllTrusts;
+        PSTR*           ppszTrustExceptionList;
+        DWORD           dwTrustExceptionCount;
     } DomainManager;
 } LSA_AD_CONFIG, *PLSA_AD_CONFIG;
 
@@ -153,6 +156,20 @@ typedef struct _LSA_AD_PROVIDER_STATE {
     LSA_AD_CONFIG      config;
 
     LSA_DB_HANDLE hCacheConnection;
+
+    /// Used during transition to join to indicate that trusts
+    /// are being discovered.
+    /// TODO: Create a LSA_DM_ENGINE_STATE opaque pointer to
+    ///       abstract out all access to global state from
+    ///       LsaDmEngine code (e.g., primary domain,
+    ///       store handle, etc.).  Move the internals
+    ///       of this state in lsadmengine.c module.
+    ///       Would need a LsaDmEngineState{Create,Destroy}
+    ///       which would be called by AD_Activate/AD_Deactivate
+    ///       (like LsaDmIntialize/LsaDmCleanup).
+    struct {
+        BOOLEAN bIsDiscoveringTrusts;
+    } TrustDiscovery;
 
     ADSTATE_CONNECTION_HANDLE hStateConnection;
     DWORD dwMaxAllowedClockDriftSeconds;

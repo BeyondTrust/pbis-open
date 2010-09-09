@@ -58,6 +58,9 @@
 "NssEnumerationEnabled"=dword:@ENABLE_NSS_ENUM_DEFAULT_DWORD@
 "DomainManagerCheckDomainOnlineInterval"=dword:0000012C
 "DomainManagerUnknownDomainCacheTimeout"=dword:00000E10
+"DomainManagerIgnoreAllTrusts"=dword:00000000
+"DomainManagerExcludeTrustsList"=sza:""
+"DomainManagerIncludeTrustsList"=sza:""
 "CacheType"="memory"
 "MemoryCacheSizeCap"=dword:00000000
 

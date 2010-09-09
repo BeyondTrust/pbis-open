@@ -144,7 +144,10 @@ DWORD
 LsaDmInitialize(
     IN BOOLEAN bIsOfflineBehaviorEnabled,
     IN DWORD dwCheckOnlineSeconds,
-    IN DWORD dwUnknownDomainCacheTimeoutSeconds
+    IN DWORD dwUnknownDomainCacheTimeoutSeconds,
+    IN BOOLEAN bIgnoreAllTrusts,
+    IN PSTR* ppszTrustExceptionList,
+    IN DWORD dwTrustExceptionCount
     );
 ///<
 /// Initialize state for domain manager.
@@ -158,6 +161,16 @@ LsaDmInitialize(
 ///
 /// @param[in] dwUnknownDomainCacheTimeoutSeconds - Number of seconds to keep
 ///     entries in the unknown domain cache.
+///
+/// @param[in] bIgnoreAllTrusts - Whether to ignore all trusts (except for
+///     those in ppszTrustExceptionList).
+///
+/// @param[in] ppszTrustExceptionList - Specific trusts to exclude/include.
+///     If bIgnoreAllTrusts is not set, this is an exclusion list.
+///     If bIgnoreAllTrusts is set, this is an inclusion list.
+///
+/// @param[in] dwTrustExceptionCount - Count of entries in
+///     ppszTrustExceptionList.
 ///
 /// @return LSA status code.
 ///  @arg LW_ERROR_SUCCESS on success
@@ -563,6 +576,39 @@ LsaDmCacheUnknownDomainSid(
 DWORD
 LsaDmCacheUnknownDomainName(
     IN PCSTR pszDomainName
+    );
+
+DWORD
+LsaDmCacheUnknownDomainSidForever(
+    IN PSID pDomainSid
+    );
+
+DWORD
+LsaDmCacheUnknownDomainNameForever(
+    IN PCSTR pszDomainName
+    );
+
+BOOLEAN
+LsaDmIsCertainIgnoreTrust(
+    IN PCSTR pszDomainName
+    );
+
+BOOLEAN
+LsaDmIsIgnoreTrust(
+    IN PCSTR pszDnsDomainName,
+    IN PCSTR pszNetbiosDomainName
+    );
+
+DWORD
+LsaDmQueryExcludeTrusts(
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    );
+
+DWORD
+LsaDmQueryIncludeTrusts(
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
     );
 
 /// @} lsa_om

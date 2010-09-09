@@ -250,5 +250,12 @@ AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
     VOID
     );
 
+DWORD
+AD_GetDomainManagerTrustExceptionList(
+    OUT PBOOLEAN pbIgnoreAllTrusts,
+    OUT PSTR** pppszTrustsList,
+    OUT PDWORD pdwTrustsCount
+    );
+
 #endif /* __AD_CFG_H__ */
 

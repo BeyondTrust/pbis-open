@@ -133,12 +133,15 @@ typedef LW_DWORD LSA_DM_STATE_FLAGS, *PLSA_DM_STATE_FLAGS;
 #define LSA_DM_STATE_FLAG_FORCE_OFFLINE          0x00000002
 /// Whether globally offline due to media sense.
 #define LSA_DM_STATE_FLAG_MEDIA_SENSE_OFFLINE    0x00000004
+/// Whether to ignore trusts.
+#define LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS      0x00000008
 
 #define LSA_DM_STATE_FLAGS_VALID_MASK \
     ( \
         LSA_DM_STATE_FLAG_OFFLINE_ENABLED | \
         LSA_DM_STATE_FLAG_FORCE_OFFLINE | \
         LSA_DM_STATE_FLAG_MEDIA_SENSE_OFFLINE | \
+        LSA_DM_STATE_FLAG_IGNORE_ALL_TRUSTS | \
         0 \
     )
 

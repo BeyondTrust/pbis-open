@@ -58,6 +58,7 @@ LsaDmEngineDiscoverTrusts(
 
 DWORD
 LsaDmEngineGetDomainNameWithDiscovery(
+    IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName
@@ -65,6 +66,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
 
 DWORD
 LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
+    IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName,

@@ -73,6 +73,13 @@ AD_SetConfig_MachinePasswordLifespan(
     DWORD          dwMachinePasswordSyncPwdLifetime
     );
 
+static
+DWORD
+AD_SetConfig_DomainManager_TrustExceptionList(
+    PLSA_AD_CONFIG pConfig,
+    PCSTR pszTrustsListMultiString
+    );
+
 
 DWORD
 AD_TransferConfigContents(
@@ -121,6 +128,9 @@ AD_InitializeConfig(
 
     pConfig->DomainManager.dwCheckDomainOnlineSeconds = 5 * LSA_SECONDS_IN_MINUTE;
     pConfig->DomainManager.dwUnknownDomainCacheTimeoutSeconds = 1 * LSA_SECONDS_IN_HOUR;
+    pConfig->DomainManager.bIgnoreAllTrusts = FALSE;
+    pConfig->DomainManager.ppszTrustExceptionList = NULL;
+    pConfig->DomainManager.dwTrustExceptionCount = 0;
 
     dwError = LwAllocateString(
                     AD_DEFAULT_SHELL,
@@ -182,6 +192,12 @@ AD_FreeConfigContents(
         LsaDLinkedListFree(pConfig->pUnresolvedMemberList);
         pConfig->pUnresolvedMemberList = NULL;
     }
+
+    LwFreeStringArray(
+        pConfig->DomainManager.ppszTrustExceptionList,
+        pConfig->DomainManager.dwTrustExceptionCount);
+    pConfig->DomainManager.ppszTrustExceptionList = NULL;
+    pConfig->DomainManager.dwTrustExceptionCount = 0;
 }
 
 VOID
@@ -202,6 +218,8 @@ AD_ReadRegistry(
     PSTR pszUmask = NULL;
     PSTR pszUnresolvedMemberList = NULL;
     DWORD dwMachinePasswordSyncLifetime = 0;
+    PSTR pszExcludeTrustsListMultiString = NULL;
+    PSTR pszIncludeTrustsListMultiString = NULL;
     LSA_AD_CONFIG StagingConfig;
 
     const PCSTR CellSupport[] = {
@@ -474,7 +492,37 @@ AD_ReadRegistry(
             NULL,
             &StagingConfig.DomainManager.dwUnknownDomainCacheTimeoutSeconds,
             NULL
-        }
+        },
+        {
+            "DomainManagerIgnoreAllTrusts",
+            TRUE,
+            LsaTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.DomainManager.bIgnoreAllTrusts,
+            NULL
+        },
+        {
+            "DomainManagerExcludeTrustsList",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszExcludeTrustsListMultiString,
+            NULL
+        },
+        {
+            "DomainManagerIncludeTrustsList",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &pszIncludeTrustsListMultiString,
+            NULL
+        },
     };
 
     LSA_CONFIG LsaConfigDescription[] =
@@ -524,6 +572,12 @@ AD_ReadRegistry(
             &StagingConfig,
             "MachinePasswordLifespan",
             dwMachinePasswordSyncLifetime);
+
+    AD_SetConfig_DomainManager_TrustExceptionList(
+            &StagingConfig,
+            (StagingConfig.DomainManager.bIgnoreAllTrusts ?
+             pszIncludeTrustsListMultiString :
+             pszExcludeTrustsListMultiString));
 
     AD_TransferConfigContents(&StagingConfig, pConfig);
 
@@ -610,6 +664,65 @@ error:
 
 static
 DWORD
+AD_ConvertMultiStringToStringArray(
+    IN PCSTR pszMultiString,
+    OUT PSTR** pppszStringArray,
+    OUT PDWORD pdwCount
+    )
+{
+    DWORD dwError = 0;
+    PSTR* ppszStringArray = NULL;
+    DWORD dwCount = 0;
+    PCSTR pszIter = NULL;
+    DWORD dwIndex = 0;
+
+    dwCount = 0;
+    for (pszIter = pszMultiString;
+         pszIter && *pszIter;
+         pszIter += strlen(pszIter) + 1)
+    {
+        dwCount++;
+    }
+
+    if (dwCount)
+    {
+        dwError = LwAllocateMemory(
+                        dwCount * sizeof(*ppszStringArray),
+                        OUT_PPVOID(&ppszStringArray));
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwIndex = 0;
+    for (pszIter = pszMultiString;
+         pszIter && *pszIter;
+         pszIter += strlen(pszIter) + 1)
+    {
+        dwError = LwAllocateString(pszIter, &ppszStringArray[dwIndex]);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwIndex++;
+    }
+
+    LSA_ASSERT(dwIndex == dwCount);
+
+cleanup:
+
+    *pppszStringArray = ppszStringArray;
+    *pdwCount = dwCount;
+
+    return dwError;
+
+error:
+
+    LwFreeStringArray(ppszStringArray, dwCount);
+    ppszStringArray = NULL;
+    dwCount = 0;
+
+    goto cleanup;
+}
+
+static
+DWORD
 AD_SetConfig_RequireMembershipOf(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
@@ -688,6 +801,19 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+static
+DWORD
+AD_SetConfig_DomainManager_TrustExceptionList(
+    PLSA_AD_CONFIG pConfig,
+    PCSTR pszTrustsListMultiString
+    )
+{
+    return AD_ConvertMultiStringToStringArray(
+                    pszTrustsListMultiString,
+                    &pConfig->DomainManager.ppszTrustExceptionList,
+                    &pConfig->DomainManager.dwTrustExceptionCount);
 }
 
 DWORD
@@ -1595,3 +1721,24 @@ AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
     return result;
 }
 
+DWORD
+AD_GetDomainManagerTrustExceptionList(
+    OUT PBOOLEAN pbIgnoreAllTrusts,
+    OUT PSTR** pppszTrustsList,
+    OUT PDWORD pdwTrustsCount
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    *pbIgnoreAllTrusts = gpLsaAdProviderState->config.DomainManager.bIgnoreAllTrusts;
+    dwError = LwDuplicateStringArray(
+                    pppszTrustsList,
+                    pdwTrustsCount,
+                    gpLsaAdProviderState->config.DomainManager.ppszTrustExceptionList,
+                    gpLsaAdProviderState->config.DomainManager.dwTrustExceptionCount);
+    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+
+    return dwError;
+}

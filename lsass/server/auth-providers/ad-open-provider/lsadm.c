@@ -64,7 +64,10 @@ DWORD
 LsaDmInitialize(
     IN BOOLEAN bIsOfflineBehaviorEnabled,
     IN DWORD dwCheckOnlineSeconds,
-    IN DWORD dwUnknownDomainCacheTimeoutSeconds
+    IN DWORD dwUnknownDomainCacheTimeoutSeconds,
+    IN BOOLEAN bIgnoreAllTrusts,
+    IN PSTR* ppszTrustExceptionList,
+    IN DWORD dwTrustExceptionCount
     )
 {
     DWORD dwError = 0;
@@ -73,7 +76,10 @@ LsaDmInitialize(
     dwError = LsaDmpStateCreate(&pState,
                                 bIsOfflineBehaviorEnabled,
                                 dwCheckOnlineSeconds,
-                                dwUnknownDomainCacheTimeoutSeconds);
+                                dwUnknownDomainCacheTimeoutSeconds,
+                                bIgnoreAllTrusts,
+                                ppszTrustExceptionList,
+                                dwTrustExceptionCount);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (gLsaDmState)
@@ -1070,4 +1076,66 @@ LsaDmCacheUnknownDomainName(
     )
 {
     return LsaDmpCacheUnknownDomainName(gLsaDmState, pszDomainName);
+}
+
+DWORD
+LsaDmCacheUnknownDomainSidForever(
+    IN PSID pDomainSid
+    )
+{
+    return LsaDmpCacheUnknownDomainSidForever(gLsaDmState, pDomainSid);
+}
+
+DWORD
+LsaDmCacheUnknownDomainNameForever(
+    IN PCSTR pszDomainName
+    )
+{
+    return LsaDmpCacheUnknownDomainNameForever(gLsaDmState, pszDomainName);
+}
+
+BOOLEAN
+LsaDmIsCertainIgnoreTrust(
+    IN PCSTR pszDomainName
+    )
+{
+    return LsaDmpIsCertainIgnoreTrust(
+                gLsaDmState,
+                pszDomainName);
+}
+
+BOOLEAN
+LsaDmIsIgnoreTrust(
+    IN PCSTR pszDnsDomainName,
+    IN PCSTR pszNetbiosDomainName
+    )
+{
+    return LsaDmpIsIgnoreTrust(
+                gLsaDmState,
+                pszDnsDomainName,
+                pszNetbiosDomainName);
+}
+
+DWORD
+LsaDmQueryExcludeTrusts(
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    )
+{
+    return LsaDmpQueryExcludeTrusts(
+                gLsaDmState,
+                pppszTrustList,
+                pdwTrustCount);
+}
+
+DWORD
+LsaDmQueryIncludeTrusts(
+    OUT PSTR** pppszTrustList,
+    OUT PDWORD pdwTrustCount
+    )
+{
+    return LsaDmpQueryIncludeTrusts(
+                gLsaDmState,
+                pppszTrustList,
+                pdwTrustCount);
 }

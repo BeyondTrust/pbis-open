@@ -358,6 +358,9 @@ AD_Activate(
     PSTR  pszDomainDnsName = NULL;
     PSTR  pszHostDnsDomain = NULL;
     BOOLEAN bIsDomainOffline = FALSE;
+    BOOLEAN bIgnoreAllTrusts = FALSE;
+    PSTR* ppszTrustExceptionList = NULL;
+    DWORD dwTrustExceptionCount = 0;
 
     dwError = LsaDnsGetHostInfo(&pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
@@ -371,11 +374,20 @@ AD_Activate(
                     &pszHostDnsDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_GetDomainManagerTrustExceptionList(
+                    &bIgnoreAllTrusts,
+                    &ppszTrustExceptionList,
+                    &dwTrustExceptionCount);
+    BAIL_ON_LSA_ERROR(dwError);
+
     // Initialize domain manager before doing any network stuff.
     dwError = LsaDmInitialize(
                     TRUE,
                     AD_GetDomainManagerCheckDomainOnlineSeconds(),
-                    AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds());
+                    AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(),
+                    bIgnoreAllTrusts,
+                    ppszTrustExceptionList,
+                    dwTrustExceptionCount);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Start media sense after starting up domain manager.
@@ -439,6 +451,7 @@ cleanup:
     LW_SECURE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
     LW_SAFE_FREE_STRING(pszHostDnsDomain);
+    LwFreeStringArray(ppszTrustExceptionList, dwTrustExceptionCount);
 
     return dwError;
 
