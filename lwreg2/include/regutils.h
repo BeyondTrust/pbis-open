@@ -972,13 +972,13 @@ RegGetErrorMessageForLoggingEvent(
 
 
 DWORD
-RegAllocateWC16StringArraysFromCStringArraysWithNullTerminator(
+RegWC16StringArraysAllocateFromCStringArraysWithNullTerminator(
     IN PSTR* ppszStrings,
     OUT PWSTR** pppwszStrings
     );
 
 DWORD
-RegCopyValueAToValueW(
+RegCopyValueAToW(
     IN REG_DATA_TYPE dwType,
     IN PVOID pData,
     IN DWORD cbData,
@@ -987,7 +987,7 @@ RegCopyValueAToValueW(
     );
 
 DWORD
-RegConvertAttrAToAttrW(
+RegConvertValueAttributesAToW(
     LWREG_VALUE_ATTRIBUTES_A attrA,
     PLWREG_VALUE_ATTRIBUTES* ppAttrW
     );

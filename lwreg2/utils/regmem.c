@@ -692,7 +692,7 @@ RegStrchr(
 
 
 DWORD
-RegAllocateWC16StringArraysFromCStringArraysWithNullTerminator(
+RegWC16StringArraysAllocateFromCStringArraysWithNullTerminator(
     IN PSTR* ppszStrings,
     OUT PWSTR** pppwszStrings
     )
@@ -736,7 +736,7 @@ error:
 }
 
 DWORD
-RegCopyValueAToValueW(
+RegCopyValueAToW(
     IN REG_DATA_TYPE dwType,
     IN PVOID pData,
     IN DWORD cbData,
@@ -815,7 +815,7 @@ error:
 }
 
 DWORD
-RegConvertAttrAToAttrW(
+RegConvertValueAttributesAToW(
     LWREG_VALUE_ATTRIBUTES_A attrA,
     PLWREG_VALUE_ATTRIBUTES* ppAttrW
     )
@@ -835,7 +835,7 @@ RegConvertAttrAToAttrW(
     {
         case LWREG_VALUE_RANGE_TYPE_ENUM:
 
-            dwError = RegAllocateWC16StringArraysFromCStringArraysWithNullTerminator(
+            dwError = RegWC16StringArraysAllocateFromCStringArraysWithNullTerminator(
                             attrA.Range.ppszRangeEnumStrings,
                             &pAttr->Range.ppwszRangeEnumStrings);
             BAIL_ON_REG_ERROR(dwError);
@@ -870,14 +870,14 @@ RegConvertAttrAToAttrW(
 
     pAttr->ValueType = attrA.ValueType;
 
-    dwError = RegCopyValueAToValueW(pAttr->ValueType,
+    dwError = RegCopyValueAToW(pAttr->ValueType,
                                      attrA.pCurrentValue,
                                      attrA.CurrentValueLen,
                                      &pAttr->pCurrentValue,
                                      &pAttr->CurrentValueLen);
     BAIL_ON_REG_ERROR(dwError);
 
-    dwError = RegCopyValueAToValueW(pAttr->ValueType,
+    dwError = RegCopyValueAToW(pAttr->ValueType,
                                      attrA.pDefaultValue,
                                      attrA.DefaultValueLen,
                                      &pAttr->pDefaultValue,

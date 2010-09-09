@@ -224,7 +224,7 @@ RegExportAttributeEntries(
                           pszIndentChar);
             BAIL_ON_REG_ERROR(dwError);
             for (ppwszRangeEnumStrings = 
-                     pItem->regAttr.Range.pwszRangeEnumStrings;
+                     pItem->regAttr.Range.ppwszRangeEnumStrings;
                  *ppwszRangeEnumStrings;
                  ppwszRangeEnumStrings++)
             {

@@ -73,7 +73,7 @@ int main(int argc, char *argv[])
 
     ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
 
-    dwError = RegConvertAttrAToAttrW(ValueAttribute,
+    dwError = RegConvertValueAttributesAToW(ValueAttribute,
                                       &pAttr);
     BAIL_ON_REG_ERROR(dwError);
 

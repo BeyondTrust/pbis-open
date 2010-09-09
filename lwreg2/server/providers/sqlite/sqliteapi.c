@@ -1406,7 +1406,7 @@ SqliteGetValueAttributes(
     pCurrentValue->cbData = (LwRtlWC16StringNumChars(pCurrentValue->pvData)+1)*sizeof(WCHAR);
 
 
-    status = RegConvertAttrAToAttrW(ValueAttribute,
+    status = RegConvertValueAttributesAToW(ValueAttribute,
                                     ppValueAttributes);
     BAIL_ON_NT_STATUS(status);
 
