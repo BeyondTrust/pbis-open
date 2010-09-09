@@ -474,6 +474,7 @@ ADShutdownMachinePasswordSync(
 
         pthread_join(gAdMachinePasswordSyncState.Thread, NULL);
         gAdMachinePasswordSyncState.pThread = NULL;
+        gAdMachinePasswordSyncState.bThreadShutdown = FALSE;
     }
 
     if (gAdMachinePasswordSyncState.hPasswordStore)
