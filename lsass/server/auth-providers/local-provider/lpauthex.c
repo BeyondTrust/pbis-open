@@ -119,7 +119,7 @@ LocalAuthenticateUserExInternal(
 
     /* Allow the next provider to continue if we don't handle this domain */
 
-    if (!LocalServicesDomain(pszDomain))
+    if (!LocalServicesDomainInternal(pszDomain))
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);

@@ -55,7 +55,9 @@ typedef DWORD (*PFNSHUTDOWNPROVIDER)(
 
 typedef VOID  (*PFNCLOSEHANDLE)(HANDLE hProvider);
 
-typedef BOOLEAN (*PFNSERVICESDOMAIN)(PCSTR pszDomain);
+typedef DWORD (*PFNSERVICESDOMAIN)(
+                        PCSTR pszDomain,
+                        BOOLEAN* pbServicesDomain);
 
 typedef DWORD (*PFNAUTHENTICATEUSERPAM)(
                         HANDLE hProvider,

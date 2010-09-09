@@ -603,8 +603,18 @@ AD_CloseHandle(
     }
 }
 
-BOOLEAN
+DWORD
 AD_ServicesDomain(
+    PCSTR pszDomain,
+    BOOLEAN* pbServicesDomain
+    )
+{
+    *pbServicesDomain = FALSE;
+    return LW_ERROR_NOT_HANDLED;
+}
+
+BOOLEAN
+AD_ServicesDomainInternal(
     PCSTR pszDomain
     )
 {

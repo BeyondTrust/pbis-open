@@ -77,8 +77,14 @@ AD_CloseHandle(
     HANDLE hProvider
     );
 
-BOOLEAN
+DWORD
 AD_ServicesDomain(
+    PCSTR pszDomain,
+    BOOLEAN* pbServicesDomain
+    );
+
+BOOLEAN
+AD_ServicesDomainInternal(
     PCSTR pszDomain
     );
 

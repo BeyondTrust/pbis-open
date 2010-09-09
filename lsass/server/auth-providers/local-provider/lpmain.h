@@ -75,8 +75,14 @@ LocalCloseHandle(
     HANDLE hProvider
     );
 
-BOOLEAN
+DWORD
 LocalServicesDomain(
+    PCSTR pszDomain,
+    BOOLEAN* pbServicesDomain
+    );
+
+BOOLEAN
+LocalServicesDomainInternal(
     PCSTR pszDomain
     );
 

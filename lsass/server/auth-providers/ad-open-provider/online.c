@@ -1481,7 +1481,7 @@ AD_ServicesDomainWithDiscovery(
     BOOLEAN bFoundDomain = FALSE;
     DWORD dwError = 0;
 
-    bFoundDomain = AD_ServicesDomain(pszNetBiosName);
+    bFoundDomain = AD_ServicesDomainInternal(pszNetBiosName);
 
     if (!bFoundDomain)
     {

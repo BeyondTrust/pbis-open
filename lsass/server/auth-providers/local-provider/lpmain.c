@@ -220,8 +220,21 @@ LocalCloseHandle(
     }
 }
 
-BOOLEAN
+DWORD
 LocalServicesDomain(
+    PCSTR pszDomain,
+    BOOLEAN *pbServicesDomain
+    )
+{
+    DWORD dwError = 0;
+
+    *pbServicesDomain = LocalServicesDomainInternal(pszDomain);
+
+    return dwError;
+}
+
+BOOLEAN
+LocalServicesDomainInternal(
     PCSTR pszDomain
     )
 {

@@ -134,7 +134,10 @@ LsaSrvProviderServicesDomain(
     dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
     BAIL_ON_LSA_ERROR(dwError);
 
-    bServicesDomain = pProvider->pFnTable2->pfnServicesDomain(pszDomainName);
+    dwError = pProvider->pFnTable2->pfnServicesDomain(
+                  pszDomainName,
+                  &bServicesDomain);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 

@@ -382,7 +382,7 @@ LocalDirAddUser(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (!LocalServicesDomain(pLoginInfo->pszDomain))
+    if (!LocalServicesDomainInternal(pLoginInfo->pszDomain))
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
