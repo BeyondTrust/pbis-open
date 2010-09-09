@@ -131,7 +131,6 @@ RegExportAttributeEntries(
     PSTR pszIndentChar = " ";
     PWSTR *ppwszRangeEnumStrings = NULL;
     DWORD dwIndentLevel = 4;
-    DWORD dwI = 0;
 
     BAIL_ON_INVALID_POINTER(pItem);
     BAIL_ON_INVALID_POINTER(ppszDumpString);
@@ -219,9 +218,8 @@ RegExportAttributeEntries(
             
             break;
         case LWREG_VALUE_RANGE_TYPE_ENUM:
-            dwI = 0;
             dwError = RtlCStringAllocateAppendPrintf(
-                          &pszDumpString, "%*srange=string:\n",
+                          &pszDumpString, "%*srange=string:",
                           dwIndentLevel, 
                           pszIndentChar);
             BAIL_ON_REG_ERROR(dwError);
@@ -236,14 +234,20 @@ RegExportAttributeEntries(
                 BAIL_ON_REG_ERROR(dwError);
  
                 dwError = RtlCStringAllocateAppendPrintf(
-                              &pszDumpString, "%*s    entry[%d]=\"%s\"\n",
-                              dwIndentLevel, 
-                              pszIndentChar,
-                              dwI++,
+                              &pszDumpString, "\"%s\"",
                               pszString);
                 BAIL_ON_REG_ERROR(dwError);
                 LWREG_SAFE_FREE_STRING(pszString);
+                if (ppwszRangeEnumStrings[1])
+                {
+                    dwError = RtlCStringAllocateAppendPrintf(
+                                  &pszDumpString, ", ");
+                    BAIL_ON_REG_ERROR(dwError);
+                }
             }
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "\n");
+            BAIL_ON_REG_ERROR(dwError);
             break;
         case LWREG_VALUE_RANGE_TYPE_INTEGER:
             dwError = RtlCStringAllocateAppendPrintf(
