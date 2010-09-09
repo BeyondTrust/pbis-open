@@ -308,6 +308,8 @@ LsaAdStartupThread(
         pState->joinState = LSA_AD_NOT_JOINED;
     }
 
+    LsaSrvFlushSystemCache();
+
     LsaAdProviderStateRelease(pState);
 
     return NULL;
@@ -4012,21 +4014,24 @@ LsaAdProviderLogServiceStartEvent(
     PLWNET_DC_INFO pDCInfo = NULL;
     PLWNET_DC_INFO pGCDCInfo = NULL;
 
-    dwError = LWNetGetDCName(
-                  NULL,
-                  pszDomainDnsName,
-                  NULL,
-                  DS_BACKGROUND_ONLY,
-                  &pDCInfo);
-
-    if (pDCInfo)
+    if (!bIsDomainOffline)
     {
         dwError = LWNetGetDCName(
                       NULL,
-                      pDCInfo->pszDnsForestName,
+                      pszDomainDnsName,
                       NULL,
-                      DS_GC_SERVER_REQUIRED,
-                      &pGCDCInfo);
+                      DS_BACKGROUND_ONLY,
+                      &pDCInfo);
+
+        if (pDCInfo)
+        {
+            dwError = LWNetGetDCName(
+                          NULL,
+                          pDCInfo->pszDnsForestName,
+                          NULL,
+                          DS_GC_SERVER_REQUIRED,
+                          &pGCDCInfo);
+        }
     }
 
     dwError = LwAllocateStringPrintf(
