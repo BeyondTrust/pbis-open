@@ -217,6 +217,17 @@ SqliteSetValueAttributes(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     );
 
+NTSTATUS
+SqliteGetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+
 /* Obsolete API */
 NTSTATUS
 SqliteQueryMultipleValues(

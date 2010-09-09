@@ -1116,7 +1116,7 @@ error:
 }
 
 LWMsgStatus
-RegSrvIpcSetValueAttrW(
+RegSrvIpcSetValueAttibutesW(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
     LWMsgParams* pOut,
@@ -1127,7 +1127,7 @@ RegSrvIpcSetValueAttrW(
     PREG_IPC_SET_VALUE_ATTRS_REQ pReq = pIn->data;
     PREG_IPC_STATUS pStatus = NULL;
 
-    status = RegSrvSetValueAttrsW(
+    status = RegSrvSetValueAttributesW(
         RegSrvIpcGetSessionData(pCall),
         pReq->hKey,
         pReq->pSubKey,
@@ -1149,6 +1149,64 @@ RegSrvIpcSetValueAttrW(
     }
 
 cleanup:
+    return MAP_REG_ERROR_IPC(status);
+
+error:
+    goto cleanup;
+}
+
+LWMsgStatus
+RegSrvIpcGetValueAttibutesW(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    )
+{
+    NTSTATUS status = 0;
+    PREG_IPC_GET_VALUE_ATTRS_REQ pReq = pIn->data;
+    PREG_IPC_GET_VALUE_ATTRS_RESPONSE pRegResp = NULL;
+    PREG_IPC_STATUS pStatus = NULL;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes;
+
+
+    status = RegSrvGetValueAttributesW(
+            RegSrvIpcGetSessionData(pCall),
+            pReq->hKey,
+            pReq->pSubKey,
+            pReq->pValueName,
+            &pCurrentValue,
+            &pValueAttributes);
+
+    if (!status)
+    {
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegResp,
+                                 REG_IPC_GET_VALUE_ATTRS_RESPONSE,
+                                 sizeof(*pRegResp));
+        BAIL_ON_NT_STATUS(status);
+
+        pRegResp->pCurrentValue = pCurrentValue;
+        pCurrentValue = NULL;
+        pRegResp->pValueAttributes = pValueAttributes;
+        pValueAttributes = NULL;
+
+        pOut->tag = REG_R_GET_VALUEW_ATTRIBUTES;
+        pOut->data = pRegResp;
+    }
+    else
+    {
+        status = RegSrvIpcCreateError(status, &pStatus);
+        BAIL_ON_NT_STATUS(status);
+
+        pOut->tag = REG_R_ERROR;
+        pOut->data = pStatus;
+    }
+
+cleanup:
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    RegSafeFreeValueAttributes(&pValueAttributes);
+
     return MAP_REG_ERROR_IPC(status);
 
 error:

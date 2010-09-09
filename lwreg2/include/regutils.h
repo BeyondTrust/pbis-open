@@ -799,6 +799,11 @@ RegSafeFreeValueAttributes(
     );
 
 void
+RegSafeFreeCurrentValueInfo(
+    PLWREG_CURRENT_VALUEINFO* ppValueInfo
+    );
+
+void
 RegFreeString(
     PSTR pszString
     );
@@ -964,5 +969,28 @@ RegGetErrorMessageForLoggingEvent(
     LW_DWORD dwError,
     LW_PSTR* ppszErrorMsg
     );
+
+
+DWORD
+RegAllocateWC16StringArraysFromCStringArraysWithNullTerminator(
+    IN PSTR* ppszStrings,
+    OUT PWSTR** pppwszStrings
+    );
+
+DWORD
+RegCopyValueAToValueW(
+    IN REG_DATA_TYPE dwType,
+    IN PVOID pData,
+    IN DWORD cbData,
+    OUT PVOID* ppOutData,
+    OUT PDWORD pcbOutDataLen
+    );
+
+DWORD
+RegConvertAttrAToAttrW(
+    LWREG_VALUE_ATTRIBUTES_A attrA,
+    PLWREG_VALUE_ATTRIBUTES* ppAttrW
+    );
+
 
 #endif /* __REG_UTILS_H__ */

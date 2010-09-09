@@ -357,12 +357,22 @@ RegSrvGetKeySecurity(
 // Registry value attribute APIs
 //
 NTSTATUS
-RegSrvSetValueAttrsW(
+RegSrvSetValueAttributesW(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
     IN OPTIONAL PCWSTR pSubKey,
     IN PCWSTR pValueName,
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
+NTSTATUS
+RegSrvGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
 // Key context (key handle) utility functions

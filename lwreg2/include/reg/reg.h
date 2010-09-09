@@ -225,7 +225,7 @@ typedef struct _LWREG_VALUE_ATTRIBUTES
 typedef struct _LWREG_CURRENT_VALUEINFO{
     DWORD dwType;
     PVOID pvData;
-    DWORD pcbData;
+    DWORD cbData;
 }LWREG_CURRENT_VALUEINFO, *PLWREG_CURRENT_VALUEINFO;
 
 

@@ -1362,6 +1362,67 @@ SqliteSetValueAttributes(
     return STATUS_NOT_IMPLEMENTED;
 }
 
+NTSTATUS
+SqliteGetValueAttributes(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    )
+{
+    NTSTATUS status = 0;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+
+    CHAR szCurrentVal[] = "Current value";
+    CHAR szDefaultVal[] = "Default value";
+    CHAR szDocString[] = "Document String";
+
+    CHAR* ppszRangeEnumStrings[] = {"enum1", "enum2", "enum3", NULL};
+
+    LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
+            REG_SZ,
+            szCurrentVal,
+            sizeof(szCurrentVal),
+            szDefaultVal,
+            sizeof(szDefaultVal),
+            szDocString,
+            LWREG_VALUE_RANGE_TYPE_ENUM,
+            0};
+
+    ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
+
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pCurrentValue, LWREG_CURRENT_VALUEINFO, sizeof(*pCurrentValue));
+    BAIL_ON_NT_STATUS(status);
+
+    pCurrentValue->dwType = REG_SZ;
+
+    status = LwRtlWC16StringAllocateFromCString((PWSTR*)&pCurrentValue->pvData,
+                                                (PCSTR)"Current Value");
+    BAIL_ON_NT_STATUS(status);
+
+    pCurrentValue->cbData = (LwRtlWC16StringNumChars(pCurrentValue->pvData)+1)*sizeof(WCHAR);
+
+
+    status = RegConvertAttrAToAttrW(ValueAttribute,
+                                    ppValueAttributes);
+    BAIL_ON_NT_STATUS(status);
+
+    *ppCurrentValue = pCurrentValue;
+
+cleanup:
+    return status;
+
+error:
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    *ppCurrentValue = NULL;
+    *ppValueAttributes = NULL;
+
+    goto cleanup;
+}
+
 static
 REG_DATA_TYPE
 GetRegDataType(

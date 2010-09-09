@@ -225,6 +225,17 @@ NTSTATUS
      PLWREG_VALUE_ATTRIBUTES pValueAttributes
      );
 
+typedef
+NTSTATUS
+(*PFNRegSrvGetValueAttributes)(
+    HANDLE hRegConnection,
+    HKEY hKey,
+    PCWSTR pwszSubKey,
+    PCWSTR pwszValueName,
+    PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
 typedef struct __REGPROV_PROVIDER_FUNCTION_TABLE
 {
     PFNRegSrvCreateKeyEx         pfnRegSrvCreateKeyEx;
@@ -243,6 +254,7 @@ typedef struct __REGPROV_PROVIDER_FUNCTION_TABLE
     PFNRegSrvSetKeySecurity      pfnRegSrvSetKeySecurity;
     PFNRegSrvGetKeySecurity      pfnRegSrvGetKeySecurity;
     PFNRegSrvSetValueAttributes  pfnRegSrvSetValueAttributes;
+    PFNRegSrvGetValueAttributes  pfnRegSrvGetValueAttributes;
 } REGPROV_PROVIDER_FUNCTION_TABLE, *PREGPROV_PROVIDER_FUNCTION_TABLE;
 
 typedef

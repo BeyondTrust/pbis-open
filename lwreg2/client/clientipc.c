@@ -1445,7 +1445,67 @@ RegTransactGetValueAttributesW(
     OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = 0;
+    REG_IPC_GET_VALUE_ATTRS_REQ GetValueAttrsReq;
+    PREG_IPC_GET_VALUE_ATTRS_RESPONSE pGetValueAttrsResp = NULL;
+    // Do not free pStatus
+    PREG_IPC_STATUS pStatus = NULL;
+
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    status = RegIpcAcquireCall(hRegConnection, &pCall);
+    BAIL_ON_NT_STATUS(status);
+
+    GetValueAttrsReq.hKey = hKey;
+    GetValueAttrsReq.pSubKey = pwszSubKey;
+    GetValueAttrsReq.pValueName = pwszValueName;
+
+    in.tag = REG_Q_GET_VALUEW_ATTRIBUTES;
+    in.data = &GetValueAttrsReq;
+
+    status = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_NT_STATUS(status);
+
+    switch (out.tag)
+    {
+        case REG_R_GET_VALUEW_ATTRIBUTES:
+            pGetValueAttrsResp = (PREG_IPC_GET_VALUE_ATTRS_RESPONSE) out.data;
+
+            if (ppCurrentValue)
+            {
+                *ppCurrentValue = pGetValueAttrsResp->pCurrentValue;
+            }
+            pGetValueAttrsResp->pCurrentValue = NULL;
+
+            *ppValueAttributes = pGetValueAttrsResp->pValueAttributes;
+            pGetValueAttrsResp->pValueAttributes = NULL;
+
+            break;
+
+        case REG_R_ERROR:
+            pStatus = (PREG_IPC_STATUS) out.data;
+            status = pStatus->status;
+            BAIL_ON_NT_STATUS(status);
+            break;
+
+        default:
+            status = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return status;
+
+error:
+    goto cleanup;
 }
 
 NTSTATUS

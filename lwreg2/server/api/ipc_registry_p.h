@@ -177,7 +177,15 @@ RegSrvIpcGetKeySecurity(
     );
 
 LWMsgStatus
-RegSrvIpcSetValueAttrW(
+RegSrvIpcSetValueAttibutesW(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
+LWMsgStatus
+RegSrvIpcGetValueAttibutesW(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
     LWMsgParams* pOut,

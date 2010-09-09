@@ -403,7 +403,7 @@ RegSrvGetKeySecurity(
 // Registry Value Attributes Server APIs
 //
 NTSTATUS
-RegSrvSetValueAttrsW(
+RegSrvSetValueAttributesW(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
     IN OPTIONAL PCWSTR pSubKey,
@@ -417,6 +417,25 @@ RegSrvSetValueAttrsW(
             pSubKey,
             pValueName,
             pValueAttributes);
+}
+
+NTSTATUS
+RegSrvGetValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    )
+{
+   return gpRegProvider->pfnRegSrvGetValueAttributes(
+           hRegConnection,
+            hKey,
+            pwszSubKey,
+            pwszValueName,
+            ppCurrentValue,
+            ppValueAttributes);
 }
 
 
