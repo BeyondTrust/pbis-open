@@ -912,8 +912,6 @@ lwmsg_peer_task_run_listen(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerListenTask* task = data;
-    struct sockaddr addr;
-    socklen_t addrlen = sizeof(addr);
     int client_fd = -1;
     LWMsgAssoc* assoc = NULL;
     PeerAssocTask* client_task = NULL;
@@ -938,7 +936,7 @@ lwmsg_peer_task_run_listen(
         {
             do
             {
-                client_fd = accept(task->fd, &addr, &addrlen);
+                client_fd = accept(task->fd, NULL, NULL);
                 
                 if (client_fd < 0)
                 {
