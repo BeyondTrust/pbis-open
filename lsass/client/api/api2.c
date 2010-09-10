@@ -216,7 +216,7 @@ LsaQueryExpandedGroupMembersInternal(
 {
     DWORD dwError = 0;
     HANDLE hEnum = NULL;
-    static const DWORD dwMaxEnumCount = 128;
+    static const DWORD dwMaxEnumCount = 512;
     DWORD dwEnumCount = 0;
     PSTR* ppszSids = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -245,6 +245,15 @@ LsaQueryExpandedGroupMembersInternal(
             break;
         }
         BAIL_ON_LSA_ERROR(dwError);
+
+
+        if ((pHash->sCount + dwEnumCount) * 2 > pHash->sTableSize)
+        {
+            dwError = LsaHashResize(
+                pHash,
+                (pHash->sCount + dwEnumCount + 10) * 4);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
 
         QueryList.ppszStrings = (PCSTR*) ppszSids;
 
