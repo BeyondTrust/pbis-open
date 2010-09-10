@@ -128,8 +128,6 @@ struct _pkinit_cert_iter_data {
     unsigned int index;
 };
 
-static void openssl_init(void);
-
 static krb5_error_code pkinit_init_pkinit_oids(pkinit_plg_crypto_context );
 static void pkinit_fini_pkinit_oids(pkinit_plg_crypto_context );
 
