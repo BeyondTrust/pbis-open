@@ -438,6 +438,20 @@ RegSrvGetValueAttributesW(
             ppValueAttributes);
 }
 
+NTSTATUS
+RegSrvDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    )
+{
+    return gpRegProvider->pfnRegSrvDeleteValueAttributes(
+            hRegConnection,
+             hKey,
+             pwszSubKey,
+             pwszValueName);
+}
 
 
 

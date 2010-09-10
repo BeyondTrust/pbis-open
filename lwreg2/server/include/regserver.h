@@ -375,6 +375,14 @@ RegSrvGetValueAttributesW(
     OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
+NTSTATUS
+RegSrvDeleteValueAttributesW(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pwszValueName
+    );
+
 // Key context (key handle) utility functions
 BOOLEAN
 RegSrvIsValidKeyName(

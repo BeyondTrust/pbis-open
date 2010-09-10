@@ -236,25 +236,35 @@ NTSTATUS
     PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
+typedef
+NTSTATUS
+(*PFNRegSrvDeleteValueAttributes)(
+    HANDLE hRegConnection,
+    HKEY hKey,
+    PCWSTR pwszSubKey,
+    PCWSTR pwszValueName
+    );
+
 typedef struct __REGPROV_PROVIDER_FUNCTION_TABLE
 {
-    PFNRegSrvCreateKeyEx         pfnRegSrvCreateKeyEx;
-    PFNRegSrvCloseKey            pfnRegSrvCloseKey;
-    PFNRegSrvDeleteKey           pfnRegSrvDeleteKey;
-    PFNRegSrvDeleteKeyValue      pfnRegSrvDeleteKeyValue;
-    PFNRegSrvDeleteValue         pfnRegSrvDeleteValue;
-    PFNRegSrvDeleteTree          pfnRegSrvDeleteTree;
-    PFNRegSrvEnumKeyExW          pfnRegSrvEnumKeyExW;
-    PFNRegSrvEnumValueW          pfnRegSrvEnumValueW;
-    PFNRegSrvGetValueW           pfnRegSrvGetValueW;
-    PFNRegSrvOpenKeyExW          pfnRegSrvOpenKeyExW;
-    PFNRegSrvQueryInfoKeyW       pfnRegSrvQueryInfoKeyW;
-    PFNRegSrvQueryMultipleValues pfnRegSrvQueryMultipleValues;
-    PFNRegSrvSetValueExW         pfnRegSrvSetValueExW;
-    PFNRegSrvSetKeySecurity      pfnRegSrvSetKeySecurity;
-    PFNRegSrvGetKeySecurity      pfnRegSrvGetKeySecurity;
-    PFNRegSrvSetValueAttributes  pfnRegSrvSetValueAttributes;
-    PFNRegSrvGetValueAttributes  pfnRegSrvGetValueAttributes;
+    PFNRegSrvCreateKeyEx           pfnRegSrvCreateKeyEx;
+    PFNRegSrvCloseKey              pfnRegSrvCloseKey;
+    PFNRegSrvDeleteKey             pfnRegSrvDeleteKey;
+    PFNRegSrvDeleteKeyValue        pfnRegSrvDeleteKeyValue;
+    PFNRegSrvDeleteValue           pfnRegSrvDeleteValue;
+    PFNRegSrvDeleteTree            pfnRegSrvDeleteTree;
+    PFNRegSrvEnumKeyExW            pfnRegSrvEnumKeyExW;
+    PFNRegSrvEnumValueW            pfnRegSrvEnumValueW;
+    PFNRegSrvGetValueW             pfnRegSrvGetValueW;
+    PFNRegSrvOpenKeyExW            pfnRegSrvOpenKeyExW;
+    PFNRegSrvQueryInfoKeyW         pfnRegSrvQueryInfoKeyW;
+    PFNRegSrvQueryMultipleValues   pfnRegSrvQueryMultipleValues;
+    PFNRegSrvSetValueExW           pfnRegSrvSetValueExW;
+    PFNRegSrvSetKeySecurity        pfnRegSrvSetKeySecurity;
+    PFNRegSrvGetKeySecurity        pfnRegSrvGetKeySecurity;
+    PFNRegSrvSetValueAttributes    pfnRegSrvSetValueAttributes;
+    PFNRegSrvGetValueAttributes    pfnRegSrvGetValueAttributes;
+    PFNRegSrvDeleteValueAttributes pfnRegSrvDeleteValueAttributes;
 } REGPROV_PROVIDER_FUNCTION_TABLE, *PREGPROV_PROVIDER_FUNCTION_TABLE;
 
 typedef

@@ -1164,7 +1164,7 @@ RegSrvIpcGetValueAttibutesW(
     )
 {
     NTSTATUS status = 0;
-    PREG_IPC_GET_VALUE_ATTRS_REQ pReq = pIn->data;
+    PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
     PREG_IPC_GET_VALUE_ATTRS_RESPONSE pRegResp = NULL;
     PREG_IPC_STATUS pStatus = NULL;
     PLWREG_CURRENT_VALUEINFO pCurrentValue;
@@ -1206,6 +1206,46 @@ RegSrvIpcGetValueAttibutesW(
 cleanup:
     RegSafeFreeCurrentValueInfo(&pCurrentValue);
     RegSafeFreeValueAttributes(&pValueAttributes);
+
+    return MAP_REG_ERROR_IPC(status);
+
+error:
+    goto cleanup;
+}
+
+LWMsgStatus
+RegSrvIpcDeleteValueAttibutesW(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    )
+{
+    NTSTATUS status = 0;
+    PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
+    PREG_IPC_STATUS pStatus = NULL;
+
+    status = RegSrvDeleteValueAttributesW(
+            RegSrvIpcGetSessionData(pCall),
+            pReq->hKey,
+            pReq->pSubKey,
+            pReq->pValueName);
+
+    if (!status)
+    {
+        pOut->tag = REG_R_DELETE_VALUEW_ATTRIBUTES;
+        pOut->data = NULL;
+    }
+    else
+    {
+        status = RegSrvIpcCreateError(status, &pStatus);
+        BAIL_ON_NT_STATUS(status);
+
+        pOut->tag = REG_R_ERROR;
+        pOut->data = pStatus;
+    }
+
+cleanup:
 
     return MAP_REG_ERROR_IPC(status);
 

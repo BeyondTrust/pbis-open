@@ -192,6 +192,14 @@ RegSrvIpcGetValueAttibutesW(
     void* data
     );
 
+LWMsgStatus
+RegSrvIpcDeleteValueAttibutesW(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
 VOID
 RegSrvFreeHandle(
     PVOID pData

@@ -111,6 +111,13 @@ int main(int argc, char *argv[])
                    &pValueAttributes);
     BAIL_ON_REG_ERROR(dwError);
 
+    dwError = RegDeleteValueAttributesW(
+                   hReg,
+                   hKey,
+                   NULL,
+                   szValueName);
+    BAIL_ON_REG_ERROR(dwError);
+
 cleanup:
 
     if (hKey)

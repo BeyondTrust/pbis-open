@@ -227,6 +227,13 @@ SqliteGetValueAttributes(
     OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     );
 
+NTSTATUS
+SqliteDeleteValueAttributes(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN PCWSTR pValueName
+    );
 
 /* Obsolete API */
 NTSTATUS
