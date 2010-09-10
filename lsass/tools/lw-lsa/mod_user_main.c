@@ -115,12 +115,6 @@ BuildUserModInfo(
 
 static
 DWORD
-ReadPassword(
-    PSTR* ppszPassword
-    );
-
-static
-DWORD
 LsaModUserMain(
     int argc,
     char* argv[]
@@ -218,6 +212,7 @@ ParseArgs(
         PARSE_MODE_SET_PRIMARY_GROUP,
         PARSE_MODE_SET_NT_PASSWORD_HASH,
         PARSE_MODE_SET_LM_PASSWORD_HASH,
+        PARSE_MODE_SET_PASSWORD,
         PARSE_MODE_SET_HOMEDIR,
         PARSE_MODE_SET_SHELL,
         PARSE_MODE_SET_GECOS,
@@ -283,28 +278,6 @@ ParseArgs(
 
                     pTask = NULL;
                 }
-                else if (!strcmp(pArg, "--set-password"))
-                {
-                    fprintf(stdout, "New password: ");
-                    fflush(stdout);
-
-                    dwError = ReadPassword(&pszPassword);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    fprintf(stdout, "\n");
-
-                    dwError = LwAllocateMemory(sizeof(USER_MOD_TASK), (PVOID*)&pTask);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    pTask->taskType = UserModTask_SetPassword;
-                    pTask->pszData = pszPassword;
-                    pszPassword = NULL;
-
-                    dwError = LsaDLinkedListAppend(&pTaskList, pTask);
-                    BAIL_ON_LSA_ERROR(dwError);
-
-                    pTask = NULL;
-                }
                 else if (!strcmp(pArg, "--unlock")) {
 
                     dwError = LwAllocateMemory(sizeof(USER_MOD_TASK), (PVOID*)&pTask);
@@ -355,6 +328,10 @@ ParseArgs(
                 else if (!strcmp(pArg, "--set-lm-password-hash"))
                 {
                     parseMode = PARSE_MODE_SET_LM_PASSWORD_HASH;
+                }
+                else if (!strcmp(pArg, "--set-password"))
+                {
+                    parseMode = PARSE_MODE_SET_PASSWORD;
                 }
                 else if (!strcmp(pArg, "--set-homedir"))
                 {
@@ -445,6 +422,24 @@ ParseArgs(
                 BAIL_ON_LSA_ERROR(dwError);
 
                 pTask->taskType = UserModTask_SetLmPasswordHash;
+
+                dwError = LwAllocateString(pArg, &pTask->pszData);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LsaDLinkedListAppend(&pTaskList, pTask);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                parseMode = PARSE_MODE_OPEN;
+
+                break;
+            }
+
+            case PARSE_MODE_SET_PASSWORD:
+            {
+                dwError = LwAllocateMemory(sizeof(USER_MOD_TASK), (PVOID*)&pTask);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                pTask->taskType = UserModTask_SetPassword;
 
                 dwError = LwAllocateString(pArg, &pTask->pszData);
                 BAIL_ON_LSA_ERROR(dwError);
@@ -1040,70 +1035,6 @@ MapErrorCode(
     }
 
     return dwError2;
-}
-
-static
-DWORD
-ReadPassword(
-    PSTR* ppszPassword
-    )
-{
-    DWORD dwError = 0;
-    CHAR szBuf[129];
-    DWORD idx = 0;
-    struct termios old, new;
-    CHAR ch;
-
-    memset(szBuf, 0, sizeof(szBuf));
-
-    tcgetattr(0, &old);
-    memcpy(&new, &old, sizeof(struct termios));
-    new.c_lflag &= ~(ECHO);
-    tcsetattr(0, TCSANOW, &new);
-
-    while ( (idx < 128) ) {
-
-        if (read(0, &ch, 1)) {
-
-            if (ch != '\n') {
-
-                szBuf[idx++] = ch;
-
-            } else {
-
-                break;
-
-            }
-
-        } else {
-
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
-
-        }
-    }
-
-    if (idx == 128) {
-        dwError = LW_ERROR_ERRNO_ENOBUFS;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (idx > 0) {
-
-        dwError = LwAllocateString(szBuf, ppszPassword);
-        BAIL_ON_LSA_ERROR(dwError);
-
-    } else {
-
-        *ppszPassword = NULL;
-
-    }
-
-error:
-
-    tcsetattr(0, TCSANOW, &old);
-
-    return dwError;
 }
 
 int
