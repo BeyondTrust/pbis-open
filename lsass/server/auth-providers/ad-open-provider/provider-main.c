@@ -1237,7 +1237,11 @@ AD_PreJoinDomain(
     case LSA_AD_UNKNOWN:
     case LSA_AD_NOT_JOINED:
         break;
+
     case LSA_AD_JOINED:
+        dwError = LsaDisableDomainGroupMembership();
+        BAIL_ON_LSA_ERROR(dwError);
+
         dwError = AD_TransitionNotJoined(pState);
         BAIL_ON_LSA_ERROR(dwError);
         break;
