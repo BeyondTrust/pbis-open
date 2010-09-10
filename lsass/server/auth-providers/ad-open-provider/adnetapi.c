@@ -2021,6 +2021,7 @@ AD_NtStatusIsConnectionError(
     case STATUS_TIME_DIFFERENCE_AT_DC:
     case STATUS_INVALID_CONNECTION:
     case STATUS_PIPE_DISCONNECTED:
+    case STATUS_BAD_NETWORK_NAME:
         return TRUE;
     default:
         return FALSE;
@@ -2059,6 +2060,7 @@ AD_WinErrorIsConnectionError(
         case ERROR_TIME_SKEW:
         case ERROR_UNEXP_NET_ERR:
         case ERROR_PIPE_NOT_CONNECTED:
+        case ERROR_BAD_NET_NAME:
             return TRUE;
 
         default:
