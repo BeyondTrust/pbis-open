@@ -16,20 +16,28 @@
 extern "C" {
 #endif
 
-    long
-    BuildLWIUser(
-        const struct passwd* pUser,
-        PLWIUSER * ppLWIUser
-        );
+long
+CreateLWIUser(
+    PCSTR pszName,
+    PCSTR pszDisplayName,
+    PCSTR pszPassword,
+    PCSTR pszClass,
+    PCSTR pszGecos,
+    PCSTR pszNFSHomeDirectory,
+    PCSTR pszHomeDirectory,
+    PCSTR pszOrigNFSHomeDirectory,
+    PCSTR pszOrigHomeDirectory,
+    PCSTR pszShell,
+    uid_t uid,
+    gid_t gid,
+    PAD_USER_ATTRIBUTES padUserADInfo,
+    PLWIUSER* ppLWIUser
+    );
 
-    long
-    CloneLWIUser(
-        const PLWIUSER pUser,
-        PLWIUSER * ppCopyUser
-        );
-
-    void
-    FreeLWIUser(PLWIUSER pLWIUser);
+void
+FreeLWIUser(
+    PLWIUSER pLWIUser
+    );
 
 #ifdef __cplusplus
 }

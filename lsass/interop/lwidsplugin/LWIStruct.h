@@ -12,6 +12,14 @@
 
 #include "includes.h"
 
+
+//#define LWI_UUID_UID "315F6FA0-4CCB-42AC-8CA8-A1126E0FA7AE"
+#define LWI_UUID_UID_PREFIX "315F6FA0-4CCB-42AC-8CA8-A112"
+//#define LWI_UUID_GID "9B5F5F9B-660D-4F41-A791-795FF6B5352A"
+#define LWI_UUID_GID_PREFIX "9B5F5F9B-660D-4F41-A791-795F"
+#define LWI_GUID_LENGTH    36
+#define UNSET_GID_UID_ID   65535
+
 typedef struct __DSATTRIBUTEVALUE
 {
     uint32_t valLen;
@@ -56,23 +64,32 @@ typedef struct __DSMESSAGE
 typedef struct __LWIUSER
 {
     char*  pw_name;
+    char*  pw_display_name;
     char*  pw_passwd;
     uid_t  pw_uid;
     gid_t  pw_gid;
     time_t pw_change;
     char*  pw_class;
     char*  pw_gecos;
-    char*  pw_dir;
+    char*  pw_nfs_home_dir;
+    char*  pw_home_dir;
+    char*  pw_orig_nfs_home_dir;
+    char*  pw_orig_home_dir;
     char*  pw_shell;
     time_t pw_expire;
+    PAD_USER_ATTRIBUTES padUserInfo;
 } LWIUSER, *PLWIUSER;
 
 typedef struct __LWIGROUP
 {
     char*  gr_name;
     char*  gr_passwd;
+    char*  guid;
     gid_t  gr_gid;
-    char** gr_mem;
+    char** gr_membership; /* Members list by name */
+    char** gr_members;    /* Members list by GUID */
+    char*  shortname;
+    char*  comment;
 } LWIGROUP, *PLWIGROUP;
 
 typedef struct __LWIBITVECTOR
@@ -80,6 +97,14 @@ typedef struct __LWIBITVECTOR
     uint8_t* data;
     uint32_t nBits;
 } LWIBITVECTOR, * PLWIBITVECTOR;
+
+typedef struct __LWIMEMBERLIST
+{
+    PSTR   pszName;
+    PSTR   pszUPN;
+    uid_t  uid;
+    struct __LWIMEMBERLIST * pNext;
+} LWIMEMBERLIST, *PLWIMEMBERLIST;
 
 typedef long MACERROR;
 

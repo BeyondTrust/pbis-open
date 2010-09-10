@@ -50,7 +50,7 @@
 #include <DirectoryService/DirServicesConst.h>
 
 // Likewise headers
-//#include <lw/types.h>
+#include <lw/types.h>
 #include <lw/attrs.h>
 
 #ifndef KRB5_PRIVATE
@@ -69,6 +69,7 @@
 #endif
 
 #include <lwnet.h>
+#include <reg/lwreg.h>
 #include "lwio/lwio.h"
 #include "lwio/ntfileapi.h"
 #include <lw/winerror.h>
@@ -80,6 +81,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "macadutil/defs.h"
+#include "macadutil/structs.h"
+#include "macadutil/api.h"
+#include "macadutil/aduserinfo.h"
+#include "macadutil/adukrb5.h"
+#include "macadutil/cfgparser.h"
+#include "macadutil/credcontext.h"
+#include "macadutil/directory.h"
+#include "macadutil/gss.h"
+#include "macadutil/macerror.h"
 
 #ifdef __cplusplus
 }

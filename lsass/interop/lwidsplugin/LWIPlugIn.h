@@ -23,7 +23,6 @@
 #include "LWIAttrLookup.h"
 #include "LWIRecTypeLookup.h"
 #include "LWIPlugInInitException.h"
-#include "LWAuthAdapter.h"
 #include "LWIQuery.h"
 
 #define PLUGIN_ROOT_PATH "/Likewise - Active Directory"

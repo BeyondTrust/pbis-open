@@ -12,7 +12,6 @@ AM_CFLAGS=@AM_CFLAGS@ \
 INFO=Info.plist
 
 LWIDSPlugIn_la_SOURCES=\
-	LWAuthAdapter.cpp \
 	LWIAttrLookup.cpp \
 	LWIAttrValDataQuery.cpp \
 	LWIBitVector.cpp \
@@ -23,12 +22,19 @@ LWIDSPlugIn_la_SOURCES=\
 	LWIRecTypeLookup.cpp \
 	LWIRecordListQuery.cpp \
 	LWIRecordQuery.cpp \
-	LWISAuthAdapter.cpp \
 	LWIUser.cpp \
 	PlugInShell.cpp \
 	ServerModule.c \
 	ServerModuleLib.c \
-	Utilities.cpp
+	Utilities.cpp \
+        macadutil/api.c \
+        macadutil/aduserinfo.c \
+        macadutil/adukrb5.c \
+        macadutil/cfgparser.c \
+        macadutil/credcontext.c \
+        macadutil/directory.c \
+        macadutil/gss.c \
+        macadutil/macerror.c
 
 LWIDSPlugIn_la_CFLAGS=$(AM_CFLAGS)
 
@@ -38,7 +44,18 @@ LWIDSPlugIn_la_CXXFLAGS=$(AM_CFLAGS)\
 LWIDSPlugIn_la_CPPFLAGS=@AM_CPPFLAGS@
 
 LWIDSPlugIn_la_LDFLAGS=\
-	-module -shrext '' -avoid-version -bundle_loader /usr/sbin/DirectoryService -framework CoreFoundation
+     -module -shrext '' -avoid-version -bundle_loader \
+     /usr/sbin/DirectoryService \
+     -framework CoreFoundation \
+     -llwnetclientapi \
+     -llwioclient \
+     -llwadvapi \
+     -lldap \
+     -lkrb5
+
+LWIDSPlugIn_la_LIBADD =  \
+    $(top_builddir)/common/liblsacommon.la \
+    $(top_builddir)/client/liblsaclient.la
 
 Info.plist: Info.plist.in
 	$(srcdir)/process-info-plist.pl -v $(MAIN_VERSION) -o "$@" $(srcdir)/Info.plist.in

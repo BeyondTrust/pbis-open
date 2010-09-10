@@ -16,20 +16,23 @@
 extern "C" {
 #endif
 
-    long
-    BuildLWIGroup(
-        const struct group* pGroup,
-        PLWIGROUP * ppLWIGroup
-        );
 
-    long
-    CloneLWIGroup(
-        const PLWIGROUP pGroup,
-        PLWIGROUP * ppCopyGroup
-        );
-
-    void
-    FreeLWIGroup(PLWIGROUP pLWIGroup);
+long
+CreateLWIGroup(
+    PCSTR          pszName,
+    PCSTR          pszPassword,
+    PCSTR          pszShortname,
+    PCSTR          pszComment,
+    PLWIMEMBERLIST pMemberList,
+    PCSTR          pszGeneratedUID,
+    gid_t          gid,
+    PLWIGROUP* ppLWIGroup
+    );
+    
+void
+FreeLWIGroup(
+    PLWIGROUP pLWIGroup
+    );
 
 #ifdef __cplusplus
 }

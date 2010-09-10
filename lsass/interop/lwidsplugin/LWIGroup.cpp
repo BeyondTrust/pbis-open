@@ -9,131 +9,172 @@
 
 #include "LWIGroup.h"
 
+
 long
-BuildLWIGroup(
-    const struct group* pGroup,
-    PLWIGROUP * ppLWIGroup
+CreateLWIGroup(
+    PCSTR          pszName,
+    PCSTR          pszPassword,
+    PCSTR          pszShortname,
+    PCSTR          pszComment,
+    PLWIMEMBERLIST pMemberList,
+    PCSTR          pszGeneratedUID,
+    gid_t          gid,
+    PLWIGROUP*     ppLWIGroup
     )
 {
     long macError = eDSNoErr;
-    PLWIGROUP pLWIGroup = NULL;
-    int nUsers = 0;
-    int iUser = 0;
-
-    macError = LWIAllocateMemory(sizeof(LWIGROUP), (PVOID*)&pLWIGroup);
+    PLWIGROUP pGroup = NULL;
+    
+    macError = LwAllocateMemory(sizeof(LWIGROUP), (PVOID*)&pGroup);
     GOTO_CLEANUP_ON_MACERROR(macError);
-
-    if (pGroup->gr_name && *pGroup->gr_name)
+    
+    if (pszName)
     {
-        macError = LWIAllocateString(pGroup->gr_name, &pLWIGroup->gr_name);
+        macError = LwAllocateString(pszName, &pGroup->gr_name);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+    
+    if (pszPassword)
+    {
+        macError = LwAllocateString(pszPassword, &pGroup->gr_passwd);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+    
+    if (pszShortname)
+    {
+        macError = LwAllocateString(pszShortname, &pGroup->shortname);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+    
+    if (pszComment)
+    {
+        macError = LwAllocateString(pszComment, &pGroup->comment);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
-    if (pGroup->gr_passwd && *pGroup->gr_passwd)
+    if (pMemberList)
     {
-        macError = LWIAllocateString(pGroup->gr_passwd, &pLWIGroup->gr_passwd);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
+        int iCount = 1;
+        PLWIMEMBERLIST pCur = pMemberList;
+        char szBuf[LWI_GUID_LENGTH+1];
 
-    pLWIGroup->gr_gid = pGroup->gr_gid;
-
-    while (pGroup->gr_mem && pGroup->gr_mem[nUsers] && *pGroup->gr_mem[nUsers])
-        nUsers++;
-
-    if (nUsers)
-    {
-        macError = LWIAllocateMemory(sizeof(pLWIGroup->gr_mem[0]) * (nUsers+1), (PVOID*)&pLWIGroup->gr_mem);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        for (iUser = 0; iUser < nUsers; iUser++)
+        /* Walk list to determing number of nodes to create array of the same size */
+        while(pCur)
         {
-            macError = LWIAllocateString(pGroup->gr_mem[iUser], &pLWIGroup->gr_mem[iUser]);
-            GOTO_CLEANUP_ON_MACERROR(macError);
+            if (pCur->pszUPN || pCur->pszName)
+            {
+                iCount++;
+            }
+            pCur = pCur->pNext;
+        }
+
+        // iCount is now the size of the list + 1
+
+        macError = LwAllocateMemory(sizeof(pGroup->gr_membership[0]) * iCount, (PVOID*)&pGroup->gr_membership);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+
+        macError = LwAllocateMemory(sizeof(pGroup->gr_members[0]) * iCount, (PVOID*)&pGroup->gr_members);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+
+        /* Now walk again to fill in the string array */
+        iCount = 0;
+        pCur = pMemberList;
+
+        while(pCur)
+        {
+            BOOLEAN fAdded = FALSE;
+
+            /* For improved display on the Mac for the group membership list, we show the user's UPN */
+            if (pCur->pszUPN)
+            {
+                macError = LwAllocateString(pCur->pszUPN, &pGroup->gr_membership[iCount]);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+                fAdded = TRUE;
+            }
+            else
+            {
+                if (pCur->pszName)
+                {
+                    macError = LwAllocateString(pCur->pszName, &pGroup->gr_membership[iCount]);
+                    GOTO_CLEANUP_ON_MACERROR(macError);
+                    fAdded = TRUE;
+                }
+            }
+
+            /* The UID needs to be converted to GUID format - same way that LWIQuery does it */
+            if (fAdded && pCur->uid != UNSET_GID_UID_ID)
+            {
+                sprintf(szBuf, LWI_UUID_UID_PREFIX "%.8X", pCur->uid);
+
+                macError = LwAllocateString(szBuf, &pGroup->gr_members[iCount]);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+            }
+
+            if (fAdded)
+            {
+                iCount++;
+            }
+
+            pCur = pCur->pNext;
         }
     }
+    
+    if (pszGeneratedUID)
+    {
+        macError = LwAllocateString(pszGeneratedUID, &pGroup->guid);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+    
+    pGroup->gr_gid = gid;
 
-    *ppLWIGroup = pLWIGroup;
-
-
-    return macError;
+    *ppLWIGroup = pGroup;
+    pGroup = NULL;
 
 cleanup:
 
-    return macError;
-}
-
-long
-CloneLWIGroup(
-    const PLWIGROUP pGroup,
-    PLWIGROUP * ppCopyGroup
-    )
-{
-    long macError = eDSNoErr;
-    PLWIGROUP pCopy = NULL;
-    int nUsers = 0;
-    int iUser = 0;
-
-    macError = LWIAllocateMemory(sizeof(LWIGROUP), (PVOID*)&pCopy);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    if (pGroup->gr_name && *pGroup->gr_name)
-    {
-        macError = LWIAllocateString(pGroup->gr_name, &pCopy->gr_name);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    if (pGroup->gr_passwd && *pGroup->gr_passwd)
-    {
-        macError = LWIAllocateString(pGroup->gr_passwd, &pCopy->gr_passwd);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    pCopy->gr_gid = pGroup->gr_gid;
-
-    while (pGroup->gr_mem && pGroup->gr_mem[nUsers] && *pGroup->gr_mem[nUsers])
-        nUsers++;
-
-    if (nUsers)
-    {
-        macError = LWIAllocateMemory(sizeof(pCopy->gr_mem[0]) * (nUsers+1), (PVOID*)&pCopy->gr_mem);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        for (iUser = 0; iUser < nUsers; iUser++)
-        {
-            macError = LWIAllocateString(pGroup->gr_mem[iUser], &pCopy->gr_mem[iUser]);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-    }
-
-    *ppCopyGroup = pCopy;
-
-    return macError;
-
-cleanup:
-
-    if (pCopy)
-        FreeLWIGroup(pCopy);
-
+    FreeLWIGroup(pGroup);
+    
     return macError;
 }
 
 void
 FreeLWIGroup(PLWIGROUP pLWIGroup)
 {
-    if (pLWIGroup->gr_name)
-        LWIFreeString(pLWIGroup->gr_name);
-
-    if (pLWIGroup->gr_passwd)
-        LWIFreeString(pLWIGroup->gr_passwd);
-
-    if (pLWIGroup->gr_mem)
+    if (pLWIGroup)
     {
-        for (int index = 0; pLWIGroup->gr_mem[index]; index++)
-        {
-            LWIFreeString(pLWIGroup->gr_mem[index]);
-        }
-        LWIFreeMemory(pLWIGroup->gr_mem);
-    }
+        if (pLWIGroup->gr_name)
+            LW_SAFE_FREE_STRING(pLWIGroup->gr_name);
 
-    LWIFreeMemory(pLWIGroup);
+        if (pLWIGroup->gr_passwd)
+            LW_SAFE_FREE_STRING(pLWIGroup->gr_passwd);
+        
+        if (pLWIGroup->shortname)
+            LW_SAFE_FREE_STRING(pLWIGroup->shortname);
+        
+        if (pLWIGroup->comment)
+            LW_SAFE_FREE_STRING(pLWIGroup->comment);
+
+        if (pLWIGroup->gr_members)
+        {
+            for (int index = 0; pLWIGroup->gr_members[index]; index++)
+            {
+                LW_SAFE_FREE_STRING(pLWIGroup->gr_members[index]);
+            }
+            LwFreeMemory(pLWIGroup->gr_members);
+        }
+
+        if (pLWIGroup->gr_membership)
+        {
+            for (int index = 0; pLWIGroup->gr_membership[index]; index++)
+            {
+                LW_SAFE_FREE_STRING(pLWIGroup->gr_membership[index]);
+            }
+            LwFreeMemory(pLWIGroup->gr_membership);
+        }
+        
+        if (pLWIGroup->guid)
+            LW_SAFE_FREE_STRING(pLWIGroup->guid);
+	
+        LwFreeMemory(pLWIGroup);
+    }
 }

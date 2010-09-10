@@ -52,274 +52,85 @@ protected:
     static long ExtractGIDFromGeneratedUID(const char* pszBuf, gid_t& gid);
     static long BuildGeneratedUID(uid_t uid, char** ppszUID);
     static long BuildGeneratedGID(gid_t gid, char** ppszGID);
-
-    static
-    long
-    GetAuthString(
-        IN const PLWIUSER pUser,
-        OUT char** AuthString
-        );
-
-    long ProcessUserAttributes(
-        IN OUT PDSRECORD pRecord,
-        IN OPTIONAL const char* pszName,
-        IN const PLWIUSER pUser
-        );
-    long ProcessGroupAttributes(
-        IN OUT PDSRECORD pRecord,
-        IN OPTIONAL const char* pszName,
-        IN const PLWIGROUP pGroup
-        );
-
+    static long GetAuthString(IN const PLWIUSER pUser, OUT char** AuthString);
+    long ProcessUserAttributes(IN OUT PDSRECORD pRecord, IN OPTIONAL const char* pszName, IN const PLWIUSER pUser);
+    long ProcessGroupAttributes(IN OUT PDSRECORD pRecord, IN OPTIONAL const char* pszName, IN const PLWIGROUP pGroup);
     long QueryAllUserInformation(const char* pszName);
     long QueryAllGroupInformation(const char* pszName);
-
     long QueryUserInformationByName(const char* pszName);
     long QueryUserInformationById(uid_t uid);
     long QueryUserInformationByGeneratedUID(const char* pszGUID);
-
     long QueryGroupInformationByName(const char* pszName);
-	long QueryGroupInformationById(gid_t gid);
+    long QueryGroupInformationById(gid_t gid);
     long QueryGroupInformationByGeneratedUID(const char* pszGUID);
-	
     long QueryComputerListInformationByName(const char* pszName);
     long QueryComputerGroupInformationByName(const char* pszName);
     long QueryComputerInformationByName(const char* pszName);
 
-    long QueryGroupsForUser(
-        IN PLWIUSER UserInfo
-        );
-
-    long QueryGroupsForUserByName(
-        IN const char* UserName
-        );
-
-    long QueryGroupsForUserById(
-        IN uid_t uid
-        );
-
-    long GetUserById(
-        IN uid_t uid,
-        OUT PLWIUSER* ppUser
-        );
-		
-    long GetUserByName(
-        IN const char* pszUsername,
-        OUT PLWIUSER* ppUser
-        );
-		
-    void GetUsersStart(
-        void
-	);
-		
-    long GetUsersNext(
-	OUT PLWIUSER* ppUser
-	);
-
-    long GetGroupById(
-        IN gid_t gid,
-        OUT PLWIGROUP* ppGroup
-        );
-		
-    long GetGroupByName(
-        IN const char* pszGroupName,
-        OUT PLWIGROUP* ppGroup
-        );
-		
-    void GetGroupsStart(
-        void
-	);
-		
-    long GetGroupsNext(
-        OUT PLWIGROUP* ppUser
-	);
+    long QueryGroupsForUser(PCSTR pszUserSid);
+    long QueryGroupsForUserByName(const char* pszName);
+    long QueryGroupsForUserById(uid_t uid);
+    long GetUserInformationById(uid_t uid);
+    long GetUserInformationByName(const char* pszName);
+    long GetGroupInformationById(gid_t gid);
+    long GetGroupInformationByName(const char* pszName);
 
     static long SetDistinguishedName(PDSRECORD pRecord, const char* pszUsername, bool bSetValue);
-
     static long SetGeneratedUID(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetGeneratedUID(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
-
     static long SetNFSHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPassword(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetPassword(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
-
     static long SetPasswordPlus(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPasswordPolicyOptions(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPrimaryGroupID(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetPrimaryGroupID(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
-
     static long SetUniqueID(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetUserShell(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetAuthenticationAuthority(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetGroupMembership(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetGroupMembership(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue);
-
     static long SetHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPasswordAgingPolicy(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPasswordChange(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
-
     static long SetPasswordExpire(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue);
     static long SetMetaNodeLocation(PDSRECORD pRecord, bool bSetValue);
-
     static long SetTimeToLive(PDSRECORD pRecord, bool bSetValue);
-	
     static void FreeAttributeValue(PDSATTRIBUTEVALUE pAttributeValue);
-
     static void FreeAttributeValueList(PDSATTRIBUTEVALUE pAttributeValueList);
-
     static void FreeAttribute(PDSATTRIBUTE pAttribute);
-
     static void FreeAttributeList(PDSATTRIBUTE pAttribute);
-
     static void FreeRecord(PDSRECORD pRecord);
-
     static void FreeRecordList(PDSRECORD pRecord);
-
     static void FreeMessage(PDSMESSAGE pMessage);
-
     static void FreeMessageHeader(PDSMESSAGEHEADER pHeader);
-
-    long
-    AddUserRecord(
-        IN PLWIUSER User,
-        IN OPTIONAL const char* AltName
-        );
-
-    long
-    AddGroupRecord(
-        IN PLWIGROUP Group,
-        IN OPTIONAL const char* AltName
-        );
-
-    static long BuildRecord(
-        const char* pszType,
-        const char* pszName,
-        PDSRECORD* ppRecord
-        );
-
-    long CommitRecord(
-        PDSRECORD pRecord
-        );
-
-    static long
-    AddAttributeEx(
-        OUT PDSATTRIBUTE* ppAttribute,
-        IN PDSRECORD pRecord,
-        IN const char* pszAttributeName,
-        IN OPTIONAL const char* pszValue
-        );
-
-    static long AddAttribute(
-        const char* pszAttributeName,
-        PDSRECORD pRecord,
-        PDSATTRIBUTE * ppAttribute
-        );
-
-    static long SetAttributeValue(
-        PDSATTRIBUTE pAttribute,
-        const char* pszValue
-        );
-
-    static long SetAttributeValue(
-        PDSATTRIBUTE pAttribute,
-        const char* pszValue,
-        int         valLen
-        );
-
-    static long AddAttributeAndValue(
-        const char* pszAttributeName,
-        const char* pszValue,
-        PDSRECORD pRecord,
-        PDSATTRIBUTE* ppAttribute
-        );
-
-    static long AddAttributeAndValue(
-        const char* pszAttributeName,
-        const char* pszValue,
-        int valLen,
-        PDSRECORD pRecord,
-        PDSATTRIBUTE* ppAttribute
-        );
-
-    long WriteResponse(
-        char* buffer,
-        unsigned long maxBufferSize,
-        unsigned long& bytesWritten,
-        unsigned long& nRecordsWritten,
-        uint32_t headerType = 'StdA'
-        );
-
-    long WriteGDNIResponse(
-        char* buffer,
-        unsigned long maxBufferSize,
-        unsigned long& bytesWritten,
-        unsigned long& nRecordsWritten
-        );
-
-    static long ReadResponseAttributeValue(
-        char* buffer,
-        unsigned long  bufferSize,
-        unsigned long offset,
-        PDSATTRIBUTEVALUE* ppAttributeValue
-        );
-
-    static long ReadResponseAttribute(
-        char* buffer,
-        unsigned long  bufferSize,
-        unsigned long  offset,
-        PDSATTRIBUTE* ppAttribute
-        );
-
-    static long ReadResponseRecord(
-        char* buffer,
-        unsigned long  bufferSize,
-        unsigned long  offset,
-        PDSRECORD* ppRecord
-        );
-
-    static long ReadResponseRecords(
-        char* buffer,
-        unsigned long  bufferSize,
-        PDSMESSAGEHEADER pHeader,
-        PDSRECORD* ppRecordList
-        );
-
-    static long ReadResponseHeader(
-        char* buffer,
-        unsigned long  bufferSize,
-        PDSMESSAGEHEADER * ppHeader
-        );
-
-    static long ReadResponse(
-        char* buffer,
-        unsigned long  bufferSize,
-        PDSMESSAGE* ppMessage
-        );
-
+    static long CreateMemberList(DWORD dwMemberCount, PLSA_SECURITY_OBJECT* ppMembers, PLWIMEMBERLIST* ppMemberList);
+    static void FreeMemberList(PLWIMEMBERLIST pMemberList);
+    long AddUserRecordHelper(PLSA_SECURITY_OBJECT pUserObject);
+    long AddUserRecord(PLWIUSER pUser, OPTIONAL const char* AltName);
+    long AddGroupRecordHelper(PLSA_SECURITY_OBJECT pGroupObject);
+    long AddGroupRecord(PLWIGROUP pGroup, OPTIONAL const char* AltName);
+    static long BuildRecord(const char* pszType, const char* pszName, PDSRECORD* ppRecord);
+    long CommitRecord(PDSRECORD pRecord);
+    static long AddAttributeEx(OUT PDSATTRIBUTE* ppAttribute, IN PDSRECORD pRecord, IN const char* pszAttributeName, IN OPTIONAL const char* pszValue);
+    static long AddAttribute(const char* pszAttributeName, PDSRECORD pRecord, PDSATTRIBUTE * ppAttribute);
+    static long SetAttributeValue(PDSATTRIBUTE pAttribute, const char* pszValue);
+    static long SetAttributeValue(PDSATTRIBUTE pAttribute, const char* pszValue, int valLen);
+    static long AddAttributeAndValue(const char* pszAttributeName, const char* pszValue, PDSRECORD pRecord, PDSATTRIBUTE* ppAttribute);
+    static long AddAttributeAndValue(const char* pszAttributeName, const char* pszValue, int valLen, PDSRECORD pRecord, PDSATTRIBUTE* ppAttribute);
+    long WriteResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten, uint32_t headerType = 'StdA');
+    long WriteGDNIResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten);
+    static long ReadResponseAttributeValue(char* buffer, unsigned long  bufferSize, unsigned long offset, PDSATTRIBUTEVALUE* ppAttributeValue);
+    static long ReadResponseAttribute(char* buffer, unsigned long  bufferSize, unsigned long  offset, PDSATTRIBUTE* ppAttribute);
+    static long ReadResponseRecord(char* buffer, unsigned long  bufferSize, unsigned long  offset, PDSRECORD* ppRecord);
+    static long ReadResponseRecords(char* buffer, unsigned long  bufferSize, PDSMESSAGEHEADER pHeader, PDSRECORD* ppRecordList);
+    static long ReadResponseHeader(char* buffer, unsigned long  bufferSize, PDSMESSAGEHEADER * ppHeader);
+    static long ReadResponse(char* buffer, unsigned long  bufferSize, PDSMESSAGE* ppMessage);
     static long FindAttributeByType(PDSRECORD pRecord, const char* pszAttrType, PDSATTRIBUTE* ppAttribute);
     static long FindAttributeValueByID(PDSATTRIBUTE pAttribute, unsigned long attrValueID, PDSATTRIBUTEVALUE* ppAttributeValue);
     static long FindAttributeValueByIndex(PDSATTRIBUTE pAttribute, unsigned long attrValIndex, PDSATTRIBUTEVALUE* ppAttributeValue);
-
-    static long
-    CreateAttributeEntry(
-        OUT tAttributeEntryPtr* ppAttributeEntry,
-        IN PDSATTRIBUTE pAttribute
-        );
-
-    static long
-    CreateAttributeValueEntry(
-        OUT tAttributeValueEntryPtr* ppAttributeValueEntry,
-        IN PDSATTRIBUTEVALUE pAttributeValue
-        );
-
+    static long CreateAttributeEntry(OUT tAttributeEntryPtr* ppAttributeEntry, IN PDSATTRIBUTE pAttribute);
+    static long CreateAttributeValueEntry(OUT tAttributeValueEntryPtr* ppAttributeValueEntry, IN PDSATTRIBUTEVALUE pAttributeValue);
     static long GetNumberOfAttributes(PDSRECORD pRecord, uint16_t& nAttributes);
     static long GetNumberOfAttributeValues(PDSATTRIBUTE pAttribute, uint16_t& nValues);
     long DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecords);
@@ -340,18 +151,6 @@ protected:
 
     PLWIBITVECTOR _recTypeSet;
     PLWIBITVECTOR _attributeSet;
-
-    PLWIUSER _user;
-    PLWIUSER _userId;
-
-    char _lastUsername[256];
-    uid_t  _lastUserId;
-
-    char _lastGroupname[256];
-    gid_t  _lastGroupId;
-
-    PLWIGROUP _group;
-    PLWIGROUP _groupId;
 
     static uint32_t DEFAULT_ATTRIBUTE_TTL_SECONDS;
 };

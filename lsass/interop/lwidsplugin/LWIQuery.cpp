@@ -35,16 +35,8 @@ LWIQuery::LWIQuery(bool bGetValues)
       _pRecordListHead(NULL),
       _pRecordListTail(NULL),
       _recTypeSet(NULL),
-      _attributeSet(NULL),
-      _user(NULL),
-      _userId(NULL),
-      _group(NULL),
-      _groupId(NULL)
+      _attributeSet(NULL)
 {
-    _lastUsername[0] = 0;
-    _lastGroupname[0] = 0;
-    _lastUserId = -1;
-    _lastGroupId = -1;
 }
 
 LWIQuery::~LWIQuery()
@@ -59,23 +51,6 @@ LWIQuery::~LWIQuery()
     if (_attributeSet)
     {
         LWIFreeBitVector(_attributeSet);
-    }
-
-    if (_group)
-    {
-        FreeLWIGroup(_group);
-    }
-    if (_groupId)
-    {
-        FreeLWIGroup(_groupId);
-    }
-    if (_user)
-    {
-        FreeLWIUser(_user);
-    }
-    if (_userId)
-    {
-        FreeLWIUser(_userId);
     }
 }
 
@@ -223,38 +198,54 @@ LWIQuery::GetAuthString(
     )
 {
     long macError;
-    uint32_t wblStatus;
     char* guidString = NULL;
     char* upn = NULL;
-    char* realm = NULL;
+    char* generatedUpn = NULL;
+    char* userSamAccount = NULL;
+    char* userDomain = NULL;
     char* authString = NULL;
+    char* temp = NULL;
 
     macError = BuildGeneratedUID(pUser->pw_uid, &guidString);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    wblStatus = LWAuthAdapter::get_principal(pUser->pw_name, &upn);
-    if (wblStatus)
+    macError = GetUserPrincipalNames(pUser->pw_name, &upn, &userSamAccount, &userDomain);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    if (userDomain != NULL)
     {
-        LOG_ERROR("Failed to get UPN for '%s'", pUser->pw_name);
-        macError = ePlugInError;
+        // Convert the userDomain to a REALM
+        temp = userDomain;
+        while (*temp != '\0'){
+            *temp = toupper(*temp);
+            temp++;
+        }
+    }
+
+    if (userSamAccount != NULL &&
+        userDomain != NULL)
+    {
+        asprintf(&generatedUpn, "%s@%s", userSamAccount, userDomain);
+    }
+    else
+    {
+        if (upn != NULL)
+        {
+            asprintf(&generatedUpn, "%s", upn);
+        }
+        else
+        {
+            asprintf(&generatedUpn, "%s@%s", pUser->pw_name, "domain.not.online");
+        }
+    }
+
+    if (!generatedUpn)
+    {
+        macError = eDSAllocationFailed;
         GOTO_CLEANUP();
     }
 
-    /* TODO: Perhaps we should use the machine realm?  (Trusts?) */
-    realm = strchr(upn, '@');
-    if (realm)
-    {
-        /* Advance past '@' */
-        realm += 1;
-    }
-    if (!realm || !realm[0])
-    {
-        LOG_ERROR("Failed to get realm for UPN '%s'", upn);
-        macError = ePlugInError;
-        GOTO_CLEANUP();
-    }
-
-    asprintf(&authString, "1.0;Kerberosv5;%s;%s;%s;", guidString, upn, realm);
+    asprintf(&authString, "1.0;Kerberosv5;%s;%s;%s;", guidString, generatedUpn, userDomain);
     if (!authString)
     {
         macError = eDSAllocationFailed;
@@ -262,15 +253,32 @@ LWIQuery::GetAuthString(
     }
 
 cleanup:
-    LOG_LEAVE("--> %d", macError);
+
     if (guidString)
     {
-        LWIFreeString(guidString);
+        LW_SAFE_FREE_STRING(guidString);
     }
+
+    if (generatedUpn)
+    {
+        LW_SAFE_FREE_STRING(generatedUpn);
+    }
+
     if (upn)
     {
-        LWAuthAdapter::free_principal(upn);
+        LW_SAFE_FREE_STRING(upn);
     }
+
+    if (userSamAccount)
+    {
+        LW_SAFE_FREE_STRING(userSamAccount);
+    }
+
+    if (userDomain)
+    {
+        LW_SAFE_FREE_STRING(userDomain);
+    }
+
     if (macError)
     {
         if (authString)
@@ -575,61 +583,52 @@ long
 LWIQuery::QueryAllUserInformation(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIUSER pUser = NULL;
-	
-    LOG("Processing query which is like getpwent, need to return all user records." );
+    PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
+    DWORD dwNumUsersFound = 0;
+    DWORD iUser = 0;
 
-    GetUsersStart();
-            
-    while ( true ) {		
-        macError = GetUsersNext(&pUser);
-        if ( macError != 0 || pUser == NULL ) {
-            break;
-        }
-	else
-	{
-            macError = AddUserRecord(pUser, pszName);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-	}
+    macError = GetUserObjects(&ppUserObjects, &dwNumUsersFound);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    for (iUser = 0; iUser < dwNumUsersFound; iUser++)
+    {
+        macError = AddUserRecordHelper(ppUserObjects[iUser]);
+        GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
 cleanup:
 
-    if (pUser)
+    if (ppUserObjects)
     {
-        FreeLWIUser(pUser);
+        FreeObjectList(dwNumUsersFound, ppUserObjects);
     }
 
     return macError;
 }
 
+
 long
 LWIQuery::QueryAllGroupInformation(const char* pszName)
 {
     long macError = eDSNoErr;
-	PLWIGROUP pGroup = NULL;
-	
-    LOG("Processing query which is like getgrent, need to return all group records." );
+    PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
+    DWORD dwNumGroupsFound = 0;
+    DWORD iGroup = 0;
 
-    GetGroupsStart();
-            
-    while ( true ) {		
-        macError = GetGroupsNext(&pGroup);
-        if ( macError != 0 || pGroup == NULL ) {
-            break;
-        }
-	else
-	{
-            macError = AddGroupRecord(pGroup, pszName);
-            GOTO_CLEANUP_ON_MACERROR(macError);
-	}
+    macError = GetGroupObjects(&ppGroupObjects, &dwNumGroupsFound);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
+    {
+        macError = AddGroupRecordHelper(ppGroupObjects[iGroup]);
+        GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
 cleanup:
 
-    if (pGroup)
+    if (ppGroupObjects)
     {
-        FreeLWIGroup(pGroup);
+        FreeObjectList(dwNumGroupsFound, ppGroupObjects);
     }
 
     return macError;
@@ -639,41 +638,26 @@ long
 LWIQuery::QueryUserInformationByName(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIUSER pUser = NULL;
+    PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
     if ( !strcmp(pszName, kDSRecordsAll) )
     {
         macError = QueryAllUserInformation(pszName);
         GOTO_CLEANUP_ON_MACERROR(macError);
-#if 0 /* Test code - temporary */
-		macError = GetUserByName("son1", &pUser);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddUserRecord(pUser, "son1");
-        GOTO_CLEANUP_ON_MACERROR(macError);
-		
-		macError = GetUserByName("casacurtis\\glenn", &pUser);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddUserRecord(pUser, "casacurtis\\glenn");
-        GOTO_CLEANUP_ON_MACERROR(macError);
-#endif /* Test code */
-	}
+    }
     else
     {
-        LOG("Processing query which is like getpwnam(%s), need to return user record", pszName);
-
-        macError = GetUserByName(pszName, &pUser);
+        macError = GetUserObjectFromName(pszName, &ppUserObjects);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        macError = AddUserRecord(pUser, pszName);
+        macError = AddUserRecordHelper(ppUserObjects[0]);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
 cleanup:
-    if (pUser)
-    {
-        FreeLWIUser(pUser);
+
+    if (ppUserObjects) {
+        FreeObjectList(1, ppUserObjects);
     }
 
     return macError;
@@ -683,20 +667,18 @@ long
 LWIQuery::QueryUserInformationById(uid_t uid)
 {
     long macError = eDSNoErr;
-    PLWIUSER pUser = NULL;
+    PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
-    LOG("Processing query which is like getpwuid(%d), need to return user record", uid);
-
-    macError = GetUserById(uid, &pUser);
+    macError = GetUserObjectFromId(uid, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddUserRecord(pUser, NULL);
+    macError = AddUserRecordHelper(ppUserObjects[0]);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
-    if (pUser)
-    {
-        FreeLWIUser(pUser);
+
+    if (ppUserObjects) {
+        FreeObjectList(1, ppUserObjects);
     }
 
     return macError;
@@ -706,28 +688,15 @@ long
 LWIQuery::QueryUserInformationByGeneratedUID(const char* pszGUID)
 {
     long macError = eDSNoErr;
-    PLWIUSER pUser = NULL;
     uid_t uid;
-
-    LOG("Going to query information for records of type: Users, GeneratedUID:%s", pszGUID);
 
     macError = ExtractUIDFromGeneratedUID(pszGUID, uid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    LOG("Processing query which is like getpwuid( %d ), need to return user record", uid );
-
-    macError = GetUserById(uid, &pUser);
+    macError = QueryUserInformationById(uid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddUserRecord( pUser, pszGUID);
-    GOTO_CLEANUP_ON_MACERROR( macError );
-
 cleanup:
-
-    if (pUser)
-    {
-        FreeLWIUser(pUser);
-    }
 
     return macError;
 }
@@ -736,42 +705,19 @@ long
 LWIQuery::QueryGroupInformationByName(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
 
     if ( !strcmp(pszName, kDSRecordsAll) )
     {
         macError = QueryAllGroupInformation(pszName);
         GOTO_CLEANUP_ON_MACERROR(macError);
-#if 0 /* Test code - Temporary */
-		macError = GetGroupByName("casacurtis\\macusersgroup", &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddGroupRecord(pGroup, "casacurtis\\macusersgroup");
-        GOTO_CLEANUP_ON_MACERROR(macError);
-		
-		macError = GetGroupByName("casacurtis\\maccomputersgroup", &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddGroupRecord(pGroup, "maccomputersgroup");
-        GOTO_CLEANUP_ON_MACERROR(macError);
-#endif /* Test code */
     }
     else
     {
-        LOG("Processing query which is like getgrnam(%s), need to return group record", pszName);
-
-        macError = GetGroupByName(pszName, &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        AddGroupRecord(pGroup, pszName);
+        macError = GetGroupInformationByName(pszName);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
 cleanup:
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
@@ -780,21 +726,11 @@ long
 LWIQuery::QueryGroupInformationById(gid_t gid)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
 
-    LOG("Processing query which is like getgrgid(%d), need to return group record", gid);
-
-    macError = GetGroupById(gid, &pGroup);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    macError = AddGroupRecord(pGroup, NULL);
+    macError = GetGroupInformationById(gid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
@@ -803,29 +739,15 @@ long
 LWIQuery::QueryGroupInformationByGeneratedUID(const char* pszGUID)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
     gid_t gid;
-
-    LOG("Going to GetRecordList for records of type: Groups, GeneratedUID: %s", pszGUID );
 
     macError = ExtractGIDFromGeneratedUID(pszGUID, gid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    LOG("Processing query which is like getgrgid( %d ), need to return group record", gid );
-
-    // This is a call to find a given group, we should return the record that matches this group
-    macError = GetGroupById(gid, &pGroup);
+    macError = GetGroupInformationById(gid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddGroupRecord( pGroup, pszGUID);
-    GOTO_CLEANUP_ON_MACERROR( macError );
-
 cleanup:
-
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
@@ -834,29 +756,6 @@ long
 LWIQuery::QueryComputerListInformationByName(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-
-    if ( !strcmp(pszName, kDSRecordsAll) )
-    {
-        //macError = QueryAllGroupInformation(pszName);
-        //GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    else
-    {
-        LOG("Processing query to search for a given computer list (%s), need to return computer list record", pszName);
-
-        macError = GetGroupByName(pszName, &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        AddGroupRecord(pGroup, pszName);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-cleanup:
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
@@ -865,29 +764,6 @@ long
 LWIQuery::QueryComputerGroupInformationByName(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-
-    if ( !strcmp(pszName, kDSRecordsAll) )
-    {
-        //macError = QueryAllGroupInformation(pszName);
-        //GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    else
-    {
-        LOG("Processing query to search for a given computer group (%s), need to return computer group record", pszName);
-
-        macError = GetGroupByName(pszName, &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        AddGroupRecord(pGroup, pszName);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-cleanup:
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
@@ -896,115 +772,59 @@ long
 LWIQuery::QueryComputerInformationByName(const char* pszName)
 {
     long macError = eDSNoErr;
-    PLWIGROUP pGroup = NULL;
-
-    if ( !strcmp(pszName, kDSRecordsAll) )
-    {
-        //macError = QueryAllGroupInformation(pszName);
-        //GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-    else
-    {
-        LOG("Processing query to search for a given computer (%s), need to return computer record", pszName);
-
-        macError = GetGroupByName(pszName, &pGroup);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        AddGroupRecord(pGroup, pszName);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-cleanup:
-    if (pGroup)
-    {
-        FreeLWIGroup(pGroup);
-    }
 
     return macError;
 }
 
 long
 LWIQuery::QueryGroupsForUser(
-    IN PLWIUSER UserInfo
+    IN PCSTR pszUserSid
     )
 {
     MACERROR macError = eDSNoErr;
-    gid_t* groups = NULL;
-    int numGroups = 0;
-    PLWIGROUP groupInfo = NULL;
-    bool gotPrimaryGroup = false;
-    uint32_t err;
+    PLSA_SECURITY_OBJECT* ppGroups = NULL;
+    DWORD dwNumGroupsFound = 0;
+    DWORD iGroup = 0;
 
-    err = LWAuthAdapter::get_user_groups(UserInfo->pw_name, &groups, &numGroups);
-    if (err < 0)
+    macError = GetUserGroups(pszUserSid, &ppGroups, &dwNumGroupsFound);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
     {
-        LOG("Call to get_user_groups failed");
-        macError = eDSRecordNotFound;
+        macError = AddGroupRecordHelper(ppGroups[iGroup]);
         GOTO_CLEANUP_ON_MACERROR(macError);
-    }
-
-    for (int i = 0; i < numGroups; i++)
-    {
-        if (UserInfo->pw_gid == groups[i])
-        {
-            gotPrimaryGroup = true;
-        }
-
-        macError = GetGroupById(groups[i], &groupInfo);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddGroupRecord(groupInfo, NULL);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        FreeLWIGroup(groupInfo);
-        groupInfo = NULL;
-    }
-
-    if (!gotPrimaryGroup)
-    {
-        macError = GetGroupById(UserInfo->pw_gid, &groupInfo);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        macError = AddGroupRecord(groupInfo, NULL);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        FreeLWIGroup(groupInfo);
-        groupInfo = NULL;
     }
 
 cleanup:
 
-    if (groups)
+    if (ppGroups)
     {
-        LWAuthAdapter::free_user_groups(groups);
+        FreeObjectList(dwNumGroupsFound, ppGroups);
     }
 
-    if (groupInfo)
-    {
-        FreeLWIGroup(groupInfo);
-    }
     return macError;
 }
 
 long
 LWIQuery::QueryGroupsForUserByName(
-    IN const char* UserName
+    IN const char* pszName
     )
 {
     MACERROR macError = eDSNoErr;
-    PLWIUSER userInfo = NULL;
+    PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
-    macError = GetUserByName(UserName, &userInfo);
+    macError = GetUserObjectFromName(pszName, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = QueryGroupsForUser(userInfo);
+    macError = QueryGroupsForUser(ppUserObjects[0]->pszObjectSid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
-    if (userInfo)
-    {
-        FreeLWIUser(userInfo);
+
+    if (ppUserObjects) {
+        FreeObjectList(1, ppUserObjects);
     }
+
     return macError;
 }
 
@@ -1014,318 +834,71 @@ LWIQuery::QueryGroupsForUserById(
     )
 {
     MACERROR macError = eDSNoErr;
-    PLWIUSER userInfo = NULL;
+    PLSA_SECURITY_OBJECT* ppUserObjects = NULL;
 
-    macError = GetUserById(uid, &userInfo);
+    macError = GetUserObjectFromId(uid, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = QueryGroupsForUser(userInfo);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-cleanup:
-    if (userInfo)
-    {
-        FreeLWIUser(userInfo);
-    }
-    return macError;
-}
-
-long
-LWIQuery::GetUserById(
-    IN uid_t uid,
-    OUT PLWIUSER* ppUser
-    )
-{
-    long macError = eDSNoErr;
-
-    if (_lastUserId != uid)
-    {
-        int err = 0;
-        uint32_t nssStatus = NSS_STATUS_SUCCESS;
-        char buffer[512+1];
-        int buflen = sizeof(buffer) - 1;
-        struct passwd sUser = { 0 };
-
-        nssStatus = LWAuthAdapter::getpwuid( uid, &sUser, buffer, buflen, &err );
-        if ( nssStatus != NSS_STATUS_SUCCESS || err )
-        {
-            LOG("Call to getpwuid failed with nssstatus: %d, err: %d", nssStatus, err );
-            macError = eDSRecordNotFound;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        if (_userId)
-        {
-            FreeLWIUser(_userId);
-            _userId = NULL;
-        }
-
-        macError = BuildLWIUser(&sUser, &_userId);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        _lastUsername[0] = 0;
-        _lastUserId = uid;
-    }
-
-    macError = CloneLWIUser(_userId, ppUser);
+    macError = QueryGroupsForUser(ppUserObjects[0]->pszObjectSid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
+
+    if (ppUserObjects) {
+        FreeObjectList(1, ppUserObjects);
+    }
 
     return macError;
 }
 
 long
-LWIQuery::GetUserByName(
-    IN const char* pszUsername,
-    OUT PLWIUSER* ppUser
+LWIQuery::GetGroupInformationById(
+    IN gid_t gid
     )
 {
     long macError = eDSNoErr;
+    PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
 
-    if (strcmp(_lastUsername, pszUsername))
-    {
-        int err = 0;
-        long nssStatus = NSS_STATUS_SUCCESS;
-        char buffer[512+1];
-        int buflen = sizeof(buffer) - 1;
-        struct passwd sUser = { 0 };
+    macError = GetGroupObjectFromId(gid, &ppGroupObjects);
+    GOTO_CLEANUP_ON_MACERROR(macError);
 
-        nssStatus = LWAuthAdapter::getpwnam( pszUsername, &sUser, buffer, buflen, &err );
-        if ( nssStatus != NSS_STATUS_SUCCESS || err )
-        {
-            LOG("Call to getpwnam failed with nssstatus: %d, err: %d", nssStatus, err );
-            macError = eDSRecordNotFound;
-            GOTO_CLEANUP_ON_MACERROR( macError );
-        }
-
-        if (_user)
-        {
-            FreeLWIUser(_user);
-            _user = NULL;
-        }
-
-        macError = BuildLWIUser(&sUser, &_user);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        strcpy(_lastUsername, pszUsername);
-        _lastUserId = -1;
-    }
-
-    macError = CloneLWIUser(_user, ppUser);
+    macError = AddGroupRecordHelper(ppGroupObjects[0]);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
 
-    return macError;
-}
-
-void
-LWIQuery::GetUsersStart(
-    void
-    )
-{
-    /* Perform class housekeeping */	
-    if (_user)
+    if (ppGroupObjects)
     {
-        FreeLWIUser(_user);
-        _user = NULL;
+        FreeObjectList(1, ppGroupObjects);
     }
-	
-    _lastUserId = -1;
-	
-    /* Setup our enumeration with auth setpwent routine */
-    LWAuthAdapter::setpwent();
-}
-
-long
-LWIQuery::GetUsersNext(
-    OUT PLWIUSER* ppUser
-    )
-{
-    long macError = eDSNoErr;
-
-	int err = 0;
-	long nssStatus = NSS_STATUS_SUCCESS;
-	char buffer[512+1];
-	int buflen = sizeof(buffer) - 1;
-	struct passwd sUser = { 0 };
-
-	nssStatus = LWAuthAdapter::getpwent( &sUser, buffer, buflen, &err );
-	if ( nssStatus != NSS_STATUS_SUCCESS || err )
-	{
-		LOG("Call to getpwent failed with nssstatus: %d, err: %d", nssStatus, err );
-		macError = eDSRecordNotFound;
-		GOTO_CLEANUP_ON_MACERROR( macError );
-	}
-
-	if (_user)
-	{
-		FreeLWIUser(_user);
-		_user = NULL;
-	}
-
-	macError = BuildLWIUser(&sUser, &_user);
-	GOTO_CLEANUP_ON_MACERROR(macError);
-
-	strcpy(_lastUsername, _user->pw_name);
-	_lastUserId = _user->pw_uid;
-
-    macError = CloneLWIUser(_user, ppUser);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-cleanup:
 
     return macError;
 }
 
 long
-LWIQuery::GetGroupById(
-    IN gid_t gid,
-    OUT PLWIGROUP* ppGroup
+LWIQuery::GetGroupInformationByName(
+    IN const char* pszName
     )
 {
     long macError = eDSNoErr;
+    PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
 
-    if (_lastGroupId != gid)
-    {
-        int err = 0;
-        long nssStatus = NSS_STATUS_SUCCESS;
-        char buffer[512+1];
-        int buflen = sizeof(buffer) - 1;
-        struct group grp = { 0 };
+    macError = GetGroupObjectFromName(pszName, &ppGroupObjects);
+    GOTO_CLEANUP_ON_MACERROR(macError);
 
-        nssStatus = LWAuthAdapter::getgrgid( gid, &grp, buffer, buflen, &err );
-        if ( nssStatus != NSS_STATUS_SUCCESS || err )
-        {
-            LOG("Call to getgrgid failed with nssstatus: %d, err: %d", nssStatus, err );
-            macError = eDSRecordNotFound;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        if (_groupId)
-        {
-            FreeLWIGroup(_groupId);
-        }
-
-        macError = BuildLWIGroup(&grp, &_groupId);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        _lastGroupname[0] = 0;
-        _lastGroupId = gid;
-    }
-
-    macError = CloneLWIGroup(_groupId, ppGroup);
+    macError = AddGroupRecordHelper(ppGroupObjects[0]);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
 
-    return macError;
-}
-
-long
-LWIQuery::GetGroupByName(
-    IN const char* pszGroupName,
-    OUT PLWIGROUP* ppGroup
-    )
-{
-    long macError = eDSNoErr;
-
-    if (strcmp(_lastGroupname, pszGroupName))
+    if (ppGroupObjects)
     {
-        int err = 0;
-        long nssStatus = NSS_STATUS_SUCCESS;
-        char buffer[512+1];
-        int buflen = sizeof(buffer) - 1;
-        struct group grp = { 0 };
-
-        nssStatus = LWAuthAdapter::getgrnam( pszGroupName, &grp, buffer, buflen, &err );
-        if ( nssStatus != NSS_STATUS_SUCCESS || err )
-        {
-            LOG("Call to getgrnam failed with nssstatus: %d, err: %d", nssStatus, err );
-            macError = eDSRecordNotFound;
-            GOTO_CLEANUP_ON_MACERROR(macError);
-        }
-
-        if (_group)
-        {
-            FreeLWIGroup(_group);
-            _group = NULL;
-        }
-
-        macError = BuildLWIGroup(&grp, &_group);
-        GOTO_CLEANUP_ON_MACERROR(macError);
-
-        strcpy(_lastGroupname, pszGroupName);
-        _lastGroupId = -1;
+        FreeObjectList(1, ppGroupObjects);
     }
-
-    macError = CloneLWIGroup(_group, ppGroup);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-cleanup:
 
     return macError;
 }
 
-void
-LWIQuery::GetGroupsStart(
-    void
-    )
-{
-    /* Perform class housekeeping */	
-    if (_group)
-    {
-	FreeLWIGroup(_group);
-	_group = NULL;
-    }
-	
-    _lastGroupId = -1;
-	
-    /* Setup our enumeration with auth setgrent routine */
-    LWAuthAdapter::setgrent();
-}
-
-long
-LWIQuery::GetGroupsNext(
-    OUT PLWIGROUP* ppGroup
-    )
-{
-    long macError = eDSNoErr;
-
-    int err = 0;
-    long nssStatus = NSS_STATUS_SUCCESS;
-    char buffer[512+1];
-    int buflen = sizeof(buffer) - 1;
-    struct group grp = { 0 };
-
-    nssStatus = LWAuthAdapter::getgrent( &grp, buffer, buflen, &err );
-    if ( nssStatus != NSS_STATUS_SUCCESS || err )
-    {
-        LOG("Call to getgrent failed with nssstatus: %d, err: %d", nssStatus, err );
-        macError = eDSRecordNotFound;
-        GOTO_CLEANUP_ON_MACERROR( macError );
-    }
-
-    if (_group)
-    {
-        FreeLWIGroup(_group);
-        _group = NULL;
-    }
-
-    macError = BuildLWIGroup(&grp, &_group);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-    strcpy(_lastGroupname, _group->gr_name);
-    _lastUserId = _group->gr_gid;
-
-    macError = CloneLWIGroup(_group, ppGroup);
-    GOTO_CLEANUP_ON_MACERROR(macError);
-
-cleanup:
-
-    return macError;
-}
 
 long
 LWIQuery::SetDistinguishedName(PDSRECORD pRecord, const char* pszUsername, bool bSetValue)
@@ -1419,13 +992,16 @@ LWIQuery::SetNFSHomeDirectory(PDSRECORD pRecord, const PLWIUSER pUser, bool bSet
     long macError = eDSNoErr;
     PDSATTRIBUTE pAttribute = NULL;
 
-    if (bSetValue)
+    if (pUser && pUser->pw_nfs_home_dir)
     {
-        macError = AddAttributeAndValue(kDS1AttrNFSHomeDirectory, pUser->pw_dir, pRecord, &pAttribute);
-    }
-    else
-    {
-        macError = AddAttribute(kDS1AttrNFSHomeDirectory, pRecord, &pAttribute);
+        if (bSetValue)
+        {
+            macError = AddAttributeAndValue(kDS1AttrNFSHomeDirectory, pUser->pw_nfs_home_dir, pRecord, &pAttribute);
+        }
+        else
+        {
+            macError = AddAttribute(kDS1AttrNFSHomeDirectory, pRecord, &pAttribute);
+        }
     }
 
     return macError;
@@ -1613,20 +1189,19 @@ LWIQuery::SetGroupMembership(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetV
 long
 LWIQuery::SetGroupMembership(PDSRECORD pRecord, const PLWIGROUP pGroup, bool bSetValue)
 {
-    // A list of users that belong to a given group record
     long macError = eDSNoErr;
     PDSATTRIBUTE pAttribute = NULL;
 
     macError = AddAttribute(kDSNAttrGroupMembership, pRecord, &pAttribute);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    if (bSetValue)
+    if (bSetValue && pGroup)
     {
-        if (pGroup->gr_mem)
+        if (pGroup->gr_membership)
         {
-            for (int index = 0; pGroup->gr_mem[index] && *(pGroup->gr_mem[index]); index++)
+            for (int index = 0; pGroup->gr_membership[index] && *(pGroup->gr_membership[index]); index++)
             {
-                macError = SetAttributeValue(pAttribute, pGroup->gr_mem[index]);
+                macError = SetAttributeValue(pAttribute, pGroup->gr_membership[index]);
                 GOTO_CLEANUP_ON_MACERROR(macError);
             }
         }
@@ -1848,18 +1423,138 @@ LWIQuery::FreeMessageHeader(PDSMESSAGEHEADER pHeader)
 }
 
 long
+LWIQuery::CreateMemberList(DWORD dwMemberCount, PLSA_SECURITY_OBJECT* ppMembers, PLWIMEMBERLIST* ppMemberList)
+{
+    long macError = eDSNoErr;
+    PLWIMEMBERLIST pList = NULL;
+    PLWIMEMBERLIST pPrev = NULL;
+    PLWIMEMBERLIST pNew = NULL;
+    DWORD iMember = 0;
+
+    if (ppMembers)
+    {
+        for (iMember = 0; iMember < dwMemberCount; iMember++)
+        {
+            if(ppMembers[iMember] && ppMembers[iMember]->type == LSA_OBJECT_TYPE_USER)
+            {
+                macError = LwAllocateMemory(sizeof(LWIMEMBERLIST), (PVOID*)&pNew);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+
+                macError = LwAllocateString(ppMembers[iMember]->userInfo.pszUnixName, &pNew->pszName);
+                GOTO_CLEANUP_ON_MACERROR(macError);
+
+                pNew->uid = ppMembers[iMember]->userInfo.uid;
+
+                if (pPrev)
+                {
+                    pPrev->pNext = pNew;
+                }
+                else
+                {
+                    pList = pNew;
+                }
+
+                pPrev = pNew;
+                pNew = NULL;
+
+                iMember++;
+            }
+        }
+    }
+
+    *ppMemberList = pList;
+    pList = NULL;
+
+cleanup:
+
+    FreeMemberList(pList);
+
+    return macError;
+}
+
+void
+LWIQuery::FreeMemberList(PLWIMEMBERLIST pMemberList)
+{
+    while(pMemberList)
+    {
+        PLWIMEMBERLIST pCur = pMemberList;
+
+        pMemberList = pMemberList->pNext;
+
+        LW_SAFE_FREE_STRING(pCur->pszName);
+        LW_SAFE_FREE_STRING(pCur->pszUPN);
+        LwFreeMemory(pCur);
+    }
+}
+
+long
+LWIQuery::AddUserRecordHelper(
+    IN PLSA_SECURITY_OBJECT pUserObject
+    )
+{
+    long macError = eDSNoErr;
+    PLWIUSER pUser = NULL;
+    PAD_USER_ATTRIBUTES padUserInfo = NULL;
+    PSTR pszUserName = NULL;
+
+    macError = GetADUserInfo(pUserObject->userInfo.uid, &padUserInfo);
+    if (macError)
+    {
+        // LOG("No cached AD attributes found for user: %s",
+        //     pUserObject->userInfo.pszUnixName ? pUserObject->userInfo.pszUnixName : "<null>");
+        macError = eDSNoErr;
+    }
+
+    if (padUserInfo)
+    {
+        pszUserName = padUserInfo->pszDisplayName;
+    }
+
+    if (!pszUserName)
+    {
+        pszUserName = pUserObject->userInfo.pszUnixName;
+    }
+
+    macError = CreateLWIUser(pUserObject->userInfo.pszUnixName, /* Record Name */
+                             pszUserName, /* Display name */
+                             NULL, /* Password */
+                             NULL, /* Class */
+                             pUserObject->userInfo.pszGecos,
+                             pUserObject->userInfo.pszHomedir,
+                             NULL,
+                             NULL,
+                             NULL,
+                             pUserObject->userInfo.pszShell,
+                             pUserObject->userInfo.uid,
+                             pUserObject->userInfo.gid,
+                             padUserInfo,
+                             &pUser);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    macError = AddUserRecord(pUser, pszUserName);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+cleanup:
+
+    FreeLWIUser(pUser);
+    FreeADUserInfo(padUserInfo);
+
+    return macError;
+}
+
+long
 LWIQuery::AddUserRecord(
-    IN PLWIUSER User,
+    IN PLWIUSER pUser,
     IN OPTIONAL const char* AltName
     )
 {
     long macError = eDSNoErr;
     PDSRECORD pRecord = NULL;
 
-    macError = BuildRecord(kDSStdRecordTypeUsers, User->pw_name, &pRecord);
+    macError = BuildRecord(kDSStdRecordTypeUsers, pUser->pw_name, &pRecord);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = ProcessUserAttributes(pRecord, AltName, User);
+    macError = ProcessUserAttributes(pRecord, AltName, pUser);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     macError = CommitRecord(pRecord);
@@ -1868,6 +1563,7 @@ LWIQuery::AddUserRecord(
     pRecord = NULL;
 
 cleanup:
+
     if (pRecord)
        FreeRecord(pRecord);
 
@@ -1875,18 +1571,61 @@ cleanup:
 }
 
 long
+LWIQuery::AddGroupRecordHelper(
+    IN PLSA_SECURITY_OBJECT pGroupObject
+    )
+{
+    long macError = eDSNoErr;
+    PLWIGROUP pGroup = NULL;
+    PLWIMEMBERLIST pMembers = NULL;
+    PLSA_SECURITY_OBJECT* ppGroupMembers = NULL;
+    DWORD dwMemberCount = 0;
+
+    macError = ExpandGroupMembers(pGroupObject->pszObjectSid, &ppGroupMembers, &dwMemberCount);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    macError = CreateMemberList(dwMemberCount, ppGroupMembers, &pMembers);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    macError = CreateLWIGroup(pGroupObject->groupInfo.pszUnixName, /* Group Display Name */
+                              pGroupObject->groupInfo.pszPasswd,
+                              pGroupObject->groupInfo.pszUnixName, /* Group Name */
+                              NULL, /* Comment */
+                              pMembers,
+                              NULL, /* Generated UID - Computed automatically later */
+                              pGroupObject->groupInfo.gid,
+                              &pGroup);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    macError = AddGroupRecord(pGroup, pGroupObject->groupInfo.pszUnixName);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+cleanup:
+
+    if (ppGroupMembers)
+    {
+        FreeObjectList(dwMemberCount, ppGroupMembers);
+    }
+
+    FreeLWIGroup(pGroup);
+    FreeMemberList(pMembers);
+
+    return macError;
+}
+
+long
 LWIQuery::AddGroupRecord(
-    IN PLWIGROUP Group,
+    IN PLWIGROUP pGroup,
     IN OPTIONAL const char* AltName
     )
 {
     long macError = eDSNoErr;
     PDSRECORD pRecord = NULL;
 
-    macError = BuildRecord(kDSStdRecordTypeGroups, Group->gr_name, &pRecord);
+    macError = BuildRecord(kDSStdRecordTypeGroups, pGroup->gr_name, &pRecord);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = ProcessGroupAttributes(pRecord, AltName, Group);
+    macError = ProcessGroupAttributes(pRecord, AltName, pGroup);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     macError = CommitRecord(pRecord);
@@ -1895,11 +1634,13 @@ LWIQuery::AddGroupRecord(
     pRecord = NULL;
 
 cleanup:
+
     if (pRecord)
        FreeRecord(pRecord);
 
     return macError;
 }
+
 
 long
 LWIQuery::BuildRecord(
