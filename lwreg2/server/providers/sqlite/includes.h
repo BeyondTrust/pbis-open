@@ -76,6 +76,7 @@
 #include "structs.h"
 #include "sqldb_p.h"
 #include "sqldb_create.h"
+#include "sqldb_create_schema.h"
 #include "sqlitecache_p.h"
 #include "sqliteapi_p.h"
 #include "sqliteapi.h"

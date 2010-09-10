@@ -12,6 +12,7 @@ libregserver_provider_sqlite_la_SOURCES = \
     sqldb_p.c     \
     sqlitecache.c     \
     regsqlite.c    \
+    regschema.c    \
     globals.c           
 
 libregserver_provider_sqlite_la_CPPFLAGS = \

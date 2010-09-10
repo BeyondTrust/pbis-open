@@ -725,6 +725,22 @@ RegDbOpen(
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
 
+
+    /* Registry schema view sql statement initialization */
+
+    /*pstCreateRegSchemaKey*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_INSERT_REG_SCHEMA_KEY);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+                pConn->pDb,
+                pwszQueryStatement,
+                -1,
+                &pConn->pstCreateRegSchemaKey,
+                NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
     *phDb = pConn;
 
 cleanup:
@@ -760,6 +776,7 @@ error:
 NTSTATUS
 RegDbStoreRegKeys(
     IN HANDLE hDB,
+    IN LWREG_VIEW dwView,
     IN DWORD dwEntryCount,
     IN PREG_DB_KEY* ppKeys
     )
@@ -835,7 +852,19 @@ RegDbStoreRegKeys(
 			BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
 		}
 
-		pstCreateKey = pConn->pstCreateRegKey;
+		switch (dwView)
+		{
+		    case LWREG_USER_VIEW:
+		          pstCreateKey = pConn->pstCreateRegKey;
+		          break;
+		    case LWREG_SCHEMA_VIEW:
+		          pstCreateKey = pConn->pstCreateRegSchemaKey;
+		          break;
+
+		    default:
+		          status = STATUS_INVALID_PARAMETER;
+		          BAIL_ON_NT_STATUS(status);
+		}
 
 		if (!bGotNow)
 		{
@@ -1233,6 +1262,7 @@ error:
 NTSTATUS
 RegDbCreateKey(
     IN REG_DB_HANDLE hDb,
+    IN LWREG_VIEW dwView,
     IN PCWSTR pwszFullKeyName,
     IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
@@ -1281,6 +1311,7 @@ RegDbCreateKey(
 
     status = RegDbStoreRegKeys(
                  hDb,
+                 dwView,
                  1,
                  &pRegKey);
     BAIL_ON_NT_STATUS(status);
@@ -2315,7 +2346,9 @@ RegDbFreePreparedStatements(
         &pConn->pstQueryAclRefCount,
         &pConn->pstQueryTotalAclCount,
         &pConn->pstQueryAclByOffset,
-        &pConn->pstUpdateRegAclByCacheId
+        &pConn->pstUpdateRegAclByCacheId,
+
+        &pConn->pstCreateRegSchemaKey
     };
 
     for (i = 0; i < sizeof(pppstFreeList)/sizeof(pppstFreeList[0]); i++)

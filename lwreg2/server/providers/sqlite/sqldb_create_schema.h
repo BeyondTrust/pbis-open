@@ -33,111 +33,31 @@
  *
  * Module Name:
  *
- *        sqldb_create.h
+ *        sqldb_create_schema.h
  *
  * Abstract:
  *
  *        Likewise Registry
  *
  *        Sqlite registry backend
+ *        Registry schema Related SQL statement
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Kyle Stemen (kstemen@likewisesoftware.com)
+ * Authors:
  *          Wei Fu (wfu@likewise.com)
  */
-#ifndef __SQLCACHE_CREATE_H__
-#define __SQLCACHE_CREATE_H__
+#ifndef __SQLCACHE_CREATE_SCHEMA_H__
+#define __SQLCACHE_CREATE_SCHEMA_H__
 
-#define REG_DB_TABLE_NAME_KEYS          "regkeys1"
-#define REG_DB_TABLE_NAME_VALUES        "regvalues1"
-#define REG_DB_TABLE_NAME_ACLS          "regacl1"
 
-#define REG_DB_TABLE_NAME_SCHEMA_KEYS   "regschemakeys1"
-#define REG_DB_TABLE_NAME_SCHEMA_VALUES "regschemavalues1"
-#define REG_DB_TABLE_NAME_SCHEMA_ACLS   "regschemaacl1"
+#define REG_DB_INSERT_REG_SCHEMA_KEY "INSERT INTO " REG_DB_TABLE_NAME_SCHEMA_KEYS " (" \
+                                     "ParentId," \
+                                     "KeyName," \
+                                     "AclIndex," \
+                                     "LastUpdated) " \
+                                     "VALUES (?1,?2,?3,?4)" \
 
-#define REG_DB_TABLE_NAME_CACHE_TAGS  "regcachetags"
-#define REG_DB_TABLE_NAME_ENTRIES     "regentry1"
 
-#define _REG_DB_SQL_DROP_TABLE(Table) \
-    "DROP TABLE IF EXISTS " Table ";\n"
-
-#define _REG_DB_SQL_DROP_INDEX(Table, Column) \
-    "DROP INDEX IF EXISTS " Table "_" Column ";\n"
-
-#define _REG_DB_SQL_CREATE_TABLE(Table) \
-    "CREATE TABLE IF NOT EXISTS " Table " "
-
-#define _REG_DB_SQL_CREATE_INDEX(Table, Column) \
-    "CREATE INDEX IF NOT EXISTS " Table "_" Column " ON " Table "(" Column ");\n"
-
-#define REG_DB_CREATE_TABLES \
-    _REG_DB_SQL_DROP_TABLE(REG_DB_TABLE_NAME_CACHE_TAGS) \
-    _REG_DB_SQL_DROP_INDEX(REG_DB_TABLE_NAME_ENTRIES, "CacheId") \
-    _REG_DB_SQL_DROP_TABLE(REG_DB_TABLE_NAME_ENTRIES) \
-    "\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_KEYS) "(\n" \
-        "    CacheId integer primary key autoincrement,\n" \
-        "    LastUpdated integer,\n" \
-        "    ParentId integer,\n" \
-        "    KeyName text COLLATE NOCASE,\n" \
-        "    AclIndex integer,\n" \
-        "    UNIQUE (ParentId, KeyName)\n" \
-        "    );\n" \
-        _REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_KEYS, "CacheId") \
-        "\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_VALUES) "(\n" \
-        "    LastUpdated integer,\n" \
-        "    ParentId integer,\n" \
-        "    ValueName text COLLATE NOCASE,\n" \
-        "    Type integer,\n" \
-        "    Value blob,\n" \
-        "    UNIQUE (ParentId, ValueName)\n" \
-        "    );\n" \
-	_REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_ACLS) "(\n" \
-		"    CacheId integer primary key autoincrement,\n" \
-		"    Acl blob,\n" \
-		"    UNIQUE (Acl)\n" \
-		"    );\n" \
-		_REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_ACLS, "CacheId") \
-		"\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_KEYS) "(\n" \
-        "    CacheId integer primary key autoincrement,\n" \
-        "    LastUpdated integer,\n" \
-        "    ParentId integer,\n" \
-        "    KeyName text COLLATE NOCASE,\n" \
-        "    AclIndex integer,\n" \
-        "    UNIQUE (ParentId, KeyName)\n" \
-        "    );\n" \
-        _REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_SCHEMA_KEYS, "CacheId") \
-        "\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_VALUES) "(\n" \
-        "    LastUpdated integer,\n" \
-        "    ParentId integer,\n" \
-        "    ValueName text COLLATE NOCASE,\n" \
-        "    Type integer,\n" \
-        "    DefaultValue blob,\n" \
-        "    Document text COLLATE NOCASE,\n" \
-        "    RangeType integer,\n" \
-        "    Hint integer,\n" \
-        "    Range blob,\n" \
-        "    UNIQUE (ParentId, ValueName)\n" \
-        "    );\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_ACLS) "(\n" \
-        "    CacheId integer primary key autoincrement,\n" \
-        "    Acl blob,\n" \
-        "    UNIQUE (Acl)\n" \
-        "    );\n" \
-        _REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_SCHEMA_ACLS, "CacheId") \
-        "\n" \
-		""
-
-#define REG_DB_INSERT_REG_KEY "INSERT INTO " REG_DB_TABLE_NAME_KEYS " (" \
-                                "ParentId," \
-                                "KeyName," \
-                                "AclIndex," \
-                                "LastUpdated) " \
-                                "VALUES (?1,?2,?3,?4)" \
+#if 0
                                 ""
 
 #define REG_DB_INSERT_REG_VALUE "INSERT INTO " REG_DB_TABLE_NAME_VALUES " (" \
@@ -283,5 +203,7 @@
             "from " REG_DB_TABLE_NAME_ACLS " " \
             "LIMIT 1 OFFSET ?1" \
 
-#endif /* __SQLCACHE_CREATE_H__ */
+#endif
+
+#endif /* __SQLCACHE_CREATE_SCHEMA_H__ */
 

@@ -306,6 +306,7 @@ SqliteCreateKeyInternal(
 
 	// Create key with SD
 	status = RegDbCreateKey(ghCacheConnection,
+	                        LWREG_USER_VIEW,
 							pwszFullKeyName,
 							pSecDescRelToSet,
 							ulSecDescLengthToSet,
