@@ -241,7 +241,7 @@ RegExportAttributeEntries(
                 if (ppwszRangeEnumStrings[1])
                 {
                     dwError = RtlCStringAllocateAppendPrintf(
-                                  &pszDumpString, ", ");
+                                  &pszDumpString, " ");
                     BAIL_ON_REG_ERROR(dwError);
                 }
             }
@@ -365,6 +365,67 @@ error:
     goto cleanup;
 }
 
+
+/* Dump multi_sz in sza:"plain text" " format" */
+DWORD
+RegExportMultiStringArray(
+    PCSTR pszValueName,
+    PVOID pValue,
+    DWORD dwValueLen,
+    PSTR *ppszDumpString,
+    PDWORD pdwDumpStringLen)
+{
+    DWORD dwError = 0;
+    DWORD dwPwszLen= 0;
+    PWSTR pwszValue = NULL;
+    PSTR pszString = NULL;
+    PSTR pszDumpString = NULL;
+
+    BAIL_ON_INVALID_POINTER(pszValueName);
+    BAIL_ON_INVALID_POINTER(pValue);
+
+    pwszValue = (PWSTR) pValue;
+    dwError = RegCStringAllocatePrintf(
+                  &pszDumpString,
+                  "\"%s\"=sza:",
+                  pszValueName);
+    BAIL_ON_REG_ERROR(dwError);
+ 
+    while (*pwszValue)
+    {
+        dwError = RegCStringAllocateFromWC16String(
+                      &pszString, 
+                      pwszValue);
+        BAIL_ON_REG_ERROR(dwError);
+        dwError = RtlCStringAllocateAppendPrintf(
+                      &pszDumpString,
+                      "\"%s\"",
+                      pszString);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszString);
+
+        dwPwszLen = wc16slen(pwszValue);
+        pwszValue += dwPwszLen + 1;
+        if (*pwszValue)
+        {
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString,
+                          " \\\n    ");
+            BAIL_ON_REG_ERROR(dwError);
+        }
+    }
+
+cleanup:
+    *ppszDumpString = pszDumpString;
+    *pdwDumpStringLen = strlen(pszDumpString);
+    return dwError;
+error:
+    LWREG_SAFE_FREE_STRING(pszString);
+    LWREG_SAFE_FREE_STRING(pszDumpString);
+    goto cleanup;
+}
+
+
     
 DWORD
 RegExportEntry(
@@ -383,7 +444,6 @@ RegExportEntry(
         case REG_BINARY:
         case REG_NONE:
         case REG_EXPAND_SZ:
-        case REG_MULTI_SZ:
         case REG_RESOURCE_LIST:
         case REG_FULL_RESOURCE_DESCRIPTOR:
         case REG_RESOURCE_REQUIREMENTS_LIST:
@@ -395,6 +455,14 @@ RegExportEntry(
                                           valueLen,
                                           dumpString,
                                           dumpStringLen);
+            break;
+        case REG_MULTI_SZ:
+            dwError = RegExportMultiStringArray(
+                          valueName,
+                          value,
+                          valueLen,
+                          dumpString,
+                          dumpStringLen);
             break;
         case REG_DWORD:
             dwError = RegExportDword(valueType,
@@ -784,7 +852,7 @@ ProcessExportedKeyInfo(
     }
 
     for (iCount = 0; iCount < dwValuesCount; iCount++)
-   {
+    {
        memset(pwszValueName, 0, MAX_KEY_LENGTH);
        dwValueNameLen = MAX_KEY_LENGTH;
        memset(value, 0, MAX_VALUE_LENGTH);
@@ -822,18 +890,19 @@ ProcessExportedKeyInfo(
                       pValue,
                       dwValueLen,
                       pPrevType);
-       BAIL_ON_REG_ERROR(dwError);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszValueName);
+        LWREG_SAFE_FREE_STRING(pszValue);
    }
 
 cleanup:
-    LWREG_SAFE_FREE_STRING(pszValueName);
     LWREG_SAFE_FREE_MEMORY(pszValue);
     memset(value, 0 , MAX_KEY_LENGTH);
 
     return dwError;
 
 error:
-
+    LWREG_SAFE_FREE_STRING(pszValueName);
     goto cleanup;
 }
 

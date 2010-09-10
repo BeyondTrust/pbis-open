@@ -1176,8 +1176,6 @@ RegShellCmdParse(
             }
             break;
         case REGSHELL_CMD_EXPORT:
-            dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
-            BAIL_ON_REG_ERROR(dwError);
             if (argc > 3)
             {
                 dwError = RegShellCmdParseKeyName(
@@ -1193,16 +1191,19 @@ RegShellCmdParse(
                 dwError = RegCStringDuplicate(
                               (LW_PVOID) &pCmdItem->args[0], argv[3]);
                 BAIL_ON_REG_ERROR(dwError);
-                pCmdItem->argsCount = 1;
+                pCmdItem->argsCount = 2;
             }
             else
             {
+                dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
+                BAIL_ON_REG_ERROR(dwError);
                 dwError = RegAllocateMemory(
                               sizeof(PSTR) * 2,
                               (PVOID*)&pCmdItem->args);
                 BAIL_ON_REG_ERROR(dwError);
                 dwError = RegCStringDuplicate(
                               (LW_PVOID) &pCmdItem->args[0], argv[2]);
+                pCmdItem->argsCount = 1;
             }
             break;
 
