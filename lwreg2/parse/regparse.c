@@ -1510,7 +1510,7 @@ RegParseGetLineNumber(
     BAIL_ON_INVALID_POINTER(pHandle);
     BAIL_ON_INVALID_POINTER(pdwLineNum);
 
-    *pdwLineNum = pParseHandle->registryEntry.lineNumber;
+    RegLexGetLineNumber(pParseHandle->lexHandle, pdwLineNum);
     
 cleanup:
     return dwError;

@@ -1,6 +1,8 @@
 #
 # Example "Registry Schema" entry
 #
+"a"="b"
+"a"="s"
 [HKEY_THIS_MACHINE\Services\lsass\Parameters123]
 "v1" = {
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
@@ -11,14 +13,13 @@
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
 }
 
-
 "teststr1"="teststr1 value 1"
-
 
 "syntax_error" = {
   hint =  seconds
   default = "/foo/bar"
 }
+
 
 "pathhint" = {
   hint = path
@@ -174,6 +175,7 @@
   "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
   "hint" = "string"
 }
+
 
 #
 # Old format not in schema format

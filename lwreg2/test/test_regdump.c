@@ -170,7 +170,8 @@ DWORD parseCallbackDebug(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
 int main(int argc, char *argv[])
 {
-    DWORD dwError;
+    DWORD dwError = 0;
+    DWORD dwLineNum = 0;
     HANDLE parseH = NULL;
     USER_CONTEXT ctx = {0};
 
@@ -201,7 +202,17 @@ int main(int argc, char *argv[])
     RegParseInstallCallback(parseH, parseCallback, &ctx, NULL);
 
     dwError = RegParseRegistry(parseH);
+    BAIL_ON_REG_ERROR(dwError);
 
+cleanup:
     RegParseClose(parseH);
+    return dwError ? 1 : 0;
+
+error:
+    RegParseGetLineNumber(parseH, &dwLineNum);
+    printf("RegParseRegistry: failed error %d line=%d\n", dwError, dwLineNum);
+
+    goto cleanup;
+
     return 0;
 }

@@ -237,6 +237,7 @@ RegLexParseQuote(
     if (lexHandle->curToken.token == REGLEX_PLAIN_TEXT)
     {
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         dwError = RegIOUnGetChar(ioHandle, NULL);
         return dwError;
     }
@@ -282,6 +283,7 @@ RegLexParseOpenBracket(
     if (lexHandle->curToken.token == REGLEX_PLAIN_TEXT)
     {
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         dwError = RegIOUnGetChar(ioHandle, NULL);
         return dwError;
     }
@@ -292,6 +294,7 @@ RegLexParseOpenBracket(
         {
             /* This is a problem, can't have [ then another [ */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
         else
         {
@@ -323,6 +326,7 @@ RegLexParseCloseBracket(
         {
             /* This is a problem, can't have ] without a previous [ */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
         else
         {
@@ -355,16 +359,20 @@ RegLexParseOpenBrace(
         {
             /* This is a problem, can't have { then another { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
         else if (!lexHandle->curToken.pszValue ||
                  !lexHandle->curToken.pszValue[0])
         {
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
         else
         {
             lexHandle->curToken.token = REGLEX_ATTRIBUTES_BEGIN;
             lexHandle->eValueNameType = REGLEX_VALUENAME_ATTRIBUTES;
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.valueCursor = 0;
         }
     }
@@ -390,6 +398,7 @@ RegLexParseCloseBrace(
         {
             /* This is a problem, can't have } without a previous { */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
         else
         {
@@ -458,6 +467,7 @@ RegLexParseEquals(
         lexHandle->state != REGLEX_STATE_IN_KEY)
     {
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         lexHandle->curToken.token = REGLEX_EQUALS;
         lexHandle->curToken.valueCursor = 0;
     }
@@ -483,12 +493,14 @@ RegLexParseComma(
         if (lexHandle->curToken.valueCursor > 0 && lexHandle->curToken.valueCursor <=2)
         {
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.token = REGLEX_HEXPAIR;
         }
         else
         {
             /* Syntax error: Hex pair is only 2 characters */
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
     }
     else
@@ -770,6 +782,7 @@ RegLexParseNewline(
         }
 
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         lexHandle->curToken.token = REGLEX_HEXPAIR_END;
         lexHandle->state = REGLEX_STATE_INIT;
         return dwError;
@@ -777,6 +790,7 @@ RegLexParseNewline(
     else if (lexHandle->tokenDataType == REGLEX_REG_STRING_ARRAY)
     {
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         lexHandle->tokenDataType = REGLEX_FIRST;
         return dwError;
     }
@@ -785,12 +799,14 @@ RegLexParseNewline(
         if (lexHandle->curToken.valueCursor == 8)
         {
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.token = REGLEX_REG_DWORD;
             return dwError;
         }
         else
         {
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             return dwError;
         }
     }
@@ -803,6 +819,7 @@ RegLexParseNewline(
          * has been found before the current end-of-line.
          */
         lexHandle->isToken = TRUE;
+        lexHandle->curToken.lineNum = lexHandle->parseLineNum - 1;
         lexHandle->curToken.token = REGLEX_PLAIN_TEXT;
         return dwError;
     }
@@ -864,6 +881,7 @@ RegLexParseWhitespace(
             lexHandle->curToken.valueCursor <= 2)
         {
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.token = REGLEX_HEXPAIR;
         }
     }
@@ -872,11 +890,13 @@ RegLexParseWhitespace(
         dwError = RegLexParseBinary(lexHandle);
         if (dwError || lexHandle->isToken)
         {
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             return dwError;
         }
         if (lexHandle->curToken.token != REGLEX_FIRST)
         {
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
         }
     }
     return dwError;
@@ -903,6 +923,7 @@ RegLexParseDefaultState(
         {
             /* Eat white spaces in binhex strings */
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.token = REGLEX_HEXPAIR;
             return dwError;
         }
@@ -910,12 +931,14 @@ RegLexParseDefaultState(
         if (!isxdigit((int)inC))
         {
             dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             return dwError;
         }
         if (lexHandle->curToken.valueCursor == 2)
         {
             dwError = RegIOUnGetChar(ioHandle, &inC);
             lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
             lexHandle->curToken.token = REGLEX_HEXPAIR;
             return dwError;
         }
@@ -1067,7 +1090,6 @@ RegLexGetToken(
                 else if (lexHandle->state == REGLEX_STATE_IN_KEY)
                 {
                     lexHandle->isToken = TRUE;
-                    lexHandle->curToken.lineNum = lexHandle->parseLineNum;
                     lexHandle->curToken.token = REGLEX_REG_KEY;
                     lexHandle->state = REGLEX_STATE_INIT;
                     *pRetToken = lexHandle->curToken.token;
