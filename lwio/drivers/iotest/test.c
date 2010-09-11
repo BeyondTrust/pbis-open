@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-#include "ioapi.h"
+#include <lwio/ioapi.h>
 #include "lwthreads.h"
 
 NTSTATUS

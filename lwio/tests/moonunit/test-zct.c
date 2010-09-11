@@ -46,7 +46,7 @@
 
 #include <moonunit/moonunit.h>
 #include <lw/base.h>
-#include <lwzct.h>
+#include <lwio/lwzct.h>
 
 #define MU_ASSERT_STATUS_SUCCESS(status) \
     MU_ASSERT(STATUS_SUCCESS == (status))

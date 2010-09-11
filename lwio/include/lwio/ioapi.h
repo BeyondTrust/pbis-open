@@ -46,7 +46,7 @@
 #define __IO_API_H__
 
 #include <lwio/io-types.h>
-#include "lwzct.h"
+#include <lwio/lwzct.h>
 
 typedef ULONG IO_FLAGS, *PIO_FLAGS;
 

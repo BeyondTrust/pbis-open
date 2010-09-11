@@ -2,6 +2,7 @@ lwioincludedir = $(includedir)/lwio
 
 lwioinclude_HEADERS = \
 	lwio/lwio.h          \
+    lwio/iodriver.h      \
 	lwio/io-types.h      \
 	lwio/iortl.h         \
 	lwio/ntfileapi.h     \
@@ -12,5 +13,7 @@ lwioinclude_HEADERS = \
     lwio/lwfileinfo.h    \
     lwio/lwiodevctl.h    \
 	lwio/lwsessioninfo.h \
-	lwio/lwshareinfo.h
-    
+	lwio/lwshareinfo.h   \
+    lwio/lwzct.h         \
+    lwio/ioapi.h         \
+    lwio/utils.h

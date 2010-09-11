@@ -45,7 +45,7 @@
 #include "iop.h"
 #include "ntipcmsg.h"
 #include "ntlogmacros.h"
-#include "ioapi.h"
+#include <lwio/ioapi.h>
 #include "ioipc.h"
 
 typedef struct _IO_IPC_CALL_CONTEXT

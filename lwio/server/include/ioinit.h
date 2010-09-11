@@ -40,8 +40,7 @@
 #define __IOINIT_H__
 
 #include <lwio/io-types.h>
-
-#include "iodriver.h"
+#include <lwio/iodriver.h>
 
 VOID
 IoCleanup(

@@ -53,7 +53,7 @@
 #include <lw/rtlstring.h>
 #include <lw/rtlgoto.h>
 
-#include "iodriver.h"
+#include <lwio/iodriver.h>
 
 #include "ntlogmacros.h"
 #include "lwioutils.h"

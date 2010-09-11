@@ -31,7 +31,7 @@
 #include "config.h"
 #include "lwiosys.h"
 
-#include "iodriver.h"
+#include <lwio/iodriver.h>
 #include "ioinit.h"
 #include <lw/base.h>
 #include <lw/rtlgoto.h>

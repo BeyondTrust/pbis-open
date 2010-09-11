@@ -58,7 +58,7 @@
 #undef HAVE_SENDFILE_HEADER_TRAILER
 #undef HAVE_SENDFILE_ANY
 
-#include "lwzct.h"
+#include <lwio/lwzct.h>
 #include <lw/rtlmemory.h>
 #include <lw/rtlgoto.h>
 #include <lw/safeint.h>

@@ -10,7 +10,10 @@ lwio_mu_la_SOURCES = \
 	test-stub.c \
 	$(TEST_SOURCES)
 
-lwio_mu_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/server/include
+lwio_mu_la_CPPFLAGS =               \
+    $(AM_CPPFLAGS)                  \
+    -I$(top_srcdir)/include         \
+    -I$(top_srcdir)/server/include
 
 lwio_mu_la_LIBADD = \
 	$(top_builddir)/server/iomgr/libiomgr.la \

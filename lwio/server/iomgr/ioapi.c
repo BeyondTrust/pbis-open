@@ -42,8 +42,8 @@
  * Authors: Danilo Almeida (dalmeida@likewisesoftware.com)
  */
 
+#include <lwio/ioapi.h>
 #include "iop.h"
-#include "ioapi.h"
 
 // Need to add a way to cancel operation from outside IRP layer.
 // Probably requires something in IO_ASYNC_CONTROL_BLOCK.

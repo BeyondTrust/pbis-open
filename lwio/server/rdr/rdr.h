@@ -70,7 +70,7 @@
 #include "marshal.h"
 #include "smbwire.h"
 #include <lwio/io-types.h>
-#include "iodriver.h"
+#include <lwio/iodriver.h>
 
 #include "lwio-semaphore.h"
 #include "rdrstructs.h"
