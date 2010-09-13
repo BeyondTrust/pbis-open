@@ -217,7 +217,8 @@ UpdateEventWait(
     NTSTATUS status = STATUS_SUCCESS;
     struct kevent* pEvent = NULL;
 
-    if (pTask->EventWait != pTask->EventLastWait)
+    if ((pTask->EventWait & FD_EVENTS) != (pTask->EventLastWait & FD_EVENTS) &&
+        pTask->Fd >= 0)
     {
         if (pTask->EventWait & LW_TASK_EVENT_FD_READABLE)
         {
@@ -227,7 +228,20 @@ UpdateEventWait(
                 pEvent,
                 pTask->Fd,
                 EVFILT_READ,
-                EV_ADD | EV_CLEAR,
+                EV_ADD | EV_CLEAR | EV_ENABLE,
+                0,
+                0,
+                pTask);
+        }
+        else if (pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE)
+        {
+            status = AddCommand(pCommands, &pEvent);
+            GOTO_ERROR_ON_STATUS(status);
+            EV_SET(
+                pEvent,
+                pTask->Fd,
+                EVFILT_READ,
+                EV_DISABLE,
                 0,
                 0,
                 pTask);
@@ -241,7 +255,20 @@ UpdateEventWait(
                 pEvent,
                 pTask->Fd,
                 EVFILT_WRITE,
-                EV_ADD | EV_CLEAR,
+                EV_ADD | EV_CLEAR | EV_ENABLE,
+                0,
+                0,
+                pTask);
+        }
+        else if (pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE)
+        {
+            status = AddCommand(pCommands, &pEvent);
+            GOTO_ERROR_ON_STATUS(status);
+            EV_SET(
+                pEvent,
+                pTask->Fd,
+                EVFILT_WRITE,
+                EV_DISABLE,
                 0,
                 0,
                 pTask);
@@ -927,6 +954,7 @@ LwRtlSetTaskFd(
         }
 
         pTask->Fd = Fd;
+        pTask->EventLastWait = 0;
     }
 
 error:

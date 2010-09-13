@@ -161,7 +161,7 @@ UpdateEventWait(
     __uint32_t events = 0;
     struct epoll_event event;
 
-    if (pTask->EventWait != pTask->EventLastWait)
+    if ((pTask->EventWait & FD_EVENTS) != (pTask->EventLastWait & FD_EVENTS) && pTask->Fd >= 0)
     {
         if (pTask->EventWait & LW_TASK_EVENT_FD_READABLE)
         {
@@ -178,20 +178,17 @@ UpdateEventWait(
             events |= EPOLLERR;
         }
         
-        if (events)
+        event.events = events | EPOLLET;
+        event.data.ptr = pTask;
+
+        if (epoll_ctl(EpollFd, EPOLL_CTL_MOD, pTask->Fd, &event) < 0)
         {
-            event.events = events | EPOLLET;
-            event.data.ptr = pTask;
-            
-            if (epoll_ctl(EpollFd, EPOLL_CTL_MOD, pTask->Fd, &event) < 0)
-            {
-                status = LwErrnoToNtStatus(errno);
-                GOTO_ERROR_ON_STATUS(status);
-            }
+            status = LwErrnoToNtStatus(errno);
+            GOTO_ERROR_ON_STATUS(status);
         }
-        
-        pTask->EventLastWait = pTask->EventWait;
     }
+
+    pTask->EventLastWait = pTask->EventWait;
 
 error:
 
@@ -836,6 +833,7 @@ LwRtlSetTaskFd(
         }
 
         pTask->Fd = Fd;
+        pTask->EventLastWait = 0;
 
         if (epoll_ctl(pTask->pThread->EpollFd, EPOLL_CTL_ADD, pTask->Fd, &event) < 0)
         {

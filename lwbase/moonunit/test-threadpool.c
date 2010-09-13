@@ -201,14 +201,14 @@ MU_TEST(Task, Yield)
                                  gpPool,
                                  &pTask1,
                                  pGroup,
-                                 Yield, 
+                                 Yield,
                                  (PVOID) &value1));
 
     MU_ASSERT_STATUS_SUCCESS(LwRtlCreateTask(
                                  gpPool,
                                  &pTask1,
                                  pGroup,
-                                 Yield, 
+                                 Yield,
                                  (PVOID) &value2));
 
     LwRtlWakeTaskGroup(pGroup);
@@ -219,6 +219,72 @@ MU_TEST(Task, Yield)
 
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, value1, gTarget);
     MU_ASSERT_EQUAL(MU_TYPE_INTEGER, value2, gTarget);
+}
+
+static
+VOID
+OnOff(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pllTime
+    )
+{
+    int* fds = pContext;
+    char c = 0;
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
+    {
+        /* Wait for readability of pipe.
+         * Write a byte so we wake up immediately.
+         */
+        MU_ASSERT_STATUS_SUCCESS(LwRtlSetTaskFd(pTask, fds[0], LW_TASK_EVENT_FD_READABLE));
+        MU_ASSERT(write(fds[1], &c, sizeof(c)) == sizeof(c));
+        *pWaitMask = LW_TASK_EVENT_FD_READABLE;
+    }
+    else if (WakeMask & LW_TASK_EVENT_FD_READABLE)
+    {
+        /* Read the byte we wrote */
+        MU_ASSERT(read(fds[0], &c, sizeof(c)) == sizeof(c));
+        /* Write another byte so the read end is readable again */
+        MU_ASSERT(write(fds[1], &c, sizeof(c)) == sizeof(c));
+        /* Wait for a 1-nanosecond timeout instead.
+         * Internally, the threadpoll will need to disable any readability
+         * event it configured.
+         */
+        *pllTime = 1;
+        *pWaitMask = LW_TASK_EVENT_TIME;
+    }
+    else if (WakeMask & LW_TASK_EVENT_TIME)
+    {
+        /* Ensure that we did not receive a readability event */
+        MU_ASSERT(!(WakeMask & LW_TASK_EVENT_FD_READABLE));
+        /* Test complete */
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+    }
+}
+
+MU_TEST(Task, EventOnEventOff)
+{
+    PLW_TASK pTask = NULL;
+    int fds[2] = {-1, -1};
+
+    MU_ASSERT(pipe(fds) == 0);
+
+    MU_ASSERT_STATUS_SUCCESS(LwRtlCreateTask(
+                                 gpPool,
+                                 &pTask,
+                                 NULL,
+                                 OnOff,
+                                 (PVOID) &fds));
+
+    LwRtlWakeTask(pTask);
+    LwRtlWaitTask(pTask);
+    LwRtlReleaseTask(&pTask);
+
+    MU_ASSERT(close(fds[0]) == 0);
+    MU_ASSERT(close(fds[1]) == 0);
 }
 
 #define BUFFER_SIZE (64 * 1024)
