@@ -267,15 +267,43 @@ unsigned char pkinit_4096_dhprime[4096/8] = {
 
 static int pkinit_oids_refs = 0;
 
+static int openssl_init(void);
 static void pkinit_terminate(void);
 static int fix_signeddata(unsigned char *data, unsigned int data_len,
 	       unsigned char **out, unsigned int *out_len);
 
+MAKE_INIT_FUNCTION(openssl_init);
 MAKE_FINI_FUNCTION(pkinit_terminate);
+
+static krb5_boolean do_openssl_cleanup = FALSE;
+
+static int
+openssl_init(void)
+{
+    if (EVP_get_cipherbyname(EVP_CIPHER_name(EVP_des_cbc())) == NULL)
+    {
+        pkiDebug("%s: initializing OpenSSL\n", __FUNCTION__);
+        CRYPTO_malloc_init();
+        ERR_load_crypto_strings();
+        OpenSSL_add_all_algorithms();
+        do_openssl_cleanup = TRUE;
+    }
+    else
+    {
+        pkiDebug("%s: OpenSSL already initialized\n", __FUNCTION__);
+    }
+
+    return 0;
+}
 
 static void pkinit_terminate(void)
 {
-    EVP_cleanup();
+    if (do_openssl_cleanup)
+    {
+        pkiDebug("%s: finalizing OpenSSL\n", __FUNCTION__);
+        ERR_free_strings();
+        EVP_cleanup();
+    }
 }
 
 krb5_error_code
@@ -285,7 +313,9 @@ pkinit_init_plg_crypto(pkinit_plg_crypto_context *cryptoctx) {
     pkinit_plg_crypto_context ctx = NULL;
 
     /* initialize openssl routines */
-    openssl_init();
+    retval = CALL_INIT_FUNCTION(openssl_init);
+    if (retval)
+        goto out;
 
     ctx = (pkinit_plg_crypto_context)malloc(sizeof(*ctx));
     if (ctx == NULL)
@@ -2357,20 +2387,6 @@ server_process_dh(krb5_context context,
 	free(*server_key);
 
     return retval;
-}
-
-static void
-openssl_init()
-{
-    static int did_init = 0;
-
-    if (!did_init) {
-	/* initialize openssl routines */
-	CRYPTO_malloc_init();
-	ERR_load_crypto_strings();
-	OpenSSL_add_all_algorithms();
-	did_init++;
-    }
 }
 
 static krb5_error_code

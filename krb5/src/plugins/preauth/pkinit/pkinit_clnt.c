@@ -1119,6 +1119,13 @@ pkinit_client_process(krb5_context context,
 	    return EINVAL;
     }
 
+    if (plgctx->cryptoctx == NULL)
+    {
+        retval = pkinit_init_plg_crypto(&plgctx->cryptoctx);
+        if (retval)
+            return retval;
+    }
+
     if (processing_request) {
 	pkinit_client_profile(context, plgctx, reqctx, request);
 	pkinit_identity_set_prompter(reqctx->idctx, prompter, prompter_data);
@@ -1405,10 +1412,6 @@ pkinit_client_plugin_init(krb5_context context, void **blob)
 	goto errout;
 
     retval = pkinit_init_plg_opts(&ctx->opts);
-    if (retval)
-	goto errout;
-
-    retval = pkinit_init_plg_crypto(&ctx->cryptoctx);
     if (retval)
 	goto errout;
 
