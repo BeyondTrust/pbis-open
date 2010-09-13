@@ -55,7 +55,8 @@ LWIIsLocalHost(
     struct addrinfo* remoteInfo = NULL;
     PCSTR            pcszLocalHost = NULL;
     PCSTR            pcszRemoteHost = NULL;
-    
+    CHAR             canonNameLocal[NI_MAXHOST] = "";
+    CHAR             canonNameRemote[NI_MAXHOST] = "";
 
     memset(localHost, 0, sizeof(localHost));
 
@@ -76,9 +77,14 @@ LWIIsLocalHost(
         }
         else
         {
-            pcszLocalHost = localInfo->ai_canonname ?
-                            localInfo->ai_canonname :
-                            localHost;
+            dwError = getnameinfo(localInfo->ai_addr, localInfo->ai_addrlen, canonNameLocal, NI_MAXHOST, NULL, 0, 0);
+
+            if(dwError || !canonNameLocal[0]) {
+                pcszLocalHost = localHost;
+            }
+            else {
+                pcszLocalHost = canonNameLocal;
+            }
         }
 
         dwError = getaddrinfo(hostname, NULL, NULL, &remoteInfo);
@@ -88,12 +94,17 @@ LWIIsLocalHost(
         }
         else
         {
-            pcszRemoteHost = remoteInfo->ai_canonname ?
-                             remoteInfo->ai_canonname :
-                             hostname;
+            dwError = getnameinfo(remoteInfo->ai_addr, remoteInfo->ai_addrlen, canonNameRemote, NI_MAXHOST, NULL, 0, 0);
+
+            if(dwError || !canonNameRemote[0]) {
+                pcszRemoteHost = hostname;
+            }
+            else {
+                pcszRemoteHost = canonNameRemote;
+            }
         }
 
-        if ( !strcasecmp(pcszLocalHost,pcszRemoteHost) )
+        if ( !strcasecmp(pcszLocalHost, pcszRemoteHost) )
         {
             bResult = TRUE;
         }
