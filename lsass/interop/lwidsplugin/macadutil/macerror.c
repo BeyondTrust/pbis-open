@@ -18,6 +18,10 @@ LWGetMacError(
             macError = eDSPermissionError;
             break;
 
+        case ENOENT:
+            macError = eDSRecordNotFound;
+            break;
+
         case eDSPermissionError:
             macError = eDSPermissionError;
             break;
