@@ -73,6 +73,7 @@ LsaSrvWriteLoginSuccessEvent(
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
     PCSTR  pszPamSource,
+    DWORD  dwFlags,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     );
@@ -83,6 +84,7 @@ LsaSrvWriteLoginFailedEvent(
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
     PCSTR  pszPamSource,
+    DWORD  dwFlags,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     );

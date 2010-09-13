@@ -98,6 +98,7 @@ LsaSrvWriteLoginSuccessEvent(
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
     PCSTR  pszPamSource,
+    DWORD  dwFlags,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     )
@@ -113,8 +114,15 @@ LsaSrvWriteLoginSuccessEvent(
     {
         case LSASS_EVENT_LOGON_PHASE_AUTHENTICATE:
             sprintf(szLoginPhase, "User authenticate");
-            dwEventID = LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH +
-                LsaSrvGetPamSourceOffset(pszPamSource);
+            if (dwFlags & LSA_AUTH_USER_PAM_FLAG_SMART_CARD)
+            {
+                dwEventID = LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SMARTCARD;
+            }
+            else
+            {
+                dwEventID = LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SSH +
+                    LsaSrvGetPamSourceOffset(pszPamSource);
+            }
             break;
 
         case LSASS_EVENT_LOGON_PHASE_CREATE_SESSION:
@@ -199,6 +207,7 @@ LsaSrvWriteLoginFailedEvent(
     PCSTR  pszProvider,
     PCSTR  pszLoginId,
     PCSTR  pszPamSource,
+    DWORD  dwFlags,
     DWORD  dwLoginPhase,
     DWORD  dwErrCode
     )
@@ -236,14 +245,36 @@ LsaSrvWriteLoginFailedEvent(
         case LW_ERROR_PASSWORD_MISMATCH:
             if (dwLoginPhase == LSASS_EVENT_LOGON_PHASE_AUTHENTICATE)
             {
-                dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SSH +
-                    LsaSrvGetPamSourceOffset(pszPamSource);
+                if (dwFlags & LSA_AUTH_USER_PAM_FLAG_SMART_CARD)
+                {
+                    dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SMARTCARD;
+                }
+                else
+                {
+                    dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SSH +
+                        LsaSrvGetPamSourceOffset(pszPamSource);
+                }
             }
             else
             {
                 dwEventID = LSASS_EVENT_FAILED_LOGON_UNKNOWN_USERNAME_OR_BAD_PASSWORD;
             }
             strcpy(szReason, "Unknown username or bad password");
+            break;
+
+        case SCARD_E_NO_SMARTCARD:
+            dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SMARTCARD;
+            strcpy(szReason, "No smart card was found");
+            break;
+
+        case SCARD_E_NO_SUCH_CERTIFICATE:
+            dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SMARTCARD;
+            strcpy(szReason, "No certificate/private key combination found");
+            break;
+
+        case ERROR_DECRYPTION_FAILED:
+            dwEventID = LSASS_EVENT_FAILED_AUTHENTICATE_SMARTCARD;
+            strcpy(szReason, "Encrypt/decrypt validation failed (certificate/private key mismatch)");
             break;
 
 /* Not yet supported, MIT Kerberos needs to return a specific error for these conditions ...
@@ -292,8 +323,18 @@ LsaSrvWriteLoginFailedEvent(
             break;
 
         default:
+        {
+            char szLwError[256];
+
             dwEventID = LSASS_EVENT_FAILED_LOGON_UNEXPECTED_ERROR;
-            strcpy(szReason, "An unexpected error occurred");
+            LwGetErrorString(dwErrCode, szLwError, sizeof(szLwError));
+            snprintf(
+                szReason,
+                sizeof(szReason),
+                "An unexpected error occurred: Error %d (%s)",
+                dwErrCode,
+                szLwError);
+        }
     }
 
     if (dwErrCode == LSASS_EVENT_LOGON_PHASE_CHECK_USER)

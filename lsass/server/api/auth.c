@@ -88,6 +88,7 @@ LsaSrvAuthenticateUserPam(
                                              pProvider->pszName,
                                              pParams->pszLoginName,
                                              pParams->pszPamSource,
+                                             pParams->dwFlags,
                                              LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                              dwError);
             }
@@ -108,6 +109,7 @@ LsaSrvAuthenticateUserPam(
                                             pProvider->pszName,
                                             pParams->pszLoginName,
                                             pParams->pszPamSource,
+                                            pParams->dwFlags,
                                             LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                             dwError);
             }
@@ -272,6 +274,7 @@ LsaSrvAuthenticateUserEx(
                                              pUserParams && pUserParams->pszAccountName ?
                                              pUserParams->pszAccountName : "",
                                              NULL,
+                                             0,
                                              LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                              dwError);
             }
@@ -293,6 +296,7 @@ LsaSrvAuthenticateUserEx(
                                             pUserParams && pUserParams->pszAccountName ?
                                             pUserParams->pszAccountName : "",
                                             NULL,
+                                            0,
                                             LSASS_EVENT_LOGON_PHASE_AUTHENTICATE,
                                             dwError);
             }
@@ -455,6 +459,7 @@ LsaSrvCheckUserInList(
                     pProvider->pszName,
                     pszLoginId,
                     NULL,
+                    0,
                     LSASS_EVENT_LOGON_PHASE_CHECK_USER,
                     dwError);
             }
@@ -476,6 +481,7 @@ LsaSrvCheckUserInList(
                     pProvider->pszName,
                     pszLoginId,
                     NULL,
+                    0,
                     LSASS_EVENT_LOGON_PHASE_CHECK_USER,
                     dwError);
             }

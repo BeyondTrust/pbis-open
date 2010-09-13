@@ -124,6 +124,15 @@
 // 1259-1268 reserved
 #define LSASS_EVENT_FAILED_AUTHENTICATE_OTHER                        1269
 
+//
+// These are outside the range of other AUTHENTICATE events
+// because those events are indexed by the PAM source, and
+// smartcard authentication is separate from that (although
+// it currently only occurs on graphical logins).
+//
+#define LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SMARTCARD                1270
+#define LSASS_EVENT_FAILED_AUTHENTICATE_SMARTCARD                    1271
+
 // User password change events
 #define LSASS_EVENT_SUCCESSFUL_PASSWORD_CHANGE                       1300
 #define LSASS_EVENT_FAILED_PASSWORD_CHANGE                           1301
