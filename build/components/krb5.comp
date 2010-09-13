@@ -67,6 +67,7 @@ function component_configure
     if [ -n "${IS_COMPAT}" ]; then
         extra_flags="${extra_flags}"" --enable-includes-only"
     fi
+    CPPFLAGS="${CPPFLAGS} -DPKINIT_DEBUG"
     "${COMP_SOURCES}/src/configure" \
         CC="${CC}" \
         CFLAGS="${CFLAGS}" \
