@@ -79,6 +79,9 @@ struct _REGPARSE_HANDLE
     UCHAR *binaryData;
     DWORD binaryDataLen;
     DWORD binaryDataAllocLen;
+    PVOID pCurrentAttrValue;
+    DWORD dwCurrentAttrValueLen;
+    DWORD dwCurrentAttrValueType;
     REGPARSE_CALLBACK parseCallback;
 };
 

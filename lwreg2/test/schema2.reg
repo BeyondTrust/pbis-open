@@ -1,9 +1,13 @@
 #
 # Example "Registry Schema" entry
 #
-"a"="b"
-"a"="s"
 [HKEY_THIS_MACHINE\Services\lsass\Parameters123]
+"mv" = {
+  "range" = string:"Zow" "is" "the"
+}
+"s1" = {
+  "value" = "I am a string value"
+}
 "v1" = {
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
 }
@@ -12,6 +16,8 @@
   default = hex:0102030405060708090A0b0c0d0e0ffffafbfcfd
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
 }
+"a"="b"
+"a"="s"
 
 "teststr1"="teststr1 value 1"
 
@@ -43,7 +49,7 @@
 
 "mv1" = {
   "default" = "error"
-  "range" = string:"Now" "is" "the"
+  "range" = string:"Zow" "is" "the"
 }
 
 

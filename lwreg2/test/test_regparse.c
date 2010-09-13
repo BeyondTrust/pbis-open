@@ -227,8 +227,8 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
 
     BAIL_ON_INVALID_HANDLE(userContext);
     BAIL_ON_INVALID_POINTER(outStream);
-    pValue = pItem->regAttr.pCurrentValue ?
-                 pItem->regAttr.pCurrentValue : pItem->regAttr.pDefaultValue;
+    pValue = pItem->value ?
+                 pItem->value : pItem->regAttr.pDefaultValue;
     RegExportBinaryTypeToString(pItem->type, typeString, FALSE);
     switch (pItem->type)
     {
@@ -303,13 +303,13 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 LWREG_SAFE_FREE_MEMORY(schemaItem.value);
             }
 
-            if (pItem->regAttr.pCurrentValue)
+            if (pItem->value)
             {
                 /* Handle data value (non-attribute data */
                 schemaItem = *pItem;
                 schemaItem.type = pItem->regAttr.ValueType;
-                schemaItem.value = pItem->regAttr.pCurrentValue;
-                schemaItem.valueLen = pItem->regAttr.CurrentValueLen;
+                schemaItem.value = pItem->value;
+                schemaItem.valueLen = pItem->valueLen;
                 schemaItem.valueName = "value";
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }
@@ -318,8 +318,8 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 /* Handle data value (non-attribute data */
                 schemaItem = *pItem;
                 schemaItem.type = pItem->regAttr.ValueType;
-                schemaItem.value = pItem->regAttr.pDefaultValue;
-                schemaItem.valueLen = pItem->regAttr.DefaultValueLen;
+                schemaItem.value = pItem->value;
+                schemaItem.valueLen = pItem->valueLen;
                 schemaItem.valueName = "default";
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }

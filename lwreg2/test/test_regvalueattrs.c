@@ -47,6 +47,7 @@ CHAR szDocString[] = "Document String";
 
 CHAR* ppszRangeEnumStrings[] = {"enum1", "enum2", "enum3", NULL};
 
+#if 0
 LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
         REG_SZ,
         szCurrentVal,
@@ -56,6 +57,7 @@ LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
         szDocString,
         LWREG_VALUE_RANGE_TYPE_ENUM,
         0};
+#endif
 
 
 int main(int argc, char *argv[])
@@ -68,14 +70,18 @@ int main(int argc, char *argv[])
     wchar16_t szValueName[] = {'a','t','t','r',0};
     HKEY hKey = NULL;
 
+#if 0
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
     PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+#endif
 
+#if 0
     ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
 
     dwError = RegConvertValueAttributesAToW(ValueAttribute,
                                       &pAttr);
     BAIL_ON_REG_ERROR(dwError);
+#endif
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_REG_ERROR(dwError);
@@ -102,6 +108,7 @@ int main(int argc, char *argv[])
                    pAttr);
     BAIL_ON_REG_ERROR(dwError);
 
+#if 0
     dwError = RegGetValueAttributesW(
                    hReg,
                    hKey,
@@ -110,6 +117,7 @@ int main(int argc, char *argv[])
                    &pCurrentValue,
                    &pValueAttributes);
     BAIL_ON_REG_ERROR(dwError);
+#endif
 
     dwError = RegDeleteValueAttributesW(
                    hReg,
@@ -134,8 +142,10 @@ cleanup:
                            dwNumRootKeys);
 
     RegSafeFreeValueAttributes(&pAttr);
+#if 0
     RegSafeFreeCurrentValueInfo(&pCurrentValue);
     RegSafeFreeValueAttributes(&pValueAttributes);
+#endif
 
     return dwError;
 
