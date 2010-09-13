@@ -859,22 +859,9 @@ MemCacheFindUserByName(
     switch (pUserNameInfo->nameType)
     {
         case NameType_UPN:
-            dwError = LsaDmQueryDomainInfo(
+            dwError = LsaDmWrapGetDomainName(
                             pUserNameInfo->pszDomain,
                             &pszDnsDomain,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
                             NULL);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -888,23 +875,10 @@ MemCacheFindUserByName(
             BAIL_ON_LSA_ERROR(dwError);
             break;
        case NameType_NT4:
-            dwError = LsaDmQueryDomainInfo(
+            dwError = LsaDmWrapGetDomainName(
                             pUserNameInfo->pszDomain,
                             NULL,
-                            &pszShortDomain,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL,
-                            NULL);
+                            &pszShortDomain);
             BAIL_ON_LSA_ERROR(dwError);
 
             pIndex = pConn->pNT4ToSecurityObject;
