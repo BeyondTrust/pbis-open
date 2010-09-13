@@ -35,7 +35,6 @@
 #include "djcli.h"
 #include "djfirewall.h"
 #include "djauditing.h"
-#include "djsmartcard.h"
 #include "ctprocutils.h"
 #include "lwexc.h"
 
@@ -101,7 +100,6 @@ ShowUsageInternal()
     fprintf(stdout, "    configure { --enable | --disable } firewall [--testprefix <dir>]\n");
     fprintf(stdout, "    configure { --enable | --disable } eventfwdd\n");
     fprintf(stdout, "    configure { --enable | --disable } reapsysld\n");
-    fprintf(stdout, "    configure { --enable | --disable } smartcard\n");
     fprintf(stdout, "    get_os_type\n");
     fprintf(stdout, "    get_arch\n");
     fprintf(stdout, "    get_distro\n");
@@ -741,8 +739,6 @@ void DoConfigure(int argc, char **argv, LWException **exc)
         LW_CLEANUP_CTERR(exc, DJConfigureEventFwd(testPrefix, GetEnableBoolean(dwEnable)));
     else if(!strcmp(argv[0], "reapsysld"))
         LW_CLEANUP_CTERR(exc, DJConfigureReapSyslog(testPrefix, GetEnableBoolean(dwEnable)));
-    else if(!strcmp(argv[0], "smartcard"))
-        LW_CLEANUP_CTERR(exc, DJConfigureSmartCard(testPrefix, GetEnableBoolean(dwEnable)));
     else
     {
         LW_RAISE(exc, LW_ERROR_SHOW_USAGE);
