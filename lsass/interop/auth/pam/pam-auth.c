@@ -333,6 +333,17 @@ pam_sm_authenticate(
                 pPamContext,
                 &pszPassword);
             BAIL_ON_LSA_ERROR(dwError);
+
+#if defined(__LWI_SOLARIS__) || defined(__LWI_HP_UX__)
+            /* On Solaris, we must save the user's password in
+               a custom location so that we can pull it out later
+               for password changes */
+            dwError = LsaPamSetDataString(
+                pamh,
+                PAM_LSASS_OLDAUTHTOK,
+                pszPassword);
+            BAIL_ON_LSA_ERROR(dwError);
+#endif
         }
     }
     /* Otherwise, proceed with usual authentication */
