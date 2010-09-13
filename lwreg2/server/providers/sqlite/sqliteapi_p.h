@@ -89,7 +89,7 @@ SqliteCreateKeyInternal(
 
 NTSTATUS
 SqliteOpenKeyInternal(
-	IN OPTIONAL HANDLE handle,
+	IN HANDLE handle,
     IN PCWSTR pwszFullKeyName, // Full Key Path
     IN ACCESS_MASK AccessDesired,
     OUT OPTIONAL PREG_KEY_HANDLE* ppKeyHandle
