@@ -95,7 +95,6 @@ case "$host_os:$host_cpu" in
                 echo "Detected Mac OS X - Tiger"
                 nss_libdir="/usr/lib"
                 pam_libdir="/usr/lib/pam"
-                NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
                 PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
@@ -109,7 +108,6 @@ case "$host_os:$host_cpu" in
                 echo "Detected Mac OS X - Leopard"
                 nss_libdir="/usr/lib"
                 pam_libdir="/usr/lib/pam"
-                NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
                 PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
@@ -123,7 +121,6 @@ case "$host_os:$host_cpu" in
                 echo "Detected Mac OS X - Snow Leopard"
                 nss_libdir="/usr/lib"
                 pam_libdir="/usr/lib/pam"
-                NSS_SUBDIR="mac"
                 ENABLE_NSS_ENUM_DEFAULT="yes"
                 PLATFORM_MAC="true"
         default_skeldirs="System/Library/User Template/Non_localized, /System/Library/User Template/English.lproj"
@@ -1079,7 +1076,6 @@ AC_CONFIG_FILES([Makefile
                  interop/nsswitch/aix/Makefile
                  interop/nsswitch/hpux/Makefile
                  interop/nsswitch/solaris/Makefile
-                 interop/nsswitch/mac/Makefile
                  interop/lwmapsecurity/Makefile
                  interop/lwidsplugin/Makefile
                  server/Makefile
