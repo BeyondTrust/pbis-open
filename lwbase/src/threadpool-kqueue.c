@@ -62,16 +62,15 @@ ClearCommands(
 
 static
 NTSTATUS
-AddCommand(
-    PKQUEUE_COMMANDS pCommands,
-    struct kevent** ppEvent
+ExpandCommands(
+    PKQUEUE_COMMANDS pCommands
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
     ULONG ulNewCapacity = 0;
     struct kevent* pNewCommands = NULL;
 
-    if (pCommands->ulCommandCount + 1 > pCommands->ulCommandCapacity)
+    if (pCommands->ulCommandMax + COMMANDS_PER_FD > pCommands->ulCommandCapacity)
     {
         ulNewCapacity = pCommands->ulCommandCapacity;
 
@@ -80,7 +79,10 @@ AddCommand(
             ulNewCapacity = 8;
         }
 
-        ulNewCapacity *= 2;
+        while (pCommands->ulCommandMax > ulNewCapacity)
+        {
+            ulNewCapacity *= 2;
+        }
 
         pNewCommands = LwRtlMemoryRealloc(
             pCommands->pCommands,
@@ -95,11 +97,32 @@ AddCommand(
         pCommands->pCommands = pNewCommands;
     }
 
-    *ppEvent = &pCommands->pCommands[pCommands->ulCommandCount++];
+    pCommands->ulCommandMax += COMMANDS_PER_FD;
 
 error:
 
     return status;
+}
+
+static
+VOID
+ShrinkCommands(
+    PKQUEUE_COMMANDS pCommands
+    )
+{
+    pCommands->ulCommandMax -= COMMANDS_PER_FD;
+}
+
+static
+VOID
+AddCommand(
+    PKQUEUE_COMMANDS pCommands,
+    struct kevent** ppEvent
+    )
+{
+    assert(pCommands->ulCommandCount < pCommands->ulCommandCapacity);
+
+    *ppEvent = &pCommands->pCommands[pCommands->ulCommandCount++];
 }
 
 static
@@ -208,13 +231,12 @@ RunTask(
  * Updates the kqueue command set with the events a task is waiting on.
  */
 static
-NTSTATUS
+VOID
 UpdateEventWait(
     PKQUEUE_COMMANDS pCommands,
     PKQUEUE_TASK pTask
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     struct kevent* pEvent = NULL;
 
     if ((pTask->EventWait & FD_EVENTS) != (pTask->EventLastWait & FD_EVENTS) &&
@@ -222,8 +244,7 @@ UpdateEventWait(
     {
         if (pTask->EventWait & LW_TASK_EVENT_FD_READABLE)
         {
-            status = AddCommand(pCommands, &pEvent);
-            GOTO_ERROR_ON_STATUS(status);
+            AddCommand(pCommands, &pEvent);
             EV_SET(
                 pEvent,
                 pTask->Fd,
@@ -235,8 +256,7 @@ UpdateEventWait(
         }
         else if (pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE)
         {
-            status = AddCommand(pCommands, &pEvent);
-            GOTO_ERROR_ON_STATUS(status);
+            AddCommand(pCommands, &pEvent);
             EV_SET(
                 pEvent,
                 pTask->Fd,
@@ -249,8 +269,7 @@ UpdateEventWait(
         
         if (pTask->EventWait & LW_TASK_EVENT_FD_WRITABLE)
         {
-            status = AddCommand(pCommands, &pEvent);
-            GOTO_ERROR_ON_STATUS(status);
+            AddCommand(pCommands, &pEvent);
             EV_SET(
                 pEvent,
                 pTask->Fd,
@@ -262,8 +281,7 @@ UpdateEventWait(
         }
         else if (pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE)
         {
-            status = AddCommand(pCommands, &pEvent);
-            GOTO_ERROR_ON_STATUS(status);
+            AddCommand(pCommands, &pEvent);
             EV_SET(
                 pEvent,
                 pTask->Fd,
@@ -278,10 +296,6 @@ UpdateEventWait(
 
         pTask->EventLastWait = pTask->EventWait;
     }
-
-error:
-
-    return status;
 }
 
 /*
@@ -469,7 +483,7 @@ error:
 }
 
 static
-NTSTATUS
+VOID
 ProcessRunnable(
     PKQUEUE_THREAD pThread,
     PKQUEUE_COMMANDS pCommands,
@@ -479,7 +493,6 @@ ProcessRunnable(
     LONG64 llNow
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     ULONG ulTicks = MAX_TICKS;
     PLW_TASK pTask = NULL;
     PLW_TASK_GROUP pGroup = NULL;
@@ -508,8 +521,7 @@ ProcessRunnable(
             if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
             {
                 /* Task is still waiting to be runnable, put in back in kqueue set */
-                status = UpdateEventWait(pCommands, pTask);
-                GOTO_ERROR_ON_STATUS(status);
+                UpdateEventWait(pCommands, pTask);
                 
                 if (pTask->EventWait & LW_TASK_EVENT_YIELD)
                 {
@@ -540,8 +552,7 @@ ProcessRunnable(
                 {
                     if (pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE)
                     {
-                        status = AddCommand(pCommands, &pEvent);
-                        GOTO_ERROR_ON_STATUS(status);
+                        AddCommand(pCommands, &pEvent);
                         EV_SET(
                             pEvent,
                             pTask->Fd,
@@ -554,8 +565,7 @@ ProcessRunnable(
 
                     if (pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE)
                     {
-                        status = AddCommand(pCommands, &pEvent);
-                        GOTO_ERROR_ON_STATUS(status);
+                        AddCommand(pCommands, &pEvent);
                         EV_SET(
                             pEvent,
                             pTask->Fd,
@@ -565,6 +575,8 @@ ProcessRunnable(
                             0,
                             0);
                     }
+
+                    ShrinkCommands(pCommands);
                 }
 
                 LOCK_POOL(pThread->pPool);
@@ -603,10 +615,6 @@ ProcessRunnable(
             }
         }
     }
-
-error:
-
-    return status;
 }
 
 static
@@ -677,7 +685,6 @@ EventLoop(
     int ready = 0;
     BOOLEAN bShutdown = FALSE;
     BOOLEAN bSignalled = FALSE;
-    KQUEUE_COMMANDS commands = {0};
 
     RingInit(&runnable);
     RingInit(&timed);
@@ -715,14 +722,13 @@ EventLoop(
         }
 
         /* Process runnable tasks */
-        status = ProcessRunnable(
+        ProcessRunnable(
             pThread,
-            &commands,
+            &pThread->Commands,
             &runnable,
             &timed,
             &waiting,
             llNow);
-        GOTO_ERROR_ON_STATUS(status);
 
         if (!RingIsEmpty(&runnable))
         {
@@ -753,7 +759,7 @@ EventLoop(
             &clock,
             &llNow,
             pThread->KqueueFd,
-            &commands,
+            &pThread->Commands,
             events,
             MAX_EVENTS,
             llNextDeadline,
@@ -762,8 +768,6 @@ EventLoop(
     }
 
 error:
-
-    RTL_FREE(&commands.pCommands);
 
     return status;
 }
@@ -942,6 +946,7 @@ LwRtlSetTaskFd(
         if (Mask == 0)
         {
             pTask->Fd = -1;
+            ShrinkCommands(&pTask->pThread->Commands);
         }
     }
     else 
@@ -952,6 +957,9 @@ LwRtlSetTaskFd(
             status = STATUS_INSUFFICIENT_RESOURCES;
             GOTO_ERROR_ON_STATUS(status);
         }
+
+        status = ExpandCommands(&pTask->pThread->Commands);
+        GOTO_ERROR_ON_STATUS(status);
 
         pTask->Fd = Fd;
         pTask->EventLastWait = 0;
@@ -1243,6 +1251,8 @@ DestroyEventThread(
     {
         close(pThread->SignalFds[1]);
     }
+
+    RTL_FREE(&pThread->Commands.pCommands);
 }
 
 NTSTATUS

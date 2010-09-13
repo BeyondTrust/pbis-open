@@ -49,12 +49,14 @@
 #include "threadpool-common.h"
 
 #define TASK_COMPLETE_MASK 0xFFFFFFFF
+#define COMMANDS_PER_FD 2
 
 typedef struct _KQUEUE_COMMANDS
 {
   struct kevent* pCommands;
   ULONG ulCommandCount;
   ULONG ulCommandCapacity;
+  ULONG ulCommandMax;
 } KQUEUE_COMMANDS, *PKQUEUE_COMMANDS;
 
 typedef struct _KQUEUE_THREAD
@@ -65,6 +67,7 @@ typedef struct _KQUEUE_THREAD
     pthread_cond_t Event;
     int SignalFds[2];
     int KqueueFd;
+    KQUEUE_COMMANDS Commands;
     RING Tasks;
     /* Thread load (protected by thread pool lock) */
     ULONG volatile ulLoad;
