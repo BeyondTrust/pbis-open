@@ -101,6 +101,8 @@ ADMarshalGetCanonicalName(
             pszResult,
             ' ',
             LsaSrvSpaceReplacement());
+
+        LwStrToLower(pszResult);
     }
     else
     {
