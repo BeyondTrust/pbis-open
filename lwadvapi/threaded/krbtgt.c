@@ -115,16 +115,17 @@ LwKrb5GetTgtWithSmartCard(
         KRB5_PADATA_PK_AS_REQ,
         KRB5_PADATA_PK_AS_REP,
     };
+    void *pvPrompterData = &pszPassword;
 
     return LwKrb5GetTgtImpl(
                 pszUserPrincipal,
-                pszPassword,
+                NULL,
                 pszCcPath,
                 pdwGoodUntilTime,
                 pPreauthTypes,
                 sizeof(pPreauthTypes) / sizeof(pPreauthTypes[0]),
                 cbKrb5Prompter,
-                (void *) pszPassword
+                pvPrompterData
                 );
 }
 
@@ -191,14 +192,14 @@ LwKrb5GetTgtImpl(
     if (!LW_IS_NULL_OR_EMPTY_STR(pszPassword)) {
         dwError = LwAllocateString(pszPassword, &pszPass);
         BAIL_ON_LW_ERROR(dwError);
-    }
 
-    // The converted string is not used, but the error code is.
-    // krb5_get_init_creds_will return EINVAL if it cannot convert the name
-    // from UTF8 to UCS2. By pretesting the string first, we know it is
-    // convertable.
-    dwError = LwMbsToWc16s(pszPass, &pwszPass);
-    BAIL_ON_LW_ERROR(dwError);
+        // The converted string is not used, but the error code is.
+        // krb5_get_init_creds_will return EINVAL if it cannot convert the name
+        // from UTF8 to UCS2. By pretesting the string first, we know it is
+        // convertable.
+        dwError = LwMbsToWc16s(pszPass, &pwszPass);
+        BAIL_ON_LW_ERROR(dwError);
+    }
 
     ret = krb5_get_init_creds_password(ctx, &creds, client, pszPass,
                                        prompter, prompter_data, 0, NULL,
@@ -482,7 +483,7 @@ cbKrb5Prompter(
 {
         krb5_error_code ret = 0;
         int cb = 0;
-        const char *pszPIN = (const char *) data;
+        const char **ppszPIN = (const char **) data;
 
         if (num_prompts != 1)
         {
@@ -492,17 +493,24 @@ cbKrb5Prompter(
                 goto error;
         }
 
-        LW_LOG_DEBUG("cbKrb5Prompter(%s, %s): %s", name, banner,
+        LW_LOG_ERROR("cbKrb5Prompter(%s, %s): %s", name, banner,
                 prompts[0].prompt);
 
-        if (pszPIN == NULL)
+        if (ppszPIN == NULL || *ppszPIN == NULL)
         {
-                LW_LOG_ERROR("cbKrb5Prompter: no saved PIN");
-                ret = KRB5KRB_ERR_GENERIC;
+                /*
+                 * No PIN means we were called once before, which
+                 * means the preauth attempt failed (bad PIN, bad
+                 * card, etc).
+                 */
+                LW_LOG_DEBUG("cbKrb5Prompter: no saved PIN");
+                prompts[0].reply->data[0] = '\0';
+                prompts[0].reply->length = 0;
+                ret = KRB5_PREAUTH_FAILED;
                 goto error;
         }
 
-        cb = strlen(pszPIN);
+        cb = strlen(*ppszPIN);
         if (cb > prompts[0].reply->length)
         {
                 LW_LOG_ERROR("cbKrb5Prompter: No room for PIN in reply buffer (%ld < %ld)",
@@ -512,8 +520,9 @@ cbKrb5Prompter(
         }
 
         LW_LOG_DEBUG("cbKrb5Prompter: returning PIN as password");
-        memcpy(prompts[0].reply->data, pszPIN, cb+1);
+        memcpy(prompts[0].reply->data, *ppszPIN, cb+1);
         prompts[0].reply->length = cb;
+        *ppszPIN = NULL;
 
 error:
 
