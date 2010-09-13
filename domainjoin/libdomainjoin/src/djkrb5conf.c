@@ -1076,8 +1076,6 @@ Krb5JoinDomain(Krb5Entry *conf,
                 "&&<EKU>msScLogin<PRINCIPAL>" ));
     GCE(ceError = SetNodeValue( libdefaults, "pkinit_eku_checking",
                 "kpServerAuth" ));
-    GCE(ceError = SetNodeValue( libdefaults, "pkinit_win2k",
-                "true" ));
     GCE(ceError = SetNodeValue( libdefaults, "pkinit_win2k_require_binding",
                 "false" ));
     GCE(ceError = SetNodeValue( libdefaults, "pkinit_identities",
