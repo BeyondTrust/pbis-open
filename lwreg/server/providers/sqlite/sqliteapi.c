@@ -1182,10 +1182,21 @@ SqliteDeleteTree(
     BOOLEAN bInLock = FALSE;
     PSTR pszError = NULL;
     PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)ghCacheConnection;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
+
+    BAIL_ON_NT_INVALID_POINTER(pServerState);
 
 	// ACL check
     status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_ALL_ACCESS | DELETE);
     BAIL_ON_NT_STATUS(status);
+
+    if (!pServerState->pToken)
+    {
+        status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                         pServerState->peerGID,
+                                         &pServerState->pToken);
+        BAIL_ON_NT_STATUS(status);
+    }
 
     LWREG_LOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
 
