@@ -405,16 +405,7 @@ ProcessRunnable(
                 ulTicks--;
             }
             
-            if (pTask->EventWait & LW_TASK_EVENT_YIELD)
-            {
-                /* Task is yielding.  Set its trigger arguments
-                   to whatever it gave us (modulo INIT and CANCEL).
-                   Leave it on the runnable list for the next iteration. */
-                pTask->EventArgs =
-                    (pTask->EventWait & ~LW_TASK_EVENT_INIT) |
-                    (pTask->EventArgs & LW_TASK_EVENT_CANCEL);
-            }
-            else if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
+            if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
             {
                 /* Task is still waiting to be runnable, put in back in epoll set */
                 status = UpdateEventWait(
@@ -423,16 +414,22 @@ ProcessRunnable(
                     );
                 GOTO_ERROR_ON_STATUS(status);
                 
-                RingRemove(&pTask->QueueRing);
-                
-                if (pTask->EventWait & LW_TASK_EVENT_TIME)
+                if (pTask->EventWait & LW_TASK_EVENT_YIELD)
+                {
+                    /* Task is yielding.  Set YIELD in its trigger arguments and
+                       and leave it on the runnable list for the next iteration */
+                    pTask->EventArgs |= LW_TASK_EVENT_YIELD;
+                }                
+                else if (pTask->EventWait & LW_TASK_EVENT_TIME)
                 {
                     /* If the task is waiting for a timeout, insert it into the timed queue */
+                    RingRemove(&pTask->QueueRing);
                     InsertTimedQueue(pTimed, pTask);
                 }
                 else
                 {
                     /* Otherwise, put it in the generic waiting queue */
+                    RingRemove(&pTask->QueueRing);
                     RingEnqueue(pWaiting, &pTask->QueueRing);
                 }
             }

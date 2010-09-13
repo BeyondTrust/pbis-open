@@ -382,14 +382,7 @@ EventLoop(
             
             GOTO_ERROR_ON_STATUS(status = TaskProcessTrigger(pTask, llNow));
             
-            if (pTask->TriggerWait & LW_TASK_EVENT_YIELD)
-            {
-                /* Task is yielding temporarily.  Set its trigger arguments
-                   to whatever it gave us (minus INIT). Leave it on the runnable
-                   list */
-                pTask->TriggerArgs = pTask->TriggerWait & ~LW_TASK_EVENT_INIT;
-            }
-            else if (pTask->TriggerWait != 0)
+            if (pTask->TriggerWait != 0)
             {
                 /* Task is still waiting to be runnable, update select parameters
                    and put it back in the task list */
@@ -400,9 +393,18 @@ EventLoop(
                     &writeSet,
                     &exceptSet,
                     &llNextDeadline);
-                
-                RingRemove(&pTask->EventRing);
-                RingInsertBefore(&tasks, &pTask->EventRing);
+            
+                if (pTask->TriggerWait & LW_TASK_EVENT_YIELD)
+                {
+                    /* Task is yielding temporarily.  Set the yield flag on
+                       its trigger arguments.   Leave it on the runnable list */
+                    pTask->TriggerArgs |= LW_TASK_EVENT_YIELD;
+                }
+                else
+                {    
+                    RingRemove(&pTask->EventRing);
+                    RingInsertBefore(&tasks, &pTask->EventRing);
+                }
             }
             else
             {

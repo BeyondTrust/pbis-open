@@ -273,11 +273,10 @@ typedef enum LW_THREAD_POOL_OPTION
  *
  * - #LW_TASK_EVENT_YIELD<br>
  *   If this flag is set in the wait mask, it indicates that the task is
- *   not yet finished doing work but is yielding to allow other tasks
- *   to run.  When the task is run again, the wake mask will contain
- *   #LW_TASK_EVENT_YIELD and all other bits that were set in the wait
- *   mask, modulo the special flags above.  Additional events may occur
- *   during a yield and will be added to the wake mask.
+ *   not yet finished doing work and should be run again immediately
+ *   after giving other tasks a chance to run.  When the task is run again,
+ *   the wake mask will contain #LW_TASK_EVENT_YIELD in addition to any
+ *   other events that occurred in the interim.
  *
  * - #LW_TASK_EVENT_COMPLETE<br>
  *   If the wait mask is set to this value, the task will be considered
