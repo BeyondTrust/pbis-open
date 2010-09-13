@@ -102,10 +102,6 @@ ADUKerb5GetTGTFromKeytab(
     krb5_keytab keytab = 0;
     krb5_principal client_principal = NULL;
 
-    LOG("ADUKerb5GetTGTFromKeytab called for user: %s, path: %s",
-        szUserName ? szUserName : "<null>",
-        pszCachePath ? pszCachePath : "<null>");
-
     dwError = ADUKerb5DestroyCache(pszCachePath);
     BAIL_ON_MAC_ERROR(dwError);
 
@@ -187,8 +183,6 @@ ADUInitKrb5(
 
     ENTER_KRB5_LOCK(bInLock);
 
-    LOG("ADUInitKrb5(%s) called", pszDomainName ? pszDomainName : "<null>");
-
     if (ADUKrb5TicketHasExpired()) {
         memset(szKrb5HostName, 0, sizeof(szKrb5HostName));
 
@@ -225,8 +219,6 @@ ADUInitKrb5(
 
         dwError = ADUKerb5GetTGTFromKeytab(szKrb5HostName, NULL, pszKrb5CachePath, &dwTicketExpiryTime);
         BAIL_ON_MAC_ERROR(dwError);
-
-        LOG("ADUKerb5GetTGTFromKeytab completed ok");
 
         gdwKrbTicketExpiryTime = dwTicketExpiryTime;
     }
