@@ -1000,6 +1000,8 @@ GetUserObjects(
         goto cleanup;
     }
 
+    LOG("Found %d users", dwCount);
+
     *pppUserObjects = ppObjects;
     ppObjects = NULL;
 
@@ -1022,6 +1024,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("Failed with error: %d", dwError);
 
     goto cleanup;
 }
@@ -1071,6 +1075,8 @@ GetGroupObjects(
         goto cleanup;
     }
 
+    LOG("Found %d groups", dwCount);
+
     *pppGroupObjects = ppObjects;
     ppObjects = NULL;
 
@@ -1093,6 +1099,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("Failed with error: %d", dwError);
 
     goto cleanup;
 }
@@ -1133,6 +1141,8 @@ GetUserObjectFromId(
         goto cleanup;
     }
 
+    LOG("(Id: %d) found user (Name: %s, SID: %s) ", uid, ppObjects[0]->userInfo.pszUnixName, ppObjects[0]->pszObjectSid);
+
     *pppUserObject = ppObjects;
     ppObjects = NULL;
 
@@ -1155,6 +1165,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(Id: %d). Failed with error: %d", uid, dwError);
 
     goto cleanup;
 }
@@ -1192,6 +1204,8 @@ GetUserObjectFromName(
         goto cleanup;
     }
 
+    LOG("(Name: %s) found user (uid: %d, SID: %s) ", pszName, ppObjects[0]->userInfo.uid, ppObjects[0]->pszObjectSid);
+
     *pppUserObject = ppObjects;
     ppObjects = NULL;
 
@@ -1209,6 +1223,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(Name: %s). Failed with error: %d", pszName, dwError);
 
     goto cleanup;
 }
@@ -1260,6 +1276,8 @@ GetUserGroups(
                   &ppObjects);
     BAIL_ON_MAC_ERROR(dwError);
 
+    LOG("(SID %s) found %d groups", pszUserSid, dwCount);
+
     *pppGroups = ppObjects;
     ppObjects = NULL;
     *pdwNumGroupsFound = dwCount;
@@ -1283,6 +1301,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(SID: %s). Failed with error: %d", pszUserSid, dwError);
 
     goto cleanup;
 }
@@ -1323,6 +1343,8 @@ GetGroupObjectFromId(
         goto cleanup;
     }
 
+    LOG("(Id: %d) found group (Name: %s, SID: %s) ", gid, ppObjects[0]->groupInfo.pszUnixName, ppObjects[0]->pszObjectSid);
+
     *pppGroupObject = ppObjects;
     ppObjects = NULL;
 
@@ -1345,6 +1367,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(Id: %d). Failed with error: %d", gid, dwError);
 
     goto cleanup;
 }
@@ -1382,6 +1406,8 @@ GetGroupObjectFromName(
         goto cleanup;
     }
 
+    LOG("(Name: %s) found group (Id: %d, SID: %s) ", pszName, ppObjects[0]->groupInfo.gid, ppObjects[0]->pszObjectSid);
+
     *pppGroupObject = ppObjects;
     ppObjects = NULL;
 
@@ -1399,6 +1425,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(Name: %s). Failed with error: %d", pszName, dwError);
 
     goto cleanup;
 }
@@ -1435,6 +1463,10 @@ ExpandGroupMembers(
                   1000, /* Max Count */
                   &dwCount,
                   &ppszMembers);
+    if (dwError == ERROR_NO_MORE_ITEMS)
+    {
+        dwError = MAC_AD_ERROR_SUCCESS;
+    }
     BAIL_ON_MAC_ERROR(dwError);
 
     if (dwCount == 0)
@@ -1456,6 +1488,8 @@ ExpandGroupMembers(
                   QueryList,
                   &ppObjects);
     BAIL_ON_MAC_ERROR(dwError);
+
+    LOG("(Group SID: %s) found %d members", pszGroupSid, dwCount);
 
     *pppMembers = ppObjects;
     ppObjects = NULL;
@@ -1484,6 +1518,8 @@ cleanup:
     return LWGetMacError(dwError);
 
 error:
+
+    LOG_ERROR("(Group SID: %s). Failed with error: %d", pszGroupSid, dwError);
 
     goto cleanup;
 }
