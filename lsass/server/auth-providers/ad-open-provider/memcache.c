@@ -850,6 +850,7 @@ MemCacheFindUserByName(
     PLSA_HASH_TABLE pIndex = NULL;
     PSTR pszKey = NULL;
     PSTR pszDnsDomain = NULL;
+    PSTR pszShortDomain = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -887,12 +888,31 @@ MemCacheFindUserByName(
             BAIL_ON_LSA_ERROR(dwError);
             break;
        case NameType_NT4:
+            dwError = LsaDmQueryDomainInfo(
+                            pUserNameInfo->pszDomain,
+                            NULL,
+                            &pszShortDomain,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL,
+                            NULL);
+            BAIL_ON_LSA_ERROR(dwError);
+
             pIndex = pConn->pNT4ToSecurityObject;
 
             dwError = LwAllocateStringPrintf(
                             &pszKey,
                             "%s\\%s",
-                            pUserNameInfo->pszDomain,
+                            pszShortDomain,
                             pUserNameInfo->pszName);
             BAIL_ON_LSA_ERROR(dwError);
             break;
@@ -937,6 +957,7 @@ cleanup:
     LEAVE_RW_LOCK(&pConn->lock, bInLock);
     LW_SAFE_FREE_STRING(pszKey);
     LW_SAFE_FREE_STRING(pszDnsDomain);
+    LW_SAFE_FREE_STRING(pszShortDomain);
 
     return dwError;
 
