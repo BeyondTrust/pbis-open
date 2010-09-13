@@ -119,6 +119,14 @@ LwKrb5GetTgt(
     );
 
 DWORD
+LwKrb5GetTgtWithSmartCard(
+    PCSTR  pszUserPrincipal,
+    PCSTR  pszPassword,
+    PCSTR  pszCcPath,
+    PDWORD pdwGoodUntilTime
+    );
+
+DWORD
 LwKrb5GetServiceTicketForUser(
     uid_t         uid,
     PCSTR         pszUserPrincipal,
@@ -161,11 +169,13 @@ LwSetupUserLoginSession(
     PCSTR pszServicePassword,
     char** ppchLogonInfo,
     size_t* psLogonInfo,
-    PDWORD pdwGoodUntilTime
+    PDWORD pdwGoodUntilTime,
+    DWORD dwFlags
     );
 
-LW_END_EXTERN_C
+#define LW_USER_LOGIN_SESSION_FLAG_SMART_CARD   0x00000001
 
+LW_END_EXTERN_C
 
 #endif /* __LWKRB5_H__ */
 

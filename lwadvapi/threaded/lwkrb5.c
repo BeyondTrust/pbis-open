@@ -1378,7 +1378,8 @@ LwSetupUserLoginSession(
     PCSTR pszServicePassword,
     char** ppchLogonInfo,
     size_t* psLogonInfo,
-    PDWORD pdwGoodUntilTime
+    PDWORD pdwGoodUntilTime,
+    DWORD dwFlags
     )
 {
     DWORD dwError = 0;
@@ -1417,12 +1418,26 @@ LwSetupUserLoginSession(
             &cc);
     BAIL_ON_KRB_ERROR(ctx, ret);
 
-    dwError = LwKrb5GetTgt(
-            pszUsername,
-            pszPassword,
-            krb5_cc_get_name(ctx, cc),
-            pdwGoodUntilTime
-            );
+
+    if (dwFlags & LW_USER_LOGIN_SESSION_FLAG_SMART_CARD)
+    {
+        dwError = LwKrb5GetTgtWithSmartCard(
+                pszUsername,
+                pszPassword,
+                krb5_cc_get_name(ctx, cc),
+                pdwGoodUntilTime
+                );
+    }
+    else
+    {
+        dwError = LwKrb5GetTgt(
+                pszUsername,
+                pszPassword,
+                krb5_cc_get_name(ctx, cc),
+                pdwGoodUntilTime
+                );
+    }
+
     BAIL_ON_LW_ERROR(dwError);
 
     ret = krb5_parse_name(ctx, pszServicePrincipal, &credsRequest.server);

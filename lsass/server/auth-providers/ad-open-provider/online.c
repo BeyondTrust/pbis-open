@@ -1624,7 +1624,8 @@ AD_OnlineCheckUserPassword(
                     pszServicePassword,
                     &pchNdrEncodedPac,
                     &sNdrEncodedPac,
-                    pdwGoodUntilTime);
+                    pdwGoodUntilTime,
+                    0);
     if (dwError == LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN)
     {
         LW_SAFE_FREE_STRING(pszServicePrincipal);
@@ -1649,7 +1650,8 @@ AD_OnlineCheckUserPassword(
                       pszServicePassword,
                       &pchNdrEncodedPac,
                       &sNdrEncodedPac,
-                      pdwGoodUntilTime);
+                      pdwGoodUntilTime,
+                      0);
     }
     
     if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)

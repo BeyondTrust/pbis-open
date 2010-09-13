@@ -49,12 +49,95 @@
 #include "includes.h"
 #include "krbtgt_p.h"
 
+static DWORD
+LwKrb5GetTgtImpl(
+    PCSTR             pszUserPrincipal,
+    PCSTR             pszPassword,
+    PCSTR             pszCcPath,
+    PDWORD            pdwGoodUntilTime,
+    krb5_preauthtype  *pPreauthTypes,
+    DWORD             dwNumPreauthTypes,
+    krb5_prompter_fct prompter,
+    void              *prompter_data
+    );
+ 
+static
+krb5_error_code 
+cbKrb5Prompter(
+    krb5_context ctx, 
+    void *data, 
+    const char *name,
+    const char *banner, 
+    int num_prompts, 
+    krb5_prompt prompts[]
+    );
+
 DWORD
 LwKrb5GetTgt(
     PCSTR  pszUserPrincipal,
     PCSTR  pszPassword,
     PCSTR  pszCcPath,
     PDWORD pdwGoodUntilTime
+    )
+{
+    // Always try sending PA-ENC-TIMESTAMP. This saves a round trip because
+    // otherwise Windows will return a KRB5KDC_ERR_PREAUTH_REQUIRED reply.
+    //
+    // Worse still, if the user is marked as preauth not required, and no
+    // preauth is given, the TGT will not contain a PAC. If the TGT is used
+    // without a PAC, it will not have the same permissions since Windows uses
+    // the PAC for group membership checks.
+    krb5_preauthtype pPreauthTypes[] = { KRB5_PADATA_ENC_TIMESTAMP };
+
+    return LwKrb5GetTgtImpl(
+                pszUserPrincipal,
+                pszPassword,
+                pszCcPath,
+                pdwGoodUntilTime,
+                pPreauthTypes,
+                sizeof(pPreauthTypes) / sizeof(pPreauthTypes[0]),
+                NULL,
+                NULL);
+}
+
+DWORD
+LwKrb5GetTgtWithSmartCard(
+    PCSTR  pszUserPrincipal,
+    PCSTR  pszPassword,
+    PCSTR  pszCcPath,
+    PDWORD pdwGoodUntilTime
+    )
+{
+    // Only try the pkinit preauthentication types.
+    krb5_preauthtype pPreauthTypes[] = {
+        KRB5_PADATA_PK_AS_REQ_OLD,
+        KRB5_PADATA_PK_AS_REP_OLD,
+        KRB5_PADATA_PK_AS_REQ,
+        KRB5_PADATA_PK_AS_REP,
+    };
+
+    return LwKrb5GetTgtImpl(
+                pszUserPrincipal,
+                pszPassword,
+                pszCcPath,
+                pdwGoodUntilTime,
+                pPreauthTypes,
+                sizeof(pPreauthTypes) / sizeof(pPreauthTypes[0]),
+                cbKrb5Prompter,
+                (void *) pszPassword
+                );
+}
+
+DWORD
+LwKrb5GetTgtImpl(
+    PCSTR             pszUserPrincipal,
+    PCSTR             pszPassword,
+    PCSTR             pszCcPath,
+    PDWORD            pdwGoodUntilTime,
+    krb5_preauthtype  *pPreauthTypes,
+    DWORD             dwNumPreauthTypes,
+    krb5_prompter_fct prompter,
+    void              *prompter_data
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -69,7 +152,6 @@ LwKrb5GetTgt(
     PSTR pszRealmIdx = NULL;
     BOOLEAN bUnlockExistingClientLock = FALSE;
     PWSTR pwszPass = NULL;
-    krb5_preauthtype pPreauthTypes[] = { KRB5_PADATA_ENC_TIMESTAMP };
 
     dwError = LwAllocateString(
                     pszUserPrincipal,
@@ -89,18 +171,10 @@ LwKrb5GetTgt(
     krb5_get_init_creds_opt_init(&opts);
     krb5_get_init_creds_opt_set_tkt_life(&opts, LW_KRB5_DEFAULT_TKT_LIFE);
     krb5_get_init_creds_opt_set_forwardable(&opts, TRUE);
-
-    // Always try sending PA-ENC-TIMESTAMP. This saves a round trip because
-    // otherwise Windows will return a KRB5KDC_ERR_PREAUTH_REQUIRED reply.
-    //
-    // Worse still, if the user is marked as preauth not required, and no
-    // preauth is given, the TGT will not contain a PAC. If the TGT is used
-    // without a PAC, it will not have the same permissions since Windows uses
-    // the PAC for group membership checks.
     krb5_get_init_creds_opt_set_preauth_list(
                 &opts,
                 pPreauthTypes,
-                sizeof(pPreauthTypes) / sizeof(pPreauthTypes[0]));
+                dwNumPreauthTypes);
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszCcPath)) {
         ret = krb5_cc_default(ctx, &cc);
@@ -126,19 +200,10 @@ LwKrb5GetTgt(
     dwError = LwMbsToWc16s(pszPass, &pwszPass);
     BAIL_ON_LW_ERROR(dwError);
 
-    ret = krb5_get_init_creds_password(ctx, &creds, client, pszPass, NULL,
-                                       NULL, 0, NULL, &opts);
+    ret = krb5_get_init_creds_password(ctx, &creds, client, pszPass,
+                                       prompter, prompter_data, 0, NULL,
+                                       &opts);
     BAIL_ON_KRB_ERROR(ctx, ret);
-
-    if (ret == KRB5KRB_AP_ERR_SKEW) {
-
-        ret = krb5_get_init_creds_password(ctx, &creds, client, pszPass, NULL,
-                                           NULL, 0, NULL, &opts);
-        BAIL_ON_KRB_ERROR(ctx, ret);
-
-    } else {
-        BAIL_ON_KRB_ERROR(ctx, ret);
-    }
 
     dwError = pthread_mutex_lock(&gLwKrb5State.ExistingClientLock);
     BAIL_ON_LW_ERROR(dwError);
@@ -402,6 +467,57 @@ cleanup:
 error:
 
     goto cleanup;
+}
+ 
+static
+krb5_error_code 
+cbKrb5Prompter(
+    krb5_context ctx, 
+    void *data, 
+    const char *name,
+    const char *banner, 
+    int num_prompts, 
+    krb5_prompt prompts[]
+    )
+{
+        krb5_error_code ret = 0;
+        int cb = 0;
+        const char *pszPIN = (const char *) data;
+
+        if (num_prompts != 1)
+        {
+                LW_LOG_ERROR("cbKrb5Prompter: num_prompts invalid (%d != 1)",
+                        num_prompts);
+                ret = KRB5KRB_ERR_GENERIC;
+                goto error;
+        }
+
+        LW_LOG_DEBUG("cbKrb5Prompter(%s, %s): %s", name, banner,
+                prompts[0].prompt);
+
+        if (pszPIN == NULL)
+        {
+                LW_LOG_ERROR("cbKrb5Prompter: no saved PIN");
+                ret = KRB5KRB_ERR_GENERIC;
+                goto error;
+        }
+
+        cb = strlen(pszPIN);
+        if (cb > prompts[0].reply->length)
+        {
+                LW_LOG_ERROR("cbKrb5Prompter: No room for PIN in reply buffer (%ld < %ld)",
+                        (long) prompts[0].reply->length, (long) cb);
+                ret = KRB5KRB_ERR_GENERIC;
+                goto error;
+        }
+
+        LW_LOG_DEBUG("cbKrb5Prompter: returning PIN as password");
+        memcpy(prompts[0].reply->data, pszPIN, cb+1);
+        prompts[0].reply->length = cb;
+
+error:
+
+        return ret;
 }
 
 /*
