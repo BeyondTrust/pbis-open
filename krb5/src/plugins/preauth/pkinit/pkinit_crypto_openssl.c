@@ -268,6 +268,8 @@ unsigned char pkinit_4096_dhprime[4096/8] = {
 static int pkinit_oids_refs = 0;
 
 static void pkinit_terminate(void);
+static int fix_signeddata(unsigned char *data, unsigned int data_len,
+	       unsigned char **out, unsigned int *out_len);
 
 MAKE_FINI_FUNCTION(pkinit_terminate);
 
@@ -1601,6 +1603,7 @@ cms_envelopeddata_verify(krb5_context context,
      * For draft9-compatible, we don't do anything because it
      * is already wrapped.
      */
+#if 0
 #ifdef LONGHORN_BETA_COMPAT
     /*
      * The Longhorn server returns the expected RFC-style data, but
@@ -1634,6 +1637,21 @@ cms_envelopeddata_verify(krb5_context context,
 	vfy_buf = tmp_buf2;
 	vfy_buf_len = tmp_buf2_len;
 
+    } else {
+	vfy_buf = tmp_buf;
+	vfy_buf_len = tmp_buf_len;
+    }
+#endif
+#else
+    retval = fix_signeddata(tmp_buf, tmp_buf_len,
+                             &tmp_buf2, &tmp_buf2_len);
+    if (retval) {
+        pkiDebug("failed to encode signeddata\n");
+        goto cleanup;
+    }
+    if (tmp_buf2) {
+        vfy_buf = tmp_buf2;
+        vfy_buf_len = tmp_buf2_len;
     } else {
 	vfy_buf = tmp_buf;
 	vfy_buf_len = tmp_buf_len;
@@ -3134,6 +3152,104 @@ wrap_signeddata(unsigned char *data, unsigned int data_len,
     return 0;
 }
 #endif
+
+/*
+ * The data returned from the KDC might come in one of several
+ * forms:
+ *
+ * -   RFC-style, with just the signed data.
+ * -   Draft 9, with the signed data wrapped.
+ * -   Various partially-wrapped forms from Windows 2008 servers.
+ *
+ * This function determines what format the data is in, and
+ * converts them all to the Draft 9 wrapped version.
+ */
+static int
+fix_signeddata(unsigned char *data, unsigned int data_len,
+	       unsigned char **out, unsigned int *out_len)
+{
+
+    unsigned int oid_len = 0, tot_len = 0, outer_len, wrap_len;
+    ASN1_OBJECT *oid = NULL;
+    unsigned char *p;
+    unsigned char *start;
+    long length;
+    int tag;
+    int class;
+    int result;
+    enum {
+        NOTHING       = 0,
+        LENGTH        = 1,
+        OID           = 2,
+        INNER_LENGTH  = 3
+    } needed = NOTHING;
+    unsigned char oid_buf[64];
+
+    p = oid_buf;
+    oid = OBJ_nid2obj(NID_pkcs7_signed);
+    oid_len = i2d_ASN1_OBJECT(oid, &p);
+
+    p = data;
+    start = p;
+    wrap_len = data_len;
+    result = ASN1_get_object(&p, &length, &tag, &class, data_len);
+    pkiDebug("%s: result %04x length %d tag %d class %d\n", __FUNCTION__,
+            result, length, tag, class);
+    if (tag == V_ASN1_ENUMERATED) {
+        pkiDebug("%s: found raw data\n", __FUNCTION__);
+        needed = INNER_LENGTH;
+        wrap_len = ASN1_object_size(1, (int)(data_len), V_ASN1_SEQUENCE);
+        outer_len = ASN1_object_size(1, (int)(oid_len + wrap_len),
+                V_ASN1_SEQUENCE);
+    } else if (tag == V_ASN1_SEQUENCE) {
+        start = p;
+        result = ASN1_get_object(&p, &length, &tag, &class, data_len - length);
+        pkiDebug("%s: result %04x length %d tag %d class %d\n", __FUNCTION__,
+                result, length, tag, class);
+        if (tag != V_ASN1_OBJECT || memcmp(start, oid_buf, length) != 0) {
+            needed = OID;
+            outer_len = ASN1_object_size(1, (int)(oid_len + data_len),
+                    V_ASN1_SEQUENCE);
+        }
+        else pkiDebug("%s: found length and OID\n", __FUNCTION__);
+    } else if (tag == V_ASN1_OBJECT && memcmp(start, oid_buf, length) == 0) {
+        pkiDebug("%s: found OID\n", __FUNCTION__);
+        needed = LENGTH;
+        outer_len = data_len;
+    } else {
+        pkiDebug("%s: unrecognized ASN.1 tag\n", __FUNCTION__);
+        return -1;
+    }
+
+    if (needed == NOTHING) {
+        return 0;
+    }
+
+    tot_len = ASN1_object_size(1, (int)(outer_len), V_ASN1_SEQUENCE);
+    p = *out = (unsigned char *)malloc(tot_len);
+    if (p == NULL)
+       return -1;
+
+    if (needed >= LENGTH) {
+        ASN1_put_object(&p, 1, (int)outer_len, V_ASN1_SEQUENCE,
+                V_ASN1_UNIVERSAL);
+    }
+
+    if (needed >= OID) {
+        i2d_ASN1_OBJECT(oid, &p);
+        ASN1_put_object(&p, 1, (int)wrap_len, 0, V_ASN1_CONTEXT_SPECIFIC);
+    }
+
+    if (needed >= INNER_LENGTH) {
+        ASN1_put_object(&p, 1, (int)data_len, V_ASN1_SEQUENCE,
+                V_ASN1_UNIVERSAL);
+    }
+
+    memcpy(p, data, data_len);
+    *out_len = tot_len;
+
+    return 0;
+}
 
 static int
 prepare_enc_data(unsigned char *indata,
