@@ -2839,27 +2839,6 @@ error:
 }
 
 static
-BOOLEAN
-LsaAdBatchIsUserOrGroupObjectType(
-    IN LSA_AD_BATCH_OBJECT_TYPE ObjectType
-    )
-{
-    BOOLEAN bIsOk = FALSE;
-
-    switch (ObjectType)
-    {
-        case LSA_AD_BATCH_OBJECT_TYPE_USER:
-        case LSA_AD_BATCH_OBJECT_TYPE_GROUP:
-            bIsOk = TRUE;
-            break;
-        default:
-            break;
-    }
-
-    return bIsOk;
-}
-
-static
 DWORD
 LsaAdBatchGetObjectTypeFromRealMessage(
     OUT PLSA_AD_BATCH_OBJECT_TYPE pObjectType,
@@ -3403,17 +3382,16 @@ LsaAdBatchProcessRpcObject(
             BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaAdBatchAccountTypeToObjectType(
-                    pTranslatedName->ObjectType,
-                    &objectType);
-    BAIL_ON_LSA_ERROR(dwError);
-
+    objectType = LsaAdBatchGetObjectTypeFromAccountType(
+                        pTranslatedName->ObjectType);
     if (!LsaAdBatchIsUserOrGroupObjectType(objectType))
     {
         // We found something else.
         LSA_LOG_DEBUG("Found non-user/non-group object type %d",
                       pTranslatedName->ObjectType);
-        dwError = LW_ERROR_DATA_ERROR;
+        // TODO: Perhaps support domain objects in the future.
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     desiredObjectType = LsaAdBatchGetObjectTypeFromQueryType(QueryType);
@@ -3940,14 +3918,32 @@ LsaAdBatchQueryTermDebugInfo(
     }
 }
 
-DWORD
-LsaAdBatchAccountTypeToObjectType(
-    IN LSA_OBJECT_TYPE AccountType,
-    OUT PLSA_AD_BATCH_OBJECT_TYPE pObjectType
+BOOLEAN
+LsaAdBatchIsUserOrGroupObjectType(
+    IN LSA_AD_BATCH_OBJECT_TYPE ObjectType
     )
 {
-    DWORD dwError = 0;
-    LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
+    BOOLEAN bIsOk = FALSE;
+
+    switch (ObjectType)
+    {
+        case LSA_AD_BATCH_OBJECT_TYPE_USER:
+        case LSA_AD_BATCH_OBJECT_TYPE_GROUP:
+            bIsOk = TRUE;
+            break;
+        default:
+            break;
+    }
+
+    return bIsOk;
+}
+
+LSA_AD_BATCH_OBJECT_TYPE
+LsaAdBatchGetObjectTypeFromAccountType(
+    IN LSA_OBJECT_TYPE AccountType
+    )
+{
+    LSA_AD_BATCH_OBJECT_TYPE objectType = LSA_AD_BATCH_OBJECT_TYPE_UNDEFINED;
 
     switch (AccountType)
     {
@@ -3958,12 +3954,11 @@ LsaAdBatchAccountTypeToObjectType(
             objectType = LSA_AD_BATCH_OBJECT_TYPE_GROUP;
             break;
         default:
-            LSA_ASSERT(FALSE);
-            dwError = LW_ERROR_INTERNAL;
+            // The default is undefined.
+            break;
     }
 
-    *pObjectType = objectType;
-    return dwError;
+    return objectType;
 }
 
 LSA_AD_BATCH_OBJECT_TYPE

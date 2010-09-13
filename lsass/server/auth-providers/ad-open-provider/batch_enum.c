@@ -813,8 +813,15 @@ LsaAdBatchEnumObjects(
     DWORD dwOutput = 0;
     PSTR pszCopiedSid = NULL;
 
-    dwError = LsaAdBatchAccountTypeToObjectType(AccountType, &objectType);
-    BAIL_ON_LSA_ERROR(dwError);
+    objectType = LsaAdBatchGetObjectTypeFromAccountType(AccountType);
+    if (!LsaAdBatchIsUserOrGroupObjectType(objectType))
+    {
+        // We found something else.
+        LSA_LOG_DEBUG("Requested non-user/non-group object type %d",
+                      AccountType);
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     if (pCookie->bSearchFinished)
     {

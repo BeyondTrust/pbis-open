@@ -218,10 +218,14 @@ LsaAdBatchQueryTermDebugInfo(
     OUT OPTIONAL PDWORD pdwId
     );
 
-DWORD
-LsaAdBatchAccountTypeToObjectType(
-    IN LSA_OBJECT_TYPE AccountType,
-    OUT PLSA_AD_BATCH_OBJECT_TYPE pObjectType
+BOOLEAN
+LsaAdBatchIsUserOrGroupObjectType(
+    IN LSA_AD_BATCH_OBJECT_TYPE ObjectType
+    );
+
+LSA_AD_BATCH_OBJECT_TYPE
+LsaAdBatchGetObjectTypeFromAccountType(
+    IN LSA_OBJECT_TYPE AccountType
     );
 
 LSA_AD_BATCH_OBJECT_TYPE
