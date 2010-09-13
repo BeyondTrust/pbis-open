@@ -150,6 +150,9 @@ LsaSrvGetPamConfig(
     memset(&PamConfig, 0, sizeof(LSA_PAM_CONFIG));
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszSmartCardServices);
+    LW_SAFE_FREE_STRING(pszSmartCardPromptGecos);
+
     *ppPamConfig = pPamConfig;
 
     return dwError;
