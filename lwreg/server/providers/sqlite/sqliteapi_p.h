@@ -117,7 +117,7 @@ SqliteCloseKey_inlock(
     );
 
 NTSTATUS
-SqliteDeleteKeyInternal(
+SqliteDeleteKeyInternal_inlock(
 	IN HANDLE handle,
     IN PCWSTR pwszKeyName
     );
