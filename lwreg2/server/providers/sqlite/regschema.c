@@ -71,7 +71,6 @@ SqliteGetValueAttributes(
     NTSTATUS status = 0;
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
 
-    CHAR szCurrentVal[] = "Current value";
     CHAR szDefaultVal[] = "Default value";
     CHAR szDocString[] = "Document String";
 
@@ -79,8 +78,6 @@ SqliteGetValueAttributes(
 
     LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
             REG_SZ,
-            szCurrentVal,
-            sizeof(szCurrentVal),
             szDefaultVal,
             sizeof(szDefaultVal),
             szDocString,

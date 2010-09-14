@@ -192,8 +192,6 @@ typedef struct _LWREG_RANGE_INTEGER
 typedef struct _LWREG_VALUE_ATTRIBUTES_A
 {
     DWORD ValueType;
-    PVOID pCurrentValue;
-    DWORD CurrentValueLen;
     PVOID pDefaultValue;
     DWORD DefaultValueLen;
     PSTR  pszDocString;
@@ -209,8 +207,6 @@ typedef struct _LWREG_VALUE_ATTRIBUTES_A
 typedef struct _LWREG_VALUE_ATTRIBUTES
 {
     DWORD ValueType;
-    PVOID pCurrentValue;
-    DWORD CurrentValueLen;
     PVOID pDefaultValue;
     DWORD DefaultValueLen;
     PWSTR pwszDocString;

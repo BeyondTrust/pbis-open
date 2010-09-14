@@ -181,7 +181,6 @@ RegSafeFreeValueAttributes(
     }
 
     pValueAttrs = *ppValueAttrs;
-    RTL_FREE(&pValueAttrs->pCurrentValue);
     RTL_FREE(&pValueAttrs->pDefaultValue);
     RTL_FREE(&pValueAttrs->pwszDocString);
     RegFreeWC16StringArrayWithNullTerminator(
@@ -826,7 +825,6 @@ RegConvertValueAttributesAToW(
     dwError = RegAllocateMemory(sizeof(*pAttr),(PVOID*)&pAttr);
     BAIL_ON_REG_ERROR(dwError);
 
-    pAttr->CurrentValueLen = attrA.CurrentValueLen;
     pAttr->DefaultValueLen = attrA.DefaultValueLen;
     pAttr->Hint = attrA.Hint;
     pAttr->RangeType = attrA.RangeType;
@@ -871,17 +869,10 @@ RegConvertValueAttributesAToW(
     pAttr->ValueType = attrA.ValueType;
 
     dwError = RegCopyValueAToW(pAttr->ValueType,
-                                     attrA.pCurrentValue,
-                                     attrA.CurrentValueLen,
-                                     &pAttr->pCurrentValue,
-                                     &pAttr->CurrentValueLen);
-    BAIL_ON_REG_ERROR(dwError);
-
-    dwError = RegCopyValueAToW(pAttr->ValueType,
-                                     attrA.pDefaultValue,
-                                     attrA.DefaultValueLen,
-                                     &pAttr->pDefaultValue,
-                                     &pAttr->DefaultValueLen);
+                               attrA.pDefaultValue,
+                               attrA.DefaultValueLen,
+                               &pAttr->pDefaultValue,
+                               &pAttr->DefaultValueLen);
     BAIL_ON_REG_ERROR(dwError);
 
     *ppAttrW = pAttr;
