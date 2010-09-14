@@ -93,7 +93,7 @@ ProcessImportedKeyName(
     while (!LW_IS_NULL_OR_EMPTY_STR(pszKeyToken))
     {
         dwError = RegWC16StringAllocateFromCString(&pSubKey,
-                                                     pszKeyToken);
+                                                   pszKeyToken);
         BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegCreateKeyExW(
@@ -228,7 +228,7 @@ ProcessImportedValue(
     {
         //Open the subkey
         dwError = RegWC16StringAllocateFromCString(&pSubKey,
-                                                     pszSubKeyName+1);
+                                                   pszSubKeyName+1);
         BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegOpenKeyExW(
