@@ -423,6 +423,7 @@ RegLexParseAt(
 {
     DWORD dwError = 0;
     BOOLEAN eof = FALSE;
+    BOOLEAN bHasSecurity = FALSE;
 
     if (lexHandle->state != REGLEX_STATE_IN_QUOTE)
     {
@@ -440,15 +441,23 @@ RegLexParseAt(
         {
             RegLexAppendChar(lexHandle, inC);
             dwError = RegIOGetChar(ioHandle, &inC, &eof);
+            bHasSecurity = TRUE;
         }
         if (eof)
         {
             return dwError;
         }
         dwError = RegIOUnGetChar(ioHandle, NULL);
-        if (strcmp(lexHandle->curToken.pszValue, "@security") == 0)
+        if (bHasSecurity)
         {
-            lexHandle->eValueNameType = REGLEX_VALUENAME_SECURITY;
+            if (strcmp(lexHandle->curToken.pszValue, "@security") == 0)
+            {
+                lexHandle->eValueNameType = REGLEX_VALUENAME_SECURITY;
+            }
+            else
+            {
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+            }
         }
     }
     return dwError;
@@ -709,7 +718,8 @@ RegLexParseColon(
     DWORD dwError = 0;
 
     if (lexHandle->state == REGLEX_STATE_IN_QUOTE ||
-        lexHandle->state == REGLEX_STATE_IN_KEY)
+        lexHandle->state == REGLEX_STATE_IN_KEY || 
+        lexHandle->eValueNameType == REGLEX_VALUENAME_SECURITY)
     {
         RegLexAppendChar(lexHandle, inC);
         return dwError;

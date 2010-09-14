@@ -2,6 +2,8 @@
 # Example "Registry Schema" entry
 #
 [HKEY_THIS_MACHINE\Services\lsass\Parameters123]
+@ = "3d347b284dadc155514e287328ff1021"
+@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
 "mv" = {
   "range" = string:"Zow" "is" "the"
 }

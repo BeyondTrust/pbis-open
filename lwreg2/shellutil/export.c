@@ -602,7 +602,8 @@ DWORD RegExportString(
 
     if (valueType == REG_KEY_DEFAULT)
     {
-        dumpStringLen = sprintf(dumpBuf, "@=\"%s\"",
+        dumpStringLen = sprintf(dumpBuf, "%s=\"%s\"",
+                            valueName,
                             valueEscName);
     }
     else
