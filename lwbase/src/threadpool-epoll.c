@@ -134,7 +134,7 @@ RunTask(
         &llNewTime);
 
     /* Clear event arguments except sticky bits */
-    pTask->EventArgs &= LW_TASK_EVENT_CANCEL;
+    pTask->EventArgs &= STICKY_EVENTS;
 
     /* If the function gave us a valid time, update the task deadline */
     if (llNewTime != 0)
@@ -196,7 +196,7 @@ error:
 }
 
 /*
- * Updates the set events on tasks from epoll results and
+ * Updates the event args on tasks from epoll results and
  * schedules them to run.
  */
 static
@@ -404,7 +404,7 @@ ProcessRunnable(
             
             if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
             {
-                /* Task is still waiting to be runnable, put in back in epoll set */
+                /* Task is still waiting to be runnable, update events in epoll set */
                 status = UpdateEventWait(
                     pTask,
                     pThread->EpollFd

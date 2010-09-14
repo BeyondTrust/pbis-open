@@ -41,15 +41,24 @@
 
 #include <pthread.h>
 
+/*
+ * Circular linked list structure
+ * TODO: merge or replace with LW_LIST_LINKS from lwio
+ */
 typedef struct _RING
 {
     struct _RING* pPrev;
     struct _RING* pNext;
 } RING, *PRING;
 
+/*
+ * Clock structure
+ */
 typedef struct _CLOCK
 {
+    /* Last time value from system */
     LONG64 llLastTime;
+    /* Adjustment to system time to yield monotonic time */
     LONG64 llAdjust;
 } CLOCK, *PCLOCK;
 
@@ -104,7 +113,9 @@ typedef struct _LW_WORK_THREADS
 
 #define DEFAULT_WORK_THREAD_TIMEOUT 30
 
+/* Mask of events which are never reset once they occur */
 #define STICKY_EVENTS LW_TASK_EVENT_CANCEL
+/* Mask of fd-related events */
 #define FD_EVENTS (LW_TASK_EVENT_FD_READABLE | LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_FD_EXCEPTION)
 
 /* Ring functions */
@@ -271,10 +282,19 @@ ClockUpdate(
 
     if (pClock->llLastTime == 0)
     {
+        /*
+         * First update, set the adjustment so that
+         * the first monotonic time value is 0
+         */
         pClock->llAdjust = -llNow;
     }
     else if (llNow < pClock->llLastTime)
     {
+        /*
+         * Time appears to have gone backwards.
+         * Add to the adjustment so that the next monotonic
+         * time value is 1 nanosecond after the last.
+         */
         pClock->llAdjust += (pClock->llLastTime - llNow + 1);
     }
 

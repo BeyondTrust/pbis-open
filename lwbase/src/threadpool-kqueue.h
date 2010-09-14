@@ -54,8 +54,14 @@
 typedef struct _KQUEUE_COMMANDS
 {
   struct kevent* pCommands;
+  /* Command slots used */
   ULONG ulCommandCount;
+  /* Command slots allocated */
   ULONG ulCommandCapacity;
+  /*
+   * Maximum command slots we could possibly need
+   * based on the number of tasks with active fd events.
+   */
   ULONG ulCommandMax;
 } KQUEUE_COMMANDS, *PKQUEUE_COMMANDS;
 
@@ -65,6 +71,7 @@ typedef struct _KQUEUE_THREAD
     pthread_t Thread;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
+    /* Self pipe for explicitly waking the thread */
     int SignalFds[2];
     int KqueueFd;
     KQUEUE_COMMANDS Commands;
@@ -94,7 +101,6 @@ typedef struct _LW_TASK
     LW_TASK_EVENT_MASK volatile EventSignal;
     /* Absolute time of next time wake event (owned by thread) */
     LONG64 llDeadline;
-    /* kevent() commands */
     /* Callback function and context (immutable) */
     LW_TASK_FUNCTION pfnFunc;
     PVOID pFuncContext;

@@ -39,14 +39,9 @@
 #include "includes.h"
 #include "threadpool-kqueue.h"
 
-/* FIXME: Make these tweakable on the thread pool itself */
-
+/* FIXME: Make these configurable via thread pool attributes */
 /* Maximum events to read */
 #define MAX_EVENTS 500
-/* Number of event-processing threads */
-#define EVENT_THREAD_COUNT 8
-/* Number of work item-processing threads */
-#define WORK_THREAD_COUNT 8
 /* Maximum number of ticks (task function invocations) to
    process each iteration of the event loop */
 #define MAX_TICKS 1000
@@ -214,7 +209,7 @@ RunTask(
         &llNewTime);
 
     /* Clear event arguments except sticky bits */
-    pTask->EventArgs &= LW_TASK_EVENT_CANCEL;
+    pTask->EventArgs &= STICKY_EVENTS;
 
     /* If the function gave us a valid time, update the task deadline */
     if (llNewTime != 0)
@@ -520,7 +515,7 @@ ProcessRunnable(
             
             if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
             {
-                /* Task is still waiting to be runnable, put in back in kqueue set */
+                /* Task is still waiting on events, update kqueue */
                 UpdateEventWait(pCommands, pTask);
                 
                 if (pTask->EventWait & LW_TASK_EVENT_YIELD)
@@ -696,7 +691,7 @@ EventLoop(
         status = ClockGetMonotonicTime(&clock, &llNow);
         GOTO_ERROR_ON_STATUS(status);
 
-        /* Schedule any timed tasks that are have reached their deadline */
+        /* Schedule any timed tasks that have reached their deadlines */
         ScheduleTimedTasks(
             &timed,
             llNow,
