@@ -35,7 +35,8 @@
 #define BAIL_ON_LDAP_ERROR(e)                \
     if ((e) != LDAP_SUCCESS)                 \
     {                                        \
-        goto error;                          \
+        LSA_LOG_DEBUG("Ldap error code: %u ", (e)); \
+        goto error;                 \
     }
 
 
@@ -55,7 +56,7 @@ LdapModReplStrValue(
     );
 
 
-int
+DWORD
 LdapModAddIntValue(
     LDAPMod **mod,
     const char *t,

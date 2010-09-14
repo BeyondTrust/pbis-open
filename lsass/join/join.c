@@ -2493,7 +2493,7 @@ cleanup:
     if (dwError == ERROR_SUCCESS &&
         lderr != 0)
     {
-        dwError = LdapErrToWin32Error(lderr);
+        dwError = LwMapLdapErrorToLwError(lderr);
     }
 
     return dwError;
@@ -2520,7 +2520,7 @@ LsaDirectoryDisconnect(
     )
 {
     int lderr = LdapCloseConnection(ldconn);
-    return LdapErrToWin32Error(lderr);
+    return LwMapLdapErrorToLwError(lderr);
 }
 
 
@@ -2598,7 +2598,7 @@ cleanup:
     if (dwError == ERROR_SUCCESS &&
         lderr != 0)
     {
-        dwError = LdapErrToWin32Error(lderr);
+        dwError = LwMapLdapErrorToLwError(lderr);
     }
 
     return dwError;
@@ -2665,7 +2665,7 @@ cleanup:
     if (dwError == ERROR_SUCCESS &&
         lderr != 0)
     {
-        dwError = LwLdapErrToWin32Error(lderr);
+        dwError = LwMapLdapErrorToLwError(lderr);
     }
 
     return dwError;
@@ -2725,7 +2725,7 @@ cleanup:
     if (dwError == ERROR_SUCCESS &&
         lderr != 0)
     {
-        dwError = LwLdapErrToWin32Error(lderr);
+        dwError = LwMapLdapErrorToLwError(lderr);
     }
 
     return dwError;
@@ -2749,7 +2749,7 @@ LsaMachAcctSetAttribute(
     int lderr = LDAP_SUCCESS;
 
     lderr = LdapMachAcctSetAttribute(ldconn, dn, attr_name, attr_val, new);
-    return LdapErrToWin32Error(lderr);
+    return LwMapLdapErrorToLwError(lderr);
 }
 
 

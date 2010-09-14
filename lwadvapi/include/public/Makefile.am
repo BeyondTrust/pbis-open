@@ -10,7 +10,6 @@ include_HEADERS = \
 	lwstr.h \
 	lwtime.h \
         lwsid.h \
-	ldaperror-table.h \
 	lwldap-error.h \
 	lwdscache.h \
 	lwbuffer.h

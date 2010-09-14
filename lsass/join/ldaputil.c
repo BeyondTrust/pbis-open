@@ -107,7 +107,12 @@ int LdapModReplStrValue(LDAPMod **mod, const char *t, const wchar16_t *sv)
 }
 
 
-int LdapModAddIntValue(LDAPMod **mod, const char *t, const int iv)
+DWORD
+LdapModAddIntValue(
+    LDAPMod **mod,
+    const char *t,
+    const int iv
+    )
 {
     wchar16_t sv[11] = {0};
     if (sw16printfw(
@@ -116,10 +121,13 @@ int LdapModAddIntValue(LDAPMod **mod, const char *t, const int iv)
                 L"%u",
                 iv) < 0)
     {
-        return ErrnoToLdapErr(errno);
+        return LwErrnoToWin32Error(errno);
     }
 
-    return LdapModAddStrValue(mod, t, (const wchar16_t*)sv);
+    return LwMapLdapErrorToLwError(LdapModAddStrValue(
+                mod,
+                t,
+                (const wchar16_t*)sv));
 }
 
 

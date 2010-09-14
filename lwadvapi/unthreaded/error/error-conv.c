@@ -36,7 +36,6 @@
 #include <lw/winerror.h>
 #include <lw/errno.h>
 #include <lwerror.h>
-#include <ldaperror-table.h>
 
 #define STATUS_CODE(status, werror, errno, desc)             \
     {status, werror, errno, #status, #werror, #errno, desc },
@@ -99,53 +98,6 @@ find(
     }
 
     return NULL;
-}
-
-
-const struct lderr_winerr*
-find_lderr(
-    int lderr
-    )
-{
-    unsigned int i;
-
-    for (i = 0; ldaperr_winerr_map[i].pszLderrStr; i++)
-    {
-        if (ldaperr_winerr_map[i].lderr == lderr)
-        {
-            return &ldaperr_winerr_map[i];
-        }
-    }
-
-    return NULL;
-}
-
-DWORD
-LwLdapErrToWin32Error(
-    int lderr
-    )
-{
-    const struct lderr_winerr *e = find_lderr(lderr);
-    return (e) ? e->winerr : -1;
-}
-
-int
-LwErrnoToLdapErr(
-    int uerror
-    )
-{
-    unsigned int i = 0;
-    DWORD dwError = LwErrnoToWin32Error(uerror);
-
-    for (i = 0; ldaperr_winerr_map[i].pszLderrStr; i++)
-    {
-        if (ldaperr_winerr_map[i].winerr == dwError)
-        {
-            return ldaperr_winerr_map[i].lderr;
-        }
-    }
-
-    return -1;
 }
 
 PCSTR
