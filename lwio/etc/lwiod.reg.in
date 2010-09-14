@@ -59,6 +59,7 @@
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\pvfs]
 "Path"="@providerdir@/libpvfs.sys@MOD_EXT@"
+"PathCacheSize"=dword:00002800
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\npfs]
 "Path"="@providerdir@/libnpfs.sys@MOD_EXT@"
