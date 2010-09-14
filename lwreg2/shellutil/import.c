@@ -92,9 +92,9 @@ ProcessImportedKeyName(
     pszKeyToken = strtok_r (NULL, pszDelim, &pszStrTokSav);
     while (!LW_IS_NULL_OR_EMPTY_STR(pszKeyToken))
     {
-    	dwError = RegWC16StringAllocateFromCString(&pSubKey,
-    			                                     pszKeyToken);
-    	BAIL_ON_REG_ERROR(dwError);
+        dwError = RegWC16StringAllocateFromCString(&pSubKey,
+                                                     pszKeyToken);
+        BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegCreateKeyExW(
             hReg,
@@ -110,14 +110,14 @@ ProcessImportedKeyName(
             );
         if (LWREG_ERROR_KEYNAME_EXIST == dwError)
         {
-        	// Key has already been created (open it).
-        	dwError = RegOpenKeyExW(hReg,
-        		                    hCurrKey,
-        	                        pSubKey,
-        	                        0,
-        	                        KEY_ALL_ACCESS,
-        	                        &pNewKey);
-        	BAIL_ON_REG_ERROR(dwError);
+            // Key has already been created (open it).
+            dwError = RegOpenKeyExW(hReg,
+                                    hCurrKey,
+                                    pSubKey,
+                                    0,
+                                    KEY_ALL_ACCESS,
+                                    &pNewKey);
+            BAIL_ON_REG_ERROR(dwError);
         }
         BAIL_ON_REG_ERROR(dwError);
 
@@ -147,7 +147,7 @@ cleanup:
     {
         dwError = RegCloseKey(hReg,pNewKey);
     }
- 
+
     if (hCurrKey)
     {
         dwError = RegCloseKey(hReg,hCurrKey);
@@ -227,9 +227,9 @@ ProcessImportedValue(
     if (pszSubKeyName && !LW_IS_NULL_OR_EMPTY_STR(pszSubKeyName+1))
     {
         //Open the subkey
-    	dwError = RegWC16StringAllocateFromCString(&pSubKey,
-    			                                     pszSubKeyName+1);
-    	BAIL_ON_REG_ERROR(dwError);
+        dwError = RegWC16StringAllocateFromCString(&pSubKey,
+                                                     pszSubKeyName+1);
+        BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegOpenKeyExW(
             hReg,
@@ -286,7 +286,7 @@ ProcessImportedValue(
                           &pwszValueName,
                           pItem->valueName);
             BAIL_ON_REG_ERROR(dwError);
-   
+
             dwError = RegSetValueExW(
                           hReg,
                           hKey,
@@ -296,7 +296,7 @@ ProcessImportedValue(
                           pData,
                           cbData);
         }
-        else 
+        else
         {
             dwError = RegSetValueExA(
                           hReg,
@@ -333,7 +333,7 @@ error:
 }
 
 
-DWORD 
+DWORD
 RegShellUtilImportCallback(
     PREG_PARSE_ITEM pItem,
     HANDLE hUserCtx
