@@ -35,6 +35,67 @@
 #include "ioinit.h"
 
 static
+NTSTATUS
+LwIoGetPeerIdentity(
+    IN LWMsgCall* pCall,
+    OUT uid_t* pUid,
+    OUT gid_t* pGid
+    )
+{
+    NTSTATUS ntStatus = 0;
+    LWMsgSession* pSession = lwmsg_call_get_session(pCall);
+    LWMsgSecurityToken* token = lwmsg_session_get_peer_security_token(pSession);
+    uid_t uid = (uid_t) -1;
+    gid_t gid = (gid_t) -1;
+
+    if (token == NULL || strcmp(lwmsg_security_token_get_type(token), "local"))
+    {
+        ntStatus = STATUS_INVALID_PARAMETER;
+        BAIL_ON_LWIO_ERROR(ntStatus);
+    }
+
+    ntStatus = NtIpcLWMsgStatusToNtStatus(lwmsg_local_token_get_eid(token, &uid, &gid));
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+error:
+
+     if (pUid)
+     {
+         *pUid = uid;
+     }
+
+     if (pGid)
+     {
+         *pGid = gid;
+     }
+
+    return ntStatus;
+}
+
+static
+NTSTATUS
+LwIoVerifyRootAccess(
+    IN LWMsgCall* pCall
+    )
+{
+    NTSTATUS ntStatus = 0;
+    uid_t uid = 0;
+
+    ntStatus = LwIoGetPeerIdentity(pCall, &uid, NULL);
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    if (uid != 0)
+    {
+        ntStatus = STATUS_ACCESS_DENIED;
+        BAIL_ON_LWIO_ERROR(ntStatus);
+    }
+
+error:
+
+    return ntStatus;
+}
+
+static
 LWMsgStatus
 LwIoDaemonIpcRefreshConfiguration(
     IN LWMsgCall* pCall,
@@ -43,19 +104,20 @@ LwIoDaemonIpcRefreshConfiguration(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
     NTSTATUS ntStatus = STATUS_SUCCESS;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    dwError = SMBAllocateMemory(
+    ntStatus = LwIoVerifyRootAccess(pCall);
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    ntStatus = SMBAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
-    BAIL_ON_LWIO_ERROR(dwError);
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
     ntStatus = LwioSrvRefreshConfig(&gLwioServerConfig);
 
-    /* Transmit refresh error to client but do not fail out of dispatch loop */
     if (ntStatus)
     {
         pStatusResponse->dwError = LwNtStatusToWin32Error(ntStatus);
@@ -86,27 +148,28 @@ LwIoDaemonIpcSetLogInfo(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    dwError = SMBAllocateMemory(
+    ntStatus = LwIoVerifyRootAccess(pCall);
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    ntStatus = SMBAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
-    BAIL_ON_LWIO_ERROR(dwError);
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
-    BAIL_ON_INVALID_POINTER(pIn->data);
-
-    dwError = LwioLogSetInfo_r((PLWIO_LOG_INFO)pIn->data);
+    ntStatus = LwioLogSetInfo_r((PLWIO_LOG_INFO)pIn->data);
 
     /* Transmit failure to client but do not bail out of dispatch loop */
-    if (dwError)
+    if (ntStatus)
     {
-        pStatusResponse->dwError = dwError;
+        pStatusResponse->dwError = ntStatus;
         pOut->tag = LWIO_SET_LOG_INFO_FAILED;
         pOut->data = pStatusResponse;
 
-        dwError = 0;
+        ntStatus = 0;
         goto cleanup;
     }
 
@@ -131,26 +194,26 @@ LwIoDaemonIpcGetLogInfo(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
     PLWIO_LOG_INFO pLogInfo = NULL;
 
-    dwError = SMBAllocateMemory(
+    ntStatus = SMBAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
-    BAIL_ON_LWIO_ERROR(dwError);
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
-    dwError = LwioLogGetInfo_r(&pLogInfo);
+    ntStatus = LwioLogGetInfo_r(&pLogInfo);
 
-    if (dwError)
+    if (ntStatus)
     {
-        pStatusResponse->dwError = dwError;
+        pStatusResponse->dwError = ntStatus;
         pOut->tag = LWIO_GET_LOG_INFO_FAILED;
         pOut->data = pStatusResponse;
         pStatusResponse = NULL;
 
-        dwError = 0;
+        ntStatus = 0;
         goto cleanup;
     }
 
@@ -177,23 +240,23 @@ LwIoDaemonIpcGetDriverStatus(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PWSTR pwszDriverName = pIn->data;
     PLWIO_DRIVER_STATUS pStatus = NULL;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    dwError = SMBAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
-    BAIL_ON_LWIO_ERROR(dwError);
+    ntStatus = SMBAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
-    if (dwError)
+    if (ntStatus)
     {
-        pStatusResponse->dwError = dwError;
+        pStatusResponse->dwError = ntStatus;
         pOut->tag = LWIO_GET_DRIVER_STATUS_FAILED;
         pOut->data = pStatusResponse;
         pStatusResponse = NULL;
 
-        dwError = 0;
+        ntStatus = 0;
         goto cleanup;
     }
 
@@ -223,18 +286,21 @@ LwIoDaemonIpcLoadDriver(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PWSTR pwszDriverName = pIn->data;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    dwError = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
-    BAIL_ON_LWIO_ERROR(dwError);
+    ntStatus = LwIoVerifyRootAccess(pCall);
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
-    dwError = IoMgrLoadDriver(pwszDriverName);
+    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    ntStatus = IoMgrLoadDriver(pwszDriverName);
     
-    pStatusResponse->dwError = dwError;
-    pOut->tag = dwError ? LWIO_LOAD_DRIVER_SUCCESS : LWIO_LOAD_DRIVER_FAILED;
+    pStatusResponse->dwError = ntStatus;
+    pOut->tag = ntStatus ? LWIO_LOAD_DRIVER_SUCCESS : LWIO_LOAD_DRIVER_FAILED;
     pOut->data = pStatusResponse;
     pStatusResponse = NULL;
 
@@ -258,18 +324,21 @@ LwIoDaemonIpcUnloadDriver(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PWSTR pwszDriverName = pIn->data;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    dwError = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
-    BAIL_ON_LWIO_ERROR(dwError);
+    ntStatus = LwIoVerifyRootAccess(pCall);
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
-    dwError = IoMgrUnloadDriver(pwszDriverName);
+    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    ntStatus = IoMgrUnloadDriver(pwszDriverName);
     
-    pStatusResponse->dwError = dwError;
-    pOut->tag = dwError ? LWIO_UNLOAD_DRIVER_SUCCESS : LWIO_UNLOAD_DRIVER_FAILED;
+    pStatusResponse->dwError = ntStatus;
+    pOut->tag = ntStatus ? LWIO_UNLOAD_DRIVER_SUCCESS : LWIO_UNLOAD_DRIVER_FAILED;
     pOut->data = pStatusResponse;
     pStatusResponse = NULL;
 
@@ -293,12 +362,12 @@ LwIoDaemonIpcGetPid(
     IN void* pData
     )
 {
-    DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     pid_t* pPid = NULL;
 
-    dwError = SMBAllocateMemory(sizeof(*pPid), OUT_PPVOID(&pPid));
-    BAIL_ON_LWIO_ERROR(dwError);
+    ntStatus = SMBAllocateMemory(sizeof(*pPid), OUT_PPVOID(&pPid));
+    BAIL_ON_LWIO_ERROR(ntStatus);
 
     *pPid = getpid();
 

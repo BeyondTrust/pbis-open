@@ -86,12 +86,6 @@ main(
     PIO_CONTEXT pContext = (HANDLE)NULL;
     PLWIO_LOG_INFO pLogInfo = NULL;
 
-    if (geteuid() != 0) {
-        fprintf(stderr, "This program requires super-user privileges.\n");
-        dwError = EACCES;
-        BAIL_ON_LWIO_ERROR(dwError);
-    }
-
     dwError = ParseArgs(argc, argv, &logLevel);
     BAIL_ON_LWIO_ERROR(dwError);
 
