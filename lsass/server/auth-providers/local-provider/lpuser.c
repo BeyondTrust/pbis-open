@@ -705,8 +705,7 @@ LocalDirValidateUID(
 
     /* Check whether account uid is within permitted range */
     if (uid < LOWEST_UID) {
-        dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_WITH_LSA_ERROR(LW_ERROR_UID_TOO_LOW);
     }
 
 cleanup:

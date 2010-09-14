@@ -386,6 +386,10 @@
 #define LW_ERROR_LDAP_CANNOT_CANCEL                        40352
 #define LW_ERROR_LDAP_ASSERTION_FAILED                     40353
 
+#define LW_ERROR_UID_TOO_LOW                               40400
+#define LW_ERROR_UID_TOO_HIGH                              40401
+#define LW_ERROR_GID_TOO_LOW                               40402
+#define LW_ERROR_GID_TOO_HIGH                              40403
 
 /* range 40500 - 40600 are reserved for GSS specific errors */
 

@@ -306,8 +306,7 @@ LocalDirValidateGID(
 
     /* Check whether group gid is within permitted range */
     if (gid < LOWEST_GID) {
-        dwError = LW_ERROR_INVALID_PARAMETER;
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_WITH_LSA_ERROR(LW_ERROR_GID_TOO_LOW);
     }
 
 cleanup:
