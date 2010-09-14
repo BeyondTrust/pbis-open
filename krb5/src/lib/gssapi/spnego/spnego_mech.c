@@ -2125,17 +2125,22 @@ spnego_gss_delete_sec_context(
 
 	/*
 	 * If this is still an SPNEGO mech, release it locally.
+	 *
+	 * If ctx is null, the context was already freed in the cleanup block
+	 * of another function.
 	 */
-	if (*ctx != NULL &&
-	    (*ctx)->magic_num == SPNEGO_MAGIC_ID) {
-		(void) gss_delete_sec_context(minor_status,
-				    &(*ctx)->ctx_handle,
-				    output_token);
-		(void) release_spnego_ctx(ctx);
-	} else {
-		ret = gss_delete_sec_context(minor_status,
-				    context_handle,
-				    output_token);
+	if (*ctx != NULL)
+	{
+		if ((*ctx)->magic_num == SPNEGO_MAGIC_ID) {
+			(void) gss_delete_sec_context(minor_status,
+					    &(*ctx)->ctx_handle,
+					    output_token);
+			(void) release_spnego_ctx(ctx);
+		} else {
+			ret = gss_delete_sec_context(minor_status,
+					    context_handle,
+					    output_token);
+		}
 	}
 
 	return (ret);
