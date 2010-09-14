@@ -330,7 +330,7 @@ LW_VOID
  * the #LW_TASK_FUNCTION itself), it should be released with
  * #LwRtlReleaseTask().  The task will not be completely freed
  * until it has been released and the #LW_TASK_FUNCTION has
- * indicated completion by setting an empty wake mask.
+ * indicated completion by setting a wake mask of #LW_TASK_EVENT_COMPLETE.
  *
  * @param[in] pPool the thread pool
  * @param[out] ppTask the created task
@@ -338,7 +338,7 @@ LW_VOID
  * @param[in] pfnFunc the task wakeup function
  * @param[in] pData the user context pointer passed to pfnFunc
  * @retval #LW_STATUS_SUCCESS success
- * @retval #LW_INSUFFICIENT_RESOURCES out of memory
+ * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
  */
 LW_NTSTATUS
 LwRtlCreateTask(
@@ -359,7 +359,7 @@ LwRtlCreateTask(
  * @param[in] pPool the thread pool
  * @param[out] ppGroup the created task
  * @retval #LW_STATUS_SUCCESS success
- * @retval #LW_INSUFFICIENT_RESOURCES out of memory
+ * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
  */
 LW_NTSTATUS
 LwRtlCreateTaskGroup(
@@ -483,8 +483,8 @@ LwRtlCancelTask(
 /**
  * @brief Wait for task completion
  *
- * Waits for the specified task to complete by indicating an empty
- * wakeup trigger mask.
+ * Blocks until the specified task completes by setting
+ * #LW_TASK_EVENT_COMPLETE as its wait mask.
  *
  * @param[in] pTask the task
  */
