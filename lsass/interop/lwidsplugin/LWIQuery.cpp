@@ -778,6 +778,7 @@ LWIQuery::QueryComputerInformationByName(const char* pszName)
 
 long
 LWIQuery::QueryGroupsForUser(
+    IN gid_t gid,
     IN PCSTR pszUserSid
     )
 {
@@ -785,13 +786,25 @@ LWIQuery::QueryGroupsForUser(
     PLSA_SECURITY_OBJECT* ppGroups = NULL;
     DWORD dwNumGroupsFound = 0;
     DWORD iGroup = 0;
+    BOOLEAN fFoundPrimaryGroup = FALSE;
 
     macError = GetUserGroups(pszUserSid, &ppGroups, &dwNumGroupsFound);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
     {
+        if (gid == ppGroups[iGroup]->groupInfo.gid)
+        {
+            fFoundPrimaryGroup = TRUE;
+        }
+
         macError = AddGroupRecordHelper(ppGroups[iGroup]);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+
+    if (!fFoundPrimaryGroup)
+    {
+        macError = GetGroupInformationById(gid);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
@@ -816,7 +829,7 @@ LWIQuery::QueryGroupsForUserByName(
     macError = GetUserObjectFromName(pszName, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = QueryGroupsForUser(ppUserObjects[0]->pszObjectSid);
+    macError = QueryGroupsForUser(ppUserObjects[0]->userInfo.gid, ppUserObjects[0]->pszObjectSid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
@@ -839,7 +852,7 @@ LWIQuery::QueryGroupsForUserById(
     macError = GetUserObjectFromId(uid, &ppUserObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = QueryGroupsForUser(ppUserObjects[0]->pszObjectSid);
+    macError = QueryGroupsForUser(ppUserObjects[0]->userInfo.gid, ppUserObjects[0]->pszObjectSid);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
@@ -1012,18 +1025,6 @@ LWIQuery::SetPassword(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
 {
     // Holds the password or credential value
     long macError = eDSNoErr;
-#if 0
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (bSetValue)
-    {
-        macError = AddAttributeAndValue(kDS1AttrPassword, pUser->pw_passwd, pRecord, &pAttribute);
-    }
-    else
-    {
-        macError = AddAttribute(kDS1AttrPassword, pRecord, &pAttribute);
-    }
-#endif
     return macError;
 }
 
@@ -1229,23 +1230,6 @@ long
 LWIQuery::SetPasswordChange(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
 {
     long macError = eDSNoErr;
-#if 0
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (bSetValue)
-    {
-        macError = AddAttributeAndValue(
-           kDS1AttrChange,
-            (const char*)&pUser->pw_change,
-            sizeof(pUser->pw_change),
-            pRecord,
-            &pAttribute);
-    }
-    else
-    {
-        macError = AddAttribute(kDS1AttrChange, pRecord, &pAttribute);
-    }
-#endif
     return macError;
 }
 
@@ -1253,22 +1237,6 @@ long
 LWIQuery::SetPasswordExpire(PDSRECORD pRecord, const PLWIUSER pUser, bool bSetValue)
 {
     long macError = eDSNoErr;
-#if 0
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (bSetValue)
-    {
-        macError = AddAttributeAndValue(kDS1AttrExpire,
-                                        (const char*)&pUser->pw_expire,
-                                        sizeof(pUser->pw_expire),
-                                        pRecord,
-                                        &pAttribute);
-    }
-    else
-    {
-        macError = AddAttribute(kDS1AttrExpire, pRecord, &pAttribute);
-    }
-#endif
     return macError;
 }
 
@@ -1302,22 +1270,6 @@ long
 LWIQuery::SetTimeToLive(PDSRECORD pRecord, bool bSetValue)
 {
     long macError = eDSNoErr;
-#if 0
-    PDSATTRIBUTE pAttribute = NULL;
-
-    if (bSetValue)
-    {
-        macError = AddAttributeAndValue(kDS1AttrTimeToLive,
-                                        (const char*)&DEFAULT_ATTRIBUTE_TTL_SECONDS,
-                                        sizeof(DEFAULT_ATTRIBUTE_TTL_SECONDS),
-                                        pRecord,
-                                        &pAttribute);
-    }
-    else
-    {
-        macError = AddAttribute(kDS1AttrTimeToLive, pRecord, &pAttribute);
-    }
-#endif
     return macError;
 }
 
@@ -1841,7 +1793,14 @@ LWIQuery::AddAttributeAndValue(
     PDSATTRIBUTE* ppAttribute
     )
 {
-    return AddAttributeAndValue(pszAttributeName, pszValue, strlen(pszValue), pRecord, ppAttribute);
+    int len = 0;
+
+    if (pszValue)
+    {
+        len = strlen(pszValue);
+    }
+
+    return AddAttributeAndValue(pszAttributeName, pszValue, len, pRecord, ppAttribute);
 }
 
 long

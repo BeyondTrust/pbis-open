@@ -67,7 +67,7 @@ protected:
     long QueryComputerGroupInformationByName(const char* pszName);
     long QueryComputerInformationByName(const char* pszName);
 
-    long QueryGroupsForUser(PCSTR pszUserSid);
+    long QueryGroupsForUser(gid_t gid, PCSTR pszUserSid);
     long QueryGroupsForUserByName(const char* pszName);
     long QueryGroupsForUserById(uid_t uid);
     long GetUserInformationById(uid_t uid);
