@@ -328,12 +328,14 @@ SqliteDeleteKey(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)Handle;
     PWSTR pwszKeyName = NULL;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKey = NULL;
-
+    BOOLEAN bInLock = FALSE;
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
+    BAIL_ON_NT_INVALID_POINTER(pServerState);
 
     status = RegSrvAccessCheckKeyHandle(pKeyHandle, DELETE);
     BAIL_ON_NT_STATUS(status);
@@ -350,13 +352,23 @@ SqliteDeleteKey(
                     pSubKey);
     BAIL_ON_NT_STATUS(status);
 
-    status = SqliteDeleteActiveKey((PCWSTR)pwszKeyName);
-    BAIL_ON_NT_STATUS(status);
+    if (!pServerState->pToken)
+    {
+        status = RegSrvCreateAccessToken(pServerState->peerUID,
+                                         pServerState->peerGID,
+                                         &pServerState->pToken);
+        BAIL_ON_NT_STATUS(status);
+    }
 
-    status = SqliteDeleteKeyInternal(Handle, pwszKeyName);
+    LWREG_LOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
+
+    status = SqliteDeleteKeyInternal_inlock(Handle, pwszKeyName);
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
+
+    LWREG_UNLOCK_MUTEX(bInLock, &gActiveKeyList.mutex);
+
     LWREG_SAFE_FREE_MEMORY(pwszKeyName);
 
     return status;
@@ -1486,9 +1498,6 @@ SqliteDeleteKey_inlock_inDblock(
                     L"%ws\\%ws",
                     pKey->pwszKeyName,
                     pSubKey);
-    BAIL_ON_NT_STATUS(status);
-
-    status = SqliteDeleteActiveKey_inlock((PCWSTR)pwszKeyName);
     BAIL_ON_NT_STATUS(status);
 
     status = SqliteDeleteKeyInternal_inlock_inDblock(Handle, pwszKeyName);

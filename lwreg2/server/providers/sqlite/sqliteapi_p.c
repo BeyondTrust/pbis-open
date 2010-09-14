@@ -531,7 +531,7 @@ SqliteCloseKey_inlock(
 }
 
 NTSTATUS
-SqliteDeleteKeyInternal(
+SqliteDeleteKeyInternal_inlock(
 	IN HANDLE handle,
     IN PCWSTR pwszKeyName
     )
@@ -543,10 +543,13 @@ SqliteDeleteKeyInternal(
     // Do not free
     PREG_KEY_CONTEXT pKeyCtx = NULL;
 
-    status = SqliteOpenKeyInternal(handle,
-    		                       pwszKeyName,
-    		                       0,
-                                   &pKeyHandle);
+    status = SqliteDeleteActiveKey_inlock((PCWSTR)pwszKeyName);
+    BAIL_ON_NT_STATUS(status);
+
+    status = SqliteOpenKeyInternal_inlock(handle,
+    		                              pwszKeyName,
+    		                              0,
+                                          &pKeyHandle);
     BAIL_ON_NT_STATUS(status);
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
@@ -573,7 +576,7 @@ SqliteDeleteKeyInternal(
 
         if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
         {
-        	SqliteCacheResetParentKeySubKeyInfo(pwszParentKeyName);
+        	SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
         }
     }
     else
@@ -583,7 +586,7 @@ SqliteDeleteKeyInternal(
     }
 
 cleanup:
-    SqliteSafeFreeKeyHandle(pKeyHandle);
+    SqliteSafeFreeKeyHandle_inlock(pKeyHandle);
 
     LWREG_SAFE_FREE_MEMORY(pwszParentKeyName);
 
@@ -606,6 +609,9 @@ SqliteDeleteKeyInternal_inlock_inDblock(
     PREG_KEY_HANDLE pKeyHandle = NULL;
     // Do not free
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+
+    status = SqliteDeleteActiveKey_inlock((PCWSTR)pwszKeyName);
+    BAIL_ON_NT_STATUS(status);
 
     status = SqliteOpenKeyInternal_inlock_inDblock(handle,
     		                                pwszKeyName,
