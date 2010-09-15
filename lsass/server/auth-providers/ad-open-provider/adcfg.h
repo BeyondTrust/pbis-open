@@ -262,6 +262,7 @@ AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
 
 DWORD
 AD_GetDomainManagerTrustExceptionList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PBOOLEAN pbIgnoreAllTrusts,
     OUT PSTR** pppszTrustsList,
     OUT PDWORD pdwTrustsCount

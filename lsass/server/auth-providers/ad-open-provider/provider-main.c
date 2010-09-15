@@ -399,6 +399,7 @@ AD_Activate(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_GetDomainManagerTrustExceptionList(
+                    pState,
                     &bIgnoreAllTrusts,
                     &ppszTrustExceptionList,
                     &dwTrustExceptionCount);

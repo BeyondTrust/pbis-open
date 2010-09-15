@@ -1736,6 +1736,7 @@ AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
 
 DWORD
 AD_GetDomainManagerTrustExceptionList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PBOOLEAN pbIgnoreAllTrusts,
     OUT PSTR** pppszTrustsList,
     OUT PDWORD pdwTrustsCount
@@ -1745,12 +1746,12 @@ AD_GetDomainManagerTrustExceptionList(
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
-    *pbIgnoreAllTrusts = gpLsaAdProviderState->config.DomainManager.bIgnoreAllTrusts;
+    *pbIgnoreAllTrusts = pState->config.DomainManager.bIgnoreAllTrusts;
     dwError = LwDuplicateStringArray(
                     pppszTrustsList,
                     pdwTrustsCount,
-                    gpLsaAdProviderState->config.DomainManager.ppszTrustExceptionList,
-                    gpLsaAdProviderState->config.DomainManager.dwTrustExceptionCount);
+                    pState->config.DomainManager.ppszTrustExceptionList,
+                    pState->config.DomainManager.dwTrustExceptionCount);
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
     return dwError;
