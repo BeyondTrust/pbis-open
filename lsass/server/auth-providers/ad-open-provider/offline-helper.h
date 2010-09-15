@@ -53,6 +53,7 @@
 
 DWORD
 AD_OfflineGetGroupMembers(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszGroupSid,
     OUT size_t* psMemberObjectsCount,
     OUT PLSA_SECURITY_OBJECT** pppMemberObjects
@@ -60,6 +61,7 @@ AD_OfflineGetGroupMembers(
 
 DWORD
 AD_OfflineFindObjectsBySidList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN size_t sCount,
     IN PSTR* ppszSidList,
     OUT PLSA_SECURITY_OBJECT** pppObjects

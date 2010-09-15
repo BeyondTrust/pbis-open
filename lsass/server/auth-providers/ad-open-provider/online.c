@@ -59,6 +59,7 @@
 static
 DWORD
 AD_CheckExpiredMemberships(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN size_t sCount,
     IN PLSA_GROUP_MEMBERSHIP* ppMemberships,
     IN BOOLEAN bCheckNullParentSid,
@@ -127,6 +128,7 @@ error:
 static
 DWORD
 AD_OnlineFinishInitializeDomainTrustsInfo(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PSTR pszPrimaryDomainName
     )
 {
@@ -146,7 +148,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     //
 
     dwError = ADState_GetDomainTrustList(
-                gpLsaAdProviderState->hStateConnection,
+                pState->hStateConnection,
                 &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -157,7 +159,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
 
         if (!pDomain
             || !IsSetFlag(pDomain->Flags, LSA_DM_DOMAIN_FLAG_TRANSITIVE_1WAY_CHILD)
-            || LsaDmIsDomainPresent(pDomain->pszDnsDomainName)
+            || LsaDmIsDomainPresent(pState->hDmState, pDomain->pszDnsDomainName)
            )
         {
             pPos = pPos->pNext;
@@ -165,6 +167,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
         }
 
         dwError = LsaDmWrapNetLookupObjectSidByName(
+                     pState->hDmState,
                      pszPrimaryDomainName,
                      pDomain->pszNetbiosDomainName,
                      &pszSid,
@@ -178,6 +181,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaDmAddTrustedDomain(
+            pState->hDmState,
             pDomain->pszDnsDomainName,
             pDomain->pszNetbiosDomainName,
             pDomain->pSid,
@@ -204,6 +208,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     //
 
     dwError = LsaDmEnumDomainInfo(
+                pState->hDmState,
                 NULL,
                 NULL,
                 &ppDomainInfo,
@@ -211,7 +216,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADState_StoreDomainTrustList(
-                gpLsaAdProviderState->hStateConnection,
+                pState->hStateConnection,
                 ppDomainInfo,
                 dwDomainInfoCount);
     BAIL_ON_LSA_ERROR(dwError);
@@ -231,11 +236,13 @@ error:
 DWORD
 AD_OnlineInitializeOperatingMode(
     OUT PAD_PROVIDER_DATA* ppProviderData,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomain,
     IN PCSTR pszHostName
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PSTR  pszComputerDN = NULL;
     PSTR  pszCellDN = NULL;
     PSTR  pszRootDN = NULL;
@@ -251,10 +258,13 @@ AD_OnlineInitializeOperatingMode(
     dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID*)&pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmEngineDiscoverTrusts(pszDomain);
+    dwError = LsaDmEngineDiscoverTrusts(
+                  pState->hDmState,
+                  pszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaDmLdapOpenDc(
+                    pContext,
                     pszDomain,
                     &pConn);
     BAIL_ON_LSA_ERROR(dwError);
@@ -266,7 +276,7 @@ AD_OnlineInitializeOperatingMode(
                                &pszComputerDN);
     BAIL_ON_LSA_ERROR(dwError);
 
-    adCellSupport = AD_GetCellSupport();
+    adCellSupport = AD_GetCellSupport(pState);
     switch (adCellSupport)
     {
         case AD_CELL_SUPPORT_UNPROVISIONED:
@@ -328,7 +338,11 @@ AD_OnlineInitializeOperatingMode(
         }
     }
 
-    dwError = LsaDmWrapGetDomainName(pszDomain, NULL, &pszNetbiosDomainName);
+    dwError = LsaDmWrapGetDomainName(
+                  pState->hDmState,
+                  pszDomain,
+                  NULL,
+                  &pszNetbiosDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     strcpy(pProviderData->szDomain, pszDomain);
@@ -339,7 +353,9 @@ AD_OnlineInitializeOperatingMode(
 
     if (pProviderData->dwDirectoryMode == CELL_MODE)
     {
-        dwError = AD_GetLinkedCellInfo(pConn,
+        dwError = AD_GetLinkedCellInfo(
+                    pContext,
+                    pConn,
                     pszCellDN,
                     pszDomain,
                     &pProviderData->pCellList);
@@ -347,11 +363,12 @@ AD_OnlineInitializeOperatingMode(
     }
 
     dwError = ADState_StoreProviderData(
-                gpLsaAdProviderState->hStateConnection,
+                pState->hStateConnection,
                 pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_OnlineFinishInitializeDomainTrustsInfo(
+                pState,
                 pProviderData->szDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -380,6 +397,7 @@ error:
 
 DWORD
 AD_GetLinkedCellInfo(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_DM_LDAP_CONNECTION pConn,
     IN PCSTR pszCellDN,
     IN PCSTR pszDomain,
@@ -474,7 +492,10 @@ AD_GetLinkedCellInfo(
                         &pszDirectoryRoot);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmLdapOpenGc(pszDomain, &pGcConn);
+        dwError = LsaDmLdapOpenGc(
+                      pContext,
+                      pszDomain,
+                      &pGcConn);
         BAIL_ON_LSA_ERROR(dwError);
 
         pszLinkedCellGuid = strtok_r (pszLinkedCell, pszDelim, &pszStrTokSav);
@@ -606,6 +627,7 @@ error:
 
 DWORD
 AD_DetermineTrustModeandDomainName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDomain,
     OUT OPTIONAL LSA_TRUST_DIRECTION* pdwTrustDirection,
     OUT OPTIONAL LSA_TRUST_MODE* pdwTrustMode,
@@ -623,27 +645,27 @@ AD_DetermineTrustModeandDomainName(
     LSA_TRUST_MODE dwTrustMode = LSA_TRUST_MODE_UNKNOWN;
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszDomain) ||
-        LW_IS_NULL_OR_EMPTY_STR(gpADProviderData->szDomain) ||
-        LW_IS_NULL_OR_EMPTY_STR(gpADProviderData->szShortDomain))
+        LW_IS_NULL_OR_EMPTY_STR(pState->pProviderData->szDomain) ||
+        LW_IS_NULL_OR_EMPTY_STR(pState->pProviderData->szShortDomain))
     {
         dwError = LW_ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 #if 0
-    if (!strcasecmp(gpADProviderData->szDomain, pszDomain) ||
-        !strcasecmp(gpADProviderData->szShortDomain, pszDomain))
+    if (!strcasecmp(pState->pProviderData->szDomain, pszDomain) ||
+        !strcasecmp(pState->pProviderData->szShortDomain, pszDomain))
     {
         dwTrustDirection = LSA_TRUST_DIRECTION_SELF;
         if (ppszDnsDomainName)
         {
-            dwError = LwAllocateString(gpADProviderData->szDomain,
+            dwError = LwAllocateString(pState->pProviderData->szDomain,
                                         &pszDnsDomainName);
             BAIL_ON_LSA_ERROR(dwError);
         }
         if (ppszNetbiosDomainName)
         {
-            dwError = LwAllocateString(gpADProviderData->szShortDomain,
+            dwError = LwAllocateString(pState->pProviderData->szShortDomain,
                                         &pszNetbiosDomainName);
             BAIL_ON_LSA_ERROR(dwError);
         }
@@ -652,7 +674,8 @@ AD_DetermineTrustModeandDomainName(
     }
 #endif
 
-    dwError = LsaDmQueryDomainInfo(pszDomain,
+    dwError = LsaDmQueryDomainInfo(pState->hDmState,
+                                   pszDomain,
                                    ppszDnsDomainName ? &pszDnsDomainName : NULL,
                                    ppszNetbiosDomainName ? &pszNetbiosDomainName : NULL,
                                    NULL,
@@ -899,7 +922,7 @@ error:
 static
 DWORD
 AD_PacMembershipFilterWithLdap(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_TRUST_DIRECTION dwTrustDirection,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN DWORD dwMembershipCount,
@@ -946,7 +969,7 @@ AD_PacMembershipFilterWithLdap(
     }
 
     dwError = ADCacheGetGroupsForUser(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pUserInfo->pszObjectSid,
                     TRUE,
                     &sCacheMembershipCount,
@@ -954,6 +977,7 @@ AD_PacMembershipFilterWithLdap(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_CheckExpiredMemberships(
+                    pContext->pState,
                     sCacheMembershipCount,
                     ppCacheMemberships,
                     TRUE,
@@ -1025,7 +1049,7 @@ AD_PacMembershipFilterWithLdap(
 
     // Grab the membership information available in LDAP.
     dwError = ADLdap_GetObjectGroupMembership(
-                    hProvider,
+                    pContext,
                     pUserInfo,
                     &iPrimaryGroupIndex,
                     &sLdapGroupCount,
@@ -1075,7 +1099,7 @@ error:
 
 DWORD
 AD_CacheGroupMembershipFromPac(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_TRUST_DIRECTION dwTrustDirection,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN PAC_LOGON_INFO* pPac
@@ -1213,10 +1237,10 @@ AD_CacheGroupMembershipFromPac(
     ppMemberships[dwMembershipIndex]->version.qwDbId = -1;
     ppMemberships[dwMembershipIndex]->pszChildSid = pUserInfo->pszObjectSid;
 
-    if (AD_GetTrimUserMembershipEnabled())
+    if (AD_GetTrimUserMembershipEnabled(pContext->pState))
     {
         dwError = AD_PacMembershipFilterWithLdap(
-                        hProvider,
+                        pContext,
                         dwTrustDirection,
                         pUserInfo,
                         dwMembershipCount,
@@ -1225,7 +1249,7 @@ AD_CacheGroupMembershipFromPac(
     }
 
     dwError = ADCacheStoreGroupsForUser(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pUserInfo->pszObjectSid,
                         dwMembershipCount,
                         ppMemberships,
@@ -1251,7 +1275,7 @@ AD_CacheGroupMembershipFromPac(
         pszPrimaryGroupSid = NULL;
         
         dwError = ADCacheStoreObjectEntry(
-            gpLsaAdProviderState->hCacheConnection,
+            pContext->pState->hCacheConnection,
             pUserInfo);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -1293,6 +1317,7 @@ AD_MarshalUserAccountFlags(
 
 DWORD
 AD_CacheUserRealInfoFromPac(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT pUserInfo,
     IN PAC_LOGON_INFO* pPac
     )
@@ -1329,7 +1354,7 @@ AD_CacheUserRealInfoFromPac(
     pUserInfo->userInfo.bIsAccountInfoKnown = TRUE;
 
     dwError = ADCacheStoreObjectEntry(
-               gpLsaAdProviderState->hCacheConnection,
+               pState->hCacheConnection,
                pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1415,6 +1440,7 @@ error:
 static
 DWORD
 AD_OnlineCachePasswordVerifier(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN PCSTR  pszPassword
     )
@@ -1456,7 +1482,7 @@ AD_OnlineCachePasswordVerifier(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheStorePasswordVerifier(
-                gpLsaAdProviderState->hCacheConnection,
+                pState->hCacheConnection,
                 pVerifier);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1474,6 +1500,7 @@ error:
 
 DWORD
 AD_ServicesDomainWithDiscovery(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszNetBiosName,
     OUT PBOOLEAN pbFoundDomain
     )
@@ -1486,7 +1513,8 @@ AD_ServicesDomainWithDiscovery(
     if (!bFoundDomain)
     {
         dwError = LsaDmEngineGetDomainNameWithDiscovery(
-                     gpADProviderData->szDomain,
+                     pState->hDmState,
+                     pState->pProviderData->szDomain,
                      pszNetBiosName,
                      NULL,
                      NULL);
@@ -1518,7 +1546,7 @@ error:
 
 DWORD
 AD_OnlineCheckUserPassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PLSA_SECURITY_OBJECT pUserInfo,
     PCSTR  pszPassword,
     PDWORD pdwGoodUntilTime
@@ -1542,6 +1570,7 @@ AD_OnlineCheckUserPassword(
     NTSTATUS ntStatus = 0;
 
     dwError = AD_DetermineTrustModeandDomainName(
+                        pContext->pState,
                         pUserInfo->pszNetbiosDomainName,
                         &dwTrustDirection,
                         NULL,
@@ -1580,7 +1609,8 @@ AD_OnlineCheckUserPassword(
         LSA_LOG_DEBUG("Using generated UPN instead of '%s'", pUserInfo->userInfo.pszUPN);
 
         dwError = LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
-                       gpADProviderData->szDomain,
+                       pContext->pState->hDmState,
+                       pContext->pState->pProviderData->szDomain,
                        pUserInfo->pszObjectSid,
                        &pszUserDnsDomainName,
                        NULL,
@@ -1607,7 +1637,7 @@ AD_OnlineCheckUserPassword(
 
     ++pszUserRealm;
 
-    if (LsaDmIsDomainOffline(pszUserRealm))
+    if (LsaDmIsDomainOffline(pContext->pState->hDmState, pszUserRealm))
     {
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -1656,7 +1686,10 @@ AD_OnlineCheckUserPassword(
     
     if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
     {
-        LsaDmTransitionOffline(pszUserRealm, FALSE);
+        LsaDmTransitionOffline(
+            pContext->pState->hDmState,
+            pszUserRealm,
+            FALSE);
     }
 
     BAIL_ON_LSA_ERROR(dwError);
@@ -1674,13 +1707,14 @@ AD_OnlineCheckUserPassword(
     if (pPac != NULL)
     {
         dwError = AD_CacheGroupMembershipFromPac(
-                        hProvider,
+                        pContext,
                         dwTrustDirection,
                         pUserInfo,
                         pPac);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_CacheUserRealInfoFromPac(
+                        pContext->pState,
                         pUserInfo,
                         pPac);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1720,7 +1754,7 @@ error:
 
 DWORD
 AD_OnlineAuthenticateUserPam(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     LSA_AUTH_USER_PAM_PARAMS* pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
@@ -1737,13 +1771,13 @@ AD_OnlineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_FindUserObjectByName(
-                    hProvider,
+                    pContext,
                     pParams->pszLoginName,
                     &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_OnlineCheckUserPassword(
-                    hProvider,
+                    pContext,
                     pUserInfo,
                     pParams->pszPassword,
                     &dwGoodUntilTime);
@@ -1770,14 +1804,14 @@ AD_OnlineAuthenticateUserPam(
         }
 
         // Now update the cache entry with the changes.
-        ADCacheStoreObjectEntry(gpLsaAdProviderState->hCacheConnection, pUserInfo);
+        ADCacheStoreObjectEntry(pContext->pState->hCacheConnection, pUserInfo);
     }
     BAIL_ON_LSA_ERROR(dwError);
 
     ADCacheSafeFreeObject(&pUserInfo);
 
     dwError = AD_FindUserObjectByName(
-                    hProvider,
+                    pContext,
                     pParams->pszLoginName,
                     &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1787,6 +1821,7 @@ AD_OnlineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_OnlineCachePasswordVerifier(
+                    pContext->pState,
                     pUserInfo,
                     pParams->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1827,6 +1862,7 @@ error:
 
 DWORD
 AD_CheckExpiredObject(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
     )
 {
@@ -1838,7 +1874,7 @@ AD_CheckExpiredObject(
     BAIL_ON_LSA_ERROR(dwError);
 
     expirationDate = (*ppCachedUser)->version.tLastUpdated +
-        AD_GetCacheEntryExpirySeconds();
+        AD_GetCacheEntryExpirySeconds(pState);
 
     if (expirationDate <= now)
     {
@@ -1865,6 +1901,7 @@ error:
 
 DWORD
 AD_StoreAsExpiredObject(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
     )
 {
@@ -1875,7 +1912,7 @@ AD_StoreAsExpiredObject(
 
     // Update the cache with the now stale item
     dwError = ADCacheStoreObjectEntry(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pState->hCacheConnection,
                     *ppCachedUser);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1887,6 +1924,7 @@ error:
 static
 DWORD
 AD_CheckExpiredMemberships(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN size_t sCount,
     IN PLSA_GROUP_MEMBERSHIP* ppMemberships,
     IN BOOLEAN bCheckNullParentSid,
@@ -1914,7 +1952,7 @@ AD_CheckExpiredMemberships(
     // because we cached something else (e.g., we cached user's groups
     // but are not trying to find a group's members).
     //
-    dwCacheEntryExpirySeconds = AD_GetCacheEntryExpirySeconds();
+    dwCacheEntryExpirySeconds = AD_GetCacheEntryExpirySeconds(pState);
     for (sIndex = 0; sIndex < sCount; sIndex++)
     {
         PLSA_GROUP_MEMBERSHIP pMembership = ppMemberships[sIndex];
@@ -1962,6 +2000,7 @@ error:
 static
 DWORD
 AD_FilterExpiredMemberships(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT size_t* psCount,
     IN OUT PLSA_GROUP_MEMBERSHIP* ppMemberships
     )
@@ -1977,7 +2016,7 @@ AD_FilterExpiredMemberships(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Cannot fail after this.
-    dwCacheEntryExpirySeconds = AD_GetCacheEntryExpirySeconds();
+    dwCacheEntryExpirySeconds = AD_GetCacheEntryExpirySeconds(pState);
     for (sIndex = 0; sIndex < sCount; sIndex++)
     {
         PLSA_GROUP_MEMBERSHIP pMembership = ppMemberships[sIndex];
@@ -2340,7 +2379,7 @@ AD_FilterNullEntries(
 
 DWORD
 AD_OnlineGetUserGroupObjectMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN BOOLEAN bIsCacheOnlyMode,
     OUT size_t* psCount,
@@ -2367,14 +2406,15 @@ AD_OnlineGetUserGroupObjectMembership(
     pszSid = pUserInfo->pszObjectSid;
 
     dwError = ADCacheGetGroupsForUser(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_CheckExpiredMemberships(
+                    pContext->pState,
                     sMembershipCount,
                     ppMemberships,
                     TRUE,
@@ -2400,6 +2440,7 @@ AD_OnlineGetUserGroupObjectMembership(
         LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
 
         dwError = AD_DetermineTrustModeandDomainName(
+                        pContext->pState,
                         pUserInfo->pszNetbiosDomainName,
                         &dwTrustDirection,
                         NULL,
@@ -2419,7 +2460,10 @@ AD_OnlineGetUserGroupObjectMembership(
 
     if (!bUseCache && bIsCacheOnlyMode)
     {
-        dwError = AD_FilterExpiredMemberships(&sMembershipCount, ppMemberships);
+        dwError = AD_FilterExpiredMemberships(
+                      pContext->pState,
+                      &sMembershipCount,
+                      ppMemberships);
         BAIL_ON_LSA_ERROR(dwError);
 
         bUseCache = TRUE;
@@ -2441,7 +2485,7 @@ AD_OnlineGetUserGroupObjectMembership(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_FindObjectsBySidList(
-                        hProvider,
+                        pContext,
                         sUnexpirableResultsCount,
                         ppszSids,
                         &sUnexpirableResultsCount,
@@ -2452,7 +2496,7 @@ AD_OnlineGetUserGroupObjectMembership(
         ADCacheSafeFreeGroupMembershipList(sMembershipCount, &ppMemberships);
 
         dwError = ADLdap_GetObjectGroupMembership(
-                         hProvider,
+                         pContext,
                          pUserInfo,
                          &iPrimaryGroupIndex,
                          &sResultsCount,
@@ -2462,7 +2506,7 @@ AD_OnlineGetUserGroupObjectMembership(
         AD_FilterNullEntries(ppResults, &sResultsCount);
 
         dwError = AD_CacheMembershipFromRelatedObjects(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pszSid,
                         iPrimaryGroupIndex,
                         FALSE,
@@ -2499,7 +2543,7 @@ AD_OnlineGetUserGroupObjectMembership(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_FindObjectsBySidList(
-                        hProvider,
+                        pContext,
                         sResultsCount,
                         ppszSids,
                         &sFilteredResultsCount,
@@ -2538,7 +2582,7 @@ error:
 
 DWORD
 AD_OnlineChangePassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszLoginId,
     PCSTR pszPassword,
     PCSTR pszOldPassword
@@ -2552,12 +2596,14 @@ AD_OnlineChangePassword(
     DWORD dwGoodUntilTime = 0;
 
     dwError = AD_FindUserObjectByName(
-                     hProvider,
+                     pContext,
                      pszLoginId,
                      &pCachedUser);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_UpdateObject(pCachedUser);
+    dwError = AD_UpdateObject(
+                  pContext->pState,
+                  pCachedUser);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (!pCachedUser->userInfo.bUserCanChangePassword) {
@@ -2582,7 +2628,8 @@ AD_OnlineChangePassword(
 
     // Make sure that we are affinitized.
     dwError = LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
-                       gpADProviderData->szDomain,
+                       pContext->pState->hDmState,
+                       pContext->pState->pProviderData->szDomain,
                        pCachedUser->pszObjectSid,
                        &pszFullDomainName,
                        NULL,
@@ -2598,11 +2645,12 @@ AD_OnlineChangePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_DetermineTrustModeandDomainName(
-                                       pszFullDomainName,
-                                       &dwTrustDirection,
-                                       NULL,
-                                       NULL,
-                                       NULL);
+                    pContext->pState,
+                    pszFullDomainName,
+                    &dwTrustDirection,
+                    NULL,
+                    NULL,
+                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_NetUserChangePassword(pDcInfo->pszDomainControllerName,
@@ -2614,7 +2662,9 @@ AD_OnlineChangePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Now that the user password is updated, we need to expire the cache entry.
-    dwError = AD_StoreAsExpiredObject(&pCachedUser);
+    dwError = AD_StoreAsExpiredObject(
+                  pContext->pState,
+                  &pCachedUser);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Ignore errors because password change succeeded
@@ -2625,7 +2675,7 @@ AD_OnlineChangePassword(
     // Run a check against the new password. This will download a pac for the
     // user and store their user kerberos creds.
     dwError = AD_OnlineCheckUserPassword(
-                    hProvider,
+                    pContext,
                     pCachedUser,
                     pszPassword,
                     &dwGoodUntilTime);
@@ -2648,6 +2698,7 @@ error:
 
 DWORD
 AD_CreateHomeDirectory(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     )
 {
@@ -2664,8 +2715,10 @@ AD_CreateHomeDirectory(
                     &bExists);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!bExists && AD_ShouldCreateHomeDir()) {
-        dwError = AD_CreateHomeDirectory_Generic(pObject);
+    if (!bExists && AD_ShouldCreateHomeDir(pState)) {
+        dwError = AD_CreateHomeDirectory_Generic(
+                      pState,
+                      pObject);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -2683,6 +2736,7 @@ error:
 
 DWORD
 AD_CreateHomeDirectory_Generic(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     )
 {
@@ -2691,7 +2745,7 @@ AD_CreateHomeDirectory_Generic(
     mode_t  perms = (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH);
     BOOLEAN bRemoveDir = FALSE;
 
-    umask = AD_GetUmask();
+    umask = AD_GetUmask(pState);
 
     dwError = LsaCreateDirectory(
                  pObject->userInfo.pszHomedir,
@@ -2714,6 +2768,7 @@ AD_CreateHomeDirectory_Generic(
     bRemoveDir = FALSE;
 
     dwError = AD_ProvisionHomeDir(
+                    pState,
                     pObject->userInfo.uid,
                     pObject->userInfo.gid,
                     pObject->userInfo.pszHomedir);
@@ -2737,6 +2792,7 @@ error:
 
 DWORD
 AD_ProvisionHomeDir(
+    PLSA_AD_PROVIDER_STATE pState,
     uid_t ownerUid,
     gid_t ownerGid,
     PCSTR pszHomedirPath
@@ -2749,7 +2805,7 @@ AD_ProvisionHomeDir(
     PSTR pszIter = NULL;
     size_t stLen = 0;
 
-    dwError = AD_GetSkelDirs(&pszSkelPaths);
+    dwError = AD_GetSkelDirs(pState, &pszSkelPaths);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszSkelPaths))
@@ -3030,7 +3086,7 @@ AD_FreeHashObject(
 
 DWORD
 AD_OnlineGetGroupMembers(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomainName,
     IN PCSTR pszSid,
     IN BOOLEAN bIsCacheOnlyMode,
@@ -3054,14 +3110,15 @@ AD_OnlineGetGroupMembers(
     PSTR* ppszSids = NULL;
 
     dwError = ADCacheGetGroupMembers(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_CheckExpiredMemberships(
+                    pContext->pState,
                     sMembershipCount,
                     ppMemberships,
                     FALSE,
@@ -3087,6 +3144,7 @@ AD_OnlineGetGroupMembers(
         LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
 
         dwError = AD_DetermineTrustModeandDomainName(
+                        pContext->pState,
                         pszDomainName,
                         &dwTrustDirection,
                         NULL,
@@ -3106,7 +3164,10 @@ AD_OnlineGetGroupMembers(
 
     if (!bUseCache && bIsCacheOnlyMode)
     {
-        dwError = AD_FilterExpiredMemberships(&sMembershipCount, ppMemberships);
+        dwError = AD_FilterExpiredMemberships(
+                      pContext->pState,
+                      &sMembershipCount,
+                      ppMemberships);
         BAIL_ON_LSA_ERROR(dwError);
 
         bUseCache = TRUE;
@@ -3128,7 +3189,7 @@ AD_OnlineGetGroupMembers(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_FindObjectsBySidList(
-                        hProvider,
+                        pContext,
                         sUnexpirableResultsCount,
                         ppszSids,
                         &sUnexpirableResultsCount,
@@ -3139,7 +3200,7 @@ AD_OnlineGetGroupMembers(
         ADCacheSafeFreeGroupMembershipList(sMembershipCount, &ppMemberships);
 
         dwError = ADLdap_GetGroupMembers(
-                        hProvider,
+                        pContext,
                         pszDomainName,
                         pszSid,
                         &sResultsCount,
@@ -3147,7 +3208,7 @@ AD_OnlineGetGroupMembers(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_CacheMembershipFromRelatedObjects(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pszSid,
                         -1,
                         TRUE,
@@ -3184,7 +3245,7 @@ AD_OnlineGetGroupMembers(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_FindObjectsBySidList(
-                        hProvider,
+                        pContext,
                         sResultsCount,
                         ppszSids,
                         &sFilteredResultsCount,
@@ -3216,12 +3277,13 @@ error:
 static
 DWORD
 AD_FindObjectBySidNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszSid,
     OUT PLSA_SECURITY_OBJECT* ppObject
     )
 {
     return LsaAdBatchFindSingleObject(
+                pContext,
                 LSA_AD_BATCH_QUERY_TYPE_BY_SID,
                 pszSid,
                 NULL,
@@ -3231,12 +3293,13 @@ AD_FindObjectBySidNoCache(
 static
 DWORD
 AD_FindObjectByNT4NameNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszNT4Name,
     OUT PLSA_SECURITY_OBJECT* ppObject
     )
 {
     return LsaAdBatchFindSingleObject(
+                pContext,
                 LSA_AD_BATCH_QUERY_TYPE_BY_NT4,
                 pszNT4Name,
                 NULL,
@@ -3246,7 +3309,7 @@ AD_FindObjectByNT4NameNoCache(
 static
 DWORD
 AD_FindObjectByUpnNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszUpn,
     OUT PLSA_SECURITY_OBJECT* ppObject
     )
@@ -3256,14 +3319,15 @@ AD_FindObjectByUpnNoCache(
     PLSA_SECURITY_OBJECT pObject = NULL;
 
     dwError = LsaDmWrapNetLookupObjectSidByName(
-                    gpADProviderData->szDomain,
+                    pContext->pState->hDmState,
+                    pContext->pState->pProviderData->szDomain,
                     pszUpn,
                     &pszSid,
                     NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_FindObjectBySidNoCache(
-                    hProvider,
+                    pContext,
                     pszSid,
                     &pObject);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3283,13 +3347,14 @@ error:
 static
 DWORD
 AD_FindObjectByAliasNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszAlias,
     BOOLEAN bIsUserAlias,
     OUT PLSA_SECURITY_OBJECT* ppResult
     )
 {
     return LsaAdBatchFindSingleObject(
+                   pContext,
                    bIsUserAlias ? LSA_AD_BATCH_QUERY_TYPE_BY_USER_ALIAS : LSA_AD_BATCH_QUERY_TYPE_BY_GROUP_ALIAS,
                    pszAlias,
                    NULL,
@@ -3298,7 +3363,7 @@ AD_FindObjectByAliasNoCache(
 
 DWORD
 AD_FindObjectByNameTypeNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszName,
     IN ADLogInNameType NameType,
     IN LSA_OBJECT_TYPE AccountType,
@@ -3330,21 +3395,21 @@ AD_FindObjectByNameTypeNoCache(
     {
         case NameType_NT4:
             dwError = AD_FindObjectByNT4NameNoCache(
-                            hProvider,
+                            pContext,
                             pszName,
                             &pObject);
             BAIL_ON_LSA_ERROR(dwError);
             break;
         case NameType_UPN:
             dwError = AD_FindObjectByUpnNoCache(
-                            hProvider,
+                            pContext,
                             pszName,
                             &pObject);
             BAIL_ON_LSA_ERROR(dwError);
             break;
         case NameType_Alias:
             dwError = AD_FindObjectByAliasNoCache(
-                            hProvider,
+                            pContext,
                             pszName,
                             bIsUser,
                             &pObject);
@@ -3379,7 +3444,7 @@ error:
 
 DWORD
 AD_FindObjectByIdTypeNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN DWORD dwId,
     IN LSA_OBJECT_TYPE AccountType,
     OUT PLSA_SECURITY_OBJECT* ppObject
@@ -3394,6 +3459,7 @@ AD_FindObjectByIdTypeNoCache(
         case LSA_OBJECT_TYPE_USER:
             bIsUser = TRUE;
             dwError = LsaAdBatchFindSingleObject(
+                           pContext,
                            LSA_AD_BATCH_QUERY_TYPE_BY_UID,
                            NULL,
                            &dwId,
@@ -3404,6 +3470,7 @@ AD_FindObjectByIdTypeNoCache(
         case LSA_OBJECT_TYPE_GROUP:
             bIsUser = FALSE;
             dwError = LsaAdBatchFindSingleObject(
+                           pContext,
                            LSA_AD_BATCH_QUERY_TYPE_BY_GID,
                            NULL,
                            &dwId,
@@ -3441,6 +3508,7 @@ error:
 static
 DWORD
 AD_FindObjectsByListNoCache(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN DWORD dwCount,
     IN PSTR* ppszList,
@@ -3449,6 +3517,7 @@ AD_FindObjectsByListNoCache(
     )
 {
     return LsaAdBatchFindObjects(
+                pContext,
                 QueryType,
                 dwCount,
                 ppszList,
@@ -3459,7 +3528,7 @@ AD_FindObjectsByListNoCache(
 
 DWORD
 AD_FindObjectBySid(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszSid,
     OUT PLSA_SECURITY_OBJECT* ppResult
     )
@@ -3469,7 +3538,7 @@ AD_FindObjectBySid(
     size_t objectCount = 0;
 
     dwError = AD_FindObjectsBySidList(
-                    hProvider,
+                    pContext,
                     1,
                     (PSTR*)&pszSid,
                     &objectCount,
@@ -3496,6 +3565,7 @@ error:
 
 DWORD
 AD_FindObjectsByList(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_CACHEDB_FIND_OBJECTS_BY_LIST_CALLBACK pFindInCacheCallback,
     IN LSA_AD_LDAP_FIND_OBJECTS_BY_LIST_BATCHED_CALLBACK pFindByListBatchedCallback,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
@@ -3506,6 +3576,7 @@ AD_FindObjectsByList(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PLSA_SECURITY_OBJECT* ppResults = NULL;
     size_t sResultsCount = 0;
     size_t sFoundInCache = 0;
@@ -3524,7 +3595,7 @@ AD_FindObjectsByList(
      * Lookup as many objects as possible from the cache.
      */
     dwError = pFindInCacheCallback(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pState->hCacheConnection,
                     sCount,
                     ppszList,
                     &ppResults);
@@ -3543,7 +3614,7 @@ AD_FindObjectsByList(
         if ((ppResults[sIndex] != NULL) &&
             (ppResults[sIndex]->version.tLastUpdated >= 0) &&
             (ppResults[sIndex]->version.tLastUpdated +
-            AD_GetCacheEntryExpirySeconds() <= now))
+            AD_GetCacheEntryExpirySeconds(pState) <= now))
         {
             switch (QueryType)
             {
@@ -3584,6 +3655,7 @@ AD_FindObjectsByList(
     }
 
     dwError = pFindByListBatchedCallback(
+                     pContext,
                      QueryType,
                      sRemainNumsToFoundInAD,
                      ppszRemainingList,
@@ -3594,7 +3666,7 @@ AD_FindObjectsByList(
     sFoundInAD = dwFoundInAD;
 
     dwError = ADCacheStoreObjectEntries(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pState->hCacheConnection,
                     sFoundInAD,
                     ppRemainingObjectsResults);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3642,7 +3714,7 @@ error:
 
 DWORD
 AD_FindObjectsBySidList(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN size_t sCount,
     IN PSTR* ppszSidList,
     OUT OPTIONAL size_t* psResultsCount,
@@ -3650,6 +3722,7 @@ AD_FindObjectsBySidList(
     )
 {
     return AD_FindObjectsByList(
+               pContext,
                ADCacheFindObjectsBySidList,
                AD_FindObjectsByListNoCache,
                LSA_AD_BATCH_QUERY_TYPE_BY_SID,
@@ -3661,7 +3734,7 @@ AD_FindObjectsBySidList(
 
 DWORD
 AD_FindObjectsByDNList(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN size_t sCount,
     IN PSTR* ppszDNList,
     OUT OPTIONAL size_t* psResultsCount,
@@ -3669,6 +3742,7 @@ AD_FindObjectsByDNList(
     )
 {
     return AD_FindObjectsByList(
+               pContext,
                ADCacheFindObjectsByDNList,
                AD_FindObjectsByListNoCache,
                LSA_AD_BATCH_QUERY_TYPE_BY_DN,
@@ -3680,7 +3754,7 @@ AD_FindObjectsByDNList(
 
 DWORD
 AD_OnlineFindNSSArtefactByKey(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR  pszKeyName,
     PCSTR  pszMapName,
     DWORD  dwInfoLevel,
@@ -3692,18 +3766,19 @@ AD_OnlineFindNSSArtefactByKey(
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
 
     dwError = LsaDmLdapOpenDc(
-                    gpADProviderData->szDomain,
+                    pContext,
+                    pContext->pState->pProviderData->szDomain,
                     &pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    switch (gpADProviderData->dwDirectoryMode)
+    switch (pContext->pState->pProviderData->dwDirectoryMode)
     {
     case DEFAULT_MODE:
 
         dwError = DefaultModeFindNSSArtefactByKey(
                         pConn,
-                        gpADProviderData->cell.szCellDN,
-                        gpADProviderData->szShortDomain,
+                        pContext->pState->pProviderData->cell.szCellDN,
+                        pContext->pState->pProviderData->szShortDomain,
                         pszKeyName,
                         pszMapName,
                         dwInfoLevel,
@@ -3715,8 +3790,8 @@ AD_OnlineFindNSSArtefactByKey(
 
         dwError = CellModeFindNSSArtefactByKey(
                         pConn,
-                        gpADProviderData->cell.szCellDN,
-                        gpADProviderData->szShortDomain,
+                        pContext->pState->pProviderData->cell.szCellDN,
+                        pContext->pState->pProviderData->szShortDomain,
                         pszKeyName,
                         pszMapName,
                         dwInfoLevel,
@@ -3745,7 +3820,7 @@ error:
 
 DWORD
 AD_OnlineEnumNSSArtefacts(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNSSArtefacts,
     PDWORD  pdwNSSArtefactsFound,
@@ -3757,17 +3832,18 @@ AD_OnlineEnumNSSArtefacts(
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
 
     dwError = LsaDmLdapOpenDc(
-                    gpADProviderData->szDomain,
+                    pContext,
+                    pContext->pState->pProviderData->szDomain,
                     &pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
-    switch (gpADProviderData->dwDirectoryMode)
+    switch (pContext->pState->pProviderData->dwDirectoryMode)
     {
     case DEFAULT_MODE:
         dwError = DefaultModeEnumNSSArtefacts(
                 pConn,
-                gpADProviderData->cell.szCellDN,
-                gpADProviderData->szShortDomain,
+                pContext->pState->pProviderData->cell.szCellDN,
+                pContext->pState->pProviderData->szShortDomain,
                 pEnumState,
                 dwMaxNSSArtefacts,
                 pdwNSSArtefactsFound,
@@ -3778,8 +3854,8 @@ AD_OnlineEnumNSSArtefacts(
     case CELL_MODE:
         dwError = CellModeEnumNSSArtefacts(
                 pConn,
-                gpADProviderData->cell.szCellDN,
-                gpADProviderData->szShortDomain,
+                pContext->pState->pProviderData->cell.szCellDN,
+                pContext->pState->pProviderData->szShortDomain,
                 pEnumState,
                 dwMaxNSSArtefacts,
                 pdwNSSArtefactsFound,
@@ -3893,7 +3969,7 @@ error:
 static
 DWORD
 AD_OnlineFindObjectByName(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -3909,19 +3985,19 @@ AD_OnlineFindObjectByName(
     {
     case LSA_OBJECT_TYPE_USER:
         dwError = ADCacheFindUserByName(
-            gpLsaAdProviderState->hCacheConnection,
+            pContext->pState->hCacheConnection,
             pUserNameInfo,
             &pCachedUser);
         break;
     case LSA_OBJECT_TYPE_GROUP:
         dwError = ADCacheFindGroupByName(
-            gpLsaAdProviderState->hCacheConnection,
+            pContext->pState->hCacheConnection,
             pUserNameInfo,
             &pCachedUser);
         break;
     default:
         dwError = ADCacheFindUserByName(
-            gpLsaAdProviderState->hCacheConnection,
+            pContext->pState->hCacheConnection,
             pUserNameInfo,
             &pCachedUser);
         if ((dwError == LW_ERROR_NO_SUCH_USER ||
@@ -3929,7 +4005,7 @@ AD_OnlineFindObjectByName(
             QueryType != LSA_QUERY_TYPE_BY_UPN)
         {
             dwError = ADCacheFindGroupByName(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserNameInfo,
                 &pCachedUser);
         }
@@ -3938,7 +4014,9 @@ AD_OnlineFindObjectByName(
     
     if (dwError == LW_ERROR_SUCCESS)
     {
-        dwError = AD_CheckExpiredObject(&pCachedUser);
+        dwError = AD_CheckExpiredObject(
+                      pContext->pState,
+                      &pCachedUser);
     }
     
     switch (dwError)
@@ -3950,7 +4028,7 @@ AD_OnlineFindObjectByName(
     case LW_ERROR_NO_SUCH_GROUP:
     case LW_ERROR_NO_SUCH_OBJECT:
         dwError = AD_FindObjectByNameTypeNoCache(
-            hProvider,
+            pContext,
             pszLoginName,
             pUserNameInfo->nameType,
             ObjectType,
@@ -3959,7 +4037,7 @@ AD_OnlineFindObjectByName(
         {
         case LW_ERROR_SUCCESS:
             dwError = ADCacheStoreObjectEntry(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pCachedUser);
             BAIL_ON_LSA_ERROR(dwError);
             
@@ -3994,7 +4072,7 @@ error:
 static
 DWORD
 AD_OnlineFindObjectsByName(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -4011,7 +4089,9 @@ AD_OnlineFindObjectsByName(
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
     PSTR pszDefaultPrefix = NULL;
 
-    dwError = AD_GetUserDomainPrefix(&pszDefaultPrefix);
+    dwError = AD_GetUserDomainPrefix(
+                  pContext->pState,
+                  &pszDefaultPrefix);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*ppObjects) * dwCount, OUT_PPVOID(&ppObjects));
@@ -4054,7 +4134,7 @@ AD_OnlineFindObjectsByName(
         }
 
         dwError = AD_OnlineFindObjectByName(
-            hProvider,
+            pContext,
             FindFlags,
             ObjectType,
             QueryType,
@@ -4075,7 +4155,7 @@ AD_OnlineFindObjectsByName(
             dwError = LW_ERROR_SUCCESS;
             
             if (QueryType == LSA_QUERY_TYPE_BY_ALIAS &&
-                AD_ShouldAssumeDefaultDomain())
+                AD_ShouldAssumeDefaultDomain(pContext->pState))
             {
                 LW_SAFE_FREE_STRING(pszLoginId_copy);
                 LsaSrvFreeNameInfo(pUserNameInfo);
@@ -4100,7 +4180,7 @@ AD_OnlineFindObjectsByName(
                 BAIL_ON_LSA_ERROR(dwError);
 
                 dwError = AD_OnlineFindObjectByName(
-                    hProvider,
+                    pContext,
                     FindFlags,
                     ObjectType,
                     LSA_QUERY_TYPE_BY_NT4,
@@ -4159,7 +4239,7 @@ error:
 static
 DWORD
 AD_OnlineFindObjectsById(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -4182,13 +4262,13 @@ AD_OnlineFindObjectsById(
         {
         case LSA_OBJECT_TYPE_USER:
             dwError = ADCacheFindUserById(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 QueryList.pdwIds[dwIndex],
                 &pCachedUser);
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = ADCacheFindGroupById(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 QueryList.pdwIds[dwIndex],
                 &pCachedUser);
             break;
@@ -4198,7 +4278,9 @@ AD_OnlineFindObjectsById(
         }
         if (dwError == LW_ERROR_SUCCESS)
         {
-            dwError = AD_CheckExpiredObject(&pCachedUser);
+            dwError = AD_CheckExpiredObject(
+                          pContext->pState,
+                          &pCachedUser);
         }
         
         switch (dwError)
@@ -4212,7 +4294,7 @@ AD_OnlineFindObjectsById(
         case LW_ERROR_NO_SUCH_GROUP:
         case LW_ERROR_NO_SUCH_OBJECT:
             dwError = AD_FindObjectByIdTypeNoCache(
-                hProvider,
+                pContext,
                 QueryList.pdwIds[dwIndex],
                 ObjectType,
                 &pCachedUser);
@@ -4220,7 +4302,7 @@ AD_OnlineFindObjectsById(
             {
             case LW_ERROR_SUCCESS:
                 dwError = ADCacheStoreObjectEntry(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pCachedUser);
                 BAIL_ON_LSA_ERROR(dwError);
                 
@@ -4310,7 +4392,7 @@ error:
 
 DWORD
 AD_OnlineFindObjects(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -4330,7 +4412,7 @@ AD_OnlineFindObjects(
     {
     case LSA_QUERY_TYPE_BY_SID:
         dwError = AD_FindObjectsBySidList(
-            hProvider,
+            pContext,
             dwCount,
             (PSTR*) QueryList.ppszStrings,
             &sObjectCount,
@@ -4348,7 +4430,7 @@ AD_OnlineFindObjects(
         break;
     case LSA_QUERY_TYPE_BY_DN:
          dwError = AD_FindObjectsByDNList(
-            hProvider,
+            pContext,
             dwCount,
             (PSTR*) QueryList.ppszStrings,
             &sObjectCount,
@@ -4368,7 +4450,7 @@ AD_OnlineFindObjects(
     case LSA_QUERY_TYPE_BY_UPN:
     case LSA_QUERY_TYPE_BY_ALIAS:
         dwError = AD_OnlineFindObjectsByName(
-            hProvider,
+            pContext,
             FindFlags,
             ObjectType,
             QueryType,
@@ -4379,7 +4461,7 @@ AD_OnlineFindObjects(
         break;
     case LSA_QUERY_TYPE_BY_UNIX_ID:
         dwError = AD_OnlineFindObjectsById(
-            hProvider,
+            pContext,
             FindFlags,
             ObjectType,
             QueryType,
@@ -4438,6 +4520,7 @@ error:
 
 DWORD
 AD_OnlineEnumObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN HANDLE hEnum,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
@@ -4445,13 +4528,14 @@ AD_OnlineEnumObjects(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PAD_ENUM_HANDLE pEnum = hEnum;
     BOOLEAN bIsEnumerationEnabled = TRUE;
     LSA_FIND_FLAGS FindFlags = pEnum->FindFlags;
 
     if (FindFlags & LSA_FIND_FLAGS_NSS)
     {
-        bIsEnumerationEnabled = AD_GetNssEnumerationEnabled();
+        bIsEnumerationEnabled = AD_GetNssEnumerationEnabled(pState);
     }
 
     if (!bIsEnumerationEnabled || pEnum->CurrentObjectType == LSA_OBJECT_TYPE_UNDEFINED)
@@ -4466,6 +4550,7 @@ AD_OnlineEnumObjects(
         {
         case LSA_OBJECT_TYPE_USER:
             dwError = LsaAdBatchEnumObjects(
+                pContext,
                 &pEnum->Cookie,
                 LSA_OBJECT_TYPE_USER,
                 dwMaxObjectsCount,
@@ -4474,6 +4559,7 @@ AD_OnlineEnumObjects(
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = LsaAdBatchEnumObjects(
+                pContext,
                 &pEnum->Cookie,
                 LSA_OBJECT_TYPE_GROUP,
                 dwMaxObjectsCount,
@@ -4520,7 +4606,7 @@ error:
 static
 DWORD
 AD_OnlineQueryMemberOfForSid(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
     IN OUT PLSA_HASH_TABLE pGroupHash
@@ -4543,10 +4629,10 @@ AD_OnlineQueryMemberOfForSid(
 
     if (FindFlags & LSA_FIND_FLAGS_NSS)
     {
-        bIsCacheOnlyMode = AD_GetNssUserMembershipCacheOnlyEnabled();
+        bIsCacheOnlyMode = AD_GetNssUserMembershipCacheOnlyEnabled(pContext->pState);
     }
 
-    dwError = AD_FindObjectBySid(hProvider, pszSid, &pUserInfo);
+    dwError = AD_FindObjectBySid(pContext, pszSid, &pUserInfo);
     if (dwError == LW_ERROR_NO_SUCH_OBJECT)
     {
         /* Skip over unknown SIDs without failing */
@@ -4556,14 +4642,15 @@ AD_OnlineQueryMemberOfForSid(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheGetGroupsForUser(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_CheckExpiredMemberships(
+                    pContext->pState,
                     sMembershipCount,
                     ppMemberships,
                     TRUE,
@@ -4589,6 +4676,7 @@ AD_OnlineQueryMemberOfForSid(
         LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
 
         dwError = AD_DetermineTrustModeandDomainName(
+                        pContext->pState,
                         pUserInfo->pszNetbiosDomainName,
                         &dwTrustDirection,
                         NULL,
@@ -4608,7 +4696,10 @@ AD_OnlineQueryMemberOfForSid(
 
     if (!bUseCache && bIsCacheOnlyMode)
     {
-        dwError = AD_FilterExpiredMemberships(&sMembershipCount, ppMemberships);
+        dwError = AD_FilterExpiredMemberships(
+                      pContext->pState,
+                      &sMembershipCount,
+                      ppMemberships);
         BAIL_ON_LSA_ERROR(dwError);
 
         bUseCache = TRUE;
@@ -4617,7 +4708,7 @@ AD_OnlineQueryMemberOfForSid(
     if (!bUseCache)
     {
         dwError = ADLdap_GetObjectGroupMembership(
-                         hProvider,
+                         pContext,
                          pUserInfo,
                          &iPrimaryGroupIndex,
                          &sResultsCount,
@@ -4636,7 +4727,7 @@ AD_OnlineQueryMemberOfForSid(
         AD_FilterNullEntries(ppResults, &sResultsCount);
 
         dwError = AD_CacheMembershipFromRelatedObjects(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pszSid,
                         iPrimaryGroupIndex,
                         FALSE,
@@ -4665,7 +4756,7 @@ AD_OnlineQueryMemberOfForSid(
                 BAIL_ON_LSA_ERROR(dwError);
 
                 dwError = AD_OnlineQueryMemberOfForSid(
-                    hProvider,
+                    pContext,
                     FindFlags,
                     pszGroupSid,
                     pGroupHash);
@@ -4690,7 +4781,7 @@ AD_OnlineQueryMemberOfForSid(
                 BAIL_ON_LSA_ERROR(dwError);
                 
                 dwError = AD_OnlineQueryMemberOfForSid(
-                    hProvider,
+                    pContext,
                     FindFlags,
                     pszGroupSid,
                     pGroupHash);
@@ -4736,7 +4827,7 @@ AD_OnlineFreeMemberOfHashEntry(
 
 DWORD
 AD_OnlineQueryMemberOf(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -4769,7 +4860,7 @@ AD_OnlineQueryMemberOf(
         }
 
         dwError = AD_OnlineQueryMemberOfForSid(
-            hProvider,
+            pContext,
             FindFlags,
             ppszSids[dwIndex],
             pGroupHash);
@@ -4816,7 +4907,7 @@ error:
 
 DWORD
 AD_OnlineGetGroupMemberSids(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PCSTR pszSid,
     OUT PDWORD pdwSidCount,
@@ -4840,21 +4931,22 @@ AD_OnlineGetGroupMemberSids(
 
     if (FindFlags & LSA_FIND_FLAGS_NSS)
     {
-        bIsCacheOnlyMode = AD_GetNssGroupMembersCacheOnlyEnabled();
+        bIsCacheOnlyMode = AD_GetNssGroupMembersCacheOnlyEnabled(pContext->pState);
     }
 
-    dwError = AD_FindObjectBySid(hProvider, pszSid, &pGroupInfo);
+    dwError = AD_FindObjectBySid(pContext, pszSid, &pGroupInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheGetGroupMembers(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_CheckExpiredMemberships(
+                    pContext->pState,
                     sMembershipCount,
                     ppMemberships,
                     FALSE,
@@ -4880,11 +4972,12 @@ AD_OnlineGetGroupMemberSids(
         LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
 
         dwError = AD_DetermineTrustModeandDomainName(
-            pGroupInfo->pszNetbiosDomainName,
-            &dwTrustDirection,
-            NULL,
-            NULL,
-            NULL);
+                      pContext->pState,
+                      pGroupInfo->pszNetbiosDomainName,
+                      &dwTrustDirection,
+                      NULL,
+                      NULL,
+                      NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (dwTrustDirection == LSA_TRUST_DIRECTION_ONE_WAY)
@@ -4899,7 +4992,10 @@ AD_OnlineGetGroupMemberSids(
 
     if (!bUseCache && bIsCacheOnlyMode)
     {
-        dwError = AD_FilterExpiredMemberships(&sMembershipCount, ppMemberships);
+        dwError = AD_FilterExpiredMemberships(
+                      pContext->pState,
+                      &sMembershipCount,
+                      ppMemberships);
         BAIL_ON_LSA_ERROR(dwError);
 
         bUseCache = TRUE;
@@ -4908,7 +5004,7 @@ AD_OnlineGetGroupMemberSids(
     if (!bUseCache)
     {
         dwError = ADLdap_GetGroupMembers(
-                        hProvider,
+                        pContext,
                         pGroupInfo->pszNetbiosDomainName,
                         pszSid,
                         &sResultsCount,
@@ -4916,7 +5012,7 @@ AD_OnlineGetGroupMemberSids(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = AD_CacheMembershipFromRelatedObjects(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pszSid,
                         -1,
                         TRUE,

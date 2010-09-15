@@ -62,6 +62,7 @@ typedef DWORD (*LSA_AD_CACHEDB_FIND_OBJECTS_BY_LIST_CALLBACK)(
     );
 
 typedef DWORD (*LSA_AD_LDAP_FIND_OBJECTS_BY_LIST_BATCHED_CALLBACK)(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN DWORD dwCount,
     IN PSTR* ppszList,
@@ -161,12 +162,14 @@ AD_OnlineFindCellDN(
 DWORD
 AD_OnlineInitializeOperatingMode(
     OUT PAD_PROVIDER_DATA* ppProviderData,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomain,
     IN PCSTR pszHostName
     );
 
 DWORD
 AD_DetermineTrustModeandDomainName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDomain,
     OUT OPTIONAL LSA_TRUST_DIRECTION* pdwTrustDirection,
     OUT OPTIONAL LSA_TRUST_MODE* pdwTrustMode,
@@ -176,14 +179,14 @@ AD_DetermineTrustModeandDomainName(
 
 DWORD
 AD_OnlineAuthenticateUserPam(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     LSA_AUTH_USER_PAM_PARAMS* pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD
 AD_OnlineCheckUserPassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PLSA_SECURITY_OBJECT pUserInfo,
     PCSTR  pszPassword,
     PDWORD pdwGoodUntilTime
@@ -197,7 +200,7 @@ AD_CrackDomainQualifiedName(
 
 DWORD
 AD_OnlineGetUserGroupObjectMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN BOOLEAN bIsCacheOnlyMode,
     OUT size_t* psCount,
@@ -206,7 +209,7 @@ AD_OnlineGetUserGroupObjectMembership(
 
 DWORD
 AD_OnlineChangePassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszUserName,
     PCSTR pszPassword,
     PCSTR pszOldPassword
@@ -214,16 +217,19 @@ AD_OnlineChangePassword(
 
 DWORD
 AD_CreateHomeDirectory(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     );
 
 DWORD
 AD_CreateHomeDirectory_Generic(
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_SECURITY_OBJECT pObject
     );
 
 DWORD
 AD_ProvisionHomeDir(
+    PLSA_AD_PROVIDER_STATE pState,
     uid_t ownerUid,
     gid_t ownerGid,
     PCSTR pszHomedirPath
@@ -236,11 +242,13 @@ AD_CreateK5Login(
 
 DWORD
 AD_CheckExpiredObject(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
     );
 
 DWORD
 AD_StoreAsExpiredObject(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT* ppCachedUser
     );
 
@@ -262,7 +270,7 @@ AD_FreeHashObject(
 
 DWORD
 AD_OnlineGetGroupMembers(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomainName,
     IN PCSTR pszSid,
     IN BOOLEAN bIsCacheOnlyMode,
@@ -272,7 +280,7 @@ AD_OnlineGetGroupMembers(
 
 DWORD
 AD_FindObjectsByDNList(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN size_t sCount,
     IN PSTR* ppszDNList,
     OUT OPTIONAL size_t* psResultsCount,
@@ -281,7 +289,7 @@ AD_FindObjectsByDNList(
 
 DWORD
 AD_FindObjectByNameTypeNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszName,
     IN ADLogInNameType NameType,
     IN LSA_OBJECT_TYPE AccountType,
@@ -290,7 +298,7 @@ AD_FindObjectByNameTypeNoCache(
 
 DWORD
 AD_FindObjectByIdTypeNoCache(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN DWORD dwId,
     IN LSA_OBJECT_TYPE AccountType,
     OUT PLSA_SECURITY_OBJECT* ppObject
@@ -298,14 +306,14 @@ AD_FindObjectByIdTypeNoCache(
 
 DWORD
 AD_FindObjectBySid(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszSid,
     OUT PLSA_SECURITY_OBJECT* ppResult
     );
 
 DWORD
 AD_FindObjectsBySidList(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN size_t sCount,
     IN PSTR* ppszSidList,
     OUT OPTIONAL size_t* psResultsCount,
@@ -314,6 +322,7 @@ AD_FindObjectsBySidList(
 
 DWORD
 AD_GetLinkedCellInfo(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_DM_LDAP_CONNECTION pConn,
     IN PCSTR pszCellDN,
     IN PCSTR pszDomain,
@@ -322,7 +331,7 @@ AD_GetLinkedCellInfo(
 
 DWORD
 AD_CacheGroupMembershipFromPac(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_TRUST_DIRECTION dwTrustDirection,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     IN PAC_LOGON_INFO* pPac
@@ -330,6 +339,7 @@ AD_CacheGroupMembershipFromPac(
 
 DWORD
 AD_CacheUserRealInfoFromPac(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT pUserInfo,
     IN PAC_LOGON_INFO* pPac
     );
@@ -342,7 +352,7 @@ AD_FilterNullEntries(
 
 DWORD
 AD_OnlineFindNSSArtefactByKey(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR  pszKeyName,
     PCSTR  pszMapName,
     DWORD  dwInfoLevel,
@@ -352,7 +362,7 @@ AD_OnlineFindNSSArtefactByKey(
 
 DWORD
 AD_OnlineEnumNSSArtefacts(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNSSArtefacts,
     PDWORD  pdwNSSArtefactsFound,
@@ -378,6 +388,7 @@ AD_VerifyUserAccountCanLogin(
 
 DWORD
 AD_FindObjectsByList(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_CACHEDB_FIND_OBJECTS_BY_LIST_CALLBACK pFindInCacheCallback,
     IN LSA_AD_LDAP_FIND_OBJECTS_BY_LIST_BATCHED_CALLBACK pFindByListBatchedCallback,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
@@ -389,7 +400,7 @@ AD_FindObjectsByList(
 
 DWORD
 AD_OnlineFindObjects(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -400,6 +411,7 @@ AD_OnlineFindObjects(
 
 DWORD
 AD_OnlineEnumObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN HANDLE hEnum,
     IN DWORD dwMaxObjectsCount,
     OUT PDWORD pdwObjectsCount,
@@ -408,7 +420,7 @@ AD_OnlineEnumObjects(
 
 DWORD
 AD_OnlineQueryMemberOf(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -418,7 +430,7 @@ AD_OnlineQueryMemberOf(
 
 DWORD
 AD_OnlineGetGroupMemberSids(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PCSTR pszSid,
     OUT PDWORD pdwSidCount,

@@ -50,32 +50,34 @@
 
 DWORD
 ADInitMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 ADStartMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 VOID
 ADSyncTimeToDC(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszDomainFQDN
     );
 
 VOID
 ADShutdownMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 VOID
 ADSetMachineTGTExpiry(
-    DWORD dwGoodUntil
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState,
+    IN DWORD dwGoodUntil
     );
 
 VOID
 ADSetMachineTGTExpiryError(
-    VOID
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
     );
 
 #endif /* __MACHINEPWD_P_H__ */

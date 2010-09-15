@@ -57,6 +57,8 @@ typedef struct _LSA_DB_CONNECTION
 {
     sqlite3 *pDb;
     pthread_rwlock_t lock;
+    PLSA_AD_PROVIDER_STATE pProviderState;
+
     sqlite3_stmt *pstFindObjectByNT4;
     sqlite3_stmt *pstFindObjectByDN;
     sqlite3_stmt *pstFindObjectBySid;

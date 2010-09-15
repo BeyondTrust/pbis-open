@@ -83,6 +83,7 @@ ADNonSchemaKeywordGetUInt32(
 
 DWORD
 AD_BuildHomeDirFromTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszHomedirTemplate,
     PCSTR pszNetBIOSDomainName,
     PCSTR pszSamAccountName,

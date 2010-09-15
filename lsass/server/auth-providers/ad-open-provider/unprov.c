@@ -55,6 +55,7 @@
 static
 DWORD
 ADUnprovPlugin_QueryByIdWithDomainName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN DWORD dwId,
     IN PCSTR pszDnsDomainName,
@@ -70,7 +71,8 @@ ADUnprovPlugin_QueryByIdWithDomainName(
 
     // lsass unprovisioned mode converts a group/user uid/gid to objectSid/name with the same algorithm
 
-    dwError = LsaDmQueryDomainInfo(pszDnsDomainName,
+    dwError = LsaDmQueryDomainInfo(pState->hDmState,
+                                   pszDnsDomainName,
                                    NULL,
                                    NULL,
                                    &pDomainSid,
@@ -126,6 +128,7 @@ error:
 static
 DWORD
 ADUnprovPlugin_QueryByAliasWithDomainName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN PCSTR pszAlias,
     IN PCSTR pszDnsDomainName,
@@ -141,6 +144,7 @@ ADUnprovPlugin_QueryByAliasWithDomainName(
     LSA_OBJECT_TYPE accountType = LSA_OBJECT_TYPE_UNDEFINED;
 
     dwError = LsaDmWrapGetDomainName(
+                 pState->hDmState,
                  pszDnsDomainName,
                  NULL,
                  &pszNetBiosName);
@@ -154,7 +158,8 @@ ADUnprovPlugin_QueryByAliasWithDomainName(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaDmWrapNetLookupObjectSidByName(
-                    gpADProviderData->szDomain,
+                    pState->hDmState,
+                    pState->pProviderData->szDomain,
                     pszNT4Name,
                     &pszSid,
                     &accountType);
@@ -216,6 +221,7 @@ ADUnprovPlugin_SupportsAliases(
 
 DWORD
 ADUnprovPlugin_QueryByReal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN BOOLEAN bIsUser,
     IN PCSTR pszNT4Name,
     IN PCSTR pszSid,
@@ -242,7 +248,7 @@ ADUnprovPlugin_QueryByReal(
     if (LW_IS_NULL_OR_EMPTY_STR(pszNT4Name))
     {
         dwError = LsaDmWrapNetLookupNameByObjectSid(
-                    gpADProviderData->szDomain,
+                    pProviderData->szDomain,
                     pszSid,
                     &pszName,
                     &accountType);
@@ -258,7 +264,7 @@ ADUnprovPlugin_QueryByReal(
 
     dwError = LsaCrackDomainQualifiedName(
                  !LW_IS_NULL_OR_EMPTY_STR(pszNT4Name) ? pszNT4Name : pszName,
-                 gpADProviderData->szDomain,
+                 pProviderData->szDomain,
                  &pNameInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -297,6 +303,7 @@ error:
 
 DWORD
 ADUnprovPlugin_QueryByAlias(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN PCSTR pszAlias,
     OUT PSTR* ppszSid,
@@ -311,9 +318,10 @@ ADUnprovPlugin_QueryByAlias(
     // lsass unprovisioned mode converts a group/user uid/gid to objectSid/name with the same algorithm
 
     dwError = ADUnprovPlugin_QueryByAliasWithDomainName(
+                    pState,
                     bIsUser,
                     pszAlias,
-                    gpADProviderData->szDomain,
+                    pState->pProviderData->szDomain,
                     ppszSid,
                     pdwId);
     if (LW_ERROR_NO_SUCH_OBJECT == dwError ||
@@ -327,12 +335,18 @@ ADUnprovPlugin_QueryByAlias(
     if (!LW_IS_NULL_OR_EMPTY_STR(*ppszSid))
         goto cleanup;
 
-    dwError = LsaDmEnumDomainNames(NULL, NULL, &ppszDomainNames, &dwDomainCount);
+    dwError = LsaDmEnumDomainNames(
+                  pState->hDmState,
+                  NULL,
+                  NULL,
+                  &ppszDomainNames,
+                  &dwDomainCount);
     BAIL_ON_LSA_ERROR(dwError);
 
     for (i = 0; i < dwDomainCount; i++)
     {
         dwError = ADUnprovPlugin_QueryByAliasWithDomainName(
+                        pState,
                         bIsUser,
                         pszAlias,
                         ppszDomainNames[i],
@@ -368,6 +382,7 @@ error:
 // Can optionally return alias as well.
 DWORD
 ADUnprovPlugin_QueryById(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN DWORD dwId,
     OUT PSTR* ppszSid,
@@ -382,9 +397,10 @@ ADUnprovPlugin_QueryById(
     // lsass unprovisioned mode converts a group/user uid/gid to objectSid/name with the same algorithm
 
     dwError = ADUnprovPlugin_QueryByIdWithDomainName(
+                    pState,
                     bIsUser,
                     dwId,
-                    gpADProviderData->szDomain,
+                    pState->pProviderData->szDomain,
                     ppszSid,
                     ppszAlias);
     if (LW_ERROR_NO_SUCH_OBJECT == dwError ||
@@ -398,12 +414,18 @@ ADUnprovPlugin_QueryById(
     if (!LW_IS_NULL_OR_EMPTY_STR(*ppszSid))
         goto cleanup;
 
-    dwError = LsaDmEnumDomainNames(NULL, NULL, &ppszDomainNames, &dwDomainCount);
+    dwError = LsaDmEnumDomainNames(
+                  pState->hDmState,
+                  NULL,
+                  NULL,
+                  &ppszDomainNames,
+                  &dwDomainCount);
     BAIL_ON_LSA_ERROR(dwError);
 
     for (i = 0; i < dwDomainCount; i++)
     {
         dwError = ADUnprovPlugin_QueryByIdWithDomainName(
+                        pState,
                         bIsUser,
                         dwId,
                         ppszDomainNames[i],

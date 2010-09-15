@@ -49,8 +49,9 @@
 
 DWORD
 ADMarshalGetCanonicalName(
-    PLSA_SECURITY_OBJECT     pObject,
-    PSTR*                   ppszResult);
+    PLSA_AD_PROVIDER_STATE pState,
+    PLSA_SECURITY_OBJECT   pObject,
+    PSTR*                  ppszResult);
 
 #endif //__LSALDAP_MARSHAL_GROUP_H__
 

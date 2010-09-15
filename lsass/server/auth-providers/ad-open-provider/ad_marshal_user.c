@@ -181,6 +181,7 @@ ADNonSchemaKeywordGetUInt32(
 
 DWORD
 AD_BuildHomeDirFromTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszHomedirTemplate,
     PCSTR pszNetBIOSDomainName,
     PCSTR pszSamAccountName,
@@ -207,7 +208,7 @@ AD_BuildHomeDirFromTemplate(
 
     if (strstr(pszHomedirTemplate, "%H"))
     {
-        dwError = AD_GetHomedirPrefixPath(&pszHomedirPrefix);
+        dwError = AD_GetHomedirPrefixPath(pState, &pszHomedirPrefix);
         BAIL_ON_LSA_ERROR(dwError);
 
         BAIL_ON_INVALID_STRING(pszHomedirPrefix);

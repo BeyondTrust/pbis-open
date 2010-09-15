@@ -118,6 +118,7 @@ typedef struct _MEM_DB_CONNECTION
 {
     BOOLEAN bLockCreated;
     pthread_rwlock_t lock;
+    PLSA_AD_PROVIDER_STATE pProviderState;
 
     pthread_mutex_t backupMutex;
     BOOLEAN bBackupMutexCreated;
@@ -182,6 +183,7 @@ MemCacheFreePasswordVerifier(
 DWORD
 MemCacheOpen(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pProviderState,
     OUT PLSA_DB_HANDLE phDb
     );
 

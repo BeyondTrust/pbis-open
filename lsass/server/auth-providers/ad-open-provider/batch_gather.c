@@ -681,6 +681,7 @@ error:
 
 DWORD
 LsaAdBatchGatherRealObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN OUT OPTIONAL PSTR* ppszSid,
@@ -689,6 +690,7 @@ LsaAdBatchGatherRealObject(
     )
 {
     return LsaAdBatchGatherRealObjectInternal(
+                pProviderData,
                 pItem,
                 NULL,
                 NULL,
@@ -700,6 +702,7 @@ LsaAdBatchGatherRealObject(
 
 DWORD
 LsaAdBatchGatherRealObjectInternal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN OPTIONAL PDWORD pdwDirectoryMode,
     IN OPTIONAL ADConfigurationMode* pAdMode,
@@ -710,8 +713,8 @@ LsaAdBatchGatherRealObjectInternal(
     )
 {
     DWORD dwError = 0;
-    DWORD dwDirectoryMode = pdwDirectoryMode == NULL ? gpADProviderData->dwDirectoryMode : *pdwDirectoryMode;
-    ADConfigurationMode adMode = pAdMode == NULL ? gpADProviderData->adConfigurationMode : *pAdMode;
+    DWORD dwDirectoryMode = pdwDirectoryMode == NULL ? pProviderData->dwDirectoryMode : *pdwDirectoryMode;
+    ADConfigurationMode adMode = pAdMode == NULL ? pProviderData->adConfigurationMode : *pAdMode;
 
     SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_REAL);
 
@@ -862,6 +865,7 @@ static
 DWORD
 LsaAdBatchGatherPseudoSid(
     OUT PSTR* ppszSid,
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OPTIONAL DWORD dwKeywordValuesCount,
     IN OPTIONAL PSTR* ppszKeywordValues,
     IN HANDLE hDirectory,
@@ -871,7 +875,7 @@ LsaAdBatchGatherPseudoSid(
     DWORD dwError = 0;
     PSTR pszSid = NULL;
 
-    if (LsaAdBatchIsDefaultSchemaMode())
+    if (LsaAdBatchIsDefaultSchemaMode(pProviderData))
     {
         dwError = ADLdap_GetObjectSid(hDirectory, pMessage, &pszSid);
         BAIL_ON_LSA_ERROR(dwError);
@@ -907,6 +911,7 @@ error:
 
 DWORD
 LsaAdBatchGatherPseudoObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN BOOLEAN bIsSchemaMode,
@@ -918,7 +923,7 @@ LsaAdBatchGatherPseudoObject(
 {
     DWORD dwError = 0;
 
-    LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(), ppszKeywordValues));
+    LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(pProviderData), ppszKeywordValues));
 
     SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_PSEUDO);
 
@@ -929,6 +934,7 @@ LsaAdBatchGatherPseudoObject(
     {
         dwError = LsaAdBatchGatherPseudoSid(
                         &pItem->pszSid,
+                        pProviderData,
                         dwKeywordValuesCount,
                         ppszKeywordValues,
                         hDirectory,
@@ -983,6 +989,7 @@ error:
 
 DWORD
 LsaAdBatchGatherPseudoObjectSidFromGc(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN OPTIONAL DWORD dwKeywordValuesCount,
@@ -993,7 +1000,7 @@ LsaAdBatchGatherPseudoObjectSidFromGc(
 {
     DWORD dwError = 0;
 
-    LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(), ppszKeywordValues));
+    LSA_ASSERT(LSA_IS_XOR(LsaAdBatchIsDefaultSchemaMode(pProviderData), ppszKeywordValues));
 
     LSA_ASSERT(!IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_PSEUDO));
     LSA_ASSERT(!pItem->pszSid);
@@ -1005,6 +1012,7 @@ LsaAdBatchGatherPseudoObjectSidFromGc(
     {
         dwError = LsaAdBatchGatherPseudoSid(
                         &pItem->pszSid,
+                        pProviderData,
                         dwKeywordValuesCount,
                         ppszKeywordValues,
                         hDirectory,

@@ -51,6 +51,7 @@
 static
 DWORD
 LsaAdBatchMarshalUserInfoFixHomeDirectory(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PSTR* ppszHomeDirectory,
     IN PCSTR pszNetbiosDomainName,
     IN PCSTR pszSamAccountName
@@ -62,7 +63,9 @@ LsaAdBatchMarshalUserInfoFixHomeDirectory(
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszHomeDirectory))
     {
-        dwError = AD_GetUnprovisionedModeHomedirTemplate(&pszHomeDirectory);
+        dwError = AD_GetUnprovisionedModeHomedirTemplate(
+                      pState,
+                      &pszHomeDirectory);
         BAIL_ON_LSA_ERROR(dwError);
         BAIL_ON_INVALID_STRING(pszHomeDirectory);
     }
@@ -70,10 +73,11 @@ LsaAdBatchMarshalUserInfoFixHomeDirectory(
     if (strstr(pszHomeDirectory, "%"))
     {
         dwError = AD_BuildHomeDirFromTemplate(
-                    pszHomeDirectory,
-                    pszNetbiosDomainName,
-                    pszSamAccountName,
-                    &pszNewHomeDirectory);
+                      pState,
+                      pszHomeDirectory,
+                      pszNetbiosDomainName,
+                      pszSamAccountName,
+                      &pszNewHomeDirectory);
         if (dwError)
         {
             // If we encounter a problem with fixing up the shell, leave the user object with the actual
@@ -102,6 +106,7 @@ error:
 static
 DWORD
 LsaAdBatchMarshalUserInfoFixShell(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PSTR* ppszShell
     )
 {
@@ -110,7 +115,9 @@ LsaAdBatchMarshalUserInfoFixShell(
 
     if (LW_IS_NULL_OR_EMPTY_STR(pszShell))
     {
-        dwError = AD_GetUnprovisionedModeShell(&pszShell);
+        dwError = AD_GetUnprovisionedModeShell(
+                      pState,
+                      &pszShell);
         BAIL_ON_LSA_ERROR(dwError);
         BAIL_ON_INVALID_STRING(pszShell);
     }
@@ -235,6 +242,7 @@ error:
 static
 DWORD
 LsaAdBatchMarshalUnprovisionedUser(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM_USER_INFO pUserInfo,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
@@ -255,6 +263,7 @@ LsaAdBatchMarshalUnprovisionedUser(
     BAIL_ON_LSA_ERROR(dwError);
     // uid
     dwError = ADUnprovPlugin_QueryByReal(
+                   pProviderData,
                    TRUE,
                    pszNT4Name,
                    pszSid,
@@ -272,6 +281,7 @@ LsaAdBatchMarshalUnprovisionedUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADUnprovPlugin_QueryByReal(
+                   pProviderData,
                    FALSE,
                    NULL, // no knowledge of primarygroup's NT4 Name
                    pszPrimaryGroupSid,
@@ -295,6 +305,7 @@ error:
 static
 DWORD
 LsaAdBatchMarshalUnprovisionedGroup(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM_GROUP_INFO pGroupInfo,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
@@ -315,6 +326,7 @@ LsaAdBatchMarshalUnprovisionedGroup(
 
     // gid, alias
     dwError = ADUnprovPlugin_QueryByReal(
+                   pProviderData,
                    FALSE,
                    pszNT4Name,
                    pszSid,
@@ -335,6 +347,7 @@ error:
 static
 DWORD
 LsaAdBatchMarshalUserInfo(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_AD_BATCH_ITEM_USER_INFO pUserInfo,
     OUT PLSA_SECURITY_OBJECT_USER_INFO pObjectUserInfo,
     IN PCSTR pszDnsDomainName,
@@ -344,12 +357,14 @@ LsaAdBatchMarshalUserInfo(
     )
 {
     DWORD dwError = 0;
+    PAD_PROVIDER_DATA pProviderData = pState->pProviderData;
 
     pObjectUserInfo->bIsGeneratedUPN = FALSE;
 
-    if (LsaAdBatchIsUnprovisionedMode())
+    if (LsaAdBatchIsUnprovisionedMode(pProviderData))
     {
         dwError = LsaAdBatchMarshalUnprovisionedUser(
+                        pProviderData,
                         pUserInfo,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
@@ -383,12 +398,15 @@ LsaAdBatchMarshalUserInfo(
 
     // Handle shell.
     LwStripWhitespace(pObjectUserInfo->pszShell, TRUE, TRUE);
-    dwError = LsaAdBatchMarshalUserInfoFixShell(&pObjectUserInfo->pszShell);
+    dwError = LsaAdBatchMarshalUserInfoFixShell(
+                  pState,
+                  &pObjectUserInfo->pszShell);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Handle home directory.
     LwStripWhitespace(pObjectUserInfo->pszHomedir, TRUE, TRUE);
     dwError = LsaAdBatchMarshalUserInfoFixHomeDirectory(
+                    pState,
                     &pObjectUserInfo->pszHomedir,
                     pszNetbiosDomainName,
                     pszSamAccountName);
@@ -436,6 +454,7 @@ error:
 static
 DWORD
 LsaAdBatchMarshalGroupInfo(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM_GROUP_INFO pGroupInfo,
     OUT PLSA_SECURITY_OBJECT_GROUP_INFO pObjectGroupInfo,
     IN PCSTR pszDnsDomainName,
@@ -446,9 +465,10 @@ LsaAdBatchMarshalGroupInfo(
 {
     DWORD dwError = 0;
 
-    if (LsaAdBatchIsUnprovisionedMode())
+    if (LsaAdBatchIsUnprovisionedMode(pProviderData))
     {
         dwError = LsaAdBatchMarshalUnprovisionedGroup(
+                        pProviderData,
                         pGroupInfo,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
@@ -471,6 +491,7 @@ error:
 
 DWORD
 LsaAdBatchMarshal(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
@@ -478,6 +499,7 @@ LsaAdBatchMarshal(
     )
 {
     DWORD dwError = 0;
+    PAD_PROVIDER_DATA pProviderData = pState->pProviderData;
     PLSA_SECURITY_OBJECT pObject = NULL;
 
     // To marshal, the following conditions to be satisfied:
@@ -510,7 +532,8 @@ LsaAdBatchMarshal(
         goto cleanup;
     }
 
-    if (!IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_PSEUDO) && !LsaAdBatchIsUnprovisionedMode())
+    if (!IsSetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_HAVE_PSEUDO) &&
+        !LsaAdBatchIsUnprovisionedMode(pProviderData))
     {
         SetFlag(pItem->Flags, LSA_AD_BATCH_ITEM_FLAG_DISABLED);
     }
@@ -559,6 +582,7 @@ LsaAdBatchMarshal(
         case LSA_AD_BATCH_OBJECT_TYPE_USER:
             pObject->type = LSA_OBJECT_TYPE_USER;
             dwError = LsaAdBatchMarshalUserInfo(
+                            pState,
                             &pItem->UserInfo,
                             &pObject->userInfo,
                             pszDnsDomainName,
@@ -574,6 +598,7 @@ LsaAdBatchMarshal(
         case LSA_AD_BATCH_OBJECT_TYPE_GROUP:
             pObject->type = LSA_OBJECT_TYPE_GROUP;
             dwError = LsaAdBatchMarshalGroupInfo(
+                            pProviderData,
                             &pItem->GroupInfo,
                             &pObject->groupInfo,
                             pszDnsDomainName,
@@ -603,6 +628,7 @@ error:
 
 DWORD
 LsaAdBatchMarshalList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN OUT PLSA_LIST_LINKS pBatchItemList,
@@ -629,6 +655,7 @@ LsaAdBatchMarshalList(
         }
 
         dwError = LsaAdBatchMarshal(
+                        pState,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
                         pItem,

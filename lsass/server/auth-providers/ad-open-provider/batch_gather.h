@@ -60,6 +60,7 @@ LsaAdBatchGatherRpcObject(
 
 DWORD
 LsaAdBatchGatherRealObjectInternal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN OPTIONAL PDWORD pdwDirectoryMode,
     IN OPTIONAL ADConfigurationMode* pAdMode,
@@ -71,6 +72,7 @@ LsaAdBatchGatherRealObjectInternal(
 
 DWORD
 LsaAdBatchGatherRealObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN OUT OPTIONAL PSTR* ppszSid,
@@ -89,6 +91,7 @@ LsaAdBatchGatherPseudoObjectDefaultSchema(
 
 DWORD
 LsaAdBatchGatherPseudoObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN BOOLEAN bIsSchemaMode,
@@ -100,6 +103,7 @@ LsaAdBatchGatherPseudoObject(
 
 DWORD
 LsaAdBatchGatherPseudoObjectSidFromGc(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OUT PLSA_AD_BATCH_ITEM pItem,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN OPTIONAL DWORD dwKeywordValuesCount,

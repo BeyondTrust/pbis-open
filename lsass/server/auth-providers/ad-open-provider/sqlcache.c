@@ -101,6 +101,7 @@ static
 DWORD
 LsaDbOpen(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PLSA_DB_HANDLE phDb
     )
 {
@@ -150,6 +151,8 @@ LsaDbOpen(
                     sizeof(LSA_DB_CONNECTION),
                     (PVOID*)&pConn);
     BAIL_ON_LSA_ERROR(dwError);
+
+    pConn->pProviderState = pState;
 
     dwError = pthread_rwlock_init(&pConn->lock, NULL);
     BAIL_ON_LSA_ERROR(dwError);
@@ -669,6 +672,7 @@ LsaDbFindUserByName(
     {
        case NameType_UPN:
             dwError = LsaDmQueryDomainInfo(
+                            pConn->pProviderState->hDmState,
                             pUserNameInfo->pszDomain,
                             &pszDnsDomain,
                             NULL,

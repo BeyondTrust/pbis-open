@@ -78,6 +78,26 @@ AD_CloseHandle(
     );
 
 DWORD
+AD_CreateProviderContext(
+    OUT PAD_PROVIDER_CONTEXT *ppContext
+    );
+
+VOID
+AD_ReferenceProviderContext(
+    IN PAD_PROVIDER_CONTEXT pContext
+    );
+
+VOID
+AD_DereferenceProviderContext(
+    IN PAD_PROVIDER_CONTEXT pContext
+    );
+
+VOID
+AD_ClearProviderState(
+    IN PAD_PROVIDER_CONTEXT pContext
+    );
+
+DWORD
 AD_ServicesDomain(
     PCSTR pszDomain,
     BOOLEAN* pbServicesDomain
@@ -90,6 +110,7 @@ AD_ServicesDomainInternal(
 
 DWORD
 AD_ServicesDomainWithDiscovery(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszNetBiosName,
     OUT PBOOLEAN pbFoundDomain
     );
@@ -154,15 +175,6 @@ AD_RemoveUserByIdFromCache(
     IN uid_t  peerUID,
     IN gid_t  peerGID,
     IN uid_t  uid
-    );
-
-DWORD
-AD_GetUserGroupObjectMembership(
-    IN HANDLE hProvider,
-    IN PLSA_SECURITY_OBJECT pUserInfo,
-    IN BOOLEAN bIsCacheOnlyMode,
-    OUT size_t* psNumGroupsFound,
-    OUT PLSA_SECURITY_OBJECT** pppResult
     );
 
 DWORD
@@ -298,6 +310,7 @@ AD_GetStatus(
 
 DWORD
 AD_GetTrustedDomainInfo(
+    LSA_DM_STATE_HANDLE hDmState,
     PLSA_TRUSTED_DOMAIN_INFO* ppDomainInfoArray,
     PDWORD pdwNumTrustedDomains
     );
@@ -350,14 +363,8 @@ AD_FindUserObjectByName(
     );
 
 DWORD
-AD_FindGroupObjectByName(
-    IN HANDLE  hProvider,
-    IN PCSTR   pszGroupName,
-    OUT PLSA_SECURITY_OBJECT* ppResult
-    );
-
-DWORD
 AD_InitializeOperatingMode(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDomain,
     IN PCSTR pszHostName,
     IN BOOLEAN bIsDomainOffline
@@ -365,19 +372,7 @@ AD_InitializeOperatingMode(
 
 DWORD
 AD_MachineCredentialsCacheInitialize(
-    VOID
-    );
-
-DWORD
-AD_GetExpandedGroupUsers(
-    IN HANDLE hProvider,
-    IN PCSTR pszDomainName,
-    IN PCSTR pszGroupSid,
-    IN BOOLEAN bIsCacheOnlyMode,
-    IN int iMaxDepth,
-    OUT BOOLEAN* pbAllExpanded,
-    OUT size_t* psCount,
-    OUT PLSA_SECURITY_OBJECT** pppResults
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
@@ -448,6 +443,7 @@ AD_CloseEnum(
 
 DWORD
 AD_UpdateObject(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT pObject
     );
 

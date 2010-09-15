@@ -50,11 +50,14 @@
 #include "adprovider.h"
 #include "adnetapi.h"
 
-static NetrCredentials gSchannelCreds = { 0 };
-static NetrCredentials* gpSchannelCreds = NULL;
-static NETR_BINDING ghSchannelBinding = NULL;
-static PSTR gpszSchannelServer = NULL;
-static pthread_mutex_t gSchannelLock = PTHREAD_MUTEX_INITIALIZER;
+typedef struct _LSA_SCHANNEL_STATE {
+    NetrCredentials SchannelCreds;
+    NetrCredentials *pSchannelCreds;
+    NETR_BINDING hSchannelBinding;
+    PSTR pszSchannelServer;
+    pthread_mutex_t SchannelLock;
+    pthread_mutex_t *pSchannelLock;
+} LSA_SCHANNEL_STATE, *PLSA_SCHANNEL_STATE;
 
 static
 BOOLEAN
@@ -83,7 +86,7 @@ AD_WinErrorIsConnectionError(
 static
 VOID
 AD_ClearSchannelStateInLock(
-    VOID
+    IN PLSA_SCHANNEL_STATE pSchannelState
     );
 
 static
@@ -188,7 +191,7 @@ error:
 static
 VOID
 AD_ClearSchannelState(
-    VOID
+    IN PLSA_SCHANNEL_STATE pSchannelState
     );
 
 DWORD
@@ -213,13 +216,60 @@ error:
 }
 
 DWORD
+AD_NetCreateSchannelState(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    DWORD dwError = 0;
+    PLSA_SCHANNEL_STATE pSchannelState = NULL;
+
+    dwError = LwAllocateMemory(
+                  sizeof(*pSchannelState),
+                  (PVOID*)&pSchannelState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(&pSchannelState->SchannelLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pSchannelState->pSchannelLock = &pSchannelState->SchannelLock;
+    pState->hSchannelState = pSchannelState;
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    AD_NetDestroySchannelState(pState);
+
+    goto cleanup;
+}
+
+VOID
+AD_NetDestroySchannelState(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    PLSA_SCHANNEL_STATE pSchannelState = pState->hSchannelState;
+
+    if (pSchannelState && pSchannelState->pSchannelLock)
+    {
+        AD_ClearSchannelState(pSchannelState);
+
+        pthread_mutex_destroy(pSchannelState->pSchannelLock);
+    }
+
+    LW_SAFE_FREE_MEMORY(pState->hSchannelState);
+}
+
+DWORD
 AD_NetShutdownMemory(
-    VOID
+    IN LSA_SCHANNEL_STATE_HANDLE hSchannelState
     )
 {
     DWORD dwError = 0;
 
-    AD_ClearSchannelState();
+    AD_ClearSchannelState((PLSA_SCHANNEL_STATE)hSchannelState);
 
     dwError = SamrDestroyMemory();
     BAIL_ON_LSA_ERROR(dwError);
@@ -1442,6 +1492,7 @@ WinTimeToInt64(
 
 static DWORD
 LsaCopyNetrUserInfo3(
+    IN PLSA_SCHANNEL_STATE pSchannelState,
     OUT PLSA_AUTH_USER_INFO pUserInfo,
     IN NetrValidationInfo *pNetrUserInfo3
     )
@@ -1477,7 +1528,7 @@ LsaCopyNetrUserInfo3(
 
     /* We have to decrypt the user session key before we can use it */
 
-    RC4_set_key(&RC4Key, 16, gpSchannelCreds->session_key);
+    RC4_set_key(&RC4Key, 16, pSchannelState->pSchannelCreds->session_key);
     RC4(&RC4Key, 
         pUserInfo->pSessionKey->dwLen,
         pUserInfo->pSessionKey->pData, 
@@ -1488,7 +1539,7 @@ LsaCopyNetrUserInfo3(
                                pBase->lmkey.key);
     BAIL_ON_LSA_ERROR(dwError);
 
-    RC4_set_key(&RC4Key, 16, gpSchannelCreds->session_key);
+    RC4_set_key(&RC4Key, 16, pSchannelState->pSchannelCreds->session_key);
     RC4(&RC4Key, 
         pUserInfo->pLmSessionKey->dwLen,
         pUserInfo->pLmSessionKey->pData, 
@@ -1604,6 +1655,7 @@ error:
 
 DWORD
 AD_NetlogonAuthenticationUserEx(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PSTR pszDomainController,
     IN PLSA_AUTH_USER_PARAMS pUserParams,
     OUT PLSA_AUTH_USER_INFO *ppUserInfo,
@@ -1611,6 +1663,7 @@ AD_NetlogonAuthenticationUserEx(
     )
 {
     DWORD dwError = LW_ERROR_INTERNAL;
+    PLSA_SCHANNEL_STATE pSchannelState = pState->hSchannelState;
     PWSTR pwszDomainController = NULL;
     PWSTR pwszServerName = NULL;
     PWSTR pwszShortDomain = NULL;
@@ -1640,7 +1693,7 @@ AD_NetlogonAuthenticationUserEx(
     BOOLEAN bResetSchannel = FALSE;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
 
-    pthread_mutex_lock(&gSchannelLock);
+    pthread_mutex_lock(pSchannelState->pSchannelLock);
 
     /* Grab the machine password and account info */
 
@@ -1682,23 +1735,23 @@ AD_NetlogonAuthenticationUserEx(
     // Remove $ from account name
     pwszComputer[wc16slen(pwszComputer) - 1] = 0;
 
-    if (gpszSchannelServer && strcasecmp(gpszSchannelServer, pszDomainController))
+    if (pSchannelState->pszSchannelServer && strcasecmp(pSchannelState->pszSchannelServer, pszDomainController))
     {
         LSA_LOG_VERBOSE("Resetting schannel due to switching DC from '%s' to '%s'",
-                        gpszSchannelServer, pszDomainController);
-        AD_ClearSchannelStateInLock();
+                        pSchannelState->pszSchannelServer, pszDomainController);
+        AD_ClearSchannelStateInLock(pSchannelState);
     }
 
-    if (!ghSchannelBinding)
+    if (!pSchannelState->hSchannelBinding)
     {
         dwError = LwMbsToWc16s(pszDomainController, &pwszDomainController);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LwMbsToWc16s(gpADProviderData->szShortDomain,
+        dwError = LwMbsToWc16s(pState->pProviderData->szShortDomain,
                                 &pwszPrimaryShortDomain);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LwMbsToWc16s(gpADProviderData->szDomain,
+        dwError = LwMbsToWc16s(pState->pProviderData->szDomain,
                                &pwszPrimaryFqdn);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -1735,8 +1788,8 @@ AD_NetlogonAuthenticationUserEx(
                                      pwszPrimaryFqdn,
                                      pwszComputer,
                                      pMachAcctInfo->pwszMachinePassword,
-                                     &gSchannelCreds,
-                                     &ghSchannelBinding);
+                                     &pSchannelState->SchannelCreds,
+                                     &pSchannelState->hSchannelBinding);
 
         if (nt_status != STATUS_SUCCESS)
         {
@@ -1764,13 +1817,15 @@ AD_NetlogonAuthenticationUserEx(
         }
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (!gpszSchannelServer)
+        if (!pSchannelState->pszSchannelServer)
         {
-            dwError = LwAllocateString(pszDomainController, &gpszSchannelServer);
+            dwError = LwAllocateString(
+                          pszDomainController,
+                          &pSchannelState->pszSchannelServer);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        gpSchannelCreds = &gSchannelCreds;
+        pSchannelState->pSchannelCreds = &pSchannelState->SchannelCreds;
     }
 
     /* Time to do the authentication */
@@ -1793,7 +1848,7 @@ AD_NetlogonAuthenticationUserEx(
         NTRespLen = LsaDataBlobLength(pUserParams->pass.chap.pNT_resp);
     }
 
-    nt_status = NetrSamLogonNetworkEx(ghSchannelBinding,
+    nt_status = NetrSamLogonNetworkEx(pSchannelState->hSchannelBinding,
                                       pwszServerName,
                                       pwszShortDomain,
                                       pwszComputer,
@@ -1881,7 +1936,7 @@ AD_NetlogonAuthenticationUserEx(
     dwError = LwAllocateMemory(sizeof(LSA_AUTH_USER_INFO), (PVOID*)&pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaCopyNetrUserInfo3(pUserInfo, pValidationInfo);
+    dwError = LsaCopyNetrUserInfo3(pSchannelState, pUserInfo, pValidationInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1929,7 +1984,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszPrimaryFqdn);
     LW_SAFE_FREE_MEMORY(pwszComputer);
 
-    pthread_mutex_unlock(&gSchannelLock);
+    pthread_mutex_unlock(pSchannelState->pSchannelLock);
 
     *ppUserInfo = pUserInfo;
 
@@ -1946,7 +2001,7 @@ error:
 
     if (bResetSchannel)
     {
-        AD_ClearSchannelStateInLock();
+        AD_ClearSchannelStateInLock(pSchannelState);
     }
 
     goto cleanup;
@@ -1955,33 +2010,38 @@ error:
 static
 VOID
 AD_ClearSchannelStateInLock(
-    VOID
+    IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
-    if (ghSchannelBinding)
+    if (pSchannelState->hSchannelBinding)
     {
-        NetrCloseSchannel(ghSchannelBinding);
+        NetrCloseSchannel(pSchannelState->hSchannelBinding);
 
-        ghSchannelBinding = NULL;
+        pSchannelState->hSchannelBinding = NULL;
 
-        memset(&gSchannelCreds, 0, sizeof(gSchannelCreds));
-        gpSchannelCreds = NULL;
+        memset(&pSchannelState->SchannelCreds,
+               0,
+               sizeof(pSchannelState->SchannelCreds));
+        pSchannelState->pSchannelCreds = NULL;
 
-        LW_SAFE_FREE_MEMORY(gpszSchannelServer);
+        LW_SAFE_FREE_MEMORY(pSchannelState->pszSchannelServer);
     }
 }
 
 static
 VOID
 AD_ClearSchannelState(
-    VOID
+    IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
-    pthread_mutex_lock(&gSchannelLock);
+    if (pSchannelState)
+    {
+        pthread_mutex_lock(pSchannelState->pSchannelLock);
 
-    AD_ClearSchannelStateInLock();
+        AD_ClearSchannelStateInLock(pSchannelState);
 
-    pthread_mutex_unlock(&gSchannelLock);
+        pthread_mutex_unlock(pSchannelState->pSchannelLock);
+    }
 }
 
 static

@@ -142,6 +142,7 @@ typedef DWORD (*PFLSA_DM_CONNECT_CALLBACK)(
 
 DWORD
 LsaDmInitialize(
+    IN PLSA_AD_PROVIDER_STATE pProviderState,
     IN BOOLEAN bIsOfflineBehaviorEnabled,
     IN DWORD dwCheckOnlineSeconds,
     IN DWORD dwUnknownDomainCacheTimeoutSeconds,
@@ -181,7 +182,7 @@ LsaDmInitialize(
 
 VOID
 LsaDmCleanup(
-    VOID
+    IN LSA_DM_STATE_HANDLE hDmState
     );
 ///<
 /// Cleanup state for domain manager.
@@ -193,6 +194,7 @@ LsaDmCleanup(
 
 DWORD
 LsaDmQueryState(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT OPTIONAL PLSA_DM_STATE_FLAGS pStateFlags,
     OUT OPTIONAL PDWORD pdwCheckOnlineSeconds,
     OUT OPTIONAL PDWORD pdwUnknownDomainCacheTimeoutSeconds
@@ -200,6 +202,7 @@ LsaDmQueryState(
 
 DWORD
 LsaDmSetState(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PBOOLEAN pbIsOfflineBehaviorEnabled,
     IN OPTIONAL PDWORD pdwCheckOnlineSeconds,
     IN OPTIONAL PDWORD pdwUnknownDomainCacheTimeoutSeconds
@@ -207,17 +210,18 @@ LsaDmSetState(
 
 VOID
 LsaDmMediaSenseOffline(
-    VOID
+    IN LSA_DM_STATE_HANDLE hDmState
     );
 
 VOID
 LsaDmMediaSenseOnline(
-    VOID
+    IN LSA_DM_STATE_HANDLE hDmState
     );
 
 // When adding a normally discovered trust
 DWORD
 LsaDmAddTrustedDomain(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN PSID pDomainSid,
@@ -253,11 +257,13 @@ LsaDmSetDnsDomainNameForOneWayTransitiveDomain(
 
 BOOLEAN
 LsaDmIsDomainPresent(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 
 DWORD
 LsaDmEnumDomainNames(
+IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PLSA_DM_ENUM_DOMAIN_FILTER_CALLBACK pfFilterCallback,
     IN OPTIONAL PVOID pFilterContext,
     OUT PSTR** pppszDomainNames,
@@ -266,6 +272,7 @@ LsaDmEnumDomainNames(
 
 DWORD
 LsaDmEnumDomainInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PLSA_DM_ENUM_DOMAIN_FILTER_CALLBACK pfFilterCallback,
     IN OPTIONAL PVOID pFilterContext,
     OUT PLSA_DM_ENUM_DOMAIN_INFO** pppDomainInfo,
@@ -274,6 +281,7 @@ LsaDmEnumDomainInfo(
 
 DWORD
 LsaDmQueryDomainInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName,
@@ -294,6 +302,7 @@ LsaDmQueryDomainInfo(
 
 DWORD
 LsaDmQueryDomainInfoByObjectSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PSID pObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName,
@@ -317,44 +326,23 @@ LsaDmFreeDcInfo(
     IN OUT PLSA_DM_DC_INFO pDcInfo
     );
 
-#if 0
-DWORD
-LsaDmQueryDomainDcInfo(
-    IN PCSTR pszDomainName,
-    OUT OPTIONAL PSTR* ppszDnsDomainName,
-    OUT OPTIONAL PSTR* ppszNetbiosDomainName,
-    OUT OPTIONAL PLSA_DM_DOMAIN_FLAGS pFlags,
-    OUT OPTIONAL PDWORD pdwDsFlags,
-    OUT OPTIONAL PSTR* ppszDomainControllerName,
-    OUT OPTIONAL PSTR* ppszDomainControllerAddress
-    );
-
-DWORD
-LsaDmQueryDomainGcInfo(
-    IN PCSTR pszDomainName,
-    OUT OPTIONAL PSTR* ppszDnsDomainName,
-    OUT OPTIONAL PSTR* ppszNetbiosDomainName,
-    OUT OPTIONAL PLSA_DM_DOMAIN_FLAGS pFlags,
-    OUT OPTIONAL PDWORD pdwDsFlags,
-    OUT OPTIONAL PSTR* ppszDomainControllerName,
-    OUT OPTIONAL PSTR* ppszDomainControllerAddress
-    );
-#endif
-
 DWORD
 LsaDmSetDomainDcInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     IN PLWNET_DC_INFO pDcInfo
     );
 
 DWORD
 LsaDmSetDomainGcInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     IN PLWNET_DC_INFO pDcInfo
     );
 
 DWORD
 LsaDmSetForceOfflineState(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PCSTR pszDomainName,
     IN BOOLEAN bIsSet
     );
@@ -381,6 +369,7 @@ LsaDmSetForceOfflineState(
 
 DWORD
 LsaDmTransitionOffline(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     IN BOOLEAN bIsGc
     );
@@ -399,6 +388,7 @@ LsaDmTransitionOffline(
 
 DWORD
 LsaDmTransitionOnline(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 ///<
@@ -417,6 +407,7 @@ LsaDmTransitionOnline(
 
 BOOLEAN
 LsaDmIsDomainOffline(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PCSTR pszDomainName
     );
 ///<
@@ -430,11 +421,13 @@ LsaDmIsDomainOffline(
 
 DWORD
 LsaDmGetPrimaryDomainName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR* ppszPrimaryDomain
     );
 
 DWORD
 LsaDmDetectTransitionOnline(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PCSTR pszDomainName
     );
 ///<
@@ -451,8 +444,8 @@ LsaDmDetectTransitionOnline(
 ///
 
 VOID
-LsaDmTriggerOnlindeDetectionThread(
-    VOID
+LsaDmTriggerOnlineDetectionThread(
+    IN LSA_DM_STATE_HANDLE hDmState
     );
 
 // TODO-inline these?
@@ -493,12 +486,14 @@ LsaDmFreeEnumDomainInfoArray(
 
 DWORD
 LsaDmLdapOpenDc(
+    IN PAD_PROVIDER_CONTEXT pProvider,
     IN PCSTR pszDnsDomainName,
     OUT PLSA_DM_LDAP_CONNECTION* ppConn
     );
 
 DWORD
 LsaDmLdapOpenGc(
+    IN PAD_PROVIDER_CONTEXT pProvider,
     IN PCSTR pszDnsDomainName,
     OUT PLSA_DM_LDAP_CONNECTION* ppConn
     );
@@ -545,6 +540,7 @@ LsaDmLdapDirectoryOnePagedSearch(
 
 DWORD
 LsaDmConnectDomain(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN LSA_DM_CONNECT_DOMAIN_FLAGS dwConnectFlags,
     IN PLWNET_DC_INFO pDcInfo,
@@ -554,59 +550,70 @@ LsaDmConnectDomain(
 
 DWORD
 LsaDmGetForestName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     OUT PSTR* ppszDnsForestName
     );
 
 BOOLEAN
 LsaDmIsUnknownDomainSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PSID pDomainSid
     );
 
 BOOLEAN
 LsaDmIsUnknownDomainName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 
 DWORD
 LsaDmCacheUnknownDomainSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PSID pDomainSid
     );
 
 DWORD
 LsaDmCacheUnknownDomainName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 
 DWORD
 LsaDmCacheUnknownDomainSidForever(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PSID pDomainSid
     );
 
 DWORD
 LsaDmCacheUnknownDomainNameForever(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 
 BOOLEAN
 LsaDmIsCertainIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName
     );
 
 BOOLEAN
 LsaDmIsIgnoreTrust(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName
     );
 
 DWORD
 LsaDmQueryExcludeTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszTrustList,
     OUT PDWORD pdwTrustCount
     );
 
 DWORD
 LsaDmQueryIncludeTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszTrustList,
     OUT PDWORD pdwTrustCount
     );

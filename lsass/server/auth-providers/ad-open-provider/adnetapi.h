@@ -74,7 +74,17 @@ AD_NetInitMemory(
 
 DWORD
 AD_NetShutdownMemory(
-    VOID
+    IN LSA_SCHANNEL_STATE_HANDLE hSchannelState
+    );
+
+DWORD
+AD_NetCreateSchannelState(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+VOID
+AD_NetDestroySchannelState(
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
@@ -167,6 +177,7 @@ LsaFreeTranslatedNameList(
 
 DWORD
 AD_NetlogonAuthenticationUserEx(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PSTR pszDomainController,
     IN PLSA_AUTH_USER_PARAMS pUserParams,
     OUT PLSA_AUTH_USER_INFO *ppUserInfo,

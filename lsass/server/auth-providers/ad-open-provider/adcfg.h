@@ -83,61 +83,67 @@ AD_FreeConfigMemberInList(
 
 DWORD
 AD_GetUnprovisionedModeShell(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszUnprovisionedModeShell
     );
 
 DWORD
 AD_GetHomedirPrefixPath(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszPath
     );
 
 DWORD
 AD_GetUserDomainPrefix(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszPath
     );
 
 DWORD
 AD_GetUnprovisionedModeHomedirTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszUnprovisionedModeHomedirTemplate
     );
 
 DWORD
 AD_GetCacheReaperTimeoutSecs(
-    VOID
+    PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetMachinePasswordSyncPwdLifetime(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetClockDriftSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetCacheEntryExpirySeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetUmask(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetSkelDirs(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszSkelDirs
     );
 
 BOOLEAN
 AD_GetLDAPSignAndSeal(
-    VOID
+    PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_AddAllowedMember(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszSID,
     IN PSTR pszMember,
     IN OUT PLSA_HASH_TABLE *pAllowedMemberList
@@ -145,11 +151,13 @@ AD_AddAllowedMember(
 
 VOID
 AD_DeleteFromMembersList(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszMember
     );
 
 DWORD
 AD_GetMemberLists(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR** pppszMembers,
     PDWORD pdwNumMembers,
     PLSA_HASH_TABLE* ppAllowedMemberList
@@ -157,97 +165,99 @@ AD_GetMemberLists(
 
 BOOLEAN
 AD_ShouldFilterUserLoginsByGroup(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_IsMemberAllowed(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR           pszSID,
     PLSA_HASH_TABLE pAllowedMemberList
     );
 
 VOID
 AD_FreeAllowedSIDs_InLock(
-    VOID);
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
 
 BOOLEAN
 AD_ShouldAssumeDefaultDomain(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_ShouldSyncSystemTime(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_EventlogEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_ShouldLogNetworkConnectionEvents(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_ShouldCreateK5Login(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_ShouldCreateHomeDir(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_ShouldRefreshUserCreds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 AD_CELL_SUPPORT
 AD_GetCellSupport(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 AD_CACHE_BACKEND
 AD_GetCacheBackend(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetCacheSizeCap(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_GetTrimUserMembershipEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_GetNssGroupMembersCacheOnlyEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_GetNssUserMembershipCacheOnlyEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 BOOLEAN
 AD_GetNssEnumerationEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetDomainManagerCheckDomainOnlineSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD

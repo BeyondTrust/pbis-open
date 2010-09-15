@@ -818,6 +818,7 @@ AD_SetConfig_DomainManager_TrustExceptionList(
 
 DWORD
 AD_GetUnprovisionedModeShell(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszUnprovisionedModeShell
     )
 {
@@ -827,10 +828,10 @@ AD_GetUnprovisionedModeShell(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszShell))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszShell))
     {
         dwError = LwAllocateString(
-                        gpLsaAdProviderState->config.pszShell,
+                        pState->config.pszShell,
                         &pszUnprovisionedModeShell);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -852,6 +853,7 @@ error:
 
 DWORD
 AD_GetHomedirPrefixPath(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszPath
     )
 {
@@ -861,10 +863,10 @@ AD_GetHomedirPrefixPath(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszHomedirPrefix))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszHomedirPrefix))
     {
         dwError = LwAllocateString(
-                        gpLsaAdProviderState->config.pszHomedirPrefix,
+                        pState->config.pszHomedirPrefix,
                         &pszHomedirPrefixPath
                         );
         BAIL_ON_LSA_ERROR(dwError);
@@ -887,6 +889,7 @@ error:
 
 DWORD
 AD_GetUserDomainPrefix(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszPath
     )
 {
@@ -896,18 +899,19 @@ AD_GetUserDomainPrefix(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszUserDomainPrefix))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszUserDomainPrefix))
     {
         dwError = LwAllocateString(
-                        gpLsaAdProviderState->config.pszUserDomainPrefix,
+                        pState->config.pszUserDomainPrefix,
                         &pszValue
                         );
         BAIL_ON_LSA_ERROR(dwError);
     }
-    else if (!LW_IS_NULL_OR_EMPTY_STR(gpADProviderData->szShortDomain))
+    else if (pState->pProviderData &&
+             !LW_IS_NULL_OR_EMPTY_STR(pState->pProviderData->szShortDomain))
     {
         dwError = LwAllocateString(
-                        gpADProviderData->szShortDomain,
+                        pState->pProviderData->szShortDomain,
                         &pszValue
                         );
         BAIL_ON_LSA_ERROR(dwError);
@@ -930,6 +934,7 @@ error:
 
 DWORD
 AD_GetUnprovisionedModeHomedirTemplate(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszUnprovisionedModeHomedirTemplate
     )
 {
@@ -939,10 +944,10 @@ AD_GetUnprovisionedModeHomedirTemplate(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszHomedirTemplate))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszHomedirTemplate))
     {
         dwError = LwAllocateString(
-                        gpLsaAdProviderState->config.pszHomedirTemplate,
+                        pState->config.pszHomedirTemplate,
                         &pszUnprovisionedModeHomedirTemplate
                         );
         BAIL_ON_LSA_ERROR(dwError);
@@ -965,14 +970,14 @@ error:
 
 DWORD
 AD_GetCacheReaperTimeoutSecs(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwCacheReaperTimeoutSecs = 0;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-    dwCacheReaperTimeoutSecs = gpLsaAdProviderState->config.dwCacheReaperTimeoutSecs;
+    dwCacheReaperTimeoutSecs = pState->config.dwCacheReaperTimeoutSecs;
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
     return dwCacheReaperTimeoutSecs;
@@ -980,14 +985,14 @@ AD_GetCacheReaperTimeoutSecs(
 
 DWORD
 AD_GetMachinePasswordSyncPwdLifetime(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwMachinePasswordSyncPwdLifetime = 0;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-    dwMachinePasswordSyncPwdLifetime = gpLsaAdProviderState->config.dwMachinePasswordSyncLifetime;
+    dwMachinePasswordSyncPwdLifetime = pState->config.dwMachinePasswordSyncLifetime;
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
     return dwMachinePasswordSyncPwdLifetime;
@@ -995,14 +1000,14 @@ AD_GetMachinePasswordSyncPwdLifetime(
 
 DWORD
 AD_GetClockDriftSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwClockDriftSecs = 0;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-    dwClockDriftSecs = gpLsaAdProviderState->dwMaxAllowedClockDriftSeconds;
+    dwClockDriftSecs = pState->dwMaxAllowedClockDriftSeconds;
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
     return dwClockDriftSecs;
@@ -1010,7 +1015,7 @@ AD_GetClockDriftSeconds(
 
 DWORD
 AD_GetCacheEntryExpirySeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwResult = 0;
@@ -1018,7 +1023,7 @@ AD_GetCacheEntryExpirySeconds(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    dwResult = gpLsaAdProviderState->config.dwCacheEntryExpirySecs;
+    dwResult = pState->config.dwCacheEntryExpirySecs;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1027,14 +1032,14 @@ AD_GetCacheEntryExpirySeconds(
 
 DWORD
 AD_GetUmask(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwResult = 0;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-    dwResult = gpLsaAdProviderState->config.dwUmask;
+    dwResult = pState->config.dwUmask;
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
     return dwResult;
@@ -1042,6 +1047,7 @@ AD_GetUmask(
 
 DWORD
 AD_GetSkelDirs(
+    PLSA_AD_PROVIDER_STATE pState,
     PSTR* ppszSkelDirs
     )
 {
@@ -1051,10 +1057,10 @@ AD_GetSkelDirs(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!LW_IS_NULL_OR_EMPTY_STR(gpLsaAdProviderState->config.pszSkelDirs))
+    if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszSkelDirs))
     {
         dwError = LwAllocateString(
-                        gpLsaAdProviderState->config.pszSkelDirs,
+                        pState->config.pszSkelDirs,
                         &pszSkelDirs);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -1076,7 +1082,7 @@ error:
 
 BOOLEAN
 AD_GetLDAPSignAndSeal(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bResult = FALSE;
@@ -1084,7 +1090,7 @@ AD_GetLDAPSignAndSeal(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bResult = gpLsaAdProviderState->config.bLDAPSignAndSeal;
+    bResult = pState->config.bLDAPSignAndSeal;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1094,13 +1100,14 @@ AD_GetLDAPSignAndSeal(
 static
 BOOLEAN
 AD_IsInMembersList_InLock(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszMember
     )
 {
     PDLINKEDLIST pIter = NULL;
     BOOLEAN      bInList = FALSE;
 
-    for (pIter = gpLsaAdProviderState->config.pUnresolvedMemberList;
+    for (pIter = pState->config.pUnresolvedMemberList;
          pIter;
          pIter = pIter->pNext)
     {
@@ -1117,13 +1124,14 @@ AD_IsInMembersList_InLock(
 static
 VOID
 AD_DeleteFromMembersList_InLock(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszMember
     )
 {
     PDLINKEDLIST pIter = NULL;
     PVOID        pItem = NULL;
 
-    for (pIter = gpLsaAdProviderState->config.pUnresolvedMemberList;
+    for (pIter = pState->config.pUnresolvedMemberList;
          pIter;
          pIter = pIter->pNext)
     {
@@ -1136,7 +1144,7 @@ AD_DeleteFromMembersList_InLock(
 
     if (pItem)
     {
-        LsaDLinkedListDelete(&gpLsaAdProviderState->config.pUnresolvedMemberList,
+        LsaDLinkedListDelete(&pState->config.pUnresolvedMemberList,
                              pItem);
 
         LwFreeMemory(pItem);
@@ -1145,6 +1153,7 @@ AD_DeleteFromMembersList_InLock(
 
 VOID
 AD_DeleteFromMembersList(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszMember
     )
 {
@@ -1152,7 +1161,7 @@ AD_DeleteFromMembersList(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    AD_DeleteFromMembersList_InLock(pszMember);
+    AD_DeleteFromMembersList_InLock(pState, pszMember);
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 }
@@ -1204,6 +1213,7 @@ error:
 
 DWORD
 AD_AddAllowedMember(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR               pszSID,
     IN PSTR                pszMember,
     IN OUT PLSA_HASH_TABLE *ppAllowedMemberList
@@ -1218,7 +1228,7 @@ AD_AddAllowedMember(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    if (!gpAllowedSIDs)
+    if (!pState->pAllowedSIDs)
     {
         dwError = LsaHashCreate(
                         11,
@@ -1226,7 +1236,7 @@ AD_AddAllowedMember(
                         LsaHashCaselessStringHash,
                         AD_FreeHashStringKeyValue,
                         AD_CopyHashStringKeyValue,
-                        &gpAllowedSIDs);
+                        &pState->pAllowedSIDs);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1261,10 +1271,10 @@ AD_AddAllowedMember(
     pszSIDCopy = NULL;
     pszMemberCopy = NULL;
 
-    if ( AD_IsInMembersList_InLock(pszMember) )
+    if ( AD_IsInMembersList_InLock(pState, pszMember) )
     {
         dwError = LsaHashGetValue(
-                      gpAllowedSIDs,
+                      pState->pAllowedSIDs,
                       pszSID,
                       (PVOID*)&pszValue);
         if (dwError == ERROR_NOT_FOUND)
@@ -1280,7 +1290,7 @@ AD_AddAllowedMember(
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = LsaHashSetValue(
-                          gpAllowedSIDs,
+                          pState->pAllowedSIDs,
                           pszSIDCopy,
                           pszMemberCopy);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1289,7 +1299,7 @@ AD_AddAllowedMember(
             pszMemberCopy = NULL;
         }
 
-        AD_DeleteFromMembersList_InLock(pszMember);
+        AD_DeleteFromMembersList_InLock(pState, pszMember);
     }
 
     *ppAllowedMemberList = pAllowedMemberList;
@@ -1315,6 +1325,7 @@ error:
 
 DWORD
 AD_GetMemberLists(
+    IN PLSA_AD_PROVIDER_STATE pState,
     PSTR** pppszMembers,
     PDWORD pdwNumMembers,
     PLSA_HASH_TABLE* ppAllowedMemberList
@@ -1329,7 +1340,7 @@ AD_GetMemberLists(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    for (pIter = gpLsaAdProviderState->config.pUnresolvedMemberList; pIter; pIter = pIter->pNext)
+    for (pIter = pState->config.pUnresolvedMemberList; pIter; pIter = pIter->pNext)
     {
         dwNumMembers++;
     }
@@ -1343,7 +1354,7 @@ AD_GetMemberLists(
                         (PVOID*)&ppszMembers);
         BAIL_ON_LSA_ERROR(dwError);
 
-        for (pIter = gpLsaAdProviderState->config.pUnresolvedMemberList;
+        for (pIter = pState->config.pUnresolvedMemberList;
              pIter;
              pIter = pIter->pNext, iMember++)
         {
@@ -1354,10 +1365,10 @@ AD_GetMemberLists(
         }
     }
 
-    if ( gpAllowedSIDs )
+    if (pState->pAllowedSIDs)
     {
         dwError = LsaHashCopy(
-                      gpAllowedSIDs,
+                      pState->pAllowedSIDs,
                       &pAllowedMemberList);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -1391,12 +1402,12 @@ error:
 static
 BOOLEAN
 AD_ShouldFilterUserLoginsByGroup_InLock(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bFilter = FALSE;
 
-    if (gpAllowedSIDs || gpLsaAdProviderState->config.pUnresolvedMemberList)
+    if (pState->pAllowedSIDs || pState->config.pUnresolvedMemberList)
     {
         bFilter = TRUE;
     }
@@ -1406,7 +1417,7 @@ AD_ShouldFilterUserLoginsByGroup_InLock(
 
 BOOLEAN
 AD_ShouldFilterUserLoginsByGroup(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bFilter = FALSE;
@@ -1414,7 +1425,7 @@ AD_ShouldFilterUserLoginsByGroup(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bFilter = AD_ShouldFilterUserLoginsByGroup_InLock();
+    bFilter = AD_ShouldFilterUserLoginsByGroup_InLock(pState);
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1423,6 +1434,7 @@ AD_ShouldFilterUserLoginsByGroup(
 
 BOOLEAN
 AD_IsMemberAllowed(
+    IN PLSA_AD_PROVIDER_STATE pState,
     PCSTR           pszSID,
     PLSA_HASH_TABLE pAllowedMemberList
     )
@@ -1430,7 +1442,7 @@ AD_IsMemberAllowed(
     BOOLEAN bAllowed = FALSE;
     PSTR    pszValue = NULL;
 
-    if (!AD_ShouldFilterUserLoginsByGroup() ||
+    if (!AD_ShouldFilterUserLoginsByGroup(pState) ||
         (pAllowedMemberList &&
          !LsaHashGetValue(
                         pAllowedMemberList,
@@ -1445,17 +1457,18 @@ AD_IsMemberAllowed(
 
 VOID
 AD_FreeAllowedSIDs_InLock(
-    VOID)
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
 {
-    if (gpAllowedSIDs)
+    if (pState->pAllowedSIDs)
     {
-        LsaHashSafeFree(&gpAllowedSIDs);
+        LsaHashSafeFree(&pState->pAllowedSIDs);
     }
 }
 
 BOOLEAN
 AD_ShouldAssumeDefaultDomain(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bAssumeDefaultDomain = FALSE;
@@ -1463,7 +1476,7 @@ AD_ShouldAssumeDefaultDomain(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bAssumeDefaultDomain = gpLsaAdProviderState->config.bAssumeDefaultDomain;
+    bAssumeDefaultDomain = pState->config.bAssumeDefaultDomain;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1472,7 +1485,7 @@ AD_ShouldAssumeDefaultDomain(
 
 BOOLEAN
 AD_ShouldSyncSystemTime(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bSyncSystemTime = FALSE;
@@ -1480,7 +1493,7 @@ AD_ShouldSyncSystemTime(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bSyncSystemTime = gpLsaAdProviderState->config.bSyncSystemTime;
+    bSyncSystemTime = pState->config.bSyncSystemTime;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1489,7 +1502,7 @@ AD_ShouldSyncSystemTime(
 
 BOOLEAN
 AD_EventlogEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bResult = FALSE;
@@ -1497,7 +1510,7 @@ AD_EventlogEnabled(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bResult = gpLsaAdProviderState->config.bEnableEventLog;
+    bResult = pState->config.bEnableEventLog;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1506,7 +1519,7 @@ AD_EventlogEnabled(
 
 BOOLEAN
 AD_ShouldLogNetworkConnectionEvents(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bResult = TRUE;
@@ -1514,7 +1527,7 @@ AD_ShouldLogNetworkConnectionEvents(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bResult = gpLsaAdProviderState->config.bShouldLogNetworkConnectionEvents;
+    bResult = pState->config.bShouldLogNetworkConnectionEvents;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1523,7 +1536,7 @@ AD_ShouldLogNetworkConnectionEvents(
 
 BOOLEAN
 AD_ShouldCreateK5Login(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bResult = TRUE;
@@ -1531,7 +1544,7 @@ AD_ShouldCreateK5Login(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bResult = gpLsaAdProviderState->config.bCreateK5Login;
+    bResult = pState->config.bCreateK5Login;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1540,7 +1553,7 @@ AD_ShouldCreateK5Login(
 
 BOOLEAN
 AD_ShouldCreateHomeDir(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bCreateHomeDir = FALSE;
@@ -1548,7 +1561,7 @@ AD_ShouldCreateHomeDir(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bCreateHomeDir = gpLsaAdProviderState->config.bCreateHomeDir;
+    bCreateHomeDir = pState->config.bCreateHomeDir;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1557,7 +1570,7 @@ AD_ShouldCreateHomeDir(
 
 BOOLEAN
 AD_ShouldRefreshUserCreds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN bRefreshUserCreds = FALSE;
@@ -1565,7 +1578,7 @@ AD_ShouldRefreshUserCreds(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    bRefreshUserCreds = gpLsaAdProviderState->config.bRefreshUserCreds;
+    bRefreshUserCreds = pState->config.bRefreshUserCreds;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1574,7 +1587,7 @@ AD_ShouldRefreshUserCreds(
 
 AD_CELL_SUPPORT
 AD_GetCellSupport(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     AD_CELL_SUPPORT result = FALSE;
@@ -1582,7 +1595,7 @@ AD_GetCellSupport(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.CellSupport;
+    result = pState->config.CellSupport;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1591,7 +1604,7 @@ AD_GetCellSupport(
 
 AD_CACHE_BACKEND
 AD_GetCacheBackend(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     AD_CACHE_BACKEND result = FALSE;
@@ -1599,7 +1612,7 @@ AD_GetCacheBackend(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.CacheBackend;
+    result = pState->config.CacheBackend;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1608,7 +1621,7 @@ AD_GetCacheBackend(
 
 DWORD
 AD_GetCacheSizeCap(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwResult = 0;
@@ -1616,7 +1629,7 @@ AD_GetCacheSizeCap(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    dwResult = gpLsaAdProviderState->config.dwCacheSizeCap;
+    dwResult = pState->config.dwCacheSizeCap;
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1625,7 +1638,7 @@ AD_GetCacheSizeCap(
 
 BOOLEAN
 AD_GetTrimUserMembershipEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN result = FALSE;
@@ -1633,7 +1646,7 @@ AD_GetTrimUserMembershipEnabled(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.bTrimUserMembershipEnabled;
+    result = pState->config.bTrimUserMembershipEnabled;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1642,7 +1655,7 @@ AD_GetTrimUserMembershipEnabled(
 
 BOOLEAN
 AD_GetNssGroupMembersCacheOnlyEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN result = FALSE;
@@ -1650,7 +1663,7 @@ AD_GetNssGroupMembersCacheOnlyEnabled(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.bNssGroupMembersCacheOnlyEnabled;
+    result = pState->config.bNssGroupMembersCacheOnlyEnabled;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1659,7 +1672,7 @@ AD_GetNssGroupMembersCacheOnlyEnabled(
 
 BOOLEAN
 AD_GetNssUserMembershipCacheOnlyEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN result = FALSE;
@@ -1667,7 +1680,7 @@ AD_GetNssUserMembershipCacheOnlyEnabled(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.bNssUserMembershipCacheOnlyEnabled;
+    result = pState->config.bNssUserMembershipCacheOnlyEnabled;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1676,7 +1689,7 @@ AD_GetNssUserMembershipCacheOnlyEnabled(
 
 BOOLEAN
 AD_GetNssEnumerationEnabled(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     BOOLEAN result = FALSE;
@@ -1684,7 +1697,7 @@ AD_GetNssEnumerationEnabled(
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
-    result = gpLsaAdProviderState->config.bNssEnumerationEnabled;
+    result = pState->config.bNssEnumerationEnabled;
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
@@ -1693,14 +1706,14 @@ AD_GetNssEnumerationEnabled(
 
 DWORD
 AD_GetDomainManagerCheckDomainOnlineSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD result = FALSE;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
-    result = gpLsaAdProviderState->config.DomainManager.dwCheckDomainOnlineSeconds;
+    result = pState->config.DomainManager.dwCheckDomainOnlineSeconds;
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
     return result;
@@ -1708,14 +1721,14 @@ AD_GetDomainManagerCheckDomainOnlineSeconds(
 
 DWORD
 AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD result = FALSE;
     BOOLEAN bInLock = FALSE;
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
-    result = gpLsaAdProviderState->config.DomainManager.dwUnknownDomainCacheTimeoutSeconds;
+    result = pState->config.DomainManager.dwUnknownDomainCacheTimeoutSeconds;
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
     return result;

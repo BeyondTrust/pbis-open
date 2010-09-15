@@ -261,6 +261,7 @@ error:
 DWORD
 MemCacheOpen(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PLSA_DB_HANDLE phDb
     )
 {
@@ -271,6 +272,8 @@ MemCacheOpen(
                     sizeof(*pConn),
                     (PVOID*)&pConn);
     BAIL_ON_LSA_ERROR(dwError);
+
+    pConn->pProviderState = pState;
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pConn->lock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
@@ -860,6 +863,7 @@ MemCacheFindUserByName(
     {
         case NameType_UPN:
             dwError = LsaDmWrapGetDomainName(
+                            pConn->pProviderState->hDmState,
                             pUserNameInfo->pszDomain,
                             &pszDnsDomain,
                             NULL);
@@ -876,6 +880,7 @@ MemCacheFindUserByName(
             break;
        case NameType_NT4:
             dwError = LsaDmWrapGetDomainName(
+                            pConn->pProviderState->hDmState,
                             pUserNameInfo->pszDomain,
                             NULL,
                             &pszShortDomain);

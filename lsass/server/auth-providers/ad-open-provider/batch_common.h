@@ -177,22 +177,24 @@ LsaAdBatchDestroyBatchItemContents(
 
 BOOLEAN
 LsaAdBatchIsDefaultSchemaMode(
-    VOID
+    PAD_PROVIDER_DATA pProviderData
     );
 
 BOOLEAN
 LsaAdBatchIsUnprovisionedMode(
-    VOID
+    PAD_PROVIDER_DATA pProviderData
     );
 
 DWORD
 LsaAdBatchIsDefaultCell(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN PCSTR pszCellDN,
     OUT PBOOLEAN pbIsDefaultCell
     );
 
 DWORD
 LsaAdBatchQueryCellConfigurationMode(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszCellDN,
     OUT ADConfigurationMode* pAdMode

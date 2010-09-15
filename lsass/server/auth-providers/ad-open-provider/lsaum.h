@@ -53,7 +53,7 @@
 
 DWORD
 LsaUmInitialize(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pProviderState
     );
 
 VOID

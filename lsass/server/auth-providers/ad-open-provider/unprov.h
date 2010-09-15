@@ -65,6 +65,7 @@ ADUnprovPlugin_SupportsAliases(
 
 DWORD
 ADUnprovPlugin_QueryByReal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN BOOLEAN bIsUser,
     IN PCSTR pszNT4Name,
     IN PCSTR pszSID,
@@ -74,6 +75,7 @@ ADUnprovPlugin_QueryByReal(
 
 DWORD
 ADUnprovPlugin_QueryByAlias(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN PCSTR pszAlias,
     OUT PSTR* ppszSid,
@@ -82,6 +84,7 @@ ADUnprovPlugin_QueryByAlias(
 
 DWORD
 ADUnprovPlugin_QueryById(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN BOOLEAN bIsUser,
     IN DWORD dwId,
     OUT PSTR* ppszSid,

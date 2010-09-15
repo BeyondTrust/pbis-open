@@ -49,10 +49,12 @@
  */
 
 #include "adprovider.h"
+#include "lsadm_p.h"
 
 static
 DWORD
 LsaDmEnginepAddTrust(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN OPTIONAL PCSTR pszTrusteeDomainName,
     IN NetrDomainTrust* pTrustInfo,
     IN LSA_TRUST_DIRECTION dwTrustDirection,
@@ -73,7 +75,8 @@ LsaDmEnginepAddTrust(
                             &pszNetbiosDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmAddTrustedDomain(pszDnsDomainName,
+    dwError = LsaDmAddTrustedDomain(hDmState,
+                                    pszDnsDomainName,
                                     pszNetbiosDomainName,
                                     pTrustInfo->sid,
                                     &pTrustInfo->guid,
@@ -110,6 +113,7 @@ error:
 static
 DWORD
 LsaDmEnginepDiscoverTrustsForDomain(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszParentTrusteeDomainName,
     IN PCSTR pszDomainName,
     IN PCSTR pszForestName,
@@ -129,7 +133,8 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
     // Enumerate all direct and in-forest trusts.
     // ISSUE-2008/08/14-dalmeida -- Why not just direct outbound and in-forest?
-    dwError = LsaDmWrapDsEnumerateDomainTrusts(pszDomainName,
+    dwError = LsaDmWrapDsEnumerateDomainTrusts(hDmState,
+                                               pszDomainName,
                                                (NETR_TRUST_FLAG_OUTBOUND |
                                                 NETR_TRUST_FLAG_INBOUND |
                                                 NETR_TRUST_FLAG_IN_FOREST),
@@ -191,6 +196,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
         // Now add the primary trust info.
         dwError = LsaDmEnginepAddTrust(
+                        hDmState,
                         NULL,
                         pPrimaryTrust,
                         LSA_TRUST_DIRECTION_SELF,
@@ -243,7 +249,9 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
             if (!LW_IS_NULL_OR_EMPTY_STR(pszNetbiosName))
             {
-                dwError = LsaDmCacheUnknownDomainName(pszNetbiosName);
+                dwError = LsaDmCacheUnknownDomainName(
+                              hDmState,
+                              pszNetbiosName);
                 BAIL_ON_LSA_ERROR(dwError);
             }
 
@@ -293,16 +301,20 @@ LsaDmEnginepDiscoverTrustsForDomain(
         }
 
         // skip ignored trust.
-        if (LsaDmIsIgnoreTrust(pszDnsDomainName, pszNetbiosName))
+        if (LsaDmIsIgnoreTrust(hDmState, pszDnsDomainName, pszNetbiosName))
         {
             LSA_LOG_WARNING("Skipping ignored trust '%s' (NetBIOS name is '%s')",
                             LSA_SAFE_LOG_STRING(pszDnsDomainName),
                             LSA_SAFE_LOG_STRING(pszNetbiosName));
 
-            dwError = LsaDmCacheUnknownDomainNameForever(pszDnsDomainName);
+            dwError = LsaDmCacheUnknownDomainNameForever(
+                          hDmState,
+                          pszDnsDomainName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LsaDmCacheUnknownDomainNameForever(pszNetbiosName);
+            dwError = LsaDmCacheUnknownDomainNameForever(
+                          hDmState,
+                          pszNetbiosName);
             BAIL_ON_LSA_ERROR(dwError);
 
             continue;
@@ -366,6 +378,7 @@ LsaDmEnginepDiscoverTrustsForDomain(
 
         // Add the trust.
         dwError = LsaDmEnginepAddTrust(
+                         hDmState,
                          pszDomainName,
                          pCurrentTrust,
                          dwTrustDirection,
@@ -430,6 +443,7 @@ error:
 static
 DWORD
 LsaDmEnginepDiscoverTrustsInternal(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszDnsPrimaryForestName
     )
@@ -445,10 +459,12 @@ LsaDmEnginepDiscoverTrustsInternal(
     }
 
     // enumerate own domain's trusts
-    dwError = LsaDmEnginepDiscoverTrustsForDomain(NULL,
-                                                  pszDnsPrimaryDomainName,
-                                                  pszDnsPrimaryForestName,
-                                                  &pTrustedForestRootList);
+    dwError = LsaDmEnginepDiscoverTrustsForDomain(
+                  hDmState,
+                  NULL,
+                  pszDnsPrimaryDomainName,
+                  pszDnsPrimaryForestName,
+                  &pTrustedForestRootList);
     BAIL_ON_LSA_ERROR(dwError);
 
     // If own domain is not the forest root, enumerate the forest root
@@ -462,10 +478,12 @@ LsaDmEnginepDiscoverTrustsInternal(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        dwError = LsaDmEnginepDiscoverTrustsForDomain(pszDnsPrimaryDomainName,
-                                                      pszDnsPrimaryForestName,
-                                                      pszDnsPrimaryForestName,
-                                                      &pTrustedForestRootList);
+        dwError = LsaDmEnginepDiscoverTrustsForDomain(
+                      hDmState,
+                      pszDnsPrimaryDomainName,
+                      pszDnsPrimaryForestName,
+                      pszDnsPrimaryForestName,
+                      &pTrustedForestRootList);
         switch (dwError)
         {
         case LW_ERROR_DOMAIN_IS_OFFLINE:
@@ -487,10 +505,12 @@ LsaDmEnginepDiscoverTrustsInternal(
         {
             PSTR pszDnsForestName = pTrustedForestRootList[i];
 
-            dwError = LsaDmEnginepDiscoverTrustsForDomain(pszDnsPrimaryForestName,
-                                                          pszDnsForestName,
-                                                          pszDnsForestName,
-                                                          NULL);
+            dwError = LsaDmEnginepDiscoverTrustsForDomain(
+                          hDmState,
+                          pszDnsPrimaryForestName,
+                          pszDnsForestName,
+                          pszDnsForestName,
+                          NULL);
             switch (dwError)
             {
             case LW_ERROR_DOMAIN_IS_OFFLINE:
@@ -519,6 +539,7 @@ error:
 static
 DWORD
 LsaDmEnginepDiscoverIncludeTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName
     )
 {
@@ -528,6 +549,7 @@ LsaDmEnginepDiscoverIncludeTrusts(
     DWORD i = 0;
 
     dwError = LsaDmQueryIncludeTrusts(
+                    hDmState,
                     &ppszTrustsList,
                     &dwTrustsCount);
     BAIL_ON_LSA_ERROR(dwError);
@@ -535,6 +557,7 @@ LsaDmEnginepDiscoverIncludeTrusts(
     for (i = 0; i < dwTrustsCount; i++)
     {
         dwError = LsaDmEngineGetDomainNameWithDiscovery(
+                        hDmState,
                         pszDnsPrimaryDomainName,
                         ppszTrustsList[i],
                         NULL,
@@ -560,13 +583,17 @@ error:
 
 DWORD
 LsaDmEngineDiscoverTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PLSA_AD_PROVIDER_STATE pProviderState = NULL;
     PLWNET_DC_INFO pDcInfo = NULL;
 
-    gpLsaAdProviderState->TrustDiscovery.bIsDiscoveringTrusts = TRUE;
+    LsaDmpGetProviderState(hDmState, &pProviderState);
+
+    pProviderState->TrustDiscovery.bIsDiscoveringTrusts = TRUE;
 
     // ISSUE-2008/10/09-dalmeida -- Perhaps put this in lsadmwrap.
     dwError = LWNetGetDCName(NULL, pszDnsPrimaryDomainName, NULL, 0, &pDcInfo);
@@ -581,15 +608,18 @@ LsaDmEngineDiscoverTrusts(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmEnginepDiscoverTrustsInternal(pszDnsPrimaryDomainName,
+    dwError = LsaDmEnginepDiscoverTrustsInternal(hDmState,
+                                                 pszDnsPrimaryDomainName,
                                                  pDcInfo->pszDnsForestName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmEnginepDiscoverIncludeTrusts(pszDnsPrimaryDomainName);
+    dwError = LsaDmEnginepDiscoverIncludeTrusts(
+                  hDmState,
+                  pszDnsPrimaryDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
-    gpLsaAdProviderState->TrustDiscovery.bIsDiscoveringTrusts = FALSE;
+    pProviderState->TrustDiscovery.bIsDiscoveringTrusts = FALSE;
 
     LWNET_SAFE_FREE_DC_INFO(pDcInfo);
 
@@ -633,6 +663,7 @@ error:
 static
 DWORD
 LsaDmEnginepAddOneWayOtherForestDomain(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
@@ -641,10 +672,14 @@ LsaDmEnginepAddOneWayOtherForestDomain(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pProviderState = NULL;
     GUID guid = { 0 };
     PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo = NULL;
 
+    LsaDmpGetProviderState(hDmState, &pProviderState);
+
     dwError = LsaDmAddTrustedDomain(
+                     hDmState,
                      pszDnsDomainName,
                      pszNetbiosDomainName,
                      pDomainSid,
@@ -661,14 +696,15 @@ LsaDmEnginepAddOneWayOtherForestDomain(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaDmWrapGetDomainEnumInfo(
+                    hDmState,
                     pszDnsDomainName,
                     &pDomainInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!gpLsaAdProviderState->TrustDiscovery.bIsDiscoveringTrusts)
+    if (!pProviderState->TrustDiscovery.bIsDiscoveringTrusts)
     {
         dwError = ADState_AddDomainTrust(
-                        gpLsaAdProviderState->hStateConnection,
+                        pProviderState->hStateConnection,
                         pDomainInfo);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -684,6 +720,7 @@ error:
 
 DWORD
 LsaDmEngineGetDomainNameWithDiscovery(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
@@ -691,6 +728,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pProviderState = NULL;
     PSTR pszDnsDomainName = NULL;
     PSTR pszNetbiosDomainName = NULL;
     PSTR pszDomainSid = NULL;
@@ -725,7 +763,8 @@ LsaDmEngineGetDomainNameWithDiscovery(
 
     // Check the domain manager
 
-    dwError = LsaDmWrapGetDomainName(pszDomainName,
+    dwError = LsaDmWrapGetDomainName(hDmState,
+                                     pszDomainName,
                                      &pszDnsDomainName,
                                      &pszNetbiosDomainName);
     if (LW_ERROR_NO_SUCH_DOMAIN != dwError)
@@ -738,19 +777,21 @@ LsaDmEngineGetDomainNameWithDiscovery(
     // Check unknown domain cache to avoid always hitting the
     // network before deciding to ignore bogus domain names.
 
-    if (LsaDmIsUnknownDomainName(pszDomainName))
+    if (LsaDmIsUnknownDomainName(hDmState, pszDomainName))
     {
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
     // Make sure that this name is not supposed to be ignored.
-    if (LsaDmIsCertainIgnoreTrust(pszDomainName))
+    if (LsaDmIsCertainIgnoreTrust(hDmState, pszDomainName))
     {
         // Ensure all known names and SID for this domain are in
         // unknown cache forever.
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -759,7 +800,10 @@ LsaDmEngineGetDomainNameWithDiscovery(
 
     // Go to the network
 
+    LsaDmpGetProviderState(hDmState, &pProviderState);
+
     dwError = LsaDmWrapNetLookupObjectSidByName(
+                 hDmState,
                  pszDnsPrimaryDomainName,
                  pszDomainName,
                  &pszDomainSid,
@@ -767,7 +811,9 @@ LsaDmEngineGetDomainNameWithDiscovery(
     if (dwError)
     {
         // This domain name is not resolvable, so cache it.
-        dwError = LsaDmCacheUnknownDomainName(pszDomainName);
+        dwError = LsaDmCacheUnknownDomainName(
+                      hDmState,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -794,6 +840,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
     // Need to add newly discovered domain to trusted domain list.
 
     dwError = LsaDmWrapDsGetDcName(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszDomainName,
                     TRUE,
@@ -802,10 +849,14 @@ LsaDmEngineGetDomainNameWithDiscovery(
     if (LW_ERROR_NO_SUCH_DOMAIN == dwError)
     {
         // This domain name is not resolvable, so cache it.
-        dwError = LsaDmCacheUnknownDomainName(pszDomainName);
+        dwError = LsaDmCacheUnknownDomainName(
+                      hDmState,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainSid(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSid(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -814,18 +865,24 @@ LsaDmEngineGetDomainNameWithDiscovery(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Make sure that this name is not supposed to be ignored.
-    if (LsaDmIsCertainIgnoreTrust(pszDnsDomainName))
+    if (LsaDmIsCertainIgnoreTrust(hDmState, pszDnsDomainName))
     {
         // Ensure all known names and SID for this domain are in
         // unknown cache forever.
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDnsDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainSidForever(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSidForever(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -833,6 +890,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
     }
 
     dwError = LsaDmWrapDsGetDcName(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszDomainName,
                     FALSE,
@@ -841,21 +899,29 @@ LsaDmEngineGetDomainNameWithDiscovery(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Make sure that this name is not supposed to be ignored.
-    if (LsaDmIsIgnoreTrust(pszDnsDomainName, pszNetbiosDomainName))
+    if (LsaDmIsIgnoreTrust(hDmState, pszDnsDomainName, pszNetbiosDomainName))
     {
         // Ensure all known names and SID for this domain are in
         // unknown cache forever.
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDnsDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszNetbiosDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszNetbiosDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainSidForever(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSidForever(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -863,6 +929,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
     }
 
     dwError = LsaDmEnginepAddOneWayOtherForestDomain(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszDnsDomainName,
                     pszNetbiosDomainName,
@@ -905,6 +972,7 @@ error:
 
 DWORD
 LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
@@ -913,6 +981,7 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pProviderState = NULL;
     PSTR pszDnsDomainName = NULL;
     PSTR pszNetbiosDomainName = NULL;
     PSTR pszDomainSid = NULL;
@@ -928,6 +997,7 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     }
 
     dwError = LsaDmWrapGetDomainNameAndSidByObjectSid(
+                    hDmState,
                     pszObjectSid,
                     &pszDnsDomainName,
                     &pszNetbiosDomainName,
@@ -947,7 +1017,7 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     // Check SID history domain SID cache to avoid always hitting the
     // network before deciding to ignore SID history SIDs.
 
-    if (LsaDmIsUnknownDomainSid(pDomainSid))
+    if (LsaDmIsUnknownDomainSid(hDmState, pDomainSid))
     {
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
         BAIL_ON_LSA_ERROR(dwError);
@@ -959,7 +1029,10 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     // Note that domain objects cannot have SID history as the AD schema
     // does not allow for it.
 
+    LsaDmpGetProviderState(hDmState, &pProviderState);
+
     dwError = LsaDmWrapNetLookupNameByObjectSid(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszDomainSid,
                     &pszNetbiosDomainName,
@@ -967,7 +1040,9 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     if (LW_ERROR_NO_SUCH_OBJECT == dwError)
     {
         // This domain SID is not resolvable, so cache it.
-        dwError = LsaDmCacheUnknownDomainSid(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSid(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -993,15 +1068,19 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     }
 
     // Make sure that this name is not supposed to be ignored.
-    if (LsaDmIsCertainIgnoreTrust(pszNetbiosDomainName))
+    if (LsaDmIsCertainIgnoreTrust(hDmState, pszNetbiosDomainName))
     {
         // Ensure all known names and SID for this domain are in
         // unknown cache forever.
 
-        dwError = LsaDmCacheUnknownDomainSidForever(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSidForever(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszNetbiosDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszNetbiosDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -1009,6 +1088,7 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     }
 
     dwError = LsaDmWrapDsGetDcName(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszNetbiosDomainName,
                     TRUE,
@@ -1017,10 +1097,14 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     if (LW_ERROR_NO_SUCH_DOMAIN == dwError)
     {
         // This domain name is not resolvable, so cache it.
-        dwError = LsaDmCacheUnknownDomainName(pszNetbiosDomainName);
+        dwError = LsaDmCacheUnknownDomainName(
+                      hDmState,
+                      pszNetbiosDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainSid(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSid(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -1029,18 +1113,24 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Make sure that this name is not supposed to be ignored.
-    if (LsaDmIsIgnoreTrust(pszDnsDomainName, pszNetbiosDomainName))
+    if (LsaDmIsIgnoreTrust(hDmState, pszDnsDomainName, pszNetbiosDomainName))
     {
         // Ensure all known names and SID for this domain are in
         // unknown cache forever.
 
-        dwError = LsaDmCacheUnknownDomainSidForever(pDomainSid);
+        dwError = LsaDmCacheUnknownDomainSidForever(
+                      hDmState,
+                      pDomainSid);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszNetbiosDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszNetbiosDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaDmCacheUnknownDomainNameForever(pszDnsDomainName);
+        dwError = LsaDmCacheUnknownDomainNameForever(
+                      hDmState,
+                      pszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
@@ -1048,6 +1138,7 @@ LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
     }
 
     dwError = LsaDmEnginepAddOneWayOtherForestDomain(
+                    hDmState,
                     pszDnsPrimaryDomainName,
                     pszDnsDomainName,
                     pszNetbiosDomainName,

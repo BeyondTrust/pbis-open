@@ -48,39 +48,6 @@
 #ifndef __AD_STRUCT_H__
 #define __AD_STRUCT_H__
 
-typedef struct __AD_ENUM_STATE {
-    DWORD dwInfoLevel;
-    BOOLEAN bCheckGroupMembersOnline;
-    LSA_FIND_FLAGS FindFlags;
-    LSA_NIS_MAP_QUERY_FLAGS dwMapFlags;
-    PSTR  pszMapName;
-
-    LW_SEARCH_COOKIE Cookie;
-} AD_ENUM_STATE, *PAD_ENUM_STATE;
-
-typedef struct __AD_ENUM_HANDLE
-{
-    enum
-    {
-        AD_ENUM_HANDLE_OBJECTS,
-        AD_ENUM_HANDLE_MEMBERS
-    } Type;
-    LSA_FIND_FLAGS FindFlags;
-    LSA_OBJECT_TYPE ObjectType;
-    LSA_OBJECT_TYPE CurrentObjectType;
-    LW_SEARCH_COOKIE Cookie;
-    PSTR* ppszSids;
-    DWORD dwSidCount;
-    DWORD dwSidIndex;
-} AD_ENUM_HANDLE, *PAD_ENUM_HANDLE;
-
-typedef struct __AD_PROVIDER_CONTEXT
-{
-    uid_t uid;
-    gid_t gid;
-    pid_t pid;
-} AD_PROVIDER_CONTEXT, *PAD_PROVIDER_CONTEXT;
-
 typedef struct _AD_LINKED_CELL_INFO
 {
     PSTR    pszCellDN;
@@ -139,8 +106,23 @@ typedef struct _LSA_AD_CONFIG {
     } DomainManager;
 } LSA_AD_CONFIG, *PLSA_AD_CONFIG;
 
+struct _LSA_DB_CONNECTION;
+typedef struct _LSA_DB_CONNECTION *LSA_DB_HANDLE;
+typedef LSA_DB_HANDLE *PLSA_DB_HANDLE;
+
 struct _ADSTATE_CONNECTION;
 typedef struct _ADSTATE_CONNECTION *ADSTATE_CONNECTION_HANDLE;
+
+struct _LSA_DM_STATE;
+typedef struct _LSA_DM_STATE *LSA_DM_STATE_HANDLE, **PLSA_DM_STATE_HANDLE;
+
+struct _AD_MACHINEPWD_STATE;
+typedef struct _LSA_MACHINEPWD_STATE *LSA_MACHINEPWD_STATE_HANDLE;
+typedef struct _LSA_MACHINEPWD_STATE **PLSA_MACHINEPWD_STATE_HANDLE;
+
+struct _LSA_SCHANNEL_STATE;
+typedef struct _LSA_SCHANNEL_STATE *LSA_SCHANNEL_STATE_HANDLE;
+typedef struct _LSA_SCHANNEL_STATE **PLSA_SCHANNEL_STATE_HANDLE;
 
 typedef struct _LSA_AD_PROVIDER_STATE {
     /// Tracks machine credentials state
@@ -182,7 +164,58 @@ typedef struct _LSA_AD_PROVIDER_STATE {
         LSA_AD_JOINED
     } joinState;
     pthread_rwlock_t* pStateLock;
+
+    PAD_PROVIDER_DATA pProviderData;
+
+    PLSA_HASH_TABLE pAllowedSIDs;
+
+    LSA_DM_STATE_HANDLE hDmState;
+
+    LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState;
+
+    LSA_SCHANNEL_STATE_HANDLE hSchannelState;
 } LSA_AD_PROVIDER_STATE, *PLSA_AD_PROVIDER_STATE;
+
+typedef struct __AD_PROVIDER_CONTEXT
+{
+    uid_t uid;
+    gid_t gid;
+    pid_t pid;
+
+    DWORD nRefCount;
+
+    PLSA_AD_PROVIDER_STATE pState;
+} AD_PROVIDER_CONTEXT, *PAD_PROVIDER_CONTEXT;
+
+typedef struct __AD_ENUM_STATE {
+    DWORD dwInfoLevel;
+    BOOLEAN bCheckGroupMembersOnline;
+    LSA_FIND_FLAGS FindFlags;
+    LSA_NIS_MAP_QUERY_FLAGS dwMapFlags;
+    PSTR  pszMapName;
+
+    LW_SEARCH_COOKIE Cookie;
+
+    PAD_PROVIDER_CONTEXT pProviderContext;
+} AD_ENUM_STATE, *PAD_ENUM_STATE;
+
+typedef struct __AD_ENUM_HANDLE
+{
+    enum
+    {
+        AD_ENUM_HANDLE_OBJECTS,
+        AD_ENUM_HANDLE_MEMBERS
+    } Type;
+    LSA_FIND_FLAGS FindFlags;
+    LSA_OBJECT_TYPE ObjectType;
+    LSA_OBJECT_TYPE CurrentObjectType;
+    LW_SEARCH_COOKIE Cookie;
+    PSTR* ppszSids;
+    DWORD dwSidCount;
+    DWORD dwSidIndex;
+
+    PAD_PROVIDER_CONTEXT pProviderContext;
+} AD_ENUM_HANDLE, *PAD_ENUM_HANDLE;
 
 #endif /* __AD_STRUCT_H__ */
 

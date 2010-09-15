@@ -53,30 +53,35 @@
 
 DWORD
 LsaDmWrapEnumExtraForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     );
 
 DWORD
 LsaDmWrapEnumExtraTwoWayForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     );
 
 DWORD
 LsaDmWrapEnumInMyForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     );
 
 DWORD
 LsaDmWrapGetDomainEnumInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     OUT PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo
     );
 
 DWORD
 LsaDmWrapGetDomainName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName
@@ -84,6 +89,7 @@ LsaDmWrapGetDomainName(
 
 DWORD
 LsaDmWrapGetDomainNameAndSidByObjectSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName,
@@ -96,11 +102,13 @@ LsaDmWrapGetDomainNameAndSidByObjectSid(
 
 DWORD
 LsaDmWrapLdapPingTcp(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName
     );
 
 DWORD
 LsaDmWrapNetLookupObjectSidByName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszName,
     OUT PSTR* ppszSid,
@@ -109,6 +117,7 @@ LsaDmWrapNetLookupObjectSidByName(
 
 DWORD
 LsaDmWrapNetLookupNamesByObjectSids(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwSidCounts,
     IN PSTR* ppszSids,
@@ -118,6 +127,7 @@ LsaDmWrapNetLookupNamesByObjectSids(
 
 DWORD
 LsaDmWrapNetLookupObjectSidsByNames(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwNameCounts,
     IN PSTR* ppszNames,
@@ -127,6 +137,7 @@ LsaDmWrapNetLookupObjectSidsByNames(
 
 DWORD
 LsaDmWrapNetLookupNameByObjectSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN  PCSTR pszDnsDomainName,
     IN  PCSTR pszSid,
     OUT PSTR* ppszName,
@@ -135,6 +146,7 @@ LsaDmWrapNetLookupNameByObjectSid(
 
 DWORD
 LsaDmWrapDsEnumerateDomainTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwFlags,
     OUT NetrDomainTrust** ppTrusts,
@@ -143,6 +155,7 @@ LsaDmWrapDsEnumerateDomainTrusts(
 
 DWORD
 LsaDmWrapDsGetDcName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszFindDomainName,
     IN BOOLEAN bReturnDnsName,
@@ -152,6 +165,7 @@ LsaDmWrapDsGetDcName(
 
 DWORD
 LsaDmWrapAuthenticateUserEx(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PLSA_AUTH_USER_PARAMS pUserParams,
     OUT PLSA_AUTH_USER_INFO *ppUserInfo

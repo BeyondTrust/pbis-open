@@ -51,6 +51,7 @@
 static
 DWORD
 AD_CreateEnumState(
+    PAD_PROVIDER_CONTEXT pContext,
     DWORD dwInfoLevel,
     BOOLEAN bCheckGroupMembersOnline,
     LSA_FIND_FLAGS FindFlags,
@@ -66,61 +67,8 @@ AD_FreeEnumState(
     );
 
 DWORD
-AD_CreateUserState(
-    HANDLE  hProvider,
-    DWORD   dwInfoLevel,
-    LSA_FIND_FLAGS FindFlags,
-    PAD_ENUM_STATE* ppEnumState
-    )
-{
-    return AD_CreateEnumState(
-                dwInfoLevel,
-                FALSE,
-                FindFlags,
-                NULL,
-                0,
-                ppEnumState);
-}
-
-VOID
-AD_FreeUserState(
-    HANDLE hProvider,
-    PAD_ENUM_STATE  pEnumState
-    )
-{
-    return AD_FreeEnumState(pEnumState);
-}
-
-DWORD
-AD_CreateGroupState(
-    HANDLE hProvider,
-    DWORD  dwInfoLevel,
-    BOOLEAN bCheckGroupMembersOnline,
-    LSA_FIND_FLAGS FindFlags,
-    PAD_ENUM_STATE* ppEnumState
-    )
-{
-    return AD_CreateEnumState(
-                    dwInfoLevel,
-                    bCheckGroupMembersOnline,
-                    FindFlags,
-                    NULL,
-                    0,
-                    ppEnumState);
-}
-
-VOID
-AD_FreeGroupState(
-    HANDLE hProvider,
-    PAD_ENUM_STATE  pEnumState
-    )
-{
-    return AD_FreeEnumState(pEnumState);
-}
-
-DWORD
 AD_CreateNSSArtefactState(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     DWORD  dwInfoLevel,
     PCSTR  pszMapName,
     LSA_NIS_MAP_QUERY_FLAGS dwFlags,
@@ -128,6 +76,7 @@ AD_CreateNSSArtefactState(
     )
 {
     return AD_CreateEnumState(
+                    pContext,
                     dwInfoLevel,
                     FALSE,
                     0,
@@ -138,7 +87,7 @@ AD_CreateNSSArtefactState(
 
 VOID
 AD_FreeNSSArtefactState(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PAD_ENUM_STATE  pEnumState
     )
 {
@@ -148,6 +97,7 @@ AD_FreeNSSArtefactState(
 static
 DWORD
 AD_CreateEnumState(
+    PAD_PROVIDER_CONTEXT pContext,
     DWORD dwInfoLevel,
     BOOLEAN bCheckGroupMembersOnline,
     LSA_FIND_FLAGS FindFlags,
@@ -168,6 +118,9 @@ AD_CreateEnumState(
     pEnumState->dwMapFlags = dwFlags;
     pEnumState->bCheckGroupMembersOnline = bCheckGroupMembersOnline;
     pEnumState->FindFlags = FindFlags;
+
+    AD_ReferenceProviderContext(pContext);
+    pEnumState->pProviderContext = pContext;
 
     if (pszMapName)
     {
@@ -210,6 +163,9 @@ AD_FreeEnumState(
         LwFreeCookieContents(&pState->Cookie);
 
         LW_SAFE_FREE_STRING(pState->pszMapName);
+
+        AD_ClearProviderState(pState->pProviderContext);
+        AD_DereferenceProviderContext(pState->pProviderContext);
 
         LwFreeMemory(pState);
     }

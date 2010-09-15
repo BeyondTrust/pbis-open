@@ -49,6 +49,7 @@
  */
 
 #include "adprovider.h"
+#include "lsadm_p.h"
 
 typedef struct _LSA_DM_WRAP_ENUM_ONE_DOMAIN_INFO_CALLBACK_CONTEXT {
     IN PCSTR pszDnsDomainName;
@@ -80,11 +81,14 @@ LsaDmWrappFilterExtraForestDomainsCallback(
 // However, this is not necessarily correct.
 DWORD
 LsaDmWrapEnumExtraForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     )
 {
-    return LsaDmEnumDomainNames(LsaDmWrappFilterExtraForestDomainsCallback,
+    return LsaDmEnumDomainNames(
+                                hDmState,
+                                LsaDmWrappFilterExtraForestDomainsCallback,
                                 NULL,
                                 pppszDomainNames,
                                 pdwCount);
@@ -117,11 +121,13 @@ LsaDmWrappFilterExtraTwoWayForestDomainsCallback(
 // However, this is not necessarily correct.
 DWORD
 LsaDmWrapEnumExtraTwoWayForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     )
 {
-    return LsaDmEnumDomainNames(LsaDmWrappFilterExtraTwoWayForestDomainsCallback,
+    return LsaDmEnumDomainNames(hDmState,
+                                LsaDmWrappFilterExtraTwoWayForestDomainsCallback,
                                 NULL,
                                 pppszDomainNames,
                                 pdwCount);
@@ -150,11 +156,13 @@ LsaDmWrappFilterInMyForestDomainsCallback(
 
 DWORD
 LsaDmWrapEnumInMyForestTrustDomains(
+    IN LSA_DM_STATE_HANDLE hDmState,
     OUT PSTR** pppszDomainNames,
     OUT PDWORD pdwCount
     )
 {
-    return LsaDmEnumDomainNames(LsaDmWrappFilterInMyForestDomainsCallback,
+    return LsaDmEnumDomainNames(hDmState,
+                                LsaDmWrappFilterInMyForestDomainsCallback,
                                 NULL,
                                 pppszDomainNames,
                                 pdwCount);
@@ -181,6 +189,7 @@ LsaDmWrappFilterFindDomainCallback(
 
 DWORD
 LsaDmWrapGetDomainEnumInfo(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     OUT PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo
     )
@@ -191,7 +200,9 @@ LsaDmWrapGetDomainEnumInfo(
 
     context.pszDnsDomainName = pszDnsDomainName;
 
-    dwError = LsaDmEnumDomainInfo(LsaDmWrappFilterFindDomainCallback,
+    dwError = LsaDmEnumDomainInfo(
+                               hDmState,
+                               LsaDmWrappFilterFindDomainCallback,
                                &context,
                                &ppDomainInfoList,
                                NULL);
@@ -219,12 +230,14 @@ error:
 
 DWORD
 LsaDmWrapGetDomainName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName
     )
 {
-    return LsaDmQueryDomainInfo(pszDomainName,
+    return LsaDmQueryDomainInfo(hDmState,
+                                pszDomainName,
                                 ppszDnsDomainName,
                                 ppszNetbiosDomainName,
                                 NULL,
@@ -244,6 +257,7 @@ LsaDmWrapGetDomainName(
 
 DWORD
 LsaDmWrapGetDomainNameAndSidByObjectSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
     OUT OPTIONAL PSTR* ppszNetbiosDomainName,
@@ -261,6 +275,7 @@ LsaDmWrapGetDomainNameAndSidByObjectSid(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaDmQueryDomainInfoByObjectSid(
+                    hDmState,
                     pObjectSid,
                     ppszDnsDomainName ? &pszDnsDomainName : NULL,
                     ppszNetbiosDomainName ? &pszNetbiosDomainName : NULL,
@@ -361,6 +376,7 @@ typedef struct _LSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT {
 } LSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT, *PLSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN PLSA_AUTH_USER_PARAMS pUserParams;
     OUT PLSA_AUTH_USER_INFO  *ppUserInfo;
 } LSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT, *PLSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT;
@@ -565,12 +581,14 @@ LsaDmWrappDsGetDcNameCallback(
 
 DWORD
 LsaDmWrapLdapPingTcp(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName
     )
 {
     DWORD dwError = 0;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
                                       LsaDmWrappLdapPingTcpCallback,
@@ -580,6 +598,7 @@ LsaDmWrapLdapPingTcp(
 
 DWORD
 LsaDmWrapNetLookupObjectSidByName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszName,
     OUT PSTR* ppszSid,
@@ -591,7 +610,8 @@ LsaDmWrapNetLookupObjectSidByName(
 
     context.pszName = pszName;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
@@ -610,6 +630,7 @@ LsaDmWrapNetLookupObjectSidByName(
 
 DWORD
 LsaDmWrapNetLookupNameByObjectSid(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN  PCSTR pszDnsDomainName,
     IN  PCSTR pszSid,
     OUT PSTR* ppszName,
@@ -621,7 +642,8 @@ LsaDmWrapNetLookupNameByObjectSid(
 
     context.pszSid = pszSid;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
@@ -640,6 +662,7 @@ LsaDmWrapNetLookupNameByObjectSid(
 
 DWORD
 LsaDmWrapNetLookupNamesByObjectSids(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwSidCounts,
     IN PSTR* ppszSids,
@@ -653,7 +676,8 @@ LsaDmWrapNetLookupNamesByObjectSids(
     context.ppszSids = ppszSids;
     context.dwSidCounts = dwSidCounts;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
@@ -668,6 +692,7 @@ LsaDmWrapNetLookupNamesByObjectSids(
 
 DWORD
 LsaDmWrapNetLookupObjectSidsByNames(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwNameCounts,
     IN PSTR* ppszNames,
@@ -681,7 +706,8 @@ LsaDmWrapNetLookupObjectSidsByNames(
     context.ppszNames = ppszNames;
     context.dwNameCounts = dwNameCounts;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
@@ -696,6 +722,7 @@ LsaDmWrapNetLookupObjectSidsByNames(
 
 DWORD
 LsaDmWrapDsEnumerateDomainTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwFlags,
     OUT NetrDomainTrust** ppTrusts,
@@ -707,7 +734,8 @@ LsaDmWrapDsEnumerateDomainTrusts(
 
     context.dwFlags = dwFlags;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                       NULL,
@@ -722,6 +750,7 @@ LsaDmWrapDsEnumerateDomainTrusts(
 
 DWORD
 LsaDmWrapDsGetDcName(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszFindDomainName,
     IN BOOLEAN bReturnDnsName,
@@ -735,7 +764,8 @@ LsaDmWrapDsGetDcName(
     context.pszDomainName = pszFindDomainName;
     context.bReturnDnsName = bReturnDnsName;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                 pszDnsDomainName,
                                  LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                  LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO,
                                  NULL,
@@ -767,6 +797,7 @@ LsaDmWrappAuthenticateUserExCallback(
     PLSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT) pContext;
 
     return AD_NetlogonAuthenticationUserEx(
+                    pCtx->pState,
                     pDcInfo->pszDomainControllerName,
                     pCtx->pUserParams,
                     pCtx->ppUserInfo,
@@ -775,6 +806,7 @@ LsaDmWrappAuthenticateUserExCallback(
 
 DWORD
 LsaDmWrapAuthenticateUserEx(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsDomainName,
     IN PLSA_AUTH_USER_PARAMS pUserParams,
     OUT PLSA_AUTH_USER_INFO *ppUserInfo
@@ -783,10 +815,12 @@ LsaDmWrapAuthenticateUserEx(
     DWORD dwError = 0;
     LSA_DM_WRAP_AUTH_USER_EX_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.pUserParams = pUserParams;
     context.ppUserInfo = ppUserInfo;
 
-    dwError = LsaDmConnectDomain(pszDnsDomainName,
+    dwError = LsaDmConnectDomain(hDmState,
+                                      pszDnsDomainName,
                                       LSA_DM_CONNECT_DOMAIN_FLAG_AUTH |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_DC_INFO |
                                       LSA_DM_CONNECT_DOMAIN_FLAG_NETRSAMLOGON,

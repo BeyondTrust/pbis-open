@@ -55,13 +55,13 @@ static LSA_UM_STATE_HANDLE gLsaUmState = NULL;
 
 DWORD
 LsaUmInitialize(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pProviderState
     )
 {
     DWORD dwError = 0;
-    LSA_UM_STATE_HANDLE pState = NULL;
+    LSA_UM_STATE_HANDLE hState = NULL;
 
-    dwError = LsaUmpStateCreate(&pState);
+    dwError = LsaUmpStateCreate(pProviderState, &hState);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (gLsaUmState)
@@ -70,14 +70,14 @@ LsaUmInitialize(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    gLsaUmState = pState;
-    pState = NULL;
+    gLsaUmState = hState;
+    hState = NULL;
     dwError = 0;
 
 cleanup:
-    if (pState)
+    if (hState)
     {
-        LsaUmpStateDestroy(pState);
+        LsaUmpStateDestroy(hState);
     }
 
     return dwError;

@@ -52,8 +52,6 @@ pthread_rwlock_t gADGlobalDataLock;
 
 PCSTR gpszADProviderName = "lsa-activedirectory-provider";
 
-PAD_PROVIDER_DATA gpADProviderData = NULL;
-
 LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
 {
     .pfnFindObjects = AD_FindObjects,
@@ -64,8 +62,6 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
     .pfnCloseEnum = AD_CloseEnum,
     .pfnQueryMemberOf = AD_QueryMemberOf,
     .pfnGetSmartCardUserObject = AD_GetSmartCardUserObject,
-    .pfnOpenHandle = AD_OpenHandle,
-    .pfnCloseHandle = AD_CloseHandle,
     .pfnShutdownProvider = AD_ShutdownProvider,
     .pfnOpenHandle = AD_OpenHandle,
     .pfnCloseHandle = AD_CloseHandle,
@@ -93,8 +89,6 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
     .pfnProviderIoControl = AD_ProviderIoControl
 };
 
-
-PLSA_HASH_TABLE gpAllowedSIDs   = NULL;
 
 // please put all new globals in the following structure:
 PLSA_AD_PROVIDER_STATE gpLsaAdProviderState = NULL;

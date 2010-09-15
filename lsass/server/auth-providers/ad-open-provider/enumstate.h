@@ -49,37 +49,8 @@
 #define __ENUM_STATE_H__
 
 DWORD
-AD_CreateUserState(
-    HANDLE  hProvider,
-    DWORD   dwInfoLevel,
-    LSA_FIND_FLAGS FindFlags,
-    PAD_ENUM_STATE* ppEnumState
-    );
-
-VOID
-AD_FreeUserState(
-    HANDLE hProvider,
-    PAD_ENUM_STATE pEnumState
-    );
-
-DWORD
-AD_CreateGroupState(
-    HANDLE hProvider,
-    DWORD  dwInfoLevel,
-    BOOLEAN bCheckGroupMembersOnline,
-    LSA_FIND_FLAGS FindFlags,
-    PAD_ENUM_STATE* ppEnumState
-    );
-
-VOID
-AD_FreeGroupState(
-    HANDLE hProvider,
-    PAD_ENUM_STATE pEnumState
-    );
-
-DWORD
 AD_CreateNSSArtefactState(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     DWORD  dwInfoLevel,
     PCSTR  pszMapName,
     LSA_NIS_MAP_QUERY_FLAGS dwFlags,
@@ -88,7 +59,7 @@ AD_CreateNSSArtefactState(
 
 VOID
 AD_FreeNSSArtefactState(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PAD_ENUM_STATE pEnumState
     );
 

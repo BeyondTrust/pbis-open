@@ -52,6 +52,7 @@
 
 DWORD
 AD_OfflineGetGroupMembers(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszGroupSid,
     OUT size_t* psMemberObjectsCount,
     OUT PLSA_SECURITY_OBJECT** pppMemberObjects
@@ -69,9 +70,9 @@ AD_OfflineGetGroupMembers(
     size_t sIndex = 0;
 
     dwError = ADCacheGetGroupMembers(
-        gpLsaAdProviderState->hCacheConnection,
+        pState->hCacheConnection,
         pszGroupSid,
-        AD_GetTrimUserMembershipEnabled(),
+        AD_GetTrimUserMembershipEnabled(pState),
         &sGroupMembershipsCount,
         &ppGroupMemberships);
     BAIL_ON_LSA_ERROR(dwError);
@@ -91,6 +92,7 @@ AD_OfflineGetGroupMembers(
     }
 
     dwError = AD_OfflineFindObjectsBySidList(
+        pState,
         sMemberSidsCount,
         ppszMemberSids,
         &ppObjects);
@@ -122,6 +124,7 @@ error:
 
 DWORD
 AD_OfflineFindObjectsBySidList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN size_t sCount,
     IN PSTR* ppszSidList,
     OUT PLSA_SECURITY_OBJECT** pppObjects
@@ -135,7 +138,7 @@ AD_OfflineFindObjectsBySidList(
      */
 
     dwError = ADCacheFindObjectsBySidList(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pState->hCacheConnection,
                     sCount,
                     ppszSidList,
                     &ppObjects);

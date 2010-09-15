@@ -148,7 +148,7 @@ ADGetGroupPseudoAttributeList(
 
 DWORD
 ADLdap_GetGroupMembers(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomainName,
     IN PCSTR pszSid,
     OUT size_t* psCount,
@@ -157,7 +157,7 @@ ADLdap_GetGroupMembers(
 
 DWORD
 ADLdap_GetObjectGroupMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pObject,
     OUT int* piPrimaryGroupIndex,
     OUT size_t* psNumGroupsFound,

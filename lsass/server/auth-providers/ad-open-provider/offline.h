@@ -52,26 +52,19 @@
 
 BOOLEAN
 AD_IsOffline(
-    VOID
+    PLSA_AD_PROVIDER_STATE pState
     );
 
 DWORD
 AD_OfflineAuthenticateUserPam(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     LSA_AUTH_USER_PAM_PARAMS* pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
 DWORD
-AD_OfflineValidateUser(
-    HANDLE hProvider,
-    PCSTR  pszUserName,
-    PCSTR  pszPassword
-    );
-
-DWORD
 AD_OfflineEnumUsers(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNumUsers,
     PDWORD  pdwUsersFound,
@@ -80,7 +73,7 @@ AD_OfflineEnumUsers(
 
 DWORD
 AD_OfflineGetUserGroupObjectMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     OUT size_t* psNumGroupsFound,
     OUT PLSA_SECURITY_OBJECT** pppResult
@@ -88,7 +81,7 @@ AD_OfflineGetUserGroupObjectMembership(
 
 DWORD
 AD_OfflineEnumGroups(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxGroups,
     PDWORD  pdwGroupsFound,
@@ -97,7 +90,7 @@ AD_OfflineEnumGroups(
 
 DWORD
 AD_OfflineChangePassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszUserName,
     PCSTR pszPassword,
     PCSTR pszOldPassword
@@ -105,7 +98,7 @@ AD_OfflineChangePassword(
 
 DWORD
 AD_OfflineFindNSSArtefactByKey(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR  pszKeyName,
     PCSTR  pszMapName,
     DWORD  dwInfoLevel,
@@ -115,7 +108,7 @@ AD_OfflineFindNSSArtefactByKey(
 
 DWORD
 AD_OfflineEnumNSSArtefacts(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNSSArtefacts,
     PDWORD  pdwNSSArtefactsFound,
@@ -125,13 +118,14 @@ AD_OfflineEnumNSSArtefacts(
 DWORD
 AD_OfflineInitializeOperatingMode(
     OUT PAD_PROVIDER_DATA* ppProviderData,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomain,
     IN PCSTR pszHostName
     );
 
 DWORD
 AD_OfflineFindObjects(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -142,7 +136,7 @@ AD_OfflineFindObjects(
 
 DWORD
 AD_OfflineQueryMemberOf(
-    IN HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -152,7 +146,7 @@ AD_OfflineQueryMemberOf(
 
 DWORD
 AD_OfflineGetGroupMemberSids(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PCSTR pszSid,
     OUT PDWORD pdwSidCount,

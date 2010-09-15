@@ -51,6 +51,7 @@
 
 DWORD
 LsaAdBatchMarshalList(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN OUT PLSA_LIST_LINKS pBatchItemList,
@@ -61,6 +62,7 @@ LsaAdBatchMarshalList(
 
 DWORD
 LsaAdBatchMarshal(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN OUT PLSA_AD_BATCH_ITEM pItem,

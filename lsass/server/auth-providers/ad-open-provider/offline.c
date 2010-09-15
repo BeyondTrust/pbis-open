@@ -52,15 +52,15 @@
 
 BOOLEAN
 AD_IsOffline(
-    VOID
+    PLSA_AD_PROVIDER_STATE pState
     )
 {
-    return LsaDmIsDomainOffline(NULL);
+    return LsaDmIsDomainOffline(pState->hDmState, NULL);
 }
 
 DWORD
 AD_OfflineAuthenticateUserPam(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     LSA_AUTH_USER_PAM_PARAMS* pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
@@ -79,7 +79,7 @@ AD_OfflineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_FindUserObjectByName(
-                hProvider,
+                pContext,
                 pParams->pszLoginName,
                 &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
@@ -89,7 +89,7 @@ AD_OfflineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheGetPasswordVerifier(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserInfo->pszObjectSid,
                 &pVerifier
                 );
@@ -151,7 +151,7 @@ error:
 
 DWORD
 AD_OfflineEnumUsers(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNumUsers,
     PDWORD  pdwUsersFound,
@@ -163,7 +163,7 @@ AD_OfflineEnumUsers(
 
 DWORD
 AD_OfflineGetUserGroupObjectMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo,
     OUT size_t* psNumGroupsFound,
     OUT PLSA_SECURITY_OBJECT** pppResult
@@ -179,9 +179,9 @@ AD_OfflineGetUserGroupObjectMembership(
     PLSA_SECURITY_OBJECT* ppGroupObjects = NULL;
 
     dwError = ADCacheGetGroupsForUser(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserInfo->pszObjectSid,
-                AD_GetTrimUserMembershipEnabled(),
+                AD_GetTrimUserMembershipEnabled(pContext->pState),
                 &sUserGroupMembershipsCount,
                 &ppUserGroupMemberships);
     BAIL_ON_LSA_ERROR(dwError);
@@ -204,6 +204,7 @@ AD_OfflineGetUserGroupObjectMembership(
     //
 
     dwError = AD_OfflineFindObjectsBySidList(
+                pContext->pState,
                 sParentSidsCount,
                 ppszParentSids,
                 &ppGroupObjects);
@@ -242,7 +243,7 @@ error:
 
 DWORD
 AD_OfflineEnumGroups(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxGroups,
     PDWORD  pdwGroupsFound,
@@ -254,7 +255,7 @@ AD_OfflineEnumGroups(
 
 DWORD
 AD_OfflineChangePassword(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszUserName,
     PCSTR pszPassword,
     PCSTR pszOldPassword
@@ -265,7 +266,7 @@ AD_OfflineChangePassword(
 
 DWORD
 AD_OfflineFindNSSArtefactByKey(
-    HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     PCSTR  pszKeyName,
     PCSTR  pszMapName,
     DWORD  dwInfoLevel,
@@ -280,7 +281,7 @@ AD_OfflineFindNSSArtefactByKey(
 
 DWORD
 AD_OfflineEnumNSSArtefacts(
-    HANDLE  hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     HANDLE  hResume,
     DWORD   dwMaxNSSArtefacts,
     PDWORD  pdwNSSArtefactsFound,
@@ -293,18 +294,20 @@ AD_OfflineEnumNSSArtefacts(
 DWORD
 AD_OfflineInitializeOperatingMode(
     OUT PAD_PROVIDER_DATA* ppProviderData,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomain,
     IN PCSTR pszHostName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PAD_PROVIDER_DATA pProviderData = NULL;
     PDLINKEDLIST pDomains = NULL;
     const DLINKEDLIST* pPos = NULL;
     const LSA_DM_ENUM_DOMAIN_INFO* pDomain = NULL;
 
     dwError = ADState_GetDomainTrustList(
-        gpLsaAdProviderState->hStateConnection,
+        pState->hStateConnection,
         &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -314,6 +317,7 @@ AD_OfflineInitializeOperatingMode(
         pDomain = (const LSA_DM_ENUM_DOMAIN_INFO*)pPos->pItem;
 
         dwError = LsaDmAddTrustedDomain(
+            pState->hDmState,
             pDomain->pszDnsDomainName,
             pDomain->pszNetbiosDomainName,
             pDomain->pSid,
@@ -337,7 +341,7 @@ AD_OfflineInitializeOperatingMode(
     }
 
     dwError = ADState_GetProviderData(
-                gpLsaAdProviderState->hStateConnection,
+                pState->hStateConnection,
                 &pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -363,7 +367,7 @@ error:
 static
 DWORD
 AD_OfflineFindObjectsByName(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -381,7 +385,9 @@ AD_OfflineFindObjectsByName(
     LSA_QUERY_TYPE type = LSA_QUERY_TYPE_UNDEFINED;
     PSTR pszDefaultPrefix = NULL;
 
-    dwError = AD_GetUserDomainPrefix(&pszDefaultPrefix);
+    dwError = AD_GetUserDomainPrefix(
+                  pContext->pState,
+                  &pszDefaultPrefix);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*ppObjects) * dwCount, OUT_PPVOID(&ppObjects));
@@ -427,26 +433,26 @@ AD_OfflineFindObjectsByName(
         {
         case LSA_OBJECT_TYPE_USER:
             dwError = ADCacheFindUserByName(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserNameInfo,
                 &pCachedUser);
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = ADCacheFindGroupByName(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserNameInfo,
                 &pCachedUser);
             break;
         default:
             dwError = ADCacheFindUserByName(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 pUserNameInfo,
                 &pCachedUser);
             if (dwError == LW_ERROR_NO_SUCH_USER  ||
                 dwError == LW_ERROR_NOT_HANDLED)
             {
                 dwError = ADCacheFindGroupByName(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pUserNameInfo,
                     &pCachedUser);
             }
@@ -466,7 +472,7 @@ AD_OfflineFindObjectsByName(
             dwError = LW_ERROR_SUCCESS;
             
             if (QueryType == LSA_QUERY_TYPE_BY_ALIAS &&
-                AD_ShouldAssumeDefaultDomain())
+                AD_ShouldAssumeDefaultDomain(pContext->pState))
             {
                 LW_SAFE_FREE_STRING(pszLoginId_copy);
                 LsaSrvFreeNameInfo(pUserNameInfo);
@@ -493,7 +499,7 @@ AD_OfflineFindObjectsByName(
                 if (ObjectType != LSA_OBJECT_TYPE_GROUP)
                 {
                     dwError = ADCacheFindUserByName(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pUserNameInfo,
                         &pCachedUser);
                 }
@@ -502,7 +508,7 @@ AD_OfflineFindObjectsByName(
                         dwError == LW_ERROR_NOT_HANDLED))
                 {
                     dwError = ADCacheFindGroupByName(
-                        gpLsaAdProviderState->hCacheConnection,
+                        pContext->pState->hCacheConnection,
                         pUserNameInfo,
                         &pCachedUser);
                 }
@@ -558,7 +564,7 @@ error:
 static
 DWORD
 AD_OfflineFindObjectsById(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -581,13 +587,13 @@ AD_OfflineFindObjectsById(
         {
         case LSA_OBJECT_TYPE_USER:
             dwError = ADCacheFindUserById(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 QueryList.pdwIds[dwIndex],
                 &pCachedUser);
             break;
         case LSA_OBJECT_TYPE_GROUP:
             dwError = ADCacheFindGroupById(
-                gpLsaAdProviderState->hCacheConnection,
+                pContext->pState->hCacheConnection,
                 QueryList.pdwIds[dwIndex],
                 &pCachedUser);
             break;
@@ -631,7 +637,7 @@ error:
 
 DWORD
 AD_OfflineFindObjects(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN OPTIONAL LSA_OBJECT_TYPE ObjectType,
     IN LSA_QUERY_TYPE QueryType,
@@ -649,7 +655,7 @@ AD_OfflineFindObjects(
     {
     case LSA_QUERY_TYPE_BY_SID:
         dwError = ADCacheFindObjectsBySidList(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     dwCount,
                     (PSTR*) QueryList.ppszStrings,
                     &ppObjects);
@@ -657,7 +663,7 @@ AD_OfflineFindObjects(
         break;
     case LSA_QUERY_TYPE_BY_DN:
         dwError = ADCacheFindObjectsByDNList(
-            gpLsaAdProviderState->hCacheConnection,
+            pContext->pState->hCacheConnection,
             dwCount,
             (PSTR*) QueryList.ppszStrings,
             &ppObjects);
@@ -667,7 +673,7 @@ AD_OfflineFindObjects(
     case LSA_QUERY_TYPE_BY_UPN:
     case LSA_QUERY_TYPE_BY_ALIAS:
         dwError = AD_OfflineFindObjectsByName(
-            hProvider,
+            pContext,
             FindFlags,
             ObjectType,
             QueryType,
@@ -678,7 +684,7 @@ AD_OfflineFindObjects(
         break;
     case LSA_QUERY_TYPE_BY_UNIX_ID:
         dwError = AD_OfflineFindObjectsById(
-            hProvider,
+            pContext,
             FindFlags,
             ObjectType,
             QueryType,
@@ -733,7 +739,7 @@ error:
 static
 DWORD
 AD_OfflineQueryMemberOfForSid(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
     IN OUT PLSA_HASH_TABLE pGroupHash
@@ -748,6 +754,7 @@ AD_OfflineQueryMemberOfForSid(
     DWORD dwIndex = 0;
 
     dwError = AD_OfflineFindObjectsBySidList(
+                  pContext->pState,
                   1,
                   &pszSid,
                   &ppUserObject);
@@ -760,9 +767,9 @@ AD_OfflineQueryMemberOfForSid(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADCacheGetGroupsForUser(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);
@@ -781,7 +788,7 @@ AD_OfflineQueryMemberOfForSid(
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = AD_OfflineQueryMemberOfForSid(
-                hProvider,
+                pContext,
                 FindFlags,
                 pszGroupSid,
                 pGroupHash);
@@ -817,7 +824,7 @@ AD_OfflineFreeMemberOfHashEntry(
 
 DWORD
 AD_OfflineQueryMemberOf(
-    IN HANDLE hProvider,
+    PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -845,7 +852,7 @@ AD_OfflineQueryMemberOf(
     for (dwIndex = 0; dwIndex < dwSidCount; dwIndex++)
     {
         dwError = AD_OfflineQueryMemberOfForSid(
-            hProvider,
+            pContext,
             FindFlags,
             ppszSids[dwIndex],
             pGroupHash);
@@ -892,7 +899,7 @@ error:
 
 DWORD
 AD_OfflineGetGroupMemberSids(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PCSTR pszSid,
     OUT PDWORD pdwSidCount,
@@ -908,9 +915,9 @@ AD_OfflineGetGroupMemberSids(
     DWORD dwIndex = 0;
 
     dwError = ADCacheGetGroupMembers(
-                    gpLsaAdProviderState->hCacheConnection,
+                    pContext->pState->hCacheConnection,
                     pszSid,
-                    AD_GetTrimUserMembershipEnabled(),
+                    AD_GetTrimUserMembershipEnabled(pContext->pState),
                     &sMembershipCount,
                     &ppMemberships);
     BAIL_ON_LSA_ERROR(dwError);

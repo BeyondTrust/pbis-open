@@ -50,6 +50,7 @@
 #include "batch_build.h"
 
 typedef DWORD (*LSA_AD_BATCH_BUILDER_GET_ATTR_VALUE_CALLBACK)(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN PVOID pCallbackContext,
     IN PVOID pItem,
     OUT PCSTR* ppszValue,
@@ -110,6 +111,7 @@ error:
 static
 DWORD
 LsaAdBatchBuilderCreateQuery(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN PCSTR pszQueryPrefix,
     IN PCSTR pszQuerySuffix,
     IN PCSTR pszAttributeName,
@@ -167,6 +169,7 @@ LsaAdBatchBuilderCreateQuery(
         }
 
         dwError = pGetAttributeValueCallback(
+                        pProviderData,
                         pCallbackContext,
                         pCurrentItem,
                         &pszAttributeValue,
@@ -235,6 +238,7 @@ LsaAdBatchBuilderCreateQuery(
         }
 
         dwError = pGetAttributeValueCallback(
+                        pProviderData,
                         pCallbackContext,
                         pCurrentItem,
                         &pszAttributeValue,
@@ -316,6 +320,7 @@ typedef struct _LSA_AD_BATCH_BUILDER_BATCH_ITEM_CONTEXT {
 static
 DWORD
 LsaAdBatchBuilderBatchItemGetAttributeValue(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN PVOID pCallbackContext,
     IN PVOID pItem,
     OUT PCSTR* ppszValue,
@@ -351,7 +356,7 @@ LsaAdBatchBuilderBatchItemGetAttributeValue(
         // that should go away in the future as we just keep an
         // unresolved batch items list.
 
-        LSA_ASSERT(!bIsForRealObject && (gpADProviderData->dwDirectoryMode == CELL_MODE));
+        LSA_ASSERT(!bIsForRealObject && (pProviderData->dwDirectoryMode == CELL_MODE));
         goto cleanup;
     }
 
@@ -539,6 +544,7 @@ LsaAdBatchBuilderBatchItemNextItem(
 static
 PCSTR
 LsaAdBatchBuilderGetPseudoQueryPrefixInternal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN OPTIONAL PDWORD pdwDirectoryMode,
     IN BOOLEAN bIsSchemaMode,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
@@ -548,7 +554,7 @@ LsaAdBatchBuilderGetPseudoQueryPrefixInternal(
 {
     PCSTR pszPrefix = NULL;
     DWORD dwDirectoryMode = (pdwDirectoryMode == NULL ?
-                             gpADProviderData->dwDirectoryMode :
+                             pProviderData->dwDirectoryMode :
                              *pdwDirectoryMode);
 
     if ((DEFAULT_MODE == dwDirectoryMode) && bIsSchemaMode)
@@ -908,6 +914,7 @@ error:
 
 DWORD
 LsaAdBatchBuildQueryForReal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN PLSA_LIST_LINKS pFirstLinks,
@@ -945,8 +952,8 @@ LsaAdBatchBuildQueryForReal(
 
     // In Default/schema case, filter out disabled users
     // when querying real objects.
-    if ((gpADProviderData->dwDirectoryMode == DEFAULT_MODE) &&
-        (gpADProviderData->adConfigurationMode == SchemaMode))
+    if ((pProviderData->dwDirectoryMode == DEFAULT_MODE) &&
+        (pProviderData->adConfigurationMode == SchemaMode))
     {
         pszPrefix = "(&(|(&(objectClass=user)(uidNumber=*))(objectClass=group))(!(objectClass=computer))";
     }
@@ -968,6 +975,7 @@ LsaAdBatchBuildQueryForReal(
     context.bIsForRealObject = TRUE;
 
     dwError = LsaAdBatchBuilderCreateQuery(
+                    pProviderData,
                     pszPrefix,
                     ")",
                     pszAttributeName,
@@ -1001,6 +1009,7 @@ error:
 static
 DWORD
 LsaAdBatchBuildQueryForPseudoInternal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN BOOLEAN bIsSchemaMode,
     IN OPTIONAL PDWORD pdwDirectoryMode,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
@@ -1035,6 +1044,7 @@ LsaAdBatchBuildQueryForPseudoInternal(
     }
 
     pszPrefix = LsaAdBatchBuilderGetPseudoQueryPrefixInternal(
+                        pProviderData,
                         pdwDirectoryMode,
                         bIsSchemaMode,
                         QueryType,
@@ -1052,6 +1062,7 @@ LsaAdBatchBuildQueryForPseudoInternal(
     context.bIsForRealObject = FALSE;
 
     dwError = LsaAdBatchBuilderCreateQuery(
+                    pProviderData,
                     pszPrefix,
                     pszSuffix,
                     pszAttributeName,
@@ -1084,6 +1095,7 @@ error:
 
 DWORD
 LsaAdBatchBuildQueryForPseudo(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN BOOLEAN bIsSchemaMode,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
@@ -1097,6 +1109,7 @@ LsaAdBatchBuildQueryForPseudo(
     )
 {
     return  LsaAdBatchBuildQueryForPseudoInternal(
+                    pProviderData,
                     bIsSchemaMode,
                     NULL,
                     QueryType,
@@ -1111,6 +1124,7 @@ LsaAdBatchBuildQueryForPseudo(
 
 DWORD
 LsaAdBatchBuildQueryForPseudoDefaultSchema(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN PLSA_LIST_LINKS pFirstLinks,
@@ -1125,6 +1139,7 @@ LsaAdBatchBuildQueryForPseudoDefaultSchema(
     DWORD dwDirectoryMode = DEFAULT_MODE;
 
     return LsaAdBatchBuildQueryForPseudoInternal(
+                    pProviderData,
                     TRUE,
                     &dwDirectoryMode,
                     QueryType,

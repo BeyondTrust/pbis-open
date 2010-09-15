@@ -51,6 +51,7 @@ typedef
 DWORD
 (*PFNOpenHandle)(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PLSA_DB_HANDLE phDb
     );
 typedef

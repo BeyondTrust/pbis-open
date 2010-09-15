@@ -52,14 +52,15 @@
 
 DWORD
 ADMarshalGetCanonicalName(
-    PLSA_SECURITY_OBJECT     pObject,
-    PSTR*                   ppszResult)
+    PLSA_AD_PROVIDER_STATE pState,
+    PLSA_SECURITY_OBJECT   pObject,
+    PSTR*                  ppszResult)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     PSTR    pszResult = NULL;
     PSTR pszDefaultPrefix = NULL;
 
-    dwError = AD_GetUserDomainPrefix(&pszDefaultPrefix);
+    dwError = AD_GetUserDomainPrefix(pState, &pszDefaultPrefix);
     BAIL_ON_LSA_ERROR(dwError);
 
     if(pObject->type == LSA_OBJECT_TYPE_GROUP &&
@@ -88,7 +89,7 @@ ADMarshalGetCanonicalName(
             ' ',
             LsaSrvSpaceReplacement());
     }
-    else if (AD_ShouldAssumeDefaultDomain() &&
+    else if (AD_ShouldAssumeDefaultDomain(pState) &&
         pObject->enabled &&
         !strcmp(pObject->pszNetbiosDomainName, pszDefaultPrefix))
     {

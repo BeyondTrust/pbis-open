@@ -62,6 +62,7 @@ static
 DWORD
 LsaAdBatchCreateDomainEntry(
     OUT PLSA_AD_BATCH_DOMAIN_ENTRY* ppEntry,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszQueryTerm
     );
@@ -91,6 +92,7 @@ LsaAdBatchDestroyBatchItem(
 static
 DWORD
 LsaAdBatchFindObjectsForDomainEntry(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN BOOLEAN bResolvePseudoObjects,
     IN OUT PLSA_AD_BATCH_DOMAIN_ENTRY pEntry
@@ -99,6 +101,7 @@ LsaAdBatchFindObjectsForDomainEntry(
 static
 DWORD
 LsaAdBatchFindObjectsForDomain(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
@@ -113,6 +116,7 @@ LsaAdBatchFindObjectsForDomain(
 static
 DWORD
 LsaAdBatchResolveRpcObjects(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
@@ -124,6 +128,7 @@ LsaAdBatchResolveRpcObjects(
 static
 DWORD
 LsaAdBatchResolveRealObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwTotalItemCount,
@@ -134,6 +139,7 @@ LsaAdBatchResolveRealObjects(
 static
 DWORD
 LsaAdBatchResolvePseudoObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszDnsDomainName,
     IN DWORD dwTotalItemCount,
@@ -145,6 +151,7 @@ LsaAdBatchResolvePseudoObjects(
 static
 DWORD
 LsaAdBatchResolvePseudoObjectsWithLinkedCells(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN DWORD dwTotalItemCount,
     // List of PLSA_AD_BATCH_ITEM
@@ -167,6 +174,7 @@ LsaAdBatchProcessRpcObject(
 static
 DWORD
 LsaAdBatchProcessRealObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
@@ -178,6 +186,7 @@ LsaAdBatchProcessRealObject(
 static
 DWORD
 LsaAdBatchProcessPseudoObject(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN OUT PLSA_LIST_LINKS pStartBatchItemListLinks,
@@ -221,6 +230,7 @@ LsaAdBatchConvertQTListToBIList(
 static
 DWORD
 LsaAdBatchSplitBIListToBIListPerDomain(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLSA_LIST_LINKS pBatchItemList,
     OUT PLSA_LIST_LINKS pDomainList
     );
@@ -228,6 +238,7 @@ LsaAdBatchSplitBIListToBIListPerDomain(
 static
 DWORD
 LsaAdBatchResolvePseudoObjectsInternalDefaultSchema(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN PCSTR pszDnsDomainName,
     // List of PLSA_AD_BATCH_ITEM
@@ -238,6 +249,7 @@ LsaAdBatchResolvePseudoObjectsInternalDefaultSchema(
 static
 DWORD
 LsaAdBatchResolvePseudoObjectsInternalDefaultOrCell(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN OPTIONAL PCSTR pszDnsDomainName,
     IN OPTIONAL PCSTR pszCellDn,

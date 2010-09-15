@@ -59,6 +59,7 @@ typedef UINT8 LSA_AD_BATCH_QUERY_TYPE, *PLSA_AD_BATCH_QUERY_TYPE;
 
 DWORD
 LsaAdBatchFindObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN DWORD dwQueryItemsCount,
     IN OPTIONAL PSTR* ppszQueryList,
@@ -69,6 +70,7 @@ LsaAdBatchFindObjects(
 
 DWORD
 LsaAdBatchFindSingleObject(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     IN OPTIONAL PCSTR pszQueryTerm,
     IN OPTIONAL PDWORD dwId,
@@ -77,6 +79,7 @@ LsaAdBatchFindSingleObject(
 
 DWORD
 LsaAdBatchEnumObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_OBJECT_TYPE AccountType,
     IN DWORD dwMaxObjectsCount,

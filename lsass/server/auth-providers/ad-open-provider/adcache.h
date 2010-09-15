@@ -48,10 +48,6 @@
 #ifndef __ADCACHE_H__
 #define __ADCACHE_H__
 
-struct _LSA_DB_CONNECTION;
-typedef struct _LSA_DB_CONNECTION *LSA_DB_HANDLE;
-typedef LSA_DB_HANDLE *PLSA_DB_HANDLE;
-
 // The bIsInLdap, bIsInPac, and bIsInPacOnly fields indicate where the
 // membership came from. Only the following combinations are valid:
 //
@@ -144,6 +140,7 @@ typedef struct __LSA_DB_PASSWORD_VERIFIER
 DWORD
 ADCacheOpen(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pState,
     PLSA_DB_HANDLE phDb
     );
 

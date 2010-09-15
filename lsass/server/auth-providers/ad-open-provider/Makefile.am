@@ -45,7 +45,6 @@ liblsass_auth_provider_ad_open_la_SOURCES = \
        provider-main.c           \
        providerstate.c           \
        lsadm.c                   \
-       lsadm_p.c                 \
        lsadmengine.c             \
        lsadmwrap.c               \
        media-sense.c             \

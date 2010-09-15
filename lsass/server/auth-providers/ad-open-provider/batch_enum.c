@@ -258,6 +258,7 @@ LsaAdBatchEnumGetQuery(
 static
 DWORD
 LsaAdBatchEnumProcessRealMessages(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN DWORD dwDirectoryMode,
@@ -271,6 +272,7 @@ LsaAdBatchEnumProcessRealMessages(
     )
 {
     DWORD dwError = 0;
+    PAD_PROVIDER_DATA pProviderData = pState->pProviderData;
     LDAPMessage* pCurrentMessage = NULL;
     LDAP* pLd = LwLdapGetSession(hDirectory);
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -286,6 +288,7 @@ LsaAdBatchEnumProcessRealMessages(
     while (pCurrentMessage)
     {
         dwError = LsaAdBatchGatherRealObjectInternal(
+                        pProviderData,
                         &batchItem,
                         &dwDirectoryMode,
                         &adMode,
@@ -302,6 +305,7 @@ LsaAdBatchEnumProcessRealMessages(
         if (!AdIsSpecialDomainSidPrefix(batchItem.pszSid))
         {
             dwError = LsaAdBatchMarshal(
+                            pState,
                             pszDnsDomainName,
                             pszNetbiosDomainName,
                             &batchItem,
@@ -338,6 +342,7 @@ error:
 static
 DWORD
 LsaAdBatchEnumProcessPseudoMessages(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
@@ -411,6 +416,7 @@ LsaAdBatchEnumProcessPseudoMessages(
     }
 
     dwError = LsaAdBatchFindObjects(
+                    pContext,
                     LSA_AD_BATCH_QUERY_TYPE_BY_SID,
                     dwSidsCount,
                     ppszSids,
@@ -444,6 +450,7 @@ error:
 static
 DWORD
 LsaAdBatchEnumProcessMessages(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDnsDomainName,
     IN PCSTR pszNetbiosDomainName,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
@@ -457,6 +464,7 @@ LsaAdBatchEnumProcessMessages(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     DWORD dwCount = 0;
     LDAP* pLd = LwLdapGetSession(hDirectory);
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -483,6 +491,7 @@ LsaAdBatchEnumProcessMessages(
         (UNPROVISIONED_MODE == dwDirectoryMode))
     {
         dwError = LsaAdBatchEnumProcessRealMessages(
+                        pState,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
                         dwDirectoryMode,
@@ -498,6 +507,7 @@ LsaAdBatchEnumProcessMessages(
     else
     {
         dwError = LsaAdBatchEnumProcessPseudoMessages(
+                        pContext,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
                         ObjectType,
@@ -530,6 +540,7 @@ error:
 static
 DWORD
 LsaAdBatchEnumObjectsInCell(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_DM_LDAP_CONNECTION pConn,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
@@ -543,6 +554,7 @@ LsaAdBatchEnumObjectsInCell(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     DWORD dwRemainingObjectsWanted = dwMaxObjectsCount;
     PSTR szBacklinkAttributeList[] =
     {
@@ -619,7 +631,8 @@ LsaAdBatchEnumObjectsInCell(
     pszQuery = LsaAdBatchEnumGetQuery(bIsByRealObject, bIsSchemaMode, ObjectType);
     LSA_ASSERT(pszQuery);
 
-    dwError = LsaDmWrapGetDomainName(pszDnsDomainName, NULL,
+    dwError = LsaDmWrapGetDomainName(pState->hDmState,
+                                     pszDnsDomainName, NULL,
                                      &pszNetbiosDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -638,6 +651,7 @@ LsaAdBatchEnumObjectsInCell(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaAdBatchEnumProcessMessages(
+                        pContext,
                         pszDnsDomainName,
                         pszNetbiosDomainName,
                         ObjectType,
@@ -696,6 +710,7 @@ error:
 static
 DWORD
 LsaAdBatchEnumObjectsInLinkedCells(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_AD_BATCH_OBJECT_TYPE ObjectType,
     IN DWORD dwMaxObjectsCount,
@@ -704,13 +719,14 @@ LsaAdBatchEnumObjectsInLinkedCells(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PLSA_SECURITY_OBJECT* ppObjectsInOneCell = NULL;
     DWORD dwObjectsCountInOneCell = 0;
     PLSA_SECURITY_OBJECT* ppObjects = *pppObjects;
     DWORD dwObjectsCount = *pdwObjectsCount;
     PAD_CELL_COOKIE_DATA pCookieData = NULL;
-    ADConfigurationMode adMode = gpADProviderData->adConfigurationMode;
-    BOOLEAN bIsDefaultCell = gpADProviderData->dwDirectoryMode == DEFAULT_MODE;
+    ADConfigurationMode adMode = pState->pProviderData->adConfigurationMode;
+    BOOLEAN bIsDefaultCell = pState->pProviderData->dwDirectoryMode == DEFAULT_MODE;
 
     LSA_ASSERT(pCookie->pfnFree == LsaAdBatchFreeCellCookie);
     pCookieData = (PAD_CELL_COOKIE_DATA)pCookie->pvData;
@@ -723,6 +739,7 @@ LsaAdBatchEnumObjectsInLinkedCells(
         if (pCookieData->pLdapConn == NULL)
         {
             dwError = LsaDmLdapOpenDc(
+                            pContext,
                             pCellInfo->pszDomain,
                             &pCookieData->pLdapConn);
             BAIL_ON_LSA_ERROR(dwError);
@@ -730,16 +747,19 @@ LsaAdBatchEnumObjectsInLinkedCells(
 
         // determine schema/non-schema mode in the current cell
         dwError = LsaAdBatchQueryCellConfigurationMode(
-                       gpADProviderData->szDomain,
+                       pContext,
+                       pState->pProviderData->szDomain,
                        pCellInfo->pszCellDN,
                        &adMode);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaAdBatchIsDefaultCell(pCellInfo->pszCellDN,
+        dwError = LsaAdBatchIsDefaultCell(pState->pProviderData,
+                                          pCellInfo->pszCellDN,
                                           &bIsDefaultCell);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaAdBatchEnumObjectsInCell(
+                        pContext,
                         pCookieData->pLdapConn,
                         &pCookieData->LdapCookie,
                         ObjectType,
@@ -795,6 +815,7 @@ error:
 // error.
 DWORD
 LsaAdBatchEnumObjects(
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN OUT PLW_SEARCH_COOKIE pCookie,
     IN LSA_OBJECT_TYPE AccountType,
     IN DWORD dwMaxObjectsCount,
@@ -803,6 +824,7 @@ LsaAdBatchEnumObjects(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     LSA_AD_BATCH_OBJECT_TYPE objectType = 0;
     DWORD dwObjectsCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -837,7 +859,7 @@ LsaAdBatchEnumObjects(
         BAIL_ON_LSA_ERROR(dwError);
 
         pCookieData = (PAD_CELL_COOKIE_DATA)pCookie->pvData;
-        if (gpADProviderData->pCellList != NULL)
+        if (pState->pProviderData->pCellList != NULL)
         {
             // There are linked cells, so we need to keep track of which
             // sids have been enumerated.
@@ -867,20 +889,22 @@ LsaAdBatchEnumObjects(
             if (pCookieData->pLdapConn == NULL)
             {
                 dwError = LsaDmLdapOpenDc(
-                                gpADProviderData->szDomain,
+                                pContext,
+                                pState->pProviderData->szDomain,
                                 &pCookieData->pLdapConn);
                 BAIL_ON_LSA_ERROR(dwError);
             }
 
             // First get the objects from the primary cell
             dwError = LsaAdBatchEnumObjectsInCell(
+                            pContext,
                             pCookieData->pLdapConn,
                             &pCookieData->LdapCookie,
                             objectType,
-                            gpADProviderData->dwDirectoryMode,
-                            gpADProviderData->adConfigurationMode,
-                            gpADProviderData->szDomain,
-                            gpADProviderData->cell.szCellDN,
+                            pState->pProviderData->dwDirectoryMode,
+                            pState->pProviderData->adConfigurationMode,
+                            pState->pProviderData->szDomain,
+                            pState->pProviderData->cell.szCellDN,
                             dwMaxObjectsCount - dwTotalObjectsCount,
                             &dwObjectsCount,
                             &ppObjects);
@@ -898,7 +922,7 @@ LsaAdBatchEnumObjects(
                 LwFreeCookieContents(&pCookieData->LdapCookie);
                 LsaDmLdapClose(pCookieData->pLdapConn);
                 pCookieData->pLdapConn = NULL;
-                pCookieData->pCurrentCell = gpADProviderData->pCellList;
+                pCookieData->pCurrentCell = pState->pProviderData->pCellList;
                 if (pCookieData->pCurrentCell == NULL)
                 {
                     pCookie->bSearchFinished = TRUE;
@@ -908,6 +932,7 @@ LsaAdBatchEnumObjects(
         else
         {
             dwError = LsaAdBatchEnumObjectsInLinkedCells(
+                         pContext,
                          pCookie,
                          objectType,
                          dwMaxObjectsCount - dwTotalObjectsCount,

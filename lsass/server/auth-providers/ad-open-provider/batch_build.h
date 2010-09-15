@@ -65,6 +65,7 @@ LsaAdBatchBuildQueryForRpc(
 
 DWORD
 LsaAdBatchBuildQueryForReal(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN PLSA_LIST_LINKS pFirstLinks,
@@ -78,6 +79,7 @@ LsaAdBatchBuildQueryForReal(
 
 DWORD
 LsaAdBatchBuildQueryForPseudo(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN BOOLEAN bIsSchemaMode,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
@@ -92,6 +94,7 @@ LsaAdBatchBuildQueryForPseudo(
 
 DWORD
 LsaAdBatchBuildQueryForPseudoDefaultSchema(
+    IN PAD_PROVIDER_DATA pProviderData,
     IN LSA_AD_BATCH_QUERY_TYPE QueryType,
     // List of PLSA_AD_BATCH_ITEM
     IN PLSA_LIST_LINKS pFirstLinks,

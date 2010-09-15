@@ -53,11 +53,13 @@
 
 DWORD
 LsaDmEngineDiscoverTrusts(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName
     );
 
 DWORD
 LsaDmEngineGetDomainNameWithDiscovery(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszDomainName,
     OUT OPTIONAL PSTR* ppszDnsDomainName,
@@ -66,6 +68,7 @@ LsaDmEngineGetDomainNameWithDiscovery(
 
 DWORD
 LsaDmEngineGetDomainNameAndSidByObjectSidWithDiscovery(
+    IN LSA_DM_STATE_HANDLE hDmState,
     IN PCSTR pszDnsPrimaryDomainName,
     IN PCSTR pszObjectSid,
     OUT OPTIONAL PSTR* ppszDnsDomainName,

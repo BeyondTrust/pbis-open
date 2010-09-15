@@ -1558,7 +1558,7 @@ error:
 
 DWORD
 ADLdap_GetGroupMembers(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PCSTR pszDomainName,
     IN PCSTR pszSid,
     OUT size_t* psCount,
@@ -1575,7 +1575,7 @@ ADLdap_GetGroupMembers(
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
 
     dwError = AD_FindObjectBySid(
-                    hProvider,
+                    pContext,
                     pszSid,
                     &pGroupObj);
     BAIL_ON_LSA_ERROR(dwError);
@@ -1587,12 +1587,16 @@ ADLdap_GetGroupMembers(
     }
 
     dwError = LsaDmWrapGetDomainName(
+                  pContext->pState->hDmState,
                   pszDomainName,
                   &pszDnsDomainName,
                   NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmLdapOpenDc(pszDnsDomainName, &pConn);
+    dwError = LsaDmLdapOpenDc(
+                  pContext,
+                  pszDnsDomainName,
+                  &pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADLdap_GetAttributeValuesList(
@@ -1606,7 +1610,7 @@ ADLdap_GetGroupMembers(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_FindObjectsBySidList(
-                 hProvider,
+                 pContext,
                  dwSidCount,
                  ppszLDAPValues,
                  &sFoundCount,
@@ -1637,7 +1641,7 @@ error:
 
 DWORD
 ADLdap_GetObjectGroupMembership(
-    IN HANDLE hProvider,
+    IN PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pObject,
     OUT int* piPrimaryGroupIndex,
     OUT size_t* psNumGroupsFound,
@@ -1667,7 +1671,10 @@ ADLdap_GetObjectGroupMembership(
                  &pszFullDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDmLdapOpenDc(pszFullDomainName, &pConn);
+    dwError = LsaDmLdapOpenDc(
+                  pContext,
+                  pszFullDomainName,
+                  &pConn);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADLdap_GetAttributeValuesList(
@@ -1701,7 +1708,7 @@ ADLdap_GetObjectGroupMembership(
     }
     
     dwError = AD_FindObjectsBySidList(
-        hProvider,
+        pContext,
         dwSidCount,
         ppszLDAPValues,
         &sNumGroupsFound,

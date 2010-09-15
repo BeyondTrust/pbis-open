@@ -55,47 +55,24 @@
 // Global Module State Type
 //
 
-typedef struct _AD_MACHINE_PASSWORD_SYNC_STATE {
+typedef struct _LSA_MACHINEPWD_STATE {
     BOOLEAN bThreadShutdown;
     DWORD dwThreadWaitSecs;
     pthread_t Thread;
-    pthread_mutex_t ThreadLock;
-    pthread_cond_t ThreadCondition;
     pthread_t* pThread;
+    pthread_mutex_t ThreadLock;
+    pthread_mutex_t *pThreadLock;
+    pthread_cond_t ThreadCondition;
+    pthread_cond_t *pThreadCondition;
     HANDLE hPasswordStore;
     DWORD dwTgtExpiry;
     DWORD dwTgtExpiryGraceSeconds;
-} AD_MACHINE_PASSWORD_SYNC_STATE, *PAD_MACHINE_PASSWORD_SYNC_STATE;
-
-//
-// Global Module State Variable
-//
-
-//
-// ISSUE-2009/07/24-dalmeida -- Make the global state be
-// dynamically initialized rather than be statically
-// initialized as a global so we can easily restart.
-//
-
-static AD_MACHINE_PASSWORD_SYNC_STATE gAdMachinePasswordSyncState = {
-    .bThreadShutdown = FALSE,
-    .dwThreadWaitSecs = DEFAULT_THREAD_WAITSECS,
-    .ThreadLock = PTHREAD_MUTEX_INITIALIZER,
-    .ThreadCondition = PTHREAD_COND_INITIALIZER,
-    .pThread = NULL,
-    .hPasswordStore = NULL,
-    .dwTgtExpiry = 0,
-    .dwTgtExpiryGraceSeconds = 2 * DEFAULT_THREAD_WAITSECS,
-};
-
-//
-// Static Function Prototypes
-//
+} LSA_MACHINEPWD_STATE, *PLSA_MACHINEPWD_STATE;
 
 static
 BOOLEAN
 ADShouldRefreshMachineTGT(
-    VOID
+    IN PLSA_MACHINEPWD_STATE pMachinePwdState
     );
 
 static
@@ -131,6 +108,7 @@ ADLogMachineTGTRefreshFailureEvent(
 static
 VOID
 ADSetMachineTGTExpiryInternal(
+    PLSA_MACHINEPWD_STATE pMachinePwdState,
     DWORD dwGoodUntil,
     DWORD dwThreadWaitSecs
     );
@@ -141,39 +119,64 @@ ADSetMachineTGTExpiryInternal(
 
 DWORD
 ADInitMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwError = 0;
-    
+    PLSA_MACHINEPWD_STATE pMachinePwdState = NULL;
+
+    dwError = LwAllocateMemory(
+                  sizeof(*pMachinePwdState),
+                  (PVOID*)&pMachinePwdState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pMachinePwdState->bThreadShutdown = FALSE;
+    pMachinePwdState->dwThreadWaitSecs = DEFAULT_THREAD_WAITSECS;
+    pMachinePwdState->dwTgtExpiryGraceSeconds = 2 * DEFAULT_THREAD_WAITSECS;
+
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(&pMachinePwdState->ThreadLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pMachinePwdState->pThreadLock = &pMachinePwdState->ThreadLock;
+
+    dwError = LwMapErrnoToLwError(pthread_cond_init(&pMachinePwdState->ThreadCondition, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pMachinePwdState->pThreadCondition = &pMachinePwdState->ThreadCondition;
+
     dwError = LwpsOpenPasswordStore(
                     LWPS_PASSWORD_STORE_DEFAULT,
-                    &gAdMachinePasswordSyncState.hPasswordStore);
+                    &pMachinePwdState->hPasswordStore);
     BAIL_ON_LSA_ERROR(dwError);
+
+    pState->hMachinePwdState = pMachinePwdState;
     
 cleanup:
 
     return dwError;
 
 error:
+
+    ADShutdownMachinePasswordSync(pState);
 
     goto cleanup;
 }
 
 DWORD
 ADStartMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwError = 0;
+    PLSA_MACHINEPWD_STATE pMachinePwdState = pState->hMachinePwdState;
 
-    dwError = pthread_create(&gAdMachinePasswordSyncState.Thread,
+    dwError = pthread_create(&pMachinePwdState->Thread,
                              NULL,
                              ADSyncMachinePasswordThreadRoutine,
-                             NULL);
+                             pState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    gAdMachinePasswordSyncState.pThread = &gAdMachinePasswordSyncState.Thread;
+    pMachinePwdState->pThread = &pMachinePwdState->Thread;
 
 cleanup:
 
@@ -181,7 +184,7 @@ cleanup:
 
 error:
 
-    gAdMachinePasswordSyncState.pThread = NULL;
+    pMachinePwdState->pThread = NULL;
 
     goto cleanup;
 }
@@ -189,7 +192,7 @@ error:
 static
 DWORD
 ADChangeMachinePasswordInThreadLock(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     DWORD dwError = 0;
@@ -208,7 +211,7 @@ ADChangeMachinePasswordInThreadLock(
     {
         LSA_LOG_ERROR("Error: Failed to change machine password (error = %u)", dwError);
 
-        if (AD_EventlogEnabled())
+        if (AD_EventlogEnabled(pState))
         {
             ADLogMachinePWUpdateFailureEvent(dwError);
         }
@@ -216,7 +219,7 @@ ADChangeMachinePasswordInThreadLock(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (AD_EventlogEnabled())
+    if (AD_EventlogEnabled(pState))
     {
         ADLogMachinePWUpdateSuccessEvent();
     }
@@ -237,6 +240,8 @@ ADSyncMachinePasswordThreadRoutine(
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = (PLSA_AD_PROVIDER_STATE)pData;
+    PLSA_MACHINEPWD_STATE pMachinePwdState = (PLSA_MACHINEPWD_STATE)pState->hMachinePwdState;
     DWORD dwPasswordSyncLifetime = 0;
     struct timespec timeout = {0, 0};
     PLWPS_PASSWORD_INFO pAcctInfo = NULL;    
@@ -246,7 +251,7 @@ ADSyncMachinePasswordThreadRoutine(
 
     LSA_LOG_INFO("Machine Password Sync Thread starting");
 
-    pthread_mutex_lock(&gAdMachinePasswordSyncState.ThreadLock);
+    pthread_mutex_lock(pMachinePwdState->pThreadLock);
 
     for (;;)
     {
@@ -254,7 +259,7 @@ ADSyncMachinePasswordThreadRoutine(
         DWORD dwCurrentPasswordAge = 0;
         BOOLEAN bRefreshTGT = FALSE;
 
-        if (gAdMachinePasswordSyncState.bThreadShutdown)
+        if (pMachinePwdState->bThreadShutdown)
         {
            break;
         }
@@ -268,15 +273,15 @@ ADSyncMachinePasswordThreadRoutine(
             goto lsa_wait_resync;
         }
 
-        if (!gpADProviderData)
+        if (!pState->pProviderData)
         {
             dwError = 0;
             goto lsa_wait_resync;
         }
-        ADSyncTimeToDC(gpADProviderData->szDomain);
+        ADSyncTimeToDC(pState, pState->pProviderData->szDomain);
         
         dwError = LwpsGetPasswordByHostName(
-                        gAdMachinePasswordSyncState.hPasswordStore,
+                        pMachinePwdState->hPasswordStore,
                         pszHostname,
                         &pAcctInfo);
         if (dwError)
@@ -291,10 +296,10 @@ ADSyncMachinePasswordThreadRoutine(
                               time(NULL),
                               pAcctInfo->last_change_time);
 
-        dwPasswordSyncLifetime = AD_GetMachinePasswordSyncPwdLifetime();
+        dwPasswordSyncLifetime = AD_GetMachinePasswordSyncPwdLifetime(pState);
         dwReapingAge = dwPasswordSyncLifetime / 2;
 
-        dwError = AD_MachineCredentialsCacheInitialize();
+        dwError = AD_MachineCredentialsCacheInitialize(pState);
         if (dwError)
         {
             LSA_LOG_DEBUG("Failed to initialize credentials cache (error = %u)", dwError);
@@ -304,7 +309,7 @@ ADSyncMachinePasswordThreadRoutine(
 
         if ((dwReapingAge > 0) && (dwCurrentPasswordAge >= dwReapingAge))
         {
-            dwError = ADChangeMachinePasswordInThreadLock();
+            dwError = ADChangeMachinePasswordInThreadLock(pState);
             if (dwError)
             {
                 dwError = 0;
@@ -317,7 +322,7 @@ ADSyncMachinePasswordThreadRoutine(
 
         if (!bRefreshTGT)
         {
-            bRefreshTGT = ADShouldRefreshMachineTGT();
+            bRefreshTGT = ADShouldRefreshMachineTGT(pMachinePwdState);
         }
 
         if (bRefreshTGT)
@@ -325,7 +330,7 @@ ADSyncMachinePasswordThreadRoutine(
             dwError = LwKrb5RefreshMachineTGT(&dwGoodUntilTime);
             if (dwError)
             {
-                if (AD_EventlogEnabled())
+                if (AD_EventlogEnabled(pState))
                 {
                     ADLogMachineTGTRefreshFailureEvent(dwError);
                 }
@@ -339,19 +344,22 @@ ADSyncMachinePasswordThreadRoutine(
                     dwError = LwWc16sToMbs(pAcctInfo->pwszDnsDomainName, &pszDnsDomainName);
                     BAIL_ON_LSA_ERROR(dwError);
 
-                    LsaDmTransitionOffline(pszDnsDomainName, FALSE);
+                    LsaDmTransitionOffline(
+                        pState->hDmState,
+                        pszDnsDomainName,
+                        FALSE);
                 }
 
-                ADSetMachineTGTExpiryError();
+                ADSetMachineTGTExpiryError(pMachinePwdState);
                 dwError = 0;
                 goto lsa_wait_resync;
             }
 
-            ADSetMachineTGTExpiry(dwGoodUntilTime);
+            ADSetMachineTGTExpiry(pMachinePwdState, dwGoodUntilTime);
 
             LSA_LOG_VERBOSE("Machine TGT was refreshed successfully");
 
-            if (AD_EventlogEnabled())
+            if (AD_EventlogEnabled(pState))
             {
                 ADLogMachineTGTRefreshSuccessEvent();
             }
@@ -361,22 +369,22 @@ lsa_wait_resync:
 
         if (pAcctInfo)
         {
-            LwpsFreePasswordInfo(gAdMachinePasswordSyncState.hPasswordStore, pAcctInfo);
+            LwpsFreePasswordInfo(pMachinePwdState->hPasswordStore, pAcctInfo);
             pAcctInfo = NULL;
         }
 
         LW_SAFE_FREE_STRING(pszHostname);
 
-        timeout.tv_sec = time(NULL) + gAdMachinePasswordSyncState.dwThreadWaitSecs;
+        timeout.tv_sec = time(NULL) + pMachinePwdState->dwThreadWaitSecs;
         timeout.tv_nsec = 0;
 
 retry_wait:
 
-        dwError = pthread_cond_timedwait(&gAdMachinePasswordSyncState.ThreadCondition,
-                                         &gAdMachinePasswordSyncState.ThreadLock,
+        dwError = pthread_cond_timedwait(pMachinePwdState->pThreadCondition,
+                                         pMachinePwdState->pThreadLock,
                                          &timeout);
 
-        if (gAdMachinePasswordSyncState.bThreadShutdown)
+        if (pMachinePwdState->bThreadShutdown)
         {
            break;
         }
@@ -397,13 +405,13 @@ cleanup:
 
     if (pAcctInfo)
     {
-        LwpsFreePasswordInfo(gAdMachinePasswordSyncState.hPasswordStore, pAcctInfo);
+        LwpsFreePasswordInfo(pMachinePwdState->hPasswordStore, pAcctInfo);
     }
 
     LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszDnsDomainName);
 
-    pthread_mutex_unlock(&gAdMachinePasswordSyncState.ThreadLock);
+    pthread_mutex_unlock(pMachinePwdState->pThreadLock);
     
     LSA_LOG_INFO("Machine Password Sync Thread stopping");
 
@@ -418,6 +426,7 @@ error:
 
 VOID
 ADSyncTimeToDC(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszDomainFQDN
     )
 {
@@ -425,14 +434,14 @@ ADSyncTimeToDC(
     LWNET_UNIX_TIME_T dcTime = 0;
     time_t ttDcTime = 0;
 
-    if ( !AD_ShouldSyncSystemTime() )
+    if ( !AD_ShouldSyncSystemTime(pState) )
     {
         goto cleanup;
     }
 
     BAIL_ON_INVALID_STRING(pszDomainFQDN);
 
-    if (LsaDmIsDomainOffline(pszDomainFQDN))
+    if (LsaDmIsDomainOffline(pState->hDmState, pszDomainFQDN))
     {
         goto cleanup;
     }
@@ -444,7 +453,7 @@ ADSyncTimeToDC(
     
     ttDcTime = (time_t) dcTime;
     
-    if (labs(ttDcTime - time(NULL)) > AD_GetClockDriftSeconds()) {
+    if (labs(ttDcTime - time(NULL)) > AD_GetClockDriftSeconds(pState)) {
         dwError = LsaSetSystemTime(ttDcTime);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -462,32 +471,46 @@ error:
 
 VOID
 ADShutdownMachinePasswordSync(
-    VOID
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
-    if (gAdMachinePasswordSyncState.pThread)
+    PLSA_MACHINEPWD_STATE pMachinePwdState = pState->hMachinePwdState;
+
+    if (pMachinePwdState->pThread)
     {   
-        pthread_mutex_lock(&gAdMachinePasswordSyncState.ThreadLock);
-        gAdMachinePasswordSyncState.bThreadShutdown = TRUE;
-        pthread_cond_signal(&gAdMachinePasswordSyncState.ThreadCondition);
-        pthread_mutex_unlock(&gAdMachinePasswordSyncState.ThreadLock);
+        pthread_mutex_lock(pMachinePwdState->pThreadLock);
+        pMachinePwdState->bThreadShutdown = TRUE;
+        pthread_cond_signal(pMachinePwdState->pThreadCondition);
+        pthread_mutex_unlock(pMachinePwdState->pThreadLock);
 
-        pthread_join(gAdMachinePasswordSyncState.Thread, NULL);
-        gAdMachinePasswordSyncState.pThread = NULL;
-        gAdMachinePasswordSyncState.bThreadShutdown = FALSE;
+        pthread_join(pMachinePwdState->Thread, NULL);
+        pMachinePwdState->pThread = NULL;
+        pMachinePwdState->bThreadShutdown = FALSE;
     }
 
-    if (gAdMachinePasswordSyncState.hPasswordStore)
+    if (pMachinePwdState->pThreadCondition)
     {
-        LwpsClosePasswordStore(gAdMachinePasswordSyncState.hPasswordStore);
-        gAdMachinePasswordSyncState.hPasswordStore = NULL;
+        pthread_cond_destroy(pMachinePwdState->pThreadCondition);
     }
+
+    if (pMachinePwdState->pThreadLock)
+    {
+        pthread_mutex_destroy(pMachinePwdState->pThreadLock);
+    }
+
+    if (pMachinePwdState->hPasswordStore)
+    {
+        LwpsClosePasswordStore(pMachinePwdState->hPasswordStore);
+        pMachinePwdState->hPasswordStore = NULL;
+    }
+
+    LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);
 }
 
 static
 BOOLEAN
 ADShouldRefreshMachineTGT(
-    VOID
+    IN PLSA_MACHINEPWD_STATE pMachinePwdState
     )
 {
     BOOLEAN bRefresh = FALSE;
@@ -495,8 +518,8 @@ ADShouldRefreshMachineTGT(
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
-    if (!gAdMachinePasswordSyncState.dwTgtExpiry ||
-        (difftime(gAdMachinePasswordSyncState.dwTgtExpiry, time(NULL)) <= gAdMachinePasswordSyncState.dwTgtExpiryGraceSeconds))
+    if (!pMachinePwdState->dwTgtExpiry ||
+        (difftime(pMachinePwdState->dwTgtExpiry, time(NULL)) <= pMachinePwdState->dwTgtExpiryGraceSeconds))
     {
         bRefresh = TRUE;
     }
@@ -508,23 +531,31 @@ ADShouldRefreshMachineTGT(
 
 VOID
 ADSetMachineTGTExpiry(
-    DWORD dwGoodUntil
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState,
+    IN DWORD dwGoodUntil
     )
 {
-    ADSetMachineTGTExpiryInternal(dwGoodUntil, DEFAULT_THREAD_WAITSECS);
+    ADSetMachineTGTExpiryInternal(
+        hMachinePwdState,
+        dwGoodUntil,
+        DEFAULT_THREAD_WAITSECS);
 }
 
 VOID
 ADSetMachineTGTExpiryError(
-    VOID
+    IN LSA_MACHINEPWD_STATE_HANDLE hMachinePwdState
     )
 {
-    ADSetMachineTGTExpiryInternal(0, ERROR_THREAD_WAITSECS);
+    ADSetMachineTGTExpiryInternal(
+        hMachinePwdState,
+        0,
+        ERROR_THREAD_WAITSECS);
 }
 
 static
 VOID
 ADSetMachineTGTExpiryInternal(
+    PLSA_MACHINEPWD_STATE pMachinePwdState,
     DWORD dwGoodUntil,
     DWORD dwThreadWaitSecs
     )
@@ -536,23 +567,23 @@ ADSetMachineTGTExpiryInternal(
 
     if (dwGoodUntil)
     {
-        gAdMachinePasswordSyncState.dwTgtExpiry = dwGoodUntil;
+        pMachinePwdState->dwTgtExpiry = dwGoodUntil;
 
         lifetime = difftime(
-                       gAdMachinePasswordSyncState.dwTgtExpiry,
+                       pMachinePwdState->dwTgtExpiry,
                        time(NULL));
 
-        gAdMachinePasswordSyncState.dwTgtExpiryGraceSeconds = 
+        pMachinePwdState->dwTgtExpiryGraceSeconds = 
             LW_MAX(lifetime / 2, 2 * DEFAULT_THREAD_WAITSECS);
     }
 
     if (dwThreadWaitSecs)
     {
-        gAdMachinePasswordSyncState.dwThreadWaitSecs = dwThreadWaitSecs;
+        pMachinePwdState->dwThreadWaitSecs = dwThreadWaitSecs;
     }
     else
     {
-        gAdMachinePasswordSyncState.dwThreadWaitSecs = DEFAULT_THREAD_WAITSECS;
+        pMachinePwdState->dwThreadWaitSecs = DEFAULT_THREAD_WAITSECS;
     }
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);

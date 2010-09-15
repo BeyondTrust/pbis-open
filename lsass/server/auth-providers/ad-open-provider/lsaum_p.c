@@ -125,6 +125,9 @@ typedef struct _LSA_UM_KSCHEDULES {
 /// Keeps track of all domain state.
 ///
 typedef struct _LSA_UM_STATE {
+    /// Provider state.
+    PLSA_AD_PROVIDER_STATE pProviderState;
+
     /// Linked list of users.
     PLSA_UM_USER_REFRESH_LIST UserList;
 
@@ -207,6 +210,7 @@ static
 DWORD
 LsaUmpRefreshUserCreds(
     LSA_UM_STATE_HANDLE       Handle,
+    PAD_PROVIDER_CONTEXT      pContext,
     PLSA_UM_USER_REFRESH_ITEM pItem
     );
 
@@ -405,6 +409,7 @@ LsaUmpStateDestroy(
 
 DWORD
 LsaUmpStateCreate(
+    IN PLSA_AD_PROVIDER_STATE pProviderState,
     OUT PLSA_UM_STATE_HANDLE pHandle
     )
 ///<
@@ -427,6 +432,8 @@ LsaUmpStateCreate(
                   sizeof(*pState),
                   (PVOID*)&pState);
     BAIL_ON_LSA_ERROR(dwError);
+
+    pState->pProviderState = pProviderState;
 
     pState->dwCheckUsersSeconds = LSA_UM_THREAD_MIN_PERIOD;
 
@@ -642,6 +649,7 @@ LsaUmpCheckUsers(
     PLSA_UM_USER_REFRESH_ITEM pItem = NULL;
     PLSA_UM_USER_REFRESH_ITEM pNextItem = NULL;
     DWORD                     dwTime = 0;
+    PAD_PROVIDER_CONTEXT      pProviderContext = NULL;
 
     LSA_LOG_VERBOSE("Lsa User Manager - checking user credentials refresh list");
 
@@ -692,14 +700,27 @@ LsaUmpCheckUsers(
         }
     }
 
-    ADSyncTimeToDC(gpADProviderData->szDomain);
+    ADSyncTimeToDC(Handle->pProviderState, Handle->pProviderState->pProviderData->szDomain);
 
-    bDomainIsOffline = LsaDmIsDomainOffline(gpADProviderData->szDomain);
-    bShouldRefreshCreds = AD_ShouldRefreshUserCreds();
+    bDomainIsOffline = LsaDmIsDomainOffline(Handle->pProviderState->hDmState, Handle->pProviderState->pProviderData->szDomain);
+    bShouldRefreshCreds = AD_ShouldRefreshUserCreds(Handle->pProviderState);
 
     if ( bDomainIsOffline )
     {
         LSA_LOG_DEBUG("LSA User Manager - domain is offline");
+    }
+
+    if (bShouldRefreshCreds)
+    {
+        dwError = AD_CreateProviderContext(&pProviderContext);
+        if (dwError)
+        {
+            bShouldRefreshCreds = FALSE;
+        }
+        else
+        {
+            pProviderContext->pState = Handle->pProviderState;
+        }
     }
 
     if ( pUserList )
@@ -737,12 +758,14 @@ LsaUmpCheckUsers(
                 // ignore errors because we want to process all users
                 LsaUmpRefreshUserCreds(
                     Handle,
+                    pProviderContext,
                     pItem);
             }
         }
     }
 
     LsaUmpFreeRequestList(pRequestList);
+    AD_DereferenceProviderContext(pProviderContext);
 
     return dwError;
 }
@@ -1488,6 +1511,7 @@ static
 DWORD
 LsaUmpRefreshUserCreds(
     LSA_UM_STATE_HANDLE       Handle,
+    PAD_PROVIDER_CONTEXT      pProviderContext,
     PLSA_UM_USER_REFRESH_ITEM pUserItem
     )
 {
@@ -1523,7 +1547,7 @@ LsaUmpRefreshUserCreds(
         NULL);
 
     dwError = AD_OnlineCheckUserPassword(
-                    (HANDLE)NULL,
+                    pProviderContext,
                     pUserInfo,
                     pszPassword,
                     &pUserItem->dwTgtEndTime);
@@ -1535,7 +1559,7 @@ LsaUmpRefreshUserCreds(
     // post-processing fails.
     pUserItem->dwFailedCount = 0;
 
-    if (AD_EventlogEnabled())
+    if (AD_EventlogEnabled(Handle->pProviderState))
     {
         LsaUmpLogUserTGTRefreshSuccessEvent(pUserInfo->userInfo.pszUPN,
                                             pUserItem->uUid,
@@ -1556,7 +1580,7 @@ error:
     {
         pUserItem->dwFailedCount++;
 
-        if (AD_EventlogEnabled())
+        if (AD_EventlogEnabled(Handle->pProviderState))
         {
             LsaUmpLogUserTGTRefreshFailureEvent(pUserInfo->userInfo.pszUPN,
                                                 pUserItem->uUid,

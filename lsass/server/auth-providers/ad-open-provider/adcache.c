@@ -48,6 +48,7 @@
 DWORD
 ADCacheOpen(
     IN PCSTR pszDbPath,
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT PLSA_DB_HANDLE phDb
     )
 {
@@ -55,6 +56,7 @@ ADCacheOpen(
 
     dwError = (*gpCacheProvider->pfnOpenHandle)(
                         pszDbPath,
+                        pState,
                         phDb
                         );
     return dwError;

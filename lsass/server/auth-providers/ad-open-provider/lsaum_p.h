@@ -61,6 +61,7 @@ LsaUmpStateDestroy(
 
 DWORD
 LsaUmpStateCreate(
+    IN PLSA_AD_PROVIDER_STATE pProviderState,
     OUT PLSA_UM_STATE_HANDLE pHandle
     );
 
