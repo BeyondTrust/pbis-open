@@ -245,9 +245,9 @@ get_rpm_arch()
 
 package_file_exists_aix_bff()
 {
-    pkgFile=${PKGDIR}/$1_*.bff
+    pkgFile=${PKGDIR}/$1-*.bff
     if [ -f $pkgFile ]; then
-        echo $pkgFile
+        echo "I:$1"
         return 0
     fi
     return $ERR_PACKAGE_FILE_NOT_FOUND
@@ -263,16 +263,16 @@ is_package_installed_aix_bff()
     return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-install_package_aix_bff()
+package_install_aix_bff()
 {
-    geninstall -I"aX" -d "${PKGDIR}" $@
+    geninstall -I "aX" -d "${PKGDIR}" $@
     if [ $? -eq 0 ]; then
         return 0
     fi
     return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-uninstall_package_aix_bff()
+package_uninstall_aix_bff()
 {
     geninstall -u $@
     if [ $? -eq 0 ]; then
