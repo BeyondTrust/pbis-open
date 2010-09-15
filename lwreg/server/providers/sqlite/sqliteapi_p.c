@@ -121,15 +121,29 @@ error:
 
 NTSTATUS
 SqliteCreateKeyHandle(
-    IN ACCESS_MASK AccessGranted,
+    IN PACCESS_TOKEN pToken,
+    IN ACCESS_MASK AccessDesired,
     IN PREG_KEY_CONTEXT pKey,
     OUT PREG_KEY_HANDLE* ppKeyHandle
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
     PREG_KEY_HANDLE pKeyHandle = NULL;
+    ACCESS_MASK AccessGranted = 0;
 
     BAIL_ON_INVALID_KEY_CONTEXT(pKey);
+
+    status = RegSrvAccessCheckKey(pToken,
+                                  pKey->pSecurityDescriptor,
+                                  pKey->ulSecDescLength,
+                                  AccessDesired,
+                                  &AccessGranted);
+    if (STATUS_NO_TOKEN == status)
+    {
+        status = 0;
+        AccessGranted = 0;
+    }
+    BAIL_ON_NT_STATUS(status);
 
     status = LW_RTL_ALLOCATE((PVOID*)&pKeyHandle, REG_KEY_HANDLE, sizeof(*pKeyHandle));
     BAIL_ON_NT_STATUS(status);
@@ -150,7 +164,6 @@ error:
 
 NTSTATUS
 SqliteCreateKeyContext(
-    IN ACCESS_MASK AccessGranted,
     IN PREG_DB_KEY pRegEntry,
     OUT PREG_KEY_CONTEXT* ppKeyResult
     )
@@ -222,7 +235,6 @@ SqliteCreateKeyInternal(
     PREG_KEY_CONTEXT pKeyCtx = NULL;
     BOOLEAN bInLock = FALSE;
     PREG_SRV_API_STATE pServerState = (PREG_SRV_API_STATE)handle;
-    ACCESS_MASK AccessGranted = 0;
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRelToSet = NULL;
     ULONG ulSecDescLengthToSet = 0;
     DWORD dwDisposition = 0;
@@ -307,14 +319,17 @@ SqliteCreateKeyInternal(
 	    SqliteCacheResetParentKeySubKeyInfo_inlock(pParentKeyCtx->pwszKeyName);
 	}
 
-	status = SqliteCreateKeyContext(AccessDesired, pRegEntry, &pKeyCtx);
+	status = SqliteCreateKeyContext(pRegEntry, &pKeyCtx);
 	BAIL_ON_NT_STATUS(status);
 
 	// Cache this new key in gActiveKeyList
 	status = SqliteCacheInsertActiveKey_inlock(pKeyCtx);
 	BAIL_ON_NT_STATUS(status);
 
-	status = SqliteCreateKeyHandle(AccessGranted, pKeyCtx, &pKeyHandle);
+	status = SqliteCreateKeyHandle(pServerState ? pServerState->pToken : NULL,
+	                               AccessDesired,
+	                               pKeyCtx,
+	                               &pKeyHandle);
 	BAIL_ON_NT_STATUS(status);
 	pKeyCtx = NULL;
 
@@ -414,7 +429,6 @@ SqliteOpenKeyInternal_inlock(
     PREG_DB_KEY pRegEntry = NULL;
     PREG_KEY_HANDLE pKeyHandle = NULL;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
-    ACCESS_MASK AccessGranted = AccessDesired;
 
     BAIL_ON_NT_INVALID_STRING(pwszFullKeyName);
 
@@ -424,7 +438,7 @@ SqliteOpenKeyInternal_inlock(
         status = RegDbOpenKey(ghCacheConnection, pwszFullKeyName, &pRegEntry);
         BAIL_ON_NT_STATUS(status);
 
-        status = SqliteCreateKeyContext(AccessGranted, pRegEntry, &pKeyCtx);
+        status = SqliteCreateKeyContext(pRegEntry, &pKeyCtx);
         BAIL_ON_NT_STATUS(status);
 
         // Cache this new key in gActiveKeyList
@@ -432,17 +446,10 @@ SqliteOpenKeyInternal_inlock(
         BAIL_ON_NT_STATUS(status);
     }
 
-    if (pServerState && pServerState->pToken)
-    {
-        status = RegSrvAccessCheckKey(pServerState->pToken,
-                                      pKeyCtx->pSecurityDescriptor,
-                                      pKeyCtx->ulSecDescLength,
-                                      AccessDesired,
-                                      &AccessGranted);
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    status = SqliteCreateKeyHandle(AccessGranted, pKeyCtx, &pKeyHandle);
+    status = SqliteCreateKeyHandle(pServerState ? pServerState->pToken : NULL,
+                                   AccessDesired,
+                                   pKeyCtx,
+                                   &pKeyHandle);
 	BAIL_ON_NT_STATUS(status);
 	pKeyCtx = NULL;
 
@@ -474,7 +481,6 @@ SqliteOpenKeyInternal_inlock_inDblock(
     PREG_DB_KEY pRegEntry = NULL;
     PREG_KEY_HANDLE pKeyHandle = NULL;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
-    ACCESS_MASK AccessGranted = AccessDesired;
 
     BAIL_ON_NT_INVALID_STRING(pwszFullKeyName);
 
@@ -484,7 +490,7 @@ SqliteOpenKeyInternal_inlock_inDblock(
         status = RegDbOpenKey_inlock(ghCacheConnection, pwszFullKeyName, &pRegEntry);
         BAIL_ON_NT_STATUS(status);
 
-        status = SqliteCreateKeyContext(AccessGranted, pRegEntry, &pKeyCtx);
+        status = SqliteCreateKeyContext(pRegEntry, &pKeyCtx);
         BAIL_ON_NT_STATUS(status);
 
         // Cache this new key in gActiveKeyList
@@ -492,17 +498,10 @@ SqliteOpenKeyInternal_inlock_inDblock(
         BAIL_ON_NT_STATUS(status);
     }
 
-    if (pServerState && pServerState->pToken)
-    {
-        status = RegSrvAccessCheckKey(pServerState->pToken,
-                                      pKeyCtx->pSecurityDescriptor,
-                                      pKeyCtx->ulSecDescLength,
-                                      AccessDesired,
-                                      &AccessGranted);
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    status = SqliteCreateKeyHandle(AccessGranted, pKeyCtx, &pKeyHandle);
+    status = SqliteCreateKeyHandle(pServerState ? pServerState->pToken : NULL,
+                                   AccessDesired,
+                                   pKeyCtx,
+                                   &pKeyHandle);
     BAIL_ON_NT_STATUS(status);
     pKeyCtx = NULL;
 
