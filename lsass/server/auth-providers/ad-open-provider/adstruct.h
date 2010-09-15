@@ -182,7 +182,7 @@ typedef struct __AD_PROVIDER_CONTEXT
     gid_t gid;
     pid_t pid;
 
-    DWORD nRefCount;
+    LONG nRefCount;
 
     PLSA_AD_PROVIDER_STATE pState;
 } AD_PROVIDER_CONTEXT, *PAD_PROVIDER_CONTEXT;
