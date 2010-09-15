@@ -63,14 +63,14 @@ SqliteGetParentKeyName(
 
 NTSTATUS
 SqliteCreateKeyHandle(
-    IN ACCESS_MASK samGranted,
+    IN PACCESS_TOKEN pToken,
+    IN ACCESS_MASK AccessDesired,
     IN PREG_KEY_CONTEXT pKey,
     OUT PREG_KEY_HANDLE* ppKeyHandle
     );
 
 NTSTATUS
 SqliteCreateKeyContext(
-    IN ACCESS_MASK samGranted,
     IN PREG_DB_KEY pRegEntry,
     OUT PREG_KEY_CONTEXT* ppKeyResult
     );
