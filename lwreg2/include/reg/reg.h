@@ -169,6 +169,8 @@ typedef struct _SECURITY_ATTRIBUTES {
 //
 // Value attribute
 //
+#define LWREG_VALUE_RANGE_TYPE_NONE 0
+
 typedef enum _LWREG_VALUE_RANGE_TYPE
 {
     LWREG_VALUE_RANGE_TYPE_BOOLEAN = 1,
@@ -207,7 +209,8 @@ typedef struct _LWREG_VALUE_ATTRIBUTES_A
 typedef struct _LWREG_VALUE_ATTRIBUTES
 {
     DWORD ValueType;
-    PVOID pDefaultValue;
+    //PVOID pDefaultValue;
+    void* pDefaultValue;
     DWORD DefaultValueLen;
     PWSTR pwszDocString;
     LWREG_VALUE_RANGE_TYPE RangeType;
