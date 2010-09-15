@@ -119,8 +119,9 @@
                       <widget class="GtkLabel" id="label11">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Details&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;_Details&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
+                        <property name="use_underline">True</property>
                       </widget>
                       <packing>
                         <property name="type">label_item</property>
@@ -170,7 +171,8 @@
                       <widget class="GtkLabel" id="label10">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="label" translatable="yes">Save Log...</property>
+                        <property name="label" translatable="yes">_Save Log...</property>
+                        <property name="use_underline">True</property>
                       </widget>
                       <packing>
                         <property name="position">1</property>
@@ -337,7 +339,9 @@
                                     <property name="visible">True</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                                     <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Password:</property>
+                                    <property name="label" translatable="yes">_Password:</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="mnemonic_widget">JoinPasswordEntry</property>
                                   </widget>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -351,7 +355,9 @@
                                     <property name="visible">True</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                                     <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">User:</property>
+                                    <property name="label" translatable="yes">_User:</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="mnemonic_widget">JoinUserEntry</property>
                                   </widget>
                                   <packing>
                                     <property name="left_attach">1</property>
@@ -753,7 +759,9 @@
                                     <property name="visible">True</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                                     <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Domain:</property>
+                                    <property name="label" translatable="yes">_Domain:</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="mnemonic_widget">DomainEntry</property>
                                   </widget>
                                   <packing>
                                     <property name="position">1</property>
@@ -866,10 +874,11 @@
                             <property name="spacing">12</property>
                             <child>
                               <widget class="GtkCheckButton" id="PrefixCheck">
-                                <property name="label" translatable="yes">Enable default user name prefix:</property>
+                                <property name="label" translatable="yes">Enable default user name _prefix:</property>
                                 <property name="visible">True</property>
                                 <property name="can_focus">True</property>
                                 <property name="receives_default">False</property>
+                                <property name="use_underline">True</property>
                                 <property name="active">True</property>
                                 <property name="draw_indicator">True</property>
                               </widget>
@@ -981,11 +990,12 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                                 <property name="spacing">12</property>
                                 <child>
                                   <widget class="GtkRadioButton" id="OUSpecific">
-                                    <property name="label" translatable="yes">Specific OU path:</property>
+                                    <property name="label" translatable="yes">Specific _OU path:</property>
                                     <property name="visible">True</property>
                                     <property name="can_focus">True</property>
                                     <property name="receives_default">False</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                                    <property name="use_underline">True</property>
                                     <property name="draw_indicator">True</property>
                                     <property name="group">radiobutton2</property>
                                   </widget>
@@ -1037,11 +1047,12 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                         <property name="left_padding">12</property>
                         <child>
                           <widget class="GtkCheckButton" id="JoinModifyHosts">
-                            <property name="label" translatable="yes">Modify hosts file (/etc/hosts)</property>
+                            <property name="label" translatable="yes">_Modify hosts file (/etc/hosts)</property>
                             <property name="visible">True</property>
                             <property name="can_focus">True</property>
                             <property name="receives_default">False</property>
                             <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
+                            <property name="use_underline">True</property>
                             <property name="active">True</property>
                             <property name="draw_indicator">True</property>
                           </widget>
@@ -1052,8 +1063,9 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                       <widget class="GtkLabel" id="label8">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="label" translatable="yes">&lt;b&gt;Advanced&lt;/b&gt;</property>
+                        <property name="label" translatable="yes">&lt;b&gt;_Advanced&lt;/b&gt;</property>
                         <property name="use_markup">True</property>
+                        <property name="use_underline">True</property>
                       </widget>
                       <packing>
                         <property name="type">label_item</property>
@@ -1121,7 +1133,8 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                       <widget class="GtkLabel" id="label5">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="label" translatable="yes">Join Domain</property>
+                        <property name="label" translatable="yes">_Join Domain</property>
+                        <property name="use_underline">True</property>
                       </widget>
                       <packing>
                         <property name="position">2</property>
@@ -1270,7 +1283,9 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                                     <property name="visible">True</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                                     <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Domain:</property>
+                                    <property name="label" translatable="yes">_Domain:</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="mnemonic_widget">StatusDomainEntry</property>
                                   </widget>
                                   <packing>
                                     <property name="position">1</property>
@@ -1304,7 +1319,9 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                                     <property name="visible">True</property>
                                     <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
                                     <property name="xalign">0</property>
-                                    <property name="label" translatable="yes">Computer name:</property>
+                                    <property name="label" translatable="yes">Computer _Name:</property>
+                                    <property name="use_underline">True</property>
+                                    <property name="mnemonic_widget">StatusComputerEntry</property>
                                   </widget>
                                   <packing>
                                     <property name="position">1</property>
@@ -1408,7 +1425,8 @@ Nested OUs should be separated by a forward-slash.&lt;/span&gt;</property>
                       <widget class="GtkLabel" id="label32">
                         <property name="visible">True</property>
                         <property name="events">GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK</property>
-                        <property name="label" translatable="yes">Leave Domain</property>
+                        <property name="label" translatable="yes">_Leave Domain</property>
+                        <property name="use_underline">True</property>
                       </widget>
                       <packing>
                         <property name="position">1</property>
