@@ -1247,6 +1247,26 @@ RegDbSafeFreeEntryValue(
     }
 }
 
+void
+RegDbSafeFreeEntryValueAttributes(
+    PREG_DB_VALUE_ATTRIBUTES* ppEntry
+    )
+{
+    PREG_DB_VALUE_ATTRIBUTES pEntry = NULL;
+    if (ppEntry != NULL && *ppEntry != NULL)
+    {
+        pEntry = *ppEntry;
+
+        LWREG_SAFE_FREE_MEMORY(pEntry->pwszValueName);
+        RegSafeFreeValueAttributes(&pEntry->pValueAttributes);
+
+        memset(pEntry, 0, sizeof(*pEntry));
+
+        LWREG_SAFE_FREE_MEMORY(pEntry);
+        *ppEntry = NULL;
+    }
+}
+
 NTSTATUS
 RegDbSafeRecordSubKeysInfo_inlock(
     IN size_t sCount,

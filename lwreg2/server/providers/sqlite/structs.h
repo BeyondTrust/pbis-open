@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        externs.h
+ *        structs.h
  *
  * Abstract:
  *
@@ -45,6 +45,8 @@
  *
  * Authors: Wei Fu (wfu@likewise.com)
  */
+
+#define REG_EMPTY_VALUE_NAME_W {0}
 
 typedef struct _REG_SRV_SQLITE_KEYLOOKUP {
 

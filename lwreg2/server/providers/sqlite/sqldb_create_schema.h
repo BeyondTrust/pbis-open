@@ -49,25 +49,77 @@
 #define __SQLCACHE_CREATE_SCHEMA_H__
 
 
-#define REG_DB_INSERT_REG_SCHEMA_KEY "INSERT INTO " REG_DB_TABLE_NAME_SCHEMA_KEYS " (" \
-                                     "ParentId," \
-                                     "KeyName," \
-                                     "AclIndex," \
-                                     "LastUpdated) " \
-                                     "VALUES (?1,?2,?3,?4)" \
-
-
-#if 0
-                                ""
-
-#define REG_DB_INSERT_REG_VALUE "INSERT INTO " REG_DB_TABLE_NAME_VALUES " (" \
+#define REG_DB_INSERT_REG_VALUE_ATTRIBUTES "INSERT INTO " REG_DB_TABLE_NAME_SCHEMA_VALUES " (" \
                                 "ParentId," \
                                 "ValueName," \
                                 "Type," \
-                                "Value," \
+                                "DefaultValue," \
+                                "Document," \
+                                "RangeType," \
+                                "Hint," \
+                                "Range," \
                                 "LastUpdated) " \
-                                "VALUES (?1,?2,?3,?4,?5)" \
+                                "VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)" \
                                 ""
+
+
+#define REG_DB_QUERY_VALUE_ATTRIBUTES  "select " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".DefaultValue, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Document, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".RangeType, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Hint, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Range, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".LastUpdated " \
+            "from " REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+            "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName = ?1 " \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?2 " \
+
+
+#define REG_DB_QUERY_VALUE_ATTRIBUTES_WITHTYPE  "select " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".DefaultValue, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Document, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".RangeType, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Hint, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Range, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".LastUpdated " \
+            "from " REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+            "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName = ?1 " \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?2 " \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type = ?3" \
+
+
+#define REG_DB_QUERY_VALUE_ATTRIBUTES_WITHWRONGTYPE "select " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".DefaultValue, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Document, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".RangeType, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Hint, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Range, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".LastUpdated " \
+            "from " REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+            "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName = ?1 " \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?2 " \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type != ?3" \
+
+
+#define REG_DB_UPDATE_VALUE_ATTRIBUTES "update " REG_DB_TABLE_NAME_SCHEMA_VALUES " set " \
+                        "LastUpdated = ?1, " \
+                        "DefaultValue = ?2, " \
+                        "Document = ?3, " \
+                        "RangeType = ?4, " \
+                        "Hint = ?5, " \
+                        "Range = ?6 " \
+                        "where ParentId = ?7 and ValueName = ?8 " \
+
+#if 0
 
 #define REG_DB_INSERT_REG_ACL "INSERT INTO " REG_DB_TABLE_NAME_ACLS " (" \
                                 "Acl) " \

@@ -52,9 +52,8 @@
 #define REG_DB_TABLE_NAME_VALUES        "regvalues1"
 #define REG_DB_TABLE_NAME_ACLS          "regacl1"
 
-#define REG_DB_TABLE_NAME_SCHEMA_KEYS   "regschemakeys1"
 #define REG_DB_TABLE_NAME_SCHEMA_VALUES "regschemavalues1"
-#define REG_DB_TABLE_NAME_SCHEMA_ACLS   "regschemaacl1"
+
 
 #define REG_DB_TABLE_NAME_CACHE_TAGS  "regcachetags"
 #define REG_DB_TABLE_NAME_ENTRIES     "regentry1"
@@ -101,16 +100,6 @@
 		"    );\n" \
 		_REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_ACLS, "CacheId") \
 		"\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_KEYS) "(\n" \
-        "    CacheId integer primary key autoincrement,\n" \
-        "    LastUpdated integer,\n" \
-        "    ParentId integer,\n" \
-        "    KeyName text COLLATE NOCASE,\n" \
-        "    AclIndex integer,\n" \
-        "    UNIQUE (ParentId, KeyName)\n" \
-        "    );\n" \
-        _REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_SCHEMA_KEYS, "CacheId") \
-        "\n" \
     _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_VALUES) "(\n" \
         "    LastUpdated integer,\n" \
         "    ParentId integer,\n" \
@@ -123,13 +112,6 @@
         "    Range blob,\n" \
         "    UNIQUE (ParentId, ValueName)\n" \
         "    );\n" \
-    _REG_DB_SQL_CREATE_TABLE(REG_DB_TABLE_NAME_SCHEMA_ACLS) "(\n" \
-        "    CacheId integer primary key autoincrement,\n" \
-        "    Acl blob,\n" \
-        "    UNIQUE (Acl)\n" \
-        "    );\n" \
-        _REG_DB_SQL_CREATE_INDEX(REG_DB_TABLE_NAME_SCHEMA_ACLS, "CacheId") \
-        "\n" \
 		""
 
 #define REG_DB_INSERT_REG_KEY "INSERT INTO " REG_DB_TABLE_NAME_KEYS " (" \

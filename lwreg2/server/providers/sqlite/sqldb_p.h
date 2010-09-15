@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        sqlcache_p.h
+ *        sqldb_p.h
  *
  * Abstract:
  *
@@ -48,11 +48,6 @@
 #ifndef __SQLCACHE_P_H__
 #define __SQLCACHE_P_H__
 
-// by default we should always only see user view
-typedef DWORD LWREG_VIEW;
-
-#define LWREG_USER_VIEW 0  // access registry schema related tables
-#define LWREG_SCHEMA_VIEW 1    // access registry explicit hierachy
 
 #define REG_DB_FREE_UNUSED_CACHEIDS   \
     "delete from " REG_DB_TABLE_NAME_CACHE_TAGS " where CacheId NOT IN " \
@@ -92,7 +87,11 @@ typedef struct _REG_DB_CONNECTION
     sqlite3_stmt *pstUpdateRegAclByCacheId;
 
     // registry schema view related sql statement
-    sqlite3_stmt *pstCreateRegSchemaKey;
+    sqlite3_stmt *pstCreateRegValueAttributes;
+    sqlite3_stmt *pstQueryValueAttributes;
+    sqlite3_stmt *pstQueryValueAttributesWithType;
+    sqlite3_stmt *pstQueryValueAttributesWithWrongType;
+    sqlite3_stmt *pstUpdateValueAttributes;
 
 
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;
@@ -238,7 +237,6 @@ RegDbOpen(
 NTSTATUS
 RegDbStoreRegKeys(
     IN HANDLE hDB,
-    IN LWREG_VIEW dwView,
     IN DWORD dwEntryCount,
     IN PREG_DB_KEY* ppKeys
     );
@@ -260,7 +258,6 @@ RegDbStoreRegValues(
 NTSTATUS
 RegDbCreateKey(
     IN REG_DB_HANDLE hDb,
-    IN LWREG_VIEW dwView,
     IN PCWSTR pwszFullKeyName,
     IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,

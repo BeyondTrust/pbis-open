@@ -887,8 +887,81 @@ error:
     goto cleanup;
 }
 
+#if 0
+DWORD
+RegDuplicateValueAttributes(
+    LWREG_VALUE_ATTRIBUTES pAttr,
+    PLWREG_VALUE_ATTRIBUTES* ppAttr
+    )
+{
+    DWORD dwError = 0;
+    PLWREG_VALUE_ATTRIBUTES pAttr = NULL;
 
+    dwError = RegAllocateMemory(sizeof(*pAttr),(PVOID*)&pAttr);
+    BAIL_ON_REG_ERROR(dwError);
 
+    pAttr->DefaultValueLen = pAttr.DefaultValueLen;
+    pAttr->Hint = attrA.Hint;
+    pAttr->RangeType = attrA.RangeType;
+
+    switch (pAttr->RangeType)
+    {
+        case LWREG_VALUE_RANGE_TYPE_ENUM:
+
+            dwError = RegWC16StringArraysAllocateFromCStringArraysWithNullTerminator(
+                            attrA.Range.ppszRangeEnumStrings,
+                            &pAttr->Range.ppwszRangeEnumStrings);
+            BAIL_ON_REG_ERROR(dwError);
+
+            break;
+
+        case LWREG_VALUE_RANGE_TYPE_INTEGER:
+             pAttr->Range.RangeInteger.Min = attrA.Range.RangeInteger.Min;
+             pAttr->Range.RangeInteger.Max = attrA.Range.RangeInteger.Max;
+
+             break;
+
+        case LWREG_VALUE_RANGE_TYPE_BOOLEAN:
+             pAttr->Range.RangeInteger.Min = 0;
+             pAttr->Range.RangeInteger.Max = 1;
+
+             break;
+
+        default:
+             dwError = ERROR_INVALID_PARAMETER;
+             BAIL_ON_REG_ERROR(dwError);
+      }
+
+    if (attrA.pszDocString)
+    {
+        dwError = RegWC16StringAllocateFromCString(
+                             &pAttr->pwszDocString,
+                             attrA.pszDocString
+                               );
+        BAIL_ON_REG_ERROR(dwError);
+    }
+
+    pAttr->ValueType = attrA.ValueType;
+
+    dwError = RegCopyValueAToW(pAttr->ValueType,
+                               attrA.pDefaultValue,
+                               attrA.DefaultValueLen,
+                               &pAttr->pDefaultValue,
+                               &pAttr->DefaultValueLen);
+    BAIL_ON_REG_ERROR(dwError);
+
+    *ppAttrW = pAttr;
+
+cleanup:
+    return dwError;
+
+error:
+
+    RegSafeFreeValueAttributes(&pAttr);
+
+    goto cleanup;
+}
+#endif
 
 
 static

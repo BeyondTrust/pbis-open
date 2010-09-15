@@ -48,7 +48,6 @@
 
 #include "includes.h"
 
-#define REG_EMPTY_VALUE_NAME_W {0}
 
 static
 REG_DATA_TYPE
@@ -734,7 +733,6 @@ SqliteSetValueEx(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PWSTR   pwszValueName = NULL;
-    PWSTR   pwcValue = NULL;
     PWSTR*  ppwszOutMultiSz = NULL;
     BOOLEAN bIsWrongType = TRUE;
     wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
@@ -823,7 +821,7 @@ done:
 cleanup:
 
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
-    LWREG_SAFE_FREE_MEMORY(pwcValue);
+
     if (ppwszOutMultiSz)
     {
         RegFreeMultiStrsW(ppwszOutMultiSz);

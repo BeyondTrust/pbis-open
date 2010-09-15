@@ -55,7 +55,101 @@ SqliteSetValueAttributes(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszValueName = NULL;
+    BOOLEAN bIsWrongType = TRUE;
+    wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    // Do not free
+    PBYTE pData = NULL;
+    DWORD cbData = 0;
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
+    BAIL_ON_NT_INVALID_POINTER(pValueAttributes);
+
+    status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_SET_VALUE);
+    BAIL_ON_NT_STATUS(status);
+
+    pKeyCtx = pKeyHandle->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+    if (MAX_VALUE_LENGTH < pValueAttributes->DefaultValueLen)
+    {
+        status = STATUS_INVALID_BLOCK_LENGTH;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegDbGetValueAttributes(ghCacheConnection,
+                              pKeyCtx->qwId,
+                              (PCWSTR)pwszValueName,
+                              (REG_DATA_TYPE)pValueAttributes->ValueType,
+                              &bIsWrongType,
+                              NULL);
+    if (!status)
+    {
+        status = STATUS_DUPLICATE_NAME;
+        BAIL_ON_NT_STATUS(status);
+    }
+    else if (STATUS_OBJECT_NAME_NOT_FOUND == status)
+    {
+        status = 0;
+    }
+    BAIL_ON_NT_STATUS(status);
+
+    pData = pValueAttributes->pDefaultValue;
+    cbData = pValueAttributes->DefaultValueLen;
+
+    if (cbData == 0)
+    {
+        goto done;
+    }
+
+    switch (pValueAttributes->ValueType)
+    {
+        case REG_BINARY:
+        case REG_DWORD:
+            break;
+
+        case REG_MULTI_SZ:
+        case REG_SZ:
+            if (cbData == 1)
+            {
+                status = STATUS_INTERNAL_ERROR;
+                BAIL_ON_NT_STATUS(status);
+            }
+
+            if (!pData || pData[cbData-1] != '\0' || pData[cbData-2] != '\0' )
+            {
+                status = STATUS_INVALID_PARAMETER;
+                BAIL_ON_NT_STATUS(status);
+            }
+
+            break;
+
+        default:
+            status = STATUS_NOT_SUPPORTED;
+            BAIL_ON_NT_STATUS(status);
+    }
+
+done:
+    status = RegDbSetValueAttributes(ghCacheConnection,
+                                     pKeyCtx->qwId,
+                                     pwszValueName,
+                                     pValueAttributes);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
+
+    return status;
+
+error:
+    goto cleanup;
 }
 
 NTSTATUS
@@ -85,7 +179,6 @@ SqliteGetValueAttributes(
             0};
 
     ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
-
 
     status = LW_RTL_ALLOCATE((PVOID*)&pCurrentValue, LWREG_CURRENT_VALUEINFO, sizeof(*pCurrentValue));
     BAIL_ON_NT_STATUS(status);

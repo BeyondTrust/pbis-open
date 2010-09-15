@@ -42,6 +42,7 @@
  * Authors: Wei Fu (wfu@likewise.com)
  *
  */
+
 #include "includes.h"
 
 static
@@ -728,18 +729,72 @@ RegDbOpen(
 
     /* Registry schema view sql statement initialization */
 
-    /*pstCreateRegSchemaKey*/
-    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_INSERT_REG_SCHEMA_KEY);
+    /*pstCreateRegValueAttributes*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_INSERT_REG_VALUE_ATTRIBUTES);
     BAIL_ON_NT_STATUS(status);
 
     status = sqlite3_prepare16_v2(
                 pConn->pDb,
                 pwszQueryStatement,
                 -1,
-                &pConn->pstCreateRegSchemaKey,
+                &pConn->pstCreateRegValueAttributes,
                 NULL);
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+    /*pstQueryValueAttributes*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_VALUE_ATTRIBUTES);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryValueAttributes,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+    /*pstQueryValueAttributesWithType*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_VALUE_ATTRIBUTES_WITHTYPE);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryValueAttributesWithType,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+
+    /*pstQueryValueAttributesWithWrongType*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_VALUE_ATTRIBUTES_WITHWRONGTYPE);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryValueAttributesWithWrongType,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+    /*pstUpdateValueAttributes*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_UPDATE_VALUE_ATTRIBUTES);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstUpdateValueAttributes,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
 
     *phDb = pConn;
 
@@ -776,7 +831,6 @@ error:
 NTSTATUS
 RegDbStoreRegKeys(
     IN HANDLE hDB,
-    IN LWREG_VIEW dwView,
     IN DWORD dwEntryCount,
     IN PREG_DB_KEY* ppKeys
     )
@@ -852,19 +906,7 @@ RegDbStoreRegKeys(
 			BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
 		}
 
-		switch (dwView)
-		{
-		    case LWREG_USER_VIEW:
-		          pstCreateKey = pConn->pstCreateRegKey;
-		          break;
-		    case LWREG_SCHEMA_VIEW:
-		          pstCreateKey = pConn->pstCreateRegSchemaKey;
-		          break;
-
-		    default:
-		          status = STATUS_INVALID_PARAMETER;
-		          BAIL_ON_NT_STATUS(status);
-		}
+		pstCreateKey = pConn->pstCreateRegKey;
 
 		if (!bGotNow)
 		{
@@ -1262,7 +1304,6 @@ error:
 NTSTATUS
 RegDbCreateKey(
     IN REG_DB_HANDLE hDb,
-    IN LWREG_VIEW dwView,
     IN PCWSTR pwszFullKeyName,
     IN PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN ULONG ulSecDescLength,
@@ -1311,7 +1352,6 @@ RegDbCreateKey(
 
     status = RegDbStoreRegKeys(
                  hDb,
-                 dwView,
                  1,
                  &pRegKey);
     BAIL_ON_NT_STATUS(status);
@@ -1451,7 +1491,7 @@ RegDbSetKeyValue(
                      &pRegEntry);
         BAIL_ON_NT_STATUS(status);
     }
-    if (STATUS_OBJECT_NAME_NOT_FOUND == status && !pRegEntry)
+    else if (STATUS_OBJECT_NAME_NOT_FOUND == status && !pRegEntry)
     {
     	status = RegDbCreateKeyValue(
     			    hDb,
@@ -2348,7 +2388,11 @@ RegDbFreePreparedStatements(
         &pConn->pstQueryAclByOffset,
         &pConn->pstUpdateRegAclByCacheId,
 
-        &pConn->pstCreateRegSchemaKey
+        &pConn->pstCreateRegValueAttributes,
+        &pConn->pstQueryValueAttributes,
+        &pConn->pstQueryValueAttributesWithType,
+        &pConn->pstQueryValueAttributesWithWrongType,
+        &pConn->pstUpdateValueAttributes
     };
 
     for (i = 0; i < sizeof(pppstFreeList)/sizeof(pppstFreeList[0]); i++)

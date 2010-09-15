@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
                 NULL,
                 ppwszRootKeyNames[0],
                 0,
-                KEY_READ,
+                KEY_SET_VALUE,
                 &hKey);
     BAIL_ON_REG_ERROR(dwError);
 

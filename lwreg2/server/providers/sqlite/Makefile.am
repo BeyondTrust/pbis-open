@@ -9,6 +9,7 @@ libregserver_provider_sqlite_la_SOURCES = \
     sqliteacl.c   \
     sqliteapi_p.c    \
     sqldb.c     \
+    sqldb_schema.c     \
     sqldb_p.c     \
     sqlitecache.c     \
     regsqlite.c    \

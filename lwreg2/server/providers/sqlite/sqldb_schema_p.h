@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- */
+ * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -33,58 +33,75 @@
  *
  * Module Name:
  *
- *        api.h
+ *        sqldb_schema_p.h
  *
  * Abstract:
  *
- *        Registry
+ *        Likewise Registry
  *
- *        LSA Server API (Private Header)
+ *        Private functions in sqlite3 Caching backend
+ *        With Value Attributes Schema process
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ * Authors: Wei Fu (wfu@likewise.com)
+ *
  */
 
-#ifndef INCLUDES_H_
-#define INCLUDES_H_
-
-#include "config.h"
-
-#include "regsystem.h"
-#include <sqlite3.h>
-#include <uuid/uuid.h>
-#include <lw/base.h>
-#include <lw/ntstatus.h>
-#include <lw/rtlstring.h>
-#include <lw/rtlmemory.h>
-
-#include <lwmsg/lwmsg.h>
-
-#include <reg/lwntreg.h>
-#include <regdef.h>
-
-#include "regutils.h"
-#include "regsrvutils.h"
-
-#include "regsqlite.h"
-#include "regserver.h"
-#include "regipc.h"
-#include "regprovspi.h"
-#include "reglog_r.h"
-
-#include "structs.h"
-#include "sqldb_p.h"
-#include "sqldb_schema_p.h"
-#include "sqldb_create.h"
-#include "sqldb_create_schema.h"
-#include "sqlitecache_p.h"
-#include "sqliteapi_p.h"
-#include "sqliteapi.h"
-
-#include "externs.h"
+#ifndef SQLDB_SCHEMA_P_H_
+#define SQLDB_SCHEMA_P_H_
 
 
+NTSTATUS
+RegDbUnpackRegValueAttributesInfo(
+    IN sqlite3_stmt* pstQuery,
+    IN OUT int* piColumnPos,
+    IN OUT PREG_DB_VALUE_ATTRIBUTES pResult
+    );
+
+void
+RegDbSafeFreeEntryValueAttributes(
+    PREG_DB_VALUE_ATTRIBUTES* ppEntry
+    );
+
+NTSTATUS
+RegDbStoreRegValueAttributes(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+NTSTATUS
+RegDbUpdateRegValueAttributes(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+NTSTATUS
+RegDbCreateValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
+NTSTATUS
+RegDbGetValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN REG_DATA_TYPE valueType,
+    IN OPTIONAL PBOOLEAN pbIsWrongType,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES* ppRegEntry
+    );
+
+NTSTATUS
+RegDbSetValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
 
 
-#endif /* INCLUDES_H_ */
+
+#endif /* SQLDB_SCHEMA_P_H_ */

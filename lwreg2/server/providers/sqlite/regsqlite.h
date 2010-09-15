@@ -131,6 +131,14 @@ typedef struct __REG_DB_VALUE
    DWORD dwValueLen;
 } REG_DB_VALUE, *PREG_DB_VALUE;
 
+typedef struct __REG_DB_VALUE_ATTRIBUTES
+{
+   time_t tLastUpdated;
+   int64_t qwParentId;
+   PWSTR pwszValueName;
+   PLWREG_VALUE_ATTRIBUTES pValueAttributes;
+} REG_DB_VALUE_ATTRIBUTES, *PREG_DB_VALUE_ATTRIBUTES;
+
 NTSTATUS
 RegSqliteReadUInt64(
     sqlite3_stmt *pstQuery,
