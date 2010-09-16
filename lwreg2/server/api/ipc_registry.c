@@ -1167,8 +1167,8 @@ RegSrvIpcGetValueAttibutesW(
     PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
     PREG_IPC_GET_VALUE_ATTRS_RESPONSE pRegResp = NULL;
     PREG_IPC_STATUS pStatus = NULL;
-    PLWREG_CURRENT_VALUEINFO pCurrentValue;
-    PLWREG_VALUE_ATTRIBUTES pValueAttributes;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
 
 
     status = RegSrvGetValueAttributesW(

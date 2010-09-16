@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     PLWREG_VALUE_ATTRIBUTES pAttr = NULL;
     PWSTR* ppwszRootKeyNames = NULL;
     DWORD dwNumRootKeys = 0;
+    wchar16_t szSubKey[] = {'a', 0};
     wchar16_t szValueName[] = {'a','t','t','r',0};
     HKEY hKey = NULL;
 
@@ -96,6 +97,14 @@ int main(int argc, char *argv[])
                    hReg,
                    hKey,
                    NULL,
+                   szValueName,
+                   pAttr);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueAttributesW(
+                   hReg,
+                   hKey,
+                   szSubKey,
                    szValueName,
                    pAttr);
     BAIL_ON_REG_ERROR(dwError);

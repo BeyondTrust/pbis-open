@@ -50,7 +50,7 @@ NTSTATUS
 SqliteSetValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
-    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName,
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     )
@@ -59,20 +59,42 @@ SqliteSetValueAttributes(
     PWSTR pwszValueName = NULL;
     BOOLEAN bIsWrongType = TRUE;
     wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
+    PWSTR pwszKeyNameWithSubKey = NULL;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+    PREG_KEY_HANDLE pKeyHandleInUse = NULL;
+    PREG_KEY_CONTEXT pKeyCtxInUse = NULL;
     // Do not free
     PBYTE pData = NULL;
     DWORD cbData = 0;
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
-    BAIL_ON_NT_INVALID_POINTER(pValueAttributes);
-
-    status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_SET_VALUE);
-    BAIL_ON_NT_STATUS(status);
-
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+    BAIL_ON_NT_INVALID_POINTER(pValueAttributes);
+
+    if (pwszSubKey)
+    {
+        status = LwRtlWC16StringAllocatePrintfW(
+                        &pwszKeyNameWithSubKey,
+                        L"%ws\\%ws",
+                        pKeyCtx->pwszKeyName,
+                        pwszSubKey);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = SqliteOpenKeyInternal(hRegConnection,
+                                   pwszSubKey ? pwszKeyNameWithSubKey : pKeyCtx->pwszKeyName,
+                                   KEY_SET_VALUE,
+                                   &pKeyHandleInUse);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegSrvAccessCheckKeyHandle(pKeyHandleInUse, KEY_SET_VALUE);
+    BAIL_ON_NT_STATUS(status);
+
+    pKeyCtxInUse = pKeyHandleInUse->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtxInUse);
 
     if (MAX_VALUE_LENGTH < pValueAttributes->DefaultValueLen)
     {
@@ -83,8 +105,9 @@ SqliteSetValueAttributes(
     status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 
-    status = RegDbGetValueAttributes(ghCacheConnection,
-                              pKeyCtx->qwId,
+    status = RegDbGetValueAttributes(
+                              ghCacheConnection,
+                              pKeyCtxInUse->qwId,
                               (PCWSTR)pwszValueName,
                               (REG_DATA_TYPE)pValueAttributes->ValueType,
                               &bIsWrongType,
@@ -137,7 +160,7 @@ SqliteSetValueAttributes(
 
 done:
     status = RegDbSetValueAttributes(ghCacheConnection,
-                                     pKeyCtx->qwId,
+                                     pKeyCtxInUse->qwId,
                                      pwszValueName,
                                      pValueAttributes);
     BAIL_ON_NT_STATUS(status);
@@ -145,6 +168,8 @@ done:
 cleanup:
 
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
+    LWREG_SAFE_FREE_MEMORY(pwszKeyNameWithSubKey);
+    SqliteSafeFreeKeyHandle(pKeyHandleInUse);
 
     return status;
 
@@ -157,54 +182,131 @@ SqliteGetValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
     IN OPTIONAL PCWSTR pwszSubKey,
-    IN PCWSTR pwszValueName,
+    IN PCWSTR pValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
     OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
-    NTSTATUS status = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszValueName = NULL;
+    PREG_DB_VALUE_ATTRIBUTES pRegEntry = NULL;
+    PREG_DB_VALUE pRegValueEntry = NULL;
+    BOOLEAN bIsWrongType = FALSE;
+    wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
+    PWSTR pwszKeyNameWithSubKey = NULL;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    PREG_KEY_HANDLE pKeyHandleInUse = NULL;
+    PREG_KEY_CONTEXT pKeyCtxInUse = NULL;
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
 
-    CHAR szDefaultVal[] = "Default value";
-    CHAR szDocString[] = "Document String";
+    BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
+    pKeyCtx = pKeyHandle->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
-    CHAR* ppszRangeEnumStrings[] = {"enum1", "enum2", "enum3", NULL};
+    if (pwszSubKey)
+    {
+        status = LwRtlWC16StringAllocatePrintfW(
+                        &pwszKeyNameWithSubKey,
+                        L"%ws\\%ws",
+                        pKeyCtx->pwszKeyName,
+                        pwszSubKey);
+        BAIL_ON_NT_STATUS(status);
+    }
 
-    LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
-            REG_SZ,
-            szDefaultVal,
-            sizeof(szDefaultVal),
-            szDocString,
-            LWREG_VALUE_RANGE_TYPE_ENUM,
-            0};
-
-    ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
-
-    status = LW_RTL_ALLOCATE((PVOID*)&pCurrentValue, LWREG_CURRENT_VALUEINFO, sizeof(*pCurrentValue));
+    status = SqliteOpenKeyInternal(hRegConnection,
+                                   pwszSubKey ? pwszKeyNameWithSubKey : pKeyCtx->pwszKeyName,
+                                   KEY_QUERY_VALUE,
+                                   &pKeyHandleInUse);
     BAIL_ON_NT_STATUS(status);
 
-    pCurrentValue->dwType = REG_SZ;
-
-    status = LwRtlWC16StringAllocateFromCString((PWSTR*)&pCurrentValue->pvData,
-                                                (PCSTR)"Current Value");
+    // ACL check
+    status = RegSrvAccessCheckKeyHandle(pKeyHandleInUse, KEY_QUERY_VALUE);
     BAIL_ON_NT_STATUS(status);
 
-    pCurrentValue->cbData = (LwRtlWC16StringNumChars(pCurrentValue->pvData)+1)*sizeof(WCHAR);
+    pKeyCtxInUse = pKeyHandleInUse->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtxInUse);
 
-
-    status = RegConvertValueAttributesAToW(ValueAttribute,
-                                    ppValueAttributes);
+    status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 
-    *ppCurrentValue = pCurrentValue;
+    // Get value attributes
+    status = RegDbGetValueAttributes(ghCacheConnection,
+                              pKeyCtxInUse->qwId,
+                              pwszValueName,
+                              REG_UNKNOWN,
+                              &bIsWrongType,
+                              &pRegEntry);
+    BAIL_ON_NT_STATUS(status);
+
+    // Optionally get value
+    if (ppCurrentValue)
+    {
+        status = RegDbGetKeyValue(ghCacheConnection,
+                                  pKeyCtxInUse->qwId,
+                                  pwszValueName,
+                                  REG_UNKNOWN,
+                                  &bIsWrongType,
+                                  &pRegValueEntry);
+        if (LW_STATUS_OBJECT_NAME_NOT_FOUND ==  status)
+        {
+            status = 0;
+            goto done;
+        }
+        BAIL_ON_NT_STATUS(status);
+
+        status = LW_RTL_ALLOCATE((PVOID*)&pCurrentValue,
+                                  LWREG_CURRENT_VALUEINFO,
+                                  sizeof(*pCurrentValue));
+        BAIL_ON_NT_STATUS(status);
+
+        pCurrentValue->cbData = pRegValueEntry->dwValueLen;
+        pCurrentValue->dwType = pRegValueEntry->type;
+
+        if (pCurrentValue->cbData)
+        {
+            status = LW_RTL_ALLOCATE((PVOID*)&pCurrentValue->pvData,
+                                     VOID,
+                                     pCurrentValue->cbData);
+            BAIL_ON_NT_STATUS(status);
+
+            memcpy(pCurrentValue->pvData, pRegValueEntry->pValue, pCurrentValue->cbData);
+        }
+    }
+
+done:
+
+    if (ppCurrentValue)
+    {
+        *ppCurrentValue = pCurrentValue;
+    }
+
+    *ppValueAttributes = pRegEntry->pValueAttributes;
+    pRegEntry->pValueAttributes = NULL;
 
 cleanup:
+
+    SqliteSafeFreeKeyHandle(pKeyHandleInUse);
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
+    LWREG_SAFE_FREE_MEMORY(pwszKeyNameWithSubKey);
+    RegDbSafeFreeEntryValueAttributes(&pRegEntry);
+    RegDbSafeFreeEntryValue(&pRegValueEntry);
+
+    if (!ppCurrentValue || status != 0)
+    {
+        RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    }
+
     return status;
 
 error:
-    RegSafeFreeCurrentValueInfo(&pCurrentValue);
-    *ppCurrentValue = NULL;
-    *ppValueAttributes = NULL;
+
+    if (ppCurrentValue)
+    {
+        *ppCurrentValue = NULL;
+    }
+
+    *ppValueAttributes  = NULL;
 
     goto cleanup;
 }
