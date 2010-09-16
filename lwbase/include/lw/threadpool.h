@@ -339,6 +339,7 @@ LW_VOID
  * @param[in] pData the user context pointer passed to pfnFunc
  * @retval #LW_STATUS_SUCCESS success
  * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
+ * @retval #LW_STATUS_CANCELLED the specified task group was cancelled
  */
 LW_NTSTATUS
 LwRtlCreateTask(
@@ -509,8 +510,9 @@ LwRtlWakeTaskGroup(
 /**
  * @brief Cancel task group
  *
- * Equivalent to calling #LwRtlCancelTask() on all tasks in the
- * given task group.
+ * All tasks in the task group are cancelled as if by #LwRtlCancelTask().
+ * In addition, any subsequent attempts to create a task within the group
+ * will fail with #LW_STATUS_CANCELLED.
  *
  * @param[in] pGroup the task group
  */

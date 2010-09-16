@@ -559,22 +559,32 @@ LwRtlCreateTask(
     pTask->llDeadline = 0;
 
     LOCK_POOL(pPool);
-    pTask->pThread = &pPool->pEventThreads[pPool->ulNextEventThread];
-    pPool->ulNextEventThread = (pPool->ulNextEventThread + 1) % pPool->ulEventThreadCount;
-    UNLOCK_POOL(pPool);
-
     if (pGroup)
     {
         LOCK_GROUP(pGroup);
+        if (pGroup->bCancelled)
+        {
+            UNLOCK_GROUP(pGroup);
+            status = STATUS_CANCELLED;
+            GOTO_ERROR_ON_STATUS(status);
+        }
         RingInsertBefore(&pGroup->Tasks, &pTask->GroupRing);
-        UNLOCK_GROUP(pGroup);
     }
+
+    pTask->pThread = &pPool->pEventThreads[pPool->ulNextEventThread];
+    pPool->ulNextEventThread = (pPool->ulNextEventThread + 1) % pPool->ulEventThreadCount;
+    UNLOCK_POOL(pPool);
 
     LOCK_THREAD(pTask->pThread);
     RingInsertBefore(&pTask->pThread->Tasks, &pTask->EventRing);
     /* It's not necessary to signal the thread about the new task here
        since it won't be run anyway */
     UNLOCK_THREAD(pTask->pThread);
+
+    if (pGroup)
+    {
+        UNLOCK_GROUP(pGroup);
+    }
 
     *ppTask = pTask;
 
@@ -795,6 +805,8 @@ LwRtlCancelTaskGroup(
     ULONG i = 0;
 
     LOCK_GROUP(group);
+
+    group->bCancelled = TRUE;
 
     for (i = 0; i < group->pPool->ulEventThreadCount; i++)
     {

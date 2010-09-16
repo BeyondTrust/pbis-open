@@ -94,7 +94,6 @@ lwmsg_peer_new(
     BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_cond_init(&peer->event, NULL)));
 
     BAIL_ON_ERROR(status = lwmsg_task_acquire_manager(&peer->task_manager));
-    BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
     BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->connect_tasks));
 
     peer->max_clients = 100;
@@ -454,6 +453,8 @@ lwmsg_peer_startup(
                           &peer->session_manager));
     }
 
+    BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->listen_tasks));
+
     for (ring = peer->listen_endpoints.next; ring != &peer->listen_endpoints; ring = ring->next)
     {
         endpoint = LWMSG_OBJECT_FROM_MEMBER(ring, PeerEndpoint, ring);
@@ -490,7 +491,13 @@ done:
 
 error:
 
-    lwmsg_task_group_cancel(peer->listen_tasks);
+    if (peer->listen_tasks)
+    {
+        lwmsg_task_group_cancel(peer->listen_tasks);
+        lwmsg_task_group_wait(peer->listen_tasks);
+        lwmsg_task_group_delete(peer->listen_tasks);
+        peer->listen_tasks = NULL;
+    }
 
     goto done;
 }
@@ -558,6 +565,8 @@ lwmsg_peer_shutdown(
 
     lwmsg_task_group_cancel(peer->listen_tasks);
     lwmsg_task_group_wait(peer->listen_tasks);
+    lwmsg_task_group_delete(peer->listen_tasks);
+    peer->listen_tasks = NULL;
 
     LWMSG_LOG_INFO(peer->context, "Listener shut down");
 

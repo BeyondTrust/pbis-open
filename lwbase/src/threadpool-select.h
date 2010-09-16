@@ -95,6 +95,7 @@ typedef struct _LW_TASK_GROUP
     RING Tasks;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
+    unsigned bCancelled:1;
 } SELECT_TASK_GROUP, *PSELECT_TASK_GROUP;
 
 typedef struct _LW_THREAD_POOL

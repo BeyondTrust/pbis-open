@@ -675,6 +675,7 @@ LwRtlCreateTask(
     RingInit(&pTask->GroupRing);
     RingInit(&pTask->QueueRing);
     RingInit(&pTask->SignalRing);
+
     pTask->pGroup = pGroup;
     pTask->ulRefCount = 2;
     pTask->pfnFunc = pfnFunc;
@@ -695,24 +696,41 @@ LwRtlCreateTask(
         }
     }
 
-    pThread->ulLoad++;
-
-    UNLOCK_POOL(pPool);
- 
     pTask->pThread = pThread;
 
     if (pGroup)
     {
         LOCK_GROUP(pGroup);
+        if (pGroup->bCancelled)
+        {
+            UNLOCK_GROUP(pGroup);
+            status = STATUS_CANCELLED;
+            GOTO_ERROR_ON_STATUS(status);
+        }
         RingInsertBefore(&pGroup->Tasks, &pTask->GroupRing);
         UNLOCK_GROUP(pGroup);
     }
 
+    pThread->ulLoad++;
+
+    UNLOCK_POOL(pPool);
+
     *ppTask = pTask;
+
+cleanup:
+
+    return status;
 
 error:
 
-    return status;
+    if (pTask)
+    {
+        TaskDelete(pTask);
+    }
+
+    *ppTask = NULL;
+
+    goto cleanup;
 }
 
 NTSTATUS
@@ -966,6 +984,9 @@ LwRtlCancelTaskGroup(
     PLW_TASK pTask = NULL;
 
     LOCK_GROUP(pGroup);
+
+    pGroup->bCancelled = TRUE;
+
     LockAllThreads(pGroup->pPool);
 
     for (ring = pGroup->Tasks.pNext; ring != &pGroup->Tasks; ring = ring->pNext)

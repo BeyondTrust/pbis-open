@@ -102,6 +102,7 @@ typedef struct _LW_TASK_GROUP
     RING Tasks;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
+    unsigned bCancelled:1;
 } EPOLL_TASK_GROUP, *PEPOLL_TASK_GROUP;
 
 typedef struct _LW_THREAD_POOL
