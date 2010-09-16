@@ -701,10 +701,17 @@ AD_ResolveProviderState(
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = (PAD_PROVIDER_CONTEXT)hProvider;
 
-    pContext->pState = gpLsaAdProviderState;
-    if (!pContext->pState)
+    if (!pContext)
     {
         dwError = LW_ERROR_NOT_HANDLED;
+    }
+    else
+    {
+        pContext->pState = gpLsaAdProviderState;
+        if (!pContext->pState)
+        {
+            dwError = LW_ERROR_NOT_HANDLED;
+        }
     }
 
     *ppContext = pContext;
@@ -717,7 +724,10 @@ AD_ClearProviderState(
     IN PAD_PROVIDER_CONTEXT pContext
     )
 {
-    pContext->pState = NULL;
+    if (pContext)
+    {
+        pContext->pState = NULL;
+    }
 }
 
 DWORD
@@ -3604,6 +3614,9 @@ AD_OpenEnumMembers(
 
     LwInitCookie(&pEnum->Cookie);
 
+    AD_ReferenceProviderContext(pContext);
+    pEnum->pProviderContext = pContext;
+   
     if (AD_IsOffline(pContext->pState))
     {
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
@@ -3629,9 +3642,6 @@ AD_OpenEnumMembers(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    AD_ReferenceProviderContext(pContext);
-    pEnum->pProviderContext = pContext;
-   
     *phEnum = pEnum;
     pEnum = NULL;
 
@@ -3793,7 +3803,7 @@ AD_CloseEnum(
         // joined to a domain.
         AD_ResolveProviderState(pEnum->pProviderContext, &pContext);
 
-        if (pContext->pState)
+        if (pContext && pContext->pState)
         {
             LsaAdProviderStateAcquireRead(pContext->pState);
         }
@@ -3805,7 +3815,7 @@ AD_CloseEnum(
         }
         LwFreeMemory(pEnum);
 
-        if (pContext->pState)
+        if (pContext && pContext->pState)
         {
             LsaAdProviderStateRelease(pContext->pState);
             AD_ClearProviderState(pContext);
