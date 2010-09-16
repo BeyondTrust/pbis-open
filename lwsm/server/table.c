@@ -398,6 +398,8 @@ LwSmTableFreeEntry(
     {
         pthread_cond_destroy(pEntry->pEvent);
     }
+
+    LwFreeMemory(pEntry);
 }
 
 DWORD
@@ -1248,6 +1250,33 @@ LwSmTableNotifyServiceObjectStateChange(
     PSM_TABLE_ENTRY pEntry = STRUCT_FROM_MEMBER(pObject, SM_TABLE_ENTRY, object);
 
     return LwSmTableNotifyEntryStateChanged(pEntry, newState);
+}
+
+
+VOID
+LwSmTableShutdown(
+    VOID
+    )
+{
+    BOOL bLocked = FALSE;
+    PSM_LINK pLink = NULL;
+    PSM_LINK pNext = NULL;
+    PSM_TABLE_ENTRY pEntry = NULL;
+
+    LOCK(bLocked, gServiceTable.pLock);
+
+    for (pLink = LwSmLinkBegin(&gServiceTable.entries);
+         LwSmLinkValid(&gServiceTable.entries, pLink);
+         pLink = pNext)
+    {
+        pNext = LwSmLinkNext(pLink);
+        pEntry = STRUCT_FROM_MEMBER(pLink, SM_TABLE_ENTRY, link);
+
+        LwSmTableFreeEntry(pEntry);
+    }
+
+    UNLOCK(bLocked, gServiceTable.pLock);
+    pthread_mutex_destroy(gServiceTable.pLock);
 }
 
 SM_LOADER_CALLS gTableCalls =

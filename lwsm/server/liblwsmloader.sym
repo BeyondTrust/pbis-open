@@ -3,4 +3,5 @@ LwSmRetainServiceObject
 LwSmReleaseServiceObject
 LwSmNotifyServiceObjectStateChange
 LwSmLoaderInitialize
+LwSmLoaderShutdown
 LwSmLoaderGetVtbl

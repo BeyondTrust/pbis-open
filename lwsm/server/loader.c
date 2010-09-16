@@ -134,6 +134,11 @@ LwSmLoaderInitialize(
     gpCalls = pCalls;
 
 error:
+
+    if (pLoaderDir)
+    {
+        closedir(pLoaderDir);
+    }
     
     LW_SAFE_FREE_MEMORY(pszPath);
 
@@ -211,5 +216,37 @@ LwSmLoaderGetVtbl(
 
 error:
 
+    LW_SAFE_FREE_MEMORY(pszLoaderName);
+
     return dwError;
+}
+
+VOID
+LwSmLoaderShutdown(
+    VOID
+    )
+{
+    PSM_LINK pLink = NULL;
+    PSM_LINK pNext = NULL;
+    PSM_PLUGIN pPlugin = NULL;
+
+    for (pLink = LwSmLinkBegin(&gPluginList);
+         LwSmLinkValid(&gPluginList, pLink);
+         pLink = pNext)
+    {
+        pNext = LwSmLinkNext(pLink);
+        pPlugin = STRUCT_FROM_MEMBER(pLink, SM_PLUGIN, link);
+
+        if (pPlugin->pPlugin && pPlugin->pPlugin->pVtbl->pfnShutdown)
+        {
+            pPlugin->pPlugin->pVtbl->pfnShutdown(pPlugin->pPlugin);
+        }
+
+        if (pPlugin->hLibrary)
+        {
+            dlclose(pPlugin->hLibrary);
+        }
+
+        LwFreeMemory(pPlugin);
+    }
 }

@@ -548,6 +548,7 @@ LwSmFreeLogTarget(
 
 #define LW_SERVICE_LOADER_INTERFACE_VERSION 1
 
+struct _LW_SERVICE_LOADER_PLUGIN;
 typedef struct _LW_SERVICE_OBJECT LW_SERVICE_OBJECT, *PLW_SERVICE_OBJECT;
 
 typedef struct _LW_SERVICE_LOADER_VTBL
@@ -558,6 +559,7 @@ typedef struct _LW_SERVICE_LOADER_VTBL
     DWORD (*pfnRefresh)(PLW_SERVICE_OBJECT pObject);
     DWORD (*pfnConstruct)(PLW_SERVICE_OBJECT pObject, PCLW_SERVICE_INFO pInfo, PVOID* ppData);
     VOID  (*pfnDestruct)(PLW_SERVICE_OBJECT pObject);
+    VOID  (*pfnShutdown)(const struct _LW_SERVICE_LOADER_PLUGIN* pPlugin);
 } LW_SERVICE_LOADER_VTBL, *PLW_SERVICE_LOADER_VTBL;
 
 typedef const struct _LW_SERVICE_LOADER_PLUGIN

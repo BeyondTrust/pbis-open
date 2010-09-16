@@ -418,6 +418,8 @@ LwSmRegistryReadStringList(
 
 cleanup:
 
+    LW_SAFE_FREE_MEMORY(pwszValuesString);
+
     return dwError;
 
 error:

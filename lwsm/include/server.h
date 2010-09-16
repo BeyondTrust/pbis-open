@@ -297,6 +297,11 @@ LwSmTableGetEntryReverseDependencyClosure(
     PWSTR** pppwszServiceList
     );
 
+VOID
+LwSmTableShutdown(
+    VOID
+    );
+
 DWORD
 LwSmRegistryEnumServices(
     HANDLE hReg,
@@ -319,6 +324,11 @@ LwSmBootstrap(
 DWORD
 LwSmLoaderInitialize(
     PSM_LOADER_CALLS pCalls
+    );
+
+VOID
+LwSmLoaderShutdown(
+    VOID
     );
 
 DWORD

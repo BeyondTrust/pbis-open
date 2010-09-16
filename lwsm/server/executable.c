@@ -497,6 +497,11 @@ LwSmExecutableDestruct(
         LwRtlReleaseTask(&pExec->pTask);
     }
 
+    LW_SAFE_FREE_MEMORY(pExec->pwszPath);
+    LwSmFreeStringList(pExec->ppwszArgs);
+    LwSmFreeStringList(pExec->ppwszEnv);
+    LwFreeMemory(pExec);
+
     return;
 }
 
@@ -621,6 +626,16 @@ error:
 }
 
 static
+VOID
+LwSmExecutableShutdown(
+    PLW_SERVICE_LOADER_PLUGIN pPlugin
+    )
+{
+    LwRtlFreeThreadPool(&gProcTable.pPool);
+    pthread_mutex_destroy(gProcTable.pLock);
+}
+
+static
 LW_SERVICE_LOADER_VTBL gExecutableVtbl =
 {
     .pfnStart = LwSmExecutableStart,
@@ -628,7 +643,8 @@ LW_SERVICE_LOADER_VTBL gExecutableVtbl =
     .pfnGetStatus = LwSmExecutableGetStatus,
     .pfnRefresh = LwSmExecutableRefresh,
     .pfnConstruct = LwSmExecutableConstruct,
-    .pfnDestruct = LwSmExecutableDestruct
+    .pfnDestruct = LwSmExecutableDestruct,
+    .pfnShutdown = LwSmExecutableShutdown
 };
 
 static

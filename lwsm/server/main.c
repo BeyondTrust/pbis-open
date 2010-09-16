@@ -159,10 +159,6 @@ main(
     dwError = LwSmMain();
     BAIL_ON_ERROR(dwError);
 
-    /* Shut down logging */
-    dwError = LwSmSetLogger(NULL, NULL);
-    BAIL_ON_ERROR(dwError);
-
 error:
 
     /* If we are starting as a daemon and have not
@@ -172,6 +168,16 @@ error:
     {
         LwSmNotify(1);
     }
+
+    /* Shut down service table */
+    LwSmTableShutdown();
+
+    /* Shut down loaders */
+    LwSmLoaderShutdown();
+
+    /* Shut down logging */
+    dwError = LwSmSetLogger(NULL, NULL);
+    BAIL_ON_ERROR(dwError);
 
     return dwError ? 1 : 0;
 }
@@ -549,14 +555,22 @@ LwSmMain(
     BAIL_ON_ERROR(dwError);
 
     LwRtlWakeTask(pTask);
-    LwRtlReleaseTask(&pTask);
 
     dwError = LwNtStatusToWin32Error(LwRtlMain());
     BAIL_ON_ERROR(dwError);
 
 cleanup:
 
-    return dwError;
+     if (pTask)
+     {
+         LwRtlCancelTask(pTask);
+         LwRtlWaitTask(pTask);
+         LwRtlReleaseTask(&pTask);
+     }
+
+     LwRtlFreeThreadPool(&gState.pPool);
+
+     return dwError;
 
 error:
 
@@ -779,6 +793,9 @@ LwSmPopulateTable(
     {
         pwszName = ppwszNames[i];
 
+        LwSmCommonFreeServiceInfo(pInfo);
+        pInfo = NULL;
+
         dwError = LwSmRegistryReadServiceInfo(hReg, pwszName, &pInfo);
         switch (dwError)
         {
@@ -808,18 +825,12 @@ LwSmPopulateTable(
 
         LwSmTableReleaseEntry(pEntry);
         pEntry = NULL;
-
-        LwSmCommonFreeServiceInfo(pInfo);
-        pInfo = NULL;
     }
 
 cleanup:
 
-    if (pInfo)
-    {
-        LwSmCommonFreeServiceInfo(pInfo);
-        pInfo = NULL;
-    }
+    LwSmFreeStringList(ppwszNames);
+    LwSmCommonFreeServiceInfo(pInfo);
 
     if (hReg)
     {
