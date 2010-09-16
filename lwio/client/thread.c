@@ -607,3 +607,38 @@ error:
 
     goto cleanup;
 }
+
+
+static
+__attribute__((destructor))
+VOID
+__LwIoDestruct()
+{
+    BOOLEAN bInLock = FALSE;
+
+    LWIO_LOCK_MUTEX(bInLock, &gLock);
+
+    if (gpClient)
+    {
+        lwmsg_peer_delete(gpClient);
+        gpClient = NULL;
+        gpSession = NULL;
+    }
+
+    if (!gpProcessCreds)
+    {
+        LwIoDeleteCreds(gpProcessCreds);
+        gpProcessCreds = NULL;
+    }
+
+    if (gbStateKeyInit)
+    {
+        pthread_key_delete(gStateKey);
+        gbStateKeyInit = FALSE;
+    }
+
+    LWIO_UNLOCK_MUTEX(bInLock, &gLock);
+
+    LwIoShutdown();
+}
+
