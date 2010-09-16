@@ -50,33 +50,27 @@ typedef struct _SM_PROCESS_TABLE
 {
     pthread_mutex_t lock;
     pthread_mutex_t* pLock;
-    SM_LINK execs;
-    pthread_t thread;
-    BOOLEAN bThreadStarted;
-    BOOLEAN bThreadStop;
+    PLW_THREAD_POOL pPool;
 } SM_PROCESS_TABLE;
 
 typedef struct _SM_EXECUTABLE
 {
+    PLW_TASK pTask;
     LW_SERVICE_STATE state;
     pid_t pid;
+    int notifyFd;
     LW_SERVICE_TYPE type;
     PWSTR pwszPath;
     PWSTR* ppwszArgs;
     PWSTR* ppwszEnv;
     PLW_SERVICE_OBJECT pObject;
-    SM_LINK link;
-    SM_LINK threadLink;
 } SM_EXECUTABLE, *PSM_EXECUTABLE;
 
 static SM_PROCESS_TABLE gProcTable =
 {
     .lock = PTHREAD_MUTEX_INITIALIZER,
     .pLock = &gProcTable.lock,
-    .execs = {&gProcTable.execs, &gProcTable.execs},
-    .thread = (pthread_t) -1,
-    .bThreadStarted = FALSE,
-    .bThreadStop = FALSE
+    .pPool = NULL
 };
 
 static
@@ -87,9 +81,13 @@ LwSmExecProgram(
     );
 
 static
-PVOID
-LwSmExecutableThread(
-    PVOID pData
+VOID
+LwSmExecutableTask(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pllTime
     );
 
 static
@@ -102,8 +100,6 @@ LwSmForkProcess(
     pid_t pid = -1;
     struct timespec ts = {1, 0};
     int notifyPipe[2] = {-1, -1};
-    char c = 0;
-    int ret = 0;
 
     if (pExec->type == LW_SERVICE_TYPE_EXECUTABLE)
     {
@@ -141,19 +137,14 @@ LwSmForkProcess(
             close(notifyPipe[1]);
             notifyPipe[1] = -1;
 
-            do
-            {
-                ret = read(notifyPipe[0], &c, sizeof(c));
-            } while (ret < 0 && errno == EINTR);
-
-            if (ret != sizeof(c) || c != 0)
-            {
-                dwError = LW_ERROR_SERVICE_UNRESPONSIVE;
-                BAIL_ON_ERROR(dwError);
-            }
+            /* Save read side of pipe as notification fd */
+            pExec->notifyFd = notifyPipe[0];
+            notifyPipe[0] = -1;
         }
         else
         {
+            pExec->notifyFd = -1;
+
             /* Wait for process to start up */
             if (nanosleep(&ts, NULL) != 0)
             {
@@ -161,8 +152,6 @@ LwSmForkProcess(
                 BAIL_ON_ERROR(dwError);
             }
         }
-            
-        pExec->state = LW_SERVICE_STATE_RUNNING;
     }
 
 cleanup:
@@ -210,14 +199,22 @@ LwSmExecutableStart(
         
     LwSmNotifyServiceObjectStateChange(pObject, pExec->state);
 
-    /* Take an additional reference to the table entry
-       because our child monitoring thread will need it */
-    LwSmRetainServiceObject(pObject);
-
-    /* Wake up the process manager thread to start the program */
-    dwError = LwMapErrnoToLwError(pthread_kill(gProcTable.thread, SIGCHLD));
+    dwError = LwSmForkProcess(pExec);
     BAIL_ON_ERROR(dwError);
-    
+
+    /* Create a task to track the process */
+    dwError = LwNtStatusToWin32Error(
+        LwRtlCreateTask(
+            gProcTable.pPool,
+            &pExec->pTask,
+            NULL,
+            LwSmExecutableTask,
+            pExec));
+    BAIL_ON_ERROR(dwError);
+
+    /* Wake up the task */
+    LwRtlWakeTask(pExec->pTask);
+        
 cleanup:
 
     UNLOCK(bLocked, &gProcTable.lock);
@@ -248,6 +245,12 @@ LwSmExecProgram(
 
     sigemptyset(&set);
 
+    /* Put ourselves in our own process group to dissociate from
+       the parent's controlling terminal, if any */
+    dwError = LwMapErrnoToLwError(setpgid(getpid(), getpid()));
+    BAIL_ON_ERROR(dwError);
+    
+    /* Reset the signal mask */
     dwError = LwMapErrnoToLwError(pthread_sigmask(SIG_SETMASK, &set, NULL));
     BAIL_ON_ERROR(dwError);
 
@@ -330,22 +333,33 @@ LwSmExecutableStop(
         BAIL_ON_ERROR(dwError);
         break;
     case LW_SERVICE_STATE_RUNNING:
+        pExec->state = LW_SERVICE_STATE_STOPPING;       
+        LwSmNotifyServiceObjectStateChange(pObject, pExec->state);
+        
         if (kill(pExec->pid, SIGTERM) < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
             BAIL_ON_ERROR(dwError);
         }
-        pExec->state = LW_SERVICE_STATE_STOPPING;       
-        LwSmNotifyServiceObjectStateChange(pObject, pExec->state);
-
-        /* The background thread will notice when the
+        
+        /* The associated task will notice when the
            child process finally exits and update the
-           status to LW_SERVICE_STOPPED */
+           status to LW_SERVICE_STOPPED.  We can release the
+           task handle now since we will no longer need
+           to use it */
+        LwRtlReleaseTask(&pExec->pTask);
         break;
     case LW_SERVICE_STATE_DEAD:
         /* Go directly to stopped state */
         pExec->state = LW_SERVICE_STATE_STOPPED;
         LwSmNotifyServiceObjectStateChange(pObject, pExec->state);
+        if (pExec->pTask)
+        {
+            /* Cancel task in case it's still alive for some reason */
+            LwRtlCancelTask(pExec->pTask);
+            /* Release task handle */
+            LwRtlReleaseTask(&pExec->pTask);
+        }
         break;
     }
 
@@ -446,26 +460,10 @@ LwSmExecutableConstruct(
     pExec->type = pInfo->type;
     pExec->state = LW_SERVICE_STATE_STOPPED;
     pExec->pObject = pObject;
-    LwSmLinkInit(&pExec->link);
-    LwSmLinkInit(&pExec->threadLink);
 
     *ppData = pExec;
 
     LOCK(bLocked, &gProcTable.lock);
-
-    LwSmLinkInsertBefore(&gProcTable.execs, &pExec->link);
-
-    if (!gProcTable.bThreadStarted)
-    {
-        dwError = LwMapErrnoToLwError(pthread_create(
-                                          &gProcTable.thread,
-                                          NULL,
-                                          LwSmExecutableThread,
-                                          NULL));
-        BAIL_ON_ERROR(dwError);
-
-        gProcTable.bThreadStarted = TRUE;
-    }
 
 cleanup:
 
@@ -484,108 +482,140 @@ LwSmExecutableDestruct(
     PLW_SERVICE_OBJECT pObject
     )
 {
+    PSM_EXECUTABLE pExec = LwSmGetServiceObjectData(pObject);
+
+    if (pExec->notifyFd >= 0)
+    {
+        close(pExec->notifyFd);
+    }
+
+    if (pExec->pTask)
+    {
+        LwRtlCancelTask(pExec->pTask);
+        LwRtlReleaseTask(&pExec->pTask);
+    }
+
     return;
 }
 
 static
-PVOID
-LwSmExecutableThread(
-    PVOID pData
+VOID
+LwSmExecutableTask(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pllTime
     )
 {
     BOOLEAN bLocked = FALSE;
-    PSM_LINK pLink = NULL;
-    PSM_LINK pNext = NULL;
-    PSM_EXECUTABLE pExec = NULL;
-    PLW_SERVICE_OBJECT pObject = NULL;
+    PSM_EXECUTABLE pExec = pContext;
     pid_t pid = -1;
-    int status = 0;
-    SM_LINK changed;
-    sigset_t set;
-    int sig = 0;
+    NTSTATUS status = STATUS_SUCCESS;
+    char c = 0;
+    int ret = 0;
+    siginfo_t info;
 
-    sigemptyset(&set);
-    sigaddset(&set, SIGCHLD);
-    
-    LwSmLinkInit(&changed);
-    
-    for (;;)
+    LOCK(bLocked, &gProcTable.lock);
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
     {
-        LwSmLinkRemove(&changed);
-        
-        LOCK(bLocked, &gProcTable.lock);
-        
-        if (gProcTable.bThreadStop)
+        status = LwRtlSetTaskUnixSignal(pTask, SIGCHLD, TRUE);
+        BAIL_ON_ERROR(status);
+
+        *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
+
+        if (pExec->notifyFd >= 0)
         {
-            break;
+            status = LwRtlSetTaskFd(pTask, pExec->notifyFd, LW_TASK_EVENT_FD_READABLE);
+            BAIL_ON_ERROR(status);
+
+            *pWaitMask |= LW_TASK_EVENT_FD_READABLE;
         }
-        
-        pLink = NULL;
-
-        while ((pLink = SM_LINK_ITERATE(&gProcTable.execs, pLink)))
+    }
+    else if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+        goto cleanup;
+    }
+    else if (WakeMask & LW_TASK_EVENT_FD_READABLE)
+    {
+        do
         {
-            pExec = STRUCT_FROM_MEMBER(pLink, SM_EXECUTABLE, link);
+            ret = read(pExec->notifyFd, &c, sizeof(c));
+        } while (ret < 0 && errno == EINTR);
 
-            if (pExec->pid != -1)
+        if (ret != sizeof(c) || c != 0)
+        {
+            goto error;
+        }
+
+        status = LwRtlSetTaskFd(pTask, pExec->notifyFd, 0);
+        BAIL_ON_ERROR(status);
+
+        close(pExec->notifyFd);
+        pExec->notifyFd = -1;
+
+        pExec->state = LW_SERVICE_STATE_RUNNING;
+        LwSmNotifyServiceObjectStateChange(pExec->pObject, pExec->state);
+
+        *pWaitMask &= ~LW_TASK_EVENT_FD_READABLE;
+    }
+    else if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
+    {
+        while (LwRtlNextTaskUnixSignal(pTask, &info))
+        {
+            if (info.si_signo == SIGCHLD)
             {
-                pid = waitpid(pExec->pid, &status, WNOHANG);
+                pid = waitpid(pExec->pid, &ret, WNOHANG);
                 
                 if (pid == pExec->pid)
                 {
+                    pExec->pid = -1;
+
                     switch (pExec->state)
                     {
                     case LW_SERVICE_STATE_STOPPING:
                         pExec->state = LW_SERVICE_STATE_STOPPED;
-                        break;
+                        LwSmNotifyServiceObjectStateChange(pExec->pObject, pExec->state);
+                        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+                        goto cleanup;
                     default:
-                        pExec->state = LW_SERVICE_STATE_DEAD;
-                        break;
+                        /* Uh-oh */
+                        goto error;
                     }
-                    
-                    pExec->pid = -1;
-                    
-                    LwSmLinkRemove(&pExec->threadLink);
-                    LwSmLinkInsertBefore(&changed, &pExec->threadLink);
-                }
-            }
-            else
-            {
-                switch (pExec->state)
-                {
-                case LW_SERVICE_STATE_STARTING:
-                    if (LwSmForkProcess(pExec) == 0)
-                    {
-                          LwSmLinkRemove(&pExec->threadLink);
-                          LwSmLinkInsertBefore(&changed, &pExec->threadLink);
-                    }
-                    break;
-                default:
-                    break;
                 }
             }
         }
-
-        UNLOCK(bLocked, &gProcTable.lock);
-
-        for (pLink = changed.pNext; pLink != &changed; pLink = pNext)
-        {
-            pNext = pLink->pNext;
-            pExec = STRUCT_FROM_MEMBER(pLink, SM_EXECUTABLE, threadLink);
-            pObject = pExec->pObject;
-            
-            LwSmLinkRemove(pLink);
-            
-            LwSmNotifyServiceObjectStateChange(pObject, pExec->state);
-            LwSmReleaseServiceObject(pObject);
-        }
-
-        do
-        {
-            sigwait(&set, &sig);
-        } while (sig != SIGCHLD);
     }
 
-    return NULL;
+cleanup:
+
+    UNLOCK(bLocked, &gProcTable.lock);
+    
+    return;
+
+error:
+
+    pExec->state = LW_SERVICE_STATE_DEAD;
+    LwSmNotifyServiceObjectStateChange(pExec->pObject, pExec->state);
+  
+    if (pExec->pid >= 0)
+    {
+        kill(pExec->pid, SIGKILL);
+        waitpid(pExec->pid, &ret, 0);
+        pExec->pid = -1;
+    }
+
+    if (pExec->notifyFd >= 0)
+    {
+        close(pExec->notifyFd);
+        pExec->notifyFd = -1;
+    }
+
+    *pWaitMask = LW_TASK_EVENT_COMPLETE;
+
+    goto cleanup;
 }
 
 static
@@ -615,7 +645,14 @@ ServiceLoaderInit(
     PLW_SERVICE_LOADER_PLUGIN* ppPlugin
     )
 {
+    DWORD dwError = 0;
+
+    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gProcTable.pPool, NULL));
+    BAIL_ON_ERROR(dwError);
+
     *ppPlugin = &gPlugin;
     
-    return LW_ERROR_SUCCESS;
+error:
+
+    return dwError;
 }

@@ -40,16 +40,19 @@
 
 static struct
 {
+    PLW_THREAD_POOL pPool;
     LWMsgContext* pIpcContext;
     LWMsgProtocol* pIpcProtocol;
     LWMsgServer* pIpcServer;
     BOOLEAN bStartAsDaemon;
+    BOOLEAN bNotified;
     int notifyPipe[2];
     LW_SM_LOG_LEVEL logLevel;
     PCSTR pszLogFilePath;
     BOOLEAN bSyslog;
 } gState = 
 {
+    .pPool = NULL,
     .pIpcContext = NULL,
     .pIpcProtocol = NULL,
     .pIpcServer = NULL,
@@ -75,13 +78,7 @@ LwSmDaemonize(
 
 static
 DWORD
-LwSmConfigureSignals(
-    VOID
-    );
-
-static
-DWORD
-LwSmWaitSignals(
+LwSmMain(
     VOID
     );
 
@@ -134,16 +131,15 @@ main(
     )
 {
     DWORD dwError = 0;
-    BOOLEAN bNotified = FALSE;
 
     /* Parse command line */
     dwError = LwSmParseArguments(argc, ppszArgv);
     BAIL_ON_ERROR(dwError);
 
-    /* Block signals */
-    dwError = LwSmConfigureSignals();
+    /* Block all signals */
+    dwError = LwNtStatusToWin32Error(LwRtlBlockSignals());
     BAIL_ON_ERROR(dwError);
-    
+
     /* Fork into background if running as a daemon */
     if (gState.bStartAsDaemon)
     {
@@ -159,40 +155,8 @@ main(
     dwError = LwSmLoaderInitialize(&gTableCalls);
     BAIL_ON_ERROR(dwError);
 
-    /* Bootstrap ourselves by adding and starting any
-       services we need to run (e.g. registry) */
-    dwError = LwSmBootstrap();
-    BAIL_ON_ERROR(dwError);
-
-    /* Read configuration and populate service table */
-    dwError = LwSmPopulateTable();
-    BAIL_ON_ERROR(dwError);
-
-    /* Start IPC server */
-    dwError = LwSmStartIpcServer();
-    BAIL_ON_ERROR(dwError);
-
-    /* If we are starting as a daemon, indicate that we
-       are ready to the parent process.  This ensures that
-       the parent does not exit until we are actually accepting
-       IPC connections */
-    if (gState.bStartAsDaemon)
-    {
-        dwError = LwSmNotify(0);
-        BAIL_ON_ERROR(dwError);
-        bNotified = TRUE;
-    }
-
-    /* Loop waiting for signals */
-    dwError = LwSmWaitSignals();
-    BAIL_ON_ERROR(dwError);
-
-    /* Stop IPC server */
-    dwError = LwSmStopIpcServer();
-    BAIL_ON_ERROR(dwError);
-
-    /* Shut down all running services as we exit */
-    dwError = LwSmShutdownServices();
+    /* Enter main loop */
+    dwError = LwSmMain();
     BAIL_ON_ERROR(dwError);
 
     /* Shut down logging */
@@ -204,7 +168,7 @@ error:
     /* If we are starting as a daemon and have not
        notified the parent process yet, notify it
        of an error now */
-    if (gState.bStartAsDaemon && !bNotified)
+    if (gState.bStartAsDaemon && !gState.bNotified)
     {
         LwSmNotify(1);
     }
@@ -412,141 +376,183 @@ error:
 
 static
 VOID
-LwSmHandleSigint(
-    int sig
+Startup(
+    PVOID pUnused
     )
 {
-    raise(SIGTERM);
+    DWORD dwError = 0;
+
+    /* Bootstrap ourselves by adding and starting any
+       services we need to run (e.g. registry) */
+    dwError = LwSmBootstrap();
+    BAIL_ON_ERROR(dwError);
+    
+    /* Read configuration and populate service table */
+    dwError = LwSmPopulateTable();
+    BAIL_ON_ERROR(dwError);
+    
+    /* Start IPC server */
+    dwError = LwSmStartIpcServer();
+    BAIL_ON_ERROR(dwError);
+
+    /* If we are starting as a daemon, indicate that we
+       are ready to the parent process.  This ensures that
+       the parent does not exit until we are actually accepting
+       IPC connections */
+    if (gState.bStartAsDaemon)
+    {
+        dwError = LwSmNotify(0);
+        BAIL_ON_ERROR(dwError);
+        gState.bNotified = TRUE;
+    }
+
+    return;
+
+error:
+
+    LwRtlExitMain(STATUS_UNSUCCESSFUL);
 }
 
 static
 VOID
-LwSmHandleSig(
-    int sig
-    )
-{
-    return;
-}
-
-static
-DWORD
-LwSmConfigureSignals(
-    VOID
+RefreshConfig(
+    PVOID pUnused
     )
 {
     DWORD dwError = 0;
-    sigset_t set;
-    static int blockSignals[] =
-    {
-        SIGTERM,
-        SIGCHLD,
-        SIGHUP,
-        SIGPIPE,
-        -1
-    };
-    int i = 0;
-    struct sigaction action;
 
-    memset(&action, 0, sizeof(action));
+    dwError = LwSmPopulateTable();
+    BAIL_ON_ERROR(dwError);
 
-    if (sigemptyset(&set) < 0)
+    return;
+
+error:
+
+    LwRtlExitMain(STATUS_UNSUCCESSFUL);
+}
+
+static
+VOID
+Shutdown(
+    PVOID pUnused
+    )
+{
+    DWORD dwError = 0;
+
+    /* Shut down all running services  */
+    dwError = LwSmShutdownServices();
+    BAIL_ON_ERROR(dwError);
+    
+    /* Stop IPC server */
+    dwError = LwSmStopIpcServer();
+    BAIL_ON_ERROR(dwError);
+
+    /* Exit from main loop */
+    LwRtlExitMain(STATUS_SUCCESS);
+
+    return;
+
+error:
+    
+    LwRtlExitMain(STATUS_UNSUCCESSFUL);
+}
+ 
+
+static
+VOID
+MainTask(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pllTime
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    siginfo_t info;
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
     {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_ERROR(dwError);
+        status = LwRtlSetTaskUnixSignal(pTask, SIGTERM, TRUE);
+        BAIL_ON_ERROR(status);
+
+        status = LwRtlSetTaskUnixSignal(pTask, SIGINT, TRUE);
+        BAIL_ON_ERROR(status);
+
+        status = LwRtlSetTaskUnixSignal(pTask, SIGHUP, TRUE);
+        BAIL_ON_ERROR(status);
+        
+        status = LwRtlQueueWorkItem(gState.pPool, Startup, NULL, 0);
+        BAIL_ON_ERROR(status);
+
+        *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
     }
-
-    for (i = 0; blockSignals[i] != -1; i++)
+    else if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
     {
-        if (sigaddset(&set, blockSignals[i]) < 0)
+        while (LwRtlNextTaskUnixSignal(pTask, &info))
         {
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_ERROR(dwError); 
+            switch(info.si_signo)
+            {
+            case SIGTERM:
+            case SIGINT:
+                /* Shutting down stops all running services, which is a blocking operation */
+                status = LwRtlQueueWorkItem(gState.pPool, Shutdown, NULL, 0);
+                BAIL_ON_ERROR(status);
+                *pWaitMask = LW_TASK_EVENT_COMPLETE;
+                goto cleanup;
+            case SIGHUP:
+                /* Refreshing config reads from the registry, which is a blocking operation */
+                status = LwRtlQueueWorkItem(gState.pPool, RefreshConfig, NULL, 0);
+                BAIL_ON_ERROR(status);
+                break;
+            default:
+                break;
+            }
         }
-
-	action.sa_handler = LwSmHandleSig;
-	action.sa_flags = 0;
-
-	if (sigaction(blockSignals[i], &action, NULL) < 0)
-        {
-             dwError = LwMapErrnoToLwError(errno);
-             BAIL_ON_ERROR(dwError);
-        }
-    }
-
-    dwError = LwMapErrnoToLwError(pthread_sigmask(SIG_SETMASK, &set, NULL));
-    BAIL_ON_ERROR(dwError); 
-
-    action.sa_handler = LwSmHandleSigint;
-    action.sa_flags = 0;
-
-    if (sigaction(SIGINT, &action, NULL) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_ERROR(dwError);
+        
+        *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
     }
 
 cleanup:
 
-    return dwError;
+    return;
 
 error:
+
+    if (status)
+    {
+        LwRtlExitMain(status);
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+    }
 
     goto cleanup;
 }
 
 static
 DWORD
-LwSmWaitSignals(
+LwSmMain(
     VOID
     )
 {
     DWORD dwError = 0;
-    sigset_t set;
-    static int waitSignals[] =
-    {
-        SIGTERM,
-        SIGHUP,
-        -1
-    };
-    int sig = -1;
-    int i = 0;
+    PLW_TASK pTask = NULL;
 
-    if (sigemptyset(&set) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_ERROR(dwError);
-    }
+    dwError = LwNtStatusToWin32Error(LwRtlCreateThreadPool(&gState.pPool, NULL));
+    BAIL_ON_ERROR(dwError);
 
-    for (i = 0; waitSignals[i] != -1; i++)
-    {
-        if (sigaddset(&set, waitSignals[i]) < 0)
-        {
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_ERROR(dwError); 
-        }
-    }
+    dwError = LwNtStatusToWin32Error(LwRtlCreateTask(
+                                         gState.pPool,
+                                         &pTask,
+                                         NULL,
+                                         MainTask,
+                                         NULL));
+    BAIL_ON_ERROR(dwError);
 
-    for (;;)
-    {
-        if (sigwait(&set, &sig) < 0)
-        {
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_ERROR(dwError);
-        }
+    LwRtlWakeTask(pTask);
+    LwRtlReleaseTask(&pTask);
 
-        switch (sig)
-        {
-        case SIGTERM:
-            SM_LOG_ALWAYS("Shutting down on SIGTERM");
-            goto cleanup;
-        case SIGHUP:
-            dwError = LwSmPopulateTable();
-            BAIL_ON_ERROR(dwError);
-            break;
-        default:
-            break;
-        }
-    }
+    dwError = LwNtStatusToWin32Error(LwRtlMain());
+    BAIL_ON_ERROR(dwError);
 
 cleanup:
 
@@ -633,7 +639,7 @@ LwSmLogIpc (
         {
             LwSmLogMessage(
                 smLevel,
-                __FUNCTION__,
+                pszFunction,
                 pszFilename,
                 line,
                 pszMessage);
