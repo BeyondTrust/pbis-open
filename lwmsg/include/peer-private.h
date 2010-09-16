@@ -250,14 +250,6 @@ lwmsg_peer_unlock(
     );
 
 LWMsgStatus
-lwmsg_peer_assoc_task_new(
-    LWMsgPeer* peer,
-    LWMsgTaskGroup* group,
-    PeerAssocTaskType type,
-    PeerAssocTask** task
-    );
-
-LWMsgStatus
 lwmsg_peer_assoc_task_new_connect(
     LWMsgPeer* peer,
     LWMsgAssoc* assoc,

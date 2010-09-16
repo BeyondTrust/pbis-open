@@ -450,10 +450,9 @@ lwmsg_peer_call_equal(
     return *((const LWMsgCookie*) key1) == *((const LWMsgCookie*) key2);
 }
 
-LWMsgStatus
+static LWMsgStatus
 lwmsg_peer_assoc_task_new(
     LWMsgPeer* peer,
-    LWMsgTaskGroup* group,
     PeerAssocTaskType type,
     PeerAssocTask** task
     )
@@ -474,13 +473,6 @@ lwmsg_peer_assoc_task_new(
     free_mutex = LWMSG_TRUE;
     BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_cond_init(&my_task->call_event, NULL)));
     free_cond = LWMSG_TRUE;
-
-    BAIL_ON_ERROR(status = lwmsg_task_new(
-                      peer->task_manager,
-                      group,
-                      lwmsg_peer_task_run,
-                      my_task,
-                      &my_task->event_task));
 
     my_task->peer = peer;
     my_task->type = type;
@@ -710,15 +702,31 @@ lwmsg_peer_assoc_task_new_accept(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* my_task = NULL;
     
-    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, peer->listen_tasks, PEER_TASK_BEGIN_ACCEPT, &my_task));
+    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, PEER_TASK_BEGIN_ACCEPT, &my_task));
 
     my_task->assoc = assoc;
 
+    BAIL_ON_ERROR(status = lwmsg_task_new(
+                       peer->task_manager,
+                       peer->listen_tasks,
+                       lwmsg_peer_task_run,
+                       my_task,
+                       &my_task->event_task));
+
     *task = my_task;
+
+done:
+
+    return status;
 
 error:
 
-    return status;
+    if (my_task)
+    {
+        lwmsg_peer_task_delete(my_task);
+    }
+
+    goto done;
 }
 
 LWMsgStatus
@@ -732,16 +740,32 @@ lwmsg_peer_assoc_task_new_connect(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* my_task = NULL;
     
-    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, peer->connect_tasks, PEER_TASK_BEGIN_CONNECT, &my_task));
+    BAIL_ON_ERROR(status = lwmsg_peer_assoc_task_new(peer, PEER_TASK_BEGIN_CONNECT, &my_task));
 
     my_task->assoc = assoc;
     my_task->session = session;
 
+
+    BAIL_ON_ERROR(status = lwmsg_task_new(
+                          peer->task_manager,
+                          peer->connect_tasks,
+                          lwmsg_peer_task_run,
+                          my_task,
+                          &my_task->event_task));
     *task = my_task;
+
+done:
+
+    return status;
 
 error:
 
-    return status;
+    if (my_task)
+    {
+        lwmsg_peer_task_delete(my_task);
+    }
+
+    goto done;
 }
 
 static
