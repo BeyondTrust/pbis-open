@@ -114,7 +114,7 @@ typedef struct _LW_SIGNAL_SUBSCRIPTION
     PLW_TASK pTask;
     RING Ring;
     RING DispatchRing;
-    UCHAR ucRefCount;
+    UCHAR volatile ucRefCount;
 } LW_SIGNAL_SUBSCRIPTION, *PLW_SIGNAL_SUBSCRIPTION;
 
 typedef struct _LW_SIGNAL_MULTIPLEX
