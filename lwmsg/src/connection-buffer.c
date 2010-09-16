@@ -75,9 +75,14 @@ void
 lwmsg_connection_buffer_empty(ConnectionBuffer* buffer)
 {
     LWMsgRing* ring, *next;
+    size_t i = 0;
 
     if (buffer->fd)
     {
+        for (i = 0; i < buffer->fd_length; i++)
+        {
+            close(buffer->fd[i]);
+        }
         memset(buffer->fd, 0xFF, sizeof(int) * buffer->fd_capacity);
     }
 
