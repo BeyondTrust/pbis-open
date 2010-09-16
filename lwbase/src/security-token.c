@@ -1037,7 +1037,6 @@ RtlSelfRelativeAccessTokenToAccessToken(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PACCESS_TOKEN pToken = NULL;
     ULONG ulOffset = 0;
     PBYTE pBuffer = (PBYTE) pRelative;
     PSID pSid = NULL;
@@ -1045,29 +1044,30 @@ RtlSelfRelativeAccessTokenToAccessToken(
     ULONG ulSize = 0;
     ULONG ulRealSize = 0;
     ULONG i = 0;
-
-    status = RTL_ALLOCATE(&pToken, ACCESS_TOKEN, sizeof(*pToken));
-    GOTO_CLEANUP_ON_STATUS(status);
-
-    pToken->ReferenceCount = 1;
+    TOKEN_USER User = {{0}};
+    TOKEN_OWNER Owner = {0};
+    TOKEN_PRIMARY_GROUP PrimaryGroup = {0};
+    TOKEN_UNIX Unix = {0};
+    PTOKEN_GROUPS pTokenGroups = NULL;
+    TOKEN_DEFAULT_DACL DefaultDacl = {0};
 
     status = CheckOffset(0, sizeof(*pRelative), ulRelativeSize);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    pToken->Flags = pRelative->Flags;
-    pToken->User.Attributes = pRelative->User.Attributes;
-    pToken->GroupCount = pRelative->GroupCount;
-    pToken->Uid = pRelative->Uid;
-    pToken->Gid = pRelative->Gid;
-    pToken->Umask = pRelative->Umask;
+    if (pRelative->Flags & ACCESS_TOKEN_FLAG_UNIX_PRESENT)
+    {
+        Unix.Uid = pRelative->Uid;
+        Unix.Gid = pRelative->Gid;
+        Unix.Umask = pRelative->Umask;
+    }
 
+    User.User.Attributes = pRelative->User.Attributes;
     ulOffset = pRelative->User.SidOffset;
     pSid = (PSID) (pBuffer + ulOffset);
     status = RtlValidateSelfRelativeSid(pSid, ulOffset, ulRelativeSize);
     GOTO_CLEANUP_ON_STATUS(status);
     
-    status = RtlDuplicateSid(&pToken->User.Sid, pSid);
-    GOTO_CLEANUP_ON_STATUS(status);
+    User.User.Sid = pSid;
 
     ulOffset = pRelative->GroupsOffset;
     if (ulOffset)
@@ -1084,25 +1084,32 @@ RtlSelfRelativeAccessTokenToAccessToken(
             pRelative->GroupCount);
         GOTO_CLEANUP_ON_STATUS(status);
 
+        status = LwRtlSafeAddULONG(
+            &ulRealSize,
+            ulRealSize,
+            sizeof(TOKEN_GROUPS));
+        GOTO_CLEANUP_ON_STATUS(status);
+
         status = CheckOffset(ulOffset, ulSize, ulRelativeSize);
         GOTO_CLEANUP_ON_STATUS(status);
 
         pGroups = (PSID_AND_ATTRIBUTES_SELF_RELATIVE) (pBuffer + ulOffset);
         
-        status = RTL_ALLOCATE(&pToken->Groups, SID_AND_ATTRIBUTES, ulRealSize);
+        status = RTL_ALLOCATE(&pTokenGroups, TOKEN_GROUPS, ulRealSize);
         GOTO_CLEANUP_ON_STATUS(status);
         
+        pTokenGroups->GroupCount = pRelative->GroupCount;
+
         for (i = 0; i < pRelative->GroupCount; i++)
         {
-            pToken->Groups[i].Attributes = pGroups[i].Attributes;
+            pTokenGroups->Groups[i].Attributes = pGroups[i].Attributes;
             
             ulOffset = pGroups[i].SidOffset;
             pSid = (PSID) (pBuffer + ulOffset);
             status = RtlValidateSelfRelativeSid(pSid, ulOffset, ulRelativeSize);
             GOTO_CLEANUP_ON_STATUS(status);
             
-            status = RtlDuplicateSid(&pToken->Groups[i].Sid, pSid);
-            GOTO_CLEANUP_ON_STATUS(status);
+            pTokenGroups->Groups[i].Sid = pSid;
         }
     }
 
@@ -1113,8 +1120,7 @@ RtlSelfRelativeAccessTokenToAccessToken(
         status = RtlValidateSelfRelativeSid(pSid, ulOffset, ulRelativeSize);
         GOTO_CLEANUP_ON_STATUS(status);
     
-        status = RtlDuplicateSid(&pToken->Owner, pSid);
-        GOTO_CLEANUP_ON_STATUS(status);
+        Owner.Owner = pSid;
     }
 
     ulOffset = pRelative->PrimaryGroupOffset;
@@ -1124,17 +1130,26 @@ RtlSelfRelativeAccessTokenToAccessToken(
         status = RtlValidateSelfRelativeSid(pSid, ulOffset, ulRelativeSize);
         GOTO_CLEANUP_ON_STATUS(status);
         
-        status = RtlDuplicateSid(&pToken->PrimaryGroup, pSid);
-        GOTO_CLEANUP_ON_STATUS(status);
+        PrimaryGroup.PrimaryGroup = pSid;
     }
 
-    *ppToken = pToken;
+    status = RtlCreateAccessToken(
+        ppToken,
+        &User,
+        pTokenGroups,
+        &Owner,
+        &PrimaryGroup,
+        &DefaultDacl,
+        pRelative->Flags & ACCESS_TOKEN_FLAG_UNIX_PRESENT ? &Unix : NULL);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
 
+    RTL_FREE(&pTokenGroups);
+
     if (!NT_SUCCESS(status))
     {
-        RtlReleaseAccessToken(&pToken);
+        *ppToken = NULL;
     }
 
     return status;
