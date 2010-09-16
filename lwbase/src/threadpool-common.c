@@ -949,3 +949,12 @@ error:
     return status;
 }
 
+static
+__attribute__((destructor))
+VOID
+LwRtlThreadpoolDestructor(
+    VOID
+    )
+{
+    RTL_FREE(&gSignal.pSubscribers);
+}
