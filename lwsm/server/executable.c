@@ -447,6 +447,8 @@ LwSmExecutableConstruct(
     dwError = LwAllocateMemory(sizeof(*pExec), OUT_PPVOID(&pExec));
     BAIL_ON_ERROR(dwError);
 
+    pExec->notifyFd = -1;
+
     dwError = LwSmCopyString(pInfo->pwszPath, &pExec->pwszPath);
     BAIL_ON_ERROR(dwError);
 
