@@ -199,7 +199,7 @@ LwSmParseArguments(
             gState.bSyslog = TRUE;
             gState.logLevel = LW_SM_LOG_LEVEL_INFO;
         }
-        else if (!strcmp(ppszArgv[i], "--log-level"))
+        else if (!strcmp(ppszArgv[i], "--loglevel"))
         {
             if (++i >= argc)
             {
@@ -212,7 +212,7 @@ LwSmParseArguments(
                 &gState.logLevel);
             BAIL_ON_ERROR(dwError);
         }
-        else if (!strcmp(ppszArgv[i], "--log-file"))
+        else if (!strcmp(ppszArgv[i], "--logfile"))
         {
             if (++i >= argc)
             {
