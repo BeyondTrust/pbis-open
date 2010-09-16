@@ -781,7 +781,7 @@ DispatchSignal(
         pSub = LW_STRUCT_FROM_FIELD(pRing, LW_SIGNAL_SUBSCRIPTION, Ring);
         
         pSub->ucRefCount++;
-        RingRemove(&pSub->DispatchRing);
+        RingInit(&pSub->DispatchRing);
         RingEnqueue(&dispatch, &pSub->DispatchRing);
     }
 
@@ -800,6 +800,7 @@ DispatchSignal(
         
         if (--pSub->ucRefCount == 0)
         {
+            RingRemove(&pSub->Ring);
             LwRtlReleaseTask(&pSub->pTask);
             LwRtlMemoryFree(pSub);
         }
