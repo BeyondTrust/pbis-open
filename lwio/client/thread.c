@@ -608,7 +608,7 @@ error:
     goto cleanup;
 }
 
-
+#if 0
 static
 __attribute__((destructor))
 VOID
@@ -641,4 +641,5 @@ __LwIoDestruct()
 
     LwIoShutdown();
 }
+#endif
 
