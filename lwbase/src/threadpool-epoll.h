@@ -88,6 +88,8 @@ typedef struct _LW_TASK
     PVOID pFuncContext;
     /* File descriptor for fd-based events (owned by thread) */
     int Fd;
+    /* Pending UNIX signal (protected by thread lock) */
+    siginfo_t* pUnixSignal;
     /* Link to siblings in task group (protected by group lock) */
     RING GroupRing;
     /* Link to siblings in scheduler queue (owned by thread) */

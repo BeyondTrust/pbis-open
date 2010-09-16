@@ -39,7 +39,10 @@
 #ifndef __LWBASE_THREADPOOL_COMMON_H__
 #define __LWBASE_THREADPOOL_COMMON_H__
 
+#include <lw/threadpool.h>
 #include <pthread.h>
+#include <signal.h>
+#include <stdlib.h>
 
 /*
  * Circular linked list structure
@@ -106,8 +109,26 @@ typedef struct _LW_WORK_THREADS
     unsigned bDestroyEvent:1;
 } LW_WORK_THREADS, *PLW_WORK_THREADS;
 
+typedef struct _LW_SIGNAL_SUBSCRIPTION
+{
+    PLW_TASK pTask;
+    RING Ring;
+    RING DispatchRing;
+    UCHAR ucRefCount;
+} LW_SIGNAL_SUBSCRIPTION, *PLW_SIGNAL_SUBSCRIPTION;
+
+typedef struct _LW_SIGNAL_MULTIPLEX
+{
+    PRING pSubscribers;
+    pthread_mutex_t Lock;
+    NTSTATUS Status;
+    BOOLEAN bExit;
+} LW_SIGNAL_MULTIPLEX;
+
 #define LOCK_THREADS(m) (pthread_mutex_lock(&(m)->Lock))
 #define UNLOCK_THREADS(m) (pthread_mutex_unlock(&(m)->Lock))
+#define LOCK_SIGNAL() (pthread_mutex_lock(&gSignal.Lock))
+#define UNLOCK_SIGNAL() (pthread_mutex_unlock(&gSignal.Lock))
 
 #define INVALID_THREAD_HANDLE ((pthread_t) (size_t) - 1)
 
@@ -405,4 +426,33 @@ QueueWorkItem(
     LW_WORK_ITEM_FLAGS Flags
     );
 
+int
+GetCpuCount(
+    VOID
+    );
+
+NTSTATUS
+SetThreadAttrAffinity(
+    pthread_attr_t* pAttr,
+    int cpuNum
+    );
+
+NTSTATUS
+RegisterTaskUnixSignal(
+    LW_IN PLW_TASK pTask,
+    LW_IN int Sig,
+    LW_IN LW_BOOLEAN bSubscribe
+    );
+
+/* These private functions are implemented by each threadpool backend */
+VOID
+NotifyTaskUnixSignal(
+    PLW_TASK pTask,
+    siginfo_t* info
+    );
+
+VOID
+RetainTask(
+    PLW_TASK pTask
+    );
 #endif

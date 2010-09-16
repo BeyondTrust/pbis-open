@@ -41,6 +41,7 @@
 
 #include <lw/types.h>
 #include <lw/attrs.h>
+#include <signal.h>
 
 LW_BEGIN_EXTERN_C
 
@@ -112,7 +113,7 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_COMPLETE     = 0x00,
+    LW_TASK_EVENT_COMPLETE     = 0x000,
     /**
      * A special bit which indicates that a task has been
      * run for the first time when passed as WakeMask
@@ -120,7 +121,7 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_INIT         = 0x01,
+    LW_TASK_EVENT_INIT         = 0x001,
     
     /**
      * Indicates that the task was explicitly woken by
@@ -129,7 +130,7 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_EXPLICIT     = 0x02,
+    LW_TASK_EVENT_EXPLICIT     = 0x002,
 
     /**
      * Indicates that the task has been cancelled.
@@ -139,28 +140,28 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_CANCEL       = 0x04,
+    LW_TASK_EVENT_CANCEL       = 0x004,
     
     /**
      * Indicates that the last set timeout has expired.
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_TIME         = 0x08,
+    LW_TASK_EVENT_TIME         = 0x008,
 
     /**
      * Indicates that a file descriptor has become readable.
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_FD_READABLE  = 0x10,
+    LW_TASK_EVENT_FD_READABLE  = 0x010,
 
     /**
      * Indicates that a file descriptor has become writable.
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_FD_WRITABLE  = 0x20,
+    LW_TASK_EVENT_FD_WRITABLE  = 0x020,
 
     /**
      * Indicates that an exception event occurred on a file
@@ -168,7 +169,7 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_FD_EXCEPTION = 0x40,
+    LW_TASK_EVENT_FD_EXCEPTION = 0x040,
     
     /**
      * Indicates that the task should be immediately run
@@ -176,7 +177,15 @@ typedef enum _LW_TASK_EVENT_MASK
      *
      * @hideinitializer
      */
-    LW_TASK_EVENT_YIELD        = 0x80
+    LW_TASK_EVENT_YIELD        = 0x080,
+
+    /**
+     * Indicates that one or more UNIX signals which the task
+     * subscribes to have arrived.
+     *
+     * @hideinitializer
+     */
+    LW_TASK_EVENT_UNIX_SIGNAL  = 0x100
 } LW_TASK_EVENT_MASK, *PLW_TASK_EVENT_MASK;
 
 /**
@@ -455,6 +464,56 @@ LwRtlQueryTaskFd(
     );
 
 /**
+ * @brief Configure UNIX signal wakeup events
+ *
+ * Configures whether the given task will be notified
+ * when the specified UNIX signal is delivered to the process.
+ *
+ * Note that if a task is configured to receive any UNIX signals,
+ * it must wait for the #LW_TASK_EVENT_UNIX_SIGNAL event and reap
+ * any delivered signals with #LwRtlNextTaskUnixSignal().  Failure
+ * to do so can cause the main signal dispatch loop to hang.
+ *
+ * @warning The result of calling this function from outside of an
+ * #LW_TASK_FUNCTION is undefined.
+ *
+ * @param[in,out] pTask the task
+ * @param[in] Sig the signal number
+ * @param[in] bSubscribe whether the task should be notified
+ * @retval #LW_STATUS_SUCCESS success
+ * @retval #LW_STATUS_INVALID_PARAMETER the provided signal was invalid
+ * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
+ */
+LW_NTSTATUS
+LwRtlSetTaskUnixSignal(
+    LW_IN PLW_TASK pTask,
+    LW_IN int Sig,
+    LW_IN LW_BOOLEAN bSubscribe
+    );
+
+/**
+ * @brief Get next UNIX signal delivered to task
+ *
+ * Gets the next UNIX signal which was delivered to the specified task.
+ * Because #LW_TASK_EVENT_UNIX_SIGNAL events are edge-triggered, you should
+ * continue calling this function as long as it returns TRUE in order to
+ * ensure that no signals are missed.
+ *
+ * @warning The result of calling this function from outside of an
+ * #LW_TASK_FUNCTION is undefined.
+ *
+ * @param[in,out] pTask the task
+ * @param[out] pInfo information about the UNIX signal
+ * @retval TRUE a signal was pending, and information about it was placed in pInfo
+ * @retval FALSE no signal was pending
+ */
+LW_BOOLEAN
+LwRtlNextTaskUnixSignal(
+    LW_IN PLW_TASK pTask,
+    LW_OUT siginfo_t* pInfo
+    );
+
+/**
  * @brief Manually wake task
  *
  * Causes the specified task to wake up immediately with the
@@ -631,6 +690,49 @@ LwRtlCreateThreadPool(
 LW_VOID
 LwRtlFreeThreadPool(
     LW_IN LW_OUT PLW_THREAD_POOL* ppPool
+    );
+
+/**
+ * @brief Main signal loop
+ *
+ * Runs the threadpool main signal loop.  You must call this function from
+ * your program's main thread if you wish to use UNIX signal events with
+ * your threadpool tasks.
+ *
+ * This function will not return until #LwRtlExitMain() is called.
+ *
+ * @return the status passed to #LwRtlExitMain()
+ */
+LW_NTSTATUS
+LwRtlMain(
+    LW_VOID
+    );
+
+/**
+ * @brief Exit main loop
+ *
+ * Causes #LwRtlMain() to return with the specified status code
+ *
+ * @param[in] Status the status that #LwRtlMain() should return
+ */
+LW_VOID
+LwRtlExitMain(
+    LW_NTSTATUS Status
+    );
+
+/**
+ * @brief Block all signals in the current thread
+ *
+ * Blocks all signals in the current thread.  It is recommended that
+ * your application call this function from the main thread before creating
+ * any other threads.  This guarantees that all signals will be properly
+ * delivered to #LwRtlMain().
+ *
+ * @retval LW_STATUS_SUCCESS success
+ */
+LW_NTSTATUS
+LwRtlBlockSignals(
+    VOID
     );
 
 /*@}*/

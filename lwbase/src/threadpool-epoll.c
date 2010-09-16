@@ -51,6 +51,7 @@ TaskDelete(
     PEPOLL_TASK pTask
     )
 {
+    RTL_FREE(&pTask->pUnixSignal);
     RtlMemoryFree(pTask);
 }
 
@@ -442,6 +443,12 @@ ProcessRunnable(
                     GOTO_ERROR_ON_STATUS(status);
                 }
 
+                /* Unsubscribe task from any UNIX signals */
+                if (pTask->pUnixSignal)
+                {
+                    RegisterTaskUnixSignal(pTask, 0, FALSE);
+                }
+
                 LOCK_POOL(pThread->pPool);
                 pThread->ulLoad--;
                 UNLOCK_POOL(pThread->pPool);
@@ -794,6 +801,19 @@ LwRtlReleaseTask(
 }
 
 VOID
+RetainTask(
+    PLW_TASK pTask
+    )
+{
+    if (pTask)
+    {
+        LOCK_THREAD(pTask->pThread);
+        ++pTask->ulRefCount;
+        UNLOCK_THREAD(pTask->pThread);
+    }
+}
+
+VOID
 LwRtlFreeTaskGroup(
     PLW_TASK_GROUP* ppGroup
     )
@@ -912,6 +932,92 @@ LwRtlWakeTask(
     }
 
     UNLOCK_THREAD(pTask->pThread);
+}
+
+LW_NTSTATUS
+LwRtlSetTaskUnixSignal(
+    LW_IN PLW_TASK pTask,
+    LW_IN int Sig,
+    LW_IN LW_BOOLEAN bSubscribe
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (bSubscribe && !pTask->pUnixSignal)
+    {
+        status = LW_RTL_ALLOCATE_AUTO(&pTask->pUnixSignal);
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
+    status = RegisterTaskUnixSignal(pTask, Sig, bSubscribe);
+    GOTO_ERROR_ON_STATUS(status);
+
+error:
+
+    UNLOCK_THREAD(pTask->pThread);
+
+    return status;
+}
+
+void
+NotifyTaskUnixSignal(
+    PLW_TASK pTask,
+    siginfo_t* pInfo
+    )
+{
+    LOCK_THREAD(pTask->pThread);
+
+    if (pTask->EventSignal != TASK_COMPLETE_MASK)
+    {
+        while (pTask->pUnixSignal->si_signo)
+        {
+            pthread_cond_wait(&pTask->pThread->Event, &pTask->pThread->Lock);
+            if (pTask->EventSignal == TASK_COMPLETE_MASK)
+            {
+                goto cleanup;
+            }
+        }
+
+        *pTask->pUnixSignal = *pInfo;
+        pTask->EventSignal |= LW_TASK_EVENT_UNIX_SIGNAL;
+        RingRemove(&pTask->SignalRing);
+        RingEnqueue(&pTask->pThread->Tasks, &pTask->SignalRing);
+        SignalThread(pTask->pThread);
+    }
+
+cleanup:
+
+    UNLOCK_THREAD(pTask->pThread);
+}
+
+LW_BOOLEAN
+LwRtlNextTaskUnixSignal(
+    LW_IN PLW_TASK pTask,
+    LW_OUT siginfo_t* pInfo
+    )
+{
+    BOOLEAN bResult = FALSE;
+
+    LOCK_THREAD(pTask->pThread);
+
+    if (pTask->pUnixSignal == NULL || pTask->pUnixSignal->si_signo == 0)
+    {
+        bResult = FALSE;
+    }
+    else
+    {
+        if (pInfo)
+        {
+            *pInfo = *pTask->pUnixSignal;
+        }
+        pTask->pUnixSignal->si_signo = 0;
+        pthread_cond_broadcast(&pTask->pThread->Event);
+        bResult = TRUE;
+    }
+
+    UNLOCK_THREAD(pTask->pThread);
+
+    return bResult;
 }
 
 VOID
@@ -1271,6 +1377,3 @@ LwRtlQueueWorkItem(
 {
     return QueueWorkItem(&pPool->WorkThreads, pfnFunc, pContext, Flags);
 }
-
-
-

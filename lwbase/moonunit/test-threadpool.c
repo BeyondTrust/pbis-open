@@ -72,7 +72,8 @@ pthread_cond_t gEvent = PTHREAD_COND_INITIALIZER;
 
 MU_FIXTURE_SETUP(Task)
 {
-    MU_ASSERT_STATUS_SUCCESS(LwRtlCreateThreadPool(&gpPool, NULL));
+    MU_ASSERT_STATUS_SUCCESS(LwRtlBlockSignals());
+    MU_ASSERT_STATUS_SUCCESS(LwRtlCreateThreadPool(&gpPool, NULL));   
 }
 
 MU_FIXTURE_TEARDOWN(Task)
@@ -314,4 +315,58 @@ MU_TEST(Task, Transceive)
             (unsigned long long) ullTotal,
             ullTime / 1000000000.0,
             (ullTotal / 131072.0) / (ullTime / 1000000000.0));
+}
+
+static
+VOID
+WaitSigTerm(
+    PLW_TASK pTask,
+    PVOID pContext,
+    LW_TASK_EVENT_MASK WakeMask,
+    PLW_TASK_EVENT_MASK pWaitMask,
+    PLONG64 pllTime
+    )
+{
+    siginfo_t info;
+
+    if (WakeMask & LW_TASK_EVENT_INIT)
+    {
+        MU_ASSERT_STATUS_SUCCESS(LwRtlSetTaskUnixSignal(pTask, SIGTERM, TRUE));
+        *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
+        kill(getpid(), SIGTERM);
+    }
+    else if (WakeMask & LW_TASK_EVENT_UNIX_SIGNAL)
+    {
+        while (LwRtlNextTaskUnixSignal(pTask, &info))
+        {
+            switch(info.si_signo)
+            {
+            case SIGTERM:
+                LwRtlExitMain(STATUS_SUCCESS);
+                *pWaitMask = LW_TASK_EVENT_COMPLETE;
+                return;
+                break;
+            default:
+                break;
+            }
+        }
+
+        *pWaitMask = LW_TASK_EVENT_UNIX_SIGNAL;
+    }
+}
+
+MU_TEST(Task, ExitOnSignal)
+{
+    PLW_TASK pTask = NULL;
+
+    MU_ASSERT_STATUS_SUCCESS(LwRtlCreateTask(
+                                 gpPool,
+                                 &pTask,
+                                 NULL,
+                                 WaitSigTerm, 
+                                 NULL));
+
+    LwRtlWakeTask(pTask);
+
+    MU_ASSERT_STATUS_SUCCESS(LwRtlMain());
 }

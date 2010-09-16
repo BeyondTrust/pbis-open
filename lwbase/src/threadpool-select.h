@@ -79,6 +79,8 @@ typedef struct _LW_TASK
     PVOID pFuncContext;
     /* File descriptor for fd-based events */
     int Fd;
+    /* Latest signal event */
+    siginfo_t* pUnixSignal;
     /* Wait mask for fd */
     LW_TASK_EVENT_MASK FdWaitMask;
     /* Set mask for fd */
