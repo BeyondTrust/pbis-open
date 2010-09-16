@@ -93,12 +93,13 @@ MU_TEST(task, basic_work_item)
 static const int target = 5;
 
 static
-LWMsgStatus
+void
 timer_task(
+    LWMsgTask* task,
     void* data,
     LWMsgTaskTrigger trigger,
     LWMsgTaskTrigger* next_trigger,
-    LWMsgTime* next_time
+    LWMsgTaskTime* next_time
     )
 {
     int volatile * value = data;
@@ -116,15 +117,12 @@ timer_task(
     {
         (*value)++;
         *next_trigger = LWMSG_TASK_TRIGGER_TIME;
-        next_time->seconds = 0;
-        next_time->microseconds = 10000;
+        *next_time = 10000000ll;
     }
     else
     {
         *next_trigger = 0;
     }
-
-    return LWMSG_STATUS_SUCCESS;
 }
 
 MU_TEST(task, timer_task)

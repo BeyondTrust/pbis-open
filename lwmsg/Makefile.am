@@ -32,7 +32,6 @@ noinst_HEADERS = \
 	include/peer-private.h \
 	include/archive-private.h \
 	include/task-private.h
-	include/task-threadpool-private.h
 
 lwmsg_includedir = $(includedir)/lwmsg
 
@@ -100,7 +99,6 @@ src_liblwmsg_nothr_la_LIBADD = @LIB_XNET@ @LIB_DL@ @LIB_ICONV@ @LIB_RT@
 src_liblwmsg_nothr_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/src/liblwmsg_nothr.sym
 
 src_liblwmsg_la_SOURCES = \
-	src/task-threadpool.c \
 	src/peer.c \
 	src/peer-task.c \
 	src/peer-call.c \

@@ -49,21 +49,23 @@
 #include <sys/stat.h>
 
 static
-LWMsgStatus
+void
 lwmsg_peer_task_run(
+    LWMsgTask* _task,
     void* data,
     LWMsgTaskTrigger trigger,
     LWMsgTaskTrigger* next_trigger,
-    LWMsgTime* next_wakeup
+    LWMsgTaskTime* next_timeout
     );
 
 static
-LWMsgStatus
+void
 lwmsg_peer_task_run_listen(
+    LWMsgTask* _task,
     void* data,
     LWMsgTaskTrigger trigger,
     LWMsgTaskTrigger* next_trigger,
-    LWMsgTime* next_timeout
+    LWMsgTaskTime* next_timeout
     );
 
 static
@@ -293,23 +295,24 @@ lwmsg_peer_log_connect(
 }
 
 static
-LWMsgTaskTrigger
-lwmsg_peer_task_assoc_trigger(
-    LWMsgAssoc* assoc
+void
+lwmsg_peer_task_update_blocked(
+    PeerAssocTask* task
     )
 {
-    switch (lwmsg_assoc_get_state(assoc))
+    switch (lwmsg_assoc_get_state(task->assoc))
     {
-    case LWMSG_ASSOC_STATE_IDLE:
-        return LWMSG_TASK_TRIGGER_FD_READABLE;
     case LWMSG_ASSOC_STATE_BLOCKED_SEND:
-        return LWMSG_TASK_TRIGGER_FD_WRITABLE;
+        task->send_blocked = LWMSG_TRUE;
+        break;
     case LWMSG_ASSOC_STATE_BLOCKED_RECV:
-        return LWMSG_TASK_TRIGGER_FD_READABLE;
+        task->recv_blocked = LWMSG_TRUE;
+        break;
     case LWMSG_ASSOC_STATE_BLOCKED_SEND_RECV:
-        return LWMSG_TASK_TRIGGER_FD_READABLE | LWMSG_TASK_TRIGGER_FD_WRITABLE;
+        task->send_blocked = task->recv_blocked = LWMSG_TRUE;
+        break;
     default:
-        return 0;
+        break;
     }
 }
 
@@ -632,8 +635,6 @@ lwmsg_peer_task_setup_listen(
         LWMSG_LOG_INFO(task->peer->context, "Listening on fd %i", task->fd);  
     }
 
-    lwmsg_task_set_trigger_fd(task->event_task, task->fd);
-
 error:
 
     return status;
@@ -849,15 +850,12 @@ lwmsg_peer_task_set_timeout(
     )
 {
     *next_timeout = *timeout;
-    *next_trigger = lwmsg_peer_task_assoc_trigger(task->assoc);
 
     if (lwmsg_time_is_positive(timeout) &&
         lwmsg_peer_task_subject_to_timeout(peer, task, trigger))
     {
         *next_trigger |= LWMSG_TASK_TRIGGER_TIME;
     }
-
-    lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd);
 }
 
 static
@@ -926,12 +924,13 @@ lwmsg_peer_task_handle_call_error(
 }
 
 static
-LWMsgStatus
+void
 lwmsg_peer_task_run_listen(
+    LWMsgTask* _task,
     void* data,
     LWMsgTaskTrigger trigger,
     LWMsgTaskTrigger* next_trigger,
-    LWMsgTime* next_timeout
+    LWMsgTaskTime* next_timeout
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
@@ -942,6 +941,11 @@ lwmsg_peer_task_run_listen(
     LWMsgBool slot = LWMSG_FALSE;
     int err = 0;
     
+    if (trigger & LWMSG_TASK_TRIGGER_INIT)
+    {
+        BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, task->fd));
+    }
+
     while (status == LWMSG_STATUS_SUCCESS)
     {
         assoc = NULL;
@@ -1016,7 +1020,7 @@ done:
         lwmsg_peer_release_client_slot(task->peer);
     }
 
-    return LWMSG_STATUS_SUCCESS;
+    return;
 
 error:
     
@@ -1072,6 +1076,9 @@ lwmsg_peer_task_run_accept(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
 
+    /* We already have the fd when accepting a connection, so set it up for events now */
+    BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
+
     status = lwmsg_assoc_accept(task->assoc, peer->session_manager, &task->session);
 
     switch (status)
@@ -1121,9 +1128,15 @@ lwmsg_peer_task_run_connect(
         task->type = PEER_TASK_DISPATCH;
         BAIL_ON_ERROR(status = lwmsg_peer_log_connect(peer, task->assoc));
         lwmsg_peer_task_notify_status(task, LWMSG_STATUS_SUCCESS);
+        /* Set up the fd the assoc just created for events */
+        BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
         break;
     case LWMSG_STATUS_PENDING:
         task->type = PEER_TASK_FINISH_CONNECT;
+        /* Even if the connect pended, the fd is now available.  Set it up for events */
+        BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, CONNECTION_PRIVATE(task->assoc)->fd));
+        /* Restore status code */
+        status = LWMSG_STATUS_PENDING;
         lwmsg_peer_task_set_timeout(peer, task, &peer->timeout.establish, trigger, next_trigger, next_timeout);
         break;
     default:
@@ -1457,7 +1470,7 @@ lwmsg_peer_task_run_finish(
         task->type = PEER_TASK_DROP;
     }
     /* Is the task unblocked? */
-    else if (trigger & lwmsg_peer_task_assoc_trigger(task->assoc))
+    else if (!task->recv_blocked || !task->send_blocked)
     {
         status = lwmsg_assoc_finish(task->assoc, NULL);
         
@@ -1508,15 +1521,14 @@ static
 LWMsgStatus
 lwmsg_peer_task_finish_transceive(
     LWMsgPeer* peer,
-    PeerAssocTask* task,
-    LWMsgTaskTrigger* trigger
+    PeerAssocTask* task
     )
 {
     LWMsgStatus status = LWMSG_STATUS_PENDING;
     LWMsgMessage* message = NULL;
 
-    while ((*trigger & LWMSG_TASK_TRIGGER_FD_READABLE && task->incoming) ||
-           (*trigger & LWMSG_TASK_TRIGGER_FD_WRITABLE && task->outgoing))
+    while ((!task->recv_blocked && task->incoming) ||
+           (!task->send_blocked && task->outgoing))
     {
         status = lwmsg_assoc_finish(task->assoc, &message);
         switch (status)
@@ -1539,7 +1551,7 @@ lwmsg_peer_task_finish_transceive(
             }
             break;
         case LWMSG_STATUS_PENDING:
-            *trigger &= ~(LWMSG_TASK_TRIGGER_FD_READABLE | LWMSG_TASK_TRIGGER_FD_WRITABLE);
+            lwmsg_peer_task_update_blocked(task);
             break;
         default:
             BAIL_ON_ERROR(status);
@@ -1748,7 +1760,7 @@ lwmsg_peer_task_run_dispatch(
     else
     {
         /* Try to finish any outstanding sends/receives */
-        finish_status = lwmsg_peer_task_finish_transceive(peer, task, trigger);
+        finish_status = lwmsg_peer_task_finish_transceive(peer, task);
         switch (finish_status)
         {
         case LWMSG_STATUS_SUCCESS:
@@ -1759,7 +1771,7 @@ lwmsg_peer_task_run_dispatch(
         }
 
         /* Try to receive and dispatch the next message */
-        if (!task->incoming && *trigger & LWMSG_TASK_TRIGGER_FD_READABLE)
+        if (!task->incoming && !task->recv_blocked)
         {
             recv_status = lwmsg_assoc_recv_message(task->assoc, &task->incoming_message);
             
@@ -1777,7 +1789,7 @@ lwmsg_peer_task_run_dispatch(
         }
 
         /* Try to send any outgoing call requests or incoming call replies */
-        if (!task->outgoing)
+        if (!task->outgoing && !task->send_blocked)
         {           
             send_status = lwmsg_peer_task_dispatch_calls(task);
             switch (send_status)
@@ -1853,90 +1865,126 @@ error:
 }
 
 static
-LWMsgStatus
+void
 lwmsg_peer_task_run(
+    LWMsgTask* _task,
     void* data,
     LWMsgTaskTrigger trigger,
     LWMsgTaskTrigger* next_trigger,
-    LWMsgTime* next_timeout
+    LWMsgTaskTime* next_timeout
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PeerAssocTask* task = (PeerAssocTask*) data;
     LWMsgPeer* peer = task->peer;
+    LWMsgTime my_timeout = {-1, -1};
 
-    while (status == LWMSG_STATUS_SUCCESS)
+    if (*next_timeout >= 0)
     {
-        switch (task->type)
-        {
-        case PEER_TASK_BEGIN_ACCEPT:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_accept(
-                              peer,
-                              task,
-                              trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        case PEER_TASK_BEGIN_CONNECT:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_connect(
-                              peer,
-                              task,
-                              trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        case PEER_TASK_DISPATCH:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_dispatch(
-                              peer,
-                              task,
-                              &trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        case PEER_TASK_BEGIN_CLOSE:
-        case PEER_TASK_BEGIN_RESET:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_shutdown(
-                              peer,
-                              task,
-                              trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        case PEER_TASK_FINISH_ACCEPT:
-        case PEER_TASK_FINISH_CONNECT:
-        case PEER_TASK_FINISH_CLOSE:
-        case PEER_TASK_FINISH_RESET:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_finish(
-                              peer,
-                              task,
-                              trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        case PEER_TASK_DROP:
-            BAIL_ON_ERROR(status = lwmsg_peer_task_run_drop(
-                              peer,
-                              task,
-                              trigger,
-                              next_trigger,
-                              next_timeout));
-            break;
-        default:
-            break;
-        }
+        my_timeout.seconds = *next_timeout / 1000000000ll;
+        my_timeout.microseconds = (*next_timeout % 1000000000ll) / 1000;
+    }
+
+    if (trigger & LWMSG_TASK_TRIGGER_FD_READABLE)
+    {
+        task->recv_blocked = LWMSG_FALSE;
+    }
+
+    if (trigger & LWMSG_TASK_TRIGGER_FD_WRITABLE)
+    {
+        task->send_blocked = LWMSG_FALSE;
+    }
+
+    *next_trigger = LWMSG_TASK_TRIGGER_EXPLICIT;
+
+    switch (task->type)
+    {
+    case PEER_TASK_BEGIN_ACCEPT:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_accept(
+            peer,
+            task,
+            trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    case PEER_TASK_BEGIN_CONNECT:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_connect(
+            peer,
+            task,
+            trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    case PEER_TASK_DISPATCH:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_dispatch(
+            peer,
+            task,
+            &trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    case PEER_TASK_BEGIN_CLOSE:
+    case PEER_TASK_BEGIN_RESET:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_shutdown(
+            peer,
+            task,
+            trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    case PEER_TASK_FINISH_ACCEPT:
+    case PEER_TASK_FINISH_CONNECT:
+    case PEER_TASK_FINISH_CLOSE:
+    case PEER_TASK_FINISH_RESET:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_finish(
+            peer,
+            task,
+            trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    case PEER_TASK_DROP:
+        BAIL_ON_ERROR(status = lwmsg_peer_task_run_drop(
+            peer,
+            task,
+            trigger,
+            next_trigger,
+            &my_timeout));
+        break;
+    default:
+        break;
     }
 
 error:
 
     switch (status)
     {
+    case LWMSG_STATUS_SUCCESS:
+    case LWMSG_STATUS_PENDING:
+        lwmsg_peer_task_update_blocked(task);
+
+        if (task->send_blocked)
+        {
+            *next_trigger |= LWMSG_TASK_TRIGGER_FD_WRITABLE;
+        }
+
+        if (task->recv_blocked)
+        {
+            *next_trigger |= LWMSG_TASK_TRIGGER_FD_READABLE;
+        }
+
+        if (status == LWMSG_STATUS_SUCCESS)
+        {
+            *next_trigger |= LWMSG_TASK_TRIGGER_YIELD;
+        }
+        break;
     case LWMSG_STATUS_CANCELLED:
         *next_trigger = 0;
         break;            
-    case LWMSG_STATUS_PENDING:
+
         break;
     default:
-        LWMSG_LOG_ERROR(peer->context, "Caught error: %s", lwmsg_error_name(status));
+        LWMSG_LOG_ERROR(peer->context, "Caught error: %s (%i)", lwmsg_error_name(status), status);
         if (peer->except)
         {
             peer->except(peer, status, peer->except_data);
@@ -1944,7 +1992,7 @@ error:
         break;
     }
 
-    /* Don't cause the task manager to bail out
-       under any circumstances */
-    return LWMSG_STATUS_SUCCESS;
+    *next_timeout = lwmsg_time_is_positive(&my_timeout) ?
+        my_timeout.seconds * 1000000000ll + my_timeout.microseconds * 1000
+        : 0;
 }
