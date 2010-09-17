@@ -54,6 +54,12 @@ typedef struct rpc_smb_buffer_s
     unsigned char* end_cursor;
 } rpc_smb_buffer_t, *rpc_smb_buffer_p_t;
 
+typedef struct rpc_smb_close_context_s
+{
+    IO_STATUS_BLOCK io_status;
+    IO_ASYNC_CONTROL_BLOCK io_async;
+} rpc_smb_close_context_t, *rpc_smb_close_context_p_t;
+
 typedef struct rpc_smb_socket_s
 {
     rpc_smb_state_t volatile state;
@@ -63,6 +69,7 @@ typedef struct rpc_smb_socket_s
     PIO_CONTEXT context;
     IO_FILE_NAME filename;
     IO_FILE_HANDLE np;
+    rpc_smb_close_context_p_t close_context;
     IO_STATUS_BLOCK io_status;
     IO_ASYNC_CONTROL_BLOCK io_async;
     rpc_timer_t retry_timer;
@@ -412,6 +419,13 @@ rpc__smb_socket_create(
         goto done;
     }
 
+    sock->close_context = calloc(1, sizeof(*sock->close_context));
+
+    if (!sock->close_context)
+    {
+        err = ENOMEM;
+        goto done;
+    }
     sock->accept_backlog.selectfd[0] = -1;
     sock->accept_backlog.selectfd[1] = -1;
 
@@ -455,6 +469,18 @@ error:
 
 INTERNAL
 void
+rpc__smb_close_file_complete(
+    void* context
+    )
+{
+    rpc_smb_close_context_p_t close_context = context;
+
+    LwNtDereferenceAsyncCancelContext(&close_context->io_async.AsyncCancelContext);
+    free(close_context);
+}
+
+INTERNAL
+void
 rpc__smb_socket_destroy(
     rpc_smb_socket_p_t sock
     )
@@ -479,9 +505,20 @@ rpc__smb_socket_destroy(
             free(sock->accept_backlog.queue);
         }
 
-        if (sock->np && sock->context)
+        if (sock->close_context)
         {
-            NtCtxCloseFile(sock->context, sock->np);
+            sock->close_context->io_async.Callback = rpc__smb_close_file_complete;
+            sock->close_context->io_async.CallbackContext = sock->close_context;
+
+            if (!sock->np || !sock->context ||
+                LwNtCtxAsyncCloseFile(
+                    sock->context,
+                    sock->np,
+                    &sock->close_context->io_async,
+                    &sock->close_context->io_status) != STATUS_PENDING)
+            {
+                free(sock->close_context);
+            }
         }
 
         if (sock->context)
