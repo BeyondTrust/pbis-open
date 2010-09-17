@@ -68,8 +68,8 @@ archive_dump(
     printf("Schema\n");
     printf("------\n\n");
 
-    BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(protocol, &text));
-    printf("%s\n", text);
+    BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(protocol, 0, &text));
+    printf("%s\n\n", text);
     free(text);
     text = NULL;
 

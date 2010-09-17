@@ -391,7 +391,7 @@ MU_TEST(stress, parallel_print_protocol)
     MU_TRY(lwmsg_protocol_new(context, &protocol));
     MU_TRY(lwmsg_protocol_add_protocol_spec(protocol, counterprotocol_spec));
 
-    MU_TRY(lwmsg_protocol_print_alloc(protocol, &text));
+    MU_TRY(lwmsg_protocol_print_alloc(protocol, 4, &text));
 
     MU_VERBOSE("\n%s", text);
 }

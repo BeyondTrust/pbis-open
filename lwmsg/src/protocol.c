@@ -425,7 +425,7 @@ lwmsg_protocol_print(
 
     for (i = 0; i < rep->message_count; i++)
     {
-        for (j = 0; i < indent; j++)
+        for (j = 0; j < indent; j++)
         {
             BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, " "));
         }
@@ -436,7 +436,7 @@ lwmsg_protocol_print(
             {
                 BAIL_ON_ERROR(status = lwmsg_buffer_print(
                                   buffer,
-                                  "Tag %s (%i):\n",
+                                  "%s (%i): ",
                                   rep->messages[i].name,
                                   rep->messages[i].tag));
             }
@@ -444,7 +444,7 @@ lwmsg_protocol_print(
             {
                 BAIL_ON_ERROR(status = lwmsg_buffer_print(
                                   buffer,
-                                  "Tag %i:\n",
+                                  "%i: ",
                                   rep->messages[i].tag));
             }
             
@@ -459,7 +459,7 @@ lwmsg_protocol_print(
             {
                 BAIL_ON_ERROR(status = lwmsg_buffer_print(
                                   buffer,
-                                  "Tag %s (%i)",
+                                  "%s (%i)",
                                   rep->messages[i].name,
                                   rep->messages[i].tag));
             }
@@ -467,12 +467,15 @@ lwmsg_protocol_print(
             {
                 BAIL_ON_ERROR(status = lwmsg_buffer_print(
                                   buffer,
-                                  "Tag %i",
+                                  "%i",
                                   rep->messages[i].tag));
             }  
         }
         
-        BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, "\n\n"));
+        if (i < rep->message_count - 1)
+        {
+            BAIL_ON_ERROR(status = lwmsg_buffer_print(buffer, "\n"));
+        }
     }
 
 cleanup:
@@ -534,6 +537,7 @@ error:
 LWMsgStatus
 lwmsg_protocol_print_alloc(
     LWMsgProtocol* prot,
+    unsigned int indent,
     char** text
     )
 {
@@ -546,7 +550,7 @@ lwmsg_protocol_print_alloc(
 
     BAIL_ON_ERROR(status = lwmsg_protocol_print(
                       prot,
-                      0,
+                      indent,
                       &buffer));
 
     BAIL_ON_ERROR(status = lwmsg_buffer_write(&buffer, &nul, 1));

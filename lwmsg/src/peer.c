@@ -476,7 +476,7 @@ lwmsg_peer_startup(
 
     if (lwmsg_context_would_log(peer->context, LWMSG_LOGLEVEL_TRACE))
     {
-        BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(peer->protocol, &message));
+        BAIL_ON_ERROR(status = lwmsg_protocol_print_alloc(peer->protocol, 4, &message));
         LWMSG_LOG_TRACE(peer->context, "Listen protocol:\n%s", message);
     }
 

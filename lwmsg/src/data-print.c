@@ -149,6 +149,22 @@ error:
 
 static
 LWMsgStatus
+newline_if(
+    PrintInfo* info
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!info->newline)
+    {
+        status = newline(info);
+    }
+
+    return status;
+}
+
+static
+LWMsgStatus
 lwmsg_data_print_integer(
     LWMsgTypeIter* iter,
     unsigned char* object,
@@ -294,7 +310,7 @@ lwmsg_data_print_graph_visit_member(
                       object,
                       data));
 
-    BAIL_ON_ERROR(status = newline(info));
+    BAIL_ON_ERROR(status = newline_if(info));
 
 error:
 
@@ -434,8 +450,7 @@ lwmsg_data_print_hex_ascii(
 
     BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(element_count, element_size, &input_length));
 
-    BAIL_ON_ERROR(status = print(info, "<hex+ascii>"));
-    BAIL_ON_ERROR(status = newline(info));
+    BAIL_ON_ERROR(status = newline_if(info));
     BAIL_ON_ERROR(status = print(info, "{"));
     info->depth += 4;
     BAIL_ON_ERROR(status = newline(info));
@@ -606,6 +621,7 @@ lwmsg_data_print_graph_visit(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PrintInfo* info = (PrintInfo*) data;
     LWMsgObjectID id = 0;
+    LWMsgTypeIter arm;
 
     if (iter->attrs.flags & LWMSG_TYPE_FLAG_SENSITIVE)
     {
@@ -616,16 +632,22 @@ lwmsg_data_print_graph_visit(
         switch (iter->kind)
         {
         case LWMSG_KIND_UNION:
+            BAIL_ON_ERROR(status = lwmsg_data_extract_active_arm(
+                iter,
+                iter->dom_object,
+                &arm));
+            if (arm.meta.member_name)
+            {
+                BAIL_ON_ERROR(status = print(info, "<arm:%s>", arm.meta.member_name));
+            }
+            BAIL_ON_ERROR(status = lwmsg_data_visit_graph(
+                                          &arm,
+                                          object,
+                                          lwmsg_data_print_graph_visit,
+                                          data));
+            break;
         case LWMSG_KIND_STRUCT:
-            if (iter->meta.type_name)
-            {
-                BAIL_ON_ERROR(status = print(info, "<%s>", iter->meta.type_name));
-            }
-            else
-            {
-                BAIL_ON_ERROR(status = print(info, iter->kind == LWMSG_KIND_STRUCT ? "<struct>" : "<union>"));
-            }
-            BAIL_ON_ERROR(status = newline(info));
+            BAIL_ON_ERROR(status = newline_if(info));
             BAIL_ON_ERROR(status = print(info, "{"));
             BAIL_ON_ERROR(status = newline(info));
             info->depth += 4;
@@ -651,10 +673,6 @@ lwmsg_data_print_graph_visit(
                 {
                     /* Print nothing */
                 }
-                else if (iter->kind == LWMSG_KIND_ARRAY)
-                {
-                    BAIL_ON_ERROR(status = print(info, "<array> "));
-                }
                 else if (iter->attrs.flags & LWMSG_TYPE_FLAG_ALIASABLE)
                 {
                     status = lwmsg_data_object_map_find_object(
@@ -669,13 +687,11 @@ lwmsg_data_print_graph_visit(
                                           *(void**) object,
                                           iter,
                                           &id));
-
                         BAIL_ON_ERROR(status = print(info, "<alias:%lu> ", (unsigned long) id));
                     }
                     else
                     {
                         BAIL_ON_ERROR(status);
-
                         BAIL_ON_ERROR(status = print(info, "<alias:%lu>", (unsigned long) id));
                         /* Skip printing pointee */
                         goto error;
@@ -702,7 +718,7 @@ lwmsg_data_print_graph_visit(
                 /* General case */
                 else
                 {
-                    BAIL_ON_ERROR(status = newline(info));
+                    BAIL_ON_ERROR(status = newline_if(info));
                     BAIL_ON_ERROR(status = print(info, "{"));
                     BAIL_ON_ERROR(status = newline(info));
                     info->depth += 4;

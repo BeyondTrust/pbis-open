@@ -104,6 +104,7 @@ lwmsg_protocol_print(
 LWMsgStatus
 lwmsg_protocol_print_alloc(
     LWMsgProtocol* prot,
+    unsigned int indent,
     char** text
     );
 

@@ -144,6 +144,22 @@ error:
 
 static
 LWMsgStatus
+newline_if(
+    PrintInfo* info
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    if (!info->newline)
+    {
+        status = newline(info);
+    }
+
+    return status;
+}
+
+static
+LWMsgStatus
 print_type_name(
     PrintInfo* info,
     LWMsgTypeRep* rep
@@ -286,6 +302,10 @@ lwmsg_type_print_enum(
     size_t i = 0;
     LWMsgVariantRep* var = NULL;
 
+    if (!rep->info.enum_rep.definition->seen)
+    {
+        BAIL_ON_ERROR(status = newline_if(info));
+    }
     BAIL_ON_ERROR(status = print(
                       info, "%sint%u enum ",
                       rep->info.enum_rep.definition->sign == LWMSG_UNSIGNED ? "u" : "",
@@ -376,6 +396,10 @@ lwmsg_type_print_struct(
     LWMsgTypeRep* old_rep = NULL;
 
 
+    if (!rep->info.struct_rep.definition->seen)
+    {
+        BAIL_ON_ERROR(status = newline_if(info));
+    }
     BAIL_ON_ERROR(status = print(info, "struct "));
     BAIL_ON_ERROR(status = print_type_name(info, rep));
 
@@ -424,6 +448,10 @@ lwmsg_type_print_union(
     size_t i = 0;
     LWMsgTypeRep* discrim = NULL;
 
+    if (!rep->info.union_rep.definition->seen)
+    {
+        BAIL_ON_ERROR(status = newline_if(info));
+    }
     BAIL_ON_ERROR(status = print(info, "union "));
     BAIL_ON_ERROR(status = print_type_name(info, rep));
 
@@ -660,7 +688,7 @@ lwmsg_type_print_rep(
 
     memset(&info, 0, sizeof(info));
 
-    info.newline = LWMSG_TRUE;
+    info.newline = LWMSG_FALSE;
     info.depth = indent;
     info.buffer = buffer;
 

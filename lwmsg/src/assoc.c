@@ -525,7 +525,7 @@ lwmsg_assoc_print_message_alloc(
     
     if (type)
     {
-        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "%s:\n    ", tag_name));
+        BAIL_ON_ERROR(status = lwmsg_buffer_print(&buffer, "%s: ", tag_name));
         BAIL_ON_ERROR(status = lwmsg_data_print_graph(
                           context,
                           type,
