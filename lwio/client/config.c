@@ -32,7 +32,7 @@
 
 NTSTATUS
 LwIoRefreshConfiguration(
-    PIO_CONTEXT pConnection
+    VOID
     )
 {
     NTSTATUS status = 0;
@@ -40,7 +40,7 @@ LwIoRefreshConfiguration(
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_REFRESH_CONFIG;

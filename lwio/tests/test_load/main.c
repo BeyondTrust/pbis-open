@@ -149,7 +149,8 @@ LoadThread(
                 0,                     /* Create options */
                 NULL,                  /* EA buffer */
                 0,                     /* EA length */
-                NULL);                 /* ECP list */
+                NULL,                  /* ECP list */
+                NULL);
             if (status != STATUS_SUCCESS)
             {
                 gState.ulFailureCount++;
@@ -223,7 +224,8 @@ LoadThread(
                     FILE_DELETE_ON_CLOSE,  /* Create options */
                     NULL,                  /* EA buffer */
                     0,                     /* EA length */
-                    NULL);                 /* ECP list */
+                    NULL,                  /* ECP list */
+                    NULL);
                 GOTO_ERROR_ON_STATUS(status);
             }
         }

@@ -309,8 +309,6 @@ typedef ULONG NAMED_PIPE_END;
 //
 // Core Types
 //
-
-typedef struct __LW_IO_CONTEXT LW_IO_CONTEXT, *LW_PIO_CONTEXT;
 typedef struct __LW_IO_CREDS LW_IO_CREDS, *LW_PIO_CREDS;
 
 struct _IO_FILE_OBJECT;
@@ -964,8 +962,6 @@ typedef struct _IO_ECP_NAMED_PIPE {
 
 #ifndef LW_STRICT_NAMESPACE
 
-typedef LW_IO_CONTEXT IO_CONTEXT;
-typedef LW_PIO_CONTEXT PIO_CONTEXT;
 typedef LW_IO_CREDS IO_CREDS;
 typedef LW_PIO_CREDS PIO_CREDS;
 

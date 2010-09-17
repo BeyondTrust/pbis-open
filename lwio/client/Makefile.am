@@ -11,8 +11,6 @@ liblwioclient_la_SOURCES = \
     ntfileapictx.c         \
     smbfileapictx.c        \
     thread.c               \
-    ntfileapi.c            \
-    smbfileapi.c           \
     win32.c
 
 liblwioclient_la_CPPFLAGS = \

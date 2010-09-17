@@ -39,18 +39,17 @@ LwIoGetThreadState(
     );
 
 NTSTATUS
-LwIoAcquireContext(
-    OUT PIO_CONTEXT pConnection
+LwIoAcquireConnection(
+    OUT PIO_CONNECTION pConnection
     );
 
 NTSTATUS
-LwIoReleaseContext(
-    IN OUT PIO_CONTEXT pConnection
+LwIoReleaseConnection(
+    IN OUT PIO_CONNECTION pConnection
     );
 
 NTSTATUS
-LwIoContextAcquireCall(
-    IN PIO_CONTEXT pConnection,
+LwIoConnectionAcquireCall(
     OUT LWMsgCall** ppCall
     );
 

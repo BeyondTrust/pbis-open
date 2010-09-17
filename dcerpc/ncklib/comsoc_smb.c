@@ -66,7 +66,6 @@ typedef struct rpc_smb_socket_s
     rpc_np_addr_t peeraddr;
     rpc_np_addr_t localaddr;
     rpc_smb_transport_info_t info;
-    PIO_CONTEXT context;
     IO_FILE_NAME filename;
     IO_FILE_HANDLE np;
     rpc_smb_close_context_p_t close_context;
@@ -439,32 +438,11 @@ rpc__smb_socket_create(
     dcethread_mutex_init_throw(&sock->lock, NULL);
     dcethread_cond_init_throw(&sock->event, NULL);
 
-    err = LwNtStatusToErrno(LwIoOpenContextShared(&sock->context));
-    if (err)
-    {
-        goto error;
-    }
-
     *out = sock;
 
 done:
     
     return err;
-
-error:
-
-    if (sock)
-    {
-        if (sock->context)
-        {
-            LwIoCloseContext(sock->context);
-        }
-
-        dcethread_mutex_destroy_throw(&sock->lock);
-        dcethread_cond_destroy_throw(&sock->event);
-    }
-    
-    goto done;
 }
 
 INTERNAL
@@ -495,7 +473,7 @@ rpc__smb_socket_destroy(
             {
                 if (sock->accept_backlog.queue[i])
                 {
-                    NtCtxCloseFile(sock->context, sock->accept_backlog.queue[i]);
+                    NtCloseFile(sock->accept_backlog.queue[i]);
                 }
             }
             
@@ -510,9 +488,8 @@ rpc__smb_socket_destroy(
             sock->close_context->io_async.Callback = rpc__smb_close_file_complete;
             sock->close_context->io_async.CallbackContext = sock->close_context;
 
-            if (!sock->np || !sock->context ||
-                LwNtCtxAsyncCloseFile(
-                    sock->context,
+            if (!sock->np ||
+                LwNtAsyncCloseFile(
                     sock->np,
                     &sock->close_context->io_async,
                     &sock->close_context->io_status) != STATUS_PENDING)
@@ -521,11 +498,6 @@ rpc__smb_socket_destroy(
             }
         }
 
-        if (sock->context)
-        {
-            LwIoCloseContext(sock->context);
-        }
-        
         if (sock->sendbuffer.base)
         {
             free(sock->sendbuffer.base);
@@ -745,9 +717,7 @@ rpc__smb_socket_connect(
     }
 
     serr = NtStatusToErrno(
-        NtCtxCreateFile(
-            smb->context,                            /* IO context */
-            smb->info.creds,                         /* Security token */
+        NtCreateFile(
             &smb->np,                                /* Created handle */
             NULL,                                    /* Async control block */
             &io_status,                              /* Status block */
@@ -762,16 +732,15 @@ rpc__smb_socket_connect(
             FILE_CREATE_TREE_CONNECTION,             /* Create options */
             NULL,                                    /* EA buffer */
             0,                                       /* EA buffer length */
-            NULL                                     /* ECP List */
-            ));
+            NULL,                                    /* ECP List */
+            smb->info.creds));                       /* Security token */
     if (serr)
     {
         goto error;
     }
 
     serr = NtStatusToErrno(
-        LwIoCtxGetSessionKey(
-            smb->context,
+        LwIoGetSessionKey(
             smb->np,
             &sesskeylen,
             &sesskey));
@@ -900,8 +869,7 @@ rpc__smb_socket_accept(
 
     /* Query for client address */
     serr = NtStatusToErrno(
-        LwIoCtxGetPeerAddress(
-            npsmb->context,
+        LwIoGetPeerAddress(
             npsmb->np,
             clientaddr,
             &clientaddrlen));
@@ -943,8 +911,7 @@ rpc__smb_socket_accept(
     }
 
      serr = NtStatusToErrno(
-        LwIoCtxGetPeerAccessToken(
-            npsmb->context,
+        LwIoGetPeerAccessToken(
             npsmb->np,
             &npsmb->info.access_token));
     if (serr)
@@ -953,8 +920,7 @@ rpc__smb_socket_accept(
     }
 
     serr = NtStatusToErrno(
-        LwIoCtxGetSessionKey(
-            npsmb->context,
+        LwIoGetSessionKey(
             npsmb->np,
             &npsmb->info.session_key.length,
             &npsmb->info.session_key.data));
@@ -970,7 +936,7 @@ error:
 
     if (np)
     {
-        NtCtxCloseFile(smb->context, np);
+        NtCloseFile(np);
     }
 
     if (npsock)
@@ -1033,9 +999,7 @@ rpc__smb_socket_accept_async(
     smb->io_async.Callback = rpc__smb_socket_create_named_pipe_complete;
     smb->io_async.CallbackContext = smb;
 
-    status = LwNtCtxCreateNamedPipeFile(
-        smb->context,                            /* IO context */ 
-        NULL,                                    /* Security token */
+    status = LwNtCreateNamedPipeFile(
         &smb->np,                                /* NP handle */
         &smb->io_async,                          /* Async control */
         &smb->io_status,                         /* IO status block */
@@ -1052,8 +1016,7 @@ rpc__smb_socket_accept_async(
         smb->accept_backlog.capacity,            /* Maximum instances */
         0,                                       /* Inbound quota */
         0,                                       /* Outbound quota */
-        &default_timeout                         /* Default timeout */
-        );
+        &default_timeout);                       /* Default timeout */
     if (status == STATUS_PENDING)
     {
         status = STATUS_SUCCESS;
@@ -1089,8 +1052,7 @@ rpc__smb_socket_create_named_pipe_complete(void* data)
     smb->io_async.Callback = rpc__smb_socket_connect_named_pipe_complete;
     smb->io_async.CallbackContext = smb;
 
-    status = LwIoCtxConnectNamedPipe(
-        smb->context,
+    status = LwIoConnectNamedPipe(
         smb->np,
         &smb->io_async,
         &smb->io_status);
@@ -1272,8 +1234,7 @@ rpc__smb_socket_do_send(
     do
     {
         serr = NtStatusToErrno(
-            NtCtxWriteFile(
-                smb->context,                          /* IO context */
+            NtWriteFile(
                 smb->np,                               /* File handle */
                 NULL,                                  /* Async control block */
                 &io_status,                            /* IO status block */
@@ -1329,8 +1290,7 @@ rpc__smb_socket_do_recv(
         bytes_read = 0;
         bytes_requested = rpc__smb_buffer_available(&smb->recvbuffer);
 
-        status = NtCtxReadFile(
-            smb->context,                 /* IO context */
+        status = NtReadFile(
             smb->np,                      /* File handle */
             NULL,                         /* Async control block */
             &io_status,                   /* IO status block */

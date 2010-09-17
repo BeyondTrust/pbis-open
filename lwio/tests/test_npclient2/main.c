@@ -261,8 +261,8 @@ CreatePipeClient(
                         0,
                         NULL,
                         0,
-                        NULL
-                        );
+                        NULL,
+                        NULL);
     BAIL_ON_NT_STATUS(ntStatus);
 
     *pFileHandle = FileHandle;

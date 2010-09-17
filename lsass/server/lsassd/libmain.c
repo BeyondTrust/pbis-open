@@ -398,15 +398,8 @@ LsaSrvVerifyLwIoStatus(
 {
     DWORD dwError = 0;
     PLWIO_LOG_INFO pLogInfo = NULL;
-    PIO_CONTEXT pContext = NULL;
 
-    dwError = LwIoOpenContext(&pContext);
-    LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %u", dwError);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwIoGetLogInfo(
-                  (HANDLE) pContext,
-                  &pLogInfo);
+    dwError = LwIoGetLogInfo(&pLogInfo);
     LSA_LOG_INFO("LsaSrvVerifyLwIoStatus call to LwIo API returned %u", dwError);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -415,11 +408,6 @@ cleanup:
     if (pLogInfo)
     {
         LwIoFreeLogInfo(pLogInfo);
-    }
-
-    if (pContext != NULL)
-    {
-        LwIoCloseContext(pContext);
     }
 
     return dwError;

@@ -50,7 +50,6 @@
 SMB_API
 NTSTATUS
 LwIoSetLogLevel(
-    PIO_CONTEXT      pContext,
     LWIO_LOG_LEVEL logLevel
     )
 {
@@ -58,15 +57,12 @@ LwIoSetLogLevel(
 
     logInfo.maxAllowedLogLevel = logLevel;
 
-    return LwIoSetLogInfo(
-                    pContext,
-                    &logInfo);
+    return LwIoSetLogInfo(&logInfo);
 }
 
 SMB_API
 NTSTATUS
 LwIoSetLogInfo(
-    PIO_CONTEXT pContext,
     PLWIO_LOG_INFO pLogInfo
     )
 {
@@ -75,7 +71,7 @@ LwIoSetLogInfo(
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
 
-    status = LwIoContextAcquireCall(pContext, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_SET_LOG_INFO;
@@ -116,7 +112,6 @@ error:
 SMB_API
 NTSTATUS
 LwIoGetLogInfo(
-    PIO_CONTEXT         pContext,
     PLWIO_LOG_INFO* ppLogInfo
     )
 {
@@ -125,7 +120,7 @@ LwIoGetLogInfo(
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     
-    status = LwIoContextAcquireCall(pContext, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_GET_LOG_INFO;

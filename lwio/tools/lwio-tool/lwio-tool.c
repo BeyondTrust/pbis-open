@@ -93,7 +93,8 @@ DoTestFileApiCreateFile(
                     createOptions,
                     pEaBuffer,
                     EaLength,
-                    pEcpList);
+                    pEcpList,
+                    NULL);
     LWIO_ASSERT(IS_BOTH_OR_NEITHER(NT_SUCCESS(status), fileHandle));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 

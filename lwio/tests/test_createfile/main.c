@@ -60,8 +60,8 @@ main(
                     FILE_DIRECTORY_FILE|FILE_DELETE_ON_CLOSE,/* CreateOptions */
                     NULL,                               /* EaBuffer           */
                     0,                                  /* EaLength           */
-                    NULL                                /* EcpList            */
-                    );
+                    NULL,                               /* EcpList            */
+                    NULL);
     if (status)
     {
         goto error;
@@ -92,8 +92,8 @@ main(
                     FILE_NON_DIRECTORY_FILE|FILE_DELETE_ON_CLOSE,/* CreateOptions */
                     NULL,                               /* EaBuffer           */
                     0,                                  /* EaLength           */
-                    NULL                                /* EcpList            */
-                    );
+                    NULL,                               /* EcpList            */
+                    NULL);
     if (status)
     {
         goto error;

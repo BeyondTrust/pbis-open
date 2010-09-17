@@ -44,39 +44,6 @@
 #include <lwio/io-types.h>
 
 LW_NTSTATUS
-LwIoCtxGetSessionKey(
-    LW_PIO_CONTEXT pContext,
-    IO_FILE_HANDLE File,
-    LW_PUSHORT pKeyLength,
-    LW_PBYTE* ppKeyBuffer
-    );
-
-LW_NTSTATUS
-LwIoCtxGetPeerAccessToken(
-    LW_PIO_CONTEXT pContext,
-    IO_FILE_HANDLE File,
-    PACCESS_TOKEN* ppToken
-    );
-
-LW_NTSTATUS
-LwIoCtxGetPeerAddress(
-    LW_PIO_CONTEXT pContext,
-    IO_FILE_HANDLE File,
-    LW_PBYTE pAddress,
-    LW_PUSHORT pusAddressLength
-    );
-
-LW_NTSTATUS
-LwIoCtxConnectNamedPipe(
-    LW_PIO_CONTEXT pContext,
-    IO_FILE_HANDLE File,
-    PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    PIO_STATUS_BLOCK IoStatusBlock
-    );
-
-#ifndef LW_NO_THREADS
-
-LW_NTSTATUS
 LwIoGetSessionKey(
     IO_FILE_HANDLE File,
     LW_PUSHORT pKeyLength,
@@ -103,23 +70,12 @@ LwIoConnectNamedPipe(
     PIO_STATUS_BLOCK IoStatusBlock
     );
 
-#endif /* !LW_NO_THREADS */
-    
 #ifndef LW_STRICT_NAMESPACE
-
-#define IoCtxGetSessionKey LwIoCtxGetSessionKey
-#define IoCtxGetPeerPrincipalName LwIoCtxGetPeerPrincipalName
-#define IoCtxGetPeerAddress LwIoCtxGetPeerAddress
-#define IoCtxCreateNamedPipe LwIoCtxCreateNamedPipe
-
-#ifndef LW_NO_THREADS
 
 #define IoGetSessionKey LwIoGetSessionKey
 #define IoGetPeerPrincipalName LwIoGetPeerPrincipalName
 #define IoGetPeerAddress LwIoGetPeerAddress
 #define IoCreateNamedPipe LwIoCreateNamedPipe
-
-#endif /* !LW_NO_THREADS */
 
 #endif /* !LW_STRICT_NAMESPACE */
 

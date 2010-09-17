@@ -228,6 +228,7 @@ CopyFileToPvfs(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -332,6 +333,7 @@ CopyFileFromPvfs(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -425,6 +427,7 @@ CatFileFromPvfs(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -509,6 +512,7 @@ StatRemoteFile(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -643,6 +647,7 @@ ListDirectory(
                            FILE_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -772,6 +777,7 @@ SetEndOfFile(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
     
@@ -869,6 +875,7 @@ LockTest(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -949,6 +956,7 @@ RequestOplock(
                   FILE_NON_DIRECTORY_FILE,
                   NULL,
                   0,
+                  NULL,
                   NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1061,6 +1069,7 @@ ListOpenFiles(
                   0,
                   NULL,
                   0,
+                  NULL,
                   NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1257,6 +1266,7 @@ TestReadDirectoryChange(
                            FILE_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1335,6 +1345,7 @@ PrintMaxOpenFiles(
                       FILE_NON_DIRECTORY_FILE|FILE_DELETE_ON_CLOSE,
                       NULL,
                       0,
+                      NULL,
                       NULL);
         if (ntError != STATUS_SUCCESS)
         {
@@ -1396,6 +1407,7 @@ GetFileSecurity(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 
@@ -1489,6 +1501,7 @@ SetFileSecurity(
                            FILE_NON_DIRECTORY_FILE,
                            NULL,
                            0,
+                           NULL,
                            NULL);
     BAIL_ON_NT_STATUS(ntError);
 

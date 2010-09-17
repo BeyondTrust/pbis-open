@@ -142,30 +142,22 @@ LwIoShutdown(
     );
 
 LW_NTSTATUS
-LwIoOpenContext(
-    LW_PIO_CONTEXT* ppContext
-    );
-
-LW_NTSTATUS
 LwIoRefreshConfiguration(
-    LW_PIO_CONTEXT hConnection
+    VOID
     );
 
 LW_NTSTATUS
 LwIoSetLogLevel(
-    LW_PIO_CONTEXT pContext,
     LWIO_LOG_LEVEL logLevel
     );
 
 LW_NTSTATUS
 LwIoGetLogInfo(
-    LW_PIO_CONTEXT pContext,
     PLWIO_LOG_INFO* ppLogInfo
     );
 
 LW_NTSTATUS
 LwIoSetLogInfo(
-    LW_PIO_CONTEXT pContext,
     PLWIO_LOG_INFO pLogInfo
     );
 
@@ -193,11 +185,6 @@ LwIoUnloadDriver(
 LW_NTSTATUS
 LwIoGetPid(
     pid_t* pPid
-    );
-
-LW_NTSTATUS
-LwIoCloseContext(
-    LW_PIO_CONTEXT pContext
     );
 
 LW_NTSTATUS
@@ -247,13 +234,6 @@ LwIoDeleteCreds(
     LW_PIO_CREDS pCreds
     );
 
-#ifndef LW_NO_THREADS
-
-LW_NTSTATUS
-LwIoOpenContextShared(
-    LW_PIO_CONTEXT* ppContext
-    );
-
 LW_NTSTATUS
 LwIoSetThreadCreds(
     LW_PIO_CREDS pToken
@@ -281,8 +261,6 @@ LwIoUncPathToInternalPath(
     LW_PCWSTR pwszUncPath,
     LW_PWSTR* ppwszInternalPath
     );
-
-#endif /* ! LW_NO_THREADS */
 
 #include <lwio/ntfileapi.h>
 #include <lwio/smbfileapi.h>

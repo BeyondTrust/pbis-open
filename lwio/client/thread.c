@@ -542,8 +542,8 @@ error:
 }
 
 NTSTATUS
-LwIoAcquireContext(
-    OUT PIO_CONTEXT pContext
+LwIoAcquireConnection(
+    OUT PIO_CONNECTION pConnection
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
@@ -551,8 +551,8 @@ LwIoAcquireContext(
     Status = LwIoThreadInit();
     BAIL_ON_NT_STATUS(Status);
     
-    pContext->pClient = gpClient;
-    pContext->pSession = gpSession;
+    pConnection->pClient = gpClient;
+    pConnection->pSession = gpSession;
 
 error:
     
@@ -560,52 +560,15 @@ error:
 }
 
 NTSTATUS
-LwIoReleaseContext(
-    IN OUT PIO_CONTEXT pContext
+LwIoReleaseConnection(
+    IN OUT PIO_CONNECTION pConnection
     )
 {
     NTSTATUS Status = STATUS_SUCCESS;
  
-    memset(pContext, 0, sizeof(*pContext));
+    memset(pConnection, 0, sizeof(*pConnection));
    
     return Status;
-}
-
-NTSTATUS
-LwIoOpenContextShared(
-    PIO_CONTEXT* ppContext
-    )
-{
-    PIO_CONTEXT pContext = NULL;
-    NTSTATUS Status = STATUS_SUCCESS;
-
-    Status = LwIoThreadInit();
-    BAIL_ON_NT_STATUS(Status);
-
-    Status = LwIoAllocateMemory(
-        sizeof(*pContext),
-        OUT_PPVOID(&pContext));
-    BAIL_ON_NT_STATUS(Status);
-
-    pContext->pClient = gpClient;
-    pContext->pSession = gpSession;
-
-    *ppContext = pContext;
-
-cleanup:
-
-    return Status;
-
-error:
-
-    if (pContext)
-    {
-        LwIoCloseContext(pContext);
-    }
-
-    *ppContext = NULL;
-
-    goto cleanup;
 }
 
 #if 0

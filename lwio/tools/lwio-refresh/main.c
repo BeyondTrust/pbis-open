@@ -76,7 +76,6 @@ main(
     )
 {
     DWORD dwError = 0;
-    PIO_CONTEXT pContext = NULL;
 
     if (geteuid() != 0) {
         fprintf(stderr, "This program requires super-user privileges.\n");
@@ -86,18 +85,10 @@ main(
 
     ParseArgs(argc, argv);
 
-    dwError = LwIoOpenContext(&pContext);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    dwError = LwIoRefreshConfiguration((HANDLE) pContext);
+    dwError = LwIoRefreshConfiguration();
     BAIL_ON_LWIO_ERROR(dwError);
 
 cleanup:
-
-    if (pContext != NULL)
-    {
-        LwIoCloseContext(pContext);
-    }
 
     LwIoShutdown();
 

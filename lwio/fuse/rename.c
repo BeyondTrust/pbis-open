@@ -90,7 +90,8 @@ LwIoFuseRename(
         0,                       /* Create options */
         NULL,                    /* EA buffer */
         0,                       /* EA length */
-        NULL);                   /* ECP list */
+        NULL,                    /* ECP list */
+        NULL);
     BAIL_ON_NT_STATUS(status);
     
     status = LwNtSetInformationFile(

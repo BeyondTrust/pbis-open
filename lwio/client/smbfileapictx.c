@@ -43,8 +43,7 @@
 #define ACCESS_TOKEN_LENGTH (8192)
 
 LW_NTSTATUS
-LwIoCtxGetSessionKey(
-    LW_PIO_CONTEXT pContext,
+LwIoGetSessionKey(
     IO_FILE_HANDLE File,
     LW_PUSHORT pKeyLength,
     LW_PBYTE* ppKeyBuffer
@@ -56,8 +55,7 @@ LwIoCtxGetSessionKey(
     PBYTE pKeyBuffer = NULL;
 
     Status = 
-        LwNtCtxFsControlFile(
-            pContext,
+        LwNtFsControlFile(
             File,
             NULL,
             &IoStatus,
@@ -97,8 +95,7 @@ error:
 }
 
 LW_NTSTATUS
-LwIoCtxGetPeerAccessToken(
-    LW_PIO_CONTEXT pContext,
+LwIoGetPeerAccessToken(
     IO_FILE_HANDLE File,
     PACCESS_TOKEN* ppToken
     )
@@ -115,8 +112,7 @@ LwIoCtxGetPeerAccessToken(
     do
     {
         Status =
-            LwNtCtxFsControlFile(
-                pContext,
+            LwNtFsControlFile(
                 File,
                 NULL,
                 &IoStatus,
@@ -168,8 +164,7 @@ error:
 }
 
 LW_NTSTATUS
-LwIoCtxGetPeerAddress(
-    LW_PIO_CONTEXT pContext,
+LwIoGetPeerAddress(
     IO_FILE_HANDLE File,
     LW_PBYTE pAddress,
     LW_PUSHORT pusAddressLength
@@ -179,8 +174,7 @@ LwIoCtxGetPeerAddress(
     IO_STATUS_BLOCK IoStatus;
 
     Status = 
-        LwNtCtxFsControlFile(
-            pContext,
+        LwNtFsControlFile(
             File,
             NULL,
             &IoStatus,
@@ -206,15 +200,13 @@ error:
 
 
 LW_NTSTATUS
-LwIoCtxConnectNamedPipe(
-    LW_PIO_CONTEXT pContext,
+LwIoConnectNamedPipe(
     IO_FILE_HANDLE File,
     PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     PIO_STATUS_BLOCK IoStatusBlock
     )
 {
-    return NtCtxFsControlFile(
-        pContext,
+    return NtFsControlFile(
         File,
         AsyncControlBlock,
         IoStatusBlock,

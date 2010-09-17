@@ -44,8 +44,6 @@
 
 #include "includes.h"
 
-#define SUCCESS_OR_PENDING(status) ((status) == STATUS_SUCCESS || (status) == STATUS_PENDING)
-
 static
 VOID
 NtpCtxFreeResponse(
@@ -139,7 +137,6 @@ error:
 static
 NTSTATUS
 NtpCtxCallAsync(
-    IN PIO_CONTEXT pConnection,
     IN PIO_CLIENT_ASYNC_CONTEXT pContext,
     IN LWMsgTag RequestType,
     IN PVOID pRequest,
@@ -153,7 +150,7 @@ NtpCtxCallAsync(
     pContext->in.tag = RequestType;
     pContext->in.data = pRequest;
 
-    status = LwIoContextAcquireCall(pConnection, &pContext->pCall);
+    status = LwIoConnectionAcquireCall(&pContext->pCall);
     BAIL_ON_NT_STATUS(status);
 
     if (pControl)
@@ -314,9 +311,7 @@ LwNtCreateNamedPipeComplete(
 }
 
 NTSTATUS
-LwNtCtxCreateNamedPipeFile(
-    IN PIO_CONTEXT pConnection,
-    IN LW_PIO_CREDS pSecurityToken,
+LwNtCreateNamedPipeFile(
     OUT PIO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -381,9 +376,7 @@ LwNtCtxCreateNamedPipeFile(
         AsyncControlBlock = &pContext->AsyncControl;
     }
 
-    status = NtCtxCreateFile(
-                    pConnection,
-                    pSecurityToken,
+    status = NtCreateFile(
                     FileHandle,
                     AsyncControlBlock,
                     IoStatusBlock,
@@ -398,7 +391,8 @@ LwNtCtxCreateNamedPipeFile(
                     CreateOptions,
                     NULL,
                     0,
-                    ecpList);
+                    ecpList,
+                    NULL);
 
     if (pContext)
     {
@@ -438,7 +432,7 @@ typedef struct CREATEFILE_CONTEXT
 
 static
 VOID
-LwNtCtxCreateFileComplete(
+LwNtCreateFileComplete(
     PIO_CLIENT_ASYNC_CONTEXT pBase,
     NTSTATUS status
     )
@@ -472,9 +466,7 @@ LwNtCtxCreateFileComplete(
 }
 
 NTSTATUS
-LwNtCtxCreateFile(
-    IN PIO_CONTEXT pConnection,
-    IN LW_PIO_CREDS pSecurityToken,
+LwNtCreateFile(
     OUT PIO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -489,7 +481,8 @@ LwNtCtxCreateFile(
     IN FILE_CREATE_OPTIONS CreateOptions,
     IN OPTIONAL PVOID EaBuffer, // PFILE_FULL_EA_INFORMATION
     IN ULONG EaLength,
-    IN OPTIONAL PIO_ECP_LIST EcpList
+    IN OPTIONAL PIO_ECP_LIST EcpList,
+    IN OPTIONAL LW_PIO_CREDS pCreds
     )
 {
     NTSTATUS status = 0;
@@ -497,12 +490,12 @@ LwNtCtxCreateFile(
     PIO_CREDS pActiveCreds = NULL;
     PCREATEFILE_CONTEXT pCreateContext = NULL;
 
-    if (!pSecurityToken)
+    if (!pCreds)
     {
         status = LwIoGetActiveCreds(FileName->FileName, &pActiveCreds);
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-        pSecurityToken = pActiveCreds;
+        pCreds = pActiveCreds;
     }
 
     status = NtpAllocAsyncContext(OUT_PPVOID(&pCreateContext), sizeof(*pCreateContext));
@@ -511,7 +504,7 @@ LwNtCtxCreateFile(
     pCreateContext->IoStatusBlock = IoStatusBlock;
     pCreateContext->FileHandle = FileHandle;
 
-    status = LwIoResolveCreds(pSecurityToken, &pCreateContext->Request.pSecurityToken);
+    status = LwIoResolveCreds(pCreds, &pCreateContext->Request.pSecurityToken);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     pCreateContext->Request.FileName = *FileName;
@@ -560,13 +553,12 @@ LwNtCtxCreateFile(
     }
 
     status = NtpCtxCallAsync(
-        pConnection,
         &pCreateContext->Base,
         NT_IPC_MESSAGE_TYPE_CREATE_FILE,
         &pCreateContext->Request,
         NT_IPC_MESSAGE_TYPE_CREATE_FILE_RESULT,
         AsyncControlBlock,
-        LwNtCtxCreateFileComplete);
+        LwNtCreateFileComplete);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
@@ -580,7 +572,7 @@ cleanup:
     {
         if (pCreateContext)
         {
-            LwNtCtxCreateFileComplete(&pCreateContext->Base, status);
+            LwNtCreateFileComplete(&pCreateContext->Base, status);
             NtpFreeClientAsyncContext(&pCreateContext->Base);
         }
         else
@@ -604,7 +596,7 @@ typedef struct CLOSEFILE_CONTEXT
 
 static
 VOID
-LwNtCtxCloseFileComplete(
+LwNtCloseFileComplete(
     PIO_CLIENT_ASYNC_CONTEXT pBase,
     NTSTATUS status
     )
@@ -622,8 +614,7 @@ LwNtCtxCloseFileComplete(
 }
 
 NTSTATUS
-LwNtCtxAsyncCloseFile(
-    IN PIO_CONTEXT pConnection,
+LwNtAsyncCloseFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock
@@ -632,22 +623,25 @@ LwNtCtxAsyncCloseFile(
     NTSTATUS status = 0;
     int EE = 0;
     PCLOSEFILE_CONTEXT pContext = NULL;
+    IO_CONNECTION connection = {0};
+
+    status = LwIoAcquireConnection(&connection);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = NtpAllocAsyncContext(OUT_PPVOID(&pContext), sizeof(*pContext));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     pContext->IoStatusBlock = IoStatusBlock;
-    pContext->pSession = pConnection->pSession;
+    pContext->pSession = connection.pSession;
     pContext->Request.FileHandle = FileHandle;
 
     status = NtpCtxCallAsync(
-        pConnection,
         &pContext->Base,
         NT_IPC_MESSAGE_TYPE_CLOSE_FILE,
         &pContext->Request,
         NT_IPC_MESSAGE_TYPE_CLOSE_FILE_RESULT,
         AsyncControlBlock,
-        LwNtCtxCloseFileComplete);
+        LwNtCloseFileComplete);
 
  cleanup:
 
@@ -655,33 +649,33 @@ LwNtCtxAsyncCloseFile(
      {
          if (pContext)
          {
-             LwNtCtxCloseFileComplete(&pContext->Base, status);
+             LwNtCloseFileComplete(&pContext->Base, status);
          }
          else
          {
              IoStatusBlock->Status = status;
-             lwmsg_session_release_handle(pConnection->pSession, FileHandle);
+             lwmsg_session_release_handle(connection.pSession, FileHandle);
          }
      }
 
-    LOG_LEAVE_IF_STATUS_EE(status, EE);
-    return status;
+     LwIoReleaseConnection(&connection);
+
+     LOG_LEAVE_IF_STATUS_EE(status, EE);
+     return status;
 }
 
 NTSTATUS
-LwNtCtxCloseFile(
-    IN PIO_CONTEXT pConnection,
+LwNtCloseFile(
     IN IO_FILE_HANDLE FileHandle
     )
 {
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
 
-    return LwNtCtxAsyncCloseFile(pConnection, FileHandle, NULL, &ioStatusBlock);
+    return LwNtAsyncCloseFile(FileHandle, NULL, &ioStatusBlock);
 }
 
 NTSTATUS
-LwNtCtxReadFile(
-    IN PIO_CONTEXT pConnection,
+LwNtReadFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -701,7 +695,7 @@ LwNtCtxReadFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -743,8 +737,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxWriteFile(
-    IN PIO_CONTEXT pConnection,
+LwNtWriteFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -764,7 +757,7 @@ LwNtCtxWriteFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -808,8 +801,7 @@ cleanup:
 }
 
 NTSTATUS 
-LwNtCtxDeviceIoControlFile(
-    IN PIO_CONTEXT pConnection,
+LwNtDeviceIoControlFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -830,7 +822,7 @@ LwNtCtxDeviceIoControlFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -883,7 +875,7 @@ typedef struct FSCONTROL_CONTEXT
 
 static
 VOID
-LwNtCtxFsControlFileComplete(
+LwNtFsControlFileComplete(
     PIO_CLIENT_ASYNC_CONTEXT pBase,
     NTSTATUS status
     )
@@ -905,8 +897,7 @@ LwNtCtxFsControlFileComplete(
 }
 
 NTSTATUS
-LwNtCtxFsControlFile(
-    IN PIO_CONTEXT pConnection,
+LwNtFsControlFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -934,13 +925,12 @@ LwNtCtxFsControlFile(
     pControlContext->OutputBufferLength = OutputBufferLength;
 
     status = NtpCtxCallAsync(
-        pConnection,
         &pControlContext->Base,
         NT_IPC_MESSAGE_TYPE_FS_CONTROL_FILE,
         &pControlContext->Request,
         NT_IPC_MESSAGE_TYPE_FS_CONTROL_FILE_RESULT,
         AsyncControlBlock,
-        LwNtCtxFsControlFileComplete);
+        LwNtFsControlFileComplete);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
@@ -949,7 +939,7 @@ cleanup:
     {
         if (pControlContext)
         {
-            LwNtCtxFsControlFileComplete(&pControlContext->Base, status);
+            LwNtFsControlFileComplete(&pControlContext->Base, status);
             NtpFreeClientAsyncContext(&pControlContext->Base);
         }
         else
@@ -964,8 +954,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxFlushBuffersFile(
-    IN PIO_CONTEXT pConnection,
+LwNtFlushBuffersFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock
@@ -981,7 +970,7 @@ LwNtCtxFlushBuffersFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1020,8 +1009,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxQueryInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtQueryInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1040,7 +1028,7 @@ LwNtCtxQueryInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1081,8 +1069,7 @@ cleanup:
 }
 
 NTSTATUS 
-LwNtCtxSetInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtSetInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1101,7 +1088,7 @@ LwNtCtxSetInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1148,7 +1135,7 @@ cleanup:
 
 #if 0
 NTSTATUS
-LwNtCtxQueryFullAttributesFile(
+LwNtQueryFullAttributesFile(
     IN PIO_CONTEXT pConnection,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1158,8 +1145,7 @@ LwNtCtxQueryFullAttributesFile(
 #endif
 
 NTSTATUS 
-LwNtCtxQueryDirectoryFile(
-    IN PIO_CONTEXT pConnection,
+LwNtQueryDirectoryFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1181,7 +1167,7 @@ LwNtCtxQueryDirectoryFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1225,8 +1211,7 @@ cleanup:
 }
 
 NTSTATUS 
-LwNtCtxReadDirectoryChangeFile(
-    IN PIO_CONTEXT pConnection,
+LwNtReadDirectoryChangeFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1247,7 +1232,7 @@ LwNtCtxReadDirectoryChangeFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1290,8 +1275,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxQueryVolumeInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtQueryVolumeInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1310,7 +1294,7 @@ LwNtCtxQueryVolumeInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1351,8 +1335,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxSetVolumeInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtSetVolumeInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1362,8 +1345,7 @@ LwNtCtxSetVolumeInformationFile(
     );
 
 NTSTATUS 
-LwNtCtxLockFile(
-    IN PIO_CONTEXT pConnection,
+LwNtLockFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1384,7 +1366,7 @@ LwNtCtxLockFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1429,8 +1411,7 @@ cleanup:
 
 
 NTSTATUS 
-LwNtCtxUnlockFile(
-    IN PIO_CONTEXT pConnection,
+LwNtUnlockFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1449,7 +1430,7 @@ LwNtCtxUnlockFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1499,7 +1480,7 @@ cleanup:
 
 #if 0
 NTSTATUS
-LwNtCtxRemoveDirectoryFile(
+LwNtRemoveDirectoryFile(
     IN PIO_CONTEXT pConnection,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1511,7 +1492,7 @@ LwNtCtxRemoveDirectoryFile(
 }
 
 NTSTATUS
-LwNtCtxDeleteFile(
+LwNtDeleteFile(
     IN PIO_CONTEXT pConnection,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1523,7 +1504,7 @@ LwNtCtxDeleteFile(
 }
 
 NTSTATUS
-LwNtCtxLinkFile(
+LwNtLinkFile(
     IN PIO_CONTEXT pConnection,
     IN PIO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
@@ -1532,7 +1513,7 @@ LwNtCtxLinkFile(
     );
 
 NTSTATUS
-LwNtCtxRenameFile(
+LwNtRenameFile(
     IN PIO_CONTEXT pConnection,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1546,8 +1527,7 @@ LwNtCtxRenameFile(
 //
 
 NTSTATUS
-LwNtCtxQueryQuotaInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtQueryQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1561,8 +1541,7 @@ LwNtCtxQueryQuotaInformationFile(
     );
 
 NTSTATUS
-LwNtCtxSetQuotaInformationFile(
-    IN PIO_CONTEXT pConnection,
+LwNtSetQuotaInformationFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1571,8 +1550,7 @@ LwNtCtxSetQuotaInformationFile(
     );
 
 NTSTATUS
-LwNtCtxQuerySecurityFile(
-    IN PIO_CONTEXT pConnection,
+LwNtQuerySecurityFile(
     IN IO_FILE_HANDLE Handle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1591,7 +1569,7 @@ LwNtCtxQuerySecurityFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)
@@ -1632,8 +1610,7 @@ cleanup:
 }
 
 NTSTATUS
-LwNtCtxSetSecurityFile(
-    IN PIO_CONTEXT pConnection,
+LwNtSetSecurityFile(
     IN IO_FILE_HANDLE Handle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
@@ -1652,7 +1629,7 @@ LwNtCtxSetSecurityFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     LWMsgCall* pCall = NULL;
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     if (AsyncControlBlock)

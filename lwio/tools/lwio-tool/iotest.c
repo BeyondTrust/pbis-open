@@ -74,7 +74,8 @@ ItLibTestRundown(
                     0, // CreateOptions
                     NULL, // EA
                     0, // EA Length
-                    NULL); // ECP List
+                    NULL, // ECP List
+                    NULL);
     LWIO_ASSERT(IS_BOTH_OR_NEITHER(NT_SUCCESS(status), fileHandle));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 

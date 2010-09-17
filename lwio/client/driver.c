@@ -40,12 +40,8 @@ LwIoGetDriverStatus(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    IO_CONTEXT context = {0};
 
-    status = LwIoAcquireContext(&context);
-    BAIL_ON_NT_STATUS(status);
-
-    status = LwIoContextAcquireCall(&context, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_GET_DRIVER_STATUS;
@@ -77,8 +73,6 @@ cleanup:
         lwmsg_call_release(pCall);
     }
 
-    LwIoReleaseContext(&context);
-
     return status;
 
 error:
@@ -95,12 +89,8 @@ LwIoLoadDriver(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    IO_CONTEXT context = {0};
 
-    status = LwIoAcquireContext(&context);
-    BAIL_ON_NT_STATUS(status);
-
-    status = LwIoContextAcquireCall(&context, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_LOAD_DRIVER;
@@ -130,8 +120,6 @@ cleanup:
         lwmsg_call_release(pCall);
     }
 
-    LwIoReleaseContext(&context);
-
     return status;
 
 error:
@@ -148,13 +136,8 @@ LwIoUnloadDriver(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    IO_CONTEXT context = {0};
 
-    status = LwIoAcquireContext(&context);
-    BAIL_ON_NT_STATUS(status);
-
-
-    status = LwIoContextAcquireCall(&context, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_UNLOAD_DRIVER;
@@ -183,8 +166,6 @@ cleanup:
         lwmsg_call_destroy_params(pCall, &out);
         lwmsg_call_release(pCall);
     }
-
-    LwIoReleaseContext(&context);
 
     return status;
 

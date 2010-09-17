@@ -31,11 +31,11 @@
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 
-struct __LW_IO_CONTEXT
+typedef struct __LW_IO_CONNECTION
 {
-    LWMsgClient* pClient;
+    LWMsgPeer* pClient;
     LWMsgSession* pSession;
-};
+} IO_CONNECTION, *PIO_CONNECTION;
 
 typedef struct __LW_IO_THREAD_STATE
 {
@@ -48,7 +48,6 @@ typedef struct IO_PATH_CREDS
     PIO_CREDS pCreds;
     LW_LIST_LINKS link;
 } IO_PATH_CREDS, *PIO_PATH_CREDS;
-
 
 typedef VOID
 (*IO_CLIENT_ASYNC_COMPLETE_FUNCTION) (

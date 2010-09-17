@@ -82,17 +82,11 @@ main(
 {
     DWORD dwError = 0;
     PLWIO_LOG_INFO pLogInfo = NULL;
-    PIO_CONTEXT pContext = NULL;
 
     dwError = ParseArgs(argc, argv);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = LwIoOpenContext(&pContext);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    dwError = LwIoGetLogInfo(
-        (HANDLE) pContext,
-        &pLogInfo);
+    dwError = LwIoGetLogInfo(&pLogInfo);
     BAIL_ON_LWIO_ERROR(dwError);
 
     dwError = PrintLogInfo(pLogInfo);
@@ -103,11 +97,6 @@ cleanup:
     if (pLogInfo)
     {
         LwIoFreeLogInfo(pLogInfo);
-    }
-
-    if (pContext != NULL)
-    {
-        LwIoCloseContext(pContext);
     }
 
     LwIoShutdown();

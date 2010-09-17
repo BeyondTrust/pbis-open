@@ -83,25 +83,17 @@ main(
 {
     DWORD dwError = 0;
     LWIO_LOG_LEVEL logLevel = LWIO_LOG_LEVEL_ERROR;
-    PIO_CONTEXT pContext = (HANDLE)NULL;
     PLWIO_LOG_INFO pLogInfo = NULL;
 
     dwError = ParseArgs(argc, argv, &logLevel);
     BAIL_ON_LWIO_ERROR(dwError);
 
-    dwError = LwIoOpenContext(&pContext);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    dwError = LwIoSetLogLevel(
-        (HANDLE) pContext,
-        logLevel);
+    dwError = LwIoSetLogLevel(logLevel);
     BAIL_ON_LWIO_ERROR(dwError);
 
     fprintf(stdout, "The log level was set successfully\n\n");
 
-    dwError = LwIoGetLogInfo(
-        (HANDLE) pContext,
-        &pLogInfo);
+    dwError = LwIoGetLogInfo(&pLogInfo);
     BAIL_ON_LWIO_ERROR(dwError);
 
     dwError = PrintLogInfo(pLogInfo);
@@ -112,10 +104,6 @@ cleanup:
     if (pLogInfo)
     {
         LwIoFreeLogInfo(pLogInfo);
-    }
-
-    if (pContext != NULL) {
-        LwIoCloseContext(pContext);
     }
 
     LwIoShutdown();

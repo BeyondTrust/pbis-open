@@ -31,43 +31,25 @@
 #include "includes.h"
 
 NTSTATUS
-LwIoOpenContext(
-    PIO_CONTEXT* ppContext
-    )
-{
-    return LwIoOpenContextShared(ppContext);
-}
-
-NTSTATUS
-LwIoCloseContext(
-    PIO_CONTEXT pContext
-    )
-{
-    NTSTATUS Status = STATUS_SUCCESS;
-
-    if (pContext)
-    {
-        LwIoFreeMemory(pContext);
-    }
-
-    return Status;
-}
-
-NTSTATUS
-LwIoContextAcquireCall(
-    IN PIO_CONTEXT pConnection,
+LwIoConnectionAcquireCall(
     OUT LWMsgCall** ppCall
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    IO_CONNECTION connection = {0};
+
+    status = LwIoAcquireConnection(&connection);
+    BAIL_ON_NT_STATUS(status);
 
     status = NtIpcLWMsgStatusToNtStatus(
         lwmsg_client_acquire_call(
-            pConnection->pClient,
+            connection.pClient,
             ppCall));
     BAIL_ON_NT_STATUS(status);
 
 error:
+
+    LwIoReleaseConnection(&connection);
 
     return status;
 }
@@ -81,12 +63,8 @@ LwIoGetPid(
     LWMsgCall* pCall = NULL;
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
-    IO_CONTEXT context = {0};
 
-    status = LwIoAcquireContext(&context);
-    BAIL_ON_NT_STATUS(status);
-
-    status = LwIoContextAcquireCall(&context, &pCall);
+    status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
     in.tag = LWIO_GET_PID;
@@ -117,8 +95,6 @@ cleanup:
         lwmsg_call_destroy_params(pCall, &out);
         lwmsg_call_release(pCall);
     }
-
-    LwIoReleaseContext(&context);
 
     return status;
 
