@@ -32,15 +32,16 @@ liblwbase_nothr_la_LIBADD = \
 
 liblwbase_la_SOURCES = \
 	atomic.c \
-        security-token.c \
-        security-sd-inherit.c \
+    security-token.c \
+    security-sd-inherit.c \
 	threadpool-common.c \
 	mapsecurity.c
 
 liblwbase_la_LIBADD = \
-        @LIB_PTHREAD@ \
+    @LIB_PTHREAD@ \
 	@LIB_DL@ \
-        liblwbase_nothr.la
+	@LIB_RT@ \
+    liblwbase_nothr.la
 
 if USE_EPOLL
 liblwbase_la_SOURCES += threadpool-epoll.c
