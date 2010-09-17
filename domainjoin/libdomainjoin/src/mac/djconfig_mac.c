@@ -576,6 +576,7 @@ static QueryResult QueryDSPlugin(const JoinProcessOptions *options, LWException 
     QueryResult result = NotConfigured;
     PSTR value = NULL;
     PSTR valueStart = NULL;
+    BOOLEAN bLikewisePresent = FALSE;
 
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/usr/bin/dscl", &exists));
     if(!exists)
@@ -614,7 +615,25 @@ static QueryResult QueryDSPlugin(const JoinProcessOptions *options, LWException 
 
     LW_CLEANUP_CTERR(exc, CTCaptureOutput("/usr/bin/dscl /Search -read / dsAttrTypeStandard:CSPSearchPath", &value));
     CTStripWhitespace(value);
-    if( (strstr(value, LWDSPLUGIN_NAME) == NULL) == options->joiningDomain )
+    valueStart = strstr(value, LWDSPLUGIN_NAME);
+    if (valueStart == NULL)
+    {
+        bLikewisePresent = FALSE;
+    }
+    else
+    {
+        switch (valueStart[strlen(LWDSPLUGIN_NAME)])
+        {
+            case 0:
+            case '\r':
+            case '\n':
+                bLikewisePresent = TRUE;
+            default:
+                bLikewisePresent = FALSE;
+        }
+    }
+
+    if( (bLikewisePresent != 0) != (options->joiningDomain != 0) )
         goto cleanup;
     CT_SAFE_FREE_STRING(value);
 
