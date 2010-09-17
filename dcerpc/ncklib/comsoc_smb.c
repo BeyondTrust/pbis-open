@@ -18,6 +18,13 @@
 
 #define SMB_SOCKET_LOCK(sock) (rpc__smb_socket_lock(sock))
 #define SMB_SOCKET_UNLOCK(sock) (rpc__smb_socket_unlock(sock))
+#define GE(err)                                 \
+    do                                          \
+    {                                           \
+        if ((err))                              \
+            goto error;                         \
+    } while (0)
+
 
 typedef struct rpc_smb_transport_info_s
 {
@@ -53,7 +60,10 @@ typedef struct rpc_smb_socket_s
     rpc_np_addr_t localaddr;
     rpc_smb_transport_info_t info;
     PIO_CONTEXT context;
+    IO_FILE_NAME filename;
     IO_FILE_HANDLE np;
+    IO_STATUS_BLOCK io_status;
+    IO_ASYNC_CONTROL_BLOCK io_async;
     rpc_smb_buffer_t sendbuffer;
     rpc_smb_buffer_t recvbuffer;
     boolean received_last;
@@ -68,6 +78,18 @@ typedef struct rpc_smb_socket_s
     dcethread_mutex lock;
     dcethread_cond event;
 } rpc_smb_socket_t, *rpc_smb_socket_p_t;
+
+INTERNAL
+void
+rpc__smb_socket_create_named_pipe_complete(
+    void* data
+    );
+
+INTERNAL
+void
+rpc__smb_socket_connect_named_pipe_complete(
+    void* data
+    );
 
 void
 rpc_smb_transport_info_from_lwio_creds(
@@ -769,10 +791,12 @@ rpc__smb_socket_accept(
     char c = 0;
     BYTE clientaddr[16] = {0};
     USHORT clientaddrlen = sizeof(clientaddr);
+    boolean locked = false;
 
     *newsock = NULL;
 
     SMB_SOCKET_LOCK(smb);
+    locked = true;
 
     while (smb->accept_backlog.length == 0)
     {
@@ -801,6 +825,9 @@ rpc__smb_socket_accept(
             break;
         }
     }
+
+    SMB_SOCKET_UNLOCK(smb);
+    locked = false;
 
     serr = rpc__socket_open(sock->pseq_id, NULL, &npsock);
     if (serr)
@@ -873,7 +900,6 @@ rpc__smb_socket_accept(
     {
         goto error;
     }
-    
 
     serr = NtStatusToErrno(
         LwIoCtxGetSessionKey(
@@ -901,178 +927,98 @@ error:
         rpc__socket_close(npsock);
     }
 
-    SMB_SOCKET_UNLOCK(smb);
+    if (locked)
+    {
+        SMB_SOCKET_UNLOCK(smb);
+    }
 
     return serr;
 }
 
 INTERNAL
-void*
-rpc__smb_socket_listen_thread(void* data)
+int
+rpc__smb_socket_accept_async(
+    rpc_smb_socket_p_t smb
+    )
 {
     int serr = RPC_C_SOCKET_OK;
-    rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) data;
-    IO_STATUS_BLOCK status_block = { 0 };
-    char *endpoint = NULL;
-    char *pipename = NULL;
-    unsigned32 dbg_status = 0;
-    PSTR smbpath = NULL;
-    IO_FILE_NAME filename = { 0 };
-    size_t i;
-    char c = 0;
     LONG64 default_timeout = 0;
-    struct timespec retry_wait = {10, 0};
+    NTSTATUS status = STATUS_SUCCESS;
 
-    SMB_SOCKET_LOCK(smb);
+    smb->io_async.Callback = rpc__smb_socket_create_named_pipe_complete;
+    smb->io_async.CallbackContext = smb;
 
-    while (smb->state != SMB_STATE_LISTEN)
+    status = LwNtCtxCreateNamedPipeFile(
+        smb->context,                            /* IO context */ 
+        NULL,                                    /* Security token */
+        &smb->np,                                /* NP handle */
+        &smb->io_async,                          /* Async control */
+        &smb->io_status,                         /* IO status block */
+        &smb->filename,                          /* Filename */
+        NULL,                                    /* Security descriptor */
+        NULL,                                    /* Security QOS */
+        GENERIC_READ | GENERIC_WRITE,            /* Desired access mode */
+        FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Share access mode */
+        FILE_CREATE,                             /* Create disposition */
+        0,                                       /* Create options */
+        0,                                       /* Named pipe type */
+        0,                                       /* Read mode */
+        0,                                       /* Completion mode */
+        smb->accept_backlog.capacity,            /* Maximum instances */
+        0,                                       /* Inbound quota */
+        0,                                       /* Outbound quota */
+        &default_timeout                         /* Default timeout */
+        );
+    if (status == STATUS_PENDING)
     {
-        if (smb->state == SMB_STATE_ERROR)
-        {
-            goto error;
-        }
-
-        rpc__smb_socket_wait(smb);
-    }     
-
-    /* Extract endpoint */
-    rpc__naf_addr_inq_endpoint ((rpc_addr_p_t) &smb->localaddr,
-                                (unsigned_char_t**) &endpoint,
-                                &dbg_status);
-    
-    if (!strncmp(endpoint, "\\pipe\\", sizeof("\\pipe\\") - 1) ||
-        !strncmp(endpoint, "\\PIPE\\", sizeof("\\PIPE\\") - 1))
-    {
-        pipename = endpoint + sizeof("\\pipe\\") - 1;
+        status = STATUS_SUCCESS;
     }
-    else
-    {
-        serr = EINVAL;
-        goto error;
-    }
-
-    serr = NtStatusToErrno(
-        LwRtlCStringAllocatePrintf(
-            &smbpath, 
-            "\\npfs\\%s",
-            (char*) pipename));
-    if (serr)
-    {
-        goto error;
-    }
-    
-    serr = NtStatusToErrno(
-        LwRtlWC16StringAllocateFromCString(
-            &filename.FileName,
-            smbpath));
-    if (serr)
-    {
-        goto error;
-    }
-
-    while (smb->state == SMB_STATE_LISTEN)
-    {
-        if (serr)
-        {
-            /* Wait before retrying */
-            dcethread_delay(&retry_wait);
-            serr = 0;
-        }
-
-        SMB_SOCKET_UNLOCK(smb);
-        
-        if (smb->np)
-        {
-            LwNtCtxCloseFile(smb->context, smb->np);
-            smb->np = NULL;
-        }
-
-        serr = NtStatusToErrno(
-            LwNtCtxCreateNamedPipeFile(
-                smb->context,                            /* IO context */ 
-                NULL,                                    /* Security token */
-                &smb->np,                                /* NP handle */
-                NULL,                                    /* Async control */
-                &status_block,                           /* IO status block */
-                &filename,                               /* Filename */
-                NULL,                                    /* Security descriptor */
-                NULL,                                    /* Security QOS */
-                GENERIC_READ | GENERIC_WRITE,            /* Desired access mode */
-                FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Share access mode */
-                FILE_CREATE,                             /* Create disposition */
-                0,                                       /* Create options */
-                0,                                       /* Named pipe type */
-                0,                                       /* Read mode */
-                0,                                       /* Completion mode */
-                smb->accept_backlog.capacity,            /* Maximum instances */
-                0,                                       /* Inbound quota */
-                0,                                       /* Outbound quota */
-                &default_timeout                         /* Default timeout */
-                ));
-        if (serr)
-        {
-            SMB_SOCKET_LOCK(smb);
-            continue;
-        }
-
-        serr = NtStatusToErrno(
-            LwIoCtxConnectNamedPipe(
-                smb->context,
-                smb->np,
-                NULL,
-                &status_block));
-        if (serr)
-        {
-            SMB_SOCKET_LOCK(smb);
-            continue;
-        }
-
-        SMB_SOCKET_LOCK(smb);
-
-        /* Wait for a slot to open in the accept queue */
-        while (smb->accept_backlog.length == smb->accept_backlog.capacity)
-        {
-            if (smb->state == SMB_STATE_ERROR)
-            {
-                goto error;
-            }
-            
-            rpc__smb_socket_wait(smb);
-        }
-        
-        /* Put the handle into the accept queue */
-        for (i = 0; i < smb->accept_backlog.capacity; i++)
-        {
-            if (smb->accept_backlog.queue[i] == NULL)
-            {
-                smb->accept_backlog.queue[i] = smb->np;
-                smb->np = NULL;
-                smb->accept_backlog.length++;
-                if (write(smb->accept_backlog.selectfd[1], &c, sizeof(c)) != sizeof(c))
-                {
-                    serr = errno;
-                    goto error;
-                }
-                dcethread_cond_broadcast_throw(&smb->event);
-                break;
-            }
-        }
-    }
+    serr = NtStatusToErrno(status);
+    GE(serr);
 
 error:
 
-    if (filename.FileName)
+    if (serr)
     {
-        RtlMemoryFree(filename.FileName);
+        rpc__smb_socket_change_state(smb, SMB_STATE_ERROR);
     }
 
-    if (smbpath)
+    return serr;
+}
+
+INTERNAL
+void
+rpc__smb_socket_create_named_pipe_complete(void* data)
+{
+    int serr = RPC_C_SOCKET_OK;
+    rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) data;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    SMB_SOCKET_LOCK(smb);
+
+    LwNtDereferenceAsyncCancelContext(&smb->io_async.AsyncCancelContext);
+
+    serr = NtStatusToErrno(smb->io_status.Status);
+    GE(serr);
+    
+    smb->io_async.Callback = rpc__smb_socket_connect_named_pipe_complete;
+    smb->io_async.CallbackContext = smb;
+
+    status = LwIoCtxConnectNamedPipe(
+        smb->context,
+        smb->np,
+        &smb->io_async,
+        &smb->io_status);
+
+    if (status == STATUS_PENDING)
     {
-        RtlMemoryFree(smbpath);
+        status = STATUS_SUCCESS;
     }
 
-    // rpc_string_free handles when *ptr is NULL
-    rpc_string_free((unsigned_char_t**) &endpoint, &dbg_status);
+    serr = NtStatusToErrno(status);
+    GE(serr);
+
+error:
 
     if (serr)
     {
@@ -1081,9 +1027,69 @@ error:
 
     SMB_SOCKET_UNLOCK(smb);
 
-    return NULL;
+    return;
 }
+
+INTERNAL
+void
+rpc__smb_socket_connect_named_pipe_complete(void* data)
+{
+    int serr = RPC_C_SOCKET_OK;
+    rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) data;
+    size_t i = 0;
+    char c = 0;
+
+    SMB_SOCKET_LOCK(smb);
+
+    LwNtDereferenceAsyncCancelContext(&smb->io_async.AsyncCancelContext);
+
+    serr = NtStatusToErrno(smb->io_status.Status);
+    GE(serr);
+
+    /* Wait for a slot to open in the accept queue */
+    while (smb->accept_backlog.length == smb->accept_backlog.capacity)
+    {
+        if (smb->state == SMB_STATE_ERROR)
+        {
+            goto error;
+        }
+        
+        rpc__smb_socket_wait(smb);
+    }
     
+    /* Put the handle into the accept queue */
+    for (i = 0; i < smb->accept_backlog.capacity; i++)
+    {
+        if (smb->accept_backlog.queue[i] == NULL)
+        {
+            smb->accept_backlog.queue[i] = smb->np;
+            smb->np = NULL;
+            smb->accept_backlog.length++;
+            if (write(smb->accept_backlog.selectfd[1], &c, sizeof(c)) != sizeof(c))
+            {
+                serr = errno;
+                goto error;
+            }
+            dcethread_cond_broadcast_throw(&smb->event);
+            break;
+        }
+    }
+    
+    /* Do it all again */
+    serr = rpc__smb_socket_accept_async(smb);
+    GE(serr);
+
+error:
+
+    if (serr)
+    {
+        rpc__smb_socket_change_state(smb, SMB_STATE_ERROR);
+    }
+
+    SMB_SOCKET_UNLOCK(smb);
+
+    return;
+}
 
 INTERNAL
 rpc_socket_error_t
@@ -1094,6 +1100,10 @@ rpc__smb_socket_listen(
 {
     rpc_socket_error_t serr = RPC_C_SOCKET_OK;
     rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) sock->data.pointer;
+    char* endpoint = NULL;
+    char* pipename = NULL;
+    char* smbpath = NULL;
+    unsigned32 dbg_status = 0;
 
     SMB_SOCKET_LOCK(smb);
 
@@ -1113,11 +1123,49 @@ rpc__smb_socket_listen(
         goto error;
     }
 
+    /* Extract endpoint */
+    rpc__naf_addr_inq_endpoint ((rpc_addr_p_t) &smb->localaddr,
+                                (unsigned_char_t**) &endpoint,
+                                &dbg_status);
+    
+    if (!strncmp(endpoint, "\\pipe\\", sizeof("\\pipe\\") - 1) ||
+        !strncmp(endpoint, "\\PIPE\\", sizeof("\\PIPE\\") - 1))
+    {
+        pipename = endpoint + sizeof("\\pipe\\") - 1;
+    }
+    else
+    {
+        serr = EINVAL;
+        GE(serr);
+    }
+
+    serr = NtStatusToErrno(
+        LwRtlCStringAllocatePrintf(
+            &smbpath, 
+            "\\npfs\\%s",
+            (char*) pipename));
+    GE(serr);
+    
+    serr = NtStatusToErrno(
+        LwRtlWC16StringAllocateFromCString(
+            &smb->filename.FileName,
+            smbpath));
+    GE(serr);
+
     smb->state = SMB_STATE_LISTEN;
 
-    dcethread_create_throw(&smb->listen_thread, NULL, rpc__smb_socket_listen_thread, smb);
+    serr = rpc__smb_socket_accept_async(smb);
+    GE(serr);
 
 error:
+
+    if (smbpath)
+    {
+        RtlMemoryFree(smbpath);
+    }
+
+    // rpc_string_free handles when *ptr is NULL
+    rpc_string_free((unsigned_char_t**) &endpoint, &dbg_status);
 
     SMB_SOCKET_UNLOCK(smb);
 
