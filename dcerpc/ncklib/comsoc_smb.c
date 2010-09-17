@@ -24,6 +24,7 @@
         if ((err))                              \
             goto error;                         \
     } while (0)
+#define RETRY_INTERVAL 10
 
 
 typedef struct rpc_smb_transport_info_s
@@ -64,6 +65,8 @@ typedef struct rpc_smb_socket_s
     IO_FILE_HANDLE np;
     IO_STATUS_BLOCK io_status;
     IO_ASYNC_CONTROL_BLOCK io_async;
+    rpc_timer_t retry_timer;
+    unsigned retry_timer_set:1;
     rpc_smb_buffer_t sendbuffer;
     rpc_smb_buffer_t recvbuffer;
     boolean received_last;
@@ -89,6 +92,12 @@ INTERNAL
 void
 rpc__smb_socket_connect_named_pipe_complete(
     void* data
+    );
+
+INTERNAL
+int
+rpc__smb_socket_accept_async(
+    rpc_smb_socket_p_t smb
     );
 
 void
@@ -490,6 +499,11 @@ rpc__smb_socket_destroy(
             free(sock->recvbuffer.base);
         }
         
+        if (sock->retry_timer_set)
+        {
+            rpc__timer_clear(&sock->retry_timer);
+        }
+
         rpc__smb_transport_info_destroy(&sock->info);
 
         dcethread_mutex_destroy_throw(&sock->lock);
@@ -936,6 +950,40 @@ error:
 }
 
 INTERNAL
+void
+rpc__smb_socket_retry(void* data)
+{
+    int serr = RPC_C_SOCKET_OK;
+    rpc_smb_socket_p_t smb = (rpc_smb_socket_p_t) data;
+
+    SMB_SOCKET_LOCK(smb);
+
+    rpc__timer_clear(&smb->retry_timer);
+    smb->retry_timer_set = false;
+
+    serr = rpc__smb_socket_accept_async(smb);
+    GE(serr);
+
+error:
+
+    SMB_SOCKET_UNLOCK(smb);
+
+    return;
+}
+
+INTERNAL
+void
+rpc__smb_socket_retry_in_seconds(rpc_smb_socket_p_t smb, int seconds)
+{
+    rpc__timer_set(
+        &smb->retry_timer,
+        rpc__smb_socket_retry,
+        smb,
+        RPC_CLOCK_SEC(seconds));
+    smb->retry_timer_set = true;
+}
+
+INTERNAL
 int
 rpc__smb_socket_accept_async(
     rpc_smb_socket_p_t smb
@@ -980,7 +1028,7 @@ error:
 
     if (serr)
     {
-        rpc__smb_socket_change_state(smb, SMB_STATE_ERROR);
+        rpc__smb_socket_retry_in_seconds(smb, RETRY_INTERVAL);
     }
 
     return serr;
@@ -1022,7 +1070,7 @@ error:
 
     if (serr)
     {
-        rpc__smb_socket_change_state(smb, SMB_STATE_ERROR);
+        rpc__smb_socket_retry_in_seconds(smb, RETRY_INTERVAL);
     }
 
     SMB_SOCKET_UNLOCK(smb);
@@ -1083,7 +1131,7 @@ error:
 
     if (serr)
     {
-        rpc__smb_socket_change_state(smb, SMB_STATE_ERROR);
+        rpc__smb_socket_retry_in_seconds(smb, RETRY_INTERVAL);
     }
 
     SMB_SOCKET_UNLOCK(smb);
