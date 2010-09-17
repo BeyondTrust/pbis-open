@@ -53,7 +53,7 @@ static const int SignalBlacklist[] =
     SIGBUS,
 #endif
 #ifdef SIGEMT
-    SIGEMT
+    SIGEMT,
 #endif
 #ifdef SIGTRAP
     SIGTRAP,
