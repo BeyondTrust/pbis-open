@@ -42,7 +42,8 @@ function component_configure
 	--includedir=${PREFIXDIR}/include \
         --sysconfdir=${SYSCONFDIR} \
 	--enable-shared \
-        --without-tcl
+        --without-tcl \
+	--disable-pkinit
 }
 
 function component_build
