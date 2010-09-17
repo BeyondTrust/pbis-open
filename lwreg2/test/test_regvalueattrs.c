@@ -55,25 +55,42 @@ LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
         LWREG_VALUE_RANGE_TYPE_ENUM,
         0};
 
+LWREG_VALUE_ATTRIBUTES_A ValueAttribute_int = {
+        REG_SZ,
+        szDefaultVal,
+        sizeof(szDefaultVal),
+        szDocString,
+        LWREG_VALUE_RANGE_TYPE_INTEGER,
+        0};
+
 
 int main(int argc, char *argv[])
 {
     DWORD dwError;
     HANDLE hReg = NULL;
     PLWREG_VALUE_ATTRIBUTES pAttr = NULL;
+    PLWREG_VALUE_ATTRIBUTES pAttr_int = NULL;
     PWSTR* ppwszRootKeyNames = NULL;
     DWORD dwNumRootKeys = 0;
     wchar16_t szSubKey[] = {'a', 0};
     wchar16_t szValueName[] = {'a','t','t','r',0};
+    wchar16_t szValueName1[] = {'a','t','t','r','1',0};
     HKEY hKey = NULL;
 
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
     PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes_int = NULL;
 
     ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
+    ValueAttribute_int.Range.RangeInteger.Max = 100;
+    ValueAttribute_int.Range.RangeInteger.Min = -1;
 
     dwError = RegConvertValueAttributesAToW(ValueAttribute,
                                             &pAttr);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegConvertValueAttributesAToW(ValueAttribute_int,
+                                            &pAttr_int);
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegOpenServer(&hReg);
@@ -104,6 +121,14 @@ int main(int argc, char *argv[])
     dwError = RegSetValueAttributesW(
                    hReg,
                    hKey,
+                   NULL,
+                   szValueName1,
+                   pAttr_int);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueAttributesW(
+                   hReg,
+                   hKey,
                    szSubKey,
                    szValueName,
                    pAttr);
@@ -116,6 +141,15 @@ int main(int argc, char *argv[])
                    szValueName,
                    &pCurrentValue,
                    &pValueAttributes);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegGetValueAttributesW(
+                   hReg,
+                   hKey,
+                   NULL,
+                   szValueName1,
+                   NULL,
+                   &pValueAttributes_int);
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegDeleteValueAttributesW(

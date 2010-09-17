@@ -183,9 +183,14 @@ RegSafeFreeValueAttributes(
     pValueAttrs = *ppValueAttrs;
     RTL_FREE(&pValueAttrs->pDefaultValue);
     RTL_FREE(&pValueAttrs->pwszDocString);
-    RegFreeWC16StringArrayWithNullTerminator(
-            pValueAttrs->Range.ppwszRangeEnumStrings);
-    pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
+
+    if (LWREG_VALUE_RANGE_TYPE_ENUM == pValueAttrs->RangeType)
+    {
+        RegFreeWC16StringArrayWithNullTerminator(
+                pValueAttrs->Range.ppwszRangeEnumStrings);
+        pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
+    }
+
     RTL_FREE(&pValueAttrs);
 
     *ppValueAttrs = NULL;

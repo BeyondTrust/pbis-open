@@ -46,6 +46,26 @@
 
 #include "includes.h"
 
+#define INTEGER_RANGE_DELIMITOR_S "|"
+#define INTEGER_RANGE_DELIMITOR_C '|'
+
+
+static
+NTSTATUS
+RegDbConvertValueAttributesRangeToBinary(
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes,
+    OUT PBYTE* ppRange,
+    OUT PDWORD pdwRangeLength
+    );
+
+static
+NTSTATUS
+RegDbConvertBinaryToValueAttributesRange(
+    IN PBYTE pRange,
+    IN DWORD dwRangeLength,
+    IN OUT PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    );
+
 NTSTATUS
 RegDbUnpackRegValueAttributesInfo(
     IN sqlite3_stmt* pstQuery,
@@ -122,6 +142,11 @@ RegDbUnpackRegValueAttributesInfo(
     BAIL_ON_NT_STATUS(status);
 
     // Convert pRange to pResult->pValueAttributes->Range union
+    status = RegDbConvertBinaryToValueAttributesRange(
+                  pRange,
+                  dwRangeLength,
+                  pResult->pValueAttributes);
+    BAIL_ON_NT_STATUS(status);
 
     status = RegSqliteReadTimeT(
         pstQuery,
@@ -157,7 +182,7 @@ RegDbStoreRegValueAttributes(
     time_t now = 0;
     BOOLEAN bInLock = FALSE;
     PBYTE pRange = NULL;
-    DWORD dwRangeLenth = 0;
+    DWORD dwRangeLength = 0;
 
     ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
 
@@ -245,11 +270,17 @@ RegDbStoreRegValueAttributes(
         iColumnPos++;
 
         // Convert pEntry->pValueAttributes->Range to pRange
+        status = RegDbConvertValueAttributesRangeToBinary(
+                        pEntry->pValueAttributes,
+                        &pRange,
+                        &dwRangeLength);
+        BAIL_ON_NT_STATUS(status);
+
         status = RegSqliteBindBlob(
                    pstQueryEntry,
                    iColumnPos,
                    pRange,
-                   dwRangeLenth);
+                   dwRangeLength);
         BAIL_ON_NT_STATUS(status);
         iColumnPos++;
 
@@ -438,12 +469,17 @@ RegDbUpdateRegValueAttributes(
         iColumnPos++;
 
         // Convert pEntry->pValueAttributes->Range to pRange
+        status = RegDbConvertValueAttributesRangeToBinary(
+                                       pEntry->pValueAttributes,
+                                       &pRange,
+                                       &dwRangeLength);
+        BAIL_ON_NT_STATUS(status);
 
         status = RegSqliteBindBlob(
                    pstQueryEntry,
                    iColumnPos,
                    pRange,
-                   dwRangeLength);
+                   (DWORD)dwRangeLength);
         BAIL_ON_NT_STATUS(status);
         iColumnPos++;
 
@@ -690,5 +726,116 @@ error:
         sqlite3_reset(pstQuery);
     }
 
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RegDbConvertValueAttributesRangeToBinary(
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes,
+    OUT PBYTE* ppRange,
+    OUT PDWORD pdwRangeLength
+    )
+{
+    NTSTATUS status = 0;
+    PBYTE pRange = NULL;
+    DWORD dwRangeLength = 0;
+
+    if (!pValueAttributes)
+    {
+        goto cleanup;
+    }
+
+    if (LWREG_VALUE_RANGE_TYPE_ENUM == pValueAttributes->RangeType)
+    {
+        // pValueAttributes->Range.ppwszRangeEnumStrings
+        if (!pValueAttributes->Range.ppwszRangeEnumStrings)
+            goto cleanup;
+
+        status = NtRegMultiStrsToByteArrayW(pValueAttributes->Range.ppwszRangeEnumStrings,
+                                            &pRange,
+                                            (SSIZE_T*)&dwRangeLength);
+        BAIL_ON_NT_STATUS(status);
+    }
+    else if (LWREG_VALUE_RANGE_TYPE_INTEGER == pValueAttributes->RangeType)
+    {
+        // pValueAttributes->Range.RangeInteger
+        status = LwRtlWC16StringAllocatePrintfW((PWSTR*)&pRange,
+                                                L"%d%c%d",
+                                                pValueAttributes->Range.RangeInteger.Max,
+                                                INTEGER_RANGE_DELIMITOR_C,
+                                                pValueAttributes->Range.RangeInteger.Min);
+        BAIL_ON_NT_STATUS(status);
+
+        dwRangeLength = (LwRtlWC16StringNumChars((PWSTR)pRange) + 1)*sizeof(wchar16_t);
+    }
+
+cleanup:
+    if (status)
+    {
+        LWREG_SAFE_FREE_MEMORY(pRange);
+        dwRangeLength = 0;
+    }
+
+    *ppRange = pRange;
+    *pdwRangeLength = dwRangeLength;
+
+    return status;
+
+error:
+    goto cleanup;
+
+}
+
+static
+NTSTATUS
+RegDbConvertBinaryToValueAttributesRange(
+    IN PBYTE pRange,
+    IN DWORD dwRangeLength,
+    IN OUT PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    NTSTATUS status = 0;
+    PSTR pszRangeInteger = NULL;
+    // Do not free
+    PSTR pszTmp = NULL;
+    PSTR pszstrtok_rSav = NULL;
+
+    if (!pRange || !dwRangeLength || !pValueAttributes)
+    {
+        goto cleanup;
+    }
+
+    if (LWREG_VALUE_RANGE_TYPE_ENUM == pValueAttributes->RangeType)
+    {
+        // pValueAttributes->Range.ppwszRangeEnumStrings
+        status = NtRegByteArrayToMultiStrsW(pRange,
+                                            (SSIZE_T)dwRangeLength,
+                                            &pValueAttributes->Range.ppwszRangeEnumStrings);
+        BAIL_ON_NT_STATUS(status);
+    }
+    else if (LWREG_VALUE_RANGE_TYPE_INTEGER == pValueAttributes->RangeType)
+    {
+        // pValueAttributes->Range.RangeInteger
+        status = LwRtlCStringAllocateFromWC16String(&pszRangeInteger,
+                                                    (PWSTR)pRange);
+        BAIL_ON_NT_STATUS(status);
+
+        // MAX|MIN
+        pszTmp = strtok_r(pszRangeInteger, INTEGER_RANGE_DELIMITOR_S, &pszstrtok_rSav);
+        if (pszTmp != NULL)
+        {
+            pValueAttributes->Range.RangeInteger.Max = pszTmp ? atoi(pszTmp) : 0;
+            pszTmp = strtok_r(NULL, INTEGER_RANGE_DELIMITOR_S, &pszstrtok_rSav);
+            pValueAttributes->Range.RangeInteger.Min = pszTmp ? atoi(pszTmp) : 0;
+        }
+    }
+
+ cleanup:
+    LWREG_SAFE_FREE_MEMORY(pszRangeInteger);
+
+    return status;
+
+error:
     goto cleanup;
 }
