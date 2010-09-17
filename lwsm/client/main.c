@@ -1163,7 +1163,9 @@ LwSmFindServiceWithPid(
         }
 
         LwSmReleaseServiceHandle(hHandle);
+        hHandle = NULL;
         LwSmFreeServiceInfo(pInfo);
+        pInfo = NULL;
     }
 
     dwError = LW_ERROR_INVALID_PARAMETER;
@@ -1219,8 +1221,10 @@ LwSmGdb(
 
     if (status.state != LW_SERVICE_STATE_RUNNING)
     {
-        printf("Service is not running\n");
-        dwError = LW_ERROR_INVALID_PARAMETER;
+        dwError = LwSmStart(argc, pArgv);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmQueryServiceStatus(hHandle, &status);
         BAIL_ON_ERROR(dwError);
     }
 
@@ -1231,7 +1235,9 @@ LwSmGdb(
         pInfo->type != LW_SERVICE_TYPE_LEGACY_EXECUTABLE)
     {
         LwSmReleaseServiceHandle(hHandle);
+        hHandle = NULL;
         LwSmFreeServiceInfo(pInfo);
+        pInfo = NULL;
 
         dwError = LwSmFindServiceWithPid(status.pid, &hHandle);
         BAIL_ON_ERROR(dwError);
