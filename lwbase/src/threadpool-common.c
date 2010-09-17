@@ -662,7 +662,7 @@ RegisterTaskUnixSignal(
 #ifdef SIGRTMAX
     int maxSig = SIGRTMAX;
 #else
-    int maxSig = SIGUNUSED;
+    int maxSig = SIGUSR2;
 #endif
 
     if (Sig == 0)
@@ -824,7 +824,7 @@ LwRtlMain(
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t waitSet;
     sigset_t intSet;
-    siginfo_t info;
+    siginfo_t info = {0};
     struct sigaction action;
     int ret = 0;
 
@@ -852,7 +852,11 @@ LwRtlMain(
     for (;;)
     {
         UNLOCK_SIGNAL();
+#ifdef HAVE_SIGWAITINFO
         ret = sigwaitinfo(&waitSet, &info);
+#else
+        ret = sigwait(&waitSet, &info.si_signo);
+#endif
         LOCK_SIGNAL();
 
         if (ret < 0 && errno == EINTR)

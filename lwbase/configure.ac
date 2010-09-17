@@ -15,8 +15,8 @@ CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
 MOD_EXT=".so"
 
 case "$host_os:$host_cpu" in
-        solaris*:*)
-                LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
+    solaris*:*)
+        LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
 		;;
 	hpux*:hppa*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500"
@@ -28,10 +28,9 @@ case "$host_os:$host_cpu" in
 	aix*:*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_THREAD_SAFE"
 		;;	
-        darwin*:*)
-                echo "Detected Mac OS X"
-                DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
-                AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+    darwin*:*)
+        DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
+        AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
 		;;	
 esac
 
@@ -109,6 +108,11 @@ AC_SUBST(LIB_PTHREAD)
 AC_SUBST(LIB_RT)
 
 AC_CHECK_FUNCS([strndup strncasecmp])
+
+saved_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIB_RT"
+AC_CHECK_FUNCS([sigwaitinfo])
+LDFLAGS="$saved_LDFLAGS"
 
 # Checks for header files.
 AC_CHECK_HEADERS([string.h strings.h sys/types.h sys/socket.h sys/varargs.h sys/time.h sys/param.h pthread.h pthread_np.h unistd.h uuid/uuid.h])
