@@ -108,6 +108,14 @@ LwNtCtxCreateFile(
     );
 
 NTSTATUS
+LwNtCtxAsyncCloseFile(
+    IN PIO_CONTEXT pConnection,
+    IN IO_FILE_HANDLE FileHandle,
+    IN OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
+    OUT PIO_STATUS_BLOCK IoStatusBlock
+    );
+
+NTSTATUS
 LwNtCtxCloseFile(
     IN PIO_CONTEXT pConnection,
     IN IO_FILE_HANDLE FileHandle
