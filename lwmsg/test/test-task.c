@@ -79,8 +79,15 @@ basic_work_item(
 MU_TEST(task, basic_work_item)
 {
     LWMsgBool volatile value = LWMSG_FALSE;
+    union
+    {
+        LWMsgBool volatile *bvalue;
+        void* vvalue;
+    } pun;
 
-    MU_TRY(lwmsg_task_dispatch_work_item(manager, basic_work_item, (void*) &value));
+    pun.bvalue = &value;
+
+    MU_TRY(lwmsg_task_dispatch_work_item(manager, basic_work_item, pun.vvalue));
 
     pthread_mutex_lock(&lock);
     while (!value)
