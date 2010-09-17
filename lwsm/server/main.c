@@ -388,6 +388,8 @@ Startup(
 {
     DWORD dwError = 0;
 
+    SM_LOG_INFO("Likewise Service Manager starting up");
+
     /* Bootstrap ourselves by adding and starting any
        services we need to run (e.g. registry) */
     dwError = LwSmBootstrap();
@@ -411,6 +413,8 @@ Startup(
         BAIL_ON_ERROR(dwError);
         gState.bNotified = TRUE;
     }
+
+    SM_LOG_INFO("Likewise Service Manager startup complete");
 
     return;
 
@@ -501,12 +505,16 @@ MainTask(
             {
             case SIGTERM:
             case SIGINT:
+                SM_LOG_VERBOSE(info.si_signo == SIGINT ?
+                    "Shutting down on SIGINT" :
+                    "Shutting down on SIGTERM");
                 /* Shutting down stops all running services, which is a blocking operation */
                 status = LwRtlQueueWorkItem(gState.pPool, Shutdown, NULL, 0);
                 BAIL_ON_ERROR(status);
                 *pWaitMask = LW_TASK_EVENT_COMPLETE;
                 goto cleanup;
             case SIGHUP:
+                SM_LOG_VERBOSE("Refreshing configuration on SIGHUP");
                 /* Refreshing config reads from the registry, which is a blocking operation */
                 status = LwRtlQueueWorkItem(gState.pPool, RefreshConfig, NULL, 0);
                 BAIL_ON_ERROR(status);
@@ -675,6 +683,8 @@ LwSmStartIpcServer(
     )
 {
     DWORD dwError = 0;
+
+    SM_LOG_VERBOSE("Starting IPC server");
 
     dwError = MAP_LWMSG_STATUS(lwmsg_context_new(NULL, &gState.pIpcContext));
     BAIL_ON_ERROR(dwError);

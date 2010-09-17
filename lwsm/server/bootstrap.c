@@ -70,6 +70,8 @@ LwSmBootstrap(
     size_t j = 0;
     size_t len = 0;
 
+    SM_LOG_VERBOSE("Bootstrapping");
+
     for (i = 0; gBootstrapServices[i]; i++)
     {
         pService = gBootstrapServices[i];
