@@ -81,7 +81,7 @@ NtpCtxCallComplete(
 
     status = pCancelContext->pfnComplete(
         status,
-        &pCancelContext->out.data,
+        pCancelContext->out.data,
         pCancelContext->pData);
     pCancelContext->pfnUserCallback(pCancelContext->pUserCallbackContext);
 
@@ -136,7 +136,7 @@ NtpCtxCallAsync(
                                                 &pCancelContext->in,
                                                 &pCancelContext->out,
                                                 NtpCtxCallComplete,
-                                                pControl));
+                                                pCancelContext));
         switch (status)
         {
         case STATUS_PENDING:
@@ -144,15 +144,6 @@ NtpCtxCallAsync(
             pCancelContext = NULL;
             break;
         default:
-            if (status == STATUS_SUCCESS &&
-                pCancelContext->out.tag != pCancelContext->responseType)
-            {
-                status = STATUS_INTERNAL_ERROR;
-            }
-            status = pfnComplete(
-                status,
-                &pCancelContext->out.data,
-                pData);
             BAIL_ON_NT_STATUS(status);
         }
     }
@@ -178,13 +169,21 @@ cleanup:
         lwmsg_call_release(pCall);
     }
 
-    if (pCancelContext)
+    if (status != STATUS_PENDING && pCancelContext)
     {
-        if (pCancelContext->pCall)
+        if (status == STATUS_SUCCESS && pCancelContext->out.tag
+            != pCancelContext->responseType)
         {
-            lwmsg_call_destroy_params(pCancelContext->pCall, &out);
-            lwmsg_call_release(pCancelContext->pCall);
+            status = STATUS_INTERNAL_ERROR;
         }
+
+        status = pfnComplete(
+            status,
+            pCancelContext->out.data,
+            pCancelContext->pData);
+
+        lwmsg_call_destroy_params(pCancelContext->pCall, &out);
+        lwmsg_call_release(pCancelContext->pCall);
 
         RTL_FREE(&pCancelContext);
     }
@@ -281,6 +280,27 @@ NtpCtxGetBufferResult(
 // Core I/O Operations
 //
 
+typedef struct CREATEPIPE_CONTEXT
+{
+    IO_ASYNC_CONTROL_BLOCK AsyncControl;
+    PIO_ASYNC_CONTROL_BLOCK pChain;
+    PIO_ECP_LIST pEcpList;
+} CREATEPIPE_CONTEXT, *PCREATEPIPE_CONTEXT;
+
+static
+VOID
+LwNtCreateNamedPipeComplete(
+    PVOID pParam
+    )
+{
+    PCREATEPIPE_CONTEXT pContext = (PCREATEPIPE_CONTEXT) pParam;
+
+    pContext->pChain->Callback(pContext->pChain->CallbackContext);
+
+    IoRtlEcpListFree(&pContext->pEcpList);
+    RTL_FREE(&pContext);
+}
+
 NTSTATUS
 LwNtCtxCreateNamedPipeFile(
     IN PIO_CONTEXT pConnection,
@@ -306,39 +326,53 @@ LwNtCtxCreateNamedPipeFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    IO_FILE_HANDLE fileHandle = NULL;
-    IO_STATUS_BLOCK ioStatusBlock = { 0 };
     PIO_ECP_LIST ecpList = NULL;
-    IO_ECP_NAMED_PIPE pipeParams = { 0 };
+    PIO_ECP_NAMED_PIPE pPipeParams = NULL;
+    PCREATEPIPE_CONTEXT pContext = NULL;
+
+    status = RTL_ALLOCATE(&pPipeParams, IO_ECP_NAMED_PIPE, sizeof(*pPipeParams));
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IoRtlEcpListAllocate(&ecpList);
-    ioStatusBlock.Status = status;
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     
-    pipeParams.NamedPipeType = NamedPipeType;
-    pipeParams.ReadMode = ReadMode;
-    pipeParams.CompletionMode = CompletionMode;
-    pipeParams.MaximumInstances = MaximumInstances;
-    pipeParams.InboundQuota = InboundQuota;
-    pipeParams.OutboundQuota = OutboundQuota;
+    pPipeParams->NamedPipeType = NamedPipeType;
+    pPipeParams->ReadMode = ReadMode;
+    pPipeParams->CompletionMode = CompletionMode;
+    pPipeParams->MaximumInstances = MaximumInstances;
+    pPipeParams->InboundQuota = InboundQuota;
+    pPipeParams->OutboundQuota = OutboundQuota;
     if (DefaultTimeout)
     {
-        pipeParams.DefaultTimeout = *DefaultTimeout;
-        pipeParams.HaveDefaultTimeout = TRUE;
+        pPipeParams->DefaultTimeout = *DefaultTimeout;
+        pPipeParams->HaveDefaultTimeout = TRUE;
     }
 
     status = IoRtlEcpListInsert(ecpList,
                                 IO_ECP_TYPE_NAMED_PIPE,
-                                &pipeParams,
-                                sizeof(pipeParams),
-                                NULL);
-    ioStatusBlock.Status = status;
+                                pPipeParams,
+                                sizeof(*pPipeParams),
+                                LwRtlMemoryFree);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    pPipeParams = NULL;
+
+    if (AsyncControlBlock)
+    {
+        status = RTL_ALLOCATE(&pContext, CREATEPIPE_CONTEXT, sizeof(*pContext));
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+        pContext->pEcpList = ecpList;
+        pContext->pChain = AsyncControlBlock;
+        pContext->AsyncControl.Callback = LwNtCreateNamedPipeComplete;
+        pContext->AsyncControl.CallbackContext = pContext;
+
+        AsyncControlBlock = &pContext->AsyncControl;
+    }
 
     status = NtCtxCreateFile(
                     pConnection,
                     pSecurityToken,
-                    &fileHandle,
+                    FileHandle,
                     AsyncControlBlock,
                     IoStatusBlock,
                     FileName,
@@ -353,14 +387,79 @@ LwNtCtxCreateNamedPipeFile(
                     NULL,
                     0,
                     ecpList);
+
+    if (pContext)
+    {
+        pContext->pChain->AsyncCancelContext = pContext->AsyncControl.AsyncCancelContext;
+    }
+
 cleanup:
 
-    IoRtlEcpListFree(&ecpList);
+    if (status != STATUS_PENDING)
+    {
+        if (pContext)
+        {
+            IoRtlEcpListFree(&pContext->pEcpList);
+            RTL_FREE(&pContext);
+        }
+        else
+        {
+            IoRtlEcpListFree(&ecpList);
+        }
 
-    *FileHandle = fileHandle;
-    *IoStatusBlock = ioStatusBlock;
+        IoStatusBlock->Status = status;
+
+        RTL_FREE(&pPipeParams);
+    }
 
     LOG_LEAVE_IF_STATUS_EE(status, EE);
+    return status;
+}
+
+typedef struct CREATEFILE_CONTEXT
+{
+    NT_IPC_MESSAGE_CREATE_FILE request;
+    OUT PIO_STATUS_BLOCK IoStatusBlock;
+    OUT PIO_FILE_HANDLE FileHandle;
+} CREATEFILE_CONTEXT, *PCREATEFILE_CONTEXT;
+
+static
+NTSTATUS
+LwNtCtxCreateFileComplete(
+    NTSTATUS status,
+    PVOID pOut,
+    PVOID pData
+    )
+{
+    PCREATEFILE_CONTEXT pContext = pData;
+    PNT_IPC_MESSAGE_CREATE_FILE_RESULT pResponse = pOut;
+
+    if (status == STATUS_SUCCESS)
+    {
+        *pContext->FileHandle = pResponse->FileHandle;
+        pResponse->FileHandle = NULL;
+        pContext->IoStatusBlock->Status = pResponse->Status;
+        pContext->IoStatusBlock->CreateResult = pResponse->CreateResult;
+
+        status = pContext->IoStatusBlock->Status;
+    }
+    else
+    {
+        pContext->IoStatusBlock->Status = status;
+    }
+
+    if (pContext->request.pSecurityToken)
+    {
+        LwIoDeleteCreds(pContext->request.pSecurityToken);
+    }
+
+    if (pContext->request.EcpList)
+    {
+        RTL_FREE(&pContext->request.EcpList);
+    } 
+
+    RTL_FREE(&pContext);
+
     return status;
 }
 
@@ -387,22 +486,8 @@ LwNtCtxCreateFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    LWMsgCall* pCall = NULL;
-    const LWMsgTag requestType = NT_IPC_MESSAGE_TYPE_CREATE_FILE;
-    const LWMsgTag responseType = NT_IPC_MESSAGE_TYPE_CREATE_FILE_RESULT;
-    NT_IPC_MESSAGE_CREATE_FILE request = { 0 };
-    PNT_IPC_MESSAGE_CREATE_FILE_RESULT pResponse = NULL;
-    PVOID pReply = NULL;
-    IO_FILE_HANDLE fileHandle = NULL;
-    IO_STATUS_BLOCK ioStatusBlock = { 0 };
     PIO_CREDS pActiveCreds = NULL;
-    PIO_CREDS pResolvedSecurityToken = NULL;
-
-    if (AsyncControlBlock)
-    {
-        status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_EE(EE);
-    }
+    PCREATEFILE_CONTEXT pCreateContext = NULL;
 
     if (!pSecurityToken)
     {
@@ -412,106 +497,77 @@ LwNtCtxCreateFile(
         pSecurityToken = pActiveCreds;
     }
 
-    status = LwIoResolveCreds(pSecurityToken, &pResolvedSecurityToken);
+    status = RTL_ALLOCATE(&pCreateContext, CREATEFILE_CONTEXT, sizeof(*pCreateContext));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = LwIoContextAcquireCall(pConnection, &pCall);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);  
+    pCreateContext->IoStatusBlock = IoStatusBlock;
+    pCreateContext->FileHandle = FileHandle;
 
-    request.pSecurityToken = pResolvedSecurityToken;
-    request.FileName = *FileName;
-    request.DesiredAccess = DesiredAccess;
-    request.AllocationSize = AllocationSize;
-    request.FileAttributes = FileAttributes;
-    request.ShareAccess = ShareAccess;
-    request.CreateDisposition = CreateDisposition;
-    request.CreateOptions = CreateOptions;
-    request.EaBuffer = EaBuffer;
-    request.EaLength = EaLength;
+    status = LwIoResolveCreds(pSecurityToken, &pCreateContext->request.pSecurityToken);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    pCreateContext->request.FileName = *FileName;
+    pCreateContext->request.DesiredAccess = DesiredAccess;
+    pCreateContext->request.AllocationSize = AllocationSize;
+    pCreateContext->request.FileAttributes = FileAttributes;
+    pCreateContext->request.ShareAccess = ShareAccess;
+    pCreateContext->request.CreateDisposition = CreateDisposition;
+    pCreateContext->request.CreateOptions = CreateOptions;
+    pCreateContext->request.EaBuffer = EaBuffer;
+    pCreateContext->request.EaLength = EaLength;
     if (SecurityDescriptor)
     {
-        request.SecurityDescriptor = SecurityDescriptor;
-        request.SecDescLength =
+        pCreateContext->request.SecurityDescriptor = SecurityDescriptor;
+        pCreateContext->request.SecDescLength =
                     RtlLengthSecurityDescriptorRelative(SecurityDescriptor);
     }
-    request.EcpCount = IoRtlEcpListGetCount(EcpList);
-    if (request.EcpCount)
+    pCreateContext->request.EcpCount = IoRtlEcpListGetCount(EcpList);
+    if (pCreateContext->request.EcpCount)
     {
         PCSTR pszType = NULL;
         ULONG ecpIndex = 0;
 
-        status = RTL_ALLOCATE(&request.EcpList, NT_IPC_HELPER_ECP, sizeof(*request.EcpList) * request.EcpCount);
-        ioStatusBlock.Status = status;
+        status = RTL_ALLOCATE(
+            &pCreateContext->request.EcpList,
+            NT_IPC_HELPER_ECP,
+            sizeof(*pCreateContext->request.EcpList) * pCreateContext->request.EcpCount);
         GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-        while (ecpIndex < request.EcpCount)
+        while (ecpIndex < pCreateContext->request.EcpCount)
         {
             status = IoRtlEcpListGetNext(
                             EcpList,
                             pszType,
-                            &request.EcpList[ecpIndex].pszType,
-                            &request.EcpList[ecpIndex].pData,
-                            &request.EcpList[ecpIndex].Size);
-            ioStatusBlock.Status = status;
+                            &pCreateContext->request.EcpList[ecpIndex].pszType,
+                            &pCreateContext->request.EcpList[ecpIndex].pData,
+                            &pCreateContext->request.EcpList[ecpIndex].Size);
             GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-            pszType = request.EcpList[ecpIndex].pszType;
+            pszType = pCreateContext->request.EcpList[ecpIndex].pszType;
             ecpIndex++;
         }
 
-        assert(ecpIndex == request.EcpCount);
+        assert(ecpIndex == pCreateContext->request.EcpCount);
         status = STATUS_SUCCESS;
     }
 
-    status = NtpCtxCall(pCall,
-                        requestType,
-                        &request,
-                        responseType,
-                        &pReply);
-    ioStatusBlock.Status = status;
+    status = NtpCtxCallAsync(
+        pConnection,
+        NT_IPC_MESSAGE_TYPE_CREATE_FILE,
+        &pCreateContext->request,
+        NT_IPC_MESSAGE_TYPE_CREATE_FILE_RESULT,
+        AsyncControlBlock,
+        LwNtCtxCreateFileComplete,
+        pCreateContext);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    pResponse = (PNT_IPC_MESSAGE_CREATE_FILE_RESULT) pReply;
-
-    fileHandle = pResponse->FileHandle;
-    ioStatusBlock.Status = pResponse->Status;
-    ioStatusBlock.CreateResult = pResponse->CreateResult;
-
-    status = ioStatusBlock.Status;
-
-    /* Unlink file handle from response message so it does not get freed */
-    pResponse->FileHandle = NULL;
-
 cleanup:
-
-    if (pResolvedSecurityToken)
-    {
-        LwIoDeleteCreds(pResolvedSecurityToken);
-    }
 
     if (pActiveCreds)
     {
         LwIoDeleteCreds(pActiveCreds);
     }
 
-    if (status)
-    {
-        // TODO !!!! -- ASK BRIAN ABOUT FileHandle and failures...
-        assert(!fileHandle);
-        assert(!pResponse || !pResponse->FileHandle);
-    }
-
-    RTL_FREE(&request.EcpList);
-    
-    if (pCall)
-    {
-        NtpCtxFreeResponse(pCall, responseType, pResponse);
-        lwmsg_call_release(pCall);
-    }
-
-    *FileHandle = fileHandle;
-    *IoStatusBlock = ioStatusBlock;
-    
     LOG_LEAVE_IF_STATUS_EE(status, EE);
     
     return status;
