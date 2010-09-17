@@ -315,11 +315,72 @@ NTSTATUS
 SqliteDeleteValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
-    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName
     )
 {
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszValueName = NULL;
+    wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
+    PWSTR pwszKeyNameWithSubKey = NULL;
+    PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
+    PREG_KEY_CONTEXT pKeyCtx = NULL;
+    PREG_KEY_HANDLE pKeyHandleInUse = NULL;
+    PREG_KEY_CONTEXT pKeyCtxInUse = NULL;
+
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
+    pKeyCtx = pKeyHandle->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+
+    if (pwszSubKey)
+    {
+        status = LwRtlWC16StringAllocatePrintfW(
+                        &pwszKeyNameWithSubKey,
+                        L"%ws\\%ws",
+                        pKeyCtx->pwszKeyName,
+                        pwszSubKey);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = SqliteOpenKeyInternal(hRegConnection,
+                                   pwszSubKey ? pwszKeyNameWithSubKey : pKeyCtx->pwszKeyName,
+                                   KEY_SET_VALUE | DELETE,
+                                   &pKeyHandleInUse);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegSrvAccessCheckKeyHandle(pKeyHandleInUse, KEY_SET_VALUE);
+    BAIL_ON_NT_STATUS(status);
+
+    pKeyCtxInUse = pKeyHandleInUse->pKey;
+    BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtxInUse);
+
+    status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegDbGetValueAttributes(
+                              ghCacheConnection,
+                              pKeyCtxInUse->qwId,
+                              (PCWSTR)pwszValueName,
+                              REG_UNKNOWN,
+                              NULL,
+                              NULL);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegDbDeleteValueAttributes(ghCacheConnection,
+                                        pKeyCtxInUse->qwId,
+                                        (PCWSTR)pwszValueName);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    SqliteSafeFreeKeyHandle(pKeyHandleInUse);
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
+    LWREG_SAFE_FREE_MEMORY(pwszKeyNameWithSubKey);
+
+    return status;
+
+error:
+    goto cleanup;
+
 }
-
-

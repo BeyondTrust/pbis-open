@@ -231,7 +231,7 @@ NTSTATUS
 SqliteDeleteValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,
-    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName
     );
 

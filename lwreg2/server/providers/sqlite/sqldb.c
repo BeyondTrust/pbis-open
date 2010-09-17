@@ -795,6 +795,20 @@ RegDbOpen(
     BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
 
+    /*pstDeleteValueAttributes*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_DELETE_VALUE_ATTRIBUTES);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstDeleteValueAttributes,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+
 
     *phDb = pConn;
 
@@ -2392,7 +2406,8 @@ RegDbFreePreparedStatements(
         &pConn->pstQueryValueAttributes,
         &pConn->pstQueryValueAttributesWithType,
         &pConn->pstQueryValueAttributesWithWrongType,
-        &pConn->pstUpdateValueAttributes
+        &pConn->pstUpdateValueAttributes,
+        &pConn->pstDeleteValueAttributes
     };
 
     for (i = 0; i < sizeof(pppstFreeList)/sizeof(pppstFreeList[0]); i++)

@@ -119,5 +119,9 @@
                         "Range = ?6 " \
                         "where ParentId = ?7 and ValueName = ?8 " \
 
+#define REG_DB_DELETE_VALUE_ATTRIBUTES "delete from "  REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+                    "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?1" \
+                    "AND " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName = ?2" \
+
 #endif /* __SQLCACHE_CREATE_SCHEMA_H__ */
 

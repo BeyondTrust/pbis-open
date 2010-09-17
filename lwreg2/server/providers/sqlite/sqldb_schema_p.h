@@ -102,6 +102,13 @@ RegDbSetValueAttributes(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     );
 
+NTSTATUS
+RegDbDeleteValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName
+    );
+
 
 
 #endif /* SQLDB_SCHEMA_P_H_ */

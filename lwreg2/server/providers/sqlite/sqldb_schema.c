@@ -729,6 +729,53 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+RegDbDeleteValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // Do not free
+    sqlite3_stmt *pstQuery = pConn->pstDeleteValueAttributes;
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwParentKeyId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindStringW(pstQuery, 2, pwszValueName);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_step(pstQuery);
+    if (status == SQLITE_DONE)
+    {
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+cleanup:
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+error:
+
+    if (pstQuery)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    goto cleanup;
+}
+
 static
 NTSTATUS
 RegDbConvertValueAttributesRangeToBinary(
