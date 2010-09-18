@@ -51,8 +51,6 @@
 #define LISTEN_Q (5)
 #define MAX_SOCKET_STALETIME   30
 #define STARTUP_PRE_CHECK_WAIT 12
-#define STARTUP_NETLOGON_WAIT  12
-#define STARTUP_LWIO_WAIT      12
 
 #ifndef MAX
 #define MAX(a,b) (((a) >= (b))?(a):(b))

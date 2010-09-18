@@ -258,10 +258,10 @@ LsaSrvStartupPreCheck(
     )
 {
     DWORD dwError = 0;
+#ifdef __LWI_DARWIN__
     PSTR  pszHostname = NULL;
     int  iter = 0;
 
-#ifdef __LWI_DARWIN__
     // Make sure that the local hostname has been setup by the system
     for (iter = 0; iter < STARTUP_PRE_CHECK_WAIT; iter++)
     {
@@ -289,75 +289,17 @@ LsaSrvStartupPreCheck(
                       dwError);
         BAIL_ON_LSA_ERROR(dwError);
     }
-#endif
 
-    for (iter = 0; iter < STARTUP_NETLOGON_WAIT; iter++)
-    {
-        dwError = LsaSrvVerifyNetLogonStatus();
-
-        if (dwError)
-        {
-            sleep(1);
-        }
-        else
-        {
-            /* NetLogon is responsive */
-            LSA_LOG_INFO("LSA Process start up check for NetLogon complete");
-            break;
-        }
-    }
-
-    if (iter >= STARTUP_NETLOGON_WAIT)
-    {
-        dwError = LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK;
-        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use NetLogonD after %u seconds of waiting [Code:%u]",
-                      STARTUP_NETLOGON_WAIT,
-                      dwError);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    for (iter = 0; iter < STARTUP_LWIO_WAIT; iter++)
-    {
-        dwError = LsaSrvVerifyLwIoStatus();
-
-        if (dwError)
-        {
-            sleep(1);
-        }
-        else
-        {
-            /* LwIo is responsive */
-            LSA_LOG_INFO("LSA Process start up check for LwIo complete");
-            break;
-        }
-    }
-
-    if (iter >= STARTUP_LWIO_WAIT)
-    {
-        dwError = LW_ERROR_FAILED_STARTUP_PREREQUISITE_CHECK;
-        LSA_LOG_ERROR("LSA start up pre-check failed to be able to use LwIoD after %u seconds of waiting [Code:%u]",
-                      STARTUP_LWIO_WAIT,
-                      dwError);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-#if defined (__LWI_DARWIN_)
     // Now that we are running, we need to flush the DirectoryService process of any negative cache entries
     dwError = LsaSrvFlushSystemCache();
     BAIL_ON_LSA_ERROR(dwError);
-#endif
-
-cleanup:
-
-    LW_SAFE_FREE_STRING(pszHostname);
-
-    return dwError;
 
 error:
 
-    LSA_LOG_ERROR("LSA Process exiting due to error checking hostname at startup [Code:%u]", dwError);
+    LW_SAFE_FREE_STRING(pszHostname);
+#endif
 
-    goto cleanup;
+    return dwError;
 }
 
 DWORD
