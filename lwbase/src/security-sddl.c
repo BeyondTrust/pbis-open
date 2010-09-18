@@ -230,7 +230,6 @@ RtlAllocateSecurityDescriptorFromSddlCString(
 
     // Parse SDDL string into maximum four parts
 
-
     status = RtlpParseSddlString(&pszOwner,
                                  &pszGroup,
                                  &pszDacl,
@@ -958,21 +957,9 @@ RtlpGetSddlAceStringFromSecurityDescriptor(
 
     for (ulAceIndex = 0; ulAceIndex < usAceCount; ulAceIndex++)
     {
-#if 0
-        size_t sIndex = 0;
-        size_t sCurrLength = 0;
-#endif
-
         if (!LwRtlCStringIsNullOrEmpty(ppszAceStrings[ulAceIndex]))
         {
             strcat(pszFullAceString, ppszAceStrings[ulAceIndex]);
-
-#if 0
-            sCurrLength = LwRtlCStringNumChars(ppszAceStrings[ulAceIndex]);
-
-            memcpy(&pszFullAceString[sIndex], ppszAceStrings[ulAceIndex], sCurrLength);
-            sIndex += sCurrLength;
-#endif
         }
     }
 
@@ -1703,71 +1690,6 @@ RtlpParseSddlString(
         RTL_FREE(&pszFormattedToken);
         RTL_FREE(&pszTmpToken);
     }
-
-#if 0
-
-
-
-    pszTmp = strtok_r(pszSddlStringTmp, SDDL_SECTION_DELIMINATOR_S, &pszstrtok_rSav);
-    while (pszTmp != NULL)
-    {
-        // SDDL OWNER
-        if (!strncmp(pszTmp, SDDL_OWNER, LwRtlCStringNumChars(SDDL_OWNER)))
-        {
-            size_t sOwnerPrefix = LwRtlCStringNumChars(SDDL_OWNER);
-            if (pszTmp[sOwnerPrefix] != SDDL_DELIMINATOR_C)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS(status);
-            }
-
-            status  = LwRtlCStringDuplicate(&pszOwner,
-                                            &pszTmp[sOwnerPrefix+1]);
-            GOTO_CLEANUP_ON_STATUS(status);
-        }
-        else if (!strncmp(pszTmp, SDDL_GROUP, LwRtlCStringNumChars(SDDL_GROUP)))
-        {
-            size_t sGroupPrefix = LwRtlCStringNumChars(SDDL_GROUP);
-            if (pszTmp[sGroupPrefix] != SDDL_DELIMINATOR_C)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS(status);
-            }
-
-            status  = LwRtlCStringDuplicate(&pszGroup,
-                                            &pszTmp[sGroupPrefix+1]);
-            GOTO_CLEANUP_ON_STATUS(status);
-        }
-        else if (!strncmp(pszTmp, SDDL_DACL, LwRtlCStringNumChars(SDDL_DACL)))
-        {
-            size_t sDaclPrefix = LwRtlCStringNumChars(SDDL_DACL);
-            if (pszTmp[sDaclPrefix] != SDDL_DELIMINATOR_C)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS(status);
-            }
-
-            status  = LwRtlCStringDuplicate(&pszDacl,
-                                            &pszTmp[sDaclPrefix+1]);
-            GOTO_CLEANUP_ON_STATUS(status);
-        }
-        else if (!strncmp(pszTmp, SDDL_SACL, LwRtlCStringNumChars(SDDL_SACL)))
-        {
-            size_t sSaclPrefix = LwRtlCStringNumChars(SDDL_SACL);
-            if (pszTmp[sSaclPrefix] != SDDL_DELIMINATOR_C)
-            {
-                status = STATUS_INVALID_PARAMETER;
-                GOTO_CLEANUP_ON_STATUS(status);
-            }
-
-            status  = LwRtlCStringDuplicate(&pszSacl,
-                                            &pszTmp[sSaclPrefix+1]);
-            GOTO_CLEANUP_ON_STATUS(status);
-        }
-
-        pszTmp = strtok_r(NULL, SDDL_SECTION_DELIMINATOR_S, &pszstrtok_rSav);
-    }
-#endif
 
     status = STATUS_SUCCESS;
 

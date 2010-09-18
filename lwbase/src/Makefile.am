@@ -18,7 +18,7 @@ liblwbase_nothr_la_SOURCES = \
         rtlstring_ansi.c \
         rbtree.c \
         security-sid.c \
-        sddlsidstring.c \
+        security-sddlmapping.c \
         security-sddl.c \
         security-acl.c \
         security-sd.c \

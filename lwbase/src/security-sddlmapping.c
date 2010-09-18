@@ -26,7 +26,7 @@
 /*
  * Module Name:
  *
- *        sddlsidstring.c
+ *        security-sddlmapping.c
  *
  * Abstract:
  *
