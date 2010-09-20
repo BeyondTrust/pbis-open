@@ -569,6 +569,12 @@ EVTRegisterEndpoint(
     }
     ENDTRY;
 
+    if (dwRpcStatus == rpc_s_no_bindings &&
+            !pEndpoint->bRegistrationRequired)
+    {
+        EVT_LOG_WARNING("Unable to register end point %s", pEndpoint->endpoint);
+        dwRpcStatus = 0;
+    }
     BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 

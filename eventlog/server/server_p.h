@@ -46,6 +46,7 @@ typedef const struct
 {
     PCSTR protocol;
     PCSTR endpoint;
+    BOOLEAN bRegistrationRequired;
 } ENDPOINT, *PENDPOINT;
 
 DWORD
