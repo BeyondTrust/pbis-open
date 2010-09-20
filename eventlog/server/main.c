@@ -1141,7 +1141,7 @@ EVTNetworkThread(
     DWORD index = 0;
     static ENDPOINT endpoints[] =
     {
-        {"ncacn_ip_tcp", NULL},
+        {"ncacn_ip_tcp", NULL, TRUE},
         {NULL, NULL}
     };
     struct timespec delay = {5, 0};
@@ -1196,7 +1196,7 @@ main(
     dcethread* networkThread = NULL;
     static ENDPOINT localEndpoints[] =
     {
-        {"ncalrpc", CACHEDIR "/rpc/socket"},
+        {"ncalrpc", CACHEDIR "/rpc/socket", FALSE},
         {NULL, NULL}
     };
     BOOLEAN bExitNow = FALSE;
