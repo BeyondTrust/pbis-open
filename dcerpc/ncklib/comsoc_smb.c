@@ -453,7 +453,11 @@ rpc__smb_close_file_complete(
 {
     rpc_smb_close_context_p_t close_context = context;
 
-    LwNtDereferenceAsyncCancelContext(&close_context->io_async.AsyncCancelContext);
+    if (close_context->io_async.AsyncCancelContext)
+    {
+        LwNtDereferenceAsyncCancelContext(&close_context->io_async.AsyncCancelContext);
+    }
+
     free(close_context);
 }
 
