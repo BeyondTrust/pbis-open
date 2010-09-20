@@ -575,9 +575,9 @@ LsaSrvLookupForeignDomainNames(
             LW_SAFE_FREE_MEMORY(pwszAcct);
         }
 
-        dwError = LsaSrvConnectDomainByName(pPolCtx,
-                                            pwszDomainName,
-                                            &pDomain);
+        ntStatus = LsaSrvConnectDomainByName(pPolCtx,
+                                             pwszDomainName,
+                                             &pDomain);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         hLsaBinding = pDomain->hLsaBinding;
