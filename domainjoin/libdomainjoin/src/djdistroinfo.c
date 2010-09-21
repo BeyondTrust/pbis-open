@@ -116,6 +116,19 @@ DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
             BOOLEAN compareCase;
         } const distroSearch[] = {
             {
+                DISTRO_ESX,
+                "/etc/vmware-release",
+                /*
+                # The format of the line is something like:
+                #   VMware ESX 4.0 (Kandinsky)
+                */
+                "^[[:space:]]*VMware ESX ([[:digit:]]+(\\.[[:digit:]]+)?)"
+                "( \\(\\S+\\))?",
+                1,
+                -1,
+                1
+            },
+            {
                 DISTRO_RHEL,
                 "/etc/redhat-release",
                 /*
@@ -555,6 +568,7 @@ struct
     { DISTRO_UBUNTU, "Ubuntu" },
     { DISTRO_DEBIAN, "Debian" },
     { DISTRO_FREEBSD, "FreeBSD" },
+    { DISTRO_ESX, "VMware ESX" },
 };
 
 DistroType DJGetDistroFromString(const char *str)
