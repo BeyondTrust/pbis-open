@@ -1,17 +1,3 @@
-lwmsg_task_new
-lwmsg_task_group_new
-lwmsg_task_release
-lwmsg_task_wake
-lwmsg_task_cancel
-lwmsg_task_wait
-lwmsg_task_group_delete
-lwmsg_task_group_wake
-lwmsg_task_group_cancel
-lwmsg_task_group_wait
-lwmsg_task_set_trigger_fd
-lwmsg_task_dispatch_work_item
-lwmsg_task_acquire_manager
-lwmsg_task_release_manager
 lwmsg_peer_new
 lwmsg_peer_delete
 lwmsg_peer_set_timeout
