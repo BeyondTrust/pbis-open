@@ -62,6 +62,7 @@ typedef enum
     DISTRO_UBUNTU,
     DISTRO_DEBIAN,
     DISTRO_FREEBSD,
+    DISTRO_ESX,
 } DistroType;
 
 typedef enum
