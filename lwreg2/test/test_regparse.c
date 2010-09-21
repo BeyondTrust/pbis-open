@@ -318,8 +318,8 @@ DWORD parseCallback(PREG_PARSE_ITEM pItem, HANDLE userContext)
                 /* Handle data value (non-attribute data */
                 schemaItem = *pItem;
                 schemaItem.type = pItem->regAttr.ValueType;
-                schemaItem.value = pItem->value;
-                schemaItem.valueLen = pItem->valueLen;
+                schemaItem.value = pItem->regAttr.pDefaultValue;
+                schemaItem.valueLen = pItem->regAttr.DefaultValueLen;
                 schemaItem.valueName = "default";
                 parseCallbackPrintData(ctx, &schemaItem, TRUE, 5);
             }

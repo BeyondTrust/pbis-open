@@ -2,8 +2,16 @@
 # Example "Registry Schema" entry
 #
 [HKEY_THIS_MACHINE\Services\lsass\Parameters123]
-@ = "3d347b284dadc155514e287328ff1021"
 @security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+"mv2" = {
+  "range" = string:"Now" "is" "the"
+  "default" = dword:01DF5E76
+}
+@ = "3d347b284dadc155514e287328ff10ff"
+"a"="a"
+
+"b"="b"
+"y"="y"
 "mv" = {
   "range" = string:"Zow" "is" "the"
 }
@@ -18,8 +26,8 @@
   default = hex:0102030405060708090A0b0c0d0e0ffffafbfcfd
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
 }
-"a"="b"
-"a"="s"
+"b1"="b"
+"s"="s"
 
 "teststr1"="teststr1 value 1"
 
@@ -72,7 +80,7 @@
   "range" = string:"three" "one" "four"
   "doc" = "I am a documentation string"
   "hint" = "account"
-  "value" = dword:00000003
+  "value" = dword:00000001
   "default" = dword:00000314
 }
 "SupportSmb3" = {
@@ -87,7 +95,7 @@
   "range" = string:"three" "one" "four"
   "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
   "hint" = "account"
-  "value" = dword:00000003
+  "value" = dword:00000001
   "default" = dword:00000314
 }
 
@@ -97,7 +105,7 @@
   "hint" = "path"
 #  "value" = dword:00000003
 #  "default" = dword:00000314
-  "value" = "debug"
+  "value" = "two"
   "default" = "error"
 }
 
@@ -179,7 +187,7 @@
 "LogLevel" = {
   "value" = "debug"
   "default" = "error"
-  "range" = string:"Now" "is" "the" "time" "for" "all"
+  "range" = string:"error" "debug" "info" "trace"
   "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
   "hint" = "string"
 }

@@ -187,6 +187,7 @@ ProcessImportedValue(
     DWORD dwDataType = 0;
     BOOLEAN bSetValue = TRUE;
     PWSTR pwszValueName = NULL;
+    REG_PARSE_ITEM regItem = {0};
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -252,7 +253,6 @@ ProcessImportedValue(
     dwError = RegAllocateMemory(sizeof(*pData) * cbData, (PVOID*)&pData);
     BAIL_ON_REG_ERROR(dwError);
 
-    memcpy(pData, (PBYTE)pItem->value, cbData);
 
     if (eMode == REGSHELL_UTIL_IMPORT_UPGRADE)
     {
@@ -287,6 +287,7 @@ ProcessImportedValue(
                           pItem->valueName);
             BAIL_ON_REG_ERROR(dwError);
 
+            memcpy(pData, (PBYTE)pItem->value, cbData);
             dwError = RegSetValueExW(
                           hReg,
                           hKey,
@@ -296,8 +297,51 @@ ProcessImportedValue(
                           pData,
                           cbData);
         }
+        else if (pItem->type == REG_ATTRIBUTES)
+        {
+            if (pItem->value)
+            {
+                /* Handle data value (non-attribute data */
+                regItem = *pItem;
+                regItem.type = pItem->regAttr.ValueType;
+                regItem.value = pItem->value;
+                regItem.valueLen = pItem->valueLen;
+                regItem.valueName = pItem->valueName;
+                dwError = ProcessImportedValue(
+                              hReg,
+                              &regItem,
+                              0);
+                BAIL_ON_REG_ERROR(dwError);
+            }
+            printf("%s import registry attributes here!\n", pItem->valueName);
+            dwError = RegWC16StringAllocateFromCString(
+                          &pwszValueName,
+                          pItem->valueName);
+            BAIL_ON_REG_ERROR(dwError);
+
+            dwError = RegSetValueAttributesW(
+                          hReg,
+                          hKey,
+                          NULL,
+                          pwszValueName,
+                          &pItem->regAttr);
+            BAIL_ON_REG_ERROR(dwError);
+
+        }
+#if 0
+        /* Deal with SDDL security descriptor */
+        else if (pItem->valueType == REG_KEY_DEFAULT)
+        {
+            if (!strcmp(pItem->valueName, "@security"))
+            {
+                printf("%s =%s import SDDL value here!\n",
+                    pItem->valueName, (PSTR) pItem->value);
+            }
+        }
+#endif
         else
         {
+            memcpy(pData, (PBYTE)pItem->value, cbData);
             dwError = RegSetValueExA(
                           hReg,
                           hKey,
