@@ -628,6 +628,7 @@ static QueryResult QueryDSPlugin(const JoinProcessOptions *options, LWException 
             case '\r':
             case '\n':
                 bLikewisePresent = TRUE;
+                break;
             default:
                 bLikewisePresent = FALSE;
         }
