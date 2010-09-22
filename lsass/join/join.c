@@ -861,7 +861,7 @@ LsaJoinDomainInternal(
     dwError = LsaMachAcctSearch(pLdap, pwszMachineAcctName, pwszBaseDn, &pwszDn);
     if (dwError == ERROR_INVALID_PARAMETER)
     {
-        dwError = ERROR_ACCESS_DENIED;
+        dwError = LW_ERROR_LDAP_INSUFFICIENT_ACCESS;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -963,7 +963,7 @@ LsaJoinDomainInternal(
                                        pwszOSNameAttrName,
                                        (const wchar16_t**)pwszOSNameAttrVal,
                                        0);
-            if (dwError == ERROR_ACCESS_DENIED)
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
             {
                 /* The user must be a non-admin. In this case, we cannot
                  * set the attribute.
@@ -990,7 +990,7 @@ LsaJoinDomainInternal(
                                        pwszOSVersionAttrName,
                                        (const wchar16_t**)pwszOSVersionAttrVal,
                                        0);
-            if (dwError == ERROR_ACCESS_DENIED)
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
             {
                 dwError = ERROR_SUCCESS;
             }
@@ -1014,7 +1014,7 @@ LsaJoinDomainInternal(
                                        pwszOSServicePackAttrName,
                                        (const wchar16_t**)pwszOSServicePackAttrVal,
                                        0);
-            if (dwError == ERROR_ACCESS_DENIED)
+            if (dwError == LW_ERROR_LDAP_INSUFFICIENT_ACCESS)
             {
                 dwError = ERROR_SUCCESS;
             }
@@ -2575,7 +2575,7 @@ LsaMachAcctCreate(
 
         dn_val = LdapAttributeGet(ld, machacct, dn_name, NULL);
         if (dn_val == NULL) {
-            dwError = ERROR_ACCESS_DENIED;
+            dwError = LW_ERROR_LDAP_INSUFFICIENT_ACCESS;
             goto error;
         }
 
