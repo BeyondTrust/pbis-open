@@ -46,6 +46,7 @@
 #include <lwstr.h>
 #include <lwbuffer.h>
 
+#include <lsautils.h>
 #include <lw/rpc/wkssvc.h>
 #include <lw/macros.h>
 

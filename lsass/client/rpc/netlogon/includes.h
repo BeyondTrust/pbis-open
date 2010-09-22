@@ -57,6 +57,7 @@
 #include <lwstr.h>
 #include <lwbuffer.h>
 
+#include <lsautils.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/macros.h>
