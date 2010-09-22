@@ -867,6 +867,10 @@ MemCacheFindUserByName(
                             pUserNameInfo->pszDomain,
                             &pszDnsDomain,
                             NULL);
+	    if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
+            {
+                dwError = LW_ERROR_NO_SUCH_USER;
+            }
             BAIL_ON_LSA_ERROR(dwError);
 
             pIndex = pConn->pUPNToSecurityObject;
@@ -884,6 +888,10 @@ MemCacheFindUserByName(
                             pUserNameInfo->pszDomain,
                             NULL,
                             &pszShortDomain);
+	    if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
+            {
+                dwError = LW_ERROR_NO_SUCH_USER;
+            }
             BAIL_ON_LSA_ERROR(dwError);
 
             pIndex = pConn->pNT4ToSecurityObject;
