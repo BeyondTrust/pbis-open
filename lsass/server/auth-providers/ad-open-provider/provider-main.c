@@ -4604,7 +4604,7 @@ AD_ResolveConfiguredLists(
                 &ppObjects);
             BAIL_ON_LSA_ERROR(dwError);
             
-            if (!ppObjects[0] || !ppObjects[0]->enabled ||
+            if (!ppObjects[0] ||
                 (ppObjects[0]->type != LSA_OBJECT_TYPE_USER &&
                  ppObjects[0]->type != LSA_OBJECT_TYPE_GROUP))
             {
