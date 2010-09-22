@@ -813,6 +813,9 @@ ProcessExportedKeyInfo(
     int iCount = 0;
     DWORD dwValuesCount = 0;
     PVOID pValue = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+    PSTR pszAttrDump = NULL;
+    DWORD pszAttrDumpLen = 0;
 
     dwError = PrintToRegFile(
                           fp,
@@ -865,6 +868,30 @@ ProcessExportedKeyInfo(
        BAIL_ON_REG_ERROR(dwError);
        dwError = RegCStringAllocateFromWC16String(&pszValueName, pwszValueName);
        BAIL_ON_REG_ERROR(dwError);
+
+       dwError = LwRegGetValueAttributesW(
+                     hReg,
+                     hKey,
+                     NULL,
+                     pwszValueName,
+                     NULL,
+                     &pValueAttributes);
+       if (dwError == 0)
+       {
+           REG_PARSE_ITEM regItem = {0};
+           regItem.type = REG_SZ;
+           regItem.valueName = pszValueName;
+           regItem.valueType = dataType;
+           regItem.value = value;
+           regItem.valueLen = dwValueLen;
+           regItem.regAttr = *pValueAttributes;
+           dwError = RegExportAttributeEntries(
+                         &regItem,
+                         &pszAttrDump,
+                         &pszAttrDumpLen);
+           BAIL_ON_REG_ERROR(dwError);
+           fprintf(fp, "%*s\n", pszAttrDumpLen, pszAttrDump);
+       }
 
        if (dataType == REG_SZ)
        {
