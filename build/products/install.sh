@@ -305,18 +305,18 @@ check_bff_installed()
 
 check_deb_installed()
 {
-    _status="`dpkg -s "$1" 2>/dev/null`"
+    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
     if [ $? -ne 0 ]
     then
         return 1
     fi
 
-    if echo "$_status" | grep 'not-installed' >/dev/null 2>&1
+    if echo "$_status" | grep ' installed' >/dev/null 2>&1
     then
-        return 1
+        return 0
     fi
 
-    return 0
+    return 1
 }
 
 check_pkg_installed()
