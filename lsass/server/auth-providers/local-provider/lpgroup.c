@@ -185,7 +185,7 @@ LocalDirAddGroup(
     PWSTR pwszSamAccountName = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszNetBIOSDomain = NULL;
-    DWORD dwGroupDNLen = 0;
+    size_t sGroupDNLen = 0;
     DWORD dwFilterLen = 0;
     PWSTR pwszFilter = NULL;
     wchar_t wszFilterFmt[] = L"%ws = '%ws'";
@@ -281,11 +281,11 @@ LocalDirAddGroup(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwWc16sLen(pwszGroupDN,
-                         &dwGroupDNLen);
+                         &sGroupDNLen);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwFilterLen = (sizeof(wszAttrDistinguishedName) - 2) +
-                  (dwGroupDNLen * sizeof(WCHAR)) +
+                  (sGroupDNLen * sizeof(WCHAR)) +
                    sizeof(wszFilterFmt);
 
     dwError = LwAllocateMemory(
