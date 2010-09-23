@@ -1,94 +1,30 @@
 #
 # Example "Registry Schema" entry
 #
-[HKEY_THIS_MACHINE\Services\lsass\Parameters123]
+[HKEY_THIS_MACHINE\test]
 @security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
-"mv2" = {
-  "range" = string:"Now" "is" "the"
-  "default" = dword:01DF5E76
-}
 @ = "3d347b284dadc155514e287328ff10ff"
 "a"="a"
-
 "b"="b"
-"y"="y"
-"mv" = {
-  "range" = string:"Zow" "is" "the"
-}
-"s1" = {
-  "value" = "I am a string value"
-}
-"v1" = {
-  "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
-}
+"b1"="b"
+
 "binary" = {
   hint = seconds
   default = hex:0102030405060708090A0b0c0d0e0ffffafbfcfd
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
 }
-"b1"="b"
-"s"="s"
-
-"teststr1"="teststr1 value 1"
-
-"syntax_error" = {
-  hint =  seconds
-  default = "/foo/bar"
-}
-
-
-"pathhint" = {
-  hint = path
-  default = "/opt/likewise/bin"
-  value = "/opt/local/likewise/bin"
-  doc = "The default location where the Likewise product is installed"
-}
-
 
 "dword" = {
   default = dword:DEADBEEF
   value = dword:FEEBDAED
 }
 
-"string" = {
-  value = "I am not dead beef"
-  default = "I am dead beef"
-  doc = "Dead beef is good for grilling"
-  hint = seconds
-}
-
-"mv1" = {
+"LogLevel" = {
+  "value" = "debug"
   "default" = "error"
-  "range" = string:"Zow" "is" "the"
-}
-
-
-"r1" = {
-  "range" = integer:3 - 666
-}
-"mv1a" = {
-  "range" = string:"Now" "is" "the"
-  "default" = "error"
-}
-
-"mv2" = {
-  "range" = string:"Now" "is" "the"
-  "default" = dword:01DF5E76
-}
-
-"SupportSmb1" = {
-  "range" = string:"three" "one" "four"
-  "doc" = "I am a documentation string"
-  "hint" = "account"
-  "value" = dword:00000001
-  "default" = dword:00000314
-}
-"SupportSmb3" = {
-  "range" = string:"three" "one" "four"
-  "doc" = "I am a documentation string"
-  "hint" = "account"
-  "value" = dword:00000003
-  "default" = dword:00000314
+  "range" = string:"error" "debug" "info" "trace"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "string"
 }
 
 "LogLevel1" = {
@@ -116,8 +52,77 @@
   "value" = dword:00000003
   "default" = dword:00000314
 }
+"mv" = {
+  "range" = string:"Zow" "is" "the"
+}
+"mv1" = {
+  "default" = "error"
+  "range" = string:"Zow" "is" "the"
+}
+"mv1a" = {
+  "range" = string:"Now" "is" "the"
+  "default" = "error"
+}
+"mv2" = {
+  "range" = string:"Now" "is" "the mv2 time"
+  "default" = dword:01DF5E76
+}
+"mv3" = {
+  "range" = string:"Now" "is" "the mv3 time"
+  "default" = dword:01DF5E76
+}
+"s1" = {
+  "value" = "I am a string value"
+}
 
-[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
+"v1" = {
+  "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
+}
+
+"y"="y"
+
+"pathhint" = {
+  hint = path
+  default = "/opt/likewise/bin"
+  value = "/opt/local/likewise/bin"
+  doc = "The default location where the Likewise product is installed"
+}
+"r1" = {
+  "range" = integer:3 - 666
+}
+
+"string" = {
+  value = "I am not dead beef"
+  default = "I am dead beef"
+  doc = "Dead beef is good for grilling"
+  hint = seconds
+}
+"SupportSmb1" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+  "hint" = "account"
+  "value" = dword:00000001
+  "default" = dword:00000314
+}
+"SupportSmb3" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+  "hint" = "account"
+  "value" = dword:00000003
+  "default" = dword:00000314
+}
+
+
+"syntax_error" = {
+  hint =  seconds
+  default = "/foo/bar"
+}
+
+"teststr1"="teststr1 value 1"
+
+
+
+[HKEY_THIS_MACHINE\test\lwio]
 "t2" = {
   "hint" = "seconds"
   value = dword:00000006
@@ -141,12 +146,10 @@
 #  "doc" = "doc string"
 }
 
-[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
 "r1" = {
   "range" = integer:3 - 666
 }
 
-[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
 "s" = {
   "value" = "I am a value"
 }
@@ -183,14 +186,6 @@
 }
 
 
-[HKEY_THIS_MACHINE\Services\lsass\Parameters123]
-"LogLevel" = {
-  "value" = "debug"
-  "default" = "error"
-  "range" = string:"error" "debug" "info" "trace"
-  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
-  "hint" = "string"
-}
 
 
 #
@@ -200,7 +195,7 @@
 "multivalue2" = sza:"the quick brown fox" "Jumped over the" \
                     "lazy dog's back" "1234567890"
 
-[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
+[HKEY_THIS_MACHINE\test\AD]
 "MachinePasswordLifeSpan" = {
   "default" = dword:00278D00
   # Assume the password lifetime can be a max of 31 days
@@ -209,7 +204,7 @@
   "doc" = "The interval (in seconds) at which the local machine trust account password must be changed. Setting this value to 0 will disable the machine password change feature."
 }
 
-[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\MachinePassword\]
+[HKEY_THIS_MACHINE\test\AD\MachinePassword]
 @security = a0efd12fcb93fd3a44439dde60ade462
 "MachinePassword" = {
   "value" = "&e4C&tt)c4tM%QLD"

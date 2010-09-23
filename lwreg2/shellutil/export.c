@@ -803,6 +803,7 @@ ProcessExportedKeyInfo(
     )
 {
     DWORD dwError = 0;
+    DWORD dwError2 = 0;
     DWORD dwValueNameLen = MAX_KEY_LENGTH;
     WCHAR pwszValueName[MAX_KEY_LENGTH];   // buffer for subkey name WCHAR format
     PSTR  pszValueName = NULL; // buffer for subkey name
@@ -851,70 +852,96 @@ ProcessExportedKeyInfo(
 
     for (iCount = 0; iCount < dwValuesCount; iCount++)
     {
-       memset(pwszValueName, 0, MAX_KEY_LENGTH);
-       dwValueNameLen = MAX_KEY_LENGTH;
-       memset(value, 0, MAX_VALUE_LENGTH);
-       dwValueLen = MAX_VALUE_LENGTH;
-
-       dwError = RegEnumValueW((HANDLE)hReg,
-                               hKey,
-                               iCount,
-                               pwszValueName,
-                               &dwValueNameLen,
-                               NULL,
-                               &dataType,
-                               value,
-                               &dwValueLen);
-       BAIL_ON_REG_ERROR(dwError);
-       dwError = RegCStringAllocateFromWC16String(&pszValueName, pwszValueName);
-       BAIL_ON_REG_ERROR(dwError);
-
-       dwError = LwRegGetValueAttributesW(
-                     hReg,
-                     hKey,
-                     NULL,
-                     pwszValueName,
-                     NULL,
-                     &pValueAttributes);
-       if (dwError == 0)
-       {
-           REG_PARSE_ITEM regItem = {0};
-           regItem.type = REG_SZ;
-           regItem.valueName = pszValueName;
-           regItem.valueType = dataType;
-           regItem.value = value;
-           regItem.valueLen = dwValueLen;
-           regItem.regAttr = *pValueAttributes;
-           dwError = RegExportAttributeEntries(
-                         &regItem,
-                         &pszAttrDump,
-                         &pszAttrDumpLen);
-           BAIL_ON_REG_ERROR(dwError);
-           fprintf(fp, "%*s\n", pszAttrDumpLen, pszAttrDump);
-       }
-
-       if (dataType == REG_SZ)
-       {
-           dwError = RegCStringAllocateFromWC16String(&pszValue, (PWSTR) value);
-           pValue = pszValue;
-       }
-       else
-       {
-           pValue = value;
-       }
-
-       dwError = PrintToRegFile(
-                      fp,
-                      pszFullKeyName,
-                      dataType,
-                      pszValueName,
-                      dataType,
-                      pValue,
-                      dwValueLen,
-                      pPrevType);
+        memset(pwszValueName, 0, MAX_KEY_LENGTH);
+        dwValueNameLen = MAX_KEY_LENGTH;
+        memset(value, 0, MAX_VALUE_LENGTH);
+        dwValueLen = MAX_VALUE_LENGTH;
+ 
+        dwError = RegEnumValueW((HANDLE)hReg,
+                                hKey,
+                                iCount,
+                                pwszValueName,
+                                &dwValueNameLen,
+                                NULL,
+                                &dataType,
+                                value,
+                                &dwValueLen);
         BAIL_ON_REG_ERROR(dwError);
-        LWREG_SAFE_FREE_STRING(pszValueName);
-        LWREG_SAFE_FREE_STRING(pszValue);
+        dwError = RegCStringAllocateFromWC16String(
+                      &pszValueName,
+                      pwszValueName);
+        BAIL_ON_REG_ERROR(dwError);
+ 
+        /*
+         * Trouble here. Can't enumerate schema entries that don't have
+         * a "value" set. There is no RegEnumAttributesW() API.
+         * Since most values will be derived from "default" an
+         * export/rm registry.db import would wipe the schema.
+         */
+        dwError = LwRegGetValueAttributesW(
+                      hReg,
+                      hKey,
+                      NULL,
+                      pwszValueName,
+                      NULL,
+                      &pValueAttributes);
+        if (dataType == REG_SZ)
+        {
+            dwError2 = RegCStringAllocateFromWC16String(
+                          &pszValue,
+                          (PWSTR) value);
+            BAIL_ON_REG_ERROR(dwError2);
+            pValue = pszValue;
+        }
+        else
+        {
+            pValue = value;
+        }
+        if (dwError == 0)
+        {
+            REG_PARSE_ITEM regItem = {0};
+            regItem.type = REG_SZ;
+            regItem.valueName = pszValueName;
+            regItem.valueType = dataType;
+            regItem.regAttr = *pValueAttributes;
+            /* Might have to do something with MULTI_SZ */
+            if (dataType == REG_SZ)
+            {
+    	        dwError = RegCStringAllocateFromWC16String(
+                              (PSTR *) &regItem.regAttr.pDefaultValue,
+                              (PWSTR) regItem.regAttr.pDefaultValue);
+                BAIL_ON_REG_ERROR(dwError);
+                regItem.regAttr.DefaultValueLen =
+                    strlen(regItem.regAttr.pDefaultValue);
+                regItem.value = pValue;
+            }
+            else 
+            {
+                regItem.value = value;
+                regItem.valueLen = dwValueLen;
+            }
+            dwError = RegExportAttributeEntries(
+                          &regItem,
+                          &pszAttrDump,
+                          &pszAttrDumpLen);
+            BAIL_ON_REG_ERROR(dwError);
+            fprintf(fp, "%*s\n", pszAttrDumpLen, pszAttrDump);
+        }
+        else
+        {
+            dwError = PrintToRegFile(
+                           fp,
+                           pszFullKeyName,
+                           dataType,
+                           pszValueName,
+                           dataType,
+                           pValue,
+                           dwValueLen,
+                           pPrevType);
+            BAIL_ON_REG_ERROR(dwError);
+            LWREG_SAFE_FREE_STRING(pszValueName);
+            LWREG_SAFE_FREE_STRING(pszValue);
+        }
    }
 
 cleanup:

@@ -280,6 +280,10 @@ ProcessImportedValue(
 
     if (bSetValue)
     {
+#if 0 /* Remove me later! Useful for debugging */
+printf("Importing type=%2d  key=%s valueName=%s\n",
+    pItem->type, pItem->keyName, pItem->valueName);
+#endif
         if (pItem->type == REG_MULTI_SZ)
         {
             dwError = RegWC16StringAllocateFromCString(
@@ -313,12 +317,26 @@ ProcessImportedValue(
                               0);
                 BAIL_ON_REG_ERROR(dwError);
             }
-            printf("%s import registry attributes here!\n", pItem->valueName);
             dwError = RegWC16StringAllocateFromCString(
                           &pwszValueName,
                           pItem->valueName);
             BAIL_ON_REG_ERROR(dwError);
 
+            /* 
+             * Deal with data types within the attributes structure
+             * REG_SZ returned from the parser is PSTR, but a PWSTR
+             * is needed here
+             */
+            if (pItem->regAttr.ValueType == REG_SZ)
+            {
+                dwError = RegWC16StringAllocateFromCString(
+                              (PWSTR *) &pItem->regAttr.pDefaultValue,
+                              (PSTR) pItem->regAttr.pDefaultValue);
+                BAIL_ON_REG_ERROR(dwError);
+                pItem->regAttr.DefaultValueLen =
+                    (wc16slen(pItem->regAttr.pDefaultValue)+1) * sizeof(WCHAR);
+        
+            }
             dwError = RegSetValueAttributesW(
                           hReg,
                           hKey,
@@ -363,11 +381,11 @@ cleanup:
 
     if (hSubKey)
     {
-        dwError = RegCloseKey(hReg, hSubKey);
+        RegCloseKey(hReg, hSubKey);
     }
     if (hRootKey)
     {
-        dwError = RegCloseKey(hReg,hRootKey);
+        RegCloseKey(hReg,hRootKey);
     }
 
     return dwError;
