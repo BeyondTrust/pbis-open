@@ -86,6 +86,7 @@ LocalDirAddGroup(
     )
 {
     DWORD dwError = 0;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
     BOOLEAN bEventlogEnabled = FALSE;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
@@ -127,12 +128,16 @@ LocalDirAddGroup(
                 .data.ulValue = pGroupInfo->gid
         }
     };
-    WCHAR wszAttrObjectClass[]    = LOCAL_DIR_ATTR_OBJECT_CLASS;
+
+    WCHAR wszAttrObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrDistinguishedName[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrObjectSID[] = LOCAL_DIR_ATTR_OBJECT_SID;
     WCHAR wszAttrSamAccountName[] = LOCAL_DIR_ATTR_SAM_ACCOUNT_NAME;
-    WCHAR wszAttrCommonName[]     = LOCAL_DIR_ATTR_COMMON_NAME;
-    WCHAR wszAttrDomain[]         = LOCAL_DIR_ATTR_DOMAIN;
-    WCHAR wszAttrNameNetBIOSDomain[]  = LOCAL_DIR_ATTR_NETBIOS_NAME;
+    WCHAR wszAttrCommonName[] = LOCAL_DIR_ATTR_COMMON_NAME;
+    WCHAR wszAttrDomain[] = LOCAL_DIR_ATTR_DOMAIN;
+    WCHAR wszAttrNameNetBIOSDomain[] = LOCAL_DIR_ATTR_NETBIOS_NAME;
     WCHAR wszAttrNameGID[] = LOCAL_DIR_ATTR_GID;
+
     DIRECTORY_MOD modObjectClass =
     {
         DIR_MOD_FLAGS_ADD,
@@ -180,13 +185,33 @@ LocalDirAddGroup(
     PWSTR pwszSamAccountName = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszNetBIOSDomain = NULL;
+    DWORD dwGroupDNLen = 0;
+    DWORD dwFilterLen = 0;
+    PWSTR pwszFilter = NULL;
+    wchar_t wszFilterFmt[] = L"%ws = '%ws'";
+    PWSTR pwszBase = NULL;
+    DWORD dwScope = 0;
+
+    PWSTR wszGroupAttrs[] = {
+        wszAttrDistinguishedName,
+        wszAttrObjectSID,
+        NULL
+    };
+
+    PDIRECTORY_ENTRY pGroup = NULL;
+    DWORD dwNumEntries = 0;
+    PWSTR pwszGroupSID = NULL;
+    PSID pGroupSID = NULL;
+    DWORD dwGroupRID = 0;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     BOOLEAN bLocked = FALSE;
 
     memset(&mods[0], 0, sizeof(mods));
 
     BAIL_ON_INVALID_STRING(pGroupInfo->pszName);
 
-    if (pGroupInfo->gid) {
+    if (pGroupInfo->gid)
+    {
         dwError = LocalDirValidateGID(pGroupInfo->gid);
         BAIL_ON_LSA_ERROR(dwError);
     }
@@ -196,16 +221,14 @@ LocalDirAddGroup(
                     &pLoginInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
+    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+
     if (!pLoginInfo->pszDomain)
     {
-        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
-
         dwError = LwAllocateString(
                         gLPGlobals.pszNetBIOSName,
                         &pLoginInfo->pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
-
-        LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
     }
 
     if (!LocalServicesDomainInternal(pLoginInfo->pszDomain))
@@ -257,6 +280,69 @@ LocalDirAddGroup(
                     mods);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwWc16sLen(pwszGroupDN,
+                         &dwGroupDNLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwFilterLen = (sizeof(wszAttrDistinguishedName) - 2) +
+                  (dwGroupDNLen * sizeof(WCHAR)) +
+                   sizeof(wszFilterFmt);
+
+    dwError = LwAllocateMemory(
+                    dwFilterLen,
+                    OUT_PPVOID(&pwszFilter));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilterFmt,
+                    wszAttrDistinguishedName, pwszGroupDN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectorySearch(
+                    pContext->hDirectory,
+                    pwszBase,
+                    dwScope,
+                    pwszFilter,
+                    wszGroupAttrs,
+                    0,
+                    &pGroup,
+                    &dwNumEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /*
+     * Set default security descriptor on the account
+     */
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                    pGroup,
+                    wszAttrObjectSID,
+                    DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                    &pwszGroupSID);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateSidFromWC16String(&pGroupSID,
+                                            pwszGroupSID);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = RtlGetRidSid(&dwGroupRID,
+                            pGroupSID);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LocalDirCreateNewAccountSecurityDescriptor(
+                    gLPGlobals.pLocalDomainSID,
+                    dwGroupRID,
+                    DIR_OBJECT_CLASS_LOCAL_GROUP,
+                    &pSecDesc);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectorySetEntrySecurityDescriptor(
+                                  pContext->hDirectory,
+                                  pwszGroupDN,
+                                  pSecDesc);
+    BAIL_ON_LSA_ERROR(dwError);
+
     if (pGroupInfo->ppszMemberSids)
     {
         dwError = LocalAddMembersToGroup(
@@ -284,10 +370,25 @@ cleanup:
         LsaSrvFreeNameInfo(pLoginInfo);
     }
 
+    if (pGroup)
+    {
+        DirectoryFreeEntries(pGroup, dwNumEntries);
+    }
+
     LW_SAFE_FREE_MEMORY(pwszGroupDN);
     LW_SAFE_FREE_MEMORY(pwszSamAccountName);
     LW_SAFE_FREE_MEMORY(pwszDomain);
     LW_SAFE_FREE_MEMORY(pwszNetBIOSDomain);
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+    RTL_FREE(&pGroupSID);
+    
+    LocalDirFreeSecurityDescriptor(&pSecDesc);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
 
     return dwError;
 
