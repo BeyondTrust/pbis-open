@@ -916,11 +916,11 @@ LwTaskMigrateCreateFile(
     )
 {
     DWORD dwError = 0;
+    NTSTATUS ntStatus = 0;
     IO_STATUS_BLOCK ioStatusBlock = {0};
     IO_FILE_HANDLE hFile = NULL;
 
-    dwError = LwNtStatusToWin32Error(
-                LwNtCreateFile(
+    ntStatus = LwNtCreateFile(
                     &hFile,
                     NULL,                           /* Async control block */
                     &ioStatusBlock,
@@ -935,9 +935,10 @@ LwTaskMigrateCreateFile(
                     dwCreateOptions,
                     NULL,                           /* EaBuffer            */
                     0,                              /* EaLength            */
-                    NULL                            /* EcpList             */
-                    ));
-    BAIL_ON_LW_TASK_ERROR(dwError);
+                    NULL,                           /* EcpList             */
+                    NULL                            /* credentials         */
+                    );
+    BAIL_ON_NT_STATUS(ntStatus);
 
     *phFile = hFile;
     if (pCreateResult)
@@ -961,6 +962,8 @@ error:
     {
         LwNtCloseFile(hFile);
     }
+
+    dwError = LwNtStatusToWin32Error(ntStatus);
 
     goto cleanup;
 }
