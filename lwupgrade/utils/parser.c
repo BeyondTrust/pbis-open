@@ -172,11 +172,11 @@ RegComp(
     )
 {
     DWORD dwError = regcomp(pRegex, pszExpr, REG_EXTENDED);
-    
+
     if (dwError)
     {
-        dwError = EINVAL;
-        BAIL_ON_UP_ERROR(EINVAL);
+        dwError = LwMapErrnoToLwError(EINVAL);
+        BAIL_ON_UP_ERROR(dwError);
     }
 
     *pbCompiled = TRUE;
