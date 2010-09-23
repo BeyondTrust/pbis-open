@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,74 +33,45 @@
  *
  * Module Name:
  *
- *        localprovider.h
+ *        lpsecurity.c
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        Local Authentication Provider (Private include)
+ *        Local Authentication Provider
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Gerald Carter <gcarter@likewise.com>
+ *        Account security descriptor functions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
 
-#include <config.h>
-#include <lsasystem.h>
-#include <lsadef.h>
-#include <lsa/lsa.h>
-#include <lsa/lsa2.h>
-#include <reg/reg.h>
+#ifndef __LP_SECURITY_H__
+#define __LP_SECURITY_H__
 
-#include <lwio/lwio.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
-#include <lw/rpc/samr.h>
 
-#include <openssl/evp.h>
-#include <openssl/md4.h>
-#include <openssl/hmac.h>
+typedef struct _ACCESS_LIST
+{
+    PSID        *ppSid;
+    ACCESS_MASK AccessMask;
+    ULONG       ulAccessType;
 
-#include <eventlog.h>
+} ACCESS_LIST, *PACCESS_LIST;
 
-#include "lwmem.h"
-#include "lwstr.h"
-#include "lwtime.h"
-#include "lwsecurityidentifier.h"
-#include "lwsid.h"
 
-#include "lsautils.h"
-#include "lsasrvutils.h"
-#include "lsalocalprovider.h"
+DWORD
+LocalDirCreateNewAccountSecurityDescriptor(
+    PSID                           pDomainSid,
+    DWORD                          dwRid,
+    DWORD                          dwObjectClass,
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
 
-#include <lsa/provider.h>
-#include "lsasrvapi.h"
-#include "directory.h"
 
-#include "lpdefs.h"
-#include "lpstructs.h"
-#include "lpenumstate.h"
-#include "lpcfg.h"
-#include "lpmain.h"
-#include "lpauthex.h"
-#include "lpuser.h"
-#include "lpgroup.h"
-#include "lpevent.h"
-#include "lpdomain.h"
-#include "lpaccess.h"
-#include "lpmisc.h"
-#include "lpmarshal.h"
-#include "lpobject.h"
-#include "lpsecurity.h"
+VOID
+LocalDirFreeSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDesc
+    );
 
-#include "externs.h"
 
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+#endif /* __LP_SECURITY_H__ */

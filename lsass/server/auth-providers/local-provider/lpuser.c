@@ -160,7 +160,8 @@ LocalDirAddUser(
     PLSA_USER_ADD_INFO pUserInfo
     )
 {
-    DWORD dwError = 0;
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
     PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
     BOOLEAN bEventlogEnabled = FALSE;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
@@ -343,6 +344,10 @@ LocalDirAddUser(
     PDIRECTORY_ENTRY pMember = NULL;
     DWORD dwNumEntries = 0;
     BOOLEAN bUserAdded = FALSE;
+    PWSTR pwszUserSID = NULL;
+    PSID pUserSID = NULL;
+    DWORD dwUserRID = 0;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc = NULL;
     gid_t gid = 0;
     PSID pGroupSID = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -551,8 +556,12 @@ LocalDirAddUser(
                     (PVOID*)&pwszFilter);
     BAIL_ON_LSA_ERROR(dwError);
 
-    sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilterFmt,
-                wszAttrDistinguishedName, pwszUserDN);
+    if (sw16printfw(pwszFilter, dwFilterLen/sizeof(WCHAR), wszFilterFmt,
+                    wszAttrDistinguishedName, pwszUserDN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = DirectorySearch(
                     pContext->hDirectory,
@@ -565,7 +574,42 @@ LocalDirAddUser(
                     &dwNumEntries);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!pwszGroupDN) {
+    /*
+     * Set default security descriptor on the account
+     */
+    dwError = DirectoryGetEntryAttrValueByName(
+                    pMember,
+                    wszAttrObjectSID,
+                    DIRECTORY_ATTR_TYPE_UNICODE_STRING,
+                    &pwszUserSID);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlAllocateSidFromWC16String(&pUserSID,
+                                            pwszUserSID);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    ntStatus = RtlGetRidSid(&dwUserRID,
+                            pUserSID);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    dwError = LocalDirCreateNewAccountSecurityDescriptor(
+                    gLPGlobals.pLocalDomainSID,
+                    dwUserRID,
+                    DIR_OBJECT_CLASS_USER,
+                    &pSecDesc);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = DirectorySetEntrySecurityDescriptor(
+                                  pContext->hDirectory,
+                                  pwszUserDN,
+                                  pSecDesc);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /*
+     * Add user to primary group
+     */
+    if (!pwszGroupDN)
+    {
         dwError = DirectoryGetEntryAttrValueByName(
                         pMember,
                         wszAttrGID,
@@ -618,6 +662,10 @@ LocalDirAddUser(
                     pMember);
     BAIL_ON_LSA_ERROR(dwError);
 
+    /*
+     * Set user password
+     */
+
     if (pUserInfo->pszPassword)
     {
         pszPassword = pUserInfo->pszPassword;
@@ -633,8 +681,6 @@ LocalDirAddUser(
                     pwszUserDN,
                     pwszPassword);
     BAIL_ON_LSA_ERROR(dwError);
-
-    LOCAL_UNLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
 
     dwError = LocalCfgIsEventlogEnabled(&bEventlogEnabled);
     BAIL_ON_LSA_ERROR(dwError);
@@ -667,12 +713,21 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszDomain);
     LW_SAFE_FREE_MEMORY(pwszNetBIOSDomain);
     RTL_FREE(&pGroupSID);
+    RTL_FREE(&pUserSID);
 
     LW_SAFE_FREE_MEMORY(pwszFilter);
 
     if (pMember)
     {
         DirectoryFreeEntries(pMember, dwNumEntries);
+    }
+
+    LocalDirFreeSecurityDescriptor(&pSecDesc);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
     }
 
     return dwError;
