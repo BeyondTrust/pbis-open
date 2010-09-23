@@ -335,7 +335,8 @@ AD_InitializeConfig(
     pConfig->dwCacheEntryExpirySecs   = AD_CACHE_ENTRY_EXPIRY_DEFAULT_SECS;
     pConfig->dwCacheSizeCap           = 0;
     pConfig->dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
-    pConfig->pszUmask          = AD_DEFAULT_UMASK;
+    dwError = LwAllocateString(AD_DEFAULT_UMASK, &pConfig->pszUmask);
+    BAIL_ON_UP_ERROR(dwError);
 
     pConfig->bEnableEventLog = FALSE;
     pConfig->bShouldLogNetworkConnectionEvents = TRUE;
@@ -397,6 +398,7 @@ AD_FreeConfigContents(
     LW_SAFE_FREE_STRING(pConfig->pszHomedirTemplate);
     LW_SAFE_FREE_STRING(pConfig->pszShell);
     LW_SAFE_FREE_STRING(pConfig->pszSkelDirs);
+    LW_SAFE_FREE_STRING(pConfig->pszUmask);
     LW_SAFE_FREE_STRING(pConfig->pszCellSupport);
     LW_SAFE_FREE_STRING(pConfig->pszCacheBackend);
 
