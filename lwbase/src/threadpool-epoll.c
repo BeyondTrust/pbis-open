@@ -179,6 +179,9 @@ UpdateEventWait(
             events |= EPOLLERR;
         }
         
+
+        memset(&event, 0, sizeof(event));
+
         event.events = events | EPOLLET;
         event.data.ptr = pTask;
 
@@ -1192,6 +1195,8 @@ InitEventThread(
     }
 
     SetCloseOnExec(pThread->EpollFd);
+
+    memset(&event, 0, sizeof(event));
 
     /* Add signal fd to epoll set */
     event.events = EPOLLIN;
