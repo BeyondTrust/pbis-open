@@ -1244,6 +1244,21 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
             goto cleanup;
         }
     }
+    else
+    {
+        LW_CLEANUP_CTERR(exc, DJHasMethodsCfg(&exists));
+
+        if(exists)
+        {
+            LW_CLEANUP_CTERR(exc, DJIsMethodsCfgConfigured(&configured));
+
+            if(configured)
+            {
+                result = NotConfigured;
+                goto cleanup;
+            }
+        }
+    }
 
 cleanup:
 
