@@ -1535,7 +1535,7 @@ LsaUmpRefreshUserCreds(
     }
 
     dwError = AD_FindUserObjectById(
-                  (HANDLE)NULL,
+                  pProviderContext,
                   pUserItem->uUid,
                   &pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
