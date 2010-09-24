@@ -6,53 +6,53 @@ SCRIPT="../install-new.sh"
 UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 
 # PACKAGES - (build) Used by the build system to determine what should be built.
-# UPGRADE_PACKAGES - (install) If present, it is installed before all others.
-# OBSOLETE_PACKAGES - (install) Packages to uninstall.
-# INSTALL_PACKAGES - (install) Everything needed for a basic installation.
-# OPTIONAL_PACKAGES - (install) Nice to have packages -- sdk, compat, ...
+# INSTALL_UPGRADE_PACKAGE - If present, it is installed before all others.
+# INSTALL_OBSOLETE_PACKAGES - Packages to uninstall.
+# INSTALL_BASE_PACKAGES - Everything needed for a basic installation.
+# INSTALL_OPTIONAL_PACKAGES - Nice to have packages -- sdk, compat, ...
 
 PACKAGES="open"
 case "${BUILD_OS_TYPE}" in
     aix)
         PACKAGES="open open-upgrade"
-        UPGRADE_PACKAGES="LikewiseOpen.Upgrade"
-        OBSOLETE_PACKAGES="Likewise.Base Likewise.Domainjoin Likewise.Eventlog Likewise.Krb5 Likewise.Lac Likewise.Libxml2 Likewise.Lsass Likewise.Lwadutil Likewise.Lwio Likewise.Lwmgmt Likewise.Netlogon LikewiseOpen.Upgrade LikewiseOpen.LikewiseOpen"
-        INSTALL_PACKAGES="LikewiseOpen.Likewise"
-        OPTIONAL_PACKAGES=""
+        INSTALL_UPGRADE_PACKAGE="LikewiseOpen.Upgrade"
+        INSTALL_OBSOLETE_PACKAGES="Likewise.Base Likewise.Domainjoin Likewise.Eventlog Likewise.Krb5 Likewise.Lac Likewise.Libxml2 Likewise.Lsass Likewise.Lwadutil Likewise.Lwio Likewise.Lwmgmt Likewise.Netlogon LikewiseOpen.Upgrade LikewiseOpen.LikewiseOpen"
+        INSTALL_BASE_PACKAGES="LikewiseOpen.Likewise"
+        INSTALL_OPTIONAL_PACKAGES=""
         ;;
     darwin)
         PACKAGES="open"
-        UPGRADE_PACKAGES=""
-        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-netlogon likewise-open"
-        INSTALL_PACKAGES="likewise-open"
-        OPTIONAL_PACKAGES=""
+        INSTALL_UPGRADE_PACKAGE=""
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-netlogon likewise-open"
+        INSTALL_BASE_PACKAGES="likewise-open"
+        INSTALL_OPTIONAL_PACKAGES=""
         ;;
     freebsd)
         PACKAGES="open open-upgrade"
-        UPGRADE_PACKAGES="likewise-open-upgrade"
-        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
-        INSTALL_PACKAGES="likewise-open"
-        OPTIONAL_PACKAGES=""
+        INSTALL_UPGRADE_PACKAGE="likewise-open-upgrade"
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
+        INSTALL_BASE_PACKAGES="likewise-open"
+        INSTALL_OPTIONAL_PACKAGES=""
         ;;
     linux)
         PACKAGES="open"
-        UPGRADE_PACKAGES=""
-        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
-        INSTALL_PACKAGES="likewise-open"
-        OPTIONAL_PACKAGES="likewise-open-gui"
+        INSTALL_UPGRADE_PACKAGE=""
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
+        INSTALL_BASE_PACKAGES="likewise-open"
+        INSTALL_OPTIONAL_PACKAGES="likewise-open-gui"
         ;;
     hpux)
         PACKAGES="open open-upgrade"
-        UPGRADE_PACKAGES="LikewiseOpenUpgrade"
-        OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
-        INSTALL_PACKAGES="LikewiseOpen"
-        OPTIONAL_PACKAGES="LikewiseOpenGui"
+        INSTALL_UPGRADE_PACKAGE="LikewiseOpenUpgrade"
+        INSTALL_OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_BASE_PACKAGES="LikewiseOpen"
+        INSTALL_OPTIONAL_PACKAGES="LikewiseOpenGui"
         ;;
     solaris)
         PACKAGES="open open-upgrade"
-        UPGRADE_PACKAGES="LikewiseOpenUpgrade"
-        OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
-        INSTALL_PACKAGES="LikewiseOpen"
-        OPTIONAL_PACKAGES="LikewiseOpenGui"
+        INSTALL_UPGRADE_PACKAGE="LikewiseOpenUpgrade"
+        INSTALL_OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_BASE_PACKAGES="LikewiseOpen"
+        INSTALL_OPTIONAL_PACKAGES="LikewiseOpenGui"
         ;;
 esac

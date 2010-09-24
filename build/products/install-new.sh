@@ -6,10 +6,9 @@
 #
 
 ERR_PACKAGE_FILE_NOT_FOUND=1
-ERR_PACKAGE_ALREADY_INSTALLED=2
-ERR_PACKAGE_COULD_NOT_INSTALL=3
-ERR_PACKAGE_NOT_INSTALLED=4
-ERR_PACKAGE_COULD_NOT_UNINSTALL=5
+ERR_PACKAGE_COULD_NOT_INSTALL=2
+ERR_PACKAGE_NOT_INSTALLED=3
+ERR_PACKAGE_COULD_NOT_UNINSTALL=4
 
 log_info()
 {
@@ -625,7 +624,7 @@ install_darwin()
 {
     uninstall_darwin
 
-    for pkg in $INSTALL_PACKAGES ; do
+    for pkg in $INSTALL_BASE_PACKAGES ; do
         file=`echo ${PKGDIR}/${pkg}-[0-9]*.dmg`
         hdiutil attach "${file}"
         exit_on_error $? "Failed to attach ${file}"
@@ -653,7 +652,7 @@ do_install()
     # Then, check for the file and add to the install list.
     # Finally, install the packages in the list.
     pkgList=""
-    for pkg in $UPGRADE_PACKAGES
+    for pkg in $INSTALL_UPGRADE_PACKAGE
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -670,7 +669,7 @@ do_install()
     fi
 
     pkgList=""
-    for pkg in $UPGRADE_PACKAGES
+    for pkg in $INSTALL_UPGRADE_PACKAGE
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
@@ -690,7 +689,7 @@ do_install()
     # Uninstall all old packages in one call to ensure interpackage dependencies
     # do not cause a failure.
     pkgList=""
-    for pkg in $OBSOLETE_PACKAGES
+    for pkg in $INSTALL_OBSOLETE_PACKAGES
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -709,7 +708,7 @@ do_install()
 
     # Install all required packages.
     pkgList=""
-    for pkg in $INSTALL_PACKAGES
+    for pkg in $INSTALL_BASE_PACKAGES
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
@@ -730,7 +729,7 @@ do_install()
     fi
 
     # Install all optional packages.
-    for pkg in $OPTIONAL_PACKAGES
+    for pkg in $INSTALL_OPTIONAL_PACKAGES
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
@@ -746,9 +745,9 @@ do_install()
 
     echo "PREFIX=\"$PREFIX\"" > /var/lib/likewise/uninstall
     echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/likewise/uninstall
-    echo "UPGRADE_PACKAGES=\"$UPGRADE_PACKAGES\"" >> /var/lib/likewise/uninstall
-    echo "REQUIRED_PACKAGES=\"$REQUIRED_PACKAGES\"" >> /var/lib/likewise/uninstall
-    echo "OPTIONAL_PACKAGES=\"$OPTIONAL_PACKAGES\"" >> /var/lib/likewise/uninstall
+    echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/likewise/uninstall
+    echo "INSTALL_BASE_PACKAGES=\"$INSTALL_BASE_PACKAGES\"" >> /var/lib/likewise/uninstall
+    echo "INSTALL_OPTIONAL_PACKAGES=\"$INSTALL_OPTIONAL_PACKAGES\"" >> /var/lib/likewise/uninstall
 
     log_info "Installing Packages was successful"
 }
@@ -871,7 +870,7 @@ do_uninstall()
     fi
 
     pkgList=""
-    for pkg in $OPTIONAL_PACKAGES $INSTALL_PACKAGES $UPGRADE_PACKAGES $OBSOLETE_PACKAGES;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_OPTIONAL_PACKAGES $INSTALL_BASE_PACKAGES;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
@@ -894,7 +893,7 @@ do_purge()
     fi
 
     pkgList=""
-    for pkg in $OPTIONAL_PACKAGES $INSTALL_PACKAGES $UPGRADE_PACKAGES $OBSOLETE_PACKAGES;
+    for pkg in $INSTALL_UPGRADE_PACKAGE $INSTALL_OPTIONAL_PACKAGES $INSTALL_BASE_PACKAGES;
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
