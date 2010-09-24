@@ -294,11 +294,13 @@ function package_bff
     mkdir -p ${_PKG_LAYOUT}/root/usr/lpp/likewise
     exit_on_error $?
 
-    mv ${_PKG_LAYOUT}/root/${PKG_PREFIX_DIR} ${_PKG_LAYOUT}/root/usr/lpp/likewise/opt-likewise
-    exit_on_error $?
+    if [ -d ${_PKG_LAYOUT}/root/${PKG_PREFIX_DIR} ]; then
+        mv ${_PKG_LAYOUT}/root/${PKG_PREFIX_DIR} ${_PKG_LAYOUT}/root/usr/lpp/likewise/opt-likewise
+        exit_on_error $?
     
-    ln -s /usr/lpp/likewise/opt-likewise ${_PKG_LAYOUT}/root/${PKG_PREFIX_DIR}
-    exit_on_error $?
+        ln -s /usr/lpp/likewise/opt-likewise ${_PKG_LAYOUT}/root/${PKG_PREFIX_DIR}
+        exit_on_error $?
+    fi
     
     sed \
         -e "s|__ARCH__|${BUILD_OS_ARCH}|g" \
