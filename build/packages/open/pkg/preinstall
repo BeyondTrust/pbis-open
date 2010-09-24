@@ -1,0 +1,102 @@
+#!/bin/sh
+
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+UPGRADEDIR5="/etc/likewise/5_0_upgrade"
+
+OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseEventlog LikewiseKrb5 LikewiseLibxml2 LikewiseLsass LikewiseLwconfig LikewiseLwio LikewiseLwnetapi LikewiseLwreg LikewiseLwtools LikewiseLwupgrade LikewiseModAuthKerb LikewiseNetlogon LikewiseOpenldap LikewisePasswd LikewisePstore LikewiseReskit LikewiseRpc LikewiseSqlite LikewiseSrvsvc"
+
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
+
+exec_log()
+{
+    $1 > $TLOG
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
+        log `cat $TLOG`
+    fi
+}
+
+exec_log_exit()
+{
+    $1 > $TLOG
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
+
+preinstall_upgrade_from_6_x()
+{
+    /etc/init.d/lwsmd stop
+}
+
+preinstall_upgrade_from_5_x()
+{
+    OLDCONFDIR=/etc/likewise
+    OLDVARDIR=/var/lib/likewise
+
+    # Stop lsassd to copy the pstore.db
+    /etc/init.d/lsassd stop
+
+    if [ -f "${OLDCONFDIR}/lsassd.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/lsassd.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDCONFDIR}/eventlogd.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/eventlogd.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDCONFDIR}/netlogon.conf" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDCONFDIR}/netlogon.conf" ${UPGRADEDIR5}
+    fi
+
+    if [ -f "${OLDVARDIR}/db/pstore.db" ]; then
+        mkdir -p ${UPGRADEDIR5}
+        cp "${OLDVARDIR}/db/pstore.db" ${UPGRADEDIR5}
+    fi
+
+    /opt/likewise/bin/domainjoin-cli leave
+
+   for _pkg in $OBSOLETE_PACKAGES ; do
+       pkgrm -n ${_pkg}
+   done
+}
+
+preinstall()
+{
+    # Determine if previous versions are installed.
+    pkginfo LikewiseOpen
+    if [ $? -eq 0 ]; then
+        preinstall_upgrade_from_6_x
+    else
+        pkginfo LikewiseLsass
+        if [ $? -eq 0 ]; then
+            preinstall_upgrade_from_5_x
+        fi
+    fi
+
+    pkill -KILL -x srvsvcd
+    pkill -KILL -x lsassd
+    pkill -KILL -x lwiod
+    pkill -KILL -x netlogond
+    pkill -KILL -x eventlogd
+    pkill -KILL -x dcerpcd
+    pkill -KILL -x netlogond
+    pkill -KILL -x lwregd
+}
