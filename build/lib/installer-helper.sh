@@ -9,6 +9,10 @@ installer_build_manifest()
     local native_packages_compat="`product_native_packages_compat ${name}`"
     local native_obsolete_packages="`product_native_obsolete_packages ${name}`"
     local native_optional_packages="`product_native_optional_packages ${name}`"
+    local native_install_upgrade_package="`product_native_install_upgrade_package ${name}`"
+    local native_install_obsolete_packages="`product_native_install_obsolete_packages ${name}`"
+    local native_install_base_packages="`product_native_install_base_packages ${name}`"
+    local native_install_optional_packages="`product_native_install_optional_packages ${name}`"
     local daemons="`product_daemons ${name}`"
     local obsolete_daemons="`product_obsolete_daemons ${name}`"
     local autostart="`product_autostart ${name}`"
@@ -25,4 +29,8 @@ installer_build_manifest()
     echo "OBSOLETE_DAEMONS=\"${obsolete_daemons}\"" >>${manifest}
     echo "AUTOSTART=\"${autostart}\"" >>${manifest}
     echo "REGFILES=\"${regfiles}\"" >>${manifest}
+    echo "INSTALL_UPGRADE_PACKAGE=\"${native_install_upgrade_package}\"" >>${manifest}
+    echo "INSTALL_OBSOLETE_PACKAGES=\"${native_install_obsolete_packages}\"" >>${manifest}
+    echo "INSTALL_BASE_PACKAGES=\"${native_install_base_packages}\"" >>${manifest}
+    echo "INSTALL_OPTIONAL_PACKAGES=\"${native_install_optional_packages}\"" >>${manifest}
 }

@@ -154,6 +154,26 @@ product_native_packages_compat()
     fi
 }
 
+product_native_install_upgrade_package()
+{
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_UPGRADE_PACKAGE )`"
+}
+
+product_native_install_obsolete_packages()
+{
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_OBSOLETE_PACKAGES )`"
+}
+
+product_native_install_base_packages()
+{
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_BASE_PACKAGES )`"
+}
+
+product_native_install_optional_packages()
+{
+    echo "`( source ${PRODUCTS_DIR}/$1/config && echo $INSTALL_OPTIONAL_PACKAGES )`"
+}
+
 product_packages_spec()
 {
     local _os="$1"
