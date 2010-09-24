@@ -5,24 +5,54 @@ FILES="COPYING README EULA"
 SCRIPT="../install-new.sh"
 UNAME_RELEASE=`(uname -r) 2>/dev/null` || UNAME_RELEASE=unknown
 
-# PACKAGES is used by the build system to determine what should be built
-# and installed.
+# PACKAGES - (build) Used by the build system to determine what should be built.
+# UPGRADE_PACKAGES - (install) If present, it is installed before all others.
+# OBSOLETE_PACKAGES - (install) Packages to uninstall.
+# INSTALL_PACKAGES - (install) Everything needed for a basic installation.
+# OPTIONAL_PACKAGES - (install) Nice to have packages -- sdk, compat, ...
+
 PACKAGES="open"
 case "${BUILD_OS_TYPE}" in
-    aix|freebsd|hpux|solaris)
-        PACKAGES="open-upgrade $PACKAGES"
+    aix)
+        PACKAGES="open open-upgrade"
+        UPGRADE_PACKAGES="LikewiseOpen.Upgrade"
+        OBSOLETE_PACKAGES="Likewise.Base Likewise.Domainjoin Likewise.Eventlog Likewise.Krb5 Likewise.Lac Likewise.Libxml2 Likewise.Lsass Likewise.Lwadutil Likewise.Lwio Likewise.Lwmgmt Likewise.Netlogon LikewiseOpen.Upgrade LikewiseOpen.LikewiseOpen"
+        INSTALL_PACKAGES="LikewiseOpen.Likewise"
+        OPTIONAL_PACKAGES=""
+        ;;
+    darwin)
+        PACKAGES="open"
+        UPGRADE_PACKAGES=""
+        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-netlogon likewise-open"
+        INSTALL_PACKAGES="likewise-open"
+        OPTIONAL_PACKAGES=""
+        ;;
+    freebsd)
+        PACKAGES="open open-upgrade"
+        UPGRADE_PACKAGES="likewise-open-upgrade"
+        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
+        INSTALL_PACKAGES="likewise-open"
+        OPTIONAL_PACKAGES=""
+        ;;
+    linux)
+        PACKAGES="open"
+        UPGRADE_PACKAGES=""
+        OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwio likewise-lwmgmt likewise-lwreg-32bit likewise-netlogon likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
+        INSTALL_PACKAGES="likewise-open"
+        OPTIONAL_PACKAGES="likewise-open-gui"
+        ;;
+    hpux)
+        PACKAGES="open open-upgrade"
+        UPGRADE_PACKAGES="LikewiseOpenUpgrade"
+        OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_PACKAGES="LikewiseOpen"
+        OPTIONAL_PACKAGES="LikewiseOpenGui"
+        ;;
+    solaris)
+        PACKAGES="open open-upgrade"
+        UPGRADE_PACKAGES="LikewiseOpenUpgrade"
+        OBSOLETE_PACKAGES="LikewiseBase LikewiseDomainjoin LikewiseDomainjoinGui LikewiseEventlog LikewiseKrb5 LikewiseLac LikewiseLibxml2 LikewiseLsass LikewiseLwadutil LikewiseLwio LikewiseLwmgmt LikewiseNetlogon LikewiseOpenUpgrade LikewiseOpen LikewiseOpenGui"
+        INSTALL_PACKAGES="LikewiseOpen"
+        OPTIONAL_PACKAGES="LikewiseOpenGui"
         ;;
 esac
-
-
-# Upgrade package. If present, it is installed before all others.
-UPGRADE_PACKAGES="open-upgrade"
-
-# Packages to uninstall. Anything important is preserved by the Upgrade package.
-OBSOLETE_PACKAGES="base domainjoin domainjoin-gui eventlog krb5 lac libxml2 lsass lwadutil lwio lwmgmt lwreg-32bit open-upgrade open open-gui open-32bit"
-
-# Everything needed for a basic installation.
-INSTALL_PACKAGES="open"
-
-# Nice to haves like GUI interface or 32-bit compatibility libraries.
-OPTIONAL_PACKAGES="open-gui open-32bit"
