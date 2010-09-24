@@ -86,7 +86,6 @@ typedef struct
     int fd;
     PWSTR pwszHostname;         /* Raw hostname, including channel specifier */
     PWSTR pwszCanonicalName;      /* Canconical hostname for DNS resolution/GSS principal construction */
-    struct sockaddr address;    /* For hashing */
     
     uint32_t maxBufferSize;     /* Max transmit buffer size */
     uint32_t maxRawSize;        /* Maximum raw buffer size */
