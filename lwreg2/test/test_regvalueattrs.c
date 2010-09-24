@@ -73,9 +73,12 @@ int main(int argc, char *argv[])
     PWSTR* ppwszRootKeyNames = NULL;
     DWORD dwNumRootKeys = 0;
     wchar16_t szSubKey[] = {'a', 0};
+    wchar16_t szSubKey1[] = {'b', 0};
     wchar16_t szValueName[] = {'a','t','t','r',0};
     wchar16_t szValueName1[] = {'a','t','t','r','1',0};
     HKEY hKey = NULL;
+    HKEY hSubKey = NULL;
+    HKEY hSubSubKey = NULL;
 
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
     PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
@@ -106,8 +109,34 @@ int main(int argc, char *argv[])
                 NULL,
                 ppwszRootKeyNames[0],
                 0,
-                KEY_SET_VALUE,
+                KEY_ALL_ACCESS | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | DELETE,
                 &hKey);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegCreateKeyExW(
+                hReg,
+                hKey,
+                szSubKey,
+                0,
+                NULL,
+                0,
+                KEY_ALL_ACCESS,
+                NULL,
+                &hSubKey,
+                NULL);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegCreateKeyExW(
+                hReg,
+                hSubKey,
+                szSubKey1,
+                0,
+                NULL,
+                0,
+                KEY_ALL_ACCESS,
+                NULL,
+                &hSubSubKey,
+                NULL);
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegSetValueAttributesW(
@@ -130,6 +159,30 @@ int main(int argc, char *argv[])
                    hReg,
                    hKey,
                    szSubKey,
+                   szValueName,
+                   pAttr);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueAttributesW(
+                   hReg,
+                   hKey,
+                   szSubKey,
+                   szValueName1,
+                   pAttr);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueAttributesW(
+                   hReg,
+                   hSubSubKey,
+                   NULL,
+                   szValueName1,
+                   pAttr_int);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueAttributesW(
+                   hReg,
+                   hSubSubKey,
+                   NULL,
                    szValueName,
                    pAttr);
     BAIL_ON_REG_ERROR(dwError);
@@ -159,12 +212,43 @@ int main(int argc, char *argv[])
                    szValueName);
     BAIL_ON_REG_ERROR(dwError);
 
+    dwError = RegDeleteTreeW(
+                   hReg,
+                   hKey,
+                   szSubKey);
+    if (LWREG_ERROR_KEY_IS_ACTIVE == dwError)
+    {
+        if (hSubKey)
+        {
+            RegCloseKey(hReg, hSubKey);
+        }
+        if (hSubSubKey)
+        {
+            RegCloseKey(hReg, hSubSubKey);
+        }
+        dwError = RegDeleteTreeW(
+                hReg,
+                hKey,
+                szSubKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    BAIL_ON_REG_ERROR(dwError);
+
 cleanup:
 
     if (hKey)
     {
         RegCloseKey(hReg, hKey);
     }
+    if (hSubKey)
+    {
+        RegCloseKey(hReg, hSubKey);
+    }
+    if (hSubSubKey)
+    {
+        RegCloseKey(hReg, hSubSubKey);
+    }
+
 
     if (hReg)
     {

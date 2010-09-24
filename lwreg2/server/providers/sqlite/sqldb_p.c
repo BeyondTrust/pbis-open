@@ -295,6 +295,22 @@ RegDbDeleteKey_inlock(
     status = (DWORD)sqlite3_reset(pstQuery);
     BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
 
+    // Delete the key's values associated attributes
+    pstQuery = pConn->pstDeleteAllValueAttributes;
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_step(pstQuery);
+    if (status == SQLITE_DONE)
+    {
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
     // Delete the keys' ACL if there is no more reference to it
     if (qwAclId != -1)
     {
