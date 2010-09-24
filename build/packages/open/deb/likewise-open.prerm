@@ -1,30 +1,64 @@
-#!/bin/sh -e
+#!/bin/sh
 
-DOMAINJOIN=/usr/bin/domainjoin-cli
-LWSMD=/etc/init.d/lwsmd
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
+
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
+
+preuninstall()
+{
+    log "Package: Likewise Open pre-uninstall begins (`date`)"
+
+    pam-auth-update --package --remove likewise-open > $TLOG 2>&1
+    err=$?
+    if [ $err -ne 0 ]; then
+        log "Error: pam-auth-update --package --remove likewise-open returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+
+    # Remove references elsewhere.
+    if [ -x $DOMAINJOIN ]
+    then
+        $DOMAINJOIN configure --disable nsswitch  > $TLOG 2>&1
+        echo "$DOMAINJOIN configure --disable nsswitch" >> $LOG
+        cat $TLOG >> $LOG
+
+        $DOMAINJOIN configure --disable ssh > $TLOG 2>&1
+        echo "$DOMAINJOIN configure --disable ssh" >> $LOG
+        cat $TLOG >> $LOG
+
+        $DOMAINJOIN configure --long `hostname --long` \
+                              --short `hostname --short` \
+                              --disable krb5 > $TLOG 2>&1
+        echo "$DOMAINJOIN configure --long `hostname --long` --short `hostname --short` --disable krb5" >> $LOG
+        cat $TLOG >> $LOG
+    else
+        log "Warning: $DOMAINJOIN is missing or not executable"
+    fi
+
+    # Stop all daemons; none should be needed anymore.
+    if [ -x /etc/init.d/lwsmd ]
+    then
+        /etc/init.d/lwsmd stop > $TLOG 2>&1
+        echo "/etc/init.d/lwsmd stop" >> $LOG
+        cat $TLOG >> $LOG
+    else
+        log "Warning: /etc/init.d/lwsmd is missing or not executable"
+    fi
+
+    log "Package: Likewise Open pre-uninstall finished"
+}
 
 case "$1" in
     remove)
-    # Removing this package; no upgrade in progress
-
-        # Remove references in PAM.
-        pam-auth-update --package --remove likewise-open
-
-        # Remove references elsewhere.
-        if [ -x $DOMAINJOIN ]
-        then
-            $DOMAINJOIN configure --disable nsswitch > /dev/null 2>&1
-            $DOMAINJOIN configure --disable ssh > /dev/null 2>&1
-            $DOMAINJOIN configure --long `hostname --long` \
-                                  --short `hostname --short` \
-                                  --disable krb5 > /dev/null 2>&1
-        fi
-
-        # Stop all daemons; none should be needed anymore.
-        if [ -x $LWSMD ]
-        then
-            $LWSMD stop
-        fi
+        preuninstall
     ;;
 
     failed-upgrade)

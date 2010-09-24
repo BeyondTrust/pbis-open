@@ -1,40 +1,77 @@
 #!/bin/sh
 
-set -e
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+log()
+{
+    echo $1
+    echo $1 >> $LOG
+}
+
+exec_log()
+{
+    $1 > $TLOG
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
+        log `cat $TLOG`
+    fi
+}
+
+exec_log_exit()
+{
+    $1 > $TLOG
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
+        log `cat $TLOG`
+        exit 1
+    fi
+}
 
 case "$1" in
     abort-upgrade)
     ;;
 
     upgrade)
-        pam-auth-update --package
+        exec_log_exit "pam-auth-update --package"
 
         if dpkg --compare-versions "$2" le "4.1.2982-0ubuntu3"; then
             # Shutdown old daemons (if running)
             if [ -f /etc/init.d/likewise-open ]
             then
-                /etc/init.d/likewise-open stop || true
+                exec_log /etc/init.d/likewise-open stop
+            else
+                log "Warning: /etc/init.d/likwise-open is not present."
             fi
 
             save_4_1_files
 
-            pam-auth-update --package --remove likewise-open
+            exec_log_exit "pam-auth-update --package --remove likewise-open"
 
             if [ -x /usr/bin/domainjoin-cli ]; then
-                /usr/bin/domainjoin-cli leave || true
+                exec_log "/usr/bin/domainjoin-cli leave"
+            else
+                log "Warning: /usr/bin/domainjoin-cli is not present."
             fi
         fi
 
         # remove obsolete conffiles from previous versions
         if dpkg --compare-versions "$2" lt-nl "6.0.0"; then
 
-        # from 4.1
-        rm_conffile /etc/samba/lwiauthd.conf
-        rm_conffile /etc/security/pam_lwidentity.conf
-        rm_conffile /etc/default/likewise-open
-        rm_conffile /etc/init.d/likewise-open
-        # from 5.0
-        rm_conffile /etc/init.d/npcmuxd
+            # from 4.1
+            rm_conffile /etc/samba/lwiauthd.conf
+            rm_conffile /etc/security/pam_lwidentity.conf
+            rm_conffile /etc/default/likewise-open
+            rm_conffile /etc/init.d/likewise-open
+
+            # from 5.0
+            rm_conffile /etc/init.d/npcmuxd
         fi
     ;;
 

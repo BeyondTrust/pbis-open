@@ -9,15 +9,38 @@ log()
     echo $1 >> $LOG
 }
 
-import_registry_configuration()
+exec_log()
 {
-    /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg > $TLOG 2>&1
+    $1 > $TLOG
     err=$?
-    if [ $err -ne 0 ]; then
-        log "Error: /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg returned $err"
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
         log `cat $TLOG`
+    fi
+    rm -f $TLOG > /dev/null 2> /dev/null
+}
+
+exec_log_exit()
+{
+    $1 > $TLOG
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo $1 >> $LOG
+    else
+        log "Error: $1 returned $err"
+        log `cat $TLOG`
+        rm -f $TLOG > /dev/null 2> /dev/null
         exit 1
     fi
+    rm -f $TLOG > /dev/null 2> /dev/null
+}
+
+import_registry_configuration()
+{
+    exec_log_exit \
+        "/opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg"
 }
 
 import_registry_configurations()
@@ -32,53 +55,34 @@ import_registry_configurations()
     import_registry_configuration pstore
 }
 
+switch_to_open_provider()
+{
+    /opt/likewise/bin/lwregshell \
+    'set_value' \
+    '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' \
+    'Path' \
+    '/opt/likewise/lib64/liblsass_auth_provider_ad_open.so'
+ }
+
 postinstall()
 {
-    log "LikewiseOpen postinstall begins"
+    log "Package: Likewise Open post-install begins (`date`)"
 
-    /opt/likewise/sbin/lwsmd --start-as-daemon > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "Error: /opt/likewise/sbin/lwsmd --start-as-daemon returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon"
 
     import_registry_configurations
 
-    /etc/init.d/lwsmd stop > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "error: /etc/init.d/lwsmd stop returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    switch_to_open_provider
 
-    /etc/init.d/lwsmd start > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "error: /etc/init.d/lwsmd start returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit "/etc/init.d/lwsmd stop"
 
-    /opt/likewise/bin/domainjoin-cli query > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "error: /opt/likewise/bin/domainjoin-cli query returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit "/etc/init.d/lwsmd start"
 
-    pam-auth-update --package > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "error: pam-auth-update --pacakge returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
 
-    log "LikewiseOpen postinstall finished"
+    exec_log_exit "pam-auth-update --package"
+
+    log "Package: Likewise Open post-install finished"
 }
 
 case "$1" in
