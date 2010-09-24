@@ -481,7 +481,12 @@ MainTask(
     NTSTATUS status = STATUS_SUCCESS;
     siginfo_t info;
 
-    if (WakeMask & LW_TASK_EVENT_INIT)
+    if (WakeMask & LW_TASK_EVENT_CANCEL)
+    {
+        *pWaitMask = LW_TASK_EVENT_COMPLETE;
+        goto cleanup;
+    }
+    else if (WakeMask & LW_TASK_EVENT_INIT)
     {
         status = LwRtlSetTaskUnixSignal(pTask, SIGTERM, TRUE);
         BAIL_ON_ERROR(status);
