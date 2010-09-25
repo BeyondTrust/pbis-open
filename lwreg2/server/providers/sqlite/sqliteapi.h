@@ -218,6 +218,19 @@ SqliteSetValueAttributes(
     );
 
 NTSTATUS
+SqliteGetValueAttributes_Internal(
+    IN HANDLE hRegConnection,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pwszSubKey,
+    IN PCWSTR pValueName,
+    IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
+    // Whether bail or not in case there is no value attributes
+    IN BOOLEAN bDoBail,
+    OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
+    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    );
+
+NTSTATUS
 SqliteGetValueAttributes(
     IN HANDLE hRegConnection,
     IN HKEY hKey,

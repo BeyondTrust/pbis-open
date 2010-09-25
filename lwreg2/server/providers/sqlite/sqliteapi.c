@@ -50,12 +50,6 @@
 
 
 static
-REG_DATA_TYPE
-GetRegDataType(
-    REG_DATA_TYPE_FLAGS Flags
-    );
-
-static
 NTSTATUS
 SqliteOpenKeyEx_inlock_inDblock(
     IN HANDLE Handle,
@@ -845,6 +839,79 @@ SqliteGetValue(
     IN OUT OPTIONAL PDWORD pcbData
     )
 {
+    NTSTATUS status = STATUS_SUCCESS;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
+    // Do not free
+    PBYTE pValue = NULL;
+    DWORD cbValue = 0;
+    REG_DATA_TYPE dwType = REG_NONE;
+
+    status = SqliteGetValueAttributes_Internal(
+                                      Handle,
+                                      hKey,
+                                      pSubKey,
+                                      pValueName,
+                                      GetRegDataType(Flags),
+                                      FALSE,
+                                      &pCurrentValue,
+                                      &pValueAttributes);
+    BAIL_ON_NT_STATUS(status);
+
+    // Value does not exist
+    if (!pCurrentValue && !pValueAttributes)
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    // Value is not set by client, hence using value attributes
+    if (!pCurrentValue && pValueAttributes)
+    {
+        pValue = pValueAttributes->pDefaultValue;
+        cbValue = pValueAttributes->DefaultValueLen;
+        dwType = pValueAttributes->ValueType;
+    }
+    else if (pCurrentValue)
+    {
+        pValue = pCurrentValue->pvData;
+        cbValue = pCurrentValue->cbData;
+        dwType = pCurrentValue->dwType;
+    }
+
+    status = RegCopyValueBytes(pValue,
+                               cbValue,
+                               pData,
+                               pcbData);
+    BAIL_ON_NT_STATUS(status);
+
+    *pdwType = dwType;
+
+cleanup:
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    RegSafeFreeValueAttributes(&pValueAttributes);
+
+    return status;
+
+error:
+    *pdwType = 0;
+
+    goto cleanup;
+}
+
+#if 0
+NTSTATUS
+SqliteGetValue(
+    IN HANDLE Handle,
+    IN HKEY hKey,
+    IN OPTIONAL PCWSTR pSubKey,
+    IN OPTIONAL PCWSTR pValueName,
+    IN OPTIONAL REG_DATA_TYPE_FLAGS Flags,
+    OUT PDWORD pdwType,
+    OUT OPTIONAL PBYTE pData,
+    IN OUT OPTIONAL PDWORD pcbData
+    )
+{
 	NTSTATUS status = STATUS_SUCCESS;
     PWSTR pwszValueName = NULL;
     PREG_DB_VALUE pRegEntry = NULL;
@@ -918,6 +985,7 @@ error:
 
     goto cleanup;
 }
+#endif
 
 NTSTATUS
 SqliteDeleteKeyValue(
@@ -1371,7 +1439,6 @@ error:
     goto cleanup;
 }
 
-static
 REG_DATA_TYPE
 GetRegDataType(
     REG_DATA_TYPE_FLAGS Flags

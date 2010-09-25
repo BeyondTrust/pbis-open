@@ -138,4 +138,9 @@ SqliteDeleteActiveKey_inlock(
     IN PCWSTR pwszKeyName
     );
 
+REG_DATA_TYPE
+GetRegDataType(
+    REG_DATA_TYPE_FLAGS Flags
+    );
+
 #endif /* SQLITEAPI_P_H_ */

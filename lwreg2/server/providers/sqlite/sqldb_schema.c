@@ -603,14 +603,9 @@ RegDbGetValueAttributes(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    PSTR pszError = NULL;
     BOOLEAN bInLock = FALSE;
-    // do not free
-    sqlite3_stmt *pstQuery = NULL;
-    size_t sResultCount = 0;
-    const int nExpectedCols = 9;
-    int iColumnPos = 0;
-    int nGotColumns = 0;
-    PREG_DB_VALUE_ATTRIBUTES pRegEntry = NULL;
+
 
     BAIL_ON_NT_INVALID_STRING(pwszValueName);
 
@@ -621,6 +616,130 @@ RegDbGetValueAttributes(
     }
 
     ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "begin;",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    status = RegDbGetValueAttributes_inlock(
+                                     hDb,
+                                     qwParentKeyId,
+                                     pwszValueName,
+                                     valueType,
+                                     pbIsWrongType,
+                                     ppRegEntry);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "end",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbGetValueAttributes() finished\n");
+
+
+cleanup:
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+error:
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+    sqlite3_exec(
+             pConn->pDb,
+            "rollback",
+             NULL,
+             NULL,
+             NULL);
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbDeleteValueAttributes(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // Do not free
+    sqlite3_stmt *pstQuery = pConn->pstDeleteValueAttributes;
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwParentKeyId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindStringW(pstQuery, 2, pwszValueName);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_step(pstQuery);
+    if (status == SQLITE_DONE)
+    {
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+cleanup:
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+error:
+
+    if (pstQuery)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbGetValueAttributes_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN REG_DATA_TYPE valueType,
+    IN OPTIONAL PBOOLEAN pbIsWrongType,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES* ppRegEntry
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // do not free
+    sqlite3_stmt *pstQuery = NULL;
+    size_t sResultCount = 0;
+    const int nExpectedCols = 9;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    PREG_DB_VALUE_ATTRIBUTES pRegEntry = NULL;
+
+
+    BAIL_ON_NT_INVALID_STRING(pwszValueName);
+
+    if (qwParentKeyId <= 0)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
 
     if (valueType == REG_UNKNOWN)
     {
@@ -669,7 +788,9 @@ RegDbGetValueAttributes(
             BAIL_ON_NT_STATUS(status);
         }
 
-        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE, sizeof(*pRegEntry));
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry,
+                                 REG_DB_VALUE_ATTRIBUTES,
+                                 sizeof(*pRegEntry));
         BAIL_ON_NT_STATUS(status);
 
         status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry->pValueAttributes,
@@ -715,63 +836,9 @@ cleanup:
             *ppRegEntry = NULL;
     }
 
-    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
-
-
     return status;
 
 error:
-    if (pstQuery != NULL)
-    {
-        sqlite3_reset(pstQuery);
-    }
-
-    goto cleanup;
-}
-
-NTSTATUS
-RegDbDeleteValueAttributes(
-    IN REG_DB_HANDLE hDb,
-    IN int64_t qwParentKeyId,
-    IN PCWSTR pwszValueName
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    BOOLEAN bInLock = FALSE;
-    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
-    // Do not free
-    sqlite3_stmt *pstQuery = pConn->pstDeleteValueAttributes;
-
-    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
-
-    status = RegSqliteBindInt64(pstQuery, 1, qwParentKeyId);
-    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
-
-    status = RegSqliteBindStringW(pstQuery, 2, pwszValueName);
-    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
-
-    status = (DWORD)sqlite3_step(pstQuery);
-    if (status == SQLITE_DONE)
-    {
-        status = STATUS_SUCCESS;
-    }
-    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
-
-    status = (DWORD)sqlite3_reset(pstQuery);
-    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
-
-cleanup:
-
-    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
-
-    return status;
-
-error:
-
-    if (pstQuery)
-    {
-        sqlite3_reset(pstQuery);
-    }
 
     goto cleanup;
 }

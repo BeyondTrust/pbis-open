@@ -1135,6 +1135,506 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+RegDbGetKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN REG_DATA_TYPE valueType,
+    IN OPTIONAL PBOOLEAN pbIsWrongType,
+    OUT OPTIONAL PREG_DB_VALUE* ppRegEntry
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // do not free
+    sqlite3_stmt *pstQuery = NULL;
+    size_t sResultCount = 0;
+    const int nExpectedCols = 5;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    PREG_DB_VALUE pRegEntry = NULL;
+
+
+    if (valueType == REG_UNKNOWN)
+    {
+        pstQuery = pConn->pstQueryKeyValue;
+
+        status = (NTSTATUS)RegSqliteBindStringW(pstQuery, 1, pwszValueName);
+        BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+        status = (NTSTATUS)RegSqliteBindInt64(pstQuery, 2, qwParentKeyId);
+        BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+    }
+    else
+    {
+        if (pbIsWrongType && !*pbIsWrongType)
+        {
+            pstQuery = pConn->pstQueryKeyValueWithType;
+        }
+        else
+        {
+            pstQuery = pConn->pstQueryKeyValueWithWrongType;
+        }
+
+        status = RegSqliteBindStringW(pstQuery, 1, pwszValueName);
+        BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+        status = RegSqliteBindInt64(pstQuery, 2, qwParentKeyId);
+        BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+        status = RegSqliteBindInt32(pstQuery, 3, (int)valueType);
+        BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+    }
+
+    while ((status = (DWORD)sqlite3_step(pstQuery)) == SQLITE_ROW)
+    {
+        nGotColumns = sqlite3_column_count(pstQuery);
+        if (nGotColumns != nExpectedCols)
+        {
+            status = STATUS_DATA_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (sResultCount >= 1)
+        {
+            // Duplicate key value records are found
+            status = STATUS_DUPLICATE_NAME;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE, sizeof(*pRegEntry));
+        BAIL_ON_NT_STATUS(status);
+
+        iColumnPos = 0;
+
+        status = RegDbUnpackRegValueInfo(pstQuery,
+                                         &iColumnPos,
+                                         pRegEntry);
+        BAIL_ON_NT_STATUS(status);
+
+        sResultCount++;
+    }
+
+    if (status == SQLITE_DONE)
+    {
+        // No more results found
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    if (!sResultCount)
+    {
+        status = STATUS_OBJECT_NAME_NOT_FOUND;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+    if (!status && ppRegEntry)
+    {
+        *ppRegEntry = pRegEntry;
+    }
+    else
+    {
+        RegDbSafeFreeEntryValue(&pRegEntry);
+        if (ppRegEntry)
+            *ppRegEntry = NULL;
+    }
+
+    return status;
+
+error:
+    if (pstQuery != NULL)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbUpdateRegValues_inlock(
+    IN HANDLE hDb,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE* ppValues
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    sqlite3_stmt *pstQueryEntry = NULL;
+    int iColumnPos = 1;
+    PREG_DB_VALUE pEntry = NULL;
+    DWORD dwIndex = 0;
+    BOOLEAN bGotNow = FALSE;
+    time_t now = 0;
+
+
+    for (dwIndex = 0; dwIndex < dwEntryCount; dwIndex++)
+    {
+        pEntry = ppValues[dwIndex];
+
+        if (pEntry == NULL)
+        {
+            continue;
+        }
+
+        pstQueryEntry = pConn->pstUpdateRegValue;
+
+        if (!bGotNow)
+        {
+            status = RegGetCurrentTimeSeconds(&now);
+            BAIL_ON_NT_STATUS(status);
+
+            bGotNow = TRUE;
+        }
+
+        iColumnPos = 1;
+
+        status = sqlite3_reset(pstQueryEntry);
+        BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+
+        status = RegSqliteBindInt64(
+                    pstQueryEntry,
+                    iColumnPos,
+                    now);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindBlob(
+                   pstQueryEntry,
+                   iColumnPos,
+                   pEntry->pValue,
+                   pEntry->dwValueLen);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindInt64(
+                    pstQueryEntry,
+                    iColumnPos,
+                    pEntry->qwParentId);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindStringW(
+                    pstQueryEntry,
+                    iColumnPos,
+                    pEntry->pwszValueName);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = (DWORD)sqlite3_step(pstQueryEntry);
+        if (status == SQLITE_DONE)
+        {
+            status = 0;
+        }
+        BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+    }
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbUpdateRegValues_inlock() finished\n");
+
+    status = sqlite3_reset(pstQueryEntry);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+
+cleanup:
+
+    return status;
+
+ error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbStoreRegKeys_inlock(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_KEY* ppKeys
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDB;
+    sqlite3_stmt *pstCreateKey = NULL;
+    sqlite3_stmt *pstCreateKeyAcl = NULL;
+    int iColumnPos = 1;
+    // Do not free pEntry
+    PREG_DB_KEY pEntry = NULL;
+    DWORD dwIndex = 0;
+    BOOLEAN bGotNow = FALSE;
+    time_t now = 0;
+
+    for (dwIndex = 0; dwIndex < dwEntryCount; dwIndex++)
+    {
+        pEntry = ppKeys[dwIndex];
+
+        if (pEntry == NULL)
+        {
+            continue;
+        }
+
+        // Creating a new key qwDbId should be -1
+        if (pEntry->version.qwDbId != -1)
+        {
+            REG_LOG_DEBUG("Registry::sqldb.c RegDbStoreRegKeys() qwDbId is -1\n");
+            continue;
+        }
+
+        status = RegDbGetKeyAclIndexByKeyAcl_inlock(
+                                            hDB,
+                                            pEntry->pSecDescRel,
+                                            pEntry->ulSecDescLength,
+                                            &pEntry->qwAclIndex);
+        BAIL_ON_NT_STATUS(status);
+
+        if (pEntry->qwAclIndex == -1)
+        {
+            pstCreateKeyAcl = pConn->pstCreateRegAcl;
+
+            status = RegSqliteBindBlob(
+                       pstCreateKeyAcl,
+                       1,
+                       (BYTE*)pEntry->pSecDescRel,
+                       pEntry->ulSecDescLength);
+            BAIL_ON_SQLITE3_ERROR_STMT(status, pstCreateKeyAcl);
+
+            status = (DWORD)sqlite3_step(pstCreateKeyAcl);
+            if (status == SQLITE_DONE)
+            {
+                status = 0;
+            }
+            BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+            pEntry->qwAclIndex = sqlite3_last_insert_rowid(pConn->pDb);
+
+            status = sqlite3_reset(pstCreateKeyAcl);
+            BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+        }
+
+        pstCreateKey = pConn->pstCreateRegKey;
+
+        if (!bGotNow)
+        {
+            status = RegGetCurrentTimeSeconds(&now);
+            BAIL_ON_NT_STATUS(status);
+
+            bGotNow = TRUE;
+        }
+
+        iColumnPos = 1;
+
+        status = RegSqliteBindInt64(
+                    pstCreateKey,
+                    iColumnPos,
+                    pEntry->qwParentId);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindStringW(
+                    pstCreateKey,
+                    iColumnPos,
+                    pEntry->pwszKeyName);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindInt64(
+                    pstCreateKey,
+                    iColumnPos,
+                    pEntry->qwAclIndex);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindInt64(
+                    pstCreateKey,
+                    iColumnPos,
+                    now);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = (DWORD)sqlite3_step(pstCreateKey);
+        if (status == SQLITE_DONE)
+        {
+            status = 0;
+        }
+        BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+        status = sqlite3_reset(pstCreateKey);
+        BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    }
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegKeys_inlock() finished\n");
+
+cleanup:
+
+    return status;
+
+ error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbStoreRegValues_inlock(
+    IN HANDLE hDb,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE* ppValues
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    sqlite3_stmt *pstQueryEntry = NULL;
+    int iColumnPos = 1;
+    PREG_DB_VALUE pEntry = NULL;
+    DWORD dwIndex = 0;
+    BOOLEAN bGotNow = FALSE;
+    time_t now = 0;
+
+
+    for (dwIndex = 0; dwIndex < dwEntryCount; dwIndex++)
+    {
+        pEntry = ppValues[dwIndex];
+
+        if (pEntry == NULL)
+        {
+            continue;
+        }
+
+        pstQueryEntry = pConn->pstCreateRegValue;
+
+        if (!bGotNow)
+        {
+            status = RegGetCurrentTimeSeconds(&now);
+            BAIL_ON_NT_STATUS(status);
+
+            bGotNow = TRUE;
+        }
+
+        iColumnPos = 1;
+
+        status = sqlite3_reset(pstQueryEntry);
+        BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+
+        status = RegSqliteBindInt64(
+                    pstQueryEntry,
+                    iColumnPos,
+                    pEntry->qwParentId);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindStringW(
+                    pstQueryEntry,
+                    iColumnPos,
+                    pEntry->pwszValueName);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindInt32(
+                    pstQueryEntry,
+                    iColumnPos,
+                    pEntry->type);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindBlob(
+                   pstQueryEntry,
+                   iColumnPos,
+                   pEntry->pValue,
+                   pEntry->dwValueLen);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = RegSqliteBindInt64(
+                    pstQueryEntry,
+                    iColumnPos,
+                    now);
+        BAIL_ON_NT_STATUS(status);
+        iColumnPos++;
+
+        status = (DWORD)sqlite3_step(pstQueryEntry);
+        if (status == SQLITE_DONE)
+        {
+            status = 0;
+        }
+        BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+    }
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbStoreRegValues_inlock() finished\n");
+
+    status = sqlite3_reset(pstQueryEntry);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+
+cleanup:
+
+    return status;
+
+ error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbCreateKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN PBYTE pValue,
+    IN DWORD dwValueLen,
+    IN REG_DATA_TYPE valueType,
+    OUT OPTIONAL PREG_DB_VALUE* ppRegEntry
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_VALUE pRegEntry = NULL;
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE, sizeof(*pRegEntry));
+    BAIL_ON_NT_STATUS(status);
+
+    memset(pRegEntry, 0, sizeof(*pRegEntry));
+
+    status = LwRtlWC16StringDuplicate(&pRegEntry->pwszValueName, pwszValueName);
+    BAIL_ON_NT_STATUS(status);
+
+    if (dwValueLen)
+    {
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry->pValue, BYTE, sizeof(*pRegEntry->pValue)*dwValueLen);
+        BAIL_ON_NT_STATUS(status);
+
+        memset(pRegEntry->pValue, 0, sizeof(*pRegEntry->pValue)*dwValueLen);
+
+        memcpy(pRegEntry->pValue, pValue, dwValueLen);
+    }
+
+    pRegEntry->dwValueLen = dwValueLen;
+    pRegEntry->type = valueType;
+    pRegEntry->qwParentId = qwParentKeyId;
+
+    status = RegDbStoreRegValues_inlock(
+                 hDb,
+                 1,
+                 &pRegEntry);
+    BAIL_ON_NT_STATUS(status);
+
+    if (ppRegEntry)
+    {
+        *ppRegEntry = pRegEntry;
+    }
+
+cleanup:
+    if (!ppRegEntry)
+    {
+        RegDbSafeFreeEntryValue(&pRegEntry);
+    }
+
+    return status;
+
+error:
+    RegDbSafeFreeEntryValue(&pRegEntry);
+    *ppRegEntry = NULL;
+
+    goto cleanup;
+}
+
 
 
 void

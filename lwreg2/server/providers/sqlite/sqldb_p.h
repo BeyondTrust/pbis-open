@@ -237,13 +237,6 @@ RegDbOpen(
     );
 
 NTSTATUS
-RegDbStoreRegKeys(
-    IN HANDLE hDB,
-    IN DWORD dwEntryCount,
-    IN PREG_DB_KEY* ppKeys
-    );
-
-NTSTATUS
 RegDbUpdateRegValues(
     IN HANDLE hDB,
     IN DWORD dwEntryCount,
@@ -490,5 +483,47 @@ RegDbUpdateKeyAclIndex_inlock(
 	IN int64_t qwKeyDbId,
 	IN int64_t qwKeySdId
 	);
+
+NTSTATUS
+RegDbGetKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN REG_DATA_TYPE valueType,
+    IN OPTIONAL PBOOLEAN pbIsWrongType,
+    OUT OPTIONAL PREG_DB_VALUE* ppRegEntry
+    );
+
+NTSTATUS
+RegDbUpdateRegValues_inlock(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE* ppValues
+    );
+
+NTSTATUS
+RegDbStoreRegKeys_inlock(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_KEY* ppKeys
+    );
+
+NTSTATUS
+RegDbStoreRegValues_inlock(
+    IN HANDLE hDB,
+    IN DWORD dwEntryCount,
+    IN PREG_DB_VALUE* ppValues
+    );
+
+NTSTATUS
+RegDbCreateKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN PBYTE pValue,
+    IN DWORD dwValueLen,
+    IN REG_DATA_TYPE valueType,
+    OUT OPTIONAL PREG_DB_VALUE* ppRegEntry
+    );
 
 #endif /* __SQLCACHE_P_H__ */

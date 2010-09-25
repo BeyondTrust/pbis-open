@@ -85,6 +85,16 @@ RegDbCreateValueAttributes(
     );
 
 NTSTATUS
+RegDbGetValueAttributes_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName,
+    IN REG_DATA_TYPE valueType,
+    IN OPTIONAL PBOOLEAN pbIsWrongType,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES* ppRegEntry
+    );
+
+NTSTATUS
 RegDbGetValueAttributes(
     IN REG_DB_HANDLE hDb,
     IN int64_t qwParentKeyId,
