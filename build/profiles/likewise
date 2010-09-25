@@ -9,9 +9,6 @@ BUILD_LOCALSTATEDIR="/var"
 
 BUILD_PRODUCTS="lwiso qatools lwtest"
 
-# Ignore errors from experimental products
-BUILD_PRODUCTS_EXPERIMENTAL="open"
-
 # We only want to srcdist for lwiso
 
 BUILD_SRCDIST="lwiso"
