@@ -126,11 +126,5 @@
 #define REG_DB_DELETE_ALL_VALUE_ATTRIBUTES "delete from "  REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
             "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?1" \
 
-
-#if 0
-select ValueName from regschemavalues1 where ParentId=4073 and ValueName not in (select ValueName from regvalues1 where ParentId=4073)
-#endif
-
-
 #endif /* __SQLCACHE_CREATE_SCHEMA_H__ */
 
