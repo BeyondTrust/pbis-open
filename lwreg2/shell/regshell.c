@@ -352,6 +352,7 @@ RegShellImportFile(
 {
     HANDLE parseH = NULL;
     DWORD dwError = 0;
+    DWORD lineNum = 0;
     REGSHELL_UTIL_IMPORT_CONTEXT importCtx = {0};
 
     dwError = RegParseOpen(rsItem->args[0], NULL, NULL, &parseH);
@@ -376,6 +377,10 @@ cleanup:
     return dwError;
 
 error:
+    RegParseGetLineNumber(parseH, &lineNum);
+    printf("lwregshell: import failed (error=%d line=%d)\n",
+           dwError,
+           lineNum);
     goto cleanup;
 }
 

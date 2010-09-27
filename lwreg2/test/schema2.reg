@@ -74,6 +74,10 @@
 "s1" = {
   "value" = "I am a string value"
 }
+"s2" = {
+  "value" = "I am a string value"
+  "default" = "I am not the string value"
+}
 
 "v1" = {
   "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
@@ -162,7 +166,8 @@
 
 "b" = {
   "range" = boolean
-  "value" = dword:31415926
+# "value" = dword:31415926
+  "value" = dword:00000000
 }
 "b2" = {
   "range" = boolean
@@ -197,7 +202,7 @@
 
 [HKEY_THIS_MACHINE\test\AD]
 "MachinePasswordLifeSpan" = {
-  "default" = dword:00278D00
+  "default" = dword:00000FFF
   # Assume the password lifetime can be a max of 31 days
   "range" = integer:1 - 44640
   "hint" = seconds

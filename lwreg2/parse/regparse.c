@@ -285,6 +285,15 @@ RegParseAssignAttrData(
         }
         else if (!strcmp(parseHandle->attrName, "range"))
         {
+            if (parseHandle->registryEntry.regAttr.RangeType)
+            {
+                /*
+                 * Range type is already set and not enum, so this is an error.
+                 */
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                BAIL_ON_REG_ERROR(dwError);
+            }
+
             if (parseHandle->registryEntry.type == REG_MULTI_SZ)
             {
                 RegByteArrayToMultiStrsW(
@@ -333,7 +342,7 @@ RegParseAppendData(
 {
     DWORD dwError = 0;
     DWORD attrSize = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     DWORD binaryValue = 0;
     REG_DATA_TYPE eDataType = 0;
 
@@ -376,7 +385,7 @@ RegParseAppendData(
             break;
     }
 
-    RegParseAssignAttrData(
+    dwError = RegParseAssignAttrData(
         parseHandle,
         (PVOID) parseHandle->binaryData,
         parseHandle->binaryDataLen);
@@ -410,7 +419,7 @@ RegParseBinaryData(
     BOOLEAN eof = FALSE;
     REGLEX_TOKEN token = 0;
     DWORD attrSize = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     DWORD lineNum = 0;
     DWORD dwError = 0;
     CHAR tokenName[256];
@@ -593,7 +602,7 @@ RegParseTypeDword(
     DWORD attrSize = 0;
     DWORD lineNum = 0;
     DWORD dwError = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     CHAR tokenName[256];
 
     if (parseHandle->dataType == REGLEX_REG_DWORD)
@@ -621,13 +630,13 @@ RegParseTypeMultiStringValue(
     DWORD attrSize = 0;
     DWORD lineNum = 0;
     DWORD dwError = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
     RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
 
     RegParseBinaryData(parseHandle);
-    RegParseAssignAttrData(
+    dwError = RegParseAssignAttrData(
         parseHandle,
         (PVOID) parseHandle->registryEntry.value,
         parseHandle->registryEntry.valueLen);
@@ -643,7 +652,7 @@ RegParseTypeStringArrayValue(
     DWORD lineNum = 0;
     DWORD dwError = 0;
     DWORD dwStrLen = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     REGLEX_TOKEN token = 0;
     BOOLEAN eof = FALSE;
     NTSTATUS ntStatus = 0;
@@ -703,10 +712,10 @@ RegParseTypeStringArrayValue(
     parseHandle->lexHandle->isToken = TRUE;
     RegParseExternDataType(parseHandle->dataType,
                            &parseHandle->registryEntry.type);
-    RegParseAssignAttrData(
-        parseHandle,
-        (PVOID) parseHandle->binaryData,
-        parseHandle->binaryDataLen);
+    dwError = RegParseAssignAttrData(
+                  parseHandle,
+                  (PVOID) parseHandle->binaryData,
+                  parseHandle->binaryDataLen);
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszString);
@@ -827,7 +836,7 @@ RegParseTypeStringValue(
     DWORD attrSize = 0;
     DWORD lineNum = 0;
     DWORD dwError = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
 
     RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
     RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
@@ -837,7 +846,7 @@ RegParseTypeStringValue(
         parseHandle->registryEntry.value = pszAttr;
         parseHandle->registryEntry.valueLen = attrSize;
     }
-    RegParseAssignAttrData(
+    dwError = RegParseAssignAttrData(
         parseHandle,
         (PVOID) pszAttr,
         attrSize);
@@ -879,7 +888,7 @@ RegParseTypeValue(
     DWORD lineNum = 0;
     DWORD dwError = 0;
     BOOLEAN eof = FALSE;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     PSTR pszTmp = 0;
     CHAR tokenName[256];
     REGLEX_TOKEN token = 0;
@@ -924,7 +933,7 @@ RegParseTypeValue(
 
         case REGLEX_REG_STRING_ARRAY:
             parseHandle->dataType = REGLEX_REG_STRING_ARRAY;
-            RegParseTypeStringArrayValue(parseHandle);
+            dwError = RegParseTypeStringArrayValue(parseHandle);
             break;
 
         case REGLEX_REG_DWORD:
@@ -968,6 +977,7 @@ RegParseTypeValue(
             break;
 
         case REGLEX_ATTRIBUTES_BEGIN:
+            RegParseFreeRegAttrData(parseHandle);
             parseHandle->dataType = REGLEX_REG_ATTRIBUTES;
             dwError = RegParseAttributes(parseHandle);
             /* Should BAIL_ON_ERROR idiom in this routine */
@@ -975,10 +985,6 @@ RegParseTypeValue(
             {
                 return dwError;
             }
-            break;
-
-        case REGLEX_ATTRIBUTES_END:
-printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
             break;
 
         case REGLEX_PLAIN_TEXT:
@@ -1130,7 +1136,7 @@ printf("!!!!!!!!!!!!!!! REGLEX_ATTRIBUTES_END: called!\n");
                 break;
             }
     }
-    return 0;
+    return dwError;
 }
 
 
@@ -1325,37 +1331,67 @@ RegParseCheckAttributes(
         BAIL_ON_REG_ERROR(dwError);
     }
     
-    /* Perform various range/type consistency checks. But
+    /*
+     * Perform various range/type consistency checks. But
      * only perform this check if there is a value assigned.
      */
-    if (parseHandle->registryEntry.regAttr.RangeType ==
-        LWREG_VALUE_RANGE_TYPE_INTEGER &&
-        (parseHandle->registryEntry.value ||
-         parseHandle->registryEntry.regAttr.pDefaultValue))
+    if  (parseHandle->registryEntry.value ||
+         parseHandle->registryEntry.regAttr.pDefaultValue)
     {
-        if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
+        if (parseHandle->registryEntry.regAttr.RangeType ==
+            LWREG_VALUE_RANGE_TYPE_INTEGER)
         {
-            dwError = LWREG_ERROR_INVALID_CONTEXT;
-            BAIL_ON_REG_ERROR(dwError);
+            if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
+            {
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                BAIL_ON_REG_ERROR(dwError);
+            }
+    
+            if (parseHandle->registryEntry.value)
+            {
+                dwValue = *(PDWORD) parseHandle->registryEntry.value;
+            }
+            else
+            {
+                dwValue = *(PDWORD)
+                    parseHandle->registryEntry.regAttr.pDefaultValue;
+            }
+    
+            /* Perform range check on integer value */
+            dwMin = parseHandle->registryEntry.regAttr.Range.RangeInteger.Min;
+            dwMax = parseHandle->registryEntry.regAttr.Range.RangeInteger.Max;
+            if (dwValue < dwMin || dwValue > dwMax)
+            {
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                BAIL_ON_REG_ERROR(dwError);
+            }
         }
-
-        if (parseHandle->registryEntry.value)
+        if (parseHandle->registryEntry.regAttr.RangeType ==
+            LWREG_VALUE_RANGE_TYPE_BOOLEAN)
         {
-            dwValue = *(PDWORD) parseHandle->registryEntry.value;
+            if (parseHandle->registryEntry.value)
+            {
+                dwValue = *(PDWORD) parseHandle->registryEntry.value;
+            }
+            else
+            {
+                dwValue = *(PDWORD)
+                    parseHandle->registryEntry.regAttr.pDefaultValue;
+            }
+            if (dwValue != 0 && dwValue != 1)
+            {
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                BAIL_ON_REG_ERROR(dwError);
+            }
         }
-        else
+    }
+    else if (parseHandle->registryEntry.regAttr.RangeType ==
+             LWREG_VALUE_RANGE_TYPE_ENUM)
+    {
+        if (!parseHandle->registryEntry.regAttr.Range.ppwszRangeEnumStrings)
         {
-            dwValue = *(PDWORD)
-                parseHandle->registryEntry.regAttr.pDefaultValue;
-        }
-
-        /* Perform range check on integer value */
-        dwMin = parseHandle->registryEntry.regAttr.Range.RangeInteger.Min;
-        dwMax = parseHandle->registryEntry.regAttr.Range.RangeInteger.Max;
-        if (dwValue < dwMin || dwValue > dwMax)
-        {
-            dwError = LWREG_ERROR_INVALID_CONTEXT;
-            BAIL_ON_REG_ERROR(dwError);
+                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                BAIL_ON_REG_ERROR(dwError);
         }
     }
 
