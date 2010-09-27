@@ -88,6 +88,13 @@ int main(int argc, char *argv[])
     ValueAttribute_int.Range.RangeInteger.Max = 100;
     ValueAttribute_int.Range.RangeInteger.Min = -1;
 
+    DWORD dwType = REG_UNKNOWN;
+    PBYTE pData[MAX_VALUE_LENGTH] = {0};
+    DWORD cbData = MAX_VALUE_LENGTH;
+
+    wchar16_t pCurrData[] = {'C', 'u', 'r', 'r', 'e', 'n', 't', 0};
+
+
     dwError = RegConvertValueAttributesAToW(ValueAttribute,
                                             &pAttr);
     BAIL_ON_REG_ERROR(dwError);
@@ -203,6 +210,27 @@ int main(int argc, char *argv[])
                    szValueName1,
                    NULL,
                    &pValueAttributes_int);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegSetValueExW(
+                  hReg,
+                  hSubKey,
+                  szValueName,
+                  0,
+                  REG_SZ,
+                  (const BYTE*)pCurrData,
+                  (wc16slen(pCurrData)+1)*sizeof(*pCurrData));
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegGetValueW(
+                   hReg,
+                   hKey,
+                   szSubKey,
+                   szValueName,
+                   RRF_RT_REG_NONE,
+                   &dwType,
+                   pData,
+                   &cbData);
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegDeleteValueAttributesW(
