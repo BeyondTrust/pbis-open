@@ -270,14 +270,6 @@ SqliteGetValueAttributes_Internal(
                               &pKeyHandleInUse);
     BAIL_ON_NT_STATUS(status);
 
-#if 0
-    status = SqliteOpenKeyInternal(hRegConnection,
-                                   pwszSubKey ? pwszKeyNameWithSubKey : pKeyCtx->pwszKeyName,
-                                   KEY_QUERY_VALUE,
-                                   &pKeyHandleInUse);
-    BAIL_ON_NT_STATUS(status);
-#endif
-
     // ACL check
     status = RegSrvAccessCheckKeyHandle(pKeyHandleInUse, KEY_QUERY_VALUE);
     BAIL_ON_NT_STATUS(status);

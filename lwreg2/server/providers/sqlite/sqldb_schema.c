@@ -66,6 +66,8 @@ RegDbConvertBinaryToValueAttributesRange(
     IN OUT PLWREG_VALUE_ATTRIBUTES pValueAttributes
     );
 
+
+
 NTSTATUS
 RegDbUnpackRegValueAttributesInfo(
     IN sqlite3_stmt* pstQuery,
@@ -162,6 +164,26 @@ cleanup:
 
 error:
     goto cleanup;
+}
+
+NTSTATUS
+RegDbUnpackDefaultValuesCountInfo(
+    sqlite3_stmt *pstQuery,
+    int *piColumnPos,
+    PDWORD pdwCount
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = RegSqliteReadUInt32(
+        pstQuery,
+        piColumnPos,
+        "DefaultvalueCount",
+        pdwCount);
+    BAIL_ON_NT_STATUS(status);
+
+error:
+    return status;
 }
 
 NTSTATUS
@@ -841,6 +863,310 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+NTSTATUS
+RegDbQueryDefaultValuesCount(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwKeyId,
+    OUT size_t* psCount
+    )
+{
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    PSTR pszError = NULL;
+    BOOLEAN bInLock = FALSE;
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "begin;",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    status = RegDbQueryDefaultValuesCount_inlock(
+                                 hDb,
+                                 qwKeyId,
+                                 psCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "end",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValuesCount() finished\n");
+
+cleanup:
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+ error:
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+    sqlite3_exec(pConn->pDb,
+                 "rollback",
+                 NULL,
+                 NULL,
+                 NULL);
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbQueryDefaultValuesCount_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwKeyId,
+    OUT size_t* psCount
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    // do not free
+    sqlite3_stmt *pstQuery = NULL;
+    size_t sResultCount = 0;
+    const int nExpectedCols = 1;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    DWORD dwCount = 0;
+
+
+    pstQuery = pConn->pstQueryDefaultValuesCount;
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwKeyId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindInt64(pstQuery, 2, qwKeyId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    while ((status = (DWORD)sqlite3_step(pstQuery)) == SQLITE_ROW)
+    {
+        nGotColumns = sqlite3_column_count(pstQuery);
+        if (nGotColumns != nExpectedCols)
+        {
+            status = STATUS_DATA_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (sResultCount >= 1)
+        {
+            status = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        iColumnPos = 0;
+
+        status = RegDbUnpackDefaultValuesCountInfo(pstQuery,
+                                              &iColumnPos,
+                                              &dwCount);
+        BAIL_ON_NT_STATUS(status);
+
+        sResultCount++;
+    }
+
+    if (status == SQLITE_DONE)
+    {
+        // No more results found
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    if (!sResultCount)
+    {
+        status = STATUS_DATA_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    *psCount = (size_t)dwCount;
+
+cleanup:
+
+    return status;
+
+error:
+    if (pstQuery != NULL)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    *psCount = 0;
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbQueryDefaultValues(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN DWORD dwLimit,
+    IN DWORD dwOffset,
+    OUT size_t* psCount,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES** pppRegEntries
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    BOOLEAN bInLock = FALSE;
+    // do not free
+    sqlite3_stmt *pstQuery = NULL;
+    size_t sResultCount = 0;
+    size_t sResultCapacity = 0;
+    const int nExpectedCols = 9;
+    int iColumnPos = 0;
+    int nGotColumns = 0;
+    PREG_DB_VALUE_ATTRIBUTES pRegEntry = NULL;
+    PREG_DB_VALUE_ATTRIBUTES* ppRegEntries = NULL;
+
+    if (qwId <= 0)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    pstQuery = pConn->pstQueryDefaultValues;
+
+    status = RegSqliteBindInt64(pstQuery, 1, qwId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindInt64(pstQuery, 2, qwId);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindInt64(pstQuery, 3, dwLimit);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    status = RegSqliteBindInt64(pstQuery, 4, dwOffset);
+    BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
+
+    while ((status = (DWORD)sqlite3_step(pstQuery)) == SQLITE_ROW)
+    {
+        nGotColumns = sqlite3_column_count(pstQuery);
+        if (nGotColumns != nExpectedCols)
+        {
+            status = STATUS_DATA_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (sResultCount >= sResultCapacity)
+        {
+            sResultCapacity *= 2;
+            sResultCapacity += 10;
+            status = NtRegReallocMemory(
+                            ppRegEntries,
+                            (PVOID*)&ppRegEntries,
+                            sizeof(*ppRegEntries) * sResultCapacity);
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE_ATTRIBUTES, sizeof(*pRegEntry));
+        BAIL_ON_NT_STATUS(status);
+
+        iColumnPos = 0;
+
+        status = RegDbUnpackRegValueAttributesInfo(pstQuery,
+                                         &iColumnPos,
+                                         pRegEntry);
+        BAIL_ON_NT_STATUS(status);
+
+        ppRegEntries[sResultCount] = pRegEntry;
+        pRegEntry = NULL;
+        sResultCount++;
+    }
+
+    if (status == SQLITE_DONE)
+    {
+        // No more results found
+        status = STATUS_SUCCESS;
+    }
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+    status = (DWORD)sqlite3_reset(pstQuery);
+    BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
+
+cleanup:
+    if (!status)
+    {
+        if (pppRegEntries)
+        {
+            *pppRegEntries = ppRegEntries;
+        }
+        *psCount = sResultCount;
+    }
+    else
+    {
+        RegDbSafeFreeEntryValueAttributes(&pRegEntry);
+        RegDbSafeFreeEntryValueAttributesList(sResultCount, &ppRegEntries);
+        if (pppRegEntries)
+        {
+            *pppRegEntries = NULL;
+        }
+        *psCount = 0;
+    }
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+
+    return status;
+
+error:
+    if (pstQuery != NULL)
+    {
+        sqlite3_reset(pstQuery);
+    }
+
+    goto cleanup;
+}
+
+void
+RegDbSafeFreeEntryValueAttributes(
+    PREG_DB_VALUE_ATTRIBUTES* ppEntry
+    )
+{
+    PREG_DB_VALUE_ATTRIBUTES pEntry = NULL;
+    if (ppEntry != NULL && *ppEntry != NULL)
+    {
+        pEntry = *ppEntry;
+
+        LWREG_SAFE_FREE_MEMORY(pEntry->pwszValueName);
+        RegSafeFreeValueAttributes(&pEntry->pValueAttributes);
+
+        memset(pEntry, 0, sizeof(*pEntry));
+
+        LWREG_SAFE_FREE_MEMORY(pEntry);
+        *ppEntry = NULL;
+    }
+}
+
+void
+RegDbSafeFreeEntryValueAttributesList(
+    size_t sCount,
+    PREG_DB_VALUE_ATTRIBUTES** pppEntries
+    )
+{
+    if (*pppEntries != NULL)
+    {
+        size_t iEntry;
+        for (iEntry = 0; iEntry < sCount; iEntry++)
+        {
+            RegDbSafeFreeEntryValueAttributes(&(*pppEntries)[iEntry]);
+        }
+        LWREG_SAFE_FREE_MEMORY(*pppEntries);
+    }
 }
 
 static

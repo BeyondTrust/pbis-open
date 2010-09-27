@@ -94,6 +94,8 @@ typedef struct _REG_DB_CONNECTION
     sqlite3_stmt *pstUpdateValueAttributes;
     sqlite3_stmt *pstDeleteValueAttributes;
     sqlite3_stmt *pstDeleteAllValueAttributes;
+    sqlite3_stmt *pstQueryDefaultValues;
+    sqlite3_stmt *pstQueryDefaultValuesCount;
 
 
 } REG_DB_CONNECTION, *PREG_DB_CONNECTION;

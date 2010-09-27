@@ -126,5 +126,32 @@
 #define REG_DB_DELETE_ALL_VALUE_ATTRIBUTES "delete from "  REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
             "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?1" \
 
+
+#define RED_DB_QUERY_DEFAULT_VALUE_COUNT "select COUNT (*) as DefaultvalueCount " \
+                "from " REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+                "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?1 " \
+                        "AND ValueName NOT IN (select " REG_DB_TABLE_NAME_VALUES ".ValueName " \
+                                               "from " REG_DB_TABLE_NAME_VALUES \
+                                               " where ParentId = ?2) " \
+
+
+#define REG_DB_QUERY_DEFAULT_VALUES "select " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".ValueName, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Type, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".DefaultValue, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Document, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".RangeType, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Hint, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".Range, " \
+            REG_DB_TABLE_NAME_SCHEMA_VALUES ".LastUpdated " \
+            "from " REG_DB_TABLE_NAME_SCHEMA_VALUES " " \
+            "where " REG_DB_TABLE_NAME_SCHEMA_VALUES ".ParentId = ?1 " \
+                        "AND ValueName NOT IN (select " REG_DB_TABLE_NAME_VALUES ".ValueName " \
+                                               "from " REG_DB_TABLE_NAME_VALUES \
+                                               " where ParentId = ?2) " \
+                    "LIMIT ?3 OFFSET ?4" \
+
+
 #endif /* __SQLCACHE_CREATE_SCHEMA_H__ */
 

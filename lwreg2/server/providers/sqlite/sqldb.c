@@ -823,6 +823,32 @@ RegDbOpen(
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
 
 
+    /*pstQueryDefaultValuesCount (query value counts that have not been specified by users.)*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, RED_DB_QUERY_DEFAULT_VALUE_COUNT);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryDefaultValuesCount,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
+    /*pstQueryDefaultValues (query values that have not been specified by users.)*/
+    status = LwRtlWC16StringAllocateFromCString(&pwszQueryStatement, REG_DB_QUERY_DEFAULT_VALUES);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_prepare16_v2(
+            pConn->pDb,
+            pwszQueryStatement,
+            -1, // search for null termination in szQuery to get length
+            &pConn->pstQueryDefaultValues,
+            NULL);
+    BAIL_ON_SQLITE3_ERROR(status, sqlite3_errmsg(pConn->pDb));
+    LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
+
 
     *phDb = pConn;
 
@@ -1604,7 +1630,7 @@ RegDbQueryInfoKeyValue(
             BAIL_ON_NT_STATUS(status);
         }
 
-        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_KEY, sizeof(*pRegEntry));
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE, sizeof(*pRegEntry));
         BAIL_ON_NT_STATUS(status);
 
         iColumnPos = 0;
@@ -2132,7 +2158,9 @@ RegDbFreePreparedStatements(
         &pConn->pstQueryValueAttributesWithWrongType,
         &pConn->pstUpdateValueAttributes,
         &pConn->pstDeleteValueAttributes,
-        &pConn->pstDeleteAllValueAttributes
+        &pConn->pstDeleteAllValueAttributes,
+        &pConn->pstQueryDefaultValues,
+        &pConn->pstQueryDefaultValuesCount
     };
 
     for (i = 0; i < sizeof(pppstFreeList)/sizeof(pppstFreeList[0]); i++)

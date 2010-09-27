@@ -62,6 +62,12 @@ RegDbSafeFreeEntryValueAttributes(
     PREG_DB_VALUE_ATTRIBUTES* ppEntry
     );
 
+void
+RegDbSafeFreeEntryValueAttributesList(
+    size_t sCount,
+    PREG_DB_VALUE_ATTRIBUTES** pppEntries
+    );
+
 NTSTATUS
 RegDbStoreRegValueAttributes(
     IN HANDLE hDB,
@@ -92,6 +98,30 @@ RegDbGetValueAttributes_inlock(
     IN REG_DATA_TYPE valueType,
     IN OPTIONAL PBOOLEAN pbIsWrongType,
     OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES* ppRegEntry
+    );
+
+NTSTATUS
+RegDbQueryDefaultValuesCount_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwKeyId,
+    OUT size_t* psCount
+    );
+
+NTSTATUS
+RegDbQueryDefaultValuesCount(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwKeyId,
+    OUT size_t* psCount
+    );
+
+NTSTATUS
+RegDbQueryDefaultValues(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN DWORD dwLimit,
+    IN DWORD dwOffset,
+    OUT size_t* psCount,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES** pppRegEntries
     );
 
 NTSTATUS

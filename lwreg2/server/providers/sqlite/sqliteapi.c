@@ -446,6 +446,13 @@ SqliteQueryInfoKey(
     status = SqliteCacheKeySecurityDescriptor_inlock(pKeyCtx);
     BAIL_ON_NT_STATUS(status);
 
+#if 0
+    status = RegDbQueryDefaultValuesCount_inlock(ghCacheConnection,
+                                                 pKeyCtx->qwId,
+                                                 &sDefaultValueCount);
+    BAIL_ON_NT_STATUS(status);
+#endif
+
     if (pcSubKeys)
     {
         *pcSubKeys = pKeyCtx->dwNumSubKeys;
