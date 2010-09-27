@@ -98,10 +98,13 @@
 DWORD 
 RegParseAttributes(PREGPARSE_HANDLE parseHandle);
 
-void RegParseExternDataType(
+
+static void 
+RegParseExternDataType(
     REGLEX_TOKEN valueType,
     PREG_DATA_TYPE externValueType)
 {
+
     if (!externValueType)
     {
         return;
@@ -153,6 +156,30 @@ void RegParseExternDataType(
             break;
     }
 }
+
+
+/*
+ * Does same job as RegParseExternDataType(), but is aware of
+ * regAttr data type, and when set, returns the type of the attribute.
+ */
+static void
+RegParseAttributesExternDataType(
+    PREGPARSE_HANDLE parseHandle,
+    PREG_DATA_TYPE externValueType)
+{
+
+    if (parseHandle->registryEntry.type == REG_ATTRIBUTES)
+    {
+        *externValueType = parseHandle->registryEntry.regAttr.ValueType;
+    }
+    else
+    {
+        RegParseExternDataType(
+            parseHandle->registryEntry.type,
+            externValueType);
+    }
+}
+
 
 
 DWORD
@@ -1117,7 +1144,7 @@ RegParseKeyValue(
     DWORD attrSize = 0;
     DWORD lineNum = 0;
     DWORD dwError = 0;
-    PSTR pszAttr = 0;
+    PSTR pszAttr = NULL;
     REGLEX_TOKEN token = 0;
     BOOLEAN eof = FALSE;
 
@@ -1242,6 +1269,103 @@ error:
 }
 
 
+DWORD
+RegParseCheckAttributes(
+    PREGPARSE_HANDLE parseHandle)
+{
+    DWORD dwError = 0;
+    DWORD dwValue = 0;
+    DWORD dwMin = 0;
+    DWORD dwMax = 0;
+    REG_DATA_TYPE regDataType = 0;
+    
+           
+    BAIL_ON_INVALID_HANDLE(parseHandle);
+    /*
+     * Perform semantic consistency check of the data present in the
+     * LWREG_VALUE_ATTRIBUTES structure. Only individual valueName=dataValue
+     * entries are checked for syntactic correctness. The combination of
+     * attributes is not checked for semantic correctness. This function does
+     * this, and either fixes up the data, or throws a syntax error
+     * because an invalid combination of data was presented.
+     * Such an example would be:
+     *  "someValue" = {
+     *     default = "theValue"
+     *     range = 1-1024
+     *     hint = seconds
+     *  }
+     *
+     * Applying a numeric range on a string value is inconistent. 
+     *
+     * Another example:
+     *  "someValue" = {
+     *     default = dword:0000ffff
+     *     range = 1-1024
+     *     hint = seconds
+     *  }
+     *
+     * Here the range hint matches the data type, but the default value is
+     * out of range, so this is also inconsistent.
+     */
+
+    if (!parseHandle->registryEntry.regAttr.pDefaultValue)
+    {
+        /* Datatype should not be set when there is no default value */
+        parseHandle->registryEntry.regAttr.ValueType = 0;
+    }
+
+    /* value/default data types must be the same */
+    RegParseAttributesExternDataType(
+        parseHandle,
+        &regDataType);
+    if (parseHandle->registryEntry.regAttr.pDefaultValue &&
+        regDataType != parseHandle->registryEntry.regAttr.ValueType)
+    {
+        dwError = LWREG_ERROR_INVALID_CONTEXT;
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    
+    /* Perform various range/type consistency checks. But
+     * only perform this check if there is a value assigned.
+     */
+    if (parseHandle->registryEntry.regAttr.RangeType ==
+        LWREG_VALUE_RANGE_TYPE_INTEGER &&
+        (parseHandle->registryEntry.value ||
+         parseHandle->registryEntry.regAttr.pDefaultValue))
+    {
+        if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
+        {
+            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            BAIL_ON_REG_ERROR(dwError);
+        }
+
+        if (parseHandle->registryEntry.value)
+        {
+            dwValue = *(PDWORD) parseHandle->registryEntry.value;
+        }
+        else
+        {
+            dwValue = *(PDWORD)
+                parseHandle->registryEntry.regAttr.pDefaultValue;
+        }
+
+        /* Perform range check on integer value */
+        dwMin = parseHandle->registryEntry.regAttr.Range.RangeInteger.Min;
+        dwMax = parseHandle->registryEntry.regAttr.Range.RangeInteger.Max;
+        if (dwValue < dwMin || dwValue > dwMax)
+        {
+            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            BAIL_ON_REG_ERROR(dwError);
+        }
+    }
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 
 DWORD
 RegParseKey(
@@ -1339,6 +1463,15 @@ RegParseKey(
         {
             RegLexUnGetToken(parseHandle->lexHandle);
             parseHandle->registryEntry.type = REG_ATTRIBUTES;
+
+            /* Perform semantic checks on attributes */
+            dwError = RegParseCheckAttributes(parseHandle);
+            if (dwError)
+            {
+                printf("Semantic inconsistency found on line %d\n", lineNum);
+            }
+            BAIL_ON_REG_ERROR(dwError);
+
             RegParseRunCallbacks(parseHandle); 
             parseHandle->lexHandle->eValueNameType =
                 REGLEX_VALUENAME_ATTRIBUTES_RESET;
