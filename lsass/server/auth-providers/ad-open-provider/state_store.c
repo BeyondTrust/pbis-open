@@ -630,6 +630,7 @@ ADState_ReadRegProviderDataValue(
                       NULL,
                       (PVOID) &pszValue,
                       pdwValueLen);
+        BAIL_ON_LSA_ERROR(dwError);
         memcpy(pValue, pszValue, *pdwValueLen);
         LW_SAFE_FREE_MEMORY(pszValue);
     }
@@ -644,8 +645,8 @@ ADState_ReadRegProviderDataValue(
                       NULL,
                       pValue,
                       pdwValueLen);
+        BAIL_ON_LSA_ERROR(dwError);
     }
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
     return dwError;
