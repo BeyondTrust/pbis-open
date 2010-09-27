@@ -881,7 +881,12 @@ LwSmShutdownServices(
         BAIL_ON_ERROR(dwError);
 
         dwError = LwSmShutdownService(pEntry);
-        BAIL_ON_ERROR(dwError);
+        if (dwError)
+        {
+            /* Ignore errors and try to shut down everything we can */
+            SM_LOG_WARNING("Could not shut down service: %u\n", (unsigned int) dwError);
+            dwError = 0;
+        }
 
         LwSmTableReleaseEntry(pEntry);
         pEntry = NULL;
