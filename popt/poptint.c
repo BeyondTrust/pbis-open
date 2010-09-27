@@ -96,11 +96,12 @@ strdup_locale_from_utf8 (/*@null@*/ char * istr)
 	char * pout = dstr;
 	size_t ib = db;
 	size_t ob = db;
-	size_t err;
+	size_t err = 0;
 
 	if (dstr == NULL)
 	    return NULL;
-	err = iconv(cd, NULL, NULL, NULL, NULL);
+
+	//err = iconv(cd, NULL, NULL, NULL, NULL);
 	while (1) {
 	    *pout = '\0';
 	    err = iconv(cd, &pin, &ib, &pout, &ob);
