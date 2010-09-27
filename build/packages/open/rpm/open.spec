@@ -91,11 +91,11 @@ rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
 %{PrefixDir}/data
 #%{PrefixDir}/apache
 %{PrefixDir}/%{_lib}/gss/*.so
-%{PrefixDir}/%{_lib}/gss/*.so
-#%{PrefixDir}/%{_lib}/security/*.so
 %{PrefixDir}/%{_lib}/engines/*.so
 %{PrefixDir}/%{_lib}/lwsm-loader/*.so
 %{PrefixDir}/%{_lib}/krb5/plugins/preauth/*.so
+%{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so
+%{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so.*
 %{PrefixDir}/%{_lib}/sasl2/lib*
 %{PrefixDir}/ssl
 %endif
@@ -151,8 +151,8 @@ $DOMAINJOIN query > /dev/null 2>&1 || exit 6
 %files devel
 %defattr(0644,root,root,0755)
 
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
+%{PrefixDir}/%{_lib}/*.a
+%{PrefixDir}/%{_lib}/*.la
 /%{_lib}/*.a
 /%{_lib}/*.la
 /%{_lib}/security/*.la
@@ -162,10 +162,12 @@ $DOMAINJOIN query > /dev/null 2>&1 || exit 6
 %attr(0644,root,root) %{PrefixDir}/share/man/*
 %attr(0644,root,root) %{PrefixDir}/share/doc/*
 %attr(0644,root,root) %{PrefixDir}/ssl/*
-%attr(0644,root,root) %{PrefixDir}/%{_lib}/lwsm-loader/*.la
 %attr(0644,root,root) %{PrefixDir}/%{_lib}/pkgconfig/*
+%{PrefixDir}/%{_lib}/lwsm-loader/*.la
 %{PrefixDir}/%{_lib}/gss/*.a
 %{PrefixDir}/%{_lib}/gss/*.la
+%{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.a
+%{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.la
 %endif
 
 %changelog
