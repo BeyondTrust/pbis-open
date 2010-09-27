@@ -16,10 +16,5 @@ centutilsinclude_HEADERS = \
     cttext.h          \
     ctuser.h          \
     lwexc.h           \
-    lwghash.h         \
-    lwglib.h          \
-    lwglist.h         \
-    lwgmissing.h      \
-    lwgprimes.h       \
     ctsysfuncs.h
 

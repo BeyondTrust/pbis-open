@@ -57,183 +57,145 @@
 #ifndef __CT_HASH_H__
 #define __CT_HASH_H__
 
-#include <lwglib.h>
-
-/**
- * @defgroup SHashTable Stable hash tables
- * @brief Hash tables which guarantee iteration order
- */
-/*@{*/
-
-/** 
- * @brief Key/value pair
- *
- * Represents a key/value pair in a stable hash table
- */
-typedef struct
-{
-    /**
-     * Pointer to key of user-defined type
-     */
-    lwgpointer key;
-    /**
-     * Pointer to value of user-defined type
-     */
-    lwgpointer value;
-} SHASH_PAIR, *PSHASH_PAIR;
-
-/**
- * @brief Stable hash table
- *
- * Wraps the glib LWGHashTable and LWGList structures to
- * allow iteration of keys in the order of their insertion
- */
-typedef struct SHASH_TABLE
-{
-    /**
-     * The underlying LWGHashTable
-     */
-    LWGHashTable* table;
-    /**
-     * A LWGList containing elements of type SHASH_PAIR.
-     * This list may be iterated to visit all keys/values
-     * in their insertion order
-     */
-    LWGList* list;
-    /**
-     *@cond PRIVATE_FIELDS
-     */
-    LWGDestroyNotify key_free, value_free;
-    BOOLEAN dynamic;
-    /**
-     *@endcond
-     */
-} SHASH_TABLE, *PSHASH_TABLE;
-
-
 LW_BEGIN_EXTERN_C
 
-/**
- * @brief Initialize a table
- *
- * Initializes a stable hash table with the specified parameters.  This
- * function is intended to initialize a SHASH_TABLE which is allocated
- * on the stack or as part of a structure.
- *
- * @param tab @in a pointer to the table structure
- * @param hash_func @in the key hash function
- * @param equal_func @in the key comparison function
- * @param key_free @in a function that will be called to free keys evicted from the table
- * @param value_free @in a function that will be called to free values evicted from the table
- * @errcode
- * @canfail
- */
+typedef struct __CT_HASH_ENTRY CT_HASH_ENTRY;
+
+typedef int (*CT_HASH_KEY_COMPARE)(PCVOID, PCVOID);
+typedef size_t (*CT_HASH_KEY)(PCVOID);
+typedef void (*CT_HASH_FREE_ENTRY)(const CT_HASH_ENTRY *);
+typedef DWORD (*CT_HASH_COPY_ENTRY)(const CT_HASH_ENTRY *, CT_HASH_ENTRY *);
+
+struct __CT_HASH_ENTRY
+{
+    PVOID pKey;
+    PVOID pValue;
+    struct __CT_HASH_ENTRY* pNext;
+};
+
+typedef struct __CT_HASH_TABLE
+{
+    size_t sTableSize;
+    size_t sCount;
+    CT_HASH_ENTRY **ppEntries;
+    CT_HASH_KEY_COMPARE fnComparator;
+    CT_HASH_KEY fnHash;
+    CT_HASH_FREE_ENTRY fnFree;
+    CT_HASH_COPY_ENTRY fnCopy;
+} CT_HASH_TABLE, *PCT_HASH_TABLE;
+
+typedef struct __CT_HASH_ITERATOR
+{
+    CT_HASH_TABLE *pTable;
+    size_t sEntryIndex;
+    CT_HASH_ENTRY *pEntryPos;
+} CT_HASH_ITERATOR;
+
 DWORD
-CTStableHashTableInit(
-    PSHASH_TABLE tab,
-    LWGHashFunc hash_func,
-    LWGEqualFunc equal_func,
-    LWGDestroyNotify key_free,
-    LWGDestroyNotify value_free
+CtHashCreate(
+    size_t sTableSize,
+    CT_HASH_KEY_COMPARE fnComparator,
+    CT_HASH_KEY fnHash,
+    CT_HASH_FREE_ENTRY fnFree, //optional
+    CT_HASH_COPY_ENTRY fnCopy, //optional
+    CT_HASH_TABLE** ppResult
     );
 
-/**
- * @brief Allocate and initialize a table
- *
- * Allocates and initializes a stable hash table with the specified parameters.
- *
- * @param tab @out a pointer where the address of the new table will be stored
- * @param hash_func @in the key hash function
- * @param equal_func @in the key comparison function
- * @param key_free @in a function that will be called to free keys evicted from the table
- * @param value_free @in a function that will be called to free values evicted from the table
- * @errcode
- * @canfail
- */
-DWORD
-CTStableHashTableNew(
-    PSHASH_TABLE* tab,
-    LWGHashFunc hash_func,
-    LWGEqualFunc equal_func,
-    LWGDestroyNotify key_free,
-    LWGDestroyNotify value_free
+size_t
+CtHashGetKeyCount(
+    PCT_HASH_TABLE pTable
     );
 
-/**
- * @brief Insert a key
- * 
- * Inserts a key/value pair into the table.  If the key was not
- * previously present in the table, it will added to the end
- * of the iteration order.  If it was already present, the
- * previous pair will be replaced and the iteration order will
- * be unchanged.
- * @param tab @in the table in which to insert
- * @param key @in a key of user-defined type to insert into the table
- * @param value @in a value of user-defined associated with key
- * @errcode
- * @canfail
- */
-DWORD
-CTStableHashTableInsert(
-    PSHASH_TABLE tab,
-    lwgpointer key,
-    lwgpointer value
-    );
-
-/**
- * @brief Remove a key
- *
- * Removes a key and its associated value from the table.  If the
- * key was not present, no action is taken.  If key_free and
- * value_free were specified in the creation of this table, the
- * removed items will automatically be freed.
- * @param tab @in the table from which to remove the key
- * @param key @in the key to remove
- * @wontfail
- */
-   
 void
-CTStableHashTableRemove(
-    PSHASH_TABLE tab,
-    lwgconstpointer key
-    );
+CtHashRemoveAll(
+        CT_HASH_TABLE* pResult);
 
-/**
- * @brief Look up a key
- *
- * Looks up a key in a table and returns the associated value.
- * @param tab @in the table in which to perform the lookup
- * @param key @in a key of user-defined type to look up
- * @return the value of user-defined type associated with the key, or
- * NULL if the key was not present in the table
- * @wontfail
- */
-lwgpointer
-CTStableHashTableLookup(
-    PSHASH_TABLE tab,
-    lwgconstpointer key
-    );
-
-/**
- * @brief Deallocate a table
- *
- * Deallocates a table and all associated memory; this includes all
- * keys and values present in the table if the table was created with
- * non-null key_free and value_free parameters.  If the table was
- * allocated with CTStableHashTableNew, the SHASH_TABLE structure
- * itself will also be freed.
- * @param tab @in the table to deallocate
- * @wontfail
- */
 void
-CTStableHashTableFree(
-    PSHASH_TABLE tab
+CtHashSafeFree(
+    CT_HASH_TABLE** ppResult
+    );
+
+DWORD
+CtHashSetValue(
+    CT_HASH_TABLE *pTable,
+    PVOID  pKey,
+    PVOID  pValue
+    );
+
+//Returns ERROR_NOT_FOUND if pKey is not in the table
+DWORD
+CtHashGetValue(
+    CT_HASH_TABLE *pTable,
+    PCVOID  pKey,
+    PVOID* ppValue
+    );
+
+BOOLEAN
+CtHashExists(
+    IN PCT_HASH_TABLE pTable,
+    IN PCVOID pKey
+    );
+
+DWORD
+CtHashCopy(
+    IN  CT_HASH_TABLE *pTable,
+    OUT CT_HASH_TABLE **ppResult
+    );
+
+//Invalidates all iterators
+DWORD
+CtHashResize(
+    CT_HASH_TABLE *pTable,
+    size_t sTableSize
+    );
+
+DWORD
+CtHashGetIterator(
+    CT_HASH_TABLE *pTable,
+    CT_HASH_ITERATOR *pIterator
+    );
+
+// returns NULL after passing the last entry
+CT_HASH_ENTRY *
+CtHashNext(
+    CT_HASH_ITERATOR *pIterator
+    );
+
+DWORD
+CtHashRemoveKey(
+    CT_HASH_TABLE *pTable,
+    PVOID  pKey
+    );
+
+
+DWORD
+CtHashRemoveKey(
+    CT_HASH_TABLE *pTable,
+    PVOID  pKey
+    );
+
+int
+CtHashStringCompare(
+    PCVOID str1,
+    PCVOID str2
+    );
+
+size_t
+CtHashStringHash(
+    PCVOID str
+    );
+
+int
+CtHashPVoidCompare(
+    IN PCVOID pvData1,
+    IN PCVOID pvData2
+    );
+
+size_t
+CtHashPVoidHash(
+    IN PCVOID pvData
     );
 
 LW_END_EXTERN_C
 
-
-/*@}*/
-
 #endif
-

@@ -292,7 +292,7 @@ LIBRT=""
 AC_CHECK_LIB([rt], [clock_settime], [LIBRT="-lrt"])
 
 CENTUTILS_LIBS=""
-AC_CHECK_LIB([centutils], [CTOpenFile], [CENTUTILS_LIBS="-lcentutils -lgpglib"], AC_MSG_ERROR([Use --with-centutils-dir to find libcentutils.so]), [$CENTUTILS_LDFLAGS -lgpglib $LIBRT])
+AC_CHECK_LIB([centutils], [CTOpenFile], [CENTUTILS_LIBS="-lcentutils"], AC_MSG_ERROR([Use --with-centutils-dir to find libcentutils.so]), [$CENTUTILS_LDFLAGS $LIBRT])
 
 AC_SUBST(CENTUTILS_INCLUDE)
 AC_SUBST(CENTUTILS_LDFLAGS)

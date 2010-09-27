@@ -214,7 +214,6 @@ AM_CONDITIONAL(HAVE_MOONUNIT, $HAVE_MOONUNIT)
 
 AC_CONFIG_FILES([Makefile
                  include/Makefile
-                 libgpglib/Makefile
                  libcentutils/Makefile
                  test/Makefile])
 

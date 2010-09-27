@@ -50,7 +50,7 @@ typedef struct
 typedef struct
 {
     StringBuffer buffer;
-    LWGHashTable* variables;
+    CT_HASH_TABLE* variables;
     DynamicArray pipes;
     unsigned int num_pipes;
 } Command;
@@ -133,10 +133,10 @@ QuoteLength(const char* string, unsigned int index)
 }
 
 
-static void
-free_variable_key(void* _ptr)
+static VOID
+free_variable_key(const CT_HASH_ENTRY* entry)
 {
-    char* key = (char*) _ptr - 1;
+    char* key = (char*) entry->pKey - 1;
 
     CTFreeString(key);
 }
@@ -145,15 +145,18 @@ static DWORD
 CountVariables(const char* format, unsigned int* result)
 {
     DWORD ceError = ERROR_SUCCESS;
-    LWGHashTable* table = NULL;
+    CT_HASH_TABLE* table = NULL;
     unsigned int i;
 
-    table = lwg_hash_table_new_full (lwg_str_hash, lwg_str_equal,
-				     (LWGDestroyNotify)free_variable_key,
-				     NULL);
+    ceError = CtHashCreate(
+        13,
+        CtHashStringCompare,
+        CtHashStringHash,
+        free_variable_key,
+	NULL,
+        &table);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if (!table)
-        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_OUTOFMEMORY);
 
     for (i = 0; format[i]; i++)
     {
@@ -170,9 +173,10 @@ CountVariables(const char* format, unsigned int* result)
             
             BAIL_ON_CENTERIS_ERROR (ceError = CTStrndup(format+i, length, &variable));
             
-            if (!lwg_hash_table_lookup(table, variable+1))
+            if (!CtHashExists(table, variable+1))
             {
-                lwg_hash_table_insert(table, variable+1, variable+1);
+                ceError = CtHashSetValue(table, variable+1, variable+1);
+                BAIL_ON_CENTERIS_ERROR(ceError);
             }
             
             i += length - 1;
@@ -187,37 +191,43 @@ CountVariables(const char* format, unsigned int* result)
         }
     }
 
-    *result = lwg_hash_table_size(table);
+    *result = CtHashGetKeyCount(table);
 
 error:
+
     if (table)
-        lwg_hash_table_destroy(table);
+    {
+        CtHashSafeFree(&table);
+    }
 
     return ceError;
 }
 
 static void
-FreeVariableEntry(lwgpointer key, lwgpointer value, lwgpointer data)
+FreeVariableEntry(const CT_HASH_ENTRY* pEntry)
 {
-    CTFreeMemory(value);
+    CTFreeMemory(pEntry->pValue);
 }
 
 static void
-DestroyVariableTable(LWGHashTable* table)
+DestroyVariableTable(CT_HASH_TABLE* table)
 {
-    lwg_hash_table_foreach(table, FreeVariableEntry, NULL);
-    lwg_hash_table_destroy(table);
+    CtHashSafeFree(&table);
 }
 
 static DWORD
-BuildVariableTable(unsigned int size, va_list ap, LWGHashTable** table)
+BuildVariableTable(unsigned int size, va_list ap, CT_HASH_TABLE** table)
 {   
     unsigned int i;
     DWORD ceError = ERROR_SUCCESS;
-    *table = lwg_hash_table_new(lwg_str_hash, lwg_str_equal);
 
-    if (!*table)
-        BAIL_ON_CENTERIS_ERROR(ceError = ERROR_OUTOFMEMORY);
+    BAIL_ON_CENTERIS_ERROR(ceError = CtHashCreate(
+                               19,
+                               CtHashStringCompare,
+                               CtHashStringHash,
+                               FreeVariableEntry,
+                               NULL,
+                               table));
 
     for (i = 0; i < size; i++)
     {
@@ -229,7 +239,7 @@ BuildVariableTable(unsigned int size, va_list ap, LWGHashTable** table)
         
         *var = va_arg(ap, CTShellVar);
 
-        lwg_hash_table_insert(*table, (void*) var->name, var);
+        BAIL_ON_CENTERIS_ERROR(ceError = CtHashSetValue(*table, (void*) var->name, var));
     }
     
 error:
@@ -446,6 +456,7 @@ ConstructShellCommand(const char* format, Command *result)
     char* variable = NULL;
     StringBuffer* buffer = &result->buffer;
     BOOLEAN inDouble = FALSE;
+    struct CTShellVar* var = NULL;
 
     for (i = 0; format[i]; i++)
     {
@@ -469,10 +480,11 @@ ConstructShellCommand(const char* format, Command *result)
         case SIGIL:
             length = VarLength(format, i);
             BAIL_ON_CENTERIS_ERROR(ceError = CTStrndup(format+i, length, &variable));
+            BAIL_ON_CENTERIS_ERROR(ceError = CtHashGetValue(result->variables, (void*) (variable+1), OUT_PPVOID(&var)));
+            
             BAIL_ON_CENTERIS_ERROR(ceError = 
                                    AppendVariable(result, 
-                                                  lwg_hash_table_lookup(result->variables, 
-									(void*) (variable+1)),
+                                                  var,
 						  inDouble));
             i += length-1;
 	    CT_SAFE_FREE_STRING(variable);

@@ -19,7 +19,6 @@ libcentutils_la_SOURCES = \
     ctsysfuncs.c
 
 libcentutils_la_LIBADD = \
-    $(top_builddir)/libgpglib/libgpglib.la \
     $(PROC_LIBS) \
     $(KVM_LIBS)  \
     $(RT_LIBS) \

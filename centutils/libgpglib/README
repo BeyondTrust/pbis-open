@@ -1,6 +1,0 @@
-This is the source code for libgpglib.so, available under the terms of
-the GNU LGPL (see COPYING for more information).  It contains a few
-pieces glib that have been modified to compile without the rest of the
-library.  To build, run the included build.sh script on a UNIX system
-with gcc.
-
