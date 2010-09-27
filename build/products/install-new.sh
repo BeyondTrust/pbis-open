@@ -390,7 +390,7 @@ uninstall_hpux()
 
 package_file_exists_linux_rpm()
 {
-    pkgFile=${PKGDIR}/$1_*.rpm
+    pkgFile=${PKGDIR}/$1-[0-9]*.rpm
     if [ -f $pkgFile ]; then
         echo $pkgFile
         return 0
