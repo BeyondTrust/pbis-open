@@ -94,6 +94,9 @@ RdrReaperShutdown(
     pthread_mutex_unlock(&pRuntime->reaperMutex);
     pthread_join(pRuntime->reaperThread, NULL);
 
+    pthread_cond_destroy(&pRuntime->reaperEvent);
+    pthread_mutex_destroy(&pRuntime->reaperMutex);
+
     return ntStatus;
 }
 
