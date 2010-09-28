@@ -876,6 +876,7 @@ SamDbCreateLocalDomainDacl(
 cleanup:
     LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
     LW_SAFE_FREE_MEMORY(pWorldSid);
+    LW_SAFE_FREE_MEMORY(pLocalAdminSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
@@ -1167,6 +1168,7 @@ SamDbCreateLocalGroupDacl(
 cleanup:
     LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
     LW_SAFE_FREE_MEMORY(pWorldSid);
+    LW_SAFE_FREE_MEMORY(pLocalAdminSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
