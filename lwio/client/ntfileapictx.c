@@ -573,6 +573,7 @@ cleanup:
         if (pCreateContext)
         {
             LwNtCreateFileComplete(&pCreateContext->Base, status);
+            status = IoStatusBlock->Status;
             NtpFreeClientAsyncContext(&pCreateContext->Base);
         }
         else
@@ -650,6 +651,8 @@ LwNtAsyncCloseFile(
          if (pContext)
          {
              LwNtCloseFileComplete(&pContext->Base, status);
+             status = IoStatusBlock->Status;
+             NtpFreeClientAsyncContext(&pContext->Base);
          }
          else
          {
@@ -940,6 +943,7 @@ cleanup:
         if (pControlContext)
         {
             LwNtFsControlFileComplete(&pControlContext->Base, status);
+            status = IoStatusBlock->Status;
             NtpFreeClientAsyncContext(&pControlContext->Base);
         }
         else
