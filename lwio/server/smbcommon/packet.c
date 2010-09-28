@@ -53,6 +53,37 @@
 
 static uchar8_t smbMagic[4] = { 0xFF, 'S', 'M', 'B' };
 
+static
+NTSTATUS
+SMBPacketAllocatePooled(
+    IN PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    OUT PSMB_PACKET* ppPacket
+    );
+
+static
+VOID
+SMBPacketReleasePooled(
+    IN PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    IN OUT PSMB_PACKET        pPacket
+    );
+
+static
+NTSTATUS
+SMBPacketBufferAllocatePooled(
+    IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    IN  size_t                 len,
+    OUT uint8_t**              ppBuffer,
+    OUT size_t*                pAllocatedLen
+    );
+
+static
+VOID
+SMBPacketBufferFreePooled(
+    IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    OUT uint8_t*               pBuffer,
+    IN  size_t                 bufferLen
+    );
+
 BOOLEAN
 SMBIsAndXCommand(
     uint8_t command
@@ -117,6 +148,42 @@ SMBPacketAllocate(
     )
 {
     NTSTATUS ntStatus = 0;
+    PSMB_PACKET pPacket = NULL;
+
+    if (pPacketAllocator)
+    {
+        ntStatus = SMBPacketAllocatePooled(pPacketAllocator, &pPacket);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        ntStatus = SMBAllocateMemory(sizeof(SMB_PACKET), (PVOID *) &pPacket);
+        BAIL_ON_NT_STATUS(ntStatus);
+
+        InterlockedIncrement(&pPacket->refCount);
+    }
+
+    *ppPacket = pPacket;
+
+cleanup:
+
+    return ntStatus;
+
+error:
+
+    *ppPacket = NULL;
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+SMBPacketAllocatePooled(
+    IN PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    OUT PSMB_PACKET* ppPacket
+    )
+{
+    NTSTATUS ntStatus = 0;
     BOOLEAN bInLock = FALSE;
     PSMB_PACKET pPacket = NULL;
 
@@ -165,6 +232,31 @@ SMBPacketRelease(
     IN OUT PSMB_PACKET        pPacket
     )
 {
+    if (pPacketAllocator)
+    {
+        SMBPacketReleasePooled(pPacketAllocator, pPacket);
+    }
+    else if (InterlockedDecrement(&pPacket->refCount) == 0)
+    {
+        if (pPacket->pRawBuffer)
+        {
+            SMBPacketBufferFree(
+                    pPacketAllocator,
+                    pPacket->pRawBuffer,
+                    pPacket->bufferLen);
+        }
+
+        SMBFreeMemory(pPacket);
+    }
+}
+
+static
+VOID
+SMBPacketReleasePooled(
+    IN PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    IN OUT PSMB_PACKET        pPacket
+    )
+{
     if (InterlockedDecrement(&pPacket->refCount) == 0)
     {
         BOOLEAN bInLock = FALSE;
@@ -204,6 +296,48 @@ SMBPacketRelease(
 
 NTSTATUS
 SMBPacketBufferAllocate(
+    IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    IN  size_t                 len,
+    OUT uint8_t**              ppBuffer,
+    OUT size_t*                pAllocatedLen
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PBYTE    pBuffer = NULL;
+    size_t   allocatedLen = len;
+
+    if (pPacketAllocator)
+    {
+        ntStatus = SMBPacketBufferAllocatePooled(
+                        pPacketAllocator,
+                        len,
+                        &pBuffer,
+                        &allocatedLen);
+    }
+    else
+    {
+        ntStatus = SMBAllocateMemory(len, (PVOID *) &pBuffer);
+    }
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    *ppBuffer = pBuffer;
+    *pAllocatedLen = allocatedLen;
+
+cleanup:
+
+    return ntStatus;
+
+error:
+
+    *ppBuffer = NULL;
+    *pAllocatedLen = 0;
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+SMBPacketBufferAllocatePooled(
     IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
     IN  size_t                 len,
     OUT uint8_t**              ppBuffer,
@@ -268,6 +402,24 @@ error:
 
 VOID
 SMBPacketBufferFree(
+    IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
+    OUT uint8_t*               pBuffer,
+    IN  size_t                 bufferLen
+    )
+{
+    if (pPacketAllocator)
+    {
+        SMBPacketBufferFreePooled(pPacketAllocator, pBuffer, bufferLen);
+    }
+    else
+    {
+        SMBFreeMemory(pBuffer);
+    }
+}
+
+static
+VOID
+SMBPacketBufferFreePooled(
     IN  PLWIO_PACKET_ALLOCATOR pPacketAllocator,
     OUT uint8_t*               pBuffer,
     IN  size_t                 bufferLen
