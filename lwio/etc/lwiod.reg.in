@@ -10,7 +10,7 @@
 
 [HKEY_THIS_MACHINE\Services\rdr]
 "Description"="Likewise CIFS Redirector"
-"Path"="@providerdir@/librdr.sys@MOD_EXT@"
+"Path"="@providerdir@/librdr2.sys@MOD_EXT@"
 "Arguments"="rdr"
 "Environment"=""
 "Dependencies"="lwio"
