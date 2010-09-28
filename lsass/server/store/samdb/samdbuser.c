@@ -83,7 +83,13 @@ SamDbSetPassword(
                     hBindHandle,
                     pwszUserDN,
                     pwszPassword);
+    BAIL_ON_SAMDB_ERROR(dwError);
 
+    dwError = SamDbIncrementSequenceNumber_inlock(
+                    pDirectoryContext);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+error:
     SAMDB_UNLOCK_RWMUTEX(bInLock, &gSamGlobals.rwLock);
 
     return dwError;

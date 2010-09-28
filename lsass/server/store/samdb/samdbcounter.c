@@ -142,6 +142,7 @@ SamDbGetNextAvailableUID(
     )
 {
     DWORD dwError = 0;
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext = hDirectory;
     PCSTR pszQueryTemplate =
         "SELECT UIDCounter FROM " SAM_DB_CONFIG_TABLE \
         "; UPDATE " SAM_DB_CONFIG_TABLE               \
@@ -160,6 +161,10 @@ SamDbGetNextAvailableUID(
                         hDirectory,
                         pszQueryTemplate,
                         &dwUID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIncrementSequenceNumber_inlock(
+                        pDirectoryContext);
         BAIL_ON_SAMDB_ERROR(dwError);
 
         dwError = SamDbIsAvailableId(
@@ -202,6 +207,7 @@ SamDbGetNextAvailableGID(
     )
 {
     DWORD dwError = 0;
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext = hDirectory;
     PCSTR pszQueryTemplate =
         "SELECT GIDCounter FROM " SAM_DB_CONFIG_TABLE \
         "; UPDATE " SAM_DB_CONFIG_TABLE               \
@@ -220,6 +226,10 @@ SamDbGetNextAvailableGID(
                         hDirectory,
                         pszQueryTemplate,
                         &dwGID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIncrementSequenceNumber_inlock(
+                        pDirectoryContext);
         BAIL_ON_SAMDB_ERROR(dwError);
 
         dwError = SamDbIsAvailableId(
@@ -323,6 +333,10 @@ SamDbGetNextAvailableRID(
                         hDirectory,
                         pszQueryTemplate,
                         &dwRID);
+        BAIL_ON_SAMDB_ERROR(dwError);
+
+        dwError = SamDbIncrementSequenceNumber_inlock(
+                        pDirContext);
         BAIL_ON_SAMDB_ERROR(dwError);
 
         dwError = SamDbIsAvailableId(
@@ -536,17 +550,14 @@ cleanup:
     return dwError;
 
 error:
-
-    *pdwId = 0;
+    if (pdwId)
+    {
+        *pdwId = 0;
+    }
 
     SAMDB_LOG_DEBUG("Sqlite3 Error (code: %u): %s",
                     dwError,
                     LSA_SAFE_LOG_STRING(pszError));
-
-    if (pszError)
-    {
-        sqlite3_free(pszError);
-    }
 
     goto cleanup;
 }

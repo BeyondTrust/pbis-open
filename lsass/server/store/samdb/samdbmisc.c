@@ -594,6 +594,79 @@ SamDbGetNTTime(
 }
 
 
+DWORD
+SamDbIncrementSequenceNumber(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+
+    SAMDB_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &gSamGlobals.rwLock);
+
+    dwError = SamDbIncrementSequenceNumber_inlock(pDirectoryContext);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+cleanup:
+    SAMDB_UNLOCK_RWMUTEX(bInLock, &gSamGlobals.rwLock);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
+SamDbIncrementSequenceNumber_inlock(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    PCSTR pszQueryTemplate = "UPDATE " SAM_DB_OBJECTS_TABLE \
+                     " SET " SAM_DB_COL_SEQUENCE_NUMBER \
+                     " = " SAM_DB_COL_SEQUENCE_NUMBER " + 1 " \
+                     " WHERE " SAM_DB_COL_OBJECT_CLASS " = %u";
+    PSTR pszQuery = NULL;
+    sqlite3_stmt *pSqlStatement = NULL;
+
+    dwError = LwAllocateStringPrintf(&pszQuery,
+                                     pszQueryTemplate,
+                                     SAMDB_OBJECT_CLASS_DOMAIN);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
+    dwError = sqlite3_prepare_v2(
+                    pDirectoryContext->pDbContext->pDbHandle,
+                    pszQuery,
+                    -1,
+                    &pSqlStatement,
+                    NULL);
+    BAIL_ON_SAMDB_SQLITE_ERROR_DB(
+                    dwError,
+                    pDirectoryContext->pDbContext->pDbHandle);
+
+    dwError = sqlite3_step(pSqlStatement);
+    if (dwError == SQLITE_DONE)
+    {
+        dwError = ERROR_SUCCESS;
+    }
+    BAIL_ON_SAMDB_SQLITE_ERROR_STMT(dwError, pSqlStatement);
+
+cleanup:
+    if (pSqlStatement)
+    {
+        sqlite3_finalize(pSqlStatement);
+    }
+
+    DIRECTORY_FREE_MEMORY(pszQuery);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
 /*
 local variables:
 mode: c

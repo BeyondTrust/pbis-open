@@ -274,6 +274,10 @@ SamDbModifyObject(
                     modifications);
     BAIL_ON_SAMDB_ERROR(dwError);
 
+    dwError = SamDbIncrementSequenceNumber(
+                    pDirectoryContext);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
 cleanup:
 
     DIRECTORY_FREE_STRING(pszObjectDN);

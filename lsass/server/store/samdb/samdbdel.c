@@ -131,6 +131,10 @@ SamDbDeleteObject(
                     dwError,
                     pDirectoryContext->pDbContext->pDelObjectStmt);
 
+    dwError = SamDbIncrementSequenceNumber_inlock(
+                    pDirectoryContext);
+    BAIL_ON_SAMDB_ERROR(dwError);
+
 cleanup:
 
     if (pDirectoryContext->pDbContext->pDelObjectStmt)

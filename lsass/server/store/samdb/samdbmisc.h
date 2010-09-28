@@ -137,6 +137,17 @@ SamDbGetNTTime(
     time_t timeVal
     );
 
+DWORD
+SamDbIncrementSequenceNumber(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext
+    );
+
+DWORD
+SamDbIncrementSequenceNumber_inlock(
+    PSAM_DIRECTORY_CONTEXT pDirectoryContext
+    );
+
+
 #endif /* __SAMDB_MISC_H__ */
 
 
