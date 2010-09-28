@@ -248,6 +248,15 @@ SqliteDeleteValueAttributes(
     IN PCWSTR pValueName
     );
 
+NTSTATUS
+SqliteQueryInfoDefaultValue(
+    IN REG_DB_HANDLE hDb,
+    IN PREG_KEY_CONTEXT pKey,
+    OUT OPTIONAL PDWORD pcDefaultValues,
+    OUT OPTIONAL PDWORD pcMaxDefaultValueNameLen,
+    OUT OPTIONAL PDWORD pcMaxDefaultValueLen
+    );
+
 /* Obsolete API */
 NTSTATUS
 SqliteQueryMultipleValues(

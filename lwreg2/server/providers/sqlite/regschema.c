@@ -467,3 +467,100 @@ error:
     goto cleanup;
 
 }
+
+// QueryInfoDeftaulValue only returns the values that are in schema and
+// not yet set explicitly set by clients
+// If we ever want to exclusively browse schema data,
+// we need to implement a separate API just for that purpose.
+NTSTATUS
+SqliteQueryInfoDefaultValue(
+    IN REG_DB_HANDLE hDb,
+    IN PREG_KEY_CONTEXT pKey,
+    OUT OPTIONAL PDWORD pcDefaultValues,
+    OUT OPTIONAL PDWORD pcMaxDefaultValueNameLen,
+    OUT OPTIONAL PDWORD pcMaxDefaultValueLen
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    size_t sCount = 0;
+    size_t sGotCount = 0;
+    PREG_DB_VALUE_ATTRIBUTES* ppRegEntries = NULL;
+    BOOLEAN bInLock = FALSE;
+    int iCount = 0;
+    DWORD dwMaxDefaultValueNameLen = 0;
+    DWORD dwMaxDefaultValueLen = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = RegDbQueryDefaultValuesCount_inlock(
+                                          hDb,
+                                          pKey->qwId,
+                                          &sCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegDbQueryDefaultValues_inlock(
+                                          hDb,
+                                          pKey->qwId,
+                                          sCount,
+                                          0,
+                                          &sGotCount,
+                                          &ppRegEntries);
+    BAIL_ON_NT_STATUS(status);
+
+    if (sCount != sGotCount)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    for (iCount = 0; iCount < (DWORD)sGotCount; iCount++)
+    {
+        DWORD dwValueNameLen = 0;
+
+        dwValueNameLen = (DWORD)RtlWC16StringNumChars(ppRegEntries[iCount]->pwszValueName);
+
+        if (dwMaxDefaultValueNameLen < dwValueNameLen)
+            dwMaxDefaultValueNameLen = dwValueNameLen;
+
+        if (dwMaxDefaultValueLen < ppRegEntries[iCount]->pValueAttributes->DefaultValueLen)
+            dwMaxDefaultValueLen = ppRegEntries[iCount]->pValueAttributes->DefaultValueLen;
+    }
+
+    if (pcDefaultValues)
+    {
+        *pcDefaultValues = (DWORD)sGotCount;
+    }
+    if (pcMaxDefaultValueNameLen)
+    {
+        *pcMaxDefaultValueNameLen = dwMaxDefaultValueNameLen;
+    }
+    if (pcMaxDefaultValueLen)
+    {
+        *pcMaxDefaultValueLen = dwMaxDefaultValueLen;
+    }
+
+cleanup:
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    RegDbSafeFreeEntryValueAttributesList(sGotCount, &ppRegEntries);
+
+    return status;
+
+error:
+    if (pcDefaultValues)
+    {
+        *pcDefaultValues = 0;
+    }
+    if (pcMaxDefaultValueNameLen)
+    {
+        *pcMaxDefaultValueNameLen = 0;
+    }
+    if (pcMaxDefaultValueLen)
+    {
+        *pcMaxDefaultValueLen = 0;
+    }
+
+    goto cleanup;
+}

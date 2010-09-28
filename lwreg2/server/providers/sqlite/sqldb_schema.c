@@ -1018,9 +1018,80 @@ RegDbQueryDefaultValues(
     OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES** pppRegEntries
     )
 {
+    NTSTATUS status = 0;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+    PSTR pszError = NULL;
+    BOOLEAN bInLock = FALSE;
+
+    if (qwId <= 0)
+    {
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "begin;",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    status = RegDbQueryDefaultValues_inlock(
+                                     hDb,
+                                     qwId,
+                                     dwLimit,
+                                     dwOffset,
+                                     psCount,
+                                     pppRegEntries);
+    BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "end",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    REG_LOG_VERBOSE("Registry::sqldb.c RegDbQueryDefaultValues() finished\n");
+
+cleanup:
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+ error:
+
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+    sqlite3_exec(pConn->pDb,
+                 "rollback",
+                 NULL,
+                 NULL,
+                 NULL);
+
+    goto cleanup;
+
+}
+
+NTSTATUS
+RegDbQueryDefaultValues_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN DWORD dwLimit,
+    IN DWORD dwOffset,
+    OUT size_t* psCount,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES** pppRegEntries
+    )
+{
     NTSTATUS status = STATUS_SUCCESS;
     PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
-    BOOLEAN bInLock = FALSE;
     // do not free
     sqlite3_stmt *pstQuery = NULL;
     size_t sResultCount = 0;
@@ -1031,13 +1102,6 @@ RegDbQueryDefaultValues(
     PREG_DB_VALUE_ATTRIBUTES pRegEntry = NULL;
     PREG_DB_VALUE_ATTRIBUTES* ppRegEntries = NULL;
 
-    if (qwId <= 0)
-    {
-        status = STATUS_INTERNAL_ERROR;
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
 
     pstQuery = pConn->pstQueryDefaultValues;
 
@@ -1074,6 +1138,11 @@ RegDbQueryDefaultValues(
         }
 
         status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry, REG_DB_VALUE_ATTRIBUTES, sizeof(*pRegEntry));
+        BAIL_ON_NT_STATUS(status);
+
+        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry->pValueAttributes,
+                                  LWREG_VALUE_ATTRIBUTES,
+                                  sizeof(*(pRegEntry->pValueAttributes)));
         BAIL_ON_NT_STATUS(status);
 
         iColumnPos = 0;
@@ -1117,9 +1186,6 @@ cleanup:
         }
         *psCount = 0;
     }
-
-    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
-
 
     return status;
 

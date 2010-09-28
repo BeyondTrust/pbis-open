@@ -125,6 +125,16 @@ RegDbQueryDefaultValues(
     );
 
 NTSTATUS
+RegDbQueryDefaultValues_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN DWORD dwLimit,
+    IN DWORD dwOffset,
+    OUT size_t* psCount,
+    OUT OPTIONAL PREG_DB_VALUE_ATTRIBUTES** pppRegEntries
+    );
+
+NTSTATUS
 RegDbGetValueAttributes(
     IN REG_DB_HANDLE hDb,
     IN int64_t qwParentKeyId,

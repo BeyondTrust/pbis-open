@@ -394,6 +394,9 @@ SqliteQueryInfoKey(
     BOOLEAN bInLock = FALSE;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+    DWORD dwDefaultValues = 0;
+    DWORD dwMaxDefaultValueNameLen = 0;
+    DWORD dwMaxDefaultValueLen = 0;
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     BAIL_ON_INVALID_RESERVED_POINTER(pdwReserved);
@@ -446,12 +449,13 @@ SqliteQueryInfoKey(
     status = SqliteCacheKeySecurityDescriptor_inlock(pKeyCtx);
     BAIL_ON_NT_STATUS(status);
 
-#if 0
-    status = RegDbQueryDefaultValuesCount_inlock(ghCacheConnection,
-                                                 pKeyCtx->qwId,
-                                                 &sDefaultValueCount);
+    status = SqliteQueryInfoDefaultValue(ghCacheConnection,
+                                         pKeyCtx,
+                                         &dwDefaultValues,
+                                         &dwMaxDefaultValueNameLen,
+                                         &dwMaxDefaultValueLen);
     BAIL_ON_NT_STATUS(status);
-#endif
+
 
     if (pcSubKeys)
     {
@@ -463,15 +467,17 @@ SqliteQueryInfoKey(
     }
     if (pcValues)
     {
-        *pcValues = pKeyCtx->dwNumValues;
+        *pcValues = pKeyCtx->dwNumValues + dwDefaultValues;
     }
     if (pcMaxValueNameLen)
     {
-        *pcMaxValueNameLen = pKeyCtx-> sMaxValueNameLen;
+        *pcMaxValueNameLen = pKeyCtx->sMaxValueNameLen > dwMaxDefaultValueNameLen
+                            ? pKeyCtx->sMaxValueNameLen : dwMaxDefaultValueNameLen;
     }
     if (pcMaxValueLen)
     {
-        *pcMaxValueLen = pKeyCtx->sMaxValueLen;
+        *pcMaxValueLen = pKeyCtx->sMaxValueLen > dwMaxDefaultValueLen
+                         ? pKeyCtx->sMaxValueLen : dwMaxDefaultValueLen;
     }
     if (pcbSecurityDescriptor)
     {
