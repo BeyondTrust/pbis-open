@@ -319,7 +319,8 @@ RegParseAssignAttrData(
             parseHandle->registryEntry.regAttr.Hint =
                 RegFindHintByName((PSTR) pData);
         }
-        else if (!parseHandle->bTypeSet)
+
+        if (parseHandle->bTypeSet)
         {
             RegParseExternDataType(
                 parseHandle->dataType, 
@@ -1393,6 +1394,26 @@ RegParseCheckAttributes(
                 dwError = LWREG_ERROR_INVALID_CONTEXT;
                 BAIL_ON_REG_ERROR(dwError);
         }
+    }
+
+    switch (parseHandle->registryEntry.regAttr.Hint)
+    {
+      case LWREG_VALUE_HINT_SECONDS:
+        if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
+        {
+            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            BAIL_ON_REG_ERROR(dwError);
+        }
+        break;
+
+      case LWREG_VALUE_HINT_PATH:
+      case LWREG_VALUE_HINT_ACCOUNT:
+        if (parseHandle->registryEntry.regAttr.ValueType != REG_SZ)
+        {
+            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            BAIL_ON_REG_ERROR(dwError);
+        }
+        break;
     }
 
 cleanup:
