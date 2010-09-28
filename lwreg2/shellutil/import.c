@@ -317,6 +317,15 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                 /* Handle data value (non-attribute data */
                 regItem = *pItem;
                 regItem.type = pItem->regAttr.ValueType;
+
+                /* This prevents adding an empty attribute */
+                if (!pItem->regAttr.pDefaultValue &&
+                    !pItem->regAttr.RangeType &&
+                    !pItem->regAttr.Hint)
+                {
+                    pItem->regAttr.ValueType = 0;
+                }
+
                 regItem.value = pItem->value;
                 regItem.valueLen = pItem->valueLen;
                 regItem.valueName = pItem->valueName;
@@ -372,7 +381,7 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                 bIsValidSecDesc = RtlValidRelativeSecurityDescriptor(
                                       pSecurityDescriptor, 
                                       dwSecurityDescriptorLen,
-                                      SECURITY_MASK_SDDL);
+                                      0);
                 if (!bIsValidSecDesc)
                 {
                     dwError = STATUS_INVALID_SECURITY_DESCR;
@@ -383,7 +392,7 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                 ntStatus = LwRegSetKeySecurity(
                                hReg,
                                hKey,
-                               SECURITY_MASK_SDDL,
+                               0,
                                pSecurityDescriptor,
                                dwSecurityDescriptorLen);
                 BAIL_ON_REG_ERROR(dwError);

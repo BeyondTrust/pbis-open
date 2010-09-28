@@ -1314,12 +1314,6 @@ RegParseCheckAttributes(
      * out of range, so this is also inconsistent.
      */
 
-    if (!parseHandle->registryEntry.regAttr.pDefaultValue)
-    {
-        /* Datatype should not be set when there is no default value */
-        parseHandle->registryEntry.regAttr.ValueType = 0;
-    }
-
     /* value/default data types must be the same */
     RegParseAttributesExternDataType(
         parseHandle,
