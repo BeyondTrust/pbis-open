@@ -40,6 +40,7 @@
  *
  */
 #include "includes.h"
+#include <popt.h>
 
 #ifndef _POSIX_PTHREAD_SEMANTICS
 #define _POSIX_PTHREAD_SEMANTICS 1
@@ -51,7 +52,8 @@
 #define ACTION_COUNT 3
 #define ACTION_EXPORT 4
 #define ACTION_DELETE 5
-#define ACTION_LAST 6
+#define ACTION_HELP 6
+#define ACTION_LAST 7
 
 #define TRY DCETHREAD_TRY
 #define CATCH_ALL DCETHREAD_CATCH_ALL(THIS_CATCH)
@@ -101,118 +103,78 @@ AddEventRecord(
     return LWIWriteEventLogBase((HANDLE)pEventLogHandle, eventRecord);
 }
 
-
-static
 DWORD
-ParseArgs(
-    int argc,
-    char* argv[],
-    PDWORD action,
-    char** pstrArgCopy,
-    PSTR ipAddress,
-    PSTR *ppszEventTableCategoryId,
-    PBOOLEAN pbEventTableCategoryIdInCSV)
+ParseFilter(
+    PCSTR pszPseudoSqlFilter,
+    PWSTR* ppwszSqlFilter
+    )
 {
-    int iArg = 1;
-    DWORD maxIndex = argc-1;
-    PSTR pszArg = NULL;
-    PSTR pstrArgLocal = NULL;
-
     DWORD dwError = 0;
-    DWORD actionLocal = 0;
-    PSTR   pszEventTableCategoryId = 0;
-    BOOLEAN bEventTableCategoryIdInCSV = TRUE;
+    PWSTR pwszSqlFilter = NULL;
+    PCSTR pszSqlFilterDefault = "eventRecordId >= 0";
 
-    if (iArg > maxIndex || maxIndex > 8) {
-        ShowUsage();
-        exit(0);
-    }
-
-    pszArg = argv[iArg++];
-    if (pszArg == NULL || *pszArg == '\0') {
-        ShowUsage();
-        exit(0);
-    }
-    else if ((strcmp(pszArg, "--help") == 0) || (strcmp(pszArg, "-h") == 0)) {
-        ShowUsage();
-        exit(0);
-    }
-    else if (strcmp(pszArg, "-s") == 0) {
-        actionLocal = ACTION_SHOW;
-    }
-    else if (strcmp(pszArg, "-t") == 0) {
-        actionLocal = ACTION_TABLE;
-    }
-    else if (strcmp(pszArg, "-c") == 0) {
-        actionLocal = ACTION_COUNT;
-    }
-    else if (strcmp(pszArg, "-e") == 0) {
-        actionLocal = ACTION_EXPORT;
-    }
-    else if (strcmp(pszArg, "-d") == 0) {
-        actionLocal = ACTION_DELETE;
-    }
-    else {
-        ShowUsage();
-        exit(0);
-    }
-
-    if (iArg > maxIndex) {
-        ShowUsage();
-        exit(0);
-    }
-
-    pszArg = argv[iArg++];
-    if (pszArg == NULL || *pszArg == '\0') {
-        ShowUsage();
-        exit(0);
-    }
-    else {
-        dwError = EVTAllocateMemory(strlen(pszArg)+1, (PVOID*)(&pstrArgLocal));
+    if (pszPseudoSqlFilter == NULL ||
+            *pszPseudoSqlFilter == '\0' ||
+            strcmp(pszPseudoSqlFilter, "-") == 0)
+    {
+        dwError = LwAllocateWc16sPrintfW(
+                    &pwszSqlFilter,
+                    L"%s",
+                    pszSqlFilterDefault);
         BAIL_ON_EVT_ERROR(dwError);
-        strcpy(pstrArgLocal, pszArg);
     }
-
-    while (iArg+2 <= maxIndex)
+    else
     {
-        pszArg = argv[iArg++];
-        if (pszArg == NULL || *pszArg == '\0')
+        DWORD startID = 0;
+        DWORD endID = 0;
+        int   nRead = 0;
+
+        nRead = sscanf(pszPseudoSqlFilter, "%d-%d", &startID, &endID);
+
+        if (nRead > 0 && nRead != EOF && startID > 0)
         {
-            ShowUsage();
-            exit(0);
+            if (endID > 0 && endID > startID) {
+                dwError = LwAllocateWc16sPrintfW(
+                            &pwszSqlFilter,
+                            L"EventRecordId >= %d AND EventRecordID <= %d",
+                            startID,
+                            endID);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
+            else
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                            &pwszSqlFilter,
+                            L"EventRecordId = %d",
+                            startID);
+                BAIL_ON_EVT_ERROR(dwError);
+            }
         }
-        else {
-            ShowUsage();
-            exit(0);
+        else
+        {
+            dwError = LwAllocateWc16sPrintfW(
+                        &pwszSqlFilter,
+                        L"%s",
+                        pszPseudoSqlFilter);
+            BAIL_ON_EVT_ERROR(dwError);
         }
     }
 
-    pszArg = argv[iArg++];
-    if (pszArg == NULL || *pszArg == '\0')
-    {
-        ShowUsage();
-        exit(0);
-    }
-    else {
-        strcpy(ipAddress, pszArg);
-    }
+    *ppwszSqlFilter = pwszSqlFilter;
 
-    *action = actionLocal;
-    *pstrArgCopy = pstrArgLocal;
-    *ppszEventTableCategoryId = pszEventTableCategoryId;
-    *pbEventTableCategoryIdInCSV = bEventTableCategoryIdInCSV;
-
- error:
-
+cleanup:
     return dwError;
+
+error:
+    LW_SAFE_FREE_MEMORY(pwszSqlFilter);
+    *ppwszSqlFilter = NULL;
+    goto cleanup;
 }
-
-
 
 int
 main(
     int argc,
-    char* argv[]
+    const char* argv[]
     )
 {
     DWORD dwError = 0;
@@ -221,29 +183,119 @@ main(
     DWORD nRecords = 0;
     DWORD currentRecord = 0;
     DWORD nRecordsPerPage = 500;
-    PSTR  pszEventTableCategoryId = NULL;
-    BOOLEAN bEventTableCategoryIdInCSV = FALSE;
 
-    char ipAddress[256];
+    PCSTR pszHostname = NULL;
 
-    char* sqlFilterChar = NULL;
-    char* sqlFilterCharDefault = "eventRecordId >= 0";
-
-    PSTR argCopy = NULL;
     DWORD action = ACTION_NONE;
+    PCSTR pszExportPath = NULL;
+    PCSTR pszSqlFilter = NULL;
+    PWSTR pwszSqlFilter = NULL;
+    FILE* fpExport = NULL;
+
+    struct poptOption optionsTable[] =
+    {
+        {
+            "help",
+            'h',
+            POPT_ARG_NONE,
+            NULL,
+            ACTION_HELP,
+            "Show help",
+            NULL
+        },
+        {
+            "show",
+            's',
+            POPT_ARG_STRING,
+            &pszSqlFilter,
+            ACTION_SHOW,
+            "Shows a detailed, human-readable listing of the records matching sql_filter, or - for all records.",
+            "filter"
+        },
+        {
+            "table",
+            't',
+            POPT_ARG_STRING,
+            &pszSqlFilter,
+            ACTION_TABLE,
+            "Shows a summary table of the records matching sql_filter, or - for all records.",
+            "filter"
+        },
+        {
+            "count",
+            'c',
+            POPT_ARG_STRING,
+            &pszSqlFilter,
+            ACTION_COUNT,
+            "Shows a count of the number of records matching sql_filter, or - for all records.",
+            "filter"
+        },
+        {
+            "export",
+            'e',
+            POPT_ARG_STRING,
+            &pszExportPath,
+            ACTION_EXPORT,
+            "Exports CSV data from the database to the given path, or - to print to the command line",
+            "path"
+        },
+        {
+            "delete",
+            'd',
+            POPT_ARG_STRING,
+            &pszSqlFilter,
+            ACTION_DELETE,
+            "Deletes the records matching sql_filter, or - to delete all records, re-initializing the database",
+            "filter"
+        },
+        POPT_AUTOHELP
+        { NULL, 0, 0, NULL, 0}
+    };
+
+    poptContext optCon = { 0 };
+
+    optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
+    if (!optCon)
+    {
+        dwError = ERROR_OUTOFMEMORY;
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+    poptSetOtherOptionHelp(optCon, "[OPTION] <hostname>");
 
     dwError = EVTInitLoggingToFile( LOG_LEVEL_ERROR,
                                     NULL);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwError = ParseArgs( argc,
-                         argv,
-                         &action,
-                         &argCopy,
-                         ipAddress,
-                         &pszEventTableCategoryId,
-                         &bEventTableCategoryIdInCSV);
-    BAIL_ON_EVT_ERROR(dwError);
+    action = poptGetNextOpt(optCon);
+
+    // Allow exactly one option
+    if (action == -1 || poptGetNextOpt(optCon) != -1)
+    {
+        ShowUsage();
+        exit(1);
+    }
+
+    if (action == ACTION_HELP)
+    {
+        ShowUsage();
+        exit(0);
+    }
+
+    pszHostname = poptGetArg(optCon);
+    if (pszHostname == NULL)
+    {
+        fprintf(stderr, "Error: missing hostname\n");
+        ShowUsage();
+        exit(1);
+    }
+
+    if (poptGetArg(optCon) != NULL)
+    {
+        fprintf(stderr, "Error: more than one hostname specified\n");
+        ShowUsage();
+        exit(1);
+    }
 
     if (action <= ACTION_NONE || action > ACTION_LAST) {
         EVT_LOG_VERBOSE("Invalid action: %d\n", action);
@@ -251,177 +303,127 @@ main(
         exit(0);
     }
 
-    TRY
+    dwError = LWIOpenEventLog(pszHostname, (PHANDLE)&pEventLogHandle);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (action == ACTION_EXPORT)
     {
-
-        dwError = LWIOpenEventLog(ipAddress, (PHANDLE)&pEventLogHandle);
-        BAIL_ON_EVT_ERROR(dwError);
-
-        if (action == ACTION_EXPORT)
+        if (strcmp(pszExportPath, "-") == 0)
         {
-            FILE* fpExport = NULL;
-
-            if (strcmp(argCopy, "-") == 0)
-            {
-                fpExport = stdout;
-            }
-            else
-            {
-                fpExport = fopen(argCopy, "w");
-            }
-
-            if (fpExport != NULL)
-            {
-                dwError = ReadAndExportEvents(pEventLogHandle, fpExport);
-            }
-            else {
-                dwError = -1;
-                EVT_LOG_VERBOSE("Unable to open file %s for writing.\n", argCopy);
-            }
-            BAIL_ON_EVT_ERROR(dwError);
+            fpExport = stdout;
+        }
+        else
+        {
+            fpExport = fopen(pszExportPath, "w");
         }
 
-        else {
-            if (argCopy == NULL || *argCopy == '\0' || strcmp(argCopy, "-") == 0) {
-                sqlFilterChar = sqlFilterCharDefault;
-            }
-            else {
+        if (fpExport != NULL)
+        {
+            dwError = ReadAndExportEvents(pEventLogHandle, fpExport);
+        }
+        else
+        {
+            dwError = -1;
+            EVT_LOG_VERBOSE("Unable to open file %s for writing.\n", pszExportPath);
+        }
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    else if (action == ACTION_COUNT)
+    {
+        dwError = ParseFilter(
+            pszSqlFilter,
+            &pwszSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
 
-                DWORD startID = 0;
-                DWORD endID = 0;
-                int   nRead = 0;
+        dwError = LWICountEventLog((HANDLE)pEventLogHandle,
+                        pwszSqlFilter,
+                        &nRecords);
 
-                nRead = sscanf(argCopy, "%d-%d", &startID, &endID);
-                if ((nRead == 0) || (nRead == EOF))
-                {
-                    printf("Error: An invalid event record range [%s] "
-                           "was specified.\n",
-                           argCopy);
 
-                    dwError = EVT_ERROR_INVALID_PARAMETER;
-                    BAIL_ON_EVT_ERROR(dwError);
-                }
+        BAIL_ON_EVT_ERROR(dwError);
+        printf("%d records found in database\n", nRecords);
+    }
+    else if (action == ACTION_SHOW)
+    {
+        dwError = ParseFilter(
+            pszSqlFilter,
+            &pwszSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
 
-                if (startID > 0) {
-                    dwError = EVTAllocateMemory(256, (PVOID*)(&sqlFilterChar));
-                    BAIL_ON_EVT_ERROR(dwError);
+        do {
 
-                    if (endID > 0 && endID > startID) {
-                        sprintf(sqlFilterChar, "EventRecordId >= %d AND EventRecordID <= %d", startID, endID);
-                    }
-                        else
-                        {
-                            sprintf(sqlFilterChar, "EventRecordId = %d", startID);
-                        }
-                    }
-                    else {
-                        sqlFilterChar = argCopy;
-                    }
-            }
+            dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
+                            currentRecord,
+                            nRecordsPerPage,
+                            pwszSqlFilter,
+                            &nRecords,
+                            &eventRecords);
 
-            wchar16_t* sqlFilter = NULL;
-            dwError = EVTAllocateMemory(sizeof(wchar16_t)*(1+strlen(sqlFilterChar)), (PVOID*)(&sqlFilter));
             BAIL_ON_EVT_ERROR(dwError);
 
-            sw16printf(sqlFilter, "%s", sqlFilterChar);
-
-            if (action == ACTION_COUNT)
-            {
-                dwError = LWICountEventLog((HANDLE)pEventLogHandle,
-                                sqlFilter,
-                                &nRecords);
-
-
-                BAIL_ON_EVT_ERROR(dwError);
-                printf("%d records found in database\n", nRecords);
-            }
-            else if (action == ACTION_SHOW)
-            {
-                do {
-
-                    dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
-                                    currentRecord,
-                                    nRecordsPerPage,
-                                    sqlFilter,
-                                    &nRecords,
-                                    &eventRecords);
-
-                    BAIL_ON_EVT_ERROR(dwError);
-
-                    PrintEventRecords(stdout, eventRecords, nRecords, &currentRecord);
-
-                } while (nRecords == nRecordsPerPage && nRecords > 0);
-            }
-            else if (action == ACTION_TABLE)
-            {
-                do {
-
-                    dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
-                                    currentRecord,
-                                    nRecordsPerPage,
-                                    sqlFilter,
-                                    &nRecords,
-                                    &eventRecords);
-
-                    BAIL_ON_EVT_ERROR(dwError);
-
-                    PrintEventRecordsTable(stdout, eventRecords, nRecords, &currentRecord);
-
-                } while (nRecords == nRecordsPerPage && nRecords > 0);
-            }
-            else if (action == ACTION_DELETE)
-            {
-                if (strcmp(sqlFilterChar, sqlFilterCharDefault) == 0)
-                {
-                    //This is probably a faster way of deleting
-                    //everything, because it drops the
-                    //table instead of running an SQL DELETE
-                    dwError = LWIClearEventLog((HANDLE)pEventLogHandle);
-                }
-                else
-                {
-                    dwError = LWIDeleteFromEventLog(
-                                    (HANDLE)pEventLogHandle,
-                                    sqlFilter
-                                    );
-                }
-                BAIL_ON_EVT_ERROR(dwError);
-            }
-            else
-            {
-                EVT_LOG_VERBOSE("Invalid action: %d\n", action);
-                ShowUsage();
-                exit(0);
-            }
-        }  //end else
-    }  //end TRY
-    CATCH_ALL
-    {
-        dwError = dcethread_exc_getstatus (THIS_CATCH);
-        EVT_LOG_ERROR("Invalid Operation: %d\n", dwError);
+            PrintEventRecords(stdout, eventRecords, nRecords, &currentRecord);
+        } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
-    ENDTRY;
+    else if (action == ACTION_TABLE)
+    {
+        dwError = ParseFilter(
+            pszSqlFilter,
+            &pwszSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        do {
+
+            dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
+                            currentRecord,
+                            nRecordsPerPage,
+                            pwszSqlFilter,
+                            &nRecords,
+                            &eventRecords);
+
+            BAIL_ON_EVT_ERROR(dwError);
+
+            PrintEventRecordsTable(stdout, eventRecords, nRecords, &currentRecord);
+
+        } while (nRecords == nRecordsPerPage && nRecords > 0);
+    }
+    else if (action == ACTION_DELETE)
+    {
+        dwError = ParseFilter(
+            pszSqlFilter,
+            &pwszSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LWIDeleteFromEventLog(
+                        (HANDLE)pEventLogHandle,
+                        pwszSqlFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+    else
+    {
+        EVT_LOG_VERBOSE("Invalid action: %d\n", action);
+        ShowUsage();
+        exit(0);
+    }
 
  error:
-
-    if (dwError != 0) {
+    if (dwError != 0)
+    {
         EVT_LOG_ERROR("The operation failed with error code [%d]\n", dwError);
     }
-
-    if (sqlFilterChar != NULL && sqlFilterChar != sqlFilterCharDefault)
-    {
-        EVTFreeMemory(sqlFilterChar);
-    }
-
+    LW_SAFE_FREE_MEMORY(pwszSqlFilter);
     if (pEventLogHandle)
     {
         LWICloseEventLog((HANDLE)pEventLogHandle);
     }
-
-
-    if (eventRecords) {
+    if (eventRecords)
+    {
         RPCFreeMemory(eventRecords);
         EVTFreeMemory(eventRecords);
+    }
+    poptFreeContext(optCon);
+    if (fpExport)
+    {
+        fclose(fpExport);
     }
 
     return dwError;
