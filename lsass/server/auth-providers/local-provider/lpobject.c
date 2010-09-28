@@ -573,6 +573,8 @@ typedef struct _LOCAL_ENUM_HANDLE
     DWORD dwCount;
     PDIRECTORY_ENTRY pEntries;
     DWORD dwIndex;
+    LONG64 llSequenceNumber;
+
 } *LOCAL_ENUM_HANDLE, **PLOCAL_ENUM_HANDLE;
 
 DWORD
@@ -704,6 +706,11 @@ LocalDirOpenEnumObjects(
         &hEnum->dwCount);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LocalGetSequenceNumber(
+        pContext,
+        &hEnum->llSequenceNumber);
+    BAIL_ON_LSA_ERROR(dwError);
+
     *phEnum = hEnum;
         
 cleanup:
@@ -734,6 +741,8 @@ LocalDirEnumObjects(
 {
     DWORD dwError = 0;
     LOCAL_ENUM_HANDLE pEnum = (LOCAL_ENUM_HANDLE) hEnum;
+    PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT) pEnum->hProvider;
+    LONG64 llSequenceNumber = 0;
     DWORD dwAllocCount = 0;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
     DWORD dwIndex = 0;
@@ -742,6 +751,17 @@ LocalDirEnumObjects(
     if (pEnum->dwIndex >= pEnum->dwCount)
     {
         dwError = ERROR_NO_MORE_ITEMS;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LocalGetSequenceNumber(
+        pContext,
+        &llSequenceNumber);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (llSequenceNumber != pEnum->llSequenceNumber)
+    {
+        dwError = ERROR_INVALID_DATA;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -893,6 +913,11 @@ LocalDirOpenEnumMembers(
             &hEnum->pEntries,
             &hEnum->dwCount);
         BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LocalGetSequenceNumber(
+            pContext,
+            &hEnum->llSequenceNumber);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
     *phEnum = hEnum;
@@ -930,6 +955,8 @@ LocalDirEnumMembers(
 {
     DWORD dwError = 0;
     LOCAL_ENUM_HANDLE pEnum = (LOCAL_ENUM_HANDLE) hEnum;
+    PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT) pEnum->hProvider;
+    LONG64 llSequenceNumber = 0;
     DWORD dwAllocCount = 0;
     PSTR* ppszMemberSids = NULL;
     DWORD dwIndex = 0;
@@ -939,6 +966,17 @@ LocalDirEnumMembers(
     if (pEnum->dwIndex >= pEnum->dwCount)
     {
         dwError = ERROR_NO_MORE_ITEMS;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LocalGetSequenceNumber(
+        pContext,
+        &llSequenceNumber);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (llSequenceNumber != pEnum->llSequenceNumber)
+    {
+        dwError = ERROR_INVALID_DATA;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1342,3 +1380,13 @@ error:
 
     goto cleanup;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

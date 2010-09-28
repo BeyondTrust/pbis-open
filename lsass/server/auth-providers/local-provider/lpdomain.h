@@ -74,6 +74,12 @@ LocalGetDomainInfo(
     );
 
 DWORD
+LocalGetSequenceNumber(
+    IN HANDLE hProvider,
+    OUT PLONG64 pllSequenceNumber
+    );
+
+DWORD
 LocalDirSetDomainName(
     IN PCSTR  pszNewName
     );

@@ -841,6 +841,89 @@ error:
     goto cleanup;
 }
 
+
+DWORD
+LocalGetSequenceNumber(
+    IN HANDLE hProvider,
+    OUT PLONG64 pllSequenceNumber
+    )
+{
+    wchar_t wszDomainFilterFmt[] = L"%ws = %u";
+    DWORD dwError = ERROR_SUCCESS;
+    PLOCAL_PROVIDER_CONTEXT pContext = (PLOCAL_PROVIDER_CONTEXT)hProvider;
+    DWORD dwFilterLen = 0;
+    PWSTR pwszFilter = NULL;
+    WCHAR wszAttrNameObjectClass[] = LOCAL_DIR_ATTR_OBJECT_CLASS;
+    WCHAR wszAttrNameSeqNumber[] = LOCAL_DIR_ATTR_SEQUENCE_NUMBER;
+    PDIRECTORY_ENTRY pEntry = NULL;
+    DWORD dwNumEntries = 0;
+    LONG64 llSequenceNumber = 0;
+
+    PWSTR wszAttrs[] = {
+        wszAttrNameSeqNumber,
+        NULL
+    };
+
+    dwFilterLen = ((sizeof(wszAttrNameSeqNumber)/sizeof(wszAttrNameSeqNumber[0])) +
+                   10 +
+                   (sizeof(wszDomainFilterFmt)/sizeof(wszDomainFilterFmt[0])));
+
+    dwError = LwAllocateMemory(sizeof(pwszFilter[0]) * dwFilterLen,
+                               OUT_PPVOID(&pwszFilter));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (sw16printfw(pwszFilter, dwFilterLen, wszDomainFilterFmt,
+                    wszAttrNameObjectClass, LOCAL_OBJECT_CLASS_DOMAIN) < 0)
+    {
+        dwError = LwErrnoToWin32Error(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectorySearch(
+        pContext->hDirectory,
+        NULL,
+        0,
+        pwszFilter,
+        wszAttrs,
+        FALSE,
+        &pEntry,
+        &dwNumEntries);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwNumEntries != 1)
+    {
+        dwError = LW_ERROR_SAM_DATABASE_ERROR;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = DirectoryGetEntryAttrValueByName(
+                          pEntry,
+                          wszAttrNameSeqNumber,
+                          DIRECTORY_ATTR_TYPE_LARGE_INTEGER,
+                          &llSequenceNumber);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *pllSequenceNumber = llSequenceNumber;
+
+cleanup:
+    if (pEntry)
+    {
+        DirectoryFreeEntries(pEntry, dwNumEntries);
+    }
+
+    LW_SAFE_FREE_MEMORY(pwszFilter);
+
+    return dwError;
+
+error:
+    if (pllSequenceNumber)
+    {
+        *pllSequenceNumber = 0;
+    }
+
+    goto cleanup;
+}
+
 static
 DWORD
 LocalGetSingleLargeIntegerAttrValue(
