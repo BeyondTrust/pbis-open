@@ -146,29 +146,48 @@ extern pthread_mutex_t gLwioLogLock;
 
 #define _LWIO_LOG_IF(Level, Format, ...)                     \
     do {                                                    \
-        LWIO_LOCK_LOGGER;                                    \
-        if (gpfnLwioLogger && (gLwioMaxLogLevel >= (Level)))  \
-        {                                                   \
-            if (gLwioMaxLogLevel >= LWIO_LOG_LEVEL_DEBUG)     \
-            {                                               \
-                _LWIO_LOG_WITH_DEBUG(Level, Format, ## __VA_ARGS__); \
-            }                                               \
-            else                                            \
-            {                                               \
-                _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
-            }                                               \
-        }                                                   \
-        LWIO_UNLOCK_LOGGER;                                  \
+                                                                    \
+        if (gpfnLwioLogger &&                                       \
+            gLwioMaxLogLevel >= (Level) &&                          \
+            gLwioMaxLogLevel >= LWIO_LOG_LEVEL_DEBUG)               \
+        {                                                           \
+            LWIO_LOCK_LOGGER;                                       \
+            if (gpfnLwioLogger &&                                   \
+                gLwioMaxLogLevel >= (Level) &&                      \
+                gLwioMaxLogLevel >= LWIO_LOG_LEVEL_DEBUG)           \
+            {                                                       \
+                _LWIO_LOG_WITH_DEBUG(Level, Format, ## __VA_ARGS__);\
+            }                                                       \
+            LWIO_UNLOCK_LOGGER;                                     \
+        }                                                           \
+                                                                    \
+        if (gpfnLwioLogger &&                                       \
+            gLwioMaxLogLevel >= (Level) &&                          \
+            gLwioMaxLogLevel < LWIO_LOG_LEVEL_DEBUG)                \
+        {                                                           \
+            LWIO_LOCK_LOGGER;                                       \
+            if (gpfnLwioLogger &&                                   \
+                gLwioMaxLogLevel >= (Level) &&                      \
+                gLwioMaxLogLevel < LWIO_LOG_LEVEL_DEBUG)            \
+            {                                                       \
+                _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__);\
+            }                                                       \
+            LWIO_UNLOCK_LOGGER;                                     \
+        }                                                           \
+                                                                    \
     } while (0)
 
-#define _LWIO_LOG_IF_CUSTOM(Level, Format, ...)                   \
-    do {                                                          \
-        LWIO_LOCK_LOGGER;                                         \
-        if (gpfnLwioLogger)                                       \
-        {                                                         \
-            _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
-        }                                                         \
-        LWIO_UNLOCK_LOGGER;                                       \
+#define _LWIO_LOG_IF_CUSTOM(Level, Format, ...)                       \
+    do {                                                              \
+        if (gpfnLwioLogger)                                           \
+        {                                                             \
+            LWIO_LOCK_LOGGER;                                         \
+            if (gpfnLwioLogger)                                       \
+            {                                                         \
+                _LWIO_LOG_WITH_THREAD(Level, Format, ## __VA_ARGS__); \
+            }                                                         \
+            LWIO_UNLOCK_LOGGER;                                       \
+        }                                                             \
     } while (0)
 
 #define LWIO_SAFE_LOG_STRING(x) \

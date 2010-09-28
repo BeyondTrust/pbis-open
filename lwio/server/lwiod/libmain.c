@@ -953,13 +953,17 @@ LwIoDaemonLogIpc (
         break;
     }
     
-    LWIO_LOCK_LOGGER;
     if (pszMessage)
     {
         if (gLwioMaxLogLevel >= ioLevel)
         {
-            LwioLogMessage(gpfnLwioLogger, ghLwioLog, ioLevel, "[IPC] %s", pszMessage);
-            result = LWMSG_TRUE;
+            LWIO_LOCK_LOGGER;
+            if (gLwioMaxLogLevel >= ioLevel)
+            {
+                LwioLogMessage(gpfnLwioLogger, ghLwioLog, ioLevel, "[IPC] %s", pszMessage);
+                result = LWMSG_TRUE;
+            }
+            LWIO_UNLOCK_LOGGER;
         }
         else
         {
@@ -970,7 +974,6 @@ LwIoDaemonLogIpc (
     {
         result = (gLwioMaxLogLevel >= ioLevel);
     }
-    LWIO_UNLOCK_LOGGER;
 
     return result;
 }
