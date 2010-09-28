@@ -220,6 +220,12 @@ error:
                         pszErrorBuffer);
                 bPrintOrigError = FALSE;
             }
+
+            if (dwError == ERROR_INVALID_DATA)
+            {
+                fprintf(stderr, "The groups list has changed while enumerating. "
+                        "Try again.\n");
+            }
         }
 
         LW_SAFE_FREE_STRING(pszErrorBuffer);

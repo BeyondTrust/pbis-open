@@ -255,6 +255,12 @@ error:
                         pszErrorBuffer);
                 bPrintOrigError = FALSE;
             }
+
+            if (dwError == ERROR_INVALID_DATA)
+            {
+                fprintf(stderr, "The users list has changed while enumerating. "
+                        "Try again.\n");
+            }
         }
 
         LW_SAFE_FREE_STRING(pszErrorBuffer);
@@ -574,3 +580,12 @@ error:
     return bIsUnsignedInteger;
 }
 
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

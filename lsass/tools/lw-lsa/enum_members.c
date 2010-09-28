@@ -518,6 +518,13 @@ error:
     if (dwError)
     {
         printf("Error: %s (%x)\n", LwWin32ExtErrorToName(dwError), dwError);
+
+        if (dwError == ERROR_INVALID_DATA)
+        {
+            fprintf(stderr, "The members list has changed while enumerating. "
+                    "Try again.\n");
+        }
+
         return 1;
     }
     else
@@ -525,3 +532,13 @@ error:
         return 0;
     }
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
