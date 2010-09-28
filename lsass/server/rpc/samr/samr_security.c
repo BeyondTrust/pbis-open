@@ -335,8 +335,8 @@ SamrSrvCreateDacl(
     *ppDacl = pDacl;
 
 cleanup:
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
     {
         dwError = LwNtStatusToWin32Error(ntStatus);
     }
@@ -440,7 +440,7 @@ SamrSrvCreateNewAccountSecurityDescriptor(
                                                dwObjectClass,
                                                &pDacl);
     }
-    BAIL_ON_NTSTATUS_ERROR(dwError);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
     ntStatus = RtlSetDaclSecurityDescriptor(
                                     pSecDesc,
@@ -452,9 +452,17 @@ SamrSrvCreateNewAccountSecurityDescriptor(
     *ppSecDesc = pSecDesc;
 
 cleanup:
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
     return ntStatus;
 
 error:
+    SamrSrvFreeSecurityDescriptor(&pSecDesc);
+
     goto cleanup;
 }
 
@@ -570,22 +578,32 @@ SamrSrvCreateLocalUserDacl(
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrSrvCreateDacl(&pDacl,
-                                 AccessList);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    dwError = SamrSrvCreateDacl(&pDacl,
+                                AccessList);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *ppDacl = pDacl;
 
 cleanup:
-    return ntStatus;
-
-error:
     LW_SAFE_FREE_MEMORY(pAdminSid);
     LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
     LW_SAFE_FREE_MEMORY(pAccountSid);
     LW_SAFE_FREE_MEMORY(pWorldSid);
 
-    *ppDacl = NULL;
+    if (ntStatus == STATUS_SUCCESS &&
+        dwError != ERROR_SUCCESS)
+    {
+        ntStatus = LwWin32ErrorToNtStatus(dwError);
+    }
+
+    return ntStatus;
+
+error:
+    if (ppDacl)
+    {
+        *ppDacl = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -610,7 +628,6 @@ SamrSrvCreateLocalGroupDacl(
                                 ALIAS_ACCESS_GET_MEMBERS |
                                 ALIAS_ACCESS_LOOKUP_INFO;
 
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
     PSID pAdminSid = NULL;
     PSID pBuiltinAdminsSid = NULL;
@@ -658,21 +675,25 @@ SamrSrvCreateLocalGroupDacl(
                                    NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = SamrSrvCreateDacl(&pDacl,
-                                 AccessList);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+    dwError = SamrSrvCreateDacl(&pDacl,
+                                AccessList);
+    BAIL_ON_LSA_ERROR(dwError);
 
     *ppDacl = pDacl;
 
 cleanup:
-    return ntStatus;
-
-error:
     LW_SAFE_FREE_MEMORY(pAdminSid);
     LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
     LW_SAFE_FREE_MEMORY(pWorldSid);
 
-    *ppDacl = NULL;
+    return dwError;
+
+error:
+    if (ppDacl)
+    {
+        *ppDacl = NULL;
+    }
+
     goto cleanup;
 }
 
@@ -725,7 +746,7 @@ SamrSrvFreeSecurityDescriptor(
                                             &bSaclDefaulted);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-cleanup:
+error:
     LW_SAFE_FREE_MEMORY(pOwnerSid);
     LW_SAFE_FREE_MEMORY(pPrimaryGroupSid);
 
@@ -741,11 +762,6 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pSecDesc);
     *ppSecDesc = NULL;
-
-    return;
-
-error:
-    goto cleanup;
 }
 
 

@@ -485,8 +485,8 @@ LocalDirCreateDacl(
     *ppDacl = pDacl;
 
 cleanup:
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
     {
         dwError = LwNtStatusToWin32Error(ntStatus);
     }
