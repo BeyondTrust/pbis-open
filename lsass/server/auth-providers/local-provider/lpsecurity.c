@@ -304,6 +304,11 @@ LocalDirCreateLocalUserDacl(
     *ppDacl = pDacl;
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pAdminSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pAccountSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
@@ -313,12 +318,11 @@ cleanup:
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pAdminSid);
-    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
-    LW_SAFE_FREE_MEMORY(pAccountSid);
-    LW_SAFE_FREE_MEMORY(pWorldSid);
+    if (ppDacl)
+    {
+        *ppDacl = NULL;
+    }
 
-    *ppDacl = NULL;
     goto cleanup;
 }
 
@@ -397,6 +401,10 @@ LocalDirCreateLocalGroupDacl(
     *ppDacl = pDacl;
 
 cleanup:
+    LW_SAFE_FREE_MEMORY(pAdminSid);
+    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
+    LW_SAFE_FREE_MEMORY(pWorldSid);
+
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)
     {
@@ -406,11 +414,11 @@ cleanup:
     return dwError;
 
 error:
-    LW_SAFE_FREE_MEMORY(pAdminSid);
-    LW_SAFE_FREE_MEMORY(pBuiltinAdminsSid);
-    LW_SAFE_FREE_MEMORY(pWorldSid);
+    if (ppDacl)
+    {
+        *ppDacl = NULL;
+    }
 
-    *ppDacl = NULL;
     goto cleanup;
 }
 
