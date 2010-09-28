@@ -45,6 +45,11 @@
 #include "includes.h"
 
 
+#define SECURITY_MASK_SDDL \
+  (OWNER_SECURITY_INFORMATION | \
+   GROUP_SECURITY_INFORMATION | \
+   DACL_SECURITY_INFORMATION)
+
 static
 DWORD
 ProcessImportedKeyName(
@@ -188,6 +193,10 @@ ProcessImportedValue(
     BOOLEAN bSetValue = TRUE;
     PWSTR pwszValueName = NULL;
     REG_PARSE_ITEM regItem = {0};
+    PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor = NULL;
+    DWORD dwSecurityDescriptorLen = 0;
+    NTSTATUS ntStatus = 0;
+    BOOLEAN bIsValidSecDesc = FALSE;
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -346,17 +355,40 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
             BAIL_ON_REG_ERROR(dwError);
 
         }
-#if 0
         /* Deal with SDDL security descriptor */
         else if (pItem->valueType == REG_KEY_DEFAULT)
         {
+
             if (!strcmp(pItem->valueName, "@security"))
             {
-                printf("%s =%s import SDDL value here!\n",
-                    pItem->valueName, (PSTR) pItem->value);
+                ntStatus = RtlAllocateSecurityDescriptorFromSddlCString(
+                               &pSecurityDescriptor,
+                               &dwSecurityDescriptorLen,
+                               (PCSTR) pItem->value,
+                               SDDL_REVISION_1);
+                dwError = RegNtStatusToWin32Error(ntStatus);
+                BAIL_ON_REG_ERROR(dwError);
+
+                bIsValidSecDesc = RtlValidRelativeSecurityDescriptor(
+                                      pSecurityDescriptor, 
+                                      dwSecurityDescriptorLen,
+                                      SECURITY_MASK_SDDL);
+                if (!bIsValidSecDesc)
+                {
+                    dwError = STATUS_INVALID_SECURITY_DESCR;
+                    BAIL_ON_NT_STATUS(dwError);
+                }
+
+                /* Apply security descriptor to current subkey */
+                ntStatus = LwRegSetKeySecurity(
+                               hReg,
+                               hKey,
+                               SECURITY_MASK_SDDL,
+                               pSecurityDescriptor,
+                               dwSecurityDescriptorLen);
+                BAIL_ON_REG_ERROR(dwError);
             }
         }
-#endif
         else
         {
             memcpy(pData, (PBYTE)pItem->value, cbData);

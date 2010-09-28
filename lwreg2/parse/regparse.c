@@ -319,8 +319,7 @@ RegParseAssignAttrData(
             parseHandle->registryEntry.regAttr.Hint =
                 RegFindHintByName((PSTR) pData);
         }
-
-        if (parseHandle->bTypeSet)
+        else if (parseHandle->bTypeSet)
         {
             RegParseExternDataType(
                 parseHandle->dataType, 
