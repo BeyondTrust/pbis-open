@@ -389,7 +389,7 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                 }
 
                 /* Apply security descriptor to current subkey */
-                ntStatus = LwRegSetKeySecurity(
+                dwError = LwRegSetKeySecurity(
                                hReg,
                                hKey,
                                0,
