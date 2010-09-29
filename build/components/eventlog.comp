@@ -1,6 +1,6 @@
 #!/bin/bash -c "exit 1"
 
-COMP_DEPENDENCIES="autoconf automake libtool sqlite dcerpc krb5 lwbase lwreg lwadvapi"
+COMP_DEPENDENCIES="autoconf automake libtool sqlite dcerpc krb5 lwbase lwreg lwadvapi popt"
 COMP_INCREMENTAL=1
 COMP_SOURCES="${BUILD_ROOT}/src/linux/eventlog"
 
