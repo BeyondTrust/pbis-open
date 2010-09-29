@@ -3,15 +3,28 @@
 #
 [HKEY_THIS_MACHINE\test]
 @security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
-@ = "3d347b284dadc155514e287328ff10ff"
+
+"MachinePasswordLifeSpan" = {
+  "value" = dword:00000001
+  "default" = dword:000000FF
+  "range" = integer:1 - 44640
+  "hint" = seconds
+  "doc" = "The interval (in seconds) at which the local machine trust account password must be changed. Setting this value to 0 will disable the machine password change feature."
+}
+
 "a"="a"
 "b"="b"
 "b1"="b"
 
+"bool_val" = {
+  "range" = boolean
+# "value" = dword:31415926
+  "value" = dword:00000000
+}
 "binary" = {
   hint = seconds
-  default = hex:0102030405060708090A0b0c0d0e0ffffafbfcfd
-  "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
+  default = dword:0000003C
+  "value" = dword:00000078
 }
 
 "dword" = {
@@ -31,8 +44,8 @@
   "range" = string:"three" "one" "four"
   "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
   "hint" = "account"
-  "value" = dword:00000001
-  "default" = dword:00000314
+  "value" = "corp\\abernstein"
+  "default" = "village\\adam"
 }
 
 "LogLevel2" = {
@@ -49,8 +62,8 @@
   "range" = string:"three" "one" "four"
   "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
   "hint" = "account"
-  "value" = dword:00000003
-  "default" = dword:00000314
+  "value" = "lampi\\a"
+  "default" = "lampi\\1234"
 }
 "mv" = {
   "range" = string:"Zow" "is" "the"
@@ -99,26 +112,26 @@
   value = "I am not dead beef"
   default = "I am dead beef"
   doc = "Dead beef is good for grilling"
-  hint = seconds
+  hint = path
 }
 "SupportSmb1" = {
   "range" = string:"three" "one" "four"
   "doc" = "I am a documentation string"
-  "hint" = "account"
+  "hint" = "seconds"
   "value" = dword:00000001
   "default" = dword:00000314
 }
 "SupportSmb3" = {
   "range" = string:"three" "one" "four"
   "doc" = "I am a documentation string"
-  "hint" = "account"
+  "hint" = "seconds"
   "value" = dword:00000003
   "default" = dword:00000314
 }
 
 
 "syntax_error" = {
-  hint =  seconds
+  hint =  path
   default = "/foo/bar"
 }
 
@@ -127,6 +140,7 @@
 
 
 [HKEY_THIS_MACHINE\test\lwio]
+@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
 "t2" = {
   "hint" = "seconds"
   value = dword:00000006
@@ -144,27 +158,31 @@
 "SupportSmb3" = {
   "range" = string:"three" "one" "four"
   "doc" = "I am a documentation string"
-  "hint" = "account"
+  "hint" = "seconds"
   "value" = dword:00000003
   "default" = dword:00000314
 #  "doc" = "doc string"
 }
 
 "r1" = {
+  value = dword:00000004
+  default = dword:0000000a
   "range" = integer:3 - 666
+  "doc" = "r1 value is testing r1"
 }
 
 "s" = {
   "value" = "I am a value"
+  "default" = "I am a value 2"
 }
 
 
 "test1" = {
-  doc = "I am jack's documentation"
   "value" = dword:00000009
+  doc = "I am jack's documentation"
 }
 
-"b" = {
+"bool_val" = {
   "range" = boolean
 # "value" = dword:31415926
   "value" = dword:00000000
@@ -179,18 +197,6 @@
   "value" = dword:00000001
 }
 
-@security = 3d347b284dadc155514e287328ff1021
-
-
-"SupportSmb2" = {
-  # Show how to specify an explicit in the new syntax (sic)
-  "value" = dword:00000000
-  "default" = dword:00000001
-  "range" = boolean
-  "doc" = "Boolean value used to control whether the server will support SMB2 protocol dialect or not. Set the value to 1 (True) to enable SMB2 support and 0 (False) to disable."
-}
-
-
 
 
 #
@@ -201,16 +207,17 @@
                     "lazy dog's back" "1234567890"
 
 [HKEY_THIS_MACHINE\test\AD]
+@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+
 "MachinePasswordLifeSpan" = {
-  "default" = dword:00000FFF
-  # Assume the password lifetime can be a max of 31 days
+  "value" = dword:00000001
+  "default" = dword:000000FF
   "range" = integer:1 - 44640
   "hint" = seconds
   "doc" = "The interval (in seconds) at which the local machine trust account password must be changed. Setting this value to 0 will disable the machine password change feature."
 }
-
+#
 [HKEY_THIS_MACHINE\test\AD\MachinePassword]
-@security = a0efd12fcb93fd3a44439dde60ade462
 "MachinePassword" = {
   "value" = "&e4C&tt)c4tM%QLD"
   "default" = ""
