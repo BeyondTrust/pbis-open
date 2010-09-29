@@ -188,6 +188,37 @@ SqliteCacheUpdateValuesInfo(
     OUT size_t* psNumValues
     );
 
+NTSTATUS
+SqliteCacheUpdateSubKeysInfo(
+    IN DWORD dwOffSet,
+    IN OUT PREG_KEY_CONTEXT pKeyResult,
+    OUT size_t* psNumSubKeys
+    );
+
+NTSTATUS
+SqliteCacheKeyDefaultValuesInfo_inlock(
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    );
+
+NTSTATUS
+SqliteCacheKeyDefaultValuesInfo(
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    );
+
+NTSTATUS
+SqliteCacheUpdateDefaultValuesInfo_inlock(
+    DWORD dwOffSet,
+    IN OUT PREG_KEY_CONTEXT pKeyResult,
+    OUT size_t* psNumValues
+    );
+
+NTSTATUS
+SqliteCacheUpdateDefaultValuesInfo(
+    DWORD dwOffSet,
+    IN OUT PREG_KEY_CONTEXT pKeyResult,
+    OUT size_t* psNumValues
+    );
+
 // Sqlite DB Key Index and ACL Index mapping cache
 void
 SqliteCacheFreeDbKeyHashEntry(

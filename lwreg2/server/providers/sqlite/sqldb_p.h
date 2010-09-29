@@ -233,6 +233,22 @@ RegDbSafeRecordValuesInfo(
     );
 
 NTSTATUS
+RegDbSafeRecordDefaultValuesInfo_inlock(
+    IN size_t sCount,
+    IN size_t sCacheCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppRegEntries,
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    );
+
+NTSTATUS
+RegDbSafeRecordDefaultValuesInfo(
+    IN size_t sCount,
+    IN size_t sCacheCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppRegEntries,
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    );
+
+NTSTATUS
 RegDbOpen(
     IN PCSTR pszDbPath,
     OUT PREG_DB_HANDLE phDb

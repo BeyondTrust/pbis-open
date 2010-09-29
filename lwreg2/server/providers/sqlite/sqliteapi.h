@@ -249,7 +249,7 @@ SqliteDeleteValueAttributes(
     );
 
 NTSTATUS
-SqliteQueryInfoDefaultValue(
+SqliteQueryInfoDefaultValues(
     IN REG_DB_HANDLE hDb,
     IN PREG_KEY_CONTEXT pKey,
     OUT OPTIONAL PDWORD pcDefaultValues,

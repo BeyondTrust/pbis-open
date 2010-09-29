@@ -165,6 +165,8 @@ done:
                                      pValueAttributes);
     BAIL_ON_NT_STATUS(status);
 
+    SqliteCacheResetKeyValueInfo(pKeyCtxInUse->pwszKeyName);
+
 cleanup:
 
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
@@ -456,6 +458,8 @@ SqliteDeleteValueAttributes(
                                         (PCWSTR)pwszValueName);
     BAIL_ON_NT_STATUS(status);
 
+    SqliteCacheResetKeyValueInfo(pKeyCtxInUse->pwszKeyName);
+
 cleanup:
     SqliteSafeFreeKeyHandle(pKeyHandleInUse);
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
@@ -473,7 +477,7 @@ error:
 // If we ever want to exclusively browse schema data,
 // we need to implement a separate API just for that purpose.
 NTSTATUS
-SqliteQueryInfoDefaultValue(
+SqliteQueryInfoDefaultValues(
     IN REG_DB_HANDLE hDb,
     IN PREG_KEY_CONTEXT pKey,
     OUT OPTIONAL PDWORD pcDefaultValues,

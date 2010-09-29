@@ -391,12 +391,16 @@ SqliteQueryInfoKey(
     size_t sNumSubKeys = 0;
     size_t sNumValues = 0;
     DWORD dwOffset = 0;
+    size_t sNumDefaultValues = 0;
+    DWORD dwDefaultOffset = 0;
     BOOLEAN bInLock = FALSE;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+#if 0
     DWORD dwDefaultValues = 0;
     DWORD dwMaxDefaultValueNameLen = 0;
     DWORD dwMaxDefaultValueLen = 0;
+#endif
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     BAIL_ON_INVALID_RESERVED_POINTER(pdwReserved);
@@ -414,6 +418,9 @@ SqliteQueryInfoKey(
     BAIL_ON_NT_STATUS(status);
 
     status = SqliteCacheKeyValuesInfo_inlock(pKeyCtx);
+    BAIL_ON_NT_STATUS(status);
+
+    status = SqliteCacheKeyDefaultValuesInfo_inlock(pKeyCtx);
     BAIL_ON_NT_STATUS(status);
 
     if (pKeyCtx->dwNumSubKeys > pKeyCtx->dwNumCacheSubKeys)
@@ -446,16 +453,40 @@ SqliteQueryInfoKey(
         } while (sNumValues);
     }
 
+    if (pKeyCtx->dwNumDefaultValues > pKeyCtx->dwNumCacheDefaultValues)
+    {
+        dwDefaultOffset = pKeyCtx->dwNumCacheDefaultValues;
+        do
+        {
+            status = SqliteCacheUpdateDefaultValuesInfo_inlock(
+                              dwDefaultOffset,
+                              pKeyCtx,
+                              &sNumDefaultValues);
+            BAIL_ON_NT_STATUS(status);
+
+            dwDefaultOffset+= (DWORD)sNumDefaultValues;
+        } while (sNumDefaultValues);
+    }
+
     status = SqliteCacheKeySecurityDescriptor_inlock(pKeyCtx);
     BAIL_ON_NT_STATUS(status);
 
-    status = SqliteQueryInfoDefaultValue(ghCacheConnection,
+#if 0
+    status = SqliteQueryInfoDefaultValues(ghCacheConnection,
                                          pKeyCtx,
                                          &dwDefaultValues,
                                          &dwMaxDefaultValueNameLen,
                                          &dwMaxDefaultValueLen);
     BAIL_ON_NT_STATUS(status);
 
+    pKeyCtx->sMaxValueNameLen = pKeyCtx->sMaxValueNameLen > dwMaxDefaultValueNameLen
+                                ? pKeyCtx->sMaxValueNameLen
+                                : dwMaxDefaultValueNameLen;
+
+    pKeyCtx->sMaxValueLen = pKeyCtx->sMaxValueLen > dwMaxDefaultValueLen
+                            ? pKeyCtx->sMaxValueLen
+                            : dwMaxDefaultValueLen;
+#endif
 
     if (pcSubKeys)
     {
@@ -467,17 +498,15 @@ SqliteQueryInfoKey(
     }
     if (pcValues)
     {
-        *pcValues = pKeyCtx->dwNumValues + dwDefaultValues;
+        *pcValues = pKeyCtx->dwNumValues + pKeyCtx->dwNumDefaultValues;
     }
     if (pcMaxValueNameLen)
     {
-        *pcMaxValueNameLen = pKeyCtx->sMaxValueNameLen > dwMaxDefaultValueNameLen
-                            ? pKeyCtx->sMaxValueNameLen : dwMaxDefaultValueNameLen;
+        *pcMaxValueNameLen = pKeyCtx->sMaxValueNameLen;
     }
     if (pcMaxValueLen)
     {
-        *pcMaxValueLen = pKeyCtx->sMaxValueLen > dwMaxDefaultValueLen
-                         ? pKeyCtx->sMaxValueLen : dwMaxDefaultValueLen;
+        *pcMaxValueLen = pKeyCtx->sMaxValueLen;
     }
     if (pcbSecurityDescriptor)
     {
@@ -584,7 +613,7 @@ SqliteEnumKeyEx(
                                    &ppRegEntries);
         BAIL_ON_NT_STATUS(status);
 
-        if (sNumSubKeys != 1)
+        if (sNumSubKeys > 1)
         {
             status = STATUS_INTERNAL_ERROR;
             BAIL_ON_NT_STATUS(status);
@@ -690,7 +719,7 @@ SqliteEnumKeyEx_inDblock(
                                    &ppRegEntries);
         BAIL_ON_NT_STATUS(status);
 
-        if (sNumSubKeys != 1)
+        if (sNumSubKeys > 1)
         {
             status = STATUS_INTERNAL_ERROR;
             BAIL_ON_NT_STATUS(status);
@@ -1151,6 +1180,11 @@ SqliteEnumValue(
     DWORD dwValueLen = 0;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+    DWORD dwTotalValue = 0;
+    size_t sNumDefaultValues = 0;
+    PREG_DB_VALUE_ATTRIBUTES* ppRegDefaultEntries = NULL;
+    DWORD dwDefaultIndex = 0;
+
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     BAIL_ON_INVALID_RESERVED_POINTER(pdwReserved);
@@ -1171,17 +1205,35 @@ SqliteEnumValue(
     status = SqliteCacheKeyValuesInfo_inlock(pKeyCtx);
     BAIL_ON_NT_STATUS(status);
 
-    if (!pKeyCtx->dwNumValues)
+    status = SqliteCacheKeyDefaultValuesInfo_inlock(pKeyCtx);
+    BAIL_ON_NT_STATUS(status);
+
+
+    dwTotalValue = pKeyCtx->dwNumValues + pKeyCtx->dwNumDefaultValues;
+    if (dwTotalValue == 0)
     {
         goto cleanup;
     }
 
-    if (dwIndex >= pKeyCtx->dwNumValues)
+    if (dwIndex >= dwTotalValue)
     {
     	status = STATUS_NO_MORE_ENTRIES;
         BAIL_ON_NT_STATUS(status);
     }
 
+    // (1) Enumrate user specified values that has been cached
+    if (dwIndex < pKeyCtx->dwNumCacheValues)
+    {
+        pValName = pKeyCtx->ppwszValueNames[dwIndex];
+        valueType = pKeyCtx->pTypes[dwIndex];
+        dwValueLen = pKeyCtx->pdwValueLen[dwIndex];
+        pValueContent = pKeyCtx->ppValues[dwIndex];
+
+        goto done;
+    }
+
+    // (2) Enumrate user specified values that has been not been cached
+    // until there are no more user specified values.
     if (dwIndex >= pKeyCtx->dwNumCacheValues)
     {
     	status = RegDbQueryInfoKeyValue(ghCacheConnection,
@@ -1190,9 +1242,49 @@ SqliteEnumValue(
                                         dwIndex,
                                         &sNumValues,
                                         &ppRegEntries);
+    	// sNumValues == 0 means no more entry
+    	if (!status  && !sNumValues)
+    	{
+    	    // (3) Enumrate default values that has been cached
+    	    dwDefaultIndex = dwIndex-pKeyCtx->dwNumValues;
+
+    	    if (dwDefaultIndex < pKeyCtx->dwNumCacheDefaultValues)
+    	    {
+    	        pValName = pKeyCtx->ppwszDefaultValueNames[dwDefaultIndex];
+    	        valueType = pKeyCtx->pDefaultTypes[dwDefaultIndex];
+    	        dwValueLen = pKeyCtx->pdwDefaultValueLen[dwDefaultIndex];
+    	        pValueContent = pKeyCtx->ppDefaultValues[dwDefaultIndex];
+
+    	        goto done;
+    	    }
+    	    // (4) Enumrate default values that has not been cached
+    	    else if (dwDefaultIndex >= pKeyCtx->dwNumCacheDefaultValues)
+    	    {
+    	        status = RegDbQueryDefaultValues(ghCacheConnection,
+    	                                         pKeyCtx->qwId,
+    	                                         1,
+    	                                         dwDefaultIndex,
+    	                                         &sNumDefaultValues,
+    	                                         &ppRegDefaultEntries);
+    	        BAIL_ON_NT_STATUS(status);
+
+    	        if (sNumDefaultValues > 1)
+    	        {
+    	            status = STATUS_INTERNAL_ERROR;
+    	            BAIL_ON_NT_STATUS(status);
+    	        }
+
+    	        pValName = ppRegDefaultEntries[0]->pwszValueName;
+    	        valueType = ppRegDefaultEntries[0]->pValueAttributes->ValueType;
+    	        dwValueLen = ppRegDefaultEntries[0]->pValueAttributes->DefaultValueLen;
+    	        pValueContent = ppRegDefaultEntries[0]->pValueAttributes->pDefaultValue;
+
+    	        goto done;
+    	    }
+    	}
         BAIL_ON_NT_STATUS(status);
 
-        if (sNumValues != 1)
+        if (sNumValues > 1)
         {
             status = STATUS_INTERNAL_ERROR;
             BAIL_ON_NT_STATUS(status);
@@ -1203,14 +1295,8 @@ SqliteEnumValue(
         dwValueLen = ppRegEntries[0]->dwValueLen;
         pValueContent = ppRegEntries[0]->pValue;
     }
-    else
-    {
-    	pValName = pKeyCtx->ppwszValueNames[dwIndex];
-        valueType = pKeyCtx->pTypes[dwIndex];
-        dwValueLen = pKeyCtx->pdwValueLen[dwIndex];
-        pValueContent = pKeyCtx->ppValues[dwIndex];
-    }
 
+done:
     if (pValName)
     {
     	sValueNameLen = RtlWC16StringNumChars(pValName);
@@ -1243,6 +1329,8 @@ cleanup:
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyCtx->mutex);
 
     RegDbSafeFreeEntryValueList(sNumValues,&ppRegEntries);
+    RegDbSafeFreeEntryValueAttributesList(sNumDefaultValues,
+                                          &ppRegDefaultEntries);
 
     return status;
 

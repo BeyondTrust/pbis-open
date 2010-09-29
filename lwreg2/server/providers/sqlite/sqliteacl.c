@@ -69,13 +69,7 @@ SqliteSetKeySecurity(
 	ULONG ulSecDescToSetLen = 0;
 	PREG_KEY_CONTEXT pKeyCtx = NULL;
 	ACCESS_MASK accessRequired = KEY_ALL_ACCESS;
-#if 0
-	SECURITY_INFORMATION SecurityInfomrationAll =
-									  (OWNER_SECURITY_INFORMATION |
-									   GROUP_SECURITY_INFORMATION |
-									   DACL_SECURITY_INFORMATION |
-									   SACL_SECURITY_INFORMATION);
-#endif
+
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
 

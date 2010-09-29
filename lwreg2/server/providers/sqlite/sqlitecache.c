@@ -915,3 +915,168 @@ SqliteReleaseDbKeyInfo_inlock(
     	SqliteCacheDeleteDbKeyInfo_inlock(pRegKey->pwszFullKeyName);
     }
 }
+
+
+NTSTATUS
+SqliteCacheKeyDefaultValuesInfo_inlock(
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    size_t sNumDefaultValues = 0;
+    size_t sNumCacheDefaultValues = 0;
+    PREG_DB_VALUE_ATTRIBUTES* ppRegEntries = NULL;
+
+    if (pKeyResult->bHasDefaultValueInfo)
+    {
+        goto cleanup;
+    }
+
+    status = RegDbQueryDefaultValuesCount(ghCacheConnection,
+                                    pKeyResult->qwId,
+                                    &sNumDefaultValues);
+    BAIL_ON_NT_STATUS(status);
+
+    sNumCacheDefaultValues = (sNumDefaultValues > (size_t)dwDefaultCacheSize)
+                      ? dwDefaultCacheSize
+                      : sNumDefaultValues;
+
+    status = RegDbQueryDefaultValues(ghCacheConnection,
+                                    pKeyResult->qwId,
+                                    sNumCacheDefaultValues,
+                                    0,
+                                    &sNumCacheDefaultValues,
+                                    &ppRegEntries);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RegDbSafeRecordDefaultValuesInfo_inlock(
+                            sNumDefaultValues,
+                            sNumCacheDefaultValues,
+                            ppRegEntries,
+                            pKeyResult);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    RegDbSafeFreeEntryValueAttributesList(sNumCacheDefaultValues,
+                                          &ppRegEntries);
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+SqliteCacheKeyDefaultValuesInfo(
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyResult);
+
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pKeyResult->mutex);
+
+    status = SqliteCacheKeyDefaultValuesInfo_inlock(pKeyResult);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+SqliteCacheUpdateDefaultValuesInfo_inlock(
+    DWORD dwOffSet,
+    IN OUT PREG_KEY_CONTEXT pKeyResult,
+    OUT size_t* psNumValues
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    size_t sNumValues = 0;
+    PREG_DB_VALUE_ATTRIBUTES* ppRegEntries = NULL;
+    int iCount = 0;
+    size_t sValueNameLen = 0;
+    DWORD dwValueLen = 0;
+
+
+    status = RegDbQueryDefaultValues(ghCacheConnection,
+                                    pKeyResult->qwId,
+                                    dwDefaultCacheSize,
+                                    dwOffSet,
+                                    &sNumValues,
+                                    &ppRegEntries);
+    BAIL_ON_NT_STATUS(status);
+
+    for (iCount = 0; iCount < (int)sNumValues; iCount++)
+    {
+        if (!ppRegEntries[iCount]->pValueAttributes)
+        {
+            status = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ppRegEntries[iCount]->pwszValueName)
+        {
+            sValueNameLen = RtlWC16StringNumChars(ppRegEntries[iCount]->pwszValueName);
+        }
+
+        if (pKeyResult->sMaxValueNameLen < sValueNameLen)
+            pKeyResult->sMaxValueNameLen = sValueNameLen;
+
+        status = RegCopyValueBytes(ppRegEntries[iCount]->pValueAttributes->pDefaultValue,
+                                   ppRegEntries[iCount]->pValueAttributes->DefaultValueLen,
+                                   NULL,
+                                   &dwValueLen);
+        BAIL_ON_NT_STATUS(status);
+
+        if (pKeyResult->sMaxValueLen < (size_t)dwValueLen)
+            pKeyResult->sMaxValueLen = (size_t)dwValueLen;
+
+        sValueNameLen = 0;
+        dwValueLen = 0;
+    }
+
+cleanup:
+    *psNumValues = sNumValues;
+    RegDbSafeFreeEntryValueAttributesList(sNumValues,
+                                          &ppRegEntries);
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+SqliteCacheUpdateDefaultValuesInfo(
+    DWORD dwOffSet,
+    IN OUT PREG_KEY_CONTEXT pKeyResult,
+    OUT size_t* psNumValues
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyResult);
+
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pKeyResult->mutex);
+
+    status = SqliteCacheUpdateDefaultValuesInfo_inlock(dwOffSet,
+                                                       pKeyResult,
+                                                       psNumValues);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
+
+    return status;
+
+error:
+    goto cleanup;
+}

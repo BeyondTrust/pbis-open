@@ -1963,3 +1963,130 @@ cleanup:
 error:
     goto cleanup;
 }
+
+
+NTSTATUS
+RegDbSafeRecordDefaultValuesInfo_inlock(
+    IN size_t sCount,
+    IN size_t sCacheCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppRegEntries,
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    int iCount = 0;
+    size_t sValueNameLen = 0;
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyResult);
+
+    //Remove previous subKey information if there is any
+    RegFreeWC16StringArray(pKeyResult->ppwszDefaultValueNames, pKeyResult->dwNumCacheDefaultValues);
+    RegFreeValueByteArray(pKeyResult->ppDefaultValues, pKeyResult->dwNumCacheDefaultValues);
+    LWREG_SAFE_FREE_MEMORY(pKeyResult->pDefaultTypes);
+    LWREG_SAFE_FREE_MEMORY(pKeyResult->pdwDefaultValueLen);
+
+    if (!sCacheCount)
+    {
+        goto cleanup;
+    }
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pKeyResult->ppwszDefaultValueNames, PWSTR,
+                              sizeof(*(pKeyResult->ppwszDefaultValueNames))* sCacheCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pKeyResult->ppDefaultValues, PBYTE,
+                              sizeof(*(pKeyResult->ppDefaultValues))* sCacheCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pKeyResult->pDefaultTypes, REG_DATA_TYPE,
+                              sizeof(*(pKeyResult->pDefaultTypes))* sCacheCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LW_RTL_ALLOCATE((PVOID*)&pKeyResult->pdwDefaultValueLen, DWORD,
+                              sizeof(*(pKeyResult->pdwDefaultValueLen))* sCacheCount);
+    BAIL_ON_NT_STATUS(status);
+
+    for (iCount = 0; iCount < (DWORD)sCacheCount; iCount++)
+    {
+        status = LwRtlWC16StringDuplicate(&pKeyResult->ppwszDefaultValueNames[iCount],
+                                          ppRegEntries[iCount]->pwszValueName);
+        BAIL_ON_NT_STATUS(status);
+
+        if (!ppRegEntries[iCount]->pValueAttributes)
+        {
+            status = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        if (ppRegEntries[iCount]->pValueAttributes->DefaultValueLen)
+        {
+            status = LW_RTL_ALLOCATE((PVOID*)&pKeyResult->ppDefaultValues[iCount], BYTE,
+               sizeof(*(pKeyResult->ppDefaultValues[iCount])) * ppRegEntries[iCount]->pValueAttributes->DefaultValueLen);
+            BAIL_ON_NT_STATUS(status);
+
+            memcpy(pKeyResult->ppDefaultValues[iCount],
+                   ppRegEntries[iCount]->pValueAttributes->pDefaultValue,
+                   ppRegEntries[iCount]->pValueAttributes->DefaultValueLen);
+        }
+
+        pKeyResult->pdwDefaultValueLen[iCount] = ppRegEntries[iCount]->pValueAttributes->DefaultValueLen;
+        pKeyResult->pDefaultTypes[iCount] = ppRegEntries[iCount]->pValueAttributes->ValueType;
+
+        if (pKeyResult->sMaxValueLen < (size_t)ppRegEntries[iCount]->pValueAttributes->DefaultValueLen)
+        {
+            pKeyResult->sMaxValueLen = (size_t)ppRegEntries[iCount]->pValueAttributes->DefaultValueLen;
+        }
+
+        if (pKeyResult->ppwszDefaultValueNames[iCount])
+        {
+            sValueNameLen = RtlWC16StringNumChars(pKeyResult->ppwszDefaultValueNames[iCount]);
+        }
+
+        if (pKeyResult->sMaxValueNameLen < sValueNameLen)
+            pKeyResult->sMaxValueNameLen = sValueNameLen;
+
+        sValueNameLen = 0;
+    }
+
+cleanup:
+    pKeyResult->dwNumDefaultValues = (DWORD)sCount;
+    pKeyResult->dwNumCacheDefaultValues = sCacheCount;
+
+    pKeyResult->bHasDefaultValueInfo = TRUE;
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbSafeRecordDefaultValuesInfo(
+    IN size_t sCount,
+    IN size_t sCacheCount,
+    IN PREG_DB_VALUE_ATTRIBUTES* ppRegEntries,
+    IN OUT PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+
+    BAIL_ON_NT_INVALID_POINTER(pKeyResult);
+
+    LWREG_LOCK_RWMUTEX_EXCLUSIVE(bInLock, &pKeyResult->mutex);
+
+    status = RegDbSafeRecordDefaultValuesInfo_inlock(sCount,
+                                                     sCacheCount,
+                                                     ppRegEntries,
+                                                     pKeyResult);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
+
+    return status;
+
+error:
+    goto cleanup;
+}
+

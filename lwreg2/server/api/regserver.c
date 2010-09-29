@@ -751,9 +751,20 @@ RegSrvResetValueInfo(
 
     pKeyResult->ppwszValueNames = NULL;
     pKeyResult->ppValues = NULL;
-
     pKeyResult->dwNumCacheValues = 0;
     pKeyResult->dwNumValues = 0;
+
+    pKeyResult->bHasDefaultValueInfo = FALSE;
+
+    RegFreeWC16StringArray(pKeyResult->ppwszDefaultValueNames, pKeyResult->dwNumCacheDefaultValues);
+    RegFreeValueByteArray(pKeyResult->ppDefaultValues, pKeyResult->dwNumCacheDefaultValues);
+    LWREG_SAFE_FREE_MEMORY(pKeyResult->pdwDefaultValueLen);
+    LWREG_SAFE_FREE_MEMORY(pKeyResult->pDefaultTypes);
+
+    pKeyResult->ppwszDefaultValueNames = NULL;
+    pKeyResult->ppDefaultValues = NULL;
+    pKeyResult->dwNumCacheDefaultValues = 0;
+    pKeyResult->dwNumCacheValues = 0;
 
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
 }
@@ -775,6 +786,24 @@ RegSrvHasValueInfo(
     return bHasValueInfo;
 }
 
+BOOLEAN
+RegSrvHasDefaultValueInfo(
+    IN PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    BOOLEAN bInLock = FALSE;
+    BOOLEAN bHasDefaultValueInfo = FALSE;
+
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
+
+    bHasDefaultValueInfo = pKeyResult->bHasDefaultValueInfo;
+
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
+
+    return bHasDefaultValueInfo;
+}
+
+
 DWORD
 RegSrvValueNum(
     IN PREG_KEY_CONTEXT pKeyResult
@@ -786,6 +815,23 @@ RegSrvValueNum(
     LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
 
     dwValueCount = pKeyResult->dwNumValues;
+
+    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
+
+    return dwValueCount;
+}
+
+DWORD
+RegSrvDefaultValueNum(
+    IN PREG_KEY_CONTEXT pKeyResult
+    )
+{
+    BOOLEAN bInLock = FALSE;
+    DWORD dwValueCount = 0;
+
+    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
+
+    dwValueCount = pKeyResult->dwNumDefaultValues;
 
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
 
@@ -824,58 +870,4 @@ RegSrvMaxValueLen(
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
 
     return sMaxValueLen;
-}
-
-PCWSTR
-RegSrvValueName(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    PCWSTR pwszValueName = NULL;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    pwszValueName = pKeyResult->ppwszValueNames[dwIndex];
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return pwszValueName;
-}
-
-void
-RegSrvValueContent(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex,
-    PBYTE* ppValue,
-    PDWORD pdwValueLen
-    )
-{
-    BOOLEAN bInLock = FALSE;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    *ppValue = pKeyResult->ppValues[dwIndex];
-    *pdwValueLen = pKeyResult->pdwValueLen[dwIndex];
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-}
-
-REG_DATA_TYPE
-RegSrvValueType(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex
-    )
-{
-    BOOLEAN bInLock = FALSE;
-    REG_DATA_TYPE type = REG_UNKNOWN;
-
-    LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyResult->mutex);
-
-    type = pKeyResult->pTypes[dwIndex];
-
-    LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyResult->mutex);
-
-    return type;
 }

@@ -81,15 +81,33 @@ typedef struct __REG_KEY_CONTEXT
     PWSTR* ppwszSubKeyNames;
     BOOLEAN bHasSubKeyInfo;
 
-    DWORD dwNumValues;
-    DWORD dwNumCacheValues;
     size_t sMaxValueNameLen;
     size_t sMaxValueLen;
+
+    // keep track of the number of values that have been set by user
+    DWORD dwNumValues;
+    DWORD dwNumCacheValues;
+
     PREG_DATA_TYPE pTypes;
     PWSTR* ppwszValueNames;
     PBYTE* ppValues;
     PDWORD pdwValueLen;
+
     BOOLEAN bHasValueInfo;
+
+    // keep track of the number of values that have not been set by user
+    // but are defined in schema as value attributes
+    DWORD dwNumDefaultValues;
+    DWORD dwNumCacheDefaultValues;
+
+    PREG_DATA_TYPE pDefaultTypes;
+    PWSTR* ppwszDefaultValueNames;
+    PBYTE* ppDefaultValues;
+    PDWORD pdwDefaultValueLen;
+
+    BOOLEAN bHasDefaultValueInfo;
+
+
 
 } REG_KEY_CONTEXT, *PREG_KEY_CONTEXT;
 
@@ -473,8 +491,18 @@ RegSrvHasValueInfo(
     IN PREG_KEY_CONTEXT pKeyResult
     );
 
+BOOLEAN
+RegSrvHasDefaultValueInfo(
+    IN PREG_KEY_CONTEXT pKeyResult
+    );
+
 DWORD
 RegSrvValueNum(
+    IN PREG_KEY_CONTEXT pKeyResult
+    );
+
+DWORD
+RegSrvDefaultValueNum(
     IN PREG_KEY_CONTEXT pKeyResult
     );
 
@@ -486,26 +514,6 @@ RegSrvMaxValueNameLen(
 size_t
 RegSrvMaxValueLen(
     IN PREG_KEY_CONTEXT pKeyResult
-    );
-
-PCWSTR
-RegSrvValueName(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex
-    );
-
-void
-RegSrvValueContent(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex,
-    PBYTE* ppValue,
-    PDWORD pdwValueLen
-    );
-
-REG_DATA_TYPE
-RegSrvValueType(
-    IN PREG_KEY_CONTEXT pKeyResult,
-    DWORD dwIndex
     );
 
 //Registry ACL check
