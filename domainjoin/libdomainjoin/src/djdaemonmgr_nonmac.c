@@ -321,11 +321,27 @@ DJStartStopDaemon(
 
         if(bStatus)
         {
-            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start. Try running '%s start; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            if (!strcmp(pszDaemonPath, "/sbin/init.d/dtlogin.rc"))
+            {
+                // dtlogin on HP-UX does not have a status option
+                LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start. Try running '%s start; ps -ef | grep dtlogin' to diagnose the issue", pszDaemonPath, pszDaemonPath);
+            }
+            else
+            {
+                LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to start daemon", "An attempt was made to start the '%s' daemon, but querying its status revealed that it did not start. Try running '%s start; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            }
         }
         else
         {
-            LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop. Try running '%s stop; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            if (!strcmp(pszDaemonPath, "/sbin/init.d/dtlogin.rc"))
+            {
+                // dtlogin on HP-UX does not have a status option
+                LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop. Try running '%s stop; ps -ef | grep dtlogin' to diagnose the issue", pszDaemonPath, pszDaemonPath);
+            }
+            else
+            {
+                LW_RAISE_EX(exc, ERROR_INVALID_STATE, "Unable to stop daemon", "An attempt was made to stop the '%s' daemon, but querying its status revealed that it did not stop. Try running '%s stop; %s status' to diagnose the issue", pszDaemonPath, pszDaemonPath, pszDaemonPath);
+            }
         }
         goto cleanup;
     }
