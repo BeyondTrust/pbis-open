@@ -908,13 +908,16 @@ ProcessExportedKeyInfo(
             /* Might have to do something with MULTI_SZ */
             if (dataType == REG_SZ)
             {
-                dwError = RegCStringAllocateFromWC16String(
-                              (PSTR *) &regItem.regAttr.pDefaultValue,
-                              (PWSTR) regItem.regAttr.pDefaultValue);
-                BAIL_ON_REG_ERROR(dwError);
-                regItem.regAttr.DefaultValueLen =
-                    strlen(regItem.regAttr.pDefaultValue);
-                regItem.value = pValue;
+                if (regItem.regAttr.pDefaultValue)
+                {
+                    dwError = RegCStringAllocateFromWC16String(
+                                  (PSTR *) &regItem.regAttr.pDefaultValue,
+                                  (PWSTR) regItem.regAttr.pDefaultValue);
+                    BAIL_ON_REG_ERROR(dwError);
+                    regItem.regAttr.DefaultValueLen =
+                        strlen(regItem.regAttr.pDefaultValue);
+                    regItem.value = pValue;
+                }
             }
             else 
             {
