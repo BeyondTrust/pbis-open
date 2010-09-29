@@ -595,8 +595,7 @@ DWORD RegExportString(
                   &dwEscapeStringLen);
     BAIL_ON_REG_ERROR(dwError);
 
-    bufLen = strlen(valueName) + sizeof("\"\" = {\n    value = \"\"") +
-                 dwEscapeStringLen + sizeof("\n}\n") + 8;
+    bufLen = strlen(valueName) + dwEscapeStringLen + 8;
 
     dwError = RegAllocateMemory(sizeof(*dumpBuf) * bufLen, (PVOID*)&dumpBuf);
     BAIL_ON_REG_ERROR(dwError);
@@ -609,7 +608,7 @@ DWORD RegExportString(
     }
     else
     {
-        dumpStringLen = sprintf(dumpBuf, "\"%s\" = {\n    value = \"%s\"\n}",
+        dumpStringLen = sprintf(dumpBuf, "\"%s\"=\"%s\"",
                             valueName,
                             valueEscName);
     }
@@ -786,7 +785,7 @@ PrintToRegFile(
 
    if (dumpString)
    {
-       RegMemoryFree(dumpString);
+	   RegMemoryFree(dumpString);
        dumpString = NULL;
    }
 
@@ -983,7 +982,7 @@ ProcessSubKeys(
     // Get the subkeys and values under this key from registry
     for (iCount = 0; iCount < dwNumSubKeys; iCount++)
     {
-        dwSubKeyLen = dwMaxSubKeyLen+1;
+    	dwSubKeyLen = dwMaxSubKeyLen+1;
 
         dwError = RegAllocateMemory(sizeof(*pwszSubKey) * dwSubKeyLen, (PVOID*)&pwszSubKey);
         BAIL_ON_REG_ERROR(dwError);
@@ -1025,7 +1024,7 @@ ProcessSubKeys(
         BAIL_ON_REG_ERROR(dwError);
 
         // Get the pszFullSubKeyName
-        dwError = RegCStringAllocateFromWC16String(&pszSubKey, pwszSubKey);
+    	dwError = RegCStringAllocateFromWC16String(&pszSubKey, pwszSubKey);
         BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegCStringAllocatePrintf(
