@@ -93,8 +93,11 @@ IopFileObjectAllocate(
 
     pFileObject->ReferenceCount = 1;
     pFileObject->pDevice = pDevice;
+    IopDeviceReference(pDevice);
 
     LwListInit(&pFileObject->IrpList);
+    LwListInit(&pFileObject->DeviceLinks);
+    LwListInit(&pFileObject->RundownLinks);
     LwListInit(&pFileObject->ZctCompletionIrpList);
 
     // Pre-allocate IRP for close.
@@ -121,7 +124,16 @@ IopFileObjectAllocate(
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     IopDeviceLock(pDevice);
-    LwListInsertTail(&pDevice->FileObjectsList, &pFileObject->DeviceLinks);
+    if (IsSetFlag(pDevice->Flags, IO_DEVICE_OBJECT_FLAG_RUNDOWN) ||
+        IsSetFlag(pDevice->Flags, IO_DEVICE_OBJECT_FLAG_RUNDOWN_DRIVER))
+    {
+        // TODO: Find "correct" error code.
+        status = STATUS_INVALID_HANDLE;
+    }
+    else
+    {
+        LwListInsertTail(&pDevice->FileObjectsList, &pFileObject->DeviceLinks);
+    }
     IopDeviceUnlock(pDevice);
 
 cleanup:
@@ -150,6 +162,8 @@ IopFileObjectFree(
         IopDeviceLock(pFileObject->pDevice);
         LwListRemove(&pFileObject->DeviceLinks);
         IopDeviceUnlock(pFileObject->pDevice);
+
+        IopDeviceDereference(&pFileObject->pDevice);
 
         LwRtlCleanupConditionVariable(&pFileObject->Rundown.Condition);
         LwRtlCleanupMutex(&pFileObject->Mutex);
@@ -269,7 +283,7 @@ IopContinueAsyncCloseFile(
     IN PIO_FILE_OBJECT FileHandle,
     IN OPTIONAL PIO_ASYNC_COMPLETE_CALLBACK Callback,
     IN OPTIONAL PVOID CallbackContext,
-    IN OPTIONAL PIO_STATUS_BLOCK IoStatusBlock
+    OUT PIO_STATUS_BLOCK IoStatusBlock
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -321,10 +335,22 @@ cleanup:
 
 NTSTATUS
 IopFileObjectRundown(
-    IN PIO_FILE_OBJECT pFileObject,
+    IN PIO_FILE_OBJECT pFileObject
+    )
+{
+    IO_STATUS_BLOCK ioStatusBlock = { 0 };
+
+    IopFileObjectReference(pFileObject);
+
+    return IopFileObjectRundownEx(pFileObject, NULL, NULL, &ioStatusBlock);
+}
+
+NTSTATUS
+IopFileObjectRundownEx(
+    IN OUT PIO_FILE_OBJECT pFileObject,
     IN OPTIONAL PIO_ASYNC_COMPLETE_CALLBACK Callback,
     IN OPTIONAL PVOID CallbackContext,
-    IN OPTIONAL PIO_STATUS_BLOCK IoStatusBlock
+    OUT PIO_STATUS_BLOCK IoStatusBlock
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -435,9 +461,15 @@ cleanup:
         *IoStatusBlock = ioStatusBlock;
     }
 
-    // TODO-Perhaps do not ASSERT here because memory allocation
-    // might have caused code not to issue close to the driver.
-    LWIO_ASSERT((STATUS_SUCCESS == status) || (STATUS_PENDING == status));
+    // TODO-Perhaps do not ASSERT here because LwRtlInitializeEvent()
+    // could have failed if disaptching close IRP synchronously.
+    LWIO_ASSERT((STATUS_SUCCESS == status) ||
+                (STATUS_PENDING == status) ||
+                (STATUS_FILE_CLOSED == status));
+
+    // TODO-Perhaps also remove object from device's file object
+    // list such that it cannot be rundown multiple times.  This
+    // would avoid the STATUS_FILE_CLOSED above.
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
     return status;

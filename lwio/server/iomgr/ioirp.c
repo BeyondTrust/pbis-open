@@ -178,9 +178,12 @@ IopIrpAttach(
     IopFileObjectUnlock(pFileObject);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
+    // These are immutable from here until the IRP is freed.
     pIrp->Type = Type;
     pIrp->FileHandle = pFileObject;
     IopFileObjectReference(pFileObject);
+    // The file object reference keeps an implicit reference to the
+    // device and driver.
     pIrp->DeviceHandle = pFileObject->pDevice;
     pIrp->DriverHandle = pFileObject->pDevice->Driver;
 
@@ -592,7 +595,7 @@ NTSTATUS
 IopIrpDispatch(
     IN PIRP pIrp,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    IN PIO_STATUS_BLOCK pIoStatusBlock
+    OUT PIO_STATUS_BLOCK pIoStatusBlock
     )
 {
     NTSTATUS status = STATUS_SUCCESS;

@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -30,6 +30,101 @@
 
 #include "iop.h"
 
+static
+NTSTATUS
+IopDriverRundownEx(
+    IN PIO_DRIVER_OBJECT pDriverObject,
+    IN BOOLEAN ForceFileRundown
+    );
+
+
+static
+NTSTATUS
+IopDriverAllocate(
+    OUT PIO_DRIVER_OBJECT* ppDriverObject,
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName,
+    IN PCSTR pszDriverName,
+    IN OPTIONAL PIO_DRIVER_ENTRY pStaticDriverEntry,
+    IN OPTIONAL PCSTR pszDriverPath
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIO_DRIVER_OBJECT pDriverObject = NULL;
+
+    LWIO_ASSERT(!LW_IS_BOTH_OR_NEITHER(pStaticDriverEntry, pszDriverPath));
+
+    status = IO_ALLOCATE(&pDriverObject, IO_DRIVER_OBJECT, sizeof(*pDriverObject));
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    LwListInit(&pDriverObject->DeviceList);
+    LwListInit(&pDriverObject->RootLinks);
+
+    pDriverObject->ReferenceCount = 1;
+    pDriverObject->Root = pRoot;
+
+    status = RtlUnicodeStringDuplicate(&pDriverObject->DriverName, pDriverName);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = RtlCStringDuplicate(&pDriverObject->pszDriverName, pszDriverName);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    if (pStaticDriverEntry)
+    {
+        pDriverObject->DriverEntry = pStaticDriverEntry;
+    }
+    else
+    {
+        status = RtlCStringDuplicate(&pDriverObject->pszDriverPath, pszDriverPath);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    }
+
+    LwRtlInitializeMutex(&pDriverObject->Mutex, FALSE);
+
+cleanup:
+    if (status)
+    {
+        IopDriverDereference(&pDriverObject);
+    }
+
+    *ppDriverObject = pDriverObject;
+
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+    return status;
+}
+
+static
+VOID
+IopDriverFree(
+    IN OUT PIO_DRIVER_OBJECT* ppDriverObject
+    )
+{
+    PIO_DRIVER_OBJECT pDriverObject = *ppDriverObject;
+
+    if (pDriverObject)
+    {
+        // The object should have already been rundown and unloaded.
+
+        LWIO_ASSERT(LwListIsEmpty(&pDriverObject->DeviceList));
+        LWIO_ASSERT(!pDriverObject->LibraryHandle);
+        LWIO_ASSERT(!pDriverObject->DriverEntry);
+
+        // The device should not be in any lists.
+        LWIO_ASSERT(LwListIsEmpty(&pDriverObject->RootLinks));
+
+        LwRtlCleanupMutex(&pDriverObject->Mutex);
+
+        RtlUnicodeStringFree(&pDriverObject->DriverName);
+        RTL_FREE(&pDriverObject->pszDriverName);
+        RTL_FREE(&pDriverObject->pszDriverPath);
+        
+        IoMemoryFree(pDriverObject);
+        
+        *ppDriverObject = NULL;
+    }
+}
+
 VOID
 IopDriverUnload(
     IN OUT PIO_DRIVER_OBJECT* ppDriverObject
@@ -43,18 +138,21 @@ IopDriverUnload(
         {
             LWIO_LOG_DEBUG("Unloading driver '%s'", pDriverObject->pszDriverName);
         }
+
         if (IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_READY))
         {
-            // TODO -- Add code to cancel IO and wait for IO to complete.
+            IopDriverRundownEx(pDriverObject, TRUE);
             IopRootRemoveDriver(pDriverObject->Root, &pDriverObject->RootLinks);
         }
+
         if (IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_INITIALIZED))
         {
             pDriverObject->Callback.Shutdown(pDriverObject);
-
-            // TODO -- Verify that devices have been removed
-            // TODO -- refcount?
         }
+
+        // The driver is supposed to have removed all of its devices.
+        LWIO_ASSERT(LwListIsEmpty(&pDriverObject->DeviceList));
+
         if (pDriverObject->LibraryHandle)
         {
             int err = dlclose(pDriverObject->LibraryHandle);
@@ -64,12 +162,12 @@ IopDriverUnload(
                                pDriverObject->pszDriverName,
                                pDriverObject->pszDriverPath);
             }
+            pDriverObject->LibraryHandle = NULL;
         }
-        RtlUnicodeStringFree(&pDriverObject->DriverName);
-        RTL_FREE(&pDriverObject->pszDriverName);
-        RTL_FREE(&pDriverObject->pszDriverPath);
-        IoMemoryFree(pDriverObject);
-        *ppDriverObject = NULL;
+
+        pDriverObject->DriverEntry = NULL;
+
+        IopDriverDereference(&pDriverObject);
     }
 }
 
@@ -92,33 +190,19 @@ IopDriverLoad(
 
     LWIO_ASSERT(!LW_IS_BOTH_OR_NEITHER(pStaticDriverEntry, pszDriverPath));
 
-    status = IO_ALLOCATE(&pDriverObject, IO_DRIVER_OBJECT, sizeof(*pDriverObject));
+    status = IopDriverAllocate(&pDriverObject,
+                               pRoot,
+                               pDriverName,
+                               pszDriverName,
+                               pStaticDriverEntry,
+                               pszDriverPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    LwListInit(&pDriverObject->DeviceList);
-
-    pDriverObject->ReferenceCount = 1;
-
-    pDriverObject->Root = pRoot;
-
-    status = RtlUnicodeStringDuplicate(&pDriverObject->DriverName, pDriverName);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-
-    status = RtlCStringDuplicate(&pDriverObject->pszDriverName, pszDriverName);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-
-    if (pStaticDriverEntry)
+    if (pDriverObject->pszDriverPath)
     {
-        pDriverObject->DriverEntry = pStaticDriverEntry;
-    }
-    else
-    {
-        status = RtlCStringDuplicate(&pDriverObject->pszDriverPath, pszDriverPath);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-
         dlerror();
-        
-        pDriverObject->LibraryHandle = dlopen(pszDriverPath, RTLD_NOW | RTLD_GLOBAL);
+
+        pDriverObject->LibraryHandle = dlopen(pDriverObject->pszDriverPath, RTLD_NOW | RTLD_GLOBAL);
         if (!pDriverObject->LibraryHandle)
         {
             pszError = dlerror();
@@ -131,7 +215,7 @@ IopDriverLoad(
             status = STATUS_DLL_NOT_FOUND;
             GOTO_CLEANUP_EE(EE);
         }
-        
+
         dlerror();
         pDriverObject->DriverEntry = (PIO_DRIVER_ENTRY)dlsym(pDriverObject->LibraryHandle, IO_DRIVER_ENTRY_FUNCTION_NAME);
         if (!pDriverObject->DriverEntry)
@@ -164,7 +248,9 @@ IopDriverLoad(
     }
 
     SetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_READY);
-    IopRootInsertDriver(pDriverObject->Root, &pDriverObject->RootLinks);
+
+    status = IopRootInsertDriver(pDriverObject->Root, pDriverObject);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
     if (status)
@@ -239,7 +325,7 @@ IoDriverRegisterRefreshCallback(
 
 cleanup:
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
-    return status; 
+    return status;
 }
 
 PCSTR
@@ -260,56 +346,209 @@ IoDriverGetContext(
 
 VOID
 IopDriverInsertDevice(
-    IN PIO_DRIVER_OBJECT pDriver,
+    IN PIO_DRIVER_OBJECT pDriverObject,
     IN PLW_LIST_LINKS pDeviceDriverLinks
     )
 {
-    LwListInsertTail(&pDriver->DeviceList,
+    IopDriverLock(pDriverObject);
+
+    LwListInsertTail(&pDriverObject->DeviceList,
                      pDeviceDriverLinks);
-    pDriver->DeviceCount++;
+    pDriverObject->DeviceCount++;
+
+    IopDriverUnlock(pDriverObject);
 }
 
 VOID
 IopDriverRemoveDevice(
-    IN PIO_DRIVER_OBJECT pDriver,
+    IN PIO_DRIVER_OBJECT pDriverObject,
     IN PLW_LIST_LINKS pDeviceDriverLinks
     )
 {
-    LwListRemove(pDeviceDriverLinks);
-    pDriver->DeviceCount--;
+    IopDriverLock(pDriverObject);
+
+    if (!LwListIsEmpty(pDeviceDriverLinks))
+    {
+        LwListRemove(pDeviceDriverLinks);
+        pDriverObject->DeviceCount--;
+    }
+
+    IopDriverUnlock(pDriverObject);
+}
+
+VOID
+IopDriverLock(
+    IN PIO_DRIVER_OBJECT pDriverObject
+    )
+{
+    LwRtlLockMutex(&pDriverObject->Mutex);
+}
+
+VOID
+IopDriverUnlock(
+    IN PIO_DRIVER_OBJECT pDriverObject
+    )
+{
+    LwRtlUnlockMutex(&pDriverObject->Mutex);
 }
 
 VOID
 IopDriverReference(
-    IN PIO_DRIVER_OBJECT pDriver
+    IN PIO_DRIVER_OBJECT pDriverObject
     )
 {
-    LONG count = InterlockedIncrement(&pDriver->ReferenceCount);
+    LONG count = InterlockedIncrement(&pDriverObject->ReferenceCount);
     LWIO_ASSERT(count > 1);
 }
 
 VOID
 IopDriverDereference(
-    IN OUT PIO_DRIVER_OBJECT* ppDriver
+    IN OUT PIO_DRIVER_OBJECT* ppDriverObject
     )
 {
-    PIO_DRIVER_OBJECT pDriver = *ppDriver;
+    PIO_DRIVER_OBJECT pDriverObject = *ppDriverObject;
 
-    if (pDriver)
+    if (pDriverObject)
     {
-        // Note that we do not have to acquire the device
-        // lock here since it is impossible to resolve
-        // a file object from a device.
-        LONG count = InterlockedDecrement(&pDriver->ReferenceCount);
+        // Rundown of the driver happens if it was ever inserted into the
+        // root's driver list.  So there is no need to lock the root's driver
+        // list here to synchronize with a "find" in the root's driver list.
+        LONG count = InterlockedDecrement(&pDriverObject->ReferenceCount);
         LWIO_ASSERT(count >= 0);
         if (0 == count)
         {
-            LWIO_ASSERT_MSG(FALSE, "Refcount reached zero for driver object");
-            // IopDriverFree(&pDriver);
+            IopDriverFree(&pDriverObject);
         }
-        *ppDriver = NULL;
+        *ppDriverObject = NULL;
     }
 }
+
+// STATUS_SUCCESS
+// STATUS_FILES_OPEN
+// STATUS_FILE_CLOSED
+static
+NTSTATUS
+IopDriverRundownEx(
+    IN PIO_DRIVER_OBJECT pDriverObject,
+    IN BOOLEAN ForceFileRundown
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    BOOLEAN isLocked = FALSE;
+    PLW_LIST_LINKS pLinks = NULL;
+    LW_LIST_LINKS rundownList = { 0 };
+
+    LwListInit(&rundownList);
+
+    IopDriverLock(pDriverObject);
+    isLocked = TRUE;
+
+    if (IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_RUNDOWN))
+    {
+        // TODO: Perhaps wait if currently running down.
+        status = STATUS_SUCCESS;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    //
+    // To handle !ForceFileRundown, we need to grab *all* the
+    // device locks to decide whether or not to go ahead
+    // with the rundown.  This is because we cannot permit
+    // an open to proceed -- presumably because we do not
+    // want to have to rundown any opens.
+    //
+
+    if (!ForceFileRundown)
+    {
+        BOOLEAN canRundown = TRUE;
+
+        for (pLinks = pDriverObject->DeviceList.Next;
+             pLinks != &pDriverObject->DeviceList;
+             pLinks = pLinks->Next)
+        {
+            PIO_DEVICE_OBJECT pDevice = LW_STRUCT_FROM_FIELD(pLinks, IO_DEVICE_OBJECT, DriverLinks);
+
+            LwListInsertTail(&rundownList, &pDevice->RundownLinks);
+            IopDeviceLock(pDevice);
+
+            if (!LwListIsEmpty(&pDevice->FileObjectsList))
+            {
+                canRundown = FALSE;
+                break;
+            }
+        }
+
+        if (!canRundown)
+        {
+            // Unlock everybody and leave
+
+            while (!LwListIsEmpty(&rundownList))
+            {
+                PIO_DEVICE_OBJECT pDevice = NULL;
+
+                pLinks = LwListRemoveHead(&rundownList);
+                pDevice = LW_STRUCT_FROM_FIELD(pLinks, IO_DEVICE_OBJECT, RundownLinks);
+
+                IopDeviceUnlock(pDevice);
+            }
+
+            status = STATUS_FILES_OPEN;
+            GOTO_CLEANUP_EE(EE);
+        }
+    }
+
+    // We can rundown.
+
+    SetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_RUNDOWN);
+
+    for (pLinks = pDriverObject->DeviceList.Next;
+         pLinks != &pDriverObject->DeviceList;
+         pLinks = pLinks->Next)
+    {
+        PIO_DEVICE_OBJECT pDevice = LW_STRUCT_FROM_FIELD(pLinks, IO_DEVICE_OBJECT, DriverLinks);
+
+        IopDeviceReference(pDevice);
+
+        // If !ForceFileRundown, the devices are already locked and
+        // inserted into the rundown list.
+        if (ForceFileRundown)
+        {
+            IopDeviceLock(pDevice);
+            LwListInsertTail(&rundownList, &pDevice->RundownLinks);
+        }
+
+        SetFlag(pDevice->Flags, IO_DEVICE_OBJECT_FLAG_RUNDOWN_DRIVER);
+
+        IopDeviceUnlock(pDevice);
+    }
+
+    IopDriverUnlock(pDriverObject);
+    isLocked = FALSE;
+
+    // Now, actually run down every device w/o holding the driver lock.
+
+    while (!LwListIsEmpty(&rundownList))
+    {
+        PIO_DEVICE_OBJECT pDevice = NULL;
+
+        pLinks = LwListRemoveHead(&rundownList);
+        pDevice = LW_STRUCT_FROM_FIELD(pLinks, IO_DEVICE_OBJECT, RundownLinks);
+
+        IopDeviceRundown(pDevice);
+        IopDeviceDereference(&pDevice);
+    }
+
+cleanup:
+    if (isLocked)
+    {
+        IopDriverUnlock(pDriverObject);
+    }
+
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+    return status;
+}
+
 
 /*
 local variables:

@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -74,26 +74,35 @@ typedef struct _IOP_ROOT_STATE {
     PLW_MAP_SECURITY_CONTEXT MapSecurityContext;
 } IOP_ROOT_STATE, *PIOP_ROOT_STATE;
 
-typedef ULONG IO_DRIVER_OBJECT_FLAGS;
+typedef ULONG IO_DRIVER_OBJECT_FLAGS, *PIO_DRIVER_OBJECT_FLAGS;
 
-#define IO_DRIVER_OBJECT_FLAG_INITIALIZED 0x00000001
-#define IO_DRIVER_OBJECT_FLAG_READY       0x00000002
+#define IO_DRIVER_OBJECT_FLAG_INITIALIZED   0x00000001
+#define IO_DRIVER_OBJECT_FLAG_READY         0x00000002
+#define IO_DRIVER_OBJECT_FLAG_RUNDOWN       0x00000004
+#define IO_DRIVER_OBJECT_FLAG_UNLOADING     0x00000008
 
 struct _IO_DRIVER_OBJECT {
     LONG ReferenceCount;
     IO_DRIVER_OBJECT_FLAGS Flags;
+
+    // Immutable after initialization
     PIOP_ROOT_STATE Root;
     UNICODE_STRING DriverName;
     PSTR pszDriverName;
     PSTR pszDriverPath;
     PVOID LibraryHandle;
     PIO_DRIVER_ENTRY DriverEntry;
+
+    // Immutable after DriverEntry
     struct {
         PIO_DRIVER_SHUTDOWN_CALLBACK Shutdown;
         PIO_DRIVER_DISPATCH_CALLBACK Dispatch;
         PIO_DRIVER_REFRESH_CALLBACK Refresh;
     } Callback;
     PVOID Context;
+
+    // Protects Flags and DeviceList.
+    LW_RTL_MUTEX Mutex;
 
     // Devices - list of IO_DEVICE_OBJECT
     LW_LIST_LINKS DeviceList;
@@ -104,24 +113,38 @@ struct _IO_DRIVER_OBJECT {
     LW_LIST_LINKS RootLinks;
 };
 
+typedef ULONG IO_DEVICE_OBJECT_FLAGS, *PIO_DEVICE_OBJECT_FLAGS;
+
+#define IO_DEVICE_OBJECT_FLAG_RUNDOWN       0x00000001
+#define IO_DEVICE_OBJECT_FLAG_RUNDOWN_DRIVER 0x00000002
+
 struct _IO_DEVICE_OBJECT {
     LONG ReferenceCount;
+    IO_DEVICE_OBJECT_FLAGS Flags;
+
+    // Immutable after initialization
     UNICODE_STRING DeviceName;
     PIO_DRIVER_OBJECT Driver;
     PVOID Context;
+    // TODO: Add to IoDeviceCreate
+    DEVICE_TYPE DeviceType;
+
+    // Protects Flags and FileObjectsList.
+    LW_RTL_MUTEX Mutex;
 
     // File objects for this device (list of IO_FILE_OBJECT).
     LW_LIST_LINKS FileObjectsList;
+
+    // Used to synchronize IRP dispatch/cancel/complete.
+    LW_RTL_MUTEX CancelMutex;
 
     // For each list to which this object belongs:
     // - Entry in IO_DRIVER_OBJECT.DevicetList
     LW_LIST_LINKS DriverLinks;
     // - Entry in IOP_ROOT_STATE.DeviceObjectList
     LW_LIST_LINKS RootLinks;
-
-    LW_RTL_MUTEX Mutex;
-
-    LW_RTL_MUTEX CancelMutex;
+    // - Entry in IopDeviceRundown()'s rundownList
+    LW_LIST_LINKS RundownLinks;
 };
 
 typedef ULONG FILE_OBJECT_FLAGS;
@@ -154,6 +177,9 @@ struct _IO_FILE_OBJECT {
 
     // Links for IO_DEVICE_OBJECT.FileObjectsList
     LW_LIST_LINKS DeviceLinks;
+
+    // Links used for device object rundown
+    LW_LIST_LINKS RundownLinks;
 
     struct {
         LW_RTL_CONDITION_VARIABLE Condition;
@@ -218,10 +244,9 @@ IopRootUnloadDriver(
     IN PUNICODE_STRING pDriverName
     );
 
-PIO_DRIVER_OBJECT
-IopRootFindDriver(
-    IN PIOP_ROOT_STATE pRoot,
-    IN PUNICODE_STRING pDriverName
+NTSTATUS
+IopRootRefreshConfig(
+    IN PIOP_ROOT_STATE pRoot
     );
 
 PIO_DEVICE_OBJECT
@@ -231,14 +256,9 @@ IopRootFindDevice(
     );
 
 NTSTATUS
-IopRootRefreshConfig(
-    IN PIOP_ROOT_STATE pRoot
-    );
-
-VOID
 IopRootInsertDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PLW_LIST_LINKS pDriverRootLinks
+    IN PIO_DRIVER_OBJECT pDriver
     );
 
 VOID
@@ -247,10 +267,10 @@ IopRootRemoveDriver(
     IN PLW_LIST_LINKS pDriverRootLinks
     );
 
-VOID
+NTSTATUS
 IopRootInsertDevice(
     IN PIOP_ROOT_STATE pRoot,
-    IN PLW_LIST_LINKS pDeviceRootLinks
+    IN PIO_DEVICE_OBJECT pDevice
     );
 
 VOID
@@ -291,24 +311,34 @@ IopDriverLoad(
 
 VOID
 IopDriverInsertDevice(
-    IN PIO_DRIVER_OBJECT pDriver,
+    IN PIO_DRIVER_OBJECT pDriverObject,
     IN PLW_LIST_LINKS pDeviceDriverLinks
     );
 
 VOID
 IopDriverRemoveDevice(
-    IN PIO_DRIVER_OBJECT pDriver,
+    IN PIO_DRIVER_OBJECT pDriverObject,
     IN PLW_LIST_LINKS pDeviceDriverLinks
     );
 
 VOID
 IopDriverReference(
-    IN PIO_DRIVER_OBJECT pDriver
+    IN PIO_DRIVER_OBJECT pDriverObject
     );
 
 VOID
 IopDriverDereference(
-    IN OUT PIO_DRIVER_OBJECT* ppDriver
+    IN OUT PIO_DRIVER_OBJECT* ppDriverObject
+    );
+
+VOID
+IopDriverLock(
+    IN PIO_DRIVER_OBJECT pDriverObject
+    );
+
+VOID
+IopDriverUnlock(
+    IN PIO_DRIVER_OBJECT pDriverObject
     );
 
 // iodevice.c
@@ -326,6 +356,21 @@ IopDeviceLock(
 
 VOID
 IopDeviceUnlock(
+    IN PIO_DEVICE_OBJECT pDeviceObject
+    );
+
+VOID
+IopDeviceReference(
+    IN PIO_DEVICE_OBJECT pDeviceObject
+    );
+
+VOID
+IopDeviceDereference(
+    IN OUT PIO_DEVICE_OBJECT* ppDeviceObject
+    );
+
+NTSTATUS
+IopDeviceRundown(
     IN PIO_DEVICE_OBJECT pDeviceObject
     );
 
@@ -389,7 +434,7 @@ NTSTATUS
 IopIrpDispatch(
     IN PIRP pIrp,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
-    IN PIO_STATUS_BLOCK pIoStatusBlock
+    OUT PIO_STATUS_BLOCK pIoStatusBlock
     );
 
 VOID
@@ -459,10 +504,15 @@ IopFileGetZctSupportMask(
 
 NTSTATUS
 IopFileObjectRundown(
-    IN PIO_FILE_OBJECT pFileObject,
+    IN PIO_FILE_OBJECT pFileObject
+    );
+
+NTSTATUS
+IopFileObjectRundownEx(
+    IN OUT PIO_FILE_OBJECT pFileObject,
     IN OPTIONAL PIO_ASYNC_COMPLETE_CALLBACK Callback,
     IN OPTIONAL PVOID CallbackContext,
-    IN OPTIONAL PIO_STATUS_BLOCK IoStatusBlock
+    OUT PIO_STATUS_BLOCK IoStatusBlock
     );
 
 NTSTATUS

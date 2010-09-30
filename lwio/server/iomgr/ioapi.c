@@ -205,6 +205,7 @@ cleanup:
     RtlWC16StringFree(&pszFileName);
     IopIrpDereference(&pIrp);
     IopFileObjectDereference(&pFileObject);
+    IopDeviceDereference(&pDevice);
 
     // Ensure that status is in status block even on early bail.
     if (status && (STATUS_PENDING != status))
@@ -258,7 +259,7 @@ IoAsyncCloseFile(
     OUT PIO_STATUS_BLOCK IoStatusBlock
     )
 {
-    return IopFileObjectRundown(
+    return IopFileObjectRundownEx(
                     FileHandle,
                     AsyncControlBlock ? AsyncControlBlock->Callback : NULL,
                     AsyncControlBlock ? AsyncControlBlock->CallbackContext : NULL,

@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -31,6 +31,13 @@
 #include "iop.h"
 
 static
+PIO_DRIVER_OBJECT
+IopRootFindDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName
+    );
+
+static
 PIO_DRIVER_ENTRY
 IopRootFindStaticDriver(
     IN PIOP_ROOT_STATE pRoot,
@@ -42,6 +49,30 @@ NTSTATUS
 IopRootReadConfigDriver(
     IN PCSTR pszDriverName,
     OUT PSTR* ppszDriverPath
+    );
+
+static
+VOID
+IopRootLockDriverList(
+    IN PIOP_ROOT_STATE pRoot
+    );
+
+static
+VOID
+IopRootUnlockDriverList(
+    IN PIOP_ROOT_STATE pRoot
+    );
+
+static
+VOID
+IopRootLockDeviceList(
+    IN PIOP_ROOT_STATE pRoot
+    );
+
+static
+VOID
+IopRootUnlockDeviceList(
+    IN PIOP_ROOT_STATE pRoot
     );
 
 
@@ -88,10 +119,10 @@ IopRootCreate(
     LwListInit(&pRoot->DriverObjectList);
     LwListInit(&pRoot->DeviceObjectList);
 
-    status = LwRtlInitializeMutex(&pRoot->DriverMutex, FALSE);
+    status = LwRtlInitializeMutex(&pRoot->DriverMutex, TRUE);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = LwRtlInitializeMutex(&pRoot->DeviceMutex, FALSE);
+    status = LwRtlInitializeMutex(&pRoot->DeviceMutex, TRUE);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = LwRtlInitializeMutex(&pRoot->InitMutex, FALSE);
@@ -129,13 +160,9 @@ IopRootQueryStateDriver(
 {
     PIO_DRIVER_OBJECT pDriver = NULL;
 
-    LwRtlLockMutex(&pRoot->DriverMutex);
-
     pDriver = IopRootFindDriver(pRoot, pDriverName);
     *pState = pDriver ? LWIO_DRIVER_STATE_LOADED : LWIO_DRIVER_STATE_UNLOADED;
     IopDriverDereference(&pDriver);
-
-    LwRtlUnlockMutex(&pRoot->DriverMutex);
 
     return STATUS_SUCCESS;
 }
@@ -153,8 +180,6 @@ IopRootLoadDriver(
     PIO_DRIVER_ENTRY pStaticDriverEntry = NULL;
     PSTR pszDriverName = NULL;
     PSTR pszDriverPath = NULL;
-
-    LwRtlLockMutex(&pRoot->DriverMutex);
 
     status = RtlCStringAllocateFromUnicodeString(&pszDriverName, pDriverName);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -188,8 +213,6 @@ IopRootLoadDriver(
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
-    LwRtlUnlockMutex(&pRoot->DriverMutex);
-
     LWIO_SAFE_FREE_MEMORY(pszDriverName);
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
@@ -206,50 +229,49 @@ IopRootUnloadDriver(
     NTSTATUS status = 0;
     int EE = 0;
     PIO_DRIVER_OBJECT pDriverObject = NULL;
-
-    LwRtlLockMutex(&pRoot->DriverMutex);
+    BOOLEAN isLocked = FALSE;
+    PIO_DRIVER_OBJECT pUnloadDriverObject = NULL;
 
     pDriverObject = IopRootFindDriver(pRoot, pDriverName);
     if (!pDriverObject)
     {
         status = STATUS_NOT_FOUND;
-        GOTO_CLEANUP_ON_STATUS(status);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     }
 
-    IopDriverUnload(&pDriverObject);
+    // Only allow one "unload" call to actually do the unload.
+
+    IopDriverLock(pDriverObject);
+    isLocked = TRUE;
+
+    if (IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_UNLOADING))
+    {
+        // TODO: Perhaps an error or block until unload completes.
+
+        status = STATUS_SUCCESS;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    SetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_UNLOADING);
+
+    IopDriverUnlock(pDriverObject);
+    isLocked = FALSE;
+
+    // Need to get rid of the "load" reference seperately from the "find"
+    // reference from above.
+    pUnloadDriverObject = pDriverObject;
+    IopDriverUnload(&pUnloadDriverObject);
 
 cleanup:
-    LwRtlUnlockMutex(&pRoot->DriverMutex);
-
-    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
-
-    return status;
-}
-
-PIO_DRIVER_OBJECT
-IopRootFindDriver(
-    IN PIOP_ROOT_STATE pRoot,
-    IN PUNICODE_STRING pDriverName
-    )
-{
-    PIO_DRIVER_OBJECT pFoundDriver = NULL;
-    PLW_LIST_LINKS pLinks = NULL;
-
-    for (pLinks = pRoot->DriverObjectList.Next;
-         pLinks != &pRoot->DriverObjectList;
-         pLinks = pLinks->Next)
+    if (isLocked)
     {
-        PIO_DRIVER_OBJECT pDriverObject = LW_STRUCT_FROM_FIELD(pLinks, IO_DRIVER_OBJECT, RootLinks);
-
-        if (RtlUnicodeStringIsEqual(pDriverName, &pDriverObject->DriverName, TRUE))
-        {
-            pFoundDriver = pDriverObject;
-            IopDriverReference(pFoundDriver);
-            break;
-        }
+        IopDriverUnlock(pDriverObject);
     }
 
-    return pFoundDriver;
+    IopDriverDereference(&pDriverObject);
+
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+    return status;
 }
 
 NTSTATUS
@@ -271,7 +293,7 @@ IopRootRefreshConfig(
         goto cleanup;
     }
 
-    LwRtlLockMutex(&pRoot->DriverMutex);
+    IopRootLockDriverList(pRoot);
 
     for (pLinks = pRoot->DriverObjectList.Next;
          pLinks != &pRoot->DriverObjectList;
@@ -294,10 +316,41 @@ IopRootRefreshConfig(
         }
     }
 
-    LwRtlUnlockMutex(&pRoot->DriverMutex);
+    IopRootUnlockDriverList(pRoot);
 
 cleanup:
     return status;
+}
+
+static
+PIO_DRIVER_OBJECT
+IopRootFindDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName
+    )
+{
+    PIO_DRIVER_OBJECT pFoundDriver = NULL;
+    PLW_LIST_LINKS pLinks = NULL;
+
+    IopRootLockDriverList(pRoot);
+
+    for (pLinks = pRoot->DriverObjectList.Next;
+         pLinks != &pRoot->DriverObjectList;
+         pLinks = pLinks->Next)
+    {
+        PIO_DRIVER_OBJECT pDriverObject = LW_STRUCT_FROM_FIELD(pLinks, IO_DRIVER_OBJECT, RootLinks);
+
+        if (RtlUnicodeStringIsEqual(pDriverName, &pDriverObject->DriverName, TRUE))
+        {
+            pFoundDriver = pDriverObject;
+            IopDriverReference(pFoundDriver);
+            break;
+        }
+    }
+
+    IopRootUnlockDriverList(pRoot);
+
+    return pFoundDriver;
 }
 
 PIO_DEVICE_OBJECT
@@ -306,8 +359,10 @@ IopRootFindDevice(
     IN PUNICODE_STRING pDeviceName
     )
 {
-    PLW_LIST_LINKS pLinks = NULL;
     PIO_DEVICE_OBJECT pFoundDevice = NULL;
+    PLW_LIST_LINKS pLinks = NULL;
+
+    IopRootLockDeviceList(pRoot);
 
     for (pLinks = pRoot->DeviceObjectList.Next;
          pLinks != &pRoot->DeviceObjectList;
@@ -317,22 +372,43 @@ IopRootFindDevice(
         if (RtlUnicodeStringIsEqual(pDeviceName, &pDevice->DeviceName, FALSE))
         {
             pFoundDevice = pDevice;
+            IopDeviceReference(pDevice);
             break;
         }
     }
 
+    IopRootUnlockDeviceList(pRoot);
+
     return pFoundDevice;
 }
 
-VOID
+NTSTATUS
 IopRootInsertDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PLW_LIST_LINKS pDriverRootLinks
+    IN PIO_DRIVER_OBJECT pDriver
     )
 {
-    LwListInsertTail(&pRoot->DriverObjectList,
-                     pDriverRootLinks);
-    pRoot->DriverCount++;
+    NTSTATUS status = 0;
+    PIO_DRIVER_OBJECT pFoundDriver = NULL;
+
+    IopRootLockDriverList(pRoot);
+
+    // Check again that there are no collisions
+    pFoundDriver = IopRootFindDriver(pRoot, &pDriver->DriverName);
+    if (pFoundDriver)
+    {
+        status = STATUS_OBJECT_NAME_COLLISION;
+    }
+    else
+    {
+        LwListInsertTail(&pRoot->DriverObjectList,
+                         &pDriver->RootLinks);
+        pRoot->DriverCount++;
+    }
+
+    IopRootUnlockDriverList(pRoot);
+
+    return status;
 }
 
 VOID
@@ -341,21 +417,45 @@ IopRootRemoveDriver(
     IN PLW_LIST_LINKS pDriverRootLinks
     )
 {
-    LwListRemove(pDriverRootLinks);
-    pRoot->DriverCount--;
+    IopRootLockDriverList(pRoot);
+
+    if (!LwListIsEmpty(pDriverRootLinks))
+    {
+        LwListRemove(pDriverRootLinks);
+        pRoot->DriverCount--;
+    }
+
+    IopRootUnlockDriverList(pRoot);
 }
 
-
-
-VOID
+NTSTATUS
 IopRootInsertDevice(
     IN PIOP_ROOT_STATE pRoot,
-    IN PLW_LIST_LINKS pDeviceRootLinks
+    IN PIO_DEVICE_OBJECT pDevice
     )
 {
-    LwListInsertTail(&pRoot->DeviceObjectList,
-                     pDeviceRootLinks);
-    pRoot->DeviceCount++;
+    NTSTATUS status = 0;
+    PIO_DEVICE_OBJECT pFoundDevice = NULL;
+
+    IopRootLockDeviceList(pRoot);
+
+    // Check again that there are no collisions
+    pFoundDevice = IopRootFindDevice(pRoot, &pDevice->DeviceName);
+    if (pFoundDevice)
+    {
+        IopDeviceDereference(&pFoundDevice);
+        status = STATUS_OBJECT_NAME_COLLISION;
+    }
+    else
+    {
+        LwListInsertTail(&pRoot->DeviceObjectList,
+                         &pDevice->RootLinks);
+        pRoot->DeviceCount++;
+    }
+
+    IopRootUnlockDeviceList(pRoot);
+
+    return status;
 }
 
 VOID
@@ -364,8 +464,15 @@ IopRootRemoveDevice(
     IN PLW_LIST_LINKS pDeviceRootLinks
     )
 {
-    LwListRemove(pDeviceRootLinks);
-    pRoot->DeviceCount--;
+    IopRootLockDeviceList(pRoot);
+
+    if (!LwListIsEmpty(pDeviceRootLinks))
+    {
+        LwListRemove(pDeviceRootLinks);
+        pRoot->DeviceCount--;
+    }
+
+    IopRootUnlockDeviceList(pRoot);
 }
 
 NTSTATUS
@@ -393,6 +500,7 @@ IopRootParse(
         }
 
         pDevice = pFileName->RootFileHandle->pDevice;
+        IopDeviceReference(pDevice);
 
         status = STATUS_SUCCESS;
         GOTO_CLEANUP_EE(EE);
@@ -432,6 +540,11 @@ IopRootParse(
     pFileName->FileName = pszCurrent;
 
 cleanup:
+    if (status)
+    {
+        IopDeviceDereference(&pDevice);
+    }
+
     *ppDevice = pDevice;
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
@@ -548,3 +661,38 @@ IopRootFindStaticDriver(
     return pFoundDriverEntry;
 }
 
+static
+VOID
+IopRootLockDriverList(
+    IN PIOP_ROOT_STATE pRoot
+    )
+{
+    LwRtlLockMutex(&pRoot->DriverMutex);
+}
+
+static
+VOID
+IopRootUnlockDriverList(
+    IN PIOP_ROOT_STATE pRoot
+    )
+{
+    LwRtlUnlockMutex(&pRoot->DriverMutex);
+}
+
+static
+VOID
+IopRootLockDeviceList(
+    IN PIOP_ROOT_STATE pRoot
+    )
+{
+    LwRtlLockMutex(&pRoot->DeviceMutex);
+}
+
+static
+VOID
+IopRootUnlockDeviceList(
+    IN PIOP_ROOT_STATE pRoot
+    )
+{
+    LwRtlUnlockMutex(&pRoot->DeviceMutex);
+}
