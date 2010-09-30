@@ -80,6 +80,7 @@ typedef enum __REGLEX_TOKEN
     REGLEX_ATTRIBUTES_BEGIN,               /* "{" attibutes */
     REGLEX_ATTRIBUTES_END,                 /* attributes "}" */
     REGLEX_REG_INTEGER_RANGE,              /* integer:M - N */
+    REGLEX_DASH,                           /* Integer range values separator */
 } REGLEX_TOKEN, *PREGLEX_TOKEN;
 
 
@@ -205,6 +206,12 @@ RegLexParseAt(
 
 DWORD
 RegLexParseEquals(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC);
+
+DWORD
+RegLexParseDash(
     PREGLEX_ITEM lexHandle,
     HANDLE ioHandle,
     CHAR inC);

@@ -68,6 +68,7 @@ RegLexOpen(
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('{')]  = RegLexParseOpenBrace;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('}')]  = RegLexParseCloseBrace;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('"')]  = RegLexParseQuote;
+    pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('-')]  = RegLexParseDash;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('@')]  = RegLexParseAt;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX('=')]  = RegLexParseEquals;
     pLexHandle->parseFuncArray[REGLEX_CHAR_INDEX(',')]  = RegLexParseComma;
@@ -475,10 +476,54 @@ RegLexParseEquals(
     if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
         lexHandle->state != REGLEX_STATE_IN_KEY)
     {
-        lexHandle->isToken = TRUE;
-        lexHandle->curToken.lineNum = lexHandle->parseLineNum;
-        lexHandle->curToken.token = REGLEX_EQUALS;
-        lexHandle->curToken.valueCursor = 0;
+        if (lexHandle->curToken.valueCursor > 0)
+        {
+            dwError = RegIOUnGetChar(ioHandle, NULL);
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+        }
+        else
+        {
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+            lexHandle->curToken.token = REGLEX_EQUALS;
+            lexHandle->curToken.valueCursor = 0;
+        }
+    }
+    else
+    {
+        RegLexAppendChar(lexHandle, inC);
+    }
+    return dwError;
+}
+
+
+DWORD
+RegLexParseDash(
+    PREGLEX_ITEM lexHandle,
+    HANDLE ioHandle,
+    CHAR inC)
+{
+    DWORD dwError = 0;
+
+    if (lexHandle->state != REGLEX_STATE_IN_QUOTE &&
+        lexHandle->state != REGLEX_STATE_IN_KEY &&
+        lexHandle->eValueNameType != REGLEX_VALUENAME_SECURITY)
+    {
+        if (lexHandle->curToken.valueCursor > 0)
+        {
+            dwError = RegIOUnGetChar(ioHandle, NULL);
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+        }
+        else
+        {
+            lexHandle->isToken = TRUE;
+            lexHandle->curToken.lineNum = lexHandle->parseLineNum;
+            lexHandle->curToken.token = REGLEX_DASH;
+            lexHandle->curToken.valueCursor = 0;
+            RegLexAppendChar(lexHandle, inC);
+        }
     }
     else
     {
