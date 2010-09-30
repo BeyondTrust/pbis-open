@@ -16,15 +16,16 @@
 "b"="b"
 "b1"="b"
 
-"bool_val" = {
-  "range" = boolean
-# "value" = dword:31415926
-  "value" = dword:00000000
-}
 "binary" = {
   hint = seconds
   default = dword:0000003C
   "value" = dword:00000078
+}
+
+"bool_val" = {
+  "range" = boolean
+# "value" = dword:31415926
+  "value" = dword:00000000
 }
 
 "dword" = {

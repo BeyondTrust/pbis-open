@@ -1314,6 +1314,21 @@ RegParseCheckAttributes(
      * out of range, so this is also inconsistent.
      */
 
+    /*
+     * Handle degenerate case where there is only a value set, and no
+     * attributes set. If so, convert to value=data type.
+     */
+    if (!parseHandle->registryEntry.regAttr.pDefaultValue &&
+        !parseHandle->registryEntry.regAttr.RangeType &&
+        !parseHandle->registryEntry.regAttr.Hint)
+    {
+        parseHandle->registryEntry.type =
+            parseHandle->registryEntry.regAttr.ValueType;
+        parseHandle->registryEntry.regAttr.ValueType = 0;
+        dwError = 0;
+        goto cleanup;
+    }
+
     /* value/default data types must be the same */
     RegParseAttributesExternDataType(
         parseHandle,
