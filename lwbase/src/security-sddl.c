@@ -186,6 +186,87 @@ RtlpMapSddlControlToAclControl(
     SECURITY_DESCRIPTOR_CONTROL* pControl
     );
 
+NTSTATUS
+RtlGetSecurityInformationFromSddlCString(
+    IN PCSTR pszStringSecurityDescriptor,
+    OUT SECURITY_INFORMATION* pSecInfo
+    )
+{
+    NTSTATUS status = 0;
+    PSTR pszOwnerPrefix = NULL;
+    PSTR pszGroupPrefix = NULL;
+    PSTR pszDaclPrefix = NULL;
+    PSTR pszSaclPrefix = NULL;
+    SECURITY_INFORMATION SecInfo = 0;
+
+    if (LwRtlCStringIsNullOrEmpty(pszStringSecurityDescriptor))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = RtlCStringAllocatePrintf(&pszOwnerPrefix,
+                                      "%s%c",
+                                      SDDL_OWNER,
+                                      SDDL_DELIMINATOR_C);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlCStringAllocatePrintf(&pszGroupPrefix,
+                                      "%s%c",
+                                      SDDL_GROUP,
+                                      SDDL_DELIMINATOR_C);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlCStringAllocatePrintf(&pszDaclPrefix,
+                                      "%s%c",
+                                      SDDL_DACL,
+                                      SDDL_DELIMINATOR_C);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlCStringAllocatePrintf(&pszSaclPrefix,
+                                      "%s%c",
+                                      SDDL_SACL,
+                                      SDDL_DELIMINATOR_C);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    if (strstr(pszStringSecurityDescriptor, pszOwnerPrefix))
+    {
+        SecInfo |= OWNER_SECURITY_INFORMATION;
+    }
+    // a SDDL string has to have owner
+    else
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    if (strstr(pszStringSecurityDescriptor, pszGroupPrefix))
+    {
+        SecInfo |= GROUP_SECURITY_INFORMATION;
+    }
+
+    if (strstr(pszStringSecurityDescriptor, pszDaclPrefix))
+    {
+        SecInfo |= DACL_SECURITY_INFORMATION;
+    }
+
+    if (strstr(pszStringSecurityDescriptor, pszSaclPrefix))
+    {
+        SecInfo |= SACL_SECURITY_INFORMATION;
+    }
+
+cleanup:
+
+    *pSecInfo = SecInfo;
+
+    RTL_FREE(&pszOwnerPrefix);
+    RTL_FREE(&pszGroupPrefix);
+    RTL_FREE(&pszDaclPrefix);
+    RTL_FREE(&pszSaclPrefix);
+
+    return status;
+}
+
 
 NTSTATUS
 RtlAllocateSecurityDescriptorFromSddlCString(

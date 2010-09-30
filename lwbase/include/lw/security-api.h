@@ -619,6 +619,12 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     IN SECURITY_INFORMATION SecurityInformation
     );
 
+NTSTATUS
+RtlGetSecurityInformationFromSddlCString(
+    IN PCSTR pszStringSecurityDescriptor,
+    OUT SECURITY_INFORMATION* pSecInfo
+    );
+
 
 LW_END_EXTERN_C
 
