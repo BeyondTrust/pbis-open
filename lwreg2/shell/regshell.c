@@ -483,7 +483,7 @@ RegShellExportFile(
                           hRootKey,
                           pszFullPath+1,
                           0,
-                          KEY_READ,
+                          KEY_READ | READ_CONTROL,
                           &hSubKey);
             BAIL_ON_REG_ERROR(dwError);
 
@@ -501,6 +501,7 @@ RegShellExportFile(
                   pszRootKey,
                   pszFullPath);
     BAIL_ON_REG_ERROR(dwError);
+
     dwError = RegQueryInfoKeyA(
                   hReg,
                   hSubKey,
@@ -515,6 +516,7 @@ RegShellExportFile(
                   NULL,
                   NULL,
                   NULL);
+    BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegShellUtilExport(hReg,
                                  fp,

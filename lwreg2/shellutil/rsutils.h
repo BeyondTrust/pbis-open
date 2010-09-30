@@ -177,13 +177,15 @@ RegExportBinaryTypeToString(
 DWORD
 RegExportEntry(
     PCSTR keyName,
+    PCSTR pszSddlCString,
     REG_DATA_TYPE valueType,
     PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID value,
     DWORD valueLen,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegExportDword(
@@ -191,13 +193,16 @@ RegExportDword(
     PCSTR valueName,
     DWORD value,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegExportRegKey(
     PCSTR keyName,
+    PCSTR pszSddlCString,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegExportString(
@@ -205,7 +210,8 @@ RegExportString(
     PCSTR valueName,
     PCSTR value,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegExportBinaryData(
@@ -215,17 +221,20 @@ RegExportBinaryData(
     UCHAR *value,
     DWORD valueLen,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegExportPlainText(
     PCHAR value,
     PSTR *dumpString,
-    PDWORD dumpStringLen);
+    PDWORD dumpStringLen
+    );
 
 DWORD
 RegShellUtilValueArrayFree(
     PREGSHELL_UTIL_VALUE pValueArray,
-    DWORD dwValueArrayLen);
+    DWORD dwValueArrayLen
+    );
 
 #endif

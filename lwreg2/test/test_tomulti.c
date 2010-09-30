@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
                                 &multiString,
                                 &multiStringLen);
     RegExportEntry("HKLM_LINUX/likewise/registry/devel",
+                   NULL,
                    0,
                    NULL,
                    REG_KEY,
@@ -92,6 +93,7 @@ int main(int argc, char *argv[])
     printf("%s\n", exportString);
 
     RegExportEntry(NULL,
+                   NULL,
                    0,
                    "testkey1",
                    REG_MULTI_SZ,

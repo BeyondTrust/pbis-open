@@ -55,10 +55,12 @@ ProcessSubKeys(
     );
 
 
-DWORD RegExportBinaryTypeToString(
+DWORD
+RegExportBinaryTypeToString(
     REG_DATA_TYPE token,
     PSTR tokenStr,
-    BOOLEAN dumpFormat)
+    BOOLEAN dumpFormat
+    )
 {
     DWORD dwError = 0;
     static char *typeStrs[][2] = {
@@ -122,7 +124,8 @@ DWORD
 RegExportAttributeEntries(
     PREG_PARSE_ITEM pItem,
     PSTR *ppszDumpString,
-    PDWORD pdwDumpStringLen)
+    PDWORD pdwDumpStringLen
+    )
 {
     DWORD dwError = 0;
     PSTR pszDumpString = NULL;
@@ -145,6 +148,7 @@ RegExportAttributeEntries(
     {
         dwError = RegExportEntry(
                       NULL,
+                      NULL,
                       REG_SZ,    /* Type of value name "value" */
                       "value",
                       pItem->regAttr.ValueType,
@@ -166,6 +170,7 @@ RegExportAttributeEntries(
     if (pItem->regAttr.pDefaultValue)
     {
         dwError = RegExportEntry(
+                      NULL,
                       NULL,
                       REG_SZ,    /* Type of value name "value" */
                       "default",
@@ -323,7 +328,8 @@ DWORD
 RegExportAttributes(
     PREG_PARSE_ITEM pItem,
     PSTR *ppszDumpString,
-    PDWORD pdwDumpStringLen)
+    PDWORD pdwDumpStringLen
+    )
 {
     DWORD dwError = 0;
     BAIL_ON_INVALID_POINTER(pItem);
@@ -343,6 +349,7 @@ RegExportAttributes(
     {
         dwError = RegExportEntry(
                       pItem->keyName,
+                      NULL,
                       pItem->valueType,
                       pItem->valueName,
                       pItem->type,
@@ -367,7 +374,8 @@ RegExportMultiStringArray(
     PVOID pValue,
     DWORD dwValueLen,
     PSTR *ppszDumpString,
-    PDWORD pdwDumpStringLen)
+    PDWORD pdwDumpStringLen
+    )
 {
     DWORD dwError = 0;
     DWORD dwPwszLen= 0;
@@ -424,13 +432,15 @@ error:
 DWORD
 RegExportEntry(
     PCSTR keyName,
+    PCSTR pszSddlCString,
     REG_DATA_TYPE valueType,
     PCSTR valueName,
     REG_DATA_TYPE type,
     LW_PVOID value,
     DWORD valueLen,
     PSTR *dumpString,
-    PDWORD dumpStringLen)
+    PDWORD dumpStringLen
+    )
 {
     DWORD dwError = 0;
     switch (type)
@@ -468,6 +478,7 @@ RegExportEntry(
 
         case REG_KEY:
             dwError = RegExportRegKey(keyName,
+                                      pszSddlCString,
                                       dumpString,
                                       dumpStringLen);
             break;
@@ -496,7 +507,8 @@ RegExportDword(
     PCSTR valueName,
     DWORD value,
     PSTR *dumpString,
-    PDWORD dumpStringLen)
+    PDWORD dumpStringLen
+    )
 {
     DWORD bufLen = 0;
     PSTR dumpBuf = NULL;
@@ -540,12 +552,15 @@ error:
 DWORD
 RegExportRegKey(
     PCSTR keyName,
+    PCSTR pszSddlCString,
     PSTR *dumpString,
-    PDWORD dumpStringLen)
+    PDWORD dumpStringLen
+    )
 {
     DWORD bufLen = 0;
     PSTR dumpBuf = NULL;
     DWORD dwError = 0;
+    char szTmpSec[] = "\r\n@security = ";
 
     BAIL_ON_INVALID_POINTER(keyName);
     BAIL_ON_INVALID_POINTER(dumpString);
@@ -555,12 +570,15 @@ RegExportRegKey(
      *  [key_name]\r\n\0
      *  5:  []\r\n\0
      */
-    bufLen = strlen(keyName) + 5;
+    bufLen = strlen(keyName) + 5 +(LwRtlCStringIsNullOrEmpty(pszSddlCString) ? 0 : (strlen(szTmpSec) + strlen(pszSddlCString)));
+
 
     dwError = RegAllocateMemory(sizeof(*dumpBuf) * bufLen, (PVOID*)&dumpBuf);
     BAIL_ON_REG_ERROR(dwError);
 
-    *dumpStringLen = sprintf(dumpBuf, "[%s]", keyName);
+    *dumpStringLen = LwRtlCStringIsNullOrEmpty(pszSddlCString)
+                   ? sprintf(dumpBuf, "[%s]", keyName)
+                   : sprintf(dumpBuf, "[%s]\r\n@security = %s", keyName, pszSddlCString);
     *dumpString = dumpBuf;
 
 cleanup:
@@ -571,12 +589,14 @@ error:
 }
 
 
-DWORD RegExportString(
+DWORD
+RegExportString(
     REG_DATA_TYPE valueType,
     PCSTR valueName,
     PCSTR value,
     PSTR *dumpString,
-    PDWORD retDumpStringLen)
+    PDWORD retDumpStringLen
+    )
 {
     DWORD bufLen = 0;
     PSTR dumpBuf = NULL;
@@ -628,7 +648,8 @@ DWORD
 RegExportPlainText(
     PCHAR value,
     PSTR *dumpString,
-    PDWORD dumpStringLen)
+    PDWORD dumpStringLen
+    )
 {
     DWORD bufLen = 0;
     PSTR dumpBuf = NULL;
@@ -661,7 +682,8 @@ RegExportBinaryData(
     UCHAR *value,
     DWORD valueLen,
     PSTR *dumpString,
-    PDWORD dumpStringLen)
+    PDWORD dumpStringLen
+    )
 {
     DWORD bufLen = 0;
     DWORD formatLines = 0;
@@ -739,6 +761,7 @@ DWORD
 PrintToRegFile(
     IN FILE* fp,
     IN PCSTR pszKeyName,
+    IN OPTIONAL PCSTR pszSddlCString,
     IN REG_DATA_TYPE dataType,
     IN PCSTR pszValueName,
     IN REG_DATA_TYPE type,
@@ -751,6 +774,7 @@ PrintToRegFile(
     DWORD dumpStringLen = 0;
 
     RegExportEntry(pszKeyName,
+                   pszSddlCString,
                    dataType,
                    pszValueName,
                    type,
@@ -799,6 +823,7 @@ ProcessExportedKeyInfo(
     IN FILE* fp,
     IN HKEY hKey,
     IN PCSTR pszFullKeyName,
+    IN OPTIONAL PCSTR pszSddlCstring,
     IN OUT PREG_DATA_TYPE pPrevType
     )
 {
@@ -821,6 +846,7 @@ ProcessExportedKeyInfo(
     dwError = PrintToRegFile(
                           fp,
                           pszFullKeyName,
+                          pszSddlCstring,
                           REG_KEY,
                           NULL,
                           REG_KEY,
@@ -935,6 +961,7 @@ ProcessExportedKeyInfo(
             dwError = PrintToRegFile(
                            fp,
                            pszFullKeyName,
+                           pszSddlCstring,
                            dataType,
                            pszValueName,
                            dataType,
@@ -1177,6 +1204,30 @@ RegShellUtilExport(
 {
     DWORD dwError = 0;
     REG_DATA_TYPE prevType = REG_UNKNOWN;
+    SECURITY_INFORMATION SecInfoAll = OWNER_SECURITY_INFORMATION
+                                     |GROUP_SECURITY_INFORMATION
+                                     |DACL_SECURITY_INFORMATION
+                                     |SACL_SECURITY_INFORMATION;
+    PBYTE pSecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE] = {0};
+    ULONG ulSecDescLen = SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE;
+    PSTR pszStringSecurityDescriptor = NULL;
+
+
+    dwError = RegGetKeySecurity(hReg,
+                                hKey,
+                                SecInfoAll,
+                                (PSECURITY_DESCRIPTOR_RELATIVE)pSecDescRel,
+                                &ulSecDescLen);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegNtStatusToWin32Error(
+            RtlAllocateSddlCStringFromSecurityDescriptor(
+                    &pszStringSecurityDescriptor,
+                    (PSECURITY_DESCRIPTOR_RELATIVE)pSecDescRel,
+                    SDDL_REVISION_1,
+                    SecInfoAll)
+                    );
+    BAIL_ON_REG_ERROR(dwError);
 
     if (hKey)
     {
@@ -1184,6 +1235,7 @@ RegShellUtilExport(
                                          fp,
                                          hKey,
                                          pszKeyName,
+                                         pszStringSecurityDescriptor,
                                          &prevType);
         BAIL_ON_REG_ERROR(dwError);
     }
@@ -1210,6 +1262,10 @@ RegShellUtilExport(
     }
 
 cleanup:
+    if (pszStringSecurityDescriptor)
+    {
+        RegFreeString(pszStringSecurityDescriptor);
+    }
 
     return dwError;
 
