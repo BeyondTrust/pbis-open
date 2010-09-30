@@ -197,6 +197,8 @@ ProcessImportedValue(
     DWORD dwSecurityDescriptorLen = 0;
     NTSTATUS ntStatus = 0;
     BOOLEAN bIsValidSecDesc = FALSE;
+    SECURITY_INFORMATION SecInfo = 0;
+
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -314,7 +316,7 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
         {
             if (pItem->value)
             {
-                /* Handle data value (non-attribute data */
+                /* Handle data value (non-attribute data) */
                 regItem = *pItem;
                 regItem.type = pItem->regAttr.ValueType;
 
@@ -385,14 +387,20 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                 if (!bIsValidSecDesc)
                 {
                     dwError = STATUS_INVALID_SECURITY_DESCR;
-                    BAIL_ON_NT_STATUS(dwError);
+                    BAIL_ON_REG_ERROR(dwError);
                 }
+
+                ntStatus = RtlGetSecurityInformationFromSddlCString(
+                                              (PCSTR) pItem->value,
+                                              &SecInfo);
+                dwError = RegNtStatusToWin32Error(ntStatus);
+                BAIL_ON_REG_ERROR(dwError);
 
                 /* Apply security descriptor to current subkey */
                 dwError = LwRegSetKeySecurity(
                                hReg,
                                hKey,
-                               0,
+                               SecInfo,
                                pSecurityDescriptor,
                                dwSecurityDescriptorLen);
                 BAIL_ON_REG_ERROR(dwError);

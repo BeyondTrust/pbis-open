@@ -191,7 +191,7 @@ SqliteGetKeySecurity(
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
 
-    status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_ALL_ACCESS | READ_CONTROL);
+    status = RegSrvAccessCheckKeyHandle(pKeyHandle, KEY_READ | READ_CONTROL);
     BAIL_ON_NT_STATUS(status);
 
     pKeyCtx = pKeyHandle->pKey;
