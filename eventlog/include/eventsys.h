@@ -30,6 +30,10 @@
   #include <errno.h>
   #include <netdb.h>
   #include <ctype.h>
+  #include <libxml/tree.h>
+  #include <libxml/parser.h>
+  #include <libxml/xpath.h>
+  #include <libxml/xpathInternals.h>
 
 #if HAVE_LIMITS_H
   #include <limits.h>

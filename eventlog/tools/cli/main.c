@@ -152,10 +152,14 @@ ParseFilter(
         }
         else
         {
-            dwError = LwAllocateWc16sPrintfW(
-                        &pwszSqlFilter,
-                        L"%s",
-                        pszPseudoSqlFilter);
+            dwError = XmlGetSqlQuery(pszPseudoSqlFilter, TRUE, &pwszSqlFilter);
+            if (dwError == APP_ERROR_REPORT_NOT_FOUND)
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                            &pwszSqlFilter,
+                            L"%s",
+                            pszPseudoSqlFilter);
+            }
             BAIL_ON_EVT_ERROR(dwError);
         }
     }

@@ -8,5 +8,6 @@
 #include <lwstr.h>
 #include <lwmem.h>
 
+#include "defs.h"
 #include "evtparser.h"
-
+#include "xmllookup.h"
