@@ -138,6 +138,8 @@ DWORD RegLexTokenToString(
         "REGLEX_ATTRIBUTES",                             /* { attributes } */
         "REGLEX_ATTRIBUTES_START",                       /* { attributes start */
         "REGLEX_ATTRIBUTES_END",                         /* attributes end } */
+        "REGLEX_REG_INTEGER_RANGE",                      /* integer:M - N */
+        "REGLEX_DASH",                                   /* Integer range values separator */
     };
     if (token < (sizeof(tokenStrs)/sizeof(char *)))
     {
