@@ -256,6 +256,8 @@ LwRtlBroadcastEvent(
 
 /////////////////////////////////
 
+#if 0
+
 NTSTATUS
 LwRtlThreadsCreateThread(
     OUT pthread_t** ppThread,
@@ -314,5 +316,6 @@ VOID
 LwRtlThreadsDestroyCond(
     IN OUT pthread_cond_t** ppCond
     );
+#endif
 
 #endif /* __LW_BASE_THREADS_H__ */

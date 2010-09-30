@@ -44,31 +44,32 @@
 
 VOID
 IoCleanup(
+    VOID
     );
 
 NTSTATUS
 IoInitialize(
-    IN PCSTR pszConfigFilePath,
-    IN PIO_STATIC_DRIVER pStaticDrivers
+    IN OPTIONAL PIO_STATIC_DRIVER pStaticDrivers
     );
 
-LWIO_DRIVER_STATUS
-IoMgrGetDriverStatus(
-    PWSTR pwszDriverName
+NTSTATUS
+IoMgrQueryStateDriver(
+    IN PWSTR pwszDriverName,
+    OUT PLWIO_DRIVER_STATE pDriverState
     );
 
 NTSTATUS
 IoMgrLoadDriver(
-    PWSTR pwszDriverName
+    IN PWSTR pwszDriverName
     );
 
 NTSTATUS
 IoMgrUnloadDriver(
-    PWSTR pwszDriverName
+    IN PWSTR pwszDriverName
     );
 
 NTSTATUS
-IoMgrRefresh(
+IoMgrRefreshConfig(
     VOID
     );
 

@@ -51,32 +51,25 @@
      ((IRP_TYPE_READ_DIRECTORY_CHANGE == (IrpType)) && \
       (STATUS_NOTIFY_ENUM_DIR == (Status))))
 
-typedef struct _IOP_DRIVER_CONFIG {
-    PSTR pszName;
-    PSTR pszPath;
-    LW_LIST_LINKS Links;
-} IOP_DRIVER_CONFIG, *PIOP_DRIVER_CONFIG;
-
-typedef struct _IOP_CONFIG {
-    LW_LIST_LINKS DriverConfigList;
-    ULONG DriverCount;
-} IOP_CONFIG, *PIOP_CONFIG;
-
-typedef struct _IOP_CONFIG_PARSE_STATE {
-    PIOP_CONFIG pConfig;
-    PIOP_DRIVER_CONFIG pDriverConfig;
-    NTSTATUS Status;
-} IOP_CONFIG_PARSE_STATE, *PIOP_CONFIG_PARSE_STATE;
-
 typedef struct _IOP_ROOT_STATE {
-    PIOP_CONFIG Config;
+    // Must point to global memory.
+    PIO_STATIC_DRIVER pStaticDrivers;
+
+    // Protects driver count/list
+    LW_RTL_MUTEX DriverMutex;
     // Diagnostics Only
     ULONG DriverCount;
+    // List of IO_DRIVER_OBJECT
     LW_LIST_LINKS DriverObjectList;
+
+    // Protects device count/list
+    LW_RTL_MUTEX DeviceMutex;
     // Diagnostics Only
     ULONG DeviceCount;
-    // Should really be a hash table...
+    // List of IO_DEVICE_OBJECT (should really be a hash table)
     LW_LIST_LINKS DeviceObjectList;
+
+    // Protects initialization of MapSecurityContext
     LW_RTL_MUTEX InitMutex;
     PLW_MAP_SECURITY_CONTEXT MapSecurityContext;
 } IOP_ROOT_STATE, *PIOP_ROOT_STATE;
@@ -90,8 +83,9 @@ struct _IO_DRIVER_OBJECT {
     LONG ReferenceCount;
     IO_DRIVER_OBJECT_FLAGS Flags;
     PIOP_ROOT_STATE Root;
-    PIOP_DRIVER_CONFIG Config;
-
+    UNICODE_STRING DriverName;
+    PSTR pszDriverName;
+    PSTR pszDriverPath;
     PVOID LibraryHandle;
     PIO_DRIVER_ENTRY DriverEntry;
     struct {
@@ -101,11 +95,12 @@ struct _IO_DRIVER_OBJECT {
     } Callback;
     PVOID Context;
 
-    // Devices
+    // Devices - list of IO_DEVICE_OBJECT
     LW_LIST_LINKS DeviceList;
     ULONG DeviceCount;
 
-    // For each list to which this object belongs.
+    // For each list to which this object belongs:
+    // - Entry in IOP_ROOT_STATE.DriverObjectList
     LW_LIST_LINKS RootLinks;
 };
 
@@ -115,11 +110,13 @@ struct _IO_DEVICE_OBJECT {
     PIO_DRIVER_OBJECT Driver;
     PVOID Context;
 
-    // File objects for this device.
+    // File objects for this device (list of IO_FILE_OBJECT).
     LW_LIST_LINKS FileObjectsList;
 
-    // For each list to which this object belongs.
+    // For each list to which this object belongs:
+    // - Entry in IO_DRIVER_OBJECT.DevicetList
     LW_LIST_LINKS DriverLinks;
+    // - Entry in IOP_ROOT_STATE.DeviceObjectList
     LW_LIST_LINKS RootLinks;
 
     LW_RTL_MUTEX Mutex;
@@ -189,18 +186,6 @@ IopGetMapSecurityContext(
     OUT PLW_MAP_SECURITY_CONTEXT* ppContext
     );
 
-// ioconfig.c
-
-VOID
-IopConfigFreeConfig(
-    IN OUT PIOP_CONFIG* ppConfig
-    );
-
-NTSTATUS
-IopConfigReadRegistry(
-    OUT PIOP_CONFIG* ppConfig
-    );
-
 // ioroot.c
 
 VOID
@@ -211,20 +196,32 @@ IopRootFree(
 NTSTATUS
 IopRootCreate(
     OUT PIOP_ROOT_STATE* ppRoot,
-    IN PCSTR pszConfigFilePath
+    IN OPTIONAL PIO_STATIC_DRIVER pStaticDrivers
+    );
+
+NTSTATUS
+IopRootQueryStateDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName,
+    OUT PLWIO_DRIVER_STATE pState
     );
 
 NTSTATUS
 IopRootLoadDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PIO_STATIC_DRIVER pStaticDrivers,
-    IN PWSTR pwszDriverName
+    IN PUNICODE_STRING pDriverName
+    );
+
+NTSTATUS
+IopRootUnloadDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName
     );
 
 PIO_DRIVER_OBJECT
 IopRootFindDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PWSTR pwszDriverName
+    IN PUNICODE_STRING pDriverName
     );
 
 PIO_DEVICE_OBJECT
@@ -234,7 +231,7 @@ IopRootFindDevice(
     );
 
 NTSTATUS
-IopRootRefreshDrivers(
+IopRootRefreshConfig(
     IN PIOP_ROOT_STATE pRoot
     );
 
@@ -286,8 +283,10 @@ NTSTATUS
 IopDriverLoad(
     OUT PIO_DRIVER_OBJECT* ppDriverObject,
     IN PIOP_ROOT_STATE pRoot,
-    IN PIOP_DRIVER_CONFIG pDriverConfig,
-    IN PIO_STATIC_DRIVER pStaticDrivers
+    IN PUNICODE_STRING pDriverName,
+    IN PCSTR pszDriverName,
+    IN OPTIONAL PIO_DRIVER_ENTRY pStaticDriverEntry,
+    IN OPTIONAL PCSTR pszDriverPath
     );
 
 VOID
@@ -300,6 +299,16 @@ VOID
 IopDriverRemoveDevice(
     IN PIO_DRIVER_OBJECT pDriver,
     IN PLW_LIST_LINKS pDeviceDriverLinks
+    );
+
+VOID
+IopDriverReference(
+    IN PIO_DRIVER_OBJECT pDriver
+    );
+
+VOID
+IopDriverDereference(
+    IN OUT PIO_DRIVER_OBJECT* ppDriver
     );
 
 // iodevice.c

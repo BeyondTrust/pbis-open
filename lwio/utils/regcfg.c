@@ -188,15 +188,14 @@ LwIoOpenConfig(
     ntStatus = LwRtlCStringDuplicate(&pReg->pszConfigKey, pszConfigKey);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = LwRtlCStringDuplicate(&pReg->pszPolicyKey, pszPolicyKey);
-    BAIL_ON_NT_STATUS(ntStatus);
+    if (pszPolicyKey)
+    {
+        ntStatus = LwRtlCStringDuplicate(&pReg->pszPolicyKey, pszPolicyKey);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     ntStatus = NtRegOpenServer(&pReg->hConnection);
-    if (ntStatus)
-    {
-        ntStatus = STATUS_SUCCESS;
-        goto error;
-    }
+    BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = NtRegOpenKeyExA(
             pReg->hConnection,
@@ -205,11 +204,7 @@ LwIoOpenConfig(
             0,
             KEY_READ,
             &(pReg->hKey));
-    if (ntStatus)
-    {
-        ntStatus = STATUS_SUCCESS;
-        goto error;
-    }
+    BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
 
@@ -267,6 +262,12 @@ LwIoReadConfigString(
 
     if (bUsePolicy)
     {
+        if (!pReg->pszPolicyKey)
+        {
+            ntStatus = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
         dwSize = sizeof(szValue);
         memset(szValue, 0, dwSize);
         ntStatus = NtRegGetValueA(
@@ -333,6 +334,12 @@ LwIoReadConfigMultiString(
 
     if (bUsePolicy)
     {
+        if (!pReg->pszPolicyKey)
+        {
+            ntStatus = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
         dwSize = sizeof(szValue);
         memset(szValue, 0, dwSize);
         ntStatus = NtRegGetValueA(
@@ -409,6 +416,12 @@ LwIoReadConfigDword(
 
     if (bUsePolicy)
     {
+        if (!pReg->pszPolicyKey)
+        {
+            ntStatus = STATUS_INVALID_PARAMETER;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
         dwSize = sizeof(dwValue);
         ntStatus = NtRegGetValueA(
                     pReg->hConnection,
@@ -455,7 +468,11 @@ LwIoReadConfigDword(
         }
     }
 
+cleanup:
     return ntStatus;
+
+error:
+    goto cleanup;
 }
 
 NTSTATUS

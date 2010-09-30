@@ -124,10 +124,10 @@ static LWMsgTypeSpec gDriverNameSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gDriverStatusSpec[] =
+static LWMsgTypeSpec gDriverStateSpec[] =
 {
-    LWMSG_UINT8(LWIO_DRIVER_STATUS),
-    LWMSG_ATTR_RANGE(LWIO_DRIVER_UNLOADED, LWIO_DRIVER_LOADED),
+    LWMSG_UINT8(LWIO_DRIVER_STATE),
+    LWMSG_ATTR_RANGE(LWIO_DRIVER_STATE_UNKNOWN, LWIO_DRIVER_STATE_LOADED),
     LWMSG_TYPE_END
 };
 
@@ -148,9 +148,9 @@ static LWMsgProtocolSpec gLwIoDaemonProtocolSpec[] =
     LWMSG_MESSAGE(LWIO_GET_LOG_INFO,                NULL),
     LWMSG_MESSAGE(LWIO_GET_LOG_INFO_SUCCESS,        gLogInfoSpec),
     LWMSG_MESSAGE(LWIO_GET_LOG_INFO_FAILED,         gStatusReplySpec),
-    LWMSG_MESSAGE(LWIO_GET_DRIVER_STATUS,           gDriverNameSpec),
-    LWMSG_MESSAGE(LWIO_GET_DRIVER_STATUS_SUCCESS,   gDriverStatusSpec),
-    LWMSG_MESSAGE(LWIO_GET_DRIVER_STATUS_FAILED,    gStatusReplySpec),
+    LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER,          gDriverNameSpec),
+    LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER_SUCCESS,  gDriverStateSpec),
+    LWMSG_MESSAGE(LWIO_QUERY_STATE_DRIVER_FAILED,   gStatusReplySpec),
     LWMSG_MESSAGE(LWIO_LOAD_DRIVER,                 gDriverNameSpec),
     LWMSG_MESSAGE(LWIO_LOAD_DRIVER_SUCCESS,         gStatusReplySpec),
     LWMSG_MESSAGE(LWIO_LOAD_DRIVER_FAILED,          gStatusReplySpec),

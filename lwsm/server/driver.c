@@ -92,7 +92,7 @@ LwSmDriverGetStatus(
     )
 {
     DWORD dwError = 0;
-    LWIO_DRIVER_STATUS driverStatus = 0;
+    LWIO_DRIVER_STATE driverState = 0;
     PWSTR pwszName = LwSmGetServiceObjectData(pObject);
 
     pStatus->home = LW_SERVICE_HOME_IO_MANAGER;
@@ -101,9 +101,9 @@ LwSmDriverGetStatus(
     
     if (!dwError)
     {
-        dwError = LwNtStatusToWin32Error(LwIoGetDriverStatus(
+        dwError = LwNtStatusToWin32Error(LwIoQueryStateDriver(
                                              pwszName,
-                                             &driverStatus));
+                                             &driverState));
     }
 
     if (dwError)
@@ -111,12 +111,12 @@ LwSmDriverGetStatus(
         pStatus->state = LW_SERVICE_STATE_STOPPED;
         dwError = 0;
     }
-    else switch(driverStatus)
+    else switch(driverState)
     {
-    case LWIO_DRIVER_LOADED:
+    case LWIO_DRIVER_STATE_LOADED:
         pStatus->state = LW_SERVICE_STATE_RUNNING;
         break;
-    case LWIO_DRIVER_UNLOADED:
+    case LWIO_DRIVER_STATE_UNLOADED:
         pStatus->state = LW_SERVICE_STATE_STOPPED;
         break;
     default:

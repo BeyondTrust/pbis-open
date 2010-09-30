@@ -233,7 +233,7 @@ error:
 
 static
 LWMsgStatus
-LwIoDaemonIpcGetDriverStatus(
+LwIoDaemonIpcQueryStateDriver(
     IN LWMsgCall* pCall,
     IN const LWMsgParams* pIn,
     OUT LWMsgParams* pOut,
@@ -243,16 +243,20 @@ LwIoDaemonIpcGetDriverStatus(
     NTSTATUS ntStatus = 0;
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     PWSTR pwszDriverName = pIn->data;
-    PLWIO_DRIVER_STATUS pStatus = NULL;
+    PLWIO_DRIVER_STATE pState = NULL;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    ntStatus = SMBAllocateMemory(sizeof(*pStatus), OUT_PPVOID(&pStatus));
+    ntStatus = SMBAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
+    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    BAIL_ON_LWIO_ERROR(ntStatus);
+
+    ntStatus = IoMgrQueryStateDriver(pwszDriverName, pState);
     if (ntStatus)
     {
         pStatusResponse->dwError = ntStatus;
-        pOut->tag = LWIO_GET_DRIVER_STATUS_FAILED;
+        pOut->tag = LWIO_QUERY_STATE_DRIVER_FAILED;
         pOut->data = pStatusResponse;
         pStatusResponse = NULL;
 
@@ -260,14 +264,13 @@ LwIoDaemonIpcGetDriverStatus(
         goto cleanup;
     }
 
-    *pStatus = IoMgrGetDriverStatus(pwszDriverName);
-    pOut->tag = LWIO_GET_DRIVER_STATUS_SUCCESS;
-    pOut->data = pStatus;
-    pStatus = NULL;
+    pOut->tag = LWIO_QUERY_STATE_DRIVER_SUCCESS;
+    pOut->data = pState;
+    pState = NULL;
 
 cleanup:
 
-    LWIO_SAFE_FREE_MEMORY(pStatus);
+    LWIO_SAFE_FREE_MEMORY(pState);
     LWIO_SAFE_FREE_MEMORY(pStatusResponse);
 
     return status;
@@ -391,7 +394,7 @@ static LWMsgDispatchSpec gLwIoDaemonIpcDispatchSpec[] =
     LWMSG_DISPATCH_BLOCK(LWIO_REFRESH_CONFIG, LwIoDaemonIpcRefreshConfiguration),
     LWMSG_DISPATCH_NONBLOCK(LWIO_SET_LOG_INFO, LwIoDaemonIpcSetLogInfo),
     LWMSG_DISPATCH_NONBLOCK(LWIO_GET_LOG_INFO, LwIoDaemonIpcGetLogInfo),
-    LWMSG_DISPATCH_BLOCK(LWIO_GET_DRIVER_STATUS, LwIoDaemonIpcGetDriverStatus),
+    LWMSG_DISPATCH_BLOCK(LWIO_QUERY_STATE_DRIVER, LwIoDaemonIpcQueryStateDriver),
     LWMSG_DISPATCH_BLOCK(LWIO_LOAD_DRIVER, LwIoDaemonIpcLoadDriver),
     LWMSG_DISPATCH_BLOCK(LWIO_UNLOAD_DRIVER, LwIoDaemonIpcUnloadDriver),
     LWMSG_DISPATCH_NONBLOCK(LWIO_GET_PID, LwIoDaemonIpcGetPid),

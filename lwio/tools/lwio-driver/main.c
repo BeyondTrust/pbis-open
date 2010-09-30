@@ -72,20 +72,20 @@ Status(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PWSTR pwszDriverName = NULL;
-    LWIO_DRIVER_STATUS driverStatus = 0;
+    LWIO_DRIVER_STATE driverState = 0;
 
     status = LwRtlWC16StringAllocateFromCString(&pwszDriverName, ppszArgv[1]);
     BAIL_ON_NT_STATUS(status);
     
-    status = LwIoGetDriverStatus(pwszDriverName, &driverStatus);
+    status = LwIoQueryStateDriver(pwszDriverName, &driverState);
     BAIL_ON_NT_STATUS(status);
 
-    switch (driverStatus)
+    switch (driverState)
     {
-    case LWIO_DRIVER_UNLOADED:
+    case LWIO_DRIVER_STATE_UNLOADED:
         printf("Unloaded\n");
         break;
-    case LWIO_DRIVER_LOADED:
+    case LWIO_DRIVER_STATE_LOADED:
         printf("Loaded\n");
         break;
     default:

@@ -39,9 +39,9 @@ IopDriverUnload(
 
     if (pDriverObject)
     {
-        if (pDriverObject->Config->pszName)
+        if (pDriverObject->pszDriverName)
         {
-            LWIO_LOG_DEBUG("Unloading driver '%s'", pDriverObject->Config->pszName);
+            LWIO_LOG_DEBUG("Unloading driver '%s'", pDriverObject->pszDriverName);
         }
         if (IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_READY))
         {
@@ -52,7 +52,7 @@ IopDriverUnload(
         {
             pDriverObject->Callback.Shutdown(pDriverObject);
 
-            // TODO -- Add code to remove devices
+            // TODO -- Verify that devices have been removed
             // TODO -- refcount?
         }
         if (pDriverObject->LibraryHandle)
@@ -61,10 +61,13 @@ IopDriverUnload(
             if (err)
             {
                 LWIO_LOG_ERROR("Failed to dlclose() for driver '%s' from '%s'",
-                              pDriverObject->Config->pszName,
-                              pDriverObject->Config->pszPath);
+                               pDriverObject->pszDriverName,
+                               pDriverObject->pszDriverPath);
             }
         }
+        RtlUnicodeStringFree(&pDriverObject->DriverName);
+        RTL_FREE(&pDriverObject->pszDriverName);
+        RTL_FREE(&pDriverObject->pszDriverPath);
         IoMemoryFree(pDriverObject);
         *ppDriverObject = NULL;
     }
@@ -74,19 +77,20 @@ NTSTATUS
 IopDriverLoad(
     OUT PIO_DRIVER_OBJECT* ppDriverObject,
     IN PIOP_ROOT_STATE pRoot,
-    IN PIOP_DRIVER_CONFIG pDriverConfig,
-    IN PIO_STATIC_DRIVER pStaticDrivers
+    IN PUNICODE_STRING pDriverName,
+    IN PCSTR pszDriverName,
+    IN OPTIONAL PIO_DRIVER_ENTRY pStaticDriverEntry,
+    IN OPTIONAL PCSTR pszDriverPath
     )
 {
     NTSTATUS status = 0;
     int EE = 0;
-    PCSTR pszError = NULL;
     PIO_DRIVER_OBJECT pDriverObject = NULL;
-    PCSTR pszPath = pDriverConfig->pszPath;
-    PCSTR pszName = pDriverConfig->pszName;
-    int i = 0;
+    PCSTR pszError = NULL;
 
-    LWIO_LOG_DEBUG("Loading driver '%s'", pszName);
+    LWIO_LOG_DEBUG("Loading driver '%s'", pszDriverName);
+
+    LWIO_ASSERT(!LW_IS_BOTH_OR_NEITHER(pStaticDriverEntry, pszDriverPath));
 
     status = IO_ALLOCATE(&pDriverObject, IO_DRIVER_OBJECT, sizeof(*pDriverObject));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -94,37 +98,36 @@ IopDriverLoad(
     LwListInit(&pDriverObject->DeviceList);
 
     pDriverObject->ReferenceCount = 1;
+
     pDriverObject->Root = pRoot;
-    pDriverObject->Config = pDriverConfig;
 
-    if (pStaticDrivers)
+    status = RtlUnicodeStringDuplicate(&pDriverObject->DriverName, pDriverName);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = RtlCStringDuplicate(&pDriverObject->pszDriverName, pszDriverName);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    if (pStaticDriverEntry)
     {
-        /* First, look for driver in static list */
-        for (i = 0; pStaticDrivers[i].pszName != NULL; i++)
-        {
-            if (!strcmp(pStaticDrivers[i].pszName, pszName))
-            {
-                pDriverObject->DriverEntry = pStaticDrivers[i].pEntry;
-                LWIO_LOG_DEBUG("Driver '%s' found in static list", pszName);
-                break;
-            }
-        }
+        pDriverObject->DriverEntry = pStaticDriverEntry;
     }
-
-    if (!pDriverObject->DriverEntry)
+    else
     {
-        /* We didn't find the driver in the static list, so
-           try to load it dynamically */
+        status = RtlCStringDuplicate(&pDriverObject->pszDriverPath, pszDriverPath);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
         dlerror();
         
-        pDriverObject->LibraryHandle = dlopen(pszPath, RTLD_NOW | RTLD_GLOBAL);
+        pDriverObject->LibraryHandle = dlopen(pszDriverPath, RTLD_NOW | RTLD_GLOBAL);
         if (!pDriverObject->LibraryHandle)
         {
             pszError = dlerror();
-            
+
             LWIO_LOG_ERROR("Failed to load driver '%s' from '%s' (%s)",
-                           pszName, pszPath, LWIO_SAFE_LOG_STRING(pszError));
-            
+                           pszDriverName,
+                           pszDriverPath,
+                           LWIO_SAFE_LOG_STRING(pszError));
+
             status = STATUS_DLL_NOT_FOUND;
             GOTO_CLEANUP_EE(EE);
         }
@@ -134,10 +137,13 @@ IopDriverLoad(
         if (!pDriverObject->DriverEntry)
         {
             pszError = dlerror();
-            
-            LWIO_LOG_ERROR("Failed to load " IO_DRIVER_ENTRY_FUNCTION_NAME " function for driver %s from %s (%s)",
-                           pszName, pszPath, LWIO_SAFE_LOG_STRING(pszError));
-            
+
+            LWIO_LOG_ERROR("Failed to load " IO_DRIVER_ENTRY_FUNCTION_NAME " "
+                           "function for driver %s from %s (%s)",
+                           pszDriverName,
+                           pszDriverPath,
+                           LWIO_SAFE_LOG_STRING(pszError));
+
             status = STATUS_BAD_DLL_ENTRYPOINT;
             GOTO_CLEANUP_EE(EE);
         }
@@ -148,15 +154,17 @@ IopDriverLoad(
 
     if (!IsSetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_INITIALIZED))
     {
-        LWIO_LOG_ERROR(IO_DRIVER_ENTRY_FUNCTION_NAME " did not initialize driver '%s' from '%s'",
-                      pszName, pszPath);
+        LWIO_LOG_ERROR(IO_DRIVER_ENTRY_FUNCTION_NAME " did not initialize "
+                       "driver '%s' from '%s'",
+                       pszDriverName,
+                       pszDriverPath);
 
         status = STATUS_DLL_INIT_FAILED;
         GOTO_CLEANUP_EE(EE);
     }
 
-    IopRootInsertDriver(pDriverObject->Root, &pDriverObject->RootLinks);
     SetFlag(pDriverObject->Flags, IO_DRIVER_OBJECT_FLAG_READY);
+    IopRootInsertDriver(pDriverObject->Root, &pDriverObject->RootLinks);
 
 cleanup:
     if (status)
@@ -239,7 +247,7 @@ IoDriverGetName(
     IN IO_DRIVER_HANDLE DriverHandle
     )
 {
-    return DriverHandle->Config->pszName;
+    return DriverHandle->pszDriverName;
 }
 
 PVOID
@@ -271,6 +279,37 @@ IopDriverRemoveDevice(
     pDriver->DeviceCount--;
 }
 
+VOID
+IopDriverReference(
+    IN PIO_DRIVER_OBJECT pDriver
+    )
+{
+    LONG count = InterlockedIncrement(&pDriver->ReferenceCount);
+    LWIO_ASSERT(count > 1);
+}
+
+VOID
+IopDriverDereference(
+    IN OUT PIO_DRIVER_OBJECT* ppDriver
+    )
+{
+    PIO_DRIVER_OBJECT pDriver = *ppDriver;
+
+    if (pDriver)
+    {
+        // Note that we do not have to acquire the device
+        // lock here since it is impossible to resolve
+        // a file object from a device.
+        LONG count = InterlockedDecrement(&pDriver->ReferenceCount);
+        LWIO_ASSERT(count >= 0);
+        if (0 == count)
+        {
+            LWIO_ASSERT_MSG(FALSE, "Refcount reached zero for driver object");
+            // IopDriverFree(&pDriver);
+        }
+        *ppDriver = NULL;
+    }
+}
 
 /*
 local variables:

@@ -6,7 +6,6 @@ endif
 
 libiomgr_la_SOURCES = \
     ioinit.c \
-    ioconfig.c \
     ioroot.c \
     iodriver.c \
     iodevice.c \

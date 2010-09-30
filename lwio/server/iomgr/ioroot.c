@@ -30,6 +30,21 @@
 
 #include "iop.h"
 
+static
+PIO_DRIVER_ENTRY
+IopRootFindStaticDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PSTR pszDriverName
+    );
+
+static
+NTSTATUS
+IopRootReadConfigDriver(
+    IN PCSTR pszDriverName,
+    OUT PSTR* ppszDriverPath
+    );
+
+
 VOID
 IopRootFree(
     IN OUT PIOP_ROOT_STATE* ppRoot
@@ -48,9 +63,10 @@ IopRootFree(
             IopDriverUnload(&pDriverObject);
         }
 
-        IopConfigFreeConfig(&pRoot->Config);
         LwMapSecurityFreeContext(&pRoot->MapSecurityContext);
         LwRtlCleanupMutex(&pRoot->InitMutex);
+        LwRtlCleanupMutex(&pRoot->DeviceMutex);
+        LwRtlCleanupMutex(&pRoot->DriverMutex);
         IoMemoryFree(pRoot);
         *ppRoot = NULL;
     }
@@ -59,7 +75,7 @@ IopRootFree(
 NTSTATUS
 IopRootCreate(
     OUT PIOP_ROOT_STATE* ppRoot,
-    IN PCSTR pszConfigFilePath
+    IN OPTIONAL PIO_STATIC_DRIVER pStaticDrivers
     )
 {
     NTSTATUS status = 0;
@@ -72,7 +88,10 @@ IopRootCreate(
     LwListInit(&pRoot->DriverObjectList);
     LwListInit(&pRoot->DeviceObjectList);
 
-    status = IopConfigReadRegistry(&pRoot->Config);
+    status = LwRtlInitializeMutex(&pRoot->DriverMutex, FALSE);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = LwRtlInitializeMutex(&pRoot->DeviceMutex, FALSE);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = LwRtlInitializeMutex(&pRoot->InitMutex, FALSE);
@@ -87,6 +106,8 @@ IopRootCreate(
         status = 0;
     }
 
+    pRoot->pStaticDrivers = pStaticDrivers;
+
 cleanup:
     if (status)
     {
@@ -100,54 +121,105 @@ cleanup:
 }
 
 NTSTATUS
+IopRootQueryStateDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName,
+    OUT PLWIO_DRIVER_STATE pState
+    )
+{
+    PIO_DRIVER_OBJECT pDriver = NULL;
+
+    LwRtlLockMutex(&pRoot->DriverMutex);
+
+    pDriver = IopRootFindDriver(pRoot, pDriverName);
+    *pState = pDriver ? LWIO_DRIVER_STATE_LOADED : LWIO_DRIVER_STATE_UNLOADED;
+    IopDriverDereference(&pDriver);
+
+    LwRtlUnlockMutex(&pRoot->DriverMutex);
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS
 IopRootLoadDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PIO_STATIC_DRIVER pStaticDrivers,
-    IN PWSTR pwszDriverName
+    IN PUNICODE_STRING pDriverName
     )
 {
     NTSTATUS status = 0;
     int EE = 0;
-    PLW_LIST_LINKS pLinks = NULL;
     PIO_DRIVER_OBJECT pDriverObject = NULL;
+    PIO_DRIVER_OBJECT pFoundDriverObject = NULL;
+    PIO_DRIVER_ENTRY pStaticDriverEntry = NULL;
     PSTR pszDriverName = NULL;
+    PSTR pszDriverPath = NULL;
 
-    status = RtlCStringAllocateFromWC16String(&pszDriverName, pwszDriverName);
+    LwRtlLockMutex(&pRoot->DriverMutex);
+
+    status = RtlCStringAllocateFromUnicodeString(&pszDriverName, pDriverName);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    for (pLinks = pRoot->DriverObjectList.Next;
-         pLinks != &pRoot->DriverObjectList;
-         pLinks = pLinks->Next)
+    pFoundDriverObject = IopRootFindDriver(pRoot, pDriverName);
+    if (pFoundDriverObject)
     {
-        PIO_DRIVER_OBJECT pDriverObject = LW_STRUCT_FROM_FIELD(pLinks, IO_DRIVER_OBJECT, RootLinks);
+        IopDriverDereference(&pFoundDriverObject);
 
-        if (RtlCStringIsEqual(pszDriverName, pDriverObject->Config->pszName, TRUE))
-        {
-            status = STATUS_OBJECT_NAME_COLLISION;
-            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-        }
+        LWIO_LOG_VERBOSE("Attempted to load already loaded driver '%s'",
+                         pszDriverName);
+
+        status = STATUS_OBJECT_NAME_COLLISION;
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     }
 
-    for (pLinks = pRoot->Config->DriverConfigList.Next;
-         pLinks != &pRoot->Config->DriverConfigList;
-         pLinks = pLinks->Next)
+    pStaticDriverEntry = IopRootFindStaticDriver(pRoot, pszDriverName);
+    if (!pStaticDriverEntry)
     {
-        PIOP_DRIVER_CONFIG pDriverConfig = LW_STRUCT_FROM_FIELD(pLinks, IOP_DRIVER_CONFIG, Links);
-
-        if (RtlCStringIsEqual(pszDriverName, pDriverConfig->pszName, TRUE))
-        {
-            status = IopDriverLoad(&pDriverObject, pRoot, pDriverConfig, pStaticDrivers);
-            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-            goto cleanup;
-        }
+        status = IopRootReadConfigDriver(pszDriverName, &pszDriverPath);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
     }
 
-    status = STATUS_NOT_FOUND;
+    status = IopDriverLoad(
+                    &pDriverObject,
+                    pRoot,
+                    pDriverName,
+                    pszDriverName,
+                    pStaticDriverEntry,
+                    pszDriverPath);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
 cleanup:
+    LwRtlUnlockMutex(&pRoot->DriverMutex);
 
     LWIO_SAFE_FREE_MEMORY(pszDriverName);
+
+    IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
+
+    return status;
+}
+
+NTSTATUS
+IopRootUnloadDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PUNICODE_STRING pDriverName
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    PIO_DRIVER_OBJECT pDriverObject = NULL;
+
+    LwRtlLockMutex(&pRoot->DriverMutex);
+
+    pDriverObject = IopRootFindDriver(pRoot, pDriverName);
+    if (!pDriverObject)
+    {
+        status = STATUS_NOT_FOUND;
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    IopDriverUnload(&pDriverObject);
+
+cleanup:
+    LwRtlUnlockMutex(&pRoot->DriverMutex);
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
 
@@ -157,17 +229,11 @@ cleanup:
 PIO_DRIVER_OBJECT
 IopRootFindDriver(
     IN PIOP_ROOT_STATE pRoot,
-    IN PWSTR pwszDriverName
+    IN PUNICODE_STRING pDriverName
     )
 {
-    NTSTATUS status = 0;
-    int EE = 0;
-    PLW_LIST_LINKS pLinks = NULL;
-    PSTR pszDriverName = NULL;
     PIO_DRIVER_OBJECT pFoundDriver = NULL;
-
-    status = RtlCStringAllocateFromWC16String(&pszDriverName, pwszDriverName);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    PLW_LIST_LINKS pLinks = NULL;
 
     for (pLinks = pRoot->DriverObjectList.Next;
          pLinks != &pRoot->DriverObjectList;
@@ -175,28 +241,37 @@ IopRootFindDriver(
     {
         PIO_DRIVER_OBJECT pDriverObject = LW_STRUCT_FROM_FIELD(pLinks, IO_DRIVER_OBJECT, RootLinks);
 
-        if (RtlCStringIsEqual(pszDriverName, pDriverObject->Config->pszName, TRUE))
+        if (RtlUnicodeStringIsEqual(pDriverName, &pDriverObject->DriverName, TRUE))
         {
             pFoundDriver = pDriverObject;
+            IopDriverReference(pFoundDriver);
             break;
         }
     }
-
-cleanup:
-
-    LWIO_SAFE_FREE_MEMORY(pszDriverName);
 
     return pFoundDriver;
 }
 
 NTSTATUS
-IopRootRefreshDrivers(
+IopRootRefreshConfig(
     IN PIOP_ROOT_STATE pRoot
     )
 {
     NTSTATUS status = 0;
     NTSTATUS subStatus = 0;
     PLW_LIST_LINKS pLinks = NULL;
+
+    // This handles calls to IoMgrRefreshConfig() before the I/O Manager
+    // is initialized.
+    // TODO: Make lwiod track whether I/O Manager has been initialized
+    //       and only call into IoMgrRefreshConfig() if it has been
+    //       initialized.
+    if (!pRoot)
+    {
+        goto cleanup;
+    }
+
+    LwRtlLockMutex(&pRoot->DriverMutex);
 
     for (pLinks = pRoot->DriverObjectList.Next;
          pLinks != &pRoot->DriverObjectList;
@@ -209,11 +284,9 @@ IopRootRefreshDrivers(
             subStatus = pDriverObject->Callback.Refresh(pDriverObject);
             if (subStatus)
             {
-                LWIO_LOG_ERROR("Failed to refresh driver: %s (0x%x)",
+                LWIO_LOG_ERROR("Failed to refresh driver: %s (0x%08x)",
                                LwNtStatusToName(subStatus), subStatus);
             }
-            
-
             if (!status)
             {
                 status = subStatus;
@@ -221,6 +294,9 @@ IopRootRefreshDrivers(
         }
     }
 
+    LwRtlUnlockMutex(&pRoot->DriverMutex);
+
+cleanup:
     return status;
 }
 
@@ -388,3 +464,87 @@ cleanup:
 
     return status;
 }
+
+static
+NTSTATUS
+IopRootReadConfigDriver(
+    IN PCSTR pszDriverName,
+    OUT PSTR* ppszDriverPath
+    )
+{
+    NTSTATUS status = 0;
+    int EE = 0;
+    PSTR pszDriverPath = NULL;
+    PSTR pszDriverKey = NULL;
+    PLWIO_CONFIG_REG pReg = NULL;
+
+    status = LwRtlCStringAllocatePrintf(
+                    &pszDriverKey,
+                    "Services\\lwio\\Parameters\\Drivers\\%s",
+                    pszDriverName);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = LwIoOpenConfig(
+                    pszDriverKey,
+                    NULL,
+                    &pReg);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    status = LwIoReadConfigString(pReg, "Path", FALSE, &pszDriverPath);
+    if (status)
+    {
+        LWIO_LOG_ERROR("Status 0x%08x (%s) reading path config for "
+                       "driver '%s'",
+                       status, LwNtStatusToName(status), pszDriverName);
+        status = STATUS_DEVICE_CONFIGURATION_ERROR;
+    }
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+
+    if (IsNullOrEmptyString(pszDriverPath))
+    {
+        LWIO_LOG_ERROR("Empty path for driver '%s'", pszDriverName);
+        status = STATUS_DEVICE_CONFIGURATION_ERROR;
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    }
+
+cleanup:
+    if (status)
+    {
+        RTL_FREE(&pszDriverPath);
+    }
+
+    RTL_FREE(&pszDriverKey);
+    LwIoCloseConfig(pReg);
+
+    *ppszDriverPath = pszDriverPath;
+
+    return status;
+}
+
+static
+PIO_DRIVER_ENTRY
+IopRootFindStaticDriver(
+    IN PIOP_ROOT_STATE pRoot,
+    IN PSTR pszDriverName
+    )
+{
+    PIO_DRIVER_ENTRY pFoundDriverEntry = NULL;
+    DWORD i = 0;
+
+    if (pRoot->pStaticDrivers)
+    {
+        /* First, look for driver in static list */
+        for (i = 0; pRoot->pStaticDrivers[i].pszName != NULL; i++)
+        {
+            if (!strcmp(pRoot->pStaticDrivers[i].pszName, pszDriverName))
+            {
+                pFoundDriverEntry = pRoot->pStaticDrivers[i].pEntry;
+                LWIO_LOG_DEBUG("Driver '%s' found in static list", pszDriverName);
+                break;
+            }
+        }
+    }
+
+    return pFoundDriverEntry;
+}
+

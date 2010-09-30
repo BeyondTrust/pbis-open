@@ -30,128 +30,95 @@
 
 #include "iop.h"
 
-static volatile PIOP_ROOT_STATE gpIoRoot = NULL;
-static volatile PIO_STATIC_DRIVER gpStaticDrivers = NULL;
-static pthread_mutex_t gDriverLock = PTHREAD_MUTEX_INITIALIZER;
+static PIOP_ROOT_STATE gpIoRoot = NULL;
 
 VOID
 IoCleanup(
+    VOID
     )
 {
-    PIOP_ROOT_STATE pRoot = gpIoRoot;
-    IopRootFree(&pRoot);
-    gpIoRoot = pRoot;
+    IopRootFree(&gpIoRoot);
 }
 
 NTSTATUS
 IoInitialize(
-    IN PCSTR pszConfigFilePath,
-    IN PIO_STATIC_DRIVER pStaticDrivers
+    IN OPTIONAL PIO_STATIC_DRIVER pStaticDrivers
+    )
+{
+    LWIO_ASSERT(!gpIoRoot);
+
+    return IopRootCreate(&gpIoRoot, pStaticDrivers);
+}
+
+NTSTATUS
+IoMgrQueryStateDriver(
+    IN PWSTR pwszDriverName,
+    OUT PLWIO_DRIVER_STATE pDriverState
     )
 {
     NTSTATUS status = 0;
-    PIOP_ROOT_STATE pRoot = NULL;
+    UNICODE_STRING driverName = { 0 };
+    LWIO_DRIVER_STATE driverState = LWIO_DRIVER_STATE_UNKNOWN;
 
-    status = IopRootCreate(&pRoot, pszConfigFilePath);
+    status = RtlUnicodeStringInitEx(&driverName, pwszDriverName);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    gpIoRoot = pRoot;
-    gpStaticDrivers = pStaticDrivers;
+    status = IopRootQueryStateDriver(gpIoRoot, &driverName, &driverState);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
     if (status)
     {
-        IopRootFree(&pRoot);
+        driverState = LWIO_DRIVER_STATE_UNKNOWN;
     }
 
-    gpIoRoot = pRoot;
-
-    return status;
-}
-
-LWIO_DRIVER_STATUS
-IoMgrGetDriverStatus(
-    PWSTR pwszDriverName
-    )
-{
-    LWIO_DRIVER_STATUS status = 0;
-
-    LwThreadsAcquireMutex(&gDriverLock);
-
-    status = IopRootFindDriver(gpIoRoot, pwszDriverName) ? 
-        LWIO_DRIVER_LOADED : LWIO_DRIVER_UNLOADED;
-
-    LwThreadsReleaseMutex(&gDriverLock);
+    *pDriverState = driverState;
 
     return status;
 }
 
 NTSTATUS
 IoMgrLoadDriver(
-    PWSTR pwszDriverName
+    IN PWSTR pwszDriverName
     )
 {
     NTSTATUS status = 0;
+    UNICODE_STRING driverName = { 0 };
 
-    LwThreadsAcquireMutex(&gDriverLock);
-    
-    status = IopRootLoadDriver(gpIoRoot, gpStaticDrivers, pwszDriverName);
+    status = RtlUnicodeStringInitEx(&driverName, pwszDriverName);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = IopRootLoadDriver(gpIoRoot, &driverName);
     GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
-
-    LwThreadsReleaseMutex(&gDriverLock);
-
     return status;
 }
 
 NTSTATUS
 IoMgrUnloadDriver(
-    PWSTR pwszDriverName
+    IN PWSTR pwszDriverName
     )
 {
     NTSTATUS status = 0;
-    PIO_DRIVER_OBJECT pDriverObject = NULL;
+    UNICODE_STRING driverName = { 0 };
 
-    LwThreadsAcquireMutex(&gDriverLock);
+    status = RtlUnicodeStringInitEx(&driverName, pwszDriverName);
+    GOTO_CLEANUP_ON_STATUS(status);
 
-    pDriverObject = IopRootFindDriver(gpIoRoot, pwszDriverName);
-    
-    if (!pDriverObject)
-    {
-        status = STATUS_NOT_FOUND;
-        GOTO_CLEANUP_ON_STATUS(status);
-    }
-
-    IopDriverUnload(&pDriverObject);
+    IopRootUnloadDriver(gpIoRoot, &driverName);
+    GOTO_CLEANUP_ON_STATUS(status);
 
 cleanup:
-
-    LwThreadsReleaseMutex(&gDriverLock);
-
     return status;
 }
 
 NTSTATUS
-IoMgrRefresh(
+IoMgrRefreshConfig(
     VOID
     )
 {
-    NTSTATUS status = 0;
-
-    LwThreadsAcquireMutex(&gDriverLock);
-
-    if (gpIoRoot)
-    {
-        status = IopRootRefreshDrivers(gpIoRoot);
-        GOTO_CLEANUP_ON_STATUS(status);
-    }
-
-cleanup:
-
-    LwThreadsReleaseMutex(&gDriverLock);
-
-    return status;
+    return IopRootRefreshConfig(gpIoRoot);
 }
 
 NTSTATUS
@@ -160,9 +127,7 @@ IopParse(
     OUT PIO_DEVICE_OBJECT* ppDevice
     )
 {
-    PIOP_ROOT_STATE pRoot = gpIoRoot;
-    
-    return IopRootParse(pRoot, pFileName, ppDevice);
+    return IopRootParse(gpIoRoot, pFileName, ppDevice);
 }
 
 NTSTATUS
@@ -170,7 +135,5 @@ IopGetMapSecurityContext(
     OUT PLW_MAP_SECURITY_CONTEXT* ppContext
     )
 {
-    PIOP_ROOT_STATE pRoot = gpIoRoot;
-
-    return IopRootGetMapSecurityContext(pRoot, ppContext);
+    return IopRootGetMapSecurityContext(gpIoRoot, ppContext);
 }

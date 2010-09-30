@@ -119,9 +119,10 @@ typedef enum
 
 typedef enum
 {
-    LWIO_DRIVER_UNLOADED,
-    LWIO_DRIVER_LOADED
-} LWIO_DRIVER_STATUS, *PLWIO_DRIVER_STATUS;
+    LWIO_DRIVER_STATE_UNKNOWN,
+    LWIO_DRIVER_STATE_UNLOADED,
+    LWIO_DRIVER_STATE_LOADED
+} LWIO_DRIVER_STATE, *PLWIO_DRIVER_STATE;
 
 typedef VOID (*PFN_LWIO_LOG_MESSAGE)(
                             HANDLE      hLog,
@@ -167,9 +168,9 @@ LwIoFreeLogInfo(
     );
 
 LW_NTSTATUS
-LwIoGetDriverStatus(
+LwIoQueryStateDriver(
     LW_PWSTR pwszDriverName,
-    PLWIO_DRIVER_STATUS pStatus
+    PLWIO_DRIVER_STATE pState
     );
 
 LW_NTSTATUS

@@ -84,7 +84,7 @@ LwioSrvRefreshConfig(
 
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = IoMgrRefresh();
+    ntStatus = IoMgrRefreshConfig();
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:

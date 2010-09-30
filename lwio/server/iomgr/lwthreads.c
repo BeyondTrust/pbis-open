@@ -889,6 +889,7 @@ LwRtlDetachThread(
 
 ////////
 
+#if 0
 static
 NTSTATUS
 LwRtlThreadsCreateThreadEx(
@@ -1151,3 +1152,4 @@ LwRtlThreadsDestroyCond(
         *ppCond = NULL;
     }
 }
+#endif

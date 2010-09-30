@@ -31,9 +31,9 @@
 #include "includes.h"
 
 LW_NTSTATUS
-LwIoGetDriverStatus(
+LwIoQueryStateDriver(
     LW_PWSTR pwszDriverName,
-    PLWIO_DRIVER_STATUS pStatus
+    PLWIO_DRIVER_STATE pState
     )
 {
     NTSTATUS status = 0;
@@ -44,7 +44,7 @@ LwIoGetDriverStatus(
     status = LwIoConnectionAcquireCall(&pCall);
     BAIL_ON_NT_STATUS(status);
 
-    in.tag = LWIO_GET_DRIVER_STATUS;
+    in.tag = LWIO_QUERY_STATE_DRIVER;
     in.data = pwszDriverName;
 
     status = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
@@ -52,10 +52,10 @@ LwIoGetDriverStatus(
 
     switch (out.tag)
     {
-    case LWIO_GET_DRIVER_STATUS_SUCCESS:
-        *pStatus = *((PLWIO_DRIVER_STATUS) out.data);
+    case LWIO_QUERY_STATE_DRIVER_SUCCESS:
+        *pState = *((PLWIO_DRIVER_STATE) out.data);
         break;
-    case LWIO_GET_DRIVER_STATUS_FAILED:
+    case LWIO_QUERY_STATE_DRIVER_FAILED:
         status = ((PLWIO_STATUS_REPLY) out.data)->dwError;
         BAIL_ON_LWIO_ERROR(status);
         break;

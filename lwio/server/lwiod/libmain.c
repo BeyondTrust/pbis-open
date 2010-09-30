@@ -612,9 +612,9 @@ SMBSrvInitialize(
     BAIL_ON_LWIO_ERROR(dwError);
 
 #ifdef ENABLE_STATIC_DRIVERS
-    dwError = IoInitialize("", gStaticDrivers);
+    dwError = IoInitialize(gStaticDrivers);
 #else
-    dwError = IoInitialize("", NULL);
+    dwError = IoInitialize(NULL);
 #endif
     BAIL_ON_LWIO_ERROR(dwError);
 
