@@ -214,6 +214,7 @@ IopRootLoadDriver(
 
 cleanup:
     LWIO_SAFE_FREE_MEMORY(pszDriverName);
+    LWIO_SAFE_FREE_MEMORY(pszDriverPath);
 
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
 
