@@ -1067,10 +1067,7 @@ SMBSrvExecute(
 
 cleanup:
 
-    // Calling exit() here is a temporary work-around until I/O cancellation
-    // is completely plumbed in.
     LWIO_LOG_VERBOSE("Exiting with dwError = %d", dwError);
-    exit(dwError);
 
     if (pServer)
     {
