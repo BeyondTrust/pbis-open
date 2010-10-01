@@ -410,7 +410,7 @@ SMBCreateDirectoryRecursive(
 
     if (pszToken != NULL) {
 
-        dwError = SMBAllocateMemory(strlen(pszCurDirPath)+strlen(pszToken)+2,
+        dwError = LwIoAllocateMemory(strlen(pszCurDirPath)+strlen(pszToken)+2,
                                    (PVOID*)&pszDirPath);
         BAIL_ON_LWIO_ERROR(dwError);
 
@@ -450,7 +450,7 @@ SMBCreateDirectoryRecursive(
         BAIL_ON_LWIO_ERROR(dwError);
     }
     if (pszDirPath) {
-        SMBFreeMemory(pszDirPath);
+        LwIoFreeMemory(pszDirPath);
     }
 
     return dwError;
@@ -462,7 +462,7 @@ error:
     }
 
     if (pszDirPath) {
-        SMBFreeMemory(pszDirPath);
+        LwIoFreeMemory(pszDirPath);
     }
 
     return dwError;
@@ -520,12 +520,12 @@ error:
 
         SMBChangeDirectory(pszCurDirPath);
 
-        SMBFreeMemory(pszCurDirPath);
+        LwIoFreeMemory(pszCurDirPath);
 
     }
 
     if (pszTmpPath) {
-        SMBFreeMemory(pszTmpPath);
+        LwIoFreeMemory(pszTmpPath);
     }
 
     return dwError;
@@ -580,7 +580,7 @@ SMBCopyFileWithPerms(
         BAIL_ON_LWIO_ERROR(dwError);
     }
 
-    dwError = SMBAllocateMemory(strlen(pszDstPath)+strlen(pszTmpSuffix)+2,
+    dwError = LwIoAllocateMemory(strlen(pszDstPath)+strlen(pszTmpSuffix)+2,
                                (PVOID*)&pszTmpPath);
     BAIL_ON_LWIO_ERROR(dwError);
 

@@ -62,7 +62,7 @@ SMBResponseCreate(
     BOOLEAN bDestroyCondition = FALSE;
     BOOLEAN bDestroyMutex = FALSE;
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     sizeof(SMB_RESPONSE),
                     (PVOID*)&pResponse);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -137,7 +137,7 @@ SMBResponseFree(
     }
 
     /* @todo: use allocator */
-    SMBFreeMemory(pResponse);
+    LwIoFreeMemory(pResponse);
 }
 
 VOID

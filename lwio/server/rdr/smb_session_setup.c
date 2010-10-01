@@ -257,7 +257,7 @@ SessionSetup(
 
     if (!pSocket->pSessionKey && pSessionKey)
     {
-        ntStatus = SMBAllocateMemory(
+        ntStatus = LwIoAllocateMemory(
                         dwSessionKeyLength,
                         OUT_PPVOID(&pSocket->pSessionKey));
         BAIL_ON_NT_STATUS(ntStatus);

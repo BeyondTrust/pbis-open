@@ -85,24 +85,6 @@ LwIoFreeMemory(
 }
 
 DWORD
-SMBAllocateMemory(
-    DWORD dwSize,
-    PVOID * ppMemory
-    )
-{
-    return LwIoAllocateMemory((size_t) dwSize, ppMemory);
-}
-
-VOID
-SMBFreeMemory(
-    PVOID pMemory
-    )
-{
-    LwIoFreeMemory(pMemory);
-}
-
-
-DWORD
 SMBAllocateString(
     PCSTR  pszInputString,
     PSTR* ppszOutputString
@@ -119,7 +101,7 @@ SMBAllocateString(
 
     dwLen = strlen(pszInputString);
 
-    dwError = SMBAllocateMemory(dwLen+1, (PVOID *)&pszOutputString);
+    dwError = LwIoAllocateMemory(dwLen+1, (PVOID *)&pszOutputString);
     BAIL_ON_LWIO_ERROR(dwError);
 
     if (dwLen) {
@@ -146,7 +128,7 @@ SMBFreeString(
     PSTR pszString
     )
 {
-    SMBFreeMemory(pszString);
+    LwIoFreeMemory(pszString);
 }
 
 VOID
@@ -165,7 +147,7 @@ SMBFreeStringArray(
             }
         }
 
-        SMBFreeMemory(ppStringArray);
+        LwIoFreeMemory(ppStringArray);
     }
 
     return;
@@ -185,6 +167,6 @@ SMBFreeNullTerminatedStringArray(
           ppTmp++;
     }
 
-    SMBFreeMemory(ppStringArray);
+    LwIoFreeMemory(ppStringArray);
 }
 

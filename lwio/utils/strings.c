@@ -103,7 +103,7 @@ SMBAllocateStringPrintfV(
     /* Use a small buffer in case libc does not like NULL */
     do
     {
-        dwError = SMBAllocateMemory(
+        dwError = LwIoAllocateMemory(
                         dwBufsize, 
                         (PVOID*) &pszSmallBuffer);
         BAIL_ON_LWIO_ERROR(dwError);
@@ -117,7 +117,7 @@ SMBAllocateStringPrintfV(
         {
             dwBufsize *= 2;
         }
-        SMBFreeMemory(pszSmallBuffer);
+        LwIoFreeMemory(pszSmallBuffer);
         pszSmallBuffer = NULL;
         
     } while (requiredLength < 0);
@@ -128,7 +128,7 @@ SMBAllocateStringPrintfV(
         BAIL_ON_LWIO_ERROR(dwError);
     }
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     requiredLength + 2,
                     (PVOID*)&pszOutputString);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -364,7 +364,7 @@ SMBEscapeString(
          * We are going to escape each single quote and enclose it in two other
          * single-quotes
          */
-        dwError = SMBAllocateMemory(
+        dwError = LwIoAllocateMemory(
                       strlen(pszOrig)+3*nQuotes+1,
                       (PVOID*)&pszNew );
         BAIL_ON_LWIO_ERROR(dwError);
@@ -423,7 +423,7 @@ SMBStrndup(
     if (copylen > size)
         copylen = size;
 
-    dwError = SMBAllocateMemory(copylen+1, (PVOID *)&pszOutputString);
+    dwError = LwIoAllocateMemory(copylen+1, (PVOID *)&pszOutputString);
     BAIL_ON_LWIO_ERROR(dwError);
 
     memcpy(pszOutputString, pszInputString, copylen);

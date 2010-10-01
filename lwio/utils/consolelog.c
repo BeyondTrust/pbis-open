@@ -58,7 +58,7 @@ LwioOpenConsoleLog(
     DWORD dwError = 0;
     PSMB_CONSOLE_LOG pConsoleLog = NULL;
     
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(SMB_CONSOLE_LOG),
                     (PVOID*)&pConsoleLog);
     if (dwError)
@@ -153,5 +153,5 @@ SMBFreeConsoleLogInfo(
     PSMB_CONSOLE_LOG pConsoleLog
     )
 {
-    SMBFreeMemory(pConsoleLog);
+    LwIoFreeMemory(pConsoleLog);
 }

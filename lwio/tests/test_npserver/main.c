@@ -140,7 +140,7 @@ main(int argc,
     ntStatus = BlockSignals();
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     sizeof(pthread_t) * nConnections,
                     (PVOID*)&pThreadArray);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -178,7 +178,7 @@ cleanup:
             pthread_join(*pThread, NULL);
         }
 
-        SMBFreeMemory(pThreadArray);
+        LwIoFreeMemory(pThreadArray);
     }
 
     return ntStatus;

@@ -226,7 +226,7 @@ RdrAcquireEstablishedSession(
 
         if (!pSession->pSocket->pSessionKey && pSession->pSessionKey)
         {
-            ntStatus = SMBAllocateMemory(
+            ntStatus = LwIoAllocateMemory(
                 pSession->dwSessionKeyLength,
                 (PVOID*)&pSession->pSocket->pSessionKey);
             BAIL_ON_NT_STATUS(ntStatus);

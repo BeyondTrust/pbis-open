@@ -75,7 +75,7 @@ SMBSessionCreate(
     BOOLEAN bDestroySetupCondition = FALSE;
     BOOLEAN bDestroyMutex = FALSE;
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                 sizeof(SMB_SESSION),
                 (PVOID*)&pSession);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -143,7 +143,7 @@ error:
             pthread_mutex_destroy(&pSession->mutex);
         }
 
-        SMBFreeMemory(pSession);
+        LwIoFreeMemory(pSession);
     }
 
     *ppSession = NULL;
@@ -263,7 +263,7 @@ SMBSessionFree(
     }
 
     /* @todo: use allocator */
-    SMBFreeMemory(pSession);
+    LwIoFreeMemory(pSession);
 }
 
 VOID

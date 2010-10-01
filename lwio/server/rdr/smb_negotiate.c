@@ -176,7 +176,7 @@ Negotiate(
 
     pSocket->securityBlobLen = securityBlobLen;
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     pSocket->securityBlobLen,
                     (PVOID *) &pSocket->pSecurityBlob);
     BAIL_ON_NT_STATUS(ntStatus);

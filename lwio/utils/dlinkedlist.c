@@ -58,7 +58,7 @@ SMBDLinkedListPrepend(
     DWORD dwError = 0;
     PSMBDLINKEDLIST pList = NULL;
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                   sizeof(SMBDLINKEDLIST),
                   (PVOID*)&pList);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -80,7 +80,7 @@ cleanup:
 error:
 
     if (pList) {
-        SMBFreeMemory(pList);
+        LwIoFreeMemory(pList);
     }
 
     goto cleanup;
@@ -95,7 +95,7 @@ SMBDLinkedListAppend(
     DWORD dwError = 0;
     PSMBDLINKEDLIST pList = NULL;
 
-    dwError = SMBAllocateMemory(sizeof(SMBDLINKEDLIST), (PVOID*)&pList);
+    dwError = LwIoAllocateMemory(sizeof(SMBDLINKEDLIST), (PVOID*)&pList);
     BAIL_ON_LWIO_ERROR(dwError);
 
     pList->pItem = pItem;
@@ -120,7 +120,7 @@ cleanup:
 error:
 
     if (pList) {
-        SMBFreeMemory(pList);
+        LwIoFreeMemory(pList);
     }
 
     goto cleanup;
@@ -160,7 +160,7 @@ SMBDLinkedListDelete(
           *ppList = pCandidate->pNext;
        }
        pCandidate->pItem = NULL;
-       SMBFreeMemory(pCandidate);
+       LwIoFreeMemory(pCandidate);
     }
 
     return bFound;
@@ -188,6 +188,6 @@ SMBDLinkedListFree(
     {
         PSMBDLINKEDLIST pTmp = pList;
         pList = pList->pNext;
-        SMBFreeMemory(pTmp);
+        LwIoFreeMemory(pTmp);
     }
 }

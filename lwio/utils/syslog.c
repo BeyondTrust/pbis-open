@@ -61,7 +61,7 @@ LwioOpenSyslog(
     DWORD dwError = 0;
     PSMB_SYS_LOG pSyslog = NULL;
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                 sizeof(SMB_SYS_LOG),
                 (PVOID*)&pSyslog);
     if (dwError)
@@ -224,6 +224,6 @@ SMBFreeSysLogInfo(
     
     LWIO_SAFE_FREE_STRING(pSysLog->pszIdentifier);
     
-    SMBFreeMemory(pSysLog);
+    LwIoFreeMemory(pSysLog);
 }
 

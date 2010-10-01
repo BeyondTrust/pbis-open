@@ -82,7 +82,7 @@ SMBTreeCreate(
     pthread_mutexattr_t mutexAttr;
     pthread_mutexattr_t* pMutexAttr = NULL;
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                 sizeof(SMB_TREE),
                 (PVOID*)&pTree);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -339,7 +339,7 @@ SMBTreeFree(
         SMBSessionRelease(pTree->pSession);
     }
 
-    SMBFreeMemory(pTree);
+    LwIoFreeMemory(pTree);
 }
 
 static

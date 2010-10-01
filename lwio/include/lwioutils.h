@@ -202,7 +202,7 @@
 #define LWIO_SAFE_FREE_MEMORY(mem) \
         do {                      \
            if (mem) {             \
-              SMBFreeMemory(mem); \
+              LwIoFreeMemory(mem); \
               (mem) = NULL;       \
            }                      \
         } while(0);
@@ -492,17 +492,6 @@ LwIoFreeMemory(
             (pMem) = NULL;                      \
         }                                       \
     } while (0)
-
-DWORD
-SMBAllocateMemory(
-    DWORD dwSize,
-    PVOID * ppMemory
-    );
-
-void
-SMBFreeMemory(
-    PVOID pMemory
-    );
 
 DWORD
 SMBAllocateString(

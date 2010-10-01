@@ -65,7 +65,7 @@ LwioOpenFileLog(
         goto error;
     }
     
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(SMB_FILE_LOG),
                     (PVOID*)&pFileLog);
     if (dwError)
@@ -134,7 +134,7 @@ LwioGetFileLogInfo(
         BAIL_ON_LWIO_ERROR(dwError);
     }
     
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(LWIO_LOG_INFO),
                     (PVOID*)&pLogInfo);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -213,5 +213,5 @@ SMBFreeFileLogInfo(
 
     LWIO_SAFE_FREE_STRING(pFileLog->pszFilePath);
     
-    SMBFreeMemory(pFileLog);
+    LwIoFreeMemory(pFileLog);
 }

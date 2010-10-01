@@ -198,7 +198,7 @@ SMBGSSContextBuild(
     
     LWIO_LOG_DEBUG("Build GSS Context for server [%s]", LWIO_SAFE_LOG_STRING(pszServerName));
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
         sizeof(SMB_GSS_SEC_CONTEXT),
         (PVOID*)&pContext);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -336,7 +336,7 @@ SMBGSSContextBuild(
         }
     }
     
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
         sizeof(CtxtHandle),
         (PVOID*)&pContext->pGSSContext);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -478,7 +478,7 @@ SMBGSSContextNegotiate(
 
     if (output_desc.length)
     {
-        dwError = SMBAllocateMemory(
+        dwError = LwIoAllocateMemory(
                         output_desc.length,
                         (PVOID*)&pSecurityBlob);
         BAIL_ON_LWIO_ERROR(dwError);
@@ -604,7 +604,7 @@ SMBGSSContextFree(
                             pContext->pGSSContext,
                             GSS_C_NO_BUFFER);
 
-            SMBFreeMemory(pContext->pGSSContext);
+            LwIoFreeMemory(pContext->pGSSContext);
         }
 
         if (pContext->credHandle)
@@ -612,7 +612,7 @@ SMBGSSContextFree(
             gss_release_cred(&dwMinorStatus, &pContext->credHandle);
         }
 
-        SMBFreeMemory(pContext);
+        LwIoFreeMemory(pContext);
     }
 }
 

@@ -126,7 +126,7 @@ RdrCreateFileEx(
         BAIL_ON_NT_STATUS(ntStatus);
     }
     
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
         sizeof(SMB_CLIENT_FILE_HANDLE),
         (PVOID*)&pFile);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -316,7 +316,7 @@ ParseSharePath(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
         sizeof("\\\\") - 1 + strlen(pszCanonical) + sizeof("\\") - 1 + sLen + 1,
         (PVOID*)&pszShare);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -330,7 +330,7 @@ ParseSharePath(
     sLen = strspn(pszIndex, "\\/");
     if (!sLen)
     {
-        SMBAllocateMemory(
+        LwIoAllocateMemory(
             strlen("\\") + 1,
             (PVOID*)&pszFilename);
         BAIL_ON_NT_STATUS(ntStatus);
@@ -342,7 +342,7 @@ ParseSharePath(
     {
         pszIndex += sLen;
 
-        SMBAllocateMemory(
+        LwIoAllocateMemory(
             strlen(pszIndex) + 2,
             (PVOID*)&pszFilename);
         BAIL_ON_NT_STATUS(ntStatus);

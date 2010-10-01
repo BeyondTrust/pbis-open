@@ -72,7 +72,7 @@ RdrGetSessionKey(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     pSession->dwSessionKeyLength,
                     (PVOID*)&pSessionKey);
     BAIL_ON_NT_STATUS(ntStatus);

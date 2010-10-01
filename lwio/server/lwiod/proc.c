@@ -184,7 +184,7 @@ cleanup:
         BAIL_ON_LWIO_ERROR(dwError);
     }
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                 sPathLen,
                 (PVOID*)&pszPathname);
     BAIL_ON_LWIO_ERROR(dwError);

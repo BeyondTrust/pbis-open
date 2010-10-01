@@ -63,7 +63,7 @@ SMBStackPush(
         BAIL_ON_LWIO_ERROR(dwError);
     }
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(SMB_STACK),
                     (PVOID*)&pStack);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -80,7 +80,7 @@ cleanup:
 error:
 
     if (pStack) {
-        SMBFreeMemory(pStack);
+        LwIoFreeMemory(pStack);
     }
 
     goto cleanup;
@@ -117,7 +117,7 @@ SMBStackPop(
 
         pItem = pTop->pItem;
 
-        SMBFreeMemory(pTop);
+        LwIoFreeMemory(pTop);
     }
 
     return pItem;
@@ -228,6 +228,6 @@ SMBStackFree(
 
         pStack = pStack->pNext;
 
-        SMBFreeMemory(pTmp);
+        LwIoFreeMemory(pTmp);
     }
 }

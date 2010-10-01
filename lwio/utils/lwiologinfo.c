@@ -53,5 +53,5 @@ LwIoFreeLogInfo(
     )
 {
     LWIO_SAFE_FREE_STRING(pLogInfo->pszPath);
-    SMBFreeMemory(pLogInfo);
+    LwIoFreeMemory(pLogInfo);
 }

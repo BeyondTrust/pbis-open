@@ -56,7 +56,7 @@ LWIOQueueCreate(
     DWORD dwError = 0;
     PLWIO_QUEUE pQueue = NULL;
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(LWIO_QUEUE),
                     (PVOID*)&pQueue);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -83,7 +83,7 @@ SMBEnqueue(
     DWORD dwError = 0;
     PLWIO_QUEUE_ITEM pQueueItem = NULL;
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(LWIO_QUEUE_ITEM),
                     (PVOID*)&pQueueItem);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -120,7 +120,7 @@ SMBEnqueueFront(
     DWORD dwError = 0;
     PLWIO_QUEUE_ITEM pQueueItem = NULL;
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     sizeof(LWIO_QUEUE_ITEM),
                     (PVOID*)&pQueueItem);
     BAIL_ON_LWIO_ERROR(dwError);
@@ -167,7 +167,7 @@ SMBDequeue(
 
         pItem = pQueueItem->pItem;
 
-        SMBFreeMemory(pQueueItem);
+        LwIoFreeMemory(pQueueItem);
     }
 
     return pItem;
@@ -207,7 +207,7 @@ LWIOQueueFree(
     PLWIO_QUEUE pQueue
     )
 {
-    SMBFreeMemory(pQueue);
+    LwIoFreeMemory(pQueue);
 }
 
 

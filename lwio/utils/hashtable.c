@@ -119,7 +119,7 @@ SMBHashSafeFree(
     }
 
     LWIO_SAFE_FREE_MEMORY((*ppResult)->ppEntries);
-    SMBFreeMemory(*ppResult);
+    LwIoFreeMemory(*ppResult);
 
     *ppResult = NULL;
 

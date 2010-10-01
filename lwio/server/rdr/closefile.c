@@ -44,7 +44,7 @@ RdrReleaseFile(
     RTL_FREE(&pFile->pwszPath);
     RTL_FREE(&pFile->find.pBuffer);
     
-    SMBFreeMemory(pFile);
+    LwIoFreeMemory(pFile);
 }
 
 NTSTATUS

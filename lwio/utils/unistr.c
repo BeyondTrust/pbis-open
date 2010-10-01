@@ -47,7 +47,7 @@ SMBAllocateStringW(
 
     sLen = wc16slen(pwszInputString);
 
-    dwError = SMBAllocateMemory(
+    dwError = LwIoAllocateMemory(
                     (sLen + 1 ) * sizeof(wchar16_t),
                     (PVOID *)&pwszOutputString);
     BAIL_ON_LWIO_ERROR(dwError);

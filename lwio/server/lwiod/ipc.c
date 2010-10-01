@@ -111,7 +111,7 @@ LwIoDaemonIpcRefreshConfiguration(
     ntStatus = LwIoVerifyRootAccess(pCall);
     BAIL_ON_LWIO_ERROR(ntStatus);
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
     BAIL_ON_LWIO_ERROR(ntStatus);
@@ -155,7 +155,7 @@ LwIoDaemonIpcSetLogInfo(
     ntStatus = LwIoVerifyRootAccess(pCall);
     BAIL_ON_LWIO_ERROR(ntStatus);
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
     BAIL_ON_LWIO_ERROR(ntStatus);
@@ -199,7 +199,7 @@ LwIoDaemonIpcGetLogInfo(
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
     PLWIO_LOG_INFO pLogInfo = NULL;
 
-    ntStatus = SMBAllocateMemory(
+    ntStatus = LwIoAllocateMemory(
                     sizeof(LWIO_STATUS_REPLY),
                     (PVOID*)&pStatusResponse);
     BAIL_ON_LWIO_ERROR(ntStatus);
@@ -246,10 +246,10 @@ LwIoDaemonIpcQueryStateDriver(
     PLWIO_DRIVER_STATE pState = NULL;
     PLWIO_STATUS_REPLY pStatusResponse = NULL;
 
-    ntStatus = SMBAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
+    ntStatus = LwIoAllocateMemory(sizeof(*pState), OUT_PPVOID(&pState));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
-    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    ntStatus = LwIoAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
     ntStatus = IoMgrQueryStateDriver(pwszDriverName, pState);
@@ -297,7 +297,7 @@ LwIoDaemonIpcLoadDriver(
     ntStatus = LwIoVerifyRootAccess(pCall);
     BAIL_ON_LWIO_ERROR(ntStatus);
 
-    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    ntStatus = LwIoAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
     ntStatus = IoMgrLoadDriver(pwszDriverName);
@@ -335,7 +335,7 @@ LwIoDaemonIpcUnloadDriver(
     ntStatus = LwIoVerifyRootAccess(pCall);
     BAIL_ON_LWIO_ERROR(ntStatus);
 
-    ntStatus = SMBAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
+    ntStatus = LwIoAllocateMemory(sizeof(*pStatusResponse), OUT_PPVOID(&pStatusResponse));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
     ntStatus = IoMgrUnloadDriver(pwszDriverName);
@@ -369,7 +369,7 @@ LwIoDaemonIpcGetPid(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     pid_t* pPid = NULL;
 
-    ntStatus = SMBAllocateMemory(sizeof(*pPid), OUT_PPVOID(&pPid));
+    ntStatus = LwIoAllocateMemory(sizeof(*pPid), OUT_PPVOID(&pPid));
     BAIL_ON_LWIO_ERROR(ntStatus);
 
     *pPid = getpid();

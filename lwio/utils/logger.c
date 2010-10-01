@@ -195,7 +195,7 @@ LwioLogGetInfo(
         case LWIO_LOG_TARGET_CONSOLE:
         case LWIO_LOG_TARGET_SYSLOG:
             
-            dwError = SMBAllocateMemory(
+            dwError = LwIoAllocateMemory(
                             sizeof(LWIO_LOG_INFO),
                             (PVOID*)&pLogInfo);
             BAIL_ON_LWIO_ERROR(dwError);
