@@ -3,8 +3,6 @@ bin_SCRIPTS = lw-edit-reg
 
 #lwregshell
 lwregshell_SOURCES = \
-    import.c \
-    export.c \
     cmdparse.c \
     regshell.c
 

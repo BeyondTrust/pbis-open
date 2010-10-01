@@ -1,7 +1,6 @@
 #ifndef _RSUTILS_H
 #define _RSUTILS_H
 
-
 #define REGEXPORT_LINE_WIDTH 80
 
 typedef struct _REGSHELL_UTIL_VALUE
@@ -132,23 +131,25 @@ RegShellUtilGetValue(
     );
 
 DWORD
-RegShellUtilEscapeString(
-    PCSTR pszValue,
-    PSTR *ppszRetValue,
-    PDWORD pdwEscapeValueLen
+RegShellUtilImportCallback(
+    PREG_PARSE_ITEM pItem,
+    HANDLE hUserCtx
     );
 
 DWORD
-RegShellUtilValueArrayFree(
-    PREGSHELL_UTIL_VALUE pValueArray,
-    DWORD dwValueArrayLen
+RegShellUtilImportDebugCallback(
+    PREG_PARSE_ITEM pItem,
+    HANDLE userContext
     );
 
 DWORD
-RegExportBinaryTypeToString(
-    REG_DATA_TYPE token,
-    PSTR tokenStr,
-    BOOLEAN dumpFormat
+RegShellUtilExport(
+    HANDLE hReg,
+    FILE* fp,
+    HKEY hKey,
+    PCSTR pszKeyName,
+    DWORD dwNumSubKeys,
+    DWORD dwMaxSubKeyLen
     );
 
 DWORD
@@ -156,6 +157,21 @@ RegExportAttributes(
     PREG_PARSE_ITEM pItem,
     PSTR *ppszDumpString,
     PDWORD pdwDumpStringLen
+    );
+
+
+DWORD
+RegShellUtilEscapeString(
+    PCSTR pszValue,
+    PSTR *ppszRetValue,
+    PDWORD pdwEscapeValueLen
+    );
+
+DWORD
+RegExportBinaryTypeToString(
+    REG_DATA_TYPE token,
+    PSTR tokenStr,
+    BOOLEAN dumpFormat
     );
 
 DWORD
@@ -216,10 +232,9 @@ RegExportPlainText(
     );
 
 DWORD
-RegExportAttributeEntries(
-    PREG_PARSE_ITEM pItem,
-    PSTR *ppszDumpString,
-    PDWORD pdwDumpStringLen
+RegShellUtilValueArrayFree(
+    PREGSHELL_UTIL_VALUE pValueArray,
+    DWORD dwValueArrayLen
     );
 
 #endif

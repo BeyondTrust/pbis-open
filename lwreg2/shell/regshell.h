@@ -172,13 +172,6 @@ typedef struct _REGSHELL_REG_TYPE_ENTRY
     DWORD backendType;
 } REGSHELL_REG_TYPE_ENTRY, *PREGSHELL_REG_TYPE_ENTRY;
 
-typedef struct __REG_EXPORT_STATE
-{
-    FILE* fp;
-    PBYTE pRootKeySecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE];
-    ULONG ulRootKeySecDescLen;
-}REG_EXPORT_STATE, *PREG_EXPORT_STATE;
-
 
 PSTR
 RegShellGetRootKey(
@@ -249,27 +242,4 @@ RegShellOpenHandle(
 DWORD
 RegShellCmdParseFree(
     PREGSHELL_CMD_ITEM pCmdItem);
-
-DWORD
-RegShellUtilExport(
-    HANDLE hReg,
-    PREG_EXPORT_STATE pExportState,
-    HKEY hKey,
-    PCSTR pszKeyName,
-    DWORD dwNumSubKeys,
-    DWORD dwMaxSubKeyLen
-    );
-
-DWORD
-RegShellUtilImportCallback(
-    PREG_PARSE_ITEM pItem,
-    HANDLE hUserCtx
-    );
-
-DWORD
-RegShellUtilImportDebugCallback(
-    PREG_PARSE_ITEM pItem,
-    HANDLE userContext
-    );
-
 #endif

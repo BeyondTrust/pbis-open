@@ -94,6 +94,15 @@ int main(int argc, char *argv[])
 
     wchar16_t pCurrData[] = {'C', 'u', 'r', 'r', 'e', 'n', 't', 0};
 
+    DWORD dwValueCount = 0;
+    DWORD dwMaxValueNameLen = 0;
+    DWORD dwMaxValueLen = 0;
+
+    DWORD iCount = 0;
+    PWSTR pwszValueName = NULL;
+    PBYTE pValData = NULL;
+    REG_DATA_TYPE dwDataType = REG_UNKNOWN;
+
 
     dwError = RegConvertValueAttributesAToW(ValueAttribute,
                                             &pAttr);
@@ -233,6 +242,56 @@ int main(int argc, char *argv[])
                    &cbData);
     BAIL_ON_REG_ERROR(dwError);
 
+    dwError = RegQueryInfoKeyW(
+                   hReg,
+                   hSubKey,
+                   NULL,
+                   NULL,
+                   NULL,
+                   NULL,
+                   NULL,
+                   NULL,
+                   &dwValueCount,
+                   &dwMaxValueNameLen,
+                   &dwMaxValueLen,
+                   NULL,
+                   NULL);
+    BAIL_ON_REG_ERROR(dwError);
+
+    for (iCount = 0; iCount < dwValueCount; iCount++)
+    {
+        DWORD dwValueLen = dwMaxValueLen;
+        DWORD dwValueNameLen = dwMaxValueNameLen+1;
+
+        if (dwValueNameLen)
+        {
+            RTL_FREE(&pwszValueName);
+
+            dwError = RTL_ALLOCATE(&pwszValueName, VOID, dwValueNameLen);
+            BAIL_ON_REG_ERROR(dwError);
+        }
+
+        if (dwValueLen)
+        {
+            RTL_FREE(&pValData);
+
+            dwError = RTL_ALLOCATE(&pValData, VOID, dwValueLen);
+            BAIL_ON_REG_ERROR(dwError);
+        }
+
+        dwError = RegEnumValueW(
+                      hReg,
+                      hSubKey,
+                      iCount,
+                      pwszValueName,
+                      &dwValueNameLen,
+                      NULL,
+                      &dwDataType,
+                      pValData,
+                      &dwValueLen);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+
     dwError = RegDeleteValueAttributesW(
                    hReg,
                    hKey,
@@ -289,6 +348,9 @@ cleanup:
     RegSafeFreeValueAttributes(&pAttr);
     RegSafeFreeCurrentValueInfo(&pCurrentValue);
     RegSafeFreeValueAttributes(&pValueAttributes);
+
+    RTL_FREE(&pwszValueName);
+    RTL_FREE(&pValData);
 
 
     return dwError;
