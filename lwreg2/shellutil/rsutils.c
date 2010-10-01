@@ -1636,13 +1636,16 @@ RegExportAttributeEntries(
                       &dwAttrStringLen);
         BAIL_ON_REG_ERROR(dwError);
 
-        dwError = RtlCStringAllocateAppendPrintf(
-                      &pszDumpString, "%*s%s\n",
-                      dwIndentLevel,
-                      pszIndentChar,
-                      pszString);
-        BAIL_ON_REG_ERROR(dwError);
-        LWREG_SAFE_FREE_STRING(pszString);
+        if (pszString && dwAttrStringLen)
+        {
+            dwError = RtlCStringAllocateAppendPrintf(
+                          &pszDumpString, "%*s%s\n",
+                          dwIndentLevel,
+                          pszIndentChar,
+                          pszString);
+            BAIL_ON_REG_ERROR(dwError);
+            LWREG_SAFE_FREE_STRING(pszString);
+        }
     }
 
     if (pItem->regAttr.pDefaultValue)
@@ -2174,6 +2177,13 @@ RegExportBinaryData(
     BOOLEAN firstHex = FALSE;
 
     CHAR typeName[128];
+
+    if (type == 0 && valueLen == 0)
+    {
+        *dumpString = NULL;
+        *dumpStringLen = 0;
+        return 0;
+    }
 
     RegExportBinaryTypeToString(type, typeName, TRUE);
     /* 5 extra for " "= \\n characters on first line */
