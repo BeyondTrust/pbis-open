@@ -255,8 +255,8 @@ RdrShutdown(
     ntStatus = RdrReaperShutdown(&gRdrRuntime);
     BAIL_ON_NT_STATUS(ntStatus);
 
+    LwRtlWaitTaskGroup(gRdrRuntime.pReaderTaskGroup);
     LwRtlFreeTaskGroup(&gRdrRuntime.pReaderTaskGroup);
-
     LwRtlFreeThreadPool(&gRdrRuntime.pThreadPool);
 
     ntStatus = RdrSocketShutdown();

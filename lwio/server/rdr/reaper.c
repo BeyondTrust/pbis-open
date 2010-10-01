@@ -186,6 +186,18 @@ RdrReaperThread(
         }
     }
 
+    /* Run RdrReaperReapGlobal() one more time now that bShutdown is set
+     * to clean up all remaining objects
+     */
+
+    LWIO_UNLOCK_MUTEX(bInReaperLock, &pRuntime->reaperMutex);
+
+    ntStatus = RdrReaperReapGlobal(
+           pRuntime,
+           currentTime,
+           &nextWakeupTime);
+    BAIL_ON_NT_STATUS(ntStatus);
+
 error:
 
     LWIO_UNLOCK_MUTEX(bInReaperLock, &pRuntime->reaperMutex);
@@ -351,9 +363,10 @@ cleanup:
         
             if (--pSocket->refCount == 0)
             {
-                if (RdrReaperIsExpired(pSocket->lastActiveTime,
-                                       currentTime,
-                                       expirationTime))
+                if (pRuntime->bShutdown ||
+                    RdrReaperIsExpired(pSocket->lastActiveTime,
+                        currentTime,
+                        expirationTime))
                 {
                     /* Ref count is 0 and socket has expired,
                        so remove it from the hash and leave it
@@ -474,9 +487,10 @@ cleanup:
         
             if (--pSession->refCount == 0)
             {
-                if (RdrReaperIsExpired(pSession->lastActiveTime,
-                                       currentTime,
-                                       expirationTime))
+                if (pRuntime->bShutdown ||
+                    RdrReaperIsExpired(pSession->lastActiveTime,
+                        currentTime,
+                        expirationTime))
                 {
                     LWIO_LOG_VERBOSE("Session %p is expired, reaping", pSession);
                     
@@ -567,9 +581,10 @@ cleanup:
         
             if (pTree->refCount == 0)
             {
-                if (RdrReaperIsExpired(pTree->lastActiveTime,
-                                       currentTime,
-                                       expirationTime))
+                if (pRuntime->bShutdown ||
+                    RdrReaperIsExpired(pTree->lastActiveTime,
+                        currentTime,
+                        expirationTime))
                 {
                     LWIO_LOG_VERBOSE("Tree %p is expired, reaping", pTree);
 
