@@ -774,6 +774,7 @@ LwMapSecurityCreateAccessTokenFromUidGid(
     PACCESS_TOKEN accessToken = NULL;
     PSID userSid = NULL;
     PSID groupSid = NULL;
+    PACL freeDefaultDacl = NULL;
     PACCESS_TOKEN_CREATE_INFORMATION createInformation = NULL;
 
     if (0 == Uid)
@@ -824,6 +825,8 @@ LwMapSecurityCreateAccessTokenFromUidGid(
                      VOID,
                      ulDaclSize);
         GOTO_CLEANUP_ON_STATUS(status);
+
+        freeDefaultDacl = tokenDefaultDacl.DefaultDacl;
 
         status = RtlCreateAcl(
                      tokenDefaultDacl.DefaultDacl,
@@ -880,6 +883,7 @@ cleanup:
 
     LwMapSecurityFreeSid(Context, &userSid);
     LwMapSecurityFreeSid(Context, &groupSid);
+    RTL_FREE(&freeDefaultDacl);
     LwMapSecurityFreeAccessTokenCreateInformation(Context, &createInformation);
 
     *AccessToken = accessToken;
