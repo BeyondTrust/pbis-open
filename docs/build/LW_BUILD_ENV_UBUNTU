@@ -28,3 +28,7 @@ On 64bit ubuntu 8.04:
 On 64bit ubuntu 9.10:
 
 gcc-4.4-multilib
+
+[optional for extended attribute support in cifs]
+
+libattr1-dev
