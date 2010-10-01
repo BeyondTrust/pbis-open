@@ -395,7 +395,6 @@ RegShellExportFile(
     DWORD dwSubKeysCount = 0;
     DWORD dwMaxSubKeyLen = 0;
     char szRegFileName[PATH_MAX + 1];
-    FILE* fp = NULL;
     HKEY hSubKey = NULL;
     HKEY hRootKey = NULL;
     PSTR pszFullPath = NULL;
@@ -403,7 +402,15 @@ RegShellExportFile(
     PSTR pszDefaultKey = NULL;
     PSTR pszRootKey = NULL;
     PSTR pszTemp = NULL;
+    HKEY hRootKeyToRetrieveSd = NULL;
+    SECURITY_INFORMATION SecInfoAll = OWNER_SECURITY_INFORMATION
+                                     |GROUP_SECURITY_INFORMATION
+                                     |DACL_SECURITY_INFORMATION
+                                     |SACL_SECURITY_INFORMATION;
+    PREG_EXPORT_STATE pExportState = NULL;
 
+    dwError = RegAllocateMemory(sizeof(*pExportState), (LW_PVOID*)&pExportState);
+    BAIL_ON_INVALID_POINTER(pExportState);
 
     strcpy(szRegFileName, rsItem->args[0]);
 
@@ -411,15 +418,47 @@ RegShellExportFile(
 
     if (!strcmp(szRegFileName, "-"))
     {
-        fp = stdout;
+        pExportState->fp = stdout;
     }
     else
     {
-        fp = fopen(szRegFileName, "w");
+        pExportState->fp = fopen(szRegFileName, "w");
     }
-    if (fp == NULL) {
+    if (pExportState->fp == NULL) {
         dwError = errno;
         goto error;
+    }
+
+    pExportState->ulRootKeySecDescLen = SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE;
+    memset(pExportState->pRootKeySecDescRel,
+           0,
+           sizeof(pExportState->pRootKeySecDescRel));
+
+    dwError = RegOpenKeyExA(hReg,
+                            NULL,
+                            HKEY_THIS_MACHINE,
+                            0,
+                            KEY_READ | READ_CONTROL,
+                            &hRootKeyToRetrieveSd);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegGetKeySecurity(hReg,
+                                hRootKeyToRetrieveSd,
+                                SecInfoAll,
+                                (PSECURITY_DESCRIPTOR_RELATIVE)pExportState->pRootKeySecDescRel,
+                                &pExportState->ulRootKeySecDescLen);
+    BAIL_ON_REG_ERROR(dwError);
+
+    if (hRootKeyToRetrieveSd)
+    {
+        RegCloseKey(hReg, hRootKeyToRetrieveSd);
+        hRootKeyToRetrieveSd = NULL;
+    }
+
+    if (pExportState->ulRootKeySecDescLen == 0)
+    {
+        dwError = ERROR_INVALID_SECURITY_DESCR;
+        BAIL_ON_REG_ERROR(dwError);
     }
 
     if (rsItem->keyName && *rsItem->keyName)
@@ -437,7 +476,7 @@ RegShellExportFile(
                                 NULL,
                                 pszRootKey,
                                 0,
-                                KEY_READ,
+                                KEY_READ | READ_CONTROL,
                                 &hRootKey);
         if (dwError)
         {
@@ -445,14 +484,16 @@ RegShellExportFile(
                                     NULL,
                                     HKEY_THIS_MACHINE,
                                     0,
-                                    KEY_READ,
+                                    KEY_READ | READ_CONTROL,
                                     &hRootKey);
             BAIL_ON_REG_ERROR(dwError);
+
             LWREG_SAFE_FREE_STRING(pszRootKey);
             dwError = LwRtlCStringDuplicate(
                           &pszRootKey,
                           HKEY_THIS_MACHINE);
             BAIL_ON_REG_ERROR(dwError);
+
             pszDefaultKey = strchr(rsItem->keyName, '\\'); 
             if (pszDefaultKey)
             {
@@ -532,7 +573,7 @@ RegShellExportFile(
     BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegShellUtilExport(hReg,
-                                 fp,
+                                 pExportState,
                                  hSubKey,
                                  pszRootFullPath,
                                  dwSubKeysCount,
@@ -548,14 +589,24 @@ cleanup:
     {
         RegCloseKey(hReg, hRootKey);
     }
+    if (hRootKeyToRetrieveSd)
+    {
+        RegCloseKey(hReg, hRootKeyToRetrieveSd);
+    }
+    if (pExportState->fp && pExportState->fp != stdout)
+    {
+        fclose(pExportState->fp);
+        pExportState->fp = NULL;
+    }
+    if (pExportState)
+    {
+        RegFreeMemory(pExportState);
+    }
     LWREG_SAFE_FREE_STRING(pszRootKey);
     LWREG_SAFE_FREE_STRING(pszFullPath);
     LWREG_SAFE_FREE_STRING(pszRootFullPath);
 
-    if (fp && fp != stdout)
-    {
-        fclose(fp);
-    }
+
     return dwError;
 
 error:

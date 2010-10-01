@@ -42,7 +42,7 @@
  *          Adam Bernstein (abernstein@likewise.com)
  *
  */
-#include "includes.h"
+#include "regshell.h"
 
 
 #define SECURITY_MASK_SDDL \
