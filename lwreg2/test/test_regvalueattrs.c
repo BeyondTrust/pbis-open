@@ -45,6 +45,8 @@ CHAR szCurrentVal[] = "Current value";
 CHAR szDefaultVal[] = "Default value";
 CHAR szDocString[] = "Document String";
 
+DWORD dwDefaultVal = 8;
+
 CHAR* ppszRangeEnumStrings[] = {"enum1", "enum2", "enum3", NULL};
 
 LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
@@ -56,9 +58,9 @@ LWREG_VALUE_ATTRIBUTES_A ValueAttribute = {
         0};
 
 LWREG_VALUE_ATTRIBUTES_A ValueAttribute_int = {
-        REG_SZ,
-        szDefaultVal,
-        sizeof(szDefaultVal),
+        REG_DWORD,
+        &dwDefaultVal,
+        sizeof(DWORD),
         szDocString,
         LWREG_VALUE_RANGE_TYPE_INTEGER,
         0};
@@ -86,9 +88,9 @@ int main(int argc, char *argv[])
 
     ValueAttribute.Range.ppszRangeEnumStrings = ppszRangeEnumStrings;
     ValueAttribute_int.Range.RangeInteger.Max = 100;
-    ValueAttribute_int.Range.RangeInteger.Min = -1;
+    ValueAttribute_int.Range.RangeInteger.Min = 1;
 
-    DWORD dwType = REG_UNKNOWN;
+    DWORD dwType = REG_NONE;
     PBYTE pData[MAX_VALUE_LENGTH] = {0};
     DWORD cbData = MAX_VALUE_LENGTH;
 
