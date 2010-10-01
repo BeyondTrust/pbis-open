@@ -499,13 +499,6 @@ SMBAllocateMemory(
     PVOID * ppMemory
     );
 
-DWORD
-SMBReallocMemory(
-    PVOID  pMemory,
-    PVOID * ppNewMemory,
-    DWORD dwSize
-    );
-
 void
 SMBFreeMemory(
     PVOID pMemory

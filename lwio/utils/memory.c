@@ -93,16 +93,6 @@ SMBAllocateMemory(
     return LwIoAllocateMemory((size_t) dwSize, ppMemory);
 }
 
-DWORD
-SMBReallocMemory(
-    PVOID  pMemory,
-    PVOID * ppNewMemory,
-    DWORD dwSize
-    )
-{
-    return LwIoReallocMemory(pMemory, (size_t) dwSize, ppNewMemory);
-}
-
 VOID
 SMBFreeMemory(
     PVOID pMemory
