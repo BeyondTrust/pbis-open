@@ -703,7 +703,7 @@ rpc__smb_socket_connect(
     serr = NtStatusToErrno(
         LwRtlCStringAllocatePrintf(
             &smbpath, 
-            "\\rdr\\%s\\IPC$\\%s",
+            "/rdr/%s/IPC$/%s",
             (char*) netaddr,
             (char*) pipename));
     if (serr)
