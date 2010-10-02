@@ -835,7 +835,7 @@ unsigned32              *status;
      * Convert backslashes to forward slashes to conform to
      * UNIX filesystem convention.
      */
-    if (np_addr->rpc_protseq_id == RPC_C_PROTSEQ_ID_NCACN_NP)
+    if (np_addr->rpc_protseq_id == RPC_C_PROTSEQ_ID_NCALRPC)
     {
         for (p = (unsigned char*) &np_addr->sa.sun_path[RPC_C_NP_DIR_LEN]; *p != '\0'; p++) {
             if (*p == '\\')
