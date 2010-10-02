@@ -866,7 +866,7 @@ RegSrvIpcEnumValueW(
     PWSTR pValueName = NULL;
     PBYTE pValue = NULL;
     PREG_IPC_STATUS pStatus = NULL;
-    REG_DATA_TYPE type = REG_UNKNOWN;
+    REG_DATA_TYPE type = REG_NONE;
 
     if (pReq->cName)
     {

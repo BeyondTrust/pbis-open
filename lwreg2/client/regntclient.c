@@ -558,7 +558,7 @@ NtRegEnumValueA(
     )
 {
 	NTSTATUS status = 0;
-    DWORD dwType = REG_UNKNOWN;
+    DWORD dwType = REG_NONE;
     PWSTR pwszValueName = NULL;
     PSTR pszTempValueName = NULL;
     PVOID pTempData = NULL;
@@ -698,7 +698,7 @@ cleanup:
 error:
     if (pdwType)
     {
-        *pdwType = REG_UNKNOWN;
+        *pdwType = REG_NONE;
     }
     if (pcbData)
     {
@@ -750,7 +750,7 @@ NtRegGetValueA(
     )
 {
 	NTSTATUS status = 0;
-    DWORD dwType = REG_UNKNOWN;
+    DWORD dwType = REG_NONE;
     PWSTR pwszSubKey = NULL;
     PWSTR pwszValueName = NULL;
     PVOID pTempData = NULL;
@@ -873,7 +873,7 @@ cleanup:
 error:
     if (pdwType)
     {
-        *pdwType = REG_UNKNOWN;
+        *pdwType = REG_NONE;
     }
 
     if (pcbData)
@@ -1251,7 +1251,7 @@ NtRegSetValueExA(
     				                                     (PCSTR)pData);
     		BAIL_ON_NT_STATUS(status);
 
-                cbOutDataLen = (mbstrlen((const char*) pData)+1) * sizeof(WCHAR);
+            cbOutDataLen = (mbstrlen((const char*) pData)+1) * sizeof(WCHAR);
     		bIsStrType = TRUE;
     	}
     }

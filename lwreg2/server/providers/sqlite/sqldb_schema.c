@@ -763,7 +763,7 @@ RegDbGetValueAttributes_inlock(
         BAIL_ON_NT_STATUS(status);
     }
 
-    if (valueType == REG_UNKNOWN)
+    if (valueType == REG_NONE)
     {
         pstQuery = pConn->pstQueryValueAttributes;
 

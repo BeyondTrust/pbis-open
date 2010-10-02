@@ -193,7 +193,7 @@ SqliteGetValueAttributes(
                                              hKey,
                                              pwszSubKey,
                                              pValueName,
-                                             REG_UNKNOWN,
+                                             REG_NONE,
                                              TRUE,
                                              ppCurrentValue,
                                              ppValueAttributes);
@@ -324,7 +324,7 @@ SqliteGetValueAttributes_Internal(
                                      ghCacheConnection,
                                      pKeyCtxInUse->qwId,
                                      pwszValueName,
-                                     REG_UNKNOWN,
+                                     REG_NONE,
                                      &bIsWrongType,
                                      &pRegEntry);
     if (!bDoBail && LW_STATUS_OBJECT_NAME_NOT_FOUND == status)
@@ -448,7 +448,7 @@ SqliteDeleteValueAttributes(
                               ghCacheConnection,
                               pKeyCtxInUse->qwId,
                               (PCWSTR)pwszValueName,
-                              REG_UNKNOWN,
+                              REG_NONE,
                               NULL,
                               NULL);
     BAIL_ON_NT_STATUS(status);

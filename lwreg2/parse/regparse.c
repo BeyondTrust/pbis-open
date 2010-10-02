@@ -102,7 +102,8 @@ RegParseAttributes(PREGPARSE_HANDLE parseHandle);
 static void 
 RegParseExternDataType(
     REGLEX_TOKEN valueType,
-    PREG_DATA_TYPE externValueType)
+    PREG_DATA_TYPE externValueType
+    )
 {
 
     if (!externValueType)
@@ -165,7 +166,8 @@ RegParseExternDataType(
 static void
 RegParseAttributesExternDataType(
     PREGPARSE_HANDLE parseHandle,
-    PREG_DATA_TYPE externValueType)
+    PREG_DATA_TYPE externValueType
+    )
 {
 
     if (parseHandle->registryEntry.type == REG_ATTRIBUTES)
@@ -196,7 +198,8 @@ RegParseTypeNone(
 
 DWORD
 RegParseReAllocateData(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
     DWORD newValueSize = 0;
@@ -228,7 +231,8 @@ DWORD
 RegParseAssignAttrData(
     PREGPARSE_HANDLE parseHandle,
     PVOID pData,
-    DWORD dwDataLen)
+    DWORD dwDataLen
+    )
 {
     DWORD dwError = 0;
     PVOID pvData = NULL;
@@ -338,7 +342,8 @@ error:
 DWORD 
 RegParseAppendData(
     PREGPARSE_HANDLE parseHandle,
-    PSTR pszHexValue)
+    PSTR pszHexValue
+    )
 {
     DWORD dwError = 0;
     DWORD attrSize = 0;
@@ -400,7 +405,8 @@ error:
 
 void RegParsePrintBinaryData(
     PUCHAR binaryData,
-    DWORD binaryDataLen)
+    DWORD binaryDataLen
+    )
 {
     int i;
     for (i=0; i<binaryDataLen; i++)
@@ -413,7 +419,8 @@ void RegParsePrintBinaryData(
 
 DWORD
 RegParseBinaryData(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     PSTR dataName = NULL;
     BOOLEAN eof = FALSE;
@@ -530,7 +537,8 @@ error:
 
 DWORD
 RegParseTypeBinary(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
 
@@ -541,7 +549,8 @@ RegParseTypeBinary(
 
 DWORD
 RegParseTypeExpandString(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
 
@@ -552,7 +561,8 @@ RegParseTypeExpandString(
 
 DWORD
 RegParseTypeQuadWord(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
 
@@ -574,7 +584,8 @@ RegParseTypeFullResDescriptor(
 
 DWORD
 RegParseTypeResourceReqList(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
 
@@ -585,7 +596,8 @@ RegParseTypeResourceReqList(
 
 DWORD
 RegParseTypeResourceList(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
 
@@ -597,7 +609,8 @@ RegParseTypeResourceList(
 
 DWORD
 RegParseTypeDword(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;
@@ -625,7 +638,8 @@ RegParseTypeDword(
 
 DWORD
 RegParseTypeMultiStringValue(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;
@@ -646,7 +660,8 @@ RegParseTypeMultiStringValue(
 
 DWORD
 RegParseTypeStringArrayValue(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;
@@ -731,7 +746,8 @@ RegParseInstallCallback(
     PREGPARSE_HANDLE parseHandle,
     PFN_REG_CALLBACK parseCallback,
     HANDLE userContext,
-    PDWORD indexCallback)
+    PDWORD indexCallback
+    )
 {
     DWORD dwError = 0;
     DWORD i = 0;
@@ -769,7 +785,8 @@ error:
 DWORD
 RegParseRemoveCallback(
     PREGPARSE_HANDLE parseHandle,
-    DWORD indexCallback)
+    DWORD indexCallback
+    )
 {
     DWORD dwError = 0;
 
@@ -796,7 +813,8 @@ error:
 
 DWORD
 RegParseRunCallbacks(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
     DWORD i = 0;
@@ -882,7 +900,8 @@ RegParsePrintASCII(
 
 DWORD
 RegParseTypeValue(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;
@@ -1145,7 +1164,8 @@ RegParseTypeValue(
  */
 DWORD
 RegParseKeyValue(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;
@@ -1277,7 +1297,8 @@ error:
 
 DWORD
 RegParseCheckAttributes(
-    PREGPARSE_HANDLE parseHandle)
+    PREGPARSE_HANDLE parseHandle
+    )
 {
     DWORD dwError = 0;
     DWORD dwValue = 0;
@@ -1435,7 +1456,8 @@ error:
 DWORD
 RegParseKey(
     PREGPARSE_HANDLE parseHandle,
-    REGLEX_TOKEN token)
+    REGLEX_TOKEN token
+    )
 {
     DWORD attrSize = 0;
     DWORD lineNum = 0;

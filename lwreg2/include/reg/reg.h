@@ -115,9 +115,8 @@ typedef DWORD *PREG_DATA_TYPE;
 #define REG_KEY                            21 // represent the reg entry is a Key
 #define REG_KEY_DEFAULT                    22 // Default "@" entry
 #define REG_PLAIN_TEXT                     23 // A string without "" around it
-#define REG_UNKNOWN                        24 // Unknown data type
-#define REG_SZA                            25 // Alias for REG_MULTI_SZ
-#define REG_ATTRIBUTES                     26 // Registry schema type
+#define REG_SZA                            24 // Alias for REG_MULTI_SZ
+#define REG_ATTRIBUTES                     25 // Registry schema type
 
 
 typedef DWORD REG_DATA_TYPE_FLAGS;
@@ -187,8 +186,8 @@ typedef enum _LWREG_VALUE_HINT
 
 typedef struct _LWREG_RANGE_INTEGER
 {
-    int Min;
-    int Max;
+    DWORD Min;
+    DWORD Max;
 } LWREG_RANGE_INTEGER;
 
 typedef struct _LWREG_VALUE_ATTRIBUTES_A
@@ -209,8 +208,7 @@ typedef struct _LWREG_VALUE_ATTRIBUTES_A
 typedef struct _LWREG_VALUE_ATTRIBUTES
 {
     DWORD ValueType;
-    //PVOID pDefaultValue;
-    void* pDefaultValue;
+    PVOID pDefaultValue;
     DWORD DefaultValueLen;
     PWSTR pwszDocString;
     LWREG_VALUE_RANGE_TYPE RangeType;

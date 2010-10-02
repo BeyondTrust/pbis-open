@@ -98,7 +98,7 @@ RegShellUtilExport(
     )
 {
     DWORD dwError = 0;
-    REG_DATA_TYPE prevType = REG_UNKNOWN;
+    REG_DATA_TYPE prevType = REG_NONE;
     SECURITY_INFORMATION SecInfoAll = OWNER_SECURITY_INFORMATION
                                      |GROUP_SECURITY_INFORMATION
                                      |DACL_SECURITY_INFORMATION
@@ -252,7 +252,7 @@ ProcessExportedKeyInfo(
     WCHAR pwszValueName[MAX_KEY_LENGTH];   // buffer for subkey name WCHAR format
     PSTR  pszValueName = NULL; // buffer for subkey name
     PSTR pszValue = NULL;
-    REG_DATA_TYPE dataType = REG_UNKNOWN;
+    REG_DATA_TYPE dataType = REG_NONE;
     BYTE value[MAX_VALUE_LENGTH * 2] = {0};
     DWORD dwValueLen = 0;
     int iCount = 0;

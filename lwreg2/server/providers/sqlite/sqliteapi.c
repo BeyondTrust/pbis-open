@@ -1083,7 +1083,7 @@ SqliteDeleteKeyValue(
     status = RegDbGetKeyValue(ghCacheConnection,
     		                  pKeyCtxInUse->qwId,
     		                  pwszValueName,
-                              REG_UNKNOWN,
+                              REG_NONE,
                               NULL,
                               NULL);
     BAIL_ON_NT_STATUS(status);
@@ -1133,7 +1133,7 @@ SqliteDeleteValue(
     status = RegDbGetKeyValue(ghCacheConnection,
     		                  pKeyCtx->qwId,
     		                  pwszValueName,
-                              REG_UNKNOWN,
+                              REG_NONE,
                               NULL,
                               NULL);
     BAIL_ON_NT_STATUS(status);
@@ -1169,7 +1169,7 @@ SqliteEnumValue(
 {
 	NTSTATUS status = STATUS_SUCCESS;
     size_t sValueNameLen = 0;
-    REG_DATA_TYPE valueType = REG_UNKNOWN;
+    REG_DATA_TYPE valueType = REG_NONE;
     BOOLEAN bInLock = FALSE;
     size_t sNumValues = 0;
     PREG_DB_VALUE* ppRegEntries = NULL;
@@ -1339,7 +1339,7 @@ error:
 
     if (pType)
     {
-        *pType = REG_UNKNOWN;
+        *pType = REG_NONE;
     }
 
     goto cleanup;
@@ -1496,7 +1496,7 @@ SqliteQueryMultipleValues(
         status = RegDbGetKeyValue(ghCacheConnection,
         		                  pKeyCtx->qwId,
         		                  pVal_list[iCount].ve_valuename,
-                                  REG_UNKNOWN,
+                                  REG_NONE,
                                   NULL,
                                   &ppRegEntries[iCount]);
         BAIL_ON_NT_STATUS(status);
@@ -1563,7 +1563,7 @@ GetRegDataType(
             break;
 
         default:
-            dataType = REG_UNKNOWN;
+            dataType = REG_NONE;
     }
 
     return dataType;

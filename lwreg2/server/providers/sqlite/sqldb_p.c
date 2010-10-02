@@ -1156,7 +1156,7 @@ RegDbGetKeyValue_inlock(
     PREG_DB_VALUE pRegEntry = NULL;
 
 
-    if (valueType == REG_UNKNOWN)
+    if (valueType == REG_NONE)
     {
         pstQuery = pConn->pstQueryKeyValue;
 

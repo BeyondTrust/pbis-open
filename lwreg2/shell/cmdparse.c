@@ -428,7 +428,7 @@ RegShellParseStringType(
     DWORD i = 0;
     DWORD dwError = 0;
     DWORD backendType = 0;
-    REG_DATA_TYPE type = REG_UNKNOWN;
+    REG_DATA_TYPE type = REG_NONE;
 
     static REGSHELL_REG_TYPE_ENTRY typeStrs[] = {
         { "REG_DWORD", REG_DWORD, RRF_RT_REG_DWORD             },
@@ -1065,7 +1065,7 @@ RegShellDumpCmdItem(
     {
         printf("DumpCmd: valueName=%s\n", rsItem->valueName);
     }
-    if (rsItem->type != REG_UNKNOWN)
+    if (rsItem->type != REG_NONE)
     {
         RegExportBinaryTypeToString(
             rsItem->type,
@@ -1369,7 +1369,7 @@ RegShellCmdlineParseToArgv(
     PSTR pszKeyName = NULL;
     REGLEX_TOKEN token = 0;
     REGSHELL_CMDLINE_STATE_E state = 0;
-    REG_DATA_TYPE valueType = REG_UNKNOWN;
+    REG_DATA_TYPE valueType = REG_NONE;
     REGSHELL_CMD_E cmdEnum = 0;
     PREGSHELL_CMD_ITEM pCmdItem = NULL;
 
@@ -1864,7 +1864,7 @@ RegShellCmdlineParseToArgv(
                                   pszAttr,
                                   &valueType,
                                   NULL);
-                    if (valueType == REG_UNKNOWN)
+                    if (valueType == REG_NONE)
                     {
                         dwError = LWREG_ERROR_INVALID_CONTEXT;
                         BAIL_ON_REG_ERROR(dwError);
