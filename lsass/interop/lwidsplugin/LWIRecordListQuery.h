@@ -21,6 +21,7 @@ private:
 
 public:
     static long Run(IN OUT sGetRecordList* pGetRecordList);
+    static long ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseContinueData);
 
     static
     long

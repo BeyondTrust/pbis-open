@@ -22,7 +22,7 @@ class LWIQuery
     friend class LWIRecordQuery;
 
 protected:
-    LWIQuery(bool bGetValues);
+    LWIQuery(bool bGetValues, bool bAllowIOContinue);
     virtual ~LWIQuery();
 
 private:
@@ -32,7 +32,7 @@ private:
 
 public:
 
-    static long Create(bool bGetValues, LWIQuery** pQuery);
+    static long Create(bool bGetValues, bool bAllowIOContinue, LWIQuery** pQuery);
     void Release();
 
     PDSRECORD GetRecordList(bool bRemove);
@@ -118,8 +118,8 @@ protected:
     static long SetAttributeValue(PDSATTRIBUTE pAttribute, const char* pszValue, int valLen);
     static long AddAttributeAndValue(const char* pszAttributeName, const char* pszValue, PDSRECORD pRecord, PDSATTRIBUTE* ppAttribute);
     static long AddAttributeAndValue(const char* pszAttributeName, const char* pszValue, int valLen, PDSRECORD pRecord, PDSATTRIBUTE* ppAttribute);
-    long WriteResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten, uint32_t headerType = 'StdA');
-    long WriteGDNIResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten);
+    long WriteResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten, unsigned long& TotalRecords, uint32_t headerType = 'StdA');
+    long WriteGDNIResponse(char* buffer, unsigned long maxBufferSize, unsigned long& bytesWritten, unsigned long& nRecordsWritten, unsigned long& TotalRecords);
     static long ReadResponseAttributeValue(char* buffer, unsigned long  bufferSize, unsigned long offset, PDSATTRIBUTEVALUE* ppAttributeValue);
     static long ReadResponseAttribute(char* buffer, unsigned long  bufferSize, unsigned long  offset, PDSATTRIBUTE* ppAttribute);
     static long ReadResponseRecord(char* buffer, unsigned long  bufferSize, unsigned long  offset, PDSRECORD* ppRecord);
@@ -133,7 +133,7 @@ protected:
     static long CreateAttributeValueEntry(OUT tAttributeValueEntryPtr* ppAttributeValueEntry, IN PDSATTRIBUTEVALUE pAttributeValue);
     static long GetNumberOfAttributes(PDSRECORD pRecord, uint16_t& nAttributes);
     static long GetNumberOfAttributeValues(PDSATTRIBUTE pAttribute, uint16_t& nValues);
-    long DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecords);
+    long DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecords, int& TotalRecords);
     static unsigned int GetHeaderSize(int nRecords);
     static long GetAttributeSize(PDSATTRIBUTE pAttribute, uint32_t& attrSize);
     static long GetRecordSize(PDSRECORD pRecord, uint32_t& recordSize);
@@ -144,6 +144,7 @@ protected:
 
 protected:
     bool _bGetValues;
+    bool _bAllowIOContinue;
 
     PDSRECORD _pRecordListHead;
     PDSRECORD _pRecordListTail;
@@ -154,6 +155,44 @@ protected:
 
     static uint32_t DEFAULT_ATTRIBUTE_TTL_SECONDS;
 };
+
+//
+// IO response buffer continuation cache
+//
+typedef struct __QUERYCONTEXT
+{
+    tContextData           HandleId;
+    LWIQuery*              pQuery;
+    struct __QUERYCONTEXT* pNext;
+} QUERYCONTEXT, *PQUERYCONTEXT;
+
+long
+InitializeContextList(
+    );
+
+void
+UninitializeContextList(
+    );
+
+long
+AddQueryToContextList(
+    LWIQuery*     pQuery,
+    tContextData* pHandleId
+    );
+
+long
+GetQueryFromContextList(
+    tContextData HandleId,
+    LWIQuery**   ppQuery
+    );
+
+//
+// Global cache context variables
+//
+extern PQUERYCONTEXT   Global_ContextList;
+extern tContextData    Global_LastHandleId;
+extern pthread_mutex_t Global_ContextListMutexLock;
+extern BOOLEAN         Global_ContextListMutexLockInitialized;
 
 #endif /* __LWIQUERY_H__ */
 

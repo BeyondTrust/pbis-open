@@ -215,10 +215,12 @@ LWIAttrValDataQuery::Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData)
     long macError_groupQuery = eDSNoErr;
     unsigned long bytesWritten = 0;
     unsigned long nRecordsWritten = 0;
+    unsigned long TotalRecords = 0;
     LWIQuery* pQuery = NULL;
     int recordTypeCount;
     int recordAttributeCount;
     bool isWithData = (kDoAttributeValueSearchWithData == pAttrValueSearchWithData->fType);
+    tContextData HandleId = 0;
 
     LOG_ENTER("fType = %d, fResult = %d, fInNodeRef = %d, fInAttrType = %s, fInPattMatchType = 0x%04X, fInPatt2Match = %s, fInAttrInfoOnly = %s, fOutDataBuff => { size = %d }",
               pAttrValueSearchWithData->fType,
@@ -237,7 +239,18 @@ LWIAttrValDataQuery::Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData)
               recordTypeCount,
               recordAttributeCount);
 
-    pQuery = new LWIQuery(!isWithData || !pAttrValueSearchWithData->fInAttrInfoOnly);
+    if (pAttrValueSearchWithData->fIOContinueData != 0)
+    {
+        macError = GetQueryFromContextList(pAttrValueSearchWithData->fIOContinueData, &pQuery);
+        if (macError == eDSNoErr)
+        {
+            LOG("Already processed this query, handling IO continuation for result record data");
+            goto HandleResponse;
+        }
+    }
+
+    pQuery = new LWIQuery(!isWithData || !pAttrValueSearchWithData->fInAttrInfoOnly,
+                          true /* The query results will support fIOContinue (split large results over many calls) */);
     if (!pQuery)
     {
         macError = eDSAllocationFailed;
@@ -301,12 +314,28 @@ LWIAttrValDataQuery::Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData)
     else
        macError = eDSNoErr;
 
+HandleResponse:
+
     // Write the results
     macError = pQuery->WriteResponse(pAttrValueSearchWithData->fOutDataBuff->fBufferData,
                                      pAttrValueSearchWithData->fOutDataBuff->fBufferSize,
                                      bytesWritten,
-                                     nRecordsWritten);
+                                     nRecordsWritten,
+                                     TotalRecords);
     GOTO_CLEANUP_ON_MACERROR(macError);
+
+    if (TotalRecords > nRecordsWritten)
+    {
+        macError = AddQueryToContextList(pQuery, &HandleId);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+
+        pQuery = NULL;
+        pAttrValueSearchWithData->fIOContinueData = HandleId;
+    }
+    else
+    {
+        pAttrValueSearchWithData->fIOContinueData = 0;
+    }
 
     pAttrValueSearchWithData->fOutDataBuff->fBufferLength = bytesWritten;
     pAttrValueSearchWithData->fOutMatchRecordCount = nRecordsWritten;
@@ -319,6 +348,7 @@ LWIAttrValDataQuery::Run(sDoAttrValueSearchWithData* pAttrValueSearchWithData)
     }
 
 cleanup:
+
     if (pQuery)
     {
         delete pQuery;

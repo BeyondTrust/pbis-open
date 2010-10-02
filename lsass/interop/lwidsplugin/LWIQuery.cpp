@@ -30,10 +30,20 @@
 
 uint32_t LWIQuery::DEFAULT_ATTRIBUTE_TTL_SECONDS = 60; // Cache values for a minute
 
-LWIQuery::LWIQuery(bool bGetValues)
+//
+// Global cache context variables
+//
+PQUERYCONTEXT   Global_ContextList = NULL;
+tContextData    Global_LastHandleId = 0;
+pthread_mutex_t Global_ContextListMutexLock;
+BOOLEAN         Global_ContextListMutexLockInitialized = FALSE;
+
+LWIQuery::LWIQuery(bool bGetValues, bool bAllowIOContinue)
     : _bGetValues(bGetValues),
+      _bAllowIOContinue(bAllowIOContinue),
       _pRecordListHead(NULL),
       _pRecordListTail(NULL),
+      _pCurrentRecord(NULL),
       _recTypeSet(NULL),
       _attributeSet(NULL)
 {
@@ -57,11 +67,12 @@ LWIQuery::~LWIQuery()
 long
 LWIQuery::Create(
     bool bGetValues,
+    bool bAllowIOContinue,
     OUT LWIQuery** ppQuery)
 {
     long macError = eDSNoErr;
 
-    LWIQuery* pQuery = new LWIQuery(bGetValues);
+    LWIQuery* pQuery = new LWIQuery(bGetValues, bAllowIOContinue);
     if (!pQuery)
     {
         macError = eDSAllocationFailed;
@@ -797,7 +808,6 @@ LWIQuery::QueryGroupsForUser(
         {
             fFoundPrimaryGroup = TRUE;
         }
-
         macError = AddGroupRecordHelper(ppGroups[iGroup]);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
@@ -1858,16 +1868,28 @@ LWIQuery::WriteResponse(
     unsigned long maxBufferSize,
     unsigned long& bytesWritten,
     unsigned long& nRecordsWritten,
+    unsigned long& TotalRecords,
     uint32_t headerType
     )
 {
     long macError = eDSNoErr;
     int  nRecords = 0;
+    int  nTotalRecords = 0;
     int  iRecord = 0;
     PDSRECORD pRecord = NULL;
     unsigned long offset = 0;
 
-    macError = DetermineRecordsToFitInBuffer(maxBufferSize, nRecords);
+    /* Initialize the return value */
+    nRecordsWritten = 0;
+    TotalRecords = 0;
+
+    // What is the start of records we are to return?
+    if (_pCurrentRecord == NULL)
+    {
+        _pCurrentRecord = _pRecordListHead;
+    }
+
+    macError = DetermineRecordsToFitInBuffer(maxBufferSize, nRecords, nTotalRecords);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     if (nRecords > 0)
@@ -1875,15 +1897,23 @@ LWIQuery::WriteResponse(
         macError = WriteHeader(buffer, nRecords, offset, headerType);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
-        for (pRecord = _pRecordListHead; pRecord && (iRecord < nRecords); pRecord = pRecord->pNext, iRecord++)
+        for (pRecord = _pCurrentRecord; pRecord && (iRecord < nRecords); pRecord = pRecord->pNext, iRecord++)
         {
             macError = WriteRecord(buffer, iRecord, pRecord, offset);
             GOTO_CLEANUP_ON_MACERROR(macError);
+
+            nRecordsWritten++;
+        }
+
+        // If the list had more items, save the position of the record we need to continue on.
+        if (pRecord)
+        {
+            _pCurrentRecord = pRecord;
         }
     }
 
-    nRecordsWritten = nRecords;
     bytesWritten = offset;
+    TotalRecords = nTotalRecords;
 
     LOG("WriteResponse success, bytesWritten = %d, recordsWritten = %d", bytesWritten, nRecordsWritten );
 
@@ -1897,10 +1927,11 @@ LWIQuery::WriteGDNIResponse(
     char* buffer,
     unsigned long maxBufferSize,
     unsigned long& bytesWritten,
-    unsigned long& nRecordsWritten
+    unsigned long& nRecordsWritten,
+    unsigned long& TotalRecords
     )
 {
-    return WriteResponse(buffer, maxBufferSize, bytesWritten, nRecordsWritten, 'Gdni');
+    return WriteResponse(buffer, maxBufferSize, bytesWritten, nRecordsWritten, TotalRecords, 'Gdni');
 }
 
 long
@@ -2484,57 +2515,75 @@ LWIQuery::GetNumberOfAttributeValues(PDSATTRIBUTE pAttribute, uint16_t& nValues)
 }
 
 long
-LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecords)
+LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecords, int& TotalRecords)
 {
     long macError = eDSNoErr;
     PDSRECORD pRecord = NULL;
     unsigned int recordSize = 0;
     unsigned long currentSize = 0;
+    int total = 0;
     int result = 0;
 
     LOG_ENTER("maxBufferSize: %ld", maxBufferSize);
 
-    if (_pRecordListHead)
-	{
-        for (pRecord = _pRecordListHead;
-	         pRecord; 
-		     pRecord = pRecord->pNext)
+    if (_pCurrentRecord)
+    {
+        for (pRecord = _pCurrentRecord;
+             pRecord; 
+             pRecord = pRecord->pNext)
+        {
+            total++;
+        }
+
+        for (pRecord = _pCurrentRecord;
+             pRecord; 
+             pRecord = pRecord->pNext)
         {
             macError = GetRecordSize(pRecord, recordSize);
             GOTO_CLEANUP_ON_MACERROR(macError);
 
+            if((currentSize + recordSize + 4 + 4 + GetHeaderSize(result+1)) > maxBufferSize)
+            {
+                // Stopping here because this extra record will exceed buffer space provided
+                break;
+            }
+
+            // Add the size of this record, it will fit.
             currentSize += 4; // This is in the offset in the header
             currentSize += 4; // This is to store the record size
             // before the contents of the record
             currentSize += recordSize;
 			
-			if(currentSize > maxBufferSize)
-			{
-			    break;
-			}
-			
-		    result++;
-		}
-		
-		if (!pRecord)
-		{
-            currentSize += GetHeaderSize(result);
-		}
-	}
+            result++;
+        }
 
-	if (currentSize > maxBufferSize)
+        if (!pRecord)
+        {
+            LOG("All %d response records will fit into the buffer provided", total);
+            currentSize += GetHeaderSize(result);
+        }
+        else
+        {
+            LOG("Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
+            currentSize += GetHeaderSize(result);
+        }
+    }
+
+    if (pRecord && !_bAllowIOContinue)
     {
         LOG("No record will fit into caller's buffer, size needed is %d", currentSize);
-		nRecords = 0;
-		macError = eDSBufferTooSmall;
-		GOTO_CLEANUP_ON_MACERROR(macError);
-	}
+        nRecords = 0;
+        TotalRecords = total;
+        macError = eDSBufferTooSmall;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
 
     LOG("%d record(s) will be written into caller's buffer, size needed is %d", result, currentSize);
     nRecords = result;
+    TotalRecords = total;
 
 cleanup:
-
+    LOG_LEAVE("--> %d", macError);
     return macError;
 }
 
@@ -2737,3 +2786,172 @@ LWIQuery::WriteAttributeValue(char* buffer, PDSATTRIBUTEVALUE pAttributeValue, u
 
     return eDSNoErr;
 }
+
+//
+// IO Continuation context list helper functions
+//
+
+long
+InitializeContextList(
+    )
+{
+    long macError = eDSNoErr;
+
+    Global_ContextList = NULL;
+    Global_LastHandleId = 0;
+
+    if (pthread_mutex_init(&Global_ContextListMutexLock, NULL) < 0)
+    {
+        int libcError = errno;
+        LOG_ERROR("Failied to init context cache lock: %s (%d)", strerror(libcError), libcError);
+        macError = ePlugInInitError;
+        GOTO_CLEANUP();
+    }
+    Global_ContextListMutexLockInitialized = TRUE;
+
+cleanup:
+
+    return macError;
+}
+
+void
+UninitializeContextList(
+    )
+{
+    if (Global_ContextListMutexLockInitialized)
+    {
+        pthread_mutex_lock(&Global_ContextListMutexLock);
+
+        while (Global_ContextList)
+        {
+            PQUERYCONTEXT pTemp = Global_ContextList;
+
+            Global_ContextList = Global_ContextList->pNext;
+
+            if (pTemp->pQuery)
+            {
+                pTemp->pQuery->Release();
+                pTemp->pQuery = NULL;
+            }
+
+            LwFreeMemory(pTemp);
+        }
+
+        Global_ContextList = NULL;
+        Global_LastHandleId = 0;
+
+        pthread_mutex_unlock(&Global_ContextListMutexLock);
+
+        pthread_mutex_destroy(&Global_ContextListMutexLock);
+    }
+    Global_ContextListMutexLockInitialized = FALSE;
+}
+
+long
+AddQueryToContextList(
+    LWIQuery*     pQuery,
+    tContextData* pHandleId
+    )
+{
+    long macError = eDSNoErr;
+    PQUERYCONTEXT pContext = NULL;
+    tContextData HandleId = 0;
+
+    if (!pQuery)
+    {
+        macError = eDSNullParameter;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+
+    // Create new query context
+    macError = LwAllocateMemory(sizeof(QUERYCONTEXT), (PVOID*) &pContext);
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
+    // Store query object into context
+    pContext->pQuery = pQuery;
+
+    // Insert new context into global list and assign handle identifier
+    pthread_mutex_lock(&Global_ContextListMutexLock);
+
+    HandleId = Global_LastHandleId = (tContextData)((UInt32)Global_LastHandleId + 1);
+    pContext->HandleId = HandleId;
+    
+    pContext->pNext = Global_ContextList;
+    Global_ContextList = pContext;
+    pContext = NULL;
+
+    pthread_mutex_unlock(&Global_ContextListMutexLock);
+
+    *pHandleId = HandleId;
+
+cleanup:
+
+    if (pContext)
+    {
+        LwFreeMemory(pContext);
+    }
+
+    return macError;
+}
+
+long
+GetQueryFromContextList(
+    tContextData HandleId,
+    LWIQuery**   ppQuery
+    )
+{
+    long macError = eDSNoErr;
+    PQUERYCONTEXT pCurrent = Global_ContextList;
+    PQUERYCONTEXT pPrev = NULL;
+    PQUERYCONTEXT pContext = NULL;
+
+    pthread_mutex_lock(&Global_ContextListMutexLock);
+
+    while (pCurrent)
+    {
+        if (pCurrent->HandleId == HandleId)
+        {
+            pContext = pCurrent;
+
+            // Unlink the node from the list
+            if (pPrev)
+            {
+                pPrev->pNext = pCurrent->pNext;
+            }
+            else
+            {
+                Global_ContextList = pCurrent->pNext;
+            }
+
+            pContext->pNext = NULL;
+
+            break;
+        }
+
+        pPrev = pCurrent;
+        pCurrent = pCurrent->pNext;
+    }
+
+    if (!pContext)
+    {
+        macError = eDSRecordNotFound;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+
+    pthread_mutex_unlock(&Global_ContextListMutexLock);
+
+    // Give the LWIQuery object to caller
+    *ppQuery = pContext->pQuery;
+    pContext->pQuery = NULL;
+
+cleanup:
+
+    // Free the old  context list item.
+    if (pContext)
+    {
+        LwFreeMemory(pContext);
+    }
+
+    return macError;
+}
+

@@ -105,6 +105,7 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo)
     long macError = eDSNoErr;
     unsigned long bytesWritten = 0;
     unsigned long nRecordsWritten = 0;
+    unsigned long TotalRecords = 0;
     unsigned long nAttributesWritten = 0;
     unsigned long attributeCount;
     char* attributesBuffer = NULL;
@@ -132,7 +133,8 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo)
     LOG_PARAM("fInDirNodeInfoTypeList => { count = %d, items = \"%s\"}",
               attributeCount, SAFE_LOG_STR(attributes));
 
-    pQuery = new LWIQuery(!pGetDirNodeInfo->fInAttrInfoOnly);
+    pQuery = new LWIQuery(!pGetDirNodeInfo->fInAttrInfoOnly,
+                           false /* Rely on our error eDSBufferTooSmall to cause the caller to retry */);
     if (!pQuery)
     {
         macError = eDSAllocationFailed;
@@ -310,7 +312,8 @@ LWIDirNodeQuery::GetInfo(sGetDirNodeInfo * pGetDirNodeInfo)
     macError = pQuery->WriteGDNIResponse(pGetDirNodeInfo->fOutDataBuff->fBufferData,
                                          pGetDirNodeInfo->fOutDataBuff->fBufferSize,
                                          bytesWritten,
-                                         nRecordsWritten);
+                                         nRecordsWritten,
+                                         TotalRecords);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
     pGetDirNodeInfo->fOutDataBuff->fBufferLength = bytesWritten;

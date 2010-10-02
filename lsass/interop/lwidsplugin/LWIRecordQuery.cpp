@@ -116,7 +116,9 @@ LWIRecordQuery::Open(sOpenRecord* pOpenRecord)
 
     if (!strcmp(pOpenRecord->fInRecType->fBufferData, kDSStdRecordTypeUsers))
     {
-        macError = LWIQuery::Create(true, &pQuery);
+        macError = LWIQuery::Create(true,
+                                    false, // Rely on our error eDSBufferTooSmall to cause the caller to retry,
+                                    &pQuery);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
         macError = LWIRecTypeLookup::GetVector(pszRecType, &pQuery->_recTypeSet);
@@ -132,7 +134,9 @@ LWIRecordQuery::Open(sOpenRecord* pOpenRecord)
     }
     else if (!strcmp(pOpenRecord->fInRecType->fBufferData, kDSStdRecordTypeGroups))
     {
-        macError = LWIQuery::Create(true, &pQuery);
+        macError = LWIQuery::Create(true,
+                                    false, // Rely on our error eDSBufferTooSmall to cause the caller to retry,
+                                    &pQuery);
         GOTO_CLEANUP_ON_MACERROR(macError);
 
         macError = LWIRecTypeLookup::GetVector(pszRecType, &pQuery->_recTypeSet);

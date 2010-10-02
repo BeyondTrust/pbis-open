@@ -142,6 +142,9 @@ long PlugInShell_Initialize(void)
         GOTO_CLEANUP();
     }
 
+    macError = InitializeContextList();
+    GOTO_CLEANUP_ON_MACERROR(macError);
+
     macError = LWIAttrLookup::Initialize();
     GOTO_CLEANUP_ON_MACERROR(macError);
 
@@ -322,6 +325,9 @@ PlugInShell_ProcessRequest(void *inData)
             break;
 			
         case kReleaseContinueData:
+            macError = LWIRecordListQuery::ReleaseContinueData((sReleaseContinueData *)inData);
+            break;
+
         case kGetRecordEntry:
         case kSetRecordName:
         case kSetRecordType:
@@ -512,6 +518,7 @@ long PlugInShell_Shutdown(void)
         GlobalState.IsInitialized = false;
     }
 
+    UninitializeContextList();
     LWIRecTypeLookup::Cleanup();
     LWIAttrLookup::Cleanup();
     LWIDirNodeQuery::Cleanup();

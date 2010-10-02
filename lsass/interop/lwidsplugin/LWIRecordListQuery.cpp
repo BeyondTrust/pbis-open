@@ -168,10 +168,12 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
     const char* szNames;
     unsigned long bytesWritten = 0;
     unsigned long nRecordsWritten = 0;
+    unsigned long TotalRecords = 0;
     LWIQuery* pQuery = NULL;
     int recordNameCount;
     int recordTypeCount;
     int recordAttributeCount;
+    tContextData HandleId = 0;
 
     LOG_ENTER("fType = %d, fResult = %d, fInNodeRef = %d, "
               "fInDataBuf => { len = %d, size = %d }, fInPatternMatch = 0x%04X, "
@@ -192,9 +194,20 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
               "fInAttribTypeList.count = %d",
               recordNameCount,
               recordTypeCount,
-              recordAttributeCount);
+             recordAttributeCount);
 
-    pQuery = new LWIQuery(!pGetRecordList->fInAttribInfoOnly);
+    if (pGetRecordList->fIOContinueData != 0)
+    {
+        macError = GetQueryFromContextList(pGetRecordList->fIOContinueData, &pQuery);
+        if (macError == eDSNoErr)
+        {
+            LOG("Already processed this query, handling IO continuation for result record data");
+            goto HandleResponse;
+        }
+    }
+
+    pQuery = new LWIQuery(!pGetRecordList->fInAttribInfoOnly,
+                          true /* The query results will support fIOContinue (split large results over many calls) */);
     if (!pQuery)
     {
         macError = eDSAllocationFailed;
@@ -251,12 +264,29 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
     else
        macError = eDSNoErr;
 
+HandleResponse:
+
     // Write the results
     macError = pQuery->WriteResponse(pGetRecordList->fInDataBuff->fBufferData,
                                      pGetRecordList->fInDataBuff->fBufferSize,
                                      bytesWritten,
-                                     nRecordsWritten);
+                                     nRecordsWritten,
+                                     TotalRecords);
     GOTO_CLEANUP_ON_MACERROR(macError);
+
+    if (TotalRecords > nRecordsWritten)
+    {
+        macError = AddQueryToContextList(pQuery, &HandleId);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+
+        pQuery = NULL;
+
+        pGetRecordList->fIOContinueData = HandleId;
+    }
+    else
+    {
+        pGetRecordList->fIOContinueData = 0;
+    }
 
     pGetRecordList->fInDataBuff->fBufferLength = bytesWritten;
     pGetRecordList->fOutRecEntryCount = nRecordsWritten;
@@ -269,6 +299,7 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
     }
 
 cleanup:
+
     if (pDataNode)
     {
         dsDataNodeDeAllocate(0, pDataNode);
@@ -288,6 +319,39 @@ cleanup:
     return macError;
 }
 
+long
+LWIRecordListQuery::ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseContinueData)
+{
+    long macError = eDSNoErr;
+    LWIQuery* pQuery = NULL;
+
+    LOG_ENTER("fType = %d, fResult = %d, fInNodeRef = %d, "
+              "fInContinueData = %d",
+              pReleaseContinueData->fType,
+              pReleaseContinueData->fResult,
+              pReleaseContinueData->fInDirReference,
+              pReleaseContinueData->fInContinueData);
+
+    macError = GetQueryFromContextList(pReleaseContinueData->fInContinueData, &pQuery);
+    if (macError == eDSNoErr && pQuery)
+    {
+        /* This is our continue value that we used. Free the pQuery object. */
+        pQuery->Release();
+    }
+    else
+    {
+        macError = eDSInvalidContinueData;
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
+
+cleanup:
+
+    LOG_LEAVE("fInContinueData = %d, macError = %d",
+              pReleaseContinueData->fInContinueData,
+              macError);
+
+    return macError;
+}
 
 long
 LWIRecordListQuery::Test(
