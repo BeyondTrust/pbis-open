@@ -28,7 +28,7 @@ help.c: Makefile $(ASRC)
 
 CLEANFILES = $(BUILT_SOURCES)
 
-noinst_LTLIBRARIES    = libedit.la
+lib_LTLIBRARIES    = libedit.la
 libedit_la_SOURCES = chared.c common.c el.c emacs.c hist.c key.c map.c parse.c \
 							prompt.c read.c refresh.c search.c sig.c term.c tty.c vi.c \
 							fgetln.c strlcat.c strlcpy.c unvis.c vis.c tokenizer.c \
