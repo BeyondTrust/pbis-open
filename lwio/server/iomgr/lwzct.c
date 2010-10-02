@@ -58,11 +58,11 @@
 #undef HAVE_SENDFILE_HEADER_TRAILER
 #undef HAVE_SENDFILE_ANY
 
+#include "config.h"
 #include <lwio/lwzct.h>
 #include <lw/rtlmemory.h>
 #include <lw/rtlgoto.h>
 #include <lw/safeint.h>
-#include "config.h"
 #include <lw/errno.h>
 #include <assert.h>
 

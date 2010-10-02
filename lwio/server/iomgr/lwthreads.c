@@ -43,6 +43,7 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
+#include "config.h"
 #include "lwthreads.h"
 #include <lw/rtlgoto.h>
 #include <lw/rtlmemory.h>
