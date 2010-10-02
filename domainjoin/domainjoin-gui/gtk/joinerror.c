@@ -28,6 +28,7 @@
  * license@likewisesoftware.com
  */
 
+#include "DomainJoinConfig.h"
 #include <lw/attrs.h>
 #include "joinerror.h"
 #include "common.h"

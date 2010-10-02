@@ -28,6 +28,7 @@
  * license@likewisesoftware.com
  */
 
+#include "DomainJoinConfig.h"
 #include "joindialog.h"
 #include "common.h"
 
