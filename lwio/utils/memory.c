@@ -56,6 +56,23 @@ LwIoAllocateMemory(
 }
 
 LW_NTSTATUS
+LwIoAllocateBuffer(
+    size_t     Size,
+    LW_PVOID * ppMemory
+    )
+{
+    return LW_RTL_ALLOCATE_NOCLEAR(ppMemory, VOID, Size);
+}
+
+VOID
+LwIoFreeBuffer(
+    LW_PVOID pMemory
+    )
+{
+    LwRtlMemoryFree(pMemory);
+}
+
+LW_NTSTATUS
 LwIoReallocMemory(
     LW_PVOID pMemory,
     size_t Size,

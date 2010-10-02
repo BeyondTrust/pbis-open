@@ -316,7 +316,10 @@ SMBPacketBufferAllocate(
     }
     else
     {
-        ntStatus = LwIoAllocateMemory(len, (PVOID *) &pBuffer);
+        //
+        // Note: The resultant buffer will not be cleared
+        //
+        ntStatus = LwIoAllocateBuffer(len, (PVOID *) &pBuffer);
     }
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -371,7 +374,7 @@ SMBPacketBufferAllocatePooled(
 
         LWIO_UNLOCK_MUTEX(bInLock, &pPacketAllocator->mutex);
 
-        memset(pBuffer, 0, allocatedLen);
+        // memset(pBuffer, 0, allocatedLen);
     }
     else
     {
@@ -379,7 +382,7 @@ SMBPacketBufferAllocatePooled(
 
         LWIO_UNLOCK_MUTEX(bInLock, &pPacketAllocator->mutex);
 
-        ntStatus = LwIoAllocateMemory(allocatedLen, (PVOID *) &pBuffer);
+        ntStatus = LwIoAllocateBuffer(allocatedLen, (PVOID *) &pBuffer);
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
@@ -413,7 +416,7 @@ SMBPacketBufferFree(
     }
     else
     {
-        LwIoFreeMemory(pBuffer);
+        LwIoFreeBuffer(pBuffer);
     }
 }
 
@@ -444,7 +447,7 @@ SMBPacketBufferFreePooled(
     {
         LWIO_UNLOCK_MUTEX(bInLock, &pPacketAllocator->mutex);
 
-        LwIoFreeMemory(pBuffer);
+        LwIoFreeBuffer(pBuffer);
     }
 
     LWIO_UNLOCK_MUTEX(bInLock, &pPacketAllocator->mutex);

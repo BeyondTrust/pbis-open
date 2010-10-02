@@ -472,6 +472,17 @@ LwIoAllocateMemory(
     );
 
 LW_NTSTATUS
+LwIoAllocateBuffer(
+    size_t     Size,
+    LW_PVOID * ppMemory
+    );
+
+VOID
+LwIoFreeBuffer(
+    LW_PVOID pMemory
+    );
+
+LW_NTSTATUS
 LwIoReallocMemory(
     LW_PVOID pMemory,
     size_t Size,
