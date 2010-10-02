@@ -1553,7 +1553,7 @@ INTERNAL void rpc__gssauth_cn_wrap_packet
 	OM_uint32 min_stat = 0;
 	int conf_req = (int)seal;
 	int conf_state = 0;
-	gss_iov_buffer_desc output_iov[2] = {0};
+	gss_iov_buffer_desc output_iov[2] = {{0}};
 	gss_buffer_desc pdu_buffer = {0};
 	gss_buffer_desc auth_buffer = {0};
 
@@ -2021,9 +2021,6 @@ INTERNAL void rpc__gssauth_cn_unwrap_packet
 {
 	rpc_gssauth_cn_info_p_t gssauth_cn_info = (rpc_gssauth_cn_info_p_t)sec->sec_cn_info;
 	unsigned32 payload_len = 0;
-	unsigned32 wrap_len = 0;
-	unsigned32 wrap_idx = 0;
-	unsigned_char_p_t wrap_base = NULL;
 	OM_uint32 maj_stat = 0;
 	OM_uint32 min_stat = 0;
 	int conf_state = 0;
@@ -2032,7 +2029,7 @@ INTERNAL void rpc__gssauth_cn_unwrap_packet
 	unsigned_char_p_t auth_base = NULL;
 	unsigned16 auth_len = 0;
 	unsigned8 pad_len = auth_tlr->stub_pad_length;
-	gss_iov_buffer_desc output_iov[2] = {0};
+	gss_iov_buffer_desc output_iov[2] = {{0}};
 	gss_buffer_desc pdu_buffer = {0};
 	gss_buffer_desc tlr_buffer = {0};
 

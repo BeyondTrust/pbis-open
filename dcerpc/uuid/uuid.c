@@ -788,7 +788,7 @@ unsigned32              *status;
     UUID_SPRINTF(
         (char *) *uuid_string,
         "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-        uuid->time_low, uuid->time_mid, uuid->time_hi_and_version,
+        (unsigned long) uuid->time_low, uuid->time_mid, uuid->time_hi_and_version,
         uuid->clock_seq_hi_and_reserved, uuid->clock_seq_low,
         (unsigned8) uuid->node[0], (unsigned8) uuid->node[1],
         (unsigned8) uuid->node[2], (unsigned8) uuid->node[3],
@@ -1599,9 +1599,8 @@ unsigned64_t        *prodPtr;
 
 static void true_random_init (void)
 {
-    dce_uuid_time_t     t;
+    union { dce_uuid_time_t t; unsigned16 u16; } u;
     unsigned16          *seedp, seed=0;
-
 
     /*
      * optimal/recommended starting values according to the reference
@@ -1627,8 +1626,8 @@ static void true_random_init (void)
      * independent.  Then for good measure to ensure a unique seed when there
      * are multiple processes creating UUID's on a system, we add in the PID.
      */
-    uuid__get_os_time(&t);
-    seedp = (unsigned16 *)(&t);
+    uuid__get_os_time(&u.t);
+    seedp = (unsigned16 *)(&u.u16);
     seed ^= *seedp++;
     seed ^= *seedp++;
     seed ^= *seedp++;

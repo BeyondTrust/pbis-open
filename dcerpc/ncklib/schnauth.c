@@ -216,7 +216,6 @@ PRIVATE void rpc__schnauth_init
 {
     unsigned32                  prot_id;
     rpc_auth_rpc_prot_epv_t     *prot_epv;
-    unsigned32                  dbg_st;
 
     RPC_DBG_PRINTF(rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_ROUTINE_TRACE,
 		   ("(rpc__schnauth_init)\n"));

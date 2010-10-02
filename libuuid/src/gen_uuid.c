@@ -38,6 +38,7 @@
  */
 #define _SVID_SOURCE
 
+#include "config.h"
 #include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -137,7 +138,9 @@ static void get_random_bytes(void *buf, int nbytes)
 	int i, n = nbytes, fd = get_random_fd();
 	int lose_counter = 0;
 	unsigned char *cp = (unsigned char *) buf;
+#ifdef DO_JRAND_MIX
 	unsigned short tmp_seed[3];
+#endif
 
 	if (fd >= 0) {
 		while (n > 0) {
@@ -352,9 +355,9 @@ try_again:
 
 	if (state_fd > 0) {
 		rewind(state_f);
-		ftruncate(state_fd, 0);
+		if (ftruncate(state_fd, 0)) abort();
 		fprintf(state_f, "clock: %04x tv: %lu %lu adj: %d\n",
-			clock_seq, last.tv_sec, last.tv_usec, adjustment);
+            clock_seq, (unsigned long) last.tv_sec, (unsigned long) last.tv_usec, adjustment);
 		fflush(state_f);
 		rewind(state_f);
 		fl.l_type = F_UNLCK;
@@ -367,6 +370,7 @@ try_again:
 	return 0;
 }
 
+#if defined(USE_UUIDD) && defined(HAVE_SYS_UN_H)
 static ssize_t read_all(int fd, char *buf, size_t count)
 {
 	ssize_t ret;
@@ -386,7 +390,7 @@ static ssize_t read_all(int fd, char *buf, size_t count)
 	}
 	return c;
 }
-
+#endif
 
 /*
  * Try using the uuidd daemon to generate the UUID
