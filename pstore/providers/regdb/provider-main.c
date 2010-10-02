@@ -102,10 +102,12 @@ RegDB_OpenProvider(
 
     pContext->hReg = hReg;
 
+#if 0
     dwError = LwpsCreateRWLock(
                   LWPS_CONFIG_DIR "/" LWPS_LOCK_FILE,
                   &pContext->hRWLock);
     BAIL_ON_LWPS_ERROR(dwError);
+#endif
 
     *phProvider = (HANDLE)pContext;
 
@@ -134,7 +136,6 @@ RegDB_ReadPassword(
     DWORD dwError = 0;
     PLWPS_PASSWORD_INFO pInfo = NULL;
     PREGDB_PROVIDER_CONTEXT pContext = NULL;
-    BOOLEAN bUnlock = FALSE;
     PSTR pszDomainDnsName = NULL;
     PSTR pszDomainName = NULL;
     PSTR pszDomainSID = NULL;
@@ -150,10 +151,6 @@ RegDB_ReadPassword(
 
     pContext = (PREGDB_PROVIDER_CONTEXT)hProvider;
     BAIL_ON_INVALID_POINTER(pContext);
-
-    dwError = LwpsAcquireReadLock(pContext->hRWLock);
-    BAIL_ON_LWPS_ERROR(dwError);
-    bUnlock = TRUE;
 
     dwError = RegUtilIsValidKey(
                   pContext->hReg,
@@ -336,10 +333,7 @@ cleanup:
     LWPS_SAFE_FREE_MEMORY(pszHostNameValue);
     LWPS_SAFE_FREE_MEMORY(pszMachineAccountName);
     LWPS_SECURE_FREE_STRING(pszMachineAccountPassword);
-    if (bUnlock)
-    {
-       LwpsReleaseReadLock(pContext->hRWLock);
-    }
+    LWPS_SAFE_FREE_MEMORY(pszMachineAccountPassword);
 
     return dwError;
 
@@ -541,7 +535,6 @@ RegDB_WritePassword(
 {
     DWORD dwError = 0;
     PREGDB_PROVIDER_CONTEXT pContext = NULL;
-    BOOLEAN bUnlock = FALSE;
 
     PSTR pszDomainSID = NULL;
     PSTR pszDomainName = NULL;
@@ -592,11 +585,6 @@ RegDB_WritePassword(
     time(&tCreationTimestamp);
     dwClientModifyTimestamp = pInfo->last_change_time;
     dwSchannelType = pInfo->dwSchannelType;
-
-
-    dwError = LwpsAcquireWriteLock(pContext->hRWLock);
-    BAIL_ON_LWPS_ERROR(dwError);
-    bUnlock = TRUE;
 
     /* Add top-level pstore registry key */
     dwError = RegUtilAddKey(
@@ -727,10 +715,6 @@ RegDB_WritePassword(
     BAIL_ON_LWPS_ERROR(dwError);
 
 cleanup:
-    if (bUnlock)
-    {
-        LwpsReleaseWriteLock(pContext->hRWLock);
-    }
 
     LWPS_SAFE_FREE_MEMORY(pszDomainSID);
     LWPS_SAFE_FREE_MEMORY(pszDomainName);
@@ -755,17 +739,12 @@ RegDB_DeleteAllEntries(
 {
     DWORD dwError = 0;
     PREGDB_PROVIDER_CONTEXT pContext = NULL;
-    BOOLEAN bUnlock = FALSE;
 
     BAIL_IF_NOT_SUPERUSER(geteuid());
 
     pContext = (PREGDB_PROVIDER_CONTEXT)hProvider;
 
     BAIL_ON_INVALID_POINTER(pContext);
-
-    dwError = LwpsAcquireWriteLock(pContext->hRWLock);
-    BAIL_ON_LWPS_ERROR(dwError);
-    bUnlock = TRUE;
 
     dwError = RegUtilDeleteTree(
                   pContext->hReg,
@@ -779,10 +758,6 @@ RegDB_DeleteAllEntries(
     }
 
 cleanup:
-    if (bUnlock)
-    {
-        LwpsReleaseWriteLock(pContext->hRWLock);
-    }
 
     return dwError;
 
