@@ -55,7 +55,6 @@
 
 #include "lwnet.h"
 
-#include "externs.h"
 #include <lwio/lwio.h>
 
 typedef struct _LSA_CREDS_FREE_INFO *PLSA_CREDS_FREE_INFO;
