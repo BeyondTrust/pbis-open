@@ -137,7 +137,7 @@ LWRaise(
     {
         shortMsg = "Undocumented exception";
     }
-    if ((ceError = CTAllocateString(desc, &shortMsg)));
+    if ((ceError = CTAllocateString(desc, &shortMsg)))
     {
 	*dest = CreateException(ceError, __FILE__, __LINE__, NULL, NULL);
 	return;

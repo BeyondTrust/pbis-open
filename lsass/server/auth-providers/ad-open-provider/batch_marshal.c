@@ -174,7 +174,7 @@ LsaAdBatchMarshalUserInfoAccountExpires(
         UINT64 currentNtTime = 0;
 
         dwError = ADGetCurrentNtTime(&currentNtTime);
-        if (dwError);
+        if (dwError)
         {
             LSA_LOG_INFO("While processing information for user (%s), lsass was unable to determine if the account is expired. Defaulting to not expired.", pszSamAccountName);
             dwError = 0;
