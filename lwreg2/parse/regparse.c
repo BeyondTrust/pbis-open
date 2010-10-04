@@ -1049,9 +1049,12 @@ RegParseTypeValue(
             else
             {
                 RegLexTokenToString(token, tokenName);
+#if 0
+/* Return LWREG_ERROR_SYNTAX_ERROR */
                 printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
                        "unknown line=%d\n\n",
                        tokenName, lineNum);
+#endif
                 dwError = LWREG_ERROR_INVALID_CONTEXT;
                 return dwError;
             }
@@ -1147,9 +1150,12 @@ RegParseTypeValue(
             else
             {
                 RegLexTokenToString(token, tokenName);
+#if 0
+/* Return LWREG_ERROR_SYNTAX_ERROR */
                 printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
                        "unknown line=%d\n\n",
                        tokenName, lineNum);
+#endif
                 dwError = LWREG_ERROR_INVALID_CONTEXT;
                 return dwError;
                 break;
@@ -1248,7 +1254,9 @@ RegParseKeyValue(
     }
     else
     {
+#if 0
         printf("RegParseKeyValue: ERROR (syntax error) line=%d\n\n", lineNum);
+#endif
         dwError = LWREG_ERROR_INVALID_CONTEXT;
         return dwError;
     }
@@ -1639,6 +1647,17 @@ RegParseAttributes(
                                      &eof);
             if (eof)
             {
+                if (parseHandle->lexHandle->eValueNameType ==
+                    REGLEX_VALUENAME_ATTRIBUTES)
+                {
+                    /* Syntax error, imbalanced { } and EOF found */
+#if 0
+                    /* Return LWREG_ERROR_SYNTAX_ERROR vs printf here */
+                    printf("RegParseKeyValue: ERROR (syntax error) line=%d\n\n",
+                            parseHandle->registryEntry.lineNumber);
+#endif
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                }
                 return dwError;
             }
         }
@@ -1737,8 +1756,7 @@ RegParseGetLineNumber(
     BAIL_ON_INVALID_POINTER(pHandle);
     BAIL_ON_INVALID_POINTER(pdwLineNum);
 
-    RegLexGetLineNumber(pParseHandle->lexHandle, pdwLineNum);
-    
+    *pdwLineNum = pParseHandle->registryEntry.lineNumber;
 cleanup:
     return dwError;
 error:
