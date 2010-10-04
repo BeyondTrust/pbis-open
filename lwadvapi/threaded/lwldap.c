@@ -815,15 +815,8 @@ LwLdapDirectorySearch(
                              &timeout,
                              &pMessage);
     if (dwError) {
-        if (dwError==LDAP_NO_SUCH_OBJECT) {
+        if (dwError == LDAP_NO_SUCH_OBJECT) {
             LW_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
-            BAIL_ON_LDAP_ERROR(dwError);
-        }
-        if (dwError == LDAP_FILTER_ERROR) {
-            LW_LOG_ERROR("Caught LDAP_FILTER_ERROR on ldap search");
-            LW_LOG_ERROR("LDAP Search Info: DN: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszObjectDN) ? "<null>" : pszObjectDN);
-            LW_LOG_ERROR("LDAP Search Info: scope: [%d]", scope);
-            LW_LOG_ERROR("LDAP Search Info: query: [%s]", LW_IS_NULL_OR_EMPTY_STR(pszQuery) ? "<null>" : pszQuery);
             BAIL_ON_LDAP_ERROR(dwError);
         }
         if (dwError == LDAP_REFERRAL) {
@@ -841,27 +834,6 @@ LwLdapDirectorySearch(
                 LW_LOG_ERROR("Error: LDAP Search Info: no attributes were specified");
             }
         }
-        if (dwError == LDAP_SERVER_DOWN)
-        {
-            /* Note: Do not log as ERROR, since this can occur in normal operations */
-            LW_LOG_INFO("Caught LDAP_SERVER_DOWN Error on ldap search");
-            dwError = LW_ERROR_LDAP_SERVER_DOWN;
-            goto error;
-        }
-        if (dwError == LDAP_TIMEOUT)
-        {
-            LW_LOG_ERROR("Caught LDAP_TIMEOUT Error on ldap search");
-            dwError = LW_ERROR_LDAP_TIMEOUT;
-            goto error;
-        }
-        if (dwError == LDAP_CONNECT_ERROR)
-        {
-            LW_LOG_ERROR("Caught LDAP_CONNECT_ERROR on ldap search");
-            dwError = LW_ERROR_LDAP_SERVER_UNAVAILABLE;
-            goto error;
-        }
-        LW_LOG_ERROR("Caught ldap error %d on search [%s]",
-                dwError, LW_SAFE_LOG_STRING(pszQuery));
         BAIL_ON_LDAP_ERROR(dwError);
     }
 
