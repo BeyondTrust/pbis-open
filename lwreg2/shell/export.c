@@ -261,6 +261,7 @@ ProcessExportedKeyInfo(
     PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
     PSTR pszAttrDump = NULL;
     DWORD pszAttrDumpLen = 0;
+    PLWREG_CURRENT_VALUEINFO pCurrValueInfo = NULL;
 
     dwError = PrintToRegFile(
                           fp,
@@ -301,6 +302,7 @@ ProcessExportedKeyInfo(
         dwValueNameLen = MAX_KEY_LENGTH;
         memset(value, 0, MAX_VALUE_LENGTH);
         dwValueLen = MAX_VALUE_LENGTH;
+        RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
 
         dwError = RegEnumValueW((HANDLE)hReg,
                                 hKey,
@@ -328,7 +330,7 @@ ProcessExportedKeyInfo(
                       hKey,
                       NULL,
                       pwszValueName,
-                      NULL,
+                      &pCurrValueInfo,
                       &pValueAttributes);
         if (dataType == REG_SZ)
         {
@@ -360,12 +362,12 @@ ProcessExportedKeyInfo(
                     BAIL_ON_REG_ERROR(dwError);
                     regItem.regAttr.DefaultValueLen =
                         strlen(regItem.regAttr.pDefaultValue);
-                    regItem.value = pValue;
+                    regItem.value = pCurrValueInfo ? pValue : NULL;
                 }
             }
             else
             {
-                regItem.value = value;
+                regItem.value = pCurrValueInfo ? value : NULL;
                 regItem.valueLen = dwValueLen;
             }
             dwError = RegExportAttributeEntries(
@@ -395,6 +397,7 @@ ProcessExportedKeyInfo(
 
 cleanup:
     LWREG_SAFE_FREE_MEMORY(pszValue);
+    RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
     memset(value, 0 , MAX_KEY_LENGTH);
 
     return dwError;
