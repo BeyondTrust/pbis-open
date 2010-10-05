@@ -1369,12 +1369,25 @@ NtRegSetValueAttributesW(
     IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     )
 {
-    return RegTransactSetValueAttributesW(
+    NTSTATUS status = 0;
+
+    if (!RegValidValueAttributes(pValueAttributes))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = RegTransactSetValueAttributesW(
             hRegConnection,
             hKey,
             pSubKey,
             pValueName,
             pValueAttributes);
+    BAIL_ON_NT_STATUS(status);
+
+error:
+
+    return status;
 }
 
 NTSTATUS

@@ -72,7 +72,11 @@ SqliteSetValueAttributes(
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
-    BAIL_ON_NT_INVALID_POINTER(pValueAttributes);
+    if (!RegValidValueAttributes(pValueAttributes))
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
 
     if (pwszSubKey)
     {

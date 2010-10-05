@@ -168,18 +168,18 @@ typedef struct _SECURITY_ATTRIBUTES {
 //
 // Value attribute
 //
-#define LWREG_VALUE_RANGE_TYPE_NONE 0
-
 typedef enum _LWREG_VALUE_RANGE_TYPE
 {
-    LWREG_VALUE_RANGE_TYPE_BOOLEAN = 1,
+    LWREG_VALUE_RANGE_TYPE_NONE = 0,
+    LWREG_VALUE_RANGE_TYPE_BOOLEAN,
     LWREG_VALUE_RANGE_TYPE_ENUM,
     LWREG_VALUE_RANGE_TYPE_INTEGER,
 } LWREG_VALUE_RANGE_TYPE;
 
 typedef enum _LWREG_VALUE_HINT
 {
-    LWREG_VALUE_HINT_SECONDS = 1,
+    LWREG_VALUE_HINT_NONE = 0,
+    LWREG_VALUE_HINT_SECONDS,
     LWREG_VALUE_HINT_PATH,
     LWREG_VALUE_HINT_ACCOUNT
 } LWREG_VALUE_HINT;
@@ -192,7 +192,7 @@ typedef struct _LWREG_RANGE_INTEGER
 
 typedef struct _LWREG_VALUE_ATTRIBUTES_A
 {
-    DWORD ValueType;
+    REG_DATA_TYPE ValueType;
     PVOID pDefaultValue;
     DWORD DefaultValueLen;
     PSTR  pszDocString;
@@ -207,7 +207,7 @@ typedef struct _LWREG_VALUE_ATTRIBUTES_A
 
 typedef struct _LWREG_VALUE_ATTRIBUTES
 {
-    DWORD ValueType;
+    REG_DATA_TYPE ValueType;
     PVOID pDefaultValue;
     DWORD DefaultValueLen;
     PWSTR pwszDocString;
@@ -247,6 +247,11 @@ RegCopyValueBytes(
     IN DWORD dwValueLen,
     OUT OPTIONAL PBYTE pData,
     IN OUT OPTIONAL PDWORD pcbData
+    );
+
+BOOLEAN
+RegValidValueAttributes(
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
     );
 
 

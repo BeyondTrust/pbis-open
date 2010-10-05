@@ -716,3 +716,99 @@ RegFindHintByValue(DWORD dwHint)
 
    return NULL;
 }
+
+BOOLEAN
+RegValidValueAttributes(
+    IN PLWREG_VALUE_ATTRIBUTES pValueAttributes
+    )
+{
+    BOOLEAN bIsValid = TRUE;
+    DWORD dwDefaultValue = 0;
+
+    switch (pValueAttributes->ValueType)
+    {
+        case REG_DWORD:
+
+            // Check range information consistency
+            if (pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_ENUM  ||
+                pValueAttributes->RangeType > LWREG_VALUE_RANGE_TYPE_INTEGER )
+            {
+                bIsValid = FALSE;
+                goto cleanup;
+            }
+            else if (pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_BOOLEAN &&
+                    pValueAttributes->pDefaultValue)
+            {
+                dwDefaultValue = *(PDWORD) pValueAttributes->pDefaultValue;
+
+                if (dwDefaultValue != 0 && dwDefaultValue != 1)
+                {
+                    bIsValid = FALSE;
+                    goto cleanup;
+                }
+            }
+            else if (pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_INTEGER)
+            {
+                if (pValueAttributes->Range.RangeInteger.Max < pValueAttributes->Range.RangeInteger.Min)
+                {
+                    bIsValid = FALSE;
+                    goto cleanup;
+                }
+
+                if (pValueAttributes->pDefaultValue)
+                {
+                    dwDefaultValue = *(PDWORD) pValueAttributes->pDefaultValue;
+
+                    if (dwDefaultValue < pValueAttributes->Range.RangeInteger.Min ||
+                        dwDefaultValue > pValueAttributes->Range.RangeInteger.Max)
+                    {
+                        bIsValid = FALSE;
+                        goto cleanup;
+                    }
+                }
+            }
+
+            // Check hint information consistency
+            if (pValueAttributes->Hint >= LWREG_VALUE_HINT_PATH)
+            {
+                bIsValid = FALSE;
+                goto cleanup;
+            }
+
+            break;
+
+        case REG_SZ:
+        case REG_MULTI_SZ:
+
+            // Check range information consistency
+            if (pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_BOOLEAN ||
+                pValueAttributes->RangeType >= LWREG_VALUE_RANGE_TYPE_INTEGER)
+            {
+                bIsValid = FALSE;
+                goto cleanup;
+            }
+            else if (pValueAttributes->RangeType == LWREG_VALUE_RANGE_TYPE_ENUM)
+            {
+                if (!pValueAttributes->Range.ppwszRangeEnumStrings)
+                {
+                    bIsValid = FALSE;
+                    goto cleanup;
+                }
+            }
+
+            // Check hint information consistency
+            if (pValueAttributes->Hint == LWREG_VALUE_HINT_SECONDS)
+            {
+                bIsValid = FALSE;
+                goto cleanup;
+            }
+
+            break;
+
+        default:
+            goto cleanup;
+    }
+
+cleanup:
+    return bIsValid;
+}

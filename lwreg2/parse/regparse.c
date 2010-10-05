@@ -1451,6 +1451,9 @@ RegParseCheckAttributes(
             BAIL_ON_REG_ERROR(dwError);
         }
         break;
+
+      default:
+          goto cleanup;
     }
 
 cleanup:
