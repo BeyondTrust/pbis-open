@@ -397,6 +397,23 @@ error:
     return LwIoFuseMapNtStatus(status);
 }
 
+static
+int
+LwIoFuseEntrypointUtimens(
+    const char* path,
+    const struct timespec tv[2]
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LwIoFuseUtimens(path, tv);
+    BAIL_ON_NT_STATUS(status);
+
+error:
+
+    return LwIoFuseMapNtStatus(status);
+}
+
 static struct fuse_operations gLwIoFuseOperations =
 {
     .init = LwIoFuseEntrypointInit,
@@ -415,7 +432,8 @@ static struct fuse_operations gLwIoFuseOperations =
     .rmdir = LwIoFuseEntrypointRmdir,
     .rename = LwIoFuseEntrypointRename,
     .chmod = LwIoFuseEntrypointChmod,
-    .chown = LwIoFuseEntrypointChown
+    .chown = LwIoFuseEntrypointChown,
+    .utimens = LwIoFuseEntrypointUtimens
 };
 
 struct fuse_operations*

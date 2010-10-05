@@ -120,4 +120,9 @@ LwIoFuseMapNtStatus(
     NTSTATUS status
     );
 
+LONG64
+LwIoTimeSpecToWinTime(
+    const struct timespec* pTs
+    );
+
 #endif

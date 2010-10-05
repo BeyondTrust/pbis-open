@@ -150,4 +150,10 @@ LwIoFuseCreate(
     struct fuse_file_info* pFileInfo
     );
 
+NTSTATUS
+LwIoFuseUtimens(
+    const char* pszPath,
+    const struct timespec tv[2]
+    );
+
 #endif

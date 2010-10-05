@@ -570,6 +570,15 @@ LwIoWinToUnixTime(
     return status;
 }
 
+LONG64
+LwIoTimeSpecToWinTime(
+    const struct timespec* pTs
+    )
+{
+    return (pTs->tv_sec + TIME_SEC_CONVERSION_CONSTANT) * 10000000LL + (pTs->tv_nsec / 100);
+}
+
+
 static
 NTSTATUS
 LwIoFuseTranslateSecurityDescriptorPermissions(

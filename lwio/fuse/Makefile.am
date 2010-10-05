@@ -21,6 +21,7 @@ lwio_fuse_mount_SOURCES = \
 	rename.c          \
 	chmod.c           \
 	chown.c           \
+	utimens.c         \
 	entrypoint.c      \
 	main.c
 
