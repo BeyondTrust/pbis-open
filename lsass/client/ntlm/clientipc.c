@@ -202,8 +202,11 @@ NtlmTransactAcceptSecurityContext(
                     FALSE);
             BAIL_ON_LSA_ERROR(dwError);
 
-            *phNewContext = pResultList->hNewContext;
-            pResultList->hNewContext = NULL;
+            if (phNewContext)
+            {
+                *phNewContext = pResultList->hNewContext;
+                pResultList->hNewContext = NULL;
+            }
 
             *pfContextAttr = pResultList->fContextAttr;
             *ptsTimeStamp = pResultList->tsTimeStamp;
@@ -221,6 +224,12 @@ NtlmTransactAcceptSecurityContext(
     }
 
 cleanup:
+    if (phContext && *phContext)
+    {
+        NtlmIpcReleaseHandle(*phContext);
+        *phContext = NULL;
+    }
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -230,6 +239,19 @@ cleanup:
     return dwError;
 
 error:
+    if (phNewContext)
+    {
+        if (phContext)
+        {
+            *phNewContext = *phContext;
+            *phContext = NULL;
+        }
+        else
+        {
+            *phNewContext = NULL;
+        }
+    }
+    
     *pfContextAttr = 0;
     *ptsTimeStamp = 0;
 
@@ -820,6 +842,12 @@ NtlmTransactInitializeSecurityContext(
     }
 
 cleanup:
+    if (phContext && *phContext)
+    {
+        NtlmIpcReleaseHandle(*phContext);
+        *phContext = NULL;
+    }
+
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &Out);
@@ -829,7 +857,19 @@ cleanup:
     return dwError;
 
 error:
-    *phNewContext = NULL;
+    if (phNewContext)
+    {
+        if (phContext)
+        {
+            *phNewContext = *phContext;
+            *phContext = NULL;
+        }
+        else
+        {
+            *phNewContext = NULL;
+        }
+    }
+    
     *pfContextAttr = 0;
     *ptsExpiry = 0;
     memset(pOutput, 0, sizeof(SecBufferDesc));
