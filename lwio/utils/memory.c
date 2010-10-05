@@ -61,7 +61,8 @@ LwIoAllocateBuffer(
     LW_PVOID * ppMemory
     )
 {
-    return LW_RTL_ALLOCATE_NOCLEAR(ppMemory, VOID, Size);
+    // return LW_RTL_ALLOCATE_NOCLEAR(ppMemory, VOID, Size);
+    return LW_RTL_ALLOCATE(ppMemory, VOID, Size);
 }
 
 VOID
