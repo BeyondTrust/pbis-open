@@ -900,9 +900,13 @@ typedef struct _IO_ECP_LIST *PIO_ECP_LIST;
 
 // TODO-Move named pipe ECP stuff to internal header.
 
-#define IO_ECP_TYPE_NAMED_PIPE "Likewise.IO.NamedPipe"
-#define IO_ECP_TYPE_SESSION_KEY "Likewise.IO.SessionKey"
-#define IO_ECP_TYPE_PEER_ADDRESS "Likewise.IO.PeerAddress"
+#define IO_ECP_TYPE_NAMED_PIPE      "Likewise.IO.NamedPipe"
+#define IO_ECP_TYPE_SESSION_KEY     "Likewise.IO.SessionKey"
+#define IO_ECP_TYPE_PEER_ADDRESS    "Likewise.IO.PeerAddress"
+#define IO_ECP_TYPE_FILE_STD_INFO   "Likewise.IO.FileStdInfo"
+#define IO_ECP_TYPE_FILE_BASIC_INFO "Likewise.IO.FileBasicInfo"
+#define IO_ECP_TYPE_PIPE_INFO       "Likewise.IO.FilePipeInfo"
+#define IO_ECP_TYPE_PIPE_LOCAL_INFO "Likewise.IO.FilePipeLocalInfo"
 
 typedef struct _IO_ECP_NAMED_PIPE {
     FILE_PIPE_TYPE_MASK NamedPipeType;
