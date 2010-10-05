@@ -32,7 +32,12 @@ DWORD
 XmlGetSqlQuery(
     PCSTR pszName,
     BOOLEAN bFuzzyMatch,
-    PWSTR *ppwszQuery
+    PSTR *ppszQuery
+    );
+
+DWORD
+XmlList(
+    VOID
     );
 
 #endif

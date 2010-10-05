@@ -54,6 +54,7 @@
 #define ACTION_DELETE 5
 #define ACTION_HELP 6
 #define ACTION_LAST 7
+#define ACTION_LIST 8
 
 #define TRY DCETHREAD_TRY
 #define CATCH_ALL DCETHREAD_CATCH_ALL(THIS_CATCH)
@@ -63,34 +64,48 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: lw-eventlog-cli [-h] | { [-s [<sql_filter>|-]] | [-c [<sql_filter>|-]] | [-t [<sql_filter> | -]]\n");
-    printf(" | [-e [<csv_path>|-]] | [-d [<sql_filter>|-]] }  <ip_address>\n\n");
-    printf("\t-h\tShow help\n");
-    printf("\t-s\tShows a detailed, human-readable listing of the records matching sql_filter, or - for all records.\n");
-    printf("\t-t\tShows a summary table of the records matching sql_filter, or - for all records.\n");
-    printf("\t-c\tShows a count of the number of records matching sql_filter, or - for all records.\n");
-    printf("\t-e\tExports CSV data from the database to the given path, or - to print to the command line\n");
-    printf("\t-d\tDeletes the records matching sql_filter, or - to delete all records, re-initializing the database\n");
-    printf("\nExamples:\n");
-    printf("\tPrints details for events 1-10:\n");
-    printf("\tlw-eventlog-cli -s 1-10 127.0.0.1\n\n");
-    printf("\tPrints table for all events:\n");
-    printf("\tlw-eventlog-cli -t - 127.0.0.1\n\n");
-    printf("\tCount all events matching the SQL WHILE expression:\n");
-    printf("\tlw-eventlog-cli -c \"(EventRecordId < 1000) AND (EventType = 'Warning')\" 127.0.0.1\n");
-    printf("\n");
-    printf("Valid Field Names:\n");
-    printf("\tEventTableCategoryId (integer)\n");
-    printf("\tEventRecordId (integer)\n");
-    printf("\tEventType     (varchar(128))\n");
-    printf("\tEventTime     (integer - seconds since Jan. 1 1970)\n");
-    printf("\tEventSource   (varchar(256))\n");
-    printf("\tEventCategory (varchar(128))\n");
-    printf("\tEventSourceId (integer)\n");
-    printf("\tUser          (varchar(128))\n");
-    printf("\tComputer      (varchar(128))\n");
-    printf("\tDescription   (TEXT))\n\n");
-    printf("\tData          (varchar(128))\n\n");
+    fputs(
+"Usage: lw-eventlog-cli [-h] | --list | \n"
+" { [-s <filter>] | [-c <filter>] | [-t <filter>] | [-d <filter>] }\n"
+" { [-e [<csv_path>|-]] }\n"
+" { [--days <int>] | [--hours <int>] | [--mins <int>] } <ip_address>\n"
+"\n"
+"   -h        Show help\n"
+"   --list    List named SQL filters.\n"
+"   -s        Shows a detailed, human-readable listing of the records matching\n"
+"                filter.\n"
+"   -t        Shows a summary table of the records matching filter.\n"
+"   -c        Shows a count of the number of records matching filter.\n"
+"   -d        Deletes the records matching filter.\n"
+"   -e        Exports CSV data from the database to the given path, or - to\n"
+"               print to the command line. May be combined with -s to filter\n"
+"               records.\n"
+"\n"
+"   filter    Either an SQL filter, or a - for all records, or a named SQL\n"
+"                filter.\n"
+"\n"
+"Examples:\n"
+"   Prints details for events 1-10:\n"
+"   lw-eventlog-cli -s 1-10 127.0.0.1\n"
+"\n"
+"   Prints table for all events:\n"
+"   lw-eventlog-cli -t - 127.0.0.1\n\n"
+"   Count all events matching the SQL WHILE expression:\n"
+"   lw-eventlog-cli -c \"(EventRecordId < 1000) AND (EventType = 'Warning')\" 127.0.0.1\n"
+"\n"
+"Valid Field Names:\n"
+"    EventTableCategoryId (integer)\n"
+"    EventRecordId (integer)\n"
+"    EventType     (varchar(128))\n"
+"    EventDateTime (integer - seconds since Jan. 1 1970)\n"
+"    EventSource   (varchar(256))\n"
+"    EventCategory (varchar(128))\n"
+"    EventSourceId (integer)\n"
+"    User          (varchar(128))\n"
+"    Computer      (varchar(128))\n"
+"    Description   (TEXT))\n"
+"    Data          (varchar(128))\n\n",
+    stdout);
 }
 
 
@@ -106,6 +121,9 @@ AddEventRecord(
 DWORD
 ParseFilter(
     PCSTR pszPseudoSqlFilter,
+    PCSTR pszUserForFilter,
+    DWORD dwSecondsForFilter,
+    DWORD dwLastForFilter,
     PWSTR* ppwszSqlFilter
     )
 {
@@ -113,14 +131,74 @@ ParseFilter(
     PWSTR pwszSqlFilter = NULL;
     PCSTR pszSqlFilterDefault = "eventRecordId >= 0";
 
+    PSTR pszXmlSqlFilter = NULL;
+    PSTR pszUserFilter = NULL;
+    PSTR pszDateFilter = NULL;
+    PSTR ppszFilters[3];
+    DWORD dwFilters = 0;
+    size_t i;
+    PSTR pszFinalFilter = NULL;
+    DWORD dwFinalFilterLength = 0;
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszUserForFilter))
+    {
+        dwError = LwAllocateStringPrintf(
+                    &pszUserFilter,
+                    " User='%s' ",
+                    pszUserForFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        ppszFilters[dwFilters++] = pszUserFilter;
+    }
+
+    if (dwSecondsForFilter != 0)
+    {
+        dwError = LwAllocateStringPrintf(
+                    &pszDateFilter,
+                    " EventDateTime >= %lu ",
+                    time(NULL) - dwSecondsForFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        ppszFilters[dwFilters++] = pszDateFilter;
+    }
+
+    if (dwFilters)
+    {
+        for (i = 0; i < dwFilters; i++)
+        {
+            dwFinalFilterLength += strlen(" AND ");
+            dwFinalFilterLength += strlen(ppszFilters[i]);
+        }
+
+        dwError = LwAllocateMemory(
+                    sizeof(char) * (dwFinalFilterLength + 1),
+                    (PVOID*)&pszFinalFilter);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwFinalFilterLength = 0;
+        for (i = 0; i < dwFilters; i++)
+        {
+            strcpy(pszFinalFilter + dwFinalFilterLength, " AND ");
+            dwFinalFilterLength += strlen(" AND ");
+            strcpy(pszFinalFilter + dwFinalFilterLength, ppszFilters[i]);
+            dwFinalFilterLength += strlen(ppszFilters[i]);
+        }
+    }
+    else
+    {
+        dwError = LwAllocateStringPrintf(&pszFinalFilter, "");
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
     if (pszPseudoSqlFilter == NULL ||
             *pszPseudoSqlFilter == '\0' ||
             strcmp(pszPseudoSqlFilter, "-") == 0)
     {
         dwError = LwAllocateWc16sPrintfW(
                     &pwszSqlFilter,
-                    L"%s",
-                    pszSqlFilterDefault);
+                    L"%s%s",
+                    pszSqlFilterDefault,
+                    pszFinalFilter);
         BAIL_ON_EVT_ERROR(dwError);
     }
     else
@@ -136,29 +214,40 @@ ParseFilter(
             if (endID > 0 && endID > startID) {
                 dwError = LwAllocateWc16sPrintfW(
                             &pwszSqlFilter,
-                            L"EventRecordId >= %d AND EventRecordID <= %d",
+                            L"EventRecordId >= %d AND EventRecordID <= %d%s",
                             startID,
-                            endID);
+                            endID,
+                            pszFinalFilter);
                 BAIL_ON_EVT_ERROR(dwError);
             }
             else
             {
                 dwError = LwAllocateWc16sPrintfW(
                             &pwszSqlFilter,
-                            L"EventRecordId = %d",
-                            startID);
+                            L"EventRecordId = %d%s",
+                            startID,
+                            pszFinalFilter);
                 BAIL_ON_EVT_ERROR(dwError);
             }
         }
         else
         {
-            dwError = XmlGetSqlQuery(pszPseudoSqlFilter, TRUE, &pwszSqlFilter);
-            if (dwError == APP_ERROR_REPORT_NOT_FOUND)
+            dwError =XmlGetSqlQuery(pszPseudoSqlFilter, TRUE, &pszXmlSqlFilter);
+            if (dwError == 0)
             {
                 dwError = LwAllocateWc16sPrintfW(
                             &pwszSqlFilter,
-                            L"%s",
-                            pszPseudoSqlFilter);
+                            L"%s%s",
+                            pszXmlSqlFilter,
+                            pszFinalFilter);
+            }
+            else if (dwError == APP_ERROR_REPORT_NOT_FOUND)
+            {
+                dwError = LwAllocateWc16sPrintfW(
+                            &pwszSqlFilter,
+                            L"(%s%s)",
+                            pszPseudoSqlFilter,
+                            pszFinalFilter);
             }
             BAIL_ON_EVT_ERROR(dwError);
         }
@@ -167,6 +256,12 @@ ParseFilter(
     *ppwszSqlFilter = pwszSqlFilter;
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszUserFilter);
+    LW_SAFE_FREE_STRING(pszDateFilter);
+    LW_SAFE_FREE_STRING(pszFinalFilter);
+
+    LW_SAFE_FREE_STRING(pszXmlSqlFilter);
+
     return dwError;
 
 error:
@@ -190,11 +285,20 @@ main(
 
     PCSTR pszHostname = NULL;
 
-    DWORD action = ACTION_NONE;
+    DWORD action = ACTION_NONE, dwFinalAction = ACTION_NONE;
+
     PCSTR pszExportPath = NULL;
+    FILE* fpExport = NULL;
+
     PCSTR pszSqlFilter = NULL;
     PWSTR pwszSqlFilter = NULL;
-    FILE* fpExport = NULL;
+
+    PSTR pszUserForFilter = NULL;
+    DWORD dwDaysForFilter = 0;
+    DWORD dwHoursForFilter = 0;
+    DWORD dwMinutesForFilter = 0;
+    DWORD dwSecondsForFilter = 0;
+    DWORD dwLastForFilter = 0;
 
     struct poptOption optionsTable[] =
     {
@@ -252,6 +356,60 @@ main(
             "Deletes the records matching sql_filter, or - to delete all records, re-initializing the database",
             "filter"
         },
+        {
+            "user",
+            '\0',
+            POPT_ARG_STRING,
+            &pszUserForFilter,
+            ACTION_NONE,
+            "Filter results to those items that match this user.",
+            "filter"
+        },
+        {
+            "days",
+            '\0',
+            POPT_ARG_LONG,
+            &dwDaysForFilter,
+            ACTION_NONE,
+            "Filter results to those items in the past n days.",
+            "filter"
+        },
+        {
+            "hours",
+            '\0',
+            POPT_ARG_LONG,
+            &dwHoursForFilter,
+            ACTION_NONE,
+            "Filter results to those items in the past n hours.",
+            "filter"
+        },
+        {
+            "mins",
+            '\0',
+            POPT_ARG_LONG,
+            &dwMinutesForFilter,
+            ACTION_NONE,
+            "Filter results to those items in the past n minutes.",
+            "filter"
+        },
+        {
+            "last",
+            '\0',
+            POPT_ARG_LONG,
+            &dwLastForFilter,
+            ACTION_NONE,
+            "Filter results to the last n results.",
+            "filter"
+        },
+        {
+            "list",
+            'd',
+            POPT_ARG_NONE,
+            NULL,
+            ACTION_LIST,
+            "List named SQL filters.",
+            "filter"
+        },
         POPT_AUTOHELP
         { NULL, 0, 0, NULL, 0}
     };
@@ -271,19 +429,78 @@ main(
                                     NULL);
     BAIL_ON_EVT_ERROR(dwError);
 
-    action = poptGetNextOpt(optCon);
-
-    // Allow exactly one option
-    if (action == -1 || poptGetNextOpt(optCon) != -1)
+    while( (action = poptGetNextOpt(optCon)) != -1)
     {
+        switch (action)
+        {
+            case ACTION_SHOW:
+            case ACTION_TABLE:
+            case ACTION_COUNT:
+            case ACTION_DELETE:
+                if (dwFinalAction == ACTION_NONE)
+                {
+                    dwFinalAction = action;
+                }
+                else if (dwFinalAction != ACTION_EXPORT)
+                {
+                    fprintf(stderr, "Use only one of -s, -t, -c, -d, -e, --list\n");
+                    ShowUsage();
+                    exit(1);
+                }
+                break;
+
+            case ACTION_EXPORT:
+                if (dwFinalAction == ACTION_SHOW ||
+                    dwFinalAction == ACTION_TABLE ||
+                    dwFinalAction == ACTION_COUNT ||
+                    dwFinalAction == ACTION_DELETE)
+                {
+                    dwFinalAction = action;
+                }
+                else if (dwFinalAction == ACTION_EXPORT)
+                {
+                    fprintf(stderr, "Use only one -e\n");
+                    ShowUsage();
+                    exit(1);
+                }
+                else
+                {
+                    fprintf(stderr, "Use only one of -s, -t, -c, -d, -e, --list\n");
+                    ShowUsage();
+                    exit(1);
+                }
+                break;
+
+            case ACTION_LIST:
+                if (dwFinalAction != 0)
+                {
+                    fprintf(stderr, "Use only one of -s, -t, -c, -d, -e, --list\n");
+                    ShowUsage();
+                    exit(1);
+                }
+                dwFinalAction = action;
+                break;
+
+            case ACTION_HELP:
+                ShowUsage();
+                exit(0);
+                break;
+        }
+    }
+
+    if (dwFinalAction == 0)
+    {
+        EVT_LOG_VERBOSE("Must have one of -s, -t, -c, -d, -e, or --list\n");
         ShowUsage();
         exit(1);
     }
 
-    if (action == ACTION_HELP)
+    if (dwFinalAction == ACTION_LIST)
     {
-        ShowUsage();
-        exit(0);
+        dwError = XmlList();
+        BAIL_ON_EVT_ERROR(dwError);
+
+        goto error; // Otherwise we have a lot of indenting.
     }
 
     pszHostname = poptGetArg(optCon);
@@ -301,16 +518,32 @@ main(
         exit(1);
     }
 
-    if (action <= ACTION_NONE || action > ACTION_LAST) {
-        EVT_LOG_VERBOSE("Invalid action: %d\n", action);
-        ShowUsage();
-        exit(0);
-    }
 
     dwError = LWIOpenEventLog(pszHostname, (PHANDLE)&pEventLogHandle);
     BAIL_ON_EVT_ERROR(dwError);
 
-    if (action == ACTION_EXPORT)
+    if (dwMinutesForFilter != 0)
+    {
+        dwSecondsForFilter = dwMinutesForFilter * 60;
+    }
+    else if (dwHoursForFilter != 0)
+    {
+        dwSecondsForFilter = dwHoursForFilter * 60 * 60;
+    }
+    else if (dwDaysForFilter != 0)
+    {
+        dwSecondsForFilter = dwDaysForFilter * 24 * 60 * 60;
+    }
+
+    dwError = ParseFilter(
+                pszSqlFilter,
+                pszUserForFilter,
+                dwSecondsForFilter,
+                dwLastForFilter,
+                &pwszSqlFilter);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (dwFinalAction == ACTION_EXPORT)
     {
         if (strcmp(pszExportPath, "-") == 0)
         {
@@ -323,7 +556,7 @@ main(
 
         if (fpExport != NULL)
         {
-            dwError = ReadAndExportEvents(pEventLogHandle, fpExport);
+            dwError = ReadAndExportEvents(pEventLogHandle, pwszSqlFilter, fpExport);
         }
         else
         {
@@ -332,13 +565,8 @@ main(
         }
         BAIL_ON_EVT_ERROR(dwError);
     }
-    else if (action == ACTION_COUNT)
+    else if (dwFinalAction == ACTION_COUNT)
     {
-        dwError = ParseFilter(
-            pszSqlFilter,
-            &pwszSqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-
         dwError = LWICountEventLog((HANDLE)pEventLogHandle,
                         pwszSqlFilter,
                         &nRecords);
@@ -347,13 +575,8 @@ main(
         BAIL_ON_EVT_ERROR(dwError);
         printf("%d records found in database\n", nRecords);
     }
-    else if (action == ACTION_SHOW)
+    else if (dwFinalAction == ACTION_SHOW)
     {
-        dwError = ParseFilter(
-            pszSqlFilter,
-            &pwszSqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-
         do {
 
             dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
@@ -368,13 +591,8 @@ main(
             PrintEventRecords(stdout, eventRecords, nRecords, &currentRecord);
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
-    else if (action == ACTION_TABLE)
+    else if (dwFinalAction == ACTION_TABLE)
     {
-        dwError = ParseFilter(
-            pszSqlFilter,
-            &pwszSqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-
         do {
 
             dwError = LWIReadEventLog((HANDLE)pEventLogHandle,
@@ -390,13 +608,8 @@ main(
 
         } while (nRecords == nRecordsPerPage && nRecords > 0);
     }
-    else if (action == ACTION_DELETE)
+    else if (dwFinalAction == ACTION_DELETE)
     {
-        dwError = ParseFilter(
-            pszSqlFilter,
-            &pwszSqlFilter);
-        BAIL_ON_EVT_ERROR(dwError);
-
         dwError = LWIDeleteFromEventLog(
                         (HANDLE)pEventLogHandle,
                         pwszSqlFilter);

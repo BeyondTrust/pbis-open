@@ -286,6 +286,7 @@ PrintEventRecordsTable(
 DWORD
 ReadAndExportEvents(
     PEVENT_LOG_HANDLE pEventLogHandle,
+    PCWSTR pwszSqlFilter,
     FILE* fpExport
     )
 {
@@ -299,14 +300,6 @@ ReadAndExportEvents(
 
     if (fpExport == NULL) return -1;
     if (pEventLogHandle == NULL) return -1;
-
-    const char* sqlFilterChar = "eventRecordId > 0";
-
-    wchar16_t* sqlFilter = NULL;
-    dwError = EVTAllocateMemory(sizeof(wchar16_t)*(1+strlen(sqlFilterChar)), (PVOID*)(&sqlFilter));
-    BAIL_ON_EVT_ERROR(dwError);
-
-    sw16printf(sqlFilter, "%s", sqlFilterChar);
 
     /*
      * CSV fields:
@@ -326,18 +319,23 @@ ReadAndExportEvents(
 
     do
     {
-
-    dwError = LWIReadEventLog((HANDLE)pEventLogHandle, currentEntry, pageSize, sqlFilter, &entriesRead, &records);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    for (i = 0; i < entriesRead; i++) {
-        dwError = ExportEventRecord(&(records[i]), fpExport);
+        dwError = LWIReadEventLog(
+                    (HANDLE)pEventLogHandle,
+                    currentEntry,
+                    pageSize,
+                    pwszSqlFilter,
+                    &entriesRead,
+                    &records);
         BAIL_ON_EVT_ERROR(dwError);
-    }
 
-    fflush(fpExport);
+        for (i = 0; i < entriesRead; i++) {
+            dwError = ExportEventRecord(&(records[i]), fpExport);
+            BAIL_ON_EVT_ERROR(dwError);
+        }
 
-    currentEntry += entriesRead;
+        fflush(fpExport);
+
+        currentEntry += entriesRead;
 
     } while (entriesRead == pageSize && entriesRead > 0);
 

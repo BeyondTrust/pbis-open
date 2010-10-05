@@ -72,6 +72,7 @@ PrintEventRecordsTable(
 DWORD
 ReadAndExportEvents(
     PEVENT_LOG_HANDLE pEventLogHandle,
+    PCWSTR pwszSqlFilter,
     FILE* fpExport
     );
 
