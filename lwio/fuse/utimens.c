@@ -68,7 +68,7 @@ LwIoFuseUtimens(
         FILE_SHARE_WRITE |
         FILE_SHARE_DELETE,       /* Share access */
         FILE_OPEN,               /* Create disposition */
-        FILE_NON_DIRECTORY_FILE, /* Create options */
+        0,                       /* Create options */
         NULL,                    /* EA buffer */
         0,                       /* EA length */
         NULL,                     /* ECP list */
