@@ -190,7 +190,7 @@ krb5_gss_acquire_cred_impersonate_name(OM_uint32 *minor_status,
 {
     OM_uint32 major_status;
     krb5_error_code code;
-    krb5_gss_cred_id_t cred;
+    krb5_gss_cred_id_t cred = NULL;
     krb5_context context;
 
     if (impersonator_cred_handle == GSS_C_NO_CREDENTIAL)
