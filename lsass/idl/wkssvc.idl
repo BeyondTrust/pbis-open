@@ -46,7 +46,7 @@ cpp_quote("#endif /* DCERPC_STUB_BUILD */")
         [in,string,unique] wchar16_t *pwszServerName,
         [in,out,ref] NETR_WKSTA_USER_INFO  *pInfo,
         [in] DWORD dwPrefMaxLen,
-        [out,ref] DWORD *dwNumEntries,
+        [out,ref] DWORD *pdwNumEntries,
         [in,out,unique] DWORD *pdwResume
         );
 
