@@ -2564,8 +2564,19 @@ LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecor
         }
         else
         {
-            LOG("Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
-            currentSize += GetHeaderSize(result);
+            if (result == 0 && total > 0)
+            {
+                LOG("No record will fit into caller's buffer, size needed is %d", currentSize);
+                nRecords = 0;
+                TotalRecords = total;
+                macError = eDSBufferTooSmall;
+                GOTO_CLEANUP_ON_MACERROR(macError);
+            }
+            else
+            {
+                LOG("Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
+                currentSize += GetHeaderSize(result);
+            }
         }
     }
 
@@ -2872,6 +2883,12 @@ AddQueryToContextList(
 
     // Insert new context into global list and assign handle identifier
     pthread_mutex_lock(&Global_ContextListMutexLock);
+
+    if ((UInt32)Global_LastHandleId >= MAX_DS_CONTINUE_HANDLE)
+    {
+        // Time to loop around to new IDs
+        Global_LastHandleId = 0;
+    }
 
     HandleId = Global_LastHandleId = (tContextData)((UInt32)Global_LastHandleId + 1);
     pContext->HandleId = HandleId;

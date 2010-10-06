@@ -175,16 +175,18 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
     int recordAttributeCount;
     tContextData HandleId = 0;
 
-    LOG_ENTER("fType = %d, fResult = %d, fInNodeRef = %d, "
+    LOG_ENTER("LWIRecordListQuery::Run - fType = %d, fResult = %d, fInNodeRef = %d, "
               "fInDataBuf => { len = %d, size = %d }, fInPatternMatch = 0x%04X, "
               "fInAttribInfoOnly = %s",
+              "fIOContinueData = %d",
               pGetRecordList->fType,
               pGetRecordList->fResult,
               pGetRecordList->fInNodeRef,
               pGetRecordList->fInDataBuff->fBufferLength,
               pGetRecordList->fInDataBuff->fBufferSize,
               pGetRecordList->fInPatternMatch,
-              BOOL_STRING(pGetRecordList->fInAttribInfoOnly));
+              BOOL_STRING(pGetRecordList->fInAttribInfoOnly),
+              pGetRecordList->fIOContinueData);
 
     recordNameCount = dsDataListGetNodeCount(pGetRecordList->fInRecNameList);
     recordTypeCount = dsDataListGetNodeCount(pGetRecordList->fInRecTypeList);
@@ -196,7 +198,8 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
               recordTypeCount,
              recordAttributeCount);
 
-    if (pGetRecordList->fIOContinueData != 0)
+    if (pGetRecordList->fIOContinueData != 0 &&
+        pGetRecordList->fIOContinueData != SPECIAL_DS_CONTINUE_HANDLE)
     {
         macError = GetQueryFromContextList(pGetRecordList->fIOContinueData, &pQuery);
         if (macError == eDSNoErr)
@@ -310,10 +313,16 @@ cleanup:
         delete pQuery;
     }
 
-    LOG_LEAVE("fOutRecEntryCount = %d, fInDataBuff => { length = %d, size = %d } --> %d",
+    if (macError == eDSBufferTooSmall)
+    {
+        pGetRecordList->fIOContinueData = (tContextData)SPECIAL_DS_CONTINUE_HANDLE;
+    }
+
+    LOG_LEAVE("fOutRecEntryCount = %d, fInDataBuff => { length = %d, size = %d }, fIOContinueData = %d, macError = %d",
               pGetRecordList->fOutRecEntryCount,
               pGetRecordList->fInDataBuff->fBufferLength,
               pGetRecordList->fInDataBuff->fBufferSize,
+              pGetRecordList->fIOContinueData,
               macError);
 
     return macError;
@@ -331,6 +340,12 @@ LWIRecordListQuery::ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseCon
               pReleaseContinueData->fResult,
               pReleaseContinueData->fInDirReference,
               pReleaseContinueData->fInContinueData);
+
+    if (pReleaseContinueData->fInContinueData)
+    {
+        // Special continue handle value, no actual cached query for this one.
+        goto cleanup;
+    }
 
     macError = GetQueryFromContextList(pReleaseContinueData->fInContinueData, &pQuery);
     if (macError == eDSNoErr && pQuery)
