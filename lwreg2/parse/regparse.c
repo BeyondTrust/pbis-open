@@ -241,8 +241,7 @@ RegParseAssignAttrData(
 
     /* regAttr contains memory that must be freed by caller */
     if (parseHandle->lexHandle->eValueNameType ==
-        REGLEX_VALUENAME_ATTRIBUTES &&
-        pData && dwDataLen > 0)
+        REGLEX_VALUENAME_ATTRIBUTES && pData);
     {
         if (!strcmp(parseHandle->attrName, "value"))
         {
