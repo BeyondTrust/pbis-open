@@ -165,6 +165,12 @@ LwMapSecurityFreeContextInternal(
     IN OUT PLW_MAP_SECURITY_CONTEXT* Context
     );
 
+static
+VOID
+LwMapSecurityFreeContextInLock(
+    IN OUT PLW_MAP_SECURITY_CONTEXT* Context
+    );
+
 //
 // Plugin Functions
 //
@@ -298,8 +304,9 @@ cleanup:
     return status;
 }
 
+static
 VOID
-LwMapSecurityFreeContext(
+LwMapSecurityFreeContextInLock(
     IN OUT PLW_MAP_SECURITY_CONTEXT* Context
     )
 {
@@ -335,6 +342,20 @@ cleanup:
     *Context = NULL;
 
     return;
+}
+
+VOID
+LwMapSecurityFreeContext(
+    IN OUT PLW_MAP_SECURITY_CONTEXT* Context
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LOCK_MUTEX(&gLwMapSecurityState.Mutex, bInLock);
+
+    LwMapSecurityFreeContextInLock(Context);
+
+    UNLOCK_MUTEX(&gLwMapSecurityState.Mutex, bInLock);
 }
 
 VOID
@@ -424,7 +445,7 @@ LwMapSecurityCreateContextInternal(
 cleanup:
     if (!NT_SUCCESS(status))
     {
-        LwMapSecurityFreeContext(&pContext);
+        LwMapSecurityFreeContextInLock(&pContext);
     }
 
     *Context = pContext;
