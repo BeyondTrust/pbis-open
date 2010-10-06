@@ -101,6 +101,18 @@ IoRtlEcpListRemove(
     OUT PIO_ECP_FREE_CONTEXT_CALLBACK* ppfnFreeContextCallback
     );
 
+NTSTATUS
+IoRtlEcpListAcknowledge(
+    IN PIO_ECP_LIST pEcpList,
+    IN PCSTR pszType
+    );
+
+BOOLEAN
+IoRtlEcpListIsAcknowledged(
+    IN PIO_ECP_LIST pEcpList,
+    IN PCSTR pszType
+    );
+
 BOOLEAN
 IoRtlPathIsSeparator(
     IN WCHAR Character

@@ -48,12 +48,17 @@
 #include "ntlogmacros.h"
 #include "lwio/iortl.h"
 
+typedef ULONG IO_ECP_FLAGS, *PIO_ECP_FLAGS;
+
+#define IO_ECP_FLAG_ACKNOWLEDGED    0x00000001
+
 typedef struct _IO_ECP_LIST {
     LW_LIST_LINKS Head;
 } IO_ECP_LIST;
 
 typedef struct _IO_ECP_NODE {
     LW_LIST_LINKS Links;
+    IO_ECP_FLAGS Flags;
     PSTR pszType;
     PVOID pContext;
     ULONG ContextSize;
@@ -406,6 +411,42 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+IoRtlEcpListAcknowledge(
+    IN PIO_ECP_LIST pEcpList,
+    IN PCSTR pszType
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PIO_ECP_NODE pNode = NULL;
+
+    status = IopRtlEcpListFindNode(pEcpList, pszType, &pNode);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    SetFlag(pNode->Flags, IO_ECP_FLAG_ACKNOWLEDGED);
+
+cleanup:
+    return status;
+}
+
+BOOLEAN
+IoRtlEcpListIsAcknowledged(
+    IN PIO_ECP_LIST pEcpList,
+    IN PCSTR pszType
+    )
+{
+    BOOLEAN isAcknowledged = FALSE;
+    NTSTATUS status = STATUS_SUCCESS;
+    PIO_ECP_NODE pNode = NULL;
+
+    status = IopRtlEcpListFindNode(pEcpList, pszType, &pNode);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    isAcknowledged = IsSetFlag(pNode->Flags, IO_ECP_FLAG_ACKNOWLEDGED);
+
+cleanup:
+    return isAcknowledged;
+}
 
 /*
 local variables:
