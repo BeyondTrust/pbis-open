@@ -198,8 +198,8 @@ LWIRecordListQuery::Run(IN OUT sGetRecordList* pGetRecordList)
               recordTypeCount,
              recordAttributeCount);
 
-    if (pGetRecordList->fIOContinueData != 0 &&
-        pGetRecordList->fIOContinueData != SPECIAL_DS_CONTINUE_HANDLE)
+    if ((UInt32)pGetRecordList->fIOContinueData != 0 &&
+        (UInt32)pGetRecordList->fIOContinueData != SPECIAL_DS_CONTINUE_HANDLE)
     {
         macError = GetQueryFromContextList(pGetRecordList->fIOContinueData, &pQuery);
         if (macError == eDSNoErr)
@@ -341,7 +341,7 @@ LWIRecordListQuery::ReleaseContinueData(IN OUT sReleaseContinueData* pReleaseCon
               pReleaseContinueData->fInDirReference,
               pReleaseContinueData->fInContinueData);
 
-    if (pReleaseContinueData->fInContinueData)
+    if ((UInt32)pReleaseContinueData->fInContinueData == SPECIAL_DS_CONTINUE_HANDLE)
     {
         // Special continue handle value, no actual cached query for this one.
         goto cleanup;
