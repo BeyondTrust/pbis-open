@@ -45,7 +45,9 @@
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *          Rafal Szczesniak (rafal@likewise.com)
  */
+
 #include "includes.h"
 
 PCSTR gpszLocalProviderName = LOCAL_CFG_TAG_LOCAL_PROVIDER;
@@ -62,31 +64,31 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
     .pfnGetSmartCardUserObject       = LocalGetSmartCardUserObject,
     .pfnOpenHandle                   = LocalOpenHandle,
     .pfnCloseHandle                  = LocalCloseHandle,
-    .pfnShutdownProvider             = &LocalShutdownProvider,
-    .pfnOpenHandle                   = &LocalOpenHandle,
-    .pfnServicesDomain               = &LocalServicesDomain,
-    .pfnCheckUserInList              = &LocalCheckUserInList,
-    .pfnAuthenticateUserPam          = &LocalAuthenticateUserPam,
-    .pfnAuthenticateUserEx           = &LocalAuthenticateUserEx,
-    .pfnValidateUser                 = &LocalValidateUser,
-    .pfnChangePassword               = &LocalChangePassword,
-    .pfnSetPassword                  = &LocalSetPassword,
-    .pfnAddUser                      = &LocalAddUser,
-    .pfnModifyUser                   = &LocalModifyUser,
+    .pfnShutdownProvider             = LocalShutdownProvider,
+    .pfnOpenHandle                   = LocalOpenHandle,
+    .pfnServicesDomain               = LocalServicesDomain,
+    .pfnCheckUserInList              = LocalCheckUserInList,
+    .pfnAuthenticateUserPam          = LocalAuthenticateUserPam,
+    .pfnAuthenticateUserEx           = LocalAuthenticateUserEx,
+    .pfnValidateUser                 = LocalValidateUser,
+    .pfnChangePassword               = LocalChangePassword,
+    .pfnSetPassword                  = LocalSetPassword,
+    .pfnAddUser                      = LocalAddUser,
+    .pfnModifyUser                   = LocalModifyUser,
     .pfnDeleteObject                 = LocalDeleteObject,
-    .pfnAddGroup                     = &LocalAddGroup,
-    .pfnModifyGroup                  = &LocalModifyGroup,
-    .pfnOpenSession                  = &LocalOpenSession,
-    .pfnCloseSession                 = &LocalCloseSession,
-    .pfnLookupNSSArtefactByKey       = &LocalFindNSSArtefactByKey,
-    .pfnBeginEnumNSSArtefacts        = &LocalBeginEnumNSSArtefacts,
-    .pfnEnumNSSArtefacts             = &LocalEnumNSSArtefacts,
-    .pfnEndEnumNSSArtefacts          = &LocalEndEnumNSSArtefacts,
-    .pfnGetStatus                    = &LocalGetStatus,
-    .pfnFreeStatus                   = &LocalFreeStatus,
-    .pfnRefreshConfiguration         = &LocalRefreshConfiguration,
-    .pfnProviderIoControl            = &LocalIoControl,
-    .pfnCloseHandle                  = &LocalCloseHandle
+    .pfnAddGroup                     = LocalAddGroup,
+    .pfnModifyGroup                  = LocalModifyGroup,
+    .pfnOpenSession                  = LocalOpenSession,
+    .pfnCloseSession                 = LocalCloseSession,
+    .pfnLookupNSSArtefactByKey       = LocalFindNSSArtefactByKey,
+    .pfnBeginEnumNSSArtefacts        = LocalBeginEnumNSSArtefacts,
+    .pfnEnumNSSArtefacts             = LocalEnumNSSArtefacts,
+    .pfnEndEnumNSSArtefacts          = LocalEndEnumNSSArtefacts,
+    .pfnGetStatus                    = LocalGetStatus,
+    .pfnFreeStatus                   = LocalFreeStatus,
+    .pfnRefreshConfiguration         = LocalRefreshConfiguration,
+    .pfnProviderIoControl            = LocalIoControl,
+    .pfnCloseHandle                  = LocalCloseHandle
 };
 
 LOCAL_PROVIDER_GLOBALS gLPGlobals =
