@@ -1699,10 +1699,38 @@ RegDbDeleteKeyValue(
 	NTSTATUS status = STATUS_SUCCESS;
     BOOLEAN bInLock = FALSE;
     PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+
+
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = RegDbDeleteKeyValue_inlock(hDb,
+                                        qwParentKeyId,
+                                        pwszValueName);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    return status;
+
+error:
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbDeleteKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)hDb;
+
     // Do not free
     sqlite3_stmt *pstQuery = pConn->pstDeleteKeyValue;
 
-    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
 
     status = RegSqliteBindInt64(pstQuery, 1, qwParentKeyId);
     BAIL_ON_SQLITE3_ERROR_STMT(status, pstQuery);
@@ -1721,8 +1749,6 @@ RegDbDeleteKeyValue(
     BAIL_ON_SQLITE3_ERROR_DB(status, pConn->pDb);
 
 cleanup:
-
-    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
 
     return status;
 

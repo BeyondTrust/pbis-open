@@ -513,6 +513,13 @@ RegDbGetKeyValue_inlock(
     );
 
 NTSTATUS
+RegDbDeleteKeyValue_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwParentKeyId,
+    IN PCWSTR pwszValueName
+    );
+
+NTSTATUS
 RegDbUpdateRegValues_inlock(
     IN HANDLE hDB,
     IN DWORD dwEntryCount,

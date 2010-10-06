@@ -1045,7 +1045,7 @@ SqliteDeleteKeyValue(
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
     PREG_KEY_HANDLE pKeyHandleInUse = NULL;
-    PREG_KEY_CONTEXT pKeyCtxInUse = NULL;
+
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     pKeyCtx = pKeyHandle->pKey;
@@ -1072,28 +1072,15 @@ SqliteDeleteKeyValue(
 
 	// ACL check
     status = RegSrvAccessCheckKeyHandle(pKeyHandleInUse, KEY_SET_VALUE);
-    BAIL_ON_NT_STATUS(status);
-
-	pKeyCtxInUse = pKeyHandleInUse->pKey;
-	BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtxInUse);
+    BAIL_ON_NT_STATUS(status);;
 
     status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 
-    status = RegDbGetKeyValue(ghCacheConnection,
-    		                  pKeyCtxInUse->qwId,
-    		                  pwszValueName,
-                              REG_NONE,
-                              NULL,
-                              NULL);
+    status = SqliteDeleteValue(Handle,
+                               (HKEY)pKeyHandleInUse,
+                               pwszValueName);
     BAIL_ON_NT_STATUS(status);
-
-    status = RegDbDeleteKeyValue(ghCacheConnection,
-    		                     pKeyCtxInUse->qwId,
-    		                     pwszValueName);
-    BAIL_ON_NT_STATUS(status);
-
-    SqliteCacheResetKeyValueInfo(pKeyCtxInUse->pwszKeyName);
 
 cleanup:
     SqliteSafeFreeKeyHandle(pKeyHandleInUse);
@@ -1118,6 +1105,10 @@ SqliteDeleteValue(
     wchar16_t wszEmptyValueName[] = REG_EMPTY_VALUE_NAME_W;
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
+    BOOLEAN bInLock = FALSE;
+    PREG_DB_CONNECTION pConn = (PREG_DB_CONNECTION)ghCacheConnection;
+    PSTR pszError = NULL;
+
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
 	// ACL check
@@ -1130,27 +1121,58 @@ SqliteDeleteValue(
     status = LwRtlWC16StringDuplicate(&pwszValueName, !pValueName ? wszEmptyValueName : pValueName);
     BAIL_ON_NT_STATUS(status);
 
-    status = RegDbGetKeyValue(ghCacheConnection,
-    		                  pKeyCtx->qwId,
-    		                  pwszValueName,
-                              REG_NONE,
-                              NULL,
-                              NULL);
+    ENTER_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "begin;",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    status = RegDbGetKeyValue_inlock((REG_DB_HANDLE)pConn,
+    		                         pKeyCtx->qwId,
+    		                         pwszValueName,
+                                     REG_NONE,
+                                     NULL,
+                                     NULL);
     BAIL_ON_NT_STATUS(status);
 
-    status = RegDbDeleteKeyValue(ghCacheConnection,
-    		                     pKeyCtx->qwId,
-    		                     pwszValueName);
+    status = RegDbDeleteKeyValue_inlock((REG_DB_HANDLE)pConn,
+    		                            pKeyCtx->qwId,
+    		                            pwszValueName);
     BAIL_ON_NT_STATUS(status);
+
+    status = sqlite3_exec(
+                    pConn->pDb,
+                    "end",
+                    NULL,
+                    NULL,
+                    &pszError);
+    BAIL_ON_SQLITE3_ERROR(status, pszError);
+
+    REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteValue() finished\n");
 
     SqliteCacheResetKeyValueInfo(pKeyCtx->pwszKeyName);
 
 cleanup:
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
 
     return status;
 
 error:
+    if (pszError)
+    {
+        sqlite3_free(pszError);
+    }
+    sqlite3_exec(pConn->pDb,
+                 "rollback",
+                 NULL,
+                 NULL,
+                 NULL);
+
     goto cleanup;
 }
 
