@@ -459,7 +459,7 @@ RegLexParseAt(
             }
             else
             {
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
             }
         }
     }
@@ -1033,8 +1033,7 @@ RegLexUnGetToken(PREGLEX_ITEM lexHandle)
     {
         if (lexHandle->prevToken.pszValue)
         {
-            RegMemoryFree(lexHandle->prevToken.pszValue);
-            lexHandle->prevToken.pszValue = NULL;
+            LWREG_SAFE_FREE_MEMORY(lexHandle->prevToken.pszValue);
         }
     }
     lexHandle->prevToken = lexHandle->curToken;
@@ -1060,6 +1059,7 @@ RegLexResetToken(
     lexHandle->isToken = FALSE;
     LWREG_SAFE_FREE_MEMORY(lexHandle->curToken.pszValue);
     memset(&lexHandle->curToken, 0, sizeof(lexHandle->curToken));
+    lexHandle->prevToken.pszValue = NULL;
 
 cleanup:
     return dwError;
@@ -1142,7 +1142,7 @@ RegLexGetToken(
             {
                 if (lexHandle->state == REGLEX_STATE_IN_QUOTE)
                 {
-                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    dwError = LWREG_ERROR_UNEXPECTED_TOKEN;
                 }
                 else if (lexHandle->state == REGLEX_STATE_IN_KEY)
                 {
