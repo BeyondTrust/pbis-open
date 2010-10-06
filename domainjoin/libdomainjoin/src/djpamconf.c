@@ -3500,11 +3500,14 @@ void DJNewConfigurePamForADLogin(
     {
         if (enable)
         {
-            LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
-            if(conf.modified)
-                LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
-            LW_TRY(exc, EnablePamAuthUpdate(testPrefix, &LW_EXC));
-            goto cleanup;
+            if (!bPamAuthUpdateLikewiseEnabled)
+            {
+                LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
+                if(conf.modified)
+                    LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+                LW_TRY(exc, EnablePamAuthUpdate(testPrefix, &LW_EXC));
+                goto cleanup;
+            }
         }
         else if (bPamAuthUpdateLikewiseEnabled)
         {
