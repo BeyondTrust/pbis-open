@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -63,9 +63,6 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
     .pfnQueryMemberOf                = LocalQueryMemberOf,
     .pfnGetSmartCardUserObject       = LocalGetSmartCardUserObject,
     .pfnOpenHandle                   = LocalOpenHandle,
-    .pfnCloseHandle                  = LocalCloseHandle,
-    .pfnShutdownProvider             = LocalShutdownProvider,
-    .pfnOpenHandle                   = LocalOpenHandle,
     .pfnServicesDomain               = LocalServicesDomain,
     .pfnCheckUserInList              = LocalCheckUserInList,
     .pfnAuthenticateUserPam          = LocalAuthenticateUserPam,
@@ -88,7 +85,8 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
     .pfnFreeStatus                   = LocalFreeStatus,
     .pfnRefreshConfiguration         = LocalRefreshConfiguration,
     .pfnProviderIoControl            = LocalIoControl,
-    .pfnCloseHandle                  = LocalCloseHandle
+    .pfnCloseHandle                  = LocalCloseHandle,
+    .pfnShutdownProvider             = LocalShutdownProvider
 };
 
 LOCAL_PROVIDER_GLOBALS gLPGlobals =
@@ -96,3 +94,13 @@ LOCAL_PROVIDER_GLOBALS gLPGlobals =
     .pszBuiltinDomain = "BUILTIN",
     .pSecCtx          = NULL
 };
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/
