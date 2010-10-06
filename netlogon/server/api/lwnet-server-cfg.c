@@ -58,6 +58,9 @@ typedef struct _LWNET_SERVER_CONFIG {
     DWORD dwNegativeCacheTimeoutSeconds;
     DWORD dwWritableRediscoveryTimeoutSeconds;
     DWORD dwWritableTimestampMinimumChangeSeconds;
+    DWORD dwCLdapMaximumConnections;
+    DWORD dwCLdapSearchTimeoutSeconds;
+    DWORD dwCLdapSingleConnectionTimeoutSeconds;
 } LWNET_SERVER_CONFIG, *PLWNET_SERVER_CONFIG;
 
 #define LWNET_PING_AGAIN_TIMEOUT_SECONDS (15 * 60)
@@ -72,6 +75,9 @@ LWNET_SERVER_CONFIG gLWNetServerConfig = {
     .dwNegativeCacheTimeoutSeconds = LWNET_NEGATIVE_CACHE_TIMEOUT_SECONDS,
     .dwWritableRediscoveryTimeoutSeconds = LWNET_WRITABLE_REDISCOVERY_TIMEOUT_SECONDS,
     .dwWritableTimestampMinimumChangeSeconds = LWNET_WRITABLE_TIMESTAMP_MINIMUM_CHANGE_SECONDS,
+    .dwCLdapMaximumConnections = LWNET_CLDAP_DEFAULT_MAXIMUM_CONNECTIONS,
+    .dwCLdapSearchTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
+    .dwCLdapSingleConnectionTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
 };
 
 static
@@ -121,6 +127,33 @@ LWNET_CONFIG gConfig[] =
         -1,
         NULL,
         &gLWNetServerConfig.dwWritableTimestampMinimumChangeSeconds
+    },
+    {
+        "CLdapMaximumConnections",
+        TRUE,
+        LWNetTypeDword,
+        0,
+        -1,
+        NULL,
+        &gLWNetServerConfig.dwCLdapMaximumConnections
+    },
+    {
+        "CLdapSearchTimeout",
+        TRUE,
+        LWNetTypeDword,
+        0,
+        -1,
+        NULL,
+        &gLWNetServerConfig.dwCLdapSearchTimeoutSeconds
+    },
+    {
+        "CLdapSingleConnectionTimeout",
+        TRUE,
+        LWNetTypeDword,
+        0,
+        -1,
+        NULL,
+        &gLWNetServerConfig.dwCLdapSingleConnectionTimeoutSeconds
     }
 };
 
@@ -183,4 +216,28 @@ LWNetConfigGetWritableTimestampMinimumChangeSeconds(
     )
 {
     return gLWNetServerConfig.dwWritableTimestampMinimumChangeSeconds;
+}
+
+DWORD
+LWNetConfigGetCLdapMaximumConnections(
+    VOID
+    )
+{
+    return gLWNetServerConfig.dwCLdapMaximumConnections;
+}
+
+DWORD
+LWNetConfigGetCLdapSearchTimeoutSeconds(
+    VOID
+    )
+{
+    return gLWNetServerConfig.dwCLdapSearchTimeoutSeconds;
+}
+
+DWORD
+LWNetConfigGetCLdapSingleConnectionTimeoutSeconds(
+    VOID
+    )
+{
+    return gLWNetServerConfig.dwCLdapSingleConnectionTimeoutSeconds;
 }

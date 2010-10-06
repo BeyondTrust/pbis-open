@@ -60,51 +60,32 @@ typedef struct _PACKED_ARRAY
 
 #define NETLOGON_LDAP_ATTRIBUTE_NAME "Netlogon"
 
-#define LWNET_CLDAP_DEFAULT_THREAD_COUNT    20
+// CLDAP searches of individual domain controllers are
+// started in batches of 1/5 the maximum number of
+// connections or the minimum number set here.  The
+// short poll timeout controls how long to wait between
+// batches.  This prevents the entire set of connections
+// from being started in cases where there is a fast
+// response.
+#define LWNET_CLDAP_SHORT_POLL_TIMEOUT_MILLISECONDS 100
+#define LWNET_CLDAP_MINIMUM_INCREMENTAL_CONNECTIONS 20
+
+// These settings can be overridden by configuration.
+// This timeout is the default for both the entire
+// search and individual domain controller searches.
+// The maximum number of connections controls how
+// many domain controllers can be searched 
+// simultaneously.
 #define LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS 15
+#define LWNET_CLDAP_DEFAULT_MAXIMUM_CONNECTIONS 100
 
-// Invariant: Threads can set pDcInfo and read from pServerArray
-//            IFF (dwServerIndex < dwServerCount).
-typedef struct _LWNET_CLDAP_THREAD_CONTEXT {
-    // Result:
-    PLWNET_DC_INFO pDcInfo; // mutable
-    // Queue of work items:
-    PSTR pszDnsDomainName;
-    PDNS_SERVER_INFO pServerArray;
-    DWORD dwServerCount;
-    DWORD dwServerIndex; // mutable
-    DWORD dwDsFlags;
-    BOOLEAN bIsDone; // mutable
-    BOOLEAN bFailedFindWritable; // mutable
-    // Synchronization
-    pthread_mutex_t Mutex;
-    pthread_cond_t Condition;
-    pthread_mutex_t* pMutex;
-    pthread_cond_t* pCondition;
-    // Threads currently active -- used to figure out
-    // last thread so it can signal
-    DWORD dwActiveThreadCount; // mutable
-    // RefCount
-    DWORD dwRefCount; // mutable
-} LWNET_CLDAP_THREAD_CONTEXT, *PLWNET_CLDAP_THREAD_CONTEXT;
-
-// The "if" is to simplify code in codepath where the context
-// is not fully initialized.
-#define LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext) \
-    do { \
-        if ((pContext)->pMutex) \
-        { \
-            pthread_mutex_lock((pContext)->pMutex); \
-        } \
-    } while (0)
-            
-#define LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext) \
-    do { \
-        if ((pContext)->pMutex) \
-        { \
-            pthread_mutex_unlock((pContext)->pMutex); \
-        } \
-    } while (0)
+typedef struct _LWNET_CLDAP_CONNECTION_CONTEXT {
+    HANDLE hDirectory;
+    int fd;
+    int msgid;
+    LWNET_UNIX_MS_TIME_T StartTime;
+    PDNS_SERVER_INFO pServerInfo;
+} LWNET_CLDAP_CONNECTION_CONTEXT, *PLWNET_CLDAP_CONNECTION_CONTEXT;
 
 BOOLEAN
 LWNetSrvIsMatchingDcInfo(
@@ -123,7 +104,6 @@ LWNetSrvPingCLdapArray(
     IN DWORD dwDsFlags,
     IN PDNS_SERVER_INFO pServerArray,
     IN DWORD dwServerCount,
-    IN OPTIONAL DWORD dwThreadCount,
     IN OPTIONAL DWORD dwTimeoutSeconds,
     OUT PLWNET_DC_INFO* ppDcInfo,
     OUT PBOOLEAN pbFailedFindWritable

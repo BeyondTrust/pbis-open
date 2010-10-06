@@ -96,6 +96,7 @@
   #include <netinet/in.h>
   #include <resolv.h>
   #include <locale.h>
+  #include <poll.h>
 
 #ifdef HAVE_SOCKET_H
   #include <socket.h>

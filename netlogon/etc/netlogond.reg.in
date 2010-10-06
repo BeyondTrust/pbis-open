@@ -13,3 +13,6 @@
 "NegativeCacheTimeout"=dword:0000003C
 "WritableRediscoveryTimeout"=dword:00000708
 "WritableTimestampMinimumChange"=dword:00000000
+"CLdapMaximumConnections"=dword:00000064
+"CLdapSearchTimeout"=dword:0000000F
+"CLdapSingleConnectionTimeout"=dword:0000000F

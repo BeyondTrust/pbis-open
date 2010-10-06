@@ -67,55 +67,136 @@ LWNetServerIsInDomain(
 
 static
 DWORD
-LWNetSrvPingCLdap(
+LWNetSrvPingCLdapEnd(
+    IN PLWNET_CLDAP_CONNECTION_CONTEXT pContext
+    );
+
+static
+DWORD
+LWNetSrvPingCLdapBegin(
+    IN PLWNET_CLDAP_CONNECTION_CONTEXT pContext,
+    IN PDNS_SERVER_INFO pServerInfo,
     IN PCSTR pszDnsDomainName,
-    IN PCSTR pszAddress,
-    OUT PLWNET_DC_INFO* ppDcInfo
+    IN DWORD dwTimeout
     )
 {
     DWORD dwError = 0;
-    // ISSUE-2008/07/01-dalmeida -- A HANDLE cannot be an integer -- must be ptr type!!!
-    HANDLE hDirectory = 0;
     PSTR pszQuery = NULL;
     PSTR szAttributeList[] = { NETLOGON_LDAP_ATTRIBUTE_NAME, NULL };
-    LDAPMessage* pMessage = NULL;
-    PBYTE pNetlogonAttributeValue = NULL;
-    DWORD dwNetlogonAttributeSize = 0;
-    PLWNET_DC_INFO pDcInfo = NULL;
-    LWNET_UNIX_MS_TIME_T startTime = 0;
-    LWNET_UNIX_MS_TIME_T stopTime = 0;
+    struct timeval timeout = {0};
+    LDAP *ld = NULL;
+
+    pContext->hDirectory = NULL;
+    pContext->pServerInfo = pServerInfo;
 
     dwError = LwAllocateStringPrintf(&pszQuery,
                                         "(&(DnsDomain=%s)(NtVer=\\06\\00\\00\\80))",
                                         pszDnsDomainName);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LwCLdapOpenDirectory(pszAddress, &hDirectory);
+    dwError = LwCLdapOpenDirectory(pServerInfo->pszAddress, &pContext->hDirectory);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LwLdapBindDirectoryAnonymous(hDirectory);
+    dwError = LwLdapBindDirectoryAnonymous(pContext->hDirectory);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetGetSystemTimeInMs(&startTime);
+    timeout.tv_sec = 0;
+    timeout.tv_usec = dwTimeout;
+
+    dwError = LWNetGetSystemTimeInMs(&pContext->StartTime);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    /* TODO: May need to do retries with shorter timeout if UDP does not retry */
-    dwError = LwLdapDirectorySearchEx(
-                    hDirectory,
-                    "",
-                    LDAP_SCOPE_BASE,
-                    pszQuery,
-                    szAttributeList,
-                    NULL,
-                    0,
-                    &pMessage);
+    ld = LwLdapGetSession(pContext->hDirectory);
+
+    dwError = ldap_search_ext(
+                  ld,
+                  "",
+                  LDAP_SCOPE_BASE,
+                  pszQuery,
+                  szAttributeList,
+                  0,
+                  NULL,
+                  NULL,
+                  &timeout,
+                  0,
+                  &pContext->msgid);
+    dwError = LwMapLdapErrorToLwError(dwError);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetGetSystemTimeInMs(&stopTime);
+    dwError = ldap_get_option(
+                  ld,
+                  LDAP_OPT_DESC,
+                  &pContext->fd);
+    dwError = LwMapLdapErrorToLwError(dwError);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pContext->hDirectory)
+        {
+            LWNetSrvPingCLdapEnd(pContext);
+        }
+    }
+
+    LWNET_SAFE_FREE_STRING(pszQuery);
+
+    return dwError;
+}
+
+static
+DWORD
+LWNetSrvPingCLdapProcess(
+    IN PLWNET_CLDAP_CONNECTION_CONTEXT pContext,
+    IN DWORD dwDsFlags,
+    IN LWNET_UNIX_MS_TIME_T StopTime,
+    OUT PLWNET_DC_INFO* ppDcInfo,
+    OUT PBOOLEAN pbFailedFindWritable
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwResultType = 0;
+    LDAPMessage* pMessage = NULL;
+    PBYTE pNetlogonAttributeValue = NULL;
+    DWORD dwNetlogonAttributeSize = 0;
+    PLWNET_DC_INFO pDcInfo = NULL;
+    BOOLEAN bFailedFindWritable = FALSE;
+    struct timeval timeout = {0};
+    LDAP *ld = NULL;
+
+    ld = LwLdapGetSession(pContext->hDirectory);
+
+    dwResultType =  ldap_result(
+                        ld,
+                        pContext->msgid,
+                        0,
+                        &timeout,
+                        &pMessage);
+    if (dwResultType == 0)
+    {
+        // timed out
+        goto error;
+    }
+    else if (dwResultType == -1)
+    {
+        // -1 = problem
+        dwError = LDAP_NO_SUCH_OBJECT;
+        LWNET_LOG_VERBOSE("Caught LDAP_NO_SUCH_OBJECT Error on ldap search");
+    }
+    else
+    {
+        // returns result type
+        if (dwResultType != LDAP_RES_SEARCH_ENTRY)
+        {
+            dwError = LDAP_NO_SUCH_OBJECT;
+            LWNET_LOG_DEBUG("Caught incorrect result type on ldap search: %d", dwError);
+        }
+    }
+    dwError = LwMapLdapErrorToLwError(dwError);
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LwLdapGetBytes(
-                    hDirectory,
+                    pContext->hDirectory,
                     pMessage,
                     NETLOGON_LDAP_ATTRIBUTE_NAME,
                     &pNetlogonAttributeValue,
@@ -127,13 +208,25 @@ LWNetSrvPingCLdap(
                                &pDcInfo);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetAllocateString(pszAddress, &pDcInfo->pszDomainControllerAddress);
+    dwError = LWNetAllocateString(pContext->pServerInfo->pszAddress, &pDcInfo->pszDomainControllerAddress);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    pDcInfo->dwPingTime = (DWORD)(stopTime - startTime);
-    if (stopTime < startTime)
+    pDcInfo->dwPingTime = (DWORD)(StopTime - pContext->StartTime);
+    if (StopTime < pContext->StartTime)
     {
         LWNET_LOG_ERROR("Stop time is earlier than start time");
+    }
+
+    if (!LWNetSrvIsMatchingDcInfo(pDcInfo, dwDsFlags))
+    {
+        dwError = LW_ERROR_NO_SUCH_OBJECT;
+
+        if (LWNetSrvIsMatchingDcInfo(pDcInfo, dwDsFlags & ~DS_WRITABLE_REQUIRED))
+        {
+            // We found something, but it failed only because it did
+            // not satisfy writability.
+            bFailedFindWritable = TRUE;
+        }
     }
 
 error:
@@ -142,58 +235,36 @@ error:
         ldap_msgfree(pMessage);
     }
 
-    if (hDirectory)
-    {
-        LwLdapCloseDirectory(hDirectory);
-    }
-
     LWNET_SAFE_FREE_MEMORY(pNetlogonAttributeValue);
-    LWNET_SAFE_FREE_STRING(pszQuery);
 
     if (dwError)
     {
         LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+
+        LWNetSrvPingCLdapEnd(pContext);
     }
 
     *ppDcInfo = pDcInfo;
+    *pbFailedFindWritable = bFailedFindWritable;
 
     return dwError;
 }
 
 static
-VOID
-LWNetSrvPingCLdapDerefenceThreadContext(
-    IN OUT PLWNET_CLDAP_THREAD_CONTEXT pContext
+DWORD
+LWNetSrvPingCLdapEnd(
+    IN PLWNET_CLDAP_CONNECTION_CONTEXT pContext
     )
 {
-    BOOLEAN bNeedCleanup = FALSE;
-    // Acquire; decrement; if 0, will cleanup; release; cleanup if needed.
-    LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-    pContext->dwRefCount--;
-    if (pContext->dwRefCount <= 0)
+    DWORD dwError = 0;
+
+    if (pContext->hDirectory)
     {
-        bNeedCleanup = TRUE;
+        LwLdapCloseDirectory(pContext->hDirectory);
+        pContext->hDirectory = NULL;
     }
-    LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext);
-    if (bNeedCleanup)
-    {
-        // TODO: Replace with ASSERT
-        if (pContext->pDcInfo)
-        {
-            LWNET_LOG_ERROR("DC info in CLDAP thread context should be NULL.");
-        }
-        // Clean up lock and condition variables; free context
-        if (pContext->pMutex)
-        {
-            pthread_mutex_destroy(pContext->pMutex);
-        }
-        if (pContext->pCondition)
-        {
-            pthread_cond_destroy(pContext->pCondition);
-        }
-        LWNET_SAFE_FREE_STRING(pContext->pszDnsDomainName);
-        LWNetFreeMemory(pContext);
-    }
+
+    return dwError;
 }
 
 BOOLEAN
@@ -272,145 +343,165 @@ LWNetSrvIsInSameSite(
 }
 
 static
-PVOID
-LWNetSrvPingCLdapThread(
-    PVOID pThreadContext
+VOID
+LWNetSrvPingCLdapNewConnections(
+    IN PCSTR pszDnsDomainName,
+    IN DWORD dwSingleConnTimeoutMilliseconds,
+    IN DWORD dwMaxConnCount,
+    IN DWORD dwServerCount,
+    IN DWORD dwIncrementalConnCount,
+    IN PDNS_SERVER_INFO pServerArray,
+    IN OUT PLWNET_CLDAP_CONNECTION_CONTEXT pConnections,
+    IN OUT struct pollfd *Readfds,
+    IN OUT DWORD* pdwActualConnCount,
+    IN OUT DWORD* pdwUsedServers
     )
 {
     DWORD dwError = 0;
-    PLWNET_CLDAP_THREAD_CONTEXT pContext = (PLWNET_CLDAP_THREAD_CONTEXT) pThreadContext;
-    BOOLEAN isAcquired = FALSE;
-    PSTR pszAddress = NULL;
-    DWORD dwServerIndex = 0;
+    DWORD dwNewConn = 0;
+    DWORD dwActualConnCount = *pdwActualConnCount;
+    DWORD dwUsedServers = *pdwUsedServers;
+
+    while (dwNewConn < dwIncrementalConnCount &&
+           dwActualConnCount < dwMaxConnCount &&
+           dwUsedServers < dwServerCount)
+    {
+
+        dwError = LWNetSrvPingCLdapBegin(
+                      &pConnections[dwActualConnCount],
+                      &pServerArray[dwUsedServers],
+                      pszDnsDomainName,
+                      dwSingleConnTimeoutMilliseconds);
+        if (dwError)
+        {
+            dwError = 0;
+        }
+        else
+        {
+            Readfds[dwActualConnCount].fd = pConnections[dwActualConnCount].fd;
+            Readfds[dwActualConnCount].events = POLLIN | POLLERR;
+            pConnections[dwActualConnCount++].pServerInfo = &pServerArray[dwUsedServers];
+            dwNewConn++;
+        }
+        dwUsedServers++;
+    }
+
+    *pdwActualConnCount = dwActualConnCount;
+    *pdwUsedServers = dwUsedServers;
+}
+
+static
+DWORD
+LWNetSrvPingCLdapPoll(
+    IN DWORD dwTimeoutMilliseconds,
+    IN DWORD dwFdCount,
+    IN struct pollfd *Readfds
+    )
+{
+    DWORD dwError = 0;
+    int sret = 0;
+
+    do
+    {
+        sret = poll(Readfds, dwFdCount, dwTimeoutMilliseconds);
+    } while (sret < 0 && errno == EINTR);
+
+    if (sret < 0)
+    {
+        dwError = LwMapErrnoToLwError(errno);
+    }
+    BAIL_ON_LWNET_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+static
+VOID
+LWNetSrvPingCLdapProcessConnections(
+    IN DWORD dwDsFlags,
+    IN LWNET_UNIX_MS_TIME_T CurrentTime,
+    IN DWORD dwSingleConnTimeoutMilliseconds,
+    IN DWORD dwActualConnCount,
+    IN struct pollfd *Readfds,
+    IN OUT PLWNET_CLDAP_CONNECTION_CONTEXT pConnections,
+    OUT PLWNET_DC_INFO* ppDcInfo,
+    OUT PBOOLEAN pbFailedFindWritable
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwIndexConn = dwActualConnCount;
+    BOOLEAN bFailedFindWritable = FALSE;
+    BOOLEAN bFailed = FALSE;
     PLWNET_DC_INFO pDcInfo = NULL;
-    BOOLEAN shouldSignal = FALSE;
 
-    for (;;)
+    while (dwIndexConn > 0)
     {
-        LWNET_SAFE_FREE_STRING(pszAddress);
+        dwIndexConn--;
 
-        //
-        // Lock the context to grab next item.
-        //
-        if (!isAcquired)
+        if (Readfds[dwIndexConn].revents)
         {
-            LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-            isAcquired = TRUE;
-        }
-
-        //
-        // Check whether there is a next item.
-        //
-        dwServerIndex = pContext->dwServerIndex;
-        if (dwServerIndex >= pContext->dwServerCount)
-        {
-            break;
-        }
-
-        //
-        // Capture the item before we unlock.
-        //
-        pContext->dwServerIndex++;
-        dwError = LWNetAllocateString(pContext->pServerArray[dwServerIndex].pszAddress,
-                                      &pszAddress);
-        if (dwError)
-        {
-            LWNET_LOG_ERROR("Failed to allocate address string in %s() at %s:%d (error %d/0x%08x)", __FUNCTION__, __FILE__, __LINE__, dwError, dwError);
-            continue;
-        }
-
-        //
-        // Unlock before we do the ping.
-        //
-        LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext);
-        isAcquired = FALSE;
-
-        //
-        // Do the ping.
-        //
-        dwError = LWNetSrvPingCLdap(pContext->pszDnsDomainName, pszAddress, &pDcInfo);
-        if (dwError)
-        {
-            LWNET_LOG_INFO("Failed CLDAP ping %s (%s) in %s() at %s:%d (error %d/0x%08x)", pContext->pszDnsDomainName, pszAddress, __FUNCTION__, __FILE__, __LINE__, dwError, dwError);
-            continue;
-        }
-        if (!LWNetSrvIsMatchingDcInfo(pDcInfo, pContext->dwDsFlags))
-        {
-            if (LWNetSrvIsMatchingDcInfo(pDcInfo, pContext->dwDsFlags & ~DS_WRITABLE_REQUIRED))
+            dwError = LWNetSrvPingCLdapProcess(
+                          &pConnections[dwIndexConn],
+                          dwDsFlags,
+                          CurrentTime,
+                          &pDcInfo,
+                          &bFailed);
+            bFailedFindWritable = bFailed ? TRUE : bFailedFindWritable;
+            if (dwError)
             {
-                // We found something, but it failed only because it did
-                // not satisfy writability.  We mark this in the context.
-                if (!isAcquired)
-                {
-                    LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-                    isAcquired = TRUE;
-                }
-                pContext->bFailedFindWritable = TRUE;
-                LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext);
-                isAcquired = FALSE;
+                LWNET_LOG_VERBOSE("CLDAP error: %d, %s", dwError, pConnections[dwIndexConn].pServerInfo->pszName);
+                dwError = 0;
             }
-            LWNET_SAFE_FREE_DC_INFO(pDcInfo);
-            continue;
-        }
-        break;
-    }
-
-    if (pDcInfo)
-    {
-        //
-        // Save the result, if appropriate.
-        //
-        if (!isAcquired)
+            else if (pDcInfo)
+            {
+                break;
+            }
+        } else if (pConnections[dwIndexConn].StartTime + dwSingleConnTimeoutMilliseconds < CurrentTime)
         {
-            LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-            isAcquired = TRUE;
-        }
+            LWNET_LOG_VERBOSE("CLDAP timed out: %s", pConnections[dwIndexConn].pServerInfo->pszName);
 
-        if (!pContext->bIsDone && !pContext->pDcInfo)
+            LWNetSrvPingCLdapEnd(&pConnections[dwIndexConn]);
+        }
+    }
+
+    *ppDcInfo = pDcInfo;
+}
+
+static
+DWORD
+LWNetSrvPingCLdapPackArrays(
+    IN DWORD dwConnectionCount,
+    IN PLWNET_CLDAP_CONNECTION_CONTEXT pConnections,
+    IN struct pollfd *Readfds
+    )
+{
+    DWORD dwSourceConn = 0;
+    DWORD dwTargetConn = 0;
+
+    // Eliminate the invalid connections while preserving
+    // the order so that the newest connections remain at
+    // the end of the list.
+    for (dwTargetConn = 0, dwSourceConn = 0 ; 
+         dwSourceConn < dwConnectionCount ;
+         dwSourceConn++)
+    {
+        if (pConnections[dwTargetConn].hDirectory == NULL &&
+            pConnections[dwSourceConn].hDirectory != NULL)
         {
-            shouldSignal = TRUE;
-
-            pContext->pDcInfo = pDcInfo;
-            pDcInfo = NULL;
-
-            // Stop processing any more
-            pContext->bIsDone = TRUE;
-            pContext->dwServerIndex = pContext->dwServerCount;
+            Readfds[dwTargetConn] = Readfds[dwSourceConn];
+            pConnections[dwTargetConn] = pConnections[dwSourceConn];
+            pConnections[dwSourceConn].hDirectory = NULL;
         }
-    }
 
-    if (!isAcquired)
-    {
-        LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-        isAcquired = TRUE;
-    }
-    pContext->dwActiveThreadCount--;
-    if (pContext->dwActiveThreadCount <= 0)
-    {
-        shouldSignal = TRUE;
-    }
-
-    if (shouldSignal)
-    {
-        // We really cannot do anything about an error here.
-        dwError = pthread_cond_signal(pContext->pCondition);
-        if (dwError)
+        if (pConnections[dwTargetConn].hDirectory != NULL)
         {
-            LWNET_LOG_ERROR("Failed to signal condition in %s() at %s:%d (error %d/0x%08x)", __FUNCTION__, __FILE__, __LINE__, dwError, dwError);
+            dwTargetConn++;
         }
     }
 
-    if (isAcquired)
-    {
-        LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext);
-        isAcquired = FALSE;
-    }
-
-    LWNET_SAFE_FREE_STRING(pszAddress);
-    LWNET_SAFE_FREE_DC_INFO(pDcInfo);
-    LWNetSrvPingCLdapDerefenceThreadContext(pContext);
-
-    return NULL;
+    return dwTargetConn;
 }
 
 DWORD
@@ -419,147 +510,183 @@ LWNetSrvPingCLdapArray(
     IN DWORD dwDsFlags,
     IN PDNS_SERVER_INFO pServerArray,
     IN DWORD dwServerCount,
-    IN OPTIONAL DWORD dwThreadCount,
     IN OPTIONAL DWORD dwTimeoutSeconds,
     OUT PLWNET_DC_INFO* ppDcInfo,
     OUT PBOOLEAN pbFailedFindWritable
     )
-// TODO: Potentially have a minimum amount of time so we can evaluate multiple
-// ping results (i.e., in a case where the ping starts later due to thread
-// scheduling).  In such a case, we would check the ping time when setting
-// the result in the context.  We would also defer trigerring the cond
-// until time minimum time has elapsed.
 {
     DWORD dwError = 0;
-    PLWNET_CLDAP_THREAD_CONTEXT pContext = NULL;
-    DWORD dwActualThreadCount = LWNET_CLDAP_DEFAULT_THREAD_COUNT;
-    DWORD dwActualTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS;
-    pthread_attr_t ThreadAttr;
-    pthread_attr_t* pThreadAttr = NULL;
-    BOOLEAN isAcquired = FALSE;
-    struct timespec stopTime = { 0 };
-    LWNET_UNIX_MS_TIME_T now = 0;
+    DWORD dwMaxConnCount = 0;
+    DWORD dwIncrementalConnCount = 0;
+    DWORD dwActualTimeoutSeconds = 0;
+    DWORD dwSingleConnTimeoutSeconds = 0;
+    DWORD dwSingleConnTimeoutMilliseconds = 0;
+    DWORD dwTimeoutMilliseconds = 0;
+    LWNET_UNIX_MS_TIME_T StopTime = 0;
+    LWNET_UNIX_MS_TIME_T CurrentTime = 0;
     PLWNET_DC_INFO pDcInfo = NULL;
-    DWORD i;
     BOOLEAN bFailedFindWritable = FALSE;
+    PLWNET_CLDAP_CONNECTION_CONTEXT pConnections = NULL;
+    DWORD dwActualConnCount = 0;
+    DWORD dwUsedServers = 0;
+    DWORD dwIndexConn = 0;
+    struct pollfd *Readfds = NULL;
 
-    if (dwThreadCount > 0)
-    {
-        dwActualThreadCount = dwThreadCount;
-    }
-    dwActualThreadCount = CT_MIN(dwActualThreadCount, dwServerCount);
+    // The basic scheme is a big loop over:
+    //
+    //     1. starting some CLDAP searches
+    //     2. polling for responses
+    //     3. processing responses
+    //
+    // When starting CLDAP searches, a portion of the 
+    // available connections will be started followed
+    // by a short poll until the maximum number of
+    // connections has been used.  Once the maximum
+    // number of connections are in use, the polling
+    // timeout will be the single search timeout for
+    // the oldest connection.  This will start the
+    // maximum number of connections reasonably fast
+    // yet prevent excess network traffic if a server
+    // responds quickly.
+    //
+    // Active connections will be tracked in a list
+    // that is ordered by start time.  If several
+    // servers respond at the same time, the one
+    // nearest the end of the list will be the one
+    // that responded the fastest.
+
+    dwMaxConnCount = CT_MIN(LWNetConfigGetCLdapMaximumConnections(), dwServerCount);
+    dwIncrementalConnCount = CT_MAX(dwMaxConnCount / 5, LWNET_CLDAP_MINIMUM_INCREMENTAL_CONNECTIONS);
 
     if (dwTimeoutSeconds > 0)
     {
         dwActualTimeoutSeconds = dwTimeoutSeconds;
     }
-
-    // TODO: Error code conversion
-    dwError = pthread_attr_init(&ThreadAttr);
-    BAIL_ON_LWNET_ERROR(dwError);
-    pThreadAttr = &ThreadAttr;
-
-    // TODO: Error code conversion
-    dwError = pthread_attr_setdetachstate(pThreadAttr, PTHREAD_CREATE_DETACHED);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    // TODO: Global tracking of contexts (for debugging)? */
-    dwError = LWNetAllocateMemory(sizeof(LWNET_CLDAP_THREAD_CONTEXT), (PVOID*)&pContext);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    pContext->dwRefCount = 1;
-    pContext->pServerArray = pServerArray;
-    pContext->dwServerCount = dwServerCount;
-    pContext->dwDsFlags = dwDsFlags;
-    pContext->dwActiveThreadCount = 0;
-
-    dwError = LWNetAllocateString(pszDnsDomainName, &pContext->pszDnsDomainName);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    // TODO: Error code conversion
-    dwError = pthread_mutex_init(&pContext->Mutex, NULL);
-    BAIL_ON_LWNET_ERROR(dwError);
-    pContext->pMutex = &pContext->Mutex;
-
-    // TODO: Error code conversion
-    dwError = pthread_cond_init(&pContext->Condition, NULL);
-    BAIL_ON_LWNET_ERROR(dwError);
-    pContext->pCondition = &pContext->Condition;
-
-    LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-    isAcquired = TRUE;
-
-    for (i = 0; i < dwActualThreadCount; i++)
+    else
     {
-        pthread_t thread;
+        dwActualTimeoutSeconds = LWNetConfigGetCLdapSearchTimeoutSeconds();
+    }
 
-        // TODO: Error code conversion
-        dwError = pthread_create(&thread,
-                                 pThreadAttr,
-                                 LWNetSrvPingCLdapThread,
-                                 pContext);
+    dwSingleConnTimeoutSeconds = CT_MIN(LWNetConfigGetCLdapSingleConnectionTimeoutSeconds(), dwActualTimeoutSeconds);
+    dwSingleConnTimeoutMilliseconds = dwSingleConnTimeoutSeconds * 1000;
+
+    dwError = LWNetAllocateMemory(
+                  dwMaxConnCount * sizeof(*pConnections),
+                  OUT_PPVOID(&pConnections));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetAllocateMemory(
+                  dwMaxConnCount * sizeof(*Readfds),
+                  OUT_PPVOID(&Readfds));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetGetSystemTimeInMs(&CurrentTime);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    StopTime = CurrentTime + (dwActualTimeoutSeconds * 1000);
+
+    while (!pDcInfo)
+    {
+        LWNetSrvPingCLdapNewConnections(
+            pszDnsDomainName,
+            dwSingleConnTimeoutMilliseconds,
+            dwMaxConnCount,
+            dwServerCount,
+            dwIncrementalConnCount,
+            pServerArray,
+            pConnections,
+            Readfds,
+            &dwActualConnCount,
+            &dwUsedServers);
+
+        if (dwActualConnCount == 0)
+        {
+            dwError = NERR_DCNotFound;
+            BAIL_ON_LWNET_ERROR(dwError);
+        }
+
+        dwError = LWNetGetSystemTimeInMs(&CurrentTime);
         BAIL_ON_LWNET_ERROR(dwError);
 
-        pContext->dwActiveThreadCount++;
-        pContext->dwRefCount++;
+        if (CurrentTime > StopTime)
+        {
+            dwError = NERR_DCNotFound;
+            BAIL_ON_LWNET_ERROR(dwError);
+        }
+
+        if (dwActualConnCount < dwMaxConnCount &&
+            dwUsedServers < dwServerCount)
+        {
+            // If there are more connections available,
+            // use a short timeout
+            dwTimeoutMilliseconds = LWNET_CLDAP_SHORT_POLL_TIMEOUT_MILLISECONDS;
+        }
+        else
+        {
+            if (pConnections[0].StartTime +
+                dwSingleConnTimeoutMilliseconds > CurrentTime)
+            {
+                // Use the remaining time for the oldest connection
+                dwTimeoutMilliseconds = pConnections[0].StartTime + 
+                                        dwSingleConnTimeoutMilliseconds -
+                                        CurrentTime;
+                dwTimeoutMilliseconds = CT_MIN(dwSingleConnTimeoutMilliseconds, StopTime - CurrentTime);
+            }
+            else
+            {
+                // The oldest connection has exceeded its limit so
+                // use the shortest possible timeout to check which
+                // connections have responded now.
+                dwTimeoutMilliseconds = 1;
+            }
+        }
+
+        dwError = LWNetSrvPingCLdapPoll(
+                      dwTimeoutMilliseconds,
+                      dwActualConnCount,
+                      Readfds);
+        BAIL_ON_LWNET_ERROR(dwError);
+
+        dwError = LWNetGetSystemTimeInMs(&CurrentTime);
+        BAIL_ON_LWNET_ERROR(dwError);
+
+        LWNetSrvPingCLdapProcessConnections(
+            dwDsFlags,
+            CurrentTime,
+            dwSingleConnTimeoutMilliseconds,
+            dwActualConnCount,
+            Readfds,
+            pConnections,
+            &pDcInfo,
+            &bFailedFindWritable);
+
+        if (pDcInfo)
+        {
+            break;
+        }
+
+        dwActualConnCount = LWNetSrvPingCLdapPackArrays(
+                                dwActualConnCount,
+                                pConnections,
+                                Readfds);
     }
 
-    // Wait on condition variable up to some time limit
-
-    dwError = LWNetGetSystemTimeInMs(&now);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    dwError = LWNetTimeInMsToTimespec(now + (dwActualTimeoutSeconds * LWNET_MILLISECONDS_IN_SECOND),
-                                      &stopTime);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    // We are about to release by doing the wait and re-acquire afterwards
-    isAcquired = FALSE;
-    // TODO: Error code conversion
-    dwError = pthread_cond_timedwait(pContext->pCondition, pContext->pMutex, &stopTime);
-    isAcquired = TRUE;
-    if (ETIMEDOUT == dwError)
-    {
-        dwError = NERR_DCNotFound;
-    }
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    if (!pContext->pDcInfo)
+    if (!pDcInfo)
     {
         dwError = NERR_DCNotFound;
         BAIL_ON_LWNET_ERROR(dwError);
     }
-
-    pDcInfo = pContext->pDcInfo;
-    pContext->pDcInfo = NULL;
 
 error:
-    if (pContext)
+    if (pConnections)
     {
-        // Need to make sure that threads will stop ASAP
-        if (pContext->pMutex)
+        for (dwIndexConn = 0 ; dwIndexConn < dwActualConnCount ; dwIndexConn++)
         {
-            if (!isAcquired)
-            {
-                LWNET_CLDAP_THREAD_CONTEXT_ACQUIRE(pContext);
-                isAcquired = TRUE;
-            }
-            // Stop processing any more
-            pContext->bIsDone = TRUE;
-            pContext->dwServerIndex = pContext->dwServerCount;
-            bFailedFindWritable = pContext->bFailedFindWritable;
+            LWNetSrvPingCLdapEnd(&pConnections[dwIndexConn]);
         }
-        if (isAcquired)
-        {
-            LWNET_CLDAP_THREAD_CONTEXT_RELEASE(pContext);
-            isAcquired = FALSE;
-        }
-        LWNetSrvPingCLdapDerefenceThreadContext(pContext);
+        LW_SAFE_FREE_MEMORY(pConnections);
     }
-    if (pThreadAttr)
-    {
-        pthread_attr_destroy(pThreadAttr);
-    }
+    LW_SAFE_FREE_MEMORY(Readfds);
     if (dwError)
     {
         LWNET_SAFE_FREE_DC_INFO(pDcInfo);
@@ -774,7 +901,7 @@ LWNetSrvGetDCNameDiscoverInternal(
                                              dwDsFlags,
                                              pServersInPrimaryDomain,
                                              dwServersInPrimaryDomainCount,
-                                             0, 0, &pDcInfo, &bFailedFindWritable);
+                                             0, &pDcInfo, &bFailedFindWritable);
         }
 
         if (dwServersInPrimaryDomainCount == 0 ||
@@ -783,7 +910,7 @@ LWNetSrvGetDCNameDiscoverInternal(
             dwError = LWNetSrvPingCLdapArray(pszDnsDomainName,
                                              dwDsFlags,
                                              pServerArray, dwServerCount,
-                                             0, 0, &pDcInfo, &bFailedFindWritable);
+                                             0, &pDcInfo, &bFailedFindWritable);
             BAIL_ON_LWNET_ERROR(dwError);
         }
     }
@@ -793,7 +920,7 @@ LWNetSrvGetDCNameDiscoverInternal(
         dwError = LWNetSrvPingCLdapArray(pszDnsDomainName,
                                          dwDsFlags,
                                          pServerArray, dwServerCount,
-                                         0, 0, &pDcInfo, &bFailedFindWritable);
+                                         0, &pDcInfo, &bFailedFindWritable);
         BAIL_ON_LWNET_ERROR(dwError);
     }
 

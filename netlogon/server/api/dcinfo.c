@@ -176,7 +176,7 @@ LWNetSrvGetDCName(
                 dwError = LWNetSrvPingCLdapArray(pszDnsDomainName,
                                                  dwDsFlags,
                                                  &serverInfo, 1,
-                                                 1, 0, &pNewDcInfo,
+                                                 0, &pNewDcInfo,
                                                  &bFailedFindWritable);
                 if (!dwError)
                 {

@@ -79,4 +79,19 @@ LWNetConfigGetWritableTimestampMinimumChangeSeconds(
     VOID
     );
 
+DWORD
+LWNetConfigGetCLdapMaximumConnections(
+    VOID
+    );
+
+DWORD
+LWNetConfigGetCLdapSearchTimeoutSeconds(
+    VOID
+    );
+
+DWORD
+LWNetConfigGetCLdapSingleConnectionTimeoutSeconds(
+    VOID
+    );
+
 #endif /* __LWNET_SERVER_CFG_H__ */
