@@ -35,5 +35,9 @@
 #define SRV_ECP_TYPE_MAX_ACCESS     "Likewise.SRV.MaximalAccess"
 #define SRV_ECP_TYPE_ABE            "Likewise.SRV.AccessBasedEnumeration"
 #define SRV_ECP_TYPE_OEM_SESSION    "Likewise.SRV.OEMSession"
+#define SRV_ECP_TYPE_FILE_STD_INFO   "Likewise.IO.FileStdInfo"
+#define SRV_ECP_TYPE_FILE_BASIC_INFO "Likewise.IO.FileBasicInfo"
+#define SRV_ECP_TYPE_PIPE_INFO       "Likewise.IO.FilePipeInfo"
+#define SRV_ECP_TYPE_PIPE_LOCAL_INFO "Likewise.IO.FilePipeLocalInfo"
 
 #endif /* __SRV_ECP_H__ */
