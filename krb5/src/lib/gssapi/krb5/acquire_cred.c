@@ -370,7 +370,7 @@ acquire_init_cred(context, minor_status, desired_name, output_name, cred)
         princ = desired_name->princ;
     } else {
         if ((code = kg_init_name(context, princ, NULL,
-                                 KG_INIT_NAME_NO_COPY | KG_INIT_NAME_INTERN,
+                                 KG_INIT_NAME_NO_COPY,
                                  output_name))) {
             (void)krb5_free_principal(context, princ);
             (void)krb5_cc_close(context, ccache);
