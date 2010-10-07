@@ -121,6 +121,10 @@
 #include <netinet/tcp.h>
 #endif
 
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+
 #if HAVE_WC16STR_H
 #include <wc16str.h>
 #endif

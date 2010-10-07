@@ -231,6 +231,20 @@ AC_CHECK_FUNCS(sched_yield)
 
 AC_SUBST(DCETHREADINCLUDES)
 
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror"
+AC_TRY_COMPILE([
+#include <pthread.h>
+],
+[
+pthread_once_t once = PTHREAD_ONCE_INIT; *(&once) = once; return 0;
+],
+[BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"],
+[BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"])
+CFLAGS="$saved_CFLAGS"
+
+AC_SUBST(BROKEN_ONCE_INIT)
+
 LIBS="$dcepthreads_save_LIBS"
 
 AC_CHECK_FUNCS(backtrace backtrace_symbols backtrace_symbols_fd)
