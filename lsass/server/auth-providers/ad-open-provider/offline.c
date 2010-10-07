@@ -86,7 +86,16 @@ AD_OfflineAuthenticateUserPam(
 
     dwError = AD_VerifyUserAccountCanLogin(
                 pUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (dwError == LW_ERROR_PASSWORD_EXPIRED)
+    {
+        // Do not block users in offline mode for expired passwords, and do not
+        // attempt to change them.
+        dwError = 0;
+    }
+    else
+    {
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = ADCacheGetPasswordVerifier(
                 pContext->pState->hCacheConnection,

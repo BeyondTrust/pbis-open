@@ -3954,7 +3954,9 @@ AD_VerifyUserAccountCanLogin(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pUserInfo->userInfo.bPasswordExpired) {
+    if (pUserInfo->userInfo.bPasswordExpired &&
+        !LsaDmIsDomainOffline(pUserInfo->pszNetbiosDomainName))
+    {
         dwError = LW_ERROR_PASSWORD_EXPIRED;
         BAIL_ON_LSA_ERROR(dwError);
     }
