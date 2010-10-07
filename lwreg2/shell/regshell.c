@@ -354,6 +354,7 @@ RegShellImportFile(
     DWORD dwError = 0;
     DWORD lineNum = 0;
     REGSHELL_UTIL_IMPORT_CONTEXT importCtx = {0};
+    CHAR cErrorBuf[512] = {0};
 
     dwError = RegParseOpen(rsItem->args[0], NULL, NULL, &parseH);
     BAIL_ON_REG_ERROR(dwError);
@@ -378,9 +379,10 @@ cleanup:
 
 error:
     RegParseGetLineNumber(parseH, &lineNum);
-    printf("lwregshell: import failed (error=%d line=%d)\n",
-           dwError,
-           lineNum);
+    sprintf(cErrorBuf, "lwregshell: import failed (line=%d)", lineNum);
+    RegPrintError(cErrorBuf, dwError);
+    dwError = 0;
+
     goto cleanup;
 }
 
@@ -2170,7 +2172,7 @@ RegShellExecuteCmdLine(
     }
     if (dwError)
     {
-        RegPrintError("regshell", dwError);
+        RegPrintError("lwregshell", dwError);
         dwError = 0;
     }
     RegShellCmdlineParseFree(dwNewArgc, pszNewArgv);
@@ -2376,7 +2378,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                 rv = history(hist, &ev, H_NEXT_EVENT, dwEventNum);
                 if (rv == -1)
                 {
-                    printf("regshell: %d: event not found\n", dwEventNum);
+                    printf("lwregshell: %d: event not found\n", dwEventNum);
                 }
             }
             else
@@ -2390,7 +2392,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                     rv = history(hist, &ev, H_FIRST);
                     if (rv == -1)
                     {
-                        printf("regshell: !!: event not found\n");
+                        printf("lwregshell: !!: event not found\n");
                     }
                     else
                     {
@@ -2408,7 +2410,7 @@ printf("\n\n got line '%.*s'\n\n", num, buf);
                     rv = history(hist, &ev, H_PREV_STR, hist_str);
                     if (rv == -1)
                     {
-                        printf("regshell: %s: event not found\n", hist_str);
+                        printf("lwregshell: %s: event not found\n", hist_str);
                     }
                 }
             }
@@ -2576,7 +2578,7 @@ cleanup:
 error:
     if (dwError)
     {
-        RegPrintError("regshell", dwError);
+        RegPrintError("lwregshell", dwError);
     }
     goto cleanup;
 }
@@ -2682,7 +2684,7 @@ cleanup:
 error:
     if (dwError)
     {
-        RegPrintError("regshell", dwError);
+        RegPrintError("lwregshell", dwError);
     }
     goto cleanup;
 }

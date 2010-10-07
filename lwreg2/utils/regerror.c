@@ -373,6 +373,7 @@ RegPrintError(
     PCSTR pszUseErrorPrefix = NULL;
     size_t size = 0;
     PSTR pszErrorString = NULL;
+    PCSTR pszWinError = "";
 
     if (dwError)
     {
@@ -391,21 +392,31 @@ RegPrintError(
             	LwRegGetErrorString(dwError, pszErrorString, size);
             }
         }
+        else
+        {
+            pszWinError = LW_PRINTF_STRING(RegWin32ExtErrorToName(dwError));
+        }
+        if (!pszWinError)
+        {
+            pszWinError = "";
+        }
         if (LW_IS_NULL_OR_EMPTY_STR(pszErrorString))
         {
             fprintf(stderr,
-                    "%s (error = %u - %s)\n",
+                    "%s (error = %u%s%s)\n",
                      pszUseErrorPrefix,
                      dwError,
-                     LW_PRINTF_STRING(RegWin32ExtErrorToName(dwError)));
+                     *pszWinError ? " - " : "",
+                     pszWinError);
         }
         else
         {
             fprintf(stderr,
-                    "%s (error = %u - %s)\n%s\n",
+                    "%s (error = %u%s%s)\n%s\n",
                     pszUseErrorPrefix,
                     dwError,
-                    LW_PRINTF_STRING(RegWin32ExtErrorToName(dwError)),
+                    *pszWinError ? " - " : "",
+                    pszWinError,
                     pszErrorString);
         }
     }
