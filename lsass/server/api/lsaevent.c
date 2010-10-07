@@ -480,13 +480,16 @@ LsaSrvStopEventLoggingThread(
 
     LW_SAFE_FREE_STRING(gEventLogState.pszComputerName);
 
-    dwError = LwMapErrnoToLwError(pthread_join(
-                    gEventLogState.writerThread,
-                    &pvReturned));
-    BAIL_ON_LSA_ERROR(dwError);
+    if (gEventLogState.writerThread != (pthread_t)-1)
+    {
+        dwError = LwMapErrnoToLwError(pthread_join(
+                        gEventLogState.writerThread,
+                        &pvReturned));
+        BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = (DWORD)(size_t)pvReturned;
-    BAIL_ON_LSA_ERROR(dwError);
+        dwError = (DWORD)(size_t)pvReturned;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
 cleanup:
     return dwError;
