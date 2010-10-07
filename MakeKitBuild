@@ -40,11 +40,6 @@ configure()
 
     MK_MSG_DOMAIN="$LW_PRODUCT"
     
-    if [ -z "$MK_CFLAGS" ]
-    then
-        mk_export MK_CFLAGS="-O2 -g"
-    fi
-    
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 

@@ -23,14 +23,53 @@ option()
         VAR=LW_CONFIGDIR \
         DEFAULT="${_default_configdir}" \
         HELP="Location of registry files"
+
+    mk_option \
+        OPTION=lw-debug \
+        PARAM="yes/no" \
+        VAR=LW_DEBUG \
+        DEFAULT="no" \
+        HELP="Control debug mode"
 }
 
 configure()
 {
+    mk_msg "debug build: $LW_DEBUG"
     mk_msg "cache dir: $LW_CACHEDIR"
     mk_msg "config dir: $LW_CONFIGDIR"
 
-    mk_export LW_CACHEDIR LW_CONFIGDIR
+    mk_export LW_DEBUG LW_CACHEDIR LW_CONFIGDIR
+
+    # If user didn't specify cflags, pick sane defaults
+    # This can be removed when MakeKit gains a --debug option in core
+    for _target in build host
+    do
+        mk_system "$_target"
+        for _isa in ${MK_ISAS}
+        do
+            mk_system "$_target/$_isa"
+            if [ -z "$MK_CFLAGS" ]
+            then
+                if [ "$LW_DEBUG" = "yes" ]
+                then
+                    mk_export MK_CFLAGS="-O0 -g"
+                else
+                    mk_export MK_CFLAGS="-O2 -g"
+                fi
+                mk_msg "overriding cflags (${MK_SYSTEM}): $MK_CFLAGS"
+            fi
+            if [ -z "$MK_LDFLAGS" ]
+            then
+                if [ "$LW_DEBUG" = "yes" ]
+                then
+                    mk_export MK_LDFLAGS="-O0 -g"
+                else
+                    mk_export MK_LDFLAGS="-O2 -g"
+                fi
+                mk_msg "overriding ldflags (${MK_SYSTEM}): $MK_LDFLAGS"
+            fi
+        done
+    done
 }
 
 lw_check_iconv()
