@@ -80,6 +80,9 @@ main(int argc,
     FILE* ttyIn = stdin;
     FILE* ttyOut = stdout;
     char szPassword[256] = {0};
+    IO_FILE_HANDLE handle = NULL;
+    IO_FILE_NAME filename = {0};
+    IO_STATUS_BLOCK ioStatus = {0};
 
     status = RTL_ALLOCATE(&pFuseContext, IO_FUSE_CONTEXT, sizeof(*pFuseContext));
     BAIL_ON_NT_STATUS(status);
@@ -144,9 +147,52 @@ main(int argc,
         BAIL_ON_NT_STATUS(status);
     }
   
+    /* Perform a test open of / to catch any obvious problems now rather than
+     * when servicing a syscall */
+    status = LwIoFuseGetNtFilename(
+        pFuseContext,
+        "/",
+        &filename);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwNtCreateFile(
+        &handle,               /* File handle */
+        NULL,                  /* Async control block */
+        &ioStatus,             /* IO status block */
+        &filename,             /* Filename */
+        NULL,                  /* Security descriptor */
+        NULL,                  /* Security QOS */
+        READ_CONTROL | FILE_READ_ATTRIBUTES,  /* Desired access mask */
+        0,                     /* Allocation size */
+        0,                     /* File attributes */
+        FILE_SHARE_READ |
+        FILE_SHARE_WRITE |
+        FILE_SHARE_DELETE,     /* Share access */
+        FILE_OPEN,             /* Create disposition */
+        FILE_DIRECTORY_FILE,   /* Create options */
+        NULL,                  /* EA buffer */
+        0,                     /* EA length */
+        NULL,                  /* ECP list */
+        NULL);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwNtCloseFile(handle);
+    handle = NULL;
+    BAIL_ON_NT_STATUS(status);
+    RTL_FREE(&filename.FileName);
+
     return fuse_main(args.argc, args.argv, LwIoFuseGetOperationsTable(), pFuseContext);
 
 error:
+
+    fprintf(stderr, "Error: %s (0x%x)\n", LwNtStatusToName(status), (unsigned int) status);
+
+    if (handle)
+    {
+        LwNtCloseFile(handle);
+    }
+
+    RTL_FREE(&filename.FileName);
 
     return 1;
 }
