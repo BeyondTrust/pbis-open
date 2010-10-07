@@ -264,6 +264,10 @@ static struct
     {
     	LWREG_ERROR_INVALID_ACCESS_TOKEN,
     	"Failure creating access token"
+    },
+    {
+        LWREG_ERROR_DELETE_DEFAULT_VALUE_NOT_ALLOWED,
+        "Delete default value is not allowed"
     }
 };
 
