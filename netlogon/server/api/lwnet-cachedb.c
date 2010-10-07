@@ -255,13 +255,14 @@ LWNetCacheDbOpen(
     )
 {
     DWORD dwError = 0;
+    LONG lError = 0;
     LWNET_CACHE_DB_HANDLE dbHandle = NULL;
 
     dwError = LWNetAllocateMemory(sizeof(*dbHandle), (PVOID *)&dbHandle);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    // TODO-dalmeida-2008/06/30 -- Convert error code
-    dwError = pthread_rwlock_init(&dbHandle->Lock, NULL);
+    lError = pthread_rwlock_init(&dbHandle->Lock, NULL);
+    dwError = LwMapErrnoToLwError(lError);
     BAIL_ON_LWNET_ERROR(dwError);
 
     dbHandle->pLock = &dbHandle->Lock;
