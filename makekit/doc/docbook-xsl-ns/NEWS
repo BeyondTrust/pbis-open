@@ -1,0 +1,83 @@
+Changes since the 1.74.2 release
+
+Note: This document lists changes only since the 1.74.2 release. If you instead
+want a record of the complete list of changes for the codebase over its entire
+history, you can obtain one by running the following commands:
+
+  svn checkout https://docbook.svn.sourceforge.net/svnroot/docbook/trunk/xsl
+  svn log --xml --verbose xsl > ChangeHistory.xml
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Table of Contents
+
+Release Notes: 1.74.3
+
+    Common
+    FO
+    HTML
+    Highlighting
+
+Release Notes: 1.74.3
+
+The following is a list of changes that have been made since the 1.74.2
+release.
+
+Common
+
+The following changes have been made to the common code since the 1.74.2
+release.
+
+  ● Robert Stayton: labels.xsl
+
+    Fix bug in labelling figure inside appendix inside article inside book.
+
+FO
+
+The following changes have been made to the fo code since the 1.74.2 release.
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Add better pointer to README for XSLTHL
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    More tweaking the way that XSLTHL does or does not get called
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+
+HTML
+
+The following changes have been made to the html code since the 1.74.2 release.
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Add better pointer to README for XSLTHL
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Another stab at fixing the stupid XSLTHT includes across processors (Saxon regression reported by Sorin Ristache)
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    More tweaking the way that XSLTHL does or does not get called
+
+  ● Keith Fahlgren: verbatim.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+
+Highlighting
+
+The following changes have been made to the highlighting code since the 1.74.2
+release.
+
+  ● Keith Fahlgren: README
+
+    Adding XSLTHL readme
+
+  ● Keith Fahlgren: common.xsl
+
+    Alternate attempt at sanely including/excluding XSLTHT code
+

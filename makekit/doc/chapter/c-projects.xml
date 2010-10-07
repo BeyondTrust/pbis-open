@@ -1,0 +1,462 @@
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="c-projects">
+  <info>
+    <title>C Language Projects</title>
+  </info>
+  
+  <para>
+      This chapter will show you how to use <productname>MakeKit</productname>
+      to configure and build a C language project.
+  </para>
+
+  <section xml:id="c-programs">
+    <title>Building Programs</title>
+    <para>
+      Programs are built using the <function>mk_program</function> function, which requires
+      at a minimum a list of source files and a program name.  The program name is passed
+      as the <parameter>PROGRAM</parameter> parameter, and the list of sources files is passed
+      as the <parameter>SOURCES</parameter> parameter.  Consider <xref linkend="c-hello-world"/>
+      for a simple "Hello, World" program <filename>hello</filename>, it's source file
+      <filename>main.c</filename>, and the <filename>MakeKitBuild</filename> file to build it.
+    </para>
+    <example xml:id="c-hello-world">
+      <title>Using <function>mk_program</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+
+int main(int argc, char** argv)
+{
+    printf("Hello, world!\n");
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>MakeKitBuild</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c"
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      By default, the program will be installed in the usual binary directory
+      (e.g. <filename>/usr/local/bin</filename>).  The install location
+      can be changed with the <parameter>INSTALLDIR</parameter> parameter to
+      <function>mk_program</function>.
+    </para>
+    
+    <section>
+      <title>Finding Header Files</title>
+      <para>
+	A C project with a complex layout will typically need to look for headers
+	from multiple directories within the source tree.  Using the
+	<parameter>INCLUDEDIRS</parameter> parameter to <function>mk_program</function>,
+	you can specify a list of directories where the compiler should look for
+	header files.  Adding a header file <filename>include/values.h</filename>
+	to our small example project and modifying <filename>MakeKitBuild</filename>
+	to find it yields <xref linkend="c-include-dirs"/>.
+      </para>
+
+      <example xml:id="c-include-dirs">
+	<title>Using <parameter>INCLUDEDIRS</parameter></title>
+	<variablelist>
+	  <varlistentry>
+	    <term><filename>include/values.h</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#define MESSAGE "Hello, World!"
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>main.c</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include "values.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c" \
+        INCLUDEDIRS="include"
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </example>
+    </section>
+    <section>
+      <title>Linking To Libraries</title>
+      <para>
+	To link your program to other libraries, specify them as a list
+	via the <parameter>LIBDEPS</parameter> parameter.  Each library should be
+	specified exactly as you would with <parameter>-l</parameter> to the C
+	compiler (without the <filename>lib</filename> prefix).  See 
+	<xref linkend="c-link-lib"/>, which links to <filename>libm</filename>
+	to use the <function>sqrt()</function> function.
+      </para>
+      <example xml:id="c-link-lib">
+	<title>Using <parameter>LIBDEPS</parameter></title>
+	<variablelist>
+	  <varlistentry>
+	    <term><filename>main.c</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	  <varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_program \
+        PROGRAM=hello \
+        SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m"
+}
+]]></programlisting>
+	    </listitem>
+	  </varlistentry>
+	</variablelist>
+      </example>
+    </section>
+  </section>
+  <section>
+    <title>Building Libraries</title>
+    <para>
+      <productname>MakeKit</productname> allows you to build two types of libraries:
+    </para>
+    <variablelist>
+      <varlistentry>
+	<term>Shared libraries</term>
+	<listitem>
+	  <para>
+	    A shared library is a collection of address-relocatable code which is combined
+	    with the program that links against it at startup by the system dynamic linker.
+	    Shared libraries are built with the <function>mk_library</function> function.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term>Dynamically loadable objects</term>
+	<listitem>
+	  <para>
+	    A dynamically loadable object is a blob of code which is explicitly loaded
+	    and executed by a program through functions like <function>dlopen()</function>.
+	    Dynamically loadable objects are typically used to implement plugins.  Although
+	    on many <productname>UNIX</productname> systems dynamically loadable objects and
+	    shared libraries are the same type of file, some systems distinguish between
+	    the two.  For example, <productname>Mac OS X</productname> distinguishes between
+	    <filename>.dylib</filename> (shared libraries) and <filename>.bundle</filename>
+	    or <filename>.so</filename> (dynamically loadable objects).  To build a dynamically
+	    loadable object, use the <function>mk_dlo</function> function, which takes nearly
+	    identical parameters to <function>mk_library</function>.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+    <para>
+      As with building programs, building a library requires a library name, passed as the
+      <parameter>LIB</parameter> parameter, and a list of sources, passed as the
+      <parameter>SOURCES</parameter> parameter.  The library name should be specified
+      without a filename extension or the <filename>lib</filename> prefix.  Consider
+      <xref linkend="c-library"/>, which expands on previous examples by building a
+      small library and linking it into the program <filename>hello</filename>.
+    </para>
+    <example xml:id="c-library">
+      <title>Using <function>mk_library</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>include/example.h</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+external unsigned long factorial(unsigned long i);
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+#include "example.h"
+
+int main(int argc, char** argv)
+{
+    printf("%s\n", MESSAGE);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+    printf("5! is %lu\n", factorial(5));
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>example.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include "example.h"
+
+unsigned long factorial(unsigned long i)
+{
+    return i == 1 ? 1 : i * factorial(i - 1);
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_library \
+        LIB=example \
+        SOURCES="example.c" \
+        INCLUDEDIRS="include"
+
+    mk_program \
+        PROGRAM=hello \
+	SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m example"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      As you can see, <function>mk_library</function> accepts many of the same parameters
+      as <function>mk_program</function>, including <parameter>INCLUDEDIRS</parameter>.
+      As with programs, libraries can specify dependencies on other shared libraries
+      with <parameter>LIBDEPS</parameter>.
+    </para>
+    <note>
+      Some systems do not allow inter-dependencies between shared libraries.  On those
+      systems, <productname>MakeKit</productname> will propagate dependencies
+      forward to any program that links against them.  The resulting program may
+      explicitly depend on libraries from which it consumes no symbols.
+    </note>
+    <para>
+      Our new library was linked into <filename>hello</filename> the same way as the
+      system library <filename>libm</filename>.  Note that the order of the two function
+      invocations in <filename>MakeKitBuild</filename> is significant.
+      Because <function>mk_program</function> was called after
+      <function>mk_library</function>, it knows that <filename>libexample</filename>
+      is a library we build ourselves rather than pre-existing on the system, and it adds
+      appropriate dependencies to the generated <filename>Makefile</filename>.
+    </para>
+  </section>
+  <section>
+    <title>Object Groups</title>
+    <para>
+      When a library or program grows large enough, it is often prudent to break its
+      source code up across multiple subdirectories to enhance organizational clarity
+      and separation of concerns.  Rather than maintaining a long list of source files
+      from disparate subdirectories in your invocation of <function>mk_library</function>
+      or <function>mk_program</function>, you can use the <function>mk_group</function>
+      function to compile related source files together into a single "object group"
+      file, and then reference just this file when building your program or library.
+      This feature is an analogue of "convenience libraries" available in
+      <orgname>GNU</orgname> <command>libtool</command>.
+    </para>
+    <para>
+      Imagine that the currently diminuitive <filename>libexample</filename> is destined
+      to become a vast utility library with both math and string manipulation functions.
+      In anticipation of this, we break it into two subdirectories, <filename>math</filename>
+      and <filename>string</filename>.  We will build each subdirectory as an object
+      group and then combine the two into <filename>libexample</filename> using the
+      <parameter>GROUPS</parameter> parameter to <function>mk_library</function>.
+      This yields <xref linkend="c-object-group"/>.
+    </para>
+    <example xml:id="c-object-group">
+      <title>Using <function>mk_group</function></title>
+      <variablelist>
+	<varlistentry>
+	  <term><filename>include/example.h</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+/* Math functions */
+external unsigned long factorial(unsigned long i);
+/* String functions */
+external void reverse_string(char* str);
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>math/factorial.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include "example.h"
+
+unsigned long factorial(unsigned long i)
+{
+    return i == 1 ? 1 : i * factorial(i - 1);
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>math/MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_group \
+        GROUP=math.og \
+        SOURCES="*.c" \
+        INCLUDEDIRS="../include"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>string/reverse.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <string.h>
+#include "example.h"
+
+unsigned void reverse_string(char* str)
+{
+    char* front = NULL;
+    char* back = NULL;
+    char tmp = 0;
+
+    for (front = str, back = str + strlen(str) - 1;
+         back > front;
+         front++, back--)
+    {
+        tmp = *front;
+        *front = *back;
+        *back = tmp;
+    }
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>string/MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+make()
+{
+    mk_group \
+        GROUP=string.og \
+        SOURCES="*.c" \
+        INCLUDEDIRS="../include"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+	<varlistentry>
+	  <term><filename>main.c</filename></term>
+	  <listitem>
+<programlisting><![CDATA[
+#include <stdio.h>
+#include <math.h>
+#include "values.h"
+#include "example.h"
+
+int main(int argc, char** argv)
+{
+    char reverse[] = MESSAGE;
+
+    reverse_string(reverse);
+
+    printf("%s\n", MESSAGE);
+    printf("Reversed: %s\n", reverse);
+    printf("The square root of 2.0 is %f\n", sqrt(2.0));
+    printf("5! is %lu\n", factorial(5));
+}
+]]></programlisting>
+	  </listitem>
+	</varlistentry>
+	<varlistentry>
+	    <term><filename>MakeKitBuild</filename></term>
+	    <listitem>
+<programlisting><![CDATA[
+SUBDIRS="math string"
+
+make()
+{
+    mk_library \
+        LIB=example \
+        GROUPS="math/math.og string/string.og"
+
+    mk_program \
+        PROGRAM=hello \
+	SOURCES="main.c" \
+        INCLUDEDIRS="include" \
+        LIBDEPS="m example"
+}
+]]></programlisting>
+	    </listitem>
+	</varlistentry>
+      </variablelist>
+    </example>
+    <para>
+      The <function>mk_group</function> function accepts nearly the same set of optional parameters as
+      <function>mk_library</function>; in fact, you can even use <parameter>GROUPS</parameter>
+      to combine several object groups together into one.
+    </para>
+    <note>
+      It is recommended that you name your object groups with the <filename>.og</filename>
+      extension as a convention, but any valid filename is permitted.
+    </note>
+    <para>
+      This particular example also demonstrates a useful shortcut enabled by keeping source
+      files neatly separated into subdirectories: filename patterns.  The invocations of
+      <function>mk_group</function> in the <filename>math</filename> and <filename>string</filename>
+      subdirectories can include all C source files with <literal>*.c</literal>.  In general,
+      <productname>MakeKit</productname> supports filename patterns whenever specifying
+      source files.
+    </para>
+    <important>
+      Filename patterns only work against files that exist at the time that
+      <filename>configure</filename> is run.  For example, the top-level
+      <filename>MakeKitBuild</filename> in <xref linkend="c-object-group"/>
+      could not pick up all object groups using <literal>*/*.og</literal>.
+      With few exceptions, if you build it, you can't match it.
+    </important>
+  </section>
+</chapter>

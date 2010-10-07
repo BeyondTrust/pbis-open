@@ -1,0 +1,16 @@
+<book 
+   xmlns="http://docbook.org/ns/docbook" version="5.0"
+   xmlns:xi="http://www.w3.org/2001/XInclude">
+  <info>
+    <title>MakeKit Guide</title>
+    <author>
+      <firstname>Brian</firstname>
+      <surname>Koropoff</surname>
+    </author>
+    <productname>MakeKit</productname>
+  </info>
+  
+  <xi:include href="chapter/project-setup.xml"/>
+  <xi:include href="chapter/c-projects.xml"/>
+  <xi:include href="appendix/reference.xml"/>
+</book>

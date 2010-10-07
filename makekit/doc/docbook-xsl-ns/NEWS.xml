@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+
+<article>
+<info>
+<abstract>
+<para><emphasis role="strong">Note:</emphasis> This
+            document lists changes only since the 1.74.2 release.
+            If you instead want a record of the complete list of
+            changes for the codebase over its entire history, you
+            can obtain one by running the following commands:
+            
+<screen>  <code>svn checkout https://docbook.svn.sourceforge.net/svnroot/docbook/trunk/xsl</code>
+  <code>svn log --xml --verbose xsl &gt; ChangeHistory.xml</code></screen></para>
+</abstract>
+</info><title>Changes since the 1.74.2 release</title>
+
+<sect1 xml:id="V1.74.3">
+<title>Release Notes: 1.74.3</title>
+<para>The following is a list of changes that have been made
+        since the 1.74.2 release.</para>
+
+<sect2 xml:id="V1.74.3_Common">
+<title>Common</title>
+<para>The following changes have been made to the
+            <filename>common</filename> code
+            since the 1.74.2 release.</para>
+<itemizedlist>
+<listitem>
+<para><literal>Robert Stayton: labels.xsl</literal></para><screen><phrase role="commit-message">Fix bug in labelling <tag>figure</tag> inside <tag>appendix</tag> inside <tag>article</tag> inside <tag>book</tag>.</phrase></screen>
+</listitem>
+</itemizedlist>
+</sect2><!--end of Common changes for 1.74.3-->
+
+<sect2 xml:id="V1.74.3_FO">
+<title>FO</title>
+<para>The following changes have been made to the
+            <filename>fo</filename> code
+            since the 1.74.2 release.</para>
+<itemizedlist>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">Add better pointer to README for XSLTHL</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">More tweaking the way that XSLTHL does or does not get called</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">Alternate attempt at sanely including/excluding XSLTHT code</phrase></screen>
+</listitem>
+</itemizedlist>
+</sect2><!--end of FO changes for 1.74.3-->
+
+<sect2 xml:id="V1.74.3_HTML">
+<title>HTML</title>
+<para>The following changes have been made to the
+            <filename>html</filename> code
+            since the 1.74.2 release.</para>
+<itemizedlist>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">Add better pointer to README for XSLTHL</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">Another stab at fixing the stupid XSLTHT includes across processors (Saxon regression reported by Sorin Ristache)</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">More tweaking the way that XSLTHL does or does not get called</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: verbatim.xsl</literal></para><screen><phrase role="commit-message">Alternate attempt at sanely including/excluding XSLTHT code</phrase></screen>
+</listitem>
+</itemizedlist>
+</sect2><!--end of HTML changes for 1.74.3-->
+
+<sect2 xml:id="V1.74.3_Highlighting">
+<title>Highlighting</title>
+<para>The following changes have been made to the
+            <filename>highlighting</filename> code
+            since the 1.74.2 release.</para>
+<itemizedlist>
+<listitem>
+<para><literal>Keith Fahlgren: README</literal></para><screen><phrase role="commit-message">Adding XSLTHL readme</phrase></screen>
+</listitem>
+<listitem>
+<para><literal>Keith Fahlgren: common.xsl</literal></para><screen><phrase role="commit-message">Alternate attempt at sanely including/excluding XSLTHT code</phrase></screen>
+</listitem>
+</itemizedlist>
+</sect2><!--end of Highlighting changes for 1.74.3-->
+
+</sect1>
+</article>
+

@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# Copyright (c) Brian Koropoff
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above copyright
+#       notice, this list of conditions and the following disclaimer in the
+#       documentation and/or other materials provided with the distribution.
+#     * Neither the name of the MakeKit project nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+##
+#
+# makekit -- main script
+#
+##
+
+MK_DEFAULT_HOME="@MK_DEFAULT_HOME@"
+MK_SOURCE_DIR="`dirname "$0"`"
+MK_COMMAND="`basename "$0"`"
+
+if test -d "$MK_HOME"
+then
+    :
+elif test -d "$MK_DEFAULT_HOME"
+then
+    MK_HOME="${MK_DEFAULT_HOME}"
+elif test -d "${MK_SOURCE_DIR}/mk"
+then
+    MK_HOME="${MK_SOURCE_DIR}/mk"
+elif test -x "${MK_SOURCE_DIR}/makekit"
+then
+    MK_HOME="${MK_SOURCE_DIR}"
+else
+    echo "ERROR: could not find valid MK_HOME"
+    exit 1
+fi
+
+SHELL_CANDIDATES="\
+    $MK_SHELL \
+    /bin/dash \
+    /bin/bash \
+    /usr/bin/bash \
+    /usr/local/bin/bash \
+    /usr/xpg4/bin/sh \
+    /bin/sh"
+
+for _shell in ${SHELL_CANDIDATES}
+do
+    if [ -x "$_shell" ]
+    then
+	MK_SHELL="$_shell"
+	break
+    fi
+done
+
+if test -z "$MK_SHELL"
+then
+    echo "ERROR: could not find valid MK_SHELL"
+    exit 1
+fi
+
+export MK_HOME MK_SHELL MK_SOURCE_DIR
+
+if test -n "$MK_TRACE"
+then
+    _trace="-x"
+fi
+
+if test x"$MK_COMMAND" = x"makekit"
+then
+    MK_COMMAND="$1"
+    shift
+fi
+
+if test -f "${MK_HOME}/command/${MK_COMMAND}.sh"
+then
+    exec $MK_SHELL ${_trace} "${MK_HOME}/command/${MK_COMMAND}.sh" "$@"
+else
+    echo "Unknown command: $MK_COMMAND"
+    exit 1
+fi
