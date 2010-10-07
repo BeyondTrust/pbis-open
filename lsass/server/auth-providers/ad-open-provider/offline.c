@@ -85,6 +85,7 @@ AD_OfflineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_VerifyUserAccountCanLogin(
+                pContext,
                 pUserInfo);
     if (dwError == LW_ERROR_PASSWORD_EXPIRED)
     {

@@ -924,6 +924,7 @@ AD_ValidateUser(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_VerifyUserAccountCanLogin(
+                pContext,
                 pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 

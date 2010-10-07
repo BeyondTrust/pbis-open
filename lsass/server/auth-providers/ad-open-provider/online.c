@@ -1817,6 +1817,7 @@ AD_OnlineAuthenticateUserPam(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_VerifyUserAccountCanLogin(
+                pContext,
                 pUserInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -3930,6 +3931,7 @@ error:
 
 DWORD
 AD_VerifyUserAccountCanLogin(
+    PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo
     )
 {
@@ -3955,7 +3957,8 @@ AD_VerifyUserAccountCanLogin(
     }
 
     if (pUserInfo->userInfo.bPasswordExpired &&
-        !LsaDmIsDomainOffline(pUserInfo->pszNetbiosDomainName))
+        !LsaDmIsDomainOffline(pContext->pState->hDmState,
+            pUserInfo->pszNetbiosDomainName))
     {
         dwError = LW_ERROR_PASSWORD_EXPIRED;
         BAIL_ON_LSA_ERROR(dwError);

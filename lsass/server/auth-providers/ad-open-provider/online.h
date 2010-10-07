@@ -383,6 +383,7 @@ AD_UpdateUserObjectFlags(
 
 DWORD
 AD_VerifyUserAccountCanLogin(
+    PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo
     );
 
