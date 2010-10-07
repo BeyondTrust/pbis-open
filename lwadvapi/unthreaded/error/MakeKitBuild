@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+            GROUP="error.og" \
+        SOURCES="error.c error-conv.c" \
+        INCLUDEDIRS=". ../../include ../../include/public" \
+        HEADERDEPS="lw/base.h ldap.h" \
+        LIBDEPS="lwbase_nothr"
+}

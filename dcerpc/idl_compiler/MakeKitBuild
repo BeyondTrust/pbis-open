@@ -1,0 +1,194 @@
+_dcerpc_flex_build()
+{
+    mk_push_vars NAMESPACE FLEX BISON
+    unset _flex _namespace
+    mk_parse_params
+
+    if [ -n "$NAMESPACE" ]
+    then
+        _namespace="-P${NAMESPACE}"
+    fi
+
+    MK_MSG_DOMAIN="flex"
+    mk_msg "${2#${MK_SOURCE_DIR}/}"
+
+    mk_mkdir "`dirname "$1"`"
+    mk_run_or_fail ${FLEX} -o"$1" ${_namespace} "$2"
+}
+
+dcerpc_flex()
+{
+    mk_push_vars SOURCE NAMESPACE OUTPUT
+    mk_parse_params
+
+    if [ -z "$OUTPUT" ]
+    then
+        OUTPUT="${SOURCE%.l}.c"
+    fi
+    
+    mk_resolve_target "$SOURCE"
+    _source="$result"
+
+    mk_target \
+        TARGET="$OUTPUT" \
+        DEPS="'$_source' '@$FLEX'" \
+        _dcerpc_flex_build %FLEX %NAMESPACE '$@' "$_source"
+
+    mk_pop_vars
+}
+
+_dcerpc_bison_build()
+{
+    mk_push_vars NAMESPACE
+    unset _namespace
+    mk_parse_params
+
+    if [ -n "$NAMESPACE" ]
+    then
+        _namespace="-p ${NAMESPACE}"
+    fi
+
+    MK_MSG_DOMAIN="bison"
+    mk_msg "${2#${MK_SOURCE_DIR}/}"
+
+    mk_mkdir "`dirname "$1"`"
+    mk_run_or_fail ${BISON} -o "$1" ${_namespace} -d "$2"
+}
+
+dcerpc_bison()
+{
+    mk_push_vars SOURCE NAMESPACE OUTPUT
+    mk_parse_params
+
+    if [ -z "$OUTPUT" ]
+    then
+        OUTPUT="${SOURCE%.y}.c"
+    fi
+
+    _header="${OUTPUT%.c}.h"
+    
+    mk_resolve_target "$SOURCE"
+    _source="$result"
+
+    mk_target \
+        TARGET="$OUTPUT" \
+        DEPS="'$_source'" \
+        _dcerpc_bison_build %BISON %NAMESPACE '$@' "$_source"
+
+    _output="$result"
+
+    mk_target \
+        TARGET="$_header" \
+        DEPS="'$result'"
+
+    unset result
+
+    mk_pop_vars
+}
+
+_dcerpc_gencat_build()
+{
+    mk_push_vars GENCAT
+    mk_parse_params
+
+    MK_MSG_DOMAIN="gencat"
+    mk_msg "${2#${MK_SOURCE_DIR}/}"
+
+    mk_mkdir "`dirname "$1"`"
+    mk_run_or_fail ${GENCAT} "$1" "$2"
+}
+
+_dcerpc_gencat_header()
+{
+    mk_parse_params
+
+    MK_MSG_DOMAIN="gencat_header"
+    mk_msg "${2#${MK_SOURCE_DIR}/}"
+
+    mk_mkdir "`dirname "$1"`"
+    ${SED} -e '/^\$/d;/^$/d;s/^[^ ]* /"/;s/$/",/;' "$2" > "$1"
+}
+
+dcerpc_gencat()
+{
+    mk_push_vars SOURCE CATALOG HEADER
+    mk_parse_params
+
+    _header="default_msg.h"
+
+    mk_resolve_target "$SOURCE"
+    _source="$result"
+
+    mk_target \
+        TARGET="${MK_DATADIR}/dcerpc/$CATALOG" \
+        DEPS="'$_source'" \
+        _dcerpc_gencat_build %GENCAT '$@' "$_source"
+
+    mk_target \
+        TARGET="$HEADER" \
+        DEPS="'$_source'" \
+        _dcerpc_gencat_header '$@' "$_source"
+
+    unset result
+
+    mk_pop_vars
+}
+
+make()
+{
+    IDL_SOURCES="\
+        acf_y.c acf_l.c nidl_y.c nidl_l.c astp_com.c astp_cpx.c \
+        astp_gbl.c astp_sim.c astp_dmp.c checker.c chkichar.c command.c \
+        driver.c errors.c files.c frontend.c getflags.c keywds.c main.c \
+        message.c nametbl.c namdump.c propagat.c sysdep.c mtsbacke.c \
+        ddbe.c ddspell.c cspeldcl.c cspell.c cstubmts.c hdgen.c clihamts.c \
+        mtspipes.c irepgen.c irepscp.c ifspemts.c sstubmts.c comstmts.c \
+        user_exc.c icharsup.c astp_exp.c"
+
+    dcerpc_flex \
+        SOURCE=nidl_l.l \
+        NAMESPACE=nidl_yy
+
+    dcerpc_flex \
+        SOURCE=acf_l.l \
+        NAMESPACE=acf_yy
+
+    dcerpc_bison \
+        SOURCE=nidl_y.y \
+        NAMESPACE=nidl_yy
+
+    dcerpc_bison \
+        SOURCE=acf_y.y \
+        NAMESPACE=acf_yy
+
+    dcerpc_gencat \
+        SOURCE="nidlmsg.m" \
+        CATALOG="idl.cat" \
+        HEADER="default_msg.h"
+
+    IDL_DEP_FILES="nbase.idl lbase.idl"
+    IDL_DEPS=""
+
+    # The idl compiler will not function unless certain built-in idl files
+    # are installed in the include directory.  Resolve the paths now so we
+    # can specify a dependency on them
+    for _file in ${IDL_DEP_FILES}
+    do
+	mk_resolve_target "${MK_INCLUDEDIR}/dce/$_file"
+	mk_quote "$result"
+	IDL_DEPS="$IDL_DEPS $result"
+    done
+
+    # Build two copies of dceidl -- one for the build system and one for the host system
+    for _sys in build host
+    do
+        mk_system "$_sys"
+
+        mk_program \
+            PROGRAM="dceidl" \
+            SOURCES="$IDL_SOURCES" \
+            INCLUDEDIRS=". ../include" \
+            CPPFLAGS="-DMIA -DDEFAULT_IDIR=\"${MK_INCLUDEDIR}\" -DCATALOG_DIR=\"${MK_DATADIR}/dcerpc\"" \
+            DEPS="default_msg.h acf_y.h nidl_y.h $IDL_DEPS"
+    done
+}

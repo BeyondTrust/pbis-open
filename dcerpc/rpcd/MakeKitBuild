@@ -1,0 +1,39 @@
+make()
+{
+    RPCD_CPPFLAGS="-Drpcd_c_database_name_prefix1=\"${LW_CACHEDIR}/db/\""
+    RPCD_INCLUDEDIRS=". ../include ../ncklib ../ncklib/include/${target_os}"
+    RPCD_IDLFLAGS="-no_mepv -cepv"
+    RPCD_HEADERDEPS="dce/rpc.h"
+
+    RPCD_SOURCES="\
+        dsm.c dsm_unix.c rpcd.c rpcddb.c rpcdep.c \
+        rpcdepdb.c rpcdsliv.c rpcdutil.c ep_sstub.c"
+
+    lw_dceidl \
+        IDL="../include/dce/ep.idl" \
+        HEADER="ep.h" \
+        SSTUB="ep_sstub.c" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        IDLFLAGS="$RPCD_IDLFLAGS"
+
+    lw_dceidl \
+        IDL="dsm.idl" \
+        HEADER="dsm.h" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        IDLFLAGS="$RPCD_IDLFLAGS"
+
+    mk_program \
+        PROGRAM="dcerpcd" \
+        SOURCES="$RPCD_SOURCES" \
+        INSTALLDIR="${MK_SBINDIR}" \
+        CPPFLAGS="$RPCD_CPPFLAGS" \
+        INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
+        GROUPS="../uuid/uuid.og" \
+        DEPS="dsm.h ep.h" \
+        HEADERDEPS="$RPCD_HEADERDEPS" \
+        LIBDEPS="dcerpc $LIB_PTHREAD"
+
+    mk_install_file \
+	FILE=dcerpcd.reg \
+	INSTALLDIR="${LW_CONFIGDIR}"
+}

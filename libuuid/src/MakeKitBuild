@@ -1,0 +1,25 @@
+make()
+{
+    UUID_SOURCES="\
+        clear.c \
+        copy.c \
+        pack.c \
+        unparse.c \
+        compare.c \
+        gen_uuid.c \
+        isnull.c \
+        parse.c \
+        unpack.c \
+        uuid_time.c"
+
+    for _isa in ${MK_HOST_ISAS}
+    do
+        mk_system "host/$_isa"
+
+        mk_library \
+            LIB="uuid" \
+            SOURCES="$UUID_SOURCES" \
+            INCLUDEDIRS=". ../include ../include/uuid" \
+            SYSTEM="host/$_isa"
+    done
+}

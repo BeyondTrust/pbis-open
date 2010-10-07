@@ -1,0 +1,97 @@
+SUBDIRS='include src moonunit'
+
+configure()
+{
+    mk_config_header 'include/config.h'
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+
+    case "$MK_OS" in
+        linux)
+            MK_CPPFLAGS="$MK_CPPFLAGS -D_GNU_SOURCE"
+            ;;
+    esac
+
+    # lwbase libraries are built in compat mode as well, so we
+    # need to peform configure checks for all instruction set
+    # architectures
+    for _isa in ${MK_HOST_ISAS}
+    do
+        mk_system "host/$_isa"
+
+        mk_msg "configuring for system: $MK_SYSTEM"
+
+        case "$_isa" in
+            x86_32)
+                mk_msg "atomic ops: x86"
+                mk_define LWBASE_ATOMIC_X86 1
+                ;;
+            x86_64)
+                mk_msg "atomic ops: x86_64"
+                mk_define LWBASE_ATOMIC_X86_64 1
+                ;;
+            *)
+                mk_msg "atomic ops: pthread mutex"
+                mk_define LWBASE_ATOMIC_LOCK 1
+                ;;
+        esac
+
+        mk_define MOD_EXT "\"$MK_DLO_EXT\""
+        mk_define LIBDIR "\"$MK_LIBDIR\""
+
+        mk_check_libraries \
+            xnet \
+            dl
+        
+        lw_check_iconv
+        
+        # Necessary headers
+        mk_check_headers \
+            FAIL=yes \
+            pthread.h \
+            dlfcn.h \
+            inttypes.h \
+            uuid/uuid.h \
+            wctype.h
+    
+        # Optional headers
+        mk_check_headers \
+            sys/varargs.h \
+            unistd.h \
+            strings.h
+        
+        # Necessary libraries \
+        mk_check_libraries \
+            FAIL=yes \
+            uuid
+        
+        # Optional libraries
+        mk_check_libraries \
+            pthread \
+            dl
+
+        mk_check_functions \
+            HEADERDEPS="pthread.h wchar.h" \
+            LIBDEPS="$LIB_PTHREAD" \
+            CPPFLAGS="-D_GNU_SOURCE" \
+            pthread_setaffinity_np wcscasecmp
+
+        mk_check_functions \
+            HEADERDEPS="sys/epoll.h" \
+            epoll_create
+
+        mk_check_functions \
+            HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
+            kqueue
+
+        if [ "$HAVE_EPOLL_CREATE" = "yes" -a "$HAVE_PTHREAD_SETAFFINITY_NP" = "yes" ]
+        then
+            mk_msg "threadpool backend: epoll"
+        elif [ "$HAVE_KQUEUE" = "yes" -a "$HAVE_PTHREAD_SETAFFINITY_NP" = "yes" ]
+        then
+            mk_msg "threadpool backend: kqueue"
+        else
+            mk_msg "threadpool backend: select"
+        fi
+    done
+}

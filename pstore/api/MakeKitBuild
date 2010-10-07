@@ -1,0 +1,10 @@
+make()
+{
+    mk_library \
+        LIB=lwpsapi \
+        SOURCES="libmain.c lwps-provider.c" \
+        GROUPS="../utils/lwps-utils.og ../logging/lwps-logging.og" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="$LIB_DL rsutils" \
+        HEADERDEPS="reg/regutil.h"
+}

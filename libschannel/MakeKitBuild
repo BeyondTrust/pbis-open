@@ -1,0 +1,22 @@
+SUBDIRS='include src'
+
+configure()
+{
+    mk_config_header 'include/config.h'
+    
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    
+    mk_export MK_CFLAGS
+
+    # Necessary headers
+    mk_check_headers FAIL=yes \
+        openssl/crypto.h
+        
+    # Optional headers
+    mk_check_headers \
+        inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdint.h stdlib.h stdbool.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h pthread.h
+
+    # Necessary libraries \
+    mk_check_libraries FAIL=yes \
+        crypto
+}

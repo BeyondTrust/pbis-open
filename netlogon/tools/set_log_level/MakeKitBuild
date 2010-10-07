@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwnet-set-log-level \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="reg/lwreg.h lwadvapi.h" \
+        LIBDEPS="lwnetclientapi lwnetcommon lwadvapi lwadvapi_nothr"
+}

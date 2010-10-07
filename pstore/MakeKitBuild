@@ -1,0 +1,31 @@
+SUBDIRS='include utils logging providers api'
+
+configure()
+{
+    mk_config_header \
+        HEADER="include/config.h"
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_define ENABLE_REGDB
+
+    mk_export MOD_EXT="$MK_DLO_EXT"
+    mk_export LIBDIR="$MK_LIBDIR"
+
+    mk_check_headers \
+        HEADERS="lwmsg/lwmsg.h sqlite3.h reg/reg.h wc16str.h" \
+        FAIL=yes
+
+    mk_check_libraries \
+        LIBS="lwmsg sqlite3 regclient" \
+        FAIL=yes
+
+    mk_check_functions \
+        FUNCTIONS="localtime_r memset select strchr strerror vsyslog strtoll" \
+        HEADERDEPS="time.h string.h sys/select.h syslog.h stdlib.h"
+
+    mk_output_file "etc/pstore.reg"
+}

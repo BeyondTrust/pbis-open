@@ -1,0 +1,1 @@
+SUBDIRS="auth lwmapsecurity nsswitch gssntlm access"

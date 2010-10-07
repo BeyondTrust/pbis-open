@@ -1,0 +1,68 @@
+SUBDIRS="include lwdns tools"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+
+    mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
+
+    mk_export MOD_EXT="${MK_DLO_EXT}"
+
+    case "${MK_OS}-${MK_SYSTEM#*/}" in
+        solaris-*)
+            mk_define __LWI_SOLARIS__ 1
+            ;;
+    esac
+
+    # Required headers
+    mk_check_headers FAIL=yes \
+        lwnet.h krb5.h lwps/lwps.h lw/base.h \
+        
+    # Required libraries
+    mk_check_libraries FAIL=yes \
+        lwnetclientapi krb5 lwpsapi lwbase
+
+    # Optional headers
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        netinet/in.h stdlib.h sys/varargs.h \
+        time.h sys/time.h strings.h pthread.h netdb.h \
+        arpa/inet.h sys/ioctl.h sys/sockio.h \
+        net/if_dl.h ifaddrs.h arpa/nameser.h \
+        wc16str.h netinet/in.h
+
+    mk_check_headers \
+        HEADERDEPS="sys/socket.h sys/types.h" \
+        net/if.h
+
+    mk_check_headers \
+        HEADERDEPS="netinet/in.h arpa/nameser.h" \
+        resolv.h
+
+    # Optional libraries
+    mk_check_libraries \
+        nsl socket dl pthread resolv
+
+    # Optional functions
+    mk_check_function \
+        FUNCTION=getifaddrs \
+        HEADERDEPS="sys/types.h ifaddrs.h"
+
+    # Check which version of strerror_r we have
+    if mk_check_function \
+        PROTOTYPE="char* strerror_r(int,char*,size_t)" \
+        HEADERDEPS="string.h"
+    then
+        mk_define STRERROR_R_CHAR_P 1
+    elif mk_check_function \
+        PROTOTYPE="int strerror_r(int,char*,size_t)" \
+        HEADERDEPS="string.h"
+    then
+        mk_define STRERROR_R_INT 1
+    else
+        mk_fail "could not find usable strerror_r function"
+    fi
+}

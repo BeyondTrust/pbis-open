@@ -1,0 +1,12 @@
+make()
+{
+    mk_group \
+            GROUP="memory.og" \
+        SOURCES="\
+           sysfuncs.c    \
+           lwmem.c    \
+           lwstr.c    \
+           lwsid.c    \
+           lwbuffer.c" \
+        INCLUDEDIRS=". ../../include ../../include/public"
+}

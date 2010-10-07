@@ -1,0 +1,2 @@
+SUBDIRS="iomgr smbcommon rdr rdr2 npfs pvfs srv lwiod"
+

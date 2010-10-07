@@ -1,0 +1,15 @@
+SUBDIRS='error lwunistr memory file dscache time logging'
+
+make()
+{
+    mk_library \
+        LIB="lwadvapi_nothr" \
+        GROUPS="\
+            error/error.og \
+            file/file.og \
+            dscache/dscache.og \
+            memory/memory.og \
+            lwunistr/lwunistr.og \
+            time/time.og \
+            logging/logging.og"
+}

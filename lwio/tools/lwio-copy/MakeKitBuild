@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwio-copy \
+        SOURCES="globals.c main.c copyutil.c lwiocopy.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h krb5.h" \
+        LIBDEPS="lwioclient lwiocommon lwbase lwbase_nothr krb5"
+}

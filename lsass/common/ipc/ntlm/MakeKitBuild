@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+	GROUP=ntlm.og \
+	SOURCES="ipc_protocol.c" \
+	INCLUDEDIRS="../../../include" \
+	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	LIBDEPS="lwmsg_nothr"
+}

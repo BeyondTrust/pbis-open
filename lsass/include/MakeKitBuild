@@ -1,0 +1,31 @@
+make()
+{
+    mk_headers \
+	MASTER="lsa/lsa.h" \
+        lsa/ad.h \
+        lsa/lsa2.h \
+        lsa/provider.h \
+	lsa/join.h
+
+    mk_headers \
+	lw/rpc/lsa.h             \
+	lw/rpc/samr.h            \
+	lw/rpc/netlogon.h        \
+	lw/rpc/dssetup.h         \
+	lw/rpc/krb5pac.h         \
+	lw/rpc/wkssvc.h
+
+    mk_headers \
+	INSTALLDIR="${MK_INCLUDEDIR}/lsa/internal" \
+	lsaadprovider.h         \
+	lsalocalprovider.h      \
+	lsadatablob.h           \
+	lsadef.h                \
+	lsaipc.h                \
+	lsakrb5smb.h            \
+	lsalist.h               \
+	lsasrvcred.h            \
+	lsasystem.h             \
+	lsautils.h              \
+	lwsecurityidentifier.h
+}

@@ -1,0 +1,1 @@
+SUBDIRS='providers api lwregd'

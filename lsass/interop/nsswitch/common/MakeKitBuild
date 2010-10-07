@@ -1,0 +1,16 @@
+make()
+{
+    COMMON_SOURCES="\
+	nss-error.c \
+	nss-handle.c \
+	nss-user.c \
+	nss-group.c \
+	nss-netgrp.c"
+
+    mk_group \
+	GROUP=common.og \
+	SOURCES="$COMMON_SOURCES" \
+	INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
+	HEADERDEPS="lwadvapi.h" \
+	LIBDEPS="lsaclient lsaauth"
+}

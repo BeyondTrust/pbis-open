@@ -1,0 +1,47 @@
+SUBDIRS="include common client server"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    LWSM_CPPFLAGS="-DLWSM_DISABLE_DEPRECATED -DLWSM_BUILD"
+    LWSM_CFLAGS="-Wall -Werror -Wmissing-prototypes"
+    LWSM_LDFLAGS=""
+
+    case "$MK_HOST_OS:$MK_HOST_PRIMARY_ISA" in
+        linux:*)
+            LWSM_CPPFLAGS="$LWSM_CPPFLAGS -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -D_BSD_SOURCE -D_GNU_SOURCE"
+            ;;
+        solaris:*)
+            LWSM_CPPFLAGS="$LWSM_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
+            ;;
+    esac
+
+    mk_define SBINDIR "\"$MK_SBINDIR\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define LOADERDIR "\"$MK_LIBDIR/lwsm-loader\""
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+
+    mk_export MOD_EXT="$MK_DLO_EXT"
+
+    # Check endianness
+    mk_check_endian
+
+    # Required headers
+    mk_check_headers \
+        FAIL=yes \
+        lwmsg/lwmsg.h lwadvapi.h lw/base.h
+    
+    # Optional headers
+    mk_check_headers \
+        pthread.h strings.h
+
+    # Required libraries
+    mk_check_libraries \
+        FAIL=yes \
+        lwmsg lwadvapi lwbase regclient lwioclient
+
+    # Optional libraries
+    mk_check_libraries \
+        pthread dl
+}

@@ -1,0 +1,52 @@
+make()
+{
+    RDR_SOURCES="\
+        client_session.c      \
+        client_socket.c       \
+        client_tree.c         \
+        createfile.c          \
+        closefile.c           \
+        getsesskey.c          \
+        globals.c             \
+        readfile.c            \
+        queryinfofile.c       \
+        setinfofile.c         \
+        renamefile.c          \
+        querysecurity.c       \
+        queryfsinfo.c         \
+        findfirst2.c          \
+        findnext2.c           \
+        response.c            \
+        session.c             \
+        smb_logoff.c          \
+        smb_negotiate.c       \
+        smb_nptransact.c      \
+        smb_session_setup.c   \
+        smb_tree_connect.c    \
+        smb_tree_disconnect.c \
+        smb_write.c           \
+        socket.c              \
+        tree.c                \
+        writefile.c           \
+        reaper.c              \
+        lwio-semaphore.c      \
+        rdrdriver.c           \
+        rdrcreate.c           \
+        rdrread.c             \
+        rdrwrite.c            \
+        rdrsetinfo.c          \
+        rdrqueryinfo.c        \
+        rdrquerydir.c         \
+        rdrdeviceio.c         \
+        rdrfsctl.c            \
+        rdrsecurity.c         \
+        rdrqueryfs.c          \
+        rdrclose.c"
+    
+    mk_dlo \
+        DLO=librdr.sys \
+        SOURCES="$RDR_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="openssl/md5.h lw/base.h" \
+        LIBDEPS="lwiosmbcommon iomgr"
+}

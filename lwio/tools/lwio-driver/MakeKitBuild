@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lwio-driver \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwioclient lwiocommon lwbase lwbase_nothr"
+}

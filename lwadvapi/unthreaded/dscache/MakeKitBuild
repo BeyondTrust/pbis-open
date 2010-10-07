@@ -1,0 +1,7 @@
+make()
+{
+    mk_group \
+            GROUP="dscache.og" \
+        SOURCES=lwdscache.c \
+        INCLUDEDIRS=". ../../include ../../include/public"
+}

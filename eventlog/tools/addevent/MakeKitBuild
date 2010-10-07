@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+	PROGRAM=lw-addevent \
+	SOURCES="main.c" \
+	INCLUDEDIRS=". ../../include" \
+	HEADERDEPS="dce/rpc.h lwadvapi.h" \
+	LIBDEPS="eventlog eventlogutils dcerpc lwadvapi lwadvapi_nothr"
+}

@@ -1,0 +1,25 @@
+make()
+{
+    EVENTLOGD_SOURCES="\
+	access.c         \
+	db.c             \
+	eventlog_sstub.c \
+	globals.c        \
+	main.c           \
+	security.c       \
+	server.c"
+
+    lw_dceidl \
+	IDL="../idl/eventlog.idl" \
+	SSTUB="eventlog_sstub.c" \
+	HEADER="eventlog_h.h"
+    
+    mk_program \
+	PROGRAM=eventlogd \
+	SOURCES="$EVENTLOGD_SOURCES" \
+	INSTALLDIR="$MK_SBINDIR" \
+	INCLUDEDIRS=". ../include" \
+	HEADERDEPS="gssapi.h dce/rpc.h sqlite3.h lwadvapi.h" \
+	LIBDEPS="lwadvapi lwadvapi_nothr sqlite3 gssapi_krb5 dcerpc eventlogutils $LIB_PTHREAD $LIB_DL" \
+	DEPS="eventlog_h.h"
+}

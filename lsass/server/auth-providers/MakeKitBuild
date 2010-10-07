@@ -1,0 +1,1 @@
+SUBDIRS="local-provider ad-open-provider"

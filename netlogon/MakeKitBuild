@@ -1,0 +1,36 @@
+SUBDIRS="include utils ipc common client server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    case "$MK_OS" in
+        linux)
+            mk_define __LWI_LINUX__
+            ;;
+    esac
+
+    mk_export MOD_EXT="$MK_DLO_EXT"
+    mk_export SBINDIR="$MK_SBINDIR"
+
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define LWNET_CACHE_DIR "\"$LW_CACHEDIR\""
+    mk_define LWNET_CONFIG_DIR "\"$MK_SYSCONFDIR\""
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+   
+    mk_output_file "etc/netlogond.reg"
+
+    mk_check_libraries \
+        FAIL=yes \
+        rsutils regclient lwadvapi
+
+    mk_check_libraries \
+        rt pthread resolv
+
+    mk_check_functions \
+        HEADERDEPS="time.h sys/time.h" \
+        LIBDEPS="$LIB_RT" \
+        clock_settime settimeofday
+}

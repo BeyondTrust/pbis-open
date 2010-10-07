@@ -1,0 +1,62 @@
+make()
+{
+    BASE_INCLUDE_DIRS="../include ."
+
+    BASE_NOTHR_SOURCES="\
+        error-conv.c \
+        errno.c \
+        ntstatus.c \
+        dscache.c \
+        rpcstatus.c \
+        rtlmemory.c \
+        rtlstring.c \
+        rtlstring_cstring.c \
+        rtlstring_wc16string.c \
+        rtlstring_unicode.c \
+        rtlstring_ansi.c \
+        rbtree.c \
+        security-sid.c \
+        security-acl.c \
+        security-sd.c \
+        wc16str.c \
+        wc16printf.c"
+
+    BASE_SOURCES="\
+        atomic.c \
+        security-token.c \
+        security-sd-inherit.c \
+        threadpool-common.c \
+        mapsecurity.c"
+
+    BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
+       
+    for _isa in ${MK_HOST_ISAS}
+    do
+        mk_system "host/$_isa"
+
+        if [ "$HAVE_EPOLL_CREATE" = yes -a "$HAVE_PTHREAD_SETAFFINITY_NP" = yes ]
+        then
+            THREADPOOL_SOURCES="threadpool-epoll.c"
+        elif [ "$HAVE_KQUEUE" = yes -a "$HAVE_PTHREAD_SETAFFINITY_NP" = yes ]
+        then
+            THREADPOOL_SOURCES="threadpool-kqueue.c"
+        else
+            THREADPOOL_SOURCES="threadpool-select.c"
+        fi
+        
+        mk_library \
+            LIB="lwbase_nothr" \
+            SOURCES="$BASE_NOTHR_SOURCES" \
+            INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+            HEADERDEPS="$BASE_HEADER_DEPS" \
+            LIBDEPS="uuid $LIB_ICONV $LIB_XNET"
+
+        mk_library \
+            LIB="lwbase" \
+            SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
+            CPPFLAGS="$BASE_CPPFLAGS" \
+            INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+            HEADERDEPS="$BASE_HEADER_DEPS" \
+            LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL"
+    done
+}

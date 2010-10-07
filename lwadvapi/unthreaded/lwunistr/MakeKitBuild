@@ -1,0 +1,9 @@
+make()
+{
+    mk_group \
+        GROUP="lwunistr.og" \
+        SOURCES=lwunistr.c \
+        INCLUDEDIRS=". ../../include ../../include/public" \
+        HEADERDEPS="lw/base.h" \
+        LIBDEPS="lwbase_nothr"
+}

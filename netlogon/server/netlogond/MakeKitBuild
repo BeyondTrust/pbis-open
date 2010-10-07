@@ -1,0 +1,17 @@
+make()
+{
+    NETLOGOND_SOURCES="\
+        globals.c    \
+        listener.c   \
+        main.c       \
+        sighandler.c"
+
+    mk_program \
+        PROGRAM="netlogond" \
+        INSTALLDIR="${MK_SBINDIR}" \
+        SOURCES="$NETLOGOND_SOURCES" \
+        GROUPS="../ipc/ipc.og ../api/api.og" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="lw/base.h lwadvapi.h" \
+	LIBDEPS="lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr"
+}

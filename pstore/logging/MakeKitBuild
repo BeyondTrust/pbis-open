@@ -1,0 +1,11 @@
+make()
+{
+    LOGGING_SOURCES="\
+       globals.c \
+       logging.c"
+
+    mk_group \
+        GROUP="lwps-logging.og" \
+        SOURCES="$LOGGING_SOURCES" \
+        INCLUDEDIRS=". ../include"
+}

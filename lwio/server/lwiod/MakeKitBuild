@@ -1,0 +1,18 @@
+make()
+{
+    LWIOD_SOURCES="\
+        globals.c \
+        libmain.c \
+        cfg.c \
+        ipc.c \
+        proc.c \
+        main.c"
+
+    mk_program \
+        PROGRAM=lwiod \
+        INSTALLDIR="${MK_SBINDIR}" \
+        SOURCES="$LWIOD_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="reg/lwntreg.h lwadvapi.h lw/base.h" \
+        LIBDEPS="iomgr lwnetclientapi lwmsg lwmsg_nothr lwbase lwbase_nothr lwadvapi lwadvapi_nothr regclient lwiocommon $LIB_PTHREAD"
+}

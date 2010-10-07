@@ -1,0 +1,9 @@
+make()
+{
+    mk_program \
+        PROGRAM=lw-update-dns \
+        SOURCES="*.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lwnet.h lwps/lwps.h krb5.h" \
+        LIBDEPS="lwnetclientapi lwpsapi lwdns krb5 gssapi_krb5 lwbase lwbase_nothr"
+}

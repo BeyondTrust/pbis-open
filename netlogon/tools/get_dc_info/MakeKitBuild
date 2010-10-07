@@ -1,0 +1,10 @@
+make()
+{
+    mk_program \
+        PROGRAM=lw-get-dc-name \
+        SOURCES="main.c" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="reg/lwreg.h lwadvapi.h" \
+        LIBDEPS="lwnetclientapi lwnetcommon lwadvapi lwadvapi_nothr"
+}
+

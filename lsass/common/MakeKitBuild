@@ -1,0 +1,8 @@
+SUBDIRS="utils ipc"
+
+make()
+{
+    mk_library \
+	LIB=lsacommon \
+	GROUPS="utils/utils.og ipc/ipc.og"
+}

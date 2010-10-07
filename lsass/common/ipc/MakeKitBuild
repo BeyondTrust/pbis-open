@@ -1,0 +1,8 @@
+SUBDIRS="api ad ntlm"
+
+make()
+{
+    mk_group \
+	GROUP=ipc.og \
+	GROUPDEPS="api/api.og ad/ad.og ntlm/ntlm.og"
+}

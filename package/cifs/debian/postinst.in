@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+PATH=$PATH:@MK_BINDIR@
+export PATH
+
+case "$1" in
+    abort-upgrade)
+	;;
+    
+    configure)
+	domainjoin-cli configure --enable pam >/dev/null
+	domainjoin-cli configure --enable nsswitch >/dev/null
+	
+	if [ -z "`pidof lwsmd`" ]; then
+            /etc/init.d/lwsmd start
+	else
+            /etc/init.d/lwsmd stop
+            sleep 1
+            /etc/init.d/lwsmd start
+	fi
+	lwsm start lwreg
+	for file in "@LW_CONFIGDIR@/"*.reg; do
+	    echo "Importing $file..."
+            lwregshell upgrade $file >/dev/null
+	done
+	/etc/init.d/lwsmd reload
+        sleep 2
+	lwsm start srvsvc
+	;;
+esac
+
+#DEBHELPER#

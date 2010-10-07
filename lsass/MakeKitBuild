@@ -1,0 +1,103 @@
+SUBDIRS="include common logging_r client interop join server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    case "$MK_OS:$MK_ISA" in
+        linux:*)
+            mk_define __LWI_LINUX__
+	    mk_define _GNU_SOURCE
+	    mk_export PAMDIR="/lib/security"
+	    mk_export NSSDIR="/lib"
+            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+            ;;
+        freebsd:*)
+            mk_define __LWI_FREEBSD__
+	    mk_export PAMDIR="/lib/security"
+	    mk_export NSSDIR="/lib"
+            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
+            ;;
+    esac
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    mk_export providerdir="$MK_LIBDIR"
+    mk_export rpcserverdir="$MK_LIBDIR"
+    mk_export MOD_EXT="$MK_DLO_EXT"
+    mk_export default_homedir_prefix="/home"
+    mk_export default_skeldirs="/etc/skel"
+    mk_export SBINDIR="$MK_SBINDIR"
+    mk_export CACHEDIR="$LW_CACHEDIR"
+
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    # FIXME
+    mk_define COMPONENT_VERSION "\"5.0.0.0\""
+    mk_define __LW_MOTD_FILE__ "\"/etc/motd\""
+    mk_define __LW_MOTD_MAX_SIZE__ 4096
+    mk_define AD_DEFAULT_HOMEDIR_PREFIX '"/home"'
+    mk_define AD_DEFAULT_SKELDIRS '"/etc/skel"'
+
+    mk_check_headers \
+	stdlib.h sys/varargs.h time.h strings.h stdbool.h \
+	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
+	wc16str.h wc16printf.h sys/pstate.h procfs.h sys/procfs.h \
+	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
+	sys/regset.h sys/resource.h security/pam_appl.h security/pam_modules.h \
+	pam/pam_appl.h pam/pam_modules.h
+
+    mk_check_headers \
+	FAIL=yes \
+	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
+        openssl/rc4.h
+
+    mk_check_libraries \
+	FAIL=yes \
+	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
+	lwmsg_nothr lwmsg pam sqlite3
+
+    if mk_check_function \
+	FUNCTION=isblank \
+	HEADERDEPS="ctype.h"
+    then
+	mk_define HAVE_DECL_ISBLANK 1
+    else
+	mk_define HAVE_DECL_ISBLANK 0
+    fi
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll strtoul strtoull
+
+    mk_check_function \
+	HEADERDEPS="time.h" \
+	FUNCTION="clock_settime"
+
+    mk_check_function \
+	HEADERDEPS="sys/time.h" \
+	FUNCTION="settimeofday"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        PROTOTYPE="int pam_get_data(const pam_handle_t* pamh,const char* module_data_name, const void** data)"
+    then
+        mk_define PAM_GET_DATA_TAKES_CONST_DATA_ARG 1
+    fi
+
+    if mk_check_function \
+        HEADERDEPS="kvm.h" \
+        FUNCTION="kvm_getprocs"
+    then
+        mk_define HAVE_DECL_KVM_GETPROCS 1
+    else
+        mk_define HAVE_DECL_KVM_GETPROCS 0
+    fi
+
+    mk_output_file include/lsaregdef.h
+    mk_output_file server/auth-providers/local-provider/lpdefs.h
+    mk_output_file server/store/dsapi/dirdefs.h
+    mk_output_file etc/lsassd.reg
+    mk_output_file interop/gssntlm/mech
+}

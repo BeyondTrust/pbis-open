@@ -1,0 +1,10 @@
+make()
+{
+    mk_group \
+	GROUP=logging_r.og \
+	SOURCES="globals.c logging.c tracing.c" \
+	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
+	INCLUDEDIRS="../include" \
+	HEADERDEPS="lwps/lwps.h lwadvapi.h" \
+	LIBDEPS="lsacommon lwadvapi lwpsapi $LIB_PTHREAD"
+}

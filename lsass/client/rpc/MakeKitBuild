@@ -1,0 +1,9 @@
+SUBDIRS="lsa samr netlogon dssetup wkssvc krb5pac"
+
+make()
+{
+    mk_library \
+	LIB=lsarpc \
+	GROUPS="lsa/lsa.og samr/samr.og netlogon/netlogon.og \
+                dssetup/dssetup.og wkssvc/wkssvc.og krb5pac/krb5pac.og"
+}

@@ -1,0 +1,52 @@
+make()
+{
+    COMMON_HEADERDEPS="reg/lwreg.h lwadvapi.h lwmsg/lwmsg.h lwio/lwio.h"
+    
+    mk_library \
+        LIB=lwsmloader \
+        SOURCES="loader.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmcommon $LIB_PTHREAD $LIB_DL"
+
+    mk_dlo \
+        DLO="executable" \
+        SOURCES="executable.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmloader" \
+        INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
+
+    mk_dlo \
+        DLO="driver" \
+        SOURCES="driver.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmloader" \
+        INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
+
+    mk_dlo \
+        DLO="stub" \
+        SOURCES="stub.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="lwsmloader" \
+        INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
+    
+    mk_program \
+        PROGRAM=lwsmd \
+        SOURCES="\
+            table.c \
+            api.c \
+            dispatch.c \
+            registry.c \
+            bootstrap.c \
+            logger.c \
+            main.c" \
+        INCLUDEDIRS=". ../include" \
+        HEADERDEPS="$COMMON_HEADERDEPS" \
+        LIBDEPS="\
+            lwsmcommon lwsmloader lwmsg lwmsg_nothr lwioclient \
+            regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD" \
+        INSTALLDIR="${MK_SBINDIR}"
+}

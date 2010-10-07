@@ -1,0 +1,17 @@
+make()
+{
+    NSS_SOURCES="\
+	nss-group.c \
+	nss-user.c \
+	nss-netgrp.c \
+	globals.c"
+
+    mk_dlo \
+	DLO=libnss_lsass \
+        EXT=".so.2" \
+	SOURCES="$NSS_SOURCES" \
+	GROUPS="../common/common.og" \
+	INSTALLDIR="$NSSDIR" \
+	INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
+	HEADERDEPS="lwadvapi.h"
+}

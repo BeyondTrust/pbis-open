@@ -1,0 +1,53 @@
+SUBDIRS='include src test'
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    LWMSG_CFLAGS="-Wall -Werror"
+
+    case "$MK_OS:$MK_ARCH" in
+        linux:*)
+            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -D_BSD_SOURCE -D_GNU_SOURCE"
+                ;;
+        solaris:*)
+            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
+            ;;
+        hpux:hppa*)
+            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500 -D_REENTRANT"
+            MOD_EXT=".sl"
+            ;;
+        hpux:ia64*)
+            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500 -D_REENTRANT"
+            MOD_EXT=".so"
+            ;;
+        aix:*)
+            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_THREAD_SAFE"
+            ;;        
+    esac
+
+    mk_export LWMSG_CPPFLAGS LWMSG_CFLAGS LWMSG_LDFLAGS
+
+    for _isa in ${MK_HOST_ISAS}
+    do
+        mk_system "host/$_isa"
+
+        mk_check_headers \
+            string.h \
+            strings.h \
+            sys/types.h \
+            sys/socket.h \
+            sys/varargs.h \
+            sys/select.h
+        
+        mk_check_libraries FAIL=yes \
+            lwbase
+        
+        mk_check_libraries \
+            pthread rt dl xnet
+
+	lw_check_iconv
+
+        mk_define "MOD_EXT" "${MK_DLO_EXT}"
+    done
+}

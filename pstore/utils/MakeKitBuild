@@ -1,0 +1,21 @@
+make()
+{
+    UTIL_SOURCES="\
+       lwps-futils.c   \
+       lwps-error.c    \
+       lwps-mem.c      \
+       lwps-paths.c    \
+       lwps-rwlock.c   \
+       lwps-sid.c      \
+       lwps-stack.c    \
+       lwps-str.c      \
+       lwps-strerror.c \
+       lwps-sysfuncs.c"
+
+    mk_group \
+        GROUP="lwps-utils.og" \
+        SOURCES="$UTIL_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="lwbase" \
+        HEADERDEPS="lw/base.h"
+}

@@ -1,0 +1,52 @@
+SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui"
+
+configure()
+{
+    mk_config_header "include/DomainJoinConfig.h"
+    
+    case "$MK_OS" in
+	linux)
+	    mk_define __LWI_LINUX__
+	    ;;
+    esac
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
+    mk_export MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT"
+
+    mk_define LOCALSTATEDIR "\"$MK_LOCALSTATEDIR\""
+    mk_define BINDIR "\"$MK_BINDIR\""
+    mk_define SBINDIR "\"$MK_SBINDIR\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define DATADIR "\"$MK_DATADIR\""
+
+    if mk_pkg_config \
+	VARPREFIX=GTK \
+	glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
+    then
+	mk_msg "GTK+ interface enabled"
+    else
+	mk_msg "GTK+ interface disabled"
+	mk_skip_subdir domainjoin-gui
+    fi
+
+    mk_check_headers \
+	signal.h
+
+    mk_check_function \
+	HEADERDEPS="signal.h" \
+	FUNCTION="sigprocmask"
+
+    if mk_check_function \
+	FUNCTION=isblank \
+	HEADERDEPS="ctype.h"
+    then
+	mk_define HAVE_DECL_ISBLANK 1
+    else
+	mk_define HAVE_DECL_ISBLANK 0
+    fi
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll strtoul strtoull
+}

@@ -1,0 +1,40 @@
+SUBDIRS="include utils client server tools etc"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    mk_export SBINDIR="$MK_SBINDIR"
+
+    mk_define CACHEDIR "\"$LW_CACHEDIR\""
+    mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_define MOD_EXT "\"$MK_DLO_EXT\""
+    mk_define PREFIXDIR "\"$MK_PREFIX\""
+    mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+
+    mk_check_headers FAIL=yes \
+        popt.h
+
+    mk_check_libraries FAIL=yes \
+        popt
+
+    mk_check_headers \
+	limits.h sys/limits.h sys/syslimits.h wc16str.h
+
+    if mk_check_function \
+	FUNCTION=isblank \
+	HEADERDEPS="ctype.h"
+    then
+	mk_define HAVE_DECL_ISBLANK 1
+    else
+	mk_define HAVE_DECL_ISBLANK 0
+    fi
+
+    mk_check_functions \
+	HEADERDEPS="stdlib.h" \
+	strtol strtoll strtoul strtoull
+
+    mk_output_file "etc/eventlogd.reg"
+}

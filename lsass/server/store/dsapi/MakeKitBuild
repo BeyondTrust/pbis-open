@@ -1,0 +1,24 @@
+make()
+{
+    DSAPI_SOURCES="\
+        diradd.c      \
+        dirattr.c     \
+        dirbind.c     \
+        dirclose.c    \
+        dirdel.c      \
+        dirglobals.c  \
+        dirgroup.c    \
+        dirmem.c      \
+        dirmodify.c   \
+        diropen.c     \
+        dirprovider.c \
+        dirsearch.c   \
+        diruser.c"
+
+    mk_library \
+	LIB=dsapi \
+	SOURCES="$DSAPI_SOURCES" \
+	INCLUDEDIRS=". ../include ../../include ../../../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h" \
+	LIBDEPS="lwbase"
+}

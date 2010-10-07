@@ -1,0 +1,23 @@
+make()
+{
+    LWREGD_SOURCES="\
+        globals.c       \
+        listener.c      \
+        main.c          \
+        sighandler.c"
+
+    mk_program \
+        PROGRAM="lwregd" \
+        INSTALLDIR="${MK_SBINDIR}" \
+        SOURCES="$LWREGD_SOURCES" \
+        GROUPS="../api/regserverapi.og ../../logging_r/reglog_r.og" \
+        CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
+        INCLUDEDIRS="../../include ../include" \
+        HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \
+        LIBDEPS="lwmsg lwmsg_nothr"
+
+    mk_install_file \
+        FILE=lwreg.reg \
+        INSTALLDIR="${LW_CONFIGDIR}" \
+        MODE=0644
+}

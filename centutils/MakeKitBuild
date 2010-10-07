@@ -1,0 +1,78 @@
+SUBDIRS="include libcentutils test"
+
+configure()
+{
+    mk_config_header "include/config.h"
+
+    case "${MK_HOST_OS}-${MK_SYSTEM#*/}" in
+        linux-*)
+            mk_define __LWI_LINUX__ 1
+            ;;
+        solaris-*)
+            mk_define __LWI_SOLARIS__ 1
+            mk_define __EXTENSIONS__
+            ;;
+        freebsd-*)
+            mk_define __LWI_FREEBSD__
+            ;;
+    esac
+
+    mk_export MOD_EXT="${MK_DLO_EXT}"
+    mk_define MOD_EXT "\"${MK_DLO_EXT}"\"
+    
+    MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    
+    mk_export CONFIGDIR="${MK_SYSCONFDIR}"
+    mk_define CONFIGDIR "\"${MK_SYSCONFDIR}\""
+    
+    mk_define PREFIXDIR "\"${MK_PREFIX}\""
+    mk_define LIBDIR "\"${MK_LIBDIR}\""
+
+    mk_check_endian
+
+    # Headers
+    mk_check_headers \
+        HEADERDEPS="sys/types.h" \
+        inttypes.h fcntl.h limits.h stdlib.h string.h \
+        strings.h syslog.h unistd.h sys/types.h fcntl.h \
+        sys/stat.h sys/param.h sys/pstat.h proc/readproc.h \
+        sys/ioctl.h sys/termio.h utmps.h utmpx.h utmp.h \
+        procfs.h sys/procfs.h kvm.h sys/sysctl.h sys/user.h \
+        time.h sys/time.h
+
+    # Types
+    mk_check_types \
+        HEADERDEPS="unistd.h time.h inttypes.h" \
+        pid_t "struct tm" \
+        int8 int16 int32 int64 \
+        uint8 uint16 uint32 uint64
+
+    mk_check_type \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        TYPE="struct psinfo"
+
+    # Libraries
+    mk_check_libraries \
+        proc kvm rt
+
+    mk_check_functions \
+        HEADERDEPS="signal.h stdlib.h kvm.h" \
+        sigtimedwait bzero localtime_r memset \
+        select socket strchr strerror vsyslog \
+        rpl_malloc rpl_realloc mkdtemp _NSGetEnviron \
+        kvm_open kvm_getprocs
+
+    # Functions
+    if mk_check_function \
+        HEADERDEPS="ctype.h" \
+        FUNCTION=isblank
+    then
+        mk_define HAVE_DECL_ISBLANK 1
+    else
+        mk_define HAVE_DECL_ISBLANK 0
+    fi
+
+    mk_check_sizeof "long long int"
+    mk_check_sizeof "long int"
+}
