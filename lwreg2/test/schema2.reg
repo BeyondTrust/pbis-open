@@ -1,8 +1,8 @@
 #
 # Example "Registry Schema" entry
 #
-[HKEY_THIS_MACHINE\test]
-@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+[HKEY_THIS_MACHINE\Services\lsass\test]
+#@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
 
 "MachinePasswordLifeSpan" = {
   "value" = dword:00000001
@@ -21,6 +21,7 @@
   default = dword:0000003C
   "value" = dword:00000078
 }
+
 
 "bool_val" = {
   "range" = boolean
@@ -78,12 +79,14 @@
   "default" = "error"
 }
 "mv2" = {
-  "range" = string:"Now" "is" "the mv2 time"
-  "default" = dword:01DF5E76
+#  "range" = string:"Now" "is" "the mv2 time"
+  "range" = integer:0-1111111111
+#  "range" = string:"a"
+  "value" = dword:01DF5E76
 }
 "mv3" = {
   "range" = string:"Now" "is" "the mv3 time"
-  "default" = dword:01DF5E76
+  "default" = "is"
 }
 "s1" = {
   "value" = "I am a string value"
@@ -118,12 +121,12 @@
 "SupportSmb1" = {
   "range" = string:"three" "one" "four"
   "doc" = "I am a documentation string"
-  "hint" = "seconds"
-  "value" = dword:00000001
-  "default" = dword:00000314
+#  "hint" = "seconds"
+  "value" = "one"
+  "default" = "four"
 }
 "SupportSmb3" = {
-  "range" = string:"three" "one" "four"
+  "range" = integer:1-65535
   "doc" = "I am a documentation string"
   "hint" = "seconds"
   "value" = dword:00000003
@@ -157,7 +160,7 @@
 }
 
 "SupportSmb3" = {
-  "range" = string:"three" "one" "four"
+  "range" = integer:1-111111
   "doc" = "I am a documentation string"
   "hint" = "seconds"
   "value" = dword:00000003
@@ -191,8 +194,9 @@
 "b2" = {
   "range" = boolean
   "value" = dword:00000000
-}
 
+
+}
 "b3" = {
   "range" = boolean
   "value" = dword:00000001

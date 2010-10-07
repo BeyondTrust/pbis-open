@@ -261,9 +261,8 @@ ProcessImportedValue(
 
     cbData = pItem->type == REG_SZ ? pItem->valueLen+1 : pItem->valueLen;
 
-    dwError = RegAllocateMemory(sizeof(*pData) * cbData, (PVOID*)&pData);
+    dwError = RegAllocateMemory(sizeof(*pData) * (cbData+1), (PVOID*)&pData);
     BAIL_ON_REG_ERROR(dwError);
-
 
     if (eMode == REGSHELL_UTIL_IMPORT_UPGRADE)
     {

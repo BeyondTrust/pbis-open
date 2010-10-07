@@ -518,9 +518,7 @@ RegParseBinaryData(
         }
         else
         {
-            printf("RegParseType%s: ERROR (syntax error) type '%s' "
-                   "unknown line=%d\n\n",
-                   dataName, tokenName, lineNum);
+            dwError = LWREG_ERROR_SYNTAX;
             return dwError;
         }
     } while (!eof);
@@ -616,7 +614,6 @@ RegParseTypeDword(
     DWORD lineNum = 0;
     DWORD dwError = 0;
     PSTR pszAttr = NULL;
-    CHAR tokenName[256];
 
     if (parseHandle->dataType == REGLEX_REG_DWORD)
     {
@@ -628,9 +625,7 @@ RegParseTypeDword(
     }
     else
     {
-        printf("RegParseTypeDword: ERROR (syntax error) type '%s' "
-               "unknown line=%d\n\n",
-               tokenName, lineNum);
+        dwError = LWREG_ERROR_SYNTAX;
     }
     return dwError;
 }
@@ -1049,13 +1044,7 @@ RegParseTypeValue(
             else
             {
                 RegLexTokenToString(token, tokenName);
-#if 0
-/* Return LWREG_ERROR_SYNTAX_ERROR */
-                printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
-                       "unknown line=%d\n\n",
-                       tokenName, lineNum);
-#endif
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_SYNTAX;
                 return dwError;
             }
             break;
@@ -1150,13 +1139,7 @@ RegParseTypeValue(
             else
             {
                 RegLexTokenToString(token, tokenName);
-#if 0
-/* Return LWREG_ERROR_SYNTAX_ERROR */
-                printf("RegParseTypeValue: ERROR (syntax error) type '%s' "
-                       "unknown line=%d\n\n",
-                       tokenName, lineNum);
-#endif
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_SYNTAX;
                 return dwError;
                 break;
             }
@@ -1254,10 +1237,7 @@ RegParseKeyValue(
     }
     else
     {
-#if 0
-        printf("RegParseKeyValue: ERROR (syntax error) line=%d\n\n", lineNum);
-#endif
-        dwError = LWREG_ERROR_INVALID_CONTEXT;
+        dwError = LWREG_ERROR_SYNTAX;
         return dwError;
     }
 
@@ -1365,7 +1345,7 @@ RegParseCheckAttributes(
     if (parseHandle->registryEntry.regAttr.pDefaultValue &&
         regDataType != parseHandle->registryEntry.regAttr.ValueType)
     {
-        dwError = LWREG_ERROR_INVALID_CONTEXT;
+        dwError = LWREG_ERROR_PARSE;
         BAIL_ON_REG_ERROR(dwError);
     }
     
@@ -1381,7 +1361,7 @@ RegParseCheckAttributes(
         {
             if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
             {
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_PARSE;
                 BAIL_ON_REG_ERROR(dwError);
             }
     
@@ -1400,7 +1380,7 @@ RegParseCheckAttributes(
             dwMax = parseHandle->registryEntry.regAttr.Range.RangeInteger.Max;
             if (dwValue < dwMin || dwValue > dwMax)
             {
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_PARSE;
                 BAIL_ON_REG_ERROR(dwError);
             }
         }
@@ -1418,17 +1398,23 @@ RegParseCheckAttributes(
             }
             if (dwValue != 0 && dwValue != 1)
             {
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_PARSE;
                 BAIL_ON_REG_ERROR(dwError);
             }
         }
     }
-    else if (parseHandle->registryEntry.regAttr.RangeType ==
+    if (parseHandle->registryEntry.regAttr.RangeType ==
              LWREG_VALUE_RANGE_TYPE_ENUM)
     {
         if (!parseHandle->registryEntry.regAttr.Range.ppwszRangeEnumStrings)
         {
-                dwError = LWREG_ERROR_INVALID_CONTEXT;
+                dwError = LWREG_ERROR_PARSE;
+                BAIL_ON_REG_ERROR(dwError);
+        }
+        if ((parseHandle->registryEntry.regAttr.ValueType &&
+             parseHandle->registryEntry.regAttr.ValueType != REG_SZ))
+        {
+                dwError = LWREG_ERROR_PARSE;
                 BAIL_ON_REG_ERROR(dwError);
         }
     }
@@ -1438,7 +1424,7 @@ RegParseCheckAttributes(
       case LWREG_VALUE_HINT_SECONDS:
         if (parseHandle->registryEntry.regAttr.ValueType != REG_DWORD)
         {
-            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            dwError = LWREG_ERROR_PARSE;
             BAIL_ON_REG_ERROR(dwError);
         }
         break;
@@ -1447,7 +1433,7 @@ RegParseCheckAttributes(
       case LWREG_VALUE_HINT_ACCOUNT:
         if (parseHandle->registryEntry.regAttr.ValueType != REG_SZ)
         {
-            dwError = LWREG_ERROR_INVALID_CONTEXT;
+            dwError = LWREG_ERROR_PARSE;
             BAIL_ON_REG_ERROR(dwError);
         }
         break;
@@ -1564,10 +1550,6 @@ RegParseKey(
 
             /* Perform semantic checks on attributes */
             dwError = RegParseCheckAttributes(parseHandle);
-            if (dwError)
-            {
-                printf("Semantic inconsistency found on line %d\n", lineNum);
-            }
             BAIL_ON_REG_ERROR(dwError);
 
             RegParseRunCallbacks(parseHandle); 
@@ -1584,7 +1566,7 @@ RegParseKey(
             parseHandle->valueType = token;
             RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
             dwError = RegParseKeyValue(parseHandle);
-            printf("Unhandled token '%s'!\n", pszAttr);
+            dwError = LWREG_ERROR_PARSE;
             return dwError;
         }
         dwError = RegLexGetToken(parseHandle->ioHandle,
@@ -1654,12 +1636,7 @@ RegParseAttributes(
                     REGLEX_VALUENAME_ATTRIBUTES)
                 {
                     /* Syntax error, imbalanced { } and EOF found */
-#if 0
-                    /* Return LWREG_ERROR_SYNTAX_ERROR vs printf here */
-                    printf("RegParseKeyValue: ERROR (syntax error) line=%d\n\n",
-                            parseHandle->registryEntry.lineNumber);
-#endif
-                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    dwError = LWREG_ERROR_SYNTAX;
                 }
                 return dwError;
             }

@@ -280,6 +280,8 @@ RegValidValueAttributes(
 #define LWREG_ERROR_NOT_HANDLED                               40725 //40017
 #define LWREG_ERROR_UNEXPECTED_TOKEN                          40726 //40062
 #define LWREG_ERROR_UNKNOWN                                   40727 //40188
+#define LWREG_ERROR_SYNTAX                                    40728 
+#define LWREG_ERROR_PARSE                                     40729
 
 #endif /* __REG_H__ */
 

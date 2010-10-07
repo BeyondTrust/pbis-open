@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
     DWORD dwLineNum = 0;
     HANDLE parseH = NULL;
     USER_CONTEXT ctx = {0};
+    CHAR cErrorBuf[1024] = {0};
 
 
     if (argc == 1)
@@ -210,7 +211,13 @@ cleanup:
 
 error:
     RegParseGetLineNumber(parseH, &dwLineNum);
-    printf("RegParseRegistry: failed error %d line=%d\n", dwError, dwLineNum);
+    LwRegGetErrorString(
+        dwError,
+        cErrorBuf,
+        sizeof(cErrorBuf) - 1);
+
+    printf("RegParseRegistry: '%s' (%d) line=%d\n", 
+           cErrorBuf, dwError, dwLineNum);
 
     goto cleanup;
 

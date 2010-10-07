@@ -266,9 +266,17 @@ static struct
     	"Failure creating access token"
     },
     {
+        LWREG_ERROR_SYNTAX,
+       "Syntax error found while parsing registry file"
+    },
+    {
+       LWREG_ERROR_PARSE,
+       "Parse error occurred while paring registry file"
+    },
+    {
         LWREG_ERROR_DELETE_DEFAULT_VALUE_NOT_ALLOWED,
         "Delete default value is not allowed"
-    }
+    },
 };
 
 size_t
