@@ -10,6 +10,7 @@ typedef struct _REGSHELL_UTIL_VALUE
     PWSTR pValueName;
     LW_PVOID pData;
     DWORD dwDataLen;
+    BOOLEAN bValueSet;
 } REGSHELL_UTIL_VALUE, *PREGSHELL_UTIL_VALUE;
 
 

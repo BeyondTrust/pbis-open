@@ -661,9 +661,10 @@ RegShellListValues(
         {
             LWREG_SAFE_FREE_STRING(pszValueName);
 
-            dwError = LwRtlCStringAllocateFromWC16String(&pszValueName, pValues[i].pValueName);
+            dwError = LwRtlCStringAllocateFromWC16String(
+                          &pszValueName,
+                          pValues[i].pValueName);
             BAIL_ON_REG_ERROR(dwError);
-
 #ifdef _LW_DEBUG
             printf("ListValues: value='%s\n", pszValueName);
             printf("ListValues: dataLen='%d'\n", pValues[i].dwDataLen);
@@ -675,10 +676,12 @@ RegShellListValues(
                 continue;
             }
             dwValuesListed++;
-            printf("  \"%s\"%*s",
+            printf("%c  \"%s\"%*s",
+                   pValues[i].bValueSet ? '+' : ' ',
                    pszValueName,
                    (int) (strlen(pszValueName)-dwValueNameLenMax),
                    "");
+
             switch (pValues[i].type)
             {
                 case REG_SZ:
@@ -712,7 +715,10 @@ RegShellListValues(
                     BAIL_ON_REG_ERROR(dwError);
                     if (!ppszMultiStrArray[0])
                     {
-                        /* Just print the type for a reg_multi_sz with no values */
+                        /* 
+                         * Just print the type for a reg_multi_sz 
+                         * with no values.
+                         */
                         printf("%*sREG_MULTI_SZ\n",
                                dwMultiIndex == 0 ? 0 :
                                    dwValueNameLenMax + 2,

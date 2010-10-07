@@ -610,7 +610,9 @@ RegShellUtilGetKeys(
 
     if (pszParentPath && pszParentPath[1])
     {
-    	dwError = RegWC16StringAllocateFromCString(&pwszSubKey, pszParentPath+1);
+    	dwError = RegWC16StringAllocateFromCString(
+                      &pwszSubKey,
+                      pszParentPath+1);
     	BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegOpenKeyExW(
@@ -636,7 +638,9 @@ RegShellUtilGetKeys(
         pFullKey = pRootKey;
         pRootKey = NULL;
 
-        dwError = RegWC16StringAllocateFromCString(&pwszParentKeyName, pszRootKeyName);
+        dwError = RegWC16StringAllocateFromCString(
+                      &pwszParentKeyName,
+                      pszRootKeyName);
         BAIL_ON_REG_ERROR(dwError);
     }
 
@@ -661,7 +665,9 @@ RegShellUtilGetKeys(
     	goto done;
     }
 
-    dwError = RegAllocateMemory(sizeof(*subKeys) * dwSubKeyCount, (PVOID*)&subKeys);
+    dwError = RegAllocateMemory(
+                  sizeof(*subKeys) * dwSubKeyCount,
+                  (PVOID*)&subKeys);
     BAIL_ON_REG_ERROR(dwError);
 
 #ifdef _LW_DEBUG
@@ -672,7 +678,9 @@ RegShellUtilGetKeys(
     {
         dwSubKeyLen = dwMaxSubKeyLen+1;
 
-        dwError = RegAllocateMemory(sizeof(*pszKeyName) * dwSubKeyLen, (PVOID*)&pszKeyName);
+        dwError = RegAllocateMemory(
+                      sizeof(*pszKeyName) * dwSubKeyLen,
+                      (PVOID*)&pszKeyName);
         BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegEnumKeyExA((HANDLE)hReg,
@@ -915,6 +923,7 @@ RegShellUtilGetValues(
     DWORD dwError = 0;
     DWORD indx = 0;
     PSTR pszValueName = NULL;
+    PWSTR pwszValueName = NULL;
     DWORD dwValueNameLen = 0;
     DWORD regType = 0;
     PBYTE pData = NULL;
@@ -928,6 +937,8 @@ RegShellUtilGetValues(
     PREGSHELL_UTIL_VALUE pValueArray = NULL;
     DWORD dwMaxValueNameLen = 0;
     DWORD dwMaxValueLen = 0;
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
+    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
 
     if (!hReg)
     {
@@ -953,7 +964,9 @@ RegShellUtilGetValues(
 
     if (pszParentPath && strcmp(pszParentPath, "\\") != 0)
     {
-    	dwError = RegWC16StringAllocateFromCString(&pwszParentPath, pszParentPath+1);
+    	dwError = RegWC16StringAllocateFromCString(
+                      &pwszParentPath,
+                      pszParentPath+1);
     	BAIL_ON_REG_ERROR(dwError);
 
         dwError = RegOpenKeyExW(
@@ -993,7 +1006,9 @@ RegShellUtilGetValues(
     	goto done;
     }
 
-    dwError = RegAllocateMemory(sizeof(*pValueArray) * dwValuesCount, (PVOID*)&pValueArray);
+    dwError = RegAllocateMemory(
+                  sizeof(*pValueArray) * dwValuesCount,
+                  (PVOID*)&pValueArray);
     BAIL_ON_REG_ERROR(dwError);
 
     /*
@@ -1010,7 +1025,9 @@ RegShellUtilGetValues(
          */
         dwValueNameLen = dwMaxValueNameLen;
 
-        dwError = RegAllocateMemory(sizeof(*pszValueName) * dwValueNameLen, (PVOID*)&pszValueName);
+        dwError = RegAllocateMemory(
+                      sizeof(*pszValueName) * dwValueNameLen,
+                      (PVOID*)&pszValueName);
         BAIL_ON_REG_ERROR(dwError);
 
         dwDataLen = dwMaxValueLen;
@@ -1033,7 +1050,30 @@ RegShellUtilGetValues(
                       &dwDataLen);
         BAIL_ON_REG_ERROR(dwError);
 
-    	dwError = RegWC16StringAllocateFromCString(&pValueArray[indx].pValueName, pszValueName);
+    	dwError = RegWC16StringAllocateFromCString(
+                      &pwszValueName,
+                      pszValueName);
+        BAIL_ON_REG_ERROR(dwError);
+
+        dwError = LwRegGetValueAttributesW(
+                      hReg,
+                      pFullKey,
+                      NULL,
+                      pwszValueName,
+                      &pCurrentValue,
+                      &pValueAttributes);
+        /*
+         * Don't care if this fails.
+         * Manually added new values don't have attributes to back them.
+         */
+        if (pCurrentValue)
+        {
+            pValueArray[indx].bValueSet = TRUE;
+        }
+
+    	dwError = RegWC16StringAllocateFromCString(
+                      &pValueArray[indx].pValueName,
+                      pszValueName);
     	BAIL_ON_REG_ERROR(dwError);
         LWREG_SAFE_FREE_STRING(pszValueName);
 
@@ -1044,7 +1084,6 @@ RegShellUtilGetValues(
     }
 
  done:
-
     *valueArray = pValueArray;
     *pdwValueArrayLen = indx;
 
@@ -1061,7 +1100,11 @@ cleanup:
     LWREG_SAFE_FREE_STRING(pszValueName);
     LWREG_SAFE_FREE_STRING(pszParentPath);
     LWREG_SAFE_FREE_MEMORY(pSubKey);
+    LWREG_SAFE_FREE_MEMORY(pwszValueName);
     LWREG_SAFE_FREE_MEMORY(pData);
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    RegSafeFreeValueAttributes(&pValueAttributes);
+
     return dwError;
 
 error:
