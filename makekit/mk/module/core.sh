@@ -392,7 +392,11 @@ mk_output_file()
     _output="$result"
 
     mk_mkdir "${_output%/*}"
-    awk -f ".awk.$$" < "$_input" > "${_output}.new" || mk_fail "awk error"
+    # First copy the file to preserve mode bits.
+    # There ought to be a better way to do this...
+    mk_run_or_fail cp "$_input" "${_output}.new"
+    # Now overwrites its contents
+    mk_run_or_fail awk -f ".awk.$$" < "$_input" > "${_output}.new"
     mk_run_or_fail rm -f ".awk.$$"
 
     if [ -f "${_output}" ] && diff "${_output}" "${_output}.new" >/dev/null 2>&1

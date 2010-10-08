@@ -640,12 +640,16 @@ _mk_build_test()
 	    (
                 eval "exec ${MK_LOG_FD}>&-"
 		MK_LOG_FD=""
-		    # FIXME: running link directly on a .c file is sort of a hack
-		mk_run_script link \
+                mk_run_script compile \
+                    DISABLE_DEPGEN=yes \
+		    CPPFLAGS="$CPPFLAGS" \
+		    CFLAGS="$CFLAGS" \
+		    "${__test}.o" "${__test}.c"
+                mk_run_script link \
 		    MODE=program \
 		    LIBDEPS="$LIBDEPS" \
-		    LDFLAGS="$CPPFLAGS $MK_CPPFLAGS $CFLAGS $MK_CFLAGS $LDFLAGS" \
-		    "${__test}" "${__test}.c"
+		    LDFLAGS="$LDFLAGS" \
+		    "${__test}" "${__test}.o"
 	    ) >&${MK_LOG_FD} 2>&1
 	    _ret="$?"
 	    if [ "$_ret" -eq 0 -a "$1" = "run-program" ]
@@ -654,6 +658,7 @@ _mk_build_test()
 		_ret="$?"
 	    fi
 	    rm -f "${__test}"
+	    rm -f "${__test}.o"
 	    ;;
 	*)
 	    mk_fail "Unsupported build type: ${1}"
