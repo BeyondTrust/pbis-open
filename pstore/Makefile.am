@@ -7,7 +7,3 @@ SUBDIRS = etc       \
           api       \
 	  tools     \
           include
-
-if ENABLE_TESTS
-SUBDIRS += tests
-endif
