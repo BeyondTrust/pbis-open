@@ -223,6 +223,36 @@ RtlGetAclAceCount(
     IN PACL Acl
     );
 
+///<
+/// Get size required for an ACCESS_ALLOWED_ACE.
+///
+/// This function gets the number of bytes required for an
+/// access allowed ACE (ACCESS_ALLOWED_ACE) given a particular SID.
+///
+/// @param[in] Sid - SID for ACE.
+///
+/// @return Number of bytes required or 0 if Sid is invalid.
+///
+USHORT
+RtlLengthAccessAllowedAce(
+    IN PSID Sid
+    );
+
+///<
+/// Get size required for an ACCESS_DENIED_ACE.
+///
+/// This function gets the number of bytes required for an
+/// access denied ACE (ACCESS_DENIED_ACE) given a particular SID.
+///
+/// @param[in] Sid - SID for ACE.
+///
+/// @return Number of bytes required or 0 if Sid is invalid.
+///
+USHORT
+RtlLengthAccessDeniedAce(
+    IN PSID Sid
+    );
+
 NTSTATUS
 RtlAddAccessAllowedAceEx(
     IN PACL Acl,
