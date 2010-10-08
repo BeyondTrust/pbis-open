@@ -617,6 +617,37 @@ cleanup:
     return status;
 }
 
+NTSTATUS
+LwMapSecurityGetSidFromName(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PSID* Sid,
+    IN BOOLEAN IsUser,
+    IN PCSTR Name
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSID sid = NULL;
+
+    status = Context->PluginInterface->GetSidFromName(
+                    Context->PluginContext,
+                    &sid,
+                    IsUser,
+                    Name);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+    if (!NT_SUCCESS(status) && sid)
+    {
+        Context->PluginInterface->FreeSid(
+                        Context->PluginContext,
+                        &sid);
+    }
+
+    *Sid = sid;
+
+    return status;
+}
+
 VOID
 LwMapSecurityFreeSid(
     IN PLW_MAP_SECURITY_CONTEXT Context,

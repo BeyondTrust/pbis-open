@@ -81,6 +81,14 @@ LwMapSecurityGetSidFromId(
     IN ULONG Id
     );
 
+NTSTATUS
+LwMapSecurityGetSidFromName(
+    IN PLW_MAP_SECURITY_CONTEXT Context,
+    OUT PSID* Sid,
+    IN BOOLEAN IsUser,
+    IN PCSTR Name
+    );
+
 VOID
 LwMapSecurityFreeSid(
     IN PLW_MAP_SECURITY_CONTEXT Context,
