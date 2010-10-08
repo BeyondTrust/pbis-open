@@ -1,0 +1,5 @@
+@PKG_DEB_NAME@ (@PKG_DEB_VERSION@) lucid; urgency=low
+
+  * New Likewise Open release
+
+ -- Gerald Carter <gcarter@likewise.com>  @PKG_DEB_DATE@

@@ -1,0 +1,68 @@
+MODULES="package-deb"
+
+configure()
+{
+    if mk_deb_enabled
+    then
+        mk_export PKG_DEB_NAME="likewise-open-cifs"
+        mk_export PKG_DEB_VERSION="${LW_VERSION}-1"
+        mk_export PKG_DEB_DATE="`date -R`"
+    fi
+}
+
+make()
+{
+    if mk_deb_enabled
+    then
+        mk_deb_do \
+            PACKAGE="$PKG_DEB_NAME" \
+            VERSION="$PKG_DEB_VERSION" \
+            DEBIANFILES="debian/changelog.in debian/compat.in \
+                         debian/control.in debian/postinst.in \
+                         debian/postrm.in debian/preinst.in \
+                         debian/prerm.in debian/rules.in"
+        
+        common_files
+        
+        mk_subpackage_do SUBPACKAGE="dev"
+        
+        common_files_dev
+        
+        mk_subpackage_done
+        
+        mk_deb_done
+    fi
+}
+
+common_files()
+{
+    mk_package_files \
+        "${MK_BINDIR}/*" \
+        "${MK_SBINDIR}/*" \
+        "${MK_DATADIR}/likewise/*" \
+        "${MK_PREFIX}/data/VERSION" \
+        "${LW_CONFIGDIR}/*" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}" \
+        "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
+        "${MK_LIBDIR}/*${MK_DLO_EXT}" \
+        "${MK_LIBDIR}/gss/*${MK_DSO_EXT}" \
+        "${MK_LIBDIR}/sasl2/*${MK_DSO_EXT}" \
+        "${MK_LIBDIR}/lwsm-loader/*${MK_DSO_EXT}" \
+        "/etc/init.d/*" \
+        "/etc/krb5.conf.default" \
+        "${MK_SYSCONFDIR}/*" \
+        "/lib/security/pam_lsass${MK_DLO_EXT}" \
+        "/lib/libnss_lsass${MK_DLO_EXT}.*"
+
+    mk_package_dirs \
+        "${LW_CACHEDIR}" \
+        "${LW_CACHEDIR}/db" \
+        "${LW_CACHEDIR}/rpc"
+}
+
+common_files_dev()
+{
+    mk_package_files \
+        "${MK_INCLUDEDIR}/*" \
+        "${MK_LIBDIR}/*.la"
+}
