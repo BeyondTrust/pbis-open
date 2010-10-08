@@ -72,6 +72,21 @@ configure()
     done
 }
 
+lw_define_feature_macros()
+{
+    case "$MK_OS" in
+        linux)
+            mk_define _GNU_SOURCE
+            mk_define _XOPEN_SOURCE 500
+            mk_define _POSIX_C_SOURCE 200112L
+            ;;
+        solaris)
+            mk_define _XOPEN_SOURCE 500
+            mk_define __EXTENSIONS__
+            ;;
+    esac
+}
+
 lw_check_iconv()
 {
     mk_check_header FAIL=yes HEADER=iconv.h

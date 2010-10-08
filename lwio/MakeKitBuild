@@ -5,12 +5,11 @@ configure()
     mk_config_header \
         HEADER="include/config.h"
 
+	lw_define_feature_macros
+
     case "$MK_OS" in
         linux)
             mk_define __LWI_LINUX__
-            mk_define _GNU_SOURCE
-            mk_define _XOPEN_SOURCE 500
-            mk_define _POSIX_C_SOURCE 200112L
             ;;
         freebsd)
             mk_define __LWI_FREEBSD__
@@ -18,8 +17,6 @@ configure()
             ;;
         solaris)
             mk_define __LWI_SOLARIS__
-            mk_define _XOPEN_SOURCE 500
-            mk_define __EXTENSIONS__
             mk_define HAVE_STRUCT_PSINFO # FIXME
             ;;
         *)
@@ -58,7 +55,7 @@ configure()
     mk_check_headers \
         FAIL="yes" \
         reg/reg.h lw/base.h krb5.h gssapi.h openssl/crypto.h wc16str.h \
-	openssl/md5.h openssl/hmac.h openssl/rand.h
+        openssl/md5.h openssl/hmac.h openssl/rand.h
 
     mk_check_headers \
         inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \

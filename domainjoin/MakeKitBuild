@@ -4,6 +4,8 @@ configure()
 {
     mk_config_header "include/DomainJoinConfig.h"
     
+    lw_define_feature_macros
+    
     case "$MK_OS" in
 	linux)
 	    mk_define __LWI_LINUX__
