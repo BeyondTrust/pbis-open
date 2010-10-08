@@ -1,5 +1,5 @@
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl"
-SUBDIRS=". libuuid lwbase lwmsg lwreg pstore lwadvapi netlogon \
+SUBDIRS=". libuuid lwbase lwmsg lwreg lwreg2 pstore lwadvapi netlogon \
          lwio libschannel dcerpc lwdns centutils lwsm eventlog lsass \
          srvsvc lwnetapi lwtools domainjoin config package"
 
@@ -30,6 +30,13 @@ option()
         VAR=LW_BUNDLED \
         DEFAULT="$default_bundled" \
         HELP="Use bundled libraries"
+
+    mk_option \
+        OPTION=use-lwreg2 \
+	VAR=LW_USE_LWREG2 \
+	PARAM='yes/no' \
+	DEFAULT="no"
+	HELP="Use lwreg2 instead of lwreg"
 }
 
 configure()
@@ -44,6 +51,13 @@ configure()
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
     lw_use_bundled libuuid || mk_skip_subdir libuuid
+
+    if [ "$LW_USE_LWREG2" = yes ]
+    then
+	mk_skip_subdir lwreg
+    else
+	mk_skip_subdir lwreg2
+    fi
 }
 
 make()
