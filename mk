@@ -1,1 +1,1 @@
-/home/bkoropoff/Projects/git/makekit/mk
+makekit/mk
