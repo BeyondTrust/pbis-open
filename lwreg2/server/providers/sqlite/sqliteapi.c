@@ -1029,11 +1029,32 @@ SqliteDeleteValue(
                                      REG_NONE,
                                      NULL,
                                      NULL);
-    BAIL_ON_NT_STATUS(status);
-
-    status = RegDbDeleteKeyValue_inlock((REG_DB_HANDLE)pConn,
-    		                            pKeyCtx->qwId,
-    		                            pwszValueName);
+    // (1) if value is user-set delete the user set value
+    if (!status)
+    {
+        status = RegDbDeleteKeyValue_inlock((REG_DB_HANDLE)pConn,
+                                            pKeyCtx->qwId,
+                                            pwszValueName);
+        BAIL_ON_NT_STATUS(status);
+    }
+    // (2) if value is not user-set
+    else if (STATUS_OBJECT_NAME_NOT_FOUND == status)
+    {
+        status = RegDbGetValueAttributes_inlock((REG_DB_HANDLE)pConn,
+                                                pKeyCtx->qwId,
+                                                pwszValueName,
+                                                REG_NONE,
+                                                NULL,
+                                                NULL);
+        // (2).1 value is not user-set but has schema info
+        if (!status)
+        {
+            status = STATUS_CANNOT_DELETE;
+        }
+        // (2).2 value is not user-set and has no schema info
+        // bail with status that is generated
+        BAIL_ON_NT_STATUS(status);
+    }
     BAIL_ON_NT_STATUS(status);
 
     status = sqlite3_exec(
