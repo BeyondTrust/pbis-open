@@ -262,6 +262,7 @@ ProcessExportedKeyInfo(
     PSTR pszAttrDump = NULL;
     DWORD pszAttrDumpLen = 0;
     PLWREG_CURRENT_VALUEINFO pCurrValueInfo = NULL;
+    REG_PARSE_ITEM regItem = {0};
 
     dwError = PrintToRegFile(
                           fp,
@@ -314,6 +315,7 @@ ProcessExportedKeyInfo(
                                 value,
                                 &dwValueLen);
         BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_STRING(pszValueName);
         dwError = RegCStringAllocateFromWC16String(
                       &pszValueName,
                       pwszValueName);
@@ -334,6 +336,7 @@ ProcessExportedKeyInfo(
                       &pValueAttributes);
         if (dataType == REG_SZ)
         {
+            LWREG_SAFE_FREE_STRING(pszValue);
             dwError2 = RegCStringAllocateFromWC16String(
                           &pszValue,
                           (PWSTR) value);
@@ -344,9 +347,11 @@ ProcessExportedKeyInfo(
         {
             pValue = value;
         }
+        LWREG_SAFE_FREE_MEMORY(pszAttrDump);
         if (dwError == 0)
         {
-            REG_PARSE_ITEM regItem = {0};
+            /* Export value and attribute information */
+            memset(&regItem, 0, sizeof(regItem));
             regItem.type = REG_SZ;
             regItem.valueName = pszValueName;
             regItem.valueType = dataType;
@@ -375,35 +380,45 @@ ProcessExportedKeyInfo(
                           &pszAttrDump,
                           &pszAttrDumpLen);
             BAIL_ON_REG_ERROR(dwError);
+            LWREG_SAFE_FREE_STRING(regItem.regAttr.pDefaultValue);
             fprintf(fp, "%*s\n", pszAttrDumpLen, pszAttrDump);
         }
         else
         {
-            dwError = PrintToRegFile(
-                           fp,
-                           pszFullKeyName,
-                           pszSddlCstring,
-                           dataType,
-                           pszValueName,
-                           dataType,
-                           pValue,
-                           dwValueLen,
-                           pPrevType);
+            /* 
+             * Create a "fake" PITEM, populate it with legacy
+             * valueName=dataValue information, and use 
+             * RegExportAttributeEntries() to generate the export data.
+             */
+            memset(&regItem, 0, sizeof(regItem));
+            regItem.type = REG_SZ;
+            regItem.valueName = pszValueName;
+            regItem.valueType = dataType;
+            regItem.regAttr.ValueType = dataType;
+            regItem.value = pValue;
+            regItem.valueLen = dwValueLen;
+
+            dwError = RegExportAttributeEntries(
+                          &regItem,
+                          &pszAttrDump,
+                          &pszAttrDumpLen);
             BAIL_ON_REG_ERROR(dwError);
-            LWREG_SAFE_FREE_STRING(pszValueName);
-            LWREG_SAFE_FREE_STRING(pszValue);
+            fprintf(fp, "%*s\n", pszAttrDumpLen, pszAttrDump);
         }
    }
 
 cleanup:
+    LWREG_SAFE_FREE_MEMORY(pszAttrDump);
     LWREG_SAFE_FREE_MEMORY(pszValue);
+    LWREG_SAFE_FREE_STRING(pszValueName);
+    LWREG_SAFE_FREE_STRING(pszValue);
+    LWREG_SAFE_FREE_STRING(regItem.regAttr.pDefaultValue);
     RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
     memset(value, 0 , MAX_KEY_LENGTH);
 
     return dwError;
 
 error:
-    LWREG_SAFE_FREE_STRING(pszValueName);
     goto cleanup;
 }
 
