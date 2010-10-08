@@ -28,7 +28,7 @@ EOF
     exit 1
 }
 
-LOCAL_STATE_DIR=/var/cache/likewise
+LOCAL_STATE_DIR=/var/lib/likewise
 OPT_SHOW=false
 
 # Parse options
