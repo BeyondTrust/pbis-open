@@ -783,7 +783,7 @@ LocalDirModifyUser(
     DWORD   dwUserInfoFlags = 0;
     DWORD   dwOrigUserInfoFlags = 0;
     WCHAR   wszAttrDN[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
-    DIRECTORY_MOD mods[9] = {{0}};
+    DIRECTORY_MOD mods[10] = {{0}};
 
     ATTRIBUTE_VALUE UserAttrVal[] = {
         {
@@ -813,6 +813,7 @@ LocalDirModifyUser(
     };
 
     WCHAR wszAttrNameDn[] = LOCAL_DIR_ATTR_DISTINGUISHED_NAME;
+    WCHAR wszAttrNameLastPasswordSet[] = LOCAL_DIR_ATTR_PASSWORD_LAST_SET;
     WCHAR wszAttrNameUserInfoFlags[] = LOCAL_DIR_ATTR_ACCOUNT_FLAGS;
     WCHAR wszAttrNameAccountExpiry[] = LOCAL_DIR_ATTR_ACCOUNT_EXPIRY;
     WCHAR wszAttrNameNtHash [] = LOCAL_DIR_ATTR_NT_HASH;
@@ -821,6 +822,7 @@ LocalDirModifyUser(
     WCHAR wszAttrNameShell [] = LOCAL_DIR_ATTR_SHELL;
     WCHAR wszAttrNameGecos [] = LOCAL_DIR_ATTR_GECOS;
     WCHAR wszAttrNameHomedir [] = LOCAL_DIR_ATTR_HOME_DIR;
+    ATTRIBUTE_VALUE avLastPasswordChange = {0};
     ATTRIBUTE_VALUE avUserInfoFlags = {0};
     ATTRIBUTE_VALUE avAccountExpiry = {0};
     ATTRIBUTE_VALUE avNtHash = {0};
@@ -907,7 +909,14 @@ LocalDirModifyUser(
 
     if (pUserModInfo->actions.bSetChangePasswordOnNextLogon)
     {
-        dwUserInfoFlags |= LOCAL_ACB_PW_EXPIRED;
+        mods[dwNumMods].ulOperationFlags = DIR_MOD_FLAGS_REPLACE;
+        mods[dwNumMods].pwszAttrName = &wszAttrNameLastPasswordSet[0];
+        mods[dwNumMods].ulNumValues = 1;
+        avLastPasswordChange.Type = DIRECTORY_ATTR_TYPE_LARGE_INTEGER;
+        avLastPasswordChange.data.llValue = 0;
+        mods[dwNumMods].pAttrValues = &avLastPasswordChange;
+
+        dwNumMods++;
     }
 
     if (pUserModInfo->actions.bUnlockUser)
