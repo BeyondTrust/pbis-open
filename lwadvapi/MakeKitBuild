@@ -4,6 +4,8 @@ configure()
 {
     mk_config_header "include/config.h"
 
+    lw_define_feature_macros
+
     mk_define _REENTRANT
     mk_define _THREAD_SAFE
 
@@ -49,6 +51,8 @@ configure()
         HEADERDEPS='ctype.h'
     then
         mk_define HAVE_DECL_ISBLANK 1
+    else
+        mk_define HAVE_DECL_ISBLANK 0
     fi
 }
 

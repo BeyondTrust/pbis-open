@@ -4,6 +4,8 @@ configure()
 {
     mk_config_header "include/config.h"
 
+    lw_define_feature_macros
+
     case "$MK_OS:$MK_ISA" in
         linux:*)
             mk_define __LWI_LINUX__

@@ -4,7 +4,7 @@ configure()
 {
     mk_config_header 'include/config.h'
 
-	lw_define_feature_macros
+    lw_define_feature_macros
 
     mk_export SBINDIR="${MK_SBINDIR}"
 
