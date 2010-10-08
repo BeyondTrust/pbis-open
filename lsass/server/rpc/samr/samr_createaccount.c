@@ -9,6 +9,15 @@ SamrSrvBuildHomedirPath(
     PWSTR  *ppHomedirPath
     );
 
+static
+DWORD
+SamrSrvAddToDefaultAliases(
+    handle_t       hBinding,
+    DOMAIN_HANDLE  hDomain,
+    PSID           pDomainSid,
+    DWORD          dwRid
+    );
+
 
 NTSTATUS
 SamrSrvCreateAccount(
@@ -311,6 +320,16 @@ SamrSrvCreateAccount(
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
+    if (dwObjectClass == DS_OBJECT_CLASS_USER)
+    {
+        dwError = SamrSrvAddToDefaultAliases(
+                                     hBinding,
+                                     hDomain,
+                                     pDomCtx->pDomainSid,
+                                     dwRid);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     pAccCtx->Type            = SamrContextAccount;
     pAccCtx->refcount        = 1;
     pAccCtx->dwAccessGranted = dwAccessGranted;
@@ -564,6 +583,71 @@ error:
     LW_SAFE_FREE_MEMORY(pwszHomedirPath);
 
     *ppwszHomedirPath = NULL;
+    goto cleanup;
+}
+
+
+static
+DWORD
+SamrSrvAddToDefaultAliases(
+    handle_t       hBinding,
+    DOMAIN_HANDLE  hDomain,
+    PSID           pDomainSid,
+    DWORD          dwRid
+    )
+{
+    DWORD dwError = ERROR_SUCCESS;
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    DWORD dwUserSidLen = 0;
+    PSID pUserSid = NULL;
+    ACCOUNT_HANDLE hAlias = NULL;
+
+    dwUserSidLen = RtlLengthRequiredSid(pDomainSid->SubAuthorityCount + 1);
+    dwError = LwAllocateMemory(dwUserSidLen,
+                               OUT_PPVOID(&pUserSid));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ntStatus = RtlCopySid(dwUserSidLen,
+                          pUserSid,
+                          pDomainSid);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = RtlAppendRidSid(dwUserSidLen,
+                               pUserSid,
+                               dwRid);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    /* Add user account to "Likewise Users" alias */
+    ntStatus = SamrSrvOpenAlias(hBinding,
+                                hDomain,
+                                ALIAS_ACCESS_ADD_MEMBER |
+                                ALIAS_ACCESS_REMOVE_MEMBER,
+                                DOMAIN_ALIAS_RID_LW_USERS,
+                                &hAlias);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+    ntStatus = SamrSrvAddAliasMember(hBinding,
+                                     hAlias,
+                                     pUserSid);
+    BAIL_ON_NTSTATUS_ERROR(ntStatus);
+
+cleanup:
+    if (hAlias)
+    {
+        SamrSrvClose(hBinding, &hAlias);
+    }
+
+    LW_SAFE_FREE_MEMORY(pUserSid);
+
+    if (dwError == ERROR_SUCCESS &&
+        ntStatus != STATUS_SUCCESS)
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+    }
+
+    return dwError;
+
+error:
     goto cleanup;
 }
 
