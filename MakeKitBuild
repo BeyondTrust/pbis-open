@@ -17,10 +17,10 @@ option()
 {
     case "${MK_HOST_OS}" in
         linux)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl"
+            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt"
             ;;
     esac
 
@@ -137,6 +137,12 @@ make()
         --disable-rtsp --disable-dict --disable-telnet \
         --disable-tftp --disable-pop3 --disable-imap \
         --disable-smtp
+
+    lw_use_bundled popt && mk_autotools \
+        SOURCEDIR=popt \
+        HEADERS="popt.h" \
+        LIBS="popt" \
+        --disable-nls
 }
 
 # OpenSSL can't be built with the usual mk_autotools stuff
