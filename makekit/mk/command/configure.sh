@@ -235,7 +235,7 @@ mk_option()
     for _arg in "$@"
     do
 	case "$_arg" in
-	    "--$OPTION="*|"--with-$OPTION="*|"$VAR="*)
+	    "--$OPTION="*|"--with-$OPTION="*)
 		mk_set "$VAR" "${_arg#*=}"
 		break
 		;;
@@ -244,7 +244,7 @@ mk_option()
 		break
 		;;
 	    "--no-$OPTION"|"--disable-$OPTION")
-		mk_set "$VAR" "yes"
+		mk_set "$VAR" "no"
 		break
 		;;
 	esac
@@ -273,7 +273,7 @@ _mk_print_option()
     [ -z "$PARAM" ] && PARAM="value"
     [ -z "$HELP" ] && HELP="No help available"
 
-    if [ -n "$OPTION" ]
+    if [ -n "$OPTION" -a "$MK_SHOW_VARS" = "no" ]
     then
 	_form="  --${OPTION}=${PARAM}"
     else
@@ -499,7 +499,7 @@ mk_help_recursive()
 
 mk_help()
 {
-    echo "Usage: makekit configure [ options ... ]"
+    echo "Usage: makekit configure [ option | @settings_file ] ..."
     echo "Options:"
     _basic_options
     echo ""
@@ -563,6 +563,38 @@ _basic_options()
 	PARAM='yes|no' \
 	DEFAULT='no' \
 	HELP="Show this help"
+
+    mk_option \
+        VAR=MK_SHOW_VARS \
+        OPTION=show-vars \
+        PARAM='yes|no' \
+        DEFAULT='no' \
+        HELP="Always show options as variable names in help output"
+}
+
+_mk_sort_params()
+{
+    mk_quote_list "$@"
+    MK_OPTIONS="$result"
+
+    # Sort through parameters and figure out what to do with them
+    for _param in "$@"
+    do
+        case "$_param" in
+            "@"*)
+                # Read variables from file
+                mk_source_or_fail "${_param#@}"
+                ;;
+            "--"*)
+                # Leave it alone for now
+                :
+                ;;
+            *"="*)
+                # Set variable
+                mk_set "${_param%%=*}" "${_param#*=}"
+                ;;
+        esac
+    done
 }
 
 #
@@ -610,9 +642,8 @@ _mk_emit_build_script()
     } | awk -f "${MK_HOME}/build.awk" >.MakeKitBuild || mk_fail "could not write .MakeKitBuild"
 }
 
-# Save our parameters for later use
-mk_quote_list "$@"
-MK_OPTIONS="$result"
+# Sort through our command line parameters
+_mk_sort_params "$@"
 
 # Set up basic variables
 MK_ROOT_DIR="$PWD"

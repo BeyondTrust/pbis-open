@@ -485,6 +485,13 @@ option()
 	PARAM="yes|no" \
 	DEFAULT="no" \
 	HELP="Fail on warnings"
+
+    mk_option \
+        OPTION="debug" \
+        VAR="MK_DEBUG" \
+        PARAM="yes|no" \
+        DEFAULT="no" \
+        HELP="Build in debug mode"
 }
 
 configure()

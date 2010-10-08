@@ -566,7 +566,7 @@ mk_write_config_header()
 
 _mk_close_config_header()
 {
-    if [ -n "${MK_CONFIG_HEADER}" ]
+    if [ -n "${MK_LAST_CONFIG_HEADER}" ]
     then
 	cat >&5 <<EOF
 
@@ -574,15 +574,15 @@ _mk_close_config_header()
 EOF
 	exec 5>&-
 	
-	if [ -f "${MK_CONFIG_HEADER}" ] && diff "${MK_CONFIG_HEADER}" "${MK_CONFIG_HEADER}.new" >/dev/null 2>&1
+	if [ -f "${MK_LAST_CONFIG_HEADER}" ] && diff "${MK_LAST_CONFIG_HEADER}" "${MK_LAST_CONFIG_HEADER}.new" >/dev/null 2>&1
 	then
 	    # The config header has not changed, so don't touch the timestamp on the file */
-	    rm -f "${MK_CONFIG_HEADER}.new"
+	    rm -f "${MK_LAST_CONFIG_HEADER}.new"
 	else
-	    mv "${MK_CONFIG_HEADER}.new" "${MK_CONFIG_HEADER}"
+	    mv "${MK_LAST_CONFIG_HEADER}.new" "${MK_LAST_CONFIG_HEADER}"
 	fi
 	
-	MK_CONFIG_HEADER=""
+	MK_LAST_CONFIG_HEADER=""
     fi
 }
     
@@ -596,6 +596,7 @@ mk_config_header()
     [ -z "$HEADER" ] && HEADER="$1"
     
     MK_CONFIG_HEADER="${MK_OBJECT_DIR}${MK_SUBDIR}/${HEADER}"
+    MK_LAST_CONFIG_HEADER="$MK_CONFIG_HEADER"
     MK_CONFIG_HEADERS="$MK_CONFIG_HEADERS '$MK_CONFIG_HEADER'"
     
     mkdir -p "${MK_CONFIG_HEADER%/*}"
@@ -675,12 +676,22 @@ _mk_build_test()
     return "$_ret"
 }
 
+_mk_c_check_prologue()
+{
+    if [ -n "$MK_CONFIG_HEADER" ]
+    then
+        cat "${MK_CONFIG_HEADER}.new"
+        printf "#endif\n\n"
+    fi
+}
+
 mk_try_compile()
 {
     mk_push_vars CODE HEADERDEPS
     mk_parse_params
     
     {
+        _mk_c_check_prologue
 	for _header in ${HEADERDEPS}
 	do
             mk_might_have_header "$_header" && echo "#include <${_header}>"
@@ -722,6 +733,7 @@ mk_check_header()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
             for _header in ${HEADERDEPS}
             do
                 mk_might_have_header "$_header" && echo "#include <${_header}>"
@@ -812,6 +824,7 @@ mk_check_function()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
 	    for _header in ${HEADERDEPS}
 	    do
                 mk_might_have_header "$_header" && echo "#include <${_header}>"
@@ -890,6 +903,7 @@ mk_check_library()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
 	    cat <<EOF
 int main(int argc, char** argv)
 {
@@ -944,6 +958,7 @@ _mk_check_type()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
 	    for _header in ${HEADERDEPS}
 	    do
                 mk_might_have_header "$_header" && echo "#include <${_header}>"
@@ -1015,6 +1030,7 @@ _mk_check_sizeof()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
 	    for _header in ${HEADERDEPS}
 	    do
                 mk_might_have_header "$_header" && echo "#include <${_header}>"
@@ -1081,6 +1097,7 @@ mk_check_endian()
 	_result="$result"
     else
 	{
+            _mk_c_check_prologue
 	    cat <<EOF
 #include <stdio.h>
 
@@ -1189,6 +1206,13 @@ mk_check_headers()
 
 option()
 {
+    if [ "$MK_DEBUG" = yes ]
+    then
+        _default_OPTFLAGS="-O0 -g"
+    else
+        _default_OPTFLAGS="-O2 -g"
+    fi
+
     mk_option \
 	VAR="CC" \
 	PARAM="program" \
@@ -1208,7 +1232,7 @@ option()
     mk_option \
 	VAR="CFLAGS" \
 	PARAM="flags" \
-	DEFAULT="" \
+	DEFAULT="$_default_OPTFLAGS" \
 	HELP="Default C compiler flags"
 
     MK_DEFAULT_CFLAGS="$CFLAGS"
@@ -1216,7 +1240,7 @@ option()
     mk_option \
 	VAR="LDFLAGS" \
 	PARAM="flags" \
-	DEFAULT="" \
+	DEFAULT="$_default_OPTFLAGS" \
 	HELP="Default linker flags"
 
     MK_DEFAULT_LDFLAGS="$LDFLAGS"
@@ -1277,6 +1301,7 @@ option()
 
 configure()
 {
+    mk_export MK_CONFIG_HEADER=""
     mk_declare_system_var MK_CC MK_CPPFLAGS MK_CFLAGS MK_LDFLAGS
     mk_declare_system_var EXPORT=no MK_INTERNAL_LIBS
 

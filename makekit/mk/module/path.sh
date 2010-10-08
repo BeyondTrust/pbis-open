@@ -100,14 +100,21 @@ option()
 	OPTION=bindir \
 	PARAM="path" \
 	DEFAULT="${MK_EPREFIX}/bin" \
-	HELP="Program directory"
+	HELP="User executable directory"
 
     mk_option \
 	VAR=MK_SBINDIR \
 	OPTION=sbindir \
 	PARAM="path" \
 	DEFAULT="${MK_EPREFIX}/sbin" \
-	HELP="System program directory"
+	HELP="System executable directory"
+
+    mk_option \
+        VAR=MK_LIBEXECDIR \
+        OPTION=libexecdir \
+        PARAM="path" \
+        DEFAULT="${MK_EPREFIX}/libexec" \
+        HELP="Program executable directory"
 
     mk_option \
 	VAR=MK_SYSCONFDIR \

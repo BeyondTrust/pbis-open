@@ -339,6 +339,19 @@ mk_function_exists()
 ##
 mk_safe_source()
 {
+    # Prefix relative paths with ./
+    # Sourcing is like running a program
+    # in that the shell WILL NOT search the
+    # current directory for the file
+    case "$1" in
+        "/"*)
+            :
+            ;;
+        *)
+            set -- "./$1"
+            ;;
+    esac
+            
     if [ -f "$1" ]
     then
 	. "$1"
