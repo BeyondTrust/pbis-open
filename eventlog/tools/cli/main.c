@@ -123,7 +123,6 @@ ParseFilter(
     PCSTR pszPseudoSqlFilter,
     PCSTR pszUserForFilter,
     DWORD dwSecondsForFilter,
-    DWORD dwLastForFilter,
     PWSTR* ppwszSqlFilter
     )
 {
@@ -298,7 +297,6 @@ main(
     DWORD dwHoursForFilter = 0;
     DWORD dwMinutesForFilter = 0;
     DWORD dwSecondsForFilter = 0;
-    DWORD dwLastForFilter = 0;
 
     struct poptOption optionsTable[] =
     {
@@ -390,15 +388,6 @@ main(
             &dwMinutesForFilter,
             ACTION_NONE,
             "Filter results to those items in the past n minutes.",
-            "filter"
-        },
-        {
-            "last",
-            '\0',
-            POPT_ARG_LONG,
-            &dwLastForFilter,
-            ACTION_NONE,
-            "Filter results to the last n results.",
             "filter"
         },
         {
@@ -539,7 +528,6 @@ main(
                 pszSqlFilter,
                 pszUserForFilter,
                 dwSecondsForFilter,
-                dwLastForFilter,
                 &pwszSqlFilter);
     BAIL_ON_EVT_ERROR(dwError);
 
