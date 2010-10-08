@@ -53,6 +53,7 @@ configure()
 	sqlite3
 
     mk_output_file server/lwregd/lwreg.reg
+    mk_output_file shell/lw-edit-reg.sh
 }
 
 make()
