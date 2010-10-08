@@ -18,6 +18,8 @@ make()
         security-sid.c \
         security-acl.c \
         security-sd.c \
+        security-sddl.c \
+        security-sddlmapping.c \
         wc16str.c \
         wc16printf.c"
 
