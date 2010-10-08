@@ -25,6 +25,12 @@ option()
         VAR=ENABLE_NP \
         DEFAULT="yes" \
         HELP="Enable SMB named pipe RPC support"
+
+    mk_option \
+        OPTION=rpc-http \
+        VAR=ENABLE_HTTP \
+        DEFAULT="yes" \
+        HELP="Enable RPCHTTP support"
     
     mk_option \
         OPTION=rpc-gss \
@@ -121,7 +127,7 @@ configure()
     # Required headers
     mk_check_headers \
         FAIL=yes \
-        lwio/lwio.h lw/base.h curl/curl.h
+        lwio/lwio.h lw/base.h
 
     # Optional headers
     mk_check_headers \
@@ -135,6 +141,13 @@ configure()
     mk_check_libraries \
         FAIL=yes \
         lwioclient schannel curl
+
+    # Curl
+    if [ "$ENABLE_HTTP" = "yes" ]
+    then
+        mk_check_headers FAIL=yes curl/curl.h
+        mk_check_libraries FAIL=yes curl
+    fi
 
     # Optional libraries
     mk_check_libraries \
