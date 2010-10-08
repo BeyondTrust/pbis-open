@@ -472,10 +472,17 @@ RegSrvSafeFreeKeyContext(
         LWREG_SAFE_FREE_MEMORY(pKeyResult->pwszKeyName);
         LWREG_SAFE_FREE_MEMORY(pKeyResult->pwszParentKeyName);
         RegFreeWC16StringArray(pKeyResult->ppwszSubKeyNames, pKeyResult->dwNumCacheSubKeys);
+
         RegFreeWC16StringArray(pKeyResult->ppwszValueNames, pKeyResult->dwNumCacheValues);
         RegFreeValueByteArray(pKeyResult->ppValues, pKeyResult->dwNumCacheValues);
         LWREG_SAFE_FREE_MEMORY(pKeyResult->pdwValueLen);
         LWREG_SAFE_FREE_MEMORY(pKeyResult->pTypes);
+
+        RegFreeWC16StringArray(pKeyResult->ppwszDefaultValueNames, pKeyResult->dwNumCacheDefaultValues);
+        RegFreeValueByteArray(pKeyResult->ppDefaultValues, pKeyResult->dwNumCacheDefaultValues);
+        LWREG_SAFE_FREE_MEMORY(pKeyResult->pdwDefaultValueLen);
+        LWREG_SAFE_FREE_MEMORY(pKeyResult->pDefaultTypes);
+
         LWREG_SAFE_FREE_MEMORY(pKeyResult->pSecurityDescriptor);
 
         memset(pKeyResult, 0, sizeof(*pKeyResult));
