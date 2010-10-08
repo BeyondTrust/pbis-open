@@ -33,35 +33,10 @@ AC_ARG_WITH([lwmsg-libs],
                 LWMSG_LDFLAGS="-L$withval"
         ])
 
-# sqlite
-
-AC_ARG_WITH([sqlite],
-        [AC_HELP_STRING([--with-sqlite=<dir>], [use sqlite located in prefix <dir>])],
-        [
-		SQLITE_INCLUDES="-I$withval/include"
-                SQLITE_LDFLAGS="-L$withval/lib"
-        ])
-
-AC_ARG_WITH([sqlite-includes],
-        [AC_HELP_STRING([--with-sqlite-includes=<dir>], [use sqlite includes located in <dir>])],
-        [
-		SQLITE_INCLUDES="-I$withval"
-        ])
-
-AC_ARG_WITH([sqlite-libs],
-        [AC_HELP_STRING([--with-sqlite-libs=<dir>], [use sqlite libs located in <dir>])],
-        [
-		SQLITE_LDFLAGS="-L$withval"
-        ])
-
-AC_SUBST(SQLITE_INCLUDES)
-AC_SUBST(SQLITE_LDFLAGS)
-AC_SUBST(SQLITE_LIBS)
-
 # providers
 
-AC_ARG_WITH([providers], [AC_HELP_STRING([--with-providers], [list of providers to build (sqldb filedb regdb)])],
-                       [], [with_providers="sqldb regdb"])
+AC_ARG_WITH([providers], [AC_HELP_STRING([--with-providers], [list of providers to build (regdb)])],
+                       [], [with_providers="regdb"])
 
 _IFS="${IFS}"
 IFS=" ,"
@@ -70,18 +45,6 @@ do
         eval "enable_${provider}=yes"
 done
 IFS="${_IFS}"
-
-AM_CONDITIONAL(ENABLE_SQLDB, test x"$enable_sqldb" = x"yes")
-if test x"$enable_sqldb" = x"yes"
-then
-        AC_DEFINE([ENABLE_SQLDB], [], [Define if sqldb provider should be built])
-fi
-
-AM_CONDITIONAL(ENABLE_FILEDB, test x"$enable_filedb" = x"yes")
-if test x"$enable_filedb" = x"yes"
-then
-        AC_DEFINE([ENABLE_FILEDB], [], [Define if filedb provider should be built])
-fi
 
 AM_CONDITIONAL(ENABLE_REGDB, test x"$enable_regdb" = x"yes")
 if test x"$enable_regdb" = x"yes"
@@ -274,9 +237,6 @@ AC_SUBST(LWREG_LDFLAGS)
 AC_SUBST(LWREG_LIBS)
 
 # Check for external libraries
-AC_CHECK_LIB([sqlite3], [sqlite3_exec], [SQLITE_LIBS="-lsqlite3"],
-    AC_MSG_ERROR([Could not find sqlite; please use --with-sqlite]),
-    [$SQLITE_LDFLAGS])
 AC_CHECK_LIB([pthread], [pthread_self], [PTHREAD_LIBS="-lpthread"], [])
 
 AC_SUBST(PTHREAD_LIBS)
@@ -287,8 +247,6 @@ AC_CONFIG_FILES([Makefile
                  utils/Makefile
                  api/Makefile
                  providers/Makefile
-                 providers/sqldb/Makefile
-                 providers/filedb/Makefile
                  providers/regdb/Makefile
 		 tools/Makefile
 		 tools/dump_machine_account/Makefile
@@ -296,14 +254,5 @@ AC_CONFIG_FILES([Makefile
                  etc/pstore.reg
 		 logging/Makefile
                  ])
-
-if $ENABLE_TESTS
-then
-	AC_CONFIG_FILES([
-			tests/Makefile
-			tests/test_show_sqldb_machinepwd_entries/Makefile
-			tests/test_SqlDBMachinePwdDBGet/Makefile
-			tests/test_SqlDBMachinePwdDBSet/Makefile])
-fi
 
 AC_OUTPUT

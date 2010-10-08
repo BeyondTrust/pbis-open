@@ -56,26 +56,11 @@
 
 #ifdef ENABLE_STATIC_PROVIDERS
 
-extern DWORD LWPS_INITIALIZE_PROVIDER(sqldb)(PCSTR, PSTR*, PLWPS_PROVIDER_FUNC_TABLE*);
-extern DWORD LWPS_SHUTDOWN_PROVIDER(sqldb)(PSTR, PLWPS_PROVIDER_FUNC_TABLE);
-extern DWORD LWPS_INITIALIZE_PROVIDER(tdb)(PCSTR, PSTR*, PLWPS_PROVIDER_FUNC_TABLE*);
-extern DWORD LWPS_SHUTDOWN_PROVIDER(tdb)(PSTR, PLWPS_PROVIDER_FUNC_TABLE);
-extern DWORD LWPS_INITIALIZE_PROVIDER(filedb)(PCSTR, PSTR*, PLWPS_PROVIDER_FUNC_TABLE*);
-extern DWORD LWPS_SHUTDOWN_PROVIDER(filedb)(PSTR, PLWPS_PROVIDER_FUNC_TABLE);
 extern DWORD LWPS_INITIALIZE_PROVIDER(regdb)(PCSTR, PSTR*, PLWPS_PROVIDER_FUNC_TABLE*);
 extern DWORD LWPS_SHUTDOWN_PROVIDER(regdb)(PSTR, PLWPS_PROVIDER_FUNC_TABLE);
 
 static LWPS_STATIC_PROVIDER gStaticProviders[] =
 {
-#ifdef ENABLE_FILEDB
-    LWPS_STATIC_PROVIDER_ENTRY(filedb, filedb),
-#endif
-#ifdef ENABLE_SQLDB
-    LWPS_STATIC_PROVIDER_ENTRY(sqldb, sqldb),
-#endif
-#ifdef ENABLE_TDB
-    LWPS_STATIC_PROVIDER_ENTRY(tdb, tdb),
-#endif
 #ifdef ENABLE_REGDB
     LWPS_STATIC_PROVIDER_ENTRY(regdb, regdb),
 #endif
@@ -381,13 +366,7 @@ LwpsConfigNameValuePair(
     }
     else if (!strcasecmp(pszName, "type") && !IsNullOrEmptyString(pszValue)) {
 
-       if (!strcasecmp(pszValue, "sqldb")) {
-           pProvider->storeType = LWPS_PASSWORD_STORE_SQLDB;
-       } else if (!strcasecmp(pszValue, "tdb")) {
-           pProvider->storeType = LWPS_PASSWORD_STORE_TDB;
-       } else if (!strcasecmp(pszValue, "filedb")) {
-           pProvider->storeType = LWPS_PASSWORD_STORE_FILEDB;
-       } else if (!strcasecmp(pszValue, "regdb")) {
+       if (!strcasecmp(pszValue, "regdb")) {
            pProvider->storeType = LWPS_PASSWORD_STORE_REGDB;
        } else {
            pProvider->storeType = LWPS_PASSWORD_STORE_UNKNOWN;
@@ -780,15 +759,6 @@ LwpsBuiltInProviders(
         case LWPS_PASSWORD_STORE_DEFAULT:   /* 1 */
             pszStorageType = "unknown";
             break;
-        case LWPS_PASSWORD_STORE_SQLDB:     /* 2 */
-            pszStorageType = "sqldb";
-            break;
-        case LWPS_PASSWORD_STORE_TDB:       /* 3 */
-            pszStorageType = "tdb";
-            break;
-        case LWPS_PASSWORD_STORE_FILEDB:    /* 4 */
-            pszStorageType = "filedb";
-            break;
         case LWPS_PASSWORD_STORE_REGDB:     /* 5 */
         default:
             pszStorageType = "regdb";
@@ -803,20 +773,6 @@ LwpsBuiltInProviders(
     {
         RegCloseServer(hReg);
     }
-
-#elif defined(ENABLE_FILEDB)
-    dwError = LwpsAllocateString(
-                  "filedb",
-                  &pProvider->pszId);
-    BAIL_ON_LWPS_ERROR(dwError);
-
-    dwError = LwpsAllocateString(
-                  "/opt/likewise/lib/liblwps-filedb.so",
-                  &pProvider->pszLibPath);
-    BAIL_ON_LWPS_ERROR(dwError);
-
-    pProvider->storeType = LWPS_PASSWORD_STORE_FILEDB;
-    pProvider->bDefault = TRUE;
 
 #else
     dwError = LWPS_ERROR_NO_SUCH_PROVIDER;
