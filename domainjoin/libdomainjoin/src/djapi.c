@@ -28,6 +28,7 @@
  * license@likewisesoftware.com
  */
 
+#include "DomainJoinConfig.h"
 #include "djapi.h"
 
 #include "domainjoin.h"
