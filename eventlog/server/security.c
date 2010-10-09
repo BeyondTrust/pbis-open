@@ -49,7 +49,7 @@ LWIGetGSSSecurityContextInfo(
     PSTR *pszClientName
     )
 {
-    DWORD dwError = EVT_ERROR_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     int gss_rc = 0;
     OM_uint32 minor_status = 0;
     gss_name_t src = GSS_C_NO_NAME;
@@ -116,7 +116,7 @@ LWICheckGSSSecurity(
     PEVTALLOWEDDATA pAllowedData
     )
 {
-    DWORD dwError = EVT_ERROR_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     PSTR pszClientName = NULL;
     PSTR pszServerName = NULL;
 
@@ -154,37 +154,18 @@ error:
 DWORD
 LWICheckSecurity(
     handle_t        hBindingHandle,
-    PEVTALLOWEDDATA pAllowedData
+    ACCESS_MASK dwAccessMask
     )
 {
-    DWORD dwError = EVT_ERROR_SUCCESS;
+    DWORD dwError = ERROR_SUCCESS;
     volatile unsigned32 rpcError;
-    unsigned char* pszStringBinding = NULL;
-    unsigned char* pszProtocol = NULL;
-    DWORD dwAuthnProtocol = 0;
-    PVOID pMechCtx = NULL;
-    unsigned32 uid = -1, gid = -1;
-    rpc_transport_info_handle_t info = NULL;
+    PACCESS_TOKEN        pUserToken = NULL;
 
     TRY
     {
-        /*
-         * This is expected to fail for local rpc.
-         */
-        rpc_binding_inq_security_context(
+        rpc_binding_inq_access_token_caller(
             hBindingHandle,
-            (unsigned32*)&dwAuthnProtocol,
-            &pMechCtx,
-            (unsigned32*)&rpcError);
-    }
-    CATCH_ALL
-    ENDTRY;
-
-    TRY
-    {
-        rpc_binding_to_string_binding(
-            hBindingHandle,
-            &pszStringBinding,
+            &pUserToken,
             (unsigned32*)&rpcError);
     }
     CATCH_ALL
@@ -192,67 +173,16 @@ LWICheckSecurity(
 
     BAIL_ON_DCE_ERROR(dwError, rpcError);
 
-    TRY
-    {
-        rpc_string_binding_parse(
-            pszStringBinding,
-            NULL,
-            &pszProtocol,
-            NULL,
-            NULL,
-            NULL,
-            (unsigned32*)&rpcError);
-    }
-    CATCH_ALL
-    ENDTRY;
-
-    BAIL_ON_DCE_ERROR(dwError, rpcError);
-
-    switch(dwAuthnProtocol)
-    {
-    case rpc_c_authn_gss_negotiate:
-        dwError = LWICheckGSSSecurity(
-                      (gss_ctx_id_t)pMechCtx,
-                      pAllowedData);
-        break;
-        
-    default:
-        /* Always allow in local rpc */
-        if (!strcmp((char*) pszProtocol, "ncalrpc"))
-        {
-            rpc_binding_inq_transport_info(hBindingHandle, &info, (unsigned32*) &rpcError);
-            BAIL_ON_DCE_ERROR(dwError, rpcError);
-
-            rpc_lrpc_transport_info_inq_peer_eid(info, &uid, &gid);
-
-            if (uid == 0)
-            {
-                dwError = EVT_ERROR_SUCCESS;
-            }
-            else
-            {
-                dwError = EVT_ERROR_ACCESS_DENIED;
-            }
-        }
-        else
-        {
-            dwError = EVT_ERROR_ACCESS_DENIED;
-        }
-        break;
-    }
+    dwError = EVTCheckAllowed(
+            pUserToken, 
+            dwAccessMask);
+    BAIL_ON_EVT_ERROR(dwError);
 
 error:
-    
-    if (pszStringBinding)
+    if (pUserToken)
     {
-        rpc_string_free(&pszStringBinding, (unsigned32*)&rpcError);
+        RtlReleaseAccessToken(&pUserToken);
     }
-
-    if (pszProtocol)
-    {
-        rpc_string_free(&pszProtocol, (unsigned32*)&rpcError);
-    }
-
     return dwError;
 }
 

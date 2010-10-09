@@ -141,12 +141,12 @@ LWICreateEventLogRpcBinding(
     handle_t eventBinding_local = 0;
     BOOLEAN bLocalHost = FALSE;
 
-    if ( (hostname == NULL) || ((geteuid() == 0) && LWIIsLocalHost(hostname)) )
+    if (hostname == NULL || LWIIsLocalHost(hostname))
     {
         /* If no host is specified, connect to the local host over ncalrpc */
         bLocalHost = TRUE;
         protocol = "ncalrpc";
-        endpoint = CACHEDIR "/rpc/socket";
+        endpoint = CACHEDIR "/.eventlog";
     }
     else
     {
@@ -185,7 +185,7 @@ LWICreateEventLogRpcBinding(
         
         ret = snprintf(hostPrincipal, hostPrincipalSize, "host/%s", hostname);
         if (ret < 0 || ret >= hostPrincipalSize) {
-            BAIL_ON_EVT_ERROR(EVT_ERROR_INSUFFICIENT_BUFFER);
+            BAIL_ON_EVT_ERROR(ERROR_INSUFFICIENT_BUFFER);
         }
         
         EVT_LOG_VERBOSE("client::eventlogbinding.c: CreateEventLogRpcBinding() using host principal [%s]\n",

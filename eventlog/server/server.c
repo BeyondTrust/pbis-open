@@ -52,48 +52,32 @@ RpcLWIOpenEventLog(
     )
 {
     DWORD dwError = 0;
-    PEVTALLOWEDDATA pAllowAccessTo = NULL;
-
-    dwError = EVTGetAllowReadToLocked( &pAllowAccessTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowAccessTo);
+                  EVENTLOG_READ_RECORD);
 
     EVTUnlockServerInfo();
 
     if ( dwError )
     {
-        dwError = EVTGetAllowWriteToLocked( &pAllowAccessTo );
-        BAIL_ON_EVT_ERROR(dwError);
-
         dwError = LWICheckSecurity(
                       bindingHandle,
-                      pAllowAccessTo);
+                      EVENTLOG_WRITE_RECORD);
 
         EVTUnlockServerInfo();
     }
 
     if ( dwError )
     {
-        dwError = EVTGetAllowDeleteToLocked( &pAllowAccessTo );
-        BAIL_ON_EVT_ERROR(dwError);
-
         dwError = LWICheckSecurity(
                       bindingHandle,
-                      pAllowAccessTo);
+                      EVENTLOG_DELETE_RECORD);
 
         EVTUnlockServerInfo();
     }
 
-cleanup:
-
     return dwError;
-
-error:
-
-    goto cleanup;
 }
 
 idl_long_int
@@ -116,16 +100,10 @@ RpcLWIEventLogCount(
 {
     DWORD  dwError = 0;
     HANDLE hDB = (HANDLE)NULL;
-    PEVTALLOWEDDATA pAllowAccessTo = NULL;
-
-    dwError = EVTGetAllowReadToLocked( &pAllowAccessTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowAccessTo);
-
-    EVTUnlockServerInfo();
+                  EVENTLOG_READ_RECORD);
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError =  SrvOpenEventDatabase(&hDB);
@@ -162,16 +140,10 @@ RpcLWIReadEventLog(
 {
     DWORD  dwError = 0;
     HANDLE hDB = (HANDLE)NULL;
-    PEVTALLOWEDDATA pAllowAccessTo = NULL;
-
-    dwError = EVTGetAllowReadToLocked( &pAllowAccessTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowAccessTo);
-
-    EVTUnlockServerInfo();
+                  EVENTLOG_READ_RECORD);
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError =  SrvOpenEventDatabase(&hDB);
@@ -212,16 +184,10 @@ RpcLWIWriteEventLogRecords(
 {
     DWORD  dwError = 0;
     HANDLE hDB = (HANDLE)NULL;
-    PEVTALLOWEDDATA pAllowWriteTo = NULL;
-
-    dwError = EVTGetAllowWriteToLocked( &pAllowWriteTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowWriteTo);
-
-    EVTUnlockServerInfo();
+                  EVENTLOG_WRITE_RECORD);
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError =  SrvOpenEventDatabase(&hDB);
@@ -251,16 +217,10 @@ RpcLWIClearEventLog(handle_t bindingHandle)
 {
     DWORD  dwError = 0;
     HANDLE hDB = (HANDLE)NULL;
-    PEVTALLOWEDDATA pAllowDeleteTo = NULL;
-
-    dwError = EVTGetAllowDeleteToLocked( &pAllowDeleteTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowDeleteTo);
-
-    EVTUnlockServerInfo();
+                  EVENTLOG_DELETE_RECORD);
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError =  SrvOpenEventDatabase(&hDB);
@@ -291,16 +251,10 @@ RpcLWIDeleteFromEventLog(
 {
     DWORD  dwError = 0;
     HANDLE hDB = (HANDLE)NULL;
-    PEVTALLOWEDDATA pAllowDeleteTo = NULL;
-
-    dwError = EVTGetAllowDeleteToLocked( &pAllowDeleteTo );
-    BAIL_ON_EVT_ERROR(dwError);
 
     dwError = LWICheckSecurity(
                   bindingHandle,
-                  pAllowDeleteTo);
-
-    EVTUnlockServerInfo();
+                  EVENTLOG_DELETE_RECORD);
     BAIL_ON_EVT_ERROR(dwError);
 
     dwError =  SrvOpenEventDatabase(&hDB);
@@ -420,13 +374,6 @@ prepare_domain_socket(PCSTR pszPath)
     dwError = mkdir_recursive(pszDirname, 0655);
     BAIL_ON_EVT_ERROR(dwError);
     
-    /* Ensure directory is only accessible by root */
-    if (chmod(pszDirname, 0700))
-    {
-        dwError = errno;
-        BAIL_ON_EVT_ERROR(dwError);
-    }
-
 error:
     
     if (pszPathCopy)
@@ -444,7 +391,7 @@ bind_server(
     )
 {
     DWORD dwError = 0;
-    DWORD dwRpcStatus = 0;
+    volatile DWORD dwRpcStatus = 0;
 
     if (!pEndPoint->endpoint)
     {
@@ -494,17 +441,11 @@ EVTRegisterInterface(
     }
     CATCH_ALL
     {
-        if ( dwRpcStatus == RPC_S_OK )
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-            if(!dwError)
-            {
-                dwError = EVT_ERROR_RPC_EXCEPTION_UPON_REGISTER;
-            }
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY;
     
+    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
 error:
@@ -533,17 +474,11 @@ EVTRegisterEndpoint(
     }
     CATCH_ALL
     {
-        if(!dwError)
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-        }
-        if(!dwError)
-        {
-            dwError = EVT_ERROR_RPC_EXCEPTION_UPON_REGISTER;
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY;
 
+    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
     bBound = TRUE;
@@ -558,14 +493,7 @@ EVTRegisterEndpoint(
     }
     CATCH_ALL
     {
-        if ( dwRpcStatus == RPC_S_OK )
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-            if(!dwError)
-            {
-                dwError = EVT_ERROR_RPC_EXCEPTION_UPON_REGISTER;
-            }
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY;
 
@@ -603,24 +531,19 @@ EVTListen(
     )
 {
     volatile DWORD dwError = 0;
+    volatile DWORD dwRpcStatus = 0;
 
     TRY
     {
-        rpc_server_listen(rpc_c_listen_max_calls_default, (unsigned32*)&dwError);
+        rpc_server_listen(rpc_c_listen_max_calls_default, (unsigned32*)&dwRpcStatus);
     }
     CATCH_ALL
     {
-        if (!dwError)
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-        }
-        if(!dwError)
-        {
-            dwError = EVT_ERROR_RPC_EXCEPTION_UPON_LISTEN;
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY
 
+    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
@@ -637,24 +560,19 @@ EVTStopListen(
     )
 {
     volatile DWORD dwError = 0;
+    volatile DWORD dwRpcStatus = 0;
 
     TRY
     {
-        rpc_mgmt_stop_server_listening(NULL, (unsigned32*)&dwError);
+        rpc_mgmt_stop_server_listening(NULL, (unsigned32*)&dwRpcStatus);
     }
     CATCH_ALL
     {
-        if (!dwError)
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-        }
-        if(!dwError)
-        {
-            dwError = EVT_ERROR_RPC_EXCEPTION_UPON_LISTEN;
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY
 
+    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
@@ -673,24 +591,19 @@ EVTIsListening(
 {
     volatile DWORD dwError = 0;
     boolean32 bIsListening = FALSE;
+    volatile DWORD dwRpcStatus = 0;
 
     TRY
     {
-        bIsListening = rpc_mgmt_is_server_listening(NULL, (unsigned32*)&dwError);
+        bIsListening = rpc_mgmt_is_server_listening(NULL, (unsigned32*)&dwRpcStatus);
     }
     CATCH_ALL
     {
-        if (!dwError)
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-        }
-        if(!dwError)
-        {
-            dwError = EVT_ERROR_RPC_EXCEPTION_UPON_LISTEN;
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY
 
+    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);
 
 cleanup:
@@ -728,19 +641,9 @@ EVTUnregisterAllEndpoints(
     }
     CATCH_ALL
     {
-        if ( dwRpcStatus == RPC_S_OK )
-        {
-            dwError = dcethread_exc_getstatus (THIS_CATCH);
-            if(!dwError)
-            {
-                dwError = EVT_ERROR_RPC_EXCEPTION_UPON_UNREGISTER;
-            }
-        }
+        dwRpcStatus = dcethread_exc_getstatus (THIS_CATCH);
     }
     ENDTRY
-
-    BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
-    BAIL_ON_EVT_ERROR(dwError);
 
     BAIL_ON_DCE_ERROR(dwError, dwRpcStatus);
     BAIL_ON_EVT_ERROR(dwError);

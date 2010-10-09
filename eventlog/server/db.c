@@ -1076,7 +1076,7 @@ SrvQueryEventLog(
 
     pContext = (PEVENTLOG_CONTEXT)((long)hDB);
     if (!pContext->pDbHandle) {
-        dwError = EVT_ERROR_INVALID_DB_HANDLE;
+        dwError = ERROR_INVALID_HANDLE;
         BAIL_ON_EVT_ERROR(dwError);
     }
 

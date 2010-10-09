@@ -40,7 +40,7 @@ EVTParseDays(
     else 
     {
     	*pdwTimeInterval = 0;
-        dwError = EVT_ERROR_INVALID_PARAMETER;
+        dwError = ERROR_INVALID_PARAMETER;
     }
     
 cleanup:
@@ -99,7 +99,7 @@ EVTParseDiskUsage(
     }
     else 
     {
-        dwError = EVT_ERROR_INVALID_PARAMETER;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 

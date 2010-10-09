@@ -59,3 +59,7 @@
 #include "access_p.h"
 
 #include <lwerror.h>
+#include <lwstr.h>
+#include <lwmem.h>
+#include <lwsid.h>
+#include <lw/mapsecurity.h>

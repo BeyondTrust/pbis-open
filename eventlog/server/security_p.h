@@ -45,7 +45,7 @@
 DWORD
 LWICheckSecurity(
     handle_t        hBindingHandle,
-    PEVTALLOWEDDATA pAllowedData
+    ACCESS_MASK dwAccessMask
     );
 
 #endif /* __EVTSECURITY_H__ */

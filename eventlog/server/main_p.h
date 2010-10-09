@@ -87,16 +87,24 @@ typedef struct {
     /* Flag to prune database*/
     BOOLEAN bRemoveAsNeeded;
 
-    /* Who is allowed to read events */
-    EVTALLOWEDDATA  pAllowReadTo;
-    /* Who is allowed to write events */
-    EVTALLOWEDDATA  pAllowWriteTo;
-    /* Who is allowed to delete events */
-    EVTALLOWEDDATA  pAllowDeleteTo;
+    /* Who is allowed to read, write, and delete events. The security
+     * descriptor is set when all of the users/groups can be resolved. */
+    PSTR pszAllowReadTo;
+    PSTR pszAllowWriteTo;
+    PSTR pszAllowDeleteTo;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pAccess;
 } EVTSERVERINFO, *PEVTSERVERINFO;
 
 extern EVTSERVERINFO gServerInfo;
 
+#define EVENTLOG_READ_RECORD    1
+#define EVENTLOG_WRITE_RECORD   2
+#define EVENTLOG_DELETE_RECORD  4
+
+VOID
+EVTFreeSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE pDescriptor
+    );
 
 DWORD
 EVTGetConfigPath(
@@ -111,6 +119,12 @@ EVTGetCachePath(
 DWORD
 EVTGetPrefixPath(
     PSTR* ppszPath
+    );
+
+DWORD
+EVTCheckAllowed(
+    PACCESS_TOKEN pUserToken,
+    ACCESS_MASK dwAccessMask
     );
 
 DWORD
@@ -136,21 +150,6 @@ EVTGetMaxLogSize(
 DWORD
 EVTGetRemoveEventsFlag(
     PBOOLEAN pbRemoveEvents
-    );
-
-DWORD
-EVTGetAllowReadToLocked(
-    PEVTALLOWEDDATA * ppAllowReadTo
-    );
-
-DWORD
-EVTGetAllowWriteToLocked(
-    PEVTALLOWEDDATA * ppAllowWriteTo
-    );
-
-DWORD
-EVTGetAllowDeleteToLocked(
-    PEVTALLOWEDDATA * ppAllowDeleteTo
     );
 
 void

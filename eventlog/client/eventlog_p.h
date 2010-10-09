@@ -44,8 +44,7 @@
 
 DWORD
 EVTGetRpcError(
-    dcethread_exc* exCatch,
-    DWORD dwEVTError
+    dcethread_exc* exCatch
     );
 
 #endif /* __EVENTLOG_P_H__ */
