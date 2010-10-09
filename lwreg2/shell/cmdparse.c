@@ -144,6 +144,7 @@ typedef enum _REGSHELL_CMDLINE_STATE_E
     REGSHELL_CMDLINE_STATE_ADDVALUE_KEYNAME,
     REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME,
     REGSHELL_CMDLINE_STATE_ADDVALUE_TYPE,
+    REGSHELL_CMDLINE_STATE_ADDVALUE_OPTION,
     REGSHELL_CMDLINE_STATE_ADDVALUE_VALUE,
     REGSHELL_CMDLINE_STATE_ADDVALUE_STOP,
 
@@ -1764,10 +1765,30 @@ RegShellCmdlineParseToArgv(
                 }
                 else if (token == REGLEX_REG_SZ ||
                          token == REGLEX_PLAIN_TEXT ||
-                         token == REGLEX_KEY_NAME_DEFAULT ||
-                         token == REGLEX_DASH)
+                         token == REGLEX_KEY_NAME_DEFAULT)
                 {
                     state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME;
+                }
+                else if (token == REGLEX_DASH)
+                {
+                    dwError = RegLexGetToken(pParseState->ioHandle,
+                                             pParseState->lexHandle,
+                                             &token,
+                                             &eof);
+                    BAIL_ON_REG_ERROR(dwError);
+                    if (token != REGLEX_DASH)
+                    {
+                        state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME;
+                        RegLexUnGetToken(pParseState->lexHandle);
+                    }
+                    else if (eof)
+                    {
+                        state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME;
+                    }
+                    else
+                    {
+                        state = REGSHELL_CMDLINE_STATE_ADDVALUE_OPTION;
+                    }
                 }
                 else
                 {
@@ -1775,6 +1796,37 @@ RegShellCmdlineParseToArgv(
                 }
                 break;
 
+            case REGSHELL_CMDLINE_STATE_ADDVALUE_OPTION:
+                /* Handle export --legacy option */
+                dwError = RegLexGetToken(pParseState->ioHandle,
+                                         pParseState->lexHandle,
+                                         &token,
+                                         &eof);
+                if (dwError || eof || token != REGLEX_PLAIN_TEXT)
+                {
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+
+                RegLexGetAttribute(pParseState->lexHandle,
+                                   &attrSize,
+                                   &pszAttr);
+                if (cmdEnum == REGSHELL_CMD_EXPORT && 
+                    !strcmp("legacy", pszAttr))
+                {
+                    dwError = RegCStringDuplicate(
+                                  &pszArgv[dwArgc++],
+                                  "--legacy");
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                else
+                {
+                    dwError = LWREG_ERROR_INVALID_CONTEXT;
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                state = REGSHELL_CMDLINE_STATE_ADDVALUE;
+                break;
+                         
                 case REGSHELL_CMDLINE_STATE_ADDVALUE_KEYNAME:
                     if (pszPrevAttr)
                     {
