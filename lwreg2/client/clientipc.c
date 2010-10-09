@@ -1528,7 +1528,7 @@ RegTransactDeleteValueAttributesW(
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ DeleteValueAttrsReq = {0};
+    REG_IPC_DELETE_VALUE_ATTRS_REQ DeleteValueAttrsReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 

@@ -1227,7 +1227,7 @@ RegSrvIpcDeleteValueAttibutesW(
     )
 {
     NTSTATUS status = 0;
-    PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
+    PREG_IPC_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
     PREG_IPC_STATUS pStatus = NULL;
 
     status = RegSrvDeleteValueAttributesW(
