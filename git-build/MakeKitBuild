@@ -240,6 +240,7 @@ configure_openssl()
         mk_run_quiet_or_fail \
             ./config \
             --prefix="${MK_PREFIX}" \
+            -d \
             shared
     fi
 
@@ -269,8 +270,8 @@ build_openssl()
     unset MAKE MFLAGS MAKEFLAGS
     export MAKE MFLAGS MAKEFLAGS
     
-    mk_run_quiet_or_fail ${3} LIBDIR="${MK_LIBDIR}" CC="${MK_CC}" all
-    mk_run_quiet_or_fail ${3} INSTALL_PREFIX="${MK_ROOT_DIR}/${MK_STAGE_DIR}" install_sw
+    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" CC="${MK_CC}"
+    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" INSTALL_PREFIX="${MK_ROOT_DIR}/${MK_STAGE_DIR}" install_sw
     mk_cd_or_fail "$old_pwd"
     mk_run_or_fail touch "$1"
 
