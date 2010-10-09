@@ -746,6 +746,30 @@ static LWMsgTypeSpec gRegGetOrDeleteValueAttrsSpec[] =
     LWMSG_TYPE_END
 };
 
+
+static LWMsgTypeSpec gRegGetValueAttrsSpec[] =
+{
+    // HKEY hKey
+    // PCWSTR pSubKey
+    // PCWSTR pValueName
+    // BOOLEAN bRetCurrentValue;
+    // BOOLEAN bRetValueAttributes
+
+    LWMSG_STRUCT_BEGIN(REG_IPC_GET_VALUE_ATTRS_REQ),
+
+    LWMSG_MEMBER_HANDLE(REG_IPC_GET_VALUE_ATTRS_REQ, hKey, HKEY),
+    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
+
+    LWMSG_MEMBER_PWSTR(REG_IPC_GET_VALUE_ATTRS_REQ, pSubKey),
+    LWMSG_MEMBER_PWSTR(REG_IPC_GET_VALUE_ATTRS_REQ, pValueName),
+    LWMSG_MEMBER_UINT8(REG_IPC_GET_VALUE_ATTRS_REQ, bRetCurrentValue),
+    LWMSG_MEMBER_UINT8(REG_IPC_GET_VALUE_ATTRS_REQ, bRetValueAttributes),
+
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+
 static LWMsgTypeSpec gRegCurrentValueInfo[] =
 {
     // DWORD dwType
@@ -830,7 +854,7 @@ static LWMsgProtocolSpec gRegIPCSpec[] =
     /*Value Attributes Operation APIs*/
     LWMSG_MESSAGE(REG_Q_SET_VALUEW_ATTRIBUTES, gRegSetValueAttrsSpec),
     LWMSG_MESSAGE(REG_R_SET_VALUEW_ATTRIBUTES, NULL),
-    LWMSG_MESSAGE(REG_Q_GET_VALUEW_ATTRIBUTES, gRegGetOrDeleteValueAttrsSpec),
+    LWMSG_MESSAGE(REG_Q_GET_VALUEW_ATTRIBUTES, gRegGetValueAttrsSpec),
     LWMSG_MESSAGE(REG_R_GET_VALUEW_ATTRIBUTES, gRegGetValueAttrsResp),
     LWMSG_MESSAGE(REG_Q_DELETE_VALUEW_ATTRIBUTES, gRegGetOrDeleteValueAttrsSpec),
     LWMSG_MESSAGE(REG_R_DELETE_VALUEW_ATTRIBUTES, NULL),

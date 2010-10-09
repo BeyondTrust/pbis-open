@@ -190,7 +190,7 @@ SqliteGetValueAttributes(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
     return SqliteGetValueAttributes_Internal(hRegConnection,
@@ -213,7 +213,7 @@ SqliteGetValueAttributes_Internal(
     // Whether bail or not in case there is no value attributes
     IN BOOLEAN bDoBail,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
@@ -237,6 +237,12 @@ SqliteGetValueAttributes_Internal(
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+    if (!ppCurrentValue && !ppValueAttributes)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
 
     if (pwszSubKey)
     {
@@ -324,23 +330,24 @@ SqliteGetValueAttributes_Internal(
     }
 
     // Get value attributes
-    status = RegDbGetValueAttributes_inlock(
-                                     ghCacheConnection,
-                                     pKeyCtxInUse->qwId,
-                                     pwszValueName,
-                                     REG_NONE,
-                                     &bIsWrongType,
-                                     &pRegEntry);
-    if (!bDoBail && LW_STATUS_OBJECT_NAME_NOT_FOUND == status)
+    if (ppValueAttributes)
     {
-        status = 0;
-
-        status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry,
-                                 REG_DB_VALUE_ATTRIBUTES,
-                                 sizeof(*pRegEntry));
+        status = RegDbGetValueAttributes_inlock(
+                                         ghCacheConnection,
+                                         pKeyCtxInUse->qwId,
+                                         pwszValueName,
+                                         REG_NONE,
+                                         &bIsWrongType,
+                                         &pRegEntry);
+        if (!bDoBail && LW_STATUS_OBJECT_NAME_NOT_FOUND == status)
+        {
+            status = LW_RTL_ALLOCATE((PVOID*)&pRegEntry,
+                                     REG_DB_VALUE_ATTRIBUTES,
+                                     sizeof(*pRegEntry));
+            BAIL_ON_NT_STATUS(status);
+        }
         BAIL_ON_NT_STATUS(status);
     }
-    BAIL_ON_NT_STATUS(status);
 
     status = sqlite3_exec(
                     pConn->pDb,
@@ -355,10 +362,14 @@ SqliteGetValueAttributes_Internal(
     if (ppCurrentValue)
     {
         *ppCurrentValue = pCurrentValue;
+        pCurrentValue = NULL;
     }
 
-    *ppValueAttributes = pRegEntry->pValueAttributes;
-    pRegEntry->pValueAttributes = NULL;
+    if (ppValueAttributes)
+    {
+        *ppValueAttributes = pRegEntry->pValueAttributes;
+        pRegEntry->pValueAttributes = NULL;
+    }
 
 cleanup:
 
@@ -369,13 +380,10 @@ cleanup:
     SqliteSafeFreeKeyHandle(pKeyHandleInUse);
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
     LWREG_SAFE_FREE_MEMORY(pwszKeyNameWithSubKey);
-    RegDbSafeFreeEntryValueAttributes(&pRegEntry);
     RegDbSafeFreeEntryValue(&pRegValueEntry);
 
-    if (!ppCurrentValue || status != 0)
-    {
-        RegSafeFreeCurrentValueInfo(&pCurrentValue);
-    }
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+    RegDbSafeFreeEntryValueAttributes(&pRegEntry);
 
     return status;
 
@@ -395,7 +403,10 @@ error:
         *ppCurrentValue = NULL;
     }
 
-    *ppValueAttributes  = NULL;
+    if (ppValueAttributes)
+    {
+        *ppValueAttributes  = NULL;
+    }
 
     goto cleanup;
 }

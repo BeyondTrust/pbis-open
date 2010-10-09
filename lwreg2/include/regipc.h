@@ -488,6 +488,21 @@ typedef struct __REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ
     PCWSTR pValueName;
 } REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ, *PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ;
 
+// IN HKEY hKey
+// IN OPTIONAL PCWSTR pwszSubKey
+// IN PCWSTR pwszValueName
+// BOOLEAN bRetCurrentValue;   used to determine what information clients actually want
+// BOOLEAN bRetValueAttributes;
+
+typedef struct __REG_IPC_GET_VALUE_ATTRS_REQ
+{
+    HKEY hKey;
+    PCWSTR pSubKey;
+    PCWSTR pValueName;
+    BOOLEAN bRetCurrentValue;
+    BOOLEAN bRetValueAttributes;
+} REG_IPC_GET_VALUE_ATTRS_REQ, *PREG_IPC_GET_VALUE_ATTRS_REQ;
+
 // OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
 // OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
 typedef struct __REG_IPC_GET_VALUE_ATTRS_RESPONSE

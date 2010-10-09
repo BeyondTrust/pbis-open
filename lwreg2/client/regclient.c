@@ -792,7 +792,7 @@ LwRegGetValueAttributesA(
     IN OPTIONAL PCSTR pszSubKey,
     IN PCSTR pszValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES_A* ppValueAttributes
     )
 {
     return RegNtStatusToWin32Error(
@@ -815,7 +815,7 @@ LwRegGetValueAttributesW(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pwszValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
     return RegNtStatusToWin32Error(

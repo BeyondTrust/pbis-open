@@ -426,7 +426,7 @@ RegSrvGetValueAttributesW(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pwszValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
    return gpRegProvider->pfnRegSrvGetValueAttributes(

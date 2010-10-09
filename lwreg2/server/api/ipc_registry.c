@@ -1164,20 +1164,25 @@ RegSrvIpcGetValueAttibutesW(
     )
 {
     NTSTATUS status = 0;
-    PREG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ pReq = pIn->data;
+    PREG_IPC_GET_VALUE_ATTRS_REQ pReq = pIn->data;
     PREG_IPC_GET_VALUE_ATTRS_RESPONSE pRegResp = NULL;
     PREG_IPC_STATUS pStatus = NULL;
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
     PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
 
+    if (!pReq->bRetCurrentValue && !pReq->bRetValueAttributes)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
 
     status = RegSrvGetValueAttributesW(
             RegSrvIpcGetSessionData(pCall),
             pReq->hKey,
             pReq->pSubKey,
             pReq->pValueName,
-            &pCurrentValue,
-            &pValueAttributes);
+            pReq->bRetCurrentValue ? &pCurrentValue :NULL,
+            pReq->bRetValueAttributes ? &pValueAttributes : NULL);
 
     if (!status)
     {

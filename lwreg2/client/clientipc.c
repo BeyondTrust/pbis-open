@@ -295,7 +295,7 @@ RegTransactCreateKeyExW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_CREATE_KEY_EX_REQ CreateKeyExReq;
+    REG_IPC_CREATE_KEY_EX_REQ CreateKeyExReq = {0};
     PREG_IPC_CREATE_KEY_EX_RESPONSE pCreateKeyExResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -402,7 +402,7 @@ RegTransactOpenKeyExW(
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_OPEN_KEY_EX_REQ OpenKeyExReq;
+    REG_IPC_OPEN_KEY_EX_REQ OpenKeyExReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
     PREG_IPC_OPEN_KEY_EX_RESPONSE pOpenKeyExResp = NULL;
@@ -463,7 +463,7 @@ RegTransactCloseKey(
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_CLOSE_KEY_REQ CloseKeyReq;
+    REG_IPC_CLOSE_KEY_REQ CloseKeyReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -523,7 +523,7 @@ RegTransactDeleteKeyW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_DELETE_KEY_REQ DeleteKeyReq;
+    REG_IPC_DELETE_KEY_REQ DeleteKeyReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -590,7 +590,7 @@ RegTransactQueryInfoKeyW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_QUERY_INFO_KEY_REQ QueryInfoKeyReq;
+    REG_IPC_QUERY_INFO_KEY_REQ QueryInfoKeyReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
     PREG_IPC_QUERY_INFO_KEY_RESPONSE pQueryInfoKeyResp = NULL;
@@ -680,7 +680,7 @@ RegTransactEnumKeyExW(
 {
 	NTSTATUS status = 0;
 
-    REG_IPC_ENUM_KEY_EX_REQ EnumKeyExReq;
+    REG_IPC_ENUM_KEY_EX_REQ EnumKeyExReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
     PREG_IPC_ENUM_KEY_EX_RESPONSE pEnumKeyExResp = NULL;
@@ -758,7 +758,7 @@ RegTransactGetValueW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_GET_VALUE_REQ GetValueReq;
+    REG_IPC_GET_VALUE_REQ GetValueReq = {0};
     PREG_IPC_GET_VALUE_RESPONSE pGetValueResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -836,7 +836,7 @@ RegTransactDeleteKeyValueW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_DELETE_KEY_VALUE_REQ DeleteKeyValueReq;
+    REG_IPC_DELETE_KEY_VALUE_REQ DeleteKeyValueReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -893,7 +893,7 @@ RegTransactDeleteTreeW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_DELETE_TREE_REQ DeleteTreeReq;
+    REG_IPC_DELETE_TREE_REQ DeleteTreeReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -950,7 +950,7 @@ RegTransactDeleteValueW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_DELETE_VALUE_REQ DeleteValueReq;
+    REG_IPC_DELETE_VALUE_REQ DeleteValueReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -1012,7 +1012,7 @@ RegTransactEnumValueW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_ENUM_VALUE_REQ EnumValueReq;
+    REG_IPC_ENUM_VALUE_REQ EnumValueReq = {0};
     PREG_IPC_ENUM_VALUE_RESPONSE pEnumValueResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -1096,7 +1096,7 @@ RegTransactQueryMultipleValues(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_QUERY_MULTIPLE_VALUES_REQ QueryMultipleValuesReq;
+    REG_IPC_QUERY_MULTIPLE_VALUES_REQ QueryMultipleValuesReq = {0};
     PREG_IPC_QUERY_MULTIPLE_VALUES_RESPONSE pRegResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -1193,7 +1193,7 @@ RegTransactSetValueExW(
     )
 {
 	NTSTATUS status = 0;
-    REG_IPC_SET_VALUE_EX_REQ SetValueExReq;
+    REG_IPC_SET_VALUE_EX_REQ SetValueExReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -1255,7 +1255,7 @@ RegTransactSetKeySecurity(
 	)
 {
 	NTSTATUS status = 0;
-    REG_IPC_SET_KEY_SECURITY_REQ SetKeySecurityReq;
+    REG_IPC_SET_KEY_SECURITY_REQ SetKeySecurityReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -1316,7 +1316,7 @@ RegTransactGetKeySecurity(
 	)
 {
 	NTSTATUS status = 0;
-    REG_IPC_GET_KEY_SECURITY_REQ GetKeySecurityReq;
+    REG_IPC_GET_KEY_SECURITY_REQ GetKeySecurityReq = {0};
     PREG_IPC_GET_KEY_SECURITY_RES pGetKeySecurityResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -1383,7 +1383,7 @@ RegTransactSetValueAttributesW(
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_SET_VALUE_ATTRS_REQ SetValueAttrsReq;
+    REG_IPC_SET_VALUE_ATTRS_REQ SetValueAttrsReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
@@ -1442,11 +1442,11 @@ RegTransactGetValueAttributesW(
     IN OPTIONAL PCWSTR pwszSubKey,
     IN PCWSTR pwszValueName,
     OUT OPTIONAL PLWREG_CURRENT_VALUEINFO* ppCurrentValue,
-    OUT PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
+    OUT OPTIONAL PLWREG_VALUE_ATTRIBUTES* ppValueAttributes
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ GetValueAttrsReq;
+    REG_IPC_GET_VALUE_ATTRS_REQ GetValueAttrsReq = {0};
     PREG_IPC_GET_VALUE_ATTRS_RESPONSE pGetValueAttrsResp = NULL;
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
@@ -1455,12 +1455,20 @@ RegTransactGetValueAttributesW(
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
+    if (!ppCurrentValue && !ppValueAttributes)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
     status = RegIpcAcquireCall(hRegConnection, &pCall);
     BAIL_ON_NT_STATUS(status);
 
     GetValueAttrsReq.hKey = hKey;
     GetValueAttrsReq.pSubKey = pwszSubKey;
     GetValueAttrsReq.pValueName = pwszValueName;
+    GetValueAttrsReq.bRetCurrentValue = ppCurrentValue ? TRUE : FALSE;
+    GetValueAttrsReq.bRetValueAttributes = ppValueAttributes ? TRUE : FALSE;
 
     in.tag = REG_Q_GET_VALUEW_ATTRIBUTES;
     in.data = &GetValueAttrsReq;
@@ -1476,11 +1484,14 @@ RegTransactGetValueAttributesW(
             if (ppCurrentValue)
             {
                 *ppCurrentValue = pGetValueAttrsResp->pCurrentValue;
+                pGetValueAttrsResp->pCurrentValue = NULL;
             }
-            pGetValueAttrsResp->pCurrentValue = NULL;
 
-            *ppValueAttributes = pGetValueAttrsResp->pValueAttributes;
-            pGetValueAttrsResp->pValueAttributes = NULL;
+            if (ppValueAttributes)
+            {
+                *ppValueAttributes = pGetValueAttrsResp->pValueAttributes;
+                pGetValueAttrsResp->pValueAttributes = NULL;
+            }
 
             break;
 
@@ -1517,7 +1528,7 @@ RegTransactDeleteValueAttributesW(
     )
 {
     NTSTATUS status = 0;
-    REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ DeleteValueAttrsReq;
+    REG_IPC_GET_OR_DELETE_VALUE_ATTRS_REQ DeleteValueAttrsReq = {0};
     // Do not free pStatus
     PREG_IPC_STATUS pStatus = NULL;
 
