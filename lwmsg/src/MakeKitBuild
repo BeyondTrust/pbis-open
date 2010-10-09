@@ -1,6 +1,6 @@
 make()
 {
-    LWMSG_HEADER_DEPS="lw/base.h"
+    LWMSG_HEADER_DEPS="iconv.h lw/base.h"
 
     LWMSG_NOTHR_SOURCES="\
         assoc.c \
