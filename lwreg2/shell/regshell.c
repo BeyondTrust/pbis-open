@@ -396,7 +396,7 @@ RegShellExportFile(
     DWORD dwError = 0;
     DWORD dwSubKeysCount = 0;
     DWORD dwMaxSubKeyLen = 0;
-    char szRegFileName[PATH_MAX + 1];
+    char szRegFileName[PATH_MAX + 1] = {0};
     HKEY hSubKey = NULL;
     HKEY hRootKey = NULL;
     PSTR pszFullPath = NULL;
@@ -410,15 +410,24 @@ RegShellExportFile(
                                      |DACL_SECURITY_INFORMATION
                                      |SACL_SECURITY_INFORMATION;
     PREG_EXPORT_STATE pExportState = NULL;
+    DWORD dwArgc = 0;
 
     dwError = RegAllocateMemory(sizeof(*pExportState), (LW_PVOID*)&pExportState);
     BAIL_ON_INVALID_POINTER(pExportState);
 
-    strcpy(szRegFileName, rsItem->args[0]);
+    if (!strcmp(rsItem->args[dwArgc], "--legacy"))
+    {
+        pExportState->dwExportFormat = 1;
+        dwArgc++;
+    }
+    if (dwArgc < rsItem->argsCount)
+    {
+        strcpy(szRegFileName, rsItem->args[dwArgc]);
+    }
 
     RegStripWhitespace(szRegFileName, TRUE, TRUE);
 
-    if (!strcmp(szRegFileName, "-"))
+    if (!szRegFileName[0] || !strcmp(szRegFileName, "-"))
     {
         pExportState->fp = stdout;
     }

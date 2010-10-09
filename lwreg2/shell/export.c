@@ -61,7 +61,7 @@ static
 DWORD
 ProcessExportedKeyInfo(
     IN HANDLE hReg,
-    IN FILE* fp,
+    PREG_EXPORT_STATE pExportState,
     IN HKEY hKey,
     IN PCSTR pszFullKeyName,
     IN OPTIONAL PCSTR pszSddlCstring,
@@ -132,10 +132,11 @@ RegShellUtilExport(
     if (hKey)
     {
         dwError = ProcessExportedKeyInfo(hReg,
-                                         pExportState->fp,
+                                         pExportState,
                                          hKey,
                                          pszKeyName,
-                                         pszStringSecurityDescriptor,
+                                         pExportState->dwExportFormat == 1 ?
+                                             NULL : pszStringSecurityDescriptor,
                                          &prevType);
         BAIL_ON_REG_ERROR(dwError);
     }
@@ -239,7 +240,7 @@ static
 DWORD
 ProcessExportedKeyInfo(
     IN HANDLE hReg,
-    IN FILE* fp,
+    PREG_EXPORT_STATE pExportState,
     IN HKEY hKey,
     IN PCSTR pszFullKeyName,
     IN OPTIONAL PCSTR pszSddlCstring,
@@ -263,6 +264,7 @@ ProcessExportedKeyInfo(
     DWORD pszAttrDumpLen = 0;
     PLWREG_CURRENT_VALUEINFO pCurrValueInfo = NULL;
     REG_PARSE_ITEM regItem = {0};
+    FILE *fp = pExportState->fp;
 
     dwError = PrintToRegFile(
                           fp,
@@ -321,19 +323,6 @@ ProcessExportedKeyInfo(
                       pwszValueName);
         BAIL_ON_REG_ERROR(dwError);
 
-        /*
-         * Trouble here. Can't enumerate schema entries that don't have
-         * a "value" set. There is no RegEnumAttributesW() API.
-         * Since most values will be derived from "default" an
-         * export/rm registry.db import would wipe the schema.
-         */
-        dwError = LwRegGetValueAttributesW(
-                      hReg,
-                      hKey,
-                      NULL,
-                      pwszValueName,
-                      &pCurrValueInfo,
-                      &pValueAttributes);
         if (dataType == REG_SZ)
         {
             LWREG_SAFE_FREE_STRING(pszValue);
@@ -347,8 +336,30 @@ ProcessExportedKeyInfo(
         {
             pValue = value;
         }
+
         LWREG_SAFE_FREE_MEMORY(pszAttrDump);
-        if (dwError == 0)
+        dwError = LwRegGetValueAttributesW(
+                      hReg,
+                      hKey,
+                      NULL,
+                      pwszValueName,
+                      &pCurrValueInfo,
+                      &pValueAttributes);
+        if (pExportState->dwExportFormat == 1)
+        {
+            /* Export "legacy" format */
+            dwError = PrintToRegFile(
+                                  fp,
+                                  pszFullKeyName,
+                                  NULL,
+                                  REG_SZ,
+                                  pszValueName,
+                                  dataType,
+                                  pValue,
+                                  dwValueLen,
+                                  pPrevType);
+        }
+        else if (dwError == 0)
         {
             /* Export value and attribute information */
             memset(&regItem, 0, sizeof(regItem));

@@ -1147,6 +1147,9 @@ RegShellCmdParse(
     DWORD dwError = 0;
     PSTR pszCommand = NULL;
     PREGSHELL_CMD_ITEM pCmdItem = NULL;
+    DWORD dwArgc = 2;
+    DWORD dwNewArgc = 0;
+    DWORD dwExportFormat = 0;
 
     BAIL_ON_INVALID_POINTER(argv);
 
@@ -1178,27 +1181,51 @@ RegShellCmdParse(
         case REGSHELL_CMD_EXPORT:
             if (argc > 3)
             {
-                dwError = RegShellCmdParseKeyName(
-                              pParseState,
-                              cmd,
-                              argv[2],
-                              &pCmdItem);
-                BAIL_ON_REG_ERROR(dwError);
+                if (!strcmp("--legacy", argv[dwArgc]))
+                {
+                    dwExportFormat = 1;
+                    dwArgc++;
+                }
+                if ((dwArgc+1) < argc)
+                {
+                    dwError = RegShellCmdParseKeyName(
+                                  pParseState,
+                                  cmd,
+                                  argv[dwArgc++],
+                                  &pCmdItem);
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                else
+                {
+                    dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
+                    BAIL_ON_REG_ERROR(dwError);
+                }
                 dwError = RegAllocateMemory(
-                              sizeof(PSTR) * 2,
+                              sizeof(PSTR) * argc,
                               (PVOID*)&pCmdItem->args);
                 BAIL_ON_REG_ERROR(dwError);
-                dwError = RegCStringDuplicate(
-                              (LW_PVOID) &pCmdItem->args[0], argv[3]);
-                BAIL_ON_REG_ERROR(dwError);
-                pCmdItem->argsCount = 2;
+                if (dwExportFormat == 1)
+                {
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                                  "--legacy");
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                if (dwArgc < argc)
+                {
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                                  argv[dwArgc++]);
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                pCmdItem->argsCount = dwNewArgc;
             }
             else
             {
                 dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
                 BAIL_ON_REG_ERROR(dwError);
                 dwError = RegAllocateMemory(
-                              sizeof(PSTR) * 2,
+                              sizeof(PSTR) * argc,
                               (PVOID*)&pCmdItem->args);
                 BAIL_ON_REG_ERROR(dwError);
                 dwError = RegCStringDuplicate(
@@ -1737,7 +1764,8 @@ RegShellCmdlineParseToArgv(
                 }
                 else if (token == REGLEX_REG_SZ ||
                          token == REGLEX_PLAIN_TEXT ||
-                         token == REGLEX_KEY_NAME_DEFAULT)
+                         token == REGLEX_KEY_NAME_DEFAULT ||
+                         token == REGLEX_DASH)
                 {
                     state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME;
                 }

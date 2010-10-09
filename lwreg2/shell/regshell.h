@@ -177,6 +177,7 @@ typedef struct __REG_EXPORT_STATE
     FILE* fp;
     PBYTE pRootKeySecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE];
     ULONG ulRootKeySecDescLen;
+    DWORD dwExportFormat; 
 }REG_EXPORT_STATE, *PREG_EXPORT_STATE;
 
 
