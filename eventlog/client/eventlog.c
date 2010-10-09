@@ -150,7 +150,7 @@ LWIOpenEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_RPC_BINDING);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY
 
@@ -164,11 +164,11 @@ LWIOpenEventLog(
     }
     CATCH (rpc_x_auth_method)
     {
-        dwError = EVT_ERROR_ACCESS_DENIED;
+        dwError = ERROR_ACCESS_DENIED;
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_OPEN);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY
 
@@ -184,7 +184,7 @@ cleanup:
 error:
     switch(dwError)
     {
-        case EVT_ERROR_ACCESS_DENIED:
+        case ERROR_ACCESS_DENIED:
             EVT_LOG_ERROR("Failed to open event log. Access is denied.\n");
             break;
         default:
@@ -295,7 +295,7 @@ LWICloseEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_CLOSE);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY;
 
@@ -332,7 +332,7 @@ LWIReadEventLog(
     PEVENT_LOG_HANDLE pEventLogHandle = (PEVENT_LOG_HANDLE) hEventLog;
 
     if (sqlFilter == NULL) {
-        dwError = EVT_ERROR_INTERNAL;
+        dwError = ERROR_INTERNAL_ERROR;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -355,7 +355,7 @@ LWIReadEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_READ);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY;
 
@@ -386,7 +386,7 @@ LWICountEventLog(
 
     if (sqlFilter == NULL) {
         EVT_LOG_VERBOSE("CountEventLog(): sqlFilter == NULL\n");
-        dwError = EVT_ERROR_INTERNAL;
+        dwError = ERROR_INTERNAL_ERROR;
         BAIL_ON_EVT_ERROR(dwError);
     }
 
@@ -403,7 +403,7 @@ LWICountEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_COUNT);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY;
 
@@ -592,7 +592,7 @@ LWIWriteEventLogRecords(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_WRITE);        
+        dwError = EVTGetRpcError(THIS_CATCH);        
     }
     ENDTRY;
 
@@ -698,7 +698,7 @@ LWIWriteEventLogBase(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_WRITE);        
+        dwError = EVTGetRpcError(THIS_CATCH);        
     }
     ENDTRY;
 
@@ -767,7 +767,7 @@ LWIDeleteFromEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_DELETE);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY;
 
@@ -796,7 +796,7 @@ LWIClearEventLog(
     }
     CATCH_ALL
     {
-        dwError = EVTGetRpcError(THIS_CATCH, EVT_ERROR_RPC_EXCEPTION_UPON_CLEAR);
+        dwError = EVTGetRpcError(THIS_CATCH);
     }
     ENDTRY;
 
@@ -813,22 +813,11 @@ error:
 
 DWORD
 EVTGetRpcError(
-    dcethread_exc* exCatch,
-    DWORD dwEVTError
+    dcethread_exc* exCatch
     )
 {
     DWORD dwError = 0;
-
-#ifdef _WIN32
-    dwError = dwEVTError;
-#else
     dwError = dcethread_exc_getstatus (exCatch);
-    if(!dwError)
-    {
-        dwError = dwEVTError;
-    }
-#endif //!_WIN32
-    
-    return dwError;
+    return LwNtStatusToWin32Error(LwRpcStatusToNtStatus(dwError));
 }
 

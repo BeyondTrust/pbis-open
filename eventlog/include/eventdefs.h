@@ -174,14 +174,8 @@ void __RPC_USER midl_user_free(void __RPC_FAR * p);
             EVT_LOG_ERROR("DCE Error [0x%8x]", (rpcstatus));            \
         }                                                               \
                                                                         \
-        switch ((rpcstatus)) {                                          \
-        case RPC_S_INVALID_STRING_BINDING:                              \
-            (dwError) = EVT_ERROR_RPC_EXCEPTION_UPON_RPC_BINDING;       \
-            break;                                                      \
-                                                                        \
-        default:                                                        \
-            (dwError) = EVT_ERROR_RPC_EXCEPTION;                        \
-        }                                                               \
+        (dwError) = LwNtStatusToWin32Error(                             \
+                LwRpcStatusToNtStatus((rpcstatus)));                    \
                                                                         \
         goto error;                                                     \
     }

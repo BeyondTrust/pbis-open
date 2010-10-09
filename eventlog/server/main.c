@@ -64,16 +64,22 @@ EVTSERVERINFO gServerInfo =
     0,                          /* Remove records older than*/
     0,                          /* Purge records at interval*/
     0,                          /* Enable/disable Remove records a boolean value TRUE or FALSE*/
-    { NULL, NULL },             /* Who is allowed to read events   */
-    { NULL, NULL },             /* Who is allowed to write events  */
-    { NULL, NULL }              /* Who is allowed to delete events */
+    NULL,
 };
 
 #define EVT_LOCK_SERVERINFO   pthread_mutex_lock(&gServerInfo.lock)
 #define EVT_UNLOCK_SERVERINFO pthread_mutex_unlock(&gServerInfo.lock)
 
 
-
+static
+DWORD
+EVTCreateAccessDescriptor(
+    PCSTR pszAllowReadTo,
+    PCSTR pszAllowWriteTo,
+    PCSTR pszAllowDeleteTo,
+    PSECURITY_DESCRIPTOR_ABSOLUTE* ppDescriptor,
+    PBOOLEAN pbFullyResolved
+    );
 
 static
 DWORD
@@ -225,6 +231,104 @@ EVTGetCachePath(
 }
 
 DWORD
+EVTCheckAllowed(
+    PACCESS_TOKEN pUserToken,
+    ACCESS_MASK dwAccessMask
+    )
+{
+    DWORD dwError = 0;
+    PSECURITY_DESCRIPTOR_ABSOLUTE pAbsolute = NULL;
+    // Do not free
+    PSECURITY_DESCRIPTOR_ABSOLUTE pDescriptor = NULL;
+    PSTR pszAllowReadTo = NULL;
+    PSTR pszAllowWriteTo = NULL;
+    PSTR pszAllowDeleteTo = NULL;
+    BOOLEAN bLocked = FALSE;
+    BOOLEAN bFullyResolved = FALSE;
+    GENERIC_MAPPING GenericMapping = {0};
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    ACCESS_MASK dwGrantedAccess = 0;
+
+    EVT_LOCK_SERVERINFO;
+    bLocked = TRUE;
+
+    if (!gServerInfo.pAccess)
+    {
+        dwError = LwAllocateString(
+                        gServerInfo.pszAllowReadTo ?
+                            gServerInfo.pszAllowReadTo : "",
+                        &pszAllowReadTo);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LwAllocateString(
+                        gServerInfo.pszAllowWriteTo ?
+                            gServerInfo.pszAllowWriteTo : "",
+                        &pszAllowWriteTo);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        dwError = LwAllocateString(
+                        gServerInfo.pszAllowDeleteTo ?
+                            gServerInfo.pszAllowDeleteTo : "",
+                        &pszAllowDeleteTo);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        EVT_UNLOCK_SERVERINFO;
+        bLocked = FALSE;
+
+        dwError = EVTCreateAccessDescriptor(
+            pszAllowReadTo,
+            pszAllowWriteTo,
+            pszAllowDeleteTo,
+            &pAbsolute,
+            &bFullyResolved);
+        BAIL_ON_EVT_ERROR(dwError);
+
+        EVT_LOCK_SERVERINFO;
+        bLocked = TRUE;
+
+        if (bFullyResolved && !gServerInfo.pAccess)
+        {
+            gServerInfo.pAccess = pAbsolute;
+            pAbsolute = NULL;
+        }
+        else
+        {
+            pDescriptor = pAbsolute;
+        }
+    }
+    if (pDescriptor == NULL)
+    {
+        pDescriptor = gServerInfo.pAccess;
+    }
+
+    if (!RtlAccessCheck(pDescriptor,
+                        pUserToken,
+                        dwAccessMask,
+                        0,
+                        &GenericMapping,
+                        &dwGrantedAccess,
+                        &ntStatus))
+    {
+        dwError = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+cleanup:
+    if (bLocked)
+    {
+        EVT_UNLOCK_SERVERINFO;
+    }
+    LW_SAFE_FREE_STRING(pszAllowReadTo);
+    LW_SAFE_FREE_STRING(pszAllowWriteTo);
+    LW_SAFE_FREE_STRING(pszAllowDeleteTo);
+    EVTFreeSecurityDescriptor(pAbsolute);
+    return (dwError);
+
+error:
+    goto cleanup;
+}
+
+DWORD
 EVTGetMaxRecords(
     DWORD* pdwMaxRecords
     )
@@ -320,48 +424,6 @@ EVTGetPrefixPath(
     return (dwError);
 }
 
-DWORD
-EVTGetAllowReadToLocked(
-    PEVTALLOWEDDATA * ppAllowReadTo
-    )
-{
-    DWORD dwError = 0;
-
-    EVT_LOCK_SERVERINFO;
-
-    *ppAllowReadTo = &gServerInfo.pAllowReadTo;
-
-    return (dwError);
-}
-
-DWORD
-EVTGetAllowWriteToLocked(
-    PEVTALLOWEDDATA * ppAllowWriteTo
-    )
-{
-    DWORD dwError = 0;
-
-    EVT_LOCK_SERVERINFO;
-
-    *ppAllowWriteTo = &gServerInfo.pAllowWriteTo;
-
-    return (dwError);
-}
-
-DWORD
-EVTGetAllowDeleteToLocked(
-    PEVTALLOWEDDATA * ppAllowDeleteTo
-    )
-{
-    DWORD dwError = 0;
-
-    EVT_LOCK_SERVERINFO;
-
-    *ppAllowDeleteTo = &gServerInfo.pAllowDeleteTo;
-
-    return (dwError);
-}
-
 void
 EVTUnlockServerInfo()
 {
@@ -377,52 +439,6 @@ EVTFreeAllowData(
     EVTAccessFreeData(pAllowData->pAllowedTo);
     pAllowData->configData = NULL;
     pAllowData->pAllowedTo = NULL;
-}
-
-DWORD
-EVTSetAllowData(
-    PCSTR   pszValue,
-    PEVTALLOWEDDATA pAllowData
-    )
-{
-    DWORD dwError = 0;
-    PVOID pParsed = NULL;
-    BOOLEAN bLocked = FALSE;
-
-    dwError = EVTAccessGetData(
-                  pszValue,
-                  &pParsed);
-    BAIL_ON_EVT_ERROR(dwError);
-
-    EVT_LOCK_SERVERINFO;
-    bLocked = TRUE;
-
-    EVTFreeAllowData(pAllowData);
-
-    dwError = EVTAllocateString(
-                  pszValue,
-                  &pAllowData->configData);    
-    BAIL_ON_EVT_ERROR(dwError);
-
-    pAllowData->pAllowedTo = pParsed;
-
-    EVT_UNLOCK_SERVERINFO;
-
-cleanup:
-    return (dwError);
-
-error:
-    if (bLocked)
-    {
-        EVT_SAFE_FREE_STRING(pAllowData->configData);
-        pAllowData->pAllowedTo = NULL;
-        EVT_UNLOCK_SERVERINFO;
-    }
-    if (pParsed)
-    {
-        EVTAccessFreeData(pParsed);
-    }
-    goto cleanup;
 }
 
 static
@@ -791,9 +807,12 @@ EVTSetConfigDefaults()
     gServerInfo.dwMaxAge = EVT_DEFAULT_MAX_AGE;
     gServerInfo.dwPurgeInterval = EVT_DEFAULT_PURGE_INTERVAL;
 
-    EVTFreeAllowData(&gServerInfo.pAllowReadTo);
-    EVTFreeAllowData(&gServerInfo.pAllowWriteTo);
-    EVTFreeAllowData(&gServerInfo.pAllowDeleteTo);
+    EVTFreeSecurityDescriptor(gServerInfo.pAccess);
+    gServerInfo.pAccess = NULL;
+
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowReadTo);
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowWriteTo);
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowDeleteTo);
 
     EVT_UNLOCK_SERVERINFO;
 
@@ -986,9 +1005,490 @@ error:
 
 static
 DWORD
+EVTStringSplit(
+    PCSTR   pszInput,
+    PDWORD  pdwCount,
+    PSTR**  pppszArray
+    )
+{
+    DWORD  dwError = 0;
+    DWORD  dwCount = 0;
+    PCSTR  pszStart = NULL;
+    PCSTR  pszEnd = NULL;
+    PSTR* ppszArray = NULL;
+    PSTR pszAdd = NULL;
+
+    for (pszStart = pszInput; *pszStart !=  0; pszStart++)
+    {
+        if (*pszStart == ',') dwCount++;
+    }
+    dwCount++;
+
+    dwError = EVTAllocateMemory(
+                  (dwCount+1)*sizeof(PCSTR),
+                  (PVOID *)&ppszArray);
+
+    dwCount = 0;
+    pszStart = pszInput;
+    while (TRUE)
+    {
+        pszEnd = strchr(pszStart, ',');
+        if ( pszEnd )
+        {
+            dwError = LwStrndup(
+                         pszStart,
+                         pszEnd - pszStart,
+                         &pszAdd);
+            BAIL_ON_EVT_ERROR(dwError);
+        }
+        else
+        {
+            dwError = LwAllocateString(
+                        pszStart,
+                        &pszAdd);
+            BAIL_ON_EVT_ERROR(dwError);
+        }
+        LwStripWhitespace(pszAdd, TRUE, TRUE);
+        if (pszAdd[0])
+        {
+            ppszArray[dwCount++] = pszAdd;
+            pszAdd = NULL;
+        }
+        else
+        {
+            LW_SAFE_FREE_STRING(pszAdd);
+        }
+
+        if (pszEnd)
+        {
+            pszStart = pszEnd + 1;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    *pppszArray = ppszArray;
+    *pdwCount = dwCount;
+
+cleanup:
+    LW_SAFE_FREE_STRING(pszAdd);
+    return dwError;
+
+error:
+    LwFreeStringArray(
+        ppszArray,
+        dwCount);
+    goto cleanup;
+}
+
+VOID
+EVTFreeSidArray(
+    PLW_MAP_SECURITY_CONTEXT pContext,
+    DWORD dwCount,
+    PSID* ppSidArray
+    )
+{
+    DWORD dwInputIndex = 0;
+
+    for (dwInputIndex = 0; dwInputIndex < dwCount; dwInputIndex++)
+    {
+        LwMapSecurityFreeSid(pContext, &ppSidArray[dwInputIndex]);
+    }
+    LW_SAFE_FREE_MEMORY(ppSidArray);
+}
+
+static
+DWORD
+EVTNamesToSids(
+    PLW_MAP_SECURITY_CONTEXT pContext,
+    DWORD dwCount,
+    PSTR* ppszArray,
+    PDWORD pdwSidCount,
+    PSID** pppSidArray
+    )
+{
+    DWORD dwError = 0;
+    PSID pSid = NULL;
+    DWORD dwInputIndex = 0;
+    DWORD dwOutputIndex = 0;
+    PSID* ppSidArray = NULL;
+
+    dwError = LwAllocateMemory(
+                sizeof(PSID) * dwCount,
+                (PVOID)&ppSidArray);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    for (dwInputIndex = 0; dwInputIndex < dwCount; dwInputIndex++)
+    {
+        dwError = LwNtStatusToWin32Error(
+            LwMapSecurityGetSidFromName(
+                pContext,
+                &pSid,
+                TRUE,
+                ppszArray[dwInputIndex]));
+        if (dwError == LW_ERROR_NO_SUCH_USER || dwError == ERROR_NOT_FOUND)
+        {
+            dwError = LwNtStatusToWin32Error(
+                LwMapSecurityGetSidFromName(
+                    pContext,
+                    &pSid,
+                    FALSE,
+                    ppszArray[dwInputIndex]));
+        }
+        if (dwError == LW_ERROR_NO_SUCH_GROUP || dwError == ERROR_NOT_FOUND)
+        {
+            dwError = 0;
+        }
+        BAIL_ON_EVT_ERROR(dwError);
+        if (pSid)
+        {
+            ppSidArray[dwOutputIndex] = pSid;
+            dwOutputIndex++;
+        }
+    }
+
+    *pppSidArray = ppSidArray;
+    *pdwSidCount = dwOutputIndex;
+
+cleanup:
+    return dwError;
+
+error:
+    EVTFreeSidArray(
+        pContext,
+        dwCount,
+        ppSidArray);
+    goto cleanup;
+}
+
+DWORD
+EVTGetAllowAcesSize(
+    DWORD dwCount,
+    PSID* ppSidArray
+    )
+{
+    DWORD dwInputIndex = 0;
+    DWORD dwSize = 0;
+
+    for (dwInputIndex = 0; dwInputIndex < dwCount; dwInputIndex++)
+    {
+        dwSize += RtlLengthAccessAllowedAce(ppSidArray[dwInputIndex]);
+    }
+    return dwSize;
+}
+
+static
+DWORD
+EVTAddAllowAces(
+    PACL pDacl,
+    DWORD dwCount,
+    PSID* ppSidArray,
+    ACCESS_MASK dwAccessMask
+    )
+{
+    DWORD dwInputIndex = 0;
+    DWORD dwError = 0;
+
+    for (dwInputIndex = 0; dwInputIndex < dwCount; dwInputIndex++)
+    {
+        dwError = LwNtStatusToWin32Error(
+            RtlAddAccessAllowedAceEx(pDacl,
+                                            ACL_REVISION,
+                                            0,
+                                            dwAccessMask,
+                                            ppSidArray[dwInputIndex]));
+        BAIL_ON_EVT_ERROR(dwError);
+    }
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+VOID
+EVTFreeSecurityDescriptor(
+    PSECURITY_DESCRIPTOR_ABSOLUTE pSecDesc
+    )
+{
+    PSID pOwnerSid = NULL;
+    BOOLEAN bOwnerDefaulted = FALSE;
+    PSID pPrimaryGroupSid = NULL;
+    BOOLEAN bPrimaryGroupDefaulted = FALSE;
+    PACL pDacl = NULL;
+    BOOLEAN bDaclPresent = FALSE;
+    BOOLEAN bDaclDefaulted = FALSE;
+    PACL pSacl = NULL;
+    BOOLEAN bSaclPresent = FALSE;
+    BOOLEAN bSaclDefaulted = FALSE;
+
+    if (pSecDesc)
+    {
+        RtlGetOwnerSecurityDescriptor(pSecDesc,
+                                                 &pOwnerSid,
+                                                 &bOwnerDefaulted);
+        LW_SAFE_FREE_MEMORY(pOwnerSid);
+
+        RtlGetGroupSecurityDescriptor(pSecDesc,
+                                                 &pPrimaryGroupSid,
+                                                 &bPrimaryGroupDefaulted);
+        LW_SAFE_FREE_MEMORY(pPrimaryGroupSid);
+
+        RtlGetDaclSecurityDescriptor(pSecDesc,
+                                                &bDaclPresent,
+                                                &pDacl,
+                                                &bDaclDefaulted);
+        LW_SAFE_FREE_MEMORY(pDacl);
+
+        RtlGetSaclSecurityDescriptor(pSecDesc,
+                                                &bSaclPresent,
+                                                &pSacl,
+                                                &bSaclDefaulted);
+        LW_SAFE_FREE_MEMORY(pSacl);
+
+        LW_SAFE_FREE_MEMORY(pSecDesc);
+    }
+}
+
+static
+DWORD
+EVTCreateAccessDescriptor(
+    PCSTR pszAllowReadTo,
+    PCSTR pszAllowWriteTo,
+    PCSTR pszAllowDeleteTo,
+    PSECURITY_DESCRIPTOR_ABSOLUTE* ppDescriptor,
+    PBOOLEAN pbFullyResolved
+    )
+{
+    PSECURITY_DESCRIPTOR_ABSOLUTE pDescriptor = NULL;
+    DWORD dwCount = 0;
+    PSTR* ppszArray = NULL;
+    DWORD dwReadCount = 0;
+    DWORD dwWriteCount = 0;
+    DWORD dwDeleteCount = 0;
+    PSID* ppReadList = NULL;
+    PSID* ppWriteList = NULL;
+    PSID* ppDeleteList = NULL;
+    PACL pDacl = NULL;
+    DWORD dwDaclSize = 0;
+    PLW_MAP_SECURITY_CONTEXT pContext = NULL;
+    DWORD dwError = 0;
+    PSID pLocalSystem = NULL;
+    PSID pAdministrators = NULL;
+    BOOLEAN bFullyResolved = TRUE;
+
+    dwError = LwCreateWellKnownSid(
+                    WinLocalSystemSid,
+                    NULL,
+                    &pLocalSystem,
+                    NULL);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwCreateWellKnownSid(
+                    WinBuiltinAdministratorsSid,
+                    NULL,
+                    &pAdministrators,
+                    NULL);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+        LwMapSecurityCreateContext(
+                &pContext));
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwAllocateMemory(
+                SECURITY_DESCRIPTOR_ABSOLUTE_MIN_SIZE,
+                (PVOID*)&pDescriptor);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+        RtlCreateSecurityDescriptorAbsolute(
+                pDescriptor,
+                SECURITY_DESCRIPTOR_REVISION));
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTStringSplit(
+                pszAllowReadTo,
+                &dwCount,
+                &ppszArray);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTNamesToSids(
+                pContext,
+                dwCount,
+                ppszArray,
+                &dwReadCount,
+                &ppReadList);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (dwReadCount < dwCount)
+    {
+        bFullyResolved = FALSE;
+    }
+
+    LwFreeStringArray(
+        ppszArray,
+        dwCount);
+    ppszArray = NULL;
+
+    dwError = EVTStringSplit(
+                pszAllowWriteTo,
+                &dwCount,
+                &ppszArray);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTNamesToSids(
+                pContext,
+                dwCount,
+                ppszArray,
+                &dwWriteCount,
+                &ppWriteList);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (dwReadCount < dwCount)
+    {
+        bFullyResolved = FALSE;
+    }
+
+    LwFreeStringArray(
+        ppszArray,
+        dwCount);
+    ppszArray = NULL;
+
+    dwError = EVTStringSplit(
+                pszAllowDeleteTo,
+                &dwCount,
+                &ppszArray);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTNamesToSids(
+                pContext,
+                dwCount,
+                ppszArray,
+                &dwDeleteCount,
+                &ppDeleteList);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    if (dwReadCount < dwCount)
+    {
+        bFullyResolved = FALSE;
+    }
+
+    LwFreeStringArray(
+        ppszArray,
+        dwCount);
+    ppszArray = NULL;
+
+    dwDaclSize = ACL_HEADER_SIZE +
+        EVTGetAllowAcesSize(dwReadCount, ppReadList) +
+        EVTGetAllowAcesSize(dwWriteCount, ppWriteList) +
+        EVTGetAllowAcesSize(dwDeleteCount, ppDeleteList);
+
+    dwError = LwAllocateMemory(
+        dwDaclSize,
+        OUT_PPVOID(&pDacl));
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+        RtlCreateAcl(pDacl, dwDaclSize, ACL_REVISION));
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTAddAllowAces(
+                pDacl,
+                dwReadCount,
+                ppReadList,
+                EVENTLOG_READ_RECORD);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTAddAllowAces(
+                pDacl,
+                dwWriteCount,
+                ppWriteList,
+                EVENTLOG_WRITE_RECORD);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = EVTAddAllowAces(
+                pDacl,
+                dwWriteCount,
+                ppWriteList,
+                EVENTLOG_DELETE_RECORD);
+    BAIL_ON_EVT_ERROR(dwError);
+
+    dwError = LwNtStatusToWin32Error(
+        RtlSetDaclSecurityDescriptor(
+            pDescriptor,
+            TRUE,
+            pDacl,
+            FALSE));
+    BAIL_ON_EVT_ERROR(dwError);
+    pDacl = NULL;
+
+    dwError = LwNtStatusToWin32Error(
+        RtlSetOwnerSecurityDescriptor(
+            pDescriptor,
+            pLocalSystem,
+            FALSE));
+    BAIL_ON_EVT_ERROR(dwError);
+    pLocalSystem = NULL;
+
+    dwError = LwNtStatusToWin32Error(
+        RtlSetGroupSecurityDescriptor(
+            pDescriptor,
+            pAdministrators,
+            FALSE));
+    BAIL_ON_EVT_ERROR(dwError);
+    pAdministrators = NULL;
+
+    *ppDescriptor = pDescriptor;
+    if (pbFullyResolved)
+    {
+        *pbFullyResolved = bFullyResolved;
+    }
+
+cleanup:
+    if (ppszArray)
+    {
+        LwFreeStringArray(
+            ppszArray,
+            dwCount);
+    }
+    EVTFreeSidArray(
+        pContext,
+        dwReadCount,
+        ppReadList);
+    EVTFreeSidArray(
+        pContext,
+        dwWriteCount,
+        ppWriteList);
+    EVTFreeSidArray(
+        pContext,
+        dwDeleteCount,
+        ppDeleteList);
+    LwMapSecurityFreeContext(&pContext);
+    return dwError;
+
+error:
+    EVTFreeSecurityDescriptor(pDescriptor);
+    *ppDescriptor = NULL;
+    if (pbFullyResolved)
+    {
+        *pbFullyResolved = FALSE;
+    }
+    LW_SAFE_FREE_MEMORY(pDacl);
+    LW_SAFE_FREE_MEMORY(pLocalSystem);
+    LW_SAFE_FREE_MEMORY(pAdministrators);
+    goto cleanup;
+}
+
+static
+DWORD
 EVTReadEventLogConfigSettings()
 {
     DWORD dwError = 0;
+    BOOLEAN bLocked = FALSE;
 
     EVT_LOG_INFO("Read Eventlog configuration settings");
 
@@ -996,19 +1496,29 @@ EVTReadEventLogConfigSettings()
     BAIL_ON_EVT_ERROR(dwError);
 
     EVT_LOCK_SERVERINFO;
+    bLocked = TRUE;
+
     dwError = EVTProcessConfig(
                 "Services\\eventlog\\Parameters",
                 "Policy\\Services\\eventlog\\Parameters",
                 gConfigDescription,
                 sizeof(gConfigDescription)/sizeof(gConfigDescription[0]));
-    EVT_UNLOCK_SERVERINFO;
 
-    if (gpszAllowReadTo)
-        EVTSetAllowData(gpszAllowReadTo, &gServerInfo.pAllowReadTo);
-    if (gpszAllowWriteTo)
-        EVTSetAllowData(gpszAllowWriteTo, &gServerInfo.pAllowWriteTo);
-    if (gpszAllowDeleteTo)
-        EVTSetAllowData(gpszAllowDeleteTo, &gServerInfo.pAllowDeleteTo);
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowReadTo);
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowWriteTo);
+    LW_SAFE_FREE_STRING(gServerInfo.pszAllowDeleteTo);
+    gServerInfo.pszAllowReadTo = gpszAllowReadTo;
+    gServerInfo.pszAllowWriteTo = gpszAllowWriteTo;
+    gServerInfo.pszAllowDeleteTo = gpszAllowDeleteTo;
+    gpszAllowReadTo = NULL;
+    gpszAllowWriteTo = NULL;
+    gpszAllowDeleteTo = NULL;
+
+    EVTFreeSecurityDescriptor(gServerInfo.pAccess);
+    gServerInfo.pAccess = NULL;
+
+    EVT_UNLOCK_SERVERINFO;
+    bLocked = FALSE;
 
     EVTLogConfigReload();
 
@@ -1018,10 +1528,14 @@ cleanup:
     EVT_SAFE_FREE_STRING(gpszAllowWriteTo);
     EVT_SAFE_FREE_STRING(gpszAllowDeleteTo);
 
+    if (bLocked)
+    {
+        EVT_UNLOCK_SERVERINFO;
+    }
+
     return dwError;
 
 error:
-
     goto cleanup;
 }
 
@@ -1196,7 +1710,7 @@ main(
     dcethread* networkThread = NULL;
     static ENDPOINT localEndpoints[] =
     {
-        {"ncalrpc", CACHEDIR "/rpc/socket", FALSE},
+        {"ncalrpc", CACHEDIR "/.eventlog", FALSE},
         {NULL, NULL}
     };
     BOOLEAN bExitNow = FALSE;
@@ -1344,6 +1858,9 @@ main(
     SrvShutdownEventDatabase();
 
     EVTSetConfigDefaults();
+    EVTFreeSecurityDescriptor(gServerInfo.pAccess);
+    gServerInfo.pAccess = NULL;
+
     EVTUnloadLsaLibrary();
 
     EVTSetProcessExitCode(dwError);

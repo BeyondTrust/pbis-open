@@ -57,7 +57,7 @@ EVTStackPush(
     PEVT_STACK pStack = NULL;
 
     if (!ppStack) {
-        dwError = EVT_ERROR_INVALID_PARAMETER;
+        dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_EVT_ERROR(dwError);
     }
 

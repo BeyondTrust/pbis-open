@@ -68,7 +68,7 @@ EVTLoadLsaLibrary(
     if ( gpLsaAccessLibHandle == NULL )
     {
         pszError = dlerror();
-        dwError = EVT_ERROR_LOAD_LIBRARY_FAILED;
+        dwError = ERROR_DLL_INIT_FAILED;
         EVT_LOG_ERROR(
             "Failed to load library [%s]. Error [%s]",
             LSAACCESS_LIBPATH,
@@ -84,7 +84,7 @@ EVTLoadLsaLibrary(
         EVT_LOG_ERROR(
             "Unable to find LSA Access API - %s",
             LSA_SYMBOL_NAME_ACCESS_GET_DATA);
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
         goto error;
     }
 
@@ -96,7 +96,7 @@ EVTLoadLsaLibrary(
         EVT_LOG_ERROR(
             "Unable to find LSA Access API - %s",
             LSA_SYMBOL_NAME_ACCESS_CHECK_DATA);
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
         goto error;
     }
 
@@ -108,7 +108,7 @@ EVTLoadLsaLibrary(
         EVT_LOG_ERROR(
             "Unable to find LSA Access API - %s",
             LSA_SYMBOL_NAME_ACCESS_FREE_DATA);
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
         goto error;
     }
 
@@ -184,7 +184,7 @@ EVTAccessGetData(
     }
     else
     {
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
     }
 
 cleanup:
@@ -213,7 +213,7 @@ EVTAccessCheckData(
 
     if ( !gpfnLsaAccessCheckData )
     {
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
     }
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -222,7 +222,7 @@ EVTAccessCheckData(
                   pAccessData);
     if ( dwError )
     {
-        dwError = EVT_ERROR_ACCESS_DENIED;
+        dwError = ERROR_ACCESS_DENIED;
     }
     BAIL_ON_EVT_ERROR(dwError);
 
@@ -248,7 +248,7 @@ EVTAccessFreeData(
     }
     else
     {
-        dwError = EVT_ERROR_LOOKUP_SYMBOL_FAILED;
+        dwError = ERROR_INVALID_FUNCTION;
     }
 
     return dwError;
