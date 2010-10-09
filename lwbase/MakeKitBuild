@@ -57,9 +57,27 @@ configure()
         # Optional headers
         mk_check_headers \
             sys/varargs.h \
+            sys/param.h \
             unistd.h \
-            strings.h
+            strings.h \
+            pthread_np.h \
         
+        mk_check_headers \
+            HEADERDEPS="sys/param.h" \
+            sys/cpuset.h
+
+        mk_check_types \
+            HEADERDEPS="sys/param.h sys/cpuset.h pthread.h" \
+            cpu_set_t cpuset_t
+
+        if [ "$HAVE_CPU_SET_T" = yes ]
+        then
+            mk_define CPU_SET_TYPE "cpu_set_t"
+        elif [ "$HAVE_CPUSET_T" = yes ]
+        then
+            mk_define CPU_SET_TYPE "cpuset_t"
+        fi
+
         # Necessary libraries \
         mk_check_libraries \
             FAIL=yes \
@@ -71,10 +89,10 @@ configure()
             dl
 
         mk_check_functions \
-            HEADERDEPS="pthread.h wchar.h" \
+            HEADERDEPS="pthread.h pthread_np.h wchar.h" \
             LIBDEPS="$LIB_PTHREAD" \
             CPPFLAGS="-D_GNU_SOURCE" \
-            pthread_setaffinity_np wcscasecmp
+            pthread_setaffinity_np pthread_attr_setaffinity_np wcscasecmp
 
         mk_check_functions \
             HEADERDEPS="sys/epoll.h" \
@@ -84,10 +102,10 @@ configure()
             HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
             kqueue
 
-        if [ "$HAVE_EPOLL_CREATE" = "yes" -a "$HAVE_PTHREAD_SETAFFINITY_NP" = "yes" ]
+        if [ "$HAVE_EPOLL_CREATE" = "yes" ]
         then
             mk_msg "threadpool backend: epoll"
-        elif [ "$HAVE_KQUEUE" = "yes" -a "$HAVE_PTHREAD_SETAFFINITY_NP" = "yes" ]
+        elif [ "$HAVE_KQUEUE" = "yes" ]
         then
             mk_msg "threadpool backend: kqueue"
         else

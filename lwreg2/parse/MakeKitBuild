@@ -11,5 +11,5 @@ make()
         SOURCES="$PARSE_SOURCES" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="regcommon lwbase lwbase_nothr" \
-        HEADERDEPS="lwmsg/lwmsg.h lw/base.h"
+        HEADERDEPS="lwmsg/lwmsg.h lw/base.h iconv.h"
 }
