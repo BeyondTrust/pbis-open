@@ -18,7 +18,18 @@ make()
         cominit.c cominit_ux.c comnaf.c comnet.c comnlsn.c comobj.c comp.c \
         comtwr.c comtwrflr.c comtwrref.c comutil.c nsldap.c sec_id.c"
 
-    TRANS_SOURCES="comsoc.c comsoc_bsd.c comsoc_smb.c comsoc_http.c xnet.c"
+    TRANS_SOURCES="comsoc.c comsoc_bsd.c comsoc_smb.c xnet.c"
+    
+    TRANS_HEADERS=""
+    
+    TRANS_LIBS=""
+
+    if [ "$ENABLE_HTTP" = yes ]
+    then
+        TRANS_SOURCES="$TRANS_SOURCES comsoc_http.c"
+        TRANS_HEADERS="$TRANS_HEADERS curl/curl.h"
+        TRANS_LIBS="$TRANS_LIBS curl"
+    fi
 
     STUB_SOURCES="pickle_cstub.c ep_cstub.c"
 
@@ -112,8 +123,8 @@ make()
         SOURCES="$TRANS_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         CFLAGS="$NCK_CFLAGS" \
-        HEADERDEPS="$NCK_HEADERDEPS lwio/lwio.h lw/base.h curl/curl.h" \
-        LIBDEPS="lwioclient curl"
+        HEADERDEPS="$NCK_HEADERDEPS lwio/lwio.h lw/base.h $TRANS_HEADERS" \
+        LIBDEPS="lwioclient $TRANS_LIBS"
 
     # Build optional protocol support
 
