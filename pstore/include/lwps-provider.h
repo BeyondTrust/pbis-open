@@ -87,6 +87,21 @@ typedef DWORD (*PFNLWPS_STORE_DELETE_HOST_ENTRY)(
                  PCSTR pszHostname
                  );
 
+typedef DWORD (*PFNLWPS_STORE_DELETE_DOMAIN_ENTRY)(
+                 HANDLE hProvider,
+                 PCSTR pszDomainName
+                 );
+
+typedef DWORD (*PFNLWPS_GET_DEFAULT_JOINED_DOMAIN)(
+                 HANDLE hProvider,
+                 PSTR* ppszDomainName
+                 );
+
+typedef DWORD (*PFNLWPS_SET_DEFAULT_JOINED_DOMAIN)(
+                 HANDLE hProvider,
+                 PCSTR pszDomainName
+                 );
+
 typedef VOID (*PFNLWPS_STORE_FREE_PASSWORD)(
                  PLWPS_PASSWORD_INFO pInfo
                  );
@@ -104,6 +119,9 @@ typedef struct __LWPS_PROVIDER_FUNC_TABLE
     PFNLWPS_STORE_WRITE_PASSWORD pFnWritePassword;
     PFNLWPS_STORE_DELETE_ALL_ENTRIES pFnDeleteAllEntries;
     PFNLWPS_STORE_DELETE_HOST_ENTRY pFnDeleteHostEntry;
+    PFNLWPS_STORE_DELETE_DOMAIN_ENTRY pFnDeleteDomainEntry;
+    PFNLWPS_GET_DEFAULT_JOINED_DOMAIN pFnGetDefaultJoinedDomain;
+    PFNLWPS_SET_DEFAULT_JOINED_DOMAIN pFnSetDefaultJoinedDomain;
     PFNLWPS_STORE_FREE_PASSWORD  pfnFreePassword;
     PFNLWPS_STORE_CLOSE_PROVIDER pFnCloseProvider;
 } LWPS_PROVIDER_FUNC_TABLE, *PLWPS_PROVIDER_FUNC_TABLE;

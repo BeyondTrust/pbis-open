@@ -46,17 +46,13 @@
 
 #include "adprovider.h"
 
-// The database consists of several tables.  Because we're
-// using a flat file and the amount of data is small, the
-// easiest way to update it is to replace the entire file.
-// However, we may be asked to write some of it before we
-// have been asked to read all of it.  The simplest solution
-// is to preload everything into memory and hold it until
-// either we're asked for it or we determine it isn't needed.
-typedef struct _ADSTATE_CONNECTION
-{
-    pthread_rwlock_t lock;
-} ADSTATE_CONNECTION, *PADSTATE_CONNECTION;
+#define LSASS_PARAMETERS_REGKEY "Services\\lsass\\Parameters"
+#define LSASS_PROVIDERS_REGKEY "Providers"
+#define AD_REGKEY "ActiveDirectory"
+#define AD_PROVIDER_REGKEY LSASS_PARAMETERS_REGKEY "\\" LSASS_PROVIDERS_REGKEY "\\" AD_REGKEY "\\" "DomainJoin"
+#define AD_PROVIDER_DATA_REGKEY "ProviderData"
+#define AD_LINKEDCELL_REGKEY    "LinkedCell"
+#define AD_DOMAIN_TRUST_REGKEY  "DomainTrust"
 
 // This is the maximum number of characters necessary to store a guid in
 // string form.
@@ -85,22 +81,29 @@ typedef struct _AD_REGB_DOMAIN_INFO
 static
 DWORD
 ADState_ReadFromRegistry(
+    IN PCSTR pszDomainName,
     OUT OPTIONAL PAD_PROVIDER_DATA* ppProviderData,
     OUT OPTIONAL PDLINKEDLIST* ppDomainList
     );
 
+static
 DWORD
 ADState_ReadRegProviderData(
+    IN PCSTR pszRegistryPath,
     OUT PAD_PROVIDER_DATA *ppProviderData
     );
 
+static
 DWORD
 ADState_ReadRegCellEntry(
+    IN PCSTR pszRegistryPath,
     IN OUT PDLINKEDLIST *ppCellList
     );
 
+static
 DWORD
 ADState_ReadRegDomainEntry(
+    IN PCSTR pszRegistryPath,
     PDLINKEDLIST *ppDomainList
     );
 
@@ -111,6 +114,7 @@ ADState_FreeEnumDomainInfoCallback(
     IN PVOID pUserData
     );
 
+static
 VOID
 ADState_FreeEnumDomainInfo(
     IN OUT PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo
@@ -119,6 +123,7 @@ ADState_FreeEnumDomainInfo(
 static
 DWORD
 ADState_WriteToRegistry(
+    IN PCSTR pszDomainName,
     IN OPTIONAL PAD_PROVIDER_DATA pProviderData,
     IN OPTIONAL PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo,
     IN OPTIONAL DWORD dwDomainInfoCount,
@@ -128,96 +133,34 @@ ADState_WriteToRegistry(
 static
 DWORD
 ADState_WriteRegProviderData(
+    IN PCSTR pszRegistryPath,
     IN PAD_PROVIDER_DATA pProviderData
     );
 
+static
 DWORD
 ADState_WriteRegDomainEntry(
+    IN PCSTR pszRegistryPath,
     IN PLSA_DM_ENUM_DOMAIN_INFO pDomainInfoEntry
     );
 
+static
 DWORD
 ADState_WriteRegCellEntry(
+    IN PCSTR pszRegistryPath,
     IN PAD_LINKED_CELL_INFO pCellEntry
     );
 
 
 DWORD
-ADState_OpenDb(
-    ADSTATE_CONNECTION_HANDLE* phDb
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bLockCreated = FALSE;
-    PADSTATE_CONNECTION pConn = NULL;
-
-    dwError = LwAllocateMemory(
-                    sizeof(ADSTATE_CONNECTION),
-                    (PVOID*)&pConn);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = pthread_rwlock_init(&pConn->lock, NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-    bLockCreated = TRUE;
-
-    *phDb = pConn;
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    if (pConn != NULL)
-    {
-        if (bLockCreated)
-        {
-            pthread_rwlock_destroy(&pConn->lock);
-        }
-
-        LW_SAFE_FREE_MEMORY(pConn);
-    }
-    *phDb = NULL;
-
-    goto cleanup;
-}
-
-void
-ADState_SafeCloseDb(
-    ADSTATE_CONNECTION_HANDLE* phDb
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    ADSTATE_CONNECTION_HANDLE hDb = NULL;
-
-    if (phDb == NULL || *phDb == NULL)
-    {
-        goto cleanup;
-    }
-
-    hDb = *phDb;
-
-    dwError = pthread_rwlock_destroy(&hDb->lock);
-    if (dwError != LW_ERROR_SUCCESS)
-    {
-        LSA_LOG_ERROR("Error destroying lock [%u]", dwError);
-        dwError = LW_ERROR_SUCCESS;
-    }
-
-    LW_SAFE_FREE_MEMORY(hDb);
-
-cleanup:
-    return;
-}
-
-DWORD
 ADState_EmptyDb(
-    ADSTATE_CONNECTION_HANDLE hDb
+    IN PCSTR pszDomainName
     )
 {
     DWORD dwError = 0;
 
     dwError = ADState_WriteToRegistry(
+                  pszDomainName,
                   NULL,
                   NULL,
                   0,
@@ -235,13 +178,14 @@ error:
 
 DWORD
 ADState_GetProviderData(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     OUT PAD_PROVIDER_DATA* ppResult
     )
 {
     DWORD dwError = 0;
 
     dwError = ADState_ReadFromRegistry(
+                  pszDomainName,
                   ppResult,
                   NULL);
     return dwError;
@@ -249,7 +193,7 @@ ADState_GetProviderData(
 
 DWORD
 ADState_StoreProviderData(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PAD_PROVIDER_DATA pProvider
     )
 {
@@ -258,6 +202,7 @@ ADState_StoreProviderData(
     if (pProvider)
     {
         dwError = ADState_WriteToRegistry(
+                      pszDomainName,
                       pProvider,
                       NULL,
                       0,
@@ -269,19 +214,20 @@ ADState_StoreProviderData(
 
 DWORD
 ADState_GetDomainTrustList(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
     OUT PDLINKEDLIST* ppList
     )
 {
     return ADState_ReadFromRegistry(
+               pszDomainName,
                NULL,
                ppList);
 }
 
 DWORD
 ADState_AddDomainTrust(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo
     )
 {
@@ -290,6 +236,7 @@ ADState_AddDomainTrust(
     if (pDomainInfo)
     {
         dwError = ADState_WriteToRegistry(
+                      pszDomainName,
                       NULL,
                       NULL,
                       0,
@@ -301,7 +248,7 @@ ADState_AddDomainTrust(
 
 DWORD
 ADState_StoreDomainTrustList(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo,
     IN DWORD dwDomainInfoCount
     )
@@ -311,6 +258,7 @@ ADState_StoreDomainTrustList(
     if (ppDomainInfo && dwDomainInfoCount)
     {
         dwError = ADState_WriteToRegistry(
+                      pszDomainName,
                       NULL,
                       ppDomainInfo,
                       dwDomainInfoCount,
@@ -319,52 +267,6 @@ ADState_StoreDomainTrustList(
 
     return dwError;
 }
-
-
-static
-DWORD
-ADState_ReadFromRegistry(
-    OUT OPTIONAL PAD_PROVIDER_DATA* ppProviderData,
-    OUT OPTIONAL PDLINKEDLIST* ppDomainList
-    )
-{
-    DWORD dwError = 0;
-    PDLINKEDLIST pRegCellList = NULL;
-    PDLINKEDLIST pRegDomainList = NULL;
-    PAD_PROVIDER_DATA pRegProviderData = NULL;
-
-    if (ppProviderData)
-    {
-        dwError = ADState_ReadRegProviderData(
-                      &pRegProviderData);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = ADState_ReadRegCellEntry(
-                      &pRegCellList);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        if (pRegProviderData)
-        {
-            pRegProviderData->pCellList = pRegCellList;
-            pRegCellList = NULL;
-        }
-        *ppProviderData = pRegProviderData;
-        pRegProviderData = NULL;
-    }
-
-    if (ppDomainList)
-    {
-        dwError = ADState_ReadRegDomainEntry(
-                      &pRegDomainList);
-        BAIL_ON_LSA_ERROR(dwError);
-        *ppDomainList = pRegDomainList;
-    }
-    cleanup:
-        return dwError;
-    error:
-        goto cleanup;
-}
-
 
 VOID
 ADState_FreeEnumDomainInfoList(
@@ -380,6 +282,163 @@ ADState_FreeEnumDomainInfoList(
     LsaDLinkedListFree(pList);
 }
 
+DWORD
+ADState_GetJoinedDomainList(
+    OUT PDWORD pdwDomainCount,
+    OUT PSTR** pppszDomainList
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hReg = NULL;
+    PWSTR* ppwszSubKeys = NULL;
+    PSTR pszSubKey = NULL;
+    PSTR pszSubKeyPtr = NULL;
+    PSTR* ppszDomainList = NULL;
+    DWORD dwSubKeysLen = 0;
+    DWORD dwIndex = 0;
+
+    dwError = RegOpenServer(&hReg);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = RegUtilIsValidKey(
+                  hReg,
+                  HKEY_THIS_MACHINE,
+                  AD_PROVIDER_REGKEY);
+    if (dwError)
+    {
+        dwError = 0;
+        goto error;
+    }
+
+    dwError = RegUtilGetKeys(
+                  hReg,
+                  HKEY_THIS_MACHINE,
+                  AD_PROVIDER_REGKEY,
+                  NULL,
+                  &ppwszSubKeys,
+                  &dwSubKeysLen);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (dwSubKeysLen)
+    {
+        dwError = LwAllocateMemory(
+                      sizeof(*ppszDomainList) * dwSubKeysLen,
+                      (PVOID*)&ppszDomainList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        for (dwIndex = 0; dwIndex < dwSubKeysLen; dwIndex++)
+        {
+            dwError = LwWc16sToMbs(ppwszSubKeys[dwIndex], &pszSubKey);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            pszSubKeyPtr = strrchr(pszSubKey, '\\');
+            if (pszSubKeyPtr)
+            {
+                dwError = LwAllocateString(
+                              ++pszSubKeyPtr,
+                              &ppszDomainList[dwIndex]);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                LW_SAFE_FREE_STRING(pszSubKey);
+            }
+            else
+            {
+                ppszDomainList[dwIndex] = pszSubKey;
+                pszSubKey = NULL;
+            }
+        }
+    }
+
+    *pppszDomainList = ppszDomainList;
+    *pdwDomainCount = dwSubKeysLen;
+
+cleanup:
+
+    for (dwIndex = 0; dwIndex < dwSubKeysLen; dwIndex++)
+    {
+        LW_SAFE_FREE_MEMORY(ppwszSubKeys[dwIndex]);
+    }
+    LW_SAFE_FREE_MEMORY(ppwszSubKeys);
+
+    LW_SAFE_FREE_STRING(pszSubKey);
+
+    RegCloseServer(hReg);
+
+    return dwError;
+
+error:
+
+    *pppszDomainList = NULL;
+    *pdwDomainCount = 0;
+
+    LwFreeStringArray(ppszDomainList, dwSubKeysLen);
+    ppszDomainList = NULL;
+
+    goto cleanup;
+}
+
+static
+DWORD
+ADState_ReadFromRegistry(
+    IN PCSTR pszDomainName,
+    OUT OPTIONAL PAD_PROVIDER_DATA* ppProviderData,
+    OUT OPTIONAL PDLINKEDLIST* ppDomainList
+    )
+{
+    DWORD dwError = 0;
+    PDLINKEDLIST pRegCellList = NULL;
+    PDLINKEDLIST pRegDomainList = NULL;
+    PAD_PROVIDER_DATA pRegProviderData = NULL;
+    PSTR pszRegistryPath = NULL;
+
+    dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s",
+                  AD_PROVIDER_REGKEY,
+                  pszDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (ppProviderData)
+    {
+        dwError = ADState_ReadRegProviderData(
+                      pszRegistryPath,
+                      &pRegProviderData);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = ADState_ReadRegCellEntry(
+                      pszRegistryPath,
+                      &pRegCellList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (pRegProviderData)
+        {
+            pRegProviderData->pCellList = pRegCellList;
+            pRegCellList = NULL;
+        }
+        *ppProviderData = pRegProviderData;
+        pRegProviderData = NULL;
+    }
+
+    if (ppDomainList)
+    {
+        dwError = ADState_ReadRegDomainEntry(
+                      pszRegistryPath,
+                      &pRegDomainList);
+        BAIL_ON_LSA_ERROR(dwError);
+        *ppDomainList = pRegDomainList;
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_MEMORY(pszRegistryPath);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
 static
 VOID
 ADState_FreeEnumDomainInfoCallback(
@@ -393,6 +452,7 @@ ADState_FreeEnumDomainInfoCallback(
     ADState_FreeEnumDomainInfo(pInfo);
 }
 
+static
 VOID
 ADState_FreeEnumDomainInfo(
     IN OUT PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo
@@ -424,6 +484,7 @@ ADState_FreeEnumDomainInfo(
 static
 DWORD
 ADState_WriteToRegistry(
+    IN PCSTR pszDomainName,
     IN OPTIONAL PAD_PROVIDER_DATA pProviderData,
     IN OPTIONAL PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo,
     IN OPTIONAL DWORD dwDomainInfoCount,
@@ -432,6 +493,8 @@ ADState_WriteToRegistry(
 {
     DWORD dwError = 0;
     DWORD dwCount = 0;
+    DWORD dwSubKeysCount = 0;
+    DWORD dwValuesCount = 0;
     DWORD i = 0;
     REG_DATA_TYPE domainTrustOrderType = 0;
     PDLINKEDLIST pCellList = NULL;
@@ -439,6 +502,14 @@ ADState_WriteToRegistry(
     PSTR *ppszDomainTrustOrder = NULL;
     PSTR *ppszDomainTrustOrderAppend = NULL;
     PSTR pszDomainTrustName = NULL;
+    PSTR pszRegistryPath = NULL;
+
+    dwError = LwAllocateStringPrintf(
+                  &pszRegistryPath,
+                  "%s\\%s",
+                  AD_PROVIDER_REGKEY,
+                  pszDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
 
     /* Handle the ADState_EmptyDb case */
     if (!pProviderData && !ppDomainInfo && !pDomainInfoAppend)
@@ -450,18 +521,39 @@ ADState_WriteToRegistry(
         RegUtilDeleteTree(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY,
+                      pszRegistryPath,
                       AD_PROVIDER_DATA_REGKEY);
         RegUtilDeleteTree(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY,
+                      pszRegistryPath,
                       AD_DOMAIN_TRUST_REGKEY);
         RegUtilDeleteTree(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY,
+                      pszRegistryPath,
                       AD_LINKEDCELL_REGKEY);
+
+        /* Delete domain key only if empty */
+        dwError = RegUtilGetKeyObjectCounts(
+                      hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL,
+                      &dwSubKeysCount,
+                      &dwValuesCount);
+        if (dwError)
+        {
+            dwError = 0;
+        }
+        else if (!dwSubKeysCount && !dwValuesCount)
+        {
+            RegUtilDeleteKey(
+                      hReg,
+                      HKEY_THIS_MACHINE,
+                      pszRegistryPath,
+                      NULL);
+        }
     }
     else if (pProviderData)
     {
@@ -469,17 +561,19 @@ ADState_WriteToRegistry(
         dwError = RegUtilDeleteValue(
                       NULL,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY, 
+                      pszRegistryPath, 
                       AD_LINKEDCELL_REGKEY,
                       "CellList");
 
         dwError = ADState_WriteRegProviderData(
+                      pszRegistryPath,
                       pProviderData);
         BAIL_ON_LSA_ERROR(dwError);
         pCellList = pProviderData->pCellList;
         while (pCellList)
         {
             dwError = ADState_WriteRegCellEntry(
+                          pszRegistryPath,
                           pCellList->pItem);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -497,6 +591,7 @@ ADState_WriteToRegistry(
         for (dwCount=0; dwCount<dwDomainInfoCount; dwCount++)
         {
             dwError = ADState_WriteRegDomainEntry(
+                          pszRegistryPath,
                           ppDomainInfo[dwCount]);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -510,8 +605,8 @@ ADState_WriteToRegistry(
         dwError = RegUtilSetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
-                      NULL,
+                      pszRegistryPath,
+                      AD_DOMAIN_TRUST_REGKEY,
                       "DomainTrustOrder",
                       REG_MULTI_SZ,
                       ppszDomainTrustOrder,
@@ -529,8 +624,8 @@ ADState_WriteToRegistry(
             dwError = RegUtilGetValue(
                           hReg,
                           HKEY_THIS_MACHINE,
-                          AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
-                              NULL,
+                          pszRegistryPath,
+                          AD_DOMAIN_TRUST_REGKEY,
                           "DomainTrustOrder",
                           &domainTrustOrderType,
                           (PVOID) &ppszDomainTrustOrder,
@@ -564,6 +659,7 @@ ADState_WriteToRegistry(
 
             /* Write the appended trust entry to registry */
             dwError = ADState_WriteRegDomainEntry(
+                          pszRegistryPath,
                           pDomainInfoAppend);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -571,8 +667,8 @@ ADState_WriteToRegistry(
             dwError = RegUtilSetValue(
                           hReg,
                           HKEY_THIS_MACHINE,
-                          AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
-                          NULL,
+                          pszRegistryPath,
+                          AD_DOMAIN_TRUST_REGKEY,
                           "DomainTrustOrder",
                           REG_MULTI_SZ,
                           ppszDomainTrustOrderAppend,
@@ -582,6 +678,7 @@ ADState_WriteToRegistry(
     }
 
 cleanup:
+
     if (ppszDomainTrustOrder)
     {
         for (i=0; ppszDomainTrustOrder[i]; i++)
@@ -596,25 +693,30 @@ cleanup:
             LW_SAFE_FREE_STRING(ppszDomainTrustOrderAppend[i]);
         }
     }
+
     LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder);
     LW_SAFE_FREE_MEMORY(ppszDomainTrustOrderAppend);
+    LW_SAFE_FREE_MEMORY(pszRegistryPath);
+
     RegCloseServer(hReg);
+
     return dwError;
+
 error: 
+
     goto cleanup;
 }
-
 
 static
 DWORD
 ADState_ReadRegProviderDataValue(
-    HANDLE hReg,
-    PSTR pszFullKeyPath,
-    PSTR pszSubKey,
-    PSTR pszValueName,
-    DWORD regType,
-    PVOID pValue,
-    PDWORD pdwValueLen)
+    IN HANDLE hReg,
+    IN PCSTR pszFullKeyPath,
+    IN PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN DWORD regType,
+    OUT PVOID pValue,
+    OUT PDWORD pdwValueLen)
 {
     DWORD dwError = 0;
     PSTR pszValue = NULL;
@@ -649,22 +751,24 @@ ADState_ReadRegProviderDataValue(
     }
 
 cleanup:
+
     return dwError;
+
 error:
+
     goto cleanup;
-    
 }
 
 static
 DWORD
 ADState_WriteRegProviderDataValue(
-    HANDLE hReg,
-    PSTR pszFullKeyPath,
-    PSTR pszSubKey,
-    PSTR pszValueName,
-    DWORD dwType,
-    PVOID pValue,
-    DWORD dwValueLen)
+    IN HANDLE hReg,
+    IN PCSTR pszFullKeyPath,
+    IN PCSTR pszSubKey,
+    IN PCSTR pszValueName,
+    IN DWORD dwType,
+    IN PVOID pValue,
+    IN DWORD dwValueLen)
 {
     DWORD dwError = 0;
     DWORD dwDataLen = 0;
@@ -721,15 +825,18 @@ ADState_WriteRegProviderDataValue(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
     return dwError;
 
 error:
+
     goto cleanup;
 }
 
-
+static
 DWORD
 ADState_ReadRegProviderData(
+    IN PCSTR pszRegistryPath,
     OUT PAD_PROVIDER_DATA *ppProviderData
     )
 {
@@ -744,7 +851,6 @@ ADState_ReadRegProviderData(
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
-
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
@@ -757,7 +863,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "DirectoryMode",
                   REG_DWORD,
@@ -767,7 +873,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ADConfigurationMode",
                   REG_DWORD,
@@ -777,7 +883,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "Domain",
                   REG_SZ,
@@ -787,7 +893,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ShortDomain",
                   REG_SZ,
@@ -797,7 +903,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ComputerDN",
                   REG_SZ,
@@ -807,7 +913,7 @@ ADState_ReadRegProviderData(
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "CellDN",
                   REG_SZ,
@@ -816,19 +922,23 @@ ADState_ReadRegProviderData(
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppProviderData = pProviderData;
+
 cleanup:
      
     RegCloseServer(hReg);
+
     return dwError;
 
 error:
+
     goto cleanup;
 }
 
-
+static
 DWORD
 ADState_ReadRegCellEntry(
-    PDLINKEDLIST *ppCellList)
+    IN PCSTR pszRegistryPath,
+    OUT PDLINKEDLIST *ppCellList)
 {
     PAD_LINKED_CELL_INFO pListEntry = NULL;
     DWORD dwError = 0;
@@ -838,18 +948,25 @@ ADState_ReadRegCellEntry(
     PSTR *ppszMultiCellListOrder = NULL;
     DWORD dwMultiCellListOrder = 0;
     DWORD dwIsForestCell = 0;
+    PSTR pszFullRegistryPath = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pListEntry), (PVOID) &pListEntry);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(
+                  &pszFullRegistryPath,
+                  "%s\\%s",
+                  pszRegistryPath,
+                  AD_LINKEDCELL_REGKEY);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
-
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY);
+                  pszFullRegistryPath);
     if (dwError)
     {
         dwError = 0;
@@ -860,7 +977,7 @@ ADState_ReadRegCellEntry(
     dwError = RegUtilGetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_LINKEDCELL_REGKEY,
                   "CellList",
                   NULL,
@@ -873,7 +990,7 @@ ADState_ReadRegCellEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                      pszFullRegistryPath,
                       ppszMultiCellListOrder[i],
                       "CellDN",
                       NULL,
@@ -884,7 +1001,7 @@ ADState_ReadRegCellEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                      pszFullRegistryPath,
                       ppszMultiCellListOrder[i],
                       "Domain",
                       NULL,
@@ -894,7 +1011,7 @@ ADState_ReadRegCellEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                      pszFullRegistryPath,
                       ppszMultiCellListOrder[i],
                       "IsForestCell",
                       NULL,
@@ -910,22 +1027,27 @@ ADState_ReadRegCellEntry(
     }
 
 cleanup:
+
     for (i=0; i<dwMultiCellListOrder; i++)
     {
         LW_SAFE_FREE_STRING(ppszMultiCellListOrder[i]);
     }
+
     LW_SAFE_FREE_MEMORY(ppszMultiCellListOrder);
+    LW_SAFE_FREE_MEMORY(pszFullRegistryPath);
+
     return dwError;
 
 error:
+
     goto cleanup;
-    return dwError;
 }
 
-
+static
 DWORD
 ADState_ReadRegDomainEntry(
-    PDLINKEDLIST *ppDomainList)
+    IN PCSTR pszRegistryPath,
+    OUT PDLINKEDLIST *ppDomainList)
 {
     HANDLE hReg = NULL;
     PAD_REGDB_DOMAIN_INFO pDomainInfo = NULL;
@@ -941,6 +1063,7 @@ ADState_ReadRegDomainEntry(
     DWORD i = 0;
     PSTR *ppszDomainTrustOrder = NULL;
     REG_DATA_TYPE domainTrustOrderType = 0;
+    PSTR pszFullRegistryPath = NULL;
 
     pDomainInfo = NULL;
     BAIL_ON_LSA_ERROR(dwError);
@@ -948,10 +1071,17 @@ ADState_ReadRegDomainEntry(
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwAllocateStringPrintf(
+                  &pszFullRegistryPath,
+                  "%s\\%s",
+                  pszRegistryPath,
+                  AD_DOMAIN_TRUST_REGKEY);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY);
+                  pszFullRegistryPath);
     if (dwError)
     {
         dwError = 0;
@@ -961,7 +1091,7 @@ ADState_ReadRegDomainEntry(
     dwError = RegUtilGetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   NULL,
                   "DomainTrustOrder",
                   &domainTrustOrderType,
@@ -973,7 +1103,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetKeys(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY,
+                      pszRegistryPath,
                       AD_DOMAIN_TRUST_REGKEY,
                       &ppwszSubKeys,
                       &dwSubKeysLen);
@@ -1012,7 +1142,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "DNSDomainName",
                       NULL,
@@ -1028,7 +1158,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "NetBiosDomainName",
                       NULL,
@@ -1044,7 +1174,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "SID",
                       NULL,
@@ -1059,7 +1189,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "GUID",
                       NULL,
@@ -1090,7 +1220,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrusteeDomainName",
                       NULL,
@@ -1106,7 +1236,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrustFlags",
                       NULL,
@@ -1117,7 +1247,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrustType",
                       NULL,
@@ -1128,7 +1258,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrustAttributes",
                       NULL,
@@ -1139,7 +1269,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrustDirection",
                       NULL,
@@ -1150,7 +1280,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "TrustMode",
                       NULL,
@@ -1161,7 +1291,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "ForestName",
                       NULL,
@@ -1176,7 +1306,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "ClientSiteName",
                       NULL,
@@ -1191,7 +1321,7 @@ ADState_ReadRegDomainEntry(
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
-                      AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                      pszFullRegistryPath,
                       pszSubKeyPtr,
                       "Flags",
                       NULL,
@@ -1208,13 +1338,16 @@ ADState_ReadRegDomainEntry(
     }
 
 cleanup:
+
     if (hReg)
     {
         RegCloseServer(hReg);
     }
+
     LW_SAFE_FREE_STRING(pszSubKey);
     LW_SAFE_FREE_STRING(pszSID);
     LW_SAFE_FREE_STRING(pszGUID);
+
     for (i = 0; i < dwSubKeysLen; i++)
     {
         if (ppwszSubKeys)
@@ -1226,18 +1359,22 @@ cleanup:
             LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder[i]);
         }
     }
+
     LW_SAFE_FREE_MEMORY(ppwszSubKeys);
     LW_SAFE_FREE_MEMORY(ppszDomainTrustOrder);
+    LW_SAFE_FREE_MEMORY(pszFullRegistryPath);
+
     return dwError;
 
 error:
+
     goto cleanup;
-    return dwError;
 }
 
-
+static
 DWORD
 ADState_WriteRegDomainEntry(
+    IN PCSTR pszRegistryPath,
     IN PLSA_DM_ENUM_DOMAIN_INFO pDomainInfoEntry
     )
 {
@@ -1245,15 +1382,15 @@ ADState_WriteRegDomainEntry(
     DWORD dwError = 0;
     PSTR pszSid = NULL;
     char szGuid[UUID_STR_SIZE] = {0};
+    PSTR pszFullRegistryPath = NULL;
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* Add top level AD DomainTrust data registry key */
-    dwError = RegUtilAddKey(
-                  hReg,
-                  HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+    dwError = LwAllocateStringPrintf(
+                  &pszFullRegistryPath,
+                  "%s\\%s",
+                  pszRegistryPath,
                   AD_DOMAIN_TRUST_REGKEY);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1261,7 +1398,15 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilAddKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszRegistryPath,
+                  AD_DOMAIN_TRUST_REGKEY);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    /* Add top level AD DomainTrust data registry key */
+    dwError = RegUtilAddKey(
+                  hReg,
+                  HKEY_THIS_MACHINE,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1269,7 +1414,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "DNSDomainName",
                   REG_SZ,
@@ -1281,7 +1426,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "NetBiosDomainName",
                   REG_SZ,
@@ -1300,7 +1445,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "SID",
                   REG_SZ,
@@ -1321,7 +1466,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "GUID",
                   REG_SZ,
@@ -1332,7 +1477,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrusteeDomainName",
                   REG_SZ,
@@ -1344,7 +1489,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrustFlags",
                   REG_DWORD,
@@ -1355,7 +1500,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrustType",
                   REG_DWORD,
@@ -1366,7 +1511,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrustAttributes",
                   REG_DWORD,
@@ -1377,7 +1522,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrustDirection",
                   REG_DWORD,
@@ -1388,7 +1533,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "TrustMode",
                   REG_DWORD,
@@ -1399,7 +1544,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "ForestName",
                   REG_SZ,
@@ -1411,7 +1556,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "ClientSiteName",
                   REG_SZ,
@@ -1423,7 +1568,7 @@ ADState_WriteRegDomainEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_DOMAIN_TRUST_REGKEY,
+                  pszFullRegistryPath,
                   pDomainInfoEntry->pszNetbiosDomainName,
                   "Flags",
                   REG_DWORD,
@@ -1432,18 +1577,23 @@ ADState_WriteRegDomainEntry(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
     LW_SAFE_FREE_STRING(pszSid);
+    LW_SAFE_FREE_MEMORY(pszFullRegistryPath);
      
     RegCloseServer(hReg);
+
     return dwError;
 
 error:
+
     goto cleanup;
 }
  
-
+static
 DWORD
 ADState_WriteRegCellEntry(
+    IN PCSTR pszRegistryPath,
     IN PAD_LINKED_CELL_INFO pCellEntry
     )
 {
@@ -1452,17 +1602,25 @@ ADState_WriteRegCellEntry(
     DWORD dwBooleanValue = 0;
     DWORD dwValueLen = 0;
     PSTR *ppszMultiCellListOrder = NULL;
+    PSTR pszFullRegistryPath = NULL;
     // Do not free
     PSTR *ppszNewMultiCellListOrder = NULL;
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwAllocateStringPrintf(
+                  &pszFullRegistryPath,
+                  "%s\\%s",
+                  pszRegistryPath,
+                  AD_LINKEDCELL_REGKEY);
+    BAIL_ON_LSA_ERROR(dwError);
+
     /* Add top level AD CellEntry data registry key */
     dwError = RegUtilAddKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_LINKEDCELL_REGKEY);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1470,14 +1628,14 @@ ADState_WriteRegCellEntry(
     dwError = RegUtilAddKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                  pszFullRegistryPath,
                   pCellEntry->pszCellDN);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = RegUtilGetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_LINKEDCELL_REGKEY,
                   "CellList",
                   NULL,
@@ -1496,7 +1654,7 @@ ADState_WriteRegCellEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_LINKEDCELL_REGKEY,
                   "CellList",
                   REG_MULTI_SZ,
@@ -1508,7 +1666,7 @@ ADState_WriteRegCellEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                  pszFullRegistryPath,
                   pCellEntry->pszCellDN,
                   "CellDN",
                   REG_SZ,
@@ -1518,7 +1676,7 @@ ADState_WriteRegCellEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                  pszFullRegistryPath,
                   pCellEntry->pszCellDN,
                   "Domain",
                   REG_SZ,
@@ -1530,7 +1688,7 @@ ADState_WriteRegCellEntry(
     dwError = RegUtilSetValue(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_LINKEDCELL_REGKEY,
+                  pszFullRegistryPath,
                   pCellEntry->pszCellDN,
                   "IsForestCell",
                   REG_DWORD,
@@ -1540,17 +1698,21 @@ ADState_WriteRegCellEntry(
 
 cleanup:
      
+    LW_SAFE_FREE_MEMORY(pszFullRegistryPath);
+
     RegCloseServer(hReg);
+
     return dwError;
 
 error:
+
     goto cleanup;
 }
-
 
 static
 DWORD
 ADState_WriteRegProviderData(
+    IN PCSTR pszRegistryPath,
     IN PAD_PROVIDER_DATA pProviderData
     )
 {
@@ -1565,7 +1727,7 @@ ADState_WriteRegProviderData(
     dwError = RegUtilAddKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1573,7 +1735,7 @@ ADState_WriteRegProviderData(
 
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "DirectoryMode",
                   REG_DWORD,
@@ -1584,7 +1746,7 @@ ADState_WriteRegProviderData(
     dwAdConfigurationMode = (DWORD) pProviderData->adConfigurationMode;
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ADConfigurationMode",
                   REG_DWORD,
@@ -1595,7 +1757,7 @@ ADState_WriteRegProviderData(
     pszString = (PSTR) pProviderData->szDomain;
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "Domain",
                   REG_SZ,
@@ -1606,7 +1768,7 @@ ADState_WriteRegProviderData(
     pszString = (PSTR) pProviderData->szShortDomain;
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ShortDomain",
                   REG_SZ,
@@ -1617,7 +1779,7 @@ ADState_WriteRegProviderData(
     pszString = (PSTR) pProviderData->szComputerDN;
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "ComputerDN",
                   REG_SZ,
@@ -1628,7 +1790,7 @@ ADState_WriteRegProviderData(
     pszString = (PSTR) pProviderData->cell.szCellDN;
     dwError = ADState_WriteRegProviderDataValue(
                   hReg,
-                  AD_PROVIDER_REGKEY,
+                  pszRegistryPath,
                   AD_PROVIDER_DATA_REGKEY,
                   "CellDN",
                   REG_SZ,
@@ -1637,9 +1799,12 @@ ADState_WriteRegProviderData(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
     RegCloseServer(hReg);
+
     return dwError;
 
 error:
+
     goto cleanup;
 }

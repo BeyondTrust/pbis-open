@@ -728,6 +728,23 @@ LwKrb5GetMachineCreds(
     PSTR* ppszHostDnsDomain
     )
 {
+    return LwKrb5GetMachineCredsByDomain(
+               NULL,
+               ppszUsername,
+               ppszPassword,
+               ppszDomainDnsName,
+               ppszHostDnsDomain);
+}
+
+DWORD
+LwKrb5GetMachineCredsByDomain(
+    PCSTR pszDomainName,
+    PSTR* ppszUsername,
+    PSTR* ppszPassword,
+    PSTR* ppszDomainDnsName,
+    PSTR* ppszHostDnsDomain
+    )
+{
     DWORD dwError = 0;
     PSTR  pszUsername = NULL;
     PSTR  pszPassword = NULL;
@@ -741,8 +758,9 @@ LwKrb5GetMachineCreds(
                     &hPasswordStore);
     BAIL_ON_LW_ERROR(dwError);
     
-    dwError = LwpsGetPasswordByCurrentHostName(
+    dwError = LwpsGetPasswordByDomainName(
                     hPasswordStore,
+                    pszDomainName,
                     &pMachineAcctInfo);
     if (dwError)
     {
@@ -869,6 +887,17 @@ LwKrb5RefreshMachineTGT(
     PDWORD pdwGoodUntilTime
     )
 {
+    return LwKrb5RefreshMachineTGTByDomain(
+               NULL,
+               pdwGoodUntilTime);
+}
+
+DWORD
+LwKrb5RefreshMachineTGTByDomain(
+    PCSTR  pszDomainName,
+    PDWORD pdwGoodUntilTime
+    )
+{
     DWORD dwError = 0;
     DWORD dwGoodUntilTime = 0;
     PSTR  pszUsername = NULL;
@@ -878,7 +907,8 @@ LwKrb5RefreshMachineTGT(
 
     LW_LOG_VERBOSE("Refreshing machine TGT");
 
-    dwError = LwKrb5GetMachineCreds(
+    dwError = LwKrb5GetMachineCredsByDomain(
+                    pszDomainName,
                     &pszUsername,
                     &pszPassword,
                     &pszDomainDnsName,

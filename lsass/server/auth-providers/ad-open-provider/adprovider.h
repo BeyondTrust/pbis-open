@@ -128,11 +128,3 @@
 #include "memcache_p.h"
 #include "specialdomain.h"
 #include "lsakrb5smb.h"
-
-#define LSASS_PARAMETERS_REGKEY "Services\\lsass\\Parameters"
-#define LSASS_PROVIDERS_REGKEY "Providers"
-#define AD_REGKEY "ActiveDirectory"
-#define AD_PROVIDER_REGKEY LSASS_PARAMETERS_REGKEY "\\" LSASS_PROVIDERS_REGKEY "\\" AD_REGKEY
-#define AD_PROVIDER_DATA_REGKEY "ProviderData"
-#define AD_LINKEDCELL_REGKEY    "LinkedCell"
-#define AD_DOMAIN_TRUST_REGKEY  "DomainTrust"

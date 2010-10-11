@@ -49,51 +49,39 @@
 #define __STATE_STORE_H__
 
 DWORD
-ADState_OpenDb(
-    ADSTATE_CONNECTION_HANDLE* phDb
-    );
-
-// Sets the handle to null after closing it. If a null handle is passed in,
-// it is ignored.
-void
-ADState_SafeCloseDb(
-    ADSTATE_CONNECTION_HANDLE* phDb
-    );
-
-DWORD
 ADState_EmptyDb(
-    ADSTATE_CONNECTION_HANDLE hDb
+    IN PCSTR pszDomainName
     );
 
 DWORD
 ADState_GetProviderData(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     OUT PAD_PROVIDER_DATA* ppProvider
     );
 
 DWORD
 ADState_StoreProviderData(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PAD_PROVIDER_DATA pProvider
     );
 
 DWORD
 ADState_GetDomainTrustList(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
     OUT PDLINKEDLIST* ppList
     );
 
 DWORD
 ADState_StoreDomainTrustList(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PLSA_DM_ENUM_DOMAIN_INFO* ppDomainInfo,
     IN DWORD dwDomainInfoCount
     );
 
 DWORD
 ADState_AddDomainTrust(
-    IN ADSTATE_CONNECTION_HANDLE hDb,
+    IN PCSTR pszDomainName,
     IN PLSA_DM_ENUM_DOMAIN_INFO pDomainInfo
     );
 
@@ -101,6 +89,12 @@ VOID
 ADState_FreeEnumDomainInfoList(
     // Contains type PLSA_DM_ENUM_DOMAIN_INFO
     IN OUT PDLINKEDLIST pList
+    );
+
+DWORD
+ADState_GetJoinedDomainList(
+    OUT PDWORD pdwDomainCount,
+    OUT PSTR** ppszDomainList
     );
 
 #endif /* __STATE_STORE_H__ */

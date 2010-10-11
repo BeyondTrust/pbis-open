@@ -148,8 +148,8 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     //
 
     dwError = ADState_GetDomainTrustList(
-                pState->hStateConnection,
-                &pDomains);
+                  pState->pszJoinedDomainName,
+                  &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
     pPos = pDomains;
@@ -216,7 +216,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADState_StoreDomainTrustList(
-                pState->hStateConnection,
+                pState->pszJoinedDomainName,
                 ppDomainInfo,
                 dwDomainInfoCount);
     BAIL_ON_LSA_ERROR(dwError);
@@ -363,7 +363,7 @@ AD_OnlineInitializeOperatingMode(
     }
 
     dwError = ADState_StoreProviderData(
-                pState->hStateConnection,
+                pState->pszJoinedDomainName,
                 pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1583,7 +1583,8 @@ AD_OnlineCheckUserPassword(
 
     LwStrToLower(pszHostname);
 
-    dwError = LwKrb5GetMachineCreds(
+    dwError = LwKrb5GetMachineCredsByDomain(
+                    pContext->pState->pszJoinedDomainName,
                     &pszMachineAccountName,
                     &pszServicePassword,
                     &pszDomainDnsName,

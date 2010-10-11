@@ -141,7 +141,22 @@ LwKrb5RefreshMachineTGT(
     );
 
 DWORD
+LwKrb5RefreshMachineTGTByDomain(
+    PCSTR pszDomainName,
+    PDWORD pdwGoodUntilTime
+    );
+
+DWORD
 LwKrb5GetMachineCreds(
+    PSTR* ppszUsername,
+    PSTR* ppszPassword,
+    PSTR* ppszDomainDnsName,
+    PSTR* ppszHostDnsDomain
+    );
+
+DWORD
+LwKrb5GetMachineCredsByDomain(
+    PCSTR pszDomainName,
     PSTR* ppszUsername,
     PSTR* ppszPassword,
     PSTR* ppszDomainDnsName,

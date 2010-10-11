@@ -54,8 +54,12 @@
 
 #define PSTOREDB_REGISTRY_KEY \
     "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\Pstore\\Default"
-#define PSTOREDB_REGISTRY_MACHINE_PWD_KEY \
-        PSTOREDB_REGISTRY_KEY "\\MachinePassword"
+#define PSTOREDB_REGISTRY_AD_KEY \
+    "Services\\lsass\\Parameters\\Providers\\ActiveDirectory\\DomainJoin"
+#define PSTOREDB_REGISTRY_PSTORE_SUBKEY \
+        "Pstore"
+#define PSTOREDB_REGISTRY_MACHINE_PWD_SUBKEY \
+        "MachinePassword"
 
 #define LWPS_REG_HOSTNAME           "HostName"
 #define LWPS_REG_DOMAIN_SID         "DomainSID"
@@ -124,6 +128,24 @@ DWORD
 RegDB_DeleteHostEntry(
     HANDLE hProvider,
     PCSTR  pszHostname
+    );
+
+DWORD
+RegDB_DeleteDomainEntry(
+    HANDLE hProvider,
+    PCSTR pszDomainName
+    );
+
+DWORD
+RegDB_GetDefaultJoinedDomain(
+    HANDLE hProvider,
+    PSTR* ppszDomainName
+    );
+
+DWORD
+RegDB_SetDefaultJoinedDomain(
+    HANDLE hProvider,
+    PCSTR pszDomainName
     );
 
 VOID

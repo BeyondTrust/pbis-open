@@ -317,8 +317,8 @@ AD_OfflineInitializeOperatingMode(
     const LSA_DM_ENUM_DOMAIN_INFO* pDomain = NULL;
 
     dwError = ADState_GetDomainTrustList(
-        pState->hStateConnection,
-        &pDomains);
+                  pState->pszJoinedDomainName,
+                  &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
     pPos = pDomains;
@@ -351,8 +351,8 @@ AD_OfflineInitializeOperatingMode(
     }
 
     dwError = ADState_GetProviderData(
-                pState->hStateConnection,
-                &pProviderData);
+                  pState->pszJoinedDomainName,
+                  &pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppProviderData = pProviderData;

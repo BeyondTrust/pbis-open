@@ -110,6 +110,16 @@ RegShellUtilGetValues(
     );
 
 DWORD
+RegShellUtilGetKeyObjectCounts(
+    HANDLE hReg,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PDWORD pdwSubKeysCount,
+    PDWORD pdwValuesCount
+    );
+
+DWORD
 RegShellUtilDeleteValue(
     HANDLE hReg,
     PCSTR pszRootKeyName,

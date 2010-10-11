@@ -110,9 +110,6 @@ struct _LSA_DB_CONNECTION;
 typedef struct _LSA_DB_CONNECTION *LSA_DB_HANDLE;
 typedef LSA_DB_HANDLE *PLSA_DB_HANDLE;
 
-struct _ADSTATE_CONNECTION;
-typedef struct _ADSTATE_CONNECTION *ADSTATE_CONNECTION_HANDLE;
-
 struct _LSA_DM_STATE;
 typedef struct _LSA_DM_STATE *LSA_DM_STATE_HANDLE, **PLSA_DM_STATE_HANDLE;
 
@@ -125,6 +122,8 @@ typedef struct _LSA_SCHANNEL_STATE *LSA_SCHANNEL_STATE_HANDLE;
 typedef struct _LSA_SCHANNEL_STATE **PLSA_SCHANNEL_STATE_HANDLE;
 
 typedef struct _LSA_AD_PROVIDER_STATE {
+    PSTR pszJoinedDomainName;
+
     /// Tracks machine credentials state
     struct {
         BOOLEAN bIsInitialized;
@@ -153,7 +152,6 @@ typedef struct _LSA_AD_PROVIDER_STATE {
         BOOLEAN bIsDiscoveringTrusts;
     } TrustDiscovery;
 
-    ADSTATE_CONNECTION_HANDLE hStateConnection;
     DWORD dwMaxAllowedClockDriftSeconds;
 
     pthread_rwlock_t stateLock;

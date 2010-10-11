@@ -570,12 +570,15 @@ LsaDmCleanup(
 {
     PLSA_AD_PROVIDER_STATE pState = NULL;
 
-    LsaDmpGetProviderState(hDmState, &pState);
-
-    if (pState->hDmState)
+    if (hDmState)
     {
-        LsaDmpStateDestroy(pState->hDmState);
-        pState->hDmState = NULL;
+        LsaDmpGetProviderState(hDmState, &pState);
+
+        if (pState->hDmState)
+        {
+            LsaDmpStateDestroy(pState->hDmState);
+            pState->hDmState = NULL;
+        }
     }
 }
 
@@ -3714,7 +3717,9 @@ LsaDmConnectDomain(
                                 &bIsNetworkError);
     if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
     {
-        dwError = LwKrb5RefreshMachineTGT(NULL);
+        dwError = LwKrb5RefreshMachineTGTByDomain(
+                      pProviderState->pszJoinedDomainName,
+                      NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,
@@ -3778,7 +3783,9 @@ LsaDmConnectDomain(
                                 &bIsNetworkError);
     if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
     {
-        dwError = LwKrb5RefreshMachineTGT(NULL);
+        dwError = LwKrb5RefreshMachineTGTByDomain(
+                      pProviderState->pszJoinedDomainName,
+                      NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = pfConnectCallback(pszDnsDomainOrForestName,

@@ -153,6 +153,23 @@ LwpsDeleteEntriesInAllStores(
 
 DWORD
 LwpsDeleteHostInAllStores(
+    PCSTR pszHostname
+    );
+
+DWORD
+LwpsDeleteDomainInAllStores(
+    PCSTR pszDomainName
+    );
+
+DWORD
+LwpsGetDefaultJoinedDomain(
+    HANDLE hStore,
+    PSTR* ppszDomainName
+    );
+
+DWORD
+LwpsSetDefaultJoinedDomain(
+    HANDLE hStore,
     PCSTR pszDomainName
     );
 

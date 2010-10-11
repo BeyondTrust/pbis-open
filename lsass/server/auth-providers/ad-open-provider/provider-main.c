@@ -205,6 +205,7 @@ AD_InitializeProvider(
     DWORD dwError = 0;
     LSA_AD_CONFIG config = {0};
     pthread_t startThread;
+    HANDLE hPstore = NULL;
 
     pthread_rwlock_init(&gADGlobalDataLock, NULL);
 
@@ -212,6 +213,20 @@ AD_InitializeProvider(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_NetInitMemory();
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwpsOpenPasswordStore(
+                  LWPS_PASSWORD_STORE_DEFAULT,
+                  &hPstore);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwpsGetDefaultJoinedDomain(
+                  hPstore,
+                  &gpLsaAdProviderState->pszJoinedDomainName);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+    }
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_NetCreateSchannelState(gpLsaAdProviderState);
@@ -235,10 +250,6 @@ AD_InitializeProvider(
         gpCacheProvider);
 
     dwError = LwKrb5SetProcessDefaultCachePath(LSASS_CACHE_PATH);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = ADState_OpenDb(
-                &gpLsaAdProviderState->hStateConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
     switch (gpLsaAdProviderState->config.CacheBackend)
@@ -286,6 +297,11 @@ cleanup:
 
     AD_FreeConfigContents(&config);
 
+    if (hPstore)
+    {
+        LwpsClosePasswordStore(hPstore);
+    }
+
     return dwError;
 
 error:
@@ -310,7 +326,12 @@ LsaAdStartupThread(
 
     LsaAdProviderStateAcquireWrite(pState);
 
-    dwError = LwKrb5GetMachineCreds(NULL, NULL, NULL, NULL);
+    dwError = LwKrb5GetMachineCredsByDomain(
+                  pState->pszJoinedDomainName,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL);
     if (dwError == 0)
     {
         dwError = AD_Activate(pState);
@@ -387,7 +408,8 @@ AD_Activate(
 
     LwStrToUpper(pszHostname);
 
-    dwError = LwKrb5GetMachineCreds(
+    dwError = LwKrb5GetMachineCredsByDomain(
+                    pState->pszJoinedDomainName,
                     &pszUsername,
                     &pszPassword,
                     &pszDomainDnsName,
@@ -531,6 +553,8 @@ AD_Deactivate(
     LsaUmCleanup();
 
     LsaDmCleanup(pState->hDmState);
+
+    LW_SAFE_FREE_STRING(pState->pszJoinedDomainName);
 
     return dwError;
 }
@@ -1466,6 +1490,13 @@ AD_JoinDomain(
         pRequest->dwFlags);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwAllocateString(
+                  pRequest->pszDomain,
+                  &pContext->pState->pszJoinedDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pContext->pState->pszJoinedDomainName);
+
     dwError = AD_PostJoinDomain(pContext, pContext->pState);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1541,7 +1572,7 @@ AD_PostLeaveDomain(
     dwError = ADCacheEmptyCache(pState->hCacheConnection);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = ADState_EmptyDb(pState->hStateConnection);
+    dwError = ADState_EmptyDb(pState->pszJoinedDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_Deactivate(pState);
@@ -3954,7 +3985,6 @@ LsaAdProviderStateDestroy(
     if (pState)
     {
         ADCacheSafeClose(&pState->hCacheConnection);
-        ADState_SafeCloseDb(&pState->hStateConnection);
 
         if (pState->MediaSenseHandle)
         {
@@ -3993,6 +4023,8 @@ LsaAdProviderStateDestroy(
         {
             AD_NetDestroySchannelState(pState);
         }
+
+        LW_SAFE_FREE_STRING(pState->pszJoinedDomainName);
 
         LwFreeMemory(pState);
     }
@@ -4104,7 +4136,8 @@ AD_MachineCredentialsCacheInitialize(
     LwStrToUpper(pszHostname);
 
     // Read password info before acquiring the lock.
-    dwError = LwKrb5GetMachineCreds(
+    dwError = LwKrb5GetMachineCredsByDomain(
+                    pState->pszJoinedDomainName,
                     &pszUsername,
                     &pszPassword,
                     &pszDomainDnsName,

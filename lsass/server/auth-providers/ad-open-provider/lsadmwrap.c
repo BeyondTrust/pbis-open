@@ -337,18 +337,21 @@ typedef struct _LSA_DM_WRAP_LDAP_OPEN_DIRECORY_CALLBACK_CONTEXT {
 } LSA_DM_WRAP_LDAP_OPEN_DIRECORY_CALLBACK_CONTEXT, *PLSA_DM_WRAP_LDAP_OPEN_DIRECORY_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN PCSTR pszName;
     OUT PSTR pszSid;
     OUT LSA_OBJECT_TYPE ObjectType;
 } LSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT, *PLSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN PCSTR pszSid;
     OUT PSTR pszNT4Name;
     OUT LSA_OBJECT_TYPE ObjectType;
 } LSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT, *PLSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN DWORD dwSidCounts;
     IN PSTR* ppszSids;
     OUT DWORD dwFoundNamesCount;
@@ -356,6 +359,7 @@ typedef struct _LSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT {
 } LSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT, *PLSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN DWORD dwNameCounts;
     IN PSTR* ppszNames;
     OUT DWORD dwFoundSidsCount;
@@ -363,12 +367,14 @@ typedef struct _LSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT {
 } LSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT, *PLSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN DWORD dwFlags;
     OUT NetrDomainTrust* pTrusts;
     OUT DWORD dwCount;
 } LSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT, *PLSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT;
 
 typedef struct _LSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT {
+    IN PLSA_AD_PROVIDER_STATE pState;
     IN PCSTR pszDomainName;
     IN BOOLEAN bReturnDnsName;
     OUT PSTR pszDomainDnsOrFlatName;
@@ -413,11 +419,13 @@ LsaDmWrappLookupSidByNameCallback(
     DWORD dwError = 0;
     PLSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT) pContext;
 
-    dwError = AD_NetLookupObjectSidByName(pDcInfo->pszDomainControllerName,
-                                          pCtx->pszName,
-                                          &pCtx->pszSid,
-                                          &pCtx->ObjectType,
-                                          pbIsNetworkError);
+    dwError = AD_NetLookupObjectSidByName(
+                    pCtx->pState,
+                    pDcInfo->pszDomainControllerName,
+                    pCtx->pszName,
+                    &pCtx->pszSid,
+                    &pCtx->ObjectType,
+                    pbIsNetworkError);
     return dwError;
 }
 
@@ -433,6 +441,7 @@ LsaDmWrappLookupNameBySidCallback(
     PLSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT) pContext;
 
     return AD_NetLookupObjectNameBySid(
+                    pCtx->pState,
                     pDcInfo->pszDomainControllerName,
                     pCtx->pszSid,
                     &pCtx->pszNT4Name,
@@ -452,6 +461,7 @@ LsaDmWrappLookupNamesBySidsCallback(
     PLSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT) pContext;
 
     return AD_NetLookupObjectNamesBySids(
+                    pCtx->pState,
                     pDcInfo->pszDomainControllerName,
                     pCtx->dwSidCounts,
                     pCtx->ppszSids,
@@ -472,6 +482,7 @@ LsaDmWrappLookupSidsByNamesCallback(
     PLSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT) pContext;
 
     return AD_NetLookupObjectSidsByNames(
+                    pCtx->pState,
                     pDcInfo->pszDomainControllerName,
                     pCtx->dwNameCounts,
                     pCtx->ppszNames,
@@ -539,11 +550,13 @@ LsaDmWrappDsEnumerateDomainTrustsCallback(
                     &pszFqdnDC);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_DsEnumerateDomainTrusts(pszFqdnDC,
-                                         pCtx->dwFlags,
-                                         &pCtx->pTrusts,
-                                         &pCtx->dwCount,
-                                         pbIsNetworkError);
+    dwError = AD_DsEnumerateDomainTrusts(
+                    pCtx->pState,
+                    pszFqdnDC,
+                    pCtx->dwFlags,
+                    &pCtx->pTrusts,
+                    &pCtx->dwCount,
+                    pbIsNetworkError);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -566,12 +579,14 @@ LsaDmWrappDsGetDcNameCallback(
     DWORD dwError = 0;
     PLSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT pCtx = (PLSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT) pContext;
 
-    dwError = AD_DsGetDcName(pDcInfo->pszDomainControllerName,
-                             pCtx->pszDomainName,
-                             pCtx->bReturnDnsName,
-                             &pCtx->pszDomainDnsOrFlatName,
-                             &pCtx->pszDomainForestDnsName,
-                             pbIsNetworkError);
+    dwError = AD_DsGetDcName(
+                    pCtx->pState,
+                    pDcInfo->pszDomainControllerName,
+                    pCtx->pszDomainName,
+                    pCtx->bReturnDnsName,
+                    &pCtx->pszDomainDnsOrFlatName,
+                    &pCtx->pszDomainForestDnsName,
+                    pbIsNetworkError);
     return dwError;
 }
 
@@ -608,6 +623,7 @@ LsaDmWrapNetLookupObjectSidByName(
     DWORD dwError = 0;
     LSA_DM_WRAP_LOOKUP_SID_BY_NAME_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.pszName = pszName;
 
     dwError = LsaDmConnectDomain(hDmState,
@@ -640,6 +656,7 @@ LsaDmWrapNetLookupNameByObjectSid(
     DWORD dwError = 0;
     LSA_DM_WRAP_LOOKUP_NAME_BY_SID_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.pszSid = pszSid;
 
     dwError = LsaDmConnectDomain(hDmState,
@@ -673,6 +690,7 @@ LsaDmWrapNetLookupNamesByObjectSids(
     DWORD dwError = 0;
     LSA_DM_WRAP_LOOKUP_NAMES_BY_SIDS_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.ppszSids = ppszSids;
     context.dwSidCounts = dwSidCounts;
 
@@ -703,6 +721,7 @@ LsaDmWrapNetLookupObjectSidsByNames(
     DWORD dwError = 0;
     LSA_DM_WRAP_LOOKUP_SIDS_BY_NAMES_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.ppszNames = ppszNames;
     context.dwNameCounts = dwNameCounts;
 
@@ -732,6 +751,7 @@ LsaDmWrapDsEnumerateDomainTrusts(
     DWORD dwError = 0;
     LSA_DM_WRAP_ENUM_DOMAIN_TRUSTS_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.dwFlags = dwFlags;
 
     dwError = LsaDmConnectDomain(hDmState,
@@ -761,6 +781,7 @@ LsaDmWrapDsGetDcName(
     DWORD dwError = 0;
     LSA_DM_WRAP_GET_DC_NAME_CALLBACK_CONTEXT context = { 0 };
 
+    LsaDmpGetProviderState(hDmState, &context.pState);
     context.pszDomainName = pszFindDomainName;
     context.bReturnDnsName = bReturnDnsName;
 

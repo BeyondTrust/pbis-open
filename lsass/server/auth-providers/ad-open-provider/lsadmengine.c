@@ -704,7 +704,7 @@ LsaDmEnginepAddOneWayOtherForestDomain(
     if (!pProviderState->TrustDiscovery.bIsDiscoveringTrusts)
     {
         dwError = ADState_AddDomainTrust(
-                        pProviderState->hStateConnection,
+                        pProviderState->pszJoinedDomainName,
                         pDomainInfo);
         BAIL_ON_LSA_ERROR(dwError);
     }

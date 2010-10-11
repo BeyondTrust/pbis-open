@@ -92,7 +92,8 @@ AD_ClearSchannelStateInLock(
 static
 DWORD
 AD_GetSystemCreds(
-    LW_PIO_CREDS* ppCreds
+    IN PLSA_AD_PROVIDER_STATE pState,
+    OUT LW_PIO_CREDS* ppCreds
     )
 {
     LW_PIO_CREDS pCreds = NULL;
@@ -103,7 +104,8 @@ AD_GetSystemCreds(
     PSTR pszHostDnsDomain = NULL;
     PSTR pszMachPrincipal = NULL;
 
-    dwError = LwKrb5GetMachineCreds(
+    dwError = LwKrb5GetMachineCredsByDomain(
+                    pState->pszJoinedDomainName,
                     &pszUsername,
                     &pszPassword,
                     &pszDomainDnsName,
@@ -146,6 +148,7 @@ error:
 
 DWORD
 AD_SetSystemAccess(
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT OPTIONAL LW_PIO_CREDS* ppOldToken
     )
 {
@@ -153,7 +156,9 @@ AD_SetSystemAccess(
     LW_PIO_CREDS pSystemToken = NULL;
     DWORD dwError = 0;
 
-    dwError = AD_GetSystemCreds(&pSystemToken);
+    dwError = AD_GetSystemCreds(
+                  pState,
+                  &pSystemToken);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (ppOldToken)
@@ -406,6 +411,7 @@ GetObjectType(
 
 DWORD
 AD_NetLookupObjectSidByName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN PCSTR pszObjectName,
     OUT PSTR* ppszObjectSid,
@@ -419,6 +425,7 @@ AD_NetLookupObjectSidByName(
     BOOLEAN bIsNetworkError = FALSE;
 
     dwError = AD_NetLookupObjectSidsByNames(
+                 pState,
                  pszHostname,
                  1,
                  (PSTR*)&pszObjectName,
@@ -466,6 +473,7 @@ error:
 
 DWORD
 AD_NetLookupObjectSidsByNames(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN DWORD dwNamesCount,
     IN PSTR* ppszNames,
@@ -499,7 +507,9 @@ AD_NetLookupObjectSidsByNames(
                   &pwcHost);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_SetSystemAccess(&pOldToken);
+    dwError = AD_SetSystemAccess(
+                  pState,
+                  &pOldToken);
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
@@ -762,6 +772,7 @@ error:
 
 DWORD
 AD_NetLookupObjectNameBySid(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN PCSTR pszObjectSid,
     OUT PSTR* ppszNT4Name,
@@ -775,6 +786,7 @@ AD_NetLookupObjectNameBySid(
     BOOLEAN bIsNetworkError = FALSE;
 
     dwError = AD_NetLookupObjectNamesBySids(
+                 pState,
                  pszHostname,
                  1,
                  (PSTR*)&pszObjectSid,
@@ -825,6 +837,7 @@ error:
 
 DWORD
 AD_NetLookupObjectNamesBySids(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN DWORD dwSidsCount,
     IN PSTR* ppszObjectSids,
@@ -861,7 +874,9 @@ AD_NetLookupObjectNamesBySids(
                   &pwcHost);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_SetSystemAccess(&pOldToken);
+    dwError = AD_SetSystemAccess(
+                  pState,
+                  &pOldToken);
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
@@ -1166,6 +1181,7 @@ error:
 
 DWORD
 AD_DsEnumerateDomainTrusts(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDomainControllerName,
     IN DWORD dwFlags,
     OUT NetrDomainTrust** ppTrusts,
@@ -1188,7 +1204,9 @@ AD_DsEnumerateDomainTrusts(
     dwError = LwMbsToWc16s(pszDomainControllerName, &pwcDomainControllerName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_SetSystemAccess(&pOldToken);
+    dwError = AD_SetSystemAccess(
+                  pState,
+                  &pOldToken);
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
@@ -1294,6 +1312,7 @@ AD_FreeDomainTrusts(
 
 DWORD
 AD_DsGetDcName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszServerName,
     IN PCSTR pszDomainName,
     IN BOOLEAN bReturnDnsName,
@@ -1320,7 +1339,9 @@ AD_DsGetDcName(
     dwError = LwMbsToWc16s(pszServerName, &pwcServerName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_SetSystemAccess(&pOldToken);
+    dwError = AD_SetSystemAccess(
+                  pState,
+                  &pOldToken);
     BAIL_ON_LSA_ERROR(dwError);
     bChangedToken = TRUE;
 
@@ -1704,8 +1725,8 @@ AD_NetlogonAuthenticationUserEx(
     dwError = LsaDnsGetHostInfo(&pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwpsGetPasswordByHostName(hPwdDb,
-                                        pszHostname,
+    dwError = LwpsGetPasswordByDomainName(hPwdDb,
+                                        pState->pszJoinedDomainName,
                                         &pMachAcctInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1760,7 +1781,9 @@ AD_NetlogonAuthenticationUserEx(
 
         /* Establish the initial bind to \NETLOGON */
 
-        dwError = AD_SetSystemAccess(&pOldToken);
+        dwError = AD_SetSystemAccess(
+                      pState,
+                      &pOldToken);
         BAIL_ON_LSA_ERROR(dwError);
         bChangedToken = TRUE;
 

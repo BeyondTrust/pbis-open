@@ -142,6 +142,12 @@ LwpsDeleteHostInStore(
     PVOID pData
     );
 
+DWORD
+LwpsDeleteDomainInStore(
+    PVOID pItem,
+    PVOID pData
+    );
+
 
 #endif /* __LWPS_PROVIDER_P_H__ */
 

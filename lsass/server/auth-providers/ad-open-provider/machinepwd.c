@@ -199,7 +199,7 @@ ADChangeMachinePasswordInThreadLock(
 
     LSA_LOG_VERBOSE("Changing machine password");
 
-    dwError = AD_SetSystemAccess(NULL);
+    dwError = AD_SetSystemAccess(pState, NULL);
     if (dwError)
     {
         LSA_LOG_ERROR("Error: Failed to acquire credentials (error = %u)", dwError);
@@ -280,9 +280,9 @@ ADSyncMachinePasswordThreadRoutine(
         }
         ADSyncTimeToDC(pState, pState->pProviderData->szDomain);
         
-        dwError = LwpsGetPasswordByHostName(
+        dwError = LwpsGetPasswordByDomainName(
                         pMachinePwdState->hPasswordStore,
-                        pszHostname,
+                        pState->pszJoinedDomainName,
                         &pAcctInfo);
         if (dwError)
         {
@@ -327,7 +327,9 @@ ADSyncMachinePasswordThreadRoutine(
 
         if (bRefreshTGT)
         {
-            dwError = LwKrb5RefreshMachineTGT(&dwGoodUntilTime);
+            dwError = LwKrb5RefreshMachineTGTByDomain(
+                          pState->pszJoinedDomainName,
+                          &dwGoodUntilTime);
             if (dwError)
             {
                 if (AD_EventlogEnabled(pState))
@@ -476,35 +478,38 @@ ADShutdownMachinePasswordSync(
 {
     PLSA_MACHINEPWD_STATE pMachinePwdState = pState->hMachinePwdState;
 
-    if (pMachinePwdState->pThread)
-    {   
-        pthread_mutex_lock(pMachinePwdState->pThreadLock);
-        pMachinePwdState->bThreadShutdown = TRUE;
-        pthread_cond_signal(pMachinePwdState->pThreadCondition);
-        pthread_mutex_unlock(pMachinePwdState->pThreadLock);
-
-        pthread_join(pMachinePwdState->Thread, NULL);
-        pMachinePwdState->pThread = NULL;
-        pMachinePwdState->bThreadShutdown = FALSE;
-    }
-
-    if (pMachinePwdState->pThreadCondition)
+    if (pMachinePwdState)
     {
-        pthread_cond_destroy(pMachinePwdState->pThreadCondition);
-    }
+        if (pMachinePwdState->pThread)
+        {   
+            pthread_mutex_lock(pMachinePwdState->pThreadLock);
+            pMachinePwdState->bThreadShutdown = TRUE;
+            pthread_cond_signal(pMachinePwdState->pThreadCondition);
+            pthread_mutex_unlock(pMachinePwdState->pThreadLock);
 
-    if (pMachinePwdState->pThreadLock)
-    {
-        pthread_mutex_destroy(pMachinePwdState->pThreadLock);
-    }
+            pthread_join(pMachinePwdState->Thread, NULL);
+            pMachinePwdState->pThread = NULL;
+            pMachinePwdState->bThreadShutdown = FALSE;
+        }
 
-    if (pMachinePwdState->hPasswordStore)
-    {
-        LwpsClosePasswordStore(pMachinePwdState->hPasswordStore);
-        pMachinePwdState->hPasswordStore = NULL;
-    }
+        if (pMachinePwdState->pThreadCondition)
+        {
+            pthread_cond_destroy(pMachinePwdState->pThreadCondition);
+        }
 
-    LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);
+        if (pMachinePwdState->pThreadLock)
+        {
+            pthread_mutex_destroy(pMachinePwdState->pThreadLock);
+        }
+
+        if (pMachinePwdState->hPasswordStore)
+        {
+            LwpsClosePasswordStore(pMachinePwdState->hPasswordStore);
+            pMachinePwdState->hPasswordStore = NULL;
+        }
+
+        LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);
+    }
 }
 
 static

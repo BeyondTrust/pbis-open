@@ -648,6 +648,50 @@ error:
 
 }
 
+DWORD
+LwpsDeleteDomainInStore(
+    PVOID pItem,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    PLWPS_STORAGE_PROVIDER pProvider = (PLWPS_STORAGE_PROVIDER)pItem;
+    HANDLE hProvider = (HANDLE)NULL;
+    PCSTR pszDomainName = (PCSTR)pData;
+
+    BAIL_ON_INVALID_POINTER(pProvider);
+    BAIL_ON_INVALID_POINTER(pszDomainName);
+
+    dwError = LwpsInitProvider(
+                  LWPS_CONFIG_PATH,
+		  pProvider);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+    dwError = pProvider->pFnTable->pFnOpenProvider(&hProvider);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+    dwError = pProvider->pFnTable->pFnDeleteDomainEntry(
+                                       hProvider,
+                                       pszDomainName);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+cleanup:
+
+    if (pProvider && (hProvider != (HANDLE)NULL))
+    {
+       pProvider->pFnTable->pFnCloseProvider(hProvider); 
+    }
+
+    return dwError;
+
+error:
+
+    LWPS_LOG_ERROR("Failed to delete all entries in provider: %s [Error code:%d]", ((pProvider && !IsNullOrEmptyString(pProvider->pszName)) ? pProvider->pszName : ""), dwError);
+
+    goto cleanup;
+
+}
+
 static
 DWORD
 LwpsBuiltInProviders(

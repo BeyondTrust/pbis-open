@@ -367,7 +367,112 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwpsDeleteDomainInAllStores(
+    PCSTR pszDomainName
+    )
+{
+    DWORD dwError = 0;
+    PLWPS_STACK pProviderStack = NULL;
 
+    dwError = LwpsFindAllProviders(&pProviderStack);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+    BAIL_ON_INVALID_POINTER(pProviderStack);
+    BAIL_ON_INVALID_POINTER(pszDomainName);
+
+    dwError = LwpsStackForeach(
+	          pProviderStack,
+                  &LwpsDeleteDomainInStore,
+                  (PVOID)pszDomainName);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+cleanup:
+
+    if (pProviderStack) {
+       LwpsStackForeach(
+            pProviderStack,
+            &LwpsConfigFreeProviderInStack,
+            NULL);
+       LwpsStackFree(pProviderStack);
+    }
+
+    return dwError;
+
+error:
+
+    LWPS_LOG_ERROR("Failed to delete password entries in all stores. [Error code: %d]", dwError);
+
+    goto cleanup;
+}
+
+DWORD
+LwpsGetDefaultJoinedDomain(
+    HANDLE hStore,
+    PSTR* ppszDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hProvider = (HANDLE)NULL;
+    PLWPS_STORAGE_PROVIDER pProvider = (PLWPS_STORAGE_PROVIDER)hStore;
+
+    BAIL_ON_INVALID_HANDLE(hStore);
+
+    dwError = pProvider->pFnTable->pFnOpenProvider(&hProvider);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+    dwError = pProvider->pFnTable->pFnGetDefaultJoinedDomain(
+                                        hProvider,
+                                        ppszDomainName);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+cleanup:
+
+    if (pProvider && (hProvider != (HANDLE)NULL))
+    {
+       pProvider->pFnTable->pFnCloseProvider(hProvider); 
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LwpsSetDefaultJoinedDomain(
+    HANDLE hStore,
+    PCSTR pszDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hProvider = (HANDLE)NULL;
+    PLWPS_STORAGE_PROVIDER pProvider = (PLWPS_STORAGE_PROVIDER)hStore;
+
+    BAIL_ON_INVALID_HANDLE(hStore);
+
+    dwError = pProvider->pFnTable->pFnOpenProvider(&hProvider);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+    dwError = pProvider->pFnTable->pFnSetDefaultJoinedDomain(
+                                        hProvider,
+                                        pszDomainName);
+    BAIL_ON_LWPS_ERROR(dwError);
+
+cleanup:
+
+    if (pProvider && (hProvider != (HANDLE)NULL))
+    {
+       pProvider->pFnTable->pFnCloseProvider(hProvider); 
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
 
 VOID
 LwpsFreePasswordInfo(

@@ -60,6 +60,9 @@ LWPS_PROVIDER_FUNC_TABLE gRegDBProviderAPITable =
     &RegDB_WritePassword,
     &RegDB_DeleteAllEntries,
     &RegDB_DeleteHostEntry,
+    &RegDB_DeleteDomainEntry,
+    &RegDB_GetDefaultJoinedDomain,
+    &RegDB_SetDefaultJoinedDomain,
     &RegDB_FreePassword,
     &RegDB_CloseProvider
 };

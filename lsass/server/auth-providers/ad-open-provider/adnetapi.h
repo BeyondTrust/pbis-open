@@ -64,6 +64,7 @@ typedef struct _LSA_TRANSLATED_NAME_OR_SID {
 
 DWORD
 AD_SetSystemAccess(
+    IN PLSA_AD_PROVIDER_STATE pState,
     OUT OPTIONAL LW_PIO_CREDS* ppOldToken
     );
 
@@ -99,6 +100,7 @@ AD_NetUserChangePassword(
 
 DWORD
 AD_NetLookupObjectSidByName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN PCSTR pszObjectName,
     OUT PSTR* ppszObjectSid,
@@ -108,6 +110,7 @@ AD_NetLookupObjectSidByName(
 
 DWORD
 AD_NetLookupObjectSidsByNames(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN DWORD dwNamesCount,
     IN PSTR* ppszNames,
@@ -118,6 +121,7 @@ AD_NetLookupObjectSidsByNames(
 
 DWORD
 AD_NetLookupObjectNameBySid(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN PCSTR pszObjectSid,
     OUT PSTR* ppszNT4Name,
@@ -127,6 +131,7 @@ AD_NetLookupObjectNameBySid(
 
 DWORD
 AD_NetLookupObjectNamesBySids(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszHostname,
     IN DWORD dwSidsCount,
     IN PSTR* ppszObjectSids,
@@ -137,6 +142,7 @@ AD_NetLookupObjectNamesBySids(
 
 DWORD
 AD_DsEnumerateDomainTrusts(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszDomainControllerName,
     IN DWORD dwFlags,
     OUT NetrDomainTrust** ppTrusts,
@@ -151,6 +157,7 @@ AD_FreeDomainTrusts(
 
 DWORD
 AD_DsGetDcName(
+    IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszServerName,
     IN PCSTR pszDomainName,
     IN BOOLEAN bReturnDnsName,

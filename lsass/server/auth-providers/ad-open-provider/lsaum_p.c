@@ -157,6 +157,7 @@ LsaUmpCheckUsers(
 static
 DWORD
 LsaUmpCreateKeys(
+    PCSTR pszDomainName,
     PLSA_UM_KSCHEDULES kSchedules
     );
 
@@ -464,7 +465,9 @@ LsaUmpStateCreate(
                   (PVOID*)&pState->kSchedules);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaUmpCreateKeys(pState->kSchedules);
+    dwError = LsaUmpCreateKeys(
+                  pProviderState->pszJoinedDomainName,
+                  pState->kSchedules);
     BAIL_ON_LSA_ERROR(dwError);
 
     // Now that everything is set up, we need to initialize the thread.
@@ -773,6 +776,7 @@ LsaUmpCheckUsers(
 static
 DWORD
 LsaUmpCreateKeys(
+    PCSTR pszDomainName,
     PLSA_UM_KSCHEDULES kSchedules
     )
 {
@@ -799,7 +803,8 @@ LsaUmpCreateKeys(
 
         LwStrToLower(pszHostname);
 
-        dwError = LwKrb5GetMachineCreds(
+        dwError = LwKrb5GetMachineCredsByDomain(
+                      pszDomainName,
                       &pszUsername,
                       &pszServicePassword,
                       &pszDomainDnsName,
