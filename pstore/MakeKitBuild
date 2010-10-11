@@ -16,11 +16,11 @@ configure()
     mk_export LIBDIR="$MK_LIBDIR"
 
     mk_check_headers \
-        HEADERS="lwmsg/lwmsg.h sqlite3.h reg/reg.h wc16str.h" \
+        HEADERS="lwmsg/lwmsg.h reg/reg.h wc16str.h" \
         FAIL=yes
 
     mk_check_libraries \
-        LIBS="lwmsg sqlite3 regclient" \
+        LIBS="lwmsg regclient" \
         FAIL=yes
 
     mk_check_functions \
