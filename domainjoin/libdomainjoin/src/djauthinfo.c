@@ -1134,53 +1134,6 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                     firstStart - 2,
                     firstStop + stopLaterOffset * 1,
                     &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("lwregd", TRUE,
-                    firstStart - 1, 
-                    firstStop + stopLaterOffset * 2,
-                    &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("netlogond", TRUE,
-                    firstStart + 0,
-                    firstStop + stopLaterOffset * 0,
-                    &LW_EXC));
-        LW_TRY(exc, DJManageDaemon("lwiod", TRUE,
-                    firstStart + 1,
-                    firstStop + stopLaterOffset * 0,
-                    &LW_EXC));
-
-        if (bEnableDcerpcd)
-        {
-            // Use the system's dced daemon if it exists, otherwise use the
-            // Likewise version.
-            LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists(
-                        HPUX_SYSTEM_RPCD_PATH,
-                        &systemDcedExists));
-            if (systemDcedExists)
-            {
-                LW_TRY(exc, DJManageDaemon(HPUX_SYSTEM_RPCD_PATH, TRUE,
-                            590, 410, &LW_EXC));
-            }
-            else
-            {
-                LW_TRY(exc, DJManageDaemon("dcerpcd", TRUE,
-                            firstStart + 0,
-                            firstStop + stopLaterOffset * 2,
-                            &LW_EXC));
-            }
-
-            DJManageDaemon("eventlogd", TRUE,
-                        firstStart + 1,
-                        firstStop + stopLaterOffset * 1,
-                        &innerExc);
-            if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
-            {
-                DJLogException(LOG_LEVEL_WARNING, innerExc);
-            }
-        }
-
-        LW_TRY(exc, DJManageDaemon("lsassd", TRUE,
-                    firstStart + 2,
-                    firstStop + stopLaterOffset * 2,
-                    &LW_EXC));
     }
 
 #if 0
