@@ -103,10 +103,19 @@ RegShellUtilExport(
                                      |GROUP_SECURITY_INFORMATION
                                      |DACL_SECURITY_INFORMATION
                                      |SACL_SECURITY_INFORMATION;
-    PBYTE pSecDescRel[SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE] = {0};
+    PBYTE pSecDescRel = NULL;
     ULONG ulSecDescLen = SECURITY_DESCRIPTOR_RELATIVE_MAX_SIZE;
     PSTR pszStringSecurityDescriptor = NULL;
 
+    dwError = RegGetKeySecurity(hReg,
+                                hKey,
+                                SecInfoAll,
+                                NULL,
+                                &ulSecDescLen);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegAllocateMemory(ulSecDescLen, (PVOID)&pSecDescRel);
+    BAIL_ON_REG_ERROR(dwError);
 
     dwError = RegGetKeySecurity(hReg,
                                 hKey,
@@ -166,6 +175,12 @@ cleanup:
     if (pszStringSecurityDescriptor)
     {
         RegFreeString(pszStringSecurityDescriptor);
+    }
+
+    if (pSecDescRel)
+    {
+        RegMemoryFree(pSecDescRel);
+        pSecDescRel = NULL;
     }
 
     return dwError;

@@ -202,12 +202,12 @@ RegTransactSetKeySecurity(
 
 NTSTATUS
 RegTransactGetKeySecurity(
-	IN HANDLE hNtRegConnection,
-	IN HKEY hKey,
-	IN SECURITY_INFORMATION SecurityInformation,
-	OUT PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
-	IN OUT PULONG lpcbSecurityDescriptor
-	);
+    IN HANDLE hConnection,
+    IN HKEY hKey,
+    IN SECURITY_INFORMATION SecurityInformation,
+    OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    IN OUT PULONG lpcbSecurityDescriptor
+    );
 
 NTSTATUS
 RegTransactQueryMultipleValues(

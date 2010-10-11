@@ -180,7 +180,7 @@ SqliteGetKeySecurity(
     IN HANDLE hNtRegConnection,
     IN HKEY hKey,
     IN SECURITY_INFORMATION SecurityInformation,
-    IN OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    IN OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN OUT PULONG pulSecDescRelLen
     )
 {
@@ -188,6 +188,7 @@ SqliteGetKeySecurity(
     PREG_KEY_HANDLE pKeyHandle = (PREG_KEY_HANDLE)hKey;
     PREG_KEY_CONTEXT pKeyCtx = NULL;
     BOOLEAN bInLock = FALSE;
+    PBYTE pTmpSecDescRel = NULL;
 
     BAIL_ON_NT_INVALID_POINTER(pKeyHandle);
 
@@ -196,6 +197,18 @@ SqliteGetKeySecurity(
 
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
+
+    if (!pulSecDescRelLen || *pulSecDescRelLen == 0)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    if (!pSecDescRel)
+    {
+        status = LW_RTL_ALLOCATE((PVOID*)&pTmpSecDescRel, VOID, *pulSecDescRelLen);
+        BAIL_ON_NT_STATUS(status);
+    }
 
     LWREG_LOCK_RWMUTEX_SHARED(bInLock, &pKeyCtx->mutex);
 
@@ -211,13 +224,15 @@ SqliteGetKeySecurity(
 
 	status = RtlQuerySecurityDescriptorInfo(
 				  SecurityInformation,
-				  pSecDescRel,
+				  pSecDescRel ? pSecDescRel : (PSECURITY_DESCRIPTOR_RELATIVE)pTmpSecDescRel,
 				  pulSecDescRelLen,
 				  pKeyCtx->pSecurityDescriptor);
 	BAIL_ON_NT_STATUS(status);
 
 cleanup:
     LWREG_UNLOCK_RWMUTEX(bInLock, &pKeyCtx->mutex);
+
+    LWREG_SAFE_FREE_MEMORY(pTmpSecDescRel);
 
     return status;
 

@@ -1075,7 +1075,7 @@ RegSrvIpcGetKeySecurity(
     PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel = NULL;
     PREG_IPC_STATUS pStatus = NULL;
 
-    if (pReq->Length)
+    if (pReq->bRetSecurityDescriptor && pReq->Length)
     {
     	status = LW_RTL_ALLOCATE((PVOID*)&pSecDescRel, VOID, pReq->Length);
         BAIL_ON_NT_STATUS(status);

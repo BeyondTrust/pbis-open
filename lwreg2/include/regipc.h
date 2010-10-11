@@ -437,11 +437,13 @@ typedef struct __REG_IPC_SET_KEY_SECURITY_REQ
 //IN SECURITY_INFORMATION SecurityInformation,
 //IN PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
 //IN ULONG Length
+// BOOLEAN bRetSecurityDescriptor;
 typedef struct __REG_IPC_GET_KEY_SECURITY_REQ
 {
     HKEY hKey;
     SECURITY_INFORMATION SecurityInformation;
     ULONG Length;
+    BOOLEAN bRetSecurityDescriptor;
 } REG_IPC_GET_KEY_SECURITY_REQ, *PREG_IPC_GET_KEY_SECURITY_REQ;
 
 // No RESPONSE of SetKeySecurity

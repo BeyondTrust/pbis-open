@@ -368,7 +368,7 @@ RegSrvGetKeySecurity(
     IN HANDLE Handle,
     IN HKEY hKey,
     IN SECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
+    OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecurityDescriptor,
     IN OUT PULONG pulSecDescLength
     );
 //

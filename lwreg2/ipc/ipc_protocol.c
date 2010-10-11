@@ -640,6 +640,8 @@ static LWMsgTypeSpec gRegGetKeySecuritySpec[] =
 
     LWMSG_MEMBER_UINT32(REG_IPC_GET_KEY_SECURITY_REQ, Length),
 
+    LWMSG_MEMBER_UINT8(REG_IPC_GET_KEY_SECURITY_REQ, bRetSecurityDescriptor),
+
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };

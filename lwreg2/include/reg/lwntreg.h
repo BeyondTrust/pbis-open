@@ -367,7 +367,7 @@ LwNtRegGetKeySecurity(
     IN HANDLE hNtRegConnection,
     IN HKEY hKey,
     IN SECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+    OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
     IN OUT PULONG lpcbSecurityDescriptor
     );
 

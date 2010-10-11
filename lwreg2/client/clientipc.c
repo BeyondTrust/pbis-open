@@ -1311,7 +1311,7 @@ RegTransactGetKeySecurity(
 	IN HANDLE hConnection,
 	IN HKEY hKey,
 	IN SECURITY_INFORMATION SecurityInformation,
-	OUT PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
+	OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE SecurityDescriptor,
 	IN OUT PULONG lpcbSecurityDescriptor
 	)
 {
@@ -1331,6 +1331,7 @@ RegTransactGetKeySecurity(
     GetKeySecurityReq.hKey = hKey;
     GetKeySecurityReq.SecurityInformation = SecurityInformation;
     GetKeySecurityReq.Length = *lpcbSecurityDescriptor;
+    GetKeySecurityReq.bRetSecurityDescriptor = SecurityDescriptor ? TRUE : FALSE;
 
     in.tag = REG_Q_GET_KEY_SECURITY;
     in.data = &GetKeySecurityReq;
@@ -1344,7 +1345,13 @@ RegTransactGetKeySecurity(
         	pGetKeySecurityResp = (PREG_IPC_GET_KEY_SECURITY_RES) out.data;
 
         	*lpcbSecurityDescriptor = pGetKeySecurityResp->Length;
-        	memcpy(SecurityDescriptor, pGetKeySecurityResp->SecurityDescriptor, pGetKeySecurityResp->Length);
+
+        	if (SecurityDescriptor)
+        	{
+        	    memcpy(SecurityDescriptor,
+        	           pGetKeySecurityResp->SecurityDescriptor,
+        	           pGetKeySecurityResp->Length);
+        	}
 
             break;
 

@@ -1334,7 +1334,7 @@ NtRegGetKeySecurity(
     IN HANDLE hNtRegConnection,
     IN HKEY hKey,
     IN SECURITY_INFORMATION SecurityInformation,
-    OUT PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
+    OUT OPTIONAL PSECURITY_DESCRIPTOR_RELATIVE pSecDescRel,
     IN OUT PULONG pulSecDescLen
     )
 {
