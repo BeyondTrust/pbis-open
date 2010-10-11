@@ -938,7 +938,6 @@ RegShellUtilGetValues(
     DWORD dwMaxValueNameLen = 0;
     DWORD dwMaxValueLen = 0;
     PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
-    PLWREG_VALUE_ATTRIBUTES pValueAttributes = NULL;
 
     if (!hReg)
     {
@@ -1061,7 +1060,7 @@ RegShellUtilGetValues(
                       NULL,
                       pwszValueName,
                       &pCurrentValue,
-                      &pValueAttributes);
+                      NULL);
         /*
          * Don't care if this fails.
          * Manually added new values don't have attributes to back them.
@@ -1103,7 +1102,6 @@ cleanup:
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
     LWREG_SAFE_FREE_MEMORY(pData);
     RegSafeFreeCurrentValueInfo(&pCurrentValue);
-    RegSafeFreeValueAttributes(&pValueAttributes);
 
     return dwError;
 
