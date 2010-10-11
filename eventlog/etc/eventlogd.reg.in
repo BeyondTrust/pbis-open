@@ -7,6 +7,7 @@
 "Environment"=""
 "Dependencies"="dcerpc"
 "Type"=dword:00000001
+"Autostart"=dword:00000001
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters]
 "AllowReadTo"=""
