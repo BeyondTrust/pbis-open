@@ -373,7 +373,7 @@ RegPrintError(
     PCSTR pszUseErrorPrefix = NULL;
     size_t size = 0;
     PSTR pszErrorString = NULL;
-    PCSTR pszWinError = "";
+    PCSTR pszWinError = NULL;
 
     if (dwError)
     {
@@ -392,14 +392,14 @@ RegPrintError(
             	LwRegGetErrorString(dwError, pszErrorString, size);
             }
         }
-        else
-        {
-            pszWinError = LW_PRINTF_STRING(RegWin32ExtErrorToName(dwError));
-        }
+
+        pszWinError = LW_PRINTF_STRING(RegWin32ExtErrorToName(dwError));
+
         if (!pszWinError)
         {
             pszWinError = "";
         }
+
         if (LW_IS_NULL_OR_EMPTY_STR(pszErrorString))
         {
             fprintf(stderr,
