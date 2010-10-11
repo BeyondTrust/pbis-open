@@ -137,6 +137,16 @@ RegUtilGetValues(
     );
 
 DWORD
+RegUtilGetKeyObjectCounts(
+    IN OPTIONAL HANDLE hReg,
+    IN PSTR pszRootKeyName,
+    IN PSTR pszSubKeyPath,
+    IN PSTR keyName,
+    OUT OPTIONAL PDWORD pdwSubKeysCount,
+    OUT OPTIONAL PDWORD pdwValuesCount
+    );
+
+DWORD
 RegUtilDeleteValue(
     IN OPTIONAL HANDLE hReg,
     IN PCSTR pszRootKeyName,

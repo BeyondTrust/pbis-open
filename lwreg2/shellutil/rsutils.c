@@ -1118,6 +1118,112 @@ error:
 
 
 DWORD
+RegShellUtilGetKeyObjectCounts(
+    HANDLE hReg,
+    PCSTR pszRootKeyName,
+    PCSTR pszDefaultKey,
+    PCSTR keyName,
+    PDWORD pdwSubKeysCount,
+    PDWORD pdwValuesCount
+    )
+{
+    HANDLE hRegLocal = NULL;
+    DWORD dwError = 0;
+    HKEY pRootKey = NULL;
+    HKEY pFullKey = NULL;
+    PSTR pszParentPath = NULL;
+    PWSTR pwszParentPath = NULL;
+    DWORD dwSubKeysCount = 0;
+    DWORD dwValuesCount = 0;
+
+    if (!hReg)
+    {
+        dwError = RegOpenServer(&hRegLocal);
+        BAIL_ON_REG_ERROR(dwError);
+        hReg = hRegLocal;
+    }
+
+
+    if (!pszRootKeyName)
+    {
+        return 0;
+    }
+    dwError = RegShellCanonicalizePath(pszDefaultKey,
+                                       keyName,
+                                       &pszParentPath,
+                                       NULL,
+                                       NULL);
+    BAIL_ON_REG_ERROR(dwError);
+
+    dwError = RegOpenKeyExA(hReg, NULL, pszRootKeyName, 0, KEY_READ, &pRootKey);
+    BAIL_ON_REG_ERROR(dwError);
+
+    if (pszParentPath && strcmp(pszParentPath, "\\") != 0)
+    {
+    	dwError = RegWC16StringAllocateFromCString(&pwszParentPath, pszParentPath+1);
+    	BAIL_ON_REG_ERROR(dwError);
+
+        dwError = RegOpenKeyExW(
+                      hReg,
+                      pRootKey,
+                      pwszParentPath,
+                      0,
+                      KEY_READ,
+                      &pFullKey);
+        BAIL_ON_REG_ERROR(dwError);
+        LWREG_SAFE_FREE_MEMORY(pwszParentPath);
+    }
+    else
+    {
+        pFullKey = pRootKey;
+        pRootKey = NULL;
+    }
+
+    dwError = RegQueryInfoKeyA(
+                  hReg,
+                  pFullKey,
+                  NULL,
+                  NULL,
+                  NULL,
+                  &dwSubKeysCount,
+                  NULL,
+                  NULL,
+                  &dwValuesCount,
+                  NULL,
+                  NULL,
+                  NULL,
+                  NULL);
+    BAIL_ON_REG_ERROR(dwError);
+
+    if (pdwSubKeysCount)
+    {
+        *pdwSubKeysCount = dwSubKeysCount;
+    }
+    if (pdwValuesCount)
+    {
+        *pdwValuesCount = dwValuesCount;
+    }
+
+cleanup:
+    RegCloseServer(hRegLocal);
+    if (pFullKey)
+    {
+        RegCloseKey(hReg, pFullKey);
+    }
+    if (pRootKey)
+    {
+        RegCloseKey(hReg, pRootKey);
+    }
+    LWREG_SAFE_FREE_STRING(pszParentPath);
+    return dwError;
+
+error:
+    LWREG_SAFE_FREE_MEMORY(pwszParentPath);
+    goto cleanup;
+}
+
+
+DWORD
 RegShellUtilDeleteValue(
     HANDLE hReg,
     PCSTR pszRootKeyName,
