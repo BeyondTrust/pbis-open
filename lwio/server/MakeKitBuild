@@ -1,2 +1,2 @@
-SUBDIRS="iomgr smbcommon rdr rdr2 npfs pvfs srv lwiod"
+SUBDIRS="iomgr smbcommon rdr npfs pvfs srv lwiod"
 
