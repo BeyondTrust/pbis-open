@@ -136,20 +136,16 @@ AD_JoinDomain(
 
 static
 DWORD
-AD_TransitionJoined(
-    PLSA_AD_PROVIDER_STATE pState
-    );
-
-static
-DWORD
 AD_Deactivate(
     PLSA_AD_PROVIDER_STATE pState
     );
 
 static
 DWORD
-AD_TransitionNotJoined(
-    PLSA_AD_PROVIDER_STATE pState
+AD_LeaveDomainInternal(
+    PAD_PROVIDER_CONTEXT pContext,
+    PCSTR pszUsername,
+    PCSTR pszPassword
     );
 
 static
@@ -506,25 +502,6 @@ error:
 
 static
 DWORD
-AD_TransitionJoined(
-    PLSA_AD_PROVIDER_STATE pState
-    )
-{
-    DWORD dwError = 0;
-
-
-    dwError = AD_Activate(pState);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    pState->joinState = LSA_AD_JOINED;
-
-error:
-
-    return dwError;
-}
-
-static
-DWORD
 AD_Deactivate(
     PLSA_AD_PROVIDER_STATE pState
     )
@@ -554,30 +531,6 @@ AD_Deactivate(
     LsaUmCleanup();
 
     LsaDmCleanup(pState->hDmState);
-
-    return dwError;
-}
-
-static
-DWORD
-AD_TransitionNotJoined(
-    PLSA_AD_PROVIDER_STATE pState
-    )
-{
-    DWORD dwError = 0;
-
-    dwError = ADCacheEmptyCache(pState->hCacheConnection);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = ADState_EmptyDb(pState->hStateConnection);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_Deactivate(pState);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    pState->joinState = LSA_AD_NOT_JOINED;
-
-error:
 
     return dwError;
 }
@@ -1401,10 +1354,10 @@ AD_PreJoinDomain(
         break;
 
     case LSA_AD_JOINED:
-        dwError = LsaDisableDomainGroupMembership();
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = AD_TransitionNotJoined(pState);
+        dwError = AD_LeaveDomainInternal(
+                      pContext,
+                      NULL,
+                      NULL);
         BAIL_ON_LSA_ERROR(dwError);
         break;
     }
@@ -1423,8 +1376,10 @@ AD_PostJoinDomain(
 {
     DWORD dwError = 0;
 
-    dwError = AD_TransitionJoined(pState);
+    dwError = AD_Activate(pState);
     BAIL_ON_LSA_ERROR(dwError);
+
+    pState->joinState = LSA_AD_JOINED;
 
 error:
 
@@ -1581,7 +1536,66 @@ AD_PostLeaveDomain(
     PLSA_AD_PROVIDER_STATE pState
     )
 {
-    return AD_TransitionNotJoined(pState);
+    DWORD dwError = 0;
+
+    dwError = ADCacheEmptyCache(pState->hCacheConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = ADState_EmptyDb(pState->hStateConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_Deactivate(pState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pState->joinState = LSA_AD_NOT_JOINED;
+
+error:
+
+    return dwError;
+}
+
+static
+DWORD
+AD_LeaveDomainInternal(
+    PAD_PROVIDER_CONTEXT pContext,
+    PCSTR pszUsername,
+    PCSTR pszPassword
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bNeedLeave = TRUE;
+
+    dwError = LsaDisableDomainGroupMembership();
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_PreLeaveDomain(pContext, pContext->pState);
+    if (dwError == LW_ERROR_NOT_JOINED_TO_AD)
+    {
+        dwError = 0;
+        bNeedLeave = FALSE;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bNeedLeave)
+    {
+        dwError = LsaLeaveDomain(
+            pszUsername,
+            pszPassword);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    
+    dwError = AD_PostLeaveDomain(pContext, pContext->pState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LSA_LOG_INFO("Left domain\n");
+
+cleanup:
+
+    return dwError;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -1635,21 +1649,11 @@ AD_LeaveDomain(
     LsaAdProviderStateAcquireWrite(pContext->pState);
     bLocked = TRUE;
 
-    dwError = LsaDisableDomainGroupMembership();
+    dwError = AD_LeaveDomainInternal(
+                  pContext,
+                  pRequest->pszUsername,
+                  pRequest->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_PreLeaveDomain(pContext, pContext->pState);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LsaLeaveDomain(
-        pRequest->pszUsername,
-        pRequest->pszPassword);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = AD_PostLeaveDomain(pContext, pContext->pState);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LSA_LOG_INFO("Left domain\n");
 
 cleanup:
 
