@@ -10,7 +10,7 @@
 
 [HKEY_THIS_MACHINE\Services\rdr]
 "Description"="Likewise CIFS Redirector"
-"Path"="@providerdir@/librdr2.sys@MOD_EXT@"
+"Path"="@providerdir@/librdr.sys@MOD_EXT@"
 "Arguments"="rdr"
 "Environment"=""
 "Dependencies"="lwio"
@@ -65,7 +65,7 @@
 "Path"="@providerdir@/libnpfs.sys@MOD_EXT@"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\rdr]
-"Path"="@providerdir@/librdr2.sys@MOD_EXT@"
+"Path"="@providerdir@/librdr.sys@MOD_EXT@"
 
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
 "Path"="@providerdir@/libsrv.sys@MOD_EXT@"
