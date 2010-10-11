@@ -1,0 +1,30 @@
+make()
+{
+    RDR_SOURCES="\
+        connect.c             \
+        getsesskey.c          \
+        globals.c             \
+        session.c             \
+        socket.c              \
+        tree.c                \
+        driver.c              \
+        create.c              \
+        read.c                \
+        write.c               \
+        setinfo.c             \
+        queryinfo.c           \
+        querydir.c            \
+        deviceio.c            \
+        fsctl.c               \
+        security.c            \
+        queryfs.c             \
+        close.c"
+
+    
+    mk_dlo \
+        DLO=librdr2.sys \
+        SOURCES="$RDR_SOURCES" \
+        INCLUDEDIRS=". ../include ../../include" \
+        HEADERDEPS="openssl/md5.h lw/base.h" \
+        LIBDEPS="lwiosmbcommon iomgr"
+}
