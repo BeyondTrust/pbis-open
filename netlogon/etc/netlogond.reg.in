@@ -1,18 +1,57 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\netlogon]
-"Description"="Likewise Site Affinity Service"
-"Path"="@SBINDIR@/netlogond"
-"Arguments"="@SBINDIR@/netlogond --syslog"
-"Environment"=""
-"Dependencies"="lwreg"
-"Type"=dword:00000001
+"Description" = { 
+    default = "Likewise Site Affinity Service" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@SBINDIR@/netlogond" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "@SBINDIR@/netlogond --syslog" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "lwreg" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000001 
+    doc = "" 
+}
 
 [HKEY_THIS_MACHINE\Services\netlogon\Parameters]
-"PingAgainTimeout"=dword:00000384
-"NegativeCacheTimeout"=dword:0000003C
-"WritableRediscoveryTimeout"=dword:00000708
-"WritableTimestampMinimumChange"=dword:00000000
-"CLdapMaximumConnections"=dword:00000064
-"CLdapSearchTimeout"=dword:0000000F
-"CLdapSingleConnectionTimeout"=dword:0000000F
+"PingAgainTimeout" = { 
+    default = dword:00000384 
+    doc = "" 
+}
+"NegativeCacheTimeout" = { 
+    default = dword:0000003C 
+    doc = "" 
+}
+"WritableRediscoveryTimeout" = { 
+    default = dword:00000708 
+    doc = "" 
+}
+"WritableTimestampMinimumChange" = { 
+    default = dword:00000000 
+    doc = "" 
+}
+"CLdapMaximumConnections" = { 
+    default = dword:00000064 
+    doc = "" 
+}
+"CLdapSearchTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}
+"CLdapSingleConnectionTimeout" = { 
+    default = dword:0000000F 
+    doc = "" 
+}

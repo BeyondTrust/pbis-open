@@ -1,10 +1,28 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\dcerpc]
-"Description"="Likewise DCE/RPC Endpoint Mapper"
-"Path"="@SBINDIR@/dcerpcd"
-"Arguments"="@SBINDIR@/dcerpcd -f"
-"Environment"=""
-"Dependencies"=""
-"Type"=@DCERPCD_SERVICE_TYPE@
+"Description" = { 
+    default = "Likewise DCE/RPC Endpoint Mapper" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@SBINDIR@/dcerpcd" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "@SBINDIR@/dcerpcd -f" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "" 
+    doc = "" 
+}
+"Type" = { 
+    default = @DCERPCD_SERVICE_TYPE@ 
+    doc = "" 
+}
 

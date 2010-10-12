@@ -1,18 +1,57 @@
 [HKEY_THIS_MACHINE\Services]
 
 [HKEY_THIS_MACHINE\Services\eventlog]
-"Description"="Likewise Event Log Service"
-"Path"="@SBINDIR@/eventlogd"
-"Arguments"="@SBINDIR@/eventlogd --syslog"
-"Environment"=""
-"Dependencies"="dcerpc"
-"Type"=dword:00000001
+"Description" = { 
+    default = "Likewise Event Log Service" 
+    doc = "" 
+}
+"Path" = { 
+    default = "@SBINDIR@/eventlogd" 
+    doc = "" 
+}
+"Arguments" = { 
+    default = "@SBINDIR@/eventlogd --syslog" 
+    doc = "" 
+}
+"Environment" = { 
+    default = "" 
+    doc = "" 
+}
+"Dependencies" = { 
+    default = "dcerpc" 
+    doc = "" 
+}
+"Type" = { 
+    default = dword:00000001 
+    doc = "" 
+}
 
 [HKEY_THIS_MACHINE\Services\eventlog\Parameters]
-"AllowReadTo"=""
-"AllowWriteTo"=""
-"AllowDeleteTo"=""
-"MaxDiskUsage"=dword:06400000
-"MaxEventLifespan"=dword:0000005A
-"MaxNumEvents"=dword:000186A0
-"EventDbPurgeInterval"=dword:00000001
+"AllowReadTo" = { 
+    default = "" 
+    doc = "" 
+}
+"AllowWriteTo" = { 
+    default = "" 
+    doc = "" 
+}
+"AllowDeleteTo" = { 
+    default = "" 
+    doc = "" 
+}
+"MaxDiskUsage" = { 
+    default = dword:06400000 
+    doc = "" 
+}
+"MaxEventLifespan" = { 
+    default = dword:0000005A 
+    doc = "" 
+}
+"MaxNumEvents" = { 
+    default = dword:000186A0 
+    doc = "" 
+}
+"EventDbPurgeInterval" = { 
+    default = dword:00000001 
+    doc = "" 
+}
