@@ -112,7 +112,7 @@ typedef void* (*dcethread_startroutine)(void*);
 #  define DCETHREAD_ONCE_INIT PTHREAD_ONCE_INIT
 #endif
 #define DCETHREAD_MUTEX_INITIALIZER {PTHREAD_MUTEX_INITIALIZER, (pthread_t) -1}
-#if __LW_BROKEN_ONCE_INIT
+#if __LW_BROKEN_ONCE_INIT &&  !defined(_AIX)
 #  define DCETHREAD_COND_INITIALIZER {{{0}, 0, 0}, 0}
 #else
 #  define DCETHREAD_COND_INITIALIZER PTHREAD_COND_INITIALIZER
