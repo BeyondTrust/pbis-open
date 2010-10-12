@@ -395,7 +395,7 @@ ProcessExportedKeyInfo(
                                   REG_SZ,
                                   pszValueName,
                                   dataType,
-                                  dwError ? FALSE : TRUE,
+                                  pCurrValueInfo ? FALSE : TRUE,
                                   pValue,
                                   dwValueLen,
                                   pPrevType);
