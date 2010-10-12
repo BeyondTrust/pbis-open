@@ -304,6 +304,7 @@ ProcessExportedKeyInfo(
     PLWREG_CURRENT_VALUEINFO pCurrValueInfo = NULL;
     REG_PARSE_ITEM regItem = {0};
     FILE *fp = pExportState->fp;
+    BOOLEAN bValueSet = FALSE;
 
     dwError = PrintToRegFile(
                           fp,
@@ -387,6 +388,8 @@ ProcessExportedKeyInfo(
                       &pValueAttributes);
         if (pExportState->dwExportFormat == REGSHELL_EXPORT_LEGACY)
         {
+            bValueSet = pCurrValueInfo || (dwError && dwValueLen) ?
+                            FALSE : TRUE;
             /* Export "legacy" format */
             dwError = PrintToRegFile(
                                   fp,
@@ -395,7 +398,7 @@ ProcessExportedKeyInfo(
                                   REG_SZ,
                                   pszValueName,
                                   dataType,
-                                  pCurrValueInfo ? FALSE : TRUE,
+                                  bValueSet,
                                   pValue,
                                   dwValueLen,
                                   pPrevType);
