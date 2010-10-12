@@ -1310,6 +1310,9 @@ void DJCreateComputerAccount(
                     LW_RAISE_LSERR(exc, dwError);
                 }
                 break;
+            case ERROR_NOT_ENOUGH_QUOTA:
+                LW_RAISE_EX(exc, ERROR_NOT_ENOUGH_QUOTA, "Lsass Error", "The account's computer join limit has been exceeded. Talk to your Windows administrators about the limits assigned to your account.");
+                break;
             default:
                 LW_RAISE_LSERR(exc, dwError);
                 break;
