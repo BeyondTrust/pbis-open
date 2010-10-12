@@ -1,0 +1,13 @@
+make()
+{
+    TEST_LOAD_SOURCES="main.c"
+
+    mk_program \
+        PROGRAM=test_load \
+        INSTALL=no \
+        SOURCES="$TEST_LOAD_SOURCES" \
+        INCLUDEDIRS=". ../../include" \
+        HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h" \
+        LIBDEPS="lwioclient"
+}
+
