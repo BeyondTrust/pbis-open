@@ -5,7 +5,6 @@ export PATH=$PATH:@MK_BINDIR@
 case "$1" in
     remove)
     ## Be paranoid about cleaning up
-	domainjoin-cli leave
 	domainjoin-cli configure --disable pam
 	domainjoin-cli configure --disable nsswitch
 	
