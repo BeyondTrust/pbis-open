@@ -1,0 +1,231 @@
+#
+# Example "Registry Schema" entry
+#
+[HKEY_THIS_MACHINE\Services\lsass\test]
+#@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+
+"MachinePasswordLifeSpan" = {
+  "value" = dword:00000001
+  "default" = dword:000000FF
+  "range" = integer:1 - 44640
+  "hint" = seconds
+  "doc" = "The interval (in seconds) at which the local machine trust account password must be changed. Setting this value to 0 will disable the machine password change feature."
+}
+
+"a"="a"
+"b"="b"
+"b1"="b"
+
+"binary" = {
+  hint = seconds
+  default = dword:0000003C
+  "value" = dword:00000078
+}
+
+
+"bool_val" = {
+  "range" = boolean
+# "value" = dword:31415926
+  "value" = dword:00000000
+}
+
+"dword" = {
+  default = dword:DEADBEEF
+  value = dword:FEEBDAED
+}
+
+"LogLevel" = {
+  "value" = "debug"
+  "default" = "error"
+  "range" = string:"error" "debug" "info" "trace"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "string"
+}
+
+"LogLevel1" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "account"
+  "value" = "corp\\abernstein"
+  "default" = "village\\adam"
+}
+
+"LogLevel2" = {
+  "range" = string:"Now" "is" "the"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "path"
+#  "value" = dword:00000003
+#  "default" = dword:00000314
+  "value" = "two"
+  "default" = "error"
+}
+
+"LogLevel3" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "Controls the level at which logging information is written to the system log facility (or daemon specific file)."
+  "hint" = "account"
+  "value" = "lampi\\a"
+  "default" = "lampi\\1234"
+}
+"mv" = {
+  "range" = string:"Zow" "is" "the"
+}
+"mv1" = {
+  "default" = "error"
+  "range" = string:"Zow" "is" "the"
+}
+"mv1a" = {
+  "range" = string:"Now" "is" "the"
+  "default" = "error"
+}
+"mv2" = {
+#  "range" = string:"Now" "is" "the mv2 time"
+  "range" = integer:0-1111111111
+#  "range" = string:"a"
+  "value" = dword:01DF5E76
+}
+"mv3" = {
+  "range" = string:"Now" "is" "the mv3 time"
+  "default" = "is"
+}
+"s1" = {
+  "value" = "I am a string value"
+}
+"s2" = {
+  "value" = "I am a string value"
+  "default" = "I am not the string value"
+}
+
+"v1" = {
+  "value" = hex:0000000102030405060708090A0b0c0d0e0ffffafbfcfd
+}
+
+"y"="y"
+
+"pathhint" = {
+  hint = path
+  default = "/opt/likewise/bin"
+  value = "/opt/local/likewise/bin"
+  doc = "The default location where the Likewise product is installed"
+}
+"r1" = {
+  "range" = integer:3 - 666
+}
+
+"string" = {
+  value = "I am not dead beef"
+  default = "I am dead beef"
+  doc = "Dead beef is good for grilling"
+  hint = path
+}
+"SupportSmb1" = {
+  "range" = string:"three" "one" "four"
+  "doc" = "I am a documentation string"
+#  "hint" = "seconds"
+  "value" = "one"
+  "default" = "four"
+}
+"SupportSmb3" = {
+  "range" = integer:1-65535
+  "doc" = "I am a documentation string"
+  "hint" = "seconds"
+  "value" = dword:00000003
+  "default" = dword:00000314
+}
+
+
+"syntax_error" = {
+  hint =  path
+  default = "/foo/bar"
+}
+
+"teststr1"="teststr1 value 1"
+
+
+
+[HKEY_THIS_MACHINE\test\lwio]
+@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+"t2" = {
+  "hint" = "seconds"
+  value = dword:00000006
+  default = dword:00000001
+}
+
+"SupportSmb2" = {
+  # Show how to specify an explicit in the new syntax (sic)
+  "value" = dword:00000000
+  "default" = dword:00000001
+  "range" = boolean
+  "doc" = "Boolean value used to control whether the server will support SMB2 protocol dialect or not. Set the value to 1 (True) to enable SMB2 support and 0 (False) to disable."
+}
+
+"SupportSmb3" = {
+  "range" = integer:1-111111
+  "doc" = "I am a documentation string"
+  "hint" = "seconds"
+  "value" = dword:00000003
+  "default" = dword:00000314
+#  "doc" = "doc string"
+}
+
+"r1" = {
+  value = dword:00000004
+  default = dword:0000000a
+  "range" = integer:3 - 666
+  "doc" = "r1 value is testing r1"
+}
+
+"s" = {
+  "value" = "I am a value"
+  "default" = "I am a value 2"
+}
+
+
+"test1" = {
+  "value" = dword:00000009
+  doc = "I am jack's documentation"
+}
+
+"bool_val" = {
+  "range" = boolean
+# "value" = dword:31415926
+  "value" = dword:00000000
+}
+"b2" = {
+  "range" = boolean
+  "value" = dword:00000000
+
+
+}
+"b3" = {
+  "range" = boolean
+  "value" = dword:00000001
+}
+
+
+
+#
+# Old format not in schema format
+#
+"multivalue" = sza:"error" "warning" "verbose" "debug" "trace"
+"multivalue2" = sza:"the quick brown fox" "Jumped over the" \
+                    "lazy dog's back" "1234567890"
+
+[HKEY_THIS_MACHINE\test\AD]
+@security = O:SYG:S-1-22-2-0D:(A;;RCFAFRFWFXKAKRKWKXNW;;;WD)(A;;RCFAFRFWFXKAKRKWKXNW;;;S-1-22-2-0)(A;;RCSDWDWOFAFRFWFXKAKRKWKXNRNWNX;;;SY)
+
+"MachinePasswordLifeSpan" = {
+  "value" = dword:00000001
+  "default" = dword:000000FF
+  "range" = integer:1 - 44640
+  "hint" = seconds
+  "doc" = "The interval (in seconds) at which the local machine trust account password must be changed. Setting this value to 0 will disable the machine password change feature."
+}
+#
+[HKEY_THIS_MACHINE\test\AD\MachinePassword]
+"MachinePassword" = {
+  "value" = "&e4C&tt)c4tM%QLD"
+  "default" = ""
+  "doc" = "The password for the machine account created when joining a computer to an AD domain. The machine account name is stored as MachineAccount under this subkey: [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]"
+}
+

@@ -1,0 +1,84 @@
+#!/bin/sh
+
+PROGRAM="`basename "$0"`"
+BINDIR="@BINDIR@"
+DEFAULT_EDITORS_GRAPHICAL="gedit"
+DEFAULT_EDITORS="vim vi emacs nano pico"
+
+if [ -n "$DISPLAY" ]
+then
+    DEFAULT_EDITORS="$DEFAULT_EDITORS_GRAPHICAL $DEFAULT_EDITORS"
+fi
+
+MODE_SERVICE=false
+ROOT_PATH=""
+
+while [ -n "$*" ]
+do
+    arg="$1"
+    shift
+
+    case "$arg" in
+	--help|-h)
+	    cat <<EOF
+$PROGRAM -- Modify Likewise configuration in your preferred text editor
+
+Usage:  $PROGRAM [ options ] [ path ]
+
+Options:
+
+    path                     Subset of configuration to edit (default: entire database)
+    -s,--service             Specify path to edit as a service name rather than a full path
+    -e,--editor              Manually specify text editor to invoke
+    -h,--help                Display this help
+
+Environment variables:
+
+    EDITOR                   Preferred text editor
+EOF
+	    exit 0
+	    ;;
+	--service|-s)
+	    MODE_SERVICE=true
+	    ;;
+        -e|--editor)
+	    EDITOR="$1"
+	    shift
+	    ;;
+	*)
+	    canon="`echo "$arg" | sed -e 's|/|\\\\|g' -e 's/^\[//' -e 's/\]$//'`"
+	    if ${MODE_SERVICE}
+	    then
+		ROOT_PATH="[HKEY_THIS_MACHINE\\Services\\${canon}]"
+	    else
+		ROOT_PATH="[${canon}]"
+	    fi
+	    break
+	    ;;
+    esac
+done
+
+if [ -z "$EDITOR" ]
+then
+    for candidate in ${DEFAULT_EDITORS}
+    do
+	if type "${candidate}" >/dev/null 2>&1
+	then
+	    EDITOR="${candidate}"
+	    break;
+	fi
+    done
+
+    if [ -z "$EDITOR" ]
+    then
+	echo "Error: EDITOR not set, and no default editor could be located" >&1
+	exit 1
+    fi
+fi
+
+TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
+
+"${BINDIR}/lwregshell" export ${ROOT_PATH} "${TMP_FILE}" || exit $?
+${EDITOR} "${TMP_FILE}" || exit $?
+"${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
+rm -f "${TMP_FILE}"

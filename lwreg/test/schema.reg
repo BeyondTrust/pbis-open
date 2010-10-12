@@ -1,0 +1,61 @@
+#
+# Example "Registry Schema" entry
+#
+
+[HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
+@security = 3d347b284dadc155514e287328ff1021
+
+"test1" = {
+  "doc" = "I am jack's documentation"
+}
+
+"SupportSmb2" = {
+  # Show how to specify an explicit in the new syntax (sic)
+  "value" = dword:00000000
+  value2 = dword:00000000
+  "default" = dword:00000001
+  "range" = boolean
+  "doc" = "Boolean value used to control whether the " \
+    "server will support SMB2 protocol dialect or not. " \
+    "Set the value to 1 (True) to enable SMB2 support and 0 " \
+    "(False) to disable."
+}
+
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters]
+"LogLevel" = {
+  "value" = "debug"
+  "default" = "error"
+  "range" = sza:"error" "warning" "verbose" "debug" "trace"
+  "range" = string:"Now" "is" "the" "time" "for" "all"
+  "doc" = "Controls the level at which logging information is written to the" \
+          "system log facility (or daemon specific file)."
+  "hint" = "string"
+}
+
+#
+# Old format not in schema format
+#
+"multivalue" = sza:"error" "warning" "verbose" "debug" "trace"
+
+[HKEY_THIS_MACHINE\Services\lsass\{arameters\Providers\ActiveDirectory]
+"MachinePasswordLifeSpan" = {
+  "default" = dword:00278D00
+  # Assume the password lifetime can be a max of 31 days
+  "range" = integer:1 - 44640
+  "hint" = seconds
+  "doc" = "The interval (in seconds) at which the local " \
+           "machine trust account password must be changed. Setting this " \
+           "value to 0 will disable the machine password change feature."
+}
+
+[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\MachinePassword\]
+@security = a0efd12fcb93fd3a44439dde60ade462
+"MachinePassword" = {
+  "value" = "&e4C&tt)c4tM%QLD"
+  "default" = ""
+  "doc" = "The password for the machine account created when joining a computer " \
+          "to an AD domain. The machine account name is stored as MachineAccount " \ 
+          "under this subkey: " \
+          "[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]"
+}

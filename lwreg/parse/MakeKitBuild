@@ -1,0 +1,15 @@
+make()
+{
+    PARSE_SOURCES="\
+        regio.c \
+        reglex.c \
+        regiconv.c \
+        regparse.c"
+
+    mk_group \
+        GROUP=regparse.og \
+        SOURCES="$PARSE_SOURCES" \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="regcommon lwbase lwbase_nothr" \
+        HEADERDEPS="lwmsg/lwmsg.h lw/base.h iconv.h"
+}

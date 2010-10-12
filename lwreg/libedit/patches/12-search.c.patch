@@ -1,0 +1,10 @@
+--- export/src/search.c	2009-09-05 13:37:56.000000000 +0200
++++ ../src/search.c	2009-09-05 13:47:56.000000000 +0200
+@@ -45,6 +45,7 @@
+  * search.c: History and character search functions
+  */
+ #include <stdlib.h>
++#include <sys/types.h>
+ #if defined(REGEX)
+ #include <regex.h>
+ #elif defined(REGEXP)

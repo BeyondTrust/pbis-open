@@ -1,0 +1,17 @@
+make()
+{
+    API_SOURCES="\
+        main.c                \
+        globals.c             \
+        ipc_registry.c        \
+        regserver.c           \
+        regsecurity.c"
+
+    mk_group \
+        GROUP="regserverapi.og" \
+        INCLUDEDIRS="../../include ../include" \
+        SOURCES="$API_SOURCES" \
+        GROUPDEPS="../providers/sqlite/provider-sqlite.og" \
+        LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
+        HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h"
+}

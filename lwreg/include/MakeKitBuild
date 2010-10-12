@@ -1,0 +1,10 @@
+make()
+{
+    mk_headers \
+        MASTER='reg/lwreg.h' \
+        HEADERS='reg/lwntreg.h reg/reg.h'
+
+    mk_headers \
+        HEADERS='reg/regutil.h' \
+        HEADERDEPS="reg/lwreg.h"
+}
