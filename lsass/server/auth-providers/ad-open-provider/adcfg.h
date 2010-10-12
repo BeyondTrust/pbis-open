@@ -146,7 +146,7 @@ AD_AddAllowedMember(
     IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR pszSID,
     IN PSTR pszMember,
-    IN OUT PLSA_HASH_TABLE *pAllowedMemberList
+    IN OUT PLW_HASH_TABLE *pAllowedMemberList
     );
 
 VOID
@@ -160,7 +160,7 @@ AD_GetMemberLists(
     PLSA_AD_PROVIDER_STATE pState,
     PSTR** pppszMembers,
     PDWORD pdwNumMembers,
-    PLSA_HASH_TABLE* ppAllowedMemberList
+    PLW_HASH_TABLE* ppAllowedMemberList
     );
 
 BOOLEAN
@@ -172,7 +172,7 @@ BOOLEAN
 AD_IsMemberAllowed(
     PLSA_AD_PROVIDER_STATE pState,
     PCSTR           pszSID,
-    PLSA_HASH_TABLE pAllowedMemberList
+    PLW_HASH_TABLE pAllowedMemberList
     );
 
 VOID

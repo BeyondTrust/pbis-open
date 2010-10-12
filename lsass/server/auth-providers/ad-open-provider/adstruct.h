@@ -165,7 +165,7 @@ typedef struct _LSA_AD_PROVIDER_STATE {
 
     PAD_PROVIDER_DATA pProviderData;
 
-    PLSA_HASH_TABLE pAllowedSIDs;
+    PLW_HASH_TABLE pAllowedSIDs;
 
     LSA_DM_STATE_HANDLE hDmState;
 

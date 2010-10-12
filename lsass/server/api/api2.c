@@ -141,7 +141,7 @@ static
 DWORD
 LsaSrvMergeMemberOfPass(
     IN PLSA_SRV_MEMBER_OF_PASS pPass,
-    IN OUT PLSA_HASH_TABLE pSidHash
+    IN OUT PLW_HASH_TABLE pSidHash
     )
 {
     DWORD dwError = 0;
@@ -152,7 +152,7 @@ LsaSrvMergeMemberOfPass(
     {
         for (dwSidIndex = 0; dwSidIndex < pPass->pResults[dwResultIndex].dwSidCount; dwSidIndex++)
         {
-            dwError = LsaHashSetValue(pSidHash,
+            dwError = LwHashSetValue(pSidHash,
                                       pPass->pResults[dwResultIndex].ppszSids[dwSidIndex],
                                       pPass->pResults[dwResultIndex].ppszSids[dwSidIndex]);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1032,7 +1032,7 @@ error:
 static
 VOID
 LsaSrvFreeMemberOfHashEntry(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -1061,15 +1061,15 @@ LsaSrvQueryMemberOfMerged(
     PLSA_SRV_MEMBER_OF_PASS pSourcePass = &pass1;
     PLSA_SRV_MEMBER_OF_PASS pDestPass = &pass2;
     PLSA_SRV_MEMBER_OF_PASS pTempPass = NULL;
-    PLSA_HASH_TABLE pHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY* pHashEntry = NULL;
+    PLW_HASH_TABLE pHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY* pHashEntry = NULL;
     DWORD dwIndex = 0;
     
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
         29,
-        LsaHashCaselessStringCompare,
-        LsaHashCaselessStringHash,
+        LwHashCaselessStringCompare,
+        LwHashCaselessStringHash,
         LsaSrvFreeMemberOfHashEntry,
         NULL,
         &pHash);
@@ -1104,7 +1104,7 @@ LsaSrvQueryMemberOfMerged(
         pDestPass =  pTempPass;
     }
 
-    dwCombinedCount = (DWORD) LsaHashGetKeyCount(pHash);
+    dwCombinedCount = (DWORD) LwHashGetKeyCount(pHash);
     
     if (dwCombinedCount)
     {
@@ -1113,10 +1113,10 @@ LsaSrvQueryMemberOfMerged(
             OUT_PPVOID(&ppszCombinedSids));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pHash, &hashIterator);
+        dwError = LwHashGetIterator(pHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for (dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for (dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             ppszCombinedSids[dwIndex] = (PSTR) pHashEntry->pValue;
             pHashEntry->pValue = NULL;
@@ -1130,7 +1130,7 @@ cleanup:
 
     LsaSrvDestroyMemberOfPass(&pass1);
     LsaSrvDestroyMemberOfPass(&pass2);
-    LsaHashSafeFree(&pHash);
+    LwHashSafeFree(&pHash);
 
     LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
@@ -1278,7 +1278,7 @@ LsaSrvQueryExpandedGroupMembersInternal(
     IN LSA_FIND_FLAGS FindFlags,
     IN LSA_OBJECT_TYPE ObjectType,
     IN PCSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pHash
+    IN OUT PLW_HASH_TABLE pHash
     )
 {
     DWORD dwError = 0;
@@ -1328,9 +1328,9 @@ LsaSrvQueryExpandedGroupMembersInternal(
 
         for (dwIndex = 0; dwIndex < dwEnumCount; dwIndex++)
         {
-            if (ppObjects[dwIndex] && !LsaHashExists(pHash, ppObjects[dwIndex]->pszObjectSid))
+            if (ppObjects[dwIndex] && !LwHashExists(pHash, ppObjects[dwIndex]->pszObjectSid))
             {
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                     pHash,
                     ppObjects[dwIndex]->pszObjectSid,
                     ppObjects[dwIndex]);
@@ -1395,7 +1395,7 @@ error:
 static
 VOID
 LsaFreeMemberHashEntry(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -1418,18 +1418,18 @@ LsaSrvQueryExpandedGroupMembers(
 {
     DWORD dwError = 0;
     DWORD dwIndex = 0;
-    PLSA_HASH_TABLE pHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY* pHashEntry = NULL;
+    PLW_HASH_TABLE pHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY* pHashEntry = NULL;
     DWORD dwMemberCount = 0;
     DWORD dwFilteredMemberCount = 0;
     PLSA_SECURITY_OBJECT* ppMembers = NULL;
     PLSA_SECURITY_OBJECT pMember = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
         29,
-        LsaHashCaselessStringCompare,
-        LsaHashCaselessStringHash,
+        LwHashCaselessStringCompare,
+        LwHashCaselessStringHash,
         LsaFreeMemberHashEntry,
         NULL,
         &pHash);
@@ -1443,7 +1443,7 @@ LsaSrvQueryExpandedGroupMembers(
         pszSid,
         pHash);
 
-    dwMemberCount = (DWORD) LsaHashGetKeyCount(pHash);
+    dwMemberCount = (DWORD) LwHashGetKeyCount(pHash);
     
     if (dwMemberCount)
     {
@@ -1452,10 +1452,10 @@ LsaSrvQueryExpandedGroupMembers(
             OUT_PPVOID(&ppMembers));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pHash, &hashIterator);
+        dwError = LwHashGetIterator(pHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for (dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for (dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             pMember = pHashEntry->pValue;
 
@@ -1473,7 +1473,7 @@ LsaSrvQueryExpandedGroupMembers(
 
 cleanup:
 
-    LsaHashSafeFree(&pHash);
+    LwHashSafeFree(&pHash);
 
     return dwError;
 

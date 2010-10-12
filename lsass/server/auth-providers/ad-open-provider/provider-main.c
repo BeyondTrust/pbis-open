@@ -92,7 +92,7 @@ static
 DWORD
 AD_ResolveConfiguredLists(
     PAD_PROVIDER_CONTEXT pContext,
-    PLSA_HASH_TABLE *ppAllowedMemberList
+    PLW_HASH_TABLE *ppAllowedMemberList
     );
 
 static
@@ -931,7 +931,7 @@ AD_CheckUserInList(
     PLSA_SECURITY_OBJECT* ppGroupList = NULL;
     PLSA_SECURITY_OBJECT pUserInfo = NULL;
     size_t  iGroup = 0;
-    PLSA_HASH_TABLE pAllowedMemberList = NULL;
+    PLW_HASH_TABLE pAllowedMemberList = NULL;
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
@@ -991,7 +991,7 @@ cleanup:
 
     ADCacheSafeFreeObjectList(sNumGroupsFound, &ppGroupList);
     ADCacheSafeFreeObject(&pUserInfo);
-    LsaHashSafeFree(&pAllowedMemberList);
+    LwHashSafeFree(&pAllowedMemberList);
 
     return dwError;
 
@@ -4434,9 +4434,9 @@ LsaAdProviderLogRequireMembershipOfChangeEvent(
 {
     DWORD dwError = 0;
     PSTR pszDescription = NULL;
-    PLSA_HASH_TABLE pAllowedMemberList = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY *pHashEntry = NULL;
+    PLW_HASH_TABLE pAllowedMemberList = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY *pHashEntry = NULL;
     PSTR pszMemberList = NULL;
     DWORD i = 0;
 
@@ -4447,10 +4447,10 @@ LsaAdProviderLogRequireMembershipOfChangeEvent(
 
     if (pAllowedMemberList != NULL)
     {
-        dwError = LsaHashGetIterator(pAllowedMemberList, &hashIterator);
+        dwError = LwHashGetIterator(pAllowedMemberList, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
 
-        for (i = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; i++)
+        for (i = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; i++)
         {
             PSTR pszNewMemberList = NULL;
 
@@ -4494,7 +4494,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszDescription);
     LW_SAFE_FREE_STRING(pszMemberList);
-    LsaHashSafeFree(&pAllowedMemberList);
+    LwHashSafeFree(&pAllowedMemberList);
 
     return;
 
@@ -4545,14 +4545,14 @@ static
 DWORD
 AD_ResolveConfiguredLists(
     PAD_PROVIDER_CONTEXT pContext,
-    PLSA_HASH_TABLE *ppAllowedMemberList
+    PLW_HASH_TABLE *ppAllowedMemberList
     )
 {
     DWORD dwError = 0;
     DWORD iMember = 0;
     PSTR* ppszMembers = 0;
     DWORD dwNumMembers = 0;
-    PLSA_HASH_TABLE pAllowedMemberList = NULL;
+    PLW_HASH_TABLE pAllowedMemberList = NULL;
     PLSA_SECURITY_OBJECT pGroupInfo = NULL;
     PLSA_SECURITY_IDENTIFIER pSID = NULL;
     PLSA_SECURITY_OBJECT* ppObjects = NULL;
@@ -4703,7 +4703,7 @@ error:
 
     *ppAllowedMemberList = NULL;
 
-    LsaHashSafeFree(&pAllowedMemberList);
+    LwHashSafeFree(&pAllowedMemberList);
 
     goto cleanup;
 }

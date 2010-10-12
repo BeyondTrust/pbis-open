@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        lsahash.c
+ *        lwhash.c
  *
  * Abstract:
  *
@@ -45,21 +45,21 @@
 #include "includes.h"
 
 DWORD
-LsaHashCreate(
+LwHashCreate(
         size_t sTableSize,
-        LSA_HASH_KEY_COMPARE fnComparator,
-        LSA_HASH_KEY fnHash,
-        LSA_HASH_FREE_ENTRY fnFree, //optional
-        LSA_HASH_COPY_ENTRY fnCopy, //optional
-        LSA_HASH_TABLE** ppResult)
+        LW_HASH_KEY_COMPARE fnComparator,
+        LW_HASH_KEY fnHash,
+        LW_HASH_FREE_ENTRY fnFree, //optional
+        LW_HASH_COPY_ENTRY fnCopy, //optional
+        LW_HASH_TABLE** ppResult)
 {
-    LSA_HASH_TABLE *pResult = NULL;
+    LW_HASH_TABLE *pResult = NULL;
     DWORD dwError = LW_ERROR_SUCCESS;
 
     dwError = LwAllocateMemory(
                     sizeof(*pResult),
                     (PVOID*)&pResult);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     pResult->sTableSize = sTableSize;
     pResult->sCount = 0;
@@ -71,7 +71,7 @@ LsaHashCreate(
     dwError = LwAllocateMemory(
                     sizeof(*pResult->ppEntries) * sTableSize,
                     (PVOID*)&pResult->ppEntries);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
     *ppResult = pResult;
 
@@ -79,13 +79,13 @@ cleanup:
     return dwError;
 
 error:
-    LsaHashSafeFree(&pResult);
+    LwHashSafeFree(&pResult);
     goto cleanup;
 }
 
 size_t
-LsaHashGetKeyCount(
-    PLSA_HASH_TABLE pTable
+LwHashGetKeyCount(
+    PLW_HASH_TABLE pTable
     )
 {
     return pTable->sCount;
@@ -93,22 +93,22 @@ LsaHashGetKeyCount(
 
 //Don't call this
 void
-LsaHashFree(
-        LSA_HASH_TABLE* pResult)
+LwHashFree(
+        LW_HASH_TABLE* pResult)
 {
-    LsaHashSafeFree(&pResult);
+    LwHashSafeFree(&pResult);
 }
 
 void
-LsaHashRemoveAll(
-        LSA_HASH_TABLE* pResult)
+LwHashRemoveAll(
+        LW_HASH_TABLE* pResult)
 {
     size_t sBucket = 0;
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
 
     for (sBucket = 0; pResult->sCount; sBucket++)
     {
-        LSA_ASSERT(sBucket < pResult->sTableSize);
+        LW_ASSERT(sBucket < pResult->sTableSize);
         while ( (pEntry = pResult->ppEntries[sBucket]) != NULL)
         {
             if (pResult->fnFree != NULL)
@@ -123,27 +123,27 @@ LsaHashRemoveAll(
 }
 
 void
-LsaHashSafeFree(
-        LSA_HASH_TABLE** ppResult)
+LwHashSafeFree(
+        LW_HASH_TABLE** ppResult)
 {
     if (*ppResult != NULL)
     {
-        LsaHashRemoveAll(*ppResult);
+        LwHashRemoveAll(*ppResult);
         LW_SAFE_FREE_MEMORY((*ppResult)->ppEntries);
         LW_SAFE_FREE_MEMORY(*ppResult);
     }
 }
 
 DWORD
-LsaHashSetValue(
-        LSA_HASH_TABLE *pTable,
+LwHashSetValue(
+        LW_HASH_TABLE *pTable,
         PVOID  pKey,
         PVOID  pValue)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     size_t sBucket = pTable->fnHash(pKey) % pTable->sTableSize;
-    LSA_HASH_ENTRY **ppExamine = &pTable->ppEntries[sBucket];
-    LSA_HASH_ENTRY *pNewEntry = NULL;
+    LW_HASH_ENTRY **ppExamine = &pTable->ppEntries[sBucket];
+    LW_HASH_ENTRY *pNewEntry = NULL;
 
     while (*ppExamine != NULL)
     {
@@ -168,7 +168,7 @@ LsaHashSetValue(
     dwError = LwAllocateMemory(
                     sizeof(*pNewEntry),
                     (PVOID*)&pNewEntry);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
     pNewEntry->pKey = pKey;
     pNewEntry->pValue = pValue;
 
@@ -185,14 +185,14 @@ error:
 
 //Returns ERROR_NOT_FOUND if pKey is not in the table
 DWORD
-LsaHashGetValue(
-        LSA_HASH_TABLE *pTable,
+LwHashGetValue(
+        LW_HASH_TABLE *pTable,
         PCVOID  pKey,
         PVOID* ppValue)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     size_t sBucket = 0;
-    LSA_HASH_ENTRY *pExamine = NULL;
+    LW_HASH_ENTRY *pExamine = NULL;
     
     if (pTable->sTableSize > 0)
     {
@@ -223,47 +223,47 @@ cleanup:
 }
 
 BOOLEAN
-LsaHashExists(
-    IN PLSA_HASH_TABLE pTable,
+LwHashExists(
+    IN PLW_HASH_TABLE pTable,
     IN PCVOID pKey
     )
 {
-    DWORD dwError = LsaHashGetValue(pTable, pKey, NULL);
+    DWORD dwError = LwHashGetValue(pTable, pKey, NULL);
     return (LW_ERROR_SUCCESS == dwError) ? TRUE : FALSE;
 }
 
 DWORD
-LsaHashCopy(
-    IN  LSA_HASH_TABLE *pTable,
-    OUT LSA_HASH_TABLE **ppResult
+LwHashCopy(
+    IN  LW_HASH_TABLE *pTable,
+    OUT LW_HASH_TABLE **ppResult
     )
 {
     DWORD             dwError = LW_ERROR_SUCCESS;
-    LSA_HASH_ITERATOR iterator;
-    LSA_HASH_ENTRY    EntryCopy;
-    LSA_HASH_ENTRY    *pEntry = NULL;
-    LSA_HASH_TABLE    *pResult = NULL;
+    LW_HASH_ITERATOR iterator;
+    LW_HASH_ENTRY    EntryCopy;
+    LW_HASH_ENTRY    *pEntry = NULL;
+    LW_HASH_TABLE    *pResult = NULL;
 
     memset(&EntryCopy, 0, sizeof(EntryCopy));
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                   pTable->sTableSize,
                   pTable->fnComparator,
                   pTable->fnHash,
                   pTable->fnCopy ? pTable->fnFree : NULL,
                   pTable->fnCopy,
                   &pResult);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
-    dwError = LsaHashGetIterator(pTable, &iterator);
-    BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwHashGetIterator(pTable, &iterator);
+    BAIL_ON_LW_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         if ( pTable->fnCopy )
         {
             dwError = pTable->fnCopy(pEntry, &EntryCopy);
-            BAIL_ON_LSA_ERROR(dwError);
+            BAIL_ON_LW_ERROR(dwError);
         }
         else
         {
@@ -271,11 +271,11 @@ LsaHashCopy(
             EntryCopy.pValue = pEntry->pValue;
         }
 
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                       pResult,
                       EntryCopy.pKey,
                       EntryCopy.pValue);
-        BAIL_ON_LSA_ERROR(dwError);
+        BAIL_ON_LW_ERROR(dwError);
 
         memset(&EntryCopy, 0, sizeof(EntryCopy));
     }
@@ -293,32 +293,32 @@ error:
         pTable->fnFree(&EntryCopy);
     }
 
-    LsaHashSafeFree(&pResult);
+    LwHashSafeFree(&pResult);
 
     goto cleanup;
 }
 
 //Invalidates all iterators
 DWORD
-LsaHashResize(
-        LSA_HASH_TABLE *pTable,
+LwHashResize(
+        LW_HASH_TABLE *pTable,
         size_t sTableSize)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    LSA_HASH_ENTRY **ppEntries;
-    LSA_HASH_ITERATOR iterator;
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY **ppEntries;
+    LW_HASH_ITERATOR iterator;
+    LW_HASH_ENTRY *pEntry = NULL;
     size_t sBucket;
 
     dwError = LwAllocateMemory(
                     sizeof(*ppEntries) * sTableSize,
                     (PVOID*)&ppEntries);
-    BAIL_ON_LSA_ERROR(dwError);
+    BAIL_ON_LW_ERROR(dwError);
 
-    dwError = LsaHashGetIterator(pTable, &iterator);
-    BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwHashGetIterator(pTable, &iterator);
+    BAIL_ON_LW_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         sBucket = pTable->fnHash(pEntry->pKey) % sTableSize;
         pEntry->pNext = ppEntries[sBucket];
@@ -339,9 +339,9 @@ error:
 }
 
 DWORD
-LsaHashGetIterator(
-        LSA_HASH_TABLE *pTable,
-        LSA_HASH_ITERATOR *pIterator)
+LwHashGetIterator(
+        LW_HASH_TABLE *pTable,
+        LW_HASH_ITERATOR *pIterator)
 {
     pIterator->pTable = pTable;
     pIterator->sEntryIndex = 0;
@@ -358,12 +358,12 @@ LsaHashGetIterator(
 }
 
 // returns NULL after passing the last entry
-LSA_HASH_ENTRY *
-LsaHashNext(
-        LSA_HASH_ITERATOR *pIterator
+LW_HASH_ENTRY *
+LwHashNext(
+        LW_HASH_ITERATOR *pIterator
         )
 {
-    LSA_HASH_ENTRY *pRet;
+    LW_HASH_ENTRY *pRet;
 
     // If there are any entries left, return a non-null entry
     while (pIterator->pEntryPos == NULL &&
@@ -388,14 +388,14 @@ LsaHashNext(
 }
 
 DWORD
-LsaHashRemoveKey(
-        LSA_HASH_TABLE *pTable,
+LwHashRemoveKey(
+        LW_HASH_TABLE *pTable,
         PVOID  pKey)
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     size_t sBucket = pTable->fnHash(pKey) % pTable->sTableSize;
-    LSA_HASH_ENTRY **ppExamine = &pTable->ppEntries[sBucket];
-    LSA_HASH_ENTRY *pDelete;
+    LW_HASH_ENTRY **ppExamine = &pTable->ppEntries[sBucket];
+    LW_HASH_ENTRY *pDelete;
 
     while (*ppExamine != NULL)
     {
@@ -426,7 +426,7 @@ cleanup:
 }
 
 int
-LsaHashCaselessStringCompare(
+LwHashCaselessStringCompare(
         PCVOID str1,
         PCVOID str2)
 {
@@ -449,7 +449,7 @@ LsaHashCaselessStringCompare(
 }
 
 size_t
-LsaHashCaselessStringHash(
+LwHashCaselessStringHash(
         PCVOID str)
 {
     size_t result = 0;
@@ -475,8 +475,8 @@ LsaHashCaselessStringHash(
 }
 
 VOID
-LsaHashFreeStringKey(
-    IN OUT const LSA_HASH_ENTRY *pEntry
+LwHashFreeStringKey(
+    IN OUT const LW_HASH_ENTRY *pEntry
     )
 {
     if (pEntry->pKey)
@@ -486,7 +486,7 @@ LsaHashFreeStringKey(
 }
 
 int
-LsaHashPVoidCompare(
+LwHashPVoidCompare(
     IN PCVOID pvData1,
     IN PCVOID pvData2
     )
@@ -506,7 +506,7 @@ LsaHashPVoidCompare(
 }
 
 size_t
-LsaHashPVoidHash(
+LwHashPVoidHash(
     IN PCVOID pvData
     )
 {

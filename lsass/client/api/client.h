@@ -53,6 +53,7 @@
 #include "lsadef.h"
 
 #include <lwmsg/lwmsg.h>
+#include <lwhash.h>
 
 #include "lsaclient.h"
 #include "lsalocalprovider.h"

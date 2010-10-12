@@ -1169,7 +1169,7 @@ AD_DeleteFromMembersList(
 static
 void
 AD_FreeHashStringKeyValue(
-    const LSA_HASH_ENTRY *pEntry)
+    const LW_HASH_ENTRY *pEntry)
 {
     PSTR pszKeyCopy = (PSTR)pEntry->pKey;
     LW_SAFE_FREE_STRING(pszKeyCopy);
@@ -1180,8 +1180,8 @@ AD_FreeHashStringKeyValue(
 static
 DWORD
 AD_CopyHashStringKeyValue(
-    const LSA_HASH_ENTRY *pEntry,
-    LSA_HASH_ENTRY       *pEntryCopy
+    const LW_HASH_ENTRY *pEntry,
+    LW_HASH_ENTRY       *pEntryCopy
     )
 {
     DWORD dwError = 0;
@@ -1216,7 +1216,7 @@ AD_AddAllowedMember(
     IN PLSA_AD_PROVIDER_STATE pState,
     IN PCSTR               pszSID,
     IN PSTR                pszMember,
-    IN OUT PLSA_HASH_TABLE *ppAllowedMemberList
+    IN OUT PLW_HASH_TABLE *ppAllowedMemberList
     )
 {
     DWORD dwError = 0;
@@ -1224,16 +1224,16 @@ AD_AddAllowedMember(
     PSTR  pszValue = NULL;
     PSTR  pszSIDCopy = NULL;
     PSTR  pszMemberCopy = NULL;
-    PLSA_HASH_TABLE pAllowedMemberList = *ppAllowedMemberList;
+    PLW_HASH_TABLE pAllowedMemberList = *ppAllowedMemberList;
 
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
     if (!pState->pAllowedSIDs)
     {
-        dwError = LsaHashCreate(
+        dwError = LwHashCreate(
                         11,
-                        LsaHashCaselessStringCompare,
-                        LsaHashCaselessStringHash,
+                        LwHashCaselessStringCompare,
+                        LwHashCaselessStringHash,
                         AD_FreeHashStringKeyValue,
                         AD_CopyHashStringKeyValue,
                         &pState->pAllowedSIDs);
@@ -1242,10 +1242,10 @@ AD_AddAllowedMember(
 
     if (!pAllowedMemberList)
     {
-        dwError = LsaHashCreate(
+        dwError = LwHashCreate(
                         11,
-                        LsaHashCaselessStringCompare,
-                        LsaHashCaselessStringHash,
+                        LwHashCaselessStringCompare,
+                        LwHashCaselessStringHash,
                         AD_FreeHashStringKeyValue,
                         AD_CopyHashStringKeyValue,
                         &pAllowedMemberList);
@@ -1262,7 +1262,7 @@ AD_AddAllowedMember(
                     &pszMemberCopy);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashSetValue(
+    dwError = LwHashSetValue(
                     pAllowedMemberList,
                     pszSIDCopy,
                     pszMemberCopy);
@@ -1273,7 +1273,7 @@ AD_AddAllowedMember(
 
     if ( AD_IsInMembersList_InLock(pState, pszMember) )
     {
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                       pState->pAllowedSIDs,
                       pszSID,
                       (PVOID*)&pszValue);
@@ -1289,7 +1289,7 @@ AD_AddAllowedMember(
                           &pszMemberCopy);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                           pState->pAllowedSIDs,
                           pszSIDCopy,
                           pszMemberCopy);
@@ -1317,7 +1317,7 @@ error:
 
     if ( ! *ppAllowedMemberList )
     {
-        LsaHashSafeFree(&pAllowedMemberList);
+        LwHashSafeFree(&pAllowedMemberList);
     }
 
     goto cleanup;
@@ -1328,7 +1328,7 @@ AD_GetMemberLists(
     IN PLSA_AD_PROVIDER_STATE pState,
     PSTR** pppszMembers,
     PDWORD pdwNumMembers,
-    PLSA_HASH_TABLE* ppAllowedMemberList
+    PLW_HASH_TABLE* ppAllowedMemberList
     )
 {
     DWORD dwError = 0;
@@ -1336,7 +1336,7 @@ AD_GetMemberLists(
     DWORD dwNumMembers = 0;
     PDLINKEDLIST pIter = NULL;
     PSTR* ppszMembers = NULL;
-    PLSA_HASH_TABLE pAllowedMemberList = NULL;
+    PLW_HASH_TABLE pAllowedMemberList = NULL;
 
     ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
 
@@ -1367,7 +1367,7 @@ AD_GetMemberLists(
 
     if (pState->pAllowedSIDs)
     {
-        dwError = LsaHashCopy(
+        dwError = LwHashCopy(
                       pState->pAllowedSIDs,
                       &pAllowedMemberList);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1394,7 +1394,7 @@ error:
     *pdwNumMembers = 0;
     *ppAllowedMemberList = NULL;
 
-    LsaHashSafeFree(&pAllowedMemberList);
+    LwHashSafeFree(&pAllowedMemberList);
 
     goto cleanup;
 }
@@ -1436,7 +1436,7 @@ BOOLEAN
 AD_IsMemberAllowed(
     IN PLSA_AD_PROVIDER_STATE pState,
     PCSTR           pszSID,
-    PLSA_HASH_TABLE pAllowedMemberList
+    PLW_HASH_TABLE pAllowedMemberList
     )
 {
     BOOLEAN bAllowed = FALSE;
@@ -1444,7 +1444,7 @@ AD_IsMemberAllowed(
 
     if (!AD_ShouldFilterUserLoginsByGroup(pState) ||
         (pAllowedMemberList &&
-         !LsaHashGetValue(
+         !LwHashGetValue(
                         pAllowedMemberList,
                         pszSID,
                         (PVOID*)&pszValue)))
@@ -1462,7 +1462,7 @@ AD_FreeAllowedSIDs_InLock(
 {
     if (pState->pAllowedSIDs)
     {
-        LsaHashSafeFree(&pState->pAllowedSIDs);
+        LwHashSafeFree(&pState->pAllowedSIDs);
     }
 }
 

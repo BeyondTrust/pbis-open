@@ -67,6 +67,7 @@
 #include "lsalog_r.h"
 #include "lsaregdef.h"
 #include "lwmapsecurity-lsass.h"
+#include <lwhash.h>
 
 #include "lsasrvutils.h"
 #include "lsaserver.h"

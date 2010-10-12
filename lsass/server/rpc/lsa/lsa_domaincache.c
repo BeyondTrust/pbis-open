@@ -73,7 +73,7 @@ LsaSrvDomainKeyHash(
 static
 void
 LsaSrvDomainHashEntryFree(
-    const LSA_HASH_ENTRY *pEntry
+    const LW_HASH_ENTRY *pEntry
     );
 
 
@@ -103,14 +103,14 @@ LsaSrvDomainKeyFree(
 
 NTSTATUS
 LsaSrvCreateDomainsTable(
-    PLSA_HASH_TABLE *ppDomains
+    PLW_HASH_TABLE *ppDomains
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    PLSA_HASH_TABLE pDomains = NULL;
+    PLW_HASH_TABLE pDomains = NULL;
 
-    dwError = LsaHashCreate(20,
+    dwError = LwHashCreate(20,
                             LsaSrvDomainKeyCompare,
                             LsaSrvDomainKeyHash,
                             LsaSrvDomainHashEntryFree,
@@ -157,7 +157,7 @@ LsaSrvGetDomainByName(
                                      NULL);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwError = LsaHashGetValue(pPolCtx->pDomains,
+    dwError = LwHashGetValue(pPolCtx->pDomains,
                               (PVOID)pKey,
                               OUT_PPVOID(&pEntry));
     if (dwError == ERROR_NOT_FOUND)
@@ -217,7 +217,7 @@ LsaSrvGetDomainBySid(
                                      pSid);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    dwError = LsaHashGetValue(pPolCtx->pDomains,
+    dwError = LwHashGetValue(pPolCtx->pDomains,
                               (PVOID)pKey,
                               OUT_PPVOID(&pEntry));
     if (dwError == ERROR_NOT_FOUND)
@@ -282,7 +282,7 @@ LsaSrvSetDomain(
                                          pDomain);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        dwError = LsaHashSetValue(pPolCtx->pDomains,
+        dwError = LwHashSetValue(pPolCtx->pDomains,
                                   pKeyName,
                                   pEntryByName);
         BAIL_ON_LSA_ERROR(dwError);
@@ -299,7 +299,7 @@ LsaSrvSetDomain(
                                          pDomain);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        dwError = LsaHashSetValue(pPolCtx->pDomains,
+        dwError = LwHashSetValue(pPolCtx->pDomains,
                                   pKeySid,
                                   pEntryBySid);
     }
@@ -443,7 +443,7 @@ LsaSrvDomainKeyHash(
     }
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-    hash = LsaHashCaselessStringHash(pszKeyStr);
+    hash = LwHashCaselessStringHash(pszKeyStr);
 
 cleanup:
     RTL_FREE(&pszKeyStr);
@@ -458,7 +458,7 @@ error:
 static
 void
 LsaSrvDomainHashEntryFree(
-    const LSA_HASH_ENTRY *pEntry
+    const LW_HASH_ENTRY *pEntry
     )
 {
     LsaSrvDomainKeyFree((PDOMAIN_KEY*)&pEntry->pKey);
@@ -605,18 +605,18 @@ LsaSrvDomainKeyFree(
 
 VOID
 LsaSrvDestroyDomainsTable(
-    PLSA_HASH_TABLE  pDomains,
+    PLW_HASH_TABLE  pDomains,
     BOOLEAN          bCleanClose
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    LSA_HASH_ITERATOR Iter = {0};
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ITERATOR Iter = {0};
+    LW_HASH_ENTRY *pEntry = NULL;
 
-    dwError = LsaHashGetIterator(pDomains, &Iter);
+    dwError = LwHashGetIterator(pDomains, &Iter);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&Iter)) != NULL)
+    while ((pEntry = LwHashNext(&Iter)) != NULL)
     {
         LsaSrvDomainKeyFree((PDOMAIN_KEY*)&pEntry->pKey);
         LsaSrvDomainEntryDestroy((PDOMAIN_ENTRY*)&pEntry->pValue,

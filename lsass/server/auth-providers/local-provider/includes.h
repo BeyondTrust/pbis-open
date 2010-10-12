@@ -69,6 +69,7 @@
 #include "lwtime.h"
 #include "lwsecurityidentifier.h"
 #include "lwsid.h"
+#include <lwhash.h>
 
 #include "lsautils.h"
 #include "lsasrvutils.h"

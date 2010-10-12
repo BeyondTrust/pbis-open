@@ -53,6 +53,7 @@
 #include <lwnet.h>
 #include <lwps/lwps.h>
 #include <lwkrb5.h>
+#include <lwhash.h>
 
 #include <lsa/lsa.h>
 #include <lsarpcsrv.h>

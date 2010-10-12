@@ -933,7 +933,7 @@ AD_PacMembershipFilterWithLdap(
     int iPrimaryGroupIndex = -1;
     size_t sLdapGroupCount = 0;
     PLSA_SECURITY_OBJECT* ppLdapGroups = NULL;
-    LSA_HASH_TABLE* pMembershipHashTable = NULL;
+    LW_HASH_TABLE* pMembershipHashTable = NULL;
     size_t i = 0;
     PLSA_GROUP_MEMBERSHIP* ppCacheMemberships = NULL;
     size_t sCacheMembershipCount = 0;
@@ -947,10 +947,10 @@ AD_PacMembershipFilterWithLdap(
         goto cleanup;
     }
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     dwMembershipCount,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pMembershipHashTable);
@@ -961,7 +961,7 @@ AD_PacMembershipFilterWithLdap(
         // Ignore the NULL entry
         if (ppMemberships[i]->pszParentSid)
         {
-            dwError = LsaHashSetValue(pMembershipHashTable,
+            dwError = LwHashSetValue(pMembershipHashTable,
                                       ppMemberships[i]->pszParentSid,
                                       ppMemberships[i]);
             BAIL_ON_LSA_ERROR(dwError);
@@ -998,7 +998,7 @@ AD_PacMembershipFilterWithLdap(
         if (ppCacheMemberships[i]->pszParentSid)
         {
             sCacheNonNullCount++;
-            dwError = LsaHashGetValue(pMembershipHashTable,
+            dwError = LwHashGetValue(pMembershipHashTable,
                                       ppCacheMemberships[i]->pszParentSid,
                                       (PVOID*)&pMembership);
             if (LW_ERROR_SUCCESS == dwError)
@@ -1066,7 +1066,7 @@ AD_PacMembershipFilterWithLdap(
     {
         PLSA_GROUP_MEMBERSHIP pMembership = NULL;
 
-        dwError = LsaHashGetValue(pMembershipHashTable,
+        dwError = LwHashGetValue(pMembershipHashTable,
                                   ppLdapGroups[i]->pszObjectSid,
                                   (PVOID*)&pMembership);
         if (LW_ERROR_SUCCESS == dwError)
@@ -1090,7 +1090,7 @@ AD_PacMembershipFilterWithLdap(
 cleanup:
     ADCacheSafeFreeGroupMembershipList(sCacheMembershipCount, &ppCacheMemberships);
     ADCacheSafeFreeObjectList(sLdapGroupCount, &ppLdapGroups);
-    LsaHashSafeFree(&pMembershipHashTable);
+    LwHashSafeFree(&pMembershipHashTable);
     return dwError;
 
 error:
@@ -2259,12 +2259,12 @@ AD_CombineCacheObjectsRemoveDuplicates(
     DWORD dwError = 0;
     PLSA_SECURITY_OBJECT* ppCombinedObjects = NULL;
     size_t sCombinedObjectsCount = 0;
-    PLSA_HASH_TABLE pHashTable = NULL;
+    PLW_HASH_TABLE pHashTable = NULL;
     size_t i = 0;
-    LSA_HASH_ITERATOR hashIterator;
-    LSA_HASH_ENTRY* pHashEntry = NULL;
+    LW_HASH_ITERATOR hashIterator;
+    LW_HASH_ENTRY* pHashEntry = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                 20,
                 AD_CompareObjectSids,
                 AD_HashObjectSid,
@@ -2275,9 +2275,9 @@ AD_CombineCacheObjectsRemoveDuplicates(
 
     for (i = 0; i < *psFromObjectsCount1; i++)
     {
-        if (!LsaHashExists(pHashTable, ppFromObjects1[i]))
+        if (!LwHashExists(pHashTable, ppFromObjects1[i]))
         {
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                             pHashTable,
                             ppFromObjects1[i],
                             ppFromObjects1[i]);
@@ -2288,9 +2288,9 @@ AD_CombineCacheObjectsRemoveDuplicates(
 
     for (i = 0; i < *psFromObjectsCount2; i++)
     {
-        if (!LsaHashExists(pHashTable, ppFromObjects2[i]))
+        if (!LwHashExists(pHashTable, ppFromObjects2[i]))
         {
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                             pHashTable,
                             ppFromObjects2[i],
                             ppFromObjects2[i]);
@@ -2305,14 +2305,14 @@ AD_CombineCacheObjectsRemoveDuplicates(
                     (PVOID*)&ppCombinedObjects);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashGetIterator(pHashTable, &hashIterator);
+    dwError = LwHashGetIterator(pHashTable, &hashIterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    for (i = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; i++)
+    for (i = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; i++)
     {
         PLSA_SECURITY_OBJECT pObject = (PLSA_SECURITY_OBJECT) pHashEntry->pKey;
 
-        dwError = LsaHashRemoveKey(pHashTable, pObject);
+        dwError = LwHashRemoveKey(pHashTable, pObject);
         BAIL_ON_LSA_ERROR(dwError);
 
         ppCombinedObjects[i] = pObject;
@@ -2331,7 +2331,7 @@ cleanup:
     if (pHashTable)
     {
         pHashTable->fnFree = AD_FreeHashObject;
-        LsaHashSafeFree(&pHashTable);
+        LwHashSafeFree(&pHashTable);
     }
     // Free any remaining objects.
     for (i = 0; i < *psFromObjectsCount1; i++)
@@ -3076,12 +3076,12 @@ size_t
 AD_HashObjectSid(
         PCVOID pObject)
 {
-    return LsaHashCaselessStringHash(((PLSA_SECURITY_OBJECT)pObject)->pszObjectSid);
+    return LwHashCaselessStringHash(((PLSA_SECURITY_OBJECT)pObject)->pszObjectSid);
 }
 
 void
 AD_FreeHashObject(
-    const LSA_HASH_ENTRY *pEntry)
+    const LW_HASH_ENTRY *pEntry)
 {
     ADCacheSafeFreeObject((PLSA_SECURITY_OBJECT *)&pEntry->pKey);
 }
@@ -4615,7 +4615,7 @@ AD_OnlineQueryMemberOfForSid(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pGroupHash
+    IN OUT PLW_HASH_TABLE pGroupHash
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -4747,7 +4747,7 @@ AD_OnlineQueryMemberOfForSid(
         for (dwIndex = 0; dwIndex < sMembershipCount; dwIndex++)
         {
             if (ppMemberships[dwIndex]->pszParentSid &&
-                !LsaHashExists(pGroupHash, ppMemberships[dwIndex]->pszParentSid) &&
+                !LwHashExists(pGroupHash, ppMemberships[dwIndex]->pszParentSid) &&
                 (ppMemberships[dwIndex]->bIsInPac ||
                  ppMemberships[dwIndex]->bIsDomainPrimaryGroup ||
                  bUseCache))
@@ -4758,7 +4758,7 @@ AD_OnlineQueryMemberOfForSid(
                     &pszGroupSid);
                 BAIL_ON_LSA_ERROR(dwError);
                 
-                dwError = LsaHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
+                dwError = LwHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 dwError = AD_OnlineQueryMemberOfForSid(
@@ -4776,14 +4776,14 @@ AD_OnlineQueryMemberOfForSid(
     {
         for (dwIndex = 0; dwIndex < sResultsCount; dwIndex++)
         {
-            if (!LsaHashExists(pGroupHash, ppResults[dwIndex]->pszObjectSid))
+            if (!LwHashExists(pGroupHash, ppResults[dwIndex]->pszObjectSid))
             {
                 dwError = LwAllocateString(
                     ppResults[dwIndex]->pszObjectSid,
                     &pszGroupSid);
                 BAIL_ON_LSA_ERROR(dwError);
                 
-                dwError = LsaHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
+                dwError = LwHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
                 BAIL_ON_LSA_ERROR(dwError);
                 
                 dwError = AD_OnlineQueryMemberOfForSid(
@@ -4822,7 +4822,7 @@ error:
 static
 VOID
 AD_OnlineFreeMemberOfHashEntry(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -4843,16 +4843,16 @@ AD_OnlineQueryMemberOf(
 {
     DWORD dwError = 0;
     DWORD dwIndex = 0;
-    PLSA_HASH_TABLE   pGroupHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY*   pHashEntry = NULL;
+    PLW_HASH_TABLE   pGroupHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY*   pHashEntry = NULL;
     DWORD dwGroupSidCount = 0;
     PSTR* ppszGroupSids = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
         13,
-        LsaHashCaselessStringCompare,
-        LsaHashCaselessStringHash,
+        LwHashCaselessStringCompare,
+        LwHashCaselessStringHash,
         AD_OnlineFreeMemberOfHashEntry,
         NULL,
         &pGroupHash);
@@ -4873,7 +4873,7 @@ AD_OnlineQueryMemberOf(
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwGroupSidCount = (DWORD) LsaHashGetKeyCount(pGroupHash);
+    dwGroupSidCount = (DWORD) LwHashGetKeyCount(pGroupHash);
     
     if (dwGroupSidCount)
     {
@@ -4882,10 +4882,10 @@ AD_OnlineQueryMemberOf(
             OUT_PPVOID(&ppszGroupSids));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pGroupHash, &hashIterator);
+        dwError = LwHashGetIterator(pGroupHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for(dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for(dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             ppszGroupSids[dwIndex] = (PSTR) pHashEntry->pValue;
             pHashEntry->pValue = NULL;
@@ -4897,7 +4897,7 @@ AD_OnlineQueryMemberOf(
 
 cleanup:
 
-    LsaHashSafeFree(&pGroupHash);
+    LwHashSafeFree(&pGroupHash);
 
     return dwError;
 

@@ -50,7 +50,7 @@
 
 NTSTATUS
 LsaSrvCreateDomainsTable(
-    PLSA_HASH_TABLE *ppDomains
+    PLW_HASH_TABLE *ppDomains
     );
 
 
@@ -85,7 +85,7 @@ LsaSrvDomainEntryFree(
 
 VOID
 LsaSrvDestroyDomainsTable(
-    PLSA_HASH_TABLE  pDomains,
+    PLW_HASH_TABLE  pDomains,
     BOOLEAN          bCleanClose
     );
 

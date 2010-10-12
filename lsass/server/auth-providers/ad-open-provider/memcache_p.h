@@ -96,9 +96,9 @@ typedef struct _MEM_GROUP_MEMBERSHIP
 
 // Space for the hash entry on the heap, plus enough space in the table for it
 // to be half full (room for an extra pointer)
-#define HASH_ENTRY_SPACE (sizeof(LSA_HASH_ENTRY) + \
+#define HASH_ENTRY_SPACE (sizeof(LW_HASH_ENTRY) + \
                             HEAP_HEADER_SIZE + \
-                            2 * sizeof(LSA_HASH_ENTRY *))
+                            2 * sizeof(LW_HASH_ENTRY *))
 
 // A user who has logged in must be this old before it can be evicted by a 0
 // second object
@@ -142,27 +142,27 @@ typedef struct _MEM_DB_CONNECTION
     PDLINKEDLIST pObjects;
 
     //indexes
-    PLSA_HASH_TABLE pDNToSecurityObject;
-    PLSA_HASH_TABLE pNT4ToSecurityObject;
-    PLSA_HASH_TABLE pSIDToSecurityObject;
+    PLW_HASH_TABLE pDNToSecurityObject;
+    PLW_HASH_TABLE pNT4ToSecurityObject;
+    PLW_HASH_TABLE pSIDToSecurityObject;
 
-    PLSA_HASH_TABLE pUIDToSecurityObject;
-    PLSA_HASH_TABLE pUserAliasToSecurityObject;
-    PLSA_HASH_TABLE pUPNToSecurityObject;
+    PLW_HASH_TABLE pUIDToSecurityObject;
+    PLW_HASH_TABLE pUserAliasToSecurityObject;
+    PLW_HASH_TABLE pUPNToSecurityObject;
 
-    PLSA_HASH_TABLE pSIDToPasswordVerifier;
+    PLW_HASH_TABLE pSIDToPasswordVerifier;
 
-    PLSA_HASH_TABLE pGIDToSecurityObject;
-    PLSA_HASH_TABLE pGroupAliasToSecurityObject;
+    PLW_HASH_TABLE pGIDToSecurityObject;
+    PLW_HASH_TABLE pGroupAliasToSecurityObject;
 
     // Points to a guardian LSA_LIST_LINKS. The rest of the linked list points
     // to LSA_LIST_LINKS from the parentListNode field in MEM_GROUP_MEMBERSHIP
     // objects.
-    PLSA_HASH_TABLE pParentSIDToMembershipList;
+    PLW_HASH_TABLE pParentSIDToMembershipList;
     // Points to a guardian LSA_LIST_LINKS. The rest of the linked list points
     // to LSA_LIST_LINKS from the childListNode field in MEM_GROUP_MEMBERSHIP
     // objects.
-    PLSA_HASH_TABLE pChildSIDToMembershipList;
+    PLW_HASH_TABLE pChildSIDToMembershipList;
 } MEM_DB_CONNECTION, *PMEM_DB_CONNECTION;
 
 void
@@ -172,12 +172,12 @@ InitializeMemCacheProvider(
 
 void
 MemCacheFreeGuardian(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     );
 
 void
 MemCacheFreePasswordVerifier(
-    IN const LSA_HASH_ENTRY* pEntry
+    IN const LW_HASH_ENTRY* pEntry
     );
 
 DWORD
@@ -262,7 +262,7 @@ MemCacheEmptyCache(
 DWORD
 MemCacheRemoveObjectByHashKey(
     IN PMEM_DB_CONNECTION pConn,
-    IN OUT PLSA_HASH_TABLE pTable,
+    IN OUT PLW_HASH_TABLE pTable,
     IN const void* pvKey
     );
 
@@ -274,7 +274,7 @@ MemCacheClearExistingObjectKeys(
 
 DWORD
 MemCacheEnsureHashSpace(
-    IN OUT PLSA_HASH_TABLE pTable,
+    IN OUT PLW_HASH_TABLE pTable,
     IN size_t sNewEntries
     );
 
@@ -354,7 +354,7 @@ MemCacheSafeFreeGroupMembership(
 
 void
 MemCacheFreeMembershipValue(
-    IN const LSA_HASH_ENTRY* pEntry
+    IN const LW_HASH_ENTRY* pEntry
     );
 
 DWORD

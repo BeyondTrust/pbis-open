@@ -175,7 +175,7 @@ MemCacheCheckSizeInLock(
 
 void
 MemCacheFreeGuardian(
-    IN const LSA_HASH_ENTRY* pEntry
+    IN const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pKey)
@@ -190,7 +190,7 @@ MemCacheFreeGuardian(
 
 void
 MemCacheFreePasswordVerifier(
-    IN const LSA_HASH_ENTRY* pEntry
+    IN const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -285,100 +285,100 @@ MemCacheOpen(
     BAIL_ON_LSA_ERROR(dwError);
 
     //indexes
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pConn->pDNToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
-                    LsaHashFreeStringKey,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
+                    LwHashFreeStringKey,
                     NULL,
                     &pConn->pNT4ToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pConn->pSIDToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashPVoidCompare,
-                    LsaHashPVoidHash,
+                    LwHashPVoidCompare,
+                    LwHashPVoidHash,
                     NULL,
                     NULL,
                     &pConn->pUIDToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pConn->pUserAliasToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pConn->pUPNToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     MemCacheFreePasswordVerifier,
                     NULL,
                     &pConn->pSIDToPasswordVerifier);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashPVoidCompare,
-                    LsaHashPVoidHash,
+                    LwHashPVoidCompare,
+                    LwHashPVoidHash,
                     NULL,
                     NULL,
                     &pConn->pGIDToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pConn->pGroupAliasToSecurityObject);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     MemCacheFreeGuardian,
                     NULL,
                     &pConn->pParentSIDToMembershipList);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     100,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     MemCacheFreeGuardian,
                     NULL,
                     &pConn->pChildSIDToMembershipList);
@@ -515,7 +515,7 @@ MemCacheLoadFile(
                 pMemCacheMembership = NULL;
                 break;
             case MEM_CACHE_PASSWORD:
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pConn->pSIDToPasswordVerifier,
                                 ((PLSA_PASSWORD_VERIFIER)message.data)->pszObjectSid,
                                 (PVOID*)&pFromHash);
@@ -529,7 +529,7 @@ MemCacheLoadFile(
                 }
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                                 pConn->pSIDToPasswordVerifier,
                                 ((PLSA_PASSWORD_VERIFIER)message.data)->pszObjectSid,
                                 message.data);
@@ -587,9 +587,9 @@ MemCacheStoreFile(
     LWMsgProtocol* pArchiveProtocol = NULL;
     BOOLEAN bInLock = FALSE;
     LWMsgMessage message = LWMSG_MESSAGE_INITIALIZER;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ITERATOR iterator = {0};
     // do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
     // do not free
     PLSA_LIST_LINKS pGuardian = NULL;
     // do not free
@@ -643,11 +643,11 @@ MemCacheStoreFile(
     }
 
     message.tag = MEM_CACHE_MEMBERSHIP;
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pParentSIDToMembershipList,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         pGuardian = (PLSA_LIST_LINKS) pEntry->pValue;
         pMemPos = pGuardian->Next;
@@ -664,11 +664,11 @@ MemCacheStoreFile(
     }
 
     message.tag = MEM_CACHE_PASSWORD;
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pSIDToPasswordVerifier,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         message.data = pEntry->pValue;
         dwError = MAP_LWMSG_ERROR(lwmsg_archive_write_message(
@@ -733,7 +733,7 @@ MemCacheRemoveMembership(
     if (bLastItem)
     {
         // Only the guardian is left, so remove the hash entry
-        dwError = LsaHashRemoveKey(
+        dwError = LwHashRemoveKey(
                         pConn->pParentSIDToMembershipList,
                         pMembership->membership.pszParentSid);
         BAIL_ON_LSA_ERROR(dwError);
@@ -747,7 +747,7 @@ MemCacheRemoveMembership(
     if (bLastItem)
     {
         // Only the guardian is left, so remove the hash entry
-        dwError = LsaHashRemoveKey(
+        dwError = LwHashRemoveKey(
                         pConn->pChildSIDToMembershipList,
                         pMembership->membership.pszChildSid);
         BAIL_ON_LSA_ERROR(dwError);
@@ -796,22 +796,22 @@ MemCacheSafeClose(
         dwError = MemCacheEmptyCache(*phDb);
         LSA_ASSERT(dwError == 0);
 
-        LsaHashSafeFree(&pConn->pDNToSecurityObject);
-        LsaHashSafeFree(&pConn->pNT4ToSecurityObject);
-        LsaHashSafeFree(&pConn->pSIDToSecurityObject);
+        LwHashSafeFree(&pConn->pDNToSecurityObject);
+        LwHashSafeFree(&pConn->pNT4ToSecurityObject);
+        LwHashSafeFree(&pConn->pSIDToSecurityObject);
 
-        LsaHashSafeFree(&pConn->pUIDToSecurityObject);
-        LsaHashSafeFree(&pConn->pUserAliasToSecurityObject);
-        LsaHashSafeFree(&pConn->pUPNToSecurityObject);
+        LwHashSafeFree(&pConn->pUIDToSecurityObject);
+        LwHashSafeFree(&pConn->pUserAliasToSecurityObject);
+        LwHashSafeFree(&pConn->pUPNToSecurityObject);
 
-        LsaHashSafeFree(&pConn->pSIDToPasswordVerifier);
+        LwHashSafeFree(&pConn->pSIDToPasswordVerifier);
 
-        LsaHashSafeFree(&pConn->pGIDToSecurityObject);
-        LsaHashSafeFree(&pConn->pGroupAliasToSecurityObject);
+        LwHashSafeFree(&pConn->pGIDToSecurityObject);
+        LwHashSafeFree(&pConn->pGroupAliasToSecurityObject);
         LW_SAFE_FREE_STRING(pConn->pszFilename);
 
-        LsaHashSafeFree(&pConn->pParentSIDToMembershipList);
-        LsaHashSafeFree(&pConn->pChildSIDToMembershipList);
+        LwHashSafeFree(&pConn->pParentSIDToMembershipList);
+        LwHashSafeFree(&pConn->pChildSIDToMembershipList);
 
         if (pConn->bLockCreated)
         {
@@ -850,7 +850,7 @@ MemCacheFindUserByName(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     PSTR pszKey = NULL;
     PSTR pszDnsDomain = NULL;
     PSTR pszShortDomain = NULL;
@@ -917,7 +917,7 @@ MemCacheFindUserByName(
             BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszKey,
                     (PVOID*)&pListEntry);
@@ -968,7 +968,7 @@ MemCacheFindUserById(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -976,7 +976,7 @@ MemCacheFindUserById(
 
     pIndex = pConn->pUIDToSecurityObject;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     (PVOID)(size_t)uid,
                     (PVOID*)&pListEntry);
@@ -1023,7 +1023,7 @@ MemCacheFindGroupByName(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     PSTR pszKey = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
@@ -1056,7 +1056,7 @@ MemCacheFindGroupByName(
             BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszKey,
                     (PVOID *)&pListEntry);
@@ -1104,7 +1104,7 @@ MemCacheFindGroupById(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -1112,7 +1112,7 @@ MemCacheFindGroupById(
 
     pIndex = pConn->pGIDToSecurityObject;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     (PVOID)(size_t)gid,
                     (PVOID *)&pListEntry);
@@ -1224,9 +1224,9 @@ MemCacheEmptyCache(
     BOOLEAN bInLock = FALSE;
     PMEM_DB_CONNECTION pConn = (PMEM_DB_CONNECTION)hDb;
     DWORD dwError = 0;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ITERATOR iterator = {0};
     // Do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
     BOOLEAN bMutexLocked = FALSE;
 
     if (pConn->bBackupMutexCreated)
@@ -1243,52 +1243,52 @@ MemCacheEmptyCache(
 
     if (pConn->pDNToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pDNToSecurityObject);
+        LwHashRemoveAll(pConn->pDNToSecurityObject);
     }
     if (pConn->pNT4ToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pNT4ToSecurityObject);
+        LwHashRemoveAll(pConn->pNT4ToSecurityObject);
     }
     if (pConn->pSIDToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pSIDToSecurityObject);
+        LwHashRemoveAll(pConn->pSIDToSecurityObject);
     }
 
     if (pConn->pUIDToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pUIDToSecurityObject);
+        LwHashRemoveAll(pConn->pUIDToSecurityObject);
     }
     if (pConn->pUserAliasToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pUserAliasToSecurityObject);
+        LwHashRemoveAll(pConn->pUserAliasToSecurityObject);
     }
     if (pConn->pUPNToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pUPNToSecurityObject);
+        LwHashRemoveAll(pConn->pUPNToSecurityObject);
     }
 
     if (pConn->pSIDToPasswordVerifier)
     {
-        LsaHashRemoveAll(pConn->pSIDToPasswordVerifier);
+        LwHashRemoveAll(pConn->pSIDToPasswordVerifier);
     }
 
     if (pConn->pGIDToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pGIDToSecurityObject);
+        LwHashRemoveAll(pConn->pGIDToSecurityObject);
     }
     if (pConn->pGroupAliasToSecurityObject)
     {
-        LsaHashRemoveAll(pConn->pGroupAliasToSecurityObject);
+        LwHashRemoveAll(pConn->pGroupAliasToSecurityObject);
     }
 
     // Remove all of the group memberships. Either table may be iterated,
     // so the parentsid list was chosen.
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pParentSIDToMembershipList,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         PLSA_LIST_LINKS pGuardian = (PLSA_LIST_LINKS)pEntry->pValue;
         // Since the hash entry exists, the list must be non-empty
@@ -1354,17 +1354,17 @@ MemCacheCheckSizeInLock(
     // Do not free
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
     // DWORD dwOut = 0;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ITERATOR iterator = {0};
     // Do not free
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
     PLSA_PASSWORD_VERIFIER pFromHash = NULL;
     // Do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
     // Do not free
     PLSA_LIST_LINKS pGuardian = NULL;
     // Do not free
@@ -1383,11 +1383,11 @@ MemCacheCheckSizeInLock(
         sCacheSize += pObject->version.dwObjectSize;
     }
 
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pParentSIDToMembershipList,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         pGuardian = (PLSA_LIST_LINKS) pEntry->pValue;
         pMemPos = pGuardian->Next;
@@ -1400,11 +1400,11 @@ MemCacheCheckSizeInLock(
         }
     }
 
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pSIDToPasswordVerifier,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         pFromHash = (PLSA_PASSWORD_VERIFIER)pEntry->pValue;
         sCacheSize += pFromHash->version.dwObjectSize;
@@ -1423,7 +1423,7 @@ error:
 DWORD
 MemCacheRemoveObjectByHashKey(
     IN PMEM_DB_CONNECTION pConn,
-    IN OUT PLSA_HASH_TABLE pTable,
+    IN OUT PLW_HASH_TABLE pTable,
     IN const void* pvKey
     )
 {
@@ -1432,7 +1432,7 @@ MemCacheRemoveObjectByHashKey(
     PLSA_SECURITY_OBJECT pObject = NULL;
     PSTR pszKey = NULL;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pTable,
                     pvKey,
                     (PVOID*)&pListEntry);
@@ -1449,7 +1449,7 @@ MemCacheRemoveObjectByHashKey(
     //Remove it from all indexes
     if (!LW_IS_NULL_OR_EMPTY_STR(pObject->pszDN))
     {
-        dwError = LsaHashRemoveKey(
+        dwError = LwHashRemoveKey(
                         pConn->pDNToSecurityObject,
                         pObject->pszDN);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1462,19 +1462,19 @@ MemCacheRemoveObjectByHashKey(
                     pObject->pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashRemoveKey(
+    dwError = LwHashRemoveKey(
                     pConn->pNT4ToSecurityObject,
                     pszKey);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashRemoveKey(
+    dwError = LwHashRemoveKey(
                     pConn->pSIDToSecurityObject,
                     pObject->pszObjectSid);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_USER)
     {
-        dwError = LsaHashRemoveKey(
+        dwError = LwHashRemoveKey(
                         pConn->pUIDToSecurityObject,
                         (PVOID)(size_t)pObject->userInfo.uid);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1482,7 +1482,7 @@ MemCacheRemoveObjectByHashKey(
         if (pObject->userInfo.pszAliasName != NULL &&
                 pObject->userInfo.pszAliasName[0])
         {
-            dwError = LsaHashRemoveKey(
+            dwError = LwHashRemoveKey(
                             pConn->pUserAliasToSecurityObject,
                             pObject->userInfo.pszAliasName);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1490,7 +1490,7 @@ MemCacheRemoveObjectByHashKey(
 
         if (pObject->userInfo.pszUPN != NULL && pObject->userInfo.pszUPN[0])
         {
-            dwError = LsaHashRemoveKey(
+            dwError = LwHashRemoveKey(
                             pConn->pUPNToSecurityObject,
                             pObject->userInfo.pszUPN);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1498,7 +1498,7 @@ MemCacheRemoveObjectByHashKey(
     }
     else if (pObject->enabled && pObject->type == LSA_OBJECT_TYPE_GROUP)
     {
-        dwError = LsaHashRemoveKey(
+        dwError = LwHashRemoveKey(
                         pConn->pGIDToSecurityObject,
                         (PVOID)(size_t)pObject->groupInfo.gid);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1506,7 +1506,7 @@ MemCacheRemoveObjectByHashKey(
         if (pObject->groupInfo.pszAliasName != NULL &&
                 pObject->groupInfo.pszAliasName[0])
         {
-            dwError = LsaHashRemoveKey(
+            dwError = LwHashRemoveKey(
                             pConn->pGroupAliasToSecurityObject,
                             pObject->groupInfo.pszAliasName);
             BAIL_ON_LSA_ERROR(dwError);
@@ -1622,7 +1622,7 @@ error:
 
 DWORD
 MemCacheEnsureHashSpace(
-    IN OUT PLSA_HASH_TABLE pTable,
+    IN OUT PLW_HASH_TABLE pTable,
     IN size_t sNewEntries
     )
 {
@@ -1630,7 +1630,7 @@ MemCacheEnsureHashSpace(
 
     if ((pTable->sCount + sNewEntries) * 2 > pTable->sTableSize)
     {
-        dwError = LsaHashResize(
+        dwError = LwHashResize(
             pTable,
             (pTable->sCount + sNewEntries + 10) * 3);
         BAIL_ON_LSA_ERROR(dwError);
@@ -1781,7 +1781,7 @@ MemCacheFindMembership(
     // Do not free
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pConn->pParentSIDToMembershipList,
                     pszParentSid,
                     (PVOID*)&pGuardian);
@@ -1980,20 +1980,20 @@ MemCacheRemoveOrphanedMemberships(
     )
 {
     DWORD dwError = 0;
-    LSA_HASH_ITERATOR iterator = {0};
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ITERATOR iterator = {0};
+    LW_HASH_ENTRY *pEntry = NULL;
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     BOOLEAN bOrphaned = FALSE;
     PDLINKEDLIST pListEntry = NULL;
     PMEM_GROUP_MEMBERSHIP pCompleteness = NULL;
 
     // Only one table needs to be enumerated to see all memberships
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pParentSIDToMembershipList,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         PLSA_LIST_LINKS pGuardian = (PLSA_LIST_LINKS)pEntry->pValue;
         PLSA_LIST_LINKS pPos = pGuardian->Next;
@@ -2005,7 +2005,7 @@ MemCacheRemoveOrphanedMemberships(
 
             if (pMembership->membership.pszParentSid != NULL)
             {
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pConn->pSIDToSecurityObject,
                                 pMembership->membership.pszParentSid,
                                 (PVOID*)&pListEntry);
@@ -2019,7 +2019,7 @@ MemCacheRemoveOrphanedMemberships(
 
             if (pMembership->membership.pszChildSid != NULL)
             {
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pConn->pSIDToSecurityObject,
                                 pMembership->membership.pszChildSid,
                                 (PVOID*)&pListEntry);
@@ -2162,7 +2162,7 @@ MemCacheSetPinnedObjectWeights(
                  LOGGED_IN_VS_NSEC);
 
             // Increase the weight of all the groups the user is a member of
-            dwError = LsaHashGetValue(
+            dwError = LwHashGetValue(
                             pConn->pChildSIDToMembershipList,
                             pObject->pszObjectSid,
                             (PVOID*)&pGuardian);
@@ -2184,7 +2184,7 @@ MemCacheSetPinnedObjectWeights(
             {
                 pMembership = CHILD_NODE_TO_MEMBERSHIP(pPos);
 
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pConn->pSIDToSecurityObject,
                                 pMembership->membership.pszParentSid,
                                 (PVOID*)&pListEntry);
@@ -2225,8 +2225,8 @@ MemCacheMaintainSizeCap(
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
     // Do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ITERATOR iterator = {0};
     time_t now = 0;
     PLSA_SECURITY_OBJECT pObject = NULL;
     time_t age = 0;
@@ -2270,17 +2270,17 @@ MemCacheMaintainSizeCap(
     // corresponding user security object is not cached). Also increase the
     // weight of security objects associated with users who have logged in.
 
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pConn->pSIDToPasswordVerifier,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         PLSA_PASSWORD_VERIFIER pFromHash = (PLSA_PASSWORD_VERIFIER)
             pEntry->pValue;
 
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pConn->pSIDToSecurityObject,
                         pFromHash->pszObjectSid,
                         (PVOID*)&pListEntry);
@@ -2292,7 +2292,7 @@ MemCacheMaintainSizeCap(
 
             // It is safe to remove this key because the iterator already
             // points to the next item.
-            dwError = LsaHashRemoveKey(
+            dwError = LwHashRemoveKey(
                             pConn->pSIDToPasswordVerifier,
                             pEntry->pKey);
             BAIL_ON_LSA_ERROR(dwError);
@@ -2317,7 +2317,7 @@ MemCacheMaintainSizeCap(
                 ((LOGGED_IN_VS_ZERO_SEC + LOGGED_IN_VS_NSEC)/ LOGGED_IN_VS_NSEC);
 
             // Increase the weight of all the groups the user is a member of
-            dwError = LsaHashGetValue(
+            dwError = LwHashGetValue(
                             pConn->pChildSIDToMembershipList,
                             pFromHash->pszObjectSid,
                             (PVOID*)&pGuardian);
@@ -2339,7 +2339,7 @@ MemCacheMaintainSizeCap(
             {
                 pMembership = CHILD_NODE_TO_MEMBERSHIP(pPos);
 
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pConn->pSIDToSecurityObject,
                                 pMembership->membership.pszParentSid,
                                 (PVOID*)&pListEntry);
@@ -2401,7 +2401,7 @@ MemCacheMaintainSizeCap(
             LSA_LOG_VERBOSE("Evicting object with sid %s", pszSid);
         }
 
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pConn->pSIDToPasswordVerifier,
                         pszSid,
                         (PVOID*)&pFromHash);
@@ -2418,7 +2418,7 @@ MemCacheMaintainSizeCap(
         {
             pConn->sCacheSize -= pFromHash->version.dwObjectSize;
 
-            dwError = LsaHashRemoveKey(
+            dwError = LwHashRemoveKey(
                             pConn->pSIDToPasswordVerifier,
                             pszSid);
             BAIL_ON_LSA_ERROR(dwError);
@@ -2490,7 +2490,7 @@ MemCacheStoreObjectEntryInLock(
         sObjectSize += MemCacheGetStringSpace(pObject->pszDN);
 
         sObjectSize += HASH_ENTRY_SPACE;
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                         pConn->pDNToSecurityObject,
                         pObject->pszDN,
                         pConn->pObjects);
@@ -2500,7 +2500,7 @@ MemCacheStoreObjectEntryInLock(
     LSA_ASSERT(pObject->pszObjectSid);
     sObjectSize += MemCacheGetStringSpace(pObject->pszObjectSid);
     sObjectSize += HASH_ENTRY_SPACE;
-    dwError = LsaHashSetValue(
+    dwError = LwHashSetValue(
                     pConn->pSIDToSecurityObject,
                     pObject->pszObjectSid,
                     pConn->pObjects);
@@ -2519,7 +2519,7 @@ MemCacheStoreObjectEntryInLock(
 
     LSA_ASSERT(pszKey != NULL);
     sObjectSize += HASH_ENTRY_SPACE;
-    dwError = LsaHashSetValue(
+    dwError = LwHashSetValue(
                     pConn->pNT4ToSecurityObject,
                     pszKey,
                     pConn->pObjects);
@@ -2531,7 +2531,7 @@ MemCacheStoreObjectEntryInLock(
     {
         case LSA_OBJECT_TYPE_GROUP:
             sObjectSize += HASH_ENTRY_SPACE;
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                             pConn->pGIDToSecurityObject,
                             (PVOID)(size_t)pObject->groupInfo.gid,
                             pConn->pObjects);
@@ -2541,7 +2541,7 @@ MemCacheStoreObjectEntryInLock(
                     pObject->groupInfo.pszAliasName[0])
             {
                 sObjectSize += HASH_ENTRY_SPACE;
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                                 pConn->pGroupAliasToSecurityObject,
                                 pObject->groupInfo.pszAliasName,
                                 pConn->pObjects);
@@ -2554,7 +2554,7 @@ MemCacheStoreObjectEntryInLock(
             break;
         case LSA_OBJECT_TYPE_USER:
             sObjectSize += HASH_ENTRY_SPACE;
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                             pConn->pUIDToSecurityObject,
                             (PVOID)(size_t)pObject->userInfo.uid,
                             pConn->pObjects);
@@ -2564,7 +2564,7 @@ MemCacheStoreObjectEntryInLock(
             {
                 sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszUPN);
                 sObjectSize += HASH_ENTRY_SPACE;
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                                 pConn->pUPNToSecurityObject,
                                 pObject->userInfo.pszUPN,
                                 pConn->pObjects);
@@ -2576,7 +2576,7 @@ MemCacheStoreObjectEntryInLock(
             {
                 sObjectSize += MemCacheGetStringSpace(pObject->userInfo.pszAliasName);
                 sObjectSize += HASH_ENTRY_SPACE;
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                                 pConn->pUserAliasToSecurityObject,
                                 pObject->userInfo.pszAliasName,
                                 pConn->pObjects);
@@ -2618,7 +2618,7 @@ MemCacheSafeFreeGroupMembership(
 
 void
 MemCacheFreeMembershipValue(
-    IN const LSA_HASH_ENTRY* pEntry
+    IN const LW_HASH_ENTRY* pEntry
     )
 {
     PMEM_GROUP_MEMBERSHIP pMembership = (PMEM_GROUP_MEMBERSHIP)pEntry->pValue;
@@ -2681,7 +2681,7 @@ MemCacheAddMembership(
 
     pMembership->membership.version.dwObjectSize = sObjectSize;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pConn->pParentSIDToMembershipList,
                     pMembership->membership.pszParentSid,
                     (PVOID*)&pGuardian);
@@ -2702,7 +2702,7 @@ MemCacheAddMembership(
                         &pszSidCopy);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                         pConn->pParentSIDToMembershipList,
                         pszSidCopy,
                         pGuardianTemp);
@@ -2723,7 +2723,7 @@ MemCacheAddMembership(
         pGuardian,
         &pMembership->parentListNode);
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pConn->pChildSIDToMembershipList,
                     pMembership->membership.pszChildSid,
                     (PVOID*)&pGuardian);
@@ -2744,7 +2744,7 @@ MemCacheAddMembership(
                         &pszSidCopy);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                         pConn->pChildSIDToMembershipList,
                         pszSidCopy,
                         pGuardianTemp);
@@ -2788,7 +2788,7 @@ MemCacheRemoveMembershipsBySid(
     PLSA_LIST_LINKS pGuardian = NULL;
     BOOLEAN bListNonempty = FALSE;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
@@ -2806,7 +2806,7 @@ MemCacheRemoveMembershipsBySid(
 
     // Copy the existing pac and primary domain memberships to the temporary
     // hash table
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszSid,
                     (PVOID*)&pGuardian);
@@ -2887,7 +2887,7 @@ MemCacheStoreGroupMembership(
 {
     DWORD dwError = 0;
     // Indexed by child sid (since parent sid is identical for all entries)
-    PLSA_HASH_TABLE pCombined = NULL;
+    PLW_HASH_TABLE pCombined = NULL;
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
     PMEM_GROUP_MEMBERSHIP pExistingMembership = NULL;
@@ -2895,12 +2895,12 @@ MemCacheStoreGroupMembership(
     PLSA_LIST_LINKS pGuardian = NULL;
     // Do not free
     PLSA_LIST_LINKS pPos = NULL;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ITERATOR iterator = {0};
     size_t sIndex = 0;
     BOOLEAN bInLock = FALSE;
     PMEM_DB_CONNECTION pConn = (PMEM_DB_CONNECTION)hDb;
     // Do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
     time_t now = 0;
     BOOLEAN bMutexLocked = FALSE;
 
@@ -2909,10 +2909,10 @@ MemCacheStoreGroupMembership(
 
     // Make a hash table to hold the new membership list along with any
     // existing memberships that need to be merged in.
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     sMemberCount * 2,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     MemCacheFreeMembershipValue,
                     NULL,
                     &pCombined);
@@ -2928,7 +2928,7 @@ MemCacheStoreGroupMembership(
 
         pMembership->membership.version.tLastUpdated = now;
 
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                         pCombined,
                         pMembership->membership.pszChildSid,
                         pMembership);
@@ -2953,7 +2953,7 @@ MemCacheStoreGroupMembership(
 
     // Copy the existing pac and primary domain memberships to the temporary
     // hash table
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pConn->pParentSIDToMembershipList,
                     pszParentSid,
                     (PVOID*)&pGuardian);
@@ -2977,7 +2977,7 @@ MemCacheStoreGroupMembership(
         if (pExistingMembership->membership.bIsInPac ||
             pExistingMembership->membership.bIsDomainPrimaryGroup)
         {
-            dwError = LsaHashGetValue(
+            dwError = LwHashGetValue(
                             pCombined,
                             pExistingMembership->membership.pszChildSid,
                             (PVOID*)&pMembership);
@@ -2990,7 +2990,7 @@ MemCacheStoreGroupMembership(
                                 &pExistingMembership->membership);
                 BAIL_ON_LSA_ERROR(dwError);
 
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                                 pCombined,
                                 pMembership->membership.pszChildSid,
                                 pMembership);
@@ -3019,12 +3019,12 @@ MemCacheStoreGroupMembership(
         FALSE);
 
     // Copy the combined list into the parent and child hashes
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pCombined,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         dwError = MemCacheAddMembership(
                     pConn,
@@ -3044,7 +3044,7 @@ MemCacheStoreGroupMembership(
 cleanup:
     LEAVE_RW_LOCK(&pConn->lock, bInLock);
     LEAVE_MUTEX(&pConn->backupMutex, bMutexLocked);
-    LsaHashSafeFree(&pCombined);
+    LwHashSafeFree(&pCombined);
 
     return dwError;
 
@@ -3064,7 +3064,7 @@ MemCacheStoreGroupsForUser(
 {
     DWORD dwError = 0;
     // Indexed by parent sid (since child sid is identical for all entries)
-    PLSA_HASH_TABLE pCombined = NULL;
+    PLW_HASH_TABLE pCombined = NULL;
     PMEM_GROUP_MEMBERSHIP pMembership = NULL;
     // Do not free
     PMEM_GROUP_MEMBERSHIP pExistingMembership = NULL;
@@ -3072,12 +3072,12 @@ MemCacheStoreGroupsForUser(
     PLSA_LIST_LINKS pGuardian = NULL;
     // Do not free
     PLSA_LIST_LINKS pPos = NULL;
-    LSA_HASH_ITERATOR iterator = {0};
+    LW_HASH_ITERATOR iterator = {0};
     size_t sIndex = 0;
     BOOLEAN bInLock = FALSE;
     PMEM_DB_CONNECTION pConn = (PMEM_DB_CONNECTION)hDb;
     // Do not free
-    LSA_HASH_ENTRY *pEntry = NULL;
+    LW_HASH_ENTRY *pEntry = NULL;
     time_t now = 0;
     BOOLEAN bMutexLocked = FALSE;
 
@@ -3086,10 +3086,10 @@ MemCacheStoreGroupsForUser(
 
     // Make a hash table to hold the new membership list along with any
     // existing memberships that need to be merged in.
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     sMemberCount * 2,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     MemCacheFreeMembershipValue,
                     NULL,
                     &pCombined);
@@ -3105,7 +3105,7 @@ MemCacheStoreGroupsForUser(
 
         pMembership->membership.version.tLastUpdated = now;
 
-        dwError = LsaHashSetValue(
+        dwError = LwHashSetValue(
                         pCombined,
                         pMembership->membership.pszParentSid,
                         pMembership);
@@ -3128,7 +3128,7 @@ MemCacheStoreGroupsForUser(
                     sMemberCount);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pConn->pParentSIDToMembershipList,
                     pszChildSid,
                     (PVOID*)&pGuardian);
@@ -3150,7 +3150,7 @@ MemCacheStoreGroupsForUser(
             if (pExistingMembership->membership.bIsInPac ||
                 pExistingMembership->membership.bIsDomainPrimaryGroup)
             {
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                                 pCombined,
                                 pExistingMembership->membership.pszParentSid,
                                 (PVOID*)&pMembership);
@@ -3163,7 +3163,7 @@ MemCacheStoreGroupsForUser(
                                     &pExistingMembership->membership);
                     BAIL_ON_LSA_ERROR(dwError);
 
-                    dwError = LsaHashSetValue(
+                    dwError = LwHashSetValue(
                                     pCombined,
                                     pMembership->membership.pszParentSid,
                                     pMembership);
@@ -3193,12 +3193,12 @@ MemCacheStoreGroupsForUser(
         FALSE);
 
     // Copy the combined list into the parent and child hashes
-    dwError = LsaHashGetIterator(
+    dwError = LwHashGetIterator(
                     pCombined,
                     &iterator);
     BAIL_ON_LSA_ERROR(dwError);
 
-    while ((pEntry = LsaHashNext(&iterator)) != NULL)
+    while ((pEntry = LwHashNext(&iterator)) != NULL)
     {
         PMEM_GROUP_MEMBERSHIP pMember = (PMEM_GROUP_MEMBERSHIP)pEntry->pValue;
 
@@ -3225,7 +3225,7 @@ MemCacheStoreGroupsForUser(
 cleanup:
     LEAVE_RW_LOCK(&pConn->lock, bInLock);
     LEAVE_MUTEX(&pConn->backupMutex, bMutexLocked);
-    LsaHashSafeFree(&pCombined);
+    LwHashSafeFree(&pCombined);
 
     return dwError;
 
@@ -3249,7 +3249,7 @@ MemCacheGetMemberships(
     PMEM_DB_CONNECTION pConn = (PMEM_DB_CONNECTION)hDb;
     BOOLEAN bInLock = FALSE;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PLSA_LIST_LINKS pGuardian = NULL;
     // Do not free
@@ -3270,7 +3270,7 @@ MemCacheGetMemberships(
         pIndex = pConn->pChildSIDToMembershipList;
     }
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszSid,
                     (PVOID*)&pGuardian);
@@ -3373,7 +3373,7 @@ MemCacheEnumUsersCache(
     // Do not free
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
     DWORD dwOut = 0;
@@ -3392,7 +3392,7 @@ MemCacheEnumUsersCache(
     if (pszResume)
     {
         // Start at one after the resume SID
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pIndex,
                         pszResume,
                         (PVOID*)&pListEntry);
@@ -3463,7 +3463,7 @@ MemCacheEnumGroupsCache(
     // Do not free
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
     DWORD dwOut = 0;
@@ -3482,7 +3482,7 @@ MemCacheEnumGroupsCache(
     if (pszResume)
     {
         // Start at one after the resume SID
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
                         pIndex,
                         pszResume,
                         (PVOID*)&pListEntry);
@@ -3550,7 +3550,7 @@ MemCacheFindObjectByDN(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -3558,7 +3558,7 @@ MemCacheFindObjectByDN(
 
     pIndex = pConn->pDNToSecurityObject;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszDN,
                     (PVOID*)&pListEntry);
@@ -3641,7 +3641,7 @@ MemCacheFindObjectBySid(
     BOOLEAN bInLock = FALSE;
     PLSA_SECURITY_OBJECT pObject = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PDLINKEDLIST pListEntry = NULL;
 
@@ -3649,7 +3649,7 @@ MemCacheFindObjectBySid(
 
     pIndex = pConn->pSIDToSecurityObject;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszSid,
                     (PVOID*)&pListEntry);
@@ -3737,13 +3737,13 @@ MemCacheGetPasswordVerifier(
     // Do not free
     PLSA_PASSWORD_VERIFIER pFromHash = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
 
     ENTER_READER_RW_LOCK(&pConn->lock, bInLock);
 
     pIndex = pConn->pSIDToPasswordVerifier;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pszUserSid,
                     (PVOID*)&pFromHash);
@@ -3783,7 +3783,7 @@ MemCacheStorePasswordVerifier(
     BOOLEAN bInLock = FALSE;
     PLSA_PASSWORD_VERIFIER pCopy = NULL;
     // Do not free
-    PLSA_HASH_TABLE pIndex = NULL;
+    PLW_HASH_TABLE pIndex = NULL;
     // Do not free
     PLSA_PASSWORD_VERIFIER pFromHash = NULL;
     BOOLEAN bMutexLocked = FALSE;
@@ -3795,7 +3795,7 @@ MemCacheStorePasswordVerifier(
 
     pIndex = pConn->pSIDToPasswordVerifier;
 
-    dwError = LsaHashGetValue(
+    dwError = LwHashGetValue(
                     pIndex,
                     pVerifier->pszObjectSid,
                     (PVOID*)&pFromHash);
@@ -3821,7 +3821,7 @@ MemCacheStorePasswordVerifier(
 
     pCopy->version.dwObjectSize = sObjectSize;
 
-    dwError = LsaHashSetValue(
+    dwError = LwHashSetValue(
                     pIndex,
                     pCopy->pszObjectSid,
                     pCopy);

@@ -1026,7 +1026,7 @@ LocalDirQueryMemberOfInternal(
     IN HANDLE hProvider,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pGroupHash
+    IN OUT PLW_HASH_TABLE pGroupHash
     );
 
 static
@@ -1035,7 +1035,7 @@ LocalDirQueryMemberOfDN(
     IN HANDLE hProvider,
     IN LSA_FIND_FLAGS FindFlags,
     IN PWSTR pwszDN,
-    IN OUT PLSA_HASH_TABLE pGroupHash
+    IN OUT PLW_HASH_TABLE pGroupHash
     )
 {
     DWORD dwError = 0;
@@ -1070,13 +1070,13 @@ LocalDirQueryMemberOfDN(
             &pszGroupSid);
         BAIL_ON_LSA_ERROR(dwError);
         
-        dwError = LsaHashGetValue(
+        dwError = LwHashGetValue(
             pGroupHash,
             pszGroupSid,
             OUT_PPVOID(&pszPreviousGroupSid));
         if (dwError == ERROR_NOT_FOUND)
         {
-            dwError = LsaHashSetValue(
+            dwError = LwHashSetValue(
                 pGroupHash,
                 pszGroupSid,
                 pszGroupSid);
@@ -1121,7 +1121,7 @@ LocalDirQueryMemberOfInternal(
     IN HANDLE hProvider,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pGroupHash
+    IN OUT PLW_HASH_TABLE pGroupHash
     )
 {
     DWORD dwError = 0;
@@ -1219,16 +1219,16 @@ LocalDirQueryMemberOf(
 {
     DWORD dwError = 0;
     DWORD dwIndex = 0;
-    PLSA_HASH_TABLE   pGroupHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY*   pHashEntry = NULL;
+    PLW_HASH_TABLE   pGroupHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY*   pHashEntry = NULL;
     DWORD dwGroupSidCount = 0;
     PSTR* ppszGroupSids = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                     13,
-                    LsaHashCaselessStringCompare,
-                    LsaHashCaselessStringHash,
+                    LwHashCaselessStringCompare,
+                    LwHashCaselessStringHash,
                     NULL,
                     NULL,
                     &pGroupHash);
@@ -1244,7 +1244,7 @@ LocalDirQueryMemberOf(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwGroupSidCount = (DWORD) LsaHashGetKeyCount(pGroupHash);
+    dwGroupSidCount = (DWORD) LwHashGetKeyCount(pGroupHash);
     
     if (dwGroupSidCount)
     {
@@ -1253,10 +1253,10 @@ LocalDirQueryMemberOf(
             OUT_PPVOID(&ppszGroupSids));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pGroupHash, &hashIterator);
+        dwError = LwHashGetIterator(pGroupHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for(dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for(dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             ppszGroupSids[dwIndex] = (PSTR) pHashEntry->pValue;
             pHashEntry->pValue = NULL;
@@ -1270,15 +1270,15 @@ cleanup:
 
     if (pGroupHash)
     {
-        if (LsaHashGetIterator(pGroupHash, &hashIterator) == 0)
+        if (LwHashGetIterator(pGroupHash, &hashIterator) == 0)
         {
-            while ((pHashEntry = LsaHashNext(&hashIterator)))
+            while ((pHashEntry = LwHashNext(&hashIterator)))
             {
                 LW_SAFE_FREE_MEMORY(pHashEntry->pValue);
             }
         }
 
-        LsaHashSafeFree(&pGroupHash);
+        LwHashSafeFree(&pGroupHash);
     }
 
     return dwError;

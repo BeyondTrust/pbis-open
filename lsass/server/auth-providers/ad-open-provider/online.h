@@ -265,7 +265,7 @@ AD_HashObjectSid(
 
 void
 AD_FreeHashObject(
-    IN OUT const LSA_HASH_ENTRY *pEntry
+    IN OUT const LW_HASH_ENTRY *pEntry
     );
 
 DWORD

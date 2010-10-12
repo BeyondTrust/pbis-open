@@ -252,10 +252,10 @@ error:
 }
 
 struct _LSA_AD_GROUP_EXPANSION_DATA {
-    PLSA_HASH_TABLE pGroupsToExpand;
-    PLSA_HASH_TABLE pExpandedGroups;
-    PLSA_HASH_TABLE pUsers;
-    LSA_HASH_ITERATOR GroupsToExpandIterator;
+    PLW_HASH_TABLE pGroupsToExpand;
+    PLW_HASH_TABLE pExpandedGroups;
+    PLW_HASH_TABLE pUsers;
+    LW_HASH_ITERATOR GroupsToExpandIterator;
     BOOLEAN bIsIteratorInitialized;
     BOOLEAN bDiscardedDueToDepth;
     DWORD dwMaxDepth;
@@ -277,7 +277,7 @@ AD_GroupExpansionDataCreate(
                 (PVOID*) &pExpansionData);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                 sNumberOfBuckets,
                 AD_CompareObjectSids,
                 AD_HashObjectSid,
@@ -286,7 +286,7 @@ AD_GroupExpansionDataCreate(
                 &pExpansionData->pGroupsToExpand);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                 sNumberOfBuckets,
                 AD_CompareObjectSids,
                 AD_HashObjectSid,
@@ -295,7 +295,7 @@ AD_GroupExpansionDataCreate(
                 &pExpansionData->pExpandedGroups);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
                 sNumberOfBuckets,
                 AD_CompareObjectSids,
                 AD_HashObjectSid,
@@ -342,7 +342,7 @@ AD_GroupExpansionDataAddExpansionResults(
     if ((sMembersCount + pExpansionData->pUsers->sCount) * 2 >
             pExpansionData->pUsers->sTableSize)
     {
-        dwError = LsaHashResize(
+        dwError = LwHashResize(
                         pExpansionData->pUsers,
                         (sMembersCount +
                              pExpansionData->pUsers->sCount + 10) * 3);
@@ -352,7 +352,7 @@ AD_GroupExpansionDataAddExpansionResults(
     if ((sMembersCount + pExpansionData->pGroupsToExpand->sCount) * 2 >
             pExpansionData->pGroupsToExpand->sTableSize)
     {
-        dwError = LsaHashResize(
+        dwError = LwHashResize(
                         pExpansionData->pGroupsToExpand,
                         (sMembersCount +
                              pExpansionData->pGroupsToExpand->sCount + 10) * 3);
@@ -370,10 +370,10 @@ AD_GroupExpansionDataAddExpansionResults(
 
         if (pCurrentMember->type == LSA_OBJECT_TYPE_USER)
         {
-            if (!LsaHashExists(pExpansionData->pUsers,
+            if (!LwHashExists(pExpansionData->pUsers,
                                ppMembers[sMembersCount-1]))
             {
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                     pExpansionData->pUsers,
                     ppMembers[sMembersCount-1],
                     (PVOID)(size_t)dwExpandedGroupDepth);
@@ -392,16 +392,16 @@ AD_GroupExpansionDataAddExpansionResults(
                 pExpansionData->bDiscardedDueToDepth = TRUE;
                 ADCacheSafeFreeObject(&ppMembers[sMembersCount-1]);
             }
-            else if (LsaHashExists(pExpansionData->pExpandedGroups,
+            else if (LwHashExists(pExpansionData->pExpandedGroups,
                                    pCurrentMember) ||
-                     LsaHashExists(pExpansionData->pGroupsToExpand,
+                     LwHashExists(pExpansionData->pGroupsToExpand,
                                    pCurrentMember))
             {
                 ADCacheSafeFreeObject(&ppMembers[sMembersCount-1]);
             }
             else
             {
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                             pExpansionData->pGroupsToExpand,
                             ppMembers[sMembersCount-1],
                             (PVOID)(size_t)dwExpandedGroupDepth);
@@ -444,7 +444,7 @@ AD_GroupExpansionDataGetNextGroupToExpand(
     DWORD dwError = 0;
     PLSA_SECURITY_OBJECT pGroupToExpand = NULL;
     DWORD dwGroupToExpandDepth = 0;
-    const LSA_HASH_ENTRY* pHashEntry = NULL;
+    const LW_HASH_ENTRY* pHashEntry = NULL;
 
     dwError = pExpansionData->dwLastError;
     BAIL_ON_LSA_ERROR(dwError);
@@ -457,21 +457,21 @@ AD_GroupExpansionDataGetNextGroupToExpand(
 
     if (pExpansionData->bIsIteratorInitialized)
     {
-        pHashEntry = LsaHashNext(&pExpansionData->GroupsToExpandIterator);
+        pHashEntry = LwHashNext(&pExpansionData->GroupsToExpandIterator);
     }
 
     if (!pHashEntry)
     {
         // Either the iterator is not initialized or we
         // reached the end of the hash table and need to start over.
-        dwError = LsaHashGetIterator(
+        dwError = LwHashGetIterator(
                     pExpansionData->pGroupsToExpand,
                     &pExpansionData->GroupsToExpandIterator);
         BAIL_ON_LSA_ERROR(dwError);
 
         pExpansionData->bIsIteratorInitialized = TRUE;
 
-        pHashEntry = LsaHashNext(&pExpansionData->GroupsToExpandIterator);
+        pHashEntry = LwHashNext(&pExpansionData->GroupsToExpandIterator);
         if (!pHashEntry)
         {
             dwError = LW_ERROR_INTERNAL;
@@ -488,12 +488,12 @@ AD_GroupExpansionDataGetNextGroupToExpand(
     // the "to expand" list.  It does not hurt to track it in the
     // "expanded" list.
 
-    dwError = LsaHashSetValue(pExpansionData->pExpandedGroups,
+    dwError = LwHashSetValue(pExpansionData->pExpandedGroups,
                               pGroupToExpand,
                               (PVOID)(size_t)dwGroupToExpandDepth);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashRemoveKey(pExpansionData->pGroupsToExpand, pGroupToExpand);
+    dwError = LwHashRemoveKey(pExpansionData->pGroupsToExpand, pGroupToExpand);
     if (dwError)
     {
         LSA_LOG_DEBUG("ASSERT: cannot fail");
@@ -526,8 +526,8 @@ AD_GroupExpansionDataGetResults(
     )
 {
     DWORD dwError = 0;
-    LSA_HASH_ITERATOR hashIterator;
-    LSA_HASH_ENTRY* pHashEntry = NULL;
+    LW_HASH_ITERATOR hashIterator;
+    LW_HASH_ENTRY* pHashEntry = NULL;
     size_t sHashCount = 0;
     PLSA_SECURITY_OBJECT* ppUserMembers = NULL;
     size_t sUserMembersCount = 0;
@@ -543,16 +543,16 @@ AD_GroupExpansionDataGetResults(
                 (PVOID*)&ppUserMembers);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaHashGetIterator(pExpansionData->pUsers, &hashIterator);
+    dwError = LwHashGetIterator(pExpansionData->pUsers, &hashIterator);
     BAIL_ON_LSA_ERROR(dwError);
 
     for (sUserMembersCount = 0;
-         (pHashEntry = LsaHashNext(&hashIterator)) != NULL;
+         (pHashEntry = LwHashNext(&hashIterator)) != NULL;
          sUserMembersCount++)
     {
         PLSA_SECURITY_OBJECT pUser = (PLSA_SECURITY_OBJECT) pHashEntry->pKey;
 
-        dwError = LsaHashRemoveKey(pExpansionData->pUsers, pUser);
+        dwError = LwHashRemoveKey(pExpansionData->pUsers, pUser);
         BAIL_ON_LSA_ERROR(dwError);
 
         ppUserMembers[sUserMembersCount] = pUser;
@@ -611,9 +611,9 @@ AD_GroupExpansionDataDestroy(
         {
             pExpansionData->pUsers->fnFree = AD_FreeHashObject;
         }
-        LsaHashSafeFree(&pExpansionData->pGroupsToExpand);
-        LsaHashSafeFree(&pExpansionData->pExpandedGroups);
-        LsaHashSafeFree(&pExpansionData->pUsers);
+        LwHashSafeFree(&pExpansionData->pGroupsToExpand);
+        LwHashSafeFree(&pExpansionData->pExpandedGroups);
+        LwHashSafeFree(&pExpansionData->pUsers);
         LwFreeMemory(pExpansionData);
     }
 }

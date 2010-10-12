@@ -61,7 +61,7 @@ typedef struct __AD_CELL_COOKIE_DATA
     // This hash table is used to ensure that the same user/group is not
     // returned twice through linked cells. It is only allocated if linked
     // cells are used in the computer's cell.
-    PLSA_HASH_TABLE pEnumeratedSids;
+    PLW_HASH_TABLE pEnumeratedSids;
 } AD_CELL_COOKIE_DATA, *PAD_CELL_COOKIE_DATA;
 
 static
@@ -76,7 +76,7 @@ LsaAdBatchFreeCellCookie(
     {
         LwFreeCookieContents(&pData->LdapCookie);
         LsaDmLdapClose(pData->pLdapConn);
-        LsaHashSafeFree(&pData->pEnumeratedSids);
+        LwHashSafeFree(&pData->pEnumeratedSids);
 
         LW_SAFE_FREE_MEMORY(pData);
     }
@@ -863,11 +863,11 @@ LsaAdBatchEnumObjects(
         {
             // There are linked cells, so we need to keep track of which
             // sids have been enumerated.
-            dwError = LsaHashCreate(
+            dwError = LwHashCreate(
                             10 * 1024,
-                            LsaHashCaselessStringCompare,
-                            LsaHashCaselessStringHash,
-                            LsaHashFreeStringKey,
+                            LwHashCaselessStringCompare,
+                            LwHashCaselessStringHash,
+                            LwHashFreeStringKey,
                             NULL,
                             &pCookieData->pEnumeratedSids);
             BAIL_ON_LSA_ERROR(dwError);
@@ -953,7 +953,7 @@ LsaAdBatchEnumObjects(
         {
             for (; dwInput < dwTotalObjectsCount; dwInput++)
             {
-                dwError = LsaHashGetValue(
+                dwError = LwHashGetValue(
                             pCookieData->pEnumeratedSids,
                             ppTotalObjects[dwInput]->pszObjectSid,
                             NULL);
@@ -970,7 +970,7 @@ LsaAdBatchEnumObjects(
                         pCookieData->pEnumeratedSids->sTableSize)
                     {
                         // Enlarge the hash table to avoid collisions
-                        dwError = LsaHashResize(
+                        dwError = LwHashResize(
                                     pCookieData->pEnumeratedSids,
                                     pCookieData->pEnumeratedSids->sCount * 4);
                         BAIL_ON_LSA_ERROR(dwError);
@@ -981,7 +981,7 @@ LsaAdBatchEnumObjects(
                                     &pszCopiedSid);
                     BAIL_ON_LSA_ERROR(dwError);
 
-                    dwError = LsaHashSetValue(
+                    dwError = LwHashSetValue(
                                 pCookieData->pEnumeratedSids,
                                 pszCopiedSid,
                                 NULL);

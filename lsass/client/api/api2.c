@@ -194,7 +194,7 @@ LsaFreeSecurityObject(
 static
 VOID
 LsaFreeMemberHashEntry(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -211,7 +211,7 @@ LsaQueryExpandedGroupMembersInternal(
     IN LSA_FIND_FLAGS FindFlags,
     IN LSA_OBJECT_TYPE ObjectType,
     IN PCSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pHash
+    IN OUT PLW_HASH_TABLE pHash
     )
 {
     DWORD dwError = 0;
@@ -249,7 +249,7 @@ LsaQueryExpandedGroupMembersInternal(
 
         if ((pHash->sCount + dwEnumCount) * 2 > pHash->sTableSize)
         {
-            dwError = LsaHashResize(
+            dwError = LwHashResize(
                 pHash,
                 (pHash->sCount + dwEnumCount + 10) * 4);
             BAIL_ON_LSA_ERROR(dwError);
@@ -270,9 +270,9 @@ LsaQueryExpandedGroupMembersInternal(
 
         for (dwIndex = 0; dwIndex < dwEnumCount; dwIndex++)
         {
-            if (ppObjects[dwIndex] && !LsaHashExists(pHash, ppObjects[dwIndex]->pszObjectSid))
+            if (ppObjects[dwIndex] && !LwHashExists(pHash, ppObjects[dwIndex]->pszObjectSid))
             {
-                dwError = LsaHashSetValue(
+                dwError = LwHashSetValue(
                     pHash,
                     ppObjects[dwIndex]->pszObjectSid,
                     ppObjects[dwIndex]);
@@ -347,18 +347,18 @@ LsaQueryExpandedGroupMembers(
 {
     DWORD dwError = 0;
     DWORD dwIndex = 0;
-    PLSA_HASH_TABLE pHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY* pHashEntry = NULL;
+    PLW_HASH_TABLE pHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY* pHashEntry = NULL;
     DWORD dwMemberCount = 0;
     DWORD dwFilteredMemberCount = 0;
     PLSA_SECURITY_OBJECT* ppMembers = NULL;
     PLSA_SECURITY_OBJECT pMember = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
         29,
-        LsaHashCaselessStringCompare,
-        LsaHashCaselessStringHash,
+        LwHashCaselessStringCompare,
+        LwHashCaselessStringHash,
         LsaFreeMemberHashEntry,
         NULL,
         &pHash);
@@ -372,7 +372,7 @@ LsaQueryExpandedGroupMembers(
         pszSid,
         pHash);
 
-    dwMemberCount = (DWORD) LsaHashGetKeyCount(pHash);
+    dwMemberCount = (DWORD) LwHashGetKeyCount(pHash);
     
     if (dwMemberCount)
     {
@@ -381,10 +381,10 @@ LsaQueryExpandedGroupMembers(
             OUT_PPVOID(&ppMembers));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pHash, &hashIterator);
+        dwError = LwHashGetIterator(pHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for (dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for (dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             pMember = pHashEntry->pValue;
 
@@ -402,7 +402,7 @@ LsaQueryExpandedGroupMembers(
 
 cleanup:
 
-    LsaHashSafeFree(&pHash);
+    LwHashSafeFree(&pHash);
 
     return dwError;
 

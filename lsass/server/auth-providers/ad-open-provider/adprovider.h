@@ -68,6 +68,7 @@
 
 #include "lwmem.h"
 #include "lwstr.h"
+#include "lwhash.h"
 #include <lwkrb5.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>

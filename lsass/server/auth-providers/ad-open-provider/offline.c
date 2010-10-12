@@ -752,7 +752,7 @@ AD_OfflineQueryMemberOfForSid(
     IN PAD_PROVIDER_CONTEXT pContext,
     IN LSA_FIND_FLAGS FindFlags,
     IN PSTR pszSid,
-    IN OUT PLSA_HASH_TABLE pGroupHash
+    IN OUT PLW_HASH_TABLE pGroupHash
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -787,14 +787,14 @@ AD_OfflineQueryMemberOfForSid(
     for (dwIndex = 0; dwIndex < sMembershipCount; dwIndex++)
     {
         if (ppMemberships[dwIndex]->pszParentSid &&
-            !LsaHashExists(pGroupHash, ppMemberships[dwIndex]->pszParentSid))
+            !LwHashExists(pGroupHash, ppMemberships[dwIndex]->pszParentSid))
         {
             dwError = LwAllocateString(
                 ppMemberships[dwIndex]->pszParentSid,
                 &pszGroupSid);
             BAIL_ON_LSA_ERROR(dwError);
             
-            dwError = LsaHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
+            dwError = LwHashSetValue(pGroupHash, pszGroupSid, pszGroupSid);
             BAIL_ON_LSA_ERROR(dwError);
 
             dwError = AD_OfflineQueryMemberOfForSid(
@@ -823,7 +823,7 @@ error:
 static
 VOID
 AD_OfflineFreeMemberOfHashEntry(
-    const LSA_HASH_ENTRY* pEntry
+    const LW_HASH_ENTRY* pEntry
     )
 {
     if (pEntry->pValue)
@@ -844,16 +844,16 @@ AD_OfflineQueryMemberOf(
 {
     DWORD dwError = 0;
     DWORD dwIndex = 0;
-    PLSA_HASH_TABLE   pGroupHash = NULL;
-    LSA_HASH_ITERATOR hashIterator = {0};
-    LSA_HASH_ENTRY*   pHashEntry = NULL;
+    PLW_HASH_TABLE   pGroupHash = NULL;
+    LW_HASH_ITERATOR hashIterator = {0};
+    LW_HASH_ENTRY*   pHashEntry = NULL;
     DWORD dwGroupSidCount = 0;
     PSTR* ppszGroupSids = NULL;
 
-    dwError = LsaHashCreate(
+    dwError = LwHashCreate(
         13,
-        LsaHashCaselessStringCompare,
-        LsaHashCaselessStringHash,
+        LwHashCaselessStringCompare,
+        LwHashCaselessStringHash,
         AD_OfflineFreeMemberOfHashEntry,
         NULL,
         &pGroupHash);
@@ -869,7 +869,7 @@ AD_OfflineQueryMemberOf(
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwGroupSidCount = (DWORD) LsaHashGetKeyCount(pGroupHash);
+    dwGroupSidCount = (DWORD) LwHashGetKeyCount(pGroupHash);
     
     if (dwGroupSidCount)
     {
@@ -878,10 +878,10 @@ AD_OfflineQueryMemberOf(
             OUT_PPVOID(&ppszGroupSids));
         BAIL_ON_LSA_ERROR(dwError);
     
-        dwError = LsaHashGetIterator(pGroupHash, &hashIterator);
+        dwError = LwHashGetIterator(pGroupHash, &hashIterator);
         BAIL_ON_LSA_ERROR(dwError);
         
-        for(dwIndex = 0; (pHashEntry = LsaHashNext(&hashIterator)) != NULL; dwIndex++)
+        for(dwIndex = 0; (pHashEntry = LwHashNext(&hashIterator)) != NULL; dwIndex++)
         {
             ppszGroupSids[dwIndex] = (PSTR) pHashEntry->pValue;
             pHashEntry->pValue = NULL;
@@ -893,7 +893,7 @@ AD_OfflineQueryMemberOf(
 
 cleanup:
 
-    LsaHashSafeFree(&pGroupHash);
+    LwHashSafeFree(&pGroupHash);
 
     return dwError;
 

@@ -83,7 +83,7 @@ typedef struct lsa_policy_context
     PSID                 pDomainSid;
     PWSTR                pwszDcName;
     
-    PLSA_HASH_TABLE      pDomains;
+    PLW_HASH_TABLE      pDomains;
     DWORD                dwDomainsNum;
 
 } POLICY_CONTEXT, *PPOLICY_CONTEXT;
