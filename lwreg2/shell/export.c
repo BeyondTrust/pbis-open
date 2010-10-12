@@ -52,6 +52,7 @@ PrintToRegFile(
     IN REG_DATA_TYPE dataType,
     IN PCSTR pszValueName,
     IN REG_DATA_TYPE type,
+    IN BOOLEAN bDefault,
     IN PVOID value,
     IN DWORD dwValueLen,
     OUT PREG_DATA_TYPE pPrevType
@@ -176,6 +177,7 @@ cleanup:
     {
         RegFreeString(pszStringSecurityDescriptor);
     }
+    LWREG_SAFE_FREE_MEMORY(pSecDescRel);
 
     if (pSecDescRel)
     {
@@ -200,6 +202,7 @@ PrintToRegFile(
     IN REG_DATA_TYPE dataType,
     IN PCSTR pszValueName,
     IN REG_DATA_TYPE type,
+    IN BOOLEAN bDefault,
     IN PVOID value,
     IN DWORD dwValueLen,
     OUT PREG_DATA_TYPE pPrevType
@@ -207,6 +210,9 @@ PrintToRegFile(
 {
     PSTR dumpString = NULL;
     DWORD dumpStringLen = 0;
+    PSTR pszStart = NULL;
+    PSTR pszEnd = NULL;
+    PSTR pszComment = bDefault ? "#" : "";
 
     RegExportEntry(pszKeyName,
                    pszSddlCString,
@@ -223,7 +229,25 @@ PrintToRegFile(
        switch (type)
        {
            case REG_KEY:
-               fprintf(fp, "\r\n%.*s\r\n", dumpStringLen, dumpString);
+               fprintf(fp, "\r\n%s%.*s\r\n", 
+                       pszComment, dumpStringLen, dumpString);
+               break;
+
+           case REG_MULTI_SZ:
+               pszStart = dumpString;
+               pszEnd = strchr(pszStart, '\n');
+               while (pszEnd)
+               {
+                   fprintf(fp, "%s%.*s\r\n", 
+                           pszComment, (int) (pszEnd-pszStart), pszStart);
+                   pszStart = pszEnd+1;
+                   pszEnd = strchr(pszStart, '\n');
+               }
+               if (pszStart && *pszStart)
+               {
+                   fprintf(fp, "%s%s\r\n", 
+                           pszComment, pszStart);
+               }
                break;
 
            case REG_PLAIN_TEXT:
@@ -231,11 +255,11 @@ PrintToRegFile(
                {
                    printf("\n");
                }
-               fprintf(fp, "%*s ", dwValueLen, (PCHAR) value);
+               fprintf(fp, "%s%*s ", pszComment, dwValueLen, (PCHAR) value);
                break;
 
            default:
-               fprintf(fp, "%.*s\r\n", dumpStringLen, dumpString);
+               fprintf(fp, "%s%.*s\r\n", pszComment, dumpStringLen, dumpString);
                break;
        }
    }
@@ -288,6 +312,7 @@ ProcessExportedKeyInfo(
                           REG_KEY,
                           NULL,
                           REG_KEY,
+                          FALSE,
                           NULL,
                           0,
                           pPrevType);
@@ -360,7 +385,7 @@ ProcessExportedKeyInfo(
                       pwszValueName,
                       &pCurrValueInfo,
                       &pValueAttributes);
-        if (pExportState->dwExportFormat == 1)
+        if (pExportState->dwExportFormat == REGSHELL_EXPORT_LEGACY)
         {
             /* Export "legacy" format */
             dwError = PrintToRegFile(
@@ -370,9 +395,75 @@ ProcessExportedKeyInfo(
                                   REG_SZ,
                                   pszValueName,
                                   dataType,
+                                  dwError ? FALSE : TRUE,
                                   pValue,
                                   dwValueLen,
                                   pPrevType);
+        }
+        else if (pExportState->dwExportFormat == REGSHELL_EXPORT_VALUES)
+        {
+            /* Export only values that override default */
+            if ((dwError == 0 && pCurrValueInfo) ||
+                (dwError && dwValueLen))
+            {
+                memset(&regItem, 0, sizeof(regItem));
+                regItem.type = REG_SZ;
+                regItem.valueName = pszValueName;
+                if (pCurrValueInfo)
+                {
+                    dataType = pCurrValueInfo->dwType;
+                    pValue = pCurrValueInfo->pvData;
+                    dwValueLen = pCurrValueInfo->cbData;
+                } 
+                else
+                {
+                    pValue = value;
+                }
+
+                regItem.valueType = dataType;
+                regItem.regAttr.ValueType = regItem.valueType;
+
+                if (dataType == REG_SZ)
+                {
+                    if (pValue)
+                    {
+                        dwError = RegCStringAllocateFromWC16String(
+                                      (PSTR *) &regItem.value,
+                                      (PWSTR) pValue);
+                        BAIL_ON_REG_ERROR(dwError);
+                        regItem.valueLen = strlen(regItem.value);
+                    }
+                    pValue = regItem.value;
+                    dwValueLen = strlen((PSTR) value);
+                }
+                else
+                {
+                    regItem.value = pValue;
+                    regItem.valueLen = dwValueLen;
+                }
+
+                /* Export "legacy" format */
+                dwError = PrintToRegFile(
+                                      fp,
+                                      pszFullKeyName,
+                                      NULL,
+                                      REG_SZ,
+                                      pszValueName,
+                                      dataType,
+                                      FALSE,
+                                      pValue,
+                                      dwValueLen,
+                                      pPrevType);
+            }
+            else
+            {
+                /* 
+                 * Don't care if there isn't a schema entry when 
+                 * exporting values, so ignore error from 
+                 * RegGetValueAttributesW().
+                 */ 
+                dwError = 0;
+            }
         }
         else if (dwError == 0)
         {

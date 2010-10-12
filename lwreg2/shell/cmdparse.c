@@ -1184,7 +1184,12 @@ RegShellCmdParse(
             {
                 if (!strcmp("--legacy", argv[dwArgc]))
                 {
-                    dwExportFormat = 1;
+                    dwExportFormat = REGSHELL_EXPORT_LEGACY;
+                    dwArgc++;
+                }
+                else if (!strcmp("--values", argv[dwArgc]))
+                {
+                    dwExportFormat = REGSHELL_EXPORT_VALUES;
                     dwArgc++;
                 }
                 if ((dwArgc+1) < argc)
@@ -1205,11 +1210,18 @@ RegShellCmdParse(
                               sizeof(PSTR) * argc,
                               (PVOID*)&pCmdItem->args);
                 BAIL_ON_REG_ERROR(dwError);
-                if (dwExportFormat == 1)
+                if (dwExportFormat == REGSHELL_EXPORT_LEGACY)
                 {
                     dwError = RegCStringDuplicate(
                                   (LW_PVOID) &pCmdItem->args[dwNewArgc++],
                                   "--legacy");
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                else if (dwExportFormat == REGSHELL_EXPORT_VALUES)
+                {
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                                  "--values");
                     BAIL_ON_REG_ERROR(dwError);
                 }
                 if (dwArgc < argc)

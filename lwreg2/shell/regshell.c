@@ -417,7 +417,12 @@ RegShellExportFile(
 
     if (!strcmp(rsItem->args[dwArgc], "--legacy"))
     {
-        pExportState->dwExportFormat = 1;
+        pExportState->dwExportFormat = REGSHELL_EXPORT_LEGACY;
+        dwArgc++;
+    }
+    else if (!strcmp(rsItem->args[dwArgc], "--values"))
+    {
+        pExportState->dwExportFormat = REGSHELL_EXPORT_VALUES;
         dwArgc++;
     }
     if (dwArgc < rsItem->argsCount)
