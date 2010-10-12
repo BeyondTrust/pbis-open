@@ -58,7 +58,7 @@ LwHashCreate(
 
     dwError = LwAllocateMemory(
                     sizeof(*pResult),
-                    (PVOID*)&pResult);
+                    OUT_PPVOID(&pResult));
     BAIL_ON_LW_ERROR(dwError);
 
     pResult->sTableSize = sTableSize;
@@ -70,7 +70,7 @@ LwHashCreate(
 
     dwError = LwAllocateMemory(
                     sizeof(*pResult->ppEntries) * sTableSize,
-                    (PVOID*)&pResult->ppEntries);
+                    OUT_PPVOID(&pResult->ppEntries));
     BAIL_ON_LW_ERROR(dwError);
 
     *ppResult = pResult;
@@ -167,7 +167,7 @@ LwHashSetValue(
     //The key isn't in the table yet.
     dwError = LwAllocateMemory(
                     sizeof(*pNewEntry),
-                    (PVOID*)&pNewEntry);
+                    OUT_PPVOID(&pNewEntry));
     BAIL_ON_LW_ERROR(dwError);
     pNewEntry->pKey = pKey;
     pNewEntry->pValue = pValue;
@@ -312,7 +312,7 @@ LwHashResize(
 
     dwError = LwAllocateMemory(
                     sizeof(*ppEntries) * sTableSize,
-                    (PVOID*)&ppEntries);
+                    OUT_PPVOID(&ppEntries));
     BAIL_ON_LW_ERROR(dwError);
 
     dwError = LwHashGetIterator(pTable, &iterator);
