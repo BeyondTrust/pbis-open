@@ -20,6 +20,7 @@ make()
 	GROUP="api.og" \
 	SOURCES="$API_SOURCES" \
 	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
-	LIBDEPS="lwmsg_nothr lsacommon"
+	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h lwhash.h" \
+	LIBDEPS="lwmsg_nothr lwadvapi_nothr lsacommon"
 }
+

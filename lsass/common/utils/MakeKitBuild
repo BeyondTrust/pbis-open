@@ -20,7 +20,6 @@ make()
        lsapaths.c              \
        lsastack.c              \
        lsaprincipal.c          \
-       lsahash.c               \
        lsastatus.c             \
        lsastrerror.c           \
        lsasecurityidentifier.c \
@@ -44,3 +43,4 @@ make()
 	HEADERDEPS="lwadvapi.h lw/base.h" \
 	LIBDEPS="lwbase_nothr lwadvapi_nothr"	
 }
+

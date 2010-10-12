@@ -7,6 +7,7 @@ make()
            lwmem.c    \
            lwstr.c    \
            lwsid.c    \
+           lwhash.c   \
            lwbuffer.c" \
         INCLUDEDIRS=". ../../include ../../include/public"
 }
