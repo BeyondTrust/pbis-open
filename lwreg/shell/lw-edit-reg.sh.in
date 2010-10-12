@@ -78,7 +78,7 @@ fi
 
 TMP_FILE="/tmp/.lw-edit-reg-$$.txt"
 
-"${BINDIR}/lwregshell" export ${ROOT_PATH} "${TMP_FILE}" || exit $?
+"${BINDIR}/lwregshell" export --legacy ${ROOT_PATH} "${TMP_FILE}" || exit $?
 ${EDITOR} "${TMP_FILE}" || exit $?
 "${BINDIR}/lwregshell" import "${TMP_FILE}" || exit $?
 rm -f "${TMP_FILE}"
