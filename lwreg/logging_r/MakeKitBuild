@@ -1,9 +1,0 @@
-make()
-{
-    mk_group \
-        GROUP="reglog_r.og" \
-        SOURCES="globals.c logging.c" \
-        INCLUDEDIRS=". ../include" \
-        LIBDEPS="regcommon $LIB_PTHREAD" \
-        HEADERDEPS="lw/base.h"
-}

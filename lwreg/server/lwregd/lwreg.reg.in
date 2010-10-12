@@ -1,9 +1,0 @@
-[HKEY_THIS_MACHINE\Services]
-
-[HKEY_THIS_MACHINE\Services\lwreg]
-"Description"="Likewise Registry Service"
-"Path"="@SBINDIR@/lwregd"
-"Arguments"="@SBINDIR@/lwregd"
-"Environment"=""
-"Dependencies"=""
-"Type"=dword:00000001

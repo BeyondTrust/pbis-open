@@ -1,6 +1,0 @@
-make()
-{
-    mk_library \
-        LIB=regcommon \
-        GROUPS="../ipc/regipc.og ../utils/regutils.og"
-}
