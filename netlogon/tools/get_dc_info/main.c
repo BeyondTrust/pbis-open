@@ -61,7 +61,7 @@ ShowUsage()
     printf("        [--force] [--ds-required] [--gc-required]\n");
     printf("        [--pdc-required] [--background-only] [--kdc-required]\n");
     printf("        [--timeserv-required] [--writeable-required] [--good-timeserv-required]\n");
-    printf("        [--avoid-self]\n\n"); 
+    printf("        [--avoid-self] [--preferred-domain <domain name>]\n\n"); 
 }
 
 DWORD
@@ -101,12 +101,14 @@ ParseArgs(
     char*  argv[],
     PSTR*  ppszTargetFQDN,
     PSTR*  ppszSiteName,
+    PSTR*  ppszPrimaryDomain,
     PDWORD pdwFlags
     )
 {
     typedef enum {
             PARSE_MODE_OPEN = 0,
             PARSE_MODE_SITENAME,
+            PARSE_MODE_PREFERRED_DOMAIN,
             PARSE_MODE_OPTIONS
         } ParseMode;
 
@@ -116,6 +118,7 @@ ParseArgs(
     ParseMode parseMode = PARSE_MODE_OPEN;
     PSTR pszTargetFQDN = NULL;
     PSTR pszSiteName = NULL;
+    PSTR pszPrimaryDomain = NULL;
     DWORD dwFlags = 0;
 
     do {
@@ -148,6 +151,10 @@ ParseArgs(
                 if(strcmp(pszArg, "--site") == 0)
                 {
                     parseMode = PARSE_MODE_SITENAME;
+                }
+                else if(strcmp(pszArg, "--preferred-domain") == 0)
+                {
+                    parseMode = PARSE_MODE_PREFERRED_DOMAIN;
                 }
                 else if(strcmp(pszArg, "--force") == 0)
                 {
@@ -220,6 +227,20 @@ ParseArgs(
                 
                 parseMode = PARSE_MODE_OPTIONS;
                 break;
+            case PARSE_MODE_PREFERRED_DOMAIN:
+                
+                if(!IsNullOrEmptyString(pszPrimaryDomain))
+                {
+                    LWNET_LOG_ERROR("Invalid argument: %s", pszArg);
+                    dwError = ERROR_INVALID_PARAMETER;
+                    BAIL_ON_LWNET_ERROR(dwError);
+                }
+                
+                dwError = LWNetAllocateString(pszArg, &pszPrimaryDomain);
+                BAIL_ON_LWNET_ERROR(dwError);
+                
+                parseMode = PARSE_MODE_OPTIONS;
+                break;
         }
         
     } while (iArg < argc);
@@ -236,11 +257,13 @@ error:
     {
         LWNET_SAFE_FREE_STRING(pszTargetFQDN);
         LWNET_SAFE_FREE_STRING(pszSiteName);
+        LWNET_SAFE_FREE_STRING(pszPrimaryDomain);
         dwFlags = 0;
     }
 
     *ppszTargetFQDN = pszTargetFQDN;
     *ppszSiteName = pszSiteName;
+    *ppszPrimaryDomain = pszPrimaryDomain;
     *pdwFlags = dwFlags;
 
     return dwError;
@@ -280,6 +303,7 @@ main(
 
     PSTR pszTargetFQDN = NULL;
     PSTR pszSiteName = NULL;
+    PSTR pszPrimaryDomain = NULL;
     PLWNET_DC_INFO pDCInfo = NULL;
     DWORD dwFlags = 0;
     CHAR szErrorBuf[1024];
@@ -291,17 +315,21 @@ main(
                 argv,
                 &pszTargetFQDN,
                 &pszSiteName,
+                &pszPrimaryDomain,
                 &dwFlags
                 );
     BAIL_ON_LWNET_ERROR(dwError);
 
     lwnet_init_logging_to_file(LWNET_LOG_LEVEL_VERBOSE, TRUE, "");
 
-    dwError = LWNetGetDCName(
+    dwError = LWNetGetDCNameExt(
                 NULL,
                 pszTargetFQDN,
                 pszSiteName,
+                pszPrimaryDomain,
                 dwFlags,
+                0,
+                NULL,
                 &pDCInfo
                 );
     BAIL_ON_LWNET_ERROR(dwError); 
