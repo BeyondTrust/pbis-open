@@ -246,7 +246,7 @@ FakeClientConnection(
 {
     DWORD dwError = 0;
     CHAR  szClientPath[PATH_MAX+1];
-    DWORD dwFd = -1;
+    int   fd = -1;
     BOOLEAN bFileExists = FALSE;
     struct sockaddr_un unixaddr;
     PSTR  pszCachePath = NULL;
@@ -254,7 +254,7 @@ FakeClientConnection(
     dwError = RegSrvGetCachePath(&pszCachePath);
     BAIL_ON_REG_ERROR(dwError);
 
-    if ((dwFd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
         dwError = errno;
         BAIL_ON_REG_ERROR(dwError);
     }
@@ -274,7 +274,7 @@ FakeClientConnection(
     memset(&unixaddr, 0, sizeof(unixaddr));
     unixaddr.sun_family = AF_UNIX;
     strcpy(unixaddr.sun_path, szClientPath);
-    if (bind(dwFd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
+    if (bind(fd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
         dwError = errno;
         BAIL_ON_REG_ERROR(dwError);
     }
@@ -288,15 +288,15 @@ FakeClientConnection(
     unixaddr.sun_family = AF_UNIX;
     sprintf(unixaddr.sun_path, "%s/%s", pszCachePath, REG_SERVER_FILENAME);
 
-    if (connect(dwFd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
+    if (connect(fd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
         dwError = errno;
         BAIL_ON_REG_ERROR(dwError);
     }
 
 error:
 
-    if (dwFd >= 0) {
-        close(dwFd);
+    if (fd >= 0) {
+        close(fd);
     }
 
     if (bFileExists)
