@@ -156,7 +156,7 @@ LWNetCacheDbUpdate(
     IN LWNET_CACHE_DB_HANDLE DbHandle,
     IN PCSTR pszDnsDomainName,
     IN OPTIONAL PCSTR pszSiteName,
-    IN DWORD dwDsFlags,
+    IN LWNET_CACHE_DB_QUERY_TYPE QueryType,
     IN LWNET_UNIX_TIME_T LastDiscovered,
     IN LWNET_UNIX_TIME_T LastPinged,
     IN BOOLEAN IsBackoffToWritableDc,
@@ -1168,7 +1168,7 @@ LWNetCacheDbUpdate(
     IN LWNET_CACHE_DB_HANDLE DbHandle,
     IN PCSTR pszDnsDomainName,
     IN OPTIONAL PCSTR pszSiteName,
-    IN DWORD dwDsFlags,
+    IN LWNET_CACHE_DB_QUERY_TYPE QueryType,
     IN LWNET_UNIX_TIME_T LastDiscovered,
     IN LWNET_UNIX_TIME_T LastPinged,
     IN BOOLEAN IsBackoffToWritableDc,
@@ -1181,7 +1181,6 @@ LWNetCacheDbUpdate(
     PLWNET_CACHE_DB_ENTRY pOldEntry = NULL;
     PDLINKEDLIST pOldListEntry = NULL;
     BOOLEAN isAcquired = FALSE;
-    LWNET_CACHE_DB_QUERY_TYPE QueryType = LWNetCacheDbQueryToQueryType(dwDsFlags);
 
     dwError = LWNetAllocateMemory(sizeof(*pNewEntry), (PVOID *)&pNewEntry);
     BAIL_ON_LWNET_ERROR(dwError);
@@ -1553,12 +1552,13 @@ LWNetCacheUpdate(
     )
 {
     DWORD dwError = 0;
+    LWNET_CACHE_DB_QUERY_TYPE QueryType = LWNetCacheDbQueryToQueryType(dwDsFlags);
 
     dwError = LWNetCacheDbUpdate(
                     gDbHandle,
                     pszDnsDomainName,
                     pszSiteName,
-                    dwDsFlags,
+                    QueryType,
                     LastDiscovered,
                     LastPinged,
                     IsBackoffToWritableDc,
@@ -1573,7 +1573,7 @@ LWNetCacheUpdate(
                         gDbHandle,
                         pszDnsDomainName,
                         pDcInfo->pszDCSiteName,
-                        dwDsFlags,
+                        QueryType,
                         LastDiscovered,
                         LastPinged,
                         IsBackoffToWritableDc,
