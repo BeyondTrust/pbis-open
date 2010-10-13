@@ -7,4 +7,4 @@
 "Environment"=""
 "Dependencies"=""
 "Type"=@DCERPCD_SERVICE_TYPE@
-
+"Autostart"=dword:00000001
