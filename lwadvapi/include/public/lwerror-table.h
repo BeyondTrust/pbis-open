@@ -75,7 +75,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_DUPLICATE_DOMAINNAME, -1, "A duplicate
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_KRB5_CALL_FAILED, -1, "The call to Kerberos 5 failed" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GSS_CALL_FAILED, -1, "The GSS call failed" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_FIND_DC, -1, "Failed to find the domain controller" )
-S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NO_SUCH_CELL, -1, "Failed to find the Cell in Active Direcotry" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_NO_SUCH_CELL, -1, "Failed to find the Cell in Active Directory" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GROUP_IN_USE, -1, "The specified group is currently being used" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_FAILED_CREATE_HOMEDIR, -1, "Failed to create home directory for user" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_PASSWORD_TOO_WEAK, -1, "The specified password is not strong enough" )
