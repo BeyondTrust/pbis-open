@@ -57,7 +57,7 @@ typedef struct _LSA_SCHANNEL_STATE {
     PSTR pszSchannelServer;
     pthread_mutex_t SchannelLock;
     pthread_mutex_t *pSchannelLock;
-} LSA_SCHANNEL_STATE, *PLSA_SCHANNEL_STATE;
+} LSA_SCHANNEL_STATE;
 
 static
 BOOLEAN
@@ -222,7 +222,7 @@ error:
 
 DWORD
 AD_NetCreateSchannelState(
-    IN PLSA_AD_PROVIDER_STATE pState
+    OUT PLSA_SCHANNEL_STATE* ppSchannelState
     )
 {
     DWORD dwError = 0;
@@ -237,7 +237,8 @@ AD_NetCreateSchannelState(
     BAIL_ON_LSA_ERROR(dwError);
 
     pSchannelState->pSchannelLock = &pSchannelState->SchannelLock;
-    pState->hSchannelState = pSchannelState;
+
+    *ppSchannelState = pSchannelState;
 
 cleanup:
 
@@ -245,26 +246,29 @@ cleanup:
 
 error:
 
-    AD_NetDestroySchannelState(pState);
+    *ppSchannelState = NULL;
+
+    if (pSchannelState)
+    {
+        AD_NetDestroySchannelState(pSchannelState);
+    }
 
     goto cleanup;
 }
 
 VOID
 AD_NetDestroySchannelState(
-    IN PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
-    PLSA_SCHANNEL_STATE pSchannelState = pState->hSchannelState;
+    AD_ClearSchannelState(pSchannelState);
 
-    if (pSchannelState && pSchannelState->pSchannelLock)
+    if (pSchannelState->pSchannelLock)
     {
-        AD_ClearSchannelState(pSchannelState);
-
         pthread_mutex_destroy(pSchannelState->pSchannelLock);
     }
 
-    LW_SAFE_FREE_MEMORY(pState->hSchannelState);
+    LwFreeMemory(pSchannelState);
 }
 
 DWORD
@@ -2059,11 +2063,17 @@ AD_ClearSchannelState(
 {
     if (pSchannelState)
     {
-        pthread_mutex_lock(pSchannelState->pSchannelLock);
+        if (pSchannelState->pSchannelLock)
+        {
+            pthread_mutex_lock(pSchannelState->pSchannelLock);
+        }
 
         AD_ClearSchannelStateInLock(pSchannelState);
 
-        pthread_mutex_unlock(pSchannelState->pSchannelLock);
+        if (pSchannelState->pSchannelLock)
+        {
+            pthread_mutex_unlock(pSchannelState->pSchannelLock);
+        }
     }
 }
 

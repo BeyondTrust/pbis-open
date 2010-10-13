@@ -62,6 +62,8 @@ typedef struct _LSA_TRANSLATED_NAME_OR_SID {
     LSA_OBJECT_TYPE ObjectType;
 } LSA_TRANSLATED_NAME_OR_SID, *PLSA_TRANSLATED_NAME_OR_SID;
 
+typedef struct _LSA_SCHANNEL_STATE* PLSA_SCHANNEL_STATE;
+
 DWORD
 AD_SetSystemAccess(
     IN PLSA_AD_PROVIDER_STATE pState,
@@ -80,12 +82,12 @@ AD_NetShutdownMemory(
 
 DWORD
 AD_NetCreateSchannelState(
-    IN PLSA_AD_PROVIDER_STATE pState
+    OUT PLSA_SCHANNEL_STATE* ppSchannelState
     );
 
 VOID
 AD_NetDestroySchannelState(
-    IN PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_SCHANNEL_STATE pSchannelState
     );
 
 DWORD

@@ -229,7 +229,7 @@ AD_InitializeProvider(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_NetCreateSchannelState(gpLsaAdProviderState);
+    dwError = AD_NetCreateSchannelState(&gpLsaAdProviderState->hSchannelState);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_InitializeConfig(&config);
@@ -375,7 +375,11 @@ AD_ShutdownProvider(
         dwError = 0;
     }
 
-    AD_NetDestroySchannelState(gpLsaAdProviderState);
+    if (gpLsaAdProviderState->hSchannelState)
+    {
+        AD_NetDestroySchannelState(gpLsaAdProviderState->hSchannelState);
+        gpLsaAdProviderState->hSchannelState = NULL;
+    }
 
     AD_FreeAllowedSIDs_InLock(gpLsaAdProviderState);
 
@@ -4021,7 +4025,7 @@ LsaAdProviderStateDestroy(
 
         if (pState->hSchannelState)
         {
-            AD_NetDestroySchannelState(pState);
+            AD_NetDestroySchannelState(pState->hSchannelState);
         }
 
         LW_SAFE_FREE_STRING(pState->pszJoinedDomainName);
