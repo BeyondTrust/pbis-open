@@ -33,39 +33,40 @@
 #include "ctstrutils.h"
 #include "djauthinfo.h"
 #include "djdistroinfo.h"
+#include "djservicemgr.h"
+#include "djregistry.h"
 #include <lsa/lsa.h>
-
-// aka: DWORD_LICENSE_INCORRECT
-static DWORD GPAGENT_LICENSE_ERROR = 0x00002001;
-
-// DWORD_LICENSE_EXPIRED
-static DWORD GPAGENT_LICENSE_EXPIRED_ERROR = 0x00002002;
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 #define PWGRD "/etc/rc.config.d/pwgr"
 
 static QueryResult QueryStopDaemons(const JoinProcessOptions *options, LWException **exc)
 {
+    DWORD dwError = 0;
     BOOLEAN running;
     QueryResult result = FullyConfigured;
-    LWException *inner = NULL;
 
     /* Check for lwiauthd and likewise-open */
 
-    DJGetDaemonStatus("gpagentd", &running, &inner);
-    if (!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
+    dwError = DJGetServiceStatus("gpagent", &running);
+    if (dwError == LW_ERROR_NO_SUCH_SERVICE)
     {
         /* The gpagentd may not be installed so ignore */
-        LW_HANDLE(&inner);
         running = FALSE;
+        dwError = 0;
     }
-    LW_CLEANUP(exc, inner);
+    if (dwError)
+    {
+        LW_RAISE_EX(exc, dwError,
+                "Received error while querying lwsmd.",
+                "Recevied error while querying lwsmd.");
+        goto cleanup;
+    }
 
     if(running)
         result = NotConfigured;
     
 cleanup:
-    LW_HANDLE(&inner);
     return result;
 }
 
@@ -98,10 +99,10 @@ const JoinModule DJDaemonStopModule = { TRUE, "stop", "stop daemons", QueryStopD
 
 static QueryResult QueryStartDaemons(const JoinProcessOptions *options, LWException **exc)
 {
+    DWORD dwError = 0;
     BOOLEAN running;
     QueryResult result = FullyConfigured;
     const ModuleState *stopState = DJGetModuleStateByName((JoinProcessOptions *)options, "stop");
-    LWException *inner = NULL;
 
     if(!options->joiningDomain)
     {
@@ -109,23 +110,28 @@ static QueryResult QueryStartDaemons(const JoinProcessOptions *options, LWExcept
         goto cleanup;
     }
 
-    DJGetDaemonStatus("gpagentd", &running, &inner);
-    if (!LW_IS_OK(inner) && inner->code == ERROR_SERVICE_NOT_FOUND)
+    dwError = DJGetServiceStatus("gpagent", &running);
+    if (dwError == LW_ERROR_NO_SUCH_SERVICE)
     {
         /* The gpagentd may not be installed so ignore */
-        LW_HANDLE(&inner);
         running = TRUE;
+        dwError = 0;
     }
-    LW_CLEANUP(exc, inner);
+    if (dwError)
+    {
+        LW_RAISE_EX(exc, dwError,
+                "Received error while querying lwsmd.",
+                "Recevied error while querying lwsmd.");
+        goto cleanup;
+    }
 
     if(!running)
         result = NotConfigured;
-    
+
     if(stopState != NULL && stopState->runModule)
         result = NotConfigured;
 
 cleanup:
-    LW_HANDLE(&inner);
     return result;
 }
 
@@ -321,25 +327,12 @@ DJManageDaemons(
 {
     BOOLEAN bFileExists = TRUE;
     FILE* fp = NULL;
-    PSTR pszErrFilePath = "/var/cache/likewise/grouppolicy/gpagentd.err";
-    CHAR szBuf[256+1];
-    DWORD dwGPErrCode = 0;
     LWException *innerExc = NULL;
-    int daemonCount;
-    int i;
-    int j;
     PLSA_LOG_INFO pLogInfo = NULL;
     BOOLEAN bLsassContacted = FALSE;
+    size_t i = 0;
     DWORD dwError = 0;
     LW_HANDLE hLsa = NULL;
-    int firstStart = 0;
-    int firstStop = 0;
-    int stopLaterOffset = 0;
-
-    LW_TRY(exc, DJGetBaseDaemonPriorities(
-                &firstStart,
-                &firstStop,
-                &stopLaterOffset));
 
     LW_CLEANUP_CTERR(exc, CTCheckFileExists(PWGRD, &bFileExists));
     if(bFileExists)
@@ -350,50 +343,14 @@ DJManageDaemons(
         LW_CLEANUP_CTERR(exc, CTRunSedOnFile(PWGRD, PWGRD, FALSE, "s/=1/=0/"));
     }
 
-    //Figure out how many daemons there are
-    for(daemonCount = 0; daemonList[daemonCount].primaryName != NULL; daemonCount++);
-
     if(bStart)
     {
-        //Start the daemons in ascending order
-        for(i = 0; i < daemonCount; i++)
-        {
- 
-            DJManageDaemon(daemonList[i].primaryName,
-                             bStart,
-                             firstStart + daemonList[i].startPriority,
-                             firstStop +
-                                 stopLaterOffset * daemonList[i].stopPriority,
-                             &innerExc);
+        // Set registry value for gpagentd to autostart.
+        dwError = SetBooleanRegistryValue("Services\\gpagent", "Autostart", TRUE);
 
-            //Try the alternate daemon name if there is one
-            for(j = 0; !LW_IS_OK(innerExc) &&
-                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                    daemonList[i].alternativeNames[j] != NULL; j++)
-            {
-                LW_HANDLE(&innerExc);
-                DJManageDaemon(daemonList[i].alternativeNames[j],
-                                 bStart,
-                                 firstStart + daemonList[i].startPriority,
-                                 firstStop + stopLaterOffset *
-                                     daemonList[i].stopPriority,
-                                 &innerExc);
-                if (!LW_IS_OK(innerExc) &&
-                        innerExc->code == ERROR_SERVICE_NOT_FOUND)
-                {
-                    LW_HANDLE(&innerExc);
-                }
-                else
-                    break;
-            }
-            if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                    !daemonList[i].required)
-            {
-                LW_HANDLE(&innerExc);
-            }
-            LW_CLEANUP(exc, innerExc);
-        }
+        // Trigger gpagentd start
+        dwError = DJStartService("gpagent");
+
 
         // Make sure lsass is responding
         bLsassContacted = FALSE;
@@ -426,44 +383,9 @@ DJManageDaemons(
     }
     else
     {
-        //Stop the daemons in descending order
-        for(i = daemonCount - 1; i >= 0; i--)
-        {
-            DJManageDaemon(daemonList[i].primaryName,
-                             bStart,
-                             firstStart + daemonList[i].startPriority,
-                             firstStop +
-                                 stopLaterOffset * daemonList[i].stopPriority,
-                             &innerExc);
+        dwError = SetBooleanRegistryValue("Services\\gpagent", "Autostart", FALSE);
 
-            //Try the alternate daemon name if there is one
-            for(j = 0; !LW_IS_OK(innerExc) &&
-                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                    daemonList[i].alternativeNames[j] != NULL; j++)
-            {
-                LW_HANDLE(&innerExc);
-                DJManageDaemon(daemonList[i].alternativeNames[j],
-                                 bStart,
-                                 firstStart + daemonList[i].startPriority,
-                                 firstStop + stopLaterOffset *
-                                     daemonList[i].stopPriority,
-                                 &innerExc);
-                if (!LW_IS_OK(innerExc) &&
-                        innerExc->code == ERROR_SERVICE_NOT_FOUND)
-                {
-                    LW_HANDLE(&innerExc);
-                }
-                else
-                    break;
-            }
-            if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                    !daemonList[i].required)
-            {
-                LW_HANDLE(&innerExc);
-            }
-            LW_CLEANUP(exc, innerExc);
-        }
+        dwError = DJStopService("gpagent");
     }
 
 cleanup:

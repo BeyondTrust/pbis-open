@@ -43,6 +43,8 @@ libdomainjoin_la_LIBADD = \
 	$(LSASS_LDFLAGS) \
 	$(LSASS_LIBS) \
         -llwsm \
+    $(LWADVAPI_LDFLAGS) \
+    $(LWADVAPI_LIBS) \
         $(LIB_XNET)
 
 include_HEADERS = \
@@ -57,6 +59,7 @@ libdomainjoin_la_SOURCES = \
        src/djlogger.c     \
        src/djdistroinfo.c \
        src/djstr.c    \
+       src/djregistry.c \
        src/djroutines.c   \
        src/djprocutils.c  \
        src/djmodule.c \
@@ -75,7 +78,8 @@ libdomainjoin_la_SOURCES += \
        src/aix/djaixparser.c \
        src/mac/djconfig_mac.c \
        src/djsshconf.c    \
-       src/djddns.c
+       src/djddns.c \
+       src/djservicemgr.c
 
 if BUILD_MACCODE
 EXTRA_libdomainjoin_la_SOURCES = src/djdaemonmgr_nonmac.c

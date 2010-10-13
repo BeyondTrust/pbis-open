@@ -35,6 +35,7 @@
 #include "djauthconf.h"
 #include "djauthinfo.h"
 #include "djkrb5conf.h"
+#include "djregistry.h"
 #include "ctshell.h"
 #include "ctstrutils.h"
 #include <glob.h>
@@ -44,7 +45,6 @@
 #include <lsa/ad.h>
 #include <lwnet.h>
 #include <eventlog.h>
-#include <reg/lwreg.h>
 
 #define DOMAINJOIN_EVENT_CATEGORY   "Domain join"
 
@@ -205,211 +205,6 @@ cleanup:
 
 static
 DWORD
-DeletePolicyTreeFromRegistry()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    HANDLE hReg = (HANDLE)NULL;
-    HKEY pRootKey = NULL;
-
-    ceError = RegOpenServer(&hReg);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    ceError = RegOpenKeyExA(
-                hReg,
-                NULL,
-                HKEY_THIS_MACHINE,
-                0,
-                KEY_ALL_ACCESS,
-                &pRootKey);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to open registry root key %s",HKEY_THIS_MACHINE);
-        goto error;
-    }
-
-    ceError = RegDeleteTreeA(
-                hReg,
-                pRootKey,
-                "Policy");
-    if (ceError)
-    {
-        //Donot log if ceError is about the key which is not present
-        ceError = ERROR_SUCCESS;
-    }
-
-cleanup:
-
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
-
-    RegCloseServer(hReg);
-    hReg = NULL;
-
-    return(ceError);
-error:
-    goto cleanup;
-
-}
-
-static
-DWORD
-SetBoolRegistryValue(
-    PCSTR path,
-    PCSTR name,
-    BOOL  value
-    )
-{
-    DWORD ceError = ERROR_SUCCESS;
-    HANDLE hReg = (HANDLE)NULL;
-    HKEY pRootKey = NULL;
-    HKEY pNodeKey = NULL;
-    DWORD dwValue = 0;
-
-    if (value)
-    {
-        dwValue = 1;
-    }
-
-    ceError = RegOpenServer(&hReg);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    ceError = RegOpenKeyExA(
-                hReg,
-                NULL,
-                HKEY_THIS_MACHINE,
-                0,
-                KEY_ALL_ACCESS,
-                &pRootKey);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to open registry root key %s",HKEY_THIS_MACHINE);
-        goto error;
-    }
-
-    ceError = RegOpenKeyExA(
-                hReg,
-                pRootKey,
-                path,
-                0,
-                KEY_ALL_ACCESS,
-                &pNodeKey);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to open registry key %s\\%s",HKEY_THIS_MACHINE, path);
-        goto error;
-    }
-
-    ceError = RegSetValueExA(
-                hReg,
-                pNodeKey,
-                name,
-                0,
-                REG_DWORD,
-                (const BYTE*) &dwValue,
-                sizeof(dwValue));
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to set registry value %s with value %d", name, value ? 1 : 0);
-        goto error;
-    }
-
-cleanup:
-
-    RegCloseKey(hReg, pNodeKey);
-    pNodeKey = NULL;
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
-
-    RegCloseServer(hReg);
-    hReg = NULL;
-
-    return(ceError);
-
-error:
-    goto cleanup;
-}
-
-static
-DWORD
-SetStringRegistryValue(
-    PCSTR path,
-    PCSTR name,
-    PSTR  value
-    )
-{
-    DWORD ceError = ERROR_SUCCESS;
-    HANDLE hReg = (HANDLE)NULL;
-    HKEY pRootKey = NULL;
-    HKEY pNodeKey = NULL;
-    char szEmpty[2] = "";
-
-    if (!value)
-    {
-        value = szEmpty;
-    }
-
-    ceError = RegOpenServer(&hReg);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    ceError = RegOpenKeyExA(
-                hReg,
-                NULL,
-                HKEY_THIS_MACHINE,
-                0,
-                KEY_ALL_ACCESS,
-                &pRootKey);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to open registry root key %s",HKEY_THIS_MACHINE);
-        goto error;
-    }
-
-    ceError = RegOpenKeyExA(
-                hReg,
-                pRootKey,
-                path,
-                0,
-                KEY_ALL_ACCESS,
-                &pNodeKey);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to open registry key %s\\%s",HKEY_THIS_MACHINE, path);
-        goto error;
-    }
-
-    ceError = RegSetValueExA(
-                hReg,
-                pNodeKey,
-                name,
-                0,
-                REG_SZ,
-                value,
-                (DWORD) strlen(value)+1);
-    if (ceError)
-    {
-        DJ_LOG_ERROR( "Failed to set registry value %s with value %s", name, value);
-        goto error;
-    }
-
-
-cleanup:
-
-    RegCloseKey(hReg, pNodeKey);
-    pNodeKey = NULL;
-    RegCloseKey(hReg, pRootKey);
-    pRootKey = NULL;
-
-    RegCloseServer(hReg);
-    hReg = NULL;
-
-    return(ceError);
-
-error:
-    goto cleanup;
-}
-
-static
-DWORD
 RemoveCacheFiles()
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -501,7 +296,7 @@ RemoveCacheFiles()
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
-    ceError = DeletePolicyTreeFromRegistry();
+    ceError = DeleteTreeFromRegistry("Policy");
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     /* /etc/krb5.conf */
@@ -917,7 +712,7 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
         pszCanonicalizedOU = NULL;
     }
 
-    LW_TRY(exc, SetLsassTimeSync("", !options->disableTimeSync, &LW_EXC));
+    LW_TRY(exc, SetLsassTimeSync(!options->disableTimeSync, &LW_EXC));
 
     LW_TRY(exc, DJCreateComputerAccount(&options->shortDomainName, options, &LW_EXC));
 
@@ -1250,7 +1045,7 @@ void DJCreateComputerAccount(
         dnsDomain = hostFqdn + strlen(shortHostname) + 1;
     }
 
-    dwError = SetBoolRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+    dwError = SetBooleanRegistryValue("Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
                                    "AssumeDefaultDomain",
                                    options->assumeDefaultDomain);
     if (dwError)
@@ -1770,40 +1565,14 @@ error:
     return;
 }
 
-void SetLsassTimeSync(PCSTR rootPrefix, BOOLEAN sync, LWException **exc)
+void SetLsassTimeSync(BOOLEAN sync, LWException **exc)
 {
-    DWORD dwSync = sync;
-    HANDLE hReg = (HANDLE)NULL;
-    HKEY pAdKey = NULL;
-    HANDLE lsa = NULL;
-
-    LW_CLEANUP_LSERR(exc, RegOpenServer(&hReg));
-    LW_CLEANUP_LSERR(exc, RegOpenKeyExA(
-                hReg,
-                NULL,
-                HKEY_THIS_MACHINE "\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
-                0,
-                KEY_ALL_ACCESS,
-                &pAdKey));
-
-    LW_CLEANUP_LSERR(exc, RegSetValueExA(
-                hReg,
-                pAdKey,
-                "SyncSystemTime",
-                0,
-                REG_DWORD,
-                (BYTE*)&dwSync,
-                sizeof(dwSync)));
-
-    LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
-    LW_CLEANUP_LSERR(exc, LsaRefreshConfiguration(lsa));
-
+    LW_CLEANUP_LSERR(
+        exc,
+        SetBooleanRegistryValue(
+            "Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+            "SyncSystemTime",
+            sync));
 cleanup:
-    if (lsa)
-    {
-        LsaCloseServer(lsa);
-    }
-    RegCloseKey(hReg, pAdKey);
-    RegCloseServer(hReg);
     return;
 }

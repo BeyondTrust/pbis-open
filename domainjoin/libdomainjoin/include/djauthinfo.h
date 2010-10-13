@@ -152,6 +152,8 @@ DJLogDomainLeaveFailedEvent(
     LWException *exc
     );
 
-void SetLsassTimeSync(PCSTR rootPrefix, BOOLEAN sync, LWException **exc);
+void SetLsassTimeSync(
+    BOOLEAN sync,
+    LWException **exc);
 
 #endif /* __DJ_AUTHINFO_H__ */
