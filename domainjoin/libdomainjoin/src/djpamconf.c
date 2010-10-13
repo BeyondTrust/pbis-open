@@ -2589,7 +2589,9 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         if(line != -1)
         {
             char buffer[256] = "";
-            if(!state->sawNonDomainUserSufficientCheck &&
+            NormalizeModuleName( buffer, module, sizeof(buffer));
+
+            if( (!state->sawNonDomainUserSufficientCheck || !strcmp(service, "runuser")) &&
                     (!PamModuleGrants(phase, module) || PamModuleChecksCaller(phase, module)) &&
                     (!strcmp(control, "required") ||
                     !strcmp(control, "requisite")))
@@ -2607,7 +2609,6 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             }
             /*Insert our module before the line*/
             DJ_LOG_INFO("Inserting pam_lwidentity before %s", module);
-            NormalizeModuleName( buffer, module, sizeof(buffer));
             if(!strcmp(phase, "password") && !strcmp(buffer, "pam_aix"))
                 doingPasswdForAIX = TRUE;
             LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, NULL));
