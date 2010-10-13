@@ -109,9 +109,9 @@ AD_CreateEnumState(
     DWORD dwError = 0;
     PAD_ENUM_STATE pEnumState = NULL;
 
-    dwError = LwAllocateMemory(
-        sizeof(AD_ENUM_STATE),
-        (PVOID*)&pEnumState);
+    BAIL_ON_INVALID_POINTER(ppNewEnumState);
+
+    dwError = LwAllocateMemory(sizeof(AD_ENUM_STATE), (PVOID*)&pEnumState);
     BAIL_ON_LSA_ERROR(dwError);
 
     pEnumState->dwInfoLevel = dwInfoLevel;
@@ -128,10 +128,7 @@ AD_CreateEnumState(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (ppNewEnumState)
-    {
-       *ppNewEnumState = pEnumState;
-    }
+    *ppNewEnumState = pEnumState;
 
 cleanup:
 
