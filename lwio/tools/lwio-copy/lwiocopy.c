@@ -331,8 +331,14 @@ LwioCopyFileFromLocalToLocal(
 
 cleanup:
 
-    close(hSrcFile);
-    close(hDestFile);
+    if (hSrcFile >= 0)
+    {
+        close(hSrcFile);
+    }
+    if (hDestFile >= 0)
+    {
+        close(hDestFile);
+    }
 
     return (status);
 
