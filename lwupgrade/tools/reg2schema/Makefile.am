@@ -1,4 +1,5 @@
 bin_PROGRAMS = psupgrade
+bin_SCRIPTS = regupgr61.sh
 
 psupgrade_SOURCES = \
     psupgrade.c

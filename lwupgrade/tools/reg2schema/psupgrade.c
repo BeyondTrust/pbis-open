@@ -119,7 +119,7 @@ ParsePstoreSections(
                         strcat(pszNewHkey, "\\");
                         strcat(pszNewHkey, domainDnsName);
                         strcat(pszNewHkey, "\\Pstore");
-                        if (*pszStr == '\\')
+                        if (pszStr && *pszStr == '\\')
                         {
                             strcat(pszNewHkey, pszStr);
                         }
