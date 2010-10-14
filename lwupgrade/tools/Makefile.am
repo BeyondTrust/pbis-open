@@ -1,3 +1,3 @@
 SUBDIRS =    \
-    conf2reg
-
+    conf2reg \
+    reg2schema

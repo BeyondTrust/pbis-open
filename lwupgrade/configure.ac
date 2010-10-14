@@ -252,6 +252,7 @@ AC_CONFIG_FILES([Makefile
                  tools/conf2reg/agents/pstore-sqlite/Makefile
                  tools/conf2reg/agents/testparse/Makefile
                  tools/conf2reg/agents/testsambaparse/Makefile
+                 tools/reg2schema/Makefile
                  utils/Makefile])
 
 AC_OUTPUT

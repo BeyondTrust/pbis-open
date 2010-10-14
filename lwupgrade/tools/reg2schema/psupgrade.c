@@ -1,37 +1,70 @@
 /*
+ * Copyright (c) Likewise Software.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.  You should have received a copy of the GNU General
+ * Public License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/>.
+ *
+ * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
+ * TERMS AS WELL.  IF YOU HAVE ENTERED INTO A SEPARATE LICENSE AGREEMENT
+ * WITH LIKEWISE SOFTWARE, THEN YOU MAY ELECT TO USE THE SOFTWARE UNDER THE
+ * TERMS OF THAT SOFTWARE LICENSE AGREEMENT INSTEAD OF THE TERMS OF THE GNU
+ * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
+ * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
+ * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
+ * license@likewise.com
+ */
+
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name: psupgrade (pstore v6.0 -> 6.1+ registry upgrade program)
+ *
+ * Abstract:
  * Program to move Pstore registry entries from 6.0 Pstore\Default location
  * to per-domain location. 6.1 supports joining multiple domains, but
  * there is only one default domain in this upgrade scenario. Move Pstore
  * entries to a subkey under that domainname, and set domain Default entry.
+ * 
+ * Authors:
+ *     Adam Bernstein (abernstein@likewise.com)
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+
+#include "includes.h"
 
 
-int ParsePstoreSections(
+DWORD 
+ParsePstoreSections(
     FILE *fp,
-    char *domainDnsName)
+    PSTR domainDnsName)
 {
 
-    char buf[1024] = {0};
-    char *cp = NULL;
-    char *printBuf = NULL;
-    char *newHkey = NULL;
-    int len = 0;
-    int state = 0;
-    int bWroteDefaultDomain = 0;
+    CHAR cBuf[1024] = {0};
+    PSTR pszStr = NULL;
+    PSTR pszPrintBuf = NULL;
+    PSTR pszNewHkey = NULL;
+    DWORD dwLen = 0;
+    DWORD state = 0;
+    BOOLEAN bWroteDefaultDomain = FALSE;
 
     while (!feof(fp))
     {
-        cp = fgets(buf, sizeof(buf)-1, fp);
-        if (cp)
+        pszStr = fgets(cBuf, sizeof(cBuf)-1, fp);
+        if (pszStr)
         {
-            printBuf = buf;
+            pszPrintBuf = cBuf;
 
             /* Search for line: [HKEY_THIS_MACHINE.*Pstore.*] */
-            if (buf[0] == '[' && (cp = strstr(buf, "Pstore")))
+            if (cBuf[0] == '[' && (pszStr = strstr(cBuf, "Pstore")))
             {
                 state = 1;
 
@@ -39,7 +72,7 @@ int ParsePstoreSections(
                  * Ignore line: [HKEY_THIS_MACHINE\Services.*Pstore] 
                  * The location of the default values has not changed
                  */
-                if (cp[strlen("Pstore")] == ']')
+                if (pszStr[strlen("Pstore")] == ']')
                 {
                     state = 0;
                 }
@@ -59,104 +92,100 @@ int ParsePstoreSections(
                     * ActiveDirectory\DomainJoin\domainDnsName\Pstore\MachinePassword]
                     */
 
-                    len = strlen(buf) + sizeof("DomainJoin") + 
+                    dwLen = strlen(cBuf) + sizeof("DomainJoin") + 
                           sizeof("MachinePassword") + strlen(domainDnsName);
-                    newHkey = (char *) calloc(len, sizeof(char));
-                    if (newHkey)
+                    pszNewHkey = (char *) calloc(dwLen, sizeof(char));
+                    if (pszNewHkey)
                     {
-                        strcpy(newHkey, buf);
-                        cp = strstr(newHkey, "Pstore");
-                        *cp = '\0';
-                        cp = strstr(buf, "Default");
-                        if (cp)
+                        strcpy(pszNewHkey, cBuf);
+                        pszStr = strstr(pszNewHkey, "Pstore");
+                        *pszStr = '\0';
+                        pszStr = strstr(cBuf, "Default");
+                        if (pszStr)
                         {
-                            cp += strlen("Default");
+                            pszStr += strlen("Default");
                         }
-                        strcat(newHkey, "DomainJoin");
+                        strcat(pszNewHkey, "DomainJoin");
 
                         if (!bWroteDefaultDomain)
                         {
                             /* Emit subkey that contains default domain */
-                            printf("%s]\n", newHkey);
+                            printf("%s]\n", pszNewHkey);
                             printf("\"Default\"=\"%s\"\n\n", domainDnsName);
                             bWroteDefaultDomain = 1;
                         }
 
                         /* Subkeys that contain per-domain Pstore information */
-                        strcat(newHkey, "\\");
-                        strcat(newHkey, domainDnsName);
-                        strcat(newHkey, "\\Pstore");
-                        if (*cp == '\\')
+                        strcat(pszNewHkey, "\\");
+                        strcat(pszNewHkey, domainDnsName);
+                        strcat(pszNewHkey, "\\Pstore");
+                        if (*pszStr == '\\')
                         {
-                            strcat(newHkey, cp);
+                            strcat(pszNewHkey, pszStr);
                         }
                         else
                         {
-                            strcat(newHkey, "]\r\n");
+                            strcat(pszNewHkey, "]\r\n");
                         }
-                        printBuf = newHkey;
+                        pszPrintBuf = pszNewHkey;
                     }
                 }
             }
         
             if (state)
             {
-                printf("%s", printBuf);
-                if (buf[0] == '\r' || buf[0] == '\n')
+                printf("%s", pszPrintBuf);
+                if (cBuf[0] == '\r' || cBuf[0] == '\n')
                 {
                     printf("\n");
                     state = 0;
                 }
             }
         }
-        if (newHkey)
-        {
-            free(newHkey);
-            newHkey = NULL;
-        }
+        LW_SAFE_FREE_STRING(pszNewHkey);
     }
     return 0;
 }
 
 
 /*
- * Find "DomainDnsName" in current registry export. It is assumed this only occurs once and
- * under a Pstore subkey. This could break should this valueName be duplicated under another
- * subkey.
+ * Find "DomainDnsName" in current registry export. It is assumed this 
+ * only occurs once and under a Pstore subkey. This could break should 
+ * this valueName be duplicated under another subkey.
  */
-char *
+PSTR
 FindDomain(
     FILE *fp)
 {
-    char buf[1024] = {0};
-    char *cp = NULL;
-    char *retDomain = NULL;
+    CHAR cBuf[1024] = {0};
+    PSTR pszStr = NULL;
+    PSTR pszRetDomain = NULL;
 
     while (!feof(fp))
     {
-        cp = fgets(buf, sizeof(buf)-1, fp);
-        if (cp)
+        pszStr = fgets(cBuf, sizeof(cBuf)-1, fp);
+        if (pszStr)
         {
-            cp = strstr(buf, "DomainDnsName");
-            if (cp)
+            pszStr = strstr(cBuf, "DomainDnsName");
+            if (pszStr)
             {
-                cp = strchr(cp, '=');
-                if (cp)
+                pszStr = strchr(pszStr, '=');
+                if (pszStr)
                 {
-                    cp++;
-                    if (*cp == '"')
+                    pszStr++;
+                    if (*pszStr == '"')
                     {
-                        cp++;
-                        retDomain = strdup(cp);
-                        if (!retDomain)
+                        pszStr++;
+                        pszRetDomain = strdup(pszStr);
+                        if (!pszRetDomain)
                         {
                             return NULL;
                         }
-                        cp = retDomain;
-                        cp = strchr(cp, '"');
-                        if (cp)
+                        pszStr = pszRetDomain;
+                        pszStr = strchr(pszStr, '"');
+                        if (pszStr)
                         {
-                            *cp = '\0';
+                            *pszStr = '\0';
                             break;
                         }
                     }
@@ -164,14 +193,14 @@ FindDomain(
             }
         }
     }
-    return retDomain;
+    return pszRetDomain;
 }
 
 
 int main(int argc, char *argv[])
 {
     FILE *fp = NULL;
-    char *pszDomainDnsName = NULL;
+    PSTR pszDomainDnsName = NULL;
 
     if (argc == 1)
     {
@@ -193,7 +222,7 @@ int main(int argc, char *argv[])
     rewind(fp);
 
     ParsePstoreSections(fp, pszDomainDnsName);
-    free(pszDomainDnsName);
+    LW_SAFE_FREE_STRING(pszDomainDnsName);
     
     fclose(fp);
     return 0;
