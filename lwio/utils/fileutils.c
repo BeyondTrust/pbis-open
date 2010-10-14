@@ -680,51 +680,6 @@ error:
 }
 
 DWORD
-SMBGetSymlinkTarget(
-   PCSTR pszPath,
-   PSTR* ppszTargetPath
-   )
-{
-    DWORD dwError = 0;
-    CHAR szBuf[PATH_MAX+1];
-    PSTR pszTargetPath = NULL;
-
-    memset(szBuf, 0, sizeof(szBuf));
-
-    while (1) {
-
-       if (readlink(pszPath, szBuf, PATH_MAX) < 0) {
-          if (errno == EINTR)
-             continue;
-
-          dwError = errno;
-          BAIL_ON_LWIO_ERROR(dwError);
-       }
-
-       break;
-    }
-
-    dwError = SMBAllocateString(
-                    szBuf,
-                    &pszTargetPath);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    *ppszTargetPath = pszTargetPath;
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    *ppszTargetPath = NULL;
-
-    LWIO_SAFE_FREE_STRING(pszTargetPath);
-
-    goto cleanup;
-}
-
-DWORD
 SMBCreateSymlink(
    PCSTR pszOldPath,
    PCSTR pszNewPath

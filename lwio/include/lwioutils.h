@@ -994,12 +994,6 @@ SMBCopyFileWithOriginalPerms(
     );
 
 DWORD
-SMBGetSymlinkTarget(
-   PCSTR pszPath,
-   PSTR* ppszTargetPath
-   );
-
-DWORD
 SMBCreateSymlink(
    PCSTR pszOldPath,
    PCSTR pszNewPath
