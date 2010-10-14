@@ -1065,7 +1065,7 @@ RegShellUtilGetValues(
          * Don't care if this fails.
          * Manually added new values don't have attributes to back them.
          */
-        if (pCurrentValue)
+        if (pCurrentValue || dwDataLen)
         {
             pValueArray[indx].bValueSet = TRUE;
         }
