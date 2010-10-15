@@ -49,6 +49,7 @@ NetExecFileEnum(
     PFILE_INFO_3 pFileCursor = NULL;
     PSTR  pszPathname       = NULL;
     PSTR  pszUsername       = NULL;
+    BOOLEAN bContinue       = TRUE;
 
     do
     {
@@ -58,6 +59,7 @@ NetExecFileEnum(
             pBuffer = NULL;
         }
 
+        bContinue = FALSE;
         nStatus = NetFileEnumW(
                         pwszServername,
                         pwszBasepath,
@@ -68,6 +70,11 @@ NetExecFileEnum(
                         &dwEntriesRead,
                         &dwTotalEntries,
                         &dwResumeHandle);
+
+        if (nStatus == ERROR_MORE_DATA)
+        {
+            bContinue = TRUE;
+        }
         switch (nStatus)
         {
             case ERROR_SUCCESS:
@@ -119,7 +126,7 @@ NetExecFileEnum(
                 break;
         }
 
-    } while (nStatus == ERROR_MORE_DATA);
+    } while (bContinue);
 
     if (!iFileCursor)
     {
