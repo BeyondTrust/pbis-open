@@ -67,6 +67,7 @@ NetExecSessionEnum(
     PSTR  pszSessionname    = NULL;
     PSTR  pszUsername       = NULL;
     PSTR  pszClientType     = NULL;
+    BOOLEAN bContinue       = FALSE;
 
     do
     {
@@ -76,6 +77,7 @@ NetExecSessionEnum(
             pBuffer = NULL;
         }
 
+        bContinue = FALSE;
         nStatus = NetSessionEnumW(
                         pwszServername,
                         pwszClientname,
@@ -86,6 +88,11 @@ NetExecSessionEnum(
                         &dwEntriesRead,
                         &dwTotalEntries,
                         &dwResumeHandle);
+
+        if (nStatus == ERROR_MORE_DATA)
+        {
+            bContinue = TRUE;
+        }
         switch (nStatus)
         {
             case ERROR_SUCCESS:
@@ -157,7 +164,7 @@ NetExecSessionEnum(
                 break;
         }
 
-    } while (nStatus == ERROR_MORE_DATA);
+    } while (bContinue);
 
     if (!iSessionCursor)
     {
