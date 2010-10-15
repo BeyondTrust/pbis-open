@@ -1067,15 +1067,14 @@ SqliteDeleteValue(
 
     REG_LOG_VERBOSE("Registry::sqldb.c SqliteDeleteValue() finished\n");
 
+    // To persist the locking order. On success reset key value info
+    LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
+
+    SqliteCacheResetKeyValueInfo(pKeyCtx->pwszKeyName);
+
 cleanup:
     LEAVE_SQLITE_LOCK(&pConn->lock, bInLock);
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
-
-    // To persist the locking order. On success reset key value info
-    if (!status)
-    {
-        SqliteCacheResetKeyValueInfo(pKeyCtx->pwszKeyName);
-    }
 
     return status;
 
