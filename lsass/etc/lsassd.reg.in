@@ -30,7 +30,7 @@
 "EnableEventlog" = {
     default = dword:00000000
     doc = "Configure lsass to log events to the event log"
-    range_type = boolean
+    range = boolean
 }
 "LogLevel" = {
     default = "error"
@@ -79,7 +79,7 @@
 "DisplayMotd" = {
     default = dword:00000000
     doc = "Display message of the day"
-    range_type = boolean
+    range = boolean
 }
 "UserNotAllowedError" = {
     default = "Access denied"
@@ -128,7 +128,7 @@
 "LdapSignAndSeal" = {
     default = dword:00000000
     doc = "Whether all LDAP traffic should be sent both signed and sealed"
-    range_type = boolean
+    range = boolean
 }
 "CacheEntryExpiry" = {
     default = dword:00003840
