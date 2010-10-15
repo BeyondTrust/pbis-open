@@ -303,6 +303,7 @@ LwioSrvSetDefaults(
     struct rlimit rlim = {0};
     int err = 0;
     LWIO_CONFIG defaultConfig;
+    rlim_t maxOpenFileDescriptors = 0;
 
     gpServerInfo->maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR;
 
@@ -318,8 +319,20 @@ LwioSrvSetDefaults(
     ntStatus = LwioSrvInitializeConfig(&defaultConfig);
     BAIL_ON_NT_STATUS(ntStatus);    
 
-    rlim.rlim_cur = pConfig->MaxOpenFileDescriptors;
-    rlim.rlim_max = pConfig->MaxOpenFileDescriptors;
+    if (pConfig->MaxOpenFileDescriptors > 0)
+    {
+            maxOpenFileDescriptors = pConfig->MaxOpenFileDescriptors;
+            LWIO_LOG_VERBOSE("Setting maxOpenFileDescriptors to %d\n",
+                maxOpenFileDescriptors);
+    }
+    else
+    {
+            maxOpenFileDescriptors = RLIM_INFINITY;
+            LWIO_LOG_VERBOSE("Setting maxOpenFileDescriptors to unlimited\n");
+    }
+
+    rlim.rlim_cur = maxOpenFileDescriptors;
+    rlim.rlim_max = maxOpenFileDescriptors;
 
     if (setrlimit(RLIMIT_NOFILE, &rlim) < 0)
     {

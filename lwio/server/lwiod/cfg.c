@@ -131,7 +131,7 @@ LwioSrvReadRegistry(
         pReg,
         "MaxOpenFileDescriptors",
         TRUE,
-        1,
+        0,
         0xFFFFFFFF,
         &pConfig->MaxOpenFileDescriptors);
 
