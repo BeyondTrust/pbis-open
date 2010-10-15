@@ -16,14 +16,6 @@ if [ ! -x $PSTORE_UPGRADE ]; then
   exit 1
 fi
 
-# Shutdown everything, then bring up just lwregd for upgrade
-# Temporary until this is integrated into the install script
-# ==========================================================
-$LWSM stop lwreg
-$LWSM start lwreg
-# ==========================================================
-
-
 # Export the existing registry, in legacy format
 $LWREGSHELL export --legacy $tmpreg
 if [ ! -s $tmpreg ]; then
@@ -34,7 +26,7 @@ fi
 $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
 if [ ! -s ${tmpreg}.out ]; then
   rm -f $tmpreg
-  $LWSM start lsass
+  $LWSM stop lwreg
   exit 0
 fi
 
@@ -45,11 +37,6 @@ rm -f ${tmpreg}.out
 # Clear out old pstore entries
 $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
 
-
 # Remove values with identical default attributes from registry
 # 
-
-# Restart lsassd
-# ==========================================================
-$LWSM start lsass
 rm -f $tmpreg

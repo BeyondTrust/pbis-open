@@ -1107,6 +1107,31 @@ restore_5_0123_configuration()
     import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR5}/pstore.db"
 }
 
+
+fix_60_registry()
+{
+    REGIMPORT="`get_prefix_dir`/bin/lwregshell cleanup"
+
+    # Migrate pstore entries from default to joined domain
+    ${PREFIX}/bin/regupgr61.sh
+
+    for regfile in ${REGFILES}
+    do
+        FILEPATH="`get_prefix_dir`/share/config/${regfile}"
+        if [ -f ${FILEPATH} ]
+        then
+            ${REGIMPORT} ${FILEPATH} > /dev/null 2>&1
+            exitcode=$?
+
+            if [ $exitcode -ne '0' ]
+            then
+                echo "There was an error importing ${FILEPATH} into the registry."
+            fi
+        fi
+    done
+}
+
+
 fix_old_registry()
 {
     DomainSeparator=`${PREFIX}/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
@@ -1134,7 +1159,7 @@ fix_5_4_configuration()
 
 import_registry()
 {
-    REGIMPORT="`get_prefix_dir`/bin/lwregshell upgrade"
+    REGIMPORT="`get_prefix_dir`/bin/lwregshell import"
 
     for regfile in ${REGFILES}
     do
@@ -1280,6 +1305,9 @@ do_postinstall()
     fix_5_4_configuration
 
     fix_old_registry
+
+    # Migrate 6.0 legacy registry to 6.1 registry schema
+    fix_60_registry
 
     # Stop service manager for registry import *** WILL RESTART NORMALLY
     stop_daemon lwsmd
