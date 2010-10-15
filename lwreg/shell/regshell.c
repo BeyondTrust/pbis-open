@@ -830,8 +830,7 @@ RegShellProcessCmd(
                 pszFullKeyName = RegShellGetDefaultKey(pParseState);
                 if (pszRootKeyName)
                 {
-                    printf("\n[%s%s%s%s%s]\n",
-                        pszRootKeyName ? pszRootKeyName : "",
+                    printf("\n[%s%s%s%s]\n",
                         pszFullKeyName ? "\\" : "",
                         pszFullKeyName ?  pszFullKeyName : "",
                         rsItem->keyName ? "\\" : "",
