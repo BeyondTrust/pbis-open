@@ -190,6 +190,10 @@ ProcessImportedValue(
     PBYTE pData = NULL;
     DWORD cbData = 0;
     DWORD dwDataType = 0;
+    DWORD dwValueLen = 0;
+    DWORD dwCompValueLen = 0;
+    PVOID pValue = NULL;
+    PVOID pCompValue = NULL;
     BOOLEAN bSetValue = TRUE;
     PWSTR pwszValueName = NULL;
     REG_PARSE_ITEM regItem = {0};
@@ -198,7 +202,7 @@ ProcessImportedValue(
     NTSTATUS ntStatus = 0;
     BOOLEAN bIsValidSecDesc = FALSE;
     SECURITY_INFORMATION SecInfo = 0;
-
+    PLWREG_CURRENT_VALUEINFO pCurrentValue = NULL;
 
     BAIL_ON_INVALID_HANDLE(hReg);
 
@@ -313,6 +317,89 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
         }
         else if (pItem->type == REG_ATTRIBUTES)
         {
+            if (eMode == REGSHELL_UTIL_IMPORT_CLEANUP)
+            {
+                /*
+                 * Get value, and if it exists, check if it is the same
+                 * as the default. If so, delete this entry.
+                 */
+                dwError = RegGetValueA(
+                              hReg,
+                              hKey,
+                              NULL,
+                              pItem->valueName,
+                              0,
+                              &dwDataType,
+                              NULL,
+                              &dwValueLen);
+                if (dwError == 0)
+                {
+                    dwError = RegAllocateMemory(dwValueLen, (PVOID*)&pValue);
+                    BAIL_ON_REG_ERROR(dwError);
+                    dwError = RegGetValueA(
+                                  hReg,
+                                  hKey,
+                                  NULL,
+                                  pItem->valueName,
+                                  0,
+                                  &dwDataType,
+                                  pValue,
+                                  &dwValueLen);
+                    if (dwDataType == REG_MULTI_SZ)
+                    {
+                        dwError = RegConvertByteStreamW2A(
+                            (PBYTE) pItem->regAttr.pDefaultValue,
+                            pItem->regAttr.DefaultValueLen,
+                            (PBYTE *) &pCompValue,
+                            &dwCompValueLen);
+                            BAIL_ON_REG_ERROR(dwError);
+                    }
+                    else if (dwDataType == REG_SZ) 
+                    {
+                        dwCompValueLen = pItem->regAttr.DefaultValueLen + 1;
+                        pCompValue = pItem->regAttr.pDefaultValue;
+                    }
+                    else
+                    {
+                        dwCompValueLen = pItem->regAttr.DefaultValueLen;
+                        pCompValue = pItem->regAttr.pDefaultValue;
+                    }
+                                      
+                    dwError = RegWC16StringAllocateFromCString(
+                                  &pwszValueName,
+                                  pItem->valueName);
+                    BAIL_ON_REG_ERROR(dwError);
+
+                    RegSafeFreeCurrentValueInfo(&pCurrentValue);
+                    dwError = LwRegGetValueAttributesW(
+                                  hReg,
+                                  hKey,
+                                  NULL,
+                                  pwszValueName,
+                                  &pCurrentValue,
+                                  NULL);
+
+                    if (dwDataType == pItem->regAttr.ValueType &&
+                        pItem->regAttr.pDefaultValue &&
+                        dwValueLen == dwCompValueLen &&
+                        pCurrentValue &&
+                        !memcmp(pValue, pCompValue, dwCompValueLen))
+                    {
+#if 0
+                        printf("%s\n  %s   ---> default match!\n",
+                               pItem->keyName, pItem->valueName);
+#endif
+                        /* Delete this value, as it matches the default */
+                        dwError = RegDeleteKeyValueA(
+                                      hReg,
+                                      hKey,
+                                      NULL,
+                                      pItem->valueName);
+                        BAIL_ON_REG_ERROR(dwError);
+                    }
+                }
+            }
+
             if (pItem->value)
             {
                 /* Handle data value (non-attribute data) */
@@ -426,6 +513,7 @@ cleanup:
     LWREG_SAFE_FREE_STRING(pszKeyName);
     LWREG_SAFE_FREE_MEMORY(pData);
     LWREG_SAFE_FREE_MEMORY(pwszValueName);
+    RegSafeFreeCurrentValueInfo(&pCurrentValue);
 
     if (hSubKey)
     {

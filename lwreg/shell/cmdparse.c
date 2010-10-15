@@ -175,6 +175,7 @@ static REGSHELL_CMD_ID shellCmds[] = {
     { "import", REGSHELL_CMD_IMPORT           },
     { "export", REGSHELL_CMD_EXPORT           },
     { "upgrade", REGSHELL_CMD_UPGRADE         },
+    { "cleanup", REGSHELL_CMD_CLEANUP         },
 };
 
 
@@ -1268,6 +1269,7 @@ RegShellCmdParse(
 
         case REGSHELL_CMD_IMPORT:
         case REGSHELL_CMD_UPGRADE:
+        case REGSHELL_CMD_CLEANUP:
         case REGSHELL_CMD_SET_HIVE:
             if (argc != 3)
             {
@@ -1564,7 +1566,9 @@ RegShellCmdlineParseToArgv(
                     dwArgc = 2;
                     state = REGSHELL_CMDLINE_STATE_IMPORT;
                 }
-                else if (cmdEnum == REGSHELL_CMD_IMPORT)
+                else if (cmdEnum == REGSHELL_CMD_IMPORT ||
+                         cmdEnum == REGSHELL_CMD_UPGRADE ||
+                         cmdEnum == REGSHELL_CMD_CLEANUP)
                 {
                     dwAllocSize = 4;
                     dwArgc = 2;
@@ -1575,12 +1579,6 @@ RegShellCmdlineParseToArgv(
                     dwAllocSize = 4;
                     dwArgc = 2;
                     state = REGSHELL_CMDLINE_STATE_ADDVALUE;
-                }
-                else if (cmdEnum == REGSHELL_CMD_UPGRADE)
-                {
-                    dwAllocSize = 4;
-                    dwArgc = 2;
-                    state = REGSHELL_CMDLINE_STATE_IMPORT;
                 }
                 else
                 {
@@ -2184,6 +2182,7 @@ RegShellUsage(
         "       import file.reg | -\n"
         "       export [[keyName]] file.reg | - \n"
         "       upgrade file.reg | -\n"
+        "       cleanup file.reg | -\n"
         "       exit | quit | ^D\n"
         "       history\n"
         "\n"

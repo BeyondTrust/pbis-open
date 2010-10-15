@@ -1100,6 +1100,14 @@ RegShellProcessCmd(
                 BAIL_ON_REG_ERROR(dwError);
                 break;
 
+            case REGSHELL_CMD_CLEANUP:
+                dwError = RegShellImportFile(
+                              pParseState->hReg,
+                              rsItem,
+                              REGSHELL_UTIL_IMPORT_CLEANUP);
+                BAIL_ON_REG_ERROR(dwError);
+                break;
+
             case REGSHELL_CMD_EXPORT:
                 dwError = RegShellExportFile(pParseState->hReg, rsItem);
                 BAIL_ON_REG_ERROR(dwError);
