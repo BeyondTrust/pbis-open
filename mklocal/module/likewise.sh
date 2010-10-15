@@ -11,6 +11,13 @@ option()
     [ "${MK_DATADIR}" = "/usr/share" ] && _default_configdir="${MK_DATADIR}/likewise/config"
 
     mk_option \
+        OPTION=lw-tool-dir \
+        PARAM="name" \
+        VAR=LW_TOOL_DIRNAME \
+        DEFAULT="tools" \
+        HELP="Subdirectory of build root where developer tools are placed"
+
+    mk_option \
         OPTION=lw-cachedir \
         PARAM="path" \
         VAR=LW_CACHEDIR \
@@ -29,8 +36,10 @@ configure()
 {
     mk_msg "cache dir: $LW_CACHEDIR"
     mk_msg "config dir: $LW_CONFIGDIR"
+    mk_msg "developer tool dir: $LW_TOOL_DIRNAME"
 
     mk_export LW_CACHEDIR LW_CONFIGDIR
+    mk_export LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
 }
 
 lw_define_feature_macros()

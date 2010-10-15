@@ -1,13 +1,12 @@
 make()
 {
-    TEST_LOAD_SOURCES="main.c"
+    TEST_PVFS_SOURCES="main.c"
 
     mk_program \
-        PROGRAM=test_load \
+        PROGRAM=test_pvfs \
         INSTALLDIR="$LW_TOOL_DIR" \
-        SOURCES="$TEST_LOAD_SOURCES" \
+        SOURCES="$TEST_PVFS_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h" \
         LIBDEPS="lwioclient"
 }
-

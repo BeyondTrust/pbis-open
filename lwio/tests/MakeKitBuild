@@ -1,3 +1,4 @@
-SUBDIRS=" \
-    test_load     \
-"
+SUBDIRS="\
+    test_load \
+    test_pvfs"
+
