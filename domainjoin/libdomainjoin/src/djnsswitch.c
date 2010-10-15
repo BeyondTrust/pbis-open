@@ -154,7 +154,7 @@ static DWORD AddFormattedLine(NsswitchConf *conf, const char *filename, const ch
     /* Create an array of the modules for this entry */
     while(strchr("\r\n;#", *pos) == NULL)
     {
-        GCE(ceError = CTReadToken(&pos, &token, "=: \t", ";#\r\n", ""));
+        GCE(ceError = CTReadToken(&pos, &token, ", \t", ";#\r\n", ""));
         GCE(ceError = CTArrayAppend(&lineObj.modules, sizeof(CTParseToken), &token, 1));
         memset(&token, 0, sizeof(token));
     }
