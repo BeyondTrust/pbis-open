@@ -49,7 +49,9 @@
 #define IsValidStatusForIrpType(Status, IrpType) \
     (NT_PENDING_OR_SUCCESS_OR_NOT(Status) || \
      ((IRP_TYPE_READ_DIRECTORY_CHANGE == (IrpType)) && \
-      (STATUS_NOTIFY_ENUM_DIR == (Status))))
+      (STATUS_NOTIFY_ENUM_DIR == (Status))) || \
+     ((IRP_TYPE_DEVICE_IO_CONTROL == (IrpType)) && \
+      (STATUS_MORE_ENTRIES == (Status))))
 
 typedef struct _IOP_ROOT_STATE {
     // Must point to global memory.
