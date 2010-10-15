@@ -379,7 +379,6 @@ LwpsDeleteDomainInAllStores(
     BAIL_ON_LWPS_ERROR(dwError);
 
     BAIL_ON_INVALID_POINTER(pProviderStack);
-    BAIL_ON_INVALID_POINTER(pszDomainName);
 
     dwError = LwpsStackForeach(
 	          pProviderStack,

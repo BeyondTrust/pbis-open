@@ -660,7 +660,6 @@ LwpsDeleteDomainInStore(
     PCSTR pszDomainName = (PCSTR)pData;
 
     BAIL_ON_INVALID_POINTER(pProvider);
-    BAIL_ON_INVALID_POINTER(pszDomainName);
 
     dwError = LwpsInitProvider(
                   LWPS_CONFIG_PATH,

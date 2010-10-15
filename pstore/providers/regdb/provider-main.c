@@ -454,7 +454,6 @@ RegDB_ReadPasswordByDomainName(
 {
     DWORD dwError = 0;
     PLWPS_PASSWORD_INFO pInfo = NULL;
-    PWSTR pwszDomainName = NULL;
 
     dwError = RegDB_ReadPassword(
                   hProvider,
@@ -462,24 +461,9 @@ RegDB_ReadPasswordByDomainName(
                   &pInfo);
     BAIL_ON_LWPS_ERROR(dwError);
 
-    dwError = LwpsMbsToWc16s(
-                  pszDomainName,
-                  &pwszDomainName);
-    BAIL_ON_LWPS_ERROR(dwError);
-
-    wc16supper(pwszDomainName);
-
-    if (wc16scmp(pwszDomainName, pInfo->pwszDomainName) &&
-        wc16scmp(pwszDomainName, pInfo->pwszDnsDomainName))
-    {
-        dwError = LWPS_ERROR_INVALID_ACCOUNT;
-        BAIL_ON_LWPS_ERROR(dwError);
-    }
-
     *ppInfo = pInfo;
                 
 cleanup:
-    LWPS_SAFE_FREE_MEMORY(pwszDomainName);
 
     return dwError;
 
