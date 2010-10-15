@@ -34,7 +34,8 @@ fi
 $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
 if [ ! -s ${tmpreg}.out ]; then
   rm -f $tmpreg
-  exit 1
+  $LWSM start lsass
+  exit 0
 fi
 
 # Import renamed pstore entries
@@ -51,3 +52,4 @@ $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\
 # Restart lsassd
 # ==========================================================
 $LWSM start lsass
+rm -f $tmpreg
