@@ -862,6 +862,7 @@ RegShellCmdParseValueName(
                       cmd,
                       argv[2],
                       &pCmdItem);
+        BAIL_ON_REG_ERROR(dwError);
         argIndx = 3;
     }
     else
@@ -869,7 +870,9 @@ RegShellCmdParseValueName(
         dwError = RegShellCmdParseCommand(
                       cmd,
                       &pCmdItem);
+        BAIL_ON_REG_ERROR(dwError);
     }
+    BAIL_ON_INVALID_POINTER(pCmdItem);
 
     pszValue = argv[argIndx++];
 
@@ -887,14 +890,11 @@ RegShellCmdParseValueName(
     }
     else
     {
-        if (pCmdItem)
+        pszKeyName = pCmdItem->keyName;
+        if (pszKeyName && pszKeyName[0] == '\\')
         {
-            pszKeyName = pCmdItem->keyName;
-            if (pszKeyName && pszKeyName[0] == '\\')
-            {
-                pszKeyName++;
-                bFullPath = TRUE;
-            }
+            pszKeyName++;
+            bFullPath = TRUE;
         }
 
         dwError = RegShellUtilGetValue(
