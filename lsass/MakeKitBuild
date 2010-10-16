@@ -6,18 +6,34 @@ configure()
 
     lw_define_feature_macros
 
-    case "$MK_OS:$MK_ISA" in
-        linux:*)
-            mk_define __LWI_LINUX__
-	    mk_define _GNU_SOURCE
-	    mk_export PAMDIR="/lib/security"
-	    mk_export NSSDIR="/lib"
-            mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
-            ;;
-        freebsd:*)
-            mk_define __LWI_FREEBSD__
-	    mk_export PAMDIR="/lib/security"
-	    mk_export NSSDIR="/lib"
+    # Declare which variable vary by system (ISA)
+    mk_declare_system_var MOD_EXT
+    mk_declare_system_var PAMDIR
+    mk_declare_system_var NSSDIR
+
+    # Do defines/exports of system-dependent variables
+    mk_multiarch_do
+        case "$MK_OS:$MK_ISA" in
+            linux:*)
+                mk_define __LWI_LINUX__
+	        mk_define _GNU_SOURCE
+	        PAMDIR="/${MK_LIBDIR##*/}/security"
+	        NSSDIR="/${MK_LIBDIR##*/}"
+
+                ;;
+            freebsd:*)
+                mk_define __LWI_FREEBSD__
+	        PAMDIR="/${MK_LIBDIR##*/}/security"
+	        NSSDIR="/${MK_LIBDIR##*/}"
+                ;;
+        esac
+
+        mk_export MOD_EXT="$MK_DLO_EXT"
+        mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_multiarch_done
+
+    case "$MK_OS" in
+        linux|freebsd)
             mk_export ENABLE_NSS_ENUM_DEFAULT_DWORD="00000000"
             ;;
     esac
@@ -25,7 +41,6 @@ configure()
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     mk_export providerdir="$MK_LIBDIR"
     mk_export rpcserverdir="$MK_LIBDIR"
-    mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export default_homedir_prefix="/home"
     mk_export default_skeldirs="/etc/skel"
     mk_export SBINDIR="$MK_SBINDIR"
@@ -34,7 +49,7 @@ configure()
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
-    mk_define LIBDIR "\"$MK_LIBDIR\""
+
     # FIXME
     mk_define COMPONENT_VERSION "\"5.0.0.0\""
     mk_define __LW_MOTD_FILE__ "\"/etc/motd\""

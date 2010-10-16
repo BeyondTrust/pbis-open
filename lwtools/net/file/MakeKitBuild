@@ -1,7 +1,7 @@
 make()
 {
     mk_group \
-	GROUP=file.og \
+	GROUP=file \
 	SOURCES="libmain.c netfile.c" \
 	INCLUDEDIRS="../include ../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h lw/lm.h lwio/lwio.h lwio/lmfile.h lsa/lsa.h" \

@@ -76,7 +76,7 @@ make()
         dcethread_frame_pop.c"
 
     mk_group \
-        GROUP="dcethread.og" \
+        GROUP="dcethread" \
         SOURCES="$COMMON_FILES" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="$LIB_PTHREAD $LIB_RT" \

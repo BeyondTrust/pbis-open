@@ -6,12 +6,14 @@ make()
 	nss-netgrp.c \
 	globals.c"
 
-    mk_dlo \
-	DLO=libnss_lsass \
-        EXT=".so.2" \
-	SOURCES="$NSS_SOURCES" \
-	GROUPS="../common/common.og" \
-	INSTALLDIR="$NSSDIR" \
-	INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
-	HEADERDEPS="lwadvapi.h"
+    mk_multiarch_do
+        mk_dlo \
+	    DLO=libnss_lsass \
+            EXT=".so.2" \
+	    SOURCES="$NSS_SOURCES" \
+	    GROUPS="../common/common" \
+	    INSTALLDIR="$NSSDIR" \
+	    INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
+	    HEADERDEPS="lwadvapi.h"
+    mk_multiarch_done
 }

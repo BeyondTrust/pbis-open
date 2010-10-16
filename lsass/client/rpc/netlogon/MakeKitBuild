@@ -28,7 +28,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=netlogon_cstub.og \
+	GROUP=netlogon_cstub \
 	SOURCES="netlogon_cstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -36,9 +36,9 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_group \
-	GROUP=netlogon.og \
+	GROUP=netlogon \
 	SOURCES="$NETLOGON_SOURCES" \
-	GROUPDEPS="netlogon_cstub.og" \
+	GROUPDEPS="netlogon_cstub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h openssl/rand.h" \

@@ -33,7 +33,7 @@ make()
     mk_library \
 	LIB=lsaserverapi \
 	SOURCES="$API_SOURCES" \
-	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal.og" \
+	GROUPS="../../interop/lwmapsecurity/lwmapsecurity_internal" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../../include" \
 	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h dce/rpc.h" \

@@ -52,7 +52,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=samr_cstub.og \
+	GROUP=samr_cstub \
 	SOURCES="samr_cstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -60,9 +60,9 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_group \
-	GROUP=samr.og \
+	GROUP=samr \
 	SOURCES="$SAMR_SOURCES" \
-	GROUPDEPS="samr_cstub.og" \
+	GROUPDEPS="samr_cstub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \

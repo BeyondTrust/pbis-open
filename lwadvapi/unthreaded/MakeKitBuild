@@ -2,14 +2,16 @@ SUBDIRS='error lwunistr memory file dscache time logging'
 
 make()
 {
-    mk_library \
-        LIB="lwadvapi_nothr" \
-        GROUPS="\
-            error/error.og \
-            file/file.og \
-            dscache/dscache.og \
-            memory/memory.og \
-            lwunistr/lwunistr.og \
-            time/time.og \
-            logging/logging.og"
+	mk_multiarch_do
+            mk_library \
+                LIB="lwadvapi_nothr" \
+                GROUPS="\
+                    error/error \
+                    file/file \
+                    dscache/dscache \
+                    memory/memory \
+                    lwunistr/lwunistr \
+                    time/time \
+                    logging/logging"
+	mk_multiarch_done
 }

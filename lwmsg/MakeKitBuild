@@ -28,26 +28,23 @@ configure()
 
     mk_export LWMSG_CPPFLAGS LWMSG_CFLAGS LWMSG_LDFLAGS
 
-    for _isa in ${MK_HOST_ISAS}
-    do
-        mk_system "host/$_isa"
-
-        mk_check_headers \
-            string.h \
-            strings.h \
-            sys/types.h \
-            sys/socket.h \
-            sys/varargs.h \
-            sys/select.h
+    mk_check_headers \
+        string.h \
+        strings.h \
+        sys/types.h \
+        sys/socket.h \
+        sys/varargs.h \
+        sys/select.h
         
-        mk_check_libraries FAIL=yes \
-            lwbase
+    mk_check_libraries FAIL=yes \
+        lwbase lwbase_nothr
         
-        mk_check_libraries \
-            pthread rt dl xnet
+    mk_check_libraries \
+        pthread rt dl xnet
 
 	lw_check_iconv
 
+    mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
-    done
+    mk_multiarch_done
 }

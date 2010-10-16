@@ -1,7 +1,7 @@
 make()
 {
     mk_group \
-	GROUP=logging_r.og \
+	GROUP=logging_r \
 	SOURCES="globals.c logging.c tracing.c" \
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS="../include" \

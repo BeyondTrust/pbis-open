@@ -40,6 +40,8 @@ configure()
 
     mk_export LW_CACHEDIR LW_CONFIGDIR
     mk_export LW_TOOL_DIR="@$LW_TOOL_DIRNAME"
+
+    mk_add_scrub_target "$LW_TOOL_DIR"
 }
 
 lw_define_feature_macros()
@@ -63,17 +65,17 @@ lw_check_iconv()
     mk_check_library LIB=iconv
 
     if [ "$HAVE_LIB_ICONV" = "internal" ] || mk_check_function \
-        PROTOTYPE='size_t iconv (iconv_t, const char **, size_t *, char **, size_t*)' \
-        HEADERDEPS="iconv.h stddef.h" \
-        LIBDEPS="$LIB_ICONV"
-    then
-        mk_define ICONV_IN_TYPE 'const char**'
-    elif mk_check_function \
         PROTOTYPE='size_t iconv (iconv_t, char **, size_t *, char **, size_t*)' \
         HEADERDEPS="iconv.h stddef.h" \
         LIBDEPS="$_lib_iconv"
     then
         mk_define ICONV_IN_TYPE 'char**'
+    elif mk_check_function \
+        PROTOTYPE='size_t iconv (iconv_t, const char **, size_t *, char **, size_t*)' \
+        HEADERDEPS="iconv.h stddef.h" \
+        LIBDEPS="$LIB_ICONV"
+    then
+        mk_define ICONV_IN_TYPE 'const char**'
     else
         mk_fail "could not find usable iconv() function"
     fi

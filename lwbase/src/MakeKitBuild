@@ -32,10 +32,7 @@ make()
 
     BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
        
-    for _isa in ${MK_HOST_ISAS}
-    do
-        mk_system "host/$_isa"
-
+    mk_multiarch_do
         if [ "$HAVE_EPOLL_CREATE" = yes -a "$HAVE_PTHREAD_SETAFFINITY_NP" = yes ]
         then
             THREADPOOL_SOURCES="threadpool-epoll.c"
@@ -60,5 +57,5 @@ make()
             INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
             HEADERDEPS="$BASE_HEADER_DEPS" \
             LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL"
-    done
+    mk_multiarch_done
 }

@@ -19,7 +19,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=wkssvc_cstub.og \
+	GROUP=wkssvc_cstub \
 	SOURCES="wkssvc_cstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -27,9 +27,9 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_group \
-	GROUP=wkssvc.og \
+	GROUP=wkssvc \
 	SOURCES="$WKSSVC_SOURCES" \
-	GROUPDEPS="wkssvc_cstub.og" \
+	GROUPDEPS="wkssvc_cstub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \

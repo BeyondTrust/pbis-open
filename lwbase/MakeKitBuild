@@ -14,102 +14,97 @@ configure()
 
     # lwbase libraries are built in compat mode as well, so we
     # need to peform configure checks for all instruction set
-    # architectures
-    for _isa in ${MK_HOST_ISAS}
-    do
-        mk_system "host/$_isa"
-
-        mk_msg "configuring for system: $MK_SYSTEM"
-
-        case "$_isa" in
+    # architectures where the result could vary between them
+    mk_multiarch_do
+    	case "${MK_ISA}" in
             x86_32)
-                mk_msg "atomic ops: x86"
+                mk_msg "atomic ops: x86 ($MK_CANONICAL_SYSTEM)"
                 mk_define LWBASE_ATOMIC_X86 1
                 ;;
             x86_64)
-                mk_msg "atomic ops: x86_64"
+                mk_msg "atomic ops: x86_64 ($MK_CANONICAL_SYSTEM)"
                 mk_define LWBASE_ATOMIC_X86_64 1
                 ;;
             *)
-                mk_msg "atomic ops: pthread mutex"
+                mk_msg "atomic ops: pthread mutex ($MK_CANONICAL_SYSTEM)"
                 mk_define LWBASE_ATOMIC_LOCK 1
                 ;;
         esac
 
         mk_define MOD_EXT "\"$MK_DLO_EXT\""
         mk_define LIBDIR "\"$MK_LIBDIR\""
+    mk_multiarch_done
 
-        mk_check_libraries \
-            xnet \
-            dl
-        
-        lw_check_iconv
-        
+    mk_check_libraries \
+        xnet \
+        dl
+    
+    lw_check_iconv
+    
         # Necessary headers
-        mk_check_headers \
-            FAIL=yes \
-            pthread.h \
-            dlfcn.h \
-            inttypes.h \
-            uuid/uuid.h \
-            wctype.h
+    mk_check_headers \
+        FAIL=yes \
+        pthread.h \
+        dlfcn.h \
+        inttypes.h \
+        uuid/uuid.h \
+        wctype.h
     
         # Optional headers
-        mk_check_headers \
-            sys/varargs.h \
-            sys/param.h \
-            unistd.h \
-            strings.h \
-            pthread_np.h \
+    mk_check_headers \
+        sys/varargs.h \
+        sys/param.h \
+        unistd.h \
+        strings.h \
+        pthread_np.h \
         
-        mk_check_headers \
-            HEADERDEPS="sys/param.h" \
-            sys/cpuset.h
+    mk_check_headers \
+        HEADERDEPS="sys/param.h" \
+        sys/cpuset.h
 
-        mk_check_types \
-            HEADERDEPS="sys/param.h sys/cpuset.h pthread.h" \
-            cpu_set_t cpuset_t
+    mk_check_types \
+        HEADERDEPS="sys/param.h sys/cpuset.h pthread.h" \
+        cpu_set_t cpuset_t
 
-        if [ "$HAVE_CPU_SET_T" = yes ]
-        then
-            mk_define CPU_SET_TYPE "cpu_set_t"
-        elif [ "$HAVE_CPUSET_T" = yes ]
-        then
-            mk_define CPU_SET_TYPE "cpuset_t"
-        fi
+    if [ "$HAVE_CPU_SET_T" = yes ]
+    then
+        mk_define CPU_SET_TYPE "cpu_set_t"
+    elif [ "$HAVE_CPUSET_T" = yes ]
+    then
+        mk_define CPU_SET_TYPE "cpuset_t"
+    fi
 
         # Necessary libraries \
-        mk_check_libraries \
-            FAIL=yes \
-            uuid
-        
+    mk_check_libraries \
+        FAIL=yes \
+        uuid
+    
         # Optional libraries
-        mk_check_libraries \
-            pthread \
-            dl
+    mk_check_libraries \
+        pthread \
+        dl
 
-        mk_check_functions \
-            HEADERDEPS="pthread.h pthread_np.h wchar.h" \
-            LIBDEPS="$LIB_PTHREAD" \
-            CPPFLAGS="-D_GNU_SOURCE" \
-            pthread_setaffinity_np pthread_attr_setaffinity_np wcscasecmp
+    mk_check_functions \
+        HEADERDEPS="pthread.h pthread_np.h wchar.h" \
+        LIBDEPS="$LIB_PTHREAD" \
+        CPPFLAGS="-D_GNU_SOURCE" \
+        pthread_setaffinity_np pthread_attr_setaffinity_np wcscasecmp
 
-        mk_check_functions \
-            HEADERDEPS="sys/epoll.h" \
-            epoll_create
+    mk_check_functions \
+        HEADERDEPS="sys/epoll.h" \
+        epoll_create
 
-        mk_check_functions \
-            HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
-            kqueue
+    mk_check_functions \
+        HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
+        kqueue
 
-        if [ "$HAVE_EPOLL_CREATE" = "yes" ]
-        then
-            mk_msg "threadpool backend: epoll"
-        elif [ "$HAVE_KQUEUE" = "yes" ]
-        then
-            mk_msg "threadpool backend: kqueue"
-        else
-            mk_msg "threadpool backend: select"
-        fi
-    done
+    if [ "$HAVE_EPOLL_CREATE" = "yes" ]
+    then
+        mk_msg "threadpool backend: epoll"
+    elif [ "$HAVE_KQUEUE" = "yes" ]
+    then
+        mk_msg "threadpool backend: kqueue"
+    else
+        mk_msg "threadpool backend: select"
+    fi
 }

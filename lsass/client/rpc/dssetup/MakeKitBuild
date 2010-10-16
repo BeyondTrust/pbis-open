@@ -15,7 +15,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=dssetup_cstub.og \
+	GROUP=dssetup_cstub \
 	SOURCES="dssetup_cstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -23,9 +23,9 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_group \
-	GROUP=dssetup.og \
+	GROUP=dssetup \
 	SOURCES="$DSSETUP_SOURCES" \
-	GROUPDEPS="dssetup_cstub.og" \
+	GROUPDEPS="dssetup_cstub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \

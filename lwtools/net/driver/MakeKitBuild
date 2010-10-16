@@ -3,7 +3,7 @@ make()
     mk_program \
 	PROGRAM=lwnet \
 	SOURCES="main.c" \
-	GROUPS="../common/common.og ../file/file.og ../session/session.og ../share/share.og" \
+	GROUPS="../common/common ../file/file ../session/session ../share/share" \
 	INCLUDEDIRS="../include ../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h" \
 	LIBDEPS="lwnetapi lwadvapi"

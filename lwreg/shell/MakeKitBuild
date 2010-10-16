@@ -3,7 +3,7 @@ make()
     mk_program \
         PROGRAM=lwregshell \
         SOURCES="cmdparse.c regshell.c import.c export.c" \
-        GROUPS="../parse/regparse.og" \
+        GROUPS="../parse/regparse" \
         INCLUDEDIRS=". ../include ../shellutil" \
         LIBDEPS="regclient rsutils edit" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h histedit.h"

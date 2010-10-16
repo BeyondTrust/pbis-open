@@ -8,6 +8,6 @@ make()
         SOURCES="$TEST_LOAD_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h" \
-        LIBDEPS="lwioclient"
+        LIBDEPS="lwioclient lwbase lwbase_nothr $LIB_PTHREAD"
 }
 

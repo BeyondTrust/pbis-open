@@ -10,7 +10,7 @@ make()
         PROGRAM="lwregd" \
         INSTALLDIR="${MK_SBINDIR}" \
         SOURCES="$LWREGD_SOURCES" \
-        GROUPS="../api/regserverapi.og ../../logging_r/reglog_r.og" \
+        GROUPS="../api/regserverapi ../../logging_r/reglog_r" \
         CPPFLAGS="-DPREFIXDIR=\"${MK_PREFIX}\"" \
         INCLUDEDIRS="../../include ../include" \
         HEADERDEPS="lw/base.h lwmsg/lwmsg.h" \

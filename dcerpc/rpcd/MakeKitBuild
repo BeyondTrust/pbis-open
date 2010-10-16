@@ -28,7 +28,7 @@ make()
         INSTALLDIR="${MK_SBINDIR}" \
         CPPFLAGS="$RPCD_CPPFLAGS" \
         INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
-        GROUPS="../uuid/uuid.og" \
+        GROUPS="../uuid/uuid" \
         DEPS="dsm.h ep.h" \
         HEADERDEPS="$RPCD_HEADERDEPS" \
         LIBDEPS="dcerpc $LIB_PTHREAD"

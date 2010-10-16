@@ -12,7 +12,7 @@ make()
         sscmaset.c sscmasrv.c"
 
     mk_group \
-        GROUP="idl.og" \
+        GROUP="idl" \
         SOURCES="$LIBIDL_SOURCES" \
         CFLAGS="-Wall -Werror" \
         INCLUDEDIRS=". ../include ../ncklib" \

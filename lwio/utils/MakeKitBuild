@@ -28,7 +28,7 @@ make()
 	time.c"
 
     mk_group \
-        GROUP=utils.og \
+        GROUP=utils \
         SOURCES="$UTILS_SOURCES" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="reg/lwreg.h" \

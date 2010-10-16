@@ -7,10 +7,12 @@ make()
 	nss-group.c \
 	nss-netgrp.c"
 
-    mk_group \
-	GROUP=common.og \
-	SOURCES="$COMMON_SOURCES" \
-	INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
-	HEADERDEPS="lwadvapi.h" \
-	LIBDEPS="lsaclient lsaauth"
+    mk_multiarch_do
+        mk_group \
+	    GROUP=common \
+	    SOURCES="$COMMON_SOURCES" \
+	    INCLUDEDIRS=". ../include ../../../include ../../auth/include" \
+	    HEADERDEPS="lwadvapi.h" \
+	    LIBDEPS="lsaclient lsaauth"
+    mk_multiarch_done
 }

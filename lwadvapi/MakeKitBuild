@@ -60,6 +60,6 @@ make()
 {
     mk_library \
         LIB=lwadvapi \
-        GROUPS="threaded/threaded.og" \
+        GROUPS="threaded/threaded" \
         LIBDEPS="lwadvapi_nothr"
 }

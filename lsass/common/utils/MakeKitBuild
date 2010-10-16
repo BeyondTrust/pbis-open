@@ -36,11 +36,13 @@ make()
        sid.c                   \
        lsasecobj.c"
 
-    mk_group \
-	GROUP=utils.og \
-	SOURCES="$LSAUTILS_SOURCES" \
-	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lwadvapi.h lw/base.h" \
-	LIBDEPS="lwbase_nothr lwadvapi_nothr"	
+    mk_multiarch_do
+        mk_group \
+	    GROUP=utils \
+	    SOURCES="$LSAUTILS_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwadvapi.h lw/base.h" \
+	    LIBDEPS="lwbase_nothr lwadvapi_nothr"
+    mk_multiarch_done
 }
 

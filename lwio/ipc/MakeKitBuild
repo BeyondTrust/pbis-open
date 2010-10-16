@@ -1,7 +1,7 @@
 make()
 {
     mk_group \
-        GROUP="ipc.og" \
+        GROUP="ipc" \
         SOURCES="globals.c libmain.c ntipc.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="lwmsg/lwmsg.h" \

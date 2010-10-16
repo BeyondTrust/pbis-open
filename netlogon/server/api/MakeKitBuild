@@ -13,7 +13,7 @@ make()
        state.c"
 
     mk_group \
-        GROUP=api.og \
+        GROUP=api \
         SOURCES="$API_SOURCES" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h lwmsg/lwmsg.h lwadvapi.h lwps/lwps.h" \

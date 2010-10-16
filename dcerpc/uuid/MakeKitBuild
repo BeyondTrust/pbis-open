@@ -1,7 +1,7 @@
 make()
 {
     mk_group \
-        GROUP="uuid.og" \
+        GROUP="uuid" \
         SOURCES="uuid.c uuidsys.c get_802_addr.c" \
         INCLUDEDIRS=". ../include" \
         CPPFLAGS="-D_POSIX_C_SOURCE" \
@@ -16,5 +16,5 @@ make()
         CPPFLAGS="-D_POSIX_C_SOURCE" \
         CFLAGS="-Wall -Werror" \
         HEADERDEPS="dce/rpc.h" \
-        GROUPS="uuid.og"
+        GROUPS="uuid"
 }

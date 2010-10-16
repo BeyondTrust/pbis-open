@@ -7,7 +7,7 @@ make()
         regparse.c"
 
     mk_group \
-        GROUP=regparse.og \
+        GROUP=regparse \
         SOURCES="$PARSE_SOURCES" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="regcommon lwbase lwbase_nothr" \

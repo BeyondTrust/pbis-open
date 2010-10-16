@@ -9,6 +9,6 @@ make()
         LIB=lwnetclientapi \
         SOURCES="$CLIENT_SOURCES" \
         INCLUDEDIRS=". ../include" \
-        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
         LIBDEPS="lwnetcommon"
 }

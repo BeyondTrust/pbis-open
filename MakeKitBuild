@@ -137,9 +137,9 @@ lw_openssl()
     mk_push_vars SOURCEDIR LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS suffix stamp item
     mk_parse_params
 
-    suffix="${MK_SYSTEM%/*}_${MK_SYSTEM#*/}"
+    suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
 
-    mk_comment "OpenSSL ($MK_SYSTEM)"
+    mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
 
     BUILDDIR="${SOURCEDIR}_${suffix}"
     mk_resolve_target "$BUILDDIR"
@@ -204,7 +204,7 @@ copy_openssl()
 
     MK_MSG_DOMAIN="copy"
 
-    mk_msg "openssl ($MK_SYSTEM)"
+    mk_msg "openssl ($MK_CANONICAL_SYSTEM)"
 
     mk_safe_rm "$1"
     mk_run_or_fail cp -r "$2" "$1"
@@ -220,7 +220,7 @@ configure_openssl()
 
     MK_MSG_DOMAIN="configure"
 
-    case "${MK_OS}-${MK_SYSTEM#*/}" in
+    case "${MK_OS}-${MK_CANONICAL_SYSTEM#*/}" in
         *)
             host_string=""
             ;;
@@ -250,7 +250,7 @@ configure_openssl()
     mk_cd_or_fail "${old_pwd}"
     mk_run_or_fail touch "$1"
 
-    mk_msg "end openssl ($MK_SYSTEM)"
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
 }
 
 build_openssl()
@@ -265,7 +265,7 @@ build_openssl()
     
     mk_cd_or_fail "$2"
 
-    mk_msg "begin openssl ($MK_SYSTEM)"
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
 
     # OpenSSL does not cleanly build concurrently, so unset
     # environment variables that GNU make uses to pass
@@ -278,5 +278,5 @@ build_openssl()
     mk_cd_or_fail "$old_pwd"
     mk_run_or_fail touch "$1"
 
-    mk_msg "end openssl ($MK_SYSTEM)"
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
 }

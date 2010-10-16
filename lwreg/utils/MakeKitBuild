@@ -17,7 +17,7 @@ make()
         regdatatype.c"
 
     mk_group \
-        GROUP=regutils.og \
+        GROUP=regutils \
         SOURCES="$REGUTILS_SOURCES" \
         INCLUDEDIRS="../include" \
         LIBDEPS="lwbase" \

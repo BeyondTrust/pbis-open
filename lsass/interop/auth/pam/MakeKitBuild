@@ -11,11 +11,13 @@ make()
        pam-session.c   \
        pam-notify.c"
 
-    mk_dlo \
-	DLO=pam_lsass \
-	INSTALLDIR="$PAMDIR" \
-	SOURCES="$PAM_SOURCES" \
-	INCLUDEDIRS="../include ../../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
-	LIBDEPS="lsaauth pam"
+    mk_multiarch_do
+        mk_dlo \
+	    DLO=pam_lsass \
+	    INSTALLDIR="$PAMDIR" \
+	    SOURCES="$PAM_SOURCES" \
+	    INCLUDEDIRS="../include ../../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+	    LIBDEPS="lsaauth pam"
+    mk_multiarch_done
 }

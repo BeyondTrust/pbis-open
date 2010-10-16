@@ -8,10 +8,10 @@ make()
         regsecurity.c"
 
     mk_group \
-        GROUP="regserverapi.og" \
+        GROUP="regserverapi" \
         INCLUDEDIRS="../../include ../include" \
         SOURCES="$API_SOURCES" \
-        GROUPDEPS="../providers/sqlite/provider-sqlite.og" \
+        GROUPDEPS="../providers/sqlite/provider-sqlite" \
         LIBDEPS="regcommon uuid lwbase $LIB_PTHREAD" \
         HEADERDEPS="lw/base.h sqlite3.h lwmsg/lwmsg.h"
 }

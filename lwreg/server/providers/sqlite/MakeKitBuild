@@ -13,7 +13,7 @@ make()
         globals.c"   
 
     mk_group \
-        GROUP="provider-sqlite.og" \
+        GROUP="provider-sqlite" \
         SOURCES="$PROVIDER_SOURCES" \
         INCLUDEDIRS=". ../../include ../../../include" \
         LIBDEPS="sqlite3 uuid lwbase lwbase_nothr $LIB_PTHREAD" \

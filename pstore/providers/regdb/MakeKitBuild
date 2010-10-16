@@ -3,7 +3,7 @@ make()
     mk_dlo \
         DLO=liblwps-regdb \
         SOURCES="globals.c provider-main.c pstoresec.c" \
-        GROUPS="../../utils/lwps-utils.og" \
+        GROUPS="../../utils/lwps-utils" \
         INCLUDEDIRS=". ../../include" \
         LIBDEPS="$LIB_PTHREAD regclient lwmsg" \
         HEADERDEPS="reg/lwreg.h reg/regutil.h lw/base.h"

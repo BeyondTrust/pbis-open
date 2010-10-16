@@ -8,5 +8,5 @@ make()
         SOURCES="$TEST_PVFS_SOURCES" \
         INCLUDEDIRS=". ../../include" \
         HEADERDEPS="lw/base.h lw/rtlgoto.h lwio/lwio.h" \
-        LIBDEPS="lwioclient"
+        LIBDEPS="lwioclient lwbase lwbase_nothr lwiocommon"
 }

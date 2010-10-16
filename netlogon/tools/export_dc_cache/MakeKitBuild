@@ -4,7 +4,7 @@ make()
         PROGRAM=lwnet-export-dc-cache \
         SOURCES="main.c" \
         INCLUDEDIRS=". ../../include ../../server/include ../../server/api" \
-        GROUPS="../../utils/utils.og ../../server/api/api.og" \
+        GROUPS="../../utils/utils ../../server/api/api" \
         HEADERDEPS="reg/lwreg.h lwadvapi.h" \
         LIBDEPS="regclient ldap_r $LIB_RESOLV"
 }

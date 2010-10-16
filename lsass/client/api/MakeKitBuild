@@ -16,11 +16,13 @@ make()
 	marshal.c   \
 	api2.c"
 
-    mk_group \
-	GROUP="api.og" \
-	SOURCES="$API_SOURCES" \
-	INCLUDEDIRS="../../include" \
-	HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h lwhash.h" \
-	LIBDEPS="lwmsg_nothr lwadvapi_nothr lsacommon"
+    mk_multiarch_do
+        mk_group \
+	    GROUP="api" \
+	    SOURCES="$API_SOURCES" \
+	    INCLUDEDIRS="../../include" \
+	    HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h lwhash.h" \
+	    LIBDEPS="lwmsg_nothr lwadvapi_nothr lsacommon"
+    mk_multiarch_done
 }
 

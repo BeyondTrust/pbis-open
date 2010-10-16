@@ -10,7 +10,7 @@ make()
         PROGRAM="netlogond" \
         INSTALLDIR="${MK_SBINDIR}" \
         SOURCES="$NETLOGOND_SOURCES" \
-        GROUPS="../ipc/ipc.og ../api/api.og" \
+        GROUPS="../ipc/ipc ../api/api" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="lw/base.h lwadvapi.h" \
 	LIBDEPS="lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr"

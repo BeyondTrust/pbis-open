@@ -90,36 +90,36 @@ make()
     # Build core object groups
 
     mk_group \
-        GROUP="stubs.og" \
+        GROUP="stubs" \
         SOURCES="$STUB_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         HEADERDEPS="$NCK_HEADERDEPS"        
 
     mk_group \
-        GROUP="mgmt_stubs.og" \
+        GROUP="mgmt_stubs" \
         SOURCES="$MGMT_STUB_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         HEADERDEPS="$NCK_HEADERDEPS"        
 
     mk_group \
-        GROUP="com.og" \
+        GROUP="com" \
         SOURCES="$COM_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         CPPFLAGS="-DIMAGE_DIR=\"$MK_LIBDIR\"" \
         CFLAGS="$NCK_CFLAGS" \
-        GROUPDEPS="stubs.og" \
+        GROUPDEPS="stubs" \
         HEADERDEPS="$NCK_HEADERDEPS" \
         DEPS="ep.h pickle.h"
     
     mk_group \
-        GROUP="rpc.og" \
+        GROUP="rpc" \
         SOURCES="$RPC_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         CFLAGS="$NCK_CFLAGS" \
         HEADERDEPS="$NCK_HEADERDEPS"
 
     mk_group \
-        GROUP="trans.og" \
+        GROUP="trans" \
         SOURCES="$TRANS_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         CFLAGS="$NCK_CFLAGS" \
@@ -131,13 +131,13 @@ make()
     if [ "$ENABLE_NCACN" = "yes" ]
     then
         mk_group \
-            GROUP="prot_ncacn.og" \
+            GROUP="prot_ncacn" \
             SOURCES="$PROT_NCACN_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS"
         
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncacn.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncacn"
     fi
 
     if [ "$ENABLE_NCADG" = "yes" ]
@@ -158,20 +158,20 @@ make()
             IDLFLAGS="$NCK_IDLFLAGS -cepv"
 
         mk_group \
-            GROUP="prot_ncadg_stubs.og" \
+            GROUP="prot_ncadg_stubs" \
             SOURCES="$PROT_NCADG_STUB_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             HEADERDEPS="$NCK_HEADERDEPS"        
 
         mk_group \
-            GROUP="prot_ncadg.og" \
+            GROUP="prot_ncadg" \
             SOURCES="$PROT_NCADG_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS" \
-            GROUPDEPS="prot_ncadg_stubs.og"
+            GROUPDEPS="prot_ncadg_stubs"
         
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncadg.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS prot_ncadg"
     fi
 
     # Build optional address family support
@@ -179,37 +179,37 @@ make()
     if [ "$ENABLE_IP" = "yes" ]
     then
         mk_group \
-            GROUP="naf_ip.og" \
+            GROUP="naf_ip" \
             SOURCES="$NAF_IP_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS"
 
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_ip.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_ip"
     fi
 
     if [ "$ENABLE_NP" = "yes" ]
     then
         mk_group \
-            GROUP="naf_np.og" \
+            GROUP="naf_np" \
             SOURCES="$NAF_NP_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS"
 
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_np.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_np"
     fi
 
     if [ "$ENABLE_HTTP" = "yes" ]
     then
         mk_group \
-            GROUP="naf_http.og" \
+            GROUP="naf_http" \
             SOURCES="$NAF_HTTP_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS"
 
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_http.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS naf_http"
     fi
 
     # Build optional authentication support
@@ -217,35 +217,35 @@ make()
     if [ "$ENABLE_GSS" = "yes" ]
     then
         mk_group \
-            GROUP="auth_gss.og" \
+            GROUP="auth_gss" \
             SOURCES="$AUTH_GSS_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS gssapi.h" \
             LIBDEPS="gssapi_krb5"
 
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_gss.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_gss"
     fi
 
     if [ "$ENABLE_SCHANNEL" = "yes" ]
     then
         mk_group \
-            GROUP="auth_schannel.og" \
+            GROUP="auth_schannel" \
             SOURCES="$AUTH_SCHANNEL_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
             CFLAGS="$NCK_CFLAGS" \
             HEADERDEPS="$NCK_HEADERDEPS schannel.h" \
             LIBDEPS="schannel"
 
-        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_schannel.og"
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_schannel"
     fi
 
     mk_group \
-        GROUP="nck.og" \
+        GROUP="nck" \
         SOURCES="$NCK_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
         CFLAGS="$NCK_CFLAGS" \
         HEADERDEPS="$NCK_HEADERDEPS" \
-        GROUPDEPS="com.og rpc.og trans.og mgmt_stubs.og $NCK_EXTRA_GROUPS" \
+        GROUPDEPS="com rpc trans mgmt_stubs $NCK_EXTRA_GROUPS" \
         LIBDEPS="$LIB_SOCKET $LIB_NSL $LIB_DL"
 }

@@ -3,7 +3,7 @@ make()
     TEST_SOURCES="test-security.c test-atomic.c test-threadpool.c test-compare.c test-convert.c test-printf.c"
 
     mk_group \
-        GROUP="benchmark.og" \
+        GROUP="benchmark" \
         SOURCES="benchmark.c" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="lwbase lwbase_nothr"
@@ -11,7 +11,7 @@ make()
     mk_moonunit \
         DLO="lwbase_mu" \
         SOURCES="$TEST_SOURCES" \
-        GROUPS="benchmark.og" \
+        GROUPS="benchmark" \
         INCLUDEDIRS=". ../include"
 
     mk_program \
@@ -19,7 +19,7 @@ make()
         INSTALL=no \
         SOURCES="benchmark-main.c" \
         INCLUDEDIRS=". ../include" \
-        GROUPS="benchmark.og"
+        GROUPS="benchmark"
 
     mk_add_all_target "$result"
 }

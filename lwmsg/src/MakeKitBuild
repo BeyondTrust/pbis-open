@@ -43,10 +43,7 @@ make()
         peer-call.c \
         session-shared.c"
 
-    for _isa in ${MK_HOST_ISAS}
-    do
-        mk_system "host/$_isa"
-        
+    mk_multiarch_do
         mk_library \
             LIB=lwmsg_nothr \
             CPPFLAGS="$LWMSG_CPPFLAGS" \
@@ -56,15 +53,15 @@ make()
             INCLUDEDIRS="../include" \
             LIBDEPS="$LIB_ICONV $LIB_DL $LIB_XNET" \
             HEADERDEPS="$LWMSG_HEADER_DEPS"
-        
-        mk_library \
-            LIB=lwmsg \
-            CPPFLAGS="$LWMSG_CPPFLAGS" \
-            CFLAGS="$LWMSG_CFLAGS" \
-            LDFLAGS="$LWMSG_LDFLAGS" \
-            SOURCES="$LWMSG_SOURCES" \
-            INCLUDEDIRS="../include" \
-            LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
-            HEADERDEPS="$LWMSG_HEADER_DEPS"
-    done
+    mk_multiarch_done        
+
+    mk_library \
+        LIB=lwmsg \
+        CPPFLAGS="$LWMSG_CPPFLAGS" \
+        CFLAGS="$LWMSG_CFLAGS" \
+        LDFLAGS="$LWMSG_LDFLAGS" \
+        SOURCES="$LWMSG_SOURCES" \
+        INCLUDEDIRS="../include" \
+        LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
+        HEADERDEPS="$LWMSG_HEADER_DEPS"
 }

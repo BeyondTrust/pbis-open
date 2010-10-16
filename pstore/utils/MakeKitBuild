@@ -13,7 +13,7 @@ make()
        lwps-sysfuncs.c"
 
     mk_group \
-        GROUP="lwps-utils.og" \
+        GROUP="lwps-utils" \
         SOURCES="$UTIL_SOURCES" \
         INCLUDEDIRS=". ../include" \
         LIBDEPS="lwbase" \

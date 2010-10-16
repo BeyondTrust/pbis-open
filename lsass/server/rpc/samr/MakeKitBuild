@@ -62,7 +62,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=samr_stub.og \
+	GROUP=samr_stub \
 	SOURCES="samr_sstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -72,7 +72,7 @@ make()
     mk_dlo \
 	DLO=libsamr_srv \
 	SOURCES="$SAMR_SOURCES" \
-	GROUPS="samr_stub.og" \
+	GROUPS="samr_stub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwnet.h lwadvapi.h openssl/md4.h" \

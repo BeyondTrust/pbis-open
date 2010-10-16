@@ -22,6 +22,10 @@ configure()
    
     mk_output_file "etc/netlogond.reg"
 
+    mk_check_headers \
+        FAIL=yes \
+        reg/lwreg.h lwadvapi.h reg/regutil.h
+
     mk_check_libraries \
         FAIL=yes \
         rsutils regclient lwadvapi

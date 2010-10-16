@@ -23,7 +23,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=lsa_cstub.og \
+	GROUP=lsa_cstub \
 	SOURCES="lsa_cstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -31,9 +31,9 @@ make()
 	LIBDEPS="dcerpc"
 
     mk_group \
-	GROUP=lsa.og \
+	GROUP=lsa \
 	SOURCES="$LSA_SOURCES" \
-	GROUPDEPS="lsa_cstub.og" \
+	GROUPDEPS="lsa_cstub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \

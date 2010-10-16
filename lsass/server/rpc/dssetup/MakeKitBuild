@@ -20,7 +20,7 @@ make()
 	HEADERDEPS="lw/base.h"
 
     mk_group \
-	GROUP=dssetup_stub.og \
+	GROUP=dssetup_stub \
 	SOURCES="dssetup_sstub.c" \
 	CPPFLAGS="-DDCERPC_STUB_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
@@ -30,7 +30,7 @@ make()
     mk_dlo \
 	DLO=libdssetup_srv \
 	SOURCES="$DSSETUP_SOURCES" \
-	GROUPS="dssetup_stub.og" \
+	GROUPS="dssetup_stub" \
 	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h" \

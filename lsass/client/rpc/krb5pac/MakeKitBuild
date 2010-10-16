@@ -11,7 +11,7 @@ make()
 	INCLUDEDIRS=". ../../../include"
 
     mk_group \
-	GROUP=krb5pac.og \
+	GROUP=krb5pac \
 	SOURCES="$KRB5PAC_SOURCES" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h" \

@@ -5,7 +5,7 @@ make()
        logging.c"
 
     mk_group \
-        GROUP="lwps-logging.og" \
+        GROUP="lwps-logging" \
         SOURCES="$LOGGING_SOURCES" \
         INCLUDEDIRS=". ../include"
 }

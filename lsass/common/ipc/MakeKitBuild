@@ -2,7 +2,9 @@ SUBDIRS="api ad ntlm"
 
 make()
 {
-    mk_group \
-	GROUP=ipc.og \
-	GROUPDEPS="api/api.og ad/ad.og ntlm/ntlm.og"
+    mk_multiarch_do
+        mk_group \
+	    GROUP=ipc \
+	    GROUPDEPS="api/api ad/ad ntlm/ntlm"
+    mk_multiarch_done
 }

@@ -4,6 +4,6 @@ make()
 {
     mk_library \
 	LIB=lsarpc \
-	GROUPS="lsa/lsa.og samr/samr.og netlogon/netlogon.og \
-                dssetup/dssetup.og wkssvc/wkssvc.og krb5pac/krb5pac.og"
+	GROUPS="lsa/lsa samr/samr netlogon/netlogon \
+                dssetup/dssetup wkssvc/wkssvc krb5pac/krb5pac"
 }
