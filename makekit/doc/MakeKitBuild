@@ -16,8 +16,8 @@ make()
     [ -z "$XSLTPROC" ] && return 0
 
     DOCDIR="${MK_DATADIR}/doc/makekit"
-    MANDIR="${MK_DATADIR}/man/man3mk"
-    DEPS="*.xml chapter/*.xml appendix/*.xml"
+    MANDIR="${MK_DATADIR}/man"
+    DEPS="*.xml guide/*.xml reference/*.xml"
 
     # html
     mk_target \
@@ -39,12 +39,30 @@ make()
 
     # man
     mk_target \
-	TARGET="${MANDIR}" \
+	TARGET="man" \
 	DEPS="$DEPS man.xsl" \
 	process_xml '$@/' "&index.xml" "&man.xsl"
-    
-    mk_add_all_target "$result"
+    man_output="$result"
 
+    mk_expand_pathnames "reference/*.?mk.xml"
+    mk_unquote_list "$result"
+    
+    for i in "$@"
+    do
+        base="${i##*/}"
+        manfile="${base%.xml}"
+        section="${manfile##*.}"
+        section="${section%mk}"
+        
+        mk_target \
+            TARGET="man/$manfile" \
+            DEPS="$man_output"
+
+        mk_install_file \
+            FILE="man/$manfile" \
+            INSTALLFILE="$MANDIR/man${section}/${manfile}"
+    done
+    
     # pdf (needs Apache fop)
     #[ -z "$FOP" ] && return 0
 

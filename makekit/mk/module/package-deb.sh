@@ -20,6 +20,8 @@ configure()
         mk_msg "debian package building: disabled"
         mk_export MK_PACKAGE_DEB_ENABLED=no
     fi
+
+    mk_add_scrub_target "@package"
 }
 
 mk_deb_enabled()

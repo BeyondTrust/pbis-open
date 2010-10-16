@@ -28,7 +28,7 @@
 
 MK_MSG_DOMAIN="scrub"
 
-for _target in "${MK_STAGE_DIR}"
+for _target in "$@"
 do
     if [ -e "$_target" ]
     then

@@ -58,7 +58,7 @@ mk_run_quiet_or_fail()
     if [ "$?" -ne 0 ]
     then
         echo "$__log" >&2
-        mk_msg "$FAILED: $result"
+        mk_msg "FAILED: $result"
         exit 1
     fi
 }
@@ -420,6 +420,12 @@ mk_add_clean_target()
     MK_CLEAN_TARGETS="$MK_CLEAN_TARGETS $result"
 }
 
+mk_add_scrub_target()
+{
+    mk_quote "${1#@}"
+    MK_SCRUB_TARGETS="$MK_SCRUB_TARGETS $result"
+}
+
 mk_add_all_target()
 {
     mk_quote "$1"
@@ -440,7 +446,7 @@ mk_add_subdir_target()
 
 mk_check_cache()
 {
-    _mk_define_name "CACHED_$MK_SYSTEM"
+    _mk_define_name "CACHED_$MK_CANONICAL_SYSTEM"
     if mk_is_set "${1}__${result}"
     then
 	mk_get "${1}__${result}"
@@ -456,11 +462,24 @@ mk_check_cache()
 
 mk_cache()
 {
-    _mk_define_name "CACHED_$MK_SYSTEM"
-    MK_CACHE_VARS="$MK_CACHE_VARS ${1}__${result}"
-    mk_set "${1}__${result}" "$2"
-    mk_set "$1" "$2"
-    mk_declare_system_var "$1"
+	__systems=""
+	if [ "${MK_SYSTEM%/*}" = "$MK_SYSTEM" ]
+    then
+        for __isa in ${MK_ISAS}
+    	do
+    		 __systems="$MK_SYSTEM/$__isa"
+	    done
+	else
+        __systems="$MK_CANONICAL_SYSTEM"
+    fi      
+	for __system in ${__systems}
+	do
+        _mk_define_name "CACHED_$MK_CANONICAL_SYSTEM"
+        MK_CACHE_VARS="$MK_CACHE_VARS ${1}__${result}"
+        mk_set "${1}__${result}" "$2"
+        mk_declare_system_var "$1"
+        mk_set_system_var SYSTEM="$__system" "$1" "$2"
+	done        
 }
 
 _mk_save_cache()
@@ -500,6 +519,15 @@ option()
 
 configure()
 {
+    # Default clean targets
+    MK_CLEAN_TARGETS="${MK_RUN_DIR}"
+
+    # Default scrub targets
+    MK_SCRUB_TARGETS="${MK_STAGE_DIR}"
+
+    # Default nuke targets (scrub targets implicitly included)
+    MK_NUKE_TARGETS="${MK_OBJECT_DIR} ${MK_RUN_DIR} Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps"
+
     # Add a post-make() hook to write out a rule
     # to build all staging targets in that subdirectory
     mk_add_make_posthook _mk_core_write_subdir_rule
@@ -532,13 +560,13 @@ make()
     mk_target \
 	TARGET="@scrub" \
 	DEPS="@clean" \
-	mk_run_script scrub
+	mk_run_script scrub "*$MK_SCRUB_TARGETS"
 
     mk_add_phony_target "$result"
 
     mk_target \
 	TARGET="@nuke" \
-	mk_run_script nuke
+	mk_run_script nuke "*$MK_SCRUB_TARGETS" "*$MK_NUKE_TARGETS"
 
     mk_add_phony_target "$result"
 

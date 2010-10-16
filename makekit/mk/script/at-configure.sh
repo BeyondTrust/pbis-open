@@ -30,7 +30,7 @@ _stamp="$1"
 shift
 
 MK_MSG_DOMAIN="configure"
-__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_SYSTEM)"
+__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_CANONICAL_SYSTEM)"
 
 mk_msg "begin ${__msg#/}"
 

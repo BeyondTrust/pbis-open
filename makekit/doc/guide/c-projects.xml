@@ -11,7 +11,7 @@
   <section xml:id="c-programs">
     <title>Building Programs</title>
     <para>
-      Programs are built using the <function>mk_program</function> function, which requires
+      Programs are built using the <function><xref linkend="mk_program"/></function> function, which requires
       at a minimum a list of source files and a program name.  The program name is passed
       as the <parameter>PROGRAM</parameter> parameter, and the list of sources files is passed
       as the <parameter>SOURCES</parameter> parameter.  Consider <xref linkend="c-hello-world"/>
@@ -342,7 +342,7 @@ unsigned long factorial(unsigned long i)
 make()
 {
     mk_group \
-        GROUP=math.og \
+        GROUP=math \
         SOURCES="*.c" \
         INCLUDEDIRS="../include"
 }
@@ -381,7 +381,7 @@ unsigned void reverse_string(char* str)
 make()
 {
     mk_group \
-        GROUP=string.og \
+        GROUP=string \
         SOURCES="*.c" \
         INCLUDEDIRS="../include"
 }
@@ -421,7 +421,7 @@ make()
 {
     mk_library \
         LIB=example \
-        GROUPS="math/math.og string/string.og"
+        GROUPS="math/math string/string"
 
     mk_program \
         PROGRAM=hello \
@@ -439,10 +439,6 @@ make()
       <function>mk_library</function>; in fact, you can even use <parameter>GROUPS</parameter>
       to combine several object groups together into one.
     </para>
-    <note>
-      It is recommended that you name your object groups with the <filename>.og</filename>
-      extension as a convention, but any valid filename is permitted.
-    </note>
     <para>
       This particular example also demonstrates a useful shortcut enabled by keeping source
       files neatly separated into subdirectories: filename patterns.  The invocations of
@@ -453,10 +449,8 @@ make()
     </para>
     <important>
       Filename patterns only work against files that exist at the time that
-      <filename>configure</filename> is run.  For example, the top-level
-      <filename>MakeKitBuild</filename> in <xref linkend="c-object-group"/>
-      could not pick up all object groups using <literal>*/*.og</literal>.
-      With few exceptions, if you build it, you can't match it.
+      <filename>configure</filename> is run.  Files that are created by a
+      build rule will not be included.
     </important>
   </section>
 </chapter>

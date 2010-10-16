@@ -558,18 +558,18 @@ _basic_options()
 	HELP="Build tool install directory"
 	
     mk_option \
-	VAR=MK_HELP \
-	OPTION=help \
-	PARAM='yes|no' \
-	DEFAULT='no' \
-	HELP="Show this help"
-
-    mk_option \
         VAR=MK_SHOW_VARS \
         OPTION=show-vars \
         PARAM='yes|no' \
         DEFAULT='no' \
         HELP="Always show options as variable names in help output"
+
+    mk_option \
+	VAR=MK_HELP \
+	OPTION=help \
+	PARAM='yes|no' \
+	DEFAULT='no' \
+	HELP="Show this help"
 }
 
 _mk_sort_params()
@@ -646,8 +646,20 @@ _mk_emit_build_script()
 _mk_sort_params "$@"
 
 # Set up basic variables
+MK_MSG_DOMAIN="makekit"
 MK_ROOT_DIR="$PWD"
 _basic_options
+
+# Don't allow building in the source directory
+_canon_sourcedir="`cd "${MK_SOURCE_DIR}" && pwd`"
+_canon_rootdir="`cd "${MK_ROOT_DIR}" && pwd`"
+
+if [ "$_canon_sourcedir" = "$_canon_rootdir" ]
+then
+    mk_fail "please run configure from a separate directory"
+fi
+
+unset _canon_sourcedir _canon_rootdir
 
 MK_SEARCH_DIRS="${MK_HOME}"
 
@@ -696,7 +708,7 @@ _mk_emit_make_footer
 
 # Close and atomically replace Makefile
 exec 6>&-
-mv ".Makefile.new" "Makefile" || mk_fail "could not replace Makefile"
+mv -f ".Makefile.new" "Makefile" || mk_fail "could not replace Makefile"
 
 # Close log file
 exec 4>&-

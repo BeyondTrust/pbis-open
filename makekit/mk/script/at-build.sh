@@ -28,7 +28,7 @@
 
 MK_MSG_DOMAIN="build"
 
-__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_SYSTEM)"
+__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_CANONICAL_SYSTEM)"
 mk_msg "begin ${__msg#/}"
 
 _stamp="$1"

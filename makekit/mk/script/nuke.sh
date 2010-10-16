@@ -28,7 +28,7 @@
 
 MK_MSG_DOMAIN="nuke"
 
-for _target in "${MK_STAGE_DIR}" "${MK_OBJECT_DIR}" "${MK_RUN_DIR}" "Makefile" "config.log" ".MakeKit"*
+for _target in "$@"
 do
     if [ -e "$_target" ]
     then

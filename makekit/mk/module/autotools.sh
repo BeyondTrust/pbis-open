@@ -102,7 +102,7 @@ mk_autotools()
         fi
     done
 
-    _mk_slashless_name "${SOURCEDIR}/${MK_SYSTEM}"
+    _mk_slashless_name "${SOURCEDIR}/${MK_CANONICAL_SYSTEM}"
     BUILDDIR="$result"
 
     mk_resolve_target "$BUILDDIR"

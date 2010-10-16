@@ -13,7 +13,11 @@
   <xsl:param name="callout.graphics.extension" select="'.png'"/>
   <xsl:param name="generate.toc">
     book toc
+    reference toc
   </xsl:param>
+  <xsl:param name="toc.section.depth" select="1"/>
+  <xsl:param name="reference.autolabel">loweralpha</xsl:param>
+  <xsl:param name="refentry.xref.manvolnum" select="0"></xsl:param>
   <xsl:template name="generate.citerefentry.link">
     <xsl:value-of select="db:refentrytitle"/><xsl:text>.html</xsl:text>
   </xsl:template>

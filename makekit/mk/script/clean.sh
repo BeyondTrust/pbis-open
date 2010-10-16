@@ -33,7 +33,7 @@ do_clean()
     for _target in "$@"
     do
 	case "$_target" in
-	    "${subdir}"/*)
+	    "${subdir:+$subdir/}"*)
 		if [ -e "$_target" ]
 		then
 		    mk_msg "${_target#${MK_OBJECT_DIR}/}"
@@ -44,5 +44,5 @@ do_clean()
     done
 }
 
-subdir="${MK_OBJECT_DIR}${1:+/$1}"
+subdir="${1:+$MK_OBJECT_DIR/$1}"
 do_clean "$@"

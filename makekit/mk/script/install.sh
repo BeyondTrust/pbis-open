@@ -34,3 +34,7 @@ MK_MSG_DOMAIN="stage"
 mk_msg "${target#${MK_STAGE_DIR}}"
 mk_mkdir "`dirname "$target"`"
 mk_run_or_fail cp -r "$source" "$target"
+if [ -n "$MODE" ]
+then
+    mk_run_or_fail chmod "$MODE" "$target"
+fi

@@ -1,0 +1,91 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="mk_program">
+  <refmeta>
+    <refentrytitle>mk_program</refentrytitle>
+    <manvolnum>3mk</manvolnum>
+  </refmeta>
+  <refnamediv>
+    <refname>mk_program</refname>
+    <refpurpose>Build a program executable</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv><title>Synopsis</title>
+    <cmdsynopsis sepchar=" ">
+      <function>mk_program</function>
+      <arg choice="plain" rep="norepeat"><literal>PROGRAM=</literal><replaceable class="parameter">name</replaceable></arg>
+      <arg choice="plain" rep="norepeat"><literal>SOURCES=</literal><replaceable class="parameter">source_files</replaceable></arg>
+      <arg choice="opt" rep="repeat"><replaceable class="parameter">options</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+  <refsection><info><title>Description</title></info>
+    
+    <para>
+      <function>mk_program</function> defines a build rule to create
+      a program from a list of C source files.  At a minimum, it takes
+      a program name and a list of source files to compile and link
+      into the resulting executable.  
+    </para>
+  </refsection>
+  
+  <refsection><info><title>Parameters</title></info>
+    <para>
+      In addition to the parameters below, <function>mk_program</function>
+      accepts many common parameters detailed in <xref linkend="compiler"/>.
+    </para>
+    <variablelist>
+      <varlistentry>
+        <term><literal>PROGRAM=</literal><replaceable>name</replaceable></term>
+        <listitem>
+          <para>
+	    The name of the program executable to create.
+	  </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><literal>SOURCES=</literal><replaceable>source_files</replaceable></term>
+        <listitem>
+          <para>
+	    A space-separated list of source files in MakeKit target notation.
+	    File patterns will be expanded.
+	  </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+  <refsection xml:id="result"><info><title>Result</title></info>
+    
+    <para>
+      <function>mk_program</function> returns 0 on success and sets <literal>result</literal>
+      to the fully-qualified target which it defined.
+    </para>
+  </refsection>
+  <refsection><info><title>Examples</title></info>
+<programlisting><![CDATA[
+# Generate program hello from hello.c
+# - Look for headers in '../include'
+# - Depend on header 'foobar.h'
+# - Link against libfoobar
+
+mk_program \
+    PROGRAM="hello" \
+    SOURCES="hello.c" \
+    INCLUDEDIRS="../include" \
+    HEADERDEPS="foobar.h" \
+    LIBDEPS="foobar"
+]]></programlisting>
+  </refsection>
+  <refsection><info><title>Copyright</title></info>
+    <para>Copyright (c) Brian Koropoff.  All rights reserved.</para>
+    
+    <para>
+      Redistribution in source and binary form is permitted under
+      the terms of the 3-clause BSD license.  See COPYING in the
+      documentation or source distribution for details.
+    </para>
+  </refsection>
+  
+  <refsection><info><title>See also</title></info>
+    <para>
+      <citerefentry><refentrytitle>mk_resolve_target</refentrytitle><manvolnum>3mk</manvolnum></citerefentry>,
+    </para>
+  </refsection>
+</refentry>

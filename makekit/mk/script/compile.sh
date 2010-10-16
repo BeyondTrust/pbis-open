@@ -29,9 +29,10 @@
 _object="$1"
 _source="$2"
 
-_mk_define_name "$MK_SYSTEM"
-
+_mk_define_name "$MK_CANONICAL_SYSTEM"
 EXTRA_CPPFLAGS="-I${MK_STAGE_DIR}${MK_INCLUDEDIR} -DHAVE_CONFIG_H -D_MK_$result"
+_mk_define_name "${MK_CANONICAL_SYSTEM%/*}"
+EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -D_MK_$result"
 INCLUDE_CPPFLAGS=""
 
 for _dir in ${INCLUDEDIRS}
@@ -53,7 +54,7 @@ then
     EXTRA_CFLAGS="$EXTRA_CFLAGS -fPIC"
 fi
 
-mk_msg "${_source#${MK_SOURCE_DIR}/} ($MK_SYSTEM)"
+mk_msg "${_source#${MK_SOURCE_DIR}/} ($MK_CANONICAL_SYSTEM)"
 
 mk_mkdir "`dirname "$_object"`"
 mk_run_or_fail ${MK_CC} \

@@ -36,11 +36,16 @@ _ALL_LDFLAGS="$LDFLAGS"
 
 MK_MSG_DOMAIN="group"
 
-mk_msg "${object#${MK_OBJECT_DIR}/} ($MK_SYSTEM)"
+# Group suffix
+_gsuffix="-${MK_CANONICAL_SYSTEM%/*}-${MK_CANONICAL_SYSTEM#*/}.og"
+_name="${object#${MK_OBJECT_DIR}/}"
+_name="${_name%$_gsuffix}"
+
+mk_msg "$_name ($MK_CANONICAL_SYSTEM)"
 
 for _group in ${GROUPDEPS}
 do
-    mk_safe_source "${MK_OBJECT_DIR}${MK_SUBDIR}/${_group}" || mk_fail "Could not read group: $_group"
+    mk_safe_source "${MK_OBJECT_DIR}${MK_SUBDIR}/${_group}${_gsuffix}" || mk_fail "Could not read group: $_group"
     _ALL_OBJECTS="$_ALL_OBJECTS $OBJECTS"
     _ALL_LIBDEPS="$_ALL_LIBDEPS $LIBDEPS"
     _ALL_LIBDIRS="$_ALL_LIBDIRS $LIBDIRS"
