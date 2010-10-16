@@ -1259,45 +1259,103 @@ RtlpMapAccessMaskToSddlRights(
     GOTO_CLEANUP_ON_STATUS(status);
 
     // Generic access rights
-    if (Access & GENERIC_ALL)
+    if (IsSetFlag(Access, GENERIC_ALL))
     {
         strcat(pszMask, SDDL_GENERIC_ALL);
     }
 
-    if (Access & GENERIC_READ)
+    if (IsSetFlag(Access, GENERIC_READ))
     {
         strcat(pszMask, SDDL_GENERIC_READ);
     }
 
-    if (Access & GENERIC_WRITE)
+    if (IsSetFlag(Access, GENERIC_WRITE))
     {
         strcat(pszMask, SDDL_GENERIC_WRITE);
     }
 
-    if (Access & GENERIC_EXECUTE)
+    if (IsSetFlag(Access, GENERIC_EXECUTE))
     {
         strcat(pszMask, SDDL_GENERIC_EXECUTE);
     }
 
     // Standard access rights
-    if (Access & READ_CONTROL)
+    if (IsSetFlag(Access, READ_CONTROL))
     {
         strcat(pszMask, SDDL_READ_CONTROL);
     }
 
-    if (Access & DELETE)
+    if (IsSetFlag(Access, DELETE))
     {
         strcat(pszMask, SDDL_STANDARD_DELETE);
     }
 
-    if (Access & WRITE_DAC)
+    if (IsSetFlag(Access, WRITE_DAC))
     {
         strcat(pszMask, SDDL_WRITE_DAC);
     }
 
-    if (Access & WRITE_OWNER)
+    if (IsSetFlag(Access, WRITE_OWNER))
     {
         strcat(pszMask, SDDL_WRITE_OWNER);
+    }
+
+    // File access rights
+    if ((Access & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)
+    {
+        strcat(pszMask, SDDL_FILE_ALL);
+    }
+
+    if ((Access & FILE_GENERIC_READ) == FILE_GENERIC_READ)
+    {
+        strcat(pszMask, SDDL_FILE_READ);
+    }
+
+    if ((Access & FILE_GENERIC_WRITE) == FILE_GENERIC_WRITE)
+    {
+        strcat(pszMask, SDDL_FILE_WRITE);
+    }
+
+    if ((Access & FILE_GENERIC_EXECUTE) == FILE_GENERIC_EXECUTE)
+    {
+        strcat(pszMask, SDDL_FILE_EXECUTE);
+    }
+
+    // Registry key access rights
+    if ((Access & KEY_ALL_ACCESS) == KEY_ALL_ACCESS)
+    {
+        strcat(pszMask, SDDL_KEY_ALL);
+    }
+
+    if ((Access & KEY_READ) == KEY_READ)
+    {
+        strcat(pszMask, SDDL_KEY_READ);
+    }
+
+    if ((Access & KEY_WRITE) == KEY_WRITE)
+    {
+        strcat(pszMask, SDDL_KEY_WRITE);
+    }
+
+    if ((Access & KEY_EXECUTE) == KEY_EXECUTE)
+    {
+        strcat(pszMask, SDDL_KEY_EXECUTE);
+    }
+
+    // Mandatory label rights
+    if (IsSetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_READ_UP))
+    {
+        strcat(pszMask, SDDL_NO_READ_UP);
+    }
+
+    if (IsSetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_WRITE_UP))
+    {
+        strcat(pszMask, SDDL_NO_WRITE_UP);
+    }
+
+    if (IsSetFlag(Access, SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP))
+    {
+        strcat(pszMask, SDDL_NO_EXECUTE_UP);
     }
 
     // Directory service object access rights
@@ -1348,64 +1406,6 @@ RtlpMapAccessMaskToSddlRights(
         strcat(pszMask, SDDL_CONTROL_ACCESS);
     }
 #endif
-
-    // File access rights
-    if (Access & FILE_ALL_ACCESS)
-    {
-        strcat(pszMask, SDDL_FILE_ALL);
-    }
-
-    if (Access & FILE_GENERIC_READ)
-    {
-        strcat(pszMask, SDDL_FILE_READ);
-    }
-
-    if (Access & FILE_GENERIC_WRITE)
-    {
-        strcat(pszMask, SDDL_FILE_WRITE);
-    }
-
-    if (Access & FILE_GENERIC_EXECUTE)
-    {
-        strcat(pszMask, SDDL_FILE_EXECUTE);
-    }
-
-    // Registry key access rights
-    if (Access & KEY_ALL_ACCESS)
-    {
-        strcat(pszMask, SDDL_KEY_ALL);
-    }
-
-    if (Access & KEY_READ)
-    {
-        strcat(pszMask, SDDL_KEY_READ);
-    }
-
-    if (Access & KEY_WRITE)
-    {
-        strcat(pszMask, SDDL_KEY_WRITE);
-    }
-
-    if (Access & KEY_EXECUTE)
-    {
-        strcat(pszMask, SDDL_KEY_EXECUTE);
-    }
-
-    // Mandatory label rights
-    if (Access & SYSTEM_MANDATORY_LABEL_NO_READ_UP)
-    {
-        strcat(pszMask, SDDL_NO_READ_UP);
-    }
-
-    if (Access & SYSTEM_MANDATORY_LABEL_NO_WRITE_UP)
-    {
-        strcat(pszMask, SDDL_NO_WRITE_UP);
-    }
-
-    if (Access & SYSTEM_MANDATORY_LABEL_NO_EXECUTE_UP)
-    {
-        strcat(pszMask, SDDL_NO_EXECUTE_UP);
-    }
 
     status = STATUS_SUCCESS;
 
