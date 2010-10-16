@@ -2,13 +2,9 @@
 tmpreg=/tmp/regup-$$.txt
 BIN_DIR=/opt/likewise/bin
 LWREGSHELL=$BIN_DIR/lwregshell
-LWSM=$BIN_DIR/lwsm
 PSTORE_UPGRADE=$BIN_DIR/psupgrade
 
 #verify tools needed to perform registry upgrade are present
-if [ ! -x $LWSM ]; then
-  exit 1
-fi
 if [ ! -x $LWREGSHELL ]; then
   exit 1
 fi
@@ -26,7 +22,6 @@ fi
 $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
 if [ ! -s ${tmpreg}.out ]; then
   rm -f $tmpreg
-  $LWSM stop lwreg
   exit 0
 fi
 
