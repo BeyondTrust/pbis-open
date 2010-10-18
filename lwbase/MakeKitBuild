@@ -6,11 +6,7 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
 
-    case "$MK_OS" in
-        linux)
-            MK_CPPFLAGS="$MK_CPPFLAGS -D_GNU_SOURCE"
-            ;;
-    esac
+    lw_define_feature_macros
 
     # lwbase libraries are built in compat mode as well, so we
     # need to peform configure checks for all instruction set
@@ -37,11 +33,13 @@ configure()
 
     mk_check_libraries \
         xnet \
-        dl
+        dl \
+        rt \
+        pthread
     
     lw_check_iconv
     
-        # Necessary headers
+    # Necessary headers
     mk_check_headers \
         FAIL=yes \
         pthread.h \
@@ -50,13 +48,14 @@ configure()
         uuid/uuid.h \
         wctype.h
     
-        # Optional headers
+    # Optional headers
     mk_check_headers \
         sys/varargs.h \
         sys/param.h \
         unistd.h \
         strings.h \
         pthread_np.h \
+        signal.h
         
     mk_check_headers \
         HEADERDEPS="sys/param.h" \
@@ -74,15 +73,15 @@ configure()
         mk_define CPU_SET_TYPE "cpuset_t"
     fi
 
-        # Necessary libraries \
+    # Necessary libraries \
     mk_check_libraries \
         FAIL=yes \
         uuid
     
-        # Optional libraries
-    mk_check_libraries \
-        pthread \
-        dl
+    mk_check_functions \
+        HEADERDEPS="signal.h" \
+        LIBDEPS="$LIB_RT" \
+        sigwaitinfo
 
     mk_check_functions \
         HEADERDEPS="pthread.h pthread_np.h wchar.h" \

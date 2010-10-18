@@ -56,6 +56,6 @@ make()
             CPPFLAGS="$BASE_CPPFLAGS" \
             INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
             HEADERDEPS="$BASE_HEADER_DEPS" \
-            LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL"
+            LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
     mk_multiarch_done
 }
