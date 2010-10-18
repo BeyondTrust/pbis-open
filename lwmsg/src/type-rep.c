@@ -405,10 +405,7 @@ lwmsg_type_rep_map_insert(
     entry->spec.spec = spec;
     entry->rep = rep;
 
-    if (spec)
-    {
-        lwmsg_hash_insert_entry(&map->hash_by_spec, entry);
-    }
+    lwmsg_hash_insert_entry(&map->hash_by_spec, entry);
 
 done:
 
