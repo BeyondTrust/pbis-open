@@ -108,6 +108,44 @@ _mk_verify_headerdeps()
     done
 }
 
+_mk_process_symfile_gnu_ld()
+{
+    mk_resolve_file "$SYMFILE"
+    __input="$result"
+    mk_resolve_file "$SYMFILE.ver"
+    __output="$result"
+
+    {
+        echo "{ global:"
+        awk '{ print $0, ";"; }' < "$__input"
+        echo "local: *; };"
+    } > "$__output.new"
+
+    if ! [ -f "$__output" ] || ! diff -q "$__output" "$__output.new" >/dev/null 2>&1
+    then
+        mv -f "$__output.new" "$__output"
+    else
+        rm -f "$__output.new"
+    fi
+
+    mk_add_configure_input "$__input"
+    mk_add_configure_output "$__output"
+
+    LDFLAGS="$LDFLAGS -Wl,-version-script,$__output"
+    DEPS="$DEPS @$__output"
+}
+
+_mk_process_symfile()
+{
+    case "$MK_OS" in
+        linux)
+            _mk_process_symfile_gnu_ld "$@"
+            ;;
+        *)
+            ;;
+    esac   
+}
+
 _mk_library()
 {
     unset _deps _objects
@@ -178,15 +216,20 @@ _mk_library()
 
 mk_library()
 {
-    mk_push_vars INSTALL LIB SOURCES GROUPS CPPFLAGS CFLAGS LDFLAGS LIBDEPS HEADERDEPS LIBDIRS INCLUDEDIRS VERSION DEPS OBJECTS EXT
+    mk_push_vars INSTALL LIB SOURCES GROUPS CPPFLAGS CFLAGS LDFLAGS LIBDEPS HEADERDEPS LIBDIRS INCLUDEDIRS VERSION DEPS OBJECTS EXT SYMFILE
     EXT="${MK_LIB_EXT}"
     mk_parse_params
     
     _mk_verify_libdeps "lib$LIB${EXT}" "$LIBDEPS"
     _mk_verify_headerdeps "lib$LIB${EXT}" "$HEADERDEPS"
 
-    _mk_library "$@"
+    if [ -n "$SYMFILE" ]
+    then
+        _mk_process_symfile
+    fi
     
+    _mk_library "$@"
+
     MK_INTERNAL_LIBS="$MK_INTERNAL_LIBS $LIB"
     
     mk_pop_vars
@@ -194,12 +237,17 @@ mk_library()
 
 mk_dlo()
 {
-    mk_push_vars INSTALL DLO SOURCES GROUPS CPPFLAGS CFLAGS LDFLAGS LIBDEPS HEADERDEPS LIBDIRS INCLUDEDIRS VERSION OBJECTS DEPS INSTALLDIR EXT
+    mk_push_vars INSTALL DLO SOURCES GROUPS CPPFLAGS CFLAGS LDFLAGS LIBDEPS HEADERDEPS LIBDIRS INCLUDEDIRS VERSION OBJECTS DEPS INSTALLDIR EXT SYMFILE
     EXT="${MK_DLO_EXT}"
     mk_parse_params
     
     _mk_verify_libdeps "$DLO${EXT}" "$LIBDEPS"
     _mk_verify_headerdeps "$DLO${EXT}" "$HEADERDEPS"
+
+    if [ -n "$SYMFILE" ]
+    then
+        _mk_process_symfile
+    fi
 
     unset _deps
     
@@ -1165,14 +1213,14 @@ EOF
         } > .check.c
         if _mk_build_test 'compile-keep' .check.c
         then
-            if grep "aArDvArKsOaP" .check.o >/dev/null
+            if strings .check.o | grep "aArDvArKsOaP" >/dev/null
             then
                 _result="big"
-            elif grep "zEbRaBrUsH" .check.o >/dev/null
+            elif strings .check.o | grep "zEbRaBrUsH" >/dev/null
             then
                 _result="little"
             else
-                rm -f .check.o
+                #rm -f .check.o
                 mk_fail "could not determine endianness"
             fi
         else

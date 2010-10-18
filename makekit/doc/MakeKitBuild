@@ -1,104 +1,39 @@
+MODULES="docbook"
+
 configure()
 {
-    mk_check_program xsltproc || mk_msg "missing xsltproc -- documentation will not be generated"
-    #mk_check_program fop || mk_msg "missing Apache FOP -- PDF documentation will not be generated"
-
-    mk_resolve_file "docbook-xsl-ns"
-    mk_export XSL_DIR="${MK_ROOT_DIR}/$result"
-
-    mk_output_file html.xsl
-    mk_output_file man.xsl
-    #mk_output_file fo.xsl
+    if mk_have_docbook
+    then
+        mk_output_file html.xsl
+        mk_output_file man.xsl
+    fi
 }
 
 make()
 {
-    [ -z "$XSLTPROC" ] && return 0
-
-    DOCDIR="${MK_DATADIR}/doc/makekit"
-    MANDIR="${MK_DATADIR}/man"
-    DEPS="*.xml guide/*.xml reference/*.xml"
-
-    # html
-    mk_target \
-	TARGET="${DOCDIR}/html" \
-	DEPS="$DEPS html.xsl" \
-	process_xml '$@/' "&index.xml" "&html.xsl"
-
-    mk_add_all_target "$result"
-
-    # Install CSS file
-    mk_install_file \
-	FILE="docbook.css" \
-	INSTALLDIR="${DOCDIR}/html"
-
-    # Install callout graphics
-    mk_install_file \
-	FILE="docbook-xsl-ns/images/callouts" \
-	INSTALLFILE="${DOCDIR}/html/images/callouts"
-
-    # man
-    mk_target \
-	TARGET="man" \
-	DEPS="$DEPS man.xsl" \
-	process_xml '$@/' "&index.xml" "&man.xsl"
-    man_output="$result"
-
-    mk_expand_pathnames "reference/*.?mk.xml"
-    mk_unquote_list "$result"
-    
-    for i in "$@"
-    do
-        base="${i##*/}"
-        manfile="${base%.xml}"
-        section="${manfile##*.}"
-        section="${section%mk}"
+    if mk_have_docbook
+    then
+        # Calculate names of man pages
+        mk_expand_pathnames "reference/*.?mk.xml"
+        mk_unquote_list "$result"
         
-        mk_target \
-            TARGET="man/$manfile" \
-            DEPS="$man_output"
-
-        mk_install_file \
-            FILE="man/$manfile" \
-            INSTALLFILE="$MANDIR/man${section}/${manfile}"
-    done
-    
-    # pdf (needs Apache fop)
-    #[ -z "$FOP" ] && return 0
-
-    #mk_target \
-    #	TARGET="fo.xml" \
-    #	DEPS="$DEPS fo.xsl" \
-    #	process_xml '$@' "&index.xml" "&fo.xsl"
-    
-    #mk_target \
-    #   TARGET="${DOCDIR}/pdf/makekit.pdf" \
-    #   DEPS="fo.xml" \
-    #   process_fop '$@' "&fo.xml"
-    
-    #mk_add_all_target "$result"
-}
-
-process_xml()
-{
-    MK_MSG_DOMAIN="xsltproc"
-
-    mk_msg "${1#${MK_STAGE_DIR}}"
-    mk_mkdir "${1%/*}"
-    mk_run_or_fail \
-	"${XSLTPROC}" \
-	--xinclude \
-	--output "$1" \
-	"$3" \
-	"$2"
-    mk_run_or_fail touch "$1"
-}
-
-process_fop()
-{
-    MK_MSG_DOMAIN="fop"
-
-    mk_msg "${1#${MK_STAGE_DIR}}"
-    mk_mkdir "${1%/*}"
-    mk_run_or_fail "${FOP}" "$2" "$1"
+        for i in "$@"
+        do
+            base="${i##*/}"
+            manfile="${base%.xml}"
+            MANFILES="$MANFILES $manfile"
+        done
+        
+        mk_docbook_html \
+            SOURCE="index.xml" \
+            STYLESHEET="html.xsl" \
+            CSS="docbook.css" \
+            DEPS="reference/*.xml guide/*.xml"
+        
+        mk_docbook_man \
+            SOURCE="index.xml" \
+            STYLESHEET="man.xsl" \
+            DEPS="reference/*.xml guide/*.xml" \
+            MANPAGES="$MANFILES"
+    fi
 }

@@ -29,54 +29,71 @@
 
 ##
 #
-# build.awk -- generates .MakeKitBuild script by combining and stripping input
+# help.awk -- formats --help output
 #
 ##
 
 BEGIN {
-    out=0
+    x=0;
+    indent=30;
+    wrap=80;
 }
 
-# Common sections -- include in output
-/^### *section common/ {
-    out=1
-    next
-}
-
-# Build sections -- include in output
-/^### *section build/ {
-    out=1
-    next
-}
-
-# Configure sections -- omit from output
-/^### *section configure/ {
-    out=0
-    next
-}
-
-# % comments -- include in output
-/^#%/ {
-    print $0
-    next
-}
-
-# Normal comments -- omit from output
-/^[\t ]*#/ {
-    next
-}
-
-# Blank lines -- omit from output
-/^[\t ]*$/ {
-    next
-}
-
-# Normal line -- include in output if in included section
-{
-    if (out)
+/^Options/ {
+    if (NR != 1)
     {
-        print $0;
+        printf("\n")
+    }
+    print
+    next
+}
+
+/###/ {
+    printf("\n");
+    x=0
+    next
+}
+
+{
+    if (x == 0)
+    {
+        printf("  %s", $0);
+        if (length($0) + 2 >= indent)
+        {
+            printf("\n");
+            x = 0;
+        }
+        else
+        {
+            x = length($0) + 2;
+        }
+        
+        for (; x < indent; x++)
+        {
+            printf(" ");
+        }
+    }
+    else
+    {
+        for (i = 1; i <= NF; i++)
+        {
+            if (x + length($i) >= wrap)
+            {
+                printf("\n")
+                for (x = 0; x < indent; x++)
+                {
+                    printf(" ");
+                }
+            }
+            else if (x != indent)
+            {
+                printf(" ");
+                x++
+            }
+
+            printf("%s", $i);
+            x += length($i);
+        }
     }
 }
-
 

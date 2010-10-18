@@ -3,7 +3,7 @@
 		xmlns:html="http://www.w3.org/1999/xhtml"
 		xmlns:db="http://docbook.org/ns/docbook"
 		version="1.0">
-  <xsl:import href="@XSL_DIR@/xhtml/profile-chunk.xsl"/>
+  <xsl:import href="@MK_DOCBOOK_XSL_DIR@/xhtml/profile-chunk.xsl"/>
   <xsl:param name="citerefentry.link">1</xsl:param>
   <xsl:param name="use.id.as.filename">1</xsl:param>
   <xsl:param name="html.stylesheet" select="'docbook.css'"/>

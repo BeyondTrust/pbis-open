@@ -1,6 +1,12 @@
 SUBDIRS=". doc"
 MODULES="core path"
 
+defaults()
+{
+    # Default to using internal copy of xsl stylesheets
+    MK_DOCBOOK_XSL_DIR="`cd "${MK_SOURCE_DIR}" && echo "$PWD/doc/docbook-xsl-ns"`"
+}
+
 make()
 {
     mk_install_file \

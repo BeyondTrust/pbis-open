@@ -1,4 +1,3 @@
-#!/usr/bin/env awk -f
 #
 # Copyright (c) Brian Koropoff
 # All rights reserved.
@@ -29,54 +28,33 @@
 
 ##
 #
-# build.awk -- generates .MakeKitBuild script by combining and stripping input
+# fortune.sh -- dispenses wisdom
 #
 ##
 
-BEGIN {
-    out=0
-}
+### section configure
 
-# Common sections -- include in output
-/^### *section common/ {
-    out=1
-    next
-}
-
-# Build sections -- include in output
-/^### *section build/ {
-    out=1
-    next
-}
-
-# Configure sections -- omit from output
-/^### *section configure/ {
-    out=0
-    next
-}
-
-# % comments -- include in output
-/^#%/ {
-    print $0
-    next
-}
-
-# Normal comments -- omit from output
-/^[\t ]*#/ {
-    next
-}
-
-# Blank lines -- omit from output
-/^[\t ]*$/ {
-    next
-}
-
-# Normal line -- include in output if in included section
+configure()
 {
-    if (out)
-    {
-        print $0;
-    }
+    mk_add_complete_hook _mk_fortune
 }
 
-
+_mk_fortune()
+{
+    # Dispense wisdom
+    if _mk_find_resource "fortunes"
+    then
+        _fortunes="$result"
+        _mk_random 1 $(wc -l "$_fortunes")
+        echo ""
+        echo "---"
+        awk "{if (NR == $result) print \$0;}" < "$_fortunes"
+        echo "---"
+    fi
+}
+    
+_mk_random()
+{
+    result="`{ date; ps -ef; } | cksum | cut -d' ' -f1`"
+    result="$(($result % ($2 - $1 + 1) + $1))"
+}

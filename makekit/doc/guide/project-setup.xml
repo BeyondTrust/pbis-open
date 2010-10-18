@@ -58,6 +58,12 @@
 <programlisting>
 SUBDIRS="include src doc" <co xml:id="co.mkb.subdirs" linkends="mkb.subdirs"/>
 MODULES="core compiler" <co xml:id="co.mkb.modules" linkends="mkb.modules"/>
+PROJECT_NAME="project-name" <co xml:id="co.mkb.project_name" linkends="mkb.project_name"/>
+
+defaults() <co xml:id="co.mkb.defaults" linkends="mkb.defaults"/>
+{
+    MK_PREFIX=/opt/project-name
+}
 
 option() <co xml:id="co.mkb.option" linkends="mkb.option"/>
 {
@@ -102,6 +108,20 @@ make() <co xml:id="co.mkb.make" linkends="mkb.make"/>
 	  module gives you access to functions for configure and building
 	  C language programs and libraries.
 	</para>
+      </callout>
+      <callout xml:id="mkb.project_name" arearefs="co.mkb.project_name">
+         <para>
+           The <varname>PROJECT_NAME</varname> variable specified
+           the name of the project.  If unspecified, the name of the directory
+           of the <filename>MakeKitBuild</filename> file is used instead.
+         </para>
+      </callout>
+      <callout xml:id="mkb.defaults" arearefs="co.mkb.defaults">
+         <para>
+           The <function>defaults</function> function allows you to set default
+	   values for options that are usually specified by the user when configuring
+	   the project to be built, such as the installation prefix.
+         </para>
       </callout>
       <callout xml:id="mkb.option" arearefs="co.mkb.option">
 	<para>

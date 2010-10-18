@@ -141,8 +141,29 @@ option()
 	VAR=MK_DATADIR \
 	OPTION=datadir \
 	PARAM="path" \
-	DEFAULT="${MK_DATAROOTDIR}" \
+	DEFAULT="${MK_DATAROOTDIR}/${PROJECT_NAME}" \
 	HELP="Data directory"
+
+    mk_option \
+        VAR=MK_DOCDIR \
+        OPTION=docdir \
+        PARAM="path" \
+        DEFAULT="${MK_DATAROOTDIR}/doc/${PROJECT_NAME}" \
+        HELP="Documentation directory"
+
+    mk_option \
+        VAR=MK_HTMLDIR \
+        OPTION=htmldir \
+        PARAM="path" \
+        DEFAULT="${MK_DOCDIR}/html" \
+        HELP="HTML documentation directory"
+
+    mk_option \
+        VAR=MK_MANDIR \
+        OPTION=mandir \
+        PARAM="path" \
+        DEFAULT="${MK_DATAROOTDIR}/man" \
+        HELP="UNIX man page directory"
 }
 
 configure()
@@ -169,11 +190,15 @@ configure()
     mk_msg "local state dir: $MK_LOCALSTATEDIR"
     mk_msg "data root dir: $MK_DATAROOTDIR"
     mk_msg "data dir: $MK_DATADIR"
+    mk_msg "documenation dir: $MK_DOCDIR"
+    mk_msg "HTML documentation dir: $MK_HTMLDIR"
+    mk_msg "manpage dir: $MK_MANDIR"
 
     mk_export \
 	MK_PREFIX MK_LIBDIR MK_INCLUDEDIR MK_BINDIR \
 	MK_SBINDIR MK_SYSCONFDIR MK_LOCALSTATEDIR \
-	MK_DATAROOTDIR MK_DATADIR
+	MK_DATAROOTDIR MK_DATADIR MK_DOCDIR MK_HTMLDIR \
+        MK_MANDIR
 
     # Set up paths where programs compiled for the build system should go
     mk_export MK_RUN_PREFIX="${MK_RUN_DIR}"

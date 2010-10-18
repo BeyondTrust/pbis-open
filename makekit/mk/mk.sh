@@ -25,32 +25,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 #
-#
-# Copyright (c) Brian Koropoff
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the Moonunit project nor the
-#       names of its contributors may be used to endorse or promote products
-#       derived from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY BRIAN KOROPOFF ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL BRIAN KOROPOFF BE LIABLE FOR ANY
-# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 ##
 #
@@ -185,8 +159,16 @@ done'
     {
 	for ___var in "$@" _MK_VARS
 	do
-	    eval "_MK_VAR_${_MK_VAR_SP}_${___var}=\"\$${___var}\""
-	    unset "$___var"
+            case "$___var" in
+                *=*)
+                    eval "_MK_VAR_${_MK_VAR_SP}_${___var%%=*}=\"\$${___var%%=*}\""
+                    mk_set "${___var%%=*}" "${___var#*=}"
+                    ;;
+                *)
+                    eval "_MK_VAR_${_MK_VAR_SP}_${___var}=\"\$${___var}\""
+	            unset "$___var"
+                    ;;
+            esac
 	done
 	
 	_MK_VARS="$*"
@@ -839,28 +821,4 @@ _mk_reverse()
     done
 
     result="${result% }"
-}
-
-_mk_random()
-{
-    if [ -z "$MK_RANDOM_SEED" ]
-    then
-	MK_RANDOM_SEED=`date '+%s'`
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-	_mk_random
-    fi
-
-    if [ -n "$*" ]
-    then
-	echo $(( $MK_RANDOM_SEED % ($2 - $1 + 1) + $1 ))
-    fi
-
-    MK_RANDOM_SEED=$(( ($MK_RANDOM_SEED * 9301 + 4929) % 233280 ))
 }

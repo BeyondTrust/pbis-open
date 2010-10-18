@@ -62,9 +62,13 @@ _include_dir="${_stage_dir}${_includedir}"
 _lib_dir="${_stage_dir}${_libdir}"
 _libpath=""
 
+# Work around autotools projects that like to
+# link and run programs against libraries in the staging
+# directory
 case "$MK_OS" in
-    linux|freebsd)
-        export "LD_LIBRARY_PATH=$_lib_dir"
+    linux|freebsd|solaris)
+        LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
+        export LD_LIBRARY_PATH
         ;;
 esac
 
