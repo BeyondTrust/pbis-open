@@ -41,12 +41,12 @@
  * Authors: Danilo Almeida (dalmeida@likewise.com)
  */
 
+#include "config.h"
 #include <lw/base.h>
 #include <lw/mapsecurity-plugin.h>
 #include <lw/security-api.h>
 #include <lw/rtlgoto.h>
 #include <lw/safeint.h>
-#include "config.h"
 #include <pthread.h>
 #include <stdlib.h>
 #ifdef HAVE_DLFCN_H
