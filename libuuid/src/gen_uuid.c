@@ -186,7 +186,7 @@ static int get_node_id(unsigned char *node_id)
 	char buf[1024];
 	int		n, i;
 	unsigned char 	*a;
-#ifdef HAVE_NET_IF_DL_H
+#if !defined(SIOCGIFHWADD) && !defined(SIOCGENADDR) && defined(HAVE_NET_IF_DL_H)
 	struct sockaddr_dl *sdlp;
 #endif
 
