@@ -77,6 +77,14 @@ RdrTransceiveSessionSetup(
     DWORD dwBlobLength
     );
 
+static
+BOOLEAN
+RdrTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
 VOID
 RdrFreeTreeConnectContext(
     PRDR_OP_CONTEXT pContext
@@ -207,6 +215,7 @@ RdrNegotiateComplete(
         BAIL_ON_NT_STATUS(status);
         break;
     case RDR_SESSION_STATE_INITIALIZING:
+        pContext->Continue = RdrSessionSetupComplete;
         LwListInsertTail(&pSession->StateWaiters, &pContext->Link);
         status = STATUS_PENDING;
         BAIL_ON_NT_STATUS(status);
@@ -229,7 +238,7 @@ cleanup:
 
     if (status != STATUS_PENDING)
     {
-        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pSession);
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
         bFreeContext = TRUE;
     }
 
@@ -249,7 +258,7 @@ error:
         RdrSessionRelease(pSession);
     }
 
-   if (status != STATUS_PENDING && pSocket)
+    if (status != STATUS_PENDING && pSocket)
     {
         RdrSocketInvalidate(pSocket, status);
         RdrSocketRelease(pSocket);
@@ -654,12 +663,15 @@ RdrSessionSetupComplete(
         BAIL_ON_NT_STATUS(status);
         break;
     case RDR_TREE_STATE_INITIALIZING:
+        pContext->Continue = RdrTreeConnectComplete;
         LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
         bFreeContext = TRUE;
         status = STATUS_PENDING;
         break;
     case RDR_TREE_STATE_READY:
-        bFreeContext = TRUE;
+        RdrTreeConnectComplete(pContext, status, pTree);
+        status = STATUS_PENDING;
+        BAIL_ON_NT_STATUS(status);
         break;
     case RDR_TREE_STATE_ERROR:
         status = pTree->error;
@@ -673,7 +685,7 @@ cleanup:
 
     if (status != STATUS_PENDING)
     {
-        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pTree);
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
         bFreeContext = TRUE;
     }
 
@@ -690,6 +702,43 @@ error:
     {
         LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
         RdrTreeInvalidate(pTree, status);
+        RdrTreeRelease(pTree);
+    }
+
+    if (status != STATUS_PENDING && pSession)
+    {
+        RdrSessionRelease(pSession);
+    }
+
+    goto cleanup;
+}
+
+static
+BOOLEAN
+RdrTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    PRDR_TREE pTree = pParam;
+
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pTree);
+        RdrFreeTreeConnectContext(pContext);
+    }
+
+    return FALSE;
+
+error:
+
+    if (status != STATUS_PENDING && pTree)
+    {
         RdrTreeRelease(pTree);
     }
 
@@ -778,11 +827,15 @@ RdrTransceiveNegotiate(
     NTSTATUS status = STATUS_SUCCESS;
     PNEGOTIATE_REQUEST_HEADER pRequestHeader = NULL;
     uint32_t packetByteCount = 0;
-    BYTE const* pszDialects[] =
+    BYTE const* pszDialects[2] = {NULL, NULL};
+    ULONG ulDialectCount = 0;
+
+    pszDialects[ulDialectCount++] = (BYTE const*) "NT LM 0.12";
+
+    if (gRdrRuntime.config.bSmb2Enabled)
     {
-        (PBYTE) "NT LM 0.12",
-        (PBYTE) "SMB 2.002"
-    };
+        pszDialects[ulDialectCount++] = (BYTE const*) "SMB 2.002";
+    }
 
     status = RdrAllocateContextPacket(pContext, 1024*64);
     BAIL_ON_NT_STATUS(status);
@@ -812,7 +865,7 @@ RdrTransceiveNegotiate(
         pContext->Packet.bufferLen - pContext->Packet.bufferUsed,
         &packetByteCount,
         pszDialects,
-        sizeof(pszDialects) / sizeof(*pszDialects));
+        ulDialectCount);
     BAIL_ON_NT_STATUS(status);
     
     assert(packetByteCount <= UINT16_MAX);
@@ -1019,6 +1072,8 @@ RdrTreeConnect(
     status = RdrCreateContext(pContinue->pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);
 
+    LWIO_LOG_DEBUG("Tree connect context %p will continue %p\n", pContext, pContinue);
+
     pContext->State.TreeConnect.Uid = Uid;
     pContext->State.TreeConnect.pContinue = pContinue;
 
@@ -1054,6 +1109,7 @@ RdrTreeConnect(
         break;
     case RDR_SOCKET_STATE_CONNECTING:
     case RDR_SOCKET_STATE_NEGOTIATING:
+        pContext->Continue = RdrNegotiateComplete;
         LwListInsertTail(&pSocket->StateWaiters, &pContext->Link);
         status = STATUS_PENDING;
         BAIL_ON_NT_STATUS(status);

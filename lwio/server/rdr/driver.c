@@ -297,6 +297,7 @@ RdrInitialize(
     gRdrRuntime.SysPid = getpid();
 
     /* Default config values */
+    gRdrRuntime.config.bSmb2Enabled = FALSE;
     gRdrRuntime.config.bSigningEnabled = TRUE;
     gRdrRuntime.config.bSigningRequired = FALSE;
     gRdrRuntime.config.usIdleTimeout = RDR_IDLE_TIMEOUT;
@@ -424,6 +425,15 @@ RdrCreateContext(
 
     pContext->pIrp = pIrp;
     
+    if (pIrp)
+    {
+        LWIO_LOG_DEBUG("Created op context %p for IRP %p", pContext, pIrp);
+    }
+    else
+    {
+        LWIO_LOG_DEBUG("Created op context %p", pContext);
+    }
+
     *ppContext = pContext;
 
 error:
@@ -465,6 +475,7 @@ RdrFreeContext(
 {
     if (pContext)
     {
+        LWIO_LOG_DEBUG("Freed op context %p", pContext);
         RTL_FREE(&pContext->Packet.pRawBuffer);
         RTL_FREE(&pContext);
     }
@@ -498,6 +509,7 @@ RdrContinueContext(
 {
     if (pContext->Continue)
     {
+        LWIO_LOG_DEBUG("Continuing context %p", pContext);
         return pContext->Continue(pContext, status, pParam);
     }
     else
@@ -840,6 +852,12 @@ RdrReadConfig(
         status = STATUS_DEVICE_CONFIGURATION_ERROR;
     }
     BAIL_ON_NT_STATUS(status);
+
+    LwIoReadConfigBoolean(
+        pReg,
+        "Smb2Enabled",
+        bUsePolicy,
+        &pConfig->bSmb2Enabled);
 
     LwIoReadConfigBoolean(
         pReg,

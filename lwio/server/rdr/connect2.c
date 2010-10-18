@@ -88,6 +88,14 @@ RdrFinishTreeConnect2(
     PVOID pParam
     );
 
+static
+BOOLEAN
+RdrTreeConnect2Complete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
 BOOLEAN
 RdrProcessNegotiateResponse2(
     PRDR_OP_CONTEXT pContext,
@@ -235,6 +243,7 @@ RdrNegotiateComplete2(
         BAIL_ON_NT_STATUS(status);
         break;
     case RDR_SESSION_STATE_INITIALIZING:
+        pContext->Continue = RdrSessionSetupComplete2;
         LwListInsertTail(&pSession->StateWaiters, &pContext->Link);
         status = STATUS_PENDING;
         BAIL_ON_NT_STATUS(status);
@@ -257,7 +266,7 @@ RdrNegotiateComplete2(
 
      if (status != STATUS_PENDING)
      {
-         RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pSession);
+         RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
          bFreeContext = TRUE;
      }
 
@@ -681,12 +690,15 @@ RdrSessionSetupComplete2(
         BAIL_ON_NT_STATUS(status);
         break;
     case RDR_TREE_STATE_INITIALIZING:
+        pContext->Continue = RdrTreeConnect2Complete;
         LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
         bFreeContext = TRUE;
         status = STATUS_PENDING;
         break;
     case RDR_TREE_STATE_READY:
-        bFreeContext = TRUE;
+        RdrTreeConnect2Complete(pContext, status, pTree);
+        status = STATUS_PENDING;
+        BAIL_ON_NT_STATUS(status);
         break;
     case RDR_TREE_STATE_ERROR:
         status = pTree->error;
@@ -700,7 +712,7 @@ RdrSessionSetupComplete2(
 
     if (status != STATUS_PENDING)
     {
-        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pTree);
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
         bFreeContext = TRUE;
     }
 
@@ -717,6 +729,43 @@ RdrSessionSetupComplete2(
     {
         LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
         RdrTree2Invalidate(pTree, status);
+        RdrTree2Release(pTree);
+    }
+
+    if (status != STATUS_PENDING && pSession)
+    {
+        RdrSession2Release(pSession);
+    }
+
+    goto cleanup;
+}
+
+static
+BOOLEAN
+RdrTreeConnect2Complete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    PRDR_TREE2 pTree = pParam;
+
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, pTree);
+        RdrFreeTreeConnectContext(pContext);
+    }
+
+    return FALSE;
+
+error:
+
+    if (status != STATUS_PENDING && pTree)
+    {
         RdrTree2Release(pTree);
     }
 

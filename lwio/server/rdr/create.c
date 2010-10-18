@@ -214,10 +214,9 @@ RdrCreateTreeConnected(
     
 cleanup:
 
-    RTL_FREE(&pContext->State.Create.pwszFilename);
-
     if (status != STATUS_PENDING)
     {
+        RTL_FREE(&pContext->State.Create.pwszFilename);
         RdrFreeContext(pContext);
         pIrp->IoStatusBlock.Status = status;
         IoIrpComplete(pIrp);
@@ -270,6 +269,7 @@ cleanup:
 
     pContext->pIrp->IoStatusBlock.Status = status;
     IoIrpComplete(pContext->pIrp);
+    RTL_FREE(&pContext->State.Create.pwszFilename);
     RdrFreeContext(pContext);
 
     return FALSE;

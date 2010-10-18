@@ -196,6 +196,11 @@
     doc = "" 
 }
 
+"Smb2Enabled" = {
+	default = dword:00000000
+	doc = "Enable SMB2 support"
+}
+
 "SigningEnabled" = {
 	default = dword:00000001
 	doc = "Enable signing support"

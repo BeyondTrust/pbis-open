@@ -363,6 +363,7 @@ typedef struct _RDR_CCB2
 
 typedef struct _RDR_CONFIG
 {
+    BOOLEAN bSmb2Enabled;
     BOOLEAN bSigningEnabled;
     BOOLEAN bSigningRequired;
     USHORT usIdleTimeout;
