@@ -2194,7 +2194,7 @@ RegShellUsage(
         "       delete_value [[KeyName]] \"ValueName\"\n"
         "       set_hive HIVE_NAME\n"
         "       import file.reg | -\n"
-        "       export [[keyName]] file.reg | - \n"
+        "       export [--legacy | --values] [[keyName]] file.reg | - \n"
         "       upgrade file.reg | -\n"
         "       cleanup file.reg | -\n"
         "       exit | quit | ^D\n"
