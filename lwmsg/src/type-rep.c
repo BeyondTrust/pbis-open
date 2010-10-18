@@ -369,10 +369,11 @@ lwmsg_type_rep_map_find_spec(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     struct SpecKey key = {kind, spec};
+    LWMsgTypeRepMapEntry* entry = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_type_rep_map_init(map));
 
-    LWMsgTypeRepMapEntry* entry = lwmsg_hash_find_key(&map->hash_by_spec, &key);
+    entry = lwmsg_hash_find_key(&map->hash_by_spec, &key);
 
     if (!entry)
     {
