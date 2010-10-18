@@ -455,6 +455,8 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
         /* Deal with SDDL security descriptor */
         else if (pItem->valueType == REG_KEY_DEFAULT)
         {
+            int i = 0;
+            PSTR pszTmp = NULL;
 
             if (!strcmp(pItem->valueName, "@security"))
             {
@@ -481,6 +483,14 @@ printf("Importing type=%2d  key=%s valueName=%s\n",
                                               &SecInfo);
                 dwError = RegNtStatusToWin32Error(ntStatus);
                 BAIL_ON_REG_ERROR(dwError);
+
+                for (i=0;i<dwSecurityDescriptorLen; i++)
+                {
+                    dwError = RtlCStringAllocateAppendPrintf(
+                                  &pszTmp, "%02x",
+                                 ((PBYTE)pSecurityDescriptor)[i]);
+                    //printf("%02x", ((PBYTE)pCurrSecDescRel)[i]);
+                }
 
                 /* Apply security descriptor to current subkey */
                 dwError = LwRegSetKeySecurity(
