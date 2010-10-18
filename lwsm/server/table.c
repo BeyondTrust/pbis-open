@@ -1149,7 +1149,7 @@ cleanup:
 
     if (pDepInfo)
     {
-        LwSmCommonFreeServiceInfo(pInfo);
+        LwSmCommonFreeServiceInfo(pDepInfo);
     }
 
     if (pDepEntry)
