@@ -199,10 +199,10 @@ DWORD RegLexAppendChar(
     CHAR inC)
 {
     DWORD dwError = 0;
-    BAIL_ON_INVALID_HANDLE(lexHandle);
     PVOID pNewMemory = NULL;
     DWORD newValueSize = 0;
 
+    BAIL_ON_INVALID_HANDLE(lexHandle);
     if (lexHandle->curToken.valueCursor >= lexHandle->curToken.valueSize)
     {
         newValueSize = lexHandle->curToken.valueSize * 2;
