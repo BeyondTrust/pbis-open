@@ -117,15 +117,23 @@ char* lwmsg_formatv(const char* fmt, va_list ap)
         if (!str_new)
         {
             free(str);
+            va_end(my_ap);
             return NULL;
         }
 
         str = str_new;
 
         if (vsnprintf(str, len+1, fmt, my_ap) < len)
+        {
+            free(str);
+            va_end(my_ap);
             return NULL;
+        }
         else
+        {
+            va_end(my_ap);
             return str;
+        }
     }
 }
 
