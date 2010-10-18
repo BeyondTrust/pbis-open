@@ -640,7 +640,6 @@ LsaSrvConnectDomainByName(
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    PSTR pszDcName = NULL;
     PIO_CREDS pCreds = NULL;
     LSA_BINDING hLsaBinding = NULL;
     POLICY_HANDLE hDcPolicy = NULL;
@@ -653,10 +652,6 @@ LsaSrvConnectDomainByName(
     POLICY_HANDLE hTrustedDcPolicy = NULL;
     DOMAIN_ENTRY DomEntry = {0};
     PDOMAIN_ENTRY pDomEntry = NULL;
-
-    dwError = LwWc16sToMbs(pPolCtx->pwszDcName,
-                           &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LsaSrvGetSystemCreds(&pCreds);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
@@ -821,7 +816,6 @@ cleanup:
         LWNetFreeString(pszTrustedDcName);
     }
 
-    LW_SAFE_FREE_MEMORY(pszDcName);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -848,7 +842,6 @@ LsaSrvConnectDomainBySid(
 
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PSTR pszDcName = NULL;
     PIO_CREDS pCreds = NULL;
     LSA_BINDING hLsaBinding= NULL;
     POLICY_HANDLE hDcPolicy = NULL;
@@ -861,10 +854,6 @@ LsaSrvConnectDomainBySid(
     POLICY_HANDLE hTrustedDcPolicy = NULL;
     DOMAIN_ENTRY DomEntry = {0};
     PDOMAIN_ENTRY pDomEntry = NULL;
-
-    dwError = LwWc16sToMbs(pPolCtx->pwszDcName,
-                           &pszDcName);
-    BAIL_ON_LSA_ERROR(dwError);
 
     ntStatus = LsaSrvGetSystemCreds(&pCreds);
     BAIL_ON_NTSTATUS_ERROR(ntStatus);
@@ -1028,8 +1017,6 @@ cleanup:
     {
         LWNetFreeString(pszTrustedDcName);
     }
-
-    LW_SAFE_FREE_MEMORY(pszDcName);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)

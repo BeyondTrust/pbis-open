@@ -1550,11 +1550,11 @@ AD_PreLeaveDomain(
     
     switch (pState->joinState)
     {
-    case LSA_AD_UNKNOWN:
     case LSA_AD_NOT_JOINED:
         dwError = LW_ERROR_NOT_JOINED_TO_AD;
         BAIL_ON_LSA_ERROR(dwError);
         break;
+    case LSA_AD_UNKNOWN:
     case LSA_AD_JOINED:
         break;
     }

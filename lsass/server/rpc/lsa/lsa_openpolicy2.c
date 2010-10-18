@@ -220,11 +220,23 @@ LsaSrvOpenPolicy2(
          */
         dwError = LWNetGetDomainController(pszDomainFqdn,
                                            &pszDcFqdn);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (dwError == DNS_ERROR_BAD_PACKET)
+        {
+            /* No DCs can be found for the domain */
+            dwError = ERROR_SUCCESS;
 
-        dwError = LwMbsToWc16s(pszDcFqdn,
-                               &pPolCtx->pwszDcName);
-        BAIL_ON_LSA_ERROR(dwError);
+            pPolCtx->pwszDcName = NULL;
+        }
+        else if (dwError == ERROR_SUCCESS)
+        {
+            dwError = LwMbsToWc16s(pszDcFqdn,
+                                   &pPolCtx->pwszDcName);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+        else
+        {
+            BAIL_ON_LSA_ERROR(dwError);
+        }
 
         dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
                                         &hPassStore);

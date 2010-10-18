@@ -45,6 +45,8 @@
 #include <lwnet.h>
 #include <eventlog.h>
 #include <reg/lwreg.h>
+#include <lwps/lwps.h>
+#include <lwstr.h>
 
 #define DOMAINJOIN_EVENT_CATEGORY   "Domain join"
 
@@ -1071,12 +1073,45 @@ DJGetConfiguredShortDomain(
     LWException **exc
     )
 {
-    PSTR longDomain = NULL;
-    LW_CLEANUP_LSERR(exc, LsaGetDnsDomainName(&longDomain));
-    LW_CLEANUP_LSERR(exc, LsaNetGetShortDomainName(longDomain, ppszWorkgroup));
+    DWORD dwError = 0;
+    HANDLE hStore = 0;
+    PLWPS_PASSWORD_INFO pPassInfo = NULL; 
+    PSTR pszDomain = NULL;
+    
+    *ppszWorkgroup = NULL;
 
+    dwError = LwpsOpenPasswordStore(
+                LWPS_PASSWORD_STORE_DEFAULT,
+                &hStore);
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    dwError = LwpsGetPasswordByCurrentHostName(
+                hStore,
+                &pPassInfo);
+    if (dwError || pPassInfo == NULL || pPassInfo->pwszDnsDomainName == NULL) 
+    {
+        dwError = ERROR_NOT_JOINED;
+    }
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    dwError = LwWc16sToMbs(
+                pPassInfo->pwszDomainName,
+                &pszDomain);
+    LW_CLEANUP_LSERR(exc, dwError);
+        
+    *ppszWorkgroup = pszDomain;
+    pszDomain = NULL;
+        
 cleanup:
-    CT_SAFE_FREE_STRING(longDomain);
+    LW_SAFE_FREE_STRING(pszDomain);
+    if (pPassInfo)
+    {
+        LwpsFreePasswordInfo(hStore, pPassInfo);
+    }
+    if (hStore != (HANDLE)NULL)
+    {
+        LwpsClosePasswordStore(hStore);
+    }
 }
 
 void
