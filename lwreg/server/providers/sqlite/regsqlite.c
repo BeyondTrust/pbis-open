@@ -373,9 +373,9 @@ RegSqliteReadBlob(
     {
         status = LW_RTL_ALLOCATE((PVOID*)&pValue, BYTE, sizeof(*pValue)*dwValueLen);
         BAIL_ON_NT_STATUS(status);
-
-        memcpy(pValue, pColumnValue, dwValueLen);
     }
+
+    memcpy(pValue, pColumnValue, dwValueLen);
 
     *ppValue = pValue;
     *pdwValueLen = dwValueLen;
