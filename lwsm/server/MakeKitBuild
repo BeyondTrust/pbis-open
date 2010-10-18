@@ -7,7 +7,8 @@ make()
         SOURCES="loader.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
-        LIBDEPS="lwsmcommon $LIB_PTHREAD $LIB_DL"
+        LIBDEPS="lwsmcommon $LIB_PTHREAD $LIB_DL" \
+        SYMFILE="liblwsmloader.sym"
 
     mk_dlo \
         DLO="executable" \

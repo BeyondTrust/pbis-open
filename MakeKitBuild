@@ -1,7 +1,18 @@
-MODULES="core compiler autotools moonunit pkg-config likewise dceidl"
+PROJECT_NAME="platform"
+MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 SUBDIRS=". libuuid lwbase lwmsg lwreg pstore lwadvapi netlogon \
          lwio libschannel dcerpc lwdns centutils lwsm eventlog lsass \
          srvsvc lwnetapi lwtools domainjoin config package"
+
+defaults()
+{
+    MK_PREFIX="/opt/likewise"
+    MK_SYSCONFDIR="/etc/likewise"
+    MK_LOCALSTATEDIR="/var"
+    MK_DATADIR="/opt/likewise/share"
+    MK_DOCDIR="/opt/likewise/share/doc"
+    MK_MANDIR="/usr/share/man"
+}
 
 lw_use_bundled()
 {
@@ -37,8 +48,6 @@ configure()
     mk_export LW_VENDOR="likewise"
     mk_export LW_PRODUCT="platform"
     mk_export LW_VERSION="6.1.0"
-
-    MK_MSG_DOMAIN="$LW_PRODUCT"
     
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
@@ -230,7 +239,7 @@ configure_openssl()
     
     mk_cd_or_fail "$2"
 
-    mk_msg "begin openssl ($MK_SYSTEM)"
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
 
     if [ -n "$host_string" ]
     then

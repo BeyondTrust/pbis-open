@@ -15,4 +15,7 @@ configure()
     mk_check_header \
         HEADERDEPS="sys/socket.h sys/types.h" \
         HEADER=net/if.h
+
+    mk_check_libraries \
+        socket
 }

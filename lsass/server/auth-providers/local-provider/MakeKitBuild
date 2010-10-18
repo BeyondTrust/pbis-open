@@ -22,5 +22,6 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS=". ../../include ../../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h openssl/md4.h" \
-	LIBDEPS="lsacommon lsaserverapi dsapi"
+	LIBDEPS="lsacommon lsaserverapi dsapi" \
+        SYMFILE="lp.sym"
 }

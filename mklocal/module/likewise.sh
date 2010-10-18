@@ -8,7 +8,6 @@ option()
     _default_configdir="${MK_DATADIR}/config"
 
     [ "${MK_LOCALSTATEDIR}" = "/var" ] && _default_cachedir="/var/lib/likewise"
-    [ "${MK_DATADIR}" = "/usr/share" ] && _default_configdir="${MK_DATADIR}/likewise/config"
 
     mk_option \
         OPTION=lw-tool-dir \
@@ -55,6 +54,7 @@ lw_define_feature_macros()
         solaris)
             mk_define _XOPEN_SOURCE 500
             mk_define __EXTENSIONS__
+            mk_define _POSIX_PTHREAD_SEMANTICS
             ;;
     esac
 }

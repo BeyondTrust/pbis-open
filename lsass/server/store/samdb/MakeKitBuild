@@ -26,5 +26,6 @@ make()
 	SOURCES="$SAMDB_SOURCES" \
 	INCLUDEDIRS=". ../include ../../include ../../../include" \
 	HEADERDEPS="sqlite3.h openssl/md4.h uuid/uuid.h lw/base.h lwio/lwio.h lwadvapi.h" \
-	LIBDEPS="uuid lwbase sqlite3 crypto dsapi"
+	LIBDEPS="uuid lwbase sqlite3 crypto dsapi" \
+        SYMFILE="samdb.sym"
 }

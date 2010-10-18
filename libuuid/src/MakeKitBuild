@@ -12,14 +12,11 @@ make()
         unpack.c \
         uuid_time.c"
 
-    for _isa in ${MK_HOST_ISAS}
-    do
-        mk_system "host/$_isa"
-
+    mk_multiarch_do
         mk_library \
             LIB="uuid" \
             SOURCES="$UUID_SOURCES" \
             INCLUDEDIRS=". ../include ../include/uuid" \
-            SYSTEM="host/$_isa"
-    done
+            LIBDEPS="$LIB_SOCKET"
+    mk_multiarch_done
 }

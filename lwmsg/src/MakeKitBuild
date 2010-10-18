@@ -52,7 +52,8 @@ make()
             SOURCES="$LWMSG_NOTHR_SOURCES" \
             INCLUDEDIRS="../include" \
             LIBDEPS="$LIB_ICONV $LIB_DL $LIB_XNET" \
-            HEADERDEPS="$LWMSG_HEADER_DEPS"
+            HEADERDEPS="$LWMSG_HEADER_DEPS" \
+            SYMFILE="liblwmsg_nothr.sym"
     mk_multiarch_done        
 
     mk_library \
@@ -63,5 +64,6 @@ make()
         SOURCES="$LWMSG_SOURCES" \
         INCLUDEDIRS="../include" \
         LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
-        HEADERDEPS="$LWMSG_HEADER_DEPS"
+        HEADERDEPS="$LWMSG_HEADER_DEPS" \
+        SYMFILE="liblwmsg.sym"
 }
