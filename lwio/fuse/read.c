@@ -58,6 +58,11 @@ LwIoFuseRead(
         (ULONG) length, /* Buffer size */
         &llByteOffset, /* File offset */
         NULL); /* Key */
+    if (status == STATUS_END_OF_FILE)
+    {
+        ioStatus.BytesTransferred = 0;
+        status = STATUS_SUCCESS;
+    }
     BAIL_ON_NT_STATUS(status);
     
     *pBytesRead = (int) ioStatus.BytesTransferred;
