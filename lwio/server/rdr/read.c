@@ -275,7 +275,7 @@ RdrFinishReadFile(
             }
         }
 
-        ulReadMax = pFile->pTree->pSession->pSocket->maxBufferSize - READ_DATA_OFFSET;
+        ulReadMax = pFile->pTree->pSession->pSocket->ulMaxTransactSize - READ_DATA_OFFSET;
         ulReadLength = ulReadMax;
 
         if (ulReadLength > UINT16_MAX)

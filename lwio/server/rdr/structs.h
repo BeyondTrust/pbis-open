@@ -36,6 +36,8 @@
 #define SECURITY_MODE_SIGNED_MESSAGES_SUPPORTED 0x4
 #define SECURITY_MODE_SIGNED_MESSAGES_REQUIRED 0x8
 
+#define RDR_OBJECT_PROTOCOL(pObject) (*(SMB_PROTOCOL_VERSION*)(pObject))
+
 typedef struct _RDR_OP_CONTEXT
 {
     PIRP pIrp;
@@ -58,14 +60,48 @@ typedef struct _RDR_OP_CONTEXT
             LONG64 llTotalBytesRead;
             USHORT usReadLen;
         } Read;
+        struct
+        {
+            USHORT usOpCount;
+            /* Protected by file mutex */
+            USHORT usComplete;
+            NTSTATUS Status;
+        } Read2;
+        struct
+        {
+            USHORT usIndex;
+            ULONG ulChunkOffset;
+            ULONG ulChunkLength;
+            ULONG ulDataLength;
+            NTSTATUS Status;
+        } Read2Chunk;
         struct 
         {
+            USHORT usOpIndex;
             LONG64 llByteOffset;
             LONG64 llTotalBytesWritten;
         } Write;
         struct
         {
-            struct _RDR_CCB* pFile;
+            USHORT usOpCount;
+            /* Protected by file mutex */
+            USHORT usComplete;
+            NTSTATUS Status;
+        } Write2;
+        struct
+        {
+            USHORT usIndex;
+            ULONG ulChunkLength;
+            ULONG ulDataLength;
+            NTSTATUS Status;
+        } Write2Chunk;
+        struct
+        {
+            union
+            {
+                struct _RDR_CCB* pFile;
+                struct _RDR_CCB2* pFile2;
+            };
             PWSTR pwszFilename;
         } Create;
         struct
@@ -73,7 +109,9 @@ typedef struct _RDR_OP_CONTEXT
             union
             {
                 struct _RDR_TREE* pTree;
+                struct _RDR_TREE2* pTree2;
                 struct _RDR_SESSION* pSession;
+                struct _RDR_SESSION2* pSession2;
                 struct _RDR_SOCKET* pSocket;
             };
             PWSTR pwszSharename;
@@ -84,6 +122,12 @@ typedef struct _RDR_OP_CONTEXT
             HANDLE hGssContext;
             struct _RDR_OP_CONTEXT* pContinue;
         } TreeConnect;
+        struct
+        {
+            PVOID pInformation;
+            ULONG ulLength;
+            unsigned bRestart:1;
+        } QueryDirectory;
     } State;
     USHORT usMid;
 } RDR_OP_CONTEXT, *PRDR_OP_CONTEXT;
@@ -102,6 +146,8 @@ typedef struct _RDR_SOCKET
     pthread_mutex_t mutex;
     RDR_SOCKET_STATE volatile state;
     NTSTATUS volatile error;
+    /* Protocol */
+    SMB_PROTOCOL_VERSION version;
     /* Reference count */
     LONG volatile refCount;
     /* Whether socket is linked to by parent (global socket table) */
@@ -112,7 +158,11 @@ typedef struct _RDR_SOCKET
     /* Canconical hostname for DNS resolution/GSS principal construction */
     PWSTR pwszCanonicalName;
     /* Max transmit buffer size */
-    ULONG maxBufferSize;
+    ULONG ulMaxTransactSize;
+    /* Max read size */
+    ULONG ulMaxReadSize;
+    /* Max write size */
+    ULONG ulMaxWriteSize;
     /* Maximum raw buffer size */
     ULONG maxRawSize;
     /* Socket session key from NEGOTIATE */
@@ -133,7 +183,6 @@ typedef struct _RDR_SOCKET
     USHORT usMaxSlots;
     USHORT usUsedSlots;
     BYTE ucSecurityMode;
-    unsigned bUseSignedMessagesIfSupported:1;
     unsigned bIgnoreServerSignatures:1;
     PBYTE pSessionKey;
     DWORD dwSessionKeyLength;
@@ -148,7 +197,7 @@ typedef struct _RDR_SOCKET
     LW_LIST_LINKS StateWaiters;
     /* Storage for dependent responses */
     SMB_HASH_TABLE *pResponseHash;
-    USHORT usNextMid;
+    ULONG64 ullNextMid;
     unsigned volatile bReadBlocked:1;
     unsigned volatile bWriteBlocked:1;
     unsigned volatile bEcho:1;
@@ -187,6 +236,27 @@ typedef struct _RDR_SESSION
     PRDR_OP_CONTEXT pLogoffContext;
 } RDR_SESSION, *PRDR_SESSION;
 
+typedef struct _RDR_SESSION2
+{
+    pthread_mutex_t mutex;
+    RDR_SESSION_STATE volatile state;
+    NTSTATUS volatile error;
+    LONG volatile refCount;
+    /* Whether session is linked to by parent (socket) */
+    BOOLEAN volatile bParentLink;
+    /* Back pointer to parent socket */
+    RDR_SOCKET *pSocket;
+    ULONG64 ullSessionId;
+    struct _RDR_SESSION_KEY key;
+    SMB_HASH_TABLE *pTreeHashByPath;
+    SMB_HASH_TABLE *pTreeHashById;
+    PBYTE pSessionKey;
+    DWORD dwSessionKeyLength;
+    PLW_TASK pTimeout;
+    LW_LIST_LINKS StateWaiters;
+    PRDR_OP_CONTEXT pLogoffContext;
+} RDR_SESSION2, *PRDR_SESSION2;
+
 typedef enum _RDR_TREE_STATE
 {
     RDR_TREE_STATE_NOT_READY,
@@ -197,6 +267,7 @@ typedef enum _RDR_TREE_STATE
 
 typedef struct _RDR_TREE
 {
+    SMB_PROTOCOL_VERSION version;
     pthread_mutex_t mutex;
     RDR_TREE_STATE volatile state;
     NTSTATUS volatile error;
@@ -212,6 +283,24 @@ typedef struct _RDR_TREE
     PRDR_OP_CONTEXT pDisconnectContext;
 } RDR_TREE, *PRDR_TREE;
 
+typedef struct _RDR_TREE2
+{
+    SMB_PROTOCOL_VERSION version;
+    pthread_mutex_t mutex;
+    RDR_TREE_STATE volatile state;
+    NTSTATUS volatile error;
+    LONG volatile refCount;
+    /* Whether tree is linked to by parent (session) */
+    BOOLEAN volatile bParentLink;
+    /* Back pointer to parent session */
+    RDR_SESSION2 *pSession;
+    ULONG ulTid;
+    PWSTR pwszPath;
+    PLW_TASK pTimeout;
+    LW_LIST_LINKS StateWaiters;
+    PRDR_OP_CONTEXT pDisconnectContext;
+} RDR_TREE2, *PRDR_TREE2;
+
 typedef struct
 {
     USHORT mid;          
@@ -220,6 +309,7 @@ typedef struct
 
 typedef struct _RDR_CCB
 {
+    SMB_PROTOCOL_VERSION version;
     pthread_mutex_t mutex;
     unsigned bMutexInitialized:1;
     PWSTR pwszPath;
@@ -246,13 +336,41 @@ typedef struct _RDR_CCB
     } Params;
 } RDR_CCB, *PRDR_CCB;
 
+typedef struct _RDR_SMB2_FID
+{
+    ULONG64 ullPersistentId;
+    ULONG64 ullVolatileId;
+} __attribute__((__packed__))
+RDR_SMB2_FID, *PRDR_SMB2_FID;
+
+typedef struct _RDR_CCB2
+{
+    SMB_PROTOCOL_VERSION version;
+    pthread_mutex_t mutex;
+    unsigned bMutexInitialized:1;
+    PWSTR pwszPath;
+    PRDR_TREE2 pTree;
+    RDR_SMB2_FID Fid;
+    LONG64 llOffset;
+    struct
+    {
+        PSMB_PACKET pPacket;
+        PBYTE pCursor;
+        ULONG ulRemaining;
+        unsigned bInProgress:1;
+    } Enum;
+} RDR_CCB2, *PRDR_CCB2;
+
 typedef struct _RDR_CONFIG
 {
-    BOOLEAN bSignMessagesIfSupported;
+    BOOLEAN bSigningEnabled;
+    BOOLEAN bSigningRequired;
+    USHORT usIdleTimeout;
     USHORT usResponseTimeout;
     USHORT usEchoTimeout;
     USHORT usEchoInterval;
     USHORT usConnectTimeout;
+    USHORT usMinCreditReserve;
 } RDR_CONFIG, *PRDR_CONFIG;
 
 typedef struct _RDR_GLOBAL_RUNTIME

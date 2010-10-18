@@ -120,6 +120,19 @@ RdrSocketHashSessionByUID(
     );
 
 static
+size_t
+RdrSocketHashSession2ById(
+    PCVOID vp
+    );
+
+static
+int
+RdrSocketHashSession2CompareById(
+    PCVOID vp1,
+    PCVOID vp2
+    );
+
+static
 int
 RdrSocketHashSessionCompareByKey(
     PCVOID vp1,
@@ -151,7 +164,7 @@ RdrSocketTask(
 
 static
 NTSTATUS
-RdrSocketFindAndSignalResponse(
+RdrSocketDispatchPacket(
     PRDR_SOCKET pSocket,
     PSMB_PACKET pPacket
     );
@@ -183,11 +196,38 @@ RdrTransceiveEcho(
     );
 
 static
+NTSTATUS
+RdrTransceiveEcho2(
+    PRDR_OP_CONTEXT pContext,
+    PRDR_SOCKET pSocket
+    );
+
+static
 BOOLEAN
 RdrEchoComplete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pData
+    );
+
+static
+NTSTATUS
+RdrSocketDispatchPacket1(
+    PRDR_SOCKET pSocket,
+    PSMB_PACKET pPacket
+    );
+
+static
+NTSTATUS
+RdrSocketDispatchPacket2(
+    PRDR_SOCKET pSocket,
+    PSMB_PACKET pPacket
+    );
+
+static
+USHORT
+RdrSocketCreditsNeeded(
+    PRDR_SOCKET pSocket
     );
 
 static
@@ -222,7 +262,6 @@ RdrSocketHashResponse(
 NTSTATUS
 RdrSocketCreate(
     IN PCWSTR pwszHostname,
-    IN BOOLEAN bUseSignedMessagesIfSupported,
     OUT PRDR_SOCKET* ppSocket
     )
 {
@@ -240,11 +279,11 @@ RdrSocketCreate(
     LwListInit(&pSocket->PendingSend);
     LwListInit(&pSocket->StateWaiters);
 
-    pSocket->bUseSignedMessagesIfSupported = bUseSignedMessagesIfSupported;
-
     pthread_mutex_init(&pSocket->mutex, NULL);
     bDestroyMutex = TRUE;
 
+    /* Assume SMBv1 to start */
+    pSocket->version = SMB_PROTOCOL_VERSION_1;
     pSocket->refCount = 1;
     pSocket->fd = -1;
 
@@ -267,7 +306,7 @@ RdrSocketCreate(
 
     pSocket->pwszCanonicalName = pwszCanonicalName;
 
-    pSocket->maxBufferSize = 0;
+    pSocket->ulMaxTransactSize = 0;
     pSocket->maxRawSize = 0;
     pSocket->sessionKey = 0;
     pSocket->capabilities = 0;
@@ -282,14 +321,6 @@ RdrSocketCreate(
                     RdrSocketHashSessionByKey,
                     NULL,
                     &pSocket->pSessionHashByPrincipal);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = SMBHashCreate(
-                    19,
-                    RdrSocketHashSessionCompareByUID,
-                    RdrSocketHashSessionByUID,
-                    NULL,
-                    &pSocket->pSessionHashByUID);
     BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = SMBHashCreate(
@@ -338,6 +369,56 @@ error:
     goto cleanup;
 }
 
+NTSTATUS
+RdrSocketSetProtocol(
+    PRDR_SOCKET pSocket,
+    SMB_PROTOCOL_VERSION version
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    switch (version)
+    {
+    case SMB_PROTOCOL_VERSION_1:
+        status = SMBHashCreate(
+            19,
+            RdrSocketHashSessionCompareByUID,
+            RdrSocketHashSessionByUID,
+            NULL,
+            &pSocket->pSessionHashByUID);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    case SMB_PROTOCOL_VERSION_2:
+        status = SMBHashCreate(
+            19,
+            RdrSocketHashSession2CompareById,
+            RdrSocketHashSession2ById,
+            NULL,
+            &pSocket->pSessionHashByUID);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    pSocket->version = version;
+
+error:
+
+    return status;
+}
+
+
+static
+size_t
+RdrSocketHashSessionByUID(
+    PCVOID vp
+    )
+{
+   return *((uint16_t *) vp);
+}
+
 static
 int
 RdrSocketHashSessionCompareByUID(
@@ -362,12 +443,35 @@ RdrSocketHashSessionCompareByUID(
 
 static
 size_t
-RdrSocketHashSessionByUID(
+RdrSocketHashSession2ById(
     PCVOID vp
     )
 {
-   return *((uint16_t *) vp);
+   return (size_t) *(PULONG64) vp;
 }
+
+static
+int
+RdrSocketHashSession2CompareById(
+    PCVOID vp1,
+    PCVOID vp2
+    )
+{
+    ULONG64 id1 = *(PULONG64) vp1;
+    ULONG64 id2 = *(PULONG64) vp2;
+
+    if (id1 == id2)
+    {
+        return 0;
+    }
+    else if (id1 > id2)
+    {
+        return 1;
+    }
+
+    return -1;
+}
+
 
 static
 int
@@ -411,7 +515,7 @@ RdrSocketIsSignatureRequired(
        is meaningless and probably the result of an implementation quirk. */
     if (pSocket->state == RDR_SOCKET_STATE_READY &&
         (pSocket->ucSecurityMode & SECURITY_MODE_SIGNED_MESSAGES_REQUIRED ||
-         (pSocket->ucSecurityMode & SECURITY_MODE_SIGNED_MESSAGES_SUPPORTED && pSocket->bUseSignedMessagesIfSupported)))
+         (pSocket->ucSecurityMode & SECURITY_MODE_SIGNED_MESSAGES_SUPPORTED && gRdrRuntime.config.bSigningEnabled)))
     {
         bIsRequired = TRUE;
     }
@@ -499,37 +603,83 @@ RdrSocketPrepareSend(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     BOOLEAN bIsSignatureRequired = FALSE;
+    ULONG64 ullSessionId = 0;
+    PRDR_SESSION2 pSession = NULL;
 
-    if (pPacket->allowSignature)
+    switch (pPacket->protocolVer)
     {
-        bIsSignatureRequired = RdrSocketIsSignatureRequired(pSocket);
+    case SMB_PROTOCOL_VERSION_1:
+        if (pPacket->allowSignature)
+        {
+            bIsSignatureRequired = RdrSocketIsSignatureRequired(pSocket);
+        }
+
+        if (bIsSignatureRequired)
+        {
+            pPacket->pSMBHeader->flags2 |= FLAG2_SECURITY_SIG;
+        }
+
+        SMBPacketHTOLSmbHeader(pPacket->pSMBHeader);
+
+        pPacket->haveSignature = bIsSignatureRequired;
+
+        if (pPacket->pSMBHeader->command != COM_NEGOTIATE)
+        {
+            pPacket->sequence = RdrSocketGetNextSequence_inlock(pSocket);
+        }
+
+        if (bIsSignatureRequired)
+        {
+            ntStatus = SMBPacketSign(
+                pPacket,
+                pPacket->sequence,
+                pSocket->pSessionKey,
+                pSocket->dwSessionKeyLength);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+        pSocket->usUsedSlots++;
+        break;
+    case SMB_PROTOCOL_VERSION_2:
+        ullSessionId = SMB_HTOL64(pPacket->pSMB2Header->ullSessionId);
+        if (pSocket->pSessionHashByUID && ullSessionId != 0)
+        {
+            ntStatus = SMBHashGetValue(
+                pSocket->pSessionHashByUID,
+                &ullSessionId,
+                OUT_PPVOID(&pSession));
+            if (ntStatus == STATUS_NOT_FOUND)
+            {
+                ntStatus = STATUS_SUCCESS;
+            }
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
+        /* Set credit request */
+        pPacket->pSMB2Header->usCredits = RdrSocketCreditsNeeded(pSocket);
+
+        if (pSession && RdrSmb2ShouldSignPacket(
+                pPacket,
+                pSocket->ucSecurityMode & RDR_SMB2_SECMODE_SIGNING_ENABLED,
+                pSocket->ucSecurityMode & RDR_SMB2_SECMODE_SIGNING_REQUIRED,
+                gRdrRuntime.config.bSigningEnabled,
+                gRdrRuntime.config.bSigningRequired))
+        {
+            ntStatus = RdrSmb2Sign(
+                pPacket,
+                pSession->pSessionKey,
+                pSession->dwSessionKeyLength);
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+        /*
+         * FIXME: use 1 slot for each chained command.
+         * Even better, preallocate the slots
+         */
+        pSocket->usUsedSlots++;
+        break;
+    default:
+        break;
     }
 
-    if (bIsSignatureRequired)
-    {
-        pPacket->pSMBHeader->flags2 |= FLAG2_SECURITY_SIG;
-    }
-
-    SMBPacketHTOLSmbHeader(pPacket->pSMBHeader);
-
-    pPacket->haveSignature = bIsSignatureRequired;
-
-    if (pPacket->pSMBHeader->command != COM_NEGOTIATE)
-    {
-        pPacket->sequence = RdrSocketGetNextSequence_inlock(pSocket);
-    }
-
-    if (bIsSignatureRequired)
-    {
-        ntStatus = SMBPacketSign(
-                        pPacket,
-                        pPacket->sequence,
-                        pSocket->pSessionKey,
-                        pSocket->dwSessionKeyLength);
-        BAIL_ON_NT_STATUS(ntStatus);
-    }
-    
-    pSocket->usUsedSlots++;
     pSocket->pOutgoing = pPacket;
 
 cleanup:
@@ -572,10 +722,23 @@ RdrSocketTransceive(
     PSMB_PACKET pPacket = &pContext->Packet;
     USHORT usMid = 0;
 
-    status = RdrSocketAcquireMid(pSocket, &usMid);
-    BAIL_ON_NT_STATUS(status);
-
-    pPacket->pSMBHeader->mid = usMid;
+    switch(pPacket->protocolVer)
+    {
+    case SMB_PROTOCOL_VERSION_1:
+        status = RdrSocketAcquireMid(pSocket, &usMid);
+        BAIL_ON_NT_STATUS(status);
+        pPacket->pSMBHeader->mid = usMid;
+        break;
+    case SMB_PROTOCOL_VERSION_2:
+        status = RdrSocketAcquireMid(pSocket, &usMid);
+        BAIL_ON_NT_STATUS(status);
+        pPacket->pSMB2Header->ullCommandSequence = usMid;
+        break;
+    default:
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+        break;
+    }
 
     status = RdrResponseCreate(usMid, &pResponse);
     BAIL_ON_NT_STATUS(status);
@@ -663,20 +826,99 @@ RdrSocketReceiveAndUnmarshall(
 
     pPacket->pSMBHeader = (SMB_HEADER *) (pPacket->pRawBuffer + sizeof(NETBIOS_HEADER));
 
-    if (SMBIsAndXCommand(SMB_LTOH8(pPacket->pSMBHeader->command)))
+    switch (pPacket->pSMBHeader->smb[0])
     {
-        pPacket->pAndXHeader = (ANDX_HEADER *)
-            (pPacket->pRawBuffer + sizeof(SMB_HEADER) + sizeof(NETBIOS_HEADER));
+    case 0xFF:
+        if (pSocket->version == SMB_PROTOCOL_VERSION_2)
+        {
+            ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+        pPacket->protocolVer = SMB_PROTOCOL_VERSION_1;
+        if (SMBIsAndXCommand(SMB_LTOH8(pPacket->pSMBHeader->command)))
+        {
+            pPacket->pAndXHeader = (ANDX_HEADER *)
+                (pPacket->pRawBuffer + sizeof(SMB_HEADER) + sizeof(NETBIOS_HEADER));
+        }
+        pPacket->pParams = pPacket->pAndXHeader ?
+            (PBYTE) pPacket->pAndXHeader + sizeof(ANDX_HEADER) :
+            (PBYTE) pPacket->pSMBHeader + sizeof(SMB_HEADER);
+        pPacket->pData = NULL;
+        break;
+    case 0xFE:
+        pPacket->protocolVer = SMB_PROTOCOL_VERSION_2;
+        break;
+    default:
+        ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+        BAIL_ON_NT_STATUS(ntStatus);
     }
-
-    pPacket->pParams = pPacket->pAndXHeader ?
-        (PBYTE) pPacket->pAndXHeader + sizeof(ANDX_HEADER) :
-        (PBYTE) pPacket->pSMBHeader + sizeof(SMB_HEADER);
-    pPacket->pData = NULL;
 
 error:
 
     return ntStatus;
+}
+
+static
+ULONG
+RdrSocketReceivePacketSize(
+    PRDR_SOCKET pSocket
+    )
+{
+    ULONG ulSize = 0;
+
+    ulSize = pSocket->ulMaxTransactSize;
+
+    if (pSocket->ulMaxReadSize > ulSize)
+    {
+        ulSize = pSocket->ulMaxReadSize;
+    }
+
+    if (ulSize == 0)
+    {
+        ulSize = 1024 * 60;
+    }
+
+    ulSize += 1024 * 4;
+
+    return ulSize;
+}
+
+static
+USHORT
+RdrSocketCreditsNeeded(
+    PRDR_SOCKET pSocket
+    )
+{
+    PLW_LIST_LINKS pLink = NULL;
+    SHORT sCount = 0;
+
+    /* Count packets in the queue */
+    for (pLink = pSocket->PendingSend.Next; pLink != &pSocket->PendingSend; pLink = pLink->Next)
+    {
+        sCount++;
+    }
+
+    /*
+     * Try to keep a minimum number of credits available in reserve
+     * even if we don't have outstanding packets that need them yet.
+     */
+    if (sCount < gRdrRuntime.config.usMinCreditReserve)
+    {
+        sCount = gRdrRuntime.config.usMinCreditReserve;
+    }
+
+    /* Subtract credits we already have */
+    sCount -= (pSocket->usMaxSlots - pSocket->usUsedSlots);
+
+    if (sCount < 0)
+    {
+        sCount = 0;
+    }
+
+    /* Add credit for the packet we are about to send */
+    sCount++;
+
+    return (USHORT) sCount;
 }
 
 static
@@ -820,7 +1062,9 @@ RdrSocketTask(
     {
         if (!pSocket->pPacket)
         {
-            ntStatus = RdrAllocatePacket(1024*64, &pSocket->pPacket);
+            ntStatus = RdrAllocatePacket(
+                RdrSocketReceivePacketSize(pSocket),
+                &pSocket->pPacket);
             BAIL_ON_NT_STATUS(ntStatus);
         }
         
@@ -831,11 +1075,17 @@ RdrSocketTask(
             /* Reset timeout since we successfully received a response */
             *pllTime = 0;
 
+            /* Figure out if we need to switch into SMBv2 mode */
+            if (pSocket->pPacket->protocolVer == SMB_PROTOCOL_VERSION_2 &&
+                pSocket->version == SMB_PROTOCOL_VERSION_1)
+            {
+                pSocket->version = SMB_PROTOCOL_VERSION_2;
+            }
+
             /* This function should free packet and socket memory on error */
-            ntStatus = RdrSocketFindAndSignalResponse(pSocket, pSocket->pPacket);
-            BAIL_ON_NT_STATUS(ntStatus);
-            
+            ntStatus = RdrSocketDispatchPacket(pSocket, pSocket->pPacket);
             pSocket->pPacket = NULL;
+            BAIL_ON_NT_STATUS(ntStatus);
             
             *pWaitMask |= LW_TASK_EVENT_YIELD;
             break;
@@ -950,16 +1200,167 @@ error:
 
 static
 NTSTATUS
-RdrSocketFindAndSignalResponse(
+RdrSocketDispatchPacket(
+    PRDR_SOCKET pSocket,
+    PSMB_PACKET pPacket
+    )
+{
+    switch(pPacket->protocolVer)
+    {
+    case SMB_PROTOCOL_VERSION_1:
+        return RdrSocketDispatchPacket1(pSocket, pPacket);
+    case SMB_PROTOCOL_VERSION_2:
+        return RdrSocketDispatchPacket2(pSocket, pPacket);
+    default:
+        return STATUS_INTERNAL_ERROR;
+    }
+}
+
+static
+NTSTATUS
+RdrSocketDispatchPacket2(
+    PRDR_SOCKET pSocket,
+    PSMB_PACKET pPacket
+    )
+{
+    NTSTATUS status = 0;
+    PRDR_RESPONSE pResponse = NULL;
+    USHORT usMid = 0;
+    BOOLEAN bLocked = TRUE;
+    BOOLEAN bKeep = FALSE;
+    PRDR_SESSION2 pSession = NULL;
+    ULONG64 ullSessionId = 0;
+
+    /* Basic sanity check on header so we can read a few fields out of it */
+    if (pPacket->bufferUsed < sizeof(NETBIOS_HEADER) + sizeof(SMB2_HEADER))
+    {
+        status = STATUS_INVALID_NETWORK_RESPONSE;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    /*
+     * To verify the signature, we need to look up the session so we
+     * can grab the session key.
+     */
+    ullSessionId = SMB_HTOL64(pPacket->pSMB2Header->ullSessionId);
+    if (pSocket->pSessionHashByUID && ullSessionId != 0)
+    {
+         status = SMBHashGetValue(
+             pSocket->pSessionHashByUID,
+             &ullSessionId,
+             OUT_PPVOID(&pSession));
+         if (status == STATUS_NOT_FOUND)
+         {
+             status = STATUS_SUCCESS;
+         }
+         BAIL_ON_NT_STATUS(status);
+    }
+
+    status = RdrSmb2DecodeHeader(
+        pPacket,
+        RdrSmb2ShouldVerifyPacket(pPacket, gRdrRuntime.config.bSigningRequired),
+        pSession ? pSession->pSessionKey : NULL,
+        pSession ? pSession->dwSessionKeyLength : 0);
+    BAIL_ON_NT_STATUS(status);
+
+    /*
+     * Even if we end up discarding the packet, apply any credits now
+     */
+    pSocket->usMaxSlots += pPacket->pSMB2Header->usCredits - 1;
+
+    /* Response? */
+    if (pPacket->pSMB2Header->ulFlags & SMB2_FLAGS_SERVER_TO_REDIR)
+    {
+        /*
+         * Grab sequence number so we can look up associated request.
+         * Note that we only need the lower 16 bits to distinguish between
+         * outstanding requests.
+         */
+        usMid = (USHORT) pPacket->pSMB2Header->ullCommandSequence;
+
+        status = RdrSocketFindResponseByMid(
+            pSocket,
+            usMid,
+            &pResponse);
+
+        switch(status)
+        {
+        case STATUS_SUCCESS:
+            break;
+        case STATUS_NOT_FOUND:
+            status = STATUS_SUCCESS;
+            goto cleanup;
+        default:
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        SMBHashRemoveKey(pSocket->pResponseHash, &pResponse->mid);
+
+        assert(pResponse->pContext);
+
+        /*
+         * Make sure the response command was what we expected.
+         * FIXME: handle error response packets
+         */
+        if (SMB_HTOL16(pResponse->pContext->Packet.pSMB2Header->command) !=
+            pPacket->pSMB2Header->command)
+        {
+            status = STATUS_INVALID_NETWORK_RESPONSE;
+            BAIL_ON_NT_STATUS(status);
+        }
+
+        LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
+        bKeep = RdrContinueContext(pResponse->pContext, STATUS_SUCCESS, pPacket);
+        /* Ownership of packet was transferred to continuation */
+        pPacket = NULL;
+        LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
+
+        if (bKeep)
+        {
+            /* FIXME: we can't afford to fail here */
+            status = SMBHashSetValue(pSocket->pResponseHash, &pResponse->mid, pResponse);
+            BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            pSocket->usUsedSlots--;
+            RdrResponseFree(pResponse);
+        }
+    }
+    else
+    {
+        /* FIXME: handle echos, oplock breaks, etc. */
+        LWIO_LOG_DEBUG("Discarding non-response packet: %u", (unsigned int) pPacket->pSMB2Header->command);
+    }
+
+cleanup:
+
+    if (pPacket)
+    {
+        RdrFreePacket(pPacket);
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrSocketDispatchPacket1(
     PRDR_SOCKET pSocket,
     PSMB_PACKET pPacket
     )
 {
     NTSTATUS ntStatus = 0;
     PRDR_RESPONSE pResponse = NULL;
-    USHORT usMid = SMB_LTOH16(pPacket->pSMBHeader->mid);
+    USHORT usMid = 0;
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
+
+    usMid = SMB_HTOL16(pPacket->pSMBHeader->mid);
 
     ntStatus = RdrSocketFindResponseByMid(
                     pSocket,
@@ -970,38 +1371,50 @@ RdrSocketFindAndSignalResponse(
     case STATUS_SUCCESS:
         break;
     case STATUS_NOT_FOUND:
-        RdrFreePacket(pPacket);
         ntStatus = STATUS_SUCCESS;
         goto cleanup;
     default:
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    if (pResponse->pContext)
-    {
-        ntStatus = SMBPacketDecodeHeader(
-            pPacket,
-            (pResponse->pContext->Packet.haveSignature &&
-             !pSocket->bIgnoreServerSignatures &&
-             pSocket->pSessionKey != NULL),
+    assert(pResponse->pContext);
+
+    SMBHashRemoveKey(pSocket->pResponseHash, &pResponse->mid);
+
+    ntStatus = SMBPacketDecodeHeader(
+        pPacket,
+        (pResponse->pContext->Packet.haveSignature &&
+            !pSocket->bIgnoreServerSignatures &&
+            pSocket->pSessionKey != NULL),
             pResponse->pContext->Packet.sequence + 1,
             pSocket->pSessionKey,
             pSocket->dwSessionKeyLength);
-        BAIL_ON_NT_STATUS(ntStatus);
-        
-        LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
-        bKeep = RdrContinueContext(pResponse->pContext, STATUS_SUCCESS, pPacket);
-        LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
+    BAIL_ON_NT_STATUS(ntStatus);
 
-        if (!bKeep)
-        {
-            pSocket->usUsedSlots--;
-            SMBHashRemoveKey(pSocket->pResponseHash, &pResponse->mid);
-            RdrResponseFree(pResponse);
-        }
+    LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
+    bKeep = RdrContinueContext(pResponse->pContext, STATUS_SUCCESS, pPacket);
+    /* Ownership of packet was transferred to continuation */
+    pPacket = NULL;
+    LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
+
+    if (bKeep)
+    {
+        /* FIXME: we can't afford to fail here */
+        ntStatus = SMBHashSetValue(pSocket->pResponseHash, &pResponse->mid, pResponse);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        pSocket->usUsedSlots--;
+        RdrResponseFree(pResponse);
     }
 
 cleanup:
+
+    if (pPacket)
+    {
+        RdrFreePacket(pPacket);
+    }
 
     return ntStatus;
 
@@ -1065,7 +1478,7 @@ RdrSocketTimeout(
     else if (WakeMask & LW_TASK_EVENT_INIT)
     {
         *pWaitMask = LW_TASK_EVENT_TIME;
-        *pllTime = RDR_IDLE_TIMEOUT * 1000000000ll;
+        *pllTime = gRdrRuntime.config.usIdleTimeout * 1000000000ll;
     }
 
     if ((WakeMask & LW_TASK_EVENT_TIME) ||
@@ -1082,7 +1495,7 @@ RdrSocketTimeout(
         else
         {
             *pWaitMask = LW_TASK_EVENT_TIME;
-            *pllTime = RDR_IDLE_TIMEOUT * 1000000000ll;
+            *pllTime = gRdrRuntime.config.usIdleTimeout * 1000000000ll;
         }
 
         LWIO_UNLOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
@@ -1518,7 +1931,7 @@ RdrSocketAcquireMid(
 
     do
     {
-        *pusMid = pSocket->usNextMid++;
+        *pusMid = pSocket->ullNextMid++;
     } while (RdrSocketFindResponseByMid(pSocket, *pusMid, NULL) == STATUS_SUCCESS);
 
 error:
@@ -1589,7 +2002,6 @@ RdrSocketFindOrCreate(
     {
         ntStatus = RdrSocketCreate(
             pwszHostname,
-            gRdrRuntime.config.bSignMessagesIfSupported,
             &pSocket);
         BAIL_ON_NT_STATUS(ntStatus);
         
@@ -1633,6 +2045,36 @@ RdrSocketAddSessionByUID(
     ntStatus = SMBHashSetValue(
                     pSocket->pSessionHashByUID,
                     &pSession->uid,
+                    pSession);
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    pSession->bParentLink = TRUE;
+
+cleanup:
+
+    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    return ntStatus;
+
+error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RdrSocketAddSession2ById(
+    PRDR_SOCKET  pSocket,
+    PRDR_SESSION2 pSession
+    )
+{
+    NTSTATUS ntStatus = 0;
+    BOOLEAN bInLock = FALSE;
+
+    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    ntStatus = SMBHashSetValue(
+                    pSocket->pSessionHashByUID,
+                    &pSession->ullSessionId,
                     pSession);
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -1706,8 +2148,21 @@ RdrEcho(
     pContext->Continue = RdrEchoComplete;
     pContext->State.Echo.pSocket = pSocket;
 
-    status = RdrTransceiveEcho(pContext, pSocket, pszMessage);
-    BAIL_ON_NT_STATUS(status);
+    switch (pSocket->version)
+    {
+    case SMB_PROTOCOL_VERSION_1:
+        status = RdrTransceiveEcho(pContext, pSocket, pszMessage);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    case SMB_PROTOCOL_VERSION_2:
+        status = RdrTransceiveEcho2(pContext, pSocket);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        status = STATUS_INTERNAL_ERROR;
+        BAIL_ON_NT_STATUS(status);
+        break;
+    }
 
 cleanup:
 
@@ -1788,6 +2243,55 @@ cleanup:
     return status;
 
 error:
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrTransceiveEcho2(
+    PRDR_OP_CONTEXT pContext,
+    PRDR_SOCKET pSocket
+    )
+{
+    NTSTATUS status = 0;
+    PBYTE pCursor = NULL;
+    ULONG ulRemaining = 0;
+
+    status = RdrAllocateContextPacket(pContext, RDR_SMB2_STUB_SIZE);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSmb2BeginPacket(&pContext->Packet);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSmb2EncodeHeader(
+        &pContext->Packet,
+        COM2_ECHO,
+        0, /* flags */
+        gRdrRuntime.SysPid,
+        0, /* tid */
+        0, /* session id */
+        &pCursor,
+        &ulRemaining);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSmb2EncodeStubRequest(
+        &pContext->Packet,
+        &pCursor,
+        &ulRemaining);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSmb2FinishCommand(&pContext->Packet, &pCursor, &ulRemaining);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSocketTransceive(pSocket, pContext);
+    BAIL_ON_NT_STATUS(status);
+
+ cleanup:
+
+    return status;
+
+ error:
 
     goto cleanup;
 }

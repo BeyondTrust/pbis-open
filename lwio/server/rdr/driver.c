@@ -54,6 +54,12 @@ static IO_DEVICE_HANDLE gDeviceHandle = NULL;
 
 static
 NTSTATUS
+RdrReadConfig(
+    PRDR_CONFIG pConfig
+    );
+
+static
+NTSTATUS
 RdrInitialize(
     VOID
     );
@@ -80,97 +86,157 @@ RdrDriverShutdown(
 
 static
 NTSTATUS
+RdrDriverDispatch1(
+    IN IO_DEVICE_HANDLE DeviceHandle,
+    IN PIRP pIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    switch (pIrp->Type)
+    {
+    case IRP_TYPE_CLOSE:
+        status = RdrClose(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_READ:
+        status = RdrRead(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_WRITE:
+        status = RdrWrite(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_DEVICE_IO_CONTROL:
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    case IRP_TYPE_FS_CONTROL:
+        status = RdrFsctl(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_FLUSH_BUFFERS:
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    case IRP_TYPE_QUERY_INFORMATION:
+        status = RdrQueryInformation(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_DIRECTORY:
+        status = RdrQueryDirectory(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_VOLUME_INFORMATION:
+        status = RdrQueryVolumeInformation(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_SET_INFORMATION:
+        status = RdrSetInformation(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_SECURITY:
+        status = RdrQuerySecurity(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_SET_SECURITY:
+        status =  RdrSetSecurity(DeviceHandle, pIrp);
+        break;
+    default:
+        status = STATUS_UNSUCCESSFUL;
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        pIrp->IoStatusBlock.Status = status;
+    }
+
+    return status;
+}
+
+static
+NTSTATUS
+RdrDriverDispatch2(
+    IN IO_DEVICE_HANDLE DeviceHandle,
+    IN PIRP pIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    switch (pIrp->Type)
+    {
+    case IRP_TYPE_CLOSE:
+        status = RdrClose2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_READ:
+        status = RdrRead2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_WRITE:
+        status = RdrWrite2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_DEVICE_IO_CONTROL:
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    case IRP_TYPE_FS_CONTROL:
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    case IRP_TYPE_FLUSH_BUFFERS:
+        status = STATUS_NOT_IMPLEMENTED;
+        break;
+    case IRP_TYPE_QUERY_INFORMATION:
+        status = RdrQueryInformation2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_DIRECTORY:
+        status = RdrQueryDirectory2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_VOLUME_INFORMATION:
+        status = RdrQueryVolumeInformation2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_SET_INFORMATION:
+        status = RdrSetInformation2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_QUERY_SECURITY:
+        status = RdrQuerySecurity2(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_SET_SECURITY:
+        status = RdrSetSecurity2(DeviceHandle, pIrp);
+        break;
+    default:
+        status = STATUS_UNSUCCESSFUL;
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        pIrp->IoStatusBlock.Status = status;
+    }
+
+    return status;
+}
+
+static
+NTSTATUS
 RdrDriverDispatch(
     IN IO_DEVICE_HANDLE DeviceHandle,
     IN PIRP pIrp
     )
 {
     NTSTATUS ntStatus = 0;
+    PVOID pFile = IoFileGetContext(pIrp->FileHandle);
+
+    if (pFile)
+    {
+        switch(RDR_OBJECT_PROTOCOL(pFile))
+        {
+        case SMB_PROTOCOL_VERSION_1:
+            return RdrDriverDispatch1(DeviceHandle, pIrp);
+        case SMB_PROTOCOL_VERSION_2:
+            return RdrDriverDispatch2(DeviceHandle, pIrp);
+        default:
+            ntStatus = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+    }
     
     switch (pIrp->Type)
     {
     case IRP_TYPE_CREATE:
-        ntStatus = RdrCreate(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-        
-    case IRP_TYPE_CLOSE:
-        ntStatus = RdrClose(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-        
-        
-    case IRP_TYPE_READ:
-        ntStatus = RdrRead(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-        
-    case IRP_TYPE_WRITE:
-        ntStatus = RdrWrite(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-        
-    case IRP_TYPE_DEVICE_IO_CONTROL:
-        ntStatus = STATUS_NOT_IMPLEMENTED;
-        break;
-        
-    case IRP_TYPE_FS_CONTROL:
-        ntStatus = RdrFsctl(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-
-    case IRP_TYPE_FLUSH_BUFFERS:
-        ntStatus = STATUS_NOT_IMPLEMENTED;
-        break;
-
-    case IRP_TYPE_QUERY_INFORMATION:
-        ntStatus = RdrQueryInformation(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-    case IRP_TYPE_QUERY_DIRECTORY:
-        ntStatus = RdrQueryDirectory(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-    case IRP_TYPE_QUERY_VOLUME_INFORMATION:
-        ntStatus = RdrQueryVolumeInformation(
-            DeviceHandle,
-            pIrp);
-        break;
-    case IRP_TYPE_SET_INFORMATION:
-        ntStatus = RdrSetInformation(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-    case IRP_TYPE_QUERY_SECURITY:
-        ntStatus = RdrQuerySecurity(
-            DeviceHandle,
-            pIrp
-            );
-        break;
-    case IRP_TYPE_SET_SECURITY:
-        ntStatus =  RdrSetSecurity(
-            DeviceHandle,
-            pIrp);
+        ntStatus = RdrCreate(DeviceHandle, pIrp);
         break;
     default:
-        ntStatus = STATUS_UNSUCCESSFUL;
+        ntStatus = STATUS_INTERNAL_ERROR;
     }
     
+error:
+
     return ntStatus;
 }
 
@@ -219,7 +285,7 @@ RdrInitialize(
     VOID
     )
 {
-    NTSTATUS ntStatus = 0;
+    NTSTATUS status = 0;
     PLW_THREAD_POOL_ATTRIBUTES pAttrs = NULL;
 
     memset(&gRdrRuntime, 0, sizeof(gRdrRuntime));
@@ -228,49 +294,57 @@ RdrInitialize(
     gRdrRuntime.bLockConstructed = TRUE;
 
     /* Pid used for SMB Header */
-
     gRdrRuntime.SysPid = getpid();
+
+    /* Default config values */
+    gRdrRuntime.config.bSigningEnabled = TRUE;
+    gRdrRuntime.config.bSigningRequired = FALSE;
+    gRdrRuntime.config.usIdleTimeout = RDR_IDLE_TIMEOUT;
     gRdrRuntime.config.usResponseTimeout = RDR_RESPONSE_TIMEOUT;
     gRdrRuntime.config.usEchoTimeout = RDR_ECHO_TIMEOUT;
     gRdrRuntime.config.usEchoInterval = RDR_ECHO_INTERVAL;
     gRdrRuntime.config.usConnectTimeout = RDR_CONNECT_TIMEOUT;
+    gRdrRuntime.config.usMinCreditReserve = RDR_MIN_CREDIT_RESERVE;
     
-    ntStatus = SMBHashCreate(
+    status = RdrReadConfig(&gRdrRuntime.config);
+    BAIL_ON_NT_STATUS(status);
+
+    status = SMBHashCreate(
                     19,
                     SMBHashCaselessWc16StringCompare,
                     SMBHashCaselessWc16String,
                     NULL,
                     &gRdrRuntime.pSocketHashByName);
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateThreadPoolAttributes(&pAttrs);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateThreadPoolAttributes(&pAttrs);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateThreadPool(&gRdrRuntime.pThreadPool, pAttrs);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateThreadPool(&gRdrRuntime.pThreadPool, pAttrs);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSocketTaskGroup);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSocketTaskGroup);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSocketTimerGroup);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSocketTimerGroup);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSessionTimerGroup);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pSessionTimerGroup);
+    BAIL_ON_NT_STATUS(status);
 
-    ntStatus = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pTreeTimerGroup);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCreateTaskGroup(gRdrRuntime.pThreadPool, &gRdrRuntime.pTreeTimerGroup);
+    BAIL_ON_NT_STATUS(status);
 
 error:
 
     LwRtlFreeThreadPoolAttributes(&pAttrs);
 
-    if (ntStatus)
+    if (status)
     {
         RdrShutdown();
     }
 
-    return ntStatus;
+    return status;
 }
 
 static
@@ -279,7 +353,7 @@ RdrShutdown(
     VOID
     )
 {
-    NTSTATUS ntStatus = STATUS_SUCCESS;
+    NTSTATUS status = STATUS_SUCCESS;
 
     /* We need to run down all cached tress/session/sockets sitting around.
      * Set the global shutdown flag, then notify and wait for each task group
@@ -331,7 +405,7 @@ RdrShutdown(
         gRdrRuntime.bLockConstructed = FALSE;
     }
 
-    return ntStatus;
+    return status;
 }
 
 NTSTATUS
@@ -357,6 +431,33 @@ error:
     return status;
 }
 
+NTSTATUS
+RdrCreateContextArray(
+    PIRP pIrp,
+    ULONG ulCount,
+    PRDR_OP_CONTEXT* ppContexts
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_OP_CONTEXT pContexts = NULL;
+    ULONG ulIndex = 0;
+
+    status = LW_RTL_ALLOCATE_ARRAY_AUTO(&pContexts, ulCount);
+    BAIL_ON_NT_STATUS(status);
+
+    for (ulIndex = 0; ulIndex < ulCount; ulIndex++)
+    {
+        LwListInit(&pContexts[ulIndex].Link);
+        pContexts[ulIndex].pIrp = pIrp;
+    }
+
+    *ppContexts = pContexts;
+
+error:
+
+    return status;
+}
+
 VOID
 RdrFreeContext(
     PRDR_OP_CONTEXT pContext
@@ -364,8 +465,27 @@ RdrFreeContext(
 {
     if (pContext)
     {
-        RTL_FREE(&pContext->Packet.pRawBuffer);        
+        RTL_FREE(&pContext->Packet.pRawBuffer);
         RTL_FREE(&pContext);
+    }
+}
+
+VOID
+RdrFreeContextArray(
+    PRDR_OP_CONTEXT pContexts,
+    ULONG ulCount
+    )
+{
+    ULONG ulIndex = 0;
+
+    if (pContexts)
+    {
+        for (ulIndex = 0; ulIndex < ulCount; ulIndex++)
+        {
+            RTL_FREE(&pContexts[ulIndex].Packet.pRawBuffer);
+        }
+
+        RTL_FREE(&pContexts);
     }
 }
 
@@ -695,6 +815,122 @@ RdrSetShutdown(
     LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
     gRdrRuntime.bShutdown = TRUE;
     LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+}
+
+static
+NTSTATUS
+RdrReadConfig(
+    PRDR_CONFIG pConfig
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PLWIO_CONFIG_REG pReg = NULL;
+    BOOLEAN bUsePolicy = TRUE;
+    DWORD dwValue = 0;
+
+    status = LwIoOpenConfig(
+        "Services\\lwio\\Parameters\\Drivers\\rdr",
+        "Policy\\Services\\lwio\\Parameters\\Drivers\\rdr",
+        &pReg);
+    if (status)
+    {
+        LWIO_LOG_ERROR("Failed to access device configuration [error code: %u]",
+                       status);
+
+        status = STATUS_DEVICE_CONFIGURATION_ERROR;
+    }
+    BAIL_ON_NT_STATUS(status);
+
+    LwIoReadConfigBoolean(
+        pReg,
+        "SigningEnabled",
+        bUsePolicy,
+        &pConfig->bSigningEnabled);
+
+    LwIoReadConfigBoolean(
+        pReg,
+        "SigningRequired",
+        bUsePolicy,
+        &pConfig->bSigningRequired);
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "IdleTimeout",
+        bUsePolicy,
+        1,
+        300,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usIdleTimeout = (USHORT) dwValue;
+    }
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "ResponseTimeout",
+        bUsePolicy,
+        10,
+        900,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usResponseTimeout = (USHORT) dwValue;
+    }
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "EchoTimeout",
+        bUsePolicy,
+        5,
+        900,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usEchoTimeout = (USHORT) dwValue;
+    }
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "EchoInterval",
+        bUsePolicy,
+        30,
+        1800,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usEchoInterval = (USHORT) dwValue;
+    }
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "ConnectTimeout",
+        bUsePolicy,
+        5,
+        900,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usConnectTimeout = (USHORT) dwValue;
+    }
+
+    if (LwIoReadConfigDword(
+        pReg,
+        "MinCreditReserve",
+        bUsePolicy,
+        1,
+        100,
+        &dwValue) == STATUS_SUCCESS)
+    {
+        pConfig->usMinCreditReserve = (USHORT) dwValue;
+    }
+
+cleanup:
+
+    if (pReg)
+    {
+        LwIoCloseConfig(pReg);
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
 }
 
 /*

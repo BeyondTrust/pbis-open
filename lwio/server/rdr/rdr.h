@@ -54,6 +54,8 @@
 #include "lwiosys.h"
 
 #include <openssl/md5.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 
 #include <lw/base.h>
 #include <lwio/lwio.h>
@@ -75,15 +77,19 @@
 #include "structs.h"
 #include "socket.h"
 #include "tree.h"
+#include "tree2.h"
 #include "session.h"
+#include "session2.h"
 #include "connect.h"
 #include "externs.h"
+#include "smb2.h"
 
 #define RDR_CONNECT_TIMEOUT 10
 #define RDR_IDLE_TIMEOUT 10
 #define RDR_ECHO_TIMEOUT 10
 #define RDR_RESPONSE_TIMEOUT 20
 #define RDR_ECHO_INTERVAL 300
+#define RDR_MIN_CREDIT_RESERVE 10
 #define RDR_NS_IN_S (1000000000ll)
 
 NTSTATUS
@@ -92,11 +98,23 @@ RdrCreateContext(
     PRDR_OP_CONTEXT* ppContext
     );
 
+NTSTATUS
+RdrCreateContextArray(
+    PIRP pIrp,
+    ULONG ulCount,
+    PRDR_OP_CONTEXT* ppContexts
+    );
+
 VOID
 RdrFreeContext(
     PRDR_OP_CONTEXT pContext
     );
 
+VOID
+RdrFreeContextArray(
+    PRDR_OP_CONTEXT pContexts,
+    ULONG ulCount
+    );
 
 BOOLEAN
 RdrContinueContext(
@@ -168,9 +186,20 @@ RdrWrite(
     PIRP pIrp
     );
 
+NTSTATUS
+RdrWrite2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
 
 NTSTATUS
 RdrRead(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrRead2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );
@@ -182,7 +211,19 @@ RdrClose(
     );
 
 NTSTATUS
+RdrClose2(
+    IO_DEVICE_HANDLE DeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
 RdrQueryInformation(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrQueryInformation2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );
@@ -194,7 +235,19 @@ RdrQuerySecurity(
     );
 
 NTSTATUS
+RdrQuerySecurity2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
 RdrQueryDirectory(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrQueryDirectory2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );
@@ -206,13 +259,31 @@ RdrQueryVolumeInformation(
     );
 
 NTSTATUS
+RdrQueryVolumeInformation2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
 RdrSetInformation(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );
 
 NTSTATUS
+RdrSetInformation2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
 RdrSetSecurity(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrSetSecurity2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     );
@@ -235,6 +306,11 @@ RdrReleaseFile(
     PRDR_CCB pFile
     );
 
+void
+RdrReleaseFile2(
+    PRDR_CCB2 pFile
+    );
+
 NTSTATUS
 RdrConvertPath(
     PCWSTR pwszIoPath,
@@ -251,6 +327,42 @@ RdrIsShutdownSet(
 VOID
 RdrSetShutdown(
     VOID
+    );
+
+BOOLEAN
+RdrProcessNegotiateResponse2(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+BOOLEAN
+RdrNegotiateComplete2(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+VOID
+RdrFreeTreeConnectContext(
+    PRDR_OP_CONTEXT pContext
+    );
+
+BOOLEAN
+RdrCreateTreeConnected2(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+NTSTATUS
+RdrUnmarshalQueryFileInfoReply(
+    ULONG ulInfoLevel,
+    PBYTE pData,
+    USHORT usDataCount,
+    PVOID pInfo,
+    ULONG ulInfoLength,
+    PULONG pulInfoLengthUsed
     );
 
 #endif /* __RDR_H__ */

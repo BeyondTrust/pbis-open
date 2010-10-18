@@ -140,7 +140,7 @@ RdrCreateTreeConnected(
     PVOID pParam
     )
 {
-    PRDR_TREE pTree = pParam;
+    PRDR_TREE pTree = NULL;
     PIRP pIrp = pContext->pIrp;
     ACCESS_MASK DesiredAccess = pIrp->Args.Create.DesiredAccess;
     LONG64 AllocationSize = pIrp->Args.Create.AllocationSize;
@@ -149,6 +149,22 @@ RdrCreateTreeConnected(
     FILE_CREATE_OPTIONS CreateOptions = pIrp->Args.Create.CreateOptions;
     FILE_ATTRIBUTES FileAttributes =  pIrp->Args.Create.FileAttributes;
     PRDR_CCB pFile = NULL;
+
+    if (pParam)
+    {
+        switch (RDR_OBJECT_PROTOCOL(pParam))
+        {
+        case SMB_PROTOCOL_VERSION_1:
+            pTree = (PRDR_TREE) pParam;
+            break;
+        case SMB_PROTOCOL_VERSION_2:
+            /* We ended up with an SMB2 tree, short circuit to create2.c */
+            return RdrCreateTreeConnected2(pContext, status, pParam);
+        default:
+            status = STATUS_INTERNAL_ERROR;
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
 
     BAIL_ON_NT_STATUS(status);
 
@@ -162,6 +178,7 @@ RdrCreateTreeConnected(
     
     pFile->bMutexInitialized = TRUE;
 
+    pFile->version = SMB_PROTOCOL_VERSION_1;
     pFile->pTree = pTree;
     pFile->Params.CreateOptions = CreateOptions;
 

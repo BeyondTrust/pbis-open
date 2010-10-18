@@ -59,17 +59,6 @@ RdrQueryInfoFileComplete(
 
 static
 NTSTATUS
-RdrUnmarshalQueryFileInfoReply(
-    ULONG ulInfoLevel,
-    PBYTE pData,
-    USHORT usDataCount,
-    PVOID pInfo,
-    ULONG ulInfoLength,
-    PULONG pulInfoLengthUsed
-    );
-
-static
-NTSTATUS
 RdrUnmarshalQueryFileBasicInfoReply(
     PBYTE pData,
     USHORT usDataCount,
@@ -334,7 +323,6 @@ error:
     goto cleanup;
 }
 
-static
 NTSTATUS
 RdrUnmarshalQueryFileInfoReply(
     ULONG ulInfoLevel,

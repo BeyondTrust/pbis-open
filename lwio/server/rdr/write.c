@@ -274,7 +274,7 @@ RdrFinishWriteFile(
 
     if (pContext->State.Write.llTotalBytesWritten < ulLength)
     {
-        ulWriteMax = pFile->pTree->pSession->pSocket->maxBufferSize - WRITE_DATA_OFFSET;
+        ulWriteMax = pFile->pTree->pSession->pSocket->ulMaxTransactSize - WRITE_DATA_OFFSET;
         ulWriteLength = ulWriteMax;
 
         if (ulWriteLength > UINT16_MAX)

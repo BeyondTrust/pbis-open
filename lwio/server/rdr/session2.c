@@ -1,7 +1,3 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -15,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -28,22 +24,18 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
  * Module Name:
  *
- *        session.c
+ *        session2.c
  *
  * Abstract:
  *
- *        Likewise SMB Subsystem (LWIO)
+ *        LWIO Redirector
  *
- *        Common Session Code
+ *        SMB2 session management
  *
- * Author: Kaya Bekiroglu (kaya@likewisesoftware.com)
+ * Author: Brian Koropoff (bkoropoff@likewise.com)
  *
  */
 
@@ -51,42 +43,66 @@
 
 static
 VOID
-RdrSessionFree(
-    PRDR_SESSION pSession
+RdrSession2Unlink(
+    PRDR_SESSION2 pSession
+    );
+
+static
+VOID
+RdrSession2Free(
+    PRDR_SESSION2 pSession
+    );
+
+static
+NTSTATUS
+RdrTransceiveLogoff2(
+    PRDR_OP_CONTEXT pContext,
+    PRDR_SESSION2 pSession
     );
 
 static
 int
-RdrSessionHashTreeCompareByTID(
+RdrSession2HashTreeCompareById(
     PCVOID vp1,
     PCVOID vp2
-    );
+    )
+{
+    ULONG tid1 = *((ULONG *) vp1);
+    ULONG tid2 = *((ULONG *) vp2);
+
+    if (tid1 == tid2)
+    {
+        return 0;
+    }
+    else if (tid1 > tid2)
+    {
+        return 1;
+    }
+
+    return -1;
+}
 
 static
 size_t
-RdrSessionHashTreeByTID(
+RdrSession2HashTreeById(
     PCVOID vp
-    );
-
-static
-NTSTATUS
-RdrTransceiveLogoff(
-    PRDR_OP_CONTEXT pContext,
-    PRDR_SESSION pSession
-    );
+    )
+{
+    return (size_t) *(PULONG) vp;
+}
 
 NTSTATUS
-RdrSessionCreate(
-    PRDR_SESSION* ppSession
+RdrSession2Create(
+    PRDR_SESSION2* ppSession
     )
 {
     NTSTATUS status = 0;
-    RDR_SESSION *pSession = NULL;
+    RDR_SESSION2 *pSession = NULL;
     BOOLEAN bDestroySetupCondition = FALSE;
     BOOLEAN bDestroyMutex = FALSE;
 
     status = LwIoAllocateMemory(
-                sizeof(RDR_SESSION),
+                sizeof(RDR_SESSION2),
                 (PVOID*)&pSession);
     BAIL_ON_NT_STATUS(status);
 
@@ -107,10 +123,10 @@ RdrSessionCreate(
 
     status = SMBHashCreate(
                 19,
-                &RdrSessionHashTreeCompareByTID,
-                &RdrSessionHashTreeByTID,
+                &RdrSession2HashTreeCompareById,
+                &RdrSession2HashTreeById,
                 NULL,
-                &pSession->pTreeHashByTID);
+                &pSession->pTreeHashById);
     BAIL_ON_NT_STATUS(status);
 
     bDestroySetupCondition = TRUE;
@@ -119,7 +135,7 @@ RdrSessionCreate(
     status = RdrCreateContext(NULL, &pSession->pLogoffContext);
     BAIL_ON_NT_STATUS(status);
 
-    status = RdrAllocateContextPacket(pSession->pLogoffContext, 64 * 1024);
+    status = RdrAllocateContextPacket(pSession->pLogoffContext, RDR_SMB2_STUB_SIZE);
     BAIL_ON_NT_STATUS(status);
 
     *ppSession = pSession;
@@ -132,7 +148,7 @@ error:
 
     if (pSession)
     {
-        SMBHashSafeFree(&pSession->pTreeHashByTID);
+        SMBHashSafeFree(&pSession->pTreeHashById);
 
         SMBHashSafeFree(&pSession->pTreeHashByPath);
 
@@ -150,87 +166,26 @@ error:
 }
 
 static
-int
-RdrSessionHashTreeCompareByTID(
-    PCVOID vp1,
-    PCVOID vp2
-    )
-{
-    uint16_t tid1 = *((uint16_t *) vp1);
-    uint16_t tid2 = *((uint16_t *) vp2);
-
-    if (tid1 == tid2)
-    {
-        return 0;
-    }
-    else if (tid1 > tid2)
-    {
-        return 1;
-    }
-
-    return -1;
-}
-
-static
-size_t
-RdrSessionHashTreeByTID(
-    PCVOID vp
-    )
-{
-    return *((uint16_t *) vp);
-}
-
-static
-VOID
-RdrSessionUnlink(
-    PRDR_SESSION pSession
-    )
-{
-    if (pSession->bParentLink)
-    {
-        SMBHashRemoveKey(
-            pSession->pSocket->pSessionHashByPrincipal,
-            &pSession->key);
-        SMBHashRemoveKey(
-            pSession->pSocket->pSessionHashByUID,
-            &pSession->uid);
-        pSession->bParentLink = FALSE;
-    }
-}
-
-VOID
-RdrSessionRevive(
-    PRDR_SESSION pSession
-    )
-{
-    if (pSession->pTimeout)
-    {
-        LwRtlCancelTask(pSession->pTimeout);
-        LwRtlReleaseTask(&pSession->pTimeout);
-    }
-}
-
-static
 BOOLEAN
-RdrLogoffComplete(
+RdrLogoff2Complete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pParam
     )
 {
     PSMB_PACKET pPacket = pParam;
-    PRDR_SESSION pSession = pContext->State.TreeConnect.pSession;
+    PRDR_SESSION2 pSession = pContext->State.TreeConnect.pSession2;
 
     RdrFreePacket(pPacket);
-    RdrSessionFree(pSession);
+    RdrSession2Free(pSession);
 
-    /* We don't explicitly free pContext because RdrSessionFree() does it */
+    /* We don't explicitly free pContext because RdrSession2Free() does it */
     return FALSE;
 }
 
 static
 VOID
-RdrSessionTimeout(
+RdrSession2Timeout(
     PLW_TASK pTask,
     LW_PVOID _pSession,
     LW_TASK_EVENT_MASK WakeMask,
@@ -239,7 +194,7 @@ RdrSessionTimeout(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PRDR_SESSION pSession = _pSession;
+    PRDR_SESSION2 pSession = _pSession;
     BOOLEAN bLocked = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
 
@@ -260,19 +215,19 @@ RdrSessionTimeout(
 
         if (pSession->refCount == 0)
         {
-            RdrSessionUnlink(pSession);
-        
+            RdrSession2Unlink(pSession);
+
             pContext = pSession->pLogoffContext;
-            pContext->Continue = RdrLogoffComplete;
-            pContext->State.TreeConnect.pSession = pSession;
+            pContext->Continue = RdrLogoff2Complete;
+            pContext->State.TreeConnect.pSession2 = pSession;
 
             LWIO_UNLOCK_MUTEX(bLocked, &pSession->pSocket->mutex);
 
-            status = RdrTransceiveLogoff(pContext, pSession);
+            status = RdrTransceiveLogoff2(pContext, pSession);
             if (status != STATUS_PENDING)
             {
                 /* Give up and free the session now */
-                RdrSessionFree(pSession);
+                RdrSession2Free(pSession);
             }
 
             *pWaitMask = LW_TASK_EVENT_COMPLETE;
@@ -289,13 +244,31 @@ RdrSessionTimeout(
     return;
 }
 
+static
 VOID
-RdrSessionRelease(
-    PRDR_SESSION pSession
+RdrSession2Unlink(
+    PRDR_SESSION2 pSession
+    )
+{
+    if (pSession->bParentLink)
+    {
+        SMBHashRemoveKey(
+            pSession->pSocket->pSessionHashByPrincipal,
+            &pSession->key);
+        SMBHashRemoveKey(
+            pSession->pSocket->pSessionHashByUID,
+            &pSession->ullSessionId);
+        pSession->bParentLink = FALSE;
+    }
+}
+
+VOID
+RdrSession2Release(
+    PRDR_SESSION2 pSession
     )
 {
     BOOLEAN bInLock = FALSE;
-    LW_TASK_EVENT_MASK dummy = 0;    
+    LW_TASK_EVENT_MASK dummy = 0;
     LONG64 llDummy = 0;
 
     LWIO_LOCK_MUTEX(bInLock, &pSession->pSocket->mutex);
@@ -307,9 +280,9 @@ RdrSessionRelease(
         if (pSession->state != RDR_SESSION_STATE_READY ||
             pSession->pSocket->state != RDR_SOCKET_STATE_READY)
         {
-            RdrSessionUnlink(pSession);
+            RdrSession2Unlink(pSession);
             LWIO_UNLOCK_MUTEX(bInLock, &pSession->pSocket->mutex);
-            RdrSessionFree(pSession);
+            RdrSession2Free(pSession);
         }
         else
         {
@@ -321,7 +294,7 @@ RdrSessionRelease(
                     gRdrRuntime.pThreadPool,
                     &pSession->pTimeout,
                     gRdrRuntime.pSessionTimerGroup,
-                    RdrSessionTimeout,
+                    RdrSession2Timeout,
                     pSession) == STATUS_SUCCESS)
             {
                 LwRtlWakeTask(pSession->pTimeout);
@@ -329,7 +302,7 @@ RdrSessionRelease(
             else
             {
                 LWIO_LOG_ERROR("Could not create timer for session %p; logging off immediately");
-                RdrSessionTimeout(NULL, pSession, LW_TASK_EVENT_TIME, &dummy, &llDummy);
+                RdrSession2Timeout(NULL, pSession, LW_TASK_EVENT_TIME, &dummy, &llDummy);
             }
         }
     }
@@ -341,14 +314,14 @@ RdrSessionRelease(
 
 static
 VOID
-RdrSessionFree(
-    PRDR_SESSION pSession
+RdrSession2Free(
+    PRDR_SESSION2 pSession
     )
 {
     assert(!pSession->refCount);
 
     SMBHashSafeFree(&pSession->pTreeHashByPath);
-    SMBHashSafeFree(&pSession->pTreeHashByTID);
+    SMBHashSafeFree(&pSession->pTreeHashById);
 
     pthread_mutex_destroy(&pSession->mutex);
 
@@ -375,8 +348,8 @@ RdrSessionFree(
 }
 
 VOID
-RdrSessionInvalidate(
-    PRDR_SESSION   pSession,
+RdrSession2Invalidate(
+    PRDR_SESSION2 pSession,
     NTSTATUS ntStatus
     )
 {
@@ -389,7 +362,7 @@ RdrSessionInvalidate(
     pSession->error = ntStatus;
 
     LWIO_LOCK_MUTEX(bInSocketLock, &pSession->pSocket->mutex);
-    RdrSessionUnlink(pSession);
+    RdrSession2Unlink(pSession);
     LWIO_UNLOCK_MUTEX(bInSocketLock, &pSession->pSocket->mutex);
 
     RdrNotifyContextList(
@@ -402,16 +375,28 @@ RdrSessionInvalidate(
     LWIO_UNLOCK_MUTEX(bInLock, &pSession->mutex);
 }
 
+VOID
+RdrSession2Revive(
+    PRDR_SESSION2 pSession
+    )
+{
+    if (pSession->pTimeout)
+    {
+        LwRtlCancelTask(pSession->pTimeout);
+        LwRtlReleaseTask(&pSession->pTimeout);
+    }
+}
+
 NTSTATUS
-RdrSessionFindOrCreate(
+RdrSession2FindOrCreate(
     IN OUT PRDR_SOCKET* ppSocket,
     IN PIO_CREDS pCreds,
     uid_t uid,
-    OUT PRDR_SESSION* ppSession
+    OUT PRDR_SESSION2* ppSession
     )
 {
     NTSTATUS ntStatus = 0;
-    PRDR_SESSION pSession = NULL;
+    PRDR_SESSION2 pSession = NULL;
     BOOLEAN bInLock = FALSE;
     PRDR_SOCKET pSocket = *ppSocket;
     struct _RDR_SESSION_KEY key = {0};
@@ -438,25 +423,26 @@ RdrSessionFindOrCreate(
         break;
     }
 
+    /* This is the *UNIX* uid of the calling program */
     key.uid = uid;
-    
+
     ntStatus = SMBHashGetValue(
         pSocket->pSessionHashByPrincipal,
         &key,
         OUT_PPVOID(&pSession));
-    
+
     if (!ntStatus)
     {
         pSession->refCount++;
-        RdrSessionRevive(pSession);
+        RdrSession2Revive(pSession);
         RdrSocketRelease(pSocket);
         *ppSocket = NULL;
     }
     else
     {
-        ntStatus = RdrSessionCreate(&pSession);
+        ntStatus = RdrSession2Create(&pSession);
         BAIL_ON_NT_STATUS(ntStatus);
-        
+
         pSession->pSocket = pSocket;
 
         ntStatus = SMBStrndup(
@@ -464,37 +450,37 @@ RdrSessionFindOrCreate(
             strlen(key.pszPrincipal) + 1,
             &pSession->key.pszPrincipal);
         BAIL_ON_NT_STATUS(ntStatus);
-        
+
         pSession->key.uid = key.uid;
-        
+
         ntStatus = SMBHashSetValue(
             pSocket->pSessionHashByPrincipal,
             &pSession->key,
             pSession);
         BAIL_ON_NT_STATUS(ntStatus);
-        
+
         pSession->bParentLink = TRUE;
-        
+
         *ppSocket = NULL;
     }
-    
+
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-    
+
     *ppSession = pSession;
-    
+
 cleanup:
 
     LWIO_SAFE_FREE_STRING(key.pszPrincipal);
-    
+
     return ntStatus;
-    
+
 error:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-    
+
     if (pSession)
     {
-        RdrSessionRelease(pSession);
+        RdrSession2Release(pSession);
     }
 
     *ppSession = NULL;
@@ -504,45 +490,47 @@ error:
 
 static
 NTSTATUS
-RdrTransceiveLogoff(
+RdrTransceiveLogoff2(
     PRDR_OP_CONTEXT pContext,
-    PRDR_SESSION pSession
+    PRDR_SESSION2 pSession
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+     NTSTATUS status = 0;
+     PRDR_SOCKET pSocket = pSession->pSocket;
+     PBYTE pCursor = NULL;
+     ULONG ulRemaining = 0;
 
-    status = SMBPacketMarshallHeader(
-                pContext->Packet.pRawBuffer,
-                pContext->Packet.bufferLen,
-                COM_LOGOFF_ANDX,
-                0,
-                0,
-                0,
-                gRdrRuntime.SysPid,
-                pSession->uid,
-                0,
-                TRUE,
-                &pContext->Packet);
-    BAIL_ON_NT_STATUS(status);
+     status = RdrSmb2BeginPacket(&pContext->Packet);
+     BAIL_ON_NT_STATUS(status);
 
-    pContext->Packet.pSMBHeader->wordCount = 2;
+     status = RdrSmb2EncodeHeader(
+         &pContext->Packet,
+         COM2_LOGOFF,
+         0, /* flags */
+         gRdrRuntime.SysPid,
+         0, /* tid */
+         pSession->ullSessionId,
+         &pCursor,
+         &ulRemaining);
+     BAIL_ON_NT_STATUS(status);
 
-    pContext->Packet.pData = pContext->Packet.pParams;
-    pContext->Packet.bufferUsed += sizeof(uint16_t); /* ByteCount */
-    memset(pContext->Packet.pData, 0, sizeof(uint16_t));
+     status = RdrSmb2EncodeStubRequest(
+         &pContext->Packet,
+         &pCursor,
+         &ulRemaining);
+     BAIL_ON_NT_STATUS(status);
 
-    // no byte order conversions necessary (due to zeros)
+     status = RdrSmb2FinishCommand(&pContext->Packet, &pCursor, &ulRemaining);
+     BAIL_ON_NT_STATUS(status);
 
-    status = SMBPacketMarshallFooter(&pContext->Packet);
-    BAIL_ON_NT_STATUS(status);
+     status = RdrSocketTransceive(pSocket, pContext);
+     BAIL_ON_NT_STATUS(status);
 
-    status = RdrSocketTransceive(pSession->pSocket, pContext);
-    BAIL_ON_NT_STATUS(status);
+ cleanup:
 
-cleanup:
+     return status;
 
-    return status;
+ error:
 
-error:
-    goto cleanup;
+     goto cleanup;
 }

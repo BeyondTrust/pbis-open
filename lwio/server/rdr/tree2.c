@@ -1,7 +1,3 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -15,7 +11,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -28,22 +24,18 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
- * Copyright (C) Likewise Software. All rights reserved.
- *
  * Module Name:
  *
- *        tree.c
+ *        tree2.c
  *
  * Abstract:
  *
- *        Likewise SMB Subsystem (LWIO)
+ *        LWIO Redirector
  *
- *        Common Tree Code
+ *        SMB2 tree management
  *
- * Author: Kaya Bekiroglu (kaya@likewisesoftware.com)
+ * Author: Brian Koropoff (bkoropoff@likewise.com)
  *
  */
 
@@ -51,36 +43,36 @@
 
 static
 VOID
-RdrTreeFree(
-    PRDR_TREE pTree
+RdrTree2Free(
+    PRDR_TREE2 pTree
     );
 
 static
 NTSTATUS
-RdrTreeDestroyContents(
-    PRDR_TREE pTree
+RdrTree2DestroyContents(
+    PRDR_TREE2 pTree
     );
 
 static
 NTSTATUS
-RdrTransceiveTreeDisconnect(
+RdrTransceiveTree2Disconnect(
     PRDR_OP_CONTEXT pContext,
-    PRDR_TREE pTree
+    PRDR_TREE2 pTree
     );
 
 NTSTATUS
-RdrTreeCreate(
-    PRDR_TREE* ppTree
+RdrTree2Create(
+    PRDR_TREE2* ppTree
     )
 {
     NTSTATUS status = 0;
-    PRDR_TREE pTree = NULL;
+    PRDR_TREE2 pTree = NULL;
     BOOLEAN bDestroyMutex = FALSE;
     pthread_mutexattr_t mutexAttr;
     pthread_mutexattr_t* pMutexAttr = NULL;
 
     status = LwIoAllocateMemory(
-                sizeof(RDR_TREE),
+                sizeof(RDR_TREE2),
                 (PVOID*)&pTree);
     BAIL_ON_NT_STATUS(status);
 
@@ -101,14 +93,14 @@ RdrTreeCreate(
     status = RdrCreateContext(NULL, &pTree->pDisconnectContext);
     BAIL_ON_NT_STATUS(status);
 
-    status = RdrAllocateContextPacket(pTree->pDisconnectContext, 64 * 1024);
+    status = RdrAllocateContextPacket(pTree->pDisconnectContext, RDR_SMB2_STUB_SIZE);
     BAIL_ON_NT_STATUS(status);
 
     pTree->refCount = 1;
     pTree->pSession = NULL;
-    pTree->tid = 0;
+    pTree->ulTid = 0;
     pTree->pwszPath = NULL;
-    pTree->version = SMB_PROTOCOL_VERSION_1;
+    pTree->version = SMB_PROTOCOL_VERSION_2;
 
     *ppTree = pTree;
 
@@ -130,7 +122,7 @@ error:
 
     if (pTree)
     {
-        RdrTreeDestroyContents(pTree);
+        RdrTree2DestroyContents(pTree);
     }
     LWIO_SAFE_FREE_MEMORY(pTree);
 
@@ -140,8 +132,8 @@ error:
 }
 
 VOID
-RdrTreeRevive(
-    PRDR_TREE pTree
+RdrTree2Revive(
+    PRDR_TREE2 pTree
     )
 {
     if (pTree->pTimeout)
@@ -153,8 +145,8 @@ RdrTreeRevive(
 
 static
 VOID
-RdrTreeUnlink(
-    PRDR_TREE pTree
+RdrTree2Unlink(
+    PRDR_TREE2 pTree
     )
 {
     if (pTree->bParentLink)
@@ -163,15 +155,15 @@ RdrTreeUnlink(
             pTree->pSession->pTreeHashByPath,
             pTree->pwszPath);
         SMBHashRemoveKey(
-            pTree->pSession->pTreeHashByTID,
-            &pTree->tid);
+            pTree->pSession->pTreeHashById,
+            &pTree->ulTid);
         pTree->bParentLink = FALSE;
     }
 }
 
 NTSTATUS
-RdrTreeInvalidate(
-    PRDR_TREE pTree,
+RdrTree2Invalidate(
+    PRDR_TREE2 pTree,
     NTSTATUS ntStatus
     )
 {
@@ -179,12 +171,12 @@ RdrTreeInvalidate(
     BOOLEAN bInSessionLock = FALSE;
 
     LWIO_LOCK_MUTEX(bInLock, &pTree->mutex);
-    
+
     pTree->state = RDR_TREE_STATE_ERROR;
     pTree->error = ntStatus;
-    
+
     LWIO_LOCK_MUTEX(bInSessionLock, &pTree->pSession->mutex);
-    RdrTreeUnlink(pTree);
+    RdrTree2Unlink(pTree);
     LWIO_UNLOCK_MUTEX(bInSessionLock, &pTree->pSession->mutex);
 
     RdrNotifyContextList(
@@ -201,17 +193,17 @@ RdrTreeInvalidate(
 
 static
 BOOLEAN
-RdrTreeDisconnectComplete(
+RdrTree2DisconnectComplete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pParam
     )
 {
     PSMB_PACKET pPacket = pParam;
-    PRDR_TREE pTree = pContext->State.TreeConnect.pTree;
+    PRDR_TREE2 pTree = pContext->State.TreeConnect.pTree2;
 
     RdrFreePacket(pPacket);
-    RdrTreeFree(pTree);
+    RdrTree2Free(pTree);
 
     /* We don't explicitly free pContext because RdrTreeFree() does it */
     return FALSE;
@@ -219,7 +211,7 @@ RdrTreeDisconnectComplete(
 
 static
 VOID
-RdrTreeTimeout(
+RdrTree2Timeout(
     PLW_TASK pTask,
     LW_PVOID _pTree,
     LW_TASK_EVENT_MASK WakeMask,
@@ -228,7 +220,7 @@ RdrTreeTimeout(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PRDR_TREE pTree = _pTree;
+    PRDR_TREE2 pTree = _pTree;
     BOOLEAN bLocked = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
 
@@ -249,19 +241,19 @@ RdrTreeTimeout(
 
         if (pTree->refCount == 0)
         {
-            RdrTreeUnlink(pTree);
-        
+            RdrTree2Unlink(pTree);
+
             pContext = pTree->pDisconnectContext;
-            pContext->Continue = RdrTreeDisconnectComplete;
-            pContext->State.TreeConnect.pTree = pTree;
+            pContext->Continue = RdrTree2DisconnectComplete;
+            pContext->State.TreeConnect.pTree2 = pTree;
 
             LWIO_UNLOCK_MUTEX(bLocked, &pTree->pSession->mutex);
 
-            status = RdrTransceiveTreeDisconnect(pContext, pTree);
+            status = RdrTransceiveTree2Disconnect(pContext, pTree);
             if (status != STATUS_PENDING)
             {
                 /* Give up and free the tree now */
-                RdrTreeFree(pTree);
+                RdrTree2Free(pTree);
             }
 
             *pWaitMask = LW_TASK_EVENT_COMPLETE;
@@ -279,12 +271,12 @@ RdrTreeTimeout(
 }
 
 VOID
-RdrTreeRelease(
-    RDR_TREE *pTree
+RdrTree2Release(
+    RDR_TREE2 *pTree
     )
 {
     BOOLEAN bInLock = FALSE;
-    LW_TASK_EVENT_MASK dummy = 0;    
+    LW_TASK_EVENT_MASK dummy = 0;
     LONG64 llDummy = 0;
 
     LWIO_LOCK_MUTEX(bInLock, &pTree->pSession->mutex);
@@ -295,21 +287,21 @@ RdrTreeRelease(
     {
         if (pTree->state != RDR_TREE_STATE_READY || !RdrSocketIsValid(pTree->pSession->pSocket))
         {
-            RdrTreeUnlink(pTree);
+            RdrTree2Unlink(pTree);
             LWIO_UNLOCK_MUTEX(bInLock, &pTree->pSession->mutex);
-            RdrTreeFree(pTree);
+            RdrTree2Free(pTree);
         }
         else
         {
             LWIO_LOG_VERBOSE("Tree %p is eligible for reaping", pTree);
-            
+
             LWIO_UNLOCK_MUTEX(bInLock, &pTree->pSession->mutex);
 
             if (LwRtlCreateTask(
                     gRdrRuntime.pThreadPool,
                     &pTree->pTimeout,
                     gRdrRuntime.pTreeTimerGroup,
-                    RdrTreeTimeout,
+                    RdrTree2Timeout,
                     pTree) == STATUS_SUCCESS)
             {
                 LwRtlWakeTask(pTree->pTimeout);
@@ -317,7 +309,7 @@ RdrTreeRelease(
             else
             {
                 LWIO_LOG_ERROR("Could not create timer for tree %p; disconnecting immediately");
-                RdrTreeTimeout(NULL, pTree, LW_TASK_EVENT_TIME, &dummy, &llDummy);
+                RdrTree2Timeout(NULL, pTree, LW_TASK_EVENT_TIME, &dummy, &llDummy);
             }
         }
     }
@@ -329,19 +321,19 @@ RdrTreeRelease(
 
 static
 VOID
-RdrTreeFree(
-    PRDR_TREE pTree
+RdrTree2Free(
+    PRDR_TREE2 pTree
     )
 {
     assert(!pTree->refCount);
 
     pthread_mutex_destroy(&pTree->mutex);
 
-    RdrTreeDestroyContents(pTree);
+    RdrTree2DestroyContents(pTree);
 
     if (pTree->pSession)
     {
-        RdrSessionRelease(pTree->pSession);
+        RdrSession2Release(pTree->pSession);
     }
 
     LwIoFreeMemory(pTree);
@@ -349,8 +341,8 @@ RdrTreeFree(
 
 static
 NTSTATUS
-RdrTreeDestroyContents(
-    PRDR_TREE pTree
+RdrTree2DestroyContents(
+    PRDR_TREE2 pTree
     )
 {
     LWIO_SAFE_FREE_MEMORY(pTree->pwszPath);
@@ -371,47 +363,47 @@ RdrTreeDestroyContents(
 
 static
 NTSTATUS
-RdrTransceiveTreeDisconnect(
+RdrTransceiveTree2Disconnect(
     PRDR_OP_CONTEXT pContext,
-    PRDR_TREE pTree
+    PRDR_TREE2 pTree
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    NTSTATUS status = 0;
+    PRDR_SOCKET pSocket = pTree->pSession->pSocket;
+    PBYTE pCursor = NULL;
+    ULONG ulRemaining = 0;
 
-    /* Packet should have been pre-allocated */
-    status = SMBPacketMarshallHeader(
-        pContext->Packet.pRawBuffer,
-        pContext->Packet.bufferLen,
-        COM_TREE_DISCONNECT,
-        0,
-        0,
-        pTree->tid,
+    status = RdrSmb2BeginPacket(&pContext->Packet);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSmb2EncodeHeader(
+        &pContext->Packet,
+        COM2_TREE_DISCONNECT,
+        0, /* flags */
         gRdrRuntime.SysPid,
-        pTree->pSession->uid,
-        0,
-        TRUE,
-        &pContext->Packet);
+        pTree->ulTid, /* tid */
+        pTree->pSession->ullSessionId,
+        &pCursor,
+        &ulRemaining);
     BAIL_ON_NT_STATUS(status);
 
-    pContext->Packet.pSMBHeader->wordCount = 0;
-
-    pContext->Packet.pData = pContext->Packet.pParams;          /* ByteCount */
-    pContext->Packet.bufferUsed += sizeof(uint16_t);
-    memset(pContext->Packet.pData, 0, sizeof(uint16_t));
-
-    // no byte order conversions necessary (due to zeros)
-
-    status = SMBPacketMarshallFooter(&pContext->Packet);
+    status = RdrSmb2EncodeStubRequest(
+        &pContext->Packet,
+        &pCursor,
+        &ulRemaining);
     BAIL_ON_NT_STATUS(status);
 
-    status = RdrSocketTransceive(pTree->pSession->pSocket, pContext);
+    status = RdrSmb2FinishCommand(&pContext->Packet, &pCursor, &ulRemaining);
     BAIL_ON_NT_STATUS(status);
 
-cleanup:
+    status = RdrSocketTransceive(pSocket, pContext);
+    BAIL_ON_NT_STATUS(status);
+
+ cleanup:
 
     return status;
 
-error:
+ error:
 
     goto cleanup;
 }

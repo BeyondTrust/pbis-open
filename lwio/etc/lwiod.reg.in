@@ -196,6 +196,41 @@
     doc = "" 
 }
 
+"SigningEnabled" = {
+	default = dword:00000001
+	doc = "Enable signing support"
+}
+
+"SigningRequired" = {
+	default = dword:00000000
+	doc = "Require server to sign"
+}
+
+"IdleTimeout" = {
+	default = dword:0000000A
+	doc = "Time before closing unused tree, session, or connection"
+}
+
+"ResponseTimeout" = {
+	default = dword:00000014
+	doc = "Time before sending echo request when request is outstanding"
+}
+
+"EchoTimeout" = {
+	default = dword:0000000A
+	doc = "Time before disconnecting server when echo request is outstanding"
+}
+
+"EchoInterval" = {
+	default = dword:0000012C
+	doc = "Time between keep-alive requests when connection is idle"
+}
+
+"MinCreditReserve" = {
+	default = dword:0000000A
+	doc = "(SMB2) Minimum number of credits to attempt to keep available"
+}
+
 [HKEY_THIS_MACHINE\Services\lwio\Parameters\Drivers\srv]
 "Path" = { 
     default = "@providerdir@/libsrv.sys@MOD_EXT@" 

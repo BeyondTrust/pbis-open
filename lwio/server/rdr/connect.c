@@ -77,7 +77,6 @@ RdrTransceiveSessionSetup(
     DWORD dwBlobLength
     );
 
-static
 VOID
 RdrFreeTreeConnectContext(
     PRDR_OP_CONTEXT pContext
@@ -159,6 +158,17 @@ RdrNegotiateComplete(
     PIO_CREDS pCreds = pContext->State.TreeConnect.pCreds;
 
     BAIL_ON_NT_STATUS(status);
+
+    /* Several op contexts could be queued with this function
+     * as the continue routine before we transition to SMB2 mode,
+     * so we need to hand off to the correct function in this case.
+     * Subsequent attempts should go straight to connect2.c
+     */
+    if (pSocket->version == SMB_PROTOCOL_VERSION_2)
+    {
+        /* Short circuit to SMB2 session setup logic in connect2.c */
+        return RdrNegotiateComplete2(pContext, status, pParam);
+    }
 
     status = RdrSessionFindOrCreate(
         &pSocket,
@@ -267,8 +277,17 @@ RdrProcessNegotiateResponse(
     
     BAIL_ON_NT_STATUS(status);
     
+    /* As a special case, it is possible to receive an SMB2 negotiate response
+     * from an SMB1 negotiate request.
+     */
+    if (pPacket->protocolVer == SMB_PROTOCOL_VERSION_2)
+    {
+        /* Short-circuit to SMB2 code path in connect2.c */
+        return RdrProcessNegotiateResponse2(pContext, status, pParam);
+    }
+
     LWIO_LOCK_MUTEX(bSocketLocked, &pSocket->mutex);
-    
+
     status = pPacket->pSMBHeader->error;
     BAIL_ON_NT_STATUS(status);
     
@@ -296,7 +315,7 @@ RdrProcessNegotiateResponse(
     SMB_LTOH8_INPLACE(pHeader->encryptionKeyLength);
     SMB_LTOH16_INPLACE(pHeader->byteCount);
 
-    pSocket->maxBufferSize = pHeader->maxBufferSize;
+    pSocket->ulMaxTransactSize = pHeader->maxBufferSize;
     pSocket->maxRawSize = pHeader->maxRawSize;
     pSocket->sessionKey = pHeader->sessionKey;
     pSocket->capabilities = pHeader->capabilities;
@@ -312,6 +331,9 @@ RdrProcessNegotiateResponse(
     memcpy(pSocket->pSecurityBlob,
            pSecurityBlob,
            pSocket->securityBlobLen);
+
+    status = RdrSocketSetProtocol(pSocket, SMB_PROTOCOL_VERSION_1);
+    BAIL_ON_NT_STATUS(status);
 
     pSocket->state = RDR_SOCKET_STATE_READY;
 
@@ -756,7 +778,11 @@ RdrTransceiveNegotiate(
     NTSTATUS status = STATUS_SUCCESS;
     PNEGOTIATE_REQUEST_HEADER pRequestHeader = NULL;
     uint32_t packetByteCount = 0;
-    const uchar8_t *pszDialects[1] = { (uchar8_t *) "NT LM 0.12" };
+    BYTE const* pszDialects[] =
+    {
+        (PBYTE) "NT LM 0.12",
+        (PBYTE) "SMB 2.002"
+    };
 
     status = RdrAllocateContextPacket(pContext, 1024*64);
     BAIL_ON_NT_STATUS(status);
@@ -786,7 +812,7 @@ RdrTransceiveNegotiate(
         pContext->Packet.bufferLen - pContext->Packet.bufferUsed,
         &packetByteCount,
         pszDialects,
-        1);
+        sizeof(pszDialects) / sizeof(*pszDialects));
     BAIL_ON_NT_STATUS(status);
     
     assert(packetByteCount <= UINT16_MAX);

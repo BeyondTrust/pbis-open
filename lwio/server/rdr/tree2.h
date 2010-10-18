@@ -1,7 +1,3 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -28,86 +24,44 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __SOCKET_H__
-#define __SOCKET_H__
+/*
+ * Module Name:
+ *
+ *        tree2.h
+ *
+ * Abstract:
+ *
+ *        LWIO Redirector
+ *
+ *        SMB2 tree management
+ *
+ * Author: Brian Koropoff (bkoropoff@likewise.com)
+ *
+ */
 
-NTSTATUS
-RdrSocketCreate(
-    IN PCWSTR pwszHostname,
-    OUT PRDR_SOCKET* ppSocket
-    );
+#ifndef __RDR_TREE2_H__
+#define __RDR_TREE2_H_
 
-NTSTATUS
-RdrSocketSetProtocol(
-    PRDR_SOCKET pSocket,
-    SMB_PROTOCOL_VERSION version
-    );
-
-NTSTATUS
-RdrSocketConnect(
-    PRDR_SOCKET      pSocket
+VOID
+RdrTree2Revive(
+    PRDR_TREE2 pTree
     );
 
 VOID
-RdrSocketRevive(
-    PRDR_SOCKET pSocket
+RdrTree2Release(
+    PRDR_TREE2 pTree
     );
 
-VOID
-RdrSocketInvalidate(
-    PRDR_SOCKET    pSocket,
+NTSTATUS
+RdrTree2Create(
+    PRDR_TREE2* ppTree
+    );
+
+NTSTATUS
+RdrTree2Invalidate(
+    PRDR_TREE2 pTree,
     NTSTATUS ntStatus
     );
 
-VOID
-RdrSocketRelease(
-    PRDR_SOCKET pSocket
-    );
 
-VOID
-RdrSocketSetIgnoreServerSignatures(
-    PRDR_SOCKET pSocket,
-    BOOLEAN bValue
-    );
-
-VOID
-RdrSocketBeginSequence(
-    PRDR_SOCKET pSocket
-    );
-
-NTSTATUS
-RdrSocketTransceive(
-    IN OUT PRDR_SOCKET pSocket,
-    IN PRDR_OP_CONTEXT pContext
-    );
-
-VOID
-RdrSocketCancel(
-    IN PRDR_SOCKET pSocket,
-    IN PRDR_OP_CONTEXT pContext
-    );
-
-NTSTATUS
-RdrSocketAddSessionByUID(
-    PRDR_SOCKET  pSocket,
-    PRDR_SESSION pSession
-    );
-
-NTSTATUS
-RdrSocketAddSession2ById(
-    PRDR_SOCKET  pSocket,
-    PRDR_SESSION2 pSession
-    );
-
-NTSTATUS
-RdrSocketFindOrCreate(
-    IN PCWSTR pwszHostname,
-    OUT PRDR_SOCKET* ppSocket
-    );
-
-BOOLEAN
-RdrSocketIsValid(
-    PRDR_SOCKET pSocket
-    );
-
-#endif /* __SOCKET_H__ */
+#endif /* __RDR_TREE2_H_ */

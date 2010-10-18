@@ -18,23 +18,36 @@ endif
 
 librdr_sys_la_SOURCES =  \
     connect.c             \
+    connect2.c            \
     getsesskey.c          \
     globals.c             \
     session.c             \
+    session2.c            \
     socket.c              \
     tree.c                \
+    tree2.c               \
     driver.c              \
     create.c              \
+    create2.c             \
     read.c                \
+    read2.c               \
     write.c               \
+    write2.c              \
     setinfo.c             \
+    setinfo2.c            \
     queryinfo.c           \
+    queryinfo2.c          \
     querydir.c            \
+    querydir2.c           \
     deviceio.c            \
     fsctl.c               \
     security.c            \
+    security2.c           \
     queryfs.c             \
-    close.c
+    queryfs2.c            \
+    close.c               \
+    close2.c              \
+    smb2.c
 
 librdr_sys_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

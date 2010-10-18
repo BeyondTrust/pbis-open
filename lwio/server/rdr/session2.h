@@ -1,7 +1,3 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
  * Copyright Likewise Software
  * All rights reserved.
@@ -28,86 +24,53 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __SOCKET_H__
-#define __SOCKET_H__
+/*
+ * Module Name:
+ *
+ *        session2.h
+ *
+ * Abstract:
+ *
+ *        LWIO Redirector
+ *
+ *        SMB2 session management
+ *
+ * Author: Brian Koropoff (bkoropoff@likewise.com)
+ *
+ */
+
+#ifndef __RDR_SESSION2_H__
+#define __RDR_SESSION2_H__
 
 NTSTATUS
-RdrSocketCreate(
-    IN PCWSTR pwszHostname,
-    OUT PRDR_SOCKET* ppSocket
-    );
-
-NTSTATUS
-RdrSocketSetProtocol(
-    PRDR_SOCKET pSocket,
-    SMB_PROTOCOL_VERSION version
-    );
-
-NTSTATUS
-RdrSocketConnect(
-    PRDR_SOCKET      pSocket
+RdrSession2Create(
+    PRDR_SESSION2* ppSession
     );
 
 VOID
-RdrSocketRevive(
-    PRDR_SOCKET pSocket
+RdrSession2Release(
+    PRDR_SESSION2 pSession
     );
 
 VOID
-RdrSocketInvalidate(
-    PRDR_SOCKET    pSocket,
+RdrSession2Invalidate(
+    PRDR_SESSION2 pSession,
     NTSTATUS ntStatus
     );
 
 VOID
-RdrSocketRelease(
-    PRDR_SOCKET pSocket
-    );
-
-VOID
-RdrSocketSetIgnoreServerSignatures(
-    PRDR_SOCKET pSocket,
-    BOOLEAN bValue
-    );
-
-VOID
-RdrSocketBeginSequence(
-    PRDR_SOCKET pSocket
-    );
-
-NTSTATUS
-RdrSocketTransceive(
-    IN OUT PRDR_SOCKET pSocket,
-    IN PRDR_OP_CONTEXT pContext
-    );
-
-VOID
-RdrSocketCancel(
-    IN PRDR_SOCKET pSocket,
-    IN PRDR_OP_CONTEXT pContext
-    );
-
-NTSTATUS
-RdrSocketAddSessionByUID(
-    PRDR_SOCKET  pSocket,
-    PRDR_SESSION pSession
-    );
-
-NTSTATUS
-RdrSocketAddSession2ById(
-    PRDR_SOCKET  pSocket,
+RdrSession2Revive(
     PRDR_SESSION2 pSession
     );
 
 NTSTATUS
-RdrSocketFindOrCreate(
-    IN PCWSTR pwszHostname,
-    OUT PRDR_SOCKET* ppSocket
+RdrSession2FindOrCreate(
+    IN OUT PRDR_SOCKET* ppSocket,
+    IN PIO_CREDS pCreds,
+    uid_t uid,
+    OUT PRDR_SESSION2* ppSession
     );
 
-BOOLEAN
-RdrSocketIsValid(
-    PRDR_SOCKET pSocket
-    );
 
-#endif /* __SOCKET_H__ */
+
+#endif
