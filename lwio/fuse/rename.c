@@ -63,7 +63,7 @@ LwIoFuseRename(
 
     pRenameInfo->ReplaceIfExists = TRUE;
     pRenameInfo->RootDirectory = NULL;
-    pRenameInfo->FileNameLength = newPathLength;
+    pRenameInfo->FileNameLength = newPathLength * sizeof(WCHAR);
     
     memcpy(pRenameInfo->FileName, pwszNewPath, newPathLength * sizeof(WCHAR));
 

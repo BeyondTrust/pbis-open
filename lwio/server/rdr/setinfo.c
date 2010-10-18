@@ -853,7 +853,7 @@ RdrMarshalFileRenameInfo(
 
     status = RdrBareFilename(
         pRenameInfo->FileName,
-        pRenameInfo->FileNameLength,
+        pRenameInfo->FileNameLength / sizeof(WCHAR),
         &pwszFileName,
         &ulFileNameLength);
     BAIL_ON_NT_STATUS(status);
