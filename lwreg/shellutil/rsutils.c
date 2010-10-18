@@ -2010,6 +2010,8 @@ RegExportMultiStringArray(
     PWSTR pwszValue = NULL;
     PSTR pszString = NULL;
     PSTR pszDumpString = NULL;
+    PSTR pszEscapedValue = NULL;
+    DWORD dwEscapedValueLen = 0;
 
     BAIL_ON_INVALID_POINTER(pszValueName);
     BAIL_ON_INVALID_POINTER(pValue);
@@ -2027,10 +2029,19 @@ RegExportMultiStringArray(
                       &pszString,
                       pwszValue);
         BAIL_ON_REG_ERROR(dwError);
+
+        LWREG_SAFE_FREE_STRING(pszEscapedValue);
+        dwError = RegShellUtilEscapeString(
+                      pszString,
+                      &pszEscapedValue,
+                      &dwEscapedValueLen);
+        BAIL_ON_REG_ERROR(dwError);
+
+
         dwError = RtlCStringAllocateAppendPrintf(
                       &pszDumpString,
                       "\"%s\"",
-                      pszString);
+                      pszEscapedValue);
         BAIL_ON_REG_ERROR(dwError);
         LWREG_SAFE_FREE_STRING(pszString);
 
@@ -2046,6 +2057,7 @@ RegExportMultiStringArray(
     }
 
 cleanup:
+    LWREG_SAFE_FREE_STRING(pszEscapedValue);
     *ppszDumpString = pszDumpString;
     *pdwDumpStringLen = strlen(pszDumpString);
     return dwError;
