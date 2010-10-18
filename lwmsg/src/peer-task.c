@@ -707,12 +707,17 @@ lwmsg_peer_assoc_task_new_accept(
 
     my_task->assoc = assoc;
 
-    BAIL_ON_ERROR(status = lwmsg_task_new(
-                       peer->task_manager,
-                       peer->listen_tasks,
-                       lwmsg_peer_task_run,
-                       my_task,
-                       &my_task->event_task));
+    status = lwmsg_task_new(
+        peer->task_manager,
+        peer->listen_tasks,
+        lwmsg_peer_task_run,
+        my_task,
+        &my_task->event_task);
+    if (status != LWMSG_STATUS_SUCCESS)
+    {
+        my_task->assoc = NULL;
+    }
+    BAIL_ON_ERROR(status);
 
     *task = my_task;
 
