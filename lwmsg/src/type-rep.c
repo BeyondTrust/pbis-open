@@ -1030,10 +1030,11 @@ lwmsg_type_spec_map_find(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    LWMsgTypeSpecBuffer* entry = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_type_spec_map_init(map));
     
-    LWMsgTypeSpecBuffer* entry = lwmsg_hash_find_key(&map->hash_by_rep, rep);
+    entry = lwmsg_hash_find_key(&map->hash_by_rep, rep);
 
     if (!entry)
     {
