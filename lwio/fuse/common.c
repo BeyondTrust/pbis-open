@@ -506,7 +506,7 @@ LwIoFuseTranslateAbsoluteSecurityDescriptor(
     if (status != STATUS_SUCCESS || bIsUser != FALSE)
     {
         status = STATUS_SUCCESS;
-        ulUserId = 0;
+        ulGroupId = 0;
     }
 
     pStatbuf->st_uid = (uid_t) ulUserId;
