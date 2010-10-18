@@ -1872,9 +1872,14 @@ RegShellCmdlineParseToArgv(
                     }
                     else if (token == REGLEX_REG_SZ ||
                              token == REGLEX_PLAIN_TEXT ||
-                         token == REGLEX_KEY_NAME_DEFAULT)
+                             token == REGLEX_KEY_NAME_DEFAULT)
                     {
                         state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUENAME;
+                    }
+                    else if (token == REGLEX_DASH)
+                    {
+                        state = REGSHELL_CMDLINE_STATE_ADDVALUE_VALUE;
+                        RegLexUnGetToken(pParseState->lexHandle);
                     }
                     else
                     {
@@ -1971,7 +1976,7 @@ RegShellCmdlineParseToArgv(
                      * the next call to RegLexGetToken(), as it consumes
                      * the first hex pair if found.
                      */
-                    if (valueType == REG_BINARY || REG_DWORD)
+                    if (valueType == REG_BINARY || valueType == REG_DWORD)
                     {
                         dwError = RegIOBufferGetData(
                                       pParseState->ioHandle,
@@ -2019,7 +2024,8 @@ RegShellCmdlineParseToArgv(
                         RegLexResetToken(pParseState->lexHandle);
                     }
                     else if (token == REGLEX_REG_SZ ||
-                             token == REGLEX_PLAIN_TEXT)
+                             token == REGLEX_PLAIN_TEXT ||
+                             token == REGLEX_DASH)
                     {
                         RegLexGetAttribute(pParseState->lexHandle,
                                            &attrSize,
