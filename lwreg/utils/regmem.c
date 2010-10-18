@@ -186,8 +186,10 @@ RegSafeFreeValueAttributes(
 
     if (LWREG_VALUE_RANGE_TYPE_ENUM == pValueAttrs->RangeType)
     {
-        RegFreeWC16StringArrayWithNullTerminator(
-                pValueAttrs->Range.ppwszRangeEnumStrings);
+        if (pValueAttrs->Range.ppwszRangeEnumStrings)
+        {
+            RegFreeWC16StringArrayWithNullTerminator(pValueAttrs->Range.ppwszRangeEnumStrings);
+        }
         pValueAttrs->Range.ppwszRangeEnumStrings = NULL;
     }
 
@@ -733,8 +735,11 @@ cleanup:
     return dwError;
 
 error:
-    RegFreeWC16StringArrayWithNullTerminator(ppwszStrings);
-    *ppwszStrings = NULL;
+    if (ppwszStrings)
+    {
+        RegFreeWC16StringArrayWithNullTerminator(ppwszStrings);
+    }
+    *pppwszStrings = NULL;
 
     goto cleanup;
 }
