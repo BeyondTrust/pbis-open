@@ -119,10 +119,6 @@ SqliteSetKeySecurity(
     	}
     	else
     	{
-    	    int i = 0;
-    	    PSTR pszTmp = NULL;
-    	    PSTR pszTmp1 = NULL;
-
     	    status = LW_RTL_ALLOCATE((PVOID*)&pCurrSecDescRel, VOID, pKeyCtx->ulSecDescLength);
     	    BAIL_ON_NT_STATUS(status);
 
@@ -130,23 +126,6 @@ SqliteSetKeySecurity(
        							            pCurrSecDescRel,
     							            pKeyCtx->ulSecDescLength);
     	    BAIL_ON_NT_STATUS(status);
-
-            for (;i<pKeyCtx->ulSecDescLength; i++)
-            {
-                status = RtlCStringAllocateAppendPrintf(
-                              &pszTmp, "%02x",
-                             ((PBYTE)pCurrSecDescRel)[i]);
-                //printf("%02x", ((PBYTE)pCurrSecDescRel)[i]);
-            }
-
-            for (i=0;i<pKeyCtx->ulSecDescLength; i++)
-            {
-                status = RtlCStringAllocateAppendPrintf(
-                              &pszTmp1, "%02x",
-                             ((PBYTE)pSecDescRel)[i]);
-                //printf("%02x", ((PBYTE)pCurrSecDescRel)[i]);
-            }
-
 
     	    ulCurrSecDescLen = pKeyCtx->ulSecDescLength;
     	}
