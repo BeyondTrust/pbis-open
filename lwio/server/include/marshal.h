@@ -50,6 +50,7 @@ Align(
 
         if (pulRemainingSpace)
         {
+            memset(*ppCursor, 0, (usAlignment - usRemainder));
             *ppCursor += (usAlignment - usRemainder);
             *pulRemainingSpace -= (usAlignment - usRemainder);
         }
