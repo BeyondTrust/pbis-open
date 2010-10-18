@@ -2354,10 +2354,11 @@ lwmsg_type_assign_map_find(
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     LWMsgTypeAssignPair pair = {left, right};
+    LWMsgTypeAssignEntry* entry = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_type_assign_map_init(map));
     
-    LWMsgTypeAssignEntry* entry = lwmsg_hash_find_key(&map->hash, &pair);
+    entry = lwmsg_hash_find_key(&map->hash, &pair);
 
     if (!entry)
     {
