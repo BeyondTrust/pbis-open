@@ -1829,6 +1829,14 @@ RegShellCmdlineParseToArgv(
                                   "--legacy");
                     BAIL_ON_REG_ERROR(dwError);
                 }
+                else if (cmdEnum == REGSHELL_CMD_EXPORT && 
+                    !strcmp("values", pszAttr))
+                {
+                    dwError = RegCStringDuplicate(
+                                  &pszArgv[dwArgc++],
+                                  "--values");
+                    BAIL_ON_REG_ERROR(dwError);
+                }
                 else
                 {
                     dwError = LWREG_ERROR_INVALID_CONTEXT;
