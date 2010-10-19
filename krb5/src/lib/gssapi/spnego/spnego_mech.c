@@ -1387,8 +1387,6 @@ acc_ctx_new(OM_uint32 *minor_status,
 	gss_OID mech_wanted;
 	spnego_gss_ctx_id_t sc = NULL;
 
-	*ctx = GSS_C_NO_CONTEXT;
-
 	ret = GSS_S_DEFECTIVE_TOKEN;
 	der_mechTypes.length = 0;
 	der_mechTypes.value = NULL;
