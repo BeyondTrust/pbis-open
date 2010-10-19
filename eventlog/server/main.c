@@ -984,9 +984,12 @@ EVTLogConfigReload(
                  gServerInfo.dwMaxRecords,
                  gServerInfo.dwMaxAge,
                  gServerInfo.bRemoveAsNeeded? "true" : "false",
-                 gpszAllowReadTo,
-                 gpszAllowWriteTo,
-                 gpszAllowDeleteTo);
+                 gServerInfo.pszAllowReadTo ?
+                    gServerInfo.pszAllowReadTo: "",
+                 gServerInfo.pszAllowWriteTo ?
+                    gServerInfo.pszAllowWriteTo: "",
+                 gServerInfo.pszAllowDeleteTo ?
+                    gServerInfo.pszAllowDeleteTo: "");
 
     BAIL_ON_EVT_ERROR(dwError);
 
