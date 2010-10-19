@@ -1153,6 +1153,9 @@ RegShellCmdParse(
     DWORD dwArgc = 2;
     DWORD dwNewArgc = 0;
     DWORD dwExportFormat = 0;
+    PSTR pszRootKey = NULL;
+    PSTR pszSubKey = NULL;
+    PSTR pszPtr = NULL;
 
     BAIL_ON_INVALID_POINTER(argv);
 
@@ -1237,6 +1240,44 @@ RegShellCmdParse(
             }
             else
             {
+                if (argv[2][0] == '[' && strchr(argv[2], '\\'))
+                {
+                    /*  Assume stuff between [ and \ is root key */
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pszRootKey, &argv[2][1]);
+                    BAIL_ON_REG_ERROR(dwError);
+                    pszPtr = strchr(pszRootKey, '\\');
+                    *pszPtr++ = '\0';
+                    
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pszSubKey, pszPtr);
+                    BAIL_ON_REG_ERROR(dwError);
+                    pszPtr = strrchr(pszSubKey, ']');
+                    if (pszPtr)
+                    {
+                        *pszPtr = '\0';
+                    }
+                }
+                else
+                {
+                    /* Assume value is subkey */
+                    dwError = RegCStringDuplicate(
+                                  (LW_PVOID) &pszSubKey, argv[2]);
+                    BAIL_ON_REG_ERROR(dwError);
+                }
+                dwError = RegShellIsValidKey(
+                              pParseState->hReg,
+                              pszRootKey,
+                              pszSubKey);
+                if (dwError == 0)
+                {
+                    /* 
+                     * Inconsistent arguments. Subkey passed but
+                     * no output file name.
+                     */
+                    dwError = LWREG_ERROR_INVALID_CONTEXT; 
+                    BAIL_ON_REG_ERROR(dwError);
+                }
                 dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
                 BAIL_ON_REG_ERROR(dwError);
                 dwError = RegAllocateMemory(
@@ -1245,6 +1286,7 @@ RegShellCmdParse(
                 BAIL_ON_REG_ERROR(dwError);
                 dwError = RegCStringDuplicate(
                               (LW_PVOID) &pCmdItem->args[0], argv[2]);
+                BAIL_ON_REG_ERROR(dwError);
                 pCmdItem->argsCount = 1;
             }
             break;
@@ -1352,6 +1394,8 @@ RegShellCmdParse(
 
     *parsedCmd = pCmdItem;
 cleanup:
+    LWREG_SAFE_FREE_STRING(pszRootKey);
+    LWREG_SAFE_FREE_STRING(pszSubKey);
     return dwError;
 
 error:
