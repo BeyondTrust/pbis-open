@@ -194,9 +194,10 @@ typedef struct _RDR_SOCKET
     size_t OutgoingWritten;
     /* List of RDR_OP_CONTEXTs with packets that need to be sent */
     LW_LIST_LINKS PendingSend;
+    /* List of RDR_OP_CONTEXTs waiting for response packets */
+    LW_LIST_LINKS PendingResponse;
+    /* List of RDR_OP_CONTEXTs waiting for the socket to change state */
     LW_LIST_LINKS StateWaiters;
-    /* Storage for dependent responses */
-    SMB_HASH_TABLE *pResponseHash;
     ULONG64 ullNextMid;
     unsigned volatile bReadBlocked:1;
     unsigned volatile bWriteBlocked:1;
@@ -301,12 +302,6 @@ typedef struct _RDR_TREE2
     PRDR_OP_CONTEXT pDisconnectContext;
 } RDR_TREE2, *PRDR_TREE2;
 
-typedef struct
-{
-    USHORT mid;          
-    PRDR_OP_CONTEXT pContext;
-} RDR_RESPONSE, *PRDR_RESPONSE;
-
 typedef struct _RDR_CCB
 {
     SMB_PROTOCOL_VERSION version;
@@ -352,11 +347,16 @@ typedef struct _RDR_CCB2
     PRDR_TREE2 pTree;
     RDR_SMB2_FID Fid;
     LONG64 llOffset;
+    /* File enumeration state */
     struct
     {
+        /* Last query response */
         PSMB_PACKET pPacket;
+        /* Current position in packet */
         PBYTE pCursor;
+        /* Remaining data */
         ULONG ulRemaining;
+        /* FIXME: use this */
         unsigned bInProgress:1;
     } Enum;
 } RDR_CCB2, *PRDR_CCB2;

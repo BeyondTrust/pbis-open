@@ -64,13 +64,6 @@ RdrSocketAcquireMid(
     );
 
 static
-NTSTATUS
-RdrSocketAddResponse(
-    PRDR_SOCKET pSocket,
-    PRDR_RESPONSE pResponse
-    );
-
-static
 VOID
 RdrSocketInvalidate_InLock(
     PRDR_SOCKET pSocket,
@@ -82,19 +75,6 @@ NTSTATUS
 RdrSocketReceiveAndUnmarshall(
     IN PRDR_SOCKET pSocket,
     OUT PSMB_PACKET pPacket
-    );
-
-static
-NTSTATUS
-RdrResponseCreate(
-    uint16_t       wMid,
-    RDR_RESPONSE **ppResponse
-    );
-
-static
-VOID
-RdrResponseFree(
-    PRDR_RESPONSE pResponse
     );
 
 static
@@ -230,35 +210,6 @@ RdrSocketCreditsNeeded(
     PRDR_SOCKET pSocket
     );
 
-static
-int
-RdrSocketHashResponseCompare(
-    PCVOID vp1,
-    PCVOID vp2)
-{
-    uint16_t mid1 = *((uint16_t *) vp1);
-    uint16_t mid2 = *((uint16_t *) vp2);
-
-    if (mid1 == mid2)
-    {
-        return 0;
-    }
-    else if (mid1 > mid2)
-    {
-        return 1;
-    }
-
-    return -1;
-}
-
-static
-size_t
-RdrSocketHashResponse(
-    PCVOID vp)
-{
-    return *((uint16_t *) vp);
-}
-
 NTSTATUS
 RdrSocketCreate(
     IN PCWSTR pwszHostname,
@@ -277,6 +228,7 @@ RdrSocketCreate(
     BAIL_ON_NT_STATUS(ntStatus);
 
     LwListInit(&pSocket->PendingSend);
+    LwListInit(&pSocket->PendingResponse);
     LwListInit(&pSocket->StateWaiters);
 
     pthread_mutex_init(&pSocket->mutex, NULL);
@@ -323,14 +275,6 @@ RdrSocketCreate(
                     &pSocket->pSessionHashByPrincipal);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = SMBHashCreate(
-                19,
-                &RdrSocketHashResponseCompare,
-                &RdrSocketHashResponse,
-                NULL,
-                &pSocket->pResponseHash);
-    BAIL_ON_NT_STATUS(ntStatus);
-
     ntStatus = LwRtlCreateTask(
         gRdrRuntime.pThreadPool,
         &pSocket->pTask,
@@ -351,8 +295,6 @@ error:
     {
         SMBHashSafeFree(&pSocket->pSessionHashByUID);
         SMBHashSafeFree(&pSocket->pSessionHashByPrincipal);
-        SMBHashSafeFree(&pSocket->pResponseHash);
-
         LWIO_SAFE_FREE_MEMORY(pSocket->pwszHostname);
         LWIO_SAFE_FREE_MEMORY(pSocket->pwszCanonicalName);
 
@@ -692,23 +634,14 @@ error:
 }
 
 static
-NTSTATUS
+VOID
 RdrSocketQueue(
     IN PRDR_SOCKET pSocket,
     IN PRDR_OP_CONTEXT pContext
     )
 {
-    NTSTATUS ntStatus = 0;
-    BOOLEAN  bInLock = FALSE;
-
-    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
-   
     LwListInsertBefore(&pSocket->PendingSend, &pContext->Link);
     LwRtlWakeTask(pSocket->pTask);
-
-    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-
-    return ntStatus;
 }
 
 NTSTATUS
@@ -718,20 +651,20 @@ RdrSocketTransceive(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PRDR_RESPONSE pResponse = NULL;
     PSMB_PACKET pPacket = &pContext->Packet;
     USHORT usMid = 0;
+    BOOLEAN bInLock = FALSE;
+
+    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    status = RdrSocketAcquireMid(pSocket, &usMid);
 
     switch(pPacket->protocolVer)
     {
     case SMB_PROTOCOL_VERSION_1:
-        status = RdrSocketAcquireMid(pSocket, &usMid);
-        BAIL_ON_NT_STATUS(status);
         pPacket->pSMBHeader->mid = usMid;
         break;
     case SMB_PROTOCOL_VERSION_2:
-        status = RdrSocketAcquireMid(pSocket, &usMid);
-        BAIL_ON_NT_STATUS(status);
         pPacket->pSMB2Header->ullCommandSequence = usMid;
         break;
     default:
@@ -740,29 +673,19 @@ RdrSocketTransceive(
         break;
     }
 
-    status = RdrResponseCreate(usMid, &pResponse);
-    BAIL_ON_NT_STATUS(status);
+    pContext->usMid = usMid;
 
-    pResponse->pContext = pContext;
-
-    status = RdrSocketAddResponse(pSocket, pResponse);
-    BAIL_ON_NT_STATUS(status);
-
-    status = RdrSocketQueue(pSocket, pContext);
-    BAIL_ON_NT_STATUS(status);
+    RdrSocketQueue(pSocket, pContext);
 
     status = STATUS_PENDING;
 
 cleanup:
 
+    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
     return status;
 
 error:
-
-    if (pResponse)
-    {
-        RdrResponseFree(pResponse);
-    }
 
     goto cleanup;
 }
@@ -931,7 +854,7 @@ RdrSocketTask(
     LW_LONG64* pllTime
     )
 {
-    NTSTATUS ntStatus = 0;
+    NTSTATUS status = 0;
     PRDR_SOCKET pSocket = (PRDR_SOCKET) pContext;
     BOOLEAN bGlobalLock = FALSE;
     BOOLEAN bInLock = FALSE;
@@ -974,8 +897,8 @@ RdrSocketTask(
             /* Get result of connect() */
             if (getsockopt(pSocket->fd, SOL_SOCKET, SO_ERROR, &err, &len) < 0)
             {
-                ntStatus = LwErrnoToNtStatus(errno);
-                BAIL_ON_NT_STATUS(ntStatus);
+                status = LwErrnoToNtStatus(errno);
+                BAIL_ON_NT_STATUS(status);
             }
         }
         else
@@ -993,8 +916,8 @@ RdrSocketTask(
             if (WakeMask & LW_TASK_EVENT_TIME)
             {
                 /* We timed out, give up */
-                ntStatus = STATUS_IO_TIMEOUT;
-                BAIL_ON_NT_STATUS(ntStatus);
+                status = STATUS_IO_TIMEOUT;
+                BAIL_ON_NT_STATUS(status);
             }
             else
             {
@@ -1003,8 +926,8 @@ RdrSocketTask(
                 goto cleanup;
             }
         default:
-            ntStatus = LwErrnoToNtStatus(err);
-            BAIL_ON_NT_STATUS(ntStatus);
+            status = LwErrnoToNtStatus(err);
+            BAIL_ON_NT_STATUS(status);
         }
     }
 
@@ -1013,20 +936,20 @@ RdrSocketTask(
         if (pSocket->bEcho)
         {
             /* Server is unresponsive to echo, time out socket */
-            ntStatus = STATUS_IO_TIMEOUT;
-            BAIL_ON_NT_STATUS(ntStatus);
+            status = STATUS_IO_TIMEOUT;
+            BAIL_ON_NT_STATUS(status);
         }
         else
         {
             /* Send an echo now */
             LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-            ntStatus = RdrEcho(pSocket, "Ping!");
+            status = RdrEcho(pSocket, "Ping!");
             LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
-            if (ntStatus == STATUS_PENDING)
+            if (status == STATUS_PENDING)
             {
-                ntStatus = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
-            BAIL_ON_NT_STATUS(ntStatus);
+            BAIL_ON_NT_STATUS(status);
             pSocket->bEcho = TRUE;
         }
     }
@@ -1052,8 +975,10 @@ RdrSocketTask(
 
         pLink = LwListRemoveHead(&pSocket->PendingSend);
         pIrpContext = LW_STRUCT_FROM_FIELD(pLink, RDR_OP_CONTEXT, Link);
-        ntStatus = RdrSocketPrepareSend(pSocket, &pIrpContext->Packet);
-        BAIL_ON_NT_STATUS(ntStatus);
+        status = RdrSocketPrepareSend(pSocket, &pIrpContext->Packet);
+        BAIL_ON_NT_STATUS(status);
+        LwListInsertTail(&pSocket->PendingResponse, &pIrpContext->Link);
+        pIrpContext = NULL;
     }
 
     *pWaitMask = LW_TASK_EVENT_EXPLICIT;
@@ -1062,14 +987,14 @@ RdrSocketTask(
     {
         if (!pSocket->pPacket)
         {
-            ntStatus = RdrAllocatePacket(
+            status = RdrAllocatePacket(
                 RdrSocketReceivePacketSize(pSocket),
                 &pSocket->pPacket);
-            BAIL_ON_NT_STATUS(ntStatus);
+            BAIL_ON_NT_STATUS(status);
         }
         
-        ntStatus = RdrSocketReceiveAndUnmarshall(pSocket, pSocket->pPacket);
-        switch(ntStatus)
+        status = RdrSocketReceiveAndUnmarshall(pSocket, pSocket->pPacket);
+        switch(status)
         {
         case STATUS_SUCCESS:
             /* Reset timeout since we successfully received a response */
@@ -1083,9 +1008,9 @@ RdrSocketTask(
             }
 
             /* This function should free packet and socket memory on error */
-            ntStatus = RdrSocketDispatchPacket(pSocket, pSocket->pPacket);
+            status = RdrSocketDispatchPacket(pSocket, pSocket->pPacket);
             pSocket->pPacket = NULL;
-            BAIL_ON_NT_STATUS(ntStatus);
+            BAIL_ON_NT_STATUS(status);
             
             *pWaitMask |= LW_TASK_EVENT_YIELD;
             break;
@@ -1093,14 +1018,14 @@ RdrSocketTask(
             pSocket->bReadBlocked = TRUE;
             break;
         default:
-            BAIL_ON_NT_STATUS(ntStatus);
+            BAIL_ON_NT_STATUS(status);
         }
     }
 
     if (!pSocket->bWriteBlocked && pSocket->pOutgoing)
     {
-        ntStatus = RdrSocketSendData(pSocket, pSocket->pOutgoing);
-        switch (ntStatus)
+        status = RdrSocketSendData(pSocket, pSocket->pOutgoing);
+        switch (status)
         {
         case STATUS_SUCCESS:
             pSocket->OutgoingWritten = 0;
@@ -1111,7 +1036,7 @@ RdrSocketTask(
             pSocket->bWriteBlocked = TRUE;
             break;
         default:
-            BAIL_ON_NT_STATUS(ntStatus);
+            BAIL_ON_NT_STATUS(status);
         }
     }
 
@@ -1148,14 +1073,19 @@ cleanup:
 
     LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
 
+    if (pIrpContext)
+    {
+        RdrContinueContext(pIrpContext, status, NULL);
+    }
+
     return;
 
 error:
 
-    if (ntStatus != STATUS_PENDING)
+    if (status != STATUS_PENDING)
     {
         LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
-        RdrSocketInvalidate_InLock(pSocket, ntStatus);
+        RdrSocketInvalidate_InLock(pSocket, status);
         *pWaitMask = LW_TASK_EVENT_EXPLICIT;
     }
 
@@ -1164,36 +1094,50 @@ error:
 
 static
 NTSTATUS
-RdrSocketFindResponseByMid(
+RdrSocketFindResponseContextByMid(
     PRDR_SOCKET pSocket,
     USHORT usMid,
-    PRDR_RESPONSE* ppResponse
+    PRDR_OP_CONTEXT* ppContext
     )
 {
-    NTSTATUS ntStatus = 0;
-    PRDR_RESPONSE pResponse = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+    PLW_LIST_LINKS pLink = NULL;
+    PRDR_OP_CONTEXT pContext = NULL;
 
-    ntStatus = SMBHashGetValue(
-        pSocket->pResponseHash,
-        &usMid,
-        (PVOID *) &pResponse);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    if (ppResponse)
+    /*
+     * We expect responses to come back in roughly the same order as
+     * the requests, so a linear traversal of the list should terminate
+     * quickly in the common case.
+     */
+    while ((pLink = LwListTraverse(&pSocket->PendingResponse, pLink)))
     {
-        *ppResponse = pResponse;
+        pContext = LW_STRUCT_FROM_FIELD(pLink, RDR_OP_CONTEXT, Link);
+
+        if (pContext->usMid == usMid)
+        {
+            break;
+        }
+        else
+        {
+            pContext = NULL;
+        }
     }
+
+    if (!pContext)
+    {
+        status = STATUS_NOT_FOUND;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    *ppContext = pContext;
 
 cleanup:
 
-    return ntStatus;
+    return status;
 
 error:
 
-    if (ppResponse)
-    {
-        *ppResponse = NULL;
-    }
+    *ppContext = NULL;
 
     goto cleanup;
 }
@@ -1224,12 +1168,12 @@ RdrSocketDispatchPacket2(
     )
 {
     NTSTATUS status = 0;
-    PRDR_RESPONSE pResponse = NULL;
     USHORT usMid = 0;
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
     PRDR_SESSION2 pSession = NULL;
     ULONG64 ullSessionId = 0;
+    PRDR_OP_CONTEXT pContext = NULL;
 
     /* Basic sanity check on header so we can read a few fields out of it */
     if (pPacket->bufferUsed < sizeof(NETBIOS_HEADER) + sizeof(SMB2_HEADER))
@@ -1278,10 +1222,10 @@ RdrSocketDispatchPacket2(
          */
         usMid = (USHORT) pPacket->pSMB2Header->ullCommandSequence;
 
-        status = RdrSocketFindResponseByMid(
+        status = RdrSocketFindResponseContextByMid(
             pSocket,
             usMid,
-            &pResponse);
+            &pContext);
 
         switch(status)
         {
@@ -1294,15 +1238,12 @@ RdrSocketDispatchPacket2(
             BAIL_ON_NT_STATUS(status);
         }
 
-        SMBHashRemoveKey(pSocket->pResponseHash, &pResponse->mid);
-
-        assert(pResponse->pContext);
-
+        LwListRemove(&pContext->Link);
         /*
          * Make sure the response command was what we expected.
          * FIXME: handle error response packets
          */
-        if (SMB_HTOL16(pResponse->pContext->Packet.pSMB2Header->command) !=
+        if (SMB_HTOL16(pContext->Packet.pSMB2Header->command) !=
             pPacket->pSMB2Header->command)
         {
             status = STATUS_INVALID_NETWORK_RESPONSE;
@@ -1310,21 +1251,18 @@ RdrSocketDispatchPacket2(
         }
 
         LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
-        bKeep = RdrContinueContext(pResponse->pContext, STATUS_SUCCESS, pPacket);
+        bKeep = RdrContinueContext(pContext, STATUS_SUCCESS, pPacket);
         /* Ownership of packet was transferred to continuation */
         pPacket = NULL;
         LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
 
         if (bKeep)
         {
-            /* FIXME: we can't afford to fail here */
-            status = SMBHashSetValue(pSocket->pResponseHash, &pResponse->mid, pResponse);
-            BAIL_ON_NT_STATUS(status);
+            LwListInsertTail(&pSocket->PendingResponse, &pContext->Link);
         }
         else
         {
             pSocket->usUsedSlots--;
-            RdrResponseFree(pResponse);
         }
     }
     else
@@ -1355,17 +1293,17 @@ RdrSocketDispatchPacket1(
     )
 {
     NTSTATUS ntStatus = 0;
-    PRDR_RESPONSE pResponse = NULL;
     USHORT usMid = 0;
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
+    PRDR_OP_CONTEXT pContext = NULL;
 
     usMid = SMB_HTOL16(pPacket->pSMBHeader->mid);
 
-    ntStatus = RdrSocketFindResponseByMid(
+    ntStatus = RdrSocketFindResponseContextByMid(
                     pSocket,
                     usMid,
-                    &pResponse);
+                    &pContext);
     switch(ntStatus)
     {
     case STATUS_SUCCESS:
@@ -1377,36 +1315,31 @@ RdrSocketDispatchPacket1(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    assert(pResponse->pContext);
-
-    SMBHashRemoveKey(pSocket->pResponseHash, &pResponse->mid);
+    LwListRemove(&pContext->Link);
 
     ntStatus = SMBPacketDecodeHeader(
         pPacket,
-        (pResponse->pContext->Packet.haveSignature &&
-            !pSocket->bIgnoreServerSignatures &&
-            pSocket->pSessionKey != NULL),
-            pResponse->pContext->Packet.sequence + 1,
-            pSocket->pSessionKey,
-            pSocket->dwSessionKeyLength);
+        (pContext->Packet.haveSignature &&
+         !pSocket->bIgnoreServerSignatures &&
+         pSocket->pSessionKey != NULL),
+         pContext->Packet.sequence + 1,
+         pSocket->pSessionKey,
+         pSocket->dwSessionKeyLength);
     BAIL_ON_NT_STATUS(ntStatus);
 
     LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
-    bKeep = RdrContinueContext(pResponse->pContext, STATUS_SUCCESS, pPacket);
+    bKeep = RdrContinueContext(pContext, STATUS_SUCCESS, pPacket);
     /* Ownership of packet was transferred to continuation */
     pPacket = NULL;
     LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
 
     if (bKeep)
     {
-        /* FIXME: we can't afford to fail here */
-        ntStatus = SMBHashSetValue(pSocket->pResponseHash, &pResponse->mid, pResponse);
-        BAIL_ON_NT_STATUS(ntStatus);
+        LwListInsertTail(&pSocket->PendingResponse, &pContext->Link);
     }
     else
     {
         pSocket->usUsedSlots--;
-        RdrResponseFree(pResponse);
     }
 
 cleanup:
@@ -1654,11 +1587,6 @@ cleanup:
 
 error:
 
-    if (ntStatus != STATUS_PENDING)
-    {
-        RdrSocketInvalidate(pSocket, ntStatus);
-    }
-
     goto cleanup;
 }
 
@@ -1685,12 +1613,6 @@ RdrSocketInvalidate_InLock(
     )
 {
     BOOLEAN bInGlobalLock = FALSE;
-    PLW_LIST_LINKS pLink = NULL;
-    PRDR_OP_CONTEXT pContext = NULL;
-    SMB_HASH_ITERATOR iter = {0};
-    SMB_HASH_ENTRY* pEntry = NULL;
-    PRDR_RESPONSE pResponse = NULL;
-    BOOLEAN bLocked = TRUE;
 
     if (pSocket->state == RDR_SOCKET_STATE_ERROR)
     {
@@ -1709,19 +1631,15 @@ RdrSocketInvalidate_InLock(
     }
     LWIO_UNLOCK_MUTEX(bInGlobalLock, &gRdrRuntime.Lock);
 
-    while ((pLink = LwListTraverse(&pSocket->PendingSend, pLink)))
-    {
-        pContext = LW_STRUCT_FROM_FIELD(pLink, RDR_OP_CONTEXT, Link);
-
-        if (RdrSocketFindResponseByMid(pSocket, pContext->usMid, &pResponse) == STATUS_SUCCESS)
-        {
-            SMBHashRemoveKey(pSocket->pResponseHash, &pContext->usMid);
-            RdrResponseFree(pResponse);
-        }
-    }
-
     RdrNotifyContextList(
         &pSocket->PendingSend,
+        TRUE,
+        &pSocket->mutex,
+        status,
+        NULL);
+
+    RdrNotifyContextList(
+        &pSocket->PendingResponse,
         TRUE,
         &pSocket->mutex,
         status,
@@ -1734,20 +1652,9 @@ RdrSocketInvalidate_InLock(
         status,
         pSocket);
 
-
-    if (SMBHashGetIterator(pSocket->pResponseHash, &iter))
-    {
-        abort();
-    }
-
-    LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
-    while ((pEntry = SMBHashNext(&iter)))
-    {
-        pResponse = pEntry->pValue;
-        RdrContinueContext(pResponse->pContext, status, NULL);
-        RdrResponseFree(pResponse);
-    }
-    LWIO_LOCK_MUTEX(bLocked, &pSocket->mutex);
+    LwListInit(&pSocket->PendingSend);
+    LwListInit(&pSocket->PendingResponse);
+    LwListInit(&pSocket->StateWaiters);
 }
 
 BOOLEAN
@@ -1919,9 +1826,6 @@ RdrSocketAcquireMid(
     )
 {
     NTSTATUS ntStatus = 0;
-    BOOLEAN bInLock = FALSE;
-
-    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
 
     if (pSocket->state == RDR_SOCKET_STATE_ERROR)
     {
@@ -1929,50 +1833,11 @@ RdrSocketAcquireMid(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    do
-    {
-        *pusMid = pSocket->ullNextMid++;
-    } while (RdrSocketFindResponseByMid(pSocket, *pusMid, NULL) == STATUS_SUCCESS);
+    *pusMid = pSocket->ullNextMid++;
 
 error:
 
-    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-
     return ntStatus;
-}
-
-static
-NTSTATUS
-RdrSocketAddResponse(
-    PRDR_SOCKET pSocket,
-    PRDR_RESPONSE pResponse
-    )
-{
-    NTSTATUS ntStatus = 0;
-    BOOLEAN bInLock = FALSE;
-
-    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
-
-    ntStatus = SMBHashSetValue(
-                    pSocket->pResponseHash,
-                    &pResponse->mid,
-                    pResponse);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    if (pResponse->pContext)
-    {
-        pResponse->pContext->usMid = pResponse->mid;
-    }
-
-cleanup:
-
-    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
-
-    return ntStatus;
-
-error:
-
-    goto cleanup;
 }
 
 NTSTATUS
@@ -2089,47 +1954,6 @@ cleanup:
 error:
 
     goto cleanup;
-}
-
-static
-NTSTATUS
-RdrResponseCreate(
-    uint16_t       wMid,
-    RDR_RESPONSE **ppResponse
-    )
-{
-    NTSTATUS ntStatus = 0;
-    PRDR_RESPONSE pResponse = NULL;
-
-    ntStatus = LwIoAllocateMemory(
-                    sizeof(RDR_RESPONSE),
-                    (PVOID*)&pResponse);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    pResponse->mid = wMid;
-
-    *ppResponse = pResponse;
-
-cleanup:
-
-    return ntStatus;
-
-error:
-
-    LWIO_SAFE_FREE_MEMORY(pResponse);
-
-    *ppResponse = NULL;
-
-    goto cleanup;
-}
-
-static
-VOID
-RdrResponseFree(
-    PRDR_RESPONSE pResponse
-    )
-{
-    LwIoFreeMemory(pResponse);
 }
 
 static
