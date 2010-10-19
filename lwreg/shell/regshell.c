@@ -2204,7 +2204,7 @@ RegShellExecuteCmdLine(
     }
     RegShellCmdlineParseFree(dwNewArgc, pszNewArgv);
     LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
-    pParseState->pszFullKeyPath = NULL;
+    LWREG_SAFE_FREE_STRING(pParseState->pszFullKeyPath);
 
 cleanup:
     return dwError;

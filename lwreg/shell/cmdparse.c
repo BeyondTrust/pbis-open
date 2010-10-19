@@ -395,6 +395,7 @@ RegShellCmdParseKeyName(
         BAIL_ON_REG_ERROR(dwError);
 
         /* Use default HKEY_THIS_MACHINE root key */
+        LWREG_SAFE_FREE_STRING(pParseState->pszFullRootKeyName);
         dwError = RegCStringDuplicate(
                       &pParseState->pszFullRootKeyName,
                       HKEY_THIS_MACHINE);
