@@ -72,7 +72,7 @@ RdrSocketInvalidate_InLock(
 
 static
 NTSTATUS
-RdrSocketReceiveAndUnmarshall(
+RdrSocketReceivePacket(
     IN PRDR_SOCKET pSocket,
     OUT PSMB_PACKET pPacket
     );
@@ -691,7 +691,7 @@ error:
 }
 
 NTSTATUS
-RdrSocketReceiveAndUnmarshall(
+RdrSocketReceivePacket(
     IN PRDR_SOCKET pSocket,
     OUT PSMB_PACKET pPacket
     )
@@ -813,35 +813,41 @@ RdrSocketCreditsNeeded(
     )
 {
     PLW_LIST_LINKS pLink = NULL;
-    SHORT sCount = 0;
+    USHORT usPacketCount = 0;
+    USHORT usCredits = 0;
+    SHORT sDeficit = 0;
+
+    /*
+     * We want to request enough credits to get our
+     * maximum number of slots up to the configured minimum.
+     */
+    if (pSocket->usMaxSlots < gRdrRuntime.config.usMinCreditReserve)
+    {
+        usCredits = gRdrRuntime.config.usMinCreditReserve - pSocket->usMaxSlots;
+    }
 
     /* Count packets in the queue */
     for (pLink = pSocket->PendingSend.Next; pLink != &pSocket->PendingSend; pLink = pLink->Next)
     {
-        sCount++;
+        usPacketCount++;
     }
+
+    /* Calculate how many packets we have pending above the number of available slots */
+    sDeficit = usPacketCount - (pSocket->usMaxSlots - pSocket->usUsedSlots);
 
     /*
-     * Try to keep a minimum number of credits available in reserve
-     * even if we don't have outstanding packets that need them yet.
+     * If the value calculated above won't cover the deficit,
+     * see if the server can float us some extra credits.
      */
-    if (sCount < gRdrRuntime.config.usMinCreditReserve)
+    if (sDeficit > 0 && sDeficit > usCredits)
     {
-        sCount = gRdrRuntime.config.usMinCreditReserve;
-    }
-
-    /* Subtract credits we already have */
-    sCount -= (pSocket->usMaxSlots - pSocket->usUsedSlots);
-
-    if (sCount < 0)
-    {
-        sCount = 0;
+        usCredits = sDeficit;
     }
 
     /* Add credit for the packet we are about to send */
-    sCount++;
+    usCredits++;
 
-    return (USHORT) sCount;
+    return usCredits;
 }
 
 static
@@ -993,21 +999,14 @@ RdrSocketTask(
             BAIL_ON_NT_STATUS(status);
         }
         
-        status = RdrSocketReceiveAndUnmarshall(pSocket, pSocket->pPacket);
+        status = RdrSocketReceivePacket(pSocket, pSocket->pPacket);
         switch(status)
         {
         case STATUS_SUCCESS:
             /* Reset timeout since we successfully received a response */
             *pllTime = 0;
 
-            /* Figure out if we need to switch into SMBv2 mode */
-            if (pSocket->pPacket->protocolVer == SMB_PROTOCOL_VERSION_2 &&
-                pSocket->version == SMB_PROTOCOL_VERSION_1)
-            {
-                pSocket->version = SMB_PROTOCOL_VERSION_2;
-            }
-
-            /* This function should free packet and socket memory on error */
+            /* This function should free packet on error */
             status = RdrSocketDispatchPacket(pSocket, pSocket->pPacket);
             pSocket->pPacket = NULL;
             BAIL_ON_NT_STATUS(status);
