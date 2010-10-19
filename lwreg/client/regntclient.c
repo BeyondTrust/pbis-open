@@ -610,6 +610,7 @@ NtRegEnumValueA(
 	        pTempData,
 	        &cTempData);
 	BAIL_ON_NT_STATUS(status);
+    LWREG_SAFE_FREE_MEMORY(pTempData);
 
 	if (!cTempData)
 	{
