@@ -1365,22 +1365,34 @@ RegShellAllocKey(
     PSTR *pszNewKey)
 {
     DWORD dwError;
+    PSTR pszFullPath = NULL;
+    PSTR pszRetKey = NULL;
 
-    dwError = RegAllocateMemory(strlen(pszKeyName) + 3, (PVOID*)pszNewKey);
+
+    dwError = RegShellCanonicalizePath(
+                  pParseState->pszDefaultKey,
+                  pszKeyName,
+                  &pszFullPath,
+                  NULL,
+                  NULL);
+    BAIL_ON_REG_ERROR(dwError);
+    dwError = RegAllocateMemory(strlen(pszFullPath) + 3, (PVOID*)&pszRetKey);
     BAIL_ON_REG_ERROR(dwError);
 
     if (!pParseState->bBracketPrefix)
     {
-        strcpy(*pszNewKey, "[");
-        strcat(*pszNewKey, pszKeyName);
-        strcat(*pszNewKey, "]");
+        strcpy(pszRetKey, "[");
+        strcat(pszRetKey, pszFullPath);
+        strcat(pszRetKey, "]");
     }
     else
     {
-        strcat(*pszNewKey, pszKeyName);
+        strcat(pszRetKey, pszKeyName);
     }
 
+    *pszNewKey = pszRetKey;
 cleanup:
+    LWREG_SAFE_FREE_STRING(pszFullPath);
     return dwError;
 
 error:
