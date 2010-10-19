@@ -127,14 +127,35 @@ typedef enum
     COM_NO_ANDX_COMMAND         = 0xFF
 } COMMAND;
 
-typedef USHORT SMB_SEARCH_FLAGS;
+typedef USHORT SMB_FILE_ATTRIBUTES, *PSMB_FILE_ATTRIBUTES;
 
-#define SMB_SEARCH_FLAGS_READ_ONLY 0x0001
-#define SMB_SEARCH_FLAGS_HIDDEN    0x0002
-#define SMB_SEARCH_FLAGS_SYSTEM    0x0003
-#define SMB_SEARCH_FLAGS_VOLUME_ID 0x0004
-#define SMB_SEARCH_FLAGS_DIRECTORY 0x0010
-#define SMB_SEARCH_FLAGS_ARCHIVE   0x0020
+// used as inclusive search attributes
+#define SMB_FILE_ATTRIBUTE_NORMAL       0x0000
+#define SMB_FILE_ATTRIBUTE_READONLY     0x0001
+#define SMB_FILE_ATTRIBUTE_HIDDEN       0x0002
+#define SMB_FILE_ATTRIBUTE_SYSTEM       0x0004
+#define SMB_FILE_ATTRIBUTE_VOLUME       0x0008
+#define SMB_FILE_ATTRIBUTE_DIRECTORY    0x0010
+#define SMB_FILE_ATTRIBUTE_ARCHIVE      0x0020
+
+// exclusive search attributes
+#define SMB_SEARCH_ATTRIBUTE_READONLY   0x0100
+#define SMB_SEARCH_ATTRIBUTE_HIDDEN     0x0200
+#define SMB_SEARCH_ATTRIBUTE_SYSTEM     0x0400
+#define SMB_SEARCH_ATTRIBUTE_VOLUME     0x0800
+#define SMB_SEARCH_ATTRIBUTE_DIRECTORY  0x1000
+#define SMB_SEARCH_ATTRIBUTE_ARCHIVE    0x2000
+
+#define SMB_FILE_ATTRIBUTES_MASK 0x3F
+
+#define SMB_FILE_ATTRIBUTES_FROM_NATIVE(FileAttributes) \
+    ((SMB_FILE_ATTRIBUTES)((FileAttributes) & SMB_FILE_ATTRIBUTES_MASK))
+
+#define SMB_FILE_ATTRIBUTES_TO_NATIVE(SmbFileAttributes) \
+    ((FILE_ATTRIBUTES)((SmbFileAttributes) & SMB_FILE_ATTRIBUTES_MASK))
+
+#define SMB_SEARCH_ATTRIBUTES_TO_NATIVE(SearchAttributes) \
+    SMB_FILE_ATTRIBUTES_TO_NATIVE(SearchAttributes >> 8)
 
 typedef enum
 {
@@ -1912,7 +1933,7 @@ typedef struct _DELETE_DIRECTORY_RESPONSE_HEADER {
 
 typedef struct _SMB_DELETE_REQUEST_HEADER
 {
-    USHORT usSearchAttributes;
+    SMB_FILE_ATTRIBUTES usSearchAttributes;
     USHORT ByteCount;
 
     /* UCHAR ucBufferFormat; */
@@ -2021,7 +2042,7 @@ typedef struct _SMB_RENAME_REQUEST_HEADER
     /* wordCount and byteCount are handled at a higher layer */
     /* AndX chains will be handled at a higher layer */
 
-    USHORT usSearchAttributes;
+    SMB_FILE_ATTRIBUTES usSearchAttributes;
     USHORT usByteCount;
 
 } __attribute__((__packed__)) SMB_RENAME_REQUEST_HEADER,
@@ -2039,7 +2060,7 @@ typedef struct _SMB_RENAME_RESPONSE_HEADER
 
 typedef struct _SMB_NT_RENAME_REQUEST_HEADER
 {
-    USHORT usSearchAttributes;
+    SMB_FILE_ATTRIBUTES usSearchAttributes;
     USHORT usInfoLevel;
     ULONG ulClusterCount;
     USHORT usByteCount;
