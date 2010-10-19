@@ -53,6 +53,7 @@
 typedef struct {
     /* MT safety */
     pthread_mutex_t lock;
+    pthread_mutex_t *pLock;
     /* Should start as daemon */
     DWORD dwStartAsDaemon;
     /* where are we logging */

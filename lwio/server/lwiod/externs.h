@@ -63,13 +63,13 @@ extern pthread_t* gpSignalHandlerThread;
 
 #define LWIO_LOCK_SERVERINFO(bInLock)                  \
         if (!bInLock) {                               \
-           pthread_mutex_lock(&gpServerInfo->lock);   \
+           pthread_mutex_lock(gpServerInfo->pLock);   \
            bInLock = TRUE;                            \
         }
 
 #define LWIO_UNLOCK_SERVERINFO(bInLock)                \
         if (bInLock) {                                \
-           pthread_mutex_unlock(&gpServerInfo->lock); \
+           pthread_mutex_unlock(gpServerInfo->pLock); \
            bInLock = FALSE;                           \
         }
 

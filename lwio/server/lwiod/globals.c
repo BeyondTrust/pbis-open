@@ -50,16 +50,16 @@
 
 SMBSERVERINFO gServerInfo =
 {
-    PTHREAD_MUTEX_INITIALIZER,  /* Lock              */
-    0,                          /* Start as daemon   */
-    LWIO_LOG_TARGET_DISABLED,    /* log disabled      */
-    LWIO_LOG_LEVEL_ERROR,        /* Max Log Level     */
-    FALSE,                      /* Enable debug logs */
-    "",                         /* Log file path     */
-    "",                         /* Cache path        */
-    "",                         /* Prefix path       */
-    0,                          /* Process exit flag */
-    0                           /* Process exit code */
+    .pLock = NULL,                              /* Lock              */
+    .dwStartAsDaemon = 0,                       /* Start as daemon   */
+    .logTarget = LWIO_LOG_TARGET_DISABLED,      /* log disabled      */
+    .maxAllowedLogLevel = LWIO_LOG_LEVEL_ERROR, /* Max Log Level     */
+    .bEnableDebugLogs = FALSE,                  /* Enable debug logs */
+    .szLogFilePath = "",                        /* Log file path     */
+    .szCachePath = "",                          /* Cache path        */
+    .szPrefixPath = "",                         /* Prefix path       */
+    .bProcessShouldExit = 0,                    /* Process exit flag */
+    .dwExitCode = 0                             /* Process exit code */
 };
 
 PSMBSERVERINFO gpServerInfo = &gServerInfo;
