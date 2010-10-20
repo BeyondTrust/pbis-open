@@ -280,6 +280,7 @@ DJStartStopDaemon(
     PSTR pszDaemonPath = NULL;
     int retry;
 
+#if !defined(__LWI_MACOSX__)
     LW_TRY(exc, FindDaemonScript(pszDaemonName, &pszDaemonPath, &LW_EXC));
 
     if (bStatus) {
@@ -345,6 +346,7 @@ DJStartStopDaemon(
         }
         goto cleanup;
     }
+#endif
 
 cleanup:
 
@@ -838,6 +840,7 @@ DJManageDaemon(
 {
     BOOLEAN bStarted = FALSE;
 
+#if !defined(__LWI_MACOSX__)
     // Check for the existence of the daemon prior to doing anything. 
     // notice that we are using the private version so that if we fail,
     // our inner exception will be the one that was tossed due to the failure.
@@ -858,6 +861,7 @@ DJManageDaemon(
     if (bStarted != bStatus) {
         LW_TRY(exc, DJStartStopDaemon(pszName, bStatus, &LW_EXC));
     }
+#endif
 
 cleanup:
     ;
