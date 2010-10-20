@@ -136,7 +136,7 @@ LWNetSrvStartListenThread(
     lwmsg_context_set_log_function(gpContext, LWNetSrvLogIpc, NULL);
 
     /* Set up IPC protocol object */
-    dwError = MAP_LWMSG_ERROR(lwmsg_protocol_new(NULL, &gpProtocol));
+    dwError = MAP_LWMSG_ERROR(lwmsg_protocol_new(gpContext, &gpProtocol));
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_protocol_add_protocol_spec(
@@ -145,7 +145,7 @@ LWNetSrvStartListenThread(
     BAIL_ON_LWNET_ERROR(dwError);
 
     /* Set up IPC server object */
-    dwError = MAP_LWMSG_ERROR(lwmsg_server_new(NULL, gpProtocol, &gpServer));
+    dwError = MAP_LWMSG_ERROR(lwmsg_server_new(gpContext, gpProtocol, &gpServer));
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_server_add_dispatch_spec(

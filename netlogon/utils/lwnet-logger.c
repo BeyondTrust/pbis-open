@@ -103,49 +103,7 @@ lwnet_set_syslogmask(
 {
     DWORD dwSysLogLevel = 0;
 
-    switch (dwLogLevel)
-    {
-        case LWNET_LOG_LEVEL_ALWAYS:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_NOTICE);
-            break;
-        }
-        case LWNET_LOG_LEVEL_ERROR:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_ERR);
-            break;
-        }
-
-        case LWNET_LOG_LEVEL_WARNING:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_WARNING);
-            break;
-        }
-
-        case LWNET_LOG_LEVEL_INFO:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-
-        case LWNET_LOG_LEVEL_VERBOSE:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_INFO);
-            break;
-        }
-
-        case LWNET_LOG_LEVEL_DEBUG:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
-            break;
-        }
-        
-        case LWNET_LOG_LEVEL_TRACE:
-        {
-            dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
-            break;
-        }
-    }
+    dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
 
     setlogmask(dwSysLogLevel);
 }
