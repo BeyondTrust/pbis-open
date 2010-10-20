@@ -36,6 +36,7 @@
 #include "djauthinfo.h"
 #include "djkrb5conf.h"
 #include "djregistry.h"
+#include "djservicemgr.h"
 #include "ctshell.h"
 #include "ctstrutils.h"
 #include <glob.h>
@@ -713,6 +714,8 @@ static void DoJoin(JoinProcessOptions *options, LWException **exc)
         options->ouName = pszCanonicalizedOU;
         pszCanonicalizedOU = NULL;
     }
+
+    DJStartService("lsass");
 
     LW_TRY(exc, SetLsassTimeSync(!options->disableTimeSync, &LW_EXC));
 
