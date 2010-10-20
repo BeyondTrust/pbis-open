@@ -689,6 +689,9 @@ IopIrpDispatch(
 
     LWIO_ASSERT((STATUS_PENDING == status) || (pIrp->IoStatusBlock.Status == status));
 
+cleanup:
+    LwRtlCleanupEvent(&event);
+
     if (STATUS_PENDING == status)
     {
         LWIO_ASSERT(isAsyncCall);
@@ -706,16 +709,10 @@ IopIrpDispatch(
 
             IopIrpDereference(&pExtraIrpReference);
         }
-    }
 
-cleanup:
-    if (STATUS_PENDING != status)
-    {
         pIrp->IoStatusBlock.Status = status;
         *pIoStatusBlock = pIrp->IoStatusBlock;
     }
-
-    LwRtlCleanupEvent(&event);
 
     LWIO_ASSERT(IS_BOTH_OR_NEITHER(pExtraIrpReference, (STATUS_PENDING == status)));
     LWIO_ASSERT((STATUS_PENDING != status) || isAsyncCall);
