@@ -189,7 +189,6 @@ DJManageDaemonsDescription(
 {
     BOOLEAN bFileExists = TRUE;
     LWException *innerExc = NULL;
-    int daemonCount;
     int i;
     int j;
     StringBuffer buffer;
@@ -201,74 +200,6 @@ DJManageDaemonsDescription(
     if(bFileExists && bStart)
     {
         LW_CLEANUP_CTERR(exc, CTStringBufferAppend(&buffer, "Shutdown pwgrd because it only handles usernames up to 8 characters long. This is done by running '/sbin/init.d/pwgr stop' and setting PWGR=0 in "PWGRD"."));
-    }
-
-    //Figure out how many daemons there are
-    for(daemonCount = 0; daemonList[daemonCount].primaryName != NULL; daemonCount++);
-
-    if(bStart)
-    {
-        //Start the daemons in ascending order
-        i = 0;
-    }
-    else
-    {
-        i = daemonCount - 1;
-    }
-    while(TRUE)
-    {
-        if(i >= daemonCount)
-            break;
-        if(i < 0)
-            break;
-
-        CT_SAFE_FREE_STRING(daemonDescription);
-
-
-        DJManageDaemonDescription(daemonList[i].primaryName,
-                         bStart,
-                         daemonList[i].startPriority,
-                         daemonList[i].stopPriority,
-                         &daemonDescription,
-                         &innerExc);
-
-        //Try the alternate daemon name if there is one
-        for(j = 0; !LW_IS_OK(innerExc) &&
-                innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                daemonList[i].alternativeNames[j] != NULL; j++)
-        {
-            LW_HANDLE(&innerExc);
-            DJManageDaemonDescription(daemonList[i].alternativeNames[j],
-                             bStart,
-                             daemonList[i].startPriority,
-                             daemonList[i].stopPriority,
-                             &daemonDescription,
-                             &innerExc);
-            if (!LW_IS_OK(innerExc) &&
-                    innerExc->code == ERROR_SERVICE_NOT_FOUND)
-            {
-                LW_HANDLE(&innerExc);
-            }
-            else
-                break;
-        }
-        if (!LW_IS_OK(innerExc) &&
-                innerExc->code == ERROR_SERVICE_NOT_FOUND &&
-                !daemonList[i].required)
-        {
-            LW_HANDLE(&innerExc);
-        }
-        LW_CLEANUP(exc, innerExc);
-
-        if(daemonDescription != NULL)
-        {
-            LW_CLEANUP_CTERR(exc, CTStringBufferAppend(&buffer, daemonDescription));
-        }
-
-        if(bStart)
-            i++;
-        else
-            i--;
     }
 
     *description = CTStringBufferFreeze(&buffer);
