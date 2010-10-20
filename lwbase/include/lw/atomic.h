@@ -51,6 +51,13 @@ LwInterlockedCompareExchange(
     LW_IN LW_LONG lCompareValue
     );
 
+PVOID
+LwInterlockedCompareExchangePointer(
+    IN OUT PVOID volatile *ppDestination,
+    IN PVOID pNewPointer,
+    IN PVOID pComparePointer
+    );
+
 LW_LONG
 LwInterlockedRead(
     LW_IN LW_LONG volatile *plSource

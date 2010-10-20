@@ -65,6 +65,24 @@ LwInterlockedCompareExchange(
     return lOldValue;
 }
 
+PVOID
+LwInterlockedCompareExchangePointer(
+    IN OUT PVOID volatile *ppDestination,
+    IN PVOID pNewPointer,
+    IN PVOID pComparePointer
+    )
+{
+    PVOID pOldPointer;
+
+    /* Identical to the above, just the C types differ */
+    __asm__ __volatile__ (
+        "lock; cmpxchgl %2, %0"
+        : "=m" (*ppDestination), "=a" (pOldPointer)
+        : "r" (pNewPointer), "1" (pComparePointer), "m" (*ppDestination));
+
+    return pOldPointer;
+}
+
 LONG
 LwInterlockedRead(
     IN LONG volatile *plSource
@@ -138,6 +156,24 @@ LwInterlockedCompareExchange(
     return lOldValue;
 }
 
+PVOID
+LwInterlockedCompareExchangePointer(
+    IN OUT PVOID volatile *ppDestination,
+    IN PVOID pNewPointer,
+    IN PVOID pComparePointer
+    )
+{
+    PVOID pOldPointer;
+
+    /* Identical to above except 64-bit */
+    __asm__ __volatile__ (
+        "lock; cmpxchgq %2, %0"
+        : "=m" (*ppDestination), "=a" (pOldPointer)
+        : "r" (pNewPointer), "1" (pComparePointer), "m" (*ppDestination));
+
+    return pOldPointer;
+}
+
 LONG
 LwInterlockedRead(
     IN LONG volatile *plSource
@@ -201,6 +237,29 @@ LwInterlockedCompareExchange(
     pthread_mutex_unlock(&gAtomicMutex);
 
     return lOldValue;
+}
+
+PVOID
+LwInterlockedCompareExchangePointer(
+    IN OUT PVOID volatile *ppDestination,
+    IN PVOID pNewPointer,
+    IN PVOID pComparePointer
+    )
+{
+    PVOID pOldPointer;
+
+    pthread_mutex_lock(&gAtomicMutex);
+
+    pOldPointer = *ppDestination;
+
+    if (pOldPointer == pComparePointer)
+    {
+        *ppDestination = pNewPointer;
+    }
+
+    pthread_mutex_unlock(&gAtomicMutex);
+
+    return pOldPointer;
 }
 
 LONG
