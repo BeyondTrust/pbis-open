@@ -193,33 +193,6 @@ error:
     goto cleanup;
 }
 
-static
-VOID
-AD_ClearSchannelState(
-    IN PLSA_SCHANNEL_STATE pSchannelState
-    );
-
-DWORD
-AD_NetInitMemory(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-
-    dwError = LsaRpcInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = NetrInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = SamrInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
-}
-
 DWORD
 AD_NetCreateSchannelState(
     OUT PLSA_SCHANNEL_STATE* ppSchannelState
@@ -261,7 +234,7 @@ AD_NetDestroySchannelState(
     IN PLSA_SCHANNEL_STATE pSchannelState
     )
 {
-    AD_ClearSchannelState(pSchannelState);
+    AD_ClearSchannelStateInLock(pSchannelState);
 
     if (pSchannelState->pSchannelLock)
     {
@@ -269,29 +242,6 @@ AD_NetDestroySchannelState(
     }
 
     LwFreeMemory(pSchannelState);
-}
-
-DWORD
-AD_NetShutdownMemory(
-    IN LSA_SCHANNEL_STATE_HANDLE hSchannelState
-    )
-{
-    DWORD dwError = 0;
-
-    AD_ClearSchannelState((PLSA_SCHANNEL_STATE)hSchannelState);
-
-    dwError = SamrDestroyMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = NetrDestroyMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaRpcDestroyMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-
-    return dwError;
 }
 
 DWORD
@@ -2036,28 +1986,6 @@ AD_ClearSchannelStateInLock(
         pSchannelState->pSchannelCreds = NULL;
 
         LW_SAFE_FREE_MEMORY(pSchannelState->pszSchannelServer);
-    }
-}
-
-static
-VOID
-AD_ClearSchannelState(
-    IN PLSA_SCHANNEL_STATE pSchannelState
-    )
-{
-    if (pSchannelState)
-    {
-        if (pSchannelState->pSchannelLock)
-        {
-            pthread_mutex_lock(pSchannelState->pSchannelLock);
-        }
-
-        AD_ClearSchannelStateInLock(pSchannelState);
-
-        if (pSchannelState->pSchannelLock)
-        {
-            pthread_mutex_unlock(pSchannelState->pSchannelLock);
-        }
     }
 }
 

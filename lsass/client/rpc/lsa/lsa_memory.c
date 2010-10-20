@@ -70,26 +70,6 @@ LsaAllocateAuditEventsInfo(
 
 
 NTSTATUS
-LsaRpcInitMemory(
-    VOID
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
-LsaRpcDestroyMemory(
-    VOID
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
 LsaRpcAllocateMemory(
     OUT PVOID *ppOut,
     IN  size_t sSize

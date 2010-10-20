@@ -114,26 +114,6 @@ SamrAllocateDisplayEntryAscii(
 
 
 NTSTATUS
-SamrInitMemory(
-    void
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
-SamrDestroyMemory(
-    void
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
 SamrAllocateMemory(
     OUT PVOID  *ppOut,
     IN  size_t  sSize

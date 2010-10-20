@@ -71,16 +71,6 @@ AD_SetSystemAccess(
     );
 
 DWORD
-AD_NetInitMemory(
-    VOID
-    );
-
-DWORD
-AD_NetShutdownMemory(
-    IN LSA_SCHANNEL_STATE_HANDLE hSchannelState
-    );
-
-DWORD
 AD_NetCreateSchannelState(
     OUT PLSA_SCHANNEL_STATE* ppSchannelState
     );

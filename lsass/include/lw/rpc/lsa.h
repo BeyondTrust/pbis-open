@@ -469,18 +469,6 @@ LsaLookupSids(
     );
 
 
-NTSTATUS
-LsaRpcInitMemory(
-    VOID
-    );
-
-
-NTSTATUS
-LsaRpcDestroyMemory(
-    VOID
-    );
-
-
 VOID
 LsaRpcFreeMemory(
     IN PVOID pPtr

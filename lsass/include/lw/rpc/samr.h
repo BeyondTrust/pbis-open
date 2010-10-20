@@ -1085,16 +1085,6 @@ SamrOpenGroup(
     );
 
 
-NTSTATUS
-SamrInitMemory(
-    VOID
-    );
-
-NTSTATUS
-SamrDestroyMemory(
-    VOID
-    );
-
 VOID
 SamrFreeMemory(
     PVOID pPtr

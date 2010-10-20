@@ -761,18 +761,6 @@ NetrNTLMv1EncryptChallenge(
     );
 
 
-NTSTATUS
-NetrInitMemory(
-    VOID
-    );
-
-
-NTSTATUS
-NetrDestroyMemory(
-    VOID
-    );
-
-
 VOID
 NetrFreeMemory(
     IN PVOID pPtr

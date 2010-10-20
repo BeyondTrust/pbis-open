@@ -171,26 +171,6 @@ NetrAllocateDomainTrustInfo(
 
 
 NTSTATUS
-NetrInitMemory(
-    VOID
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
-NetrDestroyMemory(
-    VOID
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    return ntStatus;
-}
-
-
-NTSTATUS
 NetrAllocateMemory(
     OUT PVOID *ppOut,
     IN  size_t sSize

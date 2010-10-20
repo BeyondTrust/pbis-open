@@ -212,9 +212,6 @@ AD_InitializeProvider(
     dwError = LsaAdProviderStateCreate(&gpLsaAdProviderState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_NetInitMemory();
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = LwpsOpenPasswordStore(
                   LWPS_PASSWORD_STORE_DEFAULT,
                   &hPstore);
@@ -367,13 +364,6 @@ AD_ShutdownProvider(
     LsaAdProviderStateRelease(gpLsaAdProviderState);
     
     ADUnprovPlugin_Cleanup();
-
-    dwError = AD_NetShutdownMemory(gpLsaAdProviderState->hSchannelState);
-    if (dwError)
-    {
-        LSA_LOG_DEBUG("AD Provider Shutdown: Failed to shutdown net memory (error = %u)", dwError);
-        dwError = 0;
-    }
 
     if (gpLsaAdProviderState->hSchannelState)
     {
