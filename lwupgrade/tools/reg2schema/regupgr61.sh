@@ -30,7 +30,9 @@ $LWREGSHELL import ${tmpreg}.out
 rm -f ${tmpreg}.out
 
 # Clear out old pstore entries
-$LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
+if [ `grep -c '\[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]' $tmpreg` -gt 0 ]; then
+  $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
+fi
 
 # Remove values with identical default attributes from registry
 # 
