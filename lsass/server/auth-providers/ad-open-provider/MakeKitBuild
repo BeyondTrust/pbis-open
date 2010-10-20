@@ -35,7 +35,8 @@ make()
        specialdomain.c           \
        unprov.c                  \
        sqlcache.c                \
-       lsasqlite.c"
+       lsasqlite.c               \
+       pwdcache.c"
 
     mk_dlo \
 	DLO=liblsass_auth_provider_ad_open \
