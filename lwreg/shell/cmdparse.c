@@ -1151,6 +1151,10 @@ RegShellPszIsValidKey(
     PSTR pszSubKey = NULL;
     PSTR pszPtr = NULL;
     
+    BAIL_ON_INVALID_POINTER(pParseState);
+    BAIL_ON_INVALID_POINTER(pszKey);
+    BAIL_ON_INVALID_POINTER(pbIsValid);
+
     if (*pszKey == '[' && strchr(pszKey, '\\'))
     {
         /*  Assume stuff between [ and \ is root key */
@@ -1307,8 +1311,7 @@ RegShellCmdParse(
                               pParseState,
                               argv[2],
                               &bIsValidKey);
-                BAIL_ON_REG_ERROR(dwError);
-                if (bIsValidKey)
+                if (dwError == 0 && bIsValidKey)
                 {
                     /* 
                      * Inconsistent arguments. Subkey passed but
