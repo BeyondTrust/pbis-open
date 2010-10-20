@@ -1140,6 +1140,59 @@ error:
 
 
 DWORD
+RegShellPszIsValidKey(
+    PREGSHELL_PARSE_STATE pParseState,
+    PSTR pszKey,
+    PBOOLEAN pbIsValid)
+{
+
+    DWORD dwError = 0;
+    PSTR pszRootKey = NULL;
+    PSTR pszSubKey = NULL;
+    PSTR pszPtr = NULL;
+    
+    if (*pszKey == '[' && strchr(pszKey, '\\'))
+    {
+        /*  Assume stuff between [ and \ is root key */
+        dwError = RegCStringDuplicate(
+                      (LW_PVOID) &pszRootKey, &pszKey[1]);
+        BAIL_ON_REG_ERROR(dwError);
+        pszPtr = strchr(pszRootKey, '\\');
+        *pszPtr++ = '\0';
+        
+        dwError = RegCStringDuplicate(
+                      (LW_PVOID) &pszSubKey, pszPtr);
+        BAIL_ON_REG_ERROR(dwError);
+        pszPtr = strrchr(pszSubKey, ']');
+        if (pszPtr)
+        {
+            *pszPtr = '\0';
+        }
+    }
+    else
+    {
+        /* Assume value is subkey */
+        dwError = RegCStringDuplicate(
+                      (LW_PVOID) &pszSubKey, pszKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
+    dwError = RegShellIsValidKey(
+                  pParseState->hReg,
+                  pszRootKey,
+                  pszSubKey);
+    *pbIsValid = (dwError == 0) ? TRUE : FALSE;
+    
+cleanup:
+    LWREG_SAFE_FREE_STRING(pszRootKey);
+    LWREG_SAFE_FREE_STRING(pszSubKey);
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+DWORD
 RegShellCmdParse(
     PREGSHELL_PARSE_STATE pParseState,
     DWORD argc,
@@ -1153,9 +1206,7 @@ RegShellCmdParse(
     DWORD dwArgc = 2;
     DWORD dwNewArgc = 0;
     DWORD dwExportFormat = 0;
-    PSTR pszRootKey = NULL;
-    PSTR pszSubKey = NULL;
-    PSTR pszPtr = NULL;
+    BOOLEAN bIsValidKey = FALSE;
 
     BAIL_ON_INVALID_POINTER(argv);
 
@@ -1229,8 +1280,20 @@ RegShellCmdParse(
                                   "--values");
                     BAIL_ON_REG_ERROR(dwError);
                 }
+
                 if (dwArgc < argc)
                 {
+                    dwError = RegShellPszIsValidKey(
+                                  pParseState,
+                                  argv[dwArgc],
+                                  &bIsValidKey);
+
+                    if (bIsValidKey && (dwArgc+1) >= argc)
+                    {
+                        /* Valid key is present but no output specifier */
+                        dwError = LWREG_ERROR_INVALID_CONTEXT; 
+                        BAIL_ON_REG_ERROR(dwError);
+                    }
                     dwError = RegCStringDuplicate(
                                   (LW_PVOID) &pCmdItem->args[dwNewArgc++],
                                   argv[dwArgc++]);
@@ -1240,36 +1303,12 @@ RegShellCmdParse(
             }
             else
             {
-                if (argv[2][0] == '[' && strchr(argv[2], '\\'))
-                {
-                    /*  Assume stuff between [ and \ is root key */
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pszRootKey, &argv[2][1]);
-                    BAIL_ON_REG_ERROR(dwError);
-                    pszPtr = strchr(pszRootKey, '\\');
-                    *pszPtr++ = '\0';
-                    
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pszSubKey, pszPtr);
-                    BAIL_ON_REG_ERROR(dwError);
-                    pszPtr = strrchr(pszSubKey, ']');
-                    if (pszPtr)
-                    {
-                        *pszPtr = '\0';
-                    }
-                }
-                else
-                {
-                    /* Assume value is subkey */
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pszSubKey, argv[2]);
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                dwError = RegShellIsValidKey(
-                              pParseState->hReg,
-                              pszRootKey,
-                              pszSubKey);
-                if (dwError == 0)
+                dwError = RegShellPszIsValidKey(
+                              pParseState,
+                              argv[2],
+                              &bIsValidKey);
+                BAIL_ON_REG_ERROR(dwError);
+                if (bIsValidKey)
                 {
                     /* 
                      * Inconsistent arguments. Subkey passed but
@@ -1394,14 +1433,11 @@ RegShellCmdParse(
 
     *parsedCmd = pCmdItem;
 cleanup:
-    LWREG_SAFE_FREE_STRING(pszRootKey);
-    LWREG_SAFE_FREE_STRING(pszSubKey);
     return dwError;
 
 error:
     goto cleanup;
 }
-
 
 DWORD
 RegShellAllocKey(
@@ -1410,39 +1446,28 @@ RegShellAllocKey(
     PSTR *pszNewKey)
 {
     DWORD dwError;
-    PSTR pszFullPath = NULL;
-    PSTR pszRetKey = NULL;
 
-
-    dwError = RegShellCanonicalizePath(
-                  pParseState->pszDefaultKey,
-                  pszKeyName,
-                  &pszFullPath,
-                  NULL,
-                  NULL);
-    BAIL_ON_REG_ERROR(dwError);
-    dwError = RegAllocateMemory(strlen(pszFullPath) + 3, (PVOID*)&pszRetKey);
+    dwError = RegAllocateMemory(strlen(pszKeyName) + 3, (PVOID*)pszNewKey);
     BAIL_ON_REG_ERROR(dwError);
 
     if (!pParseState->bBracketPrefix)
     {
-        strcpy(pszRetKey, "[");
-        strcat(pszRetKey, pszFullPath);
-        strcat(pszRetKey, "]");
+        strcpy(*pszNewKey, "[");
+        strcat(*pszNewKey, pszKeyName);
+        strcat(*pszNewKey, "]");
     }
     else
     {
-        strcat(pszRetKey, pszKeyName);
+        strcat(*pszNewKey, pszKeyName);
     }
 
-    *pszNewKey = pszRetKey;
 cleanup:
-    LWREG_SAFE_FREE_STRING(pszFullPath);
     return dwError;
 
 error:
     goto cleanup;
 }
+
 
 DWORD
 RegShellCmdlineParseToArgv(
