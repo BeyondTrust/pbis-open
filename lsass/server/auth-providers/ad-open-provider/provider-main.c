@@ -4702,6 +4702,11 @@ AD_ResolveConfiguredLists(
         }
         else // User or Group Name
         {
+            if (pLoginInfo)
+            {
+                LsaSrvFreeNameInfo(pLoginInfo);
+                pLoginInfo = NULL;
+            }
             dwError = LsaSrvCrackDomainQualifiedName(
                 pszMember,
                 &pLoginInfo);
@@ -4712,19 +4717,14 @@ AD_ResolveConfiguredLists(
             case NameType_NT4:
                 QueryType = LSA_QUERY_TYPE_BY_NT4;
                 break;
-            case NameType_Alias:
-                QueryType = LSA_QUERY_TYPE_BY_ALIAS;
-                break;
             case NameType_UPN:
                 QueryType = LSA_QUERY_TYPE_BY_UPN;
                 break;
             default:
-                dwError = LW_ERROR_INVALID_PARAMETER;
-                BAIL_ON_LSA_ERROR(dwError);
+                LSA_LOG_WARNING("Restricted login list - aliases, such as %s, are not allowed [%u]",
+                                pszMember, LW_ERROR_INVALID_PARAMETER);
+                continue;
             }
-            
-            LsaSrvFreeNameInfo(pLoginInfo);
-            pLoginInfo = NULL;
 
             QueryList.ppszStrings = (PCSTR*) &pszMember;
             
