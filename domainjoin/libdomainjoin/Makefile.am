@@ -75,6 +75,7 @@ libdomainjoin_la_SOURCES += \
        src/aix/djlogincfg.c   \
        src/aix/djmethodcfg.c  \
        src/djdaemonmgr.c \
+       src/djdaemonmgr_nonmac.c \
        src/aix/djaixparser.c \
        src/mac/djconfig_mac.c \
        src/djsshconf.c    \
