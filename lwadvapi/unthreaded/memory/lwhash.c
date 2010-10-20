@@ -425,6 +425,58 @@ cleanup:
     return dwError;
 }
 
+static size_t
+LwHashChar(
+        size_t hash,
+        int ch)
+{
+    // rotate result to the left 3 bits with wrap around
+    return ((hash << 3) | (hash >> (sizeof(size_t)*8 - 3))) + ch;
+}
+
+int
+LwHashStringCompare(
+        PCVOID str1,
+        PCVOID str2)
+{
+    if (str1 == NULL)
+    {
+        if (str2 == NULL)
+        {
+            return 0;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+    if (str2 == NULL)
+    {
+        return 1;
+    }
+    return strcmp((PCSTR)str1, (PCSTR)str2);
+}
+
+size_t
+LwHashStringHash(
+        PCVOID str)
+{
+    size_t result = 0;
+    PCSTR pos = (PCSTR)str;
+
+    if (!str)
+    {
+        return 0;
+    }
+
+    while (*pos != '\0')
+    {
+        result = LwHashChar(result, *pos++);
+    }
+
+    return result;
+}
+
 int
 LwHashCaselessStringCompare(
         PCVOID str1,
@@ -454,7 +506,6 @@ LwHashCaselessStringHash(
 {
     size_t result = 0;
     PCSTR pos = (PCSTR)str;
-    int lowerChar;
 
     if (!str)
     {
@@ -463,12 +514,7 @@ LwHashCaselessStringHash(
 
     while (*pos != '\0')
     {
-        // rotate result to the left 3 bits with wrap around
-        result = (result << 3) | (result >> (sizeof(size_t)*8 - 3));
-
-        lowerChar = tolower((int)*pos);
-        result += lowerChar;
-        pos++;
+        result = LwHashChar(result, tolower((int)*pos++));
     }
 
     return result;

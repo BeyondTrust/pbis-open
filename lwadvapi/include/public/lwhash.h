@@ -159,6 +159,17 @@ LwHashRemoveKey(
     );
 
 int
+LwHashStringCompare(
+    PCVOID str1,
+    PCVOID str2
+    );
+
+size_t
+LwHashStringHash(
+    PCVOID str
+    );
+
+int
 LwHashCaselessStringCompare(
     PCVOID str1,
     PCVOID str2
