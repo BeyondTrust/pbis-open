@@ -31,7 +31,10 @@
 #include "domainjoin.h"
 #include "djauditing.h"
 #include <djmodule.h>
+#include <djservicemgr.h>
+#include <djregistry.h>
 
+#define BAIL_ON_ERROR(dwError) if (dwError) { goto error; }
 
 DWORD
 DJConfigureEventFwd(
@@ -39,32 +42,29 @@ DJConfigureEventFwd(
     BOOLEAN enable
     )
 {
-    DWORD ceError = ERROR_SUCCESS;
-    LWException *innerExc = NULL;
-    int firstStart = 0;
-    int firstStop = 0;
-    int stopLaterOffset = 0;
-
-    ceError = DJGetBaseDaemonPriorities(
-                &firstStart,
-                &firstStop,
-                &stopLaterOffset);
-    GOTO_CLEANUP_ON_DWORD(ceError);
+    DWORD dwError = ERROR_SUCCESS;
 
     if(enable)
-        DJ_LOG_INFO("Configuring Likewise Enterprise to run eventfwdd daemon");
-    else
-        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running eventfwdd daemon");
-
-    DJManageDaemon("eventfwdd", enable, firstStart + 2,
-            firstStop + stopLaterOffset * 0, &innerExc);
-    if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
     {
-        DJLogException(LOG_LEVEL_WARNING, innerExc);
+        DJ_LOG_INFO("Configuring Likewise Enterprise to run eventfwdd daemon");
+        dwError = SetBooleanRegistryValue("Services\\eventfwd", "Autostart", TRUE);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = DJStartService("eventfwd");
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running eventfwdd daemon");
+        dwError = SetBooleanRegistryValue("Services\\eventfwd", "Autostart", FALSE);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = DJStopService("eventfwd");
+        BAIL_ON_ERROR(dwError);
     }
 
-cleanup:
-    return ceError;
+error:
+    return dwError;
 }
 
 DWORD
@@ -73,31 +73,28 @@ DJConfigureReapSyslog(
     BOOLEAN enable
     )
 {
-    DWORD ceError = ERROR_SUCCESS;
-    LWException *innerExc = NULL;
-    int firstStart = 0;
-    int firstStop = 0;
-    int stopLaterOffset = 0;
-
-    ceError = DJGetBaseDaemonPriorities(
-                &firstStart,
-                &firstStop,
-                &stopLaterOffset);
-    GOTO_CLEANUP_ON_DWORD(ceError);
+    DWORD dwError = ERROR_SUCCESS;
 
     if(enable)
-        DJ_LOG_INFO("Configuring Likewise Enterprise to run reapsysld daemon");
-    else
-        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running reapsysld daemon");
-
-    DJManageDaemon("reapsysld", enable, firstStart + 0,
-            firstStop + stopLaterOffset * 0, &innerExc);
-    if (!LW_IS_OK(innerExc) && innerExc->code != ERROR_SERVICE_NOT_FOUND)
     {
-        DJLogException(LOG_LEVEL_WARNING, innerExc);
+        DJ_LOG_INFO("Configuring Likewise Enterprise to run reapsysld daemon");
+        dwError = SetBooleanRegistryValue("Services\\reapsysl", "Autostart", TRUE);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = DJStartService("reapsysl");
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        DJ_LOG_INFO("Deconfiguring Likewise Enterprise from running reapsysld daemon");
+        dwError = SetBooleanRegistryValue("Services\\reapsysl", "Autostart", FALSE);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = DJStopService("reapsysl");
+        BAIL_ON_ERROR(dwError);
     }
 
-cleanup:
-    return ceError;
+error:
+    return dwError;
 }
 
