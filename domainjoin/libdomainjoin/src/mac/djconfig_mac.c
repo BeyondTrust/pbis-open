@@ -47,59 +47,6 @@ typedef enum
 #define PID_FILE_CONTENTS_SIZE   ((9 * 2) + 2)
 #define CONFIGD_PID_FILE         "/var/run/configd.pid"
 
-#if 0
-static
-DWORD
-DJGetConfigDPID(
-    pid_t* ppid
-    )
-{
-    DWORD ceError = ERROR_SUCCESS;
-    BOOLEAN bFileExists = FALSE;
-    char contents[PID_FILE_CONTENTS_SIZE];
-    int  fd = -1;
-    int  len = 0;
-
-    ceError = CTCheckFileExists(CONFIGD_PID_FILE, &bFileExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (!bFileExists)
-    {
-       *ppid = 0;
-       goto error;
-    }
-
-    fd = open(CONFIGD_PID_FILE, O_RDONLY, 0644);
-    if (fd < 0)
-    {
-       ceError = LwMapErrnoToLwError(errno);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-    if ((len = read(fd, contents, sizeof(contents)-1)) < 0)
-    {
-       ceError = LwMapErrnoToLwError(errno);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-    else if (len == 0)
-    {
-       *ppid = 0;
-       goto error;
-    }
-    contents[len-1] = 0;
-
-    *ppid = atoi(contents);
-
-error:
-
-    if (fd >= 0)
-    {
-       close(fd);
-    }
-
-    return ceError;
-}
-#endif /* 0 */
 
 static
 DWORD
@@ -322,114 +269,6 @@ error:
     return ceError;
 }
 
-/*
-   The LWIDSPlugin is saved to /opt/likewise/lib/LWIDSPlugin.dsplug upon installation
-
-   In order to participate in Open Directory Services, we need to create a symbolic link
-
-   from
-
-   /System/Library/Frameworks/DirectoryService.framework/Versions/Current/Resources/Plugins/LWIDSPlugin.dsplug
-
-   to
-
-   /opt/likewise/lib/LWIDSPlugin.dsplug
-*/
-#if 0
-static
-DWORD
-DJEngageLWIDSPlugin()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    BOOLEAN bDirExists = FALSE;
-    BOOLEAN bLinkExists = FALSE;
-    BOOLEAN bCreateSymlink = TRUE;
-    PSTR    pszTargetPath = NULL;
-
-    ceError = CTCheckDirectoryExists(LWIDSPLUGIN_INSTALL_PATH, &bDirExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (!bDirExists)
-    {
-       DJ_LOG_ERROR("LWIDSPlugin folder [%s] does not exist", LWIDSPLUGIN_INSTALL_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-    ceError = CTCheckLinkExists(LWIDSPLUGIN_SYMLINK_PATH, &bLinkExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bLinkExists)
-    {
-       ceError = CTGetSymLinkTarget(LWIDSPLUGIN_SYMLINK_PATH, &pszTargetPath);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-
-       if (strcmp(pszTargetPath, LWIDSPLUGIN_INSTALL_PATH))
-       {
-          DJ_LOG_INFO("Removing symbolic link at [%s]", LWIDSPLUGIN_SYMLINK_PATH);
-          ceError = CTRemoveFile(LWIDSPLUGIN_SYMLINK_PATH);
-          BAIL_ON_CENTERIS_ERROR(ceError);
-       }
-       else
-       {
-          bCreateSymlink = FALSE;
-       }
-    }
-
-    if (bCreateSymlink)
-    {
-       ceError = CTCreateSymLink(LWIDSPLUGIN_SYMLINK_PATH, LWIDSPLUGIN_INSTALL_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-error:
-
-    if (pszTargetPath)
-    {
-       CTFreeString(pszTargetPath);
-    }
-
-    return ceError;
-}
-
-static
-DWORD
-DJDisengageLWIDSPlugin()
-{
-    DWORD ceError = ERROR_SUCCESS;
-    BOOLEAN bLinkExists = FALSE;
-    BOOLEAN bDirExists = FALSE;
-
-    ceError = CTCheckLinkExists(LWIDSPLUGIN_SYMLINK_PATH, &bLinkExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bLinkExists)
-    {
-       DJ_LOG_INFO("Removing symbolic link at [%s]", LWIDSPLUGIN_SYMLINK_PATH);
-
-       ceError = CTRemoveFile(LWIDSPLUGIN_SYMLINK_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-
-       goto done;
-    }
-
-    /* If a directory exists in the place of the symlink, remove that instead */
-    ceError = CTCheckDirectoryExists(LWIDSPLUGIN_SYMLINK_PATH, &bDirExists);
-    BAIL_ON_CENTERIS_ERROR(ceError);
-
-    if (bDirExists)
-    {
-       ceError = CTRemoveDirectory(LWIDSPLUGIN_SYMLINK_PATH);
-       BAIL_ON_CENTERIS_ERROR(ceError);
-    }
-
-done:
-error:
-
-    return ceError;
-}
-#endif
-
-
 static
 DWORD
 DJFlushCache(
@@ -475,7 +314,6 @@ DJFlushCache(
 error:
     return ceError;
 }
-
 
 DWORD
 DJConfigureLWIDSPlugin()

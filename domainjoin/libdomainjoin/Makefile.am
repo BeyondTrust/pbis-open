@@ -81,12 +81,4 @@ libdomainjoin_la_SOURCES += \
        src/djddns.c \
        src/djservicemgr.c
 
-if BUILD_MACCODE
-EXTRA_libdomainjoin_la_SOURCES = src/djdaemonmgr_nonmac.c
-libdomainjoin_la_SOURCES += src/mac/djdaemonmgr_mac.c
-else
-EXTRA_libdomainjoin_la_SOURCES = src/mac/djdaemonmgr_mac.c
-libdomainjoin_la_SOURCES += src/djdaemonmgr_nonmac.c
-endif
-
 endif
