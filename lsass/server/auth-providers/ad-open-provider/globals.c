@@ -65,6 +65,7 @@ LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
     .pfnShutdownProvider = AD_ShutdownProvider,
     .pfnOpenHandle = AD_OpenHandle,
     .pfnCloseHandle = AD_CloseHandle,
+    .pfnGetPasswordInfo = AD_GetPasswordInfo,
     .pfnServicesDomain = AD_ServicesDomain,
     .pfnAuthenticateUserPam = AD_AuthenticateUserPam,
     .pfnAuthenticateUserEx = AD_AuthenticateUserEx,

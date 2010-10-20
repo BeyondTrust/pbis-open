@@ -2802,10 +2802,12 @@ error:
 
 DWORD
 LsaEnableDomainGroupMembership(
-    PCSTR pszDomainName
+    PCSTR pszDomainName,
+    PCSTR pszDomainSID
     )
 {
     return LsaChangeDomainGroupMembership(pszDomainName,
+                                          pszDomainSID,
 					  TRUE);
 }
 
@@ -2813,17 +2815,14 @@ LsaEnableDomainGroupMembership(
 DWORD
 LsaChangeDomainGroupMembership(
     IN  PCSTR    pszDomainName,
+    IN  PCSTR    pszDomainSID,
     IN  BOOLEAN  bEnable
     )
 {
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    LSA_BINDING hLsaBinding = NULL;
     WCHAR wszLocalSystem[] = { '\\', '\\', '\0' };
     PWSTR pwszSystem = wszLocalSystem;
-    DWORD dwLocalPolicyAccessMask = LSA_ACCESS_VIEW_POLICY_INFO;
-    POLICY_HANDLE hLocalPolicy = NULL;
-    LsaPolicyInformation *pInfo = NULL;
     PSID pDomainSid = NULL;
     SAMR_BINDING hSamrBinding = NULL;
     DWORD dwLocalSamrAccessMask = SAMR_ACCESS_ENUM_DOMAINS |
@@ -2865,29 +2864,10 @@ LsaChangeDomainGroupMembership(
     memset(&ConnReq, 0, sizeof(ConnReq));
     memset(&ConnInfo, 0, sizeof(ConnInfo));
 
-    /*
-     * Connect local lsa rpc server and get basic
-     * domain information
-     */
-    ntStatus = LsaInitBindingDefault(&hLsaBinding,
-                                      NULL,
-                                      NULL);
+    ntStatus = RtlAllocateSidFromCString(
+                   &pDomainSid,
+                   pszDomainSID);
     BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LsaOpenPolicy2(hLsaBinding,
-                              pwszSystem,
-                              NULL,
-                              dwLocalPolicyAccessMask,
-                              &hLocalPolicy);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LsaQueryInfoPolicy2(hLsaBinding,
-                                   hLocalPolicy,
-                                   LSA_POLICY_INFO_DOMAIN,
-                                   &pInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    pDomainSid = pInfo->domain.sid;
 
     dwError = LwCreateWellKnownSid(WinAccountDomainAdminsSid,
                                    pDomainSid,
@@ -3009,22 +2989,12 @@ cleanup:
         SamrClose(hSamrBinding, hSamrConn);
     }
 
-    if (pInfo)
-    {
-        LsaRpcFreeMemory(pInfo);
-    }
-
-    if (hLsaBinding && hLocalPolicy)
-    {
-        LsaClose(hLsaBinding, hLocalPolicy);
-    }
-
     SamrFreeBinding(&hSamrBinding);
-    LsaFreeBinding(&hLsaBinding);
 
     LW_SAFE_FREE_MEMORY(pBuiltinDomainSid);
     LW_SAFE_FREE_MEMORY(pDomainAdminsSid);
     LW_SAFE_FREE_MEMORY(pDomainUsersSid);
+    LW_SAFE_FREE_MEMORY(pDomainSid);
 
     if (dwError == ERROR_SUCCESS &&
         ntStatus != STATUS_SUCCESS)

@@ -572,6 +572,7 @@ LsaDisableDomainGroupMembership(
     HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
     PSTR pszDnsDomainName = NULL;
+    PSTR pszDomainSID = NULL;
 
     dwError = LsaDnsGetHostInfo(&pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
@@ -596,7 +597,12 @@ LsaDisableDomainGroupMembership(
                            &pszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LwWc16sToMbs(pPassInfo->pwszSID,
+                           &pszDomainSID);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaChangeDomainGroupMembership(pszDnsDomainName,
+                                             pszDomainSID,
                                              FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -612,6 +618,7 @@ cleanup:
     }
 
     LW_SAFE_FREE_MEMORY(pszDnsDomainName);
+    LW_SAFE_FREE_MEMORY(pszDomainSID);
     LW_SAFE_FREE_MEMORY(pszHostname);
 
     return dwError;

@@ -398,26 +398,26 @@ AD_Activate(
 {
     DWORD dwError = 0;
     PSTR  pszHostname = NULL;
-    PSTR  pszUsername = NULL;
-    PSTR  pszPassword = NULL;
-    PSTR  pszDomainDnsName = NULL;
-    PSTR  pszHostDnsDomain = NULL;
     BOOLEAN bIsDomainOffline = FALSE;
     BOOLEAN bIgnoreAllTrusts = FALSE;
     PSTR* ppszTrustExceptionList = NULL;
     DWORD dwTrustExceptionCount = 0;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     dwError = LsaDnsGetHostInfo(&pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
 
     LwStrToUpper(pszHostname);
 
-    dwError = LwKrb5GetMachineCredsByDomain(
-                    pState->pszJoinedDomainName,
-                    &pszUsername,
-                    &pszPassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
+    dwError = LsaPcacheCreate(
+                  NULL,
+                  &pState->pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaPcacheGetPasswordInfo(
+                  pState->pPcache,
+                  NULL,
+                  &pPasswordInfoA);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_GetDomainManagerTrustExceptionList(
@@ -446,7 +446,7 @@ AD_Activate(
 
     dwError = LsaDmWrapLdapPingTcp(
                   pState->hDmState,
-                  pszDomainDnsName);
+                  pPasswordInfoA->pszDnsDomainName);
     if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
         bIsDomainOffline = TRUE;
@@ -475,8 +475,8 @@ AD_Activate(
 
     dwError = AD_InitializeOperatingMode(
                 pState,
-                pszDomainDnsName,
-                pszUsername,
+                pPasswordInfoA->pszDnsDomainName,
+                pPasswordInfoA->pszMachineAccount,
                 bIsDomainOffline);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -490,7 +490,7 @@ AD_Activate(
     {
         LsaAdProviderLogServiceStartEvent(
                            pszHostname,
-                           pszDomainDnsName,
+                           pPasswordInfoA->pszDnsDomainName,
                            bIsDomainOffline,
                            dwError);
     }
@@ -498,21 +498,18 @@ AD_Activate(
 cleanup:
 
     LW_SAFE_FREE_STRING(pszHostname);
-    LW_SAFE_FREE_STRING(pszUsername);
-    LW_SECURE_FREE_STRING(pszPassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LwFreeStringArray(ppszTrustExceptionList, dwTrustExceptionCount);
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 
 error:
 
-    if (AD_EventlogEnabled(pState))
+    if (AD_EventlogEnabled(pState) && pPasswordInfoA)
     {
         LsaAdProviderLogServiceStartEvent(
                            pszHostname,
-                           pszDomainDnsName,
+                           pPasswordInfoA->pszDnsDomainName,
                            bIsDomainOffline,
                            dwError);
     }
@@ -557,6 +554,9 @@ AD_Deactivate(
     LsaUmCleanup();
 
     LsaDmCleanup(pState->hDmState);
+
+    LsaPcacheDestroy(pState->pPcache);
+    pState->pPcache = NULL;
 
     LW_SAFE_FREE_STRING(pState->pszJoinedDomainName);
 
@@ -709,6 +709,102 @@ AD_ClearProviderState(
     {
         pContext->pState = NULL;
     }
+}
+
+DWORD
+AD_GetPasswordInfo(
+    PCSTR pszDomain,
+    PLWPS_PASSWORD_INFO* ppPasswordInfo,
+    PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hPasswordStore = (HANDLE)NULL;
+    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
+    PLWPS_PASSWORD_INFO pPasswordInfoCopy = NULL;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoCopyA = NULL;
+
+    LsaAdProviderStateAcquireRead(gpLsaAdProviderState);
+
+    dwError = LsaPcacheGetPasswordInfo(
+                  gpLsaAdProviderState->pPcache,
+                  &pPasswordInfoCopy,
+                  &pPasswordInfoCopyA);
+    if (dwError == LW_ERROR_INVALID_ACCOUNT)
+    {
+        dwError = LwpsOpenPasswordStore(
+                      LWPS_PASSWORD_STORE_DEFAULT,
+                      &hPasswordStore);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwpsGetPasswordByCurrentHostName(
+                      hPasswordStore,
+                      &pPasswordInfo);
+        if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+        {
+            dwError = LW_ERROR_INVALID_ACCOUNT;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (ppPasswordInfo)
+        {
+            dwError = LwDuplicatePasswordInfo(
+                          pPasswordInfo,
+                          &pPasswordInfoCopy);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        if (ppPasswordInfoA)
+        {
+            dwError = LwDuplicatePasswordInfoWToA(
+                          pPasswordInfo,
+                          &pPasswordInfoCopyA);
+            BAIL_ON_LSA_ERROR(dwError);
+        } 
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (ppPasswordInfo)
+    {
+        *ppPasswordInfo = pPasswordInfoCopy;
+        pPasswordInfoCopy = NULL;
+    }
+
+    if (ppPasswordInfoA)
+    {
+        *ppPasswordInfoA = pPasswordInfoCopyA;
+        pPasswordInfoCopyA = NULL;
+    }
+
+error:
+
+    LsaAdProviderStateRelease(gpLsaAdProviderState);
+
+    if (dwError)
+    {
+        if (ppPasswordInfo)
+        {
+            *ppPasswordInfo = NULL;
+        }
+        if (ppPasswordInfoA)
+        {
+            *ppPasswordInfoA = NULL;
+        }
+    }
+
+    LwFreePasswordInfo(pPasswordInfoCopy);
+    LwFreePasswordInfoA(pPasswordInfoCopyA);
+
+    if (pPasswordInfo)
+    {
+        LwpsFreePasswordInfo(hPasswordStore, pPasswordInfo);
+    }
+    if (hPasswordStore != (HANDLE)NULL)
+    {
+        LwpsClosePasswordStore(hPasswordStore);
+    }
+
+    return dwError;
 }
 
 DWORD
@@ -1433,7 +1529,8 @@ AD_JoinDomain(
     PSTR pszMessage = NULL;
     BOOLEAN bLocked = FALSE;
     PSTR pszDC = NULL;
-    
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+
     if (peerUID != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
@@ -1504,7 +1601,15 @@ AD_JoinDomain(
     dwError = AD_PostJoinDomain(pContext, pContext->pState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaEnableDomainGroupMembership(pRequest->pszHostDnsDomain);
+    dwError = LsaPcacheGetPasswordInfo(
+                  pContext->pState->pPcache,
+                  NULL,
+                  &pPasswordInfoA);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaEnableDomainGroupMembership(
+                  pRequest->pszHostDnsDomain,
+                  pPasswordInfoA->pszSID);
     BAIL_ON_LSA_ERROR(dwError);
 
     LSA_LOG_INFO("Joined domain: %s", pRequest->pszDomain);
@@ -1531,6 +1636,8 @@ cleanup:
         lwmsg_data_context_delete(pDataContext);
     }
     LW_SAFE_FREE_STRING(pszDC);
+
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 
@@ -4121,12 +4228,8 @@ AD_MachineCredentialsCacheInitialize(
 {
     DWORD dwError = 0;
     BOOLEAN bIsAcquired = FALSE;
-    PSTR pszHostname = NULL;
-    PSTR pszUsername = NULL;
-    PSTR pszPassword = NULL;
-    PSTR pszDomainDnsName = NULL;
-    PSTR pszHostDnsDomain = NULL;
     DWORD dwGoodUntilTime = 0;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     // Check before doing any work.
     if (AD_MachineCredentialsCacheIsInitialized(pState))
@@ -4134,21 +4237,14 @@ AD_MachineCredentialsCacheInitialize(
         goto cleanup;
     }
 
-    dwError = LsaDnsGetHostInfo(&pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToUpper(pszHostname);
-
     // Read password info before acquiring the lock.
-    dwError = LwKrb5GetMachineCredsByDomain(
-                    pState->pszJoinedDomainName,
-                    &pszUsername,
-                    &pszPassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
+    dwError = LsaPcacheGetPasswordInfo(
+                  pState->pPcache,
+                  NULL,
+                  &pPasswordInfoA);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (LsaDmIsDomainOffline(pState->hDmState, pszDomainDnsName))
+    if (LsaDmIsDomainOffline(pState->hDmState, pPasswordInfoA->pszDnsDomainName))
     {
         dwError = LW_ERROR_DOMAIN_IS_OFFLINE;
         BAIL_ON_LSA_ERROR(dwError);
@@ -4163,16 +4259,16 @@ AD_MachineCredentialsCacheInitialize(
         goto cleanup;
     }
 
-    ADSyncTimeToDC(pState, pszDomainDnsName);
+    ADSyncTimeToDC(pState, pPasswordInfoA->pszDnsDomainName);
 
     dwError = LwKrb5SetProcessDefaultCachePath(LSASS_CACHE_PATH);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwSetupMachineSession(
-                    pszUsername,
-                    pszPassword,
-                    pszDomainDnsName,
-                    pszHostDnsDomain,
+                    pPasswordInfoA->pszMachineAccount,
+                    pPasswordInfoA->pszMachinePassword,
+                    pPasswordInfoA->pszDnsDomainName,
+                    pPasswordInfoA->pszHostDnsDomain,
                     &dwGoodUntilTime);
     if (dwError)
     {
@@ -4180,7 +4276,7 @@ AD_MachineCredentialsCacheInitialize(
         {
             LsaDmTransitionOffline(
                 pState->hDmState,
-                pszDomainDnsName,
+                pPasswordInfoA->pszDnsDomainName,
                 FALSE);
         }
 
@@ -4198,11 +4294,7 @@ cleanup:
         pthread_mutex_unlock(pState->MachineCreds.pMutex);
     }
 
-    LW_SAFE_FREE_STRING(pszHostname);
-    LW_SAFE_FREE_STRING(pszUsername);
-    LW_SECURE_FREE_STRING(pszPassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 

@@ -291,6 +291,14 @@ LsaSrvProviderIoControl(
 //
 
 DWORD
+LsaSrvProviderGetPasswordInfo(
+    IN PCSTR pszProvider,
+    IN PCSTR pszDomainName,
+    OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
+    OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
+    );
+
+DWORD
 LsaSrvProviderServicesDomain(
     IN PCSTR pszProvider,
     IN PCSTR pszDomainName,

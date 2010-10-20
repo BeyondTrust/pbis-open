@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see
+ * Public License along with this program.  If not, see 
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -33,67 +33,42 @@
  *
  * Module Name:
  *
- *        ntlmsrvapi.h
+ *        pwdcache_p.h
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
- *
- *        Inter-process Communication API header (NTLM Server)
+ * 
+ *        Machine Password Sync API (Private Header)
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Marc Guy (mguy@likewisesoftware.com)
+ *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ *          Brian Dunstan (bdunstan@likewisesoftware.com)
  */
+#ifndef __PWDCACHE_P_H__
+#define __PWDCACHE_P_H__
 
-#ifndef __NTLMSRVAPI_H__
-#define __NTLMSRVAPI_H__
+DWORD
+LsaPcacheCreate(
+    IN PCSTR pszDomainName,
+    OUT PLSA_MACHINEPWD_CACHE_HANDLE phPcache
+    );
 
-#include <config.h>
+VOID
+LsaPcacheDestroy(
+    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    );
 
-#include <pthread.h>
+DWORD
+LsaPcacheGetPasswordInfo(
+    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache,
+    OUT PLWPS_PASSWORD_INFO* ppPasswordInfo,
+    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
+    );
 
-#include <ntlm/sspintlm.h>
-#include <ntlmipc.h>
+VOID
+LsaPcacheClearPasswordInfo(
+    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    );
 
-#include <openssl/des.h>
-#include <openssl/md5.h>
-#include <openssl/md4.h>
-#include <openssl/rc4.h>
-#include <openssl/hmac.h>
-
-#include <time.h>
-#include <netdb.h>
-#include <assert.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-#include <lsa/lsa.h>
-#include <lsasrvcred.h>
-#include <lsasrvapi2.h>
-#include <lsalist.h>
-#include <lwsecurityidentifier.h>
-#include <lsautils.h>
-#include <lsaadprovider.h>
-#include <lwdef.h>
-#include <lwkrb5.h>
-#include <lwmem.h>
-#include <lwps/lwps.h>
-#include <lwstr.h>
-#include <lwpwdinfo.h>
-#include <wc16str.h>
-#include <uuid/uuid.h>
-#include <lwio/lwio.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
-#include <lw/rpc/krb5pac.h>
-#include <lw/swab.h>
-#include <lsasrvutils.h>
-
-#include "defines.h"
-#include "structs.h"
-#include "externs.h"
-#include "prototypes.h"
-
-#endif // __NTLMSRVAPI_H__
+#endif /* __PWDCACHE_P_H__ */

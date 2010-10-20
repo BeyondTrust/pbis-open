@@ -64,7 +64,6 @@ typedef struct _LSA_MACHINEPWD_STATE {
     pthread_mutex_t *pThreadLock;
     pthread_cond_t ThreadCondition;
     pthread_cond_t *pThreadCondition;
-    HANDLE hPasswordStore;
     DWORD dwTgtExpiry;
     DWORD dwTgtExpiryGraceSeconds;
 } LSA_MACHINEPWD_STATE, *PLSA_MACHINEPWD_STATE;
@@ -144,11 +143,6 @@ ADInitMachinePasswordSync(
 
     pMachinePwdState->pThreadCondition = &pMachinePwdState->ThreadCondition;
 
-    dwError = LwpsOpenPasswordStore(
-                    LWPS_PASSWORD_STORE_DEFAULT,
-                    &pMachinePwdState->hPasswordStore);
-    BAIL_ON_LSA_ERROR(dwError);
-
     pState->hMachinePwdState = pMachinePwdState;
     
 cleanup:
@@ -219,6 +213,8 @@ ADChangeMachinePasswordInThreadLock(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    LsaPcacheClearPasswordInfo(pState->pPcache);
+
     if (AD_EventlogEnabled(pState))
     {
         ADLogMachinePWUpdateSuccessEvent();
@@ -244,10 +240,9 @@ ADSyncMachinePasswordThreadRoutine(
     PLSA_MACHINEPWD_STATE pMachinePwdState = (PLSA_MACHINEPWD_STATE)pState->hMachinePwdState;
     DWORD dwPasswordSyncLifetime = 0;
     struct timespec timeout = {0, 0};
-    PLWPS_PASSWORD_INFO pAcctInfo = NULL;    
     PSTR pszHostname = NULL;
-    PSTR pszDnsDomainName = NULL;
     DWORD dwGoodUntilTime = 0;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     LSA_LOG_INFO("Machine Password Sync Thread starting");
 
@@ -279,11 +274,11 @@ ADSyncMachinePasswordThreadRoutine(
             goto lsa_wait_resync;
         }
         ADSyncTimeToDC(pState, pState->pProviderData->szDomain);
-        
-        dwError = LwpsGetPasswordByDomainName(
-                        pMachinePwdState->hPasswordStore,
-                        pState->pszJoinedDomainName,
-                        &pAcctInfo);
+
+        dwError = LsaPcacheGetPasswordInfo(
+                      gpLsaAdProviderState->pPcache,
+                      NULL,
+                      &pPasswordInfoA);
         if (dwError)
         {
             LSA_LOG_ERROR("Error: Failed to get machine password information (error = %u)", dwError);
@@ -294,7 +289,7 @@ ADSyncMachinePasswordThreadRoutine(
         dwCurrentPasswordAge = 
                          difftime(
                               time(NULL),
-                              pAcctInfo->last_change_time);
+                              pPasswordInfoA->last_change_time);
 
         dwPasswordSyncLifetime = AD_GetMachinePasswordSyncPwdLifetime(pState);
         dwReapingAge = dwPasswordSyncLifetime / 2;
@@ -341,14 +336,9 @@ ADSyncMachinePasswordThreadRoutine(
 
                 if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
                 {
-                    LW_SAFE_FREE_STRING(pszDnsDomainName);
-
-                    dwError = LwWc16sToMbs(pAcctInfo->pwszDnsDomainName, &pszDnsDomainName);
-                    BAIL_ON_LSA_ERROR(dwError);
-
                     LsaDmTransitionOffline(
                         pState->hDmState,
-                        pszDnsDomainName,
+                        pPasswordInfoA->pszDnsDomainName,
                         FALSE);
                 }
 
@@ -369,11 +359,8 @@ ADSyncMachinePasswordThreadRoutine(
 
 lsa_wait_resync:
 
-        if (pAcctInfo)
-        {
-            LwpsFreePasswordInfo(pMachinePwdState->hPasswordStore, pAcctInfo);
-            pAcctInfo = NULL;
-        }
+        LwFreePasswordInfoA(pPasswordInfoA);
+        pPasswordInfoA = NULL;
 
         LW_SAFE_FREE_STRING(pszHostname);
 
@@ -405,13 +392,9 @@ retry_wait:
     
 cleanup:
 
-    if (pAcctInfo)
-    {
-        LwpsFreePasswordInfo(pMachinePwdState->hPasswordStore, pAcctInfo);
-    }
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     LW_SAFE_FREE_STRING(pszHostname);
-    LW_SAFE_FREE_STRING(pszDnsDomainName);
 
     pthread_mutex_unlock(pMachinePwdState->pThreadLock);
     
@@ -500,12 +483,6 @@ ADShutdownMachinePasswordSync(
         if (pMachinePwdState->pThreadLock)
         {
             pthread_mutex_destroy(pMachinePwdState->pThreadLock);
-        }
-
-        if (pMachinePwdState->hPasswordStore)
-        {
-            LwpsClosePasswordStore(pMachinePwdState->hPasswordStore);
-            pMachinePwdState->hPasswordStore = NULL;
         }
 
         LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);

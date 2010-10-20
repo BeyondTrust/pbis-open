@@ -100,6 +100,20 @@ typedef struct __LWPS_PASSWORD_INFO
 
 } LWPS_PASSWORD_INFO, *PLWPS_PASSWORD_INFO;
 
+typedef struct __LWPS_PASSWORD_INFO_A
+{
+    PSTR pszDomainName;
+    PSTR pszDnsDomainName;
+    PSTR pszSID;
+    PSTR pszHostname;
+    PSTR pszHostDnsDomain;
+    PSTR pszMachineAccount;
+    PSTR pszMachinePassword;
+    time_t last_change_time;
+    DWORD dwSchannelType;
+
+} LWPS_PASSWORD_INFO_A, *PLWPS_PASSWORD_INFO_A;
+
 typedef enum
 {
     LWPS_PASSWORD_STORE_UNKNOWN = 0,

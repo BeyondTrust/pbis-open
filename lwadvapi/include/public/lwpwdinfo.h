@@ -27,64 +27,68 @@
  * license@likewisesoftware.com
  */
 
-#ifndef __INCLUDES_H__
-#define __INCLUDES_H__
-
-#include "config.h"
-#include <stdarg.h>
-#include <krb5.h>
-#include <gssapi.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <assert.h>
-#include <pthread.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sasl/sasl.h>
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        lwpwdinfo.h
+ *
+ * Abstract:
+ *
+ *        Likewise Advanced API (lwadvapi)
+ *
+ *  Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
+ *           Kyle Stemen (kstemen@likewisesoftware.com)
+ *           Sriram Nambakam (snambakam@likewisesoftware.com)
+ */
+#ifndef __LWPWDINFO_H__
+#define __LWPWDINFO_H__
 
 #include <lwps/lwps.h>
-#include <lw/rtlmemory.h>
-#include <lw/security-types.h>
-#include <lw/security-api.h>
-#include <lw/attrs.h>
-#include <lw/atomic.h>
-#include <wc16str.h>
 
-#include "lwdef.h"
-#include "lwmem.h"
-#include "lwfile.h"
-#include "lwstr.h"
-#include "lwldap.h"
-#include "lwerror.h"
-#include "krb5error-table.h"
-#include "lwkrb5.h"
-#include "lwlogging.h"
-#include "bail.h"
-#include "externs.h"
+#include <lwdef.h>
 
-#include "lwldap_p.h"
-#include "lwkrb5_p.h"
-#include "lwtime.h"
-#include "lwpwdinfo.h"
-#include "lwsecurityidentifier.h"
+LW_BEGIN_EXTERN_C
 
-#if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
-#define strtoll __strtoll
-#endif
+DWORD
+LwDuplicatePasswordInfo(
+    IN PLWPS_PASSWORD_INFO pInfo,
+    OUT PLWPS_PASSWORD_INFO* ppInfoCopy
+    );
 
-#if !defined(HAVE_STRTOULL) && defined(HAVE___STRTOULL)
-#define strtoull __strtoull
-#endif
+VOID
+LwFreePasswordInfo(
+    IN PLWPS_PASSWORD_INFO pInfo
+    );
 
-#endif /* __INCLUDES_H__ */
+DWORD
+LwDuplicatePasswordInfoWToA(
+    IN PLWPS_PASSWORD_INFO pInfo,
+    OUT PLWPS_PASSWORD_INFO_A* ppInfoCopy
+    );
+
+DWORD
+LwDuplicatePasswordInfoA(
+    IN PLWPS_PASSWORD_INFO_A pInfo,
+    OUT PLWPS_PASSWORD_INFO_A* ppInfoCopy
+    );
+
+VOID
+LwFreePasswordInfoA(
+    IN PLWPS_PASSWORD_INFO_A pInfo
+    );
+
+LW_END_EXTERN_C
+
+#endif /* __LWPWDINFO_H__ */
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

@@ -6,7 +6,8 @@ liblwadvapi_threaded_la_SOURCES = \
        lwkrb5.c \
        lwldap.c   \
        lwsecurityidentifier.c   \
-       lwtime.c
+       lwtime.c \
+       lwpwdinfo.c
 
 
 liblwadvapi_threaded_la_CPPFLAGS =              \

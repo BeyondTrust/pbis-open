@@ -164,16 +164,14 @@ LsaQueryDomainInfo(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
 
-    ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
-                                     &hStore);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-    dwError = LwpsGetPasswordByCurrentHostName(hStore,
-                                               &pPassInfo);
-    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+    dwError = LsaSrvProviderGetPasswordInfo(
+                  LSA_AD_TAG_PROVIDER,
+                  NULL,
+                  &pPassInfo,
+                  NULL);
+    if (dwError == LW_ERROR_INVALID_ACCOUNT)
     {
         /* No password info means we're not joined */
         ntStatus = STATUS_INVALID_INFO_CLASS;
@@ -196,15 +194,7 @@ LsaQueryDomainInfo(
     }
 
 cleanup:
-    if (pPassInfo != NULL)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-
-    if (hStore != NULL)
-    {
-        LwpsClosePasswordStore(hStore);
-    }
+    LwFreePasswordInfo(pPassInfo);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -255,7 +245,6 @@ LsaQueryDnsDomainInfo(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    HANDLE hStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
     PWSTR pwszDnsForest = NULL;
     PSTR pszDomainFqdn = NULL;
@@ -264,13 +253,12 @@ LsaQueryDnsDomainInfo(
     DWORD dwFlags = 0;
     PLWNET_DC_INFO pDcInfo = NULL;
 
-    ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
-                                     &hStore);
-    BAIL_ON_NTSTATUS_ERROR(ntStatus);
-
-    dwError = LwpsGetPasswordByCurrentHostName(hStore,
-                                               &pPassInfo);
-    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+    dwError = LsaSrvProviderGetPasswordInfo(
+                  LSA_AD_TAG_PROVIDER,
+                  NULL,
+                  &pPassInfo,
+                  NULL);
+    if (dwError == LW_ERROR_INVALID_ACCOUNT)
     {
         ntStatus = STATUS_INVALID_INFO_CLASS;
         BAIL_ON_NT_STATUS(ntStatus);
@@ -317,15 +305,7 @@ LsaQueryDnsDomainInfo(
     }
 
 cleanup:
-    if (pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-
-    if (hStore)
-    {
-        LwpsClosePasswordStore(hStore);
-    }
+    LwFreePasswordInfo(pPassInfo);
 
     if (pDcInfo)
     {

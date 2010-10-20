@@ -122,7 +122,8 @@ LsaNetFreeString(
 
 DWORD
 LsaEnableDomainGroupMembership(
-    PCSTR pszDomainName
+    PCSTR pszDomainName,
+    PCSTR pszDomainSID
     );
 
 
@@ -135,6 +136,7 @@ LsaDisableDomainGroupMembership(
 DWORD
 LsaChangeDomainGroupMembership(
     IN  PCSTR    pszDomainName,
+    IN  PCSTR    pszDomainSID,
     IN  BOOLEAN  bEnable
     );
 

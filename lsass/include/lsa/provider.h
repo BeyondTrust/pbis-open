@@ -48,12 +48,18 @@
 #define __LSAPROVIDER_H__
 
 #include <lsa/lsa2.h>
+#include <lwps/lwps.h>
 
 typedef DWORD (*PFNSHUTDOWNPROVIDER)(
     VOID
     );
 
 typedef VOID  (*PFNCLOSEHANDLE)(HANDLE hProvider);
+
+typedef DWORD (*PFNGETPASSWORDINFO)(
+                        PCSTR pszDomain,
+                        PLWPS_PASSWORD_INFO* ppPasswordInfo,
+                        PLWPS_PASSWORD_INFO_A* ppPasswordInfoA);
 
 typedef DWORD (*PFNSERVICESDOMAIN)(
                         PCSTR pszDomain,
@@ -342,6 +348,7 @@ typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
     PFNSHUTDOWNPROVIDER            pfnShutdownProvider; // ok
     PFNOPENHANDLE_2                pfnOpenHandle; // we should be able to get rid of this and just pass in a LSA_PROVIDER_HANDLE that is created by SRV/API but that provider can attach context.
     PFNCLOSEHANDLE                 pfnCloseHandle; // "
+    PFNGETPASSWORDINFO             pfnGetPasswordInfo; // ok -- local only
     PFNSERVICESDOMAIN              pfnServicesDomain; // is it necessary?  if we can lookup domains, it is not.
     PFNAUTHENTICATEUSERPAM         pfnAuthenticateUserPam; // ok
     PFNAUTHENTICATEUSEREX          pfnAuthenticateUserEx; // ok

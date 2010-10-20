@@ -121,6 +121,10 @@ struct _LSA_SCHANNEL_STATE;
 typedef struct _LSA_SCHANNEL_STATE *LSA_SCHANNEL_STATE_HANDLE;
 typedef struct _LSA_SCHANNEL_STATE **PLSA_SCHANNEL_STATE_HANDLE;
 
+struct _LSA_MACHINEPWD_CACHE;
+typedef struct _LSA_MACHINEPWD_CACHE *LSA_MACHINEPWD_CACHE_HANDLE;
+typedef struct _LSA_MACHINEPWD_CACHE **PLSA_MACHINEPWD_CACHE_HANDLE;
+
 typedef struct _LSA_AD_PROVIDER_STATE {
     PSTR pszJoinedDomainName;
 
@@ -133,6 +137,9 @@ typedef struct _LSA_AD_PROVIDER_STATE {
         /// determine whe
         pthread_mutex_t* pMutex;
     } MachineCreds;
+
+    LSA_MACHINEPWD_CACHE_HANDLE pPcache;
+
     MEDIA_SENSE_HANDLE MediaSenseHandle;
     LSA_AD_CONFIG      config;
 

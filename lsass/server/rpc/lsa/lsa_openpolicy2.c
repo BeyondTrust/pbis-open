@@ -88,7 +88,6 @@ LsaSrvOpenPolicy2(
     DOMAIN_HANDLE hDomain = (DOMAIN_HANDLE)NULL;
     PSTR pszDomainFqdn = NULL;
     PSTR pszDcFqdn = NULL;
-    HANDLE hPassStore = NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pPolCtx),
@@ -238,13 +237,11 @@ LsaSrvOpenPolicy2(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
-                                        &hPassStore);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LwpsGetPasswordByCurrentHostName(
-                                            hPassStore,
-                                            &pPassInfo);
+        dwError = LsaSrvProviderGetPasswordInfo(
+                      LSA_AD_TAG_PROVIDER,
+                      NULL,
+                      &pPassInfo,
+                      NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (pPassInfo)
@@ -300,16 +297,7 @@ cleanup:
         LWNetFreeString(pszDomainFqdn);
     }
 
-    if (hPassStore && pPassInfo)
-    {
-        LwpsFreePasswordInfo(hPassStore,
-                             pPassInfo);
-    }
-
-    if (hPassStore)
-    {
-        LwpsClosePasswordStore(hPassStore);
-    }
+    LwFreePasswordInfo(pPassInfo);
 
     LW_SAFE_FREE_MEMORY(pwszSystemName);
     LW_SAFE_FREE_MEMORY(pszSamrLpcSocketPath);

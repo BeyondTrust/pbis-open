@@ -54,10 +54,13 @@
 #include <lwps/lwps.h>
 #include <lwkrb5.h>
 #include <lwhash.h>
+#include <lwpwdinfo.h>
 
 #include <lsa/lsa.h>
+#include <lsaadprovider.h>
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>
+#include <lsasrvapi2.h>
 #include <rpcctl-register.h>
 #include <directory.h>
 #include <samr_srv.h>
