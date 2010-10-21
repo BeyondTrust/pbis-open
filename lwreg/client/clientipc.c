@@ -774,7 +774,7 @@ RegTransactGetValueW(
     GetValueReq.pSubKey = pSubKey;
     GetValueReq.pValue = pValue;
     GetValueReq.Flags = Flags;
-    GetValueReq.cbData = *pcbData;
+    GetValueReq.cbData = pcbData ? *pcbData : 0;
 
     in.tag = REG_Q_GET_VALUEW;
     in.data = &GetValueReq;
@@ -809,6 +809,7 @@ RegTransactGetValueW(
             status = pStatus->status;
             BAIL_ON_NT_STATUS(status);
             break;
+
         default:
             status = STATUS_INVALID_PARAMETER;
             BAIL_ON_NT_STATUS(status);
