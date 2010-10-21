@@ -101,11 +101,7 @@ lwnet_set_syslogmask(
     DWORD dwLogLevel
     )
 {
-    DWORD dwSysLogLevel = 0;
-
-    dwSysLogLevel = LOG_UPTO(LOG_DEBUG);
-
-    setlogmask(dwSysLogLevel);
+    setlogmask(LOG_UPTO(LWNET_SYSLOG_MAX_LEVEL));
 }
 
 DWORD
@@ -327,38 +323,39 @@ lwnet_log_to_syslog_mt_unsafe(
     va_list msgList
     )
 {
+    int priority = LOG_INFO;
+
     switch (dwLogLevel)
     {
         case LWNET_LOG_LEVEL_ALWAYS:
-        {
-            lwnet_vsyslog(LOG_INFO, pszFormat, msgList);
+
+            priority = LOG_INFO;
             break;
-        }
+
         case LWNET_LOG_LEVEL_ERROR:
-        {
-            lwnet_vsyslog(LOG_ERR, pszFormat, msgList);
+
+            priority = LOG_ERR;
             break;
-        }
 
         case LWNET_LOG_LEVEL_WARNING:
-        {
-            lwnet_vsyslog(LOG_WARNING, pszFormat, msgList);
-            break;
-        }
 
-        case LWNET_LOG_LEVEL_INFO:
-        case LWNET_LOG_LEVEL_VERBOSE:
-        {
-            lwnet_vsyslog(LOG_INFO, pszFormat, msgList);
+            priority = LOG_WARNING;
             break;
-        }
+
+        case LWNET_LOG_LEVEL_DEBUG:
+
+            priority = LOG_DEBUG;
+            break;
 
         default:
-        {
-            lwnet_vsyslog(LOG_DEBUG, pszFormat, msgList);
+
+            priority = LOG_INFO;
             break;
-        }
     }
+
+    priority = LW_MIN(priority, LWNET_SYSLOG_MAX_LEVEL);
+
+    lwnet_vsyslog(priority, pszFormat, msgList);
 }
 
 void
