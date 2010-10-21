@@ -121,36 +121,9 @@ LwioSetSyslogMask(
     LWIO_LOG_LEVEL maxLogLevel
     )
 {
-    int mask = LOG_UPTO(LOG_INFO);
-
-    switch (maxLogLevel)
-    {
-        case LWIO_LOG_LEVEL_ERROR:
-
-            mask = LOG_UPTO(LOG_ERR);
-
-            break;
-
-        case LWIO_LOG_LEVEL_WARNING:
-
-            mask = LOG_UPTO(LOG_WARNING);
-
-            break;
-
-        case LWIO_LOG_LEVEL_DEBUG:
-
-            mask = LOG_UPTO(LOG_DEBUG);
-
-            break;
-
-        default:
-
-            mask = LOG_UPTO(LOG_INFO);
-
-            break;
-    }
-
-    setlogmask(mask);
+    // This always need to be the max log level
+    // with which this module can call syslog.
+    setlogmask(LOG_UPTO(LWIO_SYSLOG_MAX_LEVEL));
 }
 
 VOID
@@ -161,38 +134,50 @@ SMBLogToSyslog(
     va_list     msgList
     )
 {
+    int priority = LOG_INFO;
+
     switch (logLevel)
     {
         case LWIO_LOG_LEVEL_ALWAYS:
 
-            lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
+            priority = LOG_INFO;
+
             break;
 
         case LWIO_LOG_LEVEL_ERROR:
 
-            lsmb_vsyslog(LOG_ERR, pszFormat, msgList);
+            priority = LOG_ERR;
+
             break;
 
         case LWIO_LOG_LEVEL_WARNING:
 
-            lsmb_vsyslog(LOG_WARNING, pszFormat, msgList);
+            priority = LOG_WARNING;
+
             break;
 
         case LWIO_LOG_LEVEL_INFO:
 
-            lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
+            priority = LOG_INFO;
+
             break;
 
         case LWIO_LOG_LEVEL_DEBUG:
 
-            lsmb_vsyslog(LOG_DEBUG, pszFormat, msgList);
+            priority = LOG_DEBUG;
+
             break;
 
         default:
 
-            lsmb_vsyslog(LOG_INFO, pszFormat, msgList);
+            priority = LOG_INFO;
+
             break;
     }
+
+    priority = SMB_MIN(priority, LWIO_SYSLOG_MAX_LEVEL);
+
+    lsmb_vsyslog(priority, pszFormat, msgList);
 }
 
 DWORD
