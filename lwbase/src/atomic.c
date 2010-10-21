@@ -167,7 +167,7 @@ LwInterlockedCompareExchangePointer(
 
     /* Identical to above except 64-bit */
     __asm__ __volatile__ (
-        "lock; cmpxchgq %2, %0"
+        "lock; cmpxchgq %q2, %0"
         : "=m" (*ppDestination), "=a" (pOldPointer)
         : "r" (pNewPointer), "1" (pComparePointer), "m" (*ppDestination));
 
