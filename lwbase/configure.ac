@@ -39,7 +39,13 @@ case "$host_cpu" in
 		AC_DEFINE([LWBASE_ATOMIC_X86], [], [x86 atomic operations])
 		;;
 	x86_64)
-		AC_DEFINE([LWBASE_ATOMIC_X86_64], [], [x86_64 atomic operations])
+		# Check for -m32 in CC
+		if echo "$CC" | grep -- "-m32" >/dev/null 2>&1
+		then
+		        AC_DEFINE([LWBASE_ATOMIC_X86], [], [x86 atomic operations])
+		else
+			AC_DEFINE([LWBASE_ATOMIC_X86_64], [], [x86_64 atomic operations])
+		fi
 		;;
 	*)
 		AC_DEFINE([LWBASE_ATOMIC_LOCK], [], [lock atomic operations])
