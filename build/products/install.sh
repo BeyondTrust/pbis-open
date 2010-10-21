@@ -1429,13 +1429,15 @@ restore_configuration()
             if [ -x "$domainjoin_cli" ]; then
                 $domainjoin_cli configure --enable pam > /dev/null 2>&1
                 $domainjoin_cli configure --enable nsswitch > /dev/null 2>&1
-                _short=`hostname --short 2> /dev/null`
-                _short_err=$?
-                _long=`hostname --long 2>/dev/null`
-                _long_err=$?
-                if [ $_short_err -eq 0 -a $_long_err -eq 0 -a \
-                    -n "$_short" -a -n "$_long" ]; then
-                    $domainjoin_cli configure --long $_long --short $_short --enable krb5  > /dev/null 2>&1
+                if [ "${OS_TYPE}" = "linux" ]; then
+                    _short=`hostname --short 2> /dev/null`
+                    _short_err=$?
+                    _long=`hostname --long 2>/dev/null`
+                    _long_err=$?
+                    if [ $_short_err -eq 0 -a $_long_err -eq 0 -a \
+                        -n "$_short" -a -n "$_long" ]; then
+                        $domainjoin_cli configure --long $_long --short $_short --enable krb5  > /dev/null 2>&1
+                    fi
                 fi
             fi
         fi
