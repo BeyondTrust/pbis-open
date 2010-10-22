@@ -137,7 +137,7 @@ lwmsg_data_marshal_indirect_prologue(
                facilitate easy unmarshalling */
             BAIL_ON_ERROR(status = lwmsg_convert_integer(
                               count,
-                              sizeof(count),
+                              sizeof(*count),
                               LWMSG_NATIVE_ENDIAN,
                               implicit_length,
                               4,
