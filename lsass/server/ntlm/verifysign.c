@@ -154,6 +154,7 @@ NtlmVerifySignature(
                         pData->cbBuffer);
             }
         }
+
         if (!bFoundData)
         {
             HMAC_CTX_cleanup(&c);

@@ -260,18 +260,22 @@ typedef struct
 #define ISC_REQ_INTEGRITY           0x01
 #define ISC_REQ_CONFIDENTIALITY     0x02
 #define ISC_REQ_NULL_SESSION        0x04
+#define ISC_REQ_USE_DCE_STYLE       0x08
 
 #define ISC_RET_INTEGRITY           0x01
 #define ISC_RET_CONFIDENTIALITY     0x02
 #define ISC_RET_NULL_SESSION        0x04
+#define ISC_RET_USE_DCE_STYLE       0x08
 
 #define ASC_REQ_INTEGRITY           0x01
 #define ASC_REQ_CONFIDENTIALITY     0x02
 #define ASC_REQ_NULL_SESSION        0x04
+#define ASC_REQ_USE_DCE_STYLE       0x08
 
 #define ASC_RET_INTEGRITY           0x01
 #define ASC_RET_CONFIDENTIALITY     0x02
 #define ASC_RET_NULL_SESSION        0x04
+#define ASC_RET_USE_DCE_STYLE       0x08
 
 // Possible information to query our context for
 #define SECPKG_ATTR_ACCESS_TOKEN                1

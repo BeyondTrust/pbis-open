@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -131,7 +131,7 @@ NtlmServerInitializeSecurityContext(
             pfContextAttr,
             NULL,
             NULL);
-    }
+     }
 
 
 cleanup:
@@ -175,7 +175,7 @@ NtlmCreateNegotiateContext(
     DWORD dwMessageSize = 0;
     PNTLM_NEGOTIATE_MESSAGE_V1 pMessage = NULL;
     NTLM_CONFIG config;
-    DWORD dwOptions =
+    DWORD dwDefaultOptions =
             // Always do signing and sealing since they cannot be turned off on
             // Windows
             NTLM_FLAG_SIGN                  |
@@ -185,6 +185,13 @@ NtlmCreateNegotiateContext(
             NTLM_FLAG_NTLM                  |
             NTLM_FLAG_DOMAIN                |
             0;
+    DWORD dwDceStyleOptions =
+            NTLM_FLAG_OEM                   |
+            NTLM_FLAG_REQUEST_TARGET        |
+            NTLM_FLAG_NTLM                  |
+            NTLM_FLAG_DOMAIN                |
+            0;
+    DWORD dwOptions = 0;
 
     *ppNtlmContext = NULL;
 
@@ -193,6 +200,15 @@ NtlmCreateNegotiateContext(
 
     dwError = NtlmReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (fContextReq & ISC_REQ_USE_DCE_STYLE)
+    {
+        dwOptions = dwDceStyleOptions;
+    }
+    else
+    {
+        dwOptions = dwDefaultOptions;
+    }
 
     if (config.bSupportUnicode)
     {
@@ -213,6 +229,16 @@ NtlmCreateNegotiateContext(
     if (config.bSupport128bit)
     {
         dwOptions |= NTLM_FLAG_128;
+    }
+
+    if (fContextReq & ISC_REQ_INTEGRITY)
+    {
+        dwOptions |= NTLM_FLAG_SIGN;
+    }
+
+    if (fContextReq & ISC_REQ_CONFIDENTIALITY)
+    {
+        dwOptions |= NTLM_FLAG_SEAL;
     }
 
     if (fContextReq & ISC_REQ_NULL_SESSION)
@@ -442,3 +468,13 @@ error:
 
     goto cleanup;
 }
+
+
+/*
+local variables:
+mode: c
+c-basic-offset: 4
+indent-tabs-mode: nil
+tab-width: 4
+end:
+*/

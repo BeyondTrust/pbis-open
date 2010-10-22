@@ -78,6 +78,7 @@
 #include <lsaadprovider.h>
 #include <lwdef.h>
 #include <lwkrb5.h>
+#include <gssapi/gssapi_ext.h>
 #include <lwmem.h>
 #include <lwps/lwps.h>
 #include <lwstr.h>

@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright (c) Likewise Software.  All rights Reserved.
@@ -853,13 +853,13 @@ ntlm_gss_init_sec_context(
 
     InputToken.BufferType = SECBUFFER_TOKEN;
 
-    if(pInputToken)
+    if (pInputToken)
     {
         InputToken.cbBuffer = pInputToken->length;
         InputToken.pvBuffer = pInputToken->value;
     }
 
-    if( pContextHandle)
+    if (pContextHandle)
     {
         hContext = (NTLM_CONTEXT_HANDLE)*pContextHandle;
     }
@@ -913,6 +913,10 @@ ntlm_gss_init_sec_context(
     {
         dwNtlmFlags |= ISC_REQ_NULL_SESSION;
     }
+    if (nReqFlags & GSS_C_DCE_STYLE)
+    {
+        dwNtlmFlags |= ISC_REQ_USE_DCE_STYLE;
+    }
 
     MinorStatus = NtlmClientInitializeSecurityContext(
         &CredHandle,
@@ -949,6 +953,10 @@ ntlm_gss_init_sec_context(
     if (dwOutNtlmFlags & ISC_RET_NULL_SESSION)
     {
         RetFlags |= GSS_C_ANON_FLAG;
+    }
+    if (dwOutNtlmFlags & ISC_RET_USE_DCE_STYLE)
+    {
+        RetFlags |= GSS_C_DCE_STYLE;
     }
 
 cleanup:
@@ -1604,12 +1612,23 @@ ntlm_gss_wrap_iov(
         BAIL_ON_LSA_ERROR(MinorStatus);
     }
 
-    MinorStatus = NtlmClientEncryptMessage(
-        &ContextHandle,
-        nEncrypt ? TRUE : FALSE,
-        &Message,
-        0
-        );
+    if (nEncrypt)
+    {
+        MinorStatus = NtlmClientEncryptMessage(
+            &ContextHandle,
+            TRUE,
+            &Message,
+            0
+            );
+    }
+    else
+    {
+        MinorStatus = NtlmClientMakeSignature(
+            &ContextHandle,
+            Qop,
+            &Message,
+            0);
+    }
     BAIL_ON_LSA_ERROR(MinorStatus);
 
     if (nEncrypt)
@@ -1802,7 +1821,7 @@ ntlm_gss_unwrap(
     NtlmBuffer[1].cbBuffer = dwBufferSize;
     NtlmBuffer[1].pvBuffer = pBuffer;
 
-    if (dwNtlmFlags & (ISC_RET_CONFIDENTIALITY | ISC_RET_INTEGRITY))
+    if (dwNtlmFlags & ISC_RET_CONFIDENTIALITY)
     {
         MinorStatus = NtlmClientDecryptMessage(
             &ContextHandle,
@@ -1874,6 +1893,8 @@ ntlm_gss_unwrap_iov(
     BOOLEAN bEncrypted = FALSE;
     DWORD dwIndex = 0;
     BOOLEAN bFoundHeader = FALSE;
+    DWORD dwNtlmFlags = 0;
+    DWORD dwQop = GSS_C_QOP_DEFAULT;
 
     if (cBuffers < 2)
     {
@@ -1923,12 +1944,36 @@ ntlm_gss_unwrap_iov(
         BAIL_ON_LSA_ERROR(MinorStatus);
     }
 
-    MinorStatus = NtlmClientDecryptMessage(
+    // Check the negotiated flags to find out if the message is expected
+    // to be encrypted or signed only.
+    MinorStatus = NtlmClientQueryContextAttributes(
         &ContextHandle,
-        &Message,
-        0,
-        &bEncrypted
-        );
+        SECPKG_ATTR_FLAGS,
+        &dwNtlmFlags);
+    BAIL_ON_LSA_ERROR(MinorStatus);
+
+    if (dwNtlmFlags & ISC_RET_CONFIDENTIALITY)
+    {
+        MinorStatus = NtlmClientDecryptMessage(
+            &ContextHandle,
+            &Message,
+            0,
+            &bEncrypted
+            );
+    }
+    else if (dwNtlmFlags & ISC_RET_INTEGRITY)
+    {
+        MinorStatus = NtlmClientVerifySignature(
+            &ContextHandle,
+            &Message,
+            0,
+            &dwQop
+            );
+    }
+    else
+    {
+        MinorStatus = LW_ERROR_INVALID_PARAMETER;
+    }
     BAIL_ON_LSA_ERROR(MinorStatus);
 
 cleanup:
