@@ -409,7 +409,8 @@ LwSmRegistryReadStringList(
 
         *pwszSpace = (WCHAR) '\0';
 
-        LwAllocateWc16String(&ppwszValues[i], pwszCursor);
+        dwError = LwAllocateWc16String(&ppwszValues[i], pwszCursor);
+        BAIL_ON_ERROR(dwError);
 
         pwszCursor = pwszSpace + 1;
     }
