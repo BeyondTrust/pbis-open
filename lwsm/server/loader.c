@@ -181,9 +181,21 @@ LwSmLoaderLoadPlugin(
 
     LwSmLinkInsertBefore(&gPluginList, &pPlugin->link);
 
-error:
+cleanup:
 
     return dwError;
+
+error:
+
+    if (pPlugin)
+    {
+        if (pPlugin->hLibrary)
+        {
+            dlclose(pPlugin->hLibrary);
+        }
+
+        LwFreeMemory(pPlugin);
+    }
 }
 
 DWORD
