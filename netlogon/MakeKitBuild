@@ -30,6 +30,13 @@ configure()
         FAIL=yes \
         rsutils regclient lwadvapi
 
+    mk_check_headers \
+        sys/types.h netinet/in.h arpa/nameser.h
+
+    mk_check_header \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h" \
+        HEADER="resolv.h"
+
     mk_check_libraries \
         rt pthread resolv
 
@@ -37,4 +44,37 @@ configure()
         HEADERDEPS="time.h sys/time.h" \
         LIBDEPS="$LIB_RT" \
         clock_settime settimeofday
+
+    mk_check_functions \
+        HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h resolv.h" \
+        LIBDEPS="$LIB_RESOLV" \
+        res_init res_query res_ninit res_ndestroy
+
+    if [ "$HAVE_RES_INIT" = "yes" ]
+    then
+        mk_define HAVE_DECL_RES_INIT 1
+    else
+        mk_define HAVE_DECL_RES_INIT 0
+    fi
+
+    if [ "$HAVE_RES_NINIT" = "yes" ]
+    then
+        mk_define HAVE_DECL_RES_NINIT 1
+    else
+        mk_define HAVE_DECL_RES_NINIT 0
+    fi
+
+    if [ "$HAVE_RES_QUERY" = "yes" ]
+    then
+        mk_define HAVE_DECL_RES_QUERY 1
+    else
+        mk_define HAVE_DECL_RES_QUERY 0
+    fi
+
+    if [ "$HAVE_RES_NDESTROY" = "yes" ]
+    then
+        mk_define HAVE_DECL_RES_NDESTROY 1
+    else
+        mk_define HAVE_DECL_RES_NDESTROY 0
+    fi
 }
