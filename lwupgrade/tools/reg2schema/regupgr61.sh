@@ -22,6 +22,7 @@ fi
 $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
 if [ ! -s ${tmpreg}.out ]; then
   rm -f $tmpreg
+  rm -f ${tmpreg}.out
   exit 0
 fi
 
