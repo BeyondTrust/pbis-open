@@ -34,7 +34,7 @@ case "$host_os:$host_cpu" in
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_THREAD_SAFE"
 		;;	
     	darwin*:*)
-		if [ "`sysctl -n hw.optional.x86_64 2>/dev/null`" = "1" ]
+		if test "`sysctl -n hw.optional.x86_64 2>/dev/null`" = "1"
 		then
 			REALLY_X64="yes"
 		fi
@@ -46,7 +46,7 @@ esac
 
 case "$host_cpu" in
      	i?86)
-		if [ -n "$REALLY_X64" ]
+		if test -n "$REALLY_X64"
 		then
 			AC_DEFINE([LWBASE_ATOMIC_X86_64], [], [x86_64 atomic operations])
 		else
