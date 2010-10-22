@@ -326,6 +326,7 @@ AC_SUBST(GSSAPI_LIBS)
 tmp_LDFLAGS="$LDFLAGS"
 LDFLAGS="$GSSAPI_LDFLAGS $LDFLAGS"
 AC_CHECK_LIB(gssapi_krb5, gss_wrap, [GSSAPI_LIBS="-lgssapi_krb5"], [AC_MSG_ERROR([Could not find libgssapi_krb5])])
+AC_CHECK_LIB(lwbase, LwMapSecurityCreateContext, [GSSAPI_LIBS="$GSSAPI_LIBS -llwbase"], [AC_MSG_ERROR([Could not find lwbase])])
 LDFLAGS="$tmp_LDFLAGS"
 
 ##
@@ -390,6 +391,13 @@ then
 	AC_DEFINE([ENABLE_AUTH_GSS_NEGOTIATE], [], [Enable GSS negotiate auth mechanism])
 fi
 AM_CONDITIONAL(AUTH_GSS_NEGOTIATE, test x${rpc_arg_gss_negotiate} = xyes)
+
+RPC_ARG_DEFINE(ntlmssp, AUTH_NTLMSSP, yes, Include the ntlmssp auth service)
+if test x"$rpc_arg_ntlmssp" = xyes
+then
+	AC_DEFINE([ENABLE_AUTH_NTLMSSP], [], [Enable ntlmssp auth mechanism])
+fi
+AM_CONDITIONAL(AUTH_NTLMSSP, test x${rpc_arg_ntlmssp} = xyes)
 
 RPC_ARG_DEFINE(schannel, AUTH_SCHANNEL, yes, Include the schannel auth service)
 if test x"$rpc_arg_schannel" = xyes

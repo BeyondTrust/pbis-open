@@ -285,7 +285,17 @@ libnck_la_LIBADD+=libauth_gss_negotiate.la
 libauth_gss_negotiate_la_SOURCES = gssauth.c gssauthcn.c
 libauth_gss_negotiate_la_CFLAGS = @GSSAPI_INCLUDES@
 libauth_gss_negotiate_la_LDFLAGS = @GSSAPI_LDFLAGS@
-libauth_gss_negotiate_la_LIBADD = @GSSAPI_LIBS@ -llwbase
+libauth_gss_negotiate_la_LIBADD = @GSSAPI_LIBS@
+endif
+
+if AUTH_NTLMSSP
+noinst_LTLIBRARIES += libauth_ntlmssp.la
+libnck_la_LIBADD+=libauth_ntlmssp.la
+
+libauth_ntlmssp_la_SOURCES = ntlmssp.c ntlmsspcn.c
+libauth_ntlmssp_la_CFLAGS = @GSSAPI_INCLUDES@
+libauth_ntlmssp_la_LDFLAGS = @GSSAPI_LDFLAGS@
+libauth_ntlmssp_la_LIBADD = @GSSAPI_LIBS@
 endif
 
 if AUTH_SCHANNEL

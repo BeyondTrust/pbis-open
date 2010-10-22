@@ -218,6 +218,7 @@ void rpc__ip_naf_init_func(void);
 void rpc__np_naf_init_func(void);
 void rpc__http_naf_init_func(void);
 void rpc__gssauth_init_func(void);
+void rpc__ntlmauth_init_func(void);
 void rpc__schnauth_init_func(void);
 
 static void (*rpc__g_static_modules[])(void) =
@@ -239,6 +240,9 @@ static void (*rpc__g_static_modules[])(void) =
 #endif
 #ifdef ENABLE_AUTH_GSS_NEGOTIATE
     rpc__gssauth_init_func,
+#endif
+#ifdef ENABLE_AUTH_NTLMSSP
+    rpc__ntlmauth_init_func,
 #endif
 #ifdef ENABLE_AUTH_SCHANNEL
     rpc__schnauth_init_func
