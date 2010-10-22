@@ -257,9 +257,9 @@ LwSmSetLogger(
             "Logging started");
     }
 
-    UNLOCK(bLocked, &gLogLock);
-
 cleanup:
+
+    UNLOCK(bLocked, &gLogLock);
 
     return dwError;
 
