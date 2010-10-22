@@ -166,8 +166,13 @@ RegSrvSetDefaults(
 
     *(gpServerInfo->szLogFilePath) = '\0';
 
-    strcpy(gpServerInfo->szCachePath, CACHEDIR);
-    strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
+    strncpy(gpServerInfo->szCachePath,
+            CACHEDIR,
+            sizeof(gpServerInfo->szCachePath)-1);
+
+    strncpy(gpServerInfo->szPrefixPath,
+            PREFIXDIR,
+            sizeof(gpServerInfo->szPrefixPath)-1);
 
     setlocale(LC_ALL, "");
 
