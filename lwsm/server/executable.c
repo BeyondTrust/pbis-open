@@ -74,6 +74,12 @@ static SM_PROCESS_TABLE gProcTable =
 };
 
 static
+VOID
+LwSmExecutableFree(
+    PSM_EXECUTABLE pExec
+    );
+
+static
 DWORD
 LwSmExecProgram(
     PSM_EXECUTABLE pExec,
@@ -475,17 +481,20 @@ cleanup:
 
 error:
 
+    if (pExec)
+    {
+        LwSmExecutableFree(pExec);
+    }
+
     goto cleanup;
 }
 
 static
 VOID
-LwSmExecutableDestruct(
-    PLW_SERVICE_OBJECT pObject
+LwSmExecutableFree(
+    PSM_EXECUTABLE pExec
     )
 {
-    PSM_EXECUTABLE pExec = LwSmGetServiceObjectData(pObject);
-
     if (pExec->notifyFd >= 0)
     {
         close(pExec->notifyFd);
@@ -501,8 +510,16 @@ LwSmExecutableDestruct(
     LwSmFreeStringList(pExec->ppwszArgs);
     LwSmFreeStringList(pExec->ppwszEnv);
     LwFreeMemory(pExec);
+}
 
-    return;
+
+static
+VOID
+LwSmExecutableDestruct(
+    PLW_SERVICE_OBJECT pObject
+    )
+{
+    LwSmExecutableFree(LwSmGetServiceObjectData(pObject));
 }
 
 static
