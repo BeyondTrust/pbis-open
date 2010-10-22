@@ -4,18 +4,10 @@ configure()
 {
     mk_config_header "include/config.h"
 
-    LWSM_CPPFLAGS="-DLWSM_DISABLE_DEPRECATED -DLWSM_BUILD"
-    LWSM_CFLAGS="-Wall -Werror -Wmissing-prototypes"
-    LWSM_LDFLAGS=""
+    MK_CPPFLAGS="$MK_CPPFLAGS -DLWSM_DISABLE_DEPRECATED -DLWSM_BUILD"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -Wmissing-prototypes"
 
-    case "$MK_HOST_OS:$MK_HOST_PRIMARY_ISA" in
-        linux:*)
-            LWSM_CPPFLAGS="$LWSM_CPPFLAGS -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -D_BSD_SOURCE -D_GNU_SOURCE"
-            ;;
-        solaris:*)
-            LWSM_CPPFLAGS="$LWSM_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
-            ;;
-    esac
+    lw_define_feature_macros
 
     mk_define SBINDIR "\"$MK_SBINDIR\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
