@@ -1,0 +1,5 @@
+This utility measures the speed of malloc in MT environments.  Different
+allocation sizes are measured.  The utility creates 32 threads which allocate/
+free memory simultaneously.
+
+Other allocators can be evaluated by LD_PRELOAD them first.
