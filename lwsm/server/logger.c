@@ -194,9 +194,9 @@ LwSmLogMessage(
         BAIL_ON_ERROR(dwError);
     }
 
-    UNLOCK(bLocked, &gLogLock);
-
 cleanup:
+
+    UNLOCK(bLocked, &gLogLock);
 
     return dwError;
 
