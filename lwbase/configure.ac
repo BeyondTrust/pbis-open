@@ -13,10 +13,15 @@ DS_FRAMEWORK_LDFLAGS=""
 CPPFLAGS="$CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
 
 MOD_EXT=".so"
+REALLY_X64=""
 
 case "$host_os:$host_cpu" in
-    solaris*:*)
-        LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
+        solaris*:*)
+		if echo "$CC" | grep -- "-m64" >/dev/null 2>&1
+		then
+			REALLY_X64="yes"
+		fi
+		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
 		;;
 	hpux*:hppa*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500"
@@ -28,15 +33,25 @@ case "$host_os:$host_cpu" in
 	aix*:*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_THREAD_SAFE"
 		;;	
-    darwin*:*)
-        DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
-        AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
+    	darwin*:*)
+		if [ "`sysctl -n hw.optional.x86_64 2>/dev/null`" = "1" ]
+		then
+			REALLY_X64="yes"
+		fi
+		DS_FRAMEWORK_LDFLAGS="-framework DirectoryService"
+		AC_DEFINE([__LWI_DARWIN__], [], [Define if OS is Darwin])
 		;;	
 esac
+     
 
 case "$host_cpu" in
      	i?86)
-		AC_DEFINE([LWBASE_ATOMIC_X86], [], [x86 atomic operations])
+		if [ -n "$REALLY_X64" ]
+		then
+			AC_DEFINE([LWBASE_ATOMIC_X86_64], [], [x86_64 atomic operations])
+		else
+			AC_DEFINE([LWBASE_ATOMIC_X86], [], [x86 atomic operations])
+		fi
 		;;
 	x86_64)
 		# Check for -m32 in CC
