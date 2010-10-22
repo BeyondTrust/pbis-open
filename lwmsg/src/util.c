@@ -156,24 +156,46 @@ lwmsg_convert_string_alloc(
     const char* output_type
     )
 {
-    size_t cblen;
-    char *buffer;
+    ssize_t cblen = 0;
+    char *buffer = NULL;
+
     if (input == NULL)
-        return -1;
+    {
+        goto error;
+    }
+
     cblen = lwmsg_convert_string_buffer(input, input_len, NULL, 0, input_type, output_type);
+
+    if (cblen < 0)
+    {
+        goto error;
+    }
+
     buffer = malloc(cblen);
     if (buffer == NULL)
-        return -1;
+    {
+        goto error;
+    }
+
     if (lwmsg_convert_string_buffer(input, input_len, buffer, cblen, input_type, output_type) != cblen)
     {
-        free(buffer);
-        return -1;
+        goto error;
     }
-    else
+
+    *output = buffer;
+
+done:
+
+    return cblen;
+
+error:
+
+    cblen = -1;
+    if (buffer)
     {
-        *output = buffer;
-        return cblen;
+        free(buffer);
     }
+    goto done;
 }
 
 ssize_t
