@@ -1,0 +1,2 @@
+DESCRIPTION="Likewise Config Tool"
+DEPENDS="likewise-lsass"

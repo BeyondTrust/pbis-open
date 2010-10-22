@@ -11,7 +11,7 @@ PACKAGES="\
     krb5 openldap libxml2 sqlite base lwreg\
     pstore netlogon lwio rpc eventlog lsass \
     srvsvc domainjoin reskit lwupgrade \
-    lwnetapi lwtools \
+    lwnetapi lwtools lwconfig \
     "
 OBSOLETE_PACKAGES="lwmgmt lwreg-32bit"
 OPTIONAL_PACKAGES="domainjoin-gui"

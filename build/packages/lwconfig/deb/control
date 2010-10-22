@@ -1,0 +1,14 @@
+Source: __PKG_NAME
+Section: net
+Priority: optional
+Maintainer: Likewise Software <support@likewise.com>
+Build-Depends: dpkg-dev (>= 1.10.28), debhelper (>= 4.2)
+Standards-Version: 3.7.2
+
+Package: __PKG_NAME
+Architecture: any
+Provides: likewise-lwconfig
+Replaces: likewise-lwconfig
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Likewise Config Tool
+

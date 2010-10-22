@@ -431,7 +431,7 @@ cleanup:
 
         buf[0] = '\0';
 
-        if (_LW_ERROR_REG_BASE <= dwError && dwError <= _LW_ERROR_REG_MAX)
+        if (40700 <= dwError && dwError <= 41200)
         {
             size = LwRegGetErrorString(dwError, buf, sizeof(buf));
             if (size > sizeof(buf))
