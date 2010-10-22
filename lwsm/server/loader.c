@@ -196,6 +196,8 @@ error:
 
         LwFreeMemory(pPlugin);
     }
+
+    goto cleanup;
 }
 
 DWORD
