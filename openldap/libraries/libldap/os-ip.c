@@ -489,6 +489,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	char serv[7];
 	int err;
 	struct addrinfo hints, *res, *sai;
+	int retry;
 #else
 	int i;
 	int use_hp = 0;
@@ -552,7 +553,13 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	 */
 	hints.ai_flags |= AI_NUMERICHOST;
 	err = getaddrinfo( host, serv, &hints, &res );
-	if (err == EAI_NONAME || err == EAI_NODATA) {
+	retry = (err == EAI_NONAME);
+#ifdef EAI_NODATA
+	if (err == EAI_NODATA) {
+		retry = 1;
+	}
+#endif
+	if (retry) {
 		hints.ai_flags &= ~AI_NUMERICHOST;
 		err = getaddrinfo( host, serv, &hints, &res );
 	}

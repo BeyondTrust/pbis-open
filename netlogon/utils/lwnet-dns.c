@@ -1156,7 +1156,7 @@ LWNetDnsQueryWithBuffer(
     struct __res_state resLocal = { 0 };
     res_state res = &resLocal;
 #else
-    res_state res = &_res;
+    struct __res_state *res = &_res;
 #endif
 
     LWNET_LOCK_RESOLVER_API(bInLock);
