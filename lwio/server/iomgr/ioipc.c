@@ -52,6 +52,8 @@ typedef struct _IO_IPC_CALL_CONTEXT
 {
     IO_STATUS_BLOCK ioStatusBlock;
     IO_ASYNC_CONTROL_BLOCK asyncBlock;
+    PIO_CREATE_SECURITY_CONTEXT pSecurityContext;
+    PIO_ECP_LIST pEcpList;
     const LWMsgParams* pIn;
     LWMsgParams* pOut;
     LWMsgCall* pCall;
@@ -103,7 +105,13 @@ IopIpcFreeCallContext(
     PIO_IPC_CALL_CONTEXT pContext
     )
 {
-    IO_FREE(&pContext);
+    if (pContext)
+    {
+        IoSecurityDereferenceSecurityContext(&pContext->pSecurityContext);
+        IoRtlEcpListFree(&pContext->pEcpList);
+        
+        IO_FREE(&pContext);
+    }
 }
 
 static
@@ -281,6 +289,38 @@ cleanup:
 }
 
 static
+VOID
+IopIpcCompleteCreateCall(
+    IN PVOID pData
+    )
+{
+    PIO_IPC_CALL_CONTEXT pContext = (PIO_IPC_CALL_CONTEXT) pData;
+    PNT_IPC_MESSAGE_CREATE_FILE_RESULT pReply = pContext->pOut->data;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (pReply->FileHandle)
+    {
+        status = IopIpcRegisterFileHandle(pContext->pCall, pReply->FileHandle);
+        GOTO_CLEANUP_ON_STATUS(status);
+        
+        status = IopIpcRetainFileHandle(pContext->pCall, pReply->FileHandle);
+        GOTO_CLEANUP_ON_STATUS(status);
+    }
+
+    status = pContext->ioStatusBlock.Status;
+    pReply->CreateResult = pContext->ioStatusBlock.CreateResult;
+
+cleanup:
+
+    pReply->Status = status;
+
+    IoDereferenceAsyncCancelContext(&pContext->asyncBlock.AsyncCancelContext);
+    lwmsg_call_complete(pContext->pCall, LWMSG_STATUS_SUCCESS);
+
+    IopIpcFreeCallContext(pContext);
+}
+
+static
 LWMsgStatus
 IopIpcCreateFile(
     IN LWMsgCall* pCall,
@@ -291,19 +331,15 @@ IopIpcCreateFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_CREATE_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_CREATE_FILE_RESULT;
     PNT_IPC_MESSAGE_CREATE_FILE pMessage = (PNT_IPC_MESSAGE_CREATE_FILE) pIn->data;
-    PNT_IPC_MESSAGE_CREATE_FILE_RESULT pReply = NULL;
-    IO_STATUS_BLOCK ioStatusBlock = { 0 };
-    IO_FILE_HANDLE fileHandle = NULL;
-    IO_FILE_NAME fileName = { 0 };
     uid_t uid = 0;
     gid_t gid = 0;
-    PIO_CREATE_SECURITY_CONTEXT securityContext = NULL;
-    PIO_ECP_LIST pEcpList = NULL;
+    PIO_IPC_CALL_CONTEXT pContext = NULL;
+    PNT_IPC_MESSAGE_CREATE_FILE_RESULT pReply = NULL;
 
-    assert(messageType == pIn->tag);
+    status = IopIpcCreateCallContext(pCall, pIn, pOut, IopIpcCompleteCreateCall, &pContext);
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IopIpcGetProcessSecurity(
                     pCall,
@@ -312,7 +348,7 @@ IopIpcCreateFile(
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     status = IoSecurityCreateSecurityContextFromUidGid(
-                    &securityContext,
+                    &pContext->pSecurityContext,
                     uid,
                     gid,
                     pMessage->pSecurityToken);
@@ -321,77 +357,86 @@ IopIpcCreateFile(
     status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_CREATE_FILE_RESULT, sizeof(*pReply));
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    pOut->tag = replyType;
-    pOut->data = pReply;
-
-    fileName = pMessage->FileName;
-
     if (pMessage->EcpCount)
     {
         ULONG ecpIndex = 0;
 
-        pReply->Status = IoRtlEcpListAllocate(&pEcpList);
-        GOTO_CLEANUP_ON_STATUS_EE(pReply->Status, EE);
+        status = IoRtlEcpListAllocate(&pContext->pEcpList);
+        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
         for (ecpIndex = 0; ecpIndex < pMessage->EcpCount; ecpIndex++)
         {
-            pReply->Status = IoRtlEcpListInsert(
-                                    pEcpList,
-                                    pMessage->EcpList[ecpIndex].pszType,
-                                    pMessage->EcpList[ecpIndex].pData,
-                                    pMessage->EcpList[ecpIndex].Size,
-                                    NULL);
-            GOTO_CLEANUP_ON_STATUS_EE(pReply->Status, EE);
+            status = IoRtlEcpListInsert(
+                pContext->pEcpList,
+                pMessage->EcpList[ecpIndex].pszType,
+                pMessage->EcpList[ecpIndex].pData,
+                pMessage->EcpList[ecpIndex].Size,
+                NULL);
+            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
         }
     }
 
-    // TODO -- QOS, etc.
-    pReply->Status = IoCreateFile(
-                            &fileHandle,
-                            NULL,
-                            &ioStatusBlock,
-                            securityContext,
-                            &fileName,
-                            pMessage->SecurityDescriptor,
-                            NULL,
-                            pMessage->DesiredAccess,
-                            pMessage->AllocationSize,
-                            pMessage->FileAttributes,
-                            pMessage->ShareAccess,
-                            pMessage->CreateDisposition,
-                            pMessage->CreateOptions,
-                            pMessage->EaBuffer,
-                            pMessage->EaLength,
-                            pEcpList);
+    status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_CREATE_FILE_RESULT, sizeof(*pReply));
+    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+    
+    pOut->tag = replyType;
+    pOut->data = pReply;
+    
+    status = IoCreateFile(
+        &pReply->FileHandle,
+        &pContext->asyncBlock,
+        &pContext->ioStatusBlock,
+        pContext->pSecurityContext,
+        &pMessage->FileName,
+        pMessage->SecurityDescriptor,
+        NULL,
+        pMessage->DesiredAccess,
+        pMessage->AllocationSize,
+        pMessage->FileAttributes,
+        pMessage->ShareAccess,
+        pMessage->CreateDisposition,
+        pMessage->CreateOptions,
+        pMessage->EaBuffer,
+        pMessage->EaLength,
+        pContext->pEcpList);
 
-    // Register handle with lwmsg if it was created
-    if (fileHandle)
+    switch (status)
     {
-        status = IopIpcRegisterFileHandle(pCall, fileHandle);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-
-        pReply->FileHandle = fileHandle;
-        fileHandle = NULL;
-
-        status = IopIpcRetainFileHandle(pCall, pReply->FileHandle);
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-    }
-
-    pReply->Status = ioStatusBlock.Status;
-    pReply->CreateResult = ioStatusBlock.CreateResult;
+    case STATUS_PENDING:
+        lwmsg_call_pend(pCall, IopIpcCancelCall, pContext);
+        break;
+    case STATUS_SUCCESS:
+        if (pReply->FileHandle)
+        {
+            status = IopIpcRegisterFileHandle(pCall, pReply->FileHandle);
+            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+            
+            status = IopIpcRetainFileHandle(pCall, pReply->FileHandle);
+            GOTO_CLEANUP_ON_STATUS_EE(status, EE);
+        }
+        /* Intentionally fall through to default case */
+    default:
+        pReply->Status = pContext->ioStatusBlock.Status;
+        pReply->CreateResult = pContext->ioStatusBlock.CreateResult;
+        status = STATUS_SUCCESS;
+        break;
+     }
 
 cleanup:
 
-    if (status)
+    if (status != STATUS_PENDING)
     {
-        if (fileHandle)
+        if (status && pReply && pReply->FileHandle)
         {
-            IoCloseFile(fileHandle);
+            IopIpcCleanupFileHandle(pReply->FileHandle);
+            pReply->FileHandle = NULL;
+        }
+        
+        if (pContext)
+        {
+            IopIpcFreeCallContext(pContext);
         }
     }
-
-    IoSecurityDereferenceSecurityContext(&securityContext);
-    IoRtlEcpListFree(&pEcpList);
 
     LOG_LEAVE_IF_STATUS_EE(status, EE);
     return NtIpcNtStatusToLWMsgStatus(status);
@@ -431,6 +476,10 @@ IopIpcCloseFile(
     switch (status)
     {
     case STATUS_PENDING:
+        /* Note that the IRP could complete in another thread and call
+         * lwmsg_call_complete() before we call lwmsg_call_pend();
+         * lwmsg explicitly allows this
+         */
         lwmsg_call_pend(pCall, IopIpcCancelCall, pContext);
         break;
     default:
@@ -450,8 +499,6 @@ cleanup:
     return NtIpcNtStatusToLWMsgStatus(status);
 }
 
-// TODO -- ASK BRIAN ABOUT HANDLING on pOut on error (wrt free).
-
 LWMsgStatus
 IopIpcReadFile(
     IN LWMsgCall* pCall,
@@ -462,13 +509,10 @@ IopIpcReadFile(
 {
     NTSTATUS status = 0;
     int EE = 0;
-    const LWMsgTag messageType = NT_IPC_MESSAGE_TYPE_READ_FILE;
     const LWMsgTag replyType = NT_IPC_MESSAGE_TYPE_READ_FILE_RESULT;
     PNT_IPC_MESSAGE_READ_FILE pMessage = (PNT_IPC_MESSAGE_READ_FILE) pIn->data;
     PNT_IPC_MESSAGE_GENERIC_FILE_BUFFER_RESULT pReply = NULL;
     PIO_IPC_CALL_CONTEXT pContext = NULL;
-
-    assert(messageType == pIn->tag);
 
     status = IopIpcCreateCallContext(pCall, pIn, pOut, IopIpcCompleteGenericCall, &pContext);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
@@ -1096,10 +1140,10 @@ cleanup:
 static
 LWMsgDispatchSpec gIopIpcDispatchSpec[] =
 {
-    LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_CREATE_FILE,        IopIpcCreateFile),
-    LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_CLOSE_FILE,         IopIpcCloseFile),
-    LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_READ_FILE,          IopIpcReadFile),
-    LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_WRITE_FILE,         IopIpcWriteFile),
+    LWMSG_DISPATCH_NONBLOCK(NT_IPC_MESSAGE_TYPE_CREATE_FILE,         IopIpcCreateFile),
+    LWMSG_DISPATCH_NONBLOCK(NT_IPC_MESSAGE_TYPE_CLOSE_FILE,          IopIpcCloseFile),
+    LWMSG_DISPATCH_NONBLOCK(NT_IPC_MESSAGE_TYPE_READ_FILE,           IopIpcReadFile),
+    LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_WRITE_FILE,             IopIpcWriteFile),
     LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_DEVICE_IO_CONTROL_FILE, IopIpcDeviceIoControlFile),
     LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_FS_CONTROL_FILE,  IopIpcFsControlFile),
     LWMSG_DISPATCH_BLOCK(NT_IPC_MESSAGE_TYPE_FLUSH_BUFFERS_FILE,     IopIpcFlushBuffersFile),
