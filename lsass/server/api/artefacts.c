@@ -88,10 +88,14 @@ LsaSrvFindNSSArtefactByKey(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnLookupNSSArtefactByKey(
+        dwError = pProvider->pFnTable->pfnLookupNSSArtefactByKey(
                                             hProvider,
                                             pszKeyName,
                                             pszMapName,
@@ -218,7 +222,7 @@ LsaSrvEnumNSSArtefacts(
         dwNumNSSArtefactsFound = 0;
 
 
-        dwError = pProvider->pFnTable2->pfnEnumNSSArtefacts(
+        dwError = pProvider->pFnTable->pfnEnumNSSArtefacts(
                         hProvider,
                         hResume,
                         dwNumNSSArtefactsRemaining,
@@ -302,7 +306,7 @@ LsaSrvEndEnumNSSArtefacts(
         PLSA_AUTH_PROVIDER pProvider = pProviderState->pProvider;
         if (pProvider) {
            HANDLE hProvider = pProviderState->hProvider;
-           pProvider->pFnTable2->pfnEndEnumNSSArtefacts(
+           pProvider->pFnTable->pfnEndEnumNSSArtefacts(
                                        hProvider,
                                        pProviderState->hResume);
         }

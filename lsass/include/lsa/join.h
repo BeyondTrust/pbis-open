@@ -49,6 +49,7 @@
 #define __LSA_JOIN_H__
 
 #define LSA_NET_JOIN_DOMAIN_NOTIMESYNC 1
+#define LSA_NET_JOIN_DOMAIN_MULTIPLE   2
 
 DWORD
 LsaNetJoinInitialize(
@@ -81,6 +82,14 @@ DWORD
 LsaLeaveDomain(
     PCSTR pszUsername,
     PCSTR pszPassword
+    );
+
+DWORD
+LsaLeaveDomain2(
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
     );
 
 DWORD

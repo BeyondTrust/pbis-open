@@ -42,7 +42,6 @@
 #define __TOOLS_COMMON_H__
 
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 
 VOID
 PrintSecurityObject(

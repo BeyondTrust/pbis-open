@@ -52,6 +52,19 @@ LsaGetStatus(
     PLSASTATUS* ppLsaStatus
     )
 {
+    return LsaGetStatus2(
+               hLsaConnection,
+               NULL,
+               ppLsaStatus);
+}
+
+DWORD
+LsaGetStatus2(
+    HANDLE hLsaConnection,
+    PCSTR pszTargetProvider,
+    PLSASTATUS* ppLsaStatus
+    )
+{
     DWORD dwError = 0;
     PLSA_CLIENT_CONNECTION_CONTEXT pContext =
                      (PLSA_CLIENT_CONNECTION_CONTEXT)hLsaConnection;
@@ -61,7 +74,7 @@ LsaGetStatus(
     LWMsgMessage response = LWMSG_MESSAGE_INITIALIZER;
 
     request.tag = LSA_Q_GET_STATUS;
-    request.object = NULL;
+    request.object = (PVOID)pszTargetProvider;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_assoc_send_message_transact(
                               pContext->pAssoc,

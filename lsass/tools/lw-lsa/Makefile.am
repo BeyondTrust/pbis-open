@@ -22,6 +22,7 @@ MODE_NAMES = \
 	mod-group \
 	mod-user \
 	refresh-configuration \
+	set-default-domain \
 	set-log-level \
 	set-machine-sid \
 	set-machine-name \
@@ -57,6 +58,7 @@ lw_lsa_SOURCES = \
 	mod_group_main.c \
 	mod_user_main.c \
 	refresh_configuration_main.c \
+	set_default_domain_main.c \
 	set_log_level_main.c \
 	set_machine_sid_main.c \
 	set_machine_name_main.c \

@@ -51,9 +51,12 @@
 #include "lsasystem.h"
 #include "lsadef.h"
 #include "lsa/lsa.h"
+#include "lsa/ad.h"
 
 #include "lsaclient.h"
 #include "lsaipc.h"
+#include "lsaadprovider.h"
+#include "lsalocalprovider.h"
 
 #define LSA_MODE_STRING_UNKNOWN          "Unknown"
 #define LSA_MODE_STRING_UNPROVISIONED    "Un-provisioned"
@@ -80,8 +83,9 @@
 static
 VOID
 ParseArgs(
-    int    argc,
-    char*  argv[]
+    IN int    argc,
+    IN char*  argv[],
+    OUT PBOOLEAN pbAll
     );
 
 static
@@ -91,7 +95,8 @@ ShowUsage();
 static
 VOID
 PrintStatus(
-    PLSASTATUS pStatus
+    PLSASTATUS pStatus,
+    PBOOLEAN bpPrintedServerStatus
     );
 
 static
@@ -136,18 +141,85 @@ get_status_main(
     HANDLE hLsaConnection = (HANDLE)NULL;
     size_t dwErrorBufferSize = 0;
     BOOLEAN bPrintOrigError = TRUE;
+    BOOLEAN bAll = FALSE;
+    PSTR pszProviderInstance = NULL;
+    PSTR* ppszDomains = NULL;
+    DWORD dwNumDomains = 0;
+    DWORD dwIndex = 0;
+    BOOLEAN bPrintedServerStatus = FALSE;
     
-    ParseArgs(argc, argv);
-    
+    ParseArgs(argc, argv, &bAll);
+
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LsaGetStatus(
-                    hLsaConnection,
-                    &pLsaStatus);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (bAll)
+    {
+        dwError = LsaAdGetJoinedDomains(
+                      hLsaConnection,
+                      &dwNumDomains,
+                      &ppszDomains);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        if (dwNumDomains)
+        {
+            for (dwIndex = 0 ; dwIndex < dwNumDomains ; dwIndex++)
+            {
+                dwError = LwAllocateStringPrintf(
+                              &pszProviderInstance,
+                              "%s:%s",
+                              LSA_AD_TAG_PROVIDER,
+                              ppszDomains[dwIndex]);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                dwError = LsaGetStatus2(
+                              hLsaConnection,
+                              pszProviderInstance,
+                              &pLsaStatus);
+                BAIL_ON_LSA_ERROR(dwError);
+
+                PrintStatus(pLsaStatus, &bPrintedServerStatus);
+
+                LsaFreeStatus(pLsaStatus);
+                pLsaStatus = NULL;
+
+                LW_SAFE_FREE_STRING(pszProviderInstance);
+            }
+        }
+        else
+        {
+            dwError = LsaGetStatus2(
+                          hLsaConnection,
+                          LSA_AD_TAG_PROVIDER,
+                          &pLsaStatus);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            PrintStatus(pLsaStatus, &bPrintedServerStatus);
+
+            LsaFreeStatus(pLsaStatus);
+            pLsaStatus = NULL;
+
+            LW_SAFE_FREE_STRING(pszProviderInstance);
+        }
+
+        dwError = LsaGetStatus2(
+                      hLsaConnection,
+                      LSA_LOCAL_TAG_PROVIDER,
+                      &pLsaStatus);
+        BAIL_ON_LSA_ERROR(dwError);
     
-    PrintStatus(pLsaStatus);
+        PrintStatus(pLsaStatus, &bPrintedServerStatus);
+    }
+    else
+    {
+        dwError = LsaGetStatus2(
+                      hLsaConnection,
+                      NULL,
+                      &pLsaStatus);
+        BAIL_ON_LSA_ERROR(dwError);
+    
+        PrintStatus(pLsaStatus, &bPrintedServerStatus);
+    }
 
 cleanup:
 
@@ -158,6 +230,8 @@ cleanup:
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
     }
+
+    LW_SAFE_FREE_STRING(pszProviderInstance);
 
     return (dwError);
 
@@ -209,8 +283,9 @@ error:
 
 VOID
 ParseArgs(
-    int    argc,
-    char*  argv[]
+    IN int    argc,
+    IN char*  argv[],
+    OUT PBOOLEAN pbAll
     )
 {
     typedef enum {
@@ -220,6 +295,7 @@ ParseArgs(
     int iArg = 1;
     PSTR pszArg = NULL;
     ParseMode parseMode = PARSE_MODE_OPEN;
+    BOOLEAN bAll = FALSE;
 
     do {
         pszArg = argv[iArg++];
@@ -238,6 +314,10 @@ ParseArgs(
                     ShowUsage();
                     exit(0);
                 }
+                else if (strcmp(pszArg, "--all") == 0)
+                {
+                    bAll = TRUE;
+                }
                 else
                 {
                     ShowUsage();
@@ -248,17 +328,20 @@ ParseArgs(
         }
         
     } while (iArg < argc);
+
+    *pbAll = bAll;
 }
 
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-status\n");
+    printf("Usage: lw-get-status [--all]\n");
 }
 
 VOID
 PrintStatus(
-    PLSASTATUS pStatus
+    PLSASTATUS pStatus,
+    PBOOLEAN pbPrintedServerStatus
     )
 {
     DWORD iCount = 0;
@@ -272,18 +355,23 @@ PrintStatus(
                     (dwHours * LSA_SECONDS_IN_HOUR) - 
                     (dwMins * LSA_SECONDS_IN_MINUTE));
 
-    printf("LSA Server Status:\n\n");
-    printf("Compiled daemon version: %u.%u.%u.%u\n",
+    if (!*pbPrintedServerStatus)
+    {
+        printf("LSA Server Status:\n\n");
+        printf("Compiled daemon version: %u.%u.%u.%u\n",
                     pStatus->lsassVersion.dwMajor,
                     pStatus->lsassVersion.dwMinor,
                     pStatus->lsassVersion.dwBuild,
                     pStatus->lsassVersion.dwRevision);
-    printf("Packaged product version: %u.%u.%u.%u\n",
+        printf("Packaged product version: %u.%u.%u.%u\n",
                     pStatus->productVersion.dwMajor,
                     pStatus->productVersion.dwMinor,
                     pStatus->productVersion.dwBuild,
                     pStatus->productVersion.dwRevision);
-    printf("Uptime:        %u days %u hours %u minutes %u seconds\n", dwDays, dwHours, dwMins, dwSecs);
+        printf("Uptime:        %u days %u hours %u minutes %u seconds\n", dwDays, dwHours, dwMins, dwSecs);
+
+        *pbPrintedServerStatus = TRUE;
+    }
     
     for (iCount = 0; iCount < pStatus->dwCount; iCount++)
     {

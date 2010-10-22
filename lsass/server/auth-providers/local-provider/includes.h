@@ -50,7 +50,6 @@
 #include <lsasystem.h>
 #include <lsadef.h>
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 #include <reg/reg.h>
 
 #include <lwio/lwio.h>

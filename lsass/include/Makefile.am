@@ -3,7 +3,6 @@ lsainclude_HEADERS = \
     lsa/lsa.h \
     lsa/join.h \
     lsa/ad.h \
-    lsa/lsa2.h \
     lsa/provider.h
 
 ntlmincludedir = $(includedir)/ntlm

@@ -222,12 +222,14 @@ LSASS_API
 DWORD
 LsaAuthenticateUserEx(
 	IN HANDLE hLsaConnection,
+        IN PCSTR pszTargetProvider,
 	IN LSA_AUTH_USER_PARAMS* pParams,
 	OUT PLSA_AUTH_USER_INFO* ppUserInfo
 	)
 {
     return LsaTransactAuthenticateUserEx(
             hLsaConnection,
+            pszTargetProvider,
             pParams,
             ppUserInfo);
 }

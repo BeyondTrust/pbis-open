@@ -1420,6 +1420,7 @@ LsaFreeAuthUserParams(
 LW_DWORD
 LsaAuthenticateUserEx(
     LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_PCSTR pszTargetProvider,
     LW_IN LSA_AUTH_USER_PARAMS* pParams,
     LW_OUT PLSA_AUTH_USER_INFO* ppUserInfo
     );
@@ -1487,6 +1488,13 @@ LsaGetMetrics(
 LW_DWORD
 LsaGetStatus(
     LW_HANDLE hLsaConnection,
+    PLSASTATUS* ppLsaStatus
+    );
+
+LW_DWORD
+LsaGetStatus2(
+    LW_HANDLE hLsaConnection,
+    LW_IN LW_PCSTR pszTargetProvider,
     PLSASTATUS* ppLsaStatus
     );
 

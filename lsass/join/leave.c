@@ -60,6 +60,7 @@ LsaDisableMachineAccount(
 static
 DWORD
 LsaUnjoinDomain(
+    PCSTR   pszDomain,
     PCWSTR  pwszMachineName, 
     PCWSTR  pwszDomainName,
     PCWSTR  pwszAccountName,
@@ -72,6 +73,21 @@ DWORD
 LsaLeaveDomain(
     PCSTR pszUsername,
     PCSTR pszPassword
+    )
+{
+    return LsaLeaveDomain2(
+               pszUsername,
+               pszPassword,
+               NULL,
+               0);
+}
+
+DWORD
+LsaLeaveDomain2(
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
     )
 {
     DWORD dwError = 0;
@@ -95,9 +111,9 @@ LsaLeaveDomain(
     dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LwpsGetPasswordByHostName(
+    dwError = LwpsGetPasswordByDomainName(
                 hStore,
-                pszHostname,
+                pszDomain,
                 &pPassInfo);
     if (dwError)
     {
@@ -138,6 +154,7 @@ LsaLeaveDomain(
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LsaUnjoinDomain(
+                    pszDomain,
                     pwszHostname,
                     pwszDnsDomainName,
                     NULL,
@@ -146,7 +163,7 @@ LsaLeaveDomain(
         BAIL_ON_LSA_ERROR(dwError);
     }
     
-    dwError = LwpsDeleteEntriesInAllStores();
+    dwError = LwpsDeleteDomainInAllStores(pszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -182,6 +199,7 @@ error:
 static
 DWORD
 LsaUnjoinDomain(
+    PCSTR   pszDomain,
     PCWSTR  pwszMachineName, 
     PCWSTR  pwszDomainName,
     PCWSTR  pwszAccountName,
@@ -193,7 +211,6 @@ LsaUnjoinDomain(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     HANDLE hStore = (HANDLE)NULL;
     PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    PSTR pszLocalname = NULL;
     PWSTR pwszDCName = NULL;
     PWSTR pwszMachine = NULL;   
     PIO_CREDS pCreds = NULL;
@@ -206,9 +223,6 @@ LsaUnjoinDomain(
                                    pwszMachineName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaGetHostInfo(&pszLocalname);
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = LsaGetRwDcName(pwszDomainName,
                              FALSE,
                              &pwszDCName);
@@ -218,8 +232,8 @@ LsaUnjoinDomain(
                                      &hStore);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = LwpsGetPasswordByHostName(hStore,
-                                         pszLocalname,
+    ntStatus = LwpsGetPasswordByDomainName(hStore,
+                                         pszDomain,
                                          &pPassInfo);
     BAIL_ON_NT_STATUS(ntStatus);
 
@@ -263,7 +277,6 @@ LsaUnjoinDomain(
     BAIL_ON_NT_STATUS(ntStatus);
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pszLocalname);
     LW_SAFE_FREE_MEMORY(pwszDCName);
     LW_SAFE_FREE_MEMORY(pwszMachine);
 

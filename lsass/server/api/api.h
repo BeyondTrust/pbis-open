@@ -49,7 +49,6 @@
 
 #include "lsasystem.h"
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 #include <lwmsg/lwmsg.h>
 
 #include <dce/rpc.h>

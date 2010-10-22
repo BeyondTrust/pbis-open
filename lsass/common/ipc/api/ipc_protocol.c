@@ -729,6 +729,12 @@ static LWMsgTypeSpec gLsaIPCGetMetricsReqSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsaIPCGetStatusReqSpec[] =
+{
+    LWMSG_PSTR,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLsaIPCCheckUserInListReqSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_IPC_CHECK_USER_IN_LIST_REQ),
@@ -817,9 +823,10 @@ static LWMsgTypeSpec gLsaIPCAuthUserParamSpec[] =
 
 static LWMsgTypeSpec gLsaIPCAuthUserExReqSpec[] =
 {
-    LWMSG_POINTER_BEGIN,
-    LWMSG_TYPESPEC(gLsaIPCAuthUserParamSpec),
-    LWMSG_POINTER_END,
+    LWMSG_STRUCT_BEGIN(LSA_IPC_AUTH_USER_EX_REQ),
+    LWMSG_MEMBER_PSTR(LSA_IPC_AUTH_USER_EX_REQ, pszTargetProvider),
+    LWMSG_MEMBER_TYPESPEC(LSA_IPC_AUTH_USER_EX_REQ, authUserParams, gLsaIPCAuthUserParamSpec),
+    LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
 
@@ -1313,7 +1320,7 @@ static LWMsgProtocolSpec gLsaIPCSpec[] =
     LWMSG_MESSAGE(LSA_Q_GET_METRICS, gLsaIPCGetMetricsReqSpec),
     LWMSG_MESSAGE(LSA_R_GET_METRICS_SUCCESS, gLsaMetricPackSpec),
     LWMSG_MESSAGE(LSA_R_GET_METRICS_FAILURE, gLsaIPCErrorSpec),
-    LWMSG_MESSAGE(LSA_Q_GET_STATUS, NULL),
+    LWMSG_MESSAGE(LSA_Q_GET_STATUS, gLsaIPCGetStatusReqSpec),
     LWMSG_MESSAGE(LSA_R_GET_STATUS_SUCCESS, gLsaStatusPtrSpec),
     LWMSG_MESSAGE(LSA_R_GET_STATUS_FAILURE, gLsaIPCErrorSpec),
     LWMSG_MESSAGE(LSA_Q_REFRESH_CONFIGURATION, NULL),

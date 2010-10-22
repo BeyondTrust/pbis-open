@@ -439,14 +439,14 @@ error:
 DWORD
 LsaTransactAuthenticateUserEx(
     IN HANDLE hServer,
+    IN PCSTR pszTargetProvider,
     IN LSA_AUTH_USER_PARAMS* pParams,
     OUT PLSA_AUTH_USER_INFO* ppUserInfo
     )
 {
     DWORD dwError = 0;
-    LSA_AUTH_USER_PARAMS authUserExReq;
+    LSA_IPC_AUTH_USER_EX_REQ req = {0};
     PLSA_IPC_ERROR pError = NULL;
-
     LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
     LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -454,14 +454,15 @@ LsaTransactAuthenticateUserEx(
     dwError = LsaIpcAcquireCall(hServer, &pCall);
     BAIL_ON_LSA_ERROR(dwError);
 
-    authUserExReq.AuthType = pParams->AuthType;
-    authUserExReq.pass = pParams->pass;
-    authUserExReq.pszAccountName = pParams->pszAccountName;
-    authUserExReq.pszDomain = pParams->pszDomain;
-    authUserExReq.pszWorkstation = pParams->pszWorkstation;
+    req.pszTargetProvider = pszTargetProvider;
+    req.authUserParams.AuthType = pParams->AuthType;
+    req.authUserParams.pass = pParams->pass;
+    req.authUserParams.pszAccountName = pParams->pszAccountName;
+    req.authUserParams.pszDomain = pParams->pszDomain;
+    req.authUserParams.pszWorkstation = pParams->pszWorkstation;
 
     in.tag = LSA_Q_AUTH_USER_EX;
-    in.data = &authUserExReq;
+    in.data = &req;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
     BAIL_ON_LSA_ERROR(dwError);

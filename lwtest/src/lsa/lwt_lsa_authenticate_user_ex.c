@@ -191,7 +191,7 @@ AuthenticateUserEx(
     dwLocalError = InitAuthParams(pUser, &pParams);   
     BAIL_ON_TEST_BROKE(dwLocalError);
 
-    dwLocalError = LsaAuthenticateUserEx(hLsaConnection, pParams, &pUserInfo);
+    dwLocalError = LsaAuthenticateUserEx(hLsaConnection, NULL, pParams, &pUserInfo);
     BAIL_ON_TEST_BROKE(dwLocalError);
 
     dwLocalError = VerifyUserInfo(pUser, pUserInfo);

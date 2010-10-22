@@ -62,6 +62,15 @@ LsaSrvProviderIoControl(
     BOOLEAN bInLock = FALSE;
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     HANDLE hProvider = (HANDLE)NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
+
+    dwError = LsaSrvGetTargetElements(
+                  pszProvider,
+                  &pszTargetProviderName,
+                  &pszTargetInstance);
+    BAIL_ON_LSA_ERROR(dwError);
+
 
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
@@ -69,12 +78,16 @@ LsaSrvProviderIoControl(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        if ( !strcmp(pProvider->pszId, pszProvider) )
+        if ( !strcmp(pProvider->pszId, pszTargetProviderName) )
         {
-            dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+            dwError = LsaSrvOpenProvider(
+                          hServer,
+                          pProvider,
+                          pszTargetInstance,
+                          &hProvider);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = pProvider->pFnTable2->pfnProviderIoControl(
+            dwError = pProvider->pFnTable->pfnProviderIoControl(
                                             hProvider,
                                             pServerState->peerUID,
                                             pServerState->peerGID,
@@ -97,6 +110,9 @@ LsaSrvProviderIoControl(
 
 cleanup:
 
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
+
     if (hProvider != (HANDLE)NULL) {
         LsaSrvCloseProvider(pProvider, hProvider);
     }
@@ -109,7 +125,7 @@ error:
 
     LSA_LOG_ERROR_API_FAILED(hServer, dwError,
         "run provider specific request (request code = %u, provider = '%s')",
-        dwIoControlCode, LSA_SAFE_LOG_STRING(pszProvider));
+        dwIoControlCode, LSA_SAFE_LOG_STRING(pszTargetProviderName));
 
     *pdwOutputBufferSize = 0;
     *ppOutputBuffer = NULL;
@@ -134,7 +150,7 @@ LsaSrvProviderServicesDomain(
     dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = pProvider->pFnTable2->pfnServicesDomain(
+    dwError = pProvider->pFnTable->pfnServicesDomain(
                   pszDomainName,
                   &bServicesDomain);
     BAIL_ON_LSA_ERROR(dwError);
@@ -170,7 +186,7 @@ LsaSrvProviderGetPasswordInfo(
     dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = pProvider->pFnTable2->pfnGetPasswordInfo(
+    dwError = pProvider->pFnTable->pfnGetPasswordInfo(
                   pszDomainName,
                   ppPasswordInfo,
                   ppPasswordInfoA);

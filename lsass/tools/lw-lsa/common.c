@@ -43,7 +43,6 @@
 #include "lsadef.h"
 #include "lsaclient.h"
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 #include <lwmem.h>
 #include <lwerror.h>
 
@@ -111,7 +110,7 @@ PrintSecurityObject(
         if (pObject->userInfo.bIsAccountInfoKnown)
         {
             printf("Password expired: %s\n", pObject->userInfo.bPasswordExpired ? "yes" : "no");
-            printf("Password nevers expires: %s\n", pObject->userInfo.bPasswordNeverExpires ? "yes" : "no");
+            printf("Password never expires: %s\n", pObject->userInfo.bPasswordNeverExpires ? "yes" : "no");
             printf("Change password on next logon: %s\n", pObject->userInfo.bPromptPasswordChange ? "yes" : "no");
             printf("User can change password: %s\n", pObject->userInfo.bUserCanChangePassword ? "yes" : "no");
             printf("Account disabled: %s\n", pObject->userInfo.bAccountDisabled ? "yes" : "no");

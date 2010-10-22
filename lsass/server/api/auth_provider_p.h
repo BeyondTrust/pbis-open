@@ -54,7 +54,7 @@ typedef struct _LSA_AUTH_PROVIDER {
     PSTR pszProviderLibpath;
     PVOID pLibHandle;
     PCSTR pszName;
-    PLSA_PROVIDER_FUNCTION_TABLE_2 pFnTable2;
+    PLSA_PROVIDER_FUNCTION_TABLE pFnTable;
     struct _LSA_AUTH_PROVIDER *pNext;
 } LSA_AUTH_PROVIDER, *PLSA_AUTH_PROVIDER;
 

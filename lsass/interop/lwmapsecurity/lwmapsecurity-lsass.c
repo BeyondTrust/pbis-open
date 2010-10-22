@@ -1915,7 +1915,11 @@ LsaMapSecurityGetAccessTokenCreateInformationFromNtlmLogon(
     lsaUserParams.pass.chap.pNT_resp = &NTResp;
 
     // Authenticate
-    dwError = LsaAuthenticateUserEx(hLsaConnection, &lsaUserParams, &pUserInfo);
+    dwError = LsaAuthenticateUserEx(
+                  hLsaConnection,
+                  NULL,
+                  &lsaUserParams,
+                  &pUserInfo);
     if (dwError == LW_ERROR_NOT_HANDLED)
     {
         // Attempt to fallback to Guest access

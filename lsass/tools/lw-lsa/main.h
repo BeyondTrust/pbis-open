@@ -143,6 +143,12 @@ refresh_configuration_main(
     );
 
 int
+set_default_domain_main(
+    int argc,
+    char* argv[]
+    );
+
+int
 set_log_level_main(
     int argc,
     char* argv[]

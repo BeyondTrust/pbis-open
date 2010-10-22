@@ -37,6 +37,7 @@ static main_entry entry_list[] =
     {"mod-group", mod_group_main},
     {"mod-user", mod_user_main},
     {"refresh-configuration", refresh_configuration_main},
+    {"set-default-domain", set_default_domain_main},
     {"set-log-level", set_log_level_main},
     {"set-machine-sid", set_machine_sid_main},
     {"set-machine-name", set_machine_name_main},

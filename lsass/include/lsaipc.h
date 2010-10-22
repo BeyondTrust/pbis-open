@@ -50,7 +50,6 @@
 
 #include <lwmsg/lwmsg.h>
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 
 #define LSA_SERVER_FILENAME    ".lsassd"
 
@@ -343,6 +342,12 @@ typedef struct _LSA2_IPC_GET_SMART_CARD_USER_RES
     PLSA_SECURITY_OBJECT pObject;
     PSTR pszSmartCardReader;
 } LSA2_IPC_GET_SMART_CARD_USER_RES, *PLSA2_IPC_GET_SMART_CARD_USER_RES;
+
+typedef struct _LSA_IPC_AUTH_USER_EX_REQ
+{
+    PCSTR pszTargetProvider;
+    LSA_AUTH_USER_PARAMS authUserParams;
+} LSA_IPC_AUTH_USER_EX_REQ, *PLSA_IPC_AUTH_USER_EX_REQ;
 
 #define MAP_LWMSG_ERROR(_e_) (LwMapLwmsgStatusToLwError(_e_))
 #define MAP_LW_ERROR_IPC(_e_) ((_e_) ? LWMSG_STATUS_ERROR : LWMSG_STATUS_SUCCESS)

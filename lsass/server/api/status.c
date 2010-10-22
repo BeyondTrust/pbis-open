@@ -50,6 +50,7 @@
 DWORD
 LsaSrvGetStatus(
     HANDLE hServer,
+    PCSTR pszTargetProvider,
     PLSASTATUS* ppLsaStatus
     )
 {
@@ -58,9 +59,13 @@ LsaSrvGetStatus(
     PLSA_AUTH_PROVIDER pProvider = NULL;
     DWORD dwProviderCount = 0;
     DWORD iCount = 0;
+    DWORD dwStatusIndex = 0;
     HANDLE hProvider = (HANDLE)NULL;
     PLSASTATUS pLsaStatus = NULL;
     PLSA_AUTH_PROVIDER_STATUS pProviderOwnedStatus = NULL;
+    BOOLEAN bFoundProvider = FALSE;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     BAIL_ON_INVALID_POINTER(ppLsaStatus);
 
@@ -78,10 +83,26 @@ LsaSrvGetStatus(
     dwError = LsaReadVersionFile(
                     &pLsaStatus->productVersion);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
-    
-    dwProviderCount = LsaGetNumberOfProviders_inlock();
+
+    if (pszTargetProviderName)
+    {
+        dwProviderCount = 1;
+    }
+    else
+    {
+        dwProviderCount = LsaGetNumberOfProviders_inlock();
+    }
     
     if (!dwProviderCount)
     {
@@ -97,23 +118,39 @@ LsaSrvGetStatus(
         
     dwError = LW_ERROR_NOT_HANDLED;
     
-    for (pProvider = gpAuthProviderList, iCount = 0;
+    for (pProvider = gpAuthProviderList, iCount = 0, dwStatusIndex = 0;
          pProvider;
          pProvider = pProvider->pNext, iCount++)
     {
         PLSA_AUTH_PROVIDER_STATUS pAuthProviderStatus = NULL;
+
+        if (pszTargetProviderName)
+        {
+            if (!strcmp(pszTargetProviderName, pProvider->pszName))
+            {
+                bFoundProvider = TRUE;
+            }
+            else
+            {
+                continue;
+            }
+        }
         
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
-        
-        pAuthProviderStatus = &pLsaStatus->pAuthProviderStatusList[iCount];
+
+       pAuthProviderStatus = &pLsaStatus->pAuthProviderStatusList[dwStatusIndex++];
         
         dwError = LwAllocateString(
                         pProvider->pszName,
                         &pAuthProviderStatus->pszId);
         BAIL_ON_LSA_ERROR(dwError);
         
-        dwError = pProvider->pFnTable2->pfnGetStatus(
+        dwError = pProvider->pFnTable->pfnGetStatus(
                                             hProvider,
                                             &pProviderOwnedStatus);
         if (dwError == LW_ERROR_NOT_HANDLED)
@@ -129,7 +166,7 @@ LsaSrvGetStatus(
                             pAuthProviderStatus);
             BAIL_ON_LSA_ERROR(dwError);
             
-            pProvider->pFnTable2->pfnFreeStatus(
+            pProvider->pFnTable->pfnFreeStatus(
                             pProviderOwnedStatus);
             
             pProviderOwnedStatus = NULL;
@@ -138,16 +175,25 @@ LsaSrvGetStatus(
         LsaSrvCloseProvider(pProvider, hProvider);
         hProvider = (HANDLE)NULL;
     }
-    
+
+    if (pszTargetProviderName && !bFoundProvider)
+    {
+        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
 done:
 
     *ppLsaStatus = pLsaStatus;
 
 cleanup:
 
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
+
     if (pProvider != NULL && pProviderOwnedStatus)
     {
-        pProvider->pFnTable2->pfnFreeStatus(
+        pProvider->pFnTable->pfnFreeStatus(
                         pProviderOwnedStatus);
     }
         

@@ -44,7 +44,6 @@
 #include "lsaclient.h"
 #include "common.h"
 #include <lsa/lsa.h>
-#include <lsa/lsa2.h>
 #include <lwmem.h>
 #include <lwerror.h>
 

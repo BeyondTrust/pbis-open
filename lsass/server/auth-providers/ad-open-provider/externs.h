@@ -77,7 +77,7 @@ extern pthread_rwlock_t gADGlobalDataLock;
 
 extern PCSTR gpszADProviderName;
 
-extern LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2;
+extern LSA_PROVIDER_FUNCTION_TABLE gADProviderAPITable;
 
 // please put all new globals in the following structure:
 extern PLSA_AD_PROVIDER_STATE gpLsaAdProviderState;

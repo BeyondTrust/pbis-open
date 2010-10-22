@@ -189,6 +189,8 @@ typedef struct __AD_PROVIDER_CONTEXT
 
     LONG nRefCount;
 
+    PSTR pszInstance;
+
     PLSA_AD_PROVIDER_STATE pState;
 } AD_PROVIDER_CONTEXT, *PAD_PROVIDER_CONTEXT;
 

@@ -48,7 +48,7 @@
 #ifndef __LSACLIENT_AD_H__
 #define __LSACLIENT_AD_H__
 
-#include <lsa/lsa2.h>
+#include <lsa/lsa.h>
 #include <sys/types.h>
 
 DWORD
@@ -118,6 +118,28 @@ LsaAdLeaveDomain(
     HANDLE hLsaConnection,
     PCSTR pszUsername,
     PCSTR pszPassword
+    );
+
+DWORD
+LsaAdLeaveDomain2(
+    HANDLE hLsaConnection,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
+    );
+
+DWORD
+LsaAdSetDefaultDomain(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pszDomain
+    );
+
+DWORD
+LsaAdGetJoinedDomains(
+    IN HANDLE hLsaConnection,
+    OUT PDWORD pdwNumDomainsFound,
+    OUT PSTR** pppszJoinedDomains
     );
 
 #endif /* __LSACLIENT_AD_H__ */

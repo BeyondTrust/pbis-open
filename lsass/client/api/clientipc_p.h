@@ -101,6 +101,7 @@ LsaTransactAuthenticateUserPam(
 DWORD
 LsaTransactAuthenticateUserEx(
     IN HANDLE hServer,
+    IN PCSTR pszTargetProvider,
     IN LSA_AUTH_USER_PARAMS* pParams,
     OUT PLSA_AUTH_USER_INFO* ppUserInfo
     );

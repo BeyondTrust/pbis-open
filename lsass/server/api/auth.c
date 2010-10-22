@@ -69,14 +69,18 @@ LsaSrvAuthenticateUserPam(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (pPamAuthInfo)
         {
             LsaFreeAuthUserPamInfo(pPamAuthInfo);
         }
-        dwError = pProvider->pFnTable2->pfnAuthenticateUserPam(
+        dwError = pProvider->pFnTable->pfnAuthenticateUserPam(
                                             hProvider,
                                             pParams,
                                             &pPamAuthInfo);
@@ -177,6 +181,7 @@ error:
 DWORD
 LsaSrvAuthenticateUserEx(
     HANDLE hServer,
+    PCSTR pszTargetProvider,
     PLSA_AUTH_USER_PARAMS pUserParams,
     PLSA_AUTH_USER_INFO *ppUserInfo
     )
@@ -188,6 +193,9 @@ LsaSrvAuthenticateUserEx(
     HANDLE hProvider = (HANDLE)NULL;
     PLSA_LOGIN_NAME_INFO pLoginInfo = NULL;
     LSA_AUTH_USER_PARAMS localUserParams;
+    BOOLEAN bFoundProvider = FALSE;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     BAIL_ON_INVALID_POINTER(pUserParams);
     BAIL_ON_INVALID_POINTER(ppUserInfo);
@@ -254,14 +262,39 @@ LsaSrvAuthenticateUserEx(
     
     /* Do the NTLM authentication */
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        if (pszTargetProviderName)
+        {
+            if (!strcmp(pszTargetProviderName, pProvider->pszName))
+            {
+                bFoundProvider = TRUE;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnAuthenticateUserEx(
+        dwError = pProvider->pFnTable->pfnAuthenticateUserEx(
                                             hProvider,
                                             &localUserParams,
                                             ppUserInfo);
@@ -304,12 +337,21 @@ LsaSrvAuthenticateUserEx(
         }
     }
 
+    if (pszTargetProviderName && !bFoundProvider)
+    {
+        dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     if (pProvider == NULL) {
         dwError = LW_ERROR_NOT_HANDLED;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != (HANDLE)NULL) 
     {
@@ -376,10 +418,14 @@ LsaSrvValidateUser(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnValidateUser(
+        dwError = pProvider->pFnTable->pfnValidateUser(
                                             hProvider,
                                             pszLoginId,
                                             pszPassword);
@@ -443,10 +489,14 @@ LsaSrvCheckUserInList(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnCheckUserInList(
+        dwError = pProvider->pFnTable->pfnCheckUserInList(
                                             hProvider,
                                             pszLoginId,
                                             pszListName);
@@ -536,10 +586,14 @@ LsaSrvChangePassword(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnChangePassword(
+        dwError = pProvider->pFnTable->pfnChangePassword(
                                         hProvider,
                                         pszLoginId,
                                         pszPassword,
@@ -624,10 +678,14 @@ LsaSrvSetPassword(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnSetPassword(
+        dwError = pProvider->pFnTable->pfnSetPassword(
                                         hProvider,
                                         pszLoginId,
                                         pszPassword);

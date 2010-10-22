@@ -47,7 +47,7 @@
 #ifndef __LSAPROVIDER_H__
 #define __LSAPROVIDER_H__
 
-#include <lsa/lsa2.h>
+#include <lsa/lsa.h>
 #include <lwps/lwps.h>
 
 typedef DWORD (*PFNSHUTDOWNPROVIDER)(
@@ -163,7 +163,7 @@ typedef DWORD (*PFNPROVIDER_IO_CONTROL) (
                 PVOID* ppOutputBuffer
                 );
 
-#define LSA_SYMBOL_NAME_INITIALIZE_PROVIDER "LsaInitializeProvider2"
+#define LSA_SYMBOL_NAME_INITIALIZE_PROVIDER "LsaInitializeProvider"
 
 //
 // New Interfaces
@@ -262,8 +262,9 @@ typedef DWORD (*PFNADDGROUP_2) (
     PLSA_GROUP_ADD_INFO pGroupInfo
     );
 
-typedef DWORD (*PFNOPENHANDLE_2)(
+typedef DWORD (*PFNOPENHANDLE)(
     HANDLE hServer,
+    PCSTR pszInstance,
     PHANDLE phProvider
     );
 
@@ -273,7 +274,7 @@ typedef DWORD (*PFN_LSA_PROVIDER_GET_SMARTCARD_USER_OBJECT)(
     OUT PSTR* ppszSmartCardReader
     );
 
-typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
+typedef struct _LSA_PROVIDER_FUNCTION_TABLE {
 
     PFN_LSA_PROVIDER_FIND_OBJECTS pfnFindObjects;
     //
@@ -346,7 +347,7 @@ typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
     // Untouched for now -- will at least change type names for readability/consistency.
     //
     PFNSHUTDOWNPROVIDER            pfnShutdownProvider; // ok
-    PFNOPENHANDLE_2                pfnOpenHandle; // we should be able to get rid of this and just pass in a LSA_PROVIDER_HANDLE that is created by SRV/API but that provider can attach context.
+    PFNOPENHANDLE                  pfnOpenHandle; // we should be able to get rid of this and just pass in a LSA_PROVIDER_HANDLE that is created by SRV/API but that provider can attach context.
     PFNCLOSEHANDLE                 pfnCloseHandle; // "
     PFNGETPASSWORDINFO             pfnGetPasswordInfo; // ok -- local only
     PFNSERVICESDOMAIN              pfnServicesDomain; // is it necessary?  if we can lookup domains, it is not.
@@ -381,16 +382,16 @@ typedef struct _LSA_PROVIDER_FUNCTION_TABLE_2 {
     PFNPROVIDER_IO_CONTROL         pfnProviderIoControl; // fix interface wrt uid/gid stuff
 #endif
 
-} LSA_PROVIDER_FUNCTION_TABLE_2, *PLSA_PROVIDER_FUNCTION_TABLE_2;
+} LSA_PROVIDER_FUNCTION_TABLE, *PLSA_PROVIDER_FUNCTION_TABLE;
 
-typedef DWORD (*PFNINITIALIZEPROVIDER_2)(
+typedef DWORD (*PFNINITIALIZEPROVIDER)(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFnTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFnTable
     );
 
 typedef struct _LSA_STATIC_PROVIDER {
     PCSTR pszId;
-    PFNINITIALIZEPROVIDER_2 pInitialize;
+    PFNINITIALIZEPROVIDER pInitialize;
 } LSA_STATIC_PROVIDER, *PLSA_STATIC_PROVIDER;
 
 #endif /* __LSAPROVIDER_H__ */

@@ -52,6 +52,7 @@ typedef struct _LSA_SRV_ENUM_HANDLE
     LSA_OBJECT_TYPE ObjectType;
     PSTR pszDomainName;
     PSTR pszSid;
+    PSTR pszTargetInstance;
     PLSA_AUTH_PROVIDER pProvider;
     HANDLE hProvider;
     HANDLE hEnum;
@@ -169,6 +170,7 @@ static
 DWORD
 LsaSrvMakeMemberOfFirstPass(
     HANDLE hServer,
+    PCSTR pszTargetInstance,
     LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -195,15 +197,19 @@ LsaSrvMakeMemberOfFirstPass(
          pProvider;
          pProvider = pProvider->pNext, dwIndex++)
     {
-        if (pProvider->pFnTable2 == NULL)
+        if (pProvider->pFnTable == NULL)
         {
             continue;
         }
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnQueryMemberOf(
+        dwError = pProvider->pFnTable->pfnQueryMemberOf(
             hProvider,
             FindFlags,
             dwSidCount,
@@ -246,6 +252,7 @@ static
 DWORD
 LsaSrvMakeMemberOfTransferPass(
     HANDLE hServer,
+    PCSTR pszTargetInstance,
     LSA_FIND_FLAGS FindFlags,
     IN PLSA_SRV_MEMBER_OF_PASS pIn,
     OUT PLSA_SRV_MEMBER_OF_PASS pOut
@@ -270,7 +277,7 @@ LsaSrvMakeMemberOfTransferPass(
          pProvider;
          pProvider = pProvider->pNext, dwIndex++)
     {
-        if (pProvider->pFnTable2 == NULL)
+        if (pProvider->pFnTable == NULL)
         {
             continue;
         }
@@ -300,10 +307,14 @@ LsaSrvMakeMemberOfTransferPass(
         
         if (dwBatchedSidCount)
         {
-            dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+            dwError = LsaSrvOpenProvider(
+                          hServer,
+                          pProvider,
+                          pszTargetInstance,
+                          &hProvider);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = pProvider->pFnTable2->pfnQueryMemberOf(
+            dwError = pProvider->pFnTable->pfnQueryMemberOf(
                 hProvider,
                 FindFlags,
                 dwBatchedSidCount,
@@ -424,6 +435,8 @@ LsaSrvFindObjectsInternal(
     LSA_QUERY_LIST PartialQueryList;
     DWORD dwPartialCount = 0;
     BOOLEAN bFoundProvider = FALSE;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     memset(&PartialQueryList, 0, sizeof(PartialQueryList));
 
@@ -443,15 +456,24 @@ LsaSrvFindObjectsInternal(
         break;
     }
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
     for (pProvider = gpAuthProviderList;
          pProvider;
          pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider)
+        if (pszTargetProviderName)
         {
-            if (!strcmp(pszTargetProvider, pProvider->pszName))
+            if (!strcmp(pszTargetProviderName, pProvider->pszName))
             {
                 bFoundProvider = TRUE;
             }
@@ -461,7 +483,7 @@ LsaSrvFindObjectsInternal(
             }
         }
 
-        if (pProvider->pFnTable2 == NULL)
+        if (pProvider->pFnTable == NULL)
         {
             continue;
         }
@@ -480,10 +502,14 @@ LsaSrvFindObjectsInternal(
             break;
         }
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnFindObjects(
+        dwError = pProvider->pFnTable->pfnFindObjects(
             hProvider,
             FindFlags,
             ObjectType,
@@ -511,7 +537,7 @@ LsaSrvFindObjectsInternal(
         hProvider = NULL;
     }
         
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
@@ -524,6 +550,9 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ppPartialObjects);
     /* Note that this is safe regardless of the type of the query */
     LW_SAFE_FREE_MEMORY(PartialQueryList.ppszStrings);
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != NULL)
     {
@@ -665,6 +694,8 @@ LsaSrvOpenEnumObjects(
     DWORD dwError = 0;
     PLSA_SRV_ENUM_HANDLE pEnum = NULL;
     PLSA_AUTH_PROVIDER pProvider = NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pEnum), OUT_PPVOID(&pEnum));
     BAIL_ON_LSA_ERROR(dwError);
@@ -679,15 +710,27 @@ LsaSrvOpenEnumObjects(
     pEnum->FindFlags = FindFlags;
     pEnum->ObjectType = ObjectType;
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pEnum->pszTargetInstance = pszTargetInstance;
+        pszTargetInstance = NULL;
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(pEnum->bReleaseLock);
     
-    if (pszTargetProvider)
+    if (pszTargetProviderName)
     {
         for (pProvider = gpAuthProviderList;
              pProvider;
              pProvider = pProvider->pNext)
         {
-            if (!strcmp(pszTargetProvider, pProvider->pszName))
+            if (!strcmp(pszTargetProviderName, pProvider->pszName))
             {
                 pEnum->pProvider = pProvider;
                 break;
@@ -709,6 +752,9 @@ LsaSrvOpenEnumObjects(
     *phEnum = pEnum;
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     return dwError;
 
@@ -751,7 +797,7 @@ LsaSrvEnumObjects(
     
     while (dwCombinedObjectCount < dwMaxObjectsCount && pEnum->pProvider != NULL)
     {
-        if (pEnum->pProvider->pFnTable2 == NULL)
+        if (pEnum->pProvider->pFnTable == NULL)
         {
             pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
             continue;
@@ -759,13 +805,17 @@ LsaSrvEnumObjects(
 
         if (!pEnum->hProvider)
         {
-            dwError = LsaSrvOpenProvider(hServer, pEnum->pProvider, &pEnum->hProvider);
+            dwError = LsaSrvOpenProvider(
+                          hServer,
+                          pEnum->pProvider,
+                          pEnum->pszTargetInstance,
+                          &pEnum->hProvider);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
         if (!pEnum->hEnum)
         {
-            dwError = pEnum->pProvider->pFnTable2->pfnOpenEnumObjects(
+            dwError = pEnum->pProvider->pFnTable->pfnOpenEnumObjects(
                 pEnum->hProvider,
                 &pEnum->hEnum,
                 pEnum->FindFlags,
@@ -774,7 +824,7 @@ LsaSrvEnumObjects(
             if (dwError == LW_ERROR_NOT_HANDLED)
             {
                 dwError = LW_ERROR_SUCCESS;
-                pEnum->pProvider->pFnTable2->pfnCloseHandle(pEnum->hProvider);
+                pEnum->pProvider->pFnTable->pfnCloseHandle(pEnum->hProvider);
                 pEnum->hProvider = NULL;
                 pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
                 continue;
@@ -785,7 +835,7 @@ LsaSrvEnumObjects(
             }
         }
 
-        dwError = pEnum->pProvider->pFnTable2->pfnEnumObjects(
+        dwError = pEnum->pProvider->pFnTable->pfnEnumObjects(
             pEnum->hEnum,
             dwMaxObjectsCount - dwCombinedObjectCount,
             &dwPartialObjectCount,
@@ -793,9 +843,9 @@ LsaSrvEnumObjects(
         if (dwError == ERROR_NO_MORE_ITEMS)
         {
             dwError = LW_ERROR_SUCCESS;
-            pEnum->pProvider->pFnTable2->pfnCloseEnum(pEnum->hEnum);
+            pEnum->pProvider->pFnTable->pfnCloseEnum(pEnum->hEnum);
             pEnum->hEnum = NULL;
-            pEnum->pProvider->pFnTable2->pfnCloseHandle(pEnum->hProvider);
+            pEnum->pProvider->pFnTable->pfnCloseHandle(pEnum->hProvider);
             pEnum->hProvider = NULL;
             pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
             continue;
@@ -852,28 +902,42 @@ LsaSrvOpenEnumMembers(
     IN PCSTR pszSid
     )
 {
-   DWORD dwError = 0;
-   PLSA_SRV_ENUM_HANDLE pEnum = NULL;
-   PLSA_AUTH_PROVIDER pProvider = NULL;
+    DWORD dwError = 0;
+    PLSA_SRV_ENUM_HANDLE pEnum = NULL;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
-   dwError = LwAllocateMemory(sizeof(*pEnum), OUT_PPVOID(&pEnum));
-   BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwAllocateMemory(sizeof(*pEnum), OUT_PPVOID(&pEnum));
+    BAIL_ON_LSA_ERROR(dwError);
    
-   dwError = LwAllocateString(pszSid, &pEnum->pszSid);
-   BAIL_ON_LSA_ERROR(dwError);
+    dwError = LwAllocateString(pszSid, &pEnum->pszSid);
+    BAIL_ON_LSA_ERROR(dwError);
 
-   pEnum->Type = LSA_SRV_ENUM_MEMBERS;
-   pEnum->FindFlags = FindFlags;
+    pEnum->Type = LSA_SRV_ENUM_MEMBERS;
+    pEnum->FindFlags = FindFlags;
 
-   ENTER_AUTH_PROVIDER_LIST_READER_LOCK(pEnum->bReleaseLock);
-    
     if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pEnum->pszTargetInstance = pszTargetInstance;
+        pszTargetInstance = NULL;
+    }
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(pEnum->bReleaseLock);
+    
+    if (pszTargetProviderName)
     {
         for (pProvider = gpAuthProviderList;
              pProvider;
              pProvider = pProvider->pNext)
         {
-            if (!strcmp(pszTargetProvider, pProvider->pszName))
+            if (!strcmp(pszTargetProviderName, pProvider->pszName))
             {
                 pEnum->pProvider = pProvider;
                 break;
@@ -895,6 +959,9 @@ LsaSrvOpenEnumMembers(
     *phEnum = pEnum;
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     return dwError;
 
@@ -937,7 +1004,7 @@ LsaSrvEnumMembers(
     
     while (dwCombinedSidCount < dwMaxSidCount && pEnum->pProvider != NULL)
     {
-        if (pEnum->pProvider->pFnTable2 == NULL)
+        if (pEnum->pProvider->pFnTable == NULL)
         {
             pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
             continue;
@@ -945,13 +1012,17 @@ LsaSrvEnumMembers(
 
         if (!pEnum->hProvider)
         {
-            dwError = LsaSrvOpenProvider(hServer, pEnum->pProvider, &pEnum->hProvider);
+            dwError = LsaSrvOpenProvider(
+                          hServer,
+                          pEnum->pProvider,
+                          pEnum->pszTargetInstance,
+                          &pEnum->hProvider);
             BAIL_ON_LSA_ERROR(dwError);
         }
 
         if (!pEnum->hEnum)
         {
-            dwError = pEnum->pProvider->pFnTable2->pfnOpenEnumGroupMembers(
+            dwError = pEnum->pProvider->pFnTable->pfnOpenEnumGroupMembers(
                 pEnum->hProvider,
                 &pEnum->hEnum,
                 pEnum->FindFlags,
@@ -962,7 +1033,7 @@ LsaSrvEnumMembers(
             case LW_ERROR_NO_SUCH_OBJECT:
             case LW_ERROR_NO_SUCH_GROUP:
                 dwError = LW_ERROR_SUCCESS;
-                pEnum->pProvider->pFnTable2->pfnCloseHandle(pEnum->hProvider);
+                pEnum->pProvider->pFnTable->pfnCloseHandle(pEnum->hProvider);
                 pEnum->hProvider = NULL;
                 pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
                 continue;
@@ -971,7 +1042,7 @@ LsaSrvEnumMembers(
             }
         }
 
-        dwError = pEnum->pProvider->pFnTable2->pfnEnumGroupMembers(
+        dwError = pEnum->pProvider->pFnTable->pfnEnumGroupMembers(
             pEnum->hEnum,
             dwMaxSidCount - dwCombinedSidCount,
             &dwPartialSidCount,
@@ -979,9 +1050,9 @@ LsaSrvEnumMembers(
         if (dwError == ERROR_NO_MORE_ITEMS)
         {
             dwError = LW_ERROR_SUCCESS;
-            pEnum->pProvider->pFnTable2->pfnCloseEnum(pEnum->hEnum);
+            pEnum->pProvider->pFnTable->pfnCloseEnum(pEnum->hEnum);
             pEnum->hEnum = NULL;
-            pEnum->pProvider->pFnTable2->pfnCloseHandle(pEnum->hProvider);
+            pEnum->pProvider->pFnTable->pfnCloseHandle(pEnum->hProvider);
             pEnum->hProvider = NULL;
             pEnum->pProvider = pEnum->bMergeResults ? pEnum->pProvider->pNext : NULL;
             continue;
@@ -1045,6 +1116,7 @@ static
 DWORD
 LsaSrvQueryMemberOfMerged(
     IN HANDLE hServer,
+    IN OPTIONAL PCSTR pszTargetInstance,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -1079,6 +1151,7 @@ LsaSrvQueryMemberOfMerged(
 
     dwError = LsaSrvMakeMemberOfFirstPass(
         hServer,
+        pszTargetInstance,
         FindFlags,
         dwSidCount,
         ppszSids,
@@ -1089,6 +1162,7 @@ LsaSrvQueryMemberOfMerged(
     {
         dwError = LsaSrvMakeMemberOfTransferPass(
             hServer,
+            pszTargetInstance,
             FindFlags,
             pSourcePass,
             pDestPass);
@@ -1153,7 +1227,8 @@ static
 DWORD
 LsaSrvQueryMemberOfSingle(
     IN HANDLE hServer,
-    IN OPTIONAL PCSTR pszTargetProvider,
+    IN OPTIONAL PCSTR pszTargetProviderName,
+    IN OPTIONAL PCSTR pszTargetInstance,
     IN LSA_FIND_FLAGS FindFlags,
     IN DWORD dwSidCount,
     IN PSTR* ppszSids,
@@ -1172,17 +1247,21 @@ LsaSrvQueryMemberOfSingle(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        if (pProvider->pFnTable2 == NULL)
+        if (pProvider->pFnTable == NULL)
         {
             continue;
         }
 
-        if (!strcmp(pProvider->pszName, pszTargetProvider))
+        if (!strcmp(pProvider->pszName, pszTargetProviderName))
         {
-            dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+            dwError = LsaSrvOpenProvider(
+                          hServer,
+                          pProvider,
+                          pszTargetInstance,
+                          &hProvider);
             BAIL_ON_LSA_ERROR(dwError);
             
-            dwError = pProvider->pFnTable2->pfnQueryMemberOf(
+            dwError = pProvider->pFnTable->pfnQueryMemberOf(
                 hProvider,
                 FindFlags,
                 dwSidCount,
@@ -1226,6 +1305,18 @@ LsaSrvQueryMemberOf(
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
+
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     
     if (dwSidCount == 0)
     {
@@ -1234,11 +1325,12 @@ LsaSrvQueryMemberOf(
         goto cleanup;
     }
 
-    if (pszTargetProvider)
+    if (pszTargetProviderName)
     {
         dwError = LsaSrvQueryMemberOfSingle(
             hServer,
-            pszTargetProvider,
+            pszTargetProviderName,
+            pszTargetInstance,
             FindFlags,
             dwSidCount,
             ppszSids,
@@ -1250,6 +1342,7 @@ LsaSrvQueryMemberOf(
     {
         dwError = LsaSrvQueryMemberOfMerged(
             hServer,
+            pszTargetInstance,
             FindFlags,
             dwSidCount,
             ppszSids,
@@ -1259,6 +1352,9 @@ LsaSrvQueryMemberOf(
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     return dwError;
 
@@ -1573,16 +1669,17 @@ LsaSrvCloseEnum(
     {
         if (pEnum->hEnum)
         {
-            pEnum->pProvider->pFnTable2->pfnCloseEnum(pEnum->hEnum);
+            pEnum->pProvider->pFnTable->pfnCloseEnum(pEnum->hEnum);
         }
 
         if (pEnum->hProvider)
         {
-            pEnum->pProvider->pFnTable2->pfnCloseHandle(pEnum->hProvider);
+            pEnum->pProvider->pFnTable->pfnCloseHandle(pEnum->hProvider);
         }
 
         LW_SAFE_FREE_STRING(pEnum->pszDomainName);
         LW_SAFE_FREE_STRING(pEnum->pszSid);
+        LW_SAFE_FREE_STRING(pEnum->pszTargetInstance);
         LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(pEnum->bReleaseLock);
         LwFreeMemory(pEnum);
     }
@@ -1602,12 +1699,23 @@ LsaSrvAddUser2(
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PLSA_AUTH_PROVIDER pProvider = NULL;
     HANDLE hProvider = (HANDLE)NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));;
 
     if (pServerState->peerUID)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1619,17 +1727,22 @@ LsaSrvAddUser2(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider && strcmp(pProvider->pszName, pszTargetProvider))
+        if (pszTargetProviderName &&
+            strcmp(pProvider->pszName, pszTargetProviderName))
         {
             continue;
         }
 
         bFoundProvider = TRUE;
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnAddUser(
+        dwError = pProvider->pFnTable->pfnAddUser(
                                         hProvider,
                                         pUserAddInfo);
         if (dwError == LW_ERROR_SUCCESS)
@@ -1647,13 +1760,16 @@ LsaSrvAddUser2(
         }
     }
 
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != (HANDLE)NULL) {
         LsaSrvCloseProvider(pProvider, hProvider);
@@ -1685,12 +1801,23 @@ LsaSrvModifyUser2(
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PLSA_AUTH_PROVIDER pProvider = NULL;
     HANDLE hProvider = (HANDLE)NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
     if (pServerState->peerUID)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1702,17 +1829,22 @@ LsaSrvModifyUser2(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider && strcmp(pProvider->pszName, pszTargetProvider))
+        if (pszTargetProviderName &&
+            strcmp(pProvider->pszName, pszTargetProviderName))
         {
             continue;
         }
 
         bFoundProvider = TRUE;
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnModifyUser(
+        dwError = pProvider->pFnTable->pfnModifyUser(
                                         hProvider,
                                         pUserModInfo);
         if (dwError == LW_ERROR_SUCCESS)
@@ -1721,7 +1853,7 @@ LsaSrvModifyUser2(
         }
         else if ((dwError == LW_ERROR_NOT_HANDLED ||
                   dwError == LW_ERROR_NO_SUCH_USER) &&
-                 !pszTargetProvider)
+                 !pszTargetProviderName)
         {
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
@@ -1731,13 +1863,16 @@ LsaSrvModifyUser2(
         }
     }
 
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != (HANDLE)NULL) {
         LsaSrvCloseProvider(pProvider, hProvider);
@@ -1769,6 +1904,8 @@ LsaSrvAddGroup2(
     BOOLEAN bFoundProvider = TRUE;
     HANDLE hProvider = (HANDLE)NULL;
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
@@ -1778,30 +1915,44 @@ LsaSrvAddGroup2(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
     dwError = LW_ERROR_NOT_HANDLED;
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider && strcmp(pProvider->pszName, pszTargetProvider))
+        if (pszTargetProviderName &&
+            strcmp(pProvider->pszName, pszTargetProviderName))
         {
             continue;
         }
 
         bFoundProvider = TRUE;
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnAddGroup(
+        dwError = pProvider->pFnTable->pfnAddGroup(
                                         hProvider,
                                         pGroupAddInfo);
         if (dwError == LW_ERROR_SUCCESS)
         {
             break;
         }
-        else if (dwError == LW_ERROR_NOT_HANDLED && !pszTargetProvider)
+        else if (dwError == LW_ERROR_NOT_HANDLED && !pszTargetProviderName)
         {
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
@@ -1812,13 +1963,16 @@ LsaSrvAddGroup2(
         }
     }
 
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != NULL)
     {
@@ -1851,6 +2005,8 @@ LsaSrvModifyGroup2(
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PLSA_AUTH_PROVIDER pProvider = NULL;
     HANDLE hProvider = (HANDLE)NULL;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
@@ -1860,23 +2016,37 @@ LsaSrvModifyGroup2(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
     dwError = LW_ERROR_NOT_HANDLED;
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider && strcmp(pProvider->pszName, pszTargetProvider))
+        if (pszTargetProviderName &&
+            strcmp(pProvider->pszName, pszTargetProviderName))
         {
             continue;
         }
 
         bFoundProvider = TRUE;
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnModifyGroup(
+        dwError = pProvider->pFnTable->pfnModifyGroup(
                                         hProvider,
                                         pGroupModInfo);
         if (dwError == LW_ERROR_SUCCESS)
@@ -1885,7 +2055,7 @@ LsaSrvModifyGroup2(
         }
         else if ((dwError == LW_ERROR_NOT_HANDLED ||
              dwError == LW_ERROR_NO_SUCH_GROUP) &&
-            !pszTargetProvider)
+            !pszTargetProviderName)
         {
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = NULL;
@@ -1896,13 +2066,16 @@ LsaSrvModifyGroup2(
         }
     }
 
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != (HANDLE)NULL)
     {
@@ -1936,6 +2109,8 @@ LsaSrvDeleteObject(
     BOOLEAN bInLock = FALSE;
     BOOLEAN bFoundProvider = FALSE;
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
 
     LSA_TRACE_BEGIN_FUNCTION(dwTraceFlags, sizeof(dwTraceFlags)/sizeof(dwTraceFlags[0]));
 
@@ -1945,23 +2120,37 @@ LsaSrvDeleteObject(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszTargetProvider)
+    {
+        dwError = LsaSrvGetTargetElements(
+                      pszTargetProvider,
+                      &pszTargetProviderName,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
 
     dwError = LW_ERROR_NOT_HANDLED;
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        if (pszTargetProvider && strcmp(pProvider->pszName, pszTargetProvider))
+        if (pszTargetProviderName &&
+            strcmp(pProvider->pszName, pszTargetProviderName))
         {
             continue;
         }
 
         bFoundProvider = TRUE;
 
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      pszTargetInstance,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnDeleteObject(hProvider, pszSid);
+        dwError = pProvider->pFnTable->pfnDeleteObject(hProvider, pszSid);
         if (dwError == LW_ERROR_SUCCESS)
         {
             break;
@@ -1970,7 +2159,7 @@ LsaSrvDeleteObject(
                   dwError == LW_ERROR_NO_SUCH_OBJECT ||
                   dwError == LW_ERROR_NO_SUCH_USER ||
                   dwError == LW_ERROR_NO_SUCH_GROUP) &&
-                 !pszTargetProvider)
+                 !pszTargetProviderName)
         {
             LsaSrvCloseProvider(pProvider, hProvider);
             hProvider = (HANDLE)NULL;
@@ -1981,13 +2170,16 @@ LsaSrvDeleteObject(
         }
     }
 
-    if (pszTargetProvider && !bFoundProvider)
+    if (pszTargetProviderName && !bFoundProvider)
     {
         dwError = LW_ERROR_INVALID_AUTH_PROVIDER;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
 
     if (hProvider != (HANDLE)NULL) {
         LsaSrvCloseProvider(pProvider, hProvider);
@@ -2026,10 +2218,14 @@ LsaSrvGetSmartCardUserObject(
 
     for (pProvider = gpAuthProviderList; pProvider; pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnGetSmartCardUserObject(
+        dwError = pProvider->pFnTable->pfnGetSmartCardUserObject(
                                         hProvider,
                                         ppObject,
                                         ppszSmartCardReader);

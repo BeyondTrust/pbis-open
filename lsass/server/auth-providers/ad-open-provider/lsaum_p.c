@@ -715,7 +715,9 @@ LsaUmpCheckUsers(
 
     if (bShouldRefreshCreds)
     {
-        dwError = AD_CreateProviderContext(&pProviderContext);
+        dwError = AD_CreateProviderContext(
+                      Handle->pProviderState->pszJoinedDomainName,
+                      &pProviderContext);
         if (dwError)
         {
             bShouldRefreshCreds = FALSE;

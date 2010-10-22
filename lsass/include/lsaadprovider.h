@@ -61,6 +61,8 @@
 #define LSA_AD_IO_ENUMGROUPSCACHE        7
 #define LSA_AD_IO_JOINDOMAIN             8
 #define LSA_AD_IO_LEAVEDOMAIN            9
+#define LSA_AD_IO_SETDEFAULTDOMAIN      10
+#define LSA_AD_IO_GETJOINEDDOMAINS      11
 
 typedef struct __LSA_AD_IPC_ENUM_USERS_FROM_CACHE_REQ {
     PCSTR pszResume;
@@ -102,7 +104,15 @@ typedef struct __LSA_AD_IPC_LEAVE_DOMAIN_REQ
 {
     PCSTR pszUsername;
     PCSTR pszPassword;
+    PCSTR pszDomain;
+    DWORD dwFlags;
 } LSA_AD_IPC_LEAVE_DOMAIN_REQ, *PLSA_AD_IPC_LEAVE_DOMAIN_REQ;
+
+typedef struct __LSA_AD_IPC_GET_JOINED_DOMAINS_RESP
+{
+    DWORD dwObjectsCount;
+    PSTR* ppszDomains;
+} LSA_AD_IPC_GET_JOINED_DOMAINS_RESP, *PLSA_AD_IPC_GET_JOINED_DOMAINS_RESP;
 
 LWMsgTypeSpec*
 LsaAdIPCGetEnumUsersFromCacheReqSpec(
@@ -131,6 +141,11 @@ LsaAdIPCGetJoinDomainReqSpec(
 
 LWMsgTypeSpec*
 LsaAdIPCGetLeaveDomainReqSpec(
+    void
+    );
+
+LWMsgTypeSpec*
+LsaAdIPCGetJoinedDomainsRespSpec(
     void
     );
 

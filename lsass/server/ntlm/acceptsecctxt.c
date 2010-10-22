@@ -733,6 +733,7 @@ NtlmValidateResponse(
 
     dwError = LsaSrvAuthenticateUserEx(
         Handle,
+        NULL,
         &Params,
         &pUserInfo
         );

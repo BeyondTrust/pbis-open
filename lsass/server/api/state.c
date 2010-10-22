@@ -46,6 +46,59 @@
  */
 #include "api.h"
 
+DWORD
+LsaSrvGetTargetElements(
+    IN PCSTR pszTargetProvider,
+    OUT PSTR* ppszTargetProviderName,
+    OUT PSTR* ppszTargetInstance
+    )
+{
+    DWORD dwError = 0;
+    int idx = 0;
+    PSTR pszTargetProviderName = NULL;
+    PSTR pszTargetInstance = NULL;
+    PSTR pszIndex = NULL;
+
+    if ((pszIndex = strchr(pszTargetProvider, ':')) != NULL)
+    {
+        idx = pszIndex-pszTargetProvider;
+
+        if (idx)
+        {
+            dwError = LwStrndup(
+                          pszTargetProvider,
+                          idx,
+                          &pszTargetProviderName);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        dwError = LwAllocateString(
+                      pszIndex,
+                      &pszTargetInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    } 
+    else if (pszTargetProvider)
+    {
+        dwError = LwAllocateString(
+                      pszTargetProvider,
+                      &pszTargetProviderName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+
+    *ppszTargetProviderName = pszTargetProviderName;
+    *ppszTargetInstance = pszTargetInstance;
+
+    return dwError;
+
+error:
+
+    LW_SAFE_FREE_STRING(pszTargetProviderName);
+    LW_SAFE_FREE_STRING(pszTargetInstance);
+
+    goto cleanup;
+}
 
 DWORD
 LsaSrvFindProviderByName(
@@ -101,7 +154,7 @@ LsaSrvCloseProvider(
     )
 {
     if (pProvider) {
-        pProvider->pFnTable2->pfnCloseHandle(hProvider);
+        pProvider->pFnTable->pfnCloseHandle(hProvider);
     }
 }
 
@@ -109,13 +162,14 @@ DWORD
 LsaSrvOpenProvider(
     HANDLE  hServer,
     PLSA_AUTH_PROVIDER pProvider,
+    PCSTR pszInstance,
     PHANDLE phProvider
     )
 {
     DWORD dwError = 0;
     HANDLE hProvider = (HANDLE)NULL;
 
-    dwError = pProvider->pFnTable2->pfnOpenHandle(hServer, &hProvider);
+    dwError = pProvider->pFnTable->pfnOpenHandle(hServer, pszInstance, &hProvider);
     BAIL_ON_LSA_ERROR(dwError);
 
     *phProvider = hProvider;
@@ -238,10 +292,11 @@ LsaSrvCreateNSSArtefactEnumState(
         dwError = LsaSrvOpenProvider(
                             hServer,
                             pProvider,
+                            NULL,
                             &pProviderState->hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnBeginEnumNSSArtefacts(
+        dwError = pProvider->pFnTable->pfnBeginEnumNSSArtefacts(
                                             pProviderState->hProvider,
                                             pEnumState->dwInfoLevel,
                                             pEnumState->pszMapName,
@@ -317,7 +372,7 @@ LsaSrvFreeProviderStateList(
         pStateList = pStateList->pNext;
 
         if (pState->pProvider && (pState->hProvider != (HANDLE)NULL)) {
-            pState->pProvider->pFnTable2->pfnCloseHandle(pState->hProvider);
+            pState->pProvider->pFnTable->pfnCloseHandle(pState->hProvider);
         }
         LwFreeMemory(pState);
     }

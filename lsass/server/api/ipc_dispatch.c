@@ -653,12 +653,13 @@ LsaSrvIpcAuthenticateUserEx(
     )
 {
     DWORD dwError = LW_ERROR_NOT_IMPLEMENTED;
-    PLSA_AUTH_USER_PARAMS pParams = (PLSA_AUTH_USER_PARAMS) pIn->data;
+    PLSA_IPC_AUTH_USER_EX_REQ pReq = (PLSA_IPC_AUTH_USER_EX_REQ) pIn->data;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
     PLSA_IPC_ERROR pError = NULL;
 
     dwError = LsaSrvAuthenticateUserEx(LsaSrvIpcGetSessionData(pCall),
-                                       pParams,
+                                       pReq->pszTargetProvider,
+                                       &pReq->authUserParams,
                                        &pUserInfo);
 
     if (!dwError)
@@ -1142,6 +1143,7 @@ LsaSrvIpcGetStatus(
 
     dwError = LsaSrvGetStatus(
                     LsaSrvIpcGetSessionData(pCall),
+                    (PSTR)pIn->data,
                     &pLsaStatus);
 
     if (!dwError)

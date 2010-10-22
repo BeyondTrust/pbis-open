@@ -52,7 +52,7 @@ pthread_rwlock_t gADGlobalDataLock;
 
 PCSTR gpszADProviderName = "lsa-activedirectory-provider";
 
-LSA_PROVIDER_FUNCTION_TABLE_2 gADProviderAPITable2 =
+LSA_PROVIDER_FUNCTION_TABLE gADProviderAPITable =
 {
     .pfnFindObjects = AD_FindObjects,
     .pfnOpenEnumObjects = AD_OpenEnumObjects,

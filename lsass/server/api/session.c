@@ -71,10 +71,14 @@ LsaSrvOpenSession(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnOpenSession(
+        dwError = pProvider->pFnTable->pfnOpenSession(
                                         hProvider,
                                         pszLoginId);
         if (!dwError) {
@@ -164,10 +168,14 @@ LsaSrvCloseSession(
          pProvider;
          pProvider = pProvider->pNext)
     {
-        dwError = LsaSrvOpenProvider(hServer, pProvider, &hProvider);
+        dwError = LsaSrvOpenProvider(
+                      hServer,
+                      pProvider,
+                      NULL,
+                      &hProvider);
         BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = pProvider->pFnTable2->pfnCloseSession(
+        dwError = pProvider->pFnTable->pfnCloseSession(
                                 hProvider,
                                 pszLoginId);
         if (!dwError) {

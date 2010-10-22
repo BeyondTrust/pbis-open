@@ -117,6 +117,23 @@ LsaAdLeaveDomain(
     PCSTR pszPassword
     )
 {
+    return LsaAdLeaveDomain2(
+               hLsaConnection,
+               pszUsername,
+               pszPassword,
+               NULL,
+               0);
+}
+
+DWORD
+LsaAdLeaveDomain2(
+    HANDLE hLsaConnection,
+    PCSTR pszUsername,
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
+    )
+{
     DWORD dwError = 0;
     LWMsgDataContext* pDataContext = NULL;
     LSA_AD_IPC_LEAVE_DOMAIN_REQ request;
@@ -125,6 +142,8 @@ LsaAdLeaveDomain(
 
     request.pszUsername = pszUsername;
     request.pszPassword = pszPassword;
+    request.pszDomain = pszDomain;
+    request.dwFlags = dwFlags;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(NULL, &pDataContext));
     BAIL_ON_LSA_ERROR(dwError);
@@ -159,6 +178,112 @@ cleanup:
     return dwError;
 
 error:
+
+    goto cleanup;
+}
+
+DWORD
+LsaAdSetDefaultDomain(
+    IN HANDLE hLsaConnection,
+    IN PCSTR pszDomain
+    )
+{
+    DWORD dwError = 0;
+
+    if (geteuid() != 0)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LsaProviderIoControl(
+                  hLsaConnection,
+                  LSA_AD_TAG_PROVIDER,
+                  LSA_AD_IO_SETDEFAULTDOMAIN,
+                  strlen(pszDomain) + 1,
+                  (PVOID)pszDomain,
+                  NULL,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+
+    return dwError;
+}
+
+DWORD
+LsaAdGetJoinedDomains(
+    IN HANDLE hLsaConnection,
+    OUT PDWORD pdwNumDomainsFound,
+    OUT PSTR** pppszJoinedDomains
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwOutputBufferSize = 0;
+    PVOID pOutputBuffer = NULL;
+    LWMsgContext* context = NULL;
+    LWMsgDataContext* pDataContext = NULL;
+    PLSA_AD_IPC_GET_JOINED_DOMAINS_RESP response = NULL;
+
+    dwError = LsaProviderIoControl(
+                  hLsaConnection,
+                  LSA_AD_TAG_PROVIDER,
+                  LSA_AD_IO_GETJOINEDDOMAINS,
+                  0,
+                  NULL,
+                  &dwOutputBufferSize,
+                  &pOutputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &context));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(context, &pDataContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
+                              pDataContext,
+                              LsaAdIPCGetJoinedDomainsRespSpec(),
+                              pOutputBuffer,
+                              dwOutputBufferSize,
+                              (PVOID*)&response));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *pdwNumDomainsFound = response->dwObjectsCount;
+    *pppszJoinedDomains = response->ppszDomains;
+    response->ppszDomains = NULL;
+
+cleanup:
+
+    if ( response )
+    {
+        lwmsg_data_free_graph(
+            pDataContext,
+            LsaAdIPCGetJoinedDomainsRespSpec(),
+            response);
+    }
+
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
+    if ( context )
+    {
+        lwmsg_context_delete(context);
+    }
+
+    if ( pOutputBuffer )
+    {
+        LwFreeMemory(pOutputBuffer);
+    }
+
+    return dwError;
+
+error:
+
+    *pdwNumDomainsFound = 0;
+    *pppszJoinedDomains = NULL;
 
     goto cleanup;
 }

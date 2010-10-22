@@ -3,7 +3,6 @@ make()
     mk_headers \
 	MASTER="lsa/lsa.h" \
         lsa/ad.h \
-        lsa/lsa2.h \
         lsa/provider.h \
 	lsa/join.h
 

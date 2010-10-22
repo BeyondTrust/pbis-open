@@ -145,7 +145,9 @@ DWORD
 AD_LeaveDomainInternal(
     PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszUsername,
-    PCSTR pszPassword
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
     );
 
 static
@@ -199,7 +201,7 @@ static
 DWORD
 AD_InitializeProvider(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
     )
 {
     DWORD dwError = 0;
@@ -288,7 +290,7 @@ AD_InitializeProvider(
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppszProviderName = gpszADProviderName;
-    *ppFunctionTable = &gADProviderAPITable2;
+    *ppFunctionTable = &gADProviderAPITable;
 
 cleanup:
 
@@ -556,13 +558,16 @@ AD_Deactivate(
 DWORD
 AD_OpenHandle(
     HANDLE hServer,
+    PCSTR pszInstance,
     PHANDLE phProvider
     )
 {
     DWORD dwError = 0;
     PAD_PROVIDER_CONTEXT pContext = NULL;
 
-    dwError = AD_CreateProviderContext(&pContext);
+    dwError = AD_CreateProviderContext(
+                  pszInstance,
+                  &pContext);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaSrvGetClientId(
@@ -604,6 +609,7 @@ AD_CloseHandle(
 
 DWORD
 AD_CreateProviderContext(
+    IN PCSTR pszInstance,
     OUT PAD_PROVIDER_CONTEXT *ppContext
     )
 {
@@ -616,6 +622,14 @@ AD_CreateProviderContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     pContext->nRefCount = 1;
+
+    if (pszInstance)
+    {
+        dwError = LwAllocateString(
+                      pszInstance,
+                      &pContext->pszInstance);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     *ppContext = pContext;
 
@@ -657,6 +671,7 @@ AD_DereferenceProviderContext(
 
         if (0 == dwCount)
         {
+            LW_SAFE_FREE_STRING(pContext->pszInstance);
             LwFreeMemory(pContext);
         }
     }
@@ -1471,7 +1486,9 @@ AD_PreJoinDomain(
         dwError = AD_LeaveDomainInternal(
                       pContext,
                       NULL,
-                      NULL);
+                      NULL,
+                      pState->pszJoinedDomainName,
+                      0);
         BAIL_ON_LSA_ERROR(dwError);
         break;
     }
@@ -1691,7 +1708,9 @@ DWORD
 AD_LeaveDomainInternal(
     PAD_PROVIDER_CONTEXT pContext,
     PCSTR pszUsername,
-    PCSTR pszPassword
+    PCSTR pszPassword,
+    PCSTR pszDomain,
+    DWORD dwFlags
     )
 {
     DWORD dwError = 0;
@@ -1710,9 +1729,11 @@ AD_LeaveDomainInternal(
 
     if (bNeedLeave)
     {
-        dwError = LsaLeaveDomain(
+        dwError = LsaLeaveDomain2(
             pszUsername,
-            pszPassword);
+            pszPassword,
+            pszDomain,
+            dwFlags);
         BAIL_ON_LSA_ERROR(dwError);
     }
     
@@ -1784,7 +1805,9 @@ AD_LeaveDomain(
     dwError = AD_LeaveDomainInternal(
                   pContext,
                   pRequest->pszUsername,
-                  pRequest->pszPassword);
+                  pRequest->pszPassword,
+                  pRequest->pszDomain,
+                  pRequest->dwFlags);
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
@@ -1812,6 +1835,155 @@ cleanup:
     return dwError;
 
 error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+AD_SetDefaultDomain(
+    HANDLE hProvider,
+    uid_t  peerUID,
+    gid_t  peerGID,
+    DWORD  dwInputBufferSize,
+    PVOID  pInputBuffer,
+    DWORD* pdwOutputBufferSize,
+    PVOID* ppOutputBuffer
+    )
+{
+    DWORD dwError = 0;
+    PCSTR pszDomainIn = (PCSTR)pInputBuffer;
+    PSTR pszDomain = NULL;
+
+    if (peerUID != 0)
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (dwInputBufferSize == 0 ||
+        !pszDomainIn ||
+        pszDomainIn[dwInputBufferSize-1] != 0)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwAllocateString(
+                  pszDomainIn,
+                  &pszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pszDomain);
+
+    LSA_LOG_TRACE("Set default domain request: %s", pszDomain);
+
+    dwError = LW_ERROR_NOT_HANDLED;
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszDomain);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
+AD_GetJoinedDomains(
+    IN HANDLE  hProvider,
+    IN uid_t   peerUID,
+    IN gid_t   peerGID,
+    IN DWORD   dwInputBufferSize,
+    IN PVOID   pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    )
+{
+    DWORD                 dwError = 0;
+    PAD_PROVIDER_CONTEXT pContext = NULL;
+    PSTR*                 ppszDomains = NULL;
+    PVOID                 pBlob = NULL;
+    size_t                BlobSize;
+    LWMsgContext*         context = NULL;
+    LWMsgDataContext*      pDataContext = NULL;
+    LSA_AD_IPC_GET_JOINED_DOMAINS_RESP response;
+
+    dwError = AD_ResolveProviderState(hProvider, &pContext);
+    BAIL_ON_LSA_ERROR(dwError);
+    
+    LsaAdProviderStateAcquireRead(pContext->pState);
+
+    if (pContext->pState->joinState != LSA_AD_JOINED)
+    {
+        response.dwObjectsCount = 0;
+        response.ppszDomains = NULL;
+        
+    }
+    else
+    {
+        dwError = LwAllocateMemory(
+                      sizeof(*ppszDomains) * 2,
+                      OUT_PPVOID(&ppszDomains));
+        BAIL_ON_LSA_ERROR(dwError);
+
+
+        dwError = LwAllocateString(
+                      pContext->pState->pszJoinedDomainName,
+                      &ppszDomains[0]);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        response.dwObjectsCount = 1;
+        response.ppszDomains = ppszDomains;
+    }
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &context));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(context, &pDataContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
+                              pDataContext,
+                              LsaAdIPCGetJoinedDomainsRespSpec(),
+                              &response,
+                              &pBlob,
+                              &BlobSize));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    *pdwOutputBufferSize = BlobSize;
+    *ppOutputBuffer = pBlob;
+
+cleanup:
+
+    LsaAdProviderStateRelease(pContext->pState);
+
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
+    if ( context )
+    {
+        lwmsg_context_delete(context);
+    }
+
+    LW_SAFE_FREE_STRING_ARRAY(ppszDomains);
+
+    return dwError;
+
+error:
+
+    *pdwOutputBufferSize = 0;
+    *ppOutputBuffer = NULL;
+
+    if ( pBlob )
+    {
+        LwFreeMemory(pBlob);
+    }
 
     goto cleanup;
 }
@@ -3272,6 +3444,26 @@ AD_ProviderIoControl(
                           pdwOutputBufferSize,
                           ppOutputBuffer);
             break;
+        case LSA_AD_IO_SETDEFAULTDOMAIN:
+            dwError = AD_SetDefaultDomain(
+                          hProvider,
+                          peerUID,
+                          peerGID,
+                          dwInputBufferSize,
+                          pInputBuffer,
+                          pdwOutputBufferSize,
+                          ppOutputBuffer);
+            break;
+        case LSA_AD_IO_GETJOINEDDOMAINS:
+            dwError = AD_GetJoinedDomains(
+                          hProvider,
+                          peerUID,
+                          peerGID,
+                          dwInputBufferSize,
+                          pInputBuffer,
+                          pdwOutputBufferSize,
+                          ppOutputBuffer);
+            break;
         default:
             dwError = LW_ERROR_NOT_HANDLED;
             break;
@@ -3973,7 +4165,11 @@ AD_InitializeOperatingMode(
     PAD_PROVIDER_CONTEXT pContext = NULL;
     PAD_PROVIDER_DATA pProviderData = NULL;
 
-    dwError = AD_CreateProviderContext(&pContext);
+    dwError = AD_CreateProviderContext(
+                  NULL,
+                  &pContext);
+    BAIL_ON_LSA_ERROR(dwError);
+
     pContext->pState = pState;
 
     if (bIsDomainOffline || AD_IsOffline(pState))
@@ -4821,9 +5017,9 @@ InitADCacheFunctionTable(
 }
 
 DWORD
-LsaInitializeProvider2(
+LsaInitializeProvider(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
     )
 {
     return AD_InitializeProvider(ppszProviderName, ppFunctionTable);

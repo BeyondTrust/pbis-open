@@ -52,7 +52,7 @@
 
 PCSTR gpszLocalProviderName = LOCAL_CFG_TAG_LOCAL_PROVIDER;
 
-LSA_PROVIDER_FUNCTION_TABLE_2 gLocalProviderAPITable2 =
+LSA_PROVIDER_FUNCTION_TABLE gLocalProviderAPITable =
 {
     .pfnFindObjects                  = LocalFindObjects,
     .pfnOpenEnumObjects              = LocalOpenEnumObjects,

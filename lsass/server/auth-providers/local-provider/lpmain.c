@@ -76,7 +76,7 @@ static
 DWORD
 LocalInitializeProvider(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
     )
 {
     DWORD dwError = 0;
@@ -123,7 +123,7 @@ LocalInitializeProvider(
     }
 
     *ppszProviderName = gpszLocalProviderName;
-    *ppFunctionTable = &gLocalProviderAPITable2;
+    *ppFunctionTable = &gLocalProviderAPITable;
 
 cleanup:
     if (dwError == ERROR_SUCCESS &&
@@ -154,6 +154,7 @@ error:
 DWORD
 LocalOpenHandle(
     HANDLE hServer,
+    PCSTR pszInstance,
     PHANDLE phProvider
     )
 {
@@ -1318,9 +1319,9 @@ LocalShutdownProvider(
 }
 
 DWORD
-LsaInitializeProvider2(
+LsaInitializeProvider(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
     )
 {
     return LocalInitializeProvider(ppszProviderName, ppFunctionTable);

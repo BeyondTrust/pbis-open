@@ -54,9 +54,9 @@
 #endif
 
 DWORD
-LsaInitializeProvider2(
+LsaInitializeProvider(
     OUT PCSTR* ppszProviderName,
-    OUT PLSA_PROVIDER_FUNCTION_TABLE_2* ppFunctionTable
+    OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
     );
 
 DWORD
@@ -67,6 +67,7 @@ LocalShutdownProvider(
 DWORD
 LocalOpenHandle(
     HANDLE hServer,
+    PCSTR pszInstance,
     PHANDLE phProvider
     );
 

@@ -86,9 +86,9 @@ LsaSrvFreeAuthProvider(
 {
     if (pProvider)
     {
-        if (pProvider->pFnTable2 && pProvider->pFnTable2->pfnShutdownProvider)
+        if (pProvider->pFnTable && pProvider->pFnTable->pfnShutdownProvider)
         {
-           pProvider->pFnTable2->pfnShutdownProvider();
+           pProvider->pFnTable->pfnShutdownProvider();
         }
 
         if (pProvider->pLibHandle)
@@ -108,7 +108,7 @@ LsaSrvValidateProvider(
     PLSA_AUTH_PROVIDER pProvider
     )
 {
-    if (!pProvider || !pProvider->pFnTable2)
+    if (!pProvider || !pProvider->pFnTable)
     {
         return LW_ERROR_INVALID_AUTH_PROVIDER;
     }
@@ -123,7 +123,7 @@ LsaSrvInitAuthProvider(
     )
 {
     DWORD dwError = 0;
-    PFNINITIALIZEPROVIDER_2 pfnInitProvider = NULL;
+    PFNINITIALIZEPROVIDER pfnInitProvider = NULL;
     PCSTR pszError = NULL;
     PSTR pszProviderLibpath = NULL;
     int i = 0;
@@ -170,7 +170,7 @@ LsaSrvInitAuthProvider(
         }
 
         dlerror();
-        pfnInitProvider = (PFNINITIALIZEPROVIDER_2) dlsym(
+        pfnInitProvider = (PFNINITIALIZEPROVIDER) dlsym(
             pProvider->pLibHandle,
             LSA_SYMBOL_NAME_INITIALIZE_PROVIDER);
         if (!pfnInitProvider)
@@ -190,7 +190,7 @@ LsaSrvInitAuthProvider(
 
     dwError = pfnInitProvider(
                     &pProvider->pszName,
-                    &pProvider->pFnTable2);
+                    &pProvider->pFnTable);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaSrvValidateProvider(pProvider);
