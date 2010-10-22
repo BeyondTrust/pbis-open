@@ -46,7 +46,7 @@ esac
 
 case "$host_cpu" in
      	i?86)
-		if test -n "$REALLY_X64"
+		if test -n "$REALLY_X64" && echo "$CC" | grep -v -- "-arch i386" >/dev/null 2>&1
 		then
 			AC_DEFINE([LWBASE_ATOMIC_X86_64], [], [x86_64 atomic operations])
 		else
