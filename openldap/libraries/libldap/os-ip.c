@@ -552,7 +552,7 @@ ldap_connect_to_host(LDAP *ld, Sockbuf *sb,
 	 */
 	hints.ai_flags |= AI_NUMERICHOST;
 	err = getaddrinfo( host, serv, &hints, &res );
-	if (err == EAI_NONAME) {
+	if (err == EAI_NONAME || err == EAI_NODATA) {
 		hints.ai_flags &= ~AI_NUMERICHOST;
 		err = getaddrinfo( host, serv, &hints, &res );
 	}

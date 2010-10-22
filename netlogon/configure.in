@@ -282,7 +282,17 @@ AC_PROG_LIBTOOL
 
 # Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([inttypes.h arpa/inet.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h synch.h pthread.h wc16str.h wc16printf.h])
+AC_CHECK_HEADERS([inttypes.h arpa/inet.h arpa/nameser.h fcntl.h limits.h netdb.h netinet/in.h stdlib.h string.h strings.h sys/socket.h syslog.h unistd.h sys/types.h fcntl.h iconv.h sys/stat.h time.h sys/time.h synch.h pthread.h wc16str.h wc16printf.h])
+AC_CHECK_HEADERS([resolv.h], [], [],
+[[#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif]])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
@@ -304,12 +314,24 @@ AC_CHECK_FUNCS([atexit localtime_r memset select socket strchr strerror vsyslog]
 AC_CHECK_FUNCS([rpl_realloc rpl_malloc clock_gettime clock_settime])
 AC_CHECK_FUNCS([settimeofday gettimeofday timegm  strtoll __strtoll strtoull __strtoull])
 
-AC_CHECK_DECLS([isblank, pstat_getproc, res_init, res_query], [], [], [#include <ctype.h>
+AC_CHECK_DECLS([isblank, pstat_getproc, res_init, res_query, res_ninit, res_ndestroy], [], [], [#include <ctype.h>
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
 #if HAVE_SYS_PSTAT_H
 #include <sys/pstat.h>
+#endif
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#if HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+#if HAVE_RESOLV_H
+#include <resolv.h>
 #endif])
 AC_CHECK_TYPES([wchar16_t], [], [], [AC_INCLUDES_DEFAULT
 #ifdef HAVE_WC16STR_H

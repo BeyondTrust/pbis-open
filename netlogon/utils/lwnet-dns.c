@@ -1152,10 +1152,20 @@ LWNetDnsQueryWithBuffer(
     PDNS_RESPONSE_HEADER pHeader = (PDNS_RESPONSE_HEADER)pBuffer;
     int responseSize =  0;
     BOOLEAN bInLock = FALSE;
+#if HAVE_DECL_RES_NINIT
+    struct __res_state resLocal = { 0 };
+    res_state res = &resLocal;
+#else
+    res_state res = &_res;
+#endif
 
     LWNET_LOCK_RESOLVER_API(bInLock);
 
+#if HAVE_DECL_RES_NINIT
+    if (res_ninit(res) != 0)
+#else
     if (res_init() != 0)
+#endif
     {
         dwError = ERROR_NOT_FOUND;
         BAIL_ON_LWNET_ERROR(dwError);
@@ -1171,15 +1181,19 @@ LWNetDnsQueryWithBuffer(
     // may not be safe depending on the system.
     if (bUseTcp)
     {
-        _res.options |= RES_USEVC;
+        res->options |= RES_USEVC;
     }
     else
     {
-        _res.options &= ~(RES_USEVC);
+        res->options &= ~(RES_USEVC);
     }
 
     /* Assertion: pResolverContext != NULL && pResolverContext->bLocked == TRUE */
+#if HAVE_DECL_RES_NINIT
+    responseSize = res_nquery(res, pszQuestion, ns_c_in, ns_t_srv, (PBYTE) pBuffer, dwBufferSize);
+#else
     responseSize = res_query(pszQuestion, ns_c_in, ns_t_srv, (PBYTE) pBuffer, dwBufferSize);
+#endif
     if (responseSize < 0)
     {
         LWNET_LOG_ERROR("DNS lookup for '%s' failed with errno %d, h_errno = %d", pszQuestion, errno, h_errno);
@@ -1207,10 +1221,14 @@ LWNetDnsQueryWithBuffer(
 
 error:
 
+#if HAVE_DECL_RES_NINIT
+    res_nclose(res);
+#else
     /* Indicate that we are done with the resolver, except on HPUX which
        does not implement the res_close function. */
 #ifndef __LWI_HP_UX__
     res_close();
+#endif
 #endif
 
     LWNET_UNLOCK_RESOLVER_API(bInLock);
