@@ -11,7 +11,7 @@ ADDITIONAL_LIBS += $(NOINST_DEP_LIBS)
 endif
 else
 provider_LTLIBRARIES = libdsapi.la
-ADDITIONAL_LIBS _= $(NOINST_DEP_LIBS)
+ADDITIONAL_LIBS += $(NOINST_DEP_LIBS)
 endif
 
 libdsapi_la_SOURCES = \
