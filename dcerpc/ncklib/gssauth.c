@@ -32,7 +32,7 @@
 **
 **  ABSTRACT:
 **
-**      Client-side support of kerberos module.
+**      Client-side support of gss-spnego and gss-krb5 module.
 **
 **
 */
@@ -758,6 +758,10 @@ INTERNAL void rpc__gssauth_inq_access_token(
     *stp = rpc_s_ok;
 
 cleanup:
+    if (context)
+    {
+	    LwMapSecurityFreeContext(&context);
+    }
 
     return;
 
