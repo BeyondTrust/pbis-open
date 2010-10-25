@@ -8,6 +8,11 @@
 #include <lwstr.h>
 #include <lwmem.h>
 
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
+
 #include "defs.h"
 #include "evtparser.h"
 #include "xmllookup.h"
