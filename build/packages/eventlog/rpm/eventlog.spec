@@ -56,6 +56,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
 %{PrefixDir}/share/config/*
+/var/lib/likewise/lwreport.xml
 
 %define initScriptPathList %{INIT_DIR}/eventlogd
 %post
