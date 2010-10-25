@@ -2,8 +2,9 @@ make()
 {
     mk_program \
 	PROGRAM=lw-eventlog-cli \
-	SOURCES="evtparser.c main.c" \
+	SOURCES="evtparser.c xmllookup.c main.c" \
 	INCLUDEDIRS=". ../../include" \
-	HEADERDEPS="wc16printf.h dce/rpc.h lwadvapi.h popt.h" \
-	LIBDEPS="eventlog eventlogutils popt lwadvapi lwadvapi_nothr lwbase lwbase_nothr"
+        CPPFLAGS="$LIBXML2_CPPFLAGS" \
+	HEADERDEPS="wc16printf.h dce/rpc.h lwadvapi.h popt.h $LIBXML2_HEADERDEPS" \
+	LIBDEPS="eventlog eventlogutils popt lwadvapi lwadvapi_nothr lwbase lwbase_nothr xml2"
 }

@@ -13,12 +13,20 @@ configure()
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CONFIGDIR "\"$MK_SYSCONFDIR\""
+    mk_define LWREPORT_XML "\"${LW_CACHEDIR}/lwreport.xml\""
 
     mk_check_headers FAIL=yes \
         popt.h
 
     mk_check_libraries FAIL=yes \
         popt
+
+    if ! mk_pkg_config \
+	VARPREFIX=LIBXML2 \
+        libxml-2.0
+    then
+        mk_fail "libxml2 not found"
+    fi
 
     mk_check_headers \
 	limits.h sys/limits.h sys/syslimits.h wc16str.h
