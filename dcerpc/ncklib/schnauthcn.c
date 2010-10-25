@@ -287,7 +287,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_context_valid) prot->%x level->%x key_id->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id));
 
@@ -371,7 +371,7 @@ unsigned32                       *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_create_info) prot->%x level->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     authn_level));
 
 #ifdef DEBUG
@@ -384,7 +384,7 @@ unsigned32                       *st;
 #endif
 
     /*
-     * Allocate storage for a noauth info structure from heap.
+     * Allocate storage for a schnauth_info structure from heap.
      */
     RPC_MEM_ALLOC(schnauth_info, 
 		  rpc_schnauth_info_p_t, 
@@ -404,7 +404,7 @@ unsigned32                       *st;
     schnauth_info->auth_info.refcount = 1;
     schnauth_info->auth_info.server_princ_name = '\0';
     schnauth_info->auth_info.authn_level = authn_level;
-    schnauth_info->auth_info.authn_protocol = rpc_c_authn_dce_dummy;
+    schnauth_info->auth_info.authn_protocol = rpc_c_authn_schannel;
     schnauth_info->auth_info.authz_protocol = rpc_c_authz_name;
     schnauth_info->auth_info.is_server = true;
 
@@ -664,7 +664,7 @@ unsigned32                      * /* st */
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_fmt_client_req) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
@@ -781,7 +781,7 @@ unsigned32                      *auth_value_len;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_fmt_srvr_resp) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x, vfy_client_st->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
@@ -863,7 +863,7 @@ rpc_cn_auth_info_p_t            *cn_info;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_free_prot_info) prot->%x level->%x \n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     info->authn_level));
 
 #ifdef DEBUG
@@ -935,7 +935,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_get_prot_info) prot->%x level->%x \n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     info->authn_level));
 
     schnauth_info = (rpc_schnauth_info_t*)info;
@@ -1058,7 +1058,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_pre_call) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
@@ -1333,7 +1333,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_pre_send) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x ptype->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
@@ -1551,7 +1551,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_recv_check) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x ptype->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     authn_level,
                     sec->sec_key_id,
                     assoc_uuid_crc,
@@ -1799,7 +1799,7 @@ unsigned32                      * /* st */
     
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_vfy_client_req) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
@@ -1891,7 +1891,7 @@ unsigned32                      *st;
 
     RPC_DBG_PRINTF (rpc_e_dbg_auth, RPC_C_CN_DBG_AUTH_PKT,
                     ("(rpc__schnauth_cn_vfy_server_resp) prot->%x level->%x key_id->%x assoc_uuid_crc->%x xmit_seq->%x recv_seq->%x\n",
-                    rpc_c_authn_dce_dummy,
+                    rpc_c_authn_schannel,
                     sec->sec_info->authn_level,
                     sec->sec_key_id,
                     assoc_sec->assoc_uuid_crc,
