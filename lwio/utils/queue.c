@@ -178,7 +178,7 @@ LWIOQueueIsEmpty(
     PLWIO_QUEUE pQueue
     )
 {
-    return (pQueue->pHead == pQueue->pTail);
+    return (pQueue->pHead == NULL);
 }
 
 DWORD
