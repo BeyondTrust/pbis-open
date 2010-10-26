@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        ipc_protocol.c
+ *        lwshareinfo.c
  *
  * Abstract:
  *

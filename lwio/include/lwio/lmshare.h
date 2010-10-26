@@ -415,6 +415,7 @@ typedef union {
 
 #endif
 
+
 #endif /* _LMSHARE_H_ */
 
 
@@ -426,4 +427,3 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
-

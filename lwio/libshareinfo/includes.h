@@ -38,6 +38,8 @@
 #include <lwio/lwshareinfo.h>
 #include <lwio/lmsession.h>
 #include <lwio/lwsessioninfo.h>
+#include <lwio/lmconnection.h>
+#include <lwio/lwconnectioninfo.h>
 #include <lwio/lmfile.h>
 #include <lwio/lwfileinfo.h>
 #include <lwioipc.h>
@@ -45,5 +47,3 @@
 #include <ntipcmsg.h>
 
 #include "prototypes.h"
-
-
