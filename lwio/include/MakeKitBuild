@@ -9,6 +9,8 @@ make()
             lwio/lmfile.h        \
             lwio/lmsession.h     \
             lwio/lmshare.h       \
+            lwio/lmconnection.h \
+            lwio/lwconnectioninfo.h \
             lwio/lwfileinfo.h    \
             lwio/lwiodevctl.h    \
             lwio/lwsessioninfo.h \
