@@ -154,11 +154,6 @@
     doc = "Whether system time should be syncronized with AD domain controller"
     range = boolean
 }
-"CachePurgeTimeout" = {
-    default = dword:00278D00
-    doc = "Duration for when lsass object cache entries are purged"
-    range = integer:0-5184000
-}
 "RequireMembershipOf" = {
     default = sza:""
     doc = "Restrict logon access to computer to specific users or group members, or SIDs"

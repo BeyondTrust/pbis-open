@@ -106,11 +106,6 @@ AD_GetUnprovisionedModeHomedirTemplate(
     );
 
 DWORD
-AD_GetCacheReaperTimeoutSecs(
-    PLSA_AD_PROVIDER_STATE pState
-    );
-
-DWORD
 AD_GetMachinePasswordSyncPwdLifetime(
     IN PLSA_AD_PROVIDER_STATE pState
     );

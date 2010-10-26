@@ -110,7 +110,6 @@ AD_InitializeConfig(
     pConfig->bCreateK5Login   = TRUE;
     pConfig->bLDAPSignAndSeal = FALSE;
     pConfig->bSyncSystemTime  = TRUE;
-    pConfig->dwCacheReaperTimeoutSecs = AD_CACHE_REAPER_TIMEOUT_DEFAULT_SECS;
     pConfig->dwCacheEntryExpirySecs   = AD_CACHE_ENTRY_EXPIRY_DEFAULT_SECS;
     pConfig->dwCacheSizeCap           = 0;
     pConfig->dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
@@ -282,16 +281,6 @@ AD_ReadRegistry(
             MAXDWORD,
             NULL,
             &StagingConfig.pszUserDomainPrefix
-        },
-        {
-            "CachePurgeTimeout",
-            TRUE,
-            LsaTypeDword,
-            AD_CACHE_REAPER_TIMEOUT_MINIMUM_SECS,
-            AD_CACHE_REAPER_TIMEOUT_MAXIMUM_SECS,
-            NULL,
-            &StagingConfig.dwCacheReaperTimeoutSecs,
-            NULL
         },
         {
             "MachinePasswordLifespan",
@@ -966,21 +955,6 @@ error:
     *ppszUnprovisionedModeHomedirTemplate = NULL;
 
     goto cleanup;
-}
-
-DWORD
-AD_GetCacheReaperTimeoutSecs(
-    IN PLSA_AD_PROVIDER_STATE pState
-    )
-{
-    DWORD dwCacheReaperTimeoutSecs = 0;
-    BOOLEAN bInLock = FALSE;
-
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-    dwCacheReaperTimeoutSecs = pState->config.dwCacheReaperTimeoutSecs;
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
-
-    return dwCacheReaperTimeoutSecs;
 }
 
 DWORD
