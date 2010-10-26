@@ -348,7 +348,6 @@ RegDbOpen(
 	NTSTATUS status = 0;
     BOOLEAN bLockCreated = FALSE;
     PREG_DB_CONNECTION pConn = NULL;
-    PSTR pszError = NULL;
     BOOLEAN bExists = FALSE;
     PSTR pszDbDir = NULL;
     PWSTR pwszQueryStatement = NULL;
@@ -854,10 +853,6 @@ RegDbOpen(
 
 cleanup:
 
-    if (pszError != NULL)
-    {
-        sqlite3_free(pszError);
-    }
     LWREG_SAFE_FREE_STRING(pszDbDir);
     LWREG_SAFE_FREE_MEMORY(pwszQueryStatement);
 
