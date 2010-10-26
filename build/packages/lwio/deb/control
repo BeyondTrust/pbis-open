@@ -8,12 +8,12 @@ Standards-Version: 3.7.2
 Package: __PKG_NAME
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, likewise-krb5, likewise-sqlite, likewise-netlogon, likewise-base
-Replaces: likewise-rpc (< 5.2)
+Replaces: likewise-rpc (<= 5.2)
 Description: Likewise IO Services
 
 Package: __PKG_NAME-dev
 Section: libdevel
 Architecture: any
 Depends: __PKG_NAME (= ${binary:Version})
-Replaces: likewise-rpc (< 5.2)
+Replaces: likewise-rpc (<= 5.2)
 Description: Likewise IO Services
