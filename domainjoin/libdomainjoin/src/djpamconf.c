@@ -3502,23 +3502,28 @@ void DJNewConfigurePamForADLogin(
                 LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, FALSE, &LW_EXC));
                 if(conf.modified)
                     LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
-                LW_TRY(exc, EnablePamAuthUpdate(testPrefix, &LW_EXC));
-                goto cleanup;
             }
+            else
+            {
+                // The pam-auth-update file *may* have changed.
+                LW_TRY(exc, DisablePamAuthUpdate(testPrefix, &LW_EXC));
+            }
+            LW_TRY(exc, EnablePamAuthUpdate(testPrefix, &LW_EXC));
         }
         else if (bPamAuthUpdateLikewiseEnabled)
         {
             LW_TRY(exc, DisablePamAuthUpdate(testPrefix, &LW_EXC));
-            goto cleanup;
         }
     }
-
-    LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, enable, &LW_EXC));
-
-    if(conf.modified)
-        LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
     else
-        DJ_LOG_INFO("Pam configuration not modified");
+    {
+        LW_TRY(exc, DJUpdatePamConf(testPrefix, &conf, options, warning, enable, &LW_EXC));
+
+        if(conf.modified)
+            LW_CLEANUP_CTERR(exc, WritePamConfiguration(testPrefix, &conf, NULL));
+        else
+            DJ_LOG_INFO("Pam configuration not modified");
+    }
 
 cleanup:
     FreePamConfContents(&conf);
