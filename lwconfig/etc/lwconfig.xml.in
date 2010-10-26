@@ -361,26 +361,6 @@
         </registry>
     </capability>
     <capability>
-        <name>CachePurgeTimeout</name>
-        <description>Duration for when lsass object cache entries are purged</description>
-        <registry type="dword"
-            lp-path="HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\CachePurgeTimeout"
-            gp-path="HKEY_THIS_MACHINE\Policy\Services\lsass\Parameters\Providers\ActiveDirectory\CachePurgeTimeout" >
-            <description>Duration in seconds (s), minutes (m), hours (h) or days (d)</description>
-            <default>
-                <value>30d</value>
-            </default>
-            <accept>
-                <range min="0" max="5184000" />
-            </accept>
-            <unit suffix="s" multiplier="1" />
-            <unit suffix="m" multiplier="60" />
-            <unit suffix="h" multiplier="3600" />
-            <unit suffix="d" multiplier="86400" />
-            <apply command="/opt/likewise/bin/lwsm refresh lsass" />
-        </registry>
-    </capability>
-    <capability>
         <name>DomainManagerCheckDomainOnlineInterval</name>
         <description>How often the domain manager should check whether a domain is back online</description>
         <registry type="dword"
