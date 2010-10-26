@@ -641,9 +641,9 @@
         </registry>
     </capability>
   </section>
-  <section section="System Initialiation">
+  <section section="System Initialization">
     <capability>
-        <name>LsassdAutoStart</name>
+        <name>LsassAutostart</name>
         <description>Start lsassd when lwsmd starts.</description>
         <registry type="boolean"
             lp-path="HKEY_THIS_MACHINE\Services\lsass\Autostart" >
@@ -653,20 +653,20 @@
         </registry>
     </capability>
     <capability>
-        <name>EventlogdAutoStart</name>
+        <name>EventlogAutostart</name>
         <description>Start eventlogd when lwsmd starts.</description>
         <registry type="boolean"
-            lp-path="HKEY_THIS_MACHINE\Services\eventlogd\Autostart" >
+            lp-path="HKEY_THIS_MACHINE\Services\eventlog\Autostart" >
             <default>
                 <value>true</value>
             </default>
         </registry>
     </capability>
     <capability>
-        <name>GpagentdAutoStart</name>
+        <name>GpagentAutostart</name>
         <description>Start gpagentd when lwsmd starts.</description>
         <registry type="boolean"
-            lp-path="HKEY_THIS_MACHINE\Services\gpagentd\Autostart" >
+            lp-path="HKEY_THIS_MACHINE\Services\gpagent\Autostart" >
             <default>
                 <value>true</value>
             </default>
