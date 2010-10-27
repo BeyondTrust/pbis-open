@@ -48,7 +48,7 @@ LsassSectionHandler(
     }
     else if (!strcasecmp(pszSectionName, "auth provider:lsa-activedirectory-provider"))
     {
-        AD_SectionHandler(bSectionStart, pszSectionName, &pConfig->ADConfig, pbContinue);
+        UpAdSectionHandler(bSectionStart, pszSectionName, &pConfig->ADConfig, pbContinue);
     }
     else if (!strcasecmp(pszSectionName, "auth provider:lsa-local-provider"))
     {
@@ -94,12 +94,12 @@ LsassNameValueHandler(
     else if (!strcasecmp(pszSectionName, "auth provider:lsa-activedirectory-provider"))
     {
         pConfig->bSawProviderAD = TRUE;
-        AD_ConfigNameValuePair(pszName, pszValue, &pConfig->ADConfig, pbContinue);
+        UpAdConfigNameValuePair(pszName, pszValue, &pConfig->ADConfig, pbContinue);
     }
     else if (!strcasecmp(pszSectionName, "auth provider:lsa-local-provider"))
     {
         pConfig->bSawProviderLocal = TRUE;
-        LocalCfgNameValuePair(pszName, pszValue, &pConfig->LocalConfig, pbContinue);
+        UpLocalCfgNameValuePair(pszName, pszValue, &pConfig->LocalConfig, pbContinue);
     }
     else if (!strcasecmp(pszSectionName, "rpc server:lsarpc"))
     {
@@ -157,10 +157,10 @@ PrintRegFile(
     }
     BAIL_ON_UP_ERROR(dwError);
 
-    dwError = PrintADConfig(fp, &pConfig->ADConfig);
+    dwError = UpAdPrintConfig(fp, &pConfig->ADConfig);
     BAIL_ON_UP_ERROR(dwError);
 
-    dwError = PrintLocalConfig(fp, &pConfig->LocalConfig);
+    dwError = UpLocalPrintConfig(fp, &pConfig->LocalConfig);
     BAIL_ON_UP_ERROR(dwError);
 
 error:
@@ -192,10 +192,10 @@ LsassConfFileToRegFile(
     dwError = LsaPamInitializeConfig(&Config.PamConfig);
     BAIL_ON_UP_ERROR(dwError);
 
-    dwError = AD_InitializeConfig(&Config.ADConfig);
+    dwError = UpAdInitializeConfig(&Config.ADConfig);
     BAIL_ON_UP_ERROR(dwError);
 
-    dwError = LocalCfgInitialize(&Config.LocalConfig);
+    dwError = UpLocalCfgInitialize(&Config.LocalConfig);
     BAIL_ON_UP_ERROR(dwError);
 
     dwError = UpParseConfigFile(
@@ -219,8 +219,8 @@ cleanup:
 
     LsaSrvApiFreeConfigContents(&Config.LsaConfig);
     LsaPamFreeConfigContents(&Config.PamConfig);
-    AD_FreeConfigContents(&Config.ADConfig);
-    LocalCfgFreeContents(&Config.LocalConfig);
+    UpAdFreeConfigContents(&Config.ADConfig);
+    UpLocalCfgFreeContents(&Config.LocalConfig);
 
     return dwError;
 error:

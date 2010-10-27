@@ -137,7 +137,7 @@ static LOCAL_CFG_HANDLER gLocalCfgHandlers[] =
 
 
 DWORD
-LocalCfgInitialize(
+UpLocalCfgInitialize(
     PLOCAL_CONFIG pConfig
     )
 {
@@ -181,7 +181,7 @@ error:
 }
 
 VOID
-LocalCfgFreeContents(
+UpLocalCfgFreeContents(
     PLOCAL_CONFIG pConfig
     )
 {
@@ -192,7 +192,7 @@ LocalCfgFreeContents(
 }
 
 DWORD
-LocalCfgNameValuePair(
+UpLocalCfgNameValuePair(
     PCSTR    pszName,
     PCSTR    pszValue,
     PVOID    pData,
@@ -487,7 +487,7 @@ LocalCfgGetBooleanValue(
 }
 
 DWORD
-PrintLocalConfig(
+UpLocalPrintConfig(
     FILE *fp,
     PLOCAL_CONFIG pConfig
     )

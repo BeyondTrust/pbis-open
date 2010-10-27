@@ -88,17 +88,17 @@ PrintPamConfig(
 
 
 DWORD
-AD_InitializeConfig(
+UpAdInitializeConfig(
     PLSA_AD_CONFIG pConfig
     );
 
 VOID
-AD_FreeConfigContents(
+UpAdFreeConfigContents(
     PLSA_AD_CONFIG pConfig
     );
 
 DWORD
-AD_SectionHandler(
+UpAdSectionHandler(
     BOOLEAN         bStartOfSection,
     PCSTR           pszSectionName,
     PLSA_AD_CONFIG  pConfig,
@@ -106,7 +106,7 @@ AD_SectionHandler(
     );
 
 DWORD
-AD_ConfigNameValuePair(
+UpAdConfigNameValuePair(
     PCSTR    pszName,
     PCSTR    pszValue,
     PLSA_AD_CONFIG pConfig,
@@ -114,7 +114,7 @@ AD_ConfigNameValuePair(
     );
 
 DWORD
-PrintADConfig(
+UpAdPrintConfig(
     FILE *fp,
     PLSA_AD_CONFIG pConfig
     );
@@ -122,17 +122,17 @@ PrintADConfig(
 
 
 DWORD
-LocalCfgInitialize(
+UpLocalCfgInitialize(
     PLOCAL_CONFIG pConfig
     );
 
 VOID
-LocalCfgFreeContents(
+UpLocalCfgFreeContents(
     PLOCAL_CONFIG pConfig
     );
 
 DWORD
-LocalCfgNameValuePair(
+UpLocalCfgNameValuePair(
     PCSTR    pszName,
     PCSTR    pszValue,
     PVOID    pData,
@@ -140,7 +140,7 @@ LocalCfgNameValuePair(
     );
 
 DWORD
-PrintLocalConfig(
+UpLocalPrintConfig(
     FILE *fp,
     PLOCAL_CONFIG pConfig
     );

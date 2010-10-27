@@ -27,13 +27,13 @@
 
 static
 BOOLEAN
-AD_GetBooleanConfigValue(
+UpAdGetBooleanConfigValue(
     PCSTR pszValue
     );
 
 static
 DWORD
-AD_SetConfig_EnableEventLog(
+UpAdSetConfig_EnableEventLog(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -41,7 +41,7 @@ AD_SetConfig_EnableEventLog(
 
 static
 DWORD
-AD_SetConfig_LoginShellTemplate(
+UpAdSetConfig_LoginShellTemplate(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -49,7 +49,7 @@ AD_SetConfig_LoginShellTemplate(
 
 static
 DWORD
-AD_SetConfig_HomeDirTemplate(
+UpAdSetConfig_HomeDirTemplate(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -66,7 +66,7 @@ AD_CheckPunctuationChar(
 
 static
 DWORD
-AD_SetConfig_SpaceReplacement(
+UpAdSetConfig_SpaceReplacement(
     IN OUT PLSA_AD_CONFIG pConfig,
     IN PCSTR          pszName,
     IN PCSTR          pszValue
@@ -74,7 +74,7 @@ AD_SetConfig_SpaceReplacement(
 
 static
 DWORD
-AD_SetConfig_DomainSeparator(
+UpAdSetConfig_DomainSeparator(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -82,7 +82,7 @@ AD_SetConfig_DomainSeparator(
 
 static
 DWORD
-AD_SetConfig_CachePurgeTimeout(
+UpAdSetConfig_CachePurgeTimeout(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -90,7 +90,7 @@ AD_SetConfig_CachePurgeTimeout(
 
 static
 DWORD
-AD_SetConfig_MachinePasswordLifespan(
+UpAdSetConfig_MachinePasswordLifespan(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -98,7 +98,7 @@ AD_SetConfig_MachinePasswordLifespan(
 
 static
 DWORD
-AD_SetConfig_CacheEntryExpiry(
+UpAdSetConfig_CacheEntryExpiry(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -106,7 +106,7 @@ AD_SetConfig_CacheEntryExpiry(
 
 static
 DWORD
-AD_SetConfig_CacheSizeCap(
+UpAdSetConfig_CacheSizeCap(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -114,7 +114,7 @@ AD_SetConfig_CacheSizeCap(
 
 static
 DWORD
-AD_SetConfig_LDAPSignAndSeal(
+UpAdSetConfig_LDAPSignAndSeal(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -122,7 +122,7 @@ AD_SetConfig_LDAPSignAndSeal(
 
 static
 DWORD
-AD_SetConfig_RequireMembershipOf(
+UpAdSetConfig_RequireMembershipOf(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -130,7 +130,7 @@ AD_SetConfig_RequireMembershipOf(
 
 static
 DWORD
-AD_SetConfig_AssumeDefaultDomain(
+UpAdSetConfig_AssumeDefaultDomain(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -138,7 +138,7 @@ AD_SetConfig_AssumeDefaultDomain(
 
 static
 DWORD
-AD_SetConfig_SyncSystemTime(
+UpAdSetConfig_SyncSystemTime(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -146,7 +146,7 @@ AD_SetConfig_SyncSystemTime(
 
 static
 DWORD
-AD_SetConfig_LogNetworkConnectionEvents(
+UpAdSetConfig_LogNetworkConnectionEvents(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -154,7 +154,7 @@ AD_SetConfig_LogNetworkConnectionEvents(
 
 static
 DWORD
-AD_SetConfig_CreateK5Login(
+UpAdSetConfig_CreateK5Login(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -162,7 +162,7 @@ AD_SetConfig_CreateK5Login(
 
 static
 DWORD
-AD_SetConfig_CreateHomeDir(
+UpAdSetConfig_CreateHomeDir(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -170,7 +170,7 @@ AD_SetConfig_CreateHomeDir(
 
 static
 DWORD
-AD_SetConfig_RefreshUserCreds(
+UpAdSetConfig_RefreshUserCreds(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -178,7 +178,7 @@ AD_SetConfig_RefreshUserCreds(
 
 static
 DWORD
-AD_SetConfig_SkelDirs(
+UpAdSetConfig_SkelDirs(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -186,7 +186,7 @@ AD_SetConfig_SkelDirs(
 
 static
 DWORD
-AD_SetConfig_Umask(
+UpAdSetConfig_Umask(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -194,7 +194,7 @@ AD_SetConfig_Umask(
 
 static
 DWORD
-AD_SetConfig_HomedirPrefix(
+UpAdSetConfig_HomedirPrefix(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -202,7 +202,7 @@ AD_SetConfig_HomedirPrefix(
 
 static
 DWORD
-AD_SetConfig_CellSupport(
+UpAdSetConfig_CellSupport(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -210,7 +210,7 @@ AD_SetConfig_CellSupport(
 
 static
 DWORD
-AD_SetConfig_CacheType(
+UpAdSetConfig_CacheType(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -218,7 +218,7 @@ AD_SetConfig_CacheType(
 
 static
 DWORD
-AD_SetConfig_TrimUserMembershipEnabled(
+UpAdSetConfig_TrimUserMembershipEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -226,7 +226,7 @@ AD_SetConfig_TrimUserMembershipEnabled(
 
 static
 DWORD
-AD_SetConfig_NssGroupMembersCacheOnlyEnabled(
+UpAdSetConfig_NssGroupMembersCacheOnlyEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -234,7 +234,7 @@ AD_SetConfig_NssGroupMembersCacheOnlyEnabled(
 
 static
 DWORD
-AD_SetConfig_NssUserMembershipCacheOnlyEnabled(
+UpAdSetConfig_NssUserMembershipCacheOnlyEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -242,7 +242,7 @@ AD_SetConfig_NssUserMembershipCacheOnlyEnabled(
 
 static
 DWORD
-AD_SetConfig_NssEnumerationEnabled(
+UpAdSetConfig_NssEnumerationEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -250,7 +250,7 @@ AD_SetConfig_NssEnumerationEnabled(
 
 static
 DWORD
-AD_SetConfig_DomainManagerCheckDomainOnlineSeconds(
+UpAdSetConfig_DomainManagerCheckDomainOnlineSeconds(
     IN PLSA_AD_CONFIG pConfig,
     IN PCSTR pszName,
     IN PCSTR pszValue
@@ -258,7 +258,7 @@ AD_SetConfig_DomainManagerCheckDomainOnlineSeconds(
 
 static
 DWORD
-AD_SetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds(
+UpAdSetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds(
     IN PLSA_AD_CONFIG pConfig,
     IN PCSTR pszName,
     IN PCSTR pszValue
@@ -278,39 +278,39 @@ typedef struct __AD_CONFIG_HANDLER
 
 static AD_CONFIG_HANDLER gADConfigHandlers[] =
 {
-    {"enable-eventlog",               &AD_SetConfig_EnableEventLog},
-    {"login-shell-template",          &AD_SetConfig_LoginShellTemplate},
-    {"homedir-template",              &AD_SetConfig_HomeDirTemplate},
-    {"space-replacement",             &AD_SetConfig_SpaceReplacement},
-    {"domain-separator",              &AD_SetConfig_DomainSeparator},
-    {"cache-purge-timeout",           &AD_SetConfig_CachePurgeTimeout},
-    {"machine-password-lifespan",     &AD_SetConfig_MachinePasswordLifespan},
-    {"cache-entry-expiry",            &AD_SetConfig_CacheEntryExpiry},
-    {"memory-cache-size-cap",         &AD_SetConfig_CacheSizeCap},
-    {"ldap-sign-and-seal",            &AD_SetConfig_LDAPSignAndSeal},
-    {"require-membership-of",         &AD_SetConfig_RequireMembershipOf},
-    {"assume-default-domain",         &AD_SetConfig_AssumeDefaultDomain},
-    {"sync-system-time",              &AD_SetConfig_SyncSystemTime},
-    {"log-network-connection-events", &AD_SetConfig_LogNetworkConnectionEvents},
-    {"create-k5login",                &AD_SetConfig_CreateK5Login},
-    {"create-homedir",                &AD_SetConfig_CreateHomeDir},
-    {"skeleton-dirs",                 &AD_SetConfig_SkelDirs},
-    {"homedir-umask",                 &AD_SetConfig_Umask},
-    {"homedir-prefix",                &AD_SetConfig_HomedirPrefix},
-    {"refresh-user-credentials",      &AD_SetConfig_RefreshUserCreds},
-    {"cell-support",                  &AD_SetConfig_CellSupport},
-    {"trim-user-membership",          &AD_SetConfig_TrimUserMembershipEnabled},
-    {"nss-group-members-query-cache-only",   &AD_SetConfig_NssGroupMembersCacheOnlyEnabled},
-    {"nss-user-membership-query-cache-only", &AD_SetConfig_NssUserMembershipCacheOnlyEnabled},
-    {"nss-enumeration-enabled",              &AD_SetConfig_NssEnumerationEnabled},
-    {"domain-manager-check-domain-online-interval", &AD_SetConfig_DomainManagerCheckDomainOnlineSeconds},
-    {"domain-manager-unknown-domain-cache-timeout", &AD_SetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds},
-    {"cache-type",                    &AD_SetConfig_CacheType},
+    {"enable-eventlog",               &UpAdSetConfig_EnableEventLog},
+    {"login-shell-template",          &UpAdSetConfig_LoginShellTemplate},
+    {"homedir-template",              &UpAdSetConfig_HomeDirTemplate},
+    {"space-replacement",             &UpAdSetConfig_SpaceReplacement},
+    {"domain-separator",              &UpAdSetConfig_DomainSeparator},
+    {"cache-purge-timeout",           &UpAdSetConfig_CachePurgeTimeout},
+    {"machine-password-lifespan",     &UpAdSetConfig_MachinePasswordLifespan},
+    {"cache-entry-expiry",            &UpAdSetConfig_CacheEntryExpiry},
+    {"memory-cache-size-cap",         &UpAdSetConfig_CacheSizeCap},
+    {"ldap-sign-and-seal",            &UpAdSetConfig_LDAPSignAndSeal},
+    {"require-membership-of",         &UpAdSetConfig_RequireMembershipOf},
+    {"assume-default-domain",         &UpAdSetConfig_AssumeDefaultDomain},
+    {"sync-system-time",              &UpAdSetConfig_SyncSystemTime},
+    {"log-network-connection-events", &UpAdSetConfig_LogNetworkConnectionEvents},
+    {"create-k5login",                &UpAdSetConfig_CreateK5Login},
+    {"create-homedir",                &UpAdSetConfig_CreateHomeDir},
+    {"skeleton-dirs",                 &UpAdSetConfig_SkelDirs},
+    {"homedir-umask",                 &UpAdSetConfig_Umask},
+    {"homedir-prefix",                &UpAdSetConfig_HomedirPrefix},
+    {"refresh-user-credentials",      &UpAdSetConfig_RefreshUserCreds},
+    {"cell-support",                  &UpAdSetConfig_CellSupport},
+    {"trim-user-membership",          &UpAdSetConfig_TrimUserMembershipEnabled},
+    {"nss-group-members-query-cache-only",   &UpAdSetConfig_NssGroupMembersCacheOnlyEnabled},
+    {"nss-user-membership-query-cache-only", &UpAdSetConfig_NssUserMembershipCacheOnlyEnabled},
+    {"nss-enumeration-enabled",              &UpAdSetConfig_NssEnumerationEnabled},
+    {"domain-manager-check-domain-online-interval", &UpAdSetConfig_DomainManagerCheckDomainOnlineSeconds},
+    {"domain-manager-unknown-domain-cache-timeout", &UpAdSetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds},
+    {"cache-type",                    &UpAdSetConfig_CacheType},
 };
 
 
 DWORD
-AD_InitializeConfig(
+UpAdInitializeConfig(
     PLSA_AD_CONFIG pConfig
     )
 {
@@ -384,13 +384,13 @@ cleanup:
 
 error:
 
-    AD_FreeConfigContents(pConfig);
+    UpAdFreeConfigContents(pConfig);
 
     goto cleanup;
 }
 
 VOID
-AD_FreeConfigContents(
+UpAdFreeConfigContents(
     PLSA_AD_CONFIG pConfig
     )
 {
@@ -411,7 +411,7 @@ AD_FreeConfigContents(
 
 
 DWORD
-AD_SectionHandler(
+UpAdSectionHandler(
     BOOLEAN         bStartOfSection,
     PCSTR           pszSectionName,
     PLSA_AD_CONFIG  pConfig,
@@ -450,7 +450,7 @@ error:
 }
 
 DWORD
-AD_ConfigNameValuePair(
+UpAdConfigNameValuePair(
     PCSTR    pszName,
     PCSTR    pszValue,
     PLSA_AD_CONFIG pConfig,
@@ -484,20 +484,20 @@ AD_ConfigNameValuePair(
 
 static
 DWORD
-AD_SetConfig_EnableEventLog(
+UpAdSetConfig_EnableEventLog(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bEnableEventLog = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bEnableEventLog = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_LoginShellTemplate(
+UpAdSetConfig_LoginShellTemplate(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -536,7 +536,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_HomeDirTemplate(
+UpAdSetConfig_HomeDirTemplate(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -644,7 +644,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_SpaceReplacement(
+UpAdSetConfig_SpaceReplacement(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -671,7 +671,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_DomainSeparator(
+UpAdSetConfig_DomainSeparator(
     IN OUT PLSA_AD_CONFIG pConfig,
     IN PCSTR          pszName,
     IN PCSTR          pszValue
@@ -698,7 +698,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_CachePurgeTimeout(
+UpAdSetConfig_CachePurgeTimeout(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -746,7 +746,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_MachinePasswordLifespan(
+UpAdSetConfig_MachinePasswordLifespan(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -795,7 +795,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_CacheEntryExpiry(
+UpAdSetConfig_CacheEntryExpiry(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -843,7 +843,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_CacheSizeCap(
+UpAdSetConfig_CacheSizeCap(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -864,20 +864,20 @@ AD_SetConfig_CacheSizeCap(
 
 static
 DWORD
-AD_SetConfig_LDAPSignAndSeal(
+UpAdSetConfig_LDAPSignAndSeal(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bLDAPSignAndSeal = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bLDAPSignAndSeal = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_RequireMembershipOf(
+UpAdSetConfig_RequireMembershipOf(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -907,85 +907,85 @@ error:
 
 static
 DWORD
-AD_SetConfig_AssumeDefaultDomain(
+UpAdSetConfig_AssumeDefaultDomain(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bAssumeDefaultDomain = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bAssumeDefaultDomain = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_SyncSystemTime(
+UpAdSetConfig_SyncSystemTime(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bSyncSystemTime = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bSyncSystemTime = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_LogNetworkConnectionEvents(
+UpAdSetConfig_LogNetworkConnectionEvents(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bShouldLogNetworkConnectionEvents = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bShouldLogNetworkConnectionEvents = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_CreateK5Login(
+UpAdSetConfig_CreateK5Login(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bCreateK5Login = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bCreateK5Login = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_CreateHomeDir(
+UpAdSetConfig_CreateHomeDir(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bCreateHomeDir = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bCreateHomeDir = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_RefreshUserCreds(
+UpAdSetConfig_RefreshUserCreds(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bRefreshUserCreds = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bRefreshUserCreds = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_SkelDirs(
+UpAdSetConfig_SkelDirs(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -1019,7 +1019,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_Umask(
+UpAdSetConfig_Umask(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -1086,7 +1086,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_HomedirPrefix(
+UpAdSetConfig_HomedirPrefix(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -1128,7 +1128,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_CellSupport(
+UpAdSetConfig_CellSupport(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -1160,59 +1160,59 @@ error:
 
 static
 DWORD
-AD_SetConfig_TrimUserMembershipEnabled(
+UpAdSetConfig_TrimUserMembershipEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bTrimUserMembershipEnabled = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bTrimUserMembershipEnabled = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_NssGroupMembersCacheOnlyEnabled(
+UpAdSetConfig_NssGroupMembersCacheOnlyEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bNssGroupMembersCacheOnlyEnabled = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bNssGroupMembersCacheOnlyEnabled = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_NssUserMembershipCacheOnlyEnabled(
+UpAdSetConfig_NssUserMembershipCacheOnlyEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bNssUserMembershipCacheOnlyEnabled = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bNssUserMembershipCacheOnlyEnabled = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_NssEnumerationEnabled(
+UpAdSetConfig_NssEnumerationEnabled(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
     )
 {
-    pConfig->bNssEnumerationEnabled = AD_GetBooleanConfigValue(pszValue);
+    pConfig->bNssEnumerationEnabled = UpAdGetBooleanConfigValue(pszValue);
 
     return 0;
 }
 
 static
 DWORD
-AD_SetConfig_CacheType(
+UpAdSetConfig_CacheType(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
     PCSTR          pszValue
@@ -1246,7 +1246,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_DomainManagerCheckDomainOnlineSeconds(
+UpAdSetConfig_DomainManagerCheckDomainOnlineSeconds(
     IN PLSA_AD_CONFIG pConfig,
     IN PCSTR pszName,
     IN PCSTR pszValue
@@ -1272,7 +1272,7 @@ error:
 
 static
 DWORD
-AD_SetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds(
+UpAdSetConfig_DomainManagerUnknownDomainCacheTimeoutSeconds(
     IN PLSA_AD_CONFIG pConfig,
     IN PCSTR pszName,
     IN PCSTR pszValue
@@ -1298,7 +1298,7 @@ error:
 
 static
 BOOLEAN
-AD_GetBooleanConfigValue(
+UpAdGetBooleanConfigValue(
     PCSTR pszValue
     )
 {
@@ -1319,7 +1319,7 @@ AD_GetBooleanConfigValue(
 
 
 DWORD
-PrintADConfig(
+UpAdPrintConfig(
     FILE *fp,
     PLSA_AD_CONFIG pConfig
     )
