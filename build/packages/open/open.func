@@ -1,4 +1,5 @@
-PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio pstore lwnetapi domainjoin lwtools lwupgrade"
+PKG_DESC="Likewise Open"
+PKG_COMPONENTS="lwbase lwadvapi centutils openssl libiconv libuuid lwmsg lwsm popt curl lsass lwdns krb5 cyrus-sasl openldap sqlite libxml2 libschannel dcerpc lwreg lwsm eventlog netlogon lwio pstore lwnetapi domainjoin lwtools lwupgrade lwconfig"
 
 case "${BUILD_OS_TYPE}" in
     aix)
@@ -86,6 +87,7 @@ function package_populate
     then
         mkdir -p "${POPULATE_PREFIX_DIR}/bin"
         rsync -a "${BUILD_ROOT}/src/linux/config/macuninstall.sh" "${POPULATE_PREFIX_DIR}/bin/."
+        populate_component domainjoin-mac
     fi
 
     # Install generic init script routines
