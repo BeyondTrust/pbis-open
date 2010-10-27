@@ -51,11 +51,11 @@ LwInterlockedCompareExchange(
     LW_IN LW_LONG lCompareValue
     );
 
-PVOID
+LW_PVOID
 LwInterlockedCompareExchangePointer(
-    IN OUT PVOID volatile *ppDestination,
-    IN PVOID pNewPointer,
-    IN PVOID pComparePointer
+    LW_IN LW_OUT LW_PVOID volatile *ppDestination,
+    LW_IN LW_PVOID pNewPointer,
+    LW_IN LW_PVOID pComparePointer
     );
 
 LW_LONG
@@ -77,7 +77,8 @@ LwInterlockedDecrement(
 
 #define InterlockedCompareExchange(Desination, NewValue, CompareValue) \
     LwInterlockedCompareExchange(Desination, NewValue, CompareValue)
-
+#define InterlockedCompareExchangePointer(Destination, Exchange, Comparand) \
+    LwInterlockedCompareExchangePointer(Destination, Exchange, Comparand)
 #define InterlockedRead(Source)             LwInterlockedRead(Source)
 #define InterlockedIncrement(Destination)   LwInterlockedIncrement(Destination)
 #define InterlockedDecrement(Destination)   LwInterlockedDecrement(Destination)
