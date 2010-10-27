@@ -65,10 +65,6 @@ LWPS_INITIALIZE_PROVIDER(regdb)(
     dwError = LwNtStatusToWin32Error(LwMapSecurityInitialize());
     BAIL_ON_LWPS_ERROR(dwError);
 
-    dwError = LwNtStatusToWin32Error(
-                  LwMapSecurityCreateContext(&gpRegLwMapSecurityCtx));
-    BAIL_ON_LWPS_ERROR(dwError);
-
 cleanup:
     return dwError;
 
@@ -101,6 +97,10 @@ RegDB_OpenProvider(
     BAIL_ON_LWPS_ERROR(dwError);
 
     pContext->hReg = hReg;
+
+    dwError = LwNtStatusToWin32Error(
+                  LwMapSecurityCreateContext(&pContext->pRegLwMapSecurityCtx));
+    BAIL_ON_LWPS_ERROR(dwError);
 
 #if 0
     dwError = LwpsCreateRWLock(
@@ -735,7 +735,9 @@ RegDB_WritePassword(
      * stored under this key.
      */
     dwError = LwNtStatusToWin32Error(
-                  RegDB_CreateRestrictedSecDescAbs(&pSecDescAbs));
+                  RegDB_CreateRestrictedSecDescAbs(
+                      pContext->pRegLwMapSecurityCtx,
+                      &pSecDescAbs));
     BAIL_ON_LWPS_ERROR(status);
 
     dwError = RegUtilAddKeySecDesc(
@@ -1052,7 +1054,6 @@ LWPS_SHUTDOWN_PROVIDER(regdb)(
 
     BAIL_IF_NOT_SUPERUSER(geteuid());
 
-    LwMapSecurityFreeContext(&gpRegLwMapSecurityCtx);
     LwMapSecurityCleanup();
 
 cleanup:
@@ -1073,5 +1074,6 @@ LwpsFreeProviderContext(
         LwpsFreeRWLock(pContext->hRWLock);
     }
     RegCloseServer(pContext->hReg);
+    LwMapSecurityFreeContext(&pContext->pRegLwMapSecurityCtx);
     LwpsFreeMemory(pContext);
 }

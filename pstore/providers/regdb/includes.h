@@ -57,9 +57,9 @@
 
 #include <reg/reg.h>
 #include <reg/regutil.h>
+#include <lw/base.h>
 #include "provider-main_p.h"
 
-#include <lw/base.h>
 
 #include "externs.h"
 

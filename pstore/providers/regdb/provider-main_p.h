@@ -77,6 +77,7 @@ typedef struct __REGDB_PROVIDER_CONTEXT
 {
     HANDLE hRWLock;
     HANDLE hReg;
+    PLW_MAP_SECURITY_CONTEXT pRegLwMapSecurityCtx;
 } REGDB_PROVIDER_CONTEXT, *PREGDB_PROVIDER_CONTEXT;
 
 DWORD
@@ -166,6 +167,7 @@ RegDB_FreePasswordInfo(
 
 NTSTATUS
 RegDB_CreateRestrictedSecDescAbs(
+    PLW_MAP_SECURITY_CONTEXT pRegLwMapSecurityCtx,
     IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDescAbs
     );
 

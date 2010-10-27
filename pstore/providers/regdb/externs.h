@@ -53,6 +53,5 @@
 extern PCSTR gpszRegDBProviderName;
 
 extern LWPS_PROVIDER_FUNC_TABLE gRegDBProviderAPITable;
-extern PLW_MAP_SECURITY_CONTEXT gpRegLwMapSecurityCtx;
 
 #endif /* __EXTERNS_H__ */

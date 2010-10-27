@@ -50,6 +50,7 @@
 static
 NTSTATUS
 RegDB_BuildRestrictedDaclForKey(
+    PLW_MAP_SECURITY_CONTEXT pRegLwMapSecurityCtx,
     OUT PACL *ppDacl
     )
 {
@@ -59,7 +60,7 @@ RegDB_BuildRestrictedDaclForKey(
     DWORD dwSidCount = 0;
     PACL pDacl = NULL;
 
-    status = LwMapSecurityGetSidFromId(gpRegLwMapSecurityCtx,
+    status = LwMapSecurityGetSidFromId(pRegLwMapSecurityCtx,
     		                           &pRootSid,
     		                           TRUE,
                                        0);
@@ -140,8 +141,9 @@ RegDB_FreeAbsoluteSecurityDescriptor(
 
 NTSTATUS
 RegDB_CreateRestrictedSecDescAbs(
-	IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDescAbs
-	)
+    PLW_MAP_SECURITY_CONTEXT pRegLwMapSecurityCtx,
+    IN OUT PSECURITY_DESCRIPTOR_ABSOLUTE *ppSecDescAbs
+    )
 {
     NTSTATUS status = STATUS_SUCCESS;
     PSECURITY_DESCRIPTOR_ABSOLUTE pSecDescAbs = NULL;
@@ -161,7 +163,7 @@ RegDB_CreateRestrictedSecDescAbs(
     // Owner: Root
 
     status = LwMapSecurityGetSidFromId(
-	         gpRegLwMapSecurityCtx,
+	         pRegLwMapSecurityCtx,
 		 &pOwnerSid,
 		 TRUE,
 		 0);
@@ -189,7 +191,9 @@ RegDB_CreateRestrictedSecDescAbs(
     // Do not set Sacl currently
 
     // DACL
-    status = RegDB_BuildRestrictedDaclForKey(&pDacl);
+    status = RegDB_BuildRestrictedDaclForKey(
+                pRegLwMapSecurityCtx,
+                &pDacl);
     BAIL_ON_LWPS_ERROR(status);
 
     status = RtlSetDaclSecurityDescriptor(pSecDescAbs,
