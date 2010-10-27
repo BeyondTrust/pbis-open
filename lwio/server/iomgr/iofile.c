@@ -291,6 +291,32 @@ IopContinueAsyncCloseFile(
     PIRP pIrp = NULL;
     IO_ASYNC_CONTROL_BLOCK asyncControlBlock = { 0 };
     PIO_ASYNC_CONTROL_BLOCK useAsyncControlBlock = NULL;
+    BOOLEAN isOpen = FALSE;
+
+    //
+    // If the create never completed successfully, we do not want
+    // to send a CLOSE IRP.
+    //
+
+    // TODO -- There is probably still a small race window
+    // wrt create and device rundown.  The fix may involve
+    // changing when IopFileObjectRemoveDispatched() is called
+    // from IopIrpCompleteInternal() so that it is called
+    // after the switch on the IRP type.
+
+    IopFileObjectLock(FileHandle);
+    isOpen = IsSetFlag(FileHandle->Flags, FILE_OBJECT_FLAG_CREATE_DONE);
+    IopFileObjectUnlock(FileHandle);
+
+    if (!isOpen)
+    {
+        status = STATUS_SUCCESS;
+        GOTO_CLEANUP_EE(EE);
+    }
+
+    //
+    // The file was actually opened, so do rest of close cleanup.
+    //
 
     IopIrpFreeZctIrpList(FileHandle);
 
