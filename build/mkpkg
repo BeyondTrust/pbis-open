@@ -115,6 +115,7 @@ function package_deb
         cat ${PKG_DIR}/$file | sed -e "s/__PKG_NAME/${PKG_NAME}/g" \
             -e "s/__PKG_VERSION/${PKG_VERSION}/g" \
             -e "s:__PKG_PREFIX:${BUILD_PREFIX}:g" \
+            -e "s/__PKG_ARCH/${BUILD_OS_ARCH}/g" \
         > ${PKG_PACKAGE_ROOT}/${PKG_NAME}/debian/$file
     done
 

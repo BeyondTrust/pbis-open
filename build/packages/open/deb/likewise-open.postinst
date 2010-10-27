@@ -170,16 +170,10 @@ fix_old_registry()
 switch_to_open_provider()
 {
     _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
-    _path=''
+    _path='/opt/likewise/lib/liblsass_auth_provider_ad_open.so'
     case "${PKG_ARCH}" in
       x86_64|amd64)
         _path='/opt/likewise/lib64/liblsass_auth_provider_ad_open.so'
-        ;;
-      i?86)
-        _path='/opt/likewise/lib/liblsass_auth_provider_ad_open.so'
-        ;;
-      *)
-        _path='error'
         ;;
     esac
 
