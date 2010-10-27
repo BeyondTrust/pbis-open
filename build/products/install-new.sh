@@ -15,6 +15,13 @@ log_info()
     echo "$@" 1>&2
 }
 
+# Expects one file name
+escape()
+{
+    files=`echo "$@" | sed 's/ /\\ /g'`
+    echo "$files"
+}
+
 setup_os_vars()
 {
     OS_TYPE=`uname`
@@ -152,7 +159,7 @@ do_setup()
     fi
 
     ## initial package list variables
-    . $DIRNAME/MANIFEST
+    . "${DIRNAME}/MANIFEST"
 
     if [ `"$id" -u` != 0 ]; then
         log_info "ERROR: Root privileges are required to install this software. Try running this installer with su or sudo."
@@ -301,7 +308,7 @@ is_package_installed_aix_rpm()
     return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-install_package_aix_rpm()
+package_install_aix_rpm()
 {
     geninstall -d "${PKGDIR}" -F $@
     if [ $? -eq 0 ]; then
@@ -310,7 +317,7 @@ install_package_aix_rpm()
     return $ERR_PACKAGE_COULD_NOT_INSTALL
 }
 
-uninstall_package_aix_rpm()
+package_uninstall_aix_rpm()
 {
     geninstall -u $@
     if [ $? -eq 0 ]; then
@@ -390,9 +397,10 @@ uninstall_hpux()
 
 package_file_exists_linux_rpm()
 {
-    pkgFile=${PKGDIR}/$1-[0-9]*.rpm
-    if [ -f $pkgFile ]; then
-        echo $pkgFile
+    pkgFile=`(cd "${PKGDIR}" && echo $1-[0-9]*.rpm)`
+    pkgFile="${PKGDIR}/${pkgFile}"
+    if [ -f "${pkgFile}" ]; then
+        echo "$pkgFile"
         return 0
     fi
     return $ERR_PACKAGE_FILE_NOT_FOUND
@@ -409,7 +417,7 @@ is_package_installed_linux_rpm()
 
 package_install_linux_rpm()
 {
-    rpm ${RPM_INSTALL_OPTIONS} $@
+    eval "rpm ${RPM_INSTALL_OPTIONS} $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -418,7 +426,7 @@ package_install_linux_rpm()
 
 package_uninstall_linux_rpm()
 {
-    rpm -e $@
+    eval "rpm -e $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -427,9 +435,10 @@ package_uninstall_linux_rpm()
 
 package_file_exists_linux_deb()
 {
-    pkgFile=${PKGDIR}/$1_*.deb
-    if [ -f $pkgFile ]; then
-        echo $pkgFile
+    pkgFile=`(cd "${PKGDIR}" && echo $1_*.deb)`
+    pkgFile="${PKGDIR}/${pkgFile}"
+    if [ -f "$pkgFile" ]; then
+        echo "$pkgFile"
         return 0
     fi
     return $ERR_PACKAGE_FILE_NOT_FOUND
@@ -452,7 +461,7 @@ is_package_installed_linux_deb()
 
 package_install_linux_deb()
 {
-    dpkg ${DPKG_INSTALL_OPTIONS} $@
+    eval "dpkg ${DPKG_INSTALL_OPTIONS} $@"
     if [ $? -eq 0 ]; then
         return 0;
     fi
@@ -461,7 +470,7 @@ package_install_linux_deb()
 
 package_uninstall_linux_deb()
 {
-    dpkg --purge $@
+    eval "dpkg --purge $@"
     if [ $? -eq 0 ]; then
         return 0
     fi
@@ -471,9 +480,10 @@ package_uninstall_linux_deb()
 
 package_file_exists_solaris()
 {
-    pkg_file=${PKGDIR}/$1-[0-9]*.pkg
-    if [ -f $pkg_file ]; then
-        echo "$pkg_file"
+    pkgFile=`(cd "${PKGDIR}" && echo $1-[0-9]*.pkg)`
+    pkgFile="${PKGDIR}/${pkgFile}"
+    if [ -f "$pkgFile" ]; then
+        echo "$pkgFile"
         return 0
     fi
     return $ERR_PACKAGE_FILE_NOT_FOUND
@@ -491,30 +501,28 @@ is_package_installed_solaris()
 
 package_install_solaris()
 {
-    # The input is a space delimited set of packages, but we need
-    # a comma separated list of packages
-    pkgList=$1
-    shift
-
-    for pkg in $@
-    do
-        pkgList="$pkgList,$pkg"
+    pkgList=`eval echo "$@"`
+    for pkgFile in $pkgList; do
+        eval "pkgadd -a ${DIRNAME}/response -d $pkgFile all"
+        err=$?
+        if [ $err -ne 0 ]; then
+            return $ERR_PACKAGE_COULD_NOT_INSTALL
+        fi
     done
-
-    pkgadd -a "${DIRNAME}/response" -d $pkgList
-    if [ $? -eq 0 ]; then
-        return 0
-    fi
-    return $ERR_PACKAGE_COULD_NOT_INSTALL
+    return 0
 }
 
 package_uninstall_solaris()
 {
-    pkgrm -a "${DIRNAME}/response" -n $@
-    if [ $? -eq 0 ]; then
-        return 0
-    fi
-    return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+    pkgList=`eval echo "$@"`
+    for pkg in $pkgList; do
+        eval "pkgrm -a ${DIRNAME}/response -n $pkg"
+        err=$?
+        if [ $err -ne 0 ]; then
+            return $ERR_PACKAGE_COULD_NOT_UNINSTALL
+        fi
+    done
+    return 0
 }
 
 remove_extra_files()
@@ -561,8 +569,14 @@ is_package_installed()
 
 package_file_exists()
 {
-    package_file_exists_${PKGTYPE} "$@"
-    return $?
+    pkgName=`package_file_exists_${PKGTYPE} "$@"`
+    err=$?
+    if [ $err -eq 0 ]; then
+        escape $pkgName
+        return $?
+    else
+        return $err
+    fi
 }
 
 package_install()
@@ -656,7 +670,11 @@ do_install()
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
-            pkgList="$pkgList $pkgName"
+            if [ -n "${pkgList}" ]; then
+                pkgList="${pkgList} $pkgName"
+            else
+                pkgList="$pkgName"
+            fi
         fi
     done
     if [ -n "$pkgList" ]; then
@@ -673,12 +691,16 @@ do_install()
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
-            pkgList="$pkgList $pkgName"
+            if [ -n "${pkgList}" ]; then
+                pkgList="${pkgList} $pkgName"
+            else
+                pkgList="$pkgName"
+            fi
         fi
     done
 
     if [ -n "$pkgList" ]; then
-        package_install $pkgList
+        package_install "$pkgList"
         err=$?
         if [ $err -ne 0 ]; then
             log_info "Error installing $pkgList"
@@ -693,12 +715,16 @@ do_install()
     do
         pkgName=`is_package_installed $pkg`
         if [ $? -eq 0 ]; then
-            pkgList="$pkgList $pkgName"
+            if [ -n "${pkgList}" ]; then
+                pkgList="${pkgList} $pkgName"
+            else
+                pkgList="$pkgName"
+            fi
         fi
     done
 
     if [ -n "$pkgList" ]; then
-        package_uninstall $pkgList
+        package_uninstall "$pkgList"
         err=$?
         if [ $err -ne 0 ]; then
             log_info "Error uninstalling obsolete packages $pkgList"
@@ -712,7 +738,11 @@ do_install()
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
-            pkgList="$pkgList $pkgName"
+            if [ -n "${pkgList}" ]; then
+                pkgList="${pkgList} $pkgName"
+            else
+                pkgList="$pkgName"
+            fi
         else
             log_info "Missing file for package $pkg"
             exit 1
@@ -720,7 +750,7 @@ do_install()
     done
 
     if [ -n "$pkgList" ]; then
-        package_install $pkgList
+        package_install "$pkgList"
         err=$?
         if [ $err -ne 0 ]; then
             log_info "Error installing $pkgList"
@@ -733,7 +763,7 @@ do_install()
     do
         pkgName=`package_file_exists $pkg`
         if [ $? -eq 0 ]; then
-            install_package $pkgName
+            package_install "$pkgName"
             err=$?
             if [ $err -ne 0 ]; then
                 if [ $err -eq $ERR_PACKAGE_COULD_NOT_INSTALL ]; then
@@ -743,11 +773,15 @@ do_install()
         fi
     done
 
-    echo "PREFIX=\"$PREFIX\"" > /var/lib/likewise/uninstall
-    echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/likewise/uninstall
-    echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/likewise/uninstall
-    echo "INSTALL_BASE_PACKAGES=\"$INSTALL_BASE_PACKAGES\"" >> /var/lib/likewise/uninstall
-    echo "INSTALL_OPTIONAL_PACKAGES=\"$INSTALL_OPTIONAL_PACKAGES\"" >> /var/lib/likewise/uninstall
+    mkdir -p /var/lib/likewise/uninstall
+    echo "PREFIX=\"$PREFIX\"" > /var/lib/likewise/uninstall/MANIFEST
+    echo "PKGTYPE=\"$PKGTYPE\"" >> /var/lib/likewise/uninstall/MANIFEST
+    echo "INSTALL_UPGRADE_PACKAGE=\"$INSTALL_UPGRADE_PACKAGE\"" >> /var/lib/likewise/uninstall/MANIFEST
+    echo "INSTALL_BASE_PACKAGES=\"$INSTALL_BASE_PACKAGES\"" >> /var/lib/likewise/uninstall/MANIFEST
+    echo "INSTALL_OPTIONAL_PACKAGES=\"$INSTALL_OPTIONAL_PACKAGES\"" >> /var/lib/likewise/uninstall/MANIFEST
+    if [ -f "${DIRNAME}/response" ]; then
+        cp "${DIRNAME}/response" /var/lib/likewise/uninstall/response
+    fi
 
     log_info "Installing Packages was successful"
 }
@@ -1164,10 +1198,10 @@ main_uninstall()
 {
     setup_os_vars
 
-    if [ -f /var/lib/likewise/uninstall ]; then
-        . /var/lib/likewise/uninstall
+    if [ -f /var/lib/likewise/uninstall/MANIFEST ]; then
+        . /var/lib/likewise/uninstall/MANFIEST
     else
-        echo "The file /var/lib/likewise/uninstall cannot be found and"
+        echo "The file /var/lib/likewise/uninstall/MANIFEST cannot be found and"
         echo "is required for this uninstall procedure."
         exit 1
     fi
@@ -1206,8 +1240,12 @@ main()
         DIRNAME=.
     fi
 
-    if echo "$DIRNAME" | grep -v '^/' >/dev/null 2>&1; then
-        DIRNAME="`pwd`/$DIRNAME"
+    if echo "${DIRNAME}" | grep -v '^/' >/dev/null 2>&1; then
+        if [ "`pwd`" = '/' ]; then
+            DIRNAME="/${DIRNAME}"
+        else
+            DIRNAME="`pwd`/${DIRNAME}"
+        fi
     fi
 
     if [ "$BASENAME" = "uninstall.sh" ]; then
