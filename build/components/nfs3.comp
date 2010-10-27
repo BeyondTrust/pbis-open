@@ -1,7 +1,7 @@
 #!/bin/bash -c "exit 1"
 
 #
-# srvsvc.comp -- see ../../helper.sh for how this file works.
+# nfs3.comp -- see ../../helper.sh for how this file works.
 #
 
 COMP_INCREMENTAL=1
