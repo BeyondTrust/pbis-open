@@ -748,6 +748,12 @@ RdrSocketReceivePacket(
     }
 
     pPacket->pSMBHeader = (SMB_HEADER *) (pPacket->pRawBuffer + sizeof(NETBIOS_HEADER));
+    /* Bounds check the first byte of the smb header */
+    if ((PBYTE) &pPacket->pSMBHeader->smb[0] >= pPacket->pRawBuffer + pPacket->bufferUsed)
+    {
+        ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     switch (pPacket->pSMBHeader->smb[0])
     {
@@ -757,11 +763,24 @@ RdrSocketReceivePacket(
             ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
             BAIL_ON_NT_STATUS(ntStatus);
         }
+
+        if ((PBYTE) pPacket->pSMBHeader + sizeof(SMB_HEADER) >= pPacket->pRawBuffer + pPacket->bufferUsed)
+        {
+            ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
         pPacket->protocolVer = SMB_PROTOCOL_VERSION_1;
         if (SMBIsAndXCommand(SMB_LTOH8(pPacket->pSMBHeader->command)))
         {
             pPacket->pAndXHeader = (ANDX_HEADER *)
                 (pPacket->pRawBuffer + sizeof(SMB_HEADER) + sizeof(NETBIOS_HEADER));
+
+            if ((PBYTE) pPacket->pAndXHeader + sizeof(ANDX_HEADER) >= pPacket->pRawBuffer + pPacket->bufferUsed)
+            {
+                ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+                BAIL_ON_NT_STATUS(ntStatus);
+            }
         }
         pPacket->pParams = pPacket->pAndXHeader ?
             (PBYTE) pPacket->pAndXHeader + sizeof(ANDX_HEADER) :
@@ -769,6 +788,12 @@ RdrSocketReceivePacket(
         pPacket->pData = NULL;
         break;
     case 0xFE:
+        if ((PBYTE) pPacket->pSMB2Header + sizeof(SMB2_HEADER) >= pPacket->pRawBuffer + pPacket->bufferUsed)
+        {
+            ntStatus = STATUS_INVALID_NETWORK_RESPONSE;
+            BAIL_ON_NT_STATUS(ntStatus);
+        }
+
         pPacket->protocolVer = SMB_PROTOCOL_VERSION_2;
         break;
     default:
@@ -1174,13 +1199,6 @@ RdrSocketDispatchPacket2(
     ULONG64 ullSessionId = 0;
     PRDR_OP_CONTEXT pContext = NULL;
 
-    /* Basic sanity check on header so we can read a few fields out of it */
-    if (pPacket->bufferUsed < sizeof(NETBIOS_HEADER) + sizeof(SMB2_HEADER))
-    {
-        status = STATUS_INVALID_NETWORK_RESPONSE;
-        BAIL_ON_NT_STATUS(status);
-    }
-
     /*
      * To verify the signature, we need to look up the session so we
      * can grab the session key.
@@ -1239,8 +1257,7 @@ RdrSocketDispatchPacket2(
 
         LwListRemove(&pContext->Link);
         /*
-         * Make sure the response command was what we expected.
-         * FIXME: handle error response packets
+         * Make sure the response command was what we expected
          */
         if (SMB_HTOL16(pContext->Packet.pSMB2Header->command) !=
             pPacket->pSMB2Header->command)
@@ -1293,9 +1310,18 @@ RdrSocketDispatchPacket1(
 {
     NTSTATUS ntStatus = 0;
     USHORT usMid = 0;
+    ULONG ulFlags = 0;
     BOOLEAN bLocked = TRUE;
     BOOLEAN bKeep = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
+
+    ulFlags = SMB_HTOL32(pPacket->pSMBHeader->flags);
+
+    if (!(pPacket->pSMBHeader->flags & FLAG_RESPONSE))
+    {
+        /* Drop non-response packets */
+        goto cleanup;
+    }
 
     usMid = SMB_HTOL16(pPacket->pSMBHeader->mid);
 
@@ -1308,6 +1334,7 @@ RdrSocketDispatchPacket1(
     case STATUS_SUCCESS:
         break;
     case STATUS_NOT_FOUND:
+        /* Drop packets that we gave up waiting for */
         ntStatus = STATUS_SUCCESS;
         goto cleanup;
     default:
