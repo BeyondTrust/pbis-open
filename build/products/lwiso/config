@@ -20,7 +20,7 @@ DAEMONS="lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd srvsvcd"
 OBSOLETE_DAEMONS="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd"
 # lwregd is started elsewhere since it must be started first.
 AUTOSTART=""
-REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg"
+REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg srvsvcd.reg pstore.reg nfs3.reg"
 
 case "${BUILD_OS_TYPE}" in
     linux)
