@@ -100,14 +100,14 @@ postinstall()
 
     # Stop any Likewise daemon (process capture for debugging).
     exec_log "ps -ef"
-    for $daemon in $DAEMONS_TO_HALT
-    do
-        if [ -x /etc/rc.d/$daemon]; then
+    for daemon in $DAEMONS_TO_HALT; do
+        if [ -x /etc/rc.d/$daemon ]; then
             exec_log "svcadm disable $daemon"
             exec_log "/etc/rc.d/$daemon stop"
-            exec_log "killall -KILL $daemon"
+            exec_log "pkill -KILL -x $daemon"
         fi
     done
+    exec_log "ps -ef"
 
     determine_upgrade_type
 
