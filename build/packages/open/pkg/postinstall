@@ -128,7 +128,7 @@ import_registry_configurations()
 import_5_0123_file()
 {
     CONVERT="/opt/likewise/bin/conf2reg"
-    REGIMPORT="/opt/likewise/bin/lwregshell import"
+    REGIMPORT="/opt/likewise/bin/lwregshell upgrade"
 
     COMMAND=$1
     SOURCE=$2
@@ -216,7 +216,9 @@ postinstall()
 
     exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
 
-    exec_log_exit "pam-auth-update --package"
+    exec_log "/opt/likewise/bin/domainjoin-cli configure --enable pam"
+
+    exec_log "/opt/likewise/bin/domainjoin-cli configure --enable nsswitch"
 
     log "Package: Likewise Open post-install finished"
 }
