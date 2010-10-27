@@ -1,17 +1,8 @@
 # ex: set tabstop=4 expandtab shiftwidth=4:
 
-%{!?AIX: %define AIX 0}
-
 %{!?Compat32: %define Compat32 0}
 
-%if %{AIX}
-%define _prefix /opt
-%define __install /usr/linux/bin/install
-%define INIT_DIR /etc/rc.d/init.d
-%else
 %define INIT_DIR /etc/init.d
-%endif
-
 %define _sysconfdir /etc
 
 %if %{Compat32}
@@ -31,15 +22,8 @@ License: 	Likewise Proprietary
 URL: 		http://www.likewise.com/
 Group: 		System Environment/Daemons
 BuildRoot: 	%{buildRootDir}/%{name}-%{version}
-%if ! %{AIX}
 Prereq: grep, sh-utils
-%endif
-
 AutoReq: no
-%if %{AIX}
-AutoReqProv: no
-AutoProv: no
-%endif
 
 
 %description
@@ -102,6 +86,7 @@ rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
 
 %if ! %{Compat32}
 %define initScriptPathList %{INIT_DIR}/dcerpcd %{INIT_DIR}/eventlogd %{INIT_DIR}/lsassd %{INIT_DIR}/lwiod %{INIT_DIR}/lwregd %{INIT_DIR}/lwsmd %{INIT_DIR}/netlogond
+%define AdProviderPath /opt/likewise/%{_LIB}/liblsass_auth_provider_ad_open.so
 %post
 ## chkconfig behaves differently on various updates of RHEL and SUSE
 ## So, we massage the init script according to the release, for now.
@@ -127,24 +112,225 @@ for daemon in %{initScriptPathList}; do
     fi
 done
 
-DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
-LWSM=/opt/likewise/bin/lwsm
-LWSMD=/etc/init.d/lwsmd
-REGSHELL=/opt/likewise/bin/lwregshell
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
 
-$LWSMD start || exit 4
+UPGRADEDIR=/opt/likewise-upgrade
 
-$REGSHELL import /opt/likewise/share/config/dcerpcd.reg || exit 100
-$REGSHELL import /opt/likewise/share/config/eventlogd.reg || exit 101
-$REGSHELL import /opt/likewise/share/config/lwreg.reg || exit 102
-$REGSHELL import /opt/likewise/share/config/lsassd.reg || exit 103
-$REGSHELL import /opt/likewise/share/config/lwiod.reg || exit 104
-$REGSHELL import /opt/likewise/share/config/netlogond.reg || exit 105
-$REGSHELL import /opt/likewise/share/config/pstore.reg || exit 106
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
 
-$LWSMD reload || exit 5
+PKG_ARCH="__PKG_ARCH"
 
-$DOMAINJOIN query > /dev/null 2>&1 || exit 6
+# Display to screen and log file with a blank line.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+exec_log()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+exec_logfile()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+import_registry_configuration()
+{
+    exec_log_exit \
+        "/opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg"
+}
+
+import_registry_configurations()
+{
+    log "Importing registry configurations"
+    import_registry_configuration dcerpcd
+    import_registry_configuration eventlogd
+    import_registry_configuration lsassd
+    import_registry_configuration lwiod
+    import_registry_configuration lwreg
+    import_registry_configuration netlogond
+    import_registry_configuration pstore
+}
+
+import_5_0123_file()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+    REGIMPORT="/opt/likewise/bin/lwregshell import"
+
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
+
+    if [ -f $SOURCE ]; then
+        exec_log $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
+
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            exec_log $REGIMPORT $DEST > /dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                return 1
+            fi
+        fi
+    fi
+    return 0
+}
+
+restore_5_0123_configuration()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+
+    if [ ! -d "${UPGRADEDIR}" ]; then
+        return 0;
+    fi
+
+    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
+
+    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+}
+
+fix_old_registry()
+{
+    DomainSeparator=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
+        fi
+        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+    fi
+    if [ -n "${SpaceReplacement}" ]; then
+        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
+switch_to_open_provider()
+{
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='%{AdProviderPath}'
+
+    exec_log "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
+}
+
+postinstall()
+{
+    log "Package: Likewise Open post-install begins (`date`)"
+
+    # Stop any Likewise daemon (process capture for debugging).
+    logfile "Snapshot of processes before stopping daemons"
+    exec_logfile "ps ax"
+    for daemon in $DAEMONS_TO_HALT
+    do
+        if [ -x /etc/rc.d/$daemon ]; then
+            exec_logfile "/etc/rc.d/$daemon stop"
+        fi
+        exec_logfile "pkill -TERM -x $daemon"
+        exec_logfile "pkill -KILL -x $daemon"
+    done
+    logfile "Snapshot of processes after stopping daemons"
+    exec_logfile "ps ax"
+
+    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon --disable-autostart"
+
+    restore_5_0123_configuration
+
+    import_registry_configurations
+
+    fix_old_registry
+
+    switch_to_open_provider
+
+    exec_log_exit "/etc/init.d/lwsmd stop"
+
+    exec_log_exit "/etc/init.d/lwsmd start"
+
+    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
+
+    log "Package: Likewise Open post-install finished"
+}
+
+if [ $1 -eq 1 ]; then
+    postinstall
+else
+    echo "This is an upgrade"
+fi
 
 %endif
 
