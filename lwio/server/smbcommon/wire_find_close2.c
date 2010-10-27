@@ -100,6 +100,8 @@ WireMarshallFindClose2Response(
 
     pResponseHeader = (PFIND_CLOSE2_RESPONSE_HEADER)pParams;
 
+    pResponseHeader->usByteCount = 0;
+
     *ppResponseHeader = pResponseHeader;
     *pusBytesUsed = sizeof(FIND_CLOSE2_RESPONSE_HEADER);
 

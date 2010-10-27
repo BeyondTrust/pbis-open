@@ -140,6 +140,7 @@ WireMarshallNtRenameResponse(
     usPackageBytesUsed += sizeof(SMB_NT_RENAME_RESPONSE_HEADER);
 
     pResponseHeader->usByteCount = usPackageBytesUsed;
+    pResponseHeader->ucBuffer[0] = 0;
 
     *ppResponseHeader = pResponseHeader;
     *pusPackageBytesUsed = usPackageBytesUsed;

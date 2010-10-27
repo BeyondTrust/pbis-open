@@ -355,6 +355,7 @@ WireMarshallNtTransactionResponse(
     }
 
     pResponseHeader = (PNT_TRANSACTION_SECONDARY_RESPONSE_HEADER)pDataCursor;
+    memset(pResponseHeader, 0, sizeof(*pResponseHeader));
 
     pDataCursor += sizeof(NT_TRANSACTION_SECONDARY_RESPONSE_HEADER);
     ulOffset += sizeof(NT_TRANSACTION_SECONDARY_RESPONSE_HEADER);
