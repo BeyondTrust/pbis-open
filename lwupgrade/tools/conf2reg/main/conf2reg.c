@@ -146,17 +146,6 @@ main(
                 dwError = LsassConfFileToRegFile(argv[2], argv[3]);
             }
         }
-        else if (!strcmp(argv[1], "--lwio"))
-        {
-            if (argc < 4)
-            {
-                PrintUsage("--lwio requires two arguments.");
-            }
-            else
-            {
-                dwError = LwioConfFileToRegFile(argv[2], argv[3]);
-            }
-        }
         else if (!strcmp(argv[1], "--netlogon"))
         {
             if (argc < 4)
@@ -237,12 +226,6 @@ PrintUsage(
 "--lsass CONF REG\n"
 "  Convert lsass 5.x configuration file to registry\n"
 "  import file.\n"
-"\n", stderr);
-
-    fputs(
-"--lwio CONF REG\n"
-"  Convert lwio 5.x configuration file to registry import\n"
-"  file.\n"
 "\n", stderr);
 
     fputs(

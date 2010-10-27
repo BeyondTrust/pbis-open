@@ -247,7 +247,6 @@ AC_CONFIG_FILES([Makefile
                  tools/conf2reg/agents/Makefile
                  tools/conf2reg/agents/eventlog/Makefile
                  tools/conf2reg/agents/lsass/Makefile
-                 tools/conf2reg/agents/lwio/Makefile
                  tools/conf2reg/agents/netlogon/Makefile
                  tools/conf2reg/agents/pstore-sqlite/Makefile
                  tools/conf2reg/agents/testparse/Makefile

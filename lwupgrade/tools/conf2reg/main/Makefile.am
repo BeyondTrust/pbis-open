@@ -11,7 +11,6 @@ conf2reg_CPPFLAGS = \
 conf2reg_LDADD = \
     $(top_builddir)/tools/conf2reg/agents/eventlog/libconfeventlog.la \
     $(top_builddir)/tools/conf2reg/agents/lsass/libconflsass.la \
-    $(top_builddir)/tools/conf2reg/agents/lwio/libconflwio.la \
     $(top_builddir)/tools/conf2reg/agents/netlogon/libconfnetlogon.la \
     $(top_builddir)/tools/conf2reg/agents/pstore-sqlite/libpstore-sqlite.la \
     $(top_builddir)/tools/conf2reg/agents/testparse/libconftestparse.la \
