@@ -97,6 +97,6 @@ preinstall()
     pkill -KILL -x netlogond
     pkill -KILL -x eventlogd
     pkill -KILL -x dcerpcd
-    pkill -KILL -x netlogond
+    pkill -KILL -x lwsmd
     pkill -KILL -x lwregd
 }
