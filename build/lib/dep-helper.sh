@@ -255,9 +255,26 @@ component_available()
     done
 }
 
+
+component_maybe_sys()
+{
+    # Returns filtered component names depending on whether environment
+    # variable says to use the system-provided library.
+    local deps=
+    local comp
+    for comp in $@
+    do
+        if ! _contains $comp $MKCOMP_USE_SYSTEM
+        then
+            deps="${deps} ${comp}"
+        fi
+    done
+    echo $deps
+}
+
 component_dependencies()
 {
-    ( COMP_DEPENDENCIES=""; source ${COMPONENTS_DIR}/$1.comp && echo $COMP_DEPENDENCIES )
+    ( COMP_DEPENDENCIES=""; source ${COMPONENTS_DIR}/$1.comp && component_maybe_sys $COMP_DEPENDENCIES )
 }
 
 component_transitive_closure()
