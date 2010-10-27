@@ -3,25 +3,94 @@
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
+# Display to screen and log file with a blank line.
 log()
 {
-    echo $1
-    echo $1 >> $LOG
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+exec_log()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+exec_logfile()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
 }
 
 import_service_configuration()
 {
     if svccfg select TEMP/network/$1 2>/dev/null; then
-        svccfg delete TEMP/network/$1
+        exec_logfile "svccfg delete TEMP/network/$1"
     fi
 
-    svccfg import /etc/likewise/svcs-solaris/$1.xml > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then 
-        log "Error: svccfg import /etc/likewise/svcs-solaris/$1.xml returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit "svccfg import /etc/likewise/svcs-solaris/$1.xml"
 }
 
 import_service_configurations()
@@ -40,13 +109,8 @@ import_service_configurations()
 
 import_registry_configuration()
 {
-    /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg > $TLOG 2>&1
-    err=$?
-    if [ $err -ne 0 ]; then
-        log "Error: /opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg returned $err"
-        log `cat $TLOG`
-        exit 1
-    fi
+    exec_log_exit \
+        "/opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg"
 }
 
 import_registry_configurations()
@@ -61,42 +125,101 @@ import_registry_configurations()
     import_registry_configuration pstore
 }
 
-log "Package: Likewise Open post-install begins (`date`)"
+import_5_0123_file()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+    REGIMPORT="/opt/likewise/bin/lwregshell import"
 
-import_service_configurations
+    COMMAND=$1
+    SOURCE=$2
+    # DEST is not necessary for some commands.
+    DEST=$3
 
-/opt/likewise/sbin/lwsmd --start-as-daemon > $TLOG 2>&1
-err=$?
-if [ $err -ne 0 ]; then
-    log "Error: /opt/likewise/sbin/lwsmd --start-as-daemon returned $err"
-    log `cat $TLOG`
-    exit 1
-fi
+    if [ -f $SOURCE ]; then
+        exec_log "$CONVERT $COMMAND $SOURCE $DEST"
+        if [ $? -ne 0 ]; then
+            return 1
+        fi
 
-import_registry_configurations
+        if [ -n "$DEST" -a -f "$DEST" ]; then
+            exec_log "$REGIMPORT $DEST"
+            if [ $? -ne 0 ]; then
+                return 1
+            fi
+        fi
+    fi
+    return 0
+}
 
-/etc/init.d/lwsmd stop > $TLOG 2>&1
-err=$?
-if [ $err -ne 0 ]; then
-    log "error: /etc/init.d/lwsmd stop returned $err"
-    log `cat $TLOG`
-    exit 1
-fi
+restore_5_0123_configuration()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
 
-/etc/init.d/lwsmd start > $TLOG 2>&1
-err=$?
-if [ $err -ne 0 ]; then
-    log "error: /etc/init.d/lwsmd start returned $err"
-    log `cat $TLOG`
-    exit 1
-fi
+    if [ ! -d "${UPGRADEDIR}" ]; then
+        return 0;
+    fi
 
-/opt/likewise/bin/domainjoin-cli query > $TLOG 2>&1
-err=$?
-if [ $err -ne 0 ]; then
-    log "error: /opt/likewise/bin/domainjoin-cli query returned $err"
-    log `cat $TLOG`
-    exit 1
-fi
+    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
 
-log "Package: Likewise Open post-install finished"
+    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+}
+
+fix_old_registry()
+{
+    DomainSeparator=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+    if [ -n "${DomainSeparator}" ]; then
+        if [ "$DomainSeparator" = "\\\\" ]; then
+            DomainSeparator="\\"
+        fi
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+    fi
+    if [ -n "${SpaceReplacement}" ]; then
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+    fi
+}
+
+switch_to_open_provider()
+{
+    _value='[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]'
+    _path='/opt/likewise/lib/liblsass_auth_provider_ad_open.so'
+
+    exec_log "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
+}
+
+postinstall()
+{
+    log "Package: Likewise Open post-install begins (`date`)"
+
+    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon"
+
+    restore_5_0123_configuration
+
+    import_registry_configurations
+
+    fix_old_registry
+
+    switch_to_open_provider
+
+    exec_log_exit "/etc/init.d/lwsmd stop"
+
+    import_service_configurations
+
+    exec_log_exit "/etc/init.d/lwsmd start"
+
+    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
+
+    exec_log_exit "pam-auth-update --package"
+
+    log "Package: Likewise Open post-install finished"
+}
+
+postinstall
+

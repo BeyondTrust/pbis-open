@@ -117,13 +117,13 @@ import_5_0123_file()
     DEST=$3
 
     if [ -f $SOURCE ]; then
-        exec_log $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        exec_log "$CONVERT $COMMAND $SOURCE $DEST"
         if [ $? -ne 0 ]; then
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
-            exec_log $REGIMPORT $DEST > /dev/null 2>&1
+            exec_log "$REGIMPORT $DEST"
             if [ $? -ne 0 ]; then
                 return 1
             fi
@@ -160,10 +160,10 @@ fix_old_registry()
         if [ "$DomainSeparator" = "\\\\" ]; then
             DomainSeparator="\\"
         fi
-        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
     if [ -n "${SpaceReplacement}" ]; then
-        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
 }
 
@@ -177,14 +177,14 @@ switch_to_open_provider()
         ;;
     esac
 
-    exec_log /opt/likewise/bin/lwregshell 'set_value' "$_value" 'Path' "$_path"
+    exec_log "/opt/likewise/bin/lwregshell set_value $_value Path $_path"
 }
 
 postinstall()
 {
     log "Package: Likewise Open post-install begins (`date`)"
 
-    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon --disable-autostart"
+    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon"
 
     restore_5_0123_configuration
 

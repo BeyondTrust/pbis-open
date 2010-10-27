@@ -82,6 +82,8 @@ rm -rf $RPM_BUILD_ROOT/%{PrefixDir}/share
 %{PrefixDir}/%{_lib}/krb5/plugins/libkrb5/*.so.*
 %{PrefixDir}/%{_lib}/sasl2/lib*
 %{PrefixDir}/ssl
+/var/lib/likewise/lwconfig.xml
+/var/lib/likewise/lwreport.xml
 %endif
 
 %if ! %{Compat32}
@@ -307,7 +309,7 @@ postinstall()
     logfile "Snapshot of processes after stopping daemons"
     exec_logfile "ps ax"
 
-    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon --disable-autostart"
+    exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon"
 
     restore_5_0123_configuration
 
