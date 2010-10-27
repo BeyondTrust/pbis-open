@@ -109,6 +109,8 @@ LsaSrvApiInitConfig(
     PLSA_SRV_API_CONFIG pConfig
     )
 {
+    DWORD dwError = 0;
+
     LsaSrvApiFreeConfigContents(pConfig);
 
     pConfig->bSawProviderAD = FALSE;
@@ -116,11 +118,20 @@ LsaSrvApiInitConfig(
 
     pConfig->bEnableEventLog = FALSE;
     pConfig->bLogNetworkConnectionEvents = TRUE;
-    
-    pConfig->pszLogLevel = NULL;
-    LwAllocateString("error", &pConfig->pszLogLevel);
 
-    return 0;
+    pConfig->pszLogLevel = NULL;
+    dwError = LwAllocateString("error", &pConfig->pszLogLevel);
+    BAIL_ON_UP_ERROR(dwError);
+
+cleanup:
+    return dwError;
+
+error:
+    if (pConfig)
+    {
+        LW_SAFE_FREE_STRING(pConfig->pszLogLevel);
+    }
+    goto cleanup;
 }
 
 VOID
