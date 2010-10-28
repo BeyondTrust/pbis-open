@@ -205,19 +205,8 @@ preinstall()
     log "Package: Likewise Open Upgrade Helper finished"
 }
 
-case "$1" in
-    abort-upgrade)
-    ;;
+preinstall
 
-    upgrade)
-    ;;
-
-    install)
-        preinstall
-    ;;
-esac
-
-#DEBHELPER#
 %endif
 
 %changelog
