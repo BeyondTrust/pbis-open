@@ -32,7 +32,7 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 
 %if ! %{Compat32}
 %pre
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
 
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
@@ -119,7 +119,6 @@ determine_upgrade_type()
 {
     VERSIONFILE=/opt/likewise/data/VERSION
     if [ -f $VERSIONFILE ]; then
-        UPGRADING=1
         UPGRADEDIR=/opt/likewise-upgrade
         exec_log_exit mkdir -p "${UPGRADEDIR}"
 
@@ -180,7 +179,7 @@ preserve_5_4_configuration()
 
 preinstall()
 {
-    log "Package: Likewise Open Upgrade Helper begins (`date`)"
+    log "Package: Likewise Open Upgrade begins (`date`)"
 
     # Stop any Likewise daemon (process capture for debugging).
     logfile "Snapshot of processes before stopping daemons"
@@ -202,7 +201,7 @@ preinstall()
 
     preserve_5_4_configuration
 
-    log "Package: Likewise Open Upgrade Helper finished"
+    log "Package: Likewise Open Upgrade finished"
 }
 
 preinstall
