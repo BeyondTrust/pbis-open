@@ -49,6 +49,9 @@
 #ifndef __UTILS_H__
 #define __UTILS_H__
  
+#include "queue.h"
+#include "prodcons.h"
+
 NTSTATUS
 Nfs3AllocateMemory(
     IN  size_t size,

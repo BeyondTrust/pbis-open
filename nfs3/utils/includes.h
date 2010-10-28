@@ -58,5 +58,3 @@
 
 #include "nfs3defs.h"
 #include "nfs3utils.h"
-#include "queue.h"
-#include "prodcons.h"
