@@ -10,5 +10,6 @@ libnfs3utils_la_CPPFLAGS = \
     -DLW_ENABLE_THREADS=1  \
     -I@top_srcdir@/include
 
-libnfs3utils_la_LDFLAGS = -static
-
+if ENABLE_STATIC_DRIVERS
+    libnfs3utils_la_LDFLAGS = -static
+endif

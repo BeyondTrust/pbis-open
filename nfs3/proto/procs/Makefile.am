@@ -9,5 +9,6 @@ libnfs3procs_la_CPPFLAGS = 	    \
     -I@top_srcdir@/include 	    \
 	-I@top_srcdir@/proto/include
 
-libnfs3procs_la_LDFLAGS = -static
-
+if ENABLE_STATIC_DRIVERS
+    libnfs3procs_la_LDFLAGS = -static
+endif
