@@ -714,6 +714,7 @@ LwRtlCreateTask(
         if (pGroup->bCancelled)
         {
             UNLOCK_GROUP(pGroup);
+            UNLOCK_POOL(pPool);
             status = STATUS_CANCELLED;
             GOTO_ERROR_ON_STATUS(status);
         }
