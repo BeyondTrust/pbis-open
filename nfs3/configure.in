@@ -87,7 +87,7 @@ AC_SUBST(LWIO_LIBS)
 AC_ARG_WITH([lwadvapi],
         [AC_HELP_STRING([--with-lwadvapi=<dir>], [use lwadvapi located in prefix <dir>])],
         [
-		LWADVAVPI_INCLUDES="-I$withval/include"
+		LWADVAPI_INCLUDES="-I$withval/include"
 		LWADVAPI_LDFLAGS="-L$withval/lib"
         ])
 
