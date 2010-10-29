@@ -530,8 +530,16 @@ cleanup:
         return ret;
 
 error:
-        prompts[0].reply->data[0] = '\0';
-        prompts[0].reply->length = 0;
+        if (prompts && prompts[0].reply)
+        {
+            prompts[0].reply->length = 0;
+
+            if (prompts[0].reply->data)
+            {
+                prompts[0].reply->data[0] = '\0';
+            }
+        }
+
         ret = KRB5_PREAUTH_FAILED;
         goto cleanup;
 }
