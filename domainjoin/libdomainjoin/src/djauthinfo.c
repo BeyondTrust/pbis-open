@@ -953,6 +953,7 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
     int firstStart = 0;
     int firstStop = 0;
     int stopLaterOffset = 0;
+    BOOLEAN exists = FALSE;
 
 #ifndef MINIMAL_JOIN
 
@@ -963,10 +964,16 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
                     &firstStop,
                     &stopLaterOffset));
 
-        LW_TRY(exc, DJManageDaemon("lwsmd", TRUE,
-                    firstStart - 2,
-                    firstStop + stopLaterOffset * 1,
-                    &LW_EXC));
+
+        LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/usr/sbin/svcadm", &exists));
+
+        if (!exists)
+        {
+            LW_TRY(exc, DJManageDaemon("lwsmd", TRUE,
+                        firstStart - 2,
+                        firstStop + stopLaterOffset * 1,
+                        &LW_EXC));
+        }
     }
 
 #if 0
