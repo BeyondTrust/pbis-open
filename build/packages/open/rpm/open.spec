@@ -15,7 +15,7 @@
 %endif
 
 Name: 		%{RpmName}
-Summary: 	Likewise Open is amazing
+Summary: 	Authentication services for Active Directory domains
 Version: 	%{RpmVersion}
 Release: 	%{RpmRelease}
 License: 	Likewise Proprietary
@@ -27,7 +27,7 @@ AutoReq: no
 
 
 %description
-Likewise provides Active Directory authentication.
+Likewise Open integrates Unix desktops and servers into an Active Directory environment by joining hosts to the domain and lets Unix applications and services authenticate MS Windows' users and groups via the PAM and Name Service Switch libraries.
 
 %package devel
 Summary: Likewise Software Development Kit
@@ -35,8 +35,7 @@ Group: Development/Libraries
 Requires: likewise
 
 %description devel
-The likewise-devel package includes the development libraries and header files that supply the application programming interface for security and
-authentication.
+The likewise-open-devel package includes the development libraries and header files that supply the application programming interface for security and authentication.
 
 %prep
 
@@ -204,28 +203,24 @@ exec_log_exit()
     return $err
 }
 
-import_registry_configuration()
-{
-    exec_log_exit \
-        "/opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg"
-}
-
 import_registry_configurations()
 {
+    REGUPGRADE='/opt/likewise/bin/lwregshell upgrade'
+
     log "Importing registry configurations"
-    import_registry_configuration dcerpcd
-    import_registry_configuration eventlogd
-    import_registry_configuration lsassd
-    import_registry_configuration lwiod
-    import_registry_configuration lwreg
-    import_registry_configuration netlogond
-    import_registry_configuration pstore
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/dcerpcd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/eventlogd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lsassd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwiod.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwreg.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/netlogond.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/pstore.reg"
 }
 
 import_5_0123_file()
 {
     CONVERT="/opt/likewise/bin/conf2reg"
-    REGIMPORT="/opt/likewise/bin/lwregshell import"
+    REGIMPORT="/opt/likewise/bin/lwregshell upgrade"
 
     COMMAND=$1
     SOURCE=$2
@@ -233,14 +228,16 @@ import_5_0123_file()
     DEST=$3
 
     if [ -f $SOURCE ]; then
-        exec_log $CONVERT $COMMAND $SOURCE $DEST > /dev/null 2>&1
+        exec_log "$CONVERT $COMMAND $SOURCE $DEST"
         if [ $? -ne 0 ]; then
+            log "Please file a bug and attach $SOURCE."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
-            exec_log $REGIMPORT $DEST > /dev/null 2>&1
+            exec_log "$REGIMPORT $DEST"
             if [ $? -ne 0 ]; then
+                log "Please file a bug and attach $SOURCE and $DEST."
                 return 1
             fi
         fi
@@ -268,19 +265,79 @@ restore_5_0123_configuration()
     import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
 }
 
-fix_old_registry()
+relocate_domain_separator()
 {
     DomainSeparator=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
-    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
     if [ -n "${DomainSeparator}" ]; then
-        if [ "$DomainSeparator" = "\\\\" ]; then
-            DomainSeparator="\\"
+        if [ "${DomainSeparator}" = '\\' ]; then
+            DomainSeparator='\'
+# Balance quotes: '
         fi
-        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
+
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "${DomainSeparator}"
     fi
+}
+
+relocate_space_replacement()
+{
+    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
     if [ -n "${SpaceReplacement}" ]; then
-        /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
+        exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
+}
+
+# Assumes the registry is not empty
+migrate_pstore()
+{
+    tmpreg=/tmp/regup-$$.txt
+    LWREGSHELL=/opt/likewise/bin/lwregshell
+    PSTORE_UPGRADE=/opt/likewise/bin/psupgrade
+
+    # Export the existing registry, in legacy format
+    exec_log_exit $LWREGSHELL export --legacy $tmpreg
+    if [ ! -s $tmpreg ]; then
+        log "Could not export registry."
+        exit 1
+    fi
+
+    # "Rename" relevant pstore entries to new registry location
+    $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
+    if [ ! -s ${tmpreg}.out ]; then
+        # Nothing to move/rename
+        exec_logfile "rm -f $tmpreg"
+        exec_logfile "rm -f ${tmpreg}.out"
+        return
+    fi
+
+    # Import renamed pstore entries
+    exec_log_exit "$LWREGSHELL import ${tmpreg}.out"
+    exec_logfile "rm -f ${tmpreg}.out"
+
+    # Clear out old pstore entries
+    if [ `grep -c '\[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]' $tmpreg` -gt 0 ]; then
+      exec_logfile $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
+    fi
+
+    # Remove values with identical default attributes from registry
+    rm -f $tmpreg
+}
+
+
+fix_60_registry()
+{
+    REGCLEANUP="/opt/likewise/bin/lwregshell cleanup"
+
+    migrate_pstore
+
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/dcerpcd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/eventlogd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lsassd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwiod.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwreg.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/netlogond.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/pstore.reg"
 }
 
 switch_to_open_provider()
@@ -293,21 +350,7 @@ switch_to_open_provider()
 
 postinstall()
 {
-    log "Package: Likewise Open post-install begins (`date`)"
-
-    # Stop any Likewise daemon (process capture for debugging).
-    logfile "Snapshot of processes before stopping daemons"
-    exec_logfile "ps ax"
-    for daemon in $DAEMONS_TO_HALT
-    do
-        if [ -x /etc/rc.d/$daemon ]; then
-            exec_logfile "/etc/rc.d/$daemon stop"
-        fi
-        exec_logfile "pkill -TERM -x $daemon"
-        exec_logfile "pkill -KILL -x $daemon"
-    done
-    logfile "Snapshot of processes after stopping daemons"
-    exec_logfile "ps ax"
+    log "Package: Likewise Open [post install] begins (`date`)"
 
     exec_log_exit "/opt/likewise/sbin/lwsmd --start-as-daemon"
 
@@ -315,9 +358,13 @@ postinstall()
 
     import_registry_configurations
 
-    fix_old_registry
+    relocate_domain_separator
+
+    relocate_space_replacement
 
     switch_to_open_provider
+
+    fix_60_registry
 
     exec_log_exit "/etc/init.d/lwsmd stop"
 
@@ -325,15 +372,269 @@ postinstall()
 
     exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
 
-    log "Package: Likewise Open post-install finished"
+    exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable pam"
+
+    exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable nsswitch"
+
+    exec_logfile "rm -rf ${UPGRADEDIR}"
+
+    log "Package: Likewise Open [post install] finished"
+}
+
+postinstall
+
+%pre
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+
+UPGRADEDIR=/opt/likewise-upgrade
+
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+PKG_ARCH="__PKG_ARCH"
+
+# Display to screen and log file with a blank line.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+exec_log()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+exec_logfile()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+pre_upgrade()
+{
+    log "Package: Likewise Open [pre upgrade] begins (`date`)"
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable pam
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
+    exec_logfile /opt/likewise/bin/lwsm stop lsass
+    exec_logfile /opt/likewise/bin/lwsm stop netlogon
+    exec_logfile /opt/likewise/bin/lwsm stop lwio
+    exec_logfile /opt/likewise/bin/lwsm stop eventlog
+    exec_logfile /opt/likewise/bin/lwsm stop dcerpc
+    exec_logfile /etc/init.d/lwsmd stop
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        exec_logfile "pkill -KILL -x $daemon"
+    done
+
+    log "Package: Likewise Open [pre upgrade] finished"
+}
+
+pre_install()
+{
+    log "Package: Likewise Open [pre install] begins (`date`)"
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        exec_logfile "pkill -KILL -x $daemon"
+    done
+
+    log "Package: Likewise Open [pre install] finished"
 }
 
 if [ $1 -eq 1 ]; then
-    postinstall
+    pre_install
 else
-    echo "This is an upgrade"
+    pre_upgrade
+    pre_install
 fi
 
+%preun
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+
+UPGRADEDIR=/opt/likewise-upgrade
+
+LOG=/tmp/LikewiseOpen.log
+TLOG=/tmp/LikewiseOpenTemp.txt
+
+PKG_ARCH="__PKG_ARCH"
+
+# Display to screen and log file with a blank line.
+log()
+{
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+exec_log()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+exec_logfile()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
+        exit 1
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+preuninstall_remove()
+{
+    log "Package: Likewise Open [preun remove] begins (`date`)"
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable pam
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable ssh
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure \
+                              --long `hostname --long` \
+                              --short `hostname --short` \
+                              --disable krb5
+
+    # Stop all daemons; none should be needed anymore.
+    exec_logfile /etc/init.d/lwsmd stop
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        exec_logfile "pkill -KILL -x $daemon"
+    done
+
+    log "Package: Likewise Open [preun remove] finished"
+}
+
+if [ $1 -eq 0 ]; then
+    preuninstall_remove
+fi
 %endif
 
 %files devel

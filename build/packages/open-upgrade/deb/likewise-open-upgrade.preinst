@@ -1,9 +1,13 @@
 #!/bin/sh
 
-DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open likewise-winbindd centeris.com-lwiauthd centeris.com-gpagentd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+UPGRADEDIR=/opt/likewise-upgrade
 
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
+
+PKG_ARCH="__PKG_ARCH"
+
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
 
 # Display to screen and log file.
 log()
@@ -87,7 +91,6 @@ determine_upgrade_type()
 {
     VERSIONFILE=/opt/likewise/data/VERSION
     if [ -f $VERSIONFILE ]; then
-        UPGRADEDIR=/opt/likewise-upgrade
         exec_log_exit mkdir -p "${UPGRADEDIR}"
 
         exec_log_exit cat $VERSIONFILE
@@ -157,7 +160,6 @@ preinstall()
         if [ -x /etc/init.d/$daemon ]; then
             exec_logfile "/etc/init.d/$daemon stop"
         fi
-        exec_logfile "pkill -TERM  -x $daemon"
         exec_logfile "pkill -KILL  -x $daemon"
     done
     logfile "Snapshot of processes after stopping daemons"

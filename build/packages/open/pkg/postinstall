@@ -1,5 +1,7 @@
 #!/bin/sh
 
+UPGRADEDIR=/opt/likewise-upgrade
+
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
@@ -107,22 +109,18 @@ import_service_configurations()
     fi
 }
 
-import_registry_configuration()
-{
-    exec_log_exit \
-        "/opt/likewise/bin/lwregshell upgrade /opt/likewise/share/config/$1.reg"
-}
-
 import_registry_configurations()
 {
+    REGUPGRADE='/opt/likewise/bin/lwregshell upgrade'
+
     log "Importing registry configurations"
-    import_registry_configuration dcerpcd
-    import_registry_configuration eventlogd
-    import_registry_configuration lsassd
-    import_registry_configuration lwiod
-    import_registry_configuration lwreg
-    import_registry_configuration netlogond
-    import_registry_configuration pstore
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/dcerpcd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/eventlogd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lsassd.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwiod.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/lwreg.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/netlogond.reg"
+    exec_log_exit "$REGUPGRADE /opt/likewise/share/config/pstore.reg"
 }
 
 import_5_0123_file()
@@ -138,12 +136,14 @@ import_5_0123_file()
     if [ -f $SOURCE ]; then
         exec_log "$CONVERT $COMMAND $SOURCE $DEST"
         if [ $? -ne 0 ]; then
+            log "Please file a bug and attach $SOURCE."
             return 1
         fi
 
         if [ -n "$DEST" -a -f "$DEST" ]; then
             exec_log "$REGIMPORT $DEST"
             if [ $? -ne 0 ]; then
+                log "Please file a bug and attach $SOURCE and $DEST."
                 return 1
             fi
         fi
@@ -171,19 +171,97 @@ restore_5_0123_configuration()
     import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
 }
 
-fix_old_registry()
+relocate_domain_separator()
 {
     DomainSeparator=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep DomainSeparator | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
-    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
     if [ -n "${DomainSeparator}" ]; then
         if [ "$DomainSeparator" = "\\\\" ]; then
             DomainSeparator="\\"
         fi
+
         exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'DomainSeparator' "$DomainSeparator"
     fi
+}
+
+relocate_space_replacement()
+{
+    SpaceReplacement=`/opt/likewise/bin/lwregshell list_values '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]' | grep SpaceReplacement | sed -e 's/ *[^ ]\+[ ]\+[^ ]\+[ ]\+"\([^ ]*\)"$/\1/'`
+
     if [ -n "${SpaceReplacement}" ]; then
         exec_logfile /opt/likewise/bin/lwregshell set_value '[HKEY_THIS_MACHINE\Services\lsass\Parameters]' 'SpaceReplacement' "$SpaceReplacement"
     fi
+}
+
+restore_5_0123_configuration()
+{
+    CONVERT="/opt/likewise/bin/conf2reg"
+
+    if [ ! -d "${UPGRADEDIR}" ]; then
+        return 0;
+    fi
+
+    import_5_0123_file "--lsass" "${UPGRADEDIR}/lsassd.conf" \
+        "${UPGRADEDIR}/lsassd.conf.reg"
+
+    import_5_0123_file "--netlogon" "${UPGRADEDIR}/netlogon.conf" \
+        "${UPGRADEDIR}/netlogon.conf.reg"
+
+    import_5_0123_file "--eventlog" "${UPGRADEDIR}/eventlogd.conf" \
+        "${UPGRADEDIR}/eventlogd.conf.reg"
+
+    import_5_0123_file "--pstore-sqlite" "${UPGRADEDIR}/pstore.db"
+}
+
+# Assumes the registry is not empty
+migrate_pstore()
+{
+    tmpreg=/tmp/regup-$$.txt
+    LWREGSHELL=/opt/likewise/bin/lwregshell
+    PSTORE_UPGRADE=/opt/likewise/bin/psupgrade
+
+    # Export the existing registry, in legacy format
+    exec_log_exit $LWREGSHELL export --legacy $tmpreg
+    if [ ! -s $tmpreg ]; then
+        log "Could not export registry."
+        exit 1
+    fi
+
+    # "Rename" relevant pstore entries to new registry location
+    $PSTORE_UPGRADE $tmpreg > ${tmpreg}.out
+    if [ ! -s ${tmpreg}.out ]; then
+        # Nothing to move/rename
+        exec_logfile "rm -f $tmpreg"
+        exec_logfile "rm -f ${tmpreg}.out"
+        return
+    fi
+
+    # Import renamed pstore entries
+    exec_log_exit "$LWREGSHELL import ${tmpreg}.out"
+    exec_logfile "rm -f ${tmpreg}.out"
+
+    # Clear out old pstore entries
+    if [ `grep -c '\[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]' $tmpreg` -gt 0 ]; then
+      exec_logfile $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
+    fi
+
+    # Remove values with identical default attributes from registry
+    rm -f $tmpreg
+}
+
+fix_60_registry()
+{
+    REGCLEANUP="/opt/likewise/bin/lwregshell cleanup"
+
+    migrate_pstore
+
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/dcerpcd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/eventlogd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lsassd.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwiod.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/lwreg.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/netlogond.reg"
+    exec_log_exit "${REGCLEANUP} /opt/likewise/share/config/pstore.reg"
 }
 
 switch_to_open_provider()
@@ -204,9 +282,13 @@ postinstall()
 
     import_registry_configurations
 
-    fix_old_registry
+    relocate_domain_separator
+
+    relocate_space_replacement
 
     switch_to_open_provider
+
+    fix_60_registry
 
     exec_log_exit "/etc/init.d/lwsmd stop"
 
