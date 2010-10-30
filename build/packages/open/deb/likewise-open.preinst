@@ -1,81 +1,161 @@
 #!/bin/sh
 
+UPGRADEDIR=/opt/likewise-upgrade
+
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
+PKG_ARCH="__PKG_ARCH"
+
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+
+# Display to screen and log file with a blank line.
 log()
 {
-    echo $1
-    echo $1 >> $LOG
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
 }
 
+_log()
+{
+    echo $@
+    echo $@ >> $LOG
+}
+
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
 exec_log()
 {
-    $1 > $TLOG
+    $@ > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
-        echo $1 >> $LOG
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
     else
-        log "Error: $1 returned $err"
-        log `cat $TLOG`
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
     fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
 }
 
-exec_log_exit()
+# Execute command.
+# Log only to file.
+exec_logfile()
 {
-    $1 > $TLOG
+    $@ > $TLOG 2>&1
     err=$?
     if [ $err -eq 0 ]; then
-        echo $1 >> $LOG
+        echo "Success: $@" >> $LOG
     else
-        log "Error: $1 returned $err"
-        log `cat $TLOG`
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
         exit 1
     fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+check_deb_installed()
+{
+    _status="`dpkg -s "$1" 2>/dev/null | grep Status: 2>/dev/null`"
+    if [ $? -ne 0 ]
+    then
+        return 1
+    fi
+
+    if echo "$_status" | grep ' installed' >/dev/null 2>&1
+    then
+        return 0
+    fi
+
+    return 1
 }
 
 case "$1" in
     abort-upgrade)
+        log "Package: Likewise Open [preinst abort-upgrade] begins (`date`)"
+        log "Package: Likewise Open [preinst abort-upgrade] finished (`date`)"
     ;;
 
     upgrade)
-        exec_log_exit "pam-auth-update --package"
+        log "Package: Likewise Open [preinst upgrade] begins (`date`)"
 
-        if dpkg --compare-versions "$2" le "4.1.2982-0ubuntu3"; then
-            # Shutdown old daemons (if running)
-            if [ -f /etc/init.d/likewise-open ]
-            then
-                exec_log /etc/init.d/likewise-open stop
-            else
-                log "Warning: /etc/init.d/likwise-open is not present."
-            fi
-
-            save_4_1_files
-
-            exec_log_exit "pam-auth-update --package --remove likewise-open"
-
-            if [ -x /usr/bin/domainjoin-cli ]; then
-                exec_log "/usr/bin/domainjoin-cli leave"
-            else
-                log "Warning: /usr/bin/domainjoin-cli is not present."
-            fi
+        if dpkg-query --show --showformat='${Version}' likewise-open | grep "ubuntu" > /dev/null 2>&1 ; then
+            log "The package likewise-open from Ubuntu has been detected."
+            log "Neither side-by-side installations nor upgrades are supported."
+            log "Please remove likewise-open before continuing."
+            exit 1
         fi
 
-        # remove obsolete conffiles from previous versions
-        if dpkg --compare-versions "$2" lt-nl "6.0.0"; then
+        exec_logfile /opt/likewise/bin/domainjoin_cli configure --disable pam
 
-            # from 4.1
-            rm_conffile /etc/samba/lwiauthd.conf
-            rm_conffile /etc/security/pam_lwidentity.conf
-            rm_conffile /etc/default/likewise-open
-            rm_conffile /etc/init.d/likewise-open
+        exec_logfile /opt/likewise/bin/domainjoin_cli configure --disable nsswitch
+        exec_logfile /opt/likewise/bin/lwsm stop lsass
+        exec_logfile /opt/likewise/bin/lwsm stop netlogon
+        exec_logfile /opt/likewise/bin/lwsm stop lwio
+        exec_logfile /opt/likewise/bin/lwsm stop eventlog
+        exec_logfile /opt/likewise/bin/lwsm stop dcerpc
+        exec_logfile /etc/init.d/lwsmd stop
 
-            # from 5.0
-            rm_conffile /etc/init.d/npcmuxd
-        fi
+        for daemon in $DAEMONS_TO_HALT
+        do
+            exec_logfile "pkill -KILL -x $daemon"
+        done
+
+        log "Package: Likewise Open [preinst upgrade] finished"
     ;;
 
     install)
+        log "Package: Likewise Open [preinst install] begins (`data`)"
+
+        if check_deb_installed "likewise-open5" ; then
+            log "The package likewise-open5 from Ubuntu has been detected."
+            log "Neither side-by-side installations nor upgrades are supported."
+            log "Please remove likewise-open5 before continuing."
+            exit 1
+        fi
+
+        for daemon in $DAEMONS_TO_HALT
+        do
+            exec_logfile "pkill -KILL -x $daemon"
+        done
+
+        log "Package: Likewise Open [preinst install] finished"
     ;;
 esac
 

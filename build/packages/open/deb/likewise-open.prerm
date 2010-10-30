@@ -1,64 +1,124 @@
 #!/bin/sh
 
+UPGRADEDIR=/opt/likewise-upgrade
+
 LOG=/tmp/LikewiseOpen.log
 TLOG=/tmp/LikewiseOpenTemp.txt
 
-DOMAINJOIN=/opt/likewise/bin/domainjoin-cli
+PKG_ARCH="__PKG_ARCH"
 
+DAEMONS_TO_HALT="lwmgmtd lwrdrd npcmuxd likewise-open centeris.com-lwiauthd lwsmd lwregd netlogond lwiod dcerpcd eventlogd lsassd"
+
+# Display to screen and log file with a blank line.
 log()
 {
-    echo $1
-    echo $1 >> $LOG
+    echo $@
+    echo
+    echo $@ >> $LOG
+    echo >> $LOG
 }
 
-preuninstall()
+_log()
 {
-    log "Package: Likewise Open pre-uninstall begins (`date`)"
+    echo $@
+    echo $@ >> $LOG
+}
 
-    pam-auth-update --package --remove likewise-open > $TLOG 2>&1
+# Display to file.
+logfile()
+{
+    echo $@ >> $LOG
+    echo >> $LOG
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file.
+exec_log()
+{
+    $@ > $TLOG 2>&1
     err=$?
-    if [ $err -ne 0 ]; then
-        log "Error: pam-auth-update --package --remove likewise-open returned $err"
-        log `cat $TLOG`
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err"
+        _log `cat $TLOG`
+        _log
+    fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# Log only to file.
+exec_logfile()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+    else
+        echo "Error: $@ returned $err  (ignoring and continuing)" >> $LOG
+    fi
+    cat $TLOG >> $LOG
+    echo >> $LOG
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
+
+# Execute command.
+# If successful, note in log file.
+# If not successful, note on screen and log file and then exit.
+exec_log_exit()
+{
+    $@ > $TLOG 2>&1
+    err=$?
+    if [ $err -eq 0 ]; then
+        echo "Success: $@" >> $LOG
+        cat $TLOG >> $LOG
+        echo >> $LOG
+    else
+        _log "Error: $@ returned $err  (aborting this script)"
+        _log `cat $TLOG`
+        _log
+        rm -f $TLOG > /dev/null 2>&1
         exit 1
     fi
+    rm -f $TLOG > /dev/null 2>&1
+    return $err
+}
 
-    # Remove references elsewhere.
-    if [ -x $DOMAINJOIN ]
-    then
-        $DOMAINJOIN configure --disable nsswitch  > $TLOG 2>&1
-        echo "$DOMAINJOIN configure --disable nsswitch" >> $LOG
-        cat $TLOG >> $LOG
+prerm_remove()
+{
+    log "Package: Likewise Open [prerm remove] begins (`date`)"
 
-        $DOMAINJOIN configure --disable ssh > $TLOG 2>&1
-        echo "$DOMAINJOIN configure --disable ssh" >> $LOG
-        cat $TLOG >> $LOG
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable pam
 
-        $DOMAINJOIN configure --long `hostname --long` \
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable nsswitch
+
+    exec_logfile /opt/likewise/bin/domainjoin-cli configure --disable ssh
+
+    exec_logfile /opt/likewise/bin/domainjoin_cli configure \
+                              --long `hostname --long` \
                               --short `hostname --short` \
-                              --disable krb5 > $TLOG 2>&1
-        echo "$DOMAINJOIN configure --long `hostname --long` --short `hostname --short` --disable krb5" >> $LOG
-        cat $TLOG >> $LOG
-    else
-        log "Warning: $DOMAINJOIN is missing or not executable"
-    fi
+                              --disable krb5
 
     # Stop all daemons; none should be needed anymore.
-    if [ -x /etc/init.d/lwsmd ]
-    then
-        /etc/init.d/lwsmd stop > $TLOG 2>&1
-        echo "/etc/init.d/lwsmd stop" >> $LOG
-        cat $TLOG >> $LOG
-    else
-        log "Warning: /etc/init.d/lwsmd is missing or not executable"
-    fi
+    exec_logfile /etc/init.d/lwsmd stop
+
+    for daemon in $DAEMONS_TO_HALT
+    do
+        exec_logfile "pkill -KILL -x $daemon"
+    done
 
     log "Package: Likewise Open pre-uninstall finished"
 }
 
 case "$1" in
     remove)
-        preuninstall
+        prerm_remove
     ;;
 
     failed-upgrade)
