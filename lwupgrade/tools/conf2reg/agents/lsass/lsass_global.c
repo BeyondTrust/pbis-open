@@ -127,10 +127,8 @@ cleanup:
     return dwError;
 
 error:
-    if (pConfig)
-    {
-        LW_SAFE_FREE_STRING(pConfig->pszLogLevel);
-    }
+
+    LW_SAFE_FREE_STRING(pConfig->pszLogLevel);
     goto cleanup;
 }
 
