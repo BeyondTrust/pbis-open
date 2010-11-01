@@ -124,14 +124,12 @@ UpFormatDword(
 {
     DWORD dwError = 0;
     PSTR pszDword = NULL;
-    char szDword[13];
 
-    sprintf(szDword, "%08X", dwValue);
     dwError = LwAllocateStringPrintf(
                 &pszDword,
-                "\"%s\"=dword:%s\n",
+                "\"%s\"=dword:%08X\n",
                 pszName,
-                szDword);
+                dwValue);
     BAIL_ON_UP_ERROR(dwError);
 
     *ppszDword = pszDword;
