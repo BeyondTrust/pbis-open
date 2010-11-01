@@ -1315,7 +1315,7 @@ RdrSocketDispatchPacket1(
     BOOLEAN bKeep = FALSE;
     PRDR_OP_CONTEXT pContext = NULL;
 
-    ulFlags = SMB_HTOL32(pPacket->pSMBHeader->flags);
+    ulFlags = pPacket->pSMBHeader->flags;
 
     if (!(pPacket->pSMBHeader->flags & FLAG_RESPONSE))
     {
