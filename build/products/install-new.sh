@@ -410,6 +410,7 @@ is_package_installed_linux_rpm()
 {
     rpm -q $1 > /dev/null 2>&1
     if [ $? -eq 0 ]; then
+        echo "$1"
         return 0
     fi
     return $ERR_PACKAGE_NOT_INSTALLED
@@ -703,7 +704,7 @@ do_install()
         package_install "$pkgList"
         err=$?
         if [ $err -ne 0 ]; then
-            log_info "Error installing $pkgList"
+            log_info "Error installing $pkgList -- please check /tmp/LikewiseOpen.log for a full log."
             exit 1
         fi
     fi
@@ -753,7 +754,7 @@ do_install()
         package_install "$pkgList"
         err=$?
         if [ $err -ne 0 ]; then
-            log_info "Error installing $pkgList"
+            log_info "Error installing $pkgList -- please check /tmp/LikewiseOpen.log for a full log."
             exit 1
         fi
     fi
