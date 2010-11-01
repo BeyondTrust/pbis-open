@@ -33,10 +33,10 @@ make()
     BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
        
     mk_multiarch_do
-        if [ "$HAVE_EPOLL_CREATE" = yes -a "$HAVE_PTHREAD_SETAFFINITY_NP" = yes ]
+        if [ "$HAVE_EPOLL_CREATE" = yes ]
         then
             THREADPOOL_SOURCES="threadpool-epoll.c"
-        elif [ "$HAVE_KQUEUE" = yes -a "$HAVE_PTHREAD_SETAFFINITY_NP" = yes ]
+        elif [ "$HAVE_KQUEUE" = yes ]
         then
             THREADPOOL_SOURCES="threadpool-kqueue.c"
         else
