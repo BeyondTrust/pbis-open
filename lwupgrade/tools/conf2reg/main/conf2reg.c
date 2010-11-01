@@ -122,68 +122,61 @@ main(
         goto cleanup;
     }
 
-    if (argc > 1)
+    if (!strcmp(argv[1], "--eventlog"))
     {
-        if (!strcmp(argv[1], "--eventlog"))
+        if (argc < 4)
         {
-            if (argc < 4)
-            {
-                PrintUsage("--eventlog requires two arguments.");
-            }
-            else
-            {
-                dwError = EventlogConfFileToRegFile(argv[2], argv[3]);
-            }
-        }
-        else if (!strcmp(argv[1], "--lsass"))
-        {
-            if (argc < 4)
-            {
-                PrintUsage("--lsass requires two arguments.");
-            }
-            else
-            {
-                dwError = LsassConfFileToRegFile(argv[2], argv[3]);
-            }
-        }
-        else if (!strcmp(argv[1], "--netlogon"))
-        {
-            if (argc < 4)
-            {
-                PrintUsage("--netlogon requires two arguments.");
-            }
-            else
-            {
-                dwError = NetlogonConfFileToRegFile(argv[2], argv[3]);
-            }
-        }
-#ifdef ENABLE_TDB
-        else if (!strcmp(argv[1], "--lwiauth"))
-        {
-            if (argc < 5)
-            {
-                PrintUsage("--lwiauth requires three arguments and usually root privileges.");
-            }
-            else
-            {
-                dwError = LwiauthConfFileToRegFile(argv[2], argv[3], argv[4]);
-            }
-        }
-#endif
-        else if (!strcmp(argv[1], "--pstore-sqlite"))
-        {
-            if (argc < 3)
-            {
-                PrintUsage("--pstore-sqlite requires one argument and usually root privileges.");
-            }
-            else
-            {
-                dwError = SqliteMachineAccountToPstore(argv[2]);
-            }
+            PrintUsage("--eventlog requires two arguments.");
         }
         else
         {
-            PrintUsage(NULL);
+            dwError = EventlogConfFileToRegFile(argv[2], argv[3]);
+        }
+    }
+    else if (!strcmp(argv[1], "--lsass"))
+    {
+        if (argc < 4)
+        {
+            PrintUsage("--lsass requires two arguments.");
+        }
+        else
+        {
+            dwError = LsassConfFileToRegFile(argv[2], argv[3]);
+        }
+    }
+    else if (!strcmp(argv[1], "--netlogon"))
+    {
+        if (argc < 4)
+        {
+            PrintUsage("--netlogon requires two arguments.");
+        }
+        else
+        {
+            dwError = NetlogonConfFileToRegFile(argv[2], argv[3]);
+        }
+    }
+#ifdef ENABLE_TDB
+    else if (!strcmp(argv[1], "--lwiauth"))
+    {
+        if (argc < 5)
+        {
+            PrintUsage("--lwiauth requires three arguments and usually root privileges.");
+        }
+        else
+        {
+            dwError = LwiauthConfFileToRegFile(argv[2], argv[3], argv[4]);
+        }
+    }
+#endif
+    else if (!strcmp(argv[1], "--pstore-sqlite"))
+    {
+        if (argc < 3)
+        {
+            PrintUsage("--pstore-sqlite requires one argument and usually root privileges.");
+        }
+        else
+        {
+            dwError = SqliteMachineAccountToPstore(argv[2]);
         }
     }
     else
