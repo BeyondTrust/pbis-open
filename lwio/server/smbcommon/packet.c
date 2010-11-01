@@ -374,7 +374,7 @@ SMBPacketBufferAllocatePooled(
 
         LWIO_UNLOCK_MUTEX(bInLock, &pPacketAllocator->mutex);
 
-        memset(pBuffer, 0, allocatedLen);
+        // memset(pBuffer, 0, allocatedLen);
     }
     else
     {
