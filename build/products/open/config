@@ -37,7 +37,7 @@ case "${BUILD_OS_TYPE}" in
     linux)
         PACKAGES="open open-gui open-upgrade"
         INSTALL_UPGRADE_PACKAGE="likewise-open-upgrade"
-        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc likewise-open-upgrade likewise-open likewise-open-gui likewise-open-32bit"
+        INSTALL_OBSOLETE_PACKAGES="likewise-base likewise-domainjoin likewise-domainjoin-gui likewise-eventlog likewise-krb5 likewise-lac likewise-libxml2 likewise-lsass likewise-lsass-32bit likewise-lwadutil likewise-lwconfig likewise-lwio likewise-lwmgmt likewise-lwnetapi likewise-lwreg likewise-lwreg-32bit likewise-lwtools likewise-lwupgrade likewise-mod-auth-kerb likewise-netlogon likewise-openldap likewise-passwd likewise-pstore likewise-reskit likewise-rpc likewise-sqlite likewise-srvsvc"
         INSTALL_BASE_PACKAGES="likewise-open"
         INSTALL_OPTIONAL_PACKAGES="likewise-open-gui"
         ;;
