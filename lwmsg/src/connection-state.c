@@ -777,13 +777,11 @@ lwmsg_connection_state_established(
             BAIL_ON_ERROR(status = LWMSG_STATUS_BUSY);
         }
 
-        *event = CONNECTION_EVENT_FINISH;
+        *event = CONNECTION_EVENT_NONE;
         priv->outgoing = priv->params.message;
         status = lwmsg_connection_begin_send_message(assoc);
         switch (status)
         {
-        case LWMSG_STATUS_SUCCESS:
-            break;
         case LWMSG_STATUS_INVALID_HANDLE:
         case LWMSG_STATUS_MALFORMED:
         case LWMSG_STATUS_OVERFLOW:
@@ -794,6 +792,8 @@ lwmsg_connection_state_established(
         default:
             BAIL_ON_ERROR(status);
         }
+        BAIL_ON_ERROR(status = lwmsg_connection_finish_send_message(assoc));
+        priv->outgoing = NULL;
         break;
     case CONNECTION_EVENT_RECV:
         if (priv->incoming)
@@ -801,9 +801,11 @@ lwmsg_connection_state_established(
             BAIL_ON_ERROR(status = LWMSG_STATUS_BUSY);
         }
 
-        *event = CONNECTION_EVENT_FINISH;
+        *event = CONNECTION_EVENT_NONE;
         priv->incoming = priv->params.message;
         BAIL_ON_ERROR(status = lwmsg_connection_begin_recv_message(assoc));
+        BAIL_ON_ERROR(status = lwmsg_connection_finish_recv_message(assoc));
+        priv->incoming = NULL;
         break;
     case CONNECTION_EVENT_CLOSE:
         *state = CONNECTION_STATE_BEGIN_CLOSE;
