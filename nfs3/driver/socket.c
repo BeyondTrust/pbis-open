@@ -342,11 +342,7 @@ Nfs3SocketProcessTaskWrite(
     {
         *pWaitMask = LW_TASK_EVENT_YIELD;
     }
-    else
-    {
-        *pWaitMask = LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_FD_READABLE;
-    }
-
+    
 cleanup:
 
     NFS3_UNLOCK_MUTEX(bInLock, &pSocket->sendItemsLock);
@@ -402,11 +398,7 @@ Nfs3SocketProcessTaskRead(
     {
         *pWaitMask = LW_TASK_EVENT_YIELD;
     }
-    else
-    {
-        *pWaitMask = LW_TASK_EVENT_FD_WRITABLE | LW_TASK_EVENT_FD_READABLE;
-    }
-
+    
     if ((pReadBuffer->ulOffset > ulInitialOffset) &&
         (pReadBuffer->ulOffset >= pReadBuffer->ulMinimum))
     {
