@@ -25,8 +25,6 @@
 #ifndef LWCONFIG_UTIL_H
 #define LWCONFIG_UTIL_H
 
-#include "includes.h"
-
 DWORD
 UtilAllocateMultistring(
     PCSTR *ppszValues,
