@@ -763,6 +763,12 @@ ValidateDword(
                 xszMin = xmlGetProp(xmlRange, (const xmlChar*)"min");
                 xszMax = xmlGetProp(xmlRange, (const xmlChar*)"max");
 
+                if (!xszMin || !xszMax)
+                {
+                    dwError = APP_ERROR_XML_MISSING_ATTRIBUTE;
+                    goto error;
+                }
+
                 dwError = CapabilityNormalizeDword(
                                 (PCSTR)xszMin,
                                 pxRegistry,
@@ -785,16 +791,11 @@ ValidateDword(
                         dwDecision = REJECT_VALUE;
                 }
 
-                if (xszMin)
-                {
-                    xmlFree(xszMin);
-                    xszMin = NULL;
-                }
-                if (xszMax)
-                {
-                    xmlFree(xszMax);
-                    xszMax = NULL;
-                }
+                xmlFree(xszMin);
+                xszMin = NULL;
+
+                xmlFree(xszMax);
+                xszMax = NULL;
             }
         }
     }

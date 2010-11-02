@@ -281,7 +281,7 @@ int main(int argc, const char *argv[])
         BAIL_ON_ERROR(dwError);
     }
 
-    if (argc == 1)
+    if (argc < 2)
     {
         PrintUsage();
         goto cleanup;
@@ -498,6 +498,9 @@ cleanup:
                 case APP_ERROR_CAPABILITY_MULTIPLE_MATCHES:
                     strcpy(buf, "Multiple capabilties matched; aborting.");
                     returnErrorCode = 6;
+                    break;
+                case APP_ERROR_XML_MISSING_ATTRIBUTE:
+                    strcpy(buf, "Missing XML attribute");
                     break;
             }
         }
