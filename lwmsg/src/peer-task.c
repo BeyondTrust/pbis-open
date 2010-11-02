@@ -304,14 +304,17 @@ lwmsg_peer_task_update_blocked(
     {
     case LWMSG_ASSOC_STATE_BLOCKED_SEND:
         task->send_blocked = LWMSG_TRUE;
+        task->recv_blocked = LWMSG_FALSE;
         break;
     case LWMSG_ASSOC_STATE_BLOCKED_RECV:
         task->recv_blocked = LWMSG_TRUE;
+        task->send_blocked = LWMSG_FALSE;
         break;
     case LWMSG_ASSOC_STATE_BLOCKED_SEND_RECV:
         task->send_blocked = task->recv_blocked = LWMSG_TRUE;
         break;
     default:
+        task->send_blocked = task->recv_blocked = LWMSG_FALSE;
         break;
     }
 }
