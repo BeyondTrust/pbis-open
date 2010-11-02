@@ -53,6 +53,8 @@ typedef struct _NFS3_CONFIG
 {
     ULONG ulMaxWorkQueueItems;
     ULONG ulWorkersToCoresRatio;
+    ULONG ulTcpListenQueueLength;
+    ULONG ulTcpServerPort;
 
 } NFS3_CONFIG, *PNFS3_CONFIG;
 
@@ -66,6 +68,8 @@ typedef struct _NFS3_RUNTIME_GLOBALS
     PNFS3_PRODCONS_QUEUE pWorkQueue;
     PNFS3_WORKER         pWorkerArray;
     ULONG                ulNumWorkers;
+
+    PNFS3_TRANSPORT      pTransport;
 
 } NFS3_RUNTIME_GLOBALS, *PNFS3_RUNTIME_GLOBALS;
 

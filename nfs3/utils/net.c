@@ -1,9 +1,5 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,42 +24,74 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        globals.c
+ *        net.c
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Network utilities implementation implementation
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
+ *
  */
 
 #include "includes.h"
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
+
+NTSTATUS
+Nfs3SocketAddressToString(
+    struct sockaddr* pSocketAddress,
+    PSTR             pszBuf,
+    ULONG            ulBufLen
+    )
 {
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+    NTSTATUS ntStatus  = STATUS_SUCCESS;
+    PVOID pAddressPart = NULL;
 
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+    switch (pSocketAddress->sa_family)
+    {
+        case AF_INET:
 
+            pAddressPart = &((struct sockaddr_in*)pSocketAddress)->sin_addr;
+
+            break;
+
+#ifdef AF_INET6
+        case AF_INET6:
+
+            pAddressPart = &((struct sockaddr_in6*)pSocketAddress)->sin6_addr;
+
+            break;
+#endif
+        default:
+
+           ntStatus = STATUS_NOT_SUPPORTED;
+           BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    if (!inet_ntop(pSocketAddress->sa_family, pAddressPart, pszBuf, ulBufLen))
+    {
+        ntStatus = LwErrnoToNtStatus(errno);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+cleanup:
+
+    return ntStatus;
+
+error:
+
+    // Terminate output buffer
+    if (ulBufLen > 0)
+    {
+        pszBuf[0] = 0;
+    }
+
+    goto cleanup;
+}

@@ -28,42 +28,52 @@
  * license@likewisesoftware.com
  */
 
-
-
-/*
- * Copyright (C) Likewise Software. All rights reserved.
- *
- * Module Name:
- *
- *        globals.c
- *
- * Abstract:
- *
- *        Likewise I/O (LWIO) - nfs3
- *
- *        Global variables
- *
- * Authors: Evgeny Popovich (epopovich@likewise.com)
- */
-
 #include "includes.h"
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
+
+// TODO
+NTSTATUS
+Nfs3TransportCbInitSocket(
+    PNFS3_SOCKET pSocket
+    )
 {
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+    static CHAR buffer[NFS3_MAX_PACKET_SIZE];
 
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    NFS3_READ_BUFFER newBuffer = {
+                    .pBuf = buffer,
+                    .ulBufLen = NFS3_MAX_PACKET_SIZE,
+                    .ulMinimum = 1,
+                    .ulOffset = 0 };
 
+    Nfs3SocketSetReadBuffer(pSocket, &newBuffer);
+
+    return ntStatus;
+}
+
+NTSTATUS
+Nfs3TransportCbDataReady(
+    PNFS3_SOCKET pSocket
+    )
+{
+    static CHAR buffer[NFS3_MAX_PACKET_SIZE];
+
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    NFS3_READ_BUFFER newBuffer = {
+                    .pBuf = buffer,
+                    .ulBufLen = NFS3_MAX_PACKET_SIZE,
+                    .ulMinimum = 1,
+                    .ulOffset = 0 };
+    NFS3_READ_BUFFER dataBuffer = { 0 };
+
+    // Get data from the socket
+    Nfs3SocketGetReadBuffer(pSocket, &dataBuffer);
+    
+    // Use it, if there is a full packet
+    // TODO
+
+    // Set new buffer if needed
+    Nfs3SocketSetReadBuffer(pSocket, &newBuffer);
+
+    return ntStatus;
+}

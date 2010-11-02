@@ -51,7 +51,10 @@
 
 #include <config.h>
 
+#include <stdlib.h>
 #include <pthread.h>
+#include <netinet/in.h>
+#include <fcntl.h>
 
 #include <lwio/lwio.h>
 #include <lwio/iodriver.h>
@@ -61,9 +64,15 @@
 
 #include "nfs3defs.h"
 #include "nfs3utils.h"
+#include "nfs3net.h"
+#include "assert.h"
 
 #include "exec_context.h"
 #include "nfs3worker.h"
+#include "transport.h"
+#include "listener.h"
+#include "socket.h"
+#include "transportcbs.h"
 
 #include "structs.h"
 #include "externs.h"

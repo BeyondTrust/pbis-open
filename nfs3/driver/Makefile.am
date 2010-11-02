@@ -13,7 +13,11 @@ libnfs3_sys_la_SOURCES = \
     driver.c		\
 	globals.c		\
 	initialize.c    \
-    nfs3worker.c
+    listener.c      \
+    nfs3worker.c    \
+    socket.c        \
+    transport.c     \
+    transportcbs.c
 
 libnfs3_sys_la_CPPFLAGS =           \
     -DLW_ENABLE_THREADS=1           \

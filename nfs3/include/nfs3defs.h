@@ -59,6 +59,13 @@
        goto error;                                 \
     }
 
+#define BAIL_ON_SYS_ERROR(rval)           \
+    if ((rval) < 0)                         \
+    {                                       \
+        ntStatus = LwErrnoToNtStatus(errno);\
+        BAIL_ON_NT_STATUS(ntStatus);        \
+    }
+
 #define NFS3_LOCK_MUTEX(bInLock, mutex) \
     if (!bInLock) { \
        int thr_err = pthread_mutex_lock(mutex); \
@@ -111,14 +118,23 @@
        bInLock = FALSE; \
     }
 
-#define NFS3_SAFE_FREE_MEMORY(mem)  \
-    do {                            \
-        if (mem) {                  \
-            Nfs3FreeMemory(mem);    \
-            (mem) = NULL;           \
-        }                           \
-    } while(0);
+#define NFS3_ASSERT_MSG(Expression, Message) \
+    ((Expression) ? TRUE : \
+     (Nfs3AssertionFailed(#Expression, Message, __FUNCTION__, __FILE__, __LINE__), FALSE))
+
+#define NFS3_ASSERT(Expression) NFS3_ASSERT_MSG(Expression, NULL)
+
+#if defined(HAVE_SOCKLEN_T) && defined(GETSOCKNAME_TAKES_SOCKLEN_T)
+#    define SOCKLEN_T socklen_t
+#else
+#    define SOCKLEN_T int
+#endif
+
+#define NFS3_MAX_INET_ADDRSTRLEN (LW_MAX(INET_ADDRSTRLEN, INET6_ADDRSTRLEN) + 1)
+
+#define NFS3_MAX_PACKET_SIZE    (68 * 1024)
  
+
 #endif  // __DEFS_H__
 
 /*

@@ -35,28 +35,38 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        nfs3net.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Network utilities and definitions
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __NFS3_NET_H__
+#define __NFS3_NET_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
+
+typedef struct __NFS3_SOCKADDR
 {
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+    struct sockaddr_in  addr;
+    SOCKLEN_T           len;
+
+} NFS3_SOCKADDR, *PNFS3_SOCKADDR;
+
+
+NTSTATUS
+Nfs3SocketAddressToString(
+    struct sockaddr* pSocketAddress,
+    PSTR             pszBuf,
+    ULONG            ulBufLen
+    );
+
+
+#endif  // __NFS3_NET_H__
 
 /*
 local variables:

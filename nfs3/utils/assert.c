@@ -1,9 +1,5 @@
-/* Editor Settings: expandtabs and use 4 spaces for indentation
- * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
-
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,50 +24,61 @@
  * license@likewisesoftware.com
  */
 
-
-
 /*
  * Copyright (C) Likewise Software. All rights reserved.
  *
  * Module Name:
  *
- *        utils.h
+ *        assert.c
  *
  * Abstract:
  *
  *        NFS3
  *
- *        Utilities
+ *        Assertions implementation
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
+ *
  */
 
-#ifndef __UTILS_H__
-#define __UTILS_H__
+#include <includes.h>
 
-#include "lwlist.h"
-#include "queue.h"
-#include "prodcons.h"
+#define _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line) \
+    _LWIO_LOG_PREFIX_LOCATION("ASSERTION FAILED: Expression = (%s)", Function, \
+                                File, Line), (Expression)
 
-NTSTATUS
-Nfs3AllocateMemory(
-    size_t size,
-    PVOID* ppMemory
-    );
+#define _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line) \
+    _LWIO_LOG_PREFIX_LOCATION("ASSERTION FAILED: Expression = (%s), Message = '%s'", \
+                                Function, File, Line), (Expression), (Message)
 
 VOID
-Nfs3FreeMemory(
-    PVOID* ppMemory
-    );
-
-#endif  // __UTILS_H__
-
-/*
-local variables:
-mode: c
-c-basic-offset: 4
-indent-tabs-mode: nil
-tab-width: 4
-end:
-*/
-
+Nfs3AssertionFailed(
+    IN PCSTR Expression,
+    IN OPTIONAL PCSTR Message,
+    IN PCSTR Function,
+    IN PCSTR File,
+    IN ULONG Line
+    )
+{
+    if (Message)
+    {
+        _LWIO_LOG_MESSAGE(
+            LWIO_LOG_LEVEL_ERROR,
+           _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line));
+        fprintf(
+            stderr,
+            _LWIO_LOG_PREFIX_ASSERT_MSG_FAILED(Expression, Message, Function, File, Line));
+    }
+    else
+    {
+        _LWIO_LOG_MESSAGE(
+            LWIO_LOG_LEVEL_ERROR,
+           _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line),
+           Expression);
+        fprintf(
+            stderr,
+            _LWIO_LOG_PREFIX_ASSERT_FAILED(Expression, Function, File, Line));
+    }
+    fprintf(stderr, "\n");
+    abort();
+}

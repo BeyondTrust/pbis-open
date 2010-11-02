@@ -37,3 +37,11 @@
     default = dword:00000004
     doc = ""
 }
+"TcpListenQueueLength" = {
+    default = dword:00000020
+    doc = ""
+}
+"TcpServerPort" = {
+    default = dword:00000801
+    doc = ""
+}

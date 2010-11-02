@@ -115,7 +115,7 @@ Nfs3FreeExecContext(
     }
     */
 
-    Nfs3FreeMemory(pContext);
+    Nfs3FreeMemory((PVOID*)&pContext);
 }
 
 NTSTATUS

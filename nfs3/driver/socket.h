@@ -35,28 +35,50 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        socket.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Socket interface
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __SOCKET_H__
+#define __SOCKET_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
-{
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+
+// Creates a socket task which will be referenced by the given task group,
+// and will use task threads from the given thread pool
+NTSTATUS
+Nfs3SocketCreate(
+    PNFS3_SOCKET*                   ppSocket,
+    PLW_THREAD_POOL                 pPool,
+    const PNFS3_TRANSPORT_CALLBACKS pCallbacks,
+    PLW_TASK_GROUP                  pTaskGroup,
+    int                             fd,
+    PNFS3_SOCKADDR                  pCliAddr,
+    PNFS3_SOCKADDR                  pSrvAddr
+    );
+
+// Read buffer is owned always by the caller.
+// To avoid races, these two methods must be called only either on
+// initialization or from #PFN_NFS3_TRANSPORT_DATA_READY callback.
+VOID
+Nfs3SocketSetReadBuffer(
+    PNFS3_SOCKET            pSocket,
+    const PNFS3_READ_BUFFER pReadBuffer
+    );
+
+VOID
+Nfs3SocketGetReadBuffer(
+    const PNFS3_SOCKET pSocket,
+    PNFS3_READ_BUFFER  pReadBuffer
+    );
+
+#endif  // __SOCKET_H__
 
 /*
 local variables:
@@ -66,4 +88,5 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
+
 

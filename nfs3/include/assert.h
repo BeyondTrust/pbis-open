@@ -35,28 +35,30 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        assert.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Assertions interface.
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __ASSERT_H__
+#define __ASSERT_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
-{
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+VOID
+Nfs3AssertionFailed(
+    IN PCSTR Expression,
+    IN OPTIONAL PCSTR Message,
+    IN PCSTR Function,
+    IN PCSTR File,
+    IN ULONG Line
+    );
+
+#endif  // __ASSERT_H__
 
 /*
 local variables:

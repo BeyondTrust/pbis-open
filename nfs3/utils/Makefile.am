@@ -1,7 +1,9 @@
 noinst_LTLIBRARIES = libnfs3utils.la
 
 libnfs3utils_la_SOURCES = 	\
+    assert.c                \
 	memory.c				\
+    net.c                   \
     prodcons.c				\
 	queue.c
 

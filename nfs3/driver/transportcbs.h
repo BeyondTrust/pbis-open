@@ -35,28 +35,31 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        transportcbs.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Transport callbacks
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __TRANSPORTCBS_H__
+#define __TRANSPORTCBS_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
-{
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+NTSTATUS
+Nfs3TransportCbInitSocket(
+    PNFS3_SOCKET pSocket
+    );
+
+NTSTATUS
+Nfs3TransportCbDataReady(
+    PNFS3_SOCKET pSocket
+    );
+
+#endif  // __TRANSPORTCBS_H__
 
 /*
 local variables:
@@ -66,4 +69,3 @@ indent-tabs-mode: nil
 tab-width: 4
 end:
 */
-

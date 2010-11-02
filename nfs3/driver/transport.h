@@ -35,28 +35,67 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        transport.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Transport interface
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __TRANSPORT_H__
+#define __TRANSPORT_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
+
+typedef struct __NFS3_TRANSPORT NFS3_TRANSPORT, *PNFS3_TRANSPORT;
+typedef struct __NFS3_LISTENER  NFS3_LISTENER,  *PNFS3_LISTENER;
+typedef struct __NFS3_SOCKET    NFS3_SOCKET,    *PNFS3_SOCKET;
+
+typedef struct __NFS3_SEND_ITEM
 {
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+    LW_LIST_LINKS links;
+    PVOID         pBuffer;
+    ULONG         ulLength;
+    ULONG         ulOffset;
+
+} NFS3_SEND_ITEM, *PNFS3_SEND_ITEM;
+
+typedef struct __NFS3_READ_BUFFER
+{
+    PVOID pBuf;
+    ULONG ulBufLen;
+    ULONG ulMinimum;
+    ULONG ulOffset;
+
+} NFS3_READ_BUFFER, *PNFS3_READ_BUFFER;
+
+typedef NTSTATUS (*PFN_NFS3_TRANSPORT_INIT_SOCKET)  (PNFS3_SOCKET pSocket);
+typedef NTSTATUS (*PFN_NFS3_TRANSPORT_DATA_READY)   (PNFS3_SOCKET pSocket);
+
+typedef struct __NFS3_TRANSPORT_CALLBACKS
+{
+    PFN_NFS3_TRANSPORT_INIT_SOCKET  pfnInitSocket;
+    PFN_NFS3_TRANSPORT_DATA_READY   pfnDataReady;
+
+} NFS3_TRANSPORT_CALLBACKS, *PNFS3_TRANSPORT_CALLBACKS;
+
+
+NTSTATUS
+Nfs3TransportCreate(
+    PNFS3_TRANSPORT* ppTransport,
+    const PNFS3_TRANSPORT_CALLBACKS pCallbacks
+    );
+
+VOID
+Nfs3TransportFree(
+    PNFS3_TRANSPORT* ppTransport
+    );
+
+
+#endif  // __TRANSPORT_H__
 
 /*
 local variables:

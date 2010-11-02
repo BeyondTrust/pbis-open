@@ -45,8 +45,8 @@
 
 NTSTATUS
 Nfs3AllocateMemory(
-    IN  size_t size,
-    OUT PVOID* ppMemory
+    size_t size,
+    PVOID* ppMemory
     )
 {
     return RTL_ALLOCATE(ppMemory, VOID, size);
@@ -54,8 +54,12 @@ Nfs3AllocateMemory(
 
 VOID
 Nfs3FreeMemory(
-    IN PVOID pMemory
+    PVOID* ppMemory
     )
 {
-    LwRtlMemoryFree(pMemory);
+    if (*ppMemory)
+    {
+        LwRtlMemoryFree(*ppMemory);
+        *ppMemory = NULL;
+    }
 }

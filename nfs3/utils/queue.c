@@ -116,7 +116,7 @@ cleanup:
 
 error:
 
-    NFS3_SAFE_FREE_MEMORY(pQueueItem);
+    Nfs3FreeMemory((PVOID*)&pQueueItem);
 
     goto cleanup;
 }
@@ -153,7 +153,7 @@ cleanup:
 
 error:
 
-    NFS3_SAFE_FREE_MEMORY(pQueueItem);
+    Nfs3FreeMemory((PVOID*)&pQueueItem);
 
     goto cleanup;
 }
@@ -177,7 +177,7 @@ Nfs3QueueDequeue(
 
         pItem = pQueueItem->pItem;
 
-        Nfs3FreeMemory(pQueueItem);
+        Nfs3FreeMemory((PVOID*)&pQueueItem);
     }
 
     return pItem;
@@ -217,5 +217,5 @@ Nfs3QueueFree(
     PNFS3_QUEUE pQueue
     )
 {
-    Nfs3FreeMemory(pQueue);
+    Nfs3FreeMemory((PVOID*)&pQueue);
 }

@@ -48,6 +48,17 @@
 
 #include "includes.h"
 
+#define READ_CONFIG_DWORD(keyName, minValue, maxValue)                        \
+    ntStatus = LwIoReadConfigDword(pReg, #keyName, bUsePolicy, (minValue),    \
+                                   (maxValue), &pConfig->ul##keyName);        \
+    if (ntStatus)                                                             \
+    {                                                                         \
+        LWIO_LOG_ERROR("Invalid device registry configuration when reading "  \
+                       #keyName ". [error code: %u]", ntStatus);              \
+        ntStatus = STATUS_DEVICE_CONFIGURATION_ERROR;                         \
+    }                                                                         \
+    BAIL_ON_NT_STATUS(ntStatus);
+
 /* forward declarations */
 
 static
@@ -66,6 +77,10 @@ Nfs3Initialize(
     NTSTATUS ntStatus = 0;
     INT iWorker = 0;
     ULONG ulNumCpus = LwRtlGetCpuCount();
+    NFS3_TRANSPORT_CALLBACKS transportCallbacks = {
+                    .pfnInitSocket = Nfs3TransportCbInitSocket,
+                    .pfnDataReady = Nfs3TransportCbDataReady
+                    };
 
     LWIO_LOG_INFO("%s", __func__);
 
@@ -83,7 +98,7 @@ Nfs3Initialize(
                     &gNfs3Globals.pWorkQueue);
     BAIL_ON_NT_STATUS(ntStatus);
 
-
+    // Workers initialization
     gNfs3Globals.ulNumWorkers = gNfs3Globals.config.ulWorkersToCoresRatio *
                                 ulNumCpus;
 
@@ -101,6 +116,10 @@ Nfs3Initialize(
         ntStatus = Nfs3WorkerInit(pWorker, iWorker % ulNumCpus);
         BAIL_ON_NT_STATUS(ntStatus);
     }
+    // ... end
+
+    ntStatus = Nfs3TransportCreate(&gNfs3Globals.pTransport, &transportCallbacks);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     gNfs3Globals.hDevice = hDevice;
 
@@ -111,6 +130,7 @@ cleanup:
 error:
 
     Nfs3ProdConsFree(&gNfs3Globals.pWorkQueue);
+    Nfs3TransportFree(&gNfs3Globals.pTransport);
 
     goto cleanup;
 }
@@ -138,35 +158,10 @@ Nfs3ReadConfig(
     }
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = LwIoReadConfigDword(
-                    pReg,
-                    "MaxWorkQueueItems",
-                    bUsePolicy,
-                    1,
-                    1000000,
-                    &pConfig->ulMaxWorkQueueItems);
-    if (ntStatus)
-    {
-        LWIO_LOG_ERROR("Invalid device registry configuration when reading "
-                       "MaxWorkQueueItems. [error code: %u]", ntStatus);
-        ntStatus = STATUS_DEVICE_CONFIGURATION_ERROR;
-    }
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LwIoReadConfigDword(
-                    pReg,
-                    "WorkersToCoresRatio",
-                    bUsePolicy,
-                    1,
-                    1024,
-                    &pConfig->ulWorkersToCoresRatio);
-    if (ntStatus)
-    {
-        LWIO_LOG_ERROR("Invalid device registry configuration when reading "
-                       "WorkersToCoresRatio. [error code: %u]", ntStatus);
-        ntStatus = STATUS_DEVICE_CONFIGURATION_ERROR;
-    }
-    BAIL_ON_NT_STATUS(ntStatus);
+    READ_CONFIG_DWORD(MaxWorkQueueItems,    1, 1000000);
+    READ_CONFIG_DWORD(WorkersToCoresRatio,  1, 1024);
+    READ_CONFIG_DWORD(TcpListenQueueLength, 1, 1000000);
+    READ_CONFIG_DWORD(TcpServerPort,        0, 65535);
 
 cleanup:
 

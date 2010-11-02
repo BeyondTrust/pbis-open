@@ -35,28 +35,35 @@
  *
  * Module Name:
  *
- *        globals.c
+ *        listener.h
  *
  * Abstract:
  *
- *        Likewise I/O (LWIO) - nfs3
+ *        NFS3
  *
- *        Global variables
+ *        Listener interface
  *
  * Authors: Evgeny Popovich (epopovich@likewise.com)
  */
 
-#include "includes.h"
+#ifndef __LISTENER_H__
+#define __LISTENER_H__
 
-NFS3_RUNTIME_GLOBALS gNfs3Globals =
-{
-    .mutex   = PTHREAD_MUTEX_INITIALIZER,
-    .pMutex  = NULL,
-    .config  = {},
-    .hDevice = NULL,
-    .ulNumWorkers = 0,
-    .pTransport = NULL
-}; 
+
+NTSTATUS
+Nfs3ListenerCreate(
+    PNFS3_LISTENER* ppListener,
+    PLW_THREAD_POOL pPool,
+    const PNFS3_TRANSPORT_CALLBACKS pCallbacks
+    );
+
+VOID
+Nfs3ListenerFree(
+    PNFS3_LISTENER* ppListener
+    );
+
+
+#endif  // __LISTENER_H__
 
 /*
 local variables:
