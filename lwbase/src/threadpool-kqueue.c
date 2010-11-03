@@ -516,26 +516,30 @@ ProcessRunnable(
             
             if (pTask->EventWait != LW_TASK_EVENT_COMPLETE)
             {
-                /* Task is still waiting on events, update kqueue */
-                UpdateEventWait(pCommands, pTask);
-                
                 if (pTask->EventWait & LW_TASK_EVENT_YIELD)
                 {
                     /* Task is yielding.  Set the YIELD flag and
                        leave it on the runnable list for the next iteration. */
                     pTask->EventArgs |= LW_TASK_EVENT_YIELD;
                 }   
-                else if (pTask->EventWait & LW_TASK_EVENT_TIME)
+                else 
                 {
-                    /* If the task is waiting for a timeout, insert it into the timed queue */
-                    RingRemove(&pTask->QueueRing);
-                    InsertTimedQueue(pTimed, pTask);
-                }
-                else
-                {
-                    /* Otherwise, put it in the generic waiting queue */
-                    RingRemove(&pTask->QueueRing);
-                    RingEnqueue(pWaiting, &pTask->QueueRing);
+                    /* Task is still waiting on events, update kqueue */
+                    UpdateEventWait(pCommands, pTask);
+
+                    if (pTask->EventWait & LW_TASK_EVENT_TIME)
+                    {
+                        /* If the task is waiting for a timeout, 
+                           insert it into the timed queue */
+                        RingRemove(&pTask->QueueRing);
+                        InsertTimedQueue(pTimed, pTask);
+                    }
+                    else
+                    {
+                        /* Otherwise, put it in the generic waiting queue */
+                        RingRemove(&pTask->QueueRing);
+                        RingEnqueue(pWaiting, &pTask->QueueRing);
+                    }
                 }
             }
             else
@@ -615,6 +619,17 @@ ProcessRunnable(
                     TaskDelete(pTask);
                 }
             }
+        }
+    }
+
+    /* Update kevent commands for yielding tasks */
+    for (pRing = pRunnable->pNext; pRing != pRunnable; pRing = pRing->pNext)
+    {
+        pTask = LW_STRUCT_FROM_FIELD(pRing, KQUEUE_TASK, QueueRing);
+
+        if (pTask->EventArgs & LW_TASK_EVENT_YIELD)
+        {
+            UpdateEventWait(pCommands, pTask);
         }
     }
 }
