@@ -755,6 +755,7 @@ LsaAdBatchMatchDomain(
             {
                 bIsMatch = TRUE;
             }
+            break;
         default:
             dwError = LW_ERROR_INVALID_PARAMETER;
             BAIL_ON_LSA_ERROR(dwError);
