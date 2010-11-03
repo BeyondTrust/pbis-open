@@ -9,6 +9,8 @@ configure()
 
     mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
+    lw_define_feature_macros
+
     mk_define REG_USE_SQLITE
 
     mk_check_headers \
