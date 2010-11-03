@@ -114,11 +114,8 @@ IoCreateFile(
     IRP_TYPE irpType = IRP_TYPE_CREATE;
     PIO_FILE_OBJECT pResultFileObject = NULL;
 
-    if (!FileHandle || !IoStatusBlock)
-    {
-        status = STATUS_INVALID_PARAMETER;
-        GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-    }
+    LWIO_ASSERT(FileHandle);
+    LWIO_ASSERT(IoStatusBlock);
 
     if (SecurityQualityOfService)
     {
@@ -306,7 +303,9 @@ IopReadWriteFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -456,7 +455,10 @@ IopPrepareZctReadWriteFile(
     PVOID completionContext = NULL;
     PIRP pCompletionIrp = NULL;
 
-    if (!FileHandle || !IoStatusBlock || !Zct)
+    LWIO_ASSERT(IoStatusBlock);
+    LWIO_ASSERT(CompletionContext);
+
+    if (!FileHandle || !Zct)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -567,7 +569,9 @@ IopCompleteZctReadWriteFile(
     BOOLEAN bIsPagingIo = IsSetFlag(IoFlags, IO_FLAG_PAGING_IO);
     IRP_TYPE irpType = bIsWrite ? IRP_TYPE_WRITE : IRP_TYPE_READ;
 
-    if (!FileHandle || !IoStatusBlock || !CompletionContext)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle || !CompletionContext)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -726,7 +730,9 @@ IopControlFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = bIsFsControl? IRP_TYPE_FS_CONTROL : IRP_TYPE_DEVICE_IO_CONTROL;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -823,7 +829,9 @@ IoFlushBuffersFile(
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -872,7 +880,9 @@ IopQuerySetInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = bIsSet ? IRP_TYPE_SET_INFORMATION : IRP_TYPE_QUERY_INFORMATION;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -986,7 +996,9 @@ IoQueryDirectoryFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     PIO_MATCH_FILE_SPEC fileSpec = NULL;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1063,7 +1075,9 @@ IoReadDirectoryChangeFile(
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1119,7 +1133,9 @@ IopQuerySetVolumeInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = bIsSet ? IRP_TYPE_SET_VOLUME_INFORMATION : IRP_TYPE_QUERY_VOLUME_INFORMATION;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1212,7 +1228,9 @@ IoLockFile(
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1268,7 +1286,9 @@ IoUnlockFile(
     PIRP pIrp = NULL;
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1378,7 +1398,9 @@ IoQueryQuotaInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = IRP_TYPE_QUERY_QUOTA;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1437,7 +1459,9 @@ IoSetQuotaInformationFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = IRP_TYPE_SET_QUOTA;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
@@ -1490,7 +1514,9 @@ IopQuerySetSecurityFile(
     IO_STATUS_BLOCK ioStatusBlock = { 0 };
     IRP_TYPE irpType = bIsSet ? IRP_TYPE_SET_SECURITY : IRP_TYPE_QUERY_SECURITY;
 
-    if (!FileHandle || !IoStatusBlock)
+    LWIO_ASSERT(IoStatusBlock);
+
+    if (!FileHandle)
     {
         status = STATUS_INVALID_PARAMETER;
         GOTO_CLEANUP_EE(EE);
