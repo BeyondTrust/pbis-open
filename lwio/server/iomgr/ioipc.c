@@ -354,9 +354,6 @@ IopIpcCreateFile(
                     pMessage->pSecurityToken);
     GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
-    status = IO_ALLOCATE(&pReply, NT_IPC_MESSAGE_CREATE_FILE_RESULT, sizeof(*pReply));
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
-
     if (pMessage->EcpCount)
     {
         ULONG ecpIndex = 0;
