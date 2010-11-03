@@ -53,6 +53,7 @@
 
 #include <stdlib.h>
 #include <pthread.h>
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 
