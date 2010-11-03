@@ -245,7 +245,7 @@ UpdateEventWait(
                 pEvent,
                 pTask->Fd,
                 EVFILT_READ,
-                EV_ADD | EV_CLEAR | EV_ENABLE,
+                EV_ENABLE,
                 0,
                 0,
                 pTask);
@@ -272,7 +272,7 @@ UpdateEventWait(
                 pEvent,
                 pTask->Fd,
                 EVFILT_WRITE,
-                EV_ADD | EV_CLEAR | EV_ENABLE,
+                EV_ENABLE,
                 0,
                 0,
                 pTask);
@@ -497,7 +497,6 @@ ProcessRunnable(
     PLW_TASK_GROUP pGroup = NULL;
     PRING pRing = NULL;
     PRING pNext = NULL;
-    struct kevent* pEvent = NULL;
     
     /* We are guaranteed to run each task at least once.  If tasks remain
        on the runnable list by yielding, we will continue to run them
@@ -553,33 +552,7 @@ ProcessRunnable(
                 /* Remove any associated events from the kqueue */
                 if (pTask->Fd >= 0)
                 {
-                    if (pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE)
-                    {
-                        AddCommand(pCommands, &pEvent);
-                        EV_SET(
-                            pEvent,
-                            pTask->Fd,
-                            EVFILT_READ,
-                            EV_DELETE,
-                            0,
-                            0,
-                            0);
-                    }
-
-                    if (pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE)
-                    {
-                        AddCommand(pCommands, &pEvent);
-                        EV_SET(
-                            pEvent,
-                            pTask->Fd,
-                            EVFILT_WRITE,
-                            EV_DELETE,
-                            0,
-                            0,
-                            0);
-                    }
-
-                    ShrinkCommands(pCommands);
+                    (void) LwRtlSetTaskFd(pTask, pTask->Fd, 0);
                 }
 
                 /* Unsubscribe task from any UNIX signals */
@@ -986,6 +959,8 @@ LwRtlSetTaskFd(
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
+    struct kevent commands[2];
+    int count = 0;
 
     if (Fd < 0)
     {
@@ -997,6 +972,30 @@ LwRtlSetTaskFd(
     {
         if (Mask == 0)
         {
+            EV_SET(
+                &commands[count++],
+                pTask->Fd,
+                EVFILT_READ,
+                EV_DELETE,
+                0,
+                0,
+                NULL);
+
+            EV_SET(
+                &commands[count++],
+                pTask->Fd,
+                EVFILT_WRITE,
+                EV_DELETE,
+                0,
+                0,
+                NULL);
+
+            if (kevent(pTask->pThread->KqueueFd, commands, count, NULL, 0, NULL) < 0)
+            {
+                status = LwErrnoToNtStatus(errno);
+                GOTO_ERROR_ON_STATUS(status);
+            }
+
             pTask->Fd = -1;
             ShrinkCommands(&pTask->pThread->Commands);
         }
@@ -1012,6 +1011,31 @@ LwRtlSetTaskFd(
 
         status = ExpandCommands(&pTask->pThread->Commands);
         GOTO_ERROR_ON_STATUS(status);
+
+        /* Pre-add disabled events to kqueue to guarantee memory availability */
+        EV_SET(
+            &commands[count++],
+            Fd,
+            EVFILT_READ,
+            EV_ADD | EV_CLEAR | EV_DISABLE,
+            0,
+            0,
+            pTask);
+
+        EV_SET(
+            &commands[count++],
+            Fd,
+            EVFILT_WRITE,
+            EV_ADD | EV_CLEAR | EV_DISABLE,
+            0,
+            0,
+            pTask);
+
+        if (kevent(pTask->pThread->KqueueFd, commands, count, NULL, 0, NULL) < 0)
+        {
+            status = LwErrnoToNtStatus(errno);
+            GOTO_ERROR_ON_STATUS(status);
+        }
 
         pTask->Fd = Fd;
         pTask->EventLastWait = 0;
