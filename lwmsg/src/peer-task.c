@@ -1240,10 +1240,17 @@ lwmsg_peer_task_run_shutdown(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    int fd = CONNECTION_PRIVATE(task->assoc)->fd;
 
     /* Make sure all calls are run down before we close the association because it
        will destroy the session and thus any handles that are open */
     BAIL_ON_ERROR(status = lwmsg_peer_task_rundown(peer, task, trigger, next_trigger, next_timeout));
+
+    /* We are going to close the fd, so unset it now */
+    if (fd >= 0)
+    {
+        lwmsg_task_unset_trigger_fd(task->event_task, fd);
+    }
 
     switch (task->type)
     {
@@ -1263,6 +1270,11 @@ lwmsg_peer_task_run_shutdown(
         task->type = PEER_TASK_DROP;
         break;
     case LWMSG_STATUS_PENDING:
+        /* Oops, we still need to wait for fd events, so set it on the task again */
+        if (fd >= 0)
+        {
+            BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, fd));
+        }
         task->type = PEER_TASK_FINISH_CLOSE;
         lwmsg_peer_task_set_timeout(peer, task, &peer->timeout.establish, trigger, next_trigger, next_timeout);
         break;
@@ -1451,6 +1463,7 @@ lwmsg_peer_task_run_finish(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    int fd = CONNECTION_PRIVATE(task->assoc)->fd;
 
     /* When the peer runs out of available client slots, it will
        wake all of its tasks so that it can begin enforcing timeouts
@@ -1480,6 +1493,20 @@ lwmsg_peer_task_run_finish(
     /* Is the task unblocked? */
     else if (!task->recv_blocked || !task->send_blocked)
     {
+        switch (task->type)
+        {
+        case PEER_TASK_FINISH_CLOSE:
+        case PEER_TASK_FINISH_RESET:
+            /* We are going to close the fd, so unset it on task */
+            if (fd >= 0)
+            {
+                lwmsg_task_unset_trigger_fd(task->event_task, fd);
+            }
+            break;
+        default:
+            break;
+        }
+
         status = lwmsg_assoc_finish(task->assoc, NULL);
         
         switch (status)
@@ -1505,6 +1532,19 @@ lwmsg_peer_task_run_finish(
             }
             break;
         case LWMSG_STATUS_PENDING:
+            switch (task->type)
+            {
+            case PEER_TASK_FINISH_CLOSE:
+            case PEER_TASK_FINISH_RESET:
+                /* Nevermind, set the fd on the task again */
+                if (fd >= 0)
+                {
+                    BAIL_ON_ERROR(status = lwmsg_task_set_trigger_fd(task->event_task, fd));
+                }
+                break;
+            default:
+                break;
+            }
             break;
         default:
             BAIL_ON_ERROR(status = lwmsg_peer_task_handle_assoc_error(
@@ -1861,8 +1901,14 @@ lwmsg_peer_task_run_drop(
     )
 {
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+    int fd = CONNECTION_PRIVATE(task->assoc)->fd;
 
     BAIL_ON_ERROR(status = lwmsg_peer_task_rundown(peer, task, trigger, next_trigger, next_timeout));
+
+    if (fd >= 0)
+    {
+        lwmsg_task_unset_trigger_fd(task->event_task, fd);
+    }
 
     lwmsg_peer_task_unref(task);
     BAIL_ON_ERROR(status = LWMSG_STATUS_CANCELLED);

@@ -150,6 +150,21 @@ lwmsg_task_set_trigger_fd(
 }
 
 static inline
+LWMsgStatus
+lwmsg_task_unset_trigger_fd(
+    LWMsgTask* task,
+    int fd
+    )
+{
+    return __MAP_NTSTATUS(
+        LwRtlSetTaskFd(
+            task,
+            fd,
+            0));
+}
+
+
+static inline
 void
 lwmsg_task_wake(
     LWMsgTask* task
