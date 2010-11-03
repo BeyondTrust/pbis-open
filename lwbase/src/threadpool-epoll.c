@@ -335,7 +335,7 @@ Poll(
 
     do
     {
-        if (llNextDeadline != 0)
+        if (llNextDeadline >= 0)
         {
             /* Convert to timeout in milliseconds */
             timeout = (llNextDeadline - *pllNow) / 1000000ll;
@@ -623,7 +623,7 @@ EventLoop(
         else if (!RingIsEmpty(&waiting) || !bShutdown)
         {
             /* There are waiting tasks or we are not shutting down, so poll indefinitely */
-            llNextDeadline = 0;
+            llNextDeadline = -1;
         }
         else
         {

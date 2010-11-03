@@ -432,7 +432,7 @@ Poll(
 
     do
     {
-        if (llNextDeadline != 0)
+        if (llNextDeadline >= 0)
         {
             /* Convert to timeout structure */
             llTimeDiff = llNextDeadline - *pllNow;
@@ -455,7 +455,7 @@ Poll(
             pCommands->ulCommandCount,
             pEvents,
             maxEvents,
-            llNextDeadline != 0 ? &timeout : NULL);
+            llNextDeadline >= 0 ? &timeout : NULL);
 
         if (ready < 0 && errno == EINTR)
         {
@@ -766,7 +766,7 @@ EventLoop(
         else if (!RingIsEmpty(&waiting) || !bShutdown)
         {
             /* There are waiting tasks or we are not shutting down, so poll indefinitely */
-            llNextDeadline = 0;
+            llNextDeadline = -1;
         }
         else
         {
