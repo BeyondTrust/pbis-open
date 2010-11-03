@@ -235,10 +235,10 @@ UpdateEventWait(
 {
     struct kevent* pEvent = NULL;
 
-    if ((pTask->EventWait & FD_EVENTS) != (pTask->EventLastWait & FD_EVENTS) &&
-        pTask->Fd >= 0)
+    if (pTask->Fd >= 0)
     {
-        if (pTask->EventWait & LW_TASK_EVENT_FD_READABLE)
+        if ((pTask->EventWait & LW_TASK_EVENT_FD_READABLE) && 
+            !(pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE))
         {
             AddCommand(pCommands, &pEvent);
             EV_SET(
@@ -250,7 +250,8 @@ UpdateEventWait(
                 0,
                 pTask);
         }
-        else if (pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE)
+        else if ((pTask->EventLastWait & LW_TASK_EVENT_FD_READABLE) &&
+            !(pTask->EventWait & LW_TASK_EVENT_FD_READABLE))
         {
             AddCommand(pCommands, &pEvent);
             EV_SET(
@@ -263,7 +264,8 @@ UpdateEventWait(
                 pTask);
         }
         
-        if (pTask->EventWait & LW_TASK_EVENT_FD_WRITABLE)
+        if ((pTask->EventWait & LW_TASK_EVENT_FD_WRITABLE) &&
+            !(pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE))
         {
             AddCommand(pCommands, &pEvent);
             EV_SET(
@@ -275,7 +277,8 @@ UpdateEventWait(
                 0,
                 pTask);
         }
-        else if (pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE)
+        else if ((pTask->EventLastWait & LW_TASK_EVENT_FD_WRITABLE) &&
+            !(pTask->EventWait & LW_TASK_EVENT_FD_WRITABLE))
         {
             AddCommand(pCommands, &pEvent);
             EV_SET(
