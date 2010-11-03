@@ -106,6 +106,16 @@ LwSetupMachineSession(
     );
 
 DWORD
+LwSetupMachineSessionWithCache(
+    PCSTR  pszSamAccountName,
+    PCSTR  pszPassword,
+    PCSTR  pszRealm,
+    PCSTR  pszDomain,
+    PCSTR  pszCachePath,
+    PDWORD pdwGoodUntilTime
+    );
+
+DWORD
 LwKrb5CleanupMachineSession(
     VOID
     );
@@ -143,6 +153,7 @@ LwKrb5RefreshMachineTGT(
 DWORD
 LwKrb5RefreshMachineTGTByDomain(
     PCSTR pszDomainName,
+    PCSTR pszCachePath,
     PDWORD pdwGoodUntilTime
     );
 

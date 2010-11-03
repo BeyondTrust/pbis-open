@@ -148,7 +148,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     //
 
     dwError = ADState_GetDomainTrustList(
-                  pState->pszJoinedDomainName,
+                  pState->pszDomainName,
                   &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -216,7 +216,7 @@ AD_OnlineFinishInitializeDomainTrustsInfo(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADState_StoreDomainTrustList(
-                pState->pszJoinedDomainName,
+                pState->pszDomainName,
                 ppDomainInfo,
                 dwDomainInfoCount);
     BAIL_ON_LSA_ERROR(dwError);
@@ -252,7 +252,7 @@ AD_OnlineInitializeOperatingMode(
     PLSA_DM_LDAP_CONNECTION pConn = NULL;
     AD_CELL_SUPPORT adCellSupport = AD_CELL_SUPPORT_FULL;
 
-    dwError = LwKrb5SetDefaultCachePath(LSASS_CACHE_PATH, NULL);
+    dwError = LwKrb5SetDefaultCachePath(pState->MachineCreds.pszCachePath, NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID*)&pProviderData);
@@ -363,7 +363,7 @@ AD_OnlineInitializeOperatingMode(
     }
 
     dwError = ADState_StoreProviderData(
-                pState->pszJoinedDomainName,
+                pState->pszDomainName,
                 pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -1508,7 +1508,9 @@ AD_ServicesDomainWithDiscovery(
     BOOLEAN bFoundDomain = FALSE;
     DWORD dwError = 0;
 
-    bFoundDomain = AD_ServicesDomainInternal(pszNetBiosName);
+    bFoundDomain = AD_ServicesDomainInternal(
+                       pState,
+                       pszNetBiosName);
 
     if (!bFoundDomain)
     {
@@ -1554,10 +1556,6 @@ AD_OnlineCheckUserPassword(
 {
     DWORD dwError = 0;
     PSTR pszHostname = NULL;
-    PSTR pszMachineAccountName = NULL;
-    PSTR pszServicePassword = NULL;
-    PSTR pszDomainDnsName = NULL;
-    PSTR pszHostDnsDomain = NULL;
     PSTR pszServicePrincipal = NULL;
     PSTR pszUpn = NULL;
     PSTR pszUserDnsDomainName = NULL;
@@ -1568,6 +1566,7 @@ AD_OnlineCheckUserPassword(
     PAC_LOGON_INFO *pPac = NULL;
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
     NTSTATUS ntStatus = 0;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     dwError = AD_DetermineTrustModeandDomainName(
                         pContext->pState,
@@ -1578,25 +1577,25 @@ AD_OnlineCheckUserPassword(
                         NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaDnsGetHostInfo(&pszHostname);
+    dwError = LsaPcacheGetPasswordInfo(
+                  pContext->pState->pPcache,
+                  NULL,
+                  &pPasswordInfoA);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(
+                  pPasswordInfoA->pszHostname,
+                  &pszHostname);
     BAIL_ON_LSA_ERROR(dwError);
 
     LwStrToLower(pszHostname);
-
-    dwError = LwKrb5GetMachineCredsByDomain(
-                    pContext->pState->pszJoinedDomainName,
-                    &pszMachineAccountName,
-                    &pszServicePassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
-    BAIL_ON_LSA_ERROR(dwError);
 
     // Leave the realm empty so that kerberos referrals are turned on.
     dwError = LwAllocateStringPrintf(
                         &pszServicePrincipal,
                         "host/%s.%s@",
                         pszHostname,
-                        pszHostDnsDomain);
+                        pPasswordInfoA->pszHostDnsDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pUserInfo->userInfo.bIsGeneratedUPN)
@@ -1651,8 +1650,8 @@ AD_OnlineCheckUserPassword(
                     pszPassword,
                     KRB5_File_Cache,
                     pszServicePrincipal,
-                    pszDomainDnsName,
-                    pszServicePassword,
+                    pPasswordInfoA->pszDnsDomainName,
+                    pPasswordInfoA->pszMachinePassword,
                     &pchNdrEncodedPac,
                     &sNdrEncodedPac,
                     pdwGoodUntilTime,
@@ -1666,8 +1665,8 @@ AD_OnlineCheckUserPassword(
         dwError = LwAllocateStringPrintf(
                       &pszServicePrincipal,
                       "%s@%s",
-                      pszMachineAccountName,
-                      pszDomainDnsName);
+                      pPasswordInfoA->pszMachineAccount,
+                      pPasswordInfoA->pszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LwSetupUserLoginSession(
@@ -1677,8 +1676,8 @@ AD_OnlineCheckUserPassword(
                       pszPassword,
                       KRB5_File_Cache,
                       pszServicePrincipal,
-                      pszDomainDnsName,
-                      pszServicePassword,
+                      pPasswordInfoA->pszDnsDomainName,
+                      pPasswordInfoA->pszMachinePassword,
                       &pchNdrEncodedPac,
                       &sNdrEncodedPac,
                       pdwGoodUntilTime,
@@ -1736,14 +1735,12 @@ cleanup:
         FreePacLogonInfo(pPac);
     }
     LW_SAFE_FREE_STRING(pszHostname);
-    LW_SAFE_FREE_STRING(pszMachineAccountName);
-    LW_SECURE_FREE_STRING(pszServicePassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszServicePrincipal);
     LW_SAFE_FREE_STRING(pszUserDnsDomainName);
     LW_SAFE_FREE_STRING(pszFreeUpn);
     LW_SAFE_FREE_MEMORY(pchNdrEncodedPac);
+
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 
@@ -1835,12 +1832,15 @@ AD_OnlineAuthenticateUserPam(
         pUserInfo->pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaUmAddUser(
-                  pUserInfo->userInfo.uid,
-                  pszNT4UserName,
-                  pParams->pszPassword,
-                  dwGoodUntilTime);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (pContext->pState->bIsDefault)
+    {
+        dwError = LsaUmAddUser(
+                      pUserInfo->userInfo.uid,
+                      pszNT4UserName,
+                      pParams->pszPassword,
+                      dwGoodUntilTime);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     *ppPamAuthInfo = pPamAuthInfo;
 
@@ -2670,9 +2670,12 @@ AD_OnlineChangePassword(
     BAIL_ON_LSA_ERROR(dwError);
 
     // Ignore errors because password change succeeded
-    LsaUmModifyUser(
-        pCachedUser->userInfo.uid,
-        pszPassword);
+    if (pContext->pState->bIsDefault)
+    {
+        LsaUmModifyUser(
+            pCachedUser->userInfo.uid,
+            pszPassword);
+    }
 
     // Run a check against the new password. This will download a pac for the
     // user and store their user kerberos creds.

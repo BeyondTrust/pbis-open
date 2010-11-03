@@ -899,7 +899,10 @@ LsaDmpModifyStateFlags(
             {
                 // Have to ignore dwError because this function returns void
                 LsaSrvFlushSystemCache();
-                LsaUmTriggerCheckUsersThread();
+                if (Handle->pProviderState->bIsDefault)
+                {
+                    LsaUmTriggerCheckUsersThread();
+                }
             }
         }
 
@@ -3718,7 +3721,8 @@ LsaDmConnectDomain(
     if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
     {
         dwError = LwKrb5RefreshMachineTGTByDomain(
-                      pProviderState->pszJoinedDomainName,
+                      pProviderState->pszDomainName,
+                      pProviderState->MachineCreds.pszCachePath,
                       NULL);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -3784,7 +3788,8 @@ LsaDmConnectDomain(
     if (dwError == LW_ERROR_KRB5KDC_ERR_TGT_REVOKED)
     {
         dwError = LwKrb5RefreshMachineTGTByDomain(
-                      pProviderState->pszJoinedDomainName,
+                      pProviderState->pszDomainName,
+                      pProviderState->MachineCreds.pszCachePath,
                       NULL);
         BAIL_ON_LSA_ERROR(dwError);
 

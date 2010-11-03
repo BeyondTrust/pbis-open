@@ -577,67 +577,20 @@ error:
 
 DWORD
 LsaDisableDomainGroupMembership(
-    VOID
+    PCSTR pszDomainName,
+    PCSTR pszDomainSID
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    PSTR pszHostname = NULL;
-    HANDLE hStore = NULL;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    PSTR pszDnsDomainName = NULL;
-    PSTR pszDomainSID = NULL;
 
-    dwError = LsaDnsGetHostInfo(&pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwpsGetPasswordByHostName(
-                hStore,
-                pszHostname,
-                &pPassInfo);
-    if (dwError)
-    {
-        if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
-        {
-            dwError = LW_ERROR_NOT_JOINED_TO_AD;
-        }
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LwWc16sToMbs(pPassInfo->pwszDnsDomainName,
-                           &pszDnsDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwWc16sToMbs(pPassInfo->pwszSID,
-                           &pszDomainSID);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaChangeDomainGroupMembership(pszDnsDomainName,
+    dwError = LsaChangeDomainGroupMembership(pszDomainName,
                                              pszDomainSID,
                                              FALSE);
     BAIL_ON_LSA_ERROR(dwError);
 
-cleanup:
-    if (hStore && pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-
-    if (hStore)
-    {
-        LwpsClosePasswordStore(hStore);
-    }
-
-    LW_SAFE_FREE_MEMORY(pszDnsDomainName);
-    LW_SAFE_FREE_MEMORY(pszDomainSID);
-    LW_SAFE_FREE_MEMORY(pszHostname);
+error:
 
     return dwError;
-
-error:
-    goto cleanup;
 }
 
 

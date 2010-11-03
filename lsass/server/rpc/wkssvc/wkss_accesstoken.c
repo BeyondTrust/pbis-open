@@ -243,40 +243,44 @@ WkssSrvGetSystemCreds(
 {
     DWORD dwError = ERROR_SUCCESS;
     LW_PIO_CREDS pCreds = NULL;
-    PSTR pszUsername = NULL;
-    PSTR pszPassword = NULL;
-    PSTR pszDomainDnsName = NULL;
-    PSTR pszHostDnsDomain = NULL;
     PSTR pszMachinePrincipal = NULL;
+    PSTR pszCachePath = NULL;
+    PLWPS_PASSWORD_INFO_A pPassInfo = NULL;
 
-    dwError = LwKrb5GetMachineCreds(
-                    &pszUsername,
-                    &pszPassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
+    dwError = LsaSrvProviderGetPasswordInfo(
+                  LSA_AD_TAG_PROVIDER,
+                  NULL,
+                  NULL,
+                  &pPassInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
                     &pszMachinePrincipal,
                     "%s@%s",
-                    pszUsername,
-                    pszDomainDnsName);
+                    pPassInfo->pszMachineAccount,
+                    pPassInfo->pszDnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(
+                    &pszCachePath,
+                    "%s.%s",
+                    LSASS_KRB5_CACHE_PATH,
+                    pPassInfo->pszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwIoCreateKrb5CredsA(
                     pszMachinePrincipal,
-                    LSASS_KRB5_CACHE_PATH,
+                    pszCachePath,
                     &pCreds);
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppCreds = pCreds;
 
 cleanup:
-    LW_SAFE_FREE_STRING(pszUsername);
-    LW_SECURE_FREE_STRING(pszPassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
     LW_SAFE_FREE_STRING(pszMachinePrincipal);
+    LW_SAFE_FREE_STRING(pszCachePath);
+
+    LwFreePasswordInfoA(pPassInfo);
 
     return dwError;
 

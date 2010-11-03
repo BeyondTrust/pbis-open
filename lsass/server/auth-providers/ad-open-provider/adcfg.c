@@ -815,7 +815,7 @@ AD_GetUnprovisionedModeShell(
     BOOLEAN bInLock = FALSE;
     PSTR pszUnprovisionedModeShell = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszShell))
     {
@@ -829,7 +829,7 @@ AD_GetUnprovisionedModeShell(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -850,7 +850,7 @@ AD_GetHomedirPrefixPath(
     BOOLEAN bInLock = FALSE;
     PSTR  pszHomedirPrefixPath = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszHomedirPrefix))
     {
@@ -865,7 +865,7 @@ AD_GetHomedirPrefixPath(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -886,7 +886,7 @@ AD_GetUserDomainPrefix(
     BOOLEAN bInLock = FALSE;
     PSTR  pszValue = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszUserDomainPrefix))
     {
@@ -910,7 +910,7 @@ AD_GetUserDomainPrefix(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -931,7 +931,7 @@ AD_GetUnprovisionedModeHomedirTemplate(
     BOOLEAN bInLock = FALSE;
     PSTR pszUnprovisionedModeHomedirTemplate = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszHomedirTemplate))
     {
@@ -946,7 +946,7 @@ AD_GetUnprovisionedModeHomedirTemplate(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -965,9 +965,9 @@ AD_GetMachinePasswordSyncPwdLifetime(
     DWORD dwMachinePasswordSyncPwdLifetime = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     dwMachinePasswordSyncPwdLifetime = pState->config.dwMachinePasswordSyncLifetime;
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwMachinePasswordSyncPwdLifetime;
 }
@@ -980,9 +980,9 @@ AD_GetClockDriftSeconds(
     DWORD dwClockDriftSecs = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     dwClockDriftSecs = pState->dwMaxAllowedClockDriftSeconds;
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwClockDriftSecs;
 }
@@ -995,11 +995,11 @@ AD_GetCacheEntryExpirySeconds(
     DWORD dwResult = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     dwResult = pState->config.dwCacheEntryExpirySecs;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwResult;
 }
@@ -1012,9 +1012,9 @@ AD_GetUmask(
     DWORD dwResult = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     dwResult = pState->config.dwUmask;
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwResult;
 }
@@ -1029,7 +1029,7 @@ AD_GetSkelDirs(
     BOOLEAN bInLock = FALSE;
     PSTR pszSkelDirs = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     if (!LW_IS_NULL_OR_EMPTY_STR(pState->config.pszSkelDirs))
     {
@@ -1043,7 +1043,7 @@ AD_GetSkelDirs(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -1062,11 +1062,11 @@ AD_GetLDAPSignAndSeal(
     BOOLEAN bResult = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bResult = pState->config.bLDAPSignAndSeal;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bResult;
 }
@@ -1133,11 +1133,11 @@ AD_DeleteFromMembersList(
 {
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
     AD_DeleteFromMembersList_InLock(pState, pszMember);
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 }
 
 static
@@ -1200,7 +1200,7 @@ AD_AddAllowedMember(
     PSTR  pszMemberCopy = NULL;
     PLW_HASH_TABLE pAllowedMemberList = *ppAllowedMemberList;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
     if (!pState->pAllowedSIDs)
     {
@@ -1283,7 +1283,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszSIDCopy);
     LW_SAFE_FREE_STRING(pszMemberCopy);
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -1312,7 +1312,7 @@ AD_GetMemberLists(
     PSTR* ppszMembers = NULL;
     PLW_HASH_TABLE pAllowedMemberList = NULL;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     for (pIter = pState->config.pUnresolvedMemberList; pIter; pIter = pIter->pNext)
     {
@@ -1353,7 +1353,7 @@ AD_GetMemberLists(
 
 cleanup:
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
 
@@ -1397,11 +1397,11 @@ AD_ShouldFilterUserLoginsByGroup(
     BOOLEAN bFilter = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bFilter = AD_ShouldFilterUserLoginsByGroup_InLock(pState);
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bFilter;
 }
@@ -1448,11 +1448,11 @@ AD_ShouldAssumeDefaultDomain(
     BOOLEAN bAssumeDefaultDomain = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bAssumeDefaultDomain = pState->config.bAssumeDefaultDomain;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bAssumeDefaultDomain;
 }
@@ -1465,11 +1465,11 @@ AD_ShouldSyncSystemTime(
     BOOLEAN bSyncSystemTime = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bSyncSystemTime = pState->config.bSyncSystemTime;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bSyncSystemTime;
 }
@@ -1482,11 +1482,11 @@ AD_EventlogEnabled(
     BOOLEAN bResult = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bResult = pState->config.bEnableEventLog;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bResult;
 }
@@ -1499,11 +1499,11 @@ AD_ShouldLogNetworkConnectionEvents(
     BOOLEAN bResult = TRUE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bResult = pState->config.bShouldLogNetworkConnectionEvents;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bResult;
 }
@@ -1516,11 +1516,11 @@ AD_ShouldCreateK5Login(
     BOOLEAN bResult = TRUE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bResult = pState->config.bCreateK5Login;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bResult;
 }
@@ -1533,11 +1533,11 @@ AD_ShouldCreateHomeDir(
     BOOLEAN bCreateHomeDir = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bCreateHomeDir = pState->config.bCreateHomeDir;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bCreateHomeDir;
 }
@@ -1550,11 +1550,11 @@ AD_ShouldRefreshUserCreds(
     BOOLEAN bRefreshUserCreds = FALSE;
     BOOLEAN bInLock          = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     bRefreshUserCreds = pState->config.bRefreshUserCreds;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return bRefreshUserCreds;
 }
@@ -1567,11 +1567,11 @@ AD_GetCellSupport(
     AD_CELL_SUPPORT result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.CellSupport;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1584,11 +1584,11 @@ AD_GetCacheBackend(
     AD_CACHE_BACKEND result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.CacheBackend;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1601,11 +1601,11 @@ AD_GetCacheSizeCap(
     DWORD dwResult = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     dwResult = pState->config.dwCacheSizeCap;
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwResult;
 }
@@ -1618,11 +1618,11 @@ AD_GetTrimUserMembershipEnabled(
     BOOLEAN result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.bTrimUserMembershipEnabled;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1635,11 +1635,11 @@ AD_GetNssGroupMembersCacheOnlyEnabled(
     BOOLEAN result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.bNssGroupMembersCacheOnlyEnabled;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1652,11 +1652,11 @@ AD_GetNssUserMembershipCacheOnlyEnabled(
     BOOLEAN result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.bNssUserMembershipCacheOnlyEnabled;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1669,11 +1669,11 @@ AD_GetNssEnumerationEnabled(
     BOOLEAN result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     result = pState->config.bNssEnumerationEnabled;
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1686,9 +1686,9 @@ AD_GetDomainManagerCheckDomainOnlineSeconds(
     DWORD result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     result = pState->config.DomainManager.dwCheckDomainOnlineSeconds;
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1701,9 +1701,9 @@ AD_GetDomainManagerUnknownDomainCacheTimeoutSeconds(
     DWORD result = FALSE;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     result = pState->config.DomainManager.dwUnknownDomainCacheTimeoutSeconds;
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return result;
 }
@@ -1719,14 +1719,47 @@ AD_GetDomainManagerTrustExceptionList(
     DWORD dwError = 0;
     BOOLEAN bInLock = FALSE;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
     *pbIgnoreAllTrusts = pState->config.DomainManager.bIgnoreAllTrusts;
     dwError = LwDuplicateStringArray(
                     pppszTrustsList,
                     pdwTrustsCount,
                     pState->config.DomainManager.ppszTrustExceptionList,
                     pState->config.DomainManager.dwTrustExceptionCount);
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
 
     return dwError;
+}
+
+VOID
+AD_ConfigLockAcquireRead(
+    PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    int status = 0;
+
+    status = pthread_rwlock_rdlock(pState->pConfigLock);
+    LW_ASSERT(status == 0);
+}
+
+VOID
+AD_ConfigLockAcquireWrite(
+    PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    int status = 0;
+
+    status = pthread_rwlock_wrlock(pState->pConfigLock);
+    LW_ASSERT(status == 0);
+}
+
+void
+AD_ConfigLockRelease(
+    PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    int status = 0;
+
+    status = pthread_rwlock_unlock(pState->pConfigLock);
+    LW_ASSERT(status == 0);
 }

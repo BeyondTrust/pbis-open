@@ -98,41 +98,35 @@ AD_GetSystemCreds(
 {
     LW_PIO_CREDS pCreds = NULL;
     DWORD dwError = 0;
-    PSTR pszUsername = NULL;
-    PSTR pszPassword = NULL;
-    PSTR pszDomainDnsName = NULL;
-    PSTR pszHostDnsDomain = NULL;
     PSTR pszMachPrincipal = NULL;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
-    dwError = LwKrb5GetMachineCredsByDomain(
-                    pState->pszJoinedDomainName,
-                    &pszUsername,
-                    &pszPassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
+    dwError = LsaPcacheGetPasswordInfo(
+                  pState->pPcache,
+                  NULL,
+                  &pPasswordInfoA);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
                     &pszMachPrincipal,
                     "%s@%s",
-                    pszUsername,
-                    pszDomainDnsName);
+                    pPasswordInfoA->pszMachineAccount,
+                    pPasswordInfoA->pszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwIoCreateKrb5CredsA(
                     pszMachPrincipal,
-                    LSASS_CACHE_PATH,
+                    pState->MachineCreds.pszCachePath,
                     &pCreds);
     BAIL_ON_LSA_ERROR(dwError);
 
     *ppCreds = pCreds;
 
 cleanup:
-    LW_SAFE_FREE_STRING(pszUsername);
-    LW_SECURE_FREE_STRING(pszPassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
+
     LW_SAFE_FREE_STRING(pszMachPrincipal);
+
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 

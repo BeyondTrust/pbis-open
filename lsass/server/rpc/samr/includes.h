@@ -62,6 +62,8 @@
 #include <lwkrb5.h>
 #include <lw/rpc/lsa.h>
 #include <lw/rpc/samr.h>
+#include <lwps/lwps.h>
+#include <lwpwdinfo.h>
 
 #include <lsa/lsa.h>
 #include "lwmem.h"
@@ -73,6 +75,8 @@
 #include <lsautils.h>
 #include <rpcctl-register.h>
 #include <directory.h>
+#include <lsaadprovider.h>
+#include <lsasrvapi.h>
 
 #include "samr_cfg.h"
 #include "samr_srv.h"

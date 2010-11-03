@@ -68,6 +68,7 @@
 #include "lwmem.h"
 #include "lwstr.h"
 #include "lwhash.h"
+#include "lwfile.h"
 #include <lwkrb5.h>
 #include <lwpwdinfo.h>
 #include <lw/rpc/samr.h>

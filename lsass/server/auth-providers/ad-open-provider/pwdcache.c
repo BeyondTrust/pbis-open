@@ -264,8 +264,9 @@ LsaPcacheSetPasswordInfoInLock(
                   &hPasswordStore);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwpsGetPasswordByCurrentHostName(
+    dwError = LwpsGetPasswordByDomainName(
                   hPasswordStore,
+                  pPcache->pszDomainName,
                   &pPasswordInfo);
     if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
     {

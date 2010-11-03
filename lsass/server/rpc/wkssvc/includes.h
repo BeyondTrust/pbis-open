@@ -53,6 +53,7 @@
 #include <lwkrb5.h>
 #include <lw/rpc/wkssvc.h>
 #include <lw/rpc/lsa.h>
+#include <lwpwdinfo.h>
 
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>

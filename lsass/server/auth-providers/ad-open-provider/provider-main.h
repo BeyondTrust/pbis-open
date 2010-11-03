@@ -81,6 +81,7 @@ AD_CloseHandle(
 DWORD
 AD_CreateProviderContext(
     IN PCSTR pszInstance,
+    IN OPTIONAL PLSA_AD_PROVIDER_STATE,
     OUT PAD_PROVIDER_CONTEXT *ppContext
     );
 
@@ -114,6 +115,7 @@ AD_ServicesDomain(
 
 BOOLEAN
 AD_ServicesDomainInternal(
+    PLSA_AD_PROVIDER_STATE pState,
     PCSTR pszDomain
     );
 

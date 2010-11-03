@@ -79,8 +79,9 @@ extern PCSTR gpszADProviderName;
 
 extern LSA_PROVIDER_FUNCTION_TABLE gADProviderAPITable;
 
-// please put all new globals in the following structure:
-extern PLSA_AD_PROVIDER_STATE gpLsaAdProviderState;
+// please put all new globals in the LSA_AD_PROVIDER_STATE
+// structures which are stored in the following list:
+extern LSA_LIST_LINKS gLsaAdProviderStateList;
 
 extern PADCACHE_PROVIDER_FUNCTION_TABLE gpCacheProvider;
 

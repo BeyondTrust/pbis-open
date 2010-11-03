@@ -331,9 +331,30 @@ LwSetupMachineSession(
     PDWORD pdwGoodUntilTime
     )
 {
+    return LwSetupMachineSessionWithCache(
+               pszSamAccountName,
+               pszPassword,
+               pszRealm,
+               pszDomain,
+               NULL,
+               pdwGoodUntilTime);
+}
+
+DWORD
+LwSetupMachineSessionWithCache(
+    PCSTR  pszSamAccountName,
+    PCSTR  pszPassword,
+    PCSTR  pszRealm,
+    PCSTR  pszDomain,
+    PCSTR  pszCachePath,
+    PDWORD pdwGoodUntilTime
+    )
+{
     DWORD dwError = LW_ERROR_SUCCESS;
     PSTR pszHostKeytabFile = NULL;
-    PSTR pszKrb5CcPath = NULL;
+    PSTR pszKrb5SystemCcPath = NULL;
+    // Do not free
+    PCSTR pszKrb5CcPath = NULL;
     PSTR pszKrb5CcPathNew = NULL;
     PSTR pszDomname = NULL;
     PSTR pszRealmCpy = NULL;
@@ -343,13 +364,22 @@ LwSetupMachineSession(
     dwError = LwKrb5GetSystemKeytabPath(&pszHostKeytabFile);
     BAIL_ON_LW_ERROR(dwError);
 
-    dwError = LwKrb5GetSystemCachePath(&pszKrb5CcPath);
-    BAIL_ON_LW_ERROR(dwError);
+    if (pszCachePath)
+    {
+        pszKrb5CcPath = pszCachePath;
+    }
+    else
+    {
+        dwError = LwKrb5GetSystemCachePath(&pszKrb5SystemCcPath);
+        BAIL_ON_LW_ERROR(dwError);
+
+        pszKrb5CcPath = pszKrb5SystemCcPath;
+    }
 
     if (!strncmp(pszKrb5CcPath, "FILE:", sizeof("FILE:") - 1))
     {
         dwError = LwAllocateStringPrintf(&pszKrb5CcPathNew, "%s.new",
-                                          pszKrb5CcPath);
+                                         pszKrb5CcPath);
         BAIL_ON_LW_ERROR(dwError);
     }
 
@@ -389,7 +419,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pszMachPrincipal);
     LW_SAFE_FREE_STRING(pszDomname);
     LW_SAFE_FREE_STRING(pszRealmCpy);
-    LW_SAFE_FREE_STRING(pszKrb5CcPath);
+    LW_SAFE_FREE_STRING(pszKrb5SystemCcPath);
     LW_SAFE_FREE_STRING(pszHostKeytabFile);
     LW_SAFE_FREE_STRING(pszKrb5CcPathNew);
     
@@ -889,12 +919,14 @@ LwKrb5RefreshMachineTGT(
 {
     return LwKrb5RefreshMachineTGTByDomain(
                NULL,
+               NULL,
                pdwGoodUntilTime);
 }
 
 DWORD
 LwKrb5RefreshMachineTGTByDomain(
     PCSTR  pszDomainName,
+    PCSTR  pszCachePath,
     PDWORD pdwGoodUntilTime
     )
 {
@@ -915,11 +947,12 @@ LwKrb5RefreshMachineTGTByDomain(
                     &pszHostDnsDomain);
     BAIL_ON_LW_ERROR(dwError);
 	
-    dwError = LwSetupMachineSession(
+    dwError = LwSetupMachineSessionWithCache(
                     pszUsername,
                     pszPassword,
                     pszDomainDnsName,
                     pszHostDnsDomain,
+                    pszCachePath,
                     &dwGoodUntilTime);
     BAIL_ON_LW_ERROR(dwError);
     

@@ -138,7 +138,8 @@ LsaEnableDomainGroupMembership(
 
 DWORD
 LsaDisableDomainGroupMembership(
-    VOID
+    PCSTR pszDomainName,
+    PCSTR pszDomainSID
     );
 
 

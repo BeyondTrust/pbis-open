@@ -66,6 +66,9 @@ typedef struct _LSA_MACHINEPWD_STATE {
     pthread_cond_t *pThreadCondition;
     DWORD dwTgtExpiry;
     DWORD dwTgtExpiryGraceSeconds;
+    // Datalock protects dwTgtExpiry and dwTgtExpiryGraceSeconds
+    pthread_rwlock_t DataLock;
+    pthread_rwlock_t* pDataLock;
 } LSA_MACHINEPWD_STATE, *PLSA_MACHINEPWD_STATE;
 
 static
@@ -142,6 +145,11 @@ ADInitMachinePasswordSync(
     BAIL_ON_LSA_ERROR(dwError);
 
     pMachinePwdState->pThreadCondition = &pMachinePwdState->ThreadCondition;
+
+    dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pMachinePwdState->DataLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    pMachinePwdState->pDataLock = &pMachinePwdState->DataLock;
 
     pState->hMachinePwdState = pMachinePwdState;
     
@@ -240,13 +248,17 @@ ADSyncMachinePasswordThreadRoutine(
     PLSA_MACHINEPWD_STATE pMachinePwdState = (PLSA_MACHINEPWD_STATE)pState->hMachinePwdState;
     DWORD dwPasswordSyncLifetime = 0;
     struct timespec timeout = {0, 0};
-    PSTR pszHostname = NULL;
     DWORD dwGoodUntilTime = 0;
     PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     LSA_LOG_INFO("Machine Password Sync Thread starting");
 
     pthread_mutex_lock(pMachinePwdState->pThreadLock);
+
+    dwError = LwKrb5SetDefaultCachePath(
+                  pState->MachineCreds.pszCachePath,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
 
     for (;;)
     {
@@ -259,15 +271,6 @@ ADSyncMachinePasswordThreadRoutine(
            break;
         }
 
-        dwError = LsaDnsGetHostInfo(&pszHostname);
-        if (dwError)
-        {
-            LSA_LOG_ERROR("Error: Failed to find hostname (error = %u)",
-                          dwError);
-            dwError = 0;
-            goto lsa_wait_resync;
-        }
-
         if (!pState->pProviderData)
         {
             dwError = 0;
@@ -276,7 +279,7 @@ ADSyncMachinePasswordThreadRoutine(
         ADSyncTimeToDC(pState, pState->pProviderData->szDomain);
 
         dwError = LsaPcacheGetPasswordInfo(
-                      gpLsaAdProviderState->pPcache,
+                      pState->pPcache,
                       NULL,
                       &pPasswordInfoA);
         if (dwError)
@@ -323,7 +326,8 @@ ADSyncMachinePasswordThreadRoutine(
         if (bRefreshTGT)
         {
             dwError = LwKrb5RefreshMachineTGTByDomain(
-                          pState->pszJoinedDomainName,
+                          pState->pszDomainName,
+                          pState->MachineCreds.pszCachePath,
                           &dwGoodUntilTime);
             if (dwError)
             {
@@ -362,8 +366,6 @@ lsa_wait_resync:
         LwFreePasswordInfoA(pPasswordInfoA);
         pPasswordInfoA = NULL;
 
-        LW_SAFE_FREE_STRING(pszHostname);
-
         timeout.tv_sec = time(NULL) + pMachinePwdState->dwThreadWaitSecs;
         timeout.tv_nsec = 0;
 
@@ -394,8 +396,6 @@ cleanup:
 
     LwFreePasswordInfoA(pPasswordInfoA);
 
-    LW_SAFE_FREE_STRING(pszHostname);
-
     pthread_mutex_unlock(pMachinePwdState->pThreadLock);
     
     LSA_LOG_INFO("Machine Password Sync Thread stopping");
@@ -419,7 +419,7 @@ ADSyncTimeToDC(
     LWNET_UNIX_TIME_T dcTime = 0;
     time_t ttDcTime = 0;
 
-    if ( !AD_ShouldSyncSystemTime(pState) )
+    if ( !pState->bIsDefault || !AD_ShouldSyncSystemTime(pState) )
     {
         goto cleanup;
     }
@@ -485,6 +485,11 @@ ADShutdownMachinePasswordSync(
             pthread_mutex_destroy(pMachinePwdState->pThreadLock);
         }
 
+        if (pMachinePwdState->pDataLock)
+        {
+            pthread_rwlock_destroy(pMachinePwdState->pDataLock);
+        }
+
         LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);
     }
 }
@@ -496,9 +501,10 @@ ADShouldRefreshMachineTGT(
     )
 {
     BOOLEAN bRefresh = FALSE;
-    BOOLEAN bInLock = FALSE;
+    int status = 0;
 
-    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    status = pthread_rwlock_rdlock(pMachinePwdState->pDataLock);
+    LW_ASSERT(status == 0);
 
     if (!pMachinePwdState->dwTgtExpiry ||
         (difftime(pMachinePwdState->dwTgtExpiry, time(NULL)) <= pMachinePwdState->dwTgtExpiryGraceSeconds))
@@ -506,7 +512,8 @@ ADShouldRefreshMachineTGT(
         bRefresh = TRUE;
     }
 
-    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    status = pthread_rwlock_unlock(pMachinePwdState->pDataLock);
+    LW_ASSERT(status == 0);
 
     return bRefresh;
 }
@@ -542,10 +549,11 @@ ADSetMachineTGTExpiryInternal(
     DWORD dwThreadWaitSecs
     )
 {
-    BOOLEAN bInLock = FALSE;
     DWORD lifetime = 0;
+    int status = 0;
 
-    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    status = pthread_rwlock_wrlock(pMachinePwdState->pDataLock);
+    LW_ASSERT(status == 0);
 
     if (dwGoodUntil)
     {
@@ -568,7 +576,8 @@ ADSetMachineTGTExpiryInternal(
         pMachinePwdState->dwThreadWaitSecs = DEFAULT_THREAD_WAITSECS;
     }
 
-    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+    status = pthread_rwlock_unlock(pMachinePwdState->pDataLock);
+    LW_ASSERT(status == 0);
 }
 
 static

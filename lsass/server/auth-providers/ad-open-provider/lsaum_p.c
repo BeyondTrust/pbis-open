@@ -157,7 +157,7 @@ LsaUmpCheckUsers(
 static
 DWORD
 LsaUmpCreateKeys(
-    PCSTR pszDomainName,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_UM_KSCHEDULES kSchedules
     );
 
@@ -466,7 +466,7 @@ LsaUmpStateCreate(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaUmpCreateKeys(
-                  pProviderState->pszJoinedDomainName,
+                  pProviderState,
                   pState->kSchedules);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -535,6 +535,11 @@ LsaUmpThreadRoutine(
     time_t              lastCheckTime = 0;
 
     LSA_LOG_VERBOSE("Started user manager credentials refresh thread");
+
+    dwError = LwKrb5SetDefaultCachePath(
+                  pState->pProviderState->MachineCreds.pszCachePath,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
 
     for (;;)
     {
@@ -703,9 +708,13 @@ LsaUmpCheckUsers(
         }
     }
 
-    ADSyncTimeToDC(Handle->pProviderState, Handle->pProviderState->pProviderData->szDomain);
+    ADSyncTimeToDC(
+        Handle->pProviderState,
+        Handle->pProviderState->pProviderData->szDomain);
 
-    bDomainIsOffline = LsaDmIsDomainOffline(Handle->pProviderState->hDmState, Handle->pProviderState->pProviderData->szDomain);
+    bDomainIsOffline = LsaDmIsDomainOffline(
+                           Handle->pProviderState->hDmState,
+                           Handle->pProviderState->pProviderData->szDomain);
     bShouldRefreshCreds = AD_ShouldRefreshUserCreds(Handle->pProviderState);
 
     if ( bDomainIsOffline )
@@ -716,15 +725,12 @@ LsaUmpCheckUsers(
     if (bShouldRefreshCreds)
     {
         dwError = AD_CreateProviderContext(
-                      Handle->pProviderState->pszJoinedDomainName,
+                      Handle->pProviderState->pszDomainName,
+                      Handle->pProviderState,
                       &pProviderContext);
         if (dwError)
         {
             bShouldRefreshCreds = FALSE;
-        }
-        else
-        {
-            pProviderContext->pState = Handle->pProviderState;
         }
     }
 
@@ -778,50 +784,42 @@ LsaUmpCheckUsers(
 static
 DWORD
 LsaUmpCreateKeys(
-    PCSTR pszDomainName,
+    PLSA_AD_PROVIDER_STATE pState,
     PLSA_UM_KSCHEDULES kSchedules
     )
 {
     DWORD      dwError = 0;
     DWORD      dwCount = 0;
     DES_cblock Key;
-    PSTR       pszHostname = NULL;
-    PSTR       pszUsername = NULL;
-    PSTR       pszServicePassword = NULL;
-    PSTR       pszDomainDnsName = NULL;
-    PSTR       pszHostDnsDomain = NULL;
     DWORD      dwTime = 0;
     pid_t      Pid = 0;
+    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     if ( !RAND_status() )
     {
         LSA_LOG_DEBUG("LSA User Manager - randomness not seeded automatically");
-        dwError = LsaDnsGetHostInfo(&pszHostname);
+
+        dwError = LsaPcacheGetPasswordInfo(
+                      pState->pPcache,
+                      NULL,
+                      &pPasswordInfoA);
         BAIL_ON_LSA_ERROR(dwError);
 
         RAND_seed(
-            pszHostname,
-            strlen(pszHostname));
-
-        LwStrToLower(pszHostname);
-
-        dwError = LwKrb5GetMachineCredsByDomain(
-                      pszDomainName,
-                      &pszUsername,
-                      &pszServicePassword,
-                      &pszDomainDnsName,
-                      &pszHostDnsDomain);
-        BAIL_ON_LSA_ERROR(dwError);
-
+            pPasswordInfoA->pszHostname,
+            strlen(pPasswordInfoA->pszHostname));
         RAND_seed(
-            pszServicePassword,
-            strlen(pszServicePassword));
+            pPasswordInfoA->pszMachinePassword,
+            strlen(pPasswordInfoA->pszMachinePassword));
         RAND_seed(
-            pszUsername,
-            strlen(pszUsername));
+            pPasswordInfoA->pszMachineAccount,
+            strlen(pPasswordInfoA->pszMachineAccount));
         RAND_seed(
-            pszDomainDnsName,
-            strlen(pszDomainDnsName));
+            pPasswordInfoA->pszSID,
+            strlen(pPasswordInfoA->pszSID));
+        RAND_seed(
+            pState->pszDomainName,
+            strlen(pState->pszDomainName));
 
         dwTime = time(NULL);
         RAND_seed(
@@ -866,12 +864,7 @@ cleanup:
 
     memset(&Key, 0, sizeof(Key));
 
-    LW_SAFE_FREE_STRING(pszHostname);
-    LW_SAFE_FREE_STRING(pszUsername);
-    LW_SECURE_FREE_STRING(pszServicePassword);
-    LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
-
+    LwFreePasswordInfoA(pPasswordInfoA);
 
     return dwError;
 

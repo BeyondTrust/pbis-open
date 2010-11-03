@@ -125,7 +125,12 @@ typedef struct _LSA_MACHINEPWD_CACHE *LSA_MACHINEPWD_CACHE_HANDLE;
 typedef struct _LSA_MACHINEPWD_CACHE **PLSA_MACHINEPWD_CACHE_HANDLE;
 
 typedef struct _LSA_AD_PROVIDER_STATE {
-    PSTR pszJoinedDomainName;
+    LONG nRefCount;
+
+    PSTR pszDomainName;
+    BOOLEAN bIsDefault;
+
+    LSA_LIST_LINKS Links;
 
     /// Tracks machine credentials state
     struct {
@@ -135,14 +140,20 @@ typedef struct _LSA_AD_PROVIDER_STATE {
         /// Pointer to above after it is initialized.  Use this to
         /// determine whe
         pthread_mutex_t* pMutex;
+        PSTR pszCachePath;
     } MachineCreds;
 
     LSA_MACHINEPWD_CACHE_HANDLE pPcache;
 
     MEDIA_SENSE_HANDLE MediaSenseHandle;
+
     LSA_AD_CONFIG      config;
+    pthread_rwlock_t configLock;
+    pthread_rwlock_t* pConfigLock;
+
 
     LSA_DB_HANDLE hCacheConnection;
+    PSTR pszUserGroupCachePath;
 
     /// Used during transition to join to indicate that trusts
     /// are being discovered.
@@ -160,13 +171,16 @@ typedef struct _LSA_AD_PROVIDER_STATE {
 
     DWORD dwMaxAllowedClockDriftSeconds;
 
-    pthread_rwlock_t stateLock;
     enum
     {
         LSA_AD_UNKNOWN,
         LSA_AD_NOT_JOINED,
-        LSA_AD_JOINED
+        LSA_AD_JOINED,
+        LSA_AD_JOINING
     } joinState;
+
+    /// Protects the entire state structure.
+    pthread_rwlock_t stateLock;
     pthread_rwlock_t* pStateLock;
 
     PAD_PROVIDER_DATA pProviderData;
@@ -190,6 +204,7 @@ typedef struct __AD_PROVIDER_CONTEXT
 
     PSTR pszInstance;
 
+    LONG nStateCount;
     PLSA_AD_PROVIDER_STATE pState;
 } AD_PROVIDER_CONTEXT, *PAD_PROVIDER_CONTEXT;
 

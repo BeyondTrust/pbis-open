@@ -130,12 +130,15 @@ AD_OfflineAuthenticateUserPam(
         pUserInfo->pszSamAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaUmAddUser(
-                  pUserInfo->userInfo.uid,
-                  pszNT4UserName,
-                  pParams->pszPassword,
-                  0);
-    BAIL_ON_LSA_ERROR(dwError);
+    if (pContext->pState->bIsDefault)
+    {
+        dwError = LsaUmAddUser(
+                      pUserInfo->userInfo.uid,
+                      pszNT4UserName,
+                      pParams->pszPassword,
+                      0);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     *ppPamAuthInfo = pPamAuthInfo;
 
@@ -317,7 +320,7 @@ AD_OfflineInitializeOperatingMode(
     const LSA_DM_ENUM_DOMAIN_INFO* pDomain = NULL;
 
     dwError = ADState_GetDomainTrustList(
-                  pState->pszJoinedDomainName,
+                  pState->pszDomainName,
                   &pDomains);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -351,7 +354,7 @@ AD_OfflineInitializeOperatingMode(
     }
 
     dwError = ADState_GetProviderData(
-                  pState->pszJoinedDomainName,
+                  pState->pszDomainName,
                   &pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 

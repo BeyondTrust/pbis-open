@@ -72,10 +72,13 @@ LsaSrvGetTargetElements(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        dwError = LwAllocateString(
-                      pszIndex,
-                      &pszTargetInstance);
-        BAIL_ON_LSA_ERROR(dwError);
+        if (++pszIndex[0])
+        {
+            dwError = LwAllocateString(
+                          ++pszIndex,
+                          &pszTargetInstance);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
     } 
     else if (pszTargetProvider)
     {

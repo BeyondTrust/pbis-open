@@ -49,6 +49,30 @@
 #ifndef __AD_CFG_H__
 #define __AD_CFG_H__
 
+#define ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState)    \
+        if (!bInLock) {                                    \
+           AD_ConfigLockAcquireRead(pState);               \
+           bInLock = TRUE;                                 \
+        }
+
+#define LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState)    \
+        if (bInLock) {                                     \
+           AD_ConfigLockRelease(pState);                   \
+           bInLock = FALSE;                                \
+        }
+
+#define ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState)    \
+        if (!bInLock) {                                    \
+           AD_ConfigLockAcquireWrite(pState);              \
+           bInLock = TRUE;                                 \
+        }
+
+#define LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState)    \
+        if (bInLock) {                                     \
+           AD_ConfigLockRelease(pState);                   \
+           bInLock = FALSE;                                \
+        }
+
 DWORD
 AD_ReadRegistry(
     PLSA_AD_CONFIG pConfig
@@ -261,6 +285,21 @@ AD_GetDomainManagerTrustExceptionList(
     OUT PBOOLEAN pbIgnoreAllTrusts,
     OUT PSTR** pppszTrustsList,
     OUT PDWORD pdwTrustsCount
+    );
+
+VOID
+AD_ConfigLockAcquireRead(
+    PLSA_AD_PROVIDER_STATE pState
+    );
+
+VOID
+AD_ConfigLockAcquireWrite(
+    PLSA_AD_PROVIDER_STATE pState
+    );
+
+void
+AD_ConfigLockRelease(
+    PLSA_AD_PROVIDER_STATE pState
     );
 
 #endif /* __AD_CFG_H__ */
