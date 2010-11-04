@@ -1103,6 +1103,11 @@ cleanup:
         lwmsg_server_delete(pServer);
     }
 
+    if (pContext)
+    {
+        lwmsg_context_delete(pContext);
+    }
+
     return dwError;
 
 error:
