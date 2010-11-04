@@ -101,6 +101,12 @@
 }
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory]
+
+"CellSupport" = {
+    default = "unprovisioned"
+    doc = ""
+}
+
 "Id" = {
     default = "lsa-activedirectory-provider"
     doc = ""
