@@ -118,7 +118,11 @@ static DWORD WritePromptFile(PCSTR filename, PCSTR contents)
     GCE(CTFileStreamWrite(file, contents, strlen(contents)));
 
 cleanup:
-    CTCloseFile(file);
+    if (file != NULL)
+    {
+        CTCloseFile(file);
+        file = NULL;
+    }
     return ceError;
 }
 
