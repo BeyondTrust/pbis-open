@@ -205,8 +205,10 @@ static DWORD SetOption(struct SshConf *conf, const char *name, const char *value
             &lineObj.name.trailingSeparator));
         BAIL_ON_CENTERIS_ERROR(ceError = CTStrdup("",
             &lineObj.value.value));
-        CTAllocateStringPrintf(&lineObj.value.trailingSeparator, "#Overwritten by lwidentity: %s",
-                printedLine.data);
+        BAIL_ON_CENTERIS_ERROR(ceError = CTAllocateStringPrintf(
+            &lineObj.value.trailingSeparator,
+            "#Overwritten by lwidentity: %s",
+            printedLine.data));
         BAIL_ON_CENTERIS_ERROR(ceError = CTArrayInsert(&conf->private_data,
                     line, sizeof(struct SshLine), &lineObj, 1));
         memset(&lineObj, 0, sizeof(lineObj));
