@@ -31,8 +31,6 @@
 #ifndef __LWIO_CONFIG_H__
 #define __LWIO_CONFIG_H__
 
-#include "includes.h"
-
 NTSTATUS
 LwioSrvInitializeConfig(
     IN OUT PLWIO_CONFIG pConfig
