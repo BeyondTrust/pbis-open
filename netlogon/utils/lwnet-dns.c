@@ -1153,8 +1153,20 @@ LWNetDnsQueryWithBuffer(
     int responseSize =  0;
     BOOLEAN bInLock = FALSE;
 #if HAVE_DECL_RES_NINIT
-    struct __res_state resLocal = { 0 };
-    res_state res = &resLocal;
+    union
+    {
+        struct __res_state res;
+#ifdef __LWI_AIX__
+        // struct __res_state was enlarged from 720 in AIX 5.2 to 824 in AIX
+        // 5.3. This means calling res_ninit on AIX 5.3 on a structure compiled
+        // on AIX 5.2 will result in a buffer overflow. Furthermore, even on
+        // AIX 5.3, res_ninit seems to expect 1596 bytes in the structure (1491
+        // on AIX 5.2). As a workaround, this padding will ensure enough space
+        // is allocated on the stack.
+        char buffer[2048];
+#endif
+    } resLocal = { {0} };
+    res_state res = &resLocal.res;
 #else
     struct __res_state *res = &_res;
 #endif
