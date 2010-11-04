@@ -268,7 +268,8 @@ ProcessImportedValue(
     dwError = RegAllocateMemory(sizeof(*pData) * (cbData+1), (PVOID*)&pData);
     BAIL_ON_REG_ERROR(dwError);
 
-    if (eMode == REGSHELL_UTIL_IMPORT_UPGRADE)
+    if (eMode == REGSHELL_UTIL_IMPORT_UPGRADE ||
+        eMode == REGSHELL_UTIL_IMPORT_UPGRADE_VERBOSE)
     {
         dwError = RegGetValueA(
                       hReg,
@@ -285,10 +286,13 @@ ProcessImportedValue(
         }
         else
         {
-            printf("[%s%s]\n",
-                   HKEY_THIS_MACHINE,
-                   pszSubKeyName ? pszSubKeyName : "");
-            printf("    '%s' Merged.\n", pItem->valueName);
+            if (eMode == REGSHELL_UTIL_IMPORT_UPGRADE_VERBOSE)
+            {
+                printf("[%s%s]\n",
+                       HKEY_THIS_MACHINE,
+                       pszSubKeyName ? pszSubKeyName : "");
+                printf("    '%s' Merged.\n", pItem->valueName);
+            }
         }
     }
 
