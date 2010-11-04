@@ -627,8 +627,6 @@ SMBSrvInitialize(
     )
 {
     DWORD dwError = 0;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-
 
     dwError = SMBInitCacheFolders();
     BAIL_ON_LWIO_ERROR(dwError);
@@ -641,11 +639,6 @@ SMBSrvInitialize(
     BAIL_ON_LWIO_ERROR(dwError);
 
 error:
-
-    if(ntStatus)
-    {
-        dwError = LwNtStatusToWin32Error(ntStatus);
-    }
 
     return dwError;
 }
