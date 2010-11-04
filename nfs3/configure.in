@@ -39,7 +39,7 @@ vsyslog(3) in syslog.h])
 	hpux*:hppa*)
 		MOD_EXT=".sl"
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
-		AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+		AM_CPPFLAGS="$AM_CPPFLAGS -D_HPUX_SOURCE=1 -U_XOPEN_SOURCE_EXTENDED"
 		;;
 	hpux*:ia64*)
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
@@ -256,6 +256,9 @@ AC_CHECK_TYPES([socklen_t], [], [], [AC_INCLUDES_DEFAULT
 #include <sys/socket.h>
 ])
 
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Werror $AM_CPPFLAGS"
+
 AC_MSG_CHECKING([if getsockname takes socklen_t*])
 AC_TRY_COMPILE([
 #include <sys/types.h>
@@ -272,6 +275,7 @@ AC_DEFINE([GETSOCKNAME_TAKES_SOCKLEN_T], [], [Define if getsockname takes sockle
 AC_MSG_RESULT([no])
 ])
 
+CFLAGS="$saved_CFLAGS"
 
 
 AC_CONFIG_FILES([Makefile

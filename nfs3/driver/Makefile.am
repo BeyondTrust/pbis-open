@@ -20,6 +20,7 @@ libnfs3_sys_la_SOURCES = \
     transportcbs.c
 
 libnfs3_sys_la_CPPFLAGS =           \
+    $(AM_CPPFLAGS)                  \
     -DLW_ENABLE_THREADS=1           \
     -I@top_srcdir@                  \
     -I@top_srcdir@/include          \
