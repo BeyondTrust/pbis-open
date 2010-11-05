@@ -182,7 +182,8 @@ cleanup:
     return dwError;
 
 error:
-
+    LWREG_SAFE_FREE_MEMORY(ioHandle->ioBuf);
+    LWREG_SAFE_FREE_MEMORY(ioHandle);
     goto cleanup;
 }
 
@@ -264,8 +265,8 @@ RegIOOpen(
     else
     {
         ioHandle->fp = fopen(pszRegFile, "rb");
+        BAIL_ON_INVALID_HANDLE(ioHandle->fp);
     }
-    BAIL_ON_INVALID_HANDLE(ioHandle->fp);
 
     /*
      * Read first byte and try to determine if is UTF-16 or not
@@ -303,6 +304,12 @@ cleanup:
     return dwError;
 
 error:
+    if (ioHandle->fp && ioHandle->fp != stdin)
+    {
+        fclose(ioHandle->fp);
+    }
+    LWREG_SAFE_FREE_MEMORY(ioHandle->ioBuf);
+    LWREG_SAFE_FREE_MEMORY(ioHandle);
 
     goto cleanup;
 }
