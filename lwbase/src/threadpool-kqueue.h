@@ -90,6 +90,9 @@ typedef struct _LW_TASK
     PLW_TASK_GROUP pGroup;
     /* Ref count (protected by thread lock) */
     ULONG volatile ulRefCount;
+    /* Events physically registered in kqueue */
+    unsigned bReadEventAdded:1;
+    unsigned bWriteEventAdded:1;
     /* Events task is waiting for (owned by thread) */
     LW_TASK_EVENT_MASK EventWait;
     /* Last set of events task waited for (owned by thread) */

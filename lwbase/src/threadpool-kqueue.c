@@ -972,23 +972,29 @@ LwRtlSetTaskFd(
     {
         if (Mask == 0)
         {
-            EV_SET(
-                &commands[count++],
-                pTask->Fd,
-                EVFILT_READ,
-                EV_DELETE,
-                0,
-                0,
-                NULL);
+            if (pTask->bReadEventAdded)
+            {
+                EV_SET(
+                    &commands[count++],
+                    pTask->Fd,
+                    EVFILT_READ,
+                    EV_DELETE,
+                    0,
+                    0,
+                    NULL);
+            }
 
-            EV_SET(
-                &commands[count++],
-                pTask->Fd,
-                EVFILT_WRITE,
-                EV_DELETE,
-                0,
-                0,
-                NULL);
+            if (pTask->bWriteEventAdded)
+            {
+                EV_SET(
+                    &commands[count++],
+                    pTask->Fd,
+                    EVFILT_WRITE,
+                    EV_DELETE,
+                    0,
+                    0,
+                    NULL);
+            }
 
             if (kevent(pTask->pThread->KqueueFd, commands, count, NULL, 0, NULL) < 0)
             {
@@ -1013,23 +1019,30 @@ LwRtlSetTaskFd(
         GOTO_ERROR_ON_STATUS(status);
 
         /* Pre-add disabled events to kqueue to guarantee memory availability */
-        EV_SET(
-            &commands[count++],
-            Fd,
-            EVFILT_READ,
-            EV_ADD | EV_CLEAR | EV_DISABLE,
-            0,
-            0,
-            pTask);
 
-        EV_SET(
-            &commands[count++],
-            Fd,
-            EVFILT_WRITE,
-            EV_ADD | EV_CLEAR | EV_DISABLE,
-            0,
-            0,
-            pTask);
+        if (Mask & LW_TASK_EVENT_FD_READABLE)
+        {
+            EV_SET(
+                &commands[count++],
+                Fd,
+                EVFILT_READ,
+                EV_ADD | EV_CLEAR | EV_DISABLE,
+                0,
+                0,
+                pTask);
+        }
+
+        if (Mask & LW_TASK_EVENT_FD_WRITABLE)
+        {
+            EV_SET(
+                &commands[count++],
+                Fd,
+                EVFILT_WRITE,
+                EV_ADD | EV_CLEAR | EV_DISABLE,
+                0,
+                0,
+                pTask);
+        }
 
         if (kevent(pTask->pThread->KqueueFd, commands, count, NULL, 0, NULL) < 0)
         {
@@ -1039,6 +1052,8 @@ LwRtlSetTaskFd(
 
         pTask->Fd = Fd;
         pTask->EventLastWait = 0;
+        pTask->bReadEventAdded = Mask & LW_TASK_EVENT_FD_READABLE ? TRUE : FALSE;
+        pTask->bWriteEventAdded = Mask & LW_TASK_EVENT_FD_WRITABLE ? TRUE : FALSE;
     }
 
 error:
