@@ -870,8 +870,9 @@ RegParseRunCallbacks(
 {
     DWORD dwError = 0;
     DWORD i = 0;
-    BAIL_ON_INVALID_POINTER(parseHandle);
     DWORD calledCallback = 0;
+
+    BAIL_ON_INVALID_POINTER(parseHandle);
 
     if (parseHandle->parseCallback.entries == 0)
     {
