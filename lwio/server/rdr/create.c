@@ -119,7 +119,7 @@ RdrShareIsIpc(
     PWSTR pwszShare
     )
 {
-    static const WCHAR wszIpcDollar[] = {'I','P','C','$'};
+    static const WCHAR wszIpcDollar[] = {'I','P','C','$','\0'};
     ULONG ulLen = LwRtlWC16StringNumChars(pwszShare);
 
     return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
