@@ -690,6 +690,11 @@ RegFindHintByName(PSTR pszHint)
 {
    DWORD dwI = 0;
 
+   if (!pszHint)
+   {
+       return 0;
+   }
+
    for (dwI=0; gHints[dwI].pszHintName; dwI++)
    {
        if (strcmp(pszHint, gHints[dwI].pszHintName) == 0)
