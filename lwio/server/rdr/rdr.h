@@ -98,7 +98,7 @@
  * use DFS paths
  */
 #define RDR_CCB_IS_DFS(pFile) \
-    (!(pFile)->bDfsLink && (pFile)->pTree->pSession->pSocket->capabilities & CAP_DFS)
+    (!(pFile)->bNoDfs && (pFile)->pTree->pSession->pSocket->capabilities & CAP_DFS)
 
 #define RDR_CCB_PATH(pFile) \
     (RDR_CCB_IS_DFS(pFile) ? \

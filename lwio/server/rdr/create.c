@@ -114,6 +114,18 @@ RdrConstructCanonicalPath(
 }
 
 static
+BOOLEAN
+RdrShareIsIpc(
+    PWSTR pwszShare
+    )
+{
+    static const WCHAR wszIpcDollar[] = {'I','P','C','$'};
+    ULONG ulLen = LwRtlWC16StringNumChars(pwszShare);
+
+    return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
+}
+
+static
 NTSTATUS
 RdrCreateTreeConnect(
     PRDR_OP_CONTEXT pContext,
@@ -145,34 +157,42 @@ RdrCreateTreeConnect(
         &pContext->State.Create.pwszCanonicalPath);
     BAIL_ON_NT_STATUS(status);
 
-    /* Resolve against DFS cache */
-    status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, 0, &pwszResolved, &bIsRoot);
-    BAIL_ON_NT_STATUS(status);
-
-    /* If we got a different path, reparse it */
-    if (!LwRtlWC16StringIsEqual(pContext->State.Create.pwszCanonicalPath, pwszResolved, FALSE))
+    if (!RdrShareIsIpc(pwszShare))
     {
-        /*
-         * Since we got a hit in our referral cache,
-         * we don't need to chase referrals when tree connecting
-         */
-        bChaseReferrals = FALSE;
-
-        if (!bIsRoot)
-        {
-            pContext->State.Create.bDfsLink = TRUE;
-        }
-
-        RTL_FREE(&pwszServer);
-        RTL_FREE(&pwszShare);
-        RTL_FREE(&pContext->State.Create.pwszFilename);
-
-        status = RdrConvertPath(
-            pwszResolved,
-            &pwszServer,
-            &pwszShare,
-            &pContext->State.Create.pwszFilename);
+        /* Resolve against DFS cache */
+        status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, 0, &pwszResolved, &bIsRoot);
         BAIL_ON_NT_STATUS(status);
+
+        /* If we got a different path, reparse it */
+        if (!LwRtlWC16StringIsEqual(pContext->State.Create.pwszCanonicalPath, pwszResolved, FALSE))
+        {
+            /*
+             * Since we got a hit in our referral cache,
+             * we don't need to chase referrals when tree connecting
+             */
+            bChaseReferrals = FALSE;
+
+            if (!bIsRoot)
+            {
+                pContext->State.Create.bNoDfs = TRUE;
+            }
+
+            RTL_FREE(&pwszServer);
+            RTL_FREE(&pwszShare);
+            RTL_FREE(&pContext->State.Create.pwszFilename);
+
+            status = RdrConvertPath(
+                pwszResolved,
+                &pwszServer,
+                &pwszShare,
+                &pContext->State.Create.pwszFilename);
+            BAIL_ON_NT_STATUS(status);
+        }
+    }
+    else
+    {
+        bChaseReferrals = FALSE;
+        pContext->State.Create.bNoDfs = TRUE;
     }
 
     status = RdrTreeConnect(
@@ -252,7 +272,7 @@ RdrCreateTreeConnected(
     pFile->pTree = pTree;
     pFile->Params.CreateOptions = CreateOptions;
 
-    pFile->bDfsLink = pContext->State.Create.bDfsLink;
+    pFile->bNoDfs = pContext->State.Create.bNoDfs;
 
     pFile->pwszPath = pContext->State.Create.pwszFilename;
     pContext->State.Create.pwszFilename = NULL;

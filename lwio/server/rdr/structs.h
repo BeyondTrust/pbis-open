@@ -104,7 +104,7 @@ typedef struct _RDR_OP_CONTEXT
             };
             PWSTR pwszFilename;
             PWSTR pwszCanonicalPath;
-            unsigned bDfsLink:1;
+            unsigned bNoDfs:1;
         } Create;
         struct
         {
@@ -316,7 +316,7 @@ typedef struct _RDR_CCB
     SMB_PROTOCOL_VERSION version;
     pthread_mutex_t mutex;
     unsigned bMutexInitialized:1;
-    unsigned bDfsLink:1;
+    unsigned bNoDfs:1;
     PWSTR pwszPath;
     PWSTR pwszCanonicalPath;
     PRDR_TREE pTree;
