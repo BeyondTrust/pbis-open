@@ -70,7 +70,12 @@
             break;                                        \
                                                           \
         default:                                          \
-            winerr = ERROR_GEN_FAILURE;                   \
+            winerr = LwTranslateKrb5Error(                \
+                        (ctx),                            \
+                        (krb5_err),                       \
+                        __FUNCTION__,                     \
+                        __FILE__,                         \
+                        __LINE__);                        \
             break;                                        \
         }                                                 \
         goto error;                                       \

@@ -59,6 +59,77 @@ KtKrb5FreeKeytabEntries(
     DWORD              dwCount
     );
 
+static
+DWORD
+KtKrb5GetDefaultKeytab(
+    PSTR* ppszKtFile
+    )
+{
+    PSTR pszDefName = NULL;
+    PSTR pszDefNameNew = NULL;
+    const DWORD dwMaxSize = 1024;
+    // Do not free
+    PSTR pszKtFilename = NULL;
+    DWORD dwError = 0;
+    krb5_error_code ret = 0;
+    DWORD dwSize = 32;
+    krb5_context ctx = NULL;
+
+    ret = krb5_init_context(&ctx);
+    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+
+    do
+    {
+        dwSize += dwSize;
+
+        dwError = LwReallocMemory(
+                      (PVOID)pszDefName,
+                      (PVOID*)&pszDefNameNew,
+                      dwSize);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszDefName = pszDefNameNew;
+        pszDefNameNew = NULL;
+
+        ret = krb5_kt_default_name(ctx, pszDefName, dwSize);
+        if (ret == 0)
+        {
+            LwStrChr(pszDefName, ':', &pszKtFilename);
+
+            if (!pszKtFilename)
+            {
+                pszKtFilename = pszDefName;
+            }
+            else
+            {
+                pszKtFilename++;
+            }
+        }
+        else if (ret != KRB5_CONFIG_NOTENUFSPACE)
+        {
+            BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
+        }
+    }
+    while (ret == KRB5_CONFIG_NOTENUFSPACE &&
+           dwSize < dwMaxSize);
+
+    dwError = LwAllocateString(pszKtFilename,
+                               ppszKtFile);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    if (ctx)
+    {
+        krb5_free_context(ctx);
+    }
+    LW_SAFE_FREE_STRING(pszDefName);
+    LW_SAFE_FREE_STRING(pszDefNameNew);
+    return dwError;
+
+error:
+    *ppszKtFile = NULL;
+    goto cleanup;
+}
 
 static
 DWORD
@@ -69,55 +140,21 @@ KtKrb5KeytabOpen(
     krb5_keytab  *pId
     )
 {
-    const DWORD dwMaxSize = 1024;
     DWORD dwError = ERROR_SUCCESS;
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
     krb5_keytab id = 0;
     PSTR pszKtName = NULL;
-    PSTR pszDefName = NULL;
     PSTR pszKtFilename = NULL;
-    DWORD dwSize = 32;
 
     ret = krb5_init_context(&ctx);
     BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
     if (!pszKtFile)
     {
-        do
-        {
-            dwSize += dwSize;
-
-            dwError = LwReallocMemory(
-                          (PVOID)pszDefName,
-                          (PVOID*)&pszDefName,
-                          dwSize);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            ret = krb5_kt_default_name(ctx, pszDefName, dwSize);
-            if (ret == 0)
-            {
-                LwStrChr(pszDefName, ':', &pszKtFilename);
-
-                if (!pszKtFilename)
-                {
-                    pszKtFilename = pszDefName;
-                }
-                else
-                {
-                    pszKtFilename++;
-                }
-            }
-            else if (ret != KRB5_CONFIG_NOTENUFSPACE)
-            {
-                BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
-            }
-        }
-        while (ret == KRB5_CONFIG_NOTENUFSPACE &&
-               dwSize < dwMaxSize);
+        dwError = KtKrb5GetDefaultKeytab(&pszKtFilename);
+        BAIL_ON_LSA_ERROR(dwError);
     }
-
-    BAIL_ON_KRB5_ERROR(ctx, ret, dwError);
 
     dwError = LwAllocateStringPrintf(
                   &pszKtName,
@@ -139,7 +176,7 @@ error:
         ctx = NULL;
     }
 
-    LW_SAFE_FREE_MEMORY(pszDefName);
+    LW_SAFE_FREE_MEMORY(pszKtFilename);
     LW_SAFE_FREE_MEMORY(pszKtName);
 
     return dwError;
@@ -274,6 +311,63 @@ KtKrb5AddKeyA(
     DWORD dwKvno = 0;
     DWORD dwCount = 0;
     DWORD i = 0;
+    struct stat statbuf = { 0 };
+    PSTR pszKtPathLocal = NULL;
+    int dwKeytabFd = -1;
+
+    memset(&statbuf, 0, sizeof(struct stat));
+
+    if (!pszKtPath)
+    {
+        dwError = KtKrb5GetDefaultKeytab(&pszKtPathLocal);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pszKtPath = pszKtPathLocal;
+    }
+
+    if (stat(pszKtPath, &statbuf) == 0 && statbuf.st_size == 0)
+    {
+        // The file is empty. Add the version number to the file so kerberos
+        // will accept it.
+        char byte = 0x05;
+
+        dwKeytabFd = open(pszKtPath, O_WRONLY, 0);
+        if (dwKeytabFd < 0)
+        {
+            dwError = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
+        while (write(dwKeytabFd, &byte, 1) < 0)
+        {
+            if (errno != EINTR)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+
+        byte = 0x02;
+        while (write(dwKeytabFd, &byte, 1) < 0)
+        {
+            if (errno != EINTR)
+            {
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+
+        while (close(dwKeytabFd) < 0)
+        {
+            if (errno != EINTR)
+            {
+                dwKeytabFd = -1;
+                dwError = LwMapErrnoToLwError(errno);
+                BAIL_ON_LSA_ERROR(dwError);
+            }
+        }
+        dwKeytabFd = -1;
+    }
 
     dwError = KtKrb5KeytabOpen(RDWR_FILE, pszKtPath, &ctx, &kt);
     BAIL_ON_LSA_ERROR(dwError);
@@ -406,6 +500,11 @@ cleanup:
 
     LW_SAFE_FREE_MEMORY(pszBaseDn);
     LW_SAFE_FREE_MEMORY(salt.data);
+    LW_SAFE_FREE_STRING(pszKtPathLocal);
+    if (dwKeytabFd != -1)
+    {
+        close(dwKeytabFd);
+    }
 
     if (ctx)
     {
