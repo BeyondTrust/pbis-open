@@ -664,10 +664,12 @@ init_ctx_new(OM_uint32 *minor_status,
 	 */
 	sc->ctx_handle = GSS_C_NO_CONTEXT;
 	*ctx = (gss_ctx_id_t)sc;
+	sc = NULL;
 	*tokflag = INIT_TOKEN_SEND;
 	ret = GSS_S_CONTINUE_NEEDED;
 
 cleanup:
+	release_spnego_ctx(&sc);
 	gss_release_buffer(&tmpmin, &tmpoutput);
 	gss_delete_sec_context(&tmpmin, &tmpctx, GSS_C_NO_BUFFER);
 	gss_release_oid_set(&tmpmin, mechSet);
@@ -1358,9 +1360,11 @@ acc_ctx_hints(OM_uint32 *minor_status,
 	*return_token = INIT_TOKEN_SEND;
 	sc->firstpass = 1;
 	*ctx = (gss_ctx_id_t)sc;
+	sc = NULL;
 	ret = GSS_S_COMPLETE;
 
 cleanup:
+	release_spnego_ctx(&sc);
 	gss_release_oid_set(&tmpmin, &supported_mechSet);
 
 	return ret;
