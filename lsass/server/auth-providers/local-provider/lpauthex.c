@@ -105,30 +105,14 @@ LocalAuthenticateUserExInternal(
     dwError = LocalCheckForQueryAccess(hProvider);
     BAIL_ON_LSA_ERROR(dwError);
 
-    /* Assume the local domain (localhost) if we don't have one */
-
-    if (pUserParams->pszDomain)
-    {
-        pszDomain = pUserParams->pszDomain;
-    }
-    else
-    {
-        LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
-        pszDomain = gLPGlobals.pszLocalDomain;
-    }    
-
-    /* Allow the next provider to continue if we don't handle this domain */
-
-    if (!LocalServicesDomainInternal(pszDomain))
-    {
-        dwError = LW_ERROR_NOT_HANDLED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    /* Always assume authenticating a user from the local domain */
+    LOCAL_RDLOCK_RWLOCK(bLocked, &gLPGlobals.rwlock);
+    pszDomain = gLPGlobals.pszLocalDomain;
 
     dwError = LwAllocateStringPrintf(&pszAccountName,
-                                      "%s\\%s",
-                                      pszDomain,
-                                      pUserParams->pszAccountName);
+                                     "%s\\%s",
+                                     pszDomain,
+                                     pUserParams->pszAccountName);
     BAIL_ON_LSA_ERROR(dwError);
 
     QueryList.ppszStrings = (PCSTR*) &pszAccountName;
@@ -229,7 +213,8 @@ error:
 /********************************************************
  *******************************************************/
 
-static DWORD
+static
+DWORD
 AuthenticateNTLMv1(
     IN PLSA_AUTH_USER_PARAMS pUserParams,
     IN PLSA_SECURITY_OBJECT pObject,
