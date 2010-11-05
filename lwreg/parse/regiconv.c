@@ -103,6 +103,7 @@ int RegIconvConvertBuffer(
     static SSIZE_T bufsiz = BUFSIZ;
     DWORD bytesRead = 0;
     DWORD copySize = 0;
+    SSIZE_T outBufLen = 0;
 
     pivHandle->inchar = pivHandle->inbuf;
     pivHandle->outchar = pivHandle->outbuf; /* points to output buffer */
@@ -138,13 +139,14 @@ int RegIconvConvertBuffer(
         return -1;
     }
 
+    outBufLen = BUFSIZ - pivHandle->outbytesleft;
     if (pszOutBuf && pOutBufLen)
     {
-        *pOutBufLen = BUFSIZ - pivHandle->outbytesleft;
+        *pOutBufLen = outBufLen;
         *pInBufUsed = bytesRead - pivHandle->inbytesleft;
         memcpy(pszOutBuf, pivHandle->outbuf, *pOutBufLen);
     }
-    return *pOutBufLen;
+    return outBufLen;
 }
 
 
