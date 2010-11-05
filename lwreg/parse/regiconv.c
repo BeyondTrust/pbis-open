@@ -71,6 +71,7 @@ int RegIconvConvertOpen(
     pivHandle->iconvHandle = iconv_open(ivToCode, ivFromCode);
     if (pivHandle->iconvHandle == (iconv_t) -1)
     {
+        free(pivHandle);
         return -1;
     }
 
