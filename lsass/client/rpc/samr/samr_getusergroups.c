@@ -121,6 +121,16 @@ cleanup:
     return ntStatus;
 
 error:
+    if (pRids)
+    {
+        SamrFreeMemory(pRids);
+    }
+
+    if (pAttributes)
+    {
+        SamrFreeMemory(pAttributes);
+    }
+
     if (ppRids)
     {
         *ppRids = NULL;
