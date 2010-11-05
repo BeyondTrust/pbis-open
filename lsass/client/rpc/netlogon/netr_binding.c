@@ -166,7 +166,7 @@ NetrInitBindingFull(
     NETR_BINDING hBinding = NULL;
 
     BAIL_ON_INVALID_PTR(phBinding, ntStatus);
-    BAIL_ON_INVALID_PTR(pszProtSeq, ntStatus);
+    BAIL_ON_INVALID_PTR(pwszProtSeq, ntStatus);
 
     dwError = LwWc16sToMbs(pwszProtSeq, &pszProtSeq);
     BAIL_ON_WIN_ERROR(dwError);
