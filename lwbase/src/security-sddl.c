@@ -577,7 +577,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     GOTO_CLEANUP_ON_STATUS(status);
 
     // (1) SDDL-Owner  O:
-    if (SecurityInformation | OWNER_SECURITY_INFORMATION)
+    if (IsSetFlag(SecurityInformation, OWNER_SECURITY_INFORMATION))
     {
         status = RtlpGetSddlSidStringFromSecurityDescriptor(
                                &pszOwnerSid,
@@ -594,7 +594,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     }
 
     // (2) SDDL - Group G:
-    if (SecurityInformation | GROUP_SECURITY_INFORMATION)
+    if (IsSetFlag(SecurityInformation, GROUP_SECURITY_INFORMATION))
     {
         status = RtlpGetSddlSidStringFromSecurityDescriptor(
                                &pszGroupSid,
@@ -611,7 +611,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     }
 
     // (3) SDDL - DACL D:
-    if (SecurityInformation | DACL_SECURITY_INFORMATION)
+    if (IsSetFlag(SecurityInformation, DACL_SECURITY_INFORMATION))
     {
         status = RtlpGetSddlAceStringFromSecurityDescriptor(
                                 &pszDacl,
@@ -637,7 +637,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     }
 
     // (4) SDDL - SACL S:
-    if (SecurityInformation | SACL_SECURITY_INFORMATION)
+    if (IsSetFlag(SecurityInformation, SACL_SECURITY_INFORMATION))
     {
         status = RtlpGetSddlAceStringFromSecurityDescriptor(
                                 &pszSacl,
@@ -665,7 +665,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     status = RTL_ALLOCATE(&pszStringSecurityDescriptor, CHAR, sSddlLength+1);
     GOTO_CLEANUP_ON_STATUS(status);
 
-    if ((SecurityInformation | OWNER_SECURITY_INFORMATION) &&
+    if (IsSetFlag(SecurityInformation, OWNER_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszOwnerSid))
     {
         strcat(pszStringSecurityDescriptor, SDDL_OWNER);
@@ -673,7 +673,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
         strcat(pszStringSecurityDescriptor, pszOwnerSid);
     }
 
-    if ((SecurityInformation | GROUP_SECURITY_INFORMATION) &&
+    if (IsSetFlag(SecurityInformation, GROUP_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszGroupSid))
     {
         strcat(pszStringSecurityDescriptor, SDDL_GROUP);
@@ -681,7 +681,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
         strcat(pszStringSecurityDescriptor, pszGroupSid);
     }
 
-    if ((SecurityInformation | DACL_SECURITY_INFORMATION) &&
+    if (IsSetFlag(SecurityInformation, DACL_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszDacl))
     {
         strcat(pszStringSecurityDescriptor, SDDL_DACL);
@@ -691,7 +691,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
         strcat(pszStringSecurityDescriptor, pszDacl);
     }
 
-    if ((SecurityInformation | SACL_SECURITY_INFORMATION) &&
+    if (IsSetFlag(SecurityInformation, SACL_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszSacl))
     {
         strcat(pszStringSecurityDescriptor, SDDL_SACL);
