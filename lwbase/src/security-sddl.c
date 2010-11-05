@@ -499,6 +499,7 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
     // SDDL
     PSTR pszStringSecurityDescriptor = NULL;
     size_t sSddlLength = 0;
+    size_t sWorkingLength = 0;
 
     if (SDDL_REVISION_1 != SddlRevision || !pSecurityDescriptor)
     {
@@ -662,43 +663,74 @@ RtlAllocateSddlCStringFromSecurityDescriptor(
         }
     }
 
-    status = RTL_ALLOCATE(&pszStringSecurityDescriptor, CHAR, sSddlLength+1);
+    sSddlLength++; // include NULL
+
+    status = RTL_ALLOCATE(&pszStringSecurityDescriptor, CHAR, sSddlLength);
     GOTO_CLEANUP_ON_STATUS(status);
+
+    sWorkingLength = RtlCStringNumChars(pszStringSecurityDescriptor);
 
     if (IsSetFlag(SecurityInformation, OWNER_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszOwnerSid))
     {
-        strcat(pszStringSecurityDescriptor, SDDL_OWNER);
-        strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
-        strcat(pszStringSecurityDescriptor, pszOwnerSid);
+        strncat(pszStringSecurityDescriptor, SDDL_OWNER, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_OWNER);
+
+        strncat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_DELIMINATOR_S);
+
+        strncat(pszStringSecurityDescriptor, pszOwnerSid, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(pszOwnerSid);
     }
 
     if (IsSetFlag(SecurityInformation, GROUP_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszGroupSid))
     {
-        strcat(pszStringSecurityDescriptor, SDDL_GROUP);
-        strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
-        strcat(pszStringSecurityDescriptor, pszGroupSid);
+        strncat(pszStringSecurityDescriptor, SDDL_GROUP, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_GROUP);
+
+        strncat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_DELIMINATOR_S);
+
+        strncat(pszStringSecurityDescriptor, pszGroupSid, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(pszGroupSid);
     }
 
     if (IsSetFlag(SecurityInformation, DACL_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszDacl))
     {
-        strcat(pszStringSecurityDescriptor, SDDL_DACL);
-        strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
+        strncat(pszStringSecurityDescriptor, SDDL_DACL, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_DACL);
+
+        strncat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_DELIMINATOR_S);
+
         if (!LwRtlCStringIsNullOrEmpty(pszDaclControl))
-            strcat(pszStringSecurityDescriptor, pszDaclControl);
-        strcat(pszStringSecurityDescriptor, pszDacl);
+        {
+            strncat(pszStringSecurityDescriptor, pszDaclControl, sSddlLength-sWorkingLength-1);
+            sWorkingLength += RtlCStringNumChars(pszDaclControl);
+        }
+
+        strncat(pszStringSecurityDescriptor, pszDacl, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(pszDacl);
     }
 
     if (IsSetFlag(SecurityInformation, SACL_SECURITY_INFORMATION) &&
          !LwRtlCStringIsNullOrEmpty(pszSacl))
     {
-        strcat(pszStringSecurityDescriptor, SDDL_SACL);
-        strcat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S);
+        strncat(pszStringSecurityDescriptor, SDDL_SACL, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_SACL);
+
+        strncat(pszStringSecurityDescriptor, SDDL_DELIMINATOR_S, sSddlLength-sWorkingLength-1);
+        sWorkingLength += RtlCStringNumChars(SDDL_DELIMINATOR_S);
+
         if (!LwRtlCStringIsNullOrEmpty(pszSaclControl))
-            strcat(pszStringSecurityDescriptor, pszSaclControl);
-        strcat(pszStringSecurityDescriptor, pszSacl);
+        {
+            strncat(pszStringSecurityDescriptor, pszSaclControl, sSddlLength-sWorkingLength-1);
+            sWorkingLength += RtlCStringNumChars(pszSaclControl);
+        }
+
+        strncat(pszStringSecurityDescriptor, pszSacl, sSddlLength-sWorkingLength-1);
     }
 
     status = STATUS_SUCCESS;
