@@ -845,9 +845,8 @@ RegParseRemoveCallback(
 
     BAIL_ON_INVALID_POINTER(parseHandle);
 
-    if (indexCallback >= 0 &&
-        (indexCallback < sizeof(parseHandle->parseCallback.callbacks) /
-             sizeof(REGPARSE_CALLBACK_ENTRY)) &&
+    if (indexCallback < sizeof(parseHandle->parseCallback.callbacks) /
+                        sizeof(REGPARSE_CALLBACK_ENTRY) &&
          parseHandle->parseCallback.callbacks[indexCallback].used)
     {
         parseHandle->parseCallback.callbacks[indexCallback].used = FALSE;
