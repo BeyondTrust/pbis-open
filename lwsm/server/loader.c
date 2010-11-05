@@ -114,8 +114,13 @@ LwSmLoaderInitialize(
     {
         len = strlen(pEntry->d_name);
 
-        if (len >= modLen &&
-            !strcmp(pEntry->d_name + len - modLen, MOD_EXT))
+	// Make sure the file ends with the module extension (.sl or .so). Also
+	// make sure the filename does not start with a # because the HP-UX
+	// installer prepends files in use with a # instead of deleting them.
+	// So any file that starts with a # is from a previous install.
+	if (len >= modLen &&
+            !strcmp(pEntry->d_name + len - modLen, MOD_EXT) &&
+	    pEntry->d_name[0] != '#')
         {
             dwError = LwAllocateStringPrintf(
                 &pszPath,
