@@ -31,7 +31,9 @@ make()
         queryfs2.c            \
         close.c               \
         close2.c              \
-        smb2.c"
+        smb2.c                \
+        dfs.c                 \
+        dfs1.c"
     
     mk_dlo \
         DLO=librdr.sys \
