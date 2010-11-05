@@ -82,7 +82,7 @@ MU_TEST(Sddl, 0000_SddlConversion)
                 secInfoAll);
     MU_ASSERT_STATUS_SUCCESS(status);
 
-    MU_INFO("The converted sddl string is \n%s\n", pszStringSecurityDescriptor);
+    MU_INFO("The converted sddl string is %s ", pszStringSecurityDescriptor);
 
     status = RtlAllocateSecurityDescriptorFromSddlCString(
                  &pSecurityDescriptor,
@@ -97,7 +97,7 @@ MU_TEST(Sddl, 0000_SddlConversion)
     MU_ASSERT(relativeSdLength == pSdLength);
     MU_ASSERT(LwRtlEqualMemory(relativeSd, pSecurityDescriptor, pSdLength));
 
-    MU_INFO("Security Descriptor Buffer is equal.\n");
+    MU_INFO("Security Descriptor Buffer is equal.");
 
     status = RtlAllocateSddlCStringFromSecurityDescriptor(
                 &pszStringSecurityDescriptor1,
@@ -110,7 +110,7 @@ MU_TEST(Sddl, 0000_SddlConversion)
     // the SD we convert to
     MU_ASSERT(!strcmp(pszStringSecurityDescriptor1, pszStringSecurityDescriptor));
 
-    MU_INFO("Sddl string is equal.\n");
+    MU_INFO("Sddl string is equal.");
 
     RTL_FREE(&pszStringSecurityDescriptor);
     RTL_FREE(&pszStringSecurityDescriptor1);
