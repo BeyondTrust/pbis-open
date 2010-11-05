@@ -389,6 +389,9 @@ cleanup:
     return dwError;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pvData);
+    LWREG_SAFE_FREE_MEMORY(pwszDocString);
+    LWREG_SAFE_FREE_MEMORY(ppwszEnumString);
     goto cleanup;
 }
 
