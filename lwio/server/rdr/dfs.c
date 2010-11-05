@@ -100,17 +100,18 @@ RdrDfsFindMatchingNamespace(
     )
 {
     PLW_LIST_LINKS pLink = NULL;
-    ULONG ulPathLen = LwRtlWC16StringNumChars(pwszPath);
-    ULONG ulNamespaceLen = 0;
+    UNICODE_STRING path = {0};
+    UNICODE_STRING namespace = {0};
+
+    LwRtlUnicodeStringInit(&path, pwszPath);
 
     while ((pLink = LwListTraverse(&gDfsNamespaces, pLink)))
     {
         PRDR_DFS_NAMESPACE pNamespace = LW_STRUCT_FROM_FIELD(pLink, RDR_DFS_NAMESPACE, Link);
-        ulNamespaceLen = LwRtlWC16StringNumChars(pNamespace->pwszNamespace);
 
-        /* FIXME: make case-insensitive */
-        if (ulNamespaceLen <= ulPathLen &&
-            !memcmp(pwszPath, pNamespace->pwszNamespace, ulNamespaceLen))
+        LwRtlUnicodeStringInit(&namespace, pNamespace->pwszNamespace);
+
+        if (LwRtlUnicodeStringIsPrefix(&namespace, &path, FALSE))
         {
             return pNamespace;
         }

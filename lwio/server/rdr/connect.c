@@ -125,6 +125,9 @@ RdrFinishTreeConnect(
     PRDR_TREE pTree = pContext->State.TreeConnect.pTree;
     PSMB_PACKET pResponsePacket = pParam;
     BOOLEAN bTreeLocked = FALSE;
+    PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
+    PSTR pszService = NULL;
+    PWSTR pwszNativeFilesystem = NULL;
 
     LWIO_LOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
@@ -136,6 +139,17 @@ RdrFinishTreeConnect(
     pTree->tid = pResponsePacket->pSMBHeader->tid;
     pTree->state = RDR_TREE_STATE_READY;
 
+    status = UnmarshallTreeConnectResponse(
+        pResponsePacket->pParams,
+        pResponsePacket->bufferUsed - (pResponsePacket->pParams - pResponsePacket->pRawBuffer),
+        0,
+        &pHeader,
+        &pszService,
+        &pwszNativeFilesystem);
+    BAIL_ON_NT_STATUS(status);
+
+    pTree->usSupportFlags = pHeader->optionalSupport;
+
 cleanup:
 
     RdrFreePacket(pResponsePacket);
@@ -144,17 +158,12 @@ cleanup:
 
     LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
-    if (status != STATUS_SUCCESS)
-    {
-        RdrTreeInvalidate(pTree, status);
-        RdrTreeRelease(pTree);
-    }
-
-    RdrFreeTreeConnectContext(pContext);
-
-    return FALSE;
+    return RdrTreeConnectComplete(pContext, status, pTree);
 
 error:
+
+    LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
+    RdrTreeInvalidate(pTree, status);
 
     goto cleanup;
 }
@@ -307,22 +316,37 @@ RdrReferralComplete(
     PVOID pParam
     )
 {
-    BAIL_ON_NT_STATUS(status);
     PWSTR pwszReferral = NULL;
     PWSTR pwszHost = NULL;
     PWSTR pwszShare = NULL;
     BOOLEAN bIsRoot = FALSE;
 
-    /* The referral should now be in the cache, so resolve the share path */
-    status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
-    BAIL_ON_NT_STATUS(status);
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        /* The referral should now be in the cache, so resolve the share path */
+        status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
+        BAIL_ON_NT_STATUS(status);
 
-    status = RdrConvertPath(
-        pwszReferral,
-        &pwszHost,
-        &pwszShare,
-        NULL);
-    BAIL_ON_NT_STATUS(status);
+        status = RdrConvertPath(
+            pwszReferral,
+            &pwszHost,
+            &pwszShare,
+            NULL);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    case STATUS_NO_SUCH_FILE:
+        /* The share was not in DFS, so use the existing path */
+        status = RdrConvertPath(
+            pContext->State.TreeConnect.pwszSharename,
+            &pwszHost,
+            &pwszShare,
+            NULL);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        BAIL_ON_NT_STATUS(status);
+    }
 
     /* Begin the tree connect process again, but don't chase referrals this time */
     status = RdrTreeConnect(
@@ -656,7 +680,9 @@ RdrNegotiateGssContextWorkItem(
             &pSession->dwSessionKeyLength);
         BAIL_ON_NT_STATUS(status);
 
-        if (!pSocket->pSessionKey && pSession->pSessionKey)
+        if (!pSocket->pSessionKey && pSession->pSessionKey &&
+            !(pContext->State.TreeConnect.pCreds->type == IO_CREDS_TYPE_PLAIN &&
+              pContext->State.TreeConnect.pCreds->payload.plain.pwszUsername[0] == '\0'))
         {
             status = LwIoAllocateMemory(
                 pSession->dwSessionKeyLength,
@@ -745,7 +771,6 @@ RdrSessionSetupComplete(
     switch (pTree->state)
     {
     case RDR_TREE_STATE_NOT_READY:
-        LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
         pTree->state = RDR_TREE_STATE_INITIALIZING;
 
         pContext->Continue = RdrFinishTreeConnect;
@@ -755,7 +780,7 @@ RdrSessionSetupComplete(
         break;
     case RDR_TREE_STATE_INITIALIZING:
         pContext->Continue = RdrTreeConnectComplete;
-        LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
+        LwListInsertTail(&pTree->StateWaiters, &pContext->Link);
         bFreeContext = TRUE;
         status = STATUS_PENDING;
         break;
@@ -831,6 +856,7 @@ error:
     if (status != STATUS_PENDING && pTree)
     {
         RdrTreeRelease(pTree);
+        pTree = NULL;
     }
 
     goto cleanup;

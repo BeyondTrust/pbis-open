@@ -98,7 +98,7 @@
  * use DFS paths
  */
 #define RDR_CCB_IS_DFS(pFile) \
-    (!(pFile)->bNoDfs && (pFile)->pTree->pSession->pSocket->capabilities & CAP_DFS)
+    ((pFile)->pTree->usSupportFlags & SMB_SHARE_IS_IN_DFS)
 
 #define RDR_CCB_PATH(pFile) \
     (RDR_CCB_IS_DFS(pFile) ? \

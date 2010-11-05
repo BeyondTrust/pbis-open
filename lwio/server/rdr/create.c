@@ -172,11 +172,6 @@ RdrCreateTreeConnect(
              */
             bChaseReferrals = FALSE;
 
-            if (!bIsRoot)
-            {
-                pContext->State.Create.bNoDfs = TRUE;
-            }
-
             RTL_FREE(&pwszServer);
             RTL_FREE(&pwszShare);
             RTL_FREE(&pContext->State.Create.pwszFilename);
@@ -192,7 +187,6 @@ RdrCreateTreeConnect(
     else
     {
         bChaseReferrals = FALSE;
-        pContext->State.Create.bNoDfs = TRUE;
     }
 
     status = RdrTreeConnect(
@@ -271,8 +265,6 @@ RdrCreateTreeConnected(
     pFile->version = SMB_PROTOCOL_VERSION_1;
     pFile->pTree = pTree;
     pFile->Params.CreateOptions = CreateOptions;
-
-    pFile->bNoDfs = pContext->State.Create.bNoDfs;
 
     pFile->pwszPath = pContext->State.Create.pwszFilename;
     pContext->State.Create.pwszFilename = NULL;

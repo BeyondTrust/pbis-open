@@ -35,6 +35,7 @@
 
 #define SECURITY_MODE_SIGNED_MESSAGES_SUPPORTED 0x4
 #define SECURITY_MODE_SIGNED_MESSAGES_REQUIRED 0x8
+#define SMB_SHARE_IS_IN_DFS 0x2
 
 #define RDR_OBJECT_PROTOCOL(pObject) (*(SMB_PROTOCOL_VERSION*)(pObject))
 
@@ -104,7 +105,6 @@ typedef struct _RDR_OP_CONTEXT
             };
             PWSTR pwszFilename;
             PWSTR pwszCanonicalPath;
-            unsigned bNoDfs:1;
         } Create;
         struct
         {
@@ -287,6 +287,7 @@ typedef struct _RDR_TREE
     /* Back pointer to parent session */
     RDR_SESSION *pSession;
     USHORT tid;
+    USHORT usSupportFlags;
     PWSTR pwszPath;
     PLW_TASK pTimeout;
     LW_LIST_LINKS StateWaiters;
@@ -316,7 +317,6 @@ typedef struct _RDR_CCB
     SMB_PROTOCOL_VERSION version;
     pthread_mutex_t mutex;
     unsigned bMutexInitialized:1;
-    unsigned bNoDfs:1;
     PWSTR pwszPath;
     PWSTR pwszCanonicalPath;
     PRDR_TREE pTree;
