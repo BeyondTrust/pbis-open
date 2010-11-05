@@ -328,7 +328,7 @@ NetrEncryptSessionKey(
     memcpy(EncryptedSessKey, EncryptedSessionKey, sizeof(EncryptedSessionKey));
 
 cleanup:
-    memset(EncryptedSessKey, 0, sizeof(EncryptedSessKey));
+    memset(EncryptedSessionKey, 0, sizeof(EncryptedSessionKey));
 
     return ntStatus;
 
