@@ -84,6 +84,11 @@ error:
 
     *ppDataContext = NULL;
 
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
     goto cleanup;
 }
 
