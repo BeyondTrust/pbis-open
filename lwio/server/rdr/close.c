@@ -216,6 +216,7 @@ RdrReleaseFile(
     }
     
     RTL_FREE(&pFile->pwszPath);
+    RTL_FREE(&pFile->pwszCanonicalPath);
     RTL_FREE(&pFile->find.pBuffer);
     
     LwIoFreeMemory(pFile);

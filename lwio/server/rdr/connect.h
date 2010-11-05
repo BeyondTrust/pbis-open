@@ -34,5 +34,6 @@ RdrTreeConnect(
     PCWSTR pszSharename,
     PIO_CREDS pCreds,
     uid_t Uid,
+    BOOLEAN bChaseReferrals,
     PRDR_OP_CONTEXT pContinue
     );

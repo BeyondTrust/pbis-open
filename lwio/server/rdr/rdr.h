@@ -83,6 +83,7 @@
 #include "connect.h"
 #include "externs.h"
 #include "smb2.h"
+#include "dfs.h"
 
 #define RDR_CONNECT_TIMEOUT 10
 #define RDR_IDLE_TIMEOUT 10
@@ -91,6 +92,18 @@
 #define RDR_ECHO_INTERVAL 300
 #define RDR_MIN_CREDIT_RESERVE 10
 #define RDR_NS_IN_S (1000000000ll)
+
+/*
+ * Macro indicating where operations on CCB should
+ * use DFS paths
+ */
+#define RDR_CCB_IS_DFS(pFile) \
+    (!(pFile)->bDfsLink && (pFile)->pTree->pSession->pSocket->capabilities & CAP_DFS)
+
+#define RDR_CCB_PATH(pFile) \
+    (RDR_CCB_IS_DFS(pFile) ? \
+     (pFile)->pwszCanonicalPath : \
+     (pFile)->pwszPath)
 
 NTSTATUS
 RdrCreateContext(

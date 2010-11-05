@@ -651,6 +651,8 @@ RdrNotifyContextList(
     }
 }
 
+#define IS_SEPARATOR(c) ((c) == '\\' || (c) == '/')
+
 NTSTATUS
 RdrConvertPath(
     PCWSTR pwszIoPath,
@@ -685,16 +687,21 @@ RdrConvertPath(
                 WCHAR,
                 (LwRtlWC16StringNumChars(pwszIoPath) + 1) * sizeof(WCHAR));
             BAIL_ON_NT_STATUS(status);
-            if (pwszIoPath[ulSrcIndex] != '/')
+            if (!IS_SEPARATOR(pwszIoPath[ulSrcIndex]))
             {
                 status = STATUS_INVALID_PARAMETER;
                 BAIL_ON_NT_STATUS(status);
+            }
+
+            while (IS_SEPARATOR(pwszIoPath[ulSrcIndex+1]))
+            {
+                ulSrcIndex++;
             }
             ulDstIndex = 0;
             state = STATE_HOST;
             break;
         case STATE_HOST:
-            if (pwszIoPath[ulSrcIndex] == '/')
+            if (IS_SEPARATOR(pwszIoPath[ulSrcIndex]))
             {
                 status = RTL_ALLOCATE(
                     &pwszShare,
@@ -718,7 +725,7 @@ RdrConvertPath(
             }
             break;
         case STATE_SHARE:
-            if (pwszIoPath[ulSrcIndex] == '/')
+            if (IS_SEPARATOR(pwszIoPath[ulSrcIndex]))
             {
                 status = RTL_ALLOCATE(
                     &pwszFile,
@@ -735,9 +742,9 @@ RdrConvertPath(
             }
             break;
         case STATE_FILE:
-            if (pwszIoPath[ulSrcIndex] == '/')
+            if (IS_SEPARATOR(pwszIoPath[ulSrcIndex]))
             {
-                if (pwszFile[ulDstIndex-1] != '\\')
+                if (!IS_SEPARATOR(pwszFile[ulDstIndex-1]))
                 {
                     pwszFile[ulDstIndex++] = '\\';
                 }
@@ -758,7 +765,7 @@ RdrConvertPath(
 
     if (!pwszFile)
     {
-        status = LwRtlWC16StringAllocateFromCString(&pwszFile, "/");
+        status = LwRtlWC16StringAllocateFromCString(&pwszFile, "\\");
         BAIL_ON_NT_STATUS(status);
     }
 

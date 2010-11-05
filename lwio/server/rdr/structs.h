@@ -103,6 +103,8 @@ typedef struct _RDR_OP_CONTEXT
                 struct _RDR_CCB2* pFile2;
             };
             PWSTR pwszFilename;
+            PWSTR pwszCanonicalPath;
+            unsigned bDfsLink:1;
         } Create;
         struct
         {
@@ -115,6 +117,7 @@ typedef struct _RDR_OP_CONTEXT
                 struct _RDR_SOCKET* pSocket;
             };
             PWSTR pwszSharename;
+            BOOLEAN bChaseReferrals;
             PIO_CREDS pCreds;
             uid_t Uid;
             PSMB_PACKET pPacket;
@@ -128,6 +131,12 @@ typedef struct _RDR_OP_CONTEXT
             ULONG ulLength;
             unsigned bRestart:1;
         } QueryDirectory;
+        struct
+        {
+            struct _RDR_OP_CONTEXT* pContinue;
+            IO_CREDS AnonCreds;
+            PWSTR pwszPath;
+        } DfsGetReferral;
     } State;
     USHORT usMid;
 } RDR_OP_CONTEXT, *PRDR_OP_CONTEXT;
@@ -307,7 +316,9 @@ typedef struct _RDR_CCB
     SMB_PROTOCOL_VERSION version;
     pthread_mutex_t mutex;
     unsigned bMutexInitialized:1;
+    unsigned bDfsLink:1;
     PWSTR pwszPath;
+    PWSTR pwszCanonicalPath;
     PRDR_TREE pTree;
     USHORT usFileType;
     USHORT fid;
