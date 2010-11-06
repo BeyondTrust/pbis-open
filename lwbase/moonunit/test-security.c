@@ -199,6 +199,8 @@ DumpSecurityDescriptor(
                 break;
         }
     }
+
+    RTL_FREE(&sidString);
 }
 
 static
