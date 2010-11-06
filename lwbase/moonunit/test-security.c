@@ -251,6 +251,9 @@ DumpTokenInfo(
             MU_ASSERT_STATUS_SUCCESS(status);
 
             MU_INFO("User = %s", sidString);
+
+            RTL_FREE(&sidString);
+
             break;
         }
         case TokenGroups:
@@ -263,11 +266,16 @@ DumpTokenInfo(
 
             for (i = 0; i < tokenGroups->GroupCount; i++)
             {
+                RTL_FREE(&sidString);
+
                 status = RtlAllocateCStringFromSid(&sidString, tokenGroups->Groups[i].Sid);
                 MU_ASSERT_STATUS_SUCCESS(status);
 
                 MU_INFO("Groups[%u] = (0x%08x, %s)", i, tokenGroups->Groups[i].Attributes, sidString);
             }
+
+            RTL_FREE(&sidString);
+
             break;
         }
     }
