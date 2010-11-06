@@ -1532,7 +1532,8 @@ RegParseKey(
     BOOLEAN eof = FALSE;
     PSTR pszAttr = 0;
 
-    do {
+    for (;;)
+    {
         RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
         RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
 
@@ -1648,8 +1649,7 @@ RegParseKey(
         {
             return dwError;
         }
-    } while (!eof);
-    RegLexUnGetToken(parseHandle->lexHandle);
+    }
 
 cleanup:
     return dwError;
