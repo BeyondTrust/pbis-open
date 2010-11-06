@@ -271,6 +271,8 @@ DumpTokenInfo(
             break;
         }
     }
+
+    RTL_FREE(&tokenInfo);
 }
 
 static
