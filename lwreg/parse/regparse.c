@@ -1741,7 +1741,7 @@ RegParseOpen(
 
     dwError = RegAllocateMemory(REGPARSE_BUFSIZ,
                                 &binaryData);
-    BAIL_ON_INVALID_POINTER(newHandle);
+    BAIL_ON_INVALID_POINTER(binaryData);
 
     newHandle->ioHandle = ioHandle;
     newHandle->lexHandle = lexHandle;
@@ -1762,7 +1762,10 @@ cleanup:
     return dwError;
 
 error:
-
+    LWREG_SAFE_FREE_MEMORY(newHandle);
+    LWREG_SAFE_FREE_MEMORY(binaryData);
+    RegLexClose(lexHandle);
+    RegIOClose(ioHandle);
     goto cleanup;
 }
 
