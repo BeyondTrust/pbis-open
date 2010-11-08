@@ -33,7 +33,8 @@ make()
         close2.c              \
         smb2.c                \
         dfs.c                 \
-        dfs1.c"
+        dfs1.c                \
+        dfs2.c"
     
     mk_dlo \
         DLO=librdr.sys \
