@@ -72,6 +72,7 @@ RdrReleaseFile2(
     }
 
     RTL_FREE(&pFile->pwszPath);
+    RTL_FREE(&pFile->pwszCanonicalPath);
 
     LwIoFreeMemory(pFile);
 }

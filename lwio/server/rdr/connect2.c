@@ -42,6 +42,14 @@
 #include "rdr.h"
 
 static
+BOOLEAN
+RdrReferral2Complete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+static
 VOID
 RdrNegotiateGssContextWorkItem2(
     PVOID pParam
@@ -206,6 +214,30 @@ RdrNegotiateComplete2(
 
     BAIL_ON_NT_STATUS(status);
 
+    if (pContext->State.TreeConnect.bChaseReferrals &&
+        pSocket->capabilities & RDR_SMB2_CAP_DFS)
+    {
+        /*
+         * We need to take a detour to chase a potential DFS referral
+         * rather than proceeding with the session setup
+         */
+        pContext->Continue = RdrReferral2Complete;
+
+        /* After the referral we will start again from the top of RdrTreeConnect()
+         * because we might need to connect to a complete different machine, so
+         * release the socket we just got.
+         */
+        RdrSocketRelease(pSocket);
+        pSocket = NULL;
+
+        status = RdrDfsChaseReferral2(
+            NULL,
+            NULL,
+            pContext->State.TreeConnect.pwszSharename,
+            pContext);
+        BAIL_ON_NT_STATUS(status);
+    }
+
     status = RdrSession2FindOrCreate(
         &pSocket,
         pContext->State.TreeConnect.pCreds,
@@ -293,6 +325,69 @@ RdrNegotiateComplete2(
      }
 
      goto cleanup;
+}
+
+static
+BOOLEAN
+RdrReferral2Complete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    PWSTR pwszReferral = NULL;
+    PWSTR pwszHost = NULL;
+    PWSTR pwszShare = NULL;
+    BOOLEAN bIsRoot = FALSE;
+
+    BAIL_ON_NT_STATUS(status);
+
+    /* The referral should now be in the cache, so resolve the share path.
+     * Note that if the referral failed, we should have a negative cache entry
+     * which maps the path to itself.
+     */
+    status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrConvertPath(
+        pwszReferral,
+        &pwszHost,
+        &pwszShare,
+        NULL);
+    BAIL_ON_NT_STATUS(status);
+
+    /* Begin the tree connect process again, but don't chase referrals this time */
+    status = RdrTreeConnect(
+        pwszHost,
+        pwszShare,
+        pContext->State.TreeConnect.pCreds,
+        pContext->State.TreeConnect.Uid,
+        FALSE,
+        pContext->State.TreeConnect.pContinue);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    RTL_FREE(&pwszReferral);
+    RTL_FREE(&pwszHost);
+    RTL_FREE(&pwszShare);
+
+    if (status != STATUS_PENDING)
+    {
+        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
+    }
+
+    /*
+     * Even if we succeeded (STATUS_PENDING), we've passed off to
+     * a second tree connect context, so this one is finished
+     */
+    RdrFreeTreeConnectContext(pContext);
+
+    return FALSE;
+
+error:
+
+    goto cleanup;
 }
 
 static
@@ -837,6 +932,7 @@ RdrFinishTreeConnect2(
     PRDR_TREE2 pTree = pContext->State.TreeConnect.pTree2;
     PSMB_PACKET pResponsePacket = pParam;
     BOOLEAN bTreeLocked = FALSE;
+    PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
 
     LWIO_LOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
@@ -845,7 +941,11 @@ RdrFinishTreeConnect2(
     status = pResponsePacket->pSMB2Header->error;
     BAIL_ON_NT_STATUS(status);
 
+    status = RdrSmb2DecodeTreeConnectResponse(pResponsePacket, &pHeader);
+    BAIL_ON_NT_STATUS(status);
+
     pTree->ulTid = pResponsePacket->pSMB2Header->ulTid;
+    pTree->ulCapabilities = pHeader->ulShareCapabilities;
     pTree->state = RDR_TREE_STATE_READY;
 
 cleanup:

@@ -307,6 +307,7 @@ typedef struct _RDR_TREE2
     RDR_SESSION2 *pSession;
     ULONG ulTid;
     PWSTR pwszPath;
+    ULONG ulCapabilities;
     PLW_TASK pTimeout;
     LW_LIST_LINKS StateWaiters;
     PRDR_OP_CONTEXT pDisconnectContext;
@@ -355,6 +356,7 @@ typedef struct _RDR_CCB2
     pthread_mutex_t mutex;
     unsigned bMutexInitialized:1;
     PWSTR pwszPath;
+    PWSTR pwszCanonicalPath;
     PRDR_TREE2 pTree;
     RDR_SMB2_FID Fid;
     LONG64 llOffset;

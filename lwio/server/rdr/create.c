@@ -125,7 +125,6 @@ RdrShareIsIpc(
     return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
 }
 
-static
 NTSTATUS
 RdrCreateTreeConnect(
     PRDR_OP_CONTEXT pContext,

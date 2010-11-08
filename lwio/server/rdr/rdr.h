@@ -105,6 +105,14 @@
      (pFile)->pwszCanonicalPath : \
      (pFile)->pwszPath)
 
+#define RDR_CCB2_IS_DFS(pFile) \
+    ((pFile)->pTree->ulCapabilities & SMB2_SHARE_CAPABILITIES_DFS_AVAILABLE)
+
+#define RDR_CCB2_PATH(pFile) \
+    (RDR_CCB2_IS_DFS(pFile) ? \
+     (pFile)->pwszCanonicalPath : \
+     (pFile)->pwszPath)
+
 NTSTATUS
 RdrCreateContext(
     PIRP pIrp,
@@ -340,6 +348,12 @@ RdrIsShutdownSet(
 VOID
 RdrSetShutdown(
     VOID
+    );
+
+NTSTATUS
+RdrCreateTreeConnect(
+    PRDR_OP_CONTEXT pContext,
+    PWSTR pwszFilename
     );
 
 BOOLEAN

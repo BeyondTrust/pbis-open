@@ -92,6 +92,9 @@
 #define RDR_SMB2_WRITE_SIZE(ulLength) \
     (RDR_SMB2_PACKET_BASE_SIZE(WRITE) + (ulLength))
 
+#define RDR_SMB2_IOCTL_SIZE(ulLength) \
+    (RDR_SMB2_PACKET_BASE_SIZE(IOCTL) + (ulLength))
+
 #define RDR_SMB2_MAX_SHARE_PATH_LENGTH 256
 
 typedef struct _RDR_SMB2_NEGOTIATE_RESPONSE_HEADER
@@ -143,6 +146,16 @@ typedef struct _RDR_SMB2_TREE_CONNECT_REQUEST_HEADER
     USHORT usPathLength;
 } __attribute__((__packed__))
 RDR_SMB2_TREE_CONNECT_REQUEST_HEADER, *PRDR_SMB2_TREE_CONNECT_REQUEST_HEADER;
+
+typedef struct _RDR_SMB2_TREE_CONNECT_RESPONSE_HEADER
+{
+    USHORT usLength;
+    USHORT usShareType;
+    ULONG  ulShareFlags;
+    ULONG  ulShareCapabilities;
+    ULONG  ulShareAccessMask;
+} __attribute__((__packed__))
+RDR_SMB2_TREE_CONNECT_RESPONSE_HEADER, *PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER;
 
 typedef struct _RDR_SMB2_CREATE_REQUEST_HEADER
 {
@@ -302,6 +315,38 @@ typedef struct _RDR_SMB2_SET_INFO_REQUEST_HEADER
 } __attribute__((__packed__))
 RDR_SMB2_SET_INFO_REQUEST_HEADER, *PRDR_SMB2_SET_INFO_REQUEST_HEADER;
 
+typedef struct _RDR_SMB2_IOCTL_REQUEST_HEADER
+{
+    USHORT   usLength;
+    USHORT   usReserved;
+    ULONG    ulFunctionCode;
+    RDR_SMB2_FID fid;
+    ULONG    ulInOffset;
+    ULONG    ulInLength;
+    ULONG    ulMaxInLength;
+    ULONG    ulOutOffset;
+    ULONG    ulOutLength;
+    ULONG    ulMaxOutLength;
+    ULONG    ulFlags;
+    ULONG    ulReserved;
+} __attribute__((__packed__))
+RDR_SMB2_IOCTL_REQUEST_HEADER, *PRDR_SMB2_IOCTL_REQUEST_HEADER;
+
+typedef struct _RDR_SMB2_IOCTL_RESPONSE_HEADER
+{
+    USHORT   usLength;
+    USHORT   usReserved;
+    ULONG    ulFunctionCode;
+    RDR_SMB2_FID fid;
+    ULONG    ulInOffset;
+    ULONG    ulInLength;
+    ULONG    ulOutOffset;
+    ULONG    ulOutLength;
+    ULONG    ulFlags;
+    ULONG    ulReserved;
+} __attribute__((__packed__))
+RDR_SMB2_IOCTL_RESPONSE_HEADER, *PRDR_SMB2_IOCTL_RESPONSE_HEADER;
+
 typedef struct _RDR_SMB2_FILE_RENAME_INFORMATION
 {
     UCHAR     ucReplaceIfExists;
@@ -420,6 +465,12 @@ RdrSmb2EncodeTreeConnectRequest(
     PBYTE* ppCursor,
     PULONG pulRemaining,
     PCWSTR pwszPath
+    );
+
+NTSTATUS
+RdrSmb2DecodeTreeConnectResponse(
+    PSMB_PACKET pPacket,
+    PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER* ppHeader
     );
 
 NTSTATUS
@@ -542,6 +593,26 @@ RdrSmb2EncodeSetInfoRequest(
     ULONG ulAdditionalInfo,
     PRDR_SMB2_FID pFid,
     PULONG* ppulBufferLen
+    );
+
+NTSTATUS
+RdrSmb2EncodeIoctlRequest(
+    PSMB_PACKET pPacket,
+    PBYTE* ppCursor,
+    PULONG pulRemaining,
+    ULONG ulControlCode,
+    PRDR_SMB2_FID pFid,
+    ULONG ulMaxInputResponse,
+    ULONG ulMaxOutputResponse,
+    BOOLEAN bIsFsctl,
+    PULONG* ppulInputSize
+    );
+
+NTSTATUS
+RdrSmb2DecodeIoctlResponse(
+    PSMB_PACKET pPacket,
+    PBYTE* ppOutput,
+    PULONG pulOutputSize
     );
 
 #endif /* __RDR_SMB2_H__ */

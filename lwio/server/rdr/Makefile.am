@@ -29,6 +29,7 @@ librdr_sys_la_SOURCES =  \
     driver.c              \
     dfs.c                 \
     dfs1.c                \
+    dfs2.c                \
     create.c              \
     create2.c             \
     read.c                \

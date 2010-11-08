@@ -670,6 +670,41 @@ cleanup:
 }
 
 NTSTATUS
+RdrSmb2DecodeTreeConnectResponse(
+    PSMB_PACKET pPacket,
+    PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER* ppHeader
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
+    PBYTE pCursor = pPacket->pParams;
+    ULONG ulRemaining = pPacket->bufferUsed - (pPacket->pParams - pPacket->pRawBuffer);
+
+    pHeader = (PRDR_SMB2_TREE_CONNECT_RESPONSE_HEADER) pCursor;
+
+    status = Advance(&pCursor, &ulRemaining, sizeof(*pHeader));
+    BAIL_ON_NT_STATUS(status);
+
+    SMB_HTOL16_INPLACE(pHeader->usLength);
+    SMB_HTOL16_INPLACE(pHeader->usShareType);
+    SMB_HTOL32_INPLACE(pHeader->ulShareFlags);
+    SMB_HTOL32_INPLACE(pHeader->ulShareCapabilities);
+    SMB_HTOL32_INPLACE(pHeader->ulShareAccessMask);
+
+    *ppHeader = pHeader;
+
+cleanup:
+
+    return status;
+
+error:
+
+    *ppHeader = NULL;
+
+    goto cleanup;
+}
+
+NTSTATUS
 RdrSmb2EncodeCreateRequest(
     PSMB_PACKET pPacket,
     PBYTE* ppCursor,
@@ -1236,6 +1271,113 @@ cleanup:
     return status;
 
 error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RdrSmb2EncodeIoctlRequest(
+    PSMB_PACKET pPacket,
+    PBYTE* ppCursor,
+    PULONG pulRemaining,
+    ULONG ulControlCode,
+    PRDR_SMB2_FID pFid,
+    ULONG ulMaxInputResponse,
+    ULONG ulMaxOutputResponse,
+    BOOLEAN bIsFsctl,
+    PULONG* ppulInputSize
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_SMB2_IOCTL_REQUEST_HEADER pHeader = NULL;
+
+    pHeader = (PRDR_SMB2_IOCTL_REQUEST_HEADER) *ppCursor;
+    /* Advance cursor past header to ensure buffer space */
+    status = Advance(ppCursor, pulRemaining, sizeof(*pHeader));
+    BAIL_ON_NT_STATUS(status);
+
+    pHeader->usLength = SMB_HTOL16(sizeof(*pHeader) | 0x1);
+    pHeader->usReserved = 0;
+    pHeader->ulFunctionCode = ulControlCode;
+
+    if (pFid)
+    {
+        pHeader->fid.ullPersistentId = SMB_HTOL64(pFid->ullPersistentId);
+        pHeader->fid.ullVolatileId = SMB_HTOL64(pFid->ullVolatileId);
+    }
+    else
+    {
+        memset(&pHeader->fid, 0xFF, sizeof(pHeader->fid));
+    }
+
+    pHeader->ulInOffset = SMB_HTOL32((ULONG) PACKET_HEADER_OFFSET(pPacket, *ppCursor));
+    pHeader->ulInLength = 0;
+    pHeader->ulMaxInLength = SMB_HTOL32(ulMaxInputResponse);
+    pHeader->ulOutOffset = 0;
+    pHeader->ulOutLength = 0;
+    pHeader->ulMaxOutLength = SMB_HTOL32(ulMaxOutputResponse);
+    pHeader->ulFlags = SMB_HTOL32(bIsFsctl);
+    pHeader->ulReserved = 0;
+
+    if (ppulInputSize)
+    {
+        *ppulInputSize = &pHeader->ulInLength;
+    }
+
+cleanup:
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RdrSmb2DecodeIoctlResponse(
+    PSMB_PACKET pPacket,
+    PBYTE* ppOutput,
+    PULONG pulOutputSize
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_SMB2_IOCTL_RESPONSE_HEADER pHeader = NULL;
+    PBYTE pCursor = pPacket->pParams;
+    ULONG ulRemaining = pPacket->bufferUsed - (pPacket->pParams - pPacket->pRawBuffer);
+
+    pHeader = (PRDR_SMB2_IOCTL_RESPONSE_HEADER) pCursor;
+
+    status = Advance(&pCursor, &ulRemaining, sizeof(*pHeader));
+    BAIL_ON_NT_STATUS(status);
+
+    SMB_HTOL16_INPLACE(pHeader->usLength);
+    SMB_HTOL32_INPLACE(pHeader->ulFunctionCode);
+    SMB_HTOL64_INPLACE(pHeader->fid.ullPersistentId);
+    SMB_HTOL64_INPLACE(pHeader->fid.ullVolatileId);
+    SMB_HTOL32_INPLACE(pHeader->ulInOffset);
+    SMB_HTOL32_INPLACE(pHeader->ulInLength);
+    SMB_HTOL32_INPLACE(pHeader->ulOutOffset);
+    SMB_HTOL32_INPLACE(pHeader->ulOutLength);
+    SMB_HTOL32_INPLACE(pHeader->ulFlags);
+
+    status = AdvanceTo(&pCursor, &ulRemaining, (PBYTE) pPacket->pSMB2Header + pHeader->ulOutOffset);
+    BAIL_ON_NT_STATUS(status);
+
+    *ppOutput = pCursor;
+
+    status = Advance(&pCursor, &ulRemaining, pHeader->ulOutLength);
+    BAIL_ON_NT_STATUS(status);
+
+    *pulOutputSize = pHeader->ulOutLength;
+
+cleanup:
+
+    return status;
+
+error:
+
+    *ppOutput = NULL;
+    *pulOutputSize = 0;
 
     goto cleanup;
 }

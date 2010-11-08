@@ -46,7 +46,6 @@ NTSTATUS
 RdrTransceiveCreate2(
     PRDR_OP_CONTEXT pContext,
     PRDR_CCB2 pFile,
-    PCWSTR pwszPath,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
     FILE_ATTRIBUTES fileAttributes,
@@ -58,6 +57,14 @@ RdrTransceiveCreate2(
 static
 BOOLEAN
 RdrFinishCreate2(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+static
+BOOLEAN
+RdrChaseCreateReferral2Complete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pParam
@@ -97,6 +104,9 @@ RdrCreateTreeConnected2(
     status = LwRtlWC16StringDuplicate(&pFile->pwszPath, pContext->State.Create.pwszFilename);
     BAIL_ON_NT_STATUS(status);
 
+    status = LwRtlWC16StringDuplicate(&pFile->pwszCanonicalPath, pContext->State.Create.pwszCanonicalPath);
+    BAIL_ON_NT_STATUS(status);
+
     pContext->Continue = RdrFinishCreate2;
 
     pContext->State.Create.pFile2 = pFile;
@@ -104,7 +114,6 @@ RdrCreateTreeConnected2(
     status = RdrTransceiveCreate2(
         pContext,
         pFile,
-        pContext->State.Create.pwszFilename,
         DesiredAccess,
         AllocationSize,
         FileAttributes,
@@ -141,7 +150,6 @@ NTSTATUS
 RdrTransceiveCreate2(
     PRDR_OP_CONTEXT pContext,
     PRDR_CCB2 pFile,
-    PCWSTR pwszPath,
     ACCESS_MASK desiredAccess,
     LONG64 llAllocationSize,
     FILE_ATTRIBUTES fileAttributes,
@@ -153,6 +161,7 @@ RdrTransceiveCreate2(
     NTSTATUS status = STATUS_SUCCESS;
     PBYTE pCursor = NULL;
     ULONG ulRemaining = 0;
+    PWSTR pwszPath = RDR_CCB2_PATH(pFile);
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -165,7 +174,7 @@ RdrTransceiveCreate2(
     status = RdrSmb2EncodeHeader(
         &pContext->Packet,
         COM2_CREATE,
-        0, /* flags */
+        RDR_CCB2_IS_DFS(pFile) ? SMB2_FLAGS_DFS_OPERATIONS : 0, /* flags */
         gRdrRuntime.SysPid,
         pFile->pTree->ulTid, /* tid */
         pFile->pTree->pSession->ullSessionId,
@@ -220,7 +229,20 @@ RdrFinishCreate2(
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMB2Header->error;
-    BAIL_ON_NT_STATUS(status);
+    switch (status)
+    {
+    case STATUS_PATH_NOT_COVERED:
+        pContext->Continue = RdrChaseCreateReferral2Complete;
+        status = RdrDfsChaseReferral2(
+            pFile->pTree->pSession,
+            IoSecurityGetCredentials(pContext->pIrp->Args.Create.SecurityContext),
+            pFile->pwszCanonicalPath,
+            pContext);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        BAIL_ON_NT_STATUS(status);
+    }
 
     status = RdrSmb2DecodeCreateResponse(pPacket, &pResponseHeader);
     BAIL_ON_NT_STATUS(status);
@@ -234,15 +256,51 @@ cleanup:
 
     RdrFreePacket(pPacket);
 
-    pContext->pIrp->IoStatusBlock.Status = status;
-    IoIrpComplete(pContext->pIrp);
-    RdrFreeContext(pContext);
+    if (status != STATUS_PENDING)
+    {
+        pContext->pIrp->IoStatusBlock.Status = status;
+        IoIrpComplete(pContext->pIrp);
+        RdrFreeContext(pContext);
+    }
 
     return FALSE;
 
 error:
 
     RdrReleaseFile2(pFile);
+
+    goto cleanup;
+}
+
+static
+BOOLEAN
+RdrChaseCreateReferral2Complete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    BAIL_ON_NT_STATUS(status);
+
+    pContext->Continue = RdrCreateTreeConnected2;
+
+    status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        pContext->pIrp->IoStatusBlock.Status = status;
+        IoIrpComplete(pContext->pIrp);
+        RTL_FREE(&pContext->State.Create.pwszFilename);
+        RTL_FREE(&pContext->State.Create.pwszCanonicalPath);
+        RdrFreeContext(pContext);
+    }
+
+    return FALSE;
+
+error:
 
     goto cleanup;
 }

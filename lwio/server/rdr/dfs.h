@@ -120,4 +120,12 @@ RdrDfsChaseReferral1(
     PRDR_OP_CONTEXT pContinue
     );
 
+NTSTATUS
+RdrDfsChaseReferral2(
+    PRDR_SESSION2 pSession,
+    PIO_CREDS pCreds,
+    PCWSTR pwszPath,
+    PRDR_OP_CONTEXT pContinue
+    );
+
 #endif
