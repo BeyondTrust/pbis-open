@@ -283,6 +283,47 @@ error:
 static
 inline
 NTSTATUS
+MarshalPwstr(
+    IN OUT PBYTE* ppCursor,
+    IN OUT PULONG pulRemainingSpace,
+    IN PCWSTR pwszString,
+    LONG lLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (lLength == -1)
+    {
+        lLength = (LwRtlWC16StringNumChars(pwszString) + 1) * sizeof(WCHAR);
+    }
+
+    if (pulRemainingSpace && *pulRemainingSpace < lLength)
+    {
+        status = STATUS_BUFFER_TOO_SMALL;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+#ifdef WORDS_BIGENDIAN
+    swab(pwszString, *ppCursor, lLength);
+#else
+    memcpy(*ppCursor, pwszString, lLength);
+#endif
+
+    *ppCursor += lLength;
+
+    if (pulRemainingSpace)
+    {
+        *pulRemainingSpace -= lLength;
+    }
+
+error:
+
+    return status;
+}
+
+static
+inline
+NTSTATUS
 UnmarshalData(
     IN OUT PBYTE*  ppCursor,
     IN OUT PULONG  pulRemainingSpace,
