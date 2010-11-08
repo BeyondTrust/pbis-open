@@ -321,32 +321,21 @@ RdrReferralComplete(
     PWSTR pwszShare = NULL;
     BOOLEAN bIsRoot = FALSE;
 
-    switch (status)
-    {
-    case STATUS_SUCCESS:
-        /* The referral should now be in the cache, so resolve the share path */
-        status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
-        BAIL_ON_NT_STATUS(status);
+    BAIL_ON_NT_STATUS(status);
 
-        status = RdrConvertPath(
-            pwszReferral,
-            &pwszHost,
-            &pwszShare,
-            NULL);
-        BAIL_ON_NT_STATUS(status);
-        break;
-    case STATUS_NO_SUCH_FILE:
-        /* The share was not in DFS, so use the existing path */
-        status = RdrConvertPath(
-            pContext->State.TreeConnect.pwszSharename,
-            &pwszHost,
-            &pwszShare,
-            NULL);
-        BAIL_ON_NT_STATUS(status);
-        break;
-    default:
-        BAIL_ON_NT_STATUS(status);
-    }
+    /* The referral should now be in the cache, so resolve the share path.
+     * Note that if the referral failed, we should have a negative cache entry
+     * which maps the path to itself.
+     */
+    status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrConvertPath(
+        pwszReferral,
+        &pwszHost,
+        &pwszShare,
+        NULL);
+    BAIL_ON_NT_STATUS(status);
 
     /* Begin the tree connect process again, but don't chase referrals this time */
     status = RdrTreeConnect(

@@ -194,27 +194,37 @@ RdrQueryDfsReferral1Complete(
     BAIL_ON_NT_STATUS(status);
 
     status = pResponsePacket->pSMBHeader->error;
-    BAIL_ON_NT_STATUS(status);
+    switch (status)
+    {
+    case STATUS_NO_SUCH_FILE:
+        /* Referral failed -- insert negative cache entry */
+        pReplyData = NULL;
+        usReplyDataCount = 0;
+        status = STATUS_SUCCESS;
+        break;
+    default:
+        BAIL_ON_NT_STATUS(status);
 
-    pCursor = pResponsePacket->pParams;
-    ulRemainingSpace = pResponsePacket->pNetBIOSHeader->len -
-        ((PBYTE)pResponsePacket->pParams - (PBYTE)pResponsePacket->pSMBHeader);
+        pCursor = pResponsePacket->pParams;
+        ulRemainingSpace = pResponsePacket->pNetBIOSHeader->len -
+            ((PBYTE)pResponsePacket->pParams - (PBYTE)pResponsePacket->pSMBHeader);
 
-    status = WireUnmarshalTrans2ReplySetup(
-        pResponsePacket->pSMBHeader,
-        &pCursor,
-        &ulRemainingSpace,
-        NULL, /* ppResponseHeader */
-        NULL, /* pusTotalParameterCount */
-        NULL, /* pusTotalDataCount */
-        NULL, /* ppusSetupWords */
-        NULL, /* pusSetupWordCount */
-        NULL, /* pusByteCount */
-        NULL, /* pParameterBlock */
-        NULL, /* pusParameterCount */
-        &pReplyData,
-        &usReplyDataCount);
-    BAIL_ON_NT_STATUS(status);
+        status = WireUnmarshalTrans2ReplySetup(
+            pResponsePacket->pSMBHeader,
+            &pCursor,
+            &ulRemainingSpace,
+            NULL, /* ppResponseHeader */
+            NULL, /* pusTotalParameterCount */
+            NULL, /* pusTotalDataCount */
+            NULL, /* ppusSetupWords */
+            NULL, /* pusSetupWordCount */
+            NULL, /* pusByteCount */
+            NULL, /* pParameterBlock */
+            NULL, /* pusParameterCount */
+            &pReplyData,
+            &usReplyDataCount);
+        BAIL_ON_NT_STATUS(status);
+    }
 
     status = RdrDfsRegisterNamespace(
         pContext->State.DfsGetReferral.pwszPath,

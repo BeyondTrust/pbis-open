@@ -141,7 +141,7 @@ RdrCreateTreeConnect(
     PWSTR pwszServer = NULL;
     PWSTR pwszShare = NULL;
     PWSTR pwszResolved = NULL;
-    BOOLEAN bChaseReferrals = TRUE;
+    BOOLEAN bChaseReferrals = FALSE;
     BOOLEAN bIsRoot = FALSE;
 
     status = RdrConvertPath(
@@ -161,11 +161,16 @@ RdrCreateTreeConnect(
     {
         /* Resolve against DFS cache */
         status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, 0, &pwszResolved, &bIsRoot);
-        BAIL_ON_NT_STATUS(status);
-
-        /* If we got a different path, reparse it */
-        if (!LwRtlWC16StringIsEqual(pContext->State.Create.pwszCanonicalPath, pwszResolved, FALSE))
+        switch (status)
         {
+        case STATUS_NOT_FOUND:
+            /* Proceed with current path and chase referrals */
+            bChaseReferrals = TRUE;
+            status = STATUS_SUCCESS;
+            break;
+        default:
+            BAIL_ON_NT_STATUS(status);
+
             /*
              * Since we got a hit in our referral cache,
              * we don't need to chase referrals when tree connecting

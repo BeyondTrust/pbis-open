@@ -41,6 +41,8 @@
 
 #include "rdr.h"
 
+#define NEGATIVE_CACHE_TIME 600
+
 static LW_LIST_LINKS gDfsNamespaces = {&gDfsNamespaces, &gDfsNamespaces};
 static pthread_mutex_t gDfsLock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -65,6 +67,28 @@ RdrDfsFreeNamespace(
         }
 
         RTL_FREE(&pNamespace);
+    }
+}
+
+static
+VOID
+RdrDfsExpireNamespaces(
+    ULONG ulTime
+    )
+{
+    PLW_LIST_LINKS pLink = NULL;
+    PLW_LIST_LINKS pNext = NULL;
+
+    for (pLink = gDfsNamespaces.Next; pLink != &gDfsNamespaces; pLink = pNext)
+    {
+        PRDR_DFS_NAMESPACE pNamespace = LW_STRUCT_FROM_FIELD(pLink, RDR_DFS_NAMESPACE, Link);
+        pNext = pLink->Next;
+
+        if (pNamespace->ulExpirationTime <= ulTime)
+        {
+            LwListRemove(pLink);
+            RdrDfsFreeNamespace(pNamespace);
+        }
     }
 }
 
@@ -159,43 +183,52 @@ RdrDfsResolvePath(
     NTSTATUS status = STATUS_SUCCESS;
     BOOLEAN bLocked = FALSE;
     PRDR_DFS_NAMESPACE pNamespace = FALSE;
+    time_t now = 0;
+
+    if (time(&now) < 0)
+    {
+        status = LwErrnoToNtStatus(errno);
+        BAIL_ON_NT_STATUS(status);
+    }
 
     LWIO_LOCK_MUTEX(bLocked, &gDfsLock);
+
+    /* Clear expired cache entries before we search it */
+    RdrDfsExpireNamespaces((ULONG) now);
 
     pNamespace = RdrDfsFindMatchingNamespace(pwszPath);
 
     if (!pNamespace)
     {
-        if (usTry > 0)
-        {
-            /* No alternatives available */
-            status = STATUS_DFS_UNAVAILABLE;
-            BAIL_ON_NT_STATUS(status);
-        }
-        /* Just duplicate the path */
+        status = STATUS_NOT_FOUND;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    if (pNamespace->usReferralCount == 0)
+    {
+        /* Negative cache entry -- path resolves to itself */
         status = LwRtlWC16StringDuplicate(ppwszResolved, pwszPath);
         BAIL_ON_NT_STATUS(status);
 
         *pbIsRoot = FALSE;
+        goto cleanup;
     }
-    else
+
+    if (usTry >= pNamespace->usReferralCount)
     {
-        if (usTry >= pNamespace->usReferralCount)
-        {
-            /* We've run out of referrals to try */
-            status = STATUS_DFS_UNAVAILABLE;
-            BAIL_ON_NT_STATUS(status);
-        }
-
-        status = LwRtlWC16StringAllocatePrintfW(
-            ppwszResolved,
-            L"%ws%ws",
-            pNamespace->pReferrals[usTry].pwszReferral,
-            pwszPath + LwRtlWC16StringNumChars(pNamespace->pwszNamespace));
+        /* We've run out of referrals to try */
+        status = STATUS_NOT_FOUND;
         BAIL_ON_NT_STATUS(status);
-
-        *pbIsRoot = pNamespace->pReferrals[usTry].bIsRoot;
     }
+
+    status = LwRtlWC16StringAllocatePrintfW(
+        ppwszResolved,
+        L"%ws%ws",
+        pNamespace->pReferrals[usTry].pwszReferral,
+        pwszPath + LwRtlWC16StringNumChars(pNamespace->pwszNamespace));
+    BAIL_ON_NT_STATUS(status);
+
+    *pbIsRoot = pNamespace->pReferrals[usTry].bIsRoot;
 
 cleanup:
 
@@ -206,10 +239,12 @@ cleanup:
 error:
 
     *ppwszResolved = NULL;
+    *pbIsRoot = FALSE;
 
     goto cleanup;
 }
 
+/* NULL pResponse indicates desire for negative cache entry */
 NTSTATUS
 RdrDfsRegisterNamespace(
     PCWSTR pwszPath,
@@ -227,23 +262,11 @@ RdrDfsRegisterNamespace(
     PWSTR pwszEnd = NULL;
     USHORT usIndex = 0;
     USHORT usSize = 0;
+    time_t now = 0;
 
-    /* Check for overflow */
-    if (ulResponseSize < sizeof(*pResponse))
+    if (time(&now) < 0)
     {
-        status = STATUS_INVALID_NETWORK_RESPONSE;
-        BAIL_ON_NT_STATUS(status);
-    }
-
-    SMB_HTOL16_INPLACE(pResponse->usNumReferrals);
-    SMB_HTOL16_INPLACE(pResponse->usPathConsumed);
-    SMB_HTOL32_INPLACE(pResponse->ulFlags);
-
-    /* Check for consumed bytes sanity/overflow */
-    if (pResponse->usPathConsumed % 2 ||
-        pResponse->usPathConsumed / 2 > LwRtlWC16StringNumChars(pwszPath))
-    {
-        status = STATUS_INVALID_NETWORK_RESPONSE;
+        status = LwErrnoToNtStatus(errno);
         BAIL_ON_NT_STATUS(status);
     }
 
@@ -252,60 +275,100 @@ RdrDfsRegisterNamespace(
 
     status = LwRtlWC16StringDuplicate(&pNamespace->pwszNamespace, pwszPath);
     BAIL_ON_NT_STATUS(status);
-    pNamespace->pwszNamespace[pResponse->usPathConsumed / 2] = '\0';
 
-    pNamespace->usReferralCount = pResponse->usNumReferrals;
-
-    status = LW_RTL_ALLOCATE_ARRAY_AUTO(&pNamespace->pReferrals, pNamespace->usReferralCount);
-    BAIL_ON_NT_STATUS(status);
-
-    for (pCursor = pHeader + sizeof(*pResponse), usIndex = 0;
-         usIndex < pNamespace->usReferralCount;
-         usIndex++, pCursor = pCursor + usSize)
+    if (pResponse)
     {
-        if (pCursor + sizeof(*pReferral4) >= pHeader + ulResponseSize)
+        /* Parse positive entry */
+
+        /* Check for overflow */
+        if (ulResponseSize < sizeof(*pResponse))
         {
             status = STATUS_INVALID_NETWORK_RESPONSE;
             BAIL_ON_NT_STATUS(status);
         }
 
-        pReferral4 = (PDFS_REFERRAL_V4_NORMAL) pCursor;
+        SMB_HTOL16_INPLACE(pResponse->usNumReferrals);
+        SMB_HTOL16_INPLACE(pResponse->usPathConsumed);
+        SMB_HTOL32_INPLACE(pResponse->ulFlags);
 
-        SMB_HTOL16_INPLACE(pReferral4->Base.usFlags);
-        SMB_HTOL32_INPLACE(pReferral4->Base.ulTimeToLive);
-        SMB_HTOL16_INPLACE(pReferral4->Base.usServerType);
-        SMB_HTOL16_INPLACE(pReferral4->Base.usSize);
-        SMB_HTOL16_INPLACE(pReferral4->Base.usVersionNumber);
-
-        SMB_HTOL16_INPLACE(pReferral4->usDfsAlternatePathOffset);
-        SMB_HTOL16_INPLACE(pReferral4->usDfsPathOffset);
-        SMB_HTOL16_INPLACE(pReferral4->usNetworkAddressOffset);
-
-        pwszReferral = (PWSTR) ((PBYTE) pReferral4 + pReferral4->usNetworkAddressOffset);
-
-        if ((PBYTE) (pwszReferral + 1) >= pHeader + ulResponseSize)
+        /* Check for consumed bytes sanity/overflow */
+        if (pResponse->usPathConsumed % 2 ||
+            pResponse->usPathConsumed / 2 > LwRtlWC16StringNumChars(pwszPath))
         {
             status = STATUS_INVALID_NETWORK_RESPONSE;
             BAIL_ON_NT_STATUS(status);
         }
 
-        for (pwszEnd = pwszReferral; *pwszEnd; pwszEnd++)
+        pNamespace->pwszNamespace[pResponse->usPathConsumed / 2] = '\0';
+        pNamespace->usReferralCount = pResponse->usNumReferrals;
+
+        status = LW_RTL_ALLOCATE_ARRAY_AUTO(&pNamespace->pReferrals, pNamespace->usReferralCount);
+        BAIL_ON_NT_STATUS(status);
+
+        for (pCursor = pHeader + sizeof(*pResponse), usIndex = 0;
+            usIndex < pNamespace->usReferralCount;
+            usIndex++, pCursor = pCursor + usSize)
         {
-            /* Byte swap string while looking for the end */
-            SMB_HTOL16_INPLACE(*pwszEnd);
-            if ((PBYTE) (pwszEnd + 1) >= pHeader + ulResponseSize)
+            if (pCursor + sizeof(*pReferral4) >= pHeader + ulResponseSize)
             {
                 status = STATUS_INVALID_NETWORK_RESPONSE;
                 BAIL_ON_NT_STATUS(status);
             }
+
+            pReferral4 = (PDFS_REFERRAL_V4_NORMAL) pCursor;
+
+            SMB_HTOL16_INPLACE(pReferral4->Base.usFlags);
+            SMB_HTOL32_INPLACE(pReferral4->Base.ulTimeToLive);
+            SMB_HTOL16_INPLACE(pReferral4->Base.usServerType);
+            SMB_HTOL16_INPLACE(pReferral4->Base.usSize);
+            SMB_HTOL16_INPLACE(pReferral4->Base.usVersionNumber);
+
+            SMB_HTOL16_INPLACE(pReferral4->usDfsAlternatePathOffset);
+            SMB_HTOL16_INPLACE(pReferral4->usDfsPathOffset);
+            SMB_HTOL16_INPLACE(pReferral4->usNetworkAddressOffset);
+
+            pwszReferral = (PWSTR) ((PBYTE) pReferral4 + pReferral4->usNetworkAddressOffset);
+
+            if ((PBYTE) (pwszReferral + 1) >= pHeader + ulResponseSize)
+            {
+                status = STATUS_INVALID_NETWORK_RESPONSE;
+                BAIL_ON_NT_STATUS(status);
+            }
+
+            for (pwszEnd = pwszReferral; *pwszEnd; pwszEnd++)
+            {
+                /* Byte swap string while looking for the end */
+                SMB_HTOL16_INPLACE(*pwszEnd);
+                if ((PBYTE) (pwszEnd + 1) >= pHeader + ulResponseSize)
+                {
+                    status = STATUS_INVALID_NETWORK_RESPONSE;
+                    BAIL_ON_NT_STATUS(status);
+                }
+            }
+
+            status = LwRtlWC16StringDuplicate(&pNamespace->pReferrals[usIndex].pwszReferral, pwszReferral);
+            BAIL_ON_NT_STATUS(status);
+
+            pNamespace->pReferrals[usIndex].bIsRoot = pReferral4->Base.usServerType == DFS_TARGET_ROOT;
+
+            if (pNamespace->ulExpirationTime == 0)
+            {
+                pNamespace->ulExpirationTime = (ULONG) now + pReferral4->Base.ulTimeToLive;
+            }
+            else if (pNamespace->ulExpirationTime != (ULONG) now + pReferral4->Base.ulTimeToLive)
+            {
+                /* All entries should have the same expiration time */
+                status = STATUS_INVALID_NETWORK_RESPONSE;
+                BAIL_ON_NT_STATUS(status);
+            }
+
         }
-
-        status = LwRtlWC16StringDuplicate(&pNamespace->pReferrals[usIndex].pwszReferral, pwszReferral);
-        BAIL_ON_NT_STATUS(status);
-
-        pNamespace->pReferrals[usIndex].bIsRoot = pReferral4->Base.usServerType == DFS_TARGET_ROOT;
     }
-
+    else
+    {
+        /* Negative cache entry */
+        pNamespace->ulExpirationTime = (ULONG) now + NEGATIVE_CACHE_TIME;
+    }
 
     LWIO_LOCK_MUTEX(bLocked, &gDfsLock);
 
@@ -328,6 +391,11 @@ cleanup:
     return status;
 
 error:
+
+    if (pNamespace)
+    {
+        RdrDfsFreeNamespace(pNamespace);
+    }
 
     goto cleanup;
 }
