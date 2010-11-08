@@ -127,7 +127,7 @@ RpcInitBindingFromBindingStringA(
         &rpcStatus);
     BAIL_ON_RPC_STATUS(rpcStatus);
 
-    if (strcasestr(pszBindingString, "ncacn_np") &&
+    if (LwCaselessStringSearch(pszBindingString, "ncacn_np") &&
         pCreds != NULL)
     {
         rpc_smb_transport_info_from_lwio_creds(
