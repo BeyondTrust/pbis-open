@@ -345,7 +345,7 @@ ParseArgs(
                 {
                     parseMode = PARSE_MODE_SET_GECOS;
                 }
-                else if (!strcmp(pArg, "--set-account-expiry-date"))
+                else if (!strcmp(pArg, "--set-account-expiry"))
                 {
                     parseMode = PARSE_MODE_SET_EXPIRY_DATE;
                 }
