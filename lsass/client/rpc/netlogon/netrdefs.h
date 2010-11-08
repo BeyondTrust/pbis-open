@@ -3,7 +3,7 @@
  */
 
 /*
- * Copyright Likewise Software
+ * Copyright Likewise Software    2004-2008
  * All rights reserved.
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -28,47 +28,32 @@
  * license@likewisesoftware.com
  */
 
-#include "config.h"
+/*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
+ * Module Name:
+ *
+ *        netrdefs.h
+ *
+ * Abstract:
+ *
+ *        Remote Procedure Call (RPC) Client Interface
+ *
+ *        Netlogon rpc client private definitions
+ *
+ * Authors: Rafal Szczesniak (rafal@likewise.com)
+ */
 
-#include <stdlib.h>
-#include <stddef.h>
-#include <string.h>
-#include <ctype.h>
-#include <iconv.h>
-#include <pthread.h>
+#ifndef _NETR_PRIV_DEFS_H_
+#define _NETR_PRIV_DEFS_H_
 
-#include <lwio/lwio.h>
 
-#include <dce/rpc.h>
-#include <dce/smb.h>
-#include <dce/dcethread.h>
-#include <dce/schannel.h>
-#include <wc16str.h>
-#include <wc16printf.h>
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/rc4.h>
-#include <openssl/hmac.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
-#include <lw/ntstatus.h>
-#include <lw/winerror.h>
-#include <lwmem.h>
-#include <lwstr.h>
-#include <lwbuffer.h>
+#define NETLOGON_DEFAULT_PROT_SEQ   "ncacn_np"
+#define NETLOGON_DEFAULT_ENDPOINT   "\\PIPE\\netlogon"
+#define NETLOGON_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
-#include <lsautils.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
-#include <lw/macros.h>
 
-#include "netrdefs.h"
-#include "netr_credentials.h"
-#include "netr_memory.h"
-#include "netr_stubmemory.h"
-#include "netlogon_h.h"
-
-#include "externs.h"
+#endif /* _NETR_PRIV_DEFS_H_ */
 
 
 /*

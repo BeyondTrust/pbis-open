@@ -113,7 +113,7 @@ DsrInitBindingDefaultA(
     PSTR pszProtSeq = (PSTR)DSR_DEFAULT_PROT_SEQ;
     PSTR pszLpcProtSeq = (PSTR)"ncalrpc";
     PSTR pszEndpoint = (PSTR)DSR_DEFAULT_ENDPOINT;
-    PSTR pszLpcEndpoint = (PSTR)NETLOGON_LOCAL_ENDPOINT;
+    PSTR pszLpcEndpoint = (PSTR)DSR_LOCAL_ENDPOINT;
     PSTR pszUuid = NULL;
     PSTR pszOptions = NULL;
     DSR_BINDING hBinding = NULL;

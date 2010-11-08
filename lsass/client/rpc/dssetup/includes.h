@@ -53,6 +53,7 @@
 #include <lw/rpc/dssetup.h>
 #include <lw/macros.h>
 
+#include "dsrdefs.h"
 #include "dsr_memory.h"
 #include "dsr_stubmemory.h"
 #include "dssetup_h.h"

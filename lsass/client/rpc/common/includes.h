@@ -32,43 +32,22 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <string.h>
-#include <ctype.h>
 #include <iconv.h>
-#include <pthread.h>
+#include <string.h>
 
 #include <lwio/lwio.h>
 
 #include <dce/rpc.h>
 #include <dce/smb.h>
 #include <dce/dcethread.h>
-#include <dce/schannel.h>
 #include <wc16str.h>
-#include <wc16printf.h>
-#include <openssl/md4.h>
-#include <openssl/md5.h>
-#include <openssl/rc4.h>
-#include <openssl/hmac.h>
-#include <openssl/des.h>
-#include <openssl/rand.h>
 #include <lw/ntstatus.h>
-#include <lw/winerror.h>
 #include <lwmem.h>
 #include <lwstr.h>
 #include <lwbuffer.h>
 
 #include <lsautils.h>
-#include <lw/rpc/samr.h>
-#include <lw/rpc/netlogon.h>
 #include <lw/macros.h>
-
-#include "netrdefs.h"
-#include "netr_credentials.h"
-#include "netr_memory.h"
-#include "netr_stubmemory.h"
-#include "netlogon_h.h"
-
-#include "externs.h"
 
 
 /*

@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        samr_util.h
+ *        samrdefs.h
  *
  * Abstract:
  *
@@ -47,6 +47,10 @@
 #ifndef _SAMR_PRIV_DEFS_H_
 #define _SAMR_PRIV_DEFS_H_
 
+
+#define SAMR_DEFAULT_PROT_SEQ   "ncacn_np"
+#define SAMR_DEFAULT_ENDPOINT   "\\pipe\\samr"
+#define SAMR_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 #define SAMR_DEFAULT_SYSNAME   { '\\', '\\', '\0' };
 

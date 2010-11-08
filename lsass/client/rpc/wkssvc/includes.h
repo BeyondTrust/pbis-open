@@ -50,6 +50,7 @@
 #include <lw/rpc/wkssvc.h>
 #include <lw/macros.h>
 
+#include "wkssdefs.h"
 #include "wkss_memory.h"
 #include "wkss_stubmemory.h"
 #include "wkssvc_h.h"

@@ -1058,6 +1058,7 @@ AC_CONFIG_FILES([Makefile
                  client/ad/Makefile
                  client/ntlm/Makefile
                  client/rpc/Makefile
+                 client/rpc/common/Makefile
                  client/rpc/lsa/Makefile
                  client/rpc/samr/Makefile
                  client/rpc/netlogon/Makefile
