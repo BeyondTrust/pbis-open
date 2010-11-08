@@ -1898,6 +1898,7 @@ cleanup:
     if (!NT_SUCCESS(status))
     {
         RtlpFreeStringArray(ppszAceStrings, sCount);
+        sCount = 0;
     }
 
     *pppszAceStrings = ppszAceStrings;
