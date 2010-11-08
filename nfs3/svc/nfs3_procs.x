@@ -567,7 +567,7 @@ const FSF3_SYMLINK     = 0x0002;
 const FSF3_HOMOGENEOUS = 0x0008;
 const FSF3_CANSETTIME  = 0x0010;
 
-struct FSINFOargs {
+struct FSINFO3args {
     nfs_fh3   fsroot;
 };
 

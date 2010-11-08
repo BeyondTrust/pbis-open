@@ -286,6 +286,7 @@ AC_CONFIG_FILES([Makefile
                  utils/Makefile
                  proto/Makefile
                  proto/procs/Makefile
+                 svc/Makefile
                  ])
 AC_OUTPUT
 

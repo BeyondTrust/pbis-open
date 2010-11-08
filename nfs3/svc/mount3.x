@@ -81,7 +81,7 @@ struct mountres3_ok {
 };
 
 union mountres3 switch (mountstat3 fhs_status) {
-    case MNT_OK:
+    case MNT3_OK:
         mountres3_ok  mountinfo;
     default:
         void;

@@ -291,7 +291,7 @@ union program_call_body switch (unsigned int prog) {
         void;
 };
 
-union call_body switch (unsigned int rpcvers) {
+union lwcall_body switch (unsigned int rpcvers) {
     case 2:
         program_call_body body;
     default:
