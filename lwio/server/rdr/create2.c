@@ -87,7 +87,22 @@ RdrCreateTreeConnected2(
     FILE_ATTRIBUTES FileAttributes =  pIrp->Args.Create.FileAttributes;
     PRDR_CCB2 pFile = NULL;
 
-    BAIL_ON_NT_STATUS(status);
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        break;
+    default:
+        if (RdrDfsStatusIsRetriable(status))
+        {
+            if (!pContext->State.Create.OrigStatus)
+            {
+                pContext->State.Create.OrigStatus = status;
+            }
+            pContext->Continue = RdrCreateTreeConnected2;
+            status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
+        }
+        BAIL_ON_NT_STATUS(status);
+    }
 
     status = LwIoAllocateMemory(
         sizeof(RDR_CCB2),
@@ -120,6 +135,19 @@ RdrCreateTreeConnected2(
         ShareAccess,
         CreateDisposition,
         CreateOptions);
+    if (RdrDfsStatusIsRetriable(status))
+    {
+        if (!pContext->State.Create.OrigStatus)
+        {
+            pContext->State.Create.OrigStatus = status;
+        }
+
+        RdrReleaseFile2(pFile);
+        pContext->State.Create.pFile2 = pFile = NULL;
+
+        pContext->Continue = RdrCreateTreeConnected2;
+        status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
+    }
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
@@ -226,12 +254,17 @@ RdrFinishCreate2(
     PSMB_PACKET pPacket = pParam;
     PRDR_SMB2_CREATE_RESPONSE_HEADER pResponseHeader = NULL;
 
-    BAIL_ON_NT_STATUS(status);
+    if (status == STATUS_SUCCESS)
+    {
+        status = pPacket->pSMB2Header->error;
+    }
 
-    status = pPacket->pSMB2Header->error;
     switch (status)
     {
+    case STATUS_SUCCESS:
+        break;
     case STATUS_PATH_NOT_COVERED:
+        pContext->usTry = 0;
         pContext->Continue = RdrChaseCreateReferral2Complete;
         status = RdrDfsChaseReferral2(
             pFile->pTree->pSession,
@@ -241,6 +274,19 @@ RdrFinishCreate2(
         BAIL_ON_NT_STATUS(status);
         break;
     default:
+        if (RdrDfsStatusIsRetriable(status))
+        {
+            if (!pContext->State.Create.OrigStatus)
+            {
+                pContext->State.Create.OrigStatus = status;
+            }
+
+            RdrReleaseFile2(pFile);
+            pContext->State.Create.pFile2 = pFile = NULL;
+
+            pContext->Continue = RdrCreateTreeConnected2;
+            status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
+        }
         BAIL_ON_NT_STATUS(status);
     }
 

@@ -128,4 +128,9 @@ RdrDfsChaseReferral2(
     PRDR_OP_CONTEXT pContinue
     );
 
+BOOLEAN
+RdrDfsStatusIsRetriable(
+    NTSTATUS status
+    );
+
 #endif

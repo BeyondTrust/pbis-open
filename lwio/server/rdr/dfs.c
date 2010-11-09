@@ -184,6 +184,7 @@ RdrDfsResolvePath(
     BOOLEAN bLocked = FALSE;
     PRDR_DFS_NAMESPACE pNamespace = FALSE;
     time_t now = 0;
+    RDR_DFS_REFERRAL temp = {0};
 
     if (time(&now) < 0)
     {
@@ -200,13 +201,22 @@ RdrDfsResolvePath(
 
     if (!pNamespace)
     {
-        status = STATUS_NOT_FOUND;
+        status = usTry > 0 ? STATUS_DFS_UNAVAILABLE : STATUS_NOT_FOUND;
         BAIL_ON_NT_STATUS(status);
     }
 
     if (pNamespace->usReferralCount == 0)
     {
-        /* Negative cache entry -- path resolves to itself */
+        /*
+         * Negative cache entry -- path resolves to itself
+         * If usTry > 0, we are out of luck
+         */
+        if (usTry > 0)
+        {
+            status = STATUS_DFS_UNAVAILABLE;
+            BAIL_ON_NT_STATUS(status);
+        }
+
         status = LwRtlWC16StringDuplicate(ppwszResolved, pwszPath);
         BAIL_ON_NT_STATUS(status);
 
@@ -217,7 +227,7 @@ RdrDfsResolvePath(
     if (usTry >= pNamespace->usReferralCount)
     {
         /* We've run out of referrals to try */
-        status = STATUS_NOT_FOUND;
+        status = STATUS_DFS_UNAVAILABLE;
         BAIL_ON_NT_STATUS(status);
     }
 
@@ -229,6 +239,14 @@ RdrDfsResolvePath(
     BAIL_ON_NT_STATUS(status);
 
     *pbIsRoot = pNamespace->pReferrals[usTry].bIsRoot;
+
+    /*
+     * Swap the entry into index 0.  This has the effect of making the first
+     * working entry we try the default for any future lookups.
+     */
+    temp = pNamespace->pReferrals[0];
+    pNamespace->pReferrals[0] = pNamespace->pReferrals[usTry];
+    pNamespace->pReferrals[usTry] = temp;
 
 cleanup:
 
@@ -327,6 +345,7 @@ RdrDfsRegisterNamespace(
             SMB_HTOL16_INPLACE(pReferral4->usDfsPathOffset);
             SMB_HTOL16_INPLACE(pReferral4->usNetworkAddressOffset);
 
+            usSize = pReferral4->Base.usSize;
             pwszReferral = (PWSTR) ((PBYTE) pReferral4 + pReferral4->usNetworkAddressOffset);
 
             if ((PBYTE) (pwszReferral + 1) >= pHeader + ulResponseSize)
@@ -398,4 +417,19 @@ error:
     }
 
     goto cleanup;
+}
+
+BOOLEAN
+RdrDfsStatusIsRetriable(
+    NTSTATUS status
+    )
+{
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+    case STATUS_PENDING:
+        return FALSE;
+    default:
+        return TRUE;
+    }
 }

@@ -143,63 +143,75 @@ RdrCreateTreeConnect(
     BOOLEAN bChaseReferrals = FALSE;
     BOOLEAN bIsRoot = FALSE;
 
-    status = RdrConvertPath(
-        pwszFilename,
-        &pwszServer,
-        &pwszShare,
-        &pContext->State.Create.pwszFilename);
-    BAIL_ON_NT_STATUS(status);
-
-    status = RdrConstructCanonicalPath(
-        pwszShare,
-        pContext->State.Create.pwszFilename,
-        &pContext->State.Create.pwszCanonicalPath);
-    BAIL_ON_NT_STATUS(status);
-
-    if (!RdrShareIsIpc(pwszShare))
+    do
     {
-        /* Resolve against DFS cache */
-        status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, 0, &pwszResolved, &bIsRoot);
-        switch (status)
+        if (!pContext->State.Create.OrigStatus)
         {
-        case STATUS_NOT_FOUND:
-            /* Proceed with current path and chase referrals */
-            bChaseReferrals = TRUE;
-            status = STATUS_SUCCESS;
-            break;
-        default:
-            BAIL_ON_NT_STATUS(status);
-
-            /*
-             * Since we got a hit in our referral cache,
-             * we don't need to chase referrals when tree connecting
-             */
-            bChaseReferrals = FALSE;
-
-            RTL_FREE(&pwszServer);
-            RTL_FREE(&pwszShare);
-            RTL_FREE(&pContext->State.Create.pwszFilename);
-
-            status = RdrConvertPath(
-                pwszResolved,
-                &pwszServer,
-                &pwszShare,
-                &pContext->State.Create.pwszFilename);
-            BAIL_ON_NT_STATUS(status);
+            pContext->State.Create.OrigStatus = status;
         }
-    }
-    else
-    {
-        bChaseReferrals = FALSE;
-    }
 
-    status = RdrTreeConnect(
-        pwszServer,
-        pwszShare,
-        pCreds,
-        pProcessInfo->Uid,
-        bChaseReferrals,
-        pContext);
+        status = RdrConvertPath(
+            pwszFilename,
+            &pwszServer,
+            &pwszShare,
+            &pContext->State.Create.pwszFilename);
+        BAIL_ON_NT_STATUS(status);
+
+        status = RdrConstructCanonicalPath(
+            pwszShare,
+            pContext->State.Create.pwszFilename,
+            &pContext->State.Create.pwszCanonicalPath);
+        BAIL_ON_NT_STATUS(status);
+
+        if (!RdrShareIsIpc(pwszShare))
+        {
+            /* Resolve against DFS cache */
+            status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, pContext->usTry, &pwszResolved, &bIsRoot);
+            switch (status)
+            {
+            case STATUS_DFS_UNAVAILABLE:
+                status = pContext->State.Create.OrigStatus;
+                BAIL_ON_NT_STATUS(status);
+            case STATUS_NOT_FOUND:
+                /* Proceed with current path and chase referrals */
+                bChaseReferrals = TRUE;
+                status = STATUS_SUCCESS;
+                break;
+            default:
+                BAIL_ON_NT_STATUS(status);
+
+                /*
+                 * Since we got a hit in our referral cache,
+                 * we don't need to chase referrals when tree connecting
+                 */
+                bChaseReferrals = FALSE;
+
+                RTL_FREE(&pwszServer);
+                RTL_FREE(&pwszShare);
+                RTL_FREE(&pContext->State.Create.pwszFilename);
+
+                status = RdrConvertPath(
+                    pwszResolved,
+                    &pwszServer,
+                    &pwszShare,
+                    &pContext->State.Create.pwszFilename);
+                BAIL_ON_NT_STATUS(status);
+            }
+        }
+        else
+        {
+            bChaseReferrals = FALSE;
+        }
+
+        status = RdrTreeConnect(
+            pwszServer,
+            pwszShare,
+            pCreds,
+            pProcessInfo->Uid,
+            bChaseReferrals,
+            pContext);
+        pContext->usTry++;
+    } while (RdrDfsStatusIsRetriable(status));
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
@@ -255,6 +267,15 @@ RdrCreateTreeConnected(
         }
     }
 
+    if (RdrDfsStatusIsRetriable(status))
+    {
+        if (!pContext->State.Create.OrigStatus)
+        {
+            pContext->State.Create.OrigStatus = status;
+        }
+        pContext->Continue = RdrCreateTreeConnected;
+        status = RdrCreateTreeConnect(pContext, pIrp->Args.Create.FileName.FileName);
+    }
     BAIL_ON_NT_STATUS(status);
 
     status = LwIoAllocateMemory(
@@ -299,6 +320,26 @@ RdrCreateTreeConnected(
             ShareAccess,
             CreateDisposition,
             CreateOptions);
+        switch (status)
+        {
+        case STATUS_SUCCESS:
+            break;
+        default:
+            if (RdrDfsStatusIsRetriable(status))
+            {
+                if (!pContext->State.Create.OrigStatus)
+                {
+                    pContext->State.Create.OrigStatus = status;
+                }
+
+                RdrReleaseFile(pFile);
+                pContext->State.Create.pFile = pFile = NULL;
+
+                pContext->Continue = RdrCreateTreeConnected;
+                status = RdrCreateTreeConnect(pContext, pIrp->Args.Create.FileName.FileName);
+            }
+            BAIL_ON_NT_STATUS(status);
+        }
         BAIL_ON_NT_STATUS(status);
     }
     
@@ -337,12 +378,19 @@ RdrFinishCreate(
     PSMB_PACKET pPacket = pParam;
     PCREATE_RESPONSE_HEADER pResponseHeader = NULL;
 
-    BAIL_ON_NT_STATUS(status);
+    if (status == STATUS_SUCCESS)
+    {
+        status = pPacket->pSMBHeader->error;
+    }
 
-    status = pPacket->pSMBHeader->error;
     switch (status)
     {
+    case STATUS_SUCCESS:
+        break;
     case STATUS_PATH_NOT_COVERED:
+        RdrReleaseFile(pFile);
+        pContext->State.Create.pFile = pFile = NULL;
+        pContext->usTry = 0;
         pContext->Continue = RdrChaseCreateReferralComplete;
         status = RdrDfsChaseReferral1(
             pFile->pTree->pSession,
@@ -352,6 +400,19 @@ RdrFinishCreate(
         BAIL_ON_NT_STATUS(status);
         break;
     default:
+        if (RdrDfsStatusIsRetriable(status))
+        {
+            if (!pContext->State.Create.OrigStatus)
+            {
+                pContext->State.Create.OrigStatus = status;
+            }
+
+            RdrReleaseFile(pFile);
+            pContext->State.Create.pFile = pFile = NULL;
+
+            pContext->Continue = RdrCreateTreeConnected;
+            status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
+        }
         BAIL_ON_NT_STATUS(status);
     }
 

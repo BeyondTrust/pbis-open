@@ -105,6 +105,7 @@ typedef struct _RDR_OP_CONTEXT
             };
             PWSTR pwszFilename;
             PWSTR pwszCanonicalPath;
+            NTSTATUS OrigStatus;
         } Create;
         struct
         {
@@ -139,6 +140,8 @@ typedef struct _RDR_OP_CONTEXT
         } DfsGetReferral;
     } State;
     USHORT usMid;
+    /* Retry count */
+    USHORT usTry;
 } RDR_OP_CONTEXT, *PRDR_OP_CONTEXT;
 
 typedef enum _RDR_SOCKET_STATE
