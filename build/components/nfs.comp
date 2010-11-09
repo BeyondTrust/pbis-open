@@ -1,12 +1,12 @@
 #!/bin/bash -c "exit 1"
 
 #
-# nfs3.comp -- see ../../helper.sh for how this file works.
+# nfs.comp -- see ../../helper.sh for how this file works.
 #
 
 COMP_INCREMENTAL=1
 COMP_DEPENDENCIES="automake autoconf libtool lwbase lwadvapi lwio"
-COMP_SOURCES=${BUILD_ROOT}/src/linux/nfs3
+COMP_SOURCES=${BUILD_ROOT}/src/linux/nfs
 
 function component_bootstrap
 {
@@ -75,7 +75,7 @@ function component_stage
 
 function component_populate
 {
-    COMP_NAME=nfs3
+    COMP_NAME=nfs
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 

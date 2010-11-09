@@ -1,4 +1,4 @@
-PKG_COMPONENTS="lwio nfs3"
+PKG_COMPONENTS="lwio nfs"
 
 function package_populate
 {
