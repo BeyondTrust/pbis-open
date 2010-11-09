@@ -55,7 +55,7 @@ function _setup_build_env
 
     case "${BUILD_OS_TYPE}" in
         linux)
-           WANT_GTK=yes
+           WANT_GTK=${BUILD_WANT_DOMAINJOIN_GUI:-yes}
             ;;
     esac
 

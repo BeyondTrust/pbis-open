@@ -27,7 +27,14 @@ case "${BUILD_OS_TYPE}" in
         PACKAGES="$PACKAGES passwd"
         check_is_rhel_21
         if [ $? -ne 0 ]; then
-            PACKAGES="$PACKAGES mod-auth-kerb domainjoin-gui"
+            PACKAGES="$PACKAGES mod-auth-kerb"
+            case "${BUILD_WANT_DOMAINJOIN_GUI}" in
+                no|false|0)
+                    ;;
+                *)
+                    PACKAGES="$PACKAGES domainjoin-gui"
+                    ;;
+            esac
         fi
         ;;
     freebsd)
