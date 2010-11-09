@@ -289,6 +289,7 @@ RdrCreateTreeConnected(
     pFile->bMutexInitialized = TRUE;
     pFile->version = SMB_PROTOCOL_VERSION_1;
     pFile->pTree = pTree;
+    pTree = NULL;
     pFile->Params.CreateOptions = CreateOptions;
 
     pFile->pwszPath = pContext->State.Create.pwszFilename;
@@ -362,6 +363,12 @@ error:
     {
         RdrReleaseFile(pFile);
     }
+
+    if (status != STATUS_PENDING && pTree)
+    {
+        RdrTreeRelease(pTree);
+    }
+
 
     goto cleanup;
 }

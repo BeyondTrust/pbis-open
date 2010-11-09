@@ -115,6 +115,7 @@ RdrCreateTreeConnected2(
     pFile->bMutexInitialized = TRUE;
     pFile->version = SMB_PROTOCOL_VERSION_2;
     pFile->pTree = pTree;
+    pTree = NULL;
 
     status = LwRtlWC16StringDuplicate(&pFile->pwszPath, pContext->State.Create.pwszFilename);
     BAIL_ON_NT_STATUS(status);
@@ -168,6 +169,11 @@ error:
     if (status != STATUS_PENDING && pFile)
     {
         RdrReleaseFile2(pFile);
+    }
+
+    if (status != STATUS_PENDING && pTree)
+    {
+        RdrTree2Release(pTree);
     }
 
     goto cleanup;
