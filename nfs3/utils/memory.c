@@ -43,13 +43,30 @@
 
 #include "includes.h"
 
+static
+NTSTATUS
+Nfs3pAllocateMemory(
+    size_t  size,
+    PVOID*  ppMemory,
+    BOOLEAN bClear
+    );
+
 NTSTATUS
 Nfs3AllocateMemory(
     size_t size,
     PVOID* ppMemory
     )
 {
-    return RTL_ALLOCATE(ppMemory, VOID, size);
+    return Nfs3pAllocateMemory(size, ppMemory, FALSE);
+}
+
+NTSTATUS
+Nfs3AllocateMemoryClear(
+    size_t size,
+    PVOID* ppMemory
+    )
+{
+    return Nfs3pAllocateMemory(size, ppMemory, TRUE);
 }
 
 VOID
@@ -62,4 +79,35 @@ Nfs3FreeMemory(
         LwRtlMemoryFree(*ppMemory);
         *ppMemory = NULL;
     }
+}
+
+static
+NTSTATUS
+Nfs3pAllocateMemory(
+    size_t  size,
+    PVOID*  ppMemory,
+    BOOLEAN bClear
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PVOID pMemory = NULL;
+
+    pMemory = LwRtlMemoryAllocate(size, bClear);
+    if (pMemory == NULL)
+    {
+        ntStatus = STATUS_INSUFFICIENT_RESOURCES;
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+cleanup:
+
+    *ppMemory = pMemory;
+
+    return ntStatus;
+
+error:
+
+    pMemory = NULL;
+
+    goto cleanup;
 }

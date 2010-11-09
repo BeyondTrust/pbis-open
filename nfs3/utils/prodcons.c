@@ -77,7 +77,7 @@ Nfs3ProdConsInit(
         BAIL_ON_NT_STATUS(ntStatus);
     }
 
-    ntStatus = Nfs3AllocateMemory(
+    ntStatus = Nfs3AllocateMemoryClear(
                     sizeof(*pQueue),
                     (PVOID*)&pQueue);
     BAIL_ON_NT_STATUS(ntStatus);

@@ -74,7 +74,7 @@ Nfs3ListenerCreate(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PNFS3_LISTENER pListener;
 
-    ntStatus = Nfs3AllocateMemory(sizeof(*pListener), (PVOID*)&pListener);
+    ntStatus = Nfs3AllocateMemoryClear(sizeof(*pListener), (PVOID*)&pListener);
     BAIL_ON_NT_STATUS(ntStatus)
 
     memset(pListener, 0, sizeof(*pListener));

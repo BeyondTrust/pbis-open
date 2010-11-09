@@ -66,7 +66,7 @@ Nfs3QueueCreate(
     NTSTATUS ntStatus = STATUS_SUCCESS;
     PNFS3_QUEUE pQueue = NULL;
 
-    ntStatus = Nfs3AllocateMemory(
+    ntStatus = Nfs3AllocateMemoryClear(
                     sizeof(*pQueue),
                     (PVOID*)&pQueue);
     BAIL_ON_NT_STATUS(ntStatus);
@@ -99,6 +99,7 @@ Nfs3QueueEnqueue(
     BAIL_ON_NT_STATUS(ntStatus);
 
     pQueueItem->pItem = pItem;
+    pQueueItem->pNext = NULL;
 
     if (!pQueue->pHead)
     {
@@ -136,9 +137,10 @@ Nfs3QueueEnqueueFront(
     BAIL_ON_NT_STATUS(ntStatus);
 
     pQueueItem->pItem = pItem;
-
+    
     if (!pQueue->pHead)
     {
+        pQueueItem->pNext = NULL;
         pQueue->pHead = pQueue->pTail = pQueueItem;
     }
     else

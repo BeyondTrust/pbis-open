@@ -115,7 +115,7 @@ Nfs3SocketCreate(
     syserr = fcntl(fd, F_SETFL, O_NONBLOCK);
     BAIL_ON_SYS_ERROR(syserr);
 
-    ntStatus = Nfs3AllocateMemory(sizeof(*pSocket), (PVOID*)&pSocket);
+    ntStatus = Nfs3AllocateMemoryClear(sizeof(*pSocket), (PVOID*)&pSocket);
     BAIL_ON_NT_STATUS(ntStatus);
 
     LwListInit(&pSocket->sendItems);

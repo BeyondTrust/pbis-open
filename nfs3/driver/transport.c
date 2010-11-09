@@ -48,7 +48,7 @@ Nfs3TransportCreate(
     PNFS3_TRANSPORT pTransport = NULL;
     PLW_THREAD_POOL_ATTRIBUTES pAttrs = NULL;
 
-    ntStatus = Nfs3AllocateMemory(sizeof(*pTransport), (PVOID*)&pTransport);
+    ntStatus = Nfs3AllocateMemoryClear(sizeof(*pTransport), (PVOID*)&pTransport);
     BAIL_ON_NT_STATUS(ntStatus);
 
     ntStatus = LwRtlCreateThreadPoolAttributes(&pAttrs);

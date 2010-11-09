@@ -102,7 +102,7 @@ Nfs3Initialize(
     gNfs3Globals.ulNumWorkers = gNfs3Globals.config.ulWorkersToCoresRatio *
                                 ulNumCpus;
 
-    ntStatus = Nfs3AllocateMemory(
+    ntStatus = Nfs3AllocateMemoryClear(
                     gNfs3Globals.ulNumWorkers * sizeof(NFS3_WORKER),
                     (PVOID*)&gNfs3Globals.pWorkerArray);
     BAIL_ON_NT_STATUS(ntStatus);

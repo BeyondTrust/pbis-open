@@ -59,6 +59,12 @@ Nfs3AllocateMemory(
     PVOID* ppMemory
     );
 
+NTSTATUS
+Nfs3AllocateMemoryClear(
+    size_t size,
+    PVOID* ppMemory
+    );
+
 VOID
 Nfs3FreeMemory(
     PVOID* ppMemory
