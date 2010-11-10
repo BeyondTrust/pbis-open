@@ -114,6 +114,9 @@
         DCETHREAD_CATCH_ALL(dceexc)                                  \
         {                                                            \
             status = LwRpcStatusToNtStatus(dceexc->match.value);     \
+            LSA_LOG_DEBUG("Converted DCERPC code 0x%08X to NTSTATUS 0x%08x", \
+                          dceexc->match.value,                       \
+                          status);                                   \
         }                                                            \
         DCETHREAD_ENDTRY;                                            \
     } while (0);
@@ -133,6 +136,9 @@
         {                                                            \
             ntstat = LwRpcStatusToNtStatus(dceexc->match.value);     \
             winerr = LwNtStatusToWin32Error(ntstat);                 \
+            LSA_LOG_DEBUG("Converted DCERPC code 0x%08X to WINERR %d", \
+                          dceexc->match.value,                       \
+                          winerr);                                   \
         }                                                            \
         DCETHREAD_ENDTRY;                                            \
     } while (0);
