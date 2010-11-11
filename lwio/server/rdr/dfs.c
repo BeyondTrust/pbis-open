@@ -566,6 +566,7 @@ RdrDfsConnectAttempt(
 
         pContext->Continue = RdrDfsTreeConnectComplete;
 
+        (*pContext->State.DfsConnect.pusTry)++;
         status = RdrTreeConnect(
             pwszServer,
             pwszShare,
@@ -573,7 +574,6 @@ RdrDfsConnectAttempt(
             pContext->State.DfsConnect.Uid,
             bStopOnDfs,
             pContext);
-        (*pContext->State.DfsConnect.pusTry)++;
     } while (RdrDfsStatusIsRetriable(status));
     BAIL_ON_NT_STATUS(status);
 
