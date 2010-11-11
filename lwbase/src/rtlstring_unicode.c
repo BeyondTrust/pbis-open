@@ -239,7 +239,10 @@ cleanup:
         RtlUnicodeStringFree(&newString);
     }
 
-    *pNewString = newString;
+    if (pNewString)
+    {
+        *pNewString = newString;
+    }
 
     return status;
 }
