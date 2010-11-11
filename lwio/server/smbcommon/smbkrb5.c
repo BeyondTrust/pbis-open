@@ -726,7 +726,7 @@ SMBCredTokenToKrb5CredCache(
     Status = SMBAllocateStringPrintf(
         &pszCachePath,
         "MEMORY:%lu",
-        (unsigned long) (size_t) pCredToken);
+        (unsigned long) (size_t) ppszCachePath);
     BAIL_ON_NT_STATUS(Status);
 
     krb5Error = krb5_init_context(&pContext);
