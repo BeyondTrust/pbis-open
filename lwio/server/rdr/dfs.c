@@ -559,6 +559,12 @@ RdrDfsConnectAttempt(
                 BAIL_ON_NT_STATUS(status);
             }
         }
+        else if (*pContext->State.DfsConnect.pusTry > 0)
+        {
+            /* No point in retrying connections to IPC$ */
+            status = pContext->State.DfsConnect.OrigStatus;
+            BAIL_ON_NT_STATUS(status);
+        }
         else
         {
             bStopOnDfs = FALSE;
