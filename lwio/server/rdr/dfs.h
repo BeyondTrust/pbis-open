@@ -124,11 +124,6 @@ RdrDfsChaseReferral2(
     PRDR_TREE2 pTree
     );
 
-BOOLEAN
-RdrDfsStatusIsRetriable(
-    NTSTATUS status
-    );
-
 NTSTATUS
 RdrDfsConnect(
     IN OPTIONAL PRDR_SOCKET pSocket,

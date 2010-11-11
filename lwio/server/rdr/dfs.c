@@ -442,6 +442,7 @@ error:
     goto cleanup;
 }
 
+static
 BOOLEAN
 RdrDfsStatusIsRetriable(
     NTSTATUS status
@@ -451,6 +452,7 @@ RdrDfsStatusIsRetriable(
     {
     case STATUS_SUCCESS:
     case STATUS_PENDING:
+    case STATUS_OBJECT_NAME_NOT_FOUND:
         return FALSE;
     default:
         return TRUE;
@@ -599,6 +601,8 @@ RdrDfsTreeConnectComplete(
     switch (status)
     {
     case STATUS_DFS_EXIT_PATH_FOUND:
+        *pContext->State.DfsConnect.pusTry = 0;
+        pContext->State.DfsConnect.OrigStatus = STATUS_SUCCESS;
         status = RdrDfsChaseReferral(NULL, pContext);
         break;
     default:
