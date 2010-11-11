@@ -105,7 +105,6 @@ typedef struct _RDR_OP_CONTEXT
             };
             PWSTR pwszFilename;
             PWSTR pwszCanonicalPath;
-            NTSTATUS OrigStatus;
         } Create;
         struct
         {
@@ -118,7 +117,7 @@ typedef struct _RDR_OP_CONTEXT
                 struct _RDR_SOCKET* pSocket;
             };
             PWSTR pwszSharename;
-            BOOLEAN bChaseReferrals;
+            BOOLEAN bStopOnDfs;
             PIO_CREDS pCreds;
             uid_t Uid;
             PSMB_PACKET pPacket;
@@ -134,10 +133,17 @@ typedef struct _RDR_OP_CONTEXT
         } QueryDirectory;
         struct
         {
-            struct _RDR_OP_CONTEXT* pContinue;
+            PIO_CREDS pCreds;
+            uid_t Uid;
             IO_CREDS AnonCreds;
-            PWSTR pwszPath;
-        } DfsGetReferral;
+            PCWSTR pwszPath;
+            PWSTR* ppwszFilePath;
+            PWSTR* ppwszCanonicalPath;
+            PWSTR pwszNamespace;
+            NTSTATUS OrigStatus;
+            PUSHORT pusTry;
+            struct _RDR_OP_CONTEXT* pContinue;
+        } DfsConnect;
     } State;
     USHORT usMid;
     /* Retry count */

@@ -43,6 +43,29 @@
 
 #define NEGATIVE_CACHE_TIME 600
 
+static
+NTSTATUS
+RdrDfsChaseReferral(
+    PRDR_SOCKET pSocket,
+    PRDR_OP_CONTEXT pContext
+    );
+
+static
+BOOLEAN
+RdrDfsTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+static
+BOOLEAN
+RdrDfsChaseReferralTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
 static LW_LIST_LINKS gDfsNamespaces = {&gDfsNamespaces, &gDfsNamespaces};
 static pthread_mutex_t gDfsLock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -432,4 +455,347 @@ RdrDfsStatusIsRetriable(
     default:
         return TRUE;
     }
+}
+
+NTSTATUS
+RdrConstructCanonicalPath(
+    PWSTR pwszShare,
+    PWSTR pwszFilename,
+    PWSTR* ppwszCanonical
+    )
+{
+    if (pwszFilename[0] == '\\' &&
+        pwszFilename[1] == '\0')
+    {
+        return LwRtlWC16StringDuplicate(ppwszCanonical, pwszShare);
+    }
+    else
+    {
+        return LwRtlWC16StringAllocatePrintfW(
+            ppwszCanonical,
+            L"%ws%ws",
+            pwszShare,
+            pwszFilename);
+    }
+}
+
+static
+BOOLEAN
+RdrShareIsIpc(
+    PWSTR pwszShare
+    )
+{
+    static const WCHAR wszIpcDollar[] = {'I','P','C','$','\0'};
+    ULONG ulLen = LwRtlWC16StringNumChars(pwszShare);
+
+    return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
+}
+
+NTSTATUS
+RdrDfsConnectAttempt(
+    PRDR_OP_CONTEXT pContext
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszServer = NULL;
+    PWSTR pwszShare = NULL;
+    PWSTR pwszResolved = NULL;
+    BOOLEAN bIsRoot = FALSE;
+    BOOLEAN bStopOnDfs = FALSE;
+
+    do
+    {
+        status = RdrConvertPath(
+            pContext->State.DfsConnect.pwszPath,
+            &pwszServer,
+            &pwszShare,
+            pContext->State.DfsConnect.ppwszFilePath);
+        BAIL_ON_NT_STATUS(status);
+
+        status = RdrConstructCanonicalPath(
+            pwszShare,
+            *pContext->State.DfsConnect.ppwszFilePath,
+            pContext->State.DfsConnect.ppwszCanonicalPath);
+        BAIL_ON_NT_STATUS(status);
+
+        if (!RdrShareIsIpc(pwszShare))
+        {
+            /* Resolve against DFS cache */
+            status = RdrDfsResolvePath(
+                *pContext->State.DfsConnect.ppwszCanonicalPath,
+                *pContext->State.DfsConnect.pusTry,
+                &pwszResolved,
+                &bIsRoot);
+            switch (status)
+            {
+            case STATUS_DFS_UNAVAILABLE:
+                status = pContext->State.DfsConnect.OrigStatus;
+                BAIL_ON_NT_STATUS(status);
+            case STATUS_NOT_FOUND:
+                /* Proceed with current path verbatim but back off if the server supports DFS */
+                bStopOnDfs = TRUE;
+                status = STATUS_SUCCESS;
+                break;
+            default:
+                BAIL_ON_NT_STATUS(status);
+
+                /*
+                 * Since we got a hit in our referral cache,
+                 * we don't need to chase referrals when tree connecting
+                 */
+                bStopOnDfs = FALSE;
+
+                RTL_FREE(&pwszServer);
+                RTL_FREE(&pwszShare);
+                RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
+
+                status = RdrConvertPath(
+                    pwszResolved,
+                    &pwszServer,
+                    &pwszShare,
+                    pContext->State.DfsConnect.ppwszFilePath);
+                BAIL_ON_NT_STATUS(status);
+            }
+        }
+        else
+        {
+            bStopOnDfs = FALSE;
+        }
+
+        pContext->Continue = RdrDfsTreeConnectComplete;
+
+        status = RdrTreeConnect(
+            pwszServer,
+            pwszShare,
+            pContext->State.DfsConnect.pCreds,
+            pContext->State.DfsConnect.Uid,
+            bStopOnDfs,
+            pContext);
+        (*pContext->State.DfsConnect.pusTry)++;
+    } while (RdrDfsStatusIsRetriable(status));
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    RTL_FREE(&pwszServer);
+    RTL_FREE(&pwszShare);
+    RTL_FREE(&pwszResolved);
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+BOOLEAN
+RdrDfsTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    switch (status)
+    {
+    case STATUS_DFS_EXIT_PATH_FOUND:
+        status = RdrDfsChaseReferral(NULL, pContext);
+        break;
+    default:
+        if (RdrDfsStatusIsRetriable(status))
+        {
+            if (!pContext->State.DfsConnect.OrigStatus)
+            {
+                pContext->State.DfsConnect.OrigStatus = status;
+            }
+            status = RdrDfsConnectAttempt(pContext);
+        }
+    }
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        RdrContinueContext(pContext->State.DfsConnect.pContinue, status, pParam);
+        RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
+        RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
+        RdrFreeContext(pContext);
+    }
+
+    return FALSE;
+
+error:
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrDfsChaseReferral(
+    PRDR_SOCKET pSocket,
+    PRDR_OP_CONTEXT pContext
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszServer = NULL;
+    PWSTR pwszShare = NULL;
+
+    if (pSocket)
+    {
+        /*
+         * If given an existing socket, send the DFS referral request to that server.
+         * This is necessary for resolving DFS links after getting STATUS_PATH_NOT_COVERED,
+         */
+        status = LwRtlWC16StringDuplicate(&pwszServer, pSocket->pwszCanonicalName);
+        BAIL_ON_NT_STATUS(status);
+    }
+    else
+    {
+        status = RdrConvertPath(
+            pContext->State.DfsConnect.pwszPath,
+            &pwszServer,
+            NULL,
+            NULL);
+        BAIL_ON_NT_STATUS(status);
+
+
+    }
+
+    status = LwRtlWC16StringAllocatePrintfW(&pwszShare, L"\\\\%ws\\IPC$", pwszServer);
+    BAIL_ON_NT_STATUS(status);
+
+    pContext->Continue = RdrDfsChaseReferralTreeConnectComplete;
+
+    status = RdrTreeConnect(
+        pwszServer,
+        pwszShare,
+        pContext->State.DfsConnect.pCreds,
+        pContext->State.DfsConnect.Uid,
+        FALSE,
+        pContext);
+    BAIL_ON_NT_STATUS(status);
+
+ cleanup:
+
+     RTL_FREE(&pwszServer);
+     RTL_FREE(&pwszShare);
+
+     return status;
+
+ error:
+
+     goto cleanup;
+}
+
+static
+BOOLEAN
+RdrDfsChaseReferralTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    BAIL_ON_NT_STATUS(status);
+
+    switch (RDR_OBJECT_PROTOCOL(pParam))
+    {
+    case SMB_PROTOCOL_VERSION_1:
+        status = RdrDfsChaseReferral1(pContext, (PRDR_TREE) pParam);
+        break;
+    case SMB_PROTOCOL_VERSION_2:
+        status = RdrDfsChaseReferral2(pContext, (PRDR_TREE2) pParam);
+        break;
+    default:
+        status = STATUS_INTERNAL_ERROR;
+    }
+
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        RdrContinueContext(pContext->State.DfsConnect.pContinue, status, NULL);
+        RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
+        RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
+        RdrFreeContext(pContext);
+    }
+
+    return FALSE;
+
+error:
+
+    goto cleanup;
+}
+
+NTSTATUS
+RdrDfsConnect(
+    IN OPTIONAL PRDR_SOCKET pSocket,
+    IN PCWSTR pwszPath,
+    IN PIO_CREDS pCreds,
+    IN uid_t Uid,
+    IN NTSTATUS lastError,
+    IN OUT PUSHORT pusTry,
+    OUT PWSTR* ppwszFilePath,
+    OUT PWSTR* ppwszCanonicalPath,
+    IN PRDR_OP_CONTEXT pContinue
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PRDR_OP_CONTEXT pContext = NULL;
+
+    status = RdrCreateContext(NULL, &pContext);
+    BAIL_ON_NT_STATUS(status);
+
+    pContext->State.DfsConnect.pCreds = pCreds;
+    pContext->State.DfsConnect.Uid = Uid;
+    pContext->State.DfsConnect.pwszPath = pwszPath;
+    pContext->State.DfsConnect.ppwszFilePath = ppwszFilePath;
+    pContext->State.DfsConnect.ppwszCanonicalPath = ppwszCanonicalPath;
+    pContext->State.DfsConnect.pusTry = pusTry;
+    pContext->State.DfsConnect.pContinue = pContinue;
+
+    switch (lastError)
+    {
+    case STATUS_SUCCESS:
+        status = RdrDfsConnectAttempt(pContext);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    case STATUS_PATH_NOT_COVERED:
+        *pContext->State.DfsConnect.pusTry = 0;
+        pContext->State.DfsConnect.OrigStatus = lastError;
+        status = RdrDfsChaseReferral(pSocket, pContext);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        if (RdrDfsStatusIsRetriable(lastError))
+        {
+            pContext->State.DfsConnect.OrigStatus = lastError;
+            status = RdrDfsConnectAttempt(pContext);
+        }
+        else
+        {
+            status = lastError;
+        }
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+
+    if (status != STATUS_PENDING)
+    {
+        if (pContext)
+        {
+            RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
+            RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
+            RdrFreeContext(pContext);
+        }
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
 }

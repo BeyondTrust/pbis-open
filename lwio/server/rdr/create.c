@@ -73,14 +73,6 @@ RdrTransceiveCreate(
     );
 
 static
-BOOLEAN
-RdrChaseCreateReferralComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    );
-
-static
 void
 RdrCancelCreate(
     PIRP pIrp,
@@ -91,151 +83,8 @@ RdrCancelCreate(
 }
 
 static
-NTSTATUS
-RdrConstructCanonicalPath(
-    PWSTR pwszShare,
-    PWSTR pwszFilename,
-    PWSTR* ppwszCanonical
-    )
-{
-    if (pwszFilename[0] == '\\' &&
-        pwszFilename[1] == '\0')
-    {
-        return LwRtlWC16StringDuplicate(ppwszCanonical, pwszShare);
-    }
-    else
-    {
-        return LwRtlWC16StringAllocatePrintfW(
-            ppwszCanonical,
-            L"%ws%ws",
-            pwszShare,
-            pwszFilename);
-    }
-}
-
-static
 BOOLEAN
-RdrShareIsIpc(
-    PWSTR pwszShare
-    )
-{
-    static const WCHAR wszIpcDollar[] = {'I','P','C','$','\0'};
-    ULONG ulLen = LwRtlWC16StringNumChars(pwszShare);
-
-    return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
-}
-
-NTSTATUS
-RdrCreateTreeConnect(
-    PRDR_OP_CONTEXT pContext,
-    PWSTR pwszFilename
-    )
-{
-    NTSTATUS status = STATUS_SUCCESS;
-    PIRP pIrp = pContext->pIrp;
-    PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
-    PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo = 
-        IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
-    PRDR_TREE pTree = NULL;
-    PWSTR pwszServer = NULL;
-    PWSTR pwszShare = NULL;
-    PWSTR pwszResolved = NULL;
-    BOOLEAN bChaseReferrals = FALSE;
-    BOOLEAN bIsRoot = FALSE;
-
-    do
-    {
-        if (!pContext->State.Create.OrigStatus)
-        {
-            pContext->State.Create.OrigStatus = status;
-        }
-
-        status = RdrConvertPath(
-            pwszFilename,
-            &pwszServer,
-            &pwszShare,
-            &pContext->State.Create.pwszFilename);
-        BAIL_ON_NT_STATUS(status);
-
-        status = RdrConstructCanonicalPath(
-            pwszShare,
-            pContext->State.Create.pwszFilename,
-            &pContext->State.Create.pwszCanonicalPath);
-        BAIL_ON_NT_STATUS(status);
-
-        if (!RdrShareIsIpc(pwszShare))
-        {
-            /* Resolve against DFS cache */
-            status = RdrDfsResolvePath(pContext->State.Create.pwszCanonicalPath, pContext->usTry, &pwszResolved, &bIsRoot);
-            switch (status)
-            {
-            case STATUS_DFS_UNAVAILABLE:
-                status = pContext->State.Create.OrigStatus;
-                BAIL_ON_NT_STATUS(status);
-            case STATUS_NOT_FOUND:
-                /* Proceed with current path and chase referrals */
-                bChaseReferrals = TRUE;
-                status = STATUS_SUCCESS;
-                break;
-            default:
-                BAIL_ON_NT_STATUS(status);
-
-                /*
-                 * Since we got a hit in our referral cache,
-                 * we don't need to chase referrals when tree connecting
-                 */
-                bChaseReferrals = FALSE;
-
-                RTL_FREE(&pwszServer);
-                RTL_FREE(&pwszShare);
-                RTL_FREE(&pContext->State.Create.pwszFilename);
-
-                status = RdrConvertPath(
-                    pwszResolved,
-                    &pwszServer,
-                    &pwszShare,
-                    &pContext->State.Create.pwszFilename);
-                BAIL_ON_NT_STATUS(status);
-            }
-        }
-        else
-        {
-            bChaseReferrals = FALSE;
-        }
-
-        status = RdrTreeConnect(
-            pwszServer,
-            pwszShare,
-            pCreds,
-            pProcessInfo->Uid,
-            bChaseReferrals,
-            pContext);
-        pContext->usTry++;
-    } while (RdrDfsStatusIsRetriable(status));
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-
-    RTL_FREE(&pwszServer);
-    RTL_FREE(&pwszShare);
-    RTL_FREE(&pwszResolved);
-
-    return status;
-
-error:
-
-    if (status != STATUS_PENDING && pTree)
-    {
-        RdrTreeRelease(pTree);
-        pTree = NULL;
-    }
-
-    goto cleanup;
-}
-
-static
-BOOLEAN
-RdrCreateTreeConnected(
+RdrCreateTreeConnectComplete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pParam
@@ -249,6 +98,10 @@ RdrCreateTreeConnected(
     FILE_CREATE_DISPOSITION CreateDisposition = pIrp->Args.Create.CreateDisposition;
     FILE_CREATE_OPTIONS CreateOptions = pIrp->Args.Create.CreateOptions;
     FILE_ATTRIBUTES FileAttributes =  pIrp->Args.Create.FileAttributes;
+    PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
+    PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
+        IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
+
     PRDR_CCB pFile = NULL;
 
     if (pParam)
@@ -260,22 +113,13 @@ RdrCreateTreeConnected(
             break;
         case SMB_PROTOCOL_VERSION_2:
             /* We ended up with an SMB2 tree, short circuit to create2.c */
-            return RdrCreateTreeConnected2(pContext, status, pParam);
+            return RdrCreateTreeConnect2Complete(pContext, status, pParam);
         default:
             status = STATUS_INTERNAL_ERROR;
             BAIL_ON_NT_STATUS(status);
         }
     }
 
-    if (RdrDfsStatusIsRetriable(status))
-    {
-        if (!pContext->State.Create.OrigStatus)
-        {
-            pContext->State.Create.OrigStatus = status;
-        }
-        pContext->Continue = RdrCreateTreeConnected;
-        status = RdrCreateTreeConnect(pContext, pIrp->Args.Create.FileName.FileName);
-    }
     BAIL_ON_NT_STATUS(status);
 
     status = LwIoAllocateMemory(
@@ -324,22 +168,25 @@ RdrCreateTreeConnected(
         switch (status)
         {
         case STATUS_SUCCESS:
+        case STATUS_PENDING:
             break;
         default:
-            if (RdrDfsStatusIsRetriable(status))
-            {
-                if (!pContext->State.Create.OrigStatus)
-                {
-                    pContext->State.Create.OrigStatus = status;
-                }
+            pContext->Continue = RdrCreateTreeConnectComplete;
+            pContext->State.Create.pFile = NULL;
 
-                RdrReleaseFile(pFile);
-                pContext->State.Create.pFile = pFile = NULL;
+            status = RdrDfsConnect(
+                pFile->pTree->pSession->pSocket,
+                pIrp->Args.Create.FileName.FileName,
+                pCreds,
+                pProcessInfo->Uid,
+                status,
+                &pContext->usTry,
+                &pContext->State.Create.pwszFilename,
+                &pContext->State.Create.pwszCanonicalPath,
+                pContext);
 
-                pContext->Continue = RdrCreateTreeConnected;
-                status = RdrCreateTreeConnect(pContext, pIrp->Args.Create.FileName.FileName);
-            }
-            BAIL_ON_NT_STATUS(status);
+            RdrReleaseFile(pFile);
+            pFile = NULL;
         }
         BAIL_ON_NT_STATUS(status);
     }
@@ -384,6 +231,10 @@ RdrFinishCreate(
     PRDR_CCB pFile = pContext->State.Create.pFile;
     PSMB_PACKET pPacket = pParam;
     PCREATE_RESPONSE_HEADER pResponseHeader = NULL;
+    PIRP pIrp = pContext->pIrp;
+    PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
+    PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
+        IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
 
     if (status == STATUS_SUCCESS)
     {
@@ -394,34 +245,25 @@ RdrFinishCreate(
     {
     case STATUS_SUCCESS:
         break;
-    case STATUS_PATH_NOT_COVERED:
-        RdrReleaseFile(pFile);
-        pContext->State.Create.pFile = pFile = NULL;
-        pContext->usTry = 0;
-        pContext->Continue = RdrChaseCreateReferralComplete;
-        status = RdrDfsChaseReferral1(
-            pFile->pTree->pSession,
-            IoSecurityGetCredentials(pContext->pIrp->Args.Create.SecurityContext),
-            pFile->pwszCanonicalPath,
-            pContext);
-        BAIL_ON_NT_STATUS(status);
-        break;
     default:
-        if (RdrDfsStatusIsRetriable(status))
-        {
-            if (!pContext->State.Create.OrigStatus)
-            {
-                pContext->State.Create.OrigStatus = status;
-            }
+        pContext->Continue = RdrCreateTreeConnectComplete;
+        pContext->State.Create.pFile = NULL;
 
-            RdrReleaseFile(pFile);
-            pContext->State.Create.pFile = pFile = NULL;
+        status = RdrDfsConnect(
+            pFile->pTree->pSession->pSocket,
+            pIrp->Args.Create.FileName.FileName,
+            pCreds,
+            pProcessInfo->Uid,
+            status,
+            &pContext->usTry,
+            &pContext->State.Create.pwszFilename,
+            &pContext->State.Create.pwszCanonicalPath,
+            pContext);
 
-            pContext->Continue = RdrCreateTreeConnected;
-            status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
-        }
-        BAIL_ON_NT_STATUS(status);
+        RdrReleaseFile(pFile);
+        pFile = NULL;
     }
+    BAIL_ON_NT_STATUS(status);
 
     status = WireUnmarshallSMBResponseCreate(
                 pPacket->pParams,
@@ -452,40 +294,10 @@ cleanup:
 
 error:
 
-    RdrReleaseFile(pFile);
-
-    goto cleanup;
-}
-
-static
-BOOLEAN
-RdrChaseCreateReferralComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    )
-{
-    BAIL_ON_NT_STATUS(status);
-
-    pContext->Continue = RdrCreateTreeConnected;
-
-    status = RdrCreateTreeConnect(pContext, pContext->pIrp->Args.Create.FileName.FileName);
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-
-    if (status != STATUS_PENDING)
+    if (pFile)
     {
-        pContext->pIrp->IoStatusBlock.Status = status;
-        IoIrpComplete(pContext->pIrp);
-        RTL_FREE(&pContext->State.Create.pwszFilename);
-        RTL_FREE(&pContext->State.Create.pwszCanonicalPath);
-        RdrFreeContext(pContext);
+        RdrReleaseFile(pFile);
     }
-
-    return FALSE;
-
-error:
 
     goto cleanup;
 }
@@ -499,6 +311,8 @@ RdrCreate(
     NTSTATUS status = STATUS_SUCCESS;
     PRDR_OP_CONTEXT pContext = NULL;
     PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
+    PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
+        IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
 
     status = RdrCreateContext(pIrp, &pContext);
     BAIL_ON_NT_STATUS(status);
@@ -511,10 +325,17 @@ RdrCreate(
         BAIL_ON_NT_STATUS(status);
     }
 
-    pContext->Continue = RdrCreateTreeConnected;
-
-    status = RdrCreateTreeConnect(pContext, pIrp->Args.Create.FileName.FileName);
-    BAIL_ON_NT_STATUS(status);
+    pContext->Continue = RdrCreateTreeConnectComplete;
+    status = RdrDfsConnect(
+        NULL,
+        pIrp->Args.Create.FileName.FileName,
+        pCreds,
+        pProcessInfo->Uid,
+        status,
+        &pContext->usTry,
+        &pContext->State.Create.pwszFilename,
+        &pContext->State.Create.pwszCanonicalPath,
+        pContext);
 
 cleanup:
 

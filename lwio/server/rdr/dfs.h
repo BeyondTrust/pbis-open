@@ -114,23 +114,44 @@ RdrDfsRegisterNamespace(
 
 NTSTATUS
 RdrDfsChaseReferral1(
-    PRDR_SESSION pSession,
-    PIO_CREDS pCreds,
-    PCWSTR pwszPath,
-    PRDR_OP_CONTEXT pContinue
+    PRDR_OP_CONTEXT pContext,
+    PRDR_TREE pTree
     );
 
 NTSTATUS
 RdrDfsChaseReferral2(
-    PRDR_SESSION2 pSession,
-    PIO_CREDS pCreds,
-    PCWSTR pwszPath,
-    PRDR_OP_CONTEXT pContinue
+    PRDR_OP_CONTEXT pContext,
+    PRDR_TREE2 pTree
     );
 
 BOOLEAN
 RdrDfsStatusIsRetriable(
     NTSTATUS status
+    );
+
+NTSTATUS
+RdrDfsConnect(
+    IN OPTIONAL PRDR_SOCKET pSocket,
+    IN PCWSTR pwszPath,
+    IN PIO_CREDS pCreds,
+    IN uid_t Uid,
+    IN NTSTATUS lastError,
+    IN OUT PUSHORT pusTry,
+    OUT PWSTR* ppwszFilePath,
+    OUT PWSTR* ppwszCanonicalPath,
+    IN PRDR_OP_CONTEXT pContinue
+    );
+
+NTSTATUS
+RdrDfsConnectAttempt(
+    PRDR_OP_CONTEXT pContext
+    );
+
+NTSTATUS
+RdrConstructCanonicalPath(
+    PWSTR pwszShare,
+    PWSTR pwszFilename,
+    PWSTR* ppwszCanonical
     );
 
 #endif

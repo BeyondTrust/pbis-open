@@ -85,14 +85,6 @@ RdrTreeConnectComplete(
     PVOID pParam
     );
 
-static
-BOOLEAN
-RdrReferralComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    );
-
 VOID
 RdrFreeTreeConnectContext(
     PRDR_OP_CONTEXT pContext
@@ -195,27 +187,11 @@ RdrNegotiateComplete(
         return RdrNegotiateComplete2(pContext, status, pParam);
     }
 
-    if (pContext->State.TreeConnect.bChaseReferrals &&
+    if (pContext->State.TreeConnect.bStopOnDfs &&
         pSocket->capabilities & CAP_DFS)
     {
-        /*
-         * We need to take a detour to chase a potential DFS referral
-         * rather than proceeding with the session setup
-         */
-        pContext->Continue = RdrReferralComplete;
-
-        /* After the referral we will start again from the top of RdrTreeConnect()
-         * because we might need to connect to a complete different machine, so
-         * release the socket we just got.
-         */
-        RdrSocketRelease(pSocket);
-        pSocket = NULL;
-
-        status = RdrDfsChaseReferral1(
-            NULL,
-            NULL,
-            pContext->State.TreeConnect.pwszSharename,
-            pContext);
+        /* Abort tree connect because we need to do DFS referral processing first */
+        status = STATUS_DFS_EXIT_PATH_FOUND;
         BAIL_ON_NT_STATUS(status);
     }
 
@@ -304,69 +280,6 @@ error:
         RdrSocketInvalidate(pSocket, status);
         RdrSocketRelease(pSocket);
     }
-
-    goto cleanup;
-}
-
-static
-BOOLEAN
-RdrReferralComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    )
-{
-    PWSTR pwszReferral = NULL;
-    PWSTR pwszHost = NULL;
-    PWSTR pwszShare = NULL;
-    BOOLEAN bIsRoot = FALSE;
-
-    BAIL_ON_NT_STATUS(status);
-
-    /* The referral should now be in the cache, so resolve the share path.
-     * Note that if the referral failed, we should have a negative cache entry
-     * which maps the path to itself.
-     */
-    status = RdrDfsResolvePath(pContext->State.TreeConnect.pwszSharename, 0, &pwszReferral, &bIsRoot);
-    BAIL_ON_NT_STATUS(status);
-
-    status = RdrConvertPath(
-        pwszReferral,
-        &pwszHost,
-        &pwszShare,
-        NULL);
-    BAIL_ON_NT_STATUS(status);
-
-    /* Begin the tree connect process again, but don't chase referrals this time */
-    status = RdrTreeConnect(
-        pwszHost,
-        pwszShare,
-        pContext->State.TreeConnect.pCreds,
-        pContext->State.TreeConnect.Uid,
-        FALSE,
-        pContext->State.TreeConnect.pContinue);
-    BAIL_ON_NT_STATUS(status);
-
-cleanup:
-
-    RTL_FREE(&pwszReferral);
-    RTL_FREE(&pwszHost);
-    RTL_FREE(&pwszShare);
-
-    if (status != STATUS_PENDING)
-    {
-        RdrContinueContext(pContext->State.TreeConnect.pContinue, status, NULL);
-    }
-
-    /*
-     * Even if we succeeded (STATUS_PENDING), we've passed off to
-     * a second tree connect context, so this one is finished
-     */
-    RdrFreeTreeConnectContext(pContext);
-
-    return FALSE;
-
-error:
 
     goto cleanup;
 }
@@ -1167,7 +1080,7 @@ RdrTreeConnect(
     PCWSTR pwszSharename,
     PIO_CREDS pCreds,
     uid_t Uid,
-    BOOLEAN bChaseReferrals,
+    BOOLEAN bStopOnDfs,
     PRDR_OP_CONTEXT pContinue
     )
 {
@@ -1182,7 +1095,7 @@ RdrTreeConnect(
     LWIO_LOG_DEBUG("Tree connect context %p will continue %p\n", pContext, pContinue);
 
     pContext->State.TreeConnect.Uid = Uid;
-    pContext->State.TreeConnect.bChaseReferrals = bChaseReferrals;
+    pContext->State.TreeConnect.bStopOnDfs = bStopOnDfs;
     pContext->State.TreeConnect.pContinue = pContinue;
 
     status = LwRtlWC16StringDuplicate(

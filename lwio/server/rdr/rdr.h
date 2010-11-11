@@ -376,7 +376,7 @@ RdrFreeTreeConnectContext(
     );
 
 BOOLEAN
-RdrCreateTreeConnected2(
+RdrCreateTreeConnect2Complete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
     PVOID pParam

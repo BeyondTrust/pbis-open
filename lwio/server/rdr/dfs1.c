@@ -27,14 +27,6 @@
 
 static
 BOOLEAN
-RdrDfsChaseReferral1IpcConnectComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    );
-
-static
-BOOLEAN
 RdrQueryDfsReferral1Complete(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
@@ -51,128 +43,67 @@ RdrTransceiveQueryDfsReferral1(
 
 NTSTATUS
 RdrDfsChaseReferral1(
-    PRDR_SESSION pSession,
-    PIO_CREDS pCreds,
-    PCWSTR pwszPath,
-    PRDR_OP_CONTEXT pContinue
+    PRDR_OP_CONTEXT pContext,
+    PRDR_TREE pTree
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PRDR_OP_CONTEXT pContext = NULL;
-    PWSTR pwszServer = NULL;
     PWSTR pwszShare = NULL;
-    static WCHAR wszEmpty[] = {'\0'};
+    PWSTR pwszFilePath = NULL;
 
-    status = RdrCreateContext(NULL, &pContext);
-    BAIL_ON_NT_STATUS(status);
-
-    status = LwRtlWC16StringDuplicate(&pContext->State.DfsGetReferral.pwszPath, pwszPath);
-    BAIL_ON_NT_STATUS(status);
-
-    pContext->Continue = RdrDfsChaseReferral1IpcConnectComplete;
-    pContext->State.DfsGetReferral.pContinue = pContinue;
-
-    if (!pSession)
+    if (pContext->State.DfsConnect.OrigStatus == STATUS_PATH_NOT_COVERED)
     {
-        pContext->State.DfsGetReferral.AnonCreds.type = IO_CREDS_TYPE_PLAIN;
-        pContext->State.DfsGetReferral.AnonCreds.payload.plain.pwszDomain = wszEmpty;
-        pContext->State.DfsGetReferral.AnonCreds.payload.plain.pwszPassword = wszEmpty;
-        pContext->State.DfsGetReferral.AnonCreds.payload.plain.pwszUsername = wszEmpty;
-
+        /* Look up complete canonical path */
         status = RdrConvertPath(
-            pwszPath,
-            &pwszServer,
+            pContext->State.DfsConnect.pwszPath,
             NULL,
-            NULL);
+            &pwszShare,
+            &pwszFilePath);
         BAIL_ON_NT_STATUS(status);
 
-        status = LwRtlWC16StringAllocatePrintfW(&pwszShare, L"\\\\%ws\\IPC$", pwszServer);
-        BAIL_ON_NT_STATUS(status);
-
-        status = RdrTreeConnect(
-            pwszServer,
+        status = RdrConstructCanonicalPath(
             pwszShare,
-            &pContext->State.DfsGetReferral.AnonCreds,
-            getpid(),
-            FALSE,
-            pContext);
+            pwszFilePath,
+            &pContext->State.DfsConnect.pwszNamespace);
         BAIL_ON_NT_STATUS(status);
     }
     else
     {
-        status = LwRtlWC16StringAllocatePrintfW(
-            &pwszShare,
-            L"\\\\%ws\\IPC$",
-            pSession->pSocket->pwszCanonicalName);
-        BAIL_ON_NT_STATUS(status);
-
-        status = RdrTreeConnect(
-            pSession->pSocket->pwszCanonicalName,
-            pwszShare,
-            pCreds,
-            pSession->key.uid,
-            FALSE,
-            pContext);
+        /* Look up only the share */
+        status = RdrConvertPath(
+            pContext->State.DfsConnect.pwszPath,
+            NULL,
+            &pContext->State.DfsConnect.pwszNamespace,
+            NULL);
         BAIL_ON_NT_STATUS(status);
     }
-
-cleanup:
-
-    RTL_FREE(&pwszServer);
-    RTL_FREE(&pwszShare);
-
-    if (status != STATUS_PENDING && pContext)
-    {
-        RTL_FREE(&pContext->State.DfsGetReferral.pwszPath);
-        RdrFreeContext(pContext);
-    }
-
-    return status;
-
-error:
-
-    goto cleanup;
-}
-
-static
-BOOLEAN
-RdrDfsChaseReferral1IpcConnectComplete(
-    PRDR_OP_CONTEXT pContext,
-    NTSTATUS status,
-    PVOID pParam
-    )
-{
-    /* FIXME: what if we get an SMB2 connection when chasing an SMB1 referral? */
-    PRDR_TREE pTree = (PRDR_TREE) pParam;
-
-    BAIL_ON_NT_STATUS(status);
 
     pContext->Continue = RdrQueryDfsReferral1Complete;
 
     status = RdrTransceiveQueryDfsReferral1(
         pContext,
         pTree,
-        pContext->State.DfsGetReferral.pwszPath);
+        pContext->State.DfsConnect.pwszNamespace);
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
 
+    RTL_FREE(&pwszShare);
+    RTL_FREE(&pwszFilePath);
+
     if (pTree)
     {
-        /* FIXME: probably better to do this after receiving response */
         RdrTreeRelease(pTree);
     }
 
-    if (status != STATUS_PENDING && pContext)
-    {
-        RdrContinueContext(pContext->State.DfsGetReferral.pContinue, status, NULL);
-        RTL_FREE(&pContext->State.DfsGetReferral.pwszPath);
-        RdrFreeContext(pContext);
-    }
-
-    return FALSE;
+    return status;
 
 error:
+
+    if (status != STATUS_PENDING)
+    {
+        RTL_FREE(&pContext->State.DfsConnect.pwszNamespace);
+    }
 
     goto cleanup;
 }
@@ -227,19 +158,25 @@ RdrQueryDfsReferral1Complete(
     }
 
     status = RdrDfsRegisterNamespace(
-        pContext->State.DfsGetReferral.pwszPath,
+        pContext->State.DfsConnect.pwszNamespace,
         (PDFS_RESPONSE_HEADER) pReplyData,
         usReplyDataCount);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrDfsConnectAttempt(pContext);
     BAIL_ON_NT_STATUS(status);
 
 cleanup:
 
     RdrFreePacket(pResponsePacket);
 
+    RTL_FREE(&pContext->State.DfsConnect.pwszNamespace);
+
     if (status != STATUS_PENDING)
     {
-        RdrContinueContext(pContext->State.DfsGetReferral.pContinue, status, NULL);
-        RTL_FREE(&pContext->State.DfsGetReferral.pwszPath);
+        RdrContinueContext(pContext->State.DfsConnect.pContinue, status, NULL);
+        RTL_FREE(pContext->State.DfsConnect.ppwszCanonicalPath);
+        RTL_FREE(pContext->State.DfsConnect.ppwszFilePath);
         RdrFreeContext(pContext);
     }
 
