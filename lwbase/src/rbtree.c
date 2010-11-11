@@ -332,7 +332,6 @@ LwRtlRBTreeAdd(
 {
     NTSTATUS ntStatus = 0;
     PLWRTL_RB_TREE_NODE pTreeNode = NULL;
-    BOOLEAN bFree = FALSE;
     PLWRTL_RB_TREE_NODE pUncle = NULL;
     PLWRTL_RB_TREE_NODE pParent = NULL;
     PLWRTL_RB_TREE_NODE pGrandParent = NULL;
@@ -355,13 +354,9 @@ LwRtlRBTreeAdd(
     pTreeNode->pLeft = pRBTree->pSentinel;
     pTreeNode->pParent = NULL;
 
-    bFree = TRUE;
-
     LwRtlRBTreeInsert(pRBTree, pTreeNode);
 
     RB_COLOR_RED(pTreeNode);
-
-    bFree = FALSE;
 
     while ((pTreeNode != pRBTree->pRoot) && RB_IS_RED(pTreeNode->pParent))
     {
@@ -440,7 +435,7 @@ cleanup:
 
 error:
 
-    if (bFree && pTreeNode) {
+    if (pTreeNode) {
         LwRtlRBTreeFreeNode(pRBTree, pTreeNode);
     }
 
