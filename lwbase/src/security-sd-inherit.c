@@ -300,7 +300,7 @@ RtlpObjectSetOwner(
 
     // Check for Defaulting the owner from the parent Sec Desc
 
-    if (AutoInheritFlags & SEF_DEFAULT_OWNER_FROM_PARENT)
+    if (pParentSecDesc && (AutoInheritFlags & SEF_DEFAULT_OWNER_FROM_PARENT))
     {
         status = RtlGetOwnerSecurityDescriptor(
                      pParentSecDesc,
@@ -401,8 +401,7 @@ RtlpObjectSetGroup(
     }
 
     // Check for Defaulting the owner from the parent Sec Desc
-
-    if (AutoInheritFlags & SEF_DEFAULT_GROUP_FROM_PARENT)
+    if (pParentSecDesc && (AutoInheritFlags & SEF_DEFAULT_GROUP_FROM_PARENT))
     {
         status = RtlGetGroupSecurityDescriptor(
                      pParentSecDesc,
