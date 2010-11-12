@@ -178,6 +178,7 @@ RdrIsInPlaceRename(
     PWSTR pwszShare = NULL;
     PWSTR pwszFile = NULL;
     PWSTR pwszExisting = NULL;
+    PWSTR pwszNew = NULL;
 
     status = RdrConvertPath(
         pRenameInfo->FileName,
@@ -186,32 +187,26 @@ RdrIsInPlaceRename(
         &pwszFile
         );
     BAIL_ON_NT_STATUS(status);
-
-    if (!LwRtlWC16StringIsEqual(pwszShare, pFile->pTree->pwszPath, FALSE))
-    {
-        *pbIsInPlace = FALSE;
-        goto cleanup;
-    }
-
-    status = LwRtlWC16StringDuplicate(&pwszExisting, pFile->pwszPath);
+    status = LwRtlWC16StringAllocatePrintfW(
+        &pwszNew,
+        L"%ws%ws",
+        pwszShare,
+        pwszFile);
     BAIL_ON_NT_STATUS(status);
 
-    RdrTrimLastPathElement(pwszFile);
+    status = LwRtlWC16StringDuplicate(&pwszExisting, pFile->pwszCanonicalPath);
+    BAIL_ON_NT_STATUS(status);
+
+    RdrTrimLastPathElement(pwszNew);
     RdrTrimLastPathElement(pwszExisting);
 
-    if (!LwRtlWC16StringIsEqual(pwszFile, pwszExisting, FALSE))
-    {
-        *pbIsInPlace = FALSE;
-        goto cleanup;
-    }
-
-    *pbIsInPlace = TRUE;
-
+    *pbIsInPlace = LwRtlWC16StringIsEqual(pwszNew, pwszExisting, FALSE);
 cleanup:
 
     RTL_FREE(&pwszShare);
     RTL_FREE(&pwszFile);
     RTL_FREE(&pwszExisting);
+    RTL_FREE(&pwszNew);
 
     return status;
 
@@ -235,7 +230,9 @@ RdrSetInformation(
     PFILE_RENAME_INFORMATION pRenameInfo = NULL;
     BOOLEAN bIsInPlace = FALSE;
     BOOLEAN bDoRename = FALSE;
-    PWSTR pwszFileName = NULL;
+    PWSTR pwszFilePath = NULL;
+    PWSTR pwszShare = NULL;
+    PWSTR pwszDestFile = NULL;
 
     pFile = IoFileGetContext(pIrp->FileHandle);
 
@@ -284,20 +281,37 @@ RdrSetInformation(
 
     if (bDoRename)
     {
-        status = RdrConvertPath(
-            pRenameInfo->FileName,
-            NULL,
-            NULL,
-            &pwszFileName
-            );
-        BAIL_ON_NT_STATUS(status);
+        if (RDR_CCB_IS_DFS(pFile))
+        {
+            status = RdrConvertPath(
+                pRenameInfo->FileName,
+                NULL,
+                &pwszShare,
+                &pwszFilePath);
+            BAIL_ON_NT_STATUS(status);
+            status = LwRtlWC16StringAllocatePrintfW(
+                &pwszDestFile,
+                L"%ws%ws",
+                pwszShare + 1,
+                pwszFilePath);
+            BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            status = RdrConvertPath(
+                pRenameInfo->FileName,
+                NULL,
+                NULL,
+                &pwszDestFile);
+            BAIL_ON_NT_STATUS(status);
+        }
 
         status = RdrTranscieveRenameFile(
             pContext,
             pFile->pTree,
-            0,
-            pFile->pwszPath,
-            pwszFileName);
+            0x16, /* FIXME: magic value */
+            RDR_CCB_PATH(pFile),
+            pwszDestFile);
         BAIL_ON_NT_STATUS(status);
     }
     else if (pFile->fid)
@@ -323,7 +337,9 @@ RdrSetInformation(
 
 error:
 
-    RTL_FREE(&pwszFileName);
+    RTL_FREE(&pwszFilePath);
+    RTL_FREE(&pwszShare);
+    RTL_FREE(&pwszDestFile);
 
     if (status != STATUS_PENDING && pContext)
     {
@@ -497,6 +513,7 @@ RdrTransceiveSetPathInfo(
     PBYTE pCursor = NULL;
     ULONG ulRemainingSpace = 0;
     PBYTE pByteCount = NULL;
+    PWSTR pwszPath = infoLevel != SMB_SET_FILE_RENAME_INFO ? RDR_CCB_PATH(pFile) : pFile->pwszPath;
     PBYTE pFileName = NULL;
 
     status = RdrAllocateContextPacket(pContext, 1024*64);
@@ -516,6 +533,12 @@ RdrTransceiveSetPathInfo(
         &pContext->Packet);
     BAIL_ON_NT_STATUS(status);
     
+    /* Don't use DFS paths for FILE_RENAME_INFO -- it doesn't work */
+    if (RDR_CCB_IS_DFS(pFile) && infoLevel != SMB_SET_FILE_RENAME_INFO)
+    {
+        pContext->Packet.pSMBHeader->flags2 |= FLAG2_DFS;
+    }
+
     pContext->Packet.pData = pContext->Packet.pParams + sizeof(TRANSACTION_REQUEST_HEADER);
 
     pCursor = pContext->Packet.pParams;
@@ -544,13 +567,13 @@ RdrTransceiveSetPathInfo(
 
     pFileName = pCursor;
 
-    status = Advance(&pCursor, &ulRemainingSpace, (LwRtlWC16StringNumChars(pFile->pwszPath) + 1) * sizeof(WCHAR));
+    status = Advance(&pCursor, &ulRemainingSpace, (LwRtlWC16StringNumChars(pwszPath) + 1) * sizeof(WCHAR));
     BAIL_ON_NT_STATUS(status);
 
     SMB_HTOLWSTR(
         pFileName,
-        pFile->pwszPath,
-        LwRtlWC16StringNumChars(pFile->pwszPath) + 1);
+        pwszPath,
+        LwRtlWC16StringNumChars(pwszPath) + 1);
 
     pRequestData = pCursor;
 
@@ -918,6 +941,11 @@ RdrTranscieveRenameFile(
         &pContext->Packet);
     BAIL_ON_NT_STATUS(status);
     
+    if (pTree->usSupportFlags & SMB_SHARE_IS_IN_DFS)
+    {
+        pContext->Packet.pSMBHeader->flags2 |= FLAG2_DFS;
+    }
+
     pContext->Packet.pData = pContext->Packet.pParams + sizeof(SMB_RENAME_REQUEST_HEADER);
 
     pContext->Packet.bufferUsed += sizeof(SMB_RENAME_REQUEST_HEADER);

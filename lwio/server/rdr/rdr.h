@@ -102,7 +102,7 @@
 
 #define RDR_CCB_PATH(pFile) \
     (RDR_CCB_IS_DFS(pFile) ? \
-     (pFile)->pwszCanonicalPath : \
+     (pFile)->pwszCanonicalPath + 1 : \
      (pFile)->pwszPath)
 
 #define RDR_CCB2_IS_DFS(pFile) \

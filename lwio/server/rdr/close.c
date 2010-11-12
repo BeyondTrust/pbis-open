@@ -234,6 +234,7 @@ RdrTranscieveDelete(
     PBYTE pCursor = NULL;
     ULONG ulRemainingSpace = 0;
     PBYTE pFileName = NULL;
+    PWSTR pwszPath = RDR_CCB_PATH(pFile);
 
     status = RdrAllocateContextPacket(
         pContext,
@@ -254,6 +255,11 @@ RdrTranscieveDelete(
         &pContext->Packet);
     BAIL_ON_NT_STATUS(status);
     
+    if (RDR_CCB_IS_DFS(pFile))
+    {
+        pContext->Packet.pSMBHeader->flags2 |= FLAG2_DFS;
+    }
+
     pContext->Packet.pSMBHeader->wordCount = 1;
 
     pCursor = pContext->Packet.pParams;
@@ -273,13 +279,13 @@ RdrTranscieveDelete(
 
     pFileName = pCursor;
 
-    status = Advance(&pCursor, &ulRemainingSpace, (LwRtlWC16StringNumChars(pFile->pwszPath) + 1) * sizeof(WCHAR));
+    status = Advance(&pCursor, &ulRemainingSpace, (LwRtlWC16StringNumChars(pwszPath) + 1) * sizeof(WCHAR));
     BAIL_ON_NT_STATUS(status);
 
     SMB_HTOLWSTR(
         pFileName,
-        pFile->pwszPath,
-        LwRtlWC16StringNumChars(pFile->pwszPath) + 1);
+        pwszPath,
+        LwRtlWC16StringNumChars(pwszPath) + 1);
         
     pDeleteHeader->usSearchAttributes = 0;
     pDeleteHeader->ByteCount = SMB_HTOL16((pCursor - (PBYTE) pDeleteHeader) - sizeof(*pDeleteHeader));
