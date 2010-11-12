@@ -703,7 +703,6 @@ SamrAllocateDomainInfo(
     default:
         ntStatus = STATUS_INVALID_INFO_CLASS;
         BAIL_ON_NT_STATUS(ntStatus);
-        goto error;
     }
 
 cleanup:
