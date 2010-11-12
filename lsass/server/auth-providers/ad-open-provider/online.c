@@ -1842,6 +1842,8 @@ AD_OnlineAuthenticateUserPam(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    pPamAuthInfo->bOnlineLogon = TRUE;
+
     *ppPamAuthInfo = pPamAuthInfo;
 
 cleanup:

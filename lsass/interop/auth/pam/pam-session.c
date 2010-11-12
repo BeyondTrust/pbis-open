@@ -136,14 +136,18 @@ pam_sm_open_session(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaPamNotifyUserLogon(
-                    pszLoginId);
-    if (dwError == LW_ERROR_LOAD_LIBRARY_FAILED ||
-        dwError == LW_ERROR_LOOKUP_SYMBOL_FAILED )
+    if (pPamContext &&
+        pPamContext->bOnlineLogon)
     {
-        dwError = 0;
+        dwError = LsaPamNotifyUserLogon(
+                        pszLoginId);
+        if (dwError == LW_ERROR_LOAD_LIBRARY_FAILED ||
+            dwError == LW_ERROR_LOOKUP_SYMBOL_FAILED )
+        {
+            dwError = 0;
+        }
+        BAIL_ON_LSA_ERROR(dwError);
     }
-    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
 

@@ -721,7 +721,8 @@ typedef struct __LSA_AUTH_USER_PAM_PARAMS
 
 typedef struct __LSA_AUTH_USER_PAM_INFO
 {
-    LW_PSTR pszMessage;
+    LW_PSTR    pszMessage;
+    LW_BOOLEAN bOnlineLogon;
 } LSA_AUTH_USER_PAM_INFO, *PLSA_AUTH_USER_PAM_INFO;
 
 #define LSA_MAX_SID_SUB_AUTHORITIES  15
