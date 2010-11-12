@@ -228,10 +228,6 @@ WkssAllocateNetrWkstaUserInfo(
                                            &(pIn->pInfo1->pInfo[iUser]),
                                            pdwSize);
             break;
-
-        default:
-            dwError = ERROR_INVALID_LEVEL;
-            break;
         }
         BAIL_ON_WIN_ERROR(dwError);
     }
