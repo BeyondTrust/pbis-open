@@ -5,7 +5,7 @@
 #
 
 COMP_INCREMENTAL=1
-COMP_DEPENDENCIES="automake autoconf libtool openssl"
+COMP_DEPENDENCIES="automake autoconf libtool openssl lwbase"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/libschannel
 
 function component_bootstrap
