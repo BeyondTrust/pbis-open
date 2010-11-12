@@ -843,11 +843,11 @@ ADState_ReadRegProviderData(
     PAD_PROVIDER_DATA pProviderData = NULL;
     DWORD dwError = 0;
     DWORD dwValueLen = 0;
+    HANDLE hReg = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID) &pProviderData);
     BAIL_ON_LSA_ERROR(dwError);
 
-    HANDLE hReg = NULL;
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -930,6 +930,13 @@ cleanup:
     return dwError;
 
 error:
+
+    *ppProviderData = NULL;
+
+    if (pProviderData)
+    {
+        ADProviderFreeProviderData(pProviderData);
+    }
 
     goto cleanup;
 }
