@@ -62,11 +62,11 @@ NetrWkstaGetInfo(
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
 
-    memset(pWkstaInfo, 0, sizeof(*pWkstaInfo));
-    memset(&WkstaInfo, 0, sizeof(WkstaInfo));
-
     BAIL_ON_INVALID_PTR(hBinding, ntStatus);
     BAIL_ON_INVALID_PTR(pWkstaInfo, ntStatus);
+
+    memset(pWkstaInfo, 0, sizeof(*pWkstaInfo));
+    memset(&WkstaInfo, 0, sizeof(WkstaInfo));
 
     DCERPC_CALL(winError, cli_NetrWkstaGetInfo(
                               (handle_t)hBinding,
