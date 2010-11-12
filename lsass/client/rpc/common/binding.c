@@ -158,11 +158,6 @@ cleanup:
         rpc_smb_transport_info_free(hInfo);
     }
 
-    if ((rpcStatus == RPC_S_OK) && (rpcStatus2 != RPC_S_OK))
-    {
-        rpcStatus = rpcStatus2;
-    }
-
     if (ntStatus == STATUS_SUCCESS &&
         rpcStatus != RPC_S_OK)
     {
