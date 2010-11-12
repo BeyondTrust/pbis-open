@@ -3,6 +3,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/include
 lib_LTLIBRARIES = libschannel.la
 
 libschannel_la_CFLAGS = \
+       $(AM_CFLAGS) \
        @CRYPTO_INCLUDES@
 
 libschannel_la_SOURCES = \

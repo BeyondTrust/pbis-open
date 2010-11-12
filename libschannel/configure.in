@@ -8,8 +8,12 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADERS([include/config.h])
 
 AM_CPPFLAGS=""
-AM_CFLAGS=""
+AM_CFLAGS="-Wall -Werror"
 AM_LDFLAGS=""
+
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_CFLAGS)
+AC_SUBST(AM_LDFLAGS)
 
 # crypto lib
 
