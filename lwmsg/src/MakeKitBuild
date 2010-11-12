@@ -66,4 +66,14 @@ make()
         LIBDEPS="lwmsg_nothr lwbase $LIB_RT $LIB_PTHREAD $LIB_XNET" \
         HEADERDEPS="$LWMSG_HEADER_DEPS" \
         SYMFILE="liblwmsg.sym"
+        
+    mk_program \
+        PROGRAM=lwma \
+        SOURCES="lwma-main.c" \
+        CPPFLAGS="$LWMSG_CPPFLAGS" \
+        CFLAGS="$LWMSG_CFLAGS" \
+        LDFLAGS="$LWMSG_LDFLAGS" \
+        INCLUDEDIRS="../include" \
+        LIBDEPS="lwmsg_nothr" \
+        HEADERDEPS="$LWMSG_HEADER_DEPS"
 }
