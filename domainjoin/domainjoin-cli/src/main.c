@@ -73,11 +73,11 @@ ShowUsage()
     fprintf(stdout, "  and commands are:\n\n");
     fprintf(stdout, "    query\n");
     fprintf(stdout, "    setname <computer name>\n");
-    fprintf(stdout, "    join [--notimesync] [--enable <module> --disable <module> ...] [--ou <organizationalUnit>] <domain name> <user name> [<password>]\n");
+    fprintf(stdout, "    join [--notimesync] [--enable <module> --disable <module> ...] [--ou <organizationalUnit>] [--multiple] <domain name> <user name> [<password>]\n");
     fprintf(stdout, "    join [--advanced] --preview [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--assumeDefaultDomain] [--userDomainPrefix <short domain name>] [--ou <organizationalUnit>] <domain name>\n");
     fprintf(stdout, "    join [--ou <organizationalUnit>] --details <module> <domain name>\n");
-    fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [user name] [password]\n");
+    fprintf(stdout, "    leave [--enable <module> --disable <module> ...] [--multiple <domain name>] [user name] [password]\n");
     fprintf(stdout, "    leave [--advanced] --preview [user name] [password]\n");
     fprintf(stdout, "    leave --details <module>\n\n");
 
@@ -255,8 +255,15 @@ void PrintJoinHeader(const JoinProcessOptions *options, LWException **exc)
     }
     else
     {
-        LW_TRY(exc, QueryInformation(&pDomainJoinInfo, &LW_EXC));
-        domain = pDomainJoinInfo->pszDomainName;
+        if (options->domainName)
+        {
+            domain = options->domainName;
+        }
+        else
+        {
+            LW_TRY(exc, QueryInformation(&pDomainJoinInfo, &LW_EXC));
+            domain = pDomainJoinInfo->pszDomainName;
+        }
         if(domain == NULL)
             domain = "(unknown)";
         fprintf(stdout, "Leaving AD Domain:   %s\n", domain);
@@ -323,6 +330,8 @@ void DoJoin(int argc, char **argv, int columns, LWException **exc)
             options.ignorePam = TRUE;
         else if(!strcmp(argv[0], "--notimesync"))
             options.disableTimeSync = TRUE;
+        else if(!strcmp(argv[0], "--multiple"))
+            options.enableMultipleJoins = TRUE;
         else if(!strcmp(argv[0], "--nohosts"))
         {
             PCSTR module = "hostname";
@@ -545,6 +554,13 @@ void DoLeaveNew(int argc, char **argv, int columns, LWException **exc)
         else if(!strcmp(argv[0], "--details"))
         {
             LW_CLEANUP_CTERR(exc, CTArrayAppend(&detailModules, sizeof(PCSTR *), &argv[1], 1));
+            argv++;
+            argc--;
+        }
+        else if(!strcmp(argv[0], "--multiple"))
+        {
+            options.enableMultipleJoins = TRUE;
+            LW_CLEANUP_CTERR(exc, CTStrdup(argv[1], &options.domainName));
             argv++;
             argc--;
         }

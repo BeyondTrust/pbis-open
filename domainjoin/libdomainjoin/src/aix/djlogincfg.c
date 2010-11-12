@@ -129,7 +129,7 @@ static QueryResult QueryPamMode(const JoinProcessOptions *options, LWException *
     memset(&lines, 0, sizeof(lines));
     memset(&distro, 0, sizeof(distro));
 
-    if(!options->joiningDomain)
+    if(!options->joiningDomain || options->enableMultipleJoins)
         goto cleanup;
 
     LW_CLEANUP_CTERR(exc, DJGetDistroInfo(NULL, &distro));

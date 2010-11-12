@@ -208,8 +208,15 @@ void DJInitModuleStates(JoinProcessOptions *options, LWException **exc)
     }
     else
     {
-        LW_TRY(exc, QueryInformation(&joinedInfo, &LW_EXC));
-        userDomain = joinedInfo->pszDomainName;
+        if (options->domainName)
+        {
+            userDomain = options->domainName;
+        }
+        else
+        {
+            LW_TRY(exc, QueryInformation(&joinedInfo, &LW_EXC));
+            userDomain = joinedInfo->pszDomainName;
+        }
         moduleTable = stopList;
     }
     LW_TRY(exc, NormalizeUsername(&options->username, userDomain, &LW_EXC));

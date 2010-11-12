@@ -153,7 +153,7 @@ QueryResult QueryCache(
 {
     ModuleState *state = DJGetModuleStateByName(options, "cache");
 
-    if(!options->joiningDomain)
+    if(!options->joiningDomain || options->enableMultipleJoins)
         return NotApplicable;
 
     //This module sets its moduleData after it is finished making changes. By
@@ -945,11 +945,12 @@ cleanup:
 
 void
 DJTestJoin(
+    PCSTR pszDomainName,
     BOOLEAN *isValid,
     LWException **exc
     )
 {
-    LW_CLEANUP_LSERR(exc, LsaNetTestJoinDomain(isValid));
+    LW_CLEANUP_LSERR(exc, LsaNetTestJoinDomain(pszDomainName, isValid));
 cleanup:
     ;
 }
@@ -980,7 +981,7 @@ static QueryResult QueryLeave(const JoinProcessOptions *options, LWException **e
         return CannotConfigure;
     }
 
-    LW_TRY(exc, DJTestJoin(&joinValid, &LW_EXC));
+    LW_TRY(exc, DJTestJoin(options->domainName, &joinValid, &LW_EXC));
     if(!joinValid)
     {
         result = FullyConfigured;
@@ -1319,9 +1320,14 @@ void DJCreateComputerAccount(
 
     LW_CLEANUP_LSERR(exc, LWNetExtendEnvironmentForKrb5Affinity(TRUE));
 
-    if ( options->disableTimeSync )
+    if ( options->disableTimeSync || options->enableMultipleJoins )
     {
         dwFlags |= LSA_NET_JOIN_DOMAIN_NOTIMESYNC;
+    }
+
+    if ( options->enableMultipleJoins )
+    {
+        dwFlags |= LSA_NET_JOIN_DOMAIN_MULTIPLE;
     }
 
     LW_CLEANUP_CTERR(exc, DJGetFQDN(&shortHostname, &hostFqdn));
@@ -1450,7 +1456,7 @@ void DJDisableComputerAccount(PCSTR username,
     HANDLE lsa = NULL;
 
     LW_CLEANUP_LSERR(exc, LsaOpenServer(&lsa));
-    LW_CLEANUP_LSERR(exc, LsaAdLeaveDomain(lsa, username, password));
+    LW_CLEANUP_LSERR(exc, LsaAdLeaveDomain2(lsa, username, password, options->domainName, 0));
 
 cleanup:
 

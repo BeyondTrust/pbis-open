@@ -76,6 +76,7 @@ ParseArgs(
     int    argc,
     char*  argv[],
     DWORD* pdwAction,
+    PSTR*  ppszDomainName,
     PSTR*  ppszName,
     uid_t* pUID,
     gid_t* pGID,
@@ -92,6 +93,7 @@ static
 DWORD
 EnumerateUsers(
     HANDLE hLsaConnection,
+    PCSTR pszDomainName,
     DWORD  dwBatchSize
     );
 
@@ -99,6 +101,7 @@ static
 DWORD
 EnumerateGroups(
     HANDLE hLsaConnection,
+    PCSTR pszDomainName,
     DWORD  dwBatchSize
     );
 
@@ -126,6 +129,7 @@ ad_cache_main(
     BOOLEAN bPrintOrigError = TRUE;
     PSTR    pszOperation = "complete operation";
     DWORD   dwAction = ACTION_NONE;
+    PSTR    pszDomainName = NULL;
     PSTR    pszName = NULL;
     uid_t   uid = 0;
     gid_t   gid = 0;
@@ -149,6 +153,7 @@ ad_cache_main(
                   argc,
                   argv,
                   &dwAction,
+                  &pszDomainName,
                   &pszName,
                   &uid,
                   &gid,
@@ -163,7 +168,9 @@ ad_cache_main(
         case ACTION_DELETE_ALL:
             pszOperation = "empty cache";
 
-            dwError = LsaAdEmptyCache(hLsaConnection);
+            dwError = LsaAdEmptyCache(
+                          hLsaConnection,
+                          pszDomainName);
             BAIL_ON_LSA_ERROR(dwError);
 
             fprintf(stdout, "The cache has been emptied successfully.\n");
@@ -177,6 +184,7 @@ ad_cache_main(
             {
                 dwError = LsaAdRemoveUserByNameFromCache(
                               hLsaConnection,
+                              pszDomainName,
                               pszName);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -184,6 +192,7 @@ ad_cache_main(
             {
                 dwError = LsaAdRemoveUserByIdFromCache(
                               hLsaConnection,
+                              pszDomainName,
                               uid);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -199,6 +208,7 @@ ad_cache_main(
             {
                 dwError = LsaAdRemoveGroupByNameFromCache(
                               hLsaConnection,
+                              pszDomainName,
                               pszName);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -206,6 +216,7 @@ ad_cache_main(
             {
                 dwError = LsaAdRemoveGroupByIdFromCache(
                               hLsaConnection,
+                              pszDomainName,
                               gid);
                 BAIL_ON_LSA_ERROR(dwError);
             }
@@ -219,6 +230,7 @@ ad_cache_main(
 
             dwError = EnumerateUsers(
                           hLsaConnection,
+                          pszDomainName,
                           dwBatchSize);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -229,6 +241,7 @@ ad_cache_main(
 
             dwError = EnumerateGroups(
                           hLsaConnection,
+                          pszDomainName,
                           dwBatchSize);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -319,6 +332,7 @@ ParseArgs(
     int    argc,
     char*  argv[],
     DWORD* pdwAction,
+    PSTR*  ppszDomainName,
     PSTR*  ppszName,
     uid_t* pUID,
     gid_t* pGID,
@@ -327,6 +341,7 @@ ParseArgs(
 {
     typedef enum {
             PARSE_MODE_OPEN = 0,
+            PARSE_MODE_DOMAIN_NAME,
             PARSE_MODE_NAME,
             PARSE_MODE_UID,
             PARSE_MODE_GID,
@@ -339,6 +354,7 @@ ParseArgs(
     PSTR pszArg = NULL;
     ParseMode parseMode = PARSE_MODE_OPEN;
     DWORD dwAction = ACTION_NONE;
+    PSTR  pszDomainName = NULL;
     PSTR  pszName = NULL;
     uid_t uid = 0;
     gid_t gid = 0;
@@ -363,7 +379,6 @@ ParseArgs(
                 }
                 else if (!strcmp(pszArg, "--delete-all")) {
                     dwAction = ACTION_DELETE_ALL;
-                    parseMode = PARSE_MODE_DONE;
                 }
                 else if (!strcmp(pszArg, "--delete-user")) {
                     dwAction = ACTION_DELETE_USER;
@@ -376,6 +391,9 @@ ParseArgs(
                 }
                 else if (!strcmp(pszArg, "--enum-groups")) {
                     dwAction = ACTION_ENUM_GROUPS;
+                }
+                else if (!strcmp(pszArg, "--domain")) {
+                    parseMode = PARSE_MODE_DOMAIN_NAME;
                 }
                 else if (!strcmp(pszArg, "--name")) {
                     parseMode = PARSE_MODE_NAME;
@@ -394,6 +412,13 @@ ParseArgs(
                     ShowUsage(GetProgramName(argv[0]));
                     exit(1);
                 }
+                break;
+
+            case PARSE_MODE_DOMAIN_NAME:
+                dwError = LwAllocateString(pszArg, &pszDomainName);
+                BAIL_ON_LSA_ERROR(dwError);
+                parseMode = PARSE_MODE_OPEN;
+
                 break;
 
             case PARSE_MODE_NAME:
@@ -486,6 +511,7 @@ ParseArgs(
     }
 
     *pdwAction = dwAction;
+    *ppszDomainName = pszDomainName;
     *ppszName = pszName;
     *pUID = uid;
     *pGID = gid;
@@ -498,12 +524,14 @@ cleanup:
 error:
 
     *pdwAction = ACTION_NONE;
+    *ppszDomainName = NULL;
     *ppszName = NULL;
     *pUID = 0;
     *pGID = 0;
     *pdwBatchSize = 0;
 
     LW_SAFE_FREE_STRING(pszName);
+    LW_SAFE_FREE_STRING(pszDomainName);
 
     goto cleanup;
 }
@@ -514,11 +542,11 @@ ShowUsage(
     PCSTR pszProgramName
     )
 {
-    fprintf(stdout, "Usage: %s --delete-all\n", pszProgramName);
-    fprintf(stdout, "       %s --delete-user {--name <user login id> | --uid <uid>} \n", pszProgramName);
-    fprintf(stdout, "       %s --delete-group {--name <group name> | --gid <gid>} \n", pszProgramName);
-    fprintf(stdout, "       %s --enum-users {--batchsize [1..1000]}\n", pszProgramName);
-    fprintf(stdout, "       %s --enum-groups {--batchsize [1..1000]}\n\n", pszProgramName);
+    fprintf(stdout, "Usage: %s --delete-all [--domain domain]\n", pszProgramName);
+    fprintf(stdout, "       %s --delete-user [--domain domain] {--name <user login id> | --uid <uid>} \n", pszProgramName);
+    fprintf(stdout, "       %s --delete-group [--domain domain] {--name <group name> | --gid <gid>} \n", pszProgramName);
+    fprintf(stdout, "       %s --enum-users [--domain domain] {--batchsize [1..1000]}\n", pszProgramName);
+    fprintf(stdout, "       %s --enum-groups [--domain domain] {--batchsize [1..1000]}\n\n", pszProgramName);
     fprintf(stdout, "\t--delete-all        Deletes everything from the cache\n");
     fprintf(stdout, "\t--delete-user       Deletes one user from the cache\n");
     fprintf(stdout, "\t--delete-group      Deletes one group from the cache\n");
@@ -530,6 +558,7 @@ static
 DWORD
 EnumerateUsers(
     HANDLE hLsaConnection,
+    PCSTR pszDomainName,
     DWORD  dwBatchSize
     )
 {
@@ -548,11 +577,12 @@ EnumerateUsers(
         ppObjects = NULL;
 
         dwError = LsaAdEnumUsersFromCache(
-                    hLsaConnection,
-                    &pszResume,
-                    dwBatchSize,
-                    &dwNumUsersFound,
-                    &ppObjects);
+                      hLsaConnection,
+                      pszDomainName,
+                      &pszResume,
+                      dwBatchSize,
+                      &dwNumUsersFound,
+                      &ppObjects);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!dwNumUsersFound)
@@ -588,6 +618,7 @@ static
 DWORD
 EnumerateGroups(
     HANDLE hLsaConnection,
+    PCSTR pszDomainName,
     DWORD  dwBatchSize
     )
 {
@@ -606,11 +637,12 @@ EnumerateGroups(
         ppObjects = NULL;
 
         dwError = LsaAdEnumGroupsFromCache(
-                    hLsaConnection,
-                    &pszResume,
-                    dwBatchSize,
-                    &dwNumGroupsFound,
-                    &ppObjects);
+                      hLsaConnection,
+                      pszDomainName,
+                      &pszResume,
+                      dwBatchSize,
+                      &dwNumGroupsFound,
+                      &ppObjects);
         BAIL_ON_LSA_ERROR(dwError);
 
         if (!dwNumGroupsFound)

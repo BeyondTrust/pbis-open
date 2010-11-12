@@ -128,6 +128,7 @@ typedef struct _LSA_AD_PROVIDER_STATE {
     LONG nRefCount;
 
     PSTR pszDomainName;
+    PSTR pszDomainSID;
     BOOLEAN bIsDefault;
 
     LSA_LIST_LINKS Links;

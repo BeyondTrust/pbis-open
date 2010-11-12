@@ -892,7 +892,7 @@ static QueryResult QueryDescriptionSetHostname(const JoinProcessOptions *options
     BOOLEAN modified = FALSE;
     DWORD ceError = ERROR_SUCCESS;
 
-    if(!options->joiningDomain)
+    if(!options->joiningDomain || options->enableMultipleJoins)
     {
         if(changeDescription != NULL)
         {

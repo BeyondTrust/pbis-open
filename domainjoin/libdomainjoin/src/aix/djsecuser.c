@@ -209,6 +209,9 @@ static QueryResult QueryLamAuth(const JoinProcessOptions *options, LWException *
 
     memset(&lines, 0, sizeof(lines));
 
+    if (options->enableMultipleJoins)
+        goto cleanup;
+
     LW_CLEANUP_CTERR(exc, CTCheckFileExists(pszFilePath, &bFileExists));
 
     if (!bFileExists)

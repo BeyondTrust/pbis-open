@@ -536,6 +536,7 @@ error:
 
 DWORD
 LsaNetTestJoinDomain(
+    PCSTR pszDomainName,
     PBOOLEAN pbIsJoined
     )
 {
@@ -553,9 +554,9 @@ LsaNetTestJoinDomain(
                 &hStore);
     BAIL_ON_LSA_ERROR(dwError);
     
-    dwError = LwpsGetPasswordByHostName(
+    dwError = LwpsGetPasswordByDomainName(
                 hStore,
-                pszHostname,
+                pszDomainName,
                 &pPassInfo);
 
     switch(dwError)
@@ -3011,13 +3012,12 @@ error:
 
 DWORD
 LsaMachineChangePassword(
-    VOID
+    IN PCSTR pszDomainName
     )
 {
     DWORD dwError = ERROR_SUCCESS;
     DWORD conn_err = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    PSTR pszLocalname = NULL;
     PWSTR pwszDCName = NULL;
     size_t sDCNameLen = 0;
     HANDLE hStore = (HANDLE)NULL;
@@ -3028,13 +3028,10 @@ LsaMachineChangePassword(
 
     memset(wszNewPassword, 0, sizeof(wszNewPassword));
 
-    dwError = LsaGetHostInfo(&pszLocalname);
-    BAIL_ON_LSA_ERROR(dwError);
-
     ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
     BAIL_ON_NT_STATUS(ntStatus);
 
-    ntStatus = LwpsGetPasswordByHostName(hStore, pszLocalname, &pPassInfo);
+    ntStatus = LwpsGetPasswordByDomainName(hStore, pszDomainName, &pPassInfo);
     BAIL_ON_NT_STATUS(ntStatus);
 
     if (!pPassInfo)
@@ -3089,7 +3086,6 @@ LsaMachineChangePassword(
     }
 
 cleanup:
-    LW_SAFE_FREE_MEMORY(pszLocalname);
     LW_SAFE_FREE_MEMORY(pwszDCName);
 
     if (dwError == ERROR_SUCCESS &&

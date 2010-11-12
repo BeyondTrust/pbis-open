@@ -199,7 +199,7 @@ ADChangeMachinePasswordInThreadLock(
 {
     DWORD dwError = 0;
 
-    LSA_LOG_VERBOSE("Changing machine password");
+    LSA_LOG_VERBOSE("Changing machine password for %s", pState->pszDomainName);
 
     dwError = AD_SetSystemAccess(pState, NULL);
     if (dwError)
@@ -208,10 +208,10 @@ ADChangeMachinePasswordInThreadLock(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaMachineChangePassword();
+    dwError = LsaMachineChangePassword(pState->pszDomainName);
     if (dwError)
     {
-        LSA_LOG_ERROR("Error: Failed to change machine password (error = %u)", dwError);
+        LSA_LOG_ERROR("Error: Failed to change machine password for %s (error = %u)", pState->pszDomainName, dwError);
 
         if (AD_EventlogEnabled(pState))
         {
@@ -336,7 +336,7 @@ ADSyncMachinePasswordThreadRoutine(
                     ADLogMachineTGTRefreshFailureEvent(dwError);
                 }
 
-                LSA_LOG_ERROR("Error: Failed to refresh machine TGT (error = %u)", dwError);
+                LSA_LOG_ERROR("Error: Failed to refresh machine TGT for %s (error = %u)", pState->pszDomainName, dwError);
 
                 if (dwError == LW_ERROR_DOMAIN_IS_OFFLINE)
                 {
@@ -353,7 +353,7 @@ ADSyncMachinePasswordThreadRoutine(
 
             ADSetMachineTGTExpiry(pMachinePwdState, dwGoodUntilTime);
 
-            LSA_LOG_VERBOSE("Machine TGT was refreshed successfully");
+            LSA_LOG_VERBOSE("Machine TGT was refreshed successfully for %s", pState->pszDomainName);
 
             if (AD_EventlogEnabled(pState))
             {

@@ -302,6 +302,74 @@ AD_FindStateInLock(
 
 static
 DWORD
+AD_InquireStateList(
+    OUT DWORD* pdwStateCount,
+    OUT OPTIONAL PSTR** pppszDomainList
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_LIST_LINKS pHead = NULL;
+    PLSA_LIST_LINKS pLinks = NULL;
+    PLSA_LIST_LINKS pNextLinks = NULL;
+    DWORD dwStateCount = 0;
+    PSTR* ppszDomainList = NULL;
+
+    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+    pHead = &gLsaAdProviderStateList;
+
+    for (pLinks = pHead->Next;
+         pLinks != pHead;
+         pLinks = pNextLinks)
+    {
+        dwStateCount++;
+        pNextLinks = pLinks->Next;
+    }
+
+    if (pppszDomainList && dwStateCount)
+    {
+        dwError = LwAllocateMemory(
+                      sizeof(*ppszDomainList) * dwStateCount,
+                      (PVOID*)&ppszDomainList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        for (pLinks = pHead->Next, dwStateCount = 0;
+             pLinks != pHead;
+             pLinks = pNextLinks, dwStateCount++)
+        {
+            PLSA_AD_PROVIDER_STATE pEntry = LW_STRUCT_FROM_FIELD(pLinks, LSA_AD_PROVIDER_STATE, Links);
+            pNextLinks = pLinks->Next;
+
+            dwError = LwAllocateString(
+                          pEntry->pszDomainName,
+                          &ppszDomainList[dwStateCount]);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+error:
+
+    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+
+    if (dwError)
+    {
+        LwFreeStringArray(ppszDomainList, dwStateCount);
+        ppszDomainList = NULL;
+        dwStateCount = 0;
+    }
+
+    *pdwStateCount = dwStateCount;
+
+    if (pppszDomainList)
+    {
+        *pppszDomainList = ppszDomainList;
+    }
+
+    return dwError;
+}
+
+static
+DWORD
 AD_AddStateToList(
     IN PLSA_AD_PROVIDER_STATE pState
     )
@@ -390,12 +458,19 @@ AD_RemoveStateFromList(
     DWORD dwError = 0;
     BOOLEAN bInLock = FALSE;
 
+    if (!pState)
+    {
+        goto error;
+    }
+
     ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
 
     LsaListRemove(&pState->Links);
     AD_DereferenceProviderState(pState);
 
     LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+
+error:
 
     return dwError;
 }
@@ -604,6 +679,7 @@ LsaAdProviderStateDestroy(
 
         LW_SAFE_FREE_STRING(pState->MachineCreds.pszCachePath);
         LW_SAFE_FREE_STRING(pState->pszUserGroupCachePath);
+        LW_SAFE_FREE_STRING(pState->pszDomainSID);
         LW_SAFE_FREE_STRING(pState->pszDomainName);
 
         LwFreeMemory(pState);
@@ -795,7 +871,11 @@ AD_InitializeProvider(
     pthread_t startThread;
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
 
-    pthread_rwlock_init(&gADGlobalDataLock, NULL);
+    dwError = LwMapErrnoToLwError(pthread_rwlock_init(&gADGlobalDataLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMapErrnoToLwError(pthread_mutex_init(&gADDefaultDomainLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
 
     LsaListInit(&gLsaAdProviderStateList);
 
@@ -834,12 +914,12 @@ AD_InitializeProvider(
                                           &startThread,
                                           NULL,
                                           LsaAdStartupThread,
-                                          ppszDomainList[dwIndex]));
+                                          pStateMinimal));
         BAIL_ON_LSA_ERROR(dwError);
 
         // The startup thread will free this when it
         // no longer needs it.
-        ppszDomainList[dwIndex] = NULL;
+        pStateMinimal = NULL;
 
         dwError = LwMapErrnoToLwError(pthread_detach(startThread));
         BAIL_ON_LSA_ERROR(dwError);
@@ -874,11 +954,14 @@ LsaAdStartupThread(
     )
 {
     DWORD dwError = 0;
-    PSTR pszDomain = (PSTR)pData;
+    PLSA_AD_PROVIDER_STATE pStateMinimal = (PLSA_AD_PROVIDER_STATE)pData;
     PLSA_AD_PROVIDER_STATE pState = NULL;
+    BOOLEAN bRemoveFromList = TRUE;
+
+    LsaAdProviderStateAcquireRead(pStateMinimal);
 
     dwError = LsaAdProviderStateCreate(
-                  pszDomain,
+                  pStateMinimal->pszDomainName,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -887,12 +970,19 @@ LsaAdStartupThread(
 
     dwError = AD_ReplaceStateInList(pState);
     BAIL_ON_LSA_ERROR(dwError);
+    bRemoveFromList = FALSE;
 
 error:
 
-    AD_DereferenceProviderState(pState);
+    LsaAdProviderStateRelease(pStateMinimal);
 
-    LW_SAFE_FREE_STRING(pszDomain);
+    if (bRemoveFromList)
+    {
+        AD_RemoveStateFromList(pStateMinimal);
+    }
+
+    AD_DereferenceProviderState(pStateMinimal);
+    AD_DereferenceProviderState(pState);
 
     return NULL;
 }
@@ -907,6 +997,9 @@ AD_ShutdownProvider(
     AD_DestroyStateList();
     
     ADUnprovPlugin_Cleanup();
+
+    pthread_mutex_destroy(&gADDefaultDomainLock);
+    pthread_rwlock_destroy(&gADGlobalDataLock);
 
     return dwError;
 }
@@ -958,6 +1051,11 @@ AD_Activate(
                   pState->pPcache,
                   NULL,
                   &pPasswordInfoA);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateString(
+                  pPasswordInfoA->pszSID,
+                  &pState->pszDomainSID);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_GetDomainManagerTrustExceptionList(
@@ -2026,7 +2124,7 @@ AD_PreJoinDomain(
                   hProvider,
                   NULL,
                   NULL,
-                  NULL,
+                  pszDomainName,
                   0);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2045,24 +2143,17 @@ AD_PostJoinDomain(
 {
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = NULL;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
     dwError = LsaAdProviderStateCreate(
                   pszDomain,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaPcacheGetPasswordInfo(
-                  pState->pPcache,
-                  NULL,
-                  &pPasswordInfoA);
-    BAIL_ON_LSA_ERROR(dwError);
-
     if (pState->bIsDefault)
     {
         dwError = LsaEnableDomainGroupMembership(
-                      pszHostDnsDomain,
-                      pPasswordInfoA->pszSID);
+                      pState->pszDomainName,
+                      pState->pszDomainSID);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -2073,8 +2164,6 @@ error:
         LsaAdProviderStateDestroy(pState);
         pState = NULL;
     }
-
-    LwFreePasswordInfoA(pPasswordInfoA);
 
     *ppState = pState;
 
@@ -2100,6 +2189,7 @@ AD_JoinDomain(
     PSTR pszDC = NULL;
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
     PLSA_AD_PROVIDER_STATE pState = NULL;
+    BOOLEAN bRemoveFromList = FALSE;
 
     if (peerUID != 0)
     {
@@ -2141,7 +2231,9 @@ AD_JoinDomain(
 
     dwError = AD_PreJoinDomain(
                   hProvider,
-                  pRequest->pszDomain);
+                  pRequest->dwFlags & LSA_NET_JOIN_DOMAIN_MULTIPLE ?
+                      pRequest->pszDomain :
+                      NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
     // In order to prevent simultaneous joins to
@@ -2173,6 +2265,7 @@ AD_JoinDomain(
 
     dwError = AD_AddStateToList(pStateMinimal);
     BAIL_ON_LSA_ERROR(dwError);
+    bRemoveFromList = TRUE;
 
     dwError = LsaJoinDomain(
         pRequest->pszHostname,
@@ -2195,10 +2288,16 @@ AD_JoinDomain(
 
     dwError = AD_ReplaceStateInList(pState);
     BAIL_ON_LSA_ERROR(dwError);
+    bRemoveFromList = FALSE;
 
     LSA_LOG_INFO("Joined domain: %s", pRequest->pszDomain);
 
 cleanup:
+
+    if (bRemoveFromList)
+    {
+        AD_RemoveStateFromList(pStateMinimal);
+    }
 
     LW_SAFE_FREE_MEMORY(pszMessage);
 
@@ -2235,6 +2334,7 @@ AD_PreLeaveDomain(
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = pContext->pState;
     PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    DWORD dwJoinedDomainsCount = 0;
 
     if (pState)
     {
@@ -2254,6 +2354,17 @@ AD_PreLeaveDomain(
     else
     {
         dwError = LW_ERROR_NOT_JOINED_TO_AD;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = AD_InquireStateList(
+                  &dwJoinedDomainsCount,
+                  NULL);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (pState->bIsDefault && dwJoinedDomainsCount > 1)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2472,6 +2583,13 @@ AD_SetDefaultDomain(
     DWORD dwError = 0;
     PCSTR pszDomainIn = (PCSTR)pInputBuffer;
     PSTR pszDomain = NULL;
+    BOOLEAN bInLockGlobal = FALSE;
+    BOOLEAN bInLockDefaultDomain = FALSE;
+    BOOLEAN bInLockStateDefault = FALSE;
+    BOOLEAN bInLockState = FALSE;
+    PLSA_AD_PROVIDER_STATE pStateDefault = NULL;
+    PLSA_AD_PROVIDER_STATE pState = NULL;
+    HANDLE hPstore = NULL;
 
     if (peerUID != 0)
     {
@@ -2496,9 +2614,110 @@ AD_SetDefaultDomain(
 
     LSA_LOG_TRACE("Set default domain request: %s", pszDomain);
 
-    dwError = LW_ERROR_NOT_HANDLED;
+    dwError = LwMapErrnoToLwError(pthread_mutex_lock(&gADDefaultDomainLock));
+    BAIL_ON_LSA_ERROR(dwError);
+    bInLockDefaultDomain = TRUE;
+
+    dwError = AD_GetStateWithReference(
+                  NULL,
+                  &pStateDefault);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdProviderStateAcquireWrite(pStateDefault);
+    bInLockStateDefault = TRUE;
+
+    if (!strcmp(pszDomain, pStateDefault->pszDomainName))
+    {
+        goto cleanup;
+    }
+
+    if (pStateDefault->joinState != LSA_AD_JOINED)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = AD_GetStateWithReference(
+                  pszDomain,
+                  &pState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdProviderStateAcquireWrite(pState);
+    bInLockState = TRUE;
+
+    if (pState->joinState != LSA_AD_JOINED)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    LsaUmCleanup();
+
+    dwError = LwpsOpenPasswordStore(
+                  LWPS_PASSWORD_STORE_DEFAULT,
+                  &hPstore);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwpsSetDefaultJoinedDomain(
+                  hPstore,
+                  pszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLockGlobal);
+
+    pState->bIsDefault = TRUE;
+    pStateDefault->bIsDefault = FALSE;
+
+    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLockGlobal);
+
+    dwError = LsaUmInitialize(pState);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bInLockStateDefault)
+    {
+        LsaAdProviderStateRelease(pStateDefault);
+        bInLockStateDefault = FALSE;
+    }
+
+    dwError = LsaDisableDomainGroupMembership(
+                  pStateDefault->pszDomainName,
+                  pStateDefault->pszDomainSID);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bInLockState)
+    {
+        LsaAdProviderStateRelease(pState);
+        bInLockState = FALSE;
+    }
+
+    dwError = LsaEnableDomainGroupMembership(
+                  pState->pszDomainName,
+                  pState->pszDomainSID);
+    BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    if (bInLockState)
+    {
+        LsaAdProviderStateRelease(pState);
+    }
+    if (bInLockStateDefault)
+    {
+        LsaAdProviderStateRelease(pStateDefault);
+    }
+
+    AD_DereferenceProviderState(pState);
+    AD_DereferenceProviderState(pStateDefault);
+
+    if (bInLockDefaultDomain)
+    {
+        LSA_ASSERT(LwMapErrnoToLwError(pthread_mutex_unlock(&gADDefaultDomainLock)) == 0);
+    }
+
+    if (hPstore)
+    {
+        LwpsClosePasswordStore(hPstore);
+    }
 
     LW_SAFE_FREE_STRING(pszDomain);
 
@@ -2522,7 +2741,7 @@ AD_GetJoinedDomains(
     )
 {
     DWORD                 dwError = 0;
-    PAD_PROVIDER_CONTEXT pContext = NULL;
+    DWORD                 dwDomainCount = 0;
     PSTR*                 ppszDomains = NULL;
     PVOID                 pBlob = NULL;
     size_t                BlobSize;
@@ -2530,34 +2749,13 @@ AD_GetJoinedDomains(
     LWMsgDataContext*      pDataContext = NULL;
     LSA_AD_IPC_GET_JOINED_DOMAINS_RESP response;
 
-    dwError = AD_ResolveProviderState(hProvider, &pContext);
-    if (dwError == LW_ERROR_NOT_HANDLED)
-    {
-        dwError = 0;
-    }
+    dwError = AD_InquireStateList(
+                  &dwDomainCount,
+                  &ppszDomains);
     BAIL_ON_LSA_ERROR(dwError);
-    
-    if (pContext->pState == NULL ||
-        pContext->pState->joinState != LSA_AD_JOINED)
-    {
-        response.dwObjectsCount = 0;
-        response.ppszDomains = NULL;
-    }
-    else
-    {
-        dwError = LwAllocateMemory(
-                      sizeof(*ppszDomains) * 2,
-                      OUT_PPVOID(&ppszDomains));
-        BAIL_ON_LSA_ERROR(dwError);
 
-        dwError = LwAllocateString(
-                      pContext->pState->pszDomainName,
-                      &ppszDomains[0]);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        response.dwObjectsCount = 1;
-        response.ppszDomains = ppszDomains;
-    }
+    response.dwObjectsCount = dwDomainCount;
+    response.ppszDomains = ppszDomains;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &context));
     BAIL_ON_LSA_ERROR(dwError);
@@ -2578,8 +2776,6 @@ AD_GetJoinedDomains(
 
 cleanup:
 
-    AD_ClearProviderState(pContext);
-
     if (pDataContext)
     {
         lwmsg_data_context_delete(pDataContext);
@@ -2590,7 +2786,7 @@ cleanup:
         lwmsg_context_delete(context);
     }
 
-    LW_SAFE_FREE_STRING_ARRAY(ppszDomains);
+    LwFreeStringArray(ppszDomains, dwDomainCount);
 
     return dwError;
 
@@ -3873,24 +4069,36 @@ AD_FreeStatus(
     LwFreeMemory(pProviderStatus);
 }
 
+static
 DWORD
-AD_RefreshConfiguration(
-    HANDLE hProvider
+AD_RefreshConfigurationByDomain(
+    PCSTR pszDomainName
     )
 {
     DWORD dwError = 0;
+    PLSA_AD_PROVIDER_STATE pState = NULL;
     PAD_PROVIDER_CONTEXT pContext = NULL;
     LSA_AD_CONFIG config = {0};
     BOOLEAN bInLock = FALSE;
     BOOLEAN bUpdateCap = FALSE;
 
-    dwError = AD_ResolveProviderState(hProvider, &pContext);
+    dwError = AD_GetStateWithReference(
+                  pszDomainName,
+                  &pState);
     if (dwError == LW_ERROR_NOT_HANDLED)
     {
+        // not joined
         dwError = 0;
         goto cleanup;
     }
     BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdProviderStateAcquireRead(pState);
+
+    if (pState->joinState != LSA_AD_JOINED)
+    {
+        goto cleanup;
+    }
 
     dwError = AD_InitializeConfig(&config);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3898,49 +4106,57 @@ AD_RefreshConfiguration(
     dwError = AD_ReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pContext->pState);
+    ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
     dwError = AD_TransferConfigContents(
                     &config,
-                    &pContext->pState->config);
+                    &pState->config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    AD_FreeAllowedSIDs_InLock(pContext->pState);
+    AD_FreeAllowedSIDs_InLock(pState);
 
     dwError = LsaDmSetState(
-                    pContext->pState->hDmState,
+                    pState->hDmState,
                     NULL,
-                    &pContext->pState->config.DomainManager.dwCheckDomainOnlineSeconds,
-                    &pContext->pState->config.DomainManager.dwUnknownDomainCacheTimeoutSeconds);
+                    &pState->config.DomainManager.dwCheckDomainOnlineSeconds,
+                    &pState->config.DomainManager.dwUnknownDomainCacheTimeoutSeconds);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pContext->pState->config.CacheBackend == AD_CACHE_IN_MEMORY)
+    if (pState->config.CacheBackend == AD_CACHE_IN_MEMORY)
     {
         bUpdateCap = TRUE;
     }
 
-    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pContext->pState);
+    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
     if (bUpdateCap)
     {
         dwError = MemCacheSetSizeCap(
-                        pContext->pState->hCacheConnection,
-                        AD_GetCacheSizeCap(pContext->pState));
+                        pState->hCacheConnection,
+                        AD_GetCacheSizeCap(pState));
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    LsaAdProviderLogConfigReloadEvent(pContext->pState);
-    if (pContext->pState->joinState == LSA_AD_JOINED)
-    {
-        LsaAdProviderLogRequireMembershipOfChangeEvent(pContext);
-    }
-    LsaAdProviderLogEventLogEnableChangeEvent(pContext->pState);
+    LsaAdProviderLogConfigReloadEvent(pState);
+
+    dwError = AD_CreateProviderContext(
+                  NULL,
+                  pState,
+                  &pContext);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdProviderLogRequireMembershipOfChangeEvent(pContext);
+
+    LsaAdProviderLogEventLogEnableChangeEvent(pState);
 
 cleanup:
 
-    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pContext->pState);
+    LEAVE_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);
 
-    AD_ClearProviderState(pContext);
+    LsaAdProviderStateRelease(pState);
+    AD_DereferenceProviderState(pState);
+
+    AD_DereferenceProviderContext(pContext);
 
     return dwError;
 
@@ -3950,6 +4166,35 @@ error:
 
     goto cleanup;
 
+}
+
+DWORD
+AD_RefreshConfiguration(
+    HANDLE hProvider
+    )
+{
+    DWORD dwError = 0;
+    DWORD dwIndex = 0;
+    DWORD dwDomainCount;
+    PSTR* ppszDomains = NULL;
+
+    dwError = AD_InquireStateList(
+                  &dwDomainCount,
+                  &ppszDomains);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
+    {
+        dwError = AD_RefreshConfigurationByDomain(
+                      ppszDomains[dwIndex]);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+error:
+
+    LwFreeStringArray(ppszDomains, dwDomainCount);
+
+    return dwError;
 }
 
 DWORD

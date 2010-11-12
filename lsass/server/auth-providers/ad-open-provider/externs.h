@@ -51,6 +51,8 @@
 
 extern pthread_rwlock_t gADGlobalDataLock;
 
+extern pthread_mutex_t gADDefaultDomainLock;
+
 #define ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock)       \
         if (!bInLock) {                                    \
            pthread_rwlock_rdlock(&gADGlobalDataLock);      \

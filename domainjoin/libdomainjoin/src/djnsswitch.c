@@ -1195,6 +1195,12 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
 
     memset(&conf, 0, sizeof(conf));
 
+    if (options->enableMultipleJoins)
+    {
+        result = NotApplicable;
+        goto cleanup;
+    }
+
     if (options->joiningDomain)
     {
         ceError = ReadNsswitchConf(&conf, NULL, FALSE);

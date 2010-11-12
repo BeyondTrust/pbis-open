@@ -61,7 +61,8 @@ LsaNetJoinShutdown(
 
 DWORD
 LsaNetTestJoinDomain(
-    PBOOLEAN pbIsJoined
+    IN OPTIONAL PCSTR pszDomainName,
+    OUT PBOOLEAN pbIsJoined
     );
 
 DWORD
@@ -153,7 +154,7 @@ LsaChangeDomainGroupMembership(
 
 DWORD
 LsaMachineChangePassword(
-    VOID
+    IN OPTIONAL PCSTR    pszDomainName
     );
 
 

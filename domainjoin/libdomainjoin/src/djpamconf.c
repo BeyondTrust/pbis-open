@@ -3715,7 +3715,7 @@ static QueryResult QueryPam(const JoinProcessOptions *options, LWException **exc
     ceError = DJGetDistroInfo("", &distro);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    if ( options->ignorePam )
+    if ( options->ignorePam || options->enableMultipleJoins )
     {
         result = NotApplicable;
         goto cleanup;

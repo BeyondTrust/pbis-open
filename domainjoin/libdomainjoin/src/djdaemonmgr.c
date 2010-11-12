@@ -44,6 +44,12 @@ static QueryResult QueryStopDaemons(const JoinProcessOptions *options, LWExcepti
     QueryResult result = FullyConfigured;
     LWException *inner = NULL;
 
+    if (options->enableMultipleJoins)
+    {
+        result = NotApplicable;
+        goto cleanup;
+    }
+
     /* Check for lwiauthd and likewise-open */
 
     DJGetDaemonStatus("gpagentd", &running, &inner);

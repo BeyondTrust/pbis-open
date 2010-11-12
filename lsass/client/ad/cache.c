@@ -49,10 +49,12 @@
 
 DWORD
 LsaAdEmptyCache(
-    IN HANDLE hLsaConnection
+    IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
 
     if (geteuid() != 0)
     {
@@ -60,9 +62,19 @@ LsaAdEmptyCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_EMPTYCACHE,
                   0,
                   NULL,
@@ -71,6 +83,9 @@ LsaAdEmptyCache(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
+
     return dwError;
 
 error:

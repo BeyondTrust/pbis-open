@@ -578,6 +578,12 @@ static QueryResult QueryDSPlugin(const JoinProcessOptions *options, LWException 
     PSTR valueStart = NULL;
     BOOLEAN bLikewisePresent = FALSE;
 
+    if (options->enableMultipleJoins)
+    {
+        result = NotApplicable;
+        goto cleanup;
+    }
+
     LW_CLEANUP_CTERR(exc, CTCheckFileOrLinkExists("/usr/bin/dscl", &exists));
     if(!exists)
     {

@@ -1067,6 +1067,17 @@ static QueryResult QueryDescriptionConfigSsh(const JoinProcessOptions *options,
         testPrefix = "";
     memset(&conf, 0, sizeof(conf));
 
+    if(options->enableMultipleJoins)
+    {
+        if(changeDescription != NULL)
+        {
+            LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(changeDescription,
+                "SSH is fully configured"));
+        }
+        result1 = NotApplicable;
+        goto cleanup;
+    }
+
     LW_CLEANUP_CTERR(exc, CTStrdup("", &message));
 
     exists = FindSshAndConfig(testPrefix, "sshd",

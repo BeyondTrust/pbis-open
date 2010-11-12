@@ -85,7 +85,8 @@ VOID
 ParseArgs(
     IN int    argc,
     IN char*  argv[],
-    OUT PBOOLEAN pbAll
+    OUT PBOOLEAN pbAll,
+    OUT PCSTR* ppszDomainName
     );
 
 static
@@ -147,8 +148,9 @@ get_status_main(
     DWORD dwNumDomains = 0;
     DWORD dwIndex = 0;
     BOOLEAN bPrintedServerStatus = FALSE;
+    PCSTR pszDomainName = NULL;
     
-    ParseArgs(argc, argv, &bAll);
+    ParseArgs(argc, argv, &bAll, &pszDomainName);
 
     dwError = LsaOpenServer(&hLsaConnection);
     BAIL_ON_LSA_ERROR(dwError);
@@ -212,9 +214,19 @@ get_status_main(
     }
     else
     {
+        if(pszDomainName)
+        {
+            dwError = LwAllocateStringPrintf(
+                          &pszProviderInstance,
+                          "%s:%s",
+                          LSA_AD_TAG_PROVIDER,
+                          pszDomainName);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+
         dwError = LsaGetStatus2(
                       hLsaConnection,
-                      NULL,
+                      pszProviderInstance,
                       &pLsaStatus);
         BAIL_ON_LSA_ERROR(dwError);
     
@@ -230,6 +242,8 @@ cleanup:
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
     }
+
+    LwFreeStringArray(ppszDomains, dwNumDomains);
 
     LW_SAFE_FREE_STRING(pszProviderInstance);
 
@@ -285,7 +299,8 @@ VOID
 ParseArgs(
     IN int    argc,
     IN char*  argv[],
-    OUT PBOOLEAN pbAll
+    OUT PBOOLEAN pbAll,
+    OUT PCSTR* ppszDomainName
     )
 {
     typedef enum {
@@ -296,6 +311,7 @@ ParseArgs(
     PSTR pszArg = NULL;
     ParseMode parseMode = PARSE_MODE_OPEN;
     BOOLEAN bAll = FALSE;
+    PCSTR pszDomainName = NULL;
 
     do {
         pszArg = argv[iArg++];
@@ -320,8 +336,13 @@ ParseArgs(
                 }
                 else
                 {
-                    ShowUsage();
-                    exit(1);
+                    if (pszDomainName)
+                    {
+                        ShowUsage();
+                        exit(1);
+                    }
+
+                    pszDomainName = pszArg;
                 }
 
                 break;
@@ -330,12 +351,13 @@ ParseArgs(
     } while (iArg < argc);
 
     *pbAll = bAll;
+    *ppszDomainName = pszDomainName;
 }
 
 void
 ShowUsage()
 {
-    printf("Usage: lw-get-status [--all]\n");
+    printf("Usage: lw-get-status [--all] [domain]\n");
 }
 
 VOID

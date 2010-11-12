@@ -53,24 +53,28 @@
 
 DWORD
 LsaAdEmptyCache(
-    IN HANDLE hLsaConnection
+    IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName
     );
 
 DWORD
 LsaAdRemoveUserByNameFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PCSTR  pszName
     );
 
 DWORD
 LsaAdRemoveUserByIdFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN uid_t  uid
     );
 
 DWORD
 LsaAdEnumUsersFromCache(
     IN HANDLE   hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PSTR*    ppszResume,
     IN DWORD    dwMaxNumUsers,
     OUT PDWORD  pdwUsersFound,
@@ -80,18 +84,21 @@ LsaAdEnumUsersFromCache(
 DWORD
 LsaAdRemoveGroupByNameFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PCSTR  pszGroupName
     );
 
 DWORD
 LsaAdRemoveGroupByIdFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN gid_t  gid
     );
 
 DWORD
 LsaAdEnumGroupsFromCache(
     IN HANDLE   hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PSTR*    ppszResume,
     IN DWORD    dwMaxNumGroups,
     OUT PDWORD  pdwGroupsFound,

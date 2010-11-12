@@ -51,20 +51,32 @@ LSASS_API
 DWORD
 LsaAdRemoveGroupByNameFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PCSTR  pszGroupName
     )
 {
     DWORD dwError = 0;
 
+    PSTR pszTargetProvider = NULL;
     if (geteuid() != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_REMOVEGROUPBYNAMECACHE,
                   strlen(pszGroupName) + 1,
                   (PVOID)pszGroupName,
@@ -73,6 +85,9 @@ LsaAdRemoveGroupByNameFromCache(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
+
     return dwError;
 
 error:
@@ -84,10 +99,12 @@ LSASS_API
 DWORD
 LsaAdRemoveGroupByIdFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN gid_t  gid
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
 
     if (geteuid() != 0)
     {
@@ -95,9 +112,19 @@ LsaAdRemoveGroupByIdFromCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_REMOVEGROUPBYIDCACHE,
                   sizeof(gid),
                   &gid,
@@ -106,6 +133,9 @@ LsaAdRemoveGroupByIdFromCache(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
+
     return dwError;
 
 error:
@@ -117,6 +147,7 @@ LSASS_API
 DWORD
 LsaAdEnumGroupsFromCache(
     IN HANDLE   hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PSTR*    ppszResume,
     IN DWORD    dwMaxNumGroups,
     OUT PDWORD  pdwGroupsFound,
@@ -124,6 +155,7 @@ LsaAdEnumGroupsFromCache(
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
     DWORD dwOutputBufferSize = 0; 
     PVOID pOutputBuffer = NULL;
     PVOID pBlob = NULL;
@@ -138,6 +170,16 @@ LsaAdEnumGroupsFromCache(
     if (geteuid() != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -161,7 +203,7 @@ LsaAdEnumGroupsFromCache(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_ENUMGROUPSCACHE,
                   BlobSize,
                   pBlob,
@@ -219,6 +261,8 @@ cleanup:
     {
         LwFreeMemory(pOutputBuffer);
     }
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
 
     return dwError;
 

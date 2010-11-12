@@ -80,6 +80,7 @@ struct _JoinProcessOptions
     BOOLEAN joiningDomain;
     BOOLEAN showTraces;
     BOOLEAN disableTimeSync;
+    BOOLEAN enableMultipleJoins;
     BOOLEAN ignorePam;
     // TRUE means that lsass will be configured to append a domain prefix so user logons
     // can be with short account names.

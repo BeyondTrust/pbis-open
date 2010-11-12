@@ -51,10 +51,12 @@ LSASS_API
 DWORD
 LsaAdRemoveUserByNameFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PCSTR  pszName
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
 
     if (geteuid() != 0)
     {
@@ -62,9 +64,19 @@ LsaAdRemoveUserByNameFromCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_REMOVEUSERBYNAMECACHE,
                   strlen(pszName) + 1,
                   (PVOID)pszName,
@@ -73,6 +85,9 @@ LsaAdRemoveUserByNameFromCache(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
+
     return dwError;
 
 error:
@@ -84,10 +99,12 @@ LSASS_API
 DWORD
 LsaAdRemoveUserByIdFromCache(
     IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN uid_t  uid
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
 
     if (geteuid() != 0)
     {
@@ -95,9 +112,19 @@ LsaAdRemoveUserByIdFromCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_REMOVEUSERBYIDCACHE,
                   sizeof(uid),
                   &uid,
@@ -106,6 +133,9 @@ LsaAdRemoveUserByIdFromCache(
     BAIL_ON_LSA_ERROR(dwError);
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
+
     return dwError;
 
 error:
@@ -117,6 +147,7 @@ LSASS_API
 DWORD
 LsaAdEnumUsersFromCache(
     IN HANDLE   hLsaConnection,
+    IN OPTIONAL PCSTR pszDomainName,
     IN PSTR*    ppszResume,
     IN DWORD    dwMaxNumUsers,
     OUT PDWORD  pdwUsersFound,
@@ -124,6 +155,7 @@ LsaAdEnumUsersFromCache(
     )
 {
     DWORD dwError = 0;
+    PSTR pszTargetProvider = NULL;
     DWORD dwOutputBufferSize = 0;
     PVOID pOutputBuffer = NULL;
     PVOID pBlob = NULL;
@@ -138,6 +170,16 @@ LsaAdEnumUsersFromCache(
     if (geteuid() != 0)
     {
         dwError = LW_ERROR_ACCESS_DENIED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pszTargetProvider,
+                      "%s:%s",
+                      LSA_AD_TAG_PROVIDER,
+                      pszDomainName);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -161,7 +203,7 @@ LsaAdEnumUsersFromCache(
 
     dwError = LsaProviderIoControl(
                   hLsaConnection,
-                  LSA_AD_TAG_PROVIDER,
+                  pszTargetProvider ? pszTargetProvider : LSA_AD_TAG_PROVIDER,
                   LSA_AD_IO_ENUMUSERSCACHE,
                   BlobSize,
                   pBlob,
@@ -217,6 +259,8 @@ cleanup:
     {
         LwFreeMemory(pOutputBuffer);
     }
+
+    LW_SAFE_FREE_STRING(pszTargetProvider);
 
     return dwError;
 

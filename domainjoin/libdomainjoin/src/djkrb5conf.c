@@ -1458,6 +1458,13 @@ static QueryResult QueryKrb5(const JoinProcessOptions *options, LWException **ex
     DWORD ceError;
 
     memset(&conf, 0, sizeof(conf));
+
+    if (options->enableMultipleJoins && !options->joiningDomain)
+    {
+        result = NotApplicable;
+        goto cleanup;
+    }
+
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
     LW_TRY(exc, DJCopyKrb5ToRootDir(NULL, tempDir, &LW_EXC));
     ceError = ReadKrb5Configuration(tempDir, &conf, &modified);
