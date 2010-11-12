@@ -344,6 +344,7 @@ char            *argv[];
         }
 
         protseq[num_protseq++] = (unsigned_char_p_t) argv[i];
+        use_all_protseqs = false;
     }
 }
 
@@ -966,6 +967,8 @@ rpcd_network_thread(
 {
     error_status_t status = 0;
     int index = 0;
+    int jndex = 0;
+    boolean32 use_protseq = false;
     static const struct timespec retry_interval = {5, 0};
     static const char* network_protseqs[] =
     {
@@ -976,11 +979,30 @@ rpcd_network_thread(
 
     while (network_protseqs[index])
     {
-        rpc_server_use_protseq_if(
-            (unsigned char*) network_protseqs[index],
-            0,
-            ept_v3_0_s_ifspec,
-            &status);
+        use_protseq = false;
+        if (!use_all_protseqs)
+        {
+            for (jndex = 0; jndex < num_protseq; jndex++)
+            {
+                if (!strcmp(network_protseqs[index], protseq[jndex]))
+                {
+                    use_protseq = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            use_protseq = true;
+        }
+        if (use_protseq)
+        {
+            rpc_server_use_protseq_if(
+                (unsigned char*) network_protseqs[index],
+                0,
+                ept_v3_0_s_ifspec,
+                &status);
+        }
 
         if (!STATUS_OK(&status))
         {
