@@ -71,7 +71,7 @@ typedef struct _PAMCONTEXT
     BOOLEAN    bPasswordExpired;
     BOOLEAN    bPasswordChangeFailed;
     BOOLEAN    bPasswordChangeSuceeded;
-    BOOLEAN    bOnlineLogin;
+    BOOLEAN    bOnlineLogon;
     
 } PAMCONTEXT, *PPAMCONTEXT;
 
