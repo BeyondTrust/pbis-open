@@ -476,7 +476,6 @@ NetrGetLmHash(
     DES_key_schedule KeyLo;
     DES_key_schedule KeyHi;
 
-    memset(Hash, 0, sizeof(Hash));
     memset(&KeyBlockLo, 0, sizeof(KeyBlockLo));
     memset(&KeyBlockHi, 0, sizeof(KeyBlockHi));
     memset(&KeyLo, 0, sizeof(KeyLo));
