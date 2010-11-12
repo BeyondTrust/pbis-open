@@ -94,7 +94,6 @@ NetrWkstaUserEnum(
     default:
         winError = ERROR_INVALID_LEVEL;
         BAIL_ON_WIN_ERROR(winError);
-        break;
     }
 
     if (pdwResume)
