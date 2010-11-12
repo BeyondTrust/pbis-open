@@ -60,6 +60,7 @@ SamrGetUserGroups(
     UINT32 *pRids = NULL;
     UINT32 *pAttributes = NULL;
     PRID_WITH_ATTRIBUTE_ARRAY pRidWithAttr = NULL;
+    DWORD dwRidCount = 0;
     DWORD dwOffset = 0;
     DWORD dwSpaceLeft = 0;
     DWORD dwSize = 0;
@@ -77,7 +78,8 @@ SamrGetUserGroups(
 
     if (pRidWithAttr)
     {
-        dwSpaceLeft = sizeof(pRids[0]) * pRidWithAttr->dwCount;
+        dwRidCount = pRidWithAttr->dwCount;
+        dwSpaceLeft = sizeof(pRids[0]) * dwRidCount;
 
         ntStatus = SamrAllocateMemory(OUT_PPVOID(&pRids),
                                       dwSpaceLeft);
@@ -91,7 +93,7 @@ SamrGetUserGroups(
                                       &dwSize);
         BAIL_ON_NT_STATUS(ntStatus);
 
-        dwSpaceLeft = sizeof(pAttributes[0]) * pRidWithAttr->dwCount;
+        dwSpaceLeft = sizeof(pAttributes[0]) * dwRidCount;
         dwSize      = 0;
         dwOffset    = 0;
 
@@ -110,7 +112,7 @@ SamrGetUserGroups(
 
     *ppRids       = pRids;
     *ppAttributes = pAttributes;
-    *pCount       = pRidWithAttr->dwCount;
+    *pCount       = dwRidCount;
 
 cleanup:
     if (pRidWithAttr)
