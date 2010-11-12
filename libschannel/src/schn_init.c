@@ -38,8 +38,8 @@
 uint32 schn_init_creds(struct schn_auth_ctx   *ctx,
                        struct schn_blob       *creds)
 {
-    const uint32 flag1 = 0x00000000;
-    const uint32 flag2 = 0x00000017;
+    const uint32 flag1 = LW_HTOL32(0x00000000);
+    const uint32 flag2 = LW_HTOL32(0x00000017);
 
     size_t domain_name_len = 0;
     size_t fqdn_len = 0;
