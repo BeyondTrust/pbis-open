@@ -492,7 +492,7 @@ AD_DereferenceProviderState(
 {
     if (pState)
     {
-        DWORD dwCount = 0;
+        LONG dwCount = 0;
 
         dwCount = InterlockedDecrement(&pState->nRefCount);
         LW_ASSERT(dwCount >= 0);
@@ -619,12 +619,15 @@ LsaAdProviderStateDestroy(
 {
     if (pState)
     {
-        LsaAdProviderStateAcquireWrite(pState);
-        if (pState->joinState == LSA_AD_JOINED)
+        if (pState->pStateLock)
         {
-            AD_Deactivate(pState);
+            LsaAdProviderStateAcquireWrite(pState);
+            if (pState->joinState == LSA_AD_JOINED)
+            {
+                AD_Deactivate(pState);
+            }
+            LsaAdProviderStateRelease(pState);
         }
-        LsaAdProviderStateRelease(pState);
     
         if (pState->hSchannelState)
         {
@@ -669,7 +672,7 @@ LsaAdProviderStateDestroy(
 
         if (pState->hMachinePwdState)
         {
-            ADShutdownMachinePasswordSync(pState);
+            ADShutdownMachinePasswordSync(&pState->hMachinePwdState);
         }
 
         if (pState->hSchannelState)
@@ -1156,7 +1159,7 @@ error:
                            dwError);
     }
 
-    ADShutdownMachinePasswordSync(pState);
+    ADShutdownMachinePasswordSync(&pState->hMachinePwdState);
 
     LsaDmCleanup(pState->hDmState);
 
@@ -1176,7 +1179,8 @@ AD_Deactivate(
 {
     DWORD dwError = 0;
 
-    ADShutdownMachinePasswordSync(pState);
+    ADShutdownMachinePasswordSync(&pState->hMachinePwdState);
+
     AD_MachineCredentialsCacheClear(pState);
 
     if (pState->pProviderData)
@@ -1322,7 +1326,7 @@ AD_DereferenceProviderContext(
 {
     if (pContext)
     {
-        DWORD dwCount = 0;
+        LONG dwCount = 0;
 
         dwCount = InterlockedDecrement(&pContext->nRefCount);
         LW_ASSERT(dwCount >= 0);

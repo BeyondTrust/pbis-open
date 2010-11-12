@@ -66,7 +66,7 @@ ADSyncTimeToDC(
 
 VOID
 ADShutdownMachinePasswordSync(
-    IN PLSA_AD_PROVIDER_STATE pState
+    IN OUT LSA_MACHINEPWD_STATE_HANDLE* phMachinePwdState
     );
 
 VOID

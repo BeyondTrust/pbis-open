@@ -159,7 +159,7 @@ cleanup:
 
 error:
 
-    ADShutdownMachinePasswordSync(pState);
+    ADShutdownMachinePasswordSync(&pMachinePwdState);
 
     goto cleanup;
 }
@@ -456,13 +456,13 @@ error:
 
 VOID
 ADShutdownMachinePasswordSync(
-    IN PLSA_AD_PROVIDER_STATE pState
+    IN OUT LSA_MACHINEPWD_STATE_HANDLE* phMachinePwdState
     )
 {
-    PLSA_MACHINEPWD_STATE pMachinePwdState = pState->hMachinePwdState;
-
-    if (pMachinePwdState)
+    if (phMachinePwdState && *phMachinePwdState)
     {
+        PLSA_MACHINEPWD_STATE pMachinePwdState = (PLSA_MACHINEPWD_STATE)*phMachinePwdState;
+
         if (pMachinePwdState->pThread)
         {   
             pthread_mutex_lock(pMachinePwdState->pThreadLock);
@@ -490,7 +490,8 @@ ADShutdownMachinePasswordSync(
             pthread_rwlock_destroy(pMachinePwdState->pDataLock);
         }
 
-        LW_SAFE_FREE_MEMORY(pState->hMachinePwdState);
+        LwFreeMemory(pMachinePwdState);
+        *phMachinePwdState = NULL;
     }
 }
 
