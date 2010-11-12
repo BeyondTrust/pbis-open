@@ -118,6 +118,13 @@ LsaSrvReadRegistry(
                 NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = LsaReadConfigBoolean(
+                pReg,
+                "RegisterTcpIp",
+                TRUE,
+                &pConfig->bRegisterTcpIp);
+    BAIL_ON_LSA_ERROR(dwError);
+
     LsaCloseConfig(pReg);
     pReg = NULL;
 
@@ -138,13 +145,6 @@ LsaSrvReadRegistry(
                 FALSE,
                 &pConfig->pszSamrLpcSocketPath,
                 NULL);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaReadConfigBoolean(
-                pReg,
-                "RegisterTcpIp",
-                TRUE,
-                &pConfig->bRegisterTcpIp);
     BAIL_ON_LSA_ERROR(dwError);
 
     LsaCloseConfig(pReg);
