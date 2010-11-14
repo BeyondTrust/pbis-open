@@ -83,5 +83,10 @@ function component_populate
     mkdir -p ${POPULATE_PREFIX_DIR}
     rsync -a ${COMP_PREFIX_DIR}/ ${POPULATE_PREFIX_DIR}/
 
+    if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
+        x_cp 0755 ${BUILD_ROOT}/src/linux/config/lw-local-user-migrate.sh.in ${POPULATE_PREFIX_DIR}/bin/lw-local-user-migrate.sh
+    fi
+
+
     libtool_rewrite_populate
 }
