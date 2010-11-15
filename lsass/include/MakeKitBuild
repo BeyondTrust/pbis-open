@@ -7,6 +7,7 @@ make()
 	lsa/join.h
 
     mk_headers \
+	lw/rpc/common.h          \
 	lw/rpc/lsa.h             \
 	lw/rpc/samr.h            \
 	lw/rpc/netlogon.h        \
