@@ -43,10 +43,7 @@ LwIoFuseWrite(
     NTSTATUS status = STATUS_SUCCESS;
     IO_STATUS_BLOCK ioStatus = {0};
     IO_FILE_HANDLE handle = NULL;
-    PIO_FUSE_CONTEXT pFuseContext = NULL;
     LONG64 llByteOffset = (LONG64) offset;
-
-    pFuseContext = LwIoFuseGetContext();
 
     handle = FUSE_TO_NT_FH(pFileInfo->fh);
 
