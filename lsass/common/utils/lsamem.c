@@ -150,9 +150,8 @@ LsaAppendStringBuffer(
     DWORD dwError = LW_ERROR_SUCCESS;
     size_t sAppendLen = 0;
     size_t sNewCapacity = 0;
-    
-    if (pszAppend != NULL)
-        sAppendLen = strlen(pszAppend);
+
+    sAppendLen = strlen(pszAppend);
 
     if (sAppendLen + pBuffer->sLen > pBuffer->sCapacity ||
             pBuffer->pszBuffer == NULL)
