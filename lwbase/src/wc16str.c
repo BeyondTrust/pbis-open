@@ -812,7 +812,7 @@ size_t __mbsnbcnt(const char *src, size_t cchFind)
     char *srcPos = (char *)src;
     size_t retValue = -1;
 
-    if (iconv_count(handle, (ICONV_IN_TYPE) &srcPos, &cbFind, &cchFind) < 0)
+    if (iconv_count(handle, (ICONV_IN_TYPE) &srcPos, &cbFind, &cchFind) == (size_t) -1)
     {
         iconv_close(handle);
         goto cleanup;
