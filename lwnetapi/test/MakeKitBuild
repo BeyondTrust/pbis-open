@@ -1,0 +1,21 @@
+make()
+{
+    RPCTEST_SOURCES="\
+        common.c                      \
+        netapitest.c                  \
+        params.c                      \
+        test_lsa.c                    \
+        test_samr.c                   \
+        test_netlogon.c               \
+        test_dssetup.c                \
+        test_wkssvc.c"                \
+
+    mk_library \
+        PROGRAM=netapitest \
+        SOURCES="$RPCTEST_SOURCES" \
+        INCLUDEDIRS="../include" \
+	HEADERDEPS="lw/base.h lwadvapi.h openssl/rand.h lwio/lwio.h dce/rpc.h \
+                    lw/srvsvc.h lw/rpc/common.h lw/rpc/samr.h lw/rpc/lsa.h lw/rpc/wkssvc.h \
+                    lwnet.h ntlm/gssntlm.h ntlm/sspintlm.h" \
+	LIBDEPS="srvsvc lwnetclientapi lwadvapi lwbase lsarpc dcerpc lwnetapi"
+}
