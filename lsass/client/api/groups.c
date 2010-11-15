@@ -647,7 +647,7 @@ LsaGetGidsForUserByName(
     DWORD dwError = 0;
     PVOID pUserInfo = NULL;
     DWORD dwUserInfoLevel = 0;
-    DWORD dwGroupInfoLevel = 0;
+    static const DWORD dwGroupInfoLevel = 0;
     DWORD dwGroupFound = 0;
     gid_t* pGidResult = NULL;
     PVOID*  ppGroupInfoList = NULL;
@@ -681,20 +681,9 @@ LsaGetGidsForUserByName(
                     (PVOID*)&pGidResult);
     BAIL_ON_LSA_ERROR(dwError);
 
-    switch(dwGroupInfoLevel)
+    for (iGroup = 0; iGroup < dwGroupFound; iGroup++)
     {
-        case 0:
-
-            for (iGroup = 0; iGroup < dwGroupFound; iGroup++) {
-                   *(pGidResult+iGroup) = ((PLSA_GROUP_INFO_0)(*(ppGroupInfoList+iGroup)))->gid;
-            }
-
-            break;
-
-        default:
-            dwError = LW_ERROR_UNSUPPORTED_GROUP_LEVEL;
-            BAIL_ON_LSA_ERROR(dwError);
-            break;
+        *(pGidResult+iGroup) = ((PLSA_GROUP_INFO_0)(*(ppGroupInfoList+iGroup)))->gid;
     }
 
     *ppGidResults = pGidResult;
