@@ -11,7 +11,8 @@ ntlminclude_HEADERS = \
     ntlm/sspintlm.h
 
 lsarpcincludedir = $(includedir)/lw/rpc
-lsarpcinclude_HEADERS =   \
+lsarpcinclude_HEADERS =      \
+    lw/rpc/common.h          \
     lw/rpc/lsa.h             \
     lw/rpc/samr.h            \
     lw/rpc/netlogon.h        \
