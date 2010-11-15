@@ -80,10 +80,8 @@ cleanup:
     return dwError;
 
 error:
-    if (pConfig)
-    {
-        LsaUtilFreePamConfigContents(pConfig);
-    }
+
+    LsaUtilFreePamConfigContents(pConfig);
 
     goto cleanup;
 }
