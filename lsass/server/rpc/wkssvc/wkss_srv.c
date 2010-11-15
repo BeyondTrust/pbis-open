@@ -149,6 +149,8 @@ WkssRpcStartServer(
     BAIL_ON_LSA_ERROR(dwError);
 
 error:
+    LW_SAFE_FREE_STRING(pszLpcSocketPath);
+
     return dwError;
 }
 
