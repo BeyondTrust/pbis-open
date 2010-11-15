@@ -203,7 +203,6 @@ GPInitLibrary(
     )
 {
     DWORD dwError = 0;
-    char szGPLibPath[256] = { 0 };
 
     /* Test to see if we are already setup */
     if (gbGPLibInitialized == TRUE)
@@ -213,11 +212,9 @@ GPInitLibrary(
 
     gbGPLibInitialized = TRUE;
 
-    sprintf(szGPLibPath, "%s/%s", LIBDIR, GPAPI_DLL_NAME);
-
     dlerror();
 
-    gpGPLibHandle = dlopen(szGPLibPath, RTLD_LAZY);
+    gpGPLibHandle = dlopen(LIBDIR "/" GPAPI_DLL_NAME, RTLD_LAZY);
     if (gpGPLibHandle == NULL)
     {
         dwError = LW_ERROR_LOAD_LIBRARY_FAILED;
