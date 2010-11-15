@@ -217,8 +217,6 @@ LWNetGetDCList(
     DWORD dwError = 0;
     PLWNET_DC_ADDRESS pDcList = NULL;
     DWORD dwDcCount = 0;
-
-    PLWNET_DC_INFO pDCInfo = NULL;
     HANDLE hServer = 0;
 
     dwError = LWNetOpenServer(&hServer);
@@ -251,7 +249,8 @@ cleanup:
     return dwError;
 
 error:
-    if (pDCInfo)
+
+    if (pDcList)
     {
         LWNetFreeDCList(pDcList, dwDcCount);
     }
