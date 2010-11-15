@@ -138,12 +138,12 @@ LsaReadIgnoreLists()
 {
     DWORD dwError = 0;
     time_t tCurrentTime = 0;
-    struct stat fileStat = {0};
     PSTR pszUserIgnoreList = NULL;
     PSTR pszGroupIgnoreList = NULL;
     int iListFd = -1;
     size_t sOffset = 0;
     ssize_t ssRead = 0;
+    struct stat fileStat = {0};
 
     if (time(&tCurrentTime) == (time_t)-1)
     {
@@ -157,49 +157,49 @@ LsaReadIgnoreLists()
         goto cleanup;
     }
 
-    if (stat(LSA_USER_IGNORE_LIST_PATH, &fileStat) < 0)
+    if ((iListFd = open(LSA_USER_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
     {
         dwError = LwMapErrnoToLwError(errno);
         if (dwError == LwMapErrnoToLwError(ENOENT) ||
             dwError == LwMapErrnoToLwError(ENOTDIR))
         {
             dwError = 0;
+            goto cleanup;
         }
         BAIL_ON_LSA_ERROR(dwError);
     }
-    else
+
+    if (fstat(iListFd, &fileStat) < 0)
     {
-        if ((iListFd = open(LSA_USER_IGNORE_LIST_PATH, O_RDONLY, 0)) < 0)
+        dwError = LwMapErrnoToLwError(errno);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = LwAllocateMemory(
+        fileStat.st_size + 1,
+        (PVOID*)&pszUserIgnoreList);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    sOffset = 0;
+    while (sOffset < fileStat.st_size)
+    {
+        ssRead = read(
+            iListFd,
+            pszUserIgnoreList,
+            fileStat.st_size - sOffset);
+        if (ssRead < 0)
         {
             dwError = LwMapErrnoToLwError(errno);
+            if (dwError == LwMapErrnoToLwError(EINTR))
+            {
+                dwError = 0;
+                ssRead = 0;
+            }
             BAIL_ON_LSA_ERROR(dwError);
         }
-        dwError = LwAllocateMemory(
-                        fileStat.st_size + 1,
-                        (PVOID*)&pszUserIgnoreList);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        sOffset = 0;
-        while (sOffset < fileStat.st_size)
-        {
-            ssRead = read(
-                        iListFd,
-                        pszUserIgnoreList,
-                        fileStat.st_size - sOffset);
-            if (ssRead < 0)
-            {
-                dwError = LwMapErrnoToLwError(errno);
-                if (dwError == LwMapErrnoToLwError(EINTR))
-                {
-                    dwError = 0;
-                    ssRead = 0;
-                }
-                BAIL_ON_LSA_ERROR(dwError);
-            }
-            sOffset += ssRead;
-        }
-        pszUserIgnoreList[sOffset] = 0;
+        sOffset += ssRead;
     }
+    pszUserIgnoreList[sOffset] = 0;
 
     if (iListFd != -1)
     {
