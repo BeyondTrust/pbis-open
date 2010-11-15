@@ -62,6 +62,7 @@ WkssCleanStubNetrWkstaInfo(
         {
             rpc_sm_client_free(pInfo->pInfo102->wksta102_lan_root, &rpcStatus);
         }
+        break;
 
     case 101:
     case 100:
