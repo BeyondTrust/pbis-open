@@ -152,10 +152,12 @@ NtlmTransactAcceptSecurityContext(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    NTLM_IPC_ACCEPT_SEC_CTXT_REQ AcceptSecCtxtReq;
-
-    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
-    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    NTLM_IPC_ACCEPT_SEC_CTXT_REQ AcceptSecCtxtReq = {0};
+    // Do not free pResult and pError
+    PNTLM_IPC_ACCEPT_SEC_CTXT_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
+    LWMsgParams In = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out = LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
 
     dwError = NtlmIpcAcquireCall(&pCall);
@@ -165,10 +167,6 @@ NtlmTransactAcceptSecurityContext(
     *ptsTimeStamp = 0;
 
     memset(&AcceptSecCtxtReq, 0, sizeof(AcceptSecCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_ACCEPT_SEC_CTXT_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     AcceptSecCtxtReq.hCredential = *phCredential;
     if (phContext)
@@ -183,7 +181,11 @@ NtlmTransactAcceptSecurityContext(
     AcceptSecCtxtReq.pInput = &pInput->pBuffers[0];
     AcceptSecCtxtReq.fContextReq = fContextReq;
     AcceptSecCtxtReq.TargetDataRep = TargetDataRep;
-    AcceptSecCtxtReq.hNewContext = *phNewContext;
+
+    if (phNewContext)
+    {
+        AcceptSecCtxtReq.hNewContext = *phNewContext;
+    }
 
     In.tag = NTLM_Q_ACCEPT_SEC_CTXT;
     In.data = &AcceptSecCtxtReq;
@@ -271,7 +273,9 @@ NtlmTransactAcquireCredentialsHandle(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_ACQUIRE_CREDS_REQ AcquireCredsReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_ACQUIRE_CREDS_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -280,10 +284,6 @@ NtlmTransactAcquireCredentialsHandle(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&AcquireCredsReq, 0, sizeof(AcquireCredsReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_ACQUIRE_CREDS_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     AcquireCredsReq.pszPrincipal = pszPrincipal;
     AcquireCredsReq.pszPackage = pszPackage;
@@ -342,7 +342,9 @@ NtlmTransactDecryptMessage(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_DECRYPT_MSG_REQ DecryptMsgReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_DECRYPT_MSG_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -351,10 +353,6 @@ NtlmTransactDecryptMessage(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&DecryptMsgReq, 0, sizeof(DecryptMsgReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_DECRYPT_MSG_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     DecryptMsgReq.hContext = *phContext;
     DecryptMsgReq.pMessage = pMessage;
@@ -412,7 +410,8 @@ NtlmTransactDeleteSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_DELETE_SEC_CTXT_REQ DeleteSecCtxtReq;
-
+    // Do not free pError
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -421,9 +420,6 @@ NtlmTransactDeleteSecurityContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&DeleteSecCtxtReq, 0, sizeof(DeleteSecCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_ERROR pError = NULL;
 
     DeleteSecCtxtReq.hContext = *phContext;
 
@@ -474,7 +470,9 @@ NtlmTransactEncryptMessage(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_ENCRYPT_MSG_REQ EncryptMsgReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_ENCRYPT_MSG_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -483,10 +481,6 @@ NtlmTransactEncryptMessage(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&EncryptMsgReq, 0, sizeof(EncryptMsgReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_ENCRYPT_MSG_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     EncryptMsgReq.hContext = *phContext;
     EncryptMsgReq.bEncrypt = bEncrypt;
@@ -546,7 +540,9 @@ NtlmTransactExportSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_EXPORT_SEC_CTXT_REQ ExportSecCtxtReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_EXPORT_SEC_CTXT_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -555,10 +551,6 @@ NtlmTransactExportSecurityContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&ExportSecCtxtReq, 0, sizeof(ExportSecCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_EXPORT_SEC_CTXT_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     ExportSecCtxtReq.hContext = *phContext;
     ExportSecCtxtReq.fFlags = fFlags;
@@ -615,7 +607,8 @@ NtlmTransactFreeCredentialsHandle(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_FREE_CREDS_REQ FreeCredsReq;
-
+    // Do not free pError
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -624,9 +617,6 @@ NtlmTransactFreeCredentialsHandle(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&FreeCredsReq, 0, sizeof(FreeCredsReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_ERROR pError = NULL;
 
     FreeCredsReq.hCredential = *phCredential;
 
@@ -677,7 +667,9 @@ NtlmTransactImportSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_IMPORT_SEC_CTXT_REQ ImportSecCtxtReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -686,10 +678,6 @@ NtlmTransactImportSecurityContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&ImportSecCtxtReq, 0, sizeof(ImportSecCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_IMPORT_SEC_CTXT_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     ImportSecCtxtReq.pszPackage = pszPackage;
     ImportSecCtxtReq.pPackedContext = pPackedContext;
@@ -751,7 +739,9 @@ NtlmTransactInitializeSecurityContext(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_INIT_SEC_CTXT_REQ InitSecCtxtReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_INIT_SEC_CTXT_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -762,10 +752,6 @@ NtlmTransactInitializeSecurityContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&InitSecCtxtReq, 0, sizeof(InitSecCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_INIT_SEC_CTXT_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     if (phCredential)
     {
@@ -887,7 +873,9 @@ NtlmTransactMakeSignature(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_MAKE_SIGN_REQ MakeSignReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_MAKE_SIGN_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -898,10 +886,6 @@ NtlmTransactMakeSignature(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&MakeSignReq, 0, sizeof(MakeSignReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_MAKE_SIGN_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     MakeSignReq.hContext = *phContext;
     MakeSignReq.dwQop = dwQop;
@@ -960,7 +944,9 @@ NtlmTransactQueryContextAttributes(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_QUERY_CTXT_REQ QueryCtxtReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_QUERY_CTXT_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -971,10 +957,6 @@ NtlmTransactQueryContextAttributes(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&QueryCtxtReq, 0, sizeof(QueryCtxtReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_QUERY_CTXT_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     QueryCtxtReq.hContext = *phContext;
     QueryCtxtReq.ulAttribute = ulAttribute;
@@ -1065,7 +1047,9 @@ NtlmTransactQueryCredentialsAttributes(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_QUERY_CREDS_REQ QueryCredsReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_QUERY_CREDS_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -1076,10 +1060,6 @@ NtlmTransactQueryCredentialsAttributes(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&QueryCredsReq, 0, sizeof(QueryCredsReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_QUERY_CREDS_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     QueryCredsReq.hCredential = *phCredential;
     QueryCredsReq.ulAttribute = ulAttribute;
@@ -1144,7 +1124,9 @@ NtlmTransactVerifySignature(
 {
     DWORD dwError = LW_ERROR_SUCCESS;
     NTLM_IPC_VERIFY_SIGN_REQ VerifySignReq;
-
+    // Do not free pResult and pError
+    PNTLM_IPC_VERIFY_SIGN_RESPONSE pResultList = NULL;
+    PNTLM_IPC_ERROR pError = NULL;
     LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
     LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
     LWMsgCall* pCall = NULL;
@@ -1155,10 +1137,6 @@ NtlmTransactVerifySignature(
     BAIL_ON_LSA_ERROR(dwError);
 
     memset(&VerifySignReq, 0, sizeof(VerifySignReq));
-
-    // Do not free pResult and pError
-    PNTLM_IPC_VERIFY_SIGN_RESPONSE pResultList = NULL;
-    PNTLM_IPC_ERROR pError = NULL;
 
     VerifySignReq.hContext = *phContext;
     VerifySignReq.pMessage = pMessage;
