@@ -10,6 +10,6 @@ make()
         LIB=schannel \
         INCLUDEDIRS=". ../include" \
         SOURCES="$SCHANNEL_SOURCES" \
-        HEADERDEPS="openssl/crypto.h" \
+        HEADERDEPS="openssl/crypto.h lw/base.h" \
         LIBDEPS="crypto"
 }
