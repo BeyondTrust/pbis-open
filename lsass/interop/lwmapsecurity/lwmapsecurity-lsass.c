@@ -1119,6 +1119,8 @@ cleanup:
         RTL_FREE(&extraGidSidList[i]);
     }
 
+    RTL_FREE(&pszSid);
+
     *CreateInformation = createInformation;
 
     return status;
