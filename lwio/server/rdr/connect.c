@@ -397,7 +397,7 @@ cleanup:
 
 error:
 
-    if (status != STATUS_PENDING && pSocket)
+    if (status != STATUS_PENDING)
     {
         LWIO_UNLOCK_MUTEX(bSocketLocked, &pSocket->mutex);
         RdrSocketInvalidate(pSocket, status);
@@ -475,7 +475,7 @@ cleanup:
 
 error:
 
-    if (status != STATUS_PENDING && pSession)
+    if (status != STATUS_PENDING)
     {
         LWIO_UNLOCK_MUTEX(bSessionLocked, &pSession->mutex);
         RdrSessionInvalidate(pSession, status);
@@ -629,11 +629,8 @@ cleanup:
             SMBGSSContextFree(pContext->State.TreeConnect.hGssContext);
         }
 
-        if (pSession)
-        {
-            RdrSessionInvalidate(pSession, status);
-            RdrSessionRelease(pSession);
-        }
+        RdrSessionInvalidate(pSession, status);
+        RdrSessionRelease(pSession);
 
         RdrSessionSetupComplete(pContext, status, NULL);
     }
