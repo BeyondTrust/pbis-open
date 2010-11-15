@@ -6,8 +6,8 @@ umask 022
 
 . ${BUILD_ROOT}/build/lib/VARS
 
-COMP_ALL="${__COMP_LIST} lwio-fuse"
-SUPPORT_DIRS="build config packaging lwupgrade"
+COMP_ALL="${__COMP_LIST}"
+SUPPORT_DIRS="git-build build config packaging lwupgrade"
 SUPPORT_FILES="README LICENSE"
 
 DIRS="${COMP_ALL} ${SUPPORT_DIRS}"
