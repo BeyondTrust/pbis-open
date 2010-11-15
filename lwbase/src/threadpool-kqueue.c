@@ -878,20 +878,29 @@ LwRtlCreateTaskGroup(
     status = LW_RTL_ALLOCATE_AUTO(&pGroup);
     GOTO_ERROR_ON_STATUS(status);
 
-    status = LwErrnoToNtStatus(pthread_mutex_init(&pGroup->Lock, NULL));
-    GOTO_ERROR_ON_STATUS(status);
-
-    status = LwErrnoToNtStatus(pthread_cond_init(&pGroup->Event, NULL));
-    GOTO_ERROR_ON_STATUS(status);
-
     RingInit(&pGroup->Tasks);
     pGroup->pPool = pPool;
 
+    status = LwErrnoToNtStatus(pthread_mutex_init(&pGroup->Lock, NULL));
+    GOTO_ERROR_ON_STATUS(status);
+    pGroup->bLockInit = TRUE;
+
+    status = LwErrnoToNtStatus(pthread_cond_init(&pGroup->Event, NULL));
+    GOTO_ERROR_ON_STATUS(status);
+    pGroup->bEventInit = TRUE;
+
     *ppGroup = pGroup;
+
+cleanup:
+
+    return status;
 
 error:
 
-    return status;
+    LwRtlFreeTaskGroup(&pGroup);
+    *ppGroup = NULL;
+
+    goto cleanup;
 }
 
 VOID
@@ -943,8 +952,16 @@ LwRtlFreeTaskGroup(
 
     if (pGroup)
     {
-        pthread_mutex_destroy(&pGroup->Lock);
-        pthread_cond_destroy(&pGroup->Event);
+        if (pGroup->bLockInit)
+        {
+            pthread_mutex_destroy(&pGroup->Lock);
+        }
+
+        if (pGroup->bEventInit)
+        {
+            pthread_cond_destroy(&pGroup->Event);
+        }
+
         RtlMemoryFree(pGroup);
 
         *ppGroup = NULL;

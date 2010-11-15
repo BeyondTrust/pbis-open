@@ -105,6 +105,8 @@ typedef struct _LW_TASK_GROUP
     pthread_mutex_t Lock;
     pthread_cond_t Event;
     unsigned bCancelled:1;
+    unsigned bLockInit:1;
+    unsigned bEventInit:1;
 } EPOLL_TASK_GROUP, *PEPOLL_TASK_GROUP;
 
 typedef struct _LW_THREAD_POOL
