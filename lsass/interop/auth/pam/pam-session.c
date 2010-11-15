@@ -127,7 +127,6 @@ pam_sm_open_session(
 
 
     if (pPamContext &&
-        pConfig &&
         pConfig->bLsaPamDisplayMOTD)
     {
         dwError = LsaPamDisplayMOTD(
