@@ -475,7 +475,11 @@ RtlQueryAccessTokenInformation(
     status = STATUS_SUCCESS;
 
 cleanup:
-    *ReturnedLength = requiredSize;
+
+    if (ReturnedLength)
+    {
+        *ReturnedLength = requiredSize;
+    }
 
     return status;
 }
