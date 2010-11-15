@@ -1056,7 +1056,7 @@ dnl AC_CONFIG_SUBDIRS(appl/libpty appl/bsd appl/gssftp appl/telnet)
 AC_CONFIG_FILES(krb5-config, [chmod +x krb5-config])
 V5_AC_OUTPUT_MAKEFILE(.
 
-	util util/support util/profile util/send-pr
+	util util/support util/profile
 
 	lib lib/kdb
 
@@ -1082,14 +1082,6 @@ V5_AC_OUTPUT_MAKEFILE(.
 	kdc slave config-files gen-manpages include
 
 	plugins/locate/python
-	plugins/kdb/db2
-	plugins/kdb/db2/libdb2
-	plugins/kdb/db2/libdb2/hash
-	plugins/kdb/db2/libdb2/btree
-	plugins/kdb/db2/libdb2/db
-	plugins/kdb/db2/libdb2/mpool
-	plugins/kdb/db2/libdb2/recno
-	plugins/kdb/db2/libdb2/test
 	plugins/preauth/cksum_body plugins/preauth/encrypted_challenge
 	plugins/preauth/wpse
 	plugins/authdata/greet
