@@ -31,48 +31,15 @@
 #include "includes.h"
 
 
-DSR_BINDING
-CreateDsrBinding(
-    DSR_BINDING *binding,
-    const wchar16_t *host
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    LW_PIO_CREDS creds = NULL;
-
-    if (binding == NULL || host == NULL) return NULL;
-
-    if (LwIoGetActiveCreds(NULL, &creds) != STATUS_SUCCESS)
-    {
-        *binding = NULL;
-        goto error;
-    }
-
-    ntStatus = DsrInitBindingDefault(binding, host, creds);
-    if (ntStatus)
-    {
-        *binding = NULL;
-        goto error;
-    }
-
-error:
-    if (creds)
-    {
-        LwIoDeleteCreds(creds);
-    }
-
-    return *binding;
-}
-
-
-int
+static
+DWORD
 TestDsrRoleGetPrimaryDomainInformation(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefLevel = (WORD)(-1);
@@ -80,7 +47,7 @@ TestDsrRoleGetPrimaryDomainInformation(
     BOOLEAN bRet = TRUE;
     WINERROR err = ERROR_SUCCESS;
     enum param_err perr = perr_success;
-    DSR_BINDING hBinding = NULL;
+    DSR_BINDING hDsr = NULL;
     DWORD dwSelectedLevels[] = {0};
     DWORD dwAvailableLevels[] = { DS_ROLE_BASIC_INFORMATION,
                                   DS_ROLE_UPGRADE_STATUS,
@@ -91,13 +58,13 @@ TestDsrRoleGetPrimaryDomainInformation(
     DWORD i = 0;
     PDSR_ROLE_INFO pInfo = NULL;
 
-    perr = fetch_value(options, optcount, "level", pt_uint32, &dwLevel,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32, &dwLevel,
                        &dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     PARAM_INFO("level", pt_uint32, &dwLevel);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
     if (dwLevel == (WORD)(-1))
     {
@@ -111,11 +78,14 @@ TestDsrRoleGetPrimaryDomainInformation(
         dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
     }
 
-    CreateDsrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hDsr),
+                             RPC_DSSETUP_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
     for (i = 0; i < dwNumLevels; i++)
@@ -125,7 +95,7 @@ TestDsrRoleGetPrimaryDomainInformation(
         INPUT_ARG_UINT(dwLevel);
 
         CALL_NETAPI(err, DsrRoleGetPrimaryDomainInformation(
-                                    hBinding,
+                                    hDsr,
                                     dwLevel,
                                     &pInfo));
         BAIL_ON_WIN_ERROR(err);
@@ -159,10 +129,9 @@ TestDsrRoleGetPrimaryDomainInformation(
         }
     }
 
-done:
-error:
-    DsrFreeBinding(&hBinding);
+    DsrFreeBinding(&hDsr);
 
+error:
     if (pInfo)
     {
         DsrFreeMemory(pInfo);
@@ -177,10 +146,8 @@ error:
 }
 
 
-void
-SetupDsrTests(
-    struct test *t
-    )
+VOID
+SetupDsrTests(PTEST t)
 {
     AddTest(t, "DSR-ROLE-GET-PDC-INFO", TestDsrRoleGetPrimaryDomainInformation);
 }

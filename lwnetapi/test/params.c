@@ -80,7 +80,11 @@ static char* cleanup_sep(char *s, char sep)
 /*
  * Splits a string into array of strings given separator character
  */
-char** get_string_list(char *list, const char sep)
+PSTR*
+get_string_list(
+    PSTR       list,
+    const CHAR sep
+    )
 {
     char **ret;
     char *start, *end = NULL;
@@ -128,6 +132,25 @@ char** get_string_list(char *list, const char sep)
 }
 
 
+VOID
+free_string_list(
+    PSTR *ppArray
+    )
+{
+    PSTR pStr = NULL;
+    DWORD dwCount = 0;
+
+    pStr = ppArray[dwCount];
+    while (pStr)
+    {
+        free(pStr);
+        pStr = ppArray[++dwCount];
+    }
+
+    free(ppArray);
+}
+
+
 /*
  * Returns array of strings for multi-value parameters
  */
@@ -165,82 +188,93 @@ char** get_value_list(const char *list)
  * Parses string of optional parameters (key=value pairs) into array
  * of structures.
  */
-struct parameter* get_optional_params(char *opt, int *count)
+PPARAMETER
+get_optional_params(
+    PSTR    pszOpt,
+    PDWORD  pdwCount
+    )
 {
     const char separator = ',';
     const char equal = '=';
-    struct parameter *params;
-    char **opts;
+    PPARAMETER pParams = NULL;
+    PSTR *ppszOpts = NULL;
     int i;
 
-    if (!opt) {
-        if (count) *count = 0;
+    if (!pszOpt) {
+        if (pdwCount) *pdwCount = 0;
         return NULL;
     }
 
-    if (!count) return NULL;
+    if (!pdwCount) return NULL;
 
-    *count = 0;
+    *pdwCount = 0;
     i = 0;
 
-    opts = get_string_list(opt, separator);
-    if (opts == NULL) return NULL;
+    ppszOpts = get_string_list(pszOpt, separator);
+    if (ppszOpts == NULL) return NULL;
 
-    while (opts[(*count)]) (*count)++;
+    while (ppszOpts[(*pdwCount)]) (*pdwCount)++;
 
-    params = (struct parameter*) malloc(sizeof(struct parameter) * (*count));
-    if (params == NULL) return NULL;
+    pParams = (PPARAMETER) malloc(sizeof(*pParams) * (*pdwCount));
+    if (pParams == NULL) return NULL;
 
-    while (opts[i]) {
+    while (ppszOpts[i])
+    {
         size_t key_size, val_size;
-        char *param = opts[i];
+        char *param = ppszOpts[i];
         char *value = strchr(param, equal);
 
-        if (param) {
+        if (param)
+        {
             key_size = (size_t)(value - param);
-            params[i].key = strndup(param, key_size);
+            pParams[i].key = strndup(param, key_size);
 
             if (value) {
                 val_size = strlen(param) - key_size - 1; /* equal char doesn't count */
-                params[i].val = strndup((char*)(value + sizeof(char)), val_size);
+                pParams[i].val = strndup((char*)(value + sizeof(char)), val_size);
 
             } else {
                 /* if param is specified but does not equal to anything we can
                    assume it's a boolean flag set */
-                params[i].val = strdup("1");
+                pParams[i].val = strdup("1");
             }
 
             i++;
         }
     }
 
-    for (i = 0; i < (*count); i++) {
-        free(opts[i]);
+    for (i = 0; i < (*pdwCount); i++)
+    {
+        free(ppszOpts[i]);
     }
-    free(opts);
+    free(ppszOpts);
 
-    return params;
+    return pParams;
 }
 
 
-const char* find_value(struct parameter *params, int count, const char *key)
+PCSTR find_value(
+    PPARAMETER pParams,
+    DWORD      dwCount,
+    PCSTR      pszKey
+    )
 {
     int i = 0;
     size_t sParamLen = 0;
-    size_t sKeyLen = strlen(key);
+    size_t sKeyLen = strlen(pszKey);
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < dwCount; i++)
     {
-        sParamLen = strlen(params[i].key);
+        sParamLen = strlen(pParams[i].key);
 
         if (sParamLen != sKeyLen)
         {
             continue;
         }
 
-        if (memcmp(params[i].key, key, sKeyLen) == 0)
+        if (memcmp(pParams[i].key, pszKey, sKeyLen) == 0)
         {
-            return params[i].val;
+            return pParams[i].val;
         }
     }
 
@@ -325,9 +359,14 @@ PSID* create_sid_list(char **strlist)
 }
 
 
-enum param_err fetch_value(struct parameter *params, int count,
-                           const char *key, enum param_type type,
-                           void *val, const void *def)
+enum param_err fetch_value(
+    PPARAMETER pParams,
+    int count,
+    const char *key,
+    enum param_type type,
+    void *val,
+    const void *def
+    )
 {
     const char *value;
     NTSTATUS status;
@@ -343,10 +382,10 @@ enum param_err fetch_value(struct parameter *params, int count,
     enum param_err ret = perr_success;
     int i = 0;
 
-    if (params && !key) return perr_nullptr_passed;
+    if (pParams && !key) return perr_nullptr_passed;
     if (!val) return perr_invalid_out_param;
 
-    value = find_value(params, count, key);
+    value = find_value(pParams, count, key);
     if (!value && !def) return perr_not_found;
 
     switch (type) {

@@ -1,6 +1,6 @@
 /* Editor Settings: expandtabs and use 4 spaces for indentation
  * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
- * -*- mode: c, c-basic-offset: 4 -*- */
+ */
 
 /*
  * Copyright Likewise Software    2004-2008
@@ -31,10 +31,11 @@
 #ifndef _PARAMS_H_
 #define _PARAMS_H_
 
-struct parameter {
-    char *key;
-    char *val;
-};
+typedef struct _PARAMETER
+{
+    PSTR  key;
+    PSTR  val;
+} PARAMETER, *PPARAMETER;
 
 
 enum param_type {
@@ -85,11 +86,39 @@ const char *param_errstr(enum param_err perr);
     }
 
 
-struct parameter* get_optional_params(char *opt, int *count);
-const char* find_value(struct parameter *params, int count, const char *key);
-enum param_err fetch_value(struct parameter *params, int count,
-			   const char *key, enum param_type type, void *val,
-			   const void *def);
+PSTR*
+get_string_list(
+    PSTR       list,
+    const CHAR sep
+    );
+
+VOID
+free_string_list(
+    PSTR *ppArray
+    );
+
+PPARAMETER
+get_optional_params(
+    PSTR   pszOpt,
+    PDWORD pdwCount
+    );
+
+PCSTR find_value(
+    PPARAMETER pParams,
+    DWORD      dwCount,
+    PCSTR      pszKey
+    );
+
+
+enum param_err fetch_value(
+    PPARAMETER pParams,
+    int count,
+    const char *key,
+    enum param_type type,
+    void *val,
+    const void *def
+    );
+
 
 void ParamInfo(const char* name, enum param_type type, void *value);
 

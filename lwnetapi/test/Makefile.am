@@ -3,13 +3,14 @@ netapi_builddir = $(top_builddir)/src
 bin_PROGRAMS = netapitest
 
 netapitest_SOURCES =    \
-    netapitest.c     \
-    params.c         \
-    test_netapi.c    \
-    test_samr.c      \
-    test_lsa.c       \
-    test_netlogon.c  \
-    test_dssetup.c   \
+    netapitest.c        \
+    params.c            \
+    common.c            \
+    test_netapi.c       \
+    test_samr.c         \
+    test_lsa.c          \
+    test_netlogon.c     \
+    test_dssetup.c      \
     test_wkssvc.c
 
 netapitest_CPPFLAGS =          \
@@ -23,9 +24,9 @@ netapitest_CFLAGS =            \
     -D_GNU_SOURCE
 
 
-netapitest_LDFLAGS =                    \
-    $(AM_LDFLAGS)                       \
-    $(LWBASE_LDFLAGS)                   \
+netapitest_LDFLAGS =           \
+    $(AM_LDFLAGS)              \
+    $(LWBASE_LDFLAGS)          \
     $(LWADVAPI_LDFLAGS)
 
 netapitest_LDADD =                            \

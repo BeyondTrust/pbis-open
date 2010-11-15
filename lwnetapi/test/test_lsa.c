@@ -31,6 +31,121 @@
 #include "includes.h"
 
 
+typedef struct _TEST_LOOKUP
+{
+    PSTR    pszDomainName;
+    PSTR    pszName;
+    PSTR    pszSid;
+    DWORD   dwRid;
+    DWORD   dwType;
+} TEST_LOOKUP, *PTEST_LOOKUP;
+
+
+static
+DWORD
+TestFormatNT4Name(
+    PWSTR  *ppwszNT4Name,
+    PWSTR   pwszDomain,
+    PWSTR   pwszName
+    );
+
+static
+DWORD
+TestGetLookupTestSet(
+    PTEST_LOOKUP  *ppTestSet,
+    PDWORD         pdwNumNames,
+    PCSTR          pszTestSetName
+    );
+
+static
+DWORD
+TestLsaLookupNames(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaLookupNames2(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaLookupNames3(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaLookupSids(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaQueryInfoPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaQueryInfoPolicy2(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaInfoPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestLsaOpenPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
 BOOLEAN
 CallLsaOpenPolicy(
     LSA_BINDING     hBinding,
@@ -43,6 +158,7 @@ CallLsaOpenPolicy(
     );
 
 
+static
 BOOLEAN
 CallLsaLookupNames(
     LSA_BINDING    hBinding,
@@ -55,6 +171,7 @@ CallLsaLookupNames(
     );
 
 
+static
 BOOLEAN
 CallLsaLookupNames2(
     LSA_BINDING    hBinding,
@@ -67,6 +184,7 @@ CallLsaLookupNames2(
     );
 
 
+static
 BOOLEAN
 CallLsaLookupNames3(
     LSA_BINDING    hBinding,
@@ -79,6 +197,7 @@ CallLsaLookupNames3(
     );
 
 
+static
 BOOLEAN
 CallLsaLookupSids(
     LSA_BINDING    hBinding,
@@ -91,21 +210,12 @@ CallLsaLookupSids(
     );
 
 
+static
 BOOLEAN
 CallLsaClosePolicy(
     LSA_BINDING    hBinding,
     POLICY_HANDLE *phPolicy
     );
-
-
-typedef struct _TEST_LOOKUP
-{
-    PSTR    pszDomainName;
-    PSTR    pszName;
-    PSTR    pszSid;
-    DWORD   dwRid;
-    DWORD   dwType;
-} TEST_LOOKUP, *PTEST_LOOKUP;
 
 
 static
@@ -202,42 +312,16 @@ TEST_LOOKUP DomainNames[] = {
 };
 
 
-LSA_BINDING
-CreateLsaBinding(
-    PLSA_BINDING     phBinding,
-    const wchar16_t *hostname
+static
+DWORD
+TestLsaOpenPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    PIO_CREDS creds = NULL;
-
-    if (phBinding == NULL) return NULL;
-
-    if (LwIoGetActiveCreds(NULL, &creds) != STATUS_SUCCESS)
-    {
-        return NULL;
-    }
-
-    ntStatus = LsaInitBindingDefault(phBinding, hostname, creds);
-    if (ntStatus != STATUS_SUCCESS)
-    {
-        *phBinding = NULL;
-        goto done;
-    }
-
-done:
-    if (creds)
-    {
-        LwIoDeleteCreds(creds);
-    }
-
-    return *phBinding;
-}
-
-
-int TestLsaOpenPolicy(struct test *t, const wchar16_t *hostname,
-                      const wchar16_t *user, const wchar16_t *pass,
-                      struct parameter *options, int optcount)
 {
     const DWORD dwAccessRights = LSA_ACCESS_LOOKUP_NAMES_SIDS;
 
@@ -246,36 +330,35 @@ int TestLsaOpenPolicy(struct test *t, const wchar16_t *hostname,
     LSA_BINDING hLsa = NULL;
     POLICY_HANDLE hPolicy = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    hLsa = CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
-
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
     INPUT_ARG_PTR(hLsa);
-    INPUT_ARG_WSTR(hostname);
+    INPUT_ARG_WSTR(pwszHostname);
     INPUT_ARG_UINT(dwAccessRights);
 
-    CALL_MSRPC(ntStatus, LsaOpenPolicy2(hLsa, hostname, NULL,
+    CALL_MSRPC(ntStatus, LsaOpenPolicy2(hLsa, pwszHostname, NULL,
                                         dwAccessRights, &hPolicy));
-    if (ntStatus != 0) rpc_fail(ntStatus);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     OUTPUT_ARG_PTR(hLsa);
     OUTPUT_ARG_PTR(hPolicy);
 
     ntStatus = LsaClose(hLsa, hPolicy);
-    if (ntStatus != 0) rpc_fail(ntStatus);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     LsaFreeBinding(&hLsa);
 
-done:
+error:
     return bRet;
 }
 
 
+static
 DWORD
 TestFormatNT4Name(
     PWSTR  *ppwszNT4Name,
@@ -345,6 +428,7 @@ error:
 }
 
 
+static
 DWORD
 TestGetLookupTestSet(
     PTEST_LOOKUP   *ppTestSet,
@@ -384,14 +468,15 @@ error:
 }
 
 
-int
+static
+DWORD
 TestLsaLookupNames(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "\\\\";
@@ -429,26 +514,26 @@ TestLsaLookupNames(
     PWSTR *ppwszRetNames = NULL;
     PTEST_LOOKUP pTestNames = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        (UINT32*)&pszTestSetName, (UINT32*)&pszDefTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "revlookup", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "revlookup", pt_uint32,
                        (UINT32*)&bRevLookup, (UINT32*)&bDefRevLookup);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     dwError = TestGetLookupTestSet(&pTestNames, &dwNumNames, pszTestSetName);
     BAIL_ON_WIN_ERROR(dwError);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
     PARAM_INFO("systemname", pt_w16string, &pwszSysName);
     PARAM_INFO("level", pt_uint32, &dwLevel);
@@ -465,12 +550,11 @@ TestLsaLookupNames(
         dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
     }
 
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
     bRet &= CallLsaOpenPolicy(hLsa, NULL, 0, &hPolicy,
                               &pwszDomainName, NULL, NULL);
@@ -585,7 +669,6 @@ TestLsaLookupNames(
 
     bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
 
-done:
 error:
     if (ntStatus != STATUS_SUCCESS ||
         dwError != ERROR_SUCCESS)
@@ -597,14 +680,14 @@ error:
 }
 
 
-int
+DWORD
 TestLsaLookupNames2(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "\\\\";
@@ -642,26 +725,26 @@ TestLsaLookupNames2(
     PWSTR *ppwszRetNames = NULL;
     PTEST_LOOKUP pTestNames = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        (UINT32*)&pszTestSetName, (UINT32*)&pszDefTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "revlookup", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "revlookup", pt_uint32,
                        (UINT32*)&bRevLookup, (UINT32*)&bDefRevLookup);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     dwError = TestGetLookupTestSet(&pTestNames, &dwNumNames, pszTestSetName);
     BAIL_ON_WIN_ERROR(dwError);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
     PARAM_INFO("systemname", pt_w16string, &pwszSysName);
     PARAM_INFO("level", pt_uint32, &dwLevel);
@@ -678,12 +761,11 @@ TestLsaLookupNames2(
         dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
     }
 
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
     bRet &= CallLsaOpenPolicy(hLsa, NULL, 0, &hPolicy,
                               &pwszDomainName, NULL, NULL);
@@ -798,7 +880,6 @@ TestLsaLookupNames2(
 
     bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
 
-done:
 error:
     if (ntStatus != STATUS_SUCCESS ||
         dwError != ERROR_SUCCESS)
@@ -810,14 +891,14 @@ error:
 }
 
 
-int
+DWORD
 TestLsaLookupNames3(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "\\\\";
@@ -855,26 +936,26 @@ TestLsaLookupNames3(
     PWSTR *ppwszRetNames = NULL;
     PTEST_LOOKUP pTestNames = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        (UINT32*)&pszTestSetName, (UINT32*)&pszDefTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "revlookup", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "revlookup", pt_uint32,
                        (UINT32*)&bRevLookup, (UINT32*)&bDefRevLookup);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     dwError = TestGetLookupTestSet(&pTestNames, &dwNumNames, pszTestSetName);
     BAIL_ON_WIN_ERROR(dwError);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
     PARAM_INFO("systemname", pt_w16string, &pwszSysName);
     PARAM_INFO("level", pt_uint32, &dwLevel);
@@ -891,12 +972,11 @@ TestLsaLookupNames3(
         dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
     }
 
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
     bRet &= CallLsaOpenPolicy(hLsa, NULL, 0, &hPolicy,
                               &pwszDomainName, NULL, NULL);
@@ -1011,7 +1091,6 @@ TestLsaLookupNames3(
 
     bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
 
-done:
 error:
     if (ntStatus != STATUS_SUCCESS ||
         dwError != ERROR_SUCCESS)
@@ -1023,14 +1102,15 @@ error:
 }
 
 
-int
+static
+DWORD
 TestLsaLookupSids(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "\\\\";
@@ -1068,26 +1148,26 @@ TestLsaLookupSids(
     PTEST_LOOKUP pTestSids = NULL;
     PWSTR pwszNT4Name = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        (UINT32*)&pszTestSetName, (UINT32*)&pszDefTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "revlookup", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "revlookup", pt_uint32,
                        (UINT32*)&bRevLookup, (UINT32*)&bDefRevLookup);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     dwError = TestGetLookupTestSet(&pTestSids, &dwNumSids, pszTestSetName);
     BAIL_ON_WIN_ERROR(dwError);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
     PARAM_INFO("systemname", pt_w16string, &pwszSysName);
     PARAM_INFO("level", pt_uint32, &dwLevel);
@@ -1104,12 +1184,11 @@ TestLsaLookupSids(
         dwNumLevels = sizeof(dwSelectedLevels)/sizeof(dwSelectedLevels[0]);
     }
 
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
     bRet &= CallLsaOpenPolicy(hLsa, NULL, 0, &hPolicy,
                               &pwszDomainName, NULL, &pDomainSid);
@@ -1222,7 +1301,6 @@ TestLsaLookupSids(
 
     bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
 
-done:
 error:
     if (ntStatus != STATUS_SUCCESS ||
         dwError != ERROR_SUCCESS)
@@ -1234,9 +1312,16 @@ error:
 }
 
 
-int TestLsaQueryInfoPolicy(struct test *t, const wchar16_t *hostname,
-                           const wchar16_t *user, const wchar16_t *pass,
-                           struct parameter *options, int optcount)
+static
+DWORD
+TestLsaQueryInfoPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 access_rights = LSA_ACCESS_LOOKUP_NAMES_SIDS |
                                  LSA_ACCESS_VIEW_POLICY_INFO;
@@ -1251,22 +1336,24 @@ int TestLsaQueryInfoPolicy(struct test *t, const wchar16_t *hostname,
     LsaPolicyInformation *info = NULL;
     UINT32 level = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32, &level,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32, &level,
                        &def_level);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    hLsa = CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
-    ntStatus = LsaOpenPolicy2(hLsa, hostname, NULL, access_rights,
-                            &hPolicy);
-    if (ntStatus != 0) rpc_fail(ntStatus);
+    ntStatus = LsaOpenPolicy2(hLsa,
+                              pwszHostname,
+                              NULL,
+                              access_rights,
+                              &hPolicy);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     /*
      * level = 1 doesn't work yet for some reason (unmarshalling error probably)
@@ -1317,16 +1404,21 @@ int TestLsaQueryInfoPolicy(struct test *t, const wchar16_t *hostname,
     ntStatus = LsaClose(hLsa, hPolicy);
     LsaFreeBinding(&hLsa);
 
-done:
 error:
-
     return bRet;
 }
 
 
-int TestLsaQueryInfoPolicy2(struct test *t, const wchar16_t *hostname,
-                            const wchar16_t *user, const wchar16_t *pass,
-                            struct parameter *options, int optcount)
+static
+DWORD
+TestLsaQueryInfoPolicy2(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 access_rights = LSA_ACCESS_LOOKUP_NAMES_SIDS |
                                  LSA_ACCESS_ENABLE_LSA |
@@ -1351,22 +1443,24 @@ int TestLsaQueryInfoPolicy2(struct test *t, const wchar16_t *hostname,
     LsaPolicyInformation *info = NULL;
     UINT32 level = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32, &level,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32, &level,
                        &def_level);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    hLsa = CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
-    ntStatus = LsaOpenPolicy2(hLsa, hostname, NULL, access_rights,
-                            &hPolicy);
-    if (ntStatus != 0) rpc_fail(ntStatus);
+    ntStatus = LsaOpenPolicy2(hLsa,
+                              pwszHostname,
+                              NULL,
+                              access_rights,
+                              &hPolicy);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     /*
      * level = 1 doesn't work yet for some reason (unmarshalling error probably)
@@ -1417,13 +1511,12 @@ int TestLsaQueryInfoPolicy2(struct test *t, const wchar16_t *hostname,
     ntStatus = LsaClose(hLsa, hPolicy);
     LsaFreeBinding(&hLsa);
 
-done:
 error:
     return bRet;
 }
 
 
-
+static
 BOOLEAN
 CallLsaLookupNames(
     LSA_BINDING    hBinding,
@@ -1559,6 +1652,7 @@ error:
 }
 
 
+static
 BOOLEAN
 CallLsaLookupNames2(
     LSA_BINDING    hBinding,
@@ -1694,6 +1788,7 @@ error:
 }
 
 
+static
 BOOLEAN
 CallLsaLookupNames3(
     LSA_BINDING    hBinding,
@@ -1819,6 +1914,7 @@ error:
 }
 
 
+static
 BOOLEAN
 CallLsaLookupSids(
     LSA_BINDING    hBinding,
@@ -1982,6 +2078,7 @@ error:
 }
 
 
+static
 BOOLEAN
 CallLsaOpenPolicy(
     LSA_BINDING      hBinding,
@@ -2166,6 +2263,7 @@ error:
 }
 
 
+static
 BOOLEAN
 CallLsaClosePolicy(
     LSA_BINDING    hBinding,
@@ -2188,10 +2286,16 @@ error:
 }
 
 
-int
-TestLsaInfoPolicy(struct test *t, const wchar16_t *hostname,
-                      const wchar16_t *user, const wchar16_t *pass,
-                      struct parameter *options, int optcount)
+static
+DWORD
+TestLsaInfoPolicy(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefSysName = "";
 
@@ -2201,31 +2305,17 @@ TestLsaInfoPolicy(struct test *t, const wchar16_t *hostname,
     POLICY_HANDLE hPolicy = NULL;
     PWSTR pwszSysName = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
-
-    bRet &= CallLsaOpenPolicy(hLsa, pwszSysName, 0, &hPolicy, NULL, NULL, NULL);
-
-    bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
-
-    LsaFreeBinding(&hLsa);
-
-    CreateLsaBinding(&hLsa, hostname);
-    if (hLsa == NULL)
-    {
-        bRet = FALSE;
-        goto done;
-    }
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
 
     bRet &= CallLsaOpenPolicy(hLsa, pwszSysName, 0, &hPolicy, NULL, NULL, NULL);
 
@@ -2233,14 +2323,26 @@ TestLsaInfoPolicy(struct test *t, const wchar16_t *hostname,
 
     LsaFreeBinding(&hLsa);
 
-done:
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hLsa),
+                             RPC_LSA_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+
+    bRet &= CallLsaOpenPolicy(hLsa, pwszSysName, 0, &hPolicy, NULL, NULL, NULL);
+
+    bRet &= CallLsaClosePolicy(hLsa, &hPolicy);
+
+    LsaFreeBinding(&hLsa);
+
     LW_SAFE_FREE_MEMORY(pwszSysName);
 
     return (int)bRet;
 }
 
 
-void SetupLsaTests(struct test *t)
+VOID
+SetupLsaTests(PTEST t)
 {
     AddTest(t, "LSA-OPEN-POLICY", TestLsaOpenPolicy);
     AddTest(t, "LSA-LOOKUP-NAMES", TestLsaLookupNames);

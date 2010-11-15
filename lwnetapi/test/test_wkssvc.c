@@ -39,6 +39,50 @@ CallNetrWkstaGetInfo(
     PDWORD             pdwLevels,
     DWORD              dwNumLevels,
     PNETR_WKSTA_INFO  *ppInfo
+    );
+
+static
+DWORD
+TestNetrWkstaGetInfo(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestNetrJoinDomain2(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestNetrUnjoinDomain2(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+
+static
+BOOLEAN
+CallNetrWkstaGetInfo(
+    WKSS_BINDING       hBinding,
+    PWSTR              pwszServerName,
+    PDWORD             pdwLevels,
+    DWORD              dwNumLevels,
+    PNETR_WKSTA_INFO  *ppInfo
     )
 {
     BOOLEAN bRet = TRUE;
@@ -73,47 +117,15 @@ error:
 }
 
 
-WKSS_BINDING
-CreateWkssBinding(
-    PWKSS_BINDING     phBinding,
-    const wchar16_t  *hostname
-    )
-{
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    PIO_CREDS creds = NULL;
-
-    if (phBinding == NULL) return NULL;
-
-    if (LwIoGetActiveCreds(NULL, &creds) != STATUS_SUCCESS)
-    {
-        return NULL;
-    }
-
-    ntStatus = WkssInitBindingDefault(phBinding, hostname, creds);
-    if (ntStatus != STATUS_SUCCESS)
-    {
-        *phBinding = NULL;
-        goto done;
-    }
-
-done:
-    if (creds)
-    {
-        LwIoDeleteCreds(creds);
-    }
-
-    return *phBinding;
-}
-
-
-int
+static
+DWORD
 TestNetrWkstaGetInfo(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefLevel = -1;
@@ -121,7 +133,7 @@ TestNetrWkstaGetInfo(
     BOOLEAN bRet = TRUE;
     WINERROR winError = ERROR_SUCCESS;
     enum param_err perr = perr_success;
-    WKSS_BINDING hBinding = NULL;
+    WKSS_BINDING hWkss = NULL;
     PWSTR pwszServerName = NULL;
     DWORD dwSelectedLevels[] = {0};
     DWORD dwAvailableLevels[] = {100};
@@ -131,22 +143,25 @@ TestNetrWkstaGetInfo(
     DWORD dwLevel = 0;
     PNETR_WKSTA_INFO pWkstaInfo = NULL;
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateWkssBinding(&hBinding, hostname);
-    if (hBinding == NULL)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hWkss),
+                             RPC_WKSSVC_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
-    if (hostname)
+    if (pwszHostname)
     {
-        winError = LwAllocateWc16String(&pwszServerName, hostname);
+        winError = LwAllocateWc16String(&pwszServerName, pwszHostname);
         BAIL_ON_WIN_ERROR(winError);
     }
 
@@ -166,17 +181,16 @@ TestNetrWkstaGetInfo(
     {
         dwLevel = pdwLevels[iLevel];
 
-        bRet &= CallNetrWkstaGetInfo(hBinding,
+        bRet &= CallNetrWkstaGetInfo(hWkss,
                                      pwszServerName,
                                      pdwLevels,
                                      dwNumLevels,
                                      &pWkstaInfo);
     }
 
-cleanup:
-error:
-    WkssFreeBinding(&hBinding);
+    WkssFreeBinding(&hWkss);
 
+error:
     for (iLevel = 0; iLevel < dwNumLevels; iLevel++)
     {
         if (pWkstaInfo[iLevel].pInfo100)
@@ -194,14 +208,15 @@ error:
 }
 
 
-int
+static
+DWORD
 TestNetrJoinDomain2(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefAccountOu = "";
@@ -211,7 +226,7 @@ TestNetrJoinDomain2(
     WINERROR winError = ERROR_SUCCESS;
     unsigned32 rpcStatus = RPC_S_OK;
     enum param_err perr = perr_success;
-    WKSS_BINDING hBinding = NULL;
+    WKSS_BINDING hWkss = NULL;
     DWORD dwLevels[] = {100};
     PNETR_WKSTA_INFO pWkstaInfo = NULL;
     PWSTR pwszServerName = NULL;
@@ -241,34 +256,37 @@ TestNetrJoinDomain2(
     memset(&key, 0, sizeof(key));
     memset(&PasswordBuffer, 0, sizeof(PasswordBuffer));
 
-    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
                        &pwszDomainName, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "ou", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "ou", pt_w16string,
                        &pwszAccountOu, &pszDefAccountOu);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "account", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "account", pt_w16string,
                        &pwszAccountName, &pszDefAccountName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "password", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "password", pt_w16string,
                        &pwszPassword, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateWkssBinding(&hBinding, hostname);
-    if (hBinding == NULL)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hWkss),
+                             RPC_WKSSVC_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
-    if (hostname)
+    if (pwszHostname)
     {
-        winError = LwAllocateWc16String(&pwszServerName, hostname);
+        winError = LwAllocateWc16String(&pwszServerName, pwszHostname);
         BAIL_ON_WIN_ERROR(winError);
     }
 
@@ -282,19 +300,19 @@ TestNetrJoinDomain2(
     }
 
     /* This is only to create a connection and get a valid session key */
-    bRet &= CallNetrWkstaGetInfo(hBinding,
+    bRet &= CallNetrWkstaGetInfo(hWkss,
                                  pwszServerName,
                                  dwLevels,
                                  (sizeof(dwLevels)/sizeof(dwLevels[0])),
                                  &pWkstaInfo);
 
-    rpc_binding_inq_transport_info(hBinding,
+    rpc_binding_inq_transport_info(hWkss,
                                    &hTransportInfo,
                                    &rpcStatus);
 
     if (hTransportInfo)
     {
-        rpc_binding_inq_prot_seq(hBinding,
+        rpc_binding_inq_prot_seq(hWkss,
                                  (unsigned32*)&dwProtSeq,
                                  &rpcStatus);
 
@@ -319,7 +337,7 @@ TestNetrJoinDomain2(
     else
     {
         bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
     
@@ -348,7 +366,7 @@ TestNetrJoinDomain2(
     if (!RAND_bytes(KeyInit, sizeof(KeyInit)))
     {
         bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
     MD5_Init(&ctx);
@@ -370,7 +388,7 @@ TestNetrJoinDomain2(
     iByte += sizeof(KeyInit);
     memcpy(&PasswordBuffer.data[iByte], PasswordBlob, sizeof(PasswordBlob));
 
-    winError = NetrJoinDomain2(hBinding,
+    winError = NetrJoinDomain2(hWkss,
                                pwszServerName,
                                pwszDomainName,
                                pwszAccountOu,
@@ -382,9 +400,9 @@ TestNetrJoinDomain2(
         bRet = FALSE;
     }
 
-cleanup:
+    WkssFreeBinding(&hWkss);
+
 error:
-    WkssFreeBinding(&hBinding);
 
     if (pWkstaInfo[0].pInfo100)
     {
@@ -407,14 +425,15 @@ error:
 }
 
 
-int
+static
+DWORD
 TestNetrUnjoinDomain2(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefAccountName = "Administrator";
@@ -423,7 +442,7 @@ TestNetrUnjoinDomain2(
     WINERROR winError = ERROR_SUCCESS;
     unsigned32 rpcStatus = RPC_S_OK;
     enum param_err perr = perr_success;
-    WKSS_BINDING hBinding = NULL;
+    WKSS_BINDING hWkss = NULL;
     DWORD dwLevels[] = {100};
     PNETR_WKSTA_INFO pWkstaInfo = NULL;
     PWSTR pwszServerName = NULL;
@@ -451,43 +470,46 @@ TestNetrUnjoinDomain2(
     memset(&key, 0, sizeof(key));
     memset(&PasswordBuffer, 0, sizeof(PasswordBuffer));
 
-    perr = fetch_value(options, optcount, "account", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "account", pt_w16string,
                        &pwszAccountName, &pszDefAccountName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "password", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "password", pt_w16string,
                        &pwszPassword, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateWkssBinding(&hBinding, hostname);
-    if (hBinding == NULL)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hWkss),
+                             RPC_WKSSVC_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
-    if (hostname)
+    if (pwszHostname)
     {
-        winError = LwAllocateWc16String(&pwszServerName, hostname);
+        winError = LwAllocateWc16String(&pwszServerName, pwszHostname);
         BAIL_ON_WIN_ERROR(winError);
     }
 
     /* This is only to create a connection and get a valid session key */
-    bRet &= CallNetrWkstaGetInfo(hBinding,
+    bRet &= CallNetrWkstaGetInfo(hWkss,
                                  pwszServerName,
                                  dwLevels,
                                  (sizeof(dwLevels)/sizeof(dwLevels[0])),
                                  &pWkstaInfo);
 
-    rpc_binding_inq_transport_info(hBinding,
+    rpc_binding_inq_transport_info(hWkss,
                                    &hTransportInfo,
                                    &rpcStatus);
 
     if (hTransportInfo)
     {
-        rpc_binding_inq_prot_seq(hBinding,
+        rpc_binding_inq_prot_seq(hWkss,
                                  &ProtSeq,
                                  &rpcStatus);
 
@@ -514,7 +536,7 @@ TestNetrUnjoinDomain2(
     else
     {
         bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
     
@@ -543,7 +565,7 @@ TestNetrUnjoinDomain2(
     if (!RAND_bytes(KeyInit, sizeof(KeyInit)))
     {
         bRet = FALSE;
-        goto cleanup;
+        goto error;
     }
 
     MD5_Init(&ctx);
@@ -565,7 +587,7 @@ TestNetrUnjoinDomain2(
     iByte += sizeof(KeyInit);
     memcpy(&PasswordBuffer.data[iByte], PasswordBlob, sizeof(PasswordBlob));
 
-    winError = NetrUnjoinDomain2(hBinding,
+    winError = NetrUnjoinDomain2(hWkss,
                                  pwszServerName,
                                  pwszAccountName,
                                  &PasswordBuffer,
@@ -575,10 +597,9 @@ TestNetrUnjoinDomain2(
         bRet = FALSE;
     }
 
-cleanup:
-error:
-    WkssFreeBinding(&hBinding);
+    WkssFreeBinding(&hWkss);
 
+error:
     if (pWkstaInfo[0].pInfo100)
     {
         WkssFreeMemory(pWkstaInfo[0].pInfo100);
@@ -598,7 +619,8 @@ error:
 }
 
 
-void SetupWkssvcTests(struct test *t)
+VOID
+SetupWkssvcTests(PTEST t)
 {
     AddTest(t, "NETR-WKSTA-GET-INFO", TestNetrWkstaGetInfo);
     AddTest(t, "NETR-JOIN-DOMAIN2", TestNetrJoinDomain2);

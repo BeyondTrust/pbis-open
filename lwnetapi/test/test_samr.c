@@ -43,169 +43,6 @@ extern int verbose_mode;
     }
 
 
-static
-BOOLEAN
-CallSamrConnect(
-    SAMR_BINDING hBinding,
-    const wchar16_t *system_name,
-    CONNECT_HANDLE *phConn
-    );
-
-
-static
-BOOLEAN
-CallSamrClose(
-    SAMR_BINDING hBinding,
-    CONNECT_HANDLE *phConn
-    );
-
-
-static
-BOOLEAN
-CallSamrEnumDomains(
-    SAMR_BINDING        hBinding,
-    CONNECT_HANDLE  hConn,
-    PSID           *ppDomainSid,
-    PSID           *ppBuiltinSid
-    );
-
-
-static
-BOOLEAN
-CallSamrOpenDomains(
-    SAMR_BINDING        hBinding,
-    CONNECT_HANDLE  hConn,
-    PSID            pDomainSid,
-    PSID            pBuiltinSid,
-    DWORD           dwAccessRights,
-    DOMAIN_HANDLE  *phDomain,
-    DOMAIN_HANDLE  *phBuiltin
-    );
-
-
-static
-BOOLEAN
-CallSamrEnumDomainUsers(
-    SAMR_BINDING       hBinding,
-    DOMAIN_HANDLE  hDomain,
-    PDWORD        *ppdwUserRids,
-    PDWORD         pdwNumUsers
-    );
-
-
-static
-BOOLEAN
-CallSamrEnumDomainAliases(
-    SAMR_BINDING       hBinding,
-    DOMAIN_HANDLE  hDomain,
-    PDWORD        *ppdwAliasRids,
-    PDWORD         pdwNumAliases
-    );
-
-
-static
-BOOLEAN
-CallSamrQueryDomainUsers(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PDWORD          pdwRids,
-    DWORD           dwNumRids,
-    UserInfo     ***pppInfo
-    );
-
-
-static
-BOOLEAN
-CallSamrQueryDomainAliases(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PDWORD          pdwRids,
-    DWORD           dwNumRids
-    );
-
-
-static
-BOOLEAN
-CallSamrGetAliasMemberships(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PSID            pDomainSid
-    );
-
-
-static
-BOOLEAN
-CallSamrGetMembersInAlias(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PDWORD          pdwAliasRids,
-    DWORD           dwNumRids
-    );
-
-
-static
-BOOLEAN
-CallCreateUserAccounts(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PSTR            pszTestSetName,
-    PDWORD         *ppdwNewAccountRids,
-    PDWORD          pdwNumAccounts,
-    UserInfo     ***pppNewAccountInfo
-    );
-
-
-static
-BOOLEAN
-CallCleanupAccounts(
-    SAMR_BINDING       hBinding,
-    DOMAIN_HANDLE  hDomain,
-    PWSTR         *ppwszUsernames,
-    DWORD          dwNumUsernames
-    );
-
-
-static
-BOOLEAN
-CallSamrDeleteDomainUsers(
-    SAMR_BINDING        hBinding,
-    DOMAIN_HANDLE   hDomain,
-    PDWORD          pdwUserRids,
-    DWORD           dwNumUsers
-    );
-
-
-static
-BOOLEAN
-TestValidateDomainInfo(
-    DomainInfo    **ppDomainInfo
-    );
-
-
-static
-BOOLEAN
-TestValidateUserInfo(
-    UserInfo      **ppUserInfo,
-    DWORD           dwRid
-    );
-
-
-static
-BOOLEAN
-TestValidateAliasInfo(
-    AliasInfo **ppAliasInfo,
-    DWORD       dwRid
-    );
-
-
-static
-BOOLEAN
-TestVerifyUsers(
-    UserInfo   **ppNewUserInfo,
-    UserInfo  ***pppUserInfo,
-    DWORD        dwNumUsers
-    );
-
 
 typedef struct _TEST_USER
 {
@@ -225,6 +62,377 @@ typedef struct _TEST_USER
     DWORD  dwCodePage;
     PSTR   pszPassword;
 } TEST_USER, *PTEST_USER;
+
+
+static
+SAMR_BINDING
+CreateSamrBinding(
+    SAMR_BINDING *binding,
+    const wchar16_t *host
+    );
+
+static
+void
+GetSessionKey(
+    SAMR_BINDING binding,
+    unsigned char** sess_key,
+    unsigned16* sess_key_len,
+    unsigned32* st);
+
+NTSTATUS
+GetSamDomainName(
+    wchar16_t **domname,
+    const wchar16_t *hostname
+    );
+
+NTSTATUS
+GetSamDomainSid(
+    PSID* sid,
+    const wchar16_t *hostname
+    );
+
+static
+NTSTATUS
+EnsureUserAccount(
+    PCWSTR pwszHostname,
+    PWSTR  pwszUsername,
+    PBOOL  pbCreated
+    );
+
+static
+NTSTATUS
+EnsureAlias(
+    PCWSTR pwszHostname,
+    PWSTR  pwszAliasname,
+    PBOOL  pbCreated
+    );
+
+static
+NTSTATUS
+CleanupAlias(
+    PCWSTR pwszHostname,
+    PWSTR  pwszUsername
+    );
+
+static
+DWORD
+TestGetUserAccountTestSet(
+    PTEST_USER     *ppTestSet,
+    PDWORD          pdwNumNames,
+    PCSTR           pszTestSetName
+    );
+
+static
+BOOLEAN
+CallSamrConnect(
+    SAMR_BINDING hBinding,
+    const wchar16_t *system_name,
+    CONNECT_HANDLE *phConn
+    );
+
+static
+BOOLEAN
+CallSamrClose(
+    SAMR_BINDING hBinding,
+    CONNECT_HANDLE *phConn
+    );
+
+static
+BOOLEAN
+CallSamrEnumDomains(
+    SAMR_BINDING        hBinding,
+    CONNECT_HANDLE  hConn,
+    PSID           *ppDomainSid,
+    PSID           *ppBuiltinSid
+    );
+
+static
+BOOLEAN
+CallSamrOpenDomains(
+    SAMR_BINDING        hBinding,
+    CONNECT_HANDLE  hConn,
+    PSID            pDomainSid,
+    PSID            pBuiltinSid,
+    DWORD           dwAccessRights,
+    DOMAIN_HANDLE  *phDomain,
+    DOMAIN_HANDLE  *phBuiltin
+    );
+
+static
+BOOLEAN
+CallSamrEnumDomainUsers(
+    SAMR_BINDING       hBinding,
+    DOMAIN_HANDLE  hDomain,
+    PDWORD        *ppdwUserRids,
+    PDWORD         pdwNumUsers
+    );
+
+static
+BOOLEAN
+CallSamrEnumDomainAliases(
+    SAMR_BINDING       hBinding,
+    DOMAIN_HANDLE  hDomain,
+    PDWORD        *ppdwAliasRids,
+    PDWORD         pdwNumAliases
+    );
+
+static
+BOOLEAN
+CallSamrQueryDomainUsers(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PDWORD          pdwRids,
+    DWORD           dwNumRids,
+    UserInfo     ***pppInfo
+    );
+
+static
+BOOLEAN
+CallSamrQueryDomainAliases(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PDWORD          pdwRids,
+    DWORD           dwNumRids
+    );
+
+static
+BOOLEAN
+CallSamrGetAliasMemberships(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PSID            pDomainSid
+    );
+
+static
+BOOLEAN
+CallSamrGetMembersInAlias(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PDWORD          pdwAliasRids,
+    DWORD           dwNumRids
+    );
+
+static
+BOOLEAN
+CallCreateUserAccounts(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PSTR            pszTestSetName,
+    PDWORD         *ppdwNewAccountRids,
+    PDWORD          pdwNumAccounts,
+    UserInfo     ***pppNewAccountInfo
+    );
+
+static
+BOOLEAN
+CallCleanupAccounts(
+    SAMR_BINDING       hBinding,
+    DOMAIN_HANDLE  hDomain,
+    PWSTR         *ppwszUsernames,
+    DWORD          dwNumUsernames
+    );
+
+static
+BOOLEAN
+CallSamrDeleteDomainUsers(
+    SAMR_BINDING        hBinding,
+    DOMAIN_HANDLE   hDomain,
+    PDWORD          pdwUserRids,
+    DWORD           dwNumUsers
+    );
+
+static
+BOOLEAN
+TestValidateDomainInfo(
+    DomainInfo    **ppDomainInfo
+    );
+
+static
+BOOLEAN
+TestValidateUserInfo(
+    UserInfo      **ppUserInfo,
+    DWORD           dwRid
+    );
+
+static
+BOOLEAN
+TestValidateAliasInfo(
+    AliasInfo **ppAliasInfo,
+    DWORD       dwRid
+    );
+
+static
+BOOLEAN
+TestVerifyUsers(
+    UserInfo   **ppNewUserInfo,
+    UserInfo  ***pppUserInfo,
+    DWORD        dwNumUsers
+    );
+
+static
+DWORD
+TestSamrConnect(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrDomains(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrDomainsQuery(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrUsers(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrQueryUsers(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrAliases(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrQueryAliases(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrAlias(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrUsersInAliases(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrEnumUsers(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrQueryDisplayInfo(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrCreateAlias(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrCreateGroup(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrMultipleConnections(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+DWORD
+TestSamrQuerySecurity(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
 
 
 static
@@ -283,6 +491,7 @@ TEST_USER SimpleStandaloneAccounts[] = {
 };
 
 
+static
 SAMR_BINDING
 CreateSamrBinding(
     SAMR_BINDING *binding,
@@ -470,6 +679,7 @@ done:
 }
 
 
+static
 NTSTATUS
 EnsureUserAccount(
     PCWSTR pwszHostname,
@@ -539,77 +749,7 @@ done:
 }
 
 
-NTSTATUS
-CleanupAccount(
-    PCWSTR pwszHostname,
-    PWSTR  pwszUsername
-    )
-{
-    const UINT32 conn_access = SAMR_ACCESS_OPEN_DOMAIN |
-                               SAMR_ACCESS_ENUM_DOMAINS;
-    const UINT32 domain_access = DOMAIN_ACCESS_OPEN_ACCOUNT;
-    const UINT32 user_access = DELETE;
-
-    SAMR_BINDING samr_b = NULL;
-    NTSTATUS status = STATUS_SUCCESS;
-    CONNECT_HANDLE hConn = NULL;
-    DOMAIN_HANDLE hDomain = NULL;
-    ACCOUNT_HANDLE hAccount = NULL;
-    PSID sid = NULL;
-    wchar16_t *names[1] = {0};
-    UINT32 *rids = NULL;
-    UINT32 *types = NULL;
-    UINT32 rids_count = 0;
-
-    status = GetSamDomainSid(&sid, pwszHostname);
-    if (status != 0) rpc_fail(status);
-
-    CreateSamrBinding(&samr_b, pwszHostname);
-    if (samr_b == NULL) rpc_fail(status);
-
-    status = SamrConnect2(samr_b, pwszHostname, conn_access, &hConn);
-    if (status != 0) rpc_fail(status);
-
-    status = SamrOpenDomain(samr_b, hConn, domain_access, sid, &hDomain);
-    if (status != 0) rpc_fail(status);
-
-    names[0] = pwszUsername;
-    status = SamrLookupNames(samr_b, hDomain, 1, names, &rids, &types,
-                             &rids_count);
-
-    /* if no account has been found return success */
-    if (status == STATUS_NONE_MAPPED) {
-        status = STATUS_SUCCESS;
-        goto done;
-
-    } else if (status != 0) {
-        rpc_fail(status);
-    }
-
-    status = SamrOpenUser(samr_b, hDomain, user_access, rids[0], &hAccount);
-    if (status != 0) rpc_fail(status);
-
-    status = SamrDeleteUser(samr_b, hAccount);
-    if (status != 0) rpc_fail(status);
-
-    status = SamrClose(samr_b, hDomain);
-    if (status != 0) rpc_fail(status);
-
-    status = SamrClose(samr_b, hConn);
-    if (status != 0) rpc_fail(status);
-
-    SamrFreeBinding(&samr_b);
-
-done:
-    if (rids) SamrFreeMemory((void*)rids);
-    if (types) SamrFreeMemory((void*)types);
-
-    LW_SAFE_FREE_MEMORY(sid);
-
-    return status;
-}
-
-
+static
 NTSTATUS
 EnsureAlias(
     PCWSTR pwszHostname,
@@ -679,6 +819,7 @@ done:
 }
 
 
+static
 NTSTATUS
 CleanupAlias(
     PCWSTR pwszHostname,
@@ -750,6 +891,7 @@ done:
 }
 
 
+static
 DWORD
 TestGetUserAccountTestSet(
     PTEST_USER     *ppTestSet,
@@ -780,9 +922,6 @@ TestGetUserAccountTestSet(
 error:
     return dwError;
 }
-
-
-
 
 
 static
@@ -2810,108 +2949,130 @@ TestVerifyUsers(
 }
 
 
-int
-TestSamrConnect(struct test *t, const wchar16_t *hostname,
-                const wchar16_t *user, const wchar16_t *pass,
-                struct parameter *options, int optcount)
+static
+DWORD
+TestSamrConnect(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefSysName = NULL;
 
-    BOOL bRet = TRUE;
+    BOOLEAN bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PWSTR pwszSysName = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrClose(hBinding,
+    bRet &= CallSamrClose(hSamr,
                           &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pwszSysName);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
-
-int
-TestSamrDomains(struct test *t, const wchar16_t *hostname,
-                const wchar16_t *user, const wchar16_t *pass,
-                struct parameter *options, int optcount)
+static
+DWORD
+TestSamrDomains(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefSysName = "";
 
     BOOL bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
     PWSTR pwszSysName = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pwszSysName);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
-int
-TestSamrDomainsQuery(struct test *t, const wchar16_t *hostname,
-                     const wchar16_t *user, const wchar16_t *pass,
-                     struct parameter *options, int optcount)
+static
+DWORD
+TestSamrDomainsQuery(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefSysName = "";
 
     BOOLEAN bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
@@ -2921,29 +3082,32 @@ TestSamrDomainsQuery(struct test *t, const wchar16_t *hostname,
     DWORD dwDomainReadRights = DOMAIN_ACCESS_LOOKUP_INFO_2 |
                                DOMAIN_ACCESS_LOOKUP_INFO_1;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    bRet &= CallSamrOpenDomains(hBinding,
+    bRet &= CallSamrOpenDomains(hSamr,
                                 hConn,
                                 pDomainSid,
                                 pBuiltinSid,
@@ -2951,29 +3115,30 @@ TestSamrDomainsQuery(struct test *t, const wchar16_t *hostname,
                                 &hDomain,
                                 &hBuiltin);
 
-    bRet &= CallSamrClose(hBinding, &hDomain);
+    bRet &= CallSamrClose(hSamr, &hDomain);
 
-    bRet &= CallSamrClose(hBinding, &hBuiltin);
+    bRet &= CallSamrClose(hSamr, &hBuiltin);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pwszSysName);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
-int
+static
+DWORD
 TestSamrUsers(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "";
@@ -2981,7 +3146,7 @@ TestSamrUsers(
 
     BOOL bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     DWORD dwError = ERROR_SUCCESS;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
@@ -3005,33 +3170,36 @@ TestSamrUsers(
     UserInfo **ppNewAccountInfo = NULL;
     UserInfo ***pppUserInfo = NULL;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "testsetname", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testsetname", pt_string,
                        &pszTestSetName, &pszDefTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    if (CallSamrOpenDomains(hBinding,
+    if (CallSamrOpenDomains(hSamr,
                             hConn,
                             pDomainSid,
                             pBuiltinSid,
@@ -3044,7 +3212,7 @@ TestSamrUsers(
     }
     else
     {
-        bRet &= CallSamrOpenDomains(hBinding,
+        bRet &= CallSamrOpenDomains(hSamr,
                                     hConn,
                                     pDomainSid,
                                     pBuiltinSid,
@@ -3053,13 +3221,13 @@ TestSamrUsers(
                                     &hBuiltin);
     }
 
-    bRet &= CallSamrEnumDomainUsers(hBinding, hDomain, NULL, NULL);
+    bRet &= CallSamrEnumDomainUsers(hSamr, hDomain, NULL, NULL);
 
-    bRet &= CallSamrEnumDomainUsers(hBinding, hBuiltin, NULL, NULL);
+    bRet &= CallSamrEnumDomainUsers(hSamr, hBuiltin, NULL, NULL);
 
     if (bCreate)
     {
-        bRet &= CallCreateUserAccounts(hBinding,
+        bRet &= CallCreateUserAccounts(hSamr,
                                        hDomain,
                                        pszTestSetName,
                                        &pdwNewAccountRids,
@@ -3070,7 +3238,7 @@ TestSamrUsers(
                                    OUT_PPVOID(&pppUserInfo));
         BAIL_ON_WIN_ERROR(dwError);
 
-        bRet &= CallSamrQueryDomainUsers(hBinding,
+        bRet &= CallSamrQueryDomainUsers(hSamr,
                                          hDomain,
                                          pdwNewAccountRids,
                                          dwNumNewAccounts,
@@ -3080,49 +3248,49 @@ TestSamrUsers(
                                 pppUserInfo,
                                 dwNumNewAccounts);
 
-        bRet &= CallSamrDeleteDomainUsers(hBinding,
+        bRet &= CallSamrDeleteDomainUsers(hSamr,
                                           hDomain,
                                           pdwNewAccountRids,
                                           dwNumNewAccounts);
     }
 
-    bRet &= CallSamrGetAliasMemberships(hBinding,
+    bRet &= CallSamrGetAliasMemberships(hSamr,
                                         hDomain,
                                         pDomainSid);
 
-    bRet &= CallSamrGetAliasMemberships(hBinding,
+    bRet &= CallSamrGetAliasMemberships(hSamr,
                                         hBuiltin,
                                         pDomainSid);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
+    SamrFreeBinding(&hSamr);
+
 error:
-    SamrFreeBinding(&hBinding);
-
     LW_SAFE_FREE_MEMORY(pwszSysName);
     RTL_FREE(&pDomainSid);
     RTL_FREE(&pBuiltinSid);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
-int
+static
+DWORD
 TestSamrQueryUsers(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "";
 
     BOOL bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
@@ -3134,29 +3302,32 @@ TestSamrQueryUsers(
     PDWORD pdwBuiltinRids = NULL;
     DWORD dwNumBuiltinUsers = 0;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    bRet &= CallSamrOpenDomains(hBinding,
+    bRet &= CallSamrOpenDomains(hSamr,
                                 hConn,
                                 pDomainSid,
                                 pBuiltinSid,
@@ -3164,44 +3335,44 @@ TestSamrQueryUsers(
                                 &hDomain,
                                 &hBuiltin);
 
-    bRet &= CallSamrEnumDomainUsers(hBinding,
+    bRet &= CallSamrEnumDomainUsers(hSamr,
                                     hDomain,
                                     &pdwDomainRids,
                                     &dwNumDomainUsers);
 
-    bRet &= CallSamrQueryDomainUsers(hBinding,
+    bRet &= CallSamrQueryDomainUsers(hSamr,
                                      hDomain,
                                      pdwDomainRids,
                                      dwNumDomainUsers,
                                      NULL);
 
-    bRet &= CallSamrEnumDomainUsers(hBinding,
+    bRet &= CallSamrEnumDomainUsers(hSamr,
                                     hBuiltin,
                                     &pdwBuiltinRids,
                                     &dwNumBuiltinUsers);
 
-    bRet &= CallSamrQueryDomainUsers(hBinding,
+    bRet &= CallSamrQueryDomainUsers(hSamr,
                                      hBuiltin,
                                      pdwBuiltinRids,
                                      dwNumBuiltinUsers,
                                      NULL);
 
-    bRet &= CallSamrClose(hBinding, &hDomain);
+    bRet &= CallSamrClose(hSamr, &hDomain);
 
-    bRet &= CallSamrClose(hBinding, &hBuiltin);
+    bRet &= CallSamrClose(hSamr, &hBuiltin);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pdwDomainRids);
     LW_SAFE_FREE_MEMORY(pdwBuiltinRids);
     LW_SAFE_FREE_MEMORY(pwszSysName);
     RTL_FREE(&pDomainSid);
     RTL_FREE(&pBuiltinSid);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
@@ -3247,21 +3418,22 @@ CallSamrDeleteDomainUsers(
 }
 
 
-int
+static
+DWORD
 TestSamrAliases(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "";
 
     BOOL bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
@@ -3273,29 +3445,32 @@ TestSamrAliases(
     PDWORD pdwBuiltinRids = NULL;
     DWORD dwNumBuiltinAliases = 0;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    bRet &= CallSamrOpenDomains(hBinding,
+    bRet &= CallSamrOpenDomains(hSamr,
                                 hConn,
                                 pDomainSid,
                                 pBuiltinSid,
@@ -3303,54 +3478,55 @@ TestSamrAliases(
                                 &hDomain,
                                 &hBuiltin);
 
-    bRet &= CallSamrEnumDomainAliases(hBinding,
+    bRet &= CallSamrEnumDomainAliases(hSamr,
                                       hDomain,
                                       &pdwDomainRids,
                                       &dwNumDomainAliases);
 
-    bRet &= CallSamrEnumDomainAliases(hBinding,
+    bRet &= CallSamrEnumDomainAliases(hSamr,
                                       hBuiltin,
                                       &pdwBuiltinRids,
                                       &dwNumBuiltinAliases);
 
-    bRet &= CallSamrGetMembersInAlias(hBinding,
+    bRet &= CallSamrGetMembersInAlias(hSamr,
                                       hDomain,
                                       pdwDomainRids,
                                       dwNumDomainAliases);
 
-    bRet &= CallSamrGetMembersInAlias(hBinding,
+    bRet &= CallSamrGetMembersInAlias(hSamr,
                                       hBuiltin,
                                       pdwBuiltinRids,
                                       dwNumBuiltinAliases);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pwszSysName);
     LW_SAFE_FREE_MEMORY(pdwDomainRids);
     LW_SAFE_FREE_MEMORY(pdwBuiltinRids);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
-int
+static
+DWORD
 TestSamrQueryAliases(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefSysName = "";
 
     BOOL bRet = TRUE;
     enum param_err perr = perr_success;
-    SAMR_BINDING hBinding = NULL;
+    SAMR_BINDING hSamr = NULL;
     CONNECT_HANDLE hConn = NULL;
     PSID pDomainSid = NULL;
     PSID pBuiltinSid = NULL;
@@ -3362,29 +3538,32 @@ TestSamrQueryAliases(
     PDWORD pdwBuiltinRids = NULL;
     DWORD dwNumBuiltinUsers = 0;
 
-    perr = fetch_value(options, optcount, "systemname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "systemname", pt_w16string,
                        &pwszSysName, &pszDefSysName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&hBinding, hostname);
-    if (!hBinding)
+    bRet &= CreateRpcBinding(OUT_PPVOID(&hSamr),
+                             RPC_SAMR_BINDING,
+                             pwszHostname,
+                             pwszBindingString,
+                             pCreds);
+    if (!bRet)
     {
-        bRet = FALSE;
-        goto done;
+        goto error;
     }
 
-    bRet &= CallSamrConnect(hBinding,
+    bRet &= CallSamrConnect(hSamr,
                             pwszSysName,
                             &hConn);
 
-    bRet &= CallSamrEnumDomains(hBinding,
+    bRet &= CallSamrEnumDomains(hSamr,
                                 hConn,
                                 &pDomainSid,
                                 &pBuiltinSid);
 
-    bRet &= CallSamrOpenDomains(hBinding,
+    bRet &= CallSamrOpenDomains(hSamr,
                                 hConn,
                                 pDomainSid,
                                 pBuiltinSid,
@@ -3392,42 +3571,42 @@ TestSamrQueryAliases(
                                 &hDomain,
                                 &hBuiltin);
 
-    bRet &= CallSamrEnumDomainAliases(hBinding,
+    bRet &= CallSamrEnumDomainAliases(hSamr,
                                       hDomain,
                                       &pdwDomainRids,
                                       &dwNumDomainUsers);
 
-    bRet &= CallSamrQueryDomainAliases(hBinding,
+    bRet &= CallSamrQueryDomainAliases(hSamr,
                                        hDomain,
                                        pdwDomainRids,
                                        dwNumDomainUsers);
 
-    bRet &= CallSamrEnumDomainAliases(hBinding,
+    bRet &= CallSamrEnumDomainAliases(hSamr,
                                       hBuiltin,
                                       &pdwBuiltinRids,
                                       &dwNumBuiltinUsers);
 
-    bRet &= CallSamrQueryDomainAliases(hBinding,
+    bRet &= CallSamrQueryDomainAliases(hSamr,
                                        hBuiltin,
                                        pdwBuiltinRids,
                                        dwNumBuiltinUsers);
 
-    bRet &= CallSamrClose(hBinding, &hDomain);
+    bRet &= CallSamrClose(hSamr, &hDomain);
 
-    bRet &= CallSamrClose(hBinding, &hBuiltin);
+    bRet &= CallSamrClose(hSamr, &hBuiltin);
 
-    bRet &= CallSamrClose(hBinding, &hConn);
+    bRet &= CallSamrClose(hSamr, &hConn);
 
-done:
-    SamrFreeBinding(&hBinding);
+    SamrFreeBinding(&hSamr);
 
+error:
     LW_SAFE_FREE_MEMORY(pdwDomainRids);
     LW_SAFE_FREE_MEMORY(pdwBuiltinRids);
     LW_SAFE_FREE_MEMORY(pwszSysName);
     RTL_FREE(&pDomainSid);
     RTL_FREE(&pBuiltinSid);
 
-    return (int)bRet;
+    return bRet;
 }
 
 
@@ -3451,9 +3630,16 @@ done:
     }
 
 
-int TestSamrAlias(struct test *t, const wchar16_t *hostname,
-                  const wchar16_t *user, const wchar16_t *pass,
-                  struct parameter *options, int optcount)
+static
+DWORD
+TestSamrAlias(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -3505,18 +3691,18 @@ int TestSamrAlias(struct test *t, const wchar16_t *hostname,
     BOOL bAliasCreated = FALSE;
     BOOL bUserCreated = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    samr_binding = CreateSamrBinding(&samr_binding, hostname);
+    samr_binding = CreateSamrBinding(&samr_binding, pwszHostname);
     if (samr_binding == NULL) return false;
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string, &aliasname, &testalias);
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string, &aliasname, &testalias);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "aliasdesc", pt_w16string, &aliasdesc, &testalias_desc);
+    perr = fetch_value(pOptions, dwOptcount, "aliasdesc", pt_w16string, &aliasdesc, &testalias_desc);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string, &username, &testuser);
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string, &username, &testuser);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     PARAM_INFO("aliasname", pt_w16string, aliasname);
@@ -3528,10 +3714,10 @@ int TestSamrAlias(struct test *t, const wchar16_t *hostname,
      * Creating and querying/setting alias (in the host domain)
      */
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask, &hConn);
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask, &hConn);
     if (status != 0) rpc_fail(status);
 
-    status = GetSamDomainName(&domname, hostname);
+    status = GetSamDomainName(&domname, pwszHostname);
     if (status != 0) rpc_fail(status);
 
     status = SamrLookupDomain(samr_binding, hConn, domname, &sid);
@@ -3544,7 +3730,7 @@ int TestSamrAlias(struct test *t, const wchar16_t *hostname,
     /*
      * Ensure alias to perform tests on
      */
-    status = EnsureAlias(hostname, aliasname, &bAliasCreated);
+    status = EnsureAlias(pwszHostname, aliasname, &bAliasCreated);
     if (status != 0) rpc_fail(status);
 
     names[0] = aliasname;
@@ -3570,7 +3756,7 @@ int TestSamrAlias(struct test *t, const wchar16_t *hostname,
     /*
      * Ensure a user account which will soon become alias member
      */
-    status = EnsureUserAccount(hostname, username, &bUserCreated);
+    status = EnsureUserAccount(pwszHostname, username, &bUserCreated);
     if (status != 0) rpc_fail(status);
 
     names[0] = username;
@@ -3689,9 +3875,16 @@ done:
 }
 
 
-int TestSamrUsersInAliases(struct test *t, const wchar16_t *hostname,
-                           const wchar16_t *user, const wchar16_t *pass,
-                           struct parameter *options, int optcount)
+static
+DWORD
+TestSamrUsersInAliases(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -3713,9 +3906,9 @@ int TestSamrUsersInAliases(struct test *t, const wchar16_t *hostname,
     DWORD dwSidSize = 0;
     DomainInfo *dominfo = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CreateSamrBinding(&samr_binding, hostname);
+    CreateSamrBinding(&samr_binding, pwszHostname);
     if (!samr_binding)
     {
         goto done;
@@ -3725,13 +3918,13 @@ int TestSamrUsersInAliases(struct test *t, const wchar16_t *hostname,
      * Querying user membership in aliases
      */
 
-    perr = fetch_value(options, optcount, "sid", pt_string, &sidstr,
+    perr = fetch_value(pOptions, dwOptcount, "sid", pt_string, &sidstr,
                        &btin_sidstr);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     RtlAllocateSidFromCString(&sid, sidstr);
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask,
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask,
                           &hConn);
     if (status != 0) rpc_fail(status);
 
@@ -3813,9 +4006,16 @@ done:
         }                                                       \
     }
 
-int TestSamrEnumUsers(struct test *t, const wchar16_t *hostname,
-                      const wchar16_t *user, const wchar16_t *pass,
-                      struct parameter *options, int optcount)
+static
+DWORD
+TestSamrEnumUsers(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -3848,25 +4048,25 @@ int TestSamrEnumUsers(struct test *t, const wchar16_t *hostname,
     PSID sid = NULL;
     int specifydomain = 0;
 
-    perr = fetch_value(options, optcount, "specifydomain", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "specifydomain", pt_int32,
                        &specifydomain, &def_specifydomain);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
                        &domainname, &def_domainname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "acbflags", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "acbflags", pt_uint32,
                        &acb_flags, &def_acb_flags);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    CreateSamrBinding(&samr_binding, hostname);
+    CreateSamrBinding(&samr_binding, pwszHostname);
     if (!samr_binding)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask,
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask,
                           &hConn);
     if (status != 0) rpc_fail(status);
 
@@ -3874,7 +4074,7 @@ int TestSamrEnumUsers(struct test *t, const wchar16_t *hostname,
         domname = wc16sdup(domainname);
 
     } else {
-        status = GetSamDomainName(&domname, hostname);
+        status = GetSamDomainName(&domname, pwszHostname);
         if (status != 0) rpc_fail(status);
     }
 
@@ -3976,9 +4176,16 @@ done:
 }
 
 
-int TestSamrQueryDisplayInfo(struct test *t, const wchar16_t *hostname,
-                             const wchar16_t *user, const wchar16_t *pass,
-                             struct parameter *options, int optcount)
+static
+DWORD
+TestSamrQueryDisplayInfo(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -4013,33 +4220,33 @@ int TestSamrQueryDisplayInfo(struct test *t, const wchar16_t *hostname,
     UINT32 returned_size = 0;
     SamrDisplayInfo *info = NULL;
 
-    perr = fetch_value(options, optcount, "specifydomain", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "specifydomain", pt_int32,
                        &specifydomain, &def_specifydomain);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
                        &domainname, &def_domainname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_int32, &level,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_int32, &level,
                        &def_level);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "maxentries", pt_int32, &max_entries,
+    perr = fetch_value(pOptions, dwOptcount, "maxentries", pt_int32, &max_entries,
                        &def_max_entries);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "maxsize", pt_int32, &buf_size,
+    perr = fetch_value(pOptions, dwOptcount, "maxsize", pt_int32, &buf_size,
                        &def_buf_size);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    CreateSamrBinding(&samr_binding, hostname);
+    CreateSamrBinding(&samr_binding, pwszHostname);
     if (!samr_binding)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask,
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask,
                           &hConn);
     if (status != 0) rpc_fail(status);
 
@@ -4047,7 +4254,7 @@ int TestSamrQueryDisplayInfo(struct test *t, const wchar16_t *hostname,
         domname = wc16sdup(domainname);
 
     } else {
-        status = GetSamDomainName(&domname, hostname);
+        status = GetSamDomainName(&domname, pwszHostname);
         if (status != 0) rpc_fail(status);
     }
 
@@ -4178,9 +4385,16 @@ done:
 }
 
 
-int TestSamrCreateAlias(struct test *t, const wchar16_t *hostname,
-                        const wchar16_t *user, const wchar16_t *pass,
-                        struct parameter *options, int optcount)
+static
+DWORD
+TestSamrCreateAlias(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -4209,24 +4423,24 @@ int TestSamrCreateAlias(struct test *t, const wchar16_t *hostname,
     ACCOUNT_HANDLE hAccount = NULL;
     PSID sid = NULL;
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string,
                        &newaliasname, &def_aliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    status = CleanupAlias(hostname, newaliasname);
+    status = CleanupAlias(pwszHostname, newaliasname);
     if (status != 0) rpc_fail(status);
 
-    CreateSamrBinding(&samr_binding, hostname);
+    CreateSamrBinding(&samr_binding, pwszHostname);
     if (!samr_binding)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask,
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask,
                           &hConn);
     if (status != 0) rpc_fail(status);
 
-    status = GetSamDomainName(&domname, hostname);
+    status = GetSamDomainName(&domname, pwszHostname);
     if (status != 0) rpc_fail(status);
 
     status = SamrLookupDomain(samr_binding, hConn, domname, &sid);
@@ -4268,9 +4482,16 @@ done:
 }
 
 
-int TestSamrCreateGroup(struct test *t, const wchar16_t *hostname,
-                        const wchar16_t *user, const wchar16_t *pass,
-                        struct parameter *options, int optcount)
+static
+DWORD
+TestSamrCreateGroup(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access_mask = SAMR_ACCESS_OPEN_DOMAIN |
                                     SAMR_ACCESS_ENUM_DOMAINS |
@@ -4300,21 +4521,21 @@ int TestSamrCreateGroup(struct test *t, const wchar16_t *hostname,
     ACCOUNT_HANDLE hAccount = NULL;
     PSID sid = NULL;
 
-    perr = fetch_value(options, optcount, "groupname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "groupname", pt_w16string,
                        &newgroupname, &def_groupname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    CreateSamrBinding(&samr_binding, hostname);
+    CreateSamrBinding(&samr_binding, pwszHostname);
     if (!samr_binding)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding, hostname, conn_access_mask,
+    status = SamrConnect2(samr_binding, pwszHostname, conn_access_mask,
                           &hConn);
     if (status != 0) rpc_fail(status);
 
-    status = GetSamDomainName(&domname, hostname);
+    status = GetSamDomainName(&domname, pwszHostname);
     if (status != 0) rpc_fail(status);
 
     status = SamrLookupDomain(samr_binding, hConn, domname, &sid);
@@ -4356,9 +4577,16 @@ done:
 }
 
 
-int TestSamrMultipleConnections(struct test *t, const wchar16_t *hostname,
-                                const wchar16_t *user, const wchar16_t *pass,
-                                struct parameter *options, int optcount)
+static
+DWORD
+TestSamrMultipleConnections(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const UINT32 conn_access = SAMR_ACCESS_OPEN_DOMAIN |
                                SAMR_ACCESS_ENUM_DOMAINS |
@@ -4376,25 +4604,25 @@ int TestSamrMultipleConnections(struct test *t, const wchar16_t *hostname,
     samr_binding1 = NULL;
     samr_binding2 = NULL;
 
-    CreateSamrBinding(&samr_binding1, hostname);
+    CreateSamrBinding(&samr_binding1, pwszHostname);
     if (!samr_binding1)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding1, hostname, conn_access, &hConn1);
+    status = SamrConnect2(samr_binding1, pwszHostname, conn_access, &hConn1);
     if (status != 0) rpc_fail(status);
 
     GetSessionKey(samr_binding1, &key1, &key_len1, &st);
     if (st != 0) return false;
 
-    CreateSamrBinding(&samr_binding2, hostname);
+    CreateSamrBinding(&samr_binding2, pwszHostname);
     if (!samr_binding2)
     {
         goto done;
     }
 
-    status = SamrConnect2(samr_binding2, hostname, conn_access, &hConn2);
+    status = SamrConnect2(samr_binding2, pwszHostname, conn_access, &hConn2);
     if (status != 0) rpc_fail(status);
 
     GetSessionKey(samr_binding2, &key2, &key_len2, &st);
@@ -4414,9 +4642,16 @@ done:
 }
 
 
-int TestSamrQuerySecurity(struct test *t, const wchar16_t *hostname,
-                          const wchar16_t *user, const wchar16_t *pass,
-                          struct parameter *options, int optcount)
+static
+DWORD
+TestSamrQuerySecurity(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const PSTR pszDefSidStr = "S-1-5-32-544";
     const ULONG ulDefSecurityInfo = OWNER_SECURITY_INFORMATION;
@@ -4460,13 +4695,13 @@ int TestSamrQuerySecurity(struct test *t, const wchar16_t *hostname,
     PSID pGroupSid = NULL;
     ULONG ulGroupSidLen = 1024;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "sid", pt_sid,
+    perr = fetch_value(pOptions, dwOptcount, "sid", pt_sid,
                        &pSid, &pszDefSidStr);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "security_info", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "security_info", pt_uint32,
                        &ulSecurityInfo, &ulDefSecurityInfo);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4477,14 +4712,14 @@ int TestSamrQuerySecurity(struct test *t, const wchar16_t *hostname,
     PARAM_INFO("sid", pt_w16string, pwszSidStr);
     PARAM_INFO("security_info", pt_uint32, &ulSecurityInfo);
 
-    CreateSamrBinding(&bSamr, hostname);
+    CreateSamrBinding(&bSamr, pwszHostname);
     if (!bSamr)
     {
         goto done;
     }
 
     ntStatus = SamrConnect2(bSamr,
-                            hostname,
+                            pwszHostname,
                             dwConnAccess,
                             &hConn);
     if (ntStatus != 0) rpc_fail(ntStatus);
@@ -4587,7 +4822,8 @@ done:
 }
 
 
-void SetupSamrTests(struct test *t)
+VOID
+SetupSamrTests(PTEST t)
 {
     AddTest(t, "SAMR-ALIAS", TestSamrAlias);
     AddTest(t, "SAMR-ALIAS-MEMBERS", TestSamrUsersInAliases);

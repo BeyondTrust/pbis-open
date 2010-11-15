@@ -39,7 +39,7 @@
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        Samr library
+ *        Samr rpc client library
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -48,10 +48,6 @@
 #ifndef _RPC_SAMR_H_
 #define _RPC_SAMR_H_
 
-
-#define SAMR_DEFAULT_PROT_SEQ   "ncacn_np"
-#define SAMR_DEFAULT_ENDPOINT   "\\pipe\\samr"
-#define SAMR_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 /* Connect access mask flags */
 #define SAMR_ACCESS_CONNECT_TO_SERVER          0x00000001
@@ -745,6 +741,12 @@ SamrInitBindingFull(
     IN  PCWSTR         pwszOptions,
     IN  PIO_CREDS      pCreds
     );
+
+
+#define SamrInitBindingFromBindingString(binding_ptr, binding_str, creds_ptr) \
+    RpcInitBindingFromBindingString((handle_t*)(binding_ptr),                 \
+                                    (binding_str),                            \
+                                    (creds_ptr));
 
 
 VOID

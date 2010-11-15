@@ -31,97 +31,133 @@
 #include "includes.h"
 
 
-void
+static
+PTEST
+FindTest(
+    PTEST pFirstTest,
+    PCSTR pszName
+    );
+
+static
+DWORD
+StartTest(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    );
+
+static
+VOID
+DisplayUsage(
+    VOID
+    );
+
+
+VOID
 AddTest(
-    struct test *ft,
-    const char *name,
-    test_fn function
+    PTEST   pFt,
+    PCSTR   pszName,
+    test_fn Function
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    struct test *nt = NULL;
-    struct test *lt = NULL;
+    PTEST pNextTest = NULL;
+    PTEST pLastTest = NULL;
 
-    if (ft == NULL) return;
+    if (pFt == NULL) return;
 
-    lt = ft;
-    while (lt && lt->next) lt = lt->next;
+    pLastTest = pFt;
+    while (pLastTest && pLastTest->pNext)
+    { 
+        pLastTest = pLastTest->pNext;
+    }
 
-    if (lt->name && lt->function)
+    if (pLastTest->pszName && pLastTest->Function)
     {
         /* allocate the new test */
-        dwError = LwAllocateMemory(sizeof(struct test),
-                                   OUT_PPVOID(&nt));
+        dwError = LwAllocateMemory(sizeof(TEST),
+                                   OUT_PPVOID(&pNextTest));
         BAIL_ON_WIN_ERROR(dwError);
 
         /* append the test to the list */
-        lt->next = nt;
+        pLastTest->pNext = pNextTest;
     }
     else
     {
         /* this is the very first test so use already
            allocated node */
-        nt = lt;
+        pNextTest = pLastTest;
     }
 
     /* init the new test */
-    nt->name     = name;
-    nt->function = function;
-    nt->next     = NULL;
+    pNextTest->pszName    = pszName;
+    pNextTest->Function   = Function;
+    pNextTest->pNext      = NULL;
 
 error:
     return;
 }
 
 
-struct test*
+static
+PTEST
 FindTest(
-    struct test *ft,
-    const char *name
+    PTEST pFirstTest,
+    PCSTR pszName
     )
 {
-    struct test *t = ft;
+    PTEST pTest = pFirstTest;
 
     /* search through the tests and try to find
        a matching name */
-    while (t)
+    while (pTest)
     {
-        if (strcasecmp(t->name, name) == 0)
+        if (strcasecmp(pTest->pszName, pszName) == 0)
         {
-            return t;
+            return pTest;
         }
 
-        t = t->next;
+        pTest = pTest->pNext;
     }
 
     return NULL;
 }
 
 
-int
+static
+DWORD
 StartTest(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *username,
-    const wchar16_t *password,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
-    int ret = 0;
+    DWORD dwRet = 0;
 
-    if (t == NULL) return -1;
+    if (pTest == NULL) return -1;
 
-    ret = t->function(t,
-                      hostname, username, password,
-                      options, optcount);
-    printf("%s\n", (ret) ? "SUCCEEDED" : "FAILED");
-    return ret;
+    dwRet = pTest->Function(pTest,
+                            pwszHostname,
+                            pwszBindingString,
+                            pCreds,
+                            pOptions,
+                            dwOptcount);
+    printf("%s\n", (dwRet) ? "SUCCEEDED" : "FAILED");
+    return dwRet;
 }
 
 
-
-void display_usage()
+static
+VOID
+DisplayUsage(
+    VOID
+    )
 {
     printf("Usage: netapitest [-v] [-k] -h hostname\n"
            "\t[-u username]\n"
@@ -156,35 +192,38 @@ int main(int argc, char *argv[])
     int i = 0;
     int opt = 0;
     int ret = 0;
-    char *testname = NULL;
-    char *host = NULL;
-    char *optional_args = NULL;
-    char *user = NULL;
-    char *pass = NULL;
-    char *dom = NULL;
-    char *princ = NULL;
-    char *cache = NULL;
-    char *binding = NULL;
+    PSTR pszTestname = NULL;
+    PSTR pszHost = NULL;
+    PSTR pszOptionalArgs = NULL;
+    PSTR pszUser = NULL;
+    PSTR pszPass = NULL;
+    PSTR pszDomain = NULL;
+    PSTR pszWorkstation = NULL;
+    PSTR pszPrincipal = NULL;
+    PSTR pszCredsCache = NULL;
+    PSTR pszBindingString = NULL;
     int krb5_auth = 1;
-    struct test *tests  = NULL;
-    struct test *runtest = NULL;
-    wchar16_t *hostname = NULL;
-    wchar16_t *username = NULL;
-    wchar16_t *password = NULL;
+    PTEST pTests  = NULL;
+    PTEST pRunTest = NULL;
+    PWSTR pwszHostname = NULL;
+    PWSTR pwszBindingString = NULL;
     LW_PIO_CREDS pCreds = NULL;
-    struct parameter *params = NULL;
-    int params_len = 0;
+    CREDENTIALS Credentials;
+    PPARAMETER pParams = NULL;
+    DWORD dwParamsLen = 0;
+
+    memset(&Credentials, 0, sizeof(Credentials));
 
     verbose_mode = false;
 
-    while ((opt = getopt(argc, argv, "h:o:vu:p:d:r:c:kb:")) != -1) {
+    while ((opt = getopt(argc, argv, "h:o:vu:p:d:w:r:c:kb:")) != -1) {
         switch (opt) {
         case 'h':
-            host = optarg;
+            pszHost = optarg;
             break;
 
         case 'o':
-            optional_args = optarg;
+            pszOptionalArgs = optarg;
             break;
 
         case 'v':
@@ -192,23 +231,27 @@ int main(int argc, char *argv[])
             break;
 
         case 'd':
-            dom = optarg;
+            pszDomain = optarg;
+            break;
+
+        case 'w':
+            pszWorkstation = optarg;
             break;
 
         case 'u':
-            user = optarg;
+            pszUser = optarg;
             break;
 
         case 'p':
-            pass = optarg;
+            pszPass = optarg;
             break;
 
         case 'r':
-            princ = optarg;
+            pszPrincipal = optarg;
             break;
 
         case 'c':
-            cache = optarg;
+            pszCredsCache = optarg;
             break;
 
         case 'k':
@@ -216,37 +259,44 @@ int main(int argc, char *argv[])
             break;
 
         case 'b':
-            binding = optarg;
+            pszBindingString = optarg;
+            break;
 
         default:
-            display_usage();
+            DisplayUsage();
             return -1;
         }
     }
 
-    dwError = LwAllocateMemory(sizeof(struct test),
-                               OUT_PPVOID(&tests));
+    dwError = LwAllocateMemory(sizeof(pTests[0]),
+                               OUT_PPVOID(&pTests));
     if (dwError)
     {
         printf("Failed to allocate tests\n");
         BAIL_ON_WIN_ERROR(dwError);
     }
 
-    tests->name     = NULL;
-    tests->function = NULL;
-    tests->next     = NULL;
+    pTests->pszName   = NULL;
+    pTests->Function  = NULL;
+    pTests->pNext     = NULL;
 
-    if (host)
+    if (pszHost)
     {
-        dwError = LwMbsToWc16s(host, &hostname);
+        dwError = LwMbsToWc16s(pszHost, &pwszHostname);
         BAIL_ON_WIN_ERROR(dwError);
     }
 
-    if (user && pass)
+    if (pszBindingString)
     {
-        ntStatus = LwIoCreatePlainCredsA(user,
-                                         dom,
-                                         pass,
+        dwError = LwMbsToWc16s(pszBindingString, &pwszBindingString);
+        BAIL_ON_WIN_ERROR(dwError);
+    }
+
+    if (pszUser && pszPass)
+    {
+        ntStatus = LwIoCreatePlainCredsA(pszUser,
+                                         pszDomain,
+                                         pszPass,
                                          &pCreds);
         if (ntStatus)
         {
@@ -254,18 +304,47 @@ int main(int argc, char *argv[])
             BAIL_ON_NT_STATUS(ntStatus);
         }
 
+        dwError = LwMbsToWc16s(pszUser,
+                               &Credentials.Ntlm.pwszUsername);
+        BAIL_ON_WIN_ERROR(dwError);
+
+        dwError = LwMbsToWc16s(pszPass,
+                               &Credentials.Ntlm.pwszPassword);
+        BAIL_ON_WIN_ERROR(dwError);
+
+        if (pszDomain)
+        {
+            dwError = LwMbsToWc16s(pszDomain,
+                                   &Credentials.Ntlm.pwszDomain);
+            BAIL_ON_WIN_ERROR(dwError);
+        }
+
+        if (pszWorkstation)
+        {
+            dwError = LwMbsToWc16s(pszWorkstation,
+                                   &Credentials.Ntlm.pwszWorkstation);
+            BAIL_ON_WIN_ERROR(dwError);
+        }
     }
 
-    if (princ && cache)
+    if (pszPrincipal && pszCredsCache)
     {
-        ntStatus = LwIoCreateKrb5CredsA(princ,
-                                        cache,
+        ntStatus = LwIoCreateKrb5CredsA(pszPrincipal,
+                                        pszCredsCache,
                                         &pCreds);
         if (ntStatus)
         {
             printf("Failed to create KRB5 credentials\n");
             BAIL_ON_NT_STATUS(ntStatus);
         }
+
+        dwError = LwMbsToWc16s(pszPrincipal,
+                               &Credentials.Krb5.pwszPrincipal);
+        BAIL_ON_WIN_ERROR(dwError);
+
+        dwError = LwMbsToWc16s(pszCredsCache,
+                               &Credentials.Krb5.pwszCredsCache);
+        BAIL_ON_WIN_ERROR(dwError);
     }
 
     if (pCreds)
@@ -278,72 +357,74 @@ int main(int argc, char *argv[])
         }
     }
 
-    params = get_optional_params(optional_args, &params_len);
-    if ((params != NULL && params_len == 0) ||
-        (params == NULL && params_len != 0))
+    pParams = get_optional_params(pszOptionalArgs, &dwParamsLen);
+    if ((pParams != NULL && dwParamsLen == 0) ||
+        (pParams == NULL && dwParamsLen != 0))
     {
-        printf("Error while parsing optional parameters [%s]\n", optional_args);
+        printf("Error while parsing optional parameters [%s]\n", pszOptionalArgs);
         goto error;
     }
 
-    SetupNetApiTests(tests);
-    SetupLsaTests(tests);
-    SetupSamrTests(tests);
-    SetupNetlogonTests(tests);
-    SetupDsrTests(tests);
-    SetupWkssvcTests(tests);
+    SetupNetApiTests(pTests);
+    SetupLsaTests(pTests);
+    SetupSamrTests(pTests);
+    SetupNetlogonTests(pTests);
+    SetupDsrTests(pTests);
+    SetupWkssvcTests(pTests);
     
     for (i = 1; i < argc; i++)
     {
-        testname = argv[i];
-        runtest = FindTest(tests, testname);
+        pszTestname = argv[i];
+        pRunTest = FindTest(pTests, pszTestname);
 
-        if (runtest)
+        if (pRunTest)
         {
-            ret = StartTest(runtest, hostname, username, password,
-                            params, params_len);
+            ret = StartTest(pRunTest,
+                            pwszHostname,
+                            pwszBindingString,
+                            &Credentials,
+                            pParams,
+                            dwParamsLen);
             goto done;
         }
     }
 
     printf("No test name specified. Available tests:\n");
-    runtest = tests;
-    while (runtest)
+    pRunTest = pTests;
+    while (pRunTest)
     {
-        printf("%s\n", runtest->name);
-        runtest = runtest->next;
+        printf("%s\n", pRunTest->pszName);
+        pRunTest = pRunTest->pNext;
     }
     printf("\n");
     
 
 done:
 error:
-    LW_SAFE_FREE_MEMORY(hostname);
+    LW_SAFE_FREE_MEMORY(pwszHostname);
+    LW_SAFE_FREE_MEMORY(pwszBindingString);
 
-    while (tests)
+    while (pTests)
     {
-        struct test *t = tests->next;
+        PTEST pTest = pTests->pNext;
 
-        LW_SAFE_FREE_MEMORY(tests);
-        tests = t;
+        LW_SAFE_FREE_MEMORY(pTests);
+        pTests = pTest;
     }
 
-    LW_SAFE_FREE_MEMORY(username);
-    LW_SAFE_FREE_MEMORY(password);
-
-    for (i = 0; i < params_len; i++)
+    for (i = 0; i < dwParamsLen; i++)
     {
-        LW_SAFE_FREE_MEMORY(params[i].key);
-        LW_SAFE_FREE_MEMORY(params[i].val);
+        LW_SAFE_FREE_MEMORY(pParams[i].key);
+        LW_SAFE_FREE_MEMORY(pParams[i].val);
     }
-    LW_SAFE_FREE_MEMORY(params);
+    LW_SAFE_FREE_MEMORY(pParams);
 
     if (pCreds)
     {
         LwIoDeleteCreds(pCreds);
     }
 
-    return 0;
+    return ret;
 }
 
 

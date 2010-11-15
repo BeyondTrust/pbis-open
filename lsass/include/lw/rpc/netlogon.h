@@ -48,11 +48,6 @@
 #define _RPC_NETLOGON_H_
 
 
-#define NETLOGON_DEFAULT_PROT_SEQ   "ncacn_np"
-#define NETLOGON_DEFAULT_ENDPOINT   "\\PIPE\\netlogon"
-#define NETLOGON_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
-
-
 /*
  * Domain trust definitions
  */
@@ -531,6 +526,12 @@ NetrInitBindingFull(
     IN  PCWSTR          pszOptions,
     IN  LW_PIO_CREDS    pCreds
     );
+
+
+#define NetrInitBindingFromBindingString(binding_ptr, binding_str, creds_ptr) \
+    RpcInitBindingFromBindingString((handle_t*)(binding_ptr),                 \
+                                    (binding_str),                            \
+                                    (creds_ptr));
 
 
 VOID

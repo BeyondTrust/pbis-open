@@ -47,10 +47,6 @@
 #ifndef _DSSETUP_H_
 #define _DSSETUP_H_
 
-#define DSR_DEFAULT_PROT_SEQ   "ncacn_np"
-#define DSR_DEFAULT_ENDPOINT   "\\PIPE\\lsarpc"
-#define DSR_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
-
 
 #define DS_ROLE_STANDALONE_WORKSTATION         (0)
 #define DS_ROLE_MEMBER_WORKSTATION             (1)
@@ -150,6 +146,12 @@ DsrInitBindingFull(
     IN  PCWSTR          pszOptions,
     IN  LW_PIO_CREDS    pCreds
     );
+
+
+#define DsrInitBindingFromBindingString(binding_ptr, binding_str, creds_ptr) \
+    RpcInitBindingFromBindingString((handle_t*)(binding_ptr),                \
+                                    (binding_str),                           \
+                                    (creds_ptr));
 
 
 VOID

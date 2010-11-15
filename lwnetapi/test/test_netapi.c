@@ -2721,14 +2721,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetUserEnum(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultFilter = 0;
@@ -2744,13 +2744,13 @@ TestNetUserEnum(
     DWORD dwLevel = 0;
     DWORD dwFilter = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "filter", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "filter", pt_uint32,
                        (UINT32*)&dwFilter, (UINT32*)&dwDefaultFilter);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -2775,25 +2775,25 @@ TestNetUserEnum(
 
         if (!dwFilter)
         {
-            ret &= CallNetUserEnum(hostname,
+            ret &= CallNetUserEnum(pwszHostname,
                                    dwLevel,
                                    FILTER_NORMAL_ACCOUNT);
 
-            ret &= CallNetUserEnum(hostname,
+            ret &= CallNetUserEnum(pwszHostname,
                                    dwLevel,
                                    FILTER_INTERDOMAIN_TRUST_ACCOUNT);
 
-            ret &= CallNetUserEnum(hostname,
+            ret &= CallNetUserEnum(pwszHostname,
                                    dwLevel,
                                    FILTER_WORKSTATION_TRUST_ACCOUNT);
 
-            ret &= CallNetUserEnum(hostname,
+            ret &= CallNetUserEnum(pwszHostname,
                                    dwLevel,
                                    FILTER_SERVER_TRUST_ACCOUNT);
         }
         else
         {
-            ret &= CallNetUserEnum(hostname,
+            ret &= CallNetUserEnum(pwszHostname,
                                    dwLevel,
                                    dwFilter);
         }
@@ -2822,14 +2822,14 @@ CallNetUserDel(
 }
 
 
-int
+DWORD
 TestNetUserAdd(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefaultTestSetName = "validation";
@@ -2854,9 +2854,9 @@ TestNetUserAdd(
     DWORD dwNumTests = 0;
     DWORD i = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        &pszTestSetName, &pszDefaultTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -2921,11 +2921,12 @@ TestNetUserAdd(
 
         if (pTestSet[i].bPreCleanup)
         {
-            err = CleanupAccount(hostname, pwszUsername);
+            err = CleanupAccount(pwszHostname,
+                                 pwszUsername);
             if (err != 0) netapi_fail(err);
         }
 
-        ret &= CallNetUserAdd(hostname,
+        ret &= CallNetUserAdd(pwszHostname,
                               dwLevel,
                               pwszUsername,
                               pwszDescription,
@@ -2941,7 +2942,8 @@ TestNetUserAdd(
 
         if (pTestSet[i].bPostCleanup)
         {
-            err = CleanupAccount(hostname, pwszUsername);
+            err = CleanupAccount(pwszHostname,
+                                 pwszUsername);
             if (err != 0) netapi_fail(err);
         }
 
@@ -2973,9 +2975,15 @@ done:
 }
 
 
-int TestNetUserDel(struct test *t, const wchar16_t *hostname,
-                   const wchar16_t *user, const wchar16_t *pass,
-                   struct parameter *options, int optcount)
+DWORD
+TestNetUserDel(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefaultTestSetName = "validation";
 
@@ -2990,9 +2998,9 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
     BOOLEAN bCreated = FALSE;
     DWORD dwExpectedError = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        &pszTestSetName, &pszDefaultTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3016,17 +3024,21 @@ int TestNetUserDel(struct test *t, const wchar16_t *hostname,
 
         if (pTestSet[i].bPrepare)
         {
-            err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+            err = EnsureUserAccount(pwszHostname,
+                                    pwszUsername,
+                                    &bCreated);
             if (err != 0) netapi_fail(err);
         }
 
-        ret &= CallNetUserDel(hostname,
+        ret &= CallNetUserDel(pwszHostname,
                               pwszUsername,
                               dwExpectedError);
 
         if (pTestSet[i].bCleanup && bCreated)
         {
-            err = EnsureUserAccount(hostname, pwszUsername, &bCreated);
+            err = EnsureUserAccount(pwszHostname,
+                                    pwszUsername,
+                                    &bCreated);
             if (err != 0) netapi_fail(err);
         }
 
@@ -3043,14 +3055,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetUserGetInfo(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const PSTR pszDefaultUsername = "TestUser";
@@ -3069,13 +3081,13 @@ TestNetUserGetInfo(
     DWORD dwLevel = 0;
     BOOLEAN bCreated = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3098,14 +3110,15 @@ TestNetUserGetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureUserAccount(hostname,
+        err = EnsureUserAccount(pwszHostname,
                                 pwszUsername,
                                 &bCreated);
         if (err != 0) netapi_fail(err);
 
         if (bCreated)
         {
-            err = NetUserDel(hostname, pwszUsername);
+            err = NetUserDel(pwszHostname,
+                             pwszUsername);
             if (err == ERROR_NO_SUCH_USER)
             {
                 err = ERROR_SUCCESS;
@@ -3124,14 +3137,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetUserSetInfo(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefaultTestSetName = "validation";
@@ -3162,9 +3175,9 @@ TestNetUserSetInfo(
     DWORD dwNumUserInfos = 0;
     DWORD iUserInfo = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "testset", pt_string,
+    perr = fetch_value(pOptions, dwOptcount, "testset", pt_string,
                        &pszTestSetName, &pszDefaultTestSetName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3188,7 +3201,7 @@ TestNetUserSetInfo(
 
         if (pTestSet[i].bPrepare)
         {
-            err = EnsureUserAccount(hostname,
+            err = EnsureUserAccount(pwszHostname,
                                     pwszUsername,
                                     &bCreated);
             if (err != 0) netapi_fail(err);
@@ -3234,7 +3247,7 @@ TestNetUserSetInfo(
         dwExpectedError     = pTestSet[i].dwError;
         dwExpectedParmError = pTestSet[i].dwParmError;
 
-        bRet &= CallNetUserSetInfo(hostname,
+        bRet &= CallNetUserSetInfo(pwszHostname,
                                    dwLevel,
                                    pwszUsername,
                                    pwszFullName,
@@ -3249,7 +3262,7 @@ TestNetUserSetInfo(
                                    dwExpectedParmError,
                                    &bRenamed);
 
-        bRet &= CallNetUserGetInfo(hostname,
+        bRet &= CallNetUserGetInfo(pwszHostname,
                                    pwszUsername,
                                    &ppUserInfo,
                                    &dwNumUserInfos);
@@ -3267,7 +3280,7 @@ TestNetUserSetInfo(
 
         if (pTestSet[i].bCleanup)
         {
-            err = CleanupAccount(hostname,
+            err = CleanupAccount(pwszHostname,
                                  pwszUsername);
             if (err != 0) netapi_fail(err);
         }
@@ -3319,14 +3332,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetUserGetLocalGroups(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const PSTR pszDefaultUsername = "TestUser";
@@ -3344,13 +3357,13 @@ TestNetUserGetLocalGroups(
     DWORD dwLevel = 0;
     BOOLEAN bCreated = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &pwszUsername, &pszDefaultUsername);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3373,18 +3386,19 @@ TestNetUserGetLocalGroups(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureUserAccount(hostname,
+        err = EnsureUserAccount(pwszHostname,
                                 pwszUsername,
                                 &bCreated);
         if (err != 0) netapi_fail(err);
 
-        ret &= CallNetUserGetLocalGroups(hostname,
+        ret &= CallNetUserGetLocalGroups(pwszHostname,
                                          pwszUsername,
                                          dwLevel,
                                          0);
         if (bCreated)
         {
-            err = CleanupAccount(hostname, pwszUsername);
+            err = CleanupAccount(pwszHostname,
+                                 pwszUsername);
             if (err != 0) netapi_fail(err);
         }
     }
@@ -3398,9 +3412,15 @@ done:
 
 
 
-int TestNetJoinDomain(struct test *t, const wchar16_t *hostname,
-                      const wchar16_t *user, const wchar16_t *pass,
-                      struct parameter *options, int optcount)
+DWORD
+TestNetJoinDomain(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const char *def_accountou = NULL;
     const int def_rejoin = 0;
@@ -3418,33 +3438,33 @@ int TestNetJoinDomain(struct test *t, const wchar16_t *hostname,
     LWPS_PASSWORD_INFO *pi = NULL;
     char host[128] = {0};
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &username, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "password", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "password", pt_w16string,
                        &password, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
                        &domain_name, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "accountou", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "accountou", pt_w16string,
                        &accountou, &def_accountou);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "rejoin", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "rejoin", pt_int32,
                        &rejoin, &def_rejoin);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "create", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "create", pt_int32,
                        &create, &def_create);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "deferspn", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "deferspn", pt_int32,
                        &deferspn, &def_deferspn);
 
     PARAM_INFO("username", pt_w16string, username);
@@ -3459,7 +3479,7 @@ int TestNetJoinDomain(struct test *t, const wchar16_t *hostname,
     if (rejoin) opts |= NETSETUP_DOMAIN_JOIN_IF_JOINED;
     if (deferspn) opts |= NETSETUP_DEFER_SPN_SET;
 
-    CALL_NETAPI(err, NetJoinDomain(hostname, domain_name, accountou,
+    CALL_NETAPI(err, NetJoinDomain(pwszHostname, domain_name, accountou,
                                    username, password, opts));
     if (err != 0) netapi_fail(err);
 
@@ -3494,9 +3514,15 @@ done:
 }
 
 
-int TestNetUnjoinDomain(struct test *t, const wchar16_t *hostname,
-                        const wchar16_t *user, const wchar16_t *pass,
-                        struct parameter *options, int optcount)
+DWORD
+TestNetUnjoinDomain(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const int def_disable = 1;
 
@@ -3507,17 +3533,17 @@ int TestNetUnjoinDomain(struct test *t, const wchar16_t *hostname,
     int disable;
     int opts;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &username, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "password", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "password", pt_w16string,
                        &password, NULL);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "disable", pt_int32,
+    perr = fetch_value(pOptions, dwOptcount, "disable", pt_int32,
                        &disable, &def_disable);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3539,9 +3565,15 @@ done:
 }
 
 
-int TestNetUserChangePassword(struct test *t, const wchar16_t *hostname,
-                              const wchar16_t *user, const wchar16_t *pass,
-                              struct parameter *options, int optcount)
+DWORD
+TestNetUserChangePassword(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const char *defusername = "TestUser";
     const char *defoldpass = "";
@@ -3553,17 +3585,17 @@ int TestNetUserChangePassword(struct test *t, const wchar16_t *hostname,
     wchar16_t *username, *oldpassword, *newpassword;
     BOOLEAN bCreated = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &username, &defusername);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "oldpassword", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "oldpassword", pt_w16string,
                        &oldpassword, &defoldpass);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "newpassword", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "newpassword", pt_w16string,
                        &newpassword, &defnewpass);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3571,13 +3603,15 @@ int TestNetUserChangePassword(struct test *t, const wchar16_t *hostname,
     PARAM_INFO("oldpassword", pt_w16string, oldpassword);
     PARAM_INFO("newpassword", pt_w16string, newpassword);
 
-    err = EnsureUserAccount(hostname,
+    err = EnsureUserAccount(pwszHostname,
                             username,
                             &bCreated);
     if (err != 0) netapi_fail(err);
 
-    CALL_NETAPI(err, NetUserChangePassword(hostname, username,
-                                           oldpassword, newpassword));
+    CALL_NETAPI(err, NetUserChangePassword(pwszHostname,
+                                           username,
+                                           oldpassword,
+                                           newpassword));
     if (err != 0) netapi_fail(err);
 
 done:
@@ -3590,14 +3624,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetLocalGroupEnum(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
@@ -3611,9 +3645,9 @@ TestNetLocalGroupEnum(
     DWORD dwNumLevels = 0;
     DWORD dwLevel = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3635,7 +3669,7 @@ TestNetLocalGroupEnum(
     {
         dwLevel = pdwLevels[i];
 
-        ret &= CallNetLocalGroupEnum(hostname,
+        ret &= CallNetLocalGroupEnum(pwszHostname,
                                      dwLevel);
     }
 
@@ -3643,14 +3677,15 @@ TestNetLocalGroupEnum(
 }
 
 
-int
+DWORD
 TestNetLocalGroupAdd(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount)
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     PCSTR pszDefaultAliasname = "TestLocalGroup";
     PCSTR pszDefaultComment = "Test comment for new local group";
@@ -3668,17 +3703,17 @@ TestNetLocalGroupAdd(
     PWSTR pwszAliasname = NULL;
     PWSTR pwszComment = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "comment", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "comment", pt_w16string,
                        &pwszComment, &pszDefaultComment);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3702,17 +3737,17 @@ TestNetLocalGroupAdd(
     {
         dwLevel = pdwLevels[i];
 
-        err = CleanupLocalGroup(hostname,
+        err = CleanupLocalGroup(pwszHostname,
                                 pwszAliasname);
         if (err != 0) netapi_fail(err);
 
-        ret &= CallNetLocalGroupAdd(hostname,
+        ret &= CallNetLocalGroupAdd(pwszHostname,
                                     dwLevel,
                                     pwszAliasname,
                                     pwszComment);
     }
 
-    err = CleanupLocalGroup(hostname,
+    err = CleanupLocalGroup(pwszHostname,
                             pwszAliasname);
     if (err != 0) netapi_fail(err);
 
@@ -3724,9 +3759,15 @@ done:
 }
 
 
-int TestDelLocalGroup(struct test *t, const wchar16_t *hostname,
-                      const wchar16_t *user, const wchar16_t *pass,
-                      struct parameter *options, int optcount)
+DWORD
+TestDelLocalGroup(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     const char *def_aliasname = "TestAlias";
 
@@ -3735,15 +3776,15 @@ int TestDelLocalGroup(struct test *t, const wchar16_t *hostname,
     enum param_err perr = perr_success;
     wchar16_t *aliasname;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string, &aliasname,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string, &aliasname,
                        &def_aliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
     PARAM_INFO("aliasname", pt_w16string, aliasname);
 
-    err = DelLocalGroup(hostname, aliasname);
+    err = DelLocalGroup(pwszHostname, aliasname);
     if (err != ERROR_SUCCESS) netapi_fail(err);
 
 done:
@@ -3754,14 +3795,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetLocalGroupGetInfo(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const PSTR pszDefaultAliasname = "TestLocalGroup";
@@ -3779,13 +3820,13 @@ TestNetLocalGroupGetInfo(
     DWORD dwLevel = 0;
     BOOLEAN bCreated = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3808,18 +3849,18 @@ TestNetLocalGroupGetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureLocalGroup(hostname,
+        err = EnsureLocalGroup(pwszHostname,
                                pwszAliasname,
                                &bCreated);
         if (err != 0) netapi_fail(err);
 
-        ret &= CallNetLocalGroupGetInfo(hostname,
+        ret &= CallNetLocalGroupGetInfo(pwszHostname,
                                         pwszAliasname,
                                         dwLevel);
 
         if (bCreated)
         {
-            err = CleanupLocalGroup(hostname,
+            err = CleanupLocalGroup(pwszHostname,
                                     pwszAliasname);
             if (err != 0) netapi_fail(err);
         }
@@ -3832,14 +3873,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetLocalGroupSetInfo(
-    struct test *t,
-    PCWSTR hostname,
-    PCWSTR user,
-    PCWSTR pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefaultAliasname = "TestLocalGroup";
@@ -3862,21 +3903,21 @@ TestNetLocalGroupSetInfo(
     BOOLEAN bCreated = FALSE;
     BOOLEAN bRenamed = FALSE;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string,
                        &pwszAliasname, &pszDefaultAliasname);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "comment", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "comment", pt_w16string,
                        &pwszComment, &pszDefaultComment);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -3905,16 +3946,16 @@ TestNetLocalGroupSetInfo(
     {
         dwLevel = pdwLevels[i];
 
-        err = EnsureLocalGroup(hostname,
+        err = EnsureLocalGroup(pwszHostname,
                                pwszAliasname,
                                &bCreated);
         if (err != 0) netapi_fail(err);
 
-        err = CleanupLocalGroup(hostname,
+        err = CleanupLocalGroup(pwszHostname,
                                 pwszChangedAliasname);
         if (err != 0) netapi_fail(err);
 
-        ret &= CallNetLocalGroupSetInfo(hostname,
+        ret &= CallNetLocalGroupSetInfo(pwszHostname,
                                         dwLevel,
                                         pwszAliasname,
                                         pwszChangedAliasname,
@@ -3923,7 +3964,7 @@ TestNetLocalGroupSetInfo(
 
         if (bRenamed)
         {
-            ret &= CallNetLocalGroupSetInfo(hostname,
+            ret &= CallNetLocalGroupSetInfo(pwszHostname,
                                             0,
                                             pwszChangedAliasname,
                                             pwszAliasname,
@@ -3937,7 +3978,7 @@ TestNetLocalGroupSetInfo(
 
     if (bCreated)
     {
-        err = CleanupLocalGroup(hostname,
+        err = CleanupLocalGroup(pwszHostname,
                                 pwszAliasname);
         if (err != 0) netapi_fail(err);
     }
@@ -3951,14 +3992,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetLocalGroupGetMembers(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     PCSTR pszDefaultLocalGroupName = "Administrators";
@@ -3974,13 +4015,13 @@ TestNetLocalGroupGetMembers(
     DWORD dwLevel = 0;
     PWSTR pwszLocalGroupName = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "aliasname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "aliasname", pt_w16string,
                        &pwszLocalGroupName, &pszDefaultLocalGroupName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4003,7 +4044,7 @@ TestNetLocalGroupGetMembers(
     {
         dwLevel = pdwLevels[i];
 
-        ret &= CallNetLocalGroupGetMembers(hostname,
+        ret &= CallNetLocalGroupGetMembers(pwszHostname,
                                            pwszLocalGroupName,
                                            dwLevel);
     }
@@ -4015,17 +4056,23 @@ TestNetLocalGroupGetMembers(
 
 
 
-int TestNetGetDomainName(struct test *t, const wchar16_t *hostname,
-                         const wchar16_t *user, const wchar16_t *pass,
-                         struct parameter *options, int optcounta)
+DWORD
+TestNetGetDomainName(
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
+    )
 {
     NTSTATUS status = STATUS_SUCCESS;
     NET_API_STATUS err = ERROR_SUCCESS;
     wchar16_t *domain_name;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    CALL_NETAPI(err, NetGetDomainName(hostname, &domain_name));
+    CALL_NETAPI(err, NetGetDomainName(pwszHostname, &domain_name));
     if (err != 0) netapi_fail(err);
 
     OUTPUT_ARG_WSTR(domain_name);
@@ -4038,14 +4085,14 @@ done:
 }
 
 
-int
+DWORD
 TestNetQueryDisplayInformation(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
@@ -4059,9 +4106,9 @@ TestNetQueryDisplayInformation(
     DWORD dwNumLevels = 0;
     DWORD dwLevel = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4083,7 +4130,7 @@ TestNetQueryDisplayInformation(
     {
         dwLevel = pdwLevels[i];
 
-        ret &= CallNetQueryDisplayInfo(hostname,
+        ret &= CallNetQueryDisplayInfo(pwszHostname,
                                        dwLevel);
     }
 
@@ -4091,14 +4138,14 @@ TestNetQueryDisplayInformation(
 }
 
 
-int
+DWORD
 TestNetWkstaUserEnum(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
@@ -4112,9 +4159,9 @@ TestNetWkstaUserEnum(
     DWORD dwNumLevels = 0;
     DWORD dwLevel = 0;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4136,7 +4183,7 @@ TestNetWkstaUserEnum(
     {
         dwLevel = pdwLevels[i];
 
-        ret &= CallNetWkstaUserEnum(hostname,
+        ret &= CallNetWkstaUserEnum(pwszHostname,
                                     dwLevel);
     }
 
@@ -4144,14 +4191,14 @@ TestNetWkstaUserEnum(
 }
 
 
-int
+DWORD
 TestNetSessionEnum(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
@@ -4170,17 +4217,17 @@ TestNetSessionEnum(
     PWSTR pwszUserName = NULL;
     PWSTR pwszDefaultName = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "clientname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "clientname", pt_w16string,
                        &pwszClientName, &pszDefaultName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "username", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "username", pt_w16string,
                        &pwszUserName, &pszDefaultName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4219,7 +4266,7 @@ TestNetSessionEnum(
     {
         dwLevel = pdwLevels[i];
 
-        bRet &= CallNetSessionEnum(hostname,
+        bRet &= CallNetSessionEnum(pwszHostname,
                                    pwszClientName,
                                    pwszUserName,
                                    dwLevel);
@@ -4234,14 +4281,14 @@ error:
 }
 
 
-int
+DWORD
 TestNetServerEnum(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *user,
-    const wchar16_t *pass,
-    struct parameter *options,
-    int optcount
+    PTEST         pTest,
+    PCWSTR        pwszHostname,
+    PCWSTR        pwszBindingString,
+    PCREDENTIALS  pCreds,
+    PPARAMETER    pOptions,
+    DWORD         dwOptcount
     )
 {
     const DWORD dwDefaultLevel = (DWORD)(-1);
@@ -4259,13 +4306,13 @@ TestNetServerEnum(
     PWSTR pwszDefaultName = NULL;
     PWSTR pwszDomainName = NULL;
 
-    TESTINFO(t, hostname, user, pass);
+    TESTINFO(pTest, pwszHostname);
 
-    perr = fetch_value(options, optcount, "level", pt_uint32,
+    perr = fetch_value(pOptions, dwOptcount, "level", pt_uint32,
                        (UINT32*)&dwLevel, (UINT32*)&dwDefaultLevel);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
-    perr = fetch_value(options, optcount, "domainname", pt_w16string,
+    perr = fetch_value(pOptions, dwOptcount, "domainname", pt_w16string,
                        &pwszDomainName, &pszDefaultName);
     if (!perr_is_ok(perr)) perr_fail(perr);
 
@@ -4297,7 +4344,7 @@ TestNetServerEnum(
     {
         dwLevel = pdwLevels[i];
 
-        bRet &= CallNetServerEnum(hostname,
+        bRet &= CallNetServerEnum(pwszHostname,
                                   pwszDomainName,
                                   dwLevel);
     }
@@ -4310,7 +4357,8 @@ error:
 }
 
 
-void SetupNetApiTests(struct test *t)
+VOID
+SetupNetApiTests(PTEST t)
 {
     DWORD dwError = ERROR_SUCCESS;
 

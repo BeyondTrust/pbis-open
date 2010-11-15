@@ -39,33 +39,62 @@
 #include <wc16printf.h>
 #include "params.h"
 
-struct test;
 
-typedef int (*test_fn)(
-    struct test *t,
-    const wchar16_t *hostname,
-    const wchar16_t *username,
-    const wchar16_t *password,
-    struct parameter *options,
-    int optcount
+struct _TEST;
+struct _CREDENTIALS;
+
+
+typedef DWORD (*test_fn)(
+    struct _TEST        *pTest,
+    PCWSTR               pwszHostname,
+    PCWSTR               pwszBindingString,
+    struct _CREDENTIALS *pCreds,
+    struct _PARAMETER   *pOptions,
+    DWORD                dwOptcount
     );
 
-struct test
+
+typedef struct _TEST
 {
-    const char *name;
-    test_fn function;
+    PCSTR         pszName;
+    test_fn       Function;
 
-    struct test *next;
-};
+    struct _TEST *pNext;
+} TEST, *PTEST;
 
 
-void AddTest(struct test *ft, const char *name, test_fn function);
-void SetupNetApiTests(struct test *t);
-void SetupSamrTests(struct test *t);
-void SetupLsaTests(struct test *t);
-void SetupNetlogonTests(struct test *t);
-void SetupDsrTests(struct test *t);
-void SetupWkssvcTests(struct test *t);
+typedef struct _CREDENTIALS
+{
+    struct _KRB5
+    {
+        PWSTR   pwszPrincipal;
+        PWSTR   pwszCredsCache;
+    } Krb5;
+
+    struct _NTLM
+    {
+        PWSTR   pwszDomain;
+        PWSTR   pwszWorkstation;
+        PWSTR   pwszUsername;
+        PWSTR   pwszPassword;
+    } Ntlm;
+} CREDENTIALS, *PCREDENTIALS;
+
+
+VOID
+AddTest(
+    PTEST  pFt,
+    PCSTR  pszName,
+    test_fn function
+    );
+
+
+VOID SetupNetApiTests(PTEST t);
+VOID SetupSamrTests(PTEST t);
+VOID SetupLsaTests(PTEST t);
+VOID SetupNetlogonTests(PTEST t);
+VOID SetupDsrTests(PTEST t);
+VOID SetupWkssvcTests(PTEST t);
 
 
 #define STATUS(a, b)                                                     \
@@ -129,14 +158,13 @@ extern int verbose_mode;
 #define WINERR_IS_OK(err)       ((err) == ERROR_SUCCESS)
 
 
-#define TESTINFO(test, host, user, pass)                                \
-    {                                                                   \
-        printf("#\n# Test: %s\n#\n\n", test->name);                     \
-        if (verbose_mode) {                                             \
-            printf("# Test arguments:\n");                              \
-            w16printfw(L"#  hostname: %ws\n#  username: %ws\n"              \
-                      L"#  password: %ws\n#\n", host, user, pass);        \
-        }                                                               \
+#define TESTINFO(test, host)                                        \
+    {                                                               \
+        printf("#\n# Test: %s\n#\n\n", test->pszName);              \
+        if (verbose_mode) {                                         \
+            printf("# Test arguments:\n");                          \
+            w16printfw(L"#  hostname: %ws\n", host);                \
+        }                                                           \
     }
 
 #define PARAM_INFO_START                                        \

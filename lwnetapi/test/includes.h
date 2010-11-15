@@ -12,6 +12,8 @@
 #include <dce/smb.h>
 #include <dce/lrpc.h>
 #include <dce/schannel.h>
+#include <ntlm/gssntlm.h>
+#include <ntlm/sspintlm.h>
 #include <wc16str.h>
 #include <lw/base.h>
 #include <lw/ntstatus.h>
@@ -27,6 +29,7 @@
 #include <openssl/md5.h>
 #include <openssl/rand.h>
 
+#include <lw/rpc/common.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/lsa.h>
 #include <lw/rpc/netlogon.h>
@@ -37,3 +40,4 @@
 
 #include "netapitest.h"
 #include "params.h"
+#include "common.h"

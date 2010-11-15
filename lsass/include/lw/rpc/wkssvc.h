@@ -49,11 +49,6 @@
 #define _RPC_WKSSVC_H_
 
 
-#define WKSS_DEFAULT_PROT_SEQ   "ncacn_np"
-#define WKSS_DEFAULT_ENDPOINT   "\\PIPE\\wkssvc"
-#define WKSS_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
-
-
 typedef struct _WKSTA_INFO_100
 {
     DWORD  wksta100_platform_id;
@@ -232,6 +227,12 @@ WkssInitBindingFull(
     IN  PCWSTR          pwszOptions,
     IN  LW_PIO_CREDS    pCreds
     );
+
+
+#define WkssInitBindingFromBindingString(binding_ptr, binding_str, creds_ptr) \
+    RpcInitBindingFromBindingString((handle_t*)(binding_ptr),                 \
+                                    (binding_str),                            \
+                                    (creds_ptr));
 
 
 VOID

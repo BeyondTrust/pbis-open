@@ -39,7 +39,7 @@
  *
  *        Remote Procedure Call (RPC) Client Interface
  *
- *        Lsa library
+ *        Lsa rpc client library
  *
  * Authors: Rafal Szczesniak (rafal@likewise.com)
  */
@@ -47,10 +47,6 @@
 #ifndef _RPC_LSA_H_
 #define _RPC_LSA_H_
 
-
-#define LSA_DEFAULT_PROT_SEQ   "ncacn_np"
-#define LSA_DEFAULT_ENDPOINT   "\\PIPE\\lsarpc"
-#define LSA_LOCAL_ENDPOINT     CACHEDIR "/rpc/lsass"
 
 #define LSA_LOOKUP_NAMES_ALL                   1
 #define LSA_LOOKUP_NAMES_DOMAINS_ONLY          2
@@ -375,6 +371,12 @@ LsaInitBindingFull(
     IN  PCWSTR         pwszOptions,
     IN  LW_PIO_CREDS   pCreds
     );
+
+
+#define LsaInitBindingFromBindingString(binding_ptr, binding_str, creds_ptr) \
+    RpcInitBindingFromBindingString((handle_t*)(binding_ptr),                \
+                                    (binding_str),                           \
+                                    (creds_ptr));
 
 
 VOID
