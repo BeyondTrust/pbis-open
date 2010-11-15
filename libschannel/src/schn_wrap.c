@@ -60,7 +60,7 @@ uint32 schn_wrap(void                 *sec_ctx,
     memset(digest, 0, sizeof(digest));
 
     out->len  = in->len;
-    out->base = malloc(out->len);
+    out->base = malloc(out->len ? out->len : 1);
     if (out->base == NULL) {
         status = schn_s_no_memory;
         goto error;
