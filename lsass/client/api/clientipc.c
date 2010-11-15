@@ -132,7 +132,7 @@ LsaCloseServer(
 
     if (pContext->pAssoc)
     {
-        lwmsg_assoc_close(pContext->pAssoc);
+        (void) lwmsg_assoc_close(pContext->pAssoc);
         lwmsg_assoc_delete(pContext->pAssoc);
     }
 
