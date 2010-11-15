@@ -68,12 +68,33 @@ RegistryAllocate(
     xmlNodePtr child = NULL;
 
     xszLocalPath = xmlGetProp(pxRegistry, (const xmlChar*)"lp-path");
-    dwError = LwAllocateString((PCSTR)xszLocalPath, &pszLocalPath);
-
     xszPolicyPath = xmlGetProp(pxRegistry, (const xmlChar*)"gp-path");
-    dwError = LwAllocateString((PCSTR)xszPolicyPath, &pszPolicyPath);
-
     xszType = xmlGetProp(pxRegistry, (const xmlChar*)"type");
+
+    if (!xszLocalPath && !xszPolicyPath)
+    {
+        dwError = APP_ERROR_XML_MISSING_ATTRIBUTE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!xszType)
+    {
+        dwError = APP_ERROR_XML_MISSING_ATTRIBUTE;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (xszLocalPath)
+    {
+        dwError = LwAllocateString((PCSTR)xszLocalPath, &pszLocalPath);
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (xszPolicyPath)
+    {
+        dwError = LwAllocateString((PCSTR)xszPolicyPath, &pszPolicyPath);
+        BAIL_ON_ERROR(dwError);
+    }
+
     dwError = LwAllocateString((PCSTR)xszType, &pszType);
     BAIL_ON_ERROR(dwError);
 
@@ -1346,211 +1367,47 @@ error:
 
 }
 
+static
 DWORD
-CapabilityDump(
-    PCAPABILITY pCapability
-    )
+CapabilityGetRegistry(
+    PREGISTRY pRegistry,
+    PSTR *ppszaArg,
+    PDWORD pdwValue,
+    PBOOLEAN pbLocalPolicy
+)
 {
     DWORD dwError = 0;
-    PREGISTRY pRegistry = NULL;
     DWORD dwType = -1;
     const BYTE *pData = NULL;
     DWORD dwDataSize = 0;
     PSTR pszRoot = NULL;
     PSTR pszKey = NULL;
     PSTR pszName = NULL;
-    DWORD dwValue = 0;
-    PSTR pszaArg = NULL;
-    PSTR pszEsc = NULL;
-    BOOLEAN bLocalPolicy = FALSE;
-
-    if (!pCapability)
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    if (!pCapability->pRegistry)
-    {
-       goto cleanup;
-    }
-
-    pRegistry = pCapability->pRegistry;
+    BOOLEAN bTryLocalPolicy = TRUE;
 
     if (!strcmp(pRegistry->pszType, "string"))
     {
         dwType = REG_SZ;
-        pData = (const BYTE*) &pszaArg;
+        pData = (const BYTE*) ppszaArg;
         dwDataSize = 0;
     }
     else if (!strcmp(pRegistry->pszType, "multistring"))
     {
         dwType = REG_MULTI_SZ;
-        pData = (const BYTE*) &pszaArg;
+        pData = (const BYTE*) ppszaArg;
         dwDataSize = 0;
     }
     else if (!strcmp(pRegistry->pszType, "dword"))
     {
         dwType = REG_DWORD;
-        pData = (const BYTE*) &dwValue;
-        dwDataSize = sizeof(dwValue);
+        pData = (const BYTE*) pdwValue;
+        dwDataSize = sizeof(*pdwValue);
     }
     else if (!strcmp(pRegistry->pszType, "boolean"))
     {
         dwType = REG_DWORD;
-        pData = (const BYTE*) &dwValue;
-        dwDataSize = sizeof(dwValue);
-    }
-    else
-    {
-        fprintf(stderr, "Unknown input type '%s'\n", pRegistry->pszType);
-        dwError = APP_ERROR_UNKNOWN_TYPE;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    dwError = UtilParseRegName(
-                    pRegistry->pszPolicyPath,
-                    &pszRoot,
-                    &pszKey,
-                    &pszName);
-    BAIL_ON_ERROR(dwError);
-
-    dwError = UtilGetValueExA(
-                    pszRoot,
-                    pszKey,
-                    pszName,
-                    dwType,
-                    (PVOID) pData,
-                    &dwDataSize);
-    LW_SAFE_FREE_STRING(pszRoot);
-    LW_SAFE_FREE_STRING(pszKey);
-    LW_SAFE_FREE_STRING(pszName);
-    if (dwError)
-    {
-        dwError = UtilParseRegName(
-                        pRegistry->pszLocalPath,
-                        &pszRoot,
-                        &pszKey,
-                        &pszName);
-        BAIL_ON_ERROR(dwError);
-
-        dwError = UtilGetValueExA(
-                        pszRoot,
-                        pszKey,
-                        pszName,
-                        dwType,
-                        (PVOID)pData,
-                        &dwDataSize);
-        BAIL_ON_ERROR(dwError);
-
-        bLocalPolicy = TRUE;
-    }
-
-    fprintf(stdout, "%s", pCapability->pszName);
-    if (!strcmp(pRegistry->pszType, "boolean"))
-    {
-        fprintf(stdout, " %s\n", dwValue ? "true" : "false");
-    }
-    else if (dwType == REG_DWORD)
-    {
-        fprintf(stdout, " %lu\n", (unsigned long)dwValue);
-    }
-    else if (dwType == REG_SZ)
-    {
-        dwError = UtilAllocateEscapedString(pszaArg, &pszEsc);
-        BAIL_ON_ERROR(dwError);
-
-        fprintf(stdout, " \"%s\"\n", pszEsc);
-
-        LW_SAFE_FREE_STRING(pszEsc);
-    }
-    else if (dwType == REG_MULTI_SZ)
-    {
-        PCSTR pszStr = pszaArg;
-        while (*pszStr)
-        {
-            dwError = UtilAllocateEscapedString(pszStr, &pszEsc);
-            BAIL_ON_ERROR(dwError);
-
-            fprintf(stdout, " \"%s\"", pszEsc);
-
-            LW_SAFE_FREE_STRING(pszEsc);
-
-            pszStr += strlen(pszStr) + 1;
-        }
-        fprintf(stdout, "\n");
-    }
-
-cleanup:
-
-    LW_SAFE_FREE_STRING(pszRoot);
-    LW_SAFE_FREE_STRING(pszKey);
-    LW_SAFE_FREE_STRING(pszName);
-    LW_SAFE_FREE_STRING(pszaArg);
-    LW_SAFE_FREE_STRING(pszEsc);
-
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-DWORD
-CapabilityShow(
-    PCAPABILITY pCapability,
-    BOOL bConcise
-    )
-{
-    DWORD dwError = 0;
-    PREGISTRY pRegistry = NULL;
-    DWORD dwType = -1;
-    const BYTE *pData = NULL;
-    DWORD dwDataSize = 0;
-    PSTR pszRoot = NULL;
-    PSTR pszKey = NULL;
-    PSTR pszName = NULL;
-    DWORD dwValue = 0;
-    PSTR pszaArg = NULL;
-    PSTR pszEsc = NULL;
-    BOOLEAN bRegistryValueFound = FALSE;
-    BOOLEAN bLocalPolicy = FALSE;
-
-    if (!pCapability)
-    {
-        dwError = ERROR_INVALID_PARAMETER;
-        BAIL_ON_ERROR(dwError);
-    }
-
-    if (!pCapability->pRegistry)
-    {
-       goto cleanup;
-    }
-
-    pRegistry = pCapability->pRegistry;
-
-    if (!strcmp(pRegistry->pszType, "string"))
-    {
-        dwType = REG_SZ;
-        pData = (const BYTE*) &pszaArg;
-        dwDataSize = 0;
-    }
-    else if (!strcmp(pRegistry->pszType, "multistring"))
-    {
-        dwType = REG_MULTI_SZ;
-        pData = (const BYTE*) &pszaArg;
-        dwDataSize = 0;
-    }
-    else if (!strcmp(pRegistry->pszType, "dword"))
-    {
-        dwType = REG_DWORD;
-        pData = (const BYTE*) &dwValue;
-        dwDataSize = sizeof(dwValue);
-    }
-    else if (!strcmp(pRegistry->pszType, "boolean"))
-    {
-        dwType = REG_DWORD;
-        pData = (const BYTE*) &dwValue;
-        dwDataSize = sizeof(dwValue);
+        pData = (const BYTE*) pdwValue;
+        dwDataSize = sizeof(*pdwValue);
     }
     else
     {
@@ -1578,19 +1435,14 @@ CapabilityShow(
         LW_SAFE_FREE_STRING(pszRoot);
         LW_SAFE_FREE_STRING(pszKey);
         LW_SAFE_FREE_STRING(pszName);
-        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+
+        if (!dwError)
         {
-            dwError = 0;
+            bTryLocalPolicy = FALSE;
         }
-        else if (dwError)
-        {
-            BAIL_ON_ERROR(dwError);
-        }
-        else
-            bRegistryValueFound = TRUE;
     }
 
-    if (!bRegistryValueFound)
+    if (bTryLocalPolicy)
     {
         dwError = UtilParseRegName(
                         pRegistry->pszLocalPath,
@@ -1606,24 +1458,132 @@ CapabilityShow(
                         dwType,
                         (PVOID)pData,
                         &dwDataSize);
-        LW_SAFE_FREE_STRING(pszRoot);
-        LW_SAFE_FREE_STRING(pszKey);
-        LW_SAFE_FREE_STRING(pszName);
+        BAIL_ON_ERROR(dwError);
 
-        if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
-        {
-            dwError = 0;
-        }
-        else if (dwError)
-        {
-            BAIL_ON_ERROR(dwError);
-        }
-        else
-        {
-            bRegistryValueFound = TRUE;
-            bLocalPolicy = TRUE;
-        }
+        *pbLocalPolicy = TRUE;
     }
+
+error:
+    return dwError;
+}
+
+DWORD
+CapabilityDump(
+    PCAPABILITY pCapability
+    )
+{
+    DWORD dwError = 0;
+    PREGISTRY pRegistry = NULL;
+    DWORD dwValue = 0;
+    PSTR pszaArg = NULL;
+    PSTR pszEsc = NULL;
+    BOOLEAN bLocalPolicy = FALSE;
+
+    if (!pCapability)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pCapability->pRegistry)
+    {
+       goto cleanup;
+    }
+
+    pRegistry = pCapability->pRegistry;
+
+    dwError = CapabilityGetRegistry(pRegistry, &pszaArg, &dwValue, &bLocalPolicy);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        goto cleanup;
+    }
+    BAIL_ON_ERROR(dwError);
+
+    fprintf(stdout, "%s", pCapability->pszName);
+    if (!strcmp(pRegistry->pszType, "boolean"))
+    {
+        fprintf(stdout, " %s\n", dwValue ? "true" : "false");
+    }
+    else if (!strcmp(pRegistry->pszType, "dword"))
+    {
+        fprintf(stdout, " %lu\n", (unsigned long)dwValue);
+    }
+    else if (!strcmp(pRegistry->pszType, "string"))
+    {
+        dwError = UtilAllocateEscapedString(pszaArg, &pszEsc);
+        BAIL_ON_ERROR(dwError);
+
+        fprintf(stdout, " \"%s\"\n", pszEsc);
+
+        LW_SAFE_FREE_STRING(pszEsc);
+    }
+    else if (!strcmp(pRegistry->pszType, "multistring"))
+    {
+        PCSTR pszStr = pszaArg;
+        while (*pszStr)
+        {
+            dwError = UtilAllocateEscapedString(pszStr, &pszEsc);
+            BAIL_ON_ERROR(dwError);
+
+            fprintf(stdout, " \"%s\"", pszEsc);
+
+            LW_SAFE_FREE_STRING(pszEsc);
+
+            pszStr += strlen(pszStr) + 1;
+        }
+        fprintf(stdout, "\n");
+    }
+
+cleanup:
+
+    LW_SAFE_FREE_STRING(pszaArg);
+    LW_SAFE_FREE_STRING(pszEsc);
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+CapabilityShow(
+    PCAPABILITY pCapability,
+    BOOL bConcise
+    )
+{
+    DWORD dwError = 0;
+    PREGISTRY pRegistry = NULL;
+    DWORD dwValue = 0;
+    PSTR pszaArg = NULL;
+    PSTR pszEsc = NULL;
+    BOOLEAN bRegistryValueFound = FALSE;
+    BOOLEAN bLocalPolicy = FALSE;
+
+    if (!pCapability)
+    {
+        dwError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_ERROR(dwError);
+    }
+
+    if (!pCapability->pRegistry)
+    {
+       goto cleanup;
+    }
+
+    pRegistry = pCapability->pRegistry;
+
+    dwError = CapabilityGetRegistry(pRegistry, &pszaArg, &dwValue, &bLocalPolicy);
+    if (dwError == 0)
+    {
+        bRegistryValueFound = TRUE;
+    }
+    else if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        bRegistryValueFound = FALSE;
+    }
+    BAIL_ON_ERROR(dwError);
 
     if (bConcise)
     {
@@ -1635,15 +1595,15 @@ CapabilityShow(
         {
             fprintf(stdout, "boolean\n%s\n", dwValue ? "true" : "false");
         }
-        else if (dwType == REG_DWORD)
+        else if (!strcmp(pRegistry->pszType, "dword"))
         {
             fprintf(stdout, "dword\n%lu\n", (unsigned long) dwValue);
         }
-        else if (dwType == REG_SZ)
+        else if (!strcmp(pRegistry->pszType, "string"))
         {
             fprintf(stdout, "string\n%s\n", pszaArg);
         }
-        else if (dwType == REG_MULTI_SZ)
+        else if (!strcmp(pRegistry->pszType, "multistring"))
         {
             fprintf(stdout, "multistring\n");
             PCSTR pszStr = pszaArg;
@@ -1658,9 +1618,13 @@ CapabilityShow(
         if (bRegistryValueFound)
         {
             if (bLocalPolicy)
+            {
                 fprintf(stdout, "local policy\n");
+            }
             else
+            {
                 fprintf(stdout, "group policy\n");
+            }
         }
         else
         {
@@ -1684,7 +1648,7 @@ CapabilityShow(
                 fprintf(stdout, "Current Value: %s\n", dwValue ? "true" : "false");
                 fprintf(stdout, "Accepted Values: true, false\n");
             }
-            else if (dwType == REG_DWORD)
+            else if (!strcmp(pRegistry->pszType, "dword"))
             {
                 xmlNodePtr xmlAccept = NULL;
                 fprintf(stdout, "Current Value: %lu\n", (unsigned long) dwValue);
@@ -1730,7 +1694,7 @@ CapabilityShow(
                     xmlAccept = FindNext(xmlAccept->next, "accept");
                 }
             }
-            else if (dwType == REG_SZ)
+            else if (!strcmp(pRegistry->pszType, "string"))
             {
                 xmlNodePtr xmlAccept = NULL;
 
@@ -1768,7 +1732,7 @@ CapabilityShow(
                     xmlAccept = FindNext(xmlAccept->next, "accept");
                 }
             }
-            else if (dwType == REG_MULTI_SZ)
+            else if (!strcmp(pRegistry->pszType, "multistring"))
             {
                 fprintf(stdout, "Current Values:\n");
                 PCSTR pszStr = pszaArg;
@@ -1793,9 +1757,6 @@ CapabilityShow(
     }
 cleanup:
 
-    LW_SAFE_FREE_STRING(pszRoot);
-    LW_SAFE_FREE_STRING(pszKey);
-    LW_SAFE_FREE_STRING(pszName);
     LW_SAFE_FREE_STRING(pszaArg);
     LW_SAFE_FREE_STRING(pszEsc);
 

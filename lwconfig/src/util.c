@@ -127,6 +127,12 @@ UtilParseRegName(
     PCSTR pszLast = NULL;
     PCSTR pszEnd = NULL;
 
+    if (!pszPath)
+    {
+        dwError = APP_ERROR_BAD_REGISTRY_PATH;
+        BAIL_ON_ERROR(dwError);
+    }
+
     // Skip past a leading /
     if (pszPath[0] == '\\')
         pszPath++;
