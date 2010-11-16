@@ -202,7 +202,8 @@ RegShellGetDefaultKey(
 DWORD
 RegShellCmdEnumToString(
     REGSHELL_CMD_E cmdEnum,
-    PCHAR cmdString);
+    PCHAR cmdString,
+    DWORD dwCmdStringLen);
 
 
 DWORD

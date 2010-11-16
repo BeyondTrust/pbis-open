@@ -182,17 +182,19 @@ static REGSHELL_CMD_ID shellCmds[] = {
 DWORD
 RegShellCmdEnumToString(
     REGSHELL_CMD_E cmdEnum,
-    PCHAR cmdString)
+    PCHAR cmdString,
+    DWORD dwCmdStringLen)
 {
     DWORD dwError = 0;
 
     if (cmdEnum<sizeof(shellCmds)/sizeof(shellCmds[0]))
     {
-        strcpy(cmdString, shellCmds[cmdEnum].pszCommand);
+        cmdString[0] = '\0';
+        strncat(cmdString, shellCmds[cmdEnum].pszCommand, dwCmdStringLen-1);
     }
     else
     {
-        sprintf(cmdString, "Invalid Command: %d", cmdEnum);
+        snprintf(cmdString, dwCmdStringLen, "Invalid Command: %d", cmdEnum);
         dwError = LWREG_ERROR_INVALID_CONTEXT;
     }
     return dwError;
@@ -1058,7 +1060,7 @@ RegShellDumpCmdItem(
 
     BAIL_ON_INVALID_POINTER(rsItem);
 
-    RegShellCmdEnumToString(rsItem->command, tokenName);
+    RegShellCmdEnumToString(rsItem->command, tokenName, sizeof(tokenName));
     printf("DumpCmd: command=%s\n", tokenName);
     if (rsItem->keyName)
     {
