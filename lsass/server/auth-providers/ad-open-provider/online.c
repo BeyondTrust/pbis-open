@@ -432,6 +432,8 @@ AD_GetLinkedCellInfo(
     LDAP* pGCLd = NULL;
     PDLINKEDLIST pCellList = NULL;
     HANDLE hDirectory = NULL;
+    PSTR  pszCellDirectoryRoot = NULL;
+    PSTR  pszLinkedCellDN = NULL;
 
     dwError = LsaDmLdapDirectorySearch(
                       pConn,
@@ -503,8 +505,6 @@ AD_GetLinkedCellInfo(
         {
             PSTR  pszHexStr = NULL;
             PAD_LINKED_CELL_INFO pLinkedCellInfo = NULL;
-            PSTR  pszCellDirectoryRoot = NULL;
-            PSTR  pszLinkedCellDN = NULL;
             PSTR  pszCellDN = NULL;
 
             dwError = LwAllocateMemory(
@@ -610,6 +610,8 @@ cleanup:
 
     LsaDmLdapClose(pGcConn);
 
+    LW_SAFE_FREE_STRING (pszCellDirectoryRoot);
+    LW_SAFE_FREE_STRING (pszLinkedCellDN);
     LW_SAFE_FREE_STRING (pszDirectoryRoot);
 
     return dwError;
