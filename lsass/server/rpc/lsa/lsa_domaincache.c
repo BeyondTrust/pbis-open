@@ -513,7 +513,19 @@ cleanup:
     return ntStatus;
 
 error:
-    *ppOut = NULL;
+    if (pOut)
+    {
+        LW_SAFE_FREE_MEMORY(pOut->pwszName);
+        RTL_FREE(&pOut->pSid);
+
+        LW_SAFE_FREE_MEMORY(pOut);
+    }
+
+    if (ppOut)
+    {
+        *ppOut = NULL;
+    }
+
     goto cleanup;
 }
 
