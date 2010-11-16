@@ -138,11 +138,12 @@ DWORD DJGetDistroInfo(const char *testPrefix, DistroInfo *info)
                 #   Red Hat Enterprise Linux Client release 5 (Tikanga)
                 #   Red Hat Enterprise Linux Server release 5.3 (Tikanga)
                 #   Red Hat Enterprise Linux ES release 4 (Nahant Update 8)
+                #   Red Hat Enterprise Linux Workstation release 6.0 (Santiago)
                 # In addition, Oracle Linux reports itself as:
                 #   Enterprise Linux Enterprise Linux AS release 4 (October Update 5)
                 */
                 //Find a matching distro name
-                "^[[:space:]]*((Red Hat)|(Enterprise Linux)) ((Enterprise Linux)|(Linux (Advanced|Enterprise) Server))[[:space:]]+(AS |ES |Client |Server )?"
+                "^[[:space:]]*((Red Hat)|(Enterprise Linux)) ((Enterprise Linux)|(Linux (Advanced|Enterprise) Server))[[:space:]]+(AS |ES |Client |Server |Workstation )?"
                 "release ([[:digit:]]+(\\.[[:digit:]]+)?(AS|ES)?) (\\(\\S+ Update ([[:digit:]]+)\\))?",
                 9,
                 13,
