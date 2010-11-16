@@ -212,7 +212,6 @@ RegShellIsValidKey(
     PWSTR pSubKey = NULL;
 
     BAIL_ON_INVALID_HANDLE(hReg);
-    BAIL_ON_INVALID_POINTER(pszKey);
 
     if (!pszRootKeyName)
     {
@@ -221,17 +220,20 @@ RegShellIsValidKey(
     dwError = RegOpenKeyExA(hReg, NULL, pszRootKeyName, 0, KEY_READ, &pRootKey);
     BAIL_ON_REG_ERROR(dwError);
 
-	dwError = RegWC16StringAllocateFromCString(&pSubKey, pszKey);
-	BAIL_ON_REG_ERROR(dwError);
+    if (pszKey)
+    {
+        dwError = RegWC16StringAllocateFromCString(&pSubKey, pszKey);
+        BAIL_ON_REG_ERROR(dwError);
 
-    dwError = RegOpenKeyExW(
-        hReg,
-        pRootKey,
-        pSubKey,
-        0,
-        KEY_READ,
-        &pFullKey);
-    BAIL_ON_REG_ERROR(dwError);
+        dwError = RegOpenKeyExW(
+            hReg,
+            pRootKey,
+            pSubKey,
+            0,
+            KEY_READ,
+            &pFullKey);
+        BAIL_ON_REG_ERROR(dwError);
+    }
 
 cleanup:
     
