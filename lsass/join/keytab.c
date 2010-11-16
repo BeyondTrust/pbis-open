@@ -633,7 +633,7 @@ KtKrb5GetKey(
     krb5_error_code ret = 0;
     krb5_context ctx = NULL;
     krb5_keytab ktid = 0;
-    krb5_principal client;
+    krb5_principal client = NULL;
     krb5_kvno vno = 0;
     krb5_enctype enctype = 0;
     krb5_keytab_entry entry = {0};
