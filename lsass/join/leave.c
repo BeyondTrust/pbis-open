@@ -466,11 +466,8 @@ LsaDisableMachineAccount(
                 BAIL_ON_NT_STATUS(ntStatus);
             }
 
-            if (pSid)
-            {
-                SamrFreeMemory(pSid);
-                pSid = NULL;
-            }
+            SamrFreeMemory(pSid);
+            pSid = NULL;
         }
 
         if (ppwszDomainNames)
