@@ -544,7 +544,7 @@ RegParseBinaryData(
 
         RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
         RegLexGetLineNumber(parseHandle->lexHandle, &lineNum);
-        RegLexTokenToString(token, tokenName);
+        RegLexTokenToString(token, tokenName, sizeof(tokenName));
         if (token == REGLEX_HEXPAIR)
         {
             dwError = RegParseAppendData(
@@ -1108,7 +1108,7 @@ RegParseTypeValue(
             }
             else
             {
-                RegLexTokenToString(token, tokenName);
+                RegLexTokenToString(token, tokenName, sizeof(tokenName));
                 dwError = LWREG_ERROR_SYNTAX;
                 return dwError;
             }
@@ -1203,7 +1203,7 @@ RegParseTypeValue(
             }
             else
             {
-                RegLexTokenToString(token, tokenName);
+                RegLexTokenToString(token, tokenName, sizeof(tokenName));
                 dwError = LWREG_ERROR_SYNTAX;
                 return dwError;
                 break;
@@ -1686,7 +1686,7 @@ RegParseAttributes(
         {
             return dwError;
         }
-        RegLexTokenToString(token, tokenName);
+        RegLexTokenToString(token, tokenName, sizeof(tokenName));
         RegLexGetAttribute(parseHandle->lexHandle, &attrSize, &pszAttr);
         if (token != REGLEX_ATTRIBUTES_END)
         {

@@ -108,7 +108,8 @@ RegLexClose(
 
 DWORD RegLexTokenToString(
     REGLEX_TOKEN token,
-    PSTR tokenStr)
+    PSTR tokenStr,
+    DWORD dwTokenStrLen)
 {
     static char *tokenStrs[] = {
         "REGLEX_FIRST",
@@ -144,11 +145,12 @@ DWORD RegLexTokenToString(
     };
     if (token < (sizeof(tokenStrs)/sizeof(char *)))
     {
-        strcpy(tokenStr, tokenStrs[token]);
+        tokenStr[0] = '\0';
+        strncat(tokenStr, tokenStrs[token], dwTokenStrLen-1);
     }
     else
     {
-        sprintf(tokenStr, "ERROR: No Such Token %d", token);
+        snprintf(tokenStr, dwTokenStrLen, "ERROR: No Such Token %d", token);
     }
 
     return 0;

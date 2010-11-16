@@ -61,7 +61,7 @@ runLexInput(
         if (count && (count % 1000) == 0)
         {
             dwError = RegLexGetToken(ioH, pLexH, &token, &eof);
-            RegLexTokenToString(token, pszTokenStr);
+            RegLexTokenToString(token, pszTokenStr, sizeof(pszTokenStr));
             RegLexGetLineNumber(pLexH, &lineNum);
             RegLexGetAttribute(pLexH, &attrSize, &pszAttr);
 
@@ -76,7 +76,7 @@ runLexInput(
         dwError = RegLexGetToken(ioH, pLexH, &token, &eof);
         if (dwError == ERROR_SUCCESS && !eof)
         {
-            RegLexTokenToString(token, pszTokenStr);
+            RegLexTokenToString(token, pszTokenStr, sizeof(pszTokenStr));
             RegLexGetLineNumber(pLexH, &lineNum);
             RegLexGetAttribute(pLexH, &attrSize, &pszAttr);
 

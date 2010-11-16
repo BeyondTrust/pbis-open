@@ -126,8 +126,8 @@ DWORD parseCallbackDebug(PREG_PARSE_ITEM pItem, HANDLE userContext)
         ctx->pfn_fprintf(outStream, "parseCallback: Value name  = (EMPTY)\n");
     }
 
-    RegLexTokenToString(pItem->type, tokenName);
-    RegLexTokenToString(pItem->valueType, valueName);
+    RegLexTokenToString(pItem->type, tokenName, sizeof(tokenName));
+    RegLexTokenToString(pItem->valueType, valueName, sizeof(tokenName));
     ctx->pfn_fprintf(outStream, "parseCallback: Value type   = %d (%s)\n",
            pItem->valueType, valueName);
     ctx->pfn_fprintf(outStream, "parseCallback: Data type   = %d (%s) - ", pItem->type, tokenName);

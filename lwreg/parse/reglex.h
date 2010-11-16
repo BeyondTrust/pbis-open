@@ -143,7 +143,8 @@ RegLexUnGetToken(PREGLEX_ITEM lexHandle);
 DWORD
 RegLexTokenToString(
     REGLEX_TOKEN token,
-    PSTR tokenStr);
+    PSTR tokenStr,
+    DWORD dwTokenStrLen);
 
 DWORD
 RegLexGetLineNumber(
