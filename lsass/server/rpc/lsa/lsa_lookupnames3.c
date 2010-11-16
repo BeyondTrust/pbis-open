@@ -118,7 +118,6 @@ LsaSrvLookupNames3(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwError = ERROR_SUCCESS;
     PPOLICY_CONTEXT pPolCtx = NULL;
     PACCOUNT_NAMES pAccountNames = NULL;
     DWORD dwUnknownNamesNum = 0;
@@ -290,12 +289,6 @@ LsaSrvLookupNames3(
 
 cleanup:
     LsaSrvFreeAccountNames(pAccountNames);
-
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
-    {
-        ntStatus = LwWin32ErrorToNtStatus(dwError);
-    }
 
     return ntStatus;
 
