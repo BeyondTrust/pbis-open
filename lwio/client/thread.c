@@ -141,15 +141,14 @@ LwIoDeletePathCreds(
 {
     if (pPathCreds)
     {
-        if (pPathCreds->pwszPathPrefix)
-        {
-            LwRtlMemoryFree(pPathCreds->pwszPathPrefix);
-        }
+        RTL_FREE(&pPathCreds->pwszPathPrefix);
 
         if (pPathCreds->pCreds)
         {
             LwIoDeleteCreds(pPathCreds->pCreds);
         }
+
+        RTL_FREE(&pPathCreds);
     }
 }
 
