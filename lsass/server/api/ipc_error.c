@@ -69,6 +69,14 @@ LsaSrvIpcCreateError(
 
     *ppError = pError;
 
-error:
+cleanup:
+
     return dwError;
+
+error:
+
+    LW_SAFE_FREE_MEMORY(pError);
+    *ppError = NULL;
+
+    goto cleanup;
 }
