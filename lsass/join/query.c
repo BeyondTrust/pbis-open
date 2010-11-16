@@ -407,7 +407,7 @@ LsaSrvJoinFindComputerDN(
     PSTR szAttributeList[] = {"*", NULL};
     CHAR szQuery[1024];
     LDAPMessage *pMessage = NULL;
-    DWORD dwCount = 0;
+    int count = 0;
     PSTR pszComputerDN = NULL;
     PSTR pszEscapedUpperHostName = NULL;
 
@@ -436,14 +436,14 @@ LsaSrvJoinFindComputerDN(
                     &pMessage);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwCount = ldap_count_entries(
+    count = ldap_count_entries(
                 pLd,
                 pMessage);
-    if (dwCount < 0) {
+    if (count < 0) {
         dwError = LW_ERROR_LDAP_ERROR;
-    } else if (dwCount == 0) {
+    } else if (count == 0) {
         dwError = LW_ERROR_NO_SUCH_DOMAIN;
-    } else if (dwCount > 1) {
+    } else if (count > 1) {
         dwError = LW_ERROR_DUPLICATE_DOMAINNAME;
     }
     BAIL_ON_LSA_ERROR(dwError);   
