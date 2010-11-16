@@ -141,7 +141,7 @@ LsaOpenConfig(
 
     PLSA_CONFIG_REG pReg = NULL;
 
-    LwAllocateMemory(sizeof(LSA_CONFIG_REG), (PVOID*)&pReg);
+    dwError = LwAllocateMemory(sizeof(LSA_CONFIG_REG), (PVOID*)&pReg);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateString(pszConfigKey, &(pReg->pszConfigKey));
