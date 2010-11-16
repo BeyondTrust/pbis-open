@@ -107,13 +107,13 @@ LsaSrvWriteLoginSuccessEvent(
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PSTR pszData = NULL;
     PSTR pszDescription = NULL;
-    char szLoginPhase[256] = {0};
+    PCSTR pszLoginPhase = NULL;
     DWORD dwEventID = 0;
 
     switch(dwLoginPhase)
     {
         case LSASS_EVENT_LOGON_PHASE_AUTHENTICATE:
-            sprintf(szLoginPhase, "User authenticate");
+            pszLoginPhase = "User authenticate";
             if (dwFlags & LSA_AUTH_USER_PAM_FLAG_SMART_CARD)
             {
                 dwEventID = LSASS_EVENT_SUCCESSFUL_AUTHENTICATE_SMARTCARD;
@@ -126,17 +126,17 @@ LsaSrvWriteLoginSuccessEvent(
             break;
 
         case LSASS_EVENT_LOGON_PHASE_CREATE_SESSION:
-            sprintf(szLoginPhase, "User PAM session create");
+            pszLoginPhase = "User PAM session create";
             dwEventID = LSASS_EVENT_SUCCESSFUL_LOGON_CREATE_SESSION;
             break;
 
         case LSASS_EVENT_LOGON_PHASE_CHECK_USER:
-            sprintf(szLoginPhase, "User membership check of the restricted logon list");
+            pszLoginPhase = "User membership check of the restricted logon list";
             dwEventID = LSASS_EVENT_SUCCESSFUL_LOGON_CHECK_USER;
             break;
 
         default:
-            sprintf(szLoginPhase, "Unknown login phase");
+            pszLoginPhase = "Unknown login phase";
     }
 
     if (pszPamSource != NULL)
@@ -153,7 +153,7 @@ LsaSrvWriteLoginSuccessEvent(
                      pszProvider,
                      pServerState->peerUID,
                      pszLoginId,
-                     szLoginPhase,
+                     pszLoginPhase,
                      pszPamSource);
     }
     else
@@ -169,7 +169,7 @@ LsaSrvWriteLoginSuccessEvent(
                      pszProvider,
                      pServerState->peerUID,
                      pszLoginId,
-                     szLoginPhase);
+                     pszLoginPhase);
     }
     BAIL_ON_LSA_ERROR(dwError);
 
