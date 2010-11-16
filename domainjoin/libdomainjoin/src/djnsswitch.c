@@ -1114,7 +1114,7 @@ cleanup:
     CT_SAFE_FREE_STRING(finalName);
 }
 
-DWORD UnsuportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
+DWORD UnsupportedSeLinuxEnabled(BOOLEAN *hasBadSeLinux)
 {
     BOOLEAN hasSeLinux;
     DWORD ceError = ERROR_SUCCESS;
@@ -1215,7 +1215,7 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
         LW_CLEANUP_CTERR(exc, UpdateNsswitchConf(&conf, TRUE));
         if(conf.modified)
         {
-            LW_CLEANUP_CTERR(exc, UnsuportedSeLinuxEnabled(&hasBadSeLinux));
+            LW_CLEANUP_CTERR(exc, UnsupportedSeLinuxEnabled(&hasBadSeLinux));
             if(hasBadSeLinux)
                 result = CannotConfigure;
             else
@@ -1429,7 +1429,7 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
 
     memset(&conf, 0, sizeof(conf));
 
-    LW_CLEANUP_CTERR(exc, UnsuportedSeLinuxEnabled(&hasBadSeLinux));
+    LW_CLEANUP_CTERR(exc, UnsupportedSeLinuxEnabled(&hasBadSeLinux));
     if(hasBadSeLinux)
     {
         LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&ret,
