@@ -815,7 +815,8 @@ MemCacheSafeClose(
 
         if (pConn->bLockCreated)
         {
-            LwMapErrnoToLwError(pthread_rwlock_destroy(&pConn->lock));
+            dwError = LwMapErrnoToLwError(pthread_rwlock_destroy(&pConn->lock));
+            LSA_ASSERT(dwError == 0);
         }
         if (pConn->bBackupMutexCreated)
         {
