@@ -1299,7 +1299,14 @@ static BOOLEAN NormalizeModuleName( char *destName, const char *srcName, size_t 
     else if(CTStrEndsWith(srcName, ".1"))
         trimEnd = strlen(".1");
 
-    copyLen = strlen(srcName) - trimEnd;
+    if (srcName == NULL)
+    {
+        copyLen = 0;
+    }
+    else
+    {
+        copyLen = strlen(srcName) - trimEnd;
+    }
     if(copyLen > bufferSize - 1)
         copyLen = bufferSize - 1;
 
@@ -1979,6 +1986,12 @@ static DWORD SetPamTokenValue(CTParseToken **token, CTParseToken *prev, const ch
 {
     DWORD ceError = ERROR_SUCCESS;
 
+    if (value == NULL)
+    {
+        ceError = ERROR_INVALID_PARAMETER;
+        BAIL_ON_CENTERIS_ERROR(ceError);
+    }
+
     if(prev != NULL && (prev->trailingSeparator == NULL ||
         strlen(prev->trailingSeparator) < 1))
     {
@@ -2033,6 +2046,11 @@ static DWORD FindPamDenyLikeModule(const char *testPrefix, char **modulePath, ch
                 BAIL_ON_CENTERIS_ERROR(ceError);
             }
         }
+        else
+        {
+            ceError = ERROR_MISSING_SYSTEMFILE;
+        }
+        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 error:
     if(ceError)
@@ -2268,12 +2286,14 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
              * auth required pam_deny.so.1
              */
             int newLine = -1;
-            LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, &newLine));
-            lineObj = &conf->lines[newLine];
+
             if(pam_deny_path == NULL)
             {
                 LW_CLEANUP_CTERR(exc, FindPamDenyLikeModule(testPrefix, &pam_deny_path, &pam_deny_option));
             }
+
+            LW_CLEANUP_CTERR(exc, CopyLineAndUpdateSkips(conf, line, &newLine));
+            lineObj = &conf->lines[newLine];
             LW_CLEANUP_CTERR(exc, SetPamTokenValue(&lineObj->module, lineObj->control, pam_deny_path));
             lineObj->optionCount = 0;
             if(pam_deny_option != NULL)
@@ -2422,8 +2442,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             state->sawCallerSufficientLine = TRUE;
         }
 
-        if (!strcmp(control, "sufficient") &&
-            !PamModuleAlwaysDeniesDomainLogins(phase, module, distro))
+        if (!PamModuleAlwaysDeniesDomainLogins(phase, module, distro))
         {
             state->sawDomainUserGrantingLine = TRUE;
         }
@@ -3001,6 +3020,7 @@ static DWORD FindModulePath(const char *testPrefix, const char *basename, char *
     const char *searchNameSuffixes[] = {
         ".so",
         ".so.1",
+        ".so.2",
         ".sl",
         ".sl.1",
         ".1",
