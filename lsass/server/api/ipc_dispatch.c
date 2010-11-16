@@ -1296,14 +1296,17 @@ LsaSrvIpcEnumTraceInfo(
         dwError = LsaSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LSA_ERROR(dwError);
 
-        pOut->tag = LSA_R_ENUM_TRACE_INFO_FAILURE;;
+        pOut->tag = LSA_R_ENUM_TRACE_INFO_FAILURE;
         pOut->data = pError;
+        goto error;
     }
 
 cleanup:
+
     return MAP_LW_ERROR_IPC(dwError);
 
 error:
+
     if (pResult)
     {
         LW_SAFE_FREE_MEMORY(pResult->pTraceInfoArray);
