@@ -58,13 +58,13 @@ WkssCleanStubNetrWkstaInfo(
     switch (dwLevel)
     {
     case 102:
+    case 101:
         if (pInfo->pInfo102)
         {
             rpc_sm_client_free(pInfo->pInfo102->wksta102_lan_root, &rpcStatus);
         }
-        break;
+        /* missing break is intentional (see NETR_WKSTA_INFO in wksssvc.h) */
 
-    case 101:
     case 100:
         if (pInfo->pInfo100)
         {
