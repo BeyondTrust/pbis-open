@@ -1786,6 +1786,12 @@ struct ConfigurePamModuleState
     /* Set to true if our smartcard prompt line has been added. */
     BOOLEAN hasAddedSmartCardPrompt;
 
+    /* Whether a line like "required pam_deny.so" has been encountered */
+    BOOLEAN sawRequiredDenyAll;
+
+    /* Whether a line like "sufficient pam_rhosts.so" has been encountered */
+    BOOLEAN sawCallerSufficientLine;
+
     int includeLevel;
 };
 
@@ -2414,7 +2420,14 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             state->sawCallerRequirementLine = TRUE;
         }
 
-        if(!PamModuleAlwaysDeniesDomainLogins(phase, module, distro))
+        if (!strcmp(control, "sufficient") &&
+            PamModuleChecksCaller(phase, module))
+        {
+            state->sawCallerSufficientLine = TRUE;
+        }
+
+        if (!strcmp(control, "sufficient") &&
+            !PamModuleAlwaysDeniesDomainLogins(phase, module, distro))
         {
             state->sawDomainUserGrantingLine = TRUE;
         }
@@ -2483,7 +2496,8 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         {
             char normalizedService[256];
 
-            if(state->sawCallerRequirementLine)
+            if (state->sawCallerRequirementLine ||
+                (state->sawRequiredDenyAll && state->sawCallerSufficientLine))
             {
                 /* This service is protected by something other than a password
                  */
@@ -2610,6 +2624,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
                  */
                 if( !(distro->os == OS_DARWIN && !strcmp(phase, "password")) )
                 {
+                    state->sawRequiredDenyAll = TRUE;
                     goto cleanup;
                 }
             }
