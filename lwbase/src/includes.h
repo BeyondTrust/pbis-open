@@ -48,6 +48,7 @@
 #include <fcntl.h>
 
 #include <string.h>
+#include <ctype.h>
 #include <assert.h>
 
 #ifdef HAVE_STRINGS_H

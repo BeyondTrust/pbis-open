@@ -14,7 +14,8 @@ endif
 
 DOXYGEN_DEPS = \
 	Doxyfile.in \
-	@top_srcdir@/include/lw/threadpool.h
+	@top_srcdir@/include/lw/threadpool.h \
+	@top_srcdir@/include/lw/hash.h
 
 doxygen-html: $(DOXYGEN_DEPS)
 	$(MKDIR_P) doxygen-html

@@ -17,6 +17,7 @@ liblwbase_nothr_la_SOURCES = \
         rtlstring_unicode.c \
         rtlstring_ansi.c \
         rbtree.c \
+        hash.c \
         security-sid.c \
         security-sddlmapping.c \
         security-sddl.c \

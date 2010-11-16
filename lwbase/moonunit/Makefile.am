@@ -2,7 +2,7 @@ AM_CFLAGS = $(LWBASE_CFLAGS)
 AM_CPPFLAGS = $(LWBASE_CPPFLAGS) -I$(top_srcdir)/include
 AM_LDFLAGS = $(LWBASE_LDFLAGS)
 
-TEST_SOURCES = test-security.c test-atomic.c test-threadpool.c test-compare.c test-convert.c test-printf.c test-sddl.c
+TEST_SOURCES = test-security.c test-atomic.c test-threadpool.c test-compare.c test-convert.c test-printf.c test-sddl.c test-hash.c
 
 noinst_LTLIBRARIES = libbenchmark.la
 

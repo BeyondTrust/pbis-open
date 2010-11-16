@@ -56,5 +56,6 @@
 #include <lw/affinity.h>
 #include <lw/mapsecurity.h>
 #include <lw/safeint.h>
+#include <lw/hash.h>
 
 #endif
