@@ -975,8 +975,6 @@ LwRtlSetTaskUnixSignal(
 
 error:
 
-    UNLOCK_THREAD(pTask->pThread);
-
     return status;
 }
 
