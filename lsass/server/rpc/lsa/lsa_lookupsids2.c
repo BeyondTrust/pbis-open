@@ -105,7 +105,6 @@ LsaSrvLookupSids2(
     )
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwError = ERROR_SUCCESS;
     DWORD dwLevel = level;
     PPOLICY_CONTEXT pPolCtx = NULL;
     PACCOUNT_SIDS pAccountSids = NULL;
@@ -257,12 +256,6 @@ cleanup:
     if (pAccountSids)
     {
         LsaSrvFreeAccountSids(pAccountSids);
-    }
-
-    if (ntStatus == STATUS_SUCCESS &&
-        dwError != ERROR_SUCCESS)
-    {
-        ntStatus = LwWin32ErrorToNtStatus(dwError);
     }
 
     return ntStatus;
