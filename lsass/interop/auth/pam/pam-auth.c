@@ -420,13 +420,14 @@ pam_sm_authenticate(
         }
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (pInfo && pInfo->bOnlineLogon)
+        if (pInfo && !pInfo->bOnlineLogon)
         {
-            pPamContext->bOnlineLogon = TRUE;
+            pPamContext->bOnlineLogon = FALSE;
         }
         else
         {
-            pPamContext->bOnlineLogon = FALSE;
+            // Assume online if no pInfo returned
+            pPamContext->bOnlineLogon = TRUE;
         }
 
         dwError = LsaCheckUserInList(
