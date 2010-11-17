@@ -108,7 +108,6 @@ LsaDbOpen(
     DWORD dwError = 0;
     BOOLEAN bLockCreated = FALSE;
     PLSA_DB_CONNECTION pConn = NULL;
-    PSTR pszError = NULL;
     BOOLEAN bExists = FALSE;
     PSTR pszQuery = NULL;
     PCSTR pszEitherQueryFormat =
@@ -514,10 +513,6 @@ LsaDbOpen(
 
 cleanup:
 
-    if (pszError != NULL)
-    {
-        sqlite3_free(pszError);
-    }
     LW_SAFE_FREE_STRING(pszQuery);
     LW_SAFE_FREE_STRING(pszDbDir);
 
@@ -1482,8 +1477,6 @@ LsaDbStoreObjectEntries(
     DWORD dwError = LW_ERROR_SUCCESS;
     size_t sIndex = 0;
     //Free with sqlite3_free
-    char *pszError = NULL;
-    //Free with sqlite3_free
     char *pszNewStatement = NULL;
     LSA_STRING_BUFFER buffer = {0};
     BOOLEAN bGotNow = FALSE;
@@ -1776,7 +1769,6 @@ LsaDbStoreObjectEntries(
 
 cleanup:
     SQLITE3_SAFE_FREE_STRING(pszNewStatement);
-    SQLITE3_SAFE_FREE_STRING(pszError);
     LsaFreeStringBufferContents(&buffer);
 
     return dwError;
