@@ -1190,6 +1190,8 @@ typedef struct
                                 /* Exclusive search bits */
                                 /*      ("MUST HAVE BITS") supported */
                                 /*      SMB_SHARE_IS_IN_DFS = 0x0002 */
+    uint32_t  maximalShareAccessMask;
+    uint32_t  guestMaximalShareAccessMask;
     uint16_t  byteCount;        /* Count of data bytes; min = 3 */
 
     /* Data immediately follows */
@@ -2723,16 +2725,6 @@ WireMarshallErrorResponse(
     ULONG                   ulOffset,
     PERROR_RESPONSE_HEADER* ppResponseHeader,
     PUSHORT                 pusParamBytesUsed
-    );
-
-NTSTATUS
-UnmarshallTreeConnectResponse(
-    const uint8_t    *pBuffer,
-    uint32_t          bufferLen,
-    uint8_t           messageAlignment,
-    TREE_CONNECT_RESPONSE_HEADER **ppHeader,
-    PSTR *ppszService,
-    PWSTR *ppwszNativeFilesystem
     );
 
 BOOLEAN
