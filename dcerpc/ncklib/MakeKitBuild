@@ -61,6 +61,8 @@ make()
 
     AUTH_SCHANNEL_SOURCES="schnauth.c schnauthcn.c"
 
+    AUTH_NTLMSSP_SOURCES="ntlmssp.c ntlmsspcn.c"
+
     NCK_EXTRA_GROUPS=""
 
     # Generate core stubs
@@ -238,6 +240,18 @@ make()
             LIBDEPS="schannel"
 
         NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_schannel"
+    fi
+
+    if [ "$ENABLE_NTLMSSP" = "yes" ]
+    then
+        mk_group \
+            GROUP="auth_ntlmssp" \
+            SOURCES="$AUTH_NTLMSSP_SOURCES" \
+            INCLUDEDIRS="$NCK_INCLUDEDIRS" \
+            CFLAGS="$NCK_CFLAGS" \
+            HEADERDEPS="$NCK_HEADERDEPS"
+
+        NCK_EXTRA_GROUPS="$NCK_EXTRA_GROUPS auth_ntlmssp"
     fi
 
     mk_group \
