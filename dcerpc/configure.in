@@ -392,7 +392,7 @@ then
 fi
 AM_CONDITIONAL(AUTH_GSS_NEGOTIATE, test x${rpc_arg_gss_negotiate} = xyes)
 
-RPC_ARG_DEFINE(ntlmssp, AUTH_NTLMSSP, no, Include the ntlmssp auth service)
+RPC_ARG_DEFINE(ntlmssp, AUTH_NTLMSSP, yes, Include the ntlmssp auth service)
 if test x"$rpc_arg_ntlmssp" = xyes
 then
 	AC_DEFINE([ENABLE_AUTH_NTLMSSP], [], [Enable ntlmssp auth mechanism])
