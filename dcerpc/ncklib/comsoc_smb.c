@@ -332,7 +332,8 @@ rpc__smb_buffer_packet_is_last(
 {
     rpc_cn_common_hdr_p_t packet = (rpc_cn_common_hdr_p_t) buffer->start_cursor;
 
-    return (packet->flags & RPC_C_CN_FLAGS_LAST_FRAG) == RPC_C_CN_FLAGS_LAST_FRAG;
+    return ((packet->flags & RPC_C_CN_FLAGS_LAST_FRAG) == RPC_C_CN_FLAGS_LAST_FRAG &&
+	    packet->ptype != RPC_C_CN_PKT_AUTH3);
 }
 
 INTERNAL
