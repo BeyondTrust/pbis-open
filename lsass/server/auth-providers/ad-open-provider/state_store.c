@@ -945,7 +945,7 @@ static
 DWORD
 ADState_ReadRegCellEntry(
     IN PCSTR pszRegistryPath,
-    OUT PDLINKEDLIST *ppCellList)
+    IN OUT PDLINKEDLIST *ppCellList)
 {
     PAD_LINKED_CELL_INFO pListEntry = NULL;
     DWORD dwError = 0;
@@ -956,9 +956,6 @@ ADState_ReadRegCellEntry(
     DWORD dwMultiCellListOrder = 0;
     DWORD dwIsForestCell = 0;
     PSTR pszFullRegistryPath = NULL;
-
-    dwError = LwAllocateMemory(sizeof(*pListEntry), (PVOID) &pListEntry);
-    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
                   &pszFullRegistryPath,
@@ -994,6 +991,9 @@ ADState_ReadRegCellEntry(
 
     for (i=0; i<dwMultiCellListOrder; i++)
     {
+        dwError = LwAllocateMemory(sizeof(*pListEntry), (PVOID) &pListEntry);
+        BAIL_ON_LSA_ERROR(dwError);
+
         dwError = RegUtilGetValue(
                       hReg,
                       HKEY_THIS_MACHINE,
@@ -1031,6 +1031,7 @@ ADState_ReadRegCellEntry(
                       ppCellList,
                       pListEntry);
         BAIL_ON_LSA_ERROR(dwError);
+        pListEntry = NULL;
     }
 
 cleanup:
@@ -1038,6 +1039,11 @@ cleanup:
     for (i=0; i<dwMultiCellListOrder; i++)
     {
         LW_SAFE_FREE_STRING(ppszMultiCellListOrder[i]);
+    }
+
+    if (pListEntry)
+    {
+        ADProviderFreeCellInfo(pListEntry);
     }
 
     LW_SAFE_FREE_MEMORY(ppszMultiCellListOrder);
