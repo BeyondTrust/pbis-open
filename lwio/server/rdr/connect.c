@@ -946,8 +946,8 @@ RdrTransceiveTreeConnect(
 
     pHeader = (TREE_CONNECT_REQUEST_HEADER *) pContext->Packet.pParams;
 
-    pHeader->flags = 0;
-    pHeader->passwordLength = 1;    /* strlen("") + terminating NULL */
+    pHeader->flags = SMB_HTOL16(0x8); /* FIXME: magic number */
+    pHeader->passwordLength = SMB_HTOL16(1);    /* strlen("") + terminating NULL */
 
     status = MarshallTreeConnectRequestData(
                     pContext->Packet.pData,

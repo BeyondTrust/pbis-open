@@ -331,31 +331,35 @@ UnmarshallTreeConnectResponse(
     uint32_t          bufferLen,
     uint8_t           messageAlignment,
     TREE_CONNECT_RESPONSE_HEADER **ppHeader,
-    uchar8_t        **ppszService,
-    wchar16_t       **ppwszNativeFilesystem
+    PSTR *ppszService,
+    PWSTR *ppwszNativeFilesystem
     )
 {
+    PTREE_CONNECT_RESPONSE_HEADER pHeader = NULL;
     /* NOTE: The buffer format cannot be trusted! */
     uint32_t bufferUsed = sizeof(TREE_CONNECT_RESPONSE_HEADER);
     if (bufferLen < bufferUsed)
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
 
-    /* @todo: endian swap as appropriate */
-    *ppHeader = (TREE_CONNECT_RESPONSE_HEADER*) pBuffer;
+    pHeader = (PTREE_CONNECT_RESPONSE_HEADER) pBuffer;
+    SMB_HTOL16_INPLACE(pHeader->optionalSupport);
+    SMB_HTOL32_INPLACE(pHeader->maximalShareAccessMask);
+    SMB_HTOL32_INPLACE(pHeader->guestMaximalShareAccessMask);
+    *ppHeader = pHeader;
 
-    *ppszService = (uchar8_t *) pBuffer + bufferUsed;
+    *ppszService = (PSTR) pBuffer + bufferUsed;
     bufferUsed = strnlen((char *) *ppszService, bufferLen - bufferUsed) +
         sizeof(NUL);
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     /* Align string */
     bufferUsed += (bufferUsed + messageAlignment) % 2;
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     *ppwszNativeFilesystem = (wchar16_t *) (pBuffer + bufferUsed);
@@ -363,7 +367,7 @@ UnmarshallTreeConnectResponse(
         (bufferLen - bufferUsed) / sizeof(wchar16_t)) + sizeof(WNUL);
     if (bufferUsed > bufferLen)
     {
-        return EBADMSG;
+        return STATUS_INVALID_NETWORK_RESPONSE;
     }
 
     return 0;

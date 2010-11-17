@@ -2268,6 +2268,16 @@ MarshallTreeConnectResponseData(
     );
 
 NTSTATUS
+UnmarshallTreeConnectResponse(
+    const uint8_t    *pBuffer,
+    uint32_t          bufferLen,
+    uint8_t           messageAlignment,
+    TREE_CONNECT_RESPONSE_HEADER **ppHeader,
+    PSTR *ppszService,
+    PWSTR *ppwszNativeFilesystem
+    );
+
+NTSTATUS
 WireUnmarshallCreateFileRequest(
     PBYTE  pParams,
     ULONG  ulBytesAvailable,
