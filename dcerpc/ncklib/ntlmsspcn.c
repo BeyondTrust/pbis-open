@@ -1391,7 +1391,7 @@ INTERNAL void rpc__ntlmauth_cn_wrap_packet
 	OM_uint32 minor_status = 0;
 	int conf_req = (int)seal;
 	int conf_state = 0;
-	gss_iov_buffer_desc output_iov[4] = {0};
+	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc ntlmssp_buffer = {0};
 
 	CODING_ERROR(st);
@@ -1902,9 +1902,6 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 {
 	rpc_ntlmauth_cn_info_p_t ntlmauth_cn_info = (rpc_ntlmauth_cn_info_p_t)sec->sec_cn_info;
 	unsigned32 pdu_len = 0;
-	unsigned32 wrap_len = 0;
-	unsigned32 wrap_idx = 0;
-	unsigned_char_p_t wrap_base = NULL;
 	OM_uint32 gss_rc = 0;
 	OM_uint32 minor_status = 0;
 	int conf_state = 0;
@@ -1913,7 +1910,7 @@ INTERNAL void rpc__ntlmauth_cn_unwrap_packet
 	unsigned_char_p_t ntlmssp_base = NULL;
 	unsigned16 ntlmssp_len = 0;
 	unsigned8 auth_pad_len = 0;
-	gss_iov_buffer_desc output_iov[4] = {0};
+	gss_iov_buffer_desc output_iov[4] = { {0}, {0}, {0}, {0} };
 	gss_buffer_desc hdr_buffer = {0};
 	gss_buffer_desc pdu_buffer = {0};
 	gss_buffer_desc ntlmssp_buffer = {0};
