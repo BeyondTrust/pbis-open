@@ -82,7 +82,7 @@ LwioGetSystemTimeString(
     NTSTATUS status = STATUS_SUCCESS;
     struct timespec ts = {0};
     struct tm tmbuf = {0};
-    LONG sWritten = 0;
+    LONG lWritten = 0;
 
     status = LwioGetSystemTime(&ts);
     if (status)
@@ -94,13 +94,13 @@ LwioGetSystemTimeString(
 
     if (gbLwioLogDoNanoSecondTime)
     {
-        sWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT, &tmbuf);
+        lWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT, &tmbuf);
     }
     else
     {
-        sWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT ":", &tmbuf);
+        lWritten = strftime(pszBuf, sBufLen, LWIO_LOG_TIME_FORMAT ":", &tmbuf);
     }
-    if (sWritten == 0)
+    if (lWritten == 0)
     {
         status = STATUS_UNSUCCESSFUL;
         goto error;
@@ -108,7 +108,7 @@ LwioGetSystemTimeString(
 
     if (gbLwioLogDoNanoSecondTime)
     {
-        size_t sRemaining = sBufLen - sWritten;
+        size_t sRemaining = sBufLen - lWritten;
 
         if (!sRemaining)
         {
@@ -116,12 +116,12 @@ LwioGetSystemTimeString(
             goto error;
         }
 
-        sWritten = snprintf(pszBuf + sWritten, sRemaining, ".%09ld:", ts.tv_nsec);
-        if (sWritten < 0)
+        lWritten = snprintf(pszBuf + lWritten, sRemaining, ".%09ld:", ts.tv_nsec);
+        if (lWritten < 0)
         {
             status = STATUS_INTERNAL_ERROR;
         }
-        else if (sWritten >= sRemaining)
+        else if (lWritten >= sRemaining)
         {
             status = STATUS_BUFFER_TOO_SMALL;
         }

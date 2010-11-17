@@ -572,7 +572,7 @@ SMBCopyFileWithPerms(
     CHAR szBuf[1024+1];
     int  iFd = -1;
     int  oFd = -1;
-    LONG dwBytesRead = 0;
+    LONG lBytesRead = 0;
 
     if (IsNullOrEmptyString(pszSrcPath) ||
         IsNullOrEmptyString(pszDstPath)) {
@@ -600,7 +600,7 @@ SMBCopyFileWithPerms(
     bRemoveFile = TRUE;
 
     while (1) {
-        if ((dwBytesRead = read(iFd, szBuf, 1024)) < 0) {
+        if ((lBytesRead = read(iFd, szBuf, 1024)) < 0) {
 
             if (errno == EINTR)
                 continue;
@@ -609,10 +609,10 @@ SMBCopyFileWithPerms(
             BAIL_ON_LWIO_ERROR(dwError);
         }
 
-        if (dwBytesRead == 0)
+        if (lBytesRead == 0)
             break;
 
-        if (write(oFd, szBuf, dwBytesRead) != dwBytesRead) {
+        if (write(oFd, szBuf, lBytesRead) != lBytesRead) {
 
             if (errno == EINTR)
                 continue;
