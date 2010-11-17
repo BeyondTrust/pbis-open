@@ -82,7 +82,7 @@ LwioGetSystemTimeString(
     NTSTATUS status = STATUS_SUCCESS;
     struct timespec ts = {0};
     struct tm tmbuf = {0};
-    size_t sWritten = 0;
+    LONG sWritten = 0;
 
     status = LwioGetSystemTime(&ts);
     if (status)
