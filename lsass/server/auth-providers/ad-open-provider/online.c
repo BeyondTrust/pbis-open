@@ -434,6 +434,7 @@ AD_GetLinkedCellInfo(
     HANDLE hDirectory = NULL;
     PSTR  pszCellDirectoryRoot = NULL;
     PSTR  pszLinkedCellDN = NULL;
+    PAD_LINKED_CELL_INFO pLinkedCellInfo = NULL;
 
     dwError = LsaDmLdapDirectorySearch(
                       pConn,
@@ -504,7 +505,6 @@ AD_GetLinkedCellInfo(
         while (pszLinkedCellGuid != NULL)
         {
             PSTR  pszHexStr = NULL;
-            PAD_LINKED_CELL_INFO pLinkedCellInfo = NULL;
             PSTR  pszCellDN = NULL;
 
             dwError = LwAllocateMemory(
@@ -579,6 +579,7 @@ AD_GetLinkedCellInfo(
 
             dwError = LsaDLinkedListAppend(&pCellList, pLinkedCellInfo);
             BAIL_ON_LSA_ERROR(dwError);
+            pLinkedCellInfo = NULL;
 
             pszLinkedCellGuid = strtok_r (NULL, pszDelim, &pszStrTokSav);
 
@@ -606,6 +607,11 @@ cleanup:
 
     if (ppszValues) {
         LwFreeStringArray(ppszValues, dwNumValues);
+    }
+
+    if (pLinkedCellInfo)
+    {
+        ADProviderFreeCellInfo(pLinkedCellInfo);
     }
 
     LsaDmLdapClose(pGcConn);
