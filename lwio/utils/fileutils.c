@@ -572,7 +572,7 @@ SMBCopyFileWithPerms(
     CHAR szBuf[1024+1];
     int  iFd = -1;
     int  oFd = -1;
-    DWORD dwBytesRead = 0;
+    LONG dwBytesRead = 0;
 
     if (IsNullOrEmptyString(pszSrcPath) ||
         IsNullOrEmptyString(pszDstPath)) {
