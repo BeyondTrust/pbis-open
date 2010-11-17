@@ -879,6 +879,13 @@ typedef struct
 typedef struct
 {
     SMB_INFO_LEVEL infoLevel;
+    ULONG ulReserved;
+} __attribute__((__packed__)) SMB_QUERY_PATH_INFO_HEADER,
+                             *PSMB_QUERY_PATH_INFO_HEADER;
+
+typedef struct
+{
+    SMB_INFO_LEVEL infoLevel;
 } __attribute__((__packed__)) SMB_QUERY_FS_INFO_HEADER,
                              *PSMB_QUERY_FS_INFO_HEADER;
 

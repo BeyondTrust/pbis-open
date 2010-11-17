@@ -53,6 +53,14 @@
 
 static
 BOOLEAN
+RdrCreateQueryInfoPathComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
+static
+BOOLEAN
 RdrFinishCreate(
     PRDR_OP_CONTEXT pContext,
     NTSTATUS status,
@@ -81,6 +89,19 @@ RdrCancelCreate(
 {
     return;
 }
+
+static
+BOOLEAN
+RdrCreateIsDeferred(
+    ACCESS_MASK DesiredAccess
+    )
+{
+    return (
+        DesiredAccess == DELETE ||
+        DesiredAccess == FILE_LIST_DIRECTORY
+    );
+}
+
 
 static
 BOOLEAN
@@ -142,20 +163,47 @@ RdrCreateTreeConnectComplete(
     pFile->pwszCanonicalPath = pContext->State.Create.pwszCanonicalPath;
     pContext->State.Create.pwszCanonicalPath = NULL;
 
-    pContext->Continue = RdrFinishCreate;
-
     pContext->State.Create.pFile = pFile;
 
-    if (DesiredAccess == DELETE)
+    if (RdrCreateIsDeferred(DesiredAccess))
     {
-        /* If the desired access is precisely DELETE, we can only peform
-           move or delete operations.  Since these are path-based, there is
-           no point in opening a fid */
-        status = IoFileSetContext(pContext->pIrp->FileHandle, pFile);
-        BAIL_ON_NT_STATUS(status);
+        /*
+         * The operation we are requesting access for is path-based, so there
+         * is no point in creating a fid.
+         */
+        if (RDR_CCB_IS_DFS(pFile))
+        {
+            /* However, in the DFS case, we can't afford to get a STATUS_PATH_NOT_COVERED
+             * after completing the create IRP because we're stuck with out current file handle.
+             * We can't change the file handle after the fact because:
+             *
+             * - It would violate the invariant that pFile->pTree is constant for the lifetime
+             *   of the handle
+             * - We might end up with a different type of connection (SMB1/2), which means
+             *   we don't even have the correct file handle structure
+             *
+             * Query FileBasicInformation now so we can detect this case
+             */
+            pContext->Continue = RdrCreateQueryInfoPathComplete;
+
+            status = RdrTransceiveQueryInfoPath(
+                pContext,
+                pFile->pTree,
+                RDR_CCB_PATH(pFile),
+                SMB_QUERY_FILE_BASIC_INFO,
+                sizeof(FILE_BASIC_INFORMATION));
+            BAIL_ON_NT_STATUS(status);
+        }
+        else
+        {
+            status = IoFileSetContext(pContext->pIrp->FileHandle, pFile);
+            BAIL_ON_NT_STATUS(status);
+        }
     }
     else
     {
+        pContext->Continue = RdrFinishCreate;
+
         status = RdrTransceiveCreate(
             pContext,
             pFile,
@@ -216,6 +264,78 @@ error:
         RdrTreeRelease(pTree);
     }
 
+
+    goto cleanup;
+}
+
+static
+BOOLEAN
+RdrCreateQueryInfoPathComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    )
+{
+    PRDR_CCB pFile = pContext->State.Create.pFile;
+    PSMB_PACKET pPacket = pParam;
+    PIRP pIrp = pContext->pIrp;
+    PIO_CREDS pCreds = IoSecurityGetCredentials(pIrp->Args.Create.SecurityContext);
+    PIO_SECURITY_CONTEXT_PROCESS_INFORMATION pProcessInfo =
+          IoSecurityGetProcessInfo(pIrp->Args.Create.SecurityContext);
+
+    if (status == STATUS_SUCCESS)
+    {
+        status = pPacket->pSMBHeader->error;
+    }
+
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        status = IoFileSetContext(pContext->pIrp->FileHandle, pFile);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        /* Go back into DFS connect */
+        pContext->Continue = RdrCreateTreeConnectComplete;
+        pContext->State.Create.pFile = NULL;
+
+        status = RdrDfsConnect(
+            pFile->pTree->pSession->pSocket,
+            pIrp->Args.Create.FileName.FileName,
+            pCreds,
+            pProcessInfo->Uid,
+            status,
+            &pContext->usTry,
+            &pContext->State.Create.pwszFilename,
+            &pContext->State.Create.pwszCanonicalPath,
+            pContext);
+
+        RdrReleaseFile(pFile);
+        pFile = NULL;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+cleanup:
+
+    RdrFreePacket(pPacket);
+
+    if (status != STATUS_PENDING)
+    {
+        pContext->pIrp->IoStatusBlock.Status = status;
+        IoIrpComplete(pContext->pIrp);
+        RTL_FREE(&pContext->State.Create.pwszFilename);
+        RTL_FREE(&pContext->State.Create.pwszCanonicalPath);
+        RdrFreeContext(pContext);
+    }
+
+    return FALSE;
+
+error:
+
+    if (pFile)
+    {
+        RdrReleaseFile(pFile);
+    }
 
     goto cleanup;
 }

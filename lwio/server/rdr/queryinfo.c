@@ -324,6 +324,112 @@ error:
 }
 
 NTSTATUS
+RdrTransceiveQueryInfoPath(
+    PRDR_OP_CONTEXT pContext,
+    PRDR_TREE pTree,
+    PCWSTR pwszPath,
+    SMB_INFO_LEVEL infoLevel,
+    ULONG ulInfoLength
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    TRANSACTION_REQUEST_HEADER *pHeader = NULL;
+    static USHORT usSetup = SMB_SUB_COMMAND_TRANS2_QUERY_PATH_INFORMATION;
+    SMB_QUERY_PATH_INFO_HEADER queryHeader = {0};
+    PBYTE pRequestParameters = NULL;
+    PBYTE pCursor = NULL;
+    PBYTE pByteCount = NULL;
+    ULONG ulRemainingSpace = 0;
+
+    status = RdrAllocateContextPacket(pContext, 1024*64);
+    BAIL_ON_NT_STATUS(status);
+
+    status = SMBPacketMarshallHeader(
+        pContext->Packet.pRawBuffer,
+        pContext->Packet.bufferLen,
+        COM_TRANSACTION2,
+        0,
+        0,
+        pTree->tid,
+        gRdrRuntime.SysPid,
+        pTree->pSession->uid,
+        0,
+        TRUE,
+        &pContext->Packet);
+    BAIL_ON_NT_STATUS(status);
+
+    if (pTree->usSupportFlags & SMB_SHARE_IS_IN_DFS)
+    {
+        pContext->Packet.pSMBHeader->flags2 |= FLAG2_DFS;
+    }
+
+    pCursor = pContext->Packet.pParams;
+    ulRemainingSpace = pContext->Packet.bufferLen - (pCursor - pContext->Packet.pRawBuffer);
+
+    status = WireMarshalTrans2RequestSetup(
+        pContext->Packet.pSMBHeader,
+        &pCursor,
+        &ulRemainingSpace,
+        &usSetup,
+        1,
+        &pHeader,
+        &pByteCount);
+    BAIL_ON_NT_STATUS(status);
+
+    /* Remember start of the trans2 parameter block */
+    pRequestParameters = pCursor;
+
+    /* Write parameters */
+    queryHeader.ulReserved = 0;
+    queryHeader.infoLevel = SMB_HTOL16(infoLevel);
+
+    status = MarshalData(&pCursor, &ulRemainingSpace, (PBYTE) &queryHeader, sizeof(queryHeader));
+    BAIL_ON_NT_STATUS(status);
+
+    status = Align((PBYTE) pContext->Packet.pSMBHeader, &pCursor, &ulRemainingSpace, sizeof(WCHAR));
+    BAIL_ON_NT_STATUS(status);
+
+    status = MarshalPwstr(&pCursor, &ulRemainingSpace, pwszPath, -1);
+    BAIL_ON_NT_STATUS(status);
+
+    /* The cursor now points exactly past the end of the packet */
+
+    /* Update fields in trans request header */
+    pHeader->totalParameterCount = SMB_HTOL16((USHORT) (pCursor - pRequestParameters));
+    pHeader->totalDataCount      = SMB_HTOL16(0);
+    pHeader->maxParameterCount   = SMB_HTOL16(sizeof(USHORT)); /* Reply parameters consist of a USHORT */
+    pHeader->maxDataCount        = SMB_HTOL16(ulInfoLength + 100);   /* FIXME: magic number */
+    pHeader->maxSetupCount       = SMB_HTOL8(1);
+    pHeader->flags               = SMB_HTOL16(0);
+    pHeader->timeout             = SMB_HTOL32(0);
+    pHeader->parameterCount      = SMB_HTOL16((USHORT) (pCursor - pRequestParameters));
+    pHeader->parameterOffset     = SMB_HTOL16((USHORT) (pRequestParameters - (PBYTE) pContext->Packet.pSMBHeader));
+    pHeader->dataCount           = SMB_HTOL16(0);
+    pHeader->dataOffset          = SMB_HTOL16(0);
+    pHeader->setupCount          = SMB_HTOL8(1);
+
+    /* Update byte count */
+    status = MarshalUshort(&pByteCount, NULL, (pCursor - pByteCount) - 2);
+
+    /* Update used length */
+    pContext->Packet.bufferUsed += (pCursor - pContext->Packet.pParams);
+
+    status = SMBPacketMarshallFooter(&pContext->Packet);
+    BAIL_ON_NT_STATUS(status);
+
+    status = RdrSocketTransceive(pTree->pSession->pSocket, pContext);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+NTSTATUS
 RdrUnmarshalQueryFileInfoReply(
     ULONG ulInfoLevel,
     PBYTE pData,

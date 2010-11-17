@@ -392,4 +392,13 @@ RdrUnmarshalQueryFileInfoReply(
     PULONG pulInfoLengthUsed
     );
 
+NTSTATUS
+RdrTransceiveQueryInfoPath(
+    PRDR_OP_CONTEXT pContext,
+    PRDR_TREE pTree,
+    PCWSTR pwszPath,
+    SMB_INFO_LEVEL infoLevel,
+    ULONG ulInfoLength
+    );
+
 #endif /* __RDR_H__ */

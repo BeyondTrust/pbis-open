@@ -152,12 +152,6 @@ RdrQueryDirectory(
 
     pFile = IoFileGetContext(pIrp->FileHandle);
 
-    if (!pFile->fid)
-    {
-        status = STATUS_ACCESS_VIOLATION;
-        BAIL_ON_NT_STATUS(status);
-    }
-
     switch (pIrp->Args.QueryDirectory.FileInformationClass)
     {
     case FileBothDirectoryInformation:
