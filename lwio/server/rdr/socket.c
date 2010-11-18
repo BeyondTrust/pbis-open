@@ -1498,6 +1498,12 @@ RdrSocketConnect(
                 continue;
             }
 #endif
+#ifdef EAFNOSUPPORT
+            if (errno == EAFNOSUPPORT)
+            {
+                continue;
+            }
+#endif
             ntStatus = ErrnoToNtStatus(errno);
             BAIL_ON_NT_STATUS(ntStatus);
         }
