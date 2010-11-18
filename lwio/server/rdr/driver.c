@@ -167,7 +167,7 @@ RdrDriverDispatch2(
         status = STATUS_NOT_IMPLEMENTED;
         break;
     case IRP_TYPE_FS_CONTROL:
-        status = STATUS_NOT_IMPLEMENTED;
+        status = RdrFsctl2(DeviceHandle, pIrp);
         break;
     case IRP_TYPE_FLUSH_BUFFERS:
         status = STATUS_NOT_IMPLEMENTED;

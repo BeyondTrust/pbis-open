@@ -203,6 +203,12 @@ RdrFsctl(
     );
 
 NTSTATUS
+RdrFsctl2(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
 RdrWrite(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
@@ -307,19 +313,6 @@ RdrSetSecurity(
 NTSTATUS
 RdrSetSecurity2(
     IO_DEVICE_HANDLE IoDeviceHandle,
-    PIRP pIrp
-    );
-
-NTSTATUS
-RdrGetSessionKey(
-    HANDLE hFile,
-    PDWORD pdwSessionKeyLength,
-    PBYTE* ppSessionKey
-    );
-
-NTSTATUS
-RdrCommonFsctl(
-    PRDR_OP_CONTEXT pIrpContext,
     PIRP pIrp
     );
 

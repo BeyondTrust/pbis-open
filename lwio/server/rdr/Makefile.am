@@ -19,7 +19,6 @@ endif
 librdr_sys_la_SOURCES =  \
     connect.c             \
     connect2.c            \
-    getsesskey.c          \
     globals.c             \
     session.c             \
     session2.c            \
@@ -44,6 +43,7 @@ librdr_sys_la_SOURCES =  \
     querydir2.c           \
     deviceio.c            \
     fsctl.c               \
+    fsctl2.c              \
     security.c            \
     security2.c           \
     queryfs.c             \

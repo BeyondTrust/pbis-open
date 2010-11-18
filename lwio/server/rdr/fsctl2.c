@@ -35,31 +35,30 @@
  *
  * Module Name:
  *
- *        driver.c
+ *        fsctl2.c
  *
  * Abstract:
  *
- *        Likewise Posix File System Driver (RDR)
+ *        LWIO Redirector
  *
- *        Device I/O Function
+ *        SMB2 FSCTL
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
+ * Authors: Brian Koropoff (bkoropoff@likewise.com)
  */
 
 #include "rdr.h"
 
 static
 NTSTATUS
-RdrGetSessionKey(
-    PRDR_CCB pFile,
+RdrGetSessionKey2(
+    PRDR_CCB2 pFile,
     PVOID pBuffer,
     ULONG ulLength,
     PULONG pulLengthUsed
     );
 
 NTSTATUS
-RdrFsctl(
+RdrFsctl2(
     IO_DEVICE_HANDLE IoDeviceHandle,
     PIRP pIrp
     )
@@ -67,12 +66,12 @@ RdrFsctl(
     NTSTATUS status = STATUS_SUCCESS;
     PVOID pOutBuffer = pIrp->Args.IoFsControl.OutputBuffer;
     ULONG OutLength = pIrp->Args.IoFsControl.OutputBufferLength;
-    PRDR_CCB pFile = IoFileGetContext(pIrp->FileHandle);
+    PRDR_CCB2 pFile = IoFileGetContext(pIrp->FileHandle);
 
     switch (pIrp->Args.IoFsControl.ControlCode)
     {
     case IO_FSCTL_SMB_GET_SESSION_KEY:
-        status = RdrGetSessionKey(
+        status = RdrGetSessionKey2(
             pFile,
             pOutBuffer,
             OutLength,
@@ -93,15 +92,15 @@ error:
 
 static
 NTSTATUS
-RdrGetSessionKey(
-    PRDR_CCB pFile,
+RdrGetSessionKey2(
+    PRDR_CCB2 pFile,
     PVOID pBuffer,
     ULONG ulLength,
     PULONG pulLengthUsed
     )
 {
     NTSTATUS status = STATUS_SUCCESS;
-    PRDR_SESSION pSession = pFile->pTree->pSession;
+    PRDR_SESSION2 pSession = pFile->pTree->pSession;
 
     if (pSession->dwSessionKeyLength > ulLength)
     {
