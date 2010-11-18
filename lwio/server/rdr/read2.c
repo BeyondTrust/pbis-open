@@ -89,6 +89,7 @@ RdrRead2(
     ULONG ulRemainder = 0;
     BOOLEAN bLocked = FALSE;
     LONG64 llOffset = 0;
+    BOOLEAN bIsPipe = RdrShareIsIpc(pFile->pTree->pwszPath);
 
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
@@ -140,7 +141,9 @@ RdrRead2(
         status = RdrTransceiveRead2(
             &pContexts[usIndex+1],
             pFile,
-            pContexts[usIndex+1].State.Read2Chunk.ulChunkOffset + llOffset,
+            bIsPipe ?
+                0 :
+                pContexts[usIndex+1].State.Read2Chunk.ulChunkOffset + llOffset,
             pContexts[usIndex+1].State.Read2Chunk.ulChunkLength);
         if (status == STATUS_PENDING)
         {

@@ -91,6 +91,7 @@ RdrWrite2(
     BOOLEAN bLocked = FALSE;
     ULONG ulChunkOffset = 0;
     LONG64 llOffset = 0;
+    BOOLEAN bIsPipe = RdrShareIsIpc(pFile->pTree->pwszPath);
 
     if (pIrp->Args.ReadWrite.ByteOffset)
     {
@@ -141,7 +142,9 @@ RdrWrite2(
         status = RdrTransceiveWrite2(
             &pContexts[usIndex+1],
             pFile,
-            llOffset + ulChunkOffset,
+            bIsPipe ?
+                0 :
+                llOffset + ulChunkOffset,
             ((PBYTE) pIrp->Args.ReadWrite.Buffer) + ulChunkOffset,
             pContexts[usIndex+1].State.Write2Chunk.ulChunkLength);
         if (status == STATUS_PENDING)
