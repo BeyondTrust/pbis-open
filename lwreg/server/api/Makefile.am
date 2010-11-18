@@ -32,6 +32,7 @@ endif
 
 libregserverapi_la_LIBADD = \
     $(BACKEND_LIB) \
-    @LWBASE_LIBS@ \
-    @UUID_LIBS@ \
+    -llwbase \
+    -llwmsg_nothr \
+    -luuid \
     @PTHREAD_LIBS@
