@@ -81,7 +81,7 @@ binary-arch: build install
 	dh_strip
 	dh_compress
 	dh_fixperms
-	dh_perl
+#	dh_perl
 	dh_makeshlibs
 	dh_installdeb
 #	dh_shlibdeps -ldebian/likewise-open/usr/lib/likewise-open
