@@ -10,6 +10,7 @@ lwio_tool_CPPFLAGS =  \
 
 lwio_tool_LDADD = \
     @top_builddir@/client/liblwioclient.la \
-    @LWBASE_LIBS@
+    @top_builddir@/common/liblwiocommon.la \
+    -llwbase_nothr
 
 lwio_tool_LDFLAGS = -L$(top_builddir)/common/.libs
