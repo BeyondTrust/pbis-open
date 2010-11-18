@@ -67,6 +67,12 @@ RdrSmb2ShouldVerifyPacket(
     BOOLEAN bClientSigningRequired
     )
 {
+    if (SMB_HTOL32(pPacket->pSMB2Header->error) == STATUS_PENDING)
+    {
+        /* Interim responses are not signed */
+        return FALSE;
+    }
+
     switch(SMB_HTOL16(pPacket->pSMB2Header->command))
     {
     case COM2_BREAK:
