@@ -50,7 +50,8 @@ librdr_sys_la_SOURCES =  \
     queryfs2.c            \
     close.c               \
     close2.c              \
-    smb2.c
+    smb2.c                \
+    path.c
 
 librdr_sys_la_CPPFLAGS = \
     $(AM_CPPFLAGS) \

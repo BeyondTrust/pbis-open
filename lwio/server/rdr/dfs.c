@@ -460,40 +460,6 @@ RdrDfsStatusIsRetriable(
 }
 
 NTSTATUS
-RdrConstructCanonicalPath(
-    PWSTR pwszShare,
-    PWSTR pwszFilename,
-    PWSTR* ppwszCanonical
-    )
-{
-    if (pwszFilename[0] == '\\' &&
-        pwszFilename[1] == '\0')
-    {
-        return LwRtlWC16StringDuplicate(ppwszCanonical, pwszShare);
-    }
-    else
-    {
-        return LwRtlWC16StringAllocatePrintfW(
-            ppwszCanonical,
-            L"%ws%ws",
-            pwszShare,
-            pwszFilename);
-    }
-}
-
-static
-BOOLEAN
-RdrShareIsIpc(
-    PWSTR pwszShare
-    )
-{
-    static const WCHAR wszIpcDollar[] = {'I','P','C','$','\0'};
-    ULONG ulLen = LwRtlWC16StringNumChars(pwszShare);
-
-    return (ulLen >= 4 && LwRtlWC16StringIsEqual(pwszShare + ulLen - 4, wszIpcDollar, FALSE));
-}
-
-NTSTATUS
 RdrDfsConnectAttempt(
     PRDR_OP_CONTEXT pContext
     )

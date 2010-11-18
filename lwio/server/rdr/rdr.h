@@ -84,6 +84,7 @@
 #include "externs.h"
 #include "smb2.h"
 #include "dfs.h"
+#include "path.h"
 
 #define RDR_CONNECT_TIMEOUT 10
 #define RDR_IDLE_TIMEOUT 10
@@ -330,14 +331,6 @@ RdrReleaseFile(
 void
 RdrReleaseFile2(
     PRDR_CCB2 pFile
-    );
-
-NTSTATUS
-RdrConvertPath(
-    PCWSTR pwszIoPath,
-    PWSTR* ppwszHost,
-    PWSTR* ppwszShare,
-    PWSTR* ppwszFile
     );
 
 BOOLEAN

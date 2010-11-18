@@ -142,11 +142,4 @@ RdrDfsConnectAttempt(
     PRDR_OP_CONTEXT pContext
     );
 
-NTSTATUS
-RdrConstructCanonicalPath(
-    PWSTR pwszShare,
-    PWSTR pwszFilename,
-    PWSTR* ppwszCanonical
-    );
-
 #endif
