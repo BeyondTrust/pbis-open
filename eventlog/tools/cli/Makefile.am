@@ -14,9 +14,11 @@ lw_eventlog_cli_SOURCES = \
 
 lw_eventlog_cli_LDADD = \
 	$(top_builddir)/client/libeventlog.la \
-	$(LWADVAPI_LIBS) \
-	$(POPT_LIBS) \
-	$(LIBXML2_LIBS)
+	$(top_builddir)/utils/libeventlogutils.la \
+	-llwadvapi \
+	-llwadvapi_nothr \
+	-lpopt \
+	-lxml2
 
 lw_eventlog_cli_LDFLAGS = \
 	$(LWADVAPI_LDFLAGS) \
