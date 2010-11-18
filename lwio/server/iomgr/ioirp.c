@@ -163,20 +163,20 @@ IopIrpAttach(
     LWIO_ASSERT(Type != IRP_TYPE_UNINITIALIZED);
 
     IopFileObjectLock(pFileObject);
+
     // TODO-Add FILE_OBJECT_FLAG_CLOSED
     if ((Type != IRP_TYPE_CLOSE) &&
         (IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_CANCELLED) ||
          IsSetFlag(pFileObject->Flags, FILE_OBJECT_FLAG_RUNDOWN)))
     {
         status = STATUS_CANCELLED;
+        GOTO_CLEANUP_EE(EE);
     }
     else
     {
         LwListInsertTail(&pFileObject->IrpList,
                          &irpInternal->FileObjectLinks);
     }
-    IopFileObjectUnlock(pFileObject);
-    GOTO_CLEANUP_ON_STATUS_EE(status, EE);
 
     // These are immutable from here until the IRP is freed.
     pIrp->Type = Type;
@@ -188,6 +188,8 @@ IopIrpAttach(
     pIrp->DriverHandle = pFileObject->pDevice->Driver;
 
 cleanup:
+    IopFileObjectUnlock(pFileObject);
+
     IO_LOG_LEAVE_ON_STATUS_EE(status, EE);
     return status;
 }
