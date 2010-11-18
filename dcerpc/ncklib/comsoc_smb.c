@@ -732,9 +732,9 @@ rpc__smb_socket_connect(
             pipeAccess,                              /* Access mode */
             0,                                       /* Allocation size */
             0,                                       /* File attributes */
-            FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Sharing mode */
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,      /* Sharing mode */
             FILE_OPEN,                               /* Create disposition */
-            FILE_CREATE_TREE_CONNECTION,             /* Create options */
+            FILE_NON_DIRECTORY_FILE | FILE_OPEN_NO_RECALL,             /* Create options */
             NULL,                                    /* EA buffer */
             0,                                       /* EA buffer length */
             NULL,                                    /* ECP List */
