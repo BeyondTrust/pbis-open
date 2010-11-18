@@ -3,7 +3,6 @@ make()
     RDR_SOURCES="\
         connect.c             \
         connect2.c            \
-        getsesskey.c          \
         globals.c             \
         session.c             \
         session2.c            \
@@ -25,6 +24,7 @@ make()
         querydir2.c           \
         deviceio.c            \
         fsctl.c               \
+        fsctl2.c              \
         security.c            \
         security2.c           \
         queryfs.c             \
@@ -34,7 +34,8 @@ make()
         smb2.c                \
         dfs.c                 \
         dfs1.c                \
-        dfs2.c"
+        dfs2.c                \
+        path.c"
     
     mk_dlo \
         DLO=librdr.sys \
