@@ -1767,7 +1767,7 @@ struct ConfigurePamModuleState
     BOOLEAN configuredRequestedModule;
     /* Set to true if a line has been passed that has "sufficient" as the control and a module that lets users in based off of a password. This will not be set to true for modules that use caller based authentication like pam_rootok.
      */
-    BOOLEAN sawNonDomainUserSufficientCheck;
+    BOOLEAN sawSufficientPromptingCheck;
     /* Set to true if a line has been passed that has a module that prompts for passwords (assuming that try_first_pass, etc. are not on the line), regardless of what the control is.
      */
     BOOLEAN sawPromptingModule;
@@ -2428,9 +2428,9 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         if ((!strcmp(control, "sufficient") ||
                 !strncmp(control, "[success=1 ", sizeof("[success=1 ") - 1)) &&
                 PamModuleGrants(phase, module) &&
-                PamModuleAlwaysDeniesDomainLogins(phase, module, distro))
+                PamModulePrompts(phase, module))
         {
-            state->sawNonDomainUserSufficientCheck = TRUE;
+            state->sawSufficientPromptingCheck = TRUE;
         }
 
         if( (!strcmp(control, "required") ||
@@ -2630,16 +2630,17 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             char buffer[256] = "";
             NormalizeModuleName( buffer, module, sizeof(buffer));
 
-            if( (!state->sawNonDomainUserSufficientCheck || !strcmp(service, "runuser")) &&
+            if( (!state->sawSufficientPromptingCheck || !strcmp(service, "runuser")) &&
                     (!PamModuleGrants(phase, module) || PamModuleChecksCaller(phase, module)) &&
                     (!strcmp(control, "required") ||
                     !strcmp(control, "requisite")))
             {
-                /* I guess the user wants to block everyone from logging in.
-                 * In this case, we won't let domain users in either, unless
-                 * it is the password phase on OS X. OS X has an OS bug where
-                 * it blocks password changes during login for all services
-                 * except passwd and interactive logins.
+                /* I guess the user wants to block everyone from logging in, or
+                 * authenticate users with something other than a password.  In
+                 * this case, we won't let domain users in either, unless it is
+                 * the password phase on OS X. OS X has an OS bug where it
+                 * blocks password changes during login for all services except
+                 * passwd and interactive logins.
                  */
                 if( !(distro->os == OS_DARWIN && !strcmp(phase, "password")) )
                 {
