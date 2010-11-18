@@ -328,10 +328,17 @@ RdrFinishReadChunk2(
     PBYTE pData = NULL;
     BOOLEAN bLocked = 0;
     PRDR_OP_CONTEXT pMaster = &pContext[-pContext->State.Read2Chunk.usIndex];
+    BOOLEAN bResult = FALSE;
 
     BAIL_ON_NT_STATUS(status);
 
     status = pPacket->pSMB2Header->error;
+    switch (status)
+    {
+    case STATUS_PENDING:
+        /* Interim response -- remain queued to receive actual response */
+        bResult = TRUE;
+    }
     BAIL_ON_NT_STATUS(status);
 
     status = RdrSmb2DecodeReadResponse(
@@ -367,7 +374,7 @@ cleanup:
         LWIO_UNLOCK_MUTEX(bLocked, &pFile->mutex);
     }
 
-    return FALSE;
+    return bResult;
 
 error:
 
