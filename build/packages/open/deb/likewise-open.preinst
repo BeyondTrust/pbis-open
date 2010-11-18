@@ -141,7 +141,7 @@ case "$1" in
     ;;
 
     install)
-        log "Package: Likewise Open [preinst install] begins (`data`)"
+        log "Package: Likewise Open [preinst install] begins (`date`)"
 
         if check_deb_installed "likewise-open5" ; then
             log "The package likewise-open5 from Ubuntu has been detected."
