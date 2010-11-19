@@ -67,6 +67,12 @@ AD_CheckExpiredMemberships(
     OUT PBOOLEAN pbIsComplete
     );
 
+static
+DWORD
+AD_UpdateRdrDomainHints(
+    PLSA_AD_PROVIDER_STATE pState
+    );
+
 DWORD
 AD_OnlineFindCellDN(
     IN PLSA_DM_LDAP_CONNECTION pConn,
@@ -372,6 +378,9 @@ AD_OnlineInitializeOperatingMode(
                 pProviderData->szDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_UpdateRdrDomainHints(pState);
+    BAIL_ON_LSA_ERROR(dwError);
+
     *ppProviderData = pProviderData;
 
 cleanup:
@@ -394,6 +403,74 @@ error:
 
     goto cleanup;
 }
+
+static
+DWORD
+AD_UpdateRdrDomainHints(
+    PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    DWORD dwError = 0;
+    PWSTR* ppwszDomains = NULL;
+    PLSA_DM_ENUM_DOMAIN_INFO* ppInfo = NULL;
+    DWORD dwCount = 0;
+    DWORD dwIndex = 0;
+    ULONG ulFinalCount = 0;
+
+    if (!pState->bIsDefault)
+    {
+        goto error;
+    }
+
+    dwError = LsaDmEnumDomainInfo(pState->hDmState, NULL, NULL, &ppInfo, &dwCount);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwAllocateMemory(sizeof(*ppwszDomains) * dwCount, OUT_PPVOID(&ppwszDomains));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (dwIndex = 0; dwIndex < dwCount;)
+    {
+        if (ppInfo[dwIndex]->pszDnsDomainName)
+        {
+            dwError = LwAllocateWc16sPrintfW(
+                &ppwszDomains[dwIndex],
+                L"%s:%s",
+                ppInfo[dwIndex]->pszDnsDomainName,
+                ppInfo[dwIndex]->pszNetbiosDomainName);
+            BAIL_ON_LSA_ERROR(dwError);
+            dwIndex++;
+        }
+    }
+    ulFinalCount = (ULONG) dwIndex;
+
+    dwError = LwNtStatusToWin32Error(LwIoSetRdrDomainHints(ppwszDomains, ulFinalCount));
+    if (dwError)
+    {
+        /* Do not fail, just log an error */
+        LSA_LOG_ERROR("Could not update rdr domain hints: %s", LwWin32ExtErrorToName(dwError));
+        dwError = 0;
+    }
+
+cleanup:
+
+    if (ppwszDomains)
+    {
+        for (dwIndex = 0; dwIndex < dwCount; dwIndex++)
+        {
+            LwFreeMemory(ppwszDomains[dwIndex]);
+        }
+        LwFreeMemory(ppwszDomains);
+    }
+
+    LsaDmFreeEnumDomainInfoArray(ppInfo);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
 
 DWORD
 AD_GetLinkedCellInfo(
