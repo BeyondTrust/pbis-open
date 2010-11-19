@@ -110,7 +110,7 @@ src_liblwmsg_la_LDFLAGS = $(AM_LDFLAGS) -export-symbols $(top_srcdir)/src/liblwm
 bin_PROGRAMS += lwma
 
 lwma_SOURCES = src/lwma-main.c
-lwma_LDADD = src/liblwmsg.la
+lwma_LDADD = src/liblwmsg_nothr.la
 
 # test
 
