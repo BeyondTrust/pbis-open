@@ -9,6 +9,7 @@ lw_export_dc_cache_CPPFLAGS = \
 
 lw_export_dc_cache_LDADD = \
 	@top_builddir@/server/api/liblwnetserverapi.la \
-	@top_builddir@/utils/liblwnetutils.la
+	@top_builddir@/utils/liblwnetutils.la \
+	-llwadvapi_nothr
 
 lw_export_dc_cache_SOURCES = main.c
