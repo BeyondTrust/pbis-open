@@ -22,7 +22,13 @@ eventlogd_LDADD = \
     @top_builddir@/utils/libeventlogutils.la \
     @GSSAPI_LIBS@ \
     @SQLITE_LIBS@ \
-    -llwadvapi
+    @PTHREAD_LIBS@ \
+    @DL_LIBS@ \
+    -ldcerpc \
+    -llwbase \
+    -llwbase_nothr \
+    -llwadvapi \
+    -llwadvapi_nothr
 
 eventlogd_LDFLAGS = \
     @GSSAPI_LDFLAGS@ \
