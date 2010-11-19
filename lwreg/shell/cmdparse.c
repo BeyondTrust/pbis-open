@@ -1211,6 +1211,7 @@ RegShellCmdParse(
     REGSHELL_CMD_E cmd = 0;
     DWORD dwError = 0;
     PSTR pszCommand = NULL;
+    PSTR pszSubKeyName = "";
     PREGSHELL_CMD_ITEM pCmdItem = NULL;
     DWORD dwArgc = 2;
     DWORD dwNewArgc = 0;
@@ -1244,8 +1245,9 @@ RegShellCmdParse(
                 dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
             }
             break;
+
         case REGSHELL_CMD_EXPORT:
-            if (argc > 3)
+            if (argc > 2)
             {
                 if (!strcmp("--legacy", argv[dwArgc]))
                 {
@@ -1257,85 +1259,59 @@ RegShellCmdParse(
                     dwExportFormat = REGSHELL_EXPORT_VALUES;
                     dwArgc++;
                 }
-                if ((dwArgc+1) < argc)
-                {
-                    dwError = RegShellCmdParseKeyName(
-                                  pParseState,
-                                  cmd,
-                                  argv[dwArgc++],
-                                  &pCmdItem);
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                else
-                {
-                    dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                dwError = RegAllocateMemory(
-                              sizeof(PSTR) * argc,
-                              (PVOID*)&pCmdItem->args);
+            }
+
+            dwError = RegShellPszIsValidKey(
+                          pParseState,
+                          argv[dwArgc],
+                          &bIsValidKey);
+            if (dwError == 0 && bIsValidKey && dwArgc < argc)
+            {
+                pszSubKeyName = argv[dwArgc++];
+            }
+
+            dwError = RegShellCmdParseKeyName(
+                          pParseState,
+                          cmd,
+                          pszSubKeyName,
+                          &pCmdItem);
+            BAIL_ON_REG_ERROR(dwError);
+
+            dwError = RegAllocateMemory(
+                          sizeof(PSTR) * argc,
+                          (PVOID*)&pCmdItem->args);
+            BAIL_ON_REG_ERROR(dwError);
+
+            if (dwExportFormat == REGSHELL_EXPORT_LEGACY)
+            {
+                dwError = RegCStringDuplicate(
+                              (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                              "--legacy");
                 BAIL_ON_REG_ERROR(dwError);
-                if (dwExportFormat == REGSHELL_EXPORT_LEGACY)
-                {
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
-                                  "--legacy");
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                else if (dwExportFormat == REGSHELL_EXPORT_VALUES)
-                {
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
-                                  "--values");
-                    BAIL_ON_REG_ERROR(dwError);
-                }
+            }
+            else if (dwExportFormat == REGSHELL_EXPORT_VALUES)
+            {
+                dwError = RegCStringDuplicate(
+                              (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                              "--values");
+                BAIL_ON_REG_ERROR(dwError);
+            }
 
-                if (dwArgc < argc)
-                {
-                    dwError = RegShellPszIsValidKey(
-                                  pParseState,
-                                  argv[dwArgc],
-                                  &bIsValidKey);
-
-                    if (bIsValidKey && (dwArgc+1) >= argc)
-                    {
-                        /* Valid key is present but no output specifier */
-                        dwError = LWREG_ERROR_INVALID_CONTEXT; 
-                        BAIL_ON_REG_ERROR(dwError);
-                    }
-                    dwError = RegCStringDuplicate(
-                                  (LW_PVOID) &pCmdItem->args[dwNewArgc++],
-                                  argv[dwArgc++]);
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                pCmdItem->argsCount = dwNewArgc;
+            if (dwArgc < argc)
+            {
+                dwError = RegCStringDuplicate(
+                              (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                              argv[dwArgc++]);
+                BAIL_ON_REG_ERROR(dwError);
             }
             else
             {
-                dwError = RegShellPszIsValidKey(
-                              pParseState,
-                              argv[2],
-                              &bIsValidKey);
-                if (dwError == 0 && bIsValidKey)
-                {
-                    /* 
-                     * Inconsistent arguments. Subkey passed but
-                     * no output file name.
-                     */
-                    dwError = LWREG_ERROR_INVALID_CONTEXT; 
-                    BAIL_ON_REG_ERROR(dwError);
-                }
-                dwError = RegShellCmdParseCommand(cmd, &pCmdItem);
-                BAIL_ON_REG_ERROR(dwError);
-                dwError = RegAllocateMemory(
-                              sizeof(PSTR) * argc,
-                              (PVOID*)&pCmdItem->args);
-                BAIL_ON_REG_ERROR(dwError);
                 dwError = RegCStringDuplicate(
-                              (LW_PVOID) &pCmdItem->args[0], argv[2]);
+                              (LW_PVOID) &pCmdItem->args[dwNewArgc++],
+                              "-");
                 BAIL_ON_REG_ERROR(dwError);
-                pCmdItem->argsCount = 1;
             }
+            pCmdItem->argsCount = dwNewArgc;
             break;
 
         case REGSHELL_CMD_LIST_KEYS:
@@ -2292,7 +2268,7 @@ RegShellUsage(
         "       delete_value [[KeyName]] \"ValueName\"\n"
         "       set_hive HIVE_NAME\n"
         "       import file.reg | -\n"
-        "       export [--legacy | --values] [[keyName]] file.reg | - \n"
+        "       export [--legacy | --values] [[keyName]] [file.reg | -]\n"
         "       upgrade file.reg | -\n"
         "       cleanup file.reg | -\n"
         "       exit | quit | ^D\n"
