@@ -53,7 +53,10 @@ server_executable_la_LDFLAGS = $(AM_LDFLAGS) $(LOADER_LDFLAGS)
 
 server_driver_la_SOURCES = server/driver.c
 server_driver_la_CFLAGS = $(AM_CFLAGS) $(LOADER_CFLAGS)
-server_driver_la_LIBADD = $(top_builddir)/server/liblwsmloader.la
+server_driver_la_LIBADD = \
+    $(top_builddir)/server/liblwsmloader.la \
+    $(top_builddir)/common/liblwsmcommon.la \
+    @LIB_PTHREAD@
 server_driver_la_LDFLAGS = $(AM_LDFLAGS) $(LOADER_LDFLAGS)
 
 server_stub_la_SOURCES = server/stub.c
@@ -76,13 +79,17 @@ server_lwsmd_SOURCES = \
 server_lwsmd_LDADD = \
 	$(top_builddir)/common/liblwsmcommon.la \
 	$(top_builddir)/server/liblwsmloader.la \
-	@LIB_LWMSG@ @LIB_LWIOCLIENT@ @LIB_REGCLIENT@ \
-	@LIB_LWADVAPI@ @LIB_LWBASE@ @LIB_PTHREAD@
+	-llwmsg -llwmsg_nothr -llwioclient \
+	-lregclient -llwadvapi -llwadvapi_nothr -llwbase -llwbase_nothr \
+	@LIB_PTHREAD@
 
 bin_PROGRAMS = client/lwsm
 
 client_lwsm_SOURCES = client/main.c
-client_lwsm_LDADD = $(top_builddir)/client/liblwsm.la
+client_lwsm_LDADD = \
+	$(top_builddir)/client/liblwsm.la \
+	$(top_builddir)/common/liblwsmcommon.la \
+	-llwadvapi -llwadvapi_nothr @LIB_PTHREAD@
 
 # documentation
 
