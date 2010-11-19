@@ -16,15 +16,15 @@ configure()
         case "$MK_OS:$MK_ISA" in
             linux:*)
                 mk_define __LWI_LINUX__
-	        mk_define _GNU_SOURCE
-	        PAMDIR="/${MK_LIBDIR##*/}/security"
-	        NSSDIR="/${MK_LIBDIR##*/}"
-
+                mk_define _GNU_SOURCE
+                mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
+                PAMDIR="/${MK_LIBDIR##*/}/security"
+                NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             freebsd:*)
                 mk_define __LWI_FREEBSD__
-	        PAMDIR="/${MK_LIBDIR##*/}/security"
-	        NSSDIR="/${MK_LIBDIR##*/}"
+                PAMDIR="/${MK_LIBDIR##*/}/security"
+                NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
         esac
 
