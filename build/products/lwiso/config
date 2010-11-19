@@ -38,7 +38,7 @@ case "${BUILD_OS_TYPE}" in
         fi
         ;;
     freebsd)
-        PACKAGES="$PACKAGES passwd"
+        PACKAGES="$PACKAGES passwd mod-auth-kerb"
         ;;
     aix|hpux)
         PACKAGES="$PACKAGES passwd"
