@@ -52,7 +52,7 @@
 #define __PROVIDER_MAIN_H__
 
 #ifdef ENABLE_STATIC_PROVIDERS
-#define LsaInitializeProvider2 LsaInitializeProvider_ActiveDirectory
+#define LsaInitializeProvider LsaInitializeProvider_ActiveDirectory
 #endif
 
 DWORD
