@@ -845,9 +845,6 @@ ADState_ReadRegProviderData(
     DWORD dwValueLen = 0;
     HANDLE hReg = NULL;
 
-    dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID) &pProviderData);
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -860,6 +857,9 @@ ADState_ReadRegProviderData(
         dwError = 0;
         goto cleanup;
     }
+
+    dwError = LwAllocateMemory(sizeof(*pProviderData), (PVOID) &pProviderData);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = ADState_ReadRegProviderDataValue(
                   hReg,
@@ -921,21 +921,20 @@ ADState_ReadRegProviderData(
                   &dwValueLen);
     BAIL_ON_LSA_ERROR(dwError);
 
-    *ppProviderData = pProviderData;
-
 cleanup:
      
     RegCloseServer(hReg);
+
+    *ppProviderData = pProviderData;
 
     return dwError;
 
 error:
 
-    *ppProviderData = NULL;
-
     if (pProviderData)
     {
         ADProviderFreeProviderData(pProviderData);
+        pProviderData = NULL;
     }
 
     goto cleanup;
