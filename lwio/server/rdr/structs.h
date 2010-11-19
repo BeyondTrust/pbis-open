@@ -383,6 +383,12 @@ typedef struct _RDR_CCB2
     } Enum;
 } RDR_CCB2, *PRDR_CCB2;
 
+typedef struct _RDR_ROOT_CCB
+{
+    SMB_PROTOCOL_VERSION version;
+    BOOLEAN bIsLocalSystem;
+} RDR_ROOT_CCB, *PRDR_ROOT_CCB;
+
 typedef struct _RDR_CONFIG
 {
     BOOLEAN bSmb2Enabled;
@@ -408,6 +414,7 @@ typedef struct _RDR_GLOBAL_RUNTIME
     PLW_TASK_GROUP pSocketTimerGroup;
     PLW_TASK_GROUP pSessionTimerGroup;
     PLW_TASK_GROUP pTreeTimerGroup;
+    PLW_HASHMAP pDomainHints;
     BOOLEAN bShutdown;
 } RDR_GLOBAL_RUNTIME, *PRDR_GLOBAL_RUNTIME;
 

@@ -624,7 +624,10 @@ RdrSocketQueue(
     )
 {
     LwListInsertBefore(&pSocket->PendingSend, &pContext->Link);
-    LwRtlWakeTask(pSocket->pTask);
+    if (pSocket->state >= RDR_SOCKET_STATE_NEGOTIATING)
+    {
+        LwRtlWakeTask(pSocket->pTask);
+    }
 }
 
 NTSTATUS
@@ -1445,14 +1448,129 @@ RdrSocketTimeout(
     }
 }
 
+static
 NTSTATUS
-RdrSocketConnect(
+RdrSocketConnectAddress(
+    PRDR_SOCKET pSocket,
+    int fd,
+    struct addrinfo* ai
+    )
+{
+    NTSTATUS ntStatus = STATUS_SUCCESS;
+    BOOLEAN bInLock = FALSE;
+
+    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
+    {
+        ntStatus = ErrnoToNtStatus(errno);
+    }
+    BAIL_ON_NT_STATUS(ntStatus);
+
+    if (connect(fd, ai->ai_addr, ai->ai_addrlen) && errno != EINPROGRESS)
+    {
+        ntStatus = LwErrnoToNtStatus(errno);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+
+    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
+
+    pSocket->fd = fd;
+    fd = -1;
+
+    /* Let the task wait for the connect() to complete before proceeding */
+    LwRtlWakeTask(pSocket->pTask);
+
+    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
+
+error:
+
+    return ntStatus;
+}
+
+static
+NTSTATUS
+RdrSocketConnectDomain(
+    PRDR_SOCKET pSocket,
+    PWSTR pwszDomain
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PLWNET_DC_INFO pInfo = NULL;
+    PSTR pszDomain = NULL;
+    struct addrinfo *ai = NULL;
+    struct addrinfo hints;
+    int fd = -1;
+
+    status = LwRtlCStringAllocateFromWC16String(&pszDomain, pwszDomain);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwWin32ErrorToNtStatus(
+        LWNetGetDCName(
+            NULL,
+            pszDomain,
+            NULL,
+            0,
+            &pInfo));
+    BAIL_ON_NT_STATUS(status);
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = PF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_NUMERICHOST;
+
+    status = RdrEaiToNtStatus(
+        getaddrinfo(pInfo->pszDomainControllerAddress, "445", &hints, &ai));
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwRtlWC16StringAllocateFromCString(&pSocket->pwszCanonicalName, pInfo->pszDomainControllerName);
+    BAIL_ON_NT_STATUS(status);
+
+    fd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
+    if (fd < 0)
+    {
+        status = LwErrnoToNtStatus(errno);
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = RdrSocketConnectAddress(pSocket, fd, ai);
+    BAIL_ON_NT_STATUS(status);
+    fd = -1;
+
+cleanup:
+
+    if (ai)
+    {
+        freeaddrinfo(ai);
+    }
+
+    if (pInfo)
+    {
+        LWNetFreeDCInfo(pInfo);
+    }
+
+    LWIO_SAFE_FREE_MEMORY(pszDomain);
+
+    return status;
+
+error:
+
+    if (fd >= 0)
+    {
+        close(fd);
+    }
+
+    RdrSocketInvalidate(pSocket, status);
+
+    goto cleanup;
+}
+
+static
+NTSTATUS
+RdrSocketConnectHost(
     PRDR_SOCKET pSocket
     )
 {
-    NTSTATUS ntStatus = 0;
+    NTSTATUS status = 0;
     int fd = -1;
-    BOOLEAN bInLock = FALSE;
     struct addrinfo *ai = NULL;
     struct addrinfo *pCursor = NULL;
     struct addrinfo hints;
@@ -1464,8 +1582,8 @@ RdrSocketConnect(
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
         
-    ntStatus = LwRtlCStringAllocateFromWC16String(&pszHostname, pSocket->pwszHostname);
-    BAIL_ON_NT_STATUS(ntStatus);
+    status = LwRtlCStringAllocateFromWC16String(&pszHostname, pSocket->pwszHostname);
+    BAIL_ON_NT_STATUS(status);
 
     /* Remove channel specifier if present */
     pszCursor = strchr(pszHostname, '@');
@@ -1474,9 +1592,9 @@ RdrSocketConnect(
         *pszCursor = '\0';
     }
 
-    ntStatus = RdrEaiToNtStatus(
+    status = RdrEaiToNtStatus(
         getaddrinfo(pszHostname, "445", &hints, &ai));
-    BAIL_ON_NT_STATUS(ntStatus);
+    BAIL_ON_NT_STATUS(status);
 
     for (pCursor = ai; pCursor; pCursor = pCursor->ai_next)
     {
@@ -1496,8 +1614,8 @@ RdrSocketConnect(
                 continue;
             }
 #endif
-            ntStatus = ErrnoToNtStatus(errno);
-            BAIL_ON_NT_STATUS(ntStatus);
+            status = ErrnoToNtStatus(errno);
+            BAIL_ON_NT_STATUS(status);
         }
         else
         {
@@ -1507,47 +1625,29 @@ RdrSocketConnect(
 
     if (fd < 0)
     {
-        ntStatus = STATUS_BAD_NETWORK_NAME;
-        BAIL_ON_NT_STATUS(ntStatus);
+        status = STATUS_BAD_NETWORK_NAME;
+        BAIL_ON_NT_STATUS(status);
     }
-
-    if (fcntl(fd, F_SETFL, O_NONBLOCK) < 0)
-    {
-        ntStatus = ErrnoToNtStatus(errno);
-    }
-    BAIL_ON_NT_STATUS(ntStatus);
 
     if (ai->ai_canonname)
     {
         /* Save canonical name for later user */
-        ntStatus = LwRtlWC16StringAllocateFromCString(
+        status = LwRtlWC16StringAllocateFromCString(
             &pSocket->pwszCanonicalName,
             ai->ai_canonname);
-        BAIL_ON_NT_STATUS(ntStatus);
+        BAIL_ON_NT_STATUS(status);
     }
     else
     {
-        ntStatus = LwRtlWC16StringAllocateFromCString(
+        status = LwRtlWC16StringAllocateFromCString(
             &pSocket->pwszCanonicalName,
             pszHostname);
-        BAIL_ON_NT_STATUS(ntStatus);
+        BAIL_ON_NT_STATUS(status);
     }
 
-    if (connect(fd, pCursor->ai_addr, pCursor->ai_addrlen) && errno != EINPROGRESS)
-    {
-        ntStatus = LwErrnoToNtStatus(errno);
-        BAIL_ON_NT_STATUS(ntStatus);
-    }
-
-    LWIO_LOCK_MUTEX(bInLock, &pSocket->mutex);
-
-    pSocket->fd = fd;
+    status = RdrSocketConnectAddress(pSocket, fd, pCursor);
+    BAIL_ON_NT_STATUS(status);
     fd = -1;
-
-    /* Let the task wait for the connect() to complete before proceeding */
-    LwRtlWakeTask(pSocket->pTask);
-
-    LWIO_UNLOCK_MUTEX(bInLock, &pSocket->mutex);
 
 cleanup:
 
@@ -1558,7 +1658,7 @@ cleanup:
 
     LWIO_SAFE_FREE_MEMORY(pszHostname);
 
-    return ntStatus;
+    return status;
 
 error:
 
@@ -1567,9 +1667,39 @@ error:
         close(fd);
     }
 
-    RdrSocketInvalidate(pSocket, ntStatus);
+    RdrSocketInvalidate(pSocket, status);
 
     goto cleanup;
+}
+
+NTSTATUS
+RdrSocketConnect(
+    PRDR_SOCKET pSocket
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PWSTR pwszDomain = NULL;
+
+    status = RdrResolveToDomain(pSocket->pwszHostname, &pwszDomain);
+    switch (status)
+    {
+    case STATUS_SUCCESS:
+        status = RdrSocketConnectDomain(pSocket, pwszDomain);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    case STATUS_NOT_FOUND:
+        status = RdrSocketConnectHost(pSocket);
+        BAIL_ON_NT_STATUS(status);
+        break;
+    default:
+        BAIL_ON_NT_STATUS(status);
+    }
+
+error:
+
+    RTL_FREE(&pwszDomain);
+
+    return status;
 }
 
 static
@@ -1711,6 +1841,20 @@ RdrSocketIsValid(
     LWIO_UNLOCK_MUTEX(bLocked, &pSocket->mutex);
 
     return bResult;
+}
+
+VOID
+RdrSocketRetain(
+    PRDR_SOCKET pSocket
+    )
+{
+    BOOLEAN bInLock = FALSE;
+
+    LWIO_LOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
+
+    pSocket->refCount++;
+
+    LWIO_UNLOCK_MUTEX(bInLock, &gRdrRuntime.Lock);
 }
 
 VOID

@@ -44,6 +44,7 @@ librdr_sys_la_SOURCES =  \
     deviceio.c            \
     fsctl.c               \
     fsctl2.c              \
+    ioctl.c               \
     security.c            \
     security2.c           \
     queryfs.c             \
@@ -66,6 +67,7 @@ librdr_sys_la_LIBADD = \
     $(ADDITIONAL_LIBS) \
     @UUID_LIBS@ \
     @PTHREAD_LIBS@ \
-    @SOCKET_LIBS@
+    @SOCKET_LIBS@ \
+    -llwnetclientapi
 
 librdr_sys_la_LDFLAGS = $(DRIVER_LDFLAGS)

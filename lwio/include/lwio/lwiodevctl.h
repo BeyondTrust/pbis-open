@@ -75,6 +75,8 @@
 #define SRV_DEVCTL_CLOSE_FILE       10
 #define SRV_DEVCTL_ENUM_CONNECTION  11
 
+#define RDR_DEVCTL_SET_DOMAIN_HINTS  1
+
 #define IO_DEVICE_CTL_OPEN_FILE_INFO   ( IO_DEVICE_TYPE_DISK_FILE_SYSTEM     | \
                                          IO_DEVICE_REQ_ACCESS_READ_DATA      | \
                                          IO_DEVICE_CUSTOM_CONTROL_CODE       | \

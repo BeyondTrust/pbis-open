@@ -59,6 +59,7 @@
 
 #include <lw/base.h>
 #include <lwio/lwio.h>
+#include <lwio/lwiodevctl.h>
 
 #include <lw/ntstatus.h>
 #include <lw/rtlstring.h>
@@ -73,6 +74,8 @@
 #include "smbwire.h"
 #include <lwio/io-types.h>
 #include <lwio/iodriver.h>
+
+#include <lwnet.h>
 
 #include "structs.h"
 #include "socket.h"
@@ -385,6 +388,40 @@ RdrTransceiveQueryInfoPath(
     PCWSTR pwszPath,
     SMB_INFO_LEVEL infoLevel,
     ULONG ulInfoLength
+    );
+
+VOID
+RdrSwapDomainHints(
+    PLW_HASHMAP* ppMap
+    );
+
+NTSTATUS
+RdrResolveToDomain(
+    PCWSTR pwszHostname,
+    PWSTR* ppwszDomain
+    );
+
+NTSTATUS
+RdrCreateRoot(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrCloseRoot(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+NTSTATUS
+RdrIoctl(
+    IO_DEVICE_HANDLE IoDeviceHandle,
+    PIRP pIrp
+    );
+
+VOID
+RdrSocketRetain(
+    PRDR_SOCKET pSocket
     );
 
 #endif /* __RDR_H__ */

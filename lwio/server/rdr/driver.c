@@ -204,6 +204,36 @@ RdrDriverDispatch2(
 
 static
 NTSTATUS
+RdrDriverDispatchRoot(
+    IN IO_DEVICE_HANDLE DeviceHandle,
+    IN PIRP pIrp
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+
+    switch (pIrp->Type)
+    {
+    case IRP_TYPE_CLOSE:
+        status = RdrCloseRoot(DeviceHandle, pIrp);
+        break;
+    case IRP_TYPE_DEVICE_IO_CONTROL:
+        status = RdrIoctl(DeviceHandle, pIrp);
+        break;
+    default:
+        status = STATUS_NOT_SUPPORTED;
+        break;
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        pIrp->IoStatusBlock.Status = status;
+    }
+
+    return status;
+}
+
+static
+NTSTATUS
 RdrDriverDispatch(
     IN IO_DEVICE_HANDLE DeviceHandle,
     IN PIRP pIrp
@@ -220,6 +250,8 @@ RdrDriverDispatch(
             return RdrDriverDispatch1(DeviceHandle, pIrp);
         case SMB_PROTOCOL_VERSION_2:
             return RdrDriverDispatch2(DeviceHandle, pIrp);
+        case 0:
+            return RdrDriverDispatchRoot(DeviceHandle, pIrp);
         default:
             ntStatus = STATUS_INTERNAL_ERROR;
             BAIL_ON_NT_STATUS(ntStatus);
@@ -229,7 +261,14 @@ RdrDriverDispatch(
     switch (pIrp->Type)
     {
     case IRP_TYPE_CREATE:
-        ntStatus = RdrCreate(DeviceHandle, pIrp);
+        if (pIrp->Args.Create.FileName.FileName[0] == '\0')
+        {
+            ntStatus = RdrCreateRoot(DeviceHandle, pIrp);
+        }
+        else
+        {
+            ntStatus = RdrCreate(DeviceHandle, pIrp);
+        }
         break;
     default:
         ntStatus = STATUS_INTERNAL_ERROR;
@@ -798,6 +837,59 @@ cleanup:
 error:
 
     goto cleanup;
+}
+
+VOID
+RdrSwapDomainHints(
+    PLW_HASHMAP* ppMap
+    )
+{
+    PLW_HASHMAP pExisting = NULL;
+    BOOLEAN bLocked = FALSE;
+
+    LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    pExisting = gRdrRuntime.pDomainHints;
+    gRdrRuntime.pDomainHints = *ppMap;
+
+    LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    *ppMap = pExisting;
+}
+
+NTSTATUS
+RdrResolveToDomain(
+    PCWSTR pwszHostname,
+    PWSTR* ppwszDomain
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    BOOLEAN bLocked = FALSE;
+    PWSTR pwszDomain = NULL;
+
+    LWIO_LOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    if (!gRdrRuntime.pDomainHints)
+    {
+        status = STATUS_NOT_FOUND;
+    }
+    else
+    {
+        status = LwRtlHashMapFindKey(
+            gRdrRuntime.pDomainHints,
+            OUT_PPVOID(&pwszDomain),
+            pwszHostname);
+    }
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwRtlWC16StringDuplicate(ppwszDomain, pwszDomain);
+    BAIL_ON_NT_STATUS(status);
+
+error:
+
+    LWIO_UNLOCK_MUTEX(bLocked, &gRdrRuntime.Lock);
+
+    return status;
 }
 
 /*

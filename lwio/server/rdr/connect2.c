@@ -286,14 +286,14 @@ RdrNegotiateComplete2(
 
  error:
 
-     if (status != STATUS_PENDING && pSession)
+     if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSession)
      {
          LWIO_UNLOCK_MUTEX(bSessionLocked, &pSession->mutex);
          RdrSession2Invalidate(pSession, status);
          RdrSession2Release(pSession);
      }
 
-     if (status != STATUS_PENDING && pSocket)
+     if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSocket)
      {
          RdrSocketInvalidate(pSocket, status);
          RdrSocketRelease(pSocket);

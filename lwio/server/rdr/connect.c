@@ -268,14 +268,14 @@ cleanup:
 
 error:
 
-    if (status != STATUS_PENDING && pSession)
+    if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSession)
     {
         LWIO_UNLOCK_MUTEX(bSessionLocked, &pSession->mutex);
         RdrSessionInvalidate(pSession, status);
         RdrSessionRelease(pSession);
     }
 
-    if (status != STATUS_PENDING && pSocket)
+    if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSocket)
     {
         RdrSocketInvalidate(pSocket, status);
         RdrSocketRelease(pSocket);
@@ -1071,6 +1071,24 @@ error:
     goto cleanup;
 }
 
+static
+VOID
+RdrSocketConnectWorkItem(
+    PVOID pData
+    )
+{
+    PRDR_SOCKET pSocket = (PRDR_SOCKET) pData;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = RdrSocketConnect(pSocket);
+    if (status != STATUS_SUCCESS)
+    {
+        RdrSocketInvalidate(pSocket, status);
+    }
+
+    RdrSocketRelease(pSocket);
+}
+
 NTSTATUS
 RdrTreeConnect(
     PCWSTR pwszHostname,
@@ -1117,7 +1135,18 @@ RdrTreeConnect(
         pSocket->state = RDR_SOCKET_STATE_CONNECTING;
         LWIO_UNLOCK_MUTEX(bSocketLocked, &pSocket->mutex);
         
-        status = RdrSocketConnect(pSocket);
+        /* Add extra reference to socket for work item */
+        RdrSocketRetain(pSocket);
+        status = LwRtlQueueWorkItem(
+            gRdrRuntime.pThreadPool,
+            RdrSocketConnectWorkItem,
+            pSocket,
+            0);
+        if (status)
+        {
+            /* Nevermind */
+            RdrSocketRelease(pSocket);
+        }
         BAIL_ON_NT_STATUS(status);
         
         pContext->Continue = RdrProcessNegotiateResponse;
