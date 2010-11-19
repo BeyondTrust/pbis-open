@@ -15,7 +15,9 @@ lw_update_dns_CPPFLAGS = \
 lw_update_dns_LDADD = \
     @top_builddir@/lwdns/liblwdns.la \
     @NETLOGON_LIBS@   \
-    @PSTORE_LIBS@
+    @PSTORE_LIBS@ \
+    @KRB5_LIBS@ \
+    -llwbase_nothr
 
 lw_update_dns_LDFLAGS = \
 	@NETLOGON_LDFLAGS@ \
