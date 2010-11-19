@@ -292,7 +292,7 @@ LwRtlHashTableRemove(
 LW_NTSTATUS
 LwRtlHashTableFindKey(
     LW_IN PCLW_HASHTABLE pTable,
-    LW_OUT PLW_HASHTABLE_NODE* ppNode,
+    LW_OUT LW_OPTIONAL PLW_HASHTABLE_NODE* ppNode,
     LW_IN LW_PCVOID pKey
     );
 
@@ -545,7 +545,7 @@ LwRtlHashMapRemove(
 LW_NTSTATUS
 LwRtlHashMapFindKey(
     LW_IN PCLW_HASHMAP pMap,
-    LW_OUT LW_PVOID* ppValue,
+    LW_OUT LW_OPTIONAL LW_PVOID* ppValue,
     LW_IN LW_PCVOID pKey
     );
 

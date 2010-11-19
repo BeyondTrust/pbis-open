@@ -232,7 +232,7 @@ cleanup:
 LW_NTSTATUS
 LwRtlHashTableFindKey(
     LW_IN PCLW_HASHTABLE pTable,
-    LW_OUT PLW_HASHTABLE_NODE* ppNode,
+    LW_OUT LW_OPTIONAL PLW_HASHTABLE_NODE* ppNode,
     LW_IN PCVOID pKey
     )
 {
@@ -241,7 +241,7 @@ LwRtlHashTableFindKey(
     PLW_HASHTABLE_NODE* ppFound = NULL;
     PLW_HASHTABLE_NODE pNode = NULL;
 
-    if (!pTable || !ppNode)
+    if (!pTable)
     {
         status = STATUS_INVALID_PARAMETER;
         goto cleanup;
@@ -256,7 +256,10 @@ LwRtlHashTableFindKey(
 
 cleanup:
 
-    *ppNode = pNode;
+    if (ppNode)
+    {
+        *ppNode = pNode;
+    }
 
     return status;
 }
@@ -548,7 +551,7 @@ cleanup:
 LW_NTSTATUS
 LwRtlHashMapFindKey(
     LW_IN PCLW_HASHMAP pMap,
-    LW_OUT PVOID* ppValue,
+    LW_OUT OPTIONAL PVOID* ppValue,
     LW_IN PCVOID pKey
     )
 {
@@ -560,13 +563,16 @@ LwRtlHashMapFindKey(
 
 cleanup:
 
-    if (pNode)
+    if (ppValue)
     {
-        *ppValue = ((PHASHPAIR_NODE) pNode)->Pair.pValue;
-    }
-    else
-    {
-        *ppValue = NULL;
+        if (pNode)
+        {
+            *ppValue = ((PHASHPAIR_NODE) pNode)->Pair.pValue;
+        }
+        else
+        {
+            *ppValue = NULL;
+        }
     }
 
     return status;
