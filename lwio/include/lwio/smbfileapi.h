@@ -70,6 +70,12 @@ LwIoConnectNamedPipe(
     PIO_STATUS_BLOCK IoStatusBlock
     );
 
+LW_NTSTATUS
+LwIoSetRdrDomainHints(
+    LW_PWSTR* ppwszDomains,
+    ULONG ulCount
+    );
+
 #ifndef LW_STRICT_NAMESPACE
 
 #define IoGetSessionKey LwIoGetSessionKey

@@ -217,3 +217,84 @@ LwIoConnectNamedPipe(
         0
         );
 }
+
+LW_NTSTATUS
+LwIoSetRdrDomainHints(
+    LW_PWSTR* ppwszDomains,
+    ULONG ulCount
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK ioStatus = {0};
+    WCHAR wszRdrPath[] = {'\\', 'r', 'd', 'r', '\0'};
+    IO_FILE_NAME fileName = {0};
+    IO_FILE_HANDLE hFile = NULL;
+    PWSTR pwszBuffer = NULL;
+    ULONG ulLength = 0;
+    ULONG ulIndex = 0;
+    ULONG ulOffset = 0;
+    ULONG ulStrLen = 0;
+
+    for (ulIndex = 0; ulIndex < ulCount; ulIndex++)
+    {
+        ulLength += (LwRtlWC16StringNumChars(ppwszDomains[ulIndex]) + 1) * sizeof(WCHAR);
+    }
+
+    status = RTL_ALLOCATE(&pwszBuffer, WCHAR, ulLength);
+    BAIL_ON_NT_STATUS(status);
+
+    for (ulIndex = 0; ulIndex < ulCount; ulIndex++)
+    {
+        ulStrLen = (LwRtlWC16StringNumChars(ppwszDomains[ulIndex]) + 1) * sizeof(WCHAR);
+
+        memcpy((PBYTE) pwszBuffer + ulOffset, ppwszDomains[ulIndex], ulStrLen);
+        ulOffset += ulStrLen;
+    }
+
+    fileName.FileName = wszRdrPath;
+
+    status = LwNtCreateFile(
+        &hFile,
+        NULL,
+        &ioStatus,
+        &fileName,
+        NULL,
+        NULL,
+        FILE_GENERIC_WRITE,
+        0,
+        0,
+        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+        FILE_OPEN,
+        0,
+        NULL,
+        0,
+        NULL,
+        NULL);
+    BAIL_ON_NT_STATUS(status);
+
+    status = LwNtDeviceIoControlFile(
+        hFile,
+        NULL,
+        &ioStatus,
+        RDR_DEVCTL_SET_DOMAIN_HINTS,
+        pwszBuffer,
+        ulLength,
+        NULL,
+        0);
+    BAIL_ON_NT_STATUS(status);
+
+cleanup:
+
+    RTL_FREE(&pwszBuffer);
+
+    if (hFile)
+    {
+        LwNtCloseFile(hFile);
+    }
+
+    return status;
+
+error:
+
+    goto cleanup;
+}

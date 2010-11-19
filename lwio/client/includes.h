@@ -53,6 +53,7 @@
 #include <lwio/lwio.h>
 #include <lwio/smbfileapi.h>
 #include <lwio/ntfileapi.h>
+#include <lwio/lwiodevctl.h>
 
 
 #include <lwmsg/lwmsg.h>
