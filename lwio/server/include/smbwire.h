@@ -638,6 +638,7 @@ typedef struct
     LONG            refCount;
 
     NETBIOS_HEADER *pNetBIOSHeader;
+    UINT8           netbiosOpcode;
 
     SMB_PROTOCOL_VERSION protocolVer;
     union

@@ -241,6 +241,10 @@
     default = "@providerdir@/libsrv.sys@MOD_EXT@" 
     doc = "" 
 }
+"SupportNetBIOS" = {
+    default = dword:00000000
+    doc = ""
+}
 "SupportSmb2" = { 
     default = dword:00000001 
     doc = "" 
