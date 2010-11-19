@@ -72,7 +72,9 @@ lw_lsa_SOURCES = \
 
 lw_lsa_LDADD = \
 	@top_builddir@/client/liblsaclient.la \
-	@top_builddir@/common/liblsacommon.la
+	@top_builddir@/common/liblsacommon.la \
+	-llwbase_nothr \
+	-llwadvapi_nothr
 
 install-exec-hook:
 	cd $(DESTDIR)$(bindir) && \
