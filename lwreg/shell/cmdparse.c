@@ -2137,7 +2137,7 @@ RegShellCmdlineParseToArgv(
                             dwError = RegReallocMemory(
                                           pszArgv,
                                           (LW_PVOID) &pszArgvRealloc,
-                                          dwAllocSize * sizeof(PSTR *));
+                                          dwAllocSize * sizeof(*pszArgv));
                             BAIL_ON_REG_ERROR(dwError);
                             pszArgv = pszArgvRealloc;
                             pszArgvRealloc = NULL;
