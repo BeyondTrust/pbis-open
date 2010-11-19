@@ -76,12 +76,6 @@ ShowUsage(
     );
 
 static
-VOID
-SMBSrvExitHandler(
-    VOID
-    );
-
-static
 DWORD
 SMBSrvInitialize(
     VOID
@@ -103,18 +97,6 @@ static
 DWORD
 SMBSrvStartAsDaemon(
     VOID
-    );
-
-static
-DWORD
-SMBSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    );
-
-static
-VOID
-SMBSrvSetProcessExitCode(
-    DWORD dwExitCode
     );
 
 #ifdef ENABLE_PIDFILE
@@ -241,11 +223,6 @@ lwiod_main(
 
     LWIO_LOG_VERBOSE("Logging started");
 
-    if (atexit(SMBSrvExitHandler) < 0) {
-       dwError = errno;
-       BAIL_ON_LWIO_ERROR(dwError);
-    }
-
     if (SMBSrvShouldStartAsDaemon()) {
        dwError = SMBSrvStartAsDaemon();
        BAIL_ON_LWIO_ERROR(dwError);
@@ -282,8 +259,6 @@ cleanup:
     LWIO_LOG_INFO("LWIO Service exiting...");
 
     LwDsCacheRemovePidException(getpid());
-
-    SMBSrvSetProcessExitCode(dwError);
 
     LwioShutdownLogging_r();
 
@@ -580,47 +555,6 @@ ShowUsage(
 }
 
 static
-VOID
-SMBSrvExitHandler(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-    DWORD dwExitCode = 0;
-    CHAR  szErrCodeFilePath[PATH_MAX+1];
-    BOOLEAN  bFileExists = 0;
-    FILE* fp = NULL;
-
-    sprintf(szErrCodeFilePath, "%s/lsasd.err", CACHEDIR);
-
-    dwError = SMBCheckFileExists(szErrCodeFilePath, &bFileExists);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    if (bFileExists) {
-        dwError = SMBRemoveFile(szErrCodeFilePath);
-        BAIL_ON_LWIO_ERROR(dwError);
-    }
-
-    dwError = SMBSrvGetProcessExitCode(&dwExitCode);
-    BAIL_ON_LWIO_ERROR(dwError);
-
-    if (dwExitCode) {
-       fp = fopen(szErrCodeFilePath, "w");
-       if (fp == NULL) {
-          dwError = errno;
-          BAIL_ON_LWIO_ERROR(dwError);
-       }
-       fprintf(fp, "%d\n", dwExitCode);
-    }
-
-error:
-
-    if (fp != NULL) {
-       fclose(fp);
-    }
-}
-
-static
 DWORD
 SMBSrvInitialize(
     VOID
@@ -753,39 +687,6 @@ SMBSrvStartAsDaemon(
  error:
 
     return (dwError);
-}
-
-static
-DWORD
-SMBSrvGetProcessExitCode(
-    PDWORD pdwExitCode
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bInLock = FALSE;
-
-    LWIO_LOCK_SERVERINFO(bInLock);
-
-    *pdwExitCode = gpServerInfo->dwExitCode;
-
-    LWIO_UNLOCK_SERVERINFO(bInLock);
-
-    return dwError;
-}
-
-static
-VOID
-SMBSrvSetProcessExitCode(
-    DWORD dwExitCode
-    )
-{
-    BOOLEAN bInLock = FALSE;
-
-    LWIO_LOCK_SERVERINFO(bInLock);
-
-    gpServerInfo->dwExitCode = dwExitCode;
-
-    LWIO_UNLOCK_SERVERINFO(bInLock);
 }
 
 #ifdef ENABLE_PIDFILE
