@@ -914,14 +914,14 @@ RegShellCmdParseValueName(
                       NULL);
         BAIL_ON_REG_ERROR(dwError);
     }
-    argCount = argc - argIndx;
-    if (argCount < 0)
+    if (argIndx >= argc)
     {
         dwError = LWREG_ERROR_INVALID_CONTEXT;
         goto error;
     }
     BAIL_ON_REG_ERROR(dwError);
 
+    argCount = argc - argIndx;
     dwError = RegCStringDuplicate(&pCmdItem->valueName, pszValue);
     BAIL_ON_REG_ERROR(dwError);
 
