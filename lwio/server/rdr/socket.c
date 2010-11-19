@@ -219,8 +219,6 @@ RdrSocketCreate(
     NTSTATUS ntStatus = 0;
     RDR_SOCKET *pSocket = NULL;
     BOOLEAN bDestroyMutex = FALSE;
-    PWSTR pwszCanonicalName = NULL;
-    PWSTR pwszCursor = NULL;
 
     ntStatus = LwIoAllocateMemory(
                 sizeof(RDR_SOCKET),
@@ -242,21 +240,6 @@ RdrSocketCreate(
     /* Hostname is trusted */
     ntStatus = LwRtlWC16StringDuplicate(&pSocket->pwszHostname, pwszHostname);
     BAIL_ON_NT_STATUS(ntStatus);
-
-    /* Construct canonical name by removing channel specifier */
-    ntStatus = LwRtlWC16StringDuplicate(&pwszCanonicalName, pwszHostname);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    for (pwszCursor = pwszCanonicalName; *pwszCursor; pwszCursor++)
-    {
-        if (*pwszCursor == '@')
-        {
-            *pwszCursor = '\0';
-            break;
-        }
-    }
-
-    pSocket->pwszCanonicalName = pwszCanonicalName;
 
     pSocket->ulMaxTransactSize = 0;
     pSocket->maxRawSize = 0;
@@ -1474,13 +1457,22 @@ RdrSocketConnect(
     struct addrinfo *pCursor = NULL;
     struct addrinfo hints;
     PSTR pszHostname = NULL;
+    PSTR pszCursor = NULL;
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
         
-    ntStatus = LwRtlCStringAllocateFromWC16String(&pszHostname, pSocket->pwszCanonicalName);
+    ntStatus = LwRtlCStringAllocateFromWC16String(&pszHostname, pSocket->pwszHostname);
     BAIL_ON_NT_STATUS(ntStatus);
+
+    /* Remove channel specifier if present */
+    pszCursor = strchr(pszHostname, '@');
+    if (pszCursor)
+    {
+        *pszCursor = '\0';
+    }
 
     ntStatus = RdrEaiToNtStatus(
         getaddrinfo(pszHostname, "445", &hints, &ai));
@@ -1524,6 +1516,22 @@ RdrSocketConnect(
         ntStatus = ErrnoToNtStatus(errno);
     }
     BAIL_ON_NT_STATUS(ntStatus);
+
+    if (ai->ai_canonname)
+    {
+        /* Save canonical name for later user */
+        ntStatus = LwRtlWC16StringAllocateFromCString(
+            &pSocket->pwszCanonicalName,
+            ai->ai_canonname);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
+    else
+    {
+        ntStatus = LwRtlWC16StringAllocateFromCString(
+            &pSocket->pwszCanonicalName,
+            pszHostname);
+        BAIL_ON_NT_STATUS(ntStatus);
+    }
 
     if (connect(fd, pCursor->ai_addr, pCursor->ai_addrlen) && errno != EINPROGRESS)
     {
