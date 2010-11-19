@@ -1446,9 +1446,9 @@ RegDbDeleteKey(
     BAIL_ON_SQLITE3_ERROR(status, pszError);
 
     status = RegDbDeleteKey_inlock(hDb,
-    		                       qwId,
-    		                       qwAclId,
-    		                       pwszFullKeyName);
+                                   qwId,
+                                   qwAclId,
+                                   pwszFullKeyName);
     BAIL_ON_NT_STATUS(status);
 
     status = sqlite3_exec(
@@ -1478,6 +1478,50 @@ cleanup:
  				 NULL,
 				 NULL,
 				 NULL);
+
+    goto cleanup;
+}
+
+NTSTATUS
+RegDbDeleteKey_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN int64_t qwAclId,
+    IN PCWSTR pwszFullKeyName
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    size_t sSubkeyCount = 0;
+
+    // Delete key from DB
+    // Make sure this key does not have subkey before go ahead and delete it
+    // Also need to delete the all of this subkey's values
+
+    status = RegDbQueryInfoKeyCount_inlock(hDb,
+                                           qwId,
+                                           QuerySubKeys,
+                                           &sSubkeyCount);
+    BAIL_ON_NT_STATUS(status);
+
+    if (sSubkeyCount)
+    {
+        status = STATUS_KEY_HAS_CHILDREN;
+        BAIL_ON_NT_STATUS(status);
+    }
+
+    status = RegDbDeleteKeyWithNoSubKeys_inlock(
+                                   hDb,
+                                   qwId,
+                                   qwAclId,
+                                   pwszFullKeyName);
+    BAIL_ON_NT_STATUS(status);
+
+
+cleanup:
+
+    return status;
+
+error:
 
     goto cleanup;
 }
@@ -2332,7 +2376,7 @@ cleanup:
 
     return status;
 
- error:
+error:
 
     goto cleanup;
 }

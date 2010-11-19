@@ -535,7 +535,6 @@ SqliteDeleteKeyInternal_inlock(
     )
 {
 	NTSTATUS status = STATUS_SUCCESS;
-    size_t sSubkeyCount = 0;
     PWSTR pwszParentKeyName = NULL;
     PREG_KEY_HANDLE pKeyHandle = NULL;
     // Do not free
@@ -554,33 +553,16 @@ SqliteDeleteKeyInternal_inlock(
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
-    // Delete key from DB
-    // Make sure this key does not have subkey before go ahead and delete it
-    // Also need to delete the all of this subkey's values
-    status = RegDbQueryInfoKeyCount(ghCacheConnection,
-    		                        pKeyCtx->qwId,
-                                    QuerySubKeys,
-                                    &sSubkeyCount);
+    // Delete all the values of this key
+    status = RegDbDeleteKey(ghCacheConnection, pKeyCtx->qwId, pKeyCtx->qwSdId, pwszKeyName);
     BAIL_ON_NT_STATUS(status);
 
-    if (sSubkeyCount == 0)
-    {
-        // Delete all the values of this key
-        status = RegDbDeleteKey(ghCacheConnection, pKeyCtx->qwId, pKeyCtx->qwSdId, pwszKeyName);
-        BAIL_ON_NT_STATUS(status);
+    status = SqliteGetParentKeyName(pwszKeyName, '\\',&pwszParentKeyName);
+    BAIL_ON_NT_STATUS(status);
 
-        status = SqliteGetParentKeyName(pwszKeyName, '\\',&pwszParentKeyName);
-        BAIL_ON_NT_STATUS(status);
-
-        if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
-        {
-        	SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
-        }
-    }
-    else
+    if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
     {
-    	status = STATUS_KEY_HAS_CHILDREN;
-        BAIL_ON_NT_STATUS(status);
+        SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
     }
 
 cleanup:
@@ -602,7 +584,6 @@ SqliteDeleteKeyInternal_inlock_inDblock(
     )
 {
 	NTSTATUS status = STATUS_SUCCESS;
-    size_t sSubkeyCount = 0;
     PWSTR pwszParentKeyName = NULL;
     PREG_KEY_HANDLE pKeyHandle = NULL;
     // Do not free
@@ -621,33 +602,16 @@ SqliteDeleteKeyInternal_inlock_inDblock(
     pKeyCtx = pKeyHandle->pKey;
     BAIL_ON_INVALID_KEY_CONTEXT(pKeyCtx);
 
-    // Delete key from DB
-    // Make sure this key does not have subkey before go ahead and delete it
-    // Also need to delete the all of this subkey's values
-    status = RegDbQueryInfoKeyCount_inlock(ghCacheConnection,
-    		                        pKeyCtx->qwId,
-                                    QuerySubKeys,
-                                    &sSubkeyCount);
+    // Delete all the values of this key
+    status = RegDbDeleteKey_inlock(ghCacheConnection, pKeyCtx->qwId, pKeyCtx->qwSdId, pwszKeyName);
     BAIL_ON_NT_STATUS(status);
 
-    if (sSubkeyCount == 0)
-    {
-        // Delete all the values of this key
-        status = RegDbDeleteKey_inlock(ghCacheConnection, pKeyCtx->qwId, pKeyCtx->qwSdId, pwszKeyName);
-        BAIL_ON_NT_STATUS(status);
+    status = SqliteGetParentKeyName(pwszKeyName, '\\',&pwszParentKeyName);
+    BAIL_ON_NT_STATUS(status);
 
-        status = SqliteGetParentKeyName(pwszKeyName, '\\',&pwszParentKeyName);
-        BAIL_ON_NT_STATUS(status);
-
-        if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
-        {
-        	SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
-        }
-    }
-    else
+    if (!LW_IS_NULL_OR_EMPTY_STR(pwszParentKeyName))
     {
-    	status = STATUS_KEY_HAS_CHILDREN;
-        BAIL_ON_NT_STATUS(status);
+        SqliteCacheResetParentKeySubKeyInfo_inlock(pwszParentKeyName);
     }
 
 cleanup:

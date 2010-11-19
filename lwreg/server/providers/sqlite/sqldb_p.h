@@ -308,6 +308,14 @@ RegDbDeleteKey_inlock(
     );
 
 NTSTATUS
+RegDbDeleteKeyWithNoSubKeys_inlock(
+    IN REG_DB_HANDLE hDb,
+    IN int64_t qwId,
+    IN int64_t qwAclId,
+    IN PCWSTR pwszFullKeyName
+    );
+
+NTSTATUS
 RegDbQueryInfoKey(
     IN REG_DB_HANDLE hDb,
     IN PCWSTR pwszKeyName,

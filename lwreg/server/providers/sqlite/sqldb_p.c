@@ -244,7 +244,7 @@ error:
 }
 
 NTSTATUS
-RegDbDeleteKey_inlock(
+RegDbDeleteKeyWithNoSubKeys_inlock(
     IN REG_DB_HANDLE hDb,
     IN int64_t qwId,
     IN int64_t qwAclId,
@@ -336,7 +336,6 @@ cleanup:
  error:
     goto cleanup;
 }
-
 
 NTSTATUS
 RegDbDeleteAcl_inlock(
