@@ -73,10 +73,11 @@ NtlmServerAcquireCredentialsHandle(
 
 DWORD
 NtlmGetNameInformation(
-    PSTR* ppszServerName,
-    PSTR* ppszDomainName,
-    PSTR* ppszDnsServerName,
-    PSTR* ppszDnsDomainName
+    IN OPTIONAL PCSTR pszJoinedDomain,
+    OUT PSTR* ppszServerName,
+    OUT PSTR* ppszDomainName,
+    OUT PSTR* ppszDnsServerName,
+    OUT PSTR* ppszDnsDomainName
     );
 
 DWORD
@@ -179,6 +180,13 @@ NtlmServerQueryContextAttributes(
     );
 
 DWORD
+NtlmServerSetCredentialsAttributes(
+    IN PNTLM_CRED_HANDLE phCredential,
+    IN DWORD ulAttribute,
+    IN PSecPkgCred pCred
+    );
+
+DWORD
 NtlmServerVerifySignature(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN const SecBufferDesc* pMessage,
@@ -215,6 +223,12 @@ DWORD
 NtlmServerQueryCredNameAttribute(
     IN PNTLM_CRED_HANDLE phCred,
     OUT PSecPkgCred_Names *ppNames
+    );
+
+DWORD
+NtlmServerSetCredDomainNameAttribute(
+    IN NTLM_CRED_HANDLE hCred,
+    IN PSecPkgCred_DomainName pDomainName
     );
 
 VOID
@@ -513,6 +527,7 @@ NtlmInitializeKeys(
 DWORD
 NtlmValidateResponse(
     IN HANDLE Handle,
+    IN NTLM_CRED_HANDLE hCred,
     IN PNTLM_RESPONSE_MESSAGE_V1 pRespMsg,
     IN DWORD dwRespMsgSize,
     IN PNTLM_CONTEXT pChlngCtxt,

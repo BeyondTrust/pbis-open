@@ -74,6 +74,12 @@ gss_OID_desc gGssCredOptionPasswordOidDesc = {
     };
 gss_OID gGssCredOptionPasswordOid = &gGssCredOptionPasswordOidDesc;
 
+gss_OID_desc gGssCredOptionDomainOidDesc = {
+    .length = GSS_CRED_OPT_DOMAIN_LEN,
+    .elements = GSS_CRED_OPT_DOMAIN
+    };
+gss_OID gGssCredOptionDomainOid = &gGssCredOptionDomainOidDesc;
+
 //
 // Since there is no GSSAPI mech plugin header, this must be kept in sync with
 // gss_mechanism in krb5/src/lib/gssapi/mglueP.h.
@@ -2575,6 +2581,8 @@ ntlm_gssspi_set_cred_option(
     OM_uint32 MinorStatus = LW_ERROR_SUCCESS;
     PNTLM_GSS_CREDS pCreds = (PNTLM_GSS_CREDS)GssCredHandle;
     PSEC_WINNT_AUTH_IDENTITY pAuthData = NULL;
+    PSTR pszDomain = NULL;
+    SecPkgCred_DomainName spcDomainName = {0};
 
     if (OptionOid->length == gGssCredOptionPasswordOid->length &&
         !memcmp(
@@ -2612,8 +2620,39 @@ ntlm_gssspi_set_cred_option(
             );
         BAIL_ON_LSA_ERROR(MinorStatus);
     }
+    else if (OptionOid->length == gGssCredOptionDomainOid->length &&
+        !memcmp(
+            OptionOid->elements,
+            gGssCredOptionDomainOid->elements,
+            OptionOid->length))
+    {
+        MajorStatus = GSS_S_COMPLETE;
+
+        if (!Buffer || !Buffer->length || !Buffer->value)
+        {
+            MinorStatus = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_LSA_ERROR(MinorStatus);
+        }
+
+        MinorStatus = LwStrndup(
+                          Buffer->value,
+                          Buffer->length,
+                          &pszDomain);
+        BAIL_ON_LSA_ERROR(MinorStatus);
+
+        spcDomainName.pName = pszDomain;
+
+        MinorStatus = NtlmClientSetCredentialsAttributes(
+                          &pCreds->CredHandle,
+                          SECPKG_CRED_ATTR_DOMAIN_NAME,
+                          &spcDomainName);
+        BAIL_ON_LSA_ERROR(MinorStatus);
+    }
 
 cleanup:
+
+    LW_SAFE_FREE_STRING(pszDomain);
+
     *pMinorStatus = MinorStatus;
 
     return MajorStatus;

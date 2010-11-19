@@ -123,6 +123,7 @@ NtlmServerAcceptSecurityContext(
 
         dwError = NtlmValidateResponse(
             Handle,
+            hCred,
             pRespMsg,
             dwMessageSize,
             pNtlmCtxtChlng,
@@ -200,6 +201,7 @@ NtlmCreateChallengeContext(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PNTLM_CREDENTIALS pCred = (PNTLM_CREDENTIALS)hCred;
     PNTLM_CONTEXT pNtlmContext = NULL;
     DWORD dwMessageSize = 0;
     PNTLM_CHALLENGE_MESSAGE pMessage = NULL;
@@ -214,6 +216,7 @@ NtlmCreateChallengeContext(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = NtlmGetNameInformation(
+        pCred ? pCred->pszDomainName : NULL,
         &pServerName,
         &pDomainName,
         &pDnsServerName,
@@ -611,6 +614,7 @@ error:
 DWORD
 NtlmValidateResponse(
     IN HANDLE Handle,
+    IN NTLM_CRED_HANDLE hCred,
     IN PNTLM_RESPONSE_MESSAGE_V1 pRespMsg,
     IN DWORD dwRespMsgSize,
     IN PNTLM_CONTEXT pChlngCtxt,
@@ -618,6 +622,7 @@ NtlmValidateResponse(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PNTLM_CREDENTIALS pCred = (PNTLM_CREDENTIALS)hCred;
     LSA_AUTH_USER_PARAMS Params;
     PLSA_AUTH_USER_INFO pUserInfo = NULL;
     PBYTE pLMRespBuffer = NULL;
@@ -628,6 +633,7 @@ NtlmValidateResponse(
     PSTR pUserName = NULL;
     PSTR pDomainName = NULL;
     PSTR pWorkstation = NULL;
+    PSTR pDomainInstance = NULL;
     BYTE sessionNonce[MD5_DIGEST_LENGTH];
     BYTE sessionHashUntrunc[MD5_DIGEST_LENGTH];
 
@@ -731,9 +737,18 @@ NtlmValidateResponse(
 
     Params.pszWorkstation = pWorkstation;
 
+    if (pCred && pCred->pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                      &pDomainInstance,
+                      ":%s",
+                      pCred->pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
     dwError = LsaSrvAuthenticateUserEx(
         Handle,
-        NULL,
+        pDomainInstance,
         &Params,
         &pUserInfo
         );
@@ -773,6 +788,7 @@ cleanup:
     LW_SAFE_FREE_STRING(pUserName);
     LW_SAFE_FREE_STRING(pDomainName);
     LW_SAFE_FREE_STRING(pWorkstation);
+    LW_SAFE_FREE_STRING(pDomainInstance);
 
     return dwError;
 error:

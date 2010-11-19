@@ -855,6 +855,42 @@ error:
 }
 
 LWMsgStatus
+NtlmSrvIpcSetCredentialsAttributes(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    PNTLM_IPC_ERROR pError = NULL;
+    PNTLM_IPC_SET_CREDS_REQ pReq = pIn->data;
+
+    dwError = NtlmServerSetCredentialsAttributes(
+                  &pReq->hCredential,
+                  pReq->ulAttribute,
+                  &pReq->Buffer);
+
+    if (!dwError)
+    {
+        pOut->tag = NTLM_R_SET_CREDS_SUCCESS;
+    }
+    else
+    {
+        dwError = NtlmSrvIpcCreateError(dwError, &pError);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        pOut->tag = NTLM_R_GENERIC_FAILURE;
+        pOut->data = pError;
+    }
+
+cleanup:
+    return MAP_NTLM_ERROR_IPC(dwError);
+error:
+    goto cleanup;
+}
+
+LWMsgStatus
 NtlmSrvIpcVerifySignature(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
@@ -914,6 +950,7 @@ static LWMsgDispatchSpec gMessageHandlers[] =
     LWMSG_DISPATCH_BLOCK(NTLM_Q_MAKE_SIGN, NtlmSrvIpcMakeSignature),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CREDS, NtlmSrvIpcQueryCredentialsAttributes),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_QUERY_CTXT, NtlmSrvIpcQueryContextAttributes),
+    LWMSG_DISPATCH_BLOCK(NTLM_Q_SET_CREDS, NtlmSrvIpcSetCredentialsAttributes),
     LWMSG_DISPATCH_BLOCK(NTLM_Q_VERIFY_SIGN, NtlmSrvIpcVerifySignature),
     LWMSG_DISPATCH_END
 };

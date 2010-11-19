@@ -64,6 +64,7 @@ NtlmServerInitializeSecurityContext(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
+    PNTLM_CREDENTIALS pCred = (PNTLM_CREDENTIALS)hCredential;
     PNTLM_CONTEXT pNtlmContext = NULL;
     PSTR pWorkstation = NULL;
     PSTR pDomain = NULL;
@@ -80,6 +81,7 @@ NtlmServerInitializeSecurityContext(
     if (!pNtlmContext)
     {
         dwError = NtlmGetNameInformation(
+                pCred ? pCred->pszDomainName : NULL,
                 &pWorkstation,
                 &pDomain,
                 NULL,

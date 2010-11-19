@@ -20,6 +20,7 @@ libntlmserver_la_SOURCES = \
     makesign.c \
     querycreds.c \
     queryctxt.c \
+    setcreds.c \
     cfg.c \
     verifysign.c
 

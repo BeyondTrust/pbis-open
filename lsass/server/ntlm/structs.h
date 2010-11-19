@@ -243,6 +243,7 @@ typedef struct _NTLM_CREDENTIALS
 {
     LSA_CRED_HANDLE CredHandle;
     DWORD dwCredDirection;
+    PSTR pszDomainName;
     LONG nRefCount;
 } NTLM_CREDENTIALS, *PNTLM_CREDENTIALS;
 

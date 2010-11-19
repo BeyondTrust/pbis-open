@@ -15,6 +15,7 @@ liblsaclient_ntlm_la_SOURCES = \
     makesign.c \
     querycreds.c \
     queryctxt.c \
+    setcreds.c \
     verifysign.c
 
 liblsaclient_ntlm_la_CFLAGS = \

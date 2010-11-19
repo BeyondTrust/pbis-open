@@ -60,6 +60,7 @@ LWMsgDispatchSpec gNtlmMessageHandlers[] =
     LWMSG_DISPATCH(NTLM_Q_MAKE_SIGN, NtlmSrvIpcMakeSignature),
     LWMSG_DISPATCH(NTLM_Q_QUERY_CREDS, NtlmSrvIpcQueryCredentialsAttributes),
     LWMSG_DISPATCH(NTLM_Q_QUERY_CTXT, NtlmSrvIpcQueryContextAttributes),
+    LWMSG_DISPATCH(NTLM_Q_SET_CREDS, NtlmSrvIpcSetCredentialsAttributes),
     LWMSG_DISPATCH(NTLM_Q_VERIFY_SIGN, NtlmSrvIpcVerifySignature),
     LWMSG_DISPATCH_END
 };

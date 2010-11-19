@@ -1079,17 +1079,84 @@ NtlmTransactQueryCredentialsAttributes(
             switch(pResultList->ulAttribute)
             {
             case SECPKG_CRED_ATTR_NAMES:
-                memcpy(
-                    pBuffer,
-                    pResultList->Buffer.pNames,
-                    sizeof(SecPkgContext_Names));
-                pResultList->Buffer.pNames = NULL;
+                ((PSecPkgCred_Names)pBuffer)->pUserName =
+                    pResultList->Buffer.pNames->pUserName;
+                pResultList->Buffer.pNames->pUserName = NULL;
                 break;
             default:
                 dwError = LW_ERROR_INTERNAL;
                 BAIL_ON_LSA_ERROR(dwError);
             }
 
+            break;
+        case NTLM_R_GENERIC_FAILURE:
+            pError = (PNTLM_IPC_ERROR) Out.data;
+            dwError = pError->dwError;
+            BAIL_ON_LSA_ERROR(dwError);
+            break;
+        default:
+            dwError = LW_ERROR_INTERNAL;
+            BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &Out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+NtlmTransactSetCredentialsAttributes(
+    IN PNTLM_CRED_HANDLE phCredential,
+    IN DWORD ulAttribute,
+    IN PVOID pBuffer
+    )
+{
+    DWORD dwError = LW_ERROR_SUCCESS;
+    NTLM_IPC_SET_CREDS_REQ SetCredsReq;
+    // Do not free pResult and pError
+    PNTLM_IPC_ERROR pError = NULL;
+    LWMsgParams In= LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams Out= LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    NtlmInitialize();
+
+    dwError = NtlmIpcAcquireCall(&pCall);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    memset(&SetCredsReq, 0, sizeof(SetCredsReq));
+
+    SetCredsReq.hCredential = *phCredential;
+    SetCredsReq.ulAttribute = ulAttribute;
+    switch (ulAttribute)
+    {
+        case SECPKG_CRED_ATTR_DOMAIN_NAME:
+            SetCredsReq.Buffer.pDomainName = (PSecPkgCred_DomainName)pBuffer;
+            break;
+        default:
+            dwError = LW_ERROR_INVALID_PARAMETER;
+            BAIL_ON_LSA_ERROR(dwError);
+            break;
+    }
+
+    In.tag = NTLM_Q_SET_CREDS;
+    In.data = &SetCredsReq;
+
+    dwError = MAP_LWMSG_ERROR(
+        lwmsg_call_dispatch(pCall, &In, &Out, NULL, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    switch (Out.tag)
+    {
+        case NTLM_R_SET_CREDS_SUCCESS:
             break;
         case NTLM_R_GENERIC_FAILURE:
             pError = (PNTLM_IPC_ERROR) Out.data;

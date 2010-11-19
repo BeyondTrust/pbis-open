@@ -118,9 +118,15 @@ typedef struct _SecPkgCred_Names
     SEC_CHAR *pUserName;
 } SecPkgCred_Names, *PSecPkgCred_Names;
 
-typedef struct _SecPkgCred
+typedef struct _SecPkgCred_DomainName
+{
+    SEC_CHAR *pName;
+} SecPkgCred_DomainName, *PSecPkgCred_DomainName;
+
+typedef union _SecPkgCred
 {
     PSecPkgCred_Names pNames;
+    PSecPkgCred_DomainName pDomainName;
 } SecPkgCred, *PSecPkgCred;
 
 typedef struct _LUID
@@ -302,6 +308,7 @@ typedef struct
 #define SECPKG_ATTR_CIPHER_STRENGTHS            21
 #define SECPKG_ATTR_SUPPORTED_PROTOCOLS         22
 #define SECPKG_ATTR_PAC_LOGON_INFO              100
+#define SECPKG_CRED_ATTR_DOMAIN_NAME            101
 
 //******************************************************************************
 //
@@ -415,6 +422,13 @@ NtlmClientQueryContextAttributes(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN DWORD ulAttribute,
     OUT PVOID pBuffer
+    );
+
+DWORD
+NtlmClientSetCredentialsAttributes(
+    IN PNTLM_CRED_HANDLE phCredential,
+    IN DWORD ulAttribute,
+    IN PVOID pBuffer
     );
 
 DWORD

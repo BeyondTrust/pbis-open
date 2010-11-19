@@ -153,6 +153,13 @@ NtlmTransactQueryContextAttributes(
     );
 
 DWORD
+NtlmTransactSetCredentialsAttributes(
+    IN PNTLM_CRED_HANDLE phCredential,
+    IN DWORD ulAttribute,
+    IN PVOID pBuffer
+    );
+
+DWORD
 NtlmTransactVerifySignature(
     IN PNTLM_CONTEXT_HANDLE phContext,
     IN PSecBufferDesc pMessage,

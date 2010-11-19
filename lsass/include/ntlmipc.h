@@ -80,6 +80,8 @@ typedef enum __NTLM_IPC_TAG
     NTLM_R_QUERY_CREDS_SUCCESS,
     NTLM_Q_QUERY_CTXT,
     NTLM_R_QUERY_CTXT_SUCCESS,
+    NTLM_Q_SET_CREDS,
+    NTLM_R_SET_CREDS_SUCCESS,
     NTLM_Q_VERIFY_SIGN,
     NTLM_R_VERIFY_SIGN_SUCCESS
 } NTLM_IPC_TAG;
@@ -274,6 +276,17 @@ typedef struct __NTLM_IPC_QUERY_CTXT_RESPONSE
 
 /******************************************************************************/
 
+typedef struct __NTLM_IPC_SET_CREDS_REQ
+{
+    NTLM_CRED_HANDLE hCredential;
+    DWORD ulAttribute;
+    SecPkgCred Buffer;
+} NTLM_IPC_SET_CREDS_REQ, *PNTLM_IPC_SET_CREDS_REQ;
+
+// No Response
+
+/******************************************************************************/
+
 typedef struct __NTLM_IPC_VERIFY_SIGN_REQ
 {
     NTLM_CONTEXT_HANDLE hContext;
@@ -402,6 +415,14 @@ NtlmSrvIpcQueryCredentialsAttributes(
 
 LWMsgStatus
 NtlmSrvIpcQueryContextAttributes(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    );
+
+LWMsgStatus
+NtlmSrvIpcSetCredentialsAttributes(
     LWMsgCall* pCall,
     const LWMsgParams* pIn,
     LWMsgParams* pOut,

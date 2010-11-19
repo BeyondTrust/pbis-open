@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,13 @@
  *
  * Module Name:
  *
- *        querycreds.c
+ *        setcreds.c
  *
  * Abstract:
  *
  *        Likewise Security and Authentication Subsystem (LSASS)
  *
- *        QueryCredentialsAttributes client wrapper API
+ *        SetCredentialsAttributes client wrapper API
  *
  * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
  *          Marc Guy (mguy@likewisesoftware.com)
@@ -48,27 +48,32 @@
 #include "ntlmsrvapi.h"
 
 DWORD
-NtlmServerQueryCredentialsAttributes(
+NtlmServerSetCredentialsAttributes(
     IN PNTLM_CRED_HANDLE phCredential,
     IN DWORD ulAttribute,
-    OUT PVOID pBuffer
+    IN PSecPkgCred pCred
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    PSecPkgCred pCred = (PSecPkgCred)pBuffer;
+
+    if (!phCredential)
+    {
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     switch(ulAttribute)
     {
-    case SECPKG_CRED_ATTR_NAMES:
-        dwError = NtlmServerQueryCredNameAttribute(
-            phCredential,
-            &pCred->pNames);
+    case SECPKG_CRED_ATTR_DOMAIN_NAME:
+        dwError = NtlmServerSetCredDomainNameAttribute(
+            *phCredential,
+            pCred->pDomainName);
         BAIL_ON_LSA_ERROR(dwError);
         break;
+    case SECPKG_CRED_ATTR_NAMES:
     case SECPKG_ATTR_SUPPORTED_ALGS:
     case SECPKG_ATTR_CIPHER_STRENGTHS:
     case SECPKG_ATTR_SUPPORTED_PROTOCOLS:
-    case SECPKG_CRED_ATTR_DOMAIN_NAME:
         dwError = LW_ERROR_NOT_IMPLEMENTED;
         BAIL_ON_LSA_ERROR(dwError);
         break;
@@ -78,51 +83,34 @@ NtlmServerQueryCredentialsAttributes(
         break;
     }
 
-cleanup:
-    return dwError;
 error:
-    goto cleanup;
+
+    return dwError;
 }
 
 DWORD
-NtlmServerQueryCredNameAttribute(
-    IN PNTLM_CRED_HANDLE phCred,
-    OUT PSecPkgCred_Names *ppNames
+NtlmServerSetCredDomainNameAttribute(
+    IN NTLM_CRED_HANDLE hCred,
+    IN PSecPkgCred_DomainName pDomainName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    PCSTR pUserName = NULL;
-    PSecPkgCred_Names pName = NULL;
+    PNTLM_CREDENTIALS pNtlmCreds = (PNTLM_CREDENTIALS)hCred;
 
-    *ppNames = NULL;
-
-    dwError = LwAllocateMemory(sizeof(*pName), OUT_PPVOID(&pName));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    NtlmGetCredentialInfo(
-        *phCred,
-        &pUserName,
-        NULL,
-        NULL);
-
-    // It's possible (in the case of a server), that no name is associated with
-    // the credential... handle this case.
-    if(!pUserName)
+    if (!hCred || !pDomainName || !pDomainName->pName)
     {
-        pUserName = "";
+        dwError = LW_ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LwAllocateString(pUserName, &pName->pUserName);
+    LW_SAFE_FREE_STRING(pNtlmCreds->pszDomainName);
+
+    dwError = LwAllocateString(
+                  pDomainName->pName,
+                  &pNtlmCreds->pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-cleanup:
-    *ppNames = pName;
-    return dwError;
 error:
-    if(pName)
-    {
-        LW_SAFE_FREE_STRING(pName->pUserName);
-    }
-    LW_SAFE_FREE_MEMORY(pName);
-    goto cleanup;
+
+    return dwError;
 }

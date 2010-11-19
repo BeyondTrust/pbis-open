@@ -96,6 +96,7 @@ NtlmCreateCredential(
     // lookup OR we created our own that didn't go into the tree anyway.
     pCreds->CredHandle = *pLsaCredHandle;
     pCreds->nRefCount = 1;
+    pCreds->dwCredDirection = dwDirection;
 
 cleanup:
     *ppNtlmCreds = pCreds;
@@ -171,6 +172,7 @@ NtlmFreeCredential(
     )
 {
     LsaReleaseCredential(&pCreds->CredHandle);
+    LW_SAFE_FREE_STRING(pCreds->pszDomainName);
     LW_SAFE_FREE_MEMORY(pCreds);
 }
 

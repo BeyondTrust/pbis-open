@@ -265,6 +265,18 @@ static LWMsgTypeSpec gNtlmSecPkgCredNamesSpec[] =
 
 /******************************************************************************/
 
+static LWMsgTypeSpec gNtlmSecPkgCredDomainNameSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(SecPkgCred_DomainName),
+
+    LWMSG_MEMBER_PSTR(SecPkgCred_DomainName, pName),
+
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+/******************************************************************************/
+
 static LWMsgTypeSpec gNtlmIpcErrorSpec[] =
 {
     // DWORD dwError;
@@ -742,6 +754,11 @@ static LWMsgTypeSpec gNtlmQueryCredsRespSpec[] =
     LWMSG_POINTER_END,
     LWMSG_ATTR_TAG(SECPKG_CRED_ATTR_NAMES),
 
+    LWMSG_MEMBER_POINTER_BEGIN(SecPkgCred, pDomainName),
+    LWMSG_TYPESPEC(gNtlmSecPkgCredDomainNameSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_TAG(SECPKG_CRED_ATTR_DOMAIN_NAME),
+
     LWMSG_UNION_END,
     LWMSG_ATTR_DISCRIM(NTLM_IPC_QUERY_CREDS_RESPONSE, ulAttribute),
 
@@ -809,6 +826,42 @@ static LWMsgTypeSpec gNtlmQueryCtxtRespSpec[] =
     LWMSG_STRUCT_END,
     LWMSG_TYPE_END
 };
+
+/******************************************************************************/
+
+static LWMsgTypeSpec gNtlmSetCredsSpec[] =
+{
+    // PNTLM_CRED_HANDLE phCredential;
+    // DWORD ulAttribute;
+    // SecPkgCred Buffer;
+
+    LWMSG_STRUCT_BEGIN(NTLM_IPC_SET_CREDS_REQ),
+
+    LWMSG_MEMBER_HANDLE(NTLM_IPC_SET_CREDS_REQ, hCredential, NTLM_CRED_HANDLE),
+    LWMSG_ATTR_HANDLE_LOCAL_FOR_RECEIVER,
+
+    LWMSG_MEMBER_UINT32(NTLM_IPC_SET_CREDS_REQ, ulAttribute),
+
+    LWMSG_MEMBER_UNION_BEGIN(NTLM_IPC_SET_CREDS_REQ, Buffer),
+
+    LWMSG_MEMBER_POINTER_BEGIN(SecPkgCred, pNames),
+    LWMSG_TYPESPEC(gNtlmSecPkgCredNamesSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_TAG(SECPKG_CRED_ATTR_NAMES),
+
+    LWMSG_MEMBER_POINTER_BEGIN(SecPkgCred, pDomainName),
+    LWMSG_TYPESPEC(gNtlmSecPkgCredDomainNameSpec),
+    LWMSG_POINTER_END,
+    LWMSG_ATTR_TAG(SECPKG_CRED_ATTR_DOMAIN_NAME),
+
+    LWMSG_UNION_END,
+    LWMSG_ATTR_DISCRIM(NTLM_IPC_SET_CREDS_REQ, ulAttribute),
+
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+    // No Response
 
 /******************************************************************************/
 
@@ -886,6 +939,9 @@ static LWMsgProtocolSpec gNtlmIpcSpec[] =
 
     LWMSG_MESSAGE(NTLM_Q_QUERY_CTXT, gNtlmQueryCtxtSpec),
     LWMSG_MESSAGE(NTLM_R_QUERY_CTXT_SUCCESS, gNtlmQueryCtxtRespSpec),
+
+    LWMSG_MESSAGE(NTLM_Q_SET_CREDS, gNtlmSetCredsSpec),
+    LWMSG_MESSAGE(NTLM_R_SET_CREDS_SUCCESS, NULL),
 
     LWMSG_MESSAGE(NTLM_Q_VERIFY_SIGN, gNtlmVerifySignSpec),
     LWMSG_MESSAGE(NTLM_R_VERIFY_SIGN_SUCCESS, gNtlmVerifySignRespSpec),

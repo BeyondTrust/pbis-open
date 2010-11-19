@@ -185,10 +185,11 @@ error:
 
 DWORD
 NtlmGetNameInformation(
-    PSTR* ppszServerName,
-    PSTR* ppszDomainName,
-    PSTR* ppszDnsServerName,
-    PSTR* ppszDnsDomainName
+    IN OPTIONAL PCSTR pszJoinedDomain,
+    OUT PSTR* ppszServerName,
+    OUT PSTR* ppszDomainName,
+    OUT PSTR* ppszDnsServerName,
+    OUT PSTR* ppszDnsDomainName
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
@@ -205,7 +206,7 @@ NtlmGetNameInformation(
 
     dwError = LsaSrvProviderGetPasswordInfo(
                   LSA_AD_TAG_PROVIDER,
-                  NULL,
+                  pszJoinedDomain,
                   NULL,
                   &pPasswordInfo);
 

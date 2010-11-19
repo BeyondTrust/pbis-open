@@ -15,6 +15,7 @@ make()
 	makesign.c \
 	querycreds.c \
 	queryctxt.c \
+	setcreds.c \
 	verifysign.c"
 
     mk_library \
