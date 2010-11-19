@@ -1454,26 +1454,33 @@ RegShellAllocKey(
     PSTR pszKeyName,
     PSTR *pszNewKey)
 {
-    DWORD dwError;
+    DWORD dwError = 0;
+    DWORD dwLen = 0;
+    PSTR pszRetKey = NULL;
 
-    dwError = RegAllocateMemory(strlen(pszKeyName) + 3, (PVOID*)pszNewKey);
+    dwLen = strlen(pszKeyName) + 3;  // 3: [ ] and \0
+    dwError = RegAllocateMemory(dwLen, (PVOID) &pszRetKey);
     BAIL_ON_REG_ERROR(dwError);
 
+    pszRetKey[0] = '\0';
     if (!pParseState->bBracketPrefix)
     {
-        strcpy(*pszNewKey, "[");
-        strcat(*pszNewKey, pszKeyName);
-        strcat(*pszNewKey, "]");
+        strncat(pszRetKey, "[", dwLen--);
+        strncat(pszRetKey, pszKeyName, dwLen);
+        dwLen -= strlen(pszKeyName);
+        strncat(pszRetKey, "]", dwLen--);
     }
     else
     {
-        strcat(*pszNewKey, pszKeyName);
+        strncat(pszRetKey, pszKeyName, dwLen);
     }
 
 cleanup:
+    *pszNewKey = pszRetKey;
     return dwError;
 
 error:
+    LWREG_SAFE_FREE_MEMORY(pszRetKey);
     goto cleanup;
 }
 
