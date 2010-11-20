@@ -53,29 +53,12 @@ typedef struct _LW_LDAP_DIRECTORY_CONTEXT {
     LDAP *ld;
 } LW_LDAP_DIRECTORY_CONTEXT, *PLW_LDAP_DIRECTORY_CONTEXT;
 
-
-DWORD
-LwLdapOpenDirectoryWithReaffinity(
-    IN PCSTR pszDnsDomainOrForestName,
-    IN DWORD dwFlags,
-    IN BOOLEAN bNeedGc,
-    OUT PHANDLE phDirectory
-    );
-
-
-DWORD
-LwLdapBindDirectoryAnonymous(
-    HANDLE hDirectory
-    );
-
-
 DWORD
 LwLdapBindDirectory(
     HANDLE hDirectory,
     PCSTR pszServerName,
     BOOLEAN bSeal
     );
-
 
 DWORD
 LwLdapOpenDirectoryServerSingleAttempt(
@@ -85,13 +68,5 @@ LwLdapOpenDirectoryServerSingleAttempt(
     IN DWORD dwFlags,
     OUT PLW_LDAP_DIRECTORY_CONTEXT* ppDirectory
     );
-
-void display_status(char *msg, OM_uint32 maj_stat, OM_uint32 min_stat);
-
-void display_status_1(char *m, OM_uint32 code, int type);
-
-#ifndef WIN32
-typedef gss_ctx_id_t CtxtHandle, *PCtxtHandle;
-#endif
 
 #endif /* __LWLDAP_P_H__ */

@@ -201,6 +201,12 @@ LwSetupUserLoginSession(
 
 #define LW_USER_LOGIN_SESSION_FLAG_SMART_CARD   0x00000001
 
+DWORD
+LwKrb5CheckInitiatorCreds(
+    IN PCSTR pszTargetPrincipalName,
+    OUT PBOOLEAN pbNeedCredentials
+    );
+
 LW_END_EXTERN_C
 
 #endif /* __LWKRB5_H__ */

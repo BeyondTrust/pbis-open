@@ -50,7 +50,205 @@
 #include "includes.h"
 #include <gssapi/gssapi_krb5.h>
 
+#define LW_GSS_LOG_CALL_FORMAT \
+    "GSS API error calling %s(): majorStatus = 0x%08x, minorStatus = 0x%08x"
+
+#define _LW_GSS_LOG_CALL_ERROR(GssFunctionName, MajorStatus, MinorStatus) \
+    do { \
+        PSTR pszLocalErrorMessage = NULL; \
+        DWORD dwLocalError = LwGssGetErrorMessage(&pszLocalErrorMessage, GssFunctionName, MajorStatus, MinorStatus); \
+        if (dwLocalError) \
+        { \
+            LW_LOG_ERROR(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
+        } \
+        else \
+        { \
+            LW_LOG_ERROR("%s", pszLocalErrorMessage); \
+            LwFreeString(pszLocalErrorMessage); \
+        } \
+    } while (0)
+
+#define _LW_GSS_LOG_CALL_DEBUG(GssFunctionName, MajorStatus, MinorStatus) \
+    do { \
+        PSTR pszLocalErrorMessage = NULL; \
+        DWORD dwLocalError = LwGssGetErrorMessage(&pszLocalErrorMessage, GssFunctionName, MajorStatus, MinorStatus); \
+        if (dwLocalError) \
+        { \
+            LW_LOG_DEBUG(LW_GSS_LOG_CALL_FORMAT, GssFunctionName, MajorStatus, MinorStatus); \
+        } \
+        else \
+        { \
+            LW_LOG_DEBUG("%s", pszLocalErrorMessage); \
+            LwFreeString(pszLocalErrorMessage); \
+        } \
+    } while (0)
+
+
+#define LW_GSS_LOG_IF_NOT_COMPLETE(GssFunctionName, MajorStatus, MinorStatus) \
+    do { \
+        switch (MajorStatus) \
+        { \
+            case GSS_S_COMPLETE: \
+                break; \
+            default: \
+                _LW_GSS_LOG_CALL_ERROR(GssFunctionName, MajorStatus, MinorStatus); \
+        } \
+    } while (0)
+
+#define LW_GSS_LOG_IF_NOT_COMPLETE_OR_CONTINUE(GssFunctionName, MajorStatus, MinorStatus) \
+    do { \
+        switch (MajorStatus) \
+        { \
+            case GSS_S_COMPLETE: \
+                break; \
+            case GSS_S_CONTINUE_NEEDED: \
+                _LW_GSS_LOG_CALL_DEBUG(GssFunctionName, MajorStatus, MinorStatus); \
+                break; \
+            default: \
+                _LW_GSS_LOG_CALL_ERROR(GssFunctionName, MajorStatus, MinorStatus); \
+        } \
+    } while (0)
+
+#define BAIL_ON_GSS_ERROR(dwError, MajorStatus, MinorStatus) \
+    do { \
+        if (((MajorStatus) != GSS_S_COMPLETE) && \
+            ((MajorStatus) != GSS_S_CONTINUE_NEEDED)) \
+        { \
+            LW_LOG_DEBUG("[%s() %s:%d] GSS API error: majorStatus = 0x%08x, minorStatus = 0x%08x", \
+                         __FUNCTION__, \
+                         __FILE__, \
+                         __LINE__, \
+                         MajorStatus, MinorStatus); \
+            dwError = LW_ERROR_GSS_CALL_FAILED; \
+            goto error; \
+        } \
+    } while (0)
+
+//
+// KG_EMPTY_CCACHE is defined inside of gssapi but it is not exposed
+// externally.  It means that the credentials cache does not have a
+// TGT inside of it.
+//
+        
+#define KG_EMPTY_CCACHE 0x25ea10c
+        
+
 static volatile LONG glLibraryRefCount = 0;
+
+static
+DWORD
+LwGssGetSingleErrorMessage(
+    OUT PSTR* ppszErrorMessage,
+    IN OM_uint32 Status,
+    IN BOOLEAN IsMajor
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszErrorMessage = NULL;
+    OM_uint32 majorStatus = 0;
+    OM_uint32 minorStatus = 0;
+    gss_buffer_desc message = GSS_C_EMPTY_BUFFER;
+    OM_uint32 messageContext = 0;
+    int statusType = IsMajor ? GSS_C_GSS_CODE : GSS_C_MECH_CODE;
+
+    do {
+        majorStatus = gss_display_status(
+                            &minorStatus,
+                            Status,
+                            statusType,
+                            GSS_C_NULL_OID,
+                            &messageContext,
+                            &message);
+        if (majorStatus != GSS_S_COMPLETE)
+        {
+            LW_LOG_ERROR("Call to gss_display_status() failed with "
+                         "majorStatus = 0x%08x, minorStatus = 0x%08x",
+                         majorStatus, minorStatus);
+
+            dwError = ERROR_INTERNAL_ERROR;
+            BAIL_ON_LW_ERROR(dwError);
+        }
+
+        if (!pszErrorMessage)
+        {
+            dwError = LwAllocateString((PSTR)message.value, &pszErrorMessage);
+            BAIL_ON_LW_ERROR(dwError);
+        }
+        else
+        {
+            PSTR pszNewErrorMessage = NULL;
+
+            dwError = LwAllocateStringPrintf(&pszNewErrorMessage,
+                                             "%s; %s",
+                                             pszErrorMessage,
+                                             (PSTR)message.value);
+            BAIL_ON_LW_ERROR(dwError);
+
+            LW_SAFE_FREE_STRING(pszErrorMessage);
+            pszErrorMessage = pszNewErrorMessage;
+        }
+
+        majorStatus = gss_release_buffer(&minorStatus, &message);
+    } while (messageContext);
+
+error:
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszErrorMessage);
+    }
+
+    if (message.value)
+    {
+        majorStatus = gss_release_buffer(&minorStatus, &message);
+    }
+
+    *ppszErrorMessage = pszErrorMessage;
+
+    return dwError;
+}
+
+DWORD
+LwGssGetErrorMessage(
+    OUT PSTR* ppszErrorMessage,
+    IN OPTIONAL PCSTR pszGssFunction,
+    IN OM_uint32 MajorStatus,
+    IN OM_uint32 MinorStatus
+    )
+{
+    DWORD dwError = 0;
+    PSTR pszErrorMessage = NULL;
+    PSTR pszMajorMessage = NULL;
+    PSTR pszMinorMessage = NULL;
+
+    dwError = LwGssGetSingleErrorMessage(&pszMajorMessage, MajorStatus, TRUE);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwGssGetSingleErrorMessage(&pszMinorMessage, MinorStatus, FALSE);
+    BAIL_ON_LW_ERROR(dwError);
+
+    dwError = LwAllocateStringPrintf(&pszErrorMessage,
+                                     "GSS API error calling %s(): "
+                                     "majorStatus = 0x%08x (%s), "
+                                     "minorStatus = 0x%08x (%s)",
+                                     pszGssFunction,
+                                     MajorStatus, pszMajorMessage,
+                                     MinorStatus, pszMinorMessage);
+    BAIL_ON_LW_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszErrorMessage);
+    }
+
+    LW_SAFE_FREE_STRING(pszMajorMessage);
+    LW_SAFE_FREE_STRING(pszMinorMessage);
+
+    *ppszErrorMessage = pszErrorMessage;
+
+    return dwError;
+}
+
 
 DWORD
 LwKrb5GetDefaultRealm(
@@ -205,7 +403,7 @@ LwKrb5SetDefaultCachePath(
                             (OM_uint32 *)&dwMinorStatus,
                             pszCachePath,
                             (ppszOrigCachePath) ? (const char**)&pszOrigCachePath : NULL);
-    BAIL_ON_SEC_ERROR(dwMajorStatus);
+    BAIL_ON_GSS_ERROR(dwError, dwMajorStatus, dwMinorStatus);
 
     LW_LOG_DEBUG("Switched gss krb5 credentials path from %s to %s",
             LW_SAFE_LOG_STRING(pszOrigCachePath),
@@ -488,13 +686,6 @@ cleanup:
 error:
     goto cleanup;
 }
-
-#define BAIL_ON_DCE_ERROR(dest, status)                   \
-    if ((status) != 0) {                    \
-        LW_LOG_ERROR("DCE Error [Code:%d]", (status));   \
-        (dest) = LW_ERROR_DCE_CALL_FAILED;               \
-        goto error;                                       \
-    }
 
 DWORD
 LwKrb5CopyFromUserCache(
@@ -1741,6 +1932,107 @@ error:
     *ppchLogonInfo = NULL;
     
     goto cleanup;
+}
+
+DWORD
+LwKrb5CheckInitiatorCreds(
+    IN PCSTR pszTargetPrincipalName,
+    OUT PBOOLEAN pbNeedCredentials
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bNeedCredentials = FALSE;
+    OM_uint32 majorStatus = 0;
+    OM_uint32 minorStatus = 0;
+    gss_ctx_id_t gssContext = GSS_C_NO_CONTEXT;
+    gss_buffer_desc importName  = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc inputBufferDesc  = GSS_C_EMPTY_BUFFER;
+    gss_buffer_desc outputBufferDesc = GSS_C_EMPTY_BUFFER;
+    OM_uint32 outputFlags = 0;
+    gss_name_t targetName = GSS_C_NO_NAME;
+
+    // discard const
+    importName.value = (PSTR) pszTargetPrincipalName;
+    importName.length = strlen(pszTargetPrincipalName);
+
+    // discard const from GSS_KRB5_NT_PRINCIPAL_NAME
+    majorStatus = gss_import_name(&minorStatus,
+                                  &importName,
+                                  (gss_OID) GSS_KRB5_NT_PRINCIPAL_NAME,
+                                  &targetName);
+    LW_GSS_LOG_IF_NOT_COMPLETE("gss_import_name", majorStatus, minorStatus);
+    BAIL_ON_GSS_ERROR(dwError, majorStatus, minorStatus);
+
+    // discard const from GSS_KRB5_NT_PRINCIPAL_NAME
+    majorStatus = gss_init_sec_context(&minorStatus,
+                                       NULL,
+                                       &gssContext,
+                                       targetName,
+                                       (gss_OID) gss_mech_krb5,
+                                       GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG,
+                                       0,
+                                       NULL,
+                                       &inputBufferDesc,
+                                       NULL,
+                                       &outputBufferDesc,
+                                       &outputFlags,
+                                       NULL);
+    LW_GSS_LOG_IF_NOT_COMPLETE_OR_CONTINUE("gss_init_sec_context", majorStatus, minorStatus);
+
+    if (((majorStatus == GSS_S_FAILURE) &&
+         ((minorStatus == KRB5KRB_AP_ERR_TKT_EXPIRED) ||
+          (minorStatus == KRB5KDC_ERR_NEVER_VALID) ||
+          (minorStatus == KRB5KDC_ERR_TGT_REVOKED))) ||
+        ((majorStatus == GSS_S_CRED_UNAVAIL) &&
+         (minorStatus == KG_EMPTY_CCACHE)))
+    {
+        // Need (new) Kerberos credentials because there are no
+        // credentials or the credentials are expired or otherwise
+        // invalid.
+
+        bNeedCredentials = TRUE;
+        goto error;
+    }
+
+    if (majorStatus == GSS_S_FAILURE)
+    {
+        switch (minorStatus)
+        {
+            case KRB5KRB_AP_ERR_SKEW:
+                dwError = ERROR_TIME_SKEW;
+                BAIL_ON_LW_ERROR(dwError);
+                break;
+            default:
+                BAIL_ON_GSS_ERROR(dwError, majorStatus, minorStatus);
+                break;
+        }
+    }
+
+    if ((majorStatus != GSS_S_COMPLETE) &&
+        (majorStatus != GSS_S_CONTINUE_NEEDED))
+    {
+        BAIL_ON_GSS_ERROR(dwError, majorStatus, minorStatus);
+    }
+
+error:
+    if (targetName)
+    {
+        gss_release_name(&minorStatus, &targetName);
+    }
+
+    if (outputBufferDesc.value)
+    {
+        majorStatus = gss_release_buffer(&minorStatus, &outputBufferDesc);
+    }
+
+    if (gssContext)
+    {
+        majorStatus = gss_delete_sec_context(&minorStatus, &gssContext, GSS_C_NO_BUFFER);
+    }
+
+    *pbNeedCredentials = bNeedCredentials;
+
+    return dwError;
 }
 
 /*

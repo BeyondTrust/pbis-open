@@ -76,28 +76,6 @@
         } \
     } while (0)
 
-#ifdef WIN32
-
-#define BAIL_ON_SEC_ERROR(dwMajorStatus)                        \
-    if ((dwMajorStatus!= SEC_E_OK) &&                           \
-        (dwMajorStatus != SEC_I_CONTINUE_NEEDED)) {             \
-        LW_LOG_DEBUG("GSS API Error: %d", dwMajorStatus);      \
-        dwError = LW_ERROR_GSS_CALL_FAILED;                    \
-        goto error;                                             \
-    }
-
-#else
-
-#define BAIL_ON_SEC_ERROR(dwMajorStatus)                        \
-    if ((dwMajorStatus!= GSS_S_COMPLETE) &&                     \
-        (dwMajorStatus != GSS_S_CONTINUE_NEEDED)) {             \
-        LW_LOG_DEBUG("[%s() %s:%d] GSS API error code: %d", __FUNCTION__, __FILE__, __LINE__, dwMajorStatus);                                 \
-        dwError = LW_ERROR_GSS_CALL_FAILED;                    \
-        goto error;                                             \
-    }
-
-#endif /* WIN32 */
-
 #define BAIL_ON_KRB_ERROR(ctx, ret) \
     do { \
         if (ret) \

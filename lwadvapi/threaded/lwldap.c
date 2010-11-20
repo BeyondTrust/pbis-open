@@ -452,83 +452,27 @@ LwLdapBindDirectory(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    DWORD dwMajorStatus = 0;
-    DWORD dwMinorStatus = 0;
+    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+    PSTR pszTargetPrinciaplName = NULL;
+    BOOLEAN bNeedCredentials = FALSE;
 
-    CtxtHandle GSSContext = {0};
-    PCtxtHandle pGSSContext = &GSSContext;
-
-    PSTR pszTargetName = NULL;
-
-    PLW_LDAP_DIRECTORY_CONTEXT pDirectory = NULL;
-
-    gss_buffer_desc input_name  = GSS_C_EMPTY_BUFFER;
-    gss_buffer_desc input_desc  = GSS_C_EMPTY_BUFFER;
-    gss_buffer_desc output_desc = GSS_C_EMPTY_BUFFER;
-
-    gss_buffer_desc token = GSS_C_EMPTY_BUFFER;
-
-//    PCtxtHandle pContextHandle = NULL;
-    OM_uint32 ret_flags = 0;
-
-    gss_name_t targ_name = GSS_C_NO_NAME;
-
-    input_desc.value = NULL;
-    input_desc.length = 0;
-
-    //Leave the realm empty so that kerberos referrals are turned on.
-    dwError = LwAllocateStringPrintf(&pszTargetName,"ldap/%s@", pszServerName);
+    // Leave the realm empty so that kerberos referrals are turned on.
+    dwError = LwAllocateStringPrintf(&pszTargetPrinciaplName, "ldap/%s@", pszServerName);
     BAIL_ON_LW_ERROR(dwError);
 
-    pDirectory = (PLW_LDAP_DIRECTORY_CONTEXT)hDirectory;
+    dwError = LwKrb5CheckInitiatorCreds(pszTargetPrinciaplName, &bNeedCredentials);
+    BAIL_ON_LW_ERROR(dwError);
 
-    input_name.value = pszTargetName;
-    input_name.length = strlen(pszTargetName);
-
-    dwMajorStatus = gss_import_name((OM_uint32 *)&dwMinorStatus,
-                                    &input_name,
-                                    (gss_OID)GSS_KRB5_NT_PRINCIPAL_NAME,
-                                    &targ_name);
-    display_status("gss_import_name", dwMajorStatus, dwMinorStatus);
-    BAIL_ON_SEC_ERROR(dwMajorStatus);
-
-    token.value = "{1 3 6 1 5 5 2}";
-    token.length = strlen(token.value);
-
-    memset(pGSSContext, 0, sizeof(CtxtHandle));
-    *pGSSContext = GSS_C_NO_CONTEXT;
-
-    dwMajorStatus = gss_init_sec_context((OM_uint32 *)&dwMinorStatus,
-                                         NULL,
-                                         pGSSContext,
-                                         targ_name,
-                                         (gss_OID)gss_mech_krb5,
-                                         GSS_C_REPLAY_FLAG | GSS_C_MUTUAL_FLAG,
-                                         0,
-                                         NULL,
-                                         &input_desc,
-                                         NULL,
-                                         &output_desc,
-                                         &ret_flags,
-                                         NULL);
-
-    display_status("gss_init_context", dwMajorStatus, dwMinorStatus);
-    if (
-        (dwMajorStatus == GSS_S_FAILURE &&
-        (dwMinorStatus == (DWORD)KRB5KRB_AP_ERR_TKT_EXPIRED ||
-         dwMinorStatus == (DWORD)KRB5KDC_ERR_NEVER_VALID ||
-         dwMinorStatus == (DWORD)KRB5KDC_ERR_TGT_REVOKED)) ||
-        (dwMajorStatus == GSS_S_CRED_UNAVAIL &&
-        dwMinorStatus == 0x25ea10c /* This is KG_EMPTY_CCACHE
-                                    * inside of gssapi, but that symbol
-                                    * is not exposed externally. This
-                                    * code means that the credentials
-                                    * cache does not have a TGT inside
-                                    * of it.
-                                    */
-        )
-	)
+    if (bNeedCredentials)
     {
+        // ISSUE-2010/11/19-dalmeida -- Code assumes machine creds.
+        // This will not behave as expected if using any creds other
+        // than machine credentials.  It also needs to be fixed for
+        // upcoming pstore work.  The proper fix is to remove the
+        // checking of initiator credentials from the LDAP code
+        // and have any higher layers that care do the check and
+        // DTRT wrt the "refreshing" the credentials..
+
         /* The kerberos ticket expired or is about to expire (The
          * machine password sync thread didn't do its job).
          */
@@ -537,48 +481,14 @@ LwLdapBindDirectory(
         dwError = LwKrb5RefreshMachineTGT(NULL);
         BAIL_ON_LW_ERROR(dwError);
     }
-    
-    if (dwMajorStatus == GSS_S_FAILURE)
-    {
-        switch (dwMinorStatus)
-        {
-            case KRB5KRB_AP_ERR_SKEW:
-                dwError = ERROR_TIME_SKEW;
-                BAIL_ON_LW_ERROR(dwError);
-                break;
-            default:
-                BAIL_ON_SEC_ERROR(dwMajorStatus);
-                break;
-        }
-    }
-	
-    if (dwMajorStatus != 0 &&
-        dwMajorStatus != GSS_S_CONTINUE_NEEDED)
-    {
-        BAIL_ON_SEC_ERROR(dwMajorStatus);
-    }
 
     dwError = LwLdapBindDirectorySasl(pDirectory->ld, pszServerName, bSeal);
     BAIL_ON_LW_ERROR(dwError);
 
 error:
+    LW_SAFE_FREE_STRING(pszTargetPrinciaplName);
 
-    if (targ_name) {
-        gss_release_name((OM_uint32*)&dwMinorStatus, &targ_name);
-    }
-
-    if (output_desc.value) {
-	gss_release_buffer((OM_uint32 *)&dwMinorStatus, &output_desc);
-    }
-						    
-    if (*pGSSContext != GSS_C_NO_CONTEXT) {
-        gss_delete_sec_context((OM_uint32*)&dwMinorStatus, pGSSContext, GSS_C_NO_BUFFER);
-    }
-
-    LW_SAFE_FREE_STRING(pszTargetName);
-
-    return(dwError);
-
+    return dwError;
 }
 
 static int
@@ -672,67 +582,6 @@ LwLdapBindDirectorySasl(
 error:
 
     return dwError;
-}
-
-void display_status(char *msg, OM_uint32 maj_stat, OM_uint32 min_stat)
-{
-    // BAIL_ON_SEC_ERROR shows this code
-    // display_status_1(msg, maj_stat, GSS_C_GSS_CODE);
-    display_status_1(msg, min_stat, GSS_C_MECH_CODE);
-}
-
-void display_status_1(char *m, OM_uint32 code, int type)
-{
-    OM_uint32 maj_stat, min_stat;
-    gss_buffer_desc msg;
-    OM_uint32 msg_ctx;
-
-    if ( code == 0 )
-    {
-        return;
-    }
-
-    msg_ctx = 0;
-    while (1) {
-        maj_stat = gss_display_status(&min_stat, code,
-                                      type, GSS_C_NULL_OID,
-                                      &msg_ctx, &msg);
-
-	switch(code)
-	{
-#ifdef WIN32
-	case SEC_E_OK:
-	case SEC_I_CONTINUE_NEEDED:
-#else
-        case GSS_S_COMPLETE:
-        case GSS_S_CONTINUE_NEEDED:
-#endif
-            LW_LOG_DEBUG("GSS-API error calling %s: %d (%s)", m, code, (char *)msg.value);
-	    break;
-	default:
-            LW_LOG_DEBUG("GSS-API error calling %s: %d (%s)", m, code, (char *)msg.value);
-	}
-
-        (void) gss_release_buffer(&min_stat, &msg);
-
-        if (!msg_ctx)
-            break;
-    }
-    if (code == (OM_uint32)KRB5_FCC_NOFILE)
-    {
-        PSTR pszOrigCachePath = NULL;
-
-        LW_LOG_DEBUG("KRB5CCNAME is set to %s",
-                LW_SAFE_LOG_STRING(getenv("KRB5CCNAME")));
-
-        if (!LwKrb5SetDefaultCachePath(NULL, &pszOrigCachePath))
-        {
-            LW_LOG_DEBUG("gss krb5 ccache is set to %s",
-                    LW_SAFE_LOG_STRING(pszOrigCachePath));
-            LwKrb5SetDefaultCachePath(pszOrigCachePath, NULL);
-            LW_SAFE_FREE_MEMORY(pszOrigCachePath);
-        }
-    }
 }
 
 void
