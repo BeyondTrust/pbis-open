@@ -46,21 +46,10 @@
 #ifndef __LWLDAP_H__
 #define __LWLDAP_H__
 
-#ifndef KRB5_PRIVATE
-#define KRB5_PRIVATE 1
-#ifndef KRB5_DEPRECATED
-#define KRB5_DEPRECATED 1
-#include <krb5.h>
-#endif
-#endif
-#include <gssapi/gssapi.h>
-#include <gssapi/gssapi_generic.h>
-#include <gssapi/gssapi_krb5.h>
 #ifndef LDAP_DEPRECATED
 #define LDAP_DEPRECATED 1
 #include <ldap.h>
 #endif
-#include <lber.h>
 
 //maximum length of LDAP query, in bytes.
 #define MAX_LDAP_QUERY_LENGTH 4096
@@ -94,20 +83,6 @@ LwLdapPingTcp(
     );
 
 DWORD
-LwLdapOpenDirectoryDomain(
-    IN PCSTR pszDnsDomainName,
-    IN DWORD dwFlags,
-    OUT PHANDLE phDirectory
-    );
-
-DWORD
-LwLdapOpenDirectoryGc(
-    IN PCSTR pszDnsForestName,
-    IN DWORD dwFlags,
-    OUT PHANDLE phDirectory
-    );
-
-DWORD
 LwLdapOpenDirectoryServer(
     IN PCSTR pszServerAddress,
     IN PCSTR pszServerName,
@@ -130,14 +105,6 @@ LwLdapConvertDNToDomain(
 void
 LwLdapCloseDirectory(
     HANDLE hDirectory
-    );
-
-DWORD
-LwLdapReadObject(
-    HANDLE hDirectory,
-    PCSTR  pszObjectDN,
-    PSTR*  ppszAttributeList,
-    LDAPMessage **ppMessage
     );
 
 DWORD
