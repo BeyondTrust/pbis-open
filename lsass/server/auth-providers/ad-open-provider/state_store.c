@@ -1671,7 +1671,7 @@ ADState_WriteRegCellEntry(
                   "CellList",
                   REG_MULTI_SZ,
                   (PVOID) ppszMultiCellListOrder,
-                  dwValueLen);
+                  dwValueLen + 1);
     BAIL_ON_LSA_ERROR(dwError);
                      
     /* Write cell data entries to registry */

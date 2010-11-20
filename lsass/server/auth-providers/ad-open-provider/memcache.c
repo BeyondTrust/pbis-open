@@ -868,7 +868,7 @@ MemCacheFindUserByName(
                             pUserNameInfo->pszDomain,
                             &pszDnsDomain,
                             NULL);
-	    if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
+            if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
             {
                 dwError = LW_ERROR_NO_SUCH_USER;
             }
@@ -889,7 +889,7 @@ MemCacheFindUserByName(
                             pUserNameInfo->pszDomain,
                             NULL,
                             &pszShortDomain);
-	    if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
+            if (dwError == LW_ERROR_NO_SUCH_DOMAIN)
             {
                 dwError = LW_ERROR_NO_SUCH_USER;
             }

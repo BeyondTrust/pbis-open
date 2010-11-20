@@ -57,17 +57,17 @@ typedef struct _AD_LINKED_CELL_INFO
 
 typedef struct _AD_PROVIDER_DATA
 {
-	DWORD dwDirectoryMode;
-	ADConfigurationMode adConfigurationMode;
-	UINT64 adMaxPwdAge;
-	CHAR  szDomain[256];
-	CHAR  szShortDomain[256];
-	CHAR  szComputerDN[256];
+    DWORD dwDirectoryMode;
+    ADConfigurationMode adConfigurationMode;
+    UINT64 adMaxPwdAge;
+    CHAR  szDomain[256];
+    CHAR  szShortDomain[256];
+    CHAR  szComputerDN[256];
     struct {
-	  CHAR szCellDN[256];
-	} cell;
-        // Contains type PAD_LINKED_CELL_INFO
-	PDLINKEDLIST pCellList;
+        CHAR szCellDN[256];
+    } cell;
+    // Contains type PAD_LINKED_CELL_INFO
+    PDLINKEDLIST pCellList;
 } AD_PROVIDER_DATA, *PAD_PROVIDER_DATA;
 
 typedef struct _LSA_AD_CONFIG {

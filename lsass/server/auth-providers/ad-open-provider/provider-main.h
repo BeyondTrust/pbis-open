@@ -129,7 +129,7 @@ AD_ServicesDomainWithDiscovery(
 DWORD
 AD_AuthenticateUserPam(
     HANDLE hProvider,
-    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     );
 
@@ -440,13 +440,6 @@ AD_QueryMemberOf(
     OUT PSTR** pppszGroupSids
     );
 
-DWORD
-AD_GetSmartCardUserObject(
-    IN HANDLE hProvider,
-    OUT PLSA_SECURITY_OBJECT* ppObject,
-    OUT PSTR* ppszSmartCardReader
-    );
-
 VOID
 AD_CloseEnum(
     IN OUT HANDLE hEnum
@@ -456,6 +449,13 @@ DWORD
 AD_UpdateObject(
     IN PLSA_AD_PROVIDER_STATE pState,
     IN OUT PLSA_SECURITY_OBJECT pObject
+    );
+
+DWORD
+AD_GetSmartCardUserObject(
+    IN HANDLE hProvider,
+    OUT PLSA_SECURITY_OBJECT* ppObject,
+    OUT PSTR* ppszSmartCardReader
     );
 
 #endif /* __PROVIDER_MAIN_H__ */

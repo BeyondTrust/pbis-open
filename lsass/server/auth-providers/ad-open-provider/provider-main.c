@@ -1461,7 +1461,7 @@ error:
         LwFreePasswordInfoA(pPasswordInfoA);
         pPasswordInfoA = NULL;
     }
-    
+
     if (ppPasswordInfo)
     {
         *ppPasswordInfo = pPasswordInfo;
@@ -1525,7 +1525,7 @@ cleanup:
 DWORD
 AD_AuthenticateUserPam(
     HANDLE hProvider,
-    LSA_AUTH_USER_PAM_PARAMS* pParams,
+    PLSA_AUTH_USER_PAM_PARAMS pParams,
     PLSA_AUTH_USER_PAM_INFO* ppPamAuthInfo
     )
 {
@@ -1544,7 +1544,7 @@ AD_AuthenticateUserPam(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
@@ -1562,7 +1562,7 @@ AD_AuthenticateUserPam(
             pParams,
             ppPamAuthInfo);
     }
-   
+
     if (LW_ERROR_DOMAIN_IS_OFFLINE == dwError)
     {
         dwError = AD_OfflineAuthenticateUserPam(
@@ -2467,7 +2467,7 @@ AD_LeaveDomainInternal(
             dwFlags);
         BAIL_ON_LSA_ERROR(dwError);
     }
-   
+
     dwError = AD_RemoveStateFromList(
                   pContext->pState);
     BAIL_ON_LSA_ERROR(dwError);
@@ -3631,7 +3631,7 @@ AD_GetStatus(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED ||
         !pContext->pState->pProviderData)
     {
