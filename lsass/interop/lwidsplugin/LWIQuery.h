@@ -108,7 +108,7 @@ protected:
     static void FreeMemberList(PLWIMEMBERLIST pMemberList);
     long AddUserRecordHelper(PLSA_SECURITY_OBJECT pUserObject);
     long AddUserRecord(PLWIUSER pUser, OPTIONAL const char* AltName);
-    long AddGroupRecordHelper(PLSA_SECURITY_OBJECT pGroupObject);
+    long AddGroupRecordHelper(PLSA_SECURITY_OBJECT pGroupObject, bool bExpandMembers);
     long AddGroupRecord(PLWIGROUP pGroup, OPTIONAL const char* AltName);
     static long BuildRecord(const char* pszType, const char* pszName, PDSRECORD* ppRecord);
     long CommitRecord(PDSRECORD pRecord);
@@ -149,6 +149,9 @@ protected:
     PDSRECORD _pRecordListHead;
     PDSRECORD _pRecordListTail;
     PDSRECORD _pCurrentRecord;
+
+    bool _bRespondedWithTooSmallError;
+    unsigned long _lastResponseBufferSize;
 
     PLWIBITVECTOR _recTypeSet;
     PLWIBITVECTOR _attributeSet;

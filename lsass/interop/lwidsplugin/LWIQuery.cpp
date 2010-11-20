@@ -44,6 +44,8 @@ LWIQuery::LWIQuery(bool bGetValues, bool bAllowIOContinue)
       _pRecordListHead(NULL),
       _pRecordListTail(NULL),
       _pCurrentRecord(NULL),
+      _bRespondedWithTooSmallError(false),
+      _lastResponseBufferSize(0),
       _recTypeSet(NULL),
       _attributeSet(NULL)
 {
@@ -631,7 +633,7 @@ LWIQuery::QueryAllGroupInformation(const char* pszName)
 
     for (iGroup = 0; iGroup < dwNumGroupsFound; iGroup++)
     {
-        macError = AddGroupRecordHelper(ppGroupObjects[iGroup]);
+        macError = AddGroupRecordHelper(ppGroupObjects[iGroup], false);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
@@ -808,7 +810,7 @@ LWIQuery::QueryGroupsForUser(
         {
             fFoundPrimaryGroup = TRUE;
         }
-        macError = AddGroupRecordHelper(ppGroups[iGroup]);
+        macError = AddGroupRecordHelper(ppGroups[iGroup], false);
         GOTO_CLEANUP_ON_MACERROR(macError);
     }
 
@@ -885,7 +887,7 @@ LWIQuery::GetGroupInformationById(
     macError = GetGroupObjectFromId(gid, &ppGroupObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddGroupRecordHelper(ppGroupObjects[0]);
+    macError = AddGroupRecordHelper(ppGroupObjects[0], false);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
@@ -909,7 +911,7 @@ LWIQuery::GetGroupInformationByName(
     macError = GetGroupObjectFromName(pszName, &ppGroupObjects);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = AddGroupRecordHelper(ppGroupObjects[0]);
+    macError = AddGroupRecordHelper(ppGroupObjects[0], true);
     GOTO_CLEANUP_ON_MACERROR(macError);
 
 cleanup:
@@ -1534,7 +1536,8 @@ cleanup:
 
 long
 LWIQuery::AddGroupRecordHelper(
-    IN PLSA_SECURITY_OBJECT pGroupObject
+    IN PLSA_SECURITY_OBJECT pGroupObject,
+    IN bool bExpandMembers
     )
 {
     long macError = eDSNoErr;
@@ -1543,11 +1546,14 @@ LWIQuery::AddGroupRecordHelper(
     PLSA_SECURITY_OBJECT* ppGroupMembers = NULL;
     DWORD dwMemberCount = 0;
 
-    macError = ExpandGroupMembers(pGroupObject->pszObjectSid, &ppGroupMembers, &dwMemberCount);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+    if (bExpandMembers)
+    {
+        macError = ExpandGroupMembers(pGroupObject->pszObjectSid, &ppGroupMembers, &dwMemberCount);
+        GOTO_CLEANUP_ON_MACERROR(macError);
 
-    macError = CreateMemberList(dwMemberCount, ppGroupMembers, &pMembers);
-    GOTO_CLEANUP_ON_MACERROR(macError);
+        macError = CreateMemberList(dwMemberCount, ppGroupMembers, &pMembers);
+        GOTO_CLEANUP_ON_MACERROR(macError);
+    }
 
     macError = CreateLWIGroup(pGroupObject->groupInfo.pszUnixName, /* Group Display Name */
                               pGroupObject->groupInfo.pszPasswd,
@@ -2534,6 +2540,7 @@ LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecor
         {
             total++;
         }
+        LOG("Counted %d records", total);
 
         for (pRecord = _pCurrentRecord;
              pRecord; 
@@ -2556,6 +2563,7 @@ LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecor
 			
             result++;
         }
+        LOG("Will write %d record(s)", result);
 
         if (!pRecord)
         {
@@ -2574,11 +2582,45 @@ LWIQuery::DetermineRecordsToFitInBuffer(unsigned long maxBufferSize, int& nRecor
             }
             else
             {
-                LOG("Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
-                currentSize += GetHeaderSize(result);
+                LOG("Grow buffer or write the results?");
+                if (maxBufferSize < 32*1024)
+                {
+                    if (!_bRespondedWithTooSmallError)
+                    {
+                        LOG("Buffer too small to fit all %d records, only %d will fit (returning eDSBufferTooSmall to try a request for a larger buffer)", total, result);
+                        currentSize += maxBufferSize + GetHeaderSize(result);
+                        _bRespondedWithTooSmallError = true;
+                        _lastResponseBufferSize = maxBufferSize;
+                    }
+                    else
+                    {
+                        if (_lastResponseBufferSize < maxBufferSize)
+                        {
+                            LOG("Buffer is still too small to fit all %d records, only %d will fit (returning eDSBufferTooSmall to encourage use of an larger one for better performance)", total, result);
+                            currentSize += maxBufferSize + GetHeaderSize(result);
+                            _bRespondedWithTooSmallError = true;
+                            _lastResponseBufferSize = maxBufferSize;
+                        }
+                        else
+                        {
+                            LOG("Could not get a larger buffer from caller. Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
+                            currentSize += GetHeaderSize(result);
+                        }
+                    }
+                }
+                else
+                {
+                    LOG("Not all %d response records will fit into buffer provided, only %d will fit in the buffer", total, result);
+                    currentSize += GetHeaderSize(result);
+                }
             }
         }
     }
+    else
+    {
+        LOG("No current record");
+    }
+
 
     if (pRecord && !_bAllowIOContinue)
     {
