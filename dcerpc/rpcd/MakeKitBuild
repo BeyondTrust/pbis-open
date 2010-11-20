@@ -3,7 +3,7 @@ make()
     RPCD_CPPFLAGS="-Drpcd_c_database_name_prefix1=\"${LW_CACHEDIR}/db/\""
     RPCD_INCLUDEDIRS=". ../include ../ncklib ../ncklib/include/${target_os}"
     RPCD_IDLFLAGS="-no_mepv -cepv"
-    RPCD_HEADERDEPS="dce/rpc.h"
+    RPCD_HEADERDEPS="dce/rpc.h gssapi.h"
 
     RPCD_SOURCES="\
         dsm.c dsm_unix.c rpcd.c rpcddb.c rpcdep.c \

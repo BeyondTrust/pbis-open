@@ -5,7 +5,7 @@ make()
     NCK_IDLFLAGS="-no_cpp -no_mepv"
     NCK_INCLUDEDIRS=". ../include include/$target_os"
     NCK_CFLAGS="-Wall -Werror -fno-strict-aliasing"
-    NCK_HEADERDEPS="dce/rpc.h"
+    NCK_HEADERDEPS="dce/rpc.h gssapi.h"
 
     # Source listings
 
