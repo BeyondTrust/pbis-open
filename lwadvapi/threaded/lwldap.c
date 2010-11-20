@@ -47,6 +47,7 @@
  *          Brian Dunstan (bdunstan@likewisesoftware.com)
  */
 #include "includes.h"
+#include <gssapi/gssapi_krb5.h>
 
 /* used by inet_addr, not defined on Solaris anywhere!? */
 #ifndef INADDR_NONE

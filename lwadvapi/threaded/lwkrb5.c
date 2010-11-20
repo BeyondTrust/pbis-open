@@ -48,6 +48,7 @@
  */
 
 #include "includes.h"
+#include <gssapi/gssapi_krb5.h>
 
 static volatile LONG glLibraryRefCount = 0;
 
