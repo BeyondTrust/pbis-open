@@ -1979,10 +1979,12 @@ LwKrb5CheckInitiatorCreds(
                                        NULL);
     LW_GSS_LOG_IF_NOT_COMPLETE_OR_CONTINUE("gss_init_sec_context", majorStatus, minorStatus);
 
+    // Need to cast below for correct comparison.  Note that
+    // some compilers do not catch the mismatch.
     if (((majorStatus == GSS_S_FAILURE) &&
-         ((minorStatus == KRB5KRB_AP_ERR_TKT_EXPIRED) ||
-          (minorStatus == KRB5KDC_ERR_NEVER_VALID) ||
-          (minorStatus == KRB5KDC_ERR_TGT_REVOKED))) ||
+         ((minorStatus == (OM_uint32) KRB5KRB_AP_ERR_TKT_EXPIRED) ||
+          (minorStatus == (OM_uint32) KRB5KDC_ERR_NEVER_VALID) ||
+          (minorStatus == (OM_uint32) KRB5KDC_ERR_TGT_REVOKED))) ||
         ((majorStatus == GSS_S_CRED_UNAVAIL) &&
          (minorStatus == KG_EMPTY_CCACHE)))
     {
