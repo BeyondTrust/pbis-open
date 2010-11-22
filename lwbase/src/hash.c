@@ -157,7 +157,10 @@ cleanup:
         LwRtlFreeHashTable(&pTable);
     }
 
-    *ppTable = pTable;
+    if (ppTable)
+    {
+        *ppTable = pTable;
+    }
 
     return status;
 }
@@ -217,6 +220,12 @@ LwRtlHashTableRemove(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PLW_HASHTABLE_NODE* ppNode = NULL;
+
+    if (!pTable || !pNode)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GCOS(status);
+    }
 
     status = HashLocate(pTable, pNode, &ppNode);
     GCOS(status);
@@ -469,7 +478,10 @@ LwRtlCreateHashMap(
 
 cleanup:
 
-    *ppMap = (PLW_HASHMAP) pTable;
+    if (ppMap)
+    {
+        *ppMap = (PLW_HASHMAP) pTable;
+    }
 
     return status;
 }
@@ -485,6 +497,12 @@ LwRtlHashMapInsert(
     NTSTATUS status = STATUS_SUCCESS;
     PHASHPAIR_NODE pPairNode = NULL;
     PLW_HASHTABLE_NODE pPrevNode = NULL;
+
+    if (!pMap)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GCOS(status);
+    }
 
     status = LW_RTL_ALLOCATE_AUTO(&pPairNode);
     GCOS(status);
@@ -523,6 +541,12 @@ LwRtlHashMapRemove(
     NTSTATUS status = STATUS_SUCCESS;
     PLW_HASHTABLE_NODE pNode = NULL;
 
+    if (!pMap)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GCOS(status);
+    }
+
     status = LwRtlHashTableFindKey((PLW_HASHTABLE) pMap, &pNode, pKey);
     GCOS(status);
 
@@ -557,6 +581,12 @@ LwRtlHashMapFindKey(
 {
     NTSTATUS status = STATUS_SUCCESS;
     PLW_HASHTABLE_NODE pNode = NULL;
+
+    if (!pMap)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        GCOS(status);
+    }
 
     status = LwRtlHashTableFindKey((PLW_HASHTABLE) pMap, &pNode, pKey);
     GCOS(status);
