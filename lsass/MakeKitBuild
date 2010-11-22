@@ -28,8 +28,9 @@ configure()
                 ;;
         esac
 
-        mk_export MOD_EXT="$MK_DLO_EXT"
         mk_define LIBDIR "\"$MK_LIBDIR\""
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+        MOD_EXT="$MK_DLO_EXT"
     mk_multiarch_done
 
     case "$MK_OS" in
@@ -38,7 +39,6 @@ configure()
             ;;
     esac
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     mk_export providerdir="$MK_LIBDIR"
     mk_export rpcserverdir="$MK_LIBDIR"
     mk_export default_homedir_prefix="/home"

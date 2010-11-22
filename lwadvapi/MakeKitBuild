@@ -9,7 +9,9 @@ configure()
     mk_define _REENTRANT
     mk_define _THREAD_SAFE
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    mk_multiarch_do
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    mk_multiarch_done
 
     mk_check_headers \
         FAIL=yes \

@@ -4,29 +4,11 @@ configure()
 {
     mk_config_header "include/config.h"
 
-    LWMSG_CFLAGS="-Wall -Werror"
+    lw_define_feature_macros
 
-    case "$MK_OS:$MK_ARCH" in
-        linux:*)
-            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200112L -D_BSD_SOURCE -D_GNU_SOURCE"
-                ;;
-        solaris:*)
-            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE=500 -D_EXTENSIONS -D_REENTRANT"
-            ;;
-        hpux:hppa*)
-            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500 -D_REENTRANT"
-            MOD_EXT=".sl"
-            ;;
-        hpux:ia64*)
-            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500 -D_REENTRANT"
-            MOD_EXT=".so"
-            ;;
-        aix:*)
-            LWMSG_CPPFLAGS="$LWMSG_CPPFLAGS -D_THREAD_SAFE"
-            ;;        
-    esac
-
-    mk_export LWMSG_CPPFLAGS LWMSG_CFLAGS LWMSG_LDFLAGS
+    mk_multiarch_do
+        MK_CFLAGS="-Wall -Werror"
+    mk_multiarch_done
 
     mk_check_headers \
         string.h \
