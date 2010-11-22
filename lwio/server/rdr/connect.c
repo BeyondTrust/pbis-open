@@ -268,16 +268,22 @@ cleanup:
 
 error:
 
-    if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSession)
+    if (status != STATUS_PENDING && pSession)
     {
         LWIO_UNLOCK_MUTEX(bSessionLocked, &pSession->mutex);
-        RdrSessionInvalidate(pSession, status);
+        if (status != STATUS_DFS_EXIT_PATH_FOUND)
+        {
+            RdrSessionInvalidate(pSession, status);
+        }
         RdrSessionRelease(pSession);
     }
 
-    if (status != STATUS_PENDING && status != STATUS_DFS_EXIT_PATH_FOUND && pSocket)
+    if (status != STATUS_PENDING && pSocket)
     {
-        RdrSocketInvalidate(pSocket, status);
+        if (status != STATUS_DFS_EXIT_PATH_FOUND)
+        {
+            RdrSocketInvalidate(pSocket, status);
+        }
         RdrSocketRelease(pSocket);
     }
 
