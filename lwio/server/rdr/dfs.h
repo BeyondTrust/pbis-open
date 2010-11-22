@@ -45,6 +45,8 @@
 #define DFS_TARGET_NON_ROOT 0
 #define DFS_TARGET_ROOT 1
 
+#define DFS_MAX_RESPONSE_SIZE 8192
+
 typedef struct _DFS_REQUEST_HEADER
 {
     USHORT usMaxReferralLevel;

@@ -428,7 +428,7 @@ RdrTransceiveSetFileInfo(
 
     pHeader->totalParameterCount = SMB_HTOL16(sizeof(setHeader));
     pHeader->totalDataCount      = SMB_HTOL16(usRequestDataCount);
-    pHeader->maxParameterCount   = SMB_HTOL16(sizeof(setHeader)); /* FIXME: really? */
+    pHeader->maxParameterCount   = SMB_HTOL16(sizeof(setHeader));
     pHeader->maxDataCount        = SMB_HTOL16(0);
     pHeader->maxSetupCount       = SMB_HTOL16(0);
     pHeader->flags               = SMB_HTOL16(0);

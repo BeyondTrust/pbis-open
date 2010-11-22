@@ -137,9 +137,7 @@ RdrDfsFindPreciseNamespace(
     return NULL;
 }
 
-/* Call with lock held
- * FIXME: expire stale entries
- */
+/* Call with lock held */
 static
 PRDR_DFS_NAMESPACE
 RdrDfsFindMatchingNamespace(

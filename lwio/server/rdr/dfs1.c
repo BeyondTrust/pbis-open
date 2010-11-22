@@ -256,7 +256,7 @@ RdrTransceiveQueryDfsReferral1(
     pHeader->totalParameterCount = SMB_HTOL16(pCursor - pRequestParameters);
     pHeader->totalDataCount      = SMB_HTOL16(0);
     pHeader->maxParameterCount   = SMB_HTOL16(0);
-    pHeader->maxDataCount        = SMB_HTOL16(8192); /* FIXME: magic value */
+    pHeader->maxDataCount        = SMB_HTOL16(DFS_MAX_RESPONSE_SIZE); /* FIXME: magic value */
     pHeader->maxSetupCount       = SMB_HTOL8(0);
     pHeader->flags               = SMB_HTOL16(0);
     pHeader->timeout             = SMB_HTOL32(0);

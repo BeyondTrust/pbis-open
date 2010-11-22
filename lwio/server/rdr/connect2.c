@@ -573,7 +573,7 @@ RdrTransceiveSessionSetup2(
         &ulRemaining,
         gRdrRuntime.config.bSigningEnabled,
         gRdrRuntime.config.bSigningRequired,
-        FALSE, /* FIXME: dfs supported */
+        TRUE,
         pBlob,
         dwBlobLength);
     BAIL_ON_NT_STATUS(status);
