@@ -224,6 +224,39 @@ typedef struct __REG_HASH_ITERATOR
 /*
  * Logging
  */
+
+typedef enum
+{
+    REG_LOG_LEVEL_ALWAYS = 0,
+    REG_LOG_LEVEL_ERROR,
+    REG_LOG_LEVEL_WARNING,
+    REG_LOG_LEVEL_INFO,
+    REG_LOG_LEVEL_VERBOSE,
+    REG_LOG_LEVEL_DEBUG,
+    REG_LOG_LEVEL_TRACE
+} RegLogLevel;
+
+typedef enum
+{
+    REG_LOG_TARGET_DISABLED = 0,
+    REG_LOG_TARGET_CONSOLE,
+    REG_LOG_TARGET_FILE,
+    REG_LOG_TARGET_SYSLOG
+} RegLogTarget;
+
+typedef struct __REG_LOG_INFO {
+    RegLogLevel  maxAllowedLogLevel;
+    RegLogTarget logTarget;
+    PSTR         pszPath;
+} REG_LOG_INFO, *PREG_LOG_INFO;
+
+typedef VOID (*PFN_REG_LOG_MESSAGE)(
+                    HANDLE      hLog,
+                    RegLogLevel logLevel,
+                    PCSTR       pszFormat,
+                    va_list     msgList
+                    );
+
 #if defined(LW_ENABLE_THREADS)
 
 extern pthread_mutex_t gLogLock;
