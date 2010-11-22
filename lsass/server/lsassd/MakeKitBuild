@@ -6,6 +6,6 @@ make()
 	SOURCES="main.c globals.c listener.c libmain.c backtrace.c sighandler.c" \
 	GROUPS="../../logging_r/logging_r" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="lwadvapi.h" \
+	HEADERDEPS="lwadvapi.h lwio/lwio.h" \
 	LIBDEPS="lsaserverapi ntlmserver lsaclient_ntlm lwnetclientapi lwnetcommon lwioclient lwiocommon lwmsg lwmsg_nothr lwadvapi lwadvapi_nothr dcerpc"
 }
