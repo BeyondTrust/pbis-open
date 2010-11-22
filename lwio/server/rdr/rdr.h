@@ -424,4 +424,11 @@ RdrSocketRetain(
     PRDR_SOCKET pSocket
     );
 
+BOOLEAN
+RdrCreateTreeConnectComplete(
+    PRDR_OP_CONTEXT pContext,
+    NTSTATUS status,
+    PVOID pParam
+    );
+
 #endif /* __RDR_H__ */

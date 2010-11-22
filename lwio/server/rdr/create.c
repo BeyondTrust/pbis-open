@@ -102,8 +102,6 @@ RdrCreateIsDeferred(
     );
 }
 
-
-static
 BOOLEAN
 RdrCreateTreeConnectComplete(
     PRDR_OP_CONTEXT pContext,

@@ -122,7 +122,7 @@ RdrCreateTreeConnect2Complete(
     case STATUS_PENDING:
         break;
     default:
-        pContext->Continue = RdrCreateTreeConnect2Complete;
+        pContext->Continue = RdrCreateTreeConnectComplete;
         pContext->State.Create.pFile2 = NULL;
 
         status = RdrDfsConnect(
