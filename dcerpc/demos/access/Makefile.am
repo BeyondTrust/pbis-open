@@ -14,7 +14,11 @@ noinst_HEADERS=misc.h access.idl access.acf
 
 CLEANFILES=access.h access_sstub.c access_cstub.c
 
-libs=$(top_builddir)/dcelib/libdcerpc.la $(top_builddir)/uuid/libuuid.la
+libs= \
+    $(top_builddir)/dcelib/libdcerpc.la \
+    $(top_builddir)/uuid/libuuid.la \
+    -llwbase \
+    -llwbase_nothr
 
 access_server_LDADD=$(libs)
 access_client_LDADD=$(libs)
