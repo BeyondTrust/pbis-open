@@ -35,12 +35,13 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include "config.h"
 #include "data-private.h"
 #include "util-private.h"
 #include "type-private.h"
 #include "buffer-private.h"
 #include "convert-private.h"
-#include "config.h"
 
 #include <string.h>
 

@@ -36,6 +36,8 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include "config.h"
 #include <lwmsg/type.h>
 #include <lwmsg/data.h>
 #include "convert-private.h"

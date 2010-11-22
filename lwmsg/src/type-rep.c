@@ -36,6 +36,7 @@
  *
  */
 
+#include "config.h"
 #include "type-private.h"
 #include "util-private.h"
 #include "data-private.h"

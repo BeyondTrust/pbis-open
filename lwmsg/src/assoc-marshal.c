@@ -37,6 +37,7 @@
  *
  */
 
+#include "config.h"
 #include <lwmsg/type.h>
 #include <lwmsg/assoc.h>
 #include "convert-private.h"

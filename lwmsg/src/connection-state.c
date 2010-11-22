@@ -36,6 +36,8 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include "config.h"
 #include "assoc-private.h"
 #include "connection-private.h"
 #include "util-private.h"
