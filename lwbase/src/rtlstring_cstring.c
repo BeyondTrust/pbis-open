@@ -275,9 +275,14 @@ my_vasprintf(
         str = str_new;
 
         if (vsnprintf(str, len+1, fmt, my_ap) < len)
+        {
+            free(str);
             return NULL;
+        }
         else
+        {
             return str;
+        }
     }
 }
 
