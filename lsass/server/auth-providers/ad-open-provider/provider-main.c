@@ -1041,7 +1041,7 @@ AD_Activate(
             dwError = MemCacheSetSizeCap(
                             pState->hCacheConnection,
                             AD_GetCacheSizeCap(pState));
-            BAIL_ON_LSA_ERROR(dwError)
+            BAIL_ON_LSA_ERROR(dwError);
             break;
     }
 
