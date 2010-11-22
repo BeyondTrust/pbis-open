@@ -210,7 +210,9 @@ struct LWMsgPeer
     size_t num_clients;
 
     pthread_mutex_t lock;
+    unsigned lock_init:1;
     pthread_cond_t event;
+    unsigned event_init:1;
     PeerState state;
     LWMsgStatus status;
 };

@@ -91,7 +91,9 @@ lwmsg_peer_new(
     peer->context = context;
 
     BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_mutex_init(&peer->lock, NULL)));
+    peer->lock_init = LWMSG_TRUE;
     BAIL_ON_ERROR(status = lwmsg_error_map_errno(pthread_cond_init(&peer->event, NULL)));
+    peer->event_init = LWMSG_TRUE;
 
     BAIL_ON_ERROR(status = lwmsg_task_acquire_manager(&peer->task_manager));
     BAIL_ON_ERROR(status = lwmsg_task_group_new(peer->task_manager, &peer->connect_tasks));
@@ -102,9 +104,18 @@ lwmsg_peer_new(
 
     *out_peer = peer;
 
-error:
+done:
 
     return status;
+
+error:
+
+    if (peer)
+    {
+        lwmsg_peer_delete(peer);
+    }
+
+    goto done;
 }
 
 static
@@ -172,8 +183,15 @@ lwmsg_peer_delete(
         lwmsg_session_manager_delete(peer->session_manager);
     }
     
-    pthread_mutex_destroy(&peer->lock);
-    pthread_cond_destroy(&peer->event);
+    if (peer->lock_init)
+    {
+        pthread_mutex_destroy(&peer->lock);
+    }
+
+    if (peer->event_init)
+    {
+        pthread_cond_destroy(&peer->event);
+    }
 
     if (peer->dispatch.vector)
     {
