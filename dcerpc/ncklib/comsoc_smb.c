@@ -85,8 +85,16 @@ typedef struct rpc_smb_socket_s
     } accept_backlog;
     dcethread* listen_thread;
     dcethread_mutex lock;
+    unsigned lock_init:1;
     dcethread_cond event;
+    unsigned event_init:1;
 } rpc_smb_socket_t, *rpc_smb_socket_p_t;
+
+INTERNAL
+void
+rpc__smb_socket_destroy(
+    rpc_smb_socket_p_t sock
+    );
 
 INTERNAL
 void
@@ -436,13 +444,33 @@ rpc__smb_socket_create(
     sock->localaddr.sa.sun_path[0] = '\0';
     sock->localaddr.remote_host[0] = '\0';
 
-    dcethread_mutex_init_throw(&sock->lock, NULL);
-    dcethread_cond_init_throw(&sock->event, NULL);
+    DCETHREAD_TRY
+    {
+        dcethread_mutex_init_throw(&sock->lock, NULL);
+        sock->lock_init = TRUE;
+        dcethread_cond_init_throw(&sock->event, NULL);
+        sock->event_init = TRUE;
+    }
+    DCETHREAD_CATCH_ALL(e)
+    {
+        err = ENOMEM;
+    }
+    DCETHREAD_ENDTRY;
+
+    if (err)
+    {
+        goto done;
+    }
 
     *out = sock;
 
 done:
-    
+
+    if (err && sock)
+    {
+        rpc__smb_socket_destroy(sock);
+    }
+
     return err;
 }
 
@@ -520,8 +548,15 @@ rpc__smb_socket_destroy(
 
         rpc__smb_transport_info_destroy(&sock->info);
 
-        dcethread_mutex_destroy_throw(&sock->lock);
-        dcethread_cond_destroy_throw(&sock->event);
+        if (sock->lock_init)
+        {
+            dcethread_mutex_destroy_throw(&sock->lock);
+        }
+
+        if (sock->event_init)
+        {
+            dcethread_cond_destroy_throw(&sock->event);
+        }
 
         free(sock);
     }
