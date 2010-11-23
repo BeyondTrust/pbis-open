@@ -86,7 +86,7 @@ exec_log_exit()
 
 import_registry_configurations()
 {
-    REGUPGRADE='/opt/likewise/bin/lwregshell upgrade'
+    REGUPGRADE='/opt/likewise/bin/lwregshell import'
 
     log "Importing registry configurations"
     exec_log_exit "$REGUPGRADE /opt/likewise/share/config/dcerpcd.reg"
