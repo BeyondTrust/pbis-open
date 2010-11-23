@@ -237,7 +237,10 @@ cleanup:
     return status;
 
 error:
-    *pulSecDescRelLen = 0;
+    if (pulSecDescRelLen)
+    {
+        *pulSecDescRelLen = 0;
+    }
 
     goto cleanup;
 }
