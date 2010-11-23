@@ -57,11 +57,6 @@ LsaSrvStopProcess(
     VOID
     );
 
-VOID
-FakeClientConnection(
-    VOID
-    );
-
 DWORD
 LsaSrvIgnoreSIGHUP(
     VOID

@@ -234,77 +234,8 @@ RegSrvStopProcess(
     )
 {
     RegSrvSetProcessToExit(TRUE);
-    FakeClientConnection();
 
     return 0;
-}
-
-VOID
-FakeClientConnection(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-    CHAR  szClientPath[PATH_MAX+1];
-    int   fd = -1;
-    BOOLEAN bFileExists = FALSE;
-    struct sockaddr_un unixaddr;
-    PSTR  pszCachePath = NULL;
-
-    dwError = RegSrvGetCachePath(&pszCachePath);
-    BAIL_ON_REG_ERROR(dwError);
-
-    if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        dwError = errno;
-        BAIL_ON_REG_ERROR(dwError);
-    }
-
-    sprintf(szClientPath, REG_CLIENT_PATH_FORMAT, (long)getpid());
-
-    dwError = RegCheckSockExists(szClientPath, &bFileExists);
-    BAIL_ON_REG_ERROR(dwError);
-
-    if (bFileExists) {
-        dwError = RegRemoveFile(szClientPath);
-        BAIL_ON_REG_ERROR(dwError);
-    }
-
-    bFileExists = FALSE;
-
-    memset(&unixaddr, 0, sizeof(unixaddr));
-    unixaddr.sun_family = AF_UNIX;
-    strcpy(unixaddr.sun_path, szClientPath);
-    if (bind(fd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
-        dwError = errno;
-        BAIL_ON_REG_ERROR(dwError);
-    }
-
-    bFileExists = TRUE;
-
-    dwError = RegChangePermissions(unixaddr.sun_path, S_IRWXU);
-    BAIL_ON_REG_ERROR(dwError);
-
-    memset(&unixaddr, 0, sizeof(unixaddr));
-    unixaddr.sun_family = AF_UNIX;
-    sprintf(unixaddr.sun_path, "%s/%s", pszCachePath, REG_SERVER_FILENAME);
-
-    if (connect(fd, (struct sockaddr*)&unixaddr, sizeof(unixaddr)) < 0) {
-        dwError = errno;
-        BAIL_ON_REG_ERROR(dwError);
-    }
-
-error:
-
-    if (fd >= 0) {
-        close(fd);
-    }
-
-    if (bFileExists)
-    {
-        RegRemoveFile(szClientPath);
-    }
-
-    LWREG_SAFE_FREE_STRING(pszCachePath);
 }
 
 

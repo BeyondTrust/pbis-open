@@ -59,11 +59,6 @@ RegSrvStopProcess(
     VOID
     );
 
-VOID
-FakeClientConnection(
-    VOID
-    );
-
 DWORD
 RegSrvIgnoreSIGHUP(
     VOID
