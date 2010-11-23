@@ -45,6 +45,7 @@ configure()
     mk_export default_skeldirs="/etc/skel"
     mk_export SBINDIR="$MK_SBINDIR"
     mk_export CACHEDIR="$LW_CACHEDIR"
+    mk_export MOD_EXT
 
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define CACHEDIR "\"$LW_CACHEDIR\""
