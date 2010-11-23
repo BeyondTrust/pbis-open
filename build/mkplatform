@@ -158,10 +158,11 @@ function populate
     PKG_POPULATE_PREFIX_DIR="${2}/${BUILD_PREFIX}"
     PKG_POPULATE_ROOT_DIR="${2}"
     PKG_COMPAT_DISPOSITION="comp"
+    PKG_IS_COMPAT=""
 
     setup_package_vars
 
-    if [ -z "$OPT_COMPAT" -a -z "$PKG_IS_COMPAT" ]
+    if [ -z "${OPT_COMPAT}" ]
     then
 
 	mkdir -p "${PKG_POPULATE_ROOT_DIR}"
@@ -171,7 +172,7 @@ function populate
         exit_on_error $?
     fi
 
-    if [ -n "${PKG_NEED_COMPAT}" ]; then
+    if [ -n "${PKG_NEED_COMPAT}" -a -z "${OPT_NOCOMPAT}" ]; then
         ( PKG_IS_COMPAT=1 && setup_package_vars && op_invoke populate )
         exit_on_error $?
     fi   
@@ -204,7 +205,8 @@ function usage
     echo ""
     echo "  options:"
     echo ""
-    echo "    --compat        - Also do compat"
+    echo "    --compat        - Only do compat"
+    echo "    --nocompat      - Do not do compat"
     echo ""
     echo "  available products:"
     echo ""
@@ -253,6 +255,8 @@ function mac_combine_binaries
 }
 
 recreate_dir "${BUILD_IMAGE_ROOT}/install"
+OPT_COMPAT=""
+OPT_NOCOMPAT=""
 
 while true
 do
@@ -262,8 +266,14 @@ do
             ;;
 	--compat)
 	    OPT_COMPAT="1"
+            OPT_NOCOMPAT=""
 	    shift
 	    ;;
+        --nocompat)
+            OPT_COMPAT=""
+            OPT_NOCOMPAT="1"
+            shift
+            ;;
         --*)
             echo "Unrecognized option $arg"
             usage
