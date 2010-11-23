@@ -490,7 +490,10 @@ cleanup:
         LwNtCloseFile(hRemoteFile);
     }
 
-    close(hLocalFile);
+    if (hLocalFile >= 0)
+    {
+        close(hLocalFile);
+    }
 
     return (status);
 
@@ -829,7 +832,10 @@ cleanup:
         LwNtCloseFile(hRemoteFile);
     }
 
-    close(hLocalFile);
+    if (hLocalFile >= 0)
+    {
+        close(hLocalFile);
+    }
 
     return (status);
 
