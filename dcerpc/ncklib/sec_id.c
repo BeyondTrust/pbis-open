@@ -194,7 +194,7 @@ PUBLIC void sec_id_pac_unpickle(sec_id_pickled_pac_t *pickled_pac,
 	unsigned32 st;
 	idl_ulong_int size;
 
-	memset(pac, 0, sizeof(pac));
+	memset(pac, 0, sizeof(*pac));
 
 	size = sizeof(*pickled_pac) - 1;
 	size += pickled_pac->num_bytes;
