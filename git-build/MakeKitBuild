@@ -1,7 +1,18 @@
-MODULES="core compiler autotools moonunit pkg-config likewise dceidl"
+PROJECT_NAME="likewise-open"
+MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
 SUBDIRS=". libuuid lwbase lwmsg lwreg pstore lwadvapi netlogon \
          lwio libschannel dcerpc lwdns centutils lwsm eventlog lsass \
          srvsvc lwnetapi lwtools domainjoin config package"
+
+defaults()
+{
+    MK_PREFIX="/opt/likewise"
+    MK_SYSCONFDIR="/etc/likewise"
+    MK_LOCALSTATEDIR="/var"
+    MK_DATADIR="/opt/likewise/share"
+    MK_DOCDIR="/usr/share/doc/likewise"
+    MK_MANDIR="/usr/share/man"
+}
 
 lw_use_bundled()
 {
@@ -34,8 +45,6 @@ option()
 
 configure()
 {
-    MK_MSG_DOMAIN="likewise-open"
-
     mk_export LW_VERSION="6.1.0"
     
     if [ -z "$MK_CFLAGS" ]
@@ -134,7 +143,7 @@ lw_openssl()
     mk_push_vars SOURCEDIR LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS suffix stamp item
     mk_parse_params
 
-    suffix="${MK_SYSTEM%/*}_${MK_SYSTEM#*/}"
+    suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
 
     mk_comment "OpenSSL ($MK_SYSTEM)"
 
