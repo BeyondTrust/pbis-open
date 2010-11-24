@@ -866,3 +866,23 @@ MU_TEST(client_server, bogus_reply_fail_ping_succeed)
     MU_TRY(lwmsg_peer_disconnect(client));
     MU_TRY(lwmsg_peer_stop_listen(server));
 }
+
+#define NUM_ASSOCS 128
+
+MU_TEST(client_server, client_limit_timeout)
+{
+    LWMsgAssoc* assocs[NUM_ASSOCS] = {0};
+    LWMsgTime idle = {1, 0};
+    int i = 0;
+
+    MU_TRY(lwmsg_peer_set_timeout(server, LWMSG_TIMEOUT_IDLE, &idle));
+    MU_TRY(lwmsg_peer_set_max_listen_clients(server, NUM_ASSOCS / 2));
+    MU_TRY(lwmsg_peer_start_listen(server));
+
+    for (i = 0; i < NUM_ASSOCS; i++)
+    {
+        MU_TRY(lwmsg_connection_new(context, protocol, &assocs[i]));
+        MU_TRY(lwmsg_connection_set_endpoint(assocs[i], LWMSG_ENDPOINT_LOCAL, TEST_ENDPOINT));
+        MU_TRY(lwmsg_assoc_connect(assocs[i], NULL));
+    }
+}

@@ -136,6 +136,7 @@ typedef struct PeerAssocTask
     unsigned outgoing:1;
     unsigned send_blocked:1;
     unsigned recv_blocked:1;
+    unsigned recv_partial:1;
     unsigned destroy_outgoing:1;
     LWMsgCookie volatile next_cookie;
     unsigned int volatile refcount;

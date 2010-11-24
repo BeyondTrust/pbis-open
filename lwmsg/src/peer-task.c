@@ -1826,6 +1826,7 @@ lwmsg_peer_task_run_dispatch(
             switch (recv_status)
             {
             case LWMSG_STATUS_SUCCESS:
+                task->recv_partial = LWMSG_FALSE;
                 BAIL_ON_ERROR(status = lwmsg_peer_task_dispatch_incoming_message(task));
                 break;
             case LWMSG_STATUS_PENDING:
@@ -1857,7 +1858,7 @@ lwmsg_peer_task_run_dispatch(
             send_status == LWMSG_STATUS_PENDING &&
             recv_status == LWMSG_STATUS_PENDING)
         {
-            if (!task->incoming && !task->outgoing)
+            if ((!task->incoming || !task->recv_partial) && !task->outgoing)
             {
                 timeout = &peer->timeout.idle;
             }
@@ -1942,6 +1943,7 @@ lwmsg_peer_task_run(
     if (trigger & LWMSG_TASK_TRIGGER_FD_READABLE)
     {
         task->recv_blocked = LWMSG_FALSE;
+        task->recv_partial = LWMSG_TRUE;
     }
 
     if (trigger & LWMSG_TASK_TRIGGER_FD_WRITABLE)
