@@ -866,13 +866,14 @@ LsaGetSymlinkTarget(
 {
     DWORD dwError = 0;
     CHAR szBuf[PATH_MAX+1];
+    ssize_t len = 0;
     PSTR pszTargetPath = NULL;
 
     memset(szBuf, 0, sizeof(szBuf));
 
     while (1) {
 
-       if (readlink(pszPath, szBuf, PATH_MAX) < 0) {
+       if ((len = readlink(pszPath, szBuf, PATH_MAX)) < 0) {
           if (errno == EINTR)
              continue;
 
@@ -882,7 +883,7 @@ LsaGetSymlinkTarget(
 
        break;
     }
-
+    szBuf[len] = '\0';
     dwError = LwAllocateString(
                     szBuf,
                     &pszTargetPath);
