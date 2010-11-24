@@ -34,29 +34,29 @@ make()
     BASE_HEADER_DEPS="uuid/uuid.h iconv.h"
        
     mk_multiarch_do
-        if [ "$HAVE_EPOLL_CREATE" = yes ]
-        then
-            THREADPOOL_SOURCES="threadpool-epoll.c"
-        elif [ "$HAVE_KQUEUE" = yes ]
-        then
-            THREADPOOL_SOURCES="threadpool-kqueue.c"
-        else
-            THREADPOOL_SOURCES="threadpool-select.c"
-        fi
-        
         mk_library \
             LIB="lwbase_nothr" \
             SOURCES="$BASE_NOTHR_SOURCES" \
             INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
             HEADERDEPS="$BASE_HEADER_DEPS" \
             LIBDEPS="uuid $LIB_ICONV $LIB_XNET"
-
-        mk_library \
-            LIB="lwbase" \
-            SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
-            CPPFLAGS="$BASE_CPPFLAGS" \
-            INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
-            HEADERDEPS="$BASE_HEADER_DEPS" \
-            LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
     mk_multiarch_done
+
+    if [ "$HAVE_EPOLL_CREATE" = yes ]
+    then
+        THREADPOOL_SOURCES="threadpool-epoll.c"
+    elif [ "$HAVE_KQUEUE" = yes ]
+    then
+        THREADPOOL_SOURCES="threadpool-kqueue.c"
+    else
+        THREADPOOL_SOURCES="threadpool-select.c"
+    fi
+
+    mk_library \
+        LIB="lwbase" \
+        SOURCES="$BASE_SOURCES $THREADPOOL_SOURCES" \
+        CPPFLAGS="$BASE_CPPFLAGS" \
+        INCLUDEDIRS="$BASE_INCLUDE_DIRS" \
+        HEADERDEPS="$BASE_HEADER_DEPS" \
+        LIBDEPS="lwbase_nothr $LIB_PTHREAD $LIB_DL $LIB_RT"
 }
