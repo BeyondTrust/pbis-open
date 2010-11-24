@@ -1,18 +1,30 @@
-DEPENDS="core program"
+DEPENDS="core program package"
 
 ### section configure
 
-# API
-# mk_deb_do
-#   mk_subpackage_do
-#     mk_package_files
-#     mk_package_dirs
-#   mk_subpackage_done
-# mk_deb_done
+option()
+{
+    mk_option \
+        OPTION="package-deb" \
+        VAR="MK_PACKAGE_DEB" \
+        PARAM="yes|no" \
+        DEFAULT="yes" \
+        HELP="Enable building deb packages"
+
+    mk_option \
+        OPTION="deb-dir" \
+        VAR="MK_PACKAGE_DEB_DIR" \
+        PARAM="path" \
+        DEFAULT="$MK_PACKAGE_DIR/deb" \
+        HELP="Subdirectory for built deb packages"
+}
 
 configure()
 {
-    if mk_check_program PROGRAM=dpkg-buildpackage
+    mk_export MK_PACKAGE_DEB_DIR
+
+    if mk_check_program PROGRAM=dpkg-buildpackage &&
+       [ "$MK_PACKAGE_DEB" = "yes" ]
     then
         mk_msg "debian package building: enabled"
         mk_export MK_PACKAGE_DEB_ENABLED=yes
@@ -20,8 +32,6 @@ configure()
         mk_msg "debian package building: disabled"
         mk_export MK_PACKAGE_DEB_ENABLED=no
     fi
-
-    mk_add_scrub_target "@package"
 }
 
 mk_deb_enabled()
@@ -133,7 +143,7 @@ mk_deb_do()
 mk_deb_done()
 {
     mk_target \
-        TARGET="@package/deb/${DEB_PACKAGE}" \
+        TARGET="@${MK_PACKAGE_DEB_DIR}/${DEB_PACKAGE}" \
         DEPS="$DEB_DEPS @all" \
         _mk_build_deb "${DEB_PACKAGE}" "&${DEB_PKGDIR}"
     master="$result"
@@ -157,10 +167,10 @@ _mk_build_deb()
     mk_msg "begin $1"
     cd "$2" || mk_fail "could not cd to $2"
     mk_run_quiet_or_fail dpkg-buildpackage -rfakeroot -uc -b
-    mk_mkdir "${MK_ROOT_DIR}/package/deb/${1}"
+    mk_mkdir "${MK_ROOT_DIR}/${MK_PACKAGE_DEB_DIR}/${1}"
     for i in ../*.deb
     do
-        mk_run_or_fail mv -f "$i" "${MK_ROOT_DIR}/package/deb/${1}"
+        mk_run_or_fail mv -f "$i" "${MK_ROOT_DIR}/${MK_PACKAGE_DEB_DIR}/${1}"
         mk_msg "built ${i##*/}"
     done
     mk_msg "end $1"

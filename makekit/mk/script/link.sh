@@ -28,69 +28,6 @@
 
 MK_MSG_DOMAIN="link"
 
-version_pre()
-{
-    case "$MODE" in
-	library)
-	    if [ -z "$VERSION" ]
-	    then
-		VERSION="0.0.0"
-	    fi
-	    ;;
-	program)
-	    return 0
-	    ;;
-    esac
-    
-    if [ "$VERSION" != "no" ]
-    then
-	_rest="${VERSION}."
-	MAJOR="${_rest%%.*}"
-	_rest="${_rest#*.}"
-	MINOR="${_rest%%.*}"
-	_rest="${_rest#*.}"
-	MICRO="${_rest%%.*}"
-    fi
-    
-    if [ -n "$MAJOR" ]
-    then
-	SONAME="${object##*/}.$MAJOR"
-	LINK1="${object}"
-	object="${object}.$MAJOR"
-    fi
-    
-    if [ -n "$MINOR" ]
-    then
-	LINK2="${object}"
-	object="${object}.$MINOR"
-    fi
-    
-    if [ -n "$MICRO" ]
-    then
-	LINK3="${object}"
-	object="${object}.$MICRO"
-    fi
-    
-    if [ -n "$SONAME" ]
-    then
-	COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-h,$SONAME"
-    fi
-}
-
-version_post()
-{
-    _target="${object}"
-
-    for _link in "$LINK3" "$LINK2" "$LINK1"
-    do
-	if [ -n "$_link" ]
-	then
-	    mk_run_or_fail ln -sf "${_target##*/}" "${_link}"
-	    _target="$_link"
-	fi
-    done
-}
-
 combine_libtool_flags()
 {
     for _lib in ${COMBINED_LIBDEPS}
@@ -134,13 +71,13 @@ create_libtool_archive()
 {
     # Create a fake .la file that can be used by combine_libtool_flags
     # This should be expanded upon for full compatibility with libtool
-    mk_msg_verbose "${object%${EXT}}.la"
+    mk_msg_verbose "$LA"
     
     {
 	mk_quote "-L${RPATH_LIBDIR} $_LIBS"
 	echo "# Created by MakeKit"
 	echo "dependency_libs=$result"
-    } > "${object%${EXT}}.la" || mk_fail "could not write ${object%${EXT}}.la"
+    } > "${MK_STAGE_DIR}${MK_LIBDIR}/$LA" || mk_fail "could not write $LA"
 }
 
 object="$1"
@@ -160,6 +97,9 @@ fi
 COMBINED_LIBDEPS="$LIBDEPS"
 COMBINED_LDFLAGS="$LDFLAGS -L${LINK_LIBDIR}"
 COMBINED_LIBDIRS="$LIBDIRS"
+
+# SONAME
+[ -n "$SONAME" ] && COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-h,$SONAME"
 
 # Group suffix
 _gsuffix="-${MK_CANONICAL_SYSTEM%/*}-${MK_CANONICAL_SYSTEM#*/}.og"
@@ -207,8 +147,6 @@ case "$MODE" in
 	;;
 esac
 
-version_pre
-
 mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
 
 case "$MODE" in
@@ -222,5 +160,3 @@ case "$MODE" in
 	mk_run_or_fail ${MK_CC} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
 	;;
 esac
-
-version_post

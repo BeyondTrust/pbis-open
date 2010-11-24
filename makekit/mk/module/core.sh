@@ -362,6 +362,77 @@ mk_install_files()
     mk_pop_vars
 }
 
+mk_symlink()
+{
+    mk_push_vars TARGET LINK DEPS
+    mk_parse_params
+    
+    [ -z "$TARGET" ] && TARGET="$1"
+    [ -z "$LINK" ] && LINK="$2"
+
+    case "$TARGET" in
+        /*)
+            mk_quote "$TARGET"
+            DEPS="$DEPS $result"
+            ;;
+        *)
+            mk_quote "${LINK%/*}/${TARGET}"
+            DEPS="$DEPS $result"
+            ;;
+    esac
+
+    mk_target \
+        TARGET="$LINK" \
+        DEPS="$DEPS" \
+        _mk_core_symlink "$TARGET" "&$LINK"
+
+    mk_add_all_target "$result"
+
+    mk_pop_vars
+}
+
+mk_stage()
+{
+    mk_push_vars SOURCE DEST SOURCEDIR DESTDIR RESULTS MODE DEPS
+    mk_parse_params
+
+    if [ -n "$SOURCE" -a -n "$DEST" ]
+    then
+        mk_quote "$SOURCE"
+        mk_target \
+            TARGET="$DEST" \
+            DEPS="$result $DEPS" \
+            _mk_core_stage "&$DEST" "&$SOURCE" "$MODE"
+        _result="$result"
+        mk_add_all_target "$result"
+        result="$_result"
+    elif [ -n "$SOURCE" -a -n "$DESTDIR" ]
+    then
+        mk_stage \
+            SOURCE="$SOURCE" \
+            DEST="$DESTDIR/${SOURCE##*/}" \
+            MODE="$MODE" \
+            DEPS="$DEPS"
+    elif [ -n "$DESTDIR" ]
+    then
+        for _file
+        do
+            mk_stage \
+                SOURCE="${SOURCEDIR:+$SOURCEDIR/}$_file" \
+                DEST="$DESTDIR/$_file" \
+                MODE="$MODE" \
+                DEPS="$DEPS"
+            mk_quote "$result"
+            RESULTS="$RESULTS $result"
+        done
+        result="$RESULTS"
+    else
+        mk_fail "invalid parameters to mk_stage"
+    fi
+
+    mk_pop_vars
+}
+
 mk_output_file()
 {
     mk_push_vars INPUT OUTPUT
@@ -396,7 +467,9 @@ mk_output_file()
     # There ought to be a better way to do this...
     mk_run_or_fail cp "$_input" "${_output}.new"
     # Now overwrites its contents
-    mk_run_or_fail awk -f ".awk.$$" < "$_input" > "${_output}.new"
+    # We don't use mk_run_or_fail because it can log
+    # output if MK_VERBOSE is set
+    awk -f ".awk.$$" < "$_input" > "${_output}.new" || mk_fail "could not run awk"
     mk_run_or_fail rm -f ".awk.$$"
 
     if [ -f "${_output}" ] && diff "${_output}" "${_output}.new" >/dev/null 2>&1
@@ -628,4 +701,32 @@ _mk_core_install()
     done
 
     return 0
+}
+
+_mk_core_symlink()
+{
+    # $1 = target
+    # $2 = link
+    mk_msg_domain "symlink"
+
+    mk_msg "${2#$MK_STAGE_DIR} -> $1"
+    mk_mkdir "${2%/*}"
+    mk_run_or_fail ln -sf "$1" "$2"
+}
+
+_mk_core_stage()
+{
+    # $1 = dest
+    # $2 = source
+    # ($3) = mode
+    mk_msg_domain "stage"
+
+    mk_msg "${1#$MK_STAGE_DIR}"
+    mk_mkdir "${1%/*}"
+    mk_run_or_fail cp -r "$2" "$1"
+
+    if [ -n "$3" ]
+    then
+        mk_run_or_fail chmod "$3" "$1"
+    fi
 }

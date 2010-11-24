@@ -226,14 +226,10 @@ option()
 
     case "$_default_MK_BUILD_OS" in
         linux)
-            if mk_safe_source "/etc/lsb-release"
+            if type lsb_release >/dev/null 2>&1
             then
-                case "$DISTRIB_ID" in
-                    *)
-                        _default_MK_BUILD_DISTRO="`echo "$DISTRIB_ID" | tr 'A-Z' 'a-z'`"
-                        _default_MK_BUILD_DISTRO_VERSION="$DISTRIB_RELEASE"
-                        ;;
-                esac
+                _default_MK_BUILD_DISTRO="`lsb_release -si | tr 'A-Z' 'a-z'`"
+                _default_MK_BUILD_DISTRO_VERSION="`lsb_release -sr | tr 'A-Z' 'a-z'`"
             else
                 _default_MK_BUILD_DISTRO="unknown"
                 _default_MK_BUILD_DISTRO_VERSION="unknown"
@@ -285,6 +281,24 @@ option()
         DEFAULT="$_default_MK_BUILD_DISTRO_VERSION" \
         HELP="Build operating system distribution version"
 
+    case "$MK_BUILD_DISTRO" in
+        centos|redhat|fedora)
+            _distro_archetype="redhat"
+            ;;
+        debian|ubuntu)
+            _distro_archetype="debian"
+            ;;
+        *)
+            _distro_archetype="$MK_BUILD_DISTRO"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=build-distro-archetype \
+        VAR=MK_BUILD_DISTRO_ARCHETYPE \
+        DEFAULT="$_distro_archetype" \
+        HELP="Build operating system distribution archetype"
+
     mk_option \
         OPTION=host-os \
         VAR=MK_HOST_OS \
@@ -315,6 +329,24 @@ option()
         DEFAULT="$MK_BUILD_DISTRO_VERSION" \
         HELP="Host operating system distribution version"
 
+    case "$MK_HOST_DISTRO" in
+        centos|redhat|fedora)
+            _distro_archetype="redhat"
+            ;;
+        debian|ubuntu)
+            _distro_archetype="debian"
+            ;;
+        *)
+            _distro_archetype="$MK_HOST_DISTRO"
+            ;;
+    esac
+
+    mk_option \
+        OPTION=host-distro-archetype \
+        VAR=MK_HOST_DISTRO_ARCHETYPE \
+        DEFAULT="$_distro_archetype" \
+        HELP="Host operating system distribution archetype"
+
     MK_BUILD_PRIMARY_ISA="${MK_BUILD_ISAS%% *}"
     MK_HOST_PRIMARY_ISA="${MK_HOST_ISAS%% *}"
 }
@@ -323,20 +355,22 @@ configure()
 {
     mk_export \
         MK_BUILD_OS MK_BUILD_DISTRO MK_BUILD_DISTRO_VERSION \
-        MK_BUILD_ARCH MK_BUILD_ISAS MK_BUILD_PRIMARY_ISA \
-        MK_HOST_OS MK_HOST_DISTRO MK_HOST_DISTRO_VERSION \
+        MK_BUILD_DISTRO_ARCHETYPE MK_BUILD_ARCH MK_BUILD_ISAS \
+        MK_BUILD_PRIMARY_ISA MK_HOST_OS MK_HOST_DISTRO \
+        MK_HOST_DISTRO_VERSION MK_HOST_DISTRO_ARCHETYPE \
         MK_HOST_ARCH MK_HOST_ISAS MK_HOST_PRIMARY_ISA \
         MK_SYSTEM_VARS
 
     mk_declare_system_var \
-        MK_OS MK_DISTRO MK_DISTRO_VERSION MK_ARCH MK_ISAS MK_ISA \
-        MK_DLO_EXT MK_LIB_EXT
+        MK_OS MK_DISTRO MK_DISTRO_VERSION MK_DISTRO_ARCHETYPE \
+        MK_ARCH MK_ISAS MK_ISA MK_DLO_EXT MK_LIB_EXT
 
     for _isa in ${MK_BUILD_ISAS}
     do
         mk_set_system_var SYSTEM="build/$_isa" MK_OS "$MK_BUILD_OS"
         mk_set_system_var SYSTEM="build/$_isa" MK_DISTRO "$MK_BUILD_DISTRO"
         mk_set_system_var SYSTEM="build/$_isa" MK_DISTRO_VERSION "$MK_BUILD_DISTRO_VERSION"
+        mk_set_system_var SYSTEM="build/$_isa" MK_DISTRO_ARCHETYPE "$MK_BUILD_DISTRO_ARCHETYPE"
         mk_set_system_var SYSTEM="build/$_isa" MK_ARCH "$MK_BUILD_ARCH"
         mk_set_system_var SYSTEM="build/$_isa" MK_ISAS "$MK_BUILD_ISAS"
         mk_set_system_var SYSTEM="build/$_isa" MK_ISA "$_isa"
@@ -347,6 +381,7 @@ configure()
         mk_set_system_var SYSTEM="host/$_isa" MK_OS "$MK_HOST_OS"
         mk_set_system_var SYSTEM="host/$_isa" MK_DISTRO "$MK_HOST_DISTRO"
         mk_set_system_var SYSTEM="host/$_isa" MK_DISTRO_VERSION "$MK_HOST_DISTRO_VERSION"
+        mk_set_system_var SYSTEM="host/$_isa" MK_DISTRO_ARCHETYPE "$MK_HOST_DISTRO_ARCHETYPE"
         mk_set_system_var SYSTEM="host/$_isa" MK_ARCH "$MK_HOST_ARCH"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISAS "$MK_HOST_ISAS"
         mk_set_system_var SYSTEM="host/$_isa" MK_ISA "$_isa"

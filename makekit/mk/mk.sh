@@ -157,21 +157,24 @@ done'
     
     mk_push_vars()
     {
-	for ___var in "$@" _MK_VARS
+        eval "_MK_VAR_${_MK_VAR_SP}__MK_VARS=\"\$_MK_VARS\""
+        _MK_VARS=""
+	for ___var in "$@"
 	do
             case "$___var" in
                 *=*)
                     eval "_MK_VAR_${_MK_VAR_SP}_${___var%%=*}=\"\$${___var%%=*}\""
                     mk_set "${___var%%=*}" "${___var#*=}"
+                    _MK_VARS="$_MK_VARS ${___var%%=*}"
                     ;;
                 *)
                     eval "_MK_VAR_${_MK_VAR_SP}_${___var}=\"\$${___var}\""
 	            unset "$___var"
+                    _MK_VARS="$_MK_VARS $___var"
                     ;;
             esac
 	done
 	
-	_MK_VARS="$*"
 	_MK_VAR_SP=$(( $_MK_VAR_SP + 1 ))
     }
     

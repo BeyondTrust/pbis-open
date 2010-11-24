@@ -64,8 +64,11 @@ option()
 	_mk_define_name "host/$_isa"
 	_var="MK_LIBDIR_$result"
 	
-	case "${MK_HOST_OS}-${MK_HOST_DISTRO}-${MK_HOST_ARCH}-${_isa}" in
-	    linux-*-x86_64-x86_32)
+	case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
+            linux-redhat-x86_64-x86_64)
+                _default_libdir="${MK_EPREFIX}/lib64"
+                ;;
+	    linux-debian-x86_64-x86_32)
 		_default_libdir="${MK_EPREFIX}/lib32"
 		;;
 	    *)
@@ -195,8 +198,8 @@ configure()
     mk_msg "manpage dir: $MK_MANDIR"
 
     mk_export \
-	MK_PREFIX MK_LIBDIR MK_INCLUDEDIR MK_BINDIR \
-	MK_SBINDIR MK_SYSCONFDIR MK_LOCALSTATEDIR \
+	MK_PREFIX MK_EPREFIX MK_LIBDIR MK_INCLUDEDIR MK_BINDIR \
+	MK_SBINDIR MK_LIBEXECDIR MK_SYSCONFDIR MK_LOCALSTATEDIR \
 	MK_DATAROOTDIR MK_DATADIR MK_DOCDIR MK_HTMLDIR \
         MK_MANDIR
 
