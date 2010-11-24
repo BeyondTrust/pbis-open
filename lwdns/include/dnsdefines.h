@@ -209,6 +209,8 @@ extern PFN_LWDNS_LOG_MESSAGE gpfnLWDNSLogger;
 #define IsNullOrEmptyString(str) \
     (!(str) || !*(str))
 
+#define IsEmptyString(str) (!*(str))
+
 #endif
 
 #define LWDNS_SAFE_FREE_STRING(str) \

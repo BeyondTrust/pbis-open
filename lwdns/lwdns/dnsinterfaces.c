@@ -415,14 +415,13 @@ DNSGetInfoUsingIoctl(
         memset(szItfName, 0, sizeof(szItfName));
         memcpy(szItfName, pInterfaceRecord->ifr_name, IFNAMSIZ);
         
-        LWDNS_LOG_VERBOSE("Considering network interface [%s]",
-                          IsNullOrEmptyString(szItfName) ? "" : szItfName);
+        LWDNS_LOG_VERBOSE("Considering network interface [%s]", szItfName);
         
         pSA = (struct sockaddr*)&pInterfaceRecord->ifr_addr;
 
         if (pSA->sa_family != AF_INET)
         {
-           LWDNS_LOG_VERBOSE("Skipping network interface [%s] [family:%d] because it is not AF_INET family", IsNullOrEmptyString(szItfName) ? "" : szItfName, pSA->sa_family);
+           LWDNS_LOG_VERBOSE("Skipping network interface [%s] [family:%d] because it is not AF_INET family", szItfName, pSA->sa_family);
            continue;
         }
         
@@ -438,15 +437,13 @@ DNSGetInfoUsingIoctl(
         
         if (dwFlags & IFF_LOOPBACK)
         {
-            LWDNS_LOG_VERBOSE("Skipping loopback network interface [%s]",
-                              IsNullOrEmptyString(szItfName) ? "" : szItfName);
+            LWDNS_LOG_VERBOSE("Skipping loopback network interface [%s]", szItfName);
             continue;
         }
         
         if (!(dwFlags & IFF_UP))
         {
-            LWDNS_LOG_VERBOSE("Skipping in-active network interface [%s]",
-                              IsNullOrEmptyString(szItfName) ? "" : szItfName);
+            LWDNS_LOG_VERBOSE("Skipping in-active network interface [%s]", szItfName);
             continue;
         }
 
@@ -495,7 +492,7 @@ DNSGetInfoUsingIoctl(
         pszIpAddress = inet_ntoa(((struct sockaddr_in*)&pInterfaceInfo->ipAddr)->sin_addr);
         
         LWDNS_LOG_VERBOSE("Added network interface [Name:%s; Address:%s] to list",
-                          (IsNullOrEmptyString(szItfName) ? "" : pInterfaceInfo->pszName),
+                          (IsNullOrEmptyString(pInterfaceInfo->pszName) ? "" : pInterfaceInfo->pszName),
                           (IsNullOrEmptyString(pszIpAddress) ? "" : pszIpAddress));
         
         pInterfaceInfo = NULL;
