@@ -413,7 +413,7 @@ EVTAllocateStringPrintfV(
     PSTR  pszSmallBuffer = NULL;
     DWORD dwBufsize = 0;
     INT   requiredLength = 0;
-    DWORD dwNewRequiredLength = 0;
+    INT   nNewRequiredLength = 0;
     PSTR  pszOutputString = NULL;
     va_list args2;
 
@@ -453,23 +453,23 @@ EVTAllocateStringPrintfV(
                     (PVOID*)&pszOutputString);
     BAIL_ON_EVT_ERROR(dwError);
 
-    dwNewRequiredLength = vsnprintf(
+    nNewRequiredLength = vsnprintf(
                             pszOutputString,
                             requiredLength + 1,
                             pszFormat,
                             args2);
-    if (dwNewRequiredLength < 0)
+    if (nNewRequiredLength < 0)
     {
         dwError = errno;
         BAIL_ON_EVT_ERROR(dwError);
     }
-    else if (dwNewRequiredLength > requiredLength)
+    else if (nNewRequiredLength > requiredLength)
     {
         /* unexpected, ideally should log something, or use better error code */
         dwError = ENOMEM;
         BAIL_ON_EVT_ERROR(dwError);
     }
-    else if (dwNewRequiredLength < requiredLength)
+    else if (nNewRequiredLength < requiredLength)
     {
         /* unexpected, ideally should log something -- do not need an error, though */
     }
