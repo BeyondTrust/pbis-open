@@ -36,6 +36,8 @@ This package provides compatibility with 32-bit applications
 %description devel
 This package provides files for developing against the Likewise APIs
 
+%clean
+
 %post
 case "$1" in
     1)
