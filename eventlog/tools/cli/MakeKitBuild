@@ -5,6 +5,7 @@ make()
 	SOURCES="evtparser.c xmllookup.c main.c" \
 	INCLUDEDIRS=". ../../include" \
         CPPFLAGS="$LIBXML2_CPPFLAGS" \
+        LDFLAGS="$LIBXML2_LDFLAGS" \
 	HEADERDEPS="wc16printf.h dce/rpc.h lwadvapi.h popt.h $LIBXML2_HEADERDEPS" \
 	LIBDEPS="eventlog eventlogutils popt lwadvapi lwadvapi_nothr lwbase lwbase_nothr xml2"
 }
