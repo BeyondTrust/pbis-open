@@ -96,9 +96,9 @@ EVTStrndup(
     memcpy(pszOutputString, pszInputString, copylen);
     pszOutputString[copylen] = 0;
 
-error:
-
     *ppszOutputString = pszOutputString;
+
+error:
 
     return(dwError);
 }
