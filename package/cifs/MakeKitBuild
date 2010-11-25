@@ -76,7 +76,6 @@ common_files()
     mk_package_files \
         "${MK_BINDIR}/*" \
         "${MK_SBINDIR}/*" \
-        "${MK_DATADIR}/likewise/*" \
         "${MK_PREFIX}/data/VERSION" \
         "${LW_CONFIGDIR}/*" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
@@ -93,6 +92,13 @@ common_files()
     if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
     then
         mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
+    fi
+
+    mk_get_export ../../domainjoin DJ_GUI_ENABLED
+
+    if [ "$result" = yes ]
+    then
+        mk_package_files "${MK_DATADIR}/likewise/*"
     fi
 
     mk_package_dirs \

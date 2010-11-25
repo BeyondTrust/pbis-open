@@ -1,5 +1,15 @@
 SUBDIRS="libdomainjoin domainjoin-cli domainjoin-gui"
 
+option()
+{
+    mk_option \
+        OPTION=dj-gui \
+        PARAM='yes|no' \
+        VAR=DJ_GUI \
+        DEFAULT="yes" \
+        HELP="Build domainjoin GUI"
+}
+
 configure()
 {
     mk_config_header "include/DomainJoinConfig.h"
@@ -22,15 +32,19 @@ configure()
     mk_define PREFIXDIR "\"$MK_PREFIX\""
     mk_define DATADIR "\"$MK_DATADIR\""
 
-    if mk_pkg_config \
+    if [ "$DJ_GUI" = yes ] && mk_pkg_config \
 	VARPREFIX=GTK \
 	glib-2.0 gthread-2.0 gtk+-2.0 libglade-2.0
     then
 	mk_msg "GTK+ interface enabled"
+        DJ_GUI_ENABLED=yes
     else
 	mk_msg "GTK+ interface disabled"
 	mk_skip_subdir domainjoin-gui
+        DJ_GUI_ENABLED=no
     fi
+    
+    mk_export DJ_GUI_ENABLED
 
     mk_check_headers \
 	signal.h
