@@ -73,6 +73,13 @@ mk_rpm_do()
     mk_output_file INPUT="$SPECFILE" OUTPUT="$RPM_SPECFILE"
     mk_quote "$result"
     RPM_DEPS="$RPM_DEPS $result"
+
+    # Emit empty clean section to prevent staging directory
+    # from being removed
+    cat >>"${RPM_RES_SPECFILE}" <<EOF
+%clean
+
+EOF
  
     _mk_rpm_files_begin
    

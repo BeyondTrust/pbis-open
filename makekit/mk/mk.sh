@@ -202,7 +202,6 @@ mk_msg_domain()
     MK_MSG_DOMAIN="$1"
 }
 
-
 ##
 #
 # mk_msg_format
@@ -217,6 +216,16 @@ mk_msg_domain()
 mk_msg_format()
 {
     printf "%20s %s\n" "[$1]" "$2"
+}
+
+mk_msg_format_begin()
+{
+    printf "%20s %s" "[$1]" "$2"
+}
+
+mk_msg_format_end()
+{
+    printf "%s\n" "$1"
 }
 
 ##
@@ -237,6 +246,18 @@ mk_msg()
 {
     mk_log "$@"
     mk_msg_format "$MK_MSG_DOMAIN" "$*"
+}
+
+mk_msg_begin()
+{
+    mk_log_begin "$@"
+    mk_msg_format_begin "$MK_MSG_DOMAIN" "$*"
+}
+
+mk_msg_end()
+{
+    mk_log_end "$@"
+    mk_msg_format_end "$@"
 }
 
 ##
@@ -263,6 +284,16 @@ mk_msg_verbose()
 mk_log()
 {
     [ -n "${MK_LOG_FD}" ] && mk_msg_format "$MK_MSG_DOMAIN" "$*" >&${MK_LOG_FD}
+}
+
+mk_log_begin()
+{
+    [ -n "${MK_LOG_FD}" ] && mk_msg_format "$MK_MSG_DOMAIN" "$*" >&${MK_LOG_FD}
+}
+
+mk_log_end()
+{
+    [ -n "${MK_LOG_FD}" ] && mk_msg_format "result" "$*" >&${MK_LOG_FD}
 }
 
 ##

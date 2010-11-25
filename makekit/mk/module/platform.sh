@@ -59,7 +59,7 @@ mk_get_system_var()
 
 mk_set_system_var()
 {
-    mk_push_vars SYSTEM
+    mk_push_vars SYSTEM result
     mk_parse_params
 
     if [ "$MK_CANONICAL_SYSTEM" = "$SYSTEM" ]
@@ -75,13 +75,13 @@ mk_set_system_var()
 
 mk_set_all_isas()
 {
-        if [ "$MK_SYSTEM" = "${MK_SYSTEM%/*}" ]
+    if [ "$MK_SYSTEM" = "${MK_SYSTEM%/*}" ]
     then 
         for __isa in ${MK_ISAS}
         do
-                mk_set_system_var SYSTEM="$MK_SYSTEM/$__isa" "$@"
+            mk_set_system_var SYSTEM="$MK_SYSTEM/$__isa" "$@"
         done
-        else
+    else
         mk_set "$@"
     fi
 }

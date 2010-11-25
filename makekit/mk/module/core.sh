@@ -36,6 +36,16 @@ DEPENDS="platform program"
 
 ### section common
 
+mk_get_export()
+{
+    # $1 = directory (relative to MK_SUBDIR)
+    # $2 = variable
+    result=$(mk_safe_source "${MK_OBJECT_DIR}${MK_SUBDIR}/$1/.MakeKitExports" && 
+             mk_get "$2" &&
+             echo "$result")
+    [ "$?" -eq 0 ] || mk_fail "could not read ${MK_OBJECT_DIR}${MK_SUBDIR}/$1/.MakeKitExports"
+}
+
 mk_run_or_fail()
 {
     mk_quote_list "$@"
@@ -517,17 +527,38 @@ mk_add_subdir_target()
     MK_SUBDIR_TARGETS="$MK_SUBDIR_TARGETS $result"
 }
 
+mk_msg_checking()
+{
+    if [ "$MK_SYSTEM" = "host" ]
+    then
+        mk_msg_begin "$*: "
+    else
+        mk_msg_begin "$* ($MK_SYSTEM): "
+    fi
+}
+
+mk_msg_result()
+{
+    mk_msg_end "$*"
+}
+
 mk_check_cache()
 {
+    mk_declare_system_var "$1"
+
     _mk_define_name "CACHED_$MK_CANONICAL_SYSTEM"
     if mk_is_set "${1}__${result}"
     then
-	mk_get "${1}__${result}"
-	__value="${result}"
-	mk_declare_system_var "$1"
-	mk_set "$1" "$__value"
-	result="$__value"
-	return 0
+        if [ "${MK_SYSTEM%/*}" = "$MK_SYSTEM" ]
+        then
+            mk_get "${1}__${result}"
+            mk_set_all_isas "$1" "$result"
+            return 0
+        else
+            mk_get "${1}__${result}"
+	    mk_set "$1" "$result"
+	    return 0
+        fi
     else
 	return 1
     fi
@@ -535,24 +566,25 @@ mk_check_cache()
 
 mk_cache()
 {
-	__systems=""
-	if [ "${MK_SYSTEM%/*}" = "$MK_SYSTEM" ]
+    __systems=""
+    if [ "${MK_SYSTEM%/*}" = "$MK_SYSTEM" ]
     then
         for __isa in ${MK_ISAS}
     	do
-    		 __systems="$MK_SYSTEM/$__isa"
-	    done
-	else
+    	    __systems="$__systems $MK_SYSTEM/$__isa"
+	done
+    else
         __systems="$MK_CANONICAL_SYSTEM"
-    fi      
-	for __system in ${__systems}
-	do
+    fi    
+    for __system in ${__systems}
+    do
         _mk_define_name "CACHED_$MK_CANONICAL_SYSTEM"
         MK_CACHE_VARS="$MK_CACHE_VARS ${1}__${result}"
         mk_set "${1}__${result}" "$2"
-        mk_declare_system_var "$1"
         mk_set_system_var SYSTEM="$__system" "$1" "$2"
-	done        
+    done
+
+    result="$2"
 }
 
 _mk_save_cache()

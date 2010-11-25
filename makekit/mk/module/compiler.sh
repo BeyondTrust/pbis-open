@@ -82,10 +82,10 @@ _mk_verify_libdeps()
 
         if [ "$result" = "no" ]
         then
-            mk_fail "$1 depends on missing library $__dep"
+            mk_fail "$1 depends on missing library $__dep ($MK_SYSTEM)"
         elif [ -z "$result" ]
         then
-            mk_warn "$1 depends on unchecked library $__dep"
+            mk_warn "$1 depends on unchecked library $__dep ($MK_SYSTEM)"
         fi
     done
 }
@@ -835,22 +835,14 @@ EOF
 
 mk_check_header()
 {
-    mk_push_vars HEADER HEADERDEPS FAIL CPPFLAGS CFLAGS
+    mk_push_vars HEADER HEADERDEPS CPPFLAGS CFLAGS
     mk_parse_params
 
     CFLAGS="$CFLAGS -Wall -Werror"
 
-    _mk_define_name "HAVE_$HEADER"
-    _defname="$result"
-    _varname="$_defname"
-    mk_declare_system_var "$_varname"
-
     if _mk_contains "$HEADER" ${MK_INTERNAL_HEADERS}
     then
-        _result="internal"
-    elif mk_check_cache "$_varname"
-    then
-        _result="$result"
+        result="internal"
     else
         {
             _mk_c_check_prologue
@@ -872,32 +864,52 @@ EOF
         mk_log "running compile test for header: $HEADER"
         if _mk_build_test compile ".check.c"
         then
-            _result="external"
+            result="external"
         else
-            _result="no"
+            result="no"
         fi
-        
-        mk_cache "$_varname" "$_result"
     fi
 
-    mk_set_all_isas "$_varname" "$_result"
-    mk_msg "header $HEADER: $_result ($MK_SYSTEM)"
+    mk_pop_vars
+    [ "$result" != "no" ]
+}
+
+mk_check_headers()
+{
+    mk_push_vars HEADERDEPS FAIL CPPFLAGS CFLAGS DEFNAME HEADER
+    mk_parse_params
     
-    case "$_result" in
-        external|internal)
-            mk_define "$_defname" "1"
-            mk_pop_vars
-            return 0
-            ;;
-        no)
-            if [ "$FAIL" = "yes" ]
-            then
-                mk_fail "missing header: $HEADER"
-            fi
-            mk_pop_vars
-            return 1
-            ;;
-    esac
+    for HEADER
+    do
+        _mk_define_name "$HEADER"
+        DEFNAME="$result"
+
+        mk_msg_checking "header $HEADER"
+
+        if ! mk_check_cache "HAVE_$DEFNAME"
+        then
+            mk_check_header \
+                HEADER="$HEADER" \
+                HEADERDEPS="$HEADERDEPS" \
+                CPPFLAGS="$CPPFLAGS" \
+                CFLAGS="$CFLAGS"
+
+            mk_cache "HAVE_$DEFNAME" "$result"
+        fi
+
+        mk_msg_result "$result"
+
+        if [ "$result" != no ]
+        then
+            mk_define "HAVE_$DEFNAME" "1"
+        elif [ "$FAIL" = yes ]
+        then
+            mk_fail "missing header: $HEADER"
+        fi
+        
+    done
+
+    mk_pop_vars
 }
 
 mk_have_header()
@@ -921,40 +933,34 @@ mk_check_function()
 
     CFLAGS="$CFLAGS -Wall -Werror"
 
-    if [ -n "$PROTOTYPE" ]
-    then
-        _parts="`echo "$PROTOTYPE" | sed 's/^\(.*[^a-zA-Z_]\)\([a-zA-Z_][a-zA-Z0-9_]*\) *(\([^)]*\)).*$/\1|\2|\3/g'`"
-        _ret="${_parts%%|*}"
-        _parts="${_parts#*|}"
-        FUNCTION="${_parts%%|*}"
-        _args="${_parts#*|}"
-        _checkname="$PROTOTYPE"
-        _mk_define_name "$PROTOTYPE"
-        _defname="$result"
-    else
-        _checkname="$FUNCTION()"
-        _mk_define_name "$FUNCTION"
-        _defname="$result"
-    fi
+    [ -z "$PROTOTYPE" ] && PROTOTYPE="$FUNCTION"
     
-    _varname="HAVE_$_defname"
+    case "$PROTOTYPE" in
+        *'('*)
+            _parts="`echo "$PROTOTYPE" | sed 's/^\(.*[^a-zA-Z_]\)\([a-zA-Z_][a-zA-Z0-9_]*\) *(\([^)]*\)).*$/\1|\2|\3/g'`"
+            _ret="${_parts%%|*}"
+            _parts="${_parts#*|}"
+            FUNCTION="${_parts%%|*}"
+            _args="${_parts#*|}"
+            ;;
+        *)
+            FUNCTION="$PROTOTYPE"
+            _args=""
+            ;;
+    esac
     
-    if mk_check_cache "$_varname"
-    then
-        _result="$result"
-    else
-        {
-            _mk_c_check_prologue
-            for _header in ${HEADERDEPS}
-            do
-                mk_might_have_header "$_header" && echo "#include <${_header}>"
-            done
-            
-            echo ""
-            
-            if [ -n "$PROTOTYPE" ]
-            then
-                cat <<EOF
+    {
+        _mk_c_check_prologue
+        for _header in ${HEADERDEPS}
+        do
+            mk_might_have_header "$_header" && echo "#include <${_header}>"
+        done
+        
+        echo ""
+        
+        if [ -n "$_args" ]
+        then
+            cat <<EOF
 int main(int argc, char** argv)
 {
     $_ret (*__func)($_args) = &$FUNCTION;
@@ -970,60 +976,75 @@ int main(int argc, char** argv)
 }
 EOF
             fi
-        } >.check.c
-        mk_log "running link test for function: $_checkname"
-        if _mk_build_test 'link-program' ".check.c"
-        then
-            _result="yes"
-        else
-            _result="no"
-        fi
-
-        mk_cache "$_varname" "$_result"
+    } >.check.c
+    
+    mk_log "running link test for $PROTOTYPE"
+    if _mk_build_test 'link-program' ".check.c"
+    then
+        result="yes"
+    else
+        result="no"
     fi
 
-    mk_msg "function $_checkname: $_result ($MK_SYSTEM)"
-    mk_set_all_isas "$_varname" "$_result"
+    mk_pop_vars
+    [ "$result" != "no" ]
+}
+
+mk_check_functions()
+{
+    mk_push_vars \
+        LIBDEPS HEADERDEPS CPPFLAGS LDFLAGS CFLAGS FAIL \
+        PROTOTYPE DEFNAME
+    mk_parse_params
     
-    case "$_result" in
-        yes)
-            mk_define "HAVE_$_defname" "1"
-            mk_define "HAVE_DECL_$_defname" "1"
-            mk_pop_vars
-            return 0
-            ;;
-        no)
-            if [ "$FAIL" = "yes" ]
-            then
-                mk_fail "missing function: $FUNCTION"
-            fi
-            mk_define "HAVE_DECL_$_defname" "0"
-            mk_pop_vars
-            return 1
-            ;;
-    esac
+    for PROTOTYPE
+    do
+        _mk_define_name "$PROTOTYPE"
+        DEFNAME="$result"
+
+        mk_msg_checking "function $PROTOTYPE"
+
+        if ! mk_check_cache "HAVE_$DEFNAME"
+        then
+            mk_check_function \
+                PROTOTYPE="$PROTOTYPE" \
+                HEADERDEPS="$HEADERDEPS" \
+                CPPFLAGS="$CPPFLAGS" \
+                LDFLAGS="$LDFLAGS" \
+                CFLAGS="$CFLAGS" \
+                LIBDEPS="$LIBDEPS"
+
+            mk_cache "HAVE_$DEFNAME" "$result"
+        fi
+
+        mk_msg_result "$result"
+
+        if [ "$result" = "yes" ]
+        then
+            mk_define "HAVE_$DEFNAME" 1
+            mk_define "HAVE_DECL_$DEFNAME" 1
+        elif [ "$FAIL" = "yes" ]
+        then
+            mk_fail "missing function: $PROTOTYPE"
+        else
+            mk_define "HAVE_DECL_$DEFNAME" 0
+        fi
+    done
+
+    mk_pop_vars
 }
 
 mk_check_library()
 {
-    mk_push_vars LIBDEPS LIB CPPFLAGS LDFLAGS CFLAGS FAIL
+    mk_push_vars LIBDEPS LIB CPPFLAGS LDFLAGS CFLAGS
     mk_parse_params
 
     CFLAGS="$CFLAGS -Wall -Werror"
     LIBDEPS="$LIBDEPS $LIB"
     
-    _mk_define_name "HAVE_LIB_$LIB"
-    _defname="$result"
-    _varname="$_defname"
-
-    mk_declare_system_var "$_varname"
-
     if _mk_contains "$LIB" ${MK_INTERNAL_LIBS}
     then
-        _result="internal"
-    elif mk_check_cache "$_varname"
-    then
-        _result="$result"
+        result="internal"
     else
         {
             _mk_c_check_prologue
@@ -1037,80 +1058,83 @@ EOF
         mk_log "running link test for library: $LIB"
         if _mk_build_test 'link-program' ".check.c"
         then
-            _result="external"
+            result="external"
         else
-            _result="no"
+            result="no"
         fi
-        
-        mk_cache "$_varname" "$_result"
     fi
 
-    mk_set_all_isas "$_varname" "$_result"    
-    mk_msg "library $LIB: $_result ($MK_SYSTEM)"
+    mk_pop_vars
+    [ "$result" != "no" ]
+}
 
-    _varname="${_varname#HAVE_}"
-    mk_declare_system_var "$_varname"
+
+mk_check_libraries()
+{
+    mk_push_vars LIBS LIBDEPS CPPFLAGS LDFLAGS CFLAGS FAIL LIB DEFNAME
+    mk_parse_params
     
-    case "$_result" in
-        external|internal)
-            mk_set_all_isas "$_varname" "$LIB"
-            mk_define "$_defname" 1
-            mk_pop_vars
-            return 0
-            ;;
-        no)
-            if [ "$FAIL" = "yes" ]
-            then
-                mk_fail "missing library: $LIB"
-            fi
-            mk_set_all_isas "$_varname" ""
-            mk_pop_vars
-            return 1
-            ;;
-    esac
+    for LIB
+    do
+        _mk_define_name "$LIB"
+        DEFNAME="$result"
+
+        mk_declare_system_var "LIB_$DEFNAME"
+
+        mk_msg_checking "library $LIB"
+
+        if ! mk_check_cache "HAVE_LIB_$DEFNAME"
+        then
+            mk_check_library \
+                LIB="$LIB" \
+                CPPFLAGS="$CPPFLAGS" \
+                LDFLAGS="$LDFLAGS" \
+                CFLAGS="$CFLAGS" \
+                LIBDEPS="$LIBDEPS"
+            
+            mk_cache "HAVE_LIB_$DEFNAME" "$result"
+        fi
+
+        mk_msg_result "$result"
+
+        if [ "$result" != "no" ]
+        then
+            mk_set_all_isas "LIB_$DEFNAME" "$LIB"
+            mk_define "HAVE_LIB_$DEFNAME" "1"
+        elif [ "$FAIL" = "yes" ]
+        then
+            mk_fail "missing library: $LIB"
+        fi
+    done
+
+    mk_pop_vars
 }
 
 _mk_check_type()
 {
-    _mk_define_name "HAVE_$TYPE"
-    _defname="$result"
-    _varname="$_defname"
-
-    if mk_check_cache "$_varname"
-    then
-        _result="$result"
-    else
-        {
-            _mk_c_check_prologue
-            for _header in ${HEADERDEPS}
-            do
-                mk_might_have_header "$_header" && echo "#include <${_header}>"
-            done
-            
-            echo ""
-            
-            cat <<EOF
+    {
+        _mk_c_check_prologue
+        for _header in ${HEADERDEPS}
+        do
+            mk_might_have_header "$_header" && echo "#include <${_header}>"
+        done
+        
+        echo ""
+        
+        cat <<EOF
 int main(int argc, char** argv)
 { 
     return (int) sizeof($TYPE);
 }
 EOF
-        } > .check.c
-        mk_log "running run test for sizeof($TYPE)"
-        if _mk_build_test 'compile' .check.c
-        then
-            _result="yes"
-        else
-            _result="no"
-        fi
-        
-        mk_cache "$_varname" "$_result"
+    } > .check.c
+    mk_log "running run test for sizeof($TYPE)"
+    if _mk_build_test 'compile' .check.c
+    then
+        result="yes"
+    else
+        result="no"
     fi
-
-    [ "$_result" = "yes" ] && mk_define "$_defname" 1
-    
-    mk_msg "type $TYPE: $_result ($MK_SYSTEM)"
-    mk_set_all_isas "$_varname" "$_result"
 }
 
 mk_check_type()
@@ -1128,16 +1152,39 @@ mk_check_type()
     _mk_check_type
 
     mk_pop_vars
+    [ "$result" != "no" ]
 }
 
 mk_check_types()
 {
-    mk_push_vars TYPES HEADERDEPS CPPFLAGS CFLAGS TYPE
+    mk_push_vars TYPES HEADERDEPS CPPFLAGS CFLAGS TYPE FAIL DEFNAME
     mk_parse_params
 
-    for TYPE in ${TYPES} "$@"
+    CFLAGS="$CFLAGS -Wall -Werror"
+
+    for TYPE
     do
-        _mk_check_type
+        _mk_define_name "$TYPE"
+        DEFNAME="$result"
+
+        mk_msg_checking "type $TYPE"
+
+        if ! mk_check_cache "HAVE_$DEFNAME"
+        then
+            _mk_check_type
+            
+            mk_cache "HAVE_$DEFNAME" "$result"
+        fi
+
+        mk_msg_result "$result"
+
+        if [ "$result" = "yes" ]
+        then
+            mk_define "HAVE_$DEFNAME" "1"
+        elif [ "$FAIL" = "yes" ]
+        then
+            mk_fail "missing type: $TYPE"
+        fi
     done
 
     mk_pop_vars
@@ -1170,42 +1217,27 @@ EOF
 
 _mk_check_sizeof()
 {
-    _mk_define_name "SIZEOF_$TYPE"
-    _defname="$result"
-    _varname="$_defname"
-
-    if mk_check_cache "$_varname"
-    then
-        _result="$result"
-    else
-        # Algorithm to derive the size of a type even
-        # when cross-compiling.  mk_check_static_predicate()
-        # lets us evaluate a boolean expression involving
-        # compile-time constants.  Using this, we can perform
-        # a binary search for the correct size of the type.
-        upper="1024"
-        lower="0"
+    # Algorithm to derive the size of a type even
+    # when cross-compiling.  mk_check_static_predicate()
+    # lets us evaluate a boolean expression involving
+    # compile-time constants.  Using this, we can perform
+    # a binary search for the correct size of the type.
+    upper="1024"
+    lower="0"
         
-        while [ "$upper" -ne "$lower" ]
-        do
-            mid="$((($upper + $lower)/2))"
-            if mk_check_static_predicate EXPR="sizeof($TYPE) <= $mid"
-            then
-                upper="$mid"
-            else
-                lower="$(($mid + 1))"
-            fi
-        done
-        
-        _result="$upper"
-        unset upper lower mid
-        mk_cache "$_varname" "$_result"
-    fi
+    while [ "$upper" -ne "$lower" ]
+    do
+        mid="$((($upper + $lower)/2))"
+        if mk_check_static_predicate EXPR="sizeof($TYPE) <= $mid"
+        then
+            upper="$mid"
+        else
+            lower="$(($mid + 1))"
+        fi
+    done
 
-    mk_define "$_defname" "$_result"
-
-    mk_msg "sizeof($TYPE): $_result ($MK_SYSTEM)"
-    mk_set "$_varname" "$_result"
+    result="$upper"
+    unset upper lower mid
 }
 
 mk_check_sizeof()
@@ -1226,6 +1258,36 @@ mk_check_sizeof()
     mk_pop_vars
 }
 
+mk_check_sizeofs()
+{
+    mk_push_vars HEADERDEPS CPPFLAGS LDFLAGS CFLAGS LIBDEPS
+    mk_parse_params
+
+    CFLAGS="$CFLAGS -Wall -Werror"
+    HEADERDEPS="$HEADERDEPS stdio.h"
+
+    for TYPE
+    do
+        _mk_define_name "$TYPE"
+        DEFNAME="$result"
+
+        mk_msg_checking "sizeof $TYPE"
+
+        if ! mk_check_cache "SIZEOF_$DEFNAME"
+        then
+            _mk_check_sizeof
+            
+            mk_cache "SIZEOF_$DEFNAME" "$result"
+        fi
+
+        mk_msg_result "$result"
+
+        mk_define "SIZEOF_$DEFNAME" "$result"
+    done
+
+    mk_pop_vars
+}
+
 mk_check_endian()
 {
     mk_push_vars CPPFLAGS LDFLAGS CFLAGS LIBDEPS
@@ -1233,12 +1295,12 @@ mk_check_endian()
 
     CFLAGS="$CFLAGS -Wall -Werror"
     HEADERDEPS="$HEADERDEPS stdio.h"
+
+    mk_msg_checking "endianness"
     
-    _varname="ENDIANNESS"
-    
-    if mk_check_cache "$_varname"
+    if mk_check_cache "ENDIANNESS"
     then
-        _result="$result"
+        result="$result"
     else
         # Check for endianness in a (hacky) manner that supports
         # cross-compiling. This is done by compiling a C file that
@@ -1269,10 +1331,10 @@ EOF
         then
             if strings .check.o | grep "aArDvArKsOaP" >/dev/null
             then
-                _result="big"
+                result="big"
             elif strings .check.o | grep "zEbRaBrUsH" >/dev/null
             then
-                _result="little"
+                result="little"
             else
                 #rm -f .check.o
                 mk_fail "could not determine endianness"
@@ -1282,74 +1344,16 @@ EOF
             mk_fail "could not determine endianness"
         fi
         
-        mk_cache "$_varname" "$_result"
+        mk_cache "ENDIANNESS" "$result"
     fi
 
-    if [ "$_result" = "big" ]
+    if [ "$ENDIANNESS" = "big" ]
     then
         mk_define WORDS_BIGENDIAN 1
     fi
     
-    mk_msg "endianness: $_result ($MK_SYSTEM)"
-    mk_set "$_varname" "$_result"
+    mk_msg_result "$ENDIANNESS"
     
-    mk_pop_vars
-}
-
-mk_check_functions()
-{
-    mk_push_vars LIBDEPS FUNCTIONS PROTOTYPES HEADERDEPS CPPFLAGS LDFLAGS CFLAGS FAIL
-    mk_parse_params
-    
-    for _name in ${FUNCTIONS} "$@"
-    do
-        mk_check_function \
-            FAIL="$FAIL" \
-            FUNCTION="$_name" \
-            HEADERDEPS="$HEADERDEPS" \
-            CPPFLAGS="$CPPFLAGS" \
-            LDFLAGS="$LDFLAGS" \
-            CFLAGS="$CFLAGS" \
-            LIBDEPS="$LIBDEPS"
-    done
-
-    mk_pop_vars
-}
-
-mk_check_libraries()
-{
-    mk_push_vars LIBS LIBDEPS CPPFLAGS LDFLAGS CFLAGS FAIL
-    mk_parse_params
-    
-    for _name in ${LIBS} "$@"
-    do
-        mk_check_library \
-            FAIL="$FAIL" \
-            LIB="$_name" \
-            CPPFLAGS="$CPPFLAGS" \
-            LDFLAGS="$LDFLAGS" \
-            CFLAGS="$CFLAGS" \
-            LIBDEPS="$LIBDEPS"
-    done
-
-    mk_pop_vars
-}
-
-mk_check_headers()
-{
-    mk_push_vars HEADERS HEADERDEPS FAIL CPPFLAGS CFLAGS
-    mk_parse_params
-    
-    for _name in ${HEADERS} "$@"
-    do
-        mk_check_header \
-            HEADER="$_name" \
-            HEADERDEPS="$HEADERDEPS" \
-            FAIL="$FAIL" \
-            CPPFLAGS="$CPPFLAGS" \
-            CFLAGS="$CFLAGS"
-    done
-
     mk_pop_vars
 }
 
@@ -1492,4 +1496,3 @@ configure()
     # header in the project, we register a completion hook as well.
     mk_add_complete_hook _mk_close_config_header
 }
-
