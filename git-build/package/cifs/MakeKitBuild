@@ -114,7 +114,9 @@ common_files()
 
     if [ "$result" = yes ]
     then
-        mk_package_files "${MK_DATADIR}/likewise/*"
+        mk_package_files \
+            "${MK_DATADIR}/*.glade" \
+            "${MK_DATADIR}/*.png"
     fi
 
     mk_package_dirs \
