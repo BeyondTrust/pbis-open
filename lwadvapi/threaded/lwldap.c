@@ -54,6 +54,10 @@
 #define INADDR_NONE ((in_addr_t) -1)
 #endif
 
+#ifndef SASL_CB_SERVERFQDN
+#define SASL_CB_SERVERFQDN 0xc0004001
+#endif
+
 DWORD
 LwCLdapOpenDirectory(
     IN PCSTR pszServerName,
