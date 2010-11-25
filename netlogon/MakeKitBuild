@@ -33,9 +33,9 @@ configure()
     mk_check_headers \
         sys/types.h netinet/in.h arpa/nameser.h
 
-    mk_check_header \
+    mk_check_headers \
         HEADERDEPS="sys/types.h netinet/in.h arpa/nameser.h" \
-        HEADER="resolv.h"
+	resolv.h
 
     mk_check_libraries \
         rt pthread resolv

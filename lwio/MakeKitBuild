@@ -17,7 +17,6 @@ configure()
             ;;
         solaris)
             mk_define __LWI_SOLARIS__
-            mk_define HAVE_STRUCT_PSINFO # FIXME
             ;;
         *)
             mk_fail "Unsupported OS: $MK_OS"
@@ -44,9 +43,9 @@ configure()
 
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
 
-    mk_check_type \
+    mk_check_types \
         HEADERDEPS="sys/types.h" \
-        TYPE="blksize_t"
+        blksize_t
 
     mk_check_libraries \
         FAIL="yes" \
@@ -67,13 +66,21 @@ configure()
         CPPFLAGS="-D_FILE_OFFSET_BITS=64" \
         fuse.h
 
-    mk_check_header \
+    mk_check_headers \
         HEADERDEPS="stdlib.h" \
-        HEADER=attr/xattr.h
+        attr/xattr.h
 
     mk_check_headers \
         HEADERDEPS="sys/types.h" \
         sys/sysctl.h sys/user.h
+
+    mk_check_types \
+        HEADERDEPS="procfs sys/procfs.h" \
+        "struct psinfo"
+
+    mk_check_types \
+        HEADERDEPS="sys/types.h sys/socket.h" \
+        "socklen_t"
 
     mk_check_libraries \
         attr pthread nsl socket fuse

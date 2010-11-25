@@ -7,7 +7,7 @@ configure()
     lw_define_feature_macros
 
     mk_multiarch_do
-        MK_CFLAGS="-Wall -Werror"
+        MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
     mk_multiarch_done
 
     mk_check_headers \
@@ -24,7 +24,7 @@ configure()
     mk_check_libraries \
         pthread rt dl xnet
 
-	lw_check_iconv
+    lw_check_iconv
 
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"

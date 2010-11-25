@@ -15,17 +15,15 @@ configure()
     mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export LIBDIR="$MK_LIBDIR"
 
-    mk_check_headers \
-        HEADERS="lwmsg/lwmsg.h reg/reg.h wc16str.h" \
-        FAIL=yes
+    mk_check_headers FAIL=yes \
+        lwmsg/lwmsg.h reg/reg.h wc16str.h
 
-    mk_check_libraries \
-        LIBS="lwmsg regclient" \
-        FAIL=yes
+    mk_check_libraries FAIL=yes \
+        lwmsg regclient
 
     mk_check_functions \
-        FUNCTIONS="localtime_r memset select strchr strerror vsyslog strtoll" \
-        HEADERDEPS="time.h string.h sys/select.h syslog.h stdlib.h"
+        HEADERDEPS="time.h string.h sys/select.h syslog.h stdlib.h" \
+        localtime_r memset select strchr strerror vsyslog strtoll
 
     mk_output_file "etc/pstore.reg"
 }

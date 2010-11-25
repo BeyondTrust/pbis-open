@@ -61,22 +61,31 @@ lw_define_feature_macros()
 
 lw_check_iconv()
 {
-    mk_check_header FAIL=yes HEADER=iconv.h
-    mk_check_library LIB=iconv
+    mk_check_headers FAIL=yes iconv.h
+    mk_check_libraries iconv
 
-    if [ "$HAVE_LIB_ICONV" = "internal" ] || mk_check_function \
-        PROTOTYPE='size_t iconv (iconv_t, char **, size_t *, char **, size_t*)' \
-        HEADERDEPS="iconv.h stddef.h" \
-        LIBDEPS="$_lib_iconv"
+    mk_msg_checking "iconv() input type"
+
+    if ! mk_check_cache ICONV_IN_TYPE
     then
-        mk_define ICONV_IN_TYPE 'char**'
-    elif mk_check_function \
-        PROTOTYPE='size_t iconv (iconv_t, const char **, size_t *, char **, size_t*)' \
-        HEADERDEPS="iconv.h stddef.h" \
-        LIBDEPS="$LIB_ICONV"
-    then
-        mk_define ICONV_IN_TYPE 'const char**'
-    else
-        mk_fail "could not find usable iconv() function"
+        if [ "$HAVE_LIB_ICONV" = "internal" ] || mk_check_function \
+            PROTOTYPE='size_t iconv (iconv_t, char **, size_t *, char **, size_t*)' \
+            HEADERDEPS="iconv.h stddef.h" \
+            LIBDEPS="$LIB_ICONV"
+        then
+            result="char**"
+        elif mk_check_function \
+            PROTOTYPE='size_t iconv (iconv_t, const char **, size_t *, char **, size_t*)' \
+            HEADERDEPS="iconv.h stddef.h" \
+            LIBDEPS="$LIB_ICONV"
+        then
+            result="const char**"
+        else
+            mk_fail "could not find usable iconv() function"
+        fi
+        mk_cache ICONV_IN_TYPE "$result"
     fi
+
+    mk_msg_result "$ICONV_IN_TYPE"
+    mk_define ICONV_IN_TYPE "$ICONV_IN_TYPE"
 }

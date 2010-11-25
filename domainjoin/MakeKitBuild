@@ -35,18 +35,13 @@ configure()
     mk_check_headers \
 	signal.h
 
-    mk_check_function \
+    mk_check_functions \
 	HEADERDEPS="signal.h" \
-	FUNCTION="sigprocmask"
+	sigprocmask
 
-    if mk_check_function \
-	FUNCTION=isblank \
-	HEADERDEPS="ctype.h"
-    then
-	mk_define HAVE_DECL_ISBLANK 1
-    else
-	mk_define HAVE_DECL_ISBLANK 0
-    fi
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
 
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \

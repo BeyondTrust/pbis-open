@@ -17,7 +17,6 @@ configure()
             linux:*)
                 mk_define __LWI_LINUX__
                 mk_define _GNU_SOURCE
-                mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
                 PAMDIR="/${MK_LIBDIR##*/}/security"
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
@@ -76,41 +75,53 @@ configure()
 	lwbase_nothr lwbase lwadvapi_nothr lwadvapi \
 	lwmsg_nothr lwmsg pam sqlite3
 
-    if mk_check_function \
-	FUNCTION=isblank \
-	HEADERDEPS="ctype.h"
-    then
-	mk_define HAVE_DECL_ISBLANK 1
-    else
-	mk_define HAVE_DECL_ISBLANK 0
-    fi
+    mk_check_functions \
+	HEADERDEPS="ctype.h" \
+        isblank
 
     mk_check_functions \
 	HEADERDEPS="stdlib.h" \
 	strtol strtoll strtoul strtoull
 
-    mk_check_function \
+    mk_check_functions \
 	HEADERDEPS="time.h" \
-	FUNCTION="clock_settime"
+        clock_settime
 
-    mk_check_function \
+    mk_check_functions \
 	HEADERDEPS="sys/time.h" \
-	FUNCTION="settimeofday"
+        settimeofday
+
+    mk_msg_checking "pam_get_data data argument type"
 
     if mk_check_function \
         HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        LIBDEPS="$LIB_PAM" \
         PROTOTYPE="int pam_get_data(const pam_handle_t* pamh,const char* module_data_name, const void** data)"
     then
+        mk_msg_result "const void**"
         mk_define PAM_GET_DATA_TAKES_CONST_DATA_ARG 1
+    else
+        mk_msg_result "void**"
     fi
 
+    mk_check_libraries \
+        proc kvm
+
+    mk_check_functions \
+        HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
+        LIBDEPS="$LIB_KVM" \
+        kvm_getprocs
+
+    mk_msg_checking "pthread_mutex_lock in libc"
+
     if mk_check_function \
-        HEADERDEPS="kvm.h" \
-        FUNCTION="kvm_getprocs"
+        HEADERDEPS="pthread.h" \
+        FUNCTION="pthread_mutex_lock"
     then
-        mk_define HAVE_DECL_KVM_GETPROCS 1
+        mk_msg_result "yes"
+        mk_define HAVE_NONLIBPTHREAD_MUTEX_LOCK
     else
-        mk_define HAVE_DECL_KVM_GETPROCS 0
+        mk_msg_result "no"
     fi
 
     mk_output_file include/lsaregdef.h

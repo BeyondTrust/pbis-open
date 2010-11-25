@@ -48,9 +48,9 @@ configure()
         int8 int16 int32 int64 \
         uint8 uint16 uint32 uint64
 
-    mk_check_type \
+    mk_check_types \
         HEADERDEPS="procfs.h sys/procfs.h" \
-        TYPE="struct psinfo"
+        "struct psinfo"
 
     # Libraries
     mk_check_libraries \
@@ -61,18 +61,16 @@ configure()
         sigtimedwait bzero localtime_r memset \
         select socket strchr strerror vsyslog \
         rpl_malloc rpl_realloc mkdtemp _NSGetEnviron \
-        kvm_open kvm_getprocs
+
+    mk_check_functions \
+        HEADERDEPS="kvm.h sys/param.h sys/sysctl.h sys/user.h" \
+        LIBDEPS="$LIB_KVM" \
+        kvm_getprocs kvm_open
 
     # Functions
-    if mk_check_function \
+    mk_check_functions \
         HEADERDEPS="ctype.h" \
-        FUNCTION=isblank
-    then
-        mk_define HAVE_DECL_ISBLANK 1
-    else
-        mk_define HAVE_DECL_ISBLANK 0
-    fi
+        isblank
 
-    mk_check_sizeof "long long int"
-    mk_check_sizeof "long int"
+    mk_check_sizeofs "long long int" "long int"
 }

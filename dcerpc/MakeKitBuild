@@ -126,9 +126,7 @@ configure()
     [ "$ENABLE_NTLMSSP" = "yes" ] && mk_define ENABLE_AUTH_NTLMSSP 1
 
     # Check for CPU architecture characteristics
-    mk_check_sizeof "long"
-    mk_check_sizeof "long int"
-    mk_check_sizeof "long long int"
+    mk_check_sizeofs "long" "long int" "long long int"
     mk_check_endian
 
     # Required headers
