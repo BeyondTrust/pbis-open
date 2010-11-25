@@ -15,7 +15,7 @@ configure()
 
     mk_check_headers \
         FAIL=yes \
-        uuid/uuid.h krb5.h gssapi.h lw/base.h lwps/lwps.h ldap.h
+        uuid/uuid.h krb5.h gssapi.h lw/base.h lwps/lwps.h ldap.h sasl/sasl.h
     
     mk_check_libraries \
         FAIL=yes \
