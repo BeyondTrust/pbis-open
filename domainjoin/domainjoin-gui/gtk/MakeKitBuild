@@ -16,5 +16,5 @@ make()
 
     mk_install_files \
 	FILES="domainjoin-gtk.glade likewise-logo.png domainjoin-logo.png" \
-	INSTALLDIR="${MK_DATADIR}/likewise"
+	INSTALLDIR="${MK_DATADIR}"
 }
