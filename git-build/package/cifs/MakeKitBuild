@@ -81,8 +81,6 @@ common_files()
         "${MK_LIBDIR}/*${MK_LIB_EXT}" \
         "${MK_LIBDIR}/*${MK_LIB_EXT}.*" \
         "${MK_LIBDIR}/gss/*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
-        "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*" \
         "${MK_LIBDIR}/lwsm-loader/*${MK_DLO_EXT}" \
         "/etc/init.d/*" \
         "/etc/krb5.conf.default" \
@@ -93,6 +91,13 @@ common_files()
     if [ "$MK_DLO_EXT" != "$MK_LIB_EXT" ]
     then
         mk_package_files "${MK_LIBDIR}/*${MK_DLO_EXT}"
+    fi
+
+    if lw_use_bundled cyrus-sasl
+    then
+        mk_package_files \
+            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}" \
+            "${MK_LIBDIR}/sasl2/*${MK_DLO_EXT}.*"
     fi
 
     mk_get_export ../../domainjoin DJ_GUI_ENABLED
