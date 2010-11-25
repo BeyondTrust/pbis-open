@@ -6,7 +6,7 @@ AM_CFLAGS += -I$(srcdir)/../include    \
 	     $(LWI_OS_FLAGS)		\
              $(GTK_CFLAGS)
 
-AM_CPPFLAGS = -DDATADIR=\"${datadir}\"
+AM_CPPFLAGS = -DDATADIR=\"${datadir}/likewise\"
 
 AM_LDFLAGS = $(LIBDOMAINJOIN_LDFLAGS) $(LIBDOMAINJOIN_LIBS)
 AM_LDFLAGS += $(CENTUTILS_LIBS) $(LIBXML2_LDFLAGS)

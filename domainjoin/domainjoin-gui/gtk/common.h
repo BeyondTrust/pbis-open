@@ -34,7 +34,7 @@
 #include <glade/glade.h>
 #include <gtk/gtk.h>
 
-#define DOMAINJOIN_XML (DATADIR "/likewise/domainjoin-gtk.glade")
+#define DOMAINJOIN_XML (DATADIR "/domainjoin-gtk.glade")
 
 typedef struct __JOINSTATE
 {
