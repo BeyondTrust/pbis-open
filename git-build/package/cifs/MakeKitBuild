@@ -71,6 +71,16 @@ make()
     mk_rpm_enabled && package_rpm
 }
 
+lw_use_bundled()
+{
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
+
+    return 1
+}
+
 common_files()
 {
     mk_package_files \
