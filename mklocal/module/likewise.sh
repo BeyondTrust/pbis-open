@@ -68,7 +68,13 @@ lw_check_iconv()
 
     if ! mk_check_cache ICONV_IN_TYPE
     then
-        if [ "$HAVE_LIB_ICONV" = "internal" ] || mk_check_function \
+        # GNU libiconv attempts to mimic the prototype
+        # of the system iconv() function, or falls back
+        # on char** if it could not find one.  Even if
+        # we build libiconv ourselves, we still need to
+        # perform these checks so we know what prototype it
+        # will use.
+        if mk_check_function \
             PROTOTYPE='size_t iconv (iconv_t, char **, size_t *, char **, size_t*)' \
             HEADERDEPS="iconv.h stddef.h" \
             LIBDEPS="$LIB_ICONV"
@@ -80,6 +86,12 @@ lw_check_iconv()
             LIBDEPS="$LIB_ICONV"
         then
             result="const char**"
+        elif [ "$HAVE_LIB_ICONV" = "internal" ]
+        then
+            # We didn't find either function, but
+            # we build libiconv ourselves, so it
+            # should fall back on char**
+            result="char**"
         else
             mk_fail "could not find usable iconv() function"
         fi
