@@ -230,6 +230,22 @@ option()
             then
                 _default_MK_BUILD_DISTRO="`lsb_release -si | tr 'A-Z' 'a-z'`"
                 _default_MK_BUILD_DISTRO_VERSION="`lsb_release -sr | tr 'A-Z' 'a-z'`"
+            elif [ -f /etc/redhat-release ]
+            then
+                case "`cat /etc/redhat-release`" in
+                    "Fedora"*)
+                        _default_MK_BUILD_DISTRO="fedora"
+                        _default_MK_BUILD_DISTRO_VERSION="`cat /etc/redhat-release | awk '{print $3;}'`"
+                        ;;
+                    "Red Hat Enterprise Linux"*)
+                        _default_MK_BUILD_DISTRO="rhel"
+                        _default_MK_BUILD_DISTRO_VERSION="`cat /etc/redhat-release | awk '{print $7;}'`"
+                        ;;
+                    *)
+                        _default_MK_BUILD_DISTRO="redhat"
+                        _default_MK_BUILD_DISTRO_VERSION="unknown"
+                        ;;
+                esac
             else
                 _default_MK_BUILD_DISTRO="unknown"
                 _default_MK_BUILD_DISTRO_VERSION="unknown"
@@ -282,7 +298,7 @@ option()
         HELP="Build operating system distribution version"
 
     case "$MK_BUILD_DISTRO" in
-        centos|redhat|fedora)
+        centos|redhat|fedora|rhel)
             _distro_archetype="redhat"
             ;;
         debian|ubuntu)

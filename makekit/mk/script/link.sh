@@ -32,38 +32,38 @@ combine_libtool_flags()
 {
     for _lib in ${COMBINED_LIBDEPS}
     do
-	for _path in ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -L/usr/lib -L/lib
-	do
-	    case "$_path" in
-		"-L"*)
-		    if [ -e "${_path#-L}/lib${_lib}.la" ]
-		    then
-			unset dependency_libs
-			mk_safe_source "${_path#-L}/lib${_lib}.la" || mk_fail "could not read libtool archive"
-			for _dep in ${dependency_libs}
-			do
-			    case "$_dep" in
-				"${MK_LIBDIR}"/*.la)
-				    _dep="${_dep##*/}"
-				    _dep="${_dep#lib}"
-				    _mk_contains "${_dep%.la}" ${COMBINED_LIBDEPS} ||
-				    COMBINED_LIBDEPS="${COMBINED_LIBDEPS} ${_dep%.la}" 
-				    ;;
-				"-l"*)
-				    _mk_contains "${_dep#-l}" ${COMBINED_LIBDEPS} ||
-				    COMBINED_LIBDEPS="${COMBINED_LIBDEPS} ${_dep#-l}"
-				    ;;
-				"-L"*)
-				    _mk_contains "${_dep}" ${COMBINED_LDFLAGS} ||
-				    COMBINED_LDFLAGS="$COMBINED_LDFLAGS $_dep"
-				    ;;
-			    esac
-			done
-			break
-		    fi
-		    ;;
-	    esac
-	done
+        for _path in ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -L/usr/lib -L/lib
+        do
+            case "$_path" in
+                "-L"*)
+                    if [ -e "${_path#-L}/lib${_lib}.la" ]
+                    then
+                        unset dependency_libs
+                        mk_safe_source "${_path#-L}/lib${_lib}.la" || mk_fail "could not read libtool archive"
+                        for _dep in ${dependency_libs}
+                        do
+                            case "$_dep" in
+                                "${MK_LIBDIR}"/*.la)
+                                    _dep="${_dep##*/}"
+                                    _dep="${_dep#lib}"
+                                    _mk_contains "${_dep%.la}" ${COMBINED_LIBDEPS} ||
+                                    COMBINED_LIBDEPS="${COMBINED_LIBDEPS} ${_dep%.la}" 
+                                    ;;
+                                "-l"*)
+                                    _mk_contains "${_dep#-l}" ${COMBINED_LIBDEPS} ||
+                                    COMBINED_LIBDEPS="${COMBINED_LIBDEPS} ${_dep#-l}"
+                                    ;;
+                                "-L"*)
+                                    _mk_contains "${_dep}" ${COMBINED_LDFLAGS} ||
+                                    COMBINED_LDFLAGS="$COMBINED_LDFLAGS $_dep"
+                                    ;;
+                            esac
+                        done
+                        break
+                    fi
+                    ;;
+            esac
+        done
     done
 }
 
@@ -74,9 +74,9 @@ create_libtool_archive()
     mk_msg_verbose "$LA"
     
     {
-	mk_quote "-L${RPATH_LIBDIR} $_LIBS"
-	echo "# Created by MakeKit"
-	echo "dependency_libs=$result"
+        mk_quote "-L${RPATH_LIBDIR} $_LIBS"
+        echo "# Created by MakeKit"
+        echo "dependency_libs=$result"
     } > "${MK_STAGE_DIR}${MK_LIBDIR}/$LA" || mk_fail "could not write $LA"
 }
 
@@ -117,21 +117,21 @@ done
 
 case "${MK_OS}" in
     linux|freebsd)
-	COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-rpath,${RPATH_LIBDIR} -Wl,-rpath-link,${LINK_LIBDIR}"
-	;;
+        COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-rpath,${RPATH_LIBDIR} -Wl,-rpath-link,${LINK_LIBDIR}"
+        ;;
     solaris)
-	COMBINED_LDFLAGS="$COMBINED_LDFLAGS -R${RPATH_LIBDIR}"
-	
-	if [ "$MODE" = "library" ]
-	then
-	    COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-z,defs -Wl,-z,text"
-	    COMBINED_LIBDEPS="$COMBINED_LIBDEPS c"
-	fi
+        COMBINED_LDFLAGS="$COMBINED_LDFLAGS -R${RPATH_LIBDIR}"
+        
+        if [ "$MODE" = "library" ]
+        then
+            COMBINED_LDFLAGS="$COMBINED_LDFLAGS -Wl,-z,defs -Wl,-z,text"
+            COMBINED_LIBDEPS="$COMBINED_LIBDEPS c"
+        fi
 
-	# The solaris linker is anal retentive about implicit shared library dependencies,
-	# so use available libtool .la files to add implicit dependencies to the link command
-	combine_libtool_flags
-	;;
+        # The solaris linker is anal retentive about implicit shared library dependencies,
+        # so use available libtool .la files to add implicit dependencies to the link command
+        combine_libtool_flags
+        ;;
 esac
 
 for lib in ${COMBINED_LIBDEPS}
@@ -143,20 +143,20 @@ done
 
 case "$MODE" in
     library|dlo)
-	create_libtool_archive
-	;;
+        create_libtool_archive
+        ;;
 esac
 
 mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
 
 case "$MODE" in
     library)
-	mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
-	;;
+        mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        ;;
     dlo)
-	mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
-	;;
+        mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        ;;
     program)
-	mk_run_or_fail ${MK_CC} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
-	;;
+        mk_run_or_fail ${MK_CC} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
+        ;;
 esac

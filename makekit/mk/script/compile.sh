@@ -37,7 +37,14 @@ INCLUDE_CPPFLAGS=""
 
 for _dir in ${INCLUDEDIRS}
 do
-    INCLUDE_CPPFLAGS="$INCLUDE_CPPFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/$_dir -I${MK_OBJECT_DIR}${MK_SUBDIR}/$_dir"
+    case "$_dir" in
+        /*)
+            INCLUDE_CPPFLAGS="$INCLUDE_CPPFLAGS -I${MK_STAGE_DIR}$_dir"
+            ;;
+        *)
+            INCLUDE_CPPFLAGS="$INCLUDE_CPPFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/$_dir -I${MK_OBJECT_DIR}${MK_SUBDIR}/$_dir"
+            ;;
+    esac
 done
 
 MK_MSG_DOMAIN="compile"

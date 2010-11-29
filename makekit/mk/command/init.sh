@@ -57,23 +57,23 @@ init_parse_params()
 {
     while [ "$#" -gt 0 ]
     do
-	_param="$1"
-	shift
-	case "$_param" in
-	    --help|-h)
-		OPTION_HELP=yes
-		;;
-	    -s)
-		OPTION_SYMLINK=yes
-		;;
-	    -f)
-		OPTION_FORCE=yes
-		;;
-	    *)
-		init_usage
-		exit 1
-		;;
-	esac
+        _param="$1"
+        shift
+        case "$_param" in
+            --help|-h)
+                OPTION_HELP=yes
+                ;;
+            -s)
+                OPTION_SYMLINK=yes
+                ;;
+            -f)
+                OPTION_FORCE=yes
+                ;;
+            *)
+                init_usage
+                exit 1
+                ;;
+        esac
     done
 }
 
@@ -81,19 +81,19 @@ do_install()
 {
     if [ "$OPTION_FORCE" = "yes" ]
     then
-	if [ -e "$2" ]
-	then
-	    rm -rf "$2"
-	fi
+        if [ -e "$2" ]
+        then
+            rm -rf "$2"
+        fi
     fi
     
     [ -e "$2" ] && return 0
 
     if [ "$OPTION_SYMLINK" = "yes" ]
     then
-	ln -s "$1" "$2" || mk_fail "could not symlink $1 to $2"
+        ln -s "$1" "$2" || mk_fail "could not symlink $1 to $2"
     else
-	cp -r "$1" "$2" || mk_fail "could not copy $1 to $2"
+        cp -r "$1" "$2" || mk_fail "could not copy $1 to $2"
     fi
 }
 

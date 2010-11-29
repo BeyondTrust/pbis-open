@@ -159,8 +159,8 @@ done'
     {
         eval "_MK_VAR_${_MK_VAR_SP}__MK_VARS=\"\$_MK_VARS\""
         _MK_VARS=""
-	for ___var in "$@"
-	do
+        for ___var in "$@"
+        do
             case "$___var" in
                 *=*)
                     eval "_MK_VAR_${_MK_VAR_SP}_${___var%%=*}=\"\$${___var%%=*}\""
@@ -169,24 +169,24 @@ done'
                     ;;
                 *)
                     eval "_MK_VAR_${_MK_VAR_SP}_${___var}=\"\$${___var}\""
-	            unset "$___var"
+                    unset "$___var"
                     _MK_VARS="$_MK_VARS $___var"
                     ;;
             esac
-	done
-	
-	_MK_VAR_SP=$(( $_MK_VAR_SP + 1 ))
+        done
+        
+        _MK_VAR_SP=$(( $_MK_VAR_SP + 1 ))
     }
     
     mk_pop_vars()
     {
-	_MK_VAR_SP=$(( $_MK_VAR_SP - 1 ))
+        _MK_VAR_SP=$(( $_MK_VAR_SP - 1 ))
 
-	for ___var in ${_MK_VARS} _MK_VARS
-	do
-	    eval "$___var=\"\$_MK_VAR_${_MK_VAR_SP}_${___var}\""
-	    unset "_MK_VAR_${_MK_VAR_SP}_${___var}"
-	done
+        for ___var in ${_MK_VARS} _MK_VARS
+        do
+            eval "$___var=\"\$_MK_VAR_${_MK_VAR_SP}_${___var}\""
+            unset "_MK_VAR_${_MK_VAR_SP}_${___var}"
+        done
     }
 fi
 
@@ -370,9 +370,9 @@ mk_safe_source()
             
     if [ -f "$1" ]
     then
-	. "$1"
+        . "$1"
     else
-	return 1
+        return 1
     fi
 }
 
@@ -403,7 +403,7 @@ mk_mkdir()
 {
     for __dir in "$@"
     do
-	mkdir -p "$__dir" || mk_fail "Could not create directory: $__dir"
+        mkdir -p "$__dir" || mk_fail "Could not create directory: $__dir"
     done
 }
 
@@ -471,30 +471,30 @@ _mk_define_name()
 
     while [ -n "$__rem" ]
     do
-	# This little dance sets __char to the first character of
-	# the string and __rem to the rest of it
-	__rem2="${__rem#?}"
-	__char="${__rem%"$__rem2"}"
-	__rem="$__rem2"
-	
-	case "$__char" in
-	    # Convert lowercase letters to uppercase
-	    a) __char="A";; h) __char="H";; o) __char="O";; v) __char="V";;
-	    b) __char="B";; i) __char="I";; p) __char="P";; w) __char="W";; 
-	    c) __char="C";; j) __char="J";; q) __char="Q";; x) __char="X";; 
-	    d) __char="D";; k) __char="K";; r) __char="R";; y) __char="Y";; 
-	    e) __char="E";; l) __char="L";; s) __char="S";; z) __char="Z";; 
-	    f) __char="F";; m) __char="M";; t) __char="T";;
-	    g) __char="G";; n) __char="N";; u) __char="U";;
-	    # Leave uppercase letters and numbers alone
-	    A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|T|S|U|V|W|X|Y|Z|1|2|3|4|5|6|7|8|9) :;;
-	    # Convert * to P
-	    \*) __char="P";;
-	    # Convert everything else to _
-	    *) __char="_";;
-	esac
+        # This little dance sets __char to the first character of
+        # the string and __rem to the rest of it
+        __rem2="${__rem#?}"
+        __char="${__rem%"$__rem2"}"
+        __rem="$__rem2"
+        
+        case "$__char" in
+            # Convert lowercase letters to uppercase
+            a) __char="A";; h) __char="H";; o) __char="O";; v) __char="V";;
+            b) __char="B";; i) __char="I";; p) __char="P";; w) __char="W";; 
+            c) __char="C";; j) __char="J";; q) __char="Q";; x) __char="X";; 
+            d) __char="D";; k) __char="K";; r) __char="R";; y) __char="Y";; 
+            e) __char="E";; l) __char="L";; s) __char="S";; z) __char="Z";; 
+            f) __char="F";; m) __char="M";; t) __char="T";;
+            g) __char="G";; n) __char="N";; u) __char="U";;
+            # Leave uppercase letters and numbers alone
+            A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|T|S|U|V|W|X|Y|Z|1|2|3|4|5|6|7|8|9) :;;
+            # Convert * to P
+            \*) __char="P";;
+            # Convert everything else to _
+            *) __char="_";;
+        esac
 
-	result="${result}${__char}"
+        result="${result}${__char}"
     done
 }
 
@@ -515,18 +515,18 @@ _mk_slashless_name()
 
     while [ -n "$__rem" ]
     do
-	__rem2="${__rem#?}"
-	__char="${__rem%"$__rem2"}"
-	__rem="$__rem2"
-	
-	case "$__char" in
-	    # Convert / to _
-	    /) __char="_";;
-	    # Leave everything else alone
-	    *) :;;
-	esac
+        __rem2="${__rem#?}"
+        __char="${__rem%"$__rem2"}"
+        __rem="$__rem2"
+        
+        case "$__char" in
+            # Convert / to _
+            /) __char="_";;
+            # Leave everything else alone
+            *) :;;
+        esac
 
-	result="${result}${__char}"
+        result="${result}${__char}"
     done
 }
 
@@ -547,23 +547,23 @@ mk_quote()
     __rem="$1"
     while true
     do
-	# Get the largest prefix of the remaining string that
-	# does not contain any single quotes
-	__prefix="${__rem%%\'*}"
+        # Get the largest prefix of the remaining string that
+        # does not contain any single quotes
+        __prefix="${__rem%%\'*}"
 
-	# If this was not the remainder of the string itself,
-	# we still have work to do...
-	if [ "$__prefix" != "$__rem" ]
-	then
-	    # Append the prefix along with the escape sequence for a single quote
-	    result="${result}${__prefix}'\\''"
-	    # Strip the single quote from the remaining string
-	    __rem="${__rem#*\'}"
-	else
-	    # We are done!
-	    result="${result}${__rem}"
-	    break
-	fi
+        # If this was not the remainder of the string itself,
+        # we still have work to do...
+        if [ "$__prefix" != "$__rem" ]
+        then
+            # Append the prefix along with the escape sequence for a single quote
+            result="${result}${__prefix}'\\''"
+            # Strip the single quote from the remaining string
+            __rem="${__rem#*\'}"
+        else
+            # We are done!
+            result="${result}${__rem}"
+            break
+        fi
     done
 
     # Affix enclosing single quotes
@@ -590,8 +590,8 @@ mk_quote_list()
     ___result=""
     for ___item in "$@"
     do
-	mk_quote "$___item"
-	___result="$___result $result"
+        mk_quote "$___item"
+        ___result="$___result $result"
     done
 
     result="${___result# }"
@@ -612,16 +612,16 @@ mk_quote_space()
     __rem="$1"
     while true
     do
-	__prefix="${__rem%%\ *}"
+        __prefix="${__rem%%\ *}"
 
-	if [ "$__prefix" != "$__rem" ]
-	then
-	    result="${result}${__prefix}\\ "
-	    __rem="${__rem#*\ }"
-	else
-	    result="${result}${__rem}"
-	    break
-	fi
+        if [ "$__prefix" != "$__rem" ]
+        then
+            result="${result}${__prefix}\\ "
+            __rem="${__rem#*\ }"
+        else
+            result="${result}${__rem}"
+            break
+        fi
     done
 }
 
@@ -638,8 +638,8 @@ mk_quote_list_space()
     ___result=""
     for ___item in "$@"
     do
-	mk_quote_space "$___item"
-	___result="$___result $result"
+        mk_quote_space "$___item"
+        ___result="$___result $result"
     done
 
     result="${___result# }"
@@ -659,24 +659,24 @@ mk_quote_c_string()
     __rem="$1"
     while true
     do
-	__prefix="${__rem%%[\"\\]*}"
+        __prefix="${__rem%%[\"\\]*}"
 
-	if [ "$__prefix" != "$__rem" ]
-	then
-	    __rem="${__rem#$__prefix}"
-	    case "$__rem" in
-		"\\"*)
-		    result="${result}${__prefix}\\\\"
-		    ;;
-		"\""*)
-		    result="${result}${__prefix}\\\""
-		    ;;
-	    esac
-	    __rem="${__rem#?}"
-	else
-	    result="${result}${__rem}"
-	    break
-	fi
+        if [ "$__prefix" != "$__rem" ]
+        then
+            __rem="${__rem#$__prefix}"
+            case "$__rem" in
+                "\\"*)
+                    result="${result}${__prefix}\\\\"
+                    ;;
+                "\""*)
+                    result="${result}${__prefix}\\\""
+                    ;;
+            esac
+            __rem="${__rem#?}"
+        else
+            result="${result}${__rem}"
+            break
+        fi
     done
 
     result="\"${result}\""
@@ -706,8 +706,8 @@ mk_expand_pathnames()
     
     for ___item in "$@"
     do
-	mk_quote "$___item"
-	___result="$___result $result"
+        mk_quote "$___item"
+        ___result="$___result $result"
     done
     result="${___result# }"
 }
@@ -741,27 +741,27 @@ mk_expand_absolute_pathnames()
 
     for ___item in "$@"
     do
-	# Prefix with .
-	# For example, /usr/bin/* becomes ./usr/bin/*
-	___item=".${___item}"
-	# Now we can actually expand the pattern
-	# First, make IFS empty to prevent field splitting
-	___ifs="$IFS"
-	IFS=""
-	# Set $@ to the expansion.  Note that this doesn't
-	# interfere with the outer for loop
-	set -- ${___item}
-	# Restore IFS
-	IFS="$___ifs"
+        # Prefix with .
+        # For example, /usr/bin/* becomes ./usr/bin/*
+        ___item=".${___item}"
+        # Now we can actually expand the pattern
+        # First, make IFS empty to prevent field splitting
+        ___ifs="$IFS"
+        IFS=""
+        # Set $@ to the expansion.  Note that this doesn't
+        # interfere with the outer for loop
+        set -- ${___item}
+        # Restore IFS
+        IFS="$___ifs"
 
-	# Now iterate over each match
-	for ___item in "$@"
-	do
-	    # Strip the leading . we added
-	    mk_quote "${___item#.}"
-	    ___result="$___result $result"
-	done
-	IFS=""
+        # Now iterate over each match
+        for ___item in "$@"
+        do
+            # Strip the leading . we added
+            mk_quote "${___item#.}"
+            ___result="$___result $result"
+        done
+        IFS=""
     done
 
     # Go back home
@@ -793,22 +793,22 @@ mk_normalize_path()
     
     for __path_item in "$@"
     do
-	case "$__path_item" in
-	    '.')
-		continue;
-		;;
-	    '..')
-		if [ -z "$result" ]
-		then
-		    result="/.."
-		else
-		    result="${result%/*}"
-		fi
-		;;
-	    *)
-		result="${result}/${__path_item}"
-		;;
-	esac
+        case "$__path_item" in
+            '.')
+                continue;
+                ;;
+            '..')
+                if [ -z "$result" ]
+                then
+                    result="/.."
+                else
+                    result="${result%/*}"
+                fi
+                ;;
+            *)
+                result="${result}/${__path_item}"
+                ;;
+        esac
     done
 
     result="${result#/}"
@@ -819,12 +819,12 @@ _mk_find_resource()
 {
     for __dir in ${MK_SEARCH_DIRS}
     do
-	__file="${__dir}/$1"
-	if [ -f "$__file" ]   
-	then
-	    result="$__file"
-	    return 0
-	fi
+        __file="${__dir}/$1"
+        if [ -f "$__file" ]   
+        then
+            result="$__file"
+            return 0
+        fi
     done
 
     return 1
@@ -837,10 +837,10 @@ _mk_contains()
     
     for ___hay in "$@"
     do
-	if [ "$___hay" = "$___needle" ]
-	then
-	    return 0
-	fi
+        if [ "$___hay" = "$___needle" ]
+        then
+            return 0
+        fi
     done
 
     return 1
@@ -851,7 +851,7 @@ _mk_reverse()
     result=""
     for ___item in "$@"
     do
-	result="$___item $result"
+        result="$___item $result"
     done
 
     result="${result% }"

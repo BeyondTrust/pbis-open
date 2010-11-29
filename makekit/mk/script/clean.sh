@@ -32,15 +32,15 @@ do_clean()
 {
     for _target in "$@"
     do
-	case "$_target" in
-	    "${subdir:+$subdir/}"*)
-		if [ -e "$_target" ]
-		then
-		    mk_msg "${_target#${MK_OBJECT_DIR}/}"
-    		    mk_safe_rm "$_target"
-		fi
-		;;
-	esac
+        case "$_target" in
+            "${subdir:+$subdir/}"*)
+                if [ -e "$_target" ]
+                then
+                    mk_msg "${_target#${MK_OBJECT_DIR}/}"
+                        mk_safe_rm "$_target"
+                fi
+                ;;
+        esac
     done
 }
 

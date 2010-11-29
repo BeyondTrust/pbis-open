@@ -41,20 +41,20 @@ _mk_restore_context()
     MK_SUBDIR="$1"
 
     case "$MK_SUBDIR" in
-	":")
-	    MK_MSG_DOMAIN="makekit"
-	    mk_source_or_fail "${MK_ROOT_DIR}/.MakeKitExports"
-	    ;;
-	"")
-	    MK_MSG_DOMAIN="${MK_SOURCE_DIR##*/}"
-	    mk_source_or_fail "${MK_OBJECT_DIR}/.MakeKitExports"
-	    mk_source_or_fail "${MK_SOURCE_DIR}/MakeKitBuild"
-	    ;;
-	*)
-	    MK_MSG_DOMAIN="${MK_SUBDIR#/}"
-	    mk_source_or_fail "${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitExports"
-	    mk_source_or_fail "${MK_SOURCE_DIR}${MK_SUBDIR}/MakeKitBuild"
-	    ;;
+        ":")
+            MK_MSG_DOMAIN="makekit"
+            mk_source_or_fail "${MK_ROOT_DIR}/.MakeKitExports"
+            ;;
+        "")
+            MK_MSG_DOMAIN="${MK_SOURCE_DIR##*/}"
+            mk_source_or_fail "${MK_OBJECT_DIR}/.MakeKitExports"
+            mk_source_or_fail "${MK_SOURCE_DIR}/MakeKitBuild"
+            ;;
+        *)
+            MK_MSG_DOMAIN="${MK_SUBDIR#/}"
+            mk_source_or_fail "${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitExports"
+            mk_source_or_fail "${MK_SOURCE_DIR}${MK_SUBDIR}/MakeKitBuild"
+            ;;
     esac
 
     unset -f configure make option

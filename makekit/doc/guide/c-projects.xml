@@ -453,4 +453,326 @@ make()
       build rule will not be included.
     </important>
   </section>
+  <section xml:id="c-checks">
+    <title>Configuration Tests</title>
+    <para>
+      Most projects of any significant complexity will need to determine how
+      and what source code to build based on the attributes of the host operating
+      system, available libraries, and so forth.  To this end,
+      <productname>MakeKit</productname> provides an array of functions to use in
+      <function>configure()</function> within your <filename>MakeKitBuild</filename>
+      files.
+    </para>
+    <para>
+      The idioms used to configure projects with <productname>MakeKit</productname>
+      are very similar to <command>autoconf</command>'s.  This was an intentional
+      design decision to ease migration.
+    </para>
+    <para>
+      Most configuration tests result in <literal>#define</literal> statements being written
+      into a config header which you can include in your source files to make use of the test
+      results.  You can set the current config header with <function>mk_config_header</function>.
+      You can add <literal>#define</literal> statements to the current config header with
+      <function>mk_define</function>:
+    </para>
+    <example xml:id="c-config-header">
+      <title>Using <function>mk_config_header</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    # Place #defines in include/config.h relative
+    # to location of MakeKitBuild in source tree
+    mk_config_header "include/config.h"
+
+    # Define FOOBAR to 1
+    mk_define FOOBAR 1
+    
+    # Define BUILD_TIME to current time as a string
+    # using UNIX 'date' program
+    mk_define BUILD_TIME "\"`date`\""
+}
+]]></programlisting>
+    </example>
+    <section xml:id="c-check-basics">
+      <title>Test Basics</title>
+      <para>
+	Most configuration checks do one or more of the following:
+      </para>
+      <itemizedlist>
+	<listitem>Display the test being performed to the user</listitem>
+	<listitem>Perform a test using the C compiler</listitem>
+	<listitem>Set a variable with the result of the test</listitem>
+	<listitem>Add a define to the config header with the result of the test</listitem>
+	<listitem>Cache the results to speed up subsequent runs of <filename>configure</filename></listitem>
+	<listitem>Display the result of the test to the user</listitem>
+      </itemizedlist>
+      <para>
+	The names of variables and defines are usually based on the item in question (e.g.
+	the name of the header or library), with a few transformations:
+      </para>
+      <itemizedlist>
+	<listitem>All lowercase letters are converted to uppercase</listitem>
+	<listitem>
+	  All <literal>*</literal> (asterisk) characters are converted to <literal>P</literal>.
+	</listitem>
+	<listitem>All other characters are converted to _.</listitem>
+      </itemizedlist>
+      <para>
+	These rules are the same as those used in <command>autoconf</command>.  Hereafter, a
+	name derived by these rules will be referred to as a <replaceable>varname</replaceable>.
+      </para>
+      <para>
+	Most of the configuration checks have two forms, singular and plural.  The plural
+	form takes a list of items and performs the above steps for each item, and is the
+	most common and convenient way of performing a check.  The singular form takes
+	only a single item has none of the side effects of the plural form.  Instead, it
+	sets the variable <varname>result</varname> to the result of the test, and
+	returns 0 (logical true in shell script) if the test succeeded, and 1 (logical false)
+	otherwise.  This form is useful for writing more elaborate custom tests.
+      </para>
+      <para>
+	Many of the tests have 3 possible results: <literal>internal</literal>,
+	<literal>external</literal>, and <literal>no</literal>.  If the item being
+	checked for is provided by the current project -- for example, checking for
+	a library which is built in a preceding source directory -- the test will
+	trivially succeed with <literal>internal</literal>.  If the item was identified
+	as being provided by the operating system or build environment, such as a system
+	header, the result will be <literal>external</literal>.  If the item was not
+	found, the result will be <literal>no</literal>.
+      </para>
+    </section>
+    <section xml:id="c-check-headers">
+      <title>Checking For Headers</title>
+      <para>
+	To check for the presence of a header on the system, use
+	<function>mk_check_headers</function>.  This function takes
+	a list of header names and tests for the presence and usability
+	of each one by attempting to compile a small program that includes
+	it.  For each header, it will do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Export the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  with the result of the test.
+	</listitem>
+	<listitem>
+	  If the header was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>
+	</listitem>
+      </itemizedlist>
+      <example xml:id="c-mk-check-headers">
+	<title>Using <function>mk_check_headers</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some basic header files
+    mk_check_headers stdio.h stdlib.h string.h does-not-exist.h
+    
+    # On a reasonable system, the following variables will be exported:
+    #
+    # HAVE_STDIO_H=external
+    # HAVE_STDLIB_H=external
+    # HAVE_STRING_H=external
+    # HAVE_DOES_NOT_EXIST_H=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_STDIO_H 1
+    # #define HAVE_STDLIB_H 1
+    # #define HAVE_STRING_H 1
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_header</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-libraries">
+      <title>Checking For Libraries</title>
+      <para>
+	To check for the presence of a library, use <function>mk_check_libraries</function>.
+	For each library name specified, it will test for its presence and usability by
+	attempting to compile and link a test program against it.  For each library
+	it will do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Export the variable <varname>HAVE_LIB_<replaceable>varname</replaceable></varname>
+	  with the result of the test.
+	</listitem>
+	<listitem>
+	  If the test succeeds, export the variable <varname>LIB_<replaceable>varname</replaceable></varname>
+	  with the name of the library exactly as passed to <function>mk_check_libraries</function>.
+	  Otherwise, the variable will be exported as the empty string.  This is useful for conditionally
+	  including the library in a <literal>LIBDEPS=</literal> list to <function>mk_program</function>
+	  and friends.
+	</listitem>
+	<listitem>
+	  If the library was found, define <literal>HAVE_LIB_<replaceable>varname</replaceable></literal>.
+	</listitem>
+      </itemizedlist>
+      <para>
+	Library names should be specified the same way as when linking to them with
+	<function>mk_program</function>, with no <literal>lib</literal> prefix or
+	file extension.
+      </para>
+      <example xml:id="c-mk-check-libraries">
+	<title>Using <function>mk_check_headers</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some common UNIX libraries
+    mk_check_libraries m pthread does-not-exist
+    
+    # On a typical Linux system, the following variables will be exported:
+    #
+    # HAVE_LIB_M=external
+    # HAVE_LIB_PTHREAD=external
+    # HAVE_LIB_DOES_NOT_EXIST=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_STDIO_H 1
+    # #define HAVE_STDLIB_H 1
+    # #define HAVE_STRING_H 1
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_library</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-functions">
+      <title>Checking For Functions</title>
+      <para>
+	<function>mk_check_functions</function> allows you to test for the availability
+	of a list of functions by attempting to compile and link test programs that
+	reference them.  For each function it will then do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Export the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  with the result of the test.  The possible results are <literal>yes</literal>
+	  and <literal>no</literal>.
+	</listitem>
+	<listitem>
+	  If the function was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>.
+	</listitem>
+	<listitem>
+	  If the function was found, define <literal>HAVE_DECL_<replaceable>varname</replaceable></literal>
+	  to 1.  Otherwise, define it to 0.
+	</listitem>
+      </itemizedlist>
+      <para>
+	Unlike <command>autoconf</command>, this check ensures that a declaration
+	of the function was available in addition to the function's symbol being
+	present in a library.  You can use <literal>HEADERDEPS=</literal> and
+	<literal>LIBDEPS=</literal> parameters to <function>mk_check_functions</function>
+	to specify header files and libraries that are necessary for the function
+	to be found.
+      </para>
+      <para>
+	Each function can be specified as a simple name, or as a full function prototype
+	in C syntax.  In the second case, <productname>MakeKit</productname> will verify
+	that the function exists and has a compatible prototype.  Bear in mind that
+	the resulting variable/define name will reflect any whitespace in your prototype.
+      </para>
+	<example xml:id="c-mk-check-functions">
+	<title>Using <function>mk_check_functions</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some functions in libm
+    mk_check_functions \
+        HEADERDEPS="math.h" \
+        LIBDEPS="m" \
+        sin cos "double sqrt(double)" does_not_exist
+    
+    # On a typical UNIX system, the following variables will be exported:
+    #
+    # HAVE_SIN=yes
+    # HAVE_COS=yes
+    # HAVE_DOUBLE_SQRT__DOUBLE_=yes
+    # HAVE_DOES_NOT_EXIST=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_SIN 1
+    # #define HAVE_COS 1
+    # #define HAVE_DOUBLE_SQRT__DOUBLE_ 1
+    # #define HAVE_DECL_SIN 1
+    # #define HAVE_DECL_COS 1
+    # #define HAVE_DECL_DOUBLE_SQRT__DOUBLE_ 1
+    # #define HAVE_DECL_DOES_NOT_EXIST 0
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_function</function>.
+      </para>
+    </section>
+    <section xml:id="c-check-types">
+      <title>Checking For Types</title>
+      <para>
+	<function>mk_check_types</function> allows you to test for the availability
+	of a list of types by attempting to compile test programs that reference them.
+	For each type it will then do the following:
+      </para>
+      <itemizedlist>
+	<listitem>
+	  Export the variable <varname>HAVE_<replaceable>varname</replaceable></varname>
+	  with the result of the test.  The possible results are <literal>yes</literal>
+	  and <literal>no</literal>.
+	</listitem>
+	<listitem>
+	  If the type was found, define <literal>HAVE_<replaceable>varname</replaceable></literal>.
+	</listitem>
+      </itemizedlist>
+      <para>
+	You can use a <literal>HEADERDEPS=</literal> parameter to
+	<function>mk_check_functions</function> to specify header
+	files necessary to find the type definition.
+      </para>
+      <example xml:id="c-mk-check-types">
+	<title>Using <function>mk_check_types</function></title>
+<programlisting><![CDATA[
+configure()
+{
+    mk_config_header "include/config.h"
+
+    # Check for some types in stdlib.h and inttypes.h
+    mk_check_types \
+        HEADERDEPS="stdlib.h inttypes.h" \
+        size_t int64_t uint64_t does_not_exist_t
+    
+    # On a typical UNIX system, the following variables will be exported:
+    #
+    # HAVE_SIZE_T=yes
+    # HAVE_INT64_T=yes
+    # HAVE_UINT64_T=yes
+    # HAVE_DOES_NOT_EXIST_T=no
+    #
+    # The following defines will be written into config.h:
+    #
+    # #define HAVE_SIZE_T
+    # #define HAVE_INT64_T
+    # #define HAVE_UINT64_T
+    # #define HAVE_DOES_NOT_EXIST_T
+}
+]]></programlisting>
+      </example>
+      <para>
+	If these side effects are undesirable, you can use the singular form
+	<function>mk_check_type</function>.
+      </para>
+    </section>
+  </section>
 </chapter>

@@ -31,6 +31,12 @@
 #
 # makekit -- main script
 #
+# This script is merely a wrapper over the individual commands
+# in the mk/command subdirectory.  Its job is to:
+# 
+# - Find the mk directory
+# - Find a fast, POSIX-compliant shell
+# - Run the actual command
 ##
 
 MK_DEFAULT_HOME="@MK_DEFAULT_HOME@"
@@ -54,14 +60,29 @@ else
     exit 1
 fi
 
-SHELL_CANDIDATES="\
-    $MK_SHELL \
-    /bin/dash \
-    /bin/bash \
-    /usr/bin/bash \
-    /usr/local/bin/bash \
-    /usr/xpg4/bin/sh \
-    /bin/sh"
+SHELL_CANDIDATES="$MK_SHELL"
+
+if test "`uname`" = "FreeBSD"
+then
+    # FreeBSD /bin/sh is POSIX-compliant and fast,
+    # so only prefer dash over it
+    SHELL_CANDIDATES="\
+        $SHELL_CANDIDATES \
+        /usr/local/bin/dash \
+        /bin/sh"
+else
+    # Try dash, then bash, then xpg4 sh, then /bin/sh
+    # as a last resort
+    SHELL_CANDIDATES="\
+        $MK_SHELL \
+        /bin/dash \
+        /usr/local/bin/dash \
+        /bin/bash \
+        /usr/bin/bash \
+        /usr/local/bin/bash \
+        /usr/xpg4/bin/sh \
+        /bin/sh"
+fi
 
 for _shell in ${SHELL_CANDIDATES}
 do

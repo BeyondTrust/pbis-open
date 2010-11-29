@@ -93,9 +93,9 @@ mk_docbook_html()
     mk_parse_params
 
     mk_target \
-	TARGET="${INSTALLDIR}" \
-	DEPS="$DEPS $SOURCE" \
-	_mk_docbook '$@/' "&$SOURCE" "&$STYLESHEET"
+        TARGET="${INSTALLDIR}" \
+        DEPS="$DEPS $SOURCE $STYLESHEET" \
+        _mk_docbook '$@/' "&$SOURCE" "&$STYLESHEET"
 
     mk_add_all_target "$result"
 
@@ -119,9 +119,9 @@ mk_docbook_man()
     mk_parse_params
 
     mk_target \
-	TARGET="${SOURCE}.docbook-man" \
-	DEPS="$DEPS $SOURCE" \
-	_mk_docbook '$@/' "&$SOURCE" "&$STYLESHEET"
+        TARGET="${SOURCE}.docbook-man" \
+        DEPS="$DEPS $SOURCE" \
+        _mk_docbook '$@/' "&$SOURCE" "&$STYLESHEET"
     man_output="$result"
 
     mk_unquote_list "$MANPAGES"
@@ -152,10 +152,10 @@ _mk_docbook()
     mk_msg "${1#${MK_STAGE_DIR}}"
     mk_mkdir "${1%/*}"
     mk_run_or_fail \
-	"${XSLTPROC}" \
-	--xinclude \
-	--output "$1" \
-	"$3" \
-	"$2"
+        "${XSLTPROC}" \
+        --xinclude \
+        --output "$1" \
+        "$3" \
+        "$2"
     mk_run_or_fail touch "$1"
 }

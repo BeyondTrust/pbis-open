@@ -32,7 +32,7 @@ for _target in "$@"
 do
     if [ -e "$_target" ]
     then
-	mk_msg "${_target}"
-    	mk_safe_rm "$_target"
+        mk_msg "${_target}"
+        mk_safe_rm "$_target"
     fi
 done

@@ -50,12 +50,12 @@ _mk_invoke_moonunit_stub()
     mk_msg "${__output#${MK_OBJECT_DIR}/}"
 
     if ! ${MOONUNIT_STUB} \
-	CPPFLAGS="$MK_CPPFLAGS $CPPFLAGS -I${MK_STAGE_DIR}${MK_INCLUDEDIR}" \
-	-o "$__output" \
-	"$@"
+        CPPFLAGS="$MK_CPPFLAGS $CPPFLAGS -I${MK_STAGE_DIR}${MK_INCLUDEDIR}" \
+        -o "$__output" \
+        "$@"
     then
-	rm -f "$__output"
-	mk_fail "moonunit-stub failed"
+        rm -f "$__output"
+        mk_fail "moonunit-stub failed"
     fi
 
     mk_pop_vars
@@ -67,7 +67,7 @@ mk_moonunit()
 {
     if [ "$HAVE_MOONUNIT" = no ]
     then
-	return 0
+        return 0
     fi
 
     mk_push_vars DLO SOURCES CPPFLAGS CFLAGS LDFLAGS HEADERS LIBDIRS INCLUDEDIRS LIBDEPS HEADERDEPS GROUPS DEPS
@@ -76,42 +76,42 @@ mk_moonunit()
     unset _CPPFLAGS _rsources _deps
 
     case "$DLO" in
-	*)
-	    _stub="${DLO}-stub.c"
-	    ;;
+        *)
+            _stub="${DLO}-stub.c"
+            ;;
     esac
 
     for _dir in ${INCLUDEDIRS}
     do
-	_CPPFLAGS="$_CPPFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/${_dir} -I${MK_OBJECT_DIR}${MK_SUBDIR}/${_dir}"
+        _CPPFLAGS="$_CPPFLAGS -I${MK_SOURCE_DIR}${MK_SUBDIR}/${_dir} -I${MK_OBJECT_DIR}${MK_SUBDIR}/${_dir}"
     done
 
     for _header in ${HEADERDEPS}
     do
-	_deps="$_deps '${MK_INCLUDEDIR}/${_header}'"
+        _deps="$_deps '${MK_INCLUDEDIR}/${_header}'"
     done
 
     mk_target \
-	TARGET="$_stub" \
-	DEPS="$SOURCES $_deps" \
-	_mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
+        TARGET="$_stub" \
+        DEPS="$SOURCES $_deps" \
+        _mk_invoke_moonunit_stub CPPFLAGS="$_CPPFLAGS $CPPFLAGS $MK_CPPFLAGS" '$@' "&$SOURCES"
     
     SOURCES="$SOURCES $_stub"
 
     mk_dlo \
-	INSTALL="no" \
-	DLO="$DLO" \
-	SOURCES="$SOURCES" \
-	HEADERS="$HEADERS" \
-	CPPFLAGS="$CPPFLAGS" \
-	CFLAGS="$CFLAGS" \
-	LDFLAGS="$LDFLAGS" \
-	LIBDIRS="$LIBDIRS" \
-	INCLUDEDIRS="$INCLUDEDIRS" \
-	LIBDEPS="$LIBDEPS" \
-	HEADERDEPS="$HEADERDEPS" \
-	GROUPS="$GROUPS" \
-	DEPS="$DEPS"
+        INSTALL="no" \
+        DLO="$DLO" \
+        SOURCES="$SOURCES" \
+        HEADERS="$HEADERS" \
+        CPPFLAGS="$CPPFLAGS" \
+        CFLAGS="$CFLAGS" \
+        LDFLAGS="$LDFLAGS" \
+        LIBDIRS="$LIBDIRS" \
+        INCLUDEDIRS="$INCLUDEDIRS" \
+        LIBDEPS="$LIBDEPS" \
+        HEADERDEPS="$HEADERDEPS" \
+        GROUPS="$GROUPS" \
+        DEPS="$DEPS"
 
     MK_MOONUNIT_TESTS="$MK_MOONUNIT_TESTS $result"
 
@@ -122,20 +122,20 @@ configure()
 {
     if [ "${MK_BUILD_OS}-${MK_BUILD_ARCH}" != "${MK_HOST_OS}-${MK_HOST_ARCH}" ]
     then
-	mk_msg "moonunit unavailable when cross-compiling"
-	HAVE_MOONUNIT=no
+        mk_msg "moonunit unavailable when cross-compiling"
+        HAVE_MOONUNIT=no
     else
-	mk_check_program moonunit
-	mk_check_program moonunit-stub
-	
-	mk_check_headers HEADERS="moonunit/moonunit.h"
-	
-	if [ -n "$MOONUNIT" -a -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no ]
-	then
-	    HAVE_MOONUNIT=yes
-	else
-	    HAVE_MOONUNIT=no
-	fi
+        mk_check_program moonunit
+        mk_check_program moonunit-stub
+        
+        mk_check_headers HEADERS="moonunit/moonunit.h"
+        
+        if [ -n "$MOONUNIT" -a -n "$MOONUNIT_STUB" -a "$HAVE_MOONUNIT_MOONUNIT_H" != no ]
+        then
+            HAVE_MOONUNIT=yes
+        else
+            HAVE_MOONUNIT=no
+        fi
     fi
     
     mk_msg "moonunit available: $HAVE_MOONUNIT"
@@ -147,11 +147,11 @@ make()
 {
     if [ "$HAVE_MOONUNIT" = yes ]
     then
-	mk_target \
-	    TARGET="@test" \
-	    DEPS="${MK_MOONUNIT_TESTS}" \
-	    mk_run_script moonunit "*${MK_MOONUNIT_TESTS}"
+        mk_target \
+            TARGET="@test" \
+            DEPS="${MK_MOONUNIT_TESTS}" \
+            mk_run_script moonunit "*${MK_MOONUNIT_TESTS}"
 
-	mk_add_phony_target "$result"
+        mk_add_phony_target "$result"
     fi
 }
