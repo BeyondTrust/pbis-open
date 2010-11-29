@@ -192,15 +192,19 @@ make()
 # OpenSSL can't be built with the usual mk_autotools stuff
 lw_openssl()
 {
-    mk_push_vars SOURCEDIR LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS suffix stamp item
+    mk_push_vars SOURCEDIR LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR suffix stamp item
     mk_parse_params
 
     suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
 
-    mk_comment "OpenSSL ($MK_SYSTEM)"
+    mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
 
-    BUILDDIR="${SOURCEDIR}_${suffix}"
+    BUILDDIR="${SOURCEDIR}_${suffix}_build"
     mk_resolve_target "$BUILDDIR"
+    mk_add_clean_target "$result"
+
+    INSTALLDIR="${SOURCEDIR}_${suffix}_install"
+    mk_resolve_target "$INSTALLDIR"
     mk_add_clean_target "$result"
 
     # Emit make target to configure OpenSSL
@@ -212,7 +216,7 @@ lw_openssl()
     mk_target \
         TARGET=".build_openssl_${suffix}" \
         DEPS="$result" \
-        build_openssl '$@' "&${BUILDDIR}" '$(MAKE)'
+        build_openssl '$@' "&${INSTALLDIR}" "&${BUILDDIR}" '$(MAKE)'
 
     stamp="$result"
 
@@ -314,14 +318,15 @@ configure_openssl()
 build_openssl()
 {
     # $1 = stamp file
-    # $2 = build directory
-    # $3 = make command
+    # $2 = install directory
+    # $3 = build directory
+    # $4 = make command
 
     MK_MSG_DOMAIN="build"
 
     old_pwd="$PWD"
     
-    mk_cd_or_fail "$2"
+    mk_cd_or_fail "$3"
 
     mk_msg "begin openssl ($MK_SYSTEM)"
 
@@ -331,9 +336,24 @@ build_openssl()
     unset MAKE MFLAGS MAKEFLAGS
     export MAKE MFLAGS MAKEFLAGS
     
-    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" CC="${MK_CC}"
-    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" INSTALL_PREFIX="${MK_ROOT_DIR}/${MK_STAGE_DIR}" install_sw
+    # Build it
+    mk_run_quiet_or_fail ${4} MAKE="$4" CC="${MK_CC}"
+
+    # Install into temporary install area
+    mk_mkdir "${MK_ROOT_DIR}/$2"
+    mk_run_quiet_or_fail ${4} MAKE="$4" INSTALL_PREFIX="${MK_ROOT_DIR}/$2" install_sw
+
+    # Go back to build root
     mk_cd_or_fail "$old_pwd"
+
+    # Move bits we want into staging area
+    mk_mkdir "${MK_STAGE_DIR}${MK_LIBDIR}"
+    mk_run_or_fail mv -f "${2}${MK_PREFIX}/lib/"*.* "${MK_STAGE_DIR}${MK_LIBDIR}"
+
+    mk_mkdir "${MK_STAGE_DIR}${MK_INCLUDEDIR}/openssl"
+    mk_run_or_fail mv -f "${2}${MK_PREFIX}/include/openssl/"* "${MK_STAGE_DIR}${MK_INCLUDEDIR}/openssl"
+    
+    # Touch stamp file
     mk_run_or_fail touch "$1"
 
     mk_msg "end openssl ($MK_SYSTEM)"
