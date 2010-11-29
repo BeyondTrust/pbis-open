@@ -24,11 +24,25 @@ lw_use_bundled()
     return 1
 }
 
+lw_filter_bundled()
+{
+    __needle="$1"
+    set -- ${LW_BUNDLED}
+    unset LW_BUNDLED
+    for i
+    do
+        if [ "$i" != "$__needle" ]
+        then
+            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+        fi
+    done
+}
+
 option()
 {
     case "${MK_HOST_OS}" in
         linux)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt"
             ;;
         *)
             default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
@@ -38,9 +52,28 @@ option()
     mk_option \
         OPTION=lw-bundled-libs \
         PARAM='...' \
-        VAR=LW_BUNDLED \
+        VAR=_LW_BUNDLED \
         DEFAULT="$default_bundled" \
         HELP="Use bundled libraries"
+
+    unset LW_BUNDLED
+    
+    for i in ${_LW_BUNDLED}
+    do
+        case "$i" in
+            +*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i#+}"
+                ;;
+            -*)
+                [ -z "$LW_BUNDLED" ] && LW_BUNDLED="$default_bundled"
+                lw_filter_bundled "${i#-}"
+                ;;
+            *)
+                LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
+                ;;
+        esac
+    done
 }
 
 configure()
@@ -48,6 +81,7 @@ configure()
     mk_export LW_VENDOR="likewise"
     mk_export LW_PRODUCT="platform"
     mk_export LW_VERSION="6.1.0"
+    mk_export LW_BUNDLED
     
     mk_msg "configuring $LW_VENDOR $LW_PRODUCT $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
