@@ -28,10 +28,10 @@ option()
 {
     case "${MK_HOST_OS}" in
         linux)
-            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt"
+            default_bundled="libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
             ;;
         *)
-            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt"
+            default_bundled="libiconv libuuid krb5 cyrus-sasl openldap sqlite openssl curl popt libxml2"
             ;;
     esac
 
@@ -138,6 +138,24 @@ make()
         HEADERS="popt.h" \
         LIBS="popt" \
         --disable-nls
+
+    # libxml2 likes to put headers in weird places
+    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
+
+    lw_use_bundled libxml2 && mk_autotools \
+        SOURCEDIR=libxml2 \
+        HEADERS="${XML_INCDIR}/libxml/tree.h \
+                 ${XML_INCDIR}/libxml/xpath.h \
+                 ${XML_INCDIR}/libxml/parser.h \
+                 ${XML_INCDIR}/libxml/xpathInternals.h" \
+        LIBS="xml2" \
+        -- \
+        --with-iconv=no \
+        --with-zlib=no \
+        --with-http=no \
+        --with-ftp=no \
+        --enable-ipv6=no \
+        --with-python=no
 }
 
 # OpenSSL can't be built with the usual mk_autotools stuff

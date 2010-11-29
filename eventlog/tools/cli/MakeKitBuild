@@ -3,7 +3,8 @@ make()
     mk_program \
 	PROGRAM=lw-eventlog-cli \
 	SOURCES="evtparser.c xmllookup.c main.c" \
-	INCLUDEDIRS=". ../../include" \
+	INCLUDEDIRS=". ../../include $LIBXML2_INCLUDEDIRS" \
+        CFLAGS="$LIBXML2_CFLAGS" \
         CPPFLAGS="$LIBXML2_CPPFLAGS" \
         LDFLAGS="$LIBXML2_LDFLAGS" \
 	HEADERDEPS="wc16printf.h dce/rpc.h lwadvapi.h popt.h $LIBXML2_HEADERDEPS" \
