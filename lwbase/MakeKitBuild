@@ -85,7 +85,6 @@ configure()
     mk_check_functions \
         HEADERDEPS="pthread.h pthread_np.h wchar.h" \
         LIBDEPS="$LIB_PTHREAD" \
-        CPPFLAGS="-D_GNU_SOURCE" \
         pthread_setaffinity_np pthread_attr_setaffinity_np wcscasecmp
 
     mk_check_functions \
