@@ -227,8 +227,7 @@ typedef struct _LW_GUID {
 #define LW_PTR_OFFSET(BasePointer, Pointer) LwRtlPointerToOffset(BasePointer, Pointer)
 #define LW_PTR_ADD(Pointer, Offset) LwRtlOffsetToPointer(Pointer, Offset)
 
-#define LW_FIELD_OFFSET(Type, Field) \
-    ((size_t)(&(((Type*)(0))->Field)))
+#define LW_FIELD_OFFSET(Type, Field) offsetof(Type, Field)
 
 #define LW_FIELD_SIZE(Type, Field) \
     (sizeof(((Type*)(0))->Field))
