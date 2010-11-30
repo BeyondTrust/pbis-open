@@ -336,8 +336,16 @@ build_openssl()
     unset MAKE MFLAGS MAKEFLAGS
     export MAKE MFLAGS MAKEFLAGS
     
+    if [ "$MK_HOST_OS" = "linux" ]
+    then
+        # Ensure executable stack bit is not set in resulting library
+        CC="$MK_CC -Wa,--noexecstack"
+    else
+        CC="$MK_CC"
+    fi
+
     # Build it
-    mk_run_quiet_or_fail ${4} MAKE="$4" CC="${MK_CC}"
+    mk_run_quiet_or_fail ${4} MAKE="$4" CC="${CC}"
 
     # Install into temporary install area
     mk_mkdir "${MK_ROOT_DIR}/$2"
