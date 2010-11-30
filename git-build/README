@@ -21,7 +21,7 @@ We hope you find this software useful.
 Instructions on building likewise-open
 ======================================
 
-The likewise-open build uses makekit (http://makekit.sourceforge.net)
+The likewise-open build uses makekit (http://mkbuild.sourceforge.net)
 While the code is portable among a variety of *nix based platforms
 (Linux, Solaris, AIX, HP-UX, and OS X), this build system is 
 primarily intended for Linux & FreeBSD platforms.
@@ -60,10 +60,7 @@ packages (depending on your Linux distro):
 The easiest way to begin a build is to run:
 
   $ mkdir debug && cd debug
-  $ ../configure --prefix=/opt/likewise \
-    --lw-configdir=/opt/likewise/share/config \
-    --localstatedir=/var \
-    --sysconfdir=/etc/likewise 
+  $ ../configure --debug
   $ make -jXX package/cifs  ## where XX is 2x CPU cores
 
 This will build the necessary binaries and libraries and package them up into
