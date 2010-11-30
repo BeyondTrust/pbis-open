@@ -1,6 +1,6 @@
-                      =================================
-                      README File for Likewise Open 5.4
-                      =================================
+                      =============================
+                      README File for Likewise Open
+                      =============================
 
 Likewise Open has several goals:
 
@@ -15,72 +15,73 @@ We hope you find this software useful.
 
                                             -- Gerald Carter
                                                Likewise Open Project Lead
-                                               <gcarter@likewiseopen.org.>
+                                               <gcarter@likewise.com>
 
 
 Instructions on building likewise-open
 ======================================
 
-The likewise-open build is driven by a series of shell scripts.
+The likewise-open build uses makekit (http://makekit.sourceforget.net)
 While the code is portable among a variety of *nix based platforms
 (Linux, Solaris, AIX, HP-UX, and OS X), this build system is 
 primarily intended for Linux & FreeBSD platforms.
 
-You need at least the following minimum versions of the toolchain
-components:
-
-  * gcc >= 3.x
-  * autoconf >= 2.61
-  * libtool >= 2.2.4
-  * automake >= 1.9.6
-  * pkg-config >= 0.23
+The toolchain no longer relies on libtool and autoconf.  We recommend
+any recent gcc 4.x release to compile.
 
 Before you begin, please read over this list of prerequisite development
 packages (depending on your Linux distro):
 
-  * RedHat/Fedora - gcc, autoconf, automake, e2fsprogs-devel,
-    pam-devel, ncurses-devel, flex, bison, rpm-build, rpm-devel,
-    openssl-devel
+  * RedHat/Fedora - gcc, glibc-devel, libuuid-devel, pam-devel, ncurses-devel,
+    flex, bison, rpm-build, rpm-devel, openssl-devel, popt-devel, libxml2-devel
 
     Optional packages: 
        o libglade2-devel - To build domainjoin-gui GTK application
        o libattr-devel   - To enable extended attribute support for the 
                            Likewise CIFS server (experimental)
+       o 32bit development tools and libraries for compatibility packages
+         when building on x86_64
+         - glibc-devel.i686, libuuid-devel.i686, libgcc.i686,
+           pam-devel.i686
 
   * Ubuntu - build-essential, fakeroot, devscripts, debhelper,
     autoconf, automake, libtool, libncurses5-dev, uuid-dev,
-    flex, bison, libpam0g-dev, libssl-dev
+    flex, bison, libpam0g-dev, libssl-dev, libxml2-dev, libpopt-dev
 
     Optional packages: 
        o libglade2-dev - To build domainjoin-gui GTK application
        o libattr1-dev  - To enable extended attribute support for the 
                          Likewise CIFS server (experimental)
+       o 32bit development tools and libraries for compatibility packages
+         when building on x86_64
+         - ia32-libs, libc6-dev-i386, gcc-multilib
 
-  * SLES/SLED/openSUSE - TDB
 
 The easiest way to begin a build is to run:
 
-  $ build/mkcomp all
+  $ mkdir debug && cd debug
+  $ ../configure --prefix=/opt/likewise \
+    --lw-configdir=/opt/likewise/share/config \
+    --localstatedir=/var \
+    --sysconfdir=/etc/likewise 
+  $ make -jXX package/cifs  ## where XX is 2x CPU cores
 
-This will build the necessary components and install them to the
-staging/install-root/ directory.  
+This will build the necessary binaries and libraries and package them up into
+DEBs or RPMs in the likewise-open/debug/package/ directory.
 
-You may then create a set of packages by executing (currently only debs
-and rpms are supported)
+You may view the complete set of configure options by runing 
 
-  $ build/mkpkg all
-
-Both mkcomp and mkpkg support the --debug option for including (and not
-stripping) debug symbols.
+  $ ../configure --help
 
 If you are working directory from the likewise-open git tree, the
 "'build/mkdist" script can be used to generate a release tarball file.
 
 
-Note: It is currently necessary to manually import all the service
-registry files after installing the packages.
+Note: When not installing using the local package managers (DEB or RPM),
+it is necessary to manually import all the service registry files after
+installing the binaries.
 
-  $ sudo bash -c 'for file in /etc/likewise/*reg; do \
+  $ sudo bash -c 'for file in /opt/likewise/share/config/*reg; do \
       /opt/likewise/bin/regshell import $file; \
     done'
 
@@ -177,15 +178,12 @@ The server offers support for the following client architectures:
   * Win2003/2008 (including R2)
   * Windows 7
   * OS 10.5 and later
-  * Gnome Desktop smb:// URL
+  * Linux CIFS fs and Gnome Desktop smb:// URL
 
-No support is planned for any client requiring port tcp/139 (e.g.
-Windows 95, Linux smbfs, or OS X 10.4)
+No support is planned for Windows 9x or OS X releases prior to 10.5
 
-Be warned that the server represents active design and development.  It is
-not recommended in any way for production use at this time.  If you are
-interested in track Likewise development or just experimenting with
-upcoming release feature, please note that the server drivers
+If you are interested in tracking Likewise development or just experimenting
+with upcoming release feature, please note that the server drivers
 (srv.sys.so, pvfs.sys.so, and npvfs.sys.so) are not loaded by default.
 The easier way to start the CIFS server to for force the Likewise
 Service Manager (lwsmd) to launch all the dependent services for the
@@ -198,18 +196,9 @@ be disabled.
 This following is a short list of known issues in the Likewise CIFS 
 server:
 
-  * No interaction with POSIX file permissions (uses Extended
-    Attributes for storing the Windows security descriptor). (planned)
   * No file system integration with byte-range locks or change
     notification (planned)
-  * Missing NT_CANCEL support (planned)
-  * No raw NTLMSSP support (only NTLMSSP encapsulated inside SPNEGO) 
-    (future)
-  * No printing support (future)
-
-That said, I am using the server for roaming user profiles, iTunes media
-libraries, network home directories, "My Documents" redirection, and other
-fundamental file services on a daily basis.
+  * No printing support (future ??)
 
 
 Getting Help

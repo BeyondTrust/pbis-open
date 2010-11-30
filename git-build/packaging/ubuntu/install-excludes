@@ -1,4 +1,0 @@
-*.la
-.libs
-*.a
-usr/include/

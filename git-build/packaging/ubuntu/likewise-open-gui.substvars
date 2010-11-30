@@ -1,1 +1,0 @@
-shlibs:Depends=libatk1.0-0 (>= 1.20.0), libxml2 (>= 2.6.27), libgtk2.0-0 (>= 2.12.0), libc6 (>= 2.4), libpango1.0-0 (>= 1.20.5), likewise-open, libcairo2 (>= 1.6.0), libglade2-0 (>= 1:2.6.1), libglib2.0-0 (>= 2.16.0)

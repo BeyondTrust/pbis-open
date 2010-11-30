@@ -1,7 +1,0 @@
-etc/init.d/eventlogd
-etc/likewise/eventlogd.conf
-usr/bin/lw-eventlog-cli
-usr/bin/lw-addevent
-usr/lib/likewise/libeventlogutils.so*
-usr/lib/likewise/libeventlog.so*
-usr/sbin/eventlogd
