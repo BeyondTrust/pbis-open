@@ -188,11 +188,14 @@ lwmsg_peer_call_dispatch_incoming(
         }
         else
         {
+            /* Drop lock for duration of call */
+            pthread_mutex_unlock(&call->task->call_lock);
             status = ((LWMsgPeerCallFunction) call->params.incoming.spec->data) (
                 LWMSG_CALL(call),
                 &call->params.incoming.in,
                 &call->params.incoming.out,
                 call->params.incoming.dispatch_data);
+            pthread_mutex_lock(&call->task->call_lock);
 
             call->state |= PEER_CALL_DISPATCHED;
 
