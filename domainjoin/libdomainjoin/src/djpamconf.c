@@ -2275,6 +2275,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
 
         if( !strcmp(module, "pam_passwd_auth.so.1") &&
                 (!strcmp(control, "required") ||
+                !strcmp(control, "binding") ||
                 !strcmp(control, "requisite")))
         {
             /*Solaris's password authentication module must be first on the stack, but it blocks our module. So we'll just rework their config a little bit.
@@ -2359,6 +2360,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
 
         if(PamModuleAlwaysDeniesDomainLogins(phase, module, distro) && (
                     !strcmp(control, "required") ||
+                    !strcmp(control, "binding") ||
                     !strcmp(control, "requisite")))
             break;
 
@@ -2430,6 +2432,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
         }
 
         if( (!strcmp(control, "required") ||
+                    !strcmp(control, "binding") ||
                     !strcmp(control, "requisite")) &&
                 PamModuleChecksCaller(phase, module))
         {
@@ -2629,6 +2632,7 @@ static void PamLwidentityEnable(const char *testPrefix, const DistroInfo *distro
             if( (!state->sawSufficientPromptingCheck || !strcmp(service, "runuser")) &&
                     (!PamModuleGrants(phase, module) || PamModuleChecksCaller(phase, module)) &&
                     (!strcmp(control, "required") ||
+                    !strcmp(control, "binding") ||
                     !strcmp(control, "requisite")))
             {
                 /* I guess the user wants to block everyone from logging in, or
@@ -3621,6 +3625,7 @@ static DWORD IsLwidentityEnabled(struct PamConf *conf, const char *service, cons
 
         if(PamModuleAlwaysDeniesDomainLogins(phase, module, &distro) && (
                     !strcmp(control, "required") ||
+                    !strcmp(control, "binding") ||
                     !strcmp(control, "requisite")))
             break;
 
