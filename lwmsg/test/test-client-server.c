@@ -875,6 +875,9 @@ MU_TEST(client_server, client_limit_timeout)
     LWMsgTime idle = {1, 0};
     int i = 0;
 
+    /* This test shouldn't take more than 5 seconds */
+    MU_TIMEOUT(5000);
+
     MU_TRY(lwmsg_peer_set_timeout(server, LWMSG_TIMEOUT_IDLE, &idle));
     MU_TRY(lwmsg_peer_set_max_listen_clients(server, NUM_ASSOCS / 2));
     MU_TRY(lwmsg_peer_start_listen(server));

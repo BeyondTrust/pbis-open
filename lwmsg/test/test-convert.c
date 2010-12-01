@@ -35,8 +35,9 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
-#include <moonunit/interface.h>
+
 #include <config.h>
+#include <moonunit/interface.h>
 
 #include "convert-private.h"
 #include "type-private.h"

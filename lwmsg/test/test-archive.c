@@ -36,9 +36,9 @@
  *
  */
 
+#include <config.h>
 #include <lwmsg/lwmsg.h>
 #include <moonunit/interface.h>
-#include <config.h>
 #include <string.h>
 
 #include "test-private.h"

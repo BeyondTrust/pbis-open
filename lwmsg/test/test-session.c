@@ -35,9 +35,10 @@
  * Authors: Brian Koropoff (bkoropoff@likewisesoftware.com)
  *
  */
+
+#include <config.h>
 #include <lwmsg/lwmsg.h>
 #include <moonunit/moonunit.h>
-#include <config.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>

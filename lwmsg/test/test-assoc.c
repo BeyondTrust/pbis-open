@@ -36,9 +36,9 @@
  *
  */
 
+#include <config.h>
 #include <lwmsg/lwmsg.h>
 #include <moonunit/moonunit.h>
-#include <config.h>
 #include <pthread.h>
 #include <sys/un.h>
 #include <sys/types.h>
