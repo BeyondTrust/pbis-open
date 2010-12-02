@@ -766,7 +766,14 @@ rpc__transport_info_equal(
 
 #define RPC_SOCKET_ETOI(serr)       (serr)
 
-#define RPC_SOCKET_CLOSE(s) \
-    ({ int __err = rpc__socket_close(s); s = NULL; __err; })
+static inline int
+__rpc_socket_close(rpc_socket_t* sock)
+{
+    int __err = rpc__socket_close(*sock);
+    *sock = NULL;
+    return __err;
+}
+
+#define RPC_SOCKET_CLOSE(s) __rpc_socket_close((rpc_socket_t*)(void*)&(s))
 
 #endif /* _COMSOC_H */

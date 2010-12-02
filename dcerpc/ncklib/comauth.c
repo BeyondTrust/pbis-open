@@ -76,15 +76,16 @@ INTERNAL void rpc__auth_info_cache_remove _DCE_PROTOTYPE_ ((
     ));
 
 
+
 /*
  * Macro to assign through a pointer iff the pointer is non-NULL.  Note
  * that we depend on the fact that "val" is not evaluated if "ptr" is
  * NULL (i.e., this must be a macro, not a function).
  */
 #define ASSIGN(ptr, val) \
-( \
-    (ptr) != NULL ? *(ptr) = (val) : 0 \
-)
+{ \
+    if ((ptr) != NULL) *(ptr) = (val); \
+}
 
 #define ASSIGN_COPY(buffer, length, val) do { \
         char* _val = (char*) (val);                             \
