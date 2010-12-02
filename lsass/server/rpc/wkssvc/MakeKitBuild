@@ -35,7 +35,6 @@ make()
 	DLO=libwkssvc_srv \
 	SOURCES="$WKSSVC_SOURCES" \
 	GROUPS="wkssvc_stub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h openssl/md5.h" \
 	DEPS="wkssvc_h.h"

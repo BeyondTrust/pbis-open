@@ -37,7 +37,6 @@ DCEIDL_PASS_INCLUDES =       \
 
 liblsa_la_CFLAGS = \
     $(AM_CFLAGS)             \
-    -DLIBRPC_BUILD           \
     $(FEATURETEST_FLAGS)     \
     -I$(srv_srcdir)/include  \
     -I$(top_srcdir)/include  \

@@ -41,7 +41,6 @@ make()
 	DLO=liblsa_srv \
 	SOURCES="$LSA_SOURCES" \
 	GROUPS="lsa_stub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../samr ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h" \
 	DEPS="lsa_h.h"

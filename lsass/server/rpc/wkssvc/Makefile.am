@@ -30,7 +30,6 @@ DCEIDL_PASS_INCLUDES =         \
 
 libwkssvc_la_CFLAGS =        \
     $(AM_CFLAGS)             \
-    -DLIBRPC_BUILD           \
     -I$(srv_srcdir)/include  \
     -I$(top_srcdir)/include  \
     -I$(rpc_srcdir)/samr     \

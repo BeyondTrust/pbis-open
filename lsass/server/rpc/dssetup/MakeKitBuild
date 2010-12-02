@@ -31,7 +31,6 @@ make()
 	DLO=libdssetup_srv \
 	SOURCES="$DSSETUP_SOURCES" \
 	GROUPS="dssetup_stub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h" \
 	DEPS="dssetup_h.h"
