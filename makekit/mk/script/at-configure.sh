@@ -30,9 +30,20 @@ _stamp="$1"
 shift
 
 MK_MSG_DOMAIN="configure"
-__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_CANONICAL_SYSTEM)"
 
-mk_msg "begin ${__msg#/}"
+if [ -n "$SOURCEDIR" ]
+then
+    dirname="${MK_SUBDIR#/}/$SOURCEDIR"
+elif [ -n "$MK_SUBDIR" ]
+then
+    dirname="${MK_SUBDIR#/}"
+else
+    dirname="$PROJECT_NAME"
+fi
+
+__msg="$dirname ($MK_CANONICAL_SYSTEM)"
+
+mk_msg "begin ${__msg}"
 
 mk_mkdir "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR"
 mk_mkdir "${MK_STAGE_DIR}"
@@ -62,13 +73,19 @@ _include_dir="${_stage_dir}${_includedir}"
 _lib_dir="${_stage_dir}${_libdir}"
 _libpath=""
 
-# Work around autotools projects that like to
-# link and run programs against libraries in the staging
-# directory
+# Make the linker happy, etc.
 case "$MK_OS" in
-    linux|freebsd|solaris)
+    linux|freebsd)
+        _ldflags="-L${_lib_dir} -Wl,-rpath-link -Wl,${_lib_dir}"
         LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
         export LD_LIBRARY_PATH
+        ;;
+    solaris)
+        LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
+        export LD_LIBRARY_PATH
+        ;;
+    *)
+        _ldflags="-L${_lib_dir}"
         ;;
 esac
 
@@ -77,7 +94,7 @@ mk_run_quiet_or_fail "${_src_dir}/configure" \
     CC="$MK_CC" \
     CPPFLAGS="-I${_include_dir} $_cppflags $CPPFLAGS" \
     CFLAGS="$MK_CFLAGS $CFLAGS" \
-    LDFLAGS="-L${_lib_dir} $MK_LDFLAGS $LDFLAGS" \
+    LDFLAGS="${_ldflags} $MK_LDFLAGS $LDFLAGS" \
     --build="${MK_AT_BUILD_STRING}" \
     --host="${MK_AT_HOST_STRING}" \
     --prefix="${_prefix}" \
@@ -88,4 +105,4 @@ mk_run_quiet_or_fail "${_src_dir}/configure" \
     --localstatedir="${_localstatedir}" \
     "$@"
 cd "${MK_ROOT_DIR}" && mk_run_quiet_or_fail touch "$_stamp"
-mk_msg "end ${__msg#/}"
+mk_msg "end ${__msg}"

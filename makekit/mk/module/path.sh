@@ -32,6 +32,8 @@
 #
 ##
 
+### section configure
+
 DEPENDS="platform"
 
 option()
@@ -65,7 +67,7 @@ option()
         _var="MK_LIBDIR_$result"
         
         case "${MK_HOST_OS}-${MK_HOST_DISTRO_ARCHETYPE}-${MK_HOST_ARCH}-${_isa}" in
-            linux-redhat-x86_64-x86_64)
+            linux-redhat-x86_64-x86_64|linux-suse-x86_64-x86_64)
                 _default_libdir="${MK_EPREFIX}/lib64"
                 ;;
             linux-debian-x86_64-x86_32)

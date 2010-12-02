@@ -765,7 +765,6 @@ configure()
     # #define HAVE_SIZE_T
     # #define HAVE_INT64_T
     # #define HAVE_UINT64_T
-    # #define HAVE_DOES_NOT_EXIST_T
 }
 ]]></programlisting>
       </example>

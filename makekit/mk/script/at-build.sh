@@ -28,8 +28,18 @@
 
 MK_MSG_DOMAIN="build"
 
-__msg="${MK_SUBDIR}/$SOURCEDIR ($MK_CANONICAL_SYSTEM)"
-mk_msg "begin ${__msg#/}"
+if [ -n "$SOURCEDIR" ]
+then
+    dirname="${MK_SUBDIR#/}/$SOURCEDIR"
+elif [ -n "$MK_SUBDIR" ]
+then
+    dirname="${MK_SUBDIR#/}"
+else
+    dirname="$PROJECT_NAME"
+fi
+
+__msg="$dirname ($MK_CANONICAL_SYSTEM)"
+mk_msg "begin ${__msg}"
 
 _stamp="$1"
 mk_mkdir "${MK_STAGE_DIR}"
@@ -66,4 +76,4 @@ then
 fi
 cd "${MK_ROOT_DIR}"
 mk_run_or_fail touch "$_stamp"
-mk_msg "end ${__msg#/}"
+mk_msg "end ${__msg}"

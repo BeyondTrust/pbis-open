@@ -656,17 +656,6 @@ MK_MSG_DOMAIN="makekit"
 MK_ROOT_DIR="$PWD"
 _basic_options
 
-# Don't allow building in the source directory
-_canon_sourcedir="`cd "${MK_SOURCE_DIR}" && pwd`"
-_canon_rootdir="`cd "${MK_ROOT_DIR}" && pwd`"
-
-if [ "$_canon_sourcedir" = "$_canon_rootdir" ]
-then
-    mk_fail "please run configure from a separate directory"
-fi
-
-unset _canon_sourcedir _canon_rootdir
-
 MK_SEARCH_DIRS="${MK_HOME}"
 
 # Look for local modules and scripts in source directory
@@ -689,6 +678,17 @@ then
     mk_help
     exit 0
 fi
+
+# Don't allow building in the source directory
+_canon_sourcedir="`cd "${MK_SOURCE_DIR}" && pwd`"
+_canon_rootdir="`cd "${MK_ROOT_DIR}" && pwd`"
+
+if [ "$_canon_sourcedir" = "$_canon_rootdir" ]
+then
+    mk_fail "please run configure from a separate directory"
+fi
+
+unset _canon_sourcedir _canon_rootdir
 
 # Open log file
 exec 4>config.log

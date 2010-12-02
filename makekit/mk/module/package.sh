@@ -59,8 +59,6 @@
 # 
 ##
 
-DEPENDS="core"
-
 # API overview
 #
 # mk_{PACKAGE_TYPE}_do
@@ -73,6 +71,8 @@ DEPENDS="core"
 # mk_{PACKAGE_TYPE}_done
 
 ### section configure
+
+DEPENDS="core"
 
 option()
 {

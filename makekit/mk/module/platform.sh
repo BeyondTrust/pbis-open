@@ -228,7 +228,17 @@ option()
         linux)
             if type lsb_release >/dev/null 2>&1
             then
-                _default_MK_BUILD_DISTRO="`lsb_release -si | tr 'A-Z' 'a-z'`"
+                case "`lsb_release -si`" in
+                    "SUSE LINUX")
+                        # Have to determine opensuse/etc. from description
+                        # To make it even more fun, the description contains
+                        # extraneous double quotes
+                        _default_MK_BUILD_DISTRO="`lsb_release -sd | sed 's/\"//g' | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
+                        ;;
+                    *)
+                        _default_MK_BUILD_DISTRO="`lsb_release -si | awk '{print $1;}' | tr 'A-Z' 'a-z'`"
+                        ;;
+                esac
                 _default_MK_BUILD_DISTRO_VERSION="`lsb_release -sr | tr 'A-Z' 'a-z'`"
             elif [ -f /etc/redhat-release ]
             then
@@ -304,6 +314,9 @@ option()
         debian|ubuntu)
             _distro_archetype="debian"
             ;;
+        suse|opensuse)
+            _distro_archetype="suse"
+            ;;
         *)
             _distro_archetype="$MK_BUILD_DISTRO"
             ;;
@@ -351,6 +364,9 @@ option()
             ;;
         debian|ubuntu)
             _distro_archetype="debian"
+            ;;
+        suse|opensuse)
+            _distro_archetype="suse"
             ;;
         *)
             _distro_archetype="$MK_HOST_DISTRO"

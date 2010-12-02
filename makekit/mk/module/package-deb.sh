@@ -32,9 +32,9 @@
 #
 ##
 
-DEPENDS="core program package"
-
 ### section configure
+
+DEPENDS="core program package"
 
 option()
 {

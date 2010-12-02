@@ -79,12 +79,22 @@ mk_autotools()
     mk_push_vars \
         SOURCEDIR HEADERS LIBS PROGRAMS LIBDEPS HEADERDEPS \
         CPPFLAGS CFLAGS LDFLAGS INSTALL TARGETS SELECT \
-        BUILDDIR prefix
+        BUILDDIR prefix dirname
     mk_parse_params
     
     unset _stage_deps
+
+    if [ -n "$SOURCEDIR" ]
+    then
+        dirname="${MK_SUBDIR#/}/$SOURCEDIR"
+    elif [ -n "$MK_SUBDIR" ]
+    then
+        dirname="${MK_SUBDIR#/}"
+    else
+        dirname="$PROJECT_NAME"
+    fi
     
-    mk_comment "autotools source component $SOURCEDIR ($MK_SYSTEM)"
+    mk_comment "autotools source component $dirname ($MK_SYSTEM)"
 
     for _lib in ${LIBDEPS}
     do
@@ -104,7 +114,7 @@ mk_autotools()
         fi
     done
 
-    _mk_slashless_name "${SOURCEDIR}/${MK_CANONICAL_SYSTEM}"
+    _mk_slashless_name "${SOURCEDIR:-build}/${MK_CANONICAL_SYSTEM}"
     BUILDDIR="$result"
 
     mk_resolve_target "$BUILDDIR"
@@ -171,22 +181,24 @@ mk_autotools()
             DEPS="'$__build_stamp'"
     done
 
-    # Add convenience rule for building just this component
-    mk_target \
-        TARGET="@${MK_SUBDIR:+${MK_SUBDIR#/}/}$SOURCEDIR" \
-        DEPS="$__build_stamp"
-
-    mk_add_phony_target "$result"
+    if [ -n "$SOURCEDIR" ]
+    then
+        # Add convenience rule for building just this component
+        mk_target \
+            TARGET="@${MK_SUBDIR:+${MK_SUBDIR#/}/}$SOURCEDIR" \
+            DEPS="$__build_stamp"
+        mk_add_phony_target "$result"
+    fi
 
     if ! [ -f "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}/configure" ]
     then
         if [ -f "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}/autogen.sh" ]
         then
-            mk_msg "running autogen.sh for ${SOURCEDIR}"
+            mk_msg "running autogen.sh for ${dirname}"
             cd "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}" && mk_run_or_fail "./autogen.sh"
             cd "${MK_ROOT_DIR}"
         else
-            mk_msg "running autoreconf for ${SOURCEDIR}"
+            mk_msg "running autoreconf for ${dirname}"
             cd "${MK_SOURCE_DIR}${MK_SUBDIR}/${SOURCEDIR}" && mk_run_or_fail autoreconf -fi
             cd "${MK_ROOT_DIR}"
         fi

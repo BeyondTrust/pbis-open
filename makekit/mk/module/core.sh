@@ -46,6 +46,51 @@ mk_get_export()
     [ "$?" -eq 0 ] || mk_fail "could not read ${MK_OBJECT_DIR}${MK_SUBDIR}/$1/.MakeKitExports"
 }
 
+_mk_get_stage_targets_filter()
+{
+    mk_unquote_list "$STAGE_TARGETS"
+    mk_fnmatch_filter "$SELECT" "$@"
+    TARGETS="$TARGETS${result:+ $result}"
+}
+
+_mk_get_stage_targets_rec()
+{
+    mk_push_vars DIR="$1"
+    if mk_safe_source "$DIR/.MakeKitTargets"
+    then
+        _mk_get_stage_targets_filter
+        mk_unquote_list "$SUBDIRS"
+        for SUBDIR
+        do
+            [ "$SUBDIR" != "." ] && _mk_get_stage_targets_rec "$DIR/$SUBDIR"
+        done
+    fi
+    mk_pop_vars
+}
+
+mk_get_stage_targets()
+{
+    mk_push_vars \
+        SELECT="*" \
+        SUBDIRS STAGE_TARGETS DIR SUBDIR TARGETS # temporaries
+    mk_parse_params
+
+    for DIR
+    do
+        case "$DIR" in
+            "@"*)
+                _mk_get_stage_targets_rec "${MK_OBJECT_DIR}/${DIR#@}"
+                ;;
+            *)
+                _mk_get_stage_targets_rec "${MK_OBJECT_DIR}${MK_SUBDIR}/${DIR}"
+                ;;
+        esac
+    done
+
+    result="${TARGETS# }"
+    mk_pop_vars
+}
+
 mk_run_or_fail()
 {
     mk_quote_list "$@"
@@ -316,7 +361,9 @@ mk_target()
 
     case "$__target" in
         "@${MK_STAGE_DIR}"/*)
-            mk_add_subdir_target "$__target"
+            mk_quote "$__target"
+            MK_SUBDIR_TARGETS="$MK_SUBDIR_TARGETS $result"
+            MK_STAGE_TARGETS="$MK_STAGE_TARGETS $result"
             ;;
         "@${MK_OBJECT_DIR}"/*)
             mk_add_clean_target "$__target"
@@ -499,32 +546,42 @@ mk_output_file()
 
 mk_add_clean_target()
 {
+    mk_push_vars result
     mk_quote "$1"
     MK_CLEAN_TARGETS="$MK_CLEAN_TARGETS $result"
+    mk_pop_vars
 }
 
 mk_add_scrub_target()
 {
+    mk_push_vars result
     mk_quote "${1#@}"
     MK_SCRUB_TARGETS="$MK_SCRUB_TARGETS $result"
+    mk_pop_vars
 }
 
 mk_add_all_target()
 {
+    mk_push_vars result
     mk_quote "$1"
     MK_ALL_TARGETS="$MK_ALL_TARGETS $result"
+    mk_pop_vars
 }
 
 mk_add_phony_target()
 {
+    mk_push_vars result
     mk_quote "$1"
     MK_PHONY_TARGETS="$MK_PHONY_TARGETS $result"
+    mk_pop_vars
 }
 
 mk_add_subdir_target()
 {
+    mk_push_vars result
     mk_quote "$1"
     MK_SUBDIR_TARGETS="$MK_SUBDIR_TARGETS $result"
+    mk_pop_vars
 }
 
 mk_msg_checking()
@@ -634,8 +691,12 @@ configure()
     MK_NUKE_TARGETS="${MK_OBJECT_DIR} ${MK_RUN_DIR} Makefile config.log .MakeKitCache .MakeKitBuild .MakeKitExports .MakeKitDeps"
 
     # Add a post-make() hook to write out a rule
-    # to build all staging targets in that subdirectory
+    # to build all relevant targets in that subdirectory
     mk_add_make_posthook _mk_core_write_subdir_rule
+
+    # Add post-make() hook to write out file with summary
+    # of targets generated in the current directory
+    mk_add_make_posthook _mk_core_write_targets_file
    
     # Emit the default target
     mk_target \
@@ -701,7 +762,7 @@ _mk_core_write_subdir_rule()
                 _targets="$_targets $result"
             fi
         done
-        mk_comment "staging targets in ${MK_SUBDIR#/}"
+        mk_comment "virtual target for subdir ${MK_SUBDIR#/}"
 
         mk_target \
             TARGET="@${MK_SUBDIR#/}" \
@@ -711,6 +772,22 @@ _mk_core_write_subdir_rule()
     fi
 
     unset MK_SUBDIR_TARGETS
+}
+
+_mk_core_write_targets_file()
+{
+    if [ "$MK_SUBDIR" != ":" ]
+    then
+        {
+            mk_quote "$SUBDIRS"
+            echo "SUBDIRS=$result"
+            mk_quote "$MK_STAGE_TARGETS"
+            echo "STAGE_TARGETS=$result"
+        } > "${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitTargets" ||
+        mk_fail "could not write ${MK_OBJECT_DIR}${MK_SUBDIR}/.MakeKitTargets"
+    fi
+
+    unset MK_STAGE_TARGETS
 }
 
 ### section build

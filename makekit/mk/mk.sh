@@ -757,17 +757,111 @@ mk_expand_absolute_pathnames()
         # Now iterate over each match
         for ___item in "$@"
         do
-            # Strip the leading . we added
-            mk_quote "${___item#.}"
-            ___result="$___result $result"
+            if [ -e "$___item" ]
+            then
+                # Strip the leading . we added
+                mk_quote "${___item#.}"
+                ___result="$___result $result"
+            fi
         done
-        IFS=""
     done
 
     # Go back home
     cd "$___pwd" || mk_fail "where did my directory go?"
 
     result="${___result# }"
+}
+
+_mk_fnmatch_transform()
+{
+    # Field split by / with globbing off
+    __tmp="$IFS"
+    IFS="/"
+    set -f
+    set -- ${1}
+    set +f
+    IFS="$__tmp"
+
+    # Now the path components are in positional parameters
+    result=""
+    __i=0
+    for __tmp
+    do
+        result="${result}${__tmp}/${__i}/"
+        __i=$(($__i + 1))
+    done
+    
+    unset __tmp __i
+}
+
+##
+#
+# mk_fnmatch
+#
+# Performs fnmatch-like glob matching in that
+# * will not match across a path separator.
+# As an extra feature, a pattern containing no
+# path separators will match just the base filename:
+#
+# mk_fnmatch /usr/lib/foobar.so /usr/lib/*.so -> true
+# mk_fnmatch /usr/lib/subdir/foobar.so /usr/lib/*.so -> false
+# mk_fnmatch /usr/lib/subdir/foobar.so *.so -> true
+#
+# This function avoids clobbering $result
+#
+##
+mk_fnmatch()
+{
+    # $1 = path
+    # $2 = pattern
+    case "$2" in
+        *'/'*)
+            set -- "$1" "$2" "$result"
+            _mk_fnmatch_transform "$1"
+            set -- "$result" "$2" "$3"
+            _mk_fnmatch_transform "$2"
+            set -- "$1" "$result" "$3"
+            result="$3"
+            ;;
+        *)
+            set -- "${1##*/}" "$2"
+            ;;
+    esac
+
+    case "$1" in
+        $2)
+            return 0
+            ;;
+    esac
+
+    return 1
+}
+
+mk_fnmatch_filter()
+{
+    __patterns="$1"
+    __results=""
+    
+    shift
+
+    for __path
+    do
+        set -f
+        mk_unquote_list "$__patterns"
+        set +f
+
+        for __pattern
+        do
+            if mk_fnmatch "$__path" "$__pattern"
+            then
+                mk_quote "$__path"
+                __results="$__results $result"
+            fi
+        done
+    done
+
+    result="${__results# }"
+    unset __patterns __results __pattern __path
 }
 
 ##
