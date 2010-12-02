@@ -2000,7 +2000,7 @@ LwKrb5CheckInitiatorCreds(
     {
         switch (minorStatus)
         {
-            case KRB5KRB_AP_ERR_SKEW:
+            case (OM_uint32) KRB5KRB_AP_ERR_SKEW:
                 dwError = ERROR_TIME_SKEW;
                 BAIL_ON_LW_ERROR(dwError);
                 break;
