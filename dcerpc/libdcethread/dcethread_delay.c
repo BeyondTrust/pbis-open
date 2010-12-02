@@ -62,7 +62,7 @@
 #include "dcethread-debug.h"
 
 int
-dcethread_delay(struct timespec* interval)
+dcethread_delay(struct timespec const* interval)
 {
 #ifdef HAVE_PTHREAD_DELAY_NP
     return pthread_delay_np(interval);

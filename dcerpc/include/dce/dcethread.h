@@ -121,7 +121,7 @@ typedef void* (*dcethread_startroutine)(void*);
 /* Entry points */
 int dcethread_get_expiration(struct timespec* delta, struct timespec* abstime);
 
-int dcethread_delay(struct timespec* interval);
+int dcethread_delay(struct timespec const* interval);
 
 void dcethread_lock_global(void);
 
