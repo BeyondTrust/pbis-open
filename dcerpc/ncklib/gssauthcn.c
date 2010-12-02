@@ -649,61 +649,61 @@ PRIVATE const char *rpc__gssauth_error_map
 #endif
 {
 	switch (minor_status) {
-	case KRB5KRB_AP_ERR_BAD_INTEGRITY:
+	case (OM_uint32) KRB5KRB_AP_ERR_BAD_INTEGRITY:
 		*st = rpc_s_auth_bad_integrity;
 		break;
-	case KRB5KRB_AP_ERR_TKT_EXPIRED:
+	case (OM_uint32) KRB5KRB_AP_ERR_TKT_EXPIRED:
 		*st = rpc_s_auth_tkt_expired;
 		break;
-	case KRB5KRB_AP_ERR_TKT_NYV:
+	case (OM_uint32) KRB5KRB_AP_ERR_TKT_NYV:
 		*st = rpc_s_auth_tkt_nyv;
 		break;
-	case KRB5KRB_AP_ERR_REPEAT:
+	case (OM_uint32) KRB5KRB_AP_ERR_REPEAT:
 		*st = rpc_s_auth_repeat;
 		break;
-	case KRB5KRB_AP_ERR_NOT_US:
+	case (OM_uint32) KRB5KRB_AP_ERR_NOT_US:
 		*st = rpc_s_auth_not_us;
 		break;
-	case KRB5KRB_AP_ERR_BADMATCH:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADMATCH:
 		*st = rpc_s_auth_badmatch;
 		break;
-	case KRB5KRB_AP_ERR_SKEW:
+	case (OM_uint32) KRB5KRB_AP_ERR_SKEW:
 		*st = rpc_s_auth_skew;
 		break;
-	case KRB5KRB_AP_ERR_BADADDR:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADADDR:
 		*st = rpc_s_auth_badaddr;
 		break;
-	case KRB5KRB_AP_ERR_BADVERSION:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADVERSION:
 		*st = rpc_s_auth_badversion;
 		break;
-	case KRB5KRB_AP_ERR_MSG_TYPE:
+	case (OM_uint32) KRB5KRB_AP_ERR_MSG_TYPE:
 		*st = rpc_s_auth_msg_type;
 		break;
-	case KRB5KRB_AP_ERR_MODIFIED:
+	case (OM_uint32) KRB5KRB_AP_ERR_MODIFIED:
 		*st = rpc_s_auth_modified;
 		break;
-	case KRB5KRB_AP_ERR_BADORDER:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADORDER:
 		*st = rpc_s_auth_badorder;
 		break;
-	case KRB5KRB_AP_ERR_BADKEYVER:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADKEYVER:
 		*st = rpc_s_auth_badkeyver;
 		break;
-	case KRB5KRB_AP_ERR_NOKEY:
+	case (OM_uint32) KRB5KRB_AP_ERR_NOKEY:
 		*st = rpc_s_auth_nokey;
 		break;
-	case KRB5KRB_AP_ERR_MUT_FAIL:
+	case (OM_uint32) KRB5KRB_AP_ERR_MUT_FAIL:
 		*st = rpc_s_auth_mut_fail;
 		break;
-	case KRB5KRB_AP_ERR_BADDIRECTION:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADDIRECTION:
 		*st = rpc_s_auth_baddirection;
 		break;
-	case KRB5KRB_AP_ERR_METHOD:
+	case (OM_uint32) KRB5KRB_AP_ERR_METHOD:
 		*st = rpc_s_auth_method;
 		break;
-	case KRB5KRB_AP_ERR_BADSEQ:
+	case (OM_uint32) KRB5KRB_AP_ERR_BADSEQ:
 		*st = rpc_s_auth_badseq;
 		break;
-	case KRB5KRB_AP_ERR_INAPP_CKSUM:
+	case (OM_uint32) KRB5KRB_AP_ERR_INAPP_CKSUM:
 		*st = rpc_s_auth_inapp_cksum;
 		break;
 	default:
