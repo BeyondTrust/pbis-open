@@ -327,7 +327,7 @@ error_status_t  *status;
     if (! STATUS_OK(status))
     {
         /* Try deleting and recreating the database */
-        unlink(pathname);
+        unlink((char*) pathname);
         db_open(h, pathname, epdb_c_file_version, status);
         if (! STATUS_OK(status))
         {

@@ -116,10 +116,12 @@ INTERNAL void register_ifs
         error_status_t  *status
     ));
 
+#if 0
 INTERNAL void use_protseqs
     _DCE_PROTOTYPE_ ((
         error_status_t  *status
     ));
+#endif
 
 INTERNAL void init
     _DCE_PROTOTYPE_ ((
@@ -378,6 +380,7 @@ error_status_t  *status;
 	 
 }
 
+#if 0
 /*
  * Arrange to handle calls on the protocol sequences of interest.
  * Note that while both interfaces specify well know endpoints,
@@ -444,6 +447,7 @@ error_status_t  *status;
             return;
     }
 }
+#endif
 
 /*
  * Do some server database, ... initialization
@@ -984,7 +988,7 @@ rpcd_network_thread(
         {
             for (jndex = 0; jndex < num_protseq; jndex++)
             {
-                if (!strcmp(network_protseqs[index], protseq[jndex]))
+                if (!strcmp(network_protseqs[index], (char*) protseq[jndex]))
                 {
                     use_protseq = true;
                     break;

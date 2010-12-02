@@ -40,6 +40,7 @@
 #include <commonp.h>
 #include <com.h>
 #include <dce/ep.h>
+#include <dce/lrpc.h>
 
 #include <rpcdp.h>
 #include <rpcdepdb.h>
