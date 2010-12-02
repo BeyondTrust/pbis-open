@@ -49,8 +49,7 @@ libnetlogon_la_CPPFLAGS =       \
     -I$(librpc_srcdir)/include
 
 libnetlogon_la_CFLAGS =         \
-    $(AM_CFLAGS)                \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 libnetlogon_la_LDFLAGS =   \
     $(AM_LDFLAGS)          \

@@ -30,7 +30,6 @@ make()
 	GROUP=wkssvc \
 	SOURCES="$WKSSVC_SOURCES" \
 	GROUPDEPS="wkssvc_cstub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
 	LIBDEPS="lwbase dcerpc" \

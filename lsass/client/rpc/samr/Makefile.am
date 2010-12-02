@@ -73,8 +73,7 @@ libsamr_la_CPPFLAGS =          \
     -I$(lsass_srcdir)/include
 
 libsamr_la_CFLAGS = \
-    $(AM_CFLAGS)    \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 libsamr_la_LDFLAGS =     \
     $(AM_LDFLAGS)        \

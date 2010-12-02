@@ -34,8 +34,7 @@ libdssetup_la_CPPFLAGS = \
     -I$(librpc_srcdir)/include
 
 libdssetup_la_CFLAGS= \
-    $(AM_CFLAGS)      \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 libdssetup_la_LDFLAGS = \
     $(AM_LDFLAGS)       \

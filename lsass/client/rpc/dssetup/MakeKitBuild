@@ -26,7 +26,6 @@ make()
 	GROUP=dssetup \
 	SOURCES="$DSSETUP_SOURCES" \
 	GROUPDEPS="dssetup_cstub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
 	LIBDEPS="lwbase dcerpc" \

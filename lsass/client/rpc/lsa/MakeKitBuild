@@ -34,7 +34,6 @@ make()
 	GROUP=lsa \
 	SOURCES="$LSA_SOURCES" \
 	GROUPDEPS="lsa_cstub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
 	LIBDEPS="lwbase dcerpc" \

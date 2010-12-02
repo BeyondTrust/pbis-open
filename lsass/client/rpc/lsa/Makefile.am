@@ -42,8 +42,7 @@ liblsa_la_CPPFLAGS =             \
     -I$(lsass_srcdir)/include
 
 liblsa_la_CFLAGS =  \
-    $(AM_CFLAGS)    \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 liblsa_la_LDFLAGS =       \
     $(AM_LDFLAGS)         \

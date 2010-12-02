@@ -19,8 +19,7 @@ libkrb5pac_la_CPPFLAGS =        \
     -I$(librpc_srcdir)/include
 
 libkrb5pac_la_CFLAGS =    \
-    $(AM_CFLAGS)          \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 libkrb5pac_la_LDFLAGS = \
     $(AM_LDFLAGS)       \

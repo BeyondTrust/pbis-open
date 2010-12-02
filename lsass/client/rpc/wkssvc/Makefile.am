@@ -39,8 +39,7 @@ libwkssvc_la_CPPFLAGS =          \
     -I$(lsass_srcdir)/include
 
 libwkssvc_la_CFLAGS =  \
-    $(AM_CFLAGS)       \
-    -DLIBRPC_BUILD
+    $(AM_CFLAGS)
 
 libwkssvc_la_LDFLAGS =  \
     $(AM_LDFLAGS)       \

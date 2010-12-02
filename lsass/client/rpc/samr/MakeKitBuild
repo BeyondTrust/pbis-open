@@ -63,7 +63,6 @@ make()
 	GROUP=samr \
 	SOURCES="$SAMR_SOURCES" \
 	GROUPDEPS="samr_cstub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
 	LIBDEPS="lwbase dcerpc" \

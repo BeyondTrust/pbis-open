@@ -39,7 +39,6 @@ make()
 	GROUP=netlogon \
 	SOURCES="$NETLOGON_SOURCES" \
 	GROUPDEPS="netlogon_cstub" \
-	CPPFLAGS="-DLIBRPC_BUILD" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h openssl/rand.h" \
 	LIBDEPS="lwbase dcerpc" \
