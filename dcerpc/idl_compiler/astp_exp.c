@@ -108,9 +108,9 @@ boolean ASTP_expr_is_simple(AST_exp_n_t * exp)
 		case AST_EXP_BINARY_SLASH:
 		case AST_EXP_BINARY_STAR:
 			if (exp->exp.expression.oper1->exp_type == AST_EXP_CONSTANT &&
-					(ASTP_expr_integer_value(exp->exp.expression.oper2) == 2) ||
-					(ASTP_expr_integer_value(exp->exp.expression.oper2) == 4) ||
-					(ASTP_expr_integer_value(exp->exp.expression.oper2) == 8))
+                            ((ASTP_expr_integer_value(exp->exp.expression.oper2) == 2) ||
+                             (ASTP_expr_integer_value(exp->exp.expression.oper2) == 4) ||
+                             (ASTP_expr_integer_value(exp->exp.expression.oper2) == 8)))
 			{
 				return true;
 			}

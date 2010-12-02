@@ -642,7 +642,12 @@ void seek_for_line
     lines_to_skip = lineno - last_error_line;
 
     for (i=0; i<lines_to_skip; i++)
-        (void) fgets(source_line, MAX_LINE_LEN, source_file);
+    {
+        if (fgets(source_line, MAX_LINE_LEN, source_file) == NULL)
+        {
+            abort();
+        }
+    }
 
     /* Strip off newline. */
     i = strlen(source_line) - 1;

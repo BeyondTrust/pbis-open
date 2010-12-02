@@ -53,12 +53,6 @@ BE_handle_info_t BE_handle_info;
 
 static AST_interface_n_t * the_interface = NULL;
 
-//centeris wfu to keep track of the cpp_quotes in between interfaces
-static AST_cpp_quote_n_t * global_cppquotes = NULL;
-
-static AST_cpp_quote_n_t * global_cppquotes_post = NULL;
-
-
 /******************************************************************************/
 /*                                                                            */
 /*    Spell test of status after runtime call                                 */

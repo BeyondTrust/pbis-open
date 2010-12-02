@@ -821,7 +821,10 @@ boolean FILE_is_cwd
     {
         /* Not current working directory; be sure to chdir back to original! */
         result = FALSE;
-        chdir(cwd);
+        if (chdir(cwd) != 0)
+        {
+            abort();
+        }
     }
 
     /* Free storage malloc'ed by getcwd(). */

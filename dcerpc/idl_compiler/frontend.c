@@ -492,7 +492,8 @@ static boolean already_imported
     if (!FILE_parse(new_import_full_fn, NULL, base_file_name, base_file_ext))
         return false;
 
-    strncat(base_file_name, base_file_ext, max_string_len);
+    strncat(base_file_name, base_file_ext, max_string_len-1);
+    base_file_name[max_string_len-1] = '\0';
     new_import_fn_id = STRTAB_add_string(base_file_name);
 
     /*
@@ -618,7 +619,7 @@ static boolean parse
 	   constructions) */
 	if (!add_def_string(DCEIDL_DEF))
         {
-            message_print("Warning: Couldn't define macro %s!\n", DCEIDL_DEF);
+            message_print(NIDL_IMPORTIDL, "Warning: Couldn't define macro %s!\n", DCEIDL_DEF);
         }
 
         cpp((char *)cmd_val[opt_cpp],

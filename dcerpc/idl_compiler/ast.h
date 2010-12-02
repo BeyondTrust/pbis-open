@@ -832,8 +832,8 @@ typedef struct AST_cpp_quote_n_t {
     fe_info_t              *fe_info;
     be_info_t              be_info;
 
-    struct AST_cpp_quotes_n_t *next;
-    struct AST_cpp_quotes_n_t *last;      
+    struct AST_cpp_quote_n_t *next;
+    struct AST_cpp_quote_n_t *last;
     STRTAB_str_t           text;
 } AST_cpp_quote_n_t;
 

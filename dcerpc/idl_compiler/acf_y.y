@@ -165,47 +165,17 @@ static void dump_attributes(char *, char const *, acf_attrib_t *);
 **  a c f _ e r r o r
 **
 **  Issues an error message, and bumps the error count.
-**
-**  Note:       This function is not prototyped since the way we use it allows
-**              it to be called with 1 to 6 arguments.
 */
 
-/* FIXME TODO change param list to va_list */
-static void acf_error(msgid, arg1, arg2, arg3, arg4, arg5)
-    long    msgid;              /* [in] Message id */
-    char    *arg1;              /* [in] 0 to 5 arguments to fill in message */
-    char    *arg2;              /*      directives */
-    char    *arg3;
-    char    *arg4;
-    char    *arg5;
-
-{
-    log_error(acf_yylineno, msgid, arg1, arg2, arg3, arg4, arg5);
-}
-
+#define acf_error(...) log_error(acf_yylineno, __VA_ARGS__)
 
 /*
 **  a c f _ w a r n i n g
 **
 **  Issues a warning message.
-**
-**  Note:       This function is not prototyped since the way we use it allows
-**              it to be called with 1 to 6 arguments.
 */
 
-/* FIXME TODO change param list to va_list */
-static void acf_warning(msgid, arg1, arg2, arg3, arg4, arg5)
-    long    msgid;              /* [in] Message id */
-    char    *arg1;              /* [in] 0 to 5 arguments to fill in message */
-    char    *arg2;              /*      directives */
-    char    *arg3;
-    char    *arg4;
-    char    *arg5;
-
-{
-    log_warning(acf_yylineno, msgid, arg1, arg2, arg3, arg4, arg5);
-}
-
+#define acf_warning(...) log_warning(acf_yylineno, __VA_ARGS__)
 
 %}
 
@@ -806,7 +776,7 @@ acf_operation:
         NAMETABLE_id_t      param_id;   /* Nametable id of parameter name */
         AST_operation_n_t   *op_p;      /* Ptr to AST operation node */
         AST_parameter_n_t   *param_p;   /* Ptr to AST parameter node */
-        boolean             log_error;  /* TRUE => error if name not found */
+        boolean             do_log_error;  /* TRUE => error if name not found */
         char const          *param_name;/* character string of param id */
 
         NAMETABLE_id_to_string($<y_id>1, &operation_name);
@@ -890,12 +860,12 @@ acf_operation:
                         &&  !p->parameter_attr.bit.cs_rtag
                         &&  (p->parameter_attr.bit.comm_status
                              || p->parameter_attr.bit.fault_status))
-                        log_error = FALSE;
+                        do_log_error = FALSE;
                     else
-                        log_error = TRUE;
+                        do_log_error = TRUE;
 
                     NAMETABLE_id_to_string(p->param_id, &param_name);
-                    if (lookup_parameter(op_p, param_name, log_error,
+                    if (lookup_parameter(op_p, param_name, do_log_error,
                                          &param_id, &param_p))
                     {
                         /* Store source information. */
@@ -935,7 +905,7 @@ acf_operation:
                         if (p->parameter_attr.bit.cs_rtag)
                             AST_SET_CS_RTAG(param_p);
                     }
-                    else if (log_error == FALSE)
+                    else if (do_log_error == FALSE)
                     {
                         /*
                          * Lookup failed, but OK since the parameter only has
@@ -1277,7 +1247,7 @@ void acf_cleanup()
 static boolean lookup_exception
 (
     NAMETABLE_id_t  excep_id,     /* [in] Nametable id of exception name */
-    boolean         log_error,    /* [in] TRUE => log error if name not found */
+    boolean         do_log_error,    /* [in] TRUE => log error if name not found */
     AST_exception_n_t **excep_ptr /*[out] Ptr to AST exception node */
 )
 {
@@ -1296,7 +1266,7 @@ static boolean lookup_exception
         }
     }
 
-    if (log_error)
+    if (do_log_error)
     {
         NAMETABLE_id_to_string(excep_id, &perm_excep_name);
         acf_error(NIDL_EXCNOTDEF, perm_excep_name);
@@ -1318,7 +1288,7 @@ static boolean lookup_exception
 static boolean lookup_type
 (
     char const      *type_name, /* [in] Name to look up */
-    boolean         log_error,  /* [in] TRUE => log error if name not found */
+    boolean         do_log_error,  /* [in] TRUE => log error if name not found */
     NAMETABLE_id_t  *type_id,   /*[out] Nametable id of type name */
     AST_type_n_t    **type_ptr  /*[out] Ptr to AST type node */
 )
@@ -1340,7 +1310,7 @@ static boolean lookup_type
         }
     }
 
-    if (log_error)
+    if (do_log_error)
     {
         name_id = NAMETABLE_add_id(type_name);
         NAMETABLE_id_to_string(name_id, &perm_type_name);
@@ -1363,7 +1333,7 @@ static boolean lookup_type
 static boolean lookup_operation
 (
     char const      *op_name,   /* [in] Name to look up */
-    boolean         log_error,  /* [in] TRUE => log error if name not found */
+    boolean         do_log_error,  /* [in] TRUE => log error if name not found */
     NAMETABLE_id_t  *op_id,     /*[out] Nametable id of operation name */
     AST_operation_n_t **op_ptr  /*[out] Ptr to AST operation node */
 )
@@ -1385,7 +1355,7 @@ static boolean lookup_operation
         }
     }
 
-    if (log_error)
+    if (do_log_error)
     {
         name_id = NAMETABLE_add_id(op_name);
         NAMETABLE_id_to_string(name_id, &perm_op_name);
@@ -1409,7 +1379,7 @@ static boolean lookup_parameter
 (
     AST_operation_n_t   *op_p,          /* [in] Ptr to AST operation node */
     char const          *param_name,    /* [in] Parameter name to look up */
-    boolean             log_error,      /* [in] TRUE=> log error if not found */
+    boolean             do_log_error,      /* [in] TRUE=> log error if not found */
     NAMETABLE_id_t      *param_id,      /*[out] Nametable id of param name */
     AST_parameter_n_t   **param_ptr     /*[out] Ptr to AST parameter node */
 )
@@ -1432,7 +1402,7 @@ static boolean lookup_parameter
         }
     }
 
-    if (log_error)
+    if (do_log_error)
     {
         char const *file_name;     /* Related file name */
 

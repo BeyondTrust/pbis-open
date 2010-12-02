@@ -545,8 +545,8 @@ static void CSPELL_server_stub_routine
     long first_pipe;        /* Index of first pipe to be processed */
     boolean explicit_binding;
     BE_rep_as_handle_t_k_t rep_as_handle_param;
-    NAMETABLE_id_t rep_as_type_name;
-    NAMETABLE_id_t binding_handle_name;
+    NAMETABLE_id_t rep_as_type_name = NULL;
+    NAMETABLE_id_t binding_handle_name = NULL;
     param_node_link_t *fixed_char_array_list = NULL;
                 /* List of fixed size character array parameters */
     BE_cs_info_t cs_info;           /* I-char machinery description */

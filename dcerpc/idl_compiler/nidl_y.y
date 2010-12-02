@@ -1347,7 +1347,6 @@ acf_interface_attr:
 	|
 	IMPLICIT_HANDLE_KW LPAREN IDENTIFIER IDENTIFIER RPAREN
 	{
-		AST_type_n_t * type_p;
 		if (the_interface->implicit_handle_name != NAMETABLE_NIL_ID)
 			log_error(nidl_yylineno, NIDL_ATTRUSEMULT, NULL);
 	
