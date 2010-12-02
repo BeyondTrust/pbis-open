@@ -136,8 +136,10 @@ dcerpc_gencat()
 
 make()
 {
+    PARSER_SOURCES="acf_y.c acf_l.c nidl_y.c nidl_l.c"
+
     IDL_SOURCES="\
-        acf_y.c acf_l.c nidl_y.c nidl_l.c astp_com.c astp_cpx.c \
+        astp_com.c astp_cpx.c \
         astp_gbl.c astp_sim.c astp_dmp.c checker.c chkichar.c command.c \
         driver.c errors.c files.c frontend.c getflags.c keywds.c main.c \
         message.c nametbl.c namdump.c propagat.c sysdep.c mtsbacke.c \
@@ -184,11 +186,21 @@ make()
     do
         mk_system "$_sys"
 
+        mk_group \
+            GROUP=parser \
+            SOURCES="$PARSER_SOURCES" \
+            INCLUDEDIRS=". ../include" \
+            CPPFLAGS="-DMIA -DDEFAULT_IDIR=\"${MK_INCLUDEDIR}\" -DCATALOG_DIR=\"${MK_DATADIR}/dcerpc\"" \
+            CFLAGS="-Wall -Werror -Wno-unused-function -Wno-unused-label" \
+            DEPS="default_msg.h acf_y.h nidl_y.h $IDL_DEPS"
+
         mk_program \
             PROGRAM="dceidl" \
             SOURCES="$IDL_SOURCES" \
+            GROUPS="parser" \
             INCLUDEDIRS=". ../include" \
             CPPFLAGS="-DMIA -DDEFAULT_IDIR=\"${MK_INCLUDEDIR}\" -DCATALOG_DIR=\"${MK_DATADIR}/dcerpc\"" \
+            CFLAGS="-Wall -Werror" \
             DEPS="default_msg.h acf_y.h nidl_y.h $IDL_DEPS"
     done
 }

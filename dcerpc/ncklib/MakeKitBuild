@@ -95,13 +95,15 @@ make()
         GROUP="stubs" \
         SOURCES="$STUB_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
-        HEADERDEPS="$NCK_HEADERDEPS"        
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        CFLAGS="$NCK_CFLAGS"
 
     mk_group \
         GROUP="mgmt_stubs" \
         SOURCES="$MGMT_STUB_SOURCES" \
         INCLUDEDIRS="$NCK_INCLUDEDIRS" \
-        HEADERDEPS="$NCK_HEADERDEPS"        
+        HEADERDEPS="$NCK_HEADERDEPS" \
+        CFLAGS="$NCK_CFLAGS"
 
     mk_group \
         GROUP="com" \
@@ -163,7 +165,8 @@ make()
             GROUP="prot_ncadg_stubs" \
             SOURCES="$PROT_NCADG_STUB_SOURCES" \
             INCLUDEDIRS="$NCK_INCLUDEDIRS" \
-            HEADERDEPS="$NCK_HEADERDEPS"        
+            HEADERDEPS="$NCK_HEADERDEPS" \
+            CFLAGS="$NCK_CFLAGS"
 
         mk_group \
             GROUP="prot_ncadg" \

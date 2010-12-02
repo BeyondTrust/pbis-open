@@ -27,6 +27,7 @@ make()
         SOURCES="$RPCD_SOURCES" \
         INSTALLDIR="${MK_SBINDIR}" \
         CPPFLAGS="$RPCD_CPPFLAGS" \
+        CFLAGS="-Wall -Werror" \
         INCLUDEDIRS="$RPCD_INCLUDEDIRS" \
         GROUPS="../uuid/uuid" \
         DEPS="dsm.h ep.h" \
