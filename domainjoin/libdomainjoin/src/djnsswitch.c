@@ -1192,6 +1192,9 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
     BOOLEAN hasBadSeLinux;
     NsswitchConf conf;
     DWORD ceError = ERROR_SUCCESS;
+    uid_t uid = 0;
+    gid_t gid = 0;
+    mode_t mode = 0;
 
     memset(&conf, 0, sizeof(conf));
 
@@ -1209,6 +1212,16 @@ static QueryResult QueryNsswitch(const JoinProcessOptions *options, LWException 
         LW_TRY(exc, result = RemoveCompat(&conf, NULL, &LW_EXC));
         if(result == CannotConfigure || result == NotConfigured)
         {
+            goto cleanup;
+        }
+
+        LW_CLEANUP_CTERR(exc, CTGetOwnerAndPermissions(
+            conf.filename, &uid, &gid, &mode));
+
+        if ((mode & 0444) != 0444)
+        {
+            // The user has to fix the permissions
+            result = CannotConfigure;
             goto cleanup;
         }
 
@@ -1457,6 +1470,22 @@ static PSTR GetNsswitchDescription(const JoinProcessOptions *options, LWExceptio
     {
         CT_SAFE_FREE_STRING(compatDescription);
         LW_CLEANUP_CTERR(exc, CTStrdup("", &compatDescription));
+    }
+
+    if (options->joiningDomain)
+    {
+        uid_t uid = 0;
+        gid_t gid = 0;
+        mode_t mode = 0;
+        LW_CLEANUP_CTERR(exc, CTGetOwnerAndPermissions(
+            conf.filename, &uid, &gid, &mode));
+
+        if ((mode & 0444) != 0444)
+        {
+            LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&ret,
+"The permissions of 0%03o on %s are invalid. All users must have at least read permission for the file. You can fix this by running 'chmod a+r %s'.", (int)(mode&0777), conf.filename, conf.filename));
+            goto cleanup;
+        }
     }
 
     conf.modified = FALSE;
