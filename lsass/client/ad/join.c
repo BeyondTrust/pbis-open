@@ -287,3 +287,106 @@ error:
 
     goto cleanup;
 }
+
+DWORD
+LsaAdGetMachinePassword(
+    IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    size_t inputBufferSize = 0;
+    PVOID pInputBuffer = NULL;
+    DWORD dwOutputBufferSize = 0;
+    PVOID pOutputBuffer = NULL;
+    LWMsgContext* pContext = NULL;
+    LWMsgDataContext* pDataContext = NULL;
+    PLWPS_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &pContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdIPCSetMemoryFunctions(pContext);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(pContext, &pDataContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
+                                  pDataContext,
+                                  LsaAdIPCGetStringSpec(),
+                                  (PVOID) pszDnsDomainName,
+                                  &pInputBuffer,
+                                  &inputBufferSize));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaProviderIoControl(
+                  hLsaConnection,
+                  LSA_AD_TAG_PROVIDER,
+                  LSA_AD_IO_GET_MACHINE_PASSWORD,
+                  inputBufferSize,
+                  pInputBuffer,
+                  &dwOutputBufferSize,
+                  &pOutputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
+                              pDataContext,
+                              LsaAdIPCGetMachinePasswordRespSpec(),
+                              pOutputBuffer,
+                              dwOutputBufferSize,
+                              OUT_PPVOID(&pPasswordInfo)));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            LsaAdFreeMachinePassword(pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+    }
+
+    if (pOutputBuffer)
+    {
+        LwFreeMemory(pOutputBuffer);
+    }
+
+    if (pInputBuffer)
+    {
+        LwFreeMemory(pInputBuffer);
+    }
+
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
+    if (pContext)
+    {
+        lwmsg_context_delete(pContext);
+    }
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;
+}
+
+VOID
+LsaAdFreeMachinePassword(
+    IN PLWPS_PASSWORD_INFO_A pPasswordInfo
+    )
+{
+    if (pPasswordInfo)
+    {
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszDnsDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszSID);
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszHostname);
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszHostDnsDomain);
+        LW_SAFE_FREE_STRING(pPasswordInfo->pszMachineAccount);
+        LW_SECURE_FREE_STRING(pPasswordInfo->pszMachinePassword);
+        LwFreeMemory(pPasswordInfo);
+    }
+}

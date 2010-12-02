@@ -50,6 +50,7 @@
 
 #include <lsa/lsa.h>
 #include <sys/types.h>
+#include <lwps/lwps.h>
 
 DWORD
 LsaAdEmptyCache(
@@ -147,6 +148,18 @@ LsaAdGetJoinedDomains(
     IN HANDLE hLsaConnection,
     OUT PDWORD pdwNumDomainsFound,
     OUT PSTR** pppszJoinedDomains
+    );
+
+DWORD
+LsaAdGetMachinePassword(
+    IN HANDLE hLsaConnection,
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+VOID
+LsaAdFreeMachinePassword(
+    IN PLWPS_PASSWORD_INFO_A pPasswordInfo
     );
 
 #endif /* __LSACLIENT_AD_H__ */

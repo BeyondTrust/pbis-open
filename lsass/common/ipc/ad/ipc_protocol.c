@@ -47,6 +47,12 @@
 
 #include "ipc.h"
 
+static LWMsgTypeSpec gLsaAdIPCStringSpec[] =
+{
+    LWMSG_PSTR,
+    LWMSG_TYPE_END
+};
+
 static LWMsgTypeSpec gLsaAdIPCEnumUsersFromCacheReqSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_AD_IPC_ENUM_USERS_FROM_CACHE_REQ),
@@ -137,6 +143,30 @@ static LWMsgTypeSpec gLsaAdIPCGetJoinedDomainsRespSpec[] =
     LWMSG_TYPE_END
 };
 
+static LWMsgTypeSpec gLsaAdIPCGetMachinePasswordRespSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LWPS_PASSWORD_INFO_A),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszDomainName),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszDnsDomainName),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszSID),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszHostname),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszHostDnsDomain),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszMachineAccount),
+    LWMSG_MEMBER_PSTR(LWPS_PASSWORD_INFO_A, pszMachinePassword),
+    LWMSG_MEMBER_INT32(LWPS_PASSWORD_INFO_A, last_change_time),
+    LWMSG_MEMBER_UINT32(LWPS_PASSWORD_INFO_A, dwSchannelType),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+LWMsgTypeSpec*
+LsaAdIPCGetStringSpec(
+    VOID
+    )
+{
+    return gLsaAdIPCStringSpec;
+}
+
 LWMsgTypeSpec*
 LsaAdIPCGetEnumUsersFromCacheReqSpec(
     void
@@ -191,4 +221,42 @@ LsaAdIPCGetJoinedDomainsRespSpec(
     )
 {
     return gLsaAdIPCGetJoinedDomainsRespSpec;
+}
+
+LWMsgTypeSpec*
+LsaAdIPCGetMachinePasswordRespSpec(
+    VOID
+    )
+{
+    return gLsaAdIPCGetMachinePasswordRespSpec;
+}
+
+static
+LWMsgStatus
+LsaAdIPCAllocate(
+    IN size_t Size,
+    OUT PVOID* ppMemory,
+    IN PVOID pContext
+    )
+{
+    DWORD dwError = LwAllocateMemory((DWORD)Size, ppMemory);
+    return dwError ? LWMSG_STATUS_MEMORY : LWMSG_STATUS_SUCCESS;
+}
+
+static
+VOID
+LsaAdIPCFree(
+    IN PVOID pMemory,
+    IN PVOID pContext
+    )
+{
+    LwFreeMemory(pMemory);
+}
+
+VOID
+LsaAdIPCSetMemoryFunctions(
+    IN LWMsgContext* pContext
+    )
+{
+    lwmsg_context_set_memory_functions(pContext, LsaAdIPCAllocate, LsaAdIPCFree, NULL, NULL);
 }

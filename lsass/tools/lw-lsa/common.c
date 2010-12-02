@@ -140,3 +140,40 @@ Basename(
         return pszPath;
     }
 }
+
+VOID
+PrintErrorMessage(
+    IN DWORD ErrorCode
+    )
+{
+    PCSTR pszErrorName = LwWin32ExtErrorToName(ErrorCode);
+    PSTR pszErrorMessage = NULL;
+    DWORD size = LwGetErrorString(ErrorCode, NULL, 0);
+
+    if (size > 0)
+    {
+        DWORD dwError = LwAllocateMemory(size, OUT_PPVOID(&pszErrorMessage));
+        if (!dwError)
+        {
+            (void) LwGetErrorString(ErrorCode, pszErrorMessage, size);
+        }
+    }
+
+    if (!LW_IS_NULL_OR_EMPTY_STR(pszErrorMessage))
+    {
+        fprintf(stderr,
+                "Error code %u (%s).\n%s\n",
+                ErrorCode,
+                LW_PRINTF_STRING(pszErrorName),
+                pszErrorMessage);
+    }
+    else
+    {
+        fprintf(stderr,
+                "Error code %u (%s).\n",
+                ErrorCode,
+                LW_PRINTF_STRING(pszErrorName));
+    }
+
+    LW_SAFE_FREE_STRING(pszErrorMessage);
+}

@@ -17,6 +17,12 @@ ad_cache_main(
     );
 
 int
+ad_get_machine_main(
+    int argc,
+    char* argv[]
+    );
+
+int
 add_group_main(
     int argc,
     char* argv[]

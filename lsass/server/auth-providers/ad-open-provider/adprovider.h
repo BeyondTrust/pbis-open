@@ -123,6 +123,7 @@
 #include "lsasqlite.h"
 #include "lsasqlite_p.h"
 #include "pwdcache_p.h"
+#include "ioctl.h"
 
 #include "externs.h"
 

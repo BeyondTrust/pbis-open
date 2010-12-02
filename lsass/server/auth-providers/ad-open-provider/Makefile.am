@@ -59,7 +59,8 @@ liblsass_auth_provider_ad_open_la_SOURCES = \
        memcache.c                \
        specialdomain.c           \
        unprov.c                  \
-       pwdcache.c
+       pwdcache.c                \
+       ioctl.c
 
 if !ENABLE_MINIMAL
 PROVIDER_CPPFLAGS += -DAD_CACHE_ENABLE_SQLITE @SQLITE_INCLUDES@

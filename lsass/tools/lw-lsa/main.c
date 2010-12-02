@@ -17,6 +17,7 @@ static main_entry entry_list[] =
 {
     {"lsa", lsa_main},
     {"ad-cache", ad_cache_main},
+    {"ad-get-machine", ad_get_machine_main},
     {"add-group", add_group_main},
     {"add-user", add_user_main},
     {"del-group", del_group_main},

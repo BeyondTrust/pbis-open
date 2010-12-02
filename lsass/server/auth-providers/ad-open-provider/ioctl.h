@@ -1,6 +1,5 @@
 /*
- * Copyright Likewise Software
- * All rights reserved.
+ * Copyright (c) Likewise Software.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,46 +20,34 @@
  * GENERAL PUBLIC LICENSE, NOTWITHSTANDING THE ABOVE NOTICE.  IF YOU
  * HAVE QUESTIONS, OR WISH TO REQUEST A COPY OF THE ALTERNATE LICENSING
  * TERMS OFFERED BY LIKEWISE SOFTWARE, PLEASE CONTACT LIKEWISE SOFTWARE AT
- * license@likewisesoftware.com
+ * license@likewise.com
  */
 
 /*
+ * Copyright (C) Likewise Software. All rights reserved.
+ *
  * Module Name:
  *
- *        common.c
+ *        ioctl.c
  *
  * Abstract:
  *
- *        Likewise Security and Authentication Subsystem (LSASS)
+ *        AD Provider IOCTL Handlers
  *
- *        Common functions for tools
+ * Authors: Danilo Almeida <dalmeida@likewise.com>
  *
- * Authors: Brian Koropoff(bkoropoff@likewise.com)
  */
 
-#ifndef __TOOLS_COMMON_H__
-#define __TOOLS_COMMON_H__
+#ifndef __LSA_AD_IOCTL_H__
+#define __LSA_AD_IOCTL_H__
 
-#include <lsa/lsa.h>
-#include "lwargvcursor.h"
-
-#define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
-
-VOID
-PrintSecurityObject(
-    PLSA_SECURITY_OBJECT pObject,
-    DWORD dwObjectNumber,
-    DWORD dwObjectTotal
+DWORD
+AD_IoctlGetMachinePassword(
+    IN HANDLE hProvider,
+    IN DWORD dwInputBufferSize,
+    IN PVOID pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
     );
 
-PCSTR
-Basename(
-    PCSTR pszPath
-    );
-
-VOID
-PrintErrorMessage(
-    IN DWORD ErrorCode
-    );
-
-#endif
+#endif // __LSA_AD_IOCTL_H__
