@@ -204,6 +204,11 @@ configure()
         mk_msg "broken PTHREAD_ONCE_INIT: yes"
     fi
 
+    # Check for stuff for build system (needed by idl compiler)
+    mk_system build
+    mk_check_headers nl_types.h
+    mk_system host
+
     # Programs
     mk_check_program FAIL=yes bison
     mk_check_program FAIL=yes gencat
