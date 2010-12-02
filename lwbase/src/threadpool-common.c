@@ -584,7 +584,7 @@ LwRtlSetAffinityThreadAttribute(
     CPU_SET_TYPE cpuSet;
 
     CPU_ZERO(&cpuSet);
-    CPU_SET(CpuNumber, &cpuSet);
+    (void) CPU_SET(CpuNumber, &cpuSet);
 
     status = LwErrnoToNtStatus(
         pthread_attr_setaffinity_np(pAttr, sizeof(cpuSet), &cpuSet));
@@ -611,7 +611,7 @@ LwRtlResetAffinityThreadAttribute(
     
     for (i = 0; i < numCpus; i++)
     {
-        CPU_SET(i, &cpuSet);
+        (void) CPU_SET(i, &cpuSet);
     }
     
     status = LwErrnoToNtStatus(
