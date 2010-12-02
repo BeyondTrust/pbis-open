@@ -30,7 +30,10 @@ configure()
         
     if mk_check_function \
         HEADERDEPS="sys/socket.h" \
-        PROTOTYPE="int getsockname(int,struct sockaddr*,socklen_t*)"
+        PROTOTYPE="int getsockname(int,struct sockaddr*,socklen_t*)" ||
+       mk_check_function \
+        HEADERDEPS="sys/socket.h" \
+        PROTOTYPE="int getsockname(int,__SOCKADDR_ARG,socklen_t*)" # Hack for clang on linux
     then
         mk_define GETSOCKNAME_TAKES_SOCKLEN_T 1
     elif ! mk_check_function \
