@@ -1049,6 +1049,35 @@ SelectThreadDestroy(
     pthread_cond_destroy(&pThread->Event);
 }
 
+static
+NTSTATUS
+GetFdLimit(
+    PULONG pulLimit
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    struct rlimit limit = {0};
+
+    if (getrlimit(RLIMIT_NOFILE, &limit) != 0)
+    {
+        status = LwErrnoToNtStatus(errno);
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
+    if (limit.rlim_cur == RLIM_INFINITY)
+    {
+        *pulLimit = (ULONG) 0xFFFFFFFF;
+    }
+    else
+    {
+        *pulLimit = (ULONG) limit.rlim_cur;
+    }
+
+error:
+
+    return status;
+}
+
 NTSTATUS
 LwRtlCreateThreadPool(
     PLW_THREAD_POOL* ppPool,
@@ -1059,6 +1088,7 @@ LwRtlCreateThreadPool(
     PLW_THREAD_POOL pPool = NULL;
     int i = 0;
     int numCpus = 0;
+    ULONG ulFdLimit = 0;
 
 #if defined(_SC_NPROCESSORS_ONLN)
     numCpus = sysconf(_SC_NPROCESSORS_ONLN);
@@ -1086,6 +1116,20 @@ LwRtlCreateThreadPool(
     {
         pPool->ulEventThreadCount = GetTaskThreadsAttr(pAttrs, numCpus);
         pPool->ulNextEventThread = 0;
+
+        status = GetFdLimit(&ulFdLimit);
+        GOTO_ERROR_ON_STATUS(status);
+
+        /*
+         * Each thread needs 2 fds for the notification pipe.
+         * This check will limit us to 1/4 of the process fd limit.
+         * This is particularly important on Solaris which has a very
+         * low default limit of 256.
+         */
+        if (pPool->ulEventThreadCount > ulFdLimit / 8)
+        {
+            pPool->ulEventThreadCount = ulFdLimit / 8;
+        }
 
         if (pPool->ulEventThreadCount)
         {
