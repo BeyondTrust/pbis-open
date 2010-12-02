@@ -33,12 +33,6 @@
 #define BLOCK_SIZE 4096
 #define TIME_SEC_CONVERSION_CONSTANT 11644473600LL
 
-typedef struct
-{
-    SID base;
-    BYTE data[SID_MAX_SIZE-SID_MIN_SIZE];
-} SIDMAX;
-
 /* Private prototypes */
 static
 NTSTATUS
