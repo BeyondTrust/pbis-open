@@ -1,0 +1,24 @@
+make()
+{
+    mk_autotools \
+        HEADERS='sasl/sasl.h' \
+        LIBS='sasl2' \
+	HEADERDEPS="gssapi.h" \
+	LIBDEPS="gssapi_krb5" \
+        -- \
+        --with-configdir="${MK_LIBDIR}/sasl2" \
+        --with-plugindir="${MK_LIBDIR}/sasl2" \
+        --without-dblib \
+        --without-saslauthd \
+        --without-authdaemond \
+        --disable-macos-framework \
+        --disable-sample \
+        --disable-cram \
+        --disable-digest \
+        --disable-otp \
+        --disable-plain \
+        --disable-anon \
+        --enable-gss_mutexes \
+        --disable-static \
+        --enable-shared
+}

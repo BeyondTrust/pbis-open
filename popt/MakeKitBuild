@@ -1,0 +1,7 @@
+make()
+{
+    mk_autotools \
+        HEADERS="popt.h" \
+        LIBS="popt" \
+        --disable-nls
+}

@@ -1,0 +1,10 @@
+make()
+{
+    mk_autotools \
+        SOURCEDIR=src \
+        HEADERS='krb5.h gssapi.h' \
+        LIBS='krb5 gssapi_krb5 k5crypto' \
+        --enable-shared \
+	--disable-pkinit \
+        --without-tcl
+}

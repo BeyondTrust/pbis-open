@@ -1,0 +1,156 @@
+make()
+{
+    lw_openssl \
+        HEADERS="openssl/crypto.h openssl/md5.h openssl/rand.h openssl/hmac.h openssl/ssl.h openssl/md4.h openssl/rc4.h" \
+        LIBS="ssl crypto"
+}
+
+# OpenSSL can't be built with the usual mk_autotools stuff
+lw_openssl()
+{
+    mk_push_vars LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS suffix stamp item
+    mk_parse_params
+
+    suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
+
+    mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
+
+    BUILDDIR="build_${suffix}"
+    mk_resolve_target "$BUILDDIR"
+    mk_add_clean_target "$result"
+
+    # Emit make target to configure OpenSSL
+    mk_target \
+        TARGET=".configure_openssl_${suffix}" \
+        configure_openssl '$@' "&${BUILDDIR}" "&."
+
+    # Emit make target to build OpenSSL
+    mk_target \
+        TARGET=".build_openssl_${suffix}" \
+        DEPS="$result" \
+        build_openssl '$@' "&${BUILDDIR}" '$(MAKE)'
+
+    stamp="$result"
+
+    # Include openssl in 'make all'
+    mk_add_all_target "$stamp"
+
+    # Allow 'make openssl'
+    mk_target \
+        TARGET="@openssl" \
+        DEPS="$stamp"
+
+    mk_add_phony_target "$result"
+
+    # For each header/library that OpenSSL installs, we need to
+    # emit a dummy target for it that depends on the build stamp file
+    # in order to get make to do the right thing.  We also need to
+    # tell MakeKit that we build it internally so subsequent configure
+    # checks for it succeed.
+
+    mk_unquote_list "$HEADERS"
+    for item in "$@"
+    do
+        mk_target \
+            TARGET="${MK_INCLUDEDIR}/$item" \
+            DEPS="$stamp"
+
+        mk_declare_internal_header "$item"
+    done
+
+    mk_unquote_list "$LIBS"
+    for item in "$@"
+    do
+        mk_target \
+            TARGET="${MK_LIBDIR}/lib${item}${MK_LIB_EXT}" \
+            DEPS="$stamp"
+
+        mk_declare_internal_library "$item"
+    done
+
+    mk_pop_vars
+}
+
+copy_openssl()
+{
+    # $1 = build directory
+    # $2 = source directory
+
+    MK_MSG_DOMAIN="copy"
+
+    mk_msg "openssl ($MK_CANONICAL_SYSTEM)"
+
+    mk_safe_rm "$1"
+    mk_run_or_fail cp -r "$2" "$1"
+}
+
+configure_openssl()
+{
+    # $1 = stamp file
+    # $2 = build directory
+    # $3 = source directory
+
+    copy_openssl "$2" "$3"
+
+    MK_MSG_DOMAIN="configure"
+
+    case "${MK_OS}-${MK_CANONICAL_SYSTEM#*/}" in
+        *)
+            host_string=""
+            ;;
+    esac
+
+    old_pwd="$PWD"
+
+    mk_cd_or_fail "$2"
+
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
+
+    if [ -n "$host_string" ]
+    then
+        mk_run_quiet_or_fail \
+            ./Configure \
+            --prefix="${MK_PREFIX}" \
+            shared \
+            "$host_string"
+    else
+        mk_run_quiet_or_fail \
+            ./config \
+            --prefix="${MK_PREFIX}" \
+            -d \
+            shared
+    fi
+
+    mk_cd_or_fail "${old_pwd}"
+    mk_run_or_fail touch "$1"
+
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}
+
+build_openssl()
+{
+    # $1 = stamp file
+    # $2 = build directory
+    # $3 = make command
+
+    MK_MSG_DOMAIN="build"
+
+    old_pwd="$PWD"
+
+    mk_cd_or_fail "$2"
+
+    mk_msg "begin openssl ($MK_CANONICAL_SYSTEM)"
+
+    # OpenSSL does not cleanly build concurrently, so unset
+    # environment variables that GNU make uses to pass
+    # concurrency settings
+    unset MAKE MFLAGS MAKEFLAGS
+    export MAKE MFLAGS MAKEFLAGS
+
+    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" CC="${MK_CC}"
+    mk_run_quiet_or_fail ${3} MAKE="$3" LIBDIR="${MK_LIBDIR}" INSTALL_PREFIX="${MK_ROOT_DIR}/${MK_STAGE_DIR}" install_sw
+    mk_cd_or_fail "$old_pwd"
+    mk_run_or_fail touch "$1"
+
+    mk_msg "end openssl ($MK_CANONICAL_SYSTEM)"
+}

@@ -1,0 +1,6 @@
+make()
+{
+    mk_autotools \
+        HEADERS="iconv.h" \
+        LIBS="iconv"
+}

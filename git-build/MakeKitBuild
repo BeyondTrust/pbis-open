@@ -1,8 +1,12 @@
 PROJECT_NAME="likewise-open"
 MODULES="core compiler autotools moonunit pkg-config likewise dceidl fortune"
-SUBDIRS=". libuuid lwbase lwmsg lwreg pstore lwadvapi netlogon \
+LW_ALL_BUNDLED="krb5 cyrus-sasl openldap libiconv \
+                sqlite libuuid openssl curl libxml2"
+SUBDIRS="$LW_ALL_BUNDLED \
+         lwbase lwmsg lwreg pstore lwadvapi netlogon \
          lwio libschannel dcerpc lwdns centutils lwsm eventlog lsass \
          srvsvc lwnetapi lwtools domainjoin config package"
+
 
 defaults()
 {
@@ -12,30 +16,6 @@ defaults()
     MK_DATADIR="/opt/likewise/share"
     MK_DOCDIR="/usr/share/doc/likewise"
     MK_MANDIR="/usr/share/man"
-}
-
-lw_use_bundled()
-{
-    for _dep in ${LW_BUNDLED}
-    do
-        [ "$_dep" = "$1" ] && return 0
-    done
-
-    return 1
-}
-
-lw_filter_bundled()
-{
-    __needle="$1"
-    set -- ${LW_BUNDLED}
-    unset LW_BUNDLED
-    for i
-    do
-        if [ "$i" != "$__needle" ]
-        then
-            LW_BUNDLED="${LW_BUNDLED:+$LW_BUNDLED }${i}"
-        fi
-    done
 }
 
 option()
@@ -81,288 +61,37 @@ configure()
     mk_export LW_VERSION="6.1.0"
     mk_export LW_BUNDLED
     
-    if [ -z "$MK_CFLAGS" ]
-    then
-        mk_export MK_CFLAGS="-O2 -g"
-    fi
-    
     mk_msg "configuring Likewise Open $LW_VERSION"
     mk_msg "using bundled libraries: $LW_BUNDLED"
 
-    lw_use_bundled libuuid || mk_skip_subdir libuuid
+    for comp in ${LW_ALL_BUNDLED}
+    do
+        lw_use_bundled "$comp" || mk_skip_subdir "$comp"
+    done
 }
 
 make()
 {
-    # Handle building bundled 3rd-party dependencies
+    bundled_targets=""
 
-    lw_use_bundled libiconv && mk_autotools \
-        SOURCEDIR=libiconv \
-        HEADERS="iconv.h" \
-        LIBS="iconv"
-
-    lw_use_bundled krb5 && mk_autotools \
-        SOURCEDIR=krb5/src \
-        HEADERS='krb5.h gssapi.h' \
-        LIBS='krb5 gssapi_krb5 k5crypto' \
-        --enable-shared \
-	--disable-pkinit \
-        --without-tcl
-
-    lw_use_bundled cyrus-sasl && mk_autotools \
-        SOURCEDIR=cyrus-sasl \
-        HEADERS='sasl/sasl.h' \
-        LIBS='sasl2' \
-	HEADERDEPS="gssapi.h" \
-	LIBDEPS="gssapi_krb5" \
-        -- \
-        --with-configdir="${MK_LIBDIR}/sasl2" \
-        --with-plugindir="${MK_LIBDIR}/sasl2" \
-        --without-dblib \
-        --without-saslauthd \
-        --without-authdaemond \
-        --disable-macos-framework \
-        --disable-sample \
-        --disable-cram \
-        --disable-digest \
-        --disable-otp \
-        --disable-plain \
-        --disable-anon \
-        --enable-gss_mutexes \
-        --disable-static \
-        --enable-shared
-    
-    lw_use_bundled openldap && mk_autotools \
-        SOURCEDIR=openldap \
-        HEADERS='ldap.h' \
-        LIBS='ldap ldap_r' \
-        HEADERDEPS="gssapi.h sasl/sasl.h" \
-        LIBDEPS="gssapi_krb5 sasl2" \
-        CPPFLAGS="-D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE" \
-        CFLAGS="-fPIC" \
-        --disable-static \
-        --enable-shared \
-        --without-kerberos \
-        --disable-slapd \
-        --disable-slurpd \
-        --without-tls
-    
-    lw_use_bundled sqlite && mk_autotools \
-        SOURCEDIR=sqlite \
-        HEADERS='sqlite3.h' \
-        LIBS='sqlite3' \
-        CPPFLAGS="-D_REENTRANT" \
-        CFLAGS="-fPIC -fno-strict-aliasing"
-
-    lw_use_bundled openssl && lw_openssl \
-        SOURCEDIR=openssl \
-        HEADERS="openssl/crypto.h openssl/md5.h openssl/rand.h openssl/hmac.h openssl/ssl.h openssl/md4.h openssl/rc4.h" \
-        LIBS="ssl crypto"
-
-    lw_use_bundled curl && mk_autotools \
-        SOURCEDIR=curl \
-        HEADERS="curl/curl.h" \
-        LIBS="curl" \
-        HEADERDEPS="openssl/ssl.h" \
-        LIBDEPS="ssl" \
-        --disable-ldap --disable-ldaps --disable-ftp \
-        --disable-rtsp --disable-dict --disable-telnet \
-        --disable-tftp --disable-pop3 --disable-imap \
-        --disable-smtp
-
-    # libxml2 likes to put headers in weird places
-    XML_INCDIR="${MK_INCLUDEDIR}/libxml2"
-
-    lw_use_bundled libxml2 && mk_autotools \
-        SOURCEDIR=libxml2 \
-        HEADERS="${XML_INCDIR}/libxml/tree.h \
-                 ${XML_INCDIR}/libxml/xpath.h \
-                 ${XML_INCDIR}/libxml/parser.h \
-                 ${XML_INCDIR}/libxml/xpathInternals.h" \
-        LIBS="xml2" \
-        -- \
-        --with-iconv=no \
-        --with-zlib=no \
-        --with-http=no \
-        --with-ftp=no \
-        --enable-ipv6=no \
-        --with-python=no
-}
-
-# OpenSSL can't be built with the usual mk_autotools stuff
-lw_openssl()
-{
-    mk_push_vars SOURCEDIR LIBS HEADERS CPPFLAGS CFLAGS LDFLAGS BUILDDIR INSTALLDIR suffix stamp item
-    mk_parse_params
-
-    suffix="${MK_CANONICAL_SYSTEM%/*}_${MK_CANONICAL_SYSTEM#*/}"
-
-    mk_comment "OpenSSL ($MK_CANONICAL_SYSTEM)"
-
-    BUILDDIR="${SOURCEDIR}_${suffix}_build"
-    mk_resolve_target "$BUILDDIR"
-    mk_add_clean_target "$result"
-
-    INSTALLDIR="${SOURCEDIR}_${suffix}_install"
-    mk_resolve_target "$INSTALLDIR"
-    mk_add_clean_target "$result"
-
-    # Emit make target to configure OpenSSL
-    mk_target \
-        TARGET=".configure_openssl_${suffix}" \
-        configure_openssl '$@' "&${BUILDDIR}" "&${SOURCEDIR}"
-
-    # Emit make target to build OpenSSL
-    mk_target \
-        TARGET=".build_openssl_${suffix}" \
-        DEPS="$result" \
-        build_openssl '$@' "&${INSTALLDIR}" "&${BUILDDIR}" '$(MAKE)'
-
-    stamp="$result"
-
-    # Include openssl in 'make all'
-    mk_add_all_target "$stamp"
-
-    # Allow 'make openssl'
-    mk_target \
-        TARGET="@openssl" \
-        DEPS="$stamp"
-    
-    mk_add_phony_target "$result"
-
-    # For each header/library that OpenSSL installs, we need to
-    # emit a dummy target for it that depends on the build stamp file
-    # in order to get make to do the right thing.  We also need to
-    # tell MakeKit that we build it internally so subsequent configure
-    # checks for it succeed.
-
-    mk_unquote_list "$HEADERS"
-    for item in "$@"
+    for comp in ${LW_ALL_BUNDLED}
     do
-        mk_target \
-            TARGET="${MK_INCLUDEDIR}/$item" \
-            DEPS="$stamp"
-
-        mk_declare_internal_header "$item"
-    done
-    
-    mk_unquote_list "$LIBS"
-    for item in "$@"
-    do
-        mk_target \
-            TARGET="${MK_LIBDIR}/lib${item}${MK_LIB_EXT}" \
-            DEPS="$stamp"
-
-        mk_declare_internal_library "$item"
+        lw_use_bundled "$comp" && bundled_targets="$bundled_targets @$comp"
     done
             
-    mk_pop_vars
+    mk_target \
+        TARGET="@bundled" \
+        DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
+
+    mk_add_phony_target "$result"
 }
 
-copy_openssl()
+lw_use_bundled()
 {
-    # $1 = build directory
-    # $2 = source directory
+    for _dep in ${LW_BUNDLED}
+    do
+        [ "$_dep" = "$1" ] && return 0
+    done
 
-    MK_MSG_DOMAIN="copy"
-
-    mk_msg "openssl ($MK_SYSTEM)"
-
-    mk_safe_rm "$1"
-    mk_run_or_fail cp -r "$2" "$1"
-}
-
-configure_openssl()
-{
-    # $1 = stamp file
-    # $2 = build directory
-    # $3 = source directory
-
-    copy_openssl "$2" "$3"
-
-    MK_MSG_DOMAIN="configure"
-
-    case "${MK_OS}-${MK_SYSTEM#*/}" in
-        *)
-            host_string=""
-            ;;
-    esac
-
-    old_pwd="$PWD"
-    
-    mk_cd_or_fail "$2"
-
-    mk_msg "begin openssl ($MK_SYSTEM)"
-
-    if [ -n "$host_string" ]
-    then
-        mk_run_quiet_or_fail \
-            ./Configure \
-            --prefix="${MK_PREFIX}" \
-            shared \
-            "$host_string"
-    else
-        mk_run_quiet_or_fail \
-            ./config \
-            --prefix="${MK_PREFIX}" \
-            -d \
-            shared
-    fi
-
-    mk_cd_or_fail "${old_pwd}"
-    mk_run_or_fail touch "$1"
-
-    mk_msg "end openssl ($MK_SYSTEM)"
-}
-
-build_openssl()
-{
-    # $1 = stamp file
-    # $2 = install directory
-    # $3 = build directory
-    # $4 = make command
-
-    MK_MSG_DOMAIN="build"
-
-    old_pwd="$PWD"
-    
-    mk_cd_or_fail "$3"
-
-    mk_msg "begin openssl ($MK_SYSTEM)"
-
-    # OpenSSL does not cleanly build concurrently, so unset
-    # environment variables that GNU make uses to pass
-    # concurrency settings
-    unset MAKE MFLAGS MAKEFLAGS
-    export MAKE MFLAGS MAKEFLAGS
-    
-    if [ "$MK_HOST_OS" = "linux" ]
-    then
-        # Ensure executable stack bit is not set in resulting library
-        CC="$MK_CC -Wa,--noexecstack"
-    else
-        CC="$MK_CC"
-    fi
-
-    # Build it
-    mk_run_quiet_or_fail ${4} MAKE="$4" CC="${CC}"
-
-    # Install into temporary install area
-    mk_mkdir "${MK_ROOT_DIR}/$2"
-    mk_run_quiet_or_fail ${4} MAKE="$4" INSTALL_PREFIX="${MK_ROOT_DIR}/$2" install_sw
-
-    # Go back to build root
-    mk_cd_or_fail "$old_pwd"
-
-    # Move bits we want into staging area
-    mk_mkdir "${MK_STAGE_DIR}${MK_LIBDIR}"
-    mk_run_or_fail mv -f "${2}${MK_PREFIX}/lib/"*.* "${MK_STAGE_DIR}${MK_LIBDIR}"
-
-    mk_mkdir "${MK_STAGE_DIR}${MK_INCLUDEDIR}/openssl"
-    mk_run_or_fail mv -f "${2}${MK_PREFIX}/include/openssl/"* "${MK_STAGE_DIR}${MK_INCLUDEDIR}/openssl"
-    
-    # Touch stamp file
-    mk_run_or_fail touch "$1"
-
-    mk_msg "end openssl ($MK_SYSTEM)"
+    return 1
 }

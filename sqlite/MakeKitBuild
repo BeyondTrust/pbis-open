@@ -1,0 +1,8 @@
+make()
+{
+    mk_autotools \
+        HEADERS='sqlite3.h' \
+        LIBS='sqlite3' \
+        CPPFLAGS="-D_REENTRANT" \
+        CFLAGS="-fPIC -fno-strict-aliasing"
+}
