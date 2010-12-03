@@ -42,15 +42,14 @@ make()
             LIBDEPS="uuid $LIB_ICONV $LIB_XNET"
     mk_multiarch_done
 
-    if [ "$HAVE_EPOLL_CREATE" = yes ]
-    then
-        THREADPOOL_SOURCES="threadpool-epoll.c"
-    elif [ "$HAVE_KQUEUE" = yes ]
-    then
-        THREADPOOL_SOURCES="threadpool-kqueue.c"
-    else
-        THREADPOOL_SOURCES="threadpool-select.c"
-    fi
+    case "$THREADPOOL_BACKEND" in
+        "epoll"|"kqueue"|"select")
+            THREADPOOL_SOURCES="threadpool-${THREADPOOL_BACKEND}.c"
+            ;;
+        *)
+            mk_fail "unknown threadpool backend: $THREADPOOL_BACKEND"
+            ;;
+    esac
 
     mk_library \
         LIB="lwbase" \

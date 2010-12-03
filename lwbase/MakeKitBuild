@@ -1,5 +1,15 @@
 SUBDIRS='include src moonunit'
 
+option()
+{
+    mk_option \
+        OPTION=threadpool-backend \
+        PARAM='value' \
+        VAR=THREADPOOL_BACKEND \
+        DEFAULT="autodetect" \
+        HELP="Threadpool backend"
+}
+
 configure()
 {
     mk_config_header 'include/config.h'
@@ -95,13 +105,18 @@ configure()
         HEADERDEPS="sys/types.h sys/event.h sys/time.h" \
         kqueue
 
-    if [ "$HAVE_EPOLL_CREATE" = "yes" ]
+    if [ "$THREADPOOL_BACKEND" = "autodetect" ]
     then
-        mk_msg "threadpool backend: epoll"
-    elif [ "$HAVE_KQUEUE" = "yes" ]
-    then
-        mk_msg "threadpool backend: kqueue"
-    else
-        mk_msg "threadpool backend: select"
+        if [ "$HAVE_EPOLL_CREATE" = "yes" ]
+        then
+            THREADPOOL_BACKEND="epoll"
+        elif [ "$HAVE_KQUEUE" = "yes"  ]
+        then
+            THREADPOOL_BACKEND="kqueue"
+        else
+            THREADPOOL_BACKEND="select"
+        fi
     fi
+
+    mk_msg "threadpool backend: $THREADPOOL_BACKEND"
 }
