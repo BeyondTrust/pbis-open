@@ -86,6 +86,8 @@ make()
         DEPS="$bundled_targets @lwreg/libedit @dcerpc/flex-2.5.4"
 
     mk_add_phony_target "$result"
+
+    lw_print_features
 }
 
 lw_use_bundled()
@@ -96,4 +98,44 @@ lw_use_bundled()
     done
 
     return 1
+}
+
+lw_print_feature()
+{
+    printf "%-30s%s\n" "$1:" "$2"
+}
+
+lw_print_features()
+{
+    printf -- "\n---\nConfiguration summary\n---\n\n"
+
+    lw_print_feature "Host OS" "$MK_HOST_OS"
+    lw_print_feature "Host ISAs" "$MK_HOST_ISAS"
+    lw_print_feature "Bundled libraries" "$LW_BUNDLED"
+
+    mk_get_export lwbase THREADPOOL_BACKEND
+    lw_print_feature "Threadpool backend" "$result"
+
+    mk_get_export lwbase HAVE_PTHREAD_ATTR_SETAFFINITY_NP
+    lw_print_feature "Threadpool CPU affinity" "$result"
+
+    mk_get_export lwio HAVE_LIB_FUSE
+    [ "$result" != "no" ] && result=yes
+    lw_print_feature "FUSE support" "$result"
+
+    mk_get_export lwio HAVE_LIB_ATTR
+    [ "$result" != "no" ] && result=yes
+    lw_print_feature "EA support" "$result"
+
+    mk_get_export domainjoin DJ_GUI_ENABLED
+    lw_print_feature "Domain join GUI" "$result"
+
+    types=""
+
+    mk_rpm_enabled && types="$types rpm"
+    mk_deb_enabled && types="$types deb"
+
+    [ -z "$types" ] && types="none"
+
+    lw_print_feature "Package types" "${types# }"
 }
