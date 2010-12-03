@@ -60,7 +60,7 @@
 #include <lsautils.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 #include "netrdefs.h"
 #include "netr_credentials.h"

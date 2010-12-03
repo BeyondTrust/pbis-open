@@ -48,7 +48,7 @@
 
 #include <lsautils.h>
 #include <lw/rpc/lsa.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 #include "lsadefs.h"
 #include "lsa_memory.h"

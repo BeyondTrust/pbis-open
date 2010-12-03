@@ -66,7 +66,7 @@
 #include <lsautils.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/lsa.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 #include "samrdefs.h"
 #include "samr_memory.h"

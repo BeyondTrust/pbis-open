@@ -48,7 +48,7 @@
 
 #include <lsautils.h>
 #include <lw/rpc/wkssvc.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 #include "wkssdefs.h"
 #include "wkss_memory.h"

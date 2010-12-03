@@ -51,7 +51,7 @@
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/dssetup.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 #include "dsrdefs.h"
 #include "dsr_memory.h"
