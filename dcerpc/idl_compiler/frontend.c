@@ -135,8 +135,7 @@ static void FE_init()
 **
 **  Sends the source file through CPP before giving it to lex.
 **  The cpp_output argument is a file ID for the output from cpp.
-**      UNIX only:      cpp_output is connected to piped output from cpp.
-**      VAX/VMS only:   cpp_output is connected to a temp file of cpp output.
+**  cpp_output is connected to piped output from cpp.
 */
 
 #if defined(CPP)
@@ -146,7 +145,6 @@ static void cpp
     char        *cpp_cmd,       /* [in] Base command to invoke cpp */
     char        *cpp_opt,       /* [in] Addtl command options for cpp */
     char        *file_name,     /* [in] Source full filespec; "" => stdin */
-    char        *dst_file_name ATTRIBUTE_UNUSED, /* [in] Target filespec (VMS) */
     char        **def_strings,  /* [in] List of #define's for preprocessor */
     char        **undef_strings,/* [in] List of #undefine's for preprocessor */
     char        **idir_list,    /* [in] List of -I directories */
@@ -167,153 +165,92 @@ idir_list, cpp_output)
 
 {
     extern FILE *popen();
-#ifdef VMS
-    boolean     paren_flag;
-    char        dir[max_string_len], name[max_string_len], type[max_string_len];
-    char        expanded_file_name[max_string_len];
-    int         system_status;
-#endif
-    char        cmd[max_string_len];    /* Command to spawn cpp */
+    char* cmd = NULL;  /* Command to spawn cpp */
+    size_t length = 0;
+    int i;
 
-    cmd[0] = '\0';
+    /* Calculate length of command */
+
+    length += strlen(cpp_cmd) + 1;
+    length += strlen(cpp_opt) + 1;
+    length += strlen(file_name);
+
+    i = 0;
+    while (def_strings[i])
+    {
+        length += strlen(" -D");
+        length += strlen(def_strings[i++]);
+    }
+
+    i = 0;
+    while (undef_strings[i])
+    {
+        length += strlen(" -U");
+        length += strlen(undef_strings[i++]);
+    }
+
+    if (strcmp(cpp_cmd, CMD_def_cpp_cmd) == 0)
+    {
+        i = 0;
+        while (idir_list[i])
+        {
+            length += strlen(" -I");
+            length += strlen(idir_list[i++]);
+        }
+    }
+
+    cmd = calloc(length + 1, 1);
+    if (!cmd)
+    {
+        error(NIDL_INVOKECPP);
+    }
 
     /* Put together beginning of command. */
 
     strcpy(cmd, cpp_cmd);
     strcat(cmd, " ");
-#ifdef VMS
-    strcat(cmd, "/PREPROCESS=");
-    strcat(cmd, dst_file_name);
-    strcat(cmd, " ");
-#endif
     strcat(cmd, cpp_opt);
     strcat(cmd, " ");
-#ifndef VMS
     strcat(cmd, file_name);
-#else
-    /* On VMS, hack so source filespec in U*ix format still works. */
-    FILE_parse(file_name, dir, name, type);
-    FILE_form_filespec(name, dir, type, (char *)NULL, expanded_file_name);
-    strcat(cmd, expanded_file_name);
-#endif
 
     /* Append the -D strings. */
 
-#ifdef VMS
-    if (*def_strings)
-    {
-        paren_flag = TRUE;
-        strcat(cmd, " /DEFINE=(");
-    }
-    else
-        paren_flag = FALSE;
-#endif
-
     while (*def_strings)
     {
-#ifndef VMS
         strcat(cmd, " -D");
-#endif
         strcat(cmd, *def_strings++);
-#ifdef VMS
-        strcat(cmd, ",");
-#endif
     }
-
-#ifdef VMS
-    if (paren_flag)
-        /* Overwrite trailing comma with paren. */
-        cmd[strlen(cmd)-1] = ')';
-#endif
 
     /* Append the -U strings. */
 
-#ifdef VMS
-    if (*undef_strings)
-    {
-        paren_flag = TRUE;
-        strcat(cmd, " /UNDEFINE=(");
-    }
-    else
-        paren_flag = FALSE;
-#endif
-
     while (*undef_strings)
     {
-#ifndef VMS
         strcat(cmd, " -U");
-#endif
         strcat(cmd, *undef_strings++);
-#ifdef VMS
-        strcat(cmd, ",");
-#endif
     }
-
-#ifdef VMS
-    if (paren_flag)
-        /* Overwrite trailing comma with paren. */
-        cmd[strlen(cmd)-1] = ')';
-#endif
 
     /* If cpp_cmd is the default, append the -I directories. */
 
     if (strcmp(cpp_cmd, CMD_def_cpp_cmd) == 0)
     {
-#ifdef VMS
-        if (*idir_list)
-        {
-            paren_flag = TRUE;
-            strcat(cmd, " /INCLUDE_DIRECTORY=(");
-        }
-        else
-            paren_flag = FALSE;
-#endif
-
         while (*idir_list)
         {
-#ifndef VMS
             strcat(cmd, " -I");
-#endif
             strcat(cmd, *idir_list++);
-#ifdef VMS
-            strcat(cmd, ",");
-#endif
         }
-
-#ifdef VMS
-        if (paren_flag)
-            /* Overwrite trailing comma with paren. */
-            cmd[strlen(cmd)-1] = ')';
-#endif
     }
+
+    assert(strlen(cmd) == length);
 
     /* Now execute the cpp command and open output file or pipe. */
 
     if (saved_cmd_opt[opt_verbose])
         message_print(NIDL_RUNCPP,cmd);
 
-#ifdef VMS
-    {
-        $DESCRIPTOR(vcmd, cmd);
-        vcmd.dsc$w_length = strlen(cmd);
-        system_status = LIB$SPAWN(&vcmd);
-        if (($VMS_STATUS_SEVERITY(system_status) == STS$K_ERROR) ||
-            ($VMS_STATUS_SEVERITY(system_status) == STS$K_SEVERE))
-        {
-            idl_error_list_t errvec[2];
-            errvec[0].msg_id = NIDL_INVOKECPP;
-            errvec[1].msg_id = NIDL_SYSERRMSG;
-            errvec[1].arg1   = strerror(EVMSERR,system_status);
-            error_list(2, errvec, TRUE);
-        }
-    }
-    FILE_open(dst_file_name, cpp_output);
-#endif
-
-#ifndef VMS
     if ((*cpp_output = popen(cmd, "r")) == 0)
         error(NIDL_INVOKECPP);
-#endif
+
+    free(cmd);
 }
 #endif
 
@@ -355,7 +292,6 @@ static boolean parse_acf        /* Returns true on success */
     int         *yylineno_sp;
     int         *yynerrs_sp;
     char        **yytext_sp;
-    char        temp_path_name[max_string_len]; /* Full temp file pathname */
 
     if (cmd_opt[opt_verbose])
         message_print(NIDL_PROCESSACF, acf_file);
@@ -388,20 +324,9 @@ static boolean parse_acf        /* Returns true on success */
 #if defined(CPP)
     if (cmd_opt[opt_cpp])
     {
-#ifdef VMS
-        char temp_file_name[max_string_len];
-        ASSERTION(max_string_len > L_tmpnam);
-        FILE_parse(acf_file, (char *)NULL, temp_file_name, (char *)NULL);
-        FILE_form_filespec(temp_file_name, "sys$scratch:", ".acf$tmp",
-                           (char *)NULL, temp_path_name);
-#else
-        temp_path_name[0] = '\0';
-#endif
-
         cpp((char *)cmd_val[opt_cpp],
             (char *)cmd_val[opt_cpp_opt],
             acf_file,
-            temp_path_name,
             (char **)cmd_val[opt_cpp_def],
             (char **)cmd_val[opt_cpp_undef],
             (char **)cmd_val[opt_idir],
@@ -559,7 +484,6 @@ static boolean parse
 
     char const  *sf;                            /* Source filespec */
     char        full_path_name[max_string_len]; /* Full source pathname */
-    char        temp_path_name[max_string_len]; /* Full temp file pathname */
     STRTAB_str_t full_pn_id;                    /* Full src path string id */
     char const * *idir_list;                    /* List of search directories */
     char        file_dir[max_string_len];       /* Directory part of src file */
@@ -605,19 +529,9 @@ static boolean parse
 #if defined(CPP)
     if (cmd_opt[opt_cpp])
     {
-#ifdef VMS
-        char temp_file_name[max_string_len];
-        ASSERTION(max_string_len > L_tmpnam);
-        FILE_parse(full_path_name, (char *)NULL, temp_file_name, (char *)NULL);
-        FILE_form_filespec(temp_file_name, "sys$scratch:", ".idl$tmp",
-                           (char *)NULL, temp_path_name);
-#else
-        temp_path_name[0] = '\0';
-#endif
-
 	/* define the macro describing dceidl compiler (for conditional
 	   constructions) */
-	if (!add_def_string(DCEIDL_DEF))
+        if (!add_def_string(DCEIDL_DEF))
         {
             message_print(NIDL_IMPORTIDL, "Warning: Couldn't define macro %s!\n", DCEIDL_DEF);
         }
@@ -625,7 +539,6 @@ static boolean parse
         cpp((char *)cmd_val[opt_cpp],
             (char *)cmd_val[opt_cpp_opt],
             full_path_name,
-            temp_path_name,
             (char **)cmd_val[opt_cpp_def],
             (char **)cmd_val[opt_cpp_undef],
             (char **)cmd_val[opt_idir],
