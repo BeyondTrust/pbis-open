@@ -47,7 +47,7 @@
 #include <lwbuffer.h>
 
 #include <lsautils.h>
-#include <lw/macros.h>
+#include <lw/rpcmacros.h>
 
 
 /*
