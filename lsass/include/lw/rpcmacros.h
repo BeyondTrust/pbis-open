@@ -48,42 +48,13 @@
 #ifndef _RPC_MACROS_H_
 #define _RPC_MACROS_H_
 
-#ifndef BAIL_ON_NT_STATUS
-#define BAIL_ON_NT_STATUS(err)     \
-    if ((err) != STATUS_SUCCESS) { \
-        LSA_LOG_DEBUG("Error at %s:%d [code: %X]", \
-                      __FILE__, __LINE__, (err));  \
-        goto error;                \
-    }
-#endif
-
-#define BAIL_ON_WIN_ERROR(err)    \
-    if ((err) != ERROR_SUCCESS) { \
-        LSA_LOG_DEBUG("Error code: %u (symbol: %s)", err, LSA_SAFE_LOG_STRING(LwWin32ExtErrorToName(err))); \
-        goto error;               \
-    }
+#define BAIL_ON_WIN_ERROR(err)    BAIL_ON_LSA_ERROR(err)
 
 #define BAIL_ON_RPC_STATUS(st)    \
     if ((st) != RPC_S_OK) {       \
         LSA_LOG_DEBUG("RPC Error at %s:%d [code: %X]", \
                       __FILE__, __LINE__, (st));  \
         goto error;               \
-    }
-
-#define BAIL_ON_NO_MEMORY_RPCSTATUS(p, status)  \
-    if ((p) == NULL) {                          \
-        status = RPC_S_OUT_OF_MEMORY;           \
-        LSA_LOG_DEBUG("RPC Error at %s:%d [code: %X]", \
-                      __FILE__, __LINE__, (status));  \
-        goto error;                             \
-    }
-
-#define BAIL_ON_INVALID_PTR_RPCSTATUS(p, status)    \
-    if ((p) == NULL) {                              \
-        status = RPC_S_INVALID_ARG;                 \
-        LSA_LOG_DEBUG("RPC Error at %s:%d [code: %X]", \
-                      __FILE__, __LINE__, (status));  \
-        goto error;                                 \
     }
 
 #define BAIL_ON_NULL_PTR(p, status)              \

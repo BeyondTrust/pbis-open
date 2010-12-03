@@ -282,9 +282,10 @@ SamrInitBindingFullA(
         BAIL_ON_NULL_PTR(options, ntStatus);
     }
 
-    if (pszHostname != NULL) {
+    if (pszHostname != NULL)
+    {
         address = (unsigned char*) strdup(pszHostname);
-        BAIL_ON_NO_MEMORY_RPCSTATUS(address, ntStatus);
+        BAIL_ON_NULL_PTR(address, ntStatus);
     }
 
     rpc_string_binding_compose(
