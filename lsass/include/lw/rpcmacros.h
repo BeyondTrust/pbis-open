@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        macros.h
+ *        rpcmacros.h
  *
  * Abstract:
  *
@@ -142,61 +142,6 @@
         }                                                            \
         DCETHREAD_ENDTRY;                                            \
     } while (0);
-
-
-#ifndef IN
-#define IN
-#endif
-
-#ifndef OUT
-#define OUT
-#endif
-
-#define LIBRPC_LOCK_MUTEX(bInLock, pMutex)           \
-    if (!bInLock) {                                  \
-        int thr_err = pthread_mutex_lock(pMutex);    \
-        if (thr_err) {                               \
-            abort();                                 \
-        }                                            \
-        bInLock = TRUE;                              \
-    }
-
-#define LIBRPC_UNLOCK_MUTEX(bInLock, pMutex)        \
-    if (bInLock) {                                   \
-        int thr_err = pthread_mutex_unlock(pMutex);  \
-        if (thr_err) {                               \
-            abort();                                 \
-        }                                            \
-        bInLock = FALSE;                             \
-    }
-
-#define LIBRPC_LOCK_RWMUTEX_SHARED(bInLock, pMutex) \
-    if (!bInLock) {                                 \
-        int thr_err = pthread_rwlock_rdlock(mutex); \
-        if (thr_err) {                              \
-            abort();                                \
-        }                                           \
-        bInLock = TRUE;                             \
-    }
-
-#define LIBRPC_LOCK_RWMUTEX_EXCLUSIVE(bInLock, pMutex)  \
-    if (!bInLock) {                                     \
-        int thr_err = pthread_rwlock_wrlock(pMutex);    \
-        if (thr_err) {                                  \
-            abort();                                    \
-        }                                               \
-        bInLock = TRUE;                                 \
-    }
-
-#define LIBRPC_UNLOCK_RWMUTEX(bInLock, pMutex)       \
-    if (bInLock) {                                   \
-        int thr_err = pthread_rwlock_unlock(pMutex); \
-        if (thr_err) {                               \
-            abort();                                 \
-        }                                            \
-        bInLock = FALSE;                             \
-    }
-
 
 
 #endif /* _RPC_MACROS_H_ */
