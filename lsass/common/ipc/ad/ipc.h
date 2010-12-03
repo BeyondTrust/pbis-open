@@ -60,4 +60,4 @@
 
 #include "lsaipc.h"
 #include "lsaadprovider.h"
-#include <lwps/lwps.h>
+#include <lsa/lsapstore-types.h>

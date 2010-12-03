@@ -82,7 +82,7 @@ ad_get_machine_main(
     HANDLE hLsaConnection = NULL;
     PCSTR pszDomainName = NULL;
     BOOLEAN printPassword = FALSE;
-    PLWPS_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
     dwError = ParseArgs(argc, argv, &pszDomainName, &printPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -106,21 +106,23 @@ ad_get_machine_main(
            "  NetBIOS Domain Name: %s\n"
            "  Domain SID: %s\n"
            "  SAM Account Name: %s\n"
-           "  FQDN: %s.%s\n"
+           "  FQDN: %s\n"
            "  Join Type: %u\n"
+           "  Key Version: %u\n"
            "  Last Change Time: %d\n"
            "",
-           pPasswordInfo->pszDnsDomainName,
-           pPasswordInfo->pszDomainName,
-           pPasswordInfo->pszSID,
-           pPasswordInfo->pszMachineAccount,
-           pPasswordInfo->pszHostname, pPasswordInfo->pszHostDnsDomain,
-           pPasswordInfo->dwSchannelType,
-           (int) pPasswordInfo->last_change_time);
+           pPasswordInfo->Account.DnsDomainName,
+           pPasswordInfo->Account.NetbiosDomainName,
+           pPasswordInfo->Account.DomainSid,
+           pPasswordInfo->Account.SamAccountName,
+           pPasswordInfo->Account.Fqdn,
+           pPasswordInfo->Account.Type,
+           pPasswordInfo->Account.KeyVersionNumber,
+           (int) pPasswordInfo->Account.LastChangeTime);
 
     if (printPassword)
     {
-        printf("  Password: %s\n", pPasswordInfo->pszMachinePassword);
+        printf("  Password: %s\n", pPasswordInfo->Password);
     }
 
 error:

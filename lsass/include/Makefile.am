@@ -2,6 +2,7 @@ lsaincludedir = $(includedir)/lsa
 lsainclude_HEADERS = \
     lsa/lsa.h \
     lsa/join.h \
+    lsa/lsapstore-types.h \
     lsa/ad.h \
     lsa/provider.h
 

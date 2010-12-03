@@ -2,6 +2,7 @@ make()
 {
     mk_headers \
 	MASTER="lsa/lsa.h" \
+        lsa/lsapstore-types.h \
         lsa/ad.h \
         lsa/provider.h \
 	lsa/join.h

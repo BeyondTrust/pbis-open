@@ -40,6 +40,110 @@
 
 #include "adprovider.h"
 
+static
+VOID
+AD_FreeMachinePassword(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    )
+{
+    if (pPasswordInfo)
+    {
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DnsDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.NetbiosDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DomainSid);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.SamAccountName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.Fqdn);
+        LW_SECURE_FREE_STRING(pPasswordInfo->Password);
+        LwFreeMemory(pPasswordInfo);
+    }
+}
+
+static
+DWORD
+AD_ConvertPasswordInfo(
+    IN PLWPS_PASSWORD_INFO_A pLegacyPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    )
+///<
+/// Convert legacy pstore password info to LSA pstore version.
+///
+/// @return Windows error code
+/// @retval ERROR_SUCCESS on success
+/// @retval !ERROR_SUCCESS on failure
+///
+/// @note This function will go away once the new pstore changes
+///       are complete.
+///
+{
+    DWORD dwError = 0;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    dwError = LwAllocateMemory(sizeof(*pPasswordInfo), OUT_PPVOID(&pPasswordInfo));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pLegacyPasswordInfo->pszDnsDomainName,
+                    &pPasswordInfo->Account.DnsDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pPasswordInfo->Account.DnsDomainName);
+
+    dwError = LwStrDupOrNull(
+                    pLegacyPasswordInfo->pszDomainName,
+                    &pPasswordInfo->Account.NetbiosDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pPasswordInfo->Account.NetbiosDomainName);
+
+    dwError = LwStrDupOrNull(
+                    pLegacyPasswordInfo->pszSID,
+                    &pPasswordInfo->Account.DomainSid);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwStrDupOrNull(
+                    pLegacyPasswordInfo->pszMachineAccount,
+                    &pPasswordInfo->Account.SamAccountName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToUpper(pPasswordInfo->Account.SamAccountName);
+
+    // TODO-2010/12/03-dalmeida - Hard-coded for now.
+    pPasswordInfo->Account.Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+    pPasswordInfo->Account.KeyVersionNumber = 1;
+
+    dwError = LwAllocateStringPrintf(
+                    &pPasswordInfo->Account.Fqdn,
+                    "%s.%s",
+                    pLegacyPasswordInfo->pszHostname,
+                    pLegacyPasswordInfo->pszHostDnsDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LwStrToLower(pPasswordInfo->Account.Fqdn);
+
+    // TODO-2010/12/03-dalmeida - Incorrect conversion.
+    pPasswordInfo->Account.LastChangeTime = pLegacyPasswordInfo->last_change_time;
+
+    dwError = LwStrDupOrNull(
+                    pLegacyPasswordInfo->pszMachinePassword,
+                    &pPasswordInfo->Password);
+    BAIL_ON_LSA_ERROR(dwError);
+                        
+
+error:
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            AD_FreeMachinePassword(pPasswordInfo);
+        }
+        pPasswordInfo = NULL;
+    }
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;    
+}
+
 DWORD
 AD_IoctlGetMachinePassword(
     IN HANDLE hProvider,
@@ -57,6 +161,7 @@ AD_IoctlGetMachinePassword(
     LWMsgDataContext* pDataContext = NULL;
     PSTR pszDnsDomainName = NULL;
     PLWPS_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pFinalPasswordInfo = NULL;
 
     //
     // Do access check
@@ -91,10 +196,13 @@ AD_IoctlGetMachinePassword(
     dwError = AD_GetPasswordInfo(pszDnsDomainName, NULL, &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
+    dwError = AD_ConvertPasswordInfo(pPasswordInfo, &pFinalPasswordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
                                   pDataContext,
                                   LsaAdIPCGetMachinePasswordRespSpec(),
-                                  pPasswordInfo,
+                                  pFinalPasswordInfo,
                                   &pOutputBuffer,
                                   &outputBufferSize));
     BAIL_ON_LSA_ERROR(dwError);
@@ -115,6 +223,11 @@ error:
     if (pPasswordInfo)
     {
         LwFreePasswordInfoA(pPasswordInfo);
+    }
+
+    if (pFinalPasswordInfo)
+    {
+        AD_FreeMachinePassword(pFinalPasswordInfo);
     }
 
     if (pDataContext)

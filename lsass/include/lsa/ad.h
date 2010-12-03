@@ -50,7 +50,7 @@
 
 #include <lsa/lsa.h>
 #include <sys/types.h>
-#include <lwps/lwps.h>
+#include <lsa/lsapstore-types.h>
 
 DWORD
 LsaAdEmptyCache(
@@ -154,12 +154,12 @@ DWORD
 LsaAdGetMachinePassword(
     IN HANDLE hLsaConnection,
     IN OPTIONAL PCSTR pszDnsDomainName,
-    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfo
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
     );
 
 VOID
 LsaAdFreeMachinePassword(
-    IN PLWPS_PASSWORD_INFO_A pPasswordInfo
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     );
 
 #endif /* __LSACLIENT_AD_H__ */

@@ -292,7 +292,7 @@ DWORD
 LsaAdGetMachinePassword(
     IN HANDLE hLsaConnection,
     IN OPTIONAL PCSTR pszDnsDomainName,
-    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfo
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
     )
 {
     DWORD dwError = 0;
@@ -302,7 +302,7 @@ LsaAdGetMachinePassword(
     PVOID pOutputBuffer = NULL;
     LWMsgContext* pContext = NULL;
     LWMsgDataContext* pDataContext = NULL;
-    PLWPS_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
     dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &pContext));
     BAIL_ON_LSA_ERROR(dwError);
@@ -375,18 +375,17 @@ error:
 
 VOID
 LsaAdFreeMachinePassword(
-    IN PLWPS_PASSWORD_INFO_A pPasswordInfo
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     )
 {
     if (pPasswordInfo)
     {
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszDomainName);
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszDnsDomainName);
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszSID);
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszHostname);
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszHostDnsDomain);
-        LW_SAFE_FREE_STRING(pPasswordInfo->pszMachineAccount);
-        LW_SECURE_FREE_STRING(pPasswordInfo->pszMachinePassword);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DnsDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.NetbiosDomainName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DomainSid);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.SamAccountName);
+        LW_SAFE_FREE_STRING(pPasswordInfo->Account.Fqdn);
+        LW_SECURE_FREE_STRING(pPasswordInfo->Password);
         LwFreeMemory(pPasswordInfo);
     }
 }
