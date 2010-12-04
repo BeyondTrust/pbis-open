@@ -65,7 +65,11 @@ int
 dcethread_delay(struct timespec const* interval)
 {
 #ifdef HAVE_PTHREAD_DELAY_NP
+#if defined(_AIX)
+    return pthread_delay_np((struct timespec*) interval);
+#else
     return pthread_delay_np(interval);
+#endif
 #else
     struct timespec rqtp, rmtp;
     int ret;
