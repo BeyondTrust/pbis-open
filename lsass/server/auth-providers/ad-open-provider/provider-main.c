@@ -4321,6 +4321,14 @@ AD_ProviderIoControl(
                           pdwOutputBufferSize,
                           ppOutputBuffer);
             break;
+        case LSA_AD_IO_GET_MACHINE_ACCOUNT:
+            dwError = AD_IoctlGetMachineAccount(
+                            hProvider,
+                            dwInputBufferSize,
+                            pInputBuffer,
+                            pdwOutputBufferSize,
+                            ppOutputBuffer);
+            break;
         case LSA_AD_IO_GET_MACHINE_PASSWORD:
             dwError = AD_IoctlGetMachinePassword(
                             hProvider,

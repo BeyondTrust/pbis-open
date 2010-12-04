@@ -150,16 +150,28 @@ LsaAdGetJoinedDomains(
     OUT PSTR** pppszJoinedDomains
     );
 
-DWORD
-LsaAdGetMachinePassword(
-    IN HANDLE hLsaConnection,
-    IN OPTIONAL PCSTR pszDnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+LW_DWORD
+LsaAdGetMachineAccountInfo(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_OPTIONAL LW_PCSTR pszDnsDomainName,
+    LW_OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
     );
 
-VOID
-LsaAdFreeMachinePassword(
-    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+LW_VOID
+LsaAdFreeMachineAccountInfo(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    );
+
+LW_DWORD
+LsaAdGetMachinePasswordInfo(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_PCSTR pszDnsDomainName,
+    LW_OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+LW_VOID
+LsaAdFreeMachinePasswordInfo(
+    LW_IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     );
 
 #endif /* __LSACLIENT_AD_H__ */

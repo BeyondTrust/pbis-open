@@ -52,97 +52,11 @@
 #include <string.h>
 
 static
-DWORD
-ParseArgs(
-    IN int argc,
-    IN PCSTR argv[],
-    OUT PCSTR* ppszDomainName,
-    OUT PBOOLEAN PrintPassword
-    );
-
-static
 VOID
-ShowUsageError(
-    IN PCSTR pszProgramName
+ShowUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
     );
-
-static
-VOID
-ShowUsageHelp(
-    IN PCSTR pszProgramName
-    );
-
-int
-ad_get_machine_main(
-    int argc,
-    const char* argv[]
-    )
-{
-    DWORD dwError = 0;
-    HANDLE hLsaConnection = NULL;
-    PCSTR pszDomainName = NULL;
-    BOOLEAN printPassword = FALSE;
-    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
-
-    dwError = ParseArgs(argc, argv, &pszDomainName, &printPassword);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaOpenServer(&hLsaConnection);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaAdGetMachinePassword(hLsaConnection, pszDomainName, &pPasswordInfo);
-    if ((dwError == LW_ERROR_ACCESS_DENIED) ||
-        (dwError == ERROR_ACCESS_DENIED))
-    {
-        if (geteuid() != 0)
-        {
-            fprintf(stderr, "You are not super-user.  Access was denied.\n");
-        }
-    }
-    BAIL_ON_LSA_ERROR(dwError);
-
-    printf("Machine Password Information:\n"
-           "  DNS Domain Name: %s\n"
-           "  NetBIOS Domain Name: %s\n"
-           "  Domain SID: %s\n"
-           "  SAM Account Name: %s\n"
-           "  FQDN: %s\n"
-           "  Join Type: %u\n"
-           "  Key Version: %u\n"
-           "  Last Change Time: %d\n"
-           "",
-           pPasswordInfo->Account.DnsDomainName,
-           pPasswordInfo->Account.NetbiosDomainName,
-           pPasswordInfo->Account.DomainSid,
-           pPasswordInfo->Account.SamAccountName,
-           pPasswordInfo->Account.Fqdn,
-           pPasswordInfo->Account.Type,
-           pPasswordInfo->Account.KeyVersionNumber,
-           (int) pPasswordInfo->Account.LastChangeTime);
-
-    if (printPassword)
-    {
-        printf("  Password: %s\n", pPasswordInfo->Password);
-    }
-
-error:
-    if (dwError)
-    {
-        PrintErrorMessage(dwError);
-    }
-
-    if (pPasswordInfo)
-    {
-        LsaAdFreeMachinePassword(pPasswordInfo);
-    }
-
-    if (hLsaConnection)
-    {
-        LsaCloseServer(hLsaConnection);
-    }
-
-    return dwError;
-}
 
 static
 PCSTR
@@ -179,6 +93,7 @@ IsHelpOption(
             !strcmp(Option, "-?"));
 }
 
+static
 BOOLEAN
 IsHelpCommand(
     IN PCSTR Command
@@ -188,21 +103,173 @@ IsHelpCommand(
 }
 
 static
+VOID
+ShowUsageError(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowUsage(pszProgramName, 1);
+}
+
+static
+VOID
+ShowUsageHelp(
+    IN PCSTR pszProgramName
+    )
+{
+    ShowUsage(pszProgramName, 0);
+}
+
+static
+inline
+VOID
+PrintSuperUserWarningOnError(
+    IN DWORD dwError
+    )
+{
+    if ((dwError == LW_ERROR_ACCESS_DENIED) ||
+        (dwError == ERROR_ACCESS_DENIED))
+    {
+        if (geteuid() != 0)
+        {
+            fprintf(stderr, "You are not super-user.  Access was denied.\n");
+        }
+    }
+}
+
+static
+VOID
+PrintAccountInfo(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    printf(""
+           "  DNS Domain Name: %s\n"
+           "  NetBIOS Domain Name: %s\n"
+           "  Domain SID: %s\n"
+           "  SAM Account Name: %s\n"
+           "  FQDN: %s\n"
+           "  Join Type: %u\n"
+           "  Key Version: %u\n"
+           "  Last Change Time: %d\n"
+           "",
+           LW_PRINTF_STRING(pAccountInfo->DnsDomainName),
+           LW_PRINTF_STRING(pAccountInfo->NetbiosDomainName),
+           LW_PRINTF_STRING(pAccountInfo->DomainSid),
+           LW_PRINTF_STRING(pAccountInfo->SamAccountName),
+           LW_PRINTF_STRING(pAccountInfo->Fqdn),
+           pAccountInfo->Type,
+           pAccountInfo->KeyVersionNumber,
+           (int) pAccountInfo->LastChangeTime);
+}
+
+static
+VOID
+PrintPasswordInfo(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    )
+{
+    PrintAccountInfo(&pPasswordInfo->Account);
+    printf("  Password: %s\n", pPasswordInfo->Password);
+}
+
+static
 DWORD
-ParseArgs(
-    IN int argc,
-    IN PCSTR argv[],
-    OUT PCSTR* ppszDomainName,
-    OUT PBOOLEAN PrintPassword
+DoGetMachineAccount(
+    IN PCSTR pszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaAdGetMachineAccountInfo(
+                    hLsaConnection,
+                    pszDnsDomainName,
+                    &pAccountInfo);
+    PrintSuperUserWarningOnError(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    printf("Machine Account Info:\n");
+    PrintAccountInfo(pAccountInfo);
+
+error:
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    return dwError;
+}
+
+static
+DWORD
+DoGetMachinePassword(
+    IN PCSTR pszDnsDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaAdGetMachinePasswordInfo(
+                    hLsaConnection,
+                    pszDnsDomainName,
+                    &pPasswordInfo);
+    PrintSuperUserWarningOnError(dwError);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    printf("Machine Password Info:\n");
+    PrintPasswordInfo(pPasswordInfo);
+
+error:
+    if (pPasswordInfo)
+    {
+        LsaAdFreeMachinePasswordInfo(pPasswordInfo);
+    }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    return dwError;
+}
+
+static
+VOID
+ShowUsage(
+    IN PCSTR pszProgramName,
+    IN int ExitCode
+    )
+{
+    PCSTR pszUseProgramName = Basename(pszProgramName);
+    printf("Usage: %s <account | password> [DNS-DOMAIN-NAME]\n", pszUseProgramName);
+    exit(ExitCode);
+}
+
+int
+ad_get_machine_main(
+    int argc,
+    const char* argv[]
     )
 {
     DWORD dwError = 0;
     PCSTR programName = NULL;
     PCSTR option = NULL;
     PCSTR command = NULL;
-    PCSTR domainName = NULL;
     LW_ARGV_CURSOR cursor;
-    BOOLEAN printPassword = FALSE;
 
     LwArgvCursorInit(&cursor, argc, argv);
     programName = LwArgvCursorPop(&cursor);
@@ -241,23 +308,25 @@ ParseArgs(
     }
     else if (!strcmp(command, "account"))
     {
-        printPassword = FALSE;
-        domainName = LwArgvCursorPop(&cursor);
+        PCSTR domainName = LwArgvCursorPop(&cursor);
         if (LwArgvCursorRemaining(&cursor))
         {
             fprintf(stderr, "Too many arguments.\n");
             ShowUsageError(programName);
         }
+        dwError = DoGetMachineAccount(domainName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
     else if (!strcmp(command, "password"))
     {
-        printPassword = TRUE;
-        domainName = LwArgvCursorPop(&cursor);
+        PCSTR domainName = LwArgvCursorPop(&cursor);
         if (LwArgvCursorRemaining(&cursor))
         {
             fprintf(stderr, "Too many arguments.\n");
             ShowUsageError(programName);
         }
+        dwError = DoGetMachinePassword(domainName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
     else
     {
@@ -265,38 +334,11 @@ ParseArgs(
         ShowUsageError(programName);
     }
 
-    *ppszDomainName = domainName;
-    *PrintPassword = printPassword;
+error:
+    if (dwError)
+    {
+        PrintErrorMessage(dwError);
+    }
 
     return dwError;
-}
-
-static
-VOID
-ShowUsage(
-    IN PCSTR pszProgramName,
-    IN int ExitCode
-    )
-{
-    PCSTR pszUseProgramName = Basename(pszProgramName);
-    printf("Usage: %s <account | password> [DNS-DOMAIN-NAME]\n", pszUseProgramName);
-    exit(ExitCode);
-}
-
-static
-VOID
-ShowUsageError(
-    IN PCSTR pszProgramName
-    )
-{
-    ShowUsage(pszProgramName, 1);
-}
-
-static
-VOID
-ShowUsageHelp(
-    IN PCSTR pszProgramName
-    )
-{
-    ShowUsage(pszProgramName, 0);
 }

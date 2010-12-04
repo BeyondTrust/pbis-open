@@ -143,17 +143,25 @@ static LWMsgTypeSpec gLsaAdIPCGetJoinedDomainsRespSpec[] =
     LWMSG_TYPE_END
 };
 
-static LWMsgTypeSpec gLsaAdIPCGetMachinePasswordRespSpec[] =
+static LWMsgTypeSpec gLsaAdIPCGetMachineAccountInfoSpec[] =
+{
+    LWMSG_STRUCT_BEGIN(LSA_MACHINE_ACCOUNT_INFO_A),
+    LWMSG_MEMBER_PSTR(LSA_MACHINE_ACCOUNT_INFO_A, DnsDomainName),
+    LWMSG_MEMBER_PSTR(LSA_MACHINE_ACCOUNT_INFO_A, NetbiosDomainName),
+    LWMSG_MEMBER_PSTR(LSA_MACHINE_ACCOUNT_INFO_A, DomainSid),
+    LWMSG_MEMBER_PSTR(LSA_MACHINE_ACCOUNT_INFO_A, SamAccountName),
+    LWMSG_MEMBER_UINT32(LSA_MACHINE_ACCOUNT_INFO_A, Type),
+    LWMSG_MEMBER_UINT32(LSA_MACHINE_ACCOUNT_INFO_A, KeyVersionNumber),
+    LWMSG_MEMBER_PSTR(LSA_MACHINE_ACCOUNT_INFO_A, Fqdn),
+    LWMSG_MEMBER_INT64(LSA_MACHINE_ACCOUNT_INFO_A, LastChangeTime),
+    LWMSG_STRUCT_END,
+    LWMSG_TYPE_END
+};
+
+static LWMsgTypeSpec gLsaAdIPCGetMachinePasswordInfoSpec[] =
 {
     LWMSG_STRUCT_BEGIN(LSA_MACHINE_PASSWORD_INFO_A),
-    LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Account.DnsDomainName),
-    LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Account.NetbiosDomainName),
-    LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Account.DomainSid),
-    LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Account.SamAccountName),
-    LWMSG_MEMBER_UINT32(LSA_MACHINE_PASSWORD_INFO_A, Account.Type),
-    LWMSG_MEMBER_UINT32(LSA_MACHINE_PASSWORD_INFO_A, Account.KeyVersionNumber),
-    LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Account.Fqdn),
-    LWMSG_MEMBER_INT64(LSA_MACHINE_PASSWORD_INFO_A, Account.LastChangeTime),
+    LWMSG_MEMBER_TYPESPEC(LSA_MACHINE_PASSWORD_INFO_A, Account, gLsaAdIPCGetMachineAccountInfoSpec),
     LWMSG_MEMBER_PSTR(LSA_MACHINE_PASSWORD_INFO_A, Password),
     LWMSG_ATTR_SENSITIVE,
     LWMSG_STRUCT_END,
@@ -225,11 +233,19 @@ LsaAdIPCGetJoinedDomainsRespSpec(
 }
 
 LWMsgTypeSpec*
-LsaAdIPCGetMachinePasswordRespSpec(
+LsaAdIPCGetMachineAccountInfoSpec(
     VOID
     )
 {
-    return gLsaAdIPCGetMachinePasswordRespSpec;
+    return gLsaAdIPCGetMachineAccountInfoSpec;
+}
+
+LWMsgTypeSpec*
+LsaAdIPCGetMachinePasswordInfoSpec(
+    VOID
+    )
+{
+    return gLsaAdIPCGetMachinePasswordInfoSpec;
 }
 
 static

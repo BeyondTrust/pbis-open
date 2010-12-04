@@ -288,11 +288,122 @@ error:
     goto cleanup;
 }
 
-DWORD
-LsaAdGetMachinePassword(
-    IN HANDLE hLsaConnection,
-    IN OPTIONAL PCSTR pszDnsDomainName,
-    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+static
+inline
+VOID
+LsaAdpFreeMachineAccountInfoContents(
+    IN OUT PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    LW_SAFE_FREE_STRING(pAccountInfo->DnsDomainName);
+    LW_SAFE_FREE_STRING(pAccountInfo->NetbiosDomainName);
+    LW_SAFE_FREE_STRING(pAccountInfo->DomainSid);
+    LW_SAFE_FREE_STRING(pAccountInfo->SamAccountName);
+    LW_SAFE_FREE_STRING(pAccountInfo->Fqdn);
+}
+
+LW_DWORD
+LsaAdGetMachineAccountInfo(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_OPTIONAL LW_PCSTR pszDnsDomainName,
+    LW_OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    size_t inputBufferSize = 0;
+    PVOID pInputBuffer = NULL;
+    DWORD dwOutputBufferSize = 0;
+    PVOID pOutputBuffer = NULL;
+    LWMsgContext* pContext = NULL;
+    LWMsgDataContext* pDataContext = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &pContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdIPCSetMemoryFunctions(pContext);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(pContext, &pDataContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
+                                  pDataContext,
+                                  LsaAdIPCGetStringSpec(),
+                                  (PVOID) pszDnsDomainName,
+                                  &pInputBuffer,
+                                  &inputBufferSize));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaProviderIoControl(
+                  hLsaConnection,
+                  LSA_AD_TAG_PROVIDER,
+                  LSA_AD_IO_GET_MACHINE_ACCOUNT,
+                  inputBufferSize,
+                  pInputBuffer,
+                  &dwOutputBufferSize,
+                  &pOutputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
+                              pDataContext,
+                              LsaAdIPCGetMachineAccountInfoSpec(),
+                              pOutputBuffer,
+                              dwOutputBufferSize,
+                              OUT_PPVOID(&pAccountInfo)));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pAccountInfo)
+        {
+            LsaAdFreeMachineAccountInfo(pAccountInfo);
+            pAccountInfo = NULL;
+        }
+    }
+
+    if (pOutputBuffer)
+    {
+        LwFreeMemory(pOutputBuffer);
+    }
+
+    if (pInputBuffer)
+    {
+        LwFreeMemory(pInputBuffer);
+    }
+
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
+    if (pContext)
+    {
+        lwmsg_context_delete(pContext);
+    }
+
+    *ppAccountInfo = pAccountInfo;
+
+    return dwError;
+}
+
+LW_VOID
+LsaAdFreeMachineAccountInfo(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    if (pAccountInfo)
+    {
+        LsaAdpFreeMachineAccountInfoContents(pAccountInfo);
+        LwFreeMemory(pAccountInfo);
+    }
+}
+
+LW_DWORD
+LsaAdGetMachinePasswordInfo(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_PCSTR pszDnsDomainName,
+    LW_OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
     )
 {
     DWORD dwError = 0;
@@ -332,7 +443,7 @@ LsaAdGetMachinePassword(
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
                               pDataContext,
-                              LsaAdIPCGetMachinePasswordRespSpec(),
+                              LsaAdIPCGetMachinePasswordInfoSpec(),
                               pOutputBuffer,
                               dwOutputBufferSize,
                               OUT_PPVOID(&pPasswordInfo)));
@@ -343,7 +454,7 @@ error:
     {
         if (pPasswordInfo)
         {
-            LsaAdFreeMachinePassword(pPasswordInfo);
+            LsaAdFreeMachinePasswordInfo(pPasswordInfo);
             pPasswordInfo = NULL;
         }
     }
@@ -373,18 +484,14 @@ error:
     return dwError;
 }
 
-VOID
-LsaAdFreeMachinePassword(
-    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+LW_VOID
+LsaAdFreeMachinePasswordInfo(
+    LW_IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     )
 {
     if (pPasswordInfo)
     {
-        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DnsDomainName);
-        LW_SAFE_FREE_STRING(pPasswordInfo->Account.NetbiosDomainName);
-        LW_SAFE_FREE_STRING(pPasswordInfo->Account.DomainSid);
-        LW_SAFE_FREE_STRING(pPasswordInfo->Account.SamAccountName);
-        LW_SAFE_FREE_STRING(pPasswordInfo->Account.Fqdn);
+        LsaAdpFreeMachineAccountInfoContents(&pPasswordInfo->Account);
         LW_SECURE_FREE_STRING(pPasswordInfo->Password);
         LwFreeMemory(pPasswordInfo);
     }

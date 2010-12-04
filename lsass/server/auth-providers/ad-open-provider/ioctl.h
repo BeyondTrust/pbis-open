@@ -42,6 +42,15 @@
 #define __LSA_AD_IOCTL_H__
 
 DWORD
+AD_IoctlGetMachineAccount(
+    IN HANDLE hProvider,
+    IN DWORD dwInputBufferSize,
+    IN PVOID pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    );
+
+DWORD
 AD_IoctlGetMachinePassword(
     IN HANDLE hProvider,
     IN DWORD dwInputBufferSize,
