@@ -28,5 +28,6 @@ make()
 	lsasrvcred.h            \
 	lsasystem.h             \
 	lsautils.h              \
-	lwsecurityidentifier.h
+	lwsecurityidentifier.h  \
+	xpg_socket.h
 }

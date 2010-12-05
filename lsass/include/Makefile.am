@@ -27,8 +27,7 @@ noinst_HEADERS = \
     lsaclient.h \
     lsalog_r.h \
     lsasystem.h \
-    lwmapsecurity-lsass.h \
-    xpg_socket.h
+    lwmapsecurity-lsass.h
 
 lsainternaldir = $(includedir)/lsa/internal
 lsainternal_HEADERS =       \
@@ -42,4 +41,5 @@ lsainternal_HEADERS =       \
     lsasrvcred.h            \
     lsasystem.h             \
     lsautils.h              \
-    lwsecurityidentifier.h
+    lwsecurityidentifier.h  \
+    xpg_socket.h
