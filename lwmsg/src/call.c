@@ -115,3 +115,29 @@ lwmsg_call_acquire_callback(
 {
     return call->vtbl->acquire_callback(call, callback);
 }
+
+void
+lwmsg_call_set_user_data(
+    LWMsgCall* call,
+    void* data
+    )
+{
+    call->user_data = data;
+}
+
+void*
+lwmsg_call_get_user_data(
+    LWMsgCall* call
+    )
+{
+    return call->user_data;
+}
+
+LWMsgCallDirection
+lwmsg_call_get_direction(
+    LWMsgCall* call
+    )
+{
+    return call->is_outgoing ? LWMSG_CALL_OUTGOING : LWMSG_CALL_INCOMING;
+}
+

@@ -86,6 +86,17 @@ typedef struct LWMsgParams
 typedef struct LWMsgCall LWMsgCall;
 
 /**
+ * @brief Call direction
+ *
+ * The direction of a call.
+ */
+typedef enum LWMsgCallDirection
+{
+    LWMSG_CALL_INCOMING,
+    LWMSG_CALL_OUTGOING
+} LWMsgCallDirection;
+
+/**
  * @brief Call completion callback
  *
  * A caller-supplied function which is invoked when an asynchronous
@@ -269,6 +280,48 @@ LWMsgStatus
 lwmsg_call_acquire_callback(
     LWMsgCall* call,
     LWMsgCall** callback
+    );
+
+/**
+ * @brief Get call direction
+ *
+ * Returns whether a call is incoming or outgoing.
+ *
+ * @param[in] call the call handle
+ * @return the call type
+ */
+LWMsgCallDirection
+lwmsg_call_get_direction(
+    LWMsgCall* call
+    );
+
+/**
+ * @brief Set user data
+ *
+ * Sets an arbitrary user data pointer on a call handle,
+ * which may be used for any purpose.
+ *
+ * @param[in,out] call the call handle
+ * @param[in] data the data pointer
+ */
+void
+lwmsg_call_set_user_data(
+    LWMsgCall* call,
+    void* data
+    );
+
+/**
+ * @brief Get user data
+ *
+ * Gets the user data pointer previously set with
+ * #lwmsg_call_set_user_data().
+ *
+ * @param[in] call the call handle
+ * @return the user data pointer
+ */
+void*
+lwmsg_call_get_user_data(
+    LWMsgCall* call
     );
 
 /**

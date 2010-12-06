@@ -178,6 +178,15 @@ lwmsg_peer_call_dispatch_incoming(
         call->params.incoming.in.data = incoming_message->data;
         call->params.incoming.out.tag = LWMSG_TAG_INVALID;
         call->params.incoming.out.data = NULL;
+
+        if (call->task->peer->trace_begin)
+        {
+            call->task->peer->trace_begin(
+                LWMSG_CALL(call),
+                &call->params.incoming.in,
+                call->task->peer->trace_data);
+        }
+
         if (call->params.incoming.spec->type == LWMSG_DISPATCH_TYPE_BLOCK)
         {
             BAIL_ON_ERROR(status = lwmsg_task_dispatch_work_item(
@@ -267,6 +276,15 @@ lwmsg_peer_call_dispatch_outgoing(
     lwmsg_hash_insert_entry(&pcall->task->outgoing_calls, pcall);
     lwmsg_peer_call_activate_outgoing(pcall);
     lwmsg_task_wake(pcall->task->event_task);
+
+    /* Trace call start */
+    if (pcall->task->peer->trace_begin)
+    {
+        pcall->task->peer->trace_begin(
+            LWMSG_CALL(call),
+            pcall->params.outgoing.in,
+            pcall->task->peer->trace_data);
+    }
 
     if (!complete)
     {
@@ -363,6 +381,15 @@ lwmsg_peer_call_complete_outgoing(
         call->state |= PEER_CALL_COMPLETED;
 
         lwmsg_message_init(incoming_message);
+
+        /* Trace call completion */
+        if (call->task->peer->trace_end)
+        {
+            call->task->peer->trace_end(
+                LWMSG_CALL(call),
+                call->params.outgoing.out,
+                call->task->peer->trace_data);
+        }
 
         if (call->params.outgoing.complete)
         {
@@ -521,6 +548,8 @@ lwmsg_peer_call_acquire_callback(
     PeerCall* my_callback = NULL;
 
     BAIL_ON_ERROR(status = lwmsg_peer_call_new(pcall->task, &my_callback));
+
+    my_callback->base.is_outgoing = LWMSG_TRUE;
 
     *callback = LWMSG_CALL(my_callback);
 

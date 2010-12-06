@@ -791,6 +791,34 @@ error:
 }
 
 LWMsgStatus
+lwmsg_peer_set_trace_functions(
+    LWMsgPeer* peer,
+    LWMsgPeerTraceFunction begin,
+    LWMsgPeerTraceFunction end,
+    void* data
+    )
+{
+    LWMsgStatus status = LWMSG_STATUS_SUCCESS;
+
+    lwmsg_peer_lock(peer);
+
+    if (peer->state != PEER_STATE_STOPPED)
+    {
+        BAIL_ON_ERROR(status = LWMSG_STATUS_INVALID_STATE);
+    }
+
+    peer->trace_begin = begin;
+    peer->trace_end = end;
+    peer->trace_data = data;
+
+error:
+
+    lwmsg_peer_unlock(peer);
+
+    return status;
+}
+
+LWMsgStatus
 lwmsg_peer_add_connect_endpoint(
     LWMsgPeer* peer,
     LWMsgEndpointType type,
@@ -1129,6 +1157,7 @@ lwmsg_peer_acquire_call(
     } while (status == LWMSG_STATUS_AGAIN);
             
     BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &pcall));
+    pcall->base.is_outgoing = LWMSG_TRUE;
     task = NULL;
 
     *call = LWMSG_CALL(pcall);

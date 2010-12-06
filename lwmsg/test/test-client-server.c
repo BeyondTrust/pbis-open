@@ -889,3 +889,80 @@ MU_TEST(client_server, client_limit_timeout)
         MU_TRY(lwmsg_assoc_connect(assocs[i], NULL));
     }
 }
+
+typedef struct trace_info
+{
+    LWMsgBool outgoing_begin, outgoing_end;
+    LWMsgBool incoming_begin, incoming_end;
+} trace_info;
+
+static
+void
+trace_begin(
+    LWMsgCall* call,
+    const LWMsgParams* params,
+    void* data
+    )
+{
+    trace_info* info = data;
+
+    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
+    {
+        MU_VERBOSE("Begin in call %i\n", params->tag);
+        info->incoming_begin = LWMSG_TRUE;
+    }
+    else
+    {
+        MU_VERBOSE("Begin out call %i\n", params->tag);
+        info->outgoing_begin = LWMSG_TRUE;
+    }
+}
+
+static
+void
+trace_end(
+    LWMsgCall* call,
+    const LWMsgParams* params,
+    void* data
+    )
+{
+    trace_info* info = data;
+
+    if (lwmsg_call_get_direction(call) == LWMSG_CALL_INCOMING)
+    {
+        MU_VERBOSE("End in call %i\n", params->tag);
+        info->incoming_end = LWMSG_TRUE;
+    }
+    else
+    {
+        MU_VERBOSE("End out call %i\n", params->tag);
+        info->outgoing_end = LWMSG_TRUE;
+    }
+}
+
+MU_TEST(client_server, tracing)
+{
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* call = NULL;
+    trace_info info = {0};
+
+    in.tag = PING_REQUEST;
+    in.data = NULL;
+
+    MU_TRY(lwmsg_peer_set_trace_functions(server, trace_begin, trace_end, &info));
+    MU_TRY(lwmsg_peer_set_trace_functions(client, trace_begin, trace_end, &info));
+
+    MU_TRY(lwmsg_peer_start_listen(server));
+    MU_TRY(lwmsg_peer_connect(client, NULL));
+    MU_TRY(lwmsg_peer_acquire_call(client, &call));
+    MU_TRY(lwmsg_call_dispatch(call, &in, &out, NULL, NULL));
+    MU_ASSERT_EQUAL(MU_TYPE_INTEGER, out.tag, PING_REPLY);
+    MU_ASSERT(info.incoming_begin);
+    MU_ASSERT(info.incoming_end);
+    MU_ASSERT(info.outgoing_begin);
+    MU_ASSERT(info.outgoing_end);
+
+    MU_TRY(lwmsg_peer_disconnect(client));
+    MU_TRY(lwmsg_peer_stop_listen(server));
+}

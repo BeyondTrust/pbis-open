@@ -184,6 +184,8 @@ struct LWMsgCall
      * the call handle operations
      */
     LWMsgCallClass* vtbl;
+    unsigned is_outgoing:1;
+    void* user_data;
 };
 
 /**

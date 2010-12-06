@@ -39,6 +39,9 @@ lwmsg_call_release
 lwmsg_call_destroy_params
 lwmsg_call_get_session
 lwmsg_call_acquire_callback
+lwmsg_call_get_direction
+lwmsg_call_get_user_data
+lwmsg_call_set_user_data
 lwmsg_context_new
 lwmsg_context_delete
 lwmsg_context_set_memory_functions

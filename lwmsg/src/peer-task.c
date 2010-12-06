@@ -1383,6 +1383,7 @@ lwmsg_peer_task_dispatch_incoming_message(
 
     /* Create a call structure to track call */
     BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &call));
+    call->base.is_outgoing = LWMSG_FALSE;
     /* The call structure holds a reference to the task */
     lwmsg_peer_task_ref(task);
 
@@ -1709,6 +1710,15 @@ lwmsg_peer_task_dispatch_calls(
         if ((call->state & PEER_CALL_COMPLETED) &&
             (call->state & PEER_CALL_DISPATCHED))
         {
+            /* Trace call completion */
+            if (call->task->peer->trace_end)
+            {
+                call->task->peer->trace_end(
+                    LWMSG_CALL(call),
+                    &call->params.incoming.out,
+                    call->task->peer->trace_data);
+            }
+
             lwmsg_message_init(&task->outgoing_message);
             task->outgoing_message.flags = LWMSG_MESSAGE_FLAG_REPLY;
             task->outgoing_message.tag = call->params.incoming.out.tag;

@@ -188,6 +188,10 @@ struct LWMsgPeer
     LWMsgPeerExceptionFunction except;
     void* except_data;
 
+    LWMsgPeerTraceFunction trace_begin;
+    LWMsgPeerTraceFunction trace_end;
+    void* trace_data;
+
     struct
     {
         LWMsgDispatchSpec** vector;

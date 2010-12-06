@@ -242,6 +242,24 @@ void
     );
 
 /**
+ * @brief Call trace function
+ *
+ * A callback function which allows tracing when a call begins or
+ * ends.
+ *
+ * @param[in] call the call handle
+ * @param[in] params the input or output parameters of the call
+ * @param[in] data a user data pointer
+ */
+typedef
+void
+(*LWMsgPeerTraceFunction) (
+    LWMsgCall* call,
+    const LWMsgParams* params,
+    void* data
+    );
+
+/**
  * @brief Create a new peer object
  *
  * Creates a new peer object
@@ -523,6 +541,31 @@ lwmsg_peer_set_exception_function(
     LWMsgPeer* peer,
     LWMsgPeerExceptionFunction except,
     void* except_data
+    );
+
+/**
+ * @brief Set trace functions
+ *
+ * Sets functions which will be invoked whenever a call begins or ends.
+ * To determine the direction of a call, use #lwmsg_call_get_direction().
+ * To store extra data on the call handle, use #lwmsg_call_set_user_data().
+ * This mechanism can be use for logging, statistics gathering, etc.
+ *
+ * @param[in,out] peer the peer handle
+ * @param[in] begin trace begin function
+ * @param[in] end trace end function
+ * @param[in] data user data pointer to pass to trace functions
+ * @lwmsg_status
+ * @lwmsg_success
+ * @lwmsg_code{INVALID_STATE, the peer is already active}
+ * @lwmsg_endstatus
+ */
+LWMsgStatus
+lwmsg_peer_set_trace_functions(
+    LWMsgPeer* peer,
+    LWMsgPeerTraceFunction begin,
+    LWMsgPeerTraceFunction end,
+    void* data
     );
 
 /**
