@@ -293,8 +293,11 @@ LwioSrvSetDefaults(
 
     *(gpServerInfo->szLogFilePath) = '\0';
 
-    strcpy(gpServerInfo->szCachePath, CACHEDIR);
-    strcpy(gpServerInfo->szPrefixPath, PREFIXDIR);
+    strncpy(gpServerInfo->szCachePath, CACHEDIR, PATH_MAX);
+    gpServerInfo->szCachePath[PATH_MAX] = '\0';
+
+    strncpy(gpServerInfo->szPrefixPath, PREFIXDIR, PATH_MAX);
+    gpServerInfo->szPrefixPath[PATH_MAX] = '\0';
 
     setlocale(LC_ALL, "");
 
