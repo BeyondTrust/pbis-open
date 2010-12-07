@@ -431,7 +431,8 @@ LwioSrvParseArgs(
       case PARSE_MODE_LOGFILE:
 
         {
-          strcpy(pSMBServerInfo->szLogFilePath, pArg);
+          strncpy(pSMBServerInfo->szLogFilePath, pArg, PATH_MAX);
+          pSMBServerInfo->szLogFilePath[PATH_MAX] = '\0';
 
           SMBStripWhitespace(pSMBServerInfo->szLogFilePath, TRUE, TRUE);
 
