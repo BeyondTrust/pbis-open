@@ -4462,42 +4462,10 @@ AD_UpdateObject(
     )
 {
     DWORD dwError = LW_ERROR_SUCCESS;
-    PAD_PROVIDER_DATA pProviderData = pState->pProviderData;
-    struct timeval current_tv = {0};
-    UINT64 u64current_NTtime = 0;
 
     switch(pObject->type)
     {
     case LSA_OBJECT_TYPE_USER:
-        if (gettimeofday(&current_tv, NULL) < 0)
-        {
-            dwError = LwMapErrnoToLwError(errno);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-        ADConvertTimeUnix2Nt(current_tv.tv_sec,
-                             &u64current_NTtime);
-        
-        if (pObject->userInfo.bIsAccountInfoKnown)
-        {
-            if (pObject->userInfo.qwAccountExpires != 0LL &&
-                pObject->userInfo.qwAccountExpires != 9223372036854775807LL &&
-                u64current_NTtime >= pObject->userInfo.qwAccountExpires)
-            {
-                pObject->userInfo.bAccountExpired = TRUE;
-            }
-
-            pObject->userInfo.qwMaxPwdAge = pProviderData->adMaxPwdAge;
-
-            if ((!pObject->userInfo.bPasswordNeverExpires &&
-                  pObject->userInfo.qwPwdExpires != 0 &&
-                  u64current_NTtime >= pObject->userInfo.qwPwdExpires) ||
-                pObject->userInfo.qwPwdLastSet == 0)
-            {
-                //password is expired already
-                pObject->userInfo.bPasswordExpired = TRUE;
-            }
-        }
-
         LW_SAFE_FREE_STRING(pObject->userInfo.pszUnixName);
         dwError = ADMarshalGetCanonicalName(
                       pState,

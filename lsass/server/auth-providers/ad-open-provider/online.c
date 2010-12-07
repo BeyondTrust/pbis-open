@@ -3976,61 +3976,12 @@ error:
 }
 
 DWORD
-AD_UpdateUserObjectFlags(
-    IN OUT PLSA_SECURITY_OBJECT pUser
-    )
-{
-    DWORD dwError = LW_ERROR_SUCCESS;
-    struct timeval current_tv = {0};
-    UINT64 u64current_NTtime = 0;
-
-    if (gettimeofday(&current_tv, NULL) < 0)
-    {
-        dwError = LwMapErrnoToLwError(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    ADConvertTimeUnix2Nt(current_tv.tv_sec,
-                         &u64current_NTtime);
-
-    if (pUser->userInfo.bIsAccountInfoKnown)
-    {
-        if (pUser->userInfo.qwAccountExpires != 0LL &&
-            pUser->userInfo.qwAccountExpires != 9223372036854775807LL &&
-            u64current_NTtime >= pUser->userInfo.qwAccountExpires)
-        {
-            pUser->userInfo.bAccountExpired = TRUE;
-        }
-
-        if ((!pUser->userInfo.bPasswordNeverExpires &&
-             pUser->userInfo.qwPwdExpires != 0 &&
-             u64current_NTtime >= pUser->userInfo.qwPwdExpires) ||
-            pUser->userInfo.qwPwdLastSet == 0)
-        {
-            //password is expired already
-            pUser->userInfo.bPasswordExpired = TRUE;
-        }
-    }
-
-cleanup:
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-DWORD
 AD_VerifyUserAccountCanLogin(
     PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo
     )
 {
     DWORD dwError = 0;
-
-    dwError = AD_UpdateUserObjectFlags(
-                pUserInfo);
-    BAIL_ON_LSA_ERROR(dwError);
 
     if (pUserInfo->userInfo.bAccountDisabled) {
         dwError = LW_ERROR_ACCOUNT_DISABLED;

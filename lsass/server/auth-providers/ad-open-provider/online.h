@@ -377,11 +377,6 @@ AD_GetCachedPasswordHash(
     );
 
 DWORD
-AD_UpdateUserObjectFlags(
-    IN OUT PLSA_SECURITY_OBJECT pUser
-    );
-
-DWORD
 AD_VerifyUserAccountCanLogin(
     PAD_PROVIDER_CONTEXT pContext,
     IN PLSA_SECURITY_OBJECT pUserInfo
