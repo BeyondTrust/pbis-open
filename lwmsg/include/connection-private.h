@@ -43,11 +43,13 @@
 #include <inttypes.h>
 #include <lwmsg/connection.h>
 #include <lwmsg/data.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 #include "assoc-private.h"
 #include "util-private.h"
 
-#if (defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID) || HAVE_DECL_SO_PEERCRED
+#if (defined(HAVE_GETPEEREID) && HAVE_DECL_GETPEEREID) || defined(SO_PEERCRED)
 #define HAVE_PEERID_METHOD
 #endif
 

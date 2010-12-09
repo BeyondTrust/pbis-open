@@ -236,7 +236,7 @@ lwmsg_local_token_from_socket_peer(
     {
         BAIL_ON_ERROR(status = lwmsg_error_map_errno(errno));
     }
-#elif HAVE_DECL_SO_PEERCRED
+#elif defined(SO_PEERCRED)
     struct ucred creds;
     socklen_t creds_len = sizeof(struct ucred);
 
