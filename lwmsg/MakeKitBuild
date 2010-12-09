@@ -16,7 +16,8 @@ configure()
         sys/types.h \
         sys/socket.h \
         sys/varargs.h \
-        sys/select.h
+        sys/select.h \
+        unistd.h
         
     mk_check_libraries FAIL=yes \
         lwbase lwbase_nothr
@@ -25,6 +26,10 @@ configure()
         pthread rt dl xnet
 
     lw_check_iconv
+    
+    mk_check_functions \
+        HEADERDEPS="sys/types.h sys/socket.h unistd.h" \
+        getpeereid
 
     mk_multiarch_do
         mk_define "MOD_EXT" "${MK_DLO_EXT}"
