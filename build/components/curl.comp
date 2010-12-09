@@ -32,7 +32,14 @@ function _setup_build_env
 
 function component_configure
 {
+    local extra_flags=""
+
     _setup_build_env
+
+    if [ -n "${BUILD_DEBUG}" ]
+    then
+        extra_flags="$extra_flags --enable-debug"
+    fi
 
     "${COMP_SOURCES}/configure"        \
 	--prefix=${PREFIX_DIR}         \
@@ -47,6 +54,7 @@ function component_configure
 	--disable-pop3 \
 	--disable-imap \
 	--disable-smtp \
+        ${extra_flags} \
 	${DEPENDENCY_TRACKING}
 }
 
