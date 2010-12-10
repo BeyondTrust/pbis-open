@@ -241,7 +241,7 @@ then
      	USE_POLL=true
 	AC_DEFINE([USE_POLL], [], [Define to use poll backend])
 else
-	USE_SELECT=false
+	USE_POLL=false
 fi
 
 if test "$THREADPOOL_BACKEND" = "kqueue"
