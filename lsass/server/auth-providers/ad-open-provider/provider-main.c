@@ -1698,7 +1698,7 @@ AD_CheckUserInList(
 
     dwError = AD_ResolveProviderState(hProvider, &pContext);
     BAIL_ON_LSA_ERROR(dwError);
-    
+
     if (pContext->pState->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
