@@ -429,7 +429,7 @@ lwmsg_assoc_connect(
     LWMsgSession* session
     )
 {
-    return assoc->aclass->connect(assoc, session);
+    return assoc->aclass->connect_peer(assoc, session);
 }
 
 LWMsgStatus
@@ -439,7 +439,7 @@ lwmsg_assoc_accept(
     LWMsgSession** session
     )
 {
-    return assoc->aclass->accept(assoc, manager, session);
+    return assoc->aclass->accept_peer(assoc, manager, session);
 }
 
 LWMsgStatus

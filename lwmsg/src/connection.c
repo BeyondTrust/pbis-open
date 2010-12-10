@@ -434,8 +434,8 @@ static LWMsgAssocClass connection_class =
     .get_session = lwmsg_connection_get_session,
     .get_state = lwmsg_connection_get_state,
     .set_timeout = lwmsg_connection_set_timeout,
-    .connect = lwmsg_connection_connect,
-    .accept = lwmsg_connection_accept,
+    .connect_peer = lwmsg_connection_connect,
+    .accept_peer = lwmsg_connection_accept,
     .set_nonblock = lwmsg_connection_set_nonblock,
     .finish = lwmsg_connection_finish
 };

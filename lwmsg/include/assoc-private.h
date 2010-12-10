@@ -186,13 +186,13 @@ typedef struct LWMsgAssocClass
         );
 
     LWMsgStatus
-    (*connect)(
+    (*connect_peer)(
         LWMsgAssoc* assoc,
         LWMsgSession* session
         );
 
     LWMsgStatus
-    (*accept)(
+    (*accept_peer)(
         LWMsgAssoc* assoc,
         LWMsgSessionManager* manager,
         LWMsgSession** session

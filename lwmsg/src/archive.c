@@ -267,7 +267,7 @@ static LWMsgAssocClass archive_class =
     .get_session = lwmsg_archive_get_session,
     .get_state = lwmsg_archive_get_state,
     .set_timeout = lwmsg_archive_set_timeout,
-    .connect = lwmsg_archive_connect,
+    .connect_peer = lwmsg_archive_connect,
     .set_nonblock = lwmsg_archive_set_nonblock,
     .finish = lwmsg_archive_finish
 };
