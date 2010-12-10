@@ -43,7 +43,7 @@ make()
     mk_multiarch_done
 
     case "$THREADPOOL_BACKEND" in
-        "epoll"|"kqueue"|"select")
+        "epoll"|"kqueue"|"select"|"poll")
             THREADPOOL_SOURCES="threadpool-${THREADPOOL_BACKEND}.c"
             ;;
         *)

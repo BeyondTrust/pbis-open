@@ -216,7 +216,7 @@ LDFLAGS="$LDFLAGS $LIB_PTHREAD"
 AC_CHECK_FUNCS([pthread_setaffinity_np pthread_attr_setaffinity_np])
 LDFLAGS="$saved_LDFLAGS"
 
-THREADPOOL_BACKEND=select
+THREADPOOL_BACKEND=poll
 
 if $HAVE_EPOLL_H && $HAVE_EPOLL_CREATE
 then
@@ -232,6 +232,14 @@ if test "$THREADPOOL_BACKEND" = "select"
 then
      	USE_SELECT=true
 	AC_DEFINE([USE_SELECT], [], [Define to use select backend])
+else
+	USE_SELECT=false
+fi
+
+if test "$THREADPOOL_BACKEND" = "poll"
+then
+     	USE_POLL=true
+	AC_DEFINE([USE_POLL], [], [Define to use poll backend])
 else
 	USE_SELECT=false
 fi
@@ -253,6 +261,7 @@ else
 fi
 
 AM_CONDITIONAL(USE_SELECT, $USE_SELECT)
+AM_CONDITIONAL(USE_POLL, $USE_POLL)
 AM_CONDITIONAL(USE_EPOLL, $USE_EPOLL)
 AM_CONDITIONAL(USE_KQUEUE, $USE_KQUEUE)
 
