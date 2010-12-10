@@ -62,7 +62,7 @@ typedef LONG64 LWMsgTaskTime;
 #define LWMSG_TASK_TRIGGER_YIELD        LW_TASK_EVENT_YIELD
 
 typedef LW_TASK_FUNCTION LWMsgTaskFunction;
-typedef LW_WORK_ITEM_FUNCTION LWMsgWorkItemFunction;
+typedef LW_WORK_ITEM_FUNCTION_COMPAT LWMsgWorkItemFunction;
 
 static inline
 LWMsgStatus
