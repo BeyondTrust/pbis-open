@@ -152,7 +152,7 @@ ADInitMachinePasswordSync(
     pMachinePwdState->pDataLock = &pMachinePwdState->DataLock;
 
     pState->hMachinePwdState = pMachinePwdState;
-    
+
 cleanup:
 
     return dwError;
