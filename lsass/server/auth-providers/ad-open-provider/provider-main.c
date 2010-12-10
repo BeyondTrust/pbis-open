@@ -1984,12 +1984,6 @@ AD_RemoveUserByNameFromCache(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (!strcasecmp(pszLoginId, "root"))
-    {
-        dwError = LW_ERROR_NO_SUCH_USER;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
     dwError = LsaSrvCrackDomainQualifiedName(
                     pszLoginId,
                     &pLoginInfo);

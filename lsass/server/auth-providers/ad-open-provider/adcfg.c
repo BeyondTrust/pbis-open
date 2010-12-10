@@ -51,6 +51,14 @@
 
 static
 DWORD
+AD_CheckList(
+    PCSTR pszNeedle,
+    PCSTR pszaHaystack,
+    PBOOLEAN pbFoundIt
+    );
+
+static
+DWORD
 AD_SetConfig_Umask(
     PLSA_AD_CONFIG pConfig,
     PCSTR          pszName,
@@ -180,6 +188,8 @@ AD_FreeConfigContents(
     LW_SAFE_FREE_STRING(pConfig->pszHomedirTemplate);
     LW_SAFE_FREE_STRING(pConfig->pszShell);
     LW_SAFE_FREE_STRING(pConfig->pszSkelDirs);
+    LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreUserNameList);
+    LW_SAFE_FREE_MEMORY(pConfig->pszaIgnoreGroupNameList);
     LW_SAFE_FREE_STRING(pConfig->pszUserDomainPrefix);
 
     if (pConfig->pUnresolvedMemberList)
@@ -512,6 +522,24 @@ AD_ReadRegistry(
             &pszIncludeTrustsListMultiString,
             NULL
         },
+        {
+            "IgnoreUserNameList",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.pszaIgnoreUserNameList
+        },
+        {
+            "IgnoreGroupNameList",
+            TRUE,
+            LsaTypeMultiString,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.pszaIgnoreGroupNameList
+        }
     };
 
     LSA_CONFIG LsaConfigDescription[] =
@@ -1296,6 +1324,102 @@ error:
         LwHashSafeFree(&pAllowedMemberList);
     }
 
+    goto cleanup;
+}
+
+DWORD
+AD_CheckIgnoreUserNameList(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszUserName,
+    PBOOLEAN pbFoundIt
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    BOOLEAN bFoundIt = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    dwError = AD_CheckList(
+                    pszUserName,
+                    pState->config.pszaIgnoreUserNameList,
+                    &bFoundIt);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    *pbFoundIt = bFoundIt;
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+DWORD
+AD_CheckIgnoreGroupNameList(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszGroupName,
+    PBOOLEAN pbFoundIt
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    BOOLEAN bFoundIt = FALSE;
+
+    ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    dwError = AD_CheckList(
+                    pszGroupName,
+                    pState->config.pszaIgnoreGroupNameList,
+                    &bFoundIt);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+    LEAVE_AD_CONFIG_RW_READER_LOCK(bInLock, pState);
+
+    *pbFoundIt = bFoundIt;
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
+AD_CheckList(
+    PCSTR pszNeedle,
+    PCSTR pszaHaystack,
+    PBOOLEAN pbFoundIt
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bFoundIt = FALSE;
+    PCSTR pszCurrent = NULL;
+
+    BAIL_ON_INVALID_STRING(pszNeedle);
+
+    pszCurrent = pszaHaystack;
+    if (pszCurrent)
+    {
+        while (*pszCurrent)
+        {
+            if (!strcasecmp(pszCurrent, pszNeedle))
+            {
+                bFoundIt = TRUE;
+                goto cleanup;
+            }
+            pszCurrent = pszCurrent + strlen(pszCurrent) + 1;
+        }
+    }
+
+cleanup:
+    *pbFoundIt = bFoundIt;
+    return dwError;
+
+error:
     goto cleanup;
 }
 

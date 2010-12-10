@@ -90,6 +90,8 @@ typedef struct _LSA_AD_CONFIG {
     DWORD               dwUmask;
     PSTR                pszSkelDirs;
     PDLINKEDLIST        pUnresolvedMemberList;
+    PSTR                pszaIgnoreUserNameList;
+    PSTR                pszaIgnoreGroupNameList;
     AD_CELL_SUPPORT     CellSupport;
     AD_CACHE_BACKEND    CacheBackend;
     BOOLEAN             bTrimUserMembershipEnabled;

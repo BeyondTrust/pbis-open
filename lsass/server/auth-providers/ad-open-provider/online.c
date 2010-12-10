@@ -58,6 +58,20 @@
 
 static
 DWORD
+AD_PrescreenUserName(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszLoginId
+    );
+
+static
+DWORD
+AD_PrescreenGroupName(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszGroupName
+    );
+
+static
+DWORD
 AD_CheckExpiredMemberships(
     IN PLSA_AD_PROVIDER_STATE pState,
     IN size_t sCount,
@@ -4031,12 +4045,22 @@ AD_OnlineFindObjectByName(
     switch(ObjectType)
     {
     case LSA_OBJECT_TYPE_USER:
+        dwError = AD_PrescreenUserName(
+                      pContext->pState,
+                      pszLoginName);
+        BAIL_ON_LSA_ERROR(dwError);
+
         dwError = ADCacheFindUserByName(
             pContext->pState->hCacheConnection,
             pUserNameInfo,
             &pCachedUser);
         break;
     case LSA_OBJECT_TYPE_GROUP:
+        dwError = AD_PrescreenGroupName(
+                      pContext->pState,
+                      pszLoginName);
+        BAIL_ON_LSA_ERROR(dwError);
+
         dwError = ADCacheFindGroupByName(
             pContext->pState->hCacheConnection,
             pUserNameInfo,
@@ -5120,7 +5144,79 @@ error:
     goto cleanup;
 }
 
+static
+DWORD
+AD_PrescreenUserName(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszLoginId
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bIgnoreUser = FALSE;
 
+    BAIL_ON_INVALID_STRING(pszLoginId);
+
+    if (!strcasecmp(pszLoginId, "root"))
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = AD_CheckIgnoreUserNameList(
+                  pState,
+                  pszLoginId,
+                  &bIgnoreUser);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bIgnoreUser)
+    {
+        dwError = LW_ERROR_NO_SUCH_USER;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+static
+DWORD
+AD_PrescreenGroupName(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszGroupName
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bIgnoreGroup = FALSE;
+
+    BAIL_ON_INVALID_STRING(pszGroupName);
+
+    if (!strcasecmp(pszGroupName, "root"))
+    {
+        dwError = LW_ERROR_NO_SUCH_GROUP;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = AD_CheckIgnoreGroupNameList(
+                  pState,
+                  pszGroupName,
+                  &bIgnoreGroup);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (bIgnoreGroup)
+    {
+        dwError = LW_ERROR_NO_SUCH_GROUP;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    return dwError;
+
+error:
+    goto cleanup;
+}
 
 /*
 local variables:

@@ -230,6 +230,14 @@
     default = dword:00000000
     doc = "The maximum bytes to use for the in-memory cache. Old data will be purged if the total cache size exceeds this limit. A value of 0 indicates no limit."
 }
+"IgnoreUserNameList" = {
+    default = sza:""
+    doc = "Do not look up the specified user names in AD."
+}
+"IgnoreGroupNameList" = {
+    default = sza:""
+    doc = "Do not look up the specified group names in AD."
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]
 "Id" = {

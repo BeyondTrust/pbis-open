@@ -214,6 +214,20 @@ AD_EventlogEnabled(
     IN PLSA_AD_PROVIDER_STATE pState
     );
 
+DWORD
+AD_CheckIgnoreUserNameList(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszUserName,
+    PBOOLEAN pbFoundIt
+    );
+
+DWORD
+AD_CheckIgnoreGroupNameList(
+    PLSA_AD_PROVIDER_STATE pState,
+    PCSTR pszGroupName,
+    PBOOLEAN pbFoundIt
+    );
+
 BOOLEAN
 AD_ShouldLogNetworkConnectionEvents(
     IN PLSA_AD_PROVIDER_STATE pState
