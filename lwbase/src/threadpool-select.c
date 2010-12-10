@@ -1201,15 +1201,38 @@ LwRtlFreeThreadPool(
     }
 }
 
-NTSTATUS
-LwRtlQueueWorkItem(
-    PLW_THREAD_POOL pPool,
-    LW_WORK_ITEM_FUNCTION pfnFunc,
-    PVOID pContext,
-    LW_WORK_ITEM_FLAGS Flags
+LW_NTSTATUS
+LwRtlCreateWorkItem(
+    LW_IN PLW_THREAD_POOL pPool,
+    LW_OUT PLW_WORK_ITEM* ppWorkItem,
+    LW_IN LW_WORK_ITEM_FUNCTION pfnFunc,
+    LW_IN PVOID pContext
     )
 {
-    return QueueWorkItem(&pPool->WorkThreads, pfnFunc, pContext, Flags);
+    return CreateWorkItem(&pPool->WorkThreads, ppWorkItem, pfnFunc, pContext);
 }
 
+LW_VOID
+LwRtlFreeWorkItem(
+    LW_IN LW_OUT PLW_WORK_ITEM* ppWorkItem
+    )
+{
+    FreeWorkItem(ppWorkItem);
+}
 
+LW_VOID
+LwRtlScheduleWorkItem(
+    LW_IN PLW_WORK_ITEM pWorkItem,
+    LW_IN LW_SCHEDULE_FLAGS Flags
+    )
+{
+    ScheduleWorkItem(NULL, pWorkItem, Flags);
+}
+
+LW_VOID
+LwRtlWaitWorkItems(
+    LW_IN PLW_THREAD_POOL pPool
+    )
+{
+    WaitWorkItems(&pPool->WorkThreads);
+}

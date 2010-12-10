@@ -67,20 +67,13 @@ typedef struct _CLOCK
 
 struct _LW_THREAD_POOL_ATTRIBUTES
 {
-    BOOLEAN bDelegateTasks;
+    unsigned bDelegateTasks:1;
     LONG lTaskThreads;
     LONG lWorkThreads;
     ULONG ulTaskThreadStackSize;
     ULONG ulWorkThreadStackSize;
     ULONG ulWorkThreadTimeout;
 };
-
-typedef struct _LW_WORK_ITEM
-{
-    LW_WORK_ITEM_FUNCTION pfnFunc;
-    PVOID pContext;
-    RING Ring;
-} LW_WORK_ITEM, *PLW_WORK_ITEM;
 
 typedef struct _LW_WORK_THREAD
 {
@@ -101,13 +94,25 @@ typedef struct _LW_WORK_THREADS
     ULONG volatile ulQueued;
     /* Number of threads available to process an item */
     ULONG volatile ulAvailable;
+    /* Number of work items delegated to the emergency pool */
+    ULONG volatile ulDelegated;
     RING WorkItems;
     BOOLEAN volatile bShutdown;
+    BOOLEAN volatile bWaiting;
     pthread_mutex_t Lock;
     pthread_cond_t Event;
     unsigned bDestroyLock:1;
     unsigned bDestroyEvent:1;
 } LW_WORK_THREADS, *PLW_WORK_THREADS;
+
+struct _LW_WORK_ITEM
+{
+    PLW_WORK_THREADS pThreads;
+    LW_WORK_ITEM_FUNCTION pfnFunc;
+    PVOID pContext;
+    RING Ring;
+};
+
 
 typedef struct _LW_SIGNAL_SUBSCRIPTION
 {
@@ -419,11 +424,28 @@ DestroyWorkThreads(
     );
 
 NTSTATUS
-QueueWorkItem(
+CreateWorkItem(
+    LW_IN PLW_WORK_THREADS pThreads,
+    LW_OUT PLW_WORK_ITEM* ppWorkItem,
+    LW_IN LW_WORK_ITEM_FUNCTION pfnFunc,
+    LW_IN PVOID pContext
+    );
+
+VOID
+FreeWorkItem(
+    LW_IN LW_OUT PLW_WORK_ITEM* ppWorkItem
+    );
+
+VOID
+ScheduleWorkItem(
     PLW_WORK_THREADS pThreads,
-    LW_WORK_ITEM_FUNCTION pfnFunc,
-    PVOID pContext,
-    LW_WORK_ITEM_FLAGS Flags
+    PLW_WORK_ITEM pWorkItem,
+    LW_SCHEDULE_FLAGS Flags
+    );
+
+VOID
+WaitWorkItems(
+    PLW_WORK_THREADS pThreads
     );
 
 int

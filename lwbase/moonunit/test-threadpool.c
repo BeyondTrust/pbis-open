@@ -84,6 +84,44 @@ MU_FIXTURE_TEARDOWN(Task)
 static
 VOID
 BasicWorkItem(
+    PLW_WORK_ITEM pItem,
+    PVOID pContext
+    )
+{
+    BOOLEAN volatile *pbValue = pContext;
+
+    pthread_mutex_lock(&gLock);
+    *pbValue = TRUE;
+    pthread_cond_signal(&gEvent);
+    pthread_mutex_unlock(&gLock);
+
+    LwRtlFreeWorkItem(&pItem);
+}
+
+MU_TEST(Task, BasicWorkItem)
+{
+    BOOLEAN volatile bValue = FALSE;
+    PLW_WORK_ITEM pItem = NULL;
+
+    MU_ASSERT_STATUS_SUCCESS(LwRtlCreateWorkItem(
+        gpPool,
+        &pItem,
+        BasicWorkItem,
+        (PVOID) &bValue));
+
+    LwRtlScheduleWorkItem(pItem, 0);
+
+    pthread_mutex_lock(&gLock);
+    while (!bValue)
+    {
+        pthread_cond_wait(&gEvent, &gLock);
+    }
+    pthread_mutex_unlock(&gLock);
+}
+
+static
+VOID
+CompatWorkItem(
     PVOID pContext
     )
 {
@@ -95,13 +133,13 @@ BasicWorkItem(
     pthread_mutex_unlock(&gLock);
 }
 
-MU_TEST(Task, BasicWorkItem)
+MU_TEST(Task, CompatWorkItem)
 {
     BOOLEAN volatile bValue = FALSE;
 
     MU_ASSERT_STATUS_SUCCESS(LwRtlQueueWorkItem(
                                  gpPool,
-                                 BasicWorkItem,
+                                 CompatWorkItem,
                                  (PVOID) &bValue,
                                  0));
 

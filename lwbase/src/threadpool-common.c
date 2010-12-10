@@ -61,9 +61,13 @@ static const int SignalBlacklist[] =
     0
 };
 
+/* Global thread pool to which tasks are usually delegated */
 static PLW_THREAD_POOL gpDelegatePool = NULL;
+/* Global work threads where work items are delegated in an emergency */
+static LW_WORK_THREADS gDelegateThreads = {0};
 static ULONG gpDelegatePoolRefCount = 0;
-static pthread_mutex_t gpDelegatePoolLock = PTHREAD_MUTEX_INITIALIZER;
+static ULONG gpDelegateThreadsRefCount = 0;
+static pthread_mutex_t gpDelegateLock = PTHREAD_MUTEX_INITIALIZER;
 
 static LW_SIGNAL_MULTIPLEX gSignal =
 {
@@ -75,6 +79,13 @@ static LW_SIGNAL_MULTIPLEX gSignal =
 
 static BOOLEAN volatile gRealSigInt = FALSE;
 
+static
+NTSTATUS
+StartWorkThread(
+    PLW_WORK_THREADS pThreads,
+    PLW_WORK_THREAD pThread
+    );
+
 NTSTATUS
 AcquireDelegatePool(
     PLW_THREAD_POOL* ppPool
@@ -82,20 +93,20 @@ AcquireDelegatePool(
 {
     NTSTATUS status = STATUS_SUCCESS;
     LW_THREAD_POOL_ATTRIBUTES attrs =
-        {
-            .bDelegateTasks = FALSE,
-            .lTaskThreads = -1,
-            .lWorkThreads = 0,
-            .ulTaskThreadStackSize = 0,
-            .ulWorkThreadStackSize = 0
-        };
+    {
+        .bDelegateTasks = FALSE,
+        .lTaskThreads = -1,
+        .lWorkThreads = 0,
+        .ulTaskThreadStackSize = 0,
+        .ulWorkThreadStackSize = 0
+    };
 
     if (getenv("LW_GLOBAL_TASK_THREADS"))
     {
         attrs.lTaskThreads = (LONG) atoi(getenv("LW_GLOBAL_TASK_THREADS"));
     }
 
-    pthread_mutex_lock(&gpDelegatePoolLock);
+    pthread_mutex_lock(&gpDelegateLock);
 
     if (!gpDelegatePool)
     {
@@ -113,7 +124,7 @@ AcquireDelegatePool(
 
 cleanup:
 
-    pthread_mutex_unlock(&gpDelegatePoolLock);
+    pthread_mutex_unlock(&gpDelegateLock);
 
     return status;
 
@@ -127,20 +138,78 @@ ReleaseDelegatePool(
     PLW_THREAD_POOL* ppPool
     )
 {
+    BOOLEAN bFree = FALSE;
+
     if (*ppPool)
     {
-        pthread_mutex_lock(&gpDelegatePoolLock);
+        pthread_mutex_lock(&gpDelegateLock);
         
         assert(*ppPool == gpDelegatePool);
         
         if (--gpDelegatePoolRefCount == 0)
         {
-            LwRtlFreeThreadPool(&gpDelegatePool);
+            gpDelegatePool = NULL;
+            bFree = TRUE;
         }
         
-        pthread_mutex_unlock(&gpDelegatePoolLock);
-        *ppPool = NULL;
+        pthread_mutex_unlock(&gpDelegateLock);
     }
+
+    if (bFree)
+    {
+        LwRtlFreeThreadPool(ppPool);
+    }
+}
+
+static
+NTSTATUS
+AcquireDelegateThreads(
+    VOID
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    LW_THREAD_POOL_ATTRIBUTES attrs =
+    {
+        .lWorkThreads = 1,
+        .ulWorkThreadStackSize = 0,
+        .ulWorkThreadTimeout = 0
+    };
+
+    pthread_mutex_lock(&gpDelegateLock);
+
+    if (gpDelegateThreadsRefCount == 0)
+    {
+        status = InitWorkThreads(&gDelegateThreads, &attrs, 1);
+        GOTO_ERROR_ON_STATUS(status);
+    }
+
+    gpDelegateThreadsRefCount++;
+
+cleanup:
+
+    pthread_mutex_unlock(&gpDelegateLock);
+
+    return status;
+
+error:
+
+    goto cleanup;
+}
+
+static
+VOID
+ReleaseDelegateThreads(
+    VOID
+    )
+{
+    pthread_mutex_lock(&gpDelegateLock);
+
+    if (--gpDelegatePoolRefCount == 0)
+    {
+        DestroyWorkThreads(&gDelegateThreads);
+    }
+
+    pthread_mutex_unlock(&gpDelegateLock);
 }
 
 LW_NTSTATUS
@@ -274,6 +343,20 @@ InitWorkThreads(
             pThreads->pWorkThreads[i].Thread = INVALID_THREAD_HANDLE;
         }
     }
+
+    if (pThreads->ulWorkThreadTimeout == 0)
+    {
+        for (i = 0; i < pThreads->ulWorkThreadCount; i++)
+        {
+            status = StartWorkThread(pThreads, &pThreads->pWorkThreads[i]);
+            GOTO_ERROR_ON_STATUS(status);
+        }
+    }
+    else
+    {
+        status = AcquireDelegateThreads();
+        GOTO_ERROR_ON_STATUS(status);
+    }
         
 error:
 
@@ -289,6 +372,8 @@ DestroyWorkThreads(
 
     if (pThreads->pWorkThreads)
     {
+        WaitWorkItems(pThreads);
+
         LOCK_THREADS(pThreads);
         pThreads->bShutdown = TRUE;
         pthread_cond_broadcast(&pThreads->Event);
@@ -316,6 +401,11 @@ DestroyWorkThreads(
     if (pThreads->bDestroyEvent)
     {
         pthread_cond_destroy(&pThreads->Event);
+    }
+
+    if (pThreads->ulWorkThreadTimeout != 0)
+    {
+        ReleaseDelegateThreads();
     }
 }
 
@@ -370,6 +460,7 @@ WorkLoop(
     PRING pRing = NULL;
     PLW_WORK_ITEM pItem = NULL;
     PLW_WORK_THREADS pThreads = pThread->pThreads;
+    PLW_WORK_THREADS pItemThreads = NULL;
 
     LOCK_THREADS(pThread->pThreads);
 
@@ -395,11 +486,27 @@ WorkLoop(
         UNLOCK_THREADS(pThreads);
 
         pItem = LW_STRUCT_FROM_FIELD(pRing, LW_WORK_ITEM, Ring);
+        pItemThreads = pItem->pThreads;
+        pItem->pfnFunc(pItem, pItem->pContext);
         
-        pItem->pfnFunc(pItem->pContext);
-        RtlMemoryFree(pItem);
+        if (pItemThreads != pThreads)
+        {
+            /* Item was given to us by someone else, notify it */
+            LOCK_THREADS(pItemThreads);
+            pItemThreads->ulDelegated--;
+            if (pItemThreads->bWaiting && pItemThreads->ulDelegated == 0)
+            {
+                pthread_cond_broadcast(&pItemThreads->Event);
+            }
+            UNLOCK_THREADS(pItemThreads);
+        }
 
         LOCK_THREADS(pThreads);
+
+        if (pItemThreads->bWaiting && pItemThreads->ulQueued == 0)
+        {
+            pthread_cond_broadcast(&pItemThreads->Event);
+        }
     }
 
 error:
@@ -486,16 +593,52 @@ error:
 }
 
 NTSTATUS
-QueueWorkItem(
-    PLW_WORK_THREADS pThreads,
+CreateWorkItem(
+    LW_IN PLW_WORK_THREADS pThreads,
+    LW_OUT PLW_WORK_ITEM* ppWorkItem,
     LW_WORK_ITEM_FUNCTION pfnFunc,
-    PVOID pContext,
-    LW_WORK_ITEM_FLAGS Flags
+    PVOID pContext
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;
     PLW_WORK_ITEM pItem = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    status = LW_RTL_ALLOCATE_AUTO(&pItem);
+    GOTO_ERROR_ON_STATUS(status);
+
+    RingInit(&pItem->Ring);
+    pItem->pThreads = pThreads;
+    pItem->pfnFunc = pfnFunc;
+    pItem->pContext = pContext;
+
+error:
+
+    *ppWorkItem = pItem;
+
+    return status;
+}
+
+VOID
+FreeWorkItem(
+    LW_IN LW_OUT PLW_WORK_ITEM* ppWorkItem
+    )
+{
+    RTL_FREE(ppWorkItem);
+}
+
+VOID
+ScheduleWorkItem(
+    PLW_WORK_THREADS pThreads,
+    PLW_WORK_ITEM pItem,
+    LW_SCHEDULE_FLAGS Flags
+    )
+{
     size_t i = 0;
+
+    if (pThreads == NULL)
+    {
+        pThreads = pItem->pThreads;
+    }
 
     LOCK_THREADS(pThreads);
     
@@ -510,8 +653,14 @@ QueueWorkItem(
         {
             if (!pThreads->pWorkThreads[i].bStarted)
             {
-                status = StartWorkThread(pThreads, &pThreads->pWorkThreads[i]);
-                GOTO_ERROR_ON_STATUS(status);
+                /* This might fail -- we'll handle that below */
+                if (StartWorkThread(pThreads, &pThreads->pWorkThreads[i]) != STATUS_SUCCESS)
+                {
+                    /* Pass the work item to the emergency work pool */
+                    ScheduleWorkItem(&gDelegateThreads, pItem, Flags);
+                    pThreads->ulDelegated++;
+                    goto error;
+                }
                 break;
             }
         }
@@ -523,14 +672,7 @@ QueueWorkItem(
         pthread_cond_signal(&pThreads->Event);
     }
 
-    status = LW_RTL_ALLOCATE_AUTO(&pItem);
-    GOTO_ERROR_ON_STATUS(status);
-    
-    RingInit(&pItem->Ring);
-    pItem->pfnFunc = pfnFunc;
-    pItem->pContext = pContext;
-
-    if (Flags & LW_WORK_ITEM_HIGH_PRIORITY)
+    if (Flags & LW_SCHEDULE_HIGH_PRIORITY)
     {
         RingEnqueueFront(&pThreads->WorkItems, &pItem->Ring);
     }
@@ -539,18 +681,29 @@ QueueWorkItem(
         RingEnqueue(&pThreads->WorkItems, &pItem->Ring);
     }
     pThreads->ulQueued++;
-    pItem = NULL;
 
 error:
 
     UNLOCK_THREADS(pThreads);
+}
 
-    if (pItem)
+VOID
+WaitWorkItems(
+    PLW_WORK_THREADS pThreads
+    )
+{
+    LOCK_THREADS(pThreads);
+
+    pThreads->bWaiting = TRUE;
+
+    while (pThreads->ulQueued && pThreads->ulDelegated)
     {
-        RtlMemoryFree(pItem);
+        pthread_cond_wait(&pThreads->Event, &pThreads->Lock);
     }
 
-    return status;
+    pThreads->bWaiting = FALSE;
+
+    UNLOCK_THREADS(pThreads);
 }
 
 #if defined(_SC_NPROCESSORS_ONLN)
@@ -954,6 +1107,59 @@ LwRtlBlockSignals(
     GOTO_ERROR_ON_STATUS(status);
 
 error:
+
+    return status;
+}
+
+typedef struct COMPAT_WORK_ITEM
+{
+    LW_WORK_ITEM_FUNCTION_COMPAT pfnFunc;
+    PVOID pContext;
+} COMPAT_WORK_ITEM, *PCOMPAT_WORK_ITEM;
+
+static
+VOID
+CompatWorkItem(
+    PLW_WORK_ITEM pItem,
+    PVOID pContext
+    )
+{
+    PCOMPAT_WORK_ITEM pCompat = pContext;
+
+    pCompat->pfnFunc(pCompat->pContext);
+
+    LwRtlFreeWorkItem(&pItem);
+}
+
+LW_NTSTATUS
+LwRtlQueueWorkItem(
+    LW_IN PLW_THREAD_POOL pPool,
+    LW_IN LW_WORK_ITEM_FUNCTION_COMPAT pfnFunc,
+    LW_IN LW_PVOID pContext,
+    LW_IN LW_WORK_ITEM_FLAGS Flags
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PCOMPAT_WORK_ITEM pCompat = NULL;
+    PLW_WORK_ITEM pItem = NULL;
+
+    status = LW_RTL_ALLOCATE_AUTO(&pCompat);
+    GOTO_ERROR_ON_STATUS(status);
+
+    pCompat->pfnFunc = pfnFunc;
+    pCompat->pContext = pContext;
+
+    status = LwRtlCreateWorkItem(pPool, &pItem, CompatWorkItem, pCompat);
+    GOTO_ERROR_ON_STATUS(status);
+    pCompat = NULL;
+
+    LwRtlScheduleWorkItem(pItem, Flags);
+    pItem = NULL;
+
+error:
+
+    RTL_FREE(&pCompat);
+    LwRtlFreeWorkItem(&pItem);
 
     return status;
 }

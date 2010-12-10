@@ -189,18 +189,33 @@ typedef enum _LW_TASK_EVENT_MASK
 } LW_TASK_EVENT_MASK, *PLW_TASK_EVENT_MASK;
 
 /**
- * @brief Work item flags
+ * @brief Scheduling flags
  *
- * Controls how work items are run.
+ * Controls how work items are scheduled.
  */
-typedef enum LW_WORK_ITEM_FLAGS
+typedef enum LW_SCHEDULE_FLAGS
 {
     /**
      * Indicates the the work item should be placed at the front
      * of the work queue.
+     *
+     * @hideinitializer
      */
-    LW_WORK_ITEM_HIGH_PRIORITY         = 0x00010000
-} LW_WORK_ITEM_FLAGS;
+    LW_SCHEDULE_HIGH_PRIORITY         = 0x00010000
+} LW_SCHEDULE_FLAGS;
+
+#ifndef DOXYGEN
+#define LW_WORK_ITEM_FLAGS LW_SCHEDULE_FLAGS
+#define LW_WORK_ITEM_HIGH_PRIOTIRY LW_SCHEDULE_HIGH_PRIORITY
+#endif
+
+/**
+ * @brief Work item structure
+ *
+ * Opaque structure representing a work item
+ */
+typedef struct _LW_WORK_ITEM LW_WORK_ITEM, *PLW_WORK_ITEM;
+
 
 /**
  * @brief Thread pool option
@@ -313,17 +328,28 @@ LW_VOID
 /**
  * @brief Work item function
  *
- * A function which is queued and dispatched by
- * #LwRtlQueueWorkItem().  Unlike tasks, work item
- * functions are synchronous and may block.
+ * A function which is called to run a work item
+ * created with #LwRtlCreateWorkItem().  A work
+ * item function -- unlike a task function -- may
+ * safely block.
  *
+ * @param[in] pWorkItem the work item
  * @param[in] pContext the user context pointer
  */
 typedef
 LW_VOID
 (*LW_WORK_ITEM_FUNCTION)(
+    PLW_WORK_ITEM pWorkItem,
+    PVOID pContext
+    );
+
+#ifndef DOXYGEN
+typedef
+LW_VOID
+(*LW_WORK_ITEM_FUNCTION_COMPAT)(
     LW_PVOID pContext
     );
+#endif
 
 /**
  * @brief Create a new task
@@ -594,25 +620,82 @@ LwRtlWaitTaskGroup(
     );
 
 /**
- * @brief Queue synchronous work item
+ * @brief Create work item
  *
- * Schedules a work item to be run in another thread.  Unlike tasks,
- * work items are not asynchronous and may block arbitrarily.  This
- * functionality is provided as a convenience for tasks which may need
- * to make calls into blocking code.
+ * Creates a work item which can be scheduled to run
+ * with #LwRtlScheduleWorkItem().  Work items -- unlike tasks --
+ * may block.
  *
- * @param[in] pPool the thread pool
- * @param[in] pfnFunc a work item function to run
- * @param[in] pContext the user context pointer to pass to the work item function
- * @param[in] Flags control flags for the work item
+ * @param[in] pPool thread pool which will own the work item
+ * @param[out] ppWorkItem set to the created work item
+ * @param[in] pfnFunc work item function to run
+ * @param[in] pContext user context to pass to the callback
+ * @retval #LW_STATUS_SUCCESS success
+ * @retval #LW_STATUS_INSUFFICIENT_RESOURCES out of memory
  */
+LW_NTSTATUS
+LwRtlCreateWorkItem(
+    LW_IN PLW_THREAD_POOL pPool,
+    LW_OUT PLW_WORK_ITEM* ppWorkItem,
+    LW_IN LW_WORK_ITEM_FUNCTION pfnFunc,
+    LW_IN PVOID pContext
+    );
+
+/**
+ * @brief Free work item
+ *
+ * Frees a work item.  Once a work item has been scheduled,
+ * this function may only be called safely from the work item
+ * function.
+ *
+ * @param[in,out] ppWorkItem if *ppWorkItem is not NULL, it is freed and set to NULL
+ */
+LW_VOID
+LwRtlFreeWorkItem(
+    LW_IN LW_OUT PLW_WORK_ITEM* ppWorkItem
+    );
+
+/**
+ * @brief Schedule blocking work item
+ *
+ * Schedules a work item to be run with the specified scheduling flags.
+ *
+ * @param[in] pWorkItem the work item
+ * @param[in] Flags scheduling control flags
+ */
+LW_VOID
+LwRtlScheduleWorkItem(
+    LW_IN PLW_WORK_ITEM pWorkItem,
+    LW_IN LW_SCHEDULE_FLAGS Flags
+    );
+
+/**
+ * @brief Wait for scheduled work items to complete
+ *
+ * Blocks until all scheduled work items have finished running.
+ *
+ * @warning It is up to the user to ensure that no further work
+ * items will be scheduled.  Otherwise, this function may return
+ * even if work items are still scheduled, or block forever.
+ *
+ * @warning Calling this function from a work item function
+ * will cause a deadlock
+ */
+LW_VOID
+LwRtlWaitWorkItems(
+    LW_IN PLW_THREAD_POOL pPool
+    );
+
+#ifndef DOXYGEN
+/* Deprecated compat function */
 LW_NTSTATUS
 LwRtlQueueWorkItem(
     LW_IN PLW_THREAD_POOL pPool,
-    LW_IN LW_WORK_ITEM_FUNCTION pfnFunc,
+    LW_IN LW_WORK_ITEM_FUNCTION_COMPAT pfnFunc,
     LW_IN LW_PVOID pContext,
     LW_IN LW_WORK_ITEM_FLAGS Flags
     );
+#endif
 
 /**
  * @brief Create thread pool attributes structure
