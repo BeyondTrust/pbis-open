@@ -2118,6 +2118,7 @@ AD_PreJoinDomain(
 {
     DWORD dwError = 0;
 
+    LSA_LOG_DEBUG("Clearing old join state");
     dwError = AD_LeaveDomainInternal(
                   hProvider,
                   NULL,
@@ -2213,6 +2214,7 @@ AD_JoinDomain(
                                   &pszMessage));
     BAIL_ON_LSA_ERROR(dwError);
 
+    LSA_LOG_DEBUG("Joining domain %s", LW_SAFE_LOG_STRING(pRequest->pszDomain));
     LSA_LOG_TRACE("Domain join request: %s", pszMessage);
 
     dwError = LWNetGetDomainController(
