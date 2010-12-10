@@ -33,7 +33,7 @@
  *
  * Module Name:
  *
- *        lsadb.h
+ *        adcache.h
  *
  * Abstract:
  *

@@ -2550,7 +2550,7 @@ LsaDbQueryObjectMulti(
     }
     else
     {
-        iColumnPos += 21; // This is the number of fields in the userInfo section of lsadb.h (LSA_SECURITY_OBJECT)
+        iColumnPos += 21; // Number of fields after ObjectSid in LSA_DB_TABLE_NAME_USERS in sqlcache_create.h
     }
 
     if (pObject->type == LSA_OBJECT_TYPE_GROUP && pObject->enabled)
@@ -2810,7 +2810,7 @@ LsaDbQueryObject(
     }
     else
     {
-        iColumnPos += 21; // This is the number of fields in the userInfo section of lsadb.h (LSA_SECURITY_OBJECT)
+        iColumnPos += 21; // Number of fields after ObjectSid in LSA_DB_TABLE_NAME_USERS in sqlcache_create.h
     }
 
     if (pObject->type == LSA_OBJECT_TYPE_GROUP && pObject->enabled)
