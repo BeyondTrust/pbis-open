@@ -56,13 +56,15 @@ function component_install
         mv "${INSTALL_PREFIX_DIR}/lib" "${INSTALL_PREFIX_DIR}/${_lib}" 
     fi
 
-    rsync -a \
-        --filter '- bin/' \
-        --filter '- engines/' \
-        --filter '- pkgconfig/' \
-        --filter "- ${PREFIXDIR}/ssl/" \
-        --filter "- libssl.*" \
-        ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
+    cat <<EOF > ${EXCLUDE_FILE}
+bin/
+engines/
+pkgconfig/
+${PREFIXDIR}/ssl/
+libssl.*
+EOF
+
+    rsync -a --exclude-from=${EXCLUDE_FILE} ${INSTALL_ROOT}/ ${STAGE_INSTALL_DIR}/
 
     libtool_rewrite_staging
 }
