@@ -137,11 +137,14 @@ RegAppendStringBuffer(
         pBuffer->sCapacity = sNewCapacity;
     }
 
-    memcpy(
-        pBuffer->pszBuffer + pBuffer->sLen,
-        pszAppend,
-        sAppendLen);
-    pBuffer->sLen += sAppendLen;
+    if (pszAppend != NULL)
+    {
+        memcpy(
+            pBuffer->pszBuffer + pBuffer->sLen,
+            pszAppend,
+            sAppendLen);
+        pBuffer->sLen += sAppendLen;
+    }
     pBuffer->pszBuffer[pBuffer->sLen] = '\0';
 
 cleanup:
