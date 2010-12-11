@@ -52,6 +52,8 @@
 #include "lwnet-system.h"
 #include "lwnet-def.h"
 
+#include <lw/rtlstring.h>
+
 #include "lwnet.h"
 #include "lwnet-utils.h"
 #include "lwnet-ipc.h"

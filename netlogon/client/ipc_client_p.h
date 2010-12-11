@@ -131,4 +131,13 @@ LWNetTransactGetLogInfo(
     OUT PSTR* ppszLogPath
     );
 
+DWORD
+LWNetTransactResolveName(
+    LW_IN HANDLE hConnection,
+    LW_IN LW_PCSTR pszHostName,
+    LW_OUT LW_PSTR *pszCanonName,
+    LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
+    LW_OUT PDWORD pdwAddressListLen
+    );
+
 #endif /* __IPC_CLIENT_P_H__ */

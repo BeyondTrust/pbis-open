@@ -457,3 +457,74 @@ error:
 
     goto cleanup;
 }
+
+
+LWNET_API
+LW_DWORD
+LWNetResolveName(
+    LW_IN LW_PCSTR pszHostName,
+    LW_OUT LW_PSTR *ppszCanonName,
+    LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
+    LW_OUT PDWORD pdwAddressListLen
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hServer = 0;
+    LW_PSTR pszCanonName = NULL;
+    PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
+    DWORD dwAddressListLen = 0;
+   
+
+    dwError = LWNetOpenServer(&hServer);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetTransactResolveName(
+        hServer,
+        pszHostName,
+        &pszCanonName,
+        &ppAddressList,
+        &dwAddressListLen);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+cleanup:
+    if (hServer)
+    {
+        DWORD dwErrorLocal = 0;
+        dwErrorLocal = LWNetCloseServer(hServer);
+        if(!dwError)
+        {
+            dwError = dwErrorLocal;
+        }
+    }
+
+    *ppszCanonName = pszCanonName;
+    *pppAddressList = ppAddressList;
+    *pdwAddressListLen = dwAddressListLen;
+
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
+
+LWNET_API
+LW_DWORD
+LWNetResolveNameFree(
+    LW_OUT PLWNET_RESOLVE_ADDR *ppAddressList,
+    LW_OUT DWORD dwAddressListLen)
+{
+    DWORD dwError = 0;
+    DWORD i = 0;
+
+    BAIL_ON_INVALID_POINTER(ppAddressList);
+
+    for (i=0; i<dwAddressListLen; i++)
+    {
+        LWNET_SAFE_FREE_MEMORY(ppAddressList[i]);
+    }
+    LWNET_SAFE_FREE_MEMORY(ppAddressList);
+
+error:
+    return dwError;
+}

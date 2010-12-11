@@ -3,7 +3,7 @@
  * -*- mode: c, c-basic-offset: 4 -*- */
 
 /*
- * Copyright Likewise Software    2004-2008
+ * Copyright Likewise Software    2004-2010
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,9 +39,9 @@
  *
  *        Likewise Site Manager
  *
- *        Client Test Program
+ *        Resolve Hostname
  *
- * Authors: Brian Dunstan (bdunstan@likewisesoftware.com)
+ * Authors: Adam Bernstein (abernstein@likewise.com)
  *
  */
 #include "config.h"
@@ -55,7 +55,7 @@ static
 void
 ShowUsage()
 {
-    printf("Usage: netlogonclient\n");
+    printf("Usage: resolvenameclient hostname\n");
 }
 
 static
@@ -90,29 +90,76 @@ main(
     )
 {
     DWORD dwError = 0;
-    HANDLE hLWNetConnection = (HANDLE)NULL;
+    PSTR pszHostName = NULL;
+    PSTR pszCanonName = NULL;
+    PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
+    DWORD dwAddressListLen = 0;
+    DWORD i = 0;
+    CHAR ipAddressBuf[INET_ADDRSTRLEN];
+    PCSTR pszAddress = NULL;
+    DWORD ipAddressLen = 0;
+    DWORD ipAddrFamily = 0;
+    PBYTE pIpAddr = NULL;
 
     lwnet_init_logging_to_file(LWNET_LOG_LEVEL_VERBOSE, TRUE, "");
 
     ParseArgs(argc, argv);
 
-    dwError = LWNetOpenServer(&hLWNetConnection);
-    BAIL_ON_LWNET_ERROR(dwError);
-
-    LWNetCloseServer(hLWNetConnection);
-    hLWNetConnection = (HANDLE)NULL;
-
-    LWNET_LOG_INFO("Successfully communicated with the LWNET Agent.\n");
-
-    return (dwError);
-
-  error:
- 
-    if (hLWNetConnection != (HANDLE)NULL) {
-       LWNetCloseServer(hLWNetConnection);
+    if (argc == 1)
+    {
+        printf("usage: %s hostname\n", argv[0]);
+        return 0;
     }
 
-    LWNET_LOG_ERROR("Failed communication with likewise-netlogond. Error code [%d]\n", dwError);
+    pszHostName = argv[1];
+    dwError = LWNetResolveName(
+                  pszHostName,
+                  &pszCanonName,
+                  &ppAddressList,
+                  &dwAddressListLen);
+    BAIL_ON_LWNET_ERROR(dwError);
+    printf("Responses = %d Host: '%s'\n", dwAddressListLen, pszCanonName);
+ 
+    for (i=0; i<dwAddressListLen; i++)
+    {
+        if (ppAddressList[i]->AddressType == LWNET_IP_ADDR_V4)
+        {
+            ipAddressLen = 4; 
+            ipAddrFamily = PF_INET;
+            pIpAddr = ppAddressList[i]->Address.Ip4Addr;
+        }
+        else if (ppAddressList[i]->AddressType == LWNET_IP_ADDR_V6)
+        {
+            ipAddressLen = 16; 
+            ipAddrFamily = PF_INET6;
+            pIpAddr = ppAddressList[i]->Address.Ip4Addr;
+        }
+        pszAddress = inet_ntop(ipAddrFamily,
+                               pIpAddr,
+                               ipAddressBuf,
+                               sizeof(ipAddressBuf));
+        if (pszAddress)
+        {
+            printf("IP Address = %s\n", pszAddress);
+        }
+    }
+
+
+    LWNetResolveNameFree(ppAddressList, dwAddressListLen);
+    LWNET_SAFE_FREE_STRING(pszCanonName);
+    return (dwError);
+
+error:
+ 
+    if (dwError == ERROR_BAD_NET_NAME)
+    {
+        printf("LWNetResolveName() failed DNS/NetBIOS name resolution\n");
+    }
+    else
+    {
+        LWNET_LOG_ERROR("Failed communication with likewise-netlogond. "
+                        "Error code [%d]\n", dwError);
+    } 
 
     return (dwError);
 }

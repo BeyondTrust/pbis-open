@@ -621,3 +621,81 @@ error:
 
     goto cleanup;
 }
+
+
+DWORD
+LWNetTransactResolveName(
+    LW_IN HANDLE hConnection,
+    LW_IN LW_PCSTR pszHostName,
+    LW_OUT LW_PSTR *ppszCanonName,
+    LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
+    LW_OUT PDWORD pdwAddressListLen)
+{
+    DWORD dwError = 0;
+    PLWNET_IPC_ERROR pError = NULL;
+    LWNET_RESOLVE_NAME_ADDRESS inHostName = {0};
+    PSTR pszCanonName = NULL;
+    PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
+    DWORD dwAddressListLen = 0;
+
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+    LWMsgCall* pCall = NULL;
+
+    
+    dwError = LWNetAcquireCall(hConnection, &pCall);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LwRtlWC16StringAllocateFromCString(&inHostName.pwszHostName,
+                                                 pszHostName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    in.tag = LWNET_Q_RESOLVE_NAME;
+    in.data = &inHostName;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case LWNET_R_RESOLVE_NAME:
+    {
+        PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE pResponse = 
+            (PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE) out.data;
+        ppAddressList = pResponse->ppAddressList;
+        dwAddressListLen = pResponse->dwAddressListLen;
+
+        pResponse->ppAddressList = NULL;
+
+        dwError = LwRtlCStringAllocateFromWC16String(&pszCanonName,
+                                                     pResponse->pwszCanonName);
+        BAIL_ON_LWNET_ERROR(dwError);
+        break;
+    }
+    case LWNET_R_ERROR:
+        pError = (PLWNET_IPC_ERROR) out.data;
+        dwError = pError->dwError;
+        BAIL_ON_LWNET_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+
+cleanup:
+    LWNET_SAFE_FREE_MEMORY(inHostName.pwszHostName);
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    *ppszCanonName = pszCanonName;
+    *pppAddressList = ppAddressList;
+    *pdwAddressListLen = dwAddressListLen;
+
+    return dwError;
+
+error:
+    goto cleanup;
+}

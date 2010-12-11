@@ -453,3 +453,124 @@ error:
     goto cleanup;
 }
 
+
+DWORD
+LWNetSrvIpcResolveName(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    )
+{
+    DWORD dwError = 0;
+    LWNET_RESOLVE_NAME_ADDRESS *pReq = pIn->data;
+    PLWNET_IPC_ERROR pError = NULL;
+    PWSTR pwszHostName = NULL;
+    PSTR pszHostName = NULL;
+    PWSTR pwszCanonName = NULL;
+    PLWNET_RESOLVE_ADDR *ppResAddr = NULL;
+    PLWNET_RESOLVE_ADDR pResAddr = NULL;
+    DWORD dwResAddrLen = 2;
+    PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE pRes = NULL;
+    DWORD i = 0;
+    int addrinfoResult = 0;
+    struct addrinfo hints;
+    struct addrinfo *result = NULL;
+    struct addrinfo *rp = NULL;
+
+
+    /* Convert hostname to resolve from WC to C string */
+    pwszHostName = pReq->pwszHostName;
+    dwError = LwRtlCStringAllocateFromWC16String(&pszHostName, pwszHostName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    /*
+     * Resolve pszHostName using DNS then NetBIOS
+     */
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_flags  = AI_CANONNAME;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = AF_UNSPEC;
+
+    /* Resolve using DNS */
+    addrinfoResult = getaddrinfo(pszHostName, NULL, &hints, &result);
+    if (addrinfoResult == 0)
+    {
+        dwError = LwRtlWC16StringAllocateFromCString(
+                      &pwszCanonName, result->ai_canonname);
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+    else
+    {
+        dwError = ERROR_BAD_NET_NAME;
+        dwError = LWNetSrvIpcCreateError(dwError, "DNS Lookup Failed", &pError);
+        BAIL_ON_LWNET_ERROR(dwError);
+        goto cleanup;
+    }
+
+    dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
+    BAIL_ON_LWNET_ERROR(dwError);
+    
+    for (dwResAddrLen = 0, rp = result; rp; rp = rp->ai_next)
+    {
+        dwResAddrLen++;
+    }
+    
+    dwError = LWNetAllocateMemory(sizeof(*ppResAddr) * dwResAddrLen, 
+                                  (void*) &ppResAddr);
+    BAIL_ON_LWNET_ERROR(dwError);
+    for (i = 0, rp = result; rp; rp = rp->ai_next, i++)
+    {
+        dwError = LWNetAllocateMemory(sizeof(*pResAddr),
+                                      (void*) &pResAddr);
+        BAIL_ON_LWNET_ERROR(dwError);
+        
+        if (rp->ai_family == PF_INET)
+        {
+            pResAddr->AddressType = LWNET_IP_ADDR_V4;
+            memcpy(pResAddr->Address.Ip4Addr, 
+                   &((struct sockaddr_in *)rp->ai_addr)->sin_addr, 
+                   4);
+        }
+        else if (rp->ai_family == PF_INET6)
+        {
+            pResAddr->AddressType = LWNET_IP_ADDR_V6;
+            memcpy(pResAddr->Address.Ip6Addr, 
+                   &((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr, 
+                   16);
+        }
+        ppResAddr[i] = pResAddr;
+    }
+
+    pRes->pwszCanonName = pwszCanonName;
+    pRes->ppAddressList = ppResAddr;
+    pRes->dwAddressListLen = dwResAddrLen;
+    pOut->tag = LWNET_R_RESOLVE_NAME;
+    pOut->data = pRes;
+
+cleanup:
+    LWNET_SAFE_FREE_STRING(pszHostName);
+    freeaddrinfo(result);
+
+    if (pError)
+    {
+        pOut->data = pError;
+        pOut->tag = LWNET_R_ERROR;
+    }
+
+    return MAP_LWNET_ERROR(dwError);
+    
+error:
+    LWNET_SAFE_FREE_MEMORY(pwszCanonName);
+    if (ppResAddr)
+    {
+        for (i=0; ppResAddr[i]; i++)
+        {
+            LWNET_SAFE_FREE_MEMORY(ppResAddr[i]);
+        }
+        LWNET_SAFE_FREE_MEMORY(ppResAddr);
+    }
+    LWNET_SAFE_FREE_MEMORY(pRes);
+
+    goto cleanup;
+}

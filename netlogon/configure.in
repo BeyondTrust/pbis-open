@@ -433,6 +433,7 @@ AC_CONFIG_FILES([Makefile
 		 service_locator/Makefile
                  tests/Makefile
                  tests/netlogonclient/Makefile
+                 tests/resolvehostclient/Makefile
                  tests/get_domain_controller/Makefile
                  tests/plugin/Makefile
                  tools/Makefile

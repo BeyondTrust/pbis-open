@@ -194,6 +194,41 @@ typedef struct _LWNET_DC_ADDRESS {
 } LWNET_DC_ADDRESS, *PLWNET_DC_ADDRESS;
 
 
+typedef enum LWNET_ADDR_TYPE
+{
+    LWNET_IP_ADDR_V4 = 1,
+    LWNET_IP_ADDR_V6
+} LWNET_ADDR_TYPE;
+
+
+typedef union LWNET_ADDR
+{
+    BYTE Ip4Addr[4];
+    BYTE Ip6Addr[16];
+} LWNET_ADDR, *PLWNET_ADDR;
+
+
+typedef struct LWNET_RESOLVE_ADDR
+{
+    LWNET_ADDR_TYPE AddressType;
+    LWNET_ADDR Address;
+} LWNET_RESOLVE_ADDR, *PLWNET_RESOLVE_ADDR;
+
+
+typedef struct LWNET_RESOLVE_NAME_ADDRESS
+{
+    PWSTR pwszHostName;
+} LWNET_RESOLVE_NAME_ADDRESS;
+
+
+typedef struct LWNET_RESOLVE_NAME_ADDRESS_RESPONSE
+{
+    PWSTR pwszCanonName;
+    PLWNET_RESOLVE_ADDR *ppAddressList;
+    DWORD dwAddressListLen;
+} LWNET_RESOLVE_NAME_ADDRESS_RESPONSE, *PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE;
+
+
 LW_BEGIN_EXTERN_C
 
 LWNET_API
@@ -335,6 +370,22 @@ LWNetGetLogInfo(
     LW_OUT PLWNET_LOG_LEVEL pLogLevel,
     LW_OUT PLWNET_LOG_TARGET pLogTarget,
     LW_OUT LW_PSTR* ppszLogPath
+    );
+
+LWNET_API
+LW_DWORD
+LWNetResolveName(
+    LW_IN LW_PCSTR pszHostName,
+    LW_OUT LW_PSTR *ppszCanonName,
+    LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
+    LW_OUT PDWORD pdwAddressListLen
+    );
+
+LWNET_API
+LW_DWORD
+LWNetResolveNameFree(
+    LW_OUT PLWNET_RESOLVE_ADDR *ppAddressList,
+    LW_OUT DWORD dwAddressListLen
     );
 
 LW_END_EXTERN_C

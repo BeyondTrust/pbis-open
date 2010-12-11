@@ -103,5 +103,13 @@ LWNetSrvIpcGetCurrentDomain(
     void* data
     );
 
+DWORD
+LWNetSrvIpcResolveName(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    );
+
 #endif /* __IPC_DCINFO_P_H__ */
 
