@@ -807,8 +807,11 @@ RegCopyValueAToW(
         dwError = RegAllocateMemory(cbData, &pOutData);
         BAIL_ON_REG_ERROR(dwError);
 
-        memcpy(pOutData, pData, cbData);
-        cbOutDataLen = cbData;
+        if (pData)
+        {
+            memcpy(pOutData, pData, cbData);
+            cbOutDataLen = cbData;
+        }
     }
 
     *ppOutData = pOutData;
