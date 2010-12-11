@@ -450,8 +450,8 @@ daemon_stop() {
                 # Use the solaris service manager
                 svcadm disable "$SCRIPTNAME"
 
-                #Wait up to 300 seconds for the program to end
-                for i in `seq 300`; do
+                #Wait up to 180 seconds for the program to end
+                for i in `seq 180`; do
                     #Did the program end?
                     generic_status
                     # Make sure the agent is not running and is not a zombie
@@ -467,8 +467,8 @@ daemon_stop() {
                 pid="`generic_pid`"
                 kill -TERM $pid
 
-                #Wait up to 300 seconds for the program to end
-                for i in `seq 300`; do
+                #Wait up to 180 seconds for the program to end
+                for i in `seq 180`; do
                     #Did the program end?
                     generic_status
                     # Make sure the agent is not running and is not a zombie
