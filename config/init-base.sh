@@ -415,16 +415,6 @@ daemon_start() {
 
 daemon_stop() {
     case "${PLATFORM}" in 
-        REDHAT)
-            echo -n $"Stopping `basename ${PROG_BIN}`: "
-            killproc `basename ${PROG_BIN}`
-            status=$?
-            ;;
-        SUSE)
-            echo -n "Stopping $PROG_DESC "
-            killproc -TERM ${PROG_BIN}
-            status=$?
-            ;;
         DEBIAN)
             log_daemon_msg "Stopping $PROG_DESC: `basename $PROG_BIN`"
             status=1
@@ -452,7 +442,7 @@ daemon_stop() {
             fi
             log_end_msg $status
             ;;
-        AIX | HP-UX | SOLARIS | FREEBSD | ESXI)
+        REDHAT | SUSE | AIX | HP-UX | SOLARIS | FREEBSD | ESXI)
             echo -n "Stopping $PROG_DESC"
             status=1
             #only try to stop the daemon if it is running
@@ -460,8 +450,8 @@ daemon_stop() {
                 # Use the solaris service manager
                 svcadm disable "$SCRIPTNAME"
 
-                #Wait up to 5 seconds for the program to end
-                for i in `seq 5`; do
+                #Wait up to 300 seconds for the program to end
+                for i in `seq 300`; do
                     #Did the program end?
                     generic_status
                     # Make sure the agent is not running and is not a zombie
@@ -477,8 +467,8 @@ daemon_stop() {
                 pid="`generic_pid`"
                 kill -TERM $pid
 
-                #Wait up to 5 seconds for the program to end
-                for i in `seq 5`; do
+                #Wait up to 300 seconds for the program to end
+                for i in `seq 300`; do
                     #Did the program end?
                     generic_status
                     # Make sure the agent is not running and is not a zombie
