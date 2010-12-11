@@ -275,6 +275,10 @@ cleanup:
         LsaCloseServer(hLsaConnection);
     }
 
+    if (pGroupInfo) {
+        LsaFreeGroupInfo(dwGroupInfoLevel, pGroupInfo);
+    }
+
     return dwError;
 
 error:

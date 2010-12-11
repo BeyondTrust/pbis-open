@@ -354,7 +354,7 @@ ParseArgs(
                 }
 
                 dwBatchSize = atoi(pszArg);
-                if ((dwBatchSize < 0) ||
+		if ((dwBatchSize == 0) ||
                     (dwBatchSize > 1000)) {
                     ShowUsage();
                     exit(1);

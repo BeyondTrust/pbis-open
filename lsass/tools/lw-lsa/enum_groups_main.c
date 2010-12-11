@@ -309,8 +309,7 @@ ParseArgs(
                 }
 
                 dwInfoLevel = atoi(pszArg);
-                if ((dwInfoLevel < 0) ||
-                    (dwInfoLevel > 1)) {
+                if (dwInfoLevel > 1) {
                     ShowUsage();
                     exit(1);
                 }
@@ -329,7 +328,7 @@ ParseArgs(
                 }
 
                 dwBatchSize = atoi(pszArg);
-                if ((dwBatchSize < 0) ||
+                if ((dwBatchSize == 0) ||
                     (dwBatchSize > 1000)) {
                     ShowUsage();
                     exit(1);

@@ -280,20 +280,7 @@ GetGroupId(
                     &pGroupInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    switch(dwGroupInfoLevel)
-    {
-        case 0:
-        {
-            gid = ((PLSA_GROUP_INFO_0)pGroupInfo)->gid;
-            break;
-        }
-        default:
-        {
-            dwError = LW_ERROR_INVALID_GROUP_INFO_LEVEL;
-            BAIL_ON_LSA_ERROR(dwError);
-            break;
-        }
-    }
+    gid = ((PLSA_GROUP_INFO_0)pGroupInfo)->gid;
 
     *pGid = gid;
 
@@ -416,6 +403,10 @@ cleanup:
 
     if (hLsaConnection != (HANDLE)NULL) {
         LsaCloseServer(hLsaConnection);
+    }
+
+    if (pUserInfo) {
+        LsaFreeUserInfo(dwUserInfoLevel, pUserInfo);
     }
 
     return dwError;

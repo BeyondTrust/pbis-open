@@ -717,6 +717,7 @@ LsaFreeUserAddInfo(
     LW_SAFE_FREE_STRING(pUserAddInfo->pszGecos);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszShell);
     LW_SAFE_FREE_STRING(pUserAddInfo->pszHomedir);
+    LW_SAFE_FREE_MEMORY(pUserAddInfo);
 }
 
 

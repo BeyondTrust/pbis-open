@@ -460,7 +460,7 @@ ParseArgs(
                     exit(1);
                 }
                 dwBatchSize = atoi(pszArg);
-                if ((dwBatchSize < 0) ||
+                if ((dwBatchSize == 0) ||
                     (dwBatchSize > 1000)) {
                     fprintf(stderr, "Please enter a valid batch size.\n");
                     ShowUsage(GetProgramName(argv[0]));

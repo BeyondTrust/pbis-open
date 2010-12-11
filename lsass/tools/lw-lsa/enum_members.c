@@ -84,7 +84,7 @@ ParseQueryItem(
         dwError = LwReallocMemory(
             gState.QueryList.pdwIds,
             OUT_PPVOID(&NewList.pdwIds),
-            sizeof(NewList.pdwIds) * (gState.dwCount + 1));
+            sizeof(*NewList.pdwIds) * (gState.dwCount + 1));
         BAIL_ON_LSA_ERROR(dwError);
         NewList.pdwIds[gState.dwCount] = (DWORD) id;
         gState.QueryList.pdwIds = NewList.pdwIds;
@@ -94,7 +94,7 @@ ParseQueryItem(
         dwError = LwReallocMemory(
             gState.QueryList.ppszStrings,
             OUT_PPVOID(&NewList.ppszStrings),
-            sizeof(NewList.ppszStrings) * (gState.dwCount + 1));
+            sizeof(*NewList.ppszStrings) * (gState.dwCount + 1));
         BAIL_ON_LSA_ERROR(dwError);
         NewList.ppszStrings[gState.dwCount] = pszArg;
         gState.QueryList.ppszStrings = NewList.ppszStrings;

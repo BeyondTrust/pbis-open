@@ -1036,9 +1036,6 @@ LsaMarshalUserInfo0ToUserAddInfo(
     dwError = LwStrDupOrNull(pUserInfo->pszName, &pAddInfo->pszName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwStrDupOrNull(pUserInfo->pszName, &pAddInfo->pszName);
-    BAIL_ON_LSA_ERROR(dwError);
-
     dwError = LwStrDupOrNull(pUserInfo->pszPasswd, &pAddInfo->pszPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
