@@ -428,8 +428,8 @@ daemon_stop() {
                 # systems where other threads can still be in the process
                 # of shutting down even when the main thread has exited
                 PIDFILE=""
-                #Wait up to 5 seconds for the program to end
-                for i in `seq 5`; do
+                #Wait up to 180 seconds for the program to end
+                for i in `seq 180`; do
                     #Did the program end?
                     generic_status
                     # Make sure the agent is not running and is not a zombie
