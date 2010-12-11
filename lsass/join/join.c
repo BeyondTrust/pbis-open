@@ -934,9 +934,11 @@ LsaJoinDomainInternal(
                                    &pwszDescAttrName);
             BAIL_ON_LSA_ERROR(dwError);
 
-            dwError = LwAllocateWc16String(&pwszDescAttrVal[0],
-                                           pwszMachineName);
-            BAIL_ON_LSA_ERROR(dwError);
+            pwszDescAttrVal[0] = LdapAttrValDnsHostName(
+                                     pwszMachineNameLc,
+                                     pwszDnsDomain ?
+                                     pwszDnsDomain :
+                                     pwszDnsDomainName);
 
             dwError = LsaMachAcctSetAttribute(
                       pLdap,
@@ -1101,43 +1103,69 @@ LsaGetAccountName(
     wchar16_t *dn = NULL;
     wchar16_t *machname_lc = NULL;
     wchar16_t *samname = NULL;     /* short name valid for SAM account */
+    wchar16_t *dnsname = NULL;
     wchar16_t *hashstr = NULL;
     wchar16_t *samacctname = NULL; /* account name (with trailing '$') */
     UINT32    hash = 0;
     UINT32    offset = 0;
-    wchar16_t newname[16];
-    wchar16_t searchname[17];
+    UINT32    hashoffset = 0;
+    wchar16_t newname[16] = {0};
+    wchar16_t searchname[17] = {0};
     size_t    hashstrlen = 0;
+    size_t    machname_len = 0;
     size_t    samacctname_len = 0;
 
-    memset(newname, 0, sizeof(newname));
 
-    /* the host name is short enough to use as is */
-    if (wc16slen(machname) < 16)
-    {
-        err = LwAllocateWc16String(&samname, machname);
-        BAIL_ON_LSA_ERROR(err);
-    }
+    err = LwWc16sLen(machname, &machname_len);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LwAllocateWc16String(&machname_lc, machname);
+    BAIL_ON_LSA_ERROR(err);
+
+    wc16slower(machname_lc);
 
     /* look for an existing account using the dns_host_name attribute */
+    err = LsaDirectoryConnect(domain_controller_name, &ld, &base_dn);
+    BAIL_ON_LSA_ERROR(err);
+
+    err = LsaMachDnsNameSearch(ld, machname_lc, base_dn, dns_domain_name, &samname);
+    if (err == ERROR_SUCCESS)
+    {
+        size_t samname_len = 0;
+
+        err = LwWc16sLen(samname, &samname_len);
+        BAIL_ON_LSA_ERROR(err);
+
+        samname[samname_len - 1] = 0;
+    }
+    else
+    {
+        err = ERROR_SUCCESS;
+    }
+
     if (!samname)
     {
-        err = LwAllocateWc16String(&machname_lc, machname);
-        BAIL_ON_LSA_ERROR(err);
-
-        wc16slower(machname_lc);
-
-        err = LsaDirectoryConnect(domain_controller_name, &ld, &base_dn);
-        BAIL_ON_LSA_ERROR(err);
-
-        err = LsaMachDnsNameSearch(ld, machname_lc, base_dn, dns_domain_name, &samname);
-        if (err == ERROR_SUCCESS)
+        /* the host name is short enough to use as is */
+        if (machname_len < 16)
         {
-            samname[wc16slen(samname) - 1] = 0;
-        }
-        else
-        {
-            err = ERROR_SUCCESS;
+            if (sw16printfw(searchname,
+                            sizeof(searchname)/sizeof(wchar16_t),
+                            L"%ws$",
+                            machname) < 0)
+            {
+                err = ErrnoToWin32Error(errno);
+                BAIL_ON_LSA_ERROR(err);
+            }
+
+            err = LsaMachAcctSearch( ld, searchname, base_dn, &dn );
+            if ( err != ERROR_SUCCESS )
+            {
+                err = ERROR_SUCCESS;
+
+                err = LwAllocateWc16String(&samname, machname);
+                BAIL_ON_LSA_ERROR(err);
+            }
+            LW_SAFE_FREE_MEMORY(dn);
         }
     }
 
@@ -1150,19 +1178,39 @@ LsaGetAccountName(
       */
     if (!samname)
     {
-        err = LsaWc16sHash(machname_lc, &hash);
-        BAIL_ON_LSA_ERROR(err);
+        dnsname = LdapAttrValDnsHostName(
+                      machname_lc,
+                      dns_domain_name);
+
+        if (dnsname)
+        {
+            err = LsaWc16sHash(dnsname, &hash);
+            BAIL_ON_LSA_ERROR(err);
+        }
+        else
+        {
+            err = LsaWc16sHash(machname_lc, &hash);
+            BAIL_ON_LSA_ERROR(err);
+        }
 
         for (offset = 0 ; offset < 100 ; offset++)
         {
             err = LsaHashToWc16s(hash + offset, &hashstr);
             BAIL_ON_LSA_ERROR(err);
 
-            hashstrlen = wc16slen(hashstr);
+            err = LwWc16sLen(hashstr, &hashstrlen);
+            BAIL_ON_LSA_ERROR(err);
 
-            wc16sncpy(newname, machname, 15 - hashstrlen);
-            newname[15 - hashstrlen - 1] = (WCHAR)'-';
-            wc16sncpy(newname + 15 - hashstrlen, hashstr, hashstrlen);
+
+            // allow for '-' + hash
+            hashoffset = 15 - (hashstrlen + 1);
+            if (hashoffset > machname_len)
+            {
+                hashoffset = machname_len;
+            }
+            wc16sncpy(newname, machname, hashoffset);
+            newname[hashoffset++] = (WCHAR)'-';
+            wc16sncpy(newname + hashoffset, hashstr, hashstrlen + 1);
 
             LW_SAFE_FREE_MEMORY(hashstr);
 
@@ -1223,6 +1271,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(machname_lc);
     LW_SAFE_FREE_MEMORY(hashstr);
     LW_SAFE_FREE_MEMORY(dn);
+    LW_SAFE_FREE_MEMORY(dnsname);
     LW_SAFE_FREE_MEMORY(samname);
     LW_SAFE_FREE_MEMORY(base_dn);
 
