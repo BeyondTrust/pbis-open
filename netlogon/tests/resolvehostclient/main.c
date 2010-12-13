@@ -145,8 +145,7 @@ main(
     }
 
 
-    LWNetResolveNameFree(ppAddressList, dwAddressListLen);
-    LWNET_SAFE_FREE_STRING(pszCanonName);
+    LWNetResolveNameFree(pszCanonName, ppAddressList, dwAddressListLen);
     return (dwError);
 
 error:

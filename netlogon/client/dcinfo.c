@@ -511,8 +511,9 @@ error:
 LWNET_API
 LW_DWORD
 LWNetResolveNameFree(
-    LW_OUT PLWNET_RESOLVE_ADDR *ppAddressList,
-    LW_OUT DWORD dwAddressListLen)
+    LW_PSTR pszCanonName,
+    LW_IN PLWNET_RESOLVE_ADDR *ppAddressList,
+    LW_IN DWORD dwAddressListLen)
 {
     DWORD dwError = 0;
     DWORD i = 0;
@@ -524,6 +525,7 @@ LWNetResolveNameFree(
         LWNET_SAFE_FREE_MEMORY(ppAddressList[i]);
     }
     LWNET_SAFE_FREE_MEMORY(ppAddressList);
+    LWNET_SAFE_FREE_STRING(pszCanonName);
 
 error:
     return dwError;

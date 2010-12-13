@@ -215,20 +215,6 @@ typedef struct LWNET_RESOLVE_ADDR
 } LWNET_RESOLVE_ADDR, *PLWNET_RESOLVE_ADDR;
 
 
-typedef struct LWNET_RESOLVE_NAME_ADDRESS
-{
-    PWSTR pwszHostName;
-} LWNET_RESOLVE_NAME_ADDRESS;
-
-
-typedef struct LWNET_RESOLVE_NAME_ADDRESS_RESPONSE
-{
-    PWSTR pwszCanonName;
-    PLWNET_RESOLVE_ADDR *ppAddressList;
-    DWORD dwAddressListLen;
-} LWNET_RESOLVE_NAME_ADDRESS_RESPONSE, *PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE;
-
-
 LW_BEGIN_EXTERN_C
 
 LWNET_API
@@ -384,8 +370,9 @@ LWNetResolveName(
 LWNET_API
 LW_DWORD
 LWNetResolveNameFree(
-    LW_OUT PLWNET_RESOLVE_ADDR *ppAddressList,
-    LW_OUT DWORD dwAddressListLen
+    LW_IN LW_PSTR pszCanonName,
+    LW_IN PLWNET_RESOLVE_ADDR *ppAddressList,
+    LW_IN DWORD dwAddressListLen
     );
 
 LW_END_EXTERN_C
