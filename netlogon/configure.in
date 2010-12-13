@@ -48,7 +48,8 @@ vsyslog(3) in syslog.h])
 	hpux*:hppa*)
 		MOD_EXT=".sl"
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
-                AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [Define on HP-UX])
+                CFLAGS="$CFLAGS -D_HPUX_SOURCE=1 -U_XOPEN_SOURCE_EXTENDED"
+
 		;;
 	hpux*:ia64*)
 		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
