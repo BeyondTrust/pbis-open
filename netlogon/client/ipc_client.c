@@ -626,15 +626,14 @@ error:
 DWORD
 LWNetTransactResolveName(
     LW_IN HANDLE hConnection,
-    LW_IN LW_PCSTR pszHostName,
-    LW_OUT LW_PSTR *ppszCanonName,
+    LW_IN LW_PCWSTR pcwszHostName,
+    LW_OUT LW_PWSTR *ppwszCanonName,
     LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
     LW_OUT PDWORD pdwAddressListLen)
 {
     DWORD dwError = 0;
     PLWNET_IPC_ERROR pError = NULL;
     LWNET_RESOLVE_NAME_ADDRESS inHostName = {0};
-    PSTR pszCanonName = NULL;
     PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
     DWORD dwAddressListLen = 0;
 
@@ -646,9 +645,7 @@ LWNetTransactResolveName(
     dwError = LWNetAcquireCall(hConnection, &pCall);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LwRtlWC16StringAllocateFromCString(&inHostName.pwszHostName,
-                                                 pszHostName);
-    BAIL_ON_LWNET_ERROR(dwError);
+    inHostName.pwszHostName = (PWSTR) pcwszHostName;
 
     in.tag = LWNET_Q_RESOLVE_NAME;
     in.data = &inHostName;
@@ -665,11 +662,10 @@ LWNetTransactResolveName(
         ppAddressList = pResponse->ppAddressList;
         dwAddressListLen = pResponse->dwAddressListLen;
 
+        *ppwszCanonName = pResponse->pwszCanonName;
+        // Returned to caller, NULL to prevent freeing by lwmsg
         pResponse->ppAddressList = NULL;
-
-        dwError = LwRtlCStringAllocateFromWC16String(&pszCanonName,
-                                                     pResponse->pwszCanonName);
-        BAIL_ON_LWNET_ERROR(dwError);
+        pResponse->pwszCanonName = NULL;
         break;
     }
     case LWNET_R_ERROR:
@@ -683,14 +679,12 @@ LWNetTransactResolveName(
     }
 
 cleanup:
-    LWNET_SAFE_FREE_MEMORY(inHostName.pwszHostName);
     if (pCall)
     {
         lwmsg_call_destroy_params(pCall, &out);
         lwmsg_call_release(pCall);
     }
 
-    *ppszCanonName = pszCanonName;
     *pppAddressList = ppAddressList;
     *pdwAddressListLen = dwAddressListLen;
 

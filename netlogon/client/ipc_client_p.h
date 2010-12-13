@@ -134,8 +134,8 @@ LWNetTransactGetLogInfo(
 DWORD
 LWNetTransactResolveName(
     LW_IN HANDLE hConnection,
-    LW_IN LW_PCSTR pszHostName,
-    LW_OUT LW_PSTR *pszCanonName,
+    LW_IN LW_PCWSTR pcwszHostName,
+    LW_OUT LW_PWSTR *pwszCanonName,
     LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
     LW_OUT PDWORD pdwAddressListLen
     );

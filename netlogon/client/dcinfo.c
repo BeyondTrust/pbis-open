@@ -462,15 +462,15 @@ error:
 LWNET_API
 LW_DWORD
 LWNetResolveName(
-    LW_IN LW_PCSTR pszHostName,
-    LW_OUT LW_PSTR *ppszCanonName,
+    LW_IN LW_PCWSTR pcwszHostName,
+    LW_OUT LW_PWSTR *ppwszCanonName,
     LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
     LW_OUT PDWORD pdwAddressListLen
     )
 {
     DWORD dwError = 0;
     HANDLE hServer = 0;
-    LW_PSTR pszCanonName = NULL;
+    LW_PWSTR pwszCanonName = NULL;
     PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
     DWORD dwAddressListLen = 0;
    
@@ -480,8 +480,8 @@ LWNetResolveName(
 
     dwError = LWNetTransactResolveName(
         hServer,
-        pszHostName,
-        &pszCanonName,
+        pcwszHostName,
+        &pwszCanonName,
         &ppAddressList,
         &dwAddressListLen);
     BAIL_ON_LWNET_ERROR(dwError);
@@ -497,7 +497,7 @@ cleanup:
         }
     }
 
-    *ppszCanonName = pszCanonName;
+    *ppwszCanonName = pwszCanonName;
     *pppAddressList = ppAddressList;
     *pdwAddressListLen = dwAddressListLen;
 
@@ -511,7 +511,7 @@ error:
 LWNET_API
 LW_DWORD
 LWNetResolveNameFree(
-    LW_PSTR pszCanonName,
+    LW_IN LW_PWSTR pwszCanonName,
     LW_IN PLWNET_RESOLVE_ADDR *ppAddressList,
     LW_IN DWORD dwAddressListLen)
 {
@@ -525,7 +525,7 @@ LWNetResolveNameFree(
         LWNET_SAFE_FREE_MEMORY(ppAddressList[i]);
     }
     LWNET_SAFE_FREE_MEMORY(ppAddressList);
-    LWNET_SAFE_FREE_STRING(pszCanonName);
+    LWNET_SAFE_FREE_MEMORY(pwszCanonName);
 
 error:
     return dwError;

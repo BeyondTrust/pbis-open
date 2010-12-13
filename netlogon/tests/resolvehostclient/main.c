@@ -49,6 +49,7 @@
 #include "lwnet-def.h"
 #include "lwnet.h"
 #include "lwnet-utils.h"
+#include "lw/rtlstring.h"
 #include "client/ipc_client_p.h"
 
 static
@@ -91,6 +92,8 @@ main(
 {
     DWORD dwError = 0;
     PSTR pszHostName = NULL;
+    PWSTR pwszHostName = NULL;
+    PWSTR pwszCanonName = NULL;
     PSTR pszCanonName = NULL;
     PLWNET_RESOLVE_ADDR *ppAddressList = NULL;
     DWORD dwAddressListLen = 0;
@@ -112,12 +115,20 @@ main(
     }
 
     pszHostName = argv[1];
+    dwError = LwRtlWC16StringAllocateFromCString(&pwszHostName,
+                                                 pszHostName);
+    BAIL_ON_LWNET_ERROR(dwError);
     dwError = LWNetResolveName(
-                  pszHostName,
-                  &pszCanonName,
+                  (PCWSTR) pwszHostName,
+                  &pwszCanonName,
                   &ppAddressList,
                   &dwAddressListLen);
     BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LwRtlCStringAllocateFromWC16String(&pszCanonName,
+                                                 pwszCanonName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
     printf("Responses = %d Host: '%s'\n", dwAddressListLen, pszCanonName);
  
     for (i=0; i<dwAddressListLen; i++)
@@ -144,10 +155,11 @@ main(
         }
     }
 
-
-    LWNetResolveNameFree(pszCanonName, ppAddressList, dwAddressListLen);
+cleanup:
+    LWNetResolveNameFree(pwszCanonName, ppAddressList, dwAddressListLen);
+    LWNET_SAFE_FREE_MEMORY(pwszHostName);
+    LWNET_SAFE_FREE_STRING(pszCanonName);
     return (dwError);
-
 error:
  
     if (dwError == ERROR_BAD_NET_NAME)
@@ -159,6 +171,6 @@ error:
         LWNET_LOG_ERROR("Failed communication with likewise-netlogond. "
                         "Error code [%d]\n", dwError);
     } 
+    goto cleanup;
 
-    return (dwError);
 }
