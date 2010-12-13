@@ -204,7 +204,7 @@ ReleaseDelegateThreads(
 {
     pthread_mutex_lock(&gpDelegateLock);
 
-    if (--gpDelegatePoolRefCount == 0)
+    if (--gpDelegateThreadsRefCount == 0)
     {
         DestroyWorkThreads(&gDelegateThreads);
     }
