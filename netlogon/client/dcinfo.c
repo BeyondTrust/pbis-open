@@ -463,7 +463,7 @@ LWNET_API
 LW_DWORD
 LWNetResolveName(
     LW_IN LW_PCWSTR pcwszHostName,
-    LW_OUT LW_PWSTR *ppwszCanonName,
+    LW_OUT LW_OPTIONAL LW_PWSTR *ppwszCanonName,
     LW_OUT PLWNET_RESOLVE_ADDR **pppAddressList,
     LW_OUT PDWORD pdwAddressListLen
     )
@@ -497,7 +497,14 @@ cleanup:
         }
     }
 
-    *ppwszCanonName = pwszCanonName;
+    if (ppwszCanonName)
+    {
+        *ppwszCanonName = pwszCanonName;
+    }
+    else
+    {
+        LWNET_SAFE_FREE_MEMORY(pwszCanonName);
+    }
     *pppAddressList = ppAddressList;
     *pdwAddressListLen = dwAddressListLen;
 
@@ -511,7 +518,7 @@ error:
 LWNET_API
 LW_DWORD
 LWNetResolveNameFree(
-    LW_IN LW_PWSTR pwszCanonName,
+    LW_IN LW_OPTIONAL LW_PWSTR pwszCanonName,
     LW_IN PLWNET_RESOLVE_ADDR *ppAddressList,
     LW_IN DWORD dwAddressListLen)
 {
