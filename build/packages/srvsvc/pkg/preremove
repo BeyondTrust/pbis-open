@@ -3,7 +3,13 @@
 # if this is a local deinstall, stop the Likewise Server Service Daemon
 if [ -z "$PKG_INSTALL_ROOT" ]
 then
-   LWSRVSVCD=`ps -e -o pid,comm | grep srvsvcd | awk '{print $1}'`
+   ZONENAME="`zonename 2>/dev/null`"
+   if [ -z "$ZONENAME" ]; then
+       PSOPTS="-e"
+   else
+       PSOPTS="-z $ZONENAME"
+   fi
+   LWSRVSVCD=`ps $PSOPTS -o pid,comm | grep srvsvcd | awk '{print $1}'`
    [ ! -z "$LWSRVSVCD" ] && kill -TERM $LWSRVSVCD
    sleep 2
 fi

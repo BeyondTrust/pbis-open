@@ -3,7 +3,13 @@
 # if this is a local deinstall, stop the Likewise Netlogon daemon
 if [ -z "$PKG_INSTALL_ROOT" ]
 then
-   LWNETLOGOND=`ps -e -o pid,comm | grep netlogond | awk '{print $1}'`
+   ZONENAME="`zonename 2>/dev/null`"
+   if [ -z "$ZONENAME" ]; then
+       PSOPTS="-e"
+   else
+       PSOPTS="-z $ZONENAME"
+   fi
+   LWNETLOGOND=`ps $PSOPTS -o pid,comm | grep netlogond | awk '{print $1}'`
    [ ! -z "$LWNETLOGOND" ] && kill -TERM $LWNETLOGOND
    sleep 2
 fi
