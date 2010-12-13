@@ -1388,7 +1388,7 @@ INTERNAL void rpc__schnauth_cn_unwrap_pdu
     unsigned32                      pdu_len,
     unsigned32                      cred_len,
     rpc_cn_auth_tlr_p_t             auth_tlr,
-    boolean32                       unpack_ints ATTRIBUTE_UNUSED,
+    boolean32                       unpack_ints,
     unsigned32                      *st
 )
 #else
@@ -1410,6 +1410,7 @@ unsigned32                      *st;
     struct schn_auth_ctx *sec_ctx;
     struct schn_blob input_token, output_token;
     struct schn_tail tail;
+    unsigned16 auth_len = 0;
 
     schn_auth = (rpc_schnauth_cn_info_p_t)sec->sec_cn_info;
     schn_tlr = (rpc_cn_schnauth_tlr_p_t)auth_tlr->auth_value;
@@ -1430,10 +1431,15 @@ unsigned32                      *st;
 
     sec_ctx = &schn_auth->sec_ctx;
 
+    auth_len = RPC_CN_PKT_AUTH_LEN((rpc_cn_packet_p_t)pdu);
+    if (unpack_ints) {
+        SWAB_INPLACE_16(auth_len);
+    }
+
     input_token.base = (uint8*)(pdu) + RPC_CN_PKT_SIZEOF_RESP_HDR;
     input_token.len  = pdu_len - (RPC_CN_PKT_SIZEOF_RESP_HDR +
 				  RPC_CN_PKT_SIZEOF_COM_AUTH_TLR +
-				  RPC_CN_PKT_AUTH_LEN((rpc_cn_packet_p_t) pdu));
+				  auth_len);
 
     output_token.base = NULL;
     output_token.len  = 0;
