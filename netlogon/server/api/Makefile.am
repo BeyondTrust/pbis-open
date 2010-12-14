@@ -15,6 +15,7 @@ liblwnetserverapi_la_SOURCES = \
        lwnet-server-cfg.c \
        lwnet-krb5.c       \
        lwnet-cachedb.c    \
+       lwnet-netbios.c    \
        lwnet-pstore.c     \
        lwnet-plugin.c     \
        dcinfo.c           \

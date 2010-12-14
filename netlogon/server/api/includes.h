@@ -60,10 +60,14 @@
 #include <reg/lwreg.h>
 #include <reg/regutil.h>
 
+#include <string.h>
+#include <arpa/inet.h>
+
 #include "lwnet.h"
 #include "lwnet-utils.h"
 #include "lwnet-ipc.h"
 
+#include "lwnet-netbios.h"
 #include "lwnet-server.h"
 #include "lwnet-server-api.h"
 
