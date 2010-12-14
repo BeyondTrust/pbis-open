@@ -344,6 +344,14 @@ lwmsg_data_print_string(
         encoding = "UCS-2LE";
 #endif
     }
+    else if (!strcmp(encoding, "utf-16"))
+    {
+#ifdef WORDS_BIGENDIAN
+        encoding = "UTF-16BE";
+#else
+        encoding = "UTF-16LE";
+#endif
+    }
 
     if (iter->kind == LWMSG_KIND_POINTER)
     {
@@ -360,7 +368,10 @@ lwmsg_data_print_string(
                       &element_count,
                       &element_size));
 
-    input_length = element_count * element_size;
+    BAIL_ON_ERROR(status = lwmsg_multiply_unsigned(
+        element_count,
+        element_size,
+        &input_length));
 
     if (!strcmp(iter->info.kind_indirect.encoding, ""))
     {
