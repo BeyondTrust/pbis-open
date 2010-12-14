@@ -1187,9 +1187,16 @@ lwmsg_peer_task_rundown(
     {
         if (call->state & PEER_CALL_COMPLETED)
         {
+            /* Destroy in call parameters */
+            message.tag = call->params.incoming.in.tag;
+            message.data = call->params.incoming.in.data;
+            lwmsg_assoc_destroy_message(task->assoc, &message);
+
+            /* Destroy out call parameters */
             message.tag = call->params.incoming.out.tag;
             message.data = call->params.incoming.out.data;
             lwmsg_assoc_destroy_message(task->assoc, &message);
+
             lwmsg_hash_remove_entry(&task->incoming_calls, call);
             lwmsg_peer_call_delete(call);
         }
@@ -1242,9 +1249,19 @@ lwmsg_peer_task_run_shutdown(
     LWMsgStatus status = LWMSG_STATUS_SUCCESS;
     int fd = CONNECTION_PRIVATE(task->assoc)->fd;
 
-    /* Make sure all calls are run down before we close the association because it
-       will destroy the session and thus any handles that are open */
+    /* Before we close the assoc, we need to free any data it allocated */
+
+    /* First, make sure any calls are canceled, completed, and freed */
     BAIL_ON_ERROR(status = lwmsg_peer_task_rundown(peer, task, trigger, next_trigger, next_timeout));
+
+    /* Destroy any incoming message we never got around to dispatching */
+    lwmsg_assoc_destroy_message(task->assoc, &task->incoming_message);
+
+    /* Destroy any outgoing message we never got around to sending */
+    if (task->destroy_outgoing)
+    {
+        lwmsg_assoc_destroy_message(task->assoc, &task->outgoing_message);
+    }
 
     /* We are going to close the fd, so unset it now */
     if (fd >= 0)
@@ -1384,6 +1401,9 @@ lwmsg_peer_task_dispatch_incoming_message(
     /* Create a call structure to track call */
     BAIL_ON_ERROR(status = lwmsg_peer_call_new(task, &call));
     call->base.is_outgoing = LWMSG_FALSE;
+    call->params.incoming.in.tag = LWMSG_TAG_INVALID;
+    call->params.incoming.out.tag = LWMSG_TAG_INVALID;
+
     /* The call structure holds a reference to the task */
     lwmsg_peer_task_ref(task);
 
