@@ -694,7 +694,6 @@ RdrSessionSetupComplete2(
     switch (pTree->state)
     {
     case RDR_TREE_STATE_NOT_READY:
-        LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
         pTree->state = RDR_TREE_STATE_INITIALIZING;
 
         pContext->Continue = RdrFinishTreeConnect2;
@@ -704,7 +703,7 @@ RdrSessionSetupComplete2(
         break;
     case RDR_TREE_STATE_INITIALIZING:
         pContext->Continue = RdrTreeConnect2Complete;
-        LwListInsertTail(&pTree->StateWaiters, &pContext->State.TreeConnect.pContinue->Link);
+        LwListInsertTail(&pTree->StateWaiters, &pContext->Link);
         bFreeContext = TRUE;
         status = STATUS_PENDING;
         break;
@@ -874,17 +873,12 @@ cleanup:
 
     LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
 
-    if (status != STATUS_SUCCESS)
-    {
-        RdrTree2Invalidate(pTree, status);
-        RdrTree2Release(pTree);
-    }
-
-    RdrFreeTreeConnectContext(pContext);
-
-    return FALSE;
+    return RdrTreeConnect2Complete(pContext, status, pTree);
 
 error:
+
+    LWIO_UNLOCK_MUTEX(bTreeLocked, &pTree->mutex);
+    RdrTree2Invalidate(pTree, status);
 
     goto cleanup;
 }
