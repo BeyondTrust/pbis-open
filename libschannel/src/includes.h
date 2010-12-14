@@ -33,10 +33,11 @@
 
 #include "config.h"
 
+#include <lw/base.h>
+#include <lw/swab.h>
 #include <schtypes.h>
 #include <schannel.h>
 #include "schannel_p.h"
-#include <lw/swab.h>
 
 #include <openssl/md5.h>
 #include <openssl/hmac.h>
