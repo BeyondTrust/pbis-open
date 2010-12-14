@@ -492,7 +492,7 @@ AC_CHECK_SIZEOF([long int])
 AC_CHECK_DECLS([isblank], [], [], [#include <ctype.h>])
 
 AC_CHECK_HEADERS([inttypes.h stdlib.h sys/varargs.h dlfcn.h])
-AC_CHECK_HEADERS([time.h sys/time.h strings.h stdbool.h sys/socket.h netinet/tcp.h])
+AC_CHECK_HEADERS([time.h sys/time.h strings.h stdbool.h sys/socket.h netinet/tcp.h netinet/in.h netinet/in6.h])
 
 AC_CHECK_HEADERS([winnttypes.h wc16str.h wc16printf.h])
 

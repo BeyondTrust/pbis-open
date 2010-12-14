@@ -60,7 +60,7 @@ configure()
         inttypes.h stdlib.h sys/varargs.h dlfcn.h pthread.h \
         time.h sys/time.h strings.h stdbool.h sys/socket.h netinet/tcp.h \
         netdb.h wc16str.h wc16printf.h sys/param.h sys/pstat.h \
-        procfs.h sys/procfs.h sys/vfs.h
+        procfs.h sys/procfs.h sys/vfs.h netinet/in.h netinet/in6.h
 
     mk_check_headers \
         CPPFLAGS="-D_FILE_OFFSET_BITS=64" \

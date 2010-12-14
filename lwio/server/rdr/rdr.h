@@ -53,6 +53,11 @@
 #include "config.h"
 #include "lwiosys.h"
 
+#include <netinet/in.h>
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif
+
 #include <openssl/md5.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>

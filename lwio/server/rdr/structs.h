@@ -31,6 +31,7 @@
 #ifndef __STRUCTS_H__
 #define __STRUCTS_H__
 
+#include <lwnet.h>
 #include "lwlist.h"
 
 #define SECURITY_MODE_SIGNED_MESSAGES_SUPPORTED 0x4
@@ -173,8 +174,12 @@ typedef struct _RDR_SOCKET
     int fd;
     /* Raw hostname, including channel specifier */
     PWSTR pwszHostname;
-    /* Canconical hostname for DNS resolution/GSS principal construction */
+    /* Canconical hostname, address list from netlogon */
     PWSTR pwszCanonicalName;
+    PLWNET_RESOLVE_ADDR* ppAddressList;
+    ULONG AddressListCount;
+    /* Next address to attempt */
+    ULONG AddressIndex;
     /* Max transmit buffer size */
     ULONG ulMaxTransactSize;
     /* Max read size */
