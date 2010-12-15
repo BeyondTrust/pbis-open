@@ -54,7 +54,7 @@ union mpinfou {};
 #endif
 void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
 {
-	char buf[sizeof(struct ifreq) * 32];
+	char buf[sizeof(struct ifreq) * 128];
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	int s, i;
