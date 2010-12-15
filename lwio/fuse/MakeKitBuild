@@ -28,6 +28,6 @@ make()
         SOURCES="$FUSE_SOURCES" \
         CPPFLAGS="-D_FILE_OFFSET_BITS=64" \
         INCLUDEDIRS="../include" \
-        HEADERDEPS="lw/base.h" \
+        HEADERDEPS="lw/base.h fuse.h" \
         LIBDEPS="lwbase lwioclient fuse"
 }
