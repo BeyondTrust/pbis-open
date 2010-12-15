@@ -81,6 +81,8 @@ LwSmBootstrap(
 
         pInfo->type = pService->type;
 
+        pInfo->bAutostart = 0;
+
         dwError = LwMbsToWc16s(pService->pszName, &pInfo->pwszName);
         BAIL_ON_ERROR(dwError);
 

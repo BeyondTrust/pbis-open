@@ -184,6 +184,7 @@ LwSmRegistryReadServiceInfo(
     DWORD dwType = 0;
     PSTR pszName = NULL;
     PSTR pszParentKey = NULL;
+    DWORD dwAutostart = 0;
 
     static const WCHAR wszDescription[] =
         {'D', 'e', 's', 'c', 'r', 'i', 'p', 't', 'i', 'o', 'n', 0};
@@ -197,6 +198,8 @@ LwSmRegistryReadServiceInfo(
         {'D', 'e', 'p', 'e', 'n', 'd', 'e', 'n', 'c', 'i', 'e', 's', 0};
     static const WCHAR wszEnvironment[] =
         {'E', 'n', 'v', 'i', 'r', 'o', 'n', 'm', 'e', 'n', 't', 0};
+    static const WCHAR wszAutostart[] =
+        {'A', 'u', 't', 'o', 's', 't', 'a', 'r', 't', 0};
 
     dwError = LwWc16sToMbs(pwszName, &pszName);
     BAIL_ON_ERROR(dwError);
@@ -271,6 +274,21 @@ LwSmRegistryReadServiceInfo(
         wszDependencies,
         &pInfo->ppwszDependencies);
     BAIL_ON_ERROR(dwError);
+
+    dwError = LwSmRegistryReadDword(
+        hReg,
+        pRootKey,
+        pwszParentKey,
+        wszAutostart,
+        &dwAutostart);
+    if (dwError == LWREG_ERROR_NO_SUCH_KEY_OR_VALUE)
+    {
+        dwError = 0;
+        dwAutostart = FALSE;
+    }
+    BAIL_ON_ERROR(dwError);
+
+    pInfo->bAutostart = dwAutostart ? TRUE : FALSE;
 
     *ppInfo = pInfo;
 

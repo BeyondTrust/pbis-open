@@ -1076,6 +1076,131 @@ error:
 }
 
 static
+DWORD
+LwSmAutostart(
+    int argc,
+    char** pArgv
+    )
+{
+    DWORD dwError = 0;
+    PWSTR *ppwszAllServices = NULL;
+    LW_SERVICE_HANDLE hHandle = NULL;
+    PLW_SERVICE_INFO pInfo = NULL;
+    size_t i = 0;
+    PWSTR *ppwszDependencies = NULL;
+    LW_SERVICE_HANDLE hDepHandle = NULL;
+    LW_SERVICE_STATUS status = {0};
+    PSTR pszTemp = NULL;
+    size_t j = 0;
+
+    dwError = LwSmEnumerateServices(&ppwszAllServices);
+    BAIL_ON_ERROR(dwError);
+
+    for (i = 0; ppwszAllServices[i]; i++)
+    {
+        dwError = LwSmAcquireServiceHandle(ppwszAllServices[i], &hHandle);
+        BAIL_ON_ERROR(dwError);
+
+        dwError = LwSmQueryServiceInfo(hHandle, &pInfo);
+        BAIL_ON_ERROR(dwError);
+
+        if (pInfo->bAutostart)
+        {
+            dwError = LwSmQueryServiceDependencyClosure(
+                            hHandle,
+                            &ppwszDependencies);
+            BAIL_ON_ERROR(dwError);
+
+            for (j = 0; ppwszDependencies[j]; j++)
+            {
+                dwError = LwSmAcquireServiceHandle(
+                                ppwszDependencies[j],
+                                &hDepHandle);
+                BAIL_ON_ERROR(dwError);
+
+                dwError = LwSmQueryServiceStatus(hDepHandle, &status);
+                BAIL_ON_ERROR(dwError);
+
+                if (status.state != LW_SERVICE_STATE_RUNNING)
+                {
+                    if (!gState.bQuiet)
+                    {
+                        dwError = LwWc16sToMbs(ppwszDependencies[j], &pszTemp);
+                        BAIL_ON_ERROR(dwError);
+
+                        printf("Starting service dependency: %s\n", pszTemp);
+                        LW_SAFE_FREE_MEMORY(pszTemp);
+                    }
+
+                    dwError = LwSmStartService(hDepHandle);
+                    BAIL_ON_ERROR(dwError);
+                }
+
+                dwError = LwSmReleaseServiceHandle(hDepHandle);
+                hDepHandle = NULL;
+                BAIL_ON_ERROR(dwError);
+            }
+
+            if (ppwszDependencies)
+            {
+                LwSmFreeServiceNameList(ppwszDependencies);
+                ppwszDependencies = NULL;
+            }
+
+            if (!gState.bQuiet)
+            {
+                dwError = LwWc16sToMbs(ppwszAllServices[i], &pszTemp);
+                BAIL_ON_ERROR(dwError);
+
+                printf("Starting service: %s\n", pszTemp);
+                LW_SAFE_FREE_MEMORY(pszTemp);
+            }
+
+            dwError = LwSmStartService(hHandle);
+            BAIL_ON_ERROR(dwError);
+        }
+
+        dwError = LwSmReleaseServiceHandle(hHandle);
+        hHandle = NULL;
+        BAIL_ON_ERROR(dwError);
+    }
+
+cleanup:
+
+    if (hHandle)
+    {
+        LwSmReleaseServiceHandle(hHandle);
+        hHandle = NULL;
+    }
+
+    if (ppwszAllServices)
+    {
+        LwSmFreeStringList(ppwszAllServices);
+        ppwszAllServices = NULL;
+    }
+
+    if (ppwszDependencies)
+    {
+        LwSmFreeServiceNameList(ppwszDependencies);
+        ppwszDependencies = NULL;
+    }
+
+    if (hDepHandle)
+    {
+        LwSmReleaseServiceHandle(hDepHandle);
+        hDepHandle = NULL;
+    }
+
+    LW_SAFE_FREE_MEMORY(pszTemp);
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
 PVOID
 LwSmWaitThread(
     PVOID pData
@@ -1486,6 +1611,7 @@ LwSmUsage(
     printf("Usage: %s [ options ... ] <command> ...\n\n", pArgv[0]);
     printf("Service commands:\n"
            "    list                       List all known services and their status\n"
+           "    autostart                  Start all services configured for autostart\n"
            "    start-only <service>       Start a service\n"
            "    start <service>            Start a service and all dependencies\n"
            "    stop-only <service>        Stop a service\n"
@@ -1617,6 +1743,11 @@ main(
         else if (!strcmp(pArgv[i], "get-log-level"))
         {
             dwError = LwSmCmdGetLogLevel(argc-i, pArgv+i);
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "autostart"))
+        {
+            dwError = LwSmAutostart(argc-i, pArgv+i);
             goto error;
         }
         else
