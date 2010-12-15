@@ -1129,6 +1129,7 @@ CompatWorkItem(
     pCompat->pfnFunc(pCompat->pContext);
 
     LwRtlFreeWorkItem(&pItem);
+    RTL_FREE(&pCompat);
 }
 
 LW_NTSTATUS
