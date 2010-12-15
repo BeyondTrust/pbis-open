@@ -451,10 +451,6 @@ RegDbQueryInfoKeyCount_inlock(
                 BAIL_ON_NT_STATUS(status);
 
                 break;
-
-            default:
-                status = STATUS_INVALID_PARAMETER;
-                BAIL_ON_NT_STATUS(status);
         }
 
         sResultCount++;
