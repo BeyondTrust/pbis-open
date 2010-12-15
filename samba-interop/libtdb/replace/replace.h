@@ -79,10 +79,6 @@
 #include <stddef.h>
 #endif
 
-#if !defined(HAVE_VOLATILE)
-#define volatile
-#endif
-
 /**
   this is a warning hack. The idea is to use this everywhere that we
   get the "discarding const" warning from gcc. That doesn't actually
@@ -303,10 +299,6 @@ void rep_vsyslog (int facility_priority, const char *format, va_list arglist) PR
 #endif
 #endif
 
-#ifndef HAVE_VOLATILE
-#define volatile
-#endif
-
 #ifndef HAVE_COMPARISON_FN_T
 typedef int (*comparison_fn_t)(const void *, const void *);
 #endif
@@ -417,14 +409,6 @@ typedef int bool;
 #endif
 #ifndef _FALSE
 #define _FALSE false
-#endif
-
-#ifndef HAVE_FUNCTION_MACRO
-#ifdef HAVE_func_MACRO
-#define __FUNCTION__ __func__
-#else
-#define __FUNCTION__ ("")
-#endif
 #endif
 
 #ifdef HAVE_SYS_PARAM_H

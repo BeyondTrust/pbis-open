@@ -1,6 +1,7 @@
 /* a test program for tdb - the trivial database */
 
 #include "replace.h"
+#include "system/wait.h"
 #include "tdb.h"
 #include "system/filesys.h"
 #include "system/time.h"

@@ -44,7 +44,7 @@
 #define SA_RESETHAND SA_ONESHOT
 #endif
 
-#if !defined(HAVE_SIG_ATOMIC_T_TYPE)
+#if !defined(HAVE_SIG_ATOMIC_T)
 typedef int sig_atomic_t;
 #endif
 

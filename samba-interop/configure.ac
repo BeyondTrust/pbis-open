@@ -7,6 +7,7 @@ AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_SUBDIRS([libtdb])
 
 AM_CPPFLAGS=""
 AM_CFLAGS=""
