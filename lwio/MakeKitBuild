@@ -5,7 +5,7 @@ configure()
     mk_config_header \
         HEADER="include/config.h"
 
-	lw_define_feature_macros
+    lw_define_feature_macros
 
     case "$MK_OS" in
         linux)
@@ -22,6 +22,8 @@ configure()
             mk_fail "Unsupported OS: $MK_OS"
             ;;
     esac
+
+    mk_check_endian
     
     mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export SBINDIR="$MK_SBINDIR"
