@@ -1623,11 +1623,12 @@ RdrSocketConnectDomain(
     status = LwRtlWC16StringAllocateFromCString(&pwszDomainController, pInfo->pszDomainControllerName);
     BAIL_ON_NT_STATUS(status);
 
-    status = LWNetResolveName(
-        pwszDomainController,
-        &pSocket->pwszCanonicalName,
-        &pSocket->ppAddressList,
-        &pSocket->AddressListCount);
+    status = LwWin32ErrorToNtStatus(
+        LWNetResolveName(
+            pwszDomainController,
+            &pSocket->pwszCanonicalName,
+            &pSocket->ppAddressList,
+            &pSocket->AddressListCount));
     BAIL_ON_NT_STATUS(status);
 
     LwRtlWakeTask(pSocket->pTask);
@@ -1659,11 +1660,12 @@ RdrSocketConnectHost(
 {
     NTSTATUS status = 0;
         
-    status = LWNetResolveName(
-        pSocket->pwszHostname,
-        &pSocket->pwszCanonicalName,
-        &pSocket->ppAddressList,
-        &pSocket->AddressListCount);
+    status = LwWin32ErrorToNtStatus(
+        LWNetResolveName(
+            pSocket->pwszHostname,
+            &pSocket->pwszCanonicalName,
+            &pSocket->ppAddressList,
+            &pSocket->AddressListCount));
     BAIL_ON_NT_STATUS(status);
 
     LwRtlWakeTask(pSocket->pTask);
