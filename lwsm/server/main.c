@@ -102,12 +102,6 @@ LwSmStopIpcServer(
 
 static
 DWORD
-LwSmPopulateTable(
-    VOID
-    );
-
-static
-DWORD
 LwSmShutdownServices(
     VOID
     );
@@ -766,90 +760,6 @@ cleanup:
     if (gState.pIpcContext)
     {
         lwmsg_context_delete(gState.pIpcContext);
-    }
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-static
-DWORD
-LwSmPopulateTable(
-    VOID
-    )
-{
-    DWORD dwError = 0;
-    HANDLE hReg = NULL;
-    PWSTR* ppwszNames = NULL;
-    PWSTR pwszName = NULL;
-    PLW_SERVICE_INFO pInfo = NULL;
-    PSM_TABLE_ENTRY pEntry = NULL;
-    size_t i = 0;
-
-    SM_LOG_VERBOSE("Populating service table");
-
-    dwError = RegOpenServer(&hReg);
-    BAIL_ON_ERROR(dwError);
-
-    dwError = LwSmRegistryEnumServices(hReg, &ppwszNames);
-    switch (dwError)
-    {
-    case LWREG_ERROR_NO_SUCH_KEY_OR_VALUE:
-        /* No services in registry */
-        dwError = 0;
-        goto cleanup;
-    }
-    BAIL_ON_ERROR(dwError);
-
-    for (i = 0; ppwszNames[i]; i++)
-    {
-        pwszName = ppwszNames[i];
-
-        LwSmCommonFreeServiceInfo(pInfo);
-        pInfo = NULL;
-
-        dwError = LwSmRegistryReadServiceInfo(hReg, pwszName, &pInfo);
-        switch (dwError)
-        {
-        case LWREG_ERROR_NO_SUCH_KEY_OR_VALUE:
-            dwError = 0;
-            continue;
-        default:
-            break;
-        }
-        BAIL_ON_ERROR(dwError);
-
-        dwError = LwSmTableGetEntry(pwszName, &pEntry);
-        if (!dwError)
-        {
-            dwError = LwSmTableUpdateEntry(pEntry, pInfo, LW_SERVICE_INFO_MASK_ALL);
-            BAIL_ON_ERROR(dwError);
-        }
-        else if (dwError == LW_ERROR_NO_SUCH_SERVICE)
-        {
-            dwError = LwSmTableAddEntry(pInfo, &pEntry);
-            BAIL_ON_ERROR(dwError);
-        }
-        else
-        {
-            BAIL_ON_ERROR(dwError);
-        }
-
-        LwSmTableReleaseEntry(pEntry);
-        pEntry = NULL;
-    }
-
-cleanup:
-
-    LwSmFreeStringList(ppwszNames);
-    LwSmCommonFreeServiceInfo(pInfo);
-
-    if (hReg)
-    {
-        RegCloseServer(hReg);
     }
 
     return dwError;

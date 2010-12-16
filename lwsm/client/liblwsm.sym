@@ -17,4 +17,6 @@ LwSmSetLogInfo
 LwSmGetLogInfo
 LwSmSetLogLevel
 LwSmGetLogLevel
+LwSmRefresh
+LwSmShutdown
 LwSmFreeLogTarget

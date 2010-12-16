@@ -761,6 +761,94 @@ error:
 }
 
 static
+LWMsgStatus
+LwSmDispatchRefresh(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    uid_t uid = 0;
+
+    dwError = LwSmGetCallUid(pCall, &uid);
+    BAIL_ON_ERROR(dwError);
+
+    if (uid == 0)
+    {
+        dwError = LwSmPopulateTable();
+    }
+    else
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+    }
+
+    if (dwError)
+    {
+        dwError = LwSmSetError(pOut, dwError);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        pOut->tag = SM_IPC_REFRESH_RES;
+        pOut->data = NULL;
+    }
+
+cleanup:
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    goto cleanup;
+}
+
+static
+LWMsgStatus
+LwSmDispatchShutdown(
+    LWMsgCall* pCall,
+    LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    PVOID pData
+    )
+{
+    DWORD dwError = 0;
+    uid_t uid = 0;
+
+    dwError = LwSmGetCallUid(pCall, &uid);
+    BAIL_ON_ERROR(dwError);
+
+    if (uid == 0)
+    {
+        dwError = LwMapErrnoToLwError(kill(getpid(), SIGTERM));
+    }
+    else
+    {
+        dwError = LW_ERROR_ACCESS_DENIED;
+    }
+
+    if (dwError)
+    {
+        dwError = LwSmSetError(pOut, dwError);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        pOut->tag = SM_IPC_SHUTDOWN_RES;
+        pOut->data = NULL;
+    }
+
+cleanup:
+
+    return LwSmMapLwError(dwError);
+
+error:
+
+    goto cleanup;
+}
+
+static
 LWMsgDispatchSpec gDispatchSpec[] =
 {
     LWMSG_DISPATCH_BLOCK(SM_IPC_ACQUIRE_SERVICE_HANDLE_REQ, LwSmDispatchAcquireServiceHandle),
@@ -776,6 +864,8 @@ LWMsgDispatchSpec gDispatchSpec[] =
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_LOG_INFO_REQ, LwSmDispatchGetLogInfo),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_SET_LOG_LEVEL_REQ, LwSmDispatchSetLogLevel),
     LWMSG_DISPATCH_NONBLOCK(SM_IPC_GET_LOG_LEVEL_REQ, LwSmDispatchGetLogLevel),
+    LWMSG_DISPATCH_BLOCK(SM_IPC_REFRESH_REQ, LwSmDispatchRefresh),
+    LWMSG_DISPATCH_NONBLOCK(SM_IPC_SHUTDOWN_REQ, LwSmDispatchShutdown),
     LWMSG_DISPATCH_END
 };
 

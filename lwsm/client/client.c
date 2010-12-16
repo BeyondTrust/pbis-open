@@ -1039,6 +1039,102 @@ error:
     goto cleanup;
 }
 
+DWORD
+LwSmRefresh(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    in.tag = SM_IPC_REFRESH_REQ;
+    in.data = NULL;
+
+    dwError = LwSmIpcAcquireCall(&pCall);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case SM_IPC_REFRESH_RES:
+        break;
+    case SM_IPC_ERROR:
+        dwError = *(PDWORD) out.data;
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+DWORD
+LwSmShutdown(
+    VOID
+    )
+{
+    DWORD dwError = 0;
+    LWMsgCall* pCall = NULL;
+    LWMsgParams in = LWMSG_PARAMS_INITIALIZER;
+    LWMsgParams out = LWMSG_PARAMS_INITIALIZER;
+
+    in.tag = SM_IPC_SHUTDOWN_REQ;
+    in.data = NULL;
+
+    dwError = LwSmIpcAcquireCall(&pCall);
+    BAIL_ON_ERROR(dwError);
+
+    dwError = MAP_LWMSG_STATUS(lwmsg_call_dispatch(pCall, &in, &out, NULL, NULL));
+    BAIL_ON_ERROR(dwError);
+
+    switch (out.tag)
+    {
+    case SM_IPC_SHUTDOWN_RES:
+        break;
+    case SM_IPC_ERROR:
+        dwError = *(PDWORD) out.data;
+        BAIL_ON_ERROR(dwError);
+        break;
+    default:
+        dwError = LW_ERROR_INTERNAL;
+        BAIL_ON_ERROR(dwError);
+        break;
+    }
+
+cleanup:
+
+    if (pCall)
+    {
+        lwmsg_call_destroy_params(pCall, &out);
+        lwmsg_call_release(pCall);
+    }
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
 VOID
 LwSmFreeLogTarget(
     PSTR pszTarget

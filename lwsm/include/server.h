@@ -322,6 +322,11 @@ LwSmBootstrap(
     );
 
 DWORD
+LwSmPopulateTable(
+    VOID
+    );
+
+DWORD
 LwSmLoaderInitialize(
     PSM_LOADER_CALLS pCalls
     );

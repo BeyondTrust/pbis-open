@@ -38,25 +38,19 @@
 
 #include "includes.h"
 
-#if defined(WORDS_BIGENDIAN)
-#  define UCS2_NATIVE "UCS-2BE"
-#else
-#  define UCS2_NATIVE "UCS-2LE"
-#endif
-
 #define LWMSG_MEMBER_PWSTR(_type, _field)           \
     LWMSG_MEMBER_POINTER_BEGIN(_type, _field),      \
     LWMSG_UINT16(WCHAR),                            \
     LWMSG_POINTER_END,                              \
     LWMSG_ATTR_ZERO_TERMINATED,                     \
-    LWMSG_ATTR_ENCODING(UCS2_NATIVE)
+    LWMSG_ATTR_ENCODING("utf-16")
 
 #define LWMSG_PWSTR                    \
     LWMSG_POINTER_BEGIN,               \
     LWMSG_UINT16(WCHAR),               \
     LWMSG_POINTER_END,                 \
     LWMSG_ATTR_ZERO_TERMINATED,        \
-    LWMSG_ATTR_ENCODING(UCS2_NATIVE)
+    LWMSG_ATTR_ENCODING("utf-16")
 
 static LWMsgTypeSpec gStringSpec[] =
 {
@@ -193,6 +187,10 @@ static LWMsgProtocolSpec gIpcSpec[] =
     LWMSG_MESSAGE(SM_IPC_SET_LOG_LEVEL_RES, NULL),
     LWMSG_MESSAGE(SM_IPC_GET_LOG_LEVEL_REQ, NULL),
     LWMSG_MESSAGE(SM_IPC_GET_LOG_LEVEL_RES, gLogLevelSpec),
+    LWMSG_MESSAGE(SM_IPC_REFRESH_REQ, NULL),
+    LWMSG_MESSAGE(SM_IPC_REFRESH_RES, NULL),
+    LWMSG_MESSAGE(SM_IPC_SHUTDOWN_REQ, NULL),
+    LWMSG_MESSAGE(SM_IPC_SHUTDOWN_RES, NULL),
     LWMSG_PROTOCOL_END,
 };
 

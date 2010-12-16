@@ -881,7 +881,7 @@ error:
 
 static
 DWORD
-LwSmRefresh(
+LwSmDoRefresh(
     int argc,
     char** pArgv
     )
@@ -890,22 +890,35 @@ LwSmRefresh(
     PWSTR pwszServiceName = NULL;
     LW_SERVICE_HANDLE hHandle = NULL;
     
-    dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
-    BAIL_ON_ERROR(dwError);
-    
-    dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
-    BAIL_ON_ERROR(dwError);
-    
-    if (!gState.bQuiet)
+    if (argc > 1)
     {
-        printf("Refreshing service: %s\n", pArgv[1]);
+        dwError = LwMbsToWc16s(pArgv[1], &pwszServiceName);
+        BAIL_ON_ERROR(dwError);
+    
+        dwError = LwSmAcquireServiceHandle(pwszServiceName, &hHandle);
+        BAIL_ON_ERROR(dwError);
+
+        if (!gState.bQuiet)
+        {
+            printf("Refreshing service: %s\n", pArgv[1]);
+        }
+
+        dwError = LwSmRefreshService(hHandle);
+        BAIL_ON_ERROR(dwError);
+    }
+    else
+    {
+        if (!gState.bQuiet)
+        {
+            printf("Refreshing service manager\n");
+        }
+
+        dwError = LwSmRefresh();
+        BAIL_ON_ERROR(dwError);
     }
 
-    dwError = LwSmRefreshService(hHandle);
-    BAIL_ON_ERROR(dwError);
-    
 cleanup:
-    
+
     LW_SAFE_FREE_MEMORY(pwszServiceName);
 
     if (hHandle)
@@ -1623,6 +1636,8 @@ LwSmUsage(
            "    status <service>           Get the status of a service\n"
            "    gdb <service>              Attach gdb to the specified running service\n\n");
     printf("Maintenance commands:\n"
+           "    refresh                    Refresh service manager configuration\n"
+           "    shutdown                   Shutdown service manager\n"
            "    set-log <type> [<target>]  Set logging destination\n"
            "                               Valid types:\n"
            "                                   file (target is filename)\n"
@@ -1707,7 +1722,7 @@ main(
         }
         else if (!strcmp(pArgv[i], "refresh"))
         {
-            dwError = LwSmRefresh(argc-i, pArgv+i);
+            dwError = LwSmDoRefresh(argc-i, pArgv+i);
             goto error;
         }
         else if (!strcmp(pArgv[i], "restart"))
@@ -1748,6 +1763,11 @@ main(
         else if (!strcmp(pArgv[i], "autostart"))
         {
             dwError = LwSmAutostart(argc-i, pArgv+i);
+            goto error;
+        }
+        else if (!strcmp(pArgv[i], "shutdown"))
+        {
+            dwError = LwSmShutdown();
             goto error;
         }
         else

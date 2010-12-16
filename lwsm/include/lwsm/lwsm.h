@@ -529,6 +529,32 @@ LwSmSetLogLevel(
     LW_SM_LOG_LEVEL level
     );
 
+/**
+ * @brief Refresh service manager
+ *
+ * Causes the service manager to reread its own configuration.
+ * To refresh the configuration of a particular service, use
+ * #LwSmRefreshService().
+ *
+ * @retval LW_ERROR_SUCCESS success
+ */
+DWORD
+LwSmRefresh(
+    VOID
+    );
+
+/**
+ * @brief Shutdown
+ *
+ * Causes the service manager to shut down completely.
+ *
+ * @retval LW_ERROR_SUCCESS success
+ */
+DWORD
+LwSmShutdown(
+    VOID
+    );
+
 VOID
 LwSmFreeLogTarget(
     PSTR pszTarget
