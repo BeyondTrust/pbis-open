@@ -1,7 +1,15 @@
+configure()
+{
+    lw_check_iconv
+}
+
 make()
 {
     mk_autotools \
         HEADERS="popt.h" \
         LIBS="popt" \
+        HEADERDEPS="iconv.h" \
+        LIBDEPS="$LIB_ICONV" \
+        -- \
         --disable-nls
 }
