@@ -23,6 +23,6 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../server/include keytab" \
 	HEADERDEPS="$LSAJOIN_HEADERDEPS" \
-	LIBDEPS="lsacommon lsarpc eventlog" \
+	LIBDEPS="lsacommon lsarpc eventlog lwnetclientapi" \
 	GROUPS="../logging_r/logging_r"
 }

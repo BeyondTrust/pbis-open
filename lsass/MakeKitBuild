@@ -25,6 +25,11 @@ configure()
                 PAMDIR="/${MK_LIBDIR##*/}/security"
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
+            solaris:*)
+                mk_define __LWI_SOLARIS__
+                NSSDIR="/usr/lib"
+                PAMDIR="/usr/lib/security"
+                ;;
         esac
 
         mk_define LIBDIR "\"$MK_LIBDIR\""
@@ -62,13 +67,21 @@ configure()
 	unistd.h sys/systeminfo.h sys/utsname.h sys/socket.h \
 	wc16str.h wc16printf.h sys/pstate.h procfs.h sys/procfs.h \
 	kvm.h sys/param.h sys/sysctl.h sys/user.h libgen.h execinfo.h \
-	sys/regset.h sys/resource.h security/pam_appl.h security/pam_modules.h \
-	pam/pam_appl.h pam/pam_modules.h
+	sys/regset.h sys/resource.h security/pam_appl.h pam/pam_appl.h \
+        nss_common.h nss_dbdefs.h nss.h
+
+    mk_check_headers \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        security/pam_modules.h pam/pam_modules.h
 
     mk_check_headers \
 	FAIL=yes \
 	gssapi.h ldap.h lw/base.h lwadvapi.h openssl/md4.h \
         openssl/rc4.h
+
+    mk_check_types \
+        HEADERDEPS="procfs.h sys/procfs.h" \
+        "struct psinfo"
 
     mk_check_libraries \
 	FAIL=yes \
@@ -94,12 +107,25 @@ configure()
     mk_msg_checking "pam_get_data data argument type"
 
     if mk_check_function \
-        HEADERDEPS="security/pam_appl.h pam/pam_appl.h" \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
         LIBDEPS="$LIB_PAM" \
         PROTOTYPE="int pam_get_data(const pam_handle_t* pamh,const char* module_data_name, const void** data)"
     then
         mk_msg_result "const void**"
         mk_define PAM_GET_DATA_TAKES_CONST_DATA_ARG 1
+    else
+        mk_msg_result "void**"
+    fi
+
+    mk_msg_checking "pam_get_item data argument type"
+
+    if mk_check_function \
+        HEADERDEPS="security/pam_appl.h pam/pam_appl.h security/pam_modules.h pam/pam_modules.h" \
+        LIBDEPS="$LIB_PAM" \
+        PROTOTYPE="int pam_get_item(const pam_handle_t* pamh,int item_type,const void** item)"
+    then
+        mk_msg_result "const void**"
+        mk_define PAM_GET_ITEM_TAKES_CONST_ITEM_ARG 1
     else
         mk_msg_result "void**"
     fi

@@ -8,5 +8,5 @@ make()
 	SOURCES="$COMMON_SOURCES" \
 	INCLUDEDIRS=". ../../../include" \
 	HEADERDEPS="dce/rpc.h lw/base.h lwadvapi.h" \
-	LIBDEPS="lwbase dcerpc"
+	LIBDEPS="lwbase dcerpc lwadvapi lsacommon"
 }

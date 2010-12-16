@@ -73,8 +73,16 @@
 
 #elif defined(__LWI_SOLARIS__)
 
+#if defined(PAM_GET_ITEM_TAKES_CONST_ITEM_ARG)
+#define PAM_GET_ITEM_TYPE             const void**
+#else
 #define PAM_GET_ITEM_TYPE             void**
+#endif
+#if defined(PAM_GET_DATA_TAKES_CONST_DATA_ARG)
 #define PAM_GET_DATA_TYPE             const void**
+#else
+#define PAM_GET_DATA_TYPE             void**
+#endif
 #define PPCHAR_ARG_CAST               char**
 #define PAM_MESSAGE_MSG_TYPE          char*
 #define PAM_CONV_2ND_ARG_TYPE         struct pam_message**

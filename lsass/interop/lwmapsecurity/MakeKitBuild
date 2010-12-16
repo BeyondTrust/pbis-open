@@ -13,5 +13,5 @@ make()
 	CPPFLAGS="-DLSASS_INTERNAL_PLUGIN" \
 	INCLUDEDIRS="../../include ../../server/include" \
 	HEADERDEPS="lw/base.h lwadvapi.h lwio/lwio.h" \
-	LIBDEPS="lwbase"
+	LIBDEPS="lsarpc lwbase"
 }

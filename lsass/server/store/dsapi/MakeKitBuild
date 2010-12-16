@@ -20,5 +20,5 @@ make()
 	SOURCES="$DSAPI_SOURCES" \
 	INCLUDEDIRS=". ../include ../../include ../../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h" \
-	LIBDEPS="lwbase"
+	LIBDEPS="lwbase lwadvapi lsacommon"
 }
