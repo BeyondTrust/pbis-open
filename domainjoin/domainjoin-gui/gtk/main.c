@@ -28,6 +28,7 @@
  * license@likewisesoftware.com
  */
 
+#include "DomainJoinConfig.h"
 #include <glade/glade.h>
 #include <gtk/gtk.h>
 
@@ -210,7 +211,7 @@ free_state_password()
 /* Dirty, horrible hacks to allow use of new file chooser dialog widget
    despite old RHEL3 build machine */
 
-#if GTK_MINOR_VERSION < 6
+#if GTK_MINOR_VERSION < 6 && !defined(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)
 #define GTK_FILE_CHOOSER_ACTION_SAVE 1
 typedef int GtkFileChooserAction;
 static GtkWidget *(*gtk_file_chooser_dialog_new)(const gchar *title,
@@ -225,6 +226,7 @@ static const gchar* (*gtk_file_chooser_get_filename)(void*);
 static void
 show_error_dialog(GtkWindow* parent, LWException* exc)
 {
+#if !defined(HAVE_GTK_FILE_CHOOSE_DIALOG_NEW)
     if(gtk_minor_version < 6)
     {
         GtkDialog* dialog = GTK_DIALOG(
@@ -241,11 +243,12 @@ show_error_dialog(GtkWindow* parent, LWException* exc)
         return;
     }
     else
+#endif
     {
         JoinErrorDialog* error_dialog = joinerror_new(parent, exc);
         int result;
 
-#if GTK_MINOR_VERSION < 6
+#if GTK_MINOR_VERSION < 6 && !defined(HAVE_GTK_FILE_CHOOSER_DIALOG_NEW)
         {
             void* handle = dlopen(NULL, RTLD_LAZY);
 

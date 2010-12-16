@@ -44,6 +44,14 @@ configure()
         DJ_GUI_ENABLED=no
     fi
     
+    mk_check_functions \
+        HEADERDEPS="gtk/gtk.h" \
+        CPPFLAGS="$GTK_CPPFLAGS" \
+        CFLAGS="$GTK_CFLAGS" \
+        LDFLAGS="$GTK_LDFLAGS" \
+        LIBDEPS="$GTK_LIBS" \
+        gtk_file_chooser_dialog_new
+
     mk_export DJ_GUI_ENABLED
 
     mk_check_headers \
