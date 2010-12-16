@@ -77,7 +77,7 @@ configure()
         sys/sysctl.h sys/user.h
 
     mk_check_types \
-        HEADERDEPS="procfs sys/procfs.h" \
+        HEADERDEPS="procfs.h sys/procfs.h" \
         "struct psinfo"
 
     mk_check_types \
