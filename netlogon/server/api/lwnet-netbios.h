@@ -1,7 +1,6 @@
 #ifndef _NBFUNC_H_
 #define _NBFUNC_H_
 
-#include <stdint.h>
 #include <arpa/inet.h>
 
 #define LWNB_QUERY_BROADCAST 1
