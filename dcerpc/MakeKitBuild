@@ -136,7 +136,7 @@ configure()
 
     # Optional headers
     mk_check_headers \
-        HEADERDEPS="sys/types.h" \
+        HEADERDEPS="sys/types.h sys/socket.h" \
         features.h sys/cdefs.h dlfcn.h sys/time.h \
         getopt.h sys/sockio.h sys/un.h nl_types.h \
         net/if_dl.h execinfo.h sys/fd_set.h string.h \
@@ -161,8 +161,8 @@ configure()
     # Required functions
     mk_check_functions \
         FAIL=yes \
-        HEADERDEPS="dirent.h string.h" \
-        scandir memcmp
+        HEADERDEPS="string.h" \
+        memcmp
 
     # Optional functions
     mk_check_functions \
@@ -191,17 +191,12 @@ configure()
         mk_define GETHOSTBYNAME_R_ARGS 3
     fi
 
-    # Check for broken PTHREAD_ONCE_INIT
-    if mk_try_compile \
-        CODE="pthread_once_t once = PTHREAD_ONCE_INIT; *(&once) = once; return 0;" \
-        CFLAGS="-Wall -Werror" \
-        HEADERDEPS="pthread.h"
+    lw_check_pthread_once_init
+    if [ "$result" = "yes" ]
     then
-        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
-        mk_msg "broken PTHREAD_ONCE_INIT: no"
-    else
         mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 1"
-        mk_msg "broken PTHREAD_ONCE_INIT: yes"
+    else
+        mk_export BROKEN_ONCE_INIT="#define __LW_BROKEN_ONCE_INIT 0"
     fi
 
     # Check for stuff for build system (needed by idl compiler)

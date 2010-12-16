@@ -5,7 +5,9 @@ configure()
     mk_config_header \
         HEADER="include/config.h"
 
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
+
+    lw_define_feature_macros
 
     mk_define MOD_EXT "\"$MK_DLO_EXT\""
     mk_define PREFIXDIR "\"$MK_PREFIX\""
@@ -24,6 +26,8 @@ configure()
     mk_check_functions \
         HEADERDEPS="time.h string.h sys/select.h syslog.h stdlib.h" \
         localtime_r memset select strchr strerror vsyslog strtoll
+
+    lw_check_strerror_r
 
     mk_output_file "etc/pstore.reg"
 }

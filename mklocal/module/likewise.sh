@@ -47,14 +47,21 @@ lw_define_feature_macros()
 {
     case "$MK_OS" in
         linux)
+            mk_define __LWI_LINUX__
             mk_define _GNU_SOURCE
             mk_define _XOPEN_SOURCE 500
             mk_define _POSIX_C_SOURCE 200112L
+            mk_define _REENTRANT
             ;;
         solaris)
+            mk_define __LWI_SOLARIS__
             mk_define _XOPEN_SOURCE 500
             mk_define __EXTENSIONS__
             mk_define _POSIX_PTHREAD_SEMANTICS
+            mk_define _REENTRANT
+            ;;
+        freebsd)
+            mk_define __LWI_FREEBSD__
             ;;
     esac
 }
@@ -100,4 +107,70 @@ lw_check_iconv()
 
     mk_msg_result "$ICONV_IN_TYPE"
     mk_define ICONV_IN_TYPE "$ICONV_IN_TYPE"
+}
+
+lw_check_strerror_r()
+{
+    mk_msg_checking "return type of strerror_r"
+
+    if ! mk_check_cache STRERROR_R_RETURN_TYPE
+    then
+        # Check which version of strerror_r we have
+        if mk_check_function \
+            PROTOTYPE="char* strerror_r(int,char*,size_t)" \
+            HEADERDEPS="string.h"
+        then
+            result="char*"
+        elif mk_check_function \
+            PROTOTYPE="int strerror_r(int,char*,size_t)" \
+            HEADERDEPS="string.h"
+        then
+            result="int"
+        else
+            result="none"
+        fi
+        mk_cache STRERROR_R_RETURN_TYPE "$result"
+    fi
+
+    mk_msg_result "$STRERROR_R_RETURN_TYPE"
+
+    case "$STRERROR_R_RETURN_TYPE" in
+        "char*")
+            mk_define STRERROR_R_CHAR_P 1
+            ;;
+        "int")
+            mk_define STRERROR_R_INT 1
+            ;;
+    esac
+}
+
+lw_check_pthread_once_init()
+{
+    mk_msg_checking "broken PTHREAD_ONCE_INIT"
+
+    if ! mk_check_cache HAVE_BROKEN_ONCE_INIT
+    then
+        if mk_try_compile \
+            CODE="pthread_once_t once = PTHREAD_ONCE_INIT; *(&once) = once; return 0;" \
+            CFLAGS="-Wall -Werror" \
+            HEADERDEPS="pthread.h"
+        then
+            result="no"
+        else
+            result="yes"
+        fi
+        
+        mk_cache HAVE_BROKEN_ONCE_INIT "$result"
+    fi
+
+    mk_msg_result "$HAVE_BROKEN_ONCE_INIT"
+
+    if [ "$HAVE_BROKEN_ONCE_INIT" = "yes" ]
+    then
+        mk_define BROKEN_ONCE_INIT 1
+    else
+        mk_define BROKEN_ONCE_INIT 0
+    fi
+
+    result="$HAVE_BROKEN_ONCE_INIT"
 }

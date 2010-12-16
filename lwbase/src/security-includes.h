@@ -36,6 +36,9 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include <lw/security-api.h>
 #include "security-api2.h"
 #include "security-types-internal.h"

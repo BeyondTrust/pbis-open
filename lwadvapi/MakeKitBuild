@@ -6,9 +6,6 @@ configure()
 
     lw_define_feature_macros
 
-    mk_define _REENTRANT
-    mk_define _THREAD_SAFE
-
     mk_multiarch_do
         MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
     mk_multiarch_done

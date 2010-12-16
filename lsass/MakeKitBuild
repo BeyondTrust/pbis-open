@@ -15,18 +15,15 @@ configure()
     mk_multiarch_do
         case "$MK_OS:$MK_ISA" in
             linux:*)
-                mk_define __LWI_LINUX__
                 mk_define _GNU_SOURCE
                 PAMDIR="/${MK_LIBDIR##*/}/security"
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             freebsd:*)
-                mk_define __LWI_FREEBSD__
                 PAMDIR="/${MK_LIBDIR##*/}/security"
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             solaris:*)
-                mk_define __LWI_SOLARIS__
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
                 ;;

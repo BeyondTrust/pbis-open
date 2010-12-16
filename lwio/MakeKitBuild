@@ -8,18 +8,8 @@ configure()
     lw_define_feature_macros
 
     case "$MK_OS" in
-        linux)
-            mk_define __LWI_LINUX__
-            ;;
         freebsd)
-            mk_define __LWI_FREEBSD__
             mk_define HAVE_DECL_KERN_PROC_PATHNAME 1 # FIXME
-            ;;
-        solaris)
-            mk_define __LWI_SOLARIS__
-            ;;
-        *)
-            mk_fail "Unsupported OS: $MK_OS"
             ;;
     esac
 
@@ -115,18 +105,7 @@ configure()
         mk_define HAVE_DECL_ISBLANK 1
     fi
 
-    # Check for broken PTHREAD_ONCE_INIT
-    if mk_try_compile \
-        CODE="pthread_once_t once = PTHREAD_ONCE_INIT; *(&once) = once; return 0;" \
-        CFLAGS="-Wall -Werror" \
-        HEADERDEPS="pthread.h"
-    then
-        mk_define BROKEN_ONCE_INIT 0
-        mk_msg "broken PTHREAD_ONCE_INIT: no"
-    else
-        mk_define BROKEN_ONCE_INIT 1
-        mk_msg "broken PTHREAD_ONCE_INIT: yes"
-    fi
+    lw_check_pthread_once_init
 
     if [ "$HAVE_FUSE_H" != "no" -a "$HAVE_LIB_FUSE" != "no" ]
     then

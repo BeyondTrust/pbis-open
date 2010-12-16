@@ -4,11 +4,7 @@ configure()
 {
     mk_config_header "include/config.h"
 
-    case "$MK_OS" in
-        linux)
-            mk_define __LWI_LINUX__
-            ;;
-    esac
+    lw_define_feature_macros
 
     mk_export MOD_EXT="$MK_DLO_EXT"
     mk_export SBINDIR="$MK_SBINDIR"
@@ -50,31 +46,5 @@ configure()
         LIBDEPS="$LIB_RESOLV" \
         res_init res_query res_ninit res_ndestroy
 
-    if [ "$HAVE_RES_INIT" = "yes" ]
-    then
-        mk_define HAVE_DECL_RES_INIT 1
-    else
-        mk_define HAVE_DECL_RES_INIT 0
-    fi
-
-    if [ "$HAVE_RES_NINIT" = "yes" ]
-    then
-        mk_define HAVE_DECL_RES_NINIT 1
-    else
-        mk_define HAVE_DECL_RES_NINIT 0
-    fi
-
-    if [ "$HAVE_RES_QUERY" = "yes" ]
-    then
-        mk_define HAVE_DECL_RES_QUERY 1
-    else
-        mk_define HAVE_DECL_RES_QUERY 0
-    fi
-
-    if [ "$HAVE_RES_NDESTROY" = "yes" ]
-    then
-        mk_define HAVE_DECL_RES_NDESTROY 1
-    else
-        mk_define HAVE_DECL_RES_NDESTROY 0
-    fi
+    lw_check_pthread_once_init
 }

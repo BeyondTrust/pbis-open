@@ -62,6 +62,7 @@ configure()
         sys/varargs.h \
         sys/param.h \
         unistd.h \
+        string.h \
         strings.h \
         pthread_np.h \
         signal.h

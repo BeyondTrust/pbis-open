@@ -15,16 +15,9 @@ configure()
     mk_config_header "include/DomainJoinConfig.h"
     
     lw_define_feature_macros
+
+    MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
     
-    case "$MK_OS" in
-	linux)
-	    mk_define __LWI_LINUX__
-	    ;;
-    esac
-
-    mk_export MK_CFLAGS="$MK_CFLAGS -Wall -Werror"
-    mk_export MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT"
-
     mk_define LOCALSTATEDIR "\"$MK_LOCALSTATEDIR\""
     mk_define BINDIR "\"$MK_BINDIR\""
     mk_define SBINDIR "\"$MK_SBINDIR\""

@@ -4,18 +4,7 @@ configure()
 {
     mk_config_header "include/config.h"
 
-    case "${MK_HOST_OS}-${MK_SYSTEM#*/}" in
-        linux-*)
-            mk_define __LWI_LINUX__ 1
-            ;;
-        solaris-*)
-            mk_define __LWI_SOLARIS__ 1
-            mk_define __EXTENSIONS__
-            ;;
-        freebsd-*)
-            mk_define __LWI_FREEBSD__
-            ;;
-    esac
+    lw_define_feature_macros
 
     mk_export MOD_EXT="${MK_DLO_EXT}"
     mk_define MOD_EXT "\"${MK_DLO_EXT}"\"

@@ -4,18 +4,13 @@ configure()
 {
     mk_config_header "include/config.h"
 
+    lw_define_feature_macros
+
     MK_CFLAGS="$MK_CFLAGS -Wall -Werror -fno-strict-aliasing"
-    MK_CPPFLAGS="$MK_CPPFLAGS -D_REENTRANT -D_GNU_SOURCE"
 
     mk_define PREFIXDIR "\"${MK_PREFIXDIR}\""
 
     mk_export MOD_EXT="${MK_DLO_EXT}"
-
-    case "${MK_OS}-${MK_SYSTEM#*/}" in
-        solaris-*)
-            mk_define __LWI_SOLARIS__ 1
-            ;;
-    esac
 
     # Required headers
     mk_check_headers FAIL=yes \
@@ -51,21 +46,5 @@ configure()
         HEADERDEPS="sys/types.h ifaddrs.h" \
         getifaddrs
     
-    mk_msg_checking "return type of strerror_r"
-    # Check which version of strerror_r we have
-    if mk_check_function \
-        PROTOTYPE="char* strerror_r(int,char*,size_t)" \
-        HEADERDEPS="string.h"
-    then
-        mk_msg_result "char*"
-        mk_define STRERROR_R_CHAR_P 1
-    elif mk_check_function \
-        PROTOTYPE="int strerror_r(int,char*,size_t)" \
-        HEADERDEPS="string.h"
-    then
-        mk_msg_result "int"
-        mk_define STRERROR_R_INT 1
-    else
-        mk_fail "could not find usable strerror_r function"
-    fi
+    lw_check_strerror_r
 }
