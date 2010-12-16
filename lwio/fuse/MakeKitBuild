@@ -29,5 +29,5 @@ make()
         CPPFLAGS="-D_FILE_OFFSET_BITS=64" \
         INCLUDEDIRS="../include" \
         HEADERDEPS="lw/base.h fuse.h" \
-        LIBDEPS="lwbase lwioclient fuse"
+        LIBDEPS="lwbase lwbase_nothr lwioclient fuse"
 }
