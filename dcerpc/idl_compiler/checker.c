@@ -45,6 +45,7 @@
 #include <command.h>    /* Command option defs */
 #include <errors.h>     /* Error reporting functions */
 #include <message.h>    /* reporting functions */
+#include <stdarg.h>
 
 extern char *acf_keyword_lookup(
 #ifdef PROTO
@@ -6672,20 +6673,24 @@ boolean CHECKER_main            /* Returns TRUE on success */
 **          a la printf.
 */
 
-/* FIXME TODO change param list to va_list */
-void CHECKER_error
-(node_p, msgid, arg1, arg2, arg3, arg4, arg5)
-    ASTP_node_t         *node_p;        /* [in] Ptr to an AST node */
-    long                msgid;          /* [in] Message ID */
-    char                *arg1;          /* [in] 0 to 5 message arguments */
-    char                *arg2;
-    char                *arg3;
-    char                *arg4;
-    char                *arg5;
+void CHECKER_error(
+    void *node_p,        /* [in] Ptr to an AST node */
+    long msgid,          /* [in] Message ID */
+    ...
+    )
 {
-    log_source_error(node_p->fe_info->file,
-                     node_p->fe_info->source_line,
-                     msgid, arg1, arg2, arg3, arg4, arg5);
+    va_list ap;
+
+    va_start(ap, msgid);
+
+    log_source_va(
+        &error_count,
+        ((ASTP_node_t*) (node_p))->fe_info->file,
+        ((ASTP_node_t*) (node_p))->fe_info->source_line,
+        msgid,
+        ap);
+
+    va_end(ap);
 }
 
 
@@ -6703,20 +6708,24 @@ void CHECKER_error
 **          a la printf.
 */
 
-/* FIXME TODO change param list to va_list */
-void CHECKER_warning
-(node_p, msgid, arg1, arg2, arg3, arg4, arg5)
-    ASTP_node_t         *node_p;        /* [in] Ptr to an AST node */
-    long                msgid;          /* [in] Message ID */
-    char                *arg1;          /* [in] 0 to 5 message arguments */
-    char                *arg2;
-    char                *arg3;
-    char                *arg4;
-    char                *arg5;
+void CHECKER_warning(
+    void *node_p,        /* [in] Ptr to an AST node */
+    long msgid,          /* [in] Message ID */
+    ...
+    )
 {
-    log_source_warning(node_p->fe_info->file,
-                       node_p->fe_info->source_line,
-                       msgid, arg1, arg2, arg3, arg4, arg5);
+    va_list ap;
+
+    va_start(ap, msgid);
+
+    log_source_va(
+        &warnings,
+        ((ASTP_node_t*) (node_p))->fe_info->file,
+        ((ASTP_node_t*) (node_p))->fe_info->source_line,
+        msgid,
+        ap);
+
+    va_end(ap);
 }
 
 /*
@@ -6733,25 +6742,24 @@ void CHECKER_warning
 **          a la printf.
 */
 
-/* FIXME TODO change param list to va_list */
-void CHECKER_acf_error
-(node_p, msgid, arg1, arg2, arg3, arg4, arg5)
-    ASTP_node_t         *node_p;        /* [in] Ptr to an AST node */
-    long                msgid;          /* [in] Message ID */
-    char                *arg1;          /* [in] 0 to 5 message arguments */
-    char                *arg2;
-    char                *arg3;
-    char                *arg4;
-    char                *arg5;
+void CHECKER_acf_error(
+    void *node_p,        /* [in] Ptr to an AST node */
+    long msgid,          /* [in] Message ID */
+    ...
+    )
 {
-    if (node_p->fe_info->acf_file != (STRTAB_str_t)0)
-        log_source_error(node_p->fe_info->acf_file,
-                         node_p->fe_info->acf_source_line,
-                         msgid, arg1, arg2, arg3, arg4, arg5);
-    else
-        log_source_error(node_p->fe_info->file,
-                         node_p->fe_info->source_line,
-                         msgid, arg1, arg2, arg3, arg4, arg5);
+    va_list ap;
+
+    va_start(ap, msgid);
+
+    log_source_va(
+        &error_count,
+        ((ASTP_node_t*) (node_p))->fe_info->file,
+        ((ASTP_node_t*) (node_p))->fe_info->source_line,
+        msgid,
+        ap);
+
+    va_end(ap);
 }
 
 
@@ -6769,27 +6777,25 @@ void CHECKER_acf_error
 **          a la printf.
 */
 
-/* FIXME TODO change param list to va_list */
-void CHECKER_acf_warning
-(node_p, msgid, arg1, arg2, arg3, arg4, arg5)
-    ASTP_node_t         *node_p;        /* [in] Ptr to an AST node */
-    long                msgid;          /* [in] Message ID */
-    char                *arg1;          /* [in] 0 to 5 message arguments */
-    char                *arg2;
-    char                *arg3;
-    char                *arg4;
-    char                *arg5;
+void CHECKER_acf_warning(
+    void *node_p,        /* [in] Ptr to an AST node */
+    long msgid,          /* [in] Message ID */
+    ...
+    )
 {
-    if (node_p->fe_info->acf_file != (STRTAB_str_t)0)
-        log_source_warning(node_p->fe_info->acf_file,
-                           node_p->fe_info->acf_source_line,
-                           msgid, arg1, arg2, arg3, arg4, arg5);
-    else
-        log_source_warning(node_p->fe_info->file,
-                           node_p->fe_info->source_line,
-                           msgid, arg1, arg2, arg3, arg4, arg5);
-}
+    va_list ap;
 
+    va_start(ap, msgid);
+
+    log_source_va(
+        &warnings,
+        ((ASTP_node_t*) (node_p))->fe_info->file,
+        ((ASTP_node_t*) (node_p))->fe_info->source_line,
+        msgid,
+        ap);
+
+    va_end(ap);
+}
 
 
 /*

@@ -87,7 +87,7 @@ char ** yytext_p;
 
 boolean ERR_no_warnings;    /* Global copy of -no_warn command line option */
 
-static  int              warnings = 0;      /* Warning count */
+int              warnings = 0;      /* Warning count */
 static  STRTAB_str_t    error_files[MAX_ERROR_FILES]; /* List of all files with errors */
 static  int     error_file_count = 0;       /* Number of files with errors */
 static  int     last_error_line = 0;        /* Line of last error */
@@ -434,7 +434,7 @@ static void add_error_log_rec
  *
  */
 
-static void log_source_va
+void log_source_va
 (
  int*         counter,
  STRTAB_str_t filename,
@@ -833,20 +833,23 @@ boolean print_errors
 void error
 (
     long msg_id,
-    char *arg1,
-    char *arg2,
-    char *arg3,
-    char *arg4,
-    char *arg5
+    ...
 )
 {
+    va_list arglist;
+
+    va_start(arglist, msg_id);
+
     if (current_file)
         message_print(NIDL_LINEFILE, current_file, *yylineno_p);
-    message_print(msg_id, arg1, arg2, arg3, arg4, arg5);
+    message_printv(msg_id, arglist);
+
+    va_end(arglist);
 
 #ifndef HASPOPEN
     sysdep_cleanup_temp();
 #endif
+
 
     nidl_terminate();
 }
@@ -912,20 +915,22 @@ void error_list
 void warning
 (
     long msg_id,
-    char *arg1,
-    char *arg2,
-    char *arg3,
-    char *arg4,
-    char *arg5
+    ...
 )
 {
+    va_list arglist;
+
     /* Return if warnings are suppressed. */
     if (ERR_no_warnings)
         return;
 
+    va_start(arglist, msg_id);
+
     if (current_file)
         message_print(NIDL_LINEFILE, current_file, *yylineno_p);
-    message_print(msg_id, arg1, arg2, arg3, arg4, arg5);
+    message_printv(msg_id, arglist);
+
+    va_end(arglist);
 
     if (++warnings > MAX_WARNINGS)
     {

@@ -36,10 +36,14 @@
 **
 */
 
+void message_printv(
+    long msgid,
+    va_list args
+);
+
 void message_print(
-#ifdef __STDC__
-    long msgid, ...
-#endif
+    long msgid,
+    ...
 );
 
 void message_open(

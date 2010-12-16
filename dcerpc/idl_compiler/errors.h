@@ -52,8 +52,17 @@
  *  since they are designed, a la printf, to accept a variable number of
  *  arguments without using the varargs nonsense.
  */
-void error();
-void warning();
+void error(long msgid, ...);
+void warning(long msgid, ...);
+
+void log_source_va
+(
+ int*         counter,
+ STRTAB_str_t filename,
+ int          lineno,
+ long         msg_id,
+ va_list      ap
+);
 
 void log_source_error
 (
@@ -150,6 +159,7 @@ extern char     **yytext_p;
  * Error info to be fillin the fe_info nodes
  */
 extern int          error_count;
+extern int          warnings;
 extern STRTAB_str_t error_file_name_id;
 
 #ifdef DUMPERS

@@ -250,79 +250,57 @@ void message_close
  *              SYS$ERROR/SYS$OUTPUT following the VAX/VMS conventions.
  */
 
-void message_print
-#ifdef VMS
+void message_printv
 (
     long msgid,
-    char *arg1,
-    char *arg2,
-    char *arg3,
-    char *arg4,
-    char *arg5
+    va_list args
 )
-#else
-#ifdef __STDC__
-(long msgid, ...)
-#else
-(va_alist) va_dcl
-#endif
-#endif
-
-#if defined(VMS) && !defined(BROKEN_PUTMSG)
-                    /* m e s s a g e _ p r i n t  (VMS) */
 {
-    long            status;
-    char            *msg_vec[8]; /* create a message vec for PUTMSG */
-
-    /* Initialize the message vector */
-    msg_vec[0] = (char *)7;
-    msg_vec[1] = (char *)msgid;
-    msg_vec[2] = (char *)5;
-    msg_vec[3] = arg1;
-    msg_vec[4] = arg2;
-    msg_vec[5] = arg3;
-    msg_vec[6] = arg4;
-    msg_vec[7] = arg5;
-
-    status = SYS$PUTMSG(msg_vec, 0, 0, 0);
-    if ((status & 1) == 0) LIB$SIGNAL(status);
-}
-#else
-{   /* non-VMS message_print() */
     va_list arglist;
-    char            format[MAX_FMT_TEXT];     /* Format string */
-    VA_START(arglist, msgid, long);
+    char format[MAX_FMT_TEXT];     /* Format string */
+    va_copy(arglist, args);
 
-#ifdef HAVE_NL_TYPES_H
-    /*
-     * Output message prefix on all errors that identify the input file,
-     * or on every line for UUIDGEN
-     */
-    format[0]='\0';
-    switch (msgid)
-    {
-#ifndef UUIDGEN
-        case NIDL_EOF:
-        case NIDL_EOFNEAR:
-        case NIDL_SYNTAXNEAR:
-        case NIDL_FILESOURCE:
-        case NIDL_LINEFILE:
-#else
-        default:
-#endif
-            strcpy(format, msg_prefix);
-    }
+ #ifdef HAVE_NL_TYPES_H
+     /*
+      * Output message prefix on all errors that identify the input file,
+      * or on every line for UUIDGEN
+      */
+     format[0]='\0';
+     switch (msgid)
+     {
+ #ifndef UUIDGEN
+         case NIDL_EOF:
+         case NIDL_EOFNEAR:
+         case NIDL_SYNTAXNEAR:
+         case NIDL_FILESOURCE:
+         case NIDL_LINEFILE:
+ #else
+         default:
+ #endif
+             strcpy(format, msg_prefix);
+     }
 
-    strcat(format,catgets(cat_handle, CAT_SET, msgid, def_message(msgid)));
-    strcat(format,"\n");
-#else
-    snprintf(format, sizeof(format), "%s%s\n", msg_prefix, def_message(msgid));
-#endif /* HAVE_NL_TYPES_H */
-    NL_VFPRINTF(stderr, format, arglist);
+     strcat(format,catgets(cat_handle, CAT_SET, msgid, def_message(msgid)));
+     strcat(format,"\n");
+ #else
+     snprintf(format, sizeof(format), "%s%s\n", msg_prefix, def_message(msgid));
+ #endif /* HAVE_NL_TYPES_H */
+     NL_VFPRINTF(stderr, format, arglist);
+     va_end(arglist);
+}
+
+void message_print
+(
+    long msgid,
+    ...
+)
+{
+    va_list arglist;
+
+    va_start(arglist, msgid);
+    message_printv(msgid, arglist);
     va_end(arglist);
 }
-#endif
-
 
 
 #ifndef UUIDGEN

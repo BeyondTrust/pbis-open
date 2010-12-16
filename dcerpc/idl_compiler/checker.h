@@ -322,9 +322,25 @@ extern boolean CHECKER_main(    /* Returns true on success */
 #endif
 );
 
-extern void CHECKER_error();    /* Intentionally not function prototyped */
-extern void CHECKER_warning();  /* See below */
-extern void CHECKER_acf_error();
-extern void CHECKER_acf_warning();
+extern void CHECKER_error(
+    void* node_p,        /* [in] Ptr to an AST node */
+    long  msgid,          /* [in] Message ID */
+    ...
+    );
+extern void CHECKER_warning(
+    void* node_p,        /* [in] Ptr to an AST node */
+    long  msgid,          /* [in] Message ID */
+    ...
+    );
+extern void CHECKER_acf_error(
+    void* node_p,        /* [in] Ptr to an AST node */
+    long  msgid,          /* [in] Message ID */
+    ...
+    );
+extern void CHECKER_acf_warning(
+    void* node_p,        /* [in] Ptr to an AST node */
+    long  msgid,          /* [in] Message ID */
+    ...
+    );
 
 #endif
