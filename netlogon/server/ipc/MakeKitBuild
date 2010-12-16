@@ -5,5 +5,5 @@ make()
         SOURCES="ipc_dcinfo.c globals.c" \
         INCLUDEDIRS=". ../include ../../include" \
         HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
-        LIBDEPS="lwmsg lwnetcommon"
+        LIBDEPS="lwmsg lwnetcommon lwbase lwbase_nothr"
 }
