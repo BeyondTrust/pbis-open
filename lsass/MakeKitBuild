@@ -20,8 +20,8 @@ configure()
                 NSSDIR="/${MK_LIBDIR##*/}"
                 ;;
             freebsd:*)
-                PAMDIR="/${MK_LIBDIR##*/}/security"
-                NSSDIR="/${MK_LIBDIR##*/}"
+                PAMDIR="/usr/local/${MK_LIBDIR##*/}/security"
+                NSSDIR="/usr/local/${MK_LIBDIR##*/}"
                 ;;
             solaris:*)
                 NSSDIR="/usr/lib"
