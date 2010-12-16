@@ -296,6 +296,12 @@ int main(int argc, const char *argv[])
         }
         else if (!strcmp(argv[dwArgc], "--file"))
         {
+            if (argc == dwArgc+1)
+            {
+                PrintUsage();
+                goto cleanup;
+            }
+
             bFile = TRUE;
             pszFile = argv[++dwArgc];
         }
@@ -309,12 +315,23 @@ int main(int argc, const char *argv[])
         }
         else if (!strcmp(argv[dwArgc], "--show"))
         {
+            if (argc == dwArgc+1)
+            {
+                PrintUsage();
+                goto cleanup;
+            }
+
             bShowCapability = TRUE;
             pszCapability = argv[++dwArgc];
         }
         else if (!strcmp(argv[dwArgc], "--detail") ||
                  !strcmp(argv[dwArgc], "--details"))
         {
+            if (argc == dwArgc+1)
+            {
+                PrintUsage();
+                goto cleanup;
+            }
             bDetailCapability = TRUE;
             pszCapability = argv[++dwArgc];
         }
