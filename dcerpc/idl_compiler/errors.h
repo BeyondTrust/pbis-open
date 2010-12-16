@@ -42,6 +42,7 @@
 #include <errno.h>
 #include <nidl.h>
 #include <nametbl.h>
+#include <stdarg.h>
 
 
 #define IDL_ERROR_LIST_SIZE 5
