@@ -1,4 +1,3 @@
-
 #include "config.h"
 #include "lwiosys.h"
 #include "termios.h"

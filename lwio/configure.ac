@@ -26,7 +26,8 @@ case "$host_os:$host_cpu" in
 		;;
 	solaris*:i?86|solaris*:sparc*)
 		AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
-	    AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
+		AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
+		AC_DEFINE([_POSIX_PTHREAD_SEMANTICS], [1], [Define on Solaris])
 		;;
         darwin8.*:*)
                 echo "Detected Mac OS X - Tiger"

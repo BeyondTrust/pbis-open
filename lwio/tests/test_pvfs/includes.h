@@ -48,8 +48,6 @@
 #ifndef _TEST_PVFS_INCLUDES_H_
 #define _TEST_PVFS_INCLUDES_H_
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include "config.h"
 #include <lw/base.h>
 #include "lwiosys.h"

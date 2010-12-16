@@ -42,8 +42,6 @@
  * Authors: Brian Koropoff (bkoropoff@likewise.com)
  */
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include "config.h"
 #include <lwio/lwio.h>
 #include <stdio.h>

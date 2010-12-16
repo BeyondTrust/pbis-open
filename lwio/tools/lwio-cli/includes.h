@@ -42,8 +42,6 @@
  * Authors: Sriram Nambakam (snambakam@likewise.com)
  */
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include <config.h>
 #include <lwiosys.h>
 #include <lwio/lwio.h>

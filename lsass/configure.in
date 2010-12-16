@@ -87,7 +87,8 @@ case "$host_os:$host_cpu" in
                 pam_libdir="/usr/lib/security"
                 NSS_SUBDIR="solaris"
                 ENABLE_NSS_ENUM_DEFAULT="no"
-        default_homedir_prefix="/export/home"
+		default_homedir_prefix="/export/home"
+		AC_DEFINE([_POSIX_PTHREAD_SEMANTICS], [], [Define on Solaris])
                 AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
                 AC_DEFINE([_XOPEN_SOURCE], [500], [Define to desired XOPEN compliance level])
                 ;;

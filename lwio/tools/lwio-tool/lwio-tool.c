@@ -42,8 +42,6 @@
  * Authors: Danilo Almeida (dalmeida@likewisesoftware.com)
  */
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include "lwio-tool.h"
 
 static

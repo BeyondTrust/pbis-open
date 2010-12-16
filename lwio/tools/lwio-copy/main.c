@@ -45,8 +45,6 @@
  *          Sriram Nambakam (snambakam@likewisesoftware.com)
  */
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include "includes.h"
 
 static

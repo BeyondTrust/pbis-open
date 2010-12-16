@@ -45,8 +45,6 @@
  *
  */
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #include "config.h"
 #include "lsasystem.h"
 #include "lsadef.h"
