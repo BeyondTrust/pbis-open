@@ -36,4 +36,17 @@ configure()
     # Optional libraries
     mk_check_libraries \
         pthread dl
+
+    # Check for broken PTHREAD_ONCE_INIT
+    if mk_try_compile \
+        CODE="pthread_once_t once = PTHREAD_ONCE_INIT; *(&once) = once; return 0;" \
+        CFLAGS="-Wall -Werror" \
+        HEADERDEPS="pthread.h"
+    then
+        mk_define BROKEN_ONCE_INIT 0
+        mk_msg "broken PTHREAD_ONCE_INIT: no"
+    else
+        mk_define BROKEN_ONCE_INIT 1
+        mk_msg "broken PTHREAD_ONCE_INIT: yes"
+    fi
 }

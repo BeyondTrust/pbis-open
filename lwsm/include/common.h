@@ -73,7 +73,15 @@
         }                                       \
     } while (0)
 
+#ifndef BROKEN_ONCE_INIT
 #if defined(sun) || defined(_AIX)
+#define BROKEN_ONCE_INIT 1
+#else
+#define BROKEN_ONCE_INIT 0
+#endif
+#endif
+
+#if BROKEN_ONCE_INIT
 #  define ONCE_INIT {PTHREAD_ONCE_INIT}
 #else
 #  define ONCE_INIT PTHREAD_ONCE_INIT
