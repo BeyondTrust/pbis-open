@@ -93,6 +93,9 @@ AD_FillAccountInfo(
 /// This also handles any conversions or "cons"-ing up of values that
 /// are not stored in the old legacy format.
 ///
+/// @param[in] pLegacyPasswordInfo - Legacy password information.
+/// @param[out] pAccountInfo - Returns machine accouhnt information.
+///
 /// @return Windows error code
 /// @retval ERROR_SUCCESS on success
 /// @retval !ERROR_SUCCESS on failure
