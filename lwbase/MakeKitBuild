@@ -114,7 +114,7 @@ configure()
         then
             THREADPOOL_BACKEND="kqueue"
         else
-            THREADPOOL_BACKEND="select"
+            THREADPOOL_BACKEND="poll"
         fi
     fi
 
