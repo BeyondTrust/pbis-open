@@ -145,13 +145,18 @@ mk_safe_rm()
 
 mk_warn()
 {
-    if [ -n "$MK_FAIL_ON_WARN" ]
+    if [ "$MK_FAIL_ON_WARN" = "yes" ]
     then
         mk_fail "$@"
     else
         mk_msg "WARNING: $*"
         sleep 1
     fi
+}
+
+mk_deprecated()
+{
+    [ "$MK_WARN_DEPRECATED" = "yes" ] && mk_warn "$@"
 }
 
 mk_run_script()
@@ -377,6 +382,7 @@ mk_target()
 
 mk_install_file()
 {
+    mk_deprecated "mk_install_file is deprecated; use mk_stage"
     mk_push_vars FILE INSTALLFILE INSTALLDIR MODE
     mk_parse_params
 
@@ -400,6 +406,7 @@ mk_install_file()
 
 mk_install_files()
 {
+    mk_deprecated "mk_install_files is deprecated; use mk_stage"
     mk_push_vars INSTALLDIR FILES MODE
     mk_parse_params
 
@@ -664,6 +671,13 @@ _mk_load_cache()
 
 option()
 {
+    mk_option \
+        OPTION="warn-deprecated" \
+        VAR="MK_WARN_DEPRECATED" \
+        PARAM="yes|no" \
+        DEFAULT="no" \
+        HELP="Warn about deprecated function use"
+
     mk_option \
         OPTION="fail-on-warn" \
         VAR="MK_FAIL_ON_WARN" \

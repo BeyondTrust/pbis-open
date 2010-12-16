@@ -35,6 +35,19 @@ _mk_define_name "${MK_CANONICAL_SYSTEM%/*}"
 EXTRA_CPPFLAGS="$EXTRA_CPPFLAGS -D_MK_$result"
 INCLUDE_CPPFLAGS=""
 
+case "$COMPILER" in
+    c)
+        CPROG="$MK_CC"
+        FLAGS="$CFLAGS"
+        MK_FLAGS="$MK_CFLAGS"
+        ;;
+    c++)
+        CPROG="$MK_CXX"
+        FLAGS="$CXXFLAGS"
+        MK_FLAGS="$MK_CXXFLAGS"
+        ;;
+esac
+
 for _dir in ${INCLUDEDIRS}
 do
     case "$_dir" in
@@ -58,15 +71,15 @@ fi
 
 if [ "$PIC" = "yes" ]
 then
-    EXTRA_CFLAGS="$EXTRA_CFLAGS -fPIC"
+    EXTRA_FLAGS="$EXTRA_FLAGS -fPIC"
 fi
 
 mk_msg "${_source#${MK_SOURCE_DIR}/} ($MK_CANONICAL_SYSTEM)"
 
 mk_mkdir "`dirname "$_object"`"
-mk_run_or_fail ${MK_CC} \
+mk_run_or_fail ${CPROG} \
     ${INCLUDE_CPPFLAGS} ${MK_CPPFLAGS} ${CPPFLAGS} ${EXTRA_CPPFLAGS} \
-    ${MK_CFLAGS} ${CFLAGS} ${EXTRA_CFLAGS} \
+    ${MK_FLAGS} ${FLAGS} ${EXTRA_FLAGS} \
     ${DEP_FLAGS} \
     -o "$_object" \
     -c "$_source"

@@ -77,12 +77,19 @@ _libpath=""
 case "$MK_OS" in
     linux|freebsd)
         _ldflags="-L${_lib_dir} -Wl,-rpath-link -Wl,${_lib_dir}"
-        LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
-        export LD_LIBRARY_PATH
+        if [ "$MK_CROSS_COMPILING" = "no" ]
+        then
+            LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
+            export LD_LIBRARY_PATH
+        fi
         ;;
     solaris)
-        LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
-        export LD_LIBRARY_PATH
+        _ldflags="-L${_lib_dir}"
+        if [ "$MK_CROSS_COMPILING" = "no" ]
+        then
+            LD_LIBRARY_PATH="$_lib_dir:$LD_LIBRARY_PATH"
+            export LD_LIBRARY_PATH
+        fi
         ;;
     *)
         _ldflags="-L${_lib_dir}"
@@ -92,8 +99,10 @@ esac
 cd "${MK_OBJECT_DIR}${MK_SUBDIR}/$BUILDDIR" && \
 mk_run_quiet_or_fail "${_src_dir}/configure" \
     CC="$MK_CC" \
+    CXX="$MK_CXX" \
     CPPFLAGS="-I${_include_dir} $_cppflags $CPPFLAGS" \
     CFLAGS="$MK_CFLAGS $CFLAGS" \
+    CXXFLAGS="$MK_CXXFLAGS $CXXFLAGS" \
     LDFLAGS="${_ldflags} $MK_LDFLAGS $LDFLAGS" \
     --build="${MK_AT_BUILD_STRING}" \
     --host="${MK_AT_HOST_STRING}" \

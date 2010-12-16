@@ -440,6 +440,17 @@ configure()
         mk_msg "$_sys instruction set architectures: $MK_ISAS"
     done
 
+    if [ "$MK_BUILD_OS:$MK_BUILD_ARCH" != "$MK_HOST_OS:$MK_HOST_ARCH" ]
+    then
+        MK_CROSS_COMPILING="yes"
+    else
+        MK_CROSS_COMPILING="no"
+    fi
+
+    mk_export MK_CROSS_COMPILING
+
+    mk_msg "cross compiling: $MK_CROSS_COMPILING"
+
     # Register hooks that set the target system to the default
     # or restore any modified system variables at the start of
     # all configure() and make() functions

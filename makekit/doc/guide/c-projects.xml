@@ -578,9 +578,9 @@ configure()
     #
     # The following defines will be written into config.h:
     #
-    # #define HAVE_STDIO_H 1
-    # #define HAVE_STDLIB_H 1
-    # #define HAVE_STRING_H 1
+    # #define HAVE_STDIO_H
+    # #define HAVE_STDLIB_H
+    # #define HAVE_STRING_H
 }
 ]]></programlisting>
       </example>
@@ -633,12 +633,14 @@ configure()
     # HAVE_LIB_M=external
     # HAVE_LIB_PTHREAD=external
     # HAVE_LIB_DOES_NOT_EXIST=no
+    # LIB_M=m
+    # LIB_PTHREAD=pthread
+    # LIB_DOES_NOT_EXIST=
     #
     # The following defines will be written into config.h:
     #
-    # #define HAVE_STDIO_H 1
-    # #define HAVE_STDLIB_H 1
-    # #define HAVE_STRING_H 1
+    # #define HAVE_LIB_M
+    # #define HAVE_LIB_PTHREAD
 }
 ]]></programlisting>
       </example>
@@ -704,9 +706,9 @@ configure()
     #
     # The following defines will be written into config.h:
     #
-    # #define HAVE_SIN 1
-    # #define HAVE_COS 1
-    # #define HAVE_DOUBLE_SQRT__DOUBLE_ 1
+    # #define HAVE_SIN
+    # #define HAVE_COS
+    # #define HAVE_DOUBLE_SQRT__DOUBLE_
     # #define HAVE_DECL_SIN 1
     # #define HAVE_DECL_COS 1
     # #define HAVE_DECL_DOUBLE_SQRT__DOUBLE_ 1

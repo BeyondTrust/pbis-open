@@ -1,17 +1,11 @@
 SUBDIRS=". doc"
 MODULES="core path"
 
-defaults()
-{
-    # Default to using internal copy of xsl stylesheets
-    MK_DOCBOOK_XSL_DIR="`cd "${MK_SOURCE_DIR}" && echo "$PWD/doc/docbook-xsl-ns"`"
-}
-
 make()
 {
-    mk_install_file \
-	INSTALLDIR="${MK_DATADIR}/makekit" \
-	FILE="mk"
+    mk_stage \
+        DEST="${MK_DATADIR}/mk" \
+	SOURCE="mk"
 
     mk_target \
 	TARGET="${MK_BINDIR}/makekit" \

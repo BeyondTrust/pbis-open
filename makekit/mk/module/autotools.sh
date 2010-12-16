@@ -78,7 +78,7 @@ mk_autotools()
 {
     mk_push_vars \
         SOURCEDIR HEADERS LIBS PROGRAMS LIBDEPS HEADERDEPS \
-        CPPFLAGS CFLAGS LDFLAGS INSTALL TARGETS SELECT \
+        CPPFLAGS CFLAGS CXXFLAGS LDFLAGS INSTALL TARGETS SELECT \
         BUILDDIR prefix dirname
     mk_parse_params
     
@@ -125,7 +125,7 @@ mk_autotools()
         DEPS="${_stage_deps}" \
         mk_run_script \
         at-configure \
-        %SOURCEDIR %BUILDDIR %CPPFLAGS %CFLAGS %LDFLAGS \
+        %SOURCEDIR %BUILDDIR %CPPFLAGS %CFLAGS %CXXFLAGS %LDFLAGS \
         DIR="$dir" '$@' "$@"
 
     __configure_stamp="$result"

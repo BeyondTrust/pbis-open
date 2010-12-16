@@ -83,6 +83,9 @@ create_libtool_archive()
 object="$1"
 shift 1
 
+IS_CXX=false
+
+[ "$COMPILER" = "c++" ] && IS_CXX=true
 
 if [ "${MK_SYSTEM%/*}" = "build" ]
 then
@@ -113,7 +116,19 @@ do
     COMBINED_LIBDEPS="$COMBINED_LIBDEPS $LIBDEPS"
     COMBINED_LIBDIRS="$COMBINED_LIBDIRS $LIBDIRS"
     COMBINED_LDFLAGS="$COMBINED_LDFLAGS $LDFLAGS"
+    [ "$COMPILER" = "c++" ] && IS_CXX=true
 done
+
+${IS_CXX} && COMPILER="c++"
+
+case "$COMPILER" in
+    c)
+        CPROG="$MK_CC"
+        ;;
+    c++)
+        CPROG="$MK_CXX"
+        ;;
+esac
 
 case "${MK_OS}" in
     linux|freebsd)
@@ -151,12 +166,12 @@ mk_msg "${object#${MK_STAGE_DIR}} ($MK_CANONICAL_SYSTEM)"
 
 case "$MODE" in
     library)
-        mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        mk_run_or_fail ${CPROG} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
         ;;
     dlo)
-        mk_run_or_fail ${MK_CC} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
+        mk_run_or_fail ${CPROG} -shared -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} -fPIC ${_LIBS}
         ;;
     program)
-        mk_run_or_fail ${MK_CC} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
+        mk_run_or_fail ${CPROG} -o "$object" "$@" ${GROUP_OBJECTS} ${COMBINED_LDFLAGS} ${MK_LDFLAGS} ${_LIBS}
         ;;
 esac

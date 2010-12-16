@@ -55,6 +55,7 @@ done
 mk_mkdir "`dirname "$object"`"
 
 {
+    echo "COMPILER='$COMPILER'"
     mk_quote "${_ALL_OBJECTS# }"
     echo "OBJECTS=$result"
     mk_quote "${_ALL_LIBDEPS# }"

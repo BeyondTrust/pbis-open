@@ -35,7 +35,8 @@
 # in the mk/command subdirectory.  Its job is to:
 # 
 # - Find the mk directory
-# - Find a fast, POSIX-compliant shell
+# - Set MK_SHELL to a fast, POSIX-compliant shell
+# - Set PATH to include POSIX-compliant utilities
 # - Run the actual command
 ##
 
@@ -99,7 +100,14 @@ then
     exit 1
 fi
 
-export MK_HOME MK_SHELL MK_SOURCE_DIR
+# If the system has /usr/xpg4/bin, add it to the path
+# so we get POSIX-compliant utilities
+if test -d "/usr/xpg4/bin"
+then
+    PATH="/usr/xpg4/bin:$PATH"
+fi
+
+export MK_HOME MK_SHELL MK_SOURCE_DIR PATH
 
 if test -n "$MK_TRACE"
 then

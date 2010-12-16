@@ -14,9 +14,23 @@ mk_pkg_config()
         cppflags="`$PKG_CONFIG --cflags-only-I "$@"`"
         [ "$?" -eq 0 ] || mk_fail "pkg-config failed"
 
-        cflags="`$PKG_CONFIG --cflags-only-other "$@"`"
+        __cflags="`$PKG_CONFIG --cflags-only-other "$@"`"
         [ "$?" -eq 0 ] || mk_fail "pkg-config failed"
         
+        cflags=""
+        for __cflag in ${__cflags}
+        do
+            # FIXME: only do this for gcc-like compilers
+            case "$__cflag" in
+                "-mt")
+                    cflags="$cflags -pthread"
+                    ;;
+                *)
+                    cflags="$cflags $__cflag"
+                    ;;
+            esac
+        done
+
         ldflags="`$PKG_CONFIG --libs-only-other "$@"`"
         [ "$?" -eq 0 ] || mk_fail "pkg-config failed"
 

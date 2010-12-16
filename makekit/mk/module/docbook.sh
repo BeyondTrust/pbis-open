@@ -40,10 +40,9 @@ DEPENDS="program core"
 
 option()
 {
-    _default_docbook_dir="/usr/share/xml/docbook/stylesheet/docbook-xsl"
+    _default_docbook_dir="<none>"
 
     for candidate in \
-        "$_default_docbook_dir" \
         /usr/share/xml/docbook/stylesheet/docbook-xsl
     do
         if [ -d "$candidate" ]
@@ -63,6 +62,7 @@ option()
 
 configure()
 {
+    mk_msg "xsl dir: $MK_DOCBOOK_XSL_DIR"
     mk_check_program "xsltproc"
 
     if [ -d "$MK_DOCBOOK_XSL_DIR" -a -n "$XSLTPROC" ]

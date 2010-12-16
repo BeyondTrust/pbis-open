@@ -55,6 +55,6 @@ _mk_fortune()
     
 _mk_random()
 {
-    result="`{ date; ps -ef; } 2>&1 | cksum | cut -d' ' -f1`"
+    result="`{ date; ps -ef; } 2>&1 | cksum | awk '{print $1;}'`"
     result="$(($result % ($2 - $1 + 1) + $1))"
 }
