@@ -168,7 +168,7 @@ boolean is_number
         str++;
 
     for ( ; *str != '\0' ; str++)
-        if (!isdigit(*str))
+        if (!isdigit((int)*str))
             return false;
 
     return true;
