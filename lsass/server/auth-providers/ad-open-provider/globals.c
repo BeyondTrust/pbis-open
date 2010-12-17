@@ -102,6 +102,7 @@ ADCACHE_PROVIDER_FUNCTION_TABLE ADCacheTable;
 
 PADCACHE_PROVIDER_FUNCTION_TABLE gpCacheProvider = &ADCacheTable;
 
+BOOLEAN gbMultiTenancyEnabled = FALSE;
 
 /*
 local variables:

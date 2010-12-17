@@ -861,6 +861,60 @@ error:
 
 static
 DWORD
+AD_GetDefaultDomain(
+    OUT PSTR* ppszDomainName
+    )
+{
+    DWORD dwError = 0;
+    HANDLE hPstore = NULL;
+    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
+    PSTR pszDomainName = NULL;
+
+    dwError = LwpsOpenPasswordStore(
+                  LWPS_PASSWORD_STORE_DEFAULT,
+                  &hPstore);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwpsGetPasswordByDomainName(
+                  hPstore,
+                  NULL,
+                  &pPasswordInfo);
+    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+    {
+        // no default domain
+        dwError = 0;
+        goto cleanup;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwWc16sToMbs(
+                  pPasswordInfo->pwszDnsDomainName,
+                  &pszDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+cleanup:
+
+    if (hPstore)
+    {
+        if (pPasswordInfo)
+        {
+            LwpsFreePasswordInfo(hPstore, pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+        LwpsClosePasswordStore(hPstore);
+    }
+
+    *ppszDomainName = pszDomainName;
+
+    return dwError;
+
+error:
+
+    goto cleanup;
+}
+
+static
+DWORD
 AD_InitializeProvider(
     OUT PCSTR* ppszProviderName,
     OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
@@ -873,6 +927,9 @@ AD_InitializeProvider(
     PSTR* ppszDomainList = NULL;;
     pthread_t startThread;
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
+    PSTR pszDefaultDomain = NULL;
+    BOOLEAN bFoundDefault = FALSE;
+    HANDLE hPstore = NULL;
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&gADGlobalDataLock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
@@ -887,7 +944,9 @@ AD_InitializeProvider(
 
     dwError = AD_ReadRegistry(&config);
     BAIL_ON_LSA_ERROR(dwError);
-                
+
+    gbMultiTenancyEnabled = config.bMultiTenancyEnabled;
+
     InitADCacheFunctionTable(
         &config,
         gpCacheProvider);
@@ -895,13 +954,55 @@ AD_InitializeProvider(
     dwError = ADUnprovPlugin_Initialize();
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = ADState_GetJoinedDomainList(
-                 &dwDomainCount,
-                 &ppszDomainList);
+    dwError = AD_GetDefaultDomain(&pszDefaultDomain);
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszDefaultDomain)
+    {
+        bFoundDefault = TRUE;
+    }
+
+    if (bFoundDefault && !gbMultiTenancyEnabled)
+    {
+        dwDomainCount = 1;
+        dwError = LwAllocateMemory(
+                        sizeof(*ppszDomainList),
+                        (PVOID*)&ppszDomainList);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        ppszDomainList[0] = pszDefaultDomain;
+        pszDefaultDomain = NULL;
+    }
+    else
+    {
+        dwError = ADState_GetJoinedDomainList(
+                      &dwDomainCount,
+                      &ppszDomainList);
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
+        if (!gbMultiTenancyEnabled && dwIndex > 0)
+        {
+            break;
+        }
+
+        if (!bFoundDefault)
+        {
+            dwError = LwpsOpenPasswordStore(
+                          LWPS_PASSWORD_STORE_DEFAULT,
+                          &hPstore);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            dwError = LwpsSetDefaultJoinedDomain(
+                          hPstore,
+                          ppszDomainList[dwIndex]);
+            BAIL_ON_LSA_ERROR(dwError);
+
+            bFoundDefault = TRUE;
+        }
+
         // Add a minimal state to the list so that no one
         // can attempt a join to this domain before
         // initialization is complete.
@@ -936,6 +1037,12 @@ AD_InitializeProvider(
 
 cleanup:
 
+    if (hPstore)
+    {
+        LwpsClosePasswordStore(hPstore);
+    }
+
+    LW_SAFE_FREE_STRING(pszDefaultDomain);
     AD_FreeConfigContents(&config);
     LwFreeStringArray(ppszDomainList, dwDomainCount);
     AD_DereferenceProviderState(pStateMinimal);
@@ -2216,6 +2323,14 @@ AD_JoinDomain(
 
     LSA_LOG_TRACE("Domain join request: %s", pszMessage);
     LSA_LOG_DEBUG("Joining domain %s", LW_SAFE_LOG_STRING(pRequest->pszDomain));
+
+    if (pRequest->dwFlags & LSA_NET_JOIN_DOMAIN_MULTIPLE &&
+        !gbMultiTenancyEnabled)
+    {
+        LSA_LOG_VERBOSE("Joining multiple domains is not supported");
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LWNetGetDomainController(
                     pRequest->pszDomain,

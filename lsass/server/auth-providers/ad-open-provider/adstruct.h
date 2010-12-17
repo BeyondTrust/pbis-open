@@ -105,6 +105,7 @@ typedef struct _LSA_AD_CONFIG {
         PSTR*           ppszTrustExceptionList;
         DWORD           dwTrustExceptionCount;
     } DomainManager;
+    BOOLEAN             bMultiTenancyEnabled;
 } LSA_AD_CONFIG, *PLSA_AD_CONFIG;
 
 struct _LSA_DB_CONNECTION;

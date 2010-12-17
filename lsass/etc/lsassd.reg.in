@@ -238,6 +238,11 @@
     default = sza:""
     doc = "Do not look up the specified group names in AD."
 }
+"MultiTenancyEnabled" = {
+    default = dword:00000000
+    doc = "Configure lsass to join to multiple domains"
+    range = boolean
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\Local]
 "Id" = {

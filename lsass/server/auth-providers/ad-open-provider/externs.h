@@ -87,5 +87,7 @@ extern LSA_LIST_LINKS gLsaAdProviderStateList;
 
 extern PADCACHE_PROVIDER_FUNCTION_TABLE gpCacheProvider;
 
+extern BOOLEAN gbMultiTenancyEnabled;
+
 #endif /* __EXTERNS_H__ */
 

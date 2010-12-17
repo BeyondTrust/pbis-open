@@ -295,7 +295,10 @@ ADState_GetJoinedDomainList(
     PSTR pszSubKeyPtr = NULL;
     PSTR* ppszDomainList = NULL;
     DWORD dwSubKeysLen = 0;
-    DWORD dwIndex = 0;
+    DWORD dwIndexKeys = 0;
+    DWORD dwIndexDomains = 0;
+    HANDLE hPstore = NULL;
+    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
 
     dwError = RegOpenServer(&hReg);
     BAIL_ON_LSA_ERROR(dwError);
@@ -326,9 +329,14 @@ ADState_GetJoinedDomainList(
                       (PVOID*)&ppszDomainList);
         BAIL_ON_LSA_ERROR(dwError);
 
-        for (dwIndex = 0; dwIndex < dwSubKeysLen; dwIndex++)
+        dwError = LwpsOpenPasswordStore(
+                      LWPS_PASSWORD_STORE_DEFAULT,
+                      &hPstore);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        for (dwIndexKeys = 0, dwIndexDomains = 0 ; dwIndexKeys < dwSubKeysLen; dwIndexKeys++)
         {
-            dwError = LwWc16sToMbs(ppwszSubKeys[dwIndex], &pszSubKey);
+            dwError = LwWc16sToMbs(ppwszSubKeys[dwIndexKeys], &pszSubKey);
             BAIL_ON_LSA_ERROR(dwError);
 
             pszSubKeyPtr = strrchr(pszSubKey, '\\');
@@ -336,27 +344,58 @@ ADState_GetJoinedDomainList(
             {
                 dwError = LwAllocateString(
                               ++pszSubKeyPtr,
-                              &ppszDomainList[dwIndex]);
+                              &ppszDomainList[dwIndexDomains]);
                 BAIL_ON_LSA_ERROR(dwError);
 
                 LW_SAFE_FREE_STRING(pszSubKey);
             }
             else
             {
-                ppszDomainList[dwIndex] = pszSubKey;
+                ppszDomainList[dwIndexDomains] = pszSubKey;
                 pszSubKey = NULL;
+            }
+
+            if (pPasswordInfo)
+            {
+                LwpsFreePasswordInfo(hPstore, pPasswordInfo);
+                pPasswordInfo = NULL;
+            }
+
+            dwError = LwpsGetPasswordByDomainName(
+                          hPstore,
+                          ppszDomainList[dwIndexDomains],
+                          &pPasswordInfo);
+            if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
+            {
+                // The domain is not joined.
+                dwError = 0;
+                LW_SAFE_FREE_STRING(ppszDomainList[dwIndexDomains]);
+            }
+            else
+            {
+                dwIndexDomains++;
             }
         }
     }
 
     *pppszDomainList = ppszDomainList;
-    *pdwDomainCount = dwSubKeysLen;
+    *pdwDomainCount = dwIndexDomains;
 
 cleanup:
 
-    for (dwIndex = 0; dwIndex < dwSubKeysLen; dwIndex++)
+    if (hPstore)
     {
-        LW_SAFE_FREE_MEMORY(ppwszSubKeys[dwIndex]);
+        if (pPasswordInfo)
+        {
+            LwpsFreePasswordInfo(hPstore, pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+        LwpsClosePasswordStore(hPstore);
+    }
+
+    for (dwIndexKeys = 0; dwIndexKeys < dwSubKeysLen; dwIndexKeys++)
+    {
+        LW_SAFE_FREE_MEMORY(ppwszSubKeys[dwIndexKeys]);
     }
     LW_SAFE_FREE_MEMORY(ppwszSubKeys);
 

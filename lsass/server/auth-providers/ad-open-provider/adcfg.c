@@ -139,6 +139,8 @@ AD_InitializeConfig(
     pConfig->DomainManager.ppszTrustExceptionList = NULL;
     pConfig->DomainManager.dwTrustExceptionCount = 0;
 
+    pConfig->bMultiTenancyEnabled = FALSE;
+
     dwError = LwAllocateString(
                     AD_DEFAULT_SHELL,
                     &pConfig->pszShell);
@@ -529,7 +531,8 @@ AD_ReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.pszaIgnoreUserNameList
+            &StagingConfig.pszaIgnoreUserNameList,
+            NULL
         },
         {
             "IgnoreGroupNameList",
@@ -538,7 +541,18 @@ AD_ReadRegistry(
             0,
             MAXDWORD,
             NULL,
-            &StagingConfig.pszaIgnoreGroupNameList
+            &StagingConfig.pszaIgnoreGroupNameList,
+            NULL
+        },
+        {
+            "MultiTenancyEnabled",
+            TRUE,
+            LsaTypeBoolean,
+            0,
+            MAXDWORD,
+            NULL,
+            &StagingConfig.bMultiTenancyEnabled,
+            NULL
         }
     };
 
