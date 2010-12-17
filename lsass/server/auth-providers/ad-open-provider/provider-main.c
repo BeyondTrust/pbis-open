@@ -612,6 +612,34 @@ AD_ClearProviderState(
 }
 
 static
+DWORD
+AD_SafeRemoveJoinInfo(
+    IN PCSTR pszDomainName
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AD_PROVIDER_STATE pState = NULL;
+
+    ENTER_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+
+    pState = AD_FindStateInLock(pszDomainName);
+
+    if (pState)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+    }
+    else
+    {
+        dwError = LwpsDeleteDomainInAllStores(pszDomainName);
+    }
+
+    LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
+
+    return dwError;
+}
+
+static
 VOID
 LsaAdProviderStateDestroy(
     IN PLSA_AD_PROVIDER_STATE pState
@@ -2382,6 +2410,9 @@ AD_JoinDomain(
     BAIL_ON_LSA_ERROR(dwError);
     bRemoveFromList = TRUE;
 
+    dwError = LwpsDeleteDomainInAllStores(pRequest->pszDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LsaJoinDomain(
         pRequest->pszHostname,
         pRequest->pszHostDnsDomain,
@@ -2552,8 +2583,10 @@ AD_LeaveDomainInternal(
                   &pContext->pState);
     if (dwError == LW_ERROR_NOT_HANDLED)
     {
-        // not joined
-        dwError = 0;
+        // not joined, ensure pstore is clean
+        dwError = AD_SafeRemoveJoinInfo(pszDomain);
+        BAIL_ON_LSA_ERROR(dwError);
+
         goto cleanup;
     }
     BAIL_ON_LSA_ERROR(dwError);

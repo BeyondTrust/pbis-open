@@ -952,7 +952,7 @@ RegDB_DeleteDomainEntry(
         BAIL_ON_LWPS_ERROR(dwError);
     }
 
-    if (!pszDomainName ||
+    if (!pszDomainName || !pszDefaultDomain ||
         strcmp(pszDomainName, pszDefaultDomain) == 0)
     {
         RegDB_SetDefaultJoinedDomain(
