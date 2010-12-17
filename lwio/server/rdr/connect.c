@@ -965,13 +965,8 @@ RdrTransceiveTreeConnect(
     BAIL_ON_NT_STATUS(status);
 
     assert(packetByteCount <= UINT16_MAX);
-    pHeader->byteCount = (uint16_t) packetByteCount;
+    pHeader->byteCount = SMB_HTOL16((uint16_t) packetByteCount);
     pContext->Packet.bufferUsed += packetByteCount;
-
-    // byte order conversions
-    SMB_HTOL16_INPLACE(pHeader->flags);
-    SMB_HTOL16_INPLACE(pHeader->passwordLength);
-    SMB_HTOL16_INPLACE(pHeader->byteCount);
 
     status = SMBPacketMarshallFooter(&pContext->Packet);
     BAIL_ON_NT_STATUS(status);
