@@ -1010,8 +1010,8 @@ rpcd_network_thread(
 
         if (!STATUS_OK(&status))
         {
-            printf("(rpcd) Could not listen on %s: %x.  Retrying in %i seconds\n",
-                   network_protseqs[index], status, (int) retry_interval.tv_sec);
+            printf("(rpcd) Could not listen on %s: %lx.  Retrying in %i seconds\n",
+                   network_protseqs[index], (long) status, (int) retry_interval.tv_sec);
             dcethread_delay(&retry_interval);
         }
         else
