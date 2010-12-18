@@ -147,5 +147,20 @@ LWNetSrvLogErrorEvent(
     PCSTR  pszData
     );
 
+
+DWORD 
+LWNetSrvStartNetBios(
+    VOID
+    );
+
+
+DWORD LWNetNbResolveName(
+    IN PSTR pszHostName,
+    IN UINT16 flags,
+    OUT struct in_addr **retAddrs,
+    OUT PDWORD retAddrsLen
+    );
+
+
 #endif /* __LWNETSRVAPI_H__ */
 

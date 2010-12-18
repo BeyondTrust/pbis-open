@@ -55,3 +55,8 @@
     default = dword:0000000F 
     doc = "" 
 }
+
+"NetBiosSupportEnable" = {
+    default = dword:00000000
+    doc = "Enable NetBIOS name resolution. 0=off 1=on"
+}

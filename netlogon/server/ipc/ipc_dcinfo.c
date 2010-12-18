@@ -15,7 +15,7 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.  You should have received a copy of the GNU General
- * Public License along with this program.  If not, see 
+ * Public License along with this program.  If not, see
  * <http://www.gnu.org/licenses/>.
  *
  * LIKEWISE SOFTWARE MAKES THIS SOFTWARE AVAILABLE UNDER OTHER LICENSING
@@ -38,11 +38,11 @@
  * Abstract:
  *
  *        Likewise Site Manager
- * 
+ *
  *        Inter-process communication (Server) API for querying DC Info
  *
  * Authors: Brian Dunstan (bdunstan@likewisesoftware.com)
- *         
+ *
  */
 #include "includes.h"
 
@@ -64,7 +64,7 @@ LWNetSrvIpcCreateError(
         dwError = LWNetAllocateString(pszErrorMessage, (PSTR*) &pError->pszErrorMessage);
         BAIL_ON_LWNET_ERROR(dwError);
     }
-    
+
     pError->dwError = dwErrorCode;
 
     *ppError = pError;
@@ -226,15 +226,15 @@ LWNetSrvIpcGetDCName(
     {
         dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         pOut->tag = LWNET_R_ERROR;
         pOut->data = pError;
     }
-    
+
 cleanup:
 
     return MAP_LWNET_ERROR(dwError);
-    
+
 error:
 
     if(pDCInfo != NULL)
@@ -283,11 +283,11 @@ LWNetSrvIpcGetDCList(
 
         dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         pOut->tag = LWNET_R_ERROR;;
         pOut->data = pError;
     }
-    
+
 cleanup:
 
     return MAP_LWNET_ERROR(dwError);
@@ -331,7 +331,7 @@ LWNetSrvIpcGetDCTime(
     {
         dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         pOut->tag = LWNET_R_ERROR;
         pOut->data = pError;
     }
@@ -345,7 +345,7 @@ cleanup:
     }
 
     return MAP_LWNET_ERROR(dwError);
-    
+
 error:
 
     goto cleanup;
@@ -363,26 +363,26 @@ LWNetSrvIpcGetDomainController(
     PLWNET_IPC_CONST_STRING pReq = pIn->data;
     PLWNET_IPC_STRING pRes = NULL;
     PLWNET_IPC_ERROR pError = NULL;
-    
+
     dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
     BAIL_ON_LWNET_ERROR(dwError);
-    
+
     dwError = LWNetSrvGetDomainController(
         pReq->pszString,
         &pRes->pszString
         );
-    
+
     if (!dwError)
     {
         pOut->tag = LWNET_R_GET_DOMAIN_CONTROLLER;
         pOut->data = pRes;
-        
+
     }
     else
     {
         dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         pOut->tag = LWNET_R_ERROR;
         pOut->data = pError;
     }
@@ -396,7 +396,7 @@ cleanup:
     }
 
     return MAP_LWNET_ERROR(dwError);
-    
+
 error:
 
     LWNET_SAFE_FREE_MEMORY(pRes);
@@ -415,14 +415,14 @@ LWNetSrvIpcGetCurrentDomain(
     DWORD dwError = 0;
     PLWNET_IPC_STRING pRes = NULL;
     PLWNET_IPC_ERROR pError = NULL;
-    
+
     dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
     BAIL_ON_LWNET_ERROR(dwError);
-    
+
     dwError = LWNetSrvGetCurrentDomain(
         &pRes->pszString
         );
-    
+
     if (!dwError)
     {
         pOut->tag = LWNET_R_GET_CURRENT_DOMAIN;
@@ -432,20 +432,20 @@ LWNetSrvIpcGetCurrentDomain(
     {
         dwError = LWNetSrvIpcCreateError(dwError, NULL, &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         pOut->tag = LWNET_R_ERROR;
         pOut->data = pError;
     }
-    
+
 cleanup:
-    
+
     if (pRes && pError)
     {
         LWNetFreeMemory(pRes);
     }
 
     return MAP_LWNET_ERROR(dwError);
-    
+
 error:
 
     LWNET_SAFE_FREE_MEMORY(pRes);
@@ -453,36 +453,91 @@ error:
     goto cleanup;
 }
 
+static DWORD
+LWNetSrvIpcResolveNetBiosName(
+    PSTR pszHostName,
+    LWMsgParams* pOut)
+{
+    struct in_addr *nbAddrs = {0};
+    DWORD nbAddrsLen = 0;
+    DWORD dwError = 0;
+    DWORD i = 0;
+    DWORD nbAddrsAlloc = 0;
+    PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE pRes = NULL;
+    PLWNET_RESOLVE_ADDR *ppResAddr = NULL;
+    PLWNET_RESOLVE_ADDR pResAddr = NULL;
+    PWSTR pwszCanonName = NULL;
 
-DWORD
-LWNetSrvIpcResolveName(
-    LWMsgCall* pCall,
-    const LWMsgParams* pIn,
-    LWMsgParams* pOut,
-    void* data
-    )
+    dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetNbResolveName(
+                  pszHostName,
+                  0,
+                  &nbAddrs,
+                  &nbAddrsLen);
+    if (dwError)
+    {
+        dwError = ERROR_BAD_NET_NAME;
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+
+    dwError = LWNetAllocateMemory(sizeof(*ppResAddr) * nbAddrsLen,
+                                  (void*) &ppResAddr);
+    BAIL_ON_LWNET_ERROR(dwError);
+    for (i=0; i<nbAddrsLen; i++)
+    {
+        dwError = LWNetAllocateMemory(sizeof(*pResAddr),
+                                      (void*) &pResAddr);
+        BAIL_ON_LWNET_ERROR(dwError);
+
+        pResAddr->AddressType = LWNET_IP_ADDR_V4;
+        memcpy(pResAddr->Address.Ip4Addr,
+               &nbAddrs[i],
+               4);
+        ppResAddr[i] = pResAddr;
+        nbAddrsAlloc = i;
+    }
+
+    dwError = LwRtlWC16StringAllocateFromCString(
+                  &pwszCanonName,
+                  pszHostName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    pRes->pwszCanonName = pwszCanonName; // Return value requested
+    pRes->ppAddressList = ppResAddr;
+    pRes->dwAddressListLen = nbAddrsLen;
+    pOut->tag = LWNET_R_RESOLVE_NAME;
+    pOut->data = pRes;
+cleanup:
+    return dwError;
+
+error:
+    for (i=0; i<nbAddrsAlloc; i++)
+    {
+        LWNET_SAFE_FREE_MEMORY(ppResAddr[i]);
+    }
+    LWNET_SAFE_FREE_MEMORY(ppResAddr);
+    goto cleanup;
+}
+
+static DWORD
+LWNetSrvIpcResolveDnsName(
+    PSTR pszHostName,
+    LWMsgParams* pOut)
 {
     DWORD dwError = 0;
-    LWNET_RESOLVE_NAME_ADDRESS *pReq = pIn->data;
     PLWNET_IPC_ERROR pError = NULL;
-    PWSTR pwszHostName = NULL;
-    PSTR pszHostName = NULL;
     PWSTR pwszCanonName = NULL;
     PLWNET_RESOLVE_ADDR *ppResAddr = NULL;
     PLWNET_RESOLVE_ADDR pResAddr = NULL;
-    DWORD dwResAddrLen = 2;
+    DWORD dwResAddrLen = 0;
     PLWNET_RESOLVE_NAME_ADDRESS_RESPONSE pRes = NULL;
     DWORD i = 0;
     int addrinfoResult = 0;
     struct addrinfo hints;
     struct addrinfo *result = NULL;
     struct addrinfo *rp = NULL;
-
-
-    /* Convert hostname to resolve from WC to C string */
-    pwszHostName = pReq->pwszHostName;
-    dwError = LwRtlCStringAllocateFromWC16String(&pszHostName, pwszHostName);
-    BAIL_ON_LWNET_ERROR(dwError);
 
     /*
      * Resolve pszHostName using DNS then NetBIOS
@@ -503,20 +558,18 @@ LWNetSrvIpcResolveName(
     else
     {
         dwError = ERROR_BAD_NET_NAME;
-        dwError = LWNetSrvIpcCreateError(dwError, "DNS Lookup Failed", &pError);
         BAIL_ON_LWNET_ERROR(dwError);
-        goto cleanup;
     }
 
     dwError = LWNetAllocateMemory(sizeof(*pRes), (void**) (void*) &pRes);
     BAIL_ON_LWNET_ERROR(dwError);
-    
+
     for (dwResAddrLen = 0, rp = result; rp; rp = rp->ai_next)
     {
         dwResAddrLen++;
     }
-    
-    dwError = LWNetAllocateMemory(sizeof(*ppResAddr) * dwResAddrLen, 
+
+    dwError = LWNetAllocateMemory(sizeof(*ppResAddr) * dwResAddrLen,
                                   (void*) &ppResAddr);
     BAIL_ON_LWNET_ERROR(dwError);
     for (i = 0, rp = result; rp; rp = rp->ai_next, i++)
@@ -524,19 +577,19 @@ LWNetSrvIpcResolveName(
         dwError = LWNetAllocateMemory(sizeof(*pResAddr),
                                       (void*) &pResAddr);
         BAIL_ON_LWNET_ERROR(dwError);
-        
+
         if (rp->ai_family == PF_INET)
         {
             pResAddr->AddressType = LWNET_IP_ADDR_V4;
-            memcpy(pResAddr->Address.Ip4Addr, 
-                   &((struct sockaddr_in *)rp->ai_addr)->sin_addr, 
+            memcpy(pResAddr->Address.Ip4Addr,
+                   &((struct sockaddr_in *)rp->ai_addr)->sin_addr,
                    4);
         }
         else if (rp->ai_family == PF_INET6)
         {
             pResAddr->AddressType = LWNET_IP_ADDR_V6;
-            memcpy(pResAddr->Address.Ip6Addr, 
-                   &((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr, 
+            memcpy(pResAddr->Address.Ip6Addr,
+                   &((struct sockaddr_in6 *)rp->ai_addr)->sin6_addr,
                    16);
         }
         ppResAddr[i] = pResAddr;
@@ -549,7 +602,6 @@ LWNetSrvIpcResolveName(
     pOut->data = pRes;
 
 cleanup:
-    LWNET_SAFE_FREE_STRING(pszHostName);
     freeaddrinfo(result);
 
     if (pError)
@@ -559,7 +611,7 @@ cleanup:
     }
 
     return MAP_LWNET_ERROR(dwError);
-    
+
 error:
     LWNET_SAFE_FREE_MEMORY(pwszCanonName);
     if (ppResAddr)
@@ -572,5 +624,56 @@ error:
     }
     LWNET_SAFE_FREE_MEMORY(pRes);
 
+    goto cleanup;
+}
+
+
+DWORD
+LWNetSrvIpcResolveName(
+    LWMsgCall* pCall,
+    const LWMsgParams* pIn,
+    LWMsgParams* pOut,
+    void* data
+    )
+{
+    DWORD dwError = 0;
+    LWNET_RESOLVE_NAME_ADDRESS *pReq = pIn->data;
+    PLWNET_IPC_ERROR pError = NULL;
+    PWSTR pwszHostName = NULL;
+    PSTR pszHostName = NULL;
+    PWSTR pwszCanonName = NULL;
+
+    /* Convert hostname to resolve from WC to C string */
+    pwszHostName = pReq->pwszHostName;
+    dwError = LwRtlCStringAllocateFromWC16String(&pszHostName, pwszHostName);
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LWNetSrvIpcResolveDnsName(
+                  pszHostName,
+                  pOut);
+    if (dwError)
+    {
+        dwError = LWNetSrvIpcResolveNetBiosName(
+                  pszHostName,
+                  pOut);
+    }
+    if (dwError)
+    {
+        dwError = LWNetSrvIpcCreateError(dwError, "DNS Lookup Failed", &pError);
+    }
+
+cleanup:
+    LWNET_SAFE_FREE_STRING(pszHostName);
+
+    if (pError)
+    {
+        pOut->data = pError;
+        pOut->tag = LWNET_R_ERROR;
+    }
+
+    return MAP_LWNET_ERROR(dwError);
+
+error:
+    LWNET_SAFE_FREE_MEMORY(pwszCanonName);
     goto cleanup;
 }

@@ -61,6 +61,7 @@ typedef struct _LWNET_SERVER_CONFIG {
     DWORD dwCLdapMaximumConnections;
     DWORD dwCLdapSearchTimeoutSeconds;
     DWORD dwCLdapSingleConnectionTimeoutSeconds;
+    DWORD dwNetBiosEnabled;
 } LWNET_SERVER_CONFIG, *PLWNET_SERVER_CONFIG;
 
 #define LWNET_PING_AGAIN_TIMEOUT_SECONDS (15 * 60)
@@ -78,6 +79,7 @@ LWNET_SERVER_CONFIG gLWNetServerConfig = {
     .dwCLdapMaximumConnections = LWNET_CLDAP_DEFAULT_MAXIMUM_CONNECTIONS,
     .dwCLdapSearchTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
     .dwCLdapSingleConnectionTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
+    .dwNetBiosEnabled = FALSE,
 };
 
 static
@@ -154,6 +156,15 @@ LWNET_CONFIG gConfig[] =
         -1,
         NULL,
         &gLWNetServerConfig.dwCLdapSingleConnectionTimeoutSeconds
+    },
+    {
+        "NetBiosSupportEnable",
+        TRUE,
+        LWNetTypeDword,
+        0,
+        1,
+        NULL,
+        &gLWNetServerConfig.dwNetBiosEnabled
     }
 };
 
@@ -240,4 +251,12 @@ LWNetConfigGetCLdapSingleConnectionTimeoutSeconds(
     )
 {
     return gLWNetServerConfig.dwCLdapSingleConnectionTimeoutSeconds;
+}
+
+DWORD
+LWNetConfigIsNetBiosEnabled(
+    VOID
+    )
+{
+    return gLWNetServerConfig.dwNetBiosEnabled;
 }

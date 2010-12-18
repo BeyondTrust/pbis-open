@@ -94,4 +94,10 @@ LWNetConfigGetCLdapSingleConnectionTimeoutSeconds(
     VOID
     );
 
+DWORD
+LWNetConfigIsNetBiosEnabled(
+    VOID
+    );
+
+
 #endif /* __LWNET_SERVER_CFG_H__ */

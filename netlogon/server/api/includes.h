@@ -59,6 +59,7 @@
 #include <lwmem.h>
 #include <reg/lwreg.h>
 #include <reg/regutil.h>
+#include <lw/base.h>
 
 #include <string.h>
 #include <arpa/inet.h>

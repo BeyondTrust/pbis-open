@@ -128,8 +128,6 @@ main(
     dwError = LwRtlCStringAllocateFromWC16String(&pszCanonName,
                                                  pwszCanonName);
     BAIL_ON_LWNET_ERROR(dwError);
-
-    printf("Responses = %d Host: '%s'\n", dwAddressListLen, pszCanonName);
  
     for (i=0; i<dwAddressListLen; i++)
     {
@@ -154,6 +152,7 @@ main(
             printf("IP Address = %s\n", pszAddress);
         }
     }
+    printf("Responses = %d Host: '%s'\n", dwAddressListLen, pszCanonName);
 
 cleanup:
     LWNetResolveNameFree(pwszCanonName, ppAddressList, dwAddressListLen);

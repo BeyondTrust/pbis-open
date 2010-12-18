@@ -66,6 +66,9 @@ LWNetSrvApiInit(
     dwError = LWNetInitializePlugin(LWNetConfigGetPluginPath());
     BAIL_ON_LWNET_ERROR(dwError);
 
+    dwError = LWNetSrvStartNetBios();
+    BAIL_ON_LWNET_ERROR(dwError);
+
 error:
     return dwError;
 }
