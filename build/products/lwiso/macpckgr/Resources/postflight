@@ -128,66 +128,81 @@ ConfigureDirectoryOwners()
     fi
 }
 
-stop_daemon()
+wait_for_lwsm_running_status()
 {
-    SERVICE=$1
-    SERVICE_NAME=com.likewisesoftware.$SERVICE
-    SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
+    status=1
 
-    if [ -f $SERVICE_DAEMON ]; then
-        launchctl list | grep $SERVICE_NAME > /dev/null
-        if [ $? -eq 0 ]; then
-            launchctl stop $SERVICE_NAME > /dev/null
-        fi
-    fi
+    while [ $status -ne 0 ]; do
+        /opt/likewise/bin/lwsm list > /dev/null 2>&1
+        status=$?
+        sleep 1
+    done
+
+    echo "Service lwsmd running"
 }
 
-start_daemon()
+wait_for_service_running_status()
 {
     SERVICE=$1
-    SERVICE_NAME=com.likewisesoftware.$SERVICE
+    status=1
 
-    launchctl start $SERVICE_NAME || exit 1
+    while [ $status -ne 0 ]; do
+        /opt/likewise/bin/lwsm status $SERVICE > /dev/null 2>&1
+        status=$?
+        sleep 1
+    done
+
+    echo "Service $SERVICE running"
 }
 
-configure_and_start_daemon()
+configure_and_start_lwsmd()
 {
-    SERVICE=$1
-    SERVICE_NAME=com.likewisesoftware.$SERVICE
+    SERVICE_NAME=com.likewisesoftware.lwsmd
     SERVICE_DAEMON=/Library/LaunchDaemons/$SERVICE_NAME.plist
     SERVICE_DAEMON_INSTALL=/etc/likewise/LaunchDaemons/$SERVICE_NAME.plist
 
     if [ -f $SERVICE_DAEMON_INSTALL ]; then
+        echo "Configuring and starting lwsmd service with launchctl"
         cp $SERVICE_DAEMON_INSTALL $SERVICE_DAEMON
-        launchctl load $SERVICE_DAEMON || exit 1
-        start_daemon $SERVICE || exit 1
+        launchctl load $SERVICE_DAEMON > /dev/null 2>&1
+        launchctl start $SERVICE_NAME > /dev/null 2>&1
+        wait_for_lwsm_running_status
     fi
+}
+
+restart_lwsmd()
+{
+    SERVICE_NAME=com.likewisesoftware.lwsmd
+
+    echo "Restarting lwsmd service with launchctl"
+    launchctl stop $SERVICE_NAME > /dev/null 2>&1
+    sleep 3
+    launchctl start $SERVICE_NAME > /dev/null 2>&1
+    wait_for_lwsm_running_status
+}
+
+configure_and_start_service()
+{
+    SERVICE=$1
+
+    /opt/likewise/bin/lwregshell set_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart 1 > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        /opt/likewise/bin/lwregshell add_value [HKEY_THIS_MACHINE\\Services\\$SERVICE] Autostart REG_DWORD 1 2>&1 || exit 1
+    fi
+
+    echo "Starting $SERVICE service with Likewise Service Manager"
+    /opt/likewise/bin/lwsm start $SERVICE > /dev/null 2>&1 || exit 1
+    wait_for_service_running_status $SERVICE
 }
 
 restore_daemon()
 {
     SERVICE=$1
 
-    if [ -f /tmp/$SERVICE.restart ]; then
-        configure_and_start_daemon $SERVICE
-        rm /tmp/$SERVICE.restart
+    if [ -f /tmp/${SERVICE}.restart ]; then
+        configure_and_restart_service $SERVICE
+        rm /tmp/${SERVICE}.restart
     fi
-}
-
-start_daemon_lwsmd()
-{
-    echo "Start Likewise Service Manager service"
-    configure_and_start_daemon lwsmd
-    if [ -f /tmp/lwsmd.restart ]; then
-        rm /tmp/lwsmd.restart
-    fi
-    echo "Start Likewise Registry service"
-    configure_and_start_daemon lwregd
-    if [ -f /tmp/lwregd.restart ]; then
-        rm /tmp/lwregd.restart
-    fi
-    echo "Pausing for services to initialize"
-    sleep 5
 }
 
 autostart_daemons()
@@ -195,8 +210,8 @@ autostart_daemons()
     daemon=""
     for daemon in ${AUTOSTART}
     do
-        echo "Auto-configuring Likewise ${daemon} daemon"
-        configure_and_start_daemon "${daemon}"
+        echo "Auto-configuring Likewise ${daemon} service"
+        configure_and_start_service "${daemon}"
         if [ -f /tmp/${daemon}.restart ]; then
             rm /tmp/${daemon}.restart
         fi
@@ -208,14 +223,14 @@ restore_daemons()
     daemon=""
     for daemon in ${DAEMONS}
     do
-        echo "Restoring Likewise ${daemon} daemon"
+        echo "Restoring Likewise ${daemon} service"
         restore_daemon "${daemon}"
     done
 }
 
 enable_plugin()
 {
-    PLUGIN_DIR_OPEN=LWIDSPlugIn.dsplug
+    PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
     FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
 
@@ -382,13 +397,13 @@ restore_configuration()
 
 UPGRADEDIR5=/tmp/lw-upgrade-5
 UPGRADEDIR6=/tmp/lw-upgrade-6
-AUTOSTART="netlogond lwiod dcerpcd"
-DAEMONS="eventlogd lsassd"
+AUTOSTART="netlogon lwio dcerpc"
+DAEMONS="eventlog lsass"
 
 echo "Finalizing Likewise installation process"
 
 # Start service manager for registry import
-start_daemon_lwsmd
+configure_and_start_lwsmd
 
 # Import configuration files and the old pstore into the registry
 restore_5_0123_configuration
@@ -398,9 +413,7 @@ restore_6_0_configuration
 import_registry
 
 # Stop/start service manager after registry import
-echo "Restart Likewise Service Manager service"
-stop_daemon lwsmd
-start_daemon lwsmd
+restart_lwsmd
 
 # Start any automatically-started daemons
 autostart_daemons
@@ -417,6 +430,21 @@ enable_plugin
 # Add Likewise DS Plugin to Search list
 /usr/bin/dscl /Search -create / SearchPolicy CSPSearchPath
 /usr/bin/dscl /Search -append / CSPSearchPath "/Likewise - Active Directory"
+
+# Add Likewise Utilities folder to Applications location in Finder. Shortcut
+# the Likewise Domain Join application to here.
+if test -d /Applications/Likewise\ Utilities; then
+    echo "Likewise Utilities folder already exists"
+else
+    mkdir -p /Applications/Likewise\ Utilities
+    if test -f /Applications/Likewise\Utilities/Likewise\ Domain\ Join; then
+        echo "Likewise Domain Join application already created in utilities fold
+er"
+    else
+        ln -s /opt/likewise/bin/Likewise\ Domain\ Join.app /Applications/Likewis
+e\ Utilities/.
+    fi
+fi
 
 if /opt/likewise/bin/lw-get-current-domain > /dev/null 2>&1; then
     JOINED="yes"
@@ -435,7 +463,7 @@ if [ -z "$JOINED" ]; then
     log_info "Use the domainjoin-cli program to join your computer to an Active "
     log_info "Directory domain which will enable logons to your system with Active Directory "
     log_info "user accounts."
-    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app/Contents/MacOS/Likewise\ Domain\ Join&
+    open -a /opt/likewise/bin/Likewise\ Domain\ Join.app&
 else
     log_info ""
     log_info "Your computer is joined to the following domain:"

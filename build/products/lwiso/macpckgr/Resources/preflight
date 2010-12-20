@@ -93,7 +93,7 @@ save_daemons()
 
 disable_plugin()
 {
-    PLUGIN_DIR_OPEN=LWIDSPlugIn.dsplug
+    PLUGIN_DIR_OPEN=LWIDSPlugin.dsplug
     SRC_DIR=/opt/likewise/lib
     FRAMEWORK_DIR="/System/Library/Frameworks/DirectoryService.framework/Resources/Plugins"
 
