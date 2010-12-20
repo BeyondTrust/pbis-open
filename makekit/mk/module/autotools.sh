@@ -66,6 +66,9 @@ _mk_at_system_string()
         x86_64)
             __arch="x86_64-unknown"
             ;;
+        sparc*)
+            __arch="sparc-sun"
+            ;;
         *)
             __arch="unknown-unknown"
             ;;

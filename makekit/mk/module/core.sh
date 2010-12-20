@@ -834,7 +834,9 @@ _mk_core_symlink()
 
     mk_msg "${2#$MK_STAGE_DIR} -> $1"
     mk_mkdir "${2%/*}"
-    mk_run_or_fail ln -sf "$1" "$2"
+    # ln -f doesn't work everywhere, so remove the file by hand first
+    mk_safe_rm "$2"
+    mk_run_or_fail ln -s "$1" "$2"
 }
 
 _mk_core_stage()

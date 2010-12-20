@@ -200,15 +200,39 @@ option()
             ;;
     esac
 
-    case `uname -m` in
-        i?86|i86pc)
-            _default_MK_BUILD_ARCH="x86"
-            ;;
-        x86_64|amd64)
-            _default_MK_BUILD_ARCH="x86_64"
+    case "$_default_MK_BUILD_OS" in
+        solaris)
+            _isainfo="`isainfo`"
+            case "$_isainfo" in
+                "sparcv9"*)
+                    _default_MK_BUILD_ARCH="sparcv9"
+                    ;;
+                "sparc"*)
+                    _default_MK_BUILD_ARCH="sparc"
+                    ;;
+                "amd64"*)
+                    _default_MK_BUILD_ARCH="x86_64"
+                    ;;
+                "i386"*)
+                    _default_MK_BUILD_ARCH="x86"
+                    ;;
+                *)
+                    mk_fail "unknown isainfo: $_isainfo"
+                    ;;
+            esac
             ;;
         *)
-            mk_fail "unknown architecture: `uname -m`"
+            case `uname -m` in
+                i?86|i86pc)
+                    _default_MK_BUILD_ARCH="x86"
+                    ;;
+                x86_64|amd64)
+                    _default_MK_BUILD_ARCH="x86_64"
+                    ;;
+                *)
+                    mk_fail "unknown architecture: `uname -m`"
+                    ;;
+            esac
             ;;
     esac
 
@@ -218,6 +242,15 @@ option()
             ;;
         "linux-x86_64")
             _default_MK_BUILD_ISAS="x86_64 x86_32"
+            ;;
+        "solaris-x86_64")
+            _default_MK_BUILD_ISAS="x86_32 x86_64"
+            ;;
+        *"-sparcv9")
+            _default_MK_BUILD_ISAS="sparc_32 sparc_64"
+            ;;
+        *"-sparc")
+            _default_MK_BUILD_ISAS="sparc_32"
             ;;
         *)
             _default_MK_BUILD_ISAS="$_default_MK_BUILD_ARCH"
