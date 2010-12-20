@@ -5,7 +5,7 @@ make()
         LIBS='ldap ldap_r' \
         HEADERDEPS="gssapi.h sasl/sasl.h" \
         LIBDEPS="gssapi_krb5 sasl2" \
-        CPPFLAGS="-D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE" \
+        CPPFLAGS="-D_REENTRANT -DLDAP_CONNECTIONLESS -D_GNU_SOURCE -D_AVL_H" \
         CFLAGS="-fPIC" \
         --disable-static \
         --enable-shared \
