@@ -49,6 +49,9 @@
 #ifndef __AD_CFG_H__
 #define __AD_CFG_H__
 
+#define AD_PROVIDER_REGKEY "Services\\lsass\\Parameters\\Providers\\ActiveDirectory"
+#define AD_PROVIDER_DOMAINJOIN_REGKEY AD_PROVIDER_REGKEY "\\DomainJoin"
+
 #define ENTER_AD_CONFIG_RW_READER_LOCK(bInLock, pState)    \
         if (!bInLock) {                                    \
            AD_ConfigLockAcquireRead(pState);               \
@@ -75,7 +78,8 @@
 
 DWORD
 AD_ReadRegistry(
-    PLSA_AD_CONFIG pConfig
+    IN OPTIONAL PCSTR pszDomainName,
+    OUT PLSA_AD_CONFIG pConfig
     );
 
 DWORD

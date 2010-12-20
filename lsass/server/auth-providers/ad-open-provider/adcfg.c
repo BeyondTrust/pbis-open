@@ -49,6 +49,9 @@
 
 #include "adprovider.h"
 
+#define AD_PROVIDER_POLICY_REGKEY "Policy\\" AD_PROVIDER_REGKEY
+#define AD_PROVIDER_POLICY_DOMAINJOIN_REGKEY "Policy\\" AD_PROVIDER_DOMAINJOIN_REGKEY
+
 static
 DWORD
 AD_CheckList(
@@ -222,10 +225,13 @@ AD_FreeConfigMemberInList(
 
 DWORD
 AD_ReadRegistry(
-    PLSA_AD_CONFIG pConfig
+    IN OPTIONAL PCSTR pszDomainName,
+    OUT PLSA_AD_CONFIG pConfig
     )
 {
     DWORD dwError = 0;
+    PSTR pszDomainKey = NULL;
+    PSTR pszDomainPolicyKey = NULL;
     PSTR pszUmask = NULL;
     PSTR pszUnresolvedMemberList = NULL;
     DWORD dwMachinePasswordSyncLifetime = 0;
@@ -576,11 +582,35 @@ AD_ReadRegistry(
     dwMachinePasswordSyncLifetime = AD_MACHINE_PASSWORD_SYNC_DEFAULT_SECS;
 
     dwError = LsaProcessConfig(
-                "Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
-                "Policy\\Services\\lsass\\Parameters\\Providers\\ActiveDirectory",
+                AD_PROVIDER_REGKEY,
+                AD_PROVIDER_POLICY_REGKEY,
                 ADConfigDescription,
                 sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
     BAIL_ON_LSA_ERROR(dwError);
+
+    if (pszDomainName)
+    {
+        dwError = LwAllocateStringPrintf(
+                     &pszDomainKey,
+                     "%s\\%s",
+                     AD_PROVIDER_DOMAINJOIN_REGKEY,
+                     pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwAllocateStringPrintf(
+                     &pszDomainPolicyKey,
+                     "%s\\%s",
+                     AD_PROVIDER_POLICY_DOMAINJOIN_REGKEY,
+                     pszDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LsaProcessConfig(
+                      pszDomainKey,
+                      pszDomainPolicyKey,
+                      ADConfigDescription,
+                      sizeof(ADConfigDescription)/sizeof(ADConfigDescription[0]));
+        BAIL_ON_LSA_ERROR(dwError);
+    }
 
     dwError = LsaProcessConfig(
                 "Services\\lsass\\Parameters",
@@ -613,6 +643,8 @@ AD_ReadRegistry(
     AD_TransferConfigContents(&StagingConfig, pConfig);
 
 cleanup:
+    LW_SAFE_FREE_STRING(pszDomainKey);
+    LW_SAFE_FREE_STRING(pszDomainPolicyKey);
     LW_SAFE_FREE_STRING(pszUmask);
     LW_SAFE_FREE_STRING(pszUnresolvedMemberList);
     LW_SAFE_FREE_STRING(pszExcludeTrustsListMultiString);

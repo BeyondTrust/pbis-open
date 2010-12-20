@@ -825,7 +825,9 @@ LsaAdProviderStateCreate(
     dwError = AD_InitializeConfig(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_ReadRegistry(&config);
+    dwError = AD_ReadRegistry(
+                  pState->pszDomainName,
+                  &config);
     BAIL_ON_LSA_ERROR(dwError);
                 
     dwError = AD_TransferConfigContents(
@@ -970,7 +972,7 @@ AD_InitializeProvider(
     dwError = AD_InitializeConfig(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_ReadRegistry(&config);
+    dwError = AD_ReadRegistry(NULL, &config);
     BAIL_ON_LSA_ERROR(dwError);
 
     gbMultiTenancyEnabled = config.bMultiTenancyEnabled;
@@ -4251,7 +4253,9 @@ AD_RefreshConfigurationByDomain(
     dwError = AD_InitializeConfig(&config);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_ReadRegistry(&config);
+    dwError = AD_ReadRegistry(
+                  pState->pszDomainName,
+                  &config);
     BAIL_ON_LSA_ERROR(dwError);
 
     ENTER_AD_CONFIG_RW_WRITER_LOCK(bInLock, pState);

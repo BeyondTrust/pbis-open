@@ -46,10 +46,6 @@
 
 #include "adprovider.h"
 
-#define LSASS_PARAMETERS_REGKEY "Services\\lsass\\Parameters"
-#define LSASS_PROVIDERS_REGKEY "Providers"
-#define AD_REGKEY "ActiveDirectory"
-#define AD_PROVIDER_REGKEY LSASS_PARAMETERS_REGKEY "\\" LSASS_PROVIDERS_REGKEY "\\" AD_REGKEY "\\" "DomainJoin"
 #define AD_PROVIDER_DATA_REGKEY "ProviderData"
 #define AD_LINKEDCELL_REGKEY    "LinkedCell"
 #define AD_DOMAIN_TRUST_REGKEY  "DomainTrust"
@@ -306,7 +302,7 @@ ADState_GetJoinedDomainList(
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY);
+                  AD_PROVIDER_DOMAINJOIN_REGKEY);
     if (dwError)
     {
         dwError = 0;
@@ -316,7 +312,7 @@ ADState_GetJoinedDomainList(
     dwError = RegUtilGetKeys(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY,
+                  AD_PROVIDER_DOMAINJOIN_REGKEY,
                   NULL,
                   &ppwszSubKeys,
                   &dwSubKeysLen);
@@ -433,7 +429,7 @@ ADState_ReadFromRegistry(
     dwError = LwAllocateStringPrintf(
                   &pszRegistryPath,
                   "%s\\%s",
-                  AD_PROVIDER_REGKEY,
+                  AD_PROVIDER_DOMAINJOIN_REGKEY,
                   pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -546,7 +542,7 @@ ADState_WriteToRegistry(
     dwError = LwAllocateStringPrintf(
                   &pszRegistryPath,
                   "%s\\%s",
-                  AD_PROVIDER_REGKEY,
+                  AD_PROVIDER_DOMAINJOIN_REGKEY,
                   pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -890,7 +886,7 @@ ADState_ReadRegProviderData(
     dwError = RegUtilIsValidKey(
                   hReg,
                   HKEY_THIS_MACHINE,
-                  AD_PROVIDER_REGKEY "\\" AD_PROVIDER_DATA_REGKEY);
+                  AD_PROVIDER_DOMAINJOIN_REGKEY "\\" AD_PROVIDER_DATA_REGKEY);
     if (dwError)
     {
         dwError = 0;
