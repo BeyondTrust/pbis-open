@@ -80,17 +80,31 @@ lw_check_iconv()
         # on char** if it could not find one.  Even if
         # we build libiconv ourselves, we still need to
         # perform these checks so we know what prototype it
-        # will use.
+        # will use.  This is why we use LDFLAGS to attempt
+        # linking to the system libiconv
+        if [ "$HAVE_LIB_ICONV" = "internal" ]
+        then
+            if mk_check_function \
+                FUNCTION="iconv_open" \
+                HEADERDEPS="iconv.h stddef.h" \
+                LDFLAGS="-liconv"
+            then
+                _ICONV_LDFLAGS="-liconv"
+            else
+                _ICONV_LDFLAGS=""
+            fi
+        fi
+
         if mk_check_function \
             PROTOTYPE='size_t iconv (iconv_t, char **, size_t *, char **, size_t*)' \
             HEADERDEPS="iconv.h stddef.h" \
-            LIBDEPS="$LIB_ICONV"
+            LDFLAGS="$_ICONV_LDFLAGS"
         then
             result="char**"
         elif mk_check_function \
             PROTOTYPE='size_t iconv (iconv_t, const char **, size_t *, char **, size_t*)' \
             HEADERDEPS="iconv.h stddef.h" \
-            LIBDEPS="$LIB_ICONV"
+            LDFLAGS="$_ICONV_LDFLAGS"
         then
             result="const char**"
         elif [ "$HAVE_LIB_ICONV" = "internal" ]
