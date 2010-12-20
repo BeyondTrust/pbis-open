@@ -1008,6 +1008,7 @@ case "$host_os:$host_cpu" in
         AC_TRY_COMPILE([
         #include <sys/types.h> 
         #include <security/pam_appl.h>
+        #include <security/pam_modules.h>
         ],
         [
             const pam_handle_t * pamh = NULL;
