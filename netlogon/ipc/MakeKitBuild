@@ -4,6 +4,6 @@ make()
         GROUP="ipc" \
         SOURCES="ipc_protocol.c" \
         INCLUDEDIRS=". ../include" \
-        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h" \
+        HEADERDEPS="lwmsg/lwmsg.h lwadvapi.h reg/lwreg.h" \
         LIBDEPS="lwmsg"
 }
