@@ -190,7 +190,7 @@ UpdateEventArgs(
     struct pollfd* pPoll
     )
 {
-    if (pPoll[pTask->PollIndex].revents)
+    if (pTask->Fd >= 0 && pPoll[pTask->PollIndex].revents)
     {
         if (pPoll[pTask->PollIndex].revents & POLLIN)
         {
@@ -873,7 +873,7 @@ AddPollFd(
             NewCapacity = 16;
         }
 
-        pNewPoll = LwRtlMemoryRealloc(pThread->pPoll, NewCapacity * sizeof(pNewPoll));
+        pNewPoll = LwRtlMemoryRealloc(pThread->pPoll, NewCapacity * sizeof(*pNewPoll));
         if (!pNewPoll)
         {
             status = STATUS_INSUFFICIENT_RESOURCES;
@@ -882,8 +882,8 @@ AddPollFd(
 
         for (index = pThread->PollCapacity; index < NewCapacity; index++)
         {
+            memset(&pNewPoll[index], 0, sizeof(*pNewPoll));
             pNewPoll[index].fd = -1;
-            pNewPoll[index].events = 0;
         }
 
         index = pThread->PollCapacity;
@@ -896,8 +896,8 @@ AddPollFd(
         pThread->PollSize = index + 1;
     }
 
+    memset(&pThread->pPoll[index], 0, sizeof(pThread->pPoll[index]));
     pThread->pPoll[index].fd = Fd;
-    pThread->pPoll[index].events = 0;
 
     *pIndex = index;
 
@@ -942,6 +942,7 @@ LwRtlSetTaskFd(
         {
             RemovePollFd(pTask->pThread, pTask->PollIndex);
             pTask->Fd = -1;
+            pTask->PollIndex = 0;
         }
     }
     else 
