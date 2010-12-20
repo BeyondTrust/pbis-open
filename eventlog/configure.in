@@ -22,6 +22,7 @@ case "$host_os:$host_cpu" in
 		;;
 	solaris*:i?86|solaris*:sparc*)
 		AC_DEFINE([__LWI_SOLARIS__], [], [Define if OS is Solaris])
+		AC_DEFINE([_POSIX_PTHREAD_SEMANTICS], [], [Define if OS is Solaris])
 		AC_DEFINE([__EXTENSIONS__], [], [Solaris requires this macro to be defined to enable
 several function declarations like:
 settimeofday(3) in sys/time.h

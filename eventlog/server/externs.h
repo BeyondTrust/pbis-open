@@ -61,8 +61,6 @@ extern DWORD gdwNewEventCount;
 #define EVENTLOG_DB_DIR CACHEDIR "/db"
 #define EVENTLOG_DB EVENTLOG_DB_DIR "/lwi_events.db"
 
-#define _POSIX_PTHREAD_SEMANTICS 1
-
 #define DEFAULT_CONFIG_FILE_PATH CONFIGDIR "/eventlogd.conf"
 
 #define EVT_DEFAULT_MAX_LOG_SIZE    104857600 //100M,converting it in to bytes
