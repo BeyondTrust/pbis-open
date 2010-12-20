@@ -924,6 +924,7 @@ DispatchSignal(
     RING dispatch;
     PRING pBase = NULL;
     PRING pRing = NULL;
+    PRING pNext = NULL;
     PLW_SIGNAL_SUBSCRIPTION pSub = NULL;
 
     if (!gSignal.pSubscribers)
@@ -952,8 +953,9 @@ DispatchSignal(
     }
     LOCK_SIGNAL();
 
-    for (pRing = dispatch.pNext; pRing != &dispatch; pRing = pRing->pNext)
+    for (pRing = dispatch.pNext; pRing != &dispatch; pRing = pNext)
     {
+        pNext = pRing->pNext;
         pSub = LW_STRUCT_FROM_FIELD(pRing, LW_SIGNAL_SUBSCRIPTION, DispatchRing);
         
         if (--pSub->ucRefCount == 0)
