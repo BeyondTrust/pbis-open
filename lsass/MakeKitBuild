@@ -23,9 +23,17 @@ configure()
                 PAMDIR="/usr/local/${MK_LIBDIR##*/}/security"
                 NSSDIR="/usr/local/${MK_LIBDIR##*/}"
                 ;;
-            solaris:*)
+            solaris:sparc_32|solaris:x86_32)
                 NSSDIR="/usr/lib"
                 PAMDIR="/usr/lib/security"
+                ;;
+            solaris:x86_64)
+                NSSDIR="/usr/lib/64"
+                PAMDIR="/usr/lib/security/64"
+                ;;
+            solaris:sparc_64)
+                NSSDIR="/usr/lib/sparcv9"
+                PAMDIR="/usr/lib/security/sparcv9"
                 ;;
         esac
 

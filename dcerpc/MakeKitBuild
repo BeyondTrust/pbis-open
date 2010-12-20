@@ -67,12 +67,15 @@ configure()
             ;;
     esac
 
-    case "$MK_HOST_ARCH" in
-        x86)
+    case "$MK_ISA" in
+        x86_32)
             target_cpu="i386"
             ;;
         x86_64)
             target_cpu="x86_64"
+            ;;
+        sparc_32)
+            target_cpu="sparc"
             ;;
     esac
 
