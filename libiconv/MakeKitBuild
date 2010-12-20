@@ -3,4 +3,10 @@ make()
     mk_autotools \
         HEADERS="iconv.h" \
         LIBS="iconv"
+
+    mk_compat_do
+        mk_autotools \
+            LIBS="iconv" \
+            SELECT="${MK_LIBDIR}/*"
+    mk_compat_done
 }
