@@ -1006,6 +1006,7 @@ case "$host_os:$host_cpu" in
     
         AC_MSG_CHECKING([if pam_get_data takes const void** as last argument])
         AC_TRY_COMPILE([
+	#define NO_STATIC_MODULES
         #include <sys/types.h> 
         #include <security/pam_appl.h>
         #include <security/pam_modules.h>
