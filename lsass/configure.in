@@ -1003,7 +1003,7 @@ AC_MSG_RESULT([no])
 
 case "$host_os:$host_cpu" in
 
-    freebsd*:*|netbsd*:*|solaris*:i?86|solaris*:sparc*)
+    freebsd*:*|netbsd*:*|solaris*:*)
     
         AC_MSG_CHECKING([if pam_get_data takes const void** as last argument])
         AC_TRY_COMPILE([
