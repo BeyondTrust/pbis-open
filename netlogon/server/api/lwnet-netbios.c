@@ -226,8 +226,10 @@ LWNetNbStrToNbName2(
     up += LWNB_NETBIOS_ENCNAME_LEN;
     
     /* Work through rest of Fqdn, replacing . with length of stuff before . */
-    tokenPtr = p;
-    p = strtok_r(tokenPtr, ".", &tokenPtr);
+    if (p)
+    {
+        p = strtok_r(p, ".", &tokenPtr);
+    }
     while (p)
     {
         len = strlen(p);
