@@ -39,9 +39,6 @@
  * Eventlog Service (Process Utilities)
  *
  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS 1
-#endif
 
 #include "includes.h"
 
