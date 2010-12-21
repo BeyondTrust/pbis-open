@@ -45,10 +45,6 @@
 #include "eventdefs.h"
 #include "eventutils.h"
 
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-
 //space: ' '
 #define FIRST_LETTER ((char)32)
 

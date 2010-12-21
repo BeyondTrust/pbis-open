@@ -42,10 +42,6 @@
 #include "includes.h"
 #include <popt.h>
 
-#ifndef _POSIX_PTHREAD_SEMANTICS
-#define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-
 #define ACTION_NONE 0
 #define ACTION_SHOW 1
 #define ACTION_TABLE 2

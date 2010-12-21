@@ -26,8 +26,6 @@
 #ifndef __XMLLOOKUP_H__
 #define __XMLLOOKUP_H__
 
-#include "includes.h"
-
 DWORD
 XmlGetSqlQuery(
     PCSTR pszName,
