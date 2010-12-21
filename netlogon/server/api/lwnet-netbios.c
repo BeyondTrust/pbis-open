@@ -333,7 +333,7 @@ LWNetNbResolveName(
     DWORD resAddrsAllocLen = 128;
 
     /* Derive this value from flags; hard code to WORKSTATION for now */
-    unsigned char queryType = LWNB_RESOLVE_WORKSTATION;
+    unsigned char queryType = LWNB_RESOLVE_FILE_SERVICE;
 
     if (!gpNbCtx)
     {
