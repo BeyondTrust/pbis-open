@@ -473,9 +473,17 @@ LWNetSrvIpcResolveNetBiosName(
 
     dwError = LWNetNbResolveName(
                   pszHostName,
-                  0,
+                  LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE,
                   &nbAddrs,
                   &nbAddrsLen);
+    if (dwError)
+    {
+        dwError = LWNetNbResolveName(
+                      pszHostName,
+                      LWNB_NETBIOS_FLAGS_RESOLVE_DC,
+                      &nbAddrs,
+                      &nbAddrsLen);
+    }
     if (dwError)
     {
         dwError = ERROR_BAD_NET_NAME;

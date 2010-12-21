@@ -331,9 +331,24 @@ LWNetNbResolveName(
     PSTR pszAddr;
     DWORD resAddrsLen = 0;
     DWORD resAddrsAllocLen = 128;
-
-    /* Derive this value from flags; hard code to WORKSTATION for now */
+    /* Derive this value from flags; hard code to FILE_SERVICE for now */
     unsigned char queryType = LWNB_RESOLVE_FILE_SERVICE;
+
+    if (flags)
+    {
+        if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE)
+        {
+            queryType = LWNB_RESOLVE_FILE_SERVICE;
+        }
+        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_WORKSTATION)
+        {
+            queryType = LWNB_RESOLVE_WORKSTATION;
+        }
+        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_DC)
+        {
+            queryType = LWNB_RESOLVE_DC;
+        }
+    }
 
     if (!gpNbCtx)
     {
@@ -419,6 +434,12 @@ LWNetNbResolveName(
     pthread_mutex_unlock(&gpNbCtx->mutex);
 
     gpNbCtx->bAck = FALSE;
+
+    if (resAddrsLen == 0)
+    {
+        dwError = ERROR_BAD_NET_NAME;
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
 
     *retAddrs = resAddrs;
     *retAddrsLen = resAddrsLen;
