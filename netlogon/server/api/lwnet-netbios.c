@@ -4,6 +4,7 @@ typedef struct _LWNET_SRV_NETBIOS_CONTEXT
 {
     BOOLEAN bNbRepsponse;
     BOOLEAN bAck;
+    BOOLEAN bShutdown;
     UINT16 transactionId;
     pthread_cond_t cv;
     pthread_mutex_t mutex;
@@ -706,7 +707,6 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
     struct sockaddr_in dgAddr;
     int NetBiosReplyAddrLen = 0;
     void *pNetBiosReplyAddrLen = &NetBiosReplyAddrLen;
-    BOOLEAN bShutdown = 0;
     PLWNET_SRV_NETBIOS_CONTEXT pNbCtx = (PLWNET_SRV_NETBIOS_CONTEXT) ctx;
     int allowBroadcast = 1;
     uint8_t Flags = 0;
@@ -801,7 +801,8 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
                 pthread_mutex_unlock(&pNbCtx->mutexAck);
             }
         }
-    } while (!bShutdown);
+    } while (!pNbCtx->bShutdown);
+    LWNET_LOG_INFO("Stopping NetBIOS listener thread");
 
 cleanup:
     close(sock);
@@ -875,4 +876,19 @@ LWNetSrvStartNetBios(
         }
     }
     return dwError;
+}
+
+
+VOID
+LWNetStopNetBios(
+    VOID)
+{
+    if (!LWNetConfigIsNetBiosEnabled())
+    {
+        return;
+    }
+    pthread_mutex_lock(&gpNbCtx->mutexAck);
+    gpNbCtx->bShutdown = TRUE;
+    pthread_mutex_unlock(&gpNbCtx->mutexAck);
+    shutdown(gpNbCtx->sock, 0);  // 0 = SHUT_RD; more portable?
 }

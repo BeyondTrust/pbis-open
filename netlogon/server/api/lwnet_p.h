@@ -171,6 +171,10 @@ VOID
 LWNetCleanupPlugin(
     );
 
+VOID
+LWNetStopNetBios(
+    );
+
 DWORD
 LWNetGetPreferredDcList(
     IN PCSTR pszDnsDomainName,

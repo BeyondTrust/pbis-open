@@ -78,6 +78,8 @@ LWNetSrvApiShutdown(
     VOID
     )
 {
+    LWNetStopNetBios();
+
     LWNetCleanupPlugin();
 
     LWNetCacheCleanup();
