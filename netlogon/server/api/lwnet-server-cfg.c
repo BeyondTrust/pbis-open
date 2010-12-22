@@ -62,6 +62,7 @@ typedef struct _LWNET_SERVER_CONFIG {
     DWORD dwCLdapSearchTimeoutSeconds;
     DWORD dwCLdapSingleConnectionTimeoutSeconds;
     DWORD dwNetBiosEnabled;
+    DWORD dwNetBiosUdpTimeout;
 } LWNET_SERVER_CONFIG, *PLWNET_SERVER_CONFIG;
 
 #define LWNET_PING_AGAIN_TIMEOUT_SECONDS (15 * 60)
@@ -80,6 +81,7 @@ LWNET_SERVER_CONFIG gLWNetServerConfig = {
     .dwCLdapSearchTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
     .dwCLdapSingleConnectionTimeoutSeconds = LWNET_CLDAP_DEFAULT_TIMEOUT_SECONDS,
     .dwNetBiosEnabled = FALSE,
+    .dwNetBiosUdpTimeout = 2,
 };
 
 static
@@ -165,6 +167,15 @@ LWNET_CONFIG gConfig[] =
         1,
         NULL,
         &gLWNetServerConfig.dwNetBiosEnabled
+    },
+    {
+        "NetBiosUdpTimeout",
+        TRUE,
+        LWNetTypeDword,
+        0,
+        60,
+        NULL,
+        &gLWNetServerConfig.dwNetBiosUdpTimeout
     }
 };
 
@@ -259,4 +270,12 @@ LWNetConfigIsNetBiosEnabled(
     )
 {
     return gLWNetServerConfig.dwNetBiosEnabled;
+}
+
+DWORD
+LWNetConfigIsNetBiosUdpTimeout(
+    VOID
+    )
+{
+    return gLWNetServerConfig.dwNetBiosUdpTimeout;
 }

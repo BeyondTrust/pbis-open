@@ -60,3 +60,7 @@
     default = dword:00000000
     doc = "Enable NetBIOS name resolution. 0=off 1=on"
 }
+"NetBiosUdpTimeout" = {
+    default = dword:00000002
+    doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
+}

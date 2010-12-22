@@ -99,5 +99,10 @@ LWNetConfigIsNetBiosEnabled(
     VOID
     );
 
+DWORD
+LWNetConfigIsNetBiosUdpTimeout(
+    VOID
+    );
+
 
 #endif /* __LWNET_SERVER_CFG_H__ */

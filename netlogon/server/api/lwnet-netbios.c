@@ -1,8 +1,5 @@
 #include "includes.h"
 
-// Make this configurable parameter from registry
-#define LWNB_NAME_RESOLUTION_TIMEOUT 2
-
 typedef struct _LWNET_SRV_NETBIOS_CONTEXT
 {
     BOOLEAN bNbRepsponse;
@@ -15,6 +12,7 @@ typedef struct _LWNET_SRV_NETBIOS_CONTEXT
     int sock;
     struct in_addr *addrs;
     DWORD addrsLen;
+    DWORD udpTimeout;
 } LWNET_SRV_NETBIOS_CONTEXT, *PLWNET_SRV_NETBIOS_CONTEXT;
 
 static PLWNET_SRV_NETBIOS_CONTEXT gpNbCtx;
@@ -396,7 +394,7 @@ LWNetNbResolveName(
     do
     {
         gettimeofday(&tp, NULL);
-        cvTimeout.tv_sec = tp.tv_sec + LWNB_NAME_RESOLUTION_TIMEOUT;
+        cvTimeout.tv_sec = tp.tv_sec + gpNbCtx->udpTimeout;
         cvTimeout.tv_nsec = tp.tv_usec + 1000;
         do {
             sts = pthread_cond_timedwait(
@@ -793,7 +791,7 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
                 {
                     gettimeofday(&tp, NULL);
                     cvTimeout.tv_sec = 
-                        tp.tv_sec + LWNB_NAME_RESOLUTION_TIMEOUT;
+                        tp.tv_sec + pNbCtx->udpTimeout;
                     cvTimeout.tv_nsec = tp.tv_usec * 1000;
                     sts = pthread_cond_timedwait(
                               &pNbCtx->cvAck,
@@ -852,6 +850,8 @@ LWNetSrvStartNetBiosThread(
                          LWNetSrvStartNetBiosThreadRoutine,
                          (void *) pNbCtx));
     BAIL_ON_LWNET_ERROR(dwError);
+
+    pNbCtx->udpTimeout = LWNetConfigIsNetBiosUdpTimeout();
 cleanup:
     return dwError;
 error:
