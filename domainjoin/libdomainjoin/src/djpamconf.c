@@ -121,6 +121,15 @@ static int ContainsOption(struct PamConf *conf, int line, const char *option);
 
 static DWORD RemoveOption(struct PamConf *conf, int line, const char *option, int *pFound);
 
+static
+DWORD
+ReadPamDirFile(
+    IN OUT struct PamConf *conf,
+    IN PCSTR pRootPrefix,
+    IN PSTR pDirPath,
+    IN PSTR pFileEntry
+    );
+
 /* On a real system, set the rootPrefix to "". When testing, set it to the
  * test directory that mirrors the target file system.
  */
@@ -887,6 +896,62 @@ error:
     return ceError;
 }
 
+static
+DWORD
+ReadPamDirFile(
+    IN OUT struct PamConf *conf,
+    IN PCSTR pRootPrefix,
+    IN PSTR pDirPath,
+    IN PSTR pFileEntry
+    )
+{
+    DWORD ceError = ERROR_SUCCESS;
+    BOOLEAN bIsDir = FALSE;
+    PSTR pNonPrefixedFilePath = NULL;
+    PSTR pFilePath = NULL;
+
+    if (pFileEntry[0] == '.' || /*Ignore hidden files*/
+       CTStrEndsWith(pFileEntry, ".bak") ||
+       CTStrEndsWith(pFileEntry, ".new") ||
+       CTStrEndsWith(pFileEntry, ".orig") ||
+       CTStrEndsWith(pFileEntry, "~") ||
+       CTStrStartsWith(pFileEntry, "#"))
+    {
+        goto error;
+    }
+
+    ceError = CTAllocateStringPrintf(
+                    &pFilePath,
+                    "%s%s/%s",
+                    pRootPrefix,
+                    pDirPath,
+                    pFileEntry);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTCheckDirectoryExists(pFilePath, &bIsDir);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    if (bIsDir)
+    {
+        goto error;
+    }
+
+    ceError = CTAllocateStringPrintf(
+                    &pNonPrefixedFilePath,
+                    "%s/%s",
+                    pDirPath,
+                    pFileEntry);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = ReadPamFile(conf, pRootPrefix, pNonPrefixedFilePath);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+error:
+    CT_SAFE_FREE_STRING(pFilePath);
+    CT_SAFE_FREE_STRING(pNonPrefixedFilePath);
+    return ceError;
+}
+
 /* On a real system, set the rootPrefix to "". When testing, set it to the
  * test directory that mirrors the target file system.
  */
@@ -896,9 +961,6 @@ static DWORD ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf)
     DIR *dp = NULL;
     struct dirent *dirp;
     PSTR pszDirPath = NULL;
-    BOOLEAN foundPamd = FALSE;
-    PSTR pszFilePath = NULL;
-    PSTR pszNonPrefixedFilePath = NULL;
 
     memset(conf, 0, sizeof(struct PamConf));
 
@@ -908,57 +970,46 @@ static DWORD ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf)
     BAIL_ON_CENTERIS_ERROR(ceError);
 
     dp = opendir(pszDirPath);
-    if(dp != NULL)
+    if (dp != NULL)
     {
-        while((dirp = readdir(dp)) != NULL)
+        while ((dirp = readdir(dp)) != NULL)
         {
-            BOOLEAN bIsDir = FALSE;
-
-            if(dirp->d_name[0] == '.' || /*Ignore hidden files*/
-               CTStrEndsWith(dirp->d_name, ".bak") ||
-               CTStrEndsWith(dirp->d_name, ".new") ||
-               CTStrEndsWith(dirp->d_name, ".orig") ||
-               CTStrEndsWith(dirp->d_name, "~") ||
-               CTStrStartsWith(dirp->d_name, "#"))
-            {
-              continue;
-            }
-
-            CT_SAFE_FREE_STRING(pszFilePath);
-
-            ceError = CTAllocateStringPrintf(
-                            &pszFilePath,
-                            "%s/%s",
-                            pszDirPath,
+            ceError = ReadPamDirFile(
+                            conf,
+                            rootPrefix,
+                            "/etc/pam.d",
                             dirp->d_name);
             BAIL_ON_CENTERIS_ERROR(ceError);
+        }
+    }
 
-            ceError = CTCheckDirectoryExists(pszFilePath, &bIsDir);
-            BAIL_ON_CENTERIS_ERROR(ceError);
+    CT_SAFE_FREE_STRING(pszDirPath);
 
-            if(bIsDir)
-            {
-              continue;
-            }
+    if (dp != NULL)
+    {
+        closedir(dp);
+    }
 
-            CT_SAFE_FREE_STRING(pszNonPrefixedFilePath);
+    ceError = CTAllocateStringPrintf(&pszDirPath, "%s/usr/local/etc/pam.d", rootPrefix);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-            ceError = CTAllocateStringPrintf(
-                            &pszNonPrefixedFilePath,
-                            "/etc/pam.d/%s",
+    dp = opendir(pszDirPath);
+    if (dp != NULL)
+    {
+        while ((dirp = readdir(dp)) != NULL)
+        {
+            ceError = ReadPamDirFile(
+                            conf,
+                            rootPrefix,
+                            "/usr/local/etc/pam.d",
                             dirp->d_name);
             BAIL_ON_CENTERIS_ERROR(ceError);
-
-            ceError = ReadPamFile(conf, rootPrefix, pszNonPrefixedFilePath);
-            BAIL_ON_CENTERIS_ERROR(ceError);
-
-            foundPamd = TRUE;
         }
     }
 
     ceError = ReadPamFile(conf, rootPrefix, "/etc/pam.conf");
 
-    if(ceError == ERROR_FILE_NOT_FOUND && foundPamd)
+    if (ceError == ERROR_FILE_NOT_FOUND && conf->lineCount > 0)
     {
         ceError = ERROR_SUCCESS;
     }
@@ -969,8 +1020,6 @@ static DWORD ReadPamConfiguration(const char *rootPrefix, struct PamConf *conf)
 error:
 
     CT_SAFE_FREE_STRING(pszDirPath);
-    CT_SAFE_FREE_STRING(pszFilePath);
-    CT_SAFE_FREE_STRING(pszNonPrefixedFilePath);
 
     if(dp != NULL)
     {
