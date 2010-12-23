@@ -1558,7 +1558,7 @@ CTFindSed(
         PSTR *sedPath
         )
 {
-    DWORD ceError = CTFindFileInPath("sed", "/bin:/usr/bin", sedPath);
+    DWORD ceError = CTFindFileInPath("sed", "/usr/xpg4/bin:/bin:/usr/bin", sedPath);
     if(ceError == ERROR_FILE_NOT_FOUND)
         ceError = ERROR_MISSING_SYSTEMFILE;
     return ceError;
@@ -1967,7 +1967,12 @@ CTSafeReplaceFile(
         PCSTR replaceWith)
 {
     DWORD ceError = ERROR_SUCCESS;
-    GCE(ceError = CTCloneFilePerms(finalName, replaceWith));
+    ceError = CTCloneFilePerms(finalName, replaceWith);
+    if (ceError == ERROR_FILE_NOT_FOUND)
+    {
+        ceError = 0;
+    }
+    GCE(ceError);
     GCE(ceError = CTBackupFile(finalName));
     GCE(ceError = CTMoveFile(replaceWith, finalName));
     

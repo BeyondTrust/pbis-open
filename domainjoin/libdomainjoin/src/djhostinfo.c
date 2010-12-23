@@ -32,6 +32,8 @@
 #include "ctshell.h"
 #include "djauthinfo.h"
 #include "djdistroinfo.h"
+#include "lwmem.h"
+#include "lwstr.h"
 
 #define GCE(x) GOTO_CLEANUP_ON_DWORD((x))
 
@@ -246,10 +248,72 @@ error:
     return ceError;
 }
 
+DWORD
+SedEscapeLiteral(
+    PCSTR pInput,
+    PSTR* ppOutput
+    )
+{
+    PSTR pOutput = NULL;
+    DWORD outputIndex = 0;
+    DWORD index = 0;
+    DWORD dwError = 0;
+
+    // Calculate the length first
+    for (index = 0; pInput[index]; index++)
+    {
+        switch (pInput[index])
+        {
+            // See the \char section of gnu sed manual
+            case '$':
+            case '*':
+            case '.':
+            case '[':
+            case '\\':
+            case '^':
+                outputIndex += 2;
+                break;
+            default:
+                outputIndex += 1;
+        }
+    }
+
+    dwError = LwAllocateMemory(
+                    outputIndex + 1,
+                    (PVOID*)&pOutput);
+    BAIL_ON_CENTERIS_ERROR(dwError);
+
+    outputIndex = 0;
+    for (index = 0; pInput[index]; index++)
+    {
+        switch (pInput[index])
+        {
+            // See the \char section of gnu sed manual
+            case '$':
+            case '*':
+            case '.':
+            case '[':
+            case '\\':
+            case '^':
+                pOutput[outputIndex++] = '\\';
+                break;
+        }
+        pOutput[outputIndex++] = pInput[index];
+    }
+    pOutput[outputIndex++] = 0;
+
+error:
+    *ppOutput = pOutput;
+    return dwError;
+}
+
 static
 DWORD
 WriteHostnameToSunFiles(
-    PSTR pszComputerName
+    PSTR pOldShortHostname,
+    PSTR pNewShortHostname,
+    PSTR pOldFqdnHostname,
+    PSTR pNewFqdnHostname
     )
 {
     DWORD ceError = ERROR_SUCCESS;
@@ -257,52 +321,88 @@ WriteHostnameToSunFiles(
     PSTR* ppszHostfilePaths = NULL;
     DWORD nPaths = 0;
     DWORD iPath = 0;
-    PSTR contents = NULL;
-    LONG fileLen;
+    PSTR pNodename = NULL;
+    PSTR pTempNodename = NULL;
+    PSTR pOldEscapedShortHostname = NULL;
+    PSTR pOldEscapedFqdnHostname = NULL;
+    PSTR pSedExpression = NULL;
+    BOOLEAN isSame = FALSE;
 
-    DJ_LOG_INFO("Setting hostname to [%s]", pszComputerName);
+    DJ_LOG_INFO("Setting hostname to [%s]", pNewShortHostname);
 
-    fp = fopen("/etc/nodename", "w");
-    if (fp == NULL) {
-        ceError = LwMapErrnoToLwError(errno);
+    ceError = CTGetFileTempPath(
+                        "/etc/nodename",
+                        &pNodename,
+                        &pTempNodename);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTOpenFile(
+            pTempNodename,
+            "w",
+            &fp);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    fprintf(fp, "%s\n", pNewShortHostname);
+
+    ceError = CTSafeCloseFile(&fp);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+
+    ceError = CTFileContentsSame(
+                    pTempNodename,
+                    pNodename,
+                    &isSame);
+    BAIL_ON_CENTERIS_ERROR(ceError);
+    if (isSame)
+    {
+        BAIL_ON_CENTERIS_ERROR(ceError = CTRemoveFile(pTempNodename));
+    }
+    else
+    {
+        ceError = CTSafeReplaceFile(pNodename, pTempNodename);
         BAIL_ON_CENTERIS_ERROR(ceError);
     }
-    fprintf(fp, "%s\n", pszComputerName);
-    fclose(fp);
-    fp = NULL;
 
+    /* The first column of the /etc/hostname.<interface> files is the IP
+     * address of the interface. It may either be specified directly in the
+     * file, or the file may refer to an entry in /etc/hosts. This program is
+     * editing /etc/hosts, any old entries in the hostname files need to be
+     * fixed. */
     ceError = CTGetMatchingFilePathsInFolder("/etc",
                                              "hostname.*",
                                              &ppszHostfilePaths,
                                              &nPaths);
     BAIL_ON_CENTERIS_ERROR(ceError);
 
-    for (iPath = 0; iPath < nPaths; iPath++) {
+    ceError = SedEscapeLiteral(
+                pOldShortHostname,
+                &pOldEscapedShortHostname);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-        CTReadFile(*(ppszHostfilePaths+iPath), SIZE_MAX, &contents, &fileLen);
-        CTStripWhitespace(contents);
-        if(!strcasecmp(contents, pszComputerName))
-        {
-            //The machine hostname is already set
-            goto done;
-        }
-    }
+    ceError = SedEscapeLiteral(
+                pOldFqdnHostname,
+                &pOldEscapedFqdnHostname);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-    // Only write the hostname in 1 file
-    for (iPath = 0; iPath < nPaths && iPath < 1; iPath++) {
+    ceError = LwAllocateStringPrintf(
+                &pSedExpression,
+                "s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/;s/^%s\\([ ].*\\)\\{0,1\\}$/%s\\1/",
+                pOldEscapedShortHostname,
+                pNewShortHostname,
+                pOldEscapedFqdnHostname,
+                pNewFqdnHostname);
+    BAIL_ON_CENTERIS_ERROR(ceError);
 
-        fp = fopen(*(ppszHostfilePaths+iPath), "w");
-        if (fp == NULL) {
-            ceError = LwMapErrnoToLwError(errno);
-            BAIL_ON_CENTERIS_ERROR(ceError);
-        }
-        fprintf(fp, "%s\n", pszComputerName);
-        fclose(fp);
-        fp = NULL;
+    for (iPath = 0; iPath < nPaths; iPath++)
+    {
+        ceError = CTRunSedOnFile(
+                        ppszHostfilePaths[iPath],
+                        ppszHostfilePaths[iPath],
+                        FALSE,
+                        pSedExpression);
+        BAIL_ON_CENTERIS_ERROR(ceError);
     }
 
 error:
-done:
 
     if (ppszHostfilePaths)
         CTFreeStringArray(ppszHostfilePaths, nPaths);
@@ -311,7 +411,11 @@ done:
         fclose(fp);
     }
 
-    CT_SAFE_FREE_STRING(contents);
+    CT_SAFE_FREE_STRING(pNodename);
+    CT_SAFE_FREE_STRING(pTempNodename);
+    CT_SAFE_FREE_STRING(pOldEscapedShortHostname);
+    CT_SAFE_FREE_STRING(pOldEscapedFqdnHostname);
+    CT_SAFE_FREE_STRING(pSedExpression);
 
     return ceError;
 }
@@ -1210,6 +1314,7 @@ DJSetComputerName(
     PSTR oldShortHostname = NULL;
     PSTR oldFqdnHostname = NULL;
     PSTR pszComputerName_lower = NULL;
+    PSTR pNewFqdnHostname = NULL;
     PSTR ppszHostfilePaths[] = { "/etc/hostname", "/etc/HOSTNAME", NULL };
     DistroInfo distro;
 
@@ -1262,6 +1367,13 @@ DJSetComputerName(
         oldShortHostname = NULL;
     }
 
+    ceError = LwAllocateStringPrintf(
+                &pNewFqdnHostname,
+                "%s.%s",
+                pszComputerName,
+                pszDnsDomainName);
+    LW_CLEANUP_CTERR(exc, ceError);
+
     ceError = DJCopyMissingHostsEntry("/etc/inet/ipnodes", "/etc/hosts",
             pszComputerName_lower, oldShortHostname);
     if(ceError == ERROR_FILE_NOT_FOUND)
@@ -1282,7 +1394,12 @@ DJSetComputerName(
     switch (distro.os)
     {
         case OS_SUNOS:
-            LW_CLEANUP_CTERR(exc, WriteHostnameToSunFiles(pszComputerName_lower));
+            LW_CLEANUP_CTERR(exc, WriteHostnameToSunFiles(
+                        oldShortHostname,
+                        pszComputerName_lower,
+                        oldFqdnHostname,
+                        pNewFqdnHostname
+                        ));
             break;
         case OS_AIX:
             LW_CLEANUP_CTERR(exc, SetAIXHostname(pszComputerName_lower));
@@ -1303,6 +1420,7 @@ cleanup:
     CT_SAFE_FREE_STRING(oldShortHostname);
     CT_SAFE_FREE_STRING(oldFqdnHostname);
     CT_SAFE_FREE_STRING(pszComputerName_lower);
+    CT_SAFE_FREE_STRING(pNewFqdnHostname);
     DJFreeDistroInfo(&distro);
 }
 
