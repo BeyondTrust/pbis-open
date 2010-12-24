@@ -336,8 +336,12 @@ TXT             16 text strings
 #ifndef WIN32
 #define SOCKET_ERROR             -1
 #define INVALID_SOCKET            -1
+#ifndef TRUE
 #define TRUE                 1
+#endif
+#ifndef FALSE
 #define FALSE                 0
+#endif
 
 
 #endif
