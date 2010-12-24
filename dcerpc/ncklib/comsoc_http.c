@@ -11,6 +11,12 @@
 #include <cnp.h>
 #include <httpnaf.h>
 #include <stddef.h>
+/* This is a huge hack to work around curl being stupid
+   on multiarch systems */
+#define __CURL_CURLRULES_H
+#define CURL_ISOCPP
+#define CURL_OFF_T_C(Val)  Val ## CURL_SUFFIX_CURL_OFF_T
+#define CURL_OFF_TU_C(Val) Val ## CURL_SUFFIX_CURL_OFF_TU
 #include <curl/curl.h>
 #include <uuid/uuid.h>
 
