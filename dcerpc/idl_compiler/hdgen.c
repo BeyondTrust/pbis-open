@@ -125,11 +125,15 @@ static void CSPELL_constant_def
                 fprintf (fid, "NULL");
                 break;
             case AST_int_const_k:
-					 /* handle the signed-ness of the constant */
-					 if (cp->int_signed)
-                	fprintf (fid, "(%ld)", cp->value.int_val);
-					 else
-						fprintf (fid, "(0x%lx)", cp->value.int_val); /* prevent signed-edness problems with cxx */
+                /* handle the signed-ness of the constant */
+                if (cp->int_signed)
+                    fprintf (fid, "(%ld)", cp->value.int_val);
+                else if (sizeof(long) == 4)
+                    fprintf (fid, "(0x%lx)", (unsigned long) cp->value.int_val);
+                else if (sizeof(int) == 4)
+                    fprintf (fid, "(0x%x)", (unsigned int) cp->value.int_val);
+                else
+                    abort();
                 break;
             case AST_hyper_int_const_k:
                 fprintf (fid, "{%ld,%lu}",
