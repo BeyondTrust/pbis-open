@@ -21,7 +21,7 @@
 PROG_DESC="Likewise Service Manager"
 PROG_BIN=PREFIX_DIR/sbin/lwsmd
 PROG_ARGS="--start-as-daemon"
-PIDFILE=/var/run/lwsmd.pid
+PIDFILE=
 SCRIPTNAME="lwsmd"
 STARTHOOK="fix_locale"
 
