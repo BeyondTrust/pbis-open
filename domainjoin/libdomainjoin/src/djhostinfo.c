@@ -280,7 +280,7 @@ SedEscapeLiteral(
 
     dwError = LwAllocateMemory(
                     outputIndex + 1,
-                    (PVOID*)&pOutput);
+                    PPCAST(&pOutput));
     BAIL_ON_CENTERIS_ERROR(dwError);
 
     outputIndex = 0;
