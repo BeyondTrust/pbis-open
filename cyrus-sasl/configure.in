@@ -80,6 +80,9 @@ AC_ARG_ENABLE(sample,
               enable_sample=$enable_val,
               enable_sample=yes)
 
+AC_ARG_VAR(BUILD_CC)
+AC_ARG_VAR(BUILD_CFLAGS)
+
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_AWK
@@ -87,6 +90,16 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
 CMU_C___ATTRIBUTE__
+
+if test "x$host" != "x$build"; then
+   	AC_CHECK_PROGS(BUILD_CC, gcc cc)
+else
+	BUILD_CC="$CC"
+        BUILD_CFLAGS="$CFLAGS"
+fi
+
+AC_SUBST(BUILD_CC)
+AC_SUBST(BUILD_CFLAGS)
 
 dnl check for -R, etc. switch
 CMU_GUESS_RUNPATH_SWITCH

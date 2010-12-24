@@ -47,9 +47,8 @@ noinst_HEADERS = gai.h exits.h
 saslincludedir = $(includedir)/sasl
 saslinclude_HEADERS = hmac-md5.h md5.h md5global.h sasl.h saslplug.h saslutil.h prop.h
 
-noinst_PROGRAMS = makemd5
-
-makemd5_SOURCES = makemd5.c
+makemd5: makemd5.c
+	$(BUILD_CC) -o $@ $<
 
 md5global.h: makemd5
 	-rm -f md5global.h
