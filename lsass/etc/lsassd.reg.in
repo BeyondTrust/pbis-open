@@ -25,6 +25,10 @@
     default = dword:00000001
     doc = ""
 }
+"Autostart" = {
+    default = dword:00000001
+    doc = ""
+}
 
 [HKEY_THIS_MACHINE\Services\lsass\Parameters]
 "EnableEventlog" = {
