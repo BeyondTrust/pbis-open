@@ -93,8 +93,12 @@ AC_CHECK_HEADER([lw/base.h],,[AC_MSG_ERROR([Could not find lwbase headers])])
 AC_CHECK_LIB([lwbase_nothr], [LwRtlMemoryAllocate], [], [AC_MSG_ERROR([Could not find liblwbase_nothr])], [$LWBASE_LDFLAGS])
 AC_CHECK_LIB([lwbase], [LwInterlockedIncrement], [], [AC_MSG_ERROR([Could not find liblwbase])], [$LWBASE_LDFLAGS])
 
+AS_AC_EXPAND(LIBDIR, $libdir)
+AC_DEFINE_UNQUOTED(LIBDIR, "$LIBDIR", [Library directory])
+
 AC_CONFIG_FILES([Makefile
                  lwicompat/Makefile
-                 wbclient/Makefile])
+                 wbclient/Makefile
+		 tools/Makefile])
 
 AC_OUTPUT

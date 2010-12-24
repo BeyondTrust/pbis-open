@@ -47,7 +47,7 @@
 #define _LSAWBCLIENT_P_H
 
 #include "wbclient.h"
-#include "lsa/lsa.h"
+#include <lsa/lsa.h>
 #include "util_str.h"
 
 #define LSA_WBC_LIBRARY_MAJOR_VERSION          0
