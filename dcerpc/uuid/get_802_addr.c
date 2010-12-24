@@ -66,11 +66,13 @@ void dce_get_802_addr(dce_802_addr_t *addr, error_status_t *st)
         union
         {
             struct arpreq arpreq;
+#ifdef AF_LINK
             struct
             {
                 struct sockaddr pa;
                 struct sockaddr_dl ha;
             } arpreq_dl;
+#endif
         } u;
 #endif
 	struct ifreq ifreq;
