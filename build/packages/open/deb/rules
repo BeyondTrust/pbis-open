@@ -51,7 +51,7 @@ install: build
 #	dh_installdirs -P $(DESTDIR)
 	dh_installdirs
 	dh_install --sourcedir=../../populate
-	install -D -m 644 debian/likewise-open.pam-auth-update ../../populate/usr/share/pam-configs/likewise-open
+#	install -D -m 644 debian/likewise-open.pam-auth-update ../../populate/usr/share/pam-configs/likewise-open
 
 
 # Build architecture-independent files here.
