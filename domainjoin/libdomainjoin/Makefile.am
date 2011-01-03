@@ -43,6 +43,7 @@ libdomainjoin_la_LIBADD = \
 	$(LSASS_LDFLAGS) \
 	$(LSASS_LIBS) \
         -llwsm \
+        -llwadvapi \
         $(LIB_XNET)
 
 include_HEADERS = \
@@ -57,6 +58,7 @@ libdomainjoin_la_SOURCES = \
        src/djlogger.c     \
        src/djdistroinfo.c \
        src/djstr.c    \
+       src/djregistry.c \
        src/djroutines.c   \
        src/djprocutils.c  \
        src/djmodule.c \
