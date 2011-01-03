@@ -82,6 +82,14 @@ function package_populate
         rsync -a --exclude=.svn "$EXTRAS_DIR"/* ${POPULATE_PREFIX_DIR}/${_lib}/.
     fi
 
+    if [ "${BUILD_OS_TYPE}" = "linux" -a "${PKG_TYPE}" = "deb" ]
+    then
+        if [ -z "${IS_FOREIGN}" -a -z "${IS_COMPAT}" ]
+        then
+            mkdir -p "${POPULATE_PREFIX_DIR}/share"
+            rsync -a "${BUILD_ROOT}/src/linux/config/likewise.pam-auth-update" "${POPULATE_PREFIX_DIR}/share/."
+        fi
+    fi
 
     if [ "${BUILD_OS_TYPE}" = "darwin" ]
     then
