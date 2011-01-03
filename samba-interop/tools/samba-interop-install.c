@@ -31,7 +31,23 @@
 #define WBCLIENT_FILENAME   "libwbclient.so.0"
 #define LWICOMPAT_FILENAME  "lwicompat_v4.so"
 
-#define BAIL_ON_LSA_ERROR(x)    if ((x) != 0) { goto cleanup; }
+#define BAIL_ON_LSA_ERROR(error)                                      \
+    if (error) {                                                      \
+        LW_LOG_DEBUG("Error in %s at %s:%d. Error code [%d]",          \
+                      __FUNCTION__, __FILE__, __LINE__, error);       \
+        goto cleanup;                                                     \
+    }
+
+static
+VOID
+LogLwMessageFunc(
+    LwLogLevel level,
+    PVOID pUserData,
+    PCSTR pszMessage
+    )
+{
+    printf("%s\n", pszMessage);
+}
 
 DWORD
 FindFileInPath(
@@ -92,7 +108,7 @@ FindFileInPath(
 
         if (exists)
         {
-            if (*ppFoundPath != NULL)
+            if (ppFoundPath != NULL)
             {
                 *ppFoundPath = pTestPath;
                 pTestPath = NULL;
@@ -170,6 +186,7 @@ CaptureOutputWithStderr(
             abort();
         }
         execvp(pCommand, (char **)ppArgs);
+        abort();
     }
     
     if (close(pipeFds[1]))
@@ -277,8 +294,9 @@ GetWbclientDir(
 
     if (pFoundPath)
     {
-        pFoundPath[strlen(pFoundPath) - (sizeof(WBCLIENT_FILENAME) -1)] = 0;
+        pFoundPath[strlen(pFoundPath) - (sizeof(WBCLIENT_FILENAME) -1) - 1] = 0;
         *ppDir = pFoundPath;
+        pFoundPath = NULL;
         goto cleanup;
     }
 
@@ -331,7 +349,7 @@ CheckSambaVersion(
         memmove(
                 pVersionString,
                 pVersionString + (sizeof("Version ") - 1),
-                strlen(pVersionString) - (sizeof("Version ") - 1));
+                strlen(pVersionString) - (sizeof("Version ") - 1) + 1);
     }
     LwStripWhitespace(
             pVersionString,
@@ -367,7 +385,7 @@ InstallWbclient(
     PSTR pSambaDir = NULL;
     PSTR pWbClient = NULL;
     PSTR pWbClientOriginal = NULL;
-    PCSTR pLikewiseWbClient = LIBDIR WBCLIENT_FILENAME;
+    PCSTR pLikewiseWbClient = LIBDIR "/" WBCLIENT_FILENAME;
     char pBuffer[1024] = { 0 };
 
     error = GetWbclientDir(
@@ -401,6 +419,7 @@ InstallWbclient(
 
     if (!strcmp(pBuffer, pLikewiseWbClient))
     {
+        LW_LOG_INFO("Link %s already points to %s", pWbClient, pBuffer);
         // Already configured
         goto cleanup;
     }
@@ -427,6 +446,8 @@ InstallWbclient(
         BAIL_ON_LSA_ERROR(error);   
     }
 
+    LW_LOG_INFO("Linked %s to %s", pWbClient, pLikewiseWbClient);
+
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
     LW_SAFE_FREE_STRING(pWbClient);
@@ -443,7 +464,7 @@ GetIdmapDir(
     DWORD error = 0;
     PSTR pCommandLine = NULL;
     PCSTR ppArgs[] = {
-        "/bin/sh"
+        "/bin/sh",
         "-c",
         NULL,
         NULL
@@ -477,7 +498,7 @@ GetIdmapDir(
         memmove(
                 pSambaLibdir,
                 pSambaLibdir + (sizeof("LIBDIR: ") - 1),
-                strlen(pSambaLibdir) - (sizeof("LIBDIR: ") - 1));
+                strlen(pSambaLibdir) - (sizeof("LIBDIR: ") - 1) + 1);
     }
 
     error = LwAllocateStringPrintf(
@@ -503,7 +524,7 @@ GetSecretsPath(
     DWORD error = 0;
     PSTR pCommandLine = NULL;
     PCSTR ppArgs[] = {
-        "/bin/sh"
+        "/bin/sh",
         "-c",
         NULL,
         NULL
@@ -537,7 +558,7 @@ GetSecretsPath(
         memmove(
                 pSambaPrivateDir,
                 pSambaPrivateDir + (sizeof("PRIVATE_DIR: ") - 1),
-                strlen(pSambaPrivateDir) - (sizeof("PRIVATE_DIR: ") - 1));
+                strlen(pSambaPrivateDir) - (sizeof("PRIVATE_DIR: ") - 1) + 1);
     }
 
     error = LwAllocateStringPrintf(
@@ -562,7 +583,7 @@ InstallLwiCompat(
     DWORD error = 0;
     PSTR pSambaDir = NULL;
     PSTR pLwiCompat = NULL;
-    PCSTR pLikewiseLwiCompat = LIBDIR LWICOMPAT_FILENAME;
+    PCSTR pLikewiseLwiCompat = LIBDIR "/" LWICOMPAT_FILENAME;
 
     error = GetIdmapDir(
                 pSmbdPath,
@@ -577,11 +598,22 @@ InstallLwiCompat(
             );
     BAIL_ON_LSA_ERROR(error);
 
+    if (unlink(pLwiCompat) < 0)
+    {
+        if (errno != ENOENT)
+        {
+            error = LwMapErrnoToLwError(errno);
+            BAIL_ON_LSA_ERROR(error);   
+        }
+    }
+
     if (symlink(pLikewiseLwiCompat, pLwiCompat) < 0)
     {
         error = LwMapErrnoToLwError(errno);
         BAIL_ON_LSA_ERROR(error);   
     }
+
+    LW_LOG_INFO("Linked idmapper %s to %s", pLwiCompat, pLikewiseLwiCompat);
 
 cleanup:
     LW_SAFE_FREE_STRING(pSambaDir);
@@ -658,7 +690,7 @@ SynchronizePassword(
     BAIL_ON_LSA_ERROR(error);
 
     pTdb = tdb_open(
-                    pSmbdPath,
+                    pSecretsPath,
                     0,
                     TDB_DEFAULT,
                     O_RDWR|O_CREAT,
@@ -744,6 +776,9 @@ SynchronizePassword(
                     sizeof(DWORD));
     BAIL_ON_LSA_ERROR(error);
 
+    LW_LOG_INFO("Wrote machine password for domain %s",
+            pPasswordInfo->Account.NetbiosDomainName);
+
 cleanup:
     LW_SAFE_FREE_STRING(pSecretsPath);
     if (hLsa != NULL)
@@ -787,40 +822,105 @@ main(
 {
     enum
     {
+        UNSET,
         SHOW_HELP,
         CHECK_VERSION,
         INSTALL,
         UNINSTALL
-    } mode;
+    } mode = UNSET;
     PCSTR pSmbdPath = NULL;
     PSTR pFoundSmbdPath = NULL;
     DWORD error = 0;
+    DWORD argIndex = 0;
+    DWORD logLevel = 0;
+    PCSTR pErrorSymbol = NULL;
 
-    if (argc < 2 || argc > 3)
+    for (argIndex = 1; argIndex < argc; argIndex++)
     {
-        mode = SHOW_HELP;
-    }
-    else if(!strcmp(argv[1], "--check-version"))
-    {
-        mode = CHECK_VERSION;
-    }
-    else if(!strcmp(argv[1], "--install"))
-    {
-        mode = INSTALL;
-    }
-    else if(!strcmp(argv[1], "--uninstall"))
-    {
-        mode = UNINSTALL;
-    }
-    else
-    {
-        mode = SHOW_HELP;
+        if (!strcmp(argv[argIndex], "--check-version"))
+        {
+            if (mode == UNSET)
+            {
+                mode = CHECK_VERSION;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--install"))
+        {
+            if (mode == UNSET)
+            {
+                mode = INSTALL;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--uninstall"))
+        {
+            if (mode == UNSET)
+            {
+                mode = UNINSTALL;
+            }
+            else
+            {
+                mode = SHOW_HELP;
+            }
+        }
+        else if (!strcmp(argv[argIndex], "--loglevel"))
+        {
+            argIndex++;
+            if (argIndex >= argc)
+            {
+                error = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LSA_ERROR(error);
+            }
+            if (!strcmp(argv[argIndex], "error"))
+            {
+                logLevel = LW_LOG_LEVEL_ERROR;
+            }
+            else if (!strcmp(argv[argIndex], "warning"))
+            {
+                logLevel = LW_LOG_LEVEL_WARNING;
+            }
+            else if (!strcmp(argv[argIndex], "info"))
+            {
+                logLevel = LW_LOG_LEVEL_INFO;
+            }
+            else if (!strcmp(argv[argIndex], "verbose"))
+            {
+                logLevel = LW_LOG_LEVEL_VERBOSE;
+            }
+            else if (!strcmp(argv[argIndex], "debug"))
+            {
+                logLevel = LW_LOG_LEVEL_DEBUG;
+            }
+            else
+            {
+                error = ERROR_INVALID_PARAMETER;
+                BAIL_ON_LSA_ERROR(error);
+            }
+        }
+        else if (argIndex == argc - 1)
+        {
+            pSmbdPath = argv[2];
+        }
+        else
+        {
+            mode = SHOW_HELP;
+        }
     }
 
-    if (argc == 3)
+    if (mode == UNSET || mode == SHOW_HELP)
     {
-        pSmbdPath = argv[2];
+        ShowUsage(argv[0]);
+        goto cleanup;
     }
+
+    LwSetLogFunction(logLevel, LogLwMessageFunc, NULL);
 
     if (pSmbdPath == NULL)
     {
@@ -835,17 +935,45 @@ main(
     error = CheckSambaVersion(pSmbdPath);
     BAIL_ON_LSA_ERROR(error);
 
-    error = InstallWbclient(pSmbdPath);
-    BAIL_ON_LSA_ERROR(error);
+    if (mode == CHECK_VERSION)
+    {
+        fprintf(stderr, "Samba version supported\n");
+    }
+    else if (mode == INSTALL)
+    {
+        error = InstallWbclient(pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
 
-    error = InstallLwiCompat(pSmbdPath);
-    BAIL_ON_LSA_ERROR(error);
+        error = InstallLwiCompat(pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
 
-    error = SynchronizePassword(
-                pSmbdPath);
-    BAIL_ON_LSA_ERROR(error);
+        error = SynchronizePassword(
+                    pSmbdPath);
+        BAIL_ON_LSA_ERROR(error);
+
+        fprintf(stderr, "Install successful\n");
+    }
+    else
+    {
+        fprintf(stderr, "Uninstall mode not implemented\n");
+        error = ERROR_INVALID_PARAMETER;
+        BAIL_ON_LSA_ERROR(error);
+    }
 
 cleanup:
     LW_SAFE_FREE_STRING(pFoundSmbdPath);
+
+    if (error)
+    {
+        pErrorSymbol = LwWin32ErrorToName(error);
+        if (pErrorSymbol != NULL)
+        {
+            fprintf(stderr, "Error: %s\n", pErrorSymbol);
+        }
+        else
+        {
+            fprintf(stderr, "Unknown error\n");
+        }
+    }
     return error;
 }
