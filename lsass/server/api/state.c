@@ -313,10 +313,8 @@ LsaSrvCreateNSSArtefactEnumState(
 
         } else if (dwError == LW_ERROR_NOT_HANDLED) {
 
-           if (pProviderState) {
-               LsaSrvFreeProviderStateList(pProviderState);
-               pProviderState = NULL;
-           }
+           LsaSrvFreeProviderStateList(pProviderState);
+           pProviderState = NULL;
 
            dwError = 0;
 

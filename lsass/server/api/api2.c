@@ -1898,7 +1898,7 @@ LsaSrvAddGroup2(
     DWORD dwTraceFlags[] = {LSA_TRACE_FLAG_USER_GROUP_ADMINISTRATION};
     PLSA_AUTH_PROVIDER pProvider = NULL;
     BOOLEAN bInLock = FALSE;
-    BOOLEAN bFoundProvider = TRUE;
+    BOOLEAN bFoundProvider = FALSE;
     HANDLE hProvider = (HANDLE)NULL;
     PLSA_SRV_API_STATE pServerState = (PLSA_SRV_API_STATE)hServer;
     PSTR pszTargetProviderName = NULL;

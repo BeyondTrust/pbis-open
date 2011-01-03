@@ -215,9 +215,13 @@ LsaSrvAuthenticateUserEx(
 	    DWORD dwLen = 0;
             LSA_AUTH_USER_PAM_PARAMS params = { 0 };
 	    
-	    /* calculate length includeing '\' and terminating NULL */
+	    /* calculate length including '\' and terminating NULL */
 
-	    dwLen = strlen(pUserParams->pszDomain) + strlen(pUserParams->pszAccountName) + 2;    
+            if (pUserParams->pszDomain)
+            {
+	        dwLen = strlen(pUserParams->pszDomain);
+            }
+	    dwLen += strlen(pUserParams->pszAccountName) + 2;    
 	    dwError = LwAllocateMemory(dwLen, (PVOID*)&pszAccountName);
 	    BAIL_ON_LSA_ERROR(dwError);
     
