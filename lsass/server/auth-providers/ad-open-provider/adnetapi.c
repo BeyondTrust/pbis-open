@@ -1589,25 +1589,54 @@ LsaCopyNetrUserInfo3(
 
     }
 
-    pUserInfo->dwNumSids = pNetrUserInfo3->sam3->sidcount;
-    if (pUserInfo->dwNumSids != 0)
+    if (pNetrUserInfo3->sam3->sidcount != 0)
     {
         int i = 0;
 
-        dwError = LwAllocateMemory(sizeof(LSA_SID_ATTRIB)*(pUserInfo->dwNumSids),
-                                    (PVOID*)&pUserInfo->pSidAttribList);
+        pUserInfo->dwNumSids = 0;        
+
+        dwError = LwAllocateMemory(
+                      sizeof(LSA_SID_ATTRIB)*(pNetrUserInfo3->sam3->sidcount),
+                      (PVOID*)&pUserInfo->pSidAttribList);
         BAIL_ON_LSA_ERROR(dwError);
 
-        for (i=0; i<pUserInfo->dwNumSids; i++)
+        for (i=0; i<pNetrUserInfo3->sam3->sidcount; i++)
         {
-            PLSA_SID_ATTRIB pSidAttrib = &(pUserInfo->pSidAttribList[i]);
+            PLSA_SID_ATTRIB pSidAttrib = &(pUserInfo->pSidAttribList[pUserInfo->dwNumSids]);
+
+            dwError = ERROR_SUCCESS;
 
             pSidAttrib->dwAttrib = pNetrUserInfo3->sam3->sids[i].attribute;
 
-            ntError = RtlAllocateCStringFromSid(&pSidAttrib->pszSid,
-                                                pNetrUserInfo3->sam3->sids[i].sid);
+            ntError = RtlAllocateCStringFromSid(
+                          &pSidAttrib->pszSid,
+                          pNetrUserInfo3->sam3->sids[i].sid);
             dwError = LwNtStatusToWin32Error(ntError);
-            BAIL_ON_LSA_ERROR(dwError);
+            if (dwError != ERROR_SUCCESS)
+            {
+                if (pNetrUserInfo3->sam3->sids[i].sid)
+                {
+                    LSA_LOG_DEBUG(
+                        "Ignoring invalid SID (User = %s\\%s, Attribute = 0x%x, Revision = %d, SubAuthorityCount = %d).\n",
+                        pUserInfo->pszDomain ? pUserInfo->pszDomain : "NULL",
+                        pUserInfo->pszAccount ? pUserInfo->pszAccount : "NULL",
+                        pNetrUserInfo3->sam3->sids[i].attribute,
+                        pNetrUserInfo3->sam3->sids[i].sid->Revision,
+                        pNetrUserInfo3->sam3->sids[i].sid->SubAuthorityCount);
+                }
+                else
+                {
+                    LSA_LOG_DEBUG(
+                        "Ignoring NULL SID (User = %s\\%s, Attribute = 0x%x).\n",
+                        pUserInfo->pszDomain ? pUserInfo->pszDomain : "NULL",
+                        pUserInfo->pszAccount ? pUserInfo->pszAccount : "NULL",
+                        pNetrUserInfo3->sam3->sids[i].attribute);
+                }
+                continue;
+            }
+
+            // Successfully added another SID
+            pUserInfo->dwNumSids++;
         }
     }
 
