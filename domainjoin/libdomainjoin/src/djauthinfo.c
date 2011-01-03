@@ -1262,6 +1262,7 @@ void DJCreateComputerAccount(
     DWORD dwFlags = 0;
     DWORD dwError = 0;
 
+    PSTR likewiseProduct = NULL;
     PSTR likewiseVersion = NULL;
     PSTR likewiseBuild = NULL;
     PSTR likewiseRevision = NULL;
@@ -1276,15 +1277,15 @@ void DJCreateComputerAccount(
 
 #ifdef MINIMAL_JOIN
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&likewiseOSServicePack,
-                "Likewise Identity %s",
+                "Likewise Open %s",
                 BUILD_VERSION));
 #else
-    LW_CLEANUP_CTERR(exc, DJGetLikewiseVersion(&likewiseVersion,
-                &likewiseBuild, &likewiseRevision));
+    LW_CLEANUP_CTERR(exc, DJGetLikewiseVersion(&likewiseProduct,
+                &likewiseVersion, &likewiseBuild, &likewiseRevision));
 
     LW_CLEANUP_CTERR(exc, CTAllocateStringPrintf(&likewiseOSServicePack,
-                "Likewise Identity %s.%s.%s",
-                likewiseVersion, likewiseBuild, likewiseRevision));
+                "Likewise %s %s.%s.%s",
+                likewiseProduct, likewiseVersion, likewiseBuild, likewiseRevision));
 #endif
 
     LW_CLEANUP_CTERR(exc, CTCreateTempDirectory(&tempDir));
@@ -1438,6 +1439,7 @@ cleanup:
        putenv("KRB5_CONFIG=/etc/krb5.conf");
     }
 
+    CT_SAFE_FREE_STRING(likewiseProduct);
     CT_SAFE_FREE_STRING(likewiseVersion);
     CT_SAFE_FREE_STRING(likewiseBuild);
     CT_SAFE_FREE_STRING(likewiseRevision);

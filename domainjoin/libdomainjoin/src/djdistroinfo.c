@@ -642,13 +642,21 @@ void DJFreeDistroInfo(DistroInfo *info)
         CT_SAFE_FREE_STRING(info->version);
 }
 
-DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
+DWORD
+DJGetLikewiseVersion(
+    PSTR *product,
+    PSTR *version,
+    PSTR *build,
+    PSTR *revision
+    )
 {
     FILE *versionFile = NULL;
     PSTR line = NULL; 
     BOOLEAN isEndOfFile = FALSE;
     DWORD ceError = ERROR_SUCCESS;
+    BOOLEAN bIsEnterprise = FALSE;
 
+    PSTR _product = NULL;
     PSTR _version = NULL;
     PSTR _build = NULL;
     PSTR _revision = NULL;
@@ -660,7 +668,15 @@ DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
 #ifdef MINIMAL_JOIN
     GCE(ceError = CTOpenFile(LOCALSTATEDIR "/VERSION", "r", &versionFile));
 #else
-    GCE(ceError = CTOpenFile(PREFIXDIR "/data/VERSION", "r", &versionFile));
+    ceError = CTOpenFile(PREFIXDIR "/data/ENTERPRISE_VERSION", "r", &versionFile);
+    if (ceError == 0)
+    {
+        bIsEnterprise = TRUE;
+    }
+    else
+    {
+        GCE(ceError = CTOpenFile(PREFIXDIR "/data/VERSION", "r", &versionFile));
+    }
 #endif
 
     while (TRUE)
@@ -686,6 +702,14 @@ DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
         }
     }
 
+    if (bIsEnterprise)
+    {
+        GCE(ceError = CTStrdup("Enterprise", &_product));
+    }
+    else
+    {
+        GCE(ceError = CTStrdup("Open", &_product));
+    }
     if (_version == NULL)
     {
         GCE(ceError = CTStrdup("unknown", &_version));
@@ -701,9 +725,11 @@ DWORD DJGetLikewiseVersion(PSTR *version, PSTR *build, PSTR *revision)
 
     GCE(ceError = CTSafeCloseFile(&versionFile));
 
+    *product = _product;
     *version = _version;
     *build = _build;
     *revision = _revision;
+    _product = NULL;
     _version = NULL;
     _build = NULL;
     _revision = NULL;
