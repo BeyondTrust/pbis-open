@@ -261,11 +261,15 @@ postinstall()
 
     exec_log_exit "/etc/init.d/lwsmd start"
 
-    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
+    exec_log_exit "/etc/init.d/likewise start"
 
     exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable pam"
 
     exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable nsswitch"
+
+    exec_log_exit "/usr/sbin/update-rc.d -f lwsmd defaults 17 8"
+
+    exec_log_exit "/usr/sbin/update-rc.d -f likewise defaults 18 7"
 
     exec_logfile "rm -rf ${UPGRADEDIR}"
 

@@ -95,7 +95,7 @@ import_service_configuration()
     exec_log_exit "svccfg import /etc/likewise/svcs-solaris/$1.xml"
 }
 
-import_service_configurations()
+import_service_configurations_or_init_d_symlinks()
 {
     if type svccfg >/dev/null 2>&1; then
         log "Importing service configurations"
@@ -106,6 +106,19 @@ import_service_configurations()
         import_service_configuration lwregd
         import_service_configuration lwsmd
         import_service_configuration netlogond
+    else
+    # On older Solaris systems, in order for a deamon to start in 
+    # multi-user mode a start symlink must be put in /etc/rc2.d, and a stop
+    # symlink must be put in /etc/rc0.d, /etc/rc1.d, /etc/rcS.d
+        exec_log "ln -s /etc/init.d/lwsmd /etc/rc0.d/K08lwsmd"
+        exec_log "ln -s /etc/init.d/lwsmd /etc/rc1.d/K08lwsmd"
+        exec_log "ln -s /etc/init.d/lwsmd /etc/rcS.d/K08lwsmd"
+        exec_log "ln -s /etc/init.d/lwsmd /etc/rc2.d/S17lwsmd"
+
+        exec_log "ln -s /etc/init.d/likewise /etc/rc0.d/K07likewise"
+        exec_log "ln -s /etc/init.d/likewise /etc/rc1.d/K07likewise"
+        exec_log "ln -s /etc/init.d/likewise /etc/rcS.d/K07likewise"
+        exec_log "ln -s /etc/init.d/likewise /etc/rc2.d/S18likewise"
     fi
 }
 
@@ -292,11 +305,9 @@ postinstall()
 
     exec_log_exit "/etc/init.d/lwsmd stop"
 
-    import_service_configurations
+    import_service_configurations_or_init_d_symlinks
 
     exec_log_exit "/etc/init.d/lwsmd start"
-
-    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
 
     exec_log "/opt/likewise/bin/domainjoin-cli configure --enable pam"
 

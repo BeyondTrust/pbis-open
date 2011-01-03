@@ -370,11 +370,13 @@ postinstall()
 
     exec_log_exit "/etc/init.d/lwsmd start"
 
-    exec_log_exit "/opt/likewise/bin/domainjoin-cli query"
-
     exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable pam"
 
     exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable nsswitch"
+
+    exec_logfile_exit /sbin/chkconfig --add lwsmd
+
+    exec_logfile_exit /sbin/chkconfig --add likewise
 
     exec_logfile "rm -rf ${UPGRADEDIR}"
 
