@@ -18,6 +18,11 @@
 #LWI_STARTUP_TYPE_SUSE# Description: Start and Stop Likewise Service Manager
 #LWI_STARTUP_TYPE_SUSE### END INIT INFO
 
+## For FreeBSD
+# PROVIDE: lwsm
+# REQUIRE: NETWORKING
+# BEFORE: LOGIN
+
 PROG_DESC="Likewise Service Manager"
 PROG_BIN=PREFIX_DIR/sbin/lwsmd
 PROG_ARGS="--start-as-daemon"
