@@ -138,7 +138,7 @@ function package_deb
         dpkg-buildpackage -a`pkgtype_convert_pkgtype_and_arch_to_larch deb $BUILD_OS_ARCH` -rfakeroot -uc -b)
     exit_on_error $?
 
-    fullPath="${PKG_PACKAGE_ROOT}/${PKG_NAME}*.deb"
+    fullPath="${PKG_PACKAGE_ROOT}/${PKG_NAME}_*.deb"
 
     copy_dist "${PKG_NAME}" "${fullPath}"
 }
