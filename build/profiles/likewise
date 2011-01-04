@@ -9,6 +9,8 @@ BUILD_LOCALSTATEDIR="/var"
 
 BUILD_PRODUCTS="lwiso qatools lwtest"
 
+BUILD_PRODUCTS_EXPERIMENTAL="open"
+
 # We only want to srcdist for lwiso
 
 BUILD_SRCDIST="lwiso"

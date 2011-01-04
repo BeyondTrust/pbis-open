@@ -127,6 +127,8 @@ function main
     OPT_PLATFORM=""
     OPT_NOTEST=""
     OPT_NOTOOL=""
+    OPT_PRODUCT_EXPERIMENTAL="--nocomp"
+    OPTIONS_PRODUCT_EXPERIMENTAL_SKIP=""
 
     parseOptDone=""
 
@@ -144,21 +146,25 @@ function main
             --onlycomp|--nopkg)
                 OPT_ONLYCOMP=1
                 OPT_PRODUCT="$OPT_PRODUCT --onlycomp"
+                OPTIONS_PRODUCT_EXPERIMENTAL_SKIP="1"
                 shift
                 ;;
             --nocopy)
                 OPT_NOCOPY=1
                 OPT_PRODUCT="$OPT_PRODUCT --nocopy"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --nocopy"
                 shift
                 ;;
             --noincremental)
                 OPT_NOINCREMENTAL=1
                 OPT_PRODUCT="$OPT_PRODUCT --noincremental"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --noincremental"
                 shift
                 ;;
             --nocompat)
                 OPT_NOCOMPAT=1
                 OPT_PRODUCT="$OPT_PRODUCT --nocompat"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --nocompat"
                 shift
                 ;;
             --notest)
@@ -168,12 +174,14 @@ function main
             --notool)
                 OPT_NOTOOL=1
                 OPT_PRODUCT="$OPT_PRODUCT --notool"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --notool"
                 shift
                 ;;
             --compat)
                 OPT_COMPAT=1
                 OPT_PRODUCT="$OPT_PRODUCT --compat"
-		OPT_PLATFORM="$OPT_PLATFORM --compat"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --compat"
+                OPT_PLATFORM="$OPT_PLATFORM --compat"
                 shift
                 ;;
             --profile)
@@ -205,18 +213,22 @@ function main
                 ;;
             --debug)
                 OPT_PRODUCT="$OPT_PRODUCT --debug"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --debug"
                 shift
                 ;;
             --nodebug)
                 OPT_PRODUCT="$OPT_PRODUCT --nodebug"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --nodebug"
                 shift
                 ;;
             --profiling)
                 OPT_PRODUCT="$OPT_PRODUCT --profiling"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --profiling"
                 shift
                 ;;
             --noprofiling)
                 OPT_PRODUCT="$OPT_PRODUCT --noprofiling"
+                OPT_PRODUCT_EXPERIMENTAL="$OPT_PRODUCT_EXPERIMENTAL --noprofiling"
                 shift
                 ;;
             *)
@@ -224,6 +236,10 @@ function main
                 ;;
         esac
     done
+
+    if [ "${BUILD_OS_TYPE}" = 'Darwin' -o "${BUILD_OS_TYPE}" = 'darwin' ]; then
+        OPTIONS_PRODUCT_EXPERIMENTAL_SKIP="1"
+    fi
 
     RUN=echo
     RUNSUFFIX=""
@@ -265,9 +281,29 @@ function main
         then
             mkproduct ${OPT_PRODUCT} --type "${PKG_TYPE_LIST}" ${products}
             exit_on_error $?
+
+            echo "Building Experimental Start"
+            if [ -n "${BUILD_PRODUCTS_EXPERIMENTAL}" ]
+            then
+                if [ -z "${OPTIONS_PRODUCT_EXPERIMENTAL_SKIP}" ]
+                then
+                    mkproduct ${OPT_PRODUCT_EXPERIMENTAL} --type "${PKG_TYPE_LIST}" ${BUILD_PRODUCTS_EXPERIMENTAL}
+                fi
+            fi
+            echo "Building Experimental End"
         else
             mkproduct ${OPT_PRODUCT} ${products}
             exit_on_error $?
+
+            echo "Building Experimental Start"
+            if [ -n "${BUILD_PRODUCTS_EXPERIMENTAL}" ]
+            then
+                if [ -z "${OPTIONS_PRODUCT_EXPERIMENTAL_SKIP}" ]
+                then
+                    mkproduct ${OPT_PRODUCT_EXPERIMENTAL} ${BUILD_PRODUCTS_EXPERIMENTAL}
+                fi
+            fi
+            echo "Building Experimental End"
         fi
         if ! [ -n "${OPT_NOTEST}" ]
         then
