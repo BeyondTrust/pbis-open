@@ -156,6 +156,27 @@ NetUserGetInfo(
                               eValidation);
     BAIL_ON_WIN_ERROR(err);
 
+    if (dwLevel == 4)
+    {
+        //
+        // USER_INFO_4 requires providing a complete user SID which
+        // has to be derived from domain SID and user RID
+        //
+
+        PUSER_INFO_4 pInfo4 = pBuffer;
+        DWORD sidSize = RtlLengthRequiredSid(SID_MAX_SUB_AUTHORITIES);
+
+        status = RtlCopySid(sidSize,
+                            pInfo4->usri4_user_sid,
+                            pConn->Rpc.Samr.pDomainSid);
+        BAIL_ON_NT_STATUS(status);
+
+        status = RtlAppendRidSid(sidSize,
+                                 pInfo4->usri4_user_sid,
+                                 dwUserRid);
+        BAIL_ON_NT_STATUS(status);
+    }
+
     status = SamrClose(hSamrBinding, hUser);
     BAIL_ON_NT_STATUS(status);
 
