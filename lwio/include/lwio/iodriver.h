@@ -187,8 +187,8 @@ typedef struct _IRP_ARGS_QUERY_SET_VOLUME_INFORMATION {
 
 typedef struct _IRP_ARGS_LOCK_CONTROL {
     IN IO_LOCK_CONTROL LockControl;
-    IN LONG64 ByteOffset;
-    IN LONG64 Length;
+    IN ULONG64 ByteOffset;
+    IN ULONG64 Length;
     IN ULONG Key;
     IN BOOLEAN FailImmediately;
     IN BOOLEAN ExclusiveLock;

@@ -361,8 +361,8 @@ typedef struct _NT_IPC_MESSAGE_QUERY_VOLUME_INFORMATION_FILE {
 
 typedef struct _NT_IPC_MESSAGE_LOCK_FILE {
     IN IO_FILE_HANDLE FileHandle;
-    IN LONG64 ByteOffset;
-    IN LONG64 Length;
+    IN ULONG64 ByteOffset;
+    IN ULONG64 Length;
     IN ULONG Key;
     BOOLEAN FailImmediately;
     BOOLEAN ExclusiveLock;	
@@ -380,8 +380,8 @@ typedef struct _NT_IPC_MESSAGE_LOCK_FILE {
 
 typedef struct _NT_IPC_MESSAGE_UNLOCK_FILE {
     IN IO_FILE_HANDLE FileHandle;
-    IN LONG64 ByteOffset;
-    IN LONG64 Length;
+    IN ULONG64 ByteOffset;
+    IN ULONG64 Length;
     IN ULONG Key;
 } NT_IPC_MESSAGE_UNLOCK_FILE, *PNT_IPC_MESSAGE_UNLOCK_FILE;
 

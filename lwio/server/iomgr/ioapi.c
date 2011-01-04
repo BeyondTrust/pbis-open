@@ -1216,8 +1216,8 @@ IoLockFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN LONG64 ByteOffset,
-    IN LONG64 Length,
+    IN ULONG64 ByteOffset,
+    IN ULONG64 Length,
     IN ULONG Key,
     IN BOOLEAN FailImmediately,
     IN BOOLEAN ExclusiveLock
@@ -1276,8 +1276,8 @@ IoUnlockFile(
     IN IO_FILE_HANDLE FileHandle,
     IN OUT OPTIONAL PIO_ASYNC_CONTROL_BLOCK AsyncControlBlock,
     OUT PIO_STATUS_BLOCK IoStatusBlock,
-    IN LONG64 ByteOffset,
-    IN LONG64 Length,
+    IN ULONG64 ByteOffset,
+    IN ULONG64 Length,
     IN ULONG Key
     )
 {
