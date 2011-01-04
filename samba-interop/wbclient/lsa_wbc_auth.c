@@ -50,6 +50,7 @@
 #include <lwmem.h>
 #include <memory.h>
 #include <stdio.h>
+#include <string.h>
 
 wbcErr wbcAuthenticateUser(
     const char *username,
