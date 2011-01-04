@@ -31,7 +31,8 @@ $LWREGSHELL import ${tmpreg}.out
 rm -f ${tmpreg}.out
 
 # Clear out old pstore entries
-if [ `grep -c '\[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default\]' $tmpreg` -gt 0 ]; then
+# Using "." to avoid quadruple backslashes
+if [ `grep -c '\[HKEY_THIS_MACHINE.Services.lsass.Parameters.Providers.ActiveDirectory.Pstore.Default\]' $tmpreg` -gt 0 ]; then
   $LWREGSHELL delete_tree '[HKEY_THIS_MACHINE\Services\lsass\Parameters\Providers\ActiveDirectory\Pstore\Default]'
 fi
 
