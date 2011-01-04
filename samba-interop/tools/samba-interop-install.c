@@ -26,6 +26,7 @@
 
 #include <lw/swab.h>
 
+#include <signal.h>
 #include <tdb.h>
 
 #define WBCLIENT_FILENAME   "libwbclient.so.0"
