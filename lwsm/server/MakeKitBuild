@@ -23,7 +23,7 @@ make()
         SOURCES="driver.c" \
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
-        LIBDEPS="lwsmloader" \
+        LIBDEPS="lwsmloader lwioclient" \
         INSTALLDIR="${MK_LIBDIR}/lwsm-loader"
 
     mk_dlo \
@@ -47,7 +47,7 @@ make()
         INCLUDEDIRS=". ../include" \
         HEADERDEPS="$COMMON_HEADERDEPS" \
         LIBDEPS="\
-            lwsmcommon lwsmloader lwmsg lwmsg_nothr lwioclient \
+            lwsmcommon lwsmloader lwmsg lwmsg_nothr \
             regclient lwadvapi lwadvapi_nothr lwbase lwbase_nothr $LIB_PTHREAD" \
         INSTALLDIR="${MK_SBINDIR}"
 }
