@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 autoreconf -fi
 pushd libtdb
 autoreconf -fi
