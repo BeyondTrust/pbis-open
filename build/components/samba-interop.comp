@@ -1,7 +1,5 @@
 #!/bin/bash
 
-COMP_NEED_COMPAT=1
-COMP_NEED_FOREIGN=1
 COMP_INCREMENTAL=1
 COMP_DEPENDENCIES="lsass"
 COMP_SOURCES=${BUILD_ROOT}/src/linux/samba-interop
@@ -85,13 +83,17 @@ function component_stage
 
 function component_populate
 {
-    COMP_NAME=lsass
+    COMP_NAME=samba-interop
     COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
     COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
 
     mkdir -p ${POPULATE_PREFIX_DIR}
 
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+    rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/${_lib}/*.la
+    rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/${_lib}/*.a
+    rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/bin/tdbtool
+    rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/bin/tdbtorture
 
     libtool_rewrite_populate
 }
