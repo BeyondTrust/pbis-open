@@ -30,7 +30,8 @@ AC_CHECK_TYPES([comparison_fn_t, bool, Bool, sig_atomic_t], , , [
 #endif
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-#endif])
+#endif
+#include <signal.h>])
 AC_CHECK_DECL([errno setenv])
 
 AM_CPPFLAGS=
