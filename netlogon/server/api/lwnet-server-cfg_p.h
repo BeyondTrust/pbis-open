@@ -104,5 +104,11 @@ LWNetConfigIsNetBiosUdpTimeout(
     VOID
     );
 
+VOID
+LwNetConfigGetWinsServers(
+    PSTR *primaryServer,
+    PSTR *secondaryServer
+    );
+
 
 #endif /* __LWNET_SERVER_CFG_H__ */

@@ -63,6 +63,8 @@ typedef struct _LWNET_SERVER_CONFIG {
     DWORD dwCLdapSingleConnectionTimeoutSeconds;
     DWORD dwNetBiosEnabled;
     DWORD dwNetBiosUdpTimeout;
+    PSTR pszWinsPrimaryServer;
+    PSTR pszWinsSecondaryServer;
 } LWNET_SERVER_CONFIG, *PLWNET_SERVER_CONFIG;
 
 #define LWNET_PING_AGAIN_TIMEOUT_SECONDS (15 * 60)
@@ -176,6 +178,24 @@ LWNET_CONFIG gConfig[] =
         60,
         NULL,
         &gLWNetServerConfig.dwNetBiosUdpTimeout
+    },
+    {
+        "NetBiosWinsPrimary",
+        TRUE,
+        0,
+        -1,
+        60,
+        NULL,
+        &gLWNetServerConfig.pszWinsPrimaryServer
+    },
+    {
+        "NetBiosWinsSecondary",
+        TRUE,
+        0,
+        -1,
+        60,
+        NULL,
+        &gLWNetServerConfig.pszWinsSecondaryServer
     }
 };
 
@@ -278,4 +298,21 @@ LWNetConfigIsNetBiosUdpTimeout(
     )
 {
     return gLWNetServerConfig.dwNetBiosUdpTimeout;
+}
+
+
+VOID
+LwNetConfigGetWinsServers(
+    PSTR *primaryServer,
+    PSTR *secondaryServer
+    )
+{
+    if (primaryServer)
+    {
+        *primaryServer = gLWNetServerConfig.pszWinsPrimaryServer;
+    }
+    if (secondaryServer)
+    {
+        *secondaryServer = gLWNetServerConfig.pszWinsSecondaryServer;
+    }
 }

@@ -473,14 +473,16 @@ LWNetSrvIpcResolveNetBiosName(
 
     dwError = LWNetNbResolveName(
                   pszHostName,
-                  LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE,
+                  LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE |
+                      LWNB_NETBIOS_FLAGS_MODE_HYBRID,
                   &nbAddrs,
                   &nbAddrsLen);
     if (dwError)
     {
         dwError = LWNetNbResolveName(
                       pszHostName,
-                      LWNB_NETBIOS_FLAGS_RESOLVE_DC,
+                      LWNB_NETBIOS_FLAGS_RESOLVE_DC |
+                          LWNB_NETBIOS_FLAGS_MODE_HYBRID,
                       &nbAddrs,
                       &nbAddrsLen);
     }
@@ -517,7 +519,9 @@ LWNetSrvIpcResolveNetBiosName(
     pRes->dwAddressListLen = nbAddrsLen;
     pOut->tag = LWNET_R_RESOLVE_NAME;
     pOut->data = pRes;
+
 cleanup:
+    LWNetNbAddressListFree(nbAddrs);
     return dwError;
 
 error:
@@ -526,6 +530,7 @@ error:
         LWNET_SAFE_FREE_MEMORY(ppResAddr[i]);
     }
     LWNET_SAFE_FREE_MEMORY(ppResAddr);
+    LWNET_SAFE_FREE_MEMORY(pRes);
     goto cleanup;
 }
 

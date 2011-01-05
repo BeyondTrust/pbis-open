@@ -305,14 +305,11 @@ error:
     goto cleanup;
 }
 
-
-
-/* public API */
-
-DWORD
-LWNetNbResolveName(
-    IN PSTR pszHostName,
-    IN UINT16 flags,
+static DWORD
+LWNetNbResolveNameUdp(
+    PSTR pszHostName,
+    PSTR winsServer,
+    UINT8 queryType,
     OUT struct in_addr **retAddrs,
     OUT PDWORD retAddrsLen)
 {
@@ -327,52 +324,49 @@ LWNetNbResolveName(
     struct in_addr *tmpResAddrs = NULL;
     int sts = 0;
     DWORD i = 0;
-    PSTR pszAddr;
     DWORD resAddrsLen = 0;
     DWORD resAddrsAllocLen = 128;
-    /* Derive this value from flags; hard code to FILE_SERVICE for now */
-    unsigned char queryType = LWNB_RESOLVE_FILE_SERVICE;
-
-    if (flags)
-    {
-        if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE)
-        {
-            queryType = LWNB_RESOLVE_FILE_SERVICE;
-        }
-        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_WORKSTATION)
-        {
-            queryType = LWNB_RESOLVE_WORKSTATION;
-        }
-        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_DC)
-        {
-            queryType = LWNB_RESOLVE_DC;
-        }
-    }
-
-    if (!gpNbCtx)
-    {
-        dwError = ERROR_INVALID_HANDLE;
-        BAIL_ON_LWNET_ERROR(dwError);
-    }
 
     dwError = LWNetAllocateMemory(
                   LWNB_NETBIOS_UDP_MAX,
                   (PVOID*) &NetBiosQuery);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    dwError = LWNetNbConstructNameQuery(
-              pszHostName,
-              LWNB_QUERY_BROADCAST,
-              queryType,
-              &transactionId,
-              NetBiosQuery,
-              &NetBiosQueryLen);
-    BAIL_ON_LWNET_ERROR(dwError);
-
     memset(&dgAddr, 0, sizeof(dgAddr));
     dgAddr.sin_family = AF_INET;
     dgAddr.sin_port = htons(137);
-    dgAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+
+    if (winsServer)
+    {
+        sts = inet_aton(winsServer, &dgAddr.sin_addr);
+        if (sts == -1)
+        {
+            dwError = LwErrnoToWin32Error(ERROR_INCORRECT_ADDRESS);
+            BAIL_ON_LWNET_ERROR(dwError);
+        }
+   
+        dwError = LWNetNbConstructNameQuery(
+                      pszHostName,
+                      LWNB_QUERY_WINS,
+                      queryType,
+                      &transactionId,
+                      NetBiosQuery,
+                      &NetBiosQueryLen);
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+    else
+    {
+        dgAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+        dwError = LWNetNbConstructNameQuery(
+                      pszHostName,
+                      LWNB_QUERY_BROADCAST,
+                      queryType,
+                      &transactionId,
+                      NetBiosQuery,
+                      &NetBiosQueryLen);
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+
 
     // If this is not enough memory, realloc below fixes that
     dwError = LWNetAllocateMemory(
@@ -396,7 +390,7 @@ LWNetNbResolveName(
     {
         gettimeofday(&tp, NULL);
         cvTimeout.tv_sec = tp.tv_sec + gpNbCtx->udpTimeout;
-        cvTimeout.tv_nsec = tp.tv_usec + 1000;
+        cvTimeout.tv_nsec = tp.tv_usec * 1000;
         do {
             sts = pthread_cond_timedwait(
                       &gpNbCtx->cv,
@@ -422,7 +416,6 @@ LWNetNbResolveName(
                 memcpy(&resAddrs[resAddrsLen++],
                        &gpNbCtx->addrs[i], 
                        sizeof(struct in_addr));
-                pszAddr = inet_ntoa(gpNbCtx->addrs[i]);
             }
             pthread_mutex_lock(&gpNbCtx->mutexAck);
             gpNbCtx->bAck = TRUE;
@@ -449,6 +442,81 @@ cleanup:
 
 error:
     LWNET_SAFE_FREE_MEMORY(resAddrs);
+    goto cleanup;
+}
+
+
+/* public API */
+
+DWORD
+LWNetNbResolveName(
+    IN PSTR pszHostName,
+    IN UINT16 flags,
+    OUT struct in_addr **retAddrs,
+    OUT PDWORD retAddrsLen)
+{
+    DWORD dwError = 0;
+    /* Derive this value from flags; hard code to FILE_SERVICE for now */
+    unsigned char queryType = LWNB_RESOLVE_FILE_SERVICE;
+    PSTR winsPrimary = NULL;
+    PSTR winsSecondary = NULL;
+
+    if (!gpNbCtx)
+    {
+        dwError = ERROR_INVALID_HANDLE;
+        BAIL_ON_LWNET_ERROR(dwError);
+    }
+
+    if (flags)
+    {
+        if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_FILE_SERVICE)
+        {
+            queryType = LWNB_RESOLVE_FILE_SERVICE;
+        }
+        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_WORKSTATION)
+        {
+            queryType = LWNB_RESOLVE_WORKSTATION;
+        }
+        else if (flags & LWNB_NETBIOS_FLAGS_RESOLVE_DC)
+        {
+            queryType = LWNB_RESOLVE_DC;
+        }
+    }
+
+    if (flags & LWNB_NETBIOS_FLAGS_MODE_WINS)
+    {
+        LwNetConfigGetWinsServers(&winsPrimary, &winsSecondary);
+        dwError = LWNetNbResolveNameUdp(
+                      pszHostName,
+                      winsPrimary,
+                      queryType,
+                      retAddrs,
+                      retAddrsLen);
+        if (dwError)
+        {
+            dwError = LWNetNbResolveNameUdp(
+                          pszHostName,
+                          winsSecondary,
+                          queryType,
+                          retAddrs,
+                          retAddrsLen);
+        }
+    }
+
+    if (dwError && (flags & LWNB_NETBIOS_FLAGS_MODE_BROADCAST))
+    {
+        dwError = LWNetNbResolveNameUdp(
+                      pszHostName,
+                      NULL,
+                      queryType,
+                      retAddrs,
+                      retAddrsLen);
+    }
+
+cleanup:
+    return dwError;
+
+error:
     goto cleanup;
 }
 
@@ -546,7 +614,7 @@ LWNetNbParseNameQueryResponse(
     DWORD nbNameOffset = 0;
     DWORD numAddrs = 0;
     DWORD addrsLen = 0;
-    struct in_addr *addrs;
+    struct in_addr *addrs = NULL;
 
     memcpy(&parseTransactionId, &buf[i], sizeof(parseTransactionId));
     i += sizeof(parseTransactionId);
@@ -686,11 +754,10 @@ error:
     goto cleanup;
 }
 
-void 
+VOID 
 LWNetNbAddressListFree(
     IN struct in_addr *retAddrs)
 {
-
     LWNET_SAFE_FREE_MEMORY(retAddrs);
 }
 
@@ -709,7 +776,7 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
     void *pNetBiosReplyAddrLen = &NetBiosReplyAddrLen;
     PLWNET_SRV_NETBIOS_CONTEXT pNbCtx = (PLWNET_SRV_NETBIOS_CONTEXT) ctx;
     int allowBroadcast = 1;
-    uint8_t Flags = 0;
+    UINT8 Flags = 0;
     UINT16 respTransactionId = 0;
     PSTR NbName = NULL;
     struct in_addr *addrs = NULL;
@@ -805,6 +872,8 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
     LWNET_LOG_INFO("Stopping NetBIOS listener thread");
 
 cleanup:
+    LWNET_SAFE_FREE_MEMORY(NetBiosReply);
+    LWNET_SAFE_FREE_STRING(NbName);
     close(sock);
     return NULL;
 
