@@ -68,12 +68,17 @@ function component_populate
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
 
     # Handle init scripts
-    local script=lwsmd
     x_mkinit \
-	"${BUILD_ROOT}/src/linux/config/${script}" \
-	${script} \
+	"${BUILD_ROOT}/src/linux/config/lwsmd" \
+	lwsmd \
 	01 01 \
 	likewise.lwsmd 17 09
+
+    x_mkinit \
+	"${BUILD_ROOT}/src/linux/config/likewise" \
+	likewise \
+	01 01 \
+	likewise.likewise 18 08
 
     if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
 	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris

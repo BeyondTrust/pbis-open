@@ -42,6 +42,7 @@ function package_populate
 	mkdir -p "${POPULATE_PREFIX_DIR}/bin"
 	rsync -a "${BUILD_ROOT}/src/linux/config/init-base.sh" "${POPULATE_PREFIX_DIR}/bin/."
 	rsync -a "${BUILD_ROOT}/src/linux/config/init-lwsm.sh" "${POPULATE_PREFIX_DIR}/bin/."
+	rsync -a "${BUILD_ROOT}/src/linux/config/init-likewise.sh" "${POPULATE_PREFIX_DIR}/bin/."
 	if [ "${BUILD_OS_TYPE}" = "aix" ]
 	then
 	    mkdir -p "${POPULATE_ROOT_DIR}/var/lock/subsys"
