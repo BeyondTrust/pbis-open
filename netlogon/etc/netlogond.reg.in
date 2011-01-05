@@ -65,7 +65,8 @@
     doc = "Enable NetBIOS name resolution. 0=off 1=on"
 }
 "NetBiosUdpTimeout" = {
-    default = dword:00000002
+    default = dword:00000001
+    "range" = integer:1 - 60
     doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
 }
 "NetBiosWinsPrimary" = {
