@@ -362,8 +362,17 @@ CheckSambaVersion(
     if (!strncmp(pVersionString, "3.2.", sizeof("3.2.") - 1))
     {
     }
-    else if (!strncmp(pVersionString, "3.0.25.", sizeof("3.0.25.") - 1))
+    else if (!strncmp(pVersionString, "3.0.", sizeof("3.0.") - 1))
     {
+        int build = 0;
+        sscanf(pVersionString, "3.0.%d.", &build);
+
+        if (build < 25)
+        {
+            LW_LOG_ERROR("Unsupported smbd version %s", pVersionString);
+            error = ERROR_PRODUCT_VERSION;
+            BAIL_ON_LSA_ERROR(error);
+        }
     }
     else
     {
