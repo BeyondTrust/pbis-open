@@ -336,7 +336,7 @@ LWNetNbResolveNameUdp(
     dgAddr.sin_family = AF_INET;
     dgAddr.sin_port = htons(137);
 
-    if (winsServer)
+    if (winsServer && *winsServer)
     {
         sts = inet_aton(winsServer, &dgAddr.sin_addr);
         if (sts == -1)

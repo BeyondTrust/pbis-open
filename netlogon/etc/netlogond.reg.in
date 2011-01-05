@@ -68,3 +68,11 @@
     default = dword:00000002
     doc = "Wait this many seconds for responses to NetBIOS broadcast queries"
 }
+"NetBiosWinsPrimary" = {
+    default = ""
+    doc = "IP address of primary WINS server used for name resolution"
+}
+"NetBiosWinsSecondary" = {
+    default = ""
+    doc = "IP address of secondary WINS server used for name resolution"
+}
