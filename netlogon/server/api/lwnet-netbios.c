@@ -6,10 +6,12 @@ typedef struct _LWNET_SRV_NETBIOS_CONTEXT
     BOOLEAN bAck;
     BOOLEAN bShutdown;
     UINT16 transactionId;
+    UINT16 nextTransactionId;
     pthread_cond_t cv;
     pthread_mutex_t mutex;
     pthread_cond_t cvAck;
     pthread_mutex_t mutexAck;
+    pthread_mutex_t mutexTransactionId;
     int sock;
     struct in_addr *addrs;
     DWORD addrsLen;
@@ -521,6 +523,20 @@ error:
 }
 
 
+UINT16
+LWNetNbNextTransactionId(
+    PLWNET_SRV_NETBIOS_CONTEXT pNbCtx)
+{
+    UINT16 retId = 0;
+
+    pthread_mutex_lock(&pNbCtx->mutexTransactionId);
+    retId = pNbCtx->nextTransactionId++;
+    pthread_mutex_unlock(&pNbCtx->mutexTransactionId);
+
+    return retId;
+}
+
+
 DWORD
 LWNetNbConstructNameQuery(
     IN PSTR pszNetBiosHost,
@@ -536,8 +552,6 @@ LWNetNbConstructNameQuery(
     UINT8 *NbNameLevel2 = NULL;
     UINT8 BuiltNBHeader[LWNB_NAME_MAX_LENGTH] = {0};
     UINT16 TransactionId = 0;
-    INT32 seed = 0;
-    struct timeval tv;
 
     dwError = LWNetNbStrToNbName2(
                   pszNetBiosHost,
@@ -546,11 +560,7 @@ LWNetNbConstructNameQuery(
                   &NbNameLevel2Len);
     BAIL_ON_LWNET_ERROR(dwError);
 
-    gettimeofday(&tv, NULL);
-    seed = tv.tv_sec % tv.tv_usec;
-    srandom(seed);
-
-    TransactionId = ((unsigned long) random()) % ((1<<15)-1);
+    TransactionId = LWNetNbNextTransactionId(gpNbCtx);
     dwError = LWNetNbConstructNameQueryHeader(
               TransactionId,
               bBroadcast ? LWNB_QUERY_BROADCAST : LWNB_QUERY_WINS,
@@ -913,6 +923,10 @@ LWNetSrvStartNetBiosThread(
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LwErrnoToWin32Error(pthread_cond_init(&pNbCtx->cvAck, NULL));
+    BAIL_ON_LWNET_ERROR(dwError);
+
+    dwError = LwErrnoToWin32Error(pthread_mutex_init(
+                  &pNbCtx->mutexTransactionId, NULL));
     BAIL_ON_LWNET_ERROR(dwError);
 
     dwError = LwErrnoToWin32Error(pthread_create(&thread,
