@@ -784,8 +784,6 @@ AM_CONDITIONAL([HAVE_DOXYGEN_PDF], [$HAVE_DOXYGEN_PDF])
 
 AC_CHECK_LIB([nsl], [gethostname], [NSL_LIBS="-lnsl"])
 AC_CHECK_LIB([dl], [dlopen], [DL_LIBS="-ldl"])
-AC_CHECK_LIB([resolv], [res_query], [RESOLV_LIBS="-lresolv"])
-AC_CHECK_LIB([resolv], [__res_query], [RESOLV_LIBS="-lresolv"])
 AC_CHECK_LIB([pthread], [pthread_self], [PTHREAD_LIBS="-lpthread"])
 AC_CHECK_LIB([rt], [clock_settime], [RT_LIBS="-lrt"])
 AC_CHECK_LIB([uuid], [uuid_copy], [UUID_LIBS="-luuid"])
@@ -807,7 +805,6 @@ unset save_libs
 
 AC_SUBST(NSL_LIBS)
 AC_SUBST(DL_LIBS)
-AC_SUBST(RESOLV_LIBS)
 AC_SUBST(PTHREAD_LIBS)
 AC_SUBST(RT_LIBS)
 AC_SUBST(UUID_LIBS)

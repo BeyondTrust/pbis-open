@@ -44,7 +44,6 @@ liblsautils_la_CPPFLAGS = \
 	$(LWADVAPI_INCLUDES)
 
 liblsautils_la_LIBADD = \
-	$(RESOLV_LIBS) \
 	$(NSL_LIBS) \
 	$(LWBASE_NOTHR_LIBS) \
 	$(LWADVAPI_NOTHR_LIBS) \

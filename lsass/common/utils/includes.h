@@ -64,7 +64,6 @@
 #include "filelog_p.h"
 #include "consolelog_p.h"
 #include "syslog_p.h"
-#include "lsadns_p.h"
 #include "lsaerror_p.h"
 #include "lsasecurityidentifier_p.h"
 #include "lsaartefactinfo_p.h"
