@@ -42,6 +42,7 @@
 #include <openssl/rc4.h>
 #include <openssl/des.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include <dce/rpc.h>
 #include <dce/smb.h>
 #include <gssapi/gssapi.h>

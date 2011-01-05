@@ -55,6 +55,13 @@
 
 static
 DWORD
+LsaRandBytes(
+    PBYTE pBuffer,
+    DWORD dwCount
+    );
+
+static
+DWORD
 LsaGenerateMachinePassword(
     PWSTR  pwszPassword,
     size_t sPasswordLen
@@ -1325,6 +1332,52 @@ static const CHAR RandomCharsUc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static const CHAR RandomCharsDigits[] = "0123456789";
 static const CHAR RandomCharsPunct[] = "-+/*,.;:!<=>%'&()";
 
+static
+DWORD
+LsaRandBytes(
+    PBYTE pBuffer,
+    DWORD dwCount
+    )
+{
+    DWORD dwError = 0;
+    unsigned long dwRandError = 0;
+    const char *pszRandFile = NULL;
+    int iRandLine = 0;
+    char *pszData = NULL;
+    int iFlags = 0;
+
+    if (!RAND_bytes(pBuffer, dwCount))
+    {
+        dwRandError = ERR_get_error_line_data(
+                            &pszRandFile,
+                            &iRandLine,
+                            (const char **)&pszData,
+                            &iFlags);
+        if (iFlags & ERR_TXT_STRING)
+        {
+            LSA_LOG_DEBUG("RAND_bytes failed with message '%s' and error code %ld at %s:%d",
+                    pszData, dwRandError, pszRandFile, iRandLine);
+        }
+        else
+        {
+            LSA_LOG_DEBUG("RAND_bytes failed with error code %ld at %s:%d",
+                    dwRandError, pszRandFile, iRandLine);
+        }
+        dwError = ERROR_ENCRYPTION_FAILED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+cleanup:
+    if (iFlags & ERR_TXT_MALLOCED)
+    {
+        LW_SAFE_FREE_STRING(pszData);
+    }
+    return dwError;
+
+error:
+    goto cleanup;
+}
+
 DWORD
 LsaGenerateRandomString(
     PSTR    pszBuffer,
@@ -1350,17 +1403,11 @@ LsaGenerateRandomString(
                                OUT_PPVOID(&pClassBuffer));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!RAND_bytes((unsigned char*)pBuffer, (int)sBufferLen))
-    {
-        dwError = ERROR_ENCRYPTION_FAILED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaRandBytes(pBuffer, sBufferLen);
+    BAIL_ON_LSA_ERROR(dwError);
 
-    if (!RAND_bytes((unsigned char*)pClassBuffer, (int)sBufferLen))
-    {
-        dwError = ERROR_ENCRYPTION_FAILED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaRandBytes((unsigned char*)pClassBuffer, (int)sBufferLen);
+    BAIL_ON_LSA_ERROR(dwError);
 
     for (i = 0; i < sBufferLen-1; i++)
     {
@@ -1847,11 +1894,8 @@ LsaEncryptPasswordBufferEx(
                                        sizeof(PasswordBuffer));
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (!RAND_bytes((unsigned char*)InitValue, sizeof(InitValue)))
-    {
-        dwError = ERROR_ENCRYPTION_FAILED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaRandBytes((unsigned char*)InitValue, sizeof(InitValue));
+    BAIL_ON_LSA_ERROR(dwError);
 
     MD5_Init(&ctx);
     MD5_Update(&ctx, InitValue, 16);
@@ -1952,11 +1996,8 @@ LsaEncodePasswordBuffer(
      * Fill the rest of the buffer with (pseudo) random mess
      * to increase security.
      */
-    if (!RAND_bytes((unsigned char*)BlobInit, iByte))
-    {
-        dwError = ERROR_ENCRYPTION_FAILED;
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaRandBytes((unsigned char*)BlobInit, iByte);
+    BAIL_ON_LSA_ERROR(dwError);
 
     memcpy(PasswordBlob, BlobInit, iByte);
 
