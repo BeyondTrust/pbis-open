@@ -122,7 +122,7 @@ liblogin_la_LDFLAGS = -version-info $(login_version) $(AM_LDFLAGS)
 liblogin_la_DEPENDENCIES = $(COMPAT_OBJS)
 liblogin_la_LIBADD = $(PLAIN_LIBS) $(COMPAT_OBJS)
 
-libsrp_la_SOURCES = srp.c srp_init.c $(common_sou$(AM_LDFLAGS)rces)
+libsrp_la_SOURCES = srp.c srp_init.c $(common_sources)
 libsrp_la_LDFLAGS = -version-info $(srp_version) $(AM_LDFLAGS)
 libsrp_la_DEPENDENCIES = $(COMPAT_OBJS)
 libsrp_la_LIBADD = $(SRP_LIBS) $(COMPAT_OBJS)
