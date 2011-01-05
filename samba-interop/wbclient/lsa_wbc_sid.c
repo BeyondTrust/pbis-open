@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #define MAX_SID_STRING_LEN 1024
 
