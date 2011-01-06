@@ -426,7 +426,7 @@ RtlLengthSecurityDescriptorRelative(
     if (SecurityDescriptor->Owner)
     {
         PSID pOwnerlittleEndianSid = (PSID)LwRtlOffsetToPointer(SecurityDescriptor,
-                                                                SecurityDescriptor->Owner);
+                                                                LW_LTOH32(SecurityDescriptor->Owner));
 
         size += RtlLengthRequiredSid(LW_LTOH8(pOwnerlittleEndianSid->SubAuthorityCount));
     }
@@ -434,7 +434,7 @@ RtlLengthSecurityDescriptorRelative(
     if (SecurityDescriptor->Group)
     {
         PSID pGrouplittleEndianSid = (PSID)LwRtlOffsetToPointer(SecurityDescriptor,
-                                                                 SecurityDescriptor->Group);
+                                                                 LW_LTOH32(SecurityDescriptor->Group));
 
         size += RtlLengthRequiredSid(LW_LTOH8(pGrouplittleEndianSid->SubAuthorityCount));
     }
@@ -442,7 +442,7 @@ RtlLengthSecurityDescriptorRelative(
     if (SecurityDescriptor->Dacl)
     {
         PACL plittleEndianDacl = (PACL)LwRtlOffsetToPointer(SecurityDescriptor,
-                                                             SecurityDescriptor->Dacl);
+                                                             LW_LTOH32(SecurityDescriptor->Dacl));
 
         size +=  LW_LTOH16(plittleEndianDacl->AclSize);
     }
@@ -450,7 +450,7 @@ RtlLengthSecurityDescriptorRelative(
     if (SecurityDescriptor->Sacl)
     {
         PACL plittleEndianSacl = (PACL)LwRtlOffsetToPointer(SecurityDescriptor,
-                                                            SecurityDescriptor->Sacl);
+                                                            LW_LTOH32(SecurityDescriptor->Sacl));
 
         size += LW_LTOH16(plittleEndianSacl->AclSize);
     }
