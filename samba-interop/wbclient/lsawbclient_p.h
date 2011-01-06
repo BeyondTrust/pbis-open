@@ -82,19 +82,19 @@
 #define BAIL_ON_WBC_ERR(x)            \
     do {                    \
         if (x != WBC_ERR_SUCCESS)    \
-            goto done;        \
+            goto cleanup;        \
     } while(0);
 
 #define BAIL_ON_LSA_ERR(x)            \
     do {                    \
         if (x != LW_ERROR_SUCCESS)    \
-            goto done;        \
+            goto cleanup;        \
     } while(0);
 
 #define BAIL_ON_NETLOGON_ERR(x)            \
     do {                    \
         if (x != ERROR_SUCCESS)    \
-            goto done;            \
+            goto cleanup;            \
     } while(0);
 
 
@@ -102,7 +102,7 @@
     do {                        \
         if (x == NULL) {            \
             y = LW_ERROR_OUT_OF_MEMORY;    \
-            goto done;            \
+            goto cleanup;            \
         }                    \
     } while(0);
 
@@ -110,7 +110,7 @@
     do {                            \
         if (x == NULL) {                \
             y = LW_ERROR_INVALID_PARAMETER;    \
-            goto done;                \
+            goto cleanup;                \
         }                        \
     } while(0);
 

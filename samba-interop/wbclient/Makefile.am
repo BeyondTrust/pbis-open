@@ -10,6 +10,7 @@ libwbclient_la_SOURCES = \
 	lsa_wbc_nss_user.c \
 	lsa_wbc_nss_group.c \
 	lsa_wbc_sid.c \
+	lsa_wbc_guid.c \
 	lsa_wbc_user.c \
 	lsa_wbc_util.c \
 	lsa_wbc_wins.c \

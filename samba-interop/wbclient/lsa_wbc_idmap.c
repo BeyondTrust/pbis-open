@@ -110,7 +110,7 @@ wbcErr wbcSidToUid(const struct wbcDomainSid *sid,
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (pNameList) {
         LsaFreeSIDInfoList(pNameList, 1);
     }
@@ -158,7 +158,7 @@ wbcErr wbcUidToSid(uid_t uid,
     dwErr = map_wbc_to_lsa_error(wbc_status);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (hLsa) {
         LsaCloseServer(hLsa);
         hLsa = (HANDLE)NULL;
@@ -236,7 +236,7 @@ wbcErr wbcSidToGid(const struct wbcDomainSid *sid,
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (pNameList) {
         LsaFreeSIDInfoList(pNameList, 1);
     }
@@ -283,7 +283,7 @@ wbcErr wbcGidToSid(gid_t gid,
     dwErr = map_wbc_to_lsa_error(wbc_status);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (hLsa) {
         LsaCloseServer(hLsa);
         hLsa = (HANDLE)NULL;

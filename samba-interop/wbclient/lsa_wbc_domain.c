@@ -146,7 +146,7 @@ wbcDomainInfo(
     *info = pWbcDomInfo;
     pWbcDomInfo = NULL;
 
-done:
+cleanup:
     
     if (pLsaStatus)
     {
@@ -235,7 +235,7 @@ wbcListTrusts(
 
     *num_domains = NumDomains;
 
-done:
+cleanup:
     if (hLsa != (HANDLE)NULL) {
         LsaCloseServer(hLsa);
     }
@@ -390,7 +390,7 @@ FillDomainInfo(
         break;
     }
 
-done:
+cleanup:
     return dwErr;
 }
 

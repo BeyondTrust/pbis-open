@@ -71,7 +71,7 @@ wbcSidCopy(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     wbcStatus = map_error_to_wbc_status(dwErr);
     
     return wbcStatus;
@@ -100,7 +100,7 @@ wbcSidAppendRid(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     wbcStatus = map_error_to_wbc_status(dwErr);
 
     return dwErr;
@@ -143,7 +143,7 @@ wbcErr wbcSidToString(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;
@@ -230,7 +230,7 @@ wbcStringToSid(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;
@@ -274,7 +274,7 @@ wbcLookupName(
         if (name_type) {
             *name_type = WBC_SID_NAME_USER;
         }
-        goto done;
+        goto cleanup;
     }
 
     /* Fall back and try it as a group */
@@ -296,7 +296,7 @@ wbcLookupName(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if ( hLsa) {
         LsaCloseServer(hLsa);
         hLsa = (HANDLE)NULL;
@@ -395,7 +395,7 @@ wbcErr wbcLookupSid(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (pNameList) {
         LsaFreeSIDInfoList(pNameList, 1);
     }
@@ -478,7 +478,7 @@ wbcErr wbcLookupRids(
         domain = NULL;
     }
 
-done:
+cleanup:
     if (domain) {
         wbcFreeMemory(domain);
     }

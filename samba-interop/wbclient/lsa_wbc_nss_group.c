@@ -92,7 +92,7 @@ static DWORD CopyGroupMembers(struct group *gr, LSA_GROUP_INFO_1 *pGroup)
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     return dwErr;
 }
 
@@ -126,7 +126,7 @@ static DWORD FillStructGroupFromGroupInfo0(struct group **grp, LSA_GROUP_INFO_1 
     *grp = gr;
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         if (gr) {
             _WBC_FREE(gr);
@@ -161,7 +161,7 @@ wbcErr wbcGetgrnam(const char *name, struct group **grp)
     dwErr = FillStructGroupFromGroupInfo0(grp, pGroupInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*grp);
     }
@@ -205,7 +205,7 @@ wbcErr wbcGetgrgid(gid_t gid, struct group **grp)
     dwErr = FillStructGroupFromGroupInfo0(grp, pGroupInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*grp);
     }

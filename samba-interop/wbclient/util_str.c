@@ -114,7 +114,7 @@ StrEqual(
         bEqual = TRUE;
     }
 
-done:
+cleanup:
     _WBC_FREE(pszCopy1);
     _WBC_FREE(pszCopy2);
 
@@ -165,7 +165,7 @@ StrnEqual(
 
     bResult = StrEqual(pszCopy1, pszCopy2);
 
-done:
+cleanup:
     _WBC_FREE(pszCopy1);
     _WBC_FREE(pszCopy2);
 

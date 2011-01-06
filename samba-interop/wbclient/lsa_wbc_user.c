@@ -139,7 +139,7 @@ wbcErr wbcLookupUserSids(const struct wbcDomainSid *user_sid,
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (pNameList) {
         LsaFreeSIDInfoList(pNameList, 1);
     }
@@ -211,7 +211,7 @@ static DWORD AddUsersToList(char ***pppUserList, uint32_t *pUserSize,
         *pUserSize = nUsers;
 
     dwErr = LW_ERROR_SUCCESS;
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS)  {
         _WBC_FREE(ppUsers);
     }
@@ -274,7 +274,7 @@ wbcErr wbcListUsers(const char *domain_name,
     *users = (const char **)userList;
     *num_users = userSize;
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(userList);
     }

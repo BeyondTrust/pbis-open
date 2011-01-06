@@ -74,7 +74,7 @@ wbcErr wbcAuthenticateUser(
     hLsa = (HANDLE)NULL;
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (hLsa) {
         LsaCloseServer(hLsa);
         hLsa = (HANDLE)NULL;
@@ -102,7 +102,7 @@ CopyPlaintextParams(
 
     pLsaParams->pass.clear.pszPassword = pszPass;
 
-done:
+cleanup:
     return dwErr;
 }
 
@@ -147,7 +147,7 @@ CopyChapParams(
                  (const PBYTE)params->password.response.lm_data );
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (!LW_ERROR_IS_OK(dwErr)) {
         LsaDataBlobFree(&pLsaParams->pass.chap.pChallenge);
         LsaDataBlobFree(&pLsaParams->pass.chap.pNT_resp);
@@ -220,7 +220,7 @@ static DWORD InitLsaAuthParams(
         break;
     }
 
-done:
+cleanup:
     return dwErr;
 }
 
@@ -388,7 +388,7 @@ CopyLsaUserInfoToWbcInfo(
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     return dwErr;
 }
 
@@ -519,7 +519,7 @@ FillErrorInfo(
 
     *ppWbcError = pError;
 
-done:
+cleanup:
     return dwErr;
 }
 
@@ -593,7 +593,7 @@ wbcAuthenticateUserEx(
     /* Copy the out parms now if we have an out pointer */
 
     if (!info || !pLsaUserInfo->pszAccount) {
-        goto done;
+        goto cleanup;
     }
 
     pWbcUserInfo = _wbc_malloc_zero(sizeof(struct wbcAuthUserInfo),
@@ -608,7 +608,7 @@ wbcAuthenticateUserEx(
     FillErrorInfo(dwErr, error);
 
 
-done:
+cleanup:
     if (hLsa) {
         LsaCloseServer(hLsa);
         hLsa = (HANDLE)NULL;

@@ -91,7 +91,7 @@ static DWORD AddGroupsToList(char ***pppGroupList, uint32_t *pGroupSize,
         *pGroupSize = nGroups;
 
     dwErr = LW_ERROR_SUCCESS;
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS)  {
         _WBC_FREE(ppGroups);
     }
@@ -155,7 +155,7 @@ wbcErr wbcListGroups(const char *domain_name,
     *groups = (const char **)groupList;
     *num_groups = groupSize;
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(groupList);
     }

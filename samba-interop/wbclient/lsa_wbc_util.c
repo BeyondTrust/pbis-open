@@ -110,7 +110,7 @@ wbcErr wbcPing(void)
     hLsa = (HANDLE)NULL;
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;
@@ -173,7 +173,7 @@ wbcErr wbcInterfaceDetails(struct wbcInterfaceDetails **details)
     (*details)->dns_domain = _wbc_strdup(pDcInfo->pszFullyQualifiedDomainName);
     BAIL_ON_NULL_PTR((*details)->dns_domain, dwErr);
 
-done:
+cleanup:
     if (pszMyDnsDomain)
         LWNetFreeString(pszMyDnsDomain);
 
@@ -198,7 +198,7 @@ wbcErr wbcLibraryDetails(struct wbcLibraryDetails **details)
     (*details)->minor_version   = LSA_WBC_LIBRARY_MINOR_VERSION;
     (*details)->vendor_version  = LSA_WBC_LIBRARY_VENDOR_STRING;
 
-done:
+cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;

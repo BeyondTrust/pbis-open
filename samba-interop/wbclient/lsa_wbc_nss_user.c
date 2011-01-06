@@ -102,7 +102,7 @@ static DWORD FillStructPasswdFromUserInfo0(struct passwd **pwd, LSA_USER_INFO_0 
     *pwd = pw;
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         if (pw) {
             _WBC_FREE(pw);
@@ -137,7 +137,7 @@ wbcErr wbcGetpwnam(const char *name, struct passwd **pwd)
     dwErr = FillStructPasswdFromUserInfo0(pwd, pUserInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*pwd);
     }
@@ -182,7 +182,7 @@ wbcErr wbcGetpwuid(uid_t uid, struct passwd **pwd)
     dwErr = FillStructPasswdFromUserInfo0(pwd, pUserInfo);
     BAIL_ON_LSA_ERR(dwErr);
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*pwd);
     }
@@ -253,7 +253,7 @@ wbcErr wbcGetGroups(const char *account,
 
     dwErr = LW_ERROR_SUCCESS;
 
-done:
+cleanup:
     if (dwErr != LW_ERROR_SUCCESS) {
         _WBC_FREE(*groups);
     }
