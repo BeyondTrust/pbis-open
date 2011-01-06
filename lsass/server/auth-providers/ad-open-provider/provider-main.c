@@ -53,7 +53,7 @@
 static
 DWORD
 LsaAdProviderStateCreate(
-    PCSTR pszDomainName,
+    IN PLSA_AD_PROVIDER_STATE pStateMinimal,
     OUT PLSA_AD_PROVIDER_STATE* ppState
     );
 
@@ -640,6 +640,43 @@ AD_SafeRemoveJoinInfo(
 }
 
 static
+DWORD
+AD_SetDefaultState(
+    IN PLSA_AD_PROVIDER_STATE pState
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AD_PROVIDER_STATE pStateLocal = NULL;
+
+    LSA_ASSERT(pState->joinState == LSA_AD_JOINING);
+
+    ENTER_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+
+    pStateLocal = AD_FindStateInLock(pState->pszDomainName);
+    LSA_ASSERT(pState == pStateLocal);
+
+    pStateLocal = AD_FindStateInLock(NULL);
+
+    if (pStateLocal)
+    {
+        // Failure here indicates a race condition between two joins
+        dwError = ERROR_INVALID_DATA;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+    else
+    {
+        pState->bIsDefault = TRUE;
+    }
+
+error:
+
+    LEAVE_AD_GLOBAL_DATA_RW_WRITER_LOCK(bInLock);
+
+    return dwError;
+}
+
+static
 VOID
 LsaAdProviderStateDestroy(
     IN PLSA_AD_PROVIDER_STATE pState
@@ -721,6 +758,7 @@ static
 DWORD
 LsaAdProviderStateCreateMinimal(
     IN PCSTR pszDomainName,
+    IN BOOLEAN bIsDefault,
     OUT PLSA_AD_PROVIDER_STATE* ppState
     )
 {
@@ -739,6 +777,7 @@ LsaAdProviderStateCreateMinimal(
 
     LwStrToUpper(pState->pszDomainName);
 
+    pState->bIsDefault = bIsDefault;
     pState->joinState = LSA_AD_UNKNOWN;
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pState->stateLock, NULL));
@@ -763,39 +802,19 @@ error:
 static
 DWORD
 LsaAdProviderStateCreate(
-    IN PCSTR pszDomainName,
+    IN PLSA_AD_PROVIDER_STATE pStateMinimal,
     OUT PLSA_AD_PROVIDER_STATE* ppState
     )
 {
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = NULL;
     LSA_AD_CONFIG config = {0};
-    PSTR pszDefaultDomain = NULL;
-    HANDLE hPstore = NULL;
 
     dwError = LsaAdProviderStateCreateMinimal(
-                  pszDomainName,
+                  pStateMinimal->pszDomainName,
+                  pStateMinimal->bIsDefault,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPstore);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsGetDefaultJoinedDomain(
-                  hPstore,
-                  &pszDefaultDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!strcasecmp(pszDomainName, pszDefaultDomain))
-    {
-        pState->bIsDefault = TRUE;
-    }
-    else
-    {
-        pState->bIsDefault = FALSE;
-    }
 
     dwError = LwAllocateStringPrintf(
                  &pState->MachineCreds.pszCachePath,
@@ -871,13 +890,6 @@ cleanup:
     }
 
     AD_FreeConfigContents(&config);
-
-    if (hPstore)
-    {
-        LwpsClosePasswordStore(hPstore);
-    }
-
-    LW_SAFE_FREE_STRING(pszDefaultDomain);
 
     return dwError;
 
@@ -994,14 +1006,17 @@ AD_InitializeProvider(
 
     if (bFoundDefault && !gbMultiTenancyEnabled)
     {
-        dwDomainCount = 1;
         dwError = LwAllocateMemory(
                         sizeof(*ppszDomainList),
                         (PVOID*)&ppszDomainList);
         BAIL_ON_LSA_ERROR(dwError);
 
-        ppszDomainList[0] = pszDefaultDomain;
-        pszDefaultDomain = NULL;
+        dwError = LwAllocateString(
+                      pszDefaultDomain,
+                      &ppszDomainList[0]);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwDomainCount = 1;
     }
     else
     {
@@ -1013,12 +1028,21 @@ AD_InitializeProvider(
 
     for (dwIndex = 0 ; dwIndex < dwDomainCount ; dwIndex++)
     {
+        BOOLEAN bIsDefault = FALSE;
+
         if (!gbMultiTenancyEnabled && dwIndex > 0)
         {
             break;
         }
 
-        if (!bFoundDefault)
+        if (pszDefaultDomain)
+        {
+            if (!strcasecmp(ppszDomainList[dwIndex], pszDefaultDomain))
+            {
+                bIsDefault = TRUE;
+            }
+        }
+        else if (!bFoundDefault)
         {
             dwError = LwpsOpenPasswordStore(
                           LWPS_PASSWORD_STORE_DEFAULT,
@@ -1031,6 +1055,7 @@ AD_InitializeProvider(
             BAIL_ON_LSA_ERROR(dwError);
 
             bFoundDefault = TRUE;
+            bIsDefault = TRUE;
         }
 
         // Add a minimal state to the list so that no one
@@ -1038,6 +1063,7 @@ AD_InitializeProvider(
         // initialization is complete.
         dwError = LsaAdProviderStateCreateMinimal(
                       ppszDomainList[dwIndex],
+                      bIsDefault,
                       &pStateMinimal);
         BAIL_ON_LSA_ERROR(dwError);
 
@@ -1101,7 +1127,7 @@ LsaAdStartupThread(
     LsaAdProviderStateAcquireRead(pStateMinimal);
 
     dwError = LsaAdProviderStateCreate(
-                  pStateMinimal->pszDomainName,
+                  pStateMinimal,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2272,16 +2298,37 @@ error:
 static
 DWORD
 AD_PostJoinDomain(
-    IN PCSTR pszDomain,
-    IN PCSTR pszHostDnsDomain,
+    IN PLSA_AD_PROVIDER_STATE pStateMinimal,
     OUT PLSA_AD_PROVIDER_STATE* ppState
     )
 {
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = NULL;
+    PSTR defaultDomain = NULL;
+    HANDLE hPstore = NULL;
+
+    dwError = LwpsOpenPasswordStore(
+                  LWPS_PASSWORD_STORE_DEFAULT,
+                  &hPstore);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwpsGetDefaultJoinedDomain(
+                  hPstore,
+                  &defaultDomain);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!strcasecmp(pStateMinimal->pszDomainName, defaultDomain))
+    {
+        dwError = AD_SetDefaultState(pStateMinimal);
+        if (dwError)
+        {
+            LSA_LOG_ERROR("Failed to set %s as the default domain", pStateMinimal->pszDomainName);
+            dwError = 0;
+        }
+    }
 
     dwError = LsaAdProviderStateCreate(
-                  pszDomain,
+                  pStateMinimal,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2300,6 +2347,13 @@ error:
         LsaAdProviderStateDestroy(pState);
         pState = NULL;
     }
+
+    if (hPstore)
+    {
+        LwpsClosePasswordStore(hPstore);
+    }
+
+    LW_SAFE_FREE_STRING(defaultDomain);
 
     *ppState = pState;
 
@@ -2403,6 +2457,7 @@ AD_JoinDomain(
 
     dwError = LsaAdProviderStateCreateMinimal(
                   pRequest->pszDomain,
+                  FALSE,
                   &pStateMinimal);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2429,8 +2484,7 @@ AD_JoinDomain(
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = AD_PostJoinDomain(
-                  pRequest->pszDomain,
-                  pRequest->pszHostDnsDomain,
+                  pStateMinimal,
                   &pState);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2776,15 +2830,27 @@ AD_SetDefaultDomain(
     LsaAdProviderStateAcquireWrite(pStateDefault);
     bInLockStateDefault = TRUE;
 
-    if (!strcmp(pszDomain, pStateDefault->pszDomainName))
-    {
-        goto cleanup;
-    }
-
     if (pStateDefault->joinState != LSA_AD_JOINED)
     {
         dwError = LW_ERROR_NOT_HANDLED;
         BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    if (!strcmp(pszDomain, pStateDefault->pszDomainName))
+    {
+        // Already the default, ensure pstore is set
+
+        dwError = LwpsOpenPasswordStore(
+                      LWPS_PASSWORD_STORE_DEFAULT,
+                      &hPstore);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwpsSetDefaultJoinedDomain(
+                      hPstore,
+                      pszDomain);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        goto cleanup;
     }
 
     dwError = AD_GetStateWithReference(
