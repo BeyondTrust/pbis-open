@@ -43,7 +43,7 @@ LwIoFuseWrite(
     NTSTATUS status = STATUS_SUCCESS;
     IO_STATUS_BLOCK ioStatus = {0};
     IO_FILE_HANDLE handle = NULL;
-    LONG64 llByteOffset = (LONG64) offset;
+    ULONG64 byteOffset = (ULONG64) offset;
 
     handle = FUSE_TO_NT_FH(pFileInfo->fh);
 
@@ -53,7 +53,7 @@ LwIoFuseWrite(
         &ioStatus, /* IO status block */
         (PVOID) pData, /* Buffer */
         (ULONG) length, /* Buffer size */
-        &llByteOffset, /* File offset */
+        &byteOffset, /* File offset */
         NULL); /* Key */
     BAIL_ON_NT_STATUS(status);
     

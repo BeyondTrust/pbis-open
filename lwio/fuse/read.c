@@ -44,7 +44,7 @@ LwIoFuseRead(
     IO_STATUS_BLOCK ioStatus = {0};
     IO_FILE_HANDLE handle = NULL;
     PIO_FUSE_CONTEXT pFuseContext = NULL;
-    LONG64 llByteOffset = (LONG64) offset;
+    ULONG64 byteOffset = (ULONG64) offset;
 
     pFuseContext = LwIoFuseGetContext();
 
@@ -56,7 +56,7 @@ LwIoFuseRead(
         &ioStatus, /* IO status block */
         pData, /* Buffer */
         (ULONG) length, /* Buffer size */
-        &llByteOffset, /* File offset */
+        &byteOffset, /* File offset */
         NULL); /* Key */
     if (status == STATUS_END_OF_FILE)
     {
