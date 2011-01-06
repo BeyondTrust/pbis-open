@@ -14,6 +14,7 @@ typedef struct _LWNET_SRV_NETBIOS_CONTEXT
     pthread_mutex_t mutexTransactionId;
     int sock;
     struct in_addr *addrs;
+    DWORD respError;
     DWORD addrsLen;
     DWORD udpTimeout;
 } LWNET_SRV_NETBIOS_CONTEXT, *PLWNET_SRV_NETBIOS_CONTEXT;
@@ -328,6 +329,8 @@ LWNetNbResolveNameUdp(
     DWORD i = 0;
     DWORD resAddrsLen = 0;
     DWORD resAddrsAllocLen = 128;
+    DWORD commType = 0;
+    BOOLEAN bLocked = FALSE;
 
     dwError = LWNetAllocateMemory(
                   LWNB_NETBIOS_UDP_MAX,
@@ -347,9 +350,10 @@ LWNetNbResolveNameUdp(
             BAIL_ON_LWNET_ERROR(dwError);
         }
    
+        commType = LWNB_QUERY_WINS;
         dwError = LWNetNbConstructNameQuery(
                       pszHostName,
-                      LWNB_QUERY_WINS,
+                      commType,
                       queryType,
                       &transactionId,
                       NetBiosQuery,
@@ -359,9 +363,10 @@ LWNetNbResolveNameUdp(
     else
     {
         dgAddr.sin_addr.s_addr = htonl(INADDR_BROADCAST);
+        commType = LWNB_QUERY_BROADCAST;
         dwError = LWNetNbConstructNameQuery(
                       pszHostName,
-                      LWNB_QUERY_BROADCAST,
+                      commType,
                       queryType,
                       &transactionId,
                       NetBiosQuery,
@@ -377,6 +382,7 @@ LWNetNbResolveNameUdp(
     BAIL_ON_LWNET_ERROR(dwError);
 
     pthread_mutex_lock(&gpNbCtx->mutex);
+    bLocked = TRUE;
     sts = sendto(gpNbCtx->sock,
                  NetBiosQuery,
                  NetBiosQueryLen,
@@ -403,28 +409,42 @@ LWNetNbResolveNameUdp(
         if (sts == 0 && gpNbCtx->transactionId == transactionId)
         {
             gpNbCtx->bNbRepsponse = FALSE;
-            if ((gpNbCtx->addrsLen + resAddrsLen) > resAddrsAllocLen)
+
+
+            if ((commType == LWNB_QUERY_WINS && gpNbCtx->respError == 0) || 
+                (commType == LWNB_QUERY_BROADCAST))
             {
-                resAddrsAllocLen = resAddrsAllocLen * 2 + gpNbCtx->addrsLen;
-                tmpResAddrs = LwRtlMemoryRealloc(resAddrs, resAddrsAllocLen);
-                if (!tmpResAddrs)
+                if ((gpNbCtx->addrsLen + resAddrsLen) > resAddrsAllocLen)
                 {
-                    dwError = ERROR_NOT_ENOUGH_MEMORY;
-                    BAIL_ON_LWNET_ERROR(dwError);
+                    resAddrsAllocLen = resAddrsAllocLen * 2 + gpNbCtx->addrsLen;
+                    tmpResAddrs = LwRtlMemoryRealloc(resAddrs, resAddrsAllocLen);
+                    if (!tmpResAddrs)
+                    {
+                        dwError = ERROR_NOT_ENOUGH_MEMORY;
+                        BAIL_ON_LWNET_ERROR(dwError);
+                    }
                 }
-            }
-            for (i=0; i<gpNbCtx->addrsLen; i++)
-            {
-                memcpy(&resAddrs[resAddrsLen++],
-                       &gpNbCtx->addrs[i], 
-                       sizeof(struct in_addr));
+                for (i=0; i<gpNbCtx->addrsLen; i++)
+                {
+                    memcpy(&resAddrs[resAddrsLen++],
+                           &gpNbCtx->addrs[i], 
+                           sizeof(struct in_addr));
+                }
             }
             pthread_mutex_lock(&gpNbCtx->mutexAck);
             gpNbCtx->bAck = TRUE;
             pthread_mutex_unlock(&gpNbCtx->mutexAck);
             pthread_cond_signal(&gpNbCtx->cvAck);
+
+            if (commType == LWNB_QUERY_WINS && gpNbCtx->respError)
+            {
+                // Bail when WINS query fails to resolve the hostname
+                dwError = gpNbCtx->respError;
+                BAIL_ON_LWNET_ERROR(dwError);
+            }
         }
-    } while (sts != ETIMEDOUT);
+    } while (commType == LWNB_QUERY_BROADCAST && sts != ETIMEDOUT);
+    bLocked = FALSE;
     pthread_mutex_unlock(&gpNbCtx->mutex);
 
     gpNbCtx->bAck = FALSE;
@@ -439,6 +459,10 @@ LWNetNbResolveNameUdp(
     *retAddrsLen = resAddrsLen;
 
 cleanup:
+    if (bLocked)
+    {
+        pthread_mutex_unlock(&gpNbCtx->mutex);
+    }
     LWNET_SAFE_FREE_MEMORY(NetBiosQuery);
     return dwError;
 
@@ -853,6 +877,7 @@ VOID *LWNetSrvStartNetBiosThreadRoutine(VOID *ctx)
                               &addrs,
                               &addrsLen);
                 pthread_mutex_lock(&pNbCtx->mutex);
+                pNbCtx->respError = dwError;
                 pNbCtx->transactionId = respTransactionId;
                 pNbCtx->addrs = addrs;
                 pNbCtx->addrsLen = addrsLen;
