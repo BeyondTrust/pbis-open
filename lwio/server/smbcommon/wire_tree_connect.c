@@ -348,7 +348,7 @@ UnmarshallTreeConnectResponse(
     *ppHeader = pHeader;
 
     *ppszService = (PSTR) pBuffer + bufferUsed;
-    bufferUsed = strnlen((char *) *ppszService, bufferLen - bufferUsed) +
+    bufferUsed += strnlen((char *) *ppszService, bufferLen - bufferUsed) +
         sizeof(NUL);
     if (bufferUsed > bufferLen)
     {
