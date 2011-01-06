@@ -123,7 +123,7 @@ LwNtReadFile(
     LW_OUT PIO_STATUS_BLOCK IoStatusBlock,
     LW_OUT LW_PVOID Buffer,
     LW_IN LW_ULONG Length,
-    LW_IN LW_OPTIONAL LW_PLONG64 ByteOffset,
+    LW_IN LW_OPTIONAL LW_PULONG64 ByteOffset,
     LW_IN LW_OPTIONAL LW_PULONG Key
     );
 
@@ -134,7 +134,7 @@ LwNtWriteFile(
     LW_OUT PIO_STATUS_BLOCK IoStatusBlock,
     LW_IN LW_PVOID Buffer,
     LW_IN LW_ULONG Length,
-    LW_IN LW_OPTIONAL LW_PLONG64 ByteOffset,
+    LW_IN LW_OPTIONAL LW_PULONG64 ByteOffset,
     LW_IN LW_OPTIONAL LW_PULONG Key
     );
 

@@ -139,7 +139,7 @@ IoReadFile(
     OUT PIO_STATUS_BLOCK IoStatusBlock,
     IN PVOID Buffer,
     IN ULONG Length,
-    IN OPTIONAL PLONG64 ByteOffset,
+    IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key
     );
 
@@ -150,7 +150,7 @@ IoWriteFile(
     OUT PIO_STATUS_BLOCK IoStatusBlock,
     IN PVOID Buffer,
     IN ULONG Length,
-    IN OPTIONAL PLONG64 ByteOffset,
+    IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key
     );
 
@@ -161,7 +161,7 @@ IoPagingReadFile(
     OUT PIO_STATUS_BLOCK IoStatusBlock,
     OUT PVOID Buffer,
     IN ULONG Length,
-    IN OPTIONAL PLONG64 ByteOffset,
+    IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key
     );
 
@@ -197,7 +197,7 @@ IoPrepareZctReadFile(
     IN IO_FLAGS IoFlags,
     IN OUT PLW_ZCT_VECTOR Zct,
     IN ULONG Length,
-    IN OPTIONAL PLONG64 ByteOffset,
+    IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key,
     OUT PVOID* CompletionContext
     );
@@ -235,7 +235,7 @@ IoPrepareZctWriteFile(
     IN IO_FLAGS IoFlags,
     IN OUT PLW_ZCT_VECTOR Zct,
     IN ULONG Length,
-    IN OPTIONAL PLONG64 ByteOffset,
+    IN OPTIONAL PULONG64 ByteOffset,
     IN OPTIONAL PULONG Key,
     OUT PVOID* CompletionContext
     );

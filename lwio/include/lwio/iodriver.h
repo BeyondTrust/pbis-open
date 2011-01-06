@@ -128,7 +128,7 @@ typedef struct _IRP_ARGS_READ_WRITE {
         IN OUT PLW_ZCT_VECTOR Zct;
     };
     IN ULONG Length;
-    IN OPTIONAL PLONG64 ByteOffset;
+    IN OPTIONAL PULONG64 ByteOffset;
     IN OPTIONAL PULONG Key;
     IN BOOLEAN IsPagingIo;
     // For ZCT read/write
@@ -137,7 +137,7 @@ typedef struct _IRP_ARGS_READ_WRITE {
     IN ULONG ZctWriteBytesTransferred;
     // Storage area for optional parameters
     struct {
-        LONG64 ByteOffset;
+        ULONG64 ByteOffset;
         ULONG Key;
     } Storage;
 } IRP_ARGS_READ_WRITE, *PIRP_ARGS_READ_WRITE;
