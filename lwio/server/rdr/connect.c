@@ -134,7 +134,7 @@ RdrFinishTreeConnect(
     status = UnmarshallTreeConnectResponse(
         pResponsePacket->pParams,
         pResponsePacket->bufferUsed - (pResponsePacket->pParams - pResponsePacket->pRawBuffer),
-        0,
+        pResponsePacket->pParams - pResponsePacket->pRawBuffer,
         &pHeader,
         &pszService,
         &pwszNativeFilesystem);
