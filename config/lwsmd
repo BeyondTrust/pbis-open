@@ -32,7 +32,7 @@ STARTHOOK="fix_locale"
 
 lookup_user_locale()
 {
-    source /etc/sysconfig/language
+    . /etc/sysconfig/language
     printf 'LANG=%q; export LANG\n' "$RC_LANG"
     printf 'LC_ALL=%q; export LC_ALL\n' "$RC_LC_ALL"
     printf 'LC_CTYPE=%q; export LC_CTYPE\n' "$RC_LC_CTYPE"
@@ -50,7 +50,7 @@ fix_locale()
         if [ -f /etc/sysconfig/language ]; then
             eval "`lookup_user_locale`"
         elif [ -f /etc/default/locale ]; then
-            source /etc/default/locale
+            . /etc/default/locale
         fi
     fi
 }
