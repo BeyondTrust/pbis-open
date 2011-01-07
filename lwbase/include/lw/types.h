@@ -435,6 +435,29 @@ typedef struct _LW_ANSI_STRING {
 #define LwRtlDecimalDigitValue(Character) \
     ((Character) - '0')
 
+#define LW_RTL_MAKE_CUSTOM_FREE(FreeFunction, PointerToPointer) \
+    do { \
+        if (*(PointerToPointer)) \
+        { \
+            (FreeFunction)(*(PointerToPointer)); \
+            *(PointerToPointer) = NULL; \
+        } \
+    } while (0)
+
+#define LW_RTL_MAKE_CUSTOM_FREE_SECURE_STRING(FreeFunction, PointerToPointer, CharType) \
+    do { \
+        if (*(PointerToPointer)) \
+        { \
+            CharType* pOverwrite; \
+            for (pOverwrite = *(PointerToPointer); *pOverwrite; pOverwrite++) \
+            { \
+                *pOverwrite = 0; \
+            } \
+            (FreeFunction)(*(PointerToPointer)); \
+            *(PointerToPointer) = NULL; \
+        } \
+    } while (0)
+
 #ifndef LW_STRICT_NAMESPACE
 
 typedef LW_UNICODE_STRING UNICODE_STRING;
