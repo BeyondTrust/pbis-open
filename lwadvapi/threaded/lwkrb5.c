@@ -526,7 +526,7 @@ LwSetupMachineSession(
     PCSTR  pszSamAccountName,
     PCSTR  pszPassword,
     PCSTR  pszRealm,
-    PCSTR  pszDomain,
+    PCSTR  pszIgnoredDomain,
     PDWORD pdwGoodUntilTime
     )
 {
@@ -534,7 +534,7 @@ LwSetupMachineSession(
                pszSamAccountName,
                pszPassword,
                pszRealm,
-               pszDomain,
+               pszIgnoredDomain,
                NULL,
                pdwGoodUntilTime);
 }
@@ -544,7 +544,7 @@ LwSetupMachineSessionWithCache(
     PCSTR  pszSamAccountName,
     PCSTR  pszPassword,
     PCSTR  pszRealm,
-    PCSTR  pszDomain,
+    PCSTR  pszIgnoredDomain,
     PCSTR  pszCachePath,
     PDWORD pdwGoodUntilTime
     )
@@ -555,8 +555,6 @@ LwSetupMachineSessionWithCache(
     // Do not free
     PCSTR pszKrb5CcPath = NULL;
     PSTR pszKrb5CcPathNew = NULL;
-    PSTR pszDomname = NULL;
-    PSTR pszRealmCpy = NULL;
     PSTR pszMachPrincipal = NULL;
     DWORD dwGoodUntilTime = 0;
 
@@ -582,17 +580,9 @@ LwSetupMachineSessionWithCache(
         BAIL_ON_LW_ERROR(dwError);
     }
 
-    dwError = LwAllocateString(pszRealm, &pszRealmCpy);
-    BAIL_ON_LW_ERROR(dwError);
-    LwStrToUpper(pszRealmCpy);
-
     dwError = LwAllocateStringPrintf(&pszMachPrincipal, "%s@%s",
                                       pszSamAccountName, pszRealm);
     BAIL_ON_LW_ERROR(dwError);
-
-    dwError = LwAllocateString(pszDomain, &pszDomname);
-    BAIL_ON_LW_ERROR(dwError);
-    LwStrToLower(pszDomname);
 
     dwError = LwKrb5GetTgt(
                   pszMachPrincipal,
@@ -616,8 +606,6 @@ LwSetupMachineSessionWithCache(
 cleanup:
 
     LW_SAFE_FREE_STRING(pszMachPrincipal);
-    LW_SAFE_FREE_STRING(pszDomname);
-    LW_SAFE_FREE_STRING(pszRealmCpy);
     LW_SAFE_FREE_STRING(pszKrb5SystemCcPath);
     LW_SAFE_FREE_STRING(pszHostKeytabFile);
     LW_SAFE_FREE_STRING(pszKrb5CcPathNew);
@@ -942,36 +930,19 @@ LwKrb5Shutdown(
     }
 }
 
-DWORD
-LwKrb5GetMachineCreds(
-    PSTR* ppszUsername,
-    PSTR* ppszPassword,
-    PSTR* ppszDomainDnsName,
-    PSTR* ppszHostDnsDomain
-    )
-{
-    return LwKrb5GetMachineCredsByDomain(
-               NULL,
-               ppszUsername,
-               ppszPassword,
-               ppszDomainDnsName,
-               ppszHostDnsDomain);
-}
-
+static
 DWORD
 LwKrb5GetMachineCredsByDomain(
-    PCSTR pszDomainName,
-    PSTR* ppszUsername,
-    PSTR* ppszPassword,
-    PSTR* ppszDomainDnsName,
-    PSTR* ppszHostDnsDomain
+    IN PCSTR pszDomainName,
+    OUT OPTIONAL PSTR* ppszUsername,
+    OUT OPTIONAL PSTR* ppszPassword,
+    OUT OPTIONAL PSTR* ppszDomainDnsName
     )
 {
     DWORD dwError = 0;
     PSTR  pszUsername = NULL;
     PSTR  pszPassword = NULL;
     PSTR  pszDomainDnsName = NULL;
-    PSTR  pszHostDnsDomain = NULL;
     PLWPS_PASSWORD_INFO pMachineAcctInfo = NULL;
     HANDLE hPasswordStore = (HANDLE)NULL;
 
@@ -1032,14 +1003,6 @@ LwKrb5GetMachineCredsByDomain(
         }    
     }
      
-    if (ppszHostDnsDomain)
-    {
-        dwError = LwWc16sToMbs(
-            pMachineAcctInfo->pwszHostDnsDomain,
-            &pszHostDnsDomain);
-        BAIL_ON_LW_ERROR(dwError);
-    }
-    
     if (ppszUsername)
     {
         *ppszUsername = pszUsername;
@@ -1055,11 +1018,6 @@ LwKrb5GetMachineCredsByDomain(
         *ppszDomainDnsName = pszDomainDnsName;
     }
 
-    if (ppszHostDnsDomain)
-    {
-        *ppszHostDnsDomain = pszHostDnsDomain;
-    }
-    
 cleanup:
 
     if (pMachineAcctInfo)
@@ -1091,22 +1049,16 @@ error:
         *ppszDomainDnsName = NULL;
     }
 
-    if (ppszHostDnsDomain)
-    {
-        *ppszHostDnsDomain = NULL;
-    }
-    
     LW_SAFE_FREE_STRING(pszUsername);
     LW_SAFE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
 
     goto cleanup;
 }
 
 DWORD
 LwKrb5RefreshMachineTGT(
-    PDWORD pdwGoodUntilTime
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
     )
 {
     return LwKrb5RefreshMachineTGTByDomain(
@@ -1117,9 +1069,9 @@ LwKrb5RefreshMachineTGT(
 
 DWORD
 LwKrb5RefreshMachineTGTByDomain(
-    PCSTR  pszDomainName,
-    PCSTR  pszCachePath,
-    PDWORD pdwGoodUntilTime
+    IN OPTIONAL PCSTR pszDomainName,
+    IN OPTIONAL PCSTR pszCachePath,
+    OUT PDWORD pdwGoodUntilTime
     )
 {
     DWORD dwError = 0;
@@ -1127,7 +1079,6 @@ LwKrb5RefreshMachineTGTByDomain(
     PSTR  pszUsername = NULL;
     PSTR  pszPassword = NULL;
     PSTR  pszDomainDnsName = NULL;
-    PSTR  pszHostDnsDomain = NULL;
 
     LW_LOG_VERBOSE("Refreshing machine TGT");
 
@@ -1135,15 +1086,14 @@ LwKrb5RefreshMachineTGTByDomain(
                     pszDomainName,
                     &pszUsername,
                     &pszPassword,
-                    &pszDomainDnsName,
-                    &pszHostDnsDomain);
+                    &pszDomainDnsName);
     BAIL_ON_LW_ERROR(dwError);
-	
+
     dwError = LwSetupMachineSessionWithCache(
                     pszUsername,
                     pszPassword,
                     pszDomainDnsName,
-                    pszHostDnsDomain,
+                    NULL,
                     pszCachePath,
                     &dwGoodUntilTime);
     BAIL_ON_LW_ERROR(dwError);
@@ -1152,16 +1102,15 @@ LwKrb5RefreshMachineTGTByDomain(
     {
         *pdwGoodUntilTime = dwGoodUntilTime;
     }
-	
+
 cleanup:
 
     LW_SAFE_FREE_STRING(pszUsername);
     LW_SAFE_FREE_STRING(pszPassword);
     LW_SAFE_FREE_STRING(pszDomainDnsName);
-    LW_SAFE_FREE_STRING(pszHostDnsDomain);
 
     return dwError;
-	
+
 error:
 
     if (pdwGoodUntilTime != NULL)

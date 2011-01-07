@@ -101,7 +101,7 @@ LwSetupMachineSession(
     PCSTR  pszSamAccountName,
     PCSTR  pszPassword,
     PCSTR  pszRealm,
-    PCSTR  pszDomain,
+    PCSTR  pszIgnoredDomain,
     PDWORD pdwGoodUntilTime
     );
 
@@ -110,7 +110,7 @@ LwSetupMachineSessionWithCache(
     PCSTR  pszSamAccountName,
     PCSTR  pszPassword,
     PCSTR  pszRealm,
-    PCSTR  pszDomain,
+    PCSTR  pszIgnoredDomain,
     PCSTR  pszCachePath,
     PDWORD pdwGoodUntilTime
     );
@@ -147,31 +147,14 @@ LwKrb5GetServiceTicketForUser(
 
 DWORD
 LwKrb5RefreshMachineTGT(
-    PDWORD pdwGoodUntilTime
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
     );
 
 DWORD
 LwKrb5RefreshMachineTGTByDomain(
-    PCSTR pszDomainName,
-    PCSTR pszCachePath,
-    PDWORD pdwGoodUntilTime
-    );
-
-DWORD
-LwKrb5GetMachineCreds(
-    PSTR* ppszUsername,
-    PSTR* ppszPassword,
-    PSTR* ppszDomainDnsName,
-    PSTR* ppszHostDnsDomain
-    );
-
-DWORD
-LwKrb5GetMachineCredsByDomain(
-    PCSTR pszDomainName,
-    PSTR* ppszUsername,
-    PSTR* ppszPassword,
-    PSTR* ppszDomainDnsName,
-    PSTR* ppszHostDnsDomain
+    IN OPTIONAL PCSTR pszDomainName,
+    IN OPTIONAL PCSTR pszCachePath,
+    OUT OPTIONAL PDWORD pdwGoodUntilTime
     );
 
 DWORD
