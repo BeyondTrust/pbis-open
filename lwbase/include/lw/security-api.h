@@ -628,10 +628,17 @@ RtlCreateWellKnownSid(
     IN OUT PULONG SidSize
     );
 
+NTSTATUS
+RtlAllocateWellKnownSid(
+    IN WELL_KNOWN_SID_TYPE WellKnownSidType,
+    IN OPTIONAL PSID DomainOrComputerSid,
+    OUT PSID* Sid
+    );
 
 //
 // SDDL Functions
 //
+
 NTSTATUS
 RtlAllocateSecurityDescriptorFromSddlCString(
     OUT PSECURITY_DESCRIPTOR_RELATIVE* ppSecurityDescriptor,

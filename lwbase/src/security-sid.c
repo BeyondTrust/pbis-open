@@ -945,7 +945,7 @@ RtlCreateWellKnownSid(
     IN OUT PULONG SidSize
     )
 {
-    NTSTATUS status = STATUS_SUCCESS;    
+    NTSTATUS status = STATUS_SUCCESS;
     union {
         SID Sid;
         UCHAR Buffer[SID_MAX_SIZE];
@@ -1175,6 +1175,42 @@ cleanup:
     }
 
     *SidSize = sizeRequired;
+
+    return status;
+}
+
+NTSTATUS
+RtlAllocateWellKnownSid(
+    IN WELL_KNOWN_SID_TYPE WellKnownSidType,
+    IN OPTIONAL PSID DomainOrComputerSid,
+    OUT PSID* Sid
+    )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    PSID sid = NULL;
+    union {
+        SID Sid;
+        UCHAR Buffer[SID_MAX_SIZE];
+    } sidBuffer = { .Buffer = { 0 } };
+    ULONG size = sizeof(sidBuffer);
+
+    status = RtlCreateWellKnownSid(
+                    WellKnownSidType,
+                    DomainOrComputerSid,
+                    &sidBuffer.Sid,
+                    &size);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+    status = RtlDuplicateSid(&sid, &sidBuffer.Sid);
+    GOTO_CLEANUP_ON_STATUS(status);
+
+cleanup:
+    if (!NT_SUCCESS(status))
+    {
+        RTL_FREE(&sid);
+    }
+
+    *Sid = sid;
 
     return status;
 }
