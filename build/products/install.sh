@@ -357,6 +357,43 @@ stop_obsolete_daemons()
     fi
 }
 
+stop_daemons_on_reboot()
+{
+    for daemon in ${DAEMONS} ${OBSOLETE_DAEMONS}; do
+        # Ubuntu, Debian, Solaris, and Redhat
+        rm -f /etc/rc?.d/S??${daemon} /etc/rc?.d/K??${daemon}
+
+        # AIX, and Redhat
+        rm -f /etc/rc.d/rc?.d/S??${daemon} /etc/rc.d/rc?.d/K??${daemon}
+
+        # HP-UX, old likewise install
+        rm -f /sbin/rc?.d/S??${daemon} /sbin/rc?.d/K??${daemon}
+        # HP-UX, new likewise install
+        rm -f /sbin/rc?.d/S???${daemon} /sbin/rc?.d/K???${daemon}
+
+        # Solaris 10 and newer
+        if type svccfg >/dev/null 2>&1 && svccfg select $daemon 2>/dev/null; then
+            svcadm disable $daemon
+            svccfg delete $daemon
+
+            solaris_zones svcadm disable $daemon
+            solaris_zones svccfg delete $daemon
+        fi
+
+        # Simply deleting the init scripts in /etc/rc.d (already happened
+        # through package uninstall) is all that is necessary for FreeBSD.
+
+        # OS X
+        if [ -x /bin/launchctl ] ; then
+            for file in /Library/LaunchDaemons/*${daemon}.plist /System/Library/LaunchDaemons/*${daemon}.plist; do
+                if [ -f $file ]; then
+                    /bin/launchctl unload $file
+                    rm -f $file
+                fi
+            done
+        fi
+    done
+}
 
 index_of()
 {
@@ -632,36 +669,6 @@ solaris_zones()
     done
 }
 
-deconfigure_everything()
-{
-    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
-    if [ -x "$domainjoin_cli" ]; then
-        if [ "$1" = "purge" ]; then
-            $domainjoin_cli leave > /dev/null 2>&1
-        fi
-        $domainjoin_cli configure --disable pam > /dev/null 2>&1
-        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
-    fi
-
-    stop_daemons
-
-    remove_init_script_symlinks
-
-    # Disable pam/nsswitch and stop/disable daemons, but not in this zone
-    # as that has already been done.
-    solaris_deconfigure_zones $1
-
-    # OS X
-    if [ -x /bin/launchctl ] ; then
-        for file in /Library/LaunchDaemons/*${daemon}.plist /System/Library/LaunchDaemons/*${daemon}.plist; do
-            if [ -f $file ]; then
-                /bin/launchctl unload $file
-                rm -f $file
-            fi
-        done
-    fi
-}
-
 solaris_deconfigure_zones()
 {
     if [ "${OS_TYPE}" != "solaris" ]; then
@@ -706,9 +713,7 @@ uninstall_pkgs()
         if [ $? -eq 0 ]; then
             # TODO: Is the response file good for uninstall?
             pkgrm -a "${DIRNAME}/response" -n ${pkg}
-            if [ $? -eq 1 ]; then
-                exit_on_error 1 "Failed to uninstall package ${pkg}"
-            fi
+            exit_on_error $? "Failed to uninstall package ${pkg}"
         fi
     done
     return 0
@@ -877,140 +882,6 @@ dispatch_pkgtype()
     ${__dispatch_pkgtype}_${PKGTYPE}s "$@"
 }
 
-remove_init_script_symlinks()
-{
-    remove_init_script_symlink lwsmd
-    remove_init_script_symlink likewise
-}
-
-remove_init_script_symlink()
-{
-    script=$1
-
-    case "${OS_TYPE}" in
-        freebsd)
-            # No symlinks
-            ;;
-        linux)
-            if [ -f /etc/debian_version ]; then
-                /usr/sbin/update-rc.d -f ${script} remove
-            elif [ -f /etc/redhat ]; then
-                /sbin/chkconfig --del ${script}
-            fi
-            ;;
-        aix)
-            rm -f /etc/rc.d/rc[2-9].d/K[0-9]+${script}
-            rm -f /etc/rc.d/rc[2-9].d/S[0-9]+${script}
-            ;;
-        hpux)
-            rm -f /sbin/rc[0-4].d/K[0-9]+${script}
-            rm -f /sbin/rc[0-4].d/S[0-9]+${script}
-            ;;
-        solaris)
-            rm /etc/rc[0-3S].d/K[0-9]+${script}
-            rm /etc/rc[0-3S].d/S[0-9]+${script}
-            ;;
-        *)
-            echo "You will need to manually remove init script symlinks for $script."
-            ;;
-    esac
-}
-
-create_init_script_symlinks()
-{
-    startPriority=17
-    stopPriority=8
-    startPriorityNext=1
-    stopPriorityNext=-1
-
-    case "${OS_TYPE}" in
-        hpux)
-            startPriority=591 # Start after S590Rpcd
-            stopPriority=401 # Stop before K410Rpcd
-
-            startPriorityNext=1
-            stopPriorityNext=-1
-            ;;
-    esac
-
-    for script in lwsmd likewise; do
-        scriptFile="${INIT_SCRIPT_PREFIX_DIR}/${script}"
-        create_init_script_symlink $scriptFile $script $startPriority $stopPriority
-
-        startPriority=`expr $startPriority + $startPriorityNext`
-
-        stopPriority=`expr $stopPriority + $stopPriorityNext`
-
-    done
-}
-
-
-create_init_script_symlink()
-{
-    initFile=$1
-    script=$2
-    startPriority=$3
-    stopPriority=$4
-
-    case "${OS_TYPE}" in
-        freebsd)
-            # No symlinks
-            ;;
-        linux)
-            if [ -f /etc/debian_version ]; then
-                /usr/sbin/update-rc.d -f $script defaults $startPriority $stopPriority
-            elif [ -f /etc/redhat ]; then
-                /sbin/chkconfig --add $script
-            fi
-            ;;
-        aix)
-# Programs on AIX may store their init scripts in /etc/rc.d/init.d .
-# The symlinks for specific runlevels are stored in /etc/rc.d/rc[0-9].d.
-# Only runlevels 0-2 are used.
-# Init scripts can only be started in 0 or 1 by editing inittab. Run
-# levels 3 and higher are left for the user to define.
-#
-# During startup, the /etc/rc.d/rc script runs all of the kill
-# scripts in /etc/rc.d/rc2.d followed by all of the start scripts in
-# that directory. Since the system goes to runlevel 2 at start up,
-# only scripts in that directory are run.
-#
-# During shutdown, the /sbin/shutdown program directly (not through
-# init or rc) runs all of the kill scripts in /etc/rc.d/rc*.d .
-#
-# So in order for a daemon to correctly be started once when the
-# machine boots, and only be shutdown once when the machine shuts
-# down, it should only create start and kill symlink in
-# /etc/rc.d/rc2.d.
-            ln -s $initFile `printf /etc/rc.d/rc2.d/K%02d${script}, $stopPriority`
-            ln -s $initFile `printf /etc/rc.d/rc2.d/S%02d${script}, $startPriority`
-            ;;
-
-        hpux)
-# On HP-UX, in order for a daemon to start in multi-user mode,
-# a start symlink must be put in /sbin/rc2.d, and a stop symlink
-# must be put in /sbin/rc1.d
-            ln -s $initFile `printf /sbin/rc1.d/K%03d${script}, $stopPriority`
-            ln -s $initFile `printf /sbin/rc2.d/S%03d${script}, $startPriority`
-            ;;
-
-        solaris)
-# On older Solaris system, in order for a daemon to start in multi-user mode,
-# a start symlink must be put in /etc/rc2.d, and a stop symlink
-# must be put in /etc/rc0.d, /etc/rc1.d, /etc/rcS.d.
-            ln -s $initFile `printf /etc/rc0.d/K%02d${script}, $stopPriority`
-            ln -s $initFile `printf /etc/rc1.d/K%02d${script}, $stopPriority`
-            ln -s $initFile `printf /etc/rcS.d/K%02d${script}, $stopPriority`
-            ln -s $initFile `printf /etc/rc2.d/S%02d${script}, $startPriority`
-            ;;
-
-        *)
-            echo "You will need to manually create init script symlinks for $initFile."
-            ;;
-    esac
-}
-
-
 start_daemon()
 {
     if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
@@ -1066,6 +937,42 @@ reload_daemon()
     if [ -x $INIT_SCRIPT_PREFIX_DIR/$1 ]; then
         $INIT_SCRIPT_PREFIX_DIR/$1 reload
     fi
+}
+
+save_daemon()
+{
+    if check_daemon_running "$1"
+    then
+        eval "${1}_RUNNING=1"
+        stop_daemon "${1}"
+    fi
+}
+
+restore_daemon()
+{
+    eval "running=\$${1}_RUNNING"
+    if [ -n "${running}" ]
+    then
+        start_daemon "${1}"
+    fi
+}
+
+save_daemons()
+{
+    daemon=""
+    for daemon in `reverse_list ${DAEMONS}`
+    do
+        save_daemon "${daemon}"
+    done
+}
+
+restore_daemons()
+{
+    daemon=""
+    for daemon in ${DAEMONS}
+    do
+        restore_daemon "${daemon}"
+    done
 }
 
 autostart_daemons()
@@ -1317,8 +1224,8 @@ do_install()
     # Stop obsolete daemons
     stop_obsolete_daemons
 
-    # Stop daemons
-    stop_daemons
+    # Save the daemon state
+    save_daemons
 
     # Save 5.[0123] configuration files and pstore.
     preserve_5_0123_configuration
@@ -1407,9 +1314,6 @@ do_postinstall()
     solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd stop
     solaris_zones svccfg delete lwsmd
 
-    # Does not create symlinks in child zones -- should be service manager.
-    create_init_script_symlinks
-
     # Start service manager for normal usage
     start_daemon lwsmd
     solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd start
@@ -1420,8 +1324,11 @@ do_postinstall()
     reload_daemon lwsmd
     solaris_zones $INIT_SCRIPT_PREFIX_DIR/lwsmd restart
 
-    `get_prefix_dir`/bin/lwsm autostart
-    solaris_zones `get_prefix_dir`/bin/lwsm autostart
+    # Restore the daemon state
+    restore_daemons
+
+    # Start any automatically-started daemons
+    autostart_daemons
 
     # Restore configuration if still joined to a domain
     restore_configuration
@@ -1510,6 +1417,12 @@ restore_configuration()
     domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
     get_current_domain=`get_prefix_dir`/bin/lw-get-current-domain
 
+    # This starts all needed likewise services
+    if [ -x "$domainjoin_cli" ]; then
+        $domainjoin_cli query > /dev/null 2>&1
+        solaris_zones $domainjoin_cli query > /dev/null 2>&1
+    fi
+
     if [ -x "$get_current_domain" ]; then
         $get_current_domain > /dev/null 2>&1
         if [ $? -eq 0 ]; then
@@ -1536,11 +1449,22 @@ do_uninstall()
     log_info "Uninstall started"
     log_info ""
 
-    deconfigure_everything
+    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
+    if [ -x "$domainjoin_cli" ]; then
+        $domainjoin_cli configure --disable pam > /dev/null 2>&1
+        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
+    fi
+
+    stop_daemons
+
+    # Both disable pam/nsswitch and stop/disable daemons.
+    solaris_deconfigure_zones
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT} ${OBSOLETE_PACKAGES}`
 
     scrub_prefix
+
+    stop_daemons_on_reboot
 
     log_info "Uninstall complete"
 }
@@ -1550,13 +1474,25 @@ do_purge()
     log_info "Purge uninstall started"
     log_info ""
 
-    deconfigure_everything "purge"
+    domainjoin_cli=`get_prefix_dir`/bin/domainjoin-cli
+    if [ -x "$domainjoin_cli" ]; then
+        $domainjoin_cli leave > /dev/null 2>&1
+        $domainjoin_cli configure --disable pam > /dev/null 2>&1
+        $domainjoin_cli configure --disable nsswitch > /dev/null 2>&1
+    fi
+
+    stop_daemons
+
+    # Both disable pam/nsswitch and stop/disable daemons.
+    solaris_deconfigure_zones purge
 
     dispatch_pkgtype uninstall `reverse_list ${PACKAGES} ${PACKAGES_COMPAT}`
 
     remove_extra_files
 
     scrub_prefix
+
+    stop_daemons_on_reboot
 
     log_info "Uninstall complete"
 }
