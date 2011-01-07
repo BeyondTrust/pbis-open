@@ -23,7 +23,7 @@ case "$1" in
 	lwsm start lwreg
 	for file in "@LW_CONFIGDIR@/"*.reg; do
 	    echo "Importing $file..."
-            lwregshell upgrade $file >/dev/null
+            lwregshell import $file >/dev/null
 	done
 	/etc/init.d/lwsmd reload
         sleep 2

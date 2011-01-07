@@ -133,7 +133,7 @@ case "$1" in
 
     for file in %{_prefix}/share/config/*.reg; do
         echo "Upgrading settings from $file..."
-        %{_bindir}/lwregshell upgrade $file
+        %{_bindir}/lwregshell import $file
     done
     /etc/init.d/lwsmd reload
     sleep 2
