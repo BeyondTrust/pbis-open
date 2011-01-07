@@ -350,9 +350,26 @@ restore_6_0_configuration()
 import_registry()
 {
     REGFILES="lwreg.reg netlogond.reg eventlogd.reg lsassd.reg lwiod.reg dcerpcd.reg pstore.reg"
-    REGIMPORT="/opt/likewise/bin/lwregshell upgrade"
+    REGFILES_IMPORT="lsassd-import.reg"
+    REGUPGRADE="/opt/likewise/bin/lwregshell upgrade"
+    REGIMPORT="/opt/likewise/bin/lwregshell import"
 
     for regfile in ${REGFILES}
+    do
+        FILEPATH="/opt/likewise/share/config/${regfile}"
+        if [ -f ${FILEPATH} ]
+        then
+            echo "Upgrading registry settings from (${FILEPATH})"
+            ${REGUPGRADE} ${FILEPATH} > /dev/null 2>&1
+            exitcode=$?
+
+            if [ $exitcode -ne '0' ]
+            then
+                echo "There was an error importing ${FILEPATH} into the registry."
+            fi
+        fi
+    done
+    for regfile in ${REGFILES_IMPORT}
     do
         FILEPATH="/opt/likewise/share/config/${regfile}"
         if [ -f ${FILEPATH} ]
