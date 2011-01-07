@@ -47,6 +47,15 @@
 #include "lsawbclient_p.h"
 #include <stdio.h>
 
+wbcErr wbcQuerySidToUid(
+    const struct wbcDomainSid *sid,
+    uid_t *puid
+    )
+{
+    return wbcSidToUid(
+                sid,
+                puid);
+}
 
 wbcErr wbcSidToUid(const struct wbcDomainSid *sid,
            uid_t *puid)
@@ -133,6 +142,15 @@ cleanup:
     return wbc_status;
 }
 
+wbcErr wbcQueryUidToSid(
+    uid_t uid,
+    struct wbcDomainSid *sid
+    )
+{
+    return wbcUidToSid(
+            uid,
+            sid);
+}
 
 wbcErr wbcUidToSid(uid_t uid,
            struct wbcDomainSid *sid)
@@ -173,6 +191,13 @@ cleanup:
     return wbc_status;
 }
 
+wbcErr wbcQuerySidToGid(const struct wbcDomainSid *sid,
+			gid_t *pgid)
+{
+    return wbcSidToGid(
+                sid,
+                pgid);
+}
 
 wbcErr wbcSidToGid(const struct wbcDomainSid *sid,
            gid_t *pgid)
@@ -258,6 +283,13 @@ cleanup:
     return wbc_status;
 }
 
+wbcErr wbcQueryGidToSid(gid_t gid,
+           struct wbcDomainSid *sid)
+{
+    return wbcGidToSid(
+                gid,
+                sid);
+}
 
 wbcErr wbcGidToSid(gid_t gid,
            struct wbcDomainSid *sid)
@@ -310,6 +342,23 @@ wbcErr wbcAllocateGid(gid_t *pgid)
     return WBC_ERR_NOT_IMPLEMENTED;
 }
 
+wbcErr
+wbcRemoveUidMapping(
+    uid_t uid,
+    const struct wbcDomainSid *sid
+    )
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
+
+wbcErr
+wbcRemoveGidMapping(
+    gid_t gid,
+    const struct wbcDomainSid *sid
+    )
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
 
 wbcErr wbcSetUidMapping(uid_t uid, const struct wbcDomainSid *sid)
 {

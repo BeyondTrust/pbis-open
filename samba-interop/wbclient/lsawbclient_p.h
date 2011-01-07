@@ -49,6 +49,7 @@
 #include "wbclient.h"
 #include <lsa/lsa.h>
 #include "util_str.h"
+#include <uuid/uuid.h>
 
 #define LSA_WBC_LIBRARY_MAJOR_VERSION          0
 #define LSA_WBC_LIBRARY_MINOR_VERSION          1
@@ -141,7 +142,17 @@ wbcSidCopy(
     struct wbcDomainSid *src
     );
 
+DWORD
+wbcFindSecurityObjectBySid(
+    IN const struct wbcDomainSid *sid,
+    PLSA_SECURITY_OBJECT* ppResult
+    );
 
+void
+wbcUuidToWbcGuid(
+    IN const uuid_t uuid,
+    OUT struct wbcGuid *pGuid
+    );
 
 /* memory management */
 

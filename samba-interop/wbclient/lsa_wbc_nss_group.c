@@ -241,6 +241,11 @@ wbcErr wbcGetgrent(struct group **grp)
 {
     return WBC_ERR_NOT_IMPLEMENTED;
 }
+
+wbcErr wbcGetgrlist(struct group **grp)
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
 /*
 local variables:
 mode: c

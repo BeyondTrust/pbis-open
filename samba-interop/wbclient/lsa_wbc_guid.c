@@ -51,13 +51,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <uuid/uuid.h>
-#include <lwmem.h>
-#include <lwstr.h>
 
-static
 void
-UuidToWbcGuid(
+wbcUuidToWbcGuid(
     IN const uuid_t uuid,
     OUT struct wbcGuid *pGuid
     )
@@ -115,10 +111,8 @@ wbcGuidToString(
         guid,
         uuid);
 
-    error = LwAllocateMemory(
-                    37,
-                    (PVOID*)&pGuidString);
-    BAIL_ON_LSA_ERR(error);
+    pGuidString = _wbc_malloc_zero(37, NULL);
+    BAIL_ON_NULL_PTR(pGuidString, error);
 
     uuid_unparse(
             uuid,
@@ -129,7 +123,7 @@ wbcGuidToString(
 cleanup:
     if (error)
     {
-        LW_SAFE_FREE_STRING(pGuidString);
+        _WBC_FREE(pGuidString);
         *guid_string = NULL;
     }
     return map_error_to_wbc_status(error);
@@ -152,7 +146,7 @@ wbcStringToGuid(
         BAIL_ON_LSA_ERR(error);
     }
 
-    UuidToWbcGuid(
+    wbcUuidToWbcGuid(
         uuid,
         guid);
 

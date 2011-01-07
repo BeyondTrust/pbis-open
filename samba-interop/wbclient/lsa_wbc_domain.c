@@ -46,6 +46,9 @@
 #include "wbclient.h"
 #include "lsawbclient_p.h"
 #include <string.h>
+#include <lwmem.h>
+#include <lwstr.h>
+#include <lwnet.h>
 
 static int
 FreeWbcDomainInfo(
@@ -394,7 +397,169 @@ cleanup:
     return dwErr;
 }
 
+static
+int
+FreeDomainControllerEx(
+    IN void *p
+    )
+{
+    struct wbcDomainControllerInfoEx *pController = NULL;
 
+    if (!p)
+    {
+        return 0;
+    }
+
+    LW_SAFE_FREE_STRING((char *)pController->dc_unc);
+    LW_SAFE_FREE_STRING((char *)pController->dc_address);
+    LW_SAFE_FREE_MEMORY(pController->domain_guid);
+    LW_SAFE_FREE_STRING((char *)pController->domain_name);
+    LW_SAFE_FREE_STRING((char *)pController->forest_name);
+    LW_SAFE_FREE_STRING((char *)pController->dc_site_name);
+    LW_SAFE_FREE_STRING((char *)pController->client_site_name);
+
+    return 0;
+}
+
+static
+int
+FreeDomainController(
+    IN void *p
+    )
+{
+    struct wbcDomainControllerInfo *pController = NULL;
+
+    if (!p)
+    {
+        return 0;
+    }
+
+    LW_SAFE_FREE_STRING(pController->dc_name);
+
+    return 0;
+}
+
+wbcErr
+wbcLookupDomainController(
+    const char *domain,
+    uint32_t flags,
+    struct wbcDomainControllerInfo **dc_info
+    )
+{
+    DWORD error;
+    PLWNET_DC_INFO pDCInfo = NULL;
+    struct wbcDomainControllerInfo *pResult = NULL;
+
+    error = LWNetGetDCName(
+            NULL,
+            domain,
+            NULL,
+            flags,
+            &pDCInfo);
+    BAIL_ON_LSA_ERR(error);
+
+    pResult = _wbc_malloc_zero(sizeof(*pResult), FreeDomainController);
+    BAIL_ON_NULL_PTR(pResult, error);
+
+    error = LwAllocateString(
+                pDCInfo->pszDomainControllerName,
+                &pResult->dc_name);
+    BAIL_ON_LSA_ERR(error);
+
+    *dc_info = pResult;
+
+cleanup:
+    if (error)
+    {
+        *dc_info = NULL;
+        _WBC_FREE(pResult);
+    }
+    return map_error_to_wbc_status(error);
+}
+
+wbcErr
+wbcLookupDomainControllerEx(
+    const char *domain,
+    struct wbcGuid *guid,
+    const char *site,
+    uint32_t flags,
+    struct wbcDomainControllerInfoEx **dc_info
+    )
+{
+    DWORD error;
+    PLWNET_DC_INFO pDCInfo = NULL;
+    struct wbcDomainControllerInfoEx *pResult = NULL;
+
+    if (guid != NULL)
+    {
+        return WBC_ERR_NOT_IMPLEMENTED;
+    }
+
+    error = LWNetGetDCName(
+            NULL,
+            domain,
+            site,
+            flags,
+            &pDCInfo);
+    BAIL_ON_LSA_ERR(error);
+
+    pResult = _wbc_malloc_zero(sizeof(*pResult), FreeDomainControllerEx);
+    BAIL_ON_NULL_PTR(pResult, error);
+
+    error = LwAllocateStringPrintf(
+                (char **)&pResult->dc_unc,
+                "\\\\%s",
+                pDCInfo->pszDomainControllerAddress);
+    BAIL_ON_LSA_ERR(error);
+
+    error = LwAllocateString(
+                pDCInfo->pszDomainControllerAddress,
+                (char **)&pResult->dc_address);
+    BAIL_ON_LSA_ERR(error);
+
+    pResult->dc_address_type = pDCInfo->dwDomainControllerAddressType;
+
+    error = LwAllocateMemory(
+                sizeof(*pResult->domain_guid),
+                (PVOID*)&pResult->domain_guid);
+    BAIL_ON_LSA_ERR(error);
+
+    wbcUuidToWbcGuid(
+        pDCInfo->pucDomainGUID,
+        pResult->domain_guid);
+
+    error = LwAllocateString(
+                pDCInfo->pszFullyQualifiedDomainName,
+                (char **)&pResult->domain_name);
+    BAIL_ON_LSA_ERR(error);
+
+    error = LwAllocateString(
+                pDCInfo->pszDnsForestName,
+                (char **)&pResult->forest_name);
+    BAIL_ON_LSA_ERR(error);
+
+    pResult->dc_flags = pDCInfo->dwFlags;
+
+    error = LwAllocateString(
+                pDCInfo->pszDCSiteName,
+                (char **)&pResult->dc_site_name);
+    BAIL_ON_LSA_ERR(error);
+
+    error = LwAllocateString(
+                pDCInfo->pszClientSiteName,
+                (char **)&pResult->client_site_name);
+    BAIL_ON_LSA_ERR(error);
+
+    *dc_info = pResult;
+
+cleanup:
+    if (error)
+    {
+        *dc_info = NULL;
+        _WBC_FREE(pResult);
+    }
+    return map_error_to_wbc_status(error);
+}
 
 /*
 local variables:

@@ -112,6 +112,80 @@ cleanup:
     return dwErr;
 }
 
+static
+DWORD
+FillStructPasswdFromUser(
+    PLSA_SECURITY_OBJECT pUser,
+    struct passwd **pwd
+    )
+{
+    DWORD error = 0;
+    struct passwd *pw = NULL;
+    DWORD requiredSize = 0;
+    BYTE *pDataPtr = NULL;
+
+    requiredSize = sizeof(struct passwd);
+    requiredSize += strlen(pUser->userInfo.pszUnixName) + 1;
+    requiredSize += strlen(pUser->userInfo.pszHomedir) + 1;
+    requiredSize += strlen(pUser->userInfo.pszShell) + 1;
+    if (pUser->userInfo.pszGecos)
+    {
+        requiredSize += strlen(pUser->userInfo.pszGecos) + 1;
+    }
+    requiredSize += strlen(pUser->userInfo.pszPasswd ?
+            pUser->userInfo.pszPasswd : "x") + 1;
+
+    pw = _wbc_malloc_zero(sizeof(struct passwd), NULL);
+    BAIL_ON_NULL_PTR(pw, error);
+
+    pDataPtr = (BYTE *)pw + sizeof(struct passwd);
+
+    pw->pw_uid = pUser->userInfo.uid;
+    pw->pw_gid = pUser->userInfo.gid;
+
+    /* Always have to have a name, loginShell, and homedir */
+
+    pw->pw_name = pDataPtr;
+    strcpy(pDataPtr, pUser->userInfo.pszUnixName);
+    pDataPtr += strlen(pDataPtr) + 1;
+
+    pw->pw_dir = pDataPtr;
+    strcpy(pDataPtr, pUser->userInfo.pszHomedir);
+    pDataPtr += strlen(pDataPtr) + 1;
+
+    pw->pw_shell = pDataPtr;
+    strcpy(pDataPtr, pUser->userInfo.pszShell);
+    pDataPtr += strlen(pDataPtr) + 1;
+
+    /* Gecos and passwd fields are technically optional */
+
+    if (pUser->userInfo.pszGecos)
+    {
+        pw->pw_gecos = pDataPtr;
+        strcpy(pDataPtr, pUser->userInfo.pszGecos);
+        pDataPtr += strlen(pDataPtr) + 1;
+    }
+
+    pw->pw_passwd = pDataPtr;
+    strcpy(pDataPtr,
+            pUser->userInfo.pszPasswd ?  pUser->userInfo.pszPasswd : "x");
+    pDataPtr += strlen(pDataPtr) + 1;
+
+    *pwd = pw;
+
+cleanup:
+    if (error != LW_ERROR_SUCCESS)
+    {
+        if (pw)
+        {
+            _WBC_FREE(pw);
+        }
+        *pwd = NULL;
+    }
+
+    return error;
+}
+
 wbcErr wbcGetpwnam(const char *name, struct passwd **pwd)
 {
     LSA_USER_INFO_0 *pUserInfo = NULL;
@@ -270,6 +344,51 @@ cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;
+}
+
+wbcErr
+wbcGetpwsid(
+    struct wbcDomainSid * sid,
+    struct passwd **pwd
+    )
+{
+    DWORD error = 0;
+    PLSA_SECURITY_OBJECT pUser = NULL;
+    struct passwd *pwdLocal = NULL;
+
+    BAIL_ON_NULL_PTR(pwd, error);
+
+    error = wbcFindSecurityObjectBySid(
+        sid,
+        &pUser);
+    BAIL_ON_LSA_ERR(error);
+
+    FillStructPasswdFromUser(
+        pUser,
+        &pwdLocal);
+    BAIL_ON_LSA_ERR(error);
+
+    *pwd = pwdLocal;
+
+cleanup:
+    if (pUser)
+    {
+        LsaFreeSecurityObject(pUser);
+    }
+
+    if (error != LW_ERROR_SUCCESS)
+    {
+        if (pwd)
+        {
+            *pwd = NULL;
+        }
+        if (pwdLocal)
+        {
+            _WBC_FREE(pwdLocal);
+        }
+    }
+
+    return map_error_to_wbc_status(error);
 }
 
 /*

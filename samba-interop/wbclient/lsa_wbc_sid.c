@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <lwmem.h>
 
 #define MAX_SID_STRING_LEN 1024
 
@@ -493,6 +494,149 @@ cleanup:
     wbc_status = map_error_to_wbc_status(dwErr);
 
     return wbc_status;
+}
+
+wbcErr
+wbcGetSidAliases(
+    const struct wbcDomainSid *dom_sid,
+    struct wbcDomainSid *sids,
+    uint32_t num_sids,
+    uint32_t **alias_rids,
+    uint32_t *num_alias_rids
+    )
+{
+    return WBC_ERR_NOT_IMPLEMENTED;
+}
+
+DWORD
+wbcFindSecurityObjectBySid(
+    IN const struct wbcDomainSid *sid,
+    PLSA_SECURITY_OBJECT* ppResult
+    )
+{
+    DWORD error = 0;
+    HANDLE hLsa = (HANDLE)NULL;
+    PSTR pszSidString = NULL;
+    PCSTR ppszSidList[2] = { NULL, NULL };
+    LSA_QUERY_LIST query = { 0 };
+    PLSA_SECURITY_OBJECT* ppResults = NULL;
+    wbcErr wbc_status = 0;
+
+    BAIL_ON_NULL_PTR_PARAM(sid, error);
+
+    /* Validate the SID */
+
+    wbc_status = wbcSidToString(sid, &pszSidString);
+    error = map_wbc_to_lsa_error(wbc_status);
+    BAIL_ON_LSA_ERR(error);
+
+    ppszSidList[0] = pszSidString;
+    query.ppszStrings = ppszSidList;
+
+    error = LsaOpenServer(&hLsa);
+    BAIL_ON_LSA_ERR(error);
+
+    error = LsaFindObjects(
+                hLsa,
+                NULL,
+                0,
+                LSA_OBJECT_TYPE_USER,
+                LSA_QUERY_TYPE_BY_SID,
+                1,
+                query,
+                &ppResults);
+    BAIL_ON_LSA_ERR(error);
+
+    if (!ppResults[0])
+    {
+        error = LW_ERROR_NOT_MAPPED;
+        BAIL_ON_LSA_ERR(error);
+    }
+
+    *ppResult = ppResults[0];
+    LW_SAFE_FREE_MEMORY(ppResults);
+
+cleanup:
+    _WBC_FREE(pszSidString);
+
+    if (hLsa)
+    {
+        LsaCloseServer(hLsa);
+    }
+
+    if (error != LW_ERROR_SUCCESS)
+    {
+        if (ppResults)
+        {
+            LsaFreeSecurityObjectList(1, ppResults);
+        }
+        *ppResult = NULL;
+    }
+
+    return map_error_to_wbc_status(error);
+}
+
+// Return the gecos
+wbcErr
+wbcGetDisplayName(
+    const struct wbcDomainSid *sid,
+    char **domain,
+    char **name,
+    enum wbcSidType *name_type
+    )
+{
+    DWORD error = 0;
+    PLSA_SECURITY_OBJECT pResult = NULL;
+
+    BAIL_ON_NULL_PTR_PARAM(sid, error);
+
+    error = wbcFindSecurityObjectBySid(
+        sid,
+        &pResult);
+    BAIL_ON_LSA_ERR(error);
+
+    if (domain)
+    {
+        *domain = _wbc_strdup(pResult->pszNetbiosDomainName);
+        BAIL_ON_NULL_PTR(*domain, error);
+
+        StrUpper(*domain);
+    }
+
+    if (name)
+    {
+        *name = _wbc_strdup(pResult->userInfo.pszGecos);
+        BAIL_ON_NULL_PTR(*name, error);
+    }
+
+    if (name_type)
+    {
+        *name_type = map_lsa_sid_type_to_wbc(pResult->type);
+    }
+
+cleanup:
+    if (pResult)
+    {
+        LsaFreeSecurityObject(pResult);
+    }
+
+    if (error != LW_ERROR_SUCCESS)
+    {
+        if (domain)
+        {
+            _WBC_FREE(*domain);
+        }
+        if (name)
+        {
+            _WBC_FREE(*name);
+        }
+        if (name_type)
+        {
+            *name_type = 0;
+        }
+    }
+
+    return map_error_to_wbc_status(error);
 }
 /*
 local variables:
