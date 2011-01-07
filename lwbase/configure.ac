@@ -26,9 +26,11 @@ case "$host_os:$host_cpu" in
 	hpux*:hppa*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500"
 		MOD_EXT=".sl"
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
 		;;
 	hpux*:ia64*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_XOPEN_SOURCE_EXTENDED=1 -D_XOPEN_SOURCE=500"
+		AC_DEFINE([__LWI_HP_UX__], [], [Define if OS is HP-UX])
 		;;
 	aix*:*)
 		LWBASE_CPPFLAGS="$LWBASE_CPPFLAGS -D_THREAD_SAFE"

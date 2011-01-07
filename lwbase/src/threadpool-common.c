@@ -1012,7 +1012,8 @@ LwRtlMain(
     for (;;)
     {
         UNLOCK_SIGNAL();
-#ifdef HAVE_SIGWAITINFO
+        // sigwaitinfo on HPUX 11.11 does not fill-in info.si_signo.
+#if defined(HAVE_SIGWAITINFO) && !defined(__LWI_HP_UX__)
         ret = sigwaitinfo(&waitSet, &info);
 #else
         ret = sigwait(&waitSet, &info.si_signo);
