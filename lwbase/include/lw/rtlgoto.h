@@ -79,6 +79,12 @@
 #define GOTO_CLEANUP_ON_ERRNO_EE(error, EE) \
     _GOTO_CLEANUP_ON_NONZERO_EE(error, EE)
 
+#define GOTO_CLEANUP_ON_WINERROR(winError) \
+    _GOTO_CLEANUP_ON_NONZERO(winError)
+
+#define GOTO_CLEANUP_ON_WINERROR_EE(winError, EE) \
+    _GOTO_CLEANUP_ON_NONZERO_EE(winError, EE)
+
 #define GOTO_ERROR_ON_STATUS(status) \
     do { if ((status)) goto error; } while (0)
 
