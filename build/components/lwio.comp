@@ -105,6 +105,7 @@ function component_populate
     mkdir -p ${POPULATE_PREFIX_DIR}
     
     rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}
+    rm -f ${POPULATE_ROOT_DIR}/${PREFIX_DIR}/bin/lwio-fuse-mount
 
     # Handle init scripts
     local script=lwiod
