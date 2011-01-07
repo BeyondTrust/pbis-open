@@ -160,7 +160,7 @@ PrintAccountInfo(
            LW_PRINTF_STRING(pAccountInfo->Fqdn),
            pAccountInfo->Type,
            pAccountInfo->KeyVersionNumber,
-           pAccountInfo->LastChangeTime);
+           (long long int)pAccountInfo->LastChangeTime);
 }
 
 static
