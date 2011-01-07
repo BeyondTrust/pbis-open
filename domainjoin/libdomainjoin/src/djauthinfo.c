@@ -1020,7 +1020,6 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
 #endif
 #endif
 
-        LW_CLEANUP_LSERR(exc, LsaNetJoinInitialize());
 #if 0
         /* Do not enable debug logging in lsajoin because
            it does not respect domainjoin logging settings
@@ -1035,7 +1034,6 @@ cleanup:
 
 void DJNetShutdown(LWException **exc)
 {
-    LsaNetJoinShutdown();
 }
 
 void DJCreateComputerAccount(
