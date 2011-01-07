@@ -41,6 +41,9 @@
 #ifndef __LW_ARGVCURSOR_H__
 #define __LW_ARGVCURSOR_H__
 
+#include <lw/types.h>
+#include <lw/attrs.h>
+
 typedef struct _LW_ARGV_CURSOR {
     PCSTR* Argv;
     ULONG Count;
