@@ -293,7 +293,7 @@ ProcessExportedKeyInfo(
     PSTR  pszValueName = NULL; // buffer for subkey name
     PSTR pszValue = NULL;
     REG_DATA_TYPE dataType = REG_NONE;
-    BYTE value[MAX_VALUE_LENGTH * 2] = {0};
+    BYTE *value = NULL;
     DWORD dwValueLen = 0;
     int iCount = 0;
     DWORD dwValuesCount = 0;
@@ -305,6 +305,9 @@ ProcessExportedKeyInfo(
     REG_PARSE_ITEM regItem = {0};
     FILE *fp = pExportState->fp;
     BOOLEAN bValueSet = FALSE;
+
+    dwError = RegAllocateMemory(MAX_VALUE_LENGTH * 2, (PVOID*)&value);
+    BAIL_ON_REG_ERROR(dwError);
 
     dwError = PrintToRegFile(
                           fp,
@@ -344,7 +347,7 @@ ProcessExportedKeyInfo(
     {
         memset(pwszValueName, 0, MAX_KEY_LENGTH);
         dwValueNameLen = MAX_KEY_LENGTH;
-        memset(value, 0, MAX_VALUE_LENGTH);
+        memset(value, 0, MAX_VALUE_LENGTH * 2);
         dwValueLen = MAX_VALUE_LENGTH;
         RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
 
@@ -535,6 +538,7 @@ cleanup:
     LWREG_SAFE_FREE_STRING(regItem.regAttr.pDefaultValue);
     RegSafeFreeCurrentValueInfo(&pCurrValueInfo);
     memset(value, 0 , MAX_KEY_LENGTH);
+    LWREG_SAFE_FREE_MEMORY(value);
 
     return dwError;
 
