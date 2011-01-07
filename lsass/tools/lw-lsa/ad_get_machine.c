@@ -151,7 +151,7 @@ PrintAccountInfo(
            "  FQDN: %s\n"
            "  Join Type: %u\n"
            "  Key Version: %u\n"
-           "  Last Change Time: %ld\n"
+           "  Last Change Time: %lld\n"
            "",
            LW_PRINTF_STRING(pAccountInfo->DnsDomainName),
            LW_PRINTF_STRING(pAccountInfo->NetbiosDomainName),
