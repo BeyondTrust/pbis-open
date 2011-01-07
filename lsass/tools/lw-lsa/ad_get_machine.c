@@ -32,7 +32,7 @@
  *
  * Module Name:
  *
- *        FILENAME
+ *        ad_get_machine.c
  *
  * Abstract:
  *
@@ -151,7 +151,7 @@ PrintAccountInfo(
            "  FQDN: %s\n"
            "  Join Type: %u\n"
            "  Key Version: %u\n"
-           "  Last Change Time: %d\n"
+           "  Last Change Time: %ld\n"
            "",
            LW_PRINTF_STRING(pAccountInfo->DnsDomainName),
            LW_PRINTF_STRING(pAccountInfo->NetbiosDomainName),
@@ -160,7 +160,7 @@ PrintAccountInfo(
            LW_PRINTF_STRING(pAccountInfo->Fqdn),
            pAccountInfo->Type,
            pAccountInfo->KeyVersionNumber,
-           (int) pAccountInfo->LastChangeTime);
+           pAccountInfo->LastChangeTime);
 }
 
 static
