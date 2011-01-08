@@ -222,16 +222,6 @@ LocalCloseHandle(
 }
 
 DWORD
-LocalGetPasswordInfo(
-    PCSTR pszDomain,
-    PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
-    )
-{
-    return LW_ERROR_NOT_HANDLED;
-}
-
-DWORD
 LocalServicesDomain(
     PCSTR pszDomain,
     BOOLEAN *pbServicesDomain

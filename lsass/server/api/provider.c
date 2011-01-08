@@ -170,49 +170,6 @@ error:
 }
 
 DWORD
-LsaSrvProviderGetPasswordInfo(
-    IN PCSTR pszProvider,
-    IN PCSTR pszDomainName,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bInLock = FALSE;
-    PLSA_AUTH_PROVIDER pProvider = NULL;
-
-    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
-
-    dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = pProvider->pFnTable->pfnGetPasswordInfo(
-                  pszDomainName,
-                  ppPasswordInfo,
-                  ppPasswordInfoA);
-    BAIL_ON_LSA_ERROR(dwError);
-
-cleanup:
-
-    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
-
-    return dwError;
-
-error:
-
-    if (ppPasswordInfo)
-    {
-        *ppPasswordInfo = NULL;
-    }
-    if (ppPasswordInfoA)
-    {
-        *ppPasswordInfoA = NULL;
-    }
-
-    goto cleanup;
-}
-
-DWORD
 LsaSrvProviderGetMachineAccountInfoA(
     IN PCSTR pszProvider,
     IN OPTIONAL PCSTR DnsDomainName,

@@ -122,13 +122,6 @@ LsaAdProviderStateRelease(
     );
 
 DWORD
-AD_GetPasswordInfo(
-    PCSTR pszDomain,
-    PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
-    );
-
-DWORD
 AD_ServicesDomain(
     PCSTR pszDomain,
     BOOLEAN* pbServicesDomain

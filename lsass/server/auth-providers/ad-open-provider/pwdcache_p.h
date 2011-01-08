@@ -61,15 +61,6 @@ LsaPcacheDestroy(
     IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     );
 
-// Get Functions
-
-DWORD
-LsaPcacheGetPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
-    );
-
 // Get Functions - Call corresponding release
 
 DWORD

@@ -63,7 +63,6 @@ LSA_PROVIDER_FUNCTION_TABLE gLocalProviderAPITable =
     .pfnQueryMemberOf                = LocalQueryMemberOf,
     .pfnGetSmartCardUserObject       = LocalGetSmartCardUserObject,
     .pfnOpenHandle                   = LocalOpenHandle,
-    .pfnGetPasswordInfo              = LocalGetPasswordInfo,
     .pfnServicesDomain               = LocalServicesDomain,
     .pfnCheckUserInList              = LocalCheckUserInList,
     .pfnAuthenticateUserPam          = LocalAuthenticateUserPam,

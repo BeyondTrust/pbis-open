@@ -65,8 +65,6 @@ typedef struct _LSA_MACHINEPWD_CACHE {
     pthread_rwlock_t StateLock;
     pthread_rwlock_t* pStateLock;
     BOOLEAN bIsLoaded;
-    PLWPS_PASSWORD_INFO pPasswordInfo;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA;
     PLSA_MACHINEPWD_CACHE_ENTRY pEntry;
 } LSA_MACHINEPWD_CACHE, *PLSA_MACHINEPWD_CACHE;
 
@@ -125,8 +123,6 @@ LsaPcacheCreate(
     pPcache->pStateLock = &pPcache->StateLock;
 
     pPcache->bIsLoaded = FALSE;
-    pPcache->pPasswordInfo = NULL;
-    pPcache->pPasswordInfoA = NULL;
     pPcache->pEntry = NULL;
 
 error:
@@ -157,73 +153,12 @@ LsaPcacheDestroy(
         }
 
         LsaPcachepReleaseEntry(pPcache->pEntry);
-        LwFreePasswordInfo(pPcache->pPasswordInfo);
-        LwFreePasswordInfoA(pPcache->pPasswordInfoA);
         LW_SAFE_FREE_STRING(pPcache->pszDomainName);
         LW_SAFE_FREE_MEMORY(pPcache->pwszDomainName);
         LW_SAFE_FREE_MEMORY(pPcache);
     }
 
     return;
-}
-
-DWORD
-LsaPcacheGetPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bInLock = FALSE;
-    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
-
-    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
-    BAIL_ON_LSA_ERROR(dwError);
-    bInLock = TRUE;
-
-    if (ppPasswordInfo && pPcache->pPasswordInfo)
-    {
-        dwError = LwDuplicatePasswordInfo(
-                      pPcache->pPasswordInfo,
-                      &pPasswordInfo);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    if (ppPasswordInfoA && pPcache->pPasswordInfoA)
-    {
-        dwError = LwDuplicatePasswordInfoA(
-                      pPcache->pPasswordInfoA,
-                      &pPasswordInfoA);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-error:
-    if (bInLock)
-    {
-        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
-    }
-
-    if (dwError)
-    {
-        LwFreePasswordInfo(pPasswordInfo);
-        pPasswordInfo = NULL;
-        LwFreePasswordInfoA(pPasswordInfoA);
-        pPasswordInfoA = NULL;
-    }
-
-    if (ppPasswordInfo)
-    {
-        *ppPasswordInfo = pPasswordInfo;
-    }
-
-    if (ppPasswordInfoA)
-    {
-        *ppPasswordInfoA = pPasswordInfoA;
-    }
-
-    return dwError;
 }
 
 VOID
@@ -311,34 +246,11 @@ LsaPcachepLoadPasswordInfoInLock(
     )
 {
     DWORD dwError = 0;
-    HANDLE hPasswordStore = NULL;
-    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
     PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfoW = NULL;
 
     LSA_ASSERT(!pPcache->bIsLoaded);
     LSA_ASSERT(!pPcache->pEntry);
-    LSA_ASSERT(!pPcache->pPasswordInfo);
-    LSA_ASSERT(!pPcache->pPasswordInfoA);
-
-    //
-    // Read information from pstore
-    //
-
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPasswordStore);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsGetPasswordByDomainName(
-                  hPasswordStore,
-                  pPcache->pszDomainName,
-                  &pPasswordInfo);
-    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
-    {
-        dwError = LW_ERROR_INVALID_ACCOUNT;
-    }
-    BAIL_ON_LSA_ERROR(dwError);
 
     //
     // Read information from LSA Pstore
@@ -364,20 +276,6 @@ LsaPcachepLoadPasswordInfoInLock(
 
     LSA_ASSERT(pPasswordInfoA->Account.KeyVersionNumber == pPasswordInfoW->Account.KeyVersionNumber);
     LSA_ASSERT(pPasswordInfoA->Account.LastChangeTime == pPasswordInfoW->Account.LastChangeTime);
-
-    //
-    // Stash information from pstore
-    //
-
-    dwError = LwDuplicatePasswordInfo(
-                  pPasswordInfo,
-                  &pPcache->pPasswordInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwDuplicatePasswordInfoWToA(
-                  pPasswordInfo,
-                  &pPcache->pPasswordInfoA);
-    BAIL_ON_LSA_ERROR(dwError);
 
     //
     // Stash information from LSA Pstore
@@ -415,14 +313,6 @@ error:
     {
         LsaPstoreFreePasswordInfoA(pPasswordInfoA);
     }
-    if (pPasswordInfo)
-    {
-        LwpsFreePasswordInfo(hPasswordStore, pPasswordInfo);
-    }
-    if (hPasswordStore)
-    {
-        LwpsClosePasswordStore(hPasswordStore);
-    }
 
     return dwError;
 }
@@ -434,10 +324,6 @@ LsaPcachepClearPasswordInfoInLock(
     )
 {
     pPcache->bIsLoaded = FALSE;
-    LwFreePasswordInfo(pPcache->pPasswordInfo);
-    pPcache->pPasswordInfo = NULL;
-    LwFreePasswordInfoA(pPcache->pPasswordInfoA);
-    pPcache->pPasswordInfoA = NULL;
     LsaPcachepReleaseEntry(pPcache->pEntry);
     pPcache->pEntry = NULL;
 }
