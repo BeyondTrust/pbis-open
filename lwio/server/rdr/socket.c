@@ -574,7 +574,7 @@ RdrSocketPrepareSend(
         }
 
         /* Set credit request */
-        pPacket->pSMB2Header->usCredits = RdrSocketCreditsNeeded(pSocket);
+        pPacket->pSMB2Header->usCredits = SMB_HTOL16(RdrSocketCreditsNeeded(pSocket));
 
         if (pSession && RdrSmb2ShouldSignPacket(
                 pPacket,
@@ -645,7 +645,7 @@ RdrSocketTransceive(
         pPacket->pSMBHeader->mid = usMid;
         break;
     case SMB_PROTOCOL_VERSION_2:
-        pPacket->pSMB2Header->ullCommandSequence = usMid;
+        pPacket->pSMB2Header->ullCommandSequence = SMB_HTOL64((ULONG64) usMid);
         break;
     default:
         status = STATUS_INTERNAL_ERROR;

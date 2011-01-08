@@ -536,7 +536,7 @@ RdrSmb2EncodeSessionSetupRequest(
         (bSigningRequired ? RDR_SMB2_SECMODE_SIGNING_REQUIRED : 0);
     pHeader->ulCapabilities = bDfsEnabled ? RDR_SMB2_CAP_DFS : 0;
     pHeader->ulChannel = SMB_HTOL32(0);
-    pHeader->usBlobLength = SMB_HTOL32(ulBlobLength);
+    pHeader->usBlobLength = SMB_HTOL16((USHORT) ulBlobLength);
     pHeader->ullPrevSessionId = SMB_HTOL32(0);
 
     /* Fill in offset field */
