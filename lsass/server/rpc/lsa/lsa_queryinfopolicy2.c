@@ -164,13 +164,12 @@ LsaQueryDomainInfo(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
 
-    dwError = LsaSrvProviderGetPasswordInfo(
+    dwError = LsaSrvProviderGetMachineAccountInfoW(
                   LSA_AD_TAG_PROVIDER,
                   NULL,
-                  &pPassInfo,
-                  NULL);
+                  &pAccountInfo);
     if (dwError == LW_ERROR_INVALID_ACCOUNT)
     {
         /* No password info means we're not joined */
@@ -182,19 +181,19 @@ LsaQueryDomainInfo(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pPassInfo)
+    if (pAccountInfo)
     {
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->name,
-                                             pPassInfo->pwszDomainName);
+                                             pAccountInfo->NetbiosDomainName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus); 
 
         ntStatus = LsaSrvAllocateSidFromWC16String(&pInfo->sid,
-                                                   pPassInfo->pwszSID);
+                                                   pAccountInfo->DomainSid);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
     }
 
 cleanup:
-    LwFreePasswordInfo(pPassInfo);
+    LsaSrvFreeMachineAccountInfoW(pAccountInfo);
 
     if (ntStatus == STATUS_SUCCESS &&
         dwError != ERROR_SUCCESS)
@@ -245,7 +244,7 @@ LsaQueryDnsDomainInfo(
 {
     NTSTATUS ntStatus = STATUS_SUCCESS;
     DWORD dwError = ERROR_SUCCESS;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
     PWSTR pwszDnsForest = NULL;
     PSTR pszDomainFqdn = NULL;
     PSTR pszDcFqdn = NULL;
@@ -253,11 +252,11 @@ LsaQueryDnsDomainInfo(
     DWORD dwFlags = 0;
     PLWNET_DC_INFO pDcInfo = NULL;
 
-    dwError = LsaSrvProviderGetPasswordInfo(
+
+    dwError = LsaSrvProviderGetMachineAccountInfoW(
                   LSA_AD_TAG_PROVIDER,
                   NULL,
-                  &pPassInfo,
-                  NULL);
+                  &pAccountInfo);
     if (dwError == LW_ERROR_INVALID_ACCOUNT)
     {
         ntStatus = STATUS_INVALID_INFO_CLASS;
@@ -268,21 +267,21 @@ LsaQueryDnsDomainInfo(
         BAIL_ON_LSA_ERROR(dwError);
     }
 
-    if (pPassInfo)
+    if (pAccountInfo)
     {
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->name,
-                                             pPassInfo->pwszHostname);
+                                             pAccountInfo->NetbiosDomainName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = LsaSrvInitUnicodeStringEx(&pInfo->dns_domain,
-                                             pPassInfo->pwszDnsDomainName);
+                                             pAccountInfo->DnsDomainName);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
         ntStatus = LsaSrvAllocateSidFromWC16String(&pInfo->sid,
-                                                   pPassInfo->pwszSID);
+                                                   pAccountInfo->DomainSid);
         BAIL_ON_NTSTATUS_ERROR(ntStatus);
 
-        dwError = LwWc16sToMbs(pPassInfo->pwszDnsDomainName,
+        dwError = LwWc16sToMbs(pAccountInfo->DnsDomainName,
                                &pszDomainFqdn);
         BAIL_ON_LSA_ERROR(dwError);
     
@@ -305,7 +304,7 @@ LsaQueryDnsDomainInfo(
     }
 
 cleanup:
-    LwFreePasswordInfo(pPassInfo);
+    LsaSrvFreeMachineAccountInfoW(pAccountInfo);
 
     if (pDcInfo)
     {

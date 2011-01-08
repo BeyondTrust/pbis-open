@@ -88,7 +88,7 @@ LsaSrvOpenPolicy2(
     DOMAIN_HANDLE hDomain = (DOMAIN_HANDLE)NULL;
     PSTR pszDomainFqdn = NULL;
     PSTR pszDcFqdn = NULL;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
 
     dwError = LwAllocateMemory(sizeof(*pPolCtx),
                                OUT_PPVOID(&pPolCtx));
@@ -237,21 +237,20 @@ LsaSrvOpenPolicy2(
             BAIL_ON_LSA_ERROR(dwError);
         }
 
-        dwError = LsaSrvProviderGetPasswordInfo(
+        dwError = LsaSrvProviderGetMachineAccountInfoW(
                       LSA_AD_TAG_PROVIDER,
                       NULL,
-                      &pPassInfo,
-                      NULL);
+                      &pAccountInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
-        if (pPassInfo)
+        if (pAccountInfo)
         {
             dwError = LwAllocateWc16String(&pPolCtx->pwszDomainName,
-                                           pPassInfo->pwszDomainName);
+                                           pAccountInfo->NetbiosDomainName);
             BAIL_ON_LSA_ERROR(dwError);
 
             ntStatus = RtlAllocateSidFromWC16String(&pPolCtx->pDomainSid,
-                                                    pPassInfo->pwszSID);
+                                                    pAccountInfo->DomainSid);
             BAIL_ON_NTSTATUS_ERROR(ntStatus);
         }
     }
@@ -297,7 +296,7 @@ cleanup:
         LWNetFreeString(pszDomainFqdn);
     }
 
-    LwFreePasswordInfo(pPassInfo);
+    LsaSrvFreeMachineAccountInfoW(pAccountInfo);
 
     LW_SAFE_FREE_MEMORY(pwszSystemName);
     LW_SAFE_FREE_MEMORY(pszSamrLpcSocketPath);

@@ -202,42 +202,36 @@ NtlmGetNameInformation(
     PSTR pName = NULL;
     struct hostent* pHost = NULL;
     DWORD dwHostSize = 0;
-    PLWPS_PASSWORD_INFO_A pPasswordInfo = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
-    dwError = LsaSrvProviderGetPasswordInfo(
+    dwError = LsaSrvProviderGetMachineAccountInfoA(
                   LSA_AD_TAG_PROVIDER,
                   pszJoinedDomain,
-                  NULL,
-                  &pPasswordInfo);
-
+                  &pAccountInfo);
     if (dwError == LW_ERROR_SUCCESS)
     {
         dwError = LwAllocateString(
-                      pPasswordInfo->pszMachineAccount,
+                      pAccountInfo->SamAccountName,
                       &pServerName);
         BAIL_ON_LSA_ERROR(dwError);
 
+        // Remove trailing $
         pServerName[strlen(pServerName) - 1] = 0;
 
         dwError = LwAllocateString(
-                      pPasswordInfo->pszDomainName,
+                      pAccountInfo->NetbiosDomainName,
                       &pDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LwAllocateString(
-                      pPasswordInfo->pszHostDnsDomain,
+                      pAccountInfo->Fqdn,
+                      &pDnsServerName);
+        BAIL_ON_LSA_ERROR(dwError);
+
+        dwError = LwAllocateString(
+                      pAccountInfo->DnsDomainName,
                       &pDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
-
-
-        dwError = LwAllocateStringPrintf(
-                       &pDnsServerName,
-                       "%s.%s",
-                       pPasswordInfo->pszHostname,
-                       pPasswordInfo->pszHostDnsDomain);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        LwStrToLower(pDnsServerName);
     }
     else
     {
@@ -340,7 +334,7 @@ cleanup:
         LW_SAFE_FREE_STRING(pDnsDomainName);
     }
 
-    LwFreePasswordInfoA(pPasswordInfo);
+    LsaSrvFreeMachineAccountInfoA(pAccountInfo);
 
     return dwError;
 error:
