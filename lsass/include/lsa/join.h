@@ -52,14 +52,6 @@
 #define LSA_NET_JOIN_DOMAIN_MULTIPLE   2
 
 DWORD
-LsaNetJoinInitialize(
-    );
-
-VOID
-LsaNetJoinShutdown(
-    );
-
-DWORD
 LsaNetTestJoinDomain(
     IN OPTIONAL PCSTR pszDomainName,
     OUT PBOOLEAN pbIsJoined
@@ -77,12 +69,6 @@ LsaJoinDomain(
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
     DWORD dwFlags
-    );
-
-DWORD
-LsaLeaveDomain(
-    PCSTR pszUsername,
-    PCSTR pszPassword
     );
 
 DWORD
@@ -115,27 +101,11 @@ LsaGetComputerDN(
     PSTR* ppszComputerDN
     );
 
-VOID
-LsaEnableDebugLog(
-    VOID
-    );
-
-VOID
-LsaDisableDebugLog(
-    VOID
-    );
-
-VOID
-LsaNetFreeString(
-    PSTR pszString
-    );
-
 DWORD
 LsaEnableDomainGroupMembership(
     PCSTR pszDomainName,
     PCSTR pszDomainSID
     );
-
 
 DWORD
 LsaDisableDomainGroupMembership(
@@ -143,20 +113,10 @@ LsaDisableDomainGroupMembership(
     PCSTR pszDomainSID
     );
 
-
-DWORD
-LsaChangeDomainGroupMembership(
-    IN  PCSTR    pszDomainName,
-    IN  PCSTR    pszDomainSID,
-    IN  BOOLEAN  bEnable
-    );
-
-
 DWORD
 LsaMachineChangePassword(
     IN OPTIONAL PCSTR    pszDomainName
     );
-
 
 DWORD
 LsaUserChangePassword(
@@ -165,7 +125,6 @@ LsaUserChangePassword(
     PWSTR  pwszOldPassword,
     PWSTR  pwszNewPassword
     );
-
 
 #endif /* __LSA_JOIN_H__ */
 

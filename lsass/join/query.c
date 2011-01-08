@@ -46,6 +46,15 @@
  */
 #include "includes.h"
 
+static
+DWORD
+LsaSrvJoinFindComputerDN(
+    HANDLE hDirectory,
+    PCSTR  pszHostName,
+    PCSTR  pszDomain,
+    PSTR*  ppszComputerDN
+    );
+
 DWORD
 LsaNetGetShortDomainName(
     PCSTR pszDomainFQDN,
@@ -393,6 +402,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaSrvJoinFindComputerDN(
     HANDLE hDirectory,
@@ -480,12 +490,4 @@ error:
     LW_SAFE_FREE_STRING(pszComputerDN);
 
     goto cleanup;    
-}
-
-VOID
-LsaNetFreeString(
-    PSTR pszString
-    )
-{
-    LW_SAFE_FREE_MEMORY(pszString);
 }

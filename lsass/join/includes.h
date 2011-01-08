@@ -35,7 +35,6 @@
 #include "lsasystem.h"
 #include "lsadef.h"
 #include "lsa/lsa.h"
-#include "eventlog.h"
 
 #include <openssl/md4.h>
 #include <openssl/md5.h>
@@ -60,7 +59,6 @@
 
 #include "lsautils.h"
 
-#include "lsasrvutils.h"
 #include "lwtime.h"
 #include "lsaldap.h"
 
@@ -87,9 +85,7 @@
 #include "lsaldap_p.h"
 
 #include "keytab.h"
-#include "ktdef.h"
 #include "ktldap.h"
-#include "externs.h"
 
 #include <lber.h>
 

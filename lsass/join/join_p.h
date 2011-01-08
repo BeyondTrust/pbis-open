@@ -51,7 +51,6 @@
 
 #include <lwio/lwio.h>
 
-
 /* (un)join domain flags - local copies of NETSETUP_* flags
    from NetAPI */
 #define LSAJOIN_JOIN_DOMAIN                          (0x00000001)
@@ -68,7 +67,6 @@
 #define LSAJOIN_ACCOUNTDISABLE                       (0x00000002)
 #define LSAJOIN_WORKSTATION_TRUST_ACCOUNT            (0x00001000)
 
-
 typedef struct __LSA_MACHINE_ACCT_INFO
 {
     PSTR   pszDomainName;
@@ -81,28 +79,6 @@ typedef struct __LSA_MACHINE_ACCT_INFO
     DWORD  dwSchannelType;
 
 } LSA_MACHINE_ACCT_INFO, *PLSA_MACHINE_ACCT_INFO;
-
-size_t
-LsaNetGetErrorString(
-    DWORD  dwErrorCode,
-    PSTR   pszBuffer,
-    size_t bufSize
-    );
-
-DWORD
-LsaBuildOrgUnitDN(
-    PCSTR pszDomain,
-    PCSTR pszOU,
-    PSTR* ppszOU_DN
-    );
-
-DWORD
-LsaSrvJoinFindComputerDN(
-    HANDLE hDirectory,
-    PCSTR  pszHostName,
-    PCSTR  pszDomain,
-    PSTR*  ppszComputerDN
-    );
 
 DWORD
 LsaSyncTimeToDC(
@@ -120,7 +96,6 @@ LsaFreeMachineAccountInfo(
     PLSA_MACHINE_ACCT_INFO pAcctInfo
     );
 
-
 DWORD
 LsaJoinDomainInternal(
     PWSTR  pwszHostname,
@@ -135,7 +110,6 @@ LsaJoinDomainInternal(
     PWSTR  pwszOsServicePack
     );
 
-
 DWORD
 LsaGetRwDcName(
     PCWSTR    pwszDnsDomainName,
@@ -143,11 +117,11 @@ LsaGetRwDcName(
     PWSTR    *ppwszDomainControllerName
     );
 
-
 DWORD
-LsaGetHostInfo(
-    PSTR* ppszHostname
+LsaChangeDomainGroupMembership(
+    IN  PCSTR    pszDomainName,
+    IN  PCSTR    pszDomainSID,
+    IN  BOOLEAN  bEnable
     );
-
 
 #endif /* __JOIN_P_H__ */

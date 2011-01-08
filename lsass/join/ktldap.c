@@ -46,7 +46,7 @@
 
 #include "includes.h"
 
-
+static
 DWORD
 KtLdapBind(
     LDAP  **ppLd,
@@ -105,7 +105,7 @@ error:
     goto cleanup;
 }
 
-
+static
 DWORD
 KtLdapQuery(
     LDAP  *pLd,
@@ -205,7 +205,7 @@ error:
     goto cleanup;
 }
 
-
+static
 DWORD
 KtLdapUnbind(
     LDAP *pLd

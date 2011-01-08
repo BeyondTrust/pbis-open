@@ -48,30 +48,49 @@
 #ifndef __KTLDAP_H__
 #define __KTLDAP_H__
 
-
 DWORD
-KtLdapBind(
-    LDAP  **pLd,
-    PCSTR   pszDc
+KtLdapGetBaseDnA(
+    PCSTR  pszDcName,
+    PSTR  *pszBaseDn
     );
 
+DWORD
+KtLdapGetBaseDnW(
+    PCWSTR  pwszDcName,
+    PWSTR  *ppwszBaseDn
+    );
 
 DWORD
-KtLdapQuery(
-    LDAP   *pLd,
+KtLdapGetKeyVersionA(
+    PCSTR   pszDcName,
     PCSTR   pszBaseDn,
-    DWORD   dwScope,
-    PCSTR   pszFilter,
-    PCSTR   pszAttrName,
-    PSTR   *ppszAttrVal
+    PCSTR   pszPrincipal,
+    PDWORD  pdwKvno
     );
-
 
 DWORD
-KtLdapUnbind(
-    LDAP  *pLd
+KtLdapGetKeyVersionW(
+    PCWSTR   pwszDcName,
+    PCWSTR   pwszBaseDn,
+    PCWSTR   pwszPrincipal,
+    PDWORD   pdwKvno
     );
 
+DWORD
+KtLdapGetSaltingPrincipalA(
+    PCSTR   pszDcName,
+    PCSTR   pszBaseDn,
+    PCSTR   pszMachAcctName,
+    PSTR   *pszSalt
+    );
+
+DWORD
+KtLdapGetSaltingPrincipalW(
+    PCWSTR  pwszDcName,
+    PCWSTR  pwszBaseDn,
+    PCWSTR  pwszMachAcctName,
+    PWSTR  *ppwszSalt
+    );
 
 #endif /* __KTLDAP_H__ */
 

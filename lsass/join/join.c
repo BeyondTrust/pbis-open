@@ -55,6 +55,14 @@
 
 static
 DWORD
+LsaBuildOrgUnitDN(
+    PCSTR pszDomain,
+    PCSTR pszOU,
+    PSTR* ppszOU_DN
+    );
+
+static
+DWORD
 LsaRandBytes(
     PBYTE pBuffer,
     DWORD dwCount
@@ -370,6 +378,7 @@ error:
     goto cleanup;
 }
 
+static
 DWORD
 LsaBuildOrgUnitDN(
     PCSTR pszDomain,

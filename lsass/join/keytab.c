@@ -50,6 +50,37 @@
 #define RDONLY_FILE  "FILE"
 #define RDWR_FILE  "WRFILE"
 
+#define BAIL_ON_KRB5_ERROR(ctx, krb5_err, winerr)         \
+    if ((krb5_err)) {                                     \
+        switch ((krb5_err))                               \
+        {                                                 \
+        case ENOENT:                                      \
+            winerr = krb5_err;                            \
+            break;                                        \
+                                                          \
+        case KRB5_LIBOS_BADPWDMATCH:                      \
+            winerr = ERROR_WRONG_PASSWORD;                \
+            break;                                        \
+                                                          \
+        case KRB5KDC_ERR_KEY_EXP:                         \
+            winerr = ERROR_PASSWORD_EXPIRED;              \
+            break;                                        \
+                                                          \
+        case KRB5KRB_AP_ERR_SKEW:                         \
+            winerr = ERROR_TIME_SKEW;                     \
+            break;                                        \
+                                                          \
+        default:                                          \
+            winerr = LwTranslateKrb5Error(                \
+                        (ctx),                            \
+                        (krb5_err),                       \
+                        __FUNCTION__,                     \
+                        __FILE__,                         \
+                        __LINE__);                        \
+            break;                                        \
+        }                                                 \
+        goto error;                                       \
+    }
 
 static
 VOID
@@ -279,7 +310,7 @@ error:
     goto cleanup;
 }
 
-
+static
 DWORD
 KtKrb5AddKeyA(
     PCSTR  pszPrincipal,

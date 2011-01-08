@@ -39,42 +39,10 @@
         goto error;                 \
     }
 
-
-int
-LdapModAddStrValue(
-    LDAPMod **mod,
-    const char *t,
-    const wchar16_t *wsv
-    );
-
-
-int
-LdapModReplStrValue(
-    LDAPMod **mod,
-    const char *t,
-    const wchar16_t *wsv
-    );
-
-
-DWORD
-LdapModAddIntValue(
-    LDAPMod **mod,
-    const char *t,
-    const int iv
-    );
-
-
-VOID
-LdapModFree(
-    LDAPMod **mod
-    );
-
-
 int
 LdapMessageFree(
     LDAPMessage *msg
     );
-
 
 int
 LdapInitConnection(
@@ -83,12 +51,10 @@ LdapInitConnection(
     BOOLEAN bSeal
     );
 
-
 int
 LdapCloseConnection(
     LDAP *ldconn
     );
-
 
 int
 LdapGetDirectoryInfo(
@@ -96,7 +62,6 @@ LdapGetDirectoryInfo(
     LDAPMessage **result,
     LDAP *ld
     );
-
 
 wchar16_t**
 LdapAttributeGet(
@@ -106,12 +71,10 @@ LdapAttributeGet(
     int *count
     );
 
-
 void
 LdapAttributeValueFree(
     wchar16_t *val[]
     );
-
 
 wchar16_t*
 LdapAttrValDnsHostName(
@@ -119,12 +82,10 @@ LdapAttrValDnsHostName(
     const wchar16_t *dnsdomain
     );
 
-
 wchar16_t*
 LdapAttrValSvcPrincipalName(
     const wchar16_t *name
     );
-
 
 int
 LdapMachAcctCreate(
@@ -133,7 +94,6 @@ LdapMachAcctCreate(
     const wchar16_t *machacct_name,
     const wchar16_t *ou
     );
-
 
 int
 LdapMachDnsNameSearch(
@@ -144,7 +104,6 @@ LdapMachDnsNameSearch(
     const wchar16_t *base
     );
 
-
 int
 LdapMachAcctSearch(
     LDAPMessage **out,
@@ -152,7 +111,6 @@ LdapMachAcctSearch(
     const wchar16_t *name,
     const wchar16_t *base
     );
-
 
 int
 LdapMachAcctMove(
@@ -162,7 +120,6 @@ LdapMachAcctMove(
     const wchar16_t *newparent
     );
 
-
 int
 LdapMachAcctSetAttribute(
     LDAP *ld,
@@ -171,7 +128,6 @@ LdapMachAcctSetAttribute(
     const wchar16_t *value[],
     int new
     );
-
 
 #endif /* _LDAP_UTIL_H_ */
 

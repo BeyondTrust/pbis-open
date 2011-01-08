@@ -1,12 +1,9 @@
 make()
 {
     LSAJOIN_SOURCES="\
-        error.c          \
-	globals.c        \
 	join.c           \
 	ldaputil.c       \
 	leave.c          \
-	libmain.c        \
 	lsakrb5smb.c     \
 	lsaldap.c        \
 	query.c          \
@@ -14,7 +11,7 @@ make()
 	ktldap.c"
 
     LSAJOIN_HEADERDEPS="\
-        openssl/rand.h dce/rpc.h gssapi.h eventlog.h \
+        openssl/rand.h dce/rpc.h gssapi.h \
         lwadvapi.h lw/base.h uuid/uuid.h lwps/lwps.h ldap.h lwnet.h"
 
     mk_library \
@@ -23,6 +20,6 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
 	INCLUDEDIRS=". ../include ../server/include keytab" \
 	HEADERDEPS="$LSAJOIN_HEADERDEPS" \
-	LIBDEPS="lsacommon lsarpc eventlog lwnetclientapi" \
+	LIBDEPS="lsacommon lsarpc lwnetclientapi" \
 	GROUPS="../logging_r/logging_r"
 }

@@ -68,20 +68,6 @@ LsaUnjoinDomain(
     DWORD   dwUnjoinFlags
     );
 
-
-DWORD
-LsaLeaveDomain(
-    PCSTR pszUsername,
-    PCSTR pszPassword
-    )
-{
-    return LsaLeaveDomain2(
-               pszUsername,
-               pszPassword,
-               NULL,
-               0);
-}
-
 DWORD
 LsaLeaveDomain2(
     PCSTR pszUsername,
@@ -299,74 +285,6 @@ cleanup:
         ntStatus != STATUS_SUCCESS)
     {
         dwError = NtStatusToWin32Error(ntStatus);
-    }
-
-    return dwError;
-
-error:
-    goto cleanup;
-}
-
-
-DWORD
-LsaGetHostInfo(
-    PSTR* ppszHostname
-    )
-{
-    DWORD dwError = ERROR_SUCCESS;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
-    CHAR szBuffer[256] = {0};
-    PSTR pszLocal = NULL;
-    PSTR pszDot = NULL;
-    size_t len = 0;
-    PSTR pszHostname = NULL;
-
-    *ppszHostname = NULL;
-
-    if (gethostname(szBuffer, sizeof(szBuffer)) != 0)
-    {
-        dwError = LwErrnoToWin32Error(errno);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    len = strlen(szBuffer);
-    if (len > strlen(".local"))
-    {
-        pszLocal = &szBuffer[len - strlen(".local")];
-        if (!strcasecmp(pszLocal, ".local"))
-        {
-            pszLocal[0] = '\0';
-        }
-    }
-    
-    /* Test to see if the name is still dotted. If so we will chop it down to
-       just the hostname field. */
-    pszDot = strchr(szBuffer, '.');
-    if ( pszDot )
-    {
-        pszDot[0] = '\0';
-    }
-
-    len = strlen(szBuffer) + 1;
-    ntStatus = LwAllocateMemory(len,
-                                OUT_PPVOID(&pszHostname));
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    memcpy((void *)pszHostname, szBuffer, len);
-
-    if (ppszHostname)
-    {
-        *ppszHostname = pszHostname;
-        pszHostname = NULL;
-    }
-        
-cleanup:
-    LW_SAFE_FREE_MEMORY(pszHostname);
-
-    if (dwError == ERROR_SUCCESS &&
-        ntStatus != STATUS_SUCCESS)
-    {
-        dwError = LwNtStatusToWin32Error(ntStatus);
     }
 
     return dwError;

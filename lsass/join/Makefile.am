@@ -5,12 +5,9 @@ AM_CPPFLAGS =                \
 lib_LTLIBRARIES = liblsajoin.la
 
 liblsajoin_la_SOURCES = \
-    error.c          \
-    globals.c        \
     join.c           \
     ldaputil.c       \
     leave.c          \
-    libmain.c        \
     lsakrb5smb.c     \
     lsaldap.c        \
     query.c          \

@@ -94,19 +94,20 @@ error:
     return lderr;
 }
 
-
+static
 int LdapModAddStrValue(LDAPMod **mod, const char *t, const wchar16_t *sv)
 {
     return LdapModSetStrValue(mod, t, sv, LDAP_MOD_ADD);
 }
 
-
+static
 int LdapModReplStrValue(LDAPMod **mod, const char *t, const wchar16_t *sv)
 {
     return LdapModSetStrValue(mod, t, sv, LDAP_MOD_REPLACE);
 }
 
 
+static
 DWORD
 LdapModAddIntValue(
     LDAPMod **mod,
@@ -130,7 +131,7 @@ LdapModAddIntValue(
                 (const wchar16_t*)sv));
 }
 
-
+static
 VOID
 LdapModFree(LDAPMod **mod)
 {
@@ -374,7 +375,7 @@ void LdapAttributeValueFree(wchar16_t *val[])
     LW_SAFE_FREE_MEMORY(val);
 }
 
-
+static
 wchar16_t* LdapAttrValDn(const wchar16_t *name, const wchar16_t *value,
                          const wchar16_t *base)
 {
@@ -390,14 +391,6 @@ wchar16_t* LdapAttrValDn(const wchar16_t *name, const wchar16_t *value,
                     name,
                     value);
     }
-}
-
-
-wchar16_t* LdapAttrValSamAcctName(const wchar16_t *name)
-{
-    return asw16printfw(
-                L"%ws$",
-                name);
 }
 
 
