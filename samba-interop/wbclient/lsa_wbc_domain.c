@@ -410,13 +410,37 @@ FreeDomainControllerEx(
         return 0;
     }
 
-    LW_SAFE_FREE_STRING((char *)pController->dc_unc);
-    LW_SAFE_FREE_STRING((char *)pController->dc_address);
+    if (pController->dc_unc)
+    {
+        LwFreeString((char *) pController->dc_unc);
+    }
+
+    if (pController->dc_address)
+    {
+        LwFreeString((char *) pController->dc_address);
+    }
+
     LW_SAFE_FREE_MEMORY(pController->domain_guid);
-    LW_SAFE_FREE_STRING((char *)pController->domain_name);
-    LW_SAFE_FREE_STRING((char *)pController->forest_name);
-    LW_SAFE_FREE_STRING((char *)pController->dc_site_name);
-    LW_SAFE_FREE_STRING((char *)pController->client_site_name);
+
+    if (pController->domain_name)
+    {
+        LwFreeString((char *) pController->domain_name);
+    }
+
+    if (pController->forest_name)
+    {
+        LwFreeString((char *) pController->forest_name);
+    }
+
+    if (pController->dc_site_name)
+    {
+        LwFreeString((char *) pController->dc_site_name);
+    }
+
+    if (pController->client_site_name)
+    {
+        LwFreeString((char *) pController->client_site_name);
+    }
 
     return 0;
 }

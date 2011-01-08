@@ -122,7 +122,7 @@ FillStructPasswdFromUser(
     DWORD error = 0;
     struct passwd *pw = NULL;
     DWORD requiredSize = 0;
-    BYTE *pDataPtr = NULL;
+    char *pDataPtr = NULL;
 
     requiredSize = sizeof(struct passwd);
     requiredSize += strlen(pUser->userInfo.pszUnixName) + 1;
@@ -138,7 +138,7 @@ FillStructPasswdFromUser(
     pw = _wbc_malloc_zero(sizeof(struct passwd), NULL);
     BAIL_ON_NULL_PTR(pw, error);
 
-    pDataPtr = (BYTE *)pw + sizeof(struct passwd);
+    pDataPtr = (char *)pw + sizeof(struct passwd);
 
     pw->pw_uid = pUser->userInfo.uid;
     pw->pw_gid = pUser->userInfo.gid;
