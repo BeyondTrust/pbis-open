@@ -47,6 +47,7 @@
 #include "lsawbclient_p.h"
 #include <memory.h>
 #include <lwmem.h>
+#include <string.h>
 
 static int FreeStructPasswd(void *p)
 {
