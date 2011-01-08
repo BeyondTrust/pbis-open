@@ -1654,7 +1654,6 @@ AD_OnlineCheckUserPassword(
     )
 {
     DWORD dwError = 0;
-    PSTR pszHostname = NULL;
     PSTR pszServicePrincipal = NULL;
     PSTR pszUpn = NULL;
     PSTR pszUserDnsDomainName = NULL;
@@ -1665,7 +1664,7 @@ AD_OnlineCheckUserPassword(
     PAC_LOGON_INFO *pPac = NULL;
     LSA_TRUST_DIRECTION dwTrustDirection = LSA_TRUST_DIRECTION_UNKNOWN;
     NTSTATUS ntStatus = 0;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
     dwError = AD_DetermineTrustModeandDomainName(
                         pContext->pState,
@@ -1676,25 +1675,16 @@ AD_OnlineCheckUserPassword(
                         NULL);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LsaPcacheGetPasswordInfo(
+    dwError = LsaPcacheGetMachinePasswordInfoA(
                   pContext->pState->pPcache,
-                  NULL,
-                  &pPasswordInfoA);
+                  &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwAllocateString(
-                  pPasswordInfoA->pszHostname,
-                  &pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToLower(pszHostname);
 
     // Leave the realm empty so that kerberos referrals are turned on.
     dwError = LwAllocateStringPrintf(
                         &pszServicePrincipal,
-                        "host/%s.%s@",
-                        pszHostname,
-                        pPasswordInfoA->pszHostDnsDomain);
+                        "host/%s@",
+                        pPasswordInfo->Account.Fqdn);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pUserInfo->userInfo.bIsGeneratedUPN)
@@ -1749,23 +1739,24 @@ AD_OnlineCheckUserPassword(
                     pszPassword,
                     KRB5_File_Cache,
                     pszServicePrincipal,
-                    pPasswordInfoA->pszDnsDomainName,
-                    pPasswordInfoA->pszMachinePassword,
+                    pPasswordInfo->Account.DnsDomainName,
+                    pPasswordInfo->Password,
                     &pchNdrEncodedPac,
                     &sNdrEncodedPac,
                     pdwGoodUntilTime,
                     0);
     if (dwError == LW_ERROR_KRB5_S_PRINCIPAL_UNKNOWN)
     {
+        // Perhaps the host has no SPN.  Try again
+        // using the UPN (sAMAccountName@REALM).
+
         LW_SAFE_FREE_STRING(pszServicePrincipal);
 
-        // Perhaps the host has no SPN or UPN.  Try again
-        // Using the sAMAccountName@REALM
         dwError = LwAllocateStringPrintf(
                       &pszServicePrincipal,
                       "%s@%s",
-                      pPasswordInfoA->pszMachineAccount,
-                      pPasswordInfoA->pszDnsDomainName);
+                      pPasswordInfo->Account.SamAccountName,
+                      pPasswordInfo->Account.DnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
 
         dwError = LwSetupUserLoginSession(
@@ -1775,8 +1766,8 @@ AD_OnlineCheckUserPassword(
                       pszPassword,
                       KRB5_File_Cache,
                       pszServicePrincipal,
-                      pPasswordInfoA->pszDnsDomainName,
-                      pPasswordInfoA->pszMachinePassword,
+                      pPasswordInfo->Account.DnsDomainName,
+                      pPasswordInfo->Password,
                       &pchNdrEncodedPac,
                       &sNdrEncodedPac,
                       pdwGoodUntilTime,
@@ -1833,13 +1824,12 @@ cleanup:
     {
         FreePacLogonInfo(pPac);
     }
-    LW_SAFE_FREE_STRING(pszHostname);
     LW_SAFE_FREE_STRING(pszServicePrincipal);
     LW_SAFE_FREE_STRING(pszUserDnsDomainName);
     LW_SAFE_FREE_STRING(pszFreeUpn);
     LW_SAFE_FREE_MEMORY(pchNdrEncodedPac);
 
-    LwFreePasswordInfoA(pPasswordInfoA);
+    LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
 
     return dwError;
 

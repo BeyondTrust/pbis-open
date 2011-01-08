@@ -793,33 +793,41 @@ LsaUmpCreateKeys(
     DES_cblock Key;
     DWORD      dwTime = 0;
     pid_t      Pid = 0;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     if ( !RAND_status() )
     {
         LSA_LOG_DEBUG("LSA User Manager - randomness not seeded automatically");
 
-        dwError = LsaPcacheGetPasswordInfo(
+        dwError = LsaPcacheGetMachineAccountInfoA(
                       pState->pPcache,
-                      NULL,
-                      &pPasswordInfoA);
+                      &pAccountInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
         RAND_seed(
-            pPasswordInfoA->pszHostname,
-            strlen(pPasswordInfoA->pszHostname));
+            pAccountInfo->DnsDomainName,
+            strlen(pAccountInfo->DnsDomainName));
         RAND_seed(
-            pPasswordInfoA->pszMachinePassword,
-            strlen(pPasswordInfoA->pszMachinePassword));
+            pAccountInfo->NetbiosDomainName,
+            strlen(pAccountInfo->NetbiosDomainName));
         RAND_seed(
-            pPasswordInfoA->pszMachineAccount,
-            strlen(pPasswordInfoA->pszMachineAccount));
+            pAccountInfo->DomainSid,
+            strlen(pAccountInfo->DomainSid));
         RAND_seed(
-            pPasswordInfoA->pszSID,
-            strlen(pPasswordInfoA->pszSID));
+            pAccountInfo->SamAccountName,
+            strlen(pAccountInfo->SamAccountName));
         RAND_seed(
-            pState->pszDomainName,
-            strlen(pState->pszDomainName));
+            &pAccountInfo->Type,
+            sizeof(pAccountInfo->Type));
+        RAND_seed(
+            &pAccountInfo->KeyVersionNumber,
+            sizeof(pAccountInfo->KeyVersionNumber));
+        RAND_seed(
+            pAccountInfo->Fqdn,
+            strlen(pAccountInfo->Fqdn));
+        RAND_seed(
+            &pAccountInfo->LastChangeTime,
+            sizeof(pAccountInfo->LastChangeTime));
 
         dwTime = time(NULL);
         RAND_seed(
@@ -864,7 +872,7 @@ cleanup:
 
     memset(&Key, 0, sizeof(Key));
 
-    LwFreePasswordInfoA(pPasswordInfoA);
+    LsaPcacheReleaseMachineAccountInfoA(pAccountInfo);
 
     return dwError;
 

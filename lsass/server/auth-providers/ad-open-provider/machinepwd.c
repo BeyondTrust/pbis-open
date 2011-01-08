@@ -249,7 +249,8 @@ ADSyncMachinePasswordThreadRoutine(
     DWORD dwPasswordSyncLifetime = 0;
     struct timespec timeout = {0, 0};
     DWORD dwGoodUntilTime = 0;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+    UINT64 lastChangeTime = 0;
 
     LSA_LOG_INFO("Machine Password Sync Thread starting");
 
@@ -278,13 +279,29 @@ ADSyncMachinePasswordThreadRoutine(
         }
         ADSyncTimeToDC(pState, pState->pProviderData->szDomain);
 
-        dwError = LsaPcacheGetPasswordInfo(
+        dwError = LsaPcacheGetMachineAccountInfoA(
                       pState->pPcache,
-                      NULL,
-                      &pPasswordInfoA);
+                      &pAccountInfo);
         if (dwError)
         {
-            LSA_LOG_ERROR("Error: Failed to get machine password information (error = %u)", dwError);
+            LSA_LOG_ERROR("Error: Failed to get machine account information (error = %u)", dwError);
+            dwError = 0;
+            goto lsa_wait_resync;
+        }
+
+        dwError = ADConvertTimeNt2Unix(
+                        (UINT64) pAccountInfo->LastChangeTime,
+                        &lastChangeTime);
+        if (dwError)
+        {
+            LSA_LOG_DEBUG("Failed to convert time (error = %u)", dwError);
+            dwError = 0;
+            goto lsa_wait_resync;
+        }
+
+        if (lastChangeTime != (time_t) lastChangeTime)
+        {
+            LSA_LOG_DEBUG("Overflow in converted time");
             dwError = 0;
             goto lsa_wait_resync;
         }
@@ -292,7 +309,7 @@ ADSyncMachinePasswordThreadRoutine(
         dwCurrentPasswordAge = 
                          difftime(
                               time(NULL),
-                              pPasswordInfoA->last_change_time);
+                              (time_t) lastChangeTime);
 
         dwPasswordSyncLifetime = AD_GetMachinePasswordSyncPwdLifetime(pState);
         dwReapingAge = dwPasswordSyncLifetime / 2;
@@ -342,7 +359,7 @@ ADSyncMachinePasswordThreadRoutine(
                 {
                     LsaDmTransitionOffline(
                         pState->hDmState,
-                        pPasswordInfoA->pszDnsDomainName,
+                        pState->pszDomainName,
                         FALSE);
                 }
 
@@ -363,8 +380,8 @@ ADSyncMachinePasswordThreadRoutine(
 
 lsa_wait_resync:
 
-        LwFreePasswordInfoA(pPasswordInfoA);
-        pPasswordInfoA = NULL;
+        LsaPcacheReleaseMachineAccountInfoA(pAccountInfo);
+        pAccountInfo = NULL;
 
         timeout.tv_sec = time(NULL) + pMachinePwdState->dwThreadWaitSecs;
         timeout.tv_nsec = 0;
@@ -394,7 +411,7 @@ retry_wait:
     
 cleanup:
 
-    LwFreePasswordInfoA(pPasswordInfoA);
+    LsaPcacheReleaseMachineAccountInfoA(pAccountInfo);
 
     pthread_mutex_unlock(pMachinePwdState->pThreadLock);
     

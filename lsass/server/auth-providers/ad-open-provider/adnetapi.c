@@ -99,19 +99,18 @@ AD_GetSystemCreds(
     LW_PIO_CREDS pCreds = NULL;
     DWORD dwError = 0;
     PSTR pszMachPrincipal = NULL;
-    PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
-    dwError = LsaPcacheGetPasswordInfo(
+    dwError = LsaPcacheGetMachineAccountInfoA(
                   pState->pPcache,
-                  NULL,
-                  &pPasswordInfoA);
+                  &pAccountInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwAllocateStringPrintf(
                     &pszMachPrincipal,
                     "%s@%s",
-                    pPasswordInfoA->pszMachineAccount,
-                    pPasswordInfoA->pszDnsDomainName);
+                    pAccountInfo->SamAccountName,
+                    pAccountInfo->DnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwIoCreateKrb5CredsA(
@@ -126,7 +125,7 @@ cleanup:
 
     LW_SAFE_FREE_STRING(pszMachPrincipal);
 
-    LwFreePasswordInfoA(pPasswordInfoA);
+    LsaPcacheReleaseMachineAccountInfoA(pAccountInfo);
 
     return dwError;
 
@@ -1671,7 +1670,7 @@ AD_NetlogonAuthenticationUserEx(
     PWSTR pwszComputer = NULL;
     NTSTATUS status = 0;
     NETR_BINDING netr_b = NULL;
-    PLWPS_PASSWORD_INFO pMachAcctInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W pMachinePasswordInfo = NULL;
     BOOLEAN bIsNetworkError = FALSE;
     NTSTATUS nt_status = STATUS_UNHANDLED_EXCEPTION;
     NetrValidationInfo  *pValidationInfo = NULL;
@@ -1693,10 +1692,9 @@ AD_NetlogonAuthenticationUserEx(
 
     /* Grab the machine password and account info */
 
-    dwError = LsaPcacheGetPasswordInfo(
+    dwError = LsaPcacheGetMachinePasswordInfoW(
                   pState->pPcache,
-                  &pMachAcctInfo,
-                  NULL);
+                  &pMachinePasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     /* Gather other Schannel params */
@@ -1715,7 +1713,7 @@ AD_NetlogonAuthenticationUserEx(
     dwError = LwMbsToWc16s(pUserParams->pszDomain, &pwszShortDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pwszComputer = wc16sdup(pMachAcctInfo->pwszMachineAccount);
+    pwszComputer = wc16sdup(pMachinePasswordInfo->Account.SamAccountName);
     if (!pwszComputer)
     {
         dwError = LW_ERROR_OUT_OF_MEMORY;
@@ -1773,13 +1771,13 @@ AD_NetlogonAuthenticationUserEx(
         /* Now setup the Schannel session */
 
         nt_status = NetrOpenSchannel(netr_b,
-                                     pMachAcctInfo->pwszMachineAccount,
+                                     pMachinePasswordInfo->Account.SamAccountName,
                                      pwszDomainController,
                                      pwszServerName,
                                      pwszPrimaryShortDomain,
                                      pwszPrimaryFqdn,
                                      pwszComputer,
-                                     pMachAcctInfo->pwszMachinePassword,
+                                     pMachinePasswordInfo->Password,
                                      &pSchannelState->SchannelCreds,
                                      &pSchannelState->hSchannelBinding);
 
@@ -1933,7 +1931,7 @@ AD_NetlogonAuthenticationUserEx(
 
 cleanup:
 
-    LwFreePasswordInfo(pMachAcctInfo);
+    LsaPcacheReleaseMachinePasswordInfoW(pMachinePasswordInfo);
 
     if (netr_b)
     {

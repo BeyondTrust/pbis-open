@@ -397,8 +397,7 @@ AD_FindUserObjectByName(
 DWORD
 AD_InitializeOperatingMode(
     IN PLSA_AD_PROVIDER_STATE pState,
-    IN PCSTR pszDomain,
-    IN PCSTR pszHostName,
+    IN PCSTR pszSamAccountName,
     IN BOOLEAN bIsDomainOffline
     );
 
