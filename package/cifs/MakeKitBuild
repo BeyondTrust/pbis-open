@@ -37,6 +37,9 @@ package_deb()
         common_files
         common_files_compat
         
+        mk_package_files \
+            "${MK_DATADIR}/likewise.pam-auth-update"
+
         mk_subpackage_do SUBPACKAGE="dev"
             common_files_dev
         mk_subpackage_done

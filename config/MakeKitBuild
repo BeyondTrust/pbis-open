@@ -17,6 +17,10 @@ make()
         FILE="VERSION" \
         INSTALLDIR="${MK_PREFIX}/data"
 
+    mk_stage \
+        DESTDIR="${MK_DATADIR}" \
+        SOURCE="likewise.pam-auth-update"        
+
     for i in dcerpcd eventlogd lsassd lwiod lwregd lwsmd netlogond srvsvcd
     do
 	lw_init_script "$i"
