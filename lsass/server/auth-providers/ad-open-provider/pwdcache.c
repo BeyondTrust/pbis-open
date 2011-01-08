@@ -41,36 +41,69 @@
  * 
  *        Password Info Cache API
  *
- * Authors: Krishna Ganugapati (krishnag@likewisesoftware.com)
- *          Sriram Nambakam (snambakam@likewisesoftware.com)
- *          Brian Dunstan (bdunstan@likewisesoftware.com)
+ * Authors: Arlene Berry (aberry@likewise.com)
+ *          Danilo Almeida (dalmeida@likewise.com)
  */
 
 #include "adprovider.h"
+#include <lsa/lsapstore-api.h>
+#include "machinepwdinfo-impl.h"
+
+typedef struct _LSA_MACHINEPWD_CACHE_ENTRY {
+    LONG RefCount;
+    LSA_MACHINE_PASSWORD_INFO_A PasswordInfoA;
+    LSA_MACHINE_PASSWORD_INFO_W PasswordInfoW;
+} LSA_MACHINEPWD_CACHE_ENTRY, *PLSA_MACHINEPWD_CACHE_ENTRY;
 
 //
 // Password Cache Type
 //
 
-typedef struct _LSA_MACHINEPWD_CACHE{
-    BOOLEAN bIsLoaded;
+typedef struct _LSA_MACHINEPWD_CACHE {
     PSTR pszDomainName;
-    pthread_rwlock_t stateLock;
+    PWSTR pwszDomainName;
+    pthread_rwlock_t StateLock;
     pthread_rwlock_t* pStateLock;
+    BOOLEAN bIsLoaded;
     PLWPS_PASSWORD_INFO pPasswordInfo;
     PLWPS_PASSWORD_INFO_A pPasswordInfoA;
+    PLSA_MACHINEPWD_CACHE_ENTRY pEntry;
 } LSA_MACHINEPWD_CACHE, *PLSA_MACHINEPWD_CACHE;
+
+#define PTHREAD_CALL_MUST_SUCCEED(Call) \
+    do { \
+        int localError = Call; \
+        LSA_ASSERT(localError == 0); \
+    } while (0)
 
 static
 DWORD
-LsaPcacheSetPasswordInfoInLock(
+LsaPcachepEnsurePasswordInfoAndLock(
     IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    );
+
+static
+DWORD
+LsaPcachepLoadPasswordInfoInLock(
+    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    );
+
+static
+VOID
+LsaPcachepClearPasswordInfoInLock(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
+    );
+
+static
+VOID
+LsaPcachepReleaseEntry(
+    IN PLSA_MACHINEPWD_CACHE_ENTRY pEntry
     );
 
 DWORD
 LsaPcacheCreate(
     IN PCSTR pszDomainName,
-    OUT PLSA_MACHINEPWD_CACHE_HANDLE phPcache
+    OUT PLSA_MACHINEPWD_CACHE_HANDLE ppPcache
     )
 {
     DWORD dwError = 0;
@@ -81,45 +114,41 @@ LsaPcacheCreate(
                   (PVOID*)&pPcache);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pszDomainName)
-    {
-        dwError = LwAllocateString(
-                      pszDomainName,
-                      &pPcache->pszDomainName);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pPcache->stateLock, NULL));
+    dwError = LwAllocateString(pszDomainName, &pPcache->pszDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pPcache->pStateLock = &pPcache->stateLock;
+    dwError = LwMbsToWc16s(pszDomainName, &pPcache->pwszDomainName);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LwMapErrnoToLwError(pthread_rwlock_init(&pPcache->StateLock, NULL));
+    BAIL_ON_LSA_ERROR(dwError);
+    pPcache->pStateLock = &pPcache->StateLock;
 
     pPcache->bIsLoaded = FALSE;
     pPcache->pPasswordInfo = NULL;
     pPcache->pPasswordInfoA = NULL;
-
-    *phPcache = pPcache;
-    pPcache = NULL;
+    pPcache->pEntry = NULL;
 
 error:
-
     if (dwError)
     {
-        *phPcache = NULL;
+        if (pPcache)
+        {
+            LsaPcacheDestroy(pPcache);
+            pPcache = NULL;
+        }
     }
 
-    LsaPcacheDestroy(pPcache);
+    *ppPcache = pPcache;
 
     return dwError;
 }
 
 VOID
 LsaPcacheDestroy(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     )
 {
-    PLSA_MACHINEPWD_CACHE pPcache = (PLSA_MACHINEPWD_CACHE)hPcache;
-
     if (pPcache)
     {
         if (pPcache->pStateLock)
@@ -127,9 +156,11 @@ LsaPcacheDestroy(
             pthread_rwlock_destroy(pPcache->pStateLock);
         }
 
+        LsaPcachepReleaseEntry(pPcache->pEntry);
         LwFreePasswordInfo(pPcache->pPasswordInfo);
         LwFreePasswordInfoA(pPcache->pPasswordInfoA);
         LW_SAFE_FREE_STRING(pPcache->pszDomainName);
+        LW_SAFE_FREE_MEMORY(pPcache->pwszDomainName);
         LW_SAFE_FREE_MEMORY(pPcache);
     }
 
@@ -138,43 +169,19 @@ LsaPcacheDestroy(
 
 DWORD
 LsaPcacheGetPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache,
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
     OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
     OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
     )
 {
     DWORD dwError = 0;
     BOOLEAN bInLock = FALSE;
-    PLSA_MACHINEPWD_CACHE pPcache = (PLSA_MACHINEPWD_CACHE)hPcache;
     PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
     PLWPS_PASSWORD_INFO_A pPasswordInfoA = NULL;
 
-    if (!pPcache)
-    {
-        dwError = LW_ERROR_INVALID_ACCOUNT; 
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-
-    dwError = pthread_rwlock_rdlock(pPcache->pStateLock);
-    LW_ASSERT(dwError == 0);
+    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
     bInLock = TRUE;
-
-    if (!pPcache->bIsLoaded)
-    {
-        dwError = pthread_rwlock_unlock(pPcache->pStateLock);
-        LW_ASSERT(dwError == 0);
-        bInLock = FALSE;
-
-        dwError = pthread_rwlock_wrlock(pPcache->pStateLock);
-        LW_ASSERT(dwError == 0);
-        bInLock = TRUE;
-
-        if (!pPcache->bIsLoaded)
-        {
-            dwError = LsaPcacheSetPasswordInfoInLock(pPcache);
-            BAIL_ON_LSA_ERROR(dwError);
-        }
-    }
 
     if (ppPasswordInfo && pPcache->pPasswordInfo)
     {
@@ -193,12 +200,9 @@ LsaPcacheGetPasswordInfo(
     }
 
 error:
-
     if (bInLock)
     {
-        int status = 0;
-        status = pthread_rwlock_unlock(pPcache->pStateLock);
-        LW_ASSERT(status == 0);
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
     }
 
     if (dwError)
@@ -224,40 +228,102 @@ error:
 
 VOID
 LsaPcacheClearPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     )
 {
-    DWORD dwError = 0;
-    PLSA_MACHINEPWD_CACHE pPcache = (PLSA_MACHINEPWD_CACHE)hPcache;
-
     if (pPcache)
     {
-        dwError = pthread_rwlock_wrlock(pPcache->pStateLock);
-        LW_ASSERT(dwError == 0);
-
-        pPcache->bIsLoaded = FALSE;
-        LwFreePasswordInfo(pPcache->pPasswordInfo);
-        pPcache->pPasswordInfo = NULL;
-        LwFreePasswordInfoA(pPcache->pPasswordInfoA);
-        pPcache->pPasswordInfoA = NULL;
-
-        dwError = pthread_rwlock_unlock(pPcache->pStateLock);
-        LW_ASSERT(dwError == 0);
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_wrlock(pPcache->pStateLock));
+        LsaPcachepClearPasswordInfoInLock(pPcache);
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
     }
-
-    return;
 }
 
 static
 DWORD
-LsaPcacheSetPasswordInfoInLock(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+LsaPcachepEnsurePasswordInfoAndLock(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
+    )
+///<
+/// Ensure that there is password information and lock the pcache.
+///
+/// This function ensures that the password information is locked
+/// and acquires a lock on the pcache.  Note that the lock will
+/// be at least a read lock but may be a write lock.  However,
+/// callers cannot rely on it being any more than a read lock.
+///
+/// Note that making this always return a read lock is not optimal
+/// as it must acquire a write lock in the case where the password
+/// information is not already loaded.  To make it return a read
+/// lock in that case would require dropping the write lock and
+/// re-checking that the password information is still loaded.
+/// This could result in looping and unnecessarily complex code.
+///
+/// @return Windows error code
+///
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+
+    if (!pPcache)
+    {
+        dwError = LW_ERROR_INVALID_ACCOUNT; 
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_rdlock(pPcache->pStateLock));
+    bInLock = TRUE;
+
+    if (!pPcache->bIsLoaded)
+    {
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+        bInLock = FALSE;
+
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_wrlock(pPcache->pStateLock));
+        bInLock = TRUE;
+
+        if (!pPcache->bIsLoaded)
+        {
+            dwError = LsaPcachepLoadPasswordInfoInLock(pPcache);
+            BAIL_ON_LSA_ERROR(dwError);
+        }
+    }
+
+error:
+    if (dwError)
+    {
+        if (bInLock)
+        {
+            PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+            bInLock = FALSE;
+        }
+    }
+
+    LW_ASSERT(LW_IS_BOTH_OR_NEITHER(0 == dwError, bInLock));
+
+    return dwError;
+}
+
+static
+DWORD
+LsaPcachepLoadPasswordInfoInLock(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     )
 {
     DWORD dwError = 0;
-    PLSA_MACHINEPWD_CACHE pPcache = (PLSA_MACHINEPWD_CACHE)hPcache;
-    HANDLE hPasswordStore = (HANDLE)NULL;
+    HANDLE hPasswordStore = NULL;
     PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfoA = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfoW = NULL;
+
+    LSA_ASSERT(!pPcache->bIsLoaded);
+    LSA_ASSERT(!pPcache->pEntry);
+    LSA_ASSERT(!pPcache->pPasswordInfo);
+    LSA_ASSERT(!pPcache->pPasswordInfoA);
+
+    //
+    // Read information from pstore
+    //
 
     dwError = LwpsOpenPasswordStore(
                   LWPS_PASSWORD_STORE_DEFAULT,
@@ -274,10 +340,34 @@ LsaPcacheSetPasswordInfoInLock(
     }
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pPcache->bIsLoaded)
+    //
+    // Read information from LSA Pstore
+    //
+
+    dwError = LsaPstoreGetPasswordInfoA(
+                    pPcache->pszDomainName,
+                    &pPasswordInfoA);
+    if (dwError == NERR_SetupNotJoined)
     {
-        goto error;
+        dwError = LW_ERROR_INVALID_ACCOUNT;
     }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaPstoreGetPasswordInfoW(
+                    pPcache->pwszDomainName,
+                    &pPasswordInfoW);
+    if (dwError == NERR_SetupNotJoined)
+    {
+        dwError = LW_ERROR_INVALID_ACCOUNT;
+    }
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LSA_ASSERT(pPasswordInfoA->Account.KeyVersionNumber == pPasswordInfoW->Account.KeyVersionNumber);
+    LSA_ASSERT(pPasswordInfoA->Account.LastChangeTime == pPasswordInfoW->Account.LastChangeTime);
+
+    //
+    // Stash information from pstore
+    //
 
     dwError = LwDuplicatePasswordInfo(
                   pPasswordInfo,
@@ -289,18 +379,285 @@ LsaPcacheSetPasswordInfoInLock(
                   &pPcache->pPasswordInfoA);
     BAIL_ON_LSA_ERROR(dwError);
 
+    //
+    // Stash information from LSA Pstore
+    //
+
+    dwError = LwAllocateMemory(
+                    sizeof(*pPcache->pEntry),
+                    OUT_PPVOID(&pPcache->pEntry));
+    BAIL_ON_LSA_ERROR(dwError);
+    pPcache->pEntry->RefCount = 1;
+
+    dwError = LsaImplFillMachinePasswordInfoA(
+                    pPasswordInfoA,
+                    &pPcache->pEntry->PasswordInfoA);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaImplFillMachinePasswordInfoW(
+                    pPasswordInfoW,
+                    &pPcache->pEntry->PasswordInfoW);
+    BAIL_ON_LSA_ERROR(dwError);
+
     pPcache->bIsLoaded = TRUE;
 
 error:
+    if (dwError)
+    {
+        LsaPcachepClearPasswordInfoInLock(pPcache);
+    }
 
+    if (pPasswordInfoW)
+    {
+        LsaPstoreFreePasswordInfoW(pPasswordInfoW);
+    }
+    if (pPasswordInfoA)
+    {
+        LsaPstoreFreePasswordInfoA(pPasswordInfoA);
+    }
     if (pPasswordInfo)
     {
         LwpsFreePasswordInfo(hPasswordStore, pPasswordInfo);
     }
-    if (hPasswordStore != (HANDLE)NULL)
+    if (hPasswordStore)
     {
         LwpsClosePasswordStore(hPasswordStore);
     }
 
     return dwError;
 }
+
+static
+VOID
+LsaPcachepClearPasswordInfoInLock(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
+    )
+{
+    pPcache->bIsLoaded = FALSE;
+    LwFreePasswordInfo(pPcache->pPasswordInfo);
+    pPcache->pPasswordInfo = NULL;
+    LwFreePasswordInfoA(pPcache->pPasswordInfoA);
+    pPcache->pPasswordInfoA = NULL;
+    LsaPcachepReleaseEntry(pPcache->pEntry);
+    pPcache->pEntry = NULL;
+}
+
+static
+VOID
+LsaPcachepReleaseEntry(
+    IN PLSA_MACHINEPWD_CACHE_ENTRY pEntry
+    )
+{
+    if (pEntry)
+    {
+        LONG count = LwInterlockedDecrement(&pEntry->RefCount);
+        LW_ASSERT(count >= 0);
+        if (0 == count)
+        {
+            LsaImplFreeMachinePasswordInfoContentsA(&pEntry->PasswordInfoA);
+            LsaImplFreeMachinePasswordInfoContentsW(&pEntry->PasswordInfoW);
+            LwFreeMemory(pEntry);
+        }
+    }
+}
+
+// Get Functions
+
+DWORD
+LsaPcacheGetMachineAccountInfoA(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
+    bInLock = TRUE;
+
+    pAccountInfo = &pPcache->pEntry->PasswordInfoA.Account;
+    LwInterlockedIncrement(&pPcache->pEntry->RefCount);
+
+error:
+    if (bInLock)
+    {
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+    }
+
+    if (dwError)
+    {
+        if (pAccountInfo)
+        {
+            LsaPcacheReleaseMachineAccountInfoA(pAccountInfo);
+            pAccountInfo = NULL;
+        }
+    }
+
+    *ppAccountInfo = pAccountInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaPcacheGetMachineAccountInfoW(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
+
+    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
+    bInLock = TRUE;
+
+    pAccountInfo = &pPcache->pEntry->PasswordInfoW.Account;
+    LwInterlockedIncrement(&pPcache->pEntry->RefCount);
+
+error:
+    if (bInLock)
+    {
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+    }
+
+    if (dwError)
+    {
+        if (pAccountInfo)
+        {
+            LsaPcacheReleaseMachineAccountInfoW(pAccountInfo);
+            pAccountInfo = NULL;
+        }
+    }
+
+    *ppAccountInfo = pAccountInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaPcacheGetMachinePasswordInfoA(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
+    bInLock = TRUE;
+
+    pPasswordInfo = &pPcache->pEntry->PasswordInfoA;
+    LwInterlockedIncrement(&pPcache->pEntry->RefCount);
+
+error:
+    if (bInLock)
+    {
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+    }
+
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            LsaPcacheReleaseMachinePasswordInfoA(pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+    }
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaPcacheGetMachinePasswordInfoW(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo = NULL;
+
+    dwError = LsaPcachepEnsurePasswordInfoAndLock(pPcache);
+    BAIL_ON_LSA_ERROR(dwError);
+    bInLock = TRUE;
+
+    pPasswordInfo = &pPcache->pEntry->PasswordInfoW;
+    LwInterlockedIncrement(&pPcache->pEntry->RefCount);
+
+error:
+    if (bInLock)
+    {
+        PTHREAD_CALL_MUST_SUCCEED(pthread_rwlock_unlock(pPcache->pStateLock));
+    }
+
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            LsaPcacheReleaseMachinePasswordInfoW(pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+    }
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;
+}
+
+// Release Functions
+
+VOID
+LsaPcacheReleaseMachineAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    )
+{
+    if (pAccountInfo)
+    {
+        PLSA_MACHINEPWD_CACHE_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pAccountInfo, LSA_MACHINEPWD_CACHE_ENTRY, PasswordInfoA.Account);
+        LsaPcachepReleaseEntry(pEntry);
+    }
+}
+
+VOID
+LsaPcacheReleaseMachineAccountInfoW(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
+    )
+{
+    if (pAccountInfo)
+    {
+        PLSA_MACHINEPWD_CACHE_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pAccountInfo, LSA_MACHINEPWD_CACHE_ENTRY, PasswordInfoW.Account);
+        LsaPcachepReleaseEntry(pEntry);
+    }
+}
+
+VOID
+LsaPcacheReleaseMachinePasswordInfoA(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    )
+{
+    if (pPasswordInfo)
+    {
+        PLSA_MACHINEPWD_CACHE_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pPasswordInfo, LSA_MACHINEPWD_CACHE_ENTRY, PasswordInfoA);
+        LsaPcachepReleaseEntry(pEntry);
+    }
+}
+
+VOID
+LsaPcacheReleaseMachinePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    )
+{
+    if (pPasswordInfo)
+    {
+        PLSA_MACHINEPWD_CACHE_ENTRY pEntry = LW_STRUCT_FROM_FIELD(pPasswordInfo, LSA_MACHINEPWD_CACHE_ENTRY, PasswordInfoW);
+        LsaPcachepReleaseEntry(pEntry);
+    }
+}
+

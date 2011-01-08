@@ -39,6 +39,7 @@ liblsass_auth_provider_ad_open_la_SOURCES = \
        enumstate.c               \
        globals.c                 \
        machinepwd.c              \
+       machinepwdinfo.c          \
        offline.c                 \
        offline-helper.c          \
        online.c                  \
@@ -86,6 +87,7 @@ liblsass_auth_provider_ad_open_la_CFLAGS = $(AM_CFLAGS) $(PROVIDER_CFLAGS)
 liblsass_auth_provider_ad_open_la_LIBADD = \
 	@top_builddir@/common/liblsacommon.la \
 	@top_builddir@/join/liblsajoin.la \
+	@top_builddir@/pstore/liblsapstore.la \
 	$(ADDITIONAL_LIBS) \
 	@LWBASE_LIBS@ \
 	@PSTORE_LIBS@ \

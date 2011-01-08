@@ -101,6 +101,27 @@ AD_ClearProviderState(
     );
 
 DWORD
+AD_GetStateWithReference(
+    IN OPTIONAL PCSTR pszDomainName,
+    OUT PLSA_AD_PROVIDER_STATE* ppState
+    );
+
+VOID
+AD_DereferenceProviderState(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+VOID
+LsaAdProviderStateAcquireRead(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+VOID
+LsaAdProviderStateRelease(
+    IN PLSA_AD_PROVIDER_STATE pState
+    );
+
+DWORD
 AD_GetPasswordInfo(
     PCSTR pszDomain,
     PLWPS_PASSWORD_INFO* ppPasswordInfo,
@@ -456,6 +477,30 @@ AD_GetSmartCardUserObject(
     IN HANDLE hProvider,
     OUT PLSA_SECURITY_OBJECT* ppObject,
     OUT PSTR* ppszSmartCardReader
+    );
+
+DWORD
+AD_GetMachineAccountInfoA(
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    );
+
+DWORD
+AD_GetMachineAccountInfoW(
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppAccountInfo
+    );
+
+DWORD
+AD_GetMachinePasswordInfoA(
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+DWORD
+AD_GetMachinePasswordInfoW(
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
     );
 
 #endif /* __PROVIDER_MAIN_H__ */

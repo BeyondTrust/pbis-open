@@ -301,6 +301,78 @@ LsaSrvProviderGetPasswordInfo(
     );
 
 DWORD
+LsaSrvProviderGetMachineAccountInfoA(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    );
+
+DWORD
+LsaSrvProviderGetMachineAccountInfoW(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppAccountInfo
+    );
+
+DWORD
+LsaSrvProviderGetMachinePasswordInfoA(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+DWORD
+LsaSrvProviderGetMachinePasswordInfoW(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
+    );
+
+VOID
+LsaSrvFreeMachineAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
+    );
+
+VOID
+LsaSrvFreeMachineAccountInfoW(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
+    );
+
+VOID
+LsaSrvFreeMachinePasswordInfoA(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    );
+
+VOID
+LsaSrvFreeMachinePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    );
+
+DWORD
+LsaSrvDuplicateMachineAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppNewAccountInfo
+    );
+
+DWORD
+LsaSrvDuplicateMachineAccountInfoW(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppNewAccountInfo
+    );
+
+DWORD
+LsaSrvDuplicateMachinePasswordInfoA(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppNewPasswordInfo
+    );
+
+DWORD
+LsaSrvDuplicateMachinePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppNewPasswordInfo
+    );
+
+DWORD
 LsaSrvProviderServicesDomain(
     IN PCSTR pszProvider,
     IN PCSTR pszDomainName,

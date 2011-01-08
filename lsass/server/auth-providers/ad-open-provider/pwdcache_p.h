@@ -48,27 +48,81 @@
 #ifndef __PWDCACHE_P_H__
 #define __PWDCACHE_P_H__
 
+// Craete/Destroy Functions
+
 DWORD
 LsaPcacheCreate(
     IN PCSTR pszDomainName,
-    OUT PLSA_MACHINEPWD_CACHE_HANDLE phPcache
+    OUT PLSA_MACHINEPWD_CACHE_HANDLE ppPcache
     );
 
 VOID
 LsaPcacheDestroy(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     );
+
+// Get Functions
 
 DWORD
 LsaPcacheGetPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache,
-    OUT PLWPS_PASSWORD_INFO* ppPasswordInfo,
-    OUT PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT OPTIONAL PLWPS_PASSWORD_INFO* ppPasswordInfo,
+    OUT OPTIONAL PLWPS_PASSWORD_INFO_A* ppPasswordInfoA
+    );
+
+// Get Functions - Call corresponding release
+
+DWORD
+LsaPcacheGetMachineAccountInfoA(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    );
+
+DWORD
+LsaPcacheGetMachineAccountInfoW(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppAccountInfo
+    );
+
+DWORD
+LsaPcacheGetMachinePasswordInfoA(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    );
+
+DWORD
+LsaPcacheGetMachinePasswordInfoW(
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
+    );
+
+// Release Functions
+
+VOID
+LsaPcacheReleaseMachineAccountInfoA(
+    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
     );
 
 VOID
+LsaPcacheReleaseMachineAccountInfoW(
+    IN PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo
+    );
+
+VOID
+LsaPcacheReleaseMachinePasswordInfoA(
+    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
+    );
+
+VOID
+LsaPcacheReleaseMachinePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    );
+
+// Reset Function
+
+VOID
 LsaPcacheClearPasswordInfo(
-    IN LSA_MACHINEPWD_CACHE_HANDLE hPcache
+    IN LSA_MACHINEPWD_CACHE_HANDLE pPcache
     );
 
 #endif /* __PWDCACHE_P_H__ */

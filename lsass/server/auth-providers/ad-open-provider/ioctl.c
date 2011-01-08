@@ -40,191 +40,6 @@
 
 #include "adprovider.h"
 
-static
-inline
-VOID
-AD_FreeMachineAccountInfoContents(
-    IN OUT PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
-    )
-{
-    LW_SAFE_FREE_STRING(pAccountInfo->DnsDomainName);
-    LW_SAFE_FREE_STRING(pAccountInfo->NetbiosDomainName);
-    LW_SAFE_FREE_STRING(pAccountInfo->DomainSid);
-    LW_SAFE_FREE_STRING(pAccountInfo->SamAccountName);
-    LW_SAFE_FREE_STRING(pAccountInfo->Fqdn);
-}
-
-static
-VOID
-AD_FreeMachineAccountInfo(
-    IN PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
-    )
-{
-    if (pAccountInfo)
-    {
-        AD_FreeMachineAccountInfoContents(pAccountInfo);
-        LwFreeMemory(pAccountInfo);
-    }
-}
-
-static
-VOID
-AD_FreeMachinePasswordInfo(
-    IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
-    )
-{
-    if (pPasswordInfo)
-    {
-        AD_FreeMachineAccountInfoContents(&pPasswordInfo->Account);
-        LW_SECURE_FREE_STRING(pPasswordInfo->Password);
-        LwFreeMemory(pPasswordInfo);
-    }
-}
-
-static
-DWORD
-AD_FillAccountInfo(
-    IN PLWPS_PASSWORD_INFO_A pLegacyPasswordInfo,
-    OUT PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo
-    )
-///<
-/// Fill LSA pstore machine account info from legacy pstore password info.
-///
-/// This also handles any conversions or "cons"-ing up of values that
-/// are not stored in the old legacy format.
-///
-/// @param[in] pLegacyPasswordInfo - Legacy password information.
-/// @param[out] pAccountInfo - Returns machine accouhnt information.
-///
-/// @return Windows error code
-/// @retval ERROR_SUCCESS on success
-/// @retval !ERROR_SUCCESS on failure
-///
-/// @note This function will go away once the new pstore changes
-///       are complete.
-///
-{
-    DWORD dwError = 0;
-
-    dwError = LwStrDupOrNull(
-                    pLegacyPasswordInfo->pszDnsDomainName,
-                    &pAccountInfo->DnsDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToUpper(pAccountInfo->DnsDomainName);
-
-    dwError = LwStrDupOrNull(
-                    pLegacyPasswordInfo->pszDomainName,
-                    &pAccountInfo->NetbiosDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToUpper(pAccountInfo->NetbiosDomainName);
-
-    dwError = LwStrDupOrNull(
-                    pLegacyPasswordInfo->pszSID,
-                    &pAccountInfo->DomainSid);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwStrDupOrNull(
-                    pLegacyPasswordInfo->pszMachineAccount,
-                    &pAccountInfo->SamAccountName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToUpper(pAccountInfo->SamAccountName);
-
-    // TODO-2010/12/03-dalmeida - Hard-coded for now.
-    pAccountInfo->Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
-    pAccountInfo->KeyVersionNumber = 1;
-
-    dwError = LwAllocateStringPrintf(
-                    &pAccountInfo->Fqdn,
-                    "%s.%s",
-                    pLegacyPasswordInfo->pszHostname,
-                    pLegacyPasswordInfo->pszHostDnsDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    LwStrToLower(pAccountInfo->Fqdn);
-
-    // TODO-2010/12/03-dalmeida - Incorrect conversion.
-    pAccountInfo->LastChangeTime = pLegacyPasswordInfo->last_change_time;
-
-error:
-    if (dwError)
-    {
-        AD_FreeMachineAccountInfoContents(pAccountInfo);
-    }
-
-    return dwError;    
-
-}
-
-static
-DWORD
-AD_ConvertToAccountInfo(
-    IN PLWPS_PASSWORD_INFO_A pLegacyPasswordInfo,
-    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
-    )
-{
-    DWORD dwError = 0;
-    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
-
-    dwError = LwAllocateMemory(sizeof(*pAccountInfo), OUT_PPVOID(&pAccountInfo));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_FillAccountInfo(pLegacyPasswordInfo, pAccountInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-error:
-    if (dwError)
-    {
-        if (pAccountInfo)
-        {
-            AD_FreeMachineAccountInfo(pAccountInfo);
-        }
-        pAccountInfo = NULL;
-    }
-
-    *ppAccountInfo = pAccountInfo;
-
-    return dwError;    
-}
-
-static
-DWORD
-AD_ConvertToPasswordInfo(
-    IN PLWPS_PASSWORD_INFO_A pLegacyPasswordInfo,
-    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
-    )
-{
-    DWORD dwError = 0;
-    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
-
-    dwError = LwAllocateMemory(sizeof(*pPasswordInfo), OUT_PPVOID(&pPasswordInfo));
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_FillAccountInfo(pLegacyPasswordInfo, &pPasswordInfo->Account);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwStrDupOrNull(
-                    pLegacyPasswordInfo->pszMachinePassword,
-                    &pPasswordInfo->Password);
-    BAIL_ON_LSA_ERROR(dwError);                 
-
-error:
-    if (dwError)
-    {
-        if (pPasswordInfo)
-        {
-            AD_FreeMachinePasswordInfo(pPasswordInfo);
-        }
-        pPasswordInfo = NULL;
-    }
-
-    *ppPasswordInfo = pPasswordInfo;
-
-    return dwError;    
-}
-
 DWORD
 AD_IoctlGetMachineAccount(
     IN HANDLE hProvider,
@@ -241,7 +56,6 @@ AD_IoctlGetMachineAccount(
     LWMsgContext* pContext = NULL;
     LWMsgDataContext* pDataContext = NULL;
     PSTR pszDnsDomainName = NULL;
-    PLWPS_PASSWORD_INFO_A pInternalPasswordInfo = NULL;
     PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     //
@@ -274,10 +88,7 @@ AD_IoctlGetMachineAccount(
                                   OUT_PPVOID(&pszDnsDomainName)));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_GetPasswordInfo(pszDnsDomainName, NULL, &pInternalPasswordInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_ConvertToAccountInfo(pInternalPasswordInfo, &pAccountInfo);
+    dwError = AD_GetMachineAccountInfoA(pszDnsDomainName, &pAccountInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
@@ -301,14 +112,9 @@ error:
 
     LW_SAFE_FREE_STRING(pszDnsDomainName);
 
-    if (pInternalPasswordInfo)
-    {
-        LwFreePasswordInfoA(pInternalPasswordInfo);
-    }
-
     if (pAccountInfo)
     {
-        AD_FreeMachineAccountInfo(pAccountInfo);
+        LsaSrvFreeMachineAccountInfoA(pAccountInfo);
     }
 
     if (pDataContext)
@@ -343,7 +149,6 @@ AD_IoctlGetMachinePassword(
     LWMsgContext* pContext = NULL;
     LWMsgDataContext* pDataContext = NULL;
     PSTR pszDnsDomainName = NULL;
-    PLWPS_PASSWORD_INFO_A pInternalPasswordInfo = NULL;
     PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
 
     //
@@ -376,10 +181,7 @@ AD_IoctlGetMachinePassword(
                                   OUT_PPVOID(&pszDnsDomainName)));
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_GetPasswordInfo(pszDnsDomainName, NULL, &pInternalPasswordInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = AD_ConvertToPasswordInfo(pInternalPasswordInfo, &pPasswordInfo);
+    dwError = AD_GetMachinePasswordInfoA(pszDnsDomainName, &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
@@ -403,14 +205,9 @@ error:
 
     LW_SAFE_FREE_STRING(pszDnsDomainName);
 
-    if (pInternalPasswordInfo)
-    {
-        LwFreePasswordInfoA(pInternalPasswordInfo);
-    }
-
     if (pPasswordInfo)
     {
-        AD_FreeMachinePasswordInfo(pPasswordInfo);
+        LsaSrvFreeMachinePasswordInfoA(pPasswordInfo);
     }
 
     if (pDataContext)

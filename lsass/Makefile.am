@@ -7,6 +7,7 @@ compat_subdirs = \
 
 full_subdirs= \
     $(compat_subdirs) \
+    pstore \
     logging_r \
     join \
     server \

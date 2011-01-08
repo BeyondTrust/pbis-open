@@ -49,6 +49,7 @@
  */
 
 #include "adprovider.h"
+#include <lsa/lsapstore-api.h>
 
 static
 DWORD
@@ -82,21 +83,8 @@ AD_ReplaceStateInList(
     );
 
 static
-DWORD
-AD_GetStateWithReference(
-    IN PCSTR pszDomainName,
-    OUT PLSA_AD_PROVIDER_STATE* ppState
-    );
-
-static
 VOID
 AD_ReferenceProviderState(
-    IN PLSA_AD_PROVIDER_STATE pState
-    );
-
-static
-VOID
-AD_DereferenceProviderState(
     IN PLSA_AD_PROVIDER_STATE pState
     );
 
@@ -209,20 +197,8 @@ InitADCacheFunctionTable(
 
 static
 VOID
-LsaAdProviderStateAcquireRead(
-    PLSA_AD_PROVIDER_STATE pState
-    );
-
-static
-VOID
 LsaAdProviderStateAcquireWrite(
-    PLSA_AD_PROVIDER_STATE pState
-    );
-
-static
-void
-LsaAdProviderStateRelease(
-    PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_AD_PROVIDER_STATE pState
     );
 
 static
@@ -272,7 +248,7 @@ AD_DestroyStateList(
 static
 PLSA_AD_PROVIDER_STATE
 AD_FindStateInLock(
-    IN PCSTR pszDomainName
+    IN OPTIONAL PCSTR pszDomainName
     )
 {
     PLSA_LIST_LINKS pHead = NULL;
@@ -484,7 +460,6 @@ AD_ReferenceProviderState(
     InterlockedIncrement(&pState->nRefCount);
 }
 
-static
 VOID
 AD_DereferenceProviderState(
     IN PLSA_AD_PROVIDER_STATE pState
@@ -504,11 +479,9 @@ AD_DereferenceProviderState(
     }
 }
 
-
-static
 DWORD
 AD_GetStateWithReference(
-    IN PCSTR pszDomainName,
+    IN OPTIONAL PCSTR pszDomainName,
     OUT PLSA_AD_PROVIDER_STATE* ppState
     )
 {
@@ -631,7 +604,7 @@ AD_SafeRemoveJoinInfo(
     }
     else
     {
-        dwError = LwpsDeleteDomainInAllStores(pszDomainName);
+        dwError = LsaPstoreDeletePasswordInfoA(pszDomainName);
     }
 
     LEAVE_AD_GLOBAL_DATA_RW_READER_LOCK(bInLock);
@@ -903,60 +876,6 @@ error:
 
 static
 DWORD
-AD_GetDefaultDomain(
-    OUT PSTR* ppszDomainName
-    )
-{
-    DWORD dwError = 0;
-    HANDLE hPstore = NULL;
-    PLWPS_PASSWORD_INFO pPasswordInfo = NULL;
-    PSTR pszDomainName = NULL;
-
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPstore);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsGetPasswordByDomainName(
-                  hPstore,
-                  NULL,
-                  &pPasswordInfo);
-    if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
-    {
-        // no default domain
-        dwError = 0;
-        goto cleanup;
-    }
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwWc16sToMbs(
-                  pPasswordInfo->pwszDnsDomainName,
-                  &pszDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-cleanup:
-
-    if (hPstore)
-    {
-        if (pPasswordInfo)
-        {
-            LwpsFreePasswordInfo(hPstore, pPasswordInfo);
-            pPasswordInfo = NULL;
-        }
-        LwpsClosePasswordStore(hPstore);
-    }
-
-    *ppszDomainName = pszDomainName;
-
-    return dwError;
-
-error:
-
-    goto cleanup;
-}
-
-static
-DWORD
 AD_InitializeProvider(
     OUT PCSTR* ppszProviderName,
     OUT PLSA_PROVIDER_FUNCTION_TABLE* ppFunctionTable
@@ -971,7 +890,10 @@ AD_InitializeProvider(
     PLSA_AD_PROVIDER_STATE pStateMinimal = NULL;
     PSTR pszDefaultDomain = NULL;
     BOOLEAN bFoundDefault = FALSE;
-    HANDLE hPstore = NULL;
+    BOOLEAN bIsPstoreInitialized = FALSE;
+
+    LsaPstoreInitializeLibrary();
+    bIsPstoreInitialized = TRUE;
 
     dwError = LwMapErrnoToLwError(pthread_rwlock_init(&gADGlobalDataLock, NULL));
     BAIL_ON_LSA_ERROR(dwError);
@@ -996,7 +918,7 @@ AD_InitializeProvider(
     dwError = ADUnprovPlugin_Initialize();
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = AD_GetDefaultDomain(&pszDefaultDomain);
+    dwError = LsaPstoreGetDefaultDomainA(&pszDefaultDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     if (pszDefaultDomain)
@@ -1020,9 +942,9 @@ AD_InitializeProvider(
     }
     else
     {
-        dwError = ADState_GetJoinedDomainList(
-                      &dwDomainCount,
-                      &ppszDomainList);
+        dwError = LsaPstoreGetJoinedDomainsA(
+                        &ppszDomainList,
+                        &dwDomainCount);
         BAIL_ON_LSA_ERROR(dwError);
     }
 
@@ -1044,13 +966,7 @@ AD_InitializeProvider(
         }
         else if (!bFoundDefault)
         {
-            dwError = LwpsOpenPasswordStore(
-                          LWPS_PASSWORD_STORE_DEFAULT,
-                          &hPstore);
-            BAIL_ON_LSA_ERROR(dwError);
-
-            dwError = LwpsSetDefaultJoinedDomain(
-                          hPstore,
+            dwError = LsaPstoreSetDefaultDomainA(
                           ppszDomainList[dwIndex]);
             BAIL_ON_LSA_ERROR(dwError);
 
@@ -1093,19 +1009,19 @@ AD_InitializeProvider(
 
 cleanup:
 
-    if (hPstore)
-    {
-        LwpsClosePasswordStore(hPstore);
-    }
-
-    LW_SAFE_FREE_STRING(pszDefaultDomain);
+    LSA_PSTORE_FREE(&pszDefaultDomain);
     AD_FreeConfigContents(&config);
-    LwFreeStringArray(ppszDomainList, dwDomainCount);
+    LsaPstoreFreeStringArrayA(ppszDomainList, dwDomainCount);
     AD_DereferenceProviderState(pStateMinimal);
 
     return dwError;
 
 error:
+
+    if (bIsPstoreInitialized)
+    {
+        LsaPstoreCleanupLibrary();
+    }
 
     *ppszProviderName = NULL;
     *ppFunctionTable = NULL;
@@ -1166,6 +1082,8 @@ AD_ShutdownProvider(
 
     pthread_mutex_destroy(&gADDefaultDomainLock);
     pthread_rwlock_destroy(&gADGlobalDataLock);
+
+    LsaPstoreCleanupLibrary();
 
     return dwError;
 }
@@ -1504,7 +1422,7 @@ AD_DereferenceProviderContext(
 
 static
 DWORD
-LsaPstoreUncachedGetPasswordInfo(
+AD_UncachedGetPasswordInfo(
     IN PCSTR pszDomain,
     OUT PLWPS_PASSWORD_INFO* ppPasswordInfo
     )
@@ -1593,7 +1511,7 @@ AD_GetPasswordInfo(
 
     if (!pPasswordInfo && !pPasswordInfoA)
     {
-        dwError = LsaPstoreUncachedGetPasswordInfo(
+        dwError = AD_UncachedGetPasswordInfo(
                       pszDomain,
                       &pPasswordInfo);
         if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
@@ -2305,19 +2223,18 @@ AD_PostJoinDomain(
     DWORD dwError = 0;
     PLSA_AD_PROVIDER_STATE pState = NULL;
     PSTR defaultDomain = NULL;
-    HANDLE hPstore = NULL;
 
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPstore);
+    dwError = LsaPstoreGetDefaultDomainA(&defaultDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwpsGetDefaultJoinedDomain(
-                  hPstore,
-                  &defaultDomain);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    if (!strcasecmp(pStateMinimal->pszDomainName, defaultDomain))
+    if (!defaultDomain)
+    {
+        LSA_LOG_ERROR("An external program remmoved the default domain "
+                      "from the password store.  LSASS may behave as though "
+                      "there is no default domain (e.g., w/o PAM and NSS "
+                      "functionality).");
+    }
+    else if (!strcasecmp(pStateMinimal->pszDomainName, defaultDomain))
     {
         dwError = AD_SetDefaultState(pStateMinimal);
         if (dwError)
@@ -2348,12 +2265,7 @@ error:
         pState = NULL;
     }
 
-    if (hPstore)
-    {
-        LwpsClosePasswordStore(hPstore);
-    }
-
-    LW_SAFE_FREE_STRING(defaultDomain);
+    LSA_PSTORE_FREE(&defaultDomain);
 
     *ppState = pState;
 
@@ -2467,7 +2379,7 @@ AD_JoinDomain(
     BAIL_ON_LSA_ERROR(dwError);
     bRemoveFromList = TRUE;
 
-    dwError = LwpsDeleteDomainInAllStores(pRequest->pszDomain);
+    dwError = LsaPstoreDeletePasswordInfoA(pRequest->pszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LsaJoinDomain(
@@ -2793,7 +2705,6 @@ AD_SetDefaultDomain(
     BOOLEAN bInLockState = FALSE;
     PLSA_AD_PROVIDER_STATE pStateDefault = NULL;
     PLSA_AD_PROVIDER_STATE pState = NULL;
-    HANDLE hPstore = NULL;
 
     if (peerUID != 0)
     {
@@ -2840,14 +2751,7 @@ AD_SetDefaultDomain(
     {
         // Already the default, ensure pstore is set
 
-        dwError = LwpsOpenPasswordStore(
-                      LWPS_PASSWORD_STORE_DEFAULT,
-                      &hPstore);
-        BAIL_ON_LSA_ERROR(dwError);
-
-        dwError = LwpsSetDefaultJoinedDomain(
-                      hPstore,
-                      pszDomain);
+        dwError = LsaPstoreSetDefaultDomainA(pszDomain);
         BAIL_ON_LSA_ERROR(dwError);
 
         goto cleanup;
@@ -2869,13 +2773,7 @@ AD_SetDefaultDomain(
 
     LsaUmCleanup();
 
-    dwError = LwpsOpenPasswordStore(
-                  LWPS_PASSWORD_STORE_DEFAULT,
-                  &hPstore);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LwpsSetDefaultJoinedDomain(
-                  hPstore,
+    dwError = LsaPstoreSetDefaultDomainA(
                   pszDomain);
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2928,11 +2826,6 @@ cleanup:
     if (bInLockDefaultDomain)
     {
         LSA_ASSERT(LwMapErrnoToLwError(pthread_mutex_unlock(&gADDefaultDomainLock)) == 0);
-    }
-
-    if (hPstore)
-    {
-        LwpsClosePasswordStore(hPstore);
     }
 
     LW_SAFE_FREE_STRING(pszDomain);
@@ -5263,10 +5156,9 @@ error:
     goto cleanup;
 }
 
-static
 VOID
 LsaAdProviderStateAcquireRead(
-    PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     int status = 0;
@@ -5278,7 +5170,7 @@ LsaAdProviderStateAcquireRead(
 static
 VOID
 LsaAdProviderStateAcquireWrite(
-    PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     int status = 0;
@@ -5287,10 +5179,9 @@ LsaAdProviderStateAcquireWrite(
     LW_ASSERT(status == 0);
 }
 
-static
-void
+VOID
 LsaAdProviderStateRelease(
-    PLSA_AD_PROVIDER_STATE pState
+    IN PLSA_AD_PROVIDER_STATE pState
     )
 {
     int status = 0;

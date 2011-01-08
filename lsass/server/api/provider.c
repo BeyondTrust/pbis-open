@@ -211,3 +211,183 @@ error:
 
     goto cleanup;
 }
+
+DWORD
+LsaSrvProviderGetMachineAccountInfoA(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_A* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pProvider->pFnTable->pfnGetMachineAccountInfoA)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = pProvider->pFnTable->pfnGetMachineAccountInfoA(
+                    DnsDomainName,
+                    &pAccountInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pAccountInfo)
+        {
+            LsaSrvFreeMachineAccountInfoA(pAccountInfo);
+            pAccountInfo = NULL;
+        }
+    }
+
+    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    *ppAccountInfo = pAccountInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaSrvProviderGetMachineAccountInfoW(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_ACCOUNT_INFO_W* ppAccountInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_W pAccountInfo = NULL;
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pProvider->pFnTable->pfnGetMachineAccountInfoW)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = pProvider->pFnTable->pfnGetMachineAccountInfoW(
+                    DnsDomainName,
+                    &pAccountInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pAccountInfo)
+        {
+            LsaSrvFreeMachineAccountInfoW(pAccountInfo);
+            pAccountInfo = NULL;
+        }
+    }
+
+    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    *ppAccountInfo = pAccountInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaSrvProviderGetMachinePasswordInfoA(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_A* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo = NULL;
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pProvider->pFnTable->pfnGetMachinePasswordInfoA)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = pProvider->pFnTable->pfnGetMachinePasswordInfoA(
+                    DnsDomainName,
+                    &pPasswordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            LsaSrvFreeMachinePasswordInfoA(pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+    }
+
+    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;
+}
+
+DWORD
+LsaSrvProviderGetMachinePasswordInfoW(
+    IN PCSTR pszProvider,
+    IN OPTIONAL PCSTR DnsDomainName,
+    OUT PLSA_MACHINE_PASSWORD_INFO_W* ppPasswordInfo
+    )
+{
+    DWORD dwError = 0;
+    BOOLEAN bInLock = FALSE;
+    PLSA_AUTH_PROVIDER pProvider = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo = NULL;
+
+    ENTER_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    dwError = LsaSrvFindProviderByName(pszProvider, &pProvider);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    if (!pProvider->pFnTable->pfnGetMachinePasswordInfoW)
+    {
+        dwError = LW_ERROR_NOT_HANDLED;
+        BAIL_ON_LSA_ERROR(dwError);
+    }
+
+    dwError = pProvider->pFnTable->pfnGetMachinePasswordInfoW(
+                    DnsDomainName,
+                    &pPasswordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        if (pPasswordInfo)
+        {
+            LsaSrvFreeMachinePasswordInfoW(pPasswordInfo);
+            pPasswordInfo = NULL;
+        }
+    }
+
+    LEAVE_AUTH_PROVIDER_LIST_READER_LOCK(bInLock);
+
+    *ppPasswordInfo = pPasswordInfo;
+
+    return dwError;
+}

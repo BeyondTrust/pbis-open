@@ -91,10 +91,4 @@ ADState_FreeEnumDomainInfoList(
     IN OUT PDLINKEDLIST pList
     );
 
-DWORD
-ADState_GetJoinedDomainList(
-    OUT PDWORD pdwDomainCount,
-    OUT PSTR** ppszDomainList
-    );
-
 #endif /* __STATE_STORE_H__ */

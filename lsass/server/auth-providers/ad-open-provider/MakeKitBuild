@@ -14,6 +14,7 @@ make()
        enumstate.c               \
        globals.c                 \
        machinepwd.c              \
+       machinepwdinfo.c          \
        offline.c                 \
        offline-helper.c          \
        online.c                  \
@@ -45,5 +46,5 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS="../../include ../../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h lwps/lwps.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
-	LIBDEPS="lsacommon lsajoin lsaserverapi sqlite3"
+	LIBDEPS="lsacommon lsajoin lsapstore lsaserverapi sqlite3"
 }

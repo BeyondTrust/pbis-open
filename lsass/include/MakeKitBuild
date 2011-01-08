@@ -3,6 +3,8 @@ make()
     mk_headers \
 	MASTER="lsa/lsa.h" \
         lsa/lsapstore-types.h \
+        lsa/lsapstore-api.h \
+        lsa/lsapstore-plugin.h \
         lsa/ad.h \
         lsa/provider.h \
 	lsa/join.h
@@ -29,5 +31,6 @@ make()
 	lsasystem.h             \
 	lsautils.h              \
 	lwsecurityidentifier.h  \
+	machinepwdinfo-impl.h   \
 	xpg_socket.h
 }

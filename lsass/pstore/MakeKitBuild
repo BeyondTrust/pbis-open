@@ -1,0 +1,19 @@
+SUBDIRS=". test"
+
+make()
+{
+    mk_library \
+        LIB=lsapstore \
+        SOURCES="\
+           lsapstore-backend-legacy.c \
+           lsapstore-backend-legacy-internal.c \
+           lsapstore-backend-wrap-a.c \
+           lsapstore-init.c \
+           lsapstore-main.c \
+           lsapstore-utils.c \
+           " \
+        INCLUDEDIRS=". ../include" \
+        LIBDEPS="$LIB_DL $LIB_PTHREAD rsutils lsacommon" \
+        HEADERDEPS="reg/regutil.h lwadvapi.h" \
+        SYMFILE="lsapstore.sym"
+}
