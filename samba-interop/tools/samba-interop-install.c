@@ -693,6 +693,7 @@ SynchronizePassword(
     TDB_CONTEXT *pTdb = NULL;
     DWORD schannelType = 0;
     DWORD LCT = 0;
+    BYTE sambaSid[68] = { 0 };
 
     error = GetSecretsPath(
         pSmbdPath,
@@ -738,12 +739,17 @@ SynchronizePassword(
                     &pSid);
     BAIL_ON_LSA_ERROR(error);
 
+    // Samba wants the sid to be null padded and exactly 68 bytes long.
+    memcpy(
+            sambaSid,
+            pSid->pucSidBytes,
+            LW_MIN(pSid->dwByteLength, sizeof(sambaSid)));
     error = TdbStore(
                     pTdb,
                     "SECRETS/SID",
                     pPasswordInfo->Account.NetbiosDomainName,
-                    (PBYTE)&pSid->pucSidBytes,
-                    pSid->dwByteLength);
+                    sambaSid,
+                    sizeof(sambaSid));
     BAIL_ON_LSA_ERROR(error);
 
     /* Schannel Type */
