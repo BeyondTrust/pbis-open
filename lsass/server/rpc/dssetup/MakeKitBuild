@@ -32,6 +32,6 @@ make()
 	SOURCES="$DSSETUP_SOURCES" \
 	GROUPS="dssetup_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
-	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h" \
 	DEPS="dssetup_h.h"
 }

@@ -48,7 +48,6 @@
 #define __LSAPROVIDER_H__
 
 #include <lsa/lsa.h>
-#include <lwps/lwps.h>
 #include <lsa/lsapstore-types.h>
 
 typedef DWORD (*PFNSHUTDOWNPROVIDER)(

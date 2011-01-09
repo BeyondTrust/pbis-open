@@ -80,9 +80,7 @@
 #include <lwkrb5.h>
 #include <gssapi/gssapi_ext.h>
 #include <lwmem.h>
-#include <lwps/lwps.h>
 #include <lwstr.h>
-#include <lwpwdinfo.h>
 #include <wc16str.h>
 #include <uuid/uuid.h>
 #include <lwio/lwio.h>

@@ -26,6 +26,6 @@ make()
 	LIB=ntlmserver \
 	SOURCES="$NTLM_SOURCES" \
 	INCLUDEDIRS=". ../include ../../include" \
-	HEADERDEPS="openssl/md5.h lwadvapi.h lwps/lwps.h wc16str.h uuid/uuid.h lwio/lwio.h" \
-	LIBDEPS="lsacommon lsaserverapi lsarpc lwmsg lwpsapi crypto krb5 lwadvapi"
+	HEADERDEPS="openssl/md5.h lwadvapi.h wc16str.h uuid/uuid.h lwio/lwio.h" \
+	LIBDEPS="lsacommon lsaserverapi lsarpc lwmsg crypto krb5 lwadvapi"
 }

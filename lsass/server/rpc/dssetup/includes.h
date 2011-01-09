@@ -51,7 +51,6 @@
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/dssetup.h>
 #include <lwnet.h>
-#include <lwps/lwps.h>
 
 #include <lsa/lsa.h>
 #include <lsarpcsrv.h>

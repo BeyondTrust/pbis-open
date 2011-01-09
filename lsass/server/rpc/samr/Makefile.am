@@ -76,8 +76,7 @@ libsamr_la_CFLAGS =         \
     $(DCERPC_INCLUDES)      \
     $(LWBASE_INCLUDES)      \
     $(LWADVAPI_INCLUDES)    \
-    $(NETLOGON_INCLUDES)    \
-    $(PSTORE_INCLUDES)
+    $(NETLOGON_INCLUDES)
 
 libsamr_la_LIBADD =                                \
     $(DCERPC_LIBS)                                 \

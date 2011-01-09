@@ -51,10 +51,8 @@
 #include <lw/rpc/netlogon.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>
-#include <lwps/lwps.h>
 #include <lwkrb5.h>
 #include <lwhash.h>
-#include <lwpwdinfo.h>
 
 #include <lsa/lsa.h>
 #include <lsaadprovider.h>

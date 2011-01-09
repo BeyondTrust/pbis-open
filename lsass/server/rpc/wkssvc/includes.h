@@ -49,11 +49,9 @@
 #include <lwsid.h>
 #include <lwio/lwio.h>
 #include <lwnet.h>
-#include <lwps/lwps.h>
 #include <lwkrb5.h>
 #include <lw/rpc/wkssvc.h>
 #include <lw/rpc/lsa.h>
-#include <lwpwdinfo.h>
 
 #include <lsarpcsrv.h>
 #include <lsasrvutils.h>

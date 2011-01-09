@@ -36,6 +36,6 @@ make()
 	SOURCES="$WKSSVC_SOURCES" \
 	GROUPS="wkssvc_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
-	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwadvapi.h openssl/md5.h" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwadvapi.h openssl/md5.h" \
 	DEPS="wkssvc_h.h"
 }

@@ -74,7 +74,7 @@ make()
 	SOURCES="$SAMR_SOURCES" \
 	GROUPS="samr_stub" \
 	INCLUDEDIRS=". ../../include ../../api ../../../include" \
-	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwps/lwps.h lwnet.h lwadvapi.h openssl/md4.h" \
+	HEADERDEPS="dce/rpc.h lw/base.h lwio/lwio.h lwnet.h lwadvapi.h openssl/md4.h" \
 	DEPS="samr_h.h" \
 	LIBDEPS="dsapi"
 }

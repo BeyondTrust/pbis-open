@@ -60,7 +60,6 @@
 #include <sqlite3.h>
 #include <uuid/uuid.h>
 #include <eventlog.h>
-#include <lwps/lwps.h>
 #include <lwnet.h>
 #include <lwio/lwio.h>
 #include <reg/lwreg.h>
@@ -71,7 +70,6 @@
 #include "lwhash.h"
 #include "lwfile.h"
 #include <lwkrb5.h>
-#include <lwpwdinfo.h>
 #include <lw/rpc/samr.h>
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/krb5pac.h>

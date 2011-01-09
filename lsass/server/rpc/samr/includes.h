@@ -62,8 +62,6 @@
 #include <lwkrb5.h>
 #include <lw/rpc/lsa.h>
 #include <lw/rpc/samr.h>
-#include <lwps/lwps.h>
-#include <lwpwdinfo.h>
 
 #include <lsa/lsa.h>
 #include "lwmem.h"

@@ -78,7 +78,6 @@ liblsass_auth_provider_ad_open_la_CPPFLAGS = \
 	-I@top_srcdir@/server/include \
         $(PROVIDER_CPPFLAGS)          \
 	@LWBASE_INCLUDES@             \
-	@PSTORE_INCLUDES@             \
 	@NETLOGON_INCLUDES@
 
 liblsass_auth_provider_ad_open_la_CFLAGS = $(AM_CFLAGS) $(PROVIDER_CFLAGS)
@@ -90,7 +89,6 @@ liblsass_auth_provider_ad_open_la_LIBADD = \
 	@top_builddir@/pstore/liblsapstore.la \
 	$(ADDITIONAL_LIBS) \
 	@LWBASE_LIBS@ \
-	@PSTORE_LIBS@ \
 	@NETLOGON_LIBS@ \
 	@PROC_LIBS@ \
 	@KVM_LIBS@  \
@@ -101,7 +99,6 @@ liblsass_auth_provider_ad_open_la_LIBADD = \
 liblsass_auth_provider_ad_open_la_LDFLAGS = \
 	$(PROVIDER_LDFLAGS) \
 	@LWBASE_LDFLAGS@ \
-	@PSTORE_LDFLAGS@ \
 	@NETLOGON_LDFLAGS@ \
 	@CF_FRAMEWORK_LDFLAGS@ \
 	@SC_FRAMEWORK_LDFLAGS@ \

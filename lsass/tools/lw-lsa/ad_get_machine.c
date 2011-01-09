@@ -47,7 +47,6 @@
 #include "common.h"
 #include <stdarg.h>
 #include "lsautils.h"
-#include <lwpwdinfo.h>
 #include <stdio.h>
 #include <string.h>
 
