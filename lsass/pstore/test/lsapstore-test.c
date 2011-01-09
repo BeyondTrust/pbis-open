@@ -53,6 +53,11 @@
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "config.h"
+#if !defined(HAVE_STRTOLL) && defined(HAVE___STRTOLL)
+#define strtoll __strtoll
+#endif
+
 #define LW_PRINTF_STRING(x) ((x) ? (x) : "<null>")
 
 #define BAIL_ON_LW_ERROR(dwError) \
