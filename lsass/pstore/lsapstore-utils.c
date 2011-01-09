@@ -97,21 +97,31 @@ LsaPstoreFreeStringArrayW(
     }
 }
 
+static
 VOID
-LsaPstoreFreePasswordInfoW(
-    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+LsaPstorepFreePasswordInfoContentsA(
+    IN OUT PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     )
 {
-    if (pPasswordInfo)
-    {
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
-        LSA_PSTORE_FREE_SECURE_WC16STRING(&pPasswordInfo->Password);
-        LsaPstoreFreeMemory(pPasswordInfo);
-    }
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
+    LSA_PSTORE_FREE_SECURE_CSTRING(&pPasswordInfo->Password);
+}
+
+VOID
+LsaPstorepFreePasswordInfoContentsW(
+    IN OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    )
+{
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
+    LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
+    LSA_PSTORE_FREE_SECURE_WC16STRING(&pPasswordInfo->Password);
 }
 
 VOID
@@ -121,12 +131,19 @@ LsaPstoreFreePasswordInfoA(
 {
     if (pPasswordInfo)
     {
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.DnsDomainName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.NetbiosDomainName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.DomainSid);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.SamAccountName);
-        LSA_PSTORE_FREE(&pPasswordInfo->Account.Fqdn);
-        LSA_PSTORE_FREE_SECURE_CSTRING(&pPasswordInfo->Password);
+        LsaPstorepFreePasswordInfoContentsA(pPasswordInfo);
+        LsaPstoreFreeMemory(pPasswordInfo);
+    }
+}
+
+VOID
+LsaPstoreFreePasswordInfoW(
+    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    )
+{
+    if (pPasswordInfo)
+    {
+        LsaPstorepFreePasswordInfoContentsW(pPasswordInfo);
         LsaPstoreFreeMemory(pPasswordInfo);
     }
 }

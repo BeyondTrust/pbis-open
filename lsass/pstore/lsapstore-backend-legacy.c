@@ -46,6 +46,7 @@
 #include "lsapstore-includes.h"
 #include "machinepwdinfo-impl.h"
 #include "lsapstore-backend-legacy-internal.h"
+#include "lsapstore-backend-legacy-convert.h"
 #include <lwpwdinfo.h>
 
 typedef struct _LSA_PSTORE_BACKEND_STATE {
@@ -123,7 +124,7 @@ LsaPstorepBackendGetPasswordInfoW(
     dwError = LSA_PSTORE_ALLOCATE_AUTO(&passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
 
-    dwError = LsaImplLegacyFillMachinePasswordInfoW(
+    dwError = LwpsConvertFillMachinePasswordInfoW(
                     legacyPasswordInfo,
                     passwordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -158,7 +159,7 @@ LsaPstorepBackendSetPasswordInfoW(
     PWSTR defaultDnsDomainName = NULL;
     BOOLEAN isDefaultDomain = FALSE;
 
-    dwError = LsaImplLegacyConvertFromMachinePasswordInfoW(
+    dwError = LwpsConvertAllocateFromMachinePasswordInfoW(
                     PasswordInfo,
                     &legacyPasswordInfo);
     GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
@@ -188,7 +189,7 @@ LsaPstorepBackendSetPasswordInfoW(
 cleanup:
     if (legacyPasswordInfo)
     {
-        LsaImpLegacyFreePasswordInfo(legacyPasswordInfo);
+        LwpsLegacyFreePassword(legacyPasswordInfo);
     }
 
     LwRtlWC16StringFree(&defaultDnsDomainName);

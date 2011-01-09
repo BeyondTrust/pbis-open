@@ -6,6 +6,7 @@ lib_LTLIBRARIES = liblsapstore.la
 
 liblsapstore_la_SOURCES =  \
         lsapstore-backend-legacy.c \
+        lsapstore-backend-legacy-convert.c \
         lsapstore-backend-legacy-internal.c \
         lsapstore-backend-wrap-a.c \
         lsapstore-init.c \

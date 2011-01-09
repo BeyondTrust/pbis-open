@@ -49,7 +49,7 @@
 #define _LSA_MACHINE_INFO_MEM_IMPL_
 
 #include <lsa/lsapstore-types.h>
-#include <lwps/lwps.h>
+#include <lw/attrs.h>
 
 VOID
 LsaImplFreeMachinePasswordInfoContentsA(
@@ -118,12 +118,6 @@ LsaImplDuplicateMachinePasswordInfoW(
     );
 
 DWORD
-LsaImplLegacyFillMachinePasswordInfoW(
-    IN PLWPS_PASSWORD_INFO pLegacyPasswordInfo,
-    OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
-    );
-
-DWORD
 LsaImplConvertMachinePasswordInfoMultiByteToWide(
     IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo,
     OUT PLSA_MACHINE_PASSWORD_INFO_W* ppNewPasswordInfo
@@ -133,17 +127,6 @@ DWORD
 LsaImplConvertMachinePasswordInfoWideToMultiByte(
     IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
     OUT PLSA_MACHINE_PASSWORD_INFO_A* ppNewPasswordInfo
-    );
-
-DWORD
-LsaImplLegacyConvertFromMachinePasswordInfoW(
-    IN PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo,
-    OUT PLWPS_PASSWORD_INFO* ppLegacyPasswordInfo
-    );
-
-VOID
-LsaImpLegacyFreePasswordInfo(
-    IN PLWPS_PASSWORD_INFO pLegacyPasswordInfo
     );
 
 #endif

@@ -95,6 +95,11 @@
 
 // lsapstore-utils.c
 
+VOID
+LsaPstorepFreePasswordInfoContentsW(
+    IN OUT PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo
+    );
+
 DWORD
 LsaPstorepConvertAnsiToWidePasswordInfo(
     IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo,
@@ -109,6 +114,16 @@ LsaPstorepCStringDowncase(
 PSTR
 LsaPstorepCStringUpcase(
     IN OUT PSTR String
+    );
+
+PWSTR
+LsaPstorepWC16StringDowncase(
+    IN OUT PWSTR String
+    );
+
+PWSTR
+LsaPstorepWC16StringUpcase(
+    IN OUT PWSTR String
     );
 
 DWORD
