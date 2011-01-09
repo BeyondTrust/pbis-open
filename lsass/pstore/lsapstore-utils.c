@@ -424,7 +424,7 @@ LsaPstorepOpenPlugin(
 {
     DWORD dwError = 0;
     int EE = 0;
-    PSTR errorMessage = NULL;
+    PCSTR errorMessage = NULL;
     PVOID handle = NULL;
     PVOID initFunction = NULL;
 
