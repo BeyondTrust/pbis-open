@@ -102,6 +102,10 @@ configure()
 	strtol strtoll strtoul strtoull
 
     mk_check_functions \
+	HEADERDEPS="inttypes.h" \
+	__strtoll __strtoull
+
+    mk_check_functions \
 	HEADERDEPS="time.h" \
         clock_settime
 
