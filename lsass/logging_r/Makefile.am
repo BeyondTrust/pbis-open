@@ -9,16 +9,13 @@ liblsalog_r_la_SOURCES = \
 
 liblsalog_r_la_CPPFLAGS = \
 	$(AM_CPPFLAGS) \
-	$(PSTORE_INCLUDES) \
         -DLW_ENABLE_THREADS=1
 
 liblsalog_r_la_LIBADD = \
 	$(top_builddir)/common/liblsacommon.la \
-	$(PSTORE_LIBS) \
 	$(PTHREAD_LIBS)
 
 liblsalog_r_la_LDFLAGS = \
-	$(PSTORE_INCLUDES) \
 	$(PTHREAD_INCLUDES)
 
 noinst_HEADERS =   \

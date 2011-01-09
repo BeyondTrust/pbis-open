@@ -57,8 +57,6 @@
 #include "lwmem.h"
 #include "lwstr.h"
 #include <lwlogging.h>
-#include <lwps/lwps.h>
-#include "lwsecurityidentifier.h"
 
 #include "lsautils.h"
 

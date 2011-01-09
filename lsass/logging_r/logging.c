@@ -64,22 +64,6 @@ LsaLwLogMessage(
     LSA_UNLOCK_LOGGER;
 }
 
-static
-VOID
-LsaLwpsLogMessage(
-    LwpsLogLevel level,
-    PVOID pUserData,
-    PCSTR pszMessage
-    )
-{
-    LSA_LOCK_LOGGER;
-    if (gpfnLogger && ((int)gLsaMaxLogLevel >= (int)level))
-    {
-        _LSA_LOG_WITH_THREAD(level, "%s", pszMessage);
-    }
-    LSA_UNLOCK_LOGGER;
-}
-
 DWORD
 LsaInitLogging_r(
     PCSTR         pszProgramName,
@@ -99,7 +83,6 @@ LsaInitLogging_r(
                     pszPath);
 
     LwSetLogFunction(LW_LOG_LEVEL_DEBUG, LsaLwLogMessage, NULL);
-    LwpsSetLogFunction(LWPS_LOG_LEVEL_DEBUG, LsaLwpsLogMessage, NULL);
 
     LSA_UNLOCK_LOGGER;
 
