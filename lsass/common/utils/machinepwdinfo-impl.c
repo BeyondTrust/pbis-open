@@ -58,7 +58,7 @@
 // These includes work around bugs in lwstr.h:
 #include <string.h>
 #include <wc16str.h>
-
+#include "config.h"
 
 static
 inline
@@ -195,11 +195,13 @@ LocalConvertTimeUnixToWindows(
     DWORD dwError = 0;
     LONG64 windowsTime = 0;
 
+#if SIZEOF_TIME_T > 4
     if ((LONG64) UnixTime < - 11644473600LL)
     {
         dwError = ERROR_INVALID_PARAMETER;
         BAIL_ON_LSA_ERROR(dwError);
     }
+#endif
 
     windowsTime = (LONG64) UnixTime + 11644473600LL;
     if (windowsTime < 0)

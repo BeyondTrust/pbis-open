@@ -854,6 +854,7 @@ AC_DEFINE_UNQUOTED([USEC_T], [$USEC_T], [Type of tv_usec field of struct timeval
 
 AC_CHECK_SIZEOF([long long int])
 AC_CHECK_SIZEOF([long int])
+AC_CHECK_SIZEOF([time_t], [#include <time.h>])
 
 # Checks for library functions.
 AC_FUNC_FORK
