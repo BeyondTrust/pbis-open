@@ -49,7 +49,8 @@
 #include "includes.h"
 #include "krbtgt_p.h"
 
-static DWORD
+static
+DWORD
 LwKrb5GetTgtImpl(
     PCSTR             pszUserPrincipal,
     PCSTR             pszPassword,
@@ -129,6 +130,41 @@ LwKrb5GetTgtWithSmartCard(
                 );
 }
 
+DWORD
+LwKrb5DestroyCache(
+    IN PCSTR pszCcPath
+    )
+{
+    DWORD dwError = 0;
+    krb5_error_code ret = 0;
+    krb5_context ctx = NULL;
+    krb5_ccache cc = NULL;
+
+    ret = krb5_init_context(&ctx);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_cc_resolve(ctx, pszCcPath, &cc);
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+    ret = krb5_cc_destroy(ctx, cc);
+    if (ret == KRB5_FCC_NOFILE)
+    {
+        ret = 0;
+    }
+    BAIL_ON_KRB_ERROR(ctx, ret);
+
+error:
+    if (ctx)
+    {
+       krb5_free_context(ctx);
+    }
+
+    assert(!ret || dwError);
+
+    return dwError;
+}
+
+static
 DWORD
 LwKrb5GetTgtImpl(
     PCSTR             pszUserPrincipal,

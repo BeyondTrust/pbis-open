@@ -137,6 +137,11 @@ LwKrb5GetTgtWithSmartCard(
     );
 
 DWORD
+LwKrb5DestroyCache(
+    IN PCSTR pszCcPath
+    );
+
+DWORD
 LwKrb5GetServiceTicketForUser(
     uid_t         uid,
     PCSTR         pszUserPrincipal,
