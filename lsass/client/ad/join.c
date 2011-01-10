@@ -496,3 +496,84 @@ LsaAdFreeMachinePasswordInfo(
         LwFreeMemory(pPasswordInfo);
     }
 }
+
+LW_DWORD
+LsaAdGetComputerDn(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_OPTIONAL LW_PCSTR pszDnsDomainName,
+    LW_OUT LW_PSTR* ppszComputerDn
+    )
+{
+    DWORD dwError = 0;
+    size_t inputBufferSize = 0;
+    PVOID pInputBuffer = NULL;
+    DWORD dwOutputBufferSize = 0;
+    PVOID pOutputBuffer = NULL;
+    LWMsgContext* pContext = NULL;
+    LWMsgDataContext* pDataContext = NULL;
+    PSTR pszComputerDn = NULL;
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_context_new(NULL, &pContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    LsaAdIPCSetMemoryFunctions(pContext);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_context_new(pContext, &pDataContext));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_marshal_flat_alloc(
+                                    pDataContext,
+                                    LsaAdIPCGetStringSpec(),
+                                    (PVOID) pszDnsDomainName,
+                                    &pInputBuffer,
+                                    &inputBufferSize));
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaProviderIoControl(
+                    hLsaConnection,
+                    LSA_AD_TAG_PROVIDER,
+                    LSA_AD_IO_GET_COMPUTER_DN,
+                    inputBufferSize,
+                    pInputBuffer,
+                    &dwOutputBufferSize,
+                    &pOutputBuffer);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = MAP_LWMSG_ERROR(lwmsg_data_unmarshal_flat(
+                                    pDataContext,
+                                    LsaAdIPCGetStringSpec(),
+                                    pOutputBuffer,
+                                    dwOutputBufferSize,
+                                    OUT_PPVOID(&pszComputerDn)));
+    BAIL_ON_LSA_ERROR(dwError);
+
+error:
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszComputerDn);
+    }
+
+    if (pOutputBuffer)
+    {
+        LwFreeMemory(pOutputBuffer);
+    }
+
+    if (pInputBuffer)
+    {
+        LwFreeMemory(pInputBuffer);
+    }
+
+    if (pDataContext)
+    {
+        lwmsg_data_context_delete(pDataContext);
+    }
+
+    if (pContext)
+    {
+        lwmsg_context_delete(pContext);
+    }
+
+    *ppszComputerDn = pszComputerDn;
+
+    return dwError;
+}

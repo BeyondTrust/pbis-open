@@ -59,4 +59,13 @@ AD_IoctlGetMachinePassword(
     OUT PVOID* ppOutputBuffer
     );
 
+DWORD
+AD_IoctlGetComputerDn(
+    IN HANDLE hProvider,
+    IN DWORD dwInputBufferSize,
+    IN PVOID pInputBuffer,
+    OUT DWORD* pdwOutputBufferSize,
+    OUT PVOID* ppOutputBuffer
+    );
+
 #endif // __LSA_AD_IOCTL_H__

@@ -174,4 +174,11 @@ LsaAdFreeMachinePasswordInfo(
     LW_IN PLSA_MACHINE_PASSWORD_INFO_A pPasswordInfo
     );
 
+LW_DWORD
+LsaAdGetComputerDn(
+    LW_IN LW_HANDLE hLsaConnection,
+    LW_IN LW_OPTIONAL LW_PCSTR pszDnsDomainName,
+    LW_OUT LW_PSTR* ppszComputerDn
+    );
+
 #endif /* __LSACLIENT_AD_H__ */

@@ -4332,6 +4332,14 @@ AD_ProviderIoControl(
                             pdwOutputBufferSize,
                             ppOutputBuffer);
             break;
+        case LSA_AD_IO_GET_COMPUTER_DN:
+            dwError = AD_IoctlGetComputerDn(
+                            hProvider,
+                            dwInputBufferSize,
+                            pInputBuffer,
+                            pdwOutputBufferSize,
+                            ppOutputBuffer);
+            break;
         default:
             dwError = LW_ERROR_NOT_HANDLED;
             break;
