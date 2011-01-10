@@ -645,7 +645,7 @@ RdrSmb2EncodeTreeConnectRequest(
     BAIL_ON_NT_STATUS(status);
 
     pHeader->usLength = SMB_HTOL16(sizeof(*pHeader) | 0x1);
-    pHeader->usPathLength = ulPathLength * sizeof(WCHAR);
+    pHeader->usPathLength = SMB_HTOL16(ulPathLength * sizeof(WCHAR));
 
     /* Align to WCHAR */
     status = Align((PBYTE) pPacket->pSMB2Header, ppCursor, pulRemaining, sizeof(WCHAR));
