@@ -85,7 +85,7 @@ typedef struct _LSA_PSTORE_PLUGIN_DISPATCH {
     "LsaPstorePluginInitializeContext"
 
 typedef
-NTSTATUS
+DWORD
 (*LSA_PSTORE_PLUGIN_INITIALIZE_FUNCTION)(
     IN ULONG Version,
     OUT PLSA_PSTORE_PLUGIN_DISPATCH* Dispatch,
