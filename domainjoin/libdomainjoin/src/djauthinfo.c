@@ -745,9 +745,45 @@ DJTestJoin(
     LWException **exc
     )
 {
-    LW_CLEANUP_LSERR(exc, LsaNetTestJoinDomain(pszDomainName, isValid));
+    DWORD dwError = 0;
+    BOOLEAN isJoined = FALSE;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    dwError = LsaAdGetMachineAccountInfo(hLsaConnection, NULL, &pAccountInfo);
+    switch (dwError)
+    {
+        case NERR_SetupNotJoined:
+            isJoined = FALSE;
+            dwError = 0;
+            break;
+        case 0:
+            isJoined = TRUE;
+            break;
+        default:
+            LW_CLEANUP_LSERR(exc, dwError);
+    }
+
 cleanup:
-    ;
+    if (dwError)
+    {
+        isJoined = FALSE;
+    }
+
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    *isValid = isJoined;
 }
 
 const JoinModule DJDoJoinModule = { TRUE, "join", "join computer to AD", QueryDoJoin, DoJoin, GetJoinDescription };
