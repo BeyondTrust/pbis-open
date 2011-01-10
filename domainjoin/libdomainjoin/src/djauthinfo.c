@@ -921,27 +921,20 @@ cleanup:
 void
 DJGetComputerDN(PSTR *dn, LWException **exc)
 {
-    DWORD _err = 0;
+    DWORD dwError = 0;
+    HANDLE hLsaConnection = NULL;
 
-    LW_CLEANUP_LSERR(exc, LWNetExtendEnvironmentForKrb5Affinity(TRUE));
+    dwError = LsaOpenServer(&hLsaConnection);
+    LW_CLEANUP_LSERR(exc, dwError);
 
-    _err = LsaGetComputerDN(dn);
-    if(_err)
-    {
-        LW_RAISE_LSERR(exc, _err);
-        if(exc != NULL)
-        {
-            switch(_err)
-            {
-                case LW_ERROR_NOT_JOINED_TO_AD:
-                    (*exc)->code = ERROR_NO_SUCH_DOMAIN;
-                    break;
-            }
-        }
-        goto cleanup;
-    }
+    dwError = LsaAdGetComputerDn(hLsaConnection, NULL, dn);
+    LW_CLEANUP_LSERR(exc, dwError);
+
 cleanup:
-    ;
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
 }
 
 void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
