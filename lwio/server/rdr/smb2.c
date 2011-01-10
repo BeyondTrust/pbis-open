@@ -752,7 +752,7 @@ RdrSmb2EncodeCreateRequest(
     pHeader->ulShareAccess = SMB_HTOL32(ulShareAccess);
     pHeader->ulCreateDisposition = SMB_HTOL32(ulCreateDisposition);
     pHeader->ulCreateOptions = SMB_HTOL32(ulCreateOptions);
-    pHeader->usNameLength = ulPathLength * sizeof(WCHAR);
+    pHeader->usNameLength = SMB_HTOL16((USHORT) (ulPathLength * sizeof(WCHAR)));
     pHeader->ulCreateContextLength = 0;
     pHeader->ulCreateContextOffset = 0;
 
