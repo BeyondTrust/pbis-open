@@ -44,6 +44,17 @@ AutoProv: no
 %description
 Likewise and Samba Integration
 
+%package        devel
+Summary:        Likewise and Samba Integration Development Kit
+Group:          Development/Libraries
+Requires:       likewise-lsass
+
+%description devel
+
+The samba-interop-devel package includes the development
+libraries and header files that supply the application
+programming interface for likewise and samba integration.
+
 %prep
 
 %build
@@ -60,5 +71,11 @@ rsync -a %{PopulateRoot}/ ${RPM_BUILD_ROOT}/
 %{PrefixDir}/bin/*
 %{PrefixDir}/%{_lib}/*.so
 %{PrefixDir}/%{_lib}/*.so.*
+
+%files devel
+%defattr(0644,root,root,0755)
+
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.a
+%attr(0644,root,root) %{PrefixDir}/%{_lib}/*.la
 
 %changelog
