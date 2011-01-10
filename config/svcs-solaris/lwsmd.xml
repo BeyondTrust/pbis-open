@@ -45,7 +45,7 @@
                 timeout_seconds='60' />
 
         <exec_method type='method' name='stop'
-                exec='/usr/bin/kill `/usr/bin/cat /var/run/lwsmd.pid`'
+                exec='/opt/likewise/bin/lwsm shutdown'
                 timeout_seconds='60' />
 
         <stability value='Unstable' />
