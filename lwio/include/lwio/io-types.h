@@ -419,6 +419,26 @@ typedef ULONG FILE_INFORMATION_CLASS, *PFILE_INFORMATION_CLASS;
 #define FileShortNameInformation          40 // SET: FILE_NAME_INFORMATION (set 8.3 name)
 #define FileMaximumInformation            41 // SENTINEL
 
+// LW-specific info classes
+
+#define _LW_FILE_INFORMATION_CLASS_BASE   0x80000000
+
+#define _MAKE_LW_FILE_INFORMATION_CLASS(Code) \
+    (_LW_FILE_INFORMATION_CLASS_BASE | (Code))
+
+#define IS_LW_FILE_INFORMATION_CLASS(Code) \
+    (_LW_FILE_INFORMATION_CLASS_BASE & (Code))
+
+#define IS_VALID_FILE_INFORMATION_CLASS(Code) \
+    ((IS_LW_FILE_INFORMATION_CLASS(Code)) ? \
+     ((Code) < LwFileMaximumInformation && (Code) > _LW_FILE_INFORMATION_CLASS_BASE) : \
+     ((Code) < FileMaximumInformation))
+
+#define LwFilePosixInformation            _MAKE_LW_FILE_INFORMATION_CLASS(1)
+#define LwFilePosixDirectoryInformation   _MAKE_LW_FILE_INFORMATION_CLASS(2)
+#define LwFileMaximumInformation          _MAKE_LW_FILE_INFORMATION_CLASS(3)
+
+
 //
 // Notes:
 //
@@ -766,6 +786,33 @@ typedef struct _FILE_LINK_INFORMATION {
     ULONG FileNameLength;
     WCHAR FileName[1];
 } FILE_LINK_INFORMATION, *PFILE_LINK_INFORMATION;
+
+// QUERY: LwFilePosixInformation
+typedef ULONG LW_UNIX_MODE, *PLW_UNIX_MODE;
+
+typedef struct _LW_FILE_POSIX_INFORMATION {
+    ULONG64 UnixAccessTime;         // Seconds since 1970
+    ULONG64 UnixModificationTime;   // Seconds since 1970
+    ULONG64 UnixChangeTime;         // Seconds since 1970
+    FILE_ATTRIBUTES FileAttributes;
+    ULONG64 EndOfFile;
+    ULONG64 AllocationSize;
+    ULONG UnixNumberOfLinks;
+    LW_UNIX_MODE UnixMode;
+    ULONG Uid;
+    ULONG Gid;
+    ULONG64 VolumeId;
+    ULONG64 InodeNumber;
+    ULONG64 GenerationNumber;
+} LW_FILE_POSIX_INFORMATION, *PLW_FILE_POSIX_INFORMATION;
+
+// DIR: FilePosixDirectoryInformation
+typedef struct _LW_FILE_POSIX_DIR_INFORMATION {
+    ULONG NextEntryOffset;
+    LW_FILE_POSIX_INFORMATION PosixInformation;
+    ULONG FileNameLength;
+    CHAR FileName[1];
+} LW_FILE_POSIX_DIR_INFORMATION, *PLW_FILE_POSIX_DIR_INFORMATION;
 
 // TODO-EA
 
