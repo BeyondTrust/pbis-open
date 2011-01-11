@@ -396,10 +396,18 @@ LwpsConvertAllocateFromMachinePasswordInfoW(
         }
     }
 
-    dwError = LwpsConvertTimeWindowsToUnix(
-                    pAccountInfo->LastChangeTime,
-                    &pLegacyPasswordInfo->last_change_time);
-    GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    if (pAccountInfo->LastChangeTime)
+    {
+        dwError = LwpsConvertTimeWindowsToUnix(
+                        pAccountInfo->LastChangeTime,
+                        &pLegacyPasswordInfo->last_change_time);
+        GOTO_CLEANUP_ON_WINERROR_EE(dwError, EE);
+    }
+    else
+    {
+        // Treat 0 as "now".
+        pLegacyPasswordInfo->last_change_time = time(NULL);
+    }
 
     dwError = LwpsConvertWc16StrDupOrNull(
                     pPasswordInfo->Password,
