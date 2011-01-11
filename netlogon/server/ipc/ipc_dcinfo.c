@@ -615,7 +615,10 @@ LWNetSrvIpcResolveDnsName(
     pOut->data = pRes;
 
 cleanup:
-    freeaddrinfo(result);
+    if (result)
+    {
+        freeaddrinfo(result);
+    }
 
     if (pError)
     {
