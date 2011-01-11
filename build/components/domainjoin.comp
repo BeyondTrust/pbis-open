@@ -20,7 +20,7 @@ COMP_INCREMENTAL=1
 COMP_SRCDIR=${BUILD_ROOT}/src/linux/domainjoin
 COMP_CONFIGS="nsswitch.lwi_defaults"
 COMP_SOURCES="${COMP_SRCDIR}"
-COMP_DEPENDENCIES="autoconf pkg-config netlogon dcerpc pstore centutils openldap lwdns eventlog lsass lwsm ${extra_deps}"
+COMP_DEPENDENCIES="autoconf pkg-config netlogon dcerpc centutils openldap lwdns eventlog lsass lwsm ${extra_deps}"
 
 for file in ${COMP_CONFIGS}; do
     COMP_SOURCES="${COMP_SOURCES} ${BUILD_ROOT}/src/linux/config/$file"
