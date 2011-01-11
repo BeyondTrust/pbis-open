@@ -44,7 +44,6 @@
 #include <lsa/ad.h>
 #include <lwnet.h>
 #include <eventlog.h>
-#include <lwps/lwps.h>
 #include <lwstr.h>
 
 #define DOMAINJOIN_EVENT_CATEGORY   "Domain join"
@@ -919,44 +918,36 @@ DJGetConfiguredShortDomain(
     )
 {
     DWORD dwError = 0;
-    HANDLE hStore = 0;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL; 
-    PSTR pszDomain = NULL;
-    
-    *ppszWorkgroup = NULL;
+    PSTR pszNetbiosDomainName = NULL;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
-    dwError = LwpsOpenPasswordStore(
-                LWPS_PASSWORD_STORE_DEFAULT,
-                &hStore);
+    dwError = LsaOpenServer(&hLsaConnection);
     LW_CLEANUP_LSERR(exc, dwError);
 
-    dwError = LwpsGetPasswordByCurrentHostName(
-                hStore,
-                &pPassInfo);
-    if (dwError || pPassInfo == NULL || pPassInfo->pwszDnsDomainName == NULL) 
-    {
-        dwError = ERROR_NOT_JOINED;
-    }
+    dwError = LsaAdGetMachineAccountInfo(hLsaConnection, NULL, &pAccountInfo);
     LW_CLEANUP_LSERR(exc, dwError);
 
-    dwError = LwWc16sToMbs(
-                pPassInfo->pwszDomainName,
-                &pszDomain);
+    dwError = LwAllocateString(pAccountInfo->NetbiosDomainName, &pszNetbiosDomainName);
     LW_CLEANUP_LSERR(exc, dwError);
-        
-    *ppszWorkgroup = pszDomain;
-    pszDomain = NULL;
-        
+
 cleanup:
-    LW_SAFE_FREE_STRING(pszDomain);
-    if (pPassInfo)
+    if (dwError)
     {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
+        LW_SAFE_FREE_STRING(pszNetbiosDomainName);
     }
-    if (hStore != (HANDLE)NULL)
+
+    if (pAccountInfo)
     {
-        LwpsClosePasswordStore(hStore);
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
     }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    *ppszWorkgroup = pszNetbiosDomainName;
 }
 
 void

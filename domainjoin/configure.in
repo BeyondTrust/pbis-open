@@ -96,25 +96,6 @@ AC_ARG_WITH(
 )
 
 AC_ARG_WITH(
-        pstore-dir,
-        [  --with-pstore-dir=<prefix>     look for pstore headers/libraries in <prefix>],
-        [
-            PSTORE_INCLUDE=-I$withval/include
-            PSTORE_LDFLAGS=-L$withval/lib
-            PSTORE_LIBDIR=$withval/lib
-        ]
-)
-
-AC_ARG_WITH(
-        pstore-libdir,
-        [  --with-pstore-libdir=<libdir>     look for pstore libraries in <libdir>],
-        [
-            PSTORE_LDFLAGS=-L$withval
-            PSTORE_LIBDIR=$withval
-        ]
-)
-
-AC_ARG_WITH(
         netlogon-dir,
         [  --with-netlogon-dir=<prefix>     look for netlogon headers/libraries in <prefix>],
         [
@@ -314,13 +295,6 @@ AC_CHECK_LIB([ldap_r], [ldap_bind], [OPENLDAP_LIBS="-lldap_r -llber"], AC_MSG_ER
 AC_SUBST(OPENLDAP_INCLUDE)
 AC_SUBST(OPENLDAP_LDFLAGS)
 AC_SUBST(OPENLDAP_LIBS)
-
-PSTORE_LIBS=""
-AC_CHECK_LIB([lwpsapi], [LwpsOpenPasswordStore], [PSTORE_LIBS="-llwpsapi"], AC_MSG_ERROR([Use --with-pstore-dir to find liblwpsapi.so]), [$PSTORE_LDFLAGS])
-
-AC_SUBST(PSTORE_INCLUDE)
-AC_SUBST(PSTORE_LDFLAGS)
-AC_SUBST(PSTORE_LIBS)
 
 NETLOGON_LIBS=""
 AC_CHECK_LIB([lwnetclientapi], [LWNetGetDCName], [NETLOGON_LIBS="-llwnetclientapi"], AC_MSG_ERROR([Use --with-netlogon-dir to find liblwnetclientapi.so]), [$NETLOGON_LDFLAGS])
@@ -522,9 +496,9 @@ fi
 
 AM_CONDITIONAL([BUILD_GTK], [test "x$have_gtk" = "xyes"])
 
-LIBDOMAINJOIN_LDFLAGS="$KRB5_LDFLAGS $OPENLDAP_LDFLAGS $LIBXML2_LDFLAGS $CENTUTILS_LDFLAGS $PSTORE_LDFLAGS $NETLOGON_LDFLAGS $DCERPC_LDFLAGS"
+LIBDOMAINJOIN_LDFLAGS="$KRB5_LDFLAGS $OPENLDAP_LDFLAGS $LIBXML2_LDFLAGS $CENTUTILS_LDFLAGS $NETLOGON_LDFLAGS $DCERPC_LDFLAGS"
 
-LIBDOMAINJOIN_LIBS="$LIBXML2_LIBS $CENTUTILS_LIBS $NETLOGON_LIBS $DCERPC_LIBS $PSTORE_LIBS $KRB5_LIBS" 
+LIBDOMAINJOIN_LIBS="$LIBXML2_LIBS $CENTUTILS_LIBS $NETLOGON_LIBS $DCERPC_LIBS $KRB5_LIBS" 
 
 AC_SUBST(LIBDOMAINJOIN_LDFLAGS)
 AC_SUBST(LIBDOMAINJOIN_LIBS)
