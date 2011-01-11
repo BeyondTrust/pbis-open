@@ -20,7 +20,6 @@ liblsajoin_la_CPPFLAGS =             \
     -I$(srcdir)/include              \
     -I$(top_srcdir)/server/include   \
     $(NETLOGON_INCLUDES)             \
-    $(PSTORE_INCLUDES)               \
     $(KRB5_INCLUDES)                 \
     $(LWIO_INCLUDES)
 
@@ -29,7 +28,6 @@ liblsajoin_la_LIBADD =                         \
     $(top_builddir)/common/liblsacommon.la     \
     $(top_builddir)/client/rpc/liblsarpc.la    \
     $(NETLOGON_LIBS)                           \
-    $(PSTORE_LIBS)                             \
     $(KRB5_LIBS)                               \
     $(LWIO_LIBS)                               \
     $(LWADVAPI_LIBS)                           \
@@ -37,7 +35,6 @@ liblsajoin_la_LIBADD =                         \
 
 liblsajoin_la_LDFLAGS =    \
     $(NETLOGON_LDFLAGS)    \
-    $(PSTORE_LDFLAGS)      \
     $(OPENLDAP_LDFLAGS)    \
     $(KRB5_LDFLAGS)        \
     $(LWIO_LDFLAGS)

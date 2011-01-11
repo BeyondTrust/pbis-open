@@ -67,47 +67,9 @@
 #define LSAJOIN_ACCOUNTDISABLE                       (0x00000002)
 #define LSAJOIN_WORKSTATION_TRUST_ACCOUNT            (0x00001000)
 
-typedef struct __LSA_MACHINE_ACCT_INFO
-{
-    PSTR   pszDomainName;
-    PSTR   pszDnsDomainName;
-    PSTR   pszSID;
-    PSTR   pszHostname;
-    PSTR   pszMachineAccount;
-    PSTR   pszMachinePassword;
-    time_t last_change_time;
-    DWORD  dwSchannelType;
-
-} LSA_MACHINE_ACCT_INFO, *PLSA_MACHINE_ACCT_INFO;
-
 DWORD
 LsaSyncTimeToDC(
     PCSTR  pszDomain
-    );
-
-DWORD
-LsaBuildMachineAccountInfo(
-    PLWPS_PASSWORD_INFO pInfo,
-    PLSA_MACHINE_ACCT_INFO* ppAcctInfo
-    );
-
-VOID
-LsaFreeMachineAccountInfo(
-    PLSA_MACHINE_ACCT_INFO pAcctInfo
-    );
-
-DWORD
-LsaJoinDomainInternal(
-    PWSTR  pwszHostname,
-    PWSTR  pwszDnsDomain,
-    PWSTR  pwszDomain,
-    PWSTR  pwszAccountOu,
-    PWSTR  pwszAccount,
-    PWSTR  pwszPassword,
-    DWORD  dwJoinFlags,
-    PWSTR  pwszOsName,
-    PWSTR  pwszOsVersion,
-    PWSTR  pwszOsServicePack
     );
 
 DWORD

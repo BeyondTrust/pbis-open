@@ -122,7 +122,6 @@ error:
 
 DWORD
 LsaSetSMBCreds(
-    IN PCSTR pszDomain,
     IN PCSTR pszUsername,
     IN PCSTR pszPassword,
     IN BOOLEAN bSetDefaultCachePath,
@@ -143,7 +142,6 @@ LsaSetSMBCreds(
     BOOLEAN bSwitchedPath = FALSE;
 
     BAIL_ON_INVALID_POINTER(ppFreeInfo);
-    BAIL_ON_INVALID_STRING(pszDomain);
     BAIL_ON_INVALID_STRING(pszUsername);
 
     ret = krb5_init_context(&ctx);

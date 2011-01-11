@@ -66,10 +66,10 @@ LsaJoinDomain(
 
 DWORD
 LsaLeaveDomain2(
-    PCSTR pszUsername,
-    PCSTR pszPassword,
-    PCSTR pszDomain,
-    LSA_NET_JOIN_FLAGS dwFlags
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    IN OPTIONAL PCSTR pszUsername,
+    IN OPTIONAL PCSTR pszPassword,
+    IN LSA_NET_JOIN_FLAGS dwFlags
     );
 
 DWORD
@@ -86,7 +86,7 @@ LsaDisableDomainGroupMembership(
 
 DWORD
 LsaMachineChangePassword(
-    IN OPTIONAL PCSTR    pszDomainName
+    IN OPTIONAL PCSTR pszDnsDomainName
     );
 
 DWORD

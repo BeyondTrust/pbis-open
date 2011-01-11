@@ -2351,7 +2351,7 @@ AD_PreLeaveDomain(
         switch (pState->joinState)
         {
         case LSA_AD_NOT_JOINED:
-            dwError = LW_ERROR_NOT_JOINED_TO_AD;
+            dwError = NERR_SetupNotJoined;
             break;
         case LSA_AD_JOINING:
         case LSA_AD_UNKNOWN:
@@ -2363,7 +2363,7 @@ AD_PreLeaveDomain(
     }
     else
     {
-        dwError = LW_ERROR_NOT_JOINED_TO_AD;
+        dwError = NERR_SetupNotJoined;
     }
     BAIL_ON_LSA_ERROR(dwError);
 
@@ -2451,7 +2451,7 @@ AD_LeaveDomainInternal(
     bLocked = TRUE;
 
     dwError = AD_PreLeaveDomain(pContext);
-    if (dwError == LW_ERROR_NOT_JOINED_TO_AD)
+    if (dwError == NERR_SetupNotJoined)
     {
         dwError = 0;
         bNeedLeave = FALSE;
@@ -2461,9 +2461,9 @@ AD_LeaveDomainInternal(
     if (bNeedLeave)
     {
         dwError = LsaLeaveDomain2(
+            pszDomain,
             pszUsername,
             pszPassword,
-            pszDomain,
             dwFlags);
         BAIL_ON_LSA_ERROR(dwError);
     }

@@ -53,6 +53,24 @@
 
 #define LSA_JOIN_MAX_ALLOWED_CLOCK_DRIFT_SECONDS 60
 
+#define MACHPASS_LEN  (16)
+
+
+static
+DWORD
+LsaJoinDomainInternal(
+    PWSTR  pwszHostname,
+    PWSTR  pwszDnsDomain,
+    PWSTR  pwszDomain,
+    PWSTR  pwszAccountOu,
+    PWSTR  pwszAccount,
+    PWSTR  pwszPassword,
+    DWORD  dwJoinFlags,
+    PWSTR  pwszOsName,
+    PWSTR  pwszOsVersion,
+    PWSTR  pwszOsServicePack
+    );
+
 static
 DWORD
 LsaBuildOrgUnitDN(
@@ -285,7 +303,6 @@ LsaJoinDomain(
     }
 
     dwError = LsaSetSMBCreds(
-                pszDomain,
                 pszUsername,
                 pszPassword,
                 TRUE,
@@ -580,90 +597,8 @@ error:
     goto cleanup;
 }
 
-DWORD
-LsaBuildMachineAccountInfo(
-    PLWPS_PASSWORD_INFO pInfo,
-    PLSA_MACHINE_ACCT_INFO* ppAcctInfo
-    )
-{
-    DWORD dwError = 0;
-    PLSA_MACHINE_ACCT_INFO pAcctInfo = NULL;
-    
-    dwError = LwAllocateMemory(
-                    sizeof(LSA_MACHINE_ACCT_INFO),
-                    (PVOID*)&pAcctInfo);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszDnsDomainName,
-                    &pAcctInfo->pszDnsDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszDomainName,
-                    &pAcctInfo->pszDomainName);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszHostname,
-                    &pAcctInfo->pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszMachineAccount,
-                    &pAcctInfo->pszMachineAccount);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszMachinePassword,
-                    &pAcctInfo->pszMachinePassword);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwWc16sToMbs(
-                    pInfo->pwszSID,
-                    &pAcctInfo->pszSID);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    pAcctInfo->dwSchannelType = pInfo->dwSchannelType;
-    pAcctInfo->last_change_time = pInfo->last_change_time;
-    
-    *ppAcctInfo = pAcctInfo;
-    
-cleanup:
 
-    return dwError;
-    
-error:
-
-    *ppAcctInfo = NULL;
-    
-    if (pAcctInfo) {
-        LsaFreeMachineAccountInfo(pAcctInfo);
-    }
-    
-    goto cleanup;
-}
-
-VOID
-LsaFreeMachineAccountInfo(
-    PLSA_MACHINE_ACCT_INFO pAcctInfo
-    )
-{
-    LW_SAFE_FREE_STRING(pAcctInfo->pszDnsDomainName);
-    LW_SAFE_FREE_STRING(pAcctInfo->pszDomainName);
-    LW_SAFE_FREE_STRING(pAcctInfo->pszHostname);
-    LW_SAFE_FREE_STRING(pAcctInfo->pszMachineAccount);
-    LW_SECURE_FREE_STRING(pAcctInfo->pszMachinePassword);
-    LW_SAFE_FREE_STRING(pAcctInfo->pszSID);
-    LwFreeMemory(pAcctInfo);
-}
-
-
-#if !defined(MACHPASS_LEN)
-#define MACHPASS_LEN  (16)
-#endif
-
-
+static
 DWORD
 LsaJoinDomainInternal(
     PWSTR  pwszHostname,
@@ -1991,7 +1926,6 @@ LsaSaveMachinePassword(
     wchar_t wszCifsFqdnFmt[] = L"cifs/%ws.%ws";
 
     DWORD dwError = ERROR_SUCCESS;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
     PWSTR pwszAccount = NULL;
     PWSTR pwszDomain = NULL;
     PWSTR pwszAdDnsDomainNameLc = NULL;
@@ -2004,7 +1938,7 @@ LsaSaveMachinePassword(
     PWSTR pwszHostnameLc = NULL;
     size_t sHostnameLcLen = 0;
     PWSTR pwszPass = NULL;
-    LWPS_PASSWORD_INFO pi = {0};
+    LSA_MACHINE_PASSWORD_INFO_W passwordInfo = { { 0 } };
     size_t sPassLen = 0;
     DWORD dwKvno = 0;
     PWSTR pwszBaseDn = NULL;
@@ -2017,6 +1951,7 @@ LsaSaveMachinePassword(
     PWSTR pwszCifsMachineFqdn = NULL;
     size_t sCifsMachineFqdnSize = 0;
     PWSTR pwszPrincipal = NULL;
+    PWSTR pwszFqdn = NULL;
 
     dwError = LwAllocateWc16String(&pwszAccount,
                                    pwszMachineAccountName);
@@ -2066,6 +2001,13 @@ LsaSaveMachinePassword(
 
     LwWc16sToLower(pwszHostnameLc);
 
+    dwError = LwAllocateWc16sPrintfW(
+                    &pwszFqdn,
+                    L"%ws.%ws",
+                    pwszHostnameLc,
+                    pwszMachDnsDomainNameLc);
+    BAIL_ON_LSA_ERROR(dwError);
+
     dwError = LwAllocateWc16String(&pwszPass,
                                    pwszPassword);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2074,22 +2016,19 @@ LsaSaveMachinePassword(
      * Store the machine password first
      */
 
-    pi.pwszDomainName      = pwszDomain;
-    pi.pwszDnsDomainName   = pwszAdDnsDomainNameLc;
-    pi.pwszSID             = pwszSid;
-    pi.pwszHostname        = pwszHostnameUc;
-    pi.pwszHostDnsDomain   = pwszMachDnsDomainNameLc;
-    pi.pwszMachineAccount  = pwszAccount;
-    pi.pwszMachinePassword = pwszPass;
-    pi.last_change_time    = time(NULL);
-    pi.dwSchannelType      = SCHANNEL_WKSTA;
+    passwordInfo.Account.DnsDomainName = pwszAdDnsDomainNameLc;
+    passwordInfo.Account.NetbiosDomainName = pwszDomain;
+    passwordInfo.Account.DomainSid = pwszSid;
+    passwordInfo.Account.SamAccountName = pwszAccount;
+    passwordInfo.Account.Type = LSA_MACHINE_ACCOUNT_TYPE_WORKSTATION;
+    // TODO-2010/01/10-dalmeida -- Use correct kvno
+    passwordInfo.Account.KeyVersionNumber = 0;
+    passwordInfo.Account.Fqdn = pwszFqdn;
+    passwordInfo.Account.LastChangeTime = 0;
+    passwordInfo.Password = pwszPass;
 
-    ntStatus = LwpsWritePasswordToAllStores(&pi);
-    if (ntStatus != STATUS_SUCCESS)
-    {
-        dwError = LwNtStatusToWin32Error(ntStatus);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
+    dwError = LsaPstoreSetPasswordInfoW(&passwordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
 
     dwError = LwWc16sLen(pwszPass, &sPassLen);
     BAIL_ON_LSA_ERROR(dwError);
@@ -2417,6 +2356,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(pwszHostMachineFqdn);
     LW_SAFE_FREE_MEMORY(pwszCifsMachineFqdn);
     LW_SAFE_FREE_MEMORY(pwszPrincipal);
+    LW_SAFE_FREE_MEMORY(pwszFqdn);
 
     return dwError;
 
@@ -3047,40 +2987,51 @@ error:
 
 DWORD
 LsaMachineChangePassword(
-    IN PCSTR pszDomainName
+    IN OPTIONAL PCSTR pszDnsDomainName
     )
 {
     DWORD dwError = ERROR_SUCCESS;
-    DWORD conn_err = ERROR_SUCCESS;
-    NTSTATUS ntStatus = STATUS_SUCCESS;
+    PWSTR pwszDnsDomainName = NULL;
     PWSTR pwszDCName = NULL;
     size_t sDCNameLen = 0;
-    HANDLE hStore = (HANDLE)NULL;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo = NULL;
     PWSTR pwszUserName = NULL;
     PWSTR pwszOldPassword = NULL;
     WCHAR wszNewPassword[MACHPASS_LEN+1];
+    PWSTR pwszHostname = NULL;
+    PCWSTR pwszFqdnSuffix = NULL;
+    int i = 0;
 
     memset(wszNewPassword, 0, sizeof(wszNewPassword));
 
-    ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LwpsGetPasswordByDomainName(hStore, pszDomainName, &pPassInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    if (!pPassInfo)
+    if (pszDnsDomainName)
     {
-        dwError = ERROR_INTERNAL_ERROR;
-        goto error;
+        dwError = LwMbsToWc16s(pszDnsDomainName, &pwszDnsDomainName);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LsaGetRwDcName(pPassInfo->pwszDnsDomainName, FALSE,
+    dwError = LsaPstoreGetPasswordInfoW(pwszDnsDomainName, &pPasswordInfo);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    dwError = LsaGetRwDcName(pPasswordInfo->Account.DnsDomainName, FALSE,
                             &pwszDCName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    pwszUserName     = pPassInfo->pwszMachineAccount;
-    pwszOldPassword  = pPassInfo->pwszMachinePassword;
+    pwszUserName     = pPasswordInfo->Account.SamAccountName;
+    pwszOldPassword  = pPasswordInfo->Password;
+
+    dwError = LwAllocateWc16String(&pwszHostname, pPasswordInfo->Account.Fqdn);
+    BAIL_ON_LSA_ERROR(dwError);
+
+    for (i = 0; pwszHostname[i]; i++)
+    {
+        if ('.' == pwszHostname[i])
+        {
+            pwszHostname[i] = 0;
+            pwszFqdnSuffix = &pwszHostname[i+1];
+            break;
+        }
+    }
 
     LsaGenerateMachinePassword(
                   wszNewPassword,
@@ -3095,62 +3046,26 @@ LsaMachineChangePassword(
                                     (PWSTR)wszNewPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
+    // TODO-2010/01/10-dalmeida -- Simplify this calling sequence
+    // by using keytab plugin in lsapstore...
     dwError = LsaSaveMachinePassword(
-              pPassInfo->pwszHostname,
-              pPassInfo->pwszMachineAccount,
-              pPassInfo->pwszHostDnsDomain ? pPassInfo->pwszHostDnsDomain
-                                           : pPassInfo->pwszDnsDomainName,
-              pPassInfo->pwszDomainName,
-              pPassInfo->pwszDnsDomainName,
-              pwszDCName,
-              pPassInfo->pwszSID,
-              wszNewPassword);
+                    pwszHostname,
+                    pPasswordInfo->Account.SamAccountName,
+                    pwszFqdnSuffix ? pwszFqdnSuffix : pPasswordInfo->Account.DnsDomainName,
+                    pPasswordInfo->Account.NetbiosDomainName,
+                    pPasswordInfo->Account.DnsDomainName,
+                    pwszDCName,
+                    pPasswordInfo->Account.DomainSid,
+                    wszNewPassword);
     BAIL_ON_LSA_ERROR(dwError);
 
-    if (pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-        pPassInfo = NULL;
-    }
-
-    if (hStore != (HANDLE)NULL)
-    {
-        ntStatus = LwpsClosePasswordStore(hStore);
-        hStore = NULL;
-        BAIL_ON_NT_STATUS(ntStatus);
-    }
-
-cleanup:
+error:
     LW_SAFE_FREE_MEMORY(pwszDCName);
-
-    if (dwError == ERROR_SUCCESS &&
-        ntStatus != STATUS_SUCCESS)
-    {
-        dwError = NtStatusToWin32Error(ntStatus);
-    }
+    LW_SAFE_FREE_MEMORY(pwszHostname);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&pPasswordInfo);
+    LW_SAFE_FREE_MEMORY(pwszDnsDomainName);
 
     return dwError;
-
-error:
-    if (pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-    
-    if (hStore != (HANDLE)NULL)
-    {
-        LwpsClosePasswordStore(hStore);
-    }
-
-    if (dwError == ERROR_SUCCESS &&
-        ntStatus == STATUS_SUCCESS &&
-        conn_err != ERROR_SUCCESS) {
-        /* overwrite error code with connection error code only if everything
-           else was fine so far */
-        dwError = conn_err;
-    }
-        
-    goto cleanup;
 }
 
 

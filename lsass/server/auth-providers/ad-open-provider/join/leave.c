@@ -50,257 +50,150 @@
 static
 NTSTATUS
 LsaDisableMachineAccount(
-    PWSTR          pwszDCName,
-    LW_PIO_CREDS   pCreds,
-    PWSTR          pwszMachineAccountName,
-    DWORD          dwUnjoinFlags
+    IN PCWSTR pwszDCName,
+    IN LW_PIO_CREDS pCreds,
+    IN PCWSTR pwszMachineAccountName
     );
-
 
 static
 DWORD
 LsaUnjoinDomain(
-    PCSTR   pszDomain,
-    PCWSTR  pwszMachineName, 
-    PCWSTR  pwszDomainName,
-    PCWSTR  pwszAccountName,
-    PCWSTR  pwszPassword,
-    DWORD   dwUnjoinFlags
+    IN PCWSTR pwszDnsDomainName,
+    IN PCWSTR pwszMachineSamAccountName,
+    IN OPTIONAL PCWSTR pwszUserName,
+    IN OPTIONAL PCWSTR pwszUserDomain,
+    IN OPTIONAL PCWSTR pwszUserPassword,
+    IN DWORD dwUnjoinFlags
     );
 
 DWORD
 LsaLeaveDomain2(
-    PCSTR pszUsername,
-    PCSTR pszPassword,
-    PCSTR pszDomain,
-    LSA_NET_JOIN_FLAGS dwFlags
+    IN OPTIONAL PCSTR pszDnsDomainName,
+    IN OPTIONAL PCSTR pszUsername,
+    IN OPTIONAL PCSTR pszPassword,
+    IN LSA_NET_JOIN_FLAGS dwFlags
     )
 {
     DWORD dwError = 0;
-    HANDLE hStore = (HANDLE)NULL;
-    PSTR  pszHostname = NULL;
-    PWSTR pwszHostname = NULL;
     PWSTR pwszDnsDomainName = NULL;
-    DWORD dwOptions = LSAJOIN_ACCT_DELETE;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    PLSA_MACHINE_ACCT_INFO pAcct = NULL;
+    PLSA_MACHINE_PASSWORD_INFO_W pPasswordInfo = NULL;
     PLSA_CREDS_FREE_INFO pAccessInfo = NULL;
-    
-    if (geteuid() != 0) {
-        dwError = LW_ERROR_ACCESS_DENIED;
+
+    if (pszDnsDomainName)
+    {
+        dwError = LwMbsToWc16s(pszDnsDomainName, &pwszDnsDomainName);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
-    dwError = LsaDnsGetHostInfo(&pszHostname);
+
+    dwError = LsaPstoreGetPasswordInfoW(pwszDnsDomainName, &pPasswordInfo);
     BAIL_ON_LSA_ERROR(dwError);
 
-    dwError = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT, &hStore);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwpsGetPasswordByDomainName(
-                hStore,
-                pszDomain,
-                &pPassInfo);
-    if (dwError)
-    {
-        if (dwError == LWPS_ERROR_INVALID_ACCOUNT)
-        {
-            dwError = LW_ERROR_NOT_JOINED_TO_AD;
-        }
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    
-    dwError = LsaBuildMachineAccountInfo(
-                    pPassInfo,
-                    &pAcct);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    if (!LW_IS_NULL_OR_EMPTY_STR(pAcct->pszDnsDomainName))
-    {
-        dwError = LwMbsToWc16s(
-                    pAcct->pszDnsDomainName,
-                    &pwszDnsDomainName);
-        BAIL_ON_LSA_ERROR(dwError);
-    }
-    
-    dwError = LwMbsToWc16s(
-                    pszHostname,
-                    &pwszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-    
     if (!LW_IS_NULL_OR_EMPTY_STR(pszUsername) &&
         !LW_IS_NULL_OR_EMPTY_STR(pszPassword))
     {
         dwError = LsaSetSMBCreds(
-                    pAcct->pszDnsDomainName,
                     pszUsername,
                     pszPassword,
                     TRUE,
                     &pAccessInfo);
         BAIL_ON_LSA_ERROR(dwError);
 
+        // TODO-2010/01/10-dalmeida -- We should try to leave the
+        // domain w/machine creds too...  Note that we do not
+        // pass in the usernmame/password below.  There is inconsistent
+        // handling of the passed in leave credentials.
+        // Also, the flag does not actually try to delete the account...
+
         dwError = LsaUnjoinDomain(
-                    pszDomain,
-                    pwszHostname,
-                    pwszDnsDomainName,
+                    pPasswordInfo->Account.DnsDomainName,
+                    pPasswordInfo->Account.SamAccountName,
                     NULL,
                     NULL,
-                    dwOptions);
+                    NULL,
+                    LSAJOIN_ACCT_DELETE);
         BAIL_ON_LSA_ERROR(dwError);
     }
-    
-    dwError = LwpsDeleteDomainInAllStores(pszDomain);
+
+    dwError = LsaPstoreDeletePasswordInfoW(pwszDnsDomainName);
     BAIL_ON_LSA_ERROR(dwError);
 
-cleanup:
-
-    if (pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-
-    if (hStore != (HANDLE)NULL) {
-        LwpsClosePasswordStore(hStore);
-    }
-    
-    if (pAcct)
-    {
-        LsaFreeMachineAccountInfo(pAcct);
-    }
-
-    LW_SAFE_FREE_STRING(pszHostname);
-
-    LW_SAFE_FREE_MEMORY(pwszHostname);
+error:
     LW_SAFE_FREE_MEMORY(pwszDnsDomainName);
+    LSA_PSTORE_FREE_PASSWORD_INFO_W(&pPasswordInfo);
     LsaFreeSMBCreds(&pAccessInfo);
 
     return dwError;
-    
-error:
-
-    goto cleanup;
 }
 
 
 static
 DWORD
 LsaUnjoinDomain(
-    PCSTR   pszDomain,
-    PCWSTR  pwszMachineName, 
-    PCWSTR  pwszDomainName,
-    PCWSTR  pwszAccountName,
-    PCWSTR  pwszPassword,
-    DWORD   dwUnjoinFlags
+    IN PCWSTR pwszDnsDomainName,
+    IN PCWSTR pwszMachineSamAccountName,
+    IN OPTIONAL PCWSTR pwszUserName,
+    IN OPTIONAL PCWSTR pwszUserDomain,
+    IN OPTIONAL PCWSTR pwszUserPassword,
+    IN DWORD dwUnjoinFlags
     )
 {
     DWORD dwError = ERROR_SUCCESS;
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    HANDLE hStore = (HANDLE)NULL;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
     PWSTR pwszDCName = NULL;
-    PWSTR pwszMachine = NULL;   
     PIO_CREDS pCreds = NULL;
-    size_t sMachinePasswordLen = 0;
 
-    BAIL_ON_INVALID_POINTER(pwszMachineName);
-    BAIL_ON_INVALID_POINTER(pwszDomainName);
-
-    dwError = LwAllocateWc16String(&pwszMachine,
-                                   pwszMachineName);
-    BAIL_ON_LSA_ERROR(dwError);
-
-    dwError = LsaGetRwDcName(pwszDomainName,
+    dwError = LsaGetRwDcName(pwszDnsDomainName,
                              FALSE,
                              &pwszDCName);
     BAIL_ON_LSA_ERROR(dwError);
 
-    ntStatus = LwpsOpenPasswordStore(LWPS_PASSWORD_STORE_DEFAULT,
-                                     &hStore);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-    ntStatus = LwpsGetPasswordByDomainName(hStore,
-                                         pszDomain,
-                                         &pPassInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
-
     /* disable the account only if requested */
     if (dwUnjoinFlags & LSAJOIN_ACCT_DELETE)
     {
-        if (pwszAccountName && pwszPassword)
+        if (pwszUserName && pwszUserPassword)
         {
-            ntStatus = LwIoCreatePlainCredsW(pwszAccountName,
-                                             pwszDomainName,
-                                             pwszPassword,
+            ntStatus = LwIoCreatePlainCredsW(pwszUserName,
+                                             pwszUserDomain,
+                                             pwszUserPassword,
                                              &pCreds);
-            BAIL_ON_NT_STATUS(ntStatus);
+            dwError = LwNtStatusToWin32Error(ntStatus);
+            BAIL_ON_LSA_ERROR(dwError);
         }
         else
         {
             ntStatus = LwIoGetActiveCreds(NULL,
                                           &pCreds);
-            BAIL_ON_NT_STATUS(ntStatus);
+            dwError = LwNtStatusToWin32Error(ntStatus);
+            BAIL_ON_LSA_ERROR(dwError);
         }
 
         ntStatus = LsaDisableMachineAccount(pwszDCName,
                                             pCreds,
-                                            pPassInfo->pwszMachineAccount,
-                                            dwUnjoinFlags);
-        BAIL_ON_NT_STATUS(ntStatus);
+                                            pwszMachineSamAccountName);
+        dwError = LwNtStatusToWin32Error(ntStatus);
+        BAIL_ON_LSA_ERROR(dwError);
     }
 
-    dwError = LwWc16sLen(pPassInfo->pwszMachinePassword,
-                         &sMachinePasswordLen);
-    BAIL_ON_LSA_ERROR(dwError);
+error:
+    LSA_ASSERT(!ntStatus || dwError);
 
-    /* zero the machine password */
-    memset(pPassInfo->pwszMachinePassword,
-           0,
-           sMachinePasswordLen);
-
-    pPassInfo->last_change_time = time(NULL);
-
-    ntStatus = LwpsWritePasswordToAllStores(pPassInfo);
-    BAIL_ON_NT_STATUS(ntStatus);
-
-cleanup:
     LW_SAFE_FREE_MEMORY(pwszDCName);
-    LW_SAFE_FREE_MEMORY(pwszMachine);
-
-    if (pPassInfo)
-    {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-
-    if (hStore != (HANDLE)NULL)
-    {
-        LwpsClosePasswordStore(hStore);
-    }
 
     if (pCreds)
     {
         LwIoDeleteCreds(pCreds);
     }
 
-    if (dwError == ERROR_SUCCESS &&
-        ntStatus != STATUS_SUCCESS)
-    {
-        dwError = NtStatusToWin32Error(ntStatus);
-    }
-
     return dwError;
-
-error:
-    goto cleanup;
 }
 
 
 static
 NTSTATUS
 LsaDisableMachineAccount(
-    PWSTR          pwszDCName,
-    LW_PIO_CREDS   pCreds,
-    PWSTR          pwszMachineAccountName,
-    DWORD          dwUnjoinFlags
+    IN PCWSTR pwszDCName,
+    IN LW_PIO_CREDS pCreds,
+    IN PCWSTR pwszMachineAccountName
     )
 {
     const DWORD dwConnAccess = SAMR_ACCESS_OPEN_DOMAIN |
@@ -315,7 +208,6 @@ LsaDisableMachineAccount(
                                USER_ACCESS_SET_PASSWORD;
 
     NTSTATUS ntStatus = STATUS_SUCCESS;
-    DWORD dwError = ERROR_SUCCESS;
     SAMR_BINDING hSamrBinding = NULL;
     CONNECT_HANDLE hConnect = NULL;
     PSID pBuiltinSid = NULL;
@@ -348,11 +240,11 @@ LsaDisableMachineAccount(
                             &hConnect);
     BAIL_ON_NT_STATUS(ntStatus);    
 
-    dwError = LwCreateWellKnownSid(WinBuiltinDomainSid,
-                                   NULL,
-                                   &pBuiltinSid,
-                                   NULL);
-    BAIL_ON_LSA_ERROR(dwError);
+    ntStatus = RtlAllocateWellKnownSid(
+                    WinBuiltinDomainSid,
+                    NULL,
+                    &pBuiltinSid);
+    BAIL_ON_NT_STATUS(ntStatus);
 
     do
     {
@@ -406,7 +298,7 @@ LsaDisableMachineAccount(
     ntStatus = SamrLookupNames(hSamrBinding,
                                hDomain,
                                1,
-                               &pwszMachineAccountName,
+                               (PWSTR*)&pwszMachineAccountName,
                                &pdwRids,
                                &pdwTypes,
                                NULL);
@@ -480,7 +372,7 @@ cleanup:
         SamrFreeMemory(ppwszDomainNames);
     }
 
-    LW_SAFE_FREE_MEMORY(pBuiltinSid);
+    RTL_FREE(&pBuiltinSid);
     RTL_FREE(&pDomainSid);
 
     return ntStatus;

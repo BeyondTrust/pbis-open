@@ -258,7 +258,6 @@ AD_NetUserChangePassword(
     BAIL_ON_INVALID_STRING(pszLoginId);
 
     dwError = LsaSetSMBCreds(
-                    pszDomainName,
                     pszUserPrincipalName,
                     pszOldPassword,
                     FALSE,

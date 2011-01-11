@@ -62,7 +62,6 @@
 #include "lwtime.h"
 #include "lsaldap.h"
 
-#include <lwps/lwps.h>
 #include <lw/winerror.h>
 #include <lwnet.h>
 
@@ -75,6 +74,7 @@
 
 #include "lsajoin.h"
 #include "join_p.h"
+#include <lsa/lsapstore-api.h>
 #include <ldap.h>
 #include "ldaputil.h"
 

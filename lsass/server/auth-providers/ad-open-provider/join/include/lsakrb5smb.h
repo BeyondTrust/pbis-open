@@ -66,7 +66,6 @@ LsaSetSMBAnonymousCreds(
 
 DWORD
 LsaSetSMBCreds(
-    IN PCSTR pszDomain,
     IN PCSTR pszUsername,
     IN PCSTR pszPassword,
     IN BOOLEAN bSetDefaultCachePath,

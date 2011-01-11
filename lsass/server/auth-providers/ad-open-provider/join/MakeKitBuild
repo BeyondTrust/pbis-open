@@ -11,7 +11,7 @@ make()
 
     LSAJOIN_HEADERDEPS="\
         openssl/rand.h dce/rpc.h gssapi.h \
-        lwadvapi.h lw/base.h uuid/uuid.h lwps/lwps.h ldap.h lwnet.h"
+        lwadvapi.h lw/base.h uuid/uuid.h ldap.h lwnet.h"
 
     mk_group \
 	GROUP="lsajoin" \
