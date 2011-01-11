@@ -185,7 +185,7 @@ AD_LeaveDomainInternal(
     PCSTR pszUsername,
     PCSTR pszPassword,
     PCSTR pszDomain,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     );
 
 static
@@ -2426,7 +2426,7 @@ AD_LeaveDomainInternal(
     PCSTR pszUsername,
     PCSTR pszPassword,
     PCSTR pszDomain,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     )
 {
     DWORD dwError = 0;

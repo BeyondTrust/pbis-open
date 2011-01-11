@@ -49,6 +49,7 @@
 #define __LSAADPROVIDER_H__
 
 #include "lsautils.h"
+#include <lsa/ad-types.h>
 
 #define LSA_AD_TAG_PROVIDER "lsa-activedirectory-provider"
 
@@ -101,7 +102,7 @@ typedef struct __LSA_AD_IPC_JOIN_DOMAIN_REQ
     PCSTR pszOSName;
     PCSTR pszOSVersion;
     PCSTR pszOSServicePack;
-    DWORD dwFlags;
+    LSA_NET_JOIN_FLAGS dwFlags;
 } LSA_AD_IPC_JOIN_DOMAIN_REQ, *PLSA_AD_IPC_JOIN_DOMAIN_REQ;
 
 typedef struct __LSA_AD_IPC_LEAVE_DOMAIN_REQ
@@ -109,7 +110,7 @@ typedef struct __LSA_AD_IPC_LEAVE_DOMAIN_REQ
     PCSTR pszUsername;
     PCSTR pszPassword;
     PCSTR pszDomain;
-    DWORD dwFlags;
+    LSA_NET_JOIN_FLAGS dwFlags;
 } LSA_AD_IPC_LEAVE_DOMAIN_REQ, *PLSA_AD_IPC_LEAVE_DOMAIN_REQ;
 
 typedef struct __LSA_AD_IPC_GET_JOINED_DOMAINS_RESP

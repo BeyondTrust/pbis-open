@@ -252,7 +252,7 @@ LsaJoinDomain(
     PCSTR pszOSName,
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     )
 {
     DWORD dwError = 0;

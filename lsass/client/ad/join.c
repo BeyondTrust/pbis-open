@@ -53,7 +53,7 @@ LsaAdJoinDomain(
     PCSTR pszOSName,
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     )
 {
     DWORD dwError = 0;
@@ -131,7 +131,7 @@ LsaAdLeaveDomain2(
     PCSTR pszUsername,
     PCSTR pszPassword,
     PCSTR pszDomain,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     )
 {
     DWORD dwError = 0;

@@ -50,6 +50,7 @@
 
 #include <lsa/lsa.h>
 #include <sys/types.h>
+#include <lsa/ad-types.h>
 #include <lsa/lsapstore-types.h>
 
 DWORD
@@ -118,7 +119,7 @@ LsaAdJoinDomain(
     PCSTR pszOSName,
     PCSTR pszOSVersion,
     PCSTR pszOSServicePack,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     );
 
 DWORD
@@ -134,7 +135,7 @@ LsaAdLeaveDomain2(
     PCSTR pszUsername,
     PCSTR pszPassword,
     PCSTR pszDomain,
-    DWORD dwFlags
+    LSA_NET_JOIN_FLAGS dwFlags
     );
 
 DWORD
