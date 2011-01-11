@@ -35,6 +35,11 @@
                 <service_fmri value='svc:/system/filesystem/local' />
         </dependency>
 
+        <dependency name='likewise-lwsmd' grouping='require_any'
+                        restart_on='none' type='service'>
+                <service_fmri value='svc:/network/lwsmd' />
+        </dependency>
+
         <dependent name='lwmgmtd-multi-user-server' grouping='optional_all'
                         restart_on='none'>
                 <service_fmri value='svc:/milestone/multi-user-server' />

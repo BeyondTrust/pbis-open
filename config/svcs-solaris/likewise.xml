@@ -17,7 +17,7 @@
 
         <dependency name='likewise-lwsmd' grouping='require_any'
                         restart_on='none' type='service'>
-                <service_fmri value='svc:/network/netlogond' />
+                <service_fmri value='svc:/network/lwsmd' />
         </dependency>
 
         <dependency name='net-loopback' grouping='require_any'
