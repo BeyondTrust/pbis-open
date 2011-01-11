@@ -10,7 +10,6 @@ liblsajoin_la_SOURCES = \
     leave.c          \
     lsakrb5smb.c     \
     lsaldap.c        \
-    query.c          \
     keytab.c         \
     ktldap.c
 

@@ -551,68 +551,6 @@ error:
 }
 
 DWORD
-LsaNetTestJoinDomain(
-    PCSTR pszDomainName,
-    PBOOLEAN pbIsJoined
-    )
-{
-    DWORD dwError = 0;
-    BOOLEAN bIsJoined = FALSE;
-    HANDLE hStore = (HANDLE)NULL;
-    PLWPS_PASSWORD_INFO pPassInfo = NULL;
-    PSTR pszHostname = NULL;
-    
-    dwError = LsaDnsGetHostInfo(&pszHostname);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwpsOpenPasswordStore(
-                LWPS_PASSWORD_STORE_DEFAULT,
-                &hStore);
-    BAIL_ON_LSA_ERROR(dwError);
-    
-    dwError = LwpsGetPasswordByDomainName(
-                hStore,
-                pszDomainName,
-                &pPassInfo);
-
-    switch(dwError)
-    {
-        case LWPS_ERROR_INVALID_ACCOUNT:
-            bIsJoined = FALSE;
-            dwError = 0;
-            break;
-        case 0:
-            bIsJoined = TRUE;
-            break;
-        default:
-            BAIL_ON_LSA_ERROR(dwError);
-    }
-    
-    *pbIsJoined = bIsJoined;
-    
-cleanup:
-
-    if (pPassInfo) {
-        LwpsFreePasswordInfo(hStore, pPassInfo);
-    }
-    
-    if (hStore != (HANDLE)NULL) {
-        LwpsClosePasswordStore(hStore);
-    }
-    
-    LW_SAFE_FREE_STRING(pszHostname);
-
-    return dwError;
-    
-error:
-
-    *pbIsJoined = FALSE;
-
-    goto cleanup;
-}
-
-
-DWORD
 LsaSyncTimeToDC(
     PCSTR  pszDomain
     )

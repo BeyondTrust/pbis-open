@@ -51,12 +51,6 @@
 #include <lsa/ad-types.h>
 
 DWORD
-LsaNetTestJoinDomain(
-    IN OPTIONAL PCSTR pszDomainName,
-    OUT PBOOLEAN pbIsJoined
-    );
-
-DWORD
 LsaJoinDomain(
     PCSTR pszHostname,
     PCSTR pszHostDnsDomain,
@@ -76,28 +70,6 @@ LsaLeaveDomain2(
     PCSTR pszPassword,
     PCSTR pszDomain,
     LSA_NET_JOIN_FLAGS dwFlags
-    );
-
-DWORD
-LsaNetGetShortDomainName(
-    PCSTR pszDomainFQDN,
-    PSTR* ppszShortDomainName
-    );
-
-DWORD
-LsaNetGetRwDCName(
-    PCSTR pszDomainName,
-    PSTR* ppszDCName
-    );
-
-DWORD
-LsaGetDnsDomainName(
-    PSTR* ppszDnsDomainName
-    );
-
-DWORD
-LsaGetComputerDN(
-    PSTR* ppszComputerDN
     );
 
 DWORD
