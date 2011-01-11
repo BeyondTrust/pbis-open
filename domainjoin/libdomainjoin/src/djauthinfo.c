@@ -40,7 +40,6 @@
 #include "ctstrutils.h"
 #include <glob.h>
 #include <dlfcn.h>
-#include <lsa/join.h>
 #include <lsa/lsa.h>
 #include <lsa/ad.h>
 #include <lwnet.h>
@@ -1053,14 +1052,6 @@ void DJNetInitialize(BOOLEAN bEnableDcerpcd, LWException **exc)
         LW_TRY(exc, DJManageDaemon("srvsvcd", TRUE,
                     21, 9, &LW_EXC));
 #endif
-#endif
-
-#if 0
-        /* Do not enable debug logging in lsajoin because
-           it does not respect domainjoin logging settings
-           such as logfile */
-        if(gdjLogInfo.dwLogLevel >= LOG_LEVEL_VERBOSE)
-            lsaFunctions->pfnEnableDebugLog();
 #endif
 
 cleanup:
