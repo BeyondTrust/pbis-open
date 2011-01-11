@@ -249,9 +249,9 @@ postinstall()
 
     fix_60_registry
 
-    exec_log_exit "/etc/init.d/lwsmd stop"
+    exec_log_exit "/etc/rc.d/lwsmd stop"
 
-    exec_log_exit "/etc/init.d/lwsmd start"
+    exec_log_exit "/etc/rc.d/lwsmd start"
 
     exec_logfile "/opt/likewise/bin/domainjoin-cli configure --enable pam"
 
