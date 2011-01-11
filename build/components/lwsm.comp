@@ -83,6 +83,7 @@ function component_populate
     if [ "${BUILD_OS_TYPE}" = 'solaris' ]; then
 	mkdir -p ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris
 	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/lwsmd.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
+	x_cp 0755 ${BUILD_ROOT}/src/linux/config/svcs-solaris/likewise.xml ${POPULATE_ROOT_DIR}/etc/likewise/svcs-solaris/.
     fi
 
     if [ "${BUILD_OS_TYPE}" = 'darwin' ]; then
