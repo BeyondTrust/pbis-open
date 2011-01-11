@@ -1,3 +1,5 @@
+SUBDIRS = join
+
 AM_CPPFLAGS = @AM_CPPFLAGS@ -I$(top_srcdir)/include
 AM_CFLAGS = @AM_CFLAGS@ -Wmissing-prototypes
 
@@ -85,7 +87,7 @@ liblsass_auth_provider_ad_open_la_CFLAGS = $(AM_CFLAGS) $(PROVIDER_CFLAGS)
 # NOTE: Need to remove LSA client dependency.
 liblsass_auth_provider_ad_open_la_LIBADD = \
 	@top_builddir@/common/liblsacommon.la \
-	@top_builddir@/join/liblsajoin.la \
+	@builddir@/join/liblsajoin.la \
 	@top_builddir@/pstore/liblsapstore.la \
 	$(ADDITIONAL_LIBS) \
 	@LWBASE_LIBS@ \

@@ -1,3 +1,5 @@
+SUBDIRS="join"
+
 make()
 {
     AD_SOURCES="\
@@ -46,5 +48,6 @@ make()
 	CPPFLAGS="-DLW_ENABLE_THREADS=1" \
 	INCLUDEDIRS="../../include ../../../include" \
 	HEADERDEPS="lw/base.h lwadvapi.h lwnet.h uuid/uuid.h openssl/rc4.h reg/regutil.h" \
-	LIBDEPS="lsacommon lsajoin lsapstore lsaserverapi sqlite3"
+	LIBDEPS="lsacommon lsapstore lsaserverapi sqlite3" \
+	GROUPS="join/lsajoin"
 }

@@ -13,12 +13,11 @@ make()
         openssl/rand.h dce/rpc.h gssapi.h \
         lwadvapi.h lw/base.h uuid/uuid.h lwps/lwps.h ldap.h lwnet.h"
 
-    mk_library \
-	LIB=lsajoin \
+    mk_group \
+	GROUP="lsajoin" \
 	SOURCES="$LSAJOIN_SOURCES" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
-	INCLUDEDIRS=". ../include ../server/include keytab" \
+	INCLUDEDIRS=". ../../../../include ../../../include" \
 	HEADERDEPS="$LSAJOIN_HEADERDEPS" \
-	LIBDEPS="lsacommon lsarpc lwnetclientapi" \
-	GROUPS="../logging_r/logging_r"
+	LIBDEPS="lsacommon lsarpc lwnetclientapi"
 }

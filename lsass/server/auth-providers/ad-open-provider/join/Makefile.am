@@ -2,7 +2,7 @@ AM_CPPFLAGS =                \
     @AM_CPPFLAGS@            \
     -I$(top_srcdir)/include
 
-lib_LTLIBRARIES = liblsajoin.la
+noinst_LTLIBRARIES = liblsajoin.la
 
 liblsajoin_la_SOURCES = \
     join.c           \
@@ -18,7 +18,6 @@ liblsajoin_la_CPPFLAGS =             \
     $(AM_CPPFLAGS)                   \
     -DLW_ENABLE_THREADS=1            \
     -I$(top_srcdir)/server/include   \
-    -I$(top_srcdir)/join/keytab      \
     $(NETLOGON_INCLUDES)             \
     $(PSTORE_INCLUDES)               \
     $(KRB5_INCLUDES)                 \
@@ -30,7 +29,6 @@ liblsajoin_la_LIBADD =                         \
     $(top_builddir)/client/rpc/liblsarpc.la    \
     $(NETLOGON_LIBS)                           \
     $(PSTORE_LIBS)                             \
-    $(top_builddir)/logging_r/liblsalog_r.la   \
     $(KRB5_LIBS)                               \
     $(LWIO_LIBS)                               \
     $(LWADVAPI_LIBS)                           \

@@ -1066,7 +1066,6 @@ AC_CONFIG_FILES([Makefile
                  client/rpc/krb5pac/Makefile
                  client/rpc/wkssvc/Makefile
                  logging_r/Makefile
-                 join/Makefile
                  interop/Makefile
                  interop/gssntlm/Makefile
                  interop/gssntlm/mech
@@ -1087,6 +1086,7 @@ AC_CONFIG_FILES([Makefile
                  server/ntlm/Makefile
                  server/auth-providers/Makefile
                  server/auth-providers/ad-open-provider/Makefile
+                 server/auth-providers/ad-open-provider/join/Makefile
                  server/auth-providers/local-provider/lpdefs.h
                  server/auth-providers/local-provider/Makefile
                  server/lsassd/Makefile
