@@ -47,7 +47,7 @@ QueryInformation(
 
     DJGetConfiguredDnsDomain(&pDomainJoinInfo->pszDomainName, &inner);
     if (!LW_IS_OK(inner) &&
-            inner->code == ERROR_NO_SUCH_DOMAIN)
+            inner->code == NERR_SetupNotJoined)
     {
         LW_HANDLE(&inner);
     }

@@ -880,23 +880,37 @@ DJGetConfiguredDnsDomain(
     LWException **exc
     )
 {
-    DWORD _err = LsaGetDnsDomainName(ppszDomain);
-    if(_err)
-    {
-        LW_RAISE_LSERR(exc, _err);
-        if(exc != NULL)
-        {
-            switch(_err)
-            {
-                case LW_ERROR_NOT_JOINED_TO_AD:
-                    (*exc)->code = ERROR_NO_SUCH_DOMAIN;
-                    break;
-            }
-        }
-        goto cleanup;
-    }
+    DWORD dwError = 0;
+    PSTR pszDnsDomainName = NULL;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
+
+    dwError = LsaOpenServer(&hLsaConnection);
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    dwError = LsaAdGetMachineAccountInfo(hLsaConnection, NULL, &pAccountInfo);
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    dwError = LwAllocateString(pAccountInfo->DnsDomainName, &pszDnsDomainName);
+    LW_CLEANUP_LSERR(exc, dwError);
+
 cleanup:
-    ;
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszDnsDomainName);
+    }
+
+    if (pAccountInfo)
+    {
+        LsaAdFreeMachineAccountInfo(pAccountInfo);
+    }
+
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
+    *ppszDomain = pszDnsDomainName;
 }
 
 void
@@ -944,14 +958,6 @@ cleanup:
     {
         LwpsClosePasswordStore(hStore);
     }
-}
-
-void
-DJGetDomainRwDC(PCSTR domain, PSTR *dc, LWException **exc)
-{
-    LW_CLEANUP_LSERR(exc, LsaNetGetRwDCName(domain, dc));
-cleanup:
-    ;
 }
 
 void
@@ -1303,9 +1309,51 @@ void DJGuessShortDomainName(PCSTR longName,
                 PSTR *shortName,
                 LWException **exc)
 {
-    LW_CLEANUP_LSERR(exc, LsaNetGetShortDomainName(longName, shortName));
+    DWORD dwError = 0;
+    PSTR pszNetbiosDomainName = NULL;
+    PCSTR pszDnsDomainName = NULL;
+    PSTR pszFreeDnsDomainName = NULL;
+    PLWNET_DC_INFO pDcInfo = NULL;
+
+    if (LW_IS_NULL_OR_EMPTY_STR(longName))
+    {
+        LW_TRY(exc, DJGetConfiguredDnsDomain(&pszFreeDnsDomainName, &LW_EXC));
+        pszDnsDomainName = pszFreeDnsDomainName;
+    }
+    else
+    {
+        pszDnsDomainName = longName;
+    }
+
+    dwError = LWNetGetDCName(
+                    NULL,
+                    pszDnsDomainName,
+                    NULL,
+                    0,
+                    &pDcInfo);
+    LW_CLEANUP_LSERR(exc, dwError);
+
+    if (LW_IS_NULL_OR_EMPTY_STR(pDcInfo->pszNetBIOSDomainName))
+    {
+        dwError = LW_ERROR_NO_NETBIOS_NAME;
+        LW_CLEANUP_LSERR(exc, dwError);
+    }
+
+    dwError = LwAllocateString(
+                    pDcInfo->pszNetBIOSDomainName,
+                    &pszNetbiosDomainName);
+    LW_CLEANUP_LSERR(exc, dwError);
+
 cleanup:
-    ;
+    if (dwError)
+    {
+        LW_SAFE_FREE_STRING(pszNetbiosDomainName);
+    }
+
+    LW_SAFE_FREE_STRING(pszFreeDnsDomainName);
+    LWNET_SAFE_FREE_DC_INFO(pDcInfo);
+
+    *shortName = pszNetbiosDomainName;
 }
 
 DWORD
