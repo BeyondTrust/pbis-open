@@ -77,6 +77,7 @@ endif
 liblsass_auth_provider_ad_open_la_CPPFLAGS = \
 	$(AM_CPPFLAGS)                \
     -DLW_ENABLE_THREADS=1         \
+	-I$(srcdir)/join/include \
 	-I@top_srcdir@/server/include \
         $(PROVIDER_CPPFLAGS)          \
 	@LWBASE_INCLUDES@             \

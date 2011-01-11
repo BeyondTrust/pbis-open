@@ -17,6 +17,7 @@ liblsajoin_la_SOURCES = \
 liblsajoin_la_CPPFLAGS =             \
     $(AM_CPPFLAGS)                   \
     -DLW_ENABLE_THREADS=1            \
+    -I$(srcdir)/include              \
     -I$(top_srcdir)/server/include   \
     $(NETLOGON_INCLUDES)             \
     $(PSTORE_INCLUDES)               \

@@ -7,8 +7,7 @@ make()
         lsa/lsapstore-plugin.h \
         lsa/ad.h \
         lsa/ad-types.h \
-        lsa/provider.h \
-	lsa/join.h
+        lsa/provider.h
 
     mk_headers \
 	lw/rpc/common.h          \
@@ -26,7 +25,6 @@ make()
 	lsadatablob.h           \
 	lsadef.h                \
 	lsaipc.h                \
-	lsakrb5smb.h            \
 	lsalist.h               \
 	lsasrvcred.h            \
 	lsasystem.h             \

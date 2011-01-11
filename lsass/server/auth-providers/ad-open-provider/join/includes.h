@@ -65,7 +65,6 @@
 #include <lwps/lwps.h>
 #include <lw/winerror.h>
 #include <lwnet.h>
-#include <keytab.h>
 
 #include <lwio/lwio.h>
 
@@ -74,7 +73,7 @@
 #include <lw/rpc/netlogon.h>
 #include <lw/rpc/krb5pac.h>
 
-#include <lsa/join.h>
+#include "lsajoin.h"
 #include "join_p.h"
 #include <ldap.h>
 #include "ldaputil.h"

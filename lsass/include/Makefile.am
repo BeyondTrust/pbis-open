@@ -1,7 +1,6 @@
 lsaincludedir = $(includedir)/lsa
 lsainclude_HEADERS = \
     lsa/lsa.h \
-    lsa/join.h \
     lsa/lsapstore-types.h \
     lsa/lsapstore-api.h \
     lsa/lsapstore-plugin.h \
@@ -38,7 +37,6 @@ lsainternal_HEADERS =       \
     lsadatablob.h           \
     lsadef.h                \
     lsaipc.h                \
-    lsakrb5smb.h            \
     lsalist.h               \
     lsasrvcred.h            \
     lsasystem.h             \

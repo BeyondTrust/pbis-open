@@ -51,7 +51,7 @@
 #include "lsasystem.h"
 #include "lsadef.h"
 #include "lsa/lsa.h"
-#include "lsa/join.h"
+#include "lsajoin.h"
 #include "lsa/lsapstore-types.h"
 
 #include <openssl/md4.h>

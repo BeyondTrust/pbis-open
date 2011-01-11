@@ -17,7 +17,7 @@ make()
 	GROUP="lsajoin" \
 	SOURCES="$LSAJOIN_SOURCES" \
 	CPPFLAGS="-DLW_ENABLE_THREADS" \
-	INCLUDEDIRS=". ../../../../include ../../../include" \
+	INCLUDEDIRS="include ../../../../include ../../../include" \
 	HEADERDEPS="$LSAJOIN_HEADERDEPS" \
 	LIBDEPS="lsacommon lsarpc lwnetclientapi"
 }
