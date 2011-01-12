@@ -392,6 +392,7 @@ S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_UID_TOO_HIGH, -1, "The specified user 
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GID_TOO_LOW, -1, "The specified group ID too low" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_GID_TOO_HIGH, -1, "The specified group ID too high" )
 S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_FAILED, -1, "Certificate auto-enrollment failed with a general SOAP fault" )
+S ( LW_STATUS_MESSAGE_NOT_FOUND, LW_ERROR_AUTOENROLL_HTTP_REQUEST_FAILED, -1, "Certificate auto-enrollment HTTP request failed" )
 
 #include "lwerror-table-krb5.h"
 
