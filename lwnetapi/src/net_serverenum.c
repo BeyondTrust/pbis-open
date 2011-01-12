@@ -45,6 +45,7 @@
  */
 
 #include "includes.h"
+#include <lsa/ad.h>
 
 
 NET_API_STATUS
@@ -67,7 +68,6 @@ NetServerEnum(
     DWORD dwTotalNumEntries = 0;
     DWORD dwResume = 0;
     PSTR pszDomain = NULL;
-    PSTR pszDomainFqdn = NULL;
     PSTR pszDomainName = NULL;
     PSTR pszSiteName = NULL;
     DWORD dwFlags = 0;
@@ -85,6 +85,8 @@ NetServerEnum(
     DWORD dwTotalSize = 0;
     PVOID pBufferCursor = NULL;
     NET_VALIDATION_LEVEL eValidation = NET_VALIDATION_NONE;
+    HANDLE hLsaConnection = NULL;
+    PLSA_MACHINE_ACCOUNT_INFO_A pAccountInfo = NULL;
 
     BAIL_ON_INVALID_PTR(ppBuffer, winError);
     BAIL_ON_INVALID_PTR(pdwNumEntries, winError);
@@ -125,14 +127,19 @@ NetServerEnum(
     }
     else
     {
-        winError = LWNetGetCurrentDomain(&pszDomainFqdn);
-        if (winError == ERROR_NOT_JOINED)
+        winError = LsaOpenServer(&hLsaConnection);
+        BAIL_ON_WIN_ERROR(winError);
+
+        winError = LsaAdGetMachineAccountInfo(hLsaConnection,
+                                              NULL,
+                                              &pAccountInfo);
+        if (winError == NERR_SetupNotJoined)
         {
             winError = ERROR_BAD_NETPATH;
         }
         BAIL_ON_WIN_ERROR(winError);
 
-        pszDomainName = pszDomainFqdn;
+        pszDomainName = pAccountInfo->DnsDomainName;
     }
 
     if (pdwResume)
@@ -276,6 +283,11 @@ cleanup:
         SrvSvcCloseContext(pSrvsCtx);
     }
 
+    if (hLsaConnection)
+    {
+        LsaCloseServer(hLsaConnection);
+    }
+
     for (iDc = 0; iDc < dwDcCount; iDc++)
     {
         if (ppInfo[iDc])
@@ -286,7 +298,7 @@ cleanup:
     LW_SAFE_FREE_MEMORY(ppInfo);
 
     LW_SAFE_FREE_MEMORY(pszDomain);
-    LWNetFreeString(pszDomainFqdn);
+    LsaAdFreeMachineAccountInfo(pAccountInfo);
     pszDomainName = NULL;
 
     LWNetFreeDCList(pDcList, dwDcCount);
