@@ -1,0 +1,550 @@
+1.OpenSOAP Envelopeに対するセキュリティ関数群
+
+(1)
+【名前】
+  RSA鍵の生成
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecGenerateRSAKeys(const unsigned char* szSeedPhrase,
+                               FILE* fpPrivKey, FILE* fpPubKey);
+int OpenSOAPSecGenerateRSAKeysToFile(const unsigned char* szSeedPhrase,
+                                     const char* szPrivKeyFileName,
+                                     const char* szPubKeyFileName);
+
+【説明】
+  OpenSOAPSecGenerateRSAKeys() は、秘密鍵と公開鍵のペアを作成し、秘密鍵を
+  fpPrivKey に、公開鍵を fpPubKey に書き込む。
+  OpenSOAPSecGenerateRSAKeysToFile() は、秘密鍵と公開鍵の書き込み先を、そ
+  れぞれ szPrivKeyFileName, szPubKeyFileName で示すファイル名で与えること
+  を除いて、OpenSOAPSecGenerateRSAKeys() と同様である。
+  szSeedPhrase は、鍵生成の際に内部的にランダム値を生成利用するための文字
+  列であり、任意の文字列を指定して良い。szSeedPhrase は、RSA鍵の生成時のみ
+  利用され、その他の局面で必要とされることは無い。また、同一のszSeedPhrase
+  を与えても、一般には異なる鍵のペアが生成される。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(2)
+【名前】
+  暗号化
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecEncWithStream(OpenSOAPEnvelopePtr env, FILE* fpPubKey);
+int OpenSOAPSecEncWithFile(OpenSOAPEnvelopePtr env,
+                           const char* szPubKName);
+
+【説明】
+  OpenSOAPSecEncWithStream() は、Body内の下記条件に該当する属性を持つ要素
+  全てに対し、その値をfpPubKeyにて与えられるRSA公開鍵を用いて暗号化する。
+
+・属性名   : encrypt
+・namespace: http://opensoap.jp/auth/
+・値       : true (boolean)
+
+  OpenSOAPSecEncWithFile() は、公開鍵の指定を szPubKName で示されるファイ
+  ル名とする点を除いて OpenSOAPSecEncWithStream() と同様である。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(3)
+【名前】
+  復号化
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecDecWithStream(OpenSOAPEnvelopePtr env,
+                             FILE* fpPrivKey);
+int OpenSOAPSecDecWithFile(OpenSOAPEnvelopePtr env,
+                           const char* szPrivKName);
+
+【説明】
+  OpenSOAPSecDecWithStream() は、Body内の下記条件に該当する属性を持つ要素
+  全てに対し、その値をfpPrivKeyにて与えられるRSA秘密鍵を用いて復号化する。
+
+・属性名   : encrypt
+・namespace: http://opensoap.jp/auth/
+・値       : true (boolean)
+
+  OpenSOAPSecDecWithFile() は、秘密鍵の指定を szPrivKName で示されるファイ
+  ル名とする点を除いて OpenSOAPSecDecWithStream() と同様である。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(4)
+【名前】
+  電子署名の付加
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecAddSignWithStream(OpenSOAPEnvelopePtr env,
+                                 int iType, FILE* fpPrivKey);
+int OpenSOAPSecAddSignWithFile(OpenSOAPEnvelopePtr env,
+                               int iType, const char* szPrivKName);
+
+【説明】
+  OpenSOAPSecAddSignWithStream() は、Body部全体に対するRSA電子署名を作成し、
+  ヘッダ部に付加する。署名作成に当たっては、 fpPrivKey で与えれる秘密鍵を利
+  用する。
+  また、iType には、電子署名を作成するに当たって利用するハッシュアルゴリズ
+  ムを指定する。以下の値のどれかを指定する。
+
+  OPENSOAP_HA_MD5    : MD5アルゴリズム
+  OPENSOAP_HA_RIPEMD : RIPEMD160アルゴリズム
+  OPENSOAP_HA_SHA    : SHAアルゴリズム
+
+  なお、このEnvelopeに電子署名が既に付加されていても構わない。(追記する)
+  OpenSOAPSecAddSignWithFile() は、秘密鍵の指定を szPrivKName で示される
+  ファイル名とする点を除いて OpenSOAPSecAddSignWithStream() と同様である。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(5)
+【名前】
+  電子署名数のカウント
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int	OpenSOAPSecCntSign(const OpenSOAPEnvelopePtr env,
+                       int* pnSig);
+
+【説明】
+  envにて与えられるエンペロープに対し、現在付加されている署名の数を取得し、
+  pnSigが指す領域に格納する。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(6)
+【名前】
+  署名者リストの取得
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int	OpenSOAPSecGetSignedByList(OpenSOAPEnvelopePtr env,
+    	                       int nCntMax,
+                               OpenSOAPStringPtr list[],
+                           	   int* pnCntPacked);
+
+【説明】
+  署名者リストを取得する。呼出側がnCntMax 個だけ list で示す結果格納領域を
+  準備する。 pnCntPackedで示した領域に取得した個数が格納される。
+ (最大で nCntMax 個)
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(7)
+【名前】
+  電子署名の検証
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecVerifySignWithStream(OpenSOAPEnvelopePtr env,
+                                    FILE* fpPubKey);
+int OpenSOAPSecVerifySignWithFile(OpenSOAPEnvelopePtr env,
+                                  const char* szPubKName);
+
+【説明】
+  OpenSOAPSecVerifySignWithStream() は、Body部全体に対するRSA電子署名を
+  検証する。署名検証に当たっては、 fpPubKey で与えられる公開鍵を利用する。
+  署名が複数ある場合は、最低１個が検証OKとなればOKとする。
+  OpenSOAPSecVerifySignWithFile() は、公開鍵の指定を szPubKName で示さ
+  れるファイル名とする点を除いて OpenSOAPSecVerifySignWithStream() と
+  同様である。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+2.ツール関数群
+
+(x)
+【名前】
+  鍵ファイルのバイナリ化
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecDecodeKeyFile(FILE* fp, unsigned long* pulLenOut,
+                             unsigned char** ppucDecode);
+
+【説明】
+  fpにて与えられる鍵ファイルをバイナリ化する。バイナリ化後のデータサイズは
+  pulLenOutの指す領域に書き込まれる。また、バイナリ化されたデータは
+  ppucDecode の指す領域に書き込まれる。バイナリ化されたデータは、利用後
+  free()をコールして開放すること。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+3.認証局上でのデータ操作関連関数群
+
+3.1.準備項目
+
+  本関数群を利用する前に、認証局データベースのファイル名を示す環境変数を
+準備する必要がある(環境変数名：OPENSOAP_CA_DATABASE)。
+  この環境変数に、利用するデータベースのパス名を指定しておくこと。
+  また、このパス名に対し、管理用に "_sno"を末尾に付加したファイルも
+自動生成、利用することに注意。
+
+例)
+  認証局データベースファイル名：/home/CA/CA.db
+  としたとき、同時に"/home/CA/CA.db_sno"というファイルも生成利用される。
+  
+(1)
+【名前】
+  ブラウズ表示(テスト用)
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCABrowse(FILE* fpOut);
+int OpenSOAPSecCABrowseRec(const OpenSOAPCARecPtr pRec,
+                           FILE* fpOut);
+
+【説明】
+  OpenSOAPSecCABrowse() は、現在のCA-DBの全内容をfpOutに対しブラウズ出力
+  する。
+  １行に対し、１レコード分出力する。
+  １行には次の情報群が順に出力される。
+
+  (a)シリアル番号
+     10進数10桁で表示される。シリアル番号はDB内でユニークな数値であり、
+     一旦登録されると以降変更されることは無い。
+  (b)失効情報
+     そのレコードが失効している場合は、文字'*'が出力され、そうでない場
+     合はスペースが出力される。
+  (c)所有者名称
+     括弧("[]")で囲まれた文字列として出力される。
+  (d)有効期限
+     年月日時分秒の順に、年のみ4桁、その他2桁で出力される。
+
+     <失効データの例>
+     0000000002*[Juventus] 20020211120000
+     <通常データの例>
+     0000000003 [A.C.Milan] 20020201120000
+
+  OpenSOAPSecCABrowseRec() は、同様に対象を１レコードとしたものである。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(2)
+【名前】
+  公開鍵の登録
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCARegist(const char* szNameOwner, const char* szTermDate,
+                        size_t sizPubkey, const unsigned char* szPubKey,
+                        unsigned long* pulSerialNo);
+
+【説明】
+  公開鍵を登録する。以下に示す値を設定する
+  (a)szNameOwner
+     鍵の所有者名称(文字列)。文字列長は、最大 OPENSOAP_CA_OWNER_LEN - 1 と
+     すること。
+  (b)szTermDate
+     有効期限を、年月日時分秒の順に、年のみ4桁、その他2桁とした文字列で指定
+     する(例："20020211120000")。文字列長は14桁固定<OPENSOAP_CERT_DATE_LEN>、
+     末尾はNULL文字で終了すること。
+  (c)sizPubKey
+     公開鍵のデータ長(バイト数)。OpenSOAPSecDecodeKeyFile()を用いて、バイナ
+     リ化した後のデータに対する値とする。
+  (d)szPubKey
+     公開鍵データ(バイナリ)。
+
+  本関数が成功すると、pulSerialNoで示す領域に登録されたシリアル番号が返され
+  る。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(3)
+【名前】
+  公開鍵の失効設定
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAInvalidate(const char* szNameOwner, unsigned long ulSerial);
+
+【説明】
+  所有者名が szNameOwner で、シリアル番号が ulSerial であるレコードを失効と
+  する。本処理では、レコードの削除までは行わず、失効されたレコード自体は
+  データベースに残る。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(4)
+【名前】
+  指定所有者のレコードの検索
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCASearchRecords(const char* szNameOwner,
+                               int* pnRec, long** pplIdxs);
+int OpenSOAPSecCASearchOneRecord(const char* szNameOwner,
+                                 OpenSOAPCARecPtr* ppRec);
+
+【説明】
+  OpenSOAPSecCASearchRecords() は、 szNameOwner で指定した所有者名に該当
+  する全てのレコードを検索し、その数を pnRec が指す領域に格納する。また、
+  pplIdxs が指す領域には、その数分のインデックス群(シリアル番号ではない)を
+  格納する領域を確保し、インデックス群を格納する。このインデックス群の領域
+  は、利用後 free() によって開放すること。このそれぞれのインデックスから、
+  OpenSOAPSecCAGetRecord() を利用することによって実際のレコードを取得する
+  ことが可能となる。
+  OpenSOAPSecCASearchOneRecord() は、 szNameOwner で指定した所有者名に該当
+  するレコードを１個検索し、 ppRec が指す領域に格納する。同一所有者のレコー
+  ドが複数存在する場合は、最も有効期限が遅いレコードを取得する。
+  取得したレコードは、使用後 OpenSOAPSecCAFreeRecord() を用いて開放すること。
+
+  なお、両方の関数共に、失効したレコードは検索対象から除外される。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(5)
+【名前】
+  レコード取得
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAGetRecord(long lIdx, OpenSOAPCARecPtr* ppRec);
+
+【説明】
+ lIdxで示したレコードを取得し、 ppRec が指す領域に格納する。
+  取得したレコードは、使用後 OpenSOAPSecCAFreeRecord() を用いて開放すること。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+(6)
+【名前】
+  レコードの開放
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAFreeRecord(OpenSOAPCARecPtr pRec);
+
+【説明】
+  pRecで与えられたレコードの領域を開放する。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+(7)
+【名前】
+  レコードの削除
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCARemoveRecord(unsigned long ulSerial);
+
+【説明】
+  シリアル番号 ulSerial を持つレコードをデータベースから完全に削除する。
+  本関数は、レコード自体は残される OpenSOAPSecCAInvalidate() とは異なること
+  に注意のこと。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+3.電子証明書の操作関連関数群
+
+(1)
+【名前】
+  電子証明書の作成
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertCreateWithStream(const char* szPublish,
+                                    FILE* fpPrivKey,
+                                    int iHashType,
+                                    const OpenSOAPCARecPtr pRec,
+                                    FILE* fpCert);
+int OpenSOAPSecCertCreateWithFile(const char* szPublish,
+                                  const char* szPrivKeyFile,
+                                  int iHashType,
+                                  const OpenSOAPCARecPtr pRec,
+                                  const char* szCertName);
+
+【説明】
+  電子証明書を作成する。
+  OpenSOAPSecCertCreateWithStream() は、以下のデータを受けて電子証明書を
+  fpCert に書き込む。
+
+  (a) szPublish : 発行者名
+  (b) fpPrivKey : 発行者の秘密鍵ファイルのストリーム
+  (c) iHashType : 署名の際のハッシュアルゴリズム。以下から選択する
+        OPENSOAP_HA_MD5    : MD5アルゴリズム
+        OPENSOAP_HA_RIPEMD : RIPEMD160アルゴリズム
+        OPENSOAP_HA_SHA    : SHAアルゴリズム
+  (d) pRec      : 認証局データベースのレコード
+
+  OpenSOAPSecCertCreateWithFile() は、秘密鍵と電子証明書をそれぞれファイル
+  名指定とする(szPrivKeyFile, szCertName)点を除いて
+  OpenSOAPSecCertCreateWithStream() と同様である。
+  
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+(2)
+【名前】
+  電子証明書のロード
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertLoadFromMem(size_t sizArea,
+                               const unsigned char* pucArea,
+                               OpenSOAPSecCertPtr* ppCert);
+int OpenSOAPSecCertLoad(const char* szName,
+                        OpenSOAPSecCertPtr* ppCert);
+
+【説明】
+  OpenSOAPSecCertLoadFromMem() は、pucArea で示された sizArea の領域から
+  電子証明書をロードし、ppCert の指す領域に格納する。
+  OpenSOAPSecCertLoad() は、ロード元が szName で示される領域である点を除
+  いて、 OpenSOAPSecCertLoadFromMem() と同様である。
+  取得した電子証明書は、利用後 OpenSOAPSecCertFree() を用いて開放すること。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+(3)
+【名前】
+  電子証明書の開放
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertFree(OpenSOAPSecCertPtr pCert);
+
+【説明】
+  pCertで与えられた電子証明書の領域を開放する。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(4)
+【名前】
+  電子証明書に対する署名検証
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertVerifyWithStream(FILE* fpCert,
+                                    FILE* fpPubKey);
+int OpenSOAPSecCertVerifyWithFile(const char* szCertName,
+                                  const char* szPubKeyName);
+
+【説明】
+  指定された公開鍵を利用して、電子証明書の署名を検証する。
+  OpenSOAPSecCertVerifyWithStream() は、電子証明書、公開鍵にそれぞれ fpCert,
+  fpPubKey で示されるファイルポインタを与える。
+  OpenSOAPSecCertVerifyWithFile() は、電子証明書、公開鍵にそれぞれ szCertName,
+  szPubKeyName で示されるファイル名を与える。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(5)
+【名前】
+  証明書内の各データの参照
+
+【書式】
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertGetPublisherName(OpenSOAPSecCertPtr pCert,
+                                    char** pszName);
+int OpenSOAPSecCertGetSerialNo(OpenSOAPSecCertPtr pCert,
+                               unsigned long* pulSerial);
+int OpenSOAPSecCertGetOwnerName(OpenSOAPSecCertPtr pCert,
+                                char** pszName);
+int OpenSOAPSecCertGetEndDate(OpenSOAPSecCertPtr pCert,
+                              char** pszDate);
+int OpenSOAPSecCertGetPubKey(OpenSOAPSecCertPtr pCert,
+                              const char* szSaveName);
+
+【説明】
+  pCert で示される電子証明書の内容を参照する関数群である。
+  OpenSOAPSecCertGetPublisherName() は、発行者名を pszName が指す領域に設定
+  する。この領域は電子証明書内の領域を指すので開放しないこと。
+  OpenSOAPSecCertGetSerialNo() は、シリアル番号を pulSerial が指す領域に格納
+  する。
+  OpenSOAPSecCertGetEndDate() は、証明書の有効期限を、年月日時分秒の順に、
+  年のみ4桁、その他2桁とした文字列で pszDate が示す領域に設定する。
+  (例："20020211120000")
+  この領域は電子証明書内の領域を指すので開放しないこと。またNULL文字で終了して
+  いないことに注意のこと(文字列長は14桁固定である<OPENSOAP_CERT_DATE_LEN>)。
+  OpenSOAPSecCertGetPubKey() は、電子証明書内の公開鍵を取得し、 szSaveName で
+  示すファイルに格納する。この公開鍵はASCII化されたものであって、本ライブラリ
+  で通常利用する公開鍵と同一の書式である。
+
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+
+【バグ】
+
+(z)
+【名前】
+【書式】
+【説明】
+【返り値】
+  OpenSOAP API のエラーコードが返される。
+【バグ】
+
+                                                                  以上

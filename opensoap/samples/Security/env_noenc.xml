@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Header><t:Transaction xmlns:t="some-URI" mustUnderstand="1" actor="http://www.w3.org/2001/06/soap-envelope/actor/next" nanika="">5</t:Transaction></SOAP-ENV:Header><SOAP-ENV:Body><m:Add xmlns:m="http://tempuri.org/message/"><A xmlns:a="http://opensoap.jp/auth/" a:encrypt="False">5.000000</A><B xmlns:a="http://opensoap.jp/auth/" a:encrypt="False">6.000000</B></m:Add></SOAP-ENV:Body></SOAP-ENV:Envelope>

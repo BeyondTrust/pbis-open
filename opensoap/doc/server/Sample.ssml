@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='Sample' nsuri='http://service.opensoap.jp/samples/Sample/'>
+	    <connection name='Sample1'>
+		<Socket hostname='localhost' port='10000'/>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample2'>
+		<StdIO>
+		    <exec prog='/usr/local/bin/SampleCpp2' option='-u -N' />
+		</StdIO>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample3'>
+		<HTTP>
+		  <url>http://services.opensoap.jp/cgi-bin/TargetService.cgi</url>
+		</HTTP>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample4'>
+		<FIFO send_pipename='samples' receive_pipename='sampler'>
+		    <exec prog='/usr/local/bin/SampleCpp2' option='-u -N' />
+		</FIFO>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample5'>
+		<IPC KeyFilename='samplek'/>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample6'>
+		<Module name='satomodule' configfile='/home/sato/.satomodule' >
+		    <exec prog='/usr/local/bin/SampleCpp2' option='-u -N' />
+		</Module>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+	    <connection name='Sample7'>
+		<COM dispID='12345' >
+		    <exec prog='/usr/local/bin/SampleCpp2' option='-u -N' />
+		</COM>
+		<synchronizedTTL count="second" >10</synchronizedTTL>
+		<MaxProccessNumber>12</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='Sample1'>add</operation>
+	    <operation type ='Sample2'>sub</operation>
+	    <operation type ='Sample3'>mul</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

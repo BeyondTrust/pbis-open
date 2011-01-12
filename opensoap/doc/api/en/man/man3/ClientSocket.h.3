@@ -1,0 +1,197 @@
+.TH "ClientSocket.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+ClientSocket.h \- OpenSOAP API Client Socket Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPClientSocket \fBOpenSOAPClientSocket\fP"
+.br
+.RI "\fIOpenSOAPClientSocket Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPClientSocket\fP * \fBOpenSOAPClientSocketPtr\fP"
+.br
+.RI "\fIOpenSOAPClientSocket Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketCreate\fP (\fBOpenSOAPClientSocketPtr\fP *s)"
+.br
+.RI "\fIOpenSOAP ClientSocket instance create. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketCreateSecure\fP (\fBOpenSOAPClientSocketPtr\fP *s)"
+.br
+.RI "\fIOpenSOAP ClientSocket instance create in SSL. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketRelease\fP (\fBOpenSOAPClientSocketPtr\fP s)"
+.br
+.RI "\fIRelease OpenSOAP ClientSocket. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketOpen\fP (\fBOpenSOAPClientSocketPtr\fP s, const char *node, const char *service)"
+.br
+.RI "\fIOpen and Connect OpenSOAP ClientSocket. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketClose\fP (\fBOpenSOAPClientSocketPtr\fP s)"
+.br
+.RI "\fIClose OpenSOAP ClientSocket. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketRead\fP (\fBOpenSOAPClientSocketPtr\fP s, unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIRead from OpenSOAP ClientSocket. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketWrite\fP (\fBOpenSOAPClientSocketPtr\fP s, const unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIWrite to OpenSOAP ClientSocket. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPClientSocketReadToDelm\fP (\fBOpenSOAPClientSocketPtr\fP s, const unsigned char *delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.br
+.RI "\fIRead up to delimiter from OpenSOAP ClientSocket. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Client Socket Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPClientSocketClose (\fBOpenSOAPClientSocketPtr\fP s)"
+.PP
+Close OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketCreate (\fBOpenSOAPClientSocketPtr\fP * s)"
+.PP
+OpenSOAP ClientSocket instance create. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr * [out] ((|s|)) OpenSOAP ClientSocket pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketCreateSecure (\fBOpenSOAPClientSocketPtr\fP * s)"
+.PP
+OpenSOAP ClientSocket instance create in SSL. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr * [out] ((|s|)) OpenSOAP ClientSocket pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketOpen (\fBOpenSOAPClientSocketPtr\fP s, const char * node, const char * service)"
+.PP
+Open and Connect OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.br
+\fInode\fP const char * [in] ((|node|)) hostname, and so on node. (i.e. 'www.isrc.co.jp', '192.168.0.1', ...) 
+.br
+\fIservice\fP const char * [in] ((|service|)) service. (i.e. 'http', 'ftp', 'smtp', '8080', ...) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketRead (\fBOpenSOAPClientSocketPtr\fP s, unsigned char * buf, size_t * buf_sz)"
+.PP
+Read from OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.br
+\fIbuf\fP unsigned char * [in] ((|buf|)) buffer for read data 
+.br
+\fIbuf_sz\fP size_t * [in, out] ((|buf_sz|)) Size of buffer. After this function call, returns actual size read. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketReadToDelm (\fBOpenSOAPClientSocketPtr\fP s, const unsigned char * delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.PP
+Read up to delimiter from OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.br
+\fIdelm\fP const unsigned char * [in] ((|delm|)) Delimiter data array 
+.br
+\fIdelm_sz\fP size_t [in] ((|delm_sz|)) Delimiter data size 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [out] ((|buf|)) Buffer for read data 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketRelease (\fBOpenSOAPClientSocketPtr\fP s)"
+.PP
+Release OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPClientSocketWrite (\fBOpenSOAPClientSocketPtr\fP s, const unsigned char * buf, size_t * buf_sz)"
+.PP
+Write to OpenSOAP ClientSocket. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPClientSocketPtr [in] ((|s|)) OpenSOAP ClientSocket 
+.br
+\fIbuf\fP const unsigned char * [in] ((|buf|)) buffer for write data 
+.br
+\fIbuf_sz\fP size_t * ((|buf_sz|)) Size of buffer. After this function call, return write size. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

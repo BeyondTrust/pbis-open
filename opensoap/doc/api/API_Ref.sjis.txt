@@ -1,0 +1,2447 @@
+------------------------------------------------------------------------------
+                           「OpenSOAP API Reference]
+
+                              OpenSOAP Ver.1.0
+------------------------------------------------------------------------------
+1. 目次
+2. はじめに
+  2. 1. 本書の記述に関して
+3. 関数仕様
+  3. 1. OpenSOAP Class
+  3. 2. OpenSOAP String Class
+  3. 3. OpenSOAP ByteArray
+  3. 4. OpenSOAP String Hash Class
+  3. 5. OpenSOAP Serializer class
+  3. 6. OpenSOAP Envelope Class
+  3. 7. OpenSOAP Block Element
+  3. 8. OpenSOAP XML Element class
+  3. 9. OpenSOAP XML Attribute class
+  3.10. OpenSOAP XML Namespace Class
+  3.11. OpenSOAP Client Socket Class
+  3.12. OpenSOAP Transport class
+  3.13. OpenSOAP Service class 
+4. 補足資料
+  4. 1. OpenSOAP Error code
+  4. 2. OpenSOAP Error code judge macro.
+------------------------------------------------------------------------------
+2.はじめに
+  2.1.  本書の記述に関して
+      本書関数仕様にて、関数名および関数説明にて記述されている(MB)/(WC)は以下の
+      意味をあらわします。
+     （ただしWCは一部サポートしておりません）
+      MB : Multi Byte 
+      WC : Wide Charactor
+      また、関数仕様は以下の記述規定によって記述されています。
+      例）  2.1.OpenSOAP Class・・・・・・・・・・・・・クラス名
+                記述ファイル：OpenSOAP.h・・・・・・・・当関数記述ヘッダファイル名
+                使用ヘッダファイル：<Defines.h> ・・・・当ヘッダファイルにて参照し
+　　　　　　　　　　　　　　　　　　　　　　　　　　　　ているヘッダファイル名
+
+                2.1.1.OpenSOAP API 初期化 ・・・・・・・関数概要
+                      関数名OpenSOAPInitialize・・・・・関数名
+                      概  要 OpenSOAP APIを使用する際の各初期化処理を行います。
+                      形  式 OpenSOAPInitialize(param)・使用形式
+                      仮引数 名前       型         I/O  説明
+                             param      void *     I    
+                                            ・・・・・・仮引数情報
+                                                        I : Input Paramater
+                                                        O : OutPut Paramater
+                      戻  値 型         説明
+                             int        エラーコード
+                                            ・・・・・・戻値情報
+
+------------------------------------------------------------------------------
+3.関数仕様
+  3.1.OpenSOAP Class
+      記述ファイル：OpenSOAP.h
+      使用ヘッダファイル：<OpenSOAP/Defines.h>
+
+      3.1.1.OpenSOAP API 初期化
+            関数名OpenSOAPInitialize
+            概  要 OpenSOAP APIを使用する際の各初期化処理を行います。
+            形  式 OpenSOAPInitialize(param)
+            仮引数 名前       型         I/O  説明
+                   param      void *     I    
+            戻  値 型         説明
+                   int        エラーコード
+
+      3.1.2.OpenSOAP API 開放
+            関数名OpenSOAPUltimate
+            概  要 OpenSOAP APIを使用した際の領域の開放を行います。
+            形  式 OpenSOAPUltimate()
+            仮引数 名前       型         I/O 説明
+                   なし
+            戻  値 型         説明
+                   int        エラーコード
+
+  3.2.OpenSOAP String Class
+      記述ファイル：String.h
+      使用ヘッダファイル： <OpenSOAP/ByteArray.h>
+      使用構造体定義：     typedef struct tagOpenSOAPString OpenSOAPString;
+                           typedef OpenSOAPString    *OpenSOAPStringPtr;
+              ・find string condition function
+                typedef int (*OpenSOAPStringFindIfFunc)(void * /* [in, out] */ opt,
+                                                        wchar_t /* [in] */ c,
+                                                        int * /* [out] */ judge);
+
+      3.2.1.OpenSOAP 文字列の作成
+            関数名 OpenSOAPStringCreate 
+            概  要 長さ 0 の OpenSOAP 文字列を作成します。
+            形  式 OpenSOAPStringCreate(str) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr *   out 作成した OpenSOAP 文字列の
+                                                        ポインタの格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.2. マルチバイト文字列により初期化した OpenSOAP 文字列の作成
+            関数名 OpenSOAPStringCreateWithMB 
+            概  要 マルチバイト文字列により初期化した OpenSOAP 文字列を作成します。
+                   MultiByte str initialize 
+            形  式 OpenSOAPStringCreateWithMB(mb_str, str) 
+            仮引数 名前       型                    I/O 説明
+                   mb_str     const char *          in  設定したいマルチバイト文字列。
+                   str        OpenSOAPStringPtr *   out 作成した OpenSOAP 文字列の
+                                                        ポインタの格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.3.ワイドキャラクタ文字列により初期化した OpenSOAP 文字列の作成
+            関数名 OpenSOAPStringCreateWithWC 
+            概  要 ワイドキャラクタ文字列により初期化した OpenSOAP 文字列を作成します。
+                   wchar_t str initialize
+            形  式 OpenSOAPStringCreateWithWC(wc_str, str) 
+            仮引数 名前       型                    I/O 説明
+                   wc_str     const wchar_t *       in  設定したいワイドキャラクタ文字列。
+                   str        OpenSOAPStringPtr *   out 作成した OpenSOAP 文字列の
+                                                        ポインタの格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.4.Character-encoding 指定文字列により初期化した OpenSOAP 文字列の作成
+            関数名 OpenSOAPStringCreateWithCharEncodingString 
+            概  要 Character-encoding 指定文字列により初期化した OpenSOAP 文字列を作成します。
+                   char encoding str initialize
+            形  式 OpenSOAPStringCreateWithCharEncodingString(char_enc, char_enc_str, str) 
+            仮引数 名前         型                   I/O 説明
+                   char_enc     const char *         in  指定 Character-encoding 。
+                   char_enc_str OpenSOAPByteArrayPtr in  設定したい文字列データ。
+                   str          OpenSOAPStringPtr *  out 作成した OpenSOAP 文字列のポインタ
+                                                         の格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.5.文字列保持
+            関数名 OpenSOAPStringRetain 
+            概  要 OpenSOAPStrPtrへの参照を保持します。
+                   Use OpenSOAPString Resource retain.
+                   this term from Objective-C
+            形  式 OpenSOAPStringRetain(str) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP 文字列
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.6.参照の開放
+            関数名 OpenSOAPStringRelease 
+            概  要 参照を開放します。参照先がなくなった場合、リソースの開放も行います。
+                   release OpenSOAPString Resource
+            形  式 OpenSOAPStringRelease(str) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP 文字列
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.7.マルチバイト文字列のサイズの取得
+            関数名 OpenSOAPStringGetLengthMB 
+            概  要 現在の locale におけるマルチバイト文字列のサイズを取得します。
+                   get length for MultiByte 
+            形  式 OpenSOAPStringGetLengthMB(str, len) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP 文字列
+                   len        size_t *              out サイズを格納するバッファ
+                                                        へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.8.ワイドキャラクタ文字列のサイズの取得
+            関数名 OpenSOAPStringGetLengthWC 
+            概  要 ワイドキャラクタ文字列における長さを取得します。
+                   get length for wchar_t
+            形  式 OpenSOAPStringGetLengthWC(str, len) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP 文字列
+                   len        size_t *              out 長さを格納するバッファへ
+                                                        のポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.9.allocator によるマルチバイト文字列の取得
+            関数名 OpenSOAPStringGetStringMBWithAllocator
+            概  要 allocator を用いて、現在の locale におけるマルチバイト文字列を取得します。
+                   get MultiByte string 
+            形  式 OpenSOAPStringGetStringMBWithAllocator(str, allocator, len, mb_str)
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in      OpenSOAP 文字列
+                   allocator  char *(*)(size_t)     in      メモリ確保用関数。
+                                                            NULL の場合は (char *)malloc(size) と同等の処理を行う
+                                                            を使用する。
+                   len        size_t *              out     サイズを格納するバッファ
+                                                            へのポインタ。
+                                                            NULL の場合はなにもしない。
+                   mb_str     char **               out     文字列を格納するバッファ
+                                                            へのポインタのポインタ。
+                                                            NULL の場合はエラーとなる。
+                                                            この変数領域を使用したあとは、
+                                                            そのメモリを開放すべき。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.10.allocator によるワイドキャラクタ文字列の取得
+            関数名 OpenSOAPStringGetStringWCWithAllocator
+            概  要 allocator を用いて、ワイドキャラクタ文字列を取得します。
+                   get wchar_t string 
+            形  式 OpenSOAPStringGetStringWCWithAllocator(str, allocator, len, wc_str)
+            仮引数 名前       型                    I/O     説明
+                   str        OpenSOAPStringPtr     in      OpenSOAP 文字列
+                   allocator  wchar_t *(*)(size_t)  in      メモリ確保用関数。
+                                                            NULL の場合は (wchar_t *)malloc(size * sizeof(wchar_t)) と同等の処理を行う。
+                                                            を使用する。
+                   len        size_t *              out     サイズを格納するバッファ
+                                                            へのポインタ。
+                                                            NULL の場合はなにもしない。
+                   wc_str     wchar_t **            out     文字列を格納するバッファ
+                                                            へのポインタのポインタ。
+                                                            NULL の場合はエラーとなる。
+                                                            この変数領域を使用したあとは、
+                                                            そのメモリを開放すべき。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.11.マルチバイト文字列の取得
+            関数名 OpenSOAPStringGetStringMB
+            概  要 現在の locale におけるマルチバイト文字列を取得します。
+                   get MultiByte string 
+            形  式 OpenSOAPStringGetStringMB(str, len, mb_str) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in      OpenSOAP 文字列
+                   len        size_t *              in, out サイズを格納するバッファ
+                                                            へのポインタ。
+                                                            呼出前は ((|wc_str|)) の
+                                                            長さを格納する。
+                   mb_str     char *                out     文字列を格納するバッファ
+                                                            へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.12.ワイドキャラクタ文字列の取得
+            関数名 OpenSOAPStringGetStringWC 
+            概  要 ワイドキャラクタ文字列を取得します。
+                   get wchar_t string 
+            形  式 OpenSOAPStringGetStringWC(str, len, wc_str) 
+            仮引数 名前       型                    I/O     説明
+                   str        OpenSOAPStringPtr     in      OpenSOAP 文字列
+                   len        size_t *              in, out サイズを格納するバッファ
+                                                            へのポインタ。
+                                                            呼出前は ((|wc_str|)) の
+                                                            長さを格納する。
+                   wc_str     wchar_t *             out     文字列を格納するバッファ
+                                                            へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.13.文字列の取得
+            関数名 OpenSOAPStringGetCharEncodingString 
+            概  要 Character encodingを指定して文字列を取得します。
+                   get char encoding string
+            形  式 OpenSOAPStringGetCharEncodingString(str, char_enc, char_enc_str) 
+            仮引数 名前         型                    I/O 説明
+                   str          OpenSOAPStringPtr     in  OpenSOAP 文字列
+                   char_enc     const char *          in  character encoding.
+                   char_enc_str OpenSOAPByteArrayPtr  out 文字列を格納するバッファへ
+                                                          のポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.14.マルチバイト文字列の設定
+            関数名 OpenSOAPStringSetStringMB 
+            概  要 現在の locale におけるマルチバイト文字列を設定します。
+                   set MultiByte string
+            形  式 OpenSOAPStringSetStringMB(str, mb_str) 
+            仮引数 名前       型                I/O 説明
+                   str        OpenSOAPStringPtr in, out OpenSOAP 文字列
+                   mb_str     char *            in      設定したい文字列を格納するバ
+                                                        ッファへのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.15.ワイドキャラクタ文字列の設定
+            関数名 OpenSOAPStringSetStringWC 
+            概  要 ワイドキャラクタ文字列を設定します。
+                   set wchar_t string
+            形  式 OpenSOAPStringSetStringWC(str, mb_str) 
+            仮引数 名前       型                I/O     説明
+                   str        OpenSOAPStringPtr in, out OpenSOAP 文字列
+                   wc_str     char *            in      設定したい文字列を格納するバ
+                                                        ッファへのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.16.文字列の設定
+            関数名 OpenSOAPStringSetCharEncodingString 
+            概  要 Character Encodingを指定して文字列を設定します。
+                   set char encoding string 
+            形  式 OpenSOAPStringSetCharEncodingString(str, char_enc, char_enc_str) 
+            仮引数 名前         型                   I/O     説明
+                   str          OpenSOAPStringPtr    in, out OpenSOAP 文字列
+                   char_enc     const char *         in      設定したい文字列の
+                                                             Character Encoding.
+                   char_enc_str OpenSOAPByteArrayPtr in      設定したい文字列を格納す
+                                                             るバッファへのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.17.書式整形(MB)
+            関数名 OpenSOAPStringFormatMB 
+            概  要 マルチバイト文字列による書式整形を行います。
+                   format string
+            形  式 OpenSOAPStringFormatMB(str, format, ...) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP String
+                   format     const char *          in  format 文字列。
+                                                        可変引数。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.18.書式整形(WC)
+            関数名 OpenSOAPStringFormatWC 
+            概  要 ワイドキャラクタ文字列による書式整形を行います。
+                   format string 
+            形  式 OpenSOAPStringFormatWC(str, format, ...) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP String
+                   format     const wchar_t *       in  format 文字列。
+                                                        可変引数。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.19.文字列比較(MB)
+            関数名 OpenSOAPStringCompareMB 
+            概  要 マルチバイト文字列の比較を行います。
+            形  式 OpenSOAPStringCompareMB(str, cmp_str, cmp_rslt) 
+                   compare multibyte character string
+            仮引数 名前     型                I/O 説明
+                   str      OpenSOAPStringPtr in  OpenSOAP String
+                   cmp_str  const char *      in  比較文字列。
+                   cmp_rslt int *             out 比較結果。*cmp_rslt の値の意味
+                                                  は、strcmp と同等。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.20.文字列比較(WC)
+            関数名 OpenSOAPStringCompareWC 
+            概  要 ワイドキャラクタ文字列の比較を行います。
+                   compare wide character string
+            形  式 OpenSOAPStringCompareWC(str, cmp_str, cmp_rslt) 
+            仮引数 名前     型                I/O 説明
+                   str      OpenSOAPStringPtr in  OpenSOAP String
+                   cmp_str  const wchar_t *   in  比較文字列。
+                   cmp_rslt int *             out 比較結果。*cmp_rslt の値の意味
+                                                  は、strcmp と同等。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.21.文字列比較
+            関数名 OpenSOAPStringCompare 
+            概  要 OpenSOAPStringPtrに格納されている文字列を比較します。
+            形  式 OpenSOAPStringCompare(str, cmp_str, cmp_rslt) 
+                   compare string
+            仮引数 名前     型                I/O 説明
+                   str      OpenSOAPStringPtr in  OpenSOAP String
+                   cmp_str  OpenSOAPStringPtr in  比較文字列。
+                   cmp_rslt int *             out 比較結果。*cmp_rslt の値の意味
+                                                  は、strcmp と同等。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.22.文字列検索(MB)
+            関数名 OpenSOAPStringFindStringMB 
+            概  要 マルチバイト文字列の検索を行います。
+                   find string
+            形  式 OpenSOAPStringFindStringMB(str, find_str, idx) 
+            仮引数 名前       型                I/O     説明
+                   str        OpenSOAPStringPtr in      OpenSOAP String
+                   find_str   const char *      in      検索文字列。
+                   idx        size_t *          in, out [in] 検索開始インデックス。
+                                                        [out] 検索結果インデックス。
+                                                        部分文字列が存在しなかった場合
+                                                        は値が (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.23.文字列検索(WC)
+            関数名 OpenSOAPStringFindStringWC 
+            概  要 ワイドキャラクタの文字列の検索を行います。
+                   find string
+            形  式 OpenSOAPStringFindStringWC(str, find_str, idx) 
+            仮引数 名前       型                I/O     説明
+                   str        OpenSOAPStringPtr in      OpenSOAP String
+                   find_str   const wchar_t *   in      検索文字列。
+                   idx        size_t *          in, out [in] 検索開始インデックス。
+                                                        [out] 検索結果インデックス。
+                                                        部分文字列が存在しなかった場合
+                                                        は値が (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.24.文字列検索
+            関数名 OpenSOAPStringFindString 
+            概  要 OpenSOAPStringPtrによる文字列検索を行います。
+                   find string
+            形  式 OpenSOAPStringFindString(str, find_str, idx) 
+            仮引数 名前     型                I/O     説明
+                   str      OpenSOAPStringPtr in      OpenSOAP String
+                   find_str OpenSOAPStringPtr in      検索文字列。
+                   idx      size_t *          in, out [in] 検索開始インデックス。
+                                                      [out] 検索結果インデックス。
+                                                      部分文字列が存在しなかった場合
+                                                      は値が (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.25.文字列検索
+            関数名 OpenSOAPStringFindIfStringIndex 
+            概  要 検索条件関数にによる文字列検索を行います。
+                   find string with condition function
+            形  式 OpenSOAPStringFindIfStringIndex(str, find_func, find_func_opt, idx) 
+            仮引数 名前          型                       I/O     説明
+                   str           OpenSOAPStringPtr        in      OpenSOAP String
+                   find_func     OpenSOAPStringFindIfFunc in      検索条件関数。
+                   find_func_opt void *                   in      検索条件関数第一引数。
+                   idx           size_t *                 in, out [in] 検索開始インデックス。
+                                                                  [out] 検索結果インデックス。
+                                                                  部分文字列が存在しなかった場合
+                                                                  は値が (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.26.文字列置換(MB)
+            関数名 OpenSOAPStringReplaceStringMB 
+            概  要 マルチバイト文字列を用いて文字列置換を行います。
+                   replace string
+            形  式 OpenSOAPStringReplaceStringMB(str, find_str, rplc_str, idx) 
+            仮引数 名前     型                I/O     説明
+                   str      OpenSOAPStringPtr in, out OpenSOAP String
+                   find_str const char *      in      検索文字列。
+                   rplc_str const char *      in      置換文字列。
+                   idx      size_t *          in, out [in] 検索開始インデックス。
+                                                      [out] 置換開始インデックス。
+                                                      置換できなかった場合は値が
+                                                      (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.27.文字列置換(WC)
+            関数名 OpenSOAPStringReplaceStringWC 
+            概  要 ワイドキャラクタ文字列を用いて文字列置換を行います。
+                   replace string
+            形  式 OpenSOAPStringReplaceStringWC(str, find_str, rplc_str, idx) 
+            仮引数 名前       型              I/O     説明
+                   str      OpenSOAPStringPtr in, out OpenSOAP String
+                   find_str const wchar_t *   in      検索文字列。
+                   rplc_str const wchar_t *   in      置換文字列。
+                   idx      size_t *          in, out [in] 検索開始インデックス。
+                                                      [out] 置換開始インデックス。
+                                                      置換できなかった場合は値が
+                                                      (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.2.28.文字列置換
+            関数名 OpenSOAPStringReplaceString 
+            概  要 OpenSOAPStringPtrを用いて文字列置換を行います。
+                   replace string
+            形  式 OpenSOAPStringReplaceString(str, find_str, rplc_str, idx) 
+            仮引数 名前     型                I/O     説明
+                   str      OpenSOAPStringPtr in, out OpenSOAP String
+                   find_str OpenSOAPStringPtr in      検索文字列。
+                   rplc_str OpenSOAPStringPtr in      置換文字列。
+                   idx      size_t *          in, out [in] 検索開始インデックス。
+                                                      [out] 置換開始インデックス。
+                                                      置換できなかった場合は値が
+                                                      (size_t)(-1) となる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.29.OpenSOAP 文字列のクリア
+            関数名 OpenSOAPStringClear 
+            概  要 OpenSOAP 文字列をクリアして、長さを 0 にします。
+                   clear OpenSOAPString
+            形  式 OpenSOAPStringClear(str) 
+            仮引数 名前       型                    I/O 説明
+                   str        OpenSOAPStringPtr     in  OpenSOAP 文字列
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.30.文字列追加(MB)
+            関数名 OpenSOAPStringAppendMB 
+            概  要 現在の locale におけるマルチバイト文字列を OpenSOAP 文字列に追加します。
+                   concat MB string to OpenSOAPString
+            形  式 OpenSOAPStringAppendMB(str, mb_str, mb_len) 
+            仮引数 名前       型                I/O 説明
+                   str        OpenSOAPStringPtr in  OpenSOAP 文字列
+                   mb_str     char *            in  追加したい文字列を格納するバッファ
+                                                    へのポインタ。
+                   mb_len     size_t            in  追加したい文字数。
+                                                    0 の場合は、mb_str 全てを追加する。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.31.文字列追加(WC)
+            関数名 OpenSOAPStringAppendWC 
+            概  要 ワイドキャラクタ文字列を OpenSOAP 文字列に追加します。
+                   concat WC string to OpenSOAPString
+            形  式 OpenSOAPStringAppendWC(str, wc_str, wc_len) 
+            仮引数 名前   型                I/O 説明
+                   str    OpenSOAPStringPtr in  OpenSOAP 文字列
+                   wc_str char *            in  追加したい文字列を格納するバッファへの
+                                                ポインタ。
+                   wc_len size_t            in  追加したい文字数。0 の場合は、mb_str 
+                                                全てを追加する。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.32.文字列の複製
+            関数名 OpenSOAPStringDuplicate 
+            概  要 OpenSOAPStringPtrに文字列を複製します。
+                   Duplicate string.
+            形  式 OpenSOAPStringDuplicate(str, dup_str) 
+            仮引数 名前    型                  I/O 説明
+                   str     OpenSOAPStringPtr   in  OpenSOAP String
+                   dup_str OpenSOAPStringPtr * out duplicate result.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.33.文字部分列の取得
+            関数名 OpenSOAPStringGetSubstring 
+            概  要 文字部分列を取得します。
+                   get substring
+            形  式 OpenSOAPStringGetSubstring(str, beg, len, sub_str) 
+            仮引数 名前       型               I/O 説明
+                   str     OpenSOAPStringPtr   in  OpenSOAP String
+                   beg     size_t              in  substring begin index.
+                   len     size_t              in  substring length.
+                                                   if len == -1 then copy to end of string.
+                   sub_str OpenSOAPStringPtr * out substring
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.34.サイズ指定付き Character encoding の変更
+            関数名 OpenSOAPStringConvertCharEncodingWithSize 
+            概  要 文字列のサイズを指定して Character encodingを変更します。
+                   Convert character encoding.
+                   This function isn't include OpenSOAPString member,
+                   but this has something to do with String processing.
+            形  式 OpenSOAPStringConvertCharEncodingWithSize(from_enc, from_beg, from_sz, to_enc, to_str) 
+            仮引数 名前     型                    I/O 説明
+                   from_enc const char *          in  Convert source character encoding.
+                                                      If NULL or "" then current locale encoding.
+                   from_beg const unsigned char * in  Convert source string data.
+                   from_sz  const unsigned char * in  Convert source string data size.
+                   to_enc   const char *          in  Convert distination character encoding.
+                                                      If NULL or "" then current locale encoding.
+                   to_str   OpenSOAPByteArrayPtr  out Convert distination string data.
+                                                      If from_enc equal to to_enc,
+                                                      then copy from_str to to_str.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.2.35.Character encoding の変更
+            関数名 OpenSOAPStringConvertCharEncoding 
+            概  要 Character encoding を変更します。
+                   Convert character encoding.
+                   This function isn't include OpenSOAPString member,
+                   but this has something to do with String processing.
+            形  式 OpenSOAPStringConvertCharEncoding(from_enc, from_str, to_enc, to_str) 
+            仮引数 名前     型                    I/O 説明
+                   from_enc const char *          in  Convert source character encoding.
+                                                      If NULL or "" then current locale encoding.
+                   from_str OpenSOAPByteArrayPtr  in  Convert source string data.
+                   to_enc   const char *          in  Convert distination character encoding.
+                                                      If NULL or "" then current locale encoding.
+                   to_str   OpenSOAPByteArrayPtr  out Convert distination string data.
+                                                      If from_enc equal to to_enc,
+                                                         then copy from_str to to_str.
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.3.OpenSOAP ByteArray
+      記述ファイル：ByteArray.h
+      使用ヘッダファイル： <stdlib.h><sys/types.h>
+                           <OpenSOAP/Defines.h><OpenSOAP/ErrorCode.h>
+      使用構造体定義：     typedef struct tagOpenSOAPByteArray OpenSOAPByteArray;
+                           typedef OpenSOAPByteArray    *OpenSOAPByteArrayPtr;
+
+      3.3.1.Byte (unsigned char)可変サイズ配列 作成
+            関数名 OpenSOAPByteArrayCreate 
+            概  要 Byte (unsigned char)可変サイズ配列を作成します。
+                   create 0 size OpenSOAPByteArray
+            形  式 OpenSOAPByteArrayCreate(b_ary) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr * out ByteArray ポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.2.Byte (unsigned char)可変サイズ配列 作成
+            関数名 OpenSOAPByteArrayCreateWithData 
+            概  要 初期化データを指定して、Byte (unsigned char)可変サイズ配列を作成します。
+                   create OpenSOAPByteArray with initial data
+            形  式 OpenSOAPByteArrayCreateWithData(data, sz, b_ary) 
+            仮引数 名前       型                     I/O 説明
+                   data       const unsigned char *  in  初期化データ。この値が NULL の場合、
+                                                         ((|sz|)) 分データを確保して、0 fill する。
+                   sz         size_t                 in  初期化データサイズ。
+                   b_ary      OpenSOAPByteArrayPtr * out ByteArray ポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.3.Byte (unsigned char)指定サイズ分0クリア
+            関数名 OpenSOAPByteArrayCreateWithSize 
+            概  要 Byte (unsigned char)指定サイズ分0クリアします。
+                   create OpenSOAPByteArray with initial size
+            形  式 OpenSOAPByteArrayCreateWithSize(sz, b_ary) 
+            仮引数 名前       型                     I/O 説明
+                   sz         size_t                 in  初期化データサイズ。
+                   b_ary      OpenSOAPByteArrayPtr * out ByteArray ポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.4.Byte (unsigned char)可変サイズ配列開放
+            関数名 OpenSOAPByteArrayRelease 
+            概  要 Byte (unsigned char)可変サイズ配列を開放します。
+                   release OpenSOAPByteArray Resource
+            形  式 OpenSOAPByteArrayRelease(b_ary) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.5.Byte (unsigned char)可変サイズ配列のサイズ取得
+            関数名 OpenSOAPByteArrayGetSize 
+            概  要 Byte (unsigned char)可変サイズ配列のサイズを取得します。
+                   get size
+            形  式 OpenSOAPByteArrayGetSize(b_ary, sz) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+                   sz         size_t *              out サイズ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.6.Byte (unsigned char)可変サイズ配列の先頭の const ポインタ取得
+            関数名 OpenSOAPByteArrayBeginConst 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭の const ポインタを取得します。
+                   get first element const pointer
+            形  式 OpenSOAPByteArrayBeginConst(b_ary, beg) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr   in  ByteArray
+                   beg        const unsigned char ** out 先頭ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.7.Byte (unsigned char)可変サイズ配列の終端の const ポインタ取得
+            関数名 OpenSOAPByteArrayEndConst 
+            概  要 Byte (unsigned char)可変サイズ配列の終端の const ポインタを取得します。
+                   get terminate element const pointer
+            形  式 OpenSOAPByteArrayEndConst(b_ary, ed) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr   in  ByteArray
+                   ed         const unsigned char ** out 終端ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.8.Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズの取得
+            関数名 OpenSOAPByteArrayGetBeginSizeConst 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。
+                   get first element pointer and size
+            形  式 OpenSOAPByteArrayGetBeginSizeConst(b_ary, beg, sz) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr   in  ByteArray
+                   beg        const unsigned char ** out 先頭ポインタ格納変数へのポインタ。
+                   sz         size_t *               out サイズ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.9.Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタの取得
+            関数名 OpenSOAPByteArrayGetBeginEndConst 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。
+                   get first and terminate element const pointer
+            形  式 OpenSOAPByteArrayGetBeginEndConst(b_ary, beg, ed) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr   in  ByteArray
+                   beg        const unsigned char ** out 先頭ポインタ格納変数へのポインタ。
+                   ed         const unsigned char ** out 終端ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.10.Byte (unsigned char)可変サイズ配列の先頭の 非const ポインタ取得
+            関数名 OpenSOAPByteArrayBegin 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭の 非const ポインタを取得します。
+                   get first element pointer
+            形  式 OpenSOAPByteArrayBegin(b_ary, beg) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+                   sz         unsigned char **      out 先頭ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.11.Byte (unsigned char)可変サイズ配列の終端の 非const ポインタ取得
+            関数名 OpenSOAPByteArrayEnd 
+            概  要 Byte (unsigned char)可変サイズ配列の終端の 非const ポインタを取得します。
+                   get terminate element pointer
+            形  式 OpenSOAPByteArrayEnd(b_ary, ed) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+                   ed         unsigned char **      out 終端ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.12.Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズの取得
+            関数名 OpenSOAPByteArrayGetBeginSize 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。
+                   get first element pointer and size
+            形  式 OpenSOAPByteArrayGetBeginSize(b_ary, beg, sz) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+                   beg        unsigned char **      out 先頭ポインタ格納変数へのポインタ。
+                   sz         size_t *              out サイズ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.13.Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタの取得
+            関数名 OpenSOAPByteArrayGetBeginEnd 
+            概  要 Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。
+                   get first and terminate element pointer
+            形  式 OpenSOAPByteArrayGetBeginEnd(b_ary, beg, ed) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+                   beg        unsigned char **      out 先頭ポインタ格納変数へのポインタ。
+                   ed         unsigned char **      out ポインタ格納変数へのポインタ。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.14.Byte (unsigned char)可変サイズ配列のクリア
+            関数名 OpenSOAPByteArrayClear 
+            概  要 Byte (unsigned char)可変サイズ配列をクリアします。
+                   clear OpenSOAPByteArray
+            形  式 OpenSOAPByteArrayClear(b_ary) 
+            仮引数 名前       型                    I/O     説明
+                   b_ary      OpenSOAPByteArrayPtr  in, out ByteArray
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.15.Byte (unsigned char)可変サイズ配列へのデータ設定
+            関数名 OpenSOAPByteArraySetData 
+            概  要 Byte (unsigned char)可変サイズ配列へデータを設定します。
+                   set data to OpenSOAPByteArray
+            形  式 OpenSOAPByteArraySetData(b_ary, data, sz) 
+            仮引数 名前       型                    I/O     説明
+                   b_ary      OpenSOAPByteArrayPtr  in, out ByteArray
+                   data       unsigned char *       in      data
+                   sz         size_t                in      data size.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.16.Byte (unsigned char)可変サイズ配列への追加
+            関数名 OpenSOAPByteArrayAppend 
+            概  要 Byte (unsigned char)可変サイズ配列へデータを追加します。
+                   Append Byte data to OpenSOAPByteArray
+            形  式 OpenSOAPByteArrayAppend(b_ary, dat, dat_len) 
+            仮引数 名前       型                    I/O     説明
+                   b_ary      OpenSOAPByteArrayPtr  in, out ByteArray
+                   dat        const unsigned char * in      追加するデータへの先頭ポインタ。
+                                                            NULL の場合は、0 で埋める。
+                   dat_len    size_t                in      追加するデータのサイズ
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.17.Byte (unsigned char)可変サイズ配列のサイズ変更
+            関数名 OpenSOAPByteArrayResize 
+            概  要 Byte (unsigned char)可変サイズ配列のサイズを変更します。
+                   resize OpenSOAPByteArray
+            形  式 OpenSOAPByteArrayResize(b_ary, new_size) 
+            仮引数 名前       型                    I/O     説明
+                   b_ary      OpenSOAPByteArrayPtr  in, out ByteArray
+                   new_size   size_t                in      新しいサイズ。
+                                                            現在のサイズより大きな値を指定した
+                                                            場合、大きくなった部分は 0 fill さ
+                                                            れる。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.18.ByteArray の複製
+            関数名 OpenSOAPByteArrayDuplicate 
+            概  要 ByteArray を複製します。
+                   duplicate OpenSOAPByteArray
+            形  式 OpenSOAPByteArrayDuplicate(b_ary, dup_b_ary) 
+            仮引数 名前       型                     I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr   in  ByteArray
+                   new_size   OpenSOAPByteArrayPtr * out 複製先 ByteArray。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.3.19.Byte (unsigned char)可変サイズ配列保持
+            関数名 OpenSOAPByteArrayRetain 
+            概  要 Byte (unsigned char)可変サイズ配列を保持します。
+            形  式 OpenSOAPByteArrayRetain(b_ary) 
+            仮引数 名前       型                    I/O 説明
+                   b_ary      OpenSOAPByteArrayPtr  in  ByteArray
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.4.OpenSOAP String Hash Class
+      記述ファイル：StringHash.h
+      使用ヘッダファイル： <OpenSOAP/String.h>
+      使用構造体定義：     typedef struct tagOpenSOAPStringHash OpenSOAPStringHash;
+                           typedef OpenSOAPStringHash    *OpenSOAPStringHashPtr;
+
+      3.4.1.Create OpenSOAPString Hash
+            関数名 OpenSOAPStringHashCreate 
+            概  要 Create OpenSOAPString Hash
+            形  式 OpenSOAPStringHashCreate(strh) 
+            仮引数 名前       型                      I/O 説明
+                   strh       OpenSOAPStringHashPtr * out 作成した OpenSOAP 文字列 Hash
+                                                          のポインタの格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.2.Release OpenSOAPString Hash
+            関数名 OpenSOAPStringHashRelease 
+            概  要 Release OpenSOAPString Hash
+            形  式 OpenSOAPStringHashRelease(strh) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.3.Clear OpenSOAPString Hash
+            関数名 OpenSOAPStringHashClear 
+            概  要 Clear OpenSOAPString Hash
+            形  式 OpenSOAPStringHashClear(strh) 
+            仮引数 名前       型                    I/O     説明
+                   strh       OpenSOAPStringHashPtr in, out OpenSOAPString Hash.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.4.OpenSOAPString Hash から登録削除
+            関数名 OpenSOAPStringHashRemoveKey 
+            概  要 OpenSOAPString Hash から登録削除。
+            形  式 OpenSOAPStringHashRemoveKey(strh, key, val) 
+            仮引数 名前       型                    I/O     説明
+                   strh       OpenSOAPStringHashPtr in, out OpenSOAPString Hash.
+                   key        OpenSOAPStringPtr     in      キー値
+                   val        void **               out     登録していた値の格納場所。
+                                                            NULL の場合は値を返さない。
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.4.5.OpenSOAPString Hash に値の登録
+            関数名 OpenSOAPStringHashSetValue 
+            概  要 OpenSOAPString Hash に値の登録
+            形  式 OpenSOAPStringHashSetValue(strh, key, val) 
+            仮引数 名前       型                    I/O     説明
+                   strh       OpenSOAPStringHashPtr in, out OpenSOAPString Hash.
+                   key        OpenSOAPStringPtr     in      キー値
+                   val        void *                in      登録する値。
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.4.6.OpenSOAPString Hash に値の登録(MB)
+            関数名 OpenSOAPStringHashSetValueMB 
+            概  要 OpenSOAPString Hash に値の登録(MB)
+            形  式 OpenSOAPStringHashSetValueMB(strh, key, val) 
+            仮引数 名前       型                    I/O     説明
+                   strh       OpenSOAPStringHashPtr in, out OpenSOAPString Hash.
+                   key        char *                in      キー値
+                   val        void *                in      登録する値。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.7.OpenSOAPString Hash に値の登録(WC)
+            関数名 OpenSOAPStringHashSetValueWC 
+            概  要 OpenSOAPString Hash に値の登録(WC)
+            形  式 OpenSOAPStringHashSetValueWC(strh, key, val) 
+            仮引数 名前       型                    I/O     説明
+                   strh       OpenSOAPStringHashPtr in, out OpenSOAPString Hash.
+                   key        const wchar_t *       in      キー値
+                   val        void *                in      登録する値。
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.4.8.OpenSOAPString Hash から値の取得
+            関数名 OpenSOAPStringHashGetValue 
+            概  要 OpenSOAPString Hash から値の取得
+            形  式 OpenSOAPStringHashGetValue(strh, key, val) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   key        OpenSOAPStringPtr     in  キー値
+                   val        void **               out 取得する値の格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.9.OpenSOAPString Hash から値の取得(MB)
+            関数名 OpenSOAPStringHashGetValueMB
+            概  要 OpenSOAPString Hash から値の取得(MB)
+            形  式 OpenSOAPStringHashGetValueMB(strh, key, val) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   key        const char *          in  キー値
+                   val        void **               out 取得する値の格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.10.OpenSOAPString Hash から値の取得(WC)
+            関数名 OpenSOAPStringHashGetValueWC
+            概  要 OpenSOAPString Hash から値の取得(WC)
+            形  式 OpenSOAPStringHashGetValueWC(strh, key, val) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   key        const wchar_t *       in  キー値
+                   val        void **               out 取得する値の格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.11.OpenSOAPString Hash の登録数の取得
+            関数名 OpenSOAPStringHashGetSize 
+            概  要 OpenSOAPString Hash の登録数の取得。
+            形  式 OpenSOAPStringHashGetSize(strh, sz) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   sz         size_t *              out 取得する登録数の格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.12.OpenSOAPString Hash の登録Key全ての取得
+            関数名 OpenSOAPStringHashGetKeys 
+            概  要 OpenSOAPString Hash の登録Key全ての取得
+            形  式 OpenSOAPStringHashGetKeys(strh, sz, keys) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   sz         size_t *              out [in] 取得する登録Keyの格納場所のサイズ。
+                                                        [out] key に格納したサイズ。
+                   keys       OpenSOAPStringPtr *   out 取得する登録Keyの格納場所。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.13.OpenSOAPString Hash の登録値全ての取得
+            関数名 OpenSOAPStringHashGetValues 
+            概  要 OpenSOAPString Hash の登録値全ての取得
+            形  式 OpenSOAPStringHashGetValues(strh, sz, vals) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   sz         size_t *              out [in] 取得する登録Keyの格納場所のサイズ。
+                                                        [out] key の数。
+                   vals       void **               out 取得する登録値の格納場所。
+                                                        値の順番は OpenSOAPStringHashGetKeys 
+                                                        関数で取得した key の順番とは無関係と
+する。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.4.14.OpenSOAPString Hash の登録値全てへの関数の適用。
+            関数名 OpenSOAPStringHashApplyToValues 
+            概  要 OpenSOAPString Hash の登録値全てへの関数の適用。
+            形  式 OpenSOAPStringHashApplyToValues(strh, aply, opt) 
+            仮引数 名前       型                    I/O 説明
+                   strh       OpenSOAPStringHashPtr in  OpenSOAPString Hash.
+                   aply       int                   in  適用する関数。
+                                                        この関数の戻り値を ret として、
+                                                        OPENSOAP_FAILED(ret) が真になるかまたは、
+                                                        全ての値にこの関数を適用するまで続ける。
+                   opt        void *                in 適用する関数のオプションパラメータ。
+            戻  値 型        説明
+                   int       エラーコード
+            例     int sumHash(void *val, void *opt) {
+                       int *sum = opt;
+                       int iVal = (int)val;
+                       
+                       *sum += iVal;
+                       
+                       return OPENSOAP_NO_ERROR;
+                   }
+                   
+                   ...
+                   OpenSOAPStringHashPtr strHash = NULL;
+                   int ret = OpenSOAPStringHashCreate(&strHash);
+                   ...
+                   int sum = 0;
+                   int ret = OpenSOAPStringHashApplyToValues(strHash, sumHash, &sum);
+                   if (OPENSOAP_SUCCEEDED(ret)) {
+                       printf("sum = %d\n", sum);
+                   }
+
+  3.5.OpenSOAP Serializer class 
+      記述ファイル：Serializer.h
+      使用ヘッダファイル： <OpenSOAP/String.h>
+      使用構造体定義：     
+            ・OpenSOAP Serializer Function Type
+              typedef int (*OpenSOAPSerializerFunc)(void * /* [in] */from_value,
+                                               OpenSOAPStringPtr /* [out] */to);
+            ・OpenSOAP Deserializer Function Type
+              typedef int (*OpenSOAPDeserializerFunc)(OpenSOAPStringPtr /* [in] */from,
+                                               void * /* [out] */to_value);
+
+      3.5.1.Serializer and deserializer register function.(MB)
+            関数名 OpenSOAPSerializerRegisterMB 
+            概  要 Serializer and deserializer register function.(MB)
+                   Register Serializer
+            形  式 OpenSOAPSerializerRegisterMB(soap_typename, serializer, deserializer) 
+            仮引数 名前          型                       I/O 説明
+                   soap_typename const char *             in  typename.
+                   serializer    OpenSOAPSerializerFunc   in  serializer
+                   deserializer  OpenSOAPDeserializerFunc in  deserializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.2.Serializer and deserializer register function.(WC)
+            関数名 OpenSOAPSerializerRegisterWC 
+            概  要 Serializer and deserializer register function.(WC)
+                   Register Serializer
+            形  式 OpenSOAPSerializerRegisterWC(soap_typename, serializer, deserializer) 
+            仮引数 名前          型                       I/O 説明
+                   soap_typename const wchar_t *          in  typename.
+                   serializer    OpenSOAPSerializerFunc   in  serializer
+                   deserializer  OpenSOAPDeserializerFunc in  deserializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.3.Get registered serializer.(OpenSOAPString)
+            関数名 OpenSOAPGetSerializer 
+            概  要 Get Serializer(OpenSOAPString)
+            形  式 OpenSOAPGetSerializer(soap_typename, serializer)
+            仮引数 名前          型                       I/O 説明
+                   soap_typename OpenSOAPStringPtr        in  typename.
+                   serializer    OpenSOAPSerializerFunc * Out serializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.4.Get registered serializer.(MB)
+            関数名 OpenSOAPGetSerializerMB 
+            概  要 Get registered serializer.(MB)
+                   Get Serializer(MB)
+            形  式 OpenSOAPGetSerializerMB(soap_typename, serializer) 
+            仮引数 名前          型                       I/O 説明
+                   soap_typename const char *             in  typename.
+                   serializer    OpenSOAPSerializerFunc * out serializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.5.Get registered serializer.(WC)
+            関数名 OpenSOAPGetSerializerWC 
+            概  要 Get registered serializer.(WC)
+                   Get Serializer(WC)
+            形  式 OpenSOAPGetSerializerWC(soap_typename, serializer) 
+            仮引数 名前          型                       I/O 説明
+                   soap_typename const wchar_t *          in  typename.
+                   serializer    OpenSOAPSerializerFunc * out serializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.6.Get Deserializer(OpenSOAPString)
+            関数名 OpenSOAPGetDeserializer 
+            概  要 Get Deserializer(OpenSOAPString)
+            形  式 OpenSOAPGetDeserializer(soap_typename, deserializer)
+            仮引数 名前          型                       I/O 説明
+                   soap_typename OpenSOAPStringPtr        in  typename.
+                   deserializer  OpenSOAPSerializerFunc * out deserializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.7.Get registered serializer.(MB)
+            関数名 OpenSOAPGetDeserializerMB 
+            概  要 Get registered serializer.(MB)
+            形  式 OpenSOAPGetDeserializerMB(soap_typename, deserializer)
+            仮引数 名前          型                         I/O 説明
+                   soap_typename const char *               in  soap_typename.
+                   deserializer  OpenSOAPDeserializerFunc * out deserializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.8.Get registered serializer.(WC)
+            関数名 OpenSOAPGetDeserializerWC 
+            概  要 Get registered serializer.(WC)
+            形  式 OpenSOAPGetDeserializerWC(soap_typename, deserializer)
+            仮引数 名前          型                         I/O 説明
+                   soap_typename const wchar_t *            in  soap_typename.
+                   deserializer  OpenSOAPDeserializerFunc * out deserializer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.5.9.Get registered serializer.
+            関数名  
+            概  要 Get registered serializer.
+                   default serializer regist
+            形  式 OpenSOAPSerializerRegistDefaults 
+            仮引数 名前       型                    I/O 説明
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.6.OpenSOAP Envelope Class
+      記述ファイル：Envelope.h
+      使用ヘッダファイル： <OpenSOAP/Block.h> <OpenSOAP/ByteArray.h>
+                           <OpenSOAP/String.h> <stdlib.h>
+      使用構造体定義：    typedef struct tagOpenSOAPEnvelope OpenSOAPEnvelope;
+                          typedef OpenSOAPEnvelope    *OpenSOAPEnvelopePtr;
+
+      3.6.1.OpenSOAP Envelope 作成と初期化
+            関数名OpenSOAPEnvelopeCreate
+            概  要 SOAP Envelope 領域の確保と構造体の初期化を行います。
+            形  式 OpenSOAPEnvelopeCreate(soap_ver)
+            仮引数 名前      型                   I/O 説明
+                   soap_env OpenSOAPEnvelopePtr * out Strage Buffer of OpenSOAP
+                                                      Envelope Pointer 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.2.OpenSOAP Envelope 作成と初期化(MB)
+            関数名OpenSOAPEnvelopeCreateMB
+            概  要 SOAP Envelope作成領域の確保を行い、SOAP Versionによって
+                   各々定数の代入を行います。
+                   soap_ver "1.1" or "1.2" 
+                   env_prefix NULL以外の場合は内容に従う。
+                   NULLの場合はsoap_verにより以下に従う。
+                   "1.1" or NULL SOAP-ENV
+                   "1.2" env
+            形  式 OpenSOAPEnvelopeCreateMB(soap_ver, env_prefix, soap_env)
+            仮引数 名前      型                    I/O 説明
+                  soap_ver   const cahr *          in  SOAP Virsion
+                  env_prefix const char *          in  SOAP Envelope namespace prefix.
+                  soap_env   OpenSOAPEnvelopePtr * out Strage Buffer of OpenSOAP
+                                                       Envelope Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.3.OpenSOAP Envelope 作成と初期化(WC)
+            関数名OpenSOAPEnvelopeCreateWC
+            概  要 SOAP Envelope作成領域の確保を行い、SOAP Versionによって
+                   各々定数の代入を行います。
+                   soap_ver "1.1" or "1.2"
+                   env_prefix NULL以外の場合は内容に従う。
+                   NULLの場合はsoap_verにより以下に従う。
+                   "1.1" SOAP-ENV
+                   "1.2" env
+            形  式 OpenSOAPEnvelopeCreateWC(soap_ver, env_prefix, soap_env)
+            仮引数 名前      型                    I/O 説明
+                  soap_ver   const wcahr_t *       in  SOAP Virsion
+                  env_prefix const wchar_t *       in  SOAP Envelope namespace prefix.
+                  soap_env   OpenSOAPEnvelopePtr * out Strage Buffer of OpenSOAP
+                                                       Envelope Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.4.Character encoding指定による ByteArrayからの SOAP Envelope 作成
+            関数名OpenSOAPEnvelopeCreateCharEncoding 
+            概  要 b_aryの内容をch_enc(EUC-JP/Shift_JIS/UTF-8...)にエンコーディ
+                   ングする。soap_env内に各々パラメータをb_aryより設定します。
+            形  式 OpenSOAPEnvelopeCreateCharEncoding(ch_enc, b_ary, soap_env) 
+            仮引数 名前      型                    I/O 説明 
+                   ch_enc    const cahr *          in  character encoding
+                   b_ary     OpenSOAPByteArrayPtr  in  OpenSOAP ByteArray
+                   soap_env  OpenSOAPEnvelopePtr * out Strage Buffer of OpenSOAP
+                                                       Envelope Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.5.SOAP Envelope リファレンス追加
+            関数名OpenSOAPEnvelopeRetain 
+            概  要 SOAP Envelope への参照を保持します。
+            形  式 OpenSOAPEnvelopeRetain(soap_env) 
+            仮引数 名前      型                    I/O 説明 
+                   soap_env  OpenSOAPEnvelopePtr   in  OpenSOAP Envelope
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.6.SOAP Envelope の開放
+            関数名OpenSOAPEnvelopeRelease 
+            概  要 SOAP Envelope作成領域の開放を行います。
+            形  式 OpenSOAPEnvelopeRelease(soap_env) 
+            仮引数 名前      型                    I/O 説明 
+                   soap_env  OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.7.ヘッダブロックの追加(MB)
+            関数名OpenSOAPEnvelopeAddHeaderBlockMB 
+            概  要 SOAP Envelope 領域にマルチバイト文字列で名前を指定した
+                   Header Blockを追加します。
+            形  式 OpenSOAPEnvelopeAddHeaderBlockMB(soap_env, block_name, h_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const char *          in  SOAP Block Name
+                   h_block    OpenSOAPBlockPtr *    out OpenSOAP Header Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.8.ヘッダブロックの追加(WC)
+            関数名OpenSOAPEnvelopeAddHeaderBlockWC 
+            概  要 SOAP Envelope領域にワイドキャラクタ文字列で名前を指定した
+                   Header Blockを追加します。
+            形  式 OpenSOAPEnvelopeAddHeaderBlockWC(soap_env, block_name, h_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const wchar_t *       in  SOAP Block Name
+                   h_block    OpenSOAPBlockPtr *    out OpenSOAP Header Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.9.ヘッダブロックの取得
+            関数名OpenSOAPEnvelopeGetNextHeaderBlock 
+            概  要 次のヘッダブロックへのポインタを取得します。
+                   最後のヘッダブロックポインタを入力した場合は、
+                   最初のヘッダブロックが取得されます。
+            形  式 OpenSOAPEnvelopeGetNextHeaderBlock(soap_env, h_block) 
+            仮引数 名前       型                    I/O     説明 
+                   soap_env   OpenSOAPEnvelopePtr   in      OpenSOAP Envelope。
+                   h_block    OpenSOAPBlockPtr *    in, out if OpenSOAP Header Block.
+                                                            *h_block as in NULL then
+                                                            Return to First Header Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.10.ヘッダブロックの取得(MB)
+            関数名OpenSOAPEnvelopeGetHeaderBlockMB 
+            概  要 名前をマルチバイト文字列で指定して、ヘッダブロックを取得します。
+            形  式 OpenSOAPEnvelopeGetHeaderBlockMB(soap_env, block_name, h_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const char *          in  SOAP Header Block name.
+                   h_block    OpenSOAPBlockPtr *    out Header Block return buffer's pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.11.ヘッダブロックの取得(WC)
+            関数名OpenSOAPEnvelopeGetHeaderBlockWC 
+            概  要 名前をワイドキャラクタ文字列で指定して、ヘッダブロックを取得します。
+            形  式 OpenSOAPEnvelopeGetHeaderBlockWC(soap_env, block_name, h_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const wchar_t *       in  SOAP Header Block name.
+                   h_block    OpenSOAPBlockPtr *    out Header Block return buffer's pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.12.ボディブロックの追加(MB)
+            関数名OpenSOAPEnvelopeAddBodyBlockMB
+            概  要 SOAP Envelope 領域にマルチバイト文字列で名前を指定した
+                   Body Blockを追加します。
+            形  式 OpenSOAPEnvelopeAddBodyBlockMB(soap_env, block_name, b_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const char *          in  SOAP Block Name
+                   b_block    OpenSOAPBlockPtr *    out OpenSOAP Body Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.13.ボディブロックの追加(WC)
+            関数名OpenSOAPEnvelopeAddBodyBlockWC 
+            概  要 SOAP Envelope 領域にワイドキャラクタ文字列で名前を指定した
+                   Body Blockを追加します。
+            形  式 OpenSOAPEnvelopeAddBodyBlockWC(soap_env, block_name, b_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const wchar_t *       in  SOAP Block Name
+                   b_block    OpenSOAPBlockPtr *    out OpenSOAP Body Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.14.ボディブロックの取得
+            関数名OpenSOAPEnvelopeGetNextBodyBlock 
+            概  要 次のボディブロックへのポインタを取得します。
+                   最後のボディブロックポインタを入力した場合は、
+                   最初のボディブロックが取得されます。
+            形  式 OpenSOAPEnvelopeGetNextBodyBlock(soap_env, b_block) 
+            仮引数 名前       型                    I/O     説明 
+                   soap_env   OpenSOAPEnvelopePtr   in      OpenSOAP Envelope。
+                   b_block    OpenSOAPBlockPtr *    in, out if OpenSOAP Body Block.
+                                                            *b_block as in NULL then
+                                                            Return to First Body Block
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.15.ボディブロックの取得(MB)
+            関数名OpenSOAPEnvelopeGetBodyBlockMB 
+            概  要 名前をマルチバイト文字列で指定して、ボディブロックを取得します。
+                   block_nameを検索b_blockを戻す。
+            形  式 OpenSOAPEnvelopeGetBodyBlockMB(soap_env, block_name, b_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const char *          in  SOAP Body Block name.
+                   b_block    OpenSOAPBlockPtr *    out Body Block return buffer's pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.16.ボディブロックの取得(WC)
+            関数名OpenSOAPEnvelopeGetBodyBlockWC 
+            概  要 名前をワイドキャラクタ文字列で指定して、ボディブロックを取得します。
+                   block_nameを検索b_blockを戻す。
+            形  式 OpenSOAPEnvelopeGetBodyBlockWC(soap_env, block_name, b_block) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   block_name const wchar_t *       in  SOAP Body Block name.
+                   b_block    OpenSOAPBlockPtr *    out Body Block return buffer's pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.6.17.SOAP Envelope の出力
+            関数名OpenSOAPEnvelopeGetCharEncodingString 
+            概  要 SOAP Envelope character encoding output.
+                   soap_envよりSOAP Messageを組み立てます。
+            形  式 OpenSOAPEnvelopeGetCharEncodingString(soap_env, ch_enc, buf) 
+            仮引数 名前       型                    I/O 説明 
+                   soap_env   OpenSOAPEnvelopePtr   in  OpenSOAP Envelope。
+                   ch_enc     const char *          in  character encoding.
+                                                        i.e. "EUC-JP", "Shift_JIS", "UTF-8"
+                   b_ary      OpenSOAPByteArrayPtr  out Strage Buffer
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.7.OpenSOAP Block Element
+      記述ファイル：Block.h
+      使用ヘッダファイル： <OpenSOAP/XMLElm.h> <OpenSOAP/XMLNamespace.h>
+      使用構造体定義：    typedef struct tagOpenSOAPBlock OpenSOAPBlock;
+                          typedef OpenSOAPBlock *OpenSOAPBlockPtr;
+
+      3.7.1.SOAP Block の値の取得(MB)
+            関数名 OpenSOAPBlockGetValueMB 
+            概  要 Body/Header Block直下の値を取得します。
+            形  式 OpenSOAPBlockGetValueMB(soap_block, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr      in  OpenSOAP SOAP Block.
+                   type_name  const char *          in  Type Name
+                   value      void *                out Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.2.SOAP Block の値の取得(WC)
+            関数名 OpenSOAPBlockGetValueWC 
+            概  要 Body/Header Block直下の値を取得します。
+            形  式 OpenSOAPBlockGetValueWC(soap_block, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr      in  OpenSOAP SOAP Block.
+                   type_name  const wchar_t *       in  Type Name
+                   value      void *                out Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.3.SOAP Blockへの値の設定(MB)
+            関数名 OpenSOAPBlockSetValueMB 
+            概  要 SOAP Blockへの値の設定を行います。
+                   Valueをtype_nameでSerializeした結果をsoap_blockへ格納する。
+            形  式 OpenSOAPBlockSetValueMB(soap_block, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr      in  OpenSOAP SOAP Block.
+                   type_name  const char *          in  Type Name
+                   value      void *                in  Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.4.SOAP Blockへの値の設定(WC)
+            関数名 OpenSOAPBlockSetValueWC 
+            概  要 SOAP Blockへの値の設定を行います。
+                   Valueをtype_nameでSerializeした結果をsoap_blockへ格納する。
+            形  式 OpenSOAPBlockSetValueWC(soap_block, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr      in  OpenSOAP SOAP Block.
+                   type_name  const wchar_t *       in  Type Name
+                   value      void *                in  Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.5.Namespaceの設定(MB)
+            関数名 OpenSOAPBlockSetNamespaceMB 
+            概  要 マルチバイト文字列でSOAP Block に Namespaceを設定します。
+                   ns_prifix/ns_uriをsoap_blockへ格納する。
+            形  式 OpenSOAPBlockSetNamespaceMB(soap_block, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   ns_uri     const char *          in      Namespace URI
+                   ns_prefix  const char *          in      Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.6.Namespaceの設定(WC)
+            関数名 OpenSOAPBlockSetNamespaceWC 
+            概  要 ワイドキャラクタ文字列でSOAP Block に Namespaceを設定します。
+                   ns_prifix/ns_uriをsoap_blockへ格納する。
+            形  式 OpenSOAPBlockSetNamespaceWC(soap_block, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   ns_uri     const wchar_t *       in      Namespace URI
+                   ns_prefix  const wchar_t *       in      Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.7.Namespaceの取得
+            関数名 OpenSOAPBlockGetNamespace 
+            概  要 NamespaceポインタにSOAP BlockのNamespaceを格納します。
+            形  式 OpenSOAPBlockGetNamespace(soap_block, ns) 
+            仮引数 名前       型                        I/O 説明
+                   soap_block OpenSOAPBlockPtr          in, out SOAP Block.
+                   ns         OpenSOAPXMLNamespacePtr * out Namespace 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.8.Namespaceの判定(MB)
+            関数名 OpenSOAPBlockIsSameNamespaceMB 
+            概  要 マルチバイト文字列でNamespaceのURIを比較判定します。
+            形  式 OpenSOAPBlockIsSameNamespaceMB(soap_block, ns_uri, is_same_uri) 
+            仮引数 名前        型                    I/O 説明
+                   soap_block  OpenSOAPBlockPtr      in  SOAP Block.
+                   ns_uri      const char *          in  Namespace URI.
+                   is_same_uri int *                 out judge result buffer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.9.Namespaceの判定(WC)
+            関数名 OpenSOAPBlockIsSameNamespaceWC 
+            概  要 ワイドキャラクタ文字列でNamespaceのURIを比較判定します。
+            形  式 OpenSOAPBlockIsSameNamespaceWC(soap_block, ns_uri, is_same_uri) 
+            仮引数 名前        型                    I/O 説明
+                   soap_block  OpenSOAPBlockPtr      in  SOAP Block.
+                   ns_uri      const wchar_t *       in  Namespace URI.
+                   is_same_uri int *                 out judge result buffer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.10.属性値(Attribute)の設定(MB)
+            関数名 OpenSOAPBlockAddAttributeMB 
+            概  要 属性名と値を指定してSOAP Blockに追加します。
+            形  式 OpenSOAPBlockAddAttributeMB(soap_block, attr_name, attr_type, attr_value, attr) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   attr_name  const char *          in      Attribute Name
+                   attr_type  const char *          in      Attribute Type
+                   attr_value void *                in      Attribute Value
+                   attr OpenSOAPXMLAttrPtr *        out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.11.属性値(Attribute)の設定(WC)
+            関数名 OpenSOAPBlockAddAttributeWC 
+            概  要 属性名と値を指定してSOAP Blockに追加します。
+            形  式 OpenSOAPBlockAddAttributeWC(soap_block, attr_name, attr_type, attr_value, attr) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   attr_name  const wchar_t *       in      Attribute Name
+                   attr_type  const wchar_t *       in      Attribute Type
+                   attr_value void *                in      Attribute Value
+                   attr OpenSOAPXMLAttrPtr *        out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.12.属性値の取得(MB)
+            関数名 OpenSOAPBlockGetAttributeMB 
+            概  要 指定した属性名(MB)の属性ポインタを返します。ない場合はNULLが格納されます。
+            形  式 OpenSOAPBlockGetAttributeMB(soap_block, attr_name, attr) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   attr_name  const char *          in      Attribute Name
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.7.13.属性値の取得(WC)
+            関数名 OpenSOAPBlockGetAttributeWC 
+            概  要 指定した属性名(WC)の属性ポインタを返します。ない場合はNULLが格納されます。
+            形  式 OpenSOAPBlockGetAttributeWC(soap_block, attr_name, attr) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   attr_name  const wchar_t *       in      Attribute Name
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.14.子要素(Element)の値の取得(MB)
+            関数名 OpenSOAPBlockGetChildValueMB 
+            概  要 指定した要素名(MB)の値を取得します。
+            形  式 OpenSOAPBlockGetChildValueMB(soap_block, p_name, type_name, value) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   p_name     const char *          in      パラメータ名
+                   type_name  const char *          in      型名
+                   value      void *                out     値格納バッファへのポインタ
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.15.子要素(Element)の値の取得(WC)
+            関数名 OpenSOAPBlockGetChildValueWC 
+            概  要 指定した要素名(WC)の値を取得します。
+            形  式 OpenSOAPBlockGetChildValueWC(soap_block, p_name, type_name, value) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   p_name     const wchar_t *       in      パラメータ名
+                   type_name  const wchar_t *       in      型名
+                   value      void *                out     値格納バッファへのポインタ
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.16.子要素とその値の設定(MB)
+            関数名 OpenSOAPBlockSetChildValueMB 
+            概  要 値の設定
+            形  式 OpenSOAPBlockSetChildValueMB(soap_block, p_name, type_name, value) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   p_name     const char *          in      パラメータ名
+                   type_name  const char *          in      型名
+                   value      void *                in      値格納バッファへのポインタ
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.17.子要素とその値の設(WC)
+            関数名 OpenSOAPBlockSetChildValueWC 
+            概  要 値の設定(WC)
+            形  式 OpenSOAPBlockSetChildValueWC(soap_block, p_name, type_name, value) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   p_name     const wchar_t *       in      パラメータ名
+                   type_name  const wchar_t *       in      型名
+                   value      void *                in      値格納バッファへのポインタ
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.18.子要素の取得
+            関数名 OpenSOAPBlockGetNextChild 
+            概  要 Block直下の次の子要素を格納します。
+            形  式 OpenSOAPBlockGetNextChild(soap_block, xml_elm) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   xml_elm    OpenSOAPXMLElmPtr *   in, out XML Element を格納する変数。
+                                                            *xml_elm が NULL の場合、
+                                                            最初の子供を代入する。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.19.子要素の追加(MB)
+            関数名 OpenSOAPBlockAddChildMB 
+            概  要 XML Elementポインタで指される子要素を追加します。
+            形  式 OpenSOAPBlockAddChildMB(soap_block, elm_name, xml_elm) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   elm_name   const char *          in      子 XML Element の名前。
+                   xml_elm    OpenSOAPXMLElmPtr *   out     OpenSOAP XML Element.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.20.子要素の追加(WC)
+            関数名 OpenSOAPBlockAddChildWC 
+            概  要 XML Elementポインタで指される子要素を追加します。
+            形  式 OpenSOAPBlockAddChildWC(soap_block, elm_name, xml_elm) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   elm_name   const wchar_t *       in      Name of XML Element
+                   xml_elm    OpenSOAPXMLElmPtr *   out     OpenSOAP XML Element.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.21.名前に合致した子 XML Element の取得(MB)
+            関数名 OpenSOAPBlockGetChildMB 
+            概  要 名前に合致した子 XML Element を取得します。
+                   合致するものが複数ある場合は、最初の要素を取り出します。
+            形  式 OpenSOAPBlockGetChildMB(soap_block, elm_name, xml_elm) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   elm_name   const char *          in      Name of XML Element
+                   xml_elm    OpenSOAPXMLElmPtr *   out     OpenSOAP XML Element.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.22.名前に合致した子 XML Element の取得(WC)
+            関数名 OpenSOAPBlockGetChildWC 
+            概  要 名前に合致した子 XML Element を取得します。
+                   合致するものが複数ある場合は、最初の要素を取り出します。
+            形  式 OpenSOAPBlockGetChildWC(soap_block, elm_name, xml_elm) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   elm_name   const wchar_t *       in      Name of Child XML Element
+                   xml_elm    OpenSOAPXMLElmPtr *   out     OpenSOAP XML Element.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.23.Mustunderstand属性の取得
+            関数名 OpenSOAPBlockGetMustunderstandAttr 
+            概  要 mustunderstand属性を取得します。
+            形  式 OpenSOAPBlockGetMustunderstandAttr(soap_block, must_std) 
+            仮引数 名前       型                I/O 説明
+                   soap_block OpenSOAPBlockPtr  in  SOAP Block.
+                   must_std   int *             out mustunderstand return buffer pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.24.Mustunderstand属性の設定
+            関数名 OpenSOAPBlockSetMustunderstandAttr 
+            概  要 mustunderstand属性を設定します。
+            形  式 OpenSOAPBlockSetMustunderstandAttr(soap_block) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.25.Mustunderstand属性の消去
+            関数名 OpenSOAPBlockClearMustunderstandAttr 
+            概  要 mustunderstand属性を消去します。
+            形  式 OpenSOAPBlockClearMustunderstandAttr(soap_block) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.26.Actor属性の取得
+            関数名 OpenSOAPBlockGetActorAttr 
+            概  要 Actor属性を取得します。
+            形  式 OpenSOAPBlockGetActorAttr(soap_block, actor_url) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr      in  SOAP Block.
+                   actor_url  OpenSOAPStringPtr *   out actor attribute value.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.27.Actor属性の設定(MB)
+            関数名 OpenSOAPBlockSetActorAttrMB 
+            概  要 Actor属性を設定します。
+            形  式 OpenSOAPBlockSetActorAttrMB(soap_block, actor_url) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   actor_url  const char *          in      actor attribute value.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.28.Actor属性の設定(WC)
+            関数名 OpenSOAPBlockSetActorAttrWC 
+            概  要 Actor属性を設定します。
+            形  式 OpenSOAPBlockSetActorAttrWC(soap_block, actor_url) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+                   actor_url  const wchar_t *       in      actor attribute value.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.29.Actor属性の消去
+            関数名 OpenSOAPBlockClearActorAttr 
+            概  要 Actor属性を消去します。
+            形  式 OpenSOAPBlockClearActorAttr(soap_block) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.30.Set actor attribute to next.
+            関数名 OpenSOAPBlockSetActorAttrNext 
+            概  要 Set actor attribute to next.
+            形  式 OpenSOAPBlockSetActorAttrNext(soap_block) 
+            仮引数 名前       型                    I/O     説明
+                   soap_block OpenSOAPBlockPtr      in, out SOAP Block.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.31.Is actor attribute to next.
+            関数名 OpenSOAPBlockIsActorAttrNext 
+            概  要 Is actor attribute to next.
+            形  式 OpenSOAPBlockIsActorAttrNext(soap_block, is_actor_next) 
+            仮引数 名前          型                    I/O     説明
+                   soap_block    OpenSOAPBlockPtr      in, out SOAP Block.
+                   is_actor_next int *                 out     judge result.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.32.OpenSOAP Block インスタンス作成
+            関数名 OpenSOAPBlockCreate 
+            概  要 OpenSOAP Block のインスタンスを生成します。
+            形  式 OpenSOAPBlockCreate(soap_block) 
+            仮引数 名前       型                    I/O 説明
+                   soap_block OpenSOAPBlockPtr *    out XML Element pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.7.33.SOAP Block の名前取得
+            関数名 OpenSOAPBlockGetName 
+            概  要 Blockの名前を取得します。
+            形  式 OpenSOAPBlockGetName(block, name) 
+            仮引数 名前       型                    I/O 説明
+                   block      OpenSOAPBlockPtr      in  SOAP Block Pointer
+                   name       OpenSOAPStringPtr *   in  Result Name of SOAP Block.
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.8.OpenSOAP XML Element class 
+      記述ファイル：XMLElm.h
+      使用ヘッダファイル： <OpenSOAP/XMLAttr.h>
+      使用構造体定義：     typedef struct tagOpenSOAPXMLElm OpenSOAPXMLElm;
+                           typedef OpenSOAPXMLElm *OpenSOAPXMLElmPtr;
+
+      3.8.1.OpenSOAP XML Element インスタンス作成
+            関数名 OpenSOAPXMLElmCreate 
+            概  要 OpenSOAP XML Element のインスタンスを生成します。
+            形  式 OpenSOAPXMLElmCreate(attr) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr *   out XML Element pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.2.XML ElementのNamespace設定(MB)
+            関数名 OpenSOAPXMLElmSetNamespaceMB 
+            概  要 マルチバイト文字列でXML ElementのNamespaceを設定します。
+            形  式 OpenSOAPXMLElmSetNamespaceMB(elm, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out XML Element.
+                   ns_uri     const char *          in      Namespace URI
+                   ns_prefix  const char *          in      Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.3.XML ElementのNamespace設定(WC)
+            関数名 OpenSOAPXMLElmSetNamespaceWC 
+            概  要 ワイドキャラクタ文字列でXML ElementのNamespaceを設定します。
+            形  式 OpenSOAPXMLElmSetNamespaceWC(elm, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out XML Element.
+                   ns_uri     const wchar_t *       in      Namespace URI
+                   ns_prefix  const wchar_t *       in      Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.4.Search Namespace of XML Element(MB).
+            関数名 OpenSOAPXMLElmSearchNamespaceMB 
+            概  要 Search Namespace of XML Element(MB).
+            形  式 OpenSOAPXMLElmSearchNamespaceMB(elm, ns_uri, ns_prefix) 
+            仮引数 名前       型                        I/O 説明
+                   elm        OpenSOAPXMLElmPtr         in  XML Element.
+                   ns_uri     const char *              in  Namespace URI
+                   ns_prefix  const char *              in  Namespace Prefix
+                   ns         OpenSOAPXMLNamespacePtr * out Namespace
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.5.Search Namespace of XML Element(WC).
+            関数名 OpenSOAPXMLElmSearchNamespaceWC 
+            概  要 Search Namespace of XML Element(WC).
+            形  式 OpenSOAPXMLElmSearchNamespaceWC(elm, ns_uri, ns_prefix) 
+            仮引数 名前       型                        I/O 説明
+                   elm        OpenSOAPXMLElmPtr         in  XML Element.
+                   ns_uri     const wchar_t *           in  Namespace URI
+                   ns_prefix  const wchar_t *           in  Namespace Prefix
+                   ns         OpenSOAPXMLNamespacePtr * out Namespace
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.6.Namespace ポインタの取得
+            関数名 OpenSOAPXMLElmGetNamespace 
+            概  要 XML Elementから OpenSOAPXMLNamespacePtrを取得します。
+            形  式 OpenSOAPXMLElmGetNamespace(elm, ns) 
+            仮引数 名前       型                        I/O     説明
+                   elm        OpenSOAPXMLElmPtr         in, out XML Element
+                   ns         OpenSOAPXMLNamespacePtr * out     Namespace 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.7.Namespace定義(MB)
+            関数名 OpenSOAPXMLElmDefineNamespaceMB 
+            概  要 XML Element の Namespaceを定義します。
+            形  式 OpenSOAPXMLElmDefineNamespaceMB(elm, ns_uri, ns_prefix, ns) 
+            仮引数 名前       型                        I/O     説明
+                   elm        OpenSOAPXMLElmPtr         in, out XML Element.
+                   ns_uri     const char *              in      Namespace URI
+                   ns_prefix  const char *              in      Namespace Prefix
+                   ns         OpenSOAPXMLNamespacePtr * out     OpenSOAP XML Namespace.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.8.Namespace定義(WC)
+            関数名 OpenSOAPXMLElmDefineNamespaceWC 
+            概  要 XML Element の Namespaceを定義します。
+            形  式 OpenSOAPXMLElmDefineNamespaceWC(elm, ns_uri, ns_prefix, ns) 
+            仮引数 名前       型                        I/O     説明
+                   elm        OpenSOAPXMLElmPtr         in, out XML Element.
+                   ns_uri     const wchar_t *           in      Namespace URI
+                   ns_prefix  const wchar_t *           in      Namespace Prefix
+                   ns         OpenSOAPXMLNamespacePtr * out     OpenSOAP XML Namespace.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.9.属性(Attribute)追加(MB)
+            関数名 OpenSOAPXMLElmAddAttributeMB 
+            概  要 属性名と値を指定してXML Element に追加します。
+            形  式 OpenSOAPXMLElmAddAttributeMB(elm, attr_name, attr_type, attr_value, attr) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out SOAP Element.
+                   attr_name  const char *          in      Attribute Name
+                   attr_type  const char *          in      Attribute Type
+                   attr_value void *                in      Attribute Value
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.10.属性(Attribute)追加(WC)
+            関数名 OpenSOAPXMLElmAddAttributeWC 
+            概  要 属性名と値を指定してXML Element に追加します。
+            形  式 OpenSOAPXMLElmAddAttributeWC(elm, attr_name, attr_type, attr_value, attr) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out SOAP Element.
+                   attr_name  const wchar_t *       in      Attribute Name
+                   attr_type  const wchar_t *       in      Attribute Type
+                   attr_value void *                in      Attribute Value
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.11.属性名を指定した属性の取得(MB)
+            関数名 OpenSOAPXMLElmGetAttributeMB 
+            概  要 指定した属性名(MB)の属性ポインタを返します。ない場合はNULLが格納されます。
+            形  式 OpenSOAPXMLElmGetAttributeMB(elm, attr_name, attr) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out XML Element.
+                   attr_name  const char *          in      Attribute Name
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.12.属性名を指定した属性の取得(WC)
+            関数名 OpenSOAPXMLElmGetAttributeWC 
+            概  要 指定した属性名(WC)の属性ポインタを返します。ない場合はNULLが格納されます。
+            形  式 OpenSOAPXMLElmGetAttributeWC(elm, attr_name, attr) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in, out XML Element.
+                   attr_name  const wchar_t *       in      Attribute Name
+                   attr       OpenSOAPXMLAttrPtr *  out     OpenSOAP XML Attribute
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.13.子要素の取得
+            関数名 OpenSOAPXMLElmGetNextChild 
+            概  要 XML Element 内の次の子要素を取得します。
+            形  式 OpenSOAPXMLElmGetNextChild(elm, cld_elm) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in      OpenSOAP XML Element.
+                   cld_elm    OpenSOAPXMLElmPtr *   in, out Next XML Element Pointer
+                                                            of Assignment XML Element
+                                                            But If *cld_elm as in
+                                                            NULL then Return To First
+                                                            XML Element Pointer 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.14.子要素の追加(MB)
+            関数名 OpenSOAPXMLElmAddChildMB 
+            概  要 XML Elementに子要素を追加します。
+            形  式 OpenSOAPXMLElmAddChildMB(elm, cld_name, cld_elm) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   cld_name   cosnt char *          in  Add Child Element Name
+                   cld_elm    OpenSOAPXMLElmPtr *   out Add Child Element Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.15.子要素の追加(WC)
+            関数名 OpenSOAPXMLElmAddChildWC 
+            概  要 XML Elementに子要素を追加します。
+            形  式 OpenSOAPXMLElmAddChildWC(elm, cld_name, cld_elm) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   cld_name   cosnt wchar_t *       in  Add Child Element Name
+                   cld_elm    OpenSOAPXMLElmPtr *   out Add Child Element Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.16.名前に合致した子 XML Element の取得(MB)
+            関数名 OpenSOAPXMLElmGetChildMB 
+            概  要 名前に合致した子 XML Element を取得します。
+                   合致するものが複数ある場合は、最初の要素を取り出します。
+            形  式 OpenSOAPXMLElmGetChildMB(elm, cld_name, cld_elm) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   cld_name   cosnt char *          in  Assignment Element Name 
+                   cld_elm    OpenSOAPXMLElmPtr *   out XML Element Pointer
+                                                        of Assignment Element Name 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.17.名前に合致した子 XML Element の取得(WC)
+            関数名 OpenSOAPXMLElmGetChildWC 
+            概  要 名前に合致した子 XML Element を取得します。
+                   合致するものが複数ある場合は、最初の要素を取り出します。
+            形  式 OpenSOAPXMLElmGetChildWC(elm, cld_name, cld_elm) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   cld_name   cosnt wchar_t *       in  Assignment Element Name 
+                   cld_elm    OpenSOAPXMLElmPtr *   out XML Element Pointer of 
+                                                        Assignment Element Name 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.18.XML Elementの値の取得(MB)
+            関数名 OpenSOAPXMLElmGetValueMB 
+            概  要 XML Element直下の値を取得します。
+            形  式 OpenSOAPXMLElmGetValueMB(elm, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   type_name  const char *          in  Type Name
+                   value      void *                out Setting Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.19.XML Elementの値の取得(WC)
+            関数名 OpenSOAPXMLElmGetValueWC 
+            概  要 XML Element直下の値を取得します。
+            形  式 OpenSOAPXMLElmGetValueWC(elm, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   type_name  const wchar_t *       in  Type Name
+                   value      void *                out Setting Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.20.XML Elementへの値の設定(MB)
+            関数名 OpenSOAPXMLElmSetValueMB 
+            概  要 XML Elementへの値の設定を行います。
+            形  式 OpenSOAPXMLElmSetValueMB(elm, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   type_name  const char *          in  Type Name
+                   value      void *                in  Setting Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.21.XML Elementへの値の設定(WC)
+            関数名 OpenSOAPXMLElmSetValueWC 
+            概  要 XML Elementへの値の設定を行います。
+            形  式 OpenSOAPXMLElmSetValueWC(elm, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   type_name  const wchar_t *       in  Type Name
+                   value      void *                in  Setting Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.22.XML Elementの値の取得
+            関数名 OpenSOAPXMLElmGetCharEncodingString
+            概  要 XML Element を指定した文字コードで取得します。
+            形  式 OpenSOAPXMLElmGetCharEncodingString(elm, ch_enc, b_ary)
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+	               ch_enc     const char *	        in  character encoding
+                   name       OpenSOAPByteArrayPtr  out OpenSOAP String Pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.23.XML Elementの名前取得
+            関数名 OpenSOAPXMLElmGetNameString
+            概  要 XML Element の name を OpenSOAPString として取得します。
+            形  式 OpenSOAPXMLElmGetNameString(elm, name)
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLElmPtr     in  OpenSOAP XML Element.
+                   name       OpenSOAPStringPtr *   out OpenSOAP String Pointer.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.8.24.XML Element の属性取得
+            関数名 OpenSOAPXMLElmGetNextAttr 
+            概  要 XML Element の次の属性へのポインタを格納します。
+            形  式 OpenSOAPXMLElmGetNextAttr(elm, attr) 
+            仮引数 名前       型                    I/O     説明
+                   elm        OpenSOAPXMLElmPtr     in      OpenSOAP XML Element.
+                   cld_elm    OpenSOAPXMLAttrPtr *  in, out Next XML Attribute Pointer
+                                                            of Assignment XML Element
+                                                            But If *attr as in
+                                                            NULL then Return To First
+                                                            XML Attribute Pointer 
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.9.OpenSOAP XML Attribute class 
+      記述ファイル：XMLAttr.h
+      使用ヘッダファイル： <OpenSOAP/XMLNamespace.h>
+      使用構造体定義：     typedef struct tagOpenSOAPXMLAttr OpenSOAPXMLAttr;
+                           typedef OpenSOAPXMLAttr *OpenSOAPXMLAttrPtr;
+
+      3.9.1.OpenSOAP XML Attribute インスタンス生成(MB)
+            関数名 OpenSOAPXMLAttrCreateMB 
+            概  要 OpenSOAP XML Attribute のインスタンスを生成します。
+            形  式 OpenSOAPXMLAttrCreateMB(attr_name, attr) 
+            仮引数 名前       型                    I/O 説明
+                   attr_name  const char *          in XML Attribute name.
+                   attr       OpenSOAPXMLAttrPtr *  out XML Attribute pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.2.OpenSOAP XML Attribute インスタンス生成(WC)
+            関数名 OpenSOAPXMLAttrCreateWC 
+            概  要 OpenSOAP XML Attribute のインスタンスを生成します。
+            形  式 OpenSOAPXMLAttrCreateWC(attr_name, attr) 
+            仮引数 名前       型                    I/O 説明
+                   attr_name  const wchar_t *       in XML Attribute name.
+                   attr       OpenSOAPXMLAttrPtr *  out XML Attribute pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.3.属性のNamespaceの設定(MB)
+            関数名 OpenSOAPXMLAttrSetNamespaceMB 
+            概  要 属性にNamespaceを設定します。
+            形  式 OpenSOAPXMLAttrSetNamespaceMB(attr, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in, out XML Attribute.
+                   ns_uri     const char *          in Namespace URI
+                   ns_prefix  const char *          in Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.4.属性のNamespaceの設定(WC)
+            関数名 OpenSOAPXMLAttrSetNamespaceWC 
+            概  要 属性にNamespaceを設定します。
+            形  式 OpenSOAPXMLAttrSetNamespaceWC(attr, ns_uri, ns_prefix) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in, out XML Attribute.
+                   ns_uri     const wchar_t *       in Namespace URI
+                   ns_prefix  const wchar_t *       in Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.5.属性のNamespaceの取得
+            関数名 OpenSOAPXMLAttrGetNamespace 
+            概  要 属性のNamespaceを取得します。
+            形  式 OpenSOAPXMLAttrGetNamespace(attr, ns) 
+            仮引数 名前       型                         I/O 説明
+                   elm        OpenSOAPXMLAttrPtr         in, out XML Attribute
+                   ns         OpenSOAPXMLNamespacePtr *  out Namespace 
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.6.属性の値の取得(MB)
+            関数名 OpenSOAPXMLAttrGetValueMB 
+            概  要 属性の値を取得します。
+            形  式 OpenSOAPXMLAttrGetValueMB(attr, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in OpenSOAP XML Attribute.
+                   type_name  const char *          in Type Name
+                   value      void *                out Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.7.属性の値の取得(WC)
+            関数名 OpenSOAPXMLAttrGetValueWC 
+            概  要 属性の値を取得します。
+            形  式 OpenSOAPXMLAttrGetValueWC(attr, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in OpenSOAP XML Attribute.
+                   type_name  const wchar_t *       in Type Name 
+                   value      void *                out Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.8.属性の値の設定(MB)
+            関数名 OpenSOAPXMLAttrSetValueMB 
+            概  要 属性の値を設定します。
+            形  式 OpenSOAPXMLAttrSetValueMB(attr, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in OpenSOAP XML Attribute.
+                   type_name  const char *          in Type Name
+                   value      void *                in Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.9.属性の値の設定(WC)
+            関数名 OpenSOAPXMLAttrSetValueWC 
+            概  要 属性の値を設定します。
+            形  式 OpenSOAPXMLAttrSetValueWC(attr, type_name, value) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in  OpenSOAP XML Attribute.
+                   type_name  const wchar_t *       in  Type Name 
+                   value      void *                in  Strage Buffer Pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.9.10.属性名の取得
+            関数名 OpenSOAPXMLAttrGetName 
+            概  要 属性ポインタから属性の名前を取得します。
+            形  式 OpenSOAPXMLAttrGetName(attr, name) 
+            仮引数 名前       型                    I/O 説明
+                   elm        OpenSOAPXMLAttrPtr    in, out XML Attribute
+                   name       OpenSOAPStringPtr *   out Attribute Name 
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.10. OpenSOAP XML Namespace Class
+      記述ファイル：XMLNamespace.h
+      使用ヘッダファイル： <OpenSOAP/String.h>
+      使用構造体定義：     typedef struct tagOpenSOAPXMLNamespace OpenSOAPXMLNamespace;
+                           typedef OpenSOAPXMLNamespace *OpenSOAPXMLNamespacePtr;
+
+      3.10.1.OpenSOAP XML Namespace インスタンスの生成(MB)
+            関数名 OpenSOAPXMLNamespaceCreateMB 
+            概  要 OpenSOAP XML Namespace インスタンスを生成します。(MB)
+            形  式 OpenSOAPXMLNamespaceCreateMB(ns_uri, ns_prefix, ns) 
+            仮引数 名前       型                          I/O 説明
+                   ns_uri     const char *                in  Namespace URI
+                   ns_prefix  const char *                in  Namespace prefix
+                   ns         OpenSOAPXMLNamespacePtr *   out XML Namespace.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.10.2.OpenSOAP XML Namespace インスタンスの生成(WC)
+            関数名 OpenSOAPXMLNamespaceCreateWC 
+            概  要 OpenSOAP XML Namespace インスタンスを生成します。(WC)
+            形  式 OpenSOAPXMLNamespaceCreateWC(ns_uri, ns_prefix, ns) 
+            仮引数 名前       型                          I/O 説明
+                   ns_uri     const wchar_t *             in  Namespace URI
+                   ns_prefix  const wchar_t *             in  Namespace prefix
+                   ns         OpenSOAPXMLNamespacePtr *   out XML Namespace.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.10.3.Relese XML Namespace area
+            関数名 OpenSOAPXMLNamespaceRelease 
+            概  要 Relese XML Namespace area
+            形  式 OpenSOAPXMLNamespaceRelease(ns) 
+            仮引数 名前       型                          I/O     説明
+                   ns         OpenSOAPXMLNamespacePtr     in, out XML Namespace.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.10.4.Namespace URI の取得
+            関数名 OpenSOAPXMLNamespaceGetURI 
+            概  要 Namespaceポインタから URIを取得します。
+            形  式 OpenSOAPXMLNamespaceGetURI(ns, ns_uri) 
+            仮引数 名前       型                          I/O     説明
+                   ns         OpenSOAPXMLNamespacePtr     in, out XML Namespace.
+                   ns_uri     OpenSOAPStringPtr *         out     Namespace URI
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.10.5.Namespace Prefix の取得
+            関数名 OpenSOAPXMLNamespaceGetPrefix 
+            概  要 Namespaceポインタから Prefixを取得します。
+            形  式 OpenSOAPXMLNamespaceGetPrefix(ns, ns_prefix) 
+            仮引数 名前       型                          I/O     説明
+                   ns         OpenSOAPXMLNamespacePtr     in, out XML Namespace.
+                   ns_prefix  OpenSOAPStringPtr *         out     Namespace Prefix
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.11.OpenSOAP Client Socket Class
+      記述ファイル：ClientSocket.h
+      使用ヘッダファイル： <OpenSOAP/ByteArray.h>
+      使用構造体定義：     typedef struct tagOpenSOAPClientSocket OpenSOAPClientSocket;
+                           typedef OpenSOAPClientSocket    *OpenSOAPClientSocketPtr;
+
+      3.11.1.OpenSOAP ClientSocket instance create
+            関数名 OpenSOAPClientSocketCreate 
+            概  要 OpenSOAP ClientSocket instance create
+            形  式 OpenSOAPClientSocketCreate(s) 
+            仮引数 名前       型                        I/O 説明
+                   s          OpenSOAPClientSocketPtr * out OpenSOAP ClientSocket pointer
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.11.2.OpenSOAP ClientSocket の開放
+            関数名 OpenSOAPClientSocketRelease 
+            概  要 OpenSOAP ClientSocket を開放します。
+            形  式 OpenSOAPClientSocketRelease(s) 
+            仮引数 名前       型                      I/O 説明
+                   s          OpenSOAPClientSocketPtr in  OpenSOAP ClientSocket
+            戻  値 型        説明
+                   int       エラーコード
+    
+      3.11.3.OpenSOAP ClientSocket のオープン
+            関数名 OpenSOAPClientSocketOpen 
+            概  要 OpenSOAP ClientSocket をオープンし、同時に接続も行います。
+            形  式 OpenSOAPClientSocketOpen(s, node, service) 
+            仮引数 名前       型                      I/O 説明
+                   s          OpenSOAPClientSocketPtr in  OpenSOAP ClientSocket
+                   node       const char *            in  ホスト名等。
+                                                          i.e."www.isrc.co.jp", 192.168.0.1", ...
+                   service    const char *            in  service.
+                                                          i.e. "http", "ftp", "smtp", "8080", ...
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.11.4.OpenSOAP ClientSocket のクローズ
+            関数名 OpenSOAPClientSocketClose 
+            概  要 OpenSOAP ClientSocket をクローズし、接続も切断します。
+            形  式 OpenSOAPClientSocketClose(s) 
+            仮引数 名前       型                      I/O 説明
+                   s          OpenSOAPClientSocketPtr in  OpenSOAP ClientSocket
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.11.5.OpenSOAP ClientSocket からの読み込み
+            関数名 OpenSOAPClientSocketRead 
+            概  要 OpenSOAP ClientSocket から読み込みます。
+            形  式 OpenSOAPClientSocketRead(s, buf, buf_sz) 
+            仮引数 名前   型                      I/O     説明
+                   s      OpenSOAPClientSocketPtr in      OpenSOAP ClientSocket
+                   buf    unsigned char *         out     読み込みバッファの先頭ポインタ。
+                   buf_sz size_t *                in, out 読み込みバッファのサイズ。
+                                                          呼出後は読み込んだサイズを返す。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.11.6.OpenSOAP ClientSocket への書き出し
+            関数名 OpenSOAPClientSocketWrite 
+            概  要 OpenSOAP ClientSocket へ書き出します。
+            形  式 OpenSOAPClientSocketWrite(s, buf, buf_sz) 
+            仮引数 名前   型                      I/O     説明
+                   s      OpenSOAPClientSocketPtr in      OpenSOAP ClientSocket
+                   buf    const unsigned char *   in      書き込みデータの先頭ポインタ。
+                   buf_sz size_t *                in, out 書き込みデータのサイズ。
+                                                          呼出後は書き込んだサイズを返す。
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.11.7.OpenSOAP ClientSocket からデリミタまでの読み込み。
+            関数名 OpenSOAPClientSocketReadToDelm 
+            概  要 OpenSOAP ClientSocket からデリミタまで読み込みます。
+            形  式 OpenSOAPClientSocketReadToDelm(s, delm, delm_sz, buf) 
+            仮引数 名前    型                      I/O 説明
+                   s       OpenSOAPClientSocketPtr in  OpenSOAP ClientSocket
+                   delm    const unsigned char *   in  デリミタデータ列。
+                   delm_sz size_t                  in  デリミタデータ列長さ。
+                   buf     OpenSOAPByteArrayPtr    out 読み込みバッファ。
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.12.OpenSOAP Transport class 
+      記述ファイル：Transport.h
+      使用ヘッダファイル： <OpenSOAP/ByteArray.h>
+                           <OpenSOAP/Envelope.h>
+      使用構造体定義：     typedef struct tagOpenSOAPTransport OpenSOAPTransport;
+                           typedef OpenSOAPTransport    *OpenSOAPTransportPtr;
+
+      3.12.1. トランスポートの生成
+            関数名 OpenSOAPTransportCreate 
+            概  要 トランスポートを生成します。
+            形  式 OpenSOAPTransportCreate(t) 
+            仮引数 名前       型                     I/O 説明
+                   t          OpenSOAPTransportPtr * out OpenSOAP Transport pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.2. トランスポートの開放
+            関数名 OpenSOAPTransportRelease 
+            概  要 トランスポートを開放します。
+            形  式 OpenSOAPTransportRelease(t) 
+            仮引数 名前       型                    I/O 説明
+                   t          OpenSOAPTransportPtr  out OpenSOAP Transport pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.3. SOAP-Action設定(Some-URI)
+            関数名 OpenSOAPTransportSetSOAPAction 
+            概  要 SOAP-Action設定(Some-URI)を行います。
+            形  式 OpenSOAPTransportSetSOAPAction(s, soap_action) 
+            仮引数 名前        型                    I/O     説明
+                   t           OpenSOAPTransportPtr  in, out OpenSOAP Transport pointer
+                   soap_action const char *          in      soap-action.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.4. SOAPメッセージ送信
+            関数名 OpenSOAPTransportSend 
+            概  要 SOAPメッセージを送信します。
+            形  式 OpenSOAPTransportSend(t, soap_env) 
+            仮引数 名前       型                    I/O 説明
+                   t          OpenSOAPTransportPtr  in  OpenSOAP Transport pointer
+                   soap_env   OpenSOAPEnvelopePtr   in  SOAP Envelope
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.5. SOAPメッセージ受信
+            関数名 OpenSOAPTransportReceive 
+            概  要 SOAPメッセージの受信を行います。
+            形  式 OpenSOAPTransportReceive(t, soap_env) 
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in      OpenSOAP Transport pointer
+                   soap_env   OpenSOAPEnvelopePtr * in, out SOAP Envelope
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.6. End Point への接続
+            関数名 OpenSOAPTransportConnect 
+            概  要 End Point への接続を行います。
+            形  式 OpenSOAPTransportConnect(t) 
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in      OpenSOAP Transport pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.7. End Point からの切断
+            関数名 OpenSOAPTransportDisconnect 
+            概  要 End Point から切断します。
+            形  式 OpenSOAPTransportDisconnect(t) 
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in      OpenSOAP Transport pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.8. OpenSOAPByteArray による SOAP 呼出
+            関数名 OpenSOAPTransportInvokeByteArray 
+            概  要 OpenSOAPByteArray による SOAP 呼出を行います。
+            形  式 OpenSOAPTransportInvokeByteArray(t, request, response)
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in      OpenSOAP Transport pointer
+                   request    OpenSOAPEnvelopePtr   in      SOAP request data.
+                   response   OpenSOAPByteArrayPtr  out     SOAP response data.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.8. SOAP呼出
+            関数名 OpenSOAPTransportInvoke 
+            概  要 SOAP呼出を行います。返信メッセージをEnveropeポインタに格納します。
+            形  式 OpenSOAPTransportInvoke(t, request, response)
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in      OpenSOAP Transport pointer
+                   request    OpenSOAPEnvelopePtr   in      SOAP request Envelope.
+                   response   OpenSOAPEnvelopePtr   in,out  SOAP response Envelope.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.9. リクエストURL設定(http://www.opensoap.com/StockQuote)
+            関数名 OpenSOAPTransportSetURL 
+            概  要 リクエストURL設定(http://www.opensoap.com/StockQuote)
+            形  式 OpenSOAPTransportSetURL(t, url) 
+            仮引数 名前       型                     I/O     説明
+                   t          OpenSOAPTransportPtr * in, out OpenSOAP Transport pointer
+                   url        const char *           in      URL
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.10. ヘッダー設定
+            関数名 OpenSOAPTransportSetHeader 
+            概  要 任意のヘッダーを設定します。
+            形  式 OpenSOAPTransportSetHeader(t, header_name, header_value) 
+            仮引数 名前         型                     I/O 説明
+                   t            OpenSOAPTransportPtr * out OpenSOAP Transport pointer
+                   header_name  const char *           in  header name.
+                   header_value const char *           in  header's value.
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.12.11. キャラクタセット設定
+            関数名 OpenSOAPTransportSetCharset 
+            概  要 キャラクタセットを設定します。
+            形  式 OpenSOAPTransportSetCharset(s) 
+            仮引数 名前       型                    I/O     説明
+                   t          OpenSOAPTransportPtr  in, out OpenSOAP Transport pointer
+                                                            const char * in character set.
+            戻  値 型        説明
+                   int       エラーコード
+
+  3.13.OpenSOAP Service class 
+      記述ファイル：Service.h
+      使用ヘッダファイル： <OpenSOAP/Envelope.h>
+      使用構造体定義：     typedef struct tagOpenSOAPService OpenSOAPService;
+                           typedef OpenSOAPService    *OpenSOAPServicePtr;
+                           typedef int
+                                  (*OpenSOAPServiceFuncPtr)(OpenSOAPEnvelopePtr /* [in] */ request,
+                                   OpenSOAPEnvelopePtr * /* [out] */ response,
+                                   void * /* [in, out] */ opt);
+
+      3.13.1. OpenSOAP Service 生成(MB)
+            関数名 OpenSOAPServiceCreateMB 
+            概  要 サービス名と接続タイプを指定してOpenSOAP Service を生成します。
+            形  式 OpenSOAPServiceCreateMB(srv, srv_name, connect_type,is_loop, ...)
+            仮引数 名前         型                     I/O 説明
+                   srv          OpenSOAPServicePtr *   out OpenSOAP Service pointer
+                   srv_name     const char *           in
+                   connect_type const char *           in
+                   is_loop      int                    in
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.13.2. OpenSOAP Service 生成(WC)
+            関数名 OpenSOAPServiceCreateWC 
+            概  要 サービス名と接続タイプを指定してOpenSOAP Service を生成します。
+            形  式 OpenSOAPServiceCreateWC(srv, srv_name, connect_type,is_loop, ...)
+            仮引数 名前         型                     I/O 説明
+                   srv          OpenSOAPServicePtr *   out OpenSOAP Service pointer
+                   srv_name     wchar_t *              in
+                   connect_type const char *           in
+                   is_loop      int                    in
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.13.3. OpenSOAP Service の開放
+            関数名 OpenSOAPServiceRelease 
+            概  要 OpenSOAP Service を開放します。
+            形  式 OpenSOAPServiceRelease(srv)
+            仮引数 名前         型                     I/O 説明
+                   srv          OpenSOAPServicePtr *   out OpenSOAP Service pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.13.4. OpenSOAP Service の登録(MB)
+            関数名 OpenSOAPServiceRegisterMB 
+            概  要 Method名とサービス機能関数を指定して OpenSOAP Service を登録します。
+            形  式 OpenSOAPServiceRegisterMB(srv,name,func,opt)
+            仮引数 名前         型                       I/O    説明
+                   srv          OpenSOAPServicePtr *     in,out OpenSOAP Service pointer
+                   name         const char *             in     Method名（第１BodyBlock名）
+                   func         OpenSOAPServiceFuncPtr * in     
+                   opt          void *                   in     
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.13.5. OpenSOAP Service の登録(WC)
+            関数名 OpenSOAPServiceRegisterWC 
+            概  要 Method名とサービス機能関数を指定して OpenSOAP Service を登録します。
+            形  式 OpenSOAPServiceRegisterWC(srv,name,func,opt)
+            仮引数 名前         型                       I/O    説明
+                   srv          OpenSOAPServicePtr *     in,out OpenSOAP Service pointer
+                   name         const wchar_t *          in     Method名（第１BodyBlock名）
+                   func         OpenSOAPServiceFuncPtr * in     
+                   opt          void *                   in     
+            戻  値 型        説明
+                   int       エラーコード
+
+      3.13.5. OpenSOAP Service の実行
+            関数名 OpenSOAPServiceRun 
+            概  要 OpenSOAP Service を実行します。
+            形  式 OpenSOAPServiceRun(srv)
+            仮引数 名前         型                       I/O    説明
+                   srv          OpenSOAPServicePtr *     in,out OpenSOAP Service pointer
+            戻  値 型        説明
+                   int       エラーコード
+
+------------------------------------------------------------------------------
+4.補足資料
+  4.1.OpenSOAP Error code
+  記述ファイル /include/ErrorCode.h
+
+  定数名                          値              備考
+  ----------------------------------------------------------------------------
+  OPENSOAP_NO_ERROR               (0)             no error
+  OPENSOAP_NOT_CATEGORIZE_ERROR   (0xffffffffL)   not categorize error
+  OPENSOAP_IMPLEMENTATION_ERROR   (0x40000000L)   implementation error
+  OPENSOAP_YET_IMPLEMENTATION     (0x40000001L)   未実装
+  OPENSOAP_PARAMETER_BADVALUE     (0x20000001L)   パラメータ値不正
+  OPENSOAP_MEM_ERROR              (0x00010000L)   memory error
+  OPENSOAP_MEM_BADALLOC           (0x00010001L)   メモリ確保エラー
+  OPENSOAP_MEM_OUTOFRANGE         (0x00010002L)   メモリ外アクセスエラー
+  OPENSOAP_CHAR_ERROR             (0x00020000L)   char convert error
+  OPENSOAP_ICONV_NOT_IMPL         (0x00020001L)   iconv 未実装
+  OPENSOAP_INVALID_MB_SEQUENCE    (0x00020002L)   不正マルチバイト文字列並び
+  OPENSOAP_INCOMPLETE_MB_SEQUENCE (0x00020003L)   マルチバイト文字列不完全
+  OPENSOAP_UNKNOWN_CHARENCODE     (0x00020004L)   未知 character encode
+  OPENSOAP_SETLOCALEFAILURE       (0x00020005L)   ロケール設定失敗
+  OPENSOAP_IO_ERROR               (0x00040000L)   IO エラー
+  OPENSOAP_XML_ERROR              (0x00080000L)   xml manipulate error
+  OPENSOAP_XML_BADNAMESPACE       (0x00080002L)   不正 XML namespace
+  OPENSOAP_XML_NOHEADERBODY       (0x00080003L)   Header および Body 無エラー
+  OPENSOAP_XML_BADDOCUMENTTYPE    (0x00080004L)   Document Type 不正
+  OPENSOAP_XML_BADMAKEDOCUMENT    (0x00080005L)   Document 作成不正
+  OPENSOAP_XML_EMPTYDOCUMENT      (0x00080006L)   空 Document
+
+  4.2.OpenSOAP Error code judge macro.
+  記述ファイル /include/ErrorCode.h
+
+  定数名                          値              備考
+  ----------------------------------------------------------------------------
+  OPENSOAP_SUCCEEDED(err)         (!(err))
+  OPENSOAP_FAILED(err)            (err)
+

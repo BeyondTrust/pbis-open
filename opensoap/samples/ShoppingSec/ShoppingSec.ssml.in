@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='ShoppingSec' 
+	 nsuri='http://services.opensoap.jp/samples/ShoppingSec/'>
+	    <connection name='ShoppingSecStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/ShoppingSec/ShoppingServiceSec'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='ShoppingSecStdio'>GetProductCount</operation>
+	    <operation type ='ShoppingSecStdio'>GetProductSpec</operation>
+	    <operation type ='ShoppingSecStdio'>GetStockQty</operation>
+	    <operation type ='ShoppingSecStdio'>PlaceOrder</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

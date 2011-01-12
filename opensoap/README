@@ -1,0 +1,42 @@
+Welcome to OpenSOAP !
+
+The OpenSOAP Project was started in 2001 to develop an opensource
+middleware for Web Services.
+
+The following are our public resources:
+
+Official Web page:
+(English/Japanese)  http://www.opensoap.jp/
+
+Bug Tracking System using Bugzilla:
+(English)  http://bugzilla.opensoap.jp/en/
+(Japanese) http://bugzilla.opensoap.jp/
+
+Mailing List:
+(Japanese) http://ml.opensoap.jp/
+
+
+Here are the brief descriptions about the files and the directories in
+this package.
+
+INSTALL          - How to install this package.
+LICENSE          - License for the OpenSOAP software. (BSD-based)
+
+src/             - Source files to be compiled.
+src/api/           - OpenSOAP API, required to execute OpenSOAP.
+src/security/      - OpenSOAP Security API.
+src/server/        - OpenSOAP Server, not required if you don't run
+                     the server.  HTTPD's CGI or INETD can be used to
+                     provide services.
+src/tools/         - Basic service tools.
+
+doc/             - Documentation.
+include/         - Header files to develop software using the OpenSOAP API.
+samples/         - Sample programs of OpenSOAP.
+etc/server/      - Configuration files for the OpenSOAP Server.
+win32/           - READMEs and Project files for building OpenSOAP on
+
+contrib/bridging/  - Bridging Interface for CORBA and DCOM.
+contrib/java/      - Class library for using OpenSOAP with Java program.
+		     Microsoft Windows.
+contrib/cpplib/    - C++ class wrappers for the OpenSOAP API.

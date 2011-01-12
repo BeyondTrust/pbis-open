@@ -1,0 +1,981 @@
+.TH "XMLElm.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+XMLElm.h \- OpenSOAP API XML Element Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/XMLAttr.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmCreate\fP (\fBOpenSOAPXMLElmPtr\fP *elm)"
+.br
+.RI "\fIOpenSOAP XML Element Instance Create. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetNamespaceMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *ns_uri, const char *ns_prefix)"
+.br
+.RI "\fISet Namespace of XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetNamespaceWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *ns_uri, const wchar_t *ns_prefix)"
+.br
+.RI "\fISet Namespace of XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSearchNamespaceMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *ns_uri, const char *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fISearch Namespace of XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSearchNamespaceWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *ns_uri, const wchar_t *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fISearch Namespace of XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetNamespace\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIGet Namespace Pointer. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSearchNamespaceString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, \fBOpenSOAPXMLNamespacePtr\fP *ns, \fBOpenSOAPXMLElmPtr\fP *defElm)"
+.br
+.RI "\fISearch Namespace String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmDefineNamespaceMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *ns_uri, const char *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIDefine XML namespace.(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmDefineNamespaceWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *ns_uri, const wchar_t *ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIDefine XML namespace.(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddAttributeMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *attr_name, const char *attr_type, void *attr_value, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIAdd Attribute(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddAttributeWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *attr_name, const wchar_t *attr_type, void *attr_value, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIAdd Attribute(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetAttributeMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIGet Attribute Pointer of Assignment Attribute Name(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetAttributeWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIGet Attribute Pointer of Assignment Attribute Name(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetNextChild\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLElmPtr\fP *cld_elm)"
+.br
+.RI "\fIGet next child XML Element. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddChildString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, \fBOpenSOAPXMLElmPtr\fP *childElm)"
+.br
+.RI "\fIAdd Child XML Element(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddChildMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *cld_name, \fBOpenSOAPXMLElmPtr\fP *cld_elm)"
+.br
+.RI "\fIAdd Child XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddChildWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *cld_name, \fBOpenSOAPXMLElmPtr\fP *cld_elm)"
+.br
+.RI "\fIAdd Child XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmAddChildXMLDocument\fP (\fBOpenSOAPXMLElmPtr\fP elm, char *elmname, \fBOpenSOAPByteArrayPtr\fP document, const char *charEnc)"
+.br
+.RI "\fIAdd Child XML Element(XML Document). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetChildString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, \fBOpenSOAPXMLElmPtr\fP *childElm)"
+.br
+.RI "\fIGet Child XML Element(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetChildMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *cld_name, \fBOpenSOAPXMLElmPtr\fP *cld_elm)"
+.br
+.RI "\fIGet Child XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetChildWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *cld_name, \fBOpenSOAPXMLElmPtr\fP *cld_elm)"
+.br
+.RI "\fIGet Child XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *type_name, void *value)"
+.br
+.RI "\fIGet Value of XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *type_name, void *value)"
+.br
+.RI "\fIGet Value of XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *type_name, void *value)"
+.br
+.RI "\fISet Value of XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *type_name, void *value)"
+.br
+.RI "\fISet Value of XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetCharEncodingString\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *chEnc, \fBOpenSOAPByteArrayPtr\fP bAry)"
+.br
+.RI "\fIXML Element Character Encoding Output. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetNameString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP *name)"
+.br
+.RI "\fIGet XML Element's Name as OpenSOAPString. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetNextAttr\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLAttrPtr\fP *attr_elm)"
+.br
+.RI "\fIGet next attr XML Element. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetChildValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *childName, const char *typeName, void *value)"
+.br
+.RI "\fIGet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetChildValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *childName, const wchar_t *typeName, void *value)"
+.br
+.RI "\fIGet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *childName, const char *typeName, void *value)"
+.br
+.RI "\fISet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *childName, const wchar_t *typeName, void *value)"
+.br
+.RI "\fISet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueXMLDocument\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPByteArrayPtr\fP document, const char *charEnc)"
+.br
+.RI "\fIAdd Child XML Element(XML Document). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetValueAsString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP value, int isDup)"
+.br
+.RI "\fIXML Element value set as string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetValueAsStringMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *value)"
+.br
+.RI "\fIXML Element value set as string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetValueAsStringWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *value)"
+.br
+.RI "\fIXML Element value set as string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueAsStringMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *childName, const char *value)"
+.br
+.RI "\fISet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueAsStringWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *childName, const wchar_t *value)"
+.br
+.RI "\fISet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetChildValueAsString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, int isValueDup, \fBOpenSOAPStringPtr\fP value)"
+.br
+.RI "\fISet Child Value. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmRemoveChildString\fP (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, int isValueRelease, \fBOpenSOAPStringPtr\fP *childValue)"
+.br
+.RI "\fIRemove Child XML Element(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetAttributeValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *attrName, const char *typeName, void *value)"
+.br
+.RI "\fIGet Attribute Value(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmGetAttributeValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *attrName, const wchar_t *typeName, void *value)"
+.br
+.RI "\fIGet Attribute Value(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetAttributeValueMB\fP (\fBOpenSOAPXMLElmPtr\fP elm, const char *attrName, const char *typeName, void *value)"
+.br
+.RI "\fISet Attribute Value(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLElmSetAttributeValueWC\fP (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t *attrName, const wchar_t *typeName, void *value)"
+.br
+.RI "\fISet Attribute Value(WC). \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API XML Element Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPXMLElmAddAttributeMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * attr_name, const char * attr_type, void * attr_value, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Add Attribute(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) SOAP Element 
+.br
+\fIattr_name\fP const char * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr_type\fP const char * [in] ((|attr_type|)) Attribute Type 
+.br
+\fIattr_value\fP void * [in] ((|attr_value|)) Attribute Value 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmAddAttributeWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * attr_name, const wchar_t * attr_type, void * attr_value, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Add Attribute(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) SOAP Element 
+.br
+\fIattr_name\fP const wchar_t * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr_type\fP const wchar_t * [in] ((|attr_type|)) Attribute Type 
+.br
+\fIattr_value\fP void * [in] ((|attr_value|)) Attribute Value 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmAddChildMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * cld_name, \fBOpenSOAPXMLElmPtr\fP * cld_elm)"
+.PP
+Add Child XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIcld_name\fP cosnt char * [in] ((|cld_name|)) Add Child Element Name 
+.br
+\fIcld_elm\fP OpenSOAPXMLElmPtr * [out] ((|cld_elm|)) Add Child Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmAddChildString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, \fBOpenSOAPXMLElmPtr\fP * childElm)"
+.PP
+Add Child XML Element(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP OpenSOAPStringPtr [in] ((|cld_name|)) Add Child Element Name 
+.br
+\fIchildElm\fP OpenSOAPXMLElmPtr * [out] ((|cld_elm|)) Add Child Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmAddChildWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * cld_name, \fBOpenSOAPXMLElmPtr\fP * cld_elm)"
+.PP
+Add Child XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIcld_name\fP cosnt wchar_t * [in] ((|cld_name|)) Add Child Element Name 
+.br
+\fIcld_elm\fP OpenSOAPXMLElmPtr * [out] ((|cld_elm|)) Add Child Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmAddChildXMLDocument (\fBOpenSOAPXMLElmPtr\fP elm, char * elmname, \fBOpenSOAPByteArrayPtr\fP document, const char * charEnc)"
+.PP
+Add Child XML Element(XML Document). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIelmname\fP char * [in] ((elmname|)) OpenSOAP XML Element Name 
+.br
+\fIdocument\fP OpenSOAPByteArrayPtr [in] ((document|)) OpenSOAPByteArrayPtr 
+.br
+\fIcharEnc\fP const char * [in] ((|charEnc|)) Characeter Encoding 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmCreate (\fBOpenSOAPXMLElmPtr\fP * elm)"
+.PP
+OpenSOAP XML Element Instance Create. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr * [out] ((|elm|)) XML Element pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmDefineNamespaceMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * ns_uri, const char * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Define XML namespace.(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) OpenSOAP XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmDefineNamespaceWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * ns_uri, const wchar_t * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Define XML namespace.(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) OpenSOAP XML Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetAttributeMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Get Attribute Pointer of Assignment Attribute Name(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIattr_name\fP const char * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetAttributeValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * attrName, const char * typeName, void * value)"
+.PP
+Get Attribute Value(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIattrName\fP const char * [in] ((|attrName|)) Attribute Name 
+.br
+\fItypeName\fP const char * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetAttributeValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * attrName, const wchar_t * typeName, void * value)"
+.PP
+Get Attribute Value(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIattrName\fP const wchar_t * [in] ((|attrName|)) Attribute Name 
+.br
+\fItypeName\fP const wchar_t * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetAttributeWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Get Attribute Pointer of Assignment Attribute Name(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIattr_name\fP const wchar_t * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetCharEncodingString (\fBOpenSOAPXMLElmPtr\fP elm, const char * chEnc, \fBOpenSOAPByteArrayPtr\fP bAry)"
+.PP
+XML Element Character Encoding Output. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchEnc\fP const char * [in] ((|chEnc|)) character encoding (i.e. 'EUC-JP', 'Shift_JIS', 'UTF-8'). 
+.br
+\fIbAry\fP OpenSOAPByteArrayPtr [out] ((|bAry|)) Result Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetChildMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * cld_name, \fBOpenSOAPXMLElmPtr\fP * cld_elm)"
+.PP
+Get Child XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIcld_name\fP cosnt char * [in] ((|cld_name|)) Assignment Element Name 
+.br
+\fIcld_elm\fP OpenSOAPXMLElmPtr * [out] ((|cld_elm|)) XML Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetChildString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, \fBOpenSOAPXMLElmPtr\fP * childElm)"
+.PP
+Get Child XML Element(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP OpenSOAPStringPtr [in] ((|chldName|)) Assignment Element Name 
+.br
+\fIchildElm\fP OpenSOAPXMLElmPtr * [out] ((|chldElm|)) XML Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetChildValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * childName, const char * typeName, void * value)"
+.PP
+Get Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const char * [in] ((|childName|)) child element name 
+.br
+\fItypeName\fP const char * [in] ((|typeName|)) value's type name 
+.br
+\fIvalue\fP void * [out] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetChildValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * childName, const wchar_t * typeName, void * value)"
+.PP
+Get Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const wchar_t * [in] ((|childName|)) child element name 
+.br
+\fItypeName\fP const wchar_t * [in] ((|typeName|)) value's type name 
+.br
+\fIvalue\fP void * [out] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetChildWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * cld_name, \fBOpenSOAPXMLElmPtr\fP * cld_elm)"
+.PP
+Get Child XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIcld_name\fP cosnt wchar_t * [in] ((|cld_name|)) Assignment Element Name 
+.br
+\fIcld_elm\fP OpenSOAPXMLElmPtr * [out] ((|cld_elm|)) XML Element Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetNamespace (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Get Namespace Pointer. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetNameString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP * name)"
+.PP
+Get XML Element's Name as OpenSOAPString. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element Pointer 
+.br
+\fIname\fP OpenSOAPStringPtr * [out] ((|name|)) Result Name of Node 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetNextAttr (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLAttrPtr\fP * attr_elm)"
+.PP
+Get next attr XML Element. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIattr_elm\fP OpenSOAPXMLAttrPtr * [in, out] ((|attr_elm|)) Next Attr Element Pointer. If 'attr_elm' is NULL, then return to first XML Element pointer. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetNextChild (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPXMLElmPtr\fP * cld_elm)"
+.PP
+Get next child XML Element. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIcld_elm\fP OOpenSOAPXMLElmPtr * [in, out] ((|cld_elm|)) XML Element Pointer. Return the next XML Element. If 'cld_elm' is NULL, return to first XML Element. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * type_name, void * value)"
+.PP
+Get Value of XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Setting Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmGetValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * type_name, void * value)"
+.PP
+Get Value of XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Setting Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmRemoveChildString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, int isValueRelease, \fBOpenSOAPStringPtr\fP * childValue)"
+.PP
+Remove Child XML Element(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP OpenSOAPStringPtr [in] ((|childName|)) Child Element Name 
+.br
+\fIisValueRelease\fP int [in] ((|isValueRelease|)) Value Released or not 
+.br
+\fIchildValue\fP OpenSOAPStringPtr * [out] ((|childValue|)) Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSearchNamespaceMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * ns_uri, const char * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Search Namespace of XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSearchNamespaceString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP nsUri, \fBOpenSOAPStringPtr\fP nsPrefix, \fBOpenSOAPXMLNamespacePtr\fP * ns, \fBOpenSOAPXMLElmPtr\fP * defElm)"
+.PP
+Search Namespace String. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element 
+.br
+\fInsUri\fP OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI 
+.br
+\fInsPrefix\fP OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.br
+\fIdefElm\fP OpenSOAPXMLElmPtr * [out] ((|defElm|)) XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSearchNamespaceWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * ns_uri, const wchar_t * ns_prefix, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Search Namespace of XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetAttributeValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * attrName, const char * typeName, void * value)"
+.PP
+Set Attribute Value(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIattrName\fP const char * [in] ((|attrName|)) Attribute Name 
+.br
+\fItypeName\fP const char * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetAttributeValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * attrName, const wchar_t * typeName, void * value)"
+.PP
+Set Attribute Value(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIattrName\fP const wchar_t * [in] ((|attrName|)) Attribute Name 
+.br
+\fItypeName\fP const wchar_t * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueAsString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP childName, int isValueDup, \fBOpenSOAPStringPtr\fP value)"
+.PP
+Set Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP OpenSOAPStringPtr [in] ((|childName|)) child element name 
+.br
+\fIisValueDup\fP int [in] ((|isValueDup|)) value duplicate flag 
+.br
+\fIvalue\fP OpenSOAPStringPtr [in, out] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueAsStringMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * childName, const char * value)"
+.PP
+Set Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const char * [in] ((|childName|)) child element name 
+.br
+\fIvalue\fP const char * [in] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueAsStringWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * childName, const wchar_t * value)"
+.PP
+Set Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const wchar_t * [in] ((|childName|)) child element name 
+.br
+\fIvalue\fP const wchar_t * [in] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * childName, const char * typeName, void * value)"
+.PP
+Set Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const char * [in] ((|childName|)) child element name 
+.br
+\fItypeName\fP const char * [in] ((|typeName|)) value's type name 
+.br
+\fIvalue\fP void * [in] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * childName, const wchar_t * typeName, void * value)"
+.PP
+Set Child Value. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIchildName\fP const wchar_t * [in] ((|childName|)) child element name 
+.br
+\fItypeName\fP const wchar_t * [in] ((|typeName|)) value's type name 
+.br
+\fIvalue\fP void * [in] ((|value|)) value buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetChildValueXMLDocument (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPByteArrayPtr\fP document, const char * charEnc)"
+.PP
+Add Child XML Element(XML Document). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fIdocument\fP OpenSOAPByteArrayPtr [in] ((document|)) OpenSOAPByteArrayPtr 
+.br
+\fIcharEnc\fP const char * [in] ((|charEnc|)) Characeter Encoding 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetNamespaceMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * ns_uri, const char * ns_prefix)"
+.PP
+Set Namespace of XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetNamespaceWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * ns_uri, const wchar_t * ns_prefix)"
+.PP
+Set Namespace of XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in, out] ((|elm|)) XML Element 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetValueAsString (\fBOpenSOAPXMLElmPtr\fP elm, \fBOpenSOAPStringPtr\fP value, int isDup)"
+.PP
+XML Element value set as string. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) XML Elm Pointer 
+.br
+\fIvalue\fP OpenSOAPStringPtr [in] ((|value|)) Setting Elm Name 
+.br
+\fIisDup\fP int [in] ((|isDup|)) duplicate flag. If non zero, then value is duplicate. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetValueAsStringMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * value)"
+.PP
+XML Element value set as string. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) XML Elm Pointer 
+.br
+\fIvalue\fP const char * [in] ((|value|)) value as string 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetValueAsStringWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * value)"
+.PP
+XML Element value set as string. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [out] ((|elm|)) XML Elm Pointer 
+.br
+\fIvalue\fP const wchar_t * [in] ((|value|)) value as string 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetValueMB (\fBOpenSOAPXMLElmPtr\fP elm, const char * type_name, void * value)"
+.PP
+Set Value of XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fItype_name\fP const char * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Setting Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLElmSetValueWC (\fBOpenSOAPXMLElmPtr\fP elm, const wchar_t * type_name, void * value)"
+.PP
+Set Value of XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLElmPtr [in] ((|elm|)) OpenSOAP XML Element 
+.br
+\fItype_name\fP const wchar_t * [in] ((|typeName|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Setting Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

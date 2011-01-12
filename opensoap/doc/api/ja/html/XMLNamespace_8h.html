@@ -1,0 +1,697 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: XMLNamespace.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>XMLNamespace.h</h1>OpenSOAP API XML Namespace 処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="String_8h-source.html">OpenSOAP/String.h</a>&gt;</code><br>
+
+<p>
+<a href="XMLNamespace_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a0" doxytag="XMLNamespace.h::OpenSOAPXMLNamespace" ></a>
+typedef tagOpenSOAPXMLNamespace&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a0">OpenSOAPXMLNamespace</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLNamespace 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="XMLNamespace.h::OpenSOAPXMLNamespacePtr" ></a>
+typedef <a class="el" href="XMLNamespace_8h.html#a0">OpenSOAPXMLNamespace</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLNamespace ポインタ定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a2" doxytag="XMLNamespace.h::OpenSOAPXMLElm" ></a>
+typedef tagOpenSOAPXMLElm&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a2">OpenSOAPXMLElm</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLElm 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a3" doxytag="XMLNamespace.h::OpenSOAPXMLElmPtr" ></a>
+typedef <a class="el" href="XMLNamespace_8h.html#a2">OpenSOAPXMLElm</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPXMLElm ポインタ定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a4">OpenSOAPXMLNamespaceCreateMB</a> (const char *ns_uri, const char *ns_prefix, <a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP XML Namespace インスタンスの生成(MB).  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a5">OpenSOAPXMLNamespaceCreateWC</a> (const wchar_t *ns_uri, const wchar_t *ns_prefix, <a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP XML Namespace インスタンスの生成(WC).  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a6">OpenSOAPXMLNamespaceRelease</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML Namespace 領域を開放.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a7">OpenSOAPXMLNamespaceCreateString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsUri, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsPrefix, <a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML Namespace Element インスタンスの生成(OpenSOAPString).  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a8">OpenSOAPXMLNamespaceGetURI</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *ns_uri)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Namespace URI の取得.  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a9">OpenSOAPXMLNamespaceDuplicate</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *dupNs)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Duplicate XML Namespace.  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a10">OpenSOAPXMLNamespaceGetDefinedXMLElm</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *elm)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">指定 Namespaceポインタから Element を取得  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a11">OpenSOAPXMLNamespaceSetDefinedXMLElm</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm, <a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *oldElm)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">指定 Namespaceポインタから Element を設定  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a12">OpenSOAPXMLNamespaceGetPrefix</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *ns_prefix)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Namespace Prefix の取得.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a13">OpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, char *(*memAllocator)(size_t), char **utf8NsURI, char **utf8NsPrefix)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get XML Namespace Properties UTF-8 encoding.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a14">OpenSOAPXMLNamespaceIsSameUriString</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsUri, int *isSame)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Same XML Namespace URI ?  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="XMLNamespace_8h.html#a15">OpenSOAPXMLNamespaceIsSameString</a> (<a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> ns, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsUri, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsPrefix, int *isSame)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Same XML Namespace URI And Prefix ?  <a href="#a15"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API XML Namespace 処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>関数</h2>
+<a class="anchor" name="a4" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceCreateMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceCreateMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_uri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_prefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP XML Namespace インスタンスの生成(MB). 
+<p>
+OpenSOAP XML Namespace インスタンスを生成します。(MB) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns_uri</em>&nbsp;</td><td>const char * [in] ((|ns_uri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>ns_prefix</em>&nbsp;</td><td>const char * [in] ((|ns_prefix|)) Namespace prefix </td></tr>
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceCreateString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceCreateString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>nsUri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>nsPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML Namespace Element インスタンスの生成(OpenSOAPString). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>nsUri</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>nsPrefix</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix </td></tr>
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr * [out] ((|ns|)) XML Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceCreateWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceCreateWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_uri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_prefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP XML Namespace インスタンスの生成(WC). 
+<p>
+OpenSOAP XML Namespace インスタンスを生成します。(WC) <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns_uri</em>&nbsp;</td><td>const wchar_t * [in] ((|ns_uri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>ns_prefix</em>&nbsp;</td><td>const wchar_t * [in] ((|ns_prefix|)) Namespace prefix </td></tr>
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLElmPtr * [out] ((|ns|)) XML Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceDuplicate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceDuplicate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>dupNs</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Duplicate XML Namespace. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>dupNs</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr * [out] ((|dupNs|)) XML Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceGetDefinedXMLElm" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceGetDefinedXMLElm </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+指定 Namespaceポインタから Element を取得 
+<p>
+指定 Namespaceポインタから Element を取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLElmPtr * [out] ((|elm|)) XML Element </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceGetPrefix" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceGetPrefix </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_prefix</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Namespace Prefix の取得. 
+<p>
+Namespaceポインタから Prefixを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>ns_prefix</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|ns_prefix|)) Namespace Prefix </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceGetPropertiesUTF8WithAllocator </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char *(*&nbsp;</td>
+          <td class="mdname" nowrap> <em>memAllocator</em>)(size_t), </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8NsURI</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>utf8NsPrefix</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get XML Namespace Properties UTF-8 encoding. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>memAllocator</em>&nbsp;</td><td>char * [in] ( * ((|memAllocator|)) )(size_t) Character String </td></tr>
+    <tr><td valign=top><em>utf8NsURI</em>&nbsp;</td><td>char ** [out] ((|utf8NsURI|)) Character String Array UTF8 Encoded Namespace URI </td></tr>
+    <tr><td valign=top><em>utf8NsPrefix</em>&nbsp;</td><td>char ** [out] ((|utf8NsPrefix|)) Character String Array UTF8 Encoded Namespace Prefix </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceGetURI" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceGetURI </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns_uri</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Namespace URI の取得. 
+<p>
+Namespaceポインタから URIを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>ns_uri</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|ns_uri|)) Namespace URI </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceIsSameString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceIsSameString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>nsUri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>nsPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>isSame</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Same XML Namespace URI And Prefix ? 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>nsUri</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>nsPrefix</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|nsPrefix|)) Namespace Prefix </td></tr>
+    <tr><td valign=top><em>isSame</em>&nbsp;</td><td>int * [out] ((|isSame|)) Is same result </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceIsSameUriString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceIsSameUriString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>nsUri</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int *&nbsp;</td>
+          <td class="mdname" nowrap> <em>isSame</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Same XML Namespace URI ? 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [in] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>nsUri</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|nsUri|)) Namespace URI </td></tr>
+    <tr><td valign=top><em>isSame</em>&nbsp;</td><td>int * [out] ((|isSame|)) Is same URI result </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>ns</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML Namespace 領域を開放. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="XMLNamespace.h::OpenSOAPXMLNamespaceSetDefinedXMLElm" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPXMLNamespaceSetDefinedXMLElm </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>ns</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>elm</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>oldElm</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+指定 Namespaceポインタから Element を設定 
+<p>
+指定 Namespaceポインタから Element を設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>ns</em>&nbsp;</td><td>OpenSOAPXMLNamespacePtr [out] ((|ns|)) XML Namespace </td></tr>
+    <tr><td valign=top><em>elm</em>&nbsp;</td><td>OpenSOAPXMLElmPtr [in] ((|elm|)) XML Element </td></tr>
+    <tr><td valign=top><em>oldElm</em>&nbsp;</td><td>OpenSOAPXMLElmPtr * [out] ((|oldElm|)) XML Element </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:48 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

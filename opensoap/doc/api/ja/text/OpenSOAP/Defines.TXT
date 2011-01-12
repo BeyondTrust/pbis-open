@@ -1,0 +1,40 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Defines.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Defines.h
+ * @brief OpenSOAP API 定義群
+ * @author
+ *    OpenSOAP Development Team
+ */
+/**
+ * @def OPENSOAP_API
+ * @brief
+ *	OpenSOAP API 宣言／定義に付加するマクロ
+ */
+/**
+ * @def OPENSOAP_VAR
+ * @brief
+ *	OpenSOAP API 変数の宣言／定義に付加するマクロ
+ */
+/**
+ * @def OPENSOAP_CLASS
+ * @brief OpenSOAP API で C++ のクラス定義に付加するマクロ
+ *
+ * このマクロは、クラスのメンバ関数すべてを export したい場合に使用する。
+ * 例:
+ * @code
+ *	class OPENSOAP_CLASS TwoChannel {
+ *	public:
+ *		TwoChannel();
+ *		const std::string &getOne() const;
+ *	};
+ * @endcode
+ */

@@ -1,0 +1,73 @@
+# -*- mode: makefile; -*-
+# -----------------------------------------------------------------------------
+#  $RCSfile: Security.mak.in,v $
+# 
+#  See Copyright for the status of this software.
+# 
+#  The OpenSOAP Project
+#  http://opensoap.jp/
+# -----------------------------------------------------------------------------
+#
+#
+#
+
+PROGRAMS = genrsakey secEnv
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+sysconfdir = @sysconfdir@
+localstatedir = @localstatedir@
+includedir = @includedir@
+libdir = @libdir@
+
+#
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+
+CC = @CC@
+
+OPENSOAP_PREFIX=@prefix@
+OPENSOAP_INCLUDE=@includedir@
+OPENSOAP_LIB=@libdir@
+
+# DEBUG_CFLAGS = -g
+CFLAGS = ${DEBUG_CFLAGS} -Wall -I${OPENSOAP_INCLUDE}
+COMMON_LDFLAGS=-L${OPENSOAP_LIB} -Wl,-rpath -Wl,${OPENSOAP_LIB}
+#COMMON_LDFLAGS=-L${OPENSOAP_LIB} -R${OPENSOAP_LIB}
+SECURITY_LDFLAGS=${COMMON_LDFLAGS} -lOpenSOAPClient -lOpenSOAPSecurity
+
+SOURCES= genkey.c envelopeTst.c fio.c
+OBJS=${SOURCES:.c=.o}
+
+all: ${PROGRAMS}
+
+genrsakey: genkey.o
+	${CC}  -o $@ $^ ${SECURITY_LDFLAGS}
+
+secEnv: envelopeTst.o fio.o
+	${CC}  -o $@ $^ ${SECURITY_LDFLAGS}
+
+clean: 
+	rm -f ${OBJS} ${PROGRAMS}
+
+## Install Programs
+
+install: ${PROGRAMS}
+	@if test -d ${DESTDIR}${bindir}; then \
+		echo "${DESTDIR}${bindir} exist."; \
+	else \
+		echo "${DESTDIR}${bindir} does not exist."; \
+		echo "mkdir -p ${DESTDIR}${bindir}."; \
+		mkdir -p ${DESTDIR}${bindir}; \
+	fi
+	@for f in $^ ; do \
+		echo "$$f install to ${DESTDIR}${bindir}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${bindir}; \
+	done
+
+install-samples: install

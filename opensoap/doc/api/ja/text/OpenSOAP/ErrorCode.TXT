@@ -1,0 +1,224 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: ErrorCode.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/ErrorCode.h
+ * @brief OpenSOAP API エラーコード定義
+ * @author
+ *    OpenSOAP Development Team
+ */
+/**
+ * @def OPENSOAP_NO_ERROR (0)
+ * @brief No Error
+ */
+/**
+ * @def OPENSOAP_NOT_CATEGORIZE_ERROR   (0xffffffffL)
+ * @brief 未定義のエラー
+ */
+/**
+ * @def OPENSOAP_IMPLEMENTATION_ERROR   (0x40000000L)
+ * @brief Implementation Error
+ */
+/**
+ * @def OPENSOAP_YET_IMPLEMENTATION     (0x40000001L)
+ * @brief 未実装エラー
+ */
+/**
+ * @def OPENSOAP_UNSUPPORT_PROTOCOL     (0x40000002L)
+ * @brief 未対応プロトコルエラー (HAVE_SSLがない時のssl使用を含む)
+ */
+/**
+ * @def OPENSOAP_PARAMETER_BADVALUE     (0x20000001L)
+ * @brief パラメータ値不正
+ */
+/**
+ * @def OPENSOAP_USERDEFINE_ERROR       (0x10000000L)
+ * @brief User 定義 Error
+ */
+/**
+ * @def OPENSOAP_MEM_ERROR      (0x00010000L)
+ * @brief メモリエラー
+ */
+/**
+ * @def OPENSOAP_MEM_BADALLOC   (0x00010001L)
+ * @brief メモリ確保エラー
+ */
+/**
+ * @def OPENSOAP_MEM_OUTOFRANGE (0x00010002L)
+ * @brief メモリ外アクセスエラー
+ */
+/**
+ * @def OPENSOAP_CHAR_ERROR             (0x00020000L)
+ * @brief キャラクタ変換エラー
+ */
+/**
+ * @def OPENSOAP_ICONV_NOT_IMPL         (0x00020001L)
+ * @brief iconv 未実装エラー
+ */
+/**
+ * @def OPENSOAP_INVALID_MB_SEQUENCE    (0x00020002L)
+ * @brief 不正マルチバイト文字列並び
+ */
+/**
+ * @def OPENSOAP_INCOMPLETE_MB_SEQUENCE (0x00020003L)
+ * @brief マルチバイト文字列不完全
+ */
+/**
+ * @def OPENSOAP_UNKNOWN_CHARENCODE     (0x00020004L)
+ * @brief 未知のキャラクタエンコード
+ */
+/**
+ * @def OPENSOAP_SETLOCALEFAILURE       (0x00020005L)
+ * @brief ロケール設定失敗
+ */
+/**
+ * @def OPENSOAP_IO_ERROR       (0x00040000L)
+ * @brief I/O エラー
+ */
+/**
+ * @def OPENSOAP_IO_READ_ERROR	(0x00040001L)
+ * @brief 読み込み Error
+ */
+/**
+ * @def OPENSOAP_IO_WRITE_ERROR	(0x00040002L)
+ * @brief 書き込み Error
+ */
+/**
+ * @def OPENSOAP_FILE_ERROR		(0x00048000L)
+ * @brief ファイル I/O Error
+ */
+/**
+ * @def OPENSOAP_FILEOPEN_ERROR	(0x00048001L)
+ * @brief ファイル Open Error
+ */
+/**
+ * @def OPENSOAP_XML_ERROR				(0x00080000L)
+ * @brief XML 処理 Error
+ */
+/**
+ * @def OPENSOAP_XMLNODE_NOT_FOUND		(0x00080001L)
+ * @brief XML ノードが無い
+ */
+/**
+ * @def OPENSOAP_XML_BADNAMESPACE		(0x00080002L)
+ * @brief 不正な XML namespace
+ */
+/**
+ * @def OPENSOAP_XML_NOHEADERBODY		(0x00080003L)
+ * @brief Header および Body が無い
+ */
+/**
+ * @def OPENSOAP_XML_BADDOCUMENTTYPE	(0x00080004L)
+ * @brief XML Document Type 不正
+ */
+/**
+ * @def OPENSOAP_XML_BADMAKEDOCUMENT	(0x00080005L)
+ * @brief XML Document 作成失敗
+ */
+/**
+ * @def OPENSOAP_XML_EMPTYDOCUMENT		(0x00080006L)
+ * @brief 空の XML Document
+ */
+/**
+ * @def OPENSOAP_XML_NOTXMLDOCUMENT		(0x00080007L)
+ * @brief Not XML Document Error
+ */
+/**
+ * @def OPENSOAP_XML_NS_URI_UNMATCHED	(0x00080008L)
+ * @brief XML Namespace Prefix は適正だが, URI が不正
+ */
+/**
+ * @def OPENSOAP_SEC_ERROR				(0x00100000L)
+ * @brief Security Error
+ */
+/**
+ * @def OPENSOAP_SEC_KEYGEN_ERROR		(0x00100001L)
+ * @brief Key Generation Error
+ */
+/**
+ * @def OPENSOAP_SEC_SIGNGEN_ERROR		(0x00100002L)
+ * @brief Signature Generation Error
+ */
+/**
+ * @def OPENSOAP_SEC_SIGNVERIFY_ERROR	(0x00100003L)
+ * @brief Signature Verification Error
+ */
+/**
+ * @def OPENSOAP_SEC_ENCRYPT_ERROR		(0x00100004L)
+ * @brief Encryption Error
+ */
+/**
+ * @def OPENSOAP_SEC_DECRYPT_ERROR		(0x00100005L)
+ * @brief Decryption Error
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_ERROR		(0x00200000L)
+ * @brief トランスポート・エラー
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_INVOKE_ERROR	(0x00210000L)
+ * @brief トランスポート・インボークのエラー
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_HOST_NOT_FOUND	(0x00210001L)
+ * @brief ホストが見つからない(おそらくDNS)
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_CONNECTION_REFUSED	(0x00210002L)
+ * @brief 接続拒否 (リモートでポートを開いていない)
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT	(0x00210003L)
+ * @brief 接続時間切れ
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_NETWORK_UNREACH	(0x00210004L)
+ * @brief ネットワーク到達不能
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_HOST_UNREACH	(0x00210005L)
+ * @brief ホスト到達不能
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_HTTP_ERROR	(0x00220000L)
+ * @brief HTTPエラー
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_IS_HTTP_ERROR(x)	((x) & (OPENSOAP_TRANSPORT_HTTP_ERROR))
+ * @brief トランスポート・エラーにおける、HTTP_ERRORかどうかの判定
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_GET_HTTP_ERROR(x) ((x) & ~(OPENSOAP_TRANSPORT_HTTP_ERROR))
+ * @brief トランスポート・エラー番号からHTTPステータスの値を計算
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_SET_HTTP_ERROR(x) ((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))
+ * @brief HTTPステータスの値からトランスポート・エラー番号を計算
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_SSL_ERROR	(0x00240000L)
+ * @brief SSL エラー
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_SSL_VERSION_ERROR	(0x00240001L)
+ * @brief SSLバージョンのエラー
+ */
+/**
+ * @def OPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR	(0x00240002L)
+ * @brief SSL証明書のエラー
+ */
+/**
+ * @def OPENSOAP_SUCCEEDED(err) (!(err))
+ * @brief OpenSOAP API の返り値が成功かどうかの判定マクロ
+ */
+/**
+ * @def OPENSOAP_FAILED(err)  (err)
+ * @brief OpenSOAP API の返り値が失敗かどうかの判定マクロ
+ */

@@ -1,0 +1,26 @@
+HKCR
+{
+	SubDll.SubtractDll.1 = s 'SubtractDll Class'
+	{
+		CLSID = s '{FA5ED1D1-91A1-4018-9391-C272F5BA5518}'
+	}
+	SubDll.SubtractDll = s 'SubtractDll Class'
+	{
+		CLSID = s '{FA5ED1D1-91A1-4018-9391-C272F5BA5518}'
+		CurVer = s 'SubDll.SubtractDll.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {FA5ED1D1-91A1-4018-9391-C272F5BA5518} = s 'SubtractDll Class'
+		{
+			ProgID = s 'SubDll.SubtractDll.1'
+			VersionIndependentProgID = s 'SubDll.SubtractDll'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '{06FA7B44-33C5-438b-8E1F-B4DB40D93BC5}'
+			'TypeLib' = s '{40D9BE9A-76B6-4BB5-AF5D-4E2891ECB547}'
+		}
+	}
+}

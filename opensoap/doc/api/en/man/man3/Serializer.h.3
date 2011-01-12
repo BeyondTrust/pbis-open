@@ -1,0 +1,243 @@
+.TH "Serializer.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Serializer.h \- OpenSOAP API Serializer Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/String.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef int(* \fBOpenSOAPSerializerFunc\fP )(void *from_value, \fBOpenSOAPStringPtr\fP to)"
+.br
+.RI "\fIOpenSOAP Serializer Function Type. \fP"
+.ti -1c
+.RI "typedef int(* \fBOpenSOAPDeserializerFunc\fP )(\fBOpenSOAPStringPtr\fP from, void *to_value)"
+.br
+.RI "\fIOpenSOAP Deserializer Function Type. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPSerializerRegisterMB\fP (const char *soap_typename, \fBOpenSOAPSerializerFunc\fP serializer, \fBOpenSOAPDeserializerFunc\fP deserializer)"
+.br
+.RI "\fISerializer and deserializer register function.(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSerializerRegisterWC\fP (const wchar_t *soap_typename, \fBOpenSOAPSerializerFunc\fP serializer, \fBOpenSOAPDeserializerFunc\fP deserializer)"
+.br
+.RI "\fISerializer and deserializer register function.(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetSerializer\fP (\fBOpenSOAPStringPtr\fP soap_typename, \fBOpenSOAPSerializerFunc\fP *serializer)"
+.br
+.RI "\fIGet Serializer(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetSerializerMB\fP (const char *soap_typename, \fBOpenSOAPSerializerFunc\fP *serializer)"
+.br
+.RI "\fIGet Serializer(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetSerializerWC\fP (const wchar_t *soap_typename, \fBOpenSOAPSerializerFunc\fP *serializer)"
+.br
+.RI "\fIGet Serializer(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetDeserializer\fP (\fBOpenSOAPStringPtr\fP soap_typename, \fBOpenSOAPDeserializerFunc\fP *deserializer)"
+.br
+.RI "\fIGet Deserializer(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetDeserializerMB\fP (const char *soap_typename, \fBOpenSOAPDeserializerFunc\fP *deserializer)"
+.br
+.RI "\fIGet Deserializer(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPGetDeserializerWC\fP (const wchar_t *soap_typename, \fBOpenSOAPDeserializerFunc\fP *deserializer)"
+.br
+.RI "\fIGet Deserializer(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSerializerRegistDefaults\fP (void)"
+.br
+.RI "\fIOpenSOAP default Serializers/Deserializers Registration. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Serializer Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Typedef Documentation"
+.PP 
+.SS "int(* \fBOpenSOAPDeserializerFunc\fP)(\fBOpenSOAPStringPtr\fP from, void *to_value)"
+.PP
+OpenSOAP Deserializer Function Type. \fBParameters:\fP
+.RS 4
+\fIfrom\fP OpenSOAPStringPtr [in] ((|from|)) Deserializer Object Assign Pointer 
+.br
+\fIto_value\fP void * [out] ((|to_value|)) Result Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int(* \fBOpenSOAPSerializerFunc\fP)(void *from_value, \fBOpenSOAPStringPtr\fP to)"
+.PP
+OpenSOAP Serializer Function Type. \fBParameters:\fP
+.RS 4
+\fIfrom_value\fP void * [in] ((|from_value|)) Serializer Object Assign Pointer 
+.br
+\fIto\fP OpenSOAPStringPtr [out] ((|to|)) Result Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPGetDeserializer (\fBOpenSOAPStringPtr\fP soap_typename, \fBOpenSOAPDeserializerFunc\fP * deserializer)"
+.PP
+Get Deserializer(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP OpenSOAPStringPtr [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIdeserializer\fP OpenSOAPDeserializerFunc * [out] ((|deserializer|)) Deserializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPGetDeserializerMB (const char * soap_typename, \fBOpenSOAPDeserializerFunc\fP * deserializer)"
+.PP
+Get Deserializer(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const char * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIdeserializer\fP OpenSOAPDeserializerFunc * [out] ((|deserializer|)) Deserializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPGetDeserializerWC (const wchar_t * soap_typename, \fBOpenSOAPDeserializerFunc\fP * deserializer)"
+.PP
+Get Deserializer(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const wchar_t * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIdeserializer\fP OpenSOAPDeserializerFunc * [out] ((|deserializer|)) Deserializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPGetSerializer (\fBOpenSOAPStringPtr\fP soap_typename, \fBOpenSOAPSerializerFunc\fP * serializer)"
+.PP
+Get Serializer(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP OpenSOAPStringPtr [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIserializer\fP OpenSOAPSerializerFunc * [out] ((|serializer|)) Serializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPGetSerializerMB (const char * soap_typename, \fBOpenSOAPSerializerFunc\fP * serializer)"
+.PP
+Get Serializer(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const char * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIserializer\fP OpenSOAPSerializerFunc * [out] ((|serializer|)) Serializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPGetSerializerWC (const wchar_t * soap_typename, \fBOpenSOAPSerializerFunc\fP * serializer)"
+.PP
+Get Serializer(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const wchar_t * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIserializer\fP OpenSOAPSerializerFunc * [out] ((|serializer|)) Serializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSerializerRegistDefaults (void)"
+.PP
+OpenSOAP default Serializers/Deserializers Registration. \fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSerializerRegisterMB (const char * soap_typename, \fBOpenSOAPSerializerFunc\fP serializer, \fBOpenSOAPDeserializerFunc\fP deserializer)"
+.PP
+Serializer and deserializer register function.(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const char * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIserializer\fP OpenSOAPSerializerFunc [in] ((|serializer|)) Serializer Function 
+.br
+\fIdeserializer\fP OpenSOAPDeserializerFunc [in] ((|deserializer|)) Deserializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSerializerRegisterWC (const wchar_t * soap_typename, \fBOpenSOAPSerializerFunc\fP serializer, \fBOpenSOAPDeserializerFunc\fP deserializer)"
+.PP
+Serializer and deserializer register function.(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_typename\fP const wchar_t * [in] ((|soap_typename|)) SOAP Type Name 
+.br
+\fIserializer\fP OpenSOAPSerializerFunc [in] ((|serializer|)) Serializer Function 
+.br
+\fIdeserializer\fP OpenSOAPDeserializerFunc [in] ((|deserializer|)) Deserializer Function 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

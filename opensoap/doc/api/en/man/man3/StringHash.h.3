@@ -1,0 +1,323 @@
+.TH "StringHash.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+StringHash.h \- OpenSOAP API StringHash Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/String.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPStringHash \fBOpenSOAPStringHash\fP"
+.br
+.RI "\fIOpenSOAPStringHash Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPStringHash\fP * \fBOpenSOAPStringHashPtr\fP"
+.br
+.RI "\fIOpenSOAPStringHash Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPStringHashCreate\fP (\fBOpenSOAPStringHashPtr\fP *strh)"
+.br
+.RI "\fICreate OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashRelease\fP (\fBOpenSOAPStringHashPtr\fP strh)"
+.br
+.RI "\fIRelease OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashClear\fP (\fBOpenSOAPStringHashPtr\fP strh)"
+.br
+.RI "\fIClear OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashRemoveKey\fP (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void **val)"
+.br
+.RI "\fIRemove Key From OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashSetValue\fP (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void *val)"
+.br
+.RI "\fIRegister Value In OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashSetValueMB\fP (\fBOpenSOAPStringHashPtr\fP strh, const char *key, void *val)"
+.br
+.RI "\fIRegister Value In OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashSetValueWC\fP (\fBOpenSOAPStringHashPtr\fP strh, const wchar_t *key, void *val)"
+.br
+.RI "\fIRegister Value In OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetValue\fP (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void **val)"
+.br
+.RI "\fIGet value from OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetValueMB\fP (\fBOpenSOAPStringHashPtr\fP strh, const char *key, void **val)"
+.br
+.RI "\fIGet value from OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetValueWC\fP (\fBOpenSOAPStringHashPtr\fP strh, const wchar_t *key, void **val)"
+.br
+.RI "\fIGet value from OpenSOAPString Hash. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetSize\fP (\fBOpenSOAPStringHashPtr\fP strh, size_t *sz)"
+.br
+.RI "\fIGet Number Of OpenSOAPString Hash Registrations. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetKeys\fP (\fBOpenSOAPStringHashPtr\fP strh, size_t *sz, \fBOpenSOAPStringPtr\fP *keys)"
+.br
+.RI "\fIGet OpenSOAPString Hash Keys(All). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashGetValues\fP (\fBOpenSOAPStringHashPtr\fP strh, size_t *sz, void **vals)"
+.br
+.RI "\fIGet OpenSOAPString Hash Values(ALL). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringHashApplyToValues\fP (\fBOpenSOAPStringHashPtr\fP strh, int(*aply)(void *, void *), void *opt)"
+.br
+.RI "\fIApply all OpenSOAPString Hash registered values to specified function. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API StringHash Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPStringHashApplyToValues (\fBOpenSOAPStringHashPtr\fP strh, int(* aply)(void *, void *), void * opt)"
+.PP
+Apply all OpenSOAPString Hash registered values to specified function. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIaply()\fP int [in] ( * ((|aply|)) )(void *val, void *opt) Function Pointer. 
+.br
+\fIopt\fP void * [in] ((|opt|)) Option Parameters for function. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashClear (\fBOpenSOAPStringHashPtr\fP strh)"
+.PP
+Clear OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString Hash 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashCreate (\fBOpenSOAPStringHashPtr\fP * strh)"
+.PP
+Create OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr * [out] ((|strh|)) Created OpenSOAP String Hash Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetKeys (\fBOpenSOAPStringHashPtr\fP strh, size_t * sz, \fBOpenSOAPStringPtr\fP * keys)"
+.PP
+Get OpenSOAPString Hash Keys(All). \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIsz\fP size_t * [in, out] ((|sz|)) 
+.br
+\fIkeys\fP OpenSOAPStringPtr * [out] ((|keys|)) Buffer containing registered keys 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetSize (\fBOpenSOAPStringHashPtr\fP strh, size_t * sz)"
+.PP
+Get Number Of OpenSOAPString Hash Registrations. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIsz\fP size_t * [out] ((|sz|)) Return Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetValue (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void ** val)"
+.PP
+Get value from OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP OpenSOAPStringPtr [in] ((|key|)) Key Value 
+.br
+\fIval\fP void ** [out] ((|val|)) Returned Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetValueMB (\fBOpenSOAPStringHashPtr\fP strh, const char * key, void ** val)"
+.PP
+Get value from OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP const char * [in] ((|key|)) Key Value 
+.br
+\fIval\fP void ** [out] ((|val|)) Returned Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetValues (\fBOpenSOAPStringHashPtr\fP strh, size_t * sz, void ** vals)"
+.PP
+Get OpenSOAPString Hash Values(ALL). \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIsz\fP size_t * [in, out] ((|sz|)) 
+.br
+\fIvals\fP void ** [out] ((|vals|)) Returned value buffer. No relation to key order generated by \fBOpenSOAPStringHashGetKeys()\fP. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashGetValueWC (\fBOpenSOAPStringHashPtr\fP strh, const wchar_t * key, void ** val)"
+.PP
+Get value from OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP const wchar_t * [in] ((|key|)) Key Value 
+.br
+\fIval\fP void ** [out] ((|val|)) Returned Value Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashRelease (\fBOpenSOAPStringHashPtr\fP strh)"
+.PP
+Release OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString Hash 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashRemoveKey (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void ** val)"
+.PP
+Remove Key From OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP OpenSOAPStringPtr [in] ((|key|)) Key Value 
+.br
+\fIval\fP void ** [out] ((|val|)) Location of registered value. If NULL, no value is returned. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashSetValue (\fBOpenSOAPStringHashPtr\fP strh, \fBOpenSOAPStringPtr\fP key, void * val)"
+.PP
+Register Value In OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP OpenSOAPStringPtr [in] ((|key|)) Key Value 
+.br
+\fIval\fP void * [in] ((|val|)) Registered Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashSetValueMB (\fBOpenSOAPStringHashPtr\fP strh, const char * key, void * val)"
+.PP
+Register Value In OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP const char * [in] ((|key|)) Key Value 
+.br
+\fIval\fP void * [in] ((|val|)) Registered Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringHashSetValueWC (\fBOpenSOAPStringHashPtr\fP strh, const wchar_t * key, void * val)"
+.PP
+Register Value In OpenSOAPString Hash. \fBParameters:\fP
+.RS 4
+\fIstrh\fP OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString Hash 
+.br
+\fIkey\fP const wchar_t * [in] ((|key|)) Key Value 
+.br
+\fIval\fP void * [in] ((|val|)) Registered Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

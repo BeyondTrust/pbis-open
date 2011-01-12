@@ -1,0 +1,1450 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: Envelope.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>Envelope.h</h1>OpenSOAP API Envelope 処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;<a class="el" href="Block_8h-source.html">OpenSOAP/Block.h</a>&gt;</code><br>
+<code>#include &lt;<a class="el" href="ByteArray_8h-source.html">OpenSOAP/ByteArray.h</a>&gt;</code><br>
+<code>#include &lt;<a class="el" href="String_8h-source.html">OpenSOAP/String.h</a>&gt;</code><br>
+<code>#include &lt;stdlib.h&gt;</code><br>
+
+<p>
+<a href="Envelope_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a0" doxytag="Envelope.h::OpenSOAPEnvelope" ></a>
+typedef tagOpenSOAPEnvelope&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a0">OpenSOAPEnvelope</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPEnvelope 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="Envelope.h::OpenSOAPEnvelopePtr" ></a>
+typedef <a class="el" href="Envelope_8h.html#a0">OpenSOAPEnvelope</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPEnvelope ポインタ定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a2">OpenSOAPEnvelopeCreate</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soap_env)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP Envelope 作成と初期化.  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a3">OpenSOAPEnvelopeCreateMB</a> (const char *soapVer, const char *envPrefix, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP Envelope 作成と初期化(MB).  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a4">OpenSOAPEnvelopeCreateWC</a> (const wchar_t *soapVer, const wchar_t *envPrefix, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP Envelope 作成と初期化(WC).  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a5">OpenSOAPEnvelopeCreateString</a> (<a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> soapVer, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> envPrefix, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP Envelope instance create(OpenSOAPString).  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a6">OpenSOAPEnvelopeCreateFaultMB</a> (const char *soapVer, const char *envPrefix, const char *faultCode, const char *faultString, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *faultBlock, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create OpenSOAP Fault Block(MB).  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a7">OpenSOAPEnvelopeCreateFaultWC</a> (const wchar_t *soapVer, const wchar_t *envPrefix, const wchar_t *faultCode, const wchar_t *faultString, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *faultBlock, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Create OpenSOAP Fault Block(WC).  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a8">OpenSOAPEnvelopeCreateCharEncoding</a> (const char *chEnc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, <a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Character encoding指定による ByteArrayからの SOAP Envelope 作成.  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a9">OpenSOAPEnvelopeRetain</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">※未実装※ OpenSOAP Envelope リファレンス追加  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a10">OpenSOAPEnvelopeRelease</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP Envelope の開放.  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a11">OpenSOAPEnvelopeAddHeaderBlockMB</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, const char *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *h_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダブロックの追加(MB)  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a12">OpenSOAPEnvelopeAddHeaderBlockWC</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, const wchar_t *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *h_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダブロックの追加(WC)  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a13">OpenSOAPEnvelopeGetNextHeaderBlock</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *h_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダブロックの取得  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a14">OpenSOAPEnvelopeGetHeaderBlockMB</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const char *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *h_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダブロックの取得(MB)  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a15">OpenSOAPEnvelopeGetHeaderBlockWC</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const wchar_t *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *h_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ヘッダブロックの取得(WC)  <a href="#a15"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a16">OpenSOAPEnvelopeAddBodyBlockMB</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const char *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *b_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ボディブロックの追加(MB)  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a17">OpenSOAPEnvelopeAddBodyBlockWC</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const wchar_t *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *b_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ボディブロックの追加(WC)  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a18">OpenSOAPEnvelopeGetNextBodyBlock</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *b_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ボディブロックの取得  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a19">OpenSOAPEnvelopeGetBodyBlockMB</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const char *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *b_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ボディブロックの取得(MB)  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a20">OpenSOAPEnvelopeGetBodyBlockWC</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const wchar_t *block_name, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *b_block)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ボディブロックの取得(WC)  <a href="#a20"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a21">OpenSOAPEnvelopeGetCharEncodingString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, const char *chEnc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SOAP Envelope Character Encoding Output.  <a href="#a21"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a22">OpenSOAPEnvelopeGetHeaderCharEncodingString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const char *ch_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Soap Header character encoding output.  <a href="#a22"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a23">OpenSOAPEnvelopeGetBodyCharEncodingString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soap_env, const char *ch_enc, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Soap Body Character Encoding Output.  <a href="#a23"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a24">OpenSOAPEnvelopeAddFaultString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> faultCode, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> faultString, int isValueDup, <a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *faultBlock)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Add Fault String.  <a href="#a24"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a25">OpenSOAPEnvelopeGetActorNameString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *actorName)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get Actor Name String.  <a href="#a25"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="Envelope_8h.html#a26">OpenSOAPEnvelopeGetActorNextString</a> (<a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> soapEnv, <a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *actorNext)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Get Actor Next String.  <a href="#a26"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API Envelope 処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>関数</h2>
+<a class="anchor" name="a16" doxytag="Envelope.h::OpenSOAPEnvelopeAddBodyBlockMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeAddBodyBlockMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ボディブロックの追加(MB) 
+<p>
+OpenSOAP Envelope 領域にマルチバイト文字列で名前を指定した Body Block を追加します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const char * [in] ((|block_name|)) SOAP Block Name. NULLの場合、Body Elementだけ追加。 </td></tr>
+    <tr><td valign=top><em>b_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="Envelope.h::OpenSOAPEnvelopeAddBodyBlockWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeAddBodyBlockWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ボディブロックの追加(WC) 
+<p>
+SOAP Envelope 領域にワイドキャラクタ文字列で名前を指定した Body Block を追加します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const wchar_t * [in] ((|block_name|)) SOAP Block Name </td></tr>
+    <tr><td valign=top><em>b_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a24" doxytag="Envelope.h::OpenSOAPEnvelopeAddFaultString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeAddFaultString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultString</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>int&nbsp;</td>
+          <td class="mdname" nowrap> <em>isValueDup</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultBlock</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Add Fault String. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [out] ((|soapEnv|)) OpenSOAP Envelope Pointer </td></tr>
+    <tr><td valign=top><em>faultCode</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|faultCode|)) SOAP Fault's faultcode </td></tr>
+    <tr><td valign=top><em>faultString</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|faultString|)) SOAP Fault's faultstring </td></tr>
+    <tr><td valign=top><em>isValueDup</em>&nbsp;</td><td>int [in] ((|isValueDup|)) faultCode and faultString duplicate flag </td></tr>
+    <tr><td valign=top><em>faultBlock</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|faultBlock|)) Storage Buffer of OpenSOAP Fault Block </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="Envelope.h::OpenSOAPEnvelopeAddHeaderBlockMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeAddHeaderBlockMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>h_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダブロックの追加(MB) 
+<p>
+OpenSOAP Envelope 領域にマルチバイト文字列で名前を指定した <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const char * [in] ((|block_name|)) SOAP Block Name </td></tr>
+    <tr><td valign=top><em>h_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="Envelope.h::OpenSOAPEnvelopeAddHeaderBlockWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeAddHeaderBlockWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>h_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダブロックの追加(WC) 
+<p>
+OpenSOAP Envelope領域にワイドキャラクタ文字列で名前を指定した <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const wchar_t * [in] ((|block_name|)) SOAP Block Name </td></tr>
+    <tr><td valign=top><em>h_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a2" doxytag="Envelope.h::OpenSOAPEnvelopeCreate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>soap_env</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP Envelope 作成と初期化. 
+<p>
+OpenSOAP Envelope 領域の確保と構造体の初期化を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soap_env|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="Envelope.h::OpenSOAPEnvelopeCreateCharEncoding" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateCharEncoding </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>chEnc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Character encoding指定による ByteArrayからの SOAP Envelope 作成. 
+<p>
+b_aryの内容をch_enc(EUC-JP/Shift_JIS/UTF-8...)にエンコーディングする。soap_env内に各々パラメータをb_aryより設定します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>chEnc</em>&nbsp;</td><td>const char * [in] ((|chEnc|)) character encoding </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in] ((|b_ary|)) OpenSOAP ByteArray </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>b_aryの内容をchEnc(EUC-JP/Shift_JIS/UTF-8...)にエンコーディングする。soapEnv内に各々パラメータをb_aryより設定する。 </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="Envelope.h::OpenSOAPEnvelopeCreateFaultMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateFaultMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapVer</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>envPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultString</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultBlock</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Create OpenSOAP Fault Block(MB). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapVer</em>&nbsp;</td><td>const char * [in] ((||soapVer|)) SOAP Version </td></tr>
+    <tr><td valign=top><em>envPrefix</em>&nbsp;</td><td>const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix </td></tr>
+    <tr><td valign=top><em>faultCode</em>&nbsp;</td><td>const char * [in] ((|faultCode|)) SOAP Fault's faultcode </td></tr>
+    <tr><td valign=top><em>faultString</em>&nbsp;</td><td>const char * [in] ((|faultString|)) SOAP Fault's faultstring </td></tr>
+    <tr><td valign=top><em>faultBlock</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|faultBlock|)) OpenSOAP Fault Block バッファポインタ </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="Envelope.h::OpenSOAPEnvelopeCreateFaultWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateFaultWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapVer</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>envPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultString</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>faultBlock</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Create OpenSOAP Fault Block(WC). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapVer</em>&nbsp;</td><td>const wchar_t * [in] ((||soapVer|)) SOAP Version </td></tr>
+    <tr><td valign=top><em>envPrefix</em>&nbsp;</td><td>const wchar_t * [in] ((|envPrefix|)) SOAP Envelope namespace prefix </td></tr>
+    <tr><td valign=top><em>faultCode</em>&nbsp;</td><td>const wchar_t * [in] ((|faultCode|)) SOAP Fault's faultcode </td></tr>
+    <tr><td valign=top><em>faultString</em>&nbsp;</td><td>const wchar_t * [in] ((|faultString|)) SOAP Fault's faultstring </td></tr>
+    <tr><td valign=top><em>faultBlock</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|faultBlock|)) OpenSOAP Fault Block バッファポインタ </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="Envelope.h::OpenSOAPEnvelopeCreateMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapVer</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>envPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP Envelope 作成と初期化(MB). 
+<p>
+OpenSOAP Envelope 作成領域の確保を行い、SOAP Versionによって各々定数の代入を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapVer</em>&nbsp;</td><td>const char * [in] ((||soapVer|)) SOAP Version </td></tr>
+    <tr><td valign=top><em>envPrefix</em>&nbsp;</td><td>const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>soapVer "1.1" or "1.2"。NULL の場合は "1.1" と同等。 <p>
+envPrefix NULL 以外の場合は内容に従う。NULL の場合はsoapVerにより以下に従う。<br>
+ "1.1" SOAP-ENV<br>
+ "1.2" env </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="Envelope.h::OpenSOAPEnvelopeCreateString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapVer</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>envPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP Envelope instance create(OpenSOAPString). 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapVer</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((||soapVer|)) SOAP Version </td></tr>
+    <tr><td valign=top><em>envPrefix</em>&nbsp;</td><td>OpenSOAPStringPtr [in] ((|envPrefix|)) SOAP Envelope namespace prefix </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="Envelope.h::OpenSOAPEnvelopeCreateWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeCreateWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapVer</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>envPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP Envelope 作成と初期化(WC). 
+<p>
+OpenSOAP Envelope 作成領域の確保を行い、SOAP Versionによって各々定数の代入を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapVer</em>&nbsp;</td><td>const char * [in] ((||soapVer|)) SOAP Version </td></tr>
+    <tr><td valign=top><em>envPrefix</em>&nbsp;</td><td>const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix </td></tr>
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+<dl compact><dt><b>覚え書き:</b></dt><dd>soapVer "1.1" or "1.2"。NULL の場合は "1.1" と同等。 <p>
+envPrefix NULL 以外の場合は内容に従う。NULL の場合はsoapVerにより以下に従う。<br>
+ "1.1" SOAP-ENV<br>
+ "1.2" env </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a25" doxytag="Envelope.h::OpenSOAPEnvelopeGetActorNameString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetActorNameString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>actorName</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get Actor Name String. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer </td></tr>
+    <tr><td valign=top><em>actorName</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|actorName|)) Actor Name </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a26" doxytag="Envelope.h::OpenSOAPEnvelopeGetActorNextString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetActorNextString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="String_8h.html#a1">OpenSOAPStringPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>actorNext</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Get Actor Next String. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer </td></tr>
+    <tr><td valign=top><em>actorNext</em>&nbsp;</td><td>OpenSOAPStringPtr * [out] ((|actorNext|)) Actor Next </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a19" doxytag="Envelope.h::OpenSOAPEnvelopeGetBodyBlockMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetBodyBlockMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ボディブロックの取得(MB) 
+<p>
+名前をマルチバイト文字列で指定して、ボディブロックを取得します。block_nameを検索b_blockを戻す。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const char * [in] ((|block_name|)) SOAP Body Block name </td></tr>
+    <tr><td valign=top><em>b_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="Envelope.h::OpenSOAPEnvelopeGetBodyBlockWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetBodyBlockWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ボディブロックの取得(WC) 
+<p>
+名前をワイドキャラクタ文字列で指定して、ボディブロックを取得します。block_nameを検索b_blockを戻す。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const wchar_t * [in] ((|block_name|)) SOAP Body Block name </td></tr>
+    <tr><td valign=top><em>b_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a23" doxytag="Envelope.h::OpenSOAPEnvelopeGetBodyCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetBodyCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ch_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Soap Body Character Encoding Output. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>ch_enc</em>&nbsp;</td><td>const char * [in] ((|ch_enc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8") </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a21" doxytag="Envelope.h::OpenSOAPEnvelopeGetCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soapEnv</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>chEnc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SOAP Envelope Character Encoding Output. 
+<p>
+soap_envよりSOAP Messageを組み立てます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>chEnc</em>&nbsp;</td><td>const char * [in] ((|chEnc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8") </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|bAry|)) Storage Buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="Envelope.h::OpenSOAPEnvelopeGetHeaderBlockMB" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetHeaderBlockMB </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>h_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダブロックの取得(MB) 
+<p>
+名前をマルチバイト文字列で指定して、ヘッダブロックを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const char * [in] ((|block_name|)) SOAP Header Block name </td></tr>
+    <tr><td valign=top><em>h_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="Envelope.h::OpenSOAPEnvelopeGetHeaderBlockWC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetHeaderBlockWC </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const wchar_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>block_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>h_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダブロックの取得(WC) 
+<p>
+名前をワイドキャラクタ文字列で指定して、ヘッダブロックを取得します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>block_name</em>&nbsp;</td><td>const wchar_t * [in] ((|block_name|)) SOAP Header Block name </td></tr>
+    <tr><td valign=top><em>h_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a22" doxytag="Envelope.h::OpenSOAPEnvelopeGetHeaderCharEncodingString" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetHeaderCharEncodingString </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>ch_enc</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Soap Header character encoding output. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>ch_enc</em>&nbsp;</td><td>const char * [in] ((|ch_enc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8") </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a18" doxytag="Envelope.h::OpenSOAPEnvelopeGetNextBodyBlock" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetNextBodyBlock </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ボディブロックの取得 
+<p>
+最後のボディブロックポインタを入力した場合は、最初のボディブロックが取得されます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>b_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [in, out] ((|b_block|)) OpenSOAP Body Block. NULLの場合、最初のボディブロックが取得されます。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="Envelope.h::OpenSOAPEnvelopeGetNextHeaderBlock" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeGetNextHeaderBlock </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>soap_env</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="Block_8h.html#a1">OpenSOAPBlockPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>h_block</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ヘッダブロックの取得 
+<p>
+次のヘッダブロックへのポインタを取得します。最後のヘッダブロックポインタを入力した場合は、最初のヘッダブロックが取得されます。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soap_env</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+    <tr><td valign=top><em>h_block</em>&nbsp;</td><td>OpenSOAPBlockPtr * [in, out] ((|h_block|)) OpenSOAP Header Block. </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="Envelope.h::OpenSOAPEnvelopeRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>soapEnv</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP Envelope の開放. 
+<p>
+OpenSOAP Envelope作成領域の開放を行います。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="Envelope.h::OpenSOAPEnvelopeRetain" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPEnvelopeRetain </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>soapEnv</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+※未実装※ OpenSOAP Envelope リファレンス追加 
+<p>
+OpenSOAP Envelope への参照を保持します。 <dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>soapEnv</em>&nbsp;</td><td>OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード (未実装エラーOPENSOAP_YET_IMPLEMENTATION) </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

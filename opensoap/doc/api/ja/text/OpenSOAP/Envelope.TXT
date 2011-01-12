@@ -1,0 +1,368 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Envelope.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Envelope.h
+ * @brief OpenSOAP API Envelope 処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPEnvelope OpenSOAPEnvelope
+     * @brief OpenSOAPEnvelope 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPEnvelope    *OpenSOAPEnvelopePtr
+     * @brief OpenSOAPEnvelope ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPEnvelopeCreate(OpenSOAPEnvelopePtr *soap_env)
+      * @brief OpenSOAP Envelope 作成と初期化
+      *
+      * OpenSOAP Envelope 領域の確保と構造体の初期化を行います。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr * [out] ((|soap_env|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateMB(const char *soapVer, const char *envPrefix, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief OpenSOAP Envelope 作成と初期化(MB)
+      *
+      * OpenSOAP Envelope 作成領域の確保を行い、SOAP Versionによって各々定数の代入を行います。
+      * @param
+      *    soapVer const char * [in] ((||soapVer|)) SOAP Version
+      * @param
+      *    envPrefix const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      * @note
+      *    soapVer "1.1" or "1.2"。NULL の場合は "1.1" と同等。
+      * @note
+      *    envPrefix NULL 以外の場合は内容に従う。NULL の場合はsoapVerにより以下に従う。\n
+      *                  "1.1" SOAP-ENV\n
+      *                  "1.2" env
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateWC(const wchar_t *soapVer, const wchar_t *envPrefix, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief OpenSOAP Envelope 作成と初期化(WC)
+      *
+      * OpenSOAP Envelope 作成領域の確保を行い、SOAP Versionによって各々定数の代入を行います。
+      * @param
+      *    soapVer const char * [in] ((||soapVer|)) SOAP Version
+      * @param
+      *    envPrefix const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      * @note
+      *    soapVer "1.1" or "1.2"。NULL の場合は "1.1" と同等。
+      * @note
+      *    envPrefix NULL 以外の場合は内容に従う。NULL の場合はsoapVerにより以下に従う。\n
+      *                  "1.1" SOAP-ENV\n
+      *                  "1.2" env
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateString(OpenSOAPStringPtr soapVer, OpenSOAPStringPtr envPrefix, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief OpenSOAP Envelope instance create(OpenSOAPString)
+      * @param
+      *    soapVer OpenSOAPStringPtr [in] ((||soapVer|)) SOAP Version
+      * @param
+      *    envPrefix OpenSOAPStringPtr [in] ((|envPrefix|)) SOAP Envelope namespace prefix
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateFaultMB(const char *soapVer, const char *envPrefix, const char *faultCode, const char *faultString, OpenSOAPBlockPtr *faultBlock, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief Create OpenSOAP Fault Block(MB)
+      * @param
+      *    soapVer const char * [in] ((||soapVer|)) SOAP Version
+      * @param
+      *    envPrefix  const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix
+      * @param
+      *    faultCode const char * [in] ((|faultCode|)) SOAP Fault's faultcode
+      * @param
+      *    faultString const char * [in] ((|faultString|)) SOAP Fault's faultstring
+      * @param
+      *    faultBlock OpenSOAPBlockPtr * [out] ((|faultBlock|)) OpenSOAP Fault Block バッファポインタ
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateFaultWC(const wchar_t *soapVer, const wchar_t *envPrefix, const wchar_t *faultCode, const wchar_t *faultString, OpenSOAPBlockPtr *faultBlock, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief Create OpenSOAP Fault Block(WC)
+      * @param
+      *    soapVer const wchar_t * [in] ((||soapVer|)) SOAP Version
+      * @param
+      *    envPrefix const wchar_t * [in] ((|envPrefix|)) SOAP Envelope namespace prefix
+      * @param
+      *    faultCode const wchar_t * [in] ((|faultCode|)) SOAP Fault's faultcode
+      * @param
+      *    faultString const wchar_t * [in] ((|faultString|)) SOAP Fault's faultstring
+      * @param
+      *    faultBlock OpenSOAPBlockPtr * [out] ((|faultBlock|)) OpenSOAP Fault Block バッファポインタ
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeCreateCharEncoding(const char *chEnc, OpenSOAPByteArrayPtr b_ary, OpenSOAPEnvelopePtr *soapEnv)
+      * @brief Character encoding指定による ByteArrayからの SOAP Envelope 作成
+      *
+      * b_aryの内容をch_enc(EUC-JP/Shift_JIS/UTF-8...)にエンコーディングする。soap_env内に各々パラメータをb_aryより設定します。
+      * @param
+      *    chEnc const char * [in] ((|chEnc|)) character encoding
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [in] ((|b_ary|)) OpenSOAP ByteArray
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) OpenSOAP Envelope バッファポインタ
+      * @return
+      *    エラーコード
+      * @note
+      *     b_aryの内容をchEnc(EUC-JP/Shift_JIS/UTF-8...)にエンコーディングする。soapEnv内に各々パラメータをb_aryより設定する。
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeRetain(OpenSOAPEnvelopePtr soapEnv)
+      * @brief ※未実装※ OpenSOAP Envelope リファレンス追加
+      *
+      * OpenSOAP Envelope への参照を保持します。
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @return
+      *    エラーコード (未実装エラーOPENSOAP_YET_IMPLEMENTATION)
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeRelease(OpenSOAPEnvelopePtr soapEnv)
+      * @brief OpenSOAP Envelope の開放
+      *
+      * OpenSOAP Envelope作成領域の開放を行います。
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeAddHeaderBlockMB(OpenSOAPEnvelopePtr soapEnv, const char *block_name, OpenSOAPBlockPtr *h_block)
+      * @brief ヘッダブロックの追加(MB)
+      *
+      * OpenSOAP Envelope 領域にマルチバイト文字列で名前を指定した
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const char * [in] ((|block_name|)) SOAP Block Name
+      * @param
+      *    h_block OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeAddHeaderBlockWC(OpenSOAPEnvelopePtr soapEnv, const wchar_t *block_name, OpenSOAPBlockPtr *h_block)
+      * @brief ヘッダブロックの追加(WC)
+      *
+      * OpenSOAP Envelope領域にワイドキャラクタ文字列で名前を指定した
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const wchar_t * [in] ((|block_name|)) SOAP Block Name
+      * @param
+      *    h_block OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetNextHeaderBlock(OpenSOAPEnvelopePtr soap_env, OpenSOAPBlockPtr *h_block)
+      * @brief ヘッダブロックの取得
+      *
+      * 次のヘッダブロックへのポインタを取得します。最後のヘッダブロックポインタを入力した場合は、最初のヘッダブロックが取得されます。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    h_block OpenSOAPBlockPtr * [in, out] ((|h_block|)) OpenSOAP Header Block.
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetHeaderBlockMB(OpenSOAPEnvelopePtr soap_env, const char *block_name, OpenSOAPBlockPtr *h_block)
+      * @brief ヘッダブロックの取得(MB)
+      *
+      * 名前をマルチバイト文字列で指定して、ヘッダブロックを取得します。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const char * [in] ((|block_name|)) SOAP Header Block name
+      * @param
+      *    h_block OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetHeaderBlockWC(OpenSOAPEnvelopePtr soap_env, const wchar_t *block_name, OpenSOAPBlockPtr *h_block)
+      * @brief ヘッダブロックの取得(WC)
+      *
+      * 名前をワイドキャラクタ文字列で指定して、ヘッダブロックを取得します。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const wchar_t * [in] ((|block_name|)) SOAP Header Block name
+      * @param
+      *    h_block OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeAddBodyBlockMB(OpenSOAPEnvelopePtr soap_env, const char *block_name, OpenSOAPBlockPtr *b_block)
+      * @brief ボディブロックの追加(MB)
+      *
+      * OpenSOAP Envelope 領域にマルチバイト文字列で名前を指定した Body Block を追加します。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const char * [in] ((|block_name|)) SOAP Block Name. NULLの場合、Body Elementだけ追加。
+      * @param
+      *    b_block OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeAddBodyBlockWC(OpenSOAPEnvelopePtr soap_env, const wchar_t *block_name, OpenSOAPBlockPtr *b_block)
+      * @brief ボディブロックの追加(WC)
+      *
+      * SOAP Envelope 領域にワイドキャラクタ文字列で名前を指定した Body Block を追加します。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const wchar_t * [in] ((|block_name|)) SOAP Block Name
+      * @param
+      *    b_block OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetNextBodyBlock(OpenSOAPEnvelopePtr soap_env, OpenSOAPBlockPtr *b_block)
+      * @brief ボディブロックの取得
+      *
+      * 最後のボディブロックポインタを入力した場合は、最初のボディブロックが取得されます。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    b_block OpenSOAPBlockPtr * [in, out] ((|b_block|)) OpenSOAP Body Block. NULLの場合、最初のボディブロックが取得されます。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetBodyBlockMB(OpenSOAPEnvelopePtr soap_env, const char *block_name, OpenSOAPBlockPtr *b_block)
+      * @brief ボディブロックの取得(MB)
+      *
+      * 名前をマルチバイト文字列で指定して、ボディブロックを取得します。block_nameを検索b_blockを戻す。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const char * [in] ((|block_name|)) SOAP Body Block name
+      * @param
+      *    b_block OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetBodyBlockWC(OpenSOAPEnvelopePtr soap_env, const wchar_t *block_name, OpenSOAPBlockPtr *b_block)
+      * @brief ボディブロックの取得(WC)
+      *
+      * 名前をワイドキャラクタ文字列で指定して、ボディブロックを取得します。block_nameを検索b_blockを戻す。
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    block_name const wchar_t * [in] ((|block_name|)) SOAP Body Block name
+      * @param
+      *    b_block OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetCharEncodingString(OpenSOAPEnvelopePtr soapEnv, const char *chEnc, OpenSOAPByteArrayPtr b_ary)
+      * @brief SOAP Envelope Character Encoding Output
+      *
+      * soap_envよりSOAP Messageを組み立てます。
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope
+      * @param
+      *    chEnc const char  * [in] ((|chEnc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8")
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [out] ((|bAry|)) Storage Buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetHeaderCharEncodingString(OpenSOAPEnvelopePtr soap_env, const char *ch_enc, OpenSOAPByteArrayPtr b_ary)
+      * @brief Soap Header character encoding output
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    ch_enc const char  * [in] ((|ch_enc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8")
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetBodyCharEncodingString(OpenSOAPEnvelopePtr soap_env, const char *ch_enc, OpenSOAPByteArrayPtr b_ary)
+      * @brief Soap Body Character Encoding Output
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope
+      * @param
+      *    ch_enc const char  * [in] ((|ch_enc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8")
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeAddFaultString(OpenSOAPEnvelopePtr soapEnv, OpenSOAPStringPtr faultCode, OpenSOAPStringPtr faultString, int isValueDup, OpenSOAPBlockPtr *faultBlock)
+      * @brief Add Fault String
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [out] ((|soapEnv|)) OpenSOAP Envelope Pointer
+      * @param
+      *    faultCode OpenSOAPStringPtr [in] ((|faultCode|)) SOAP Fault's faultcode
+      * @param
+      *    faultString OpenSOAPStringPtr [in] ((|faultString|)) SOAP Fault's faultstring
+      * @param
+      *    isValueDup int [in] ((|isValueDup|)) faultCode and faultString duplicate flag
+      * @param
+      *    faultBlock OpenSOAPBlockPtr * [out] ((|faultBlock|)) Storage Buffer of OpenSOAP Fault Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetActorNameString(OpenSOAPEnvelopePtr soapEnv, OpenSOAPStringPtr *actorName)
+      * @brief Get Actor Name String
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer
+      * @param
+      *    actorName OpenSOAPStringPtr * [out] ((|actorName|)) Actor Name
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPEnvelopeGetActorNextString(OpenSOAPEnvelopePtr soapEnv, OpenSOAPStringPtr *actorNext)
+      * @brief Get Actor Next String
+      * @param
+      *    soapEnv OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer
+      * @param
+      *    actorNext OpenSOAPStringPtr * [out] ((|actorNext|)) Actor Next
+      * @return
+      *    エラーコード
+      */

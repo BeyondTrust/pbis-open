@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: XMLElm.h Source File</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>XMLElm.h</h1><a href="XMLElm_8h.html">説明を見る。</a><div class="fragment"><pre>00001 <span class="comment">/* -*- mode: c++; -*-</span>
+00002 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00003 <span class="comment"> * $RCSfile: XMLElm.h,v $</span>
+00004 <span class="comment"> *</span>
+00005 <span class="comment"> * See Copyright for the status of this software.</span>
+00006 <span class="comment"> *</span>
+00007 <span class="comment"> * The OpenSOAP Project</span>
+00008 <span class="comment"> * http://opensoap.jp/</span>
+00009 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00010 <span class="comment"> */</span>
+00231     <span class="keywordtype">int</span>
+00626 <span class="preprocessor">#ifndef OpenSOAP_XMLElm_H</span>
+00627 <span class="preprocessor"></span><span class="preprocessor">#define OpenSOAP_XMLElm_H</span>
+00628 <span class="preprocessor"></span>
+00629 <span class="preprocessor">#include &lt;<a class="code" href="XMLAttr_8h.html">OpenSOAP/XMLAttr.h</a>&gt;</span>
+00630 
+00631 <span class="preprocessor">#ifdef __cplusplus</span>
+00632 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">"C"</span> {
+00633 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00634 
+00635     <span class="keywordtype">int</span>
+00636     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00637     <a class="code" href="XMLElm_8h.html#a0">OpenSOAPXMLElmCreate</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *elm);
+00638 
+00639     <span class="keywordtype">int</span>
+00640     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00641     <a class="code" href="XMLElm_8h.html#a1">OpenSOAPXMLElmSetNamespaceMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00642                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_uri,
+00643                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_prefix);
+00644 
+00645     <span class="keywordtype">int</span>
+00646     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00647     <a class="code" href="XMLElm_8h.html#a2">OpenSOAPXMLElmSetNamespaceWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00648                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_uri,
+00649                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_prefix);
+00650 
+00651     <span class="keywordtype">int</span>
+00652     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00653     <a class="code" href="XMLElm_8h.html#a3">OpenSOAPXMLElmSearchNamespaceMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00654                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_uri,
+00655                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_prefix,
+00656                                     <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns);
+00657     
+00658     <span class="keywordtype">int</span>
+00659     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00660     <a class="code" href="XMLElm_8h.html#a4">OpenSOAPXMLElmSearchNamespaceWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00661                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_uri,
+00662                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_prefix,
+00663                                     <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns);
+00664 
+00665     <span class="keywordtype">int</span>
+00666     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00667     <a class="code" href="XMLElm_8h.html#a5">OpenSOAPXMLElmGetNamespace</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00668                                <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns);
+00669 
+00670     <span class="keywordtype">int</span>
+00671     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00672     <a class="code" href="XMLElm_8h.html#a6">OpenSOAPXMLElmSearchNamespaceString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00673                                         <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsUri,
+00674                                         <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> nsPrefix,
+00675                                         <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns,
+00676                                         <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *defElm);
+00677 
+00678     <span class="keywordtype">int</span>
+00679     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00680     <a class="code" href="XMLElm_8h.html#a7">OpenSOAPXMLElmDefineNamespaceMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00681                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_uri,
+00682                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *ns_prefix,
+00683                                     <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns);
+00684 
+00685     <span class="keywordtype">int</span>
+00686     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00687     <a class="code" href="XMLElm_8h.html#a8">OpenSOAPXMLElmDefineNamespaceWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00688                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_uri,
+00689                                     <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *ns_prefix,
+00690                                     <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a1">OpenSOAPXMLNamespacePtr</a> *ns);
+00691 
+00692     <span class="keywordtype">int</span>
+00693     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00694     <a class="code" href="XMLElm_8h.html#a9">OpenSOAPXMLElmAddAttributeMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00695                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *attr_name,
+00696                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *attr_type,
+00697                                  <span class="comment">/* [in]  */</span> <span class="keywordtype">void</span> *attr_value,
+00698                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr);
+00699 
+00700     <span class="keywordtype">int</span>
+00701     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00702     <a class="code" href="XMLElm_8h.html#a10">OpenSOAPXMLElmAddAttributeWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00703                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *attr_name,
+00704                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *attr_type,
+00705                                  <span class="comment">/* [in]  */</span> <span class="keywordtype">void</span> *attr_value,
+00706                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr);
+00707 
+00708     <span class="keywordtype">int</span>
+00709     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00710     <a class="code" href="XMLElm_8h.html#a11">OpenSOAPXMLElmGetAttributeMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00711                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *attr_name,
+00712                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr);
+00713 
+00714     <span class="keywordtype">int</span>
+00715     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00716     <a class="code" href="XMLElm_8h.html#a12">OpenSOAPXMLElmGetAttributeWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00717                                  <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *attr_name,
+00718                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr);
+00719 
+00720     <span class="keywordtype">int</span>
+00721     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00722     <a class="code" href="XMLElm_8h.html#a13">OpenSOAPXMLElmGetNextChild</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00723                                <span class="comment">/* [in, out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *cld_elm);
+00724 
+00725     <span class="keywordtype">int</span>
+00726     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00727     <a class="code" href="XMLElm_8h.html#a14">OpenSOAPXMLElmAddChildString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00728                                  <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> childName,
+00729                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *childElm);
+00730 
+00731     <span class="keywordtype">int</span>
+00732     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00733     <a class="code" href="XMLElm_8h.html#a15">OpenSOAPXMLElmAddChildMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00734                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *cld_name,
+00735                              <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *cld_elm);
+00736 
+00737     <span class="keywordtype">int</span>
+00738     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00739     <a class="code" href="XMLElm_8h.html#a16">OpenSOAPXMLElmAddChildWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00740                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *cld_name,
+00741                              <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *cld_elm);
+00742 
+00743     <span class="keywordtype">int</span>
+00744     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00745     <a class="code" href="XMLElm_8h.html#a17">OpenSOAPXMLElmAddChildXMLDocument</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00746                                       <span class="comment">/* [in]  */</span> <span class="keywordtype">char</span> *elmname,
+00747                                       <span class="comment">/* [in]  */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> document,
+00748                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *charEnc);
+00749 
+00750     <span class="keywordtype">int</span>
+00751     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00752     <a class="code" href="XMLElm_8h.html#a18">OpenSOAPXMLElmGetChildString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00753                                  <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> childName,
+00754                                  <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *childElm);
+00755         
+00756     <span class="keywordtype">int</span>
+00757     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00758     <a class="code" href="XMLElm_8h.html#a19">OpenSOAPXMLElmGetChildMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00759                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *cld_name,
+00760                              <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *cld_elm);
+00761 
+00762     <span class="keywordtype">int</span>
+00763     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00764     <a class="code" href="XMLElm_8h.html#a20">OpenSOAPXMLElmGetChildWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00765                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *cld_name,
+00766                              <span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> *cld_elm);
+00767 
+00768     <span class="keywordtype">int</span>
+00769     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00770     <a class="code" href="XMLElm_8h.html#a21">OpenSOAPXMLElmGetValueMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00771                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *type_name,
+00772                              <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00773 
+00774     <span class="keywordtype">int</span>
+00775     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00776     <a class="code" href="XMLElm_8h.html#a22">OpenSOAPXMLElmGetValueWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00777                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *type_name,
+00778                              <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00779 
+00780     <span class="keywordtype">int</span>
+00781     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00782     <a class="code" href="XMLElm_8h.html#a23">OpenSOAPXMLElmSetValueMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00783                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *type_name,
+00784                              <span class="comment">/* [in]  */</span> <span class="keywordtype">void</span> *value);
+00785 
+00786     <span class="keywordtype">int</span>
+00787     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00788     <a class="code" href="XMLElm_8h.html#a24">OpenSOAPXMLElmSetValueWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00789                              <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *type_name,
+00790                              <span class="comment">/* [in]  */</span> <span class="keywordtype">void</span> *value);
+00791 
+00792     <span class="keywordtype">int</span>
+00793     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00794     <a class="code" href="XMLElm_8h.html#a25">OpenSOAPXMLElmGetCharEncodingString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00795                                         <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *chEnc,
+00796                                         <span class="comment">/* [out] */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> bAry);
+00797 
+00798     <span class="keywordtype">int</span>
+00799     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00800     <a class="code" href="XMLElm_8h.html#a26">OpenSOAPXMLElmGetNameString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00801                                 <span class="comment">/* [out] */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> *name);
+00802 
+00803     <span class="keywordtype">int</span>
+00804     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00805     <a class="code" href="XMLElm_8h.html#a27">OpenSOAPXMLElmGetNextAttr</a>(<span class="comment">/* [in] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00806                               <span class="comment">/* [in, out] */</span> <a class="code" href="XMLAttr_8h.html#a1">OpenSOAPXMLAttrPtr</a> *attr_elm);
+00807 
+00808     <span class="keywordtype">int</span>
+00809     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00810     <a class="code" href="XMLElm_8h.html#a28">OpenSOAPXMLElmGetChildValueMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00811                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *childName,
+00812                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *typeName,
+00813                                   <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00814 
+00815     <span class="keywordtype">int</span>
+00816     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00817     <a class="code" href="XMLElm_8h.html#a29">OpenSOAPXMLElmGetChildValueWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00818                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *childName,
+00819                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *typeName,
+00820                                   <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00821 
+00822     <span class="keywordtype">int</span>
+00823     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00824     <a class="code" href="XMLElm_8h.html#a30">OpenSOAPXMLElmSetChildValueMB</a>(<span class="comment">/* [out]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00825                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *childName,
+00826                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *typeName,
+00827                                   <span class="comment">/* [in] */</span> <span class="keywordtype">void</span> *value);
+00828 
+00829     <span class="keywordtype">int</span>
+00830     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00831     <a class="code" href="XMLElm_8h.html#a31">OpenSOAPXMLElmSetChildValueWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00832                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *childName,
+00833                                   <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *typeName,
+00834                                   <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00835 
+00836     <span class="keywordtype">int</span>
+00837     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00838     <a class="code" href="XMLElm_8h.html#a32">OpenSOAPXMLElmSetChildValueXMLDocument</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00839                                            <span class="comment">/* [in]  */</span> <a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> document,
+00840                                            <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *charEnc);
+00841 
+00842     <span class="keywordtype">int</span>
+00843     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00844     <a class="code" href="XMLElm_8h.html#a33">OpenSOAPXMLElmSetValueAsString</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00845                                    <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> value,
+00846                                    <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> isDup);
+00847 
+00848     <span class="keywordtype">int</span>
+00849     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00850     <a class="code" href="XMLElm_8h.html#a34">OpenSOAPXMLElmSetValueAsStringMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00851                                      <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *value);
+00852         
+00853     <span class="keywordtype">int</span>
+00854     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00855     <a class="code" href="XMLElm_8h.html#a35">OpenSOAPXMLElmSetValueAsStringWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00856                                      <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *value);
+00857 
+00858     <span class="keywordtype">int</span>
+00859     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00860     <a class="code" href="XMLElm_8h.html#a36">OpenSOAPXMLElmSetChildValueAsStringMB</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00861                                           <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *childName,
+00862                                           <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *value);
+00863 
+00864     <span class="keywordtype">int</span>
+00865     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00866     <a class="code" href="XMLElm_8h.html#a37">OpenSOAPXMLElmSetChildValueAsStringWC</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00867                                           <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *childName,
+00868                                           <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *value);
+00869 
+00870     <span class="keywordtype">int</span>
+00871     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00872     <a class="code" href="XMLElm_8h.html#a38">OpenSOAPXMLElmSetChildValueAsString</a>(<span class="comment">/* [out] */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00873                                         <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> childName,
+00874                                         <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> isValueDup,
+00875                                         <span class="comment">/* [in, out] */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> value);
+00876         
+00877     <span class="keywordtype">int</span>
+00878     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00879     <a class="code" href="XMLElm_8h.html#a39">OpenSOAPXMLElmRemoveChildString</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00880                                     <span class="comment">/* [in]  */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> childName,
+00881                                     <span class="comment">/* [in]  */</span> <span class="keywordtype">int</span> isValueRelease,
+00882                                     <span class="comment">/* [out] */</span> <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a> *childValue); 
+00883 
+00884     <span class="keywordtype">int</span>
+00885     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00886     <a class="code" href="XMLElm_8h.html#a40">OpenSOAPXMLElmGetAttributeValueMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00887                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *attrName,
+00888                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *typeName,
+00889                                       <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00890 
+00891     <span class="keywordtype">int</span>
+00892     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00893     <a class="code" href="XMLElm_8h.html#a41">OpenSOAPXMLElmGetAttributeValueWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00894                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *attrName,
+00895                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *typeName,
+00896                                       <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00897 
+00898     <span class="keywordtype">int</span>
+00899     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00900     <a class="code" href="XMLElm_8h.html#a42">OpenSOAPXMLElmSetAttributeValueMB</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00901                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *attrName,
+00902                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">char</span> *typeName,
+00903                                       <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00904 
+00905     <span class="keywordtype">int</span>
+00906     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00907     <a class="code" href="XMLElm_8h.html#a43">OpenSOAPXMLElmSetAttributeValueWC</a>(<span class="comment">/* [in]  */</span> <a class="code" href="XMLNamespace_8h.html#a3">OpenSOAPXMLElmPtr</a> elm,
+00908                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *attrName,
+00909                                       <span class="comment">/* [in]  */</span> <span class="keyword">const</span> <span class="keywordtype">wchar_t</span> *typeName,
+00910                                       <span class="comment">/* [out] */</span> <span class="keywordtype">void</span> *value);
+00911         
+00912 <span class="preprocessor">#ifdef __cplusplus</span>
+00913 <span class="preprocessor"></span>}
+00914 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00915 
+00916 <span class="preprocessor">#endif </span><span class="comment">/* OpenSOAP_XMLElm_H */</span>
+</pre></div><hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

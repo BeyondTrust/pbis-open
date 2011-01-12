@@ -1,0 +1,597 @@
+.TH "Envelope.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Envelope.h \- OpenSOAP API Envelope Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/Block.h>\fP
+.br
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+\fC#include <OpenSOAP/String.h>\fP
+.br
+\fC#include <stdlib.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPEnvelope \fBOpenSOAPEnvelope\fP"
+.br
+.RI "\fIOpenSOAPEnvelope Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPEnvelope\fP * \fBOpenSOAPEnvelopePtr\fP"
+.br
+.RI "\fIOpenSOAPEnvelope Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreate\fP (\fBOpenSOAPEnvelopePtr\fP *soap_env)"
+.br
+.RI "\fIOpenSOAP Envelope Instance Create. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateMB\fP (const char *soapVer, const char *envPrefix, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fIOpenSOAP Envelope Instance Create(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateWC\fP (const wchar_t *soapVer, const wchar_t *envPrefix, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fIOpenSOAP Envelope instance create(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateString\fP (\fBOpenSOAPStringPtr\fP soapVer, \fBOpenSOAPStringPtr\fP envPrefix, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fIOpenSOAP Envelope instance create(OpenSOAPString). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateFaultMB\fP (const char *soapVer, const char *envPrefix, const char *faultCode, const char *faultString, \fBOpenSOAPBlockPtr\fP *faultBlock, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fICreate OpenSOAP Fault Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateFaultWC\fP (const wchar_t *soapVer, const wchar_t *envPrefix, const wchar_t *faultCode, const wchar_t *faultString, \fBOpenSOAPBlockPtr\fP *faultBlock, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fICreate OpenSOAP Fault Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeCreateCharEncoding\fP (const char *chEnc, \fBOpenSOAPByteArrayPtr\fP b_ary, \fBOpenSOAPEnvelopePtr\fP *soapEnv)"
+.br
+.RI "\fICreate Char Encoding. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeRetain\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv)"
+.br
+.RI "\fI*NOT IMPLEMENTED* Add Reference To OpenSOAP Envelope \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeRelease\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv)"
+.br
+.RI "\fIRelease OpenSOAP Envelope Buffer. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeAddHeaderBlockMB\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, const char *block_name, \fBOpenSOAPBlockPtr\fP *h_block)"
+.br
+.RI "\fIAdd SOAP Header Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeAddHeaderBlockWC\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, const wchar_t *block_name, \fBOpenSOAPBlockPtr\fP *h_block)"
+.br
+.RI "\fIAdd SOAP Header Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetNextHeaderBlock\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, \fBOpenSOAPBlockPtr\fP *h_block)"
+.br
+.RI "\fIGet SOAP Header Block. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetHeaderBlockMB\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const char *block_name, \fBOpenSOAPBlockPtr\fP *h_block)"
+.br
+.RI "\fIGet SOAP Header Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetHeaderBlockWC\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t *block_name, \fBOpenSOAPBlockPtr\fP *h_block)"
+.br
+.RI "\fIGet SOAP Header Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeAddBodyBlockMB\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const char *block_name, \fBOpenSOAPBlockPtr\fP *b_block)"
+.br
+.RI "\fIAdd SOAP Body Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeAddBodyBlockWC\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t *block_name, \fBOpenSOAPBlockPtr\fP *b_block)"
+.br
+.RI "\fIAdd SOAP Body Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetNextBodyBlock\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, \fBOpenSOAPBlockPtr\fP *b_block)"
+.br
+.RI "\fIGet SOAP Body Block. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetBodyBlockMB\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const char *block_name, \fBOpenSOAPBlockPtr\fP *b_block)"
+.br
+.RI "\fIGet SOAP Body Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetBodyBlockWC\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t *block_name, \fBOpenSOAPBlockPtr\fP *b_block)"
+.br
+.RI "\fIGet SOAP Body Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetCharEncodingString\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, const char *chEnc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fISOAP Envelope Character Encoding Output. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetHeaderCharEncodingString\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const char *ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fISoap Header character encoding output. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetBodyCharEncodingString\fP (\fBOpenSOAPEnvelopePtr\fP soap_env, const char *ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fISoap Body Character Encoding Output. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeAddFaultString\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP faultCode, \fBOpenSOAPStringPtr\fP faultString, int isValueDup, \fBOpenSOAPBlockPtr\fP *faultBlock)"
+.br
+.RI "\fIAdd Fault String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetActorNameString\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP *actorName)"
+.br
+.RI "\fIGet Actor Name String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPEnvelopeGetActorNextString\fP (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP *actorNext)"
+.br
+.RI "\fIGet Actor Next String. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Envelope Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPEnvelopeAddBodyBlockMB (\fBOpenSOAPEnvelopePtr\fP soap_env, const char * block_name, \fBOpenSOAPBlockPtr\fP * b_block)"
+.PP
+Add SOAP Body Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const char * [in] ((|block_name|)) SOAP Block Name. If block_name==NULL, add body element only (no body block). 
+.br
+\fIb_block\fP OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeAddBodyBlockWC (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t * block_name, \fBOpenSOAPBlockPtr\fP * b_block)"
+.PP
+Add SOAP Body Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const wchar_t * [in] ((|block_name|)) SOAP Block Name 
+.br
+\fIb_block\fP OpenSOAPBlockPtr * [out] ((|b_block|)) OpenSOAP Body Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeAddFaultString (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP faultCode, \fBOpenSOAPStringPtr\fP faultString, int isValueDup, \fBOpenSOAPBlockPtr\fP * faultBlock)"
+.PP
+Add Fault String. \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [out] ((|soapEnv|)) OpenSOAP Envelope Pointer 
+.br
+\fIfaultCode\fP OpenSOAPStringPtr [in] ((|faultCode|)) SOAP Fault's faultcode 
+.br
+\fIfaultString\fP OpenSOAPStringPtr [in] ((|faultString|)) SOAP Fault's faultstring 
+.br
+\fIisValueDup\fP int [in] ((|isValueDup|)) faultCode and faultString duplicate flag 
+.br
+\fIfaultBlock\fP OpenSOAPBlockPtr * [out] ((|faultBlock|)) Storage Buffer of OpenSOAP Fault Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeAddHeaderBlockMB (\fBOpenSOAPEnvelopePtr\fP soapEnv, const char * block_name, \fBOpenSOAPBlockPtr\fP * h_block)"
+.PP
+Add SOAP Header Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const char * [in] ((|block_name|)) SOAP Block Name 
+.br
+\fIh_block\fP OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeAddHeaderBlockWC (\fBOpenSOAPEnvelopePtr\fP soapEnv, const wchar_t * block_name, \fBOpenSOAPBlockPtr\fP * h_block)"
+.PP
+Add SOAP Header Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [out] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const wchar_t * [in] ((|block_name|)) SOAP Block Name 
+.br
+\fIh_block\fP OpenSOAPBlockPtr * [out] ((|h_block|)) OpenSOAP Header Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreate (\fBOpenSOAPEnvelopePtr\fP * soap_env)"
+.PP
+OpenSOAP Envelope Instance Create. \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr * [out] ((|soap_env|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateCharEncoding (const char * chEnc, \fBOpenSOAPByteArrayPtr\fP b_ary, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+Create Char Encoding. \fBParameters:\fP
+.RS 4
+\fIchEnc\fP const char * [in] ((|chEnc|)) character encoding 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr [in] ((|b_ary|)) OpenSOAP ByteArray 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateFaultMB (const char * soapVer, const char * envPrefix, const char * faultCode, const char * faultString, \fBOpenSOAPBlockPtr\fP * faultBlock, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+Create OpenSOAP Fault Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoapVer\fP const char * [in] ((||soapVer|)) SOAP Version 
+.br
+\fIenvPrefix\fP const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix 
+.br
+\fIfaultCode\fP const char * [in] ((|faultCode|)) SOAP Fault's faultcode 
+.br
+\fIfaultString\fP const char * [in] ((|faultString|)) SOAP Fault's faultstring 
+.br
+\fIfaultBlock\fP OpenSOAPBlockPtr * [out] ((|faultBlock|)) Storage Buffer of OpenSOAP Fault Block Pointer 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateFaultWC (const wchar_t * soapVer, const wchar_t * envPrefix, const wchar_t * faultCode, const wchar_t * faultString, \fBOpenSOAPBlockPtr\fP * faultBlock, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+Create OpenSOAP Fault Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoapVer\fP const wchar_t * [in] ((||soapVer|)) SOAP Version 
+.br
+\fIenvPrefix\fP const wchar_t * [in] ((|envPrefix|)) SOAP Envelope namespace prefix 
+.br
+\fIfaultCode\fP const wchar_t * [in] ((|faultCode|)) SOAP Fault's faultcode 
+.br
+\fIfaultString\fP const wchar_t * [in] ((|faultString|)) SOAP Fault's faultstring 
+.br
+\fIfaultBlock\fP OpenSOAPBlockPtr * [out] ((|faultBlock|)) Storage Buffer of OpenSOAP Fault Block Pointer 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateMB (const char * soapVer, const char * envPrefix, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+OpenSOAP Envelope Instance Create(MB). \fBParameters:\fP
+.RS 4
+\fIsoapVer\fP const char * [in] ((||soapVer|)) SOAP Version 
+.br
+\fIenvPrefix\fP const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+soapVer This should be '1.1' or '1.2'. If NULL, this defaults to '1.1' 
+.PP
+envPrefix If NULL, this defaults as follows according to soapVer; '1.1': SOAP-ENV, '1.2': env 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateString (\fBOpenSOAPStringPtr\fP soapVer, \fBOpenSOAPStringPtr\fP envPrefix, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+OpenSOAP Envelope instance create(OpenSOAPString). \fBParameters:\fP
+.RS 4
+\fIsoapVer\fP OpenSOAPStringPtr [in] ((||soapVer|)) SOAP Version 
+.br
+\fIenvPrefix\fP OpenSOAPStringPtr [in] ((|envPrefix|)) SOAP Envelope namespace prefix 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeCreateWC (const wchar_t * soapVer, const wchar_t * envPrefix, \fBOpenSOAPEnvelopePtr\fP * soapEnv)"
+.PP
+OpenSOAP Envelope instance create(WC). \fBParameters:\fP
+.RS 4
+\fIsoapVer\fP const char * [in] ((||soapVer|)) SOAP Version 
+.br
+\fIenvPrefix\fP const char * [in] ((|envPrefix|)) SOAP Envelope namespace prefix 
+.br
+\fIsoapEnv\fP OpenSOAPEnvelopePtr * [out] ((|soapEnv|)) Storage Buffer of OpenSOAP Envelope Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+soapVer This should be '1.1' or '1.2'. If NULL, this defaults to '1.1' envPrefix If NULL, this defaults as follows according to soapVer; '1.1': SOAP-ENV, '1.2': env 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetActorNameString (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP * actorName)"
+.PP
+Get Actor Name String. \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer 
+.br
+\fIactorName\fP OpenSOAPStringPtr * [out] ((|actorName|)) Actor Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetActorNextString (\fBOpenSOAPEnvelopePtr\fP soapEnv, \fBOpenSOAPStringPtr\fP * actorNext)"
+.PP
+Get Actor Next String. \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope Pointer 
+.br
+\fIactorNext\fP OpenSOAPStringPtr * [out] ((|actorNext|)) Actor Next 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetBodyBlockMB (\fBOpenSOAPEnvelopePtr\fP soap_env, const char * block_name, \fBOpenSOAPBlockPtr\fP * b_block)"
+.PP
+Get SOAP Body Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const char * [in] ((|block_name|)) SOAP Body Block name 
+.br
+\fIb_block\fP OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+Search for 'block_name' and return the corresponding Body Block in 'b_block'. 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetBodyBlockWC (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t * block_name, \fBOpenSOAPBlockPtr\fP * b_block)"
+.PP
+Get SOAP Body Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const wchar_t * [in] ((|block_name|)) SOAP Body Block name 
+.br
+\fIb_block\fP OpenSOAPBlockPtr * [out] ((|b_block|)) Body Block return buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+Search for 'block_name' and return the corresponding Body Block in 'b_block'. 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetBodyCharEncodingString (\fBOpenSOAPEnvelopePtr\fP soap_env, const char * ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Soap Body Character Encoding Output. \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIch_enc\fP const char * [in] ((|ch_enc|)) character encoding. (i.e. 'EUC-JP', 'Shift_JIS', 'UTF-8') 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetCharEncodingString (\fBOpenSOAPEnvelopePtr\fP soapEnv, const char * chEnc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+SOAP Envelope Character Encoding Output. \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope 
+.br
+\fIchEnc\fP const char * [in] ((|chEnc|)) character encoding. (i.e. 'EUC-JP', 'Shift_JIS', 'UTF-8') 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr [out] ((|bAry|)) Storage Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetHeaderBlockMB (\fBOpenSOAPEnvelopePtr\fP soap_env, const char * block_name, \fBOpenSOAPBlockPtr\fP * h_block)"
+.PP
+Get SOAP Header Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const char * [in] ((|block_name|)) SOAP Header Block name 
+.br
+\fIh_block\fP OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetHeaderBlockWC (\fBOpenSOAPEnvelopePtr\fP soap_env, const wchar_t * block_name, \fBOpenSOAPBlockPtr\fP * h_block)"
+.PP
+Get SOAP Header Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIblock_name\fP const wchar_t * [in] ((|block_name|)) SOAP Header Block name 
+.br
+\fIh_block\fP OpenSOAPBlockPtr * [out] ((|h_block|)) Header Block return buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetHeaderCharEncodingString (\fBOpenSOAPEnvelopePtr\fP soap_env, const char * ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Soap Header character encoding output. \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIch_enc\fP const char * [in] ((|ch_enc|)) character encoding. (i.e. 'EUC-JP', 'Shift_JIS', 'UTF-8') 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetNextBodyBlock (\fBOpenSOAPEnvelopePtr\fP soap_env, \fBOpenSOAPBlockPtr\fP * b_block)"
+.PP
+Get SOAP Body Block. \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIb_block\fP OpenSOAPBlockPtr * [in, out] ((|b_block|)) OpenSOAP Body Block. If *b_block is NULL, then return first Body Block. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeGetNextHeaderBlock (\fBOpenSOAPEnvelopePtr\fP soap_env, \fBOpenSOAPBlockPtr\fP * h_block)"
+.PP
+Get SOAP Header Block. \fBParameters:\fP
+.RS 4
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope 
+.br
+\fIh_block\fP OpenSOAPBlockPtr * [in, out] ((|h_block|)) OpenSOAP Header Block. If NULL, return first header block. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeRelease (\fBOpenSOAPEnvelopePtr\fP soapEnv)"
+.PP
+Release OpenSOAP Envelope Buffer. \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+Release Resources of Created OpenSOAP Resource 
+.RE
+.PP
+
+.SS "int OpenSOAPEnvelopeRetain (\fBOpenSOAPEnvelopePtr\fP soapEnv)"
+.PP
+*NOT IMPLEMENTED* Add Reference To OpenSOAP Envelope \fBParameters:\fP
+.RS 4
+\fIsoapEnv\fP OpenSOAPEnvelopePtr [in] ((|soapEnv|)) OpenSOAP Envelope 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code (OPENSOAP_YET_IMPLEMENTATION) 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

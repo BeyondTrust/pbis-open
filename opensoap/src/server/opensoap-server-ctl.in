@@ -1,0 +1,363 @@
+#!/bin/sh
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+# First set up a default search path.
+PATH="@sbindir@:$PATH"
+export PATH
+
+# set up OpenSOAP log directory
+OPENSOAP_DIR=${exec_prefix}
+OPENSOAP_SYSCONFDIR=@sysconfdir@
+OPENSOAP_LOCALSTATEDIR=@localstatedir@
+
+export OPENSOAP_DIR
+
+LOG_DIR=${OPENSOAP_LOCALSTATEDIR}/log
+export LOG_DIR;
+
+PID_DIR=${OPENSOAP_LOCALSTATEDIR}/run
+export PID_DIR;
+
+DATA_DIR=${OPENSOAP_LOCALSTATEDIR}/spool
+export DATA_DIR;
+
+BACKUP_DIR=${OPENSOAP_LOCALSTATEDIR}/spool-backup
+export BACKUP_DIR;
+
+TABLE_DIR=${OPENSOAP_LOCALSTATEDIR}/spool
+export TABLE_DIR;
+
+CONF_DIR=${OPENSOAP_SYSCONFDIR}
+export CONF_DIR;
+
+SOCKET_DIR=${OPENSOAP_LOCALSTATEDIR}/run
+export SOCKET_DIR;
+
+# Bash is not POSIX compliant without the following
+test -n "$BASH_VERSION" && set -o posix
+
+# iterpret escape sequence
+test -n "$BASH_VERSION" && shopt -s xpg_echo
+
+# A function to start a program.
+daemon() {
+	# Test syntax.
+	case $1 in
+	    '')    echo '$0: Usage: daemon [+/-nicelevel] {program}'
+	           return 1;;
+	    -*|+*) nicelevel=$1
+	           shift;;
+	     *)    nicelevel=0;;
+	esac
+
+        # Save basename.
+        base=`basename $1`
+
+        # See if it's already running.
+	pid=`pidofproc $base`
+	[ -n "$pid" ] && ps h $pid >/dev/null 2>&1 && return
+
+	# echo basename of the program.
+	echo "$base "
+
+	# make sure it doesn't core dump anywhere; while this could mask
+	# problems with the daemon, it also closes some security problems
+	#ulimit -c 0
+
+	# And start it up.
+	nice -n $nicelevel "$@"
+}
+
+# A function to start a program as a backgrounded process.  Not sure if
+# this is a stellar idea, so we're going to put it in as a function 
+# and let the RPM creator decide.  
+
+daemon_bg() {
+        # Test syntax.
+        case $1 in
+            '')    echo '$0: Usage: daemon [+/-nicelevel] {program}'
+                   return 1;;
+            -*|+*) nicelevel=$1
+                   shift;;
+             *)    nicelevel=0;;
+        esac
+
+        # Save basename.
+        base=`basename $1`
+
+        # See if it's already running.
+        pid=`pidofproc $base`
+        [ -n "$pid" ] && ps h $pid >/dev/null 2>&1 && return
+
+        # echo basename of the program.
+        echo  "$base "
+
+        # make sure it doesn't core dump anywhere; while this could mask
+        # problems with the daemon, it also closes some security problems
+        #ulimit -c 0
+
+        # And start it up.
+        nice -n $nicelevel "$@" &
+}                                              
+
+# A function to stop a program.
+killproc() {
+	# Test syntax.
+	if [ $# = 0 ]; then
+		echo "Usage: killproc {program} [signal]"
+		return 1
+	fi
+
+	notset=0
+	# check for second arg to be kill level
+	if [ "$2" != "" ] ; then
+		killlevel=$2
+	else
+		notset=1
+		killlevel="-9"
+	fi
+	
+        # Find pid.
+	pidfile="${PID_DIR}/$1.pid"
+	if [ -f "$pidfile" ]; then
+	    pid=`head -1 $pidfile`
+	else
+	    echo ": already stopped"
+	    pid=""
+	fi
+	
+        # Kill it.
+        if [ "$pid" != "" ] ; then
+		if [ "$notset" = 1 ] ; then
+			# TERM first, then KILL if not dead
+			kill -TERM $pid >/dev/null 2>/dev/null
+			echo ": ok"
+			#usleep 100000
+		# use specified level only
+		else
+	                kill $killlevel $pid >/dev/null 2>/dev/null
+		fi
+	fi
+
+        # Remove pid file if any.
+        rm -f $pidfile
+}
+
+
+# A function to find the pid of a program.
+pidofproc() {
+	# Test syntax.
+	if [ $# = 0 ] ; then
+		echo "Usage: pidofproc {program}"
+		return 1
+	fi
+
+	# First try "${PID_DIR}/*.pid" files
+	if [ -f ${PID_DIR}/$1.pid ] ; then
+	        pid=`head -1 ${PID_DIR}/$1.pid`
+	        if [ "$pid" != "" ] ; then
+	                echo $pid
+	                return 0
+	        fi
+	fi
+
+	# Next try "pidof"
+	pid=`pidof $1`
+	if [ "$pid" != "" ] ; then
+	        echo $pid
+	        return 0
+	fi
+
+	# Finally try to extract it from ps
+	ps auxw | awk 'BEGIN { prog=ARGV[1]; ARGC=1 } 
+			   { if ((prog == $11) || (("(" prog ")") == $11) ||
+			   ((prog ":") == $11)) { print $2 ; exit 0 } }' $1
+}
+status() {
+	# Test syntax.
+	if [ $# = 0 ] ; then
+		echo "Usage: status {program}"
+		return 1
+	fi
+
+	# First try "pidof"
+	pid=`pidof $1`
+	if [ "$pid" != "" ] ; then
+	        echo "$1 (pid $pid) is running..."
+	        return 0
+        else
+                pid=`ps auxww Op | awk '{ if ($12 ~ /^[^[]'"$1"'/) print $2}'`
+                if [ "$pid" != "" ] ; then
+                        echo "$1 (pid $pid) is running..."
+                        return 0
+                fi
+	fi
+
+	# Next try "${PID_DIR}/*.pid" files
+	if [ -f ${PID_DIR}/$1.pid ] ; then
+	        pid=`head -1 ${PID_DIR}/$1.pid`
+	        if [ "$pid" != "" ] ; then
+	                echo "$1 dead but pid file exists"
+	                return 1
+	        fi
+	fi
+	# See if /var/lock/subsys/$1 exists
+	if [ -f /var/lock/subsys/$1 ]; then
+		echo "$1 dead but subsys locked"
+		return 2
+	fi
+	echo "$1 is stopped"
+	return 3
+}
+
+# Run some action. Log its output.
+action() {
+  STRING=$1
+  echo "$STRING "
+  shift
+  $*
+  rc=$?
+  echo
+  return $rc
+}
+
+# check directories for OpenSOAP server
+dircheck() {
+# For now, can't do this as this will also remove any left
+# asynchronous spool contents.
+#    rm -rf ${DATA_DIR}
+#
+    mkdir -p -m 777 ${DATA_DIR}/
+    mkdir -p -m 777 ${BACKUP_DIR}/
+    mkdir -p ${TABLE_DIR}
+    mkdir -p ${SOCKET_DIR}
+    mkdir -p ${CONF_DIR}/ssml/
+    mkdir -p ${CONF_DIR}/ssml/internalservices/
+    mkdir -p -m 777 ${LOG_DIR}
+    mkdir -p ${PID_DIR}
+}
+
+# Remove a bunch of stuff from a specified directory
+delfunc() {
+	echo "Removing files from" $1
+	for i in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		for j in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+		do
+			rm -f $1/$i$j*
+		done
+	done
+}
+
+ERROR=0
+ARGV="$@"
+if [ "x$ARGV" = "x" ] ; then 
+    ARGS="help"
+fi
+
+for ARG in $@ $ARGS
+do
+    case $ARG in
+    start)
+	# Verify existence of server.conf
+	CONF_FILE=$CONF_DIR/server.conf
+	echo "=== Check for configuration file server.conf ==="
+	if [ -f "$CONF_FILE" ]; then
+		echo "Found $CONF_FILE"
+	else
+		echo "ERROR: Can't find configuration file $CONF_FILE"
+		echo " >> Check that the configuration file server.conf is"
+		echo " >> in the proper location and restart"
+		exit 3;
+	fi
+	echo
+	# check directories for OpenSOAP server
+	echo "=== Check Required Directories ==="
+	echo "check directories for OpenSOAP server"
+	dircheck;
+	
+	#----------------------------------------------------------
+	# exec OpenSOAP Server Process
+	#----------------------------------------------------------
+	echo "=== Start OpenSOAP Server ==="
+	# exec ServerConfigManager
+	echo "start OpenSOAP Manager"
+	OpenSOAPMgr -t30 >>${LOG_DIR}/DebugLog 2>&1
+	sleep 1;
+
+        ;;
+    stop)
+	#----------------------------------------------------------
+	# stop OpenSOAP Server Process
+	#----------------------------------------------------------
+	
+	echo "=== Stop OpenSOAP Server ==="
+	
+	# stop Server Config Attributes Manager
+	echo "stop OpenSOAP Manager"
+	# Remove this as it is incompatible with the *BSDs
+	# killall -w OpenSOAPMgr
+	kill `cat ${PID_DIR}/OpenSOAPMgr.pid`
+	echo 
+	sleep 1;
+
+	echo
+	
+        ;;
+    restart)
+        # restart OpenSOAP Server
+        $0 stop
+        $0 start
+        ;;
+    reload)
+	# Verify existence of server.conf
+	CONF_FILE=$CONF_DIR/server.conf
+	echo "=== Check for configuration file server.conf ==="
+	if [ -f "$CONF_FILE" ]; then
+		echo "Found $CONF_FILE"
+	else
+		echo "ERROR: Can't find configuration file $CONF_FILE"
+		echo " >> Check that the configuration file server.conf is"
+		echo " >> in the proper location and restart"
+		exit 3;
+	fi
+	echo
+	#------------------------------------------------------------------
+	# stop OpenSOAP Server Config Manager & Attributes Manager Process
+	#------------------------------------------------------------------
+	# stop Server Config Attributes Manager
+	echo "stop OpenSOAP Manager"
+	# killall -w OpenSOAPMgr
+	kill `cat ${PID_DIR}/OpenSOAPMgr.pid`
+	echo
+	sleep 1;
+
+	echo
+	# exec OpenSOAP Server Config Manager & SSML Attibute Manager Process
+	#---------------------------------------------------------------------
+		
+	# exec ServerConfigManager
+	echo "start OpenSOAPMgr"
+	OpenSOAPMgr -t30 >>${LOG_DIR}/DebugLog 2>&1
+	
+        ;;
+    *)
+        echo "usage: $0 (start|stop|restart|reload|help)"
+        cat <<EOF
+start      - start  OpenSOAP server
+stop       - stop   OpenSOAP server
+restart    - restart OpenSOAP server
+reload     - reload OpenSOAP server configuration files
+help       - this screen
+
+EOF
+        ERROR=2
+    ;;
+    
+    esac
+
+done
+
+exit $ERROR

@@ -1,0 +1,242 @@
+ChangeHistory
+
+OpenSOAP package
+2.0 (2004/05/31) -> 2.0.1 (2004/10/18)
+
+Server
+ - Now runs on additional platforms
+ -- Besides Linux, FreeBSD(4.7), Solaris(8, 9), Mac OS X 10.3 support
+ -- Improved portability through enhanced configure processing
+ -- Improved sub-process handling for compatability with other platforms
+ - Removed unnecessary source files with migration to newest version
+ - Various bug fixes
+
+=====================================================
+1.0-20030903 (2003/09/03) -> 2.0 (2004/05/31)
+
+Server
+ - Additional server functionality
+ -- Transport interface now supports Apache DSO modules
+ -- Messages with DIME/MIME attachments now supported
+ -- Improved sub-process management
+ -- Added trace logging functionality
+ -- Extensions to message forwarding and asynchronous processing
+ - Linux only platform support
+
+=====================================================
+1.0-20030903 (2003/09/03) -> 1.0-20031201 (2003/12/01)
+
+API
+ - Major extensions to Transport API (detailed as follows)
+ - Transfer-Encoding: Chunked compatible
+ - Default HTTP Version has been changed to 1.1
+ - Now understands Invoke Time HTTP Errors Status Codes
+ - Support for HTTP Basic User Authentication
+     Authentication API addition. ( OpenSOAPTransportSetAuthUserPass() )
+     Can also be set with SetURL. (Eg. "http://user:pass@host/location/")
+ - Support for HTTPS. Possible to specify in SetURL(https://).
+     Added API to specify key for SSL Authentication.
+ - Added the related error codes to the relevant categories.
+Server
+ - Fixed many minor bugs.
+Tool
+ - More detailed error display for soaping thanks to Transport
+   function extension.
+Samples
+ - Added the Echo sample.
+Win32
+ - Improved the processing of child process termination in the server.
+ - Corrected the display of the SoapingClient transmission time.
+
+=====================================================
+1.0-20030530 (2003/05/30) -> 1.0-20030903 (2003/09/03)
+
+Server
+ - Support for calling a service by specifying a HTTP URL
+ - extended and fixed format of server.conf
+ - Transport is now implemented using OpenSOAP API
+ - The service call function and forwarding function processes have
+   been incorporated into the message handling process
+   (srvDrvCreator and fwderCreator are not used anymore)
+ - Reorganized declarations and definitions of shared symbols
+ - General review of code and bug fix
+API
+ - Added 2 new functions OpenSOAPXMLElmAddChildXMLDocument()
+   and OpenSOAPXMLElmSetChildValueXMLDocument() that allow an XML
+   character string to be inserted directly into a child element.
+ - Added a counter mechanism to OpenSOAPInitialize() / Ultimate() for
+   referencing nested OpenSOAPInitialize() calls.
+Win32
+ - Added the file win32config.h containing necessary definitions for
+   compilation in the Windows environment
+
+=====================================================
+1.0-20030331 (2003/03/31) -> 1.0-20030530 (2003/05/30)
+
+API
+ - Fixed a problem in a pattern matching routine (eg. http: and https:
+   yielded a match)
+ - Fixed a problem that prevented correct processing of character
+   strings containing '&' characters
+ - Added User-Agent: OpenSOAP ${VERSION} to the HTTP header
+Contrib
+ - Modified the cpplib sample dictionary client project file so that
+   it can be compiled in "Release Mode"
+Package/Samples
+ - Compile and install all the included samples with a single
+   "make install-samples" instruction
+
+=====================================================
+1.0-20030228 (2003/02/28) -> 1.0-20030331 (2003/03/31)
+
+Package
+ - Japanese man pages for soaping and opensoap-server-ctl.
+Contrib
+ - Created contrib directory and moved java and bridging there.
+ - Added C++ class wrappers for the OpenSOAP API.
+
+=====================================================
+1.0-20030201 (2003/02/01) -> 1.0-20030228 (2003/02/28)
+
+Package
+ - RPM package and spec file now available
+ - man pages for soaping and opensoap-server-ctl
+ - WSDL available for Soaping and some sample services
+Server
+ - Fixed problem so that the output of the res_spool_table file is now
+   sent to the directory specified in server.conf
+ - Message size problem for Windows systems fixed
+ - Repaired incomplete processing problem when specifiying forward_path
+ - Removed the unused command reloadSrvConf
+API
+ - Modified configure and some source code to correct for socklen_t,
+   sstream types in the Solaris+gcc-3.2.1 environment.
+ - Modified source and configure files to not use AC_REPLACE_FUNCS to
+   fix the LTLIBOBJS error when using autoconf-2.53.
+ - Added locking functionality to deal with instability in Windows
+   Multi-thread environment.
+ - Updated comments to comply with the most recent release of Doxygen.
+   Also included Security API in the Reference section.
+Tool
+ - Changed the name of the Soaping client command to "soaping".
+
+=====================================================
+1.0-20030110 (2003/01/10) -> 1.0-20030201 (2003/02/01)
+
+Server
+ - Added "restart" command to the opensoap-server-ctl script.
+    Usage: opensoap-server-ctl  restart
+API
+ - The functions OpenSOAPXMLElmGetChildValueMB() and OpenSOAPXMLElmGetChildValueWC()
+    now return appropriate error codes.
+ - Fixed a memory leak in the Serializer map of OpenSOAPUltimate().
+Samples
+ - All samples have been modified to be compatible with the new directory
+   layout.
+ - The samples CalcAsyncHop and CalcAsyncPath have been incorporated into
+   the CalcAsync sample.
+ - Added functions of CalcAsync CGI Client. (Options for displaying
+   SOAP messages and message forwarding.)
+ - Fixed problems with the ShoppingSec sample.
+ - Added README for Transaction sample.
+Win32
+ - Prepared installation batch files for all Tools and Samples.
+
+=====================================================
+1.0-20021130 (2002/11/30) -> 1.0-20030110 (2003/01/10)
+
+Overall
+ - Changed the directory structure making it possible to customize the installation.
+   (/usr/local/opensoap/)
+Server
+ - Fixed a problem with asynchronous transmission processing.
+API
+ - Fixed a problem so that it is possible to use NULL prefix when
+   setting the namespace. (XMLElmSetNameSpace, NamespaceIsSameString)
+Samples
+ - In Hello and other samples, fixed a Buffer overflow potential problem.
+Win32
+ - Fixed the location for DLinkList.c in the DSP files.
+
+=====================================================
+1.0-20021031 (2002/10/31) -> 1.0-20021130 (2002/11/30)
+Documentation
+ - Most of the documents have been translated into English.
+ - API References can be generated by Doxygen from the source files.
+
+=====================================================
+1.0-20020930 (2002/09/30) -> 1.0-20021031 (2002/10/31)
+Server
+ - Modified HopCount processing.  Yet incomplete for Async processing.
+API
+ - include/ErrorCode.h: OPENSOAP_IO_READ_ERROR=0x00040001L
+ - Resolved the problem on Solaris for encoding characters specified
+   with MIME charset.
+Tools
+ - The new category "Tools" was created.
+ - Moved Transaction and SoapPING to src/tools/.
+misc.
+ - Rearranged Windows Visual C++ projects.
+ - Added and modified documentation (English translation, etc.)
+
+=====================================================
+1.0pre3 (2002/08/27) -> 1.0-20020930 (2002/09/30)
+
+Server
+  - Modified messages on read/write error.
+  - Modified the string process in FileIDFunc.
+  - Modified to provide a service, if the server has the corresponding
+    service program,  when the client specifies a hopcount.
+  - Modified the handling of UTF-16/UTF-32 coded character strings.
+
+API
+  - Modified the conversion routine of Wide Character <-> Multi Byte
+    Character.
+  - Modified the HTTP header process to be case-insensitive.
+
+Samples
+  - Added new samples, Soaping, SimpleCalc and HelloSec.
+  - CalcAsyncHop/Path:
+    * Replaced getline(), to be compiled on Solaris, VC++, etc.
+    * Modified to process Hop/Path in async = false (ie. Sync) case.
+    * Changed the namespace for new service name.
+  - ShoppingSec:
+    * Added and modified SampleMessages files.
+    * Modified Shopping{Sync,Async}.mak.
+  - Calc: Modified document, added ssml, mak files.
+  - SecCertAuth: Modified .mak file, added ssml.
+  - CalcAsyncClient: Fixed the memory leak.
+
+misc.
+  - Added and modified documents.
+  - Modifications and verification for Windows VC++6.0.
+
+=====================================================
+1.0pre2 (2002/04/02) -> 1.0pre3 (2002/08/27)
+
+Server
+  - Communication between the OpenSOAP Server and Service programs now
+    supports StdIO(Standard I/O).
+  - In conjunction with the above enhancement, the sample SSML files,
+    the SSML specification documetation and SSML sample description
+    documents were modified.
+  - Fixed the problem with strings longer than 4096 bytes not being
+    passed.
+  - Duplication of a header in processing Async and Signature at once
+    was corrected.
+
+API
+  - IPv6 address format (RFC2732) supported on http transport.
+  - Memory leak problems resolved.
+
+Samples
+  - The file names for CalcAsync, which were the same as Calc's, were
+    changed.
+  - Replaced Shopping by ShoppingSec.
+  - Modified some codes in Transaction.
+  - Modified SecCertAuth/GetCert so as to be compiled on Solaris.
+
+misc.
+  - Samll bug fixes and corrections of code and documents.
+
+=====================================================

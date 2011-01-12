@@ -1,0 +1,9 @@
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">
+<SOAP-ENV:Body>
+<p:PaymentRequest xmlns:p="http://namespaces.opensoap.jp/a_bank_transfer/">
+<account>okuno1234</account>
+<amount>$5000</amount>
+<to>b_bank:1252412</to>
+</p:PaymentRequest>
+</SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

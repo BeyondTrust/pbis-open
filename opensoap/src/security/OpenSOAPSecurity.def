@@ -1,0 +1,45 @@
+; -----------------------------------------------------------------------------
+;  OpenSOAPSecurity.def
+; 
+;  See Copyright for the status of this software.
+; 
+;  The OpenSOAP Project
+;  http://opensoap.jp/
+; -----------------------------------------------------------------------------
+LIBRARY OpenSOAPSecurity
+
+EXPORTS
+	OpenSOAPSecGenerateRSAKeys
+	OpenSOAPSecGenerateRSAKeysToFile
+	OpenSOAPSecEncWithStream
+	OpenSOAPSecEncWithFile
+	OpenSOAPSecDecWithStream
+	OpenSOAPSecDecWithFile
+	OpenSOAPSecAddSignWithStream
+	OpenSOAPSecAddSignWithFile
+	OpenSOAPSecCntSign
+	OpenSOAPSecGetSignedByList
+	OpenSOAPSecVerifySignWithStream
+	OpenSOAPSecVerifySignWithFile
+	OpenSOAPSecDecodeKeyFile
+	OpenSOAPSecCARegist
+	OpenSOAPSecCASearchRecords
+	OpenSOAPSecCAGetRecord
+	OpenSOAPSecCASearchOneRecord
+	OpenSOAPSecCAFreeRecord
+	OpenSOAPSecCAInvalidate
+	OpenSOAPSecCABrowseRec
+	OpenSOAPSecCABrowse
+	OpenSOAPSecCARemoveRecord
+	OpenSOAPSecCertCreateWithStream
+	OpenSOAPSecCertCreateWithFile
+	OpenSOAPSecCertFree
+	OpenSOAPSecCertLoadFromMem
+	OpenSOAPSecCertLoad
+	OpenSOAPSecCertVerifyWithStream
+	OpenSOAPSecCertVerifyWithFile
+	OpenSOAPSecCertGetPublisherName
+	OpenSOAPSecCertGetSerialNo
+	OpenSOAPSecCertGetOwnerName
+	OpenSOAPSecCertGetEndDate
+	OpenSOAPSecCertGetPubKey

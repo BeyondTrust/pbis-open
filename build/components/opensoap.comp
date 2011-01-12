@@ -1,0 +1,71 @@
+#!/bin/sh
+COMP_NAME="opensoap"
+COMP_DEPENDENCIES="autoconf automake libtool openssl libxml2"
+COMP_SOURCES="${BUILD_ROOT}/src/linux/opensoap"
+COMP_INCREMENTAL=1
+
+function component_bootstrap
+{
+    cd "${COMP_SOURCES}" && ./bootstrap
+    exit_on_error "$?"
+}
+
+function component_gather
+{
+    echo "Nothing to gather for ${COMP_NAME}"
+}
+
+function _setup_build_env
+{
+    set_compiler_env
+
+    cd ${BUILDING_ROOT}
+    exit_on_error $?
+
+    CPPFLAGS="${_cppflags} $(libtool_staging_cppflags) -I${COMP_SOURCES}/include"
+    CFLAGS="${_cflags}"
+    LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib}) $(libtool_staging_ldflags)"
+    OPENSSL_DIRPATH=`get_staging_prefix_dir openssl`
+
+    libtool_set_staging_library_path
+
+    export PATH CPPFLAGS LDFLAGS CFLAGS CC
+}
+
+function component_configure
+{
+    _setup_build_env
+
+    "${COMP_SOURCES}/configure"        \
+	--prefix=${PREFIX_DIR}         \
+        --libdir=${PREFIX_DIR}/${_lib} \
+        --with-ssl="${OPENSSL_DIRPATH}" \
+	${DEPENDENCY_TRACKING}
+}
+
+function component_build
+{
+    _setup_build_env
+
+    ${MAKE} ${_mflags} all
+}
+
+function component_stage
+{
+    _setup_build_env
+
+    ${MAKE} DESTDIR=${STAGING_ROOT_DIR} -j1 install
+
+    libtool_rewrite_staging
+}
+
+function component_populate
+{
+    COMP_PREFIX_DIR=`get_comp_staging_prefix_dir ${COMP_NAME}`
+    COMP_ROOT_DIR=`get_comp_staging_root_dir ${COMP_NAME}`
+
+    mkdir -p ${POPULATE_ROOT_DIR}
+    rsync -a ${COMP_ROOT_DIR}/ ${POPULATE_ROOT_DIR}/
+
+    libtool_rewrite_populate
+}

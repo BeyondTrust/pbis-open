@@ -1,0 +1,39 @@
+// SubDll.idl : SubDll.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (SubDll.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(7764B9B5-1607-42EE-8295-139268E6FFF7),
+	
+		helpstring("ISubtractDll Interface"),
+		pointer_default(unique)
+	]
+	interface ISubtractDll : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Subtract")] HRESULT Subtract([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(40D9BE9A-76B6-4BB5-AF5D-4E2891ECB547),
+	version(1.0),
+	helpstring("SubDll 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library SUBDLLLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(FA5ED1D1-91A1-4018-9391-C272F5BA5518),
+		helpstring("SubtractDll Class")
+	]
+	coclass SubtractDll
+	{
+		[default] interface ISubtractDll;
+	};
+};

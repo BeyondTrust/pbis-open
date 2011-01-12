@@ -1,0 +1,550 @@
+1.OpenSOAP Envelope Security Function Group
+
+(1)
+[Name]
+  RSA Key Generation
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecGenerateRSAKeys(const unsigned char* szSeedPhrase,
+                               FILE* fpPrivKey, FILE* fpPubKey);
+int OpenSOAPSecGenerateRSAKeysToFile(const unsigned char* szSeedPhrase,
+                                     const char* szPrivKeyFileName,
+                                     const char* szPubKeyFileName);
+
+[Description]
+  The OpenSOAPSecGenerateRSAKeys() function creates a private and public key pair.
+  The private key is written to fpPrivKey and the public key is written to fpPubKey.
+  The OpenSOAPSecGenerateRSAKeysToFile() function is the same as the function OpenSOAPSecGenerateRSAKeys()
+  except that the private and public keys are written to the files represented by szPrivKeyFileName and
+  szPubKeyFileName respectively.
+  The parameter szSeedPhrase is a character string which is used when generating an internal
+  random value when creating the key values. It can optioanally be set as a character string.
+  szSeedPhrase is only used when generating the RSA Key and is not required in other phases. In general,
+  if the same value for szSeedPhrase is used, a different key pair will be generated.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(2)
+[Name]
+  Encryption
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecEncWithStream(OpenSOAPEnvelopePtr env, FILE* fpPubKey);
+int OpenSOAPSecEncWithFile(OpenSOAPEnvelopePtr env,
+                           const char* szPubKName);
+
+[Description]
+  The function OpenSOAPSecEncWithStream(), with the following conditions in the Body section, encodes
+  the attributes of the relevant elements using the public key provided in fpPubKey.
+
+ - attribute name : encrypt
+ - namespace      : http://opensoap.jp/auth/
+ - value          : True (boolean)
+
+  The function OpenSOAPSecEncWithFile() is the same as OpenSOAPSecEncWithStream() except
+  that the public key is defined by the file named in szPubKName.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(3)
+[Name]
+  Decryption
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecDecWithStream(OpenSOAPEnvelopePtr env,
+                             FILE* fpPrivKey);
+int OpenSOAPSecDecWithFile(OpenSOAPEnvelopePtr env,
+                           const char* szPrivKName);
+
+[Description]
+  The function OpenSOAPSecDecWithStream(), with the following conditions in the Body section, decodes
+  the attributes of the relevant elements using the private key provided in fpPrivKey.
+
+ - attribute name : encrypt
+ - namespace      : http://opensoap.jp/auth/
+ - value          : True (boolean)
+
+  The function OpenSOAPSecDecWithFile() is the same as OpenSOAPSecDecWithStream() except
+  that the private key is defined by the file named in szPrivKName.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(4)
+[Name]
+  Digital Signature Addition
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecAddSignWithStream(OpenSOAPEnvelopePtr env,
+                                 int iType, FILE* fpPrivKey);
+int OpenSOAPSecAddSignWithFile(OpenSOAPEnvelopePtr env,
+                               int iType, const char* szPrivKName);
+
+[Description]
+  The function OpenSOAPSecAddSignWithStream() creates an RSA digital signature for the entire
+  Body section, and appends it to the Header section. It uses the private key in fpPrivKey to
+  create the signature.
+  Also, iType specifies the hash algorithm to be used when creating the signature. The hash
+  algorithm is selected from the following list:
+
+  OPENSOAP_HA_MD5    : MD5 Algorithm
+  OPENSOAP_HA_RIPEMD : RIPEMD-160 Algorithm
+  OPENSOAP_HA_SHA    : SHA Algorithm
+
+  It is irrelevant if a digital signature has been previously appended to this Envelope.
+  The function OpenSOAPSecAddSignWithFile() is the same as OpenSOAPSecAddSignWithStream()
+  except that the private key is defined by the file named in szPrivKName.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(5)
+[Name]
+  Digital Signature Count
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int	OpenSOAPSecCntSign(const OpenSOAPEnvelopePtr env,
+                       int* pnSig);
+
+[Description]
+  Regarding the Envelope provided by env, this function retrieves the current number
+  of signatures, and  stores this value in the location pointed to by pnSig.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(6)
+[Name]
+  Signature List Acquistion
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int	OpenSOAPSecGetSignedByList(OpenSOAPEnvelopePtr env,
+    	                       int nCntMax,
+                               OpenSOAPStringPtr list[],
+                           	   int* pnCntPacked);
+
+[Description]
+  Acquires the signature list. The calling program allocates enough storage to hold
+  nCntMax signatures. pnCntPacked contains the number of signatures returned.
+  (Maximum of nCntMax signatures)
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(7)
+[Name]
+  Digital Signature Verification
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecVerifySignWithStream(OpenSOAPEnvelopePtr env,
+                                    FILE* fpPubKey);
+int OpenSOAPSecVerifySignWithFile(OpenSOAPEnvelopePtr env,
+                                  const char* szPubKName);
+
+[Description]
+  The function OpenSOAPSecVerifySignWithStream() verifies the RSA digital signature
+  of the entire Body section. The public key in fpPubKey is used when verifying.
+  
+  If there is more than 1 signature, only 1 verified signature is enough for verification.
+  The function OpenSOAPSecVerifySignWithFile() is the same as OpenSOAPSecVerifySignWithStream()
+  except that the public key is defined in the file named in szPubKName.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+2.Tools Function Group
+
+(x)
+[Name]
+  Convert Key File To Binary
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecDecodeKeyFile(FILE* fp, unsigned long* pulLenOut,
+                             unsigned char** ppucDecode);
+
+[Description]
+  The contents of the key file provide by the file pointer fp is converted to binary.
+  pulLenOut contains the size of the data after binary conversion. The binary data itself
+  is written to the location pointed to by ppucDecode. After the binary data has been used,
+  free() should be called to release the memory used by ppucDecode.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+3.Certification Authority Data Manipulation Function Group
+
+3.1.Preparatory Steps
+
+  Before using the functions in this section, it is required to define the Certificate
+  Authority database filename environment variable(Environment variable name : OPENSOAP_CA_DATABASE).
+  The path of the database to be used is assigned to this environment variable.
+  Note that for this path, a management file with the suffix "_sno" will also be created and used.
+
+Ex.)
+  Certificate Authority database file name : /home/CA/CA.db,
+  and also at the same time, the file "/home/CA/CA.db_sno" will be created and used.
+  
+(1)
+[Name]
+  Browse Display(Test Use)
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCABrowse(FILE* fpOut);
+int OpenSOAPSecCABrowseRec(const OpenSOAPCARecPtr pRec,
+                           FILE* fpOut);
+
+[Description]
+  The current contents of the CA-DB (Certificate Authority Database), as defined by
+  fpOut, can viewed by the function OpenSOAPSecCABrowse().
+  For each line, 1 record is output.
+  For each line, the data is listed in the order below.
+
+  (a)Serial Number
+     Displayed as a 10 digit decimal number. The serial number is a unique number in the database.
+     Once it has been registered, there is no further change afterwards.
+  (b)Invalidation Data
+     If that record has been invalidated, the character '*' is output; if not, a space character is output.
+  (c)Owner Name
+     This is output as a character string enclosed in ("[]") parentheses.
+  (d)Effective Date and Time Limit
+     Year Month Day Hour Minute Second, a 14 digit string with the year value displayed using 4
+     digits, and the other values displayed with 2 digits.
+
+     <Invalidated Data Example>
+     0000000002*[Juventus] 20020211120000
+
+     <Normal Data Example>
+     0000000003 [A.C.Milan] 20020201120000
+
+  The function OpenSOAPSecCABrowseRec() is the same as OpenSOAPSecCABrowse() except it is used for a single record.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(2)
+[Name]
+  Public Key Registration
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCARegist(const char* szNameOwner, const char* szTermDate,
+                        size_t sizPubkey, const unsigned char* szPubKey,
+                        unsigned long* pulSerialNo);
+
+[Description]
+  Register a public key. The following values are set.
+  (a)szNameOwner
+     Name of the key owner(Character string). The maximum length of this character string is OPENSOAP_CA_OWNER_LEN - 1.
+  (b)szTermDate
+     Effective Date and Time Limit. A string of digits representing year, month, day, hour, minute and second in that order.
+     The year is represented by 4 digits, and all the other items by 2 digits each. (Ex. "20020211120000"). The length of this
+     string is fixed at 14 characters, <OPENSOAP_CERT_DATE_LEN>, and is terminated with a NULL character.
+  (c)sizPubKey
+     Public key data length (in bytes). This is the value for the data generated by binary conversion
+     using OpenSOAPSecDecodeKeyFile().
+  (d)szPubKey
+     Public key data (binary).
+
+  On success, this function returns the serial number stored at the location pointed to by pulSerialNo.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(3)
+[Name]
+  Invalidate a Public Key
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAInvalidate(const char* szNameOwner, unsigned long ulSerial);
+
+[Description]
+  Invalidate the record whose owner is defined by szNameOwner, and serial number by ulSerial.
+  In this process, the record is NOT deleted, and the record itself remains in the database.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(4)
+[Name]
+  Search for a record for a specified owner
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCASearchRecords(const char* szNameOwner,
+                               int* pnRec, long** pplIdxs);
+int OpenSOAPSecCASearchOneRecord(const char* szNameOwner,
+                                 OpenSOAPCARecPtr* ppRec);
+
+[Description]
+  The function OpenSOAPSecCASearchRecords() searches for relevant records whose owner matches
+  szNameOwner. The number of records found is stored in the location pointed to by pnRec.
+  Also, the location pointed to by ppIdxs contains a group of indexes(not serial numbers).
+  After usage, this index block can be released using free(). By using the function OpenSOAPSecCAGetRecord()
+  on thses indexes, it is possible to retrieve the actual records.
+  The function OpenSOAPSecCASearchOneRecord() searches for 1 record that matches the owner specified by szNameOwner.
+  The resulting record is stored at the location pointed to by ppRec. If there is more than 1 record for the
+  specified owner, then the record with the latest effective date/time limit will be retrieved.
+  The acquired record should be released after use by the function OpenSOAPSecCAFreeRecord().
+
+  Both of these functions exclude records that have been invalidated.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(5)
+[Name]
+  Retrieve A Record
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAGetRecord(long lIdx, OpenSOAPCARecPtr* ppRec);
+
+[Description]
+  Retrieve a record represented by lIdx, and store it in the location pointed to by ppRec.
+  After use, the retrieved record should be released by calling the function OpenSOAPSecCAFreeRecord().
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(6)
+[Name]
+  Release A Record
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCAFreeRecord(OpenSOAPCARecPtr pRec);
+
+[Description]
+  Release the memory allocated for the record pointed to by pRec.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(7)
+[Name]
+  Delete Record
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCARemoveRecord(unsigned long ulSerial);
+
+[Description]
+  Remove the record with serial number ulSerial from the database.
+  Note that this function is unlike OpenSOAPSecCAInvalidate() which allows the record to remain in the database.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+3.Digital Certificate Operations Function Group
+
+(1)
+[Name]
+  Create Digital Certificate
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertCreateWithStream(const char* szPublish,
+                                    FILE* fpPrivKey,
+                                    int iHashType,
+                                    const OpenSOAPCARecPtr pRec,
+                                    FILE* fpCert);
+int OpenSOAPSecCertCreateWithFile(const char* szPublish,
+                                  const char* szPrivKeyFile,
+                                  int iHashType,
+                                  const OpenSOAPCARecPtr pRec,
+                                  const char* szCertName);
+
+[Description]
+  Creates a digital certificate.
+  The function OpenSOAPSecCertCreateWithStream() takes as input the following parameters, and
+  writes a digital certificate to fpCert.
+
+  (a) szPublish : Publisher's Name
+  (b) fpPrivKey : Publisher's Private Key File Stream
+  (c) iHashType : Hash algorithm for certification. Selected from:
+        OPENSOAP_HA_MD5    : MD5 Algorithm
+        OPENSOAP_HA_RIPEMD : RIPEMD-160 Algorithm
+        OPENSOAP_HA_SHA    : SHA Algorithm
+  (d) pRec      : Certification Authority Database Record
+
+  The function OpenSOAPSecCertCreateWithFile() is the same as OpenSOAPSecCertCreateWithStream() 
+  except that the private key and the digital certificate are specified in files szPrivKeyFile
+  and szCertName.
+  
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(2)
+[Name]
+  Load Digital Certificate
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertLoadFromMem(size_t sizArea,
+                               const unsigned char* pucArea,
+                               OpenSOAPSecCertPtr* ppCert);
+int OpenSOAPSecCertLoad(const char* szName,
+                        OpenSOAPSecCertPtr* ppCert);
+
+[Description]
+  The function OpenSOAPSecCertLoadFromMem() loads a digital certificate from the location pucArea
+  of size  sizArea, and stores it at the location pointed to by ppCert.
+  The function OpenSOAPSecCertLoad() is the same as the function OpenSOAPSecCertLoadFromMem() except
+  that szName points to the specific area.
+  After use, the retrieved digital certificate should be released using the function OpenSOAPSecCertFree().
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(3)
+[Name]
+  Release Digital Certificate
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertFree(OpenSOAPSecCertPtr pCert);
+
+[Description]
+  Release the memory containing the digital certificate pointed to by pCert.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(4)
+[Name]
+  Digital Certificate Signature Verification
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertVerifyWithStream(FILE* fpCert,
+                                    FILE* fpPubKey);
+int OpenSOAPSecCertVerifyWithFile(const char* szCertName,
+                                  const char* szPubKeyName);
+
+[Description]
+  Using the specified public key, verify the signature of a digital certificate.
+  For the function OpenSOAPSecCertVerifyWithStream(), the digital certificate and the
+  public key are obtained through the file pointers fpCert and fpPubKey.
+  For the function OpenSOAPSecCertVerifyWithFile(), the digital certificate and the
+  public key are obtained through the files szCertName and szPubKeyName.
+
+[Return  Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(5)
+[Name]
+  Certificate Internal Details Reference Functions
+
+[Format]
+#include <OpenSOAP/Security.h>
+
+int OpenSOAPSecCertGetPublisherName(OpenSOAPSecCertPtr pCert,
+                                    char** pszName);
+int OpenSOAPSecCertGetSerialNo(OpenSOAPSecCertPtr pCert,
+                               unsigned long* pulSerial);
+int OpenSOAPSecCertGetOwnerName(OpenSOAPSecCertPtr pCert,
+                                char** pszName);
+int OpenSOAPSecCertGetEndDate(OpenSOAPSecCertPtr pCert,
+                              char** pszDate);
+int OpenSOAPSecCertGetPubKey(OpenSOAPSecCertPtr pCert,
+                              const char* szSaveName);
+
+[Description]
+  This group of functions allow access to the internal data of a digital certificate pCert.
+  For the function OpenSOAPSecCertGetPublisherName(), the publisher's name will be set to the location
+  pointed to by pszName. This area is defined by the digital certificate internally, and cannot be released.
+  For the function OpenSOAPSecCertGetSerialNo(), the pointer pulSerial will be set to the location
+  containing the serial number.
+  For the function OpenSOAPSecCertGetEndDate(), the pointer pszDate will be set to the location of
+  the Certificate's effective date. This is a 14 digit string in the following order year, month,
+  day, hour, minute and second. The year is represented by 4 digits with the remaining items being
+  represented by 2 digits.
+  (Ex. "20020211120000")
+  This area is defined by the digital certificate internally, and cannot be released. Also, the string is NOT
+  terminated with a NULL character. (The string is a fixed length of 14 characters <OPENSOAP_CERT_DATE_LEN>)
+  For the function OpenSOAPSecCertGetPubKey(), the Certificate's public key will be stored in the file szSaveName.
+  This public key is in ASCII, and has the same format as the public keys used in this library.
+
+[Return Value]
+  OpenSOAP API error code
+
+[Bugs]
+
+(z)
+[Name]
+[Format]
+[Description]
+[Return Value]
+  OpenSOAP API error code
+[Bugs]
+
+

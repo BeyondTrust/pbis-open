@@ -1,0 +1,39 @@
+// AdDll.idl : AdDll.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (AdDll.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(E40DC641-2D09-46CF-8554-9BC97ADD0F57),
+	
+		helpstring("IAddDll Interface"),
+		pointer_default(unique)
+	]
+	interface IAddDll : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Add")] HRESULT Add([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(3CD578EB-D794-416F-BA10-8585E9C0560D),
+	version(1.0),
+	helpstring("AdDll 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library ADDLLLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(9422BEA4-2572-42FA-A5A3-B8D0B73D8292),
+		helpstring("AddDll Class")
+	]
+	coclass AddDll
+	{
+		[default] interface IAddDll;
+	};
+};

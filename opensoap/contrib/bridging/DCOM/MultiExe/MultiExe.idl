@@ -1,0 +1,39 @@
+// MultiExe.idl : MultiExe.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (MultiExe.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(6B364159-B879-4FF7-B2DF-1B54F38EBA04),
+	
+		helpstring("IMultiplyExe Interface"),
+		pointer_default(unique)
+	]
+	interface IMultiplyExe : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Multiply")] HRESULT Multiply([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(07DB3CBD-D5D1-44AC-9627-68B0465E11DD),
+	version(1.0),
+	helpstring("MultiExe 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library MULTIEXELib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(A4101D61-F356-4F3F-BE52-F04D3023E177),
+		helpstring("MultiplyExe Class")
+	]
+	coclass MultiplyExe
+	{
+		[default] interface IMultiplyExe;
+	};
+};

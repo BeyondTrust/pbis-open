@@ -1,0 +1,559 @@
+.TH "Transport.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Transport.h \- OpenSOAP API Transport Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+\fC#include <OpenSOAP/Envelope.h>\fP
+.br
+\fC#include <OpenSOAP/Stream.h>\fP
+.br
+
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBOPENSOAP_AUTH_TYPE_BASIC\fP   (1)  /* BASIC */"
+.br
+.RI "\fITransport Basic Authentication. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_AUTH_TYPE_DIGEST\fP   (2)  /* DIGEST */"
+.br
+.RI "\fITransport Digest Authentification. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_AUTH_TYPE_ANY\fP   (0)"
+.br
+.RI "\fIAny supported type for Transport Authentification. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SSL_VER_SSL2\fP   (1)  /* SSL_V2.0 ONLY */"
+.br
+.RI "\fITransport SSL Version SSL2.0 ONLY. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SSL_VER_SSL3\fP   (2)  /* SSL_V3.0 ONLY */"
+.br
+.RI "\fITransport SSL Version SSL3.0 ONLY. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SSL_VER_TLS1\fP   (4)  /* TLS_V1.0 ONLY */"
+.br
+.RI "\fITransport SSL Version TLS1.0 ONLY. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_SSL_VER_ALL\fP   (0) /* SSL all version */"
+.br
+.RI "\fITransport SSL Version accepts all Support Version (SSLv2/SSLv3/TLSv1). \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPTransport \fBOpenSOAPTransport\fP"
+.br
+.RI "\fIOpenSOAPTransport Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPTransport\fP * \fBOpenSOAPTransportPtr\fP"
+.br
+.RI "\fIOpenSOAPTransport Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPTransportCreate\fP (\fBOpenSOAPTransportPtr\fP *t)"
+.br
+.RI "\fICreate Transport instance. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportRelease\fP (\fBOpenSOAPTransportPtr\fP t)"
+.br
+.RI "\fIRelease OpenSOAP Transport. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSend\fP (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP soap_env)"
+.br
+.RI "\fISend SOAP Envelope as ByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportReceive\fP (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP *soap_env)"
+.br
+.RI "\fIReceive SOAP Message. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportConnect\fP (\fBOpenSOAPTransportPtr\fP t)"
+.br
+.RI "\fIConnect to end point. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportDisconnect\fP (\fBOpenSOAPTransportPtr\fP t)"
+.br
+.RI "\fIDisconnect from end point. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportInvokeStream\fP (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPStreamPtr\fP stream, int input_size, int *tp_status)"
+.br
+.ti -1c
+.RI "int \fBOpenSOAPTransportInvokeByteArray\fP (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPByteArrayPtr\fP request, \fBOpenSOAPByteArrayPtr\fP response, int *tp_status)"
+.br
+.RI "\fISOAP Service call using OpenSOAPByteArray. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportInvoke\fP (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP request, \fBOpenSOAPEnvelopePtr\fP *response)"
+.br
+.RI "\fISOAP call. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetSOAPAction\fP (\fBOpenSOAPTransportPtr\fP t, const char *soap_action)"
+.br
+.RI "\fISet SOAP-Action Header (Some-URI). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetURL\fP (\fBOpenSOAPTransportPtr\fP t, const char *url)"
+.br
+.RI "\fISet request URL. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetHeader\fP (\fBOpenSOAPTransportPtr\fP t, const char *header_name, const char *header_value)"
+.br
+.RI "\fISet Header. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportGetHeader\fP (\fBOpenSOAPTransportPtr\fP t, const char *header_name, char **header_value)"
+.br
+.RI "\fIGet a header value of the response. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetCharset\fP (\fBOpenSOAPTransportPtr\fP t, const char *charset)"
+.br
+.RI "\fISet Character Set. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetContentType\fP (\fBOpenSOAPTransportPtr\fP t, const char *content_type)"
+.br
+.RI "\fISet Content-Type (Overwrite \fBOpenSOAPTransportSetCharset()\fP). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSMTPSetHostname\fP (\fBOpenSOAPTransportPtr\fP s)"
+.br
+.RI "\fISet SMTP Host. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSMTPSetFrom\fP (\fBOpenSOAPTransportPtr\fP t)"
+.br
+.RI "\fISet SMTP From Header. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSMTPSetTo\fP (\fBOpenSOAPTransportPtr\fP t)"
+.br
+.RI "\fISet SMTP To Header. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetAuthUserPass\fP (\fBOpenSOAPTransportPtr\fP t, const char *user, const char *passwd)"
+.br
+.RI "\fISet User/Passwd for Authentification. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetAuthType\fP (\fBOpenSOAPTransportPtr\fP t, int auth_type)"
+.br
+.RI "\fISet Authentification type. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetProxy\fP (\fBOpenSOAPTransportPtr\fP t, const char *host, int port, const char *user, const char *passwd, int auth_type)"
+.br
+.RI "\fISet Proxy Server Information. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetSSLVersion\fP (\fBOpenSOAPTransportPtr\fP t, int ssl_version)"
+.br
+.RI "\fISet acceptable SSL versions. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPTransportSetSSLCert\fP (\fBOpenSOAPTransportPtr\fP t, const char *ca_file, const char *ca_dir, const char *certchain_file, const char *privkey_file, int verify_level)"
+.br
+.RI "\fISet SSL Certification files. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Transport Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Define Documentation"
+.PP 
+.SS "#define OPENSOAP_AUTH_TYPE_ANY   (0)"
+.PP
+Any supported type for Transport Authentification. (0) 
+.SS "#define OPENSOAP_AUTH_TYPE_BASIC   (1)  /* BASIC */"
+.PP
+Transport Basic Authentication. (1) 
+.SS "#define OPENSOAP_AUTH_TYPE_DIGEST   (2)  /* DIGEST */"
+.PP
+Transport Digest Authentification. (2) 
+.SS "#define OPENSOAP_SSL_VER_ALL   (0) /* SSL all version */"
+.PP
+Transport SSL Version accepts all Support Version (SSLv2/SSLv3/TLSv1). (0) 
+.SS "#define OPENSOAP_SSL_VER_SSL2   (1)  /* SSL_V2.0 ONLY */"
+.PP
+Transport SSL Version SSL2.0 ONLY. (1) 
+.SS "#define OPENSOAP_SSL_VER_SSL3   (2)  /* SSL_V3.0 ONLY */"
+.PP
+Transport SSL Version SSL3.0 ONLY. (2) 
+.SS "#define OPENSOAP_SSL_VER_TLS1   (4)  /* TLS_V1.0 ONLY */"
+.PP
+Transport SSL Version TLS1.0 ONLY. (4) 
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPTransportConnect (\fBOpenSOAPTransportPtr\fP t)"
+.PP
+Connect to end point. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportCreate (\fBOpenSOAPTransportPtr\fP * t)"
+.PP
+Create Transport instance. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr * [out] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportDisconnect (\fBOpenSOAPTransportPtr\fP t)"
+.PP
+Disconnect from end point. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportGetHeader (\fBOpenSOAPTransportPtr\fP t, const char * header_name, char ** header_value)"
+.PP
+Get a header value of the response. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIheader_name\fP const char * [in] ((|header_name|)) header name 
+.br
+\fIheader_value\fP char ** [out] ((|header_value|)) header's value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportInvoke (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP request, \fBOpenSOAPEnvelopePtr\fP * response)"
+.PP
+SOAP call. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIrequest\fP OpenSOAPEnvelopePtr [in] ((|request|)) SOAP request Envelope 
+.br
+\fIresponse\fP OpenSOAPEnvelopePtr * [in, out] ((|response|)) SOAP response Envelope 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code
+.RE
+.PP
+OPENSOAP_TRANSPORT_ERROR (getaddrinfo)
+.IP "\(bu" 2
+OPENSOAP_TRANSPORT_HOST_NOT_FOUND Hostname not found (DNS error) (connect)
+.IP "\(bu" 2
+OPENSOAP_TRANSPORT_NETWORK_UNREACH Network is unreachable (Network problem on local?)
+.IP "\(bu" 2
+OPENSOAP_TRANSPORT_HOST_UNREACH Hostname is unreachable (Network problem on remote?)
+.IP "\(bu" 2
+OPENSOAP_TRANSPORT_CONNECTION_REFUSED Connection Refused (The daemon doesn't exist)
+.IP "\(bu" 2
+OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT Connection Timed out (The server may be busy) HTTP
+.IP "\(bu" 2
+\fBOPENSOAP_TRANSPORT_IS_HTTP_ERROR()\fP
+.IP "\(bu" 2
+\fBOPENSOAP_TRANSPORT_GET_HTTP_ERROR()\fP
+.PP
+.PP
+.IP "\(bu" 2
+OPENSOAP_UNSUPPORT_PROTOCOL 
+.PP
+
+.SS "int OpenSOAPTransportInvokeByteArray (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPByteArrayPtr\fP request, \fBOpenSOAPByteArrayPtr\fP response, int * tp_status)"
+.PP
+SOAP Service call using OpenSOAPByteArray. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIrequest\fP OpenSOAPEnvelopePtr [in] ((|request|)) SOAP request data 
+.br
+\fIresponse\fP OpenSOAPByteArrayPtr [out] ((|response|)) SOAP response data 
+.br
+\fItp_status\fP int * [out] ((|tp_status|)) Transport status value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportReceive (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP * soap_env)"
+.PP
+Receive SOAP Message. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIsoap_env\fP OpenSOAPEnvelopePtr * [in, out] ((|soap_env|)) SOAP Envelope 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportRelease (\fBOpenSOAPTransportPtr\fP t)"
+.PP
+Release OpenSOAP Transport. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSend (\fBOpenSOAPTransportPtr\fP t, \fBOpenSOAPEnvelopePtr\fP soap_env)"
+.PP
+Send SOAP Envelope as ByteArray. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIsoap_env\fP OpenSOAPEnvelopePtr [in] ((|soap_env|)) SOAP Envelope 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetAuthType (\fBOpenSOAPTransportPtr\fP t, int auth_type)"
+.PP
+Set Authentification type. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIauth_type\fP int [in] ((|auth_type|)) acceptable type for authentication in choice of OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST | OPENSOAP_AUTH_TYPE_ANY
+.RE
+.PP
+If only OPENSOAP_AUTH_TYPE_BASIC is set, directly send UserPassword for Basic Authentication in first request. 
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetAuthUserPass (\fBOpenSOAPTransportPtr\fP t, const char * user, const char * passwd)"
+.PP
+Set User/Passwd for Authentification. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIuser\fP const char * [in] ((|user|)) username for authentication 
+.br
+\fIpasswd\fP const char * [in] ((|passwd|)) password for authentication 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetCharset (\fBOpenSOAPTransportPtr\fP t, const char * charset)"
+.PP
+Set Character Set. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIcharset\fP const char * [in] ((|charset|)) character set 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetContentType (\fBOpenSOAPTransportPtr\fP t, const char * content_type)"
+.PP
+Set Content-Type (Overwrite \fBOpenSOAPTransportSetCharset()\fP). \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIcontent_type\fP const char * [in] ((|content_type|)) content type 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetHeader (\fBOpenSOAPTransportPtr\fP t, const char * header_name, const char * header_value)"
+.PP
+Set Header. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIheader_name\fP const char * [in] ((|header_name|)) header name 
+.br
+\fIheader_value\fP const char * [in] ((|header_value|)) header's value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetProxy (\fBOpenSOAPTransportPtr\fP t, const char * host, int port, const char * user, const char * passwd, int auth_type)"
+.PP
+Set Proxy Server Information. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIhost\fP const char * [in] ((|host|)) Hostname of Proxy Server 
+.br
+\fIport\fP int [in] ((|port|)) Port Number of Proxy Server 
+.br
+\fIuser\fP const char * [in] ((|user|)) Proxy Server username (NULL for non-user/passwd auth) 
+.br
+\fIpasswd\fP const char * [in] ((|passwd|)) Proxy Server passwd 
+.br
+\fIauth_type\fP int [in] ((|auth_type|)) acceptable type for authentication in choice of OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST | OPENSOAP_AUTH_TYPE_ANY 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetSOAPAction (\fBOpenSOAPTransportPtr\fP t, const char * soap_action)"
+.PP
+Set SOAP-Action Header (Some-URI). \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIsoap_action\fP const char * [in] ((|soap_action|)) soap-action 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetSSLCert (\fBOpenSOAPTransportPtr\fP t, const char * ca_file, const char * ca_dir, const char * certchain_file, const char * privkey_file, int verify_level)"
+.PP
+Set SSL Certification files. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIca_file\fP const char * [in] ((|ca_file|)) filename of Certification Authority for Peer (NULL for no certification) 
+.br
+\fIca_dir\fP const char * [in] ((|ca_dir|)) directory name which contains Peer's CA keys (if NULL, look up no directory) 
+.br
+\fIcertchain_file\fP const char * [in] ((|certchain_file|)) filename of SSL Certification Chains for local (NULL for no certification) 
+.br
+\fIprivkey_file\fP const char * [in] ((|privkey_file|)) filename of Private Key, which is a pair of certchain_file (NULL for no certification) 
+.br
+\fIverify_level\fP int [in] ((|verify_level|)) Verification Level of Peer Certification 0(default) = session continues even if the certification is invalid, 1 = quit and returns as failed
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetSSLVersion (\fBOpenSOAPTransportPtr\fP t, int ssl_version)"
+.PP
+Set acceptable SSL versions. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIssl_version\fP int [in] ((|ssl_version|)) SSL version choice from (OPENSOAP_SSL_VER_SSL2 | OPENSOAP_SSL_VER_SSL3 | OPENSOAP_SSL_VER_TLS1 | OPENSOAP_SSL_VER_ALL) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSetURL (\fBOpenSOAPTransportPtr\fP t, const char * url)"
+.PP
+Set request URL. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP Transport pointer 
+.br
+\fIurl\fP const char * [in] ((|url|)) URL 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSMTPSetFrom (\fBOpenSOAPTransportPtr\fP t)"
+.PP
+Set SMTP From Header. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSMTPSetHostname (\fBOpenSOAPTransportPtr\fP s)"
+.PP
+Set SMTP Host. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPTransportPtr [out] ((|s|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPTransportSMTPSetTo (\fBOpenSOAPTransportPtr\fP t)"
+.PP
+Set SMTP To Header. \fBParameters:\fP
+.RS 4
+\fIt\fP OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP Transport pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

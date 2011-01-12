@@ -1,0 +1,202 @@
+.TH "Service.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Service.h \- OpenSOAP API Service Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/Envelope.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPService \fBOpenSOAPService\fP"
+.br
+.RI "\fIOpenSOAPService Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPService\fP * \fBOpenSOAPServicePtr\fP"
+.br
+.RI "\fIOpenSOAP Service Ponter Definition. \fP"
+.ti -1c
+.RI "typedef int(* \fBOpenSOAPServiceFuncPtr\fP )(\fBOpenSOAPEnvelopePtr\fP request, \fBOpenSOAPEnvelopePtr\fP *response, void *opt)"
+.br
+.RI "\fIDefine Service Function Pointer. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPServiceCreateMB\fP (\fBOpenSOAPServicePtr\fP *srv, const char *srv_name, const char *connect_type, int is_loop,...)"
+.br
+.RI "\fICreate An OpenSOAP Service(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPServiceCreateWC\fP (\fBOpenSOAPServicePtr\fP *srv, const wchar_t *srv_name, const char *connect_type, int is_loop,...)"
+.br
+.RI "\fICreate An OpenSOAP Service(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPServiceRelease\fP (\fBOpenSOAPServicePtr\fP srv)"
+.br
+.RI "\fIRelease an OpenSOAP Service. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPServiceRegisterMB\fP (\fBOpenSOAPServicePtr\fP srv, const char *name, \fBOpenSOAPServiceFuncPtr\fP func, void *opt)"
+.br
+.RI "\fIRegister OpenSOAP Service. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPServiceRegisterWC\fP (\fBOpenSOAPServicePtr\fP srv, const wchar_t *name, \fBOpenSOAPServiceFuncPtr\fP func, void *opt)"
+.br
+.RI "\fIRegister OpenSOAP Service. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPServiceRun\fP (\fBOpenSOAPServicePtr\fP srv)"
+.br
+.RI "\fIExecute OpenSOAP Service. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Service Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Typedef Documentation"
+.PP 
+.SS "int(* \fBOpenSOAPServiceFuncPtr\fP)(\fBOpenSOAPEnvelopePtr\fP request, \fBOpenSOAPEnvelopePtr\fP *response, void *opt)"
+.PP
+Define Service Function Pointer. \fBParameters:\fP
+.RS 4
+\fIrequest\fP OpenSOAPEnvelopePtr [in] ((|request|)) Service Request 
+.br
+\fIresponse\fP OpenSOAPEnvelopePtr * [out] ((|response|)) 
+.br
+\fIopt\fP void * [in, out] ((|opt|)) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPServiceCreateMB (\fBOpenSOAPServicePtr\fP * srv, const char * srv_name, const char * connect_type, int is_loop,  ...)"
+.PP
+Create An OpenSOAP Service(MB). \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr * [out] ((|srv|)) OpenSOAP Service pointer 
+.br
+\fIsrv_name\fP const char * [in] ((|srv_name|)) Service Type 
+.br
+\fIconnect_type\fP const char * [in] ((|connect_type|)) Connection Type [stdio|cgi] 
+.br
+\fIis_loop\fP int [in] ((|is_loop|)) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPServiceCreateWC (\fBOpenSOAPServicePtr\fP * srv, const wchar_t * srv_name, const char * connect_type, int is_loop,  ...)"
+.PP
+Create An OpenSOAP Service(WC). \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr * [out] ((|srv|)) OpenSOAP Service pointer 
+.br
+\fIsrv_name\fP const wchar_t * [in] ((|srv_name|)) Service Type 
+.br
+\fIconnect_type\fP const wchar_t * [in] ((|connect_type|)) Connection Type [stdio|cgi] 
+.br
+\fIis_loop\fP int [in] ((|is_loop|)) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPServiceRegisterMB (\fBOpenSOAPServicePtr\fP srv, const char * name, \fBOpenSOAPServiceFuncPtr\fP func, void * opt)"
+.PP
+Register OpenSOAP Service. \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr [in] ((|srv|)) OpenSOAP Service 
+.br
+\fIname\fP const char * [in, out] ((|name|)) service function name 
+.br
+\fIfunc\fP OpenSOAPServiceFuncPtr [in] ((|func|)) service function pointer 
+.br
+\fIopt\fP void * [in] ((|opt|)) service function option parameter 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+In OpenSOAPServiceRun function, if service function name is equal to ((|name|)), then call func(request_env, response_env, opt) and return value is FAILED, stop OpenSOAPServiceRun and return func's return value. 
+.RE
+.PP
+
+.SS "int OpenSOAPServiceRegisterWC (\fBOpenSOAPServicePtr\fP srv, const wchar_t * name, \fBOpenSOAPServiceFuncPtr\fP func, void * opt)"
+.PP
+Register OpenSOAP Service. \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr [in] ((|srv|)) OpenSOAP Service 
+.br
+\fIname\fP const wchar_t * [in, out] ((|name|)) service function name 
+.br
+\fIfunc\fP OpenSOAPServiceFuncPtr [in] ((|func|)) service function pointer 
+.br
+\fIopt\fP void * [in] ((|opt|)) service function option parameter 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+In OpenSOAPServiceRun function, if service function name is equal to ((|name|)), then call func(request_env, response_env, opt) and return value is FAILED, stop OpenSOAPServiceRun and return func's return value. 
+.RE
+.PP
+
+.SS "int OpenSOAPServiceRelease (\fBOpenSOAPServicePtr\fP srv)"
+.PP
+Release an OpenSOAP Service. \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr [in, out] ((|srv|)) OpenSOAP Service 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPServiceRun (\fBOpenSOAPServicePtr\fP srv)"
+.PP
+Execute OpenSOAP Service. \fBParameters:\fP
+.RS 4
+\fIsrv\fP OpenSOAPServicePtr [in, out] ((|srv|)) OpenSOAP Service 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

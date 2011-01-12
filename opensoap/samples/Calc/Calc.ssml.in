@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE SSML SYSTEM "ssml.dtd">
+<SSML name='Calc' xmlns="x-schema:ssmlSchema.xml">
+	<service name='Calc'
+	 nsuri='http://tempuri.org/message/'>
+	    <connection name='CalcStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/Calc/CalcService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+	    <operation type ='CalcStdio'>Add</operation>
+	    <operation type ='CalcStdio'>Subtract</operation>
+	    <operation type ='CalcStdio'>Multiply</operation>
+	    <operation type ='CalcStdio'>Divide</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

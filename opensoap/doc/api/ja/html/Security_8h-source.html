@@ -1,0 +1,286 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: Security.h Source File</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>Security.h</h1><a href="Security_8h.html">説明を見る。</a><div class="fragment"><pre>00001 <span class="comment">/* -*- mode: c++; -*-</span>
+00002 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00003 <span class="comment"> * $RCSfile: Security.h,v $</span>
+00004 <span class="comment"> *</span>
+00005 <span class="comment"> * See Copyright for the status of this software.</span>
+00006 <span class="comment"> *</span>
+00007 <span class="comment"> * The OpenSOAP Project</span>
+00008 <span class="comment"> * http://opensoap.jp/</span>
+00009 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00010 <span class="comment"> */</span>
+00517 <span class="preprocessor">#ifndef OpenSOAP_Security_H</span>
+00518 <span class="preprocessor"></span><span class="preprocessor">#define OpenSOAP_Security_H</span>
+00519 <span class="preprocessor"></span>
+00520 <span class="preprocessor">#include &lt;stdio.h&gt;</span>
+00521 <span class="preprocessor">#include &lt;<a class="code" href="Envelope_8h.html">OpenSOAP/Envelope.h</a>&gt;</span>
+00522 
+00523 <span class="preprocessor">#ifdef __cplusplus</span>
+00524 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">"C"</span> {
+00525 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00526 
+<a name="l00527"></a><a class="code" href="Security_8h.html#a0">00527</a> <span class="preprocessor">#define OPENSOAP_HA_MD2    (1)  </span><span class="comment">/* MD2 */</span>
+00528 
+00529 <span class="preprocessor">#define OPENSOAP_HA_MD4    (2)  </span><span class="comment">/* MD4 */</span>
+<a name="l00530"></a><a class="code" href="Security_8h.html#a1">00530</a> 
+00531 <span class="preprocessor">#define OPENSOAP_HA_MD5    (3)  </span><span class="comment">/* MD5 */</span>
+00532 
+<a name="l00533"></a><a class="code" href="Security_8h.html#a2">00533</a> <span class="preprocessor">#define OPENSOAP_HA_MDC2   (4)  </span><span class="comment">/* MDC2 */</span>
+00534 
+00535 <span class="preprocessor">#define OPENSOAP_HA_RIPEMD (5)  </span><span class="comment">/* RIPEMD */</span>
+<a name="l00536"></a><a class="code" href="Security_8h.html#a3">00536</a> 
+00537 <span class="preprocessor">#define OPENSOAP_HA_SHA    (6)  </span><span class="comment">/* SHA */</span>
+00538 
+<a name="l00539"></a><a class="code" href="Security_8h.html#a4">00539</a> <span class="preprocessor">#define OPENSOAP_CA_OWNER_LEN  (1024)</span>
+00540 <span class="preprocessor"></span><span class="preprocessor">#define OPENSOAP_CERT_DATE_LEN   (14)</span>
+00541 <span class="preprocessor"></span>
+<a name="l00542"></a><a class="code" href="Security_8h.html#a5">00542</a> 
+00543 
+00544     <span class="comment">/* Certificate */</span>
+<a name="l00545"></a><a class="code" href="Security_8h.html#a6">00545</a>     <span class="keyword">typedef</span> <span class="keyword">struct </span>tagOpenSOAPSecCert <a class="code" href="Security_8h.html#a8">OpenSOAPSecCert</a>;
+<a name="l00546"></a><a class="code" href="Security_8h.html#a7">00546</a> 
+00547     <span class="keyword">typedef</span> <a class="code" href="Security_8h.html#a8">OpenSOAPSecCert</a>* <a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>;
+00548 
+00549 
+00550     <span class="comment">/* CA */</span>
+<a name="l00551"></a><a class="code" href="Security_8h.html#a8">00551</a>     <span class="keyword">typedef</span> <span class="keyword">struct </span>tagOpenSOAPCARec <a class="code" href="Security_8h.html#a10">OpenSOAPCARec</a>;
+00552 
+<a name="l00553"></a><a class="code" href="Security_8h.html#a9">00553</a>     <span class="keyword">typedef</span> <a class="code" href="Security_8h.html#a10">OpenSOAPCARec</a>* <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>;
+00554 
+00555     <span class="keywordtype">int</span>
+00556     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+<a name="l00557"></a><a class="code" href="Security_8h.html#a10">00557</a>     <a class="code" href="Security_8h.html#a12">OpenSOAPSecGenerateRSAKeys</a>
+00558     (<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* szSeedPhrase, <span class="comment">/* (i)  Seed phrase */</span>
+<a name="l00559"></a><a class="code" href="Security_8h.html#a11">00559</a>      FILE*          fpPrivKey,    <span class="comment">/* (i)  RSA Private Key File stream */</span>
+00560      FILE*          fpPubKey);    <span class="comment">/* (i)  RSA Public Key File stream */</span>
+00561 
+00562     <span class="keywordtype">int</span>
+00563     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00564     <a class="code" href="Security_8h.html#a13">OpenSOAPSecGenerateRSAKeysToFile</a>
+00565     (<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* szSeedPhrase,      <span class="comment">/* (i)  Seed phrase */</span>
+00566      <span class="keyword">const</span> <span class="keywordtype">char</span>*          szPrivKeyFileName, <span class="comment">/* (i)  RSA Private Key File Name */</span>
+00567      <span class="keyword">const</span> <span class="keywordtype">char</span>*          szPubKeyFileName); <span class="comment">/* (i)  RSA Public Key File Name */</span>
+00568 
+00569     <span class="keywordtype">int</span>
+00570     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00571     <a class="code" href="Security_8h.html#a14">OpenSOAPSecEncWithStream</a>
+00572     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,       <span class="comment">/* (i)  Envelope */</span>
+00573      FILE*               fpPubKey); <span class="comment">/* (i)  Public Key File stream */</span>
+00574 
+00575     <span class="keywordtype">int</span>
+00576     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00577     <a class="code" href="Security_8h.html#a15">OpenSOAPSecEncWithFile</a>
+00578     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,         <span class="comment">/* (i)  Envelope */</span>
+00579      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szPubKName); <span class="comment">/* (i)  Public Key File Name */</span>
+00580 
+00581     <span class="keywordtype">int</span>
+00582     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00583     <a class="code" href="Security_8h.html#a16">OpenSOAPSecDecWithStream</a>
+00584     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,        <span class="comment">/* (i)  Envelope */</span>
+00585      FILE*               fpPrivKey); <span class="comment">/* (i)  Private Key File stream */</span>
+00586 
+00587     <span class="keywordtype">int</span>
+00588     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00589     <a class="code" href="Security_8h.html#a17">OpenSOAPSecDecWithFile</a>
+00590     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,          <span class="comment">/* (i)  Envelope */</span>
+00591      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szPrivKName); <span class="comment">/* (i)  Private Key File Name */</span>
+00592 
+00593     <span class="keywordtype">int</span>
+00594     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00595     <a class="code" href="Security_8h.html#a18">OpenSOAPSecAddSignWithStream</a>
+00596     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,        <span class="comment">/* (io) Envelope */</span>
+00597      <span class="keywordtype">int</span>                 iType,      <span class="comment">/* (i)  Hash Type(OPENSOAP_HA_*) */</span>
+00598      FILE*               fpPrivKey,  <span class="comment">/* (i)  Private Key File stream */</span>
+00599      <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a>   name);      <span class="comment">/* (i)  Name of Sign */</span>
+00600 
+00601     <span class="keywordtype">int</span>
+00602     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00603     <a class="code" href="Security_8h.html#a19">OpenSOAPSecAddSignWithFile</a>
+00604     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,          <span class="comment">/* (io) Envelope */</span>
+00605      <span class="keywordtype">int</span>                 iType,        <span class="comment">/* (i)  Hash Type(OPENSOAP_HA_*) */</span>
+00606      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szPrivKName,  <span class="comment">/* (i)  Private Key File Name */</span>
+00607      <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a>   name);        <span class="comment">/* (i)  Name of Sign */</span>
+00608 
+00609     <span class="keywordtype">int</span>
+00610     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00611     <a class="code" href="Security_8h.html#a20">OpenSOAPSecCntSign</a>
+00612     (<span class="keyword">const</span> <a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,    <span class="comment">/* (i)  Envelope */</span>
+00613      <span class="keywordtype">int</span>*                      pnSig); <span class="comment">/* (o)  Signature Count */</span>
+00614 
+00615     <span class="keywordtype">int</span>
+00616     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00617     <a class="code" href="Security_8h.html#a21">OpenSOAPSecGetSignedByList</a>
+00618     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,          <span class="comment">/* (i)  Envelope */</span>
+00619      <span class="keywordtype">int</span>                 nCntMax,      <span class="comment">/* (i)  Maximum Count */</span>
+00620      <a class="code" href="String_8h.html#a1">OpenSOAPStringPtr</a>   list[],       <span class="comment">/* (io) SignedBy List  */</span>
+00621      <span class="keywordtype">int</span>*                pnCntPacked); <span class="comment">/* (o)  Packed Count */</span>
+00622 
+00623     <span class="keywordtype">int</span>
+00624     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00625     <a class="code" href="Security_8h.html#a22">OpenSOAPSecVerifySignWithStream</a>
+00626     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,       <span class="comment">/* (io) Envelope */</span>
+00627      FILE*               fpPubKey); <span class="comment">/* (i)  Public Key File stream */</span>
+00628 
+00629     <span class="keywordtype">int</span>
+00630     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00631     <a class="code" href="Security_8h.html#a23">OpenSOAPSecVerifySignWithFile</a>
+00632     (<a class="code" href="Envelope_8h.html#a1">OpenSOAPEnvelopePtr</a> env,         <span class="comment">/* (io) Envelope */</span>
+00633      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szPubKName); <span class="comment">/* (i)  Public Key File Name */</span>
+00634 
+00635     <span class="keywordtype">int</span>
+00636     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00637     <a class="code" href="Security_8h.html#a24">OpenSOAPSecCertCreateWithStream</a>
+00638     (<span class="keyword">const</span> <span class="keywordtype">char</span>*            szPublish, <span class="comment">/* (i)  Publisher's Name */</span>
+00639      FILE*                  fpPrivKey, <span class="comment">/* (i)  Private Key(Publisher) */</span>
+00640      <span class="keywordtype">int</span>                    iHashType, <span class="comment">/* (i)  Hash Type(OPENSOAP_HA_*) */</span>
+00641      <span class="keyword">const</span> <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec,      <span class="comment">/* (i)  CA Record */</span>
+00642      FILE*                  fpCert);   <span class="comment">/* (o)  Certificate File */</span>
+00643 
+00644     <span class="keywordtype">int</span>
+00645     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00646     <a class="code" href="Security_8h.html#a25">OpenSOAPSecCertCreateWithFile</a>
+00647     (<span class="keyword">const</span> <span class="keywordtype">char</span>*         szPublish,     <span class="comment">/* (i)  Publisher's Name */</span>
+00648      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szPrivKeyFile, <span class="comment">/* (i)  PrivKey File Name (Publisher) */</span>
+00649      <span class="keywordtype">int</span>                 iHashType,     <span class="comment">/* (i)  Hash Type(OPENSOAP_HA_*) */</span>
+00650      <span class="keyword">const</span> <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec,          <span class="comment">/* (i)  CA Record */</span>
+00651      <span class="keyword">const</span> <span class="keywordtype">char</span>*         szCertName);   <span class="comment">/* (i)  Certificate File Name */</span>
+00652 
+00653     <span class="keywordtype">int</span>
+00654     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00655     <a class="code" href="Security_8h.html#a26">OpenSOAPSecCertLoadFromMem</a>
+00656     (size_t               sizArea,  <span class="comment">/* (i)  Size of Input Area */</span>
+00657      <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* pucArea,  <span class="comment">/* (i)  Input Area */</span>
+00658      <a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>*  ppCert);  <span class="comment">/* (o)  Certificate */</span>
+00659 
+00660     <span class="keywordtype">int</span>
+00661     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00662     <a class="code" href="Security_8h.html#a27">OpenSOAPSecCertLoad</a>
+00663     (<span class="keyword">const</span> <span class="keywordtype">char</span>*          szName,   <span class="comment">/* (i)  File Name */</span>
+00664      <a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a>*  ppCert);  <span class="comment">/* (o)  Certificate */</span>
+00665 
+00666     <span class="keywordtype">int</span>
+00667     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00668     <a class="code" href="Security_8h.html#a28">OpenSOAPSecCertFree</a>
+00669     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> ppCert);
+00670 
+00671     <span class="keywordtype">int</span>
+00672     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00673     <a class="code" href="Security_8h.html#a29">OpenSOAPSecCertVerifyWithStream</a>
+00674     (FILE* fpCert,                  <span class="comment">/* (i)  Certificate File Stream */</span>
+00675      FILE* fpPubKey);               <span class="comment">/* (i)  Public Key File Stream */</span>
+00676 
+00677     <span class="keywordtype">int</span>
+00678     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00679     <a class="code" href="Security_8h.html#a30">OpenSOAPSecCertVerifyWithFile</a>
+00680     (<span class="keyword">const</span> <span class="keywordtype">char</span>* szCertName,    <span class="comment">/* (i)  Certificate File Name */</span>
+00681      <span class="keyword">const</span> <span class="keywordtype">char</span>* szPubKeyName); <span class="comment">/* (i)  Public Key File Name */</span>
+00682 
+00683     <span class="keywordtype">int</span>
+00684     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00685     <a class="code" href="Security_8h.html#a31">OpenSOAPSecCertGetPublisherName</a>
+00686     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert,      <span class="comment">/* (i)   */</span>
+00687      <span class="keywordtype">char</span>**             pszName);   <span class="comment">/* (o)  Name (Internal Area) */</span>
+00688 
+00689     <span class="keywordtype">int</span>
+00690     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00691     <a class="code" href="Security_8h.html#a32">OpenSOAPSecCertGetSerialNo</a>
+00692     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert,      <span class="comment">/* (i)   */</span>
+00693      <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>*     pulSerial); <span class="comment">/* (o)  Serial Number */</span>
+00694 
+00695     <span class="keywordtype">int</span>
+00696     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00697     <a class="code" href="Security_8h.html#a33">OpenSOAPSecCertGetOwnerName</a>
+00698     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert,      <span class="comment">/* (i)   */</span>
+00699      <span class="keywordtype">char</span>**             pszName);   <span class="comment">/* (o)  Name (Internal Area) */</span>
+00700 
+00701     <span class="keywordtype">int</span>
+00702     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00703     <a class="code" href="Security_8h.html#a34">OpenSOAPSecCertGetEndDate</a>
+00704     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert,      <span class="comment">/* (i)   */</span>
+00705      <span class="keywordtype">char</span>**             pszDate);   <span class="comment">/* (o)  Date(Internal Area) */</span>
+00706 
+00707     <span class="keywordtype">int</span>
+00708     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00709     <a class="code" href="Security_8h.html#a35">OpenSOAPSecCertGetPubKey</a>
+00710     (<a class="code" href="Security_8h.html#a9">OpenSOAPSecCertPtr</a> pCert,       <span class="comment">/* (i)   */</span>
+00711      <span class="keyword">const</span> <span class="keywordtype">char</span>*        szSaveName); <span class="comment">/* (i)  Public Key File Name */</span>
+00712 
+00713     <span class="keywordtype">int</span>
+00714     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00715     <a class="code" href="Security_8h.html#a36">OpenSOAPSecDecodeKeyFile</a>
+00716     (FILE*           fp,          <span class="comment">/* (i)  File Stream */</span>
+00717      <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>*  pulLenOut,   <span class="comment">/* (o)  Length of output data */</span>
+00718      <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>** ppucDecode); <span class="comment">/* (o)  Decoded String(call free() after use) */</span>
+00719 
+00720     <span class="keywordtype">int</span>
+00721     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00722     <a class="code" href="Security_8h.html#a37">OpenSOAPSecCABrowseRec</a>
+00723     (<span class="keyword">const</span> <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec,   <span class="comment">/* (i)  Record */</span>
+00724      FILE*                  fpOut); <span class="comment">/* (i)  Output Stream */</span>
+00725 
+00726     <span class="keywordtype">int</span>
+00727     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00728     <a class="code" href="Security_8h.html#a38">OpenSOAPSecCABrowse</a>
+00729     (FILE* fpOut);                  <span class="comment">/* (i)  Output Stream */</span>
+00730 
+00731     <span class="keywordtype">int</span>
+00732     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00733     <a class="code" href="Security_8h.html#a39">OpenSOAPSecCARegist</a>
+00734     (<span class="keyword">const</span> <span class="keywordtype">char</span>*    szNameOwner,    <span class="comment">/* (i)  Owner's Name */</span>
+00735      <span class="keyword">const</span> <span class="keywordtype">char</span>*    szTermDate,     <span class="comment">/* (i)  Terminate Date */</span>
+00736                                     <span class="comment">/*      "YYYYMMDDHHMMSS" */</span>
+00737      size_t         sizPubkey,      <span class="comment">/* (i)  Size of public key */</span>
+00738      <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span>* szPubKey, <span class="comment">/* (i)  Public Key */</span>
+00739      <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>* pulSerialNo);   <span class="comment">/* (o)  Serial Number */</span>
+00740 
+00741     <span class="keywordtype">int</span>
+00742     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00743     <a class="code" href="Security_8h.html#a40">OpenSOAPSecCAInvalidate</a>
+00744     (<span class="keyword">const</span> <span class="keywordtype">char</span>*     szNameOwner,   <span class="comment">/* (i)  Owner's Name */</span>
+00745      <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span>   ulSerial);     <span class="comment">/* (i)  Serial Number */</span>
+00746 
+00747     <span class="keywordtype">int</span>
+00748     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00749     <a class="code" href="Security_8h.html#a41">OpenSOAPSecCASearchRecords</a>
+00750     (<span class="keyword">const</span> <span class="keywordtype">char</span>* szNameOwner, <span class="comment">/* (i)  Owner's Name */</span>
+00751      <span class="keywordtype">int</span>*        pnRec,       <span class="comment">/* (o)  Record Count */</span>
+00752      <span class="keywordtype">long</span>**      pplIdxs);    <span class="comment">/* (o)  Index Numbers (call free() after use) */</span>
+00753 
+00754     <span class="keywordtype">int</span>
+00755     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00756     <a class="code" href="Security_8h.html#a42">OpenSOAPSecCASearchOneRecord</a>
+00757     (<span class="keyword">const</span> <span class="keywordtype">char</span>*         szNameOwner, <span class="comment">/* (i)  Owner's Name */</span>
+00758      <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>*   ppRec);      <span class="comment">/* (o)  Record */</span>
+00759 
+00760     <span class="keywordtype">int</span>
+00761     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00762     <a class="code" href="Security_8h.html#a43">OpenSOAPSecCAGetRecord</a>
+00763     (<span class="keywordtype">long</span>              lIdx,    <span class="comment">/* (i)  Index */</span>
+00764      <a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a>* ppRec);  <span class="comment">/* (o)  Record */</span>
+00765 
+00766     <span class="keywordtype">int</span>
+00767     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00768     <a class="code" href="Security_8h.html#a44">OpenSOAPSecCAFreeRecord</a>
+00769     (<a class="code" href="Security_8h.html#a11">OpenSOAPCARecPtr</a> pRec);  <span class="comment">/* (i)  Record */</span>
+00770 
+00771     <span class="keywordtype">int</span>
+00772     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00773     <a class="code" href="Security_8h.html#a45">OpenSOAPSecCARemoveRecord</a>
+00774     (<span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> ulSerial);   <span class="comment">/* (i)  Serial Number */</span>
+00775 
+00776 <span class="preprocessor">#ifdef __cplusplus</span>
+00777 <span class="preprocessor"></span>}
+00778 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00779 
+00780 <span class="preprocessor">#endif </span><span class="comment">/* OpenSOAP_Security_H */</span>
+</pre></div><hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

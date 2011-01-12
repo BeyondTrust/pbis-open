@@ -1,0 +1,36 @@
+<!ELEMENT SSML (service)>
+
+<!ELEMENT service (connection+,operation*,fault)>
+
+<!ELEMENT connection (method,exec?,authentication?,synchronizedTTL,asynchronizedTTL?,MaxProcessNumber)>
+<!ELEMENT method EMPTY>
+<!ELEMENT exec EMPTY>
+<!ELEMENT authentication EMPTY>
+<!ELEMENT synchronizedTTL (#PCDATA)>
+<!ELEMENT asynchronizedTTL (#PCDATA)>
+<!ELEMENT MaxProcessNumber (#PCDATA)>
+
+<!ELEMENT operation (#PCDATA)>
+
+<!ELEMENT fault EMPTY>
+
+
+<!ATTLIST SSML name ID #REQUIRED>
+
+<!ATTLIST service name CDATA #REQUIRED>
+
+<!ATTLIST connection name ID #REQUIRED>
+<!ATTLIST method type (socket|pipe) "socket">
+<!ATTLIST method hostname CDATA #IMPLIED>
+<!ATTLIST method port CDATA #IMPLIED>
+<!ATTLIST method send_pipename CDATA #IMPLIED>
+<!ATTLIST method receive_pipename CDATA #IMPLIED>
+<!ATTLIST exec prog CDATA #REQUIRED>
+<!ATTLIST exec option CDATA #IMPLIED>
+<!ATTLIST authentication module CDATA #REQUIRED>
+<!ATTLIST synchronizedTTL count (second|hoptimes) "second">
+<!ATTLIST asynchronizedTTL count (second|hour) "second">
+
+<!ATTLIST operation type IDREF #REQUIRED>
+
+<!ATTLIST fault authentication CDATA #REQUIRED>

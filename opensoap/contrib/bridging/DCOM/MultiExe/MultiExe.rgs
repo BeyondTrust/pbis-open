@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{4541D8A2-5DF5-4382-B7E7-E7E8EFFD9D77} = s 'MultiExe'
+		'MultiExe.EXE'
+		{
+			val AppID = s {4541D8A2-5DF5-4382-B7E7-E7E8EFFD9D77}
+		}
+	}
+}

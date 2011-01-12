@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE SSML SYSTEM "ssml.dtd">
+<SSML name='TransactionABank' xmlns="x-schema:ssmlSchema.xml">
+	<service name='TransactionABank'
+	 nsuri='http://services.opensoap.jp/samples/a_bank_transfer/'>
+	    <connection name='TransactionABankStdio'>
+		<StdIO>
+		    <exec prog='@servicesdir@/TransactionABank/TransactionABankService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+	    <operation type ='TransactionABankStdio'>PaymentRequest</operation>
+	    <operation type ='TransactionABankStdio'>DepositRequest</operation>
+	    <operation type ='TransactionABankStdio'>TransactionAction</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

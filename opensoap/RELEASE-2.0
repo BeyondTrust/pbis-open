@@ -1,0 +1,45 @@
+opensoap-2.0 release notes (2004/05/31)
+
+With the release of the OpenSOAP Server version 2.0, there have been 
+many changes, including improvements in functionality, stability and
+reliability. This involved much re-design and code enhancements. As
+the changes for this release were quite extensive, at this point
+compile and normal operation have only been verified for Linux, and
+work is continuing preparing releases for other platforms. Also
+included in the package with the server is the OpenSOAP API, which at
+this time is still at version 1.0. The enhancements to the server are
+described below.
+
+  - The transport interface was enhanced to work as an Apache DSO module.
+    It is now also possible to transmit messages with attachments using 
+    DIME/MIME as defined by WS-Attachments and SOAP with Attachments
+    (SwA).
+    For this, Apache 2  must be configured to use DSO modules, and the 
+    modules must be added to the httpd.conf configuration file. The
+    default endpoint for the client when calling the OpenSOAP server
+    through the DSO module is
+    http://host/opensoap
+ 
+  - In moving toward enterprise use, the process logging functions have 
+    been greatly improved. Also, a single main process is now
+    responsible for initiating and monitoring the existing OpenSOAP
+    server processes, and on a sub-process failure, will automatically
+    restart the sub-process.
+    Furthermore, a trace of the activity of the OpenSOAP server can be 
+    obtained through the Trace Log, and general logging data can now
+    be posted to the syslog service.
+
+  - This release of the OpenSOAP server also sees a major change in the 
+    handling of asynchronous and forwarding messages. Header extensions
+    and routing now allow the OpenSOAP server to forward messages to a
+    variety of servers including database servers and work-process
+    management servers. In this case the OpenSOAP server acts as a
+    work flow engine between various web services.
+    As an example, asynchronous message queue management and hi-level
+    work-flow control has been implemented.
+    However, in order to achieve this additional functionality, the
+    existing handling of asynchronous messages has become less
+    reliable due to extensive changes to header processing, and at
+    this time is not completely stable.
+    This issue is currently being addressed and should be resolved in
+    the near future.

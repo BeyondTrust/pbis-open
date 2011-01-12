@@ -1,0 +1,218 @@
+# -*- mode: makefile; -*-
+# -----------------------------------------------------------------------------
+#  $RCSfile: Hello.mak.in,v $
+# 
+#  See Copyright for the status of this software.
+# 
+#  The OpenSOAP Project
+#  http://opensoap.jp/
+# -----------------------------------------------------------------------------
+
+SERVICE_NAME = Hello
+
+SAMPLE_MESSAGE_DIR = .
+#
+console_client_PROGRAMFILES = HelloClient
+
+#
+cgi_client_PROGRAMFILES =
+
+#
+cgi_service_PROGRAMFILES = HelloService.cgi
+#
+stdio_service_PROGRAMFILES = HelloService
+
+#
+SSML_IN_FILES = ${SERVICE_NAME}.ssml.in
+SSML_FILES = ${SSML_IN_FILES:.in=}
+
+WSDL_FILES = HelloService.wsdl
+#
+RPATH_COPTION = @RPATH_COPTION@
+#
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+sbindir = @sbindir@
+sysconfdir = @sysconfdir@
+localstatedir = @localstatedir@
+includedir = @includedir@
+libdir = @libdir@
+
+# OpenSOAP conf and data directory
+OPENSOAP_SYSCONFDIR = @sysconfdir@
+OPENSOAP_LOCALSTATEDIR = @localstatedir@
+OPENSOAP_SERVICE_LOCALSTATEDIR = ${OPENSOAP_LOCALSTATEDIR}/services
+SSML_DIR=${OPENSOAP_SYSCONFDIR}/ssml
+
+#
+SERVICE_DIR = @servicesdir@/${SERVICE_NAME}
+#SERVICE_LOCALSTATEDIR = ${OPENSOAP_SERVICE_LOCALSTATEDIR}/${SERVICE_NAME}
+
+#
+CGI_BIN_DIR = @CGI_BIN_DIR@
+
+#
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+
+# libiconv
+ICONV_LIBS = @ICONV_LIBS@
+# libxml2 libs
+XML2_LIBS = @XML2_LIBS@
+# ssl libs
+SSL_LIB_DIR = @SSL_LIB_DIR@
+SSL_LIBS = @SSL_LIBS@
+SSL_LDFLAGS = -L${SSL_LIB_DIR} ${RPATH_COPTION}${SSL_LIB_DIR}
+SSL_LIBS = 
+SSL_LDFLAGS =
+#
+LIBS = @LIBS@
+CC = @CC@
+
+#
+PROGRAMS = \
+	${console_client_PROGRAMFILES} \
+	${cgi_client_PROGRAMFILES} \
+	${stdio_service_PROGRAMFILES} \
+	${cgi_service_PROGRAMFILES}
+
+#
+COMMON_LIBS=${XML2_LIBS} ${ICONV_LIBS} ${SSL_LIBS} ${LIBS}
+
+#
+# DEBUG_CFLAGS = -g
+CFLAGS = ${DEBUG_CFLAGS} -Wall -I${includedir}
+#	-DSERVICE_NAME=\"${SERVICE_NAME}\" \
+#	-DSERVICE_DIR=\"${SERVICE_DIR}\" \
+#	-DSERVICE_LOCALSTATEDIR=\"${SERVICE_LOCALSTATEDIR}\"
+CGI_SERVICE_CFLAGS = ${CFLAGS} -DCONNECT_TYPE=\"cgi\"
+#
+COMMON_LDFLAGS = -L${libdir} ${RPATH_COPTION}${libdir} ${SSL_LDFLAGS}
+
+#
+#SECURITY_LIBS = -lOpenSOAPSecurity
+CLIENT_LIBS = ${SECURITY_LIBS} -lOpenSOAPClient
+SERVICE_LIBS = -lOpenSOAPService ${CLIENT_LIBS}
+CLIENT_LDFLAGS = ${COMMON_LDFLAGS} ${CLIENT_LIBS} ${COMMON_LIBS}
+SERVICE_LDFLAGS = ${COMMON_LDFLAGS} ${SERVICE_LIBS} ${COMMON_LIBS}
+
+SOURCES = HelloClient.c HelloService.c
+OBJS=${SOURCES:.c=.o} HelloService.cgi.o HelloClient.cgi.o
+
+all: ${PROGRAMS} ${SSML_FILES}
+
+## Make Client Programs
+
+HelloClient: HelloClient.o
+	${CC} -o $@ $^ ${CLIENT_LDFLAGS}
+
+
+## Make Service Programs
+
+HelloService: HelloService.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+HelloService.cgi: HelloService.cgi.o
+	${CC}  -o $@ $^ ${SERVICE_LDFLAGS}
+
+HelloService.cgi.o: HelloService.c
+	${CC} ${CGI_SERVICE_CFLAGS} -c -o $@ $<
+
+
+## Make SSML files
+${SSML_FILES}: ${SSML_IN_FILES} Hello.mak
+	@for i in ${SSML_IN_FILES}; do \
+		s=`echo $$i | sed 's/\.in$$//'`; \
+		sed "s%\@servicesdir\@%${prefix}/services%g" > $$s < $$i; \
+	done
+
+## Install Programs
+
+#
+install-console-client: ${console_client_PROGRAMFILES}
+	@mkdir -p ${DESTDIR}${bindir}; \
+	for f in $^ ; do \
+		echo "$$f install to ${bindir}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${bindir}/$$f; \
+	done
+
+#
+install-cgi-client-programs: ${cgi_client_PROGRAMFILES}
+
+install-cgi-client-datas:
+
+install-cgi-client: install-cgi-client-programs install-cgi-client-datas
+
+#
+install-client: install-console-client install-cgi-client
+
+#
+install-common-service-datas: ${WSDL_FILES}
+	@mkdir -p ${DESTDIR}${SERVICE_DIR} ; \
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${SERVICE_DIR}; \
+	done
+
+#
+install-ssml: ${SSML_FILES}
+	@mkdir -p ${DESTDIR}${SSML_DIR}; \
+	for f in $^ ; do \
+		echo "$$f install to ${SSML_DIR}."; \
+		${INSTALL_DATA} \
+			$$f ${DESTDIR}${SSML_DIR}/$$f; \
+	done
+
+install-stdio-service-programs: ${stdio_service_PROGRAMFILES}
+	@mkdir -p ${DESTDIR}${SERVICE_DIR}; \
+	for f in $^ ; do \
+		echo "$$f install to ${SERVICE_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${SERVICE_DIR}; \
+	done
+
+install-stdio-service-datas: install-common-service-datas install-ssml
+
+install-stdio-service: \
+	install-stdio-service-programs \
+	install-stdio-service-datas
+
+#
+install-cgi-service-programs: ${cgi_service_PROGRAMFILES}
+	@mkdir -p ${DESTDIR}${CGI_BIN_DIR}; \
+	for f in $^ ; do \
+		echo "$$f install to ${CGI_BIN_DIR}."; \
+		${INSTALL_PROGRAM} \
+			$$f ${DESTDIR}${CGI_BIN_DIR}/$$f; \
+	done
+
+install-cgi-service-datas: install-common-service-datas
+
+install-cgi-service: install-cgi-service-programs install-cgi-service-datas
+
+install-service: install-cgi-service install-stdio-service
+
+#
+install-samples: install-client install-service
+
+## Install Service Programs and cgi client program
+
+install: install-service install-cgi-client
+
+## clean
+clean: 
+	rm -f ${OBJS} ${PROGRAMS}
+
+## Client test
+
+ctest: ${console_client_PROGRAMFILES}
+	./HelloClient foo
+
+## Service test
+stest: ${cgi_service_PROGRAMFILES}
+	./HelloService.cgi < ${SAMPLE_MESSAGE_DIR}/hello_request.xml

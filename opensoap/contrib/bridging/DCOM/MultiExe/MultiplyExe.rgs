@@ -1,0 +1,23 @@
+HKCR
+{
+	MultiExe.MultiExe.1 = s 'MultiplyExe Class'
+	{
+		CLSID = s '{A4101D61-F356-4F3F-BE52-F04D3023E177}'
+	}
+	MultiExe.MultiExe = s 'MultiplyExe Class'
+	{
+		CLSID = s '{A4101D61-F356-4F3F-BE52-F04D3023E177}'
+		CurVer = s 'MultiExe.MultiExe.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {A4101D61-F356-4F3F-BE52-F04D3023E177} = s 'MultiplyExe Class'
+		{
+			ProgID = s 'MultiExe.MultiExe.1'
+			VersionIndependentProgID = s 'MultiExe.MultiExe'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{4541D8A2-5DF5-4382-B7E7-E7E8EFFD9D77}'
+			'TypeLib' = s '{07DB3CBD-D5D1-44AC-9627-68B0465E11DD}'
+		}
+	}
+}

@@ -1,0 +1,106 @@
+=pod
+
+=head1 NAME
+
+opensoap-server-ctl - OpenSOAP Server control interface
+
+idManager, msgDrvCreator, queueManager, spoolManager, srvConfAttrMgr,
+ssmlAttrMgr, ttlManager
+- server commands called by opensoap-server-ctl
+
+=head1 SYNOPSIS
+
+B<opensoap-server-ctl> I<command>
+
+B<idManager>
+
+B<msgDrvCreator>
+
+B<queueManager> [ 1 ]
+
+B<spoolManager>
+
+B<srvConfAttrMgr>
+
+B<ssmlAttrMgr>
+
+B<ttlManager>
+
+=head1 DESCRIPTION
+
+B<opensoap-server-ctl> is a front end of the OpenSOAP Server, which
+supports operations for Web Service systems and provides practical
+functions, such as asynchronous client connections for non-real time
+processing, message forwarding for searching valid services and
+passing through firewalls, and signing messages for security
+validation.
+
+When this command is executed, the following programs are called:
+
+B<srvConfAttrMgr> - Server Config Attributes Manager,
+
+B<ssmlAttrMgr> - SSML Attribute Manager,
+
+B<idManager> - SOAPMessageStoreFile ID Manager,
+
+B<msgDrvCreator> - Message Driver Creator,
+
+B<queueManager> - Queue Manager (twice for Request and Forward),
+
+B<spoolManager> - Response Spool Manager,
+
+B<ttlManager> - TTL Manager
+
+=head1 OPTIONS
+
+The I<command> for B<opensoap-server-ctl> can be any one of the
+following options:
+
+=over 4
+
+=item B<start>
+
+Starts the OpenSOAP Server processes.  Gives no error even if it is
+already running.  (See BUG section)
+
+=item B<stop>
+
+Stops the OpenSOAP Server processes.
+
+=item B<restart>
+
+Restarts the OpenSOAP Server processes.
+
+=item B<reload>
+
+Reloads the configuration file.
+
+=item B<help>
+
+Displays a short help message.
+
+=back
+
+B<queueManager> also can be set 1 as an option.
+
+=over 4
+
+=item 1
+
+Handles Forward Messages.  Without this, handles Request Messages.
+
+=head1 FILES
+
+server.conf  - server configuration file
+
+=head1 SEE ALSO
+
+soaping(1)
+
+=head1 BUGS
+
+If the server is already running when B<opensoap-server-ctl> is
+executed, the new processes come up and the old processes stay alive.
+They cannot be killed by the stop command.
+
+=cut

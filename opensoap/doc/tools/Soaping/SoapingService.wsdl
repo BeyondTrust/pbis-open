@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<!-- SoapingService WSDL by OpenSOAP Project http://opensoap.jp -->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:y="http://services.opensoap.jp/Soaping/" targetNamespace="http://services.opensoap.jp/Soaping/">
+	<message name="Soaping">
+		<part name="TimeSec" type="xs:int"/>
+		<part name="TimeUSec" type="xs:int"/>
+		<part name="SendString" type="xs:string"/>
+	</message>
+	<message name="SoapingResponse">
+		<part name="ReplyTimeSec" type="xs:int"/>
+		<part name="ReplyTimeUSec" type="xs:int"/>
+		<part name="ReplyString" type="xs:string"/>
+	</message>
+	<portType name="SoapingType">
+		<operation name="Soaping">
+			<input message="y:Soaping"/>
+			<output message="y:SoapingResponse"/>
+		</operation>
+	</portType>
+	<binding name="SoapingBinding" type="y:SoapingType">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="Soaping">
+			<soap:operation soapAction="urn:#Soaping" style="rpc"/>
+			<input>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/Soaping/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/Soaping/"/>
+			</output>
+		</operation>
+	</binding>
+	<service name="SoapingService">
+		<port name="SoapingPort" binding="y:SoapingBinding">
+			<soap:address location="http://services.opensoap.jp/cgi-bin/SoapingService.cgi"/>
+		</port>
+	</service>
+</definitions>

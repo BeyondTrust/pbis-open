@@ -1,0 +1,39 @@
+// DivDll.idl : DivDll.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (DivDll.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(219B17CF-1D60-46C4-9991-1376B7C9CA16),
+	
+		helpstring("IDivideDll Interface"),
+		pointer_default(unique)
+	]
+	interface IDivideDll : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Divide")] HRESULT Divide([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(7A59136B-D84F-44C4-B095-AEBB89A422B8),
+	version(1.0),
+	helpstring("DivDll 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library DIVDLLLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(E20519F0-35E5-4FD4-AEDA-64079ED8A952),
+		helpstring("DivideDll Class")
+	]
+	coclass DivideDll
+	{
+		[default] interface IDivideDll;
+	};
+};

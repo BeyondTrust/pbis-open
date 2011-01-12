@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE SSML SYSTEM "ssml.dtd">
+<SSML xmlns="x-schema:ssmlSchema.xml">
+  <service name='Transaction' nsuri='http://services.opensoap.jp/Transaction/'>
+    <connection name='TransactionSocket'>
+      <Socket hostname='localhost' port='9879'/>
+      <asynchronizedTTL >8000</asynchronizedTTL>
+      <synchronizedTTL count="second" >20</synchronizedTTL>
+      <MaxProccessNumber>5</MaxProccessNumber>
+    </connection>
+    <connection name='TransactionStdio'>
+      <StdIO>
+	<exec prog='@servicesdir@/Transaction/TransactionService'/>
+      </StdIO>
+      <asynchronizedTTL >8000</asynchronizedTTL>
+      <synchronizedTTL count="second" >20</synchronizedTTL>
+      <MaxProccessNumber>5</MaxProccessNumber>
+    </connection>
+    <operation type ='TransactionStdio'>TransactionControl</operation>
+    <fault signature='1' />
+    <MaxProccessNumber>15</MaxProccessNumber>
+  </service>
+</SSML>

@@ -1,0 +1,1455 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: ErrorCode.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>ErrorCode.h</h1>OpenSOAP API エラーコード定義.  
+<a href="#_details">[詳細]</a>
+<p>
+
+<p>
+<a href="ErrorCode_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>マクロ定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a0">OPENSOAP_NO_ERROR</a>&nbsp;&nbsp;&nbsp;(0)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">No Error.  <a href="#a0"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a1">OPENSOAP_NOT_CATEGORIZE_ERROR</a>&nbsp;&nbsp;&nbsp;(0xffffffffL)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">未定義のエラー.  <a href="#a1"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a2">OPENSOAP_IMPLEMENTATION_ERROR</a>&nbsp;&nbsp;&nbsp;(0x40000000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Implementation Error.  <a href="#a2"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a3">OPENSOAP_YET_IMPLEMENTATION</a>&nbsp;&nbsp;&nbsp;(0x40000001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">未実装エラー.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a4">OPENSOAP_UNSUPPORT_PROTOCOL</a>&nbsp;&nbsp;&nbsp;(0x40000002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">未対応プロトコルエラー (HAVE_SSLがない時のssl使用を含む).  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a5">OPENSOAP_PARAMETER_BADVALUE</a>&nbsp;&nbsp;&nbsp;(0x20000001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">パラメータ値不正  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a6">OPENSOAP_USERDEFINE_ERROR</a>&nbsp;&nbsp;&nbsp;(0x10000000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">User 定義 Error.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a7">OPENSOAP_MEM_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00010000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">メモリエラー  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a8">OPENSOAP_MEM_BADALLOC</a>&nbsp;&nbsp;&nbsp;(0x00010001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">メモリ確保エラー  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a9">OPENSOAP_MEM_OUTOFRANGE</a>&nbsp;&nbsp;&nbsp;(0x00010002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">メモリ外アクセスエラー  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a10">OPENSOAP_CHAR_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00020000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">キャラクタ変換エラー  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a11">OPENSOAP_ICONV_NOT_IMPL</a>&nbsp;&nbsp;&nbsp;(0x00020001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">iconv 未実装エラー  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a12">OPENSOAP_INVALID_MB_SEQUENCE</a>&nbsp;&nbsp;&nbsp;(0x00020002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">不正マルチバイト文字列並び.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a13">OPENSOAP_INCOMPLETE_MB_SEQUENCE</a>&nbsp;&nbsp;&nbsp;(0x00020003L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">マルチバイト文字列不完全  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a14">OPENSOAP_UNKNOWN_CHARENCODE</a>&nbsp;&nbsp;&nbsp;(0x00020004L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">未知のキャラクタエンコード.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a15">OPENSOAP_SETLOCALEFAILURE</a>&nbsp;&nbsp;&nbsp;(0x00020005L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ロケール設定失敗  <a href="#a15"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a16">OPENSOAP_IO_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00040000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">I/O エラー.  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a17">OPENSOAP_IO_READ_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00040001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">読み込み Error.  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a18">OPENSOAP_IO_WRITE_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00040002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">書き込み Error  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a19">OPENSOAP_FILE_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00048000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ファイル I/O Error  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a20">OPENSOAP_FILEOPEN_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00048001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ファイル Open Error  <a href="#a20"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a21">OPENSOAP_XML_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00080000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML 処理 Error.  <a href="#a21"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a22">OPENSOAP_XMLNODE_NOT_FOUND</a>&nbsp;&nbsp;&nbsp;(0x00080001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML ノードが無い.  <a href="#a22"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a23">OPENSOAP_XML_BADNAMESPACE</a>&nbsp;&nbsp;&nbsp;(0x00080002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">不正な XML namespace.  <a href="#a23"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a24">OPENSOAP_XML_NOHEADERBODY</a>&nbsp;&nbsp;&nbsp;(0x00080003L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Header および Body が無い.  <a href="#a24"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a25">OPENSOAP_XML_BADDOCUMENTTYPE</a>&nbsp;&nbsp;&nbsp;(0x00080004L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML Document Type 不正.  <a href="#a25"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a26">OPENSOAP_XML_BADMAKEDOCUMENT</a>&nbsp;&nbsp;&nbsp;(0x00080005L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML Document 作成失敗.  <a href="#a26"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a27">OPENSOAP_XML_EMPTYDOCUMENT</a>&nbsp;&nbsp;&nbsp;(0x00080006L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">空の XML Document  <a href="#a27"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a28">OPENSOAP_XML_NOTXMLDOCUMENT</a>&nbsp;&nbsp;&nbsp;(0x00080007L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Not XML Document Error.  <a href="#a28"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a29">OPENSOAP_XML_NS_URI_UNMATCHED</a>&nbsp;&nbsp;&nbsp;(0x00080008L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">XML Namespace Prefix は適正だが, URI が不正.  <a href="#a29"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a30">OPENSOAP_SEC_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Security Error.  <a href="#a30"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a31">OPENSOAP_SEC_KEYGEN_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Key Generation Error.  <a href="#a31"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a32">OPENSOAP_SEC_SIGNGEN_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Signature Generation Error.  <a href="#a32"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a33">OPENSOAP_SEC_SIGNVERIFY_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100003L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Signature Verification Error.  <a href="#a33"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a34">OPENSOAP_SEC_ENCRYPT_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100004L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Encryption Error.  <a href="#a34"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a35">OPENSOAP_SEC_DECRYPT_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00100005L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Decryption Error.  <a href="#a35"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a36">OPENSOAP_TRANSPORT_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00200000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポート・エラー  <a href="#a36"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a37">OPENSOAP_TRANSPORT_INVOKE_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00210000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポート・インボークのエラー  <a href="#a37"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a38">OPENSOAP_TRANSPORT_HOST_NOT_FOUND</a>&nbsp;&nbsp;&nbsp;(0x00210001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ホストが見つからない(おそらくDNS)  <a href="#a38"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a39">OPENSOAP_TRANSPORT_CONNECTION_REFUSED</a>&nbsp;&nbsp;&nbsp;(0x00210002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">接続拒否 (リモートでポートを開いていない).  <a href="#a39"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a40">OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT</a>&nbsp;&nbsp;&nbsp;(0x00210003L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">接続時間切れ.  <a href="#a40"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a41">OPENSOAP_TRANSPORT_NETWORK_UNREACH</a>&nbsp;&nbsp;&nbsp;(0x00210004L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ネットワーク到達不能  <a href="#a41"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a42">OPENSOAP_TRANSPORT_HOST_UNREACH</a>&nbsp;&nbsp;&nbsp;(0x00210005L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ホスト到達不能  <a href="#a42"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a43">OPENSOAP_TRANSPORT_HTTP_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00220000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">HTTPエラー.  <a href="#a43"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a44">OPENSOAP_TRANSPORT_IS_HTTP_ERROR</a>(x)&nbsp;&nbsp;&nbsp;(((x) &amp; (OPENSOAP_TRANSPORT_HTTP_ERROR)) == (OPENSOAP_TRANSPORT_HTTP_ERROR))</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポート・エラーにおける、HTTP_ERRORかどうかの判定  <a href="#a44"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a45">OPENSOAP_TRANSPORT_GET_HTTP_ERROR</a>(x)&nbsp;&nbsp;&nbsp;((x) &amp; ~(OPENSOAP_TRANSPORT_HTTP_ERROR))</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">トランスポート・エラー番号からHTTPステータスの値を計算  <a href="#a45"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a46">OPENSOAP_TRANSPORT_SET_HTTP_ERROR</a>(x)&nbsp;&nbsp;&nbsp;((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">HTTPステータスの値からトランスポート・エラー番号を計算.  <a href="#a46"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a47">OPENSOAP_TRANSPORT_SSL_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00240000L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL エラー.  <a href="#a47"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a48">OPENSOAP_TRANSPORT_SSL_VERSION_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00240001L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSLバージョンのエラー.  <a href="#a48"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a49">OPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR</a>&nbsp;&nbsp;&nbsp;(0x00240002L)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">SSL証明書のエラー.  <a href="#a49"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a50">OPENSOAP_SUCCEEDED</a>(err)&nbsp;&nbsp;&nbsp;(!(err))</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP API の返り値が成功かどうかの判定マクロ.  <a href="#a50"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ErrorCode_8h.html#a51">OPENSOAP_FAILED</a>(err)&nbsp;&nbsp;&nbsp;(err)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAP API の返り値が失敗かどうかの判定マクロ.  <a href="#a51"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API エラーコード定義. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>マクロ定義</h2>
+<a class="anchor" name="a10" doxytag="ErrorCode.h::OPENSOAP_CHAR_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_CHAR_ERROR&nbsp;&nbsp;&nbsp;(0x00020000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+キャラクタ変換エラー 
+<p>
+(0x00020000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a51" doxytag="ErrorCode.h::OPENSOAP_FAILED" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_FAILED</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">err&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;(err)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP API の返り値が失敗かどうかの判定マクロ. 
+<p>
+(err)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a19" doxytag="ErrorCode.h::OPENSOAP_FILE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_FILE_ERROR&nbsp;&nbsp;&nbsp;(0x00048000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ファイル I/O Error 
+<p>
+(0x00048000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="ErrorCode.h::OPENSOAP_FILEOPEN_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_FILEOPEN_ERROR&nbsp;&nbsp;&nbsp;(0x00048001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ファイル Open Error 
+<p>
+(0x00048001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="ErrorCode.h::OPENSOAP_ICONV_NOT_IMPL" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_ICONV_NOT_IMPL&nbsp;&nbsp;&nbsp;(0x00020001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+iconv 未実装エラー 
+<p>
+(0x00020001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a2" doxytag="ErrorCode.h::OPENSOAP_IMPLEMENTATION_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_IMPLEMENTATION_ERROR&nbsp;&nbsp;&nbsp;(0x40000000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Implementation Error. 
+<p>
+(0x40000000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="ErrorCode.h::OPENSOAP_INCOMPLETE_MB_SEQUENCE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_INCOMPLETE_MB_SEQUENCE&nbsp;&nbsp;&nbsp;(0x00020003L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+マルチバイト文字列不完全 
+<p>
+(0x00020003L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="ErrorCode.h::OPENSOAP_INVALID_MB_SEQUENCE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_INVALID_MB_SEQUENCE&nbsp;&nbsp;&nbsp;(0x00020002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+不正マルチバイト文字列並び. 
+<p>
+(0x00020002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a16" doxytag="ErrorCode.h::OPENSOAP_IO_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_IO_ERROR&nbsp;&nbsp;&nbsp;(0x00040000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+I/O エラー. 
+<p>
+(0x00040000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="ErrorCode.h::OPENSOAP_IO_READ_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_IO_READ_ERROR&nbsp;&nbsp;&nbsp;(0x00040001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+読み込み Error. 
+<p>
+(0x00040001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a18" doxytag="ErrorCode.h::OPENSOAP_IO_WRITE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_IO_WRITE_ERROR&nbsp;&nbsp;&nbsp;(0x00040002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+書き込み Error 
+<p>
+(0x00040002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="ErrorCode.h::OPENSOAP_MEM_BADALLOC" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_MEM_BADALLOC&nbsp;&nbsp;&nbsp;(0x00010001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+メモリ確保エラー 
+<p>
+(0x00010001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="ErrorCode.h::OPENSOAP_MEM_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_MEM_ERROR&nbsp;&nbsp;&nbsp;(0x00010000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+メモリエラー 
+<p>
+(0x00010000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="ErrorCode.h::OPENSOAP_MEM_OUTOFRANGE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_MEM_OUTOFRANGE&nbsp;&nbsp;&nbsp;(0x00010002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+メモリ外アクセスエラー 
+<p>
+(0x00010002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a0" doxytag="ErrorCode.h::OPENSOAP_NO_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_NO_ERROR&nbsp;&nbsp;&nbsp;(0)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+No Error. 
+<p>
+(0)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a1" doxytag="ErrorCode.h::OPENSOAP_NOT_CATEGORIZE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_NOT_CATEGORIZE_ERROR&nbsp;&nbsp;&nbsp;(0xffffffffL)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+未定義のエラー. 
+<p>
+(0xffffffffL)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="ErrorCode.h::OPENSOAP_PARAMETER_BADVALUE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_PARAMETER_BADVALUE&nbsp;&nbsp;&nbsp;(0x20000001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+パラメータ値不正 
+<p>
+(0x20000001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a35" doxytag="ErrorCode.h::OPENSOAP_SEC_DECRYPT_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_DECRYPT_ERROR&nbsp;&nbsp;&nbsp;(0x00100005L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Decryption Error. 
+<p>
+(0x00100005L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a34" doxytag="ErrorCode.h::OPENSOAP_SEC_ENCRYPT_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_ENCRYPT_ERROR&nbsp;&nbsp;&nbsp;(0x00100004L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Encryption Error. 
+<p>
+(0x00100004L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a30" doxytag="ErrorCode.h::OPENSOAP_SEC_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_ERROR&nbsp;&nbsp;&nbsp;(0x00100000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Security Error. 
+<p>
+(0x00100000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a31" doxytag="ErrorCode.h::OPENSOAP_SEC_KEYGEN_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_KEYGEN_ERROR&nbsp;&nbsp;&nbsp;(0x00100001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Key Generation Error. 
+<p>
+(0x00100001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a32" doxytag="ErrorCode.h::OPENSOAP_SEC_SIGNGEN_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_SIGNGEN_ERROR&nbsp;&nbsp;&nbsp;(0x00100002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Signature Generation Error. 
+<p>
+(0x00100002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a33" doxytag="ErrorCode.h::OPENSOAP_SEC_SIGNVERIFY_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SEC_SIGNVERIFY_ERROR&nbsp;&nbsp;&nbsp;(0x00100003L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Signature Verification Error. 
+<p>
+(0x00100003L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="ErrorCode.h::OPENSOAP_SETLOCALEFAILURE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SETLOCALEFAILURE&nbsp;&nbsp;&nbsp;(0x00020005L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ロケール設定失敗 
+<p>
+(0x00020005L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a50" doxytag="ErrorCode.h::OPENSOAP_SUCCEEDED" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_SUCCEEDED</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">err&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;(!(err))
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+OpenSOAP API の返り値が成功かどうかの判定マクロ. 
+<p>
+(!(err))     </td>
+  </tr>
+</table>
+<a class="anchor" name="a39" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_CONNECTION_REFUSED" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_CONNECTION_REFUSED&nbsp;&nbsp;&nbsp;(0x00210002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+接続拒否 (リモートでポートを開いていない). 
+<p>
+(0x00210002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a40" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_CONNECTION_TIMEOUT&nbsp;&nbsp;&nbsp;(0x00210003L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+接続時間切れ. 
+<p>
+(0x00210003L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a36" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_ERROR&nbsp;&nbsp;&nbsp;(0x00200000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポート・エラー 
+<p>
+(0x00200000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a45" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_GET_HTTP_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_GET_HTTP_ERROR</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">x&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;((x) &amp; ~(OPENSOAP_TRANSPORT_HTTP_ERROR))
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポート・エラー番号からHTTPステータスの値を計算 
+<p>
+((x) &amp; ~(OPENSOAP_TRANSPORT_HTTP_ERROR))     </td>
+  </tr>
+</table>
+<a class="anchor" name="a38" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_HOST_NOT_FOUND" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_HOST_NOT_FOUND&nbsp;&nbsp;&nbsp;(0x00210001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ホストが見つからない(おそらくDNS) 
+<p>
+(0x00210001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a42" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_HOST_UNREACH" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_HOST_UNREACH&nbsp;&nbsp;&nbsp;(0x00210005L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ホスト到達不能 
+<p>
+(0x00210005L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a43" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_HTTP_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_HTTP_ERROR&nbsp;&nbsp;&nbsp;(0x00220000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+HTTPエラー. 
+<p>
+(0x00220000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a37" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_INVOKE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_INVOKE_ERROR&nbsp;&nbsp;&nbsp;(0x00210000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポート・インボークのエラー 
+<p>
+(0x00210000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a44" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_IS_HTTP_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_IS_HTTP_ERROR</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">x&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;(((x) &amp; (OPENSOAP_TRANSPORT_HTTP_ERROR)) == (OPENSOAP_TRANSPORT_HTTP_ERROR))
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+トランスポート・エラーにおける、HTTP_ERRORかどうかの判定 
+<p>
+((x) &amp; (OPENSOAP_TRANSPORT_HTTP_ERROR))     </td>
+  </tr>
+</table>
+<a class="anchor" name="a41" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_NETWORK_UNREACH" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_NETWORK_UNREACH&nbsp;&nbsp;&nbsp;(0x00210004L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ネットワーク到達不能 
+<p>
+(0x00210004L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a46" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_SET_HTTP_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_SET_HTTP_ERROR</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">x&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+HTTPステータスの値からトランスポート・エラー番号を計算. 
+<p>
+((x) | (OPENSOAP_TRANSPORT_HTTP_ERROR))     </td>
+  </tr>
+</table>
+<a class="anchor" name="a49" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_SSL_CERTFILE_ERROR&nbsp;&nbsp;&nbsp;(0x00240002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL証明書のエラー. 
+<p>
+(0x00240002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a47" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_SSL_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_SSL_ERROR&nbsp;&nbsp;&nbsp;(0x00240000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSL エラー. 
+<p>
+(0x00240000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a48" doxytag="ErrorCode.h::OPENSOAP_TRANSPORT_SSL_VERSION_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_TRANSPORT_SSL_VERSION_ERROR&nbsp;&nbsp;&nbsp;(0x00240001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+SSLバージョンのエラー. 
+<p>
+(0x00240001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="ErrorCode.h::OPENSOAP_UNKNOWN_CHARENCODE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_UNKNOWN_CHARENCODE&nbsp;&nbsp;&nbsp;(0x00020004L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+未知のキャラクタエンコード. 
+<p>
+(0x00020004L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="ErrorCode.h::OPENSOAP_UNSUPPORT_PROTOCOL" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_UNSUPPORT_PROTOCOL&nbsp;&nbsp;&nbsp;(0x40000002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+未対応プロトコルエラー (HAVE_SSLがない時のssl使用を含む). 
+<p>
+(0x40000002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="ErrorCode.h::OPENSOAP_USERDEFINE_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_USERDEFINE_ERROR&nbsp;&nbsp;&nbsp;(0x10000000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+User 定義 Error. 
+<p>
+(0x10000000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a25" doxytag="ErrorCode.h::OPENSOAP_XML_BADDOCUMENTTYPE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_BADDOCUMENTTYPE&nbsp;&nbsp;&nbsp;(0x00080004L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML Document Type 不正. 
+<p>
+(0x00080004L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a26" doxytag="ErrorCode.h::OPENSOAP_XML_BADMAKEDOCUMENT" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_BADMAKEDOCUMENT&nbsp;&nbsp;&nbsp;(0x00080005L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML Document 作成失敗. 
+<p>
+(0x00080005L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a23" doxytag="ErrorCode.h::OPENSOAP_XML_BADNAMESPACE" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_BADNAMESPACE&nbsp;&nbsp;&nbsp;(0x00080002L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+不正な XML namespace. 
+<p>
+(0x00080002L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a27" doxytag="ErrorCode.h::OPENSOAP_XML_EMPTYDOCUMENT" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_EMPTYDOCUMENT&nbsp;&nbsp;&nbsp;(0x00080006L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+空の XML Document 
+<p>
+(0x00080006L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a21" doxytag="ErrorCode.h::OPENSOAP_XML_ERROR" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_ERROR&nbsp;&nbsp;&nbsp;(0x00080000L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML 処理 Error. 
+<p>
+(0x00080000L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a24" doxytag="ErrorCode.h::OPENSOAP_XML_NOHEADERBODY" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_NOHEADERBODY&nbsp;&nbsp;&nbsp;(0x00080003L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Header および Body が無い. 
+<p>
+(0x00080003L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a28" doxytag="ErrorCode.h::OPENSOAP_XML_NOTXMLDOCUMENT" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_NOTXMLDOCUMENT&nbsp;&nbsp;&nbsp;(0x00080007L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Not XML Document Error. 
+<p>
+(0x00080007L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a29" doxytag="ErrorCode.h::OPENSOAP_XML_NS_URI_UNMATCHED" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XML_NS_URI_UNMATCHED&nbsp;&nbsp;&nbsp;(0x00080008L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML Namespace Prefix は適正だが, URI が不正. 
+<p>
+(0x00080008L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a22" doxytag="ErrorCode.h::OPENSOAP_XMLNODE_NOT_FOUND" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_XMLNODE_NOT_FOUND&nbsp;&nbsp;&nbsp;(0x00080001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+XML ノードが無い. 
+<p>
+(0x00080001L)     </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="ErrorCode.h::OPENSOAP_YET_IMPLEMENTATION" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OPENSOAP_YET_IMPLEMENTATION&nbsp;&nbsp;&nbsp;(0x40000001L)
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+未実装エラー. 
+<p>
+(0x40000001L)     </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

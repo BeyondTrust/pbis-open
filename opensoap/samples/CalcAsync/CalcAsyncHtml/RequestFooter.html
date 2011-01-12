@@ -1,0 +1,64 @@
+            Mode: 
+	    <b>
+    	        <select name="mode">
+    		    <option value="Sync">Sync (RPC)</option>
+    		    <option selected value="Async">Async (Messaging)</option>
+    	        </select>
+	    </b>
+    	    <br><br>
+    	    <table border="0">
+    		<tr>
+    		    <td align=center>Method</td>
+    		    <td align=center>Operand A</td>
+    		    <td align=center>Operand B</td>
+    		</tr>
+    		<tr>
+    		    <td>
+    			<b>
+    			    <select name="operator">
+    				<option value="Add">Add</option>
+    				<option value="Subtract">Subtract</option>
+    				<option value="Multiply">Multiply</option>
+    				<option value="Divide">Divide</option>
+    			    </select>
+    			</b>
+    		     </td>
+    		     <td>
+    			 <input type="text" size=15 name="operand_a" 
+		          value=10.0>
+    		     </td>
+    		     <td>
+    			 <input type="text" size=15 name="operand_b" 
+                          value=20.0>
+    		     </td>
+    		</tr>
+    	    </table>
+			<br>
+			Server Message Forwarding options:
+			<table>
+			<tr>
+			     <td>
+				 <input type="checkbox" name="onhop" value="1">
+				 Hop Count : 
+				 <input type="text" name="hopcount" value="4" size="4">
+				 ( &gt; = 0 )
+				 </td>
+			</tr>
+			<tr>
+   			     <td>
+				 <input type="checkbox" name="onpath" value="1">
+				 Forward Path : <br>
+				 <textarea name="path" rows="5" cols="60" wrap="off">
+http://fwdhost0.opensoap.jp/cgi-bin/soapInterface.cgi
+http://fwdhost1.opensoap.jp/cgi-bin/soapInterface.cgi</textarea>
+				</td>
+			</tr>
+			</table>
+			<p>
+			<input type="checkbox" name="message" value="display">
+			Display Request &amp; Response messages
+			</p>
+	    <br>
+    	    <input type="submit" width=100 name="Request" value="Go">
+    	    <input type="hidden" name="screenID" value="Request">
+    	</form>

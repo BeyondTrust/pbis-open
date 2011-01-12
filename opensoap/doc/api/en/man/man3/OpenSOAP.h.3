@@ -1,0 +1,60 @@
+.TH "OpenSOAP.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+OpenSOAP.h \- OpenSOAP API initialization/termination.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/Defines.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPInitialize\fP (void *param)"
+.br
+.RI "\fIOpenSOAP API Initialization. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPUltimate\fP (void)"
+.br
+.RI "\fIOpenSOAP API Termination. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API initialization/termination. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPInitialize (void * param)"
+.PP
+OpenSOAP API Initialization. \fBParameters:\fP
+.RS 4
+\fIparam\fP Optional parameter. At current version, if NULL then call setlocale() 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error code. 
+.RE
+.PP
+
+.SS "int OpenSOAPUltimate (void)"
+.PP
+OpenSOAP API Termination. \fBReturns:\fP
+.RS 4
+Error code. 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

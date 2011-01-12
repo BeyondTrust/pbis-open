@@ -1,0 +1,992 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: ByteArray.h File Reference</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>ByteArray.h</h1>OpenSOAP API ByteArray 処理.  
+<a href="#_details">[詳細]</a>
+<p>
+<code>#include &lt;stdlib.h&gt;</code><br>
+<code>#include &lt;sys/types.h&gt;</code><br>
+<code>#include &lt;<a class="el" href="Defines_8h-source.html">OpenSOAP/Defines.h</a>&gt;</code><br>
+<code>#include &lt;<a class="el" href="ErrorCode_8h-source.html">OpenSOAP/ErrorCode.h</a>&gt;</code><br>
+
+<p>
+<a href="ByteArray_8h-source.html">ソースコードを見る。</a><table border=0 cellpadding=0 cellspacing=0>
+<tr><td></td></tr>
+<tr><td colspan=2><br><h2>マクロ定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>#define&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a0">OpenSOAPByteArrayCreateWithSize</a>(sz, b_ary)&nbsp;&nbsp;&nbsp;OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)指定サイズ分0クリアします。.  <a href="#a0"></a><br><br></td></tr>
+<tr><td colspan=2><br><h2>型定義</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a1" doxytag="ByteArray.h::OpenSOAPByteArray" ></a>
+typedef tagOpenSOAPByteArray&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a1">OpenSOAPByteArray</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPByteArray 構造体型定義. <br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top><a class="anchor" name="a2" doxytag="ByteArray.h::OpenSOAPByteArrayPtr" ></a>
+typedef <a class="el" href="ByteArray_8h.html#a1">OpenSOAPByteArray</a> *&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a></td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">OpenSOAPByteArray ポインタ型定義. <br><br></td></tr>
+<tr><td colspan=2><br><h2>関数</h2></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a3">OpenSOAPByteArrayCreate</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列を作成します。.  <a href="#a3"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a4">OpenSOAPByteArrayCreateWithData</a> (const unsigned char *data, size_t sz, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">初期化データを指定して、Byte (unsigned char)可変サイズ配列を作成します。  <a href="#a4"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a5">OpenSOAPByteArrayAppendRef</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の利用を宣言します。.  <a href="#a5"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a6">OpenSOAPByteArrayRelease</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列を開放します。.  <a href="#a6"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a7">OpenSOAPByteArrayGetSize</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, size_t *sz)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列のサイズを取得します。.  <a href="#a7"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a8">OpenSOAPByteArrayBeginConst</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char **beg)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭の const ポインタを取得します。.  <a href="#a8"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a9">OpenSOAPByteArrayEndConst</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char **ed)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の終端の const ポインタを取得します。.  <a href="#a9"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a10">OpenSOAPByteArrayGetBeginSizeConst</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char **beg, size_t *sz)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。.  <a href="#a10"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a11">OpenSOAPByteArrayGetBeginEndConst</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char **beg, const unsigned char **ed)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。.  <a href="#a11"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a12">OpenSOAPByteArrayBegin</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, unsigned char **beg)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭の 非const ポインタを取得します。.  <a href="#a12"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a13">OpenSOAPByteArrayEnd</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, unsigned char **ed)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の終端の 非const ポインタを取得します。.  <a href="#a13"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a14">OpenSOAPByteArrayGetBeginSize</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, unsigned char **beg, size_t *sz)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。.  <a href="#a14"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a15">OpenSOAPByteArrayGetBeginEnd</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, unsigned char **beg, unsigned char **ed)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。.  <a href="#a15"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a16">OpenSOAPByteArrayClear</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列をクリアします。.  <a href="#a16"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a17">OpenSOAPByteArraySetData</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char *data, size_t sz)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列へデータを設定します。.  <a href="#a17"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a18">OpenSOAPByteArrayAppend</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, const unsigned char *dat, size_t dat_len)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列へデータを追加します。.  <a href="#a18"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a19">OpenSOAPByteArrayResize</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, size_t new_size)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">Byte (unsigned char)可変サイズ配列のサイズを変更します。.  <a href="#a19"></a><br><br></td></tr>
+<tr><td class="memItemLeft" nowrap align=right valign=top>int&nbsp;</td><td class="memItemRight" valign=bottom><a class="el" href="ByteArray_8h.html#a20">OpenSOAPByteArrayDuplicate</a> (<a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> b_ary, <a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *dup_b_ary)</td></tr>
+
+<tr><td class="mdescLeft">&nbsp;</td><td class="mdescRight">ByteArray を複製します。.  <a href="#a20"></a><br><br></td></tr>
+</table>
+<hr><a name="_details"></a><h2>説明</h2>
+OpenSOAP API ByteArray 処理. 
+<p>
+<dl compact><dt><b>作者:</b></dt><dd>OpenSOAP Development Team</dd></dl>
+<hr><h2>マクロ定義</h2>
+<a class="anchor" name="a0" doxytag="ByteArray.h::OpenSOAPByteArrayCreateWithSize" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> #define OpenSOAPByteArrayCreateWithSize</td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">sz,         <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>b_ary&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap>&nbsp;&nbsp;&nbsp;OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)指定サイズ分0クリアします。. 
+<p>
+OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary)) <p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t [in] ((|sz|)) 初期化データサイズ </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ </td></tr>
+  </table>
+</dl>
+    </td>
+  </tr>
+</table>
+<hr><h2>関数</h2>
+<a class="anchor" name="a18" doxytag="ByteArray.h::OpenSOAPByteArrayAppend" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayAppend </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>dat</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>dat_len</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列へデータを追加します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>dat</em>&nbsp;</td><td>const unsigned char * [in] ((|dat|)) 追加するデータへの先頭ポインタ。NULL の場合は、0 で埋める。 </td></tr>
+    <tr><td valign=top><em>dat_len</em>&nbsp;</td><td>size_t [in] dat_sz 追加するデータのサイズ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a5" doxytag="ByteArray.h::OpenSOAPByteArrayAppendRef" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayAppendRef </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>b_ary</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の利用を宣言します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a12" doxytag="ByteArray.h::OpenSOAPByteArrayBegin" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayBegin </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭の 非const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a8" doxytag="ByteArray.h::OpenSOAPByteArrayBeginConst" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayBeginConst </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭の const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a16" doxytag="ByteArray.h::OpenSOAPByteArrayClear" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayClear </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>b_ary</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列をクリアします。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a3" doxytag="ByteArray.h::OpenSOAPByteArrayCreate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayCreate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>b_ary</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列を作成します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a4" doxytag="ByteArray.h::OpenSOAPByteArrayCreateWithData" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayCreateWithData </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top">const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+初期化データを指定して、Byte (unsigned char)可変サイズ配列を作成します。 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>data</em>&nbsp;</td><td>const unsigned char * [in] ((|data|)) 初期化データ。この値が NULL の場合、 ((|sz|)) 分データを確保して、0 fill する。</td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t [in] ((|sz|)) 初期化データサイズ </td></tr>
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [out] ((|b_ary|)) ByteArrayポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a20" doxytag="ByteArray.h::OpenSOAPByteArrayDuplicate" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayDuplicate </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a> *&nbsp;</td>
+          <td class="mdname" nowrap> <em>dup_b_ary</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+ByteArray を複製します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>dup_b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [out] ((|new_size|)) 複製先 ByteArray </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a13" doxytag="ByteArray.h::OpenSOAPByteArrayEnd" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayEnd </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>ed</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の終端の 非const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>ed</em>&nbsp;</td><td>unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a9" doxytag="ByteArray.h::OpenSOAPByteArrayEndConst" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayEndConst </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>ed</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の終端の const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>ed</em>&nbsp;</td><td>const unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a15" doxytag="ByteArray.h::OpenSOAPByteArrayGetBeginEnd" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayGetBeginEnd </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>ed</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+    <tr><td valign=top><em>ed</em>&nbsp;</td><td>unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a11" doxytag="ByteArray.h::OpenSOAPByteArrayGetBeginEndConst" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayGetBeginEndConst </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>ed</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭と終端の const ポインタを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+    <tr><td valign=top><em>ed</em>&nbsp;</td><td>const unsigned char ** [out] ((|ed|)) 終端ポインタ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a14" doxytag="ByteArray.h::OpenSOAPByteArrayGetBeginSize" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayGetBeginSize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a10" doxytag="ByteArray.h::OpenSOAPByteArrayGetBeginSizeConst" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayGetBeginSizeConst </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char **&nbsp;</td>
+          <td class="mdname" nowrap> <em>beg</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列の先頭の const ポインタとサイズを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>beg</em>&nbsp;</td><td>const unsigned char ** [out] ((|beg|)) 先頭ポインタ格納変数へのポインタ。 </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a7" doxytag="ByteArray.h::OpenSOAPByteArrayGetSize" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayGetSize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t *&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列のサイズを取得します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t * [out] ((|sz|)) サイズ格納変数へのポインタ。 </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a6" doxytag="ByteArray.h::OpenSOAPByteArrayRelease" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayRelease </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname1" valign="top" nowrap> <em>b_ary</em>          </td>
+          <td class="md" valign="top">&nbsp;)&nbsp;</td>
+          <td class="md" nowrap></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列を開放します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArrayポインタ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a19" doxytag="ByteArray.h::OpenSOAPByteArrayResize" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArrayResize </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>new_size</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列のサイズを変更します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr [in, out] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>new_size</em>&nbsp;</td><td>size_t [in] ((|new_size|)) 新しいサイズ。現在のサイズより大きな値を指定した場合、大きくなった部分は 0 fill される。</td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<a class="anchor" name="a17" doxytag="ByteArray.h::OpenSOAPByteArraySetData" ></a><p>
+<table class="mdTable" width="100%" cellpadding="2" cellspacing="0">
+  <tr>
+    <td class="mdRow">
+      <table cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td class="md" nowrap valign="top"> int OpenSOAPByteArraySetData </td>
+          <td class="md" valign="top">(&nbsp;</td>
+          <td class="md" nowrap valign="top"><a class="el" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>&nbsp;</td>
+          <td class="mdname" nowrap> <em>b_ary</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>const unsigned char *&nbsp;</td>
+          <td class="mdname" nowrap> <em>data</em>, </td>
+        </tr>
+        <tr>
+          <td class="md" nowrap align="right"></td>
+          <td></td>
+          <td class="md" nowrap>size_t&nbsp;</td>
+          <td class="mdname" nowrap> <em>sz</em></td>
+        </tr>
+        <tr>
+          <td></td>
+          <td class="md">)&nbsp;</td>
+          <td class="md" colspan="2"></td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<table cellspacing=5 cellpadding=0 border=0>
+  <tr>
+    <td>
+      &nbsp;
+    </td>
+    <td>
+
+<p>
+Byte (unsigned char)可変サイズ配列へデータを設定します。. 
+<p>
+<dl compact><dt><b>引数:</b></dt><dd>
+  <table border="0" cellspacing="2" cellpadding="0">
+    <tr><td valign=top><em>b_ary</em>&nbsp;</td><td>OpenSOAPByteArrayPtr * [in] ((|b_ary|)) ByteArray </td></tr>
+    <tr><td valign=top><em>data</em>&nbsp;</td><td>unsigned char * [in] ((|data|)) 格納するデータ </td></tr>
+    <tr><td valign=top><em>sz</em>&nbsp;</td><td>size_t [in] ((|sz|)) データサイズ </td></tr>
+  </table>
+</dl>
+<dl compact><dt><b>戻り値:</b></dt><dd>エラーコード </dd></dl>
+    </td>
+  </tr>
+</table>
+<hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

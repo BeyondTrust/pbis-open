@@ -1,0 +1,149 @@
+========================
+OpenSOAPインストール手順
+========================
+
+動作確認済みプラットフォーム
+============================
+opensoap2は以下のプラットフォームでコンパイルと動作を確認しています。
+(opensoap-2.0.1 時点)
+Linux
+ ○ Red Hat Linux 7.3 (rpmパッケージ対応、apache1ではDSO不可)
+ ◎ Red Hat Linux 9   (rpmパッケージ対応)
+ ◎ Fedora Core 2     (rpmパッケージ対応)
+ ○ VineLinux 2.6     (rpmパッケージ対応、apache1ではDSO不可)
+ ◎ SuSE Linux 9.1 Personal (rpmパッケージ対応)
+ ○ Debian Woody      (apache1ではDSO不可)
+ ○ Debian Sarge
+ ○ Slackware 10.0
+ ○ Mandrake Linux 10.0
+BSD
+ ○ FreeBSD 4.7
+ ○ FreeBSD 5.2.1
+ × FreeBSD 5.3       (現時点ではコンパイル失敗のみ確認)
+Sun
+ ○ Solaris8 sparc
+ ○ Solaris9 x86
+Apple
+ ○ MacOSX 10.3.3
+ ○ MacOSX 10.3.5
+ × MacOSX 10.2       (ビルドに失敗することを確認)
+Microsoft
+ × Microsoft Windows VisualStudio他 (opensoap2では現在未対応)
+
+インストール準備
+================
+
+ このパッケージのインストールには、以下のものをあらかじめインストールして
+おく必要があります。
+
+  1. libxml2 (http://xmlsoft.org/)
+  2. OpenSSL (http://www.openssl.org/)
+
+* 注意
+   NetBSD の pkgsrc からのインストールでは、`xml2-config' にバグがあるため、
+  xml2-config --cflags の出力が正常になるように修正する必要があります。
+
+   libxml2 については Linux のパッケージ等では、開発環境 libxml2-devel に相当
+  するものが必要となります。
+
+簡易インストール方法
+====================
+
+  以下に簡易インストールの方法を示します。
+
+  $ ./configure
+  $ make
+  $ su 
+  # make install
+
+* 注意
+   上記の make は、GNU make で行わなければいけないかもしれません。
+  *BSD では、install されていれば、 上記の make を gmake に置き換えて
+  ください。
+
+configure オプション
+====================
+
+  ./configure --help で、説明が出力されます。
+
+  OpenSSL のインストールされたディレクトリがデフォルトの /usr/local で
+  はない場合、--with-ssl=DIR で指定する必要があります。例えば、
+  /usr/local/ssl/include/openssl/rsa.h
+  /usr/local/ssl/lib/libcrypt.o
+  などのファイルがインストールされている場合、
+  ./configure --with-ssl=/usr/local/ssl
+  と指定することになります。
+
+  RedHat9でOpenSSLを使ったコンパイル時に /usr/kerberos/includeを指定す
+  る必要があります。`pkg-config --cflags openssl`の結果を参照して下さ
+  い。configure時に以下のオプションを使うとよいでしょう。
+  ./configure --with-ssl-include=/usr/kerberos/include
+
+  システムの マルチバイト文字列 <->ワイドキャラクタ文字列 の変換ルーチンに
+  不具合がある場合は、--enable-buildin-mbfuncs オプションを用いることで、
+  回避できる可能性がありますが、US-ASCII(ISO-8859-1)の文字エンコーディ
+  ングしか使えなくなります。
+
+  NetBSD 等、iconvが実装により適切に使えない環境の場合、
+  --disable-system-iconv オプションによりインストールの不具合を回避で
+  きます。
+
+  OpenSOAPサーバのCGIインターフェイスをApache2のDSOモジュールとして組
+  込むことができるようになりました。
+  configure時に、--with-apxs[=apxsコマンドへのパス]で指定可能です。
+  デフォルトでは、apxs か /usr/sbin/apxs を調べてApacheのバージョン2
+  以上ならばDSOモジュールを作成しようとします。該当コマンドがない場合
+  や、バージョン1の時は、DSOモジュール作成のみをスキップします。
+  必要ない場合は --with-out-apxs か --with-apxs=no で指定します。
+  Apache2 DSOモジュールのための設定方法は、
+    doc/server/README-APACHE-DSO.sjis.txt
+  を参照して下さい。
+
+自作プログラムコンパイル方法
+============================
+
+  デフォルトの設定の場合、 /usr/local/opensoap/include を インクルード
+  パスに追加し、 /usr/local/opensoap/lib をライブラリパスに追加します。
+  クライアントプログラムの場合は、ライブラリとして、
+  -lOpenSOAPClient を、サービスプログラムの場合は、ライブラリとして、
+  -lOpenSOAPService -lOpenSOAPClient を指定します。
+  
+  また、shared library なシステムでは、/usr/local/lib を実行時ライブラリの
+  検索パスに追加します。例えば、gcc では、 -Wl,-rpath -Wl,/usr/local/lib を
+  リンク時のオプションに追加します。
+
+インストール・ディレクトリについて
+==================================
+
+  デフォルトでは /usr/local/opensoap にインストールされますが、
+  configureオプションの -prefix等でディレクトリを指定できます。
+
+  opensoap-1.0-20021130 以前のパッケージでは、サーバディレクトリとして
+  /var/tmp/OpenSOAP、ライブラリやヘッダファイル及び各コマンド用として
+  /usr/local が使われていました。
+  この以前のディレクトリ構成でインストールされた古いファイルを全てアン
+  インストールしたい場合は、uninstall-olddir.sh スクリプトを実行して下
+  さい。
+
+  また、以前のディレクトリ構成のシステムで作成されたサービス等を新しい
+  構成に移行する場合は、次の点に注意して下さい。
+
+  1. ライブラリパス
+     (/usr/local/lib → /usr/local/opensoap/lib)
+  libOpenSOAP*.soにダイナミックリンクされる実行形式を利用する場合、
+  /etc/ld.so.conf ファイルに /usr/local/opensoap/lib パスを追加して、
+  root権限で ldconfig を実行してライブラリのサーチパスを修正して下さい。
+
+  2. OpenSOAP Serverの設定ファイル
+     (/var/tmp/OpenSOAP/conf → /usr/local/opensoap/etc)
+  以前の設定ファイル(backward.con,forward.conf,signature.conf)は server.conf
+  という1つのファイルにまとめられました。
+  サーバ用の鍵ファイルもこのディレクトリに入ります。
+
+  3. OpenSOAP Serverから実行されるサービス
+  SSMLファイルは /usr/local/opensoap/etc/ssml/ に入ります。
+  (/var/tmp/OpenSOAP/conf/ssml/*.ssml → /usr/local/opensoap/etc/ssml/)
+  各サービスで使われるコマンド及び関連ファイルは services の下に各サー
+  ビスのディレクトリを用意して置かれます。
+  (/usr/local/sbin/HelloService →
+   /usr/local/opensoap/services/HelloService/HelloService)

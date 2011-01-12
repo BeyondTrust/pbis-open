@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<!-- CalcAsyncService WSDL by OpenSOAP Project http://opensoap.jp -->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:y="http://services.opensoap.jp/samples/CalcAsync/" targetNamespace="http://services.opensoap.jp/samples/CalcAsync/">
+	<message name="AddResponse">
+		<part name="return" type="xs:double"/>
+	</message>
+	<message name="Add">
+		<part name="A" type="xs:double"/>
+		<part name="B" type="xs:double"/>
+	</message>
+	<message name="Subtract">
+		<part name="A" type="xs:double"/>
+		<part name="B" type="xs:double"/>
+	</message>
+	<message name="SubtractResponse">
+		<part name="return" type="xs:double"/>
+	</message>
+	<message name="Multiply">
+		<part name="A" type="xs:double"/>
+		<part name="B" type="xs:double"/>
+	</message>
+	<message name="MultiplyResponse">
+		<part name="return" type="xs:double"/>
+	</message>
+	<message name="Divide">
+		<part name="A" type="xs:double"/>
+		<part name="B" type="xs:double"/>
+	</message>
+	<message name="DivideResponse">
+		<part name="return" type="xs:double"/>
+	</message>
+	<portType name="CalcAsyncPortType">
+		<operation name="Add">
+			<input message="y:Add"/>
+			<output message="y:AddResponse"/>
+		</operation>
+		<operation name="Subtract">
+			<input message="y:Subtract"/>
+			<output message="y:SubtractResponse"/>
+		</operation>
+		<operation name="Multiply">
+			<input message="y:Multiply"/>
+			<output message="y:MultiplyResponse"/>
+		</operation>
+		<operation name="Divide">
+			<input message="y:Divide"/>
+			<output message="y:DivideResponse"/>
+		</operation>
+	</portType>
+	<binding name="CalcAsyncBinding" type="y:CalcAsyncPortType">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="Add">
+			<soap:operation soapAction="urn:#Add" style="rpc"/>
+			<input>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</output>
+			<soap:operation soapAction="urn:#Add" style="rpc"/>
+		</operation>
+		<operation name="Subtract">
+			<soap:operation soapAction="urn:#Subtract"/>
+			<input>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</output>
+			<soap:operation soapAction="urn:#Subtract"/>
+		</operation>
+		<operation name="Multiply">
+			<soap:operation soapAction="urn:#Multiply"/>
+			<soap:operation soapAction="urn:#Multiply"/>
+			<input/>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</output>
+			<soap:operation soapAction="urn:#Multiply"/>
+		</operation>
+		<operation name="Divide">
+			<soap:operation soapAction="urn:#Divide"/>
+			<input>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/CalcAsync/"/>
+			</output>
+			<soap:operation soapAction="urn:#Divide"/>
+		</operation>
+	</binding>
+	<service name="CalcAsyncService">
+		<port name="CalcAsyncPort" binding="y:CalcAsyncBinding">
+			<soap:address location="http://services.opensoap.jp/cgi-bin/CalcAsyncService.cgi"/>
+		</port>
+	</service>
+</definitions>

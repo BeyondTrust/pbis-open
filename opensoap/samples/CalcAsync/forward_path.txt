@@ -1,0 +1,2 @@
+http://fwdhost0.opensoap.jp/cgi-bin/soapInterface.cgi
+http://fwdhost1.opensoap.jp/cgi-bin/soapInterface.cgi

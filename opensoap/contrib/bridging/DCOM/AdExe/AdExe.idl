@@ -1,0 +1,39 @@
+// AdExe.idl : AdExe.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (AdExe.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(50D98FB1-6166-4C68-9540-F2FDF56A4EA7),
+	
+		helpstring("IAddExe Interface"),
+		pointer_default(unique)
+	]
+	interface IAddExe : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Add")] HRESULT Add([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(FC216FE4-4BAF-4F04-8099-CD19D7B1403B),
+	version(1.0),
+	helpstring("AdExe 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library ADEXELib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(7DC6AAAA-DDF1-481B-A35F-5D2AEA432728),
+		helpstring("AddExe Class")
+	]
+	coclass AddExe
+	{
+		[default] interface IAddExe;
+	};
+};

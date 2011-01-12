@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<SSML xmlns="x-schema:ssmlSchema.xml">
+	<service name='Soaping'
+	 nsuri='http://services.opensoap.jp/Soaping/'>
+	    <connection name='SoapingStdio'>
+		<StdIO>
+		    <exec prog='/OpenSOAP/user/bin/SoapingService'/>
+		</StdIO>
+		<asynchronizedTTL >8000</asynchronizedTTL>
+		<synchronizedTTL count="second" >20</synchronizedTTL>
+		<MaxProccessNumber>5</MaxProccessNumber>
+	    </connection>
+  	    <operation type ='SoapingStdio'>Soaping</operation>
+	    <fault signature='1' />
+	    <MaxProccessNumber>15</MaxProccessNumber>
+	</service>
+</SSML>

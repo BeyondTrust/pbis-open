@@ -1,0 +1,39 @@
+// MultiDll.idl : MultiDll.dll 用の IDL ソース ファイル
+//
+
+// このファイルはタイプ ライブラリ (MultiDll.tlb) を作成するために
+// タイプ ライブラリ作成ツール MIDL によって処理されます。
+
+import "oaidl.idl";
+import "ocidl.idl";
+	[
+		object,
+		uuid(C9E20848-FE2D-49B4-836F-1159E612E4FD),
+	
+		helpstring("IMultiplyDll Interface"),
+		pointer_default(unique)
+	]
+	interface IMultiplyDll : IUnknown
+	{
+		[helpstring("ﾒｿｯﾄﾞ Multiply")] HRESULT Multiply([in] double a, [in] double b, [out,retval] double *result);
+	};
+
+[
+	uuid(81C5EBD4-AD45-40AE-AC50-1DB388118ABE),
+	version(1.0),
+	helpstring("MultiDll 1.0 ﾀｲﾌﾟ ﾗｲﾌﾞﾗﾘ")
+]
+library MULTIDLLLib
+{
+	importlib("stdole32.tlb");
+	importlib("stdole2.tlb");
+
+	[
+		uuid(5A231398-BFF1-43DA-8E38-502F7161830E),
+		helpstring("MultiplyDll Class")
+	]
+	coclass MultiplyDll
+	{
+		[default] interface IMultiplyDll;
+	};
+};

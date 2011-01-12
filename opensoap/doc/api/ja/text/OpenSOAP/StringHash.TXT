@@ -1,0 +1,200 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: StringHash.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/StringHash.h
+ * @brief OpenSOAP API ハッシュ処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPStringHash OpenSOAPStringHash
+     * @brief OpenSOAPStringHash 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPStringHash    *OpenSOAPStringHashPtr
+     * @brief OpenSOAPStringHash ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPStringHashCreate(OpenSOAPStringHashPtr * strh)
+      * @brief Create OpenSOAPString Hash
+      * @param
+      *    strh OpenSOAPStringHashPtr * [out] ((|strh|)) 作成した OpenSOAP 文字列 Hashのポインタの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashRelease(OpenSOAPStringHashPtr strh)
+      * @brief Release OpenSOAPString Hash
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashClear(OpenSOAPStringHashPtr strh)
+      * @brief Clear OpenSOAPString Hash
+      * @param
+      *    strh OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashRemoveKey(OpenSOAPStringHashPtr strh, OpenSOAPStringPtr key, void ** val)
+      * @brief OpenSOAPString Hash から登録削除
+      *
+      * OpenSOAPString Hash から登録削除。
+      * @param
+      *    strh OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key OpenSOAPStringPtr [in] ((|key|)) キー値
+      * @param
+      *    val void ** [out] ((|val|)) 登録していた値の格納場所。NULL の場合は値を返さない。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashSetValue(OpenSOAPStringHashPtr strh, OpenSOAPStringPtr key, void * val)
+      * @brief OpenSOAPString Hash に値の登録
+      *
+      * OpenSOAPString Hash に値の登録
+      * @param
+      *    strh OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key OpenSOAPStringPtr [in] ((|key|)) キー値
+      * @param
+      *    val void * [in] ((|val|)) 登録する値。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashSetValueMB(OpenSOAPStringHashPtr strh, const char * key, void * val)
+      * @brief OpenSOAPString Hash に値の登録(MB)
+      *
+      * OpenSOAPString Hash に値の登録(MB)
+      * @param
+      *    strh OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key const char * [in] ((|key|)) キー値
+      * @param
+      *    val void * [in] ((|val|)) 登録する値。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashSetValueWC(OpenSOAPStringHashPtr strh, const wchar_t * key, void * val)
+      * @brief OpenSOAPString Hash に値の登録(WC)
+      *
+      * OpenSOAPString Hash に値の登録(WC)
+      * @param
+      *    strh OpenSOAPStringHashPtr [in, out] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key const wchar_t * [in] ((|key|)) キー値
+      * @param
+      *    val void * [in] ((|val|)) 登録する値。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetValue(OpenSOAPStringHashPtr strh, OpenSOAPStringPtr key, void ** val)
+      * @brief OpenSOAPString Hash から値の取得
+      *
+      * OpenSOAPString Hash から値の取得
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key OpenSOAPStringPtr [in] ((|key|)) キー値
+      * @param
+      *    val void ** [out] ((|val|)) 取得する値の格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetValueMB(OpenSOAPStringHashPtr strh, const char * key, void ** val)
+      * @brief OpenSOAPString Hash から値の取得(MB)
+      *
+      * OpenSOAPString Hash から値の取得(MB)
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key const char * [in] ((|key|)) キー値
+      * @param
+      *    val void ** [out] ((|val|)) 取得する値の格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetValueWC(OpenSOAPStringHashPtr strh, const wchar_t * key, void ** val)
+      * @brief OpenSOAPString Hash から値の取得(WC)
+      *
+      * OpenSOAPString Hash から値の取得(WC)
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    key const wchar_t * [in] ((|key|)) キー値
+      * @param
+      *    val void ** [out] ((|val|)) 取得する値の格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetSize(OpenSOAPStringHashPtr strh, size_t * sz)
+      * @brief OpenSOAPString Hash の登録数の取得
+      *
+      * OpenSOAPString Hash の登録数の取得。
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    sz size_t * [out] ((|sz|)) 取得する登録数の格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetKeys(OpenSOAPStringHashPtr strh, size_t * sz, OpenSOAPStringPtr * keys)
+      * @brief OpenSOAPString Hash の登録Key全ての取得
+      *
+      * OpenSOAPString Hash の登録Key全ての取得
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    sz size_t * [in, out] ((|sz|)) [in] 取得する登録Keyの格納場所のサイズ; [out] key に格納したサイズ。
+      * @param
+      *    keys OpenSOAPStringPtr * [out] ((|keys|)) 取得する登録Keyの格納場所。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashGetValues(OpenSOAPStringHashPtr strh, size_t * sz, void ** vals)
+      * @brief OpenSOAPString Hash の登録値全ての取得
+      *
+      * OpenSOAPString Hash の登録値全ての取得
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    sz size_t * [in, out] ((|sz|))
+      * @param
+      *    vals void ** [out] ((|vals|)) 取得する登録値の格納場所。 値の順番は OpenSOAPStringHashGetKeys 関数で取得した key の順番とは無関係とする。
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPStringHashApplyToValues(OpenSOAPStringHashPtr strh, int  (*aply)(void *, void *), void * opt)
+      * @brief OpenSOAPString Hash の登録値全てへの関数の適用。
+      *
+      * OpenSOAPString Hash の登録値全てへの関数の適用。
+      * @param
+      *    strh OpenSOAPStringHashPtr [in] ((|strh|)) OpenSOAPString ハッシュ
+      * @param
+      *    aply() int [in] ( * ((|aply|)) )(void *val, void *opt) 適用する関数。この関数の戻り値を ret として、OPENSOAP_FAILED(ret) が真になるかまたは、全ての値にこの関数を適用するまで続ける。
+      * @param
+      *    opt void * [in] ((|opt|)) 適用する関数のオプションパラメータ。
+      * @return
+      *    エラーコード
+      */

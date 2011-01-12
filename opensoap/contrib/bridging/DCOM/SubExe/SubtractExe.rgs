@@ -1,0 +1,23 @@
+HKCR
+{
+	SubExe.SubtractExe.1 = s 'SubtractExe Class'
+	{
+		CLSID = s '{AE1166EE-04DD-41DF-804C-54D82919A1C6}'
+	}
+	SubExe.SubtractExe = s 'SubtractExe Class'
+	{
+		CLSID = s '{AE1166EE-04DD-41DF-804C-54D82919A1C6}'
+		CurVer = s 'SubExe.SubtractExe.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {AE1166EE-04DD-41DF-804C-54D82919A1C6} = s 'SubtractExe Class'
+		{
+			ProgID = s 'SubExe.SubtractExe.1'
+			VersionIndependentProgID = s 'SubExe.SubtractExe'
+			LocalServer32 = s '%MODULE%'
+			val AppID = s '{83F8410A-CB68-455F-804E-61FB7AB3666E}'
+			'TypeLib' = s '{06EDCEAF-1F2B-445E-82AD-A800969BD7BC}'
+		}
+	}
+}

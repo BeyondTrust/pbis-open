@@ -1,0 +1,521 @@
+dnl -----------------------------------------------------------------------------
+dnl  $RCSfile: configure.in,v $
+dnl 
+dnl  See Copyright for the status of this software.
+dnl 
+dnl  The OpenSOAP Project
+dnl  http://opensoap.jp/
+dnl -----------------------------------------------------------------------------
+
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/api/String.c)
+AC_CONFIG_AUX_DIR(config)
+AM_CONFIG_HEADER(config.h)
+AC_CANONICAL_SYSTEM
+
+dnl Version info setting
+OPENSOAP_MAJOR_VERSION=2
+OPENSOAP_MINOR_VERSION=0
+
+OPENSOAP_REL_VERSION=1
+
+# for Library Version
+OPENSOAP_REVISION=0
+
+#OPENSOAP_EXTRA_VERSION=20040311
+OPENSOAP_EXTRA_VERSION=
+
+OPENSOAP_RPM_VERSION=${OPENSOAP_MAJOR_VERSION}.${OPENSOAP_MINOR_VERSION}
+#OPENSOAP_RPM_RELEASE_EXT=0.${OPENSOAP_EXTRA_VERSION}
+OPENSOAP_RPM_RELEASE_EXT=1
+
+OPENSOAP_CURRENT=`expr ${OPENSOAP_MAJOR_VERSION} + ${OPENSOAP_MINOR_VERSION}`
+OPENSOAP_AGE=${OPENSOAP_MINOR_VERSION}
+
+#OPENSOAP_PACKAGE_VERSION=${OPENSOAP_MAJOR_VERSION}.${OPENSOAP_MINOR_VERSION}-${OPENSOAP_EXTRA_VERSION}
+OPENSOAP_PACKAGE_VERSION=${OPENSOAP_MAJOR_VERSION}.${OPENSOAP_MINOR_VERSION}
+#OPENSOAP_VERSION=${OPENSOAP_MAJOR_VERSION}.${OPENSOAP_MINOR_VERSION}.${OPENSOAP_REL_VERSION}${OPENSOAP_EXTRA_VERSION}
+OPENSOAP_VERSION=${OPENSOAP_MAJOR_VERSION}.${OPENSOAP_MINOR_VERSION}.${OPENSOAP_REL_VERSION}
+OPENSOAP_VERSION_INFO=${OPENSOAP_CURRENT}:${OPENSOAP_REVISION}:${OPENSOAP_AGE}
+
+## AC_SUBST(OPENSOAP_MAJOR_VERSION)
+## AC_SUBST(OPENSOAP_SUB_VERSION)
+## AC_SUBST(OPENSOAP_EXTRA_VERSION)
+## AC_SUBST(OPENSOAP_CURRENT)
+## AC_SUBST(OPENSOAP_REVISION)
+## AC_SUBST(OPENSOAP_AGE)
+
+AC_SUBST(OPENSOAP_PACKAGE_VERSION)
+AC_SUBST(OPENSOAP_VERSION)
+AC_SUBST(OPENSOAP_VERSION_INFO)
+
+AC_SUBST(OPENSOAP_RPM_VERSION)
+AC_SUBST(OPENSOAP_RPM_RELEASE_EXT)
+
+AM_INIT_AUTOMAKE(opensoap, ${OPENSOAP_VERSION})
+AC_SUBST(ac_aux_dir)
+
+dnl set default prefix
+AC_PREFIX_DEFAULT(/usr/local/opensoap)
+
+dnl Checks for programs.
+AC_PROG_AWK
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+dnl Check doxygen
+AC_CHECK_PROGS(DOXYGEN, doxygen)
+dnl Check pod2man
+AC_CHECK_PROGS(POD2MAN, pod2man)
+
+for top_builddir in . .. ../.. $ac_auxdir $ac_auxdir/..; do
+  test -f $top_builddir/configure && break
+done
+
+AC_PROG_LIBTOOL
+
+dnl Checks for libraries.
+dnl Replace `main' with a function in -lc:
+AC_CHECK_LIB(c, main)
+dnl Replace `main' with a function in -libs:
+AC_CHECK_LIB(ibs, main)
+
+dnl Check pthread
+AC_CHECK_HEADERS(pthread.h,
+    AC_CHECK_LIB(pthread, main, , [
+        PTHREAD_LIBS="-lc_r -pthread"
+        PTHREAD_CFLAGS=-D_THREAD_SAFE
+        ]))
+AC_SUBST(PTHREAD_LIBS)
+AC_SUBST(PTHREAD_CFLAGS)
+
+dnl Check pthread
+AC_CHECK_HEADER(/usr/local/include/iconv.h, [
+	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
+	LDFLAGS="$LDFLAGS -L/usr/local/lib"
+	])
+AC_CHECK_HEADERS(iconv.h,
+	AC_CHECK_LIB(iconv, main))
+AC_SUBST(ICONV_LIBS)
+
+dnl Checks libxml2
+AC_CHECK_PROGS(XML2_CONFIG, xml2-config,
+	AC_MSG_ERROR(Libxml2 not found))
+
+dnl libxml2 include directory check
+AC_MSG_CHECKING("for libxml2 include directory name")
+HAVE_LIBXML2_XMLVERSION_H=0
+HAVE_LIBXML_XMLVERSION_H=0
+XML2_CFLAGS=`$XML2_CONFIG --cflags`
+XML2_LIBS=`$XML2_CONFIG --libs`
+for d in `echo ${XML2_CFLAGS} \
+| ${AWK} '{ for (i = 1; i <= NF; ++i) { \
+	if (sub(/^\-I/, "", $i) != 0) { print $i }}}'`; do
+  if test -f ${d}/libxml2/xmlversion.h; then
+    HAVE_LIBXML2_XMLVERSION_H=1
+    break
+  fi
+  if test -f ${d}/libxml/xmlversion.h; then
+    HAVE_LIBXML_XMLVERSION_H=1
+    break
+  fi
+  f=${d}/xmlversion.h
+  if test -f ${f}; then
+    libxmldir=`echo ${f} | awk -F/ '{ print $(NF - 1) }'`
+    if test "x${libxmldir}" = "xlibxml2"; then
+      HAVE_LIBXML2_XMLVERSION_H=1
+      break
+    elif test "x${libxmldir}" = "xlibxml"; then
+      HAVE_LIBXML_XMLVERSION_H=1
+      break
+    fi
+  fi
+done
+if test "x${HAVE_LIBXML2_XMLVERSION_H}" = "x1"; then
+  AC_DEFINE(HAVE_LIBXML2_XMLVERSION_H, 1, Define if libxml2's header directory is libxml2)
+  AC_MSG_RESULT("libxml2")
+elif test "x${HAVE_LIBXML_XMLVERSION_H}" = "x1"; then
+  AC_DEFINE(HAVE_LIBXML_XMLVERSION_H, 1, Define if libxml2's header directory is libxml.)
+  AC_MSG_RESULT("libxml")
+else
+  AC_MSG_ERROR(Libxml2's xmlversion.h not found)
+fi
+AC_SUBST(XML2_CFLAGS)
+AC_SUBST(XML2_LIBS)
+
+# Check GNU pthread library
+AC_CHECK_PROGS(GNU_PTHREAD_CONFIG, pthread-config)
+if test "x${GNU_PTHREAD_CONFIG}" != "x"; then
+  GNU_PTHREAD_CFLAGS=`${GNU_PTHREAD_CONFIG} --cflags`
+  GNU_PTHREAD_LIBS=`${GNU_PTHREAD_CONFIG} --ldflags --libs`
+  AC_SUBST(GNU_PTHREAD_CFLAGS)
+  AC_SUBST(GNU_PTHREAD_LIBS)
+fi
+
+dnl DOS to UNIX filter
+AC_CHECK_PROGS(SED, sed)
+DTOU_FILTER=
+if test "x${SED}" != "x"; then
+  DTOU_FILTER="${SED} 's/$//'"
+fi
+AC_SUBST(DTOU_FILTER)
+dnl check japanese kanji code converter
+AC_CHECK_PROGS(NKF, nkf)
+AC_CHECK_PROGS(KCC, kcc)
+AC_CHECK_PROGS(ICONV, iconv)
+DTOU_JA_FILTER=${DTOU_FILTER}
+if test "x${NKF}" != "x"; then
+  DTOU_JA_FILTER="${NKF} -de"
+elif test "x${KCC}" != "x"; then
+  DTOU_JA_FILTER="${KCC} -e | ${DTOU_JA_FILTER}"
+elif test "x${ICONV}" != "x"; then
+  DTOU_JA_FILTER="${ICONV} -f SJIS -t eucJP | ${DTOU_JA_FILTER}"
+fi
+AC_SUBST(DTOU_JA_FILTER)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_HEADER_DIRENT
+AC_CHECK_HEADERS(unistd.h wchar.h wtypes.h arpa/inet.h errno.h fcntl.h netdb.h netinet/in.h sys/socket.h sys/time.h)
+AC_CHECK_HEADERS(langinfo.h)
+AC_CHECK_HEADERS(sys/ipc.h sys/shm.h sys/sem.h)
+
+AC_CHECK_HEADERS(getopt.h)
+
+dnl Checks for uuid
+AC_CHECK_HEADERS(uuid/uuid.h,
+    AC_CHECK_LIB(uuid, main))
+AC_SUBST(UUID_LIBS)
+
+AC_CHECK_HEADERS(uuid.h)
+
+
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_MODE_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+#AC_CHECK_SIZEOF(short)
+#AC_CHECK_SIZEOF(long)
+
+dnl for C++ check
+AC_LANG_SAVE
+AC_LANG_CPLUSPLUS
+
+dnl Check long long
+AC_MSG_CHECKING(for long long type of C++)
+AC_TRY_COMPILE([],[
+long long v = 9223372036854775807LL;],[
+AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_LONGLONG_TYPE, 1, Define if there is long long type.)],[
+AC_MSG_RESULT(no)])
+dnl sstream check
+AC_MSG_CHECKING(for sstream)
+AC_TRY_COMPILE([
+#include <sstream>
+],[],[
+AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_SSTREAM, 1, Define if you have the <sstream> header file.)],[
+AC_MSG_RESULT(no)])
+
+dnl Check accept third argument type
+AC_MSG_CHECKING(for the 3rd argument of accept)
+AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+],[
+struct sockaddr addr;
+socklen_t socklen;
+int ret = accept(0, &addr, &socklen);
+],[
+AC_MSG_RESULT(socklen_t)
+AC_DEFINE(HAVE_TYPE_OF_ADDRLEN_AS_SOCKLEN_T, 1, Define if accept third argument type is socklen_t.)],[
+AC_TRY_COMPILE([
+#include <sys/socket.h>
+],[
+struct sockaddr addr;
+size_t socklen;
+int ret = accept(0, &addr, &socklen);
+],[
+AC_MSG_RESULT(size_t)
+AC_DEFINE(HAVE_TYPE_OF_ADDRLEN_AS_SIZE_T, 1, Define if accept third argument type is size_t.)
+],[
+AC_MSG_RESULT(int)
+AC_DEFINE(HAVE_TYPE_OF_ADDRLEN_AS_INT, 1, Define if accept third argument type is int.)])])
+
+
+
+dnl Check strerror reentrant version
+AC_MSG_CHECKING(for reentrant version of strerror)
+AC_TRY_COMPILE([
+#include <string.h>
+#include <errno.h>
+],[
+char buf[4];
+int ret = strerror_r(errno, buf, 4);
+],[
+AC_MSG_RESULT(strerror_r)
+AC_DEFINE(HAVE_STRERROR_R, 1, Define if has posix strerror_r.)],[
+AC_TRY_COMPILE([
+#include <string.h>
+#include <errno.h>
+],[
+char buf[4];
+char* ret = strerror_r(errno, buf, 4);
+],[
+AC_MSG_RESULT(nonposix_strerror_r)
+AC_DEFINE(HAVE_NONPOSIX_STRERROR_R, 1, Define if has non-posix strerror_r.)],[
+AC_MSG_RESULT(strerror)
+])])
+
+
+dnl LOG_PERROR define check
+AC_MSG_CHECKING(for LOG_PERROR is defined in <syslog.h>)
+AC_TRY_COMPILE([
+#include <syslog.h>
+],[
+int opt = LOG_PERROR;
+],[
+AC_MSG_RESULT(yes)
+AC_DEFINE(HAVE_LOG_PERROR, 1, Define if LOG_PERROR is defined at syslog.h.)],[
+AC_MSG_RESULT(no)])
+AC_LANG_RESTORE
+
+dnl Checks for library functions.
+AC_CHECK_FUNCS(memset)
+AC_CHECK_FUNCS(stat)
+AC_CHECK_FUNCS(socket getaddrinfo gethostbyname gethostname)
+AC_CHECK_FUNCS(gettimeofday) 
+#
+AC_CHECK_FUNCS(daemon)
+AC_CHECK_FUNCS(vswprintf)
+AC_CHECK_FUNCS(wcscmp wcscpy wcslen wcsncat wcsstr wmemcpy wmemmove)
+
+AC_CHECK_FUNCS(getopt getopt_long)
+
+dnl args 
+dnl enable-buildin-mbfuncs
+AC_ARG_ENABLE(buildin-mbfuncs,
+[  --enable-buildin-mbfuncs	enable buildin mb <-> wc convert functions [default=no]],
+[if test x"${enable_buildin_mbfuncs-no}" != xno; then
+  MBFUNCS_CFLAGS="-DWITH_MBFUNCS"
+ fi],[
+AC_MSG_CHECKING(for valid mbstowcs() returns)
+AC_TRY_RUN([
+#include<stdlib.h>
+int main() {
+    size_t wcsLen = -1;
+    const char *mbstr = "test";
+    wcsLen = mbstowcs(NULL, mbstr, 0);
+    return (wcsLen != 4);
+}],AC_MSG_RESULT(yes),[
+  AC_MSG_RESULT(no. added -DWITH_MBFUNCS)
+  MBFUNCS_CFLAGS="-DWITH_MBFUNCS"
+])])
+AC_SUBST(MBFUNCS_CFLAGS)
+
+dnl with-cgi-bin
+CGI_BIN_DIR="/home/httpd/cgi-bin"
+AC_ARG_WITH(cgi-bin,
+[  --with-cgi-bin=DIR	cgi-bin directory [default=/home/httpd/cgi-bin]],
+[if test x"${withval-no}" != xno; then 
+  if test x"$with_cgi_bin" != x; then
+    CGI_BIN_DIR=$with_cgi_bin
+  fi
+fi])
+AC_SUBST(CGI_BIN_DIR)
+
+dnl with-ssl
+SSL_DIR="/usr/local"
+AC_ARG_WITH(ssl,
+[  --with-ssl=DIR	ssl base directory [default=/usr/local]
+  --without-ssl			disable SSL support],
+[if test x"${withval-no}" != xno; then
+  if test x"$with_ssl" != x; then
+    SSL_DIR=$with_ssl
+  fi
+else
+  SSL_DIR=""
+fi])
+dnl with-ssl-include
+SSL_INCLUDE_DIR="$SSL_DIR/include"
+AC_ARG_WITH(ssl-include,
+[  --with-ssl-include=DIR	ssl include directory [default=/usr/local/include]],
+[if test x"${withval-no}" != xno; then 
+  if test x"$with_ssl_include" != x; then
+    SSL_INCLUDE_DIR=$with_ssl_include
+  fi
+fi])
+SSL_INCLUDES="-I$SSL_INCLUDE_DIR"
+AC_SUBST(SSL_INCLUDES)
+dnl with-ssl-lib
+SSL_LIB_DIR="$SSL_DIR/lib"
+AC_ARG_WITH(ssl-lib,
+[  --with-ssl-lib=DIR	ssl lib directory [default=/usr/local/lib]],
+[if test x"${withval-no}" != xno; then 
+  if test x"$with_ssl_lib" != x; then
+    SSL_LIB_DIR=$with_ssl_lib
+  fi
+fi])
+SSL_LIBS="-L${SSL_LIB_DIR} -lcrypto -lssl"
+
+if test x"${SSL_DIR}" != x; then
+  AC_SUBST(SSL_LIB_DIR)
+  AC_SUBST(SSL_LIBS)
+  echo "enable SSL ... define HAVE_SSL"
+  AC_DEFINE(HAVE_SSL, 1, Define if SSL support enabled.)
+else
+  echo "disable SSL ... undef HAVE_SSL"
+fi
+
+dnl with-servicesdir
+servicesdir='${prefix}/services'
+AC_ARG_WITH(servicesdir,
+[  --with-servicesdir=DIR	opensoap services directry [default=PREFIX/services]],
+[if test x"${withval-no}" != xno && test x"${with_servicesdir}" != x; then
+  servicesdir=${with_servicesdir}
+fi])
+AC_SUBST(servicesdir)
+
+dnl enable system iconv
+AC_ARG_ENABLE(system-iconv,
+[  --enable-system-iconv	enable system iconv [default=yes]],
+[if test x"${enable_system_iconv-no}" != xno; then
+  AC_DEFINE(ENABLE_SYSTEM_ICONV, 1, Define if system's iconv enable.)
+ fi], [AC_DEFINE(ENABLE_SYSTEM_ICONV, 1, Define if system's iconv enable.)])
+
+dnl COMPILER -rpath option
+case ${host} in
+  *-*-solaris*)
+    RPATH_COPTION="-R"
+    ;;
+  *)
+    RPATH_COPTION="-Wl,-rpath -Wl,"
+    ;;
+esac
+AC_SUBST(RPATH_COPTION)
+
+dnl MKDEFFILE define
+MKDEFFILE_SH=mkdeffile.sh
+AC_SUBST(MKDEFFILE_SH)
+
+dnl with-apxs
+APXS0="apxs"
+APXS="apxs"
+AC_MSG_CHECKING(for Apache 2.x module support via DSO through APXS)
+AC_ARG_WITH(apxs,
+[  --with-apxs[=FILE]      Build shared Apache 2.x module. FILE is the optional
+                          pathname to the Apache apxs tool; defaults to "apxs".],
+[
+  if test x"${withval-no}" == xno; then
+    APXS=""
+    APXS0=""
+  else
+    if test x"${withval-yes}" != xyes; then
+      APXS=$with_apxs
+      APXS0=""
+    fi
+  fi
+])
+if test x"$APXS0" != x; then
+  $APXS -q CFLAGS >/dev/null 2>&1
+  if test "$?" != "0"; then
+    if test -x /usr/sbin/apxs; then
+      APXS=/usr/sbin/apxs
+    else
+      APXS=""
+    fi
+  fi
+fi
+if test x"$APXS" != x; then
+  $APXS -q CFLAGS >/dev/null 2>&1
+  if test "$?" != "0"; then
+    AC_MSG_RESULT()
+    AC_MSG_RESULT([Unable to successfully run APXS.])
+    AC_MSG_RESULT([The output of $APXS follows])
+    $APXS
+    APXS=""
+  else
+    APXS_HTTPD=`$APXS -q SBINDIR`/`$APXS -q TARGET`
+    # Test that we're trying to configure with apache 2.x
+    APACHE_VERSION=`$APXS_HTTPD -v | head -1 | cut -f3 -d' ' | cut -f2 -d'/' | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+    if test "$APACHE_VERSION" -le 2000000; then
+      AC_MSG_RESULT([Apache1.x is not supported]) 
+      APXS=""
+    fi
+  fi
+fi
+
+if test x"$APXS" != x; then
+  AC_MSG_RESULT([$APXS])
+  AM_CONDITIONAL(WITH_APXS2, true)
+else
+  AC_MSG_RESULT(no)
+  AM_CONDITIONAL(WITH_APXS2, false)
+fi
+AC_SUBST(APXS)
+
+## CFLAGS=$opensoap_save_CFLAGS
+
+#
+## Xsed="sed -e s/^X//"
+## LTLIBOBJS=`echo X"$LIBOBJS"|\
+## 	[$Xsed -e "s,\.[^.]* ,.lo ,g;s,\.[^.]*$,.lo,"]`
+## AC_SUBST(LTLIBOBJS)
+
+AC_OUTPUT(\
+	Makefile \
+	mkdeffile.sh \
+	opensoap.spec \
+	src/Makefile \
+	src/api/Makefile \
+	src/security/Makefile \
+	src/tools/Makefile \
+	src/tools/Transaction/Makefile \
+	src/tools/Soaping/Makefile \
+	include/Makefile include/OpenSOAP/Makefile \
+	contrib/Makefile \
+	contrib/bridging/DCOM/SubExe/Makefile \
+	contrib/bridging/DCOM/AdDll/Makefile \
+	contrib/bridging/DCOM/AdExe/Makefile \
+	contrib/bridging/DCOM/DCOMDllCalc/Makefile \
+	contrib/bridging/DCOM/DCOMExeCalc/Makefile \
+	contrib/bridging/DCOM/DCOMGetDS/Makefile \
+	contrib/bridging/DCOM/DivDll/Makefile \
+	contrib/bridging/DCOM/DivExe/Makefile \
+	contrib/bridging/DCOM/MultiDll/Makefile \
+	contrib/bridging/DCOM/MultiExe/Makefile \
+	contrib/bridging/DCOM/ServerInfo/ServerInfoDll/Makefile \
+	contrib/bridging/DCOM/ServerInfo/ServerInfoExe/Makefile \
+	contrib/bridging/DCOM/ServerInfo/Makefile \
+	contrib/bridging/DCOM/SubDll/Makefile \
+	contrib/bridging/DCOM/doc/Makefile \
+	contrib/bridging/DCOM/Makefile \
+	contrib/bridging/CORBA/CORBADllCalc/Makefile \
+	contrib/bridging/CORBA/CORBAExeCalc/Makefile \
+	contrib/bridging/CORBA/RequestMessage/Makefile \
+	contrib/bridging/CORBA/doc/Makefile \
+	contrib/bridging/CORBA/Makefile \
+	contrib/bridging/Makefile \
+	contrib/java/Sync/ApacheSoap/Makefile \
+	contrib/java/Sync/SAX/Makefile \
+	contrib/java/Sync/Makefile \
+	contrib/java/Async/SAX/Makefile \
+	contrib/java/Async/Makefile \
+	contrib/java/SocketService/Makefile \
+	contrib/java/Util/Makefile \
+	contrib/java/doc/Makefile \
+	contrib/java/Makefile \
+	contrib/cpplib/Makefile \
+	contrib/cpplib/CHello.mak \
+	contrib/cpplib/samples/Makefile \
+	contrib/cpplib/samples/DicClient/Makefile \
+)
+
+dnl shell script is to be executable
+if test -f ${MKDEFFILE_SH}; then chmod +x ${MKDEFFILE_SH}; fi

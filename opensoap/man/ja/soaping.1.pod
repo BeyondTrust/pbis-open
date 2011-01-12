@@ -1,0 +1,74 @@
+=pod
+
+=head1 名前
+
+soaping - サービスの応答時間を測定して表示
+
+=head1 書式
+
+B<soaping> [ -hvo] [ -s I<size>[K|M]] [ -c I<count> [ -i I<wait>]] [URL | host]
+
+=head1 説明
+
+Soaping は PINGの OpenSOAP版で、サービスの応答時間を測定します。
+クライアントは現在時刻とある長さの文字列を送信します。
+サービスはそれを受け取り、同じ値を応答メッセージとして返します。
+クライアントはそれを受信して、メッセージ交換に要する往復の時間を計算し
+ます。
+
+=head1 オプション
+
+B<soaping> には次のオプションがあります。
+
+=over 4
+
+=item B<-h>
+
+使用方法の表示。
+
+=item B<-s> I<size>[K|M]
+
+送信する文字列の長さを設定。[[K|M]バイト] (デフォルト: 0)
+
+=item B<-c> I<count>
+
+繰り返し送信する回数の設定。(デフォルト: 1)
+
+=item B<-i> I<wait>
+
+interval time for continuous transmissions [msec] (デフォルト: 0)
+
+=item B<-v>
+
+冗長モード。SOAPメッセージ内容の表示。
+
+=item B<-o>
+
+OpenSOAPサーバ経由。
+
+(http://host/cgi-bin/soapInterface.cgi)
+
+=item URL
+
+Soapingサービスのエンドポイント。
+
+(デフォルト: http://localhost/cgi-bin/SoapingService.cgi)
+
+=item host
+
+エンドポイントをホスト名で指定 (デフォルト: localhot)。
+URLは次のようになります:
+
+http://host/cgi-bin/SoapingService.cgi
+
+http://host/cgi-bin/soapInterface.cgi (-oの場合、サーバ経由)
+
+=head1 関連項目
+
+opensoap-server-ctl(8)
+
+=head1 バグ
+
+タイムアウトはまだ扱えません。
+
+=cut

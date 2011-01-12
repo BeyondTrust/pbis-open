@@ -1,0 +1,30 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: OpenSOAP.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/OpenSOAP.h
+ * @brief OpenSOAP API 初期化/終了
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+	 * @fn int OpenSOAPInitialize(void *param)
+	 * @brief OpenSOAP APIを使用する際の各初期化処理を行います。
+	 * @param
+	 *   param	オプションパラメータ. 現バージョンではNULLでsetlocale()をcallする．
+	 * @return
+	 *    エラーコード.
+	 */
+    /**
+	 * @fn int OpenSOAPUltimate(void)
+	 * @brief OpenSOAP APIを使用した際の領域の開放を行います。
+	 * @return
+	 *    エラーコード.
+	 */

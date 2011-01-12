@@ -1,0 +1,156 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: XMLAttr.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/XMLAttr.h
+ * @brief OpenSOAP API XML 属性処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPXMLAttr OpenSOAPXMLAttr
+     * @brief OpenSOAPXMLAttr 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPXMLAttr *OpenSOAPXMLAttrPtr
+     * @brief OpenSOAPXMLAttr ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPXMLAttrCreateMB(const char * attr_name, OpenSOAPXMLAttrPtr * attr)
+      * @brief OpenSOAP XML 属性 インスタンス生成(MB)
+      *
+      * OpenSOAP XML Attribute のインスタンスを生成します。
+      * @param
+      *    attr_name const char * [in] ((|attr_name|)) OpenSOAP XML 属性名
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML 属性ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrCreateWC(const wchar_t * attr_name, OpenSOAPXMLAttrPtr * attr)
+      * @brief OpenSOAP XML 属性 インスタンス生成(WC)
+      *
+      * OpenSOAP XML Attribute のインスタンスを生成します。
+      * @param
+      *    attr_name const wchar_t * [in] ((|attr_name|)) OpenSOAP XML 属性名
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML 属性ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrSetNamespaceMB(OpenSOAPXMLAttrPtr elm, const char * ns_uri, const char * ns_prefix)
+      * @brief 属性のNamespaceの設定(MB)
+      *
+      * 属性にNamespaceを設定します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    ns_uri const char * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const char * [in] ((|ns_prefix|)) Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrSetNamespaceWC(OpenSOAPXMLAttrPtr elm, const wchar_t * ns_uri, const wchar_t * ns_prefix)
+      * @brief 属性のNamespaceの設定(WC)
+      *
+      * 属性にNamespaceを設定します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    ns_uri const wchar_t * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrGetNamespace(OpenSOAPXMLAttrPtr elm, OpenSOAPXMLNamespacePtr * ns)
+      * @brief 属性のNamespaceの取得
+      *
+      * 属性のNamespaceを取得します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in, out] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrGetValueMB(OpenSOAPXMLAttrPtr elm, const char * type_name, void * value)
+      * @brief 属性の値の取得(MB)
+      *
+      * 属性の値を取得します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    type_name const char * [in] ((|type_name|)) タイプ名
+      * @param
+      *    value void * [out] ((|value|)) 値格納バッファへのポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrGetValueWC(OpenSOAPXMLAttrPtr elm, const wchar_t * type_name, void * value)
+      * @brief 属性の値の取得(WC)
+      *
+      * 属性の値を取得します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) タイプ名
+      * @param
+      *    value void * [out] ((|value|)) 値格納バッファへのポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrSetValueMB(OpenSOAPXMLAttrPtr elm, const char * type_name, void * value)
+      * @brief 属性の値の設定(MB)
+      *
+      * 属性の値を設定します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    type_name const char * [in] ((|type_name|)) タイプ名
+      * @param
+      *    value void * [in] ((|value|)) 値格納バッファへのポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrSetValueWC(OpenSOAPXMLAttrPtr elm, const wchar_t * type_name, void * value)
+      * @brief 属性の値の設定(WC)
+      *
+      * 属性の値を設定します。
+      * @param
+      *    elm OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML 属性
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) タイプ名
+      * @param
+      *    value void * [in] ((|value|)) 値格納バッファへのポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPXMLAttrGetName(OpenSOAPXMLAttrPtr attr, OpenSOAPStringPtr * name)
+      * @brief 属性名の取得
+      *
+      * 属性ポインタから属性の名前を取得します。
+      * @param
+      *    attr OpenSOAPXMLAttrPtr [in] ((|attr|)) OpenSOAP XML 属性
+      * @param
+      *    name OpenSOAPStringPtr * [out] ((|name|)) OpenSOAP 属性名
+      * @return
+      *    エラーコード
+      */

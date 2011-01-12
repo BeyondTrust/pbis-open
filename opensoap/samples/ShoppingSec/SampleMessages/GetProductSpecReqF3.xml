@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <m:GetProductSpec
+         xmlns:m="http://services.opensoap.jp/samples/Shopping/">
+            <index>20</index>
+        </m:GetProductSpec>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

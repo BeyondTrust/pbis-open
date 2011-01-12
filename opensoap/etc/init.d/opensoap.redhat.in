@@ -1,0 +1,93 @@
+#!/bin/bash
+#
+# Startup script for the OpenSOAP Server
+#
+# chkconfig: - 86 14
+# description: OpenSOAP is an Web Service server.
+# processname: 
+# pidfile: 
+# config: /etc/opensoap/server.conf
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+if [ -f /etc/sysconfig/opensoap ]; then
+        . /etc/sysconfig/opensoap
+fi
+
+# Path to the opensoap-server-ctl script, server binary,
+# and short-form for messages.
+opensoapserverctl=@sbindir@/opensoap-server-ctl
+prog=opensoap
+RETVAL=0
+
+start() {
+        echo -n $"Starting $prog: "
+	if [ -f /var/lock/subsys/opensoap ]; then
+	    RETVAL=1
+	else
+	    $opensoapserverctl start > /dev/null
+	    RETVAL=$?
+	fi
+        [ $RETVAL = 0 ] && touch /var/lock/subsys/opensoap
+	[ "$RETVAL" -eq 0 ] && success $"$prog startup" || failure $"$prog startup"
+	echo
+        return $RETVAL
+}
+stop() {
+	echo -n $"Stopping $prog: "
+        $opensoapserverctl stop > /dev/null 2>&1
+	RETVAL=$?
+	if [ -f /var/lock/subsys/opensoap ]; then
+	    rm -f /var/lock/subsys/opensoap
+	else
+	    RETVAL=1
+	fi
+	[ "$RETVAL" -eq 0 ] && success $"$prog stop" || failure $"$prog stop"
+	echo
+	return $RETVAL
+}
+reload() {
+	echo -n $"Reloading $prog: "
+	$opensoapserverctl reload > /dev/null
+	RETVAL=$?
+	[ "$RETVAL" -eq 0 ] && success $"$prog reload" || failure $"$prog reload"
+	echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+#  status)
+#        status $opensoapserverctl
+#	RETVAL=$?
+#	;;
+  restart)
+	stop
+	start
+	;;
+  condrestart)
+	if [ -f  /var/lock/subsys/opensoap ] ; then
+		stop
+		start
+	fi
+	;;
+  reload)
+        reload
+	;;
+#  graceful|help|configtest|fullstatus)
+  help)
+	$opensoapserverctl $@
+	RETVAL=$?
+	;;
+  *)
+	echo $"Usage: $prog {start|stop|restart|condrestart|reload|help}"
+	exit 1
+esac
+
+exit $RETVAL

@@ -1,0 +1,34 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Locale.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Locale.h
+ * @brief OpenSOAP API ロケール処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+      * @fn int OpenSOAPLocaleGetCurrentCodeset(const char **codeset)
+      * @brief クライアントのコードセットを取得します。
+      * @param
+      *    codeset const char ** [out] ((|codeset|)) コードセットの格納バッファ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPLocaleIsCurrentCodeset(const char *codeset, int *isCurrentCodeset)
+      * @brief 現在のコードセットと比較します。
+      * @param
+      *    codeset const char * [in] ((|codeset|)) コードセット
+      * @param
+      *    isCurrentCodeset int * [out] ((|isCurrentCodeset|)) 比較結果バッファ. コードセットが現在のものと同一だった場合は非0. それ以外の場合は0.
+      * @return
+      *    エラーコード
+      */

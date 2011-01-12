@@ -1,0 +1,245 @@
+.TH "XMLAttr.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+XMLAttr.h \- OpenSOAP API XML Attribute Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/XMLNamespace.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPXMLAttr \fBOpenSOAPXMLAttr\fP"
+.br
+.RI "\fIOpenSOAPXMLAttr Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPXMLAttr\fP * \fBOpenSOAPXMLAttrPtr\fP"
+.br
+.RI "\fIOpenSOAPXMLAttr Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrCreateMB\fP (const char *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIOpenSOAP XML Attribute Instance Create(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrCreateWC\fP (const wchar_t *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIOpenSOAP XML Attribute Instance Create(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrSetNamespaceMB\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const char *ns_uri, const char *ns_prefix)"
+.br
+.RI "\fISet Namespace of XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrSetNamespaceWC\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t *ns_uri, const wchar_t *ns_prefix)"
+.br
+.RI "\fISet Namespace of XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrGetNamespace\fP (\fBOpenSOAPXMLAttrPtr\fP elm, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIGet Namespace of XML Element. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrGetValueMB\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const char *type_name, void *value)"
+.br
+.RI "\fIGet Value of XML Attribute(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrGetValueWC\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t *type_name, void *value)"
+.br
+.RI "\fIGet Value of XML Attribute(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrSetValueMB\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const char *type_name, void *value)"
+.br
+.RI "\fISet Value of XML Attribute(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrSetValueWC\fP (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t *type_name, void *value)"
+.br
+.RI "\fISet Value of XML Attribute(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPXMLAttrGetName\fP (\fBOpenSOAPXMLAttrPtr\fP attr, \fBOpenSOAPStringPtr\fP *name)"
+.br
+.RI "\fIGet of SOAP Attribute Name. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API XML Attribute Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPXMLAttrCreateMB (const char * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+OpenSOAP XML Attribute Instance Create(MB). \fBParameters:\fP
+.RS 4
+\fIattr_name\fP const char * [in] ((|attr_name|)) XML Attribute name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) XML Attribute pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrCreateWC (const wchar_t * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+OpenSOAP XML Attribute Instance Create(WC). \fBParameters:\fP
+.RS 4
+\fIattr_name\fP const wchar_t * [in] ((|attr_name|)) XML Attribute name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) XML Attribute pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrGetName (\fBOpenSOAPXMLAttrPtr\fP attr, \fBOpenSOAPStringPtr\fP * name)"
+.PP
+Get of SOAP Attribute Name. \fBParameters:\fP
+.RS 4
+\fIattr\fP OpenSOAPXMLAttrPtr [in] ((|attr|)) SOAP Attribute Pointer 
+.br
+\fIname\fP OpenSOAPStringPtr * [out] ((|name|)) Result Name of SOAP Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrGetNamespace (\fBOpenSOAPXMLAttrPtr\fP elm, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Get Namespace of XML Element. \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in, out] ((|elm|)) XML Attribute 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrGetValueMB (\fBOpenSOAPXMLAttrPtr\fP elm, const char * type_name, void * value)"
+.PP
+Get Value of XML Attribute(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML Attribute 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrGetValueWC (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t * type_name, void * value)"
+.PP
+Get Value of XML Attribute(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML Attribute 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrSetNamespaceMB (\fBOpenSOAPXMLAttrPtr\fP elm, const char * ns_uri, const char * ns_prefix)"
+.PP
+Set Namespace of XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in, out] ((|elm|)) XML Attribute 
+.br
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrSetNamespaceWC (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t * ns_uri, const wchar_t * ns_prefix)"
+.PP
+Set Namespace of XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in, out] ((|elm|)) XML Attribute 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrSetValueMB (\fBOpenSOAPXMLAttrPtr\fP elm, const char * type_name, void * value)"
+.PP
+Set Value of XML Attribute(MB). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML Attribute 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPXMLAttrSetValueWC (\fBOpenSOAPXMLAttrPtr\fP elm, const wchar_t * type_name, void * value)"
+.PP
+Set Value of XML Attribute(WC). \fBParameters:\fP
+.RS 4
+\fIelm\fP OpenSOAPXMLAttrPtr [in] ((|elm|)) OpenSOAP XML Attribute 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head><meta http-equiv="Content-Type" content="text/html;charset=euc-jp">
+<title>OpenSOAP: ByteArray.h Source File</title>
+<link href="doxygen.css" rel="stylesheet" type="text/css">
+</head><body>
+<!-- 作成： Doxygen 1.3.6 -->
+<div class="qindex"><a class="qindex" href="index.html">メインページ</a> | <a class="qindex" href="files.html">ファイル一覧</a> | <a class="qindex" href="globals.html">ファイルメンバ</a></div>
+<h1>ByteArray.h</h1><a href="ByteArray_8h.html">説明を見る。</a><div class="fragment"><pre>00001 <span class="comment">/* -*- mode: c++; -*-</span>
+00002 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00003 <span class="comment"> * $RCSfile: ByteArray.h,v $</span>
+00004 <span class="comment"> *</span>
+00005 <span class="comment"> * See Copyright for the status of this software.</span>
+00006 <span class="comment"> *</span>
+00007 <span class="comment"> * The OpenSOAP Project</span>
+00008 <span class="comment"> * http://opensoap.jp/</span>
+00009 <span class="comment"> *-----------------------------------------------------------------------------</span>
+00010 <span class="comment"> */</span>
+00221 <span class="preprocessor">#ifndef OpenSOAP_ByteArray_H</span>
+00222 <span class="preprocessor"></span><span class="preprocessor">#define OpenSOAP_ByteArray_H</span>
+00223 <span class="preprocessor"></span>
+00224 <span class="preprocessor">#include &lt;stdlib.h&gt;</span>
+00225 <span class="preprocessor">#include &lt;sys/types.h&gt;</span>
+00226 
+00227 <span class="preprocessor">#include &lt;<a class="code" href="Defines_8h.html">OpenSOAP/Defines.h</a>&gt;</span>
+00228 <span class="preprocessor">#include &lt;<a class="code" href="ErrorCode_8h.html">OpenSOAP/ErrorCode.h</a>&gt;</span>
+00229 
+00230 <span class="preprocessor">#ifdef __cplusplus</span>
+00231 <span class="preprocessor"></span><span class="keyword">extern</span> <span class="stringliteral">"C"</span> {
+00232 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00233 
+<a name="l00234"></a><a class="code" href="ByteArray_8h.html#a1">00234</a>     <span class="keyword">typedef</span> <span class="keyword">struct </span>tagOpenSOAPByteArray <a class="code" href="ByteArray_8h.html#a1">OpenSOAPByteArray</a>;
+00235 
+<a name="l00236"></a><a class="code" href="ByteArray_8h.html#a2">00236</a>     <span class="keyword">typedef</span> <a class="code" href="ByteArray_8h.html#a1">OpenSOAPByteArray</a>    *<a class="code" href="ByteArray_8h.html#a2">OpenSOAPByteArrayPtr</a>;
+00237 
+00238     <span class="keywordtype">int</span>
+00239     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00240     <a class="code" href="ByteArray_8h.html#a3">OpenSOAPByteArrayCreate</a>(OpenSOAPByteArrayPtr * <span class="comment">/* [out] */</span> b_ary);
+00241 
+00242     <span class="keywordtype">int</span>
+00243     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00244     <a class="code" href="ByteArray_8h.html#a4">OpenSOAPByteArrayCreateWithData</a>(<span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> * <span class="comment">/* [in] */</span> data,
+00245                                     size_t <span class="comment">/* [in] */</span> sz,
+<a name="l00246"></a><a class="code" href="ByteArray_8h.html#a0">00246</a>                                     OpenSOAPByteArrayPtr * <span class="comment">/* [out] */</span> b_ary);
+00247 
+00248 <span class="preprocessor">    #define OpenSOAPByteArrayCreateWithSize(sz, b_ary) OpenSOAPByteArrayCreateWithData(0, (sz), (b_ary))</span>
+00249 <span class="preprocessor"></span>
+00250     <span class="keywordtype">int</span>
+00251     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00252     <a class="code" href="ByteArray_8h.html#a5">OpenSOAPByteArrayAppendRef</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary);
+00253 
+00254     <span class="keywordtype">int</span>
+00255     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00256     <a class="code" href="ByteArray_8h.html#a6">OpenSOAPByteArrayRelease</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary);
+00257 
+00258     <span class="keywordtype">int</span>
+00259     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00260     <a class="code" href="ByteArray_8h.html#a7">OpenSOAPByteArrayGetSize</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00261                              size_t * <span class="comment">/* [out] */</span> sz);
+00262 
+00263     <span class="keywordtype">int</span>
+00264     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00265     <a class="code" href="ByteArray_8h.html#a8">OpenSOAPByteArrayBeginConst</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00266                                 <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span>beg);
+00267     
+00268     <span class="keywordtype">int</span>
+00269     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00270     <a class="code" href="ByteArray_8h.html#a9">OpenSOAPByteArrayEndConst</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00271                               <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span>ed);
+00272     
+00273     <span class="keywordtype">int</span>
+00274     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00275     <a class="code" href="ByteArray_8h.html#a10">OpenSOAPByteArrayGetBeginSizeConst</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00276                                        <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> beg,
+00277                                        size_t * <span class="comment">/* [out] */</span> sz);
+00278 
+00279     <span class="keywordtype">int</span>
+00280     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00281     <a class="code" href="ByteArray_8h.html#a11">OpenSOAPByteArrayGetBeginEndConst</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00282                                       <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> beg,
+00283                                       <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> ed);
+00284     
+00285     <span class="keywordtype">int</span>
+00286     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00287     <a class="code" href="ByteArray_8h.html#a12">OpenSOAPByteArrayBegin</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00288                            <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span>beg);
+00289     
+00290     <span class="keywordtype">int</span>
+00291     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00292     <a class="code" href="ByteArray_8h.html#a13">OpenSOAPByteArrayEnd</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00293                          <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span>ed);
+00294 
+00295     <span class="keywordtype">int</span>
+00296     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00297     <a class="code" href="ByteArray_8h.html#a14">OpenSOAPByteArrayGetBeginSize</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00298                                   <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> beg,
+00299                                   size_t * <span class="comment">/* [out] */</span> sz);
+00300 
+00301     <span class="keywordtype">int</span>
+00302     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00303     <a class="code" href="ByteArray_8h.html#a15">OpenSOAPByteArrayGetBeginEnd</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00304                                  <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> beg,
+00305                                  <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> ** <span class="comment">/* [out] */</span> ed);
+00306     
+00307     <span class="keywordtype">int</span>
+00308     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00309     <a class="code" href="ByteArray_8h.html#a16">OpenSOAPByteArrayClear</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary);
+00310 
+00311     <span class="keywordtype">int</span>
+00312     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00313     <a class="code" href="ByteArray_8h.html#a17">OpenSOAPByteArraySetData</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in, out] */</span> b_ary,
+00314                              <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> * <span class="comment">/* [in] */</span> data,
+00315                              size_t <span class="comment">/* [in] */</span> sz);
+00316     
+00317     <span class="keywordtype">int</span>
+00318     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00319     <a class="code" href="ByteArray_8h.html#a18">OpenSOAPByteArrayAppend</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00320                             <span class="keyword">const</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">char</span> *dat,
+00321                             size_t       dat_len);
+00322 
+00323     <span class="keywordtype">int</span>
+00324     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00325     <a class="code" href="ByteArray_8h.html#a19">OpenSOAPByteArrayResize</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in, out] */</span> b_ary,
+00326                             size_t       <span class="comment">/* [in] */</span> new_size);
+00327 
+00328     <span class="keywordtype">int</span>
+00329     <a class="code" href="Defines_8h.html#a0">OPENSOAP_API</a>
+00330     <a class="code" href="ByteArray_8h.html#a20">OpenSOAPByteArrayDuplicate</a>(OpenSOAPByteArrayPtr <span class="comment">/* [in] */</span> b_ary,
+00331                                OpenSOAPByteArrayPtr * <span class="comment">/* [out] */</span> dup_b_ary);
+00332 
+00333 <span class="preprocessor">#ifdef __cplusplus</span>
+00334 <span class="preprocessor"></span>}
+00335 <span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span>
+00336 
+00337 <span class="preprocessor">#endif </span><span class="comment">/* OpenSOAP_ByteArray_H */</span>
+</pre></div><hr size="1"><address style="align: right;"><small>OpenSOAPに対してMon Oct 18 18:29:47 2004に生成されました。
+<a href="http://www.doxygen.org/index.html">
+<img src="doxygen.png" alt="doxygen" align="middle" border=0 > </a>1.3.6 </small></address>
+</body>
+</html>

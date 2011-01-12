@@ -1,0 +1,722 @@
+.TH "Block.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Block.h \- OpenSOAP API Block Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/XMLElm.h>\fP
+.br
+\fC#include <OpenSOAP/XMLNamespace.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPBlock \fBOpenSOAPBlock\fP"
+.br
+.RI "\fIOpenSOAPBlock Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPBlock\fP * \fBOpenSOAPBlockPtr\fP"
+.br
+.RI "\fIOpenSOAPBlock Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetValueMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *type_name, void *value)"
+.br
+.RI "\fIGet Value of SOAP Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetValueWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *type_name, void *value)"
+.br
+.RI "\fIGet Value of SOAP Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetValueMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *type_name, void *value)"
+.br
+.RI "\fISet Value of SOAP Block(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetValueWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *type_name, void *value)"
+.br
+.RI "\fISet Value of SOAP Block(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetNamespaceMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *ns_uri, const char *ns_prefix)"
+.br
+.RI "\fISet Namespace(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetNamespaceWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *ns_uri, const wchar_t *ns_prefix)"
+.br
+.RI "\fISet Namespace(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetNamespace\fP (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPXMLNamespacePtr\fP *ns)"
+.br
+.RI "\fIGet Namespace. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockIsSameNamespaceMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *ns_uri, int *is_same_uri)"
+.br
+.RI "\fIJudge Namespace(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockIsSameNamespaceWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *ns_uri, int *is_same_uri)"
+.br
+.RI "\fIJudge Namespace(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockAddAttributeMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *attr_name, const char *attr_type, void *attr_value, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIAdd and Set Attribute(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockAddAttributeWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *attr_name, const wchar_t *attr_type, void *attr_value, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIAdd and Set Attribute(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetAttributeMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIGet Value of Attribute(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetAttributeWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *attr_name, \fBOpenSOAPXMLAttrPtr\fP *attr)"
+.br
+.RI "\fIGet Value of Attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetChildValueMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *p_name, const char *type_name, void *value)"
+.br
+.RI "\fIGet Parameter Value(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetChildValueWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *p_name, const wchar_t *type_name, void *value)"
+.br
+.RI "\fIGet Child Value(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetChildValueMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *p_name, const char *type_name, void *value)"
+.br
+.RI "\fISet Parameter Value(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetChildValueWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *p_name, const wchar_t *type_name, void *value)"
+.br
+.RI "\fISet Parameter Value(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetNextChild\fP (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPXMLElmPtr\fP *xml_elm)"
+.br
+.RI "\fIGet next child Block. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockAddChildMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *elm_name, \fBOpenSOAPXMLElmPtr\fP *xml_elm)"
+.br
+.RI "\fIAdd Child XML Element(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockAddChildWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *elm_name, \fBOpenSOAPXMLElmPtr\fP *xml_elm)"
+.br
+.RI "\fIAdd Child XML Element(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetChildMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *elm_name, \fBOpenSOAPXMLElmPtr\fP *xml_elm)"
+.br
+.RI "\fIGet The Child with Matching Name(MB). Get first if more than one. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetChildWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *elm_name, \fBOpenSOAPXMLElmPtr\fP *xml_elm)"
+.br
+.RI "\fIGet The Child with Matching Name(WC). Get first if more than one. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetMustunderstandAttr\fP (\fBOpenSOAPBlockPtr\fP soap_block, int *must_std)"
+.br
+.RI "\fIGet mustunderstand attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetMustunderstandAttr\fP (\fBOpenSOAPBlockPtr\fP soap_block)"
+.br
+.RI "\fISet mustunderstand attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockClearMustunderstandAttr\fP (\fBOpenSOAPBlockPtr\fP soap_block)"
+.br
+.RI "\fIClear mustunderstand attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetActorAttr\fP (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPStringPtr\fP *actor_url)"
+.br
+.RI "\fIGet actor attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetActorAttrMB\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *actor_url)"
+.br
+.RI "\fISet actor attribute.(MB). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetActorAttrWC\fP (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t *actor_url)"
+.br
+.RI "\fISet actor attribute.(WC). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockClearActorAttr\fP (\fBOpenSOAPBlockPtr\fP soap_block)"
+.br
+.RI "\fIClear actor attribute. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockSetActorAttrNext\fP (\fBOpenSOAPBlockPtr\fP soap_block)"
+.br
+.RI "\fISet actor attribute to next. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockIsActorAttrNext\fP (\fBOpenSOAPBlockPtr\fP soap_block, int *is_actor_next)"
+.br
+.RI "\fIIs actor attribute to next. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetName\fP (\fBOpenSOAPBlockPtr\fP block, \fBOpenSOAPStringPtr\fP *name)"
+.br
+.RI "\fIGet SOAP Block Name. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPBlockGetCharEncodingString\fP (\fBOpenSOAPBlockPtr\fP soap_block, const char *ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.br
+.RI "\fISoap block character encoding output. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Block Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPBlockAddAttributeMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * attr_name, const char * attr_type, void * attr_value, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Add and Set Attribute(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) 
+.br
+\fIattr_name\fP const char * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr_type\fP const char * [in] ((|attr_type|)) Attribute Type 
+.br
+\fIattr_value\fP void * [in] ((|attr_value|)) Attribute Value 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockAddAttributeWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * attr_name, const wchar_t * attr_type, void * attr_value, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Add and Set Attribute(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIattr_name\fP const wchar_t * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr_type\fP const wchar_t * [in] ((|attr_type|)) Attribute Type 
+.br
+\fIattr_value\fP void * [in] ((|attr_value|)) Attribute Value 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockAddChildMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * elm_name, \fBOpenSOAPXMLElmPtr\fP * xml_elm)"
+.PP
+Add Child XML Element(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIelm_name\fP const char * [in] ((|elm_name|)) Child XML Element Name 
+.br
+\fIxml_elm\fP OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockAddChildWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * elm_name, \fBOpenSOAPXMLElmPtr\fP * xml_elm)"
+.PP
+Add Child XML Element(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIelm_name\fP const wchar_t * [in] ((|elm_name|)) Child XML Element Name 
+.br
+\fIxml_elm\fP OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockClearActorAttr (\fBOpenSOAPBlockPtr\fP soap_block)"
+.PP
+Clear actor attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockClearMustunderstandAttr (\fBOpenSOAPBlockPtr\fP soap_block)"
+.PP
+Clear mustunderstand attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetActorAttr (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPStringPtr\fP * actor_url)"
+.PP
+Get actor attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soapBlock|)) SOAP Block 
+.br
+\fIactor_url\fP OpenSOAPStringPtr * [out] ((|actorUri|)) actor attribute value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetAttributeMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Get Value of Attribute(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIattr_name\fP const char * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetAttributeWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * attr_name, \fBOpenSOAPXMLAttrPtr\fP * attr)"
+.PP
+Get Value of Attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIattr_name\fP const wchar_t * [in] ((|attr_name|)) Attribute Name 
+.br
+\fIattr\fP OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetCharEncodingString (\fBOpenSOAPBlockPtr\fP soap_block, const char * ch_enc, \fBOpenSOAPByteArrayPtr\fP b_ary)"
+.PP
+Soap block character encoding output. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP Block 
+.br
+\fIch_enc\fP const char * [in] ((|ch_enc|)) character encoding. (i.e. 'EUC-JP', 'Shift_JIS', 'UTF-8') 
+.br
+\fIb_ary\fP OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetChildMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * elm_name, \fBOpenSOAPXMLElmPtr\fP * xml_elm)"
+.PP
+Get The Child with Matching Name(MB). Get first if more than one. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIelm_name\fP const char * [in] ((|elm_name|)) Name of XML Element 
+.br
+\fIxml_elm\fP OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetChildValueMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * p_name, const char * type_name, void * value)"
+.PP
+Get Parameter Value(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIp_name\fP const char * [in] ((|p_name|)) Parameter Name 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Parameter Type 
+.br
+\fIvalue\fP void * [out] ((|value|)) Parameter Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetChildValueWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * p_name, const wchar_t * type_name, void * value)"
+.PP
+Get Child Value(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIp_name\fP const wchar_t * [in] ((|p_name|)) Parameter Name 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Parameter Type 
+.br
+\fIvalue\fP void * [out] ((|value|)) Parameter Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetChildWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * elm_name, \fBOpenSOAPXMLElmPtr\fP * xml_elm)"
+.PP
+Get The Child with Matching Name(WC). Get first if more than one. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIelm_name\fP const wchar_t * [in] ((|elm_name|)) Name of Child XML Element 
+.br
+\fIxml_elm\fP OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetMustunderstandAttr (\fBOpenSOAPBlockPtr\fP soap_block, int * must_std)"
+.PP
+Get mustunderstand attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block 
+.br
+\fImust_std\fP int * [out] ((|must_std|)) mustunderstand return buffer pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetName (\fBOpenSOAPBlockPtr\fP block, \fBOpenSOAPStringPtr\fP * name)"
+.PP
+Get SOAP Block Name. \fBParameters:\fP
+.RS 4
+\fIblock\fP OpenSOAPBlockPtr [in] ((|block|)) SOAP Block Pointer 
+.br
+\fIname\fP OpenSOAPStringPtr * [out] ((|name|)) Result Name of SOAP Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetNamespace (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPXMLNamespacePtr\fP * ns)"
+.PP
+Get Namespace. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIns\fP OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetNextChild (\fBOpenSOAPBlockPtr\fP soap_block, \fBOpenSOAPXMLElmPtr\fP * xml_elm)"
+.PP
+Get next child Block. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIxml_elm\fP OpenSOAPXMLElmPtr * [in, out] ((|xml_elm|)) OpenSOAP XML Element. If *xml_elm is NULL, the first child is returned 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetValueMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * type_name, void * value)"
+.PP
+Get Value of SOAP Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockGetValueWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * type_name, void * value)"
+.PP
+Get Value of SOAP Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [out] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockIsActorAttrNext (\fBOpenSOAPBlockPtr\fP soap_block, int * is_actor_next)"
+.PP
+Is actor attribute to next. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIis_actor_next\fP int * [out] ((|is_actor_next|)) judge result 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockIsSameNamespaceMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * ns_uri, int * is_same_uri)"
+.PP
+Judge Namespace(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block 
+.br
+\fIns_uri\fP OpenSOAPStringPtr [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIis_same_uri\fP int * [out] ((|is_same_uri|)) judge result buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockIsSameNamespaceWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * ns_uri, int * is_same_uri)"
+.PP
+Judge Namespace(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIis_same_uri\fP int * [out] ((|is_same_uri|)) judge result buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetActorAttrMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * actor_url)"
+.PP
+Set actor attribute.(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIactor_url\fP const char * [in] ((|actor_url|)) actor attribute value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetActorAttrNext (\fBOpenSOAPBlockPtr\fP soap_block)"
+.PP
+Set actor attribute to next. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soapBlock|)) SOAP Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetActorAttrWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * actor_url)"
+.PP
+Set actor attribute.(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIactor_url\fP const wchar_t * [in] ((|actor_url|)) actor attribute value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetChildValueMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * p_name, const char * type_name, void * value)"
+.PP
+Set Parameter Value(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIp_name\fP const char * [in] ((|p_name|)) Parameter Name 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Parameter Type 
+.br
+\fIvalue\fP void * [in] ((|value|)) Parameter Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetChildValueWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * p_name, const wchar_t * type_name, void * value)"
+.PP
+Set Parameter Value(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIp_name\fP const wchar_t * [in] ((|p_name|)) Parameter Name 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Parameter Type 
+.br
+\fIvalue\fP void * [in] ((|value|)) Parameter Value 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetMustunderstandAttr (\fBOpenSOAPBlockPtr\fP soap_block)"
+.PP
+Set mustunderstand attribute. \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetNamespaceMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * ns_uri, const char * ns_prefix)"
+.PP
+Set Namespace(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIns_uri\fP const char * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const char * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetNamespaceWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * ns_uri, const wchar_t * ns_prefix)"
+.PP
+Set Namespace(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block 
+.br
+\fIns_uri\fP const wchar_t * [in] ((|ns_uri|)) Namespace URI 
+.br
+\fIns_prefix\fP const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetValueMB (\fBOpenSOAPBlockPtr\fP soap_block, const char * type_name, void * value)"
+.PP
+Set Value of SOAP Block(MB). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block 
+.br
+\fItype_name\fP const char * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPBlockSetValueWC (\fBOpenSOAPBlockPtr\fP soap_block, const wchar_t * type_name, void * value)"
+.PP
+Set Value of SOAP Block(WC). \fBParameters:\fP
+.RS 4
+\fIsoap_block\fP OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block 
+.br
+\fItype_name\fP const wchar_t * [in] ((|type_name|)) Type Name 
+.br
+\fIvalue\fP void * [in] ((|value|)) Storage Buffer Pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

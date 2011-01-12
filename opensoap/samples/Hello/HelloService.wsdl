@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!-- HelloService WSDL by OpenSOAP Project http://opensoap.jp -->
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:y="http://services.opensoap.jp/samples/Hello/" targetNamespace="http://services.opensoap.jp/samples/Hello/">
+	<message name="HelloResponse">
+		<part name="Reply" type="xs:string"/>
+	</message>
+	<message name="Hello">
+		<part name="MyName" type="xs:string"/>
+	</message>
+	<portType name="HelloPort">
+		<operation name="Hello">
+			<input message="y:Hello"/>
+			<output message="y:HelloResponse"/>
+		</operation>
+	</portType>
+	<binding name="HelloBinding" type="y:HelloPort">
+		<soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+		<operation name="Hello">
+			<input>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/Hello/"/>
+			</input>
+			<output>
+				<soap:body use="literal" namespace="http://services.opensoap.jp/samples/Hello/"/>
+			</output>
+		</operation>
+	</binding>
+	<service name="HelloOpenSOAP">
+		<port name="HelloPort" binding="y:HelloBinding">
+			<soap:address location="http://services.opensoap.jp/cgi-bin/HelloService.cgi"/>
+		</port>
+	</service>
+</definitions>

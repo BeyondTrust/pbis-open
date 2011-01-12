@@ -1,0 +1,8 @@
+HKCR
+{
+	{77E3DEAF-317F-4eeb-ACCF-7BA960D85CC1} = s 'DivideDll'
+	'DivideDll.DLL'
+	{
+		val AppID = s {77E3DEAF-317F-4eeb-ACCF-7BA960D85CC1}
+	}
+}

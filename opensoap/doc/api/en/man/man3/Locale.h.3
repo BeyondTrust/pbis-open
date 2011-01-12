@@ -1,0 +1,67 @@
+.TH "Locale.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Locale.h \- OpenSOAP API Locale Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/Defines.h>\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPLocaleGetCurrentCodeset\fP (const char **codeset)"
+.br
+.RI "\fIGet Current Codeset. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPLocaleIsCurrentCodeset\fP (const char *codeset, int *isCurrentCodeset)"
+.br
+.RI "\fICompare with current codeset. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Locale Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPLocaleGetCurrentCodeset (const char ** codeset)"
+.PP
+Get Current Codeset. \fBParameters:\fP
+.RS 4
+\fIcodeset\fP const char ** [out] ((|codeset|)) codeset return buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPLocaleIsCurrentCodeset (const char * codeset, int * isCurrentCodeset)"
+.PP
+Compare with current codeset. \fBParameters:\fP
+.RS 4
+\fIcodeset\fP const char * [in] ((|codeset|)) codeset 
+.br
+\fIisCurrentCodeset\fP int * [out] ((|isCurrentCodeset|)) Result return buffer. If codeset is current codeset then non-zero. Otherwise zero. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

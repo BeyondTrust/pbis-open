@@ -1,0 +1,413 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Block.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Block.h
+ * @brief OpenSOAP API SOAPブロック処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPBlock OpenSOAPBlock
+     * @brief OpenSOAPBlock 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPBlock *OpenSOAPBlockPtr
+     * @brief OpenSOAPBlock ポインタ型定義
+     */
+    /**
+      * @fn int OpenSOAPBlockGetValueMB(OpenSOAPBlockPtr soap_block, const char * type_name, void * value)
+      * @brief Body/Header Block直下の値を取得します。(MB)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block
+      * @param
+      *    type_name const char * [in] ((|type_name|)) Type Name
+      * @param
+      *    value void * [out] ((|value|)) Storage Buffer Pointer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetValueWC(OpenSOAPBlockPtr soap_block, const wchar_t * type_name, void * value)
+      * @brief Body/Header Block直下の値を取得します。(WC)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) Type Name
+      * @param
+      *    value void * [out] ((|value|)) Storage Buffer Pointer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetValueMB(OpenSOAPBlockPtr soap_block, const char * type_name, void * value)
+      * @brief SOAP Blockへの値の設定を行います。(MB)
+      * 
+      * Valueをtype_nameでSerializeした結果をsoap_blockへ格納します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block
+      * @param
+      *    type_name const char * [in] ((|type_name|)) Type Name
+      * @param
+      *    value void * [in] ((|value|)) Storage Buffer Pointer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetValueWC(OpenSOAPBlockPtr soap_block, const wchar_t * type_name, void * value)
+      * @brief SOAP Blockへの値の設定を行います。(WC)
+      * 
+      * Valueをtype_nameでSerializeした結果をsoap_blockへ格納します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP SOAP Block
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) Type Name
+      * @param
+      *    value void * [in] ((|value|)) Storage Buffer Pointer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetNamespaceMB(OpenSOAPBlockPtr soap_block, const char * ns_uri, const char * ns_prefix)
+      * @brief マルチバイト文字列でSOAP Block に Namespaceを設定します。
+      * 
+      * （ns_prifix/ns_uriをsoap_blockへ格納します。）
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    ns_uri const char * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const char * [in] ((|ns_prefix|)) Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetNamespaceWC(OpenSOAPBlockPtr soap_block, const wchar_t * ns_uri, const wchar_t * ns_prefix)
+      * @brief ワイドキャラクタ文字列でSOAP Block に Namespaceを設定します。
+      * 
+      * （ns_prifix/ns_uriをsoap_blockへ格納します。）
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    ns_uri const wchar_t * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    ns_prefix const wchar_t * [in] ((|ns_prefix|)) Namespace Prefix
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetNamespace(OpenSOAPBlockPtr soap_block, OpenSOAPXMLNamespacePtr * ns)
+      * @brief NamespaceポインタにSOAP BlockのNamespaceを格納します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    ns OpenSOAPXMLNamespacePtr * [out] ((|ns|)) Namespace
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockIsSameNamespaceMB(OpenSOAPBlockPtr soap_block, const char * ns_uri, int * is_same_uri)
+      * @brief マルチバイト文字列でNamespaceのURIを比較判定します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block
+      * @param
+      *    ns_uri OpenSOAPStringPtr [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    is_same_uri int * [out] ((|is_same_uri|)) judge result buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockIsSameNamespaceWC(OpenSOAPBlockPtr soap_block, const wchar_t * ns_uri, int * is_same_uri)
+      * @brief ワイドキャラクタ文字列でNamespaceのURIを比較判定します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block
+      * @param
+      *    ns_uri const wchar_t * [in] ((|ns_uri|)) Namespace URI
+      * @param
+      *    is_same_uri int * [out] ((|is_same_uri|)) judge result buffer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockAddAttributeMB(OpenSOAPBlockPtr soap_block, const char * attr_name, const char * attr_type, void * attr_value, OpenSOAPXMLAttrPtr * attr)
+      * @brief 属性名と値を指定してSOAP Blockに追加します。(MB)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|))
+      * @param
+      *    attr_name const char * [in] ((|attr_name|)) Attribute Name
+      * @param
+      *    attr_type const char * [in] ((|attr_type|)) Attribute Type
+      * @param
+      *    attr_value void * [in] ((|attr_value|)) Attribute Value
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockAddAttributeWC(OpenSOAPBlockPtr soap_block, const wchar_t * attr_name, const wchar_t * attr_type, void * attr_value, OpenSOAPXMLAttrPtr * attr)
+      * @brief 属性名と値を指定してSOAP Blockに追加します。(WC)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    attr_name const wchar_t * [in] ((|attr_name|)) Attribute Name
+      * @param
+      *    attr_type const wchar_t * [in] ((|attr_type|)) Attribute Type
+      * @param
+      *    attr_value void * [in] ((|attr_value|)) Attribute Value
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetAttributeMB(OpenSOAPBlockPtr soap_block, const char * attr_name, OpenSOAPXMLAttrPtr * attr)
+      * @brief 指定した属性名(MB)の属性ポインタを返します。ない場合はNULLが格納されます。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    attr_name const char * [in] ((|attr_name|)) Attribute Name
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetAttributeWC(OpenSOAPBlockPtr soap_block, const wchar_t * attr_name, OpenSOAPXMLAttrPtr * attr)
+      * @brief 指定した属性名(WC)の属性ポインタを返します。ない場合はNULLが格納されます。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    attr_name const wchar_t * [in] ((|attr_name|)) Attribute Name
+      * @param
+      *    attr OpenSOAPXMLAttrPtr * [out] ((|attr|)) OpenSOAP XML Attribute
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetChildValueMB(OpenSOAPBlockPtr soap_block, const char * p_name, const char * type_name, void * value)
+      * @brief 指定した要素名(MB)のXML要素の値を取得します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    p_name const char * [in] ((|p_name|)) Parameter Name
+      * @param
+      *    type_name const char * [in] ((|type_name|)) Parameter Type
+      * @param
+      *    value void * [out] ((|value|)) Parameter Value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetChildValueWC(OpenSOAPBlockPtr soap_block, const wchar_t * p_name, const wchar_t * type_name, void * value)
+      * @brief 指定した要素名(WCのXML要素の値を取得します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    p_name const wchar_t * [in] ((|p_name|)) Parameter Name
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) Parameter Type
+      * @param
+      *    value void * [out] ((|value|)) Parameter Value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetChildValueMB(OpenSOAPBlockPtr soap_block, const char * p_name, const char * type_name, void * value)
+      * @brief 子要素と子要素の値を設定します。(MB)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    p_name const char * [in] ((|p_name|)) Parameter Name
+      * @param
+      *    type_name const char * [in] ((|type_name|)) Parameter Type
+      * @param
+      *    value void * [in] ((|value|)) Parameter Value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetChildValueWC(OpenSOAPBlockPtr soap_block, const wchar_t * p_name, const wchar_t * type_name, void * value)
+      * @brief 子要素と子要素の値を設定します。(WC)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    p_name const wchar_t * [in] ((|p_name|)) Parameter Name
+      * @param
+      *    type_name const wchar_t * [in] ((|type_name|)) Parameter Type
+      * @param
+      *    value void * [in] ((|value|)) Parameter Value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetNextChild(OpenSOAPBlockPtr soap_block, OpenSOAPXMLElmPtr * xml_elm)
+      * @brief Block直下の次の子要素を格納します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    xml_elm OpenSOAPXMLElmPtr * [in, out] ((|xml_elm|)) OpenSOAP XML Element.
+      *    If *xml_elm is NULL, the first child is returned
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockAddChildMB(OpenSOAPBlockPtr soap_block, const char * elm_name, OpenSOAPXMLElmPtr * xml_elm)
+      * @brief XML Elementポインタで指される子要素を追加します。(MB)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    elm_name const char * [in] ((|elm_name|)) Child XML Element Name
+      * @param
+      *    xml_elm OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockAddChildWC(OpenSOAPBlockPtr soap_block, const wchar_t * elm_name, OpenSOAPXMLElmPtr * xml_elm)
+      * @brief XML Elementポインタで指される子要素を追加します。(WC)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    elm_name const wchar_t * [in] ((|elm_name|)) Child XML Element Name
+      * @param
+      *    xml_elm OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetChildMB(OpenSOAPBlockPtr soap_block, const char * elm_name, OpenSOAPXMLElmPtr * xml_elm)
+      * @brief 名前(MB)に合致した子 XML Element を取得します。合致するものが複数ある場合は、最初の要素を取り出します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    elm_name const char * [in] ((|elm_name|)) Name of XML Element
+      * @param
+      *    xml_elm OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetChildWC(OpenSOAPBlockPtr soap_block, const wchar_t * elm_name, OpenSOAPXMLElmPtr * xml_elm)
+      * @brief 名前(WC)に合致した子 XML Element を取得します。合致するものが複数ある場合は、最初の要素を取り出します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    elm_name const wchar_t * [in] ((|elm_name|)) Name of Child XML Element
+      * @param
+      *    xml_elm OpenSOAPXMLElmPtr * [out] ((|xml_elm|)) OpenSOAP XML Element
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetMustunderstandAttr(OpenSOAPBlockPtr soap_block, int * must_std)
+      * @brief Mustunderstand属性を取得します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) SOAP Block
+      * @param
+      *    must_std int * [out] ((|must_std|)) mustunderstand return buffer pointer
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetMustunderstandAttr(OpenSOAPBlockPtr soap_block)
+      * @brief Mustunderstand属性を設定します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockClearMustunderstandAttr(OpenSOAPBlockPtr soap_block)
+      * @brief Mustunderstand属性を消去します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetActorAttr(OpenSOAPBlockPtr soap_block, OpenSOAPStringPtr * actor_url)
+      * @brief Actor属性を取得します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soapBlock|)) SOAP Block
+      * @param
+      *    actor_url OpenSOAPStringPtr * [out] ((|actorUri|)) actor attribute value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetActorAttrMB(OpenSOAPBlockPtr soap_block, const char * actor_url)
+      * @brief Actor属性を設定します。(MB)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    actor_url const char * [in] ((|actor_url|)) actor attribute value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetActorAttrWC(OpenSOAPBlockPtr soap_block, const wchar_t * actor_url)
+      * @brief Actor属性を設定します。(WC)
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    actor_url const wchar_t * [in] ((|actor_url|)) actor attribute value
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockClearActorAttr(OpenSOAPBlockPtr soap_block)
+      * @brief Actor属性を消去します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockSetActorAttrNext(OpenSOAPBlockPtr soap_block)
+      * @brief Actor属性に，URI "http://schemas.xmlsoap.org/soap/actor/next"をセットします。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soapBlock|)) SOAP Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockIsActorAttrNext(OpenSOAPBlockPtr soap_block, int * is_actor_next)
+      * @brief Actor属性が，URI "http://schemas.xmlsoap.org/soap/actor/next"であるかを判定します。
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in, out] ((|soap_block|)) SOAP Block
+      * @param
+      *    is_actor_next int * [out] ((|is_actor_next|)) judge result
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetName(OpenSOAPBlockPtr block, OpenSOAPStringPtr * name)
+      * @brief SOAP Blockの名前を取得します。
+      * @param
+      *    block OpenSOAPBlockPtr [in] ((|block|)) SOAP Block Pointer
+      * @param
+      *    name OpenSOAPStringPtr * [out] ((|name|)) Result Name of SOAP Block
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPBlockGetCharEncodingString(OpenSOAPBlockPtr soap_block, const char * ch_enc, OpenSOAPByteArrayPtr b_ary)
+      * @brief 指定したエンコーディングでSOAPBlockをByteArrayに書き出す
+      * @param
+      *    soap_block OpenSOAPBlockPtr [in] ((|soap_block|)) OpenSOAP Block
+      * @param
+      *    ch_enc const char  * [in] ((|ch_enc|)) character encoding. (i.e. "EUC-JP", "Shift_JIS", "UTF-8")
+      * @param
+      *    b_ary OpenSOAPByteArrayPtr [out] ((|b_ary|)) Result Buffer
+      * @return
+      *    エラーコード
+      */

@@ -1,0 +1,15 @@
+APXS = @APXS@
+
+EXTRA_INCLUDES = ..
+
+LIBEXECDIR=`${APXS} -q libexecdir`
+
+all: mod_opensoap.lo
+mod_opensoap.lo: mod_opensoap.c
+	${APXS} -c -I${EXTRA_INCLUDES} $<
+install: mod_opensoap.la
+	mkdir -p ${DESTDIR}/${LIBEXECDIR}/
+	${APXS} -i -S LIBEXECDIR=${DESTDIR}/${LIBEXECDIR}/ -n mod_opensoap.so mod_opensoap.la
+clean:
+	-rm -f mod_opensoap.o mod_opensoap.lo mod_opensoap.slo mod_opensoap.la
+distdir:

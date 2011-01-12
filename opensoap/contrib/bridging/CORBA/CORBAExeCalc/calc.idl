@@ -1,0 +1,11 @@
+// calc.idl file
+
+// IDL interface
+
+interface calc {
+  exception ZERODIVIDE{};
+  double add(in double a, in double b);
+  double subtract(in double a, in double b);
+  double multiply(in double a, in double b);
+  double divide(in double a, in double b);
+};

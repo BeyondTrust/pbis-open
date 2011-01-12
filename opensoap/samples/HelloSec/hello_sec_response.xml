@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP-ENV:Header>
+    <SOAP-SEC:Signature xmlns:SOAP-SEC="http://schemas.xmlsoap.org/soap/security/2000-12" actor="some-URI" mustUnderstand="1">
+      <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>
+          <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2000/CR-xml-c14n-20001026"/>
+          <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+          <Reference URI="#Body">
+            <Transforms>
+              <Transform Algorithm="http://www.w3.org/TR/2000/CR-xml-c14n-20001026"/>
+            </Transforms>
+            <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/>
+            <DigestValue>0+ZP1lvodY7ws6jzGZzn5QNYIlA=</DigestValue>
+          </Reference>
+        </SignedInfo>
+        <SignatureValue>ZlEVz2imWaofiSaV8i/0HEbzNEu2mke9yZ5+KLDtXvBzF/v5ecGc8CqenFhUTnBx4goLxfgc+JNW8akwsAFAts/ckfH0KJ2qTJOi+9XLuNjICXnO4MX53zh/lGciBKXTa9Hj1CJbyteivQagLY6Fp5+Uwagacg/pm6JZ6bT5S6k=</SignatureValue>
+      </ds:Signature>
+    </SOAP-SEC:Signature>
+  </SOAP-ENV:Header>
+  <SOAP-ENV:Body>
+    <m:HelloResponse xmlns:m="http://services.opensoap.jp/samples/Hello/">
+      <Reply xmlns:s="http://security.opensoap.jp/1.0/" s:encrypt="true">UH/j4EGl292c5CnaS4+VoWxiKw/mDVKThyO2X31wceRav7EQOfgbM/izAKfciLYFmCqG7jof278i72c48aQuqv0zpsCG+5a8lr9BFKsoIcxz5kck/lbWbT3bildVk6tI3mKO77MssWPAzzvr/wnfBzLNGDRizNiR8U0CtHB18hk=</Reply>
+    </m:HelloResponse>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>
+

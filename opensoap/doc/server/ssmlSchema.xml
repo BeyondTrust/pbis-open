@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Schema xmlns="http://www.w3.org/2001/XMLSchema"> 
+
+	<ElementType name="exec" content="empty" >
+		<AttributeType name="prog" type="string" required="yes"/>
+		<AttributeType name="option" type="string" required="no"/>
+	</ElementType>
+	<ElementType name="StdIO" content="eltOnly" >
+		<element type="exec" minOccurs="0" maxOccurs="1" />
+	</ElementType>
+	<ElementType name="Socket" content="empty" >
+		<AttributeType name="hostname" type="string" required="yes"/>
+		<AttributeType name="port" type="int" required="yes"/>
+	</ElementType>
+	<ElementType name="FIFO" content="eltOnly" >
+		<AttributeType name="send_pipename" type="string" required="no"/>
+		<AttributeType name="receive_pipename" type="string" required="no"/>
+		<element type="exec" minOccurs="0" maxOccurs="1" />
+	</ElementType>
+	<ElementType name="IPC" content="empty" >
+		<AttributeType name="key_filename" type="string" required="no"/>
+	</ElementType>
+	<ElementType name="COM" content="eltOnly" >
+		<AttributeType name="dispID" type="int" required="yes"/>
+		<element type="exec" minOccurs="0" maxOccurs="1" />
+	</ElementType>
+	<ElementType name="Module" content="eltOnly" >
+		<AttributeType name="name" type="string" required="yes"/>
+		<AttributeType name="conf_file" type="string" required="no"/>
+		<element type="exec" minOccurs="0" maxOccurs="1" />
+	</ElementType>
+
+	<ElementType name="synchronizedTTL" type="int" >
+		<AttributeType name="count" type="enumeration" values="second hoptimes"/>
+	</ElementType>
+	<ElementType name="asynchronizedTTL" type="int" >
+		<AttributeType name="count" type="enumeration" values="second"/>
+	</ElementType>
+	<ElementType name="MaxProcessNumber" type="int" />
+
+
+	<ElementType name="connection" content="eltOnly" >
+		<AttributeType name="name" type="string" required="yes" />
+		<group minOccurs="1" maxOccurs="1" order="one">
+			<element type="StdIO" />
+			<element type="Socket" />
+			<element type="FIFO" />
+			<element type="IPC" />
+			<element type="COM" />
+			<element type="Module" />
+		</group>
+		<element type="synchronizedTTL" minOccurs="1" maxOccurs="1" />
+		<element type="asynchronizedTTL" minOccurs="0" maxOccurs="1" />
+		<element type="MaxProcessNumber" minOccurs="1" maxOccurs="1" />
+	</ElementType>
+
+	<ElementType name="operation" type="string" >
+		<AttributeType name="type" type="idref" required="yes" />
+	</ElementType>
+
+	<ElementType name="fault" type="empty" >
+		<AttributeType name="signature" type="boolean" required="yes" />
+	</ElementType>
+
+	<ElementType name="service" content="eltOnly">
+		<AttributeType name="name" type="string" required="yes" />
+		<AttributeType name="nsuri" type="string" required="no" />
+		<element type="connection" minOccurs="1" maxOccurs="*" />
+		<element type="operation" minOccurs="0" maxOccurs="*" />
+		<element type="fault" minOccurs="1" maxOccurs="1" />
+		<element type="MaxProcessNumber" minOccurs="0" maxOccurs="1" />
+	</ElementType>
+
+	<ElementType name="SSML" content="eltOnly">
+		<element type="service" minOccurs="1" maxOccurs="1" />
+	</ElementType>
+
+</Schema>

@@ -1,0 +1,345 @@
+/* -*- mode: c++; -*-
+ *-----------------------------------------------------------------------------
+ * $RCSfile: Transport.TXT,v $
+ *
+ * See Copyright for the status of this software.
+ *
+ * The OpenSOAP Project
+ * http://opensoap.jp/
+ *-----------------------------------------------------------------------------
+ */
+/**
+ * @file OpenSOAP/Transport.h
+ * @brief OpenSOAP API トランスポート処理
+ * @author
+ *    OpenSOAP Development Team
+ */
+    /**
+     * @typedef struct tagOpenSOAPTransport OpenSOAPTransport
+     * @brief OpenSOAPTransport 構造体型定義
+     */
+    /**
+     * @typedef OpenSOAPTransport    *OpenSOAPTransportPtr
+     * @brief OpenSOAPTransport ポインタ定義
+     */
+    /**
+      * @fn int OpenSOAPTransportCreate(OpenSOAPTransportPtr * t)
+      * @brief トランスポートの生成
+      *
+      * トランスポートを生成します。
+      * @param
+      *    t OpenSOAPTransportPtr * [out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportRelease(OpenSOAPTransportPtr t)
+      * @brief トランスポートの開放
+      *
+      * トランスポートを開放します。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSend(OpenSOAPTransportPtr t, OpenSOAPEnvelopePtr soap_env)
+      * @brief SOAPメッセージをByteArrayとして送信します。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr [in] ((|soap_env|)) OpenSOAP Envelope ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportReceive(OpenSOAPTransportPtr t, OpenSOAPEnvelopePtr * soap_env)
+      * @brief SOAPメッセージ受信
+      *
+      * SOAPメッセージの受信を行います。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    soap_env OpenSOAPEnvelopePtr * [in, out] ((|soap_env|)) OpenSOAP Envelope ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportConnect(OpenSOAPTransportPtr t)
+      * @brief End Point への接続
+      *
+      * End Point への接続を行います。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportDisconnect(OpenSOAPTransportPtr t)
+      * @brief End Point からの切断
+      *
+      * End Point から切断します。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportInvokeStream(OpenSOAPTransportPtr t,
+    OpenSOAPStreamPtr stream, const char *int * tp_status)
+      * @brief OpenSOAPストリームによる SOAP 呼出
+      * @param
+      *    t OpenSOAPTransportPtr ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    request OpenSOAPStreamPtr [in] ((|request|)) SOAP 要求
+      * @param
+      *    input_size size_t [in] ((|input_size|)) 入力ストリームサイズ。size_t <=0 なら、サイズ不明
+      * @param
+      *    tp_status int * [out] ((|tp_status|)) トランスポートステータス値ポインタ
+      * @return
+      *    Error Code
+      */
+    /**
+      * @fn int OpenSOAPTransportInvokeByteArray(OpenSOAPTransportPtr t, OpenSOAPByteArrayPtr request, OpenSOAPByteArrayPtr response, int * tp_status)
+      * @brief OpenSOAPByteArray による SOAP 呼出
+      *
+      * OpenSOAPByteArray による SOAP 呼出を行います。
+      * @param
+      *    t OpenSOAPTransportPtr ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    request OpenSOAPEnvelopePtr [in] ((|request|)) OpenSOAP 要求
+      * @param
+      *    response OpenSOAPByteArrayPtr [out] ((|response|)) OpenSOAP レスポンス
+      * @param
+      *    tp_status int * [out] ((|tp_status|)) トランスポートステータス値ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportInvoke(OpenSOAPTransportPtr t, OpenSOAPEnvelopePtr request, OpenSOAPEnvelopePtr * response)
+      * @brief SOAP呼出
+      *
+      * SOAP呼出を行います。返信メッセージをEnveropeポインタに格納します。
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    request OpenSOAPEnvelopePtr [in] ((|request|)) OpenSOAP 要求
+      * @param
+      *    response OpenSOAPEnvelopePtr * [in, out] ((|response|))OpenSOAP レスポンス Envelope ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetSOAPAction(OpenSOAPTransportPtr t, const char * soap_action)
+      * @brief SOAP-Action設定(Some-URI)
+      *
+      * SOAP-Action設定(Some-URI)を行います。
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    soap_action const char * [in] ((|soap_action|)) soap-action ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetURL(OpenSOAPTransportPtr t, const char * url)
+      * @brief リクエストURL設定
+      *
+      * リクエストURL設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    url const char * [in] ((|url|)) URL
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetHeader(OpenSOAPTransportPtr t, const char * header_name, const char * header_value)
+      * @brief ヘッダー設定
+      *
+      * 任意のヘッダーを設定します。
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    header_name const char * [in] ((|header_name|)) トランスポートヘッダ名
+      * @param
+      *    header_value const char * [in] ((|header_value|)) ヘッダ値ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportGetHeader(OpenSOAPTransportPtr t, const char * header_name, char ** header_value)
+      * @brief レスポンスヘッダーの値の入手
+      * @param
+      *    t OpenSOAPTransportPtr [in] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    header_name const char * [in] ((|header_name|)) トランスポートレスポンスヘッダ名
+      * @param
+      *    header_value char ** [out] ((|header_value|)) ヘッダ値ポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetCharset(OpenSOAPTransportPtr t, const char * charset)
+      * @brief キャラクタセット設定
+      *
+      * キャラクタセットを設定します。
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    charset const char * [in] ((|charset|)) キャラクタセットポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetContentType(OpenSOAPTransportPtr t, const char * content_type)
+      * @brief コンテントタイプ(Content-Type)設定 (OpenSOAPTransportSetCharset()での指定を上書き)
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    content_type const char * [in] ((|content_type|)) コンテントタイプ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSMTPSetHostname(OpenSOAPTransportPtr s)
+      * @brief SMTPホスト名設定
+      *
+      * SMTPホスト名を設定します。
+      * @param
+      *    s OpenSOAPTransportPtr [out] ((|s|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSMTPSetFrom(OpenSOAPTransportPtr t)
+      * @brief SMTP送信者設定
+      *
+      * SMTP送信者を設定します。
+      * @param
+      *    t OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSMTPSetTo(OpenSOAPTransportPtr t)
+      * @brief SMTP宛て先設定
+      *
+      * SMTP宛て先を設定します。
+      * @param
+      *    t OpenSOAPTransportPtr [out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetAuthUserPass(OpenSOAPTransportPtr t, const char * user, const char * passwd)
+      * @brief 認証用のユーザ／パスワードを設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    user   const char * [in] ((|user|)) ユーザ名
+      * @param
+      *    passwd const char * [in] ((|passwd|)) パスワード
+	  * @return
+      *    エラーコード
+      */
+    /**
+     * @def OPENSOAP_AUTH_TYPE_BASIC    (1)
+     * @brief トランスポートにおけるベーシック認証
+     */
+    /**
+     * @def OPENSOAP_AUTH_TYPE_DIGEST    (2)
+     * @brief トランスポートにおけるダイジェスト認証
+     */
+    /**
+     * @def OPENSOAP_AUTH_TYPE_ANY     (0)
+     * @brief トランスポートにおける認証でサポートするものなら何でも
+     */
+    /**
+      * @fn int OpenSOAPTransportSetAuthType(OpenSOAPTransportPtr t, int auth_type)
+      * @brief 認証の方法を設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    auth_type int [in] ((|auth_type|)) 使用する認証方法 (次のいずれか)
+          OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST |
+          OPENSOAP_AUTH_TYPE_ANY
+	     もし OPENSOAP_AUTH_TYPE_BASICのみが指定された場合、
+		 1回目のリクエストで直接ユーザ・パスワードが送信されます。
+		 (それ以外は、要求された場合のみ)
+	  * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetProxy(OpenSOAPTransportPtr t,
+                           const char * host, int port, const char * user,
+                           const char * passwd, int auth_type)
+      * @brief プロキシー・サーバに関する設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    host const char * [in] ((|host|)) プロキシー・サーバのホスト名
+      * @param
+      *    port int [in] ((|port|)) プロキシー・サーバのポート番号
+      * @param
+      *    user  const char * [in] ((|user|)) プロキシー・サーバ用のユーザ名 (NULLなら認証なし)
+      * @param
+      *    passwd const char * [in] ((|passwd|)) プロキシー・サーバ用のパスワード
+      * @param
+      *    auth_type int [in] ((|auth_type|)) 使用する認証方法 (次のいずれか)
+          OPENSOAP_AUTH_TYPE_BASIC | OPENSOAP_AUTH_TYPE_DIGEST | OPENSOAP_AUTH_TYPE_ANY
+      * @return
+      *    エラーコード
+      */
+    /**
+     * @def OPENSOAP_SSL_VER_SSL2    (1)
+     * @brief SSL バージョン SSL2.0のみ
+     */
+    /**
+     * @def OPENSOAP_SSL_VER_SSL3    (2)
+     * @brief SSL バージョン SSL3.0のみ
+     */
+    /**
+     * @def OPENSOAP_SSL_VER_TLS1    (4)
+     * @brief SSL バージョン TLS1.0のみ
+     */
+    /**
+     * @def OPENSOAP_SSL_VER_ALL    (0)
+     * @brief SSL バージョン サポートするもの全て(SSLv2/SSLv3/TLSv1)
+     */
+    /**
+      * @fn int OpenSOAPTransportSetSSLVersion(OpenSOAPTransportPtr t,
+            int ssl_version )
+      * @brief 許可するSSLバージョンを設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    ssl_version int [in] ((|ssl_version|)) SSL バージョン。次のいずれか
+          (OPENSOAP_SSL_VER_SSL2 | OPENSOAP_SSL_VER_SSL3 |
+    OPENSOAP_SSL_VER_TLS1 | OPENSOAP_SSL_VER_ALL)
+      * @return
+      *    エラーコード
+      */
+    /**
+      * @fn int OpenSOAPTransportSetSSLCert(OpenSOAPTransportPtr t,
+            const char * ca_file, const char * ca_dir,
+            const char * certchain_file, const char * privkey_file,
+            int verify_level )
+      * @brief SSL 認証用証明書ファイルの設定
+      * @param
+      *    t OpenSOAPTransportPtr [in, out] ((|t|)) OpenSOAP トランスポートポインタ
+      * @param
+      *    ca_file const char * [in] ((|ca_file|)) 接続先認証用の認証局の証明書ファイル名 (NULLなら認証なし)
+      * @param
+      *    ca_dir  const char * [in] ((|ca_dir|))  認証局の証明書が含まれるディレクトリ名(NULLならディレクトリを見ない)
+      * @param
+      *    certchain_file const char * [in] ((|certchain_file|)) ローカルの証明書チェーンファイル名(NULLならローカルの認証なし)
+      * @param
+      *    privkey_file  const char * [in] ((|privkey_file|))   ローカル認証用証明書のペアとなる秘密鍵のファイル名。(NULLならローカルの認証なし)
+      * @param
+      *    verify_level  int [in] ((|verify_level|))   接続先の証明書の確認レベル。
+                                                      
+    0(デフォルト)ならば証明書が不正でも継続。 1ならば、中断して失敗とする。
+      * @return
+      *    Error Code
+      */

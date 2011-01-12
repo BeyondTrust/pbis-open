@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope 
+ xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <m:GetServerDiskSize xmlns:m="http://namespaces.opensoap.jp">
+            <ServerName>JD-NOTE</ServerName>
+        </m:GetServerDiskSize>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

@@ -1,0 +1,233 @@
+.TH "CStdio.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+CStdio.h \- OpenSOAP API CStdio Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+\fC#include <stdio.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPCStdio \fBOpenSOAPCStdio\fP"
+.br
+.RI "\fIOpenSOAPCStdio Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPCStdio\fP * \fBOpenSOAPCStdioPtr\fP"
+.br
+.RI "\fIOpenSOAPCStdio Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPCStdioCreate\fP (\fBOpenSOAPCStdioPtr\fP *s)"
+.br
+.RI "\fIOpenSOAP CStdio Instance Create. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioCreateWithFILEPtr\fP (FILE *is, FILE *os, \fBOpenSOAPCStdioPtr\fP *s)"
+.br
+.RI "\fIOpenSOAP CStdio Instance Create. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioCreateForStdio\fP (\fBOpenSOAPCStdioPtr\fP *s)"
+.br
+.RI "\fIOpenSOAP CStdio Instance Create for Stdio. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioClose\fP (\fBOpenSOAPCStdioPtr\fP s)"
+.br
+.RI "\fIClose and Disconnect OpenSOAP CStdio. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioRelease\fP (\fBOpenSOAPCStdioPtr\fP s)"
+.br
+.RI "\fIOpenSOAP CStdio Release. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioSetBinaryMode\fP (\fBOpenSOAPCStdioPtr\fP s)"
+.br
+.RI "\fISet OpenSOAP CStdio Stream to BINARY mode. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioSetTextMode\fP (\fBOpenSOAPCStdioPtr\fP s)"
+.br
+.RI "\fISet OpenSOAP CStdio Stream to TEXT mode. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioRead\fP (\fBOpenSOAPCStdioPtr\fP s, unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIRead From OpenSOAP CStdio Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioWrite\fP (\fBOpenSOAPCStdioPtr\fP s, const unsigned char *buf, size_t *buf_sz)"
+.br
+.RI "\fIWrite to OpenSOAP CStdio Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPCStdioReadToDelm\fP (\fBOpenSOAPCStdioPtr\fP s, const unsigned char *delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.br
+.RI "\fIRead to Delimiter from OpenSOAP CStdio Stream. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API CStdio Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPCStdioClose (\fBOpenSOAPCStdioPtr\fP s)"
+.PP
+Close and Disconnect OpenSOAP CStdio. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioCreate (\fBOpenSOAPCStdioPtr\fP * s)"
+.PP
+OpenSOAP CStdio Instance Create. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioCreateForStdio (\fBOpenSOAPCStdioPtr\fP * s)"
+.PP
+OpenSOAP CStdio Instance Create for Stdio. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioCreateWithFILEPtr (FILE * is, FILE * os, \fBOpenSOAPCStdioPtr\fP * s)"
+.PP
+OpenSOAP CStdio Instance Create. \fBParameters:\fP
+.RS 4
+\fIis\fP FILE * [in] ((|is|)) FILE pointer 
+.br
+\fIos\fP FILE * [in] ((|os|)) FILE pointer 
+.br
+\fIs\fP OpenSOAPCStdioPtr * [out] ((|s|)) OpenSOAP CStdio pointer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioRead (\fBOpenSOAPCStdioPtr\fP s, unsigned char * buf, size_t * buf_sz)"
+.PP
+Read From OpenSOAP CStdio Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.br
+\fIbuf\fP unsigned char * [out] ((|buf|)) Read Buffer 
+.br
+\fIbuf_sz\fP size_t * [in, out] ((|buf_sz|)) Read Buffer size. Returns actual size read. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioReadToDelm (\fBOpenSOAPCStdioPtr\fP s, const unsigned char * delm, size_t delm_sz, \fBOpenSOAPByteArrayPtr\fP buf)"
+.PP
+Read to Delimiter from OpenSOAP CStdio Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.br
+\fIdelm\fP const unsigned char * [in] ((|delm|)) Delimiter string 
+.br
+\fIdelm_sz\fP size_t [in] ((|delm_sz|)) Delimiter length 
+.br
+\fIbuf\fP OpenSOAPByteArrayPtr [out] ((|buf|)) Read Buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioRelease (\fBOpenSOAPCStdioPtr\fP s)"
+.PP
+OpenSOAP CStdio Release. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioSetBinaryMode (\fBOpenSOAPCStdioPtr\fP s)"
+.PP
+Set OpenSOAP CStdio Stream to BINARY mode. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioSetTextMode (\fBOpenSOAPCStdioPtr\fP s)"
+.PP
+Set OpenSOAP CStdio Stream to TEXT mode. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPCStdioWrite (\fBOpenSOAPCStdioPtr\fP s, const unsigned char * buf, size_t * buf_sz)"
+.PP
+Write to OpenSOAP CStdio Stream. \fBParameters:\fP
+.RS 4
+\fIs\fP OpenSOAPCStdioPtr [in] ((|s|)) OpenSOAP CStdio 
+.br
+\fIbuf\fP const unsigned char * [in] ((|buf|)) Write Buffer 
+.br
+\fIbuf_sz\fP size_t * [in, out] ((|buf_sz|)) Write Buffer size. Returns actual size written 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

@@ -1,0 +1,21 @@
+2003/05/30 (opensoap-1.0-20030530)
+- Ver.1.0 Release
+* Bug fixes, full function test
+
+- Ver.1.1
+* Transport extension https, Basic Authentication, Proxy, HTTP/1.1
+  compatibility (chunkdata, Digest Authentication), timeout
+* Support for complex types, arrays, structures
+* Extension of API functions (Asynchronous Processing header, Fault
+  path, XML document inclusion, etc)
+* Implementation of hi-level API (Generation of RPC just by calling an
+  object)
+* Handling of Large Objects
+* Long Transaction API
+* Security API : WS-Security Conformity
+* Rewrite Server source code using OpenSOAP API
+* Improve logging management using Syslog
+* Long mode compatibility for Transaction Services
+* Server forwarding Trace service
+* Implementation of a transport interface that does not use Apache
+  CGI(including SSL/Access control)

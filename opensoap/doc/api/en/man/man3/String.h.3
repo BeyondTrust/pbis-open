@@ -1,0 +1,949 @@
+.TH "String.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+String.h \- OpenSOAP API String Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <OpenSOAP/ByteArray.h>\fP
+.br
+\fC#include <stdarg.h>\fP
+.br
+
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPString \fBOpenSOAPString\fP"
+.br
+.RI "\fIOpenSOAPString Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPString\fP * \fBOpenSOAPStringPtr\fP"
+.br
+.RI "\fIOpenSOAPString Pointer Type Definition. \fP"
+.ti -1c
+.RI "typedef int(* \fBOpenSOAPStringFindIfFunc\fP )(void *opt, wchar_t c, int *judge)"
+.br
+.RI "\fIFind String Function Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPStringCreate\fP (\fBOpenSOAPStringPtr\fP *str)"
+.br
+.RI "\fICreate 0 length OpenSOAP Character String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCreateWithMB\fP (const char *mb_str, \fBOpenSOAPStringPtr\fP *str)"
+.br
+.RI "\fICreate OpenSOAP Character String Initialized With a MultiByte String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCreateWithWC\fP (const wchar_t *wc_str, \fBOpenSOAPStringPtr\fP *str)"
+.br
+.RI "\fICreate OpenSOAP Character String Initialized With a WideCharacter String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCreateWithCharEncodingString\fP (const char *char_enc, \fBOpenSOAPByteArrayPtr\fP char_enc_str, \fBOpenSOAPStringPtr\fP *str)"
+.br
+.RI "\fICreate OpenSOAP Character String Initialized With a Character-encoding Specified String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCreateWithUTF8\fP (const char *utf8Str, \fBOpenSOAPStringPtr\fP *str)"
+.br
+.RI "\fICreate OpenSOAP Character String Initialized With a UTF-8 Encoded String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringRetain\fP (\fBOpenSOAPStringPtr\fP str)"
+.br
+.RI "\fIAdd a Reference to a Resource. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringRelease\fP (\fBOpenSOAPStringPtr\fP str)"
+.br
+.RI "\fIRemove a Reference. If the number of references is zero, release the resource. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetLengthMB\fP (\fBOpenSOAPStringPtr\fP str, size_t *len)"
+.br
+.RI "\fIGet length of MultiByte Stringv for the current locale. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetLengthWC\fP (\fBOpenSOAPStringPtr\fP str, size_t *len)"
+.br
+.RI "\fIGet length of WideCharacter String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringMBWithAllocator\fP (\fBOpenSOAPStringPtr\fP str, char *(*memAllocator)(size_t), size_t *len, char **mbStr)"
+.br
+.RI "\fIOpenSOAP String GetStringMB with memAllocator. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringWCWithAllocator\fP (\fBOpenSOAPStringPtr\fP str, wchar_t *(*memAllocator)(size_t), size_t *len, wchar_t **wcStr)"
+.br
+.RI "\fIOpenSOAP String GetStringWC with memAllocator. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringUTF8WithAllocator\fP (\fBOpenSOAPStringPtr\fP str, char *(*memAllocator)(size_t), size_t *len, char **utf8Str)"
+.br
+.RI "\fIOpenSOAP String GetString as UTF-8 encoding with memAllocator. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringMB\fP (\fBOpenSOAPStringPtr\fP str, size_t *len, char *mb_Str)"
+.br
+.RI "\fIGet MultiByte String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringWC\fP (\fBOpenSOAPStringPtr\fP str, size_t *len, wchar_t *wc_str)"
+.br
+.RI "\fIGet WideCharacter String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetCharEncodingString\fP (\fBOpenSOAPStringPtr\fP str, const char *char_enc, \fBOpenSOAPByteArrayPtr\fP char_enc_str)"
+.br
+.RI "\fIGet character encoding string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringSetStringMB\fP (\fBOpenSOAPStringPtr\fP str, const char *mb_str)"
+.br
+.RI "\fISet MultiByte Character string for the current locale. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringSetStringWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *wc_str)"
+.br
+.RI "\fISet WideCharacter string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringSetCharEncodingString\fP (\fBOpenSOAPStringPtr\fP str, const char *char_enc, \fBOpenSOAPByteArrayPtr\fP charEncStr)"
+.br
+.RI "\fISet character encoding string for the current locale. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringSetStringUTF8\fP (\fBOpenSOAPStringPtr\fP str, const char *utf8Str)"
+.br
+.RI "\fISet UTF-8 encoded string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFormatMB\fP (\fBOpenSOAPStringPtr\fP str, const char *format,...)"
+.br
+.RI "\fIFormat MultiByte String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFormatWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *format,...)"
+.br
+.RI "\fIFormat WideCharacter String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringVFormatMB\fP (\fBOpenSOAPStringPtr\fP str, const char *format, va_list ap)"
+.br
+.RI "\fIFormat MultiByte String with va_list. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringVFormatWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *format, va_list ap)"
+.br
+.RI "\fIFormat WideCharacter String with va_list. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCompareMB\fP (\fBOpenSOAPStringPtr\fP str, const char *cmp_str, int *cmp_rslt)"
+.br
+.RI "\fICompare MultiByte String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCompareWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *cmp_str, int *cmp_rslt)"
+.br
+.RI "\fICompare WideCharacter String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringCompare\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP cmp_str, int *cmp_rslt)"
+.br
+.RI "\fICompare String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFindStringMB\fP (\fBOpenSOAPStringPtr\fP str, const char *find_str, size_t *idx)"
+.br
+.RI "\fIFind String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFindStringWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *find_str, size_t *idx)"
+.br
+.RI "\fIFind String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFindString\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP find_str, size_t *idx)"
+.br
+.RI "\fIFind String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringFindIfStringIndex\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringFindIfFunc\fP find_func, void *find_func_opt, size_t *idx)"
+.br
+.RI "\fIFind String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringReplaceStringMB\fP (\fBOpenSOAPStringPtr\fP str, const char *find_str, const char *rplc_str, size_t *idx)"
+.br
+.RI "\fIReplace String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringReplaceStringWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *find_str, const wchar_t *rplc_str, size_t *idx)"
+.br
+.RI "\fIReplace String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringReplaceString\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP find_str, \fBOpenSOAPStringPtr\fP rplc_str, size_t *idx)"
+.br
+.RI "\fIReplace String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringClear\fP (\fBOpenSOAPStringPtr\fP str)"
+.br
+.RI "\fIClear OpenSOAPString, set length to 0. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringAppendMB\fP (\fBOpenSOAPStringPtr\fP str, const char *mb_str, size_t mb_len)"
+.br
+.RI "\fIConcatenate MB String To OpenSOAPString for current locale. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringAppendWC\fP (\fBOpenSOAPStringPtr\fP str, const wchar_t *wc_str, size_t wc_len)"
+.br
+.RI "\fIConcatenate WC String To OpenSOAPString. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringDuplicate\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP *dup_str)"
+.br
+.RI "\fIDuplicate String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetSubstring\fP (\fBOpenSOAPStringPtr\fP str, size_t beg, size_t len, \fBOpenSOAPStringPtr\fP *sub_str)"
+.br
+.RI "\fIDuplicate String. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringConvertCharEncoding\fP (const char *from_enc, \fBOpenSOAPByteArrayPtr\fP from_str, const char *to_enc, \fBOpenSOAPByteArrayPtr\fP to_str)"
+.br
+.RI "\fIConvert character encoding. This function does not use the OpenSOAP member, but is used for string processing. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringConvertXMLCharRefToUTF8\fP (const unsigned char *utf8Beg, \fBOpenSOAPByteArrayPtr\fP utf8BAry)"
+.br
+.RI "\fIConvert XML's CharRef to UTF-8 encoding. This function does not use the OpenSOAP member, but is used for string processing. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringGetStringUSASCII\fP (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPByteArrayPtr\fP charEncStr)"
+.br
+.RI "\fIGet US-ASCII string. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPStringIterateProc\fP (\fBOpenSOAPStringPtr\fP str, int(*iterateProc)(unsigned long c, size_t idx, size_t len, void *opt), int(*beforeProc)(size_t len, void *opt), int(*afterProc)(size_t len, void *opt), void *opt)"
+.br
+.RI "\fIIterate procedure. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API String Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Typedef Documentation"
+.PP 
+.SS "int(* \fBOpenSOAPStringFindIfFunc\fP)(void *opt, wchar_t c, int *judge)"
+.PP
+Find String Function Pointer Type Definition. \fBParameters:\fP
+.RS 4
+\fIopt\fP void * [in] Find Function Option 
+.br
+\fIc\fP wchar_t [in] 
+.br
+\fIjudge\fP int * [out] Result 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPStringAppendMB (\fBOpenSOAPStringPtr\fP str, const char * mb_str, size_t mb_len)"
+.PP
+Concatenate MB String To OpenSOAPString for current locale. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fImb_str\fP char * [in] ((|mb_str|)) Concatenate string 
+.br
+\fImb_len\fP size_t [in] ((|mb_len|)) Concatenate string number of characters. If 0, concatenate the entire mb_str. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringAppendWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * wc_str, size_t wc_len)"
+.PP
+Concatenate WC String To OpenSOAPString. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIwc_str\fP wchar_t * [in] ((|wc_str|)) Concatenate string 
+.br
+\fIwc_len\fP size_t [in] ((|wc_len|)) Concatenate string number of characters. If 0, concatenate the entire wc_str. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringClear (\fBOpenSOAPStringPtr\fP str)"
+.PP
+Clear OpenSOAPString, set length to 0. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCompare (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP cmp_str, int * cmp_rslt)"
+.PP
+Compare String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIcmp_str\fP OpenSOAPStringPtr [in] ((|cmp_str|)) Character String 
+.br
+\fIcmp_rslt\fP int * [out] ((|cmp_rslt|)) Comparison Result. Same as for strcmp(). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCompareMB (\fBOpenSOAPStringPtr\fP str, const char * cmp_str, int * cmp_rslt)"
+.PP
+Compare MultiByte String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIcmp_str\fP const char * [in] ((|cmp_str|)) Character String 
+.br
+\fIcmp_rslt\fP int * [out] ((|cmp_rslt|)) Comparison Result. Same as for strcmp(). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCompareWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * cmp_str, int * cmp_rslt)"
+.PP
+Compare WideCharacter String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIcmp_str\fP const wchar_t * [in] ((|cmp_str|)) Character String 
+.br
+\fIcmp_rslt\fP int * [out] ((|cmp_rslt|)) Comparison Result. Same as for strcmp(). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringConvertCharEncoding (const char * from_enc, \fBOpenSOAPByteArrayPtr\fP from_str, const char * to_enc, \fBOpenSOAPByteArrayPtr\fP to_str)"
+.PP
+Convert character encoding. This function does not use the OpenSOAP member, but is used for string processing. \fBParameters:\fP
+.RS 4
+\fIfrom_enc\fP const char * [in] ((|fromEnc|)) Convert source character encoding. If NULL or '' then current locale encoding. 
+.br
+\fIfrom_str\fP OpenSOAPByteArrayPtr [in] ((|fromStr|)) Convert source string data. 
+.br
+\fIto_enc\fP const char * [in] ((|toEnc|)) Convert destination character encoding. If NULL or '' then current locale encoding. 
+.br
+\fIto_str\fP OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. If fromEnc equal to toEnc, then copy fromStr to toStr. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringConvertXMLCharRefToUTF8 (const unsigned char * utf8Beg, \fBOpenSOAPByteArrayPtr\fP utf8BAry)"
+.PP
+Convert XML's CharRef to UTF-8 encoding. This function does not use the OpenSOAP member, but is used for string processing. \fBParameters:\fP
+.RS 4
+\fIutf8Beg\fP const unsigned char * [in] ((|utf8Beg|)) Convert source UTF-8 encode string data begin pointer. 
+.br
+\fIutf8BAry\fP OpenSOAPByteArrayPtr [out] ((|toStr|)) Convert destination string data. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCreate (\fBOpenSOAPStringPtr\fP * str)"
+.PP
+Create 0 length OpenSOAP Character String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr * [out] ((|str|)) OpenSOAP String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCreateWithCharEncodingString (const char * char_enc, \fBOpenSOAPByteArrayPtr\fP char_enc_str, \fBOpenSOAPStringPtr\fP * str)"
+.PP
+Create OpenSOAP Character String Initialized With a Character-encoding Specified String. \fBParameters:\fP
+.RS 4
+\fIchar_enc\fP const char * [in] ((|char_enc|)) Character Encoding 
+.br
+\fIchar_enc_str\fP OpenSOAPByteArrayPtr [in] ((|char_enc_str|)) Character String 
+.br
+\fIstr\fP OpenSOAPStringPtr * [out] ((|str|)) Created OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCreateWithMB (const char * mb_str, \fBOpenSOAPStringPtr\fP * str)"
+.PP
+Create OpenSOAP Character String Initialized With a MultiByte String. \fBParameters:\fP
+.RS 4
+\fImb_str\fP const char * [in] ((|mb_str|)) MultiByte Character String 
+.br
+\fIstr\fP OpenSOAPStringPtr * [out] ((|str|)) Created OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCreateWithUTF8 (const char * utf8Str, \fBOpenSOAPStringPtr\fP * str)"
+.PP
+Create OpenSOAP Character String Initialized With a UTF-8 Encoded String. \fBParameters:\fP
+.RS 4
+\fIutf8Str\fP const char * [in] ((|utf8Str|)) UTF-8 encoded string 
+.br
+\fIstr\fP OpenSOAPStringPtr * [out] ((|str|)) Created OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringCreateWithWC (const wchar_t * wc_str, \fBOpenSOAPStringPtr\fP * str)"
+.PP
+Create OpenSOAP Character String Initialized With a WideCharacter String. \fBParameters:\fP
+.RS 4
+\fIwc_str\fP const wchar_t * [in] ((|wc_str|)) Wide Character String 
+.br
+\fIstr\fP OpenSOAPStringPtr * [out] ((|str|)) Created OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringDuplicate (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP * dup_str)"
+.PP
+Duplicate String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIdup_str\fP OpenSOAPStringPtr * [out] ((|dup_str|)) Duplicate string 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFindIfStringIndex (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringFindIfFunc\fP find_func, void * find_func_opt, size_t * idx)"
+.PP
+Find String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIfind_func\fP OpenSOAPStringFindIfFunc [in] ((|find_func|)) Search condition function 
+.br
+\fIfind_func_opt\fP void * [in] ((|find_func_opt|)) Search condition function first parameter 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Search result index. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFindString (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP find_str, size_t * idx)"
+.PP
+Find String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP OpenSOAPStringPtr [in] ((|find_str|)) Search string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Search result index. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFindStringMB (\fBOpenSOAPStringPtr\fP str, const char * find_str, size_t * idx)"
+.PP
+Find String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP const char * [in] ((|find_str|)) Search string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Search result index. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFindStringWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * find_str, size_t * idx)"
+.PP
+Find String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP const wchar_t * [in] ((|find_str|)) Search string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Search result index. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFormatMB (\fBOpenSOAPStringPtr\fP str, const char * format,  ...)"
+.PP
+Format MultiByte String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIformat\fP const char * [in] ((|format|)) Format String 
+.br
+\fI...\fP Variable parameters 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringFormatWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * format,  ...)"
+.PP
+Format WideCharacter String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIformat\fP const wchar_t * [in] ((|format|)) Format String 
+.br
+\fI...\fP Variable parameters 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetCharEncodingString (\fBOpenSOAPStringPtr\fP str, const char * char_enc, \fBOpenSOAPByteArrayPtr\fP char_enc_str)"
+.PP
+Get character encoding string. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIchar_enc\fP const char * [in] ((|charEnc|)) character encoding 
+.br
+\fIchar_enc_str\fP OpenSOAPByteArrayPtr [out] ((|charEncStr|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetLengthMB (\fBOpenSOAPStringPtr\fP str, size_t * len)"
+.PP
+Get length of MultiByte Stringv for the current locale. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.br
+\fIlen\fP size_t * [out] ((|len|)) length 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetLengthWC (\fBOpenSOAPStringPtr\fP str, size_t * len)"
+.PP
+Get length of WideCharacter String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.br
+\fIlen\fP size_t * [out] ((|len|)) length 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringMB (\fBOpenSOAPStringPtr\fP str, size_t * len, char * mb_Str)"
+.PP
+Get MultiByte String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIlen\fP size_t * [in, out] ((|len|)) size. 
+.br
+\fImb_Str\fP char * [out] ((|mb_str|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringMBWithAllocator (\fBOpenSOAPStringPtr\fP str, char *(* memAllocator)(size_t), size_t * len, char ** mbStr)"
+.PP
+OpenSOAP String GetStringMB with memAllocator. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.br
+\fImemAllocator()\fP char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). 
+.br
+\fIlen\fP size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. 
+.br
+\fImbStr\fP char ** [out] ((|mbStr|)) MB string return buffer pointer. If NULL, then error. 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+After calling this function, the memory allocated to *mbStr should be released. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringUSASCII (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPByteArrayPtr\fP charEncStr)"
+.PP
+Get US-ASCII string. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIcharEncStr\fP OpenSOAPByteArrayPtr [out] ((|charEncStr|)) output buffer 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringUTF8WithAllocator (\fBOpenSOAPStringPtr\fP str, char *(* memAllocator)(size_t), size_t * len, char ** utf8Str)"
+.PP
+OpenSOAP String GetString as UTF-8 encoding with memAllocator. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.br
+\fImemAllocator()\fP char * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). 
+.br
+\fIlen\fP size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. 
+.br
+\fIutf8Str\fP char ** [out] ((|utf8Str|)) UTF8 string return buffer pointer. If NULL, then error. 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+After calling this function, the memory allocated to *utf8Str should be released. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringWC (\fBOpenSOAPStringPtr\fP str, size_t * len, wchar_t * wc_str)"
+.PP
+Get WideCharacter String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIlen\fP size_t * [in, out] ((|len|)) size. 
+.br
+\fIwc_str\fP char * [out] ((|wc_str|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetStringWCWithAllocator (\fBOpenSOAPStringPtr\fP str, wchar_t *(* memAllocator)(size_t), size_t * len, wchar_t ** wcStr)"
+.PP
+OpenSOAP String GetStringWC with memAllocator. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.br
+\fImemAllocator()\fP wchar_t * [in] ( * ((|memAllocator|)) )(size_t) memAllocator function pointer. If NULL, memAllocator acts like (char *)malloc(size). 
+.br
+\fIlen\fP size_t * [out] ((|len|)) length return buffer pointer. If NULL, no effect. 
+.br
+\fIwcStr\fP wchar_t ** [out] ((|wcStr|)) WC string return buffer pointer. If NULL, then error. 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+After calling this function, the memory allocated to *wcStr should be released. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringGetSubstring (\fBOpenSOAPStringPtr\fP str, size_t beg, size_t len, \fBOpenSOAPStringPtr\fP * sub_str)"
+.PP
+Duplicate String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIbeg\fP size_t [in] ((|beg|)) Substring start index 
+.br
+\fIlen\fP size_t [in] ((|len|)) Substring length. If len == -1 then copy to end of string. 
+.br
+\fIsub_str\fP OpenSOAPStringPtr * [out] ((|sub_str|)) Substring 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringIterateProc (\fBOpenSOAPStringPtr\fP str, int(* iterateProc)(unsigned long c, size_t idx, size_t len, void *opt), int(* beforeProc)(size_t len, void *opt), int(* afterProc)(size_t len, void *opt), void * opt)"
+.PP
+Iterate procedure. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP String 
+.br
+\fIiterateProc()\fP int [in] ( * ((|iterateProc|)) )(unsigned long, size_t, size_t, void *) iterate procedure 
+.br
+\fIbeforeProc()\fP int [in] ( * ((|beforeProc|)) )(size_t, void *) Before iterate procedure. If NULL, then no effect 
+.br
+\fIafterProc()\fP int [in] ( * ((|afterProc|)) )(size_t, void *) After iterate procedure. If NULL, then no effect 
+.br
+\fIopt\fP void * [in, out] ((|opt|)) iterateProc, beforeProc, and afterProc's option parameters. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringRelease (\fBOpenSOAPStringPtr\fP str)"
+.PP
+Remove a Reference. If the number of references is zero, release the resource. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringReplaceString (\fBOpenSOAPStringPtr\fP str, \fBOpenSOAPStringPtr\fP find_str, \fBOpenSOAPStringPtr\fP rplc_str, size_t * idx)"
+.PP
+Replace String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP OpenSOAPStringPtr [in] ((|find_str|)) Search string 
+.br
+\fIrplc_str\fP OpenSOAPStringPtr [in] ((|rplc_str|)) Replacement string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Replacement start index. If can't replace, set (size_)(-1). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringReplaceStringMB (\fBOpenSOAPStringPtr\fP str, const char * find_str, const char * rplc_str, size_t * idx)"
+.PP
+Replace String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP const char * [in] ((|find_str|)) Search string 
+.br
+\fIrplc_str\fP const char * [in] ((|rplc_str|)) Replacement string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Replacement start index. If can't replace, set (size_)(-1). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringReplaceStringWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * find_str, const wchar_t * rplc_str, size_t * idx)"
+.PP
+Replace String. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fIfind_str\fP const wchar_t * [in] ((|find_str|)) Search string 
+.br
+\fIrplc_str\fP const wchar_t * [in] ((|rplc_str|)) Replacement string 
+.br
+\fIidx\fP size_t * [in, out] ((|idx|)) [in]:Search start index; [out]:Replacement start index. If can't replace, set (size_)(-1). 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringRetain (\fBOpenSOAPStringPtr\fP str)"
+.PP
+Add a Reference to a Resource. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in] ((|str|)) OpenSOAP Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringSetCharEncodingString (\fBOpenSOAPStringPtr\fP str, const char * char_enc, \fBOpenSOAPByteArrayPtr\fP charEncStr)"
+.PP
+Set character encoding string for the current locale. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fIchar_enc\fP const char * [in] ((|charEnc|)) Character encoding 
+.br
+\fIcharEncStr\fP OpenSOAPByteArrayPtr [in] ((|charEncStr|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringSetStringMB (\fBOpenSOAPStringPtr\fP str, const char * mb_str)"
+.PP
+Set MultiByte Character string for the current locale. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fImb_str\fP char * [in] ((|mb_str|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringSetStringUTF8 (\fBOpenSOAPStringPtr\fP str, const char * utf8Str)"
+.PP
+Set UTF-8 encoded string. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [out] ((|str|)) 
+.br
+\fIutf8Str\fP const char * [in] ((|utf8Str|)) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringSetStringWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * wc_str)"
+.PP
+Set WideCharacter string. \fBParameters:\fP
+.RS 4
+\fIstr\fP OpenSOAPStringPtr [in, out] ((|str|)) OpenSOAP String 
+.br
+\fIwc_str\fP const wchar_t * [in] ((|wc_str|)) Character String 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringVFormatMB (\fBOpenSOAPStringPtr\fP str, const char * format, va_list ap)"
+.PP
+Format MultiByte String with va_list. \fBParameters:\fP
+.RS 4
+\fIstr\fP [out] OpenSOAP String 
+.br
+\fIformat\fP [in] Format String 
+.br
+\fIap\fP [in] Variable parameters 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPStringVFormatWC (\fBOpenSOAPStringPtr\fP str, const wchar_t * format, va_list ap)"
+.PP
+Format WideCharacter String with va_list. \fBParameters:\fP
+.RS 4
+\fIstr\fP [out] OpenSOAP String 
+.br
+\fIformat\fP [in] Format String 
+.br
+\fIap\fP [in] Variable parameters 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

@@ -1,0 +1,11 @@
+HKCR
+{
+	NoRemove AppID
+	{
+		{BA4D154E-98C3-4aa5-9381-7E9282A881E4} = s 'AddDll'
+		'AddDll.DLL'
+		{
+			val AppID = {BA4D154E-98C3-4aa5-9381-7E9282A881E4}
+		}
+	}
+}

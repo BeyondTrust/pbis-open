@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
+    <SOAP-ENV:Body>
+        <m:PlaceOrderResponse
+         xmlns:m="http://services.opensoap.jp/samples/Shopping/">
+            <confirmation>Order successfully placed</confirmation>
+        </m:PlaceOrderResponse>
+    </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>

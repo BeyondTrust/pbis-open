@@ -1,0 +1,803 @@
+.TH "Security.h" 3 "18 Oct 2004" "Version 1.0" "OpenSOAP" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+Security.h \- OpenSOAP API Security Processing.  
+
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio.h>\fP
+.br
+\fC#include <OpenSOAP/Envelope.h>\fP
+.br
+
+.SS "Defines"
+
+.in +1c
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_MD2\fP   (1)  /* MD2 */"
+.br
+.RI "\fIHash Algorithm Definition For MD2. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_MD4\fP   (2)  /* MD4 */"
+.br
+.RI "\fIHash Algorithm Definition For MD4. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_MD5\fP   (3)  /* MD5 */"
+.br
+.RI "\fIHash Algorithm Definition For MD5. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_MDC2\fP   (4)  /* MDC2 */"
+.br
+.RI "\fIHash Algorithm Definition For MDC2. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_RIPEMD\fP   (5)  /* RIPEMD */"
+.br
+.RI "\fIHash Algorithm Definition For RIPEMD. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_HA_SHA\fP   (6)  /* SHA */"
+.br
+.RI "\fIHash Algorithm Definition For SHA. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_CA_OWNER_LEN\fP   (1024)"
+.br
+.RI "\fIMax Owner Length in CA Database. \fP"
+.ti -1c
+.RI "#define \fBOPENSOAP_CERT_DATE_LEN\fP   (14)"
+.br
+.RI "\fIData Length in Certificate. \fP"
+.in -1c
+.SS "Typedefs"
+
+.in +1c
+.ti -1c
+.RI "typedef tagOpenSOAPSecCert \fBOpenSOAPSecCert\fP"
+.br
+.RI "\fIOpenSOAPSecCert Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPSecCert\fP * \fBOpenSOAPSecCertPtr\fP"
+.br
+.RI "\fIOpenSOAPSecCert Pointer Type Definition. \fP"
+.ti -1c
+.RI "typedef tagOpenSOAPCARec \fBOpenSOAPCARec\fP"
+.br
+.RI "\fIOpenSOAPCARec Structure Type Definition. \fP"
+.ti -1c
+.RI "typedef \fBOpenSOAPCARec\fP * \fBOpenSOAPCARecPtr\fP"
+.br
+.RI "\fIOpenSOAPCARec Pointer Type Definition. \fP"
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBOpenSOAPSecGenerateRSAKeys\fP (const unsigned char *szSeedPhrase, FILE *fpPrivKey, FILE *fpPubKey)"
+.br
+.RI "\fIGenerate RSA Keys To Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecGenerateRSAKeysToFile\fP (const unsigned char *szSeedPhrase, const char *szPrivKeyFileName, const char *szPubKeyFileName)"
+.br
+.RI "\fIGenerate RSA Keys To File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecEncWithStream\fP (\fBOpenSOAPEnvelopePtr\fP env, FILE *fpPubKey)"
+.br
+.RI "\fIEncrypt Envelope Using Public Key File Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecEncWithFile\fP (\fBOpenSOAPEnvelopePtr\fP env, const char *szPubKName)"
+.br
+.RI "\fIEncrypt Envelope Using Public Key File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecDecWithStream\fP (\fBOpenSOAPEnvelopePtr\fP env, FILE *fpPrivKey)"
+.br
+.RI "\fIDecrypt Envelope Using Private Key File Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecDecWithFile\fP (\fBOpenSOAPEnvelopePtr\fP env, const char *szPrivKName)"
+.br
+.RI "\fIDecrypt Envelope Using Private Key File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecAddSignWithStream\fP (\fBOpenSOAPEnvelopePtr\fP env, int iType, FILE *fpPrivKey, \fBOpenSOAPStringPtr\fP name)"
+.br
+.RI "\fIAdd Signature to SOAP Message using PrivateKey File Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecAddSignWithFile\fP (\fBOpenSOAPEnvelopePtr\fP env, int iType, const char *szPrivKName, \fBOpenSOAPStringPtr\fP name)"
+.br
+.RI "\fIAdd Signature to SOAP Message using PrivateKey File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCntSign\fP (const \fBOpenSOAPEnvelopePtr\fP env, int *pnSig)"
+.br
+.RI "\fICount Signatures. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecGetSignedByList\fP (\fBOpenSOAPEnvelopePtr\fP env, int nCntMax, \fBOpenSOAPStringPtr\fP list[], int *pnCntPacked)"
+.br
+.RI "\fIGet 'SignedBy' List of Signatures. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecVerifySignWithStream\fP (\fBOpenSOAPEnvelopePtr\fP env, FILE *fpPubKey)"
+.br
+.RI "\fIVerify Signature using PublicKey File Stream. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecVerifySignWithFile\fP (\fBOpenSOAPEnvelopePtr\fP env, const char *szPubKName)"
+.br
+.RI "\fIVerify Signature using PublicKey File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertCreateWithStream\fP (const char *szPublish, FILE *fpPrivKey, int iHashType, const \fBOpenSOAPCARecPtr\fP pRec, FILE *fpCert)"
+.br
+.RI "\fICreate Certificate from CA Record(stream). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertCreateWithFile\fP (const char *szPublish, const char *szPrivKeyFile, int iHashType, const \fBOpenSOAPCARecPtr\fP pRec, const char *szCertName)"
+.br
+.RI "\fICreate Certificate from CA Record(file). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertLoadFromMem\fP (size_t sizArea, const unsigned char *pucArea, \fBOpenSOAPSecCertPtr\fP *ppCert)"
+.br
+.RI "\fILoad Certificate From Memory. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertLoad\fP (const char *szName, \fBOpenSOAPSecCertPtr\fP *ppCert)"
+.br
+.RI "\fILoad Certificate From File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertFree\fP (\fBOpenSOAPSecCertPtr\fP ppCert)"
+.br
+.RI "\fIFree Certificate. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertVerifyWithStream\fP (FILE *fpCert, FILE *fpPubKey)"
+.br
+.RI "\fIVerify Certificate (Stream). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertVerifyWithFile\fP (const char *szCertName, const char *szPubKeyName)"
+.br
+.RI "\fIVerify Certificate (File). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertGetPublisherName\fP (\fBOpenSOAPSecCertPtr\fP pCert, char **pszName)"
+.br
+.RI "\fIGet Name Of Publisher. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertGetSerialNo\fP (\fBOpenSOAPSecCertPtr\fP pCert, unsigned long *pulSerial)"
+.br
+.RI "\fIGet Serial Number. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertGetOwnerName\fP (\fBOpenSOAPSecCertPtr\fP pCert, char **pszName)"
+.br
+.RI "\fIGet Name of Owner. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertGetEndDate\fP (\fBOpenSOAPSecCertPtr\fP pCert, char **pszDate)"
+.br
+.RI "\fIGet End Date. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCertGetPubKey\fP (\fBOpenSOAPSecCertPtr\fP pCert, const char *szSaveName)"
+.br
+.RI "\fIGet Public Key. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecDecodeKeyFile\fP (FILE *fp, unsigned long *pulLenOut, unsigned char **ppucDecode)"
+.br
+.RI "\fIDecode Key File. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCABrowseRec\fP (const \fBOpenSOAPCARecPtr\fP pRec, FILE *fpOut)"
+.br
+.RI "\fIBrowse CA Record. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCABrowse\fP (FILE *fpOut)"
+.br
+.RI "\fIBrowse CA Database. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCARegist\fP (const char *szNameOwner, const char *szTermDate, size_t sizPubkey, const unsigned char *szPubKey, unsigned long *pulSerialNo)"
+.br
+.RI "\fIRegist Key To CA Databse. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCAInvalidate\fP (const char *szNameOwner, unsigned long ulSerial)"
+.br
+.RI "\fIInvalidate CA Record. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCASearchRecords\fP (const char *szNameOwner, int *pnRec, long **pplIdxs)"
+.br
+.RI "\fISearch Records. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCASearchOneRecord\fP (const char *szNameOwner, \fBOpenSOAPCARecPtr\fP *ppRec)"
+.br
+.RI "\fISearch Record(Longest Period). \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCAGetRecord\fP (long lIdx, \fBOpenSOAPCARecPtr\fP *ppRec)"
+.br
+.RI "\fIGet Record. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCAFreeRecord\fP (\fBOpenSOAPCARecPtr\fP pRec)"
+.br
+.RI "\fIFree Record. \fP"
+.ti -1c
+.RI "int \fBOpenSOAPSecCARemoveRecord\fP (unsigned long ulSerial)"
+.br
+.RI "\fIRemove CA Record. \fP"
+.in -1c
+.SH "Detailed Description"
+.PP 
+OpenSOAP API Security Processing. 
+
+\fBAuthor:\fP
+.RS 4
+OpenSOAP Development Team
+.RE
+.PP
+
+.SH "Define Documentation"
+.PP 
+.SS "#define OPENSOAP_CA_OWNER_LEN   (1024)"
+.PP
+Max Owner Length in CA Database. (1024) 
+.SS "#define OPENSOAP_CERT_DATE_LEN   (14)"
+.PP
+Data Length in Certificate. (14) 
+.SS "#define OPENSOAP_HA_MD2   (1)  /* MD2 */"
+.PP
+Hash Algorithm Definition For MD2. (1) 
+.SS "#define OPENSOAP_HA_MD4   (2)  /* MD4 */"
+.PP
+Hash Algorithm Definition For MD4. (2) 
+.SS "#define OPENSOAP_HA_MD5   (3)  /* MD5 */"
+.PP
+Hash Algorithm Definition For MD5. (3) 
+.SS "#define OPENSOAP_HA_MDC2   (4)  /* MDC2 */"
+.PP
+Hash Algorithm Definition For MDC2. (4) 
+.SS "#define OPENSOAP_HA_RIPEMD   (5)  /* RIPEMD */"
+.PP
+Hash Algorithm Definition For RIPEMD. (5) 
+.SS "#define OPENSOAP_HA_SHA   (6)  /* SHA */"
+.PP
+Hash Algorithm Definition For SHA. (6) 
+.SH "Function Documentation"
+.PP 
+.SS "int OpenSOAPSecAddSignWithFile (\fBOpenSOAPEnvelopePtr\fP env, int iType, const char * szPrivKName, \fBOpenSOAPStringPtr\fP name)"
+.PP
+Add Signature to SOAP Message using PrivateKey File. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope 
+.br
+\fIiType\fP int [in] ((|iType|)) Hash Type(OPENSOAP_HA_*) 
+.br
+\fIszPrivKName\fP const char * [in] ((|szPrivKName|)) Private Key File Name 
+.br
+\fIname\fP OpenSOAPStringPtr [in] ((|name|)) Signature Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecAddSignWithStream (\fBOpenSOAPEnvelopePtr\fP env, int iType, FILE * fpPrivKey, \fBOpenSOAPStringPtr\fP name)"
+.PP
+Add Signature to SOAP Message using PrivateKey File Stream. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope 
+.br
+\fIiType\fP int [in] ((|iType|)) Hash Type(OPENSOAP_HA_*) 
+.br
+\fIfpPrivKey\fP FILE * [in] ((|fpPrivKey|)) Private Key File Stream 
+.br
+\fIname\fP OpenSOAPStringPtr [in] ((|name|)) Signature Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCABrowse (FILE * fpOut)"
+.PP
+Browse CA Database. \fBParameters:\fP
+.RS 4
+\fIfpOut\fP FILE * [in] ((|fpOut|)) Output Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCABrowseRec (const \fBOpenSOAPCARecPtr\fP pRec, FILE * fpOut)"
+.PP
+Browse CA Record. \fBParameters:\fP
+.RS 4
+\fIpRec\fP const OpenSOAPCARecPtr [in] ((|pRec|)) Record 
+.br
+\fIfpOut\fP FILE * [in] ((|fpOut|)) Output Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCAFreeRecord (\fBOpenSOAPCARecPtr\fP pRec)"
+.PP
+Free Record. \fBParameters:\fP
+.RS 4
+\fIpRec\fP OpenSOAPCARecPtr [in] ((|pRec|)) Record 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCAGetRecord (long lIdx, \fBOpenSOAPCARecPtr\fP * ppRec)"
+.PP
+Get Record. \fBParameters:\fP
+.RS 4
+\fIlIdx\fP long [in] ((|lIdx|)) Index 
+.br
+\fIppRec\fP OpenSOAPCARecPtr * [out] ((|ppRec|)) Record 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCAInvalidate (const char * szNameOwner, unsigned long ulSerial)"
+.PP
+Invalidate CA Record. \fBParameters:\fP
+.RS 4
+\fIszNameOwner\fP const char * [in] ((|szNameOwner|)) Owner's Name 
+.br
+\fIulSerial\fP unsigned long [in] ((|ulSerial|)) Serial Number 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCARegist (const char * szNameOwner, const char * szTermDate, size_t sizPubkey, const unsigned char * szPubKey, unsigned long * pulSerialNo)"
+.PP
+Regist Key To CA Databse. \fBParameters:\fP
+.RS 4
+\fIszNameOwner\fP const char * [in] ((|szNameOwner|)) Owner's Name 
+.br
+\fIszTermDate\fP const char * [in] ((|szTermDate|)) Terminate Date ('YYYYMMDDHHMMSS') 
+.br
+\fIsizPubkey\fP size_t [in] ((|sizPubkey|)) Size of Public Key 
+.br
+\fIszPubKey\fP const unsigned char * [in] ((|szPubKey|)) Public Key 
+.br
+\fIpulSerialNo\fP unsigned long * [out] ((pulSerialNo|)) Serial Number 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCARemoveRecord (unsigned long ulSerial)"
+.PP
+Remove CA Record. \fBParameters:\fP
+.RS 4
+\fIulSerial\fP unsigned long [in] ((|ulSerial|)) Serial Number 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCASearchOneRecord (const char * szNameOwner, \fBOpenSOAPCARecPtr\fP * ppRec)"
+.PP
+Search Record(Longest Period). \fBParameters:\fP
+.RS 4
+\fIszNameOwner\fP const char * [in] ((|szNameOwner|)) Owner's Name 
+.br
+\fIppRec\fP OpenSOAPCARecPtr * [out] ((|ppRec|)) Record 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCASearchRecords (const char * szNameOwner, int * pnRec, long ** pplIdxs)"
+.PP
+Search Records. \fBParameters:\fP
+.RS 4
+\fIszNameOwner\fP const char * [in] ((|szNameOwner|)) Owner's Name 
+.br
+\fIpnRec\fP int * [out] ((|pnRec|)) Record Count 
+.br
+\fIpplIdxs\fP lomg ** [out] ((|pplIdxs|)) Index Numbers 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+After calling this function, call free() to free resources used by pplIdxs. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertCreateWithFile (const char * szPublish, const char * szPrivKeyFile, int iHashType, const \fBOpenSOAPCARecPtr\fP pRec, const char * szCertName)"
+.PP
+Create Certificate from CA Record(file). \fBParameters:\fP
+.RS 4
+\fIszPublish\fP const char * [in] ((|szPublish|)) Publisher's Name 
+.br
+\fIszPrivKeyFile\fP const char * [in] ((|szPrivKeyFile|)) Private Key File Name(Publisher) 
+.br
+\fIiHashType\fP int [in] ((|iHashType|)) Hash Type(OPENSOAP_HA_*) 
+.br
+\fIpRec\fP const OpenSOAPCARecPtr [in] ((|pRec|)) CA Record 
+.br
+\fIszCertName\fP const char * [in] ((|szCertName|)) Certificate File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertCreateWithStream (const char * szPublish, FILE * fpPrivKey, int iHashType, const \fBOpenSOAPCARecPtr\fP pRec, FILE * fpCert)"
+.PP
+Create Certificate from CA Record(stream). \fBParameters:\fP
+.RS 4
+\fIszPublish\fP const char * [in] ((|szPublish|)) Publisher's Name 
+.br
+\fIfpPrivKey\fP FILE * [in] ((|fpPrivKey|)) Private Key(Publisher 
+.br
+\fIiHashType\fP int [in] ((|iHashType|)) Hash type(OPENSOAP_HA_*) 
+.br
+\fIpRec\fP const OpenSOAPRecPtr [in] ((|pRec|)) CA Record 
+.br
+\fIfpCert\fP FILE * [out] ((|fpCert|)) Certificate File 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertFree (\fBOpenSOAPSecCertPtr\fP ppCert)"
+.PP
+Free Certificate. \fBParameters:\fP
+.RS 4
+\fIppCert\fP OpenSOAPSecCertPtr * [in] ((|ppCert|)) Certificate 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertGetEndDate (\fBOpenSOAPSecCertPtr\fP pCert, char ** pszDate)"
+.PP
+Get End Date. \fBParameters:\fP
+.RS 4
+\fIpCert\fP OpenSOAPSecCertPtr [in] ((|pCert|)) Certificate 
+.br
+\fIpszDate\fP char ** [out] ((|pszDate|)) Date (Internal Area) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertGetOwnerName (\fBOpenSOAPSecCertPtr\fP pCert, char ** pszName)"
+.PP
+Get Name of Owner. \fBParameters:\fP
+.RS 4
+\fIpCert\fP OpenSOAPSecCertPtr [in] ((|pCert|)) Certificate 
+.br
+\fIpszName\fP char ** [out] ((|pszName|)) Name (Internal Area) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertGetPubKey (\fBOpenSOAPSecCertPtr\fP pCert, const char * szSaveName)"
+.PP
+Get Public Key. \fBParameters:\fP
+.RS 4
+\fIpCert\fP OpenSOAPSecCertPtr [in] ((|pCert|)) 
+.br
+\fIszSaveName\fP const char * [in] ((|szSaveName|)) Public Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertGetPublisherName (\fBOpenSOAPSecCertPtr\fP pCert, char ** pszName)"
+.PP
+Get Name Of Publisher. \fBParameters:\fP
+.RS 4
+\fIpCert\fP OpenSOAPSecCertPtr [in] ((|pCert|)) Certificate 
+.br
+\fIpszName\fP char ** [out] ((|pszName|)) Name (Internal Area) 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertGetSerialNo (\fBOpenSOAPSecCertPtr\fP pCert, unsigned long * pulSerial)"
+.PP
+Get Serial Number. \fBParameters:\fP
+.RS 4
+\fIpCert\fP OpenSOAPSecCertPtr [in] ((|pCert|)) Certificate 
+.br
+\fIpulSerial\fP unsigned long * [out] ((|pulSerial|)) Serial Number 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertLoad (const char * szName, \fBOpenSOAPSecCertPtr\fP * ppCert)"
+.PP
+Load Certificate From File. \fBParameters:\fP
+.RS 4
+\fIszName\fP const char * [in] ((|szName|)) File Name 
+.br
+\fIppCert\fP OpenSOAPSecCertPtr * [out] ((|ppCert|)) Certificate 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertLoadFromMem (size_t sizArea, const unsigned char * pucArea, \fBOpenSOAPSecCertPtr\fP * ppCert)"
+.PP
+Load Certificate From Memory. \fBParameters:\fP
+.RS 4
+\fIsizArea\fP size_t [in] ((|sizArea|)) Size Of Input Area 
+.br
+\fIpucArea\fP const unsigned char * [in] ((|pucArea|)) Input Area 
+.br
+\fIppCert\fP OpenSOAPSecCertPtr * [out] ((|ppCert|)) Certificate 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertVerifyWithFile (const char * szCertName, const char * szPubKeyName)"
+.PP
+Verify Certificate (File). \fBParameters:\fP
+.RS 4
+\fIszCertName\fP const char * [in] ((|szCertName|)) Certificate File Name 
+.br
+\fIszPubKeyName\fP const char * [in] ((|szPubKeyName|)) Public Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCertVerifyWithStream (FILE * fpCert, FILE * fpPubKey)"
+.PP
+Verify Certificate (Stream). \fBParameters:\fP
+.RS 4
+\fIfpCert\fP FILE * [in] ((|fpCert|)) Certificate File Stream 
+.br
+\fIfpPubKey\fP FILE * [in] ((|fpPubKey|)) Public Key File Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecCntSign (const \fBOpenSOAPEnvelopePtr\fP env, int * pnSig)"
+.PP
+Count Signatures. \fBParameters:\fP
+.RS 4
+\fIenv\fP const OpenSOAPEnvelopePtr [in] ((|env|)) OpenSOAP Envelope 
+.br
+\fIpnSig\fP int * [out] ((|pnSig|)) Signature Count 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecDecodeKeyFile (FILE * fp, unsigned long * pulLenOut, unsigned char ** ppucDecode)"
+.PP
+Decode Key File. \fBParameters:\fP
+.RS 4
+\fIfp\fP FILE * [in] ((|fp|)) File Stream 
+.br
+\fIpulLenOut\fP unsigned long * [out] ((|pulLenOut|)) Length of output data 
+.br
+\fIppucDecode\fP unsigned char ** [out] ((|ppucDecode|)) Decoded String 
+.RE
+.PP
+\fBNote:\fP
+.RS 4
+After calling this function, call free() to free resources used by ppucDecode. 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecDecWithFile (\fBOpenSOAPEnvelopePtr\fP env, const char * szPrivKName)"
+.PP
+Decrypt Envelope Using Private Key File. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in] ((|env|)) Envelope 
+.br
+\fIszPrivKName\fP const char * [in] ((|szPrivKName|)) Private Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecDecWithStream (\fBOpenSOAPEnvelopePtr\fP env, FILE * fpPrivKey)"
+.PP
+Decrypt Envelope Using Private Key File Stream. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in] ((|env|)) Envelope 
+.br
+\fIfpPrivKey\fP FILE * [in] ((|fpPrivKey|)) Private Key File Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecEncWithFile (\fBOpenSOAPEnvelopePtr\fP env, const char * szPubKName)"
+.PP
+Encrypt Envelope Using Public Key File. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope 
+.br
+\fIszPubKName\fP const char * [in] ((|szPubKName|)) Public Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecEncWithStream (\fBOpenSOAPEnvelopePtr\fP env, FILE * fpPubKey)"
+.PP
+Encrypt Envelope Using Public Key File Stream. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) Envelope 
+.br
+\fIfpPubKey\fP FILE * [in] ((|fpPubKey|)) Public Key File Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecGenerateRSAKeys (const unsigned char * szSeedPhrase, FILE * fpPrivKey, FILE * fpPubKey)"
+.PP
+Generate RSA Keys To Stream. \fBParameters:\fP
+.RS 4
+\fIszSeedPhrase\fP const unsigned char * [in] ((|szSeedPhrase|)) Seed Phrase 
+.br
+\fIfpPrivKey\fP FILE * [in] ((|fpPrivKey|)) RSA Private Key File Stream 
+.br
+\fIfpPubKey\fP FILE * [in] ((|fpPubKey|)) RSA Public Key File Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecGenerateRSAKeysToFile (const unsigned char * szSeedPhrase, const char * szPrivKeyFileName, const char * szPubKeyFileName)"
+.PP
+Generate RSA Keys To File. \fBParameters:\fP
+.RS 4
+\fIszSeedPhrase\fP const unsigned char * [in] ((|szSeedPhrase|)) Seed Phrase 
+.br
+\fIszPrivKeyFileName\fP const char * [in] ((|szPrivKeyFileName\\)) Private Key File Name 
+.br
+\fIszPubKeyFileName\fP const char * [in] ((|szPrivKeyFileName\\)) Public Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecGetSignedByList (\fBOpenSOAPEnvelopePtr\fP env, int nCntMax, \fBOpenSOAPStringPtr\fP list[], int * pnCntPacked)"
+.PP
+Get 'SignedBy' List of Signatures. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in] ((|env|)) OpenSOAP Envelope 
+.br
+\fInCntMax\fP int [in] ((|nCntMax|)) Maximum Count 
+.br
+\fIlist[]\fP OpenSOAPStringPtr [in, out] ((|list[]|)) SignedBy List 
+.br
+\fIpnCntPacked\fP int * [out] ((|pnCntPacked|)) Packed Count 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecVerifySignWithFile (\fBOpenSOAPEnvelopePtr\fP env, const char * szPubKName)"
+.PP
+Verify Signature using PublicKey File. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) OpenSOAP Envelope 
+.br
+\fIszPubKName\fP const char * [in] ((|szPubKName||) Public Key File Name 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SS "int OpenSOAPSecVerifySignWithStream (\fBOpenSOAPEnvelopePtr\fP env, FILE * fpPubKey)"
+.PP
+Verify Signature using PublicKey File Stream. \fBParameters:\fP
+.RS 4
+\fIenv\fP OpenSOAPEnvelopePtr [in, out] ((|env|)) OpenSOAP Envelope 
+.br
+\fIfpPubKey\fP FILE * [in] ((|fpPubKey|)) Public Key File Stream 
+.RE
+.PP
+\fBReturns:\fP
+.RS 4
+Error Code 
+.RE
+.PP
+
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for OpenSOAP from the source code.

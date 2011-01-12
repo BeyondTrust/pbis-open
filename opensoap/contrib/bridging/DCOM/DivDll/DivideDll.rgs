@@ -1,0 +1,26 @@
+HKCR
+{
+	DivDll.DivideDll.1 = s 'DivideDll Class'
+	{
+		CLSID = s '{E20519F0-35E5-4FD4-AEDA-64079ED8A952}'
+	}
+	DivDll.DivideDll = s 'DivideDll Class'
+	{
+		CLSID = s '{E20519F0-35E5-4FD4-AEDA-64079ED8A952}'
+		CurVer = s 'DivDll.DivideDll.1'
+	}
+	NoRemove CLSID
+	{
+		ForceRemove {E20519F0-35E5-4FD4-AEDA-64079ED8A952} = s 'DivideDll Class'
+		{
+			ProgID = s 'DivDll.DivideDll.1'
+			VersionIndependentProgID = s 'DivDll.DivideDll'
+			InprocServer32 = s '%MODULE%'
+			{
+				val ThreadingModel = s 'Apartment'
+			}
+			val AppID = s '{77E3DEAF-317F-4eeb-ACCF-7BA960D85CC1}'
+			'TypeLib' = s '{7A59136B-D84F-44C4-B095-AEBB89A422B8}'
+		}
+	}
+}
