@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Likewise Software.  All rights reserved.
+ */
 #ifndef __LWAUTOENROLL_BAIL_H__
 #define __LWAUTOENROLL_BAIL_H__
 
@@ -70,3 +73,6 @@
     } while (0)
 
 #endif /* __LWAUTOENROLL_BAIL_H__ */
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */

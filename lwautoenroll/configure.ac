@@ -1,3 +1,6 @@
+#
+# Copyright (C) Likewise Software.  All rights reserved.
+#
 AC_INIT(lwautoenroll, 1.0, support@likewise.com)
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_HEADER([include/config.h])

@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Likewise Software.  All rights reserved.
+ */
 /**
  * @file lwautoenroll.h
  * @brief Likewise AutoEnrollment C API
@@ -195,3 +198,6 @@ LwAutoEnrollGetRequestStatus(
 LW_END_EXTERN_C
 
 #endif /* __LWAUTOENROLL_H */
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */

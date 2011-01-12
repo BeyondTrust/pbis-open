@@ -1,3 +1,6 @@
+#
+# Copyright (C) Likewise Software.  All rights reserved.
+#
 # Autotool configuration
 
 ACLOCAL_AMFLAGS = -I m4

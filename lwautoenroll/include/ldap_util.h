@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Likewise Software.  All rights reserved.
+ */
 #ifndef LWAUTOENROLL_LDAP_H
 #define LWAUTOENROLL_LDAP_H
 
@@ -45,3 +48,6 @@ LwAutoEnrollLdapConnect(
         );
 
 #endif /* LWAUTOENROLL_LDAP_H */
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */

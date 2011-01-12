@@ -1,3 +1,6 @@
+/*
+ * Copyright (C) Likewise Software.  All rights reserved.
+ */
 #ifndef LWAUTOENROLL_CURL_H
 #define LWAUTOENROLL_CURL_H
 
@@ -35,3 +38,6 @@ LwAutoEnrollCurlSoapRequest(
         );
 
 #endif /* LWAUTOENROLL_CURL_H */
+/* Editor Settings: expandtabs and use 4 spaces for indentation
+ * ex: set softtabstop=4 tabstop=8 expandtab shiftwidth=4: *
+ * -*- mode: c, c-basic-offset: 4 -*- */
