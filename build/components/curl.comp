@@ -24,6 +24,8 @@ function _setup_build_env
     CPPFLAGS="${_cppflags} $(libtool_staging_cppflags)"
     CFLAGS="${_cflags}"
     LDFLAGS="${_ldflags} $(libtool_format_rpath ${PREFIX_DIR}/${_lib}) $(libtool_staging_ldflags)"
+    KRB5_DIRPATH=`get_staging_prefix_dir krb5`
+    OPENSSL_DIRPATH=`get_staging_prefix_dir openssl`
 
     libtool_set_staging_library_path
 
@@ -54,6 +56,8 @@ function component_configure
 	--disable-pop3 \
 	--disable-imap \
 	--disable-smtp \
+        --with-gssapi="${KRB5_DIRPATH}" \
+        --with-ssl="${OPENSSL_DIRPATH}" \
         ${extra_flags} \
 	${DEPENDENCY_TRACKING}
 }
