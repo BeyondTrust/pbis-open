@@ -231,6 +231,12 @@ main(int argc, char * const *argv)
     BAIL_ON_SSL_ERROR(sslResult == 0);
 
 cleanup:
+    if (pSubjectName)
+    {
+        X509_NAME_free(pSubjectName);
+        pSubjectName = NULL;
+    }
+
     if (pKeyPair)
     {
         EVP_PKEY_free(pKeyPair);
