@@ -92,17 +92,17 @@ doc/doxygen-latex: $(DOXYGEN_DEPS)
 
 doxygen-latex: doc/doxygen-latex
 
-doc/lwsm.pdf: doc/doxygen-latex
+doc/lwautoenroll.pdf: doc/doxygen-latex
 	$(MAKE) -C doc/doxygen-latex pdf
-	cp doc/doxygen-latex/refman.pdf doc/lwsm.pdf
+	cp doc/doxygen-latex/refman.pdf doc/lwautoenroll.pdf
 
-doxygen-pdf: doc/lwsm.pdf
+doxygen-pdf: doc/lwautoenroll.pdf
 
 doxygen-html-install: doc/doxygen-html
 	$(MKDIR_P) -m 755 $(DESTDIR)$(docdir)/html
 	$(INSTALL_DATA) $</* $(DESTDIR)$(docdir)/html
 
-doxygen-pdf-install: doc/lwsm.pdf
+doxygen-pdf-install: doc/lwautoenroll.pdf
 	$(MKDIR_P) -m 755 $(DESTDIR)$(docdir)/pdf
 	$(INSTALL_DATA) $< $(DESTDIR)$(docdir)/pdf
 
